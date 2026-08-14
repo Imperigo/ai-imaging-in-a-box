@@ -99,10 +99,36 @@ MIT, Apache-2.0, BSD.
 **MIT-Lizenz** — Die kürzeste verbreitete permissive Lizenz. Bedingung: Copyright-Hinweis
 beibehalten.
 
-**Apache-2.0** — Permissiv, aber ausführlicher als MIT. Zusätzlich eine ausdrückliche
-Patentlizenz und eine Verteidigungsklausel: Wer die Beitragenden wegen Patentverletzung
-verklagt, verliert seine Lizenz. Deshalb im professionellen Umfeld beliebt.
-*In diesem Projekt: die Lizenz des eigenen Codes.*
+**Apache-2.0** — Permissive Lizenz, ausführlicher als MIT. *In diesem Projekt die Lizenz
+des eigenen Codes.*
+
+**Was sie erlaubt** — praktisch alles: benutzen, verändern, weitergeben, verkaufen, in
+geschlossene Produkte einbauen. Ohne Rückfrage, ohne Gebühr, ohne Pflicht, eigene
+Änderungen offenzulegen. Auch kommerziell.
+
+**Was sie verlangt** — vier Dinge, wenn der Code weitergegeben wird:
+
+1. Eine Kopie der Lizenz beilegen.
+2. Copyright-Hinweise stehen lassen.
+3. Veränderte Dateien als verändert kennzeichnen.
+4. Eine vorhandene `NOTICE`-Datei mitgeben.
+
+**Die Patentklausel** — der eigentliche Unterschied zu MIT. Wer zu Apache-2.0-Code
+beiträgt, erteilt allen Nutzern zugleich eine Lizenz an seinen einschlägigen Patenten.
+Bei MIT ist das ungeregelt: Man erhält das Urheberrecht am Code, aber niemand sichert
+zu, dass an dessen Verfahren keine Patente hängen.
+
+**Die Verteidigungsklausel** — die Kehrseite: Wer jemanden wegen eines Patents an diesem
+Werk verklagt, verliert damit die eigene Patentlizenz daran. Eine Selbstentschärfung, die
+Apache-2.0 im professionellen Umfeld zur bevorzugten permissiven Lizenz gemacht hat.
+
+**Was sie nicht gewährt** — Namensrechte. Der Code darf verwendet werden, der
+Projektname nicht als eigener.
+
+**Verträglichkeit** — Apache-2.0-Code darf in GPL-3.0-Projekte einfliessen, aber **nicht**
+in GPL-2.0-only-Projekte; die Patentklausel verträgt sich mit deren Bedingungen nicht.
+Diese Einschränkung wirkt nur in diese eine Richtung: Apache-lizenzierter Code *benutzt*
+werden — etwa GPL-Programme als Subprozess aufrufen — ist davon nicht berührt.
 
 **BSD-Lizenz** — Permissiv, MIT sehr ähnlich, in mehreren Varianten (2-Clause, 3-Clause).
 
@@ -233,7 +259,27 @@ Bibliotheken bekommen ein eigenes venv und werden nur als Subprozess aufgerufen.
 nicht in die Quere kommen — die Grundlage der Prozessgrenze.
 
 **Subprozess** — Ein Programm, das ein anderes Programm startet und dessen Ergebnis
-abwartet.
+abwartet. Praktisch dasselbe, als würde man den Befehl selbst ins Terminal tippen —
+nur tut es das eigene Programm. *In diesem Projekt die Form, in der Blender und
+IfcOpenShell aufgerufen werden.*
+
+**IPC (Interprozesskommunikation)** — Oberbegriff für alle Arten, wie getrennte Programme
+Daten austauschen: über Dateien, über die Standardausgabe, über Netzwerkverbindungen.
+Die einfachste Form — eine Datei schreiben, die das andere Programm liest — genügt für
+dieses Projekt und ist deshalb die gewählte.
+
+**stdout / stderr (Standardausgabe / Standardfehler)** — Die beiden Textkanäle, über die
+ein Programm im Terminal ausgibt. Getrennt, damit sich Ergebnisse und Fehlermeldungen
+nicht vermischen und einzeln weiterverarbeiten lassen.
+
+**Exit-Code** — Die Zahl, mit der sich ein Programm verabschiedet. `0` heisst „hat
+geklappt", alles andere signalisiert einen Fehler. So erfährt das aufrufende Programm,
+ob der Subprozess erfolgreich war.
+
+**Protokoll** — Eine Vereinbarung darüber, in welcher Form zwei Programme miteinander
+sprechen: welche Nachrichten es gibt, in welcher Reihenfolge, in welchem Format. Nötig,
+wenn die Gegenseite nicht im Voraus weiss, was sie erwartet — überflüssig, wenn ein
+schlichter Aufruf genügt. *MCP ist ein Protokoll, ein Subprozessaufruf braucht keines.*
 
 **Umgebungsvariable** — Eine Einstellung, die dem Programm von aussen mitgegeben wird —
 üblicher Ort für Pfade und Geheimnisse, die nicht in den Code gehören.
@@ -522,9 +568,20 @@ Werkzeugaufruf zu erzeugen — etwa eine Datei zu lesen oder einen Befehl auszuf
 Werkzeuge und Datenquellen ansprechen. Statt für jedes Modell eine eigene Anbindung zu
 schreiben, spricht man ein gemeinsames Protokoll.
 
+MCP löst ein Problem, das es **nur bei Sprachmodellen** gibt: Das Modell weiss vorab
+nicht, welche Werkzeuge existieren. Es braucht sie beschrieben — Name, Zweck, erwartete
+Angaben —, bevor es eines auswählen kann. Ruft dagegen ein Programm ein anderes auf,
+steht der Aufruf bereits im Code; dort ist ein Protokoll überflüssiger Aufwand.
+
+*Abgrenzung: MCP ist **nicht** die allgemeine Form, in der Programme miteinander reden,
+und **nicht** das Mittel, mit dem in diesem Projekt die Lizenz-Prozessgrenze gezogen
+wird. Dafür genügt der Subprozessaufruf. MCP kommt an genau einer Stelle vor — ganz
+oben, wo ein Sprachmodell die Pipeline bedienen soll.*
+
 **MCP-Server** — Ein Programm, das über dieses Protokoll Werkzeuge bereitstellt.
 *In diesem Projekt der geplante Weg, über den ein lokales Sprachmodell Renderaufträge
-einstellen darf — einstellen, nicht ausführen.*
+einstellen darf — einstellen, nicht ausführen. Der Server spricht mit der eigenen
+Bibliothek, nie direkt mit Blender oder IfcOpenShell.*
 
 **Lokales Modell** — Ein Modell, das auf eigener Hardware läuft. Kein Datenabfluss,
 keine laufenden Kosten, dafür begrenzt durch die eigene Grafikkarte.
@@ -632,3 +689,5 @@ System laufen.
 | Datum | Änderung |
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
+| 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-14 | Ausgebaut: Apache-2.0 (Auflagen, Patent- und Verteidigungsklausel), MCP (Abgrenzung zum Subprozessaufruf) |
