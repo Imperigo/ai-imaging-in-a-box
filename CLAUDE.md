@@ -76,6 +76,19 @@ nicht später. Definitionen sind für Laien geschrieben: was es ist, wozu es die
 wo es im Projekt vorkommt. Keine Definition, die einen anderen unerklärten Fachbegriff
 voraussetzt.
 
+### Jede Sitzung wird protokolliert
+
+Nach `docs/sitzungen/JJJJ-MM-TT_sitzung-NN.md`. Die Gespräche tragen Entscheidungen und
+Begründungen, die sonst nur im Kontext des Modells existieren — und der geht mit der
+Sitzung verloren. Was nicht in einer Datei steht, ist weg.
+
+Ins Protokoll gehören: getroffene Entscheidungen **mit Begründung**, korrigierte
+Fehlannahmen (die kehren wieder), geprüfte Befunde samt Prüfweg, die Fragen des Owners,
+und was am Ende offen blieb. Kein wörtliches Gesprächsprotokoll — die Substanz.
+
+`docs/PLAN.md` wird in derselben Sitzung fortgeschrieben: Erledigtes abhaken, nicht
+löschen.
+
 ### Git
 
 Innerhalb dieses Repos entscheidet Claude eigenständig über Zweige und Zusammenführungen

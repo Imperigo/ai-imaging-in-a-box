@@ -14,6 +14,8 @@ austauschbarem lokalem Bildmodell.
   der MCP-Vertrag gegenüber KosmoOrbit und was er für die Bauform bedeutet
 - [`docs/LEXIKON.md`](docs/LEXIKON.md) — Fachbegriffe aus Softwareentwicklung, Lizenzrecht
   und KI, erklärt für Leser:innen mit Architekturhintergrund
+- [`docs/PLAN.md`](docs/PLAN.md) — Vorgehensplan, Phasen 0–4, offene Wissensschulden
+- [`docs/sitzungen/`](docs/sitzungen/) — Sitzungsprotokolle: Entscheidungen und Begründungen
 - [`CLAUDE.md`](CLAUDE.md) — die vier nicht verhandelbaren Regeln
 
 ## Lizenz
