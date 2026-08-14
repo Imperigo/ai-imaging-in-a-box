@@ -109,10 +109,39 @@ Die permissiven Alternativen lösen es nur halb:
 - **IFC++ (MIT)** ist lizenzrechtlich ideal, aber C++ ohne Python-Bindings und mit
   merklich kleinerer Reichweite bei IFC4-Deckung.
 
-**Nicht abschliessend geprüft:** IfcOpenShell 0.8 kann mit zwei Geometrie-Kerneln gebaut
-werden — Open CASCADE (LGPL mit Ausnahme) und CGAL. **CGAL steht in Teilen unter GPL-3.0.**
-Welcher Kernel im PyPI-/conda-Wheel tatsächlich aktiv ist, konnte ich nicht verifizieren.
-Das ist ein potenzieller versteckter GPL-Fund und muss vor jeder Auslieferung geklärt werden.
+### ⛔ Nachtrag 2026-08-14: Das IfcOpenShell-Wheel enthält GPL-Code (verifiziert)
+
+Der zunächst offene CGAL-Verdacht ist geklärt — und er bestätigt sich. Ich habe
+`ifcopenshell` 0.8.5 aus PyPI installiert und das mitgelieferte Binary untersucht:
+
+```
+_ifcopenshell_wrapper.cpython-311-x86_64-linux-gnu.so   148 MB
+  Nef_polyhedron_3           249 Symbolverweise
+  Polygon_mesh_processing     47
+  convex_decomposition         8
+  + Open CASCADE
+```
+
+**Beide Geometrie-Kernel sind statisch einkompiliert**, nicht nur Open CASCADE. Und CGAL
+ist dual lizenziert: Die Grundschicht steht unter LGPL, **die höheren Pakete unter GPL-3.0**.
+`Nef_polyhedron_3` — mit 249 Verweisen der am stärksten genutzte CGAL-Teil, zuständig für
+die booleschen Verschneidungen, aus denen IFC-Geometrie überhaupt erst entsteht — ist
+eines dieser GPL-Pakete. `Polygon_mesh_processing` ebenfalls.
+
+**Damit ist `import ifcopenshell` im Produkt-venv nicht mehr nur eine LGPL-Frage, sondern
+ein echter GPL-Fund.** Wer diese Bibliothek in den eigenen Prozess holt, macht sein
+Produkt GPL.
+
+Das ändert nichts an der Empfehlung — es verschärft sie nur von Hygiene zu Notwendigkeit:
+
+- **Die Prozessgrenze ist nicht optional.** IfcOpenShell läuft als eigenes Programm im
+  eigenen venv, exakt wie Blender, und wird im `NOTICE` als GPL-Komponente deklariert.
+- **Zwei Auswege, falls die Prozessgrenze irgendwann stört:** IfcOpenShell selbst ohne
+  CGAL-Kernel bauen (nur Open CASCADE → reines LGPL, erfordert Kompilieren), oder auf
+  **web-ifc (MPL-2.0)** bzw. **IFC++ (MIT)** wechseln.
+- **Lehre für alles Weitere:** Ein fertiges Wheel verbirgt, was einkompiliert ist. Die
+  Lizenzangabe des PyPI-Pakets sagt nichts über die statisch eingebundenen Bibliotheken.
+  Für jede weitere Abhängigkeit mit grossem Binäranteil gilt dieselbe Prüfpflicht.
 
 ### Empfehlung
 
@@ -326,12 +355,16 @@ Regel 1 verlangt, GPL-Funde explizit zu melden. Hier sind sie vollständig an ei
 - StableGen, ComfyUI-BlenderAI-node, alexisrolland/ComfyUI-Blender, Dream Textures
   (sämtliche Blender-KI-Brücken)
 
+- **CGAL-Pakete `Nef_polyhedron_3` und `Polygon_mesh_processing`** — statisch im
+  `ifcopenshell`-PyPI-Wheel, verifiziert am Binary (Kap. 2). Der einzige Fund, der sich
+  nicht aus einer Lizenzangabe ablesen liess, sondern nur aus dem Paket selbst.
+
 **GPL-2.0-or-later:**
 - Blender (Quellcode; Binär-Releases GPL-3.0-or-later)
 
 **Grenzfälle, die keine GPL-Funde sind, aber eine Entscheidung brauchen:**
-- **IfcOpenShell: LGPL-3.0-or-later** — schwaches Copyleft, über Prozessgrenze beherrschbar
-- **IfcOpenShell mit CGAL-Kernel: potenziell GPL-3.0** — nicht verifiziert, siehe Kap. 9
+- **IfcOpenShell selbst: LGPL-3.0-or-later** — schwaches Copyleft, über Prozessgrenze
+  beherrschbar. Der GPL-Anteil kommt nicht von IfcOpenShell, sondern von CGAL.
 - **Open WebUI: custom mit Branding-Klausel** — nicht OSI, fällt durch automatische Prüfung
 - **FLUX.1-dev / FLUX.2-dev: Non-Commercial** — erstreckt sich auf abgeleitete LoRAs
 - **SwarmUI / Krita AI Diffusion: MIT über GPL-Backend** — der MIT-Schild trügt
@@ -411,9 +444,13 @@ Vor einer Auslieferung gehört jede davon gegen die tatsächliche LICENSE-Datei 
 SD3.5 Community License (insbesondere die Umsatzschwelle), OpenRAIL++-M (die Nutzungsauflagen
 sind nicht trivial und können mit Apache-2.0 in Konflikt geraten).
 
-**Der offene GPL-Verdacht:** ob das ausgelieferte IfcOpenShell-Wheel den CGAL-Kernel
-enthält und damit GPL-3.0-Code mitbringt. Das ist der einzige mir bekannte Punkt, an dem
-ein **versteckter** GPL-Fund im geplanten Stack möglich ist.
+**Erledigt:** Der CGAL-Verdacht ist am 2026-08-14 geprüft und **bestätigt** — siehe
+Nachtrag in Kap. 2. Damit ist der offene Punkt geschlossen, allerdings mit dem
+unangenehmeren der beiden möglichen Ergebnisse.
+
+**Was diese Prüfung nicht abdeckt:** Ich habe genau ein Paket auf statisch eingebundene
+Fremdbibliotheken untersucht. Jedes weitere Wheel mit grossem Binäranteil — `torch`,
+`opencv`, `trimesh`-Abhängigkeiten — kann dasselbe Problem tragen und ist ungeprüft.
 
 **Nichts ausgeführt.** Ich habe keinen Code laufen lassen, keine Modelle geladen, kein
 Blender gestartet, keine Messung reproduziert. Sämtliche Aussagen über KosmoVis' Reife und
@@ -463,12 +500,17 @@ dieselbe Architektur aus zwei Richtungen.
 
 ## 11 · Offene Entscheidungen
 
-Vier Punkte, die vor dem Bau entschieden werden sollten:
+### Entschieden am 2026-08-14
 
-1. **Gilt Regel 1 auch gegen LGPL?** Meine Empfehlung: LGPL zulassen, aber ausschliesslich
-   hinter einer Prozessgrenze — dieselbe Grenze wie bei Blender. Sonst gibt es keinen
-   gangbaren IFC-Pfad in Python.
-2. **CGAL-Frage klären**, bevor IfcOpenShell fest eingeplant wird.
+1. **✅ LGPL ist zugelassen** — unter drei Auflagen: nur hinter einer Prozessgrenze, nur
+   unverändert, austauschbar und im `NOTICE` deklariert. Festgehalten in `CLAUDE.md` als
+   Präzisierung von Regel 1. Dieselben Auflagen gelten für die GPL-Komponenten, die als
+   eigenständiges Programm aufgerufen werden (Blender, IfcOpenShell/CGAL).
+2. **✅ CGAL-Frage geklärt** — bestätigt, siehe Kap. 2. IfcOpenShell bleibt eingeplant,
+   aber zwingend hinter der Prozessgrenze.
+
+### Weiterhin offen
+
 3. **Wie viel KosmoVis wandert mit?** Die acht `bpy`-freien Module wären ein erheblicher
    Vorsprung — aber sie tragen KosmoVis' Entwurfsentscheidungen mit sich. Alternative:
    nur die Verträge (Schemas, Torwächter-Logik) übernehmen und den Code neu schreiben.

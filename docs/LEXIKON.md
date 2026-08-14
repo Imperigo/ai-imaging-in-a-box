@@ -1,0 +1,634 @@
+# Lexikon
+
+Begriffe aus Softwareentwicklung, Lizenzrecht, KI und der Arbeit mit Sprachmodellen —
+erklärt für Leser:innen mit Architektur-, nicht Informatikhintergrund.
+
+**Zweck:** Nachschlagewerk während der Entwicklung und Anhang der Vertiefungsarbeit.
+**Pflege:** wächst mit dem Projekt. Jeder neue Fachbegriff, der in Code, Commit oder
+Gespräch auftaucht, wird hier nachgetragen — siehe `CLAUDE.md`.
+
+> **Lesehinweis:** thematisch gruppiert, weil die Begriffe sich gegenseitig erklären.
+> Für alphabetisches Nachschlagen die Suchfunktion benutzen (`Strg+F` / `Cmd+F`).
+
+---
+
+## 1 · Versionsverwaltung und Zusammenarbeit
+
+Werkzeuge, die festhalten, wer wann was geändert hat — vergleichbar mit einem
+Planarchiv, das jeden Zwischenstand aufbewahrt statt ihn zu überschreiben.
+
+**Git** — Das Programm, das jede Änderung an den Projektdateien aufzeichnet. Es
+speichert nicht nur den aktuellen Stand, sondern die vollständige Geschichte. Jeder
+frühere Zustand ist wiederherstellbar.
+
+**Repository (kurz: Repo)** — Der Projektordner samt seiner gesamten Geschichte. Ein
+Repo liegt lokal auf dem Rechner und meist zusätzlich auf einem Server (siehe *GitHub*).
+
+**GitHub** — Ein Dienst, der Git-Repositories im Internet hostet. Zusätzlich zur reinen
+Ablage bietet er Oberflächen für Diskussion, Überprüfung und Zusammenarbeit.
+
+**Commit** — Ein festgeschriebener Zwischenstand, vergleichbar mit einem datierten
+Planstand. Ein Commit umfasst die geänderten Dateien, Zeitpunkt, Urheber:in und eine
+Nachricht, die erklärt *warum* geändert wurde. Er ist unveränderlich und wird durch eine
+Prüfsumme identifiziert (z. B. `ae2cfa7`).
+
+**Commit-Message** — Die Begründung zu einem Commit. Konvention: die erste Zeile fasst
+in einem Satz zusammen, was sich ändert; der Rumpf erklärt die Gründe. Das *Was* steht
+ohnehin im Code — die Message trägt das *Warum*.
+
+**Branch (Zweig)** — Ein Entwicklungsstrang, der vom Hauptstand abzweigt. Erlaubt
+Arbeit an einer Sache, ohne den funktionierenden Hauptstand anzutasten. Analogie: eine
+Variantenstudie auf Transparentpapier über dem Hauptplan.
+
+**main** — Der Hauptzweig, üblicher Name für den massgeblichen Stand. (Früher `master`.)
+
+**Merge (Zusammenführen)** — Das Zurückführen eines Zweigs in einen anderen. Git
+verbindet beide Änderungsgeschichten zu einer.
+
+**Merge-Konflikt** — Tritt auf, wenn zwei Zweige *dieselbe Zeile* unterschiedlich
+geändert haben. Git kann nicht entscheiden, welche Fassung gilt, und fragt nach.
+
+**Pull Request (PR)** — Der Vorschlag, einen Zweig in einen anderen zu übernehmen. Auf
+GitHub eine Seite mit allen Änderungen, Zeile für Zeile, plus Kommentarfunktion. In
+Teams der Ort der gegenseitigen Überprüfung. Bei Alleinarbeit oft entbehrlich —
+Zusammenführen geht auch direkt.
+
+**Diff** — Die Gegenüberstellung zweier Stände: welche Zeilen kamen hinzu (grün),
+welche fielen weg (rot).
+
+**Clone** — Eine vollständige lokale Kopie eines Repositories inklusive Geschichte.
+
+**Push / Pull** — Hochladen der lokalen Commits auf den Server / Herunterladen der
+Änderungen anderer.
+
+**Fetch** — Wie *Pull*, aber holt die Änderungen nur ab, ohne sie einzuarbeiten.
+
+**Remote** — Ein Server-Repository, mit dem das lokale abgeglichen wird. Der Standard
+heisst `origin`.
+
+**HEAD** — Zeiger auf den gerade ausgecheckten Stand: „wo ich mich in der Geschichte
+gerade befinde".
+
+**Checkout** — Wechsel des Arbeitsstands auf einen anderen Zweig oder Commit.
+
+**`.gitignore`** — Liste von Dateien, die Git bewusst *nicht* aufzeichnen soll:
+Modellgewichte, Renderausgaben, Passwörter, temporäre Dateien. In diesem Projekt
+zusätzlich Schutzmechanismus für Regel 3 (keine echten Projektdaten im Repo).
+
+**Fork** — Eine eigenständige Kopie eines fremden Repositories unter eigenem Konto.
+
+**Issue** — Ein Eintrag in der Aufgaben-/Fehlerliste eines Repositories.
+
+---
+
+## 2 · Lizenzen und Recht
+
+Der für dieses Projekt heikelste Bereich. Softwarelizenzen bestimmen, was mit fremdem
+Code gebaut und ob das Ergebnis verkauft werden darf. Sie sind nicht Formsache, sondern
+Entwurfsbeschränkung: Sie schliessen Bausteine aus, bevor die Technik überhaupt zur
+Sprache kommt.
+
+**Open Source** — Software, deren Quelltext einsehbar und nutzbar ist. Sagt für sich
+genommen **nichts** über kommerzielle Verwertbarkeit — dafür sind die konkreten
+Bedingungen entscheidend.
+
+**Permissive Lizenz** — Erlaubt praktisch alles, verlangt im Wesentlichen nur
+Namensnennung. Der Code darf in geschlossene, verkaufte Produkte einfliessen. Beispiele:
+MIT, Apache-2.0, BSD.
+
+**MIT-Lizenz** — Die kürzeste verbreitete permissive Lizenz. Bedingung: Copyright-Hinweis
+beibehalten.
+
+**Apache-2.0** — Permissiv, aber ausführlicher als MIT. Zusätzlich eine ausdrückliche
+Patentlizenz und eine Verteidigungsklausel: Wer die Beitragenden wegen Patentverletzung
+verklagt, verliert seine Lizenz. Deshalb im professionellen Umfeld beliebt.
+*In diesem Projekt: die Lizenz des eigenen Codes.*
+
+**BSD-Lizenz** — Permissiv, MIT sehr ähnlich, in mehreren Varianten (2-Clause, 3-Clause).
+
+**Copyleft** — Das Gegenprinzip zu permissiv: Wer den Code nutzt, muss das Ergebnis
+unter denselben Bedingungen weitergeben. Der Zweck ist, dass freie Software frei bleibt.
+Umgangssprachlich „ansteckend".
+
+**GPL (GNU General Public License)** — Starkes Copyleft. Wird GPL-Code Teil eines
+Produkts, muss das **gesamte** Produkt GPL werden: Quelltext offen, Weitergabe frei.
+*In diesem Projekt ausgeschlossen (Regel 1) — betrifft unter anderem ComfyUI und Blender.*
+
+**AGPL (GNU Affero GPL)** — GPL mit zusätzlicher Netzwerkklausel. Bei GPL greift das
+Copyleft erst beim Ausliefern von Software. Die AGPL erweitert das auf den *Betrieb als
+Dienst*: Wer AGPL-Code hinter einer Weboberfläche laufen lässt, muss den Quelltext
+offenlegen, obwohl er nichts verteilt hat. Für Pipelines besonders heikel.
+
+**LGPL (GNU Lesser GPL)** — Abgeschwächtes Copyleft. Steckt nicht an, solange die
+Bibliothek nur *benutzt* und nicht *verändert* wird. Zentrale Auflage: Nutzer müssen die
+Bibliothek durch eine eigene Fassung ersetzen können. Wird die Bibliothek selbst geändert,
+sind diese Änderungen offenzulegen — der übrige eigene Code bleibt unberührt.
+*In diesem Projekt: der Grenzfall bei IfcOpenShell.*
+
+**MPL-2.0 (Mozilla Public License)** — Copyleft auf **Dateiebene**. Nur veränderte
+Dateien der Bibliothek müssen offen bleiben; der eigene Code in eigenen Dateien nicht.
+Ein Mittelweg, mit permissiven Projekten gut verträglich.
+
+**Dual License** — Dasselbe Werk unter zwei Lizenzen. Typisches Muster: kostenlos unter
+Copyleft, gegen Geld unter kommerzieller Lizenz. *Beispiel: CGAL.*
+
+**Non-Commercial (NC)** — Nutzung nur ohne Erwerbszweck. Trotz offenem Zugang **kein**
+Open Source im Sinne der OSI. *Beispiel: FLUX.1-dev.*
+
+**OSI (Open Source Initiative)** — Organisation, die anerkannte Open-Source-Lizenzen
+führt. „Nicht OSI-konform" heisst: offen zugänglich, aber mit Auflagen, die echte
+Weiterverwendung einschränken.
+
+**Derivative Work (abgeleitetes Werk)** — Ein Werk, das fremden Code so einbindet, dass
+beide ein Ganzes bilden. Löst das Copyleft aus. Die entscheidende Frage jeder
+Lizenzdiskussion.
+
+**Aggregation** — Das Gegenteil: zwei eigenständige Programme, die lediglich
+nebeneinander liegen oder sich Daten reichen. Löst **kein** Copyleft aus.
+
+**Linking (Binden)** — Das technische Verbinden von Programmteilen zu einer Einheit.
+*Statisch* = fest einkompiliert; *dynamisch* = zur Laufzeit hinzugeladen. Der
+Unterschied ist lizenzrechtlich erheblich: Statisches Binden gilt als abgeleitetes Werk,
+dynamisches ist umstritten.
+
+**Prozessgrenze** — Die in diesem Projekt tragende Konstruktion. Läuft fremder Code als
+**eigenständiges Programm**, das man von aussen aufruft und mit dem man nur Dateien
+austauscht, entsteht kein gemeinsames Werk, sondern eine Aggregation. Deshalb darf
+Blender (GPL) benutzt, aber nicht eingebaut werden.
+*Bauliche Analogie: der Unterschied zwischen einem Anbau, der Fundament und Wände des
+Bestands mitbenutzt und deshalb unter dessen Baubewilligung fällt, und einem
+Nebengebäude, das über einen Weg erschlossen ist und für sich steht.*
+
+**NOTICE** — Datei im Repo, die alle fremden Bestandteile mit ihrer Lizenz aufführt.
+Bei Apache-2.0 vorgesehen und die übliche Form, GPL-Beigaben sauber zu deklarieren.
+
+**Modellgewichte-Lizenz** — Die Lizenz *trainierter Modelle* ist unabhängig von der des
+Codes. Ein Apache-lizenziertes Programm kann Gewichte laden, deren Lizenz kommerzielle
+Nutzung untersagt. Beide sind getrennt zu prüfen.
+
+---
+
+## 3 · Programmieren, allgemein
+
+**Quelltext / Code** — Der lesbare Text, aus dem ein Programm besteht.
+
+**Skript** — Ein kurzes Programm für eine bestimmte Aufgabe, meist ohne Oberfläche und
+von oben nach unten ausgeführt.
+
+**Bibliothek (Library)** — Eine Sammlung fertiger Funktionen, die man in eigenen
+Programmen verwendet. Man ruft sie auf — sie gibt den Ablauf nicht vor.
+*In diesem Projekt: der Kern soll eine Bibliothek sein (Regel 4).*
+
+**Framework** — Wie eine Bibliothek, aber mit umgekehrtem Verhältnis: Das Framework gibt
+die Struktur vor und ruft den eigenen Code auf. Mehr Vorleistung, weniger Freiheit.
+
+**API (Application Programming Interface)** — Die vereinbarte Schnittstelle, über die
+Programme miteinander sprechen: welche Aufrufe es gibt, welche Angaben sie erwarten,
+was zurückkommt. Nicht die Umsetzung, sondern der Vertrag darüber.
+
+**CLI (Command Line Interface)** — Bedienung über eingetippte Befehle im Terminal statt
+über Fenster und Knöpfe. Für Automatisierung unverzichtbar, weil ein Befehl
+wiederholbar und skriptbar ist.
+
+**GUI (Graphical User Interface)** — Die grafische Oberfläche.
+
+**Headless** — Ein Programm ohne grafische Oberfläche betreiben. *In diesem Projekt:
+`blender --background` rendert, ohne dass ein Fenster aufgeht.*
+
+**Funktion** — Ein benannter, wiederverwendbarer Arbeitsschritt: nimmt Werte entgegen,
+liefert ein Ergebnis.
+
+**Parameter / Argument** — Die Angaben, die eine Funktion entgegennimmt (*Parameter* =
+die vorgesehene Stelle, *Argument* = der konkret übergebene Wert).
+
+**Rückgabewert** — Das Ergebnis, das eine Funktion zurückliefert.
+
+**Klasse / Objekt** — Bauplan und daraus erzeugtes Einzelstück. Eine Klasse `Kamera`
+beschreibt, was jede Kamera hat; ein Objekt ist eine konkrete Kamera mit konkreten Werten.
+
+**Modul** — Eine einzelne Quelltextdatei, die andere einbinden können.
+
+**Paket (Package)** — Eine Sammlung von Modulen, als Einheit installierbar.
+
+**Import** — Das Einbinden eines Moduls in den eigenen Code.
+
+**Abhängigkeit (Dependency)** — Fremde Software, die das eigene Programm zum Laufen
+braucht. Jede Abhängigkeit bringt ihre Lizenz mit — deshalb ist die Abhängigkeitsliste
+zugleich eine Lizenzliste.
+
+**pip** — Das Installationswerkzeug für Python-Pakete.
+
+**PyPI (Python Package Index)** — Das zentrale Verzeichnis, aus dem `pip` lädt.
+
+**Wheel** — Ein vorkompiliertes Python-Paket. Praktisch, weil nichts übersetzt werden
+muss — aber undurchsichtig, weil fertige Binärteile mitgeliefert werden, deren Herkunft
+man nicht sieht. *Genau daraus entstand die CGAL-Frage in diesem Projekt.*
+
+**venv (virtuelle Umgebung)** — Ein abgeschotteter Ordner mit eigener Python-Installation
+und eigenen Paketen. Verhindert, dass Projekte sich gegenseitig stören.
+*In diesem Projekt zusätzlich als Lizenzgrenze eingesetzt: LGPL-/GPL-behaftete
+Bibliotheken bekommen ein eigenes venv und werden nur als Subprozess aufgerufen.*
+
+**Prozess** — Ein laufendes Programm mit eigenem Speicher. Zwei Prozesse können sich
+nicht in die Quere kommen — die Grundlage der Prozessgrenze.
+
+**Subprozess** — Ein Programm, das ein anderes Programm startet und dessen Ergebnis
+abwartet.
+
+**Umgebungsvariable** — Eine Einstellung, die dem Programm von aussen mitgegeben wird —
+üblicher Ort für Pfade und Geheimnisse, die nicht in den Code gehören.
+
+**JSON** — Ein schlichtes Textformat für strukturierte Daten. Für Mensch und Maschine
+lesbar, deshalb das übliche Austauschformat zwischen Prozessen.
+
+**Schema** — Die formale Beschreibung, wie eine Datenstruktur auszusehen hat: welche
+Felder verpflichtend sind, welchen Typ sie haben. Macht Verträge zwischen Programmteilen
+prüfbar.
+
+**Parsing** — Das Zerlegen einer Datei in eine für das Programm nutzbare Struktur.
+
+**Serialisierung** — Die Gegenrichtung: eine Datenstruktur in eine speicherbare Form
+bringen.
+
+**Pfad** — Die Adresse einer Datei im Dateisystem. *Absolut* = ab Wurzel,
+*relativ* = ausgehend vom aktuellen Ordner.
+
+**Terminal / Shell** — Das Fenster, in dem Befehle eingetippt werden, und das Programm,
+das sie ausführt.
+
+---
+
+## 4 · Qualität und Absicherung
+
+**Test** — Code, der anderen Code überprüft. Ein Test beschreibt eine Erwartung und
+schlägt Alarm, wenn sie verletzt wird.
+
+**Unit-Test** — Prüft einen einzelnen, kleinen Baustein isoliert.
+
+**Integrationstest** — Prüft das Zusammenspiel mehrerer Bausteine.
+
+**Regressionstest** — Ein Test, der einen bereits behobenen Fehler festhält, damit er
+nicht unbemerkt zurückkehrt. Das eigentliche Sicherheitsnetz eines wachsenden Projekts.
+
+**Testabdeckung (Coverage)** — Wieviel Prozent des Codes von Tests durchlaufen wird.
+Ein grober Anhaltspunkt, keine Qualitätsgarantie.
+
+**CI (Continuous Integration)** — Automatischer Durchlauf aller Tests bei jeder Änderung,
+auf einem Server statt auf dem eigenen Rechner.
+
+**Linter** — Ein Programm, das Code auf Stil- und Flüchtigkeitsfehler prüft, ohne ihn
+auszuführen.
+
+**Debugging** — Die Suche nach der Ursache eines Fehlverhaltens.
+
+**Log** — Fortlaufende Aufzeichnung dessen, was ein Programm während des Laufs tut.
+Bei langen Renderläufen oft die einzige Möglichkeit nachzuvollziehen, was geschah.
+
+**Exception (Ausnahme)** — Ein Fehler, der das Programm an der betreffenden Stelle
+abbricht — falls er nicht abgefangen wird.
+
+**Stub** — Ein Platzhalter, der die richtige Form hat, aber noch nichts leistet.
+
+**Refactoring** — Umbau des Codes, ohne sein Verhalten zu ändern — nur zugunsten der
+Lesbarkeit oder Struktur.
+
+**Technische Schuld** — Metapher für Abkürzungen, die kurzfristig Zeit sparen und
+langfristig Zinsen kosten. Nicht per se schlecht, aber buchführungspflichtig.
+
+**Fail-closed** — Entwurfshaltung: Im Zweifel oder bei Störung *nicht* handeln. Für
+teure, nicht rückholbare Vorgänge wie GPU-Renderläufe die richtige Grundeinstellung.
+
+**Idempotenz** — Eigenschaft eines Vorgangs, der mehrfach ausgeführt dasselbe Ergebnis
+liefert wie einmal ausgeführt. Macht Wiederholung nach Abbruch gefahrlos.
+
+**Race Condition (Wettlaufsituation)** — Fehler, der davon abhängt, welcher von zwei
+gleichzeitigen Vorgängen zuerst fertig wird. Schwer zu finden, weil unregelmässig.
+
+---
+
+## 5 · Geometrie, Daten und Rendering
+
+**IFC (Industry Foundation Classes)** — Offenes Austauschformat für Gebäudemodelle.
+Enthält nicht nur Geometrie, sondern auch Bedeutung: Dieses Volumen *ist* eine Wand, sie
+gehört zu diesem Geschoss, sie besteht aus diesem Material.
+
+**BIM (Building Information Modeling)** — Die Arbeitsweise, für die IFC das
+Austauschformat ist.
+
+**Mesh (Netz)** — Geometriedarstellung aus Dreiecken. Was Renderer und Grafikkarten
+tatsächlich verarbeiten.
+
+**NURBS** — Mathematisch exakte Kurven- und Flächenbeschreibung, wie sie CAD-Programme
+(z. B. Rhino) verwenden. Muss zum Rendern erst in ein Mesh überführt werden
+(*Tesselierung*).
+
+**glTF / glb** — Ein schlankes Übertragungsformat für 3D-Geometrie. `glb` ist die
+gepackte Einzeldatei-Variante. *In diesem Projekt das Zwischenformat zwischen IFC und
+Blender.*
+
+**Bounding Box** — Der kleinste achsparallele Quader, der ein Objekt umschliesst.
+Nützlich für schnelle Grössen- und Lageabschätzungen, etwa zur automatischen
+Kamerasetzung.
+
+**Up-Achse** — Vereinbarung darüber, welche Achse „oben" bedeutet. IFC und Blender
+verwenden Z, glTF verwendet Y. Wird die Umrechnung vergessen, liegt das Gebäude auf der
+Seite.
+
+**Georeferenzierung** — Verortung eines Modells in einem Landeskoordinatensystem
+(z. B. LV95). Führt zu sehr grossen Zahlenwerten und damit zu Genauigkeitsproblemen —
+siehe *Float*.
+
+**Float (Fliesskommazahl)** — Computerdarstellung für Kommazahlen, mit begrenzter
+Stellenzahl. `float32` hat rund sieben signifikante Stellen. Bei Koordinaten in
+Millionenhöhe bleibt dadurch nur noch Dezimeter-Auflösung — sichtbar als zitternde oder
+aufreissende Geometrie.
+
+**Renderer** — Programm, das aus 3D-Geometrie ein Bild berechnet.
+
+**Cycles** — Der physikalisch basierte Renderer in Blender.
+
+**Raytracing** — Renderverfahren, das Lichtstrahlen einzeln verfolgt. Realistisch, aber
+rechenintensiv.
+
+**Pass** — Ein einzelner Bildkanal aus dem Renderer. Neben dem fertigen Bild
+(*Beauty-Pass*) etwa Tiefe, Materialzuordnung oder Normalen.
+
+**Depth-Pass / Tiefenkarte** — Graustufenbild, in dem die Helligkeit die Entfernung zur
+Kamera kodiert. *In diesem Projekt der zentrale Baustein: Die Tiefenkarte ist es, die
+das KI-Modell an die echte Gebäudeform bindet.*
+
+**Material-ID-Pass** — Bild, in dem jedes Material eine eigene Farbfläche bekommt.
+Erlaubt der KI, Bereiche zu unterscheiden.
+
+**EXR** — Bildformat mit hoher Genauigkeit, das Werte ausserhalb von 0–255 speichern
+kann. Notwendig für Tiefendaten, weil dort echte Meterwerte stehen.
+
+**Compositor** — Nachbearbeitungsstufe im Renderer, in der einzelne Passes verrechnet
+und ausgegeben werden.
+
+**Sample** — Ein einzelner Rechenschritt pro Bildpunkt beim Raytracing. Mehr Samples
+bedeuten weniger Bildrauschen und längere Rechenzeit.
+
+**Add-on / Plugin** — Eine Erweiterung, die *innerhalb* eines Wirtsprogramms läuft und
+dessen Innenleben mitbenutzt. Technisch bequem, lizenzrechtlich heikel: Ein Add-on ist
+kein eigenständiges Programm.
+*In diesem Projekt ausgeschlossen (Regel 2).*
+
+**bpy** — Blenders Python-Schnittstelle. `import bpy` funktioniert nur *innerhalb* von
+Blender und macht den eigenen Code zum Teil von Blender.
+
+---
+
+## 6 · KI-Bildmodelle
+
+**Modell** — Ein trainiertes System, das aus Eingaben Ausgaben erzeugt. Umgangssprachlich
+sowohl die Bauform als auch die konkreten trainierten Zahlen.
+
+**Gewichte (Weights)** — Die im Training gelernten Zahlen. Sie *sind* das Können des
+Modells. Dateigrössen von mehreren Gigabyte sind üblich.
+
+**Checkpoint** — Eine gespeicherte Fassung der Gewichte.
+
+**`.safetensors`** — Das heute übliche Dateiformat für Gewichte. Sicherer als das
+ältere Pickle-Format, weil es keinen ausführbaren Code enthalten kann.
+
+**Parameter (bei Modellen)** — Anzahl der Gewichte, meist in Milliarden („20B"). Grobe
+Grössenangabe, kein Qualitätsmass.
+
+**Inferenz** — Die *Benutzung* eines fertigen Modells. Zu unterscheiden vom Training.
+
+**Training** — Das Erzeugen der Gewichte aus Daten. Um Grössenordnungen aufwendiger als
+Inferenz.
+
+**Fine-Tuning** — Nachtraining eines fertigen Modells auf eigene Daten.
+
+**Diffusionsmodell** — Die heute vorherrschende Bauform für Bild-KI. Sie lernt, aus
+reinem Rauschen schrittweise ein Bild herauszuarbeiten.
+
+**Denoising (Entrauschen)** — Der einzelne Schritt dieses Prozesses.
+
+**Steps (Schritte)** — Anzahl der Entrauschungsschritte. Mehr Schritte bedeuten mehr
+Detail und mehr Zeit.
+
+**Latent Space (latenter Raum)** — Eine komprimierte interne Darstellung, in der das
+Modell rechnet. Deutlich kleiner als das fertige Bild — der Grund, warum
+Bildgenerierung überhaupt auf Endgeräten läuft.
+
+**VAE (Variational Autoencoder)** — Der Übersetzer zwischen latentem Raum und sichtbarem
+Bild.
+
+**Text-Encoder** — Wandelt den Prompt in eine für das Modell verständliche Form.
+
+**Prompt** — Die Textbeschreibung des gewünschten Bildes.
+
+**Negativer Prompt** — Beschreibung dessen, was *nicht* erscheinen soll.
+
+**CFG (Classifier-Free Guidance)** — Regelt, wie streng sich das Modell an den Prompt
+hält. Zu niedrig heisst beliebig, zu hoch heisst überzeichnet.
+
+**Seed** — Startwert des Zufallsgenerators. Gleicher Seed und gleiche Einstellungen
+liefern dasselbe Bild — die Grundlage reproduzierbarer Versuche.
+
+**img2img** — Bilderzeugung ausgehend von einem vorhandenen Bild statt von Rauschen.
+
+**Denoise-Stärke** — Wie stark das Ausgangsbild bei img2img überschrieben wird. Niedrig
+heisst nah am Original, hoch heisst freier.
+
+**Inpainting** — Gezieltes Neuerzeugen nur eines maskierten Bildbereichs.
+
+**ControlNet** — Ein Zusatzmodell, das die Bilderzeugung an eine Vorgabe bindet — etwa
+an eine Tiefenkarte oder Kantenzeichnung. *Der entscheidende Baustein dieses Projekts:
+Er ist der Grund, warum die KI die echte Kubatur übernimmt statt eine zu erfinden.*
+
+**Conditioning (Konditionierung)** — Oberbegriff für alles, was die Erzeugung lenkt:
+Prompt, Tiefenkarte, Referenzbild.
+
+**LoRA (Low-Rank Adaptation)** — Ein sparsames Nachtrainingsverfahren. Statt das ganze
+Modell zu verändern, wird eine kleine Zusatzschicht gelernt — typischerweise wenige
+Dutzend Megabyte statt vieler Gigabyte. Übliches Mittel, einem Modell einen bestimmten
+Stil beizubringen.
+
+**IP-Adapter** — Verfahren, das einen Stil aus einem Referenzbild überträgt, **ohne**
+Training. Schnell, aber weniger verbindlich als eine LoRA.
+
+**Embedding** — Die Übersetzung von Inhalten (Text, Bild) in eine Zahlenreihe, in der
+Ähnlichkeit als Nähe messbar wird.
+
+**Kosinus-Ähnlichkeit** — Das übliche Ähnlichkeitsmass zwischen zwei Embeddings.
+Wertebereich −1 bis 1. *In diesem Projekt Grundlage des Stil-Scores.*
+
+**Halluzination** — Wenn ein Modell etwas Plausibles, aber Falsches erzeugt. *Im
+Architekturkontext der entscheidende Mangel: ein schönes Gebäude, das nicht das
+entworfene ist.*
+
+**Backbone** — Das Hauptmodell einer Pipeline, im Unterschied zu den Hilfsmodellen.
+
+**Quantisierung** — Verkleinerung der Gewichte durch gröbere Zahlendarstellung. Spart
+Speicher, kostet etwas Qualität.
+
+**fp16 / fp8** — Zahlenformate der Gewichte (16 bzw. 8 Bit). Je kleiner, desto
+sparsamer und ungenauer.
+
+**GGUF** — Ein quantisiertes Dateiformat, verbreitet für den Betrieb auf schwacher
+Hardware.
+
+**VRAM** — Der Speicher auf der Grafikkarte. Die harte Obergrenze dafür, welche Modelle
+überhaupt laufen.
+
+**Upscaling** — Nachträgliches Vergrössern eines Bildes unter Hinzuerfindung von Details.
+
+**Gated Model** — Modell, dessen Gewichte erst nach Zustimmung zu Nutzungsbedingungen
+heruntergeladen werden können.
+
+---
+
+## 7 · Sprachmodelle und Agenten
+
+**LLM (Large Language Model)** — Ein Modell, das Text fortsetzt. Grundlage von Claude,
+GPT, Qwen, Llama.
+
+**Token** — Die Recheneinheit, in der Sprachmodelle Text zerlegen — meist Wortteile.
+Grobe Faustregel: ein Token entspricht etwa vier Zeichen.
+
+**Kontextfenster** — Wieviel Text ein Modell gleichzeitig überblicken kann. Alles
+darüber hinaus muss zusammengefasst oder weggelassen werden.
+
+**Systemprompt** — Die einleitende Anweisung, die Rolle und Regeln festlegt, bevor das
+Gespräch beginnt.
+
+**Prompting** — Die Praxis, Anweisungen so zu formulieren, dass ein brauchbares Ergebnis
+entsteht.
+
+**Few-Shot Prompting** — Der Anweisung einige Beispiele beigeben, statt sie nur zu
+beschreiben.
+
+**Chain-of-Thought** — Das Modell zum schrittweisen Denken anhalten, statt sofort zu
+antworten. Verbessert Ergebnisse bei mehrstufigen Aufgaben.
+
+**Temperature** — Regelt die Zufälligkeit der Antworten. Niedrig heisst berechenbar,
+hoch heisst vielfältig.
+
+**RAG (Retrieval-Augmented Generation)** — Verfahren, bei dem vor der Antwort passende
+Dokumente herausgesucht und mitgegeben werden. Der übliche Weg, ein Modell auf eigenem
+Material antworten zu lassen, ohne es nachzutrainieren.
+
+**Agent** — Ein Sprachmodell, das nicht nur antwortet, sondern Werkzeuge bedienen und
+mehrschrittig arbeiten kann.
+
+**Tool Use / Function Calling** — Die Fähigkeit, statt einer Textantwort einen
+Werkzeugaufruf zu erzeugen — etwa eine Datei zu lesen oder einen Befehl auszuführen.
+
+**MCP (Model Context Protocol)** — Ein offener Standard dafür, wie Sprachmodelle
+Werkzeuge und Datenquellen ansprechen. Statt für jedes Modell eine eigene Anbindung zu
+schreiben, spricht man ein gemeinsames Protokoll.
+
+**MCP-Server** — Ein Programm, das über dieses Protokoll Werkzeuge bereitstellt.
+*In diesem Projekt der geplante Weg, über den ein lokales Sprachmodell Renderaufträge
+einstellen darf — einstellen, nicht ausführen.*
+
+**Lokales Modell** — Ein Modell, das auf eigener Hardware läuft. Kein Datenabfluss,
+keine laufenden Kosten, dafür begrenzt durch die eigene Grafikkarte.
+
+**llama.cpp / Ollama / vLLM** — Programme zum Betrieb lokaler Sprachmodelle.
+
+**Guardrail** — Eine technische Schranke, die verhindert, dass ein Modell etwas
+Unerwünschtes auslöst. *In diesem Projekt: Freigabe-Token und GPU-Leerlaufprüfung vor
+jedem Render.*
+
+---
+
+## 8 · Systemarchitektur
+
+**Architektur (Software)** — Der Aufbau eines Systems: welche Teile es gibt, wer wovon
+abhängt, wo die Grenzen verlaufen. Der Begriff meint dasselbe wie im Bauwesen, nur ist
+das Material Code.
+
+**Node (Knoten)** — Ein einzelner Arbeitsschritt in einer Verarbeitungskette, mit
+Eingängen und Ausgängen.
+
+**Graph** — Ein Netz aus Knoten und Verbindungen.
+
+**DAG (Directed Acyclic Graph)** — Ein gerichteter Graph ohne Kreise: Die Verbindungen
+haben eine Richtung, und kein Weg führt zum Ausgangspunkt zurück. Dadurch ist immer eine
+gültige Reihenfolge bestimmbar. Die übliche Grundform von Bildketten.
+
+**Pipeline** — Eine feste Abfolge von Verarbeitungsschritten.
+
+**Frontend / Backend** — Die sichtbare Oberfläche gegenüber dem rechnenden Unterbau.
+*In diesem Projekt muss das Backend allein lauffähig sein (Regel 4).*
+
+**Job / Queue (Auftrag / Warteschlange)** — Ein Auftrag wird eingestellt statt sofort
+ausgeführt und wartet, bis Kapazität da ist. Entkoppelt Auslösen und Ausführen — die
+Grundlage dafür, dass ein Sprachmodell etwas anstossen darf, ohne die Grafikkarte zu
+blockieren.
+
+**Scheduler** — Das Programm, das entscheidet, wann ein Auftrag ausgeführt wird.
+
+**Cache** — Zwischenspeicher für teuer berechnete Ergebnisse, damit sie nicht doppelt
+berechnet werden.
+
+**Hash / Prüfsumme** — Eine kurze Zeichenfolge, die aus einem Inhalt berechnet wird.
+Gleicher Inhalt ergibt gleichen Hash. Dient dazu, Gleichheit festzustellen und
+Zwischenergebnisse wiederzufinden.
+
+**Contract (Vertrag)** — Die verbindliche Festlegung, welche Daten zwischen zwei Teilen
+fliessen. Meist als Schema notiert.
+
+**Adapter** — Zwischenschicht, die eine fremde Schnittstelle auf die eigene übersetzt.
+*In diesem Projekt der Mechanismus, der Bildmodelle austauschbar macht.*
+
+**Seam (Naht)** — Eine bewusst gesetzte Trennstelle im System, an der später etwas
+ausgetauscht oder geprüft werden kann.
+
+**Gate (Tor)** — Eine Prüfung, die bestanden sein muss, bevor es weitergeht.
+*In diesem Projekt: Ein Render gilt nur als bestanden, wenn er sowohl das Stil- als auch
+das Geometrie-Tor passiert.*
+
+**Wrapper** — Eine dünne Hülle um fremden Code, die dessen Bedienung vereinheitlicht.
+
+**Local-first** — Entwurfshaltung, bei der alles ohne Internet funktioniert. Cloud ist
+Ergänzung, nicht Voraussetzung.
+
+---
+
+## 9 · Arbeit mit Claude Code
+
+**Claude** — Das Sprachmodell von Anthropic.
+
+**Claude Code** — Die Fassung von Claude, die in einer Entwicklungsumgebung arbeitet:
+Dateien lesen und schreiben, Befehle ausführen, mit Git umgehen.
+
+**Session (Sitzung)** — Ein zusammenhängender Arbeitsverlauf mit gemeinsamem Gedächtnis.
+Mit dem Ende der Sitzung geht dieses Gedächtnis verloren — was bleiben soll, muss in
+Dateien stehen.
+
+**Kontext** — Alles, was Claude gerade „vor Augen" hat: Gespräch, gelesene Dateien,
+Werkzeugausgaben. Begrenzt (siehe *Kontextfenster*).
+
+**Kompaktierung** — Automatisches Zusammenfassen, wenn der Kontext voll wird. Details
+gehen dabei verloren — ein weiterer Grund, Beschlüsse schriftlich festzuhalten.
+
+**`CLAUDE.md`** — Die Datei im Projektwurzelverzeichnis, die Claude zu Beginn jeder
+Sitzung liest. Der Ort für dauerhafte Projektregeln.
+*In diesem Projekt: die vier nicht verhandelbaren Regeln.*
+
+**Subagent** — Eine eigenständige Nebensitzung für eine abgegrenzte Teilaufgabe, mit
+eigenem Kontext.
+
+**Skill** — Eine hinterlegte Arbeitsanweisung für wiederkehrende Aufgaben, die bei Bedarf
+geladen wird.
+
+**Slash-Befehl** — Ein mit `/` eingeleiteter Kurzbefehl.
+
+**Sandbox** — Eine abgeschottete Umgebung, in der Befehle ohne Risiko für das übrige
+System laufen.
+
+**Permission Mode** — Die Einstellung, welche Aktionen ohne Rückfrage erlaubt sind.
+
+---
+
+## Änderungsverzeichnis
+
+| Datum | Änderung |
+|---|---|
+| 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |

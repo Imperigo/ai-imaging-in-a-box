@@ -18,10 +18,21 @@ Alles, was in das ausgelieferte Produkt eingeht, ist MIT, Apache-2.0, BSD oder M
 **Kein GPL, kein AGPL** — weder als Abhängigkeit noch als gebündelte Komponente.
 
 - GPL/AGPL-Funde werden **ausdrücklich als solche gemeldet**, nie stillschweigend übergangen.
-- LGPL ist ein Grenzfall und braucht eine bewusste Einzelentscheidung (siehe
-  `docs/LAGEBEURTEILUNG_2026-08-14.md`, Kapitel 2).
 - Modellgewichte zählen mit: Non-Commercial-Lizenzen (FLUX.1-dev, FLUX.2-dev) sind
   ausgeschlossen, auch für daraus abgeleitete LoRAs.
+
+**Präzisierung LGPL (Owner-Entscheid 2026-08-14):** LGPL-Bibliotheken sind zugelassen,
+aber ausschliesslich unter drei Auflagen:
+
+1. **Nur hinter einer Prozessgrenze** — eigenes venv, Aufruf als Subprozess, Austausch
+   über Dateien. Kein `import` im Produkt-venv.
+2. **Unverändert** — wird die Bibliothek selbst angefasst, greift das Copyleft. Wer eine
+   Änderung braucht, eskaliert statt zu patchen.
+3. **Austauschbar und deklariert** — die Bibliothek muss ersetzbar bleiben, und sie
+   gehört mit ihrer Lizenz ins `NOTICE`.
+
+Dieselben drei Auflagen gelten für GPL-Komponenten, die als eigenständiges Programm
+aufgerufen werden (Blender, IfcOpenShell) — siehe Regel 2.
 
 ### 2 · Blender nur als externer Prozess, nie als Add-on
 
@@ -49,6 +60,34 @@ Jede Fähigkeit muss aus Python heraus nutzbar sein, ohne dass eine GUI läuft.
 
 ---
 
+---
+
+## Arbeitsregeln
+
+### Das Lexikon wird mitgeführt
+
+`docs/LEXIKON.md` erklärt jeden nicht-architektonischen Fachbegriff des Projekts für
+Leser:innen ohne Informatikhintergrund. Es ist Anhang der Vertiefungsarbeit, kein
+Nebenprodukt.
+
+**Pflicht bei jeder Sitzung:** Taucht ein Fachbegriff in Code, Commit, Erklärung oder
+Gespräch auf, der dort noch nicht steht, wird er nachgetragen — in derselben Sitzung,
+nicht später. Definitionen sind für Laien geschrieben: was es ist, wozu es dient, und
+wo es im Projekt vorkommt. Keine Definition, die einen anderen unerklärten Fachbegriff
+voraussetzt.
+
+### Git
+
+Innerhalb dieses Repos entscheidet Claude eigenständig über Zweige und Zusammenführungen
+(Owner-Freigabe 2026-08-14). Gearbeitet wird auf Themenzweigen; ist ein Stand in sich
+schlüssig und geprüft, wird nach `main` zusammengeführt. Ein Pull Request wird nur
+angelegt, wenn wirklich etwas zu besprechen ist. Ausserhalb dieses Repos wird nichts
+ohne Rückfrage geändert.
+
+Commit-Messages tragen das *Warum*, nicht das *Was*.
+
+---
+
 ## Arbeitsstand
 
 Der erste Auftrag war ausdrücklich **kein Bau**, sondern eine Lagebeurteilung:
@@ -56,3 +95,5 @@ Der erste Auftrag war ausdrücklich **kein Bau**, sondern eine Lagebeurteilung:
 
 Diese Datei nennt für jeden offenen Baustein die Lizenz, meldet GPL/AGPL-Funde explizit
 und benennt, wo der Prototyp eigenständig werden muss statt Bestehendes zu verdoppeln.
+
+Es ist noch kein Code geschrieben.
