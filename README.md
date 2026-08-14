@@ -10,6 +10,8 @@ austauschbarem lokalem Bildmodell.
 
 - [`docs/LAGEBEURTEILUNG_2026-08-14.md`](docs/LAGEBEURTEILUNG_2026-08-14.md) —
   Bestandsaufnahme der offenen Bausteine mit Lizenzprüfung
+- [`docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md`](docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md) —
+  der MCP-Vertrag gegenüber KosmoOrbit und was er für die Bauform bedeutet
 - [`docs/LEXIKON.md`](docs/LEXIKON.md) — Fachbegriffe aus Softwareentwicklung, Lizenzrecht
   und KI, erklärt für Leser:innen mit Architekturhintergrund
 - [`CLAUDE.md`](CLAUDE.md) — die vier nicht verhandelbaren Regeln

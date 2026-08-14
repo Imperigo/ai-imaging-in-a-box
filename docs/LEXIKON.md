@@ -302,6 +302,28 @@ bringen.
 **Terminal / Shell** — Das Fenster, in dem Befehle eingetippt werden, und das Programm,
 das sie ausführt.
 
+**Frontend-Framework (React, Vue, Svelte)** — Baukästen für Bedienoberflächen im Browser.
+*KosmoOrbit verwendet React.*
+
+**TypeScript** — JavaScript mit Typangaben. Der Übersetzer prüft vor dem Ausführen, ob
+Datentypen zusammenpassen — Fehler fallen beim Bauen auf statt beim Benutzen.
+
+**Tauri** — Baukasten für Desktop-Anwendungen, deren Oberfläche aus Web-Technik besteht,
+deren Rahmen aber ein kompaktes Rust-Programm ist. Schlanker als die Alternative Electron.
+*KosmoOrbit ist eine Tauri-Anwendung.*
+
+**REST / Endpoint** — Verbreitete Art, Web-Schnittstellen zu bauen: Jede Fähigkeit hat
+eine eigene Adresse (den *Endpoint*), die per HTTP angesprochen wird.
+
+**SSE (Server-Sent Events)** — Technik, mit der ein Server fortlaufend Daten an den
+Client nachliefert, ohne dass dieser wiederholt nachfragt. *Grundlage dafür, dass
+Kosmo-Antworten wortweise erscheinen statt am Stück.*
+
+**Sidecar** — Ein Hilfsprogramm, das mit der Hauptanwendung ausgeliefert wird und
+daneben läuft. Die übliche Form, ein Python-Programm in eine Desktop-Anwendung
+einzubinden, ohne es in sie hineinzubauen.
+
+
 ---
 
 ## 4 · Qualität und Absicherung
@@ -643,6 +665,35 @@ das Geometrie-Tor passiert.*
 
 **Wrapper** — Eine dünne Hülle um fremden Code, die dessen Bedienung vereinheitlicht.
 
+**Topologische Sortierung** — Verfahren, das aus einem DAG eine gültige Reihenfolge
+ableitet: Jeder Knoten kommt erst dran, wenn alle seine Vorgänger fertig sind. Entdeckt
+zugleich Kreise, denn bei einem Kreis bleibt eine gültige Reihenfolge unmöglich.
+*In diesem Projekt: die Art, wie KosmoOrbit seine Knotenketten ausführt.*
+
+**JSON-Schema** — Eine formale Beschreibung, wie eine JSON-Struktur auszusehen hat:
+welche Felder es gibt, welchen Typ sie haben, welche verpflichtend sind. Macht
+Schnittstellen maschinell prüfbar statt nur dokumentiert.
+
+**Validierung** — Die Prüfung tatsächlicher Daten gegen ihr Schema. Schlägt sie fehl,
+stimmt die Wirklichkeit nicht mit dem Vertrag überein.
+
+**inputSchema / outputSchema** — Die beiden Schemas eines MCP-Werkzeugs: was es erwartet,
+was es zurückgibt. *In diesem Projekt Pflicht — ohne sie kann KosmoOrbit unsere Werkzeuge
+nicht verdrahten.*
+
+**structuredContent** — Das Feld, in dem ein MCP-Werkzeug sein maschinenlesbares Ergebnis
+zurückgibt, im Unterschied zum Freitext für Menschen.
+
+**Cockpit-Prinzip** — Entwurfshaltung des ArchitekturKosmos: Die Oberfläche *konsumiert*
+Werkzeugverträge, statt deren Logik nachzubauen. Die Fähigkeit lebt im Werkzeug, nicht in
+der Ansicht. Deckungsgleich mit Regel 4, nur aus Sicht der Oberfläche formuliert.
+
+**Read-only-Gate** — Schranke, die nur lesende und rechnende Aufrufe durchlässt.
+Schreibende Vorgänge brauchen einen eigenen, ausdrücklich freigegebenen Weg.
+
+**Lane (Bahn)** — Im ArchitekturKosmos ein Fachbereich mit eigenem Werkzeugsatz
+(KosmoDraw, KosmoPublish, KosmoVis). Eine Kette läuft über mehrere Lanes hinweg.
+
 **Local-first** — Entwurfshaltung, bei der alles ohne Internet funktioniert. Cloud ist
 Ergänzung, nicht Voraussetzung.
 
@@ -690,4 +741,5 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-14 | Ergaenzt aus der KosmoOrbit-Einbindung: Tauri, TypeScript, React, REST/Endpoint, SSE, Sidecar, topologische Sortierung, JSON-Schema, Validierung, inputSchema/outputSchema, structuredContent, Cockpit-Prinzip, Read-only-Gate, Lane |
 | 2026-08-14 | Ausgebaut: Apache-2.0 (Auflagen, Patent- und Verteidigungsklausel), MCP (Abgrenzung zum Subprozessaufruf) |
