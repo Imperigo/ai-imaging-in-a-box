@@ -428,6 +428,29 @@ Stellenzahl. `float32` hat rund sieben signifikante Stellen. Bei Koordinaten in
 Millionenhöhe bleibt dadurch nur noch Dezimeter-Auflösung — sichtbar als zitternde oder
 aufreissende Geometrie.
 
+**STEP / ISO-10303-21** — Das Textformat, in dem eine IFC-Datei tatsächlich vorliegt.
+Jede Zeile ist eine nummerierte Entität, die auf andere verweist (`#42= IFCWALL(...)`).
+Lesbar, aber weitschweifig — eine kleine IFC hat schnell Hunderte Zeilen.
+*In diesem Projekt schreibt `tools/make_test_ifc.py` STEP direkt, ohne Bibliothek — so
+braucht das Erzeugen von Testdaten kein GPL-behaftetes Environment.*
+
+**Extrusion / SweptSolid** — Die häufigste Art, wie IFC Geometrie beschreibt: ein
+zweidimensionales Profil, entlang einer Richtung in die Höhe gezogen. Eine Wand ist ein
+Rechteck, drei Meter hochgezogen. Deshalb steht in einer IFC kein fertiges 3D-Modell,
+sondern eine Bauanweisung — jemand muss daraus erst Dreiecke rechnen.
+
+**GUID (Globally Unique Identifier)** — Eine Kennung, die ein Objekt weltweit eindeutig
+bezeichnet. IFC schreibt jedem Bauteil eine vor, in einer eigenen 22-Zeichen-Schreibweise.
+*In diesem Projekt werden sie für Testdaten bewusst **deterministisch** erzeugt.*
+
+**Determinismus** — Eigenschaft eines Vorgangs, der bei gleicher Eingabe immer exakt
+dasselbe Ergebnis liefert. Für Testdaten unverzichtbar: Wären die Kennungen zufällig,
+erzeugte jeder Lauf eine andere Datei, und kein Test wäre wiederholbar.
+
+**Testfixture** — Ein fester, bekannter Datensatz, gegen den geprüft wird. *Hier: das
+synthetische Gebäude aus vier Wänden und einer Platte, absichtlich asymmetrisch
+(8 × 5 × 3 m), damit eine verdrehte Up-Achse auffällt statt zufällig gleich auszusehen.*
+
 **Renderer** — Programm, das aus 3D-Geometrie ein Bild berechnet.
 
 **Cycles** — Der physikalisch basierte Renderer in Blender.
@@ -740,6 +763,12 @@ Sitzung liest. Der Ort für dauerhafte Projektregeln.
 **Subagent** — Eine eigenständige Nebensitzung für eine abgegrenzte Teilaufgabe, mit
 eigenem Kontext.
 
+
+**Orchestrator** — Bei mehreren gleichzeitig arbeitenden Modellen die Instanz, die die
+Arbeit aufteilt, verteilt und die Ergebnisse zusammenführt, statt selbst alles zu tun.
+Sinnvoll nur dort, wo Teilaufgaben wirklich unabhängig sind — sonst kostet das Aufteilen
+mehr, als es einbringt.
+
 **Skill** — Eine hinterlegte Arbeitsanweisung für wiederkehrende Aufgaben, die bei Bedarf
 geladen wird.
 
@@ -758,6 +787,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus Phase 1: STEP/ISO-10303-21, Extrusion/SweptSolid, GUID, Determinismus, Testfixture, Orchestrator |
 | 2026-08-14 | Ergaenzt aus Phase 0: stdio, Pfad-Sandbox, write-gated, Runner |
 | 2026-08-14 | Ergaenzt aus der KosmoOrbit-Einbindung: Tauri, TypeScript, React, REST/Endpoint, SSE, Sidecar, topologische Sortierung, JSON-Schema, Validierung, inputSchema/outputSchema, structuredContent, Cockpit-Prinzip, Read-only-Gate, Lane |
 | 2026-08-14 | Ausgebaut: Apache-2.0 (Auflagen, Patent- und Verteidigungsklausel), MCP (Abgrenzung zum Subprozessaufruf) |

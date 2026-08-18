@@ -1,0 +1,63 @@
+# .gitignore — was hier steht, gehört nicht ins Repo.
+# Die Abschnitte 3 und 4 sind keine Aufräumhilfe, sondern Regel 3 in ausführbarer Form.
+
+# --- 1 · Virtuelle Environments ---------------------------------------------
+# Insbesondere .venv-ifc: das eigene Environment hinter der Prozessgrenze
+# (ifcopenshell/LGPL, CGAL/GPL). Es wird nach Anleitung im README neu angelegt,
+# nie eingecheckt.
+.venv*/
+.venv*
+
+# --- 2 · Python-Artefakte ----------------------------------------------------
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+
+# --- 3 · Erzeugte Daten ------------------------------------------------------
+# build/ nimmt erzeugte Testgeometrie und Renderausgaben auf. Alles darin ist
+# aus dem Repo reproduzierbar (tools/make_test_ifc.py und die Runner) und damit
+# kein Inhalt, sondern ein Ergebnis.
+build/
+
+# --- 4 · Regel 3: keine Gewichte, keine Bilddaten, keine echten Projektdaten --
+# Regel 3 verbietet echte Projektdaten und darauf trainierte Gewichte im Repo.
+# Ein Ignoriereintrag ist die einzige Fassung dieser Regel, die auch dann greift,
+# wenn niemand hinschaut — ein `git add .` zur falschen Stunde reicht sonst.
+
+# Modellgewichte und Checkpoints (auch LoRAs)
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+
+# Bild- und Szenendaten: Renderausgaben, Tiefenkarten, Zwischengeometrie
+*.exr
+*.blend
+*.blend[0-9]
+*.glb
+*.fbx
+
+# IFC-Dateien.
+# Ausnahme-Regelung: Es gibt keine Ausnahme, und das ist der Punkt.
+# Die einzige IFC, die dieses Projekt braucht, ist synthetisch und wird von
+# tools/make_test_ifc.py nach build/ erzeugt — sie muss also gar nicht
+# eingecheckt werden. Damit bleibt der Eintrag ausnahmslos, und jede IFC, die
+# hier je auftaucht, ist per Definition eine, die nicht hierher gehört.
+# Soll doch einmal eine Fixture versioniert werden, wird sie bewusst mit
+# `git add -f` und einer Begründung im Commit hinzugefügt — nicht durch
+# Aufweichen dieser Zeile.
+*.ifc
+
+# --- 5 · Geheimnisse ---------------------------------------------------------
+.env
+.env.*
+*.pem
+*.key
+
+# --- 6 · Editor und Betriebssystem ------------------------------------------
+.DS_Store
+.idea/
+.vscode/

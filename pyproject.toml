@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aiimaging"
+version = "0.0.1"
+description = "Geometrie-treue KI-Architektur-Visualisierung: IFC-Geometrie hinein, verifizierte Bilder heraus."
+readme = "README.md"
+requires-python = ">=3.11"
+# Tabellenform statt SPDX-String: die hier installierte setuptools 68 weist die
+# PEP-639-Kurzform zurück. Geprüft, nicht vermutet.
+license = { text = "Apache-2.0" }
+authors = [{ name = "Andrin Bau" }]
+classifiers = ["License :: OSI Approved :: Apache Software License"]
+
+# Keine Laufzeitabhängigkeiten — und das ist Absicht, keine Lücke.
+#
+# Der Kern ist reine stdlib. Alles Schwere liegt jenseits einer Prozessgrenze in
+# eigenen Environments und wird als Subprozess aufgerufen:
+#
+#   * ifcopenshell (LGPL, bringt CGAL/GPL-Anteile mit) lebt im separaten `.venv-ifc`
+#     und wird über `AIIMAGING_IFC_PYTHON` angesprochen — nie importiert.
+#   * Blender (GPL) wird als Binary über `blender --background` aufgerufen,
+#     adressiert über `AIIMAGING_BLENDER` — kein `import bpy`, kein bpy-Wheel.
+#
+# Damit bleibt dieses Paket selbst permissiv lizenziert (Regel 1) und das
+# Produkt-venv frei von bpy und ifcopenshell (Regel 2). Eine Abhängigkeit hier
+# einzutragen heisst, diese Grenze zu verschieben — das ist eine Lizenzentscheidung,
+# keine Bequemlichkeitsfrage.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+# src-Layout: der importierbare Code liegt unter src/, damit Tests gegen das
+# installierte Paket laufen und nicht versehentlich gegen das Arbeitsverzeichnis.
+[tool.setuptools]
+package-dir = { "" = "src" }
+packages = ["aiimaging", "aiimaging.runners"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

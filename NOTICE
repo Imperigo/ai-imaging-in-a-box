@@ -1,0 +1,55 @@
+AI Imaging in a Box
+Copyright 2026 Andrin Bau
+
+Dieses Produkt steht unter der Apache License 2.0 (siehe LICENSE).
+
+================================================================================
+Fremde Komponenten
+================================================================================
+
+Die folgenden Komponenten werden NICHT in dieses Produkt eingebaut, sondern als
+eigenstaendige Programme in einem separaten Prozess aufgerufen. Es entsteht damit
+eine Aggregation, kein abgeleitetes Werk: Ihre Lizenzen erstrecken sich nicht auf
+den Apache-2.0-Code dieses Projekts.
+
+Jede dieser Komponenten ist austauschbar und wird unveraendert verwendet.
+
+--------------------------------------------------------------------------------
+Blender                                            GPL-2.0-or-later
+                                       (Binaer-Releases: GPL-3.0-or-later)
+https://www.blender.org/  ·  https://www.blender.org/about/license/
+
+Aufruf ausschliesslich als Subprozess:
+    blender --background --python <runner>
+
+Dieses Produkt enthaelt KEIN `import bpy`, kein bpy-PyPI-Wheel und keine
+Add-on-Verpackung. Das Blender-Binary wird nicht einverleibt.
+
+--------------------------------------------------------------------------------
+IfcOpenShell                                       LGPL-3.0-or-later
+https://github.com/IfcOpenShell/IfcOpenShell
+
+Aufruf ausschliesslich als Subprozess in einem separaten virtuellen Environment
+(.venv-ifc). Kein `import ifcopenshell` im Produkt-Environment.
+
+  ACHTUNG — enthaltener GPL-Code:
+  Das ausgelieferte PyPI-Wheel (ifcopenshell 0.8.5) bindet CGAL statisch ein.
+  Verifiziert am Binary (2026-08-14): Nef_polyhedron_3 (249 Symbolverweise),
+  Polygon_mesh_processing (47), convex_decomposition (8).
+
+--------------------------------------------------------------------------------
+CGAL — Computational Geometry Algorithms Library    dual: LGPL / GPL-3.0-or-later
+https://www.cgal.org/license.html
+
+Statisch in das IfcOpenShell-Wheel eingebunden. Die verwendeten Pakete
+Nef_polyhedron_3 und Polygon_mesh_processing gehoeren zur oberen Schicht und
+stehen damit unter GPL-3.0-or-later, nicht unter LGPL.
+
+Erreicht dieses Produkt ausschliesslich ueber die Prozessgrenze.
+
+--------------------------------------------------------------------------------
+trimesh                                            MIT
+https://github.com/mikedh/trimesh
+Nur im .venv-ifc (Runner-Environment), nicht im Produkt-Environment.
+
+--------------------------------------------------------------------------------
