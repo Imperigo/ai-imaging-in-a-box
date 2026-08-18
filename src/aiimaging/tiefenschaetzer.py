@@ -78,7 +78,7 @@ Drei Wege stehen offen, und keiner ist gratis:
 2. :data:`HG_QUANTIL` — einen festen Anteil des Bildes (etwa „die fernsten 40 %") zum
    Hintergrund erklären. Verlangt eine Annahme über die Himmelsfläche, die niemand hat.
    Bleibt für Fälle, in denen es kein Soll gibt.
-3. :data:`HG_WIE_SOLL` — **die Vorgabe in** :func:`qa_gegen_soll`. Die Soll-Karte kennt
+3. :data:`HG_WIE_SOLL` — bis 18.08.2026 die Vorgabe in :func:`qa_gegen_soll`. Die Soll-Karte kennt
    ihren Hintergrund exakt; daraus ist die **Anzahl** der Geometriepunkte bekannt. Genau
    so viele Punkte der Ist-Karte werden auf der Geometrieseite behalten, der Rest als
    Hintergrund markiert.
@@ -162,10 +162,90 @@ HG_KEINE = "keine"
 HG_QUANTIL = "quantil"
 
 #: Hintergrundstrategie: genau so viele Punkte Geometrie behalten, wie die Soll-Karte
-#: hat. Vorgabe in :func:`qa_gegen_soll`; nur dort verfügbar, denn nur dort gibt es ein Soll.
+#: hat. Nur mit einem Soll verfügbar, denn nur dort gibt es die Anzahl.
+#:
+#: **War bis zum 18.08.2026 die Vorgabe in** :func:`qa_gegen_soll` **und ist es nicht
+#: mehr.** Am Gerät gemessen (`auf-20260818-12`) lagen damit nur **40,7 %** der gewählten
+#: Punkte auf dem Bauwerk — der Rest war eine vom Schätzer in den leeren Grund gelegte
+#: Bodenebene. Die Regel wählt nach Nähe und fragt nicht, **wo** die nahen Punkte liegen;
+#: siehe :data:`HG_OHNE_RANDBERUEHRUNG`.
 HG_WIE_SOLL = "wie_soll"
 
-HG_STRATEGIEN = (HG_KEINE, HG_QUANTIL, HG_WIE_SOLL)
+#: Hintergrundstrategie: wie :data:`HG_WIE_SOLL`, aber anschliessend werden alle
+#: zusammenhängenden Flächen verworfen, die den **Bildrand berühren**.
+#:
+#: **AM GERÄT GEMESSEN** (``auf-20260818-12``, HomeStation, 18.08.2026), an Blenders
+#: eigenem Beauty-Pass — einem Bild, das die Geometrie exakt zeigt:
+#:
+#:     Regel                  geom_iou   Score    Punkte auf dem Bauwerk
+#:     wie_soll (bis dahin)     0.256    0.504          40.7 %
+#:     groesste_flaeche         0.000     n/a            0.0 %
+#:     ohne_randberuehrung      0.406    0.635          99.2 %
+#:     rand_10                  0.366    0.603          53.6 %
+#:     nur_spearman_in_soll     1.000    0.997         100.0 %
+#:
+#: **Warum es wirkt:** Der Fehler war nie der Schätzer, sondern die *Ortlosigkeit* der
+#: Auswahl. ``wie_soll`` nimmt die n nächsten Punkte, gleich wo sie liegen; ein
+#: monokularer Schätzer legt aber in eine flache Fläche eine Bodenebene, die zur Bildecke
+#: hin auf die Kamera zuläuft, und dieser Keil verdrängt echte Bauwerkspunkte eins zu
+#: eins. Die Randberührung ist genau das Merkmal, das ihn unterscheidet: Ein
+#: freistehender Baukörper in der Bildmitte berührt den Rand nicht, eine
+#: hineinhalluzinierte Bodenebene immer.
+#:
+#: **Der lehrreiche Gegenkandidat:** ``groesste_flaeche`` — der naheliegendste Filter und
+#: der, den man ohne Messung gebaut hätte — fällt komplett durch: **0 %** der gewählten
+#: Punkte liegen auf dem Bauwerk. Die grösste zusammenhängende Fläche der „nächsten n"
+#: *ist* der Hintergrundkeil. Eingebaut statt gemessen wäre die Lage schlechter gewesen
+#: als vorher, und der Grund unauffindbar.
+#:
+#: **Und der, der zu gut aussah:** ``nur_spearman_in_soll`` erreicht am perfekten Bild
+#: 0.997 — aber auch 0.79 und 0.65 an den *gestörten* Karten. Es hat den **kleinsten**
+#: Abstand zwischen treu und gestört von allen sechs Regeln und ist damit genau die Sorte
+#: Verbesserung, die alles nach oben schiebt statt zu trennen. ``ohne_randberuehrung``
+#: gewinnt auf **beiden** Achsen: höchster treuer Score UND grösster Abstand.
+#:
+#: **Ehrliche Grenze:** Auch damit erreicht das perfekte Bild nur 0.635 und bleibt knapp
+#: unter der Schwelle 0.65. Der Deckel ist gehoben, nicht beseitigt. Und an einer Szene
+#: mit echtem Gelände — wo eine Bodenebene keine Halluzination ist, sondern Geometrie —
+#: ist die Regel ungeprüft.
+HG_OHNE_RANDBERUEHRUNG = "ohne_randberuehrung"
+
+#: Vorgabe von :func:`qa_gegen_soll`: :data:`HG_OHNE_RANDBERUEHRUNG`, **wenn die
+#: Bildmasse bekannt sind** — sonst :data:`HG_WIE_SOLL`.
+#:
+#: Die bessere Regel ist nicht immer *möglich*: Sie beruht auf der Randberührung, und ohne
+#: Breite und Höhe ist nicht entscheidbar, welcher Punkt am Rand liegt. Eine Naht, die nur
+#: eine Zahlenreihe zurückgibt, kann sie nicht bedienen.
+#:
+#: Das ist **keine stille Reparatur**: Welche Regel gegriffen hat, steht in jedem Ergebnis
+#: unter ``hintergrund_strategie``, und der Rückfall trägt eine eigene Warnung. Der
+#: Aufrufer kann beide Regeln jederzeit erzwingen — dann gilt seine Wahl, auch wenn sie
+#: scheitert.
+HG_VORGABE = "vorgabe"
+
+HG_STRATEGIEN = (HG_KEINE, HG_QUANTIL, HG_WIE_SOLL, HG_OHNE_RANDBERUEHRUNG)
+
+#: Was ein Aufrufer angeben darf — die Strategien plus die auflösende Vorgabe.
+HG_WAEHLBAR = HG_STRATEGIEN + (HG_VORGABE,)
+
+
+def loese_strategie(strategie: str, *, breite=None, hoehe=None) -> tuple[str, tuple]:
+    """:data:`HG_VORGABE` in eine wirkliche Strategie auflösen.
+
+    Returns:
+        ``(strategie, warnungen)``. Jede andere Angabe kommt unverändert zurück — die
+        Wahl des Aufrufers wird nicht überstimmt, auch nicht zu seinem Besten.
+    """
+    if strategie != HG_VORGABE:
+        return strategie, ()
+    if breite is not None and hoehe is not None:
+        return HG_OHNE_RANDBERUEHRUNG, ()
+    return HG_WIE_SOLL, (
+        f"Bildmasse unbekannt — es gilt {HG_WIE_SOLL!r} statt "
+        f"{HG_OHNE_RANDBERUEHRUNG!r}. Am Geraet gemessen (auf-20260818-12) liegen damit "
+        f"nur 40.7 % der gewaehlten Punkte auf dem Bauwerk statt 99.2 %, und geom_iou "
+        f"deckelt entsprechend tiefer. Wer die Bildmasse kennt, sollte sie mitgeben.",
+    )
 
 #: Anteil des Bildes, den :data:`HG_QUANTIL` ohne eigene Angabe als Hintergrund wertet.
 #:
@@ -419,9 +499,60 @@ def _als_zahlen(werte, name: str) -> list[float]:
     return zahlen
 
 
+def _verwirf_randflaechen(werte, breite: int, hoehe: int):
+    """Jede zusammenhängende Geometriefläche verwerfen, die den Bildrand berührt.
+
+    Vierer-Nachbarschaft, nicht Achter: Zwei Flächen, die sich nur über eine Ecke
+    berühren, sind im Bild getrennt. Mit Achter-Nachbarschaft genügte ein einziger
+    diagonaler Kontakt zwischen Bauwerk und Bodenkeil, damit beide gemeinsam verworfen
+    würden — die Regel wäre an einer einzigen Pixelecke zerbrechlich.
+
+    Iterativ (Stapel) statt rekursiv: Bei 512 × 512 = 262 144 Punkten kann eine Fläche
+    das halbe Bild umfassen, und eine Rekursion dieser Tiefe erreicht Pythons Grenze.
+
+    Returns:
+        ``(neue_werte, anzahl_verworfener_flaechen)``. Die Eingabe bleibt unverändert.
+    """
+    ergebnis = list(werte)
+    gesehen = bytearray(len(werte))
+    verworfen = 0
+
+    for start in range(len(werte)):
+        if gesehen[start] or not math.isfinite(werte[start]):
+            continue
+        flaeche = []
+        stapel = [start]
+        gesehen[start] = 1
+        am_rand = False
+        while stapel:
+            i = stapel.pop()
+            flaeche.append(i)
+            y, x = divmod(i, breite)
+            if x == 0 or y == 0 or x == breite - 1 or y == hoehe - 1:
+                am_rand = True
+            if x > 0 and not gesehen[i - 1] and math.isfinite(werte[i - 1]):
+                gesehen[i - 1] = 1
+                stapel.append(i - 1)
+            if x < breite - 1 and not gesehen[i + 1] and math.isfinite(werte[i + 1]):
+                gesehen[i + 1] = 1
+                stapel.append(i + 1)
+            if y > 0 and not gesehen[i - breite] and math.isfinite(werte[i - breite]):
+                gesehen[i - breite] = 1
+                stapel.append(i - breite)
+            if y < hoehe - 1 and not gesehen[i + breite] and math.isfinite(werte[i + breite]):
+                gesehen[i + breite] = 1
+                stapel.append(i + breite)
+        if am_rand:
+            verworfen += 1
+            for i in flaeche:
+                ergebnis[i] = math.inf
+    return ergebnis, verworfen
+
+
 def markiere_hintergrund(tiefen: Sequence[float], *, polaritaet: str,
                          strategie: str = HG_KEINE, anteil: float | None = None,
-                         n_geometrie: int | None = None) -> dict:
+                         n_geometrie: int | None = None,
+                         breite: int | None = None, hoehe: int | None = None) -> dict:
     """Aus einer geschätzten Karte eine Karte mit **Hintergrundmarke** machen.
 
     Markiert wird durch Ersetzen mit ``math.inf``. Das ist kein Trick, sondern die
@@ -440,7 +571,11 @@ def markiere_hintergrund(tiefen: Sequence[float], *, polaritaet: str,
         strategie: :data:`HG_KEINE`, :data:`HG_QUANTIL` oder :data:`HG_WIE_SOLL`.
         anteil: nur für :data:`HG_QUANTIL` — Anteil des Bildes, der als Hintergrund gilt,
             in ``(0, 1)``. ``None`` nimmt :data:`HG_QUANTIL_VORGABE`.
-        n_geometrie: nur für :data:`HG_WIE_SOLL` — Anzahl Geometriepunkte der Soll-Karte.
+        n_geometrie: für :data:`HG_WIE_SOLL` und :data:`HG_OHNE_RANDBERUEHRUNG` —
+            Anzahl Geometriepunkte der Soll-Karte.
+        breite, hoehe: Bildmasse in Punkten. **Pflicht** für
+            :data:`HG_OHNE_RANDBERUEHRUNG`: Ohne sie ist nicht entscheidbar, welcher
+            Punkt am Rand liegt, und genau darauf beruht die Regel.
 
     Returns:
         ``{tiefen, strategie, polaritaet, n_punkte, n_hintergrund, anteil_hintergrund,
@@ -517,11 +652,11 @@ def markiere_hintergrund(tiefen: Sequence[float], *, polaritaet: str,
             f"Himmelsflaeche dieses Bildes, keine Messung. Stimmt sie nicht, verschiebt "
             f"sich geom_iou in beide Richtungen."
         )
-    else:                                                    # HG_WIE_SOLL
+    else:                                    # HG_WIE_SOLL und HG_OHNE_RANDBERUEHRUNG
         if isinstance(n_geometrie, bool) or not isinstance(n_geometrie, int):
             raise TiefenschaetzerError(
                 f"n_geometrie: ganze Zahl erwartet, war {n_geometrie!r} "
-                f"({type(n_geometrie).__name__}). Die Strategie {HG_WIE_SOLL!r} braucht "
+                f"({type(n_geometrie).__name__}). Die Strategie {strategie!r} braucht "
                 f"die Punktzahl der Soll-Silhouette — ohne Soll gibt es sie nicht."
             )
         if not 0 <= n_geometrie <= n:
@@ -573,6 +708,30 @@ def markiere_hintergrund(tiefen: Sequence[float], *, polaritaet: str,
                 "nicht die Schaetzung — die Silhouettengrenze ist dort willkuerlich."
             )
 
+    n_randflaechen = 0
+    if strategie == HG_OHNE_RANDBERUEHRUNG:
+        if breite is None or hoehe is None:
+            raise TiefenschaetzerError(
+                f"Strategie {HG_OHNE_RANDBERUEHRUNG!r} braucht 'breite' und 'hoehe'. "
+                f"Ohne Bildmasse ist nicht entscheidbar, welcher Punkt am Rand liegt — "
+                f"und genau die Randberuehrung ist das Merkmal, auf dem die Regel beruht."
+            )
+        if breite * hoehe != n:
+            raise TiefenschaetzerError(
+                f"{breite}x{hoehe} = {breite * hoehe} passt nicht zu {n} Werten."
+            )
+        ergebnis, n_randflaechen = _verwirf_randflaechen(ergebnis, breite, hoehe)
+        unsicherheit.append(
+            "Zusaetzlich verworfen: alle zusammenhaengenden Flaechen, die den Bildrand "
+            "beruehren. Das trennt die vom Schaetzer in den leeren Grund gelegte "
+            "Bodenebene vom freistehenden Baukoerper — gemessen an einem perfekten Bild "
+            "hebt es den Anteil echter Bauwerkspunkte von 40.7 % auf 99.2 % "
+            "(auf-20260818-12). DIE ANNAHME DAHINTER: Das Bauwerk beruehrt den Bildrand "
+            "nicht. Bei einem angeschnittenen Bau — Innenraum, Detailaufnahme, zu nahe "
+            "Kamera — verwirft die Regel das Bauwerk selbst und laesst NICHTS uebrig. "
+            "Das ist sichtbar (n_hintergrund = alle) und nicht still."
+        )
+
     n_hintergrund = sum(1 for w in ergebnis if not math.isfinite(w))
     if n_hintergrund == n:
         warnungen.append(
@@ -588,6 +747,7 @@ def markiere_hintergrund(tiefen: Sequence[float], *, polaritaet: str,
         "n_hintergrund": n_hintergrund,
         "anteil_hintergrund": n_hintergrund / n,
         "n_bereits_nicht_endlich": len(bereits),
+        "n_randflaechen_verworfen": n_randflaechen,
         "unsicherheit": tuple(unsicherheit),
         "warnungen": tuple(warnungen),
     }
@@ -833,11 +993,11 @@ def schaetze_tiefe(bild_png, *, schaetzer: str = VORGABE_TIEFENSCHAETZER, modell
     """
     eintrag = fordere_zulaessigen(schaetzer)
 
-    if hintergrund_strategie == HG_WIE_SOLL:
+    if hintergrund_strategie in (HG_WIE_SOLL, HG_OHNE_RANDBERUEHRUNG, HG_VORGABE):
         raise TiefenschaetzerError(
-            f"Strategie {HG_WIE_SOLL!r} ist hier nicht moeglich: Sie entnimmt die Anzahl "
-            f"der Geometriepunkte der SOLL-Karte, und die kennt nur qa_gegen_soll(). "
-            f"Hier stehen {HG_KEINE!r} und {HG_QUANTIL!r} zur Wahl."
+            f"Strategie {hintergrund_strategie!r} ist hier nicht moeglich: Sie entnimmt "
+            f"die Anzahl der Geometriepunkte der SOLL-Karte, und die kennt nur "
+            f"qa_gegen_soll(). Hier stehen {HG_KEINE!r} und {HG_QUANTIL!r} zur Wahl."
         )
 
     pfad = Path(bild_png)
@@ -877,7 +1037,7 @@ def schaetze_tiefe(bild_png, *, schaetzer: str = VORGABE_TIEFENSCHAETZER, modell
 
     markierung = markiere_hintergrund(
         werte, polaritaet=eintrag.polaritaet, strategie=hintergrund_strategie,
-        anteil=hintergrund_anteil,
+        anteil=hintergrund_anteil, breite=b, hoehe=h,
     )
     return _ist_ergebnis(
         STATUS_OK, bild_png=pfad, eintrag=eintrag, tiefen=markierung["tiefen"],
@@ -894,7 +1054,7 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
                   schaetzer: str = VORGABE_TIEFENSCHAETZER, modell=None, _lader=None,
                   schwelle: float = geometrie_qa.SCHWELLE_GEOMETRIE,
                   hintergrund: float | None = None,
-                  hintergrund_strategie: str = HG_WIE_SOLL,
+                  hintergrund_strategie: str = HG_VORGABE,
                   hintergrund_anteil: float | None = None,
                   breite: int | None = None, hoehe: int | None = None) -> dict:
     """Die Funktion, die die Geometrie-Metrik endlich **anwendbar** macht.
@@ -1015,10 +1175,13 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
             ),
         )
 
+    strategie, aufloesungs_warnungen = loese_strategie(
+        hintergrund_strategie, breite=ist_ergebnis["breite"], hoehe=ist_ergebnis["hoehe"])
     try:
         markierung = markiere_hintergrund(
-            roh, polaritaet=eintrag.polaritaet, strategie=hintergrund_strategie,
+            roh, polaritaet=eintrag.polaritaet, strategie=strategie,
             anteil=hintergrund_anteil, n_geometrie=n_soll_geometrie,
+            breite=ist_ergebnis["breite"], hoehe=ist_ergebnis["hoehe"],
         )
         urteil = geometrie_qa.geometrie_gate(
             soll, markierung["tiefen"], schwelle=schwelle, hintergrund=hintergrund,
@@ -1029,8 +1192,8 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
             n_punkte=len(roh), error=f"{type(fehler).__name__}: {fehler}",
         )
 
-    warnungen = tuple(ist_ergebnis["warnungen"]) + tuple(markierung["warnungen"]) \
-        + tuple(urteil["warnungen"])
+    warnungen = tuple(ist_ergebnis["warnungen"]) + tuple(aufloesungs_warnungen) \
+        + tuple(markierung["warnungen"]) + tuple(urteil["warnungen"])
     unsicherheit = tuple(markierung["unsicherheit"]) + (
         "Die Ist-Karte ist eine Schaetzung, keine Messung: Ein Fehler des Schaetzers ist "
         "von einer Halluzination des Bildmodells hier nicht unterscheidbar "

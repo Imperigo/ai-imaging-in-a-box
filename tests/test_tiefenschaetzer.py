@@ -576,13 +576,61 @@ def test_der_bogen_lehnt_die_nc_groessen_ab(bild, name):
         ts.qa_gegen_soll(bild, soll_karte(), schaetzer=name, modell=attrappe([1.0]))
 
 
-def test_wie_soll_ist_die_vorgabe_des_bogens(bild):
-    """Die Entscheidung des Moduls, ausführbar: Ohne Angabe wird nach Vorbild des Solls markiert."""
+def test_ohne_bildmasse_faellt_die_vorgabe_auf_wie_soll_zurueck(bild):
+    """Die bessere Regel ist nicht immer *möglich* — und der Rückfall sagt es.
+
+    ``HG_OHNE_RANDBERUEHRUNG`` beruht auf der Randberührung; ohne Breite und Höhe ist
+    nicht entscheidbar, welcher Punkt am Rand liegt. Eine Naht, die nur eine Zahlenreihe
+    zurückgibt, kann sie nicht bedienen — wie die Attrappe hier.
+
+    **Das ist keine stille Reparatur:** Welche Regel gegriffen hat, steht im Ergebnis, und
+    der Rückfall trägt eine eigene Warnung mit der gemessenen Zahl.
+    """
     soll = soll_karte()
     urteil = ts.qa_gegen_soll(bild, soll, modell=attrappe(disparitaets_karte(soll)))
 
     assert urteil["hintergrund_strategie"] == ts.HG_WIE_SOLL
     assert urteil["n_ist"] == urteil["n_soll"] == 64
+    assert any("Bildmasse unbekannt" in w for w in urteil["warnungen"])
+    assert any("40.7" in w for w in urteil["warnungen"])
+
+
+def test_mit_bildmassen_greift_die_gemessene_regel(bild):
+    """Sobald die Naht Breite und Höhe meldet, gilt die Regel aus `auf-20260818-12`."""
+    soll = soll_karte()
+    urteil = ts.qa_gegen_soll(bild, soll,
+                              modell=attrappe(disparitaets_karte(soll), breite=16, hoehe=8))
+    assert urteil["hintergrund_strategie"] == ts.HG_OHNE_RANDBERUEHRUNG
+    assert not any("Bildmasse unbekannt" in w for w in urteil["warnungen"])
+
+
+def test_die_wahl_des_aufrufers_wird_nicht_ueberstimmt(bild):
+    """Auch nicht zu seinem Besten.
+
+    Wer ausdrücklich ``wie_soll`` verlangt, bekommt ``wie_soll`` — sonst wäre eine
+    Vergleichsmessung zwischen beiden Regeln gar nicht möglich, und genau so eine hat den
+    Befund überhaupt erst gebracht.
+    """
+    soll = soll_karte()
+    urteil = ts.qa_gegen_soll(bild, soll,
+                              modell=attrappe(disparitaets_karte(soll), breite=16, hoehe=8),
+                              hintergrund_strategie=ts.HG_WIE_SOLL)
+    assert urteil["hintergrund_strategie"] == ts.HG_WIE_SOLL
+
+
+def test_loese_strategie_gibt_jede_andere_wahl_unveraendert_zurueck():
+    for strategie in ts.HG_STRATEGIEN:
+        gewaehlt, warnungen = ts.loese_strategie(strategie, breite=8, hoehe=8)
+        assert gewaehlt == strategie
+        assert warnungen == ()
+
+
+def test_ohne_soll_ist_die_neue_regel_ebenso_unmoeglich_wie_die_alte(bild):
+    """Sie braucht dieselbe Zahl aus derselben Quelle — das muss der Fehler auch sagen."""
+    for strategie in (ts.HG_WIE_SOLL, ts.HG_OHNE_RANDBERUEHRUNG, ts.HG_VORGABE):
+        with pytest.raises(ts.TiefenschaetzerError, match="SOLL-Karte"):
+            ts.schaetze_tiefe(bild, modell=attrappe([0.5] * 4),
+                              hintergrund_strategie=strategie)
 
 
 def test_ohne_markierung_faellt_derselbe_treue_render_durch(bild):
@@ -802,3 +850,141 @@ def test_kein_bpy_und_kein_ifcopenshell():
     """Regel 2 — hier noch einmal am Modul selbst, nicht nur im paketweiten Scan."""
     quelle = Path(ts.__file__).read_text(encoding="utf-8")
     assert not {"bpy", "ifcopenshell"} & _importe(quelle, nur_modulebene=False)
+
+
+# ==========================================================================================
+# HG_OHNE_RANDBERUEHRUNG — die Regel, die gemessen und nicht geraten wurde
+#
+# `auf-20260818-12` hat sechs Auswahlregeln an Blenders eigenem Beauty-Pass gegeneinander
+# gemessen — an einem Bild, das die Geometrie exakt zeigt. Ergebnis: `wie_soll` traf nur
+# 40.7 % der Punkte auf dem Bauwerk, `ohne_randberuehrung` 99.2 %; geom_iou 0.256 → 0.406.
+#
+# Der lehrreiche Teil ist der Verlierer: `groesste_flaeche` — der naheliegendste Filter —
+# erreicht 0.0 %. Die grösste zusammenhängende Fläche der „nächsten n" IST der
+# Hintergrundkeil. Eingebaut statt gemessen wäre alles schlechter geworden.
+# ==========================================================================================
+
+def _testkarte(breite=8, hoehe=8):
+    """Ein Bauwerk in der Mitte, ein Halluzinationskeil in der Ecke oben rechts.
+
+    Nachgebaut, was der Schätzer wirklich tut: In den leeren, gleichmässigen Grund legt er
+    eine Bodenebene, die zur Bildecke hin auf die Kamera zuläuft. Sie erscheint dadurch
+    „nah" — und verdrängt in einer Auswahl nach Nähe echte Bauwerkspunkte.
+    """
+    karte = [0.1] * (breite * hoehe)
+    for y in range(3, 6):
+        for x in range(3, 6):
+            karte[y * breite + x] = 0.9          # Bauwerk, freistehend, nah
+    for y in range(0, 2):
+        for x in range(6, 8):
+            karte[y * breite + x] = 0.85         # Keil, am Bildrand
+    return karte, breite, hoehe
+
+
+def _auf_dem_bauwerk(tiefen, breite):
+    import math as _math
+    geo = [i for i, w in enumerate(tiefen) if _math.isfinite(w)]
+    treffer = sum(1 for i in geo if 3 <= i // breite <= 5 and 3 <= i % breite <= 5)
+    return len(geo), treffer
+
+
+def test_die_alte_regel_waehlt_den_hintergrundkeil_mit():
+    """Der Befund, der den Deckel erklärt — hier im Kleinen nachgestellt."""
+    karte, b, h = _testkarte()
+    r = ts.markiere_hintergrund(karte, polaritaet=ts.POLARITAET_DISPARITAET,
+                             strategie=ts.HG_WIE_SOLL, n_geometrie=13, breite=b, hoehe=h)
+    n_geo, treffer = _auf_dem_bauwerk(r["tiefen"], b)
+    assert treffer < n_geo, "der Keil müsste mitgewählt sein"
+
+
+def test_ohne_randberuehrung_behaelt_nur_das_bauwerk():
+    karte, b, h = _testkarte()
+    r = ts.markiere_hintergrund(karte, polaritaet=ts.POLARITAET_DISPARITAET,
+                             strategie=ts.HG_OHNE_RANDBERUEHRUNG, n_geometrie=13,
+                             breite=b, hoehe=h)
+    n_geo, treffer = _auf_dem_bauwerk(r["tiefen"], b)
+    assert treffer == n_geo == 9
+    assert r["n_randflaechen_verworfen"] == 1
+
+
+def test_die_regel_braucht_die_bildmasse_und_raet_sie_nicht():
+    """Ohne Bildmasse ist nicht entscheidbar, welcher Punkt am Rand liegt.
+
+    Sie zu raten — etwa aus einer Quadratwurzel — ginge bei nicht-quadratischen Bildern
+    schief, und zwar lautlos: Die Zeilen wären falsch umgebrochen, und „Rand" bezeichnete
+    beliebige Punkte in der Bildmitte.
+    """
+    karte, b, h = _testkarte()
+    with pytest.raises(ts.TiefenschaetzerError, match="breite"):
+        ts.markiere_hintergrund(karte, polaritaet=ts.POLARITAET_DISPARITAET,
+                             strategie=ts.HG_OHNE_RANDBERUEHRUNG, n_geometrie=13)
+
+
+def test_unpassende_bildmasse_werden_abgewiesen():
+    karte, b, h = _testkarte()
+    with pytest.raises(ts.TiefenschaetzerError, match="passt nicht"):
+        ts.markiere_hintergrund(karte, polaritaet=ts.POLARITAET_DISPARITAET,
+                             strategie=ts.HG_OHNE_RANDBERUEHRUNG, n_geometrie=13,
+                             breite=5, hoehe=5)
+
+
+def test_ein_angeschnittenes_bauwerk_wird_ganz_verworfen_und_das_ist_sichtbar():
+    """Die Annahme der Regel, als Test — sie darf nicht still danebengehen.
+
+    Die Regel setzt voraus, dass das Bauwerk den Bildrand nicht berührt. Bei einem
+    angeschnittenen Bau — Innenraum, Detailaufnahme, zu nahe Kamera — trifft das nicht zu,
+    und dann verwirft sie das Bauwerk selbst. **Das ist hinnehmbar, weil es sichtbar ist:**
+    Es bleibt kein einziger Geometriepunkt, `geometrie_qa` meldet „keine gemeinsame
+    Silhouette" und gibt `score: None` statt einer Zahl. Ein verweigertes Urteil ist besser
+    als ein erfundenes.
+    """
+    b = h = 8
+    karte = [0.1] * (b * h)
+    for y in range(0, 4):                        # Bauwerk läuft in den linken Bildrand
+        for x in range(0, 4):
+            karte[y * b + x] = 0.9
+    r = ts.markiere_hintergrund(karte, polaritaet=ts.POLARITAET_DISPARITAET,
+                             strategie=ts.HG_OHNE_RANDBERUEHRUNG, n_geometrie=16,
+                             breite=b, hoehe=h)
+    assert r["n_hintergrund"] == b * h
+    assert any("gesamte Ist-Karte" in w for w in r["warnungen"])
+
+
+def test_die_unsicherheit_nennt_die_annahme_und_die_gemessene_zahl():
+    """Wer die Regel benutzt, muss am selben Ort lesen, worauf sie beruht und was sie unterstellt."""
+    karte, b, h = _testkarte()
+    r = ts.markiere_hintergrund(karte, polaritaet=ts.POLARITAET_DISPARITAET,
+                             strategie=ts.HG_OHNE_RANDBERUEHRUNG, n_geometrie=13,
+                             breite=b, hoehe=h)
+    text = " ".join(r["unsicherheit"])
+    assert "99.2" in text and "40.7" in text          # gemessen, nicht behauptet
+    assert "auf-20260818-12" in text                  # und woher
+    assert "angeschnittenen Bau" in text              # die Annahme, benannt
+
+
+def test_vierer_nachbarschaft_trennt_was_sich_nur_ueber_eine_ecke_beruehrt():
+    """Mit Achter-Nachbarschaft wäre die Regel an einer einzigen Pixelecke zerbrechlich.
+
+    Ein diagonaler Kontakt zwischen Bauwerk und Bodenkeil genügte, und beide würden
+    gemeinsam verworfen — aus einer guten Auswahl würde eine leere.
+    """
+    b = h = 6
+    karte = [0.1] * (b * h)
+    karte[2 * b + 2] = 0.9                       # freistehend, Bildmitte
+    karte[1 * b + 1] = 0.9                       # nur über die Ecke verbunden …
+    karte[0 * b + 0] = 0.9                       # … und am Rand
+    r = ts.markiere_hintergrund(karte, polaritaet=ts.POLARITAET_DISPARITAET,
+                             strategie=ts.HG_OHNE_RANDBERUEHRUNG, n_geometrie=3,
+                             breite=b, hoehe=h)
+    import math as _math
+    geo = [i for i, w in enumerate(r["tiefen"]) if _math.isfinite(w)]
+    # Alle drei berühren sich nur über Ecken, sind also drei getrennte Flächen. Verworfen
+    # wird genau die am Rand; die beiden inneren überleben — auch die, die über die Ecke
+    # an der verworfenen hängt. Mit Achter-Nachbarschaft wären alle drei EINE Fläche
+    # gewesen, sie hätte den Rand berührt, und es bliebe nichts.
+    assert 0 not in geo, "die Fläche am Bildrand müsste verworfen sein"
+    assert set(geo) == {1 * b + 1, 2 * b + 2}, geo
+
+
+def test_die_neue_strategie_steht_in_der_liste():
+    assert ts.HG_OHNE_RANDBERUEHRUNG in ts.HG_STRATEGIEN
