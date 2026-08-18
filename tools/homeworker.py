@@ -118,12 +118,18 @@ def _geometrie_bereitstellen(satz: dict, repo: Path) -> str:
     return pfad
 
 
-def fuehre_aus(satz: dict, repo: Path) -> dict:
+def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=None) -> dict:
     """Einen Auftrag ausführen und ein Ergebnis bauen.
 
     Für ``multipass`` und ``qa`` genügt Blender; ``render`` braucht zusätzlich das
-    Bildmodell. Was noch nicht gebaut ist, wird als ``uebersprungen`` gemeldet — nicht
-    als Erfolg und nicht als Fehler, damit die Auftragsliste ehrlich bleibt.
+    Bildmodell und den Tiefenschätzer.
+
+    Args:
+        _render_modell, _tiefen_modell: Nähte für Tests — fertige Modelle, die
+            durchgereicht statt geladen werden. Dieselbe Bauform wie ``modell`` in
+            ``render.rendere`` und ``_starte`` in ``seams``. Ohne sie wäre dieses Skript
+            nur auf einem Rechner mit GPU und 20 GB Gewichten prüfbar, also faktisch gar
+            nicht — und ausgerechnet der Teil, der unbeaufsichtigt läuft, bliebe ungeprüft.
     """
     from aiimaging import seams
 
@@ -147,14 +153,9 @@ def fuehre_aus(satz: dict, repo: Path) -> dict:
         aufloesung=params.get("aufloesung", 512), samples=params.get("samples", 32))
 
     if art == "render":
-        return auf.baue_ergebnis(
-            auftrag_id=satz["auftrag_id"], status="uebersprungen",
-            messwerte={"bbox_size_m": blender_bericht.get("bbox_size_m"),
-                       "n_meshes": blender_bericht.get("n_meshes")},
-            fehler="Bildmodell-Stufe ist noch nicht gebaut (Phase 3 unvollständig). "
-                   "Multipass lief durch.",
-            dauer_s=round(time.monotonic() - beginn, 1),
-            umgebung=_umgebung())
+        return _render_und_qa(satz, blender_bericht, glb_bericht, aus, params, beginn,
+                              _render_modell=_render_modell,
+                              _tiefen_modell=_tiefen_modell)
 
     # Nur Zahlen und Dateinamen — nie Bildinhalte (Regel 3).
     return auf.baue_ergebnis(
@@ -169,6 +170,132 @@ def fuehre_aus(satz: dict, repo: Path) -> dict:
         urteil={"multipass": "ok"},
         dauer_s=round(time.monotonic() - beginn, 1),
         umgebung=_umgebung())
+
+
+def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
+                   aus: Path, params: dict, beginn: float, *,
+                   _render_modell=None, _tiefen_modell=None) -> dict:
+    """Die Stufe, für die es diesen Rechner gibt: Bildmodell, dann Messung.
+
+    Bis zum 18.08.2026 meldete `art: "render"` hier `uebersprungen` — der Adapter in
+    `aiimaging.render` war gebaut, aber **nie ausgeführt**, weil im Entwicklungscontainer
+    weder GPU noch Gewichte liegen. Das ist die offene Fläche, die dieser Weg schliesst.
+
+    Vier Dinge werden hier zum ersten Mal gleichzeitig geprüft, und sie sind bewusst
+    **einzeln** berichtet, damit ein Bruch in der Mitte nicht die Erkenntnis der ersten
+    Hälfte mitnimmt:
+
+    1. Lädt und läuft der diffusers-Adapter mit echten Gewichten überhaupt?
+    2. Genügt Depth-Anything-V2-**Small** (das einzige unter Regel 1 zulässige) auf einem
+       Architekturbild — oder braucht die Metrik ein Modell, das wir nicht nehmen dürfen?
+    3. Liefert die Geometrie-Metrik auf einem **erzeugten** Bild plausible Zahlen? Bisher
+       ist sie nur an synthetischen Karten belegt (treu 0.99, halluziniert 0.24).
+    4. Trägt die Schwelle 0.65 auf dieser Naht? Sie ist an wenigen Fällen gesetzt und auf
+       einem echten Render noch nie gemessen worden.
+
+    Regel 3: Zurück reisen nur Zahlen, Urteile und **Dateinamen**. Die Bilder bleiben auf
+    der HomeStation.
+    """
+    from aiimaging import bildlesen, render, tiefenschaetzer
+
+    messwerte = {
+        "bbox_size_m": blender_bericht.get("bbox_size_m"),
+        "n_meshes": blender_bericht.get("n_meshes"),
+        "n_triangles": glb_bericht.get("n_triangles"),
+        "depth_exr_kanaele": blender_bericht.get("depth_exr_kanaele"),
+        "depth_exr_format": blender_bericht.get("depth_exr_format"),
+        "depth_png_fehler": blender_bericht.get("depth_png_fehler"),
+    }
+
+    depth_png = blender_bericht.get("depth_png")
+    if not depth_png:
+        return auf.baue_ergebnis(
+            auftrag_id=satz["auftrag_id"], status="fehler", messwerte=messwerte,
+            fehler=("Kein `depth_png` — ohne Tiefenkarte gibt es keine Konditionierung, "
+                    "und ein Render ohne sie wäre genau die erfundene Kubatur, gegen die "
+                    "dieses Projekt antritt. Grund siehe `depth_png_fehler`."),
+            dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
+
+    # ── 1 · Der Render ────────────────────────────────────────────────────────────────
+    a = render.RenderAuftrag(
+        depth_png=depth_png,
+        prompt=params.get("prompt", ""),
+        negativ_prompt=params.get("negativ_prompt", ""),
+        backbone=params.get("backbone", render.VORGABE_BACKBONE),
+        seed=params.get("seed", 0),
+        schritte=params.get("schritte", 20),
+        controlnet_staerke=params.get("controlnet_staerke", 0.8),
+        denoise=params.get("denoise", 0.6),
+        # Der Beauty-Pass als Anker macht daraus echtes Image-Edit statt txt2img. Er ist
+        # optional, weil genau das eine der Fragen ist, die gemessen werden sollen.
+        beauty_png=(blender_bericht.get("beauty_png")
+                    if params.get("mit_beauty", True) else None),
+        ausgabe_png=str(aus / "render.png"),
+        modell_wurzel=params.get("modell_wurzel"),
+    )
+    r = render.rendere(a, modell=_render_modell)
+    # Nur Zahlen und Dateinamen (Regel 3) — `bild_png` wäre ein Pfad auf der HomeStation
+    # und ist als Name genug.
+    messwerte["render"] = {
+        "status": r["status"], "seed": r.get("seed"), "backbone": r.get("backbone"),
+        "dauer_s": r.get("dauer_s"), "parameter": r.get("parameter"),
+        "lizenz": r.get("lizenz"), "maengel": r.get("maengel"),
+        "hinweise": r.get("hinweise"),
+        "bild": Path(r["bild_png"]).name if r.get("bild_png") else None,
+    }
+    if r["status"] != "ok":
+        return auf.baue_ergebnis(
+            auftrag_id=satz["auftrag_id"], status="fehler", messwerte=messwerte,
+            urteil={"render": r["status"], "grund": r.get("error") or r.get("maengel")},
+            fehler=f"Render {r['status']}: {r.get('error') or r.get('maengel')}",
+            dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
+
+    # ── 2 · Die Messung ───────────────────────────────────────────────────────────────
+    # Die Soll-Karte kommt aus der EXR, nicht aus dem PNG: nur sie trägt die Silhouette
+    # exakt (siehe `bildlesen`, Modul-Docstring). Das PNG war die Eingabe des Modells,
+    # die EXR ist der Massstab.
+    try:
+        soll, breite, hoehe = bildlesen.tiefen_aus_report(blender_bericht)
+    except Exception as e:
+        return auf.baue_ergebnis(
+            auftrag_id=satz["auftrag_id"], status="fehler", messwerte=messwerte,
+            fehler=f"Soll-Tiefenkarte nicht lesbar: {type(e).__name__}: {e}",
+            dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
+
+    qa = tiefenschaetzer.qa_gegen_soll(
+        r["bild_png"], soll, breite=breite, hoehe=hoehe, modell=_tiefen_modell,
+        schaetzer=params.get("schaetzer", tiefenschaetzer.VORGABE_TIEFENSCHAETZER),
+        schwelle=params.get("schwelle", None) or geometrie_schwelle(),
+    )
+    messwerte["geometrie_qa"] = qa
+
+    # `status` des Auftrags bildet ab, ob **gemessen** wurde — nicht, ob das Bild besteht.
+    # Ein Render, der die Schwelle reisst, ist ein gelungener Auftrag mit einem klaren
+    # Befund; ihn als Fehler zu melden würde die Auftragsliste unlesbar machen.
+    return auf.baue_ergebnis(
+        auftrag_id=satz["auftrag_id"],
+        status="ok" if qa["status"] == "ok" else "fehler",
+        messwerte=messwerte,
+        urteil={
+            "render": "ok",
+            "gemessen": qa["status"] == "ok",
+            "bestanden": qa.get("bestanden"),
+            "score": qa.get("score"),
+            "begruendung": qa.get("begruendung"),
+        },
+        fehler=qa.get("error"),
+        dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
+
+
+def geometrie_schwelle() -> float:
+    """Die Bestehensgrenze der Geometrie-QA — aus dem Kern, nicht hier nochmal getippt.
+
+    Eine zweite Stelle mit derselben Zahl wäre genau die Art stiller Abweichung, die
+    dieses Projekt zu vermeiden versucht: Wer die Schwelle in der Schwellenstudie
+    (Phase 4) ändert, änderte sonst nur die eine Hälfte.
+    """
+    from aiimaging import geometrie_qa
+    return geometrie_qa.SCHWELLE_GEOMETRIE
 
 
 def _umgebung() -> dict:

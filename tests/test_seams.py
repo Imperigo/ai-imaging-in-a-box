@@ -166,7 +166,10 @@ def test_tiefenkarte_startet_blender_mit_drehflagge(tmp_path, blender_attrappe):
 
     assert aufrufer.kommando[0] == blender_attrappe
     assert FLAGGE in aufrufer.kommando
-    assert bericht == {"status": "ok", "depth_png": "depth.png"}
+    # `depth_png` wird seit dem 18.08.2026 von der Naht selbst gesetzt, nicht vom
+    # Runner — hier auf None, weil der Attrappen-Report keine EXR nennt.
+    assert bericht["status"] == "ok"
+    assert bericht["depth_png"] is None
     assert ziel.is_dir(), "Das Ausgabeverzeichnis muss vor dem Lauf existieren"
 
 

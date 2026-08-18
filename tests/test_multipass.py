@@ -310,17 +310,32 @@ def test_alter_name_zeigt_auf_dieselbe_funktion():
     assert baue_kommando_tiefenkarte is baue_kommando_multipass
 
 
-def test_report_wird_unveraendert_durchgereicht(tmp_path, monkeypatch):
-    """Die Naht deutet den Report nicht — sie reicht ihn weiter, samt der neuen Felder."""
+def test_report_wird_durchgereicht_bis_auf_die_tiefen_nachbearbeitung(tmp_path, monkeypatch):
+    """Die Naht deutet den Report nicht — mit **einer** benannten Ausnahme.
+
+    Seit dem 18.08.2026 rechnet `seams` das normalisierte PNG selbst aus der EXR
+    (Blender 5.2 kann seine eigene Multilayer-EXR nicht zurücklesen). Damit ist der
+    Report nicht mehr wortgleich durchgereicht, und dieser Test hält fest, **wie weit**
+    die Ausnahme reicht: Jedes andere Feld bleibt unangetastet, und die drei
+    Tiefenfelder sind belegt statt beliebig.
+    """
     monkeypatch.setenv("AIIMAGING_BLENDER", "/attrappe/blender")
     report = {"status": "ok", "beauty_png": "b.png", "material_id_png": "m.png",
               "depth_exr": "t.exr", "depth_png": "t.png", "n_materialien": 2,
               "depth_normalisierung": {"min_m": 1.0, "max_m": 9.0}}
 
     zurueck = glb_zu_multipass("bau.glb", tmp_path / "out", up_axis="Y",
-                               _starte=Aufrufer(report))
+                               _starte=Aufrufer(dict(report)))
 
-    assert zurueck == report
+    unberuehrt = {k: v for k, v in report.items()
+                  if k not in ("depth_png", "depth_normalisierung")}
+    assert {k: zurueck[k] for k in unberuehrt} == unberuehrt
+
+    # `t.exr` existiert nicht — die Nachbearbeitung sagt das, statt zu raten oder zu
+    # sterben. Der Lauf bleibt gültig: massgeblich ist die EXR, nicht ihre Ableitung.
+    assert zurueck["depth_png"] is None
+    assert zurueck["depth_normalisierung"] is None
+    assert "t.exr" in zurueck["depth_png_fehler"]
 
 
 # ======================================================================================

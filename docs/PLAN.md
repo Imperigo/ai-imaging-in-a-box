@@ -1,6 +1,7 @@
 # Vorgehensplan
 
-**Angelegt:** 2026-08-14 · **Stand:** Phasen 0–2 erledigt (2026-08-14 / 08-18), Phase 3 offen
+**Angelegt:** 2026-08-14 · **Stand:** Phasen 0–2 erledigt (2026-08-14 / 08-18), Phase 3
+bis auf den ersten echten Render erledigt (beauftragt als `auf-20260818-06`)
 
 Dieser Plan ist die verbindliche Reihenfolge. Er wird bei jeder Sitzung fortgeschrieben,
 nicht ersetzt. Was erledigt ist, bleibt mit Datum stehen.
@@ -98,6 +99,15 @@ aus `register_in_odysseus.sh` bekannt, aber hier nicht ausgeführt.
 
 - [x] Multipass in Blender vollständig — Beauty, Material-ID (Goldener Winkel),
       Depth als EXR **und** normalisiertes PNG mit Rückrechnungsformel
+- [x] **Multipass läuft auch auf Blender 5.2** — erledigt 2026-08-18 (Sitzung 07), auf
+      der HomeStation gemessen. Der Weg dahin war kein Flicken: Die Normalisierung ist
+      aus dem Runner auf die Produktseite gewandert (`bildschreiben.py`), weil Blender
+      5.2 die Multilayer-EXR, die es schreiben **muss**, selbst nicht wieder einlesen
+      kann. Zahlen identisch zu 4.2 bis auf 18 von 65 536 Bildpunkten à eine
+      Quantisierungsstufe (float32 gegen float64).
+- [x] **`art: "render"` im homeworker gebaut** — 2026-08-18. Multipass → Bildmodell →
+      Tiefenschätzung → Geometrie-Score, jede Stufe berichtet einzeln. Zwei Test-Nähte
+      machen den Pfad ohne GPU prüfbar.
 - [x] Backbone-Adapter — `backbone.py`: Registry mit Lizenz je Modell.
       `waehle(kommerziell=True)` gibt FLUX-dev **nie** zurück — Regel 1 ausführbar.
 - [x] **Renderstufe gebaut** — `render.py` über `diffusers` (Apache-2.0), Modell
@@ -116,6 +126,8 @@ aus `register_in_odysseus.sh` bekannt, aber hier nicht ausgeführt.
 - [ ] **Erster echter Render** — Qwen-Image-Edit-2511 mit echten Gewichten.
       **Braucht GPU**, läuft über `auftraege/`. Der diffusers-Adapter ist bisher
       **nie ausgeführt** worden — das ist die offene Fläche.
+      *Beauftragt 2026-08-18 als `auf-20260818-06`, samt zwei Wiederholungen mit
+      `controlnet_staerke` 0,6 und 1,0 als erste Punkte der Schwellenstudie.*
 - [x] **Geometrie-Treue-QA** — `geometrie_qa.py`, an synthetischen Fällen belegt:
       treu 0.99, halluziniert 0.24 bei Spearman **+1.000**. Nur die Silhouette fängt ihn.
 - [x] Stil-QA als zweites Gate — `stil_qa.py`, Metrik testbar, Einbetter injizierbar
@@ -124,10 +136,11 @@ aus `register_in_odysseus.sh` bekannt, aber hier nicht ausgeführt.
 **Fertig, wenn** ein Render gegen die Eingangsgeometrie messbar bewertet wird und eine
 Halluzination nachweislich durchfällt.
 
-**Stand 2026-08-18:** Alles ohne GPU Machbare ist erledigt. Die Halluzination fällt
+**Stand 2026-08-18 (Sitzung 07):** Alles ohne GPU Machbare ist erledigt, jetzt
+einschliesslich der Ausführungsstufe auf der HomeStation. Die Halluzination fällt
 nachweislich durch — an **synthetischen** Tiefenkarten (Spearman +1.000, IoU 0.057,
 Score 0.24). Was aussteht, ist ein **echter** Render durch ein Bildmodell; das braucht
-GPU und Gewichte und läuft über `auftraege/` auf der HomeStation.
+GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 
 ---
 
@@ -163,6 +176,10 @@ Bekannt und ausdrücklich nicht erledigt:
   LICENSE-Datei zu prüfen.
 - **Ökosystem grösstenteils ungelesen** — `KosmoPublish`, `KosmoDesign`, `KosmoPrepare`,
   `ArchitekturKosmos-Codex`, `architekturkosmos-control-hub`, `Architektur-Cosmos`.
+- **`tools/homeworker.py` war bis 2026-08-18 ohne einen einzigen Test** — ausgerechnet
+  das Skript, das unbeaufsichtigt an einer 400-W-Hardwareschranke läuft. Seit Sitzung 07
+  gibt es `tests/test_homeworker.py`; ob die Fail-Closed-Zusage in **allen** Zweigen
+  hält, ist damit erstmals gemessen statt behauptet.
 - **Der Graph-Kern lässt fünf Dinge vermissen** (aus der Kettenverdrahtung, 2026-08-18):
   `inhalts_hash` rechnet auch Dateipfade ein, sodass ein verschobener Projektordner den
   ganzen Cache verwirft — die Kette umgeht das mit einer eigenen Hashvorbereitung, sauber

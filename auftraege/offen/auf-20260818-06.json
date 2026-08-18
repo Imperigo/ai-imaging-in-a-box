@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260818-06",
+  "art": "render",
+  "beschreibung": "ERSTER ECHTER RENDER. Der diffusers-Adapter in aiimaging.render ist gebaut, aber bisher NIE ausgefuehrt worden - hier laeuft er zum ersten Mal mit echten Gewichten. Vorher hat sich zweierlei geaendert, beides aus deinem auf-05-Befund: (1) Die Normalisierung der Tiefenkarte ist aus dem Runner auf die Produktseite gewandert (neues Modul aiimaging.bildschreiben, aufgerufen von seams.glb_zu_multipass). Deine Empfehlung, wortgetreu umgesetzt - danke, sie war richtig. Blender normalisiert nicht mehr; damit gibt es nur noch EINEN Weg zum PNG statt eines je Blender-Fassung. Auf 4.2 hier gegengeprueft: min_m, max_m und n_geometriepixel sind identisch zur alten Blender-Fassung, 18 von 65536 Bildpunkten weichen um genau eine Quantisierungsstufe ab (float32 gegen float64). Deine 5.2-Zahlen (17.934-26.625 m, 11151 Punkte) stimmen uebrigens exakt mit denen von 4.2 ueberein - zwei Blender-Fassungen, dieselbe Tiefe. (2) art:'render' ist gebaut (homeworker._render_und_qa). Ablauf: Multipass, Bildmodell, Tiefenschaetzung, Geometrie-Score. Jede Stufe berichtet einzeln, damit ein Bruch in der Mitte die erste Haelfte nicht mitnimmt. WAS DIESER LAUF PRUEFT, vier Dinge auf einmal: laeuft der diffusers-Adapter mit echten Gewichten ueberhaupt; genuegt Depth-Anything-V2-Small (das einzige unter Regel 1 zulaessige) auf einem Architekturbild; liefert die Geometrie-Metrik auf einem ERZEUGTEN Bild plausible Zahlen (bisher nur an synthetischen Karten belegt: treu 0.99, halluziniert 0.24); und traegt die Schwelle 0.65 auf dieser Naht. GEWICHTE: erwartet unter $AIIMAGING_MODELLE/qwen-image-edit-2511, ersatzweise /ai/qwen-image-edit-2511. Liegen sie woanders, setz params.modell_wurzel oder die Umgebungsvariable - bitte im Ergebnis vermerken, wo sie lagen. WENN ES BRICHT: aendere gern direkt, das Mandat aus auf-05 gilt weiter. Was mich am meisten interessiert, ist nicht ein bestandener Score, sondern eine ehrliche Zahl. Ein Score unter 0.65 ist ein Ergebnis, kein Fehlschlag - dann wissen wir, dass entweder die Konditionierung, der Schaetzer oder die Schwelle nicht traegt, und welches davon. Bitte, falls die Zeit reicht, denselben Lauf noch zweimal mit controlnet_staerke 0.6 und 1.0 wiederholen (seed gleich lassen) - drei Punkte sind der Anfang der Schwellenstudie aus Phase 4, und du hast das Geraet.",
+  "erstellt": "2026-08-18T13:26:10Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "aufloesung": 512,
+    "samples": 64,
+    "backbone": "qwen-image-edit-2511",
+    "prompt": "photorealistic architectural visualization of a simple modern concrete building, overcast daylight, matte concrete surfaces, clean flat roof, neutral grey sky, no vegetation, no people, eye-level exterior view",
+    "negativ_prompt": "extra floors, extra windows, added balconies, changed roofline, distorted perspective, fisheye, text, watermark",
+    "seed": 20260818,
+    "schritte": 28,
+    "controlnet_staerke": 0.8,
+    "denoise": 0.6,
+    "mit_beauty": true,
+    "schaetzer": "depth-anything-v2-small"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
+  }
+}

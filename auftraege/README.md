@@ -65,7 +65,18 @@ Gleichnamig heisst: `offen/auf-20260818-01.json` → `ergebnisse/auf-20260818-01
 |---|---|---|
 | `multipass` | IFC → glb → Blender-Multipass | nein (CPU-Cycles genügt) |
 | `qa` | wie oben, plus Messung | nein |
-| `render` | zusätzlich das Bildmodell | **ja** |
+| `render` | zusätzlich das Bildmodell **und** die Geometrie-Messung | **ja** |
 
-`render` ist derzeit **noch nicht gebaut** — solche Aufträge melden `uebersprungen` mit
-Begründung, nachdem der Multipass durchgelaufen ist. Ehrlich statt still.
+`render` ist seit dem 18.08.2026 gebaut (`homeworker._render_und_qa`). Der Ablauf ist
+IFC → glb → Multipass → Bildmodell → Tiefenschätzung → Geometrie-Score, und jede Stufe
+berichtet **einzeln**: Bricht es in der Mitte, bleibt die Erkenntnis der ersten Hälfte
+erhalten.
+
+`params` eines Render-Auftrags kennt: `prompt`, `negativ_prompt`, `backbone`, `seed`,
+`schritte`, `controlnet_staerke`, `denoise`, `mit_beauty`, `schaetzer`, `schwelle`,
+`modell_wurzel`, dazu `aufloesung` und `samples` für den Multipass.
+
+**Was `status` bedeutet.** `ok` heisst *gemessen*, nicht *bestanden*. Ein Render, der die
+Schwelle reisst, ist ein gelungener Auftrag mit einem klaren Befund — das Urteil steht in
+`urteil.bestanden` und `urteil.score`. Nur wo gar nicht gemessen werden konnte, steht
+`fehler`.

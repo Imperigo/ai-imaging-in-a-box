@@ -218,6 +218,18 @@ Programmen verwendet. Man ruft sie auf — sie gibt den Ablauf nicht vor.
 **Framework** — Wie eine Bibliothek, aber mit umgekehrtem Verhältnis: Das Framework gibt
 die Struktur vor und ruft den eigenen Code auf. Mehr Vorleistung, weniger Freiheit.
 
+**Standardbibliothek (stdlib)** — Die Sammlung von Bausteinen, die schon mit Python
+mitkommt: Dateizugriff, Zahlenformate, Packen, Prüfsummen. Sie muss nicht installiert
+werden und bringt keine fremde Lizenz mit. *In diesem Projekt eine Entwurfsvorgabe und
+nicht nur Bequemlichkeit: `src/aiimaging/bildlesen.py` und `src/aiimaging/bildschreiben.py`
+lesen und schreiben EXR und PNG allein damit — jede zusätzliche Fremdbibliothek wäre eine
+neue Lizenzfrage.*
+
+**Heuristik** — Eine Faustregel, die schnell eine brauchbare Antwort liefert, ohne alle
+Möglichkeiten durchzurechnen und ohne zu versprechen, dass die Antwort die beste ist. Man
+nimmt sie, wenn die genaue Lösung unverhältnismässig teuer wäre und ein guter
+Näherungswert genügt.
+
 **API (Application Programming Interface)** — Die vereinbarte Schnittstelle, über die
 Programme miteinander sprechen: welche Aufrufe es gibt, welche Angaben sie erwarten,
 was zurückkommt. Nicht die Umsetzung, sondern der Vertrag darüber.
@@ -392,6 +404,26 @@ schlägt Alarm, wenn sie verletzt wird.
 **Regressionstest** — Ein Test, der einen bereits behobenen Fehler festhält, damit er
 nicht unbemerkt zurückkehrt. Das eigentliche Sicherheitsnetz eines wachsenden Projekts.
 
+**Rückwärtskompatibilität** — Die Zusage, dass Neues mit Altem weiter zusammenarbeitet:
+Eine neue Programmfassung liest, was die alte geschrieben hat, und versteht die bisherigen
+Aufrufe. Wird sie aufgegeben, muss man es merken können — siehe den nächsten Eintrag.
+
+**Stiller Bruch** — Ein Kompatibilitätsbruch, der sich *nicht* als Fehlermeldung zeigt,
+sondern als falsches Ergebnis. Das Programm läuft weiter und liefert Unsinn, und niemand
+wird gewarnt. *Belegter Fall in diesem Projekt: Blender 5.2 lädt eine mehrschichtige EXR
+als Bild von 0 × 0 Bildpunkten mit 0 Kanälen, statt den Ladevorgang scheitern zu lassen —
+obwohl es dieselbe Datei kurz zuvor selbst geschrieben hat. Wer nur auf einen Abbruch
+wartet, bemerkt nichts; die Tiefenkarte wäre still leer geblieben. Beschrieben im
+Kopf von `src/aiimaging/runners/blender_depth_stage.py`.*
+
+**Referenzimplementierung** — Diejenige Umsetzung eines Verfahrens, die im Streitfall
+recht hat: Weichen zwei Programme voneinander ab, gilt ihr Ergebnis als das richtige, und
+das andere muss sich erklären. *In diesem Projekt seit dem 18.08.2026
+`src/aiimaging/bildschreiben.py` für die Normalisierung der Tiefenkarte — vorher war es
+Blender. Der Wechsel ist bewusst: Die Blender-Zahlen exakt nachzubauen hiesse, die
+Reihenfolge fremder Rechenschritte nachzuahmen, die niemand zusichert — das wäre
+vorgetäuschte statt echter Genauigkeit.*
+
 **Testabdeckung (Coverage)** — Wieviel Prozent des Codes von Tests durchlaufen wird.
 Ein grober Anhaltspunkt, keine Qualitätsgarantie.
 
@@ -408,6 +440,10 @@ Bei langen Renderläufen oft die einzige Möglichkeit nachzuvollziehen, was gesc
 
 **Exception (Ausnahme)** — Ein Fehler, der das Programm an der betreffenden Stelle
 abbricht — falls er nicht abgefangen wird.
+
+**Traceback** — Die Liste der Aufrufe, die zu einem Abbruch geführt haben; das, was
+Python beim Absturz ins Terminal schreibt. Beim Suchen nützlich, aber flüchtig: Er steht
+nicht in der Ergebnisdatei und ist nach dem Lauf verloren.
 
 **Attrappe (Mock)** — Ein Ersatzstück, das im Test die Stelle eines echten Bausteins
 einnimmt und vorhersehbar antwortet. *Erlaubt, den Stil-Score zu prüfen, obwohl das
@@ -436,6 +472,28 @@ langfristig Zinsen kosten. Nicht per se schlecht, aber buchführungspflichtig.
 
 **Fail-closed** — Entwurfshaltung: Im Zweifel oder bei Störung *nicht* handeln. Für
 teure, nicht rückholbare Vorgänge wie GPU-Renderläufe die richtige Grundeinstellung.
+
+**Fail-open** — Das Gegenstück: Bei einer Störung wird weitergemacht statt angehalten.
+Vertretbar nur dort, wo das Hauptergebnis auch ohne den gestörten Teilschritt gültig
+bleibt — sonst entsteht genau das halbe Ergebnis, das gültig aussieht (siehe
+*Skip-on-Error*).
+
+**Befund als Feld statt Absturz** — Die Form, in der dieses Projekt fail-open umsetzt:
+Ein gescheiterter Teilschritt bricht den Lauf nicht ab, sondern schreibt seinen Grund in
+ein eigenes Feld des Ergebnisberichts. *`_tiefe_nachbearbeiten` in
+`src/aiimaging/seams.py` legt bei einem Fehler `depth_png_fehler` an und lässt den
+Blender-Lauf gelten: Die EXR mit den echten Metern ist das massgebliche Ergebnis, das PNG
+nur ihre Ableitung für das Bildmodell. Der Unterschied zum Verschweigen ist, dass der
+Grund in einer Datei steht und nicht bloss in einem Traceback im Terminal.*
+
+**Rauchprobe (Smoke Test)** — Die kürzeste Prüfung, die feststellt, ob etwas
+*überhaupt* läuft — nicht, ob es richtig rechnet. Der Name kommt aus der Elektronik: Man
+schaltet ein Gerät zum ersten Mal ein und sieht nach, ob Rauch aufsteigt. Eine Rauchprobe
+beantwortet „ist der Weg da?", ein ausführlicher Test beantwortet „stimmt das Ergebnis?".
+*Im Projekt:* Ein Multipass-Auftrag mit 96 Bildpunkten Kantenlänge und vier Strahlen je
+Punkt (`tests/test_multipass.py`) ist eine Rauchprobe — er belegt, dass die Prozessgrenze
+zu Blender trägt, und sagt nichts über Bildqualität. Auch die ersten fünf Aufträge an die
+HomeStation waren Rauchproben: Sie fragten nur, ob der Kompositor überhaupt durchschreibt.
 
 **Idempotenz** — Eigenschaft eines Vorgangs, der mehrfach ausgeführt dasselbe Ergebnis
 liefert wie einmal ausgeführt. Macht Wiederholung nach Abbruch gefahrlos.
@@ -481,6 +539,15 @@ siehe *Float*.
 Stellenzahl. `float32` hat rund sieben signifikante Stellen. Bei Koordinaten in
 Millionenhöhe bleibt dadurch nur noch Dezimeter-Auflösung — sichtbar als zitternde oder
 aufreissende Geometrie.
+
+**float32 / float64 (einfache und doppelte Genauigkeit)** — Die zwei üblichen Grössen
+für Kommazahlen: 32 Bit mit rund sieben, 64 Bit mit rund sechzehn brauchbaren Stellen.
+Python rechnet von sich aus in float64, Blender und die meisten Grafikbibliotheken in
+float32. *Deshalb können zwei Programme, die dieselbe Formel auf dieselben Daten anwenden,
+im letzten darstellbaren Schritt auseinanderliegen: Liegt ein Zwischenwert genau auf der
+Rundungsgrenze, fällt er einmal so und einmal anders. Beim Wechsel der Normalisierung von
+Blender nach `src/aiimaging/bildschreiben.py` wichen 18 von 65 536 Bildpunkten um genau
+eine Quantisierungsstufe ab, kein einziger um mehr — Rundung, kein Fehler im Verfahren.*
 
 **STEP / ISO-10303-21** — Das Textformat, in dem eine IFC-Datei tatsächlich vorliegt.
 Jede Zeile ist eine nummerierte Entität, die auf andere verweist (`#42= IFCWALL(...)`).
@@ -595,26 +662,121 @@ Gegensatz zu gekachelt). *Hier trägt die EXR echte Meter, das PNG nur Graustufe
 **Half-Float** — Kommazahl mit 16 statt 32 Bit. Halb so gross, deutlich ungenauer. Bei
 Tiefendaten in Metern zu grob — deshalb schreibt dieses Projekt 32 Bit.
 
+**Ebene (Layer) in einer Bilddatei / Multilayer-EXR** — Gewöhnlich enthält eine
+Bilddatei ein Bild. Eine *mehrschichtige* EXR enthält mehrere Ergebnisse desselben
+Renderlaufs übereinander in **einer** Datei — etwa Farbe, Tiefe und Materialzuordnung.
+Auseinandergehalten werden sie über die Kanalnamen: Dem Namen wird die Ebene punktgetrennt
+vorangestellt, aus `V` wird `tiefe_.V`, aus `Z` wird `ViewLayer.Depth.Z`. Wer eine solche
+Datei selbst liest, muss diese zusammengesetzten Namen zerlegen, sonst findet er den
+gesuchten Kanal nicht. *Blender 5.2 lässt am File-Output-Knoten nur noch dieses Format zu;
+`src/aiimaging/bildlesen.py` sucht den Tiefenkanal deshalb ausdrücklich auch hinter einem
+Ebenen-Präfix.*
+
+**Verlustfrei / verlustbehaftet (Kompression)** — Verlustfrei gepackte Daten kommen beim
+Entpacken Bit für Bit wieder so heraus, wie sie hineingingen (PNG, zlib, die
+ZIP-Kompression in EXR). Verlustbehaftet heisst, dass zugunsten der Dateigrösse etwas
+weggelassen wird, das nicht zurückkommt (JPEG). *Hier liegt beides nebeneinander: Das PNG
+ist in sich verlustfrei gepackt, ist aber als Ganzes eine verlustbehaftete Ableitung der
+EXR — die echten Meter werden auf 65 536 Graustufen gerundet. Deshalb bleibt die EXR das
+massgebliche Artefakt.*
+
+**Prädiktor (Vorhersage bei Kompression)** — Der Grundkniff beim Packen von Messwerten:
+Statt den Wert selbst abzulegen, sagt man ihn aus schon bekannten Nachbarwerten voraus und
+legt nur die *Abweichung* von dieser Vorhersage ab. Trifft die Vorhersage ungefähr zu,
+stehen in der Datei lauter kleine, einander ähnliche Zahlen nahe null — und die lassen
+sich weit besser packen als die Ausgangswerte. Verloren geht dabei nichts: Der Leser
+bildet dieselbe Vorhersage und addiert die Abweichung wieder dazu.
+
 **Prädiktor / Byte-Entflechtung** — Zwei Kniffe, mit denen OpenEXR seine Daten vor dem
 Packen umsortiert, damit `zlib` besser greift: Erst wird jeder Wert als Differenz zum
 vorigen abgelegt, dann werden die Bytes einer Zahl auseinandergezogen und gruppiert. Wer
 die Datei selbst liest, muss beides rückgängig machen — mehr steckt in der
 ZIP-Kompression von OpenEXR nicht.
+*Der Prädiktor ist hier die einfachste denkbare Vorhersage: „der nächste Wert ist wie der
+vorige". PNG benutzt dieselbe Idee mit anderen Nachbarn — siehe Zeilenfilter.*
 
-**zlib** — Die Standardbibliothek zum Packen und Entpacken von Daten, in Python
-mitgeliefert. *Der Grund, warum dieses Projekt EXR und PNG ohne Fremdabhängigkeit lesen
-kann — und damit ohne neue Lizenzfrage.*
+**zlib** — Die überall verbreitete Bibliothek zum verlustfreien Packen und Entpacken von
+Daten; sie gehört zur Standardbibliothek von Python und bringt auch die Berechnung der
+CRC-Prüfsumme mit. *Der Grund, warum dieses Projekt EXR und PNG ohne Fremdabhängigkeit
+lesen **und schreiben** kann — und damit ohne neue Lizenzfrage.*
 
-**Endianness (Bytefolge)** — In welcher Reihenfolge die Bytes einer Zahl im Speicher
-liegen. Wer ein Binärformat selbst liest, muss die richtige wählen, sonst kommen
-sinnlose Werte heraus.
+**Zeilenfilter (PNG)** — Der Prädiktor des PNG-Formats, zeilenweise angewandt. „Filter"
+heisst hier **keine Bildbearbeitung**: Am Bild ändert sich nichts, und nichts geht
+verloren. Es ist eine Umrechnung *vor* dem Packen, die die abzulegenden Zahlen kleiner und
+einander ähnlicher macht, und die der Leser exakt rückgängig macht. PNG stellt fünf
+Verfahren zur Wahl, jede Zeile darf ein anderes benutzen, und die gewählte Nummer steht
+als erstes Byte der Zeile:
 
-**CRC-Prüfsumme** — Eine kurze Kontrollzahl, mit der sich feststellen lässt, ob ein
-Datenblock unbeschädigt ist. *PNG führt sie je Block mit.*
+- **0 — None:** keine Vorhersage, der Wert wird unverändert abgelegt.
+- **1 — Sub:** Abweichung vom linken Nachbarn.
+- **2 — Up:** Abweichung vom Wert an derselben Stelle in der Zeile darüber.
+- **3 — Average:** Abweichung vom Mittel aus linkem und oberem Nachbarn.
+- **4 — Paeth:** Abweichung von einer Vorhersage aus drei Nachbarn — siehe unten.
 
-**Quantisierungsschritt** — Der Abstand zwischen zwei darstellbaren Werten. *Bei 16 Bit
-über eine Bautiefe von 8,7 m sind das 0,13 mm; der gemessene Rückrechnungsfehler liegt
-bei genau der Hälfte davon — also reine Rundung, kein Fehler im Verfahren.*
+*Wer ein PNG liest, muss alle fünf rückgängig machen können
+(`src/aiimaging/bildlesen.py`); wer eines schreibt, muss je Zeile eines wählen
+(`src/aiimaging/bildschreiben.py`). Dort werden absichtlich alle fünf benutzt: So prüft
+jede geschriebene Testdatei nebenbei den Entfilterer des Lesers an echten Daten.*
+
+**Paeth-Prädiktor** — Die vierte und meistgebrauchte PNG-Vorhersage, benannt nach Alan W.
+Paeth. Sie zieht drei bereits bekannte Nachbarn heran — links, oben und oben-links — und
+wählt unter ihnen denjenigen aus, der einer einfachen Abschätzung am nächsten liegt
+(`links + oben − obenlinks`). Anschaulich: An einer senkrechten Kante gewinnt der obere
+Nachbar, an einer waagrechten der linke. Die Vorhersage erkennt also von selbst, in
+welcher Richtung das Bild gerade gleichmässig ist. *`_paeth` in
+`src/aiimaging/bildschreiben.py`.*
+
+**MSAD-Heuristik (minimum sum of absolute differences)** — Die Faustregel, nach der ein
+PNG-Schreiber den Filter für eine Zeile wählt: Er rechnet alle fünf durch, addiert je
+Ergebnis die Beträge aller Bytes und nimmt dasjenige mit der kleinsten Summe. Die Annahme
+dahinter ist, dass kleine Zahlen sich besser packen lassen als grosse; nachgeprüft wird
+das nicht, denn dafür müsste man jede der fünf Fassungen wirklich packen. Die Bytes werden
+dabei als vorzeichenbehaftet gelesen — ein Byte fasst 256 Werte, und 255 steht dann nicht
+für 255, sondern für −1, also für eine Abweichung um **eins** nach unten. *Die
+PNG-Spezifikation empfiehlt diese Regel, die Referenzbibliothek libpng hat sie eingeführt;
+`_zeile_filtern` in `src/aiimaging/bildschreiben.py` setzt sie um.*
+
+**PNG-Block (Chunk)** — Eine PNG-Datei ist nicht ein Stück, sondern eine Folge benannter
+Blöcke: `IHDR` mit Breite, Höhe und Bittiefe, `IDAT` mit den gepackten Bilddaten, `IEND`
+als Abschluss. Jeder Block trägt seine Länge, eine vierbuchstabige Kennung, die Nutzlast
+und eine Prüfsumme. Dadurch kann ein Leser Blöcke, die er nicht kennt, überspringen statt
+zu scheitern. *`_block` in `src/aiimaging/bildschreiben.py` setzt einen solchen zusammen.*
+
+**Endianness (Bytefolge)** — In welcher Reihenfolge die Bytes einer Zahl im Speicher oder
+in einer Datei liegen. Eine 16-Bit-Zahl besteht aus zwei Bytes: *Big-Endian* legt das
+gewichtigere zuerst ab — so, wie wir Zahlen schreiben, Hunderter vor Einern —,
+*Little-Endian* das leichtere zuerst. Wer ein Binärformat selbst liest oder schreibt, muss
+die richtige wählen, sonst kommen sinnlose Werte heraus. *PNG schreibt Big-Endian
+zwingend vor; daher das `>` in den `struct.pack(">I", ...)`-Aufrufen in
+`src/aiimaging/bildschreiben.py`. OpenEXR verlangt umgekehrt Little-Endian — die beiden
+Formate, die dieses Projekt selbst liest, sind hierin gegenläufig.*
+
+**CRC-Prüfsumme (CRC32)** — Eine kurze Kontrollzahl, die aus einem Datenblock berechnet
+wird und sich ändert, sobald sich am Block etwas ändert. Sie zeigt Beschädigungen an —
+gegen absichtliche Fälschung schützt sie nicht. *PNG führt sie je Block mit, in der
+32 Bit langen Variante CRC32, gerechnet über Kennung **und** Nutzlast (`_block` in
+`src/aiimaging/bildschreiben.py`; die Rechnung liefert `zlib` mit).*
+*Verwandt mit, aber nicht dasselbe wie* **Hash / Prüfsumme** *in Abschnitt 8: Die CRC
+bewacht einen Datenblock gegen Übertragungsschäden, der Hash dient dem Wiederfinden
+gleicher Inhalte.*
+
+**Quantisierungsschritt / Quantisierungsstufe** — Der Abstand zwischen zwei darstellbaren
+Werten; beide Wörter meinen dasselbe. Ein Format mit endlich vielen Stufen kann nichts
+dazwischen ausdrücken, es muss runden. *Bei 16 Bit über eine Bautiefe von 8,7 m sind das
+0,13 mm; der gemessene Rückrechnungsfehler liegt bei genau der Hälfte davon — also reine
+Rundung, kein Fehler im Verfahren. Dieselbe Einheit taucht beim Wechsel der Normalisierung
+auf die Produktseite wieder auf: 18 von 65 536 Bildpunkten weichen um genau **eine** Stufe
+ab.*
+*Nicht zu verwechseln mit* **Quantisierung (Modellgewichte)** *in Abschnitt 6 — gleiches
+Wort, anderer Sachverhalt.*
+
+**LSB (niedrigstwertiges Bit, least significant bit)** — Ein Bit ist die kleinste
+Speichereinheit: eine Stelle, die nur 0 oder 1 sein kann. Das niedrigstwertige ist
+dasjenige mit dem kleinsten Gewicht — kippt es, ändert sich die Zahl um genau eine
+Quantisierungsstufe. „Eine Abweichung im LSB" ist deshalb die knappe Art zu sagen: die
+kleinste, die dieses Format überhaupt ausdrücken kann. Kleiner ginge nur, indem beide
+Werte gleich wären. *Genau diese Grössenordnung trennt den eigenen Normalisierer von
+Blender.*
 
 **EXR** — Bildformat mit hoher Genauigkeit, das Werte ausserhalb von 0–255 speichern
 kann. Notwendig für Tiefendaten, weil dort echte Meterwerte stehen.
@@ -763,14 +925,12 @@ gleiche Einstellungen ergeben dasselbe Bild. *Voraussetzung dafür, dass ein Erg
 später überprüfbar ist — ohne Seed lässt sich ein Render nicht wiederholen, und die
 Schwellenstudie in Phase 4 wäre nicht durchführbar.*
 
-**Zeilenfilter (PNG)** — PNG speichert jede Bildzeile nicht direkt, sondern als
-Differenz zu ihren Nachbarn — das lässt sich besser packen. Fünf Verfahren stehen zur
-Wahl, und wer ein PNG selbst liest, muss alle fünf rückgängig machen können.
-
 **Backbone** — Das Hauptmodell einer Pipeline, im Unterschied zu den Hilfsmodellen.
 
 **Quantisierung** — Verkleinerung der Gewichte durch gröbere Zahlendarstellung. Spart
 Speicher, kostet etwas Qualität.
+*Nicht zu verwechseln mit* **Quantisierungsschritt** *in Abschnitt 5 — dort geht es um
+die Auflösung von Messwerten, nicht um die Grösse von Modellgewichten.*
 
 **fp16 / fp8** — Zahlenformate der Gewichte (16 bzw. 8 Bit). Je kleiner, desto
 sparsamer und ungenauer.
@@ -986,6 +1146,22 @@ Schreibende Vorgänge brauchen einen eigenen, ausdrücklich freigegebenen Weg.
 **Local-first** — Entwurfshaltung, bei der alles ohne Internet funktioniert. Cloud ist
 Ergänzung, nicht Voraussetzung.
 
+**Leistungsgrenze (Power Limit)** — Obergrenze, wieviel elektrische Leistung eine
+Grafikkarte aufnehmen darf, in Watt. Sie wird im Treiber gesetzt (`nvidia-smi -pl 400`),
+nicht in der Software, die die Karte benutzt; die Karte drosselt sich dann selbst, statt
+mehr zu ziehen. *Im Projekt:* Die RTX 5090 der HomeStation löst ohne Grenze unter
+Volllast die Schutzschaltung des Netzteils aus — der ganze Rechner geht aus. Jeder
+Auftrag führt darum die Auflage `leistungsgrenze_w: 400` mit, und `tools/homeworker.py`
+prüft vor dem Start, ob sie gesetzt ist. Setzen kann das Skript sie nicht selbst, das
+braucht Administratorrechte; es prüft und sagt, was zu tun wäre.
+
+**Leerlauf-Torwächter** — Prüfung, ob ein Gerät gerade frei ist, bevor eine lange
+Rechnung darauf gestartet wird. *Im Projekt:* `nur_bei_leerlauf: true` in jedem Auftrag —
+gestartet wird nur unter 120 Watt Aufnahme und unter 8 GB belegtem Grafikspeicher. Lässt
+sich der Zustand nicht feststellen, wird **abgelehnt** statt geraten (siehe
+*Fail-closed*): Ein übersprungener Auftrag kostet Wartezeit, ein abgestürzter Rechner
+mehr.
+
 ---
 
 ## 9 · Arbeit mit Claude Code
@@ -1036,6 +1212,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus dem eigenen PNG-Schreiber: PNG-Block, Paeth-Praediktor, MSAD-Heuristik, Praediktor (Vorhersage), verlustfrei/verlustbehaftet, Ebene/Multilayer-EXR, float32/float64, LSB, Standardbibliothek, Heuristik, Traceback, Referenzimplementierung, Rueckwaertskompatibilitaet/stiller Bruch, fail-open/Befund als Feld. Ausgebaut: Zeilenfilter (alle fuenf Filter benannt, von Abschnitt 6 nach Abschnitt 5 verschoben), Endianness (Big-/Little-Endian), CRC32, Quantisierungsschritt/-stufe, zlib. **Quantisierung** in zwei Bedeutungen getrennt (Messwerte / Modellgewichte) |
 | 2026-08-18 | Ergaenzt aus der Kettenverdrahtung: Fabrikfunktion, Closure |
 | 2026-08-18 | Ergaenzt aus der Ist-Seite: Polaritaet, Hintergrundmarke |
 | 2026-08-18 | Ergaenzt aus der Tiefenschaetzer-Pruefung: monokulare Tiefenschaetzung, CC-BY-NC |
@@ -1046,6 +1223,7 @@ System laufen.
 | 2026-08-18 | Ergaenzt aus Backbone/Stil-QA: Registry, Dataclass/frozen, Depth-ControlNet-Naht, Multi-Reference-Editing, Referenzset, Stil-Score, Attrappe, vakuoeser Test, OpenRAIL++-M, Stability Community License. **Aggregation** in zwei Bedeutungen getrennt (Lizenzrecht / Messwerte) |
 | 2026-08-18 | Ergaenzt aus dem Multipass: Goldener Winkel, Normalisierung |
 | 2026-08-18 | Ergaenzt aus der Geometrie-QA: Rangkorrelation, Bindung, Silhouette, IoU, geometrisches Mittel, Disparitaet |
+| 2026-08-18 | **Schuld beglichen (Sitzung 07):** Die Zeile unten versprach *Leistungsgrenze* und *Rauchprobe* — beide standen nie im Text. Jetzt nachgetragen, dazu Leerlauf-Torwaechter. Ein Aenderungsverzeichnis, das Eintraege behauptet, die es nicht gibt, ist schlimmer als keines: Es laesst die Luecke unauffindbar |
 | 2026-08-18 | Ergaenzt aus Phase 3: Leistungsgrenze, Rauchprobe, fail-closed praezisiert |
 | 2026-08-18 | Ergaenzt aus Phase 2: Skip-on-Error, Freigabe-Token, Pfad-Trickserei, Positivliste, fsync, atomares Schreiben, Zustandsautomat, Endzustand, Content-Hashing, Mutationsprobe |
 | 2026-08-18 | Ergaenzt aus der Paketierung: pyproject.toml, src-Layout, optionale Abhaengigkeitsgruppe, SPDX |

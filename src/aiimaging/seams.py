@@ -152,6 +152,11 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
         `n_materialien` und `depth_normalisierung` (min/max in Metern, für die Rückrechnung
         des PNG in echte Tiefen).
 
+        `depth_png` und `depth_normalisierung` kommen **nicht** aus Blender, sondern
+        werden hier nachgerechnet — siehe :func:`_tiefe_nachbearbeiten`. Scheitert das,
+        steht der Grund in `depth_png_fehler` und der Lauf gilt trotzdem als gelungen:
+        Die EXR mit den echten Metern ist das massgebliche Artefakt.
+
     Raises:
         ContractError: `up_axis` fehlt oder ist nicht deutbar.
         SeamError: Blender fehlt oder der Lauf scheitert.
@@ -202,7 +207,68 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             f"Blender schrieb keinen Report (Code {ergebnis.returncode}):\n"
             f"{(ergebnis.stderr or ergebnis.stdout or '').strip()[-1500:]}"
         )
-    return json.loads(bericht.read_text(encoding="utf-8"))
+    report = json.loads(bericht.read_text(encoding="utf-8"))
+    return _tiefe_nachbearbeiten(report, out_dir)
+
+
+def _tiefe_nachbearbeiten(report: dict, out_dir: Path) -> dict:
+    """Aus der EXR das normalisierte PNG rechnen — auf dieser Seite der Prozessgrenze.
+
+    Bis zum 18.08.2026 tat das der Runner selbst. Der Schritt ist hierher gewandert,
+    weil Blender 5.2 die Multilayer-EXR, die es dort schreiben **muss**, selbst nicht
+    wieder einlesen kann (`bpy.data.images.load` liefert 0×0 mit 0 Kanälen). Die volle
+    Begründung samt Messwerten steht in :mod:`aiimaging.bildschreiben`.
+
+    Warum das die bessere Naht ist, unabhängig vom Fehler: Eine Normalisierung ist
+    Arithmetik auf einem Zahlenfeld. Sie hier zu rechnen heisst, sie **ohne Blender,
+    ohne GPU und ohne Prozessgrenze** testen zu können — Regel 4 in ihrer schärfsten
+    Lesart. Und es gibt nur noch **einen** Weg zum PNG statt eines je Blender-Fassung;
+    zwei Wege wären eine stille Abweichung, die niemand bemerkt.
+
+    Der Schritt ist bewusst **nicht** tödlich: Scheitert er, bleibt der Blender-Lauf
+    gültig. Die EXR ist das massgebliche Artefakt — sie trägt echte Meter, das PNG ist
+    ihre verlustbehaftete Ableitung für das Bildmodell. Was schiefging, steht in
+    `depth_png_fehler`, nicht in einem Traceback.
+    """
+    from aiimaging import bildschreiben               # spät, damit `seams` leicht bleibt
+
+    # Überschreiben, nicht ergänzen. Diese Naht ist ab jetzt der einzige Erzeuger von
+    # `depth_png`; ein Wert, der schon im Report stand, stammt aus einem Runner, der
+    # nicht mehr normalisiert — also aus einem früheren Lauf oder einer fremden Fassung.
+    # Ihn stehen zu lassen hiesse, auf eine Datei zu zeigen, die niemand geschrieben hat.
+    # Das ist dieselbe Lehre wie beim Abräumen der Altdateien weiter oben: Ein Feld im
+    # Report ist kein Beleg für eine Datei auf der Platte.
+    report["depth_png"] = None
+    report["depth_normalisierung"] = None
+    report["depth_png_fehler"] = None
+
+    exr = report.get("depth_exr")
+    if not exr:
+        report["depth_png_fehler"] = "Report nennt keine `depth_exr` — nichts zu normalisieren."
+        return report
+    if not Path(exr).exists():
+        report["depth_png_fehler"] = f"`depth_exr` zeigt auf {exr}, dort liegt nichts."
+        return report
+
+    ziel = Path(out_dir) / "tiefe_norm.png"
+    try:
+        normalisierung = bildschreiben.tiefe_exr_zu_png(exr, ziel)
+    except Exception as e:                              # Befund als Feld, nicht als Absturz
+        report["depth_png_fehler"] = f"{type(e).__name__}: {e}"
+        return report
+
+    # Nachsehen statt behaupten — dieselbe Prüfung, die `render.rendere` am Ende macht.
+    # Ein Schreiber, der einen Pfad zurückgibt, ohne etwas zu hinterlassen, ist ein
+    # Fehlschlag und kein Erfolg mit fehlender Datei.
+    if not ziel.is_file() or ziel.stat().st_size == 0:
+        report["depth_png_fehler"] = (
+            f"Die Normalisierung meldete Erfolg, aber {ziel.name} fehlt oder ist leer."
+        )
+        return report
+
+    report["depth_normalisierung"] = normalisierung
+    report["depth_png"] = str(ziel)
+    return report
 
 
 def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,

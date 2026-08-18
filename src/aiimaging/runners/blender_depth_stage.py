@@ -16,18 +16,35 @@ Projekts bleibt Apache-2.0.
 Blender existiert `bpy` nicht, und innerhalb wäre der Import die verbotene Verbindung.
 `tests/test_prozessgrenze.py` erzwingt das.
 
-Die vier Ausgaben
------------------
+Die drei Ausgaben — und die vierte, die hier NICHT mehr entsteht
+----------------------------------------------------------------
 1. **Beauty** (`beauty_.png`) — das gewöhnliche gerenderte Bild. Beleuchtet von einer
    Sonne plus gleichmässigem Umgebungslicht. Bewusst schlicht und fest verdrahtet: Die
    Lichtstimmung ist nicht Gegenstand dieser Phase, die Reproduzierbarkeit schon.
 2. **Material-ID** (`material_id.png`) — pro Material eine flache, unbeleuchtete
    Farbfläche. Dient später als Segmentierungsmaske für die Geometrie-QA.
-3. **Tiefe roh** (`tiefe_0001.exr`) — 32-Bit-EXR über den Compositor, mit **echten
-   Meterwerten**. Das ist die Grundlage der Geometrie-QA.
-4. **Tiefe normalisiert** (`tiefe_norm.png`) — 16-Bit-Graustufen, Konvention
-   **nah = hell**. Das ist die ControlNet-Konvention und der Pass, den das Bildmodell
-   später als Konditionierung bekommt.
+3. **Tiefe roh** (`tiefe_0001.exr` bzw. `tiefe_.exr`) — 32-Bit-EXR über den Compositor,
+   mit **echten Meterwerten**. Das ist die Grundlage der Geometrie-QA.
+
+Die normalisierte Tiefenkarte (`tiefe_norm.png`) entstand bis zum 18.08.2026 ebenfalls
+hier — sie wurde aus der eben geschriebenen EXR zurückgelesen und umgerechnet. Dieser
+Schritt ist auf die **Produktseite** gewandert, nach
+:mod:`aiimaging.bildschreiben`; `seams.glb_zu_multipass` führt ihn nach dem Blender-Lauf
+aus. Der Grund ist ein Befund von der HomeStation (Blender 5.2.0 LTS, am Gerät gemessen):
+
+    Blender 5.2 kann die Datei, die es schreiben **muss**, selbst nicht wieder einlesen.
+    Der File-Output-Knoten lässt dort nur `OPEN_EXR_MULTILAYER` zu, und eine so
+    geschriebene Datei lädt `bpy.data.images.load` als **0×0 mit 0 Kanälen**. Eine
+    einschichtige EXR lädt im selben Lauf als 64×64 mit 4 Kanälen.
+
+Die Datei ist dabei in Ordnung — `aiimaging.bildlesen.lies_exr_tiefe_stdlib` holt aus
+derselben 5.2-Datei 11 151 Geometriepixel zwischen 17,9 und 26,6 m heraus, exakt die
+Zahlen, die Blender 4.2 aus seiner eigenen EXR meldet. Es lag am Multilayer-Leseweg.
+
+Die Lehre ist allgemeiner als der Fehler: Eine Normalisierung ist Arithmetik auf einem
+Zahlenfeld. Sie in einem GPL-Programm auszuführen, dessen Leseweg sich zwischen zwei
+Fassungen ändert, bringt keinen Gewinn und ein Risiko. Der Runner tut ab jetzt nur noch,
+was allein Blender kann: rendern.
 
 Zwei Renderdurchgänge, kein Kompromiss
 --------------------------------------
@@ -480,101 +497,6 @@ def _compositor_auf_tiefe(out_dir: Path) -> str:
     return ausgabe.format.file_format
 
 
-def _tiefe_normalisieren(exr: Path, ziel_png: Path) -> dict:
-    """32-Bit-Meter-EXR → 16-Bit-Graustufen-PNG, nah = hell.
-
-    Warum nicht der `Normalize`-Node im Compositor
-    ----------------------------------------------
-    Er würde über *alle* Pixel normalisieren, also auch über den Hintergrund mit seinen
-    ~1e10 Metern. Das Gebäude landete dann in den untersten Promille des Wertebereichs
-    und wäre gleichmässig schwarz. Deshalb wird hier ausserhalb des Renderns gerechnet,
-    mit einer ausdrücklichen Hintergrundschranke.
-
-    Warum 16 Bit
-    ------------
-    8 Bit teilen die Bautiefe in 256 Stufen. Bei einem 30 m tiefen Bild ist eine Stufe
-    12 cm — sichtbare Terrassen auf jeder schrägen Fläche. 16 Bit liefern 65 536 Stufen.
-
-    Returns:
-        Die Normalisierung als Dictionary: Ohne `min_m`/`max_m` ist das PNG nicht mehr in
-        Meter zurückzurechnen, und genau das braucht die Geometrie-QA.
-    """
-    import numpy as np
-
-    quelle = bpy.data.images.load(str(exr))
-    # Non-Color: Die Zahlen im EXR sind Meter, keine Farben. Ohne diesen Schalter dürfte
-    # die Farbverwaltung sie unterwegs umrechnen.
-    quelle.colorspace_settings.name = "Non-Color"
-    breite, hoehe = quelle.size
-
-    # HomeStation-Befund 18.08. (Blender 5.2.0 LTS, am Geraet gemessen): Ein MULTILAYER-EXR
-    # laedt hier als 0x0 mit 0 Kanaelen — Blender kann die Datei, die es auf 5.x schreiben
-    # MUSS, selbst nicht wieder einlesen. Gegenprobe im selben Lauf: eine Einzelschicht-EXR
-    # laedt als 64x64 mit 4 Kanaelen; die Multilayer-Datei ist auch nicht kaputt, der
-    # stdlib-Leser des Produkts (`aiimaging.bildlesen.lies_exr_tiefe_stdlib`) holt aus
-    # DERSELBEN Datei 11151 Geometriepixel (17.9-26.6 m) heraus.
-    #
-    # Ohne diese Pruefung liefe die Rechnung auf einem leeren Feld weiter und meldete
-    # "kein einziger Geometriepixel" — eine Meldung, die auf ein Kamera- oder
-    # Schwellenproblem zeigt, wo keines ist. Genau diese falsche Faehrte hat hier Zeit
-    # gekostet, darum steht die Ursache jetzt in der Meldung.
-    if breite == 0 or hoehe == 0:
-        raise RuntimeError(
-            f"Blender laedt diese EXR als {breite}x{hoehe} (0 Pixel). Auf Blender 5.x ist das "
-            f"der Normalfall fuer MULTILAYER-Dateien — und der File-Output-Knoten kann dort "
-            f"NUR multilayer schreiben. Die Datei ist in Ordnung: mit "
-            f"`aiimaging.bildlesen.lies_exr_tiefe_stdlib` ist sie ohne Blender lesbar. "
-            f"Die Normalisierung gehoert damit auf 5.x auf die Produktseite, nicht hierher."
-        )
-
-    roh = np.empty(breite * hoehe * 4, dtype=np.float32)
-    quelle.pixels.foreach_get(roh)
-    # `img.pixels` liefert IMMER RGBA, unabhaengig davon, wieviele Kanaele in der Datei
-    # stehen: Blender vervielfacht den einen "V"-Kanal auf R=G=B. Darum ist jeder vierte
-    # Wert ab 0 richtig — nicht weil die Datei einen R-Kanal haette.
-    tiefe = roh[0::4]
-
-    gueltig = np.isfinite(tiefe) & (tiefe > 0.0) & (tiefe < HINTERGRUND_AB_M)
-    if not gueltig.any():
-        raise RuntimeError("Tiefenbild enthält keinen einzigen Geometriepixel")
-
-    min_m = float(tiefe[gueltig].min())
-    max_m = float(tiefe[gueltig].max())
-    spanne = (max_m - min_m) or 1.0                     # eine ebene Fläche frontal: Spanne 0
-
-    grau = np.zeros_like(tiefe)
-    # nah = hell (ControlNet-Konvention). Der Hintergrund bleibt 0.0 — unendlich fern ist
-    # der Grenzfall von "dunkel", nicht ein eigener Sonderfall.
-    grau[gueltig] = 1.0 - (tiefe[gueltig] - min_m) / spanne
-
-    ziel_puffer = np.empty(breite * hoehe * 4, dtype=np.float32)
-    ziel_puffer[0::4] = ziel_puffer[1::4] = ziel_puffer[2::4] = grau
-    ziel_puffer[3::4] = 1.0
-
-    bild = bpy.data.images.new("tiefe_norm", width=breite, height=hoehe, float_buffer=True)
-    bild.colorspace_settings.name = "Non-Color"          # sonst schriebe Blender sRGB-kodiert
-    bild.pixels.foreach_set(ziel_puffer)
-
-    szene = bpy.context.scene
-    einst = szene.render.image_settings
-    einst.file_format = "PNG"
-    einst.color_mode = "BW"
-    einst.color_depth = "16"
-    bild.save_render(str(ziel_png), scene=szene)
-
-    return {
-        "min_m": min_m,
-        "max_m": max_m,
-        "konvention": ("nah = hell (ControlNet); Hintergrund = 0. Das entfernteste "
-                       "Geometriepixel liegt ebenfalls bei 0 und ist im PNG nicht vom "
-                       "Hintergrund zu unterscheiden — wer die Silhouette exakt braucht, "
-                       "nimmt die EXR."),
-        "hintergrund_grauwert": 0.0,
-        "rueckrechnung": "meter = max_m - grau * (max_m - min_m), grau in 0..1",
-        "n_geometriepixel": int(gueltig.sum()),
-    }
-
-
 # --------------------------------------------------------------------------------------
 # Ablauf
 # --------------------------------------------------------------------------------------
@@ -693,21 +615,19 @@ def main() -> int:
         szene.render.filepath = str(out_dir / "material_id")
         bpy.ops.render.render(write_still=True)
 
-    # ── Normalisierte Tiefenkarte ─────────────────────────────────────────────────────
-    depth_png = out_dir / "tiefe_norm.png"
-    normalisierung = None
-    fehler = None
-    if exr is not None:
-        try:
-            normalisierung = _tiefe_normalisieren(exr, depth_png)
-        except Exception as e:                           # Fehler als Report, nicht als Traceback
-            fehler = f"Tiefen-Normalisierung fehlgeschlagen: {type(e).__name__}: {e}"
-    else:
-        fehler = "Compositor schrieb keine EXR"
+    # ── Die Normalisierung passiert NICHT mehr hier ───────────────────────────────────
+    # `tiefe_norm.png` entsteht seit dem 18.08.2026 auf der Produktseite
+    # (`aiimaging.bildschreiben.tiefe_exr_zu_png`, aufgerufen von
+    # `seams.glb_zu_multipass`). Begründung im Modul-Docstring: Blender 5.2 kann die
+    # Multilayer-EXR, die es dort schreiben muss, selbst nicht wieder einlesen.
+    #
+    # Die Felder `depth_png` und `depth_normalisierung` bleiben im Report stehen und
+    # bleiben `None`. Sie zu streichen wäre ein stiller Bruch für jeden Leser des
+    # Reports; `None` ist eine Aussage, ein fehlender Schlüssel ist keine.
+    fehler = None if exr is not None else "Compositor schrieb keine EXR"
 
     erwartet = {
         "depth_exr": exr if exr is not None else None,
-        "depth_png": depth_png if normalisierung is not None else None,
         "beauty_png": beauty_png if not a.ohne_beauty else None,
         "material_id_png": material_id_png if not a.ohne_material_id else None,
     }
@@ -730,11 +650,13 @@ def main() -> int:
         # Neu mit dem Multipass.
         "beauty_png": str(beauty_png) if _frisch(beauty_png, beginn) else None,
         "material_id_png": str(material_id_png) if _frisch(material_id_png, beginn) else None,
-        "depth_png": str(depth_png) if _frisch(depth_png, beginn) else None,
+        # Bleibt None: Der Runner normalisiert nicht mehr. `seams.glb_zu_multipass`
+        # trägt hier den Pfad nach, den es selbst geschrieben hat.
+        "depth_png": None,
         "n_materialien": n_materialien,
         "material_id_tabelle": tabelle,
         "material_id_quelle": sorted({e["quelle"] for e in tabelle}) or None,
-        "depth_normalisierung": normalisierung,
+        "depth_normalisierung": None,           # siehe `depth_png`
         "samples": a.samples,
         # Diagnose fuer den externen Leser: Multilayer-EXR benennt Kanaele anders als eine
         # einkanalige Datei ("tiefe_.V" statt "V"), und `aiimaging.bildlesen` sucht nach
