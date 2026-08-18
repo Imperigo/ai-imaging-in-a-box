@@ -1,0 +1,191 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260818-13",
+  "status": "ok",
+  "beendet": "2026-08-19T00:40:00Z",
+  "dauer_s": 11.6,
+  "messwerte": {
+    "regel_1": {
+      "basis": {
+        "repo": "Tongyi-MAI/Z-Image-Turbo",
+        "lizenz": "apache-2.0",
+        "gated": false,
+        "private": false
+      },
+      "controlnet": {
+        "repo": "alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union",
+        "lizenz": "apache-2.0",
+        "gated": false,
+        "private": false
+      },
+      "quelle": "HfApi.model_info, card_data.license — vor dem Laden geprueft",
+      "abbruch": false
+    },
+    "tabelle": [
+      {
+        "polaritaet": "wie_wir",
+        "controlnet_staerke": 0.65,
+        "dauer_s": 1.5,
+        "sha256_16": "456202e65b0599e2",
+        "vram_spitze_mib": 23391,
+        "status": "ok",
+        "score": 0.11527781542254247,
+        "spearman": -0.5185839272040215,
+        "geom_iou": 0.02562550443906376,
+        "n_gemeinsam": 1143,
+        "bestanden": false
+      },
+      {
+        "polaritaet": "wie_wir",
+        "controlnet_staerke": 0.8,
+        "dauer_s": 1.4,
+        "sha256_16": "36f766682ee9f15e",
+        "vram_spitze_mib": 23391,
+        "status": "ok",
+        "score": 0.1148634514154547,
+        "spearman": -0.517579499260888,
+        "geom_iou": 0.025490987355394134,
+        "n_gemeinsam": 1137,
+        "bestanden": false
+      },
+      {
+        "polaritaet": "wie_wir",
+        "controlnet_staerke": 1.0,
+        "dauer_s": 1.4,
+        "sha256_16": "74217b8b057d1be6",
+        "vram_spitze_mib": 23391,
+        "status": "ok",
+        "score": 0.0752304676180805,
+        "spearman": -0.38018348765270443,
+        "geom_iou": 0.014886557259438615,
+        "n_gemeinsam": 664,
+        "bestanden": false
+      },
+      {
+        "polaritaet": "invertiert",
+        "controlnet_staerke": 0.65,
+        "dauer_s": 1.4,
+        "sha256_16": "c4ad8ea3ab1a60f9",
+        "vram_spitze_mib": 23391,
+        "status": "ok",
+        "score": 0.23546967925532092,
+        "spearman": -0.848117983239753,
+        "geom_iou": 0.06537530266343826,
+        "n_gemeinsam": 2916,
+        "bestanden": false
+      },
+      {
+        "polaritaet": "invertiert",
+        "controlnet_staerke": 0.8,
+        "dauer_s": 1.4,
+        "sha256_16": "bd417ee949d442cc",
+        "vram_spitze_mib": 23391,
+        "status": "ok",
+        "score": 0.264908754584682,
+        "spearman": -0.852904419289675,
+        "geom_iou": 0.08227961617792126,
+        "n_gemeinsam": 3670,
+        "bestanden": false
+      },
+      {
+        "polaritaet": "invertiert",
+        "controlnet_staerke": 1.0,
+        "dauer_s": 1.4,
+        "sha256_16": "ac7cc7448699259a",
+        "vram_spitze_mib": 23391,
+        "status": "ok",
+        "score": 0.24213791236924428,
+        "spearman": -0.7939182765409606,
+        "geom_iou": 0.07384987893462469,
+        "n_gemeinsam": 3294,
+        "bestanden": false
+      }
+    ],
+    "ladeweg": {
+      "controlnet": "ZImageControlNetModel.from_single_file auf Z-Image-Turbo-Fun-Controlnet-Union.safetensors — das Repo liefert KEIN diffusers-Verzeichnis, `from_pretrained` bricht mit 'Error no file named config.json' ab",
+      "pipeline": "ZImageControlNetPipeline.from_pretrained(z-image-turbo, controlnet=<oben>, torch_dtype=bfloat16)",
+      "geraet": "cuda",
+      "ladezeit_s": 3.1,
+      "modellgroessen_gib": {
+        "transformer": 11.46,
+        "text_encoder": 7.49,
+        "controlnet": 4.24,
+        "vae": 0.16,
+        "summe": 23.35
+      }
+    },
+    "angenommene_argumente": {
+      "genutzt": [
+        "prompt",
+        "negative_prompt",
+        "control_image",
+        "controlnet_conditioning_scale",
+        "guidance_scale",
+        "num_inference_steps",
+        "height",
+        "width",
+        "generator"
+      ],
+      "weitere_der_signatur": [
+        "sigmas",
+        "cfg_normalization",
+        "cfg_truncation",
+        "num_images_per_prompt",
+        "latents",
+        "prompt_embeds",
+        "negative_prompt_embeds",
+        "output_type",
+        "joint_attention_kwargs",
+        "max_sequence_length"
+      ],
+      "kernpunkt": "control_image UND controlnet_conditioning_scale existieren wirklich — genau die beiden Argumente, die QwenImageEditPlusPipeline nicht kennt (auf-09)."
+    },
+    "vram_spitze_mib": 23391,
+    "zeit_je_bild_s": [
+      1.5,
+      1.4,
+      1.4,
+      1.4,
+      1.4,
+      1.4
+    ],
+    "pruefsummen": {
+      "wie_wir": [
+        "456202e65b0599e2",
+        "36f766682ee9f15e",
+        "74217b8b057d1be6"
+      ],
+      "invertiert": [
+        "c4ad8ea3ab1a60f9",
+        "bd417ee949d442cc",
+        "ac7cc7448699259a"
+      ],
+      "alle_verschieden": true
+    },
+    "parameter": {
+      "seed": 12345,
+      "schritte": 8,
+      "guidance_scale": 0.0,
+      "negativ_prompt": "",
+      "aufloesung": 512,
+      "prompt": "photorealistic architectural photograph, overcast daylight, matte concrete, neutral grey sky, no vegetation, no people"
+    }
+  },
+  "urteil": {
+    "polaritaet_in_einem_satz": "INVERTIERT ist richtig: Das ControlNet erwartet nah = DUNKEL, also das Gegenteil unserer tiefe_norm.png — mit unserer Karte liegt |spearman| bei 0.38-0.52, mit invertierter bei 0.79-0.85, also rund doppelt so hoch bei jeder Staerke.",
+    "haelt_der_backbone_die_geometrie": "DEUTLICH BESSER ALS QWEN, aber nicht gut genug fuer die heutige Schwelle.\nDer Vergleich, auf den es ankommt: Qwens Nullprobe (ungestoerte Geometrie durch die ganze Kette, auf-10) ergab spearman +0.005 — GAR KEINE Korrelation. Z-Image mit invertierter Karte kommt auf -0.853. Die Tiefenordnung bleibt also weitgehend erhalten, wo sie bei Qwen vollstaendig verloren ging.\nDas Bild bestaetigt es: Der Baukoerper behaelt Lage, Groesse und Proportion im Bildausschnitt. Qwen hatte den Ausschnitt neu gewaehlt und den Koerper formatfuellend gemacht. Erfunden sind bei Z-Image nur Oberflaechendetails (fensterartige Schlitze, Struktur auf den Flaechen) — Fassadenzeichnung, keine Kubatur.\nDer Score bleibt mit 0.265 (bestes: invertiert @ 0.80) dennoch weit unter 0.65. Das liegt an geom_iou (0.082), und dessen Deckel ist nach auf-12 eine Sache der Auswahlregel, nicht des Backbones: Selbst ein PERFEKTES Bild kommt unter der heutigen Regel nur auf geom_iou 0.256.",
+    "wirkt_der_regler": "JA, und das ist belegt statt vermutet: Alle SECHS Pruefsummen sind verschieden. Bei Qwen lieferten drei Staerken auf zwoelf Stellen denselben Score, weil die Pipeline den Parameter gar nicht kennt. Hier veraendert er das Bild wirklich.\nDie Wirkung ist allerdings NICHT monoton: 0.80 ist bei beiden Polaritaeten besser als 1.00. Staerker ist nicht treuer — ein Befund fuer die spaetere Wahl.",
+    "geschwindigkeit": "1.4-1.5 s je Bild bei 8 Schritten und 512x512, gegen rund 150 s bei Qwen-Image-Edit-2511 mit 28 Schritten und Schichtauslagerung. Rund hundertfach. VRAM-Spitze 23'391 MiB — das Modell (23.35 GiB) liegt vollstaendig auf der Karte, keine Auslagerung noetig. Damit ist eine Reihe ueber viele Parameter zum ersten Mal ueberhaupt bezahlbar.",
+    "drei_stolpersteine_beim_laden": "Alle drei waren meine, nicht die des Modells — hier festgehalten, damit sie niemand zweimal findet:\n1. Das ControlNet-Repo ist eine EINZELNE safetensors-Datei ohne config.json. `from_pretrained` bricht ab; `from_single_file` ist der Weg.\n2. Die Geraetewahl nach PLATTENgroesse waehlte Auslagerung (Repo 31 GB, weil es mehrere Fassungen mitliefert), obwohl das Modell in bf16 nur 23.35 GiB belegt. Die Auslagerung liess das separat geladene ControlNet auf der CPU zurueck: 'Expected all tensors to be on the same device'.\n3. Der Ausweichweg traegt hier ohnehin nicht: `enable_sequential_cpu_offload` scheitert an Meta-Tensoren ('Cannot copy out of meta tensor'). Ein zu vorsichtiger Speicherzuschlag ist bei diesem Modell teurer als ein knapper.",
+    "nicht_getan": "Der Vorgabe-Backbone in backbone.py bleibt unveraendert — wie beauftragt.\nEine Querprobe mit der auf-12-Auswahlregel habe ich versucht und VERWORFEN: Meine Nachbildung der heutigen Regel traf die Ausgabe des Moduls nicht (meine 'ohne_randberuehrung' reproduzierte exakt das, was qa_gegen_soll bereits als geom_iou meldet, n_ausgewaehlt = n_gemeinsam = 2916). Ein Vergleich zwischen zwei Zahlen, von denen eine nicht die ist, fuer die ich sie halte, ist wertlos. Die Regel gehoert IN geometrie_qa gemessen, nicht daneben nachgebaut — das ist ein eigener Auftrag und keine Nebenbemerkung.",
+    "empfehlung_als_frage": "Die Zahlen sprechen fuer einen Wechsel, aber die Entscheidung liegt bei dir. Was dafuer spricht: Tiefenordnung 0.853 statt 0.005, hundertfache Geschwindigkeit, ein Regler der wirkt, beide Repos Apache-2.0. Was offen bleibt: der Score haengt an geom_iou, und dessen Deckel ist ungeloest — ein Wechsel des Backbones behebt ihn NICHT. Beide Baustellen sind unabhaengig voneinander."
+  },
+  "umgebung": {
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "leistungsgrenze_w": 400.0,
+    "python": "3.14.4",
+    "diffusers": "0.39.0",
+    "torch": "2.11.0+cu128"
+  },
+  "fehler": null
+}
