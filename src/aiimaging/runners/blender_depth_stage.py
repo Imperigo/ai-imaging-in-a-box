@@ -329,6 +329,31 @@ def _welt_hintergrund(welt):
     return welt.node_tree.nodes["Background"]
 
 
+
+def _api_befund(knoten) -> str:
+    """Die tatsaechlich vorhandene API eines Knotens als Text.
+
+    Wird nur im Fehlerfall gerufen. Der Grund: Ein Rundlauf zur HomeStation kostet den
+    Owner einen Handgriff, also soll ein Fehlschlag mehr zurueckbringen als einen
+    Traceback. Blender 5.x hat den File-Output-Knoten mehrfach umgebaut
+    (`base_path` -> `directory`/`file_name`, `file_slots` -> `file_output_items`), und
+    Raten hat hier schon zwei Rundlaeufe gekostet.
+    """
+    felder = sorted(a for a in dir(knoten) if not a.startswith("_"))
+    zeilen = [f"API-Befund fuer {type(knoten).__name__}:", f"  Attribute: {', '.join(felder)}"]
+    for name in ("file_slots", "file_output_items", "layer_slots"):
+        s = getattr(knoten, name, None)
+        if s is not None:
+            zeilen.append(f"  {name}: {type(s).__name__}, "
+                          f"Methoden {sorted(m for m in dir(s) if not m.startswith('_'))}")
+    try:
+        zeilen.append(f"  Eingaenge: {[e.name for e in knoten.inputs]}")
+    except Exception:
+        pass
+    zeilen.append(f"  Blender: {bpy.app.version_string}")
+    return "\n".join(zeilen)
+
+
 def _compositor_auf_tiefe(out_dir: Path) -> None:
     """View-Layer-Z-Pass über den Compositor als 32-Bit-EXR ausgeben.
 
@@ -343,7 +368,15 @@ def _compositor_auf_tiefe(out_dir: Path) -> None:
 
     render_layer = baum.nodes.new("CompositorNodeRLayers")
     ausgabe = baum.nodes.new("CompositorNodeOutputFile")
-    ausgabe.base_path = str(out_dir)
+
+    # Ausgabeort — Blender 5.0 hat `base_path` in `directory` + `file_name` getrennt.
+    # Belegt auf der HomeStation (auf-20260818-02): AttributeError auf `base_path`.
+    if hasattr(ausgabe, "base_path"):                     # <= 4.x
+        ausgabe.base_path = str(out_dir)
+    else:                                                 # 5.x
+        ausgabe.directory = str(out_dir)
+        ausgabe.file_name = "tiefe_"
+
     ausgabe.format.file_format = "OPEN_EXR"
     ausgabe.format.color_depth = "32"
     # OPEN_EXR kennt in dieser Einstellung nur RGB/RGBA. Blender schreibt die Tiefe aber
@@ -352,9 +385,44 @@ def _compositor_auf_tiefe(out_dir: Path) -> None:
     # war falsch und stand seit Phase 1 so da. Wer die EXR von aussen liest, muss nach "V"
     # suchen, nicht nach "R" (siehe `aiimaging.bildlesen`, das eine Vorrangliste benutzt).
     ausgabe.format.color_mode = "RGB"
-    ausgabe.file_slots.clear()
-    ausgabe.file_slots.new("tiefe_")
-    baum.links.new(render_layer.outputs["Depth"], ausgabe.inputs["tiefe_"])
+
+    # Eingangsslot — `file_slots` heisst ab 5.0 `file_output_items`, und der Name eines
+    # Eintrags steht dort unter `.name` statt unter `.path`. Weil die genaue Signatur von
+    # `new()` sich zwischen den Fassungen unterscheidet, wird sie NICHT geraten: Es werden
+    # mehrere bekannte Aufrufformen versucht, und schlaegt alles fehl, meldet der Runner
+    # die tatsaechlich vorhandene API zurueck (siehe `_api_befund`) — ein Fehlschlag soll
+    # Fakten liefern, nicht nur einen Traceback.
+    slot_name = "tiefe_"
+    sammlung = getattr(ausgabe, "file_slots", None)
+    if sammlung is None:
+        sammlung = getattr(ausgabe, "file_output_items", None)
+    if sammlung is None:
+        raise RuntimeError("Weder file_slots noch file_output_items: " + _api_befund(ausgabe))
+
+    try:
+        sammlung.clear()
+    except Exception:                                     # manche Fassungen kennen kein clear()
+        pass
+
+    letzter = None
+    for versuch in (lambda: sammlung.new(slot_name),
+                    lambda: sammlung.new(name=slot_name),
+                    lambda: sammlung.new("COLOR", slot_name),
+                    lambda: sammlung.new()):
+        try:
+            versuch()
+            letzter = None
+            break
+        except Exception as e:                            # noqa: BLE001 — naechste Form probieren
+            letzter = e
+    if letzter is not None:
+        raise RuntimeError(f"Eingangsslot nicht anlegbar ({letzter}). {_api_befund(ausgabe)}")
+
+    # Der Eingang heisst je nach Fassung wie der Slot oder schlicht "Image".
+    ziel = ausgabe.inputs.get(slot_name) or (ausgabe.inputs[0] if len(ausgabe.inputs) else None)
+    if ziel is None:
+        raise RuntimeError("Kein Eingang am File-Output-Knoten. " + _api_befund(ausgabe))
+    baum.links.new(render_layer.outputs["Depth"], ziel)
 
 
 def _tiefe_normalisieren(exr: Path, ziel_png: Path) -> dict:
@@ -500,7 +568,22 @@ def main() -> int:
     beauty_png = out_dir / "beauty_.png"
     szene.render.filepath = str(out_dir / "beauty_")
 
-    _compositor_auf_tiefe(out_dir)
+    try:
+        _compositor_auf_tiefe(out_dir)
+    except Exception as e:
+        # Jeder Fehler im Kompositor-Aufbau soll die tatsaechliche API mitliefern.
+        # Blender 5.x hat diesen Bereich mehrfach umgebaut, und jeder Rundlauf zur
+        # HomeStation kostet den Owner einen Handgriff — ein Fehlschlag muss darum mehr
+        # zurueckbringen als die blosse Meldung, dass etwas fehlt.
+        befund = ""
+        try:
+            szene = bpy.context.scene
+            baum = _kompositor_baum(szene)
+            knoten = baum.nodes.new("CompositorNodeOutputFile")
+            befund = "\n" + _api_befund(knoten)
+        except Exception as e2:
+            befund = f"\n(API-Befund nicht erhebbar: {e2})"
+        raise RuntimeError(f"Kompositor-Aufbau gescheitert: {e}{befund}") from e
     bpy.ops.render.render(write_still=not a.ohne_beauty)
 
     exr_kandidaten = [p for p in sorted(out_dir.glob("tiefe_*.exr")) if _frisch(p, beginn)]
