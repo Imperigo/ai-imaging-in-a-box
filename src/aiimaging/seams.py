@@ -81,7 +81,16 @@ def finde_blender() -> str:
 
 
 def ifc_zu_glb(ifc_path, glb_path, *, timeout: int = 300, _starte=None) -> dict:
-    """IFC4 → glb (Y-up) über den Subprozess im `.venv-ifc`.
+    """IFC → glb (Y-up) über den Subprozess im `.venv-ifc`.
+
+    **IFC4 *und* IFC2X3.** Hier stand bis zum 18.08.2026 „IFC4". Das war eine Behauptung
+    über eine Datei, die niemand gesehen hatte: An 40 echten Dateien (`auf-20260818-08`)
+    waren 30 IFC4 und **10 IFC2X3 — und alle zehn davon kamen aus ArchiCAD**. Wer nur
+    gegen IFC4 prüft, prüft nicht gegen das, was das verbreitetste Autorenprogramm
+    tatsächlich liefert.
+
+    Beide Schemata sind hier durch den echten Konverter gemessen, in Metern und in
+    Millimetern, jeweils mit demselben Ergebnis (8,0 × 5,0 × 3,25 m).
 
     Returns:
         Report des Runners mit `glb_path`, `up_axis`, `bbox`, `n_elements`, `n_triangles`.

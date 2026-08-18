@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""RUNNER — IFC4 → glb. Läuft im `.venv-ifc`, NIEMALS im Produkt-Environment.
+"""RUNNER — IFC (IFC4 oder IFC2X3) → glb. Läuft im `.venv-ifc`, nie im Produkt-Environment.
 
 Warum dieses Skript ein eigener Prozess ist
 -------------------------------------------
@@ -33,7 +33,7 @@ import sys
 
 
 def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
-    """Konvertiert IFC4 → glb (Y-up) und liefert einen Report.
+    """Konvertiert IFC (IFC4 oder IFC2X3) → glb (Y-up) und liefert einen Report.
 
     Der Report meldet auch dann `status`, wenn etwas schiefging — der Aufrufer soll
     entscheiden, nicht raten müssen.
@@ -88,7 +88,7 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="IFC4 → glb (Y-up). Läuft im .venv-ifc.")
+    ap = argparse.ArgumentParser(description="IFC → glb (Y-up). Läuft im .venv-ifc.")
     ap.add_argument("ifc")
     ap.add_argument("glb")
     ap.add_argument("--report", default=None)

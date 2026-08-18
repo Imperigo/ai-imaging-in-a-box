@@ -60,7 +60,8 @@ GEOMETRIE_FELDER = ("ifc_path", "glb_path", "up_axis", "bbox")
 _GEOMETRIE_EINGANG = {
     "ifc_path": {
         "type": "string",
-        "description": "Quell-IFC4. Eigener Pfad — wir konvertieren selbst und erzeugen "
+        "description": "Quell-IFC (IFC4 oder IFC2X3; ArchiCAD liefert IFC2X3). "
+                       "Eigener Pfad — wir konvertieren selbst und erzeugen "
                        "glTF-konformes Y-up. Kommt üblicherweise aus kosmodraw_export_ifc.",
     },
     "glb_path": {
