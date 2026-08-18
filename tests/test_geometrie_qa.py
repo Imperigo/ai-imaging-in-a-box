@@ -368,12 +368,36 @@ def test_arithmetisches_mittel_haette_die_halluzination_durchgelassen():
     assert ergebnis["score"] < arithmetisch / 2.0
 
 
-def test_halluzination_wird_als_muster_benannt():
-    """Der Befund steht im Klartext, nicht nur in der Zahl."""
+def test_das_muster_wird_benannt_und_nicht_gedeutet():
+    """Der Befund steht im Klartext — mit **beiden** Ursachen, nicht mit einer.
+
+    Bis zum 18.08.2026 nannte diese Warnung genau eine Ursache: eine erfundene Kubatur.
+    Die Deutung war zu sicher. `auf-20260818-10` hat dasselbe Muster an einem Bild
+    gemessen, das die Geometrie **exakt zeigt** — |spearman| 0.990 bei geom_iou 0.261 —,
+    und die Ursache lag in der Silhouettenauswahl, nicht im Bild.
+
+    *Eine Warnung, die eine von zwei möglichen Ursachen als die einzige ausgibt, schickt
+    jemanden an die falsche Stelle. Das kostet mehr als gar keine Warnung.*
+    """
     ergebnis = geometrie_score(SOLL, IST_HALLUZINIERT)
-    assert any("erfundenen Kubatur" in w for w in ergebnis["warnungen"])
+    text = " ".join(ergebnis["warnungen"])
+    assert "Innen stimmig, aussen daneben" in text
+    assert "erfundene Kubatur" in text            # Ursache (a)
+    assert "Silhouettenauswahl" in text           # Ursache (b)
+    assert "trennen" in text                      # und die Metrik kann es nicht
     assert abs(ergebnis["spearman"]) >= DIAGNOSE_RHO_HOCH
     assert ergebnis["geom_iou"] <= DIAGNOSE_IOU_NIEDRIG
+
+
+def test_die_warnung_sagt_woran_die_beiden_ursachen_zu_unterscheiden_sind():
+    """Ein Verdacht kostet jedes Mal einen Menschen, der nachsieht — eine Diagnose sagt ihm, wo.
+
+    Wenn die Metrik zwei Ursachen nicht trennen kann, muss sie wenigstens sagen, woran es
+    ein Mensch kann: am Ort der überzähligen Punkte im Bild.
+    """
+    text = " ".join(geometrie_score(SOLL, IST_HALLUZINIERT)["warnungen"])
+    assert "Bildecke" in text
+    assert "34 %" in text                          # die gemessene Zahl, nicht eine runde
 
 
 def test_invertierte_tiefe_wird_aufgefangen():
@@ -508,7 +532,7 @@ def test_gate_haelt_die_halluzination_auf():
     urteil = geometrie_gate(SOLL, IST_HALLUZINIERT)
     assert urteil["bestanden"] is False
     assert urteil["score"] < SCHWELLE_GEOMETRIE
-    assert "erfundenen Kubatur" in " ".join(urteil["warnungen"])
+    assert "Innen stimmig, aussen daneben" in " ".join(urteil["warnungen"])
 
 
 def test_die_schwelle_trennt_beide_faelle():

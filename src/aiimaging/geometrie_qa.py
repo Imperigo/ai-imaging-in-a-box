@@ -125,6 +125,27 @@ from collections.abc import Sequence
 # Sie zu erhöhen, bevor der Schätzer in der Messung steckt, hiesse eine unbegründete Zahl
 # durch eine schwächer unbegründete zu ersetzen. **0.65 ist nicht verteidigt, sondern
 # beibehalten** — der Unterschied gehört in die Arbeit und darum auch hierher.
+#
+# STAND NACH DER ZWEITEN HÄLFTE (18.08.2026, `auf-20260818-10`, `docs/HOMESTATION-
+# 2026-08-18-SCHWELLEN.md`) — der Schätzer steckt jetzt in der Messung, und die
+# befürchtete Falle ist eingetreten, nur an anderer Stelle als vermutet:
+#
+#   * **Der Schätzer ist es nicht.** An Blenders eigenem Beauty-Pass gemessen — gleiche
+#     Szene, gleiche Kamera, kein Bildmodell dazwischen — liegt seine Tiefenordnung bei
+#     |ρ| = 0.990. Nahezu fehlerfrei.
+#   * **`geom_iou` deckelt bei 0.261**, und zwar bei genau diesem perfekten Bild. Damit
+#     liegt der höchstmögliche Score der ganzen Kette bei **0.509**. 0.65 ist im Betrieb
+#     also **unerreichbar** — das Gate sperrt derzeit ALLES, auch das Treue.
+#   * **Die Nullprobe durch die ganze Kette liefert 0.033** (|ρ| = 0.005). Von der
+#     Tiefenordnung bleibt nach dem Bildmodell nichts übrig; 22 von 24 GESTÖRTEN Zeilen
+#     schneiden besser ab als die ungestörte Geometrie.
+#
+# **Die Zahl wird trotzdem nicht gesenkt.** Eine Schwelle an eine kaputte Kette
+# anzupassen hiesse, das Gate an das anzupassen, wogegen es schützen soll. Solange bei
+# ungestörter Geometrie 0.033 herauskommt, misst kein Wert etwas — die Schwelle ist
+# derzeit weder das Problem noch die Lösung. Zwei Dinge müssen vorher stimmen: die
+# Silhouettenauswahl (siehe DIAGNOSE_* unten) und ein Backbone, das die Geometrie
+# überhaupt hält (`qwen-image-edit-2511` ist kein ControlNet, `auf-20260818-09`).
 SCHWELLE_GEOMETRIE = 0.65
 
 # Wie viele Punkte die gemeinsame Silhouette mindestens tragen muss, damit ein Score
@@ -155,8 +176,26 @@ HINTERGRUND_SCHWELLE_M = 1.0e6
 #: wiederfindet, soll ihr ansehen, wie sie entstanden ist — und an welcher Fassung.
 METHODE = "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1"
 
-# Reine Diagnose-Schwellen. Sie gehen NICHT in den Score ein; sie benennen nur das Muster
-# „innen stimmig, aber am falschen Ort“ — die Signatur einer erfundenen Kubatur.
+# Reine Diagnose-Schwellen. Sie gehen NICHT in den Score ein; sie benennen ein Muster:
+# hohe Rangkorrelation bei kaum überlappenden Silhouetten.
+#
+# ACHTUNG, GEÄNDERTE DEUTUNG (18.08.2026): Bis hierher galt dieses Muster als Signatur
+# einer **erfundenen Kubatur** — „innen stimmig, aber am falschen Ort". Diese Deutung war
+# zu sicher. `auf-20260818-10` hat genau dieses Muster an einem Bild gemessen, das die
+# Geometrie **exakt zeigt** (Blenders eigener Beauty-Pass): |ρ| = 0.990 bei
+# geom_iou = 0.261. Da war nichts erfunden.
+#
+# Die Ursache lag in der **Silhouettenauswahl**: Ein monokularer Schätzer, auf Naturfotos
+# trainiert, legt in eine flache gleichmässige Fläche eine Bodenebene hinein, die zur
+# Bildecke hin auf die Kamera zuläuft. Ein Körper vor gleichmässigem Grund ist genau die
+# Situation, in der dieser Vorgriff greift. Nachgemessen: nur **34 %** der ausgewählten
+# Punkte lagen auf dem Bauwerk, der Rest bildete einen Keil in der oberen rechten Bildecke
+# — im leeren Hintergrund —, und entsprechend fiel rund ein Drittel des echten Baukörpers
+# aus der Auswahl heraus.
+#
+# Die Warnung nennt darum jetzt BEIDE Ursachen und sagt, woran sie zu unterscheiden sind.
+# Eine Warnung, die eine von zwei möglichen Ursachen als die einzige ausgibt, schickt
+# jemanden an die falsche Stelle — und das kostet mehr als gar keine Warnung.
 DIAGNOSE_RHO_HOCH = 0.80
 DIAGNOSE_IOU_NIEDRIG = 0.30
 
@@ -530,11 +569,22 @@ def geometrie_score(soll: Sequence[float], ist: Sequence[float],
 
     if score is not None and abs(rho) >= DIAGNOSE_RHO_HOCH and geom_iou <= DIAGNOSE_IOU_NIEDRIG:
         warnungen.append(
-            f"Muster einer erfundenen Kubatur: Die Tiefenordnung stimmt im Überlappungs"
+            f"Innen stimmig, aussen daneben: Die Tiefenordnung stimmt im Überlappungs"
             f"bereich gut (|spearman| {abs(rho):.3f}), die Silhouetten decken sich aber "
-            f"kaum (geom_iou {geom_iou:.3f}). Ein in sich stimmiges Gebäude an der "
-            f"falschen Stelle sieht genau so aus. Ein Mittelwert liesse den ersten Wert "
-            f"den zweiten ausgleichen — das geometrische Mittel tut es nicht."
+            f"kaum (geom_iou {geom_iou:.3f}). Dafür gibt es ZWEI Ursachen, und diese "
+            f"Metrik kann sie nicht trennen:\n"
+            f"  (a) Eine erfundene Kubatur — ein in sich stimmiges Gebäude an der "
+            f"falschen Stelle sieht genau so aus.\n"
+            f"  (b) Die Silhouettenauswahl der IST-Karte. Ein monokularer Schätzer legt "
+            f"in eine leere, gleichmässige Fläche eine Bodenebene hinein, die zur "
+            f"Bildecke hin auf die Kamera zuläuft; diese Scheingeometrie verdrängt "
+            f"echten Baukörper aus der Auswahl. Am 18.08.2026 an einem Bild gemessen, "
+            f"das die Geometrie EXAKT zeigte: |spearman| 0.990 bei geom_iou 0.261, nur "
+            f"34 % der ausgewählten Punkte auf dem Bauwerk.\n"
+            f"Unterscheiden lässt sich das nur am Bild: Liegt der überzählige Teil der "
+            f"Ist-Silhouette als zusammenhängender Keil in einer Bildecke, ist es (b). "
+            f"Ein Mittelwert liesse den guten Wert den schlechten ausgleichen — das "
+            f"geometrische Mittel tut es nicht."
         )
 
     return {
