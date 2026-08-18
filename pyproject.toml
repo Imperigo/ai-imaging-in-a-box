@@ -53,7 +53,15 @@ dev = ["pytest"]
 # die PyPI-Metadaten von mcp 2.0.0) und damit unter Regel 1 zulaessig, zieht aber 19
 # transitive Abhaengigkeiten nach, die NICHT einzeln geprueft sind. Darum optional:
 # Der Kern laeuft ohne, nur die Cockpit-Anbindung nicht.
-mcp = ["mcp>=2.0"]
+#
+# OBERGRENZE <2, gemessen auf der HomeStation am 18.08.2026: `mcp_server.py` ist gegen
+# die 1.x-Dekoratorschnittstelle geschrieben (`@server.list_tools()`), und mcp 2.0.0 hat
+# `list_tools`/`call_tool` von `Server` entfernt. Der Server startet dort gar nicht:
+#     AttributeError: 'Server' object has no attribute 'list_tools'
+# Die Zeile stand vorher auf `mcp>=2.0` und verlangte damit genau die Fassung, unter der
+# der Code bricht — die Lizenzpruefung galt der 2.0.0, der Code nie. Wer die Obergrenze
+# hebt, muss `baue_server()` auf die neue Schnittstelle umschreiben.
+mcp = ["mcp>=1.27,<2"]
 
 # src-Layout: der importierbare Code liegt unter src/, damit Tests gegen das
 # installierte Paket laufen und nicht versehentlich gegen das Arbeitsverzeichnis.

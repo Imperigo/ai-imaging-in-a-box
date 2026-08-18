@@ -23,10 +23,11 @@ from __future__ import annotations
 
 import ast
 import math
-import sys
 from pathlib import Path
 
 import pytest
+
+from conftest import nachgeladene_module
 
 from aiimaging.stil_qa import (
     AGG_MAX,
@@ -483,10 +484,24 @@ def test_kaputter_einbetter_wird_als_solcher_gemeldet():
 # --------------------------------------------------------------------------------------
 
 def test_stil_qa_laedt_keine_schweren_bibliotheken():
-    """``import aiimaging.stil_qa`` zieht weder ``torch`` noch ``numpy`` nach."""
-    import aiimaging.stil_qa  # noqa: F401
+    """``import aiimaging.stil_qa`` zieht weder ``torch`` noch ``numpy`` nach.
 
-    schwer = [m for m in ("torch", "numpy", "transformers") if m in sys.modules]
+    Gemessen in einem **frischen Interpreter** (:func:`conftest.nachgeladene_module`). Das
+    ``sys.modules`` des Testlaufs taugt dafür nicht: Es zeigt, was der Lauf bis hierhin
+    geladen hat, nicht was dieser Import lädt. Wo der GPU-Stack installiert ist, hat eine
+    frühere Testdatei ``torch`` längst geholt — die Prüfung wäre rot, obwohl an
+    ``stil_qa.py`` nichts falsch ist; wo er fehlt, könnte sie nie rot werden. Ein Test,
+    der nur in einer Umgebung gilt, misst die Umgebung und nicht den Code.
+
+    ``math`` steht als Zeuge mit in der Liste: Es ist der einzige Import von
+    ``stil_qa.py``, und ein nackter Interpreter hat es nicht. Meldet die Sonde den Zeugen
+    nicht, schaut sie ins Leere — und ihr Schweigen zu ``torch`` wäre keine Aussage.
+    """
+    geladen = nachgeladene_module(
+        "aiimaging.stil_qa", ("torch", "numpy", "transformers", "math"))
+    assert "math" in geladen, "Die Sonde sieht nicht einmal den Zeugen — sie misst nichts"
+
+    schwer = [m for m in geladen if m != "math"]
     assert not schwer, f"{schwer} wurde durch die Stil-QA geladen"
 
 

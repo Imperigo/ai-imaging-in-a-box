@@ -1,7 +1,9 @@
 """Die Bildmodell-Stufe ohne Bildmodell — was hier belegt wird, und was nicht.
 
-Auf diesem Rechner gibt es keine GPU, kein ``torch``, keine Gewichte. Diese Datei prüft
-deshalb genau das, was auch ohne all das eine Aussage hat: die **Verdrahtung**.
+Diese Datei läuft ohne GPU, ohne ``torch`` und ohne Gewichte — und sie prüft deshalb
+genau das, was auch ohne all das eine Aussage hat: die **Verdrahtung**. Sie muss dabei
+dasselbe sagen, wo der GPU-Stack installiert ist (HomeStation) wie dort, wo er fehlt
+(Entwicklungscontainer); kein Test hier darf sein Urteil aus der Umgebung beziehen.
 
 * Der Lauf selbst — Prüfung, Backbone-Auflösung, Aufruf der Naht, Aufbau des
   Ergebnisses — wird mit einer :class:`Attrappe` vollständig durchgespielt. Dieselbe
@@ -11,7 +13,10 @@ deshalb genau das, was auch ohne all das eine Aussage hat: die **Verdrahtung**.
   in der Registry steht — sonst prüfte der Test nur, dass ein Tippfehler abgelehnt wird,
   und wäre vakuös.
 * Die Prozessgrenze zum GPU-Stack: ``torch`` und ``diffusers`` dürfen nach
-  ``import aiimaging.render`` nicht in ``sys.modules`` liegen.
+  ``import aiimaging.render`` nicht in ``sys.modules`` liegen — gemessen in einem
+  frischen Interpreter (``nachgeladene_module`` in ``conftest.py``), weil das
+  ``sys.modules`` des Testlaufs die Vorgeschichte des Laufs zeigt und nicht die Folgen
+  dieses einen Imports.
 
 Was diese Datei ausdrücklich **nicht** belegt: dass ein echter Render funktioniert, dass
 die ControlNet-Verdrahtung in ``_pipeline_adapter`` trägt, dass ein Bild der Geometrie
@@ -22,13 +27,11 @@ Alle Bilddateien sind synthetische Platzhalter (Regel 3).
 from __future__ import annotations
 
 import ast
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
-from conftest import SRC
+from conftest import nachgeladene_module
 
 from aiimaging import auftrag as auftrag_modul
 from aiimaging import backbone, render
@@ -606,20 +609,23 @@ def test_lade_modell_meldet_unbekannten_backbone(tmp_path):
         render.lade_modell("gibt-es-nicht", tmp_path)
 
 
-def test_lade_modell_scheitert_erst_am_fehlenden_torch(tmp_path):
+def test_lade_modell_scheitert_erst_am_fehlenden_torch(tmp_path, ohne_gpu_stack):
     """Sind Lizenz, Naht und Gewichte in Ordnung, bleibt genau ein Hindernis: der GPU-Stack.
 
-    Hier gibt es keinen. Der Test belegt damit die **Reihenfolge** der Prüfungen — und
-    zugleich, dass ohne ``torch`` sauber und erklärend abgebrochen wird, statt mit einem
-    ``ImportError`` aus der Tiefe.
+    Der Test belegt damit die **Reihenfolge** der Prüfungen — und zugleich, dass ohne
+    ``torch`` sauber und erklärend abgebrochen wird, statt mit einem ``ImportError`` aus
+    der Tiefe.
+
+    Das Fehlen des Stacks wird **hergestellt** (``ohne_gpu_stack`` in ``conftest.py``) und
+    nicht vorausgesetzt. Früher stand hier ein ``skip``, falls ``torch`` in
+    ``sys.modules`` lag: Damit prüfte der Test dort, wo der Stack installiert ist, gar
+    nichts mehr — und wo er fehlt, war er ohne Zutun wahr. Der Riegel macht die Aussage in
+    beiden Umgebungen zu einer Aussage über ``lade_modell``.
     """
     wurzel = tmp_path / "qwen"
     wurzel.mkdir()
     for eintrag in backbone.hole(backbone.VORGABE_BACKBONE).dateien:
         (wurzel / eintrag).mkdir()
-
-    if "torch" in sys.modules:                      # pragma: no cover
-        pytest.skip("torch ist installiert — dieser Test prüft den Fall ohne GPU-Stack")
 
     with pytest.raises(RenderError, match="torch/diffusers"):
         render.lade_modell(backbone.VORGABE_BACKBONE, wurzel)
@@ -660,32 +666,33 @@ def test_gegenprobe_torch_und_diffusers_werden_sehr_wohl_importiert():
 
 
 def test_import_des_moduls_zieht_keinen_gpu_stack_nach():
-    """``import aiimaging.render`` muss auf einem Rechner ohne GPU-Stack durchlaufen."""
-    import aiimaging.render  # noqa: F401
+    """``import aiimaging.render`` muss auf einem Rechner ohne GPU-Stack durchlaufen.
 
-    geladen = sorted(m for m in ("torch", "diffusers") if m in sys.modules)
+    Gemessen wird in einem **frischen Interpreter** (:func:`conftest.nachgeladene_module`),
+    nicht am ``sys.modules`` dieses Testlaufs. Der Grund ist ein Messfehler, der lange
+    unsichtbar war: Wo der GPU-Stack installiert ist, hat ihn irgendein früherer Test
+    längst geladen — die Prüfung schlug dort fehl, obwohl an ``render.py`` nichts falsch
+    war; und wo er gar nicht installiert ist, konnte sie nie fehlschlagen. Ein Test, der
+    nur in einer Umgebung gilt, misst die Umgebung und nicht den Code.
+
+    Im eigenen Prozess bringt genau dieser eine Import mit, was danach in ``sys.modules``
+    steht. Damit hält der Test auch dort, wo die Zusage etwas wert ist: auf der
+    HomeStation, wo ``torch`` und ``diffusers`` greifbar wären.
+    """
+    geladen = nachgeladene_module("aiimaging.render", ("torch", "diffusers"))
     assert not geladen, f"{geladen} liegt nach dem Import in sys.modules"
 
 
-def test_frischer_interpreter_bleibt_frei_vom_gpu_stack():
-    """Gegenprobe in einem sauberen Prozess — unabhängig davon, was pytest sonst lud.
+def test_gegenprobe_die_sonde_sieht_ein_wirklich_geladenes_modul():
+    """Eine Sonde, die nie etwas meldet, bewacht nichts — dieselbe Sorge wie beim Scanner.
 
-    Der Test ist auf diesem Rechner schwach (es gibt gar kein ``torch``); er wird stark,
-    sobald jemand ihn auf der HomeStation laufen lässt, wo beides installiert ist. Genau
-    dort soll die Grenze halten.
+    ``render.py`` importiert ``pathlib`` auf Modulebene; in einem nackten Interpreter
+    liegt es nicht. Meldet die Sonde es nach dem Import, misst sie tatsächlich die Folgen
+    des Imports — und ihr Schweigen zu ``torch``/``diffusers`` oben ist eine Aussage und
+    kein Nichts.
     """
-    programm = (
-        "import sys\n"
-        "import aiimaging.render\n"
-        "print(','.join(m for m in ('torch', 'diffusers') if m in sys.modules))\n"
-    )
-    ergebnis = subprocess.run(
-        [sys.executable, "-c", programm],
-        capture_output=True, text=True, timeout=120,
-        env={"PATH": "/usr/bin:/bin", "PYTHONPATH": str(SRC), "PYTHONDONTWRITEBYTECODE": "1"},
-    )
-    assert ergebnis.returncode == 0, ergebnis.stderr
-    assert ergebnis.stdout.strip() == "", f"nachgeladen: {ergebnis.stdout.strip()}"
+    assert nachgeladene_module("aiimaging.render", ("pathlib",)) == ["pathlib"]
+    assert nachgeladene_module("sys", ("pathlib",)) == []
 
 
 def test_kein_comfyui_im_modul():

@@ -18,8 +18,6 @@ from __future__ import annotations
 
 import ast
 import math
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -27,7 +25,7 @@ import pytest
 from aiimaging import auftrag, geometrie_qa
 from aiimaging import tiefenschaetzer as ts
 from aiimaging.lizenzquelle import QUELLE_SEKUNDAER, QUELLE_UNGEPRUEFT, ist_belegt
-from conftest import SRC
+from conftest import nachgeladene_module
 
 #: Die drei Grössen, die unter Regel 1 ausscheiden. Als Konstante, damit ein späterer
 #: Umbau der Registry nicht stillschweigend eine davon fallen lässt.
@@ -689,11 +687,14 @@ def test_lade_modell_scheitert_an_regel_1_und_nicht_an_fehlenden_gewichten(name,
         ts.lade_modell(name, tmp_path)
 
 
-def test_lade_modell_scheitert_erst_am_fehlenden_gpu_stack(tmp_path):
-    """Ist die Lizenz in Ordnung, bleibt hier genau ein Hindernis — und es wird erklärt."""
-    if "torch" in sys.modules:                       # pragma: no cover
-        pytest.skip("torch ist installiert — dieser Test prüft den Fall ohne GPU-Stack")
+def test_lade_modell_scheitert_erst_am_fehlenden_gpu_stack(tmp_path, ohne_gpu_stack):
+    """Ist die Lizenz in Ordnung, bleibt hier genau ein Hindernis — und es wird erklärt.
 
+    Das Fehlen des Stacks stellt ``ohne_gpu_stack`` (``conftest.py``) her, statt es
+    vorauszusetzen. Vorher übersprang sich der Test selbst, sobald ``torch`` in
+    ``sys.modules`` lag — also genau auf der Maschine, auf der ``lade_modell`` wirklich
+    gerufen wird. Ein Test, der sich dort wegduckt, wo es ernst wird, belegt nichts.
+    """
     with pytest.raises(ts.TiefenschaetzerError, match="torch/transformers"):
         ts.lade_modell(ts.VORGABE_TIEFENSCHAETZER, tmp_path)
 
@@ -772,31 +773,29 @@ def test_gegenprobe_torch_und_transformers_werden_sehr_wohl_importiert():
 
 
 def test_import_des_moduls_zieht_keinen_gpu_stack_nach():
-    import aiimaging.tiefenschaetzer  # noqa: F401
+    """``import aiimaging.tiefenschaetzer`` darf ``torch``/``transformers`` nicht nachziehen.
 
-    geladen = sorted(m for m in ("torch", "transformers") if m in sys.modules)
+    Gemessen in einem **frischen Interpreter** (:func:`conftest.nachgeladene_module`) und
+    nicht am ``sys.modules`` dieses Testlaufs: Dort steht, was der bisherige Lauf geladen
+    hat, nicht was dieser Import lädt. Wo der GPU-Stack installiert ist, hat ihn ein
+    früherer Test längst gezogen — die Prüfung wäre rot, ohne dass am Modul etwas falsch
+    wäre; wo er fehlt, könnte sie nie rot werden. Ein Test, der nur in einer Umgebung
+    gilt, misst die Umgebung und nicht den Code.
+    """
+    geladen = nachgeladene_module("aiimaging.tiefenschaetzer", ("torch", "transformers"))
     assert not geladen, f"{geladen} liegt nach dem Import in sys.modules"
 
 
-def test_frischer_interpreter_bleibt_frei_vom_gpu_stack():
-    """Gegenprobe in einem sauberen Prozess — unabhängig davon, was pytest sonst lud.
+def test_gegenprobe_die_sonde_sieht_ein_wirklich_geladenes_modul():
+    """Wie ``test_scanner_selbstprobe``, nur für die Sonde: Wer nie etwas findet, bewacht nichts.
 
-    Auf diesem Rechner ist der Test schwach (es gibt gar kein ``torch``); er wird stark,
-    sobald jemand ihn auf der HomeStation laufen lässt, wo beides installiert ist. Genau
-    dort soll die Grenze halten.
+    ``tiefenschaetzer.py`` importiert ``pathlib`` auf Modulebene, ein nackter Interpreter
+    hat es nicht. Meldet die Sonde es nach diesem Import — und nach ``import sys`` eben
+    nicht —, dann misst sie die Folgen des Imports, und ihr Schweigen zum GPU-Stack oben
+    ist eine Aussage.
     """
-    programm = (
-        "import sys\n"
-        "import aiimaging.tiefenschaetzer\n"
-        "print(','.join(m for m in ('torch', 'transformers') if m in sys.modules))\n"
-    )
-    ergebnis = subprocess.run(
-        [sys.executable, "-c", programm],
-        capture_output=True, text=True, timeout=120,
-        env={"PATH": "/usr/bin:/bin", "PYTHONPATH": str(SRC), "PYTHONDONTWRITEBYTECODE": "1"},
-    )
-    assert ergebnis.returncode == 0, ergebnis.stderr
-    assert ergebnis.stdout.strip() == "", f"nachgeladen: {ergebnis.stdout.strip()}"
+    assert nachgeladene_module("aiimaging.tiefenschaetzer", ("pathlib",)) == ["pathlib"]
+    assert nachgeladene_module("sys", ("pathlib",)) == []
 
 
 def test_kein_bpy_und_kein_ifcopenshell():
