@@ -413,8 +413,94 @@ def lade_modell(backbone_name: str, modell_wurzel=None):
         ) from fehler
 
     pipeline = DiffusionPipeline.from_pretrained(str(wurzel), torch_dtype=torch.bfloat16)
-    pipeline.to("cuda" if torch.cuda.is_available() else "cpu")
+    _lege_auf_geraet(pipeline, wurzel, torch)
     return _pipeline_adapter(pipeline, eintrag, torch)
+
+
+#: Vielfaches der Gewichtsgrösse, das frei sein muss, damit das ganze Modell auf der Karte
+#: bleiben darf. Gemessen auf der HomeStation (`auf-20260818-09`): Qwen-Image-Edit-2511 in
+#: bfloat16 belegt 29,57 GiB auf einer Karte mit 31,36 GiB nutzbar — voll geladen, und dann
+#: scheitert die Bilderzeugung an einer Anforderung von **18 MiB**. Die Gewichte passen also,
+#: die Aktivierungen nicht mehr. Der Zuschlag deckt genau diese Differenz ab.
+GERAETE_ZUSCHLAG = 1.25
+
+
+def _gewichte_byte(wurzel) -> tuple[int, int]:
+    """Wie gross die Gewichte auf der Platte sind — insgesamt und als grösster Einzelteil.
+
+    Der zweite Wert ist der entscheidende: Komponentenweises Auslagern hilft nur, solange
+    die **grösste einzelne** Komponente noch auf die Karte passt. Bei
+    ``Qwen-Image-Edit-2511`` ist der Transformer allein 38 GiB — mehr als eine
+    32-GiB-Karte hat. Die Summe hätte das nicht verraten.
+
+    Returns:
+        ``(summe, groesster_teil)`` in Byte; ``(0, 0)``, wenn sich nichts lesen lässt.
+    """
+    try:
+        wurzel = Path(wurzel)
+        summe = 0
+        groesster = 0
+        for teil in wurzel.iterdir():
+            if teil.name.startswith("."):
+                continue
+            gross = (sum(p.stat().st_size for p in teil.rglob("*") if p.is_file())
+                     if teil.is_dir() else teil.stat().st_size)
+            summe += gross
+            groesster = max(groesster, gross)
+        return summe, groesster
+    except OSError:
+        return 0, 0
+
+
+def _lege_auf_geraet(pipeline, wurzel, torch) -> str:
+    """Modell auf die Karte legen — ganz, komponentenweise, schichtweise, oder gar nicht.
+
+    Entschieden wird an dem, was die Karte **jetzt** frei hat, nicht an ihrem Namen und
+    nicht an einer Fassungsnummer: ``torch.cuda.mem_get_info`` fragt den Treiber. Dieselbe
+    Karte kann je nach dem, was sonst darauf liegt (ein Sprachmodell etwa), verschiedene
+    Antworten verdienen. Ein Schwellenwert nach Kartenmodell wäre schon falsch, sobald
+    jemand daneben ein zweites Modell lädt.
+
+    Die drei Stufen kosten aufsteigend Zeit und retten aufsteigend mehr:
+
+    ============================  =====================================================
+    ``cuda``                      alles resident — schnellster Weg
+    ``cuda+auslagerung``          je eine Komponente resident (``model_cpu_offload``)
+    ``cuda+schichtauslagerung``   je ein Untermodul resident (``sequential_cpu_offload``)
+    ============================  =====================================================
+
+    Belegt auf der HomeStation (`auf-20260818-09`): Auf der RTX 5090 (31,4 GiB nutzbar)
+    scheitert Stufe 1 an einer Anforderung von 18 MiB bei 29,57 GiB belegt, und Stufe 2
+    scheitert ebenfalls — weil der Transformer mit 38 GiB grösser ist als die Karte.
+    Erst Stufe 3 trägt. Wer nur die Summe prüft, wählt Stufe 2 und scheitert erneut.
+
+    Returns:
+        Welcher Weg genommen wurde.
+    """
+    if not torch.cuda.is_available():
+        pipeline.to("cpu")
+        return "cpu"
+
+    frei, _gesamt = torch.cuda.mem_get_info()
+    summe, groesster = _gewichte_byte(wurzel)
+
+    if not summe:                                  # nichts messbar: wie bisher verfahren
+        pipeline.to("cuda")
+        return "cuda"
+
+    if frei >= summe * GERAETE_ZUSCHLAG:
+        pipeline.to("cuda")
+        return "cuda"
+
+    if frei >= groesster * GERAETE_ZUSCHLAG:
+        # diffusers holt jede Komponente einzeln auf die Karte und legt sie danach zurück.
+        pipeline.enable_model_cpu_offload()
+        return "cuda+auslagerung"
+
+    # Selbst die grösste Komponente passt nicht am Stück. Dann wandern die Untermodule
+    # einzeln — deutlich langsamer, aber der Lauf kommt durch. Ein Abbruch kostet ihn ganz.
+    pipeline.enable_sequential_cpu_offload()
+    return "cuda+schichtauslagerung"
 
 
 #: Orte, an denen eine Einzeldatei-Ablage vermutet wird, wenn das diffusers-Verzeichnis
@@ -510,6 +596,59 @@ def _hole_oder_wirf(backbone_name: str):
         raise RenderError(str(fehler)) from fehler
 
 
+def _generator_geraet(pipeline, torch) -> str:
+    """Auf welchem Gerät der Zufallsgenerator sitzt.
+
+    Nicht ``pipeline.device``: Bei schichtweiser Auslagerung liegt kein Modulteil mehr
+    fest auf der Karte, und diffusers meldet dann ``meta`` — ein Platzhalter ohne
+    Speicher. ``torch.Generator(device="meta")`` bricht mit *„META device type not an
+    accelerator"* ab, und zwar erst beim Aufruf, nicht beim Laden (belegt auf der
+    HomeStation, `auf-20260818-09`).
+
+    Der Seed muss aber genau dann tragen, wenn ausgelagert wird — sonst ist die
+    Wiederholvorschrift ausgerechnet auf der kleinen Karte keine mehr. Darum wird ein
+    **echtes** Gerät gewählt, und ``cpu`` ist dabei der verlässliche Boden: Ein
+    CPU-Generator funktioniert in jeder Auslagerungsstufe und liefert überall dieselbe
+    Folge.
+    """
+    geraet = getattr(pipeline, "device", None)
+    art = getattr(geraet, "type", None)
+    if art in (None, "meta"):
+        return "cuda" if torch.cuda.is_available() else "cpu"
+    return str(geraet)
+
+
+def _vertraegliche_argumente(pipeline, argumente: dict) -> tuple[dict, list[str]]:
+    """Nur übergeben, was die Pipeline auch entgegennimmt.
+
+    Gelesen wird die Signatur von ``pipeline.__call__`` — also das, was die geladene
+    Pipeline **kann**, nicht das, was ihr Name vermuten lässt. Nimmt sie ``**kwargs``
+    entgegen, lässt sich nichts ausschliessen, und es geht alles durch.
+
+    Warum überhaupt filtern statt einfach zu übergeben: Ein ``TypeError`` mitten im Lauf
+    kostet den ganzen Auftrag, und die Meldung nennt immer nur das **erste** unbekannte
+    Argument. Wer drei falsche Argumente hat, erfährt das in drei Läufen.
+
+    Returns:
+        ``(genommen, verworfen)`` — die übergebbaren Argumente und die Namen der
+        weggelassenen, sortiert.
+    """
+    import inspect
+
+    try:
+        parameter = inspect.signature(pipeline.__call__).parameters
+    except (TypeError, ValueError):
+        # Eine Pipeline ohne lesbare Signatur ist kein Grund, den Lauf abzubrechen —
+        # dann gilt wieder „alles durchreichen", wie vor dieser Weiche.
+        return dict(argumente), []
+
+    if any(p.kind is inspect.Parameter.VAR_KEYWORD for p in parameter.values()):
+        return dict(argumente), []
+
+    genommen = {k: v for k, v in argumente.items() if k in parameter}
+    return genommen, sorted(set(argumente) - set(genommen))
+
+
 def _pipeline_adapter(pipeline, eintrag, torch):
     """Aus einer ``diffusers``-Pipeline ein Modell im Sinne dieses Moduls machen.
 
@@ -521,15 +660,26 @@ def _pipeline_adapter(pipeline, eintrag, torch):
 
     Die genaue Verdrahtung des ControlNet unterscheidet sich je Backbone-Familie
     (Qwen, SDXL, SD3.5 nehmen die Tiefenkarte an verschiedenen Argumenten entgegen).
-    Diese erste Fassung reicht die Tiefenkarte als ``control_image`` durch; ob das für
-    jede Familie trägt, ist auf der HomeStation zu belegen und gehört dann hierher — es
-    ist keine Aussage, die dieser Rechner treffen kann.
+    Welche Argumente eine Pipeline annimmt, wird darum **an ihr selbst abgelesen**
+    (:func:`_vertraegliche_argumente`) und nicht aus ihrem Namen oder ihrer Fassung
+    geschlossen. Eine Pipeline ohne ``control_image`` bekommt die Tiefenkarte als
+    ``image``; was sie gar nicht kennt, wird nicht übergeben, sondern **gemeldet**.
+
+    Belegt auf der HomeStation (`auf-20260818-09`, 18.08.2026): ``Qwen-Image-Edit-2511``
+    ist über ``QwenImageEditPlusPipeline`` **kein ControlNet**. Ihr ``__call__`` kennt
+    weder ``control_image`` noch ``controlnet_conditioning_scale`` noch ``strength``.
+    Die frühere Fassung reichte alle drei durch und scheiterte an einem ``TypeError``;
+    hätte diffusers sie bloss verschluckt, wären ``controlnet_staerke`` und ``denoise``
+    stillschweigend wirkungslos gewesen — und eine Vergleichsreihe über die
+    ControlNet-Stärke hätte dreimal dasselbe Bild ergeben und wie ein Befund ausgesehen.
     """
-    def modell(parameter: dict) -> str:
+    def modell(parameter: dict) -> dict:
         from PIL import Image           # Pillow (MIT-CMU) — ebenfalls nur hier
 
         tiefe = Image.open(parameter["depth_png"]).convert("RGB")
-        generator = torch.Generator(device=pipeline.device).manual_seed(parameter["seed"])
+        generator = torch.Generator(device=_generator_geraet(pipeline, torch)).manual_seed(
+            parameter["seed"]
+        )
 
         argumente = {
             "prompt": parameter["prompt"],
@@ -538,17 +688,56 @@ def _pipeline_adapter(pipeline, eintrag, torch):
             "controlnet_conditioning_scale": parameter["controlnet_staerke"],
             "num_inference_steps": parameter["schritte"],
             "generator": generator,
+            # Das Bild muss die Tiefenkarte treffen, sonst ist es nicht bewertbar:
+            # `geometrie_qa` vergleicht Soll und Ist **indexweise** und lehnt bei
+            # ungleicher Länge ab — zu Recht, denn Zuschneiden wäre eine stille
+            # Reparatur. Ohne Vorgabe wählt die Pipeline ihre Lieblingsgrösse; auf der
+            # HomeStation kam aus einer 512er Tiefenkarte ein 1024er Bild, und die
+            # Bewertung fiel nach 184 s aus (`auf-20260818-09`). Pipelines ohne
+            # `height`/`width` verlieren die Angabe unten wieder.
+            "height": tiefe.height,
+            "width": tiefe.width,
         }
         if parameter["modus"] == MODUS_IMAGE_EDIT:
             argumente["image"] = Image.open(parameter["beauty_png"]).convert("RGB")
             argumente["strength"] = parameter["denoise"]
 
-        bild = pipeline(**argumente).images[0]
+        genommen, verworfen = _vertraegliche_argumente(pipeline, argumente)
+        hinweise = []
+
+        if "control_image" in verworfen:
+            # Ohne eigenen Steuereingang ist die Tiefenkarte das Bild selbst — sie ist
+            # der Geometrieträger, und Geometrietreue ist der Zweck des Ganzen. Ein
+            # Beauty-Pass, der hier vorlag, tritt dahinter zurück: Es gibt nur einen
+            # Bildeingang, und die Geometrie hat ihn nötiger als die Farbe.
+            if "image" in genommen:
+                hinweise.append(
+                    "Diese Pipeline hat keinen 'control_image'-Eingang. Die Tiefenkarte "
+                    "wurde als 'image' übergeben und ersetzt dabei den Beauty-Pass — die "
+                    "Konditionierung ist damit Bildbearbeitung, nicht ControlNet."
+                )
+            genommen["image"] = tiefe
+
+        for name, wert in (("controlnet_conditioning_scale", parameter["controlnet_staerke"]),
+                           ("strength", parameter["denoise"])):
+            if name in verworfen:
+                hinweise.append(
+                    f"'{name}' ({wert}) kennt diese Pipeline nicht und wurde nicht "
+                    f"übergeben. Der Wert ist wirkungslos — eine Vergleichsreihe darüber "
+                    f"würde identische Bilder liefern."
+                )
+
+        uebrig = [n for n in verworfen
+                  if n not in ("control_image", "controlnet_conditioning_scale", "strength")]
+        if uebrig:
+            hinweise.append(f"Nicht übergeben, weil unbekannt: {', '.join(uebrig)}.")
+
+        bild = pipeline(**genommen).images[0]
         ziel = parameter["ausgabe_png"] or str(
             Path(parameter["depth_png"]).with_name(f"render_{parameter['seed']}.png")
         )
         bild.save(ziel)
-        return ziel
+        return {"bild_png": ziel, "hinweise": hinweise}
 
     modell.backbone = eintrag.name       # zur Fehlersuche: welches Modell steckt drin
     return modell
@@ -734,7 +923,15 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None) -> dict:
         )
     dauer = time.perf_counter() - beginn
 
-    bild_png = antwort.get("bild_png") if isinstance(antwort, dict) else antwort
+    if isinstance(antwort, dict):
+        bild_png = antwort.get("bild_png")
+        # Was der Adapter beim Aufruf bemerkt hat, gehört ins Protokoll und nicht in die
+        # Konsole: erst hier ist bekannt, welche Argumente die geladene Pipeline wirklich
+        # genommen hat. Ein wirkungsloser Parameter, der nur im Auftrag steht und nirgends
+        # ankommt, ist genau die stillschweigende Unwirksamkeit, die `_hinweise` verhindert.
+        hinweise = tuple(hinweise) + tuple(antwort.get("hinweise") or ())
+    else:
+        bild_png = antwort
     if not isinstance(bild_png, str) or not bild_png.strip():
         return _ergebnis(
             STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,

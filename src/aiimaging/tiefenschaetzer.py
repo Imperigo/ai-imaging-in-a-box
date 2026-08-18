@@ -600,10 +600,23 @@ def markiere_hintergrund(tiefen: Sequence[float], *, polaritaet: str,
 def standard_modell_wurzel(schaetzer_name: str) -> Path:
     """Wo die Gewichte auf der HomeStation liegen — eine Konvention, keine Prüfung.
 
-    Dieselbe Konvention wie in ``render.standard_modell_wurzel``: unter ``/ai/modelle``,
-    ein Verzeichnis je Modellname. Die Funktion schaut nicht nach, ob dort etwas liegt.
+    ``$AIIMAGING_MODELLE/<schaetzer-name>``, ersatzweise ``/ai/<schaetzer-name>`` — genau
+    dieselbe Rechnung wie :func:`aiimaging.render.standard_modell_wurzel`, und darum von
+    dort geholt statt hier nachgebaut.
+
+    Der Grund, warum das hier steht: Bis zum 18.08.2026 rechnete diese Funktion fest mit
+    ``/ai/modelle`` und las die Umgebungsvariable **nicht** — obwohl der Docstring
+    „dieselbe Konvention" behauptete. Auf einer Maschine, deren Gewichte woanders liegen,
+    lief damit der Render durch und die Geometrie-QA scheiterte erst danach mit einem
+    ``OSError`` über eine Repo-Kennung: also ausgerechnet der Teil, der das Ergebnis
+    bewerten soll, und erst dann, wenn der teure Teil schon gelaufen war (belegt auf der
+    HomeStation, `auf-20260818-09`). Zwei Konventionen, die sich „dieselbe" nennen, sind
+    schlimmer als zwei, die es offen nicht sind.
+
+    Reine Pfadrechnung: Es wird nichts geladen und nichts geprüft.
     """
-    return Path("/ai/modelle") / hole(schaetzer_name).name
+    from aiimaging import render          # nur für die Pfadrechnung, zieht keinen GPU-Stack
+    return render.standard_modell_wurzel(hole(schaetzer_name).name)
 
 
 def lade_modell(schaetzer_name: str, modell_wurzel=None):
