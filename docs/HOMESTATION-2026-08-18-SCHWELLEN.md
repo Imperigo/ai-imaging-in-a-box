@@ -156,6 +156,47 @@ Ein Gate mit diesen Zahlen sperrt **alles**, auch das Treue. Das ist genau die F
 der Auftrag befürchtet hat — nur schlimmer als angenommen: Sie liegt nicht im Schätzer,
 sondern in der Silhouettenauswahl davor.
 
+### Und die volle Studie sagt: es ist noch schlimmer
+
+25 Zeilen gefahren, eine Stunde GPU. Die Nullprobe durch die **ganze** Kette:
+
+```
+score 0.0333    spearman +0.0047    geom_iou 0.2380
+```
+
+**Das `spearman` ist der eigentliche Befund: +0.005 ist keine Korrelation.** Die
+geschätzte Ist-Karte hat mit der Soll-Karte nichts mehr zu tun. Von den 0.90, die die
+erste Hälfte als beste Schwelle ergab, bleibt nicht ein Teil übrig, sondern nichts.
+
+| Störung | 0.1 | 0.2 | 0.5 | 1.0 | Verlauf |
+|---|---|---|---|---|---|
+| rauschen | 0.1801 | 0.1801 | 0.1801 | 0.1740 | flach |
+| silhouette_wachsen | 0.1759 | 0.2310 | 0.2171 | 0.1461 | nicht monoton |
+| silhouette_schrumpfen | 0.1910 | 0.3020 | 0.2257 | 0.0143 | nicht monoton |
+| verschiebung | 0.2318 | 0.2372 | 0.1015 | 0.2210 | nicht monoton |
+| glaettung | 0.1970 | 0.0243 | 0.1561 | 0.2632 | nicht monoton |
+| zusatzkoerper | 0.2028 | 0.1715 | 0.0636 | 0.1110 | nicht monoton |
+
+**22 von 24 gestörten Zeilen schneiden besser ab als die ungestörte Geometrie.** Keine
+einzige Zeile erreicht 0.65, geschweige denn 0.90. Spanne 0.0143 bis 0.3020, Median
+0.1801 — das ist Rauschen um einen Mittelwert, keine Kennlinie.
+
+Die einzige monotone Kurve ist `rauschen`, und sie ist es nur, weil sie **flach** ist:
+0.1, 0.2 und 0.5 liefern auf zwölf Stellen denselben Score. Die Tiefenkarten
+unterscheiden sich dabei nachweislich (mittlere Abweichung 0.059 / 0.119 / 0.296 m,
+verschiedene PNG-Prüfsummen) — **das Bildmodell hat drei verschieden gestörte Vorgaben in
+dasselbe Bild übersetzt.**
+
+Damit liegt der Verlust an zwei getrennten Stellen, und die zweite ist die grosse:
+
+1. `geom_iou` 0.261 **schon beim perfekten Bild** → Deckel bei 0.509.
+2. Das Bildmodell: |spearman| fällt von **0.990 auf 0.005**.
+
+Der Prompt war diesmal ausdrücklich ohne Bauteile («photorealistic architectural
+photograph, overcast daylight, matte concrete, neutral grey sky, no vegetation, no
+people»). Der auf-09-Befund — erfundenes Dach durch einen bauteilenennenden Prompt —
+scheidet als Ursache damit aus. Die Zahlen sind trotzdem so.
+
 **Der Hebel liegt darum nicht bei der Schwelle.** Solange ein perfektes Bild 0.26 an
 `geom_iou` bekommt, ist jede Schwelle über 0.5 eine Ablehnung aller Fälle und jede
 darunter eine Aussage über die Rangkorrelation allein. Die Auswahlregel gehört repariert,

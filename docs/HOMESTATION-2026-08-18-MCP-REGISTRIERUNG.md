@@ -126,6 +126,55 @@ strukturiert und urteilt inhaltlich richtig:
                  und ungeprüft wird nicht gerendert."}
 ```
 
+## 4a · `pipelineReadiness` kann gar nichts melden — es fehlen die Schemata
+
+Die Frage war, ob eine Kante zwischen einem KosmoDraw-Export-Knoten und
+`aiimaging_enqueue_render` entsteht und ob tote Kanten gemeldet werden. Die Antwort ist
+grundsätzlicher als erwartet.
+
+Die Kante entsteht tatsächlich über **Feldnamen-Gleichheit**
+(`KosmoOrbit/src/lib/pipeline.ts`, `nodeReadinessIssues`): Die `outputSchema`-Eigenschaften
+des Vorgängers werden gegen `inputSchema.required` des Nachfolgers gehalten, plus eine
+Synonymtabelle `FIELD_ALIAS_GROUPS`. Diese Tabelle hat **drei Gruppen**, alle zu Flächen
+und Ausnützungsziffer — **nichts zu Dateipfaden**. Ein `ifc_path` träfe also nur auf ein
+exakt gleichnamiges Feld.
+
+**Aber es wird nie dazu kommen, denn beide Prüfungen steigen vorher aus:**
+
+```js
+if (!required.length) continue              // (1) Pflichtfelder
+if (!sOut.length || !tIn.length) continue   // (2) tote Kanten — „nicht aufzählbar → kein Urteil"
+```
+
+Gemessen am laufenden Backend, alle registrierten Server zusammen:
+
+| | |
+|---|---|
+| Werkzeuge in `/api/mcp/tools` | **31** |
+| davon ohne `input_schema.properties` | **31** |
+| davon ohne `output_schema` | **31** |
+
+Der Server liefert seine Schemata sehr wohl — über stdio abgefragt trägt
+`aiimaging_query_render` ein vollständiges `inputSchema` mit `required: ["job_id"]`.
+**Odysseus reicht sie nicht durch:** `input_schema` kommt als `{}`, `output_schema` als
+`null`. KosmoOrbit setzt die Schreibweise korrekt um (`kosmo.ts:358-359`, snake_case →
+camelCase), bekommt aber nichts zu übersetzen.
+
+**Folge:** `pipelineReadiness` gibt für jede Pipeline `[]` zurück. Das Ausführungs-Tor
+filtert auf `severity === 'error'` und findet nie eines. Eine tote Kante wird nicht
+gemeldet — und eine lebende auch nicht. Der Kommentar an der Aufrufstelle fürchtet genau
+das («Tools sicherstellen — sonst gibt `pipelineReadiness` `[]` und das Gate wäre
+wirkungslos»), sichert aber gegen den falschen Fall: Die Werkzeugliste **ist** geladen,
+sie trägt nur keine Schemata.
+
+Zusätzlich hätte selbst ein gemeldeter Fund keine Sperrwirkung: `dead-edge` ist
+`severity: 'warn'`, und `missing-required` wird zu `'warn'` herabgestuft, sobald ein
+Vorgänger kein `outputSchema` hat — was hier ausnahmslos zutrifft.
+
+**Der Hebel liegt damit nicht in KosmoOrbit, sondern im Backend:** solange
+`/api/mcp/tools` die Schemata nicht durchreicht, ist jede Verdrahtungsprüfung im Cockpit
+folgenlos, egal wie sorgfältig sie geschrieben ist.
+
 ## 5 · `mcp_server.py` läuft nicht unter mcp 2.0.0
 
 Der Modul-Docstring nennt `mcp` 2.0.0 als die Fassung, gegen die die Lizenz geprüft wurde.

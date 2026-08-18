@@ -1,0 +1,348 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260818-10",
+  "status": "ok",
+  "beendet": "2026-08-18T21:55:00Z",
+  "dauer_s": 3733.5,
+  "messwerte": {
+    "nullprobe": {
+      "score": 0.033291716017157635,
+      "spearman": 0.004657839285362246,
+      "geom_iou": 0.23795118025006592,
+      "n_gemeinsam": 17147,
+      "gilt_fuer": "alle Stoerungsarten — stoere() gibt bei staerke 0.0 die Karte unveraendert zurueck, die sechs Zeilen waeren identisch gewesen",
+      "misst": "die GANZE Kette — Schaetzerfehler UND Untreue des Bildmodells zusammen. Zur Trennung siehe 'schaetzer_allein'."
+    },
+    "schaetzer_allein": {
+      "score": 0.5086412506052123,
+      "spearman": -0.9904467732180461,
+      "geom_iou": 0.2612113329186224,
+      "n_gemeinsam": 18476,
+      "n_soll": 44604,
+      "n_ist": 44604,
+      "polaritaet": "disparitaet",
+      "geom_iou_obergrenze": 0.1701507568359375,
+      "bild": "Blenders Beauty-Pass derselben Szene, gleiche Kamera, gleiche Aufloesung, KEIN Bildmodell dazwischen — die Geometrie ist exakt"
+    },
+    "verdraengungsprobe": {
+      "zweck": "Bringt eine andere Hintergrund-Strategie geom_iou hoch? Gemessen am geometrietreuen Beauty-Pass.",
+      "zeilen": [
+        {
+          "strategie": "wie_soll",
+          "anteil": null,
+          "n_soll": 44604,
+          "n_ist": 44604,
+          "n_gemeinsam": 18476,
+          "geom_iou": 0.2612113329186224,
+          "spearman": -0.9904467732180461,
+          "score": 0.5086412506052123
+        },
+        {
+          "strategie": "keine",
+          "anteil": null,
+          "n_soll": 44604,
+          "n_ist": 262144,
+          "n_gemeinsam": 44604,
+          "geom_iou": 0.1701507568359375,
+          "spearman": -0.992731980922087,
+          "score": 0.4109916031856765
+        },
+        {
+          "strategie": "quantil",
+          "anteil": 0.83,
+          "n_soll": 44604,
+          "n_ist": 44564,
+          "n_gemeinsam": 18470,
+          "geom_iou": 0.2612520863390761,
+          "spearman": -0.9904425897177738,
+          "score": 0.5086798531127864
+        },
+        {
+          "strategie": "quantil",
+          "anteil": 0.75,
+          "n_soll": 44604,
+          "n_ist": 65536,
+          "n_gemeinsam": 21177,
+          "geom_iou": 0.2380427818306487,
+          "spearman": -0.990913521882076,
+          "score": 0.48567459404668756
+        },
+        {
+          "strategie": "quantil",
+          "anteil": 0.6,
+          "n_soll": 44604,
+          "n_ist": 104858,
+          "n_gemeinsam": 26650,
+          "geom_iou": 0.21699833892453507,
+          "spearman": -0.9907890546937221,
+          "score": 0.46368047089903197
+        },
+        {
+          "strategie": "quantil",
+          "anteil": 0.45,
+          "n_soll": 44604,
+          "n_ist": 144179,
+          "n_gemeinsam": 31486,
+          "geom_iou": 0.20016910684882738,
+          "spearman": -0.990141874489259,
+          "score": 0.4451918852249429
+        },
+        {
+          "strategie": "quantil",
+          "anteil": 0.3,
+          "n_soll": 44604,
+          "n_ist": 183501,
+          "n_gemeinsam": 38286,
+          "geom_iou": 0.20169740647669623,
+          "spearman": -0.99211654424166,
+          "score": 0.44733358234785514
+        },
+        {
+          "strategie": "quantil",
+          "anteil": 0.15,
+          "n_soll": 44604,
+          "n_ist": 222822,
+          "n_gemeinsam": 44503,
+          "geom_iou": 0.199633954325036,
+          "spearman": -0.992979733831648,
+          "score": 0.4452330522652531
+        },
+        {
+          "strategie": "quantil",
+          "anteil": 0.05,
+          "n_soll": 44604,
+          "n_ist": 249037,
+          "n_gemeinsam": 44585,
+          "geom_iou": 0.17901596428112554,
+          "spearman": -0.9927614598746448,
+          "score": 0.42156867772712603
+        }
+      ],
+      "bestes_geom_iou": 0.2612520863390761
+    },
+    "kurven": {
+      "rauschen": [
+        {
+          "staerke": 0.1,
+          "score": 0.18006419758324738,
+          "spearman": -0.12005731415129807,
+          "geom_iou": 0.2700636398581984,
+          "n_gemeinsam": 18969
+        },
+        {
+          "staerke": 0.2,
+          "score": 0.18006419758324738,
+          "spearman": -0.12005731415129807,
+          "geom_iou": 0.2700636398581984,
+          "n_gemeinsam": 18969
+        },
+        {
+          "staerke": 0.5,
+          "score": 0.18006419758324738,
+          "spearman": -0.12005731415129807,
+          "geom_iou": 0.2700636398581984,
+          "n_gemeinsam": 18969
+        },
+        {
+          "staerke": 1.0,
+          "score": 0.17403395994201337,
+          "spearman": -0.10184166273526465,
+          "geom_iou": 0.2974010674966186,
+          "n_gemeinsam": 20449
+        }
+      ],
+      "silhouette_wachsen": [
+        {
+          "staerke": 0.1,
+          "score": 0.17589498023470196,
+          "spearman": -0.12295915173252277,
+          "geom_iou": 0.2516205067766647,
+          "n_gemeinsam": 17934
+        },
+        {
+          "staerke": 0.2,
+          "score": 0.2309662545634341,
+          "spearman": -0.19944807673893214,
+          "geom_iou": 0.2674651549379822,
+          "n_gemeinsam": 18825
+        },
+        {
+          "staerke": 0.5,
+          "score": 0.2171172941451518,
+          "spearman": -0.19643134796472206,
+          "geom_iou": 0.2399816521412785,
+          "n_gemeinsam": 17265
+        },
+        {
+          "staerke": 1.0,
+          "score": 0.14614117407732974,
+          "spearman": 0.11169002764408738,
+          "geom_iou": 0.19121888687106078,
+          "n_gemeinsam": 14320
+        }
+      ],
+      "silhouette_schrumpfen": [
+        {
+          "staerke": 0.1,
+          "score": 0.190971115252975,
+          "spearman": 0.19467836732965457,
+          "geom_iou": 0.18733446022386968,
+          "n_gemeinsam": 14075
+        },
+        {
+          "staerke": 0.2,
+          "score": 0.3020048560553966,
+          "spearman": -0.3190587025731287,
+          "geom_iou": 0.28586254612546125,
+          "n_gemeinsam": 19832
+        },
+        {
+          "staerke": 0.5,
+          "score": 0.2257211183392839,
+          "spearman": 0.6028402062185422,
+          "geom_iou": 0.08451663100564093,
+          "n_gemeinsam": 6952
+        },
+        {
+          "staerke": 1.0,
+          "score": 0.014284033819187709,
+          "spearman": -0.0740875229678599,
+          "geom_iou": 0.0027539538909434258,
+          "n_gemeinsam": 245
+        }
+      ],
+      "verschiebung": [
+        {
+          "staerke": 0.1,
+          "score": 0.23183788842303343,
+          "spearman": -0.21304529158891655,
+          "geom_iou": 0.2522881689033635,
+          "n_gemeinsam": 17972
+        },
+        {
+          "staerke": 0.2,
+          "score": 0.23715571092764515,
+          "spearman": -0.27764353917255574,
+          "geom_iou": 0.20257208719213815,
+          "n_gemeinsam": 15027
+        },
+        {
+          "staerke": 0.5,
+          "score": 0.10153259195129412,
+          "spearman": -0.06396893163333264,
+          "geom_iou": 0.1611542816978406,
+          "n_gemeinsam": 12381
+        },
+        {
+          "staerke": 1.0,
+          "score": 0.22100510460216957,
+          "spearman": -0.827329919782684,
+          "geom_iou": 0.05903721730871965,
+          "n_gemeinsam": 4973
+        }
+      ],
+      "glaettung": [
+        {
+          "staerke": 0.1,
+          "score": 0.1970202228564577,
+          "spearman": -0.141180126102617,
+          "geom_iou": 0.274946405602401,
+          "n_gemeinsam": 19238
+        },
+        {
+          "staerke": 0.2,
+          "score": 0.02426758874749621,
+          "spearman": 0.002349175202966998,
+          "geom_iou": 0.2506904818652123,
+          "n_gemeinsam": 17881
+        },
+        {
+          "staerke": 0.5,
+          "score": 0.15609647827438947,
+          "spearman": -0.0877124698627497,
+          "geom_iou": 0.2777952846134013,
+          "n_gemeinsam": 19394
+        },
+        {
+          "staerke": 1.0,
+          "score": 0.26323733540677147,
+          "spearman": -0.2003257573193657,
+          "geom_iou": 0.3459060665952535,
+          "n_gemeinsam": 22927
+        }
+      ],
+      "zusatzkoerper": [
+        {
+          "staerke": 0.1,
+          "score": 0.20281091456342032,
+          "spearman": -0.1403289505012442,
+          "geom_iou": 0.2931131952396828,
+          "n_gemeinsam": 20221
+        },
+        {
+          "staerke": 0.2,
+          "score": 0.1715046245069192,
+          "spearman": -0.10681030987186599,
+          "geom_iou": 0.27538386755497096,
+          "n_gemeinsam": 19262
+        },
+        {
+          "staerke": 0.5,
+          "score": 0.06364586755760006,
+          "spearman": 0.01769189008617922,
+          "geom_iou": 0.22896346503554307,
+          "n_gemeinsam": 16620
+        },
+        {
+          "staerke": 1.0,
+          "score": 0.11100413995913452,
+          "spearman": 0.06381146212874214,
+          "geom_iou": 0.19309883643172396,
+          "n_gemeinsam": 14438
+        }
+      ]
+    },
+    "kette_gesamt": {
+      "n_zeilen": 25,
+      "n_auswertbar": 24,
+      "score_min": 0.014284033819187709,
+      "score_max": 0.3020048560553966,
+      "score_median": 0.18006419758324738,
+      "score_nullprobe": 0.033291716017157635,
+      "nullprobe_ist_schlechteste": false,
+      "identische_scores": {
+        "0.180064197583": 3
+      }
+    },
+    "prompt": {
+      "verwendet": "photorealistic architectural photograph, overcast daylight, matte concrete, neutral grey sky, no vegetation, no people",
+      "ohne_bauteile": true,
+      "grund": "Lehre aus auf-09: 'clean flat roof' bei einer oben offenen Schachtel ist eine Aufforderung zur Halluzination."
+    },
+    "nicht_gefahren": {
+      "controlnet_staerke_reihe": "entfaellt — QwenImageEditPlusPipeline kennt den Parameter nicht (belegt in auf-09)",
+      "staerke_0_je_stoerungsart": "zu EINER Nullprobe zusammengezogen: stoere() gibt bei 0.0 die Karte unveraendert zurueck, sechs Laeufe mit gleichem Seed haetten sechsmal dieselbe Zahl und 12 GPU-Minuten gekostet"
+    }
+  },
+  "urteil": {
+    "kurz": "DIE NULLPROBE IST 0.0333. Das ist nicht 'weniger von den 0.90', sondern kein Signal mehr. 22 von 24 GESTOERTEN Zeilen schneiden BESSER ab als die ungestoerte Geometrie. Keine einzige Zeile erreicht 0.65, geschweige denn 0.90.",
+    "die_wichtigste_einzelzahl": "Nullprobe (ungestoerte Geometrie durch die ganze Kette): score 0.0333, spearman +0.0047, geom_iou 0.2380.\nDas spearman ist der Schluessel: +0.005 ist KEINE Korrelation. Die Ist-Karte hat mit der Soll-Karte nichts mehr zu tun. Von den 0.90, welche die erste Haelfte als beste Schwelle ergab, bleibt nichts uebrig — nicht ein Teil, sondern nichts.",
+    "wo_es_verloren_geht": "Der Schaetzer ist es NICHT. Zusatzmessung an Blenders eigenem Beauty-Pass (gleiche Szene, gleiche Kamera, kein Bildmodell dazwischen): spearman -0.990, also nahezu perfekte Tiefenordnung; das Vorzeichen ist die Disparitaetskonvention, die die Metrik korrekt ueber den Betrag abfaengt und selbst als polaritaet='disparitaet' erkennt.\nDie Kette verliert damit an ZWEI getrennten Stellen:\n  (1) geom_iou 0.261 SCHON beim perfekten Bild -> Deckel bei score 0.509.\n  (2) das Bildmodell: |spearman| faellt von 0.990 auf 0.005.\nPunkt (2) ist der grosse Verlust und liegt beim Backbone, nicht beim Schaetzer.",
+    "faellt_bis_0_85_ein_treuer_fall_durch": "Die Frage ist im Betrieb gegenstandslos. Bei einer Obergrenze von 0.509 (bestes erreichbares Bild ueberhaupt) und einer gemessenen Nullprobe von 0.033 wuerde JEDE Schwelle ab etwa 0.04 den treuen Fall sperren. Es gibt keinen Bereich, in dem 0.85 oder 0.90 etwas anderes taeten als alles abzulehnen.",
+    "kurvenform": "Die erste Haelfte hat 48 von 48 Zeilen ihre Erwartung erfuellen sehen. Durch die Kette bleibt davon nichts: 5 der 6 Kurven sind NICHT monoton, und die einzige monotone (rauschen) ist es nur, weil sie flach ist — 0.1, 0.2 und 0.5 liefern auf 12 Stellen DENSELBEN Score (0.180064197583). Die Tiefenkarten unterscheiden sich dabei nachweislich (mittlere Abweichung 0.059 / 0.119 / 0.296 m, verschiedene PNG-Pruefsummen). Das Bildmodell hat also drei verschieden gestoerte Vorgaben in dasselbe Bild uebersetzt.\nSpanne aller gestoerten Zeilen: 0.0143 bis 0.3020, Median 0.1801. Das ist Rauschen um einen Mittelwert, keine Kennlinie.",
+    "was_das_fuer_die_schwelle_heisst": "Die Schwelle ist derzeit nicht das Problem und auch nicht die Loesung. Solange die Kette bei ungestoerter Geometrie 0.033 liefert, misst kein Wert etwas. Zwei Dinge muessen VOR der naechsten Schwellendiskussion geklaert sein:\n  (a) geom_iou am treuen Bild — 0.261 ist der Deckel. Keine Einstellung der       Hintergrund-Strategie hebt ihn (gemessen ueber wie_soll, keine und       quantil mit sieben Anteilen; bestes geom_iou 0.2613, das ist der       Vorgabewert selbst).\n  (b) das Backbone — Qwen-Image-Edit-2511 ueber die Bildbearbeitungsnaht haelt       die Geometrie nicht. Es ist kein ControlNet (auf-09) und reagiert auf       abgestufte Tiefenvorgaben teils gar nicht.",
+    "prompt_ohne_bauteile": "Uebernommen wie vorgegeben: 'photorealistic architectural photograph, overcast daylight, matte concrete, neutral grey sky, no vegetation, no people'. Der Prompt war diesmal also NICHT die Fehlerquelle — die Zahlen sind trotzdem so. Damit ist ausgeschlossen, dass der auf-09-Befund (erfundenes Dach) die Ursache der niedrigen Scores war.",
+    "sparsamkeit": "Die sechs Nullproben-Zeilen (staerke 0.0 je Stoerungsart) sind zu EINER zusammengezogen: stoere() gibt bei 0.0 die Karte unveraendert zurueck, und der Seed ist fest — sechs Laeufe haetten sechsmal dieselbe Zahl und rund 12 GPU-Minuten gekostet. Die controlnet_staerke-Reihe entfaellt ersatzlos, weil die Pipeline den Parameter nicht kennt (auf-09)."
+  },
+  "umgebung": {
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "leistungsgrenze_w": 400.0,
+    "python": "3.14.4",
+    "backbone": "qwen-image-edit-2511",
+    "schaetzer": "depth-anything-v2-small",
+    "aufloesung": 512,
+    "schritte": 28,
+    "seed": 20260818
+  },
+  "fehler": null
+}
