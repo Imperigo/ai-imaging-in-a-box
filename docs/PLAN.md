@@ -25,9 +25,9 @@ Der einzige Punkt, an dem Raten teuer wird. KosmoOrbit verdrahtet Knoten über
 **Feldnamen-Gleichheit** — heisst unsere Eingabe anders als die Ausgabe des Vorgängers,
 entsteht die Kante nicht, und zwar **ohne Fehlermeldung**.
 
-- [ ] `KosmoDraw` lesen: Ausgabefelder von `kosmodraw_export_ifc`
-- [ ] `kosmo-backend` lesen: wie ein MCP-Werkzeug bei Kosmo registriert wird
-- [ ] Ergebnis als Feldnamen-Tabelle in `docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md` nachtragen
+- [x] `KosmoDraw` lesen: Ausgabefelder von `kosmodraw_export_ifc` — **erledigt 2026-08-14** (`8481ea8`)
+- [x] MCP-Registrierungsweg — **erledigt 2026-08-14**, ohne `kosmo-backend`: `register_in_odysseus.sh` dokumentiert ihn vollständig
+- [x] Feldnamen-Tabelle nachgetragen — `EINBINDUNG_KOSMOORBIT_2026-08-14.md` §8
 
 **Fertig, wenn** die Namen belegt sind statt vermutet.
 

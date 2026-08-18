@@ -276,6 +276,23 @@ nicht vermischen und einzeln weiterverarbeiten lassen.
 geklappt", alles andere signalisiert einen Fehler. So erfährt das aufrufende Programm,
 ob der Subprozess erfolgreich war.
 
+**stdio (Standard-Ein-/Ausgabe)** — Der einfachste Weg, wie zwei Programme sprechen: Das
+eine schreibt in seine Ausgabe, das andere liest sie als Eingabe. Ohne Netzwerk, ohne
+Port. *MCP-Server im ArchitekturKosmos laufen über stdio — Kosmo startet sie und
+kommuniziert über diese beiden Kanäle.*
+
+**Pfad-Sandbox** — Beschränkung, in welche Verzeichnisse ein Programm schreiben darf.
+*Im ArchitekturKosmos müssen Schreibziele unter `$HOME` oder `/tmp` liegen; ein Werkzeug
+kann so nicht versehentlich oder böswillig ins System schreiben.*
+
+**write-gated** — Gegenstück zu read-only: Ein Werkzeug, das schreibt, und darum eine
+ausdrückliche Freigabe braucht. *`kosmodraw_export_ifc` ist write-gated, die lesenden
+Werkzeuge derselben Lane nicht.*
+
+**Runner** — Ein kleines eigenständiges Skript, das genau eine Aufgabe in einem eigenen
+venv erledigt und über Dateien antwortet. Die praktische Bauform der Prozessgrenze.
+*Beispiele: `glb_export_runner.py`, `export_ifc_runner.py`.*
+
 **Protokoll** — Eine Vereinbarung darüber, in welcher Form zwei Programme miteinander
 sprechen: welche Nachrichten es gibt, in welcher Reihenfolge, in welchem Format. Nötig,
 wenn die Gegenseite nicht im Voraus weiss, was sie erwartet — überflüssig, wenn ein
@@ -741,5 +758,6 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-14 | Ergaenzt aus Phase 0: stdio, Pfad-Sandbox, write-gated, Runner |
 | 2026-08-14 | Ergaenzt aus der KosmoOrbit-Einbindung: Tauri, TypeScript, React, REST/Endpoint, SSE, Sidecar, topologische Sortierung, JSON-Schema, Validierung, inputSchema/outputSchema, structuredContent, Cockpit-Prinzip, Read-only-Gate, Lane |
 | 2026-08-14 | Ausgebaut: Apache-2.0 (Auflagen, Patent- und Verteidigungsklausel), MCP (Abgrenzung zum Subprozessaufruf) |

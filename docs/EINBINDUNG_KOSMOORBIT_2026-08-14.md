@@ -243,3 +243,114 @@ wegen der Feldnamen. Alles andere kann begleitend geschehen.
 
 Unverändert gültig: sämtliche Lizenzbefunde, die Prozessgrenzen-Architektur und die
 Einordnung der Geometrie-Treue-QA als eigentlicher Beitrag.
+
+---
+
+## 8 · Nachtrag Phase 0 (2026-08-14): belegte Feldnamen
+
+Gelesen: `Imperigo/KosmoDraw` @ `8481ea8`,
+`code/integrations/odysseus/kosmodraw_mcp_server.py` (1540 Zeilen) und
+`code/tools/glb_export_runner.py`. Damit sind die Namen **belegt statt vermutet**.
+
+### 8.1 ⚠️ Der Befund, der die Kette hätte kippen können: `up_axis`
+
+KosmoDraw hat bereits ein Werkzeug **`kosmodraw_export_glb`** (IFC → glb). Sein
+Ausgabefeld heisst `glb_path` — genau der Name, den auch wir als Eingang bräuchten.
+Über `mergeInputs` entstünde die Kante **automatisch**.
+
+Und genau dort sitzt der Konflikt:
+
+| Erzeuger | `up_axis` | Verhalten |
+|---|---|---|
+| **KosmoDraw** `glb_export_runner.py:122` | `"Z"` | rohe IFC-Koordinaten, **keine Rotation** — Kommentar: „Z-up (IFC-Konvention) — der Viewer orientiert" |
+| **KosmoVis** `ifc_to_glb.py:340` | `"Y (glTF-2.0-Standard)"` | dreht Z-up → Y-up, damit Blender aufrecht importiert |
+
+Beide schreiben ein Feld `glb_path` und ein Feld `up_axis` — mit **unverträglichem
+Inhalt**. glTF 2.0 ist definitionsgemäss Y-up und kennt kein Up-Achsen-Feld; Blender
+importiert strikt Y-up → Z-up. Eine rohe Z-up-glb landet in Blender **liegend auf der
+Seite**.
+
+Für KosmoDraw ist das richtig: Sein Abnehmer ist KosmoOrbits Viewer, dem man die
+Orientierung mitgeben kann. Für uns ist es falsch — und es fällt **still** durch:
+Tiefenkarte, Kameraableitung und Geometrie-QA wären allesamt verdreht, ohne
+Fehlermeldung.
+
+**Konsequenz für unser `inputSchema`:** `up_axis` wird **Pflichtfeld**, nicht optional.
+Wir prüfen es zur Laufzeit und rotieren bei `"Z"`, statt eine Konvention anzunehmen.
+Fehlt das Feld, wird abgelehnt — nicht geraten.
+
+Das ist exakt die Fehlerklasse, für die Phase 0 angesetzt war: Die Kante verbindet sich
+von selbst, weil die Namen stimmen; die Bedeutung tut es nicht.
+
+### 8.2 Belegte Ausgabefelder der Nachbar-Lane
+
+Aus dem `_OUT`-Block (`kosmodraw_mcp_server.py:274-300`):
+
+| Werkzeug | Ausgabefelder |
+|---|---|
+| `kosmodraw_export_ifc` | `ifc_path` · `n_entities` · `status` · `error` |
+| `kosmodraw_export_glb` | `glb_path` · `n_vertices` · `n_triangles` · `bbox` · `up_axis` · `layers` · `status` |
+| `kosmodraw_bim_layers` | `layers` · `n_layers` · `bbox` · `element_counts` · `geometry_ref` · `source_ifc` · `bbox_note` |
+
+**Für uns zu übernehmende Eingangsnamen:** `ifc_path`, `glb_path`, `up_axis`, `bbox`.
+Kein `model_path`, kein `geometry`, kein `pfad` — sonst entsteht keine Kante.
+
+`geometry_ref` ist der Ökosystem-Begriff für „hier liegt die 3D-Geometrie" und taucht
+auch in KosmoOrbits Varianten-Knoten auf. Als **Ausgabe**feld für uns vorzumerken.
+
+### 8.3 Werkzeugbenennung — doppeltes Präfix
+
+KosmoOrbit ruft `mcp__kosmodraw__kosmodraw_seed_variants`. Das Muster ist:
+
+```
+mcp__<servername>__<toolname>
+   └ aus der MCP-Registrierung  └ trägt den Lane-Namen nochmals
+```
+
+Also: Servername `KosmoVis` + Werkzeug `kosmovis_enqueue_render` ergibt
+`mcp__kosmovis__kosmovis_enqueue_render`. Die Doppelung ist gewollt und einzuhalten.
+
+### 8.4 Registrierung bei Kosmo — geklärt ohne `kosmo-backend`
+
+`register_in_odysseus.sh` dokumentiert den Weg vollständig; das Backend musste dafür
+nicht gelesen werden.
+
+1. Login: `POST /api/auth/login` (JSON `{username,password}`) → Session-Cookie
+2. Anmelden: `POST /api/mcp/servers` mit `name`, `transport=stdio`, `command`, `args`, `env`
+3. Persistenz in der Odysseus-DB (`mcp_servers`); Entfernen via `DELETE /api/mcp/servers/<id>`
+
+Der Server läuft über **stdio**, von Odysseus gespawnt. Voraussetzung: Das aufgerufene
+Python kann `import mcp`. Es gibt eine **Pfad-Sandbox** — Schreibziele müssen unter
+`$HOME` oder `/tmp` liegen.
+
+### 8.5 Unabhängige Bestätigung unserer Architektur
+
+Bemerkenswert: KosmoDraw fährt bereits **genau das Muster**, das wir aus der Lizenzlage
+abgeleitet haben. Kommentar im Server (Zeile 666f.):
+
+> „Der IFC-Bau (ifcopenshell) läuft über eine Subprozess-Seam im `.venv-night`
+> (kein ifcopenshell/bpy im MCP-Python → Freeze-Schutz)."
+
+Dieselbe Prozessgrenze, dasselbe eigene venv, dieselbe Runner-Bauform
+(`export_ifc_runner.py`, `glb_export_runner.py`, `bim_layers_runner.py`) — dort aus
+Stabilitätsgründen begründet, bei uns zusätzlich aus Lizenzgründen. Zwei unabhängige
+Wege zur selben Naht. Das stärkt die Entscheidung.
+
+**Nebenbefund:** `export_ifc` und `export_glb` sind **write-gated**, nicht read-only —
+die Unterscheidung aus §3.3 ist im Ökosystem also bereits etabliert und keine Erfindung
+unsererseits.
+
+### 8.6 Offene Frage aus diesem Nachtrag
+
+Wenn KosmoDraw IFC→glb bereits liefert: **Brauchen wir einen eigenen IFC-Pfad?**
+
+Beides ist vertretbar, und die Entscheidung gehört bewusst getroffen:
+
+- **Dagegen** — wir konsumieren `glb_path` und sind die IFC-Kette samt LGPL/CGAL-Frage
+  vollständig los; sie liegt dann in KosmoDraws Prozess, nicht in unserem.
+- **Dafür** — Regel 4 verlangt, dass der Kern eigenständig läuft. Ein Prototyp, der ohne
+  KosmoDraw keine Geometrie einlesen kann, ist kein eigenständiges Framework, sondern
+  ein Anhängsel. Ausserdem entfielen der Massstabs- und Georeferenz-Torwächter.
+
+**Empfehlung:** eigener IFC-Pfad, aber `glb_path` zusätzlich als Eingang akzeptieren.
+Dann ist der Prototyp allein lauffähig **und** fügt sich in die Kette ein.
