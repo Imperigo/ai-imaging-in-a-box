@@ -40,12 +40,27 @@ Es lädt nichts, es rechnet nichts, es ruft keine GPU. ``vorhandene_dateien`` sc
 nach, ob Dateien auf der Platte liegen. Das Laden der Gewichte gehört hinter dieselbe
 Prozessgrenze wie alles Schwere (siehe ``seams.py``).
 
-Abhängigkeiten: keine. Reine stdlib, kein ``torch``, kein ``diffusers``, kein ``bpy``.
+Abhängigkeiten: keine fremden. Reine stdlib plus ``aiimaging.lizenzquelle`` (das
+ebenfalls nur stdlib benutzt) — kein ``torch``, kein ``diffusers``, kein ``bpy``.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+
+# Die Herkunfts-Vokabel liegt seit dem 18.08.2026 in einem eigenen Modul, weil sie drei
+# Registries gemeinsam gehört (backbone, einbetter, tiefenschaetzer) und vorher in jeder
+# anders geschrieben war — siehe aiimaging/lizenzquelle.py. Die Namen werden hier weiter
+# geführt, damit bestehende Importe aus `aiimaging.backbone` gültig bleiben.
+from aiimaging import lizenzquelle
+from aiimaging.lizenzquelle import (  # noqa: F401  (bewusste Weitergabe)
+    QUELLE_GEPRUEFT_PRAEFIX,
+    QUELLE_MODELLKARTE,
+    QUELLE_SEKUNDAER,
+    QUELLE_UNGEPRUEFT,
+    hinweis_zur_herkunft,
+    ist_belegt,
+)
 
 #: Konditionierung über eine Tiefenkarte via ControlNet — die Naht dieses Projekts.
 KOND_DEPTH_CONTROLNET = "depth_controlnet"
@@ -58,37 +73,10 @@ KOND_INTEGRIERTES_EDIT = "integriertes_edit"
 #: und wird als Fehler gemeldet, nicht als leeres Ergebnis zurückgegeben.
 KONDITIONIERUNGEN = (KOND_DEPTH_CONTROLNET, KOND_INTEGRIERTES_EDIT)
 
-#: Lizenz am Original geprüft (Modellkarte selbst gelesen).
-QUELLE_MODELLKARTE = "modellkarte"
-
-#: Lizenz nur über eine Sekundärquelle bekannt.
-QUELLE_SEKUNDAER = "sekundaerquelle"
-
-#: Lizenz NICHT geprüft. Vor produktivem Einsatz nachzuholen (Regel 1).
-QUELLE_UNGEPRUEFT = "ungeprueft"
-
-#: Vorsilbe für einen belegten Vermerk mit Quelle, z. B.
-#: ``"geprueft 2026-08-18 (https://huggingface.co/…)"``.
-#:
-#: Warum nicht einfach `QUELLE_MODELLKARTE`: Ein Schlagwort sagt *dass* geprüft wurde,
-#: eine URL sagt **wogegen**. Die Lizenzprüfung vom 18.08.2026 hat den Unterschied
-#: schmerzhaft gemacht — sie trug URLs ein, und `pruefe_lizenz` verglich exakt auf das
-#: Schlagwort und meldete die frisch belegten Einträge weiter als „NICHT geprüft". Ein
-#: Beleg, den die Prüflogik nicht als Beleg erkennt, ist kein Beleg.
-QUELLE_GEPRUEFT_PRAEFIX = "geprueft "
-
-
-def ist_belegt(lizenz_quelle: str) -> bool:
-    """Ist diese Herkunftsangabe ein Beleg am Original?
-
-    ``QUELLE_MODELLKARTE`` oder ein Vermerk der Form ``"geprueft <datum> (<url>)"``.
-    Eine Sekundärquelle und ``ungeprueft`` sind es nicht.
-    """
-    return (lizenz_quelle == QUELLE_MODELLKARTE
-            or str(lizenz_quelle).startswith(QUELLE_GEPRUEFT_PRAEFIX))
-
 #: Lizenznamen, die ohne weitere Auflage unter Regel 1 fallen.
-PERMISSIVE_LIZENZEN = ("Apache-2.0", "MIT", "BSD-3-Clause", "BSD-2-Clause", "MPL-2.0")
+#: Weitergeführt aus `lizenzquelle`, damit die Regel an EINER Stelle steht. Drei
+#: Kopien derselben Liste laufen früher oder später auseinander.
+PERMISSIVE_LIZENZEN = lizenzquelle.PERMISSIVE_LIZENZEN
 
 
 class BackboneError(ValueError):
@@ -118,8 +106,11 @@ class Backbone:
             **Nicht gemessen** — hier existiert keine GPU.
         dateien: Pfade relativ zur Modellwurzel, die vorliegen müssen, damit ein Lauf
             überhaupt starten kann. Ordner (diffusers-Unterordner) sind zulässig.
-        lizenz_quelle: Wie gut die Lizenzangabe belegt ist. Vorgabe ist die
-            zurückhaltendste Annahme.
+        lizenz_quelle: Wie gut die Lizenzangabe belegt ist — eine der Vokabeln aus
+            :mod:`aiimaging.lizenzquelle` oder ein Vermerk der Form
+            ``"geprueft <datum> (<url>)"``. Vorgabe ist die zurückhaltendste Annahme.
+            Ob ein Wert ein Beleg ist, beantwortet
+            :func:`aiimaging.lizenzquelle.ist_belegt` und kein Vergleich von Hand.
 
     ``frozen=True``, weil die Registry ein Nachschlagewerk ist und kein Zustand. Ein
     versehentliches ``BACKBONES["..."].kommerziell_nutzbar = True`` an einer beliebigen
@@ -164,7 +155,14 @@ _DIFFUSERS_DATEIEN = ("model_index.json", "transformer", "vae", "text_encoder", 
 #:
 #: Alle Angaben stammen aus ``docs/LAGEBEURTEILUNG_2026-08-14.md`` Kapitel 4. Die Spalte
 #: „Geprüft" von dort steht hier als ``lizenz_quelle`` — sie gehört mit, weil Regel 1 an
-#: diesen Angaben hängt und zwei davon ausdrücklich **nicht** geprüft sind.
+#: diesen Angaben hängt und nicht jede von ihnen am Original gelesen ist.
+#:
+#: Stand nach der Lizenzprüfung vom 18.08.2026 (``docs/LIZENZPRUEFUNG_2026-08-18.md``):
+#: Die Mehrheit der Einträge ist inzwischen belegt, offen bleiben SD3.5 (gar nicht
+#: geprüft) und die beiden FLUX-dev-Gewichte (nur sekundär bekannt — sie sind unter
+#: Regel 1 ohnehin ausgeschlossen, weshalb die Prüfung dort nachrangig ist). Welche
+#: Einträge das genau sind, sagt nicht dieser Kommentar, sondern
+#: :func:`aiimaging.lizenzquelle.ist_belegt` — ein Kommentar veraltet, eine Prüfung nicht.
 BACKBONES: dict[str, Backbone] = {}
 
 
@@ -243,10 +241,12 @@ _eintrag(Backbone(
     # mit, das ControlNet ist ein eigenes Modell. Dafür ist das Ökosystem riesig — das
     # macht SDXL zum Rückfall, wenn für einen neueren Backbone kein ControlNet existiert.
     dateien=("juggernaut_xl.safetensors", "controlnet-depth-sdxl"),
-    # Am Original gelesen. Bewusst NICHT QUELLE_MODELLKARTE: tests/test_backbone.py
-    # (test_ungepruefte_lizenzen_werden_als_solche_gemeldet) hält diesen Eintrag als
-    # ungeprüft fest. Solange Test und Prüflogik nicht mitgezogen sind, meldet
-    # pruefe_lizenz hier weiterhin "NICHT geprüft" — der Widerspruch steht im Prüfbericht.
+    # Am Original gelesen, in der reichen Form: Der Vermerk trägt Datum UND URL und sagt
+    # damit nicht nur, DASS geprüft wurde, sondern wogegen. `ist_belegt` erkennt ihn seit
+    # dem 18.08.2026 als Beleg — vorher tat es das nicht, und `pruefe_lizenz` meldete
+    # diesen Eintrag weiter als "NICHT geprüft" (Prüfbericht Abschnitt 5). Der Vermerk
+    # bleibt bewusst in dieser Form stehen statt auf QUELLE_MODELLKARTE einzudampfen:
+    # Das Schlagwort wäre die ärmere Angabe.
     lizenz_quelle="geprueft 2026-08-18 (https://huggingface.co/RunDiffusion/Juggernaut-XL-v9)",
 ))
 
@@ -401,7 +401,7 @@ def pruefe_lizenz(name: str) -> dict:
 
     Returns:
         ``{name, lizenz, kommerziell_nutzbar, zulaessig, auflagen, lizenz_quelle,
-        begruendung}``.
+        lizenz_belegt, lizenz_hinweis, begruendung}``.
 
         ``zulaessig`` ist die Antwort auf „darf verwendet werden", ``auflagen`` sagt
         „unter welchen Bedingungen". Beides getrennt, weil zwei Einträge (SDXL mit den
@@ -478,24 +478,32 @@ def pruefe_lizenz(name: str) -> dict:
             f"nicht bedingungslos. " + " ".join(auflagen)
         )
 
-    if not ist_belegt(backbone.lizenz_quelle):
+    hinweis = hinweis_zur_herkunft(backbone.lizenz_quelle)
+    if hinweis is not None:
         # Auch ein 'zulaessig: True' bleibt eine Behauptung, solange die Lizenz nicht am
         # Original gelesen wurde. Das gehört in dieselbe Antwort, nicht in eine Fussnote.
-        hinweis = (
-            "Lizenzangabe nur über eine Sekundärquelle bekannt"
-            if backbone.lizenz_quelle == QUELLE_SEKUNDAER
-            else "Lizenzangabe NICHT geprüft"
-        )
         auflagen.append(f"{hinweis} — vor produktivem Einsatz an der Modellkarte prüfen.")
         begruendung += f" ({hinweis}.)"
 
     return {
+        # Sichtbar, nicht entschieden — siehe lizenzquelle.regel_1_spannung.
+        "regel_1_spannung": lizenzquelle.regel_1_spannung(
+            backbone.name, backbone.lizenz, zulaessig),
         "name": backbone.name,
         "lizenz": backbone.lizenz,
         "kommerziell_nutzbar": backbone.kommerziell_nutzbar,
         "zulaessig": zulaessig,
         "auflagen": tuple(auflagen),
         "lizenz_quelle": backbone.lizenz_quelle,
+        # Die Antwort auf „ist die Herkunft ein Beleg?" als Datum statt als Textprobe.
+        # Ohne dieses Feld musste ein Aufrufer auf Zeichenketten suchen — und traf dabei
+        # das Wort „geprüft" auch in Auflagen, die mit der Herkunft nichts zu tun haben
+        # (Juggernaut: „Modellkarte, geprüft 2026-08-18"). Genau daran ist ein Test
+        # hängengeblieben, der etwas anderes zu prüfen glaubte.
+        "lizenz_belegt": ist_belegt(backbone.lizenz_quelle),
+        # Derselbe Satz, den die Auflage oben trägt — hier noch einmal für sich, damit
+        # alle drei Registries dieselbe Form beantworten (``None`` heisst: belegt).
+        "lizenz_hinweis": hinweis,
         "begruendung": begruendung,
     }
 

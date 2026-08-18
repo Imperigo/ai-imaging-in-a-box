@@ -237,17 +237,7 @@ def lies_ifc_kopf(pfad) -> dict:
     if schema is None:
         warnungen.append("FILE_SCHEMA nicht gefunden — die Schemafassung bleibt offen.")
 
-    # Erzeuger: FILE_NAME trägt in den letzten beiden Feldern das erzeugende Programm.
-    erzeuger = None
-    name_treffer = _RE_FILENAME.search(text)
-    if name_treffer:
-        felder = re.findall(r"'([^']*)'", name_treffer.group(1))
-        # Die letzten beiden nichtleeren Zeichenketten sind originating_system und
-        # authorization; das Programm steht üblicherweise in einer davon.
-        kandidaten = [f for f in felder if f.strip()]
-        if kandidaten:
-            erzeuger = " | ".join(kandidaten[-3:])
-
+    erzeuger = _erzeuger_aus_file_name(text)
     herkunft = _erkenne(erzeuger or "")
 
     einheit, vorsatz, faktor = _laengeneinheit(text, warnungen)
@@ -283,6 +273,97 @@ def lies_ifc_kopf(pfad) -> dict:
         "warnungen": warnungen,
         "vollstaendig_gelesen": vollstaendig,
     }
+
+
+def _step_felder(inhalt: str) -> list[str]:
+    """Die Parameter einer STEP-Entität zerlegen — auf oberster Ebene, klammertreu.
+
+    Ein blosses ``split(",")`` genügt nicht: Die Autoren- und Organisationsfelder von
+    ``FILE_NAME`` sind selbst Listen (``('Muster','Zweiter')``), und ein Komma darin
+    verschöbe jedes Feld danach. Genau diese Verschiebung ist der Grund, warum hier
+    **nach Position** gelesen wird und nicht nach „die letzten drei nichtleeren".
+    """
+    felder: list[str] = []
+    tiefe = 0
+    in_text = False
+    aktuell: list[str] = []
+    i = 0
+    while i < len(inhalt):
+        z = inhalt[i]
+        if in_text:
+            aktuell.append(z)
+            if z == "'":
+                # Zwei Hochkommas hintereinander sind ein escaptes Hochkomma (ISO 10303-21).
+                if i + 1 < len(inhalt) and inhalt[i + 1] == "'":
+                    aktuell.append("'")
+                    i += 2
+                    continue
+                in_text = False
+        elif z == "'":
+            in_text = True
+            aktuell.append(z)
+        elif z == "(":
+            tiefe += 1
+            aktuell.append(z)
+        elif z == ")":
+            tiefe -= 1
+            aktuell.append(z)
+        elif z == "," and tiefe == 0:
+            felder.append("".join(aktuell).strip())
+            aktuell = []
+        else:
+            aktuell.append(z)
+        i += 1
+    felder.append("".join(aktuell).strip())
+    return felder
+
+
+#: Position der beiden Felder in ``FILE_NAME``, die das erzeugende Programm nennen.
+#:
+#: ISO 10303-21 legt die Reihenfolge fest:
+#: ``FILE_NAME(name, time_stamp, author, organization, preprocessor_version,
+#: originating_system, authorization)`` — also Index 4 und 5, nullbasiert.
+FILE_NAME_ERZEUGERFELDER = (4, 5)
+
+
+def _erzeuger_aus_file_name(text: str) -> str | None:
+    """Das erzeugende Programm aus ``FILE_NAME`` lesen — **nach Position**.
+
+    Der Befund, der diese Funktion nötig machte (18.08.2026, Testabnahme dieses Moduls):
+    Die erste Fassung sammelte *alle* nichtleeren Zeichenketten aus ``FILE_NAME`` und nahm
+    die letzten drei. In der Testgeometrie sind nur drei Felder gefüllt — **Dateiname**,
+    Zeitstempel und Beschreibung —, und damit landete der Dateiname in der Erkennung:
+
+        `rhino-haus.ifc` → ``herkunft == "Rhino"``
+
+    obwohl das Erzeugerfeld Rhino nirgends nennt. **Wer eine Datei umbenannte, änderte
+    ihre Herkunft.** Das ist keine ungenaue Erkennung, das ist eine falsche.
+
+    Gelesen werden jetzt nur ``preprocessor_version`` und ``originating_system`` — die
+    beiden Felder, die die Norm für genau diesen Zweck vorsieht. Dateiname, Autor und
+    Organisation bleiben **draussen**: Ein Autorenfeld „Blenderweg 12" hätte sonst
+    „Blender" ergeben, und `revit`, `rhino` oder `autodesk` stecken ebenso leicht in einem
+    Personen- oder Projektnamen.
+
+    Warum das bei glTF weniger heikel wäre, hier aber nicht: Bei IFC ist die Up-Achse
+    ohnehin Norm, eine Fehlerkennung kostet nur eine falsche Bemerkung. Bei glTF
+    entschiede derselbe Fehlgriff darüber, welche Achse einem Menschen zur **Bestätigung**
+    vorgeschlagen wird — und das ist die Sorte Hilfestellung, die man bestätigt, ohne
+    nachzusehen.
+    """
+    treffer = _RE_FILENAME.search(text)
+    if not treffer:
+        return None
+    felder = _step_felder(treffer.group(1))
+    teile: list[str] = []
+    for i in FILE_NAME_ERZEUGERFELDER:
+        if i < len(felder):
+            wert = felder[i].strip()
+            if wert.startswith("'") and wert.endswith("'") and len(wert) >= 2:
+                wert = wert[1:-1].replace("''", "'")
+            if wert and wert != "$":
+                teile.append(wert)
+    return " | ".join(teile) or None
 
 
 def _laengeneinheit(text: str, warnungen: list[str]) -> tuple[str | None, str | None, float | None]:
@@ -357,6 +438,12 @@ def lies_gltf_kopf(pfad) -> dict:
             ) from fehler
         format_name = "gltf"
 
+    if not isinstance(daten, dict):
+        raise HerkunftError(
+            f"{pfad.name}: Der JSON-Inhalt ist ein {type(daten).__name__}, kein Objekt. "
+            f"Eine glTF-Datei ist nach Norm ein JSON-Objekt; eine Liste oder ein blosser "
+            f"Wert ist keine deutbare glTF-Datei."
+        )
     asset = daten.get("asset") or {}
     generator = asset.get("generator")
     herkunft = _erkenne(generator or "")
@@ -552,6 +639,7 @@ def pruefe_einheit_gegen_masse(kopf: dict, bbox) -> dict:
 __all__ = [
     "BELEGT", "HERKUENFTE", "HerkunftError", "Herkunft", "LESEFENSTER_BYTE",
     "SI_VORSAETZE", "UNBEKANNT", "VERMUTET",
+    "FILE_NAME_ERZEUGERFELDER",
     "deute", "fordere_up_axis", "lies_gltf_kopf", "lies_ifc_kopf",
     "pruefe_einheit_gegen_masse",
 ]

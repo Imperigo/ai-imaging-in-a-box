@@ -41,6 +41,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+# Dieselbe Vokabel für die Herkunft einer Lizenzangabe wie in `backbone` und
+# `tiefenschaetzer`. Sie lag bis zum 18.08.2026 nur in `backbone`, und dieses Modul trug
+# stattdessen freien Text — dieselbe Sache in drei Schreibweisen (Prüfbericht Abschnitt 5).
+from aiimaging import lizenzquelle
+from aiimaging.lizenzquelle import QUELLE_UNGEPRUEFT, hinweis_zur_herkunft, ist_belegt
+
 #: Lizenzen, die Regel 1 zulässt.
 ZUGELASSENE_LIZENZEN = frozenset({"MIT", "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "MPL-2.0"})
 
@@ -65,7 +71,9 @@ class Einbetter:
     begruendung: str
     dimension: int
     gated: bool = False
-    lizenz_quelle: str = "ungeprueft"
+    #: Wie gut die Lizenzangabe belegt ist: eine Vokabel aus
+    #: :mod:`aiimaging.lizenzquelle` oder ein Vermerk ``"geprueft <datum> (<url>)"``.
+    lizenz_quelle: str = QUELLE_UNGEPRUEFT
 
 
 EINBETTER: dict[str, Einbetter] = {
@@ -141,15 +149,29 @@ def hole(name: str) -> Einbetter:
 
 
 def pruefe_lizenz(name: str) -> dict:
-    """Die Lizenzlage eines Einbetters — für den ausführbaren Pfad, nicht nur zum Lesen."""
+    """Die Lizenzlage eines Einbetters — für den ausführbaren Pfad, nicht nur zum Lesen.
+
+    ``lizenz_belegt`` und ``lizenz_hinweis`` sind am 18.08.2026 dazugekommen. Vorher gab
+    dieses Modul die Herkunft nur als Text weiter, und wer wissen wollte, ob sie ein
+    Beleg ist, musste selbst auf Zeichenketten suchen. Genau diese Suche ist in
+    ``backbone`` schiefgegangen (Prüfbericht Abschnitt 5) — die Antwort gehört darum als
+    Datum in den Satz und nicht in die Auswertung jedes Aufrufers.
+
+    ``lizenz_hinweis`` ist ``None``, wenn die Angabe belegt ist; sonst benennt es die
+    Lücke. Ein Ausschluss (``zulaessig=False``) bleibt davon unberührt: Belegt oder nicht,
+    die Registry entscheidet über die Zulässigkeit, dieses Feld nur über die Beweislage.
+    """
     e = hole(name)
     return {
+        "regel_1_spannung": lizenzquelle.regel_1_spannung(e.name, e.lizenz, e.zulaessig),
         "name": e.name,
         "lizenz": e.lizenz,
         "zulaessig": e.zulaessig,
         "gated": e.gated,
         "begruendung": e.begruendung,
         "lizenz_quelle": e.lizenz_quelle,
+        "lizenz_belegt": ist_belegt(e.lizenz_quelle),
+        "lizenz_hinweis": hinweis_zur_herkunft(e.lizenz_quelle),
     }
 
 

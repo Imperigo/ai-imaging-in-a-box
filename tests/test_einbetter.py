@@ -8,6 +8,7 @@ from __future__ import annotations
 import pytest
 
 from aiimaging import einbetter as e
+from aiimaging.lizenzquelle import QUELLE_SEKUNDAER, QUELLE_UNGEPRUEFT, ist_belegt
 
 
 def test_dinov3_steht_in_der_registry():
@@ -68,5 +69,53 @@ def test_lizenzquelle_ist_bei_allen_vermerkt():
 
 
 def test_dinov3_lizenz_ist_geprueft_nicht_nur_sekundaer():
-    """Ein Ausschluss muss besser belegt sein als eine Zulassung."""
-    assert "geprueft" in e.EINBETTER["dinov3"].lizenz_quelle
+    """Ein Ausschluss muss besser belegt sein als eine Zulassung.
+
+    Gefragt wird seit dem 18.08.2026 über ``ist_belegt`` statt über eine Textprobe auf
+    „geprueft" — dieselbe Vokabel wie in ``backbone`` und ``tiefenschaetzer``, und
+    dieselbe, die die Registry selbst benutzt.
+    """
+    assert ist_belegt(e.EINBETTER["dinov3"].lizenz_quelle)
+
+
+def _probe(name, lizenz_quelle):
+    """Ein synthetischer Eintrag, der nur die Herkunft der Lizenzangabe variiert."""
+    return e.Einbetter(name=name, modell_id=f"org/{name}", lizenz="Apache-2.0",
+                       zulaessig=True, begruendung="synthetisch", dimension=8,
+                       lizenz_quelle=lizenz_quelle)
+
+
+@pytest.mark.parametrize("quelle", [QUELLE_UNGEPRUEFT, QUELLE_SEKUNDAER])
+def test_eine_unbelegte_angabe_wird_als_solche_gemeldet(monkeypatch, quelle):
+    """Der Prüfstand gehört in die Antwort, nicht in eine Fussnote.
+
+    Synthetisch statt an einem Namen aus dem Bestand: Ein Test, der eine Namensliste
+    festhält, hält einen Schuldenstand fest und wird beim nächsten Beleg zum Hindernis —
+    genau das ist in ``test_backbone.py`` passiert (Prüfbericht Abschnitt 5).
+    """
+    monkeypatch.setitem(e.EINBETTER, "probe", _probe("probe", quelle))
+
+    urteil = e.pruefe_lizenz("probe")
+    assert urteil["lizenz_belegt"] is False
+    assert urteil["lizenz_hinweis"].startswith("Lizenzangabe")
+
+
+def test_ein_belegter_vermerk_mit_url_gilt_als_beleg(monkeypatch):
+    """Die Gegenprobe — ohne sie wäre die Zusicherung oben vakuös."""
+    monkeypatch.setitem(e.EINBETTER, "probe",
+                        _probe("probe", "geprueft 2026-08-18 (https://example.invalid/mk)"))
+
+    urteil = e.pruefe_lizenz("probe")
+    assert urteil["lizenz_belegt"] is True
+    assert urteil["lizenz_hinweis"] is None
+
+
+def test_die_belegfrage_ist_von_der_zulaessigkeit_getrennt():
+    """Ein Ausschluss ist kein Prüfstand: DINOv3 ist belegt UND unzulässig.
+
+    Beides in ein Feld zu ziehen wäre die verlockende Abkürzung — und würde die Frage
+    „wie gut wissen wir das?" hinter der Frage „dürfen wir das?" verschwinden lassen.
+    """
+    urteil = e.pruefe_lizenz("dinov3")
+    assert urteil["zulaessig"] is False
+    assert urteil["lizenz_belegt"] is True

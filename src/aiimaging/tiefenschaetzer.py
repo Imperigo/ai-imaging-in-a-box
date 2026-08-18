@@ -128,6 +128,12 @@ from pathlib import Path
 
 from aiimaging import geometrie_qa
 
+# Dieselbe Vokabel für die Herkunft einer Lizenzangabe wie in `backbone` und `einbetter`.
+# Sie lag bis zum 18.08.2026 nur in `backbone`, und dieses Modul trug stattdessen freien
+# Text — dieselbe Sache in drei Schreibweisen (Prüfbericht Abschnitt 5).
+from aiimaging import lizenzquelle
+from aiimaging.lizenzquelle import QUELLE_UNGEPRUEFT, hinweis_zur_herkunft, ist_belegt
+
 #: Lizenzen, die Regel 1 zulässt. Wortgleich mit :data:`aiimaging.einbetter.ZUGELASSENE_LIZENZEN`
 #: — bewusst noch einmal hier, damit dieses Modul für sich lesbar bleibt.
 ZUGELASSENE_LIZENZEN = frozenset(
@@ -212,7 +218,10 @@ class Tiefenschaetzer:
         parameter_m: Parameterzahl in Millionen. Grössenordnung, kein Datenblatt.
         polaritaet: Einer der Werte aus :data:`POLARITAETEN`. Entscheidet, auf welcher
             Seite der Werte der Hintergrund liegt.
-        lizenz_quelle: Wie gut die Lizenzangabe belegt ist.
+        lizenz_quelle: Wie gut die Lizenzangabe belegt ist — eine der Vokabeln aus
+            :mod:`aiimaging.lizenzquelle` oder ein Vermerk der Form
+            ``"geprueft <datum> (<url>)"``. Ob ein Wert ein Beleg ist, beantwortet
+            :func:`aiimaging.lizenzquelle.ist_belegt` und kein Vergleich von Hand.
 
     ``frozen=True``: Die Registry ist ein Nachschlagewerk und kein Zustand. Ein
     versehentliches ``TIEFENSCHAETZER["..."].zulaessig = True`` an irgendeiner Stelle im
@@ -226,7 +235,7 @@ class Tiefenschaetzer:
     begruendung: str
     parameter_m: float
     polaritaet: str = POLARITAET_UNBEKANNT
-    lizenz_quelle: str = "ungeprueft"
+    lizenz_quelle: str = QUELLE_UNGEPRUEFT
 
 
 #: Der Satz, der bei allen drei ausgeschlossenen Grössen gleich lautet. Ausgelagert,
@@ -324,9 +333,20 @@ def hole(name: str) -> Tiefenschaetzer:
 
 
 def pruefe_lizenz(name: str) -> dict:
-    """Die Lizenzlage eines Schätzers — für den ausführbaren Pfad, nicht nur zum Lesen."""
+    """Die Lizenzlage eines Schätzers — für den ausführbaren Pfad, nicht nur zum Lesen.
+
+    ``lizenz_belegt`` und ``lizenz_hinweis`` sind am 18.08.2026 dazugekommen. Vorher gab
+    dieses Modul die Herkunft nur als Text weiter, und wer wissen wollte, ob sie ein Beleg
+    ist, musste selbst auf Zeichenketten suchen. Genau diese Suche ist in ``backbone``
+    schiefgegangen (Prüfbericht Abschnitt 5) — die Antwort gehört als Datum in den Satz.
+
+    ``lizenz_hinweis`` ist ``None``, wenn die Angabe belegt ist; sonst benennt es die
+    Lücke. Über die Zulässigkeit sagt es nichts: Das entscheidet ``zulaessig``, und ein
+    belegter Ausschluss (Base, Large, Giant) ist ein besonders gut belegter.
+    """
     t = hole(name)
     return {
+        "regel_1_spannung": lizenzquelle.regel_1_spannung(t.name, t.lizenz, t.zulaessig),
         "name": t.name,
         "modell_id": t.modell_id,
         "lizenz": t.lizenz,
@@ -334,6 +354,8 @@ def pruefe_lizenz(name: str) -> dict:
         "begruendung": t.begruendung,
         "parameter_m": t.parameter_m,
         "lizenz_quelle": t.lizenz_quelle,
+        "lizenz_belegt": ist_belegt(t.lizenz_quelle),
+        "lizenz_hinweis": hinweis_zur_herkunft(t.lizenz_quelle),
     }
 
 

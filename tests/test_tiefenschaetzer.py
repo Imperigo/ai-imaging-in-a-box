@@ -26,6 +26,7 @@ import pytest
 
 from aiimaging import auftrag, geometrie_qa
 from aiimaging import tiefenschaetzer as ts
+from aiimaging.lizenzquelle import QUELLE_SEKUNDAER, QUELLE_UNGEPRUEFT, ist_belegt
 from conftest import SRC
 
 #: Die drei Grössen, die unter Regel 1 ausscheiden. Als Konstante, damit ein späterer
@@ -166,9 +167,61 @@ def test_die_kleine_variante_ist_wirklich_die_kleinste():
 
 
 def test_lizenzquelle_ist_bei_allen_vermerkt_und_geprueft():
-    """Ein Ausschluss muss belegt sein — 'sekundär gehört' genügt für Regel 1 nicht."""
+    """Ein Ausschluss muss belegt sein — 'sekundär gehört' genügt für Regel 1 nicht.
+
+    Gefragt wird seit dem 18.08.2026 über ``ist_belegt`` statt über eine Textprobe auf
+    „geprueft": dieselbe Vokabel, die die Registry selbst benutzt, und dieselbe wie in
+    ``backbone`` und ``einbetter``. Eine Textprobe beantwortet dieselbe Frage nur
+    zufällig mit — und trifft daneben, sobald irgendwo sonst „geprueft" im Satz steht
+    (Prüfbericht Abschnitt 5).
+    """
     for x in ts.TIEFENSCHAETZER.values():
-        assert "geprueft" in x.lizenz_quelle
+        assert ist_belegt(x.lizenz_quelle), f"{x.name}: {x.lizenz_quelle!r}"
+
+
+def _probe(name, lizenz_quelle):
+    """Ein synthetischer Eintrag, der nur die Herkunft der Lizenzangabe variiert."""
+    return ts.Tiefenschaetzer(name=name, modell_id=f"org/{name}", lizenz="Apache-2.0",
+                              zulaessig=True, begruendung="synthetisch", parameter_m=1.0,
+                              lizenz_quelle=lizenz_quelle)
+
+
+@pytest.mark.parametrize("quelle", [QUELLE_UNGEPRUEFT, QUELLE_SEKUNDAER])
+def test_eine_unbelegte_angabe_wird_als_solche_gemeldet(monkeypatch, quelle):
+    """Der Prüfstand gehört in die Antwort — als Feld, nicht als Textprobe des Aufrufers.
+
+    Synthetisch statt an einem Namen aus dem Bestand: Ein Test über eine Namensliste hält
+    einen Schuldenstand fest und wird beim nächsten Beleg zum Hindernis. Genau das ist in
+    ``test_backbone.py`` passiert.
+    """
+    monkeypatch.setitem(ts.TIEFENSCHAETZER, "probe", _probe("probe", quelle))
+
+    urteil = ts.pruefe_lizenz("probe")
+    assert urteil["lizenz_belegt"] is False
+    assert urteil["lizenz_hinweis"].startswith("Lizenzangabe")
+
+
+def test_ein_belegter_vermerk_mit_url_gilt_als_beleg(monkeypatch):
+    """Die Gegenprobe — ohne sie wäre die Zusicherung oben vakuös.
+
+    Der Giant-Eintrag zeigt, warum die freie Form nötig ist: Sein Beleg ist keine
+    Modellkarte, sondern der LICENSE-Abschnitt eines README. Ein Schlagwort „modellkarte"
+    wäre dort schlicht falsch.
+    """
+    monkeypatch.setitem(ts.TIEFENSCHAETZER, "probe",
+                        _probe("probe", "geprueft 2026-08-18 (https://example.invalid/mk)"))
+
+    urteil = ts.pruefe_lizenz("probe")
+    assert urteil["lizenz_belegt"] is True
+    assert urteil["lizenz_hinweis"] is None
+
+
+@pytest.mark.parametrize("name", NC_GROESSEN)
+def test_die_belegfrage_ist_von_der_zulaessigkeit_getrennt(name):
+    """Ein Ausschluss ist kein Prüfstand: Die NC-Grössen sind belegt UND unzulässig."""
+    urteil = ts.pruefe_lizenz(name)
+    assert urteil["zulaessig"] is False
+    assert urteil["lizenz_belegt"] is True
 
 
 def test_pruefe_lizenz_gibt_die_lage_als_daten():

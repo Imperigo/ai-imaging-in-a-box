@@ -32,12 +32,15 @@ from aiimaging.backbone import (
     KOND_INTEGRIERTES_EDIT,
     KONDITIONIERUNGEN,
     QUELLE_MODELLKARTE,
+    QUELLE_SEKUNDAER,
+    QUELLE_UNGEPRUEFT,
     RUECKFALL_BACKBONE,
     VORGABE_BACKBONE,
     VORSCHAU_BACKBONE,
     Backbone,
     BackboneError,
     hole,
+    ist_belegt,
     pruefe_lizenz,
     vorhandene_dateien,
     waehle,
@@ -156,10 +159,13 @@ def test_backbone_ist_unveraenderlich():
 def test_backbone_laesst_sich_ohne_lizenz_quelle_bauen():
     """Das nachgetragene Feld hat einen Vorgabewert — ältere Aufrufe bleiben gültig.
 
-    Und der Vorgabewert ist die zurückhaltendste Annahme: ungeprüft.
+    Und der Vorgabewert ist die zurückhaltendste Annahme: nicht belegt. Geprüft wird der
+    **Zustand** (``ist_belegt``) und nicht der Name der Vokabel — ein Vergleich auf einen
+    Namen wäre genau der Fehler, an dem sich die Lizenzprüfung vom 18.08.2026 gestossen
+    hat.
     """
     b = Backbone("x", "org/x", 1.0, "Apache-2.0", True, KOND_DEPTH_CONTROLNET, 2.4, ("a",))
-    assert b.lizenz_quelle != QUELLE_MODELLKARTE
+    assert not ist_belegt(b.lizenz_quelle)
 
 
 # --------------------------------------------------------------------------------------
@@ -233,12 +239,103 @@ def test_sdxl_meldet_die_openrail_nutzungsauflagen():
     assert any("OpenRAIL" in a for a in urteil["auflagen"])
 
 
-@pytest.mark.parametrize("name", ["sd35-large", "sdxl-juggernaut"])
-def test_ungepruefte_lizenzen_werden_als_solche_gemeldet(name):
-    """Die Lagebeurteilung führt beide als „nicht geprüft" — das darf nicht verlorengehen."""
+# --------------------------------------------------------------------------------------
+# 2b · Die Herkunft der Lizenzangabe — Zustand statt Namensliste
+#
+# Hier stand bis zum 18.08.2026 ``test_ungepruefte_lizenzen_werden_als_solche_gemeldet``,
+# parametrisiert über ["sd35-large", "sdxl-juggernaut"]. Der Test hielt damit den
+# Wissensstand vom 14.08. fest — eine Schuldenliste, keine Eigenschaft. Als die
+# Lizenzprüfung Juggernaut am Original belegte, wurde der Test zum Hindernis: Der Beleg
+# konnte nicht eingetragen werden, ohne ihn zu brechen (Prüfbericht Abschnitt 5).
+#
+# Dazu kam, dass er das Falsche mass. Seine zweite Zusicherung suchte das Wort „geprüft"
+# in den Auflagen — und fand es bei Juggernaut in einer Auflage, die mit der Herkunft
+# nichts zu tun hat („Modellkarte, geprüft 2026-08-18"). Er wäre also auch dann grün
+# geblieben, wenn die Herkunfts-Auflage gefehlt hätte.
+#
+# Erhalten bleibt, was er sichern sollte: **Eine nicht am Original geprüfte Lizenzangabe
+# darf nicht als geprüft durchgehen.** Das ist eine Eigenschaft des Eintrags-Zustands und
+# hängt an keinem Namen. Die Gegenprobe steht daneben, sonst wäre die Zusicherung vakuös.
+# --------------------------------------------------------------------------------------
+
+def _probe(name, lizenz_quelle):
+    """Ein synthetischer Registry-Eintrag, der nur die Herkunft variiert.
+
+    Synthetisch und nicht aus dem Bestand gegriffen: Sonst hinge der Test wieder daran,
+    dass ein bestimmtes Modell einen bestimmten Prüfstand hat — also an genau der
+    Schuldenliste, die hier abgeräumt wird.
+    """
+    return Backbone(name, f"org/{name}", 1.0, "Apache-2.0", True,
+                    KOND_DEPTH_CONTROLNET, 2.4, ("model_index.json",),
+                    lizenz_quelle=lizenz_quelle)
+
+
+@pytest.mark.parametrize("quelle", [QUELLE_UNGEPRUEFT, QUELLE_SEKUNDAER, "", "irgendwas"])
+def test_eine_nicht_belegte_lizenzangabe_geht_nicht_als_geprueft_durch(monkeypatch, quelle):
+    """Die eigentliche Zusicherung: kein Beleg, kein „geprüft" — egal welcher Eintrag."""
+    monkeypatch.setitem(BACKBONES, "probe-unbelegt", _probe("probe-unbelegt", quelle))
+
+    urteil = pruefe_lizenz("probe-unbelegt")
+    assert urteil["lizenz_belegt"] is False
+    assert any(a.startswith("Lizenzangabe") for a in urteil["auflagen"]), (
+        "Eine unbelegte Lizenzangabe muss als Auflage erscheinen, nicht als Fussnote"
+    )
+    assert "Lizenzangabe" in urteil["begruendung"]
+
+
+def test_die_sekundaerquelle_wird_von_gar_nicht_geprueft_unterschieden(monkeypatch):
+    """Beides ist kein Beleg — aber „sekundär gehört" ist nicht dasselbe wie „nichts"."""
+    monkeypatch.setitem(BACKBONES, "probe-sekundaer",
+                        _probe("probe-sekundaer", QUELLE_SEKUNDAER))
+    monkeypatch.setitem(BACKBONES, "probe-nichts",
+                        _probe("probe-nichts", QUELLE_UNGEPRUEFT))
+
+    sekundaer = " ".join(pruefe_lizenz("probe-sekundaer")["auflagen"])
+    nichts = " ".join(pruefe_lizenz("probe-nichts")["auflagen"])
+    assert "Sekundärquelle" in sekundaer
+    assert "NICHT geprüft" in nichts
+    assert sekundaer != nichts
+
+
+@pytest.mark.parametrize("quelle", [
+    QUELLE_MODELLKARTE,
+    "geprueft 2026-08-18 (https://example.invalid/modellkarte)",
+])
+def test_ein_belegter_eintrag_wird_nicht_als_ungeprueft_gemeldet(monkeypatch, quelle):
+    """Die Gegenprobe — ohne sie wäre die Zusicherung oben vakuös.
+
+    Und zugleich der Fehler vom 18.08.2026 in ausführbarer Form: Ein Vermerk mit Datum
+    und URL ist ein Beleg. Er wurde als „NICHT geprüft" weitergemeldet, weil exakt auf
+    das Schlagwort verglichen wurde. Ein Beleg, den die Prüflogik nicht als Beleg
+    erkennt, ist kein Beleg.
+    """
+    monkeypatch.setitem(BACKBONES, "probe-belegt", _probe("probe-belegt", quelle))
+
+    urteil = pruefe_lizenz("probe-belegt")
+    assert urteil["lizenz_belegt"] is True
+    assert not any(a.startswith("Lizenzangabe") for a in urteil["auflagen"]), (
+        f"{quelle!r} ist ein Beleg und darf nicht als ungeprüft gemeldet werden"
+    )
+    assert "Lizenzangabe" not in urteil["begruendung"]
+
+
+@pytest.mark.parametrize("name", sorted(BACKBONES))
+def test_die_meldung_folgt_dem_zustand_des_eintrags(name):
+    """Dieselbe Regel, angewandt auf den echten Bestand — ohne einen Namen zu nennen.
+
+    Der Test hält keinen Prüfstand fest: Wird ein Eintrag belegt, verschwindet die
+    Auflage von selbst und der Test bleibt grün. Er bricht nur, wenn Datensatz und
+    Meldung auseinanderlaufen.
+    """
     urteil = pruefe_lizenz(name)
-    assert urteil["lizenz_quelle"] != QUELLE_MODELLKARTE
-    assert any("geprüft" in a.lower() for a in urteil["auflagen"])
+    belegt = ist_belegt(BACKBONES[name].lizenz_quelle)
+
+    assert urteil["lizenz_belegt"] is belegt
+    herkunft = [a for a in urteil["auflagen"] if a.startswith("Lizenzangabe")]
+    assert bool(herkunft) is not belegt, (
+        f"{name}: lizenz_quelle={BACKBONES[name].lizenz_quelle!r} und die gemeldeten "
+        f"Auflagen {urteil['auflagen']} sagen Verschiedenes"
+    )
 
 
 def test_es_gibt_mindestens_zwei_apache_modelle_an_der_depth_naht():
@@ -374,10 +471,12 @@ def test_registry_laedt_keine_schweren_bibliotheken():
     assert not schwer, f"{schwer} wurde durch die Registry geladen"
 
 
-def test_backbone_importiert_nur_stdlib():
-    """Quelltextprobe: keine Fremdabhängigkeit, damit die Tabelle überall lesbar bleibt."""
-    import aiimaging.backbone as modul
+def _importierte_wurzelmodule(modul) -> set[str]:
+    """Die obersten Modulnamen, die eine Quelldatei importiert — aus dem Syntaxbaum.
 
+    Quelltextprobe statt ``sys.modules``: Was ein anderer Test schon geladen hat, soll
+    das Ergebnis nicht verfälschen.
+    """
     quelle = Path(modul.__file__).read_text(encoding="utf-8")
     module = set()
     for knoten in ast.walk(ast.parse(quelle)):
@@ -385,4 +484,26 @@ def test_backbone_importiert_nur_stdlib():
             module.update(a.name.split(".")[0] for a in knoten.names)
         elif isinstance(knoten, ast.ImportFrom) and knoten.level == 0 and knoten.module:
             module.add(knoten.module.split(".")[0])
-    assert module <= {"__future__", "dataclasses", "pathlib"}
+    return module
+
+
+def test_backbone_importiert_nur_stdlib():
+    """Quelltextprobe: keine Fremdabhängigkeit, damit die Tabelle überall lesbar bleibt.
+
+    ``aiimaging`` steht seit dem 18.08.2026 in der erlaubten Menge: Die Vokabel für die
+    Herkunft einer Lizenzangabe liegt in ``aiimaging.lizenzquelle``, weil sie drei
+    Registries gemeinsam gehört. Das ist keine Fremdabhängigkeit — der nächste Test hält
+    fest, dass auch jenes Modul nichts nachzieht.
+    """
+    import aiimaging.backbone as modul
+
+    assert _importierte_wurzelmodule(modul) <= {
+        "__future__", "dataclasses", "pathlib", "aiimaging",
+    }
+
+
+def test_die_lizenzvokabel_zieht_selbst_nichts_nach():
+    """Sonst wäre die Erlaubnis oben ein Schlupfloch: ein stdlib-Modul mit Hintertür."""
+    import aiimaging.lizenzquelle as modul
+
+    assert _importierte_wurzelmodule(modul) <= {"__future__"}
