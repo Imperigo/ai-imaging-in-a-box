@@ -102,8 +102,10 @@ aus `register_in_odysseus.sh` bekannt, aber hier nicht ausgeführt.
       `waehle(kommerziell=True)` gibt FLUX-dev **nie** zurück — Regel 1 ausführbar.
 - [x] **Renderstufe gebaut** — `render.py` über `diffusers` (Apache-2.0), Modell
       injizierbar, ohne GPU voll durchlaufbar. Regel 1 im Pfad: FLUX-dev wird abgelehnt.
-- [x] **Bildlesen** — `bildlesen.py` schliesst die Lücke zwischen Dateien und Metrik;
-      warnt aktiv, dass die Silhouette nur aus der EXR exakt ist.
+- [x] **Bildlesen** — `bildlesen.py`: stdlib-EXR-Leser, **bitgleich** mit Blenders eigenen
+      Zahlen; PNG-Rückrechnung auf 0,067 mm (= halber Quantisierungsschritt, reine Rundung).
+      Blender nur als Rückfall für exotische Kompressionen. Warnt aktiv über den
+      Silhouetten-Verlust im PNG — empirisch **genau ein** Punkt, und zwar der entfernteste.
 - [ ] **Erster echter Render** — Qwen-Image-Edit-2511 mit echten Gewichten.
       **Braucht GPU**, läuft über `auftraege/`. Der diffusers-Adapter ist bisher
       **nie ausgeführt** worden — das ist die offene Fläche.

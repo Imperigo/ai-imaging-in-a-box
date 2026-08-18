@@ -133,7 +133,15 @@ class EXRVarianteError(BildError):
     Rückfall auf den Blender-Subprozess. Eine kaputte oder abgeschnittene Datei tut es
     nicht — für die wäre ein drei Sekunden teurer Prozessstart nur eine langsamere Art,
     denselben Fehler zu melden.
+
+    ``grund`` trägt den Kurzgrund ohne Rahmentext. Er hängt hier als Attribut, damit der
+    Rückfall ihn nicht aus der fertigen Fehlermeldung zurückschneiden muss — solches
+    Zerschneiden von Text ist genau die Stelle, an der später ein Satz kaputtgeht.
     """
+
+    def __init__(self, meldung: str, grund: str = ""):
+        super().__init__(meldung)
+        self.grund = grund or meldung
 
 
 class SilhouettenVerlust(UserWarning):
@@ -286,6 +294,18 @@ def lies_png_graustufen(pfad) -> tuple[list[float], int, int]:
             gemeldet und nicht gedeutet: Ein RGB-Bild als Tiefenkarte zu lesen hiesse,
             aus einer Farbe eine Entfernung zu erfinden.
     """
+    werte, breite, hoehe, _bittiefe = _png_lesen(pfad)
+    return werte, breite, hoehe
+
+
+def _png_lesen(pfad) -> tuple[list[float], int, int, int]:
+    """Wie ``lies_png_graustufen``, gibt aber zusätzlich die Bittiefe zurück.
+
+    Die Bittiefe interessiert nur ``png_befund`` — für den Quantisierungsschritt. Sie aus
+    den gelesenen Werten zurückzuschliessen (etwa über den kleinsten Wert über 0) wäre
+    eine Schätzung, die bei einem Bild aus wenigen Grautönen falsch ausgeht. Lieber eine
+    interne Funktion mehr als eine geratene Zahl in einem Bericht.
+    """
     pfad = Path(pfad)
     try:
         daten = pfad.read_bytes()
@@ -361,7 +381,7 @@ def lies_png_graustufen(pfad) -> tuple[list[float], int, int]:
             zahlen.byteswap()
         werte = [zahlen[i * kanaele] / 65535.0 for i in range(n)]
 
-    return werte, breite, hoehe
+    return werte, breite, hoehe, bittiefe
 
 
 # ======================================================================================
@@ -462,7 +482,17 @@ def tiefen_aus_png(pfad, normalisierung: dict, *,
         )
     min_m, max_m = _normalisierung_lesen(normalisierung)
     grau, breite, hoehe = lies_png_graustufen(pfad)
+    return _rueckrechnen(grau, breite, hoehe, min_m, max_m, grau_null, Path(pfad).name)
 
+
+def _rueckrechnen(grau: list[float], breite: int, hoehe: int, min_m: float, max_m: float,
+                  grau_null: str, name: str) -> list[float]:
+    """Grauwerte 0..1 → Meter, samt Warnung über den unvermeidlichen Verlust.
+
+    Eigene Funktion, damit ``tiefen_aus_report`` Breite und Höhe aus demselben Lesevorgang
+    bekommt, statt die Datei ein zweites Mal zu öffnen — und damit es die Rückrechnung nur
+    an einer Stelle gibt.
+    """
     spanne = max_m - min_m
     ersatz = math.inf if grau_null == GRAU_NULL_HINTERGRUND else max_m
     tiefen: list[float] = []
@@ -486,12 +516,12 @@ def tiefen_aus_png(pfad, normalisierung: dict, *,
                      f"Gate urteilt zu milde.")
         warnings.warn(
             SilhouettenVerlust(
-                f"{Path(pfad).name}: {n_null} von {breite * hoehe} Punkten "
+                f"{name}: {n_null} von {breite * hoehe} Punkten "
                 f"({anteil:.1%}) haben Grauwert 0. Hintergrund und entferntestes "
                 f"Geometriepixel sind im normalisierten PNG nicht unterscheidbar. "
                 f"{folge} Exakt geht die Silhouette nur aus der EXR."
             ),
-            stacklevel=2,
+            stacklevel=4,      # durch _rueckrechnen und tiefen_aus_png hindurch zum Aufrufer
         )
     return tiefen
 
@@ -513,20 +543,16 @@ def png_befund(pfad, normalisierung: dict) -> dict:
         und wer eine kleinere Abweichung meldet, hat sich verrechnet.
     """
     min_m, max_m = _normalisierung_lesen(normalisierung)
-    grau, breite, hoehe = lies_png_graustufen(pfad)
+    grau, breite, hoehe, bittiefe = _png_lesen(pfad)
     n = breite * hoehe
     n_null = sum(1 for wert in grau if wert == 0.0)
     n_eins = sum(1 for wert in grau if wert == 1.0)
-
-    # Die Bittiefe steckt in den Werten selbst: 0..1 in Schritten von 1/(2^b − 1). Der
-    # kleinste Schritt über 0 verrät sie, ohne die Datei ein zweites Mal zu öffnen.
-    kleinster = min((wert for wert in grau if wert > 0.0), default=1.0)
-    stufen = round(1.0 / kleinster) if kleinster > 0.0 else 1
-    stufen = 65535 if stufen > 255 else 255
+    stufen = (1 << bittiefe) - 1
 
     return {
         "breite": breite,
         "hoehe": hoehe,
+        "bittiefe": bittiefe,
         "n_pixel": n,
         "n_grau_null": n_null,
         "anteil_grau_null": n_null / n,
@@ -817,7 +843,8 @@ def lies_exr_tiefe_stdlib(pfad) -> tuple[list[float], int, int]:
         raise EXRVarianteError(
             f"{pfad}: {kopf['grund']}. Diese Datei ist in Ordnung, nur nicht in der "
             f"Spielart, die ohne Fremdbibliothek lesbar ist — `lies_exr_tiefe` fällt "
-            f"dafür auf den Blender-Subprozess zurück."
+            f"dafür auf den Blender-Subprozess zurück.",
+            kopf["grund"],
         )
 
     breite, hoehe = kopf["breite"], kopf["hoehe"]
@@ -1025,9 +1052,9 @@ def lies_exr_tiefe(pfad, *, timeout: int = 300,
     except EXRVarianteError as fehler:
         warnings.warn(
             BlenderRueckfall(
-                f"{Path(pfad).name}: {fehler.args[0].split(': ', 1)[-1]} Es wird jetzt "
-                f"`blender --background` als Subprozess gestartet — ab hier braucht "
-                f"dieser Aufruf ein installiertes Blender."
+                f"{Path(pfad).name}: {fehler.grund}. Der stdlib-Leser kann diese Datei "
+                f"nicht, also wird jetzt `blender --background` als Subprozess gestartet "
+                f"— ab hier braucht dieser Aufruf ein installiertes Blender."
             ),
             stacklevel=2,
         )
@@ -1099,13 +1126,19 @@ def tiefen_aus_report(report: dict, *, quelle: str = QUELLE_AUTO,
             "Report nennt ein `depth_png`, aber keine `depth_normalisierung`. Ohne "
             "min_m/max_m ist das PNG nicht in Meter zurückzurechnen."
         )
+    if grau_null not in (GRAU_NULL_HINTERGRUND, GRAU_NULL_GEOMETRIE):
+        raise BildError(f"grau_null: {grau_null!r} ist unbekannt.")
+    min_m, max_m = _normalisierung_lesen(normalisierung)
     grau, breite, hoehe = lies_png_graustufen(png)
-    del grau                                            # nur für Breite/Höhe geöffnet
-    return tiefen_aus_png(png, normalisierung, grau_null=grau_null), breite, hoehe
+    tiefen = _rueckrechnen(grau, breite, hoehe, min_m, max_m, grau_null, Path(png).name)
+    return tiefen, breite, hoehe
 
 
 __all__ = [
-    "BildError", "BlenderRueckfall", "EXRVarianteError", "SilhouettenVerlust",
+    # SeamError wird mit ausgegeben, damit Aufrufer `except (BildError, SeamError)`
+    # schreiben können, ohne zusätzlich `seams` importieren zu müssen: Das eine meint
+    # "die Datei taugt nicht", das andere "die Umgebung fehlt".
+    "BildError", "BlenderRueckfall", "EXRVarianteError", "SeamError", "SilhouettenVerlust",
     "EXR_RUNNER", "GRAU_NULL_GEOMETRIE", "GRAU_NULL_HINTERGRUND",
     "QUELLE_AUTO", "QUELLE_EXR", "QUELLE_PNG",
     "exr_kopf", "lies_exr_tiefe", "lies_exr_tiefe_stdlib", "lies_exr_tiefe_ueber_blender",

@@ -569,6 +569,34 @@ In der Natur dasselbe Prinzip wie bei der Blattstellung am Trieb.
 *Die Tiefenkarte trägt echte Meter; das Bildmodell erwartet Graustufen. Die
 Rückrechnungsformel wird darum mitgeliefert, sonst wären die Meter verloren.*
 
+**OpenEXR (Scanline)** — Bildformat für Messwerte statt Bildeindrücke: hohe Genauigkeit,
+Werte weit über den sichtbaren Bereich hinaus. *Scanline* heisst zeilenweise abgelegt (im
+Gegensatz zu gekachelt). *Hier trägt die EXR echte Meter, das PNG nur Graustufen.*
+
+**Half-Float** — Kommazahl mit 16 statt 32 Bit. Halb so gross, deutlich ungenauer. Bei
+Tiefendaten in Metern zu grob — deshalb schreibt dieses Projekt 32 Bit.
+
+**Prädiktor / Byte-Entflechtung** — Zwei Kniffe, mit denen OpenEXR seine Daten vor dem
+Packen umsortiert, damit `zlib` besser greift: Erst wird jeder Wert als Differenz zum
+vorigen abgelegt, dann werden die Bytes einer Zahl auseinandergezogen und gruppiert. Wer
+die Datei selbst liest, muss beides rückgängig machen — mehr steckt in der
+ZIP-Kompression von OpenEXR nicht.
+
+**zlib** — Die Standardbibliothek zum Packen und Entpacken von Daten, in Python
+mitgeliefert. *Der Grund, warum dieses Projekt EXR und PNG ohne Fremdabhängigkeit lesen
+kann — und damit ohne neue Lizenzfrage.*
+
+**Endianness (Bytefolge)** — In welcher Reihenfolge die Bytes einer Zahl im Speicher
+liegen. Wer ein Binärformat selbst liest, muss die richtige wählen, sonst kommen
+sinnlose Werte heraus.
+
+**CRC-Prüfsumme** — Eine kurze Kontrollzahl, mit der sich feststellen lässt, ob ein
+Datenblock unbeschädigt ist. *PNG führt sie je Block mit.*
+
+**Quantisierungsschritt** — Der Abstand zwischen zwei darstellbaren Werten. *Bei 16 Bit
+über eine Bautiefe von 8,7 m sind das 0,13 mm; der gemessene Rückrechnungsfehler liegt
+bei genau der Hälfte davon — also reine Rundung, kein Fehler im Verfahren.*
+
 **EXR** — Bildformat mit hoher Genauigkeit, das Werte ausserhalb von 0–255 speichern
 kann. Notwendig für Tiefendaten, weil dort echte Meterwerte stehen.
 
@@ -979,6 +1007,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus dem EXR-Leser: OpenEXR/Scanline, Half-Float, Praediktor/Byte-Entflechtung, zlib, Endianness, CRC, Quantisierungsschritt |
 | 2026-08-18 | Ergaenzt aus Renderstufe und Bildlesen: diffusers, txt2img/img2img/image-edit, Seed, Zeilenfilter |
 | 2026-08-18 | Ergaenzt aus der Einbetter-Pruefung: Gated Model praezisiert, selbstueberwachtes Lernen |
 | 2026-08-18 | Ergaenzt aus dem Multipass-Ausbau: Beauty-Pass, Emissions-Shader, View-Transform, Dithering, Denoiser, Bittiefe |

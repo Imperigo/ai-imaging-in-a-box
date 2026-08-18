@@ -346,8 +346,11 @@ def _compositor_auf_tiefe(out_dir: Path) -> None:
     ausgabe.base_path = str(out_dir)
     ausgabe.format.file_format = "OPEN_EXR"
     ausgabe.format.color_depth = "32"
-    # OPEN_EXR kennt nur RGB/RGBA — kein Graustufen-Modus. Die Tiefe steht im R-Kanal;
-    # alle drei Kanaele tragen denselben Wert, das kostet Platz, aber keine Genauigkeit.
+    # OPEN_EXR kennt in dieser Einstellung nur RGB/RGBA. Blender schreibt die Tiefe aber
+    # als EINEN Kanal namens "V" in die Datei — nachgemessen 2026-08-18 am erzeugten
+    # Header. Der frühere Kommentar behauptete hier drei Kanaele und einen "R"-Kanal; das
+    # war falsch und stand seit Phase 1 so da. Wer die EXR von aussen liest, muss nach "V"
+    # suchen, nicht nach "R" (siehe `aiimaging.bildlesen`, das eine Vorrangliste benutzt).
     ausgabe.format.color_mode = "RGB"
     ausgabe.file_slots.clear()
     ausgabe.file_slots.new("tiefe_")
@@ -383,7 +386,10 @@ def _tiefe_normalisieren(exr: Path, ziel_png: Path) -> dict:
 
     roh = np.empty(breite * hoehe * 4, dtype=np.float32)
     quelle.pixels.foreach_get(roh)
-    tiefe = roh[0::4]                                   # R-Kanal trägt die Tiefe
+    # `img.pixels` liefert IMMER RGBA, unabhaengig davon, wieviele Kanaele in der Datei
+    # stehen: Blender vervielfacht den einen "V"-Kanal auf R=G=B. Darum ist jeder vierte
+    # Wert ab 0 richtig — nicht weil die Datei einen R-Kanal haette.
+    tiefe = roh[0::4]
 
     gueltig = np.isfinite(tiefe) & (tiefe > 0.0) & (tiefe < HINTERGRUND_AB_M)
     if not gueltig.any():
