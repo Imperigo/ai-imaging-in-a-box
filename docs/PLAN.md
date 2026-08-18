@@ -163,6 +163,14 @@ Bekannt und ausdrücklich nicht erledigt:
   LICENSE-Datei zu prüfen.
 - **Ökosystem grösstenteils ungelesen** — `KosmoPublish`, `KosmoDesign`, `KosmoPrepare`,
   `ArchitekturKosmos-Codex`, `architekturkosmos-control-hub`, `Architektur-Cosmos`.
+- **Der Graph-Kern lässt fünf Dinge vermissen** (aus der Kettenverdrahtung, 2026-08-18):
+  `inhalts_hash` rechnet auch Dateipfade ein, sodass ein verschobener Projektordner den
+  ganzen Cache verwirft — die Kette umgeht das mit einer eigenen Hashvorbereitung, sauber
+  wäre eine Ausnahmeliste im Kern. Der Cache kennt die Dateien nicht, die er verspricht;
+  die Bindung an ein Arbeitsverzeichnis musste die Kette selbst erfinden. Es gibt keine
+  selektive Verwerfung einzelner Einträge. Und es fehlt ein Begriff davon, was ein Knoten
+  *braucht* — eine Entwurfszeit-Prüfung wie KosmoOrbits `pipelineReadiness` ist im inneren
+  Graphen darum nicht möglich.
 - **KosmoVis' Reife nicht nachgeprüft** — alle Angaben stammen aus dessen eigener
   Dokumentation, die sich selbst bei ~60–65 % einordnet und einräumt, dass noch kein
   echtes Projekt durchgerendert war.

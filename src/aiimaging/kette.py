@@ -460,8 +460,14 @@ def qa_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
             return {"status": STATUS_FEHLER,
                     "error": f"Vorgänger lieferte kein 'bild_png': {sorted(render_ergebnis)}"}
 
-        soll, breite, hoehe = bildlesen.tiefen_aus_report(multipass)
         p = knoten.params
+        # Lizenz zuerst, vor dem Lesen der EXR: Regel 1 ist die bindendste und billigste
+        # Prüfung, und ein Lauf mit einem Non-Commercial-Schätzer soll an der Lizenz
+        # scheitern und nicht zufällig erst an einer fehlenden Datei. Dieselbe Reihenfolge
+        # wie in ``render.pruefe_auftrag``.
+        tiefenschaetzer.fordere_zulaessigen(p["schaetzer"])
+
+        soll, breite, hoehe = bildlesen.tiefen_aus_report(multipass)
         return tiefenschaetzer.qa_gegen_soll(
             bild_png, soll,
             schaetzer=p["schaetzer"], modell=modell, _lader=_lader,

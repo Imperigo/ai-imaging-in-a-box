@@ -32,7 +32,7 @@ from pathlib import Path
 
 import pytest
 
-from aiimaging import kette, seams, torwaechter
+from aiimaging import kette, seams, tiefenschaetzer, torwaechter
 from aiimaging.graph import ArtefaktCache, Graph, GraphError, Knoten, ZyklusError
 from aiimaging.kette import (
     ART_GEOMETRIE,
@@ -623,21 +623,27 @@ def test_renderstufe_ohne_tiefenkarte_meldet_das_fehlende_feld(tmp_path):
     assert ausgaben["status"] == "fehler" and "depth_png" in ausgaben["error"]
 
 
-def test_qastufe_erfindet_keine_ist_werte(tmp_path):
-    """Die monokulare Tiefenschätzung fehlt noch (PLAN.md, Phase 4). Das wird gesagt."""
-    knoten = baue_kette(ifc_path="/tmp/a.ifc", prompt="x").knoten[KNOTEN_QA]
-    ausgaben = kette.AUSFUEHRER[ART_QA](
-        knoten=knoten, eingaben=[{"depth_png": "t.png"}, {"bild_png": "b.png"}],
-        out_dir=tmp_path)
-    assert ausgaben["status"] == "fehler"
-    assert "Tiefenschätzung" in ausgaben["error"] and "Phase 4" in ausgaben["error"]
-
-
 def test_qastufe_braucht_beide_eingaenge(tmp_path):
     knoten = baue_kette(ifc_path="/tmp/a.ifc", prompt="x").knoten[KNOTEN_QA]
     ausgaben = kette.AUSFUEHRER[ART_QA](knoten=knoten, eingaben=[{"depth_png": "t.png"}],
                                         out_dir=tmp_path)
     assert ausgaben["status"] == "fehler" and "zwei Eingänge" in ausgaben["error"]
+
+
+def test_qastufe_ohne_bild_meldet_das_fehlende_feld(tmp_path):
+    """Ohne Bild gibt es nichts zu schätzen — und ohne Ist kein Urteil."""
+    knoten = baue_kette(ifc_path="/tmp/a.ifc", prompt="x").knoten[KNOTEN_QA]
+    ausgaben = kette.AUSFUEHRER[ART_QA](
+        knoten=knoten, eingaben=[{"depth_png": "t.png"}, {"status": "ok"}], out_dir=tmp_path)
+    assert ausgaben["status"] == "fehler" and "bild_png" in ausgaben["error"]
+
+
+def qa_knoten(**abweichungen) -> Knoten:
+    """Ein QA-Knoten mit den Vorgabeparametern der Standardkette."""
+    params = dict(baue_kette(ifc_path="/tmp/a.ifc", prompt="x").knoten[KNOTEN_QA].params)
+    params.update(abweichungen)
+    return Knoten(id=KNOTEN_QA, art=ART_QA, params=params,
+                  eingaenge=(KNOTEN_MULTIPASS, KNOTEN_RENDER))
 
 
 def test_nicht_bestandenes_gate_ist_ein_ergebnis_und_kein_fehlschlag(tmp_path, monkeypatch):
@@ -647,23 +653,80 @@ def test_nicht_bestandenes_gate_ist_ein_ergebnis_und_kein_fehlschlag(tmp_path, m
     Soll und Ist zeigen denselben Verlauf, aber an verschieden gelegenen Stellen: Die
     Rangkorrelation ist über den gemeinsamen Bereich perfekt, die Silhouetten überdecken
     sich nur zu einem Fünftel. Genau der Fall, den nur die Silhouette fängt.
+
+    Der Schätzer ist eine Attrappe — es gibt keine GPU. Geprüft ist damit die
+    Verdrahtung: Soll gelesen, Ist geschätzt, Hintergrund markiert, Urteil gefällt.
     """
     from aiimaging import bildlesen
 
-    hintergrund = 1e10
-    soll = [1.0 + i / 1000 if i < 600 else hintergrund for i in range(1000)]
-    ist = [1.0 + i / 1000 if i >= 400 else hintergrund for i in range(1000)]
-    monkeypatch.setattr(bildlesen, "tiefen_aus_report", lambda report, **kw: (soll, 10, 10))
+    fern = 1e10
+    soll = [1.0 + i / 1000 if i < 600 else fern for i in range(1000)]
+    # Disparität: nah = grosser Wert, also gegenüber Metern umgekehrt sortiert. Die
+    # geschätzte Geometrie liegt 400 Punkte weiter hinten als die echte.
+    ist = [-(1.0 + i / 1000) if i >= 400 else -fern for i in range(1000)]
+    monkeypatch.setattr(bildlesen, "tiefen_aus_report", lambda report, **kw: (soll, 50, 20))
 
-    knoten = Knoten(id=KNOTEN_QA, art=ART_QA, params={"schwelle": 0.65, "hintergrund": None},
-                    eingaenge=(KNOTEN_MULTIPASS, KNOTEN_RENDER))
-    ausgaben = kette.AUSFUEHRER[ART_QA](
-        knoten=knoten, eingaben=[{"depth_exr": "t.exr"}, {"ist_tiefen": ist}], out_dir=tmp_path)
+    bild = tmp_path / "bild.png"
+    bild.write_text("attrappe", encoding="utf-8")
+    ausfuehrer = kette.qa_ausfuehrer(modell=lambda parameter: ist)
+    ausgaben = ausfuehrer(knoten=qa_knoten(),
+                          eingaben=[{"depth_exr": "t.exr"}, {"bild_png": str(bild)}],
+                          out_dir=tmp_path)
 
-    assert ausgaben["status"] == "ok", "gerechnet ist gerechnet"
+    assert ausgaben["status"] == "ok", f"gerechnet ist gerechnet: {ausgaben['error']}"
     assert ausgaben["bestanden"] is False
     assert ausgaben["score"] is not None and ausgaben["score"] < 0.65
-    assert ausgaben["geom_iou"] == pytest.approx(0.2)
+
+
+def test_bestandenes_gate_bei_treuer_schaetzung(tmp_path, monkeypatch):
+    """Die Gegenprobe: Eine perfekt treue (invertierte) Schätzung besteht.
+
+    Invertiert ist kein Geometriefehler, sondern die Konvention der Disparität — die
+    Metrik wertet ``abs(spearman)``. Hier läuft die Kette einmal ganz durch, ohne dass ein
+    einziges Gewicht existiert.
+    """
+    from aiimaging import bildlesen
+
+    fern = 1e10
+    soll = [1.0 + i / 1000 if i < 600 else fern for i in range(1000)]
+    monkeypatch.setattr(bildlesen, "tiefen_aus_report", lambda report, **kw: (soll, 50, 20))
+
+    bild = tmp_path / "bild.png"
+    bild.write_text("attrappe", encoding="utf-8")
+    ausfuehrer = kette.qa_ausfuehrer(modell=lambda parameter: [-wert for wert in soll])
+    ausgaben = ausfuehrer(knoten=qa_knoten(),
+                          eingaben=[{"depth_exr": "t.exr"}, {"bild_png": str(bild)}],
+                          out_dir=tmp_path)
+
+    assert ausgaben["bestanden"] is True
+    assert ausgaben["score"] == pytest.approx(1.0)
+    assert ausgaben["hintergrund_strategie"] == "wie_soll"
+
+
+def test_nicht_kommerziell_lizenzierter_schaetzer_faellt_im_lauf_auf(tmp_path):
+    """Regel 1 im Pfad: Depth-Anything-V2 Large ist CC-BY-NC — und wird abgewiesen.
+
+    Der Knoten scheitert, die Kette meldet es, und nichts dahinter rechnet weiter. Ein
+    Lizenzverstoss soll nicht als Messwert enden.
+    """
+    ausfuehrer = kette.qa_ausfuehrer(modell=lambda parameter: [1.0, 2.0])
+    knoten = qa_knoten(schaetzer="depth-anything-v2-large")
+    with pytest.raises(tiefenschaetzer.TiefenschaetzerError, match="NonCommercial|Regel 1"):
+        ausfuehrer(knoten=knoten, eingaben=[{"depth_exr": "t.exr"}, {"bild_png": "b.png"}],
+                   out_dir=tmp_path)
+
+
+def test_schaetzername_gehoert_in_den_hash(tmp_path):
+    """Ein Urteil aus einem anderen Schätzer ist ein anderes Urteil — kein Cache-Treffer."""
+    ifc = schreibe_ifc(tmp_path / "haus.ifc")
+    werkbank, cache = Werkbank(), ArtefaktCache(tmp_path / "cache")
+    lauf(baue_kette(ifc_path=str(ifc), prompt="x"), werkbank, cache, tmp_path)
+    zweiter = lauf(baue_kette(ifc_path=str(ifc), prompt="x",
+                              schaetzer="depth-anything-v2-large"),
+                   werkbank, cache, tmp_path)
+
+    assert werkbank.aufrufe[ART_QA] == 2
+    assert zweiter["cache_treffer"] == 3
 
 
 # ======================================================================================
@@ -695,15 +758,17 @@ AUFLOESUNG, SAMPLES = 96, 4
 
 @ohne_prozessgrenzen
 def test_echter_lauf_ueber_beide_prozessgrenzen_und_dann_aus_dem_cache(tmp_path):
-    """IFC→glb und Multipass wirklich, QA wirklich, Bildmodell als Attrappe.
+    """IFC→glb und Multipass wirklich, QA wirklich gerechnet — nur die Modelle sind Attrappen.
 
     Der zweite Teil ist der eigentliche Punkt: Nach einer blossen Prompt-Änderung darf
     **kein** Subprozess mehr starten. Gezählt wird an den echten Ausführern.
 
-    Das Bildmodell bleibt eine Attrappe, weil es keine GPU gibt. Sie reicht die
-    Soll-Tiefe als Ist-Tiefe zurück — der hypothetische, perfekt geometrietreue Render.
-    Damit rechnet die QA an **echten** Blender-Zahlen und muss nahe 1.0 landen; ein
-    Verdrehen der Achsen oder ein vertauschter Slot fiele hier sofort auf.
+    Bildmodell und Tiefenschätzer bleiben Attrappen, weil es keine GPU gibt. Der
+    Schätzer liefert die negierte Soll-Tiefe — also eine Disparität, wie ein echter
+    Schätzer sie liefert, und zwar die eines hypothetisch perfekt geometrietreuen Bildes.
+    Damit rechnet die QA an **echten** Blender-Zahlen und muss nahe 1.0 landen; eine
+    verdrehte Achse, ein vertauschter Slot oder eine falsch gelesene EXR fiele hier
+    sofort auf.
     """
     from aiimaging import bildlesen
 
@@ -712,6 +777,7 @@ def test_echter_lauf_ueber_beide_prozessgrenzen_und_dann_aus_dem_cache(tmp_path)
                    check=True, capture_output=True)
 
     aufrufe: Counter = Counter()
+    letztes_soll: dict[str, list[float]] = {}
 
     def zaehlend(art):
         echt = kette.AUSFUEHRER[art]
@@ -725,14 +791,24 @@ def test_echter_lauf_ueber_beide_prozessgrenzen_und_dann_aus_dem_cache(tmp_path)
         aufrufe[ART_RENDER] += 1
         bild = out_dir / "bild.png"
         bild.write_text(f"Attrappe: {knoten.params['prompt']}", encoding="utf-8")
-        tiefen, _, _ = bildlesen.tiefen_aus_report(eingaben[0])
-        return {"status": "ok", "bild_png": str(bild), "ist_tiefen": tiefen}
+        letztes_soll["tiefen"], _, _ = bildlesen.tiefen_aus_report(eingaben[0])
+        return {"status": "ok", "bild_png": str(bild)}
+
+    def schaetzer_attrappe(parameter):
+        aufrufe["schaetzer"] += 1
+        return [-wert for wert in letztes_soll["tiefen"]]
+
+    qa_gezaehlt = kette.qa_ausfuehrer(modell=schaetzer_attrappe)
+
+    def qa_huelle(*, knoten, eingaben, out_dir):
+        aufrufe[ART_QA] += 1
+        return qa_gezaehlt(knoten=knoten, eingaben=eingaben, out_dir=out_dir)
 
     tabelle = {
         ART_GEOMETRIE: zaehlend(ART_GEOMETRIE),
         ART_MULTIPASS: zaehlend(ART_MULTIPASS),
         ART_RENDER: render_attrappe,
-        ART_QA: zaehlend(ART_QA),
+        ART_QA: qa_huelle,
     }
     cache = ArtefaktCache(tmp_path / "cache")
 
@@ -751,8 +827,10 @@ def test_echter_lauf_ueber_beide_prozessgrenzen_und_dann_aus_dem_cache(tmp_path)
     multipass = erster["knoten"][KNOTEN_MULTIPASS]["ausgaben"]
     assert Path(multipass["depth_exr"]).is_file() and Path(multipass["depth_png"]).is_file()
     qa = erster["knoten"][KNOTEN_QA]["ausgaben"]
+    assert qa["status"] == "ok", qa["error"]
     assert qa["bestanden"] is True and qa["score"] > 0.99, qa.get("begruendung")
-    assert aufrufe == Counter({ART_GEOMETRIE: 1, ART_MULTIPASS: 1, ART_RENDER: 1, ART_QA: 1})
+    assert aufrufe == Counter(
+        {ART_GEOMETRIE: 1, ART_MULTIPASS: 1, ART_RENDER: 1, ART_QA: 1, "schaetzer": 1})
 
     zweiter = starte("Abendstimmung, warmes Licht")
 
@@ -764,4 +842,4 @@ def test_echter_lauf_ueber_beide_prozessgrenzen_und_dann_aus_dem_cache(tmp_path)
 
     dritter = starte("Sichtbeton, Morgenlicht")
     assert dritter["cache_treffer"] == 4, "der erste Prompt liegt vollständig im Speicher"
-    assert aufrufe.total() == 6
+    assert aufrufe.total() == 8, "der dritte Lauf hat gar nichts mehr gerechnet"

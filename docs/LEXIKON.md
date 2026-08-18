@@ -231,6 +231,15 @@ wiederholbar und skriptbar ist.
 **Headless** — Ein Programm ohne grafische Oberfläche betreiben. *In diesem Projekt:
 `blender --background` rendert, ohne dass ein Fenster aufgeht.*
 
+**Fabrikfunktion** — Eine Funktion, die keine Antwort liefert, sondern eine **andere
+Funktion** — vorkonfiguriert mit Dingen, die man ihr nicht bei jedem Aufruf mitgeben will.
+*Hier nötig, weil ein geladenes Modell nicht in die Knotenparameter passt: Die werden
+gehasht und müssen dafür als Text darstellbar sein.*
+
+**Closure** — Eine Funktion, die sich Werte aus ihrer Entstehungsumgebung merkt. Das ist
+der Mechanismus hinter der Fabrikfunktion: Die zurückgegebene Funktion „weiss" noch,
+welches Modell ihr mitgegeben wurde, ohne es als Parameter zu führen.
+
 **Funktion** — Ein benannter, wiederverwendbarer Arbeitsschritt: nimmt Werte entgegen,
 liefert ein Ergebnis.
 
@@ -1027,6 +1036,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus der Kettenverdrahtung: Fabrikfunktion, Closure |
 | 2026-08-18 | Ergaenzt aus der Ist-Seite: Polaritaet, Hintergrundmarke |
 | 2026-08-18 | Ergaenzt aus der Tiefenschaetzer-Pruefung: monokulare Tiefenschaetzung, CC-BY-NC |
 | 2026-08-18 | Ergaenzt aus dem EXR-Leser: OpenEXR/Scanline, Half-Float, Praediktor/Byte-Entflechtung, zlib, Endianness, CRC, Quantisierungsschritt |
