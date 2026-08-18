@@ -73,6 +73,7 @@ from __future__ import annotations
 
 import math
 import os
+import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -396,6 +397,7 @@ def lade_modell(backbone_name: str, modell_wurzel=None):
             f"Gewichte für {eintrag.name!r} unvollständig unter {bestand['wurzel']!r} "
             f"(Verzeichnis existiert: {bestand['wurzel_existiert']}). Es fehlen: "
             f"{', '.join(bestand['fehlend'])}."
+            + _einzeldatei_hinweis(eintrag, wurzel)
         )
 
     try:
@@ -413,6 +415,86 @@ def lade_modell(backbone_name: str, modell_wurzel=None):
     pipeline = DiffusionPipeline.from_pretrained(str(wurzel), torch_dtype=torch.bfloat16)
     pipeline.to("cuda" if torch.cuda.is_available() else "cpu")
     return _pipeline_adapter(pipeline, eintrag, torch)
+
+
+#: Orte, an denen eine Einzeldatei-Ablage vermutet wird, wenn das diffusers-Verzeichnis
+#: fehlt. Die ComfyUI-Pfade stehen hier, weil ComfyUI im Ökosystem die verbreitetste
+#: Ablage ist — nicht, weil dieses Projekt es benutzt (es ist GPL, siehe Lagebeurteilung).
+EINZELDATEI_SUCHORTE = (
+    "/ai", "/mnt/data/ComfyUI/models/diffusion_models",
+    "/mnt/data/ComfyUI/models/checkpoints", "/mnt/data/ComfyUI/models/unet",
+)
+
+#: Endungen, die eine Einzeldatei-Ablage von Gewichten tragen kann.
+EINZELDATEI_ENDUNGEN = (".safetensors", ".ckpt", ".gguf", ".sft")
+
+
+def finde_einzeldatei_gewichte(eintrag, wurzel, *, suchorte=None) -> list[str]:
+    """Liegen die Gewichte vielleicht als **Einzeldatei** statt als diffusers-Verzeichnis?
+
+    Der Befund, aus dem das entstand (HomeStation, `auf-20260818-07`): Die Gewichte für
+    Qwen-Image-Edit **waren** auf der Maschine — als
+    `qwen_image_edit_2511_fp8mixed.safetensors`, eine ComfyUI-Einzeldatei. Der Adapter
+    meldete „Gewichte unvollständig … es fehlen model_index.json, transformer, vae,
+    text_encoder, tokenizer" und liess damit den Eindruck entstehen, es sei nichts da.
+
+    Das ist derselbe Unterschied wie bei :func:`aiimaging.herkunft.pruefe_einheit_gegen_masse`:
+    Ein **Verdacht** („da fehlt etwas") kostet jedes Mal einen Menschen, der nachsieht;
+    eine **Diagnose** („es ist da, aber im falschen Format, und zwar hier") sagt ihm, wo.
+
+    Gesucht wird nach Namensbestandteilen des Backbones. Die Suche ist bewusst flach und
+    auf wenige Orte begrenzt: Sie soll einen Hinweis geben, nicht die Platte durchkämmen.
+
+    Args:
+        suchorte: Naht für Tests. ``None`` nimmt :data:`EINZELDATEI_SUCHORTE`.
+
+    Returns:
+        Gefundene Pfade als Text, höchstens fünf. Leer heisst: nichts gefunden — was
+        **nicht** heisst, dass nichts da ist.
+    """
+    teile = [t for t in re.split(r"[-_]", eintrag.name.lower()) if len(t) > 2]
+    orte = [Path(o) for o in (suchorte if suchorte is not None else EINZELDATEI_SUCHORTE)]
+    orte.append(Path(wurzel).parent)
+
+    treffer: list[str] = []
+    gesehen: set[str] = set()
+    for ort in orte:
+        try:
+            if not ort.is_dir():
+                continue
+            for datei in sorted(ort.iterdir()):
+                if not datei.is_file() or datei.suffix.lower() not in EINZELDATEI_ENDUNGEN:
+                    continue
+                klein = datei.name.lower()
+                # Alle Namensteile müssen vorkommen — sonst meldete "qwen" auch jedes
+                # andere Qwen-Modell, und ein falscher Hinweis ist schlechter als keiner.
+                if all(t in klein for t in teile) and str(datei) not in gesehen:
+                    gesehen.add(str(datei))
+                    treffer.append(str(datei))
+                    if len(treffer) >= 5:
+                        return treffer
+        except OSError:
+            continue                                   # unlesbarer Ort ist kein Fehler
+    return treffer
+
+
+def _einzeldatei_hinweis(eintrag, wurzel) -> str:
+    """Der Satz, der aus „fehlt" ein „liegt hier, aber falsch" macht. Leer, wenn nichts da."""
+    treffer = finde_einzeldatei_gewichte(eintrag, wurzel)
+    if not treffer:
+        return ""
+    return (
+        "\n\nABER: Es liegen Gewichte mit passendem Namen als EINZELDATEI vor:\n  "
+        + "\n  ".join(treffer)
+        + "\n\nDas ist kein Pfadproblem, sondern ein FORMATPROBLEM. Diese Naht ruft "
+          "`DiffusionPipeline.from_pretrained` und braucht das diffusers-Verzeichnis "
+          "(model_index.json plus je einen Unterordner für transformer, vae, "
+          "text_encoder, tokenizer). Eine ComfyUI-Einzeldatei bringt dieselben Gewichte "
+          "mit, aber ohne die Konfigurationsdateien, aus denen diffusers die Pipeline "
+          "zusammensetzt. `modell_wurzel` umzustellen hilft darum nicht.\n"
+          "Wege: das diffusers-Repo des Modells laden, oder die Einzeldatei umwandeln — "
+          "beides ist ein Owner-Entscheid und passiert nicht stillschweigend hier."
+    )
 
 
 def _hole_oder_wirf(backbone_name: str):

@@ -155,12 +155,42 @@ sind diese Änderungen offenzulegen — der übrige eigene Code bleibt unberühr
 Dateien der Bibliothek müssen offen bleiben; der eigene Code in eigenen Dateien nicht.
 Ein Mittelweg, mit permissiven Projekten gut verträglich.
 
+**CDDL (Common Development and Distribution License)** — Ebenfalls Copyleft auf
+Dateiebene und der MPL im Aufbau sehr ähnlich: Veränderte Dateien der Bibliothek bleiben
+offen, eigener Code in eigenen Dateien nicht. Ursprünglich von Sun Microsystems für
+Solaris geschrieben, heute vor allem im Java- und .NET-Umfeld anzutreffen.
+*In diesem Projekt die Lizenz des xbim Toolkit, einer .NET-Bibliothek für IFC. Die
+Prüfung vom 18.08.2026 bestätigt „CDDL" wörtlich — der Lizenztext nennt aber **keine
+Versionsnummer**, die verbreitete Angabe „CDDL-1.0" ist also plausibel und unbelegt
+(`docs/LIZENZPRUEFUNG_2026-08-18.md`, §3.8).*
+
 **Dual License** — Dasselbe Werk unter zwei Lizenzen. Typisches Muster: kostenlos unter
 Copyleft, gegen Geld unter kommerzieller Lizenz. *Beispiel: CGAL.*
+
+**Contributor License Agreement (CLA)** — Eine Vereinbarung, die Beitragende
+unterschreiben, bevor ihr Code angenommen wird: Sie räumen dem Projekt das Recht ein,
+ihren Beitrag auch unter anderen Bedingungen weiterzugeben. Ohne ein solches Abkommen
+gehört jedem Beitragenden ein Stück des Werks, und niemand könnte es später neu
+lizenzieren — deshalb hängt ein CLA meist an einer Doppellizenzierung.
+*In diesem Projekt gestreift bei Open WebUI, das eines verlangt
+(`docs/LIZENZPRUEFUNG_2026-08-18.md`, §3.6).*
 
 **OpenRAIL++-M** — Lizenz von Stable Diffusion XL. Erlaubt kommerzielle Nutzung, knüpft
 sie aber an Nutzungsauflagen: bestimmte Anwendungen sind untersagt, und die Auflagen sind
 weiterzugeben. Nicht permissiv im Sinn von Regel 1, aber auch kein Copyleft.
+
+**CreativeML OpenRAIL-M** — Die ältere Schwester der vorigen Lizenz, aus der
+Stable-Diffusion-1.x-Linie. Gleiches Prinzip — kommerzielle Nutzung erlaubt, bestimmte
+Anwendungen untersagt —, aber ein anderer, älterer Text. Die beiden Namen unterscheiden
+sich nur durch zwei Pluszeichen und werden deshalb verwechselt.
+*Belegt am 18.08.2026: Die Registry der Bildmodelle (`src/aiimaging/backbone.py`)
+führte für den Rückfall-Backbone „OpenRAIL++-M"; die Modellkarte von Juggernaut XL v9 sagt
+`creativeml-openrail-m`, also die ältere Variante
+(`docs/LIZENZPRUEFUNG_2026-08-18.md`, §3.1). An Regel 1 ändert das nichts — beide sind
+nutzungsbeschränkt und keine der vier permissiven Lizenzen —, aber ein falscher Name in
+der `NOTICE`-Datei ist eine falsche Angabe. Dieselbe Karte trägt ausserdem eine
+Zusatzschranke des Anbieters **oberhalb** der Lizenz: kein Betrieb hinter einem
+kostenpflichtigen Dienst. Sie steht nur im Fliesstext und in keinem Lizenzbezeichner.*
 
 **Stability Community License** — Lizenz von SD3.5. Frei nutzbar unterhalb einer
 Umsatzschwelle (1 Mio USD), darüber kostenpflichtig. Kommerziell nutzbar, aber nicht
@@ -201,6 +231,27 @@ Bei Apache-2.0 vorgesehen und die übliche Form, GPL-Beigaben sauber zu deklarie
 **Modellgewichte-Lizenz** — Die Lizenz *trainierter Modelle* ist unabhängig von der des
 Codes. Ein Apache-lizenziertes Programm kann Gewichte laden, deren Lizenz kommerzielle
 Nutzung untersagt. Beide sind getrennt zu prüfen.
+
+**Primärquelle / Sekundärquelle** — Die **Primärquelle** ist das Original: bei einer
+Lizenz die `LICENSE`-Datei des Projekts selbst oder der vom Lizenzgeber veröffentlichte
+Vertragstext. Eine **Sekundärquelle** ist jede Angabe *über* das Original — ein
+Blogeintrag, eine Übersichtstabelle, die Antwort einer Suchmaschine, auch die eigene
+Notiz von letzter Woche. Sekundärquellen sind bequem und meistens richtig; genau das ist
+ihre Gefahr.
+
+**Ein Fehler in dieser Kette fällt nie von selbst auf.** Er hat zwei Richtungen, und sie
+sind verschieden teuer: Wird etwas Freizügiges strenger geführt als es ist, kostet das
+einen ungenutzten Baustein. Wird umgekehrt etwas Copyleft-Behaftetes als permissiv
+geführt, verhält sich alles unauffällig — bis das Produkt ausgeliefert ist. Nichts im
+Betrieb widerspricht einer falschen Lizenzangabe; kein Test schlägt an, kein Programm
+stürzt ab.
+*Belegter Fall vom 18.08.2026: Die Lagebeurteilung führte Krita AI Diffusion als „MIT".
+Die `LICENSE`-Datei des Projekts ist der vollständige Text der GPL-3.0 — die
+Sekundärquelle lag nicht ungenau, sondern glatt falsch, und in die gefährliche Richtung.
+Von 35 prüfbaren Positionen stimmten 30; dieser eine Fehltreffer wiegt schwerer als die
+Quote (`docs/LIZENZPRUEFUNG_2026-08-18.md`, §3.2 und Kap. 6). Seither gilt im Projekt:
+Lizenz vor Technik, und zwar gegen die Datei des Herausgebers, nicht gegen eine
+Suchmaschine.*
 
 ---
 
@@ -353,6 +404,24 @@ schlichter Aufruf genügt. *MCP ist ein Protokoll, ein Subprozessaufruf braucht 
 **JSON** — Ein schlichtes Textformat für strukturierte Daten. Für Mensch und Maschine
 lesbar, deshalb das übliche Austauschformat zwischen Prozessen.
 
+**Markdown** — Eine Schreibweise, mit der sich eine gewöhnliche Textdatei gliedern lässt,
+ohne Textverarbeitung: `#` macht eine Überschrift, `*` eine Aufzählung, Sternchen ringsum
+eine Hervorhebung. Die Datei bleibt im Editor lesbar und wird von Werkzeugen zugleich als
+formatierter Text angezeigt. *Sämtliche Dokumente dieses Projekts — dieses Lexikon
+eingeschlossen — sind Markdown-Dateien (`.md`). Deshalb liegen sie in derselben
+Versionsverwaltung wie der Code und lassen sich Zeile für Zeile vergleichen.*
+
+**Front-Matter (Kopfblock)** — Ein Block am Anfang einer Markdown-Datei, oben und unten
+durch eine Zeile aus drei Bindestrichen abgetrennt, der Angaben **über** die Datei
+enthält statt Text für den Leser: Titel, Sprache, Urheber — oder eben die Lizenz.
+Programme lesen ihn maschinell aus; beim Anzeigen wird er meist ausgeblendet, weshalb man
+ihn leicht übersieht. *In diesem Projekt die Stelle, an der die Lizenz eines Modells
+steht: Die Zeile `license: apache-2.0` im Front-Matter einer Modellkarte ist die Angabe,
+die Hugging Face auswertet und anzeigt. Sie kann dem Fliesstext derselben Karte
+widersprechen — bei Juggernaut XL v9 tut sie es —, und bei einem gesperrten Modell ist
+sie das Einzige, was ohne Anmeldung lesbar bleibt (`docs/LIZENZPRUEFUNG_2026-08-18.md`;
+siehe* **Modellkarte** *und* **Gated Model / Gated Repository** *in Abschnitt 6).*
+
 **Schema** — Die formale Beschreibung, wie eine Datenstruktur auszusehen hat: welche
 Felder verpflichtend sind, welchen Typ sie haben. Macht Verträge zwischen Programmteilen
 prüfbar.
@@ -381,6 +450,16 @@ deren Rahmen aber ein kompaktes Rust-Programm ist. Schlanker als die Alternative
 **REST / Endpoint** — Verbreitete Art, Web-Schnittstellen zu bauen: Jede Fähigkeit hat
 eine eigene Adresse (den *Endpoint*), die per HTTP angesprochen wird.
 
+**HTTP-Statuscode** — Die dreistellige Zahl, mit der ein Webserver jede Anfrage
+beantwortet, noch bevor er Inhalt liefert. `200` heisst „hier ist es", `404` „gibt es
+nicht", `401` „du bist nicht angemeldet", `403` „angemeldet oder nicht — du darfst
+nicht". *Die Unterscheidung entschied in der Lizenzprüfung vom 18.08.2026 über die
+Aussage: `401` bei einem Modell heisst, dass die Lizenzdatei existiert und eine
+Zustimmung fehlt; kein Treffer in der Suche heisst, dass es sie gar nicht gibt — so
+geschehen bei Depth-Anything-V2-Giant, dessen Gewichte öffentlich schlicht nicht
+vorliegen. Beides sieht von aussen nach „nicht lesbar" aus und ist doch etwas ganz
+anderes (`docs/LIZENZPRUEFUNG_2026-08-18.md`, Kap. 0 und §3.5).*
+
 **SSE (Server-Sent Events)** — Technik, mit der ein Server fortlaufend Daten an den
 Client nachliefert, ohne dass dieser wiederholt nachfragt. *Grundlage dafür, dass
 Kosmo-Antworten wortweise erscheinen statt am Stück.*
@@ -403,6 +482,19 @@ schlägt Alarm, wenn sie verletzt wird.
 
 **Regressionstest** — Ein Test, der einen bereits behobenen Fehler festhält, damit er
 nicht unbemerkt zurückkehrt. Das eigentliche Sicherheitsnetz eines wachsenden Projekts.
+
+**Charakterisierungstest** — Ein Test, der festhält, wie sich etwas **heute** verhält,
+ohne zu behaupten, dass dieses Verhalten richtig ist. Der Unterschied zum gewöhnlichen
+Test steckt im Anspruch: Der gewöhnliche prüft eine Zusage und hat recht, wenn er bricht;
+der Charakterisierungstest schreibt einen Ist-Zustand auf, damit dessen Änderung
+überhaupt auffällt — und damit die Grenze eines Verfahrens in einer Zahl steht statt in
+einem Nebensatz. *In diesem Projekt etwa
+`test_glaettung_ist_ein_stumpfes_instrument` (`tests/test_schwellenstudie.py`): Er hält
+fest, dass acht Mittelungsdurchgänge über der Testszene den Geometrie-Score um weniger
+als ein Hundertstel bewegen. Sein Docstring beginnt mit den Worten „Befund, nicht Zusage"
+— genau das macht ihn zum Charakterisierungstest. Niemand behauptet, dass es so sein
+soll; festgehalten ist, dass es so ist, und wer die Kurven der Schwellenstudie deutet,
+muss es wissen.*
 
 **Rückwärtskompatibilität** — Die Zusage, dass Neues mit Altem weiter zusammenarbeitet:
 Eine neue Programmfassung liest, was die alte geschrieben hat, und versteht die bisherigen
@@ -601,21 +693,48 @@ wer eine Schwelle wählt, soll sehen, welchen der beiden Fehler er einkauft.*
 richtig gesperrte, geteilt durch alle. Die naheliegendste Kennzahl — und für sich genommen
 irreführend, sobald die beiden Gruppen unterschiedlich gross sind: Dann erreicht schon eine
 Grenze eine ansehnliche Quote, die einfach immer dasselbe sagt. *In diesem Projekt
-vorführbar: Von den 36 gestörten Fällen der Studie gelten 12 als treu und 24 als untreu.
-Eine Schwelle, die schlicht **alles** sperrt, käme allein dadurch auf 0,667 — deutlich mehr
-als die 0,438 der heutigen Schwelle 0,65, und trotzdem wäre sie unbrauchbar. Darum wird die
-Trefferquote nie ohne `falsch_frei` und `falsch_gesperrt` gelesen.*
+vorführbar: Die Studie hat 36 gestörte Fälle gemessen; nach der Entdopplung bleiben **32
+ausgewertete**, davon gelten 12 als treu und 20 als untreu. Eine Schwelle, die schlicht
+**alles** sperrt, käme allein dadurch auf 0,625 — deutlich mehr als die 0,438 der heutigen
+Schwelle 0,65, und trotzdem wäre sie unbrauchbar. Darum wird die Trefferquote nie ohne
+`falsch_frei` und `falsch_gesperrt` gelesen.*
+*Die Zahlen 36 / 12 / 24 / 0,667 standen bis zum 18.08.2026 hier und stammten aus der
+Auswertung **vor** der Entdopplung; sie sind mit* **Entdopplung** *berichtigt worden.*
 
-**Rasterung der Stärkeachse** — Dass eine als Kommazahl angegebene Stärke in Wahrheit nur
-wenige verschiedene Eingriffe erzeugen kann, weil der Eingriff selbst in ganzen Einheiten
-rechnet und die Angabe darauf gerundet wird. *In diesem Projekt rechnen die räumlichen
-Störungen der Schwellenstudie in ganzen Bildpunkten: Auf einer Szene von 64 × 64 Punkten
-ergeben die Stärken 0,2 und 0,3 beide eine Verschiebung um **zwei** Bildpunkte, und die
+**Rasterung der Stärkeachse (Stärkeraster)** — Dass eine als Kommazahl angegebene
+Stärke in Wahrheit nur wenige verschiedene Eingriffe erzeugen kann, weil der Eingriff
+selbst in ganzen Einheiten rechnet und die Angabe darauf gerundet wird. *In diesem
+Projekt rechnen die räumlichen Störungen der Schwellenstudie in ganzen Bildpunkten:
+Auf einer Szene von 64 × 64 Punkten ergeben die Stärken 0,2 und 0,3 beide eine
+Verschiebung um **zwei** Bildpunkte, und die
 zwei Tabellenzeilen sind darum gleich. Wer die Tabelle liest, darf die Stärkeachse deshalb
 nicht für eine feine Skala halten — vergleichbar sind die Kurvenverläufe, nicht die
 einzelnen Stärkewerte untereinander.*
 *Derselbe Sachverhalt wie beim* **Quantisierungsschritt** *in Abschnitt 5 — dort für die
 Graustufen eines Bildes, hier für die Stärkeachse eines Versuchs.*
+*Code und Studie nennen den Sachverhalt kurz **Stärkeraster**
+(`src/aiimaging/schwellenstudie.py`, im Rumpf von `trennschaerfe_kurve`;
+`docs/SCHWELLENSTUDIE_2026-08-18.md`, Kap. 4a). Was er in der Auswertung anrichtet, steht
+im nächsten Eintrag.*
+
+**Entdopplung / Dublette (in einer Messreihe)** — Eine **Dublette** ist eine Zeile einer
+Messreihe, die einer anderen nicht bloss ähnelt, sondern **dieselbe Messung** ist: Nach
+der Rasterung war die Eingabe punktgleich, also ist es auch das Ergebnis.
+**Entdopplung** heisst, solche Zeilen aus der Auswertung zu nehmen — und, das ist der
+eigentliche Punkt, ihre Zahl mit auszuweisen. Eine stillschweigende Bereinigung wäre nur
+die zweite Art, dieselbe Zahl zu erfinden.
+*In diesem Projekt gemessen und teuer bezahlt: Weil die räumlichen Störungen in ganzen
+Bildpunkten rechnen (siehe den vorigen Eintrag), ergaben die Stärken 0,2 und 0,3 dieselbe
+Ist-Karte — und die gesetzte Grenze zwischen „treu" und „untreu" lag genau dazwischen.
+Zwei Zeilen mit **derselben** Messung standen damit auf verschiedenen Seiten der Grenze,
+und keine Schwelle kann sie trennen: Jede zählt zwangsläufig einen Fehler. Vier solche
+Paare gingen in die erste Auswertung als „falsch frei" ein, also als Aussage über die
+Metrik, wo eine Aussage über das Raster stand. `trennschaerfe_kurve`
+(`src/aiimaging/schwellenstudie.py`) erkennt sie am **Abdruck** der Ist-Karte — einer
+kurzen Kennzahl, die aus deren Zahlen berechnet wird und für gleiche Karten gleich ist,
+also einem Hash im Sinn von Abschnitt 8 —, verwirft sie und führt jede einzeln im Feld
+`entdoppelt` auf; `n_roh` und `n_ausgewertet` nennen beide Anzahlen nebeneinander. Aus 36
+rohen wurden so 32 ausgewertete Zeilen.*
 
 **Idempotenz** — Eigenschaft eines Vorgangs, der mehrfach ausgeführt dasselbe Ergebnis
 liefert wie einmal ausgeführt. Macht Wiederholung nach Abbruch gefahrlos.
@@ -1121,9 +1240,32 @@ Hardware.
 
 **Upscaling** — Nachträgliches Vergrössern eines Bildes unter Hinzuerfindung von Details.
 
-**Gated Model** — Ein Modell, dessen Gewichte erst nach Zustimmung zu Bedingungen und
-oft nach einem Antragsverfahren herunterladbar sind. *Für eine wissenschaftliche Arbeit
-ein Problem: Was hinter einem Antrag liegt, kann niemand nachvollziehen.*
+**Modellkarte (Model Card)** — Das Beiblatt eines veröffentlichten Modells: eine
+Textdatei im Modellverzeichnis, die beschreibt, was das Modell kann, worauf es trainiert
+wurde und unter welcher Lizenz es steht. Auf Hugging Face ist es die Datei `README.md`
+des Modell-Repositoriums, mit der Lizenz im Kopfblock (siehe *Front-Matter*,
+Abschnitt 3). *In diesem Projekt die **Primärquelle** für jede Lizenz eines Modells: Die
+Registrys der Modelle im Code (`src/aiimaging/backbone.py`, `einbetter.py`,
+`tiefenschaetzer.py`) führen zu jedem Eintrag den Vermerk, gegen welche Karte und an
+welchem Tag geprüft wurde.
+Zwei Vorbehalte gehören dazu, beide am 18.08.2026 belegt: Kopfblock und Fliesstext
+derselben Karte können verschiedene Lizenzen nennen, und die Lizenz kann innerhalb einer
+Modellfamilie an der **Grösse** hängen — FLUX.2-klein gibt es als 4B unter Apache-2.0 und
+als 9B nur nicht-kommerziell, Depth-Anything-V2 als Small unter Apache-2.0 und darüber
+nicht-kommerziell. Wer die Familie prüft, hat nichts geprüft.*
+
+**Gated Model / Gated Repository** — Ein Modell, dessen Gewichte erst nach Zustimmung zu
+Bedingungen und oft nach einem Antragsverfahren herunterladbar sind. *Für eine
+wissenschaftliche Arbeit ein Problem: Was hinter einem Antrag liegt, kann niemand
+nachvollziehen.* **Gated Repository** ist dasselbe eine Stufe höher: Gesperrt ist nicht
+die Gewichtsdatei allein, sondern das ganze Verzeichnis — die Modellkarte und der
+Lizenztext eingeschlossen. Wer nicht angemeldet ist und zugestimmt hat, bekommt vom
+Server nur ein `401` zurück (siehe *HTTP-Statuscode*, Abschnitt 3).
+*Was dann noch öffentlich lesbar bleibt, ist allein die Angabe im Kopfblock der Karte —
+ein Name wie `flux-1-dev-non-commercial-license`, nicht der Vertrag dahinter. Die
+Lizenzprüfung vom 18.08.2026 musste FLUX.1-dev, FLUX.2-dev, SD3.5-large und DINOv3
+deshalb ausdrücklich als **nicht abschliessend geprüft** führen, statt sie stillschweigend
+abzuhaken (`docs/LIZENZPRUEFUNG_2026-08-18.md`, Kap. 0 und 4).*
 
 **Selbstüberwachtes Lernen (self-supervised)** — Training ohne von Hand vergebene
 Beschriftungen: Das Modell lernt aus der Struktur der Daten selbst, etwa indem es
@@ -1214,6 +1356,58 @@ Eingängen und Ausgängen.
 haben eine Richtung, und kein Weg führt zum Ausgangspunkt zurück. Dadurch ist immer eine
 gültige Reihenfolge bestimmbar. Die übliche Grundform von Bildketten.
 
+**Bedarf (eines Knotens)** — Die Aufschreibung dessen, was ein Arbeitsschritt von seinen
+Vorgängern **erwartet** und was er selbst **zusagt**. Ohne sie weiss eine Kette nicht, ob
+sie richtig verdrahtet ist: Ein Knoten nimmt entgegen, was kommt, und merkt erst beim
+Rechnen — oder gar nicht —, dass das Erwartete fehlt. *In diesem Projekt die Klasse
+`Bedarf` (`src/aiimaging/graph.py`) mit drei Angaben: `braucht` nennt je Eingang die dort
+erwarteten Feldnamen, `liefert` die Felder, die ein gelungener Lauf immer trägt, und
+`dateien` diejenigen Felder, deren Wert ein Dateipfad ist. Der Bedarf hängt an der **Art**
+des Schritts, nicht an seinem Namen — was ein Schritt braucht, folgt daraus, was er tut.
+Welche Felder es überhaupt gibt, weiss nicht der Ablaufkern, sondern die Bildkette; die
+ausgefüllte Tabelle steht darum in `src/aiimaging/kette.py` unter `BEDARF`.*
+
+**Eingangsslot** — Ein nummerierter Steckplatz für einen Vorgänger. Die **Position** trägt
+Bedeutung: Slot 0 ist etwas anderes als Slot 1, auch wenn beide dasselbe Feld liefern.
+*Daran hängt in diesem Projekt ein Unterschied, der leicht verwechselt wird: Der
+**äussere** Graph (KosmoOrbit) verdrahtet über **Feldnamen** — die Ausgaben aller
+Vorgänger werden übereinandergelegt, und eine Kante entsteht, wo zwei Namen gleich sind.
+Der **innere** Graph (`src/aiimaging/graph.py`) verdrahtet über die **Position** — jeder
+Knoten bekommt die Ausgaben seiner Vorgänger als Liste in der Reihenfolge seiner Eingänge,
+unvermischt. Warum das nötig ist, zeigt die Geometrie-QA: Slot 0 ist das Soll aus dem
+Multipass, Slot 1 das Ist aus dem Render, und **beide** führen ein Feld `depth_png`.
+Würden sie nach Feldnamen verschmolzen, wäre nicht mehr entscheidbar, welches gemeint ist
+— verglichen würde am Ende etwas mit sich selbst.*
+
+**Pflichtfeld** — Eine Angabe, die ein Ergebnis **immer** tragen muss, damit es als
+gelungen gilt. Fehlt sie oder ist sie leer, ist das Ergebnis unbrauchbar, gleichgültig was
+sein Statusfeld behauptet. *In diesem Projekt die Liste `liefert` eines `Bedarf`
+(`src/aiimaging/graph.py`), entstanden aus einem gemessenen Fehler: In Sitzung 07 galt ein
+Multipass-Ergebnis als „ok", obwohl seine normalisierte Tiefenkarte gar nicht da war. Es
+wanderte in den Zwischenspeicher und wurde nie wieder gerechnet — auch nicht, nachdem die
+Ursache behoben war. „Leer" ist dabei genau abgegrenzt: eine fehlende Angabe und eine
+leere Liste zählen als leer, ein ausdrückliches „nein" (`False`) und die Zahl `0`
+**nicht**. Ein durchgefallenes QA-Urteil ist ein Ergebnis und kein fehlendes Feld.*
+
+**Tote Kante** — Eine Verbindung zwischen zwei Arbeitsschritten, die zwar da ist, aber
+nichts trägt: Der Vorgänger liefert das Feld nicht, das der Nachfolger dort erwartet. Die
+Kette sieht vollständig aus und rechnet trotzdem mit einer Lücke. *In diesem Projekt der
+Befund `fehlendes-feld` aus `pruefe_bedarf` (`src/aiimaging/graph.py`). Im äusseren
+Graphen entsteht dieselbe Lage aus einem anderen Grund — dort genügen zwei ungleich
+geschriebene Feldnamen (`src/aiimaging/mcp_schemas.py`).*
+
+**Entwurfszeit-Prüfung** — Etwas prüfen, **bevor** es läuft, allein an dem, was
+aufgeschrieben ist. Das Gegenstück ist die **Laufzeit-Prüfung**, die erst beim Rechnen
+zuschlägt — dann ist die teure Arbeit schon getan. Der Gewinn liegt nicht im Befund,
+sondern in der Reihenfolge: Ein falsch verdrahteter Ablauf soll das sagen, bevor Blender
+startet und die Grafikkarte eine Stunde rechnet, nicht danach. Was so prüfbar ist, ist
+allerdings nur die Form; ob die Zahlen stimmen, zeigt weiterhin erst der Lauf.
+*In diesem Projekt `pruefe_bedarf` (`src/aiimaging/graph.py`) und `pruefe_kette`
+(`src/aiimaging/kette.py`): Sie melden fehlende Eingänge und tote Kanten, ohne einen
+einzigen Schritt auszuführen — auch bei einem Graphen mit Kreis, damit der eine Fehler den
+anderen nicht verdeckt. Das Vorbild ist KosmoOrbits `pipelineReadiness`, das für die
+äussere Naht dasselbe leistet (`docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md`, Kap. 2/3).*
+
 **Skip-on-Error** — Wenn ein Knoten in einer Kette scheitert, werden alle von ihm
 abhängigen Knoten übersprungen statt mit unvollständigen Eingaben gerechnet. Ein Ergebnis
 aus halben Daten ist schlimmer als gar keines — es sieht gültig aus.
@@ -1272,6 +1466,31 @@ kann eine grüne Testreihe blosse Beruhigung sein.*
 
 **Cache** — Zwischenspeicher für teuer berechnete Ergebnisse, damit sie nicht doppelt
 berechnet werden.
+
+**Zusage (eines Cache-Eintrags)** — Die Liste der Dateien, die ein Eintrag im
+Zwischenspeicher verspricht. Sie ist nötig, weil der Eintrag die Dateien nicht enthält,
+sondern nur auf sie zeigt: Gespeichert wird der Bericht eines Arbeitsschritts — Pfade,
+Masse, Kennzahlen —, während die schweren Bilddateien liegen bleiben, wo sie entstanden
+sind. Sie hineinzukopieren hiesse, einen zweiten Ort der Wahrheit zu schaffen. Ein Pfad
+allein ist aber nur eine Behauptung.
+*In diesem Projekt nimmt `ArtefaktCache.lege_ab` die Zusage als eigenes Argument entgegen
+und vermerkt sie im Eintrag; `hole` sieht bei jedem Zugriff nach, ob die Dateien noch da
+sind, und meldet sonst einen Fehltreffer, worauf neu gerechnet wird
+(`src/aiimaging/graph.py`). Der Anlass ist gemessen: Ein aufgeräumtes Temporärverzeichnis
+genügt, und die Zusage geht ins Leere. Umgekehrt gilt weiter, was dieses Projekt mehrfach
+bezahlt hat — dass eine Datei **daliegt**, ist kein Beleg für ihren **Inhalt**; den
+liefert der Hash.*
+
+**Selektive Verwerfung** — Einen **einzelnen** Eintrag aus dem Zwischenspeicher wegwerfen
+statt aller. Das klingt selbstverständlich und fehlte lange: Wer nur „alles leeren" kann,
+greift in der Praxis zum Löschen des ganzen Ausgabeordners — und wirft die teure
+Geometriestufe mit weg, um einen Render zu wiederholen.
+*In diesem Projekt `ArtefaktCache.verwirf` (`src/aiimaging/graph.py`); den nötigen
+Schlüssel gibt jeder Lauf je Schritt selbst zurück, und `schluessel()` listet auf, was
+überhaupt drinliegt. Verworfen wird **nicht** kaskadierend: Die nachfolgenden Schritte
+hängen am Ergebnis und nicht am Eintrag — rechnet der verworfene Schritt dasselbe noch
+einmal, bleiben sie gültig. Wer eine andere Rechnung will, ändert Parameter oder Eingabe,
+und dann ändern sich deren Schlüssel ohnehin von selbst.*
 
 **Hash / Prüfsumme** — Eine kurze Zeichenfolge, die aus einem Inhalt berechnet wird.
 Gleicher Inhalt ergibt gleichen Hash. Dient dazu, Gleichheit festzustellen und
@@ -1392,6 +1611,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | **Aufgelaufene Schuld aus drei Straengen nachgetragen** (drei fruehere Laeufe kamen nicht an `docs/` heran). *Graph-Kern:* Bedarf, Eingangsslot, Pflichtfeld, tote Kante, Entwurfszeit-Pruefung, Zusage eines Cache-Eintrags, selektive Verwerfung. *Lizenzpruefung:* CreativeML OpenRAIL-M (abgegrenzt zu OpenRAIL++-M), CDDL, Contributor License Agreement, Primaerquelle/Sekundaerquelle, Modellkarte, Front-Matter, Markdown, HTTP-Statuscode; **Gated Model** zu *Gated Model / Gated Repository* erweitert. *Schwellenstudie-Abnahme:* Charakterisierungstest, Entdopplung/Dublette, **Rasterung der Staerkeachse** um den Kurznamen *Staerkeraster* ergaenzt. **Berichtigt:** **Trefferquote** nannte 36 Faelle, 24 untreue und 0,667 — Zahlen aus der Auswertung *vor* der Entdopplung; richtig sind 32 ausgewertete, 20 untreue und 0,625 |
 | 2026-08-18 | Ergaenzt aus der Schwellenstudie: Metrik, Schwelle, Kalibrierung, Validierung (eines Verfahrens), Setzung vs. Messung, Stoerung/kontrollierte Verfaelschung, Nullprobe, Kontrolle (im Experiment), Widerlegbarkeit, Trennschaerfe, falsch frei/falsch gesperrt, Trefferquote, Rasterung der Staerkeachse, streng monoton, Invarianz, inkommensurabel, normalverteiltes Rauschen/Standardabweichung, Mittelwertfilter. **Validierung** in zwei Bedeutungen getrennt (Verfahren / Daten gegen Schema). Praezisiert: **Silhouette** und **geometrisches Mittel** fangen eine *ersetzende* Halluzination zuverlaessig, eine *ergaenzende* nur schwach (Zusatzkoerper 0,698) |
 | 2026-08-18 | Ergaenzt aus dem eigenen PNG-Schreiber: PNG-Block, Paeth-Praediktor, MSAD-Heuristik, Praediktor (Vorhersage), verlustfrei/verlustbehaftet, Ebene/Multilayer-EXR, float32/float64, LSB, Standardbibliothek, Heuristik, Traceback, Referenzimplementierung, Rueckwaertskompatibilitaet/stiller Bruch, fail-open/Befund als Feld. Ausgebaut: Zeilenfilter (alle fuenf Filter benannt, von Abschnitt 6 nach Abschnitt 5 verschoben), Endianness (Big-/Little-Endian), CRC32, Quantisierungsschritt/-stufe, zlib. **Quantisierung** in zwei Bedeutungen getrennt (Messwerte / Modellgewichte) |
 | 2026-08-18 | Ergaenzt aus der Kettenverdrahtung: Fabrikfunktion, Closure |
