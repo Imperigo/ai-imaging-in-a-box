@@ -169,10 +169,28 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       unbegründet.
 - [ ] **Schwellenstudie, zweite Hälfte: die Kette** — dieselben Störungen, aber die
       Ist-Karte durch den Tiefenschätzer aus einem gerenderten Bild statt durch direkte
-      Verfälschung. **Braucht GPU**, läuft über `auftraege/`. Erst danach lässt sich die
-      Schwelle mit Grund verschieben.
-- [ ] **Die Stil-Schwelle 0.30** ist von alledem unberührt und weiterhin ungeprüft — sie
-      stammt zudem aus DINOv3-Läufen, und der Einbetter ist inzwischen SigLIP 2.
+      Verfälschung. Erst danach lässt sich die Schwelle mit Grund verschieben.
+      *Beauftragt 2026-08-18 als `auf-20260818-10`.* Die wichtigste Einzelzahl darin ist
+      die **Nullprobe**: um wieviel senkt der Schätzer den Score bei *ungestörter*
+      Geometrie? Sie sagt, wieviel von den 0,90 übrig bleibt.
+- [x] **Übersetzung an der Naht** — erledigt 2026-08-18, `kosmo_naht.py` und
+      `gate.als_kosmovis_verdikt`. Zwölf Feldabweichungen zum Ökosystem, jede eine tote
+      Kante ohne Fehlermeldung. Übersetzt statt umbenannt: Unsere Begriffe bleiben
+      deutsch, die Feldnamen an der Naht sind ein **Protokoll**.
+      **Owner-Entscheid zum Freigabe-Token (2026-08-18):** Wir bleiben bei unserer Regel —
+      das Token landet nie in einer Datei auf unserer Seite. `als_kosmo_auftrag` nimmt es
+      als **Argument** und setzt es allein in den übersetzten Satz, im Augenblick des
+      Übergangs.
+- [ ] **Die Stil-Schwelle 0.30** — untersucht 2026-08-18 (`stilstudie.py`,
+      `docs/STILSTUDIE_2026-08-18.md`), aber **nicht** entschieden. Die Studie zeigt, wovon
+      die Bedeutung der Zahl abhängt: vom **Boden** des Einbetters, und der ist
+      ungemessen. Bei Kegelanteil 0,6 läge er bei 0,36 — *über* der Schwelle, jedes
+      beliebige Bildpaar bestünde. Und der überlieferte Fehlbereich 0,06–0,13 deckt sich
+      mit dem Boden eines Kegels von rund 0,3: Er könnte der Boden von **DINOv3** gewesen
+      sein statt eine Messung. Der Einbetter hat gewechselt, die Zahl nicht.
+      *Beauftragt als `auf-20260818-11`.* Was die Schwelle braucht, ist kein besserer
+      Wert, sondern ein **Verfahren**: Boden messen, Schwelle relativ setzen. Das
+      überlebt einen Modellwechsel — genau daran ist 0,30 gescheitert.
 - [x] **Connectors, erste Hälfte** — erledigt 2026-08-18, `herkunft.py`. Ein Connector
       ist hier **kein Import-Filter** (IFC und glTF liest das Projekt längst), sondern die
       Antwort auf die zwei Fragen, die zwischen Autorenprogrammen wirklich verschieden

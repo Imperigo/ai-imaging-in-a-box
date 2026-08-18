@@ -1,0 +1,47 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260818-10",
+  "art": "qa",
+  "beschreibung": "SCHWELLENSTUDIE ZWEITE HAELFTE — die Haelfte, die zaehlt. BRAUCHT GPU. Bitte erst, wenn auf-09 (erster echter Render) durchgelaufen ist; ohne funktionierenden Adapter misst dieser Auftrag nichts. WORUM ES GEHT: Die erste Haelfte lief heute ohne GPU und hat die METRIK kalibriert - acht Stoerungsarten mal sieben Staerken, alle 48 Zeilen erfuellen ihre Erwartung. Ergebnis: Die Metrik ist nachweislich rangbasiert (streng monotone Umrechnung laesst den Score bei exakt 1.000 - die einzige Pruefung, die sie haette umwerfen koennen), und 0.65 ist ZU MILD: 18 von 32 auswertbaren gestoerten Faellen gehen durch, Trefferquote 0.44. Bestes Ergebnis bei 0.90, ueber drei Aufloesungen stabil. Bis 0.85 wird KEIN einziger treuer Fall gesperrt. Volle Auswertung: docs/SCHWELLENSTUDIE_2026-08-18.md. WARUM DIE SCHWELLE TROTZDEM AUF 0.65 STEHT: Die Studie kalibriert die Metrik, nicht die KETTE. Im Betrieb liegt zwischen Soll und Ist ein monokularer Tiefenschaetzer, dessen Fehler in keiner dieser Zahlen steckt. Er senkt jeden Score, und wie weit, weiss niemand. 0.90 koennte im Betrieb JEDEN Render sperren, auch den treuen - genau die Falle, in die der geom_iou-Deckel in Sitzung 06 schon einmal gefuehrt hat. WAS DU MISST: Dieselben acht Stoerungen, aber die Ist-Karte nicht direkt verfaelscht, sondern durch den Tiefenschaetzer aus einem GERENDERTEN Bild gewonnen. Also je Zeile: Soll-Tiefenkarte stoeren -> daraus ueber die Bildkette ein Bild rendern -> tiefenschaetzer.qa_gegen_soll gegen die UNGESTOERTE Soll-Karte. Der Unterschied zur ersten Haelfte ist genau der Schaetzerfehler, und der ist die gesuchte Groesse. aiimaging.schwellenstudie hat alles ausser dem Rendern: stoere(), studienlauf(), trennschaerfe_kurve(). Die Stoerung kannst du auf die Soll-Karte anwenden und daraus ein tiefe_norm.png schreiben (aiimaging.bildschreiben.schreibe_graustufen_png). ZWEI DINGE, DIE ICH BRAUCHE: (1) Um wieviel senkt der Schaetzer den Score bei UNGESTOERTER Geometrie? Das ist die Nullprobe und die wichtigste Einzelzahl des ganzen Auftrags - sie sagt, wieviel von 0.90 uebrig bleibt. (2) Faellt bis 0.85 immer noch kein treuer Fall durch, oder kippt das mit dem Schaetzer? WENN DIE ZEIT NICHT REICHT: Lieber weniger Staerken als weniger Stoerungsarten. Die Kurvenform je Art ist die Aussage, nicht die Aufloesung der Staerkeachse. Und die Nullprobe zuerst - wenn nur eine Zahl herauskommt, dann die. REGEL 3: Nur Zahlen zurueck, keine Bilder.",
+  "erstellt": "2026-08-18T17:23:04Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "aufloesung": 512,
+    "samples": 32,
+    "backbone": "qwen-image-edit-2511",
+    "schaetzer": "depth-anything-v2-small",
+    "seed": 20260818,
+    "controlnet_staerke": 0.8,
+    "stoerungen": [
+      "rauschen",
+      "silhouette_wachsen",
+      "silhouette_schrumpfen",
+      "verschiebung",
+      "glaettung",
+      "zusatzkoerper"
+    ],
+    "staerken": [
+      0.0,
+      0.1,
+      0.2,
+      0.5,
+      1.0
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
+  }
+}
