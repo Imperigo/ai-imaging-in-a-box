@@ -137,6 +137,32 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None)
 
     # ── Einheiten: SI-Meter. Ohne explizite Einheit ist der Massstab Auslegungssache —
     #    genau die Fehlerklasse (mm-als-m), die den Torwächter später beschäftigen wird.
+    # IfcOwnerHistory — in IFC2X3 PFLICHT, in IFC4 optional.
+    #
+    # BEFUND 18.08.2026 (Testabnahme dieser Fixture): Hier stand an allen dreizehn
+    # IfcRoot-Ableitungen schlicht `$`. In IFC4 richtig, in IFC2X3 ein verletztes
+    # Pflichtattribut — und weil die Attributzahl gleich bleibt (4), fällt es beim
+    # Zählen nicht auf. IfcOpenShell liest die Datei anstandslos; erst
+    # `ifcopenshell.validate` meldete **13 Fehler** „Attribute not optional".
+    #
+    # Die Lehre ist die des ganzen Tages, eine Ebene tiefer: Dass etwas gelesen wird,
+    # ist kein Beleg dafür, dass es gültig ist. Der Konverter war nachsichtig, der
+    # Prüfer nicht — und ein echter IFC-Leser beim Empfänger könnte es auch nicht sein.
+    #
+    # Angelegt wird sie für BEIDE Schemata: In IFC4 schadet sie nicht, und zwei Wege
+    # wären eine Abweichung, die niemand bemerkt.
+    person = s.add("IFCPERSON($,'Testfixture',$,$,$,$,$,$)")
+    organisation = s.add("IFCORGANIZATION($,'AI Imaging in a Box',$,$,$)")
+    person_org = s.add(f"IFCPERSONANDORGANIZATION({person},{organisation},$)")
+    anwendung = s.add(
+        f"IFCAPPLICATION({organisation},'0.0.2','AI Imaging in a Box','aiimaging')"
+    )
+    # Fester Zeitstempel statt `time.time()`: Die Fixture ist deterministisch, und ein
+    # Zeitstempel wäre die einzige Stelle, an der zwei Läufe auseinanderliefen.
+    besitz = s.add(
+        f"IFCOWNERHISTORY({person_org},{anwendung},$,.NOCHANGE.,$,$,$,1767225600)"
+    )
+
     laenge = s.add(f"IFCSIUNIT(*,.LENGTHUNIT.,{vorsatz_teil},.METRE.)")
     flaeche = s.add("IFCSIUNIT(*,.AREAUNIT.,$,.SQUARE_METRE.)")
     volumen = s.add("IFCSIUNIT(*,.VOLUMEUNIT.,$,.CUBIC_METRE.)")
@@ -148,22 +174,22 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None)
         f"IFCGEOMETRICREPRESENTATIONCONTEXT($,'Model',3,1.E-05,{welt},$)"
     )
     projekt = s.add(
-        f"IFCPROJECT('{_ifc_guid(next(g))}',$,'Testfixture',"
+        f"IFCPROJECT('{_ifc_guid(next(g))}',{besitz},'Testfixture',"
         f"'Synthetische Geometrie - keine Projektdaten',$,$,$,({kontext}),{einheiten})"
     )
 
     ort_site = s.add(f"IFCLOCALPLACEMENT($,{s.platzierung()})")
-    site = s.add(f"IFCSITE('{_ifc_guid(next(g))}',$,'Gelaende',$,$,{ort_site},$,$,.ELEMENT.,$,$,$,$,$)")
+    site = s.add(f"IFCSITE('{_ifc_guid(next(g))}',{besitz},'Gelaende',$,$,{ort_site},$,$,.ELEMENT.,$,$,$,$,$)")
     ort_bau = s.add(f"IFCLOCALPLACEMENT({ort_site},{s.platzierung()})")
-    gebaeude = s.add(f"IFCBUILDING('{_ifc_guid(next(g))}',$,'Testbau',$,$,{ort_bau},$,$,.ELEMENT.,$,$,$)")
+    gebaeude = s.add(f"IFCBUILDING('{_ifc_guid(next(g))}',{besitz},'Testbau',$,$,{ort_bau},$,$,.ELEMENT.,$,$,$)")
     ort_gesch = s.add(f"IFCLOCALPLACEMENT({ort_bau},{s.platzierung()})")
     geschoss = s.add(
-        f"IFCBUILDINGSTOREY('{_ifc_guid(next(g))}',$,'EG',$,$,{ort_gesch},$,$,.ELEMENT.,0.)"
+        f"IFCBUILDINGSTOREY('{_ifc_guid(next(g))}',{besitz},'EG',$,$,{ort_gesch},$,$,.ELEMENT.,0.)"
     )
 
-    s.add(f"IFCRELAGGREGATES('{_ifc_guid(next(g))}',$,$,$,{projekt},({site}))")
-    s.add(f"IFCRELAGGREGATES('{_ifc_guid(next(g))}',$,$,$,{site},({gebaeude}))")
-    s.add(f"IFCRELAGGREGATES('{_ifc_guid(next(g))}',$,$,$,{gebaeude},({geschoss}))")
+    s.add(f"IFCRELAGGREGATES('{_ifc_guid(next(g))}',{besitz},$,$,{projekt},({site}))")
+    s.add(f"IFCRELAGGREGATES('{_ifc_guid(next(g))}',{besitz},$,$,{site},({gebaeude}))")
+    s.add(f"IFCRELAGGREGATES('{_ifc_guid(next(g))}',{besitz},$,$,{gebaeude},({geschoss}))")
 
     bauteile = []
 
@@ -172,7 +198,7 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None)
     shape, ort = _quader(s, kontext, LAENGE_X, BREITE_Y, PLATTENDICKE,
                          0.0, 0.0, -PLATTENDICKE, ort_gesch, einheit_je_meter=einheit_je_meter)
     bauteile.append(s.add(
-        f"IFCSLAB('{_ifc_guid(next(g))}',$,'Bodenplatte',$,$,{ort},{shape},$,.FLOOR.)"
+        f"IFCSLAB('{_ifc_guid(next(g))}',{besitz},'Bodenplatte',$,$,{ort},{shape},$,.FLOOR.)"
     ))
 
     # Vier Wände. Die Y-Wände sind um die Wanddicke verkuerzt, damit die Ecken nicht
@@ -190,12 +216,12 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None)
             # nicht. Ein Attribut zuviel macht die Datei für einen strengen Leser
             # ungültig — und ArchiCAD 28 exportiert nach Messung an zehn echten Dateien
             # IFC2X3 (`auf-20260818-08`).
-            f"IFCWALL('{_ifc_guid(next(g))}',$,'{name}',$,$,{ort},{shape},$"
+            f"IFCWALL('{_ifc_guid(next(g))}',{besitz},'{name}',$,$,{ort},{shape},$"
             + (",$)" if schema == "IFC4" else ")")
         ))
 
     s.add(
-        f"IFCRELCONTAINEDINSPATIALSTRUCTURE('{_ifc_guid(next(g))}',$,$,$,"
+        f"IFCRELCONTAINEDINSPATIALSTRUCTURE('{_ifc_guid(next(g))}',{besitz},$,$,"
         f"({','.join(bauteile)}),{geschoss})"
     )
 
