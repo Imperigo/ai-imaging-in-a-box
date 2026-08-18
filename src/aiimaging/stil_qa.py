@@ -54,8 +54,31 @@ import math
 #:
 #: Die Zahl ist an **wenigen Fällen** kalibriert, nicht an einer Studie. Sie gilt für die
 #: Aggregation ``max`` (siehe :func:`stil_score`); mit ``mittel`` misst dieselbe Zahl
-#: etwas anderes. Die systematische Schwellenstudie steht in ``docs/PLAN.md`` als offener
-#: Punkt — bis dahin ist 0.30 eine begründete Setzung, kein Messergebnis.
+#: etwas anderes.
+#:
+#: Stand nach der Stilstudie vom 18.08.2026 (``aiimaging.stilstudie``,
+#: ``docs/STILSTUDIE_2026-08-18.md``) — sie hat die Zahl **nicht** bestätigt und **nicht**
+#: widerlegt, sondern gezeigt, wovon ihre Bedeutung abhängt:
+#:
+#: * Der **Boden** — die Ähnlichkeit zweier zusammenhangloser Vektoren — liegt bei
+#:   isotroper Streuung und 768 Dimensionen bei 0,000 ± 0,036. Von dort sind es rund
+#:   **acht Streuungen** bis 0,30; keine von 2000 Zufallsproben kam so weit.
+#: * Dieser Boden ist aber der **kleinstmögliche**. Besetzt ein Einbetter einen **Kegel**
+#:   (und reale Einbetter tun das), steigt er: bei Kegelanteil 0,3 auf 0,09, bei 0,6 auf
+#:   0,36 — dort liegt der Boden *über* dieser Schwelle, und jedes beliebige Bildpaar
+#:   bestünde. Wo **SigLIP 2** liegt, ist ungemessen und hier nicht messbar.
+#: * Der überlieferte Fehlbereich 0,06–0,13 aus den **DINOv3**-Läufen deckt sich mit dem
+#:   Boden eines Kegels von rund 0,3. Er kann also der Boden jenes Einbetters gewesen sein
+#:   statt eine Messung von Stilunähnlichkeit — und dann ist er auf SigLIP 2 **nicht**
+#:   übertragbar. Der Einbetter hat gewechselt (``einbetter.py``), die Zahl nicht.
+#:
+#: **Die Schwelle bleibt trotzdem bei 0.30 — nicht verteidigt, sondern beibehalten**,
+#: dieselbe Haltung wie bei ``geometrie_qa.SCHWELLE_GEOMETRIE``. Eine neue Zahl liesse
+#: sich hier nur aus synthetischen Vektoren ableiten, und die kennen keine Bilder. Was die
+#: Schwelle wirklich braucht, ist keine bessere Schätzung, sondern ein **Verfahren**: den
+#: Boden des eingesetzten Einbetters an zusammenhanglosen Bildpaaren messen und die
+#: Schwelle als „Boden plus k Streuungen" setzen. Das braucht das Modell und ein
+#: menschliches Urteil — beides liegt hier nicht vor.
 SCHWELLE_STIL = 0.30
 
 #: Aggregation über das Referenzset: Abstand zur NÄCHSTEN Referenz.
