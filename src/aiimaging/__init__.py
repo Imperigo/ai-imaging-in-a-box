@@ -19,12 +19,15 @@ Aufbau
 ``graph``        der innere Knotengraph der Bildkette
 ``jobs``         Auftragsverwaltung mit Freigabe (Freeze-Schutz)
 ``werkzeuge``    was die MCP-Naht anbietet — gewöhnliche Bibliotheksaufrufe
+``auftrag``      Aufträge an die HomeStation, über das Repo als Übergabeort
 ``mcp_schemas``  die Werkzeugverträge als reine Daten
 ``mcp_server``   optionaler Zusatz, braucht das MIT-lizenzierte MCP-SDK
 """
 __version__ = "0.0.2"
 
-from aiimaging import contracts, graph, jobs, mcp_schemas, seams, torwaechter, werkzeuge  # noqa: F401
+from aiimaging import (  # noqa: F401
+    auftrag, contracts, graph, jobs, mcp_schemas, seams, torwaechter, werkzeuge,
+)
 from aiimaging.contracts import (  # noqa: F401
     ContractError,
     LANE_FIELDS,

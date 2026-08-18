@@ -1,0 +1,33 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260818-00",
+  "status": "ok",
+  "beendet": "2026-08-18T06:51:51Z",
+  "dauer_s": 5.4,
+  "messwerte": {
+    "n_elements": 5,
+    "n_triangles": 60,
+    "bbox_size_m": [
+      8.0,
+      5.0000009872640305,
+      3.2500011920928955
+    ],
+    "n_meshes": 5,
+    "dateien": [
+      "beauty_.png",
+      "tiefe_0001.exr",
+      "modell.glb",
+      "blender-report.json"
+    ]
+  },
+  "urteil": {
+    "multipass": "ok"
+  },
+  "umgebung": {
+    "gpu": "keine",
+    "leistungsgrenze_w": null,
+    "python": "3.11.15",
+    "blender": "/opt/blender/blender"
+  },
+  "fehler": null
+}

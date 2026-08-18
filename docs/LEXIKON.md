@@ -849,6 +849,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus Phase 3: Leistungsgrenze, Rauchprobe, fail-closed praezisiert |
 | 2026-08-18 | Ergaenzt aus Phase 2: Skip-on-Error, Freigabe-Token, Pfad-Trickserei, Positivliste, fsync, atomares Schreiben, Zustandsautomat, Endzustand, Content-Hashing, Mutationsprobe |
 | 2026-08-18 | Ergaenzt aus der Paketierung: pyproject.toml, src-Layout, optionale Abhaengigkeitsgruppe, SPDX |
 | 2026-08-18 | Ergaenzt aus Phase 1: STEP/ISO-10303-21, Extrusion/SweptSolid, GUID, Determinismus, Testfixture, Orchestrator |
