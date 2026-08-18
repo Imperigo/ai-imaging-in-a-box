@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260818-07",
+  "art": "render",
+  "beschreibung": "ERSTER ECHTER RENDER. Bitte erst starten, wenn auf-20260818-06 (Regressionspruefung des Multipass auf 5.2) durch ist - ohne brauchbares tiefe_norm.png gibt es keine Konditionierung, und dann misst dieser Auftrag nichts. WAS ZUM ERSTEN MAL LAEUFT: Der diffusers-Adapter in aiimaging.render ist gebaut, aber NIE AUSGEFUEHRT worden - im Entwicklungscontainer gibt es weder GPU noch Gewichte. Neu gebaut ist ausserdem art:'render' im homeworker (homeworker._render_und_qa): Ablauf Multipass, Bildmodell, Tiefenschaetzung, Geometrie-Score. Jede Stufe berichtet EINZELN in messwerte - render, geometrie_qa - damit ein Bruch in der Mitte die Erkenntnis der ersten Haelfte nicht mitnimmt. Das ist meine Antwort auf deinen Einwand: getrennt berichtet, auch wo es in einem Lauf passiert. VRAM, dein Hinweis: Deine Notiz sagt, gleichzeitig resident passt genau EIN 30B-Q4 (18.6 GB) plus ein 6-GB-Seher. Qwen-Image-Edit-2511 ist eine dritte Last. Bitte vorher die Ollama-Modelle entladen (ollama stop bzw. OLLAMA_KEEP_ALIVE=0) und im Ergebnis vermerken, wieviel VRAM der Render tatsaechlich belegt hat - diese Zahl fehlt uns bisher voellig und bestimmt spaeter, ob Bildmodell und Sprachmodell je gleichzeitig laufen koennen. GEWICHTE: erwartet unter $AIIMAGING_MODELLE/qwen-image-edit-2511, ersatzweise /ai/qwen-image-edit-2511. Liegen sie woanders, setz params.modell_wurzel oder die Umgebungsvariable und vermerk es im Ergebnis. WAS DIESER LAUF PRUEFT, und was ich davon wirklich wissen will: laeuft der Adapter mit echten Gewichten ueberhaupt; genuegt Depth-Anything-V2-Small (das einzige unter Regel 1 zulaessige - Base/Large/Giant sind CC-BY-NC und ausgeschlossen) auf einem Architekturbild; und liefert die Geometrie-Metrik auf einem ERZEUGTEN Bild plausible Zahlen. Bisher ist sie nur an synthetischen Karten belegt: treu 0.99, halluziniert 0.24 bei Spearman +1.000 - nur die Silhouette faengt die Halluzination. EIN SCORE UNTER 0.65 IST EIN ERGEBNIS, KEIN FEHLSCHLAG. Mir ist eine ehrliche Zahl lieber als eine bestandene. Faellt er durch, sagen uns spearman und geom_iou getrennt, woran es liegt: hohes spearman bei niedrigem geom_iou heisst, die Tiefenordnung stimmt und die Silhouette nicht - also Halluzination. Beides niedrig heisst eher, dass der Schaetzer auf diesem Bild nicht traegt. FALLS DIE ZEIT REICHT: denselben Lauf mit controlnet_staerke 0.6 und 1.0 wiederholen, seed gleich lassen. Drei Punkte sind der Anfang der Schwellenstudie aus Phase 4, und du hast das Geraet. Leg die Wiederholungen als eigene Ergebnisdateien ab oder haeng sie im urteil an, wie es dir leichter faellt.",
+  "erstellt": "2026-08-18T13:35:21Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "aufloesung": 512,
+    "samples": 64,
+    "backbone": "qwen-image-edit-2511",
+    "prompt": "photorealistic architectural visualization of a simple modern concrete building, overcast daylight, matte concrete surfaces, clean flat roof, neutral grey sky, no vegetation, no people, eye-level exterior view",
+    "negativ_prompt": "extra floors, extra windows, added balconies, changed roofline, distorted perspective, fisheye, text, watermark",
+    "seed": 20260818,
+    "schritte": 28,
+    "controlnet_staerke": 0.8,
+    "denoise": 0.6,
+    "mit_beauty": true,
+    "schaetzer": "depth-anything-v2-small"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
+  }
+}

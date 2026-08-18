@@ -1,26 +1,17 @@
 {
   "schema": "aiimaging.homeworker-auftrag/v1",
   "auftrag_id": "auf-20260818-06",
-  "art": "render",
-  "beschreibung": "ERSTER ECHTER RENDER. Der diffusers-Adapter in aiimaging.render ist gebaut, aber bisher NIE ausgefuehrt worden - hier laeuft er zum ersten Mal mit echten Gewichten. Vorher hat sich zweierlei geaendert, beides aus deinem auf-05-Befund: (1) Die Normalisierung der Tiefenkarte ist aus dem Runner auf die Produktseite gewandert (neues Modul aiimaging.bildschreiben, aufgerufen von seams.glb_zu_multipass). Deine Empfehlung, wortgetreu umgesetzt - danke, sie war richtig. Blender normalisiert nicht mehr; damit gibt es nur noch EINEN Weg zum PNG statt eines je Blender-Fassung. Auf 4.2 hier gegengeprueft: min_m, max_m und n_geometriepixel sind identisch zur alten Blender-Fassung, 18 von 65536 Bildpunkten weichen um genau eine Quantisierungsstufe ab (float32 gegen float64). Deine 5.2-Zahlen (17.934-26.625 m, 11151 Punkte) stimmen uebrigens exakt mit denen von 4.2 ueberein - zwei Blender-Fassungen, dieselbe Tiefe. (2) art:'render' ist gebaut (homeworker._render_und_qa). Ablauf: Multipass, Bildmodell, Tiefenschaetzung, Geometrie-Score. Jede Stufe berichtet einzeln, damit ein Bruch in der Mitte die erste Haelfte nicht mitnimmt. WAS DIESER LAUF PRUEFT, vier Dinge auf einmal: laeuft der diffusers-Adapter mit echten Gewichten ueberhaupt; genuegt Depth-Anything-V2-Small (das einzige unter Regel 1 zulaessige) auf einem Architekturbild; liefert die Geometrie-Metrik auf einem ERZEUGTEN Bild plausible Zahlen (bisher nur an synthetischen Karten belegt: treu 0.99, halluziniert 0.24); und traegt die Schwelle 0.65 auf dieser Naht. GEWICHTE: erwartet unter $AIIMAGING_MODELLE/qwen-image-edit-2511, ersatzweise /ai/qwen-image-edit-2511. Liegen sie woanders, setz params.modell_wurzel oder die Umgebungsvariable - bitte im Ergebnis vermerken, wo sie lagen. WENN ES BRICHT: aendere gern direkt, das Mandat aus auf-05 gilt weiter. Was mich am meisten interessiert, ist nicht ein bestandener Score, sondern eine ehrliche Zahl. Ein Score unter 0.65 ist ein Ergebnis, kein Fehlschlag - dann wissen wir, dass entweder die Konditionierung, der Schaetzer oder die Schwelle nicht traegt, und welches davon. Bitte, falls die Zeit reicht, denselben Lauf noch zweimal mit controlnet_staerke 0.6 und 1.0 wiederholen (seed gleich lassen) - drei Punkte sind der Anfang der Schwellenstudie aus Phase 4, und du hast das Geraet.",
-  "erstellt": "2026-08-18T13:26:10Z",
+  "art": "multipass",
+  "beschreibung": "REGRESSIONSPRUEFUNG auf 5.2, klein und billig — die Vorstufe zum Render, ausdruecklich getrennt davon, weil du recht hast: wenn drei Annahmen zugleich brechen, weiss niemand welche. Hier bricht hoechstens eine. WAS SICH GEAENDERT HAT: Deine Empfehlung aus auf-05 ist umgesetzt. Die Normalisierung der Tiefenkarte hat Blender verlassen. Neues Modul aiimaging.bildschreiben (reine stdlib, kein Pillow, kein numpy), aufgerufen von seams.glb_zu_multipass NACH dem Blender-Lauf. Der Runner normalisiert nicht mehr und braucht dadurch auch kein numpy mehr; _tiefe_normalisieren ist ersatzlos entfernt, depth_png und depth_normalisierung stehen im Blender-Report jetzt fest auf None und werden von der Naht nachgetragen. Damit gibt es EINEN Weg zum PNG statt eines je Blender-Fassung. AUF 4.2 GEGENGEPRUEFT: min_m, max_m und n_geometriepixel identisch zur alten Blender-Fassung; 18 von 65536 Bildpunkten weichen um genau eine Quantisierungsstufe ab (float32 gegen float64, groesste Abweichung 7.7e-6 = eine halbe Stufe). Die ganze Kette geometrie->multipass->render laeuft mit Attrappe durch. 1076 Tests gruen. DEINE 5.2-ZAHLEN UND MEINE 4.2-ZAHLEN SIND UEBRIGENS IDENTISCH: 17.933635711669922 bis 26.625198364257812 m, 11151 Geometriepixel. Zwei Blender-Fassungen, zwei Rechner, zwei Dateiformate (einschichtig und multilayer) - dieselbe Tiefe. Das war nicht geplant und ist mehr wert als der Test, der es nebenbei erzeugt hat. WAS ICH WISSEN MOECHTE: (1) Laeuft der Multipass auf 5.2 jetzt mit status ok durch, ohne dass der 0x0-Fehler noch auftaucht? (2) Entsteht tiefe_norm.png, und was steht in depth_normalisierung - insbesondere min_m, max_m und n_geometriepixel? Wenn dort wieder 17.9336... / 26.6251... / 11151 steht, ist die Verschiebung der Naht sauber. (3) Steht depth_png_fehler auf null? WENN ES BRICHT: Mandat gilt weiter, aendere direkt. Nur bitte den 4.2-Pfad nicht brechen und die Aenderung im urteil-Feld begruenden - dein Hinweis aus dem Ollama-Dokument ist angekommen, die Diagnose gehoert in die Ergebnisdatei, nicht in die Commit-Nachricht. KEINE GPU noetig, CPU-Cycles genuegt.",
+  "erstellt": "2026-08-18T13:35:21Z",
   "geometrie": {
     "synthetisch": true,
     "pfad": null,
     "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
   },
   "params": {
-    "aufloesung": 512,
-    "samples": 64,
-    "backbone": "qwen-image-edit-2511",
-    "prompt": "photorealistic architectural visualization of a simple modern concrete building, overcast daylight, matte concrete surfaces, clean flat roof, neutral grey sky, no vegetation, no people, eye-level exterior view",
-    "negativ_prompt": "extra floors, extra windows, added balconies, changed roofline, distorted perspective, fisheye, text, watermark",
-    "seed": 20260818,
-    "schritte": 28,
-    "controlnet_staerke": 0.8,
-    "denoise": 0.6,
-    "mit_beauty": true,
-    "schaetzer": "depth-anything-v2-small"
+    "aufloesung": 256,
+    "samples": 16
   },
   "auflagen": {
     "leistungsgrenze_w": 400,
