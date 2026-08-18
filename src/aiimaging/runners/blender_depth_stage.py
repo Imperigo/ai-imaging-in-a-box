@@ -113,7 +113,69 @@ def _argumente():
                          "Tiefe hängt an ihm)")
     ap.add_argument("--ohne-material-id", action="store_true",
                     help="zweiten Renderdurchgang auslassen; spart etwa die halbe Rechenzeit")
+    # --- Kamera: drei Wege, und der Bericht sagt, welcher gegriffen hat ----------------
+    ap.add_argument("--auge", default=None,
+                    help="Kamerastandort 'x,y,z' in Metern. Hat Vorrang vor --kamera. "
+                         "Der Weg für einen Aufrufer, der selbst gerechnet hat.")
+    ap.add_argument("--blick-auf", default=None,
+                    help="Blickziel 'x,y,z' in Metern. Pflicht zusammen mit --auge.")
+    ap.add_argument("--kamera", default=None,
+                    help="Richtungskürzel aus aiimaging.kameras (n, e, s, w, nNE, …). "
+                         "Der Standort wird dann aus der gemessenen Hüllbox dieser Szene "
+                         "abgeleitet — also im selben Bezugssystem, in dem gerendert wird.")
+    # KEINE Vorgabe. Ohne Angabe bleibt Blenders eigene Brennweite stehen — siehe
+    # `_kamera_setzen`: Der Rückfall ist die Bezugsgrösse aller bisherigen Messungen,
+    # und eine stillschweigend geänderte Optik verschöbe sie alle.
+    ap.add_argument("--brennweite", type=float, default=None)
+    ap.add_argument("--bias", type=float, default=35.0)
+    ap.add_argument("--augenhoehe", type=float, default=1.70)
+    ap.add_argument("--deckungsgrad", type=float, default=0.55)
+    ap.add_argument("--gelaende-z", type=float, default=None,
+                    help="Geländehöhe im Weltsystem. Ohne Angabe die Unterkante der "
+                         "Hüllbox — bei einem Untergeschoss stünde die Kamera sonst im Keller.")
     return ap.parse_args(argv)
+
+
+def _punkt_aus_text(text, name: str):
+    """``'12.5,-30,1.7'`` → ``(12.5, -30.0, 1.7)``.
+
+    Raises:
+        RuntimeError: nicht drei endliche Zahlen. Eine halb gelesene Kameraposition wäre
+            schlimmer als gar keine — das Bild entstünde und zeigte etwas anderes als
+            gemeint, ohne dass irgendwo ein Fehler stünde.
+    """
+    teile = [t.strip() for t in str(text).split(",")]
+    if len(teile) != 3:
+        raise RuntimeError(f"{name} braucht drei durch Komma getrennte Zahlen, war: {text!r}")
+    try:
+        werte = tuple(float(t) for t in teile)
+    except ValueError as e:
+        raise RuntimeError(f"{name} enthält keine Zahl: {text!r}") from e
+    if any(w != w or w in (float("inf"), float("-inf")) for w in werte):
+        raise RuntimeError(f"{name} enthält nan oder inf: {text!r}")
+    return werte
+
+
+def _kameras_modul():
+    """``aiimaging.kameras`` von hier aus erreichbar machen — oder ``None``.
+
+    Blenders Python kennt dieses Projekt nicht. Der Pfad wird darum aus der Lage dieser
+    Datei abgeleitet (``src/aiimaging/runners/`` → ``src``), nicht aus einer Umgebung.
+
+    **Die Richtung des Imports ist die erlaubte.** Der Runner darf aus dem Produkt lesen;
+    verboten ist nur der umgekehrte Weg — ein ``import`` dieses Skripts aus ``aiimaging``
+    heraus zöge ``bpy`` in das Produkt-Environment (Regel 2, `tests/test_prozessgrenze.py`).
+    ``kameras`` ist reine stdlib-Arithmetik und bringt nichts mit.
+
+    ``None`` statt einer Ausnahme: Ein fehlendes Modul soll den Lauf nicht abbrechen,
+    sondern in den Rückfall führen — und der Bericht sagt es dann ausdrücklich.
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from aiimaging import kameras                      # noqa: PLC0415
+        return kameras
+    except Exception:                                      # noqa: BLE001
+        return None
 
 
 def _szene_leeren() -> None:
@@ -138,25 +200,111 @@ def _bbox_aller_meshes():
     return lo, hi
 
 
-def _kamera_setzen(lo, hi):
-    """Eine Kamera aus der Bounding-Box ableiten — diagonal von vorn-oben.
+def _kamera_setzen(lo, hi, a=None):
+    """Die Kamera stellen — auf drei Wegen, und der Bericht sagt, welcher gegriffen hat.
 
-    Bewusst schlicht: Das Skelett soll die Prozessgrenze prüfen, nicht die
-    Kamerakomposition. Die zwölf Automatikkameras kommen in Phase 3.
+    1. **``--auge`` und ``--blick-auf``** — der Aufrufer hat gerechnet, hier wird nur
+       gestellt. Das ist der saubere Weg: Die Rechnung liegt dann diesseits der
+       Prozessgrenze und ist ohne Blender prüfbar.
+    2. **``--kamera <kürzel>``** — der Standort wird aus der **hier gemessenen** Hüllbox
+       abgeleitet (`aiimaging.kameras`). Das ist der sichere Weg, weil er keine Annahme
+       über Bezugssysteme macht: Die Zahlen stammen aus derselben Szene, in der gerendert
+       wird. Ein Aufrufer, der die Hüllbox aus dem IFC kennt, kennt sie in *seinem*
+       Achsensystem — und ob das nach Export, Import und einer möglichen Z-up-Drehung noch
+       dasselbe ist, gehört gemessen und nicht angenommen.
+    3. **Rückfall** — diagonal von vorn-oben, wie bis zum 18.08.2026 als einziger Weg.
+       Nicht komponiert, nur brauchbar. Er greift ohne Angabe und wenn `aiimaging` von
+       hier aus nicht erreichbar ist; **beides steht dann im Bericht**.
+
+    Returns:
+        ``(kamera, mitte, spanne, herkunft)`` — ``herkunft`` ist der Block, der in den
+        Bericht wandert. Eine Ausgabe soll sagen, wie sie entstanden ist.
     """
     import mathutils
 
     mitte = mathutils.Vector([(lo[i] + hi[i]) / 2.0 for i in range(3)])
     spanne = max(hi[i] - lo[i] for i in range(3)) or 1.0
+    # `None` heisst: nicht angefasst. Der Rückfall behält damit Blenders eigene
+    # Brennweite — er ist die Bezugsgrösse aller bisher gemessenen Tiefenkarten, und wer
+    # seine Optik ändert, verschiebt rückwirkend jede Zahl, die daran kalibriert wurde.
+    brennweite = getattr(a, "brennweite", None)
+
+    auge = ziel = None
+    herkunft = {"weg": "rueckfall", "kuerzel": None,
+                "begruendung": "Keine Kamera angegeben — diagonal von vorn-oben, "
+                               "brauchbar, aber nicht komponiert."}
+
+    if a is not None and getattr(a, "auge", None):
+        if not getattr(a, "blick_auf", None):
+            raise RuntimeError("--auge ohne --blick-auf: Ein Standort ohne Blickziel "
+                               "beschreibt keine Kamera.")
+        auge = mathutils.Vector(_punkt_aus_text(a.auge, "--auge"))
+        ziel = mathutils.Vector(_punkt_aus_text(a.blick_auf, "--blick-auf"))
+        herkunft = {"weg": "vorgegeben", "kuerzel": getattr(a, "kamera", None),
+                    "begruendung": "Standort und Blickziel kamen als Zahlen herein; "
+                                   "hier wurde nur gestellt."}
+
+    elif a is not None and getattr(a, "kamera", None):
+        kameras = _kameras_modul()
+        if kameras is None:
+            herkunft["begruendung"] = (
+                f"--kamera {a.kamera!r} war gesetzt, aber 'aiimaging.kameras' ist von "
+                f"diesem Blender aus nicht erreichbar. Es wurde der Rückfall gestellt — "
+                f"das Bild zeigt NICHT die angeforderte Richtung."
+            )
+        else:
+            if brennweite is None:
+                brennweite = kameras.BRENNWEITE_MM
+            satz = kameras.kamerasatz(
+                [list(lo), list(hi)], kuerzel=[a.kamera],
+                brennweite_mm=brennweite,
+                bias_grad=float(getattr(a, "bias", 35.0)),
+                augenhoehe_m=float(getattr(a, "augenhoehe", 1.70)),
+                deckungsgrad=float(getattr(a, "deckungsgrad", 0.55)),
+                gelaende_z=getattr(a, "gelaende_z", None),
+                seitenverhaeltnis=1.0,        # der Runner rendert quadratisch
+            )
+            k = satz["kameras"][0]
+            auge = mathutils.Vector(k["auge"])
+            ziel = mathutils.Vector(k["blick_auf"])
+            herkunft = {
+                "weg": "abgeleitet", "kuerzel": k["kuerzel"],
+                "azimut_grad": k["azimut_grad"],
+                "massgebend": k["massgebend"],
+                "durchlaeufe": k["durchlaeufe"],
+                # Wenn der Eckentest nicht aufging, steht das hier — und nicht nur in
+                # einem Bild, das jemand später schief findet.
+                "vollstaendig": k["vollstaendig"],
+                # Der Füllgrad sagt, was der Eckentest nicht sagt: ob das Bauwerk das
+                # Bild auch AUSFÜLLT. Zu klein fällt keiner Prüfung auf, die nur nach
+                # "passt es hinein" fragt.
+                "fuellgrad": k["fuellgrad"],
+                "abstand_m": k["abstand_m"],
+                "gelaende_z": satz["gelaende_z"],
+                "warnungen": list(k["warnungen"]),
+                "begruendung": k["begruendung"],
+            }
+
+    if auge is None:
+        auge = mitte + mathutils.Vector((1.6, -2.0, 1.2)) * spanne
+        ziel = mitte
 
     kam_daten = bpy.data.cameras.new("Kamera")
+    if brennweite is not None:
+        kam_daten.lens = brennweite
     kam = bpy.data.objects.new("Kamera", kam_daten)
     bpy.context.scene.collection.objects.link(kam)
-    kam.location = mitte + mathutils.Vector((1.6, -2.0, 1.2)) * spanne
+    kam.location = auge
     kam.rotation_mode = "QUATERNION"
-    kam.rotation_quaternion = (mitte - kam.location).to_track_quat("-Z", "Y")
+    kam.rotation_quaternion = (ziel - auge).to_track_quat("-Z", "Y")
     bpy.context.scene.camera = kam
-    return kam, mitte, spanne
+
+    # Die tatsächlich gestellte Brennweite, nicht die angeforderte: Beim Rückfall steht
+    # hier Blenders eigene, und genau das soll ablesbar sein.
+    herkunft["brennweite_mm"] = round(float(kam_daten.lens), 4)
+    herkunft["auge"] = [round(float(v), 4) for v in auge]
+    herkunft["blick_auf"] = [round(float(v), 4) for v in ziel]
+    return kam, mitte, spanne, herkunft
 
 
 # --------------------------------------------------------------------------------------
@@ -545,7 +693,7 @@ def main() -> int:
                 obj.matrix_world = dreh @ obj.matrix_world
 
     lo, hi = _bbox_aller_meshes()
-    _kamera_setzen(lo, hi)
+    _, _, _, kamera_herkunft = _kamera_setzen(lo, hi, a)
     mitte = [(lo[i] + hi[i]) / 2.0 for i in range(3)]
     spanne = max(hi[i] - lo[i] for i in range(3)) or 1.0
 
@@ -640,6 +788,10 @@ def main() -> int:
         # Bestandsfelder — Bedeutung unverändert, damit seams.py und die Tests tragen.
         "status": "ok" if fehler is None else "error",
         "depth_exr": str(exr) if exr is not None else None,
+        # Woher die Kamera kam — vorgegeben, abgeleitet oder Rückfall. Ohne diese Angabe
+        # ist einem Bild später nicht mehr anzusehen, ob es die angeforderte Ansicht
+        # zeigt oder die Notlösung.
+        "kamera": kamera_herkunft,
         "bbox": [lo, hi],
         "bbox_size_m": [hi[i] - lo[i] for i in range(3)],
         "n_meshes": sum(1 for o in bpy.data.objects if o.type == "MESH"),

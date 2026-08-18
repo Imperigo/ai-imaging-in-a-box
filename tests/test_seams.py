@@ -20,6 +20,7 @@ from aiimaging import seams
 from aiimaging.contracts import ContractError
 from aiimaging.seams import (
     SeamError,
+    baue_kommando_multipass,
     baue_kommando_tiefenkarte,
     glb_zu_tiefenkarte,
     ifc_zu_glb,
@@ -280,3 +281,108 @@ def test_ifc_lauf_startet_nichts_ohne_venv(monkeypatch, tmp_path):
 
     with pytest.raises(SeamError, match=".venv-ifc"):
         ifc_zu_glb(tmp_path / "b.ifc", tmp_path / "b.glb", _starte=verweigerer)
+
+
+# ==========================================================================================
+# Die Kamera über die Prozessgrenze
+#
+# Bis zum 18.08.2026 stellte der Runner immer dieselbe Notkamera ("diagonal von vorn-oben")
+# und sein eigener Kommentar sagte, die zwölf Automatikkameras kämen später. Sie sind jetzt
+# da (`aiimaging.kameras`) — und die Frage ist, WIE sie über die Grenze kommen.
+#
+# Zwei Wege, und der Unterschied ist kein Geschmack:
+#   * `kamera="n"` — der Runner leitet aus der DORT gemessenen Hüllbox ab. Sicher, weil
+#     keine Annahme über Bezugssysteme nötig ist.
+#   * `auge`/`blick_auf` — fertige Zahlen. Wer sie schickt, trägt das Bezugssystem selbst.
+# ==========================================================================================
+
+def test_ohne_angabe_bleibt_das_kommando_wie_bisher():
+    """Kein Kameraargument heisst: Der Runner stellt seinen Rückfall — wie immer.
+
+    Wichtig als Rückwärtssicherung: Jede bisher gemessene Tiefenkarte hängt an genau
+    dieser Notkamera. Ein stillschweigend geändertes Vorgabekommando verschöbe sie alle.
+    """
+    kommando = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y")
+    assert "--kamera" not in kommando
+    assert "--auge" not in kommando
+    assert "--brennweite" not in kommando
+
+
+def test_richtungskuerzel_wird_durchgereicht():
+    kommando = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y", kamera="nNE")
+    assert kommando[kommando.index("--kamera") + 1] == "nNE"
+
+
+def test_fertige_koordinaten_schlagen_das_kuerzel():
+    """Wer selbst gerechnet hat, hat den Vortritt — sonst rechnete der Runner nochmal."""
+    kommando = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y",
+                                       kamera="n", auge=(1.0, -2.0, 1.7),
+                                       blick_auf=(0.0, 0.0, 5.0))
+    assert "--kamera" not in kommando
+    assert kommando[kommando.index("--auge") + 1] == "1.0,-2.0,1.7"
+    assert kommando[kommando.index("--blick-auf") + 1] == "0.0,0.0,5.0"
+
+
+def test_standort_ohne_blickziel_wird_vor_dem_blender_start_abgewiesen():
+    """Der Fehler ist an drei Zahlen erkennbar — der Lauf dahinter kostet Minuten.
+
+    Ihn erst im Runner auffallen zu lassen hiesse, einen Blender-Start für nichts zu
+    verbrennen und den Owner auf eine Meldung warten zu lassen, die hier sofort da ist.
+    """
+    for kw in ({"auge": (1.0, 2.0, 3.0)}, {"blick_auf": (1.0, 2.0, 3.0)}):
+        with pytest.raises(SeamError, match="gehören zusammen"):
+            baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y", **kw)
+
+
+@pytest.mark.parametrize("kaputt", [
+    (1.0, 2.0), (1.0, 2.0, 3.0, 4.0), "1,2,3", (1.0, 2.0, float("nan")),
+    (1.0, 2.0, float("inf")), (1.0, 2.0, None), None,
+])
+def test_unbrauchbare_koordinaten_werden_abgewiesen(kaputt):
+    """Eine halb gelesene Kameraposition ist schlimmer als gar keine.
+
+    Das Bild entstünde und zeigte etwas anderes als gemeint, ohne dass irgendwo ein
+    Fehler stünde.
+    """
+    with pytest.raises(SeamError):
+        baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y",
+                                auge=kaputt, blick_auf=(0.0, 0.0, 0.0))
+
+
+def test_brennweite_nur_wenn_gesetzt():
+    """`None` heisst: Blenders eigene Brennweite bleibt stehen.
+
+    Der Rückfall ist die Bezugsgrösse aller bisher gemessenen Tiefenkarten. Wer seine
+    Optik ändert, verschiebt rückwirkend jede Zahl, die daran kalibriert wurde.
+    """
+    ohne = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y", kamera="n")
+    assert "--brennweite" not in ohne
+    mit = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y", kamera="n",
+                                  brennweite=35.0)
+    assert mit[mit.index("--brennweite") + 1] == "35.0"
+
+
+def test_die_kameraargumente_stehen_hinter_dem_trenner():
+    """Alles vor `--` gehört Blender. Ein Kameraargument davor wäre ein Blender-Flag."""
+    kommando = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y", kamera="s")
+    assert kommando.index("--") < kommando.index("--kamera")
+
+
+def test_kamera_und_z_up_drehung_vertragen_sich():
+    """Beides zusammen ist der Regelfall bei KosmoDraw-Geometrie."""
+    kommando = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Z", kamera="eEN")
+    assert "--rotiere-z-up" in kommando
+    assert kommando[kommando.index("--kamera") + 1] == "eEN"
+
+
+def test_gelaendestand_wird_durchgereicht():
+    """Bei einem Untergeschoss ist die Hüllbox-Unterkante nicht das Gelände.
+
+    Ohne Angabe stünde die Kamera im Keller. Die Bibliothek rät nicht — sie nimmt die
+    Angabe entgegen, wenn es eine gibt.
+    """
+    kommando = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y",
+                                       kamera="n", gelaende_z=412.5)
+    assert kommando[kommando.index("--gelaende-z") + 1] == "412.5"
+    ohne = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y", kamera="n")
+    assert "--gelaende-z" not in ohne

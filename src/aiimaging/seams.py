@@ -114,17 +114,49 @@ def ifc_zu_glb(ifc_path, glb_path, *, timeout: int = 300, _starte=None) -> dict:
 
 
 def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, samples: int,
-                         beauty: bool, material_id: bool) -> list[str]:
+                         beauty: bool, material_id: bool, kamera=None,
+                         auge=None, blick_auf=None, brennweite=None,
+                         gelaende_z=None) -> list[str]:
     """Die Argumente hinter dem `--`-Trenner — eine Stelle für Lauf und Trockenlauf.
 
     Wären sie zweimal geschrieben, könnten `glb_zu_multipass` und
     `baue_kommando_multipass` auseinanderlaufen — und dann prüfte der Test ein Kommando,
     das so nie gestartet wird.
+
+    Zur Kamera gibt es zwei Wege, und ohne Angabe bleibt es beim Rückfall des Runners:
+
+    * ``kamera`` — ein Richtungskürzel aus :mod:`aiimaging.kameras`. Der Standort wird
+      dann **im Runner** aus der dort gemessenen Hüllbox abgeleitet. Das ist der sichere
+      Weg, weil er keine Annahme über Bezugssysteme macht: Ob die Hüllbox aus dem IFC nach
+      Export, Import und einer möglichen Z-up-Drehung noch dieselbe ist, gehört gemessen
+      und nicht angenommen.
+    * ``auge`` und ``blick_auf`` — fertige Koordinaten. Wer sie schickt, hat selbst
+      gerechnet und trägt die Verantwortung für das Bezugssystem.
+
+    Raises:
+        SeamError: ``auge`` ohne ``blick_auf`` (oder umgekehrt). Ein Standort ohne
+            Blickziel beschreibt keine Kamera, und der Runner würde erst nach dem
+            Blender-Start abbrechen — Minuten später, für nichts.
     """
     argumente = [
         "--glb", str(glb_path), "--out", str(out_dir),
         "--aufloesung", str(aufloesung), "--samples", str(samples),
     ]
+    if (auge is None) != (blick_auf is None):
+        raise SeamError(
+            "auge und blick_auf gehören zusammen: "
+            f"auge={auge!r}, blick_auf={blick_auf!r}. Ein Standort ohne Blickziel "
+            "beschreibt keine Kamera."
+        )
+    if auge is not None:
+        argumente += ["--auge", _punkt(auge, "auge"),
+                      "--blick-auf", _punkt(blick_auf, "blick_auf")]
+    elif kamera is not None:
+        argumente += ["--kamera", str(kamera)]
+    if brennweite is not None:
+        argumente += ["--brennweite", str(float(brennweite))]
+    if gelaende_z is not None:
+        argumente += ["--gelaende-z", str(float(gelaende_z))]
     if drehen:
         argumente.append("--rotiere-z-up")
     if not beauty:
@@ -134,9 +166,27 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
     return argumente
 
 
+def _punkt(wert, name: str) -> str:
+    """``(1, 2, 3)`` → ``"1.0,2.0,3.0"`` — die Form, die der Runner liest.
+
+    Raises:
+        SeamError: nicht drei endliche Zahlen. Hier abzufangen statt im Runner spart
+            einen Blender-Start: Der Fehler ist an drei Zahlen erkennbar, und der Lauf
+            dahinter kostet Minuten.
+    """
+    try:
+        werte = [float(w) for w in wert]
+    except (TypeError, ValueError) as e:
+        raise SeamError(f"{name} muss drei Zahlen sein, war: {wert!r}") from e
+    if len(werte) != 3 or any(w != w or w in (float("inf"), float("-inf")) for w in werte):
+        raise SeamError(f"{name} muss drei endliche Zahlen sein, war: {wert!r}")
+    return ",".join(repr(w) for w in werte)
+
+
 def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      samples: int = 16, beauty: bool = True, material_id: bool = True,
-                     timeout: int = 900, _starte=None) -> dict:
+                     kamera=None, auge=None, blick_auf=None, brennweite=None,
+                     gelaende_z=None, timeout: int = 900, _starte=None) -> dict:
     """glb → Cycles-Multipass über `blender --background`.
 
     Vier Ausgaben, in zwei Renderdurchgängen: Beauty und Tiefe (EXR in Metern plus
@@ -197,7 +247,9 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
         finde_blender(), "--background", "--factory-startup",
         "--python", str(BLENDER_RUNNER), "--",
         *_multipass_argumente(glb_path, out_dir, drehen=drehen, aufloesung=aufloesung,
-                              samples=samples, beauty=beauty, material_id=material_id),
+                              samples=samples, beauty=beauty, material_id=material_id,
+                              kamera=kamera, auge=auge, blick_auf=blick_auf,
+                              brennweite=brennweite, gelaende_z=gelaende_z),
     ]
 
     ergebnis = starte(cmd, timeout)
@@ -294,7 +346,9 @@ def _tiefe_nachbearbeiten(report: dict, out_dir: Path, *, timeout: int = 300,
 
 def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                             samples: int = 16, beauty: bool = True,
-                            material_id: bool = True) -> list[str]:
+                            material_id: bool = True, kamera=None, auge=None,
+                            blick_auf=None, brennweite=None,
+                            gelaende_z=None) -> list[str]:
     """Nur das Blender-Kommando bauen, ohne es auszuführen.
 
     Für Tests und zur Fehlersuche: zeigt, ob die Prozessgrenze richtig konstruiert ist —
@@ -305,7 +359,9 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
         "--python", str(BLENDER_RUNNER), "--",
         *_multipass_argumente(glb_path, out_dir, drehen=needs_rotation(up_axis),
                               aufloesung=aufloesung, samples=samples,
-                              beauty=beauty, material_id=material_id),
+                              beauty=beauty, material_id=material_id,
+                              kamera=kamera, auge=auge, blick_auf=blick_auf,
+                              brennweite=brennweite, gelaende_z=gelaende_z),
     ]
 
 

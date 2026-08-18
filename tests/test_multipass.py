@@ -670,3 +670,149 @@ def test_alte_ausgaben_werden_vor_dem_lauf_abgeraeumt(tmp_path):
 
     uebrig = sorted(p.name for p in ziel.iterdir())
     assert uebrig == [], f"Reste des Vorlaufs nicht abgeraeumt: {uebrig}"
+
+
+# ==========================================================================================
+# Die Kamera über die Prozessgrenze — mit echtem Blender
+#
+# Ohne Blender lässt sich nur prüfen, dass das richtige Argument im Kommando steht
+# (`test_seams.py`). Ob der Runner es auch VERSTEHT, ob `aiimaging.kameras` von Blenders
+# Python aus überhaupt erreichbar ist und ob die Kamera dann wirklich dort steht —
+# das zeigt nur ein Lauf.
+#
+# Genau diese Lücke hat dieses Projekt schon einmal geöffnet: Ein Kommando, das ein Test
+# prüft, aber niemand startet, ist kein Beleg für irgendetwas.
+# ==========================================================================================
+
+@pytest.fixture(scope="module")
+def lauf_mit_kamera(tmp_path_factory):
+    """Ein echter Lauf mit angeforderter Richtung ``n`` — nördlich, Blick nach Süden."""
+    if blender_fehlt():
+        pytest.skip("Blender nicht vorhanden")
+    ordner = tmp_path_factory.mktemp("multipass_kamera")
+    glb = schreibe_test_glb(ordner / "zwei_quader.glb")
+    report = glb_zu_multipass(glb, ordner / "out", up_axis="Y", kamera="n",
+                              aufloesung=AUFLOESUNG, samples=SAMPLES, timeout=900)
+    assert report["status"] == "ok", report.get("error")
+    return report
+
+
+@ohne_blender
+def test_der_rueckfall_sagt_dass_er_der_rueckfall_ist(lauf):
+    """Ohne Angabe stellt der Runner die Notkamera — und der Bericht verschweigt es nicht.
+
+    Einem Bild ist später nicht anzusehen, ob es die angeforderte Ansicht zeigt oder die
+    Notlösung. Dem Bericht schon.
+    """
+    kamera = lauf["kamera"]
+    assert kamera["weg"] == "rueckfall"
+    assert kamera["kuerzel"] is None
+    assert "nicht komponiert" in kamera["begruendung"]
+    assert len(kamera["auge"]) == 3
+
+
+@ohne_blender
+def test_aiimaging_ist_von_blenders_python_aus_erreichbar(lauf_mit_kamera):
+    """Die Frage, die ohne Lauf offen bliebe.
+
+    Blenders Python kennt dieses Projekt nicht; der Runner legt den Pfad selbst an. Ob
+    das trägt, ist keine Meinungsfrage — und der Rückfall greift lautlos, wenn es nicht
+    trägt. Darum steht `weg` hier als Zusicherung.
+    """
+    assert lauf_mit_kamera["kamera"]["weg"] == "abgeleitet", \
+        lauf_mit_kamera["kamera"]["begruendung"]
+    assert lauf_mit_kamera["kamera"]["kuerzel"] == "n"
+
+
+@ohne_blender
+def test_die_kamera_steht_wo_ihr_kuerzel_sagt(lauf_mit_kamera):
+    """``n`` heisst nördlich des Bauwerks — also jenseits von dessen Y-Maximum."""
+    kamera = lauf_mit_kamera["kamera"]
+    _, hi = lauf_mit_kamera["bbox"]
+    assert kamera["auge"][1] > hi[1], (kamera["auge"], hi)
+    assert kamera["azimut_grad"] == pytest.approx(0.0)
+
+
+@ohne_blender
+def test_die_kamera_steht_auf_augenhoehe(lauf_mit_kamera):
+    """1.70 m absolut — die Entscheidung aus `kameras.py`, hier am echten Lauf geprüft."""
+    assert lauf_mit_kamera["kamera"]["auge"][2] == pytest.approx(1.70, abs=1e-3)
+
+
+@ohne_blender
+def test_das_blickziel_verlaesst_das_bauwerk_nicht(lauf_mit_kamera):
+    """Die Regel, die hier zuerst falsch stand — und was der echte Lauf gelehrt hat.
+
+    Der Griff der Architekturfotografie ist, das Blickziel ÜBER die Augenhöhe zu legen;
+    die Kamera kippt nach oben, das Gebäude sitzt tiefer im Bild. Dieser Test verlangte
+    das zuerst unbedingt — und lag damit für die Testszene falsch.
+
+    Sie besteht aus 2-m-Quadern. Ein Ziel auf ``1.70 + 2 · 0.2 = 2.1 m`` läge **über dem
+    Dach**: Die Kamera schaute über den Körper hinweg, und der Rahmen wäre zur Hälfte
+    Boden und Himmel. Genau das war zu sehen — 2.4 % der Bildpunkte trugen Tiefe.
+
+    Die allgemeingültige Regel ist darum nicht „über der Augenhöhe", sondern **„im
+    Bauwerk"**. Bei einem Bau, der kaum höher ist als der Betrachter, schaut man leicht
+    nach unten, und das ist richtig so.
+    """
+    kamera = lauf_mit_kamera["kamera"]
+    lo, hi = lauf_mit_kamera["bbox"]
+    assert min(lo[2], hi[2]) <= kamera["blick_auf"][2] <= max(lo[2], hi[2])
+
+
+@ohne_blender
+def test_der_eckentest_ist_aufgegangen(lauf_mit_kamera):
+    """Ging er nicht auf, schneidet das Bild das Bauwerk an — und das muss dastehen."""
+    assert lauf_mit_kamera["kamera"]["vollstaendig"] is True, \
+        lauf_mit_kamera["kamera"]["begruendung"]
+
+
+@ohne_blender
+def test_die_berichtete_brennweite_ist_die_gestellte(lauf_mit_kamera, lauf):
+    """Nicht die angeforderte, sondern die, die in der Szene steht.
+
+    Beim Rückfall bleibt Blenders eigene stehen (50 mm); auf dem abgeleiteten Weg greift
+    die Vorgabe aus `kameras.py` (28 mm). Genau dieser Unterschied soll ablesbar sein —
+    sonst hätte eine stillschweigend geänderte Optik alle bisher gemessenen Tiefenkarten
+    verschoben, ohne dass es irgendwo stünde.
+    """
+    assert lauf_mit_kamera["kamera"]["brennweite_mm"] == pytest.approx(28.0)
+    assert lauf["kamera"]["brennweite_mm"] == pytest.approx(50.0)
+
+
+@ohne_blender
+def test_die_kamera_sieht_das_bauwerk_wirklich(lauf_mit_kamera):
+    """Die Probe, die keine Rechnung ersetzt: Steht Geometrie im Bild?
+
+    Der Eckentest sagt nur, dass die Hüllbox in die Sichtpyramide passt. Ob der Renderer
+    daraus auch Tiefenwerte macht, ist eine andere Frage — eine Kamera, die durch eine
+    Wand nach draussen schaut, bestünde den Eckentest ebenfalls.
+
+    Die Schranke ist bewusst niedrig, und das ist selbst ein Befund: Die Testszene besteht
+    aus 2-m-Quadern, und bei so kleinen Körpern setzt nicht der Bildwinkel den Abstand,
+    sondern der Mindestabstand von 10 m. Die Kamera steht 11 m von einem 2-m-Körper — das
+    Bauwerk füllt gut ein Viertel des Bildes in der Höhe und entsprechend wenig Fläche.
+    **Das ist keine Fehlfunktion, sondern die untere Grenze eines Verfahrens, das auf
+    Gebäudemasse ausgelegt ist** — und `kamerasatz` sagt es als Warnung, statt es
+    stillschweigend zu liefern (siehe der Test darunter).
+    """
+    bild = Png(Path(lauf_mit_kamera["depth_png"]))
+    geometrie = [w for w in bild.werte if w > 0]
+    anteil = len(geometrie) / len(bild.werte)
+    assert anteil > 0.01, f"nur {anteil:.1%} des Bildes tragen Tiefe"
+    assert len(set(geometrie)) > 20, "die Tiefe ist flach — sieht die Kamera eine Wand?"
+
+
+@ohne_blender
+def test_bei_dieser_kleinen_szene_warnt_der_kamerasatz(lauf_mit_kamera):
+    """Der Grund, warum die Schranke oben so niedrig sein darf.
+
+    Ein Bild, auf dem das Bauwerk ein Fleck ist, sieht wie ein Fehler des Bildmodells aus
+    — die Ursache liegt aber in der Kamera, und dort würde niemand suchen. Darum meldet
+    `aiimaging.kameras` den erreichten Füllgrad, statt ihn nur zu erzeugen.
+    """
+    from aiimaging import kameras as kameras_modul
+    satz = kameras_modul.kamerasatz(lauf_mit_kamera["bbox"], kuerzel=["n"])
+    assert satz["warnungen"], "keine Warnung, obwohl das Bauwerk winzig im Bild steht"
+    assert "füllt nur" in satz["warnungen"][0]
+    assert satz["kameras"][0]["fuellgrad"] < 0.4

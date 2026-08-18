@@ -461,17 +461,70 @@ def test_alle_kameras_stehen_auf_augenhoehe():
         assert kamera["auge"][2] == pytest.approx(kameras.AUGENHOEHE_M)
 
 
-def test_augenhoehe_ist_absolut_und_nicht_ueber_dem_gebaeudefuss():
-    """Der Vertrag aus dem Modulkopf, als Test.
+def test_die_augenhoehe_zaehlt_ab_gelaende_und_nicht_ab_der_nulllinie():
+    """Der Test, der meine erste Entscheidung widerlegt hat — und darum hier bleibt.
 
-    Der Bestand trägt drei Augenhöhen — 1.70 absolut, 1.70 über ``zmin``, 1.65. Bei einem
-    Gebäude, dessen Fuss auf 400 m über Meer liegt, sind die ersten beiden 400 m
-    auseinander. Hier gilt: absolut.
+    Der Bestand trägt drei Augenhöhen: 1.70 absolut, 1.70 über ``zmin``, 1.65. Zuerst
+    stand hier **absolut**, mit dem Argument, der Betrachter stehe auf dem Gelände und
+    nicht auf der Hüllbox-Unterkante. Das Argument stimmt, die Folgerung war falsch:
+    „Absolut" heisst über ``z = 0``, und das ist nur dort das Gelände, wo das Modell
+    zufällig auf Meereshöhe sitzt.
+
+    Ein Bauwerk mit Fuss auf 400 m über Meer bekam damit eine Kamera auf 1.70 m —
+    **400 Meter unter dem Erdgeschoss**. Nicht an einem Bild aufgefallen, sondern an
+    dieser Zeile.
     """
     hoch_gelegen = [[-15.0, -15.0, 400.0], [15.0, 15.0, 420.0]]
-    satz = kameras.kamerasatz(hoch_gelegen)
-    for kamera in satz["kameras"]:
+    for kamera in kameras.kamerasatz(hoch_gelegen)["kameras"]:
+        assert kamera["auge"][2] == pytest.approx(400.0 + 1.70)
+
+
+def test_am_boden_liegende_bauten_bleiben_unveraendert():
+    """Die Gegenprobe: Wo der Fuss auf null liegt, ändert der neue Bezug nichts."""
+    for kamera in kameras.kamerasatz(WUERFEL)["kameras"]:
         assert kamera["auge"][2] == pytest.approx(1.70)
+
+
+def test_ein_untergeschoss_laesst_sich_angeben():
+    """Der Einwand, der für „absolut" sprach — jetzt als Parameter statt als Annahme.
+
+    Reicht die Hüllbox in ein Untergeschoss hinunter, ist ihre Unterkante nicht das
+    Gelände. Ohne Angabe stünde die Kamera im Keller; mit ``gelaende_z`` steht sie
+    draussen. Das ist die ehrliche Form: Die Bibliothek rät nicht, sie fragt.
+    """
+    mit_keller = [[-15.0, -15.0, -6.0], [15.0, 15.0, 20.0]]
+    ohne_angabe = kameras.kamerasatz(mit_keller, kuerzel=["n"])["kameras"][0]
+    assert ohne_angabe["auge"][2] == pytest.approx(-6.0 + 1.70)      # im Keller
+
+    mit_angabe = kameras.kamerasatz(mit_keller, kuerzel=["n"],
+                                    gelaende_z=0.0)["kameras"][0]
+    assert mit_angabe["auge"][2] == pytest.approx(1.70)              # draussen
+
+
+def test_der_gelaendestand_steht_im_ergebnis():
+    """Wer ein Bild später schief findet, soll den Bezugspunkt nachlesen können."""
+    satz = kameras.kamerasatz([[-15.0, -15.0, 400.0], [15.0, 15.0, 420.0]])
+    assert satz["gelaende_z"] == pytest.approx(400.0)
+    assert kameras.kamerasatz(WUERFEL, gelaende_z=7.5)["gelaende_z"] == pytest.approx(7.5)
+
+
+def test_der_fuellgrad_wird_an_der_nahen_fassade_gemessen():
+    """Die Probe darauf, dass das das richtige Mass ist.
+
+    Der Abstand wird zur Gebäudemitte gerechnet, die zugewandte Fassade steht um die halbe
+    Bautiefe näher. In der Mitte gemessen erschiene ein 60-m-Riegel von der Schmalseite
+    winzig, obwohl seine Stirnfassade den Rahmen füllt.
+
+    Das Mass ist richtig, wenn bei Gebäudemassen genau der ANGEFORDERTE Deckungsgrad
+    herauskommt — und genau das tut es, über vier sehr verschiedene Baukörper.
+    """
+    for bbox in ([[-15.0, -15.0, 0.0], [15.0, 15.0, 20.0]],
+                 [[-30.0, -6.0, 0.0], [30.0, 6.0, 10.0]],
+                 [[-10.0, -10.0, 0.0], [10.0, 10.0, 100.0]],
+                 [[-15.0, -15.0, 400.0], [15.0, 15.0, 415.0]]):
+        for kamera in kameras.kamerasatz(bbox)["kameras"]:
+            assert kamera["fuellgrad"] == pytest.approx(kameras.DECKUNGSGRAD, abs=0.03), \
+                (bbox, kamera["kuerzel"], kamera["fuellgrad"])
 
 
 def test_frontale_stehen_wo_ihr_name_sagt():
@@ -585,3 +638,112 @@ def test_kein_bpy_im_modul():
                 assert name.name.split(".")[0] != "bpy"
         elif isinstance(knoten, __import__("ast").ImportFrom):
             assert (knoten.module or "").split(".")[0] != "bpy"
+
+
+# --------------------------------------------------------------------------------------
+# Das Blickziel darf das Bauwerk nicht verlassen
+#
+# Am echten Blender-Lauf aufgefallen (18.08.2026): Bei einem 2 m hohen Körper lag das
+# Blickziel auf 2.1 m — ÜBER dem Dach. Die Kamera schaute darüber hinweg, und nur 2.4 %
+# der Bildpunkte trugen Tiefe. Die Vorlage aus dem alten Bestand hat dieselbe Lücke; sie
+# ist dort nie aufgefallen, weil nur echte Gebäude gerendert wurden.
+# --------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("bbox", [
+    [[0.0, 0.0, 0.0], [2.0, 2.0, 2.0]],              # niedriger als der Betrachter
+    [[0.0, 0.0, 0.0], [3.0, 3.0, 2.5]],              # Gartenhaus
+    [[-15.0, -15.0, 0.0], [15.0, 15.0, 20.0]],       # Wohnhaus
+    [[-10.0, -10.0, 0.0], [10.0, 10.0, 100.0]],      # Turm
+    [[-15.0, -15.0, 400.0], [15.0, 15.0, 404.0]],    # flach und hoch gelegen
+])
+def test_das_blickziel_liegt_immer_im_bauwerk(bbox):
+    """Die Regel, die den Fehler unmöglich macht — über die ganze zugelassene Spanne."""
+    fuss, dach = bbox[0][2], bbox[1][2]
+    for kamera in kameras.kamerasatz(bbox)["kameras"]:
+        assert fuss <= kamera["blick_auf"][2] <= dach, (kamera["kuerzel"], kamera["blick_auf"])
+
+
+def test_bei_gebaeudemassen_aendert_die_schranke_nichts():
+    """Sie greift genau dort, wo sie soll — und sonst nirgends.
+
+    Bei 20 m Höhe liegt das ungeschränkte Ziel bei 5.7 m und die Schranke bei 10 m; es
+    gewinnt weiterhin das erste. Eine Schranke, die auch den Normalfall verschöbe, hätte
+    jede bisher gemessene Tiefenkarte mitverschoben.
+    """
+    satz = kameras.kamerasatz(WUERFEL, kuerzel=["n"])
+    ungeschraenkt = kameras.AUGENHOEHE_M + 20.0 * kameras.ZIEL_ANTEIL_HOEHE
+    assert satz["kameras"][0]["blick_auf"][2] == pytest.approx(ungeschraenkt)
+
+
+def test_bei_einem_niedrigen_bau_schaut_die_kamera_leicht_nach_unten():
+    """Und das ist richtig so — der Betrachter ist höher als das Dach."""
+    niedrig = [[0.0, 0.0, 0.0], [2.0, 2.0, 2.0]]
+    kamera = kameras.kamerasatz(niedrig, kuerzel=["n"])["kameras"][0]
+    assert kamera["blick_auf"][2] < kamera["auge"][2]
+    assert kamera["blick_auf"][2] <= 2.0
+
+
+# --------------------------------------------------------------------------------------
+# Der Füllgrad — die Frage, die der Eckentest nicht stellt
+# --------------------------------------------------------------------------------------
+
+def test_der_eckentest_allein_bemerkt_ein_winziges_bauwerk_nicht():
+    """Zu klein fällt keiner Prüfung auf, die nur nach „passt es hinein" fragt.
+
+    Genau darum steht der Füllgrad daneben: Ein Bild, auf dem das Bauwerk ein Fleck ist,
+    sieht wie ein Fehler des Bildmodells aus — die Ursache liegt in der Kamera, und dort
+    würde niemand suchen.
+    """
+    winzig = [[0.0, 0.0, 0.0], [2.0, 2.0, 2.0]]
+    satz = kameras.kamerasatz(winzig, kuerzel=["n"])
+    assert satz["unvollstaendig"] == []          # der Eckentest ist zufrieden …
+    assert satz["warnungen"]                     # … der Füllgrad nicht
+    assert satz["kameras"][0]["fuellgrad"] < kameras.DECKUNGSGRAD
+
+
+@pytest.mark.parametrize("bbox", [
+    [[-15.0, -15.0, 0.0], [15.0, 15.0, 20.0]],       # Kubus, die Höhe führt
+    [[-30.0, -6.0, 0.0], [30.0, 6.0, 10.0]],         # Riegel, die Breite führt
+    [[-10.0, -10.0, 0.0], [10.0, 10.0, 100.0]],      # Turm
+])
+def test_bei_gebaeudemassen_wird_der_deckungsgrad_annaehernd_erreicht(bbox):
+    """Die Probe darauf, dass die Rechnung tut, was sie verspricht."""
+    satz = kameras.kamerasatz(bbox)
+    assert satz["warnungen"] == (), satz["warnungen"]
+    for kamera in satz["kameras"]:
+        assert kamera["fuellgrad"] > kameras.DECKUNGSGRAD * kameras.FUELLGRAD_WARNSCHWELLE
+
+
+def test_der_fuellgrad_wird_in_beiden_richtungen_gemessen():
+    """Der Fehler, der hier zuerst stand: nur die Breite zu messen.
+
+    Der Deckungsgrad wird auf Breite und Höhe getrennt angesetzt, und der grössere Bedarf
+    gewinnt. Bei einem hohen Bau im 16:9-Rahmen ist das die Höhe — nur die Breite zu
+    messen ergäbe eine Warnung für jedes Hochhaus, obwohl der Rahmen vertikal gut gefüllt
+    ist. Ein 30 × 30 × 20 m Kubus meldete so 27 % Füllung bei 46 % Höhenfüllung.
+    """
+    kamera = kameras.kamerasatz(WUERFEL, kuerzel=["n"])["kameras"][0]
+    assert kamera["fuellgrad_hoehe"] > kamera["fuellgrad_breite"]
+    assert kamera["fuellgrad"] == pytest.approx(kamera["fuellgrad_hoehe"])
+
+    riegel = kameras.kamerasatz([[-30.0, -6.0, 0.0], [30.0, 6.0, 10.0]],
+                                kuerzel=["n"])["kameras"][0]
+    assert riegel["fuellgrad_breite"] > riegel["fuellgrad_hoehe"]
+    assert riegel["fuellgrad"] == pytest.approx(riegel["fuellgrad_breite"])
+
+
+def test_der_abstand_ist_der_endgueltige_nicht_der_gerechnete():
+    """Der Eckentest kann noch zurückgeschoben haben — dann gilt die neue Zahl."""
+    kamera = kameras.kamerasatz(WUERFEL, kuerzel=["n"])["kameras"][0]
+    auge, ziel = kamera["auge"], kamera["blick_auf"]
+    assert kamera["abstand_m"] == pytest.approx(
+        math.hypot(ziel[0] - auge[0], ziel[1] - auge[1]))
+
+
+def test_die_warnung_nennt_die_ursache_und_nicht_nur_die_zahl():
+    """Ein Verdacht kostet einen Menschen, der nachsieht; eine Diagnose sagt ihm, wo."""
+    winzig = [[0.0, 0.0, 0.0], [2.0, 2.0, 2.0]]
+    text = " ".join(kameras.kamerasatz(winzig, kuerzel=["n"])["warnungen"])
+    assert "füllt nur" in text
+    assert "Gebäudemasse" in text or "zurückgeschoben" in text
+    assert "die Ursache liegt hier" in text

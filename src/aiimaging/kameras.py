@@ -26,10 +26,24 @@ andere Annahme über den Menschen im Bild. Hier gilt:
   von Rotationskonventionen. Eine Blender-Rotation lässt sich daraus jederzeit ableiten;
   zurück geht es **nicht** eindeutig, weil ein Blickvektor keine Zielentfernung kennt.
   Wer die verlustbehaftete Form führt, kann die andere nie zurückgewinnen.
-* **Die Augenhöhe ist absolut und misst 1.70 m.** Absolut, weil der Betrachter auf dem
-  Gelände steht und nicht auf der Unterkante der Hüllbox — bei einem Gebäude mit
-  Untergeschoss sind das zwei verschiedene Orte. 1.70 m, weil das ausgereifteste
-  Verfahren des Bestands und die Mehrheit der Fundstellen es so halten.
+* **Die Augenhöhe misst 1.70 m — über dem GELÄNDE, nicht über der Nulllinie.**
+  1.70 m, weil das ausgereifteste Verfahren des Bestands und die Mehrheit der
+  Fundstellen es so halten.
+
+  Der Bezugspunkt hat mich zuerst einen Irrtum gekostet, und der gehört hierher.
+  Zunächst stand hier **absolut**, mit der Begründung: Der Betrachter steht auf dem
+  Gelände und nicht auf der Unterkante der Hüllbox — bei einem Gebäude mit Untergeschoss
+  sind das zwei verschiedene Orte. Das Argument stimmt und die Folgerung war falsch.
+  Absolut heisst nämlich: über **z = 0**, und das ist nur dort das Gelände, wo das Modell
+  zufällig auf Meereshöhe sitzt. Ein Bauwerk mit Fuss auf 400 m über Meer bekam eine
+  Kamera auf 1.70 m — **400 Meter unter dem Erdgeschoss**. Aufgefallen an einem Test über
+  die Höhenlage, nicht an einem Bild.
+
+  Beide Bezüge sind also falsch, wenn man sie zum Naturgesetz macht. Richtig ist der
+  **Geländestand**, und den kennt die Hüllbox nicht. Darum: ``gelaende_z`` ist ein
+  Parameter. Wer ihn kennt, gibt ihn an. Ohne Angabe gilt die Unterkante der Hüllbox —
+  die einzige Bodenreferenz, die in den Daten steckt, und im Zweifel um eine
+  Geschosshöhe daneben statt um vierhundert Meter.
 
 Was dieses Modul bewusst *nicht* tut
 ------------------------------------
@@ -58,7 +72,8 @@ SENSOR_BREITE_MM = 36.0
 #: 28 mm gewinnt, weil es zum engeren Standort auf der Strasse passt.
 BRENNWEITE_MM = 28.0
 
-#: Augenhöhe in Metern, **absolut** — siehe Modulkopf. Nicht über dem Gebäudefuss.
+#: Augenhöhe in Metern, gemessen **über dem Geländestand** — siehe Modulkopf.
+#: Ohne bekannten Geländestand über der Unterkante der Hüllbox.
 AUGENHOEHE_M = 1.70
 
 #: Anteil des Bildes, den das Gebäude füllen soll. Ein Wert unter 1 schiebt die Kamera
@@ -76,6 +91,23 @@ BILDRAND = 0.92
 #: Der übliche Griff der Architekturfotografie.
 ZIEL_ANTEIL_HOEHE = 0.20
 
+#: Obergrenze für das Blickziel, als Anteil der Gebäudehöhe über dem Fuss.
+#:
+#: **Das Blickziel darf das Bauwerk nicht verlassen.** Ohne diese Schranke rechnet
+#: ``AUGENHOEHE_M + dz · ZIEL_ANTEIL_HOEHE`` bei niedrigen Bauten ein Ziel ÜBER dem Dach:
+#: Ein 2 m hoher Körper bekäme ein Ziel auf 2,1 m, die Kamera schaute über ihn hinweg, und
+#: der Rahmen wäre zur Hälfte mit Boden und Himmel gefüllt. Am echten Blender-Lauf
+#: aufgefallen (18.08.2026): 2,4 % der Bildpunkte trugen Tiefe.
+#:
+#: Für Gebäudemasse ändert die Schranke nichts — bei 20 m Höhe liegt das ungeschränkte
+#: Ziel bei 5,7 m und die Schranke bei 10 m, es gewinnt weiterhin das erste. Sie greift
+#: genau dort, wo die absolute Augenhöhe das Verfahren sonst aus dem Tritt bringt: bei
+#: Bauten, die kaum höher sind als der Betrachter.
+#:
+#: Die Vorlage aus dem Bestand hat diese Schranke nicht. Sie ist dort nie aufgefallen,
+#: weil nur echte Gebäude gerendert wurden.
+ZIEL_HOECHSTANTEIL = 0.5
+
 #: Mindestabstand zur Fassade in Metern, zusätzlich zur halben Grundrissseite. Verhindert,
 #: dass die analytische Rechnung eine Kamera in die Wand stellt.
 WANDABSTAND_M = 10.0
@@ -86,6 +118,22 @@ FRONTAL_VERSATZ = 0.10
 
 #: Vorgabe für ``bias_grad`` — siehe ``richtungen``.
 BIAS_GRAD = 35.0
+
+#: Ab welchem Anteil des angeforderten Deckungsgrads eine Kamera als „zu weit weg"
+#: gemeldet wird.
+#:
+#: Der Grund ist am echten Lauf aufgefallen (18.08.2026): Bei einem 2-m-Körper setzt
+#: nicht der Bildwinkel den Abstand, sondern die Untergrenze aus Wandabstand — die Kamera
+#: steht 11 m von einem 2-m-Objekt, und das Bauwerk füllt gut 2 % der Bildfläche. Das ist
+#: kein Fehler: ``WANDABSTAND_M`` und ``AUGENHOEHE_M`` sind Gebäudemasse, und für ein
+#: Gebäude stimmt die Rechnung. Aber der Torwächter lässt Bauwerke ab 1 m durch, und über
+#: diesen unteren Teil der Spanne liefert das Verfahren eine schlechte Komposition.
+#:
+#: **Gemeldet statt stillschweigend geliefert.** Ein Bild, auf dem das Bauwerk ein Fleck
+#: ist, sieht wie ein Fehler des Bildmodells aus — die Ursache liegt aber in der Kamera,
+#: und niemand würde dort suchen. 0.6 ist eine Setzung: deutlich unter dem Angeforderten,
+#: aber nicht schon bei jeder Abweichung.
+FUELLGRAD_WARNSCHWELLE = 0.6
 
 #: Höchstzahl der Rückschub-Durchläufe. Danach wird die letzte Position geliefert und
 #: als unvollkommen gekennzeichnet. Verweigern wäre schlechter: eine Kamera, die knapp
@@ -645,6 +693,7 @@ def kamerasatz(bbox, *,
                seitenverhaeltnis: float = 16 / 9,
                deckungsgrad: float = DECKUNGSGRAD,
                augenhoehe_m: float = AUGENHOEHE_M,
+               gelaende_z: float | None = None,
                bias_grad: float = BIAS_GRAD,
                bildrand: float = BILDRAND,
                kuerzel=None) -> dict:
@@ -656,16 +705,24 @@ def kamerasatz(bbox, *,
     nachgeschaltet.
 
     Args:
-        bbox: ``[[xmin,ymin,zmin],[xmax,ymax,zmax]]`` in Metern, **im Weltsystem**. Die
-            Augenhöhe ist absolut; eine Hüllbox mit falscher Bodenkote ergibt darum eine
-            Kamera im Kellergeschoss. Der Torwächter prüft das vorher.
+        bbox: ``[[xmin,ymin,zmin],[xmax,ymax,zmax]]`` in Metern, **im Weltsystem**.
+        gelaende_z: Höhe des Geländes im Weltsystem, in Metern. ``None`` nimmt die
+            Unterkante der Hüllbox. Angeben, wenn das Bauwerk ein **Untergeschoss** hat —
+            sonst steht die Kamera im Keller. Nicht angeben heisst nicht „egal", sondern
+            „die Unterkante ist die beste Schätzung, die die Daten hergeben".
         kuerzel: Auswahl aus ``RICHTUNGSFOLGE``, oder ``None`` für alle zwölf.
 
     Returns:
         dict mit ``kameras`` (Liste in der Reihenfolge von ``RICHTUNGSFOLGE``),
-        ``masse_m``, ``mitte``, ``bias_grad`` und ``unvollstaendig`` — die Kürzel der
-        Kameras, deren Eckentest nicht aufging. Eine leere Liste dort ist die einzige
-        Auskunft, die „alle zwölf sitzen" bedeutet.
+        ``masse_m``, ``mitte``, ``bias_grad``, ``unvollstaendig`` — die Kürzel der
+        Kameras, deren Eckentest nicht aufging; eine leere Liste dort ist die einzige
+        Auskunft, die „alle zwölf sitzen" bedeutet — und ``warnungen``.
+
+        Je Kamera stehen ``abstand_m`` und ``fuellgrad`` dabei: wie weit sie am Ende
+        steht und welchen Anteil der Bildbreite das Bauwerk dort einnimmt. **Der
+        Eckentest allein genügt als Auskunft nicht** — er meldet „passt", auch wenn das
+        Bauwerk ein Fleck in der Bildmitte ist. Zu klein fällt keiner Prüfung auf, die
+        nur nach „passt es hinein" fragt.
 
     Raises:
         ValueError: bbox unbrauchbar, oder ``kuerzel`` enthält einen unbekannten Namen.
@@ -693,12 +750,19 @@ def kamerasatz(bbox, *,
             )
 
     azimute = richtungen(bias_grad)
-    # Absolut, nicht über dem Gebäudefuss — siehe Modulkopf. Das Blickziel liegt darüber.
-    ziel_z = augenhoehe_m + masse[2] * ZIEL_ANTEIL_HOEHE
+    # Der Geländestand ist der Bezug — ohne Angabe die Unterkante der Hüllbox. Siehe
+    # Modulkopf: Weder „absolut" noch „über der Hüllbox" ist allgemein richtig, aber die
+    # Unterkante liegt im Zweifel eine Geschosshöhe daneben und nicht vierhundert Meter.
+    grund = fuss if gelaende_z is None else float(gelaende_z)
+    auge_z = grund + augenhoehe_m
+    # Das Blickziel liegt darüber, aber niemals über dem Bauwerk hinaus (ZIEL_HOECHSTANTEIL).
+    ziel_z = min(auge_z + masse[2] * ZIEL_ANTEIL_HOEHE,
+                 fuss + masse[2] * ZIEL_HOECHSTANTEIL)
     hoehe_ueber_grund = ziel_z - fuss
 
     kameras = []
     unvollstaendig = []
+    alle_warnungen: list[str] = []
     for k in gewaehlt:
         azimut = azimute[k]
         rechnung = abstand_aus_bildwinkel(
@@ -716,13 +780,57 @@ def kamerasatz(bbox, *,
 
         auge = (mitte[0] + standort[0] * rechnung["abstand_m"] + quer[0] * versatz,
                 mitte[1] + standort[1] * rechnung["abstand_m"] + quer[1] * versatz,
-                augenhoehe_m)
+                auge_z)
 
         geschoben = schiebe_bis_im_bild(auge, ziel, bbox, brennweite_mm=brennweite_mm,
                                         seitenverhaeltnis=seitenverhaeltnis,
                                         bildrand=bildrand)
         if not geschoben["vollstaendig"]:
             unvollstaendig.append(k)
+
+        # Wie viel des Bildes das Bauwerk am ENDGÜLTIGEN Standort füllt — nicht am
+        # analytisch gerechneten. Der Eckentest kann die Kamera noch zurückgeschoben
+        # haben, und dann sagt der analytische Abstand nichts mehr über das Bild aus.
+        #
+        # BEIDE Richtungen, und gewertet wird die grössere. Der Deckungsgrad wird auf
+        # Breite und Höhe getrennt angesetzt, und der grössere Bedarf gewinnt — bei einem
+        # hohen Bau in einem 16:9-Rahmen ist das die Höhe. Nur die Breite zu messen ergäbe
+        # dann eine Warnung für jedes Hochhaus, obwohl der Rahmen vertikal gut gefüllt
+        # ist. (Genau dieser Fehler stand hier zuerst: Ein 30 × 30 × 20 m Kubus meldete
+        # 27 % Füllung, während er die Bildhöhe zu 46 % einnahm.)
+        endgueltig = _laenge((ziel[0] - geschoben["auge"][0],
+                              ziel[1] - geschoben["auge"][1], 0.0))
+        hfov = math.radians(rechnung["hfov_grad"])
+        vfov = math.radians(rechnung["vfov_grad"])
+        # Gemessen an der NAHEN Fassade, nicht in der Gebäudemitte. Der Abstand wird zur
+        # Mitte gerechnet; die zugewandte Fassade steht um die halbe Bautiefe näher und
+        # ist das, was ein Betrachter als „so gross ist das Haus im Bild" sieht. In der
+        # Mitte gemessen erschiene ein 60 m langer Riegel von der Schmalseite als winzig,
+        # obwohl seine Stirnfassade den Rahmen füllt — eine Warnung dafür wäre ein
+        # Fehlalarm. Die Probe darauf, dass dies das richtige Mass ist: An der nahen
+        # Fassade kommt genau der angeforderte Deckungsgrad heraus.
+        nah = max(endgueltig - rechnung["tiefe_m"] / 2.0, 1e-6)
+        bildbreite = 2.0 * math.tan(hfov / 2.0) * nah
+        bildhoehe = 2.0 * math.tan(vfov / 2.0) * nah
+        f_breite = (rechnung["breite_m"] / bildbreite) if bildbreite > 0.0 else 0.0
+        f_hoehe = (2.0 * rechnung["halbe_hoehe_m"] / bildhoehe) if bildhoehe > 0.0 else 0.0
+        fuellgrad = max(f_breite, f_hoehe)
+
+        warnungen = []
+        if fuellgrad < deckungsgrad * FUELLGRAD_WARNSCHWELLE:
+            warnungen.append(
+                f"Das Bauwerk füllt nur {fuellgrad:.1%} des Bildes statt der "
+                f"angeforderten {deckungsgrad:.0%} (Breite {f_breite:.1%}, Höhe "
+                f"{f_hoehe:.1%}) — massgebend war '{rechnung['massgebend']}'. "
+                + (f"Bei kleinen Bauten setzt der Mindestabstand von {WANDABSTAND_M:.0f} m "
+                   "den Standort, nicht der Bildwinkel; das Verfahren ist auf "
+                   "Gebäudemasse ausgelegt. "
+                   if rechnung["massgebend"] == "untergrenze" else
+                   "Der Eckentest hat die Kamera zurückgeschoben. ")
+                + "Ein Bild, auf dem das Bauwerk ein Fleck ist, sieht wie ein Fehler des "
+                  "Bildmodells aus — die Ursache liegt hier."
+            )
+        alle_warnungen.extend(f"{k}: {w}" for w in warnungen)
 
         kameras.append({
             "kuerzel": k,
@@ -735,6 +843,11 @@ def kamerasatz(bbox, *,
             "massgebend": rechnung["massgebend"],
             "durchlaeufe": geschoben["durchlaeufe"],
             "vollstaendig": geschoben["vollstaendig"],
+            "abstand_m": endgueltig,
+            "fuellgrad": fuellgrad,
+            "fuellgrad_breite": f_breite,
+            "fuellgrad_hoehe": f_hoehe,
+            "warnungen": tuple(warnungen),
             "begruendung": geschoben["begruendung"],
         })
 
@@ -744,5 +857,7 @@ def kamerasatz(bbox, *,
         "mitte": mitte,
         "bias_grad": float(bias_grad),
         "augenhoehe_m": float(augenhoehe_m),
+        "gelaende_z": grund,
         "unvollstaendig": unvollstaendig,
+        "warnungen": tuple(alle_warnungen),
     }
