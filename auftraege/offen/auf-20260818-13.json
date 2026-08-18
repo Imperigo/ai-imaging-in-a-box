@@ -1,0 +1,44 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260818-13",
+  "art": "render",
+  "beschreibung": "DIE ERSTE ECHTE ControlNet-NAHT — und die eine Frage, die alles andere erklaeren koennte. BRAUCHT GPU. WARUM: auf-20260818-09 hat gemessen, dass der Vorgabe-Backbone qwen-image-edit-2511 GAR KEIN ControlNet ist — die Pipeline kennt weder control_image noch controlnet_conditioning_scale. auf-20260818-10 hat gemessen, was daraus folgt: Das Bildmodell drueckt die Rangkorrelation von 0.990 auf 0.005 und uebersetzt drei verschieden gestoerte Tiefenvorgaben in dasselbe Bild. Solange das so ist, misst die ganze QA nichts. DER KANDIDAT, beidseitig Apache-2.0 und damit der einzige ohne Regel-1-Spannung: Basis Tongyi-MAI/Z-Image-Turbo, ControlNet alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union, geladen ueber ZImageControlNetPipeline (in diffusers v0.39.0 vorhanden — control_image und controlnet_conditioning_scale stehen dort woertlich in der Signatur, Vorgabe 0.75, empfohlenes Fenster 0.65 bis 1.00). Rund 22 GiB in bf16, passt resident auf die Karte. Destilliert: 8 Schritte, und guidance_scale MUSS 0.0 sein — mit der diffusers-Vorgabe 5.0 bekommst du ueberzeichnete Bilder bei doppelter Rechenzeit. Bei 0.0 ist der negative Prompt wirkungslos; lass ihn darum leer, statt einen hinzuschreiben, der nicht wirkt. DIE WICHTIGSTE FRAGE ZUERST — DIE TIEFENKONVENTION. Unsere tiefe_norm.png ist NAH = HELL (Disparitaet). Keine Modellkarte sagt, was das ControlNet erwartet. Ist es umgekehrt, erklaert das einen schlechten Score VOLLSTAENDIG, und jede weitere Messung waere Zeitverschwendung. Fahre darum JEDEN Lauf ZWEIMAL: einmal mit unserer Karte, einmal mit der invertierten (255 minus Wert). Wenn die invertierte deutlich besser abschneidet, ist das der Befund des Auftrags und alles andere ist Beiwerk. WAS ZU TUN IST: (1) Beide Repos laden, Ladeweg protokollieren — ob DiffusionPipeline oder ein expliziter ZImageControlNetPipeline.from_pretrained noetig war, und ob ein Single-File-Konverter im Spiel ist. (2) Pruefen und BERICHTEN, ob die Pipeline control_image und controlnet_conditioning_scale wirklich annimmt (aiimaging.render._vertraegliche_argumente sagt es dir). (3) Dieselbe Szene und Kamera wie in auf-10, Prompt ohne Bauteile: 'photorealistic architectural photograph, overcast daylight, matte concrete, neutral grey sky, no vegetation, no people'. (4) Eine Reihe ueber controlnet_staerke 0.65 / 0.80 / 1.00, jeweils beide Polaritaeten, fester Seed. (5) Je Lauf spearman, geom_iou und score gegen die Soll-Karte. DIE ENTSCHEIDENDE PRUEFUNG, und sie ist der Grund fuer die Reihe: Aendert sich das Bild ueberhaupt zwischen 0.65 und 1.00? In auf-10 ergaben drei verschiedene Vorgaben auf ZWOELF Stellen denselben Score. Wenn das hier wieder passiert, traegt auch diese Naht nicht — dann bitte die PNG-Pruefsummen der drei Bilder mitschicken, damit Gleichheit belegt und nicht vermutet ist. WAS ICH ZURUECK BRAUCHE: die Tabelle (staerke x polaritaet -> spearman, geom_iou, score), die Antwort auf die Polaritaetsfrage in einem Satz, Ladeweg und angenommene Argumente, VRAM-Spitze, Zeit je Bild, und dein Urteil, ob dieser Backbone die Geometrie haelt. REGEL 1: Beide Repos tragen Apache-2.0 laut Modellkarte. Wenn du beim Laden etwas anderes siehst — eine LICENSE-Datei, die abweicht, oder ein gated Repo —, BRICH AB und melde es. REGEL 3: Nur Zahlen und Pruefsummen zurueck, keine Bilder.",
+  "erstellt": "2026-08-18T21:31:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "backbone": "z-image-turbo",
+    "controlnet": "alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union",
+    "schritte": 8,
+    "fuehrung": 0.0,
+    "negativ_prompt": "",
+    "aufloesung": 512,
+    "samples": 16,
+    "seed": 12345,
+    "controlnet_staerke_reihe": [
+      0.65,
+      0.8,
+      1.0
+    ],
+    "polaritaeten": [
+      "wie_wir",
+      "invertiert"
+    ],
+    "prompt": "photorealistic architectural photograph, overcast daylight, matte concrete, neutral grey sky, no vegetation, no people"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
+  }
+}
