@@ -238,6 +238,24 @@ beschreibt, was jede Kamera hat; ein Objekt ist eine konkrete Kamera mit konkret
 
 **Import** — Das Einbinden eines Moduls in den eigenen Code.
 
+**pyproject.toml** — Die zentrale Beschreibungsdatei eines Python-Projekts: Name,
+Version, Lizenz, Abhängigkeiten, Werkzeugeinstellungen. Ersetzt die früher üblichen
+`setup.py`/`setup.cfg`.
+
+**src-Layout** — Konvention, den eigenen Code unter `src/` abzulegen statt direkt im
+Projektwurzelverzeichnis. Vorteil: Tests laufen zwangsläufig gegen das *installierte*
+Paket und nicht versehentlich gegen die Dateien daneben — Verpackungsfehler fallen so
+sofort auf statt beim Nutzer.
+
+**Optionale Abhängigkeitsgruppe** — Zusätzliche Pakete, die nur für bestimmte Zwecke
+installiert werden, etwa `dev` für Testwerkzeuge. Sie gehören nicht zur Laufzeit des
+Produkts. *In diesem Projekt hat der Kern **null** Laufzeitabhängigkeiten — alles
+Schwere liegt jenseits der Prozessgrenze in eigenen Environments.*
+
+**SPDX** — Ein standardisiertes Kürzelverzeichnis für Lizenzen (`Apache-2.0`, `MIT`,
+`GPL-3.0-or-later`). Erlaubt es, Lizenzen maschinenlesbar anzugeben, statt sie in Prosa
+zu umschreiben.
+
 **Abhängigkeit (Dependency)** — Fremde Software, die das eigene Programm zum Laufen
 braucht. Jede Abhängigkeit bringt ihre Lizenz mit — deshalb ist die Abhängigkeitsliste
 zugleich eine Lizenzliste.
@@ -787,6 +805,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus der Paketierung: pyproject.toml, src-Layout, optionale Abhaengigkeitsgruppe, SPDX |
 | 2026-08-18 | Ergaenzt aus Phase 1: STEP/ISO-10303-21, Extrusion/SweptSolid, GUID, Determinismus, Testfixture, Orchestrator |
 | 2026-08-14 | Ergaenzt aus Phase 0: stdio, Pfad-Sandbox, write-gated, Runner |
 | 2026-08-14 | Ergaenzt aus der KosmoOrbit-Einbindung: Tauri, TypeScript, React, REST/Endpoint, SSE, Sidecar, topologische Sortierung, JSON-Schema, Validierung, inputSchema/outputSchema, structuredContent, Cockpit-Prinzip, Read-only-Gate, Lane |
