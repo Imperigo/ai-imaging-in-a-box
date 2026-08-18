@@ -286,24 +286,40 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
 
 
 def tiefe_exr_zu_png(exr, ziel_png, *, hintergrund_ab_m: float = HINTERGRUND_AB_M,
-                     bittiefe: int = 16, _leser=None) -> dict:
+                     bittiefe: int = 16, timeout: int = 300, _leser=None,
+                     _starte=None) -> dict:
     """EXR in Metern → normalisiertes Graustufen-PNG. Der ganze Weg, ohne Blender.
 
     Das ist die Stelle, die :func:`aiimaging.seams.glb_zu_multipass` nach dem Blender-Lauf
     aufruft. Sie ersetzt den Schritt, der bis zum 18.08.2026 im Runner stand.
 
     Args:
+        timeout, _starte: **Die Prozessgrenze, die hier versteckt liegt.** Die Vorgabe
+            :func:`aiimaging.bildlesen.lies_exr_tiefe` liest zuerst mit der stdlib und
+            fällt bei EXR-Spielarten, die sie nicht kann (PIZ, DWAA/B, B44, PXR24,
+            gekachelt, mehrteilig), auf ``blender --background`` zurück. Ein
+            adversarialer Prüfer hat das am 18.08.2026 nachgewiesen: Ohne diese beiden
+            Argumente startete ``seams.glb_zu_multipass`` einen zweiten Blender-Prozess
+            **ohne injizierbare Naht und mit fremdem Zeitlimit** (300 s statt der 900 s
+            des Aufrufers) — die einzige Prozessgrenze des Projekts ohne Naht, gegen das
+            Muster von ``seams._starte``, ``bildlesen._starte`` und ``render.modell``.
         _leser: Naht für Tests — eine Funktion ``pfad -> (werte, breite, hoehe)``.
-            Vorgabe ist :func:`aiimaging.bildlesen.lies_exr_tiefe`, also erst der
-            stdlib-Weg und nur notfalls der Blender-Rückfall.
+            Wer sie setzt, umgeht ``timeout`` und ``_starte`` mitsamt dem Rückfall.
 
     Returns:
         Das ``depth_normalisierung``-Dictionary, ergänzt um ``breite`` und ``hoehe``.
+
+    Hinweis zum Rückfall: Er geht ausgerechnet über ``bpy.data.images.load`` — den
+    Leseweg, dessen Bruch auf Blender 5.x der Anlass dieses ganzen Moduls war. Auf 5.x
+    hilft er also nicht; er bleibt für 4.x und für exotische Kompressionen.
     """
     from aiimaging import bildlesen
 
-    leser = _leser or bildlesen.lies_exr_tiefe
-    werte, breite, hoehe = leser(Path(exr))
+    if _leser is not None:
+        werte, breite, hoehe = _leser(Path(exr))
+    else:
+        werte, breite, hoehe = bildlesen.lies_exr_tiefe(
+            Path(exr), timeout=timeout, _starte=_starte)
     grau, normalisierung = normalisiere_tiefe(werte, hintergrund_ab_m=hintergrund_ab_m)
     schreibe_graustufen_png(ziel_png, grau, breite, hoehe, bittiefe=bittiefe)
     normalisierung["breite"] = breite

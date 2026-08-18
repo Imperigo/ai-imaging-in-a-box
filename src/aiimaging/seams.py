@@ -208,10 +208,17 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             f"{(ergebnis.stderr or ergebnis.stdout or '').strip()[-1500:]}"
         )
     report = json.loads(bericht.read_text(encoding="utf-8"))
-    return _tiefe_nachbearbeiten(report, out_dir)
+    if not isinstance(report, dict):
+        raise SeamError(
+            f"blender-report.json enthält kein Objekt, sondern "
+            f"{type(report).__name__}. Eine abgeschnittene oder fremde Datei — der Lauf "
+            f"ist damit nicht deutbar."
+        )
+    return _tiefe_nachbearbeiten(report, out_dir, timeout=timeout, _starte=starte)
 
 
-def _tiefe_nachbearbeiten(report: dict, out_dir: Path) -> dict:
+def _tiefe_nachbearbeiten(report: dict, out_dir: Path, *, timeout: int = 300,
+                          _starte=None) -> dict:
     """Aus der EXR das normalisierte PNG rechnen — auf dieser Seite der Prozessgrenze.
 
     Bis zum 18.08.2026 tat das der Runner selbst. Der Schritt ist hierher gewandert,
@@ -252,7 +259,12 @@ def _tiefe_nachbearbeiten(report: dict, out_dir: Path) -> dict:
 
     ziel = Path(out_dir) / "tiefe_norm.png"
     try:
-        normalisierung = bildschreiben.tiefe_exr_zu_png(exr, ziel)
+        # `timeout` und `_starte` weiterreichen: Der stdlib-Leser kann nicht jede
+        # EXR-Spielart, und sein Rückfall ist ein zweiter Blender-Prozess. Ohne diese
+        # beiden Argumente liefe er ohne Naht und mit einem Zeitlimit, das der Aufrufer
+        # nie gesetzt hat.
+        normalisierung = bildschreiben.tiefe_exr_zu_png(
+            exr, ziel, timeout=timeout, _starte=_starte)
     except Exception as e:                              # Befund als Feld, nicht als Absturz
         report["depth_png_fehler"] = f"{type(e).__name__}: {e}"
         return report

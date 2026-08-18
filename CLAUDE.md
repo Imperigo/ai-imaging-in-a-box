@@ -89,6 +89,24 @@ und was am Ende offen blieb. Kein wörtliches Gesprächsprotokoll — die Substa
 `docs/PLAN.md` wird in derselben Sitzung fortgeschrieben: Erledigtes abhaken, nicht
 löschen.
 
+### Aufträge an die HomeStation kommen mit einem kopierbaren Prompt
+
+Ein Auftrag im Repo ist die Hälfte. Die andere Hälfte ist der Text, den der Owner ohne
+Nachdenken weiterreichen kann — **fertig formuliert, in einem Block, zum Kopieren**
+(Owner-Wunsch 2026-08-18).
+
+Wer etwas von der HomeStation will, liefert beides:
+
+1. Die Auftragsdatei unter `auftraege/offen/`, **committet und gepusht**, bevor der
+   Prompt herausgeht. Ein Prompt, der auf einen Auftrag zeigt, den es auf dem Remote
+   noch nicht gibt, ist eine Fehlanweisung.
+2. Einen Prompt-Block im Chat: was zu tun ist, in welcher Reihenfolge, was
+   zurückkommen soll — und was **nicht** getan werden soll. Kein „siehe Auftrag XY",
+   sondern der Inhalt.
+
+Faustregel wie bei der Oberfläche: Was der Owner erst zusammensuchen muss, existiert
+nicht.
+
 ### Git
 
 Innerhalb dieses Repos entscheidet Claude eigenständig über Zweige und Zusammenführungen

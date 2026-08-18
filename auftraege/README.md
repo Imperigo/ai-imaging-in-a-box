@@ -17,6 +17,15 @@ python3 tools/homeworker.py --repo . --alle       # abarbeiten
 git add auftraege/ergebnisse && git commit -m "Ergebnisse <datum>" && git push
 ```
 
+## Jeder Auftrag kommt mit einem kopierbaren Prompt
+
+Die Auftragsdatei ist die Hälfte. Die andere ist der Text, den der Owner ohne Nachdenken
+weiterreichen kann — fertig formuliert, in **einem** Block, zum Kopieren.
+
+Reihenfolge, und sie ist nicht beliebig: **erst committen und pushen, dann den Prompt
+herausgeben.** Ein Prompt, der auf einen Auftrag zeigt, den `git pull` noch nicht holt,
+schickt den Empfänger ins Leere.
+
 ## Was hier NICHT hineingehört
 
 **Regel 3 gilt auch für diesen Ordner.** Aufträge und Ergebnisse tragen:
@@ -64,8 +73,14 @@ Gleichnamig heisst: `offen/auf-20260818-01.json` → `ergebnisse/auf-20260818-01
 | Art | Was läuft | Braucht GPU? |
 |---|---|---|
 | `multipass` | IFC → glb → Blender-Multipass | nein (CPU-Cycles genügt) |
-| `qa` | wie oben, plus Messung | nein |
+| `qa` | **derzeit dasselbe wie `multipass`** — siehe unten | nein |
 | `render` | zusätzlich das Bildmodell **und** die Geometrie-Messung | **ja** |
+
+**Ehrlich zu `qa`:** Die Art ist angelegt, aber `fuehre_aus` behandelt alles ausser
+`render` gleich — ein `qa`-Auftrag misst heute **nichts** und meldet
+`urteil: {"multipass": "ok"}`. Das war bis zum 18.08.2026 nicht so aufgeschrieben.
+Wer messen will, nimmt `render`; eine Messung ohne erzeugtes Bild hat bisher kein
+Gegenüber.
 
 `render` ist seit dem 18.08.2026 gebaut (`homeworker._render_und_qa`). Der Ablauf ist
 IFC → glb → Multipass → Bildmodell → Tiefenschätzung → Geometrie-Score, und jede Stufe

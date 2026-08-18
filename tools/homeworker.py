@@ -63,7 +63,14 @@ def gpu_zustand() -> dict:
     if roh.returncode != 0:
         return {"verfuegbar": False, "grund": f"nvidia-smi Code {roh.returncode}"}
 
-    teile = [t.strip() for t in roh.stdout.strip().splitlines()[0].split(",")]
+    # `splitlines()[0]` stand bis zum 18.08.2026 **ausserhalb** des try/except: Lieferte
+    # nvidia-smi eine leere Ausgabe (Code 0, aber nichts darin — kommt bei Treiber-Neustart
+    # und in Containern vor), warf es IndexError statt „Zustand unbekannt" zu melden. Ein
+    # Absturz an dieser Stelle ist nicht fail-closed, sondern gar kein Verhalten.
+    zeilen = roh.stdout.strip().splitlines()
+    if not zeilen:
+        return {"verfuegbar": False, "grund": "nvidia-smi lieferte keine Ausgabe"}
+    teile = [t.strip() for t in zeilen[0].split(",")]
     try:
         return {
             "verfuegbar": True,
@@ -78,11 +85,48 @@ def gpu_zustand() -> dict:
 
 
 def darf_starten(zustand: dict, auflagen: dict) -> tuple[bool, str]:
-    """Fail-closed: Nur bei nachweislich freier Karte grünes Licht."""
-    if not auflagen.get("nur_bei_leerlauf", True):
-        return True, "Leerlauf-Gate im Auftrag abgeschaltet"
+    """Fail-closed: Nur bei nachweislich freier Karte und gesetzter Grenze grünes Licht.
+
+    Drei Löcher, gefunden am 18.08.2026 von der ersten Testsammlung, die dieses Skript je
+    bekommen hat — alle drei **fail-open**, also genau das Gegenteil dessen, was der
+    Docstring zusagte:
+
+    1. ``nur_bei_leerlauf: false`` schaltete nicht nur das Leerlauf-Gate ab, sondern auch
+       die Prüfung der Leistungsgrenze. ``auftraege/README.md`` führt beide als
+       **getrennte** Auflagen, und die Leistungsgrenze ist die, an der der Rechner hängt:
+       Sie schützt vor der Netzteil-Schutzschaltung, nicht vor einem belegten Speicher.
+    2. Mit ``nur_bei_leerlauf: false`` wurde auch bei völlig unbekanntem GPU-Zustand
+       gestartet.
+    3. Fehlte ``leistungsgrenze_w`` im Zustand, rechnete die Prüfung mit ``0`` weiter und
+       gab frei. **Ein unbekannter Wert ist kein niedriger Wert** — das ist dieselbe
+       Verwechslung, die dieses Projekt am Report schon zweimal bezahlt hat.
+
+    Die Reihenfolge ist jetzt umgedreht: Erst der Zustand, dann die Leistungsgrenze
+    (immer), und erst zuletzt das Leerlauf-Gate, das als einziges abschaltbar ist.
+    """
+    # Zuerst: Wissen wir überhaupt etwas? Ohne das ist jede weitere Prüfung eine
+    # Rechnung auf fehlenden Zahlen. Gilt auch bei abgeschaltetem Leerlauf-Gate — der
+    # Auftrag darf die Messung überspringen, nicht die Unkenntnis.
     if not zustand.get("verfuegbar"):
         return False, f"GPU-Zustand unbekannt ({zustand.get('grund')}) — im Zweifel nicht starten"
+
+    # Dann die Leistungsgrenze. **Nicht abschaltbar**, denn sie ist die Auflage, an der
+    # der ganze Rechner hängt.
+    soll = auflagen.get("leistungsgrenze_w", auf.LEISTUNGSGRENZE_W)
+    ist = zustand.get("leistungsgrenze_w")
+    if ist is None:
+        return False, (f"Leistungsgrenze der Karte unbekannt — nvidia-smi hat sie nicht "
+                       f"gemeldet. Unbekannt ist nicht dasselbe wie niedrig. Prüfen mit:  "
+                       f"nvidia-smi --query-gpu=power.limit --format=csv")
+    if ist > soll + 1:
+        return False, (f"Leistungsgrenze steht bei {ist:.0f} W, gefordert sind {soll} W. "
+                       f"Setzen mit:  sudo nvidia-smi -pl {soll}")
+
+    # Zuletzt das Leerlauf-Gate. Es darf ein Auftrag abschalten: Wer weiss, dass er die
+    # Karte teilen will, teilt sie — das kostet Zeit, nicht Hardware.
+    if not auflagen.get("nur_bei_leerlauf", True):
+        return True, (f"Leerlauf-Gate im Auftrag abgeschaltet; Leistungsgrenze "
+                      f"{ist:.0f} W ≤ {soll} W ist trotzdem geprüft")
 
     grenze_w = auflagen.get("leerlauf_schwelle_w", auf.GPU_LEERLAUF_W)
     grenze_gb = auflagen.get("leerlauf_schwelle_mem_gb", auf.GPU_LEERLAUF_MEM_GB)
@@ -92,10 +136,6 @@ def darf_starten(zustand: dict, auflagen: dict) -> tuple[bool, str]:
         return False, (f"GPU hat {zustand['speicher_belegt_gb']:.1f} GB belegt "
                        f"(≥ {grenze_gb} GB) — fremdes Modell geladen")
 
-    soll = auflagen.get("leistungsgrenze_w", auf.LEISTUNGSGRENZE_W)
-    if zustand.get("leistungsgrenze_w", 0) > soll + 1:
-        return False, (f"Leistungsgrenze steht bei {zustand['leistungsgrenze_w']:.0f} W, "
-                       f"gefordert sind {soll} W. Setzen mit:  sudo nvidia-smi -pl {soll}")
     return True, "GPU frei, Leistungsgrenze in Ordnung"
 
 
@@ -158,18 +198,81 @@ def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=No
                               _tiefen_modell=_tiefen_modell)
 
     # Nur Zahlen und Dateinamen — nie Bildinhalte (Regel 3).
+    messwerte = {
+        "n_elements": glb_bericht.get("n_elements"),
+        "n_triangles": glb_bericht.get("n_triangles"),
+        "bbox_size_m": blender_bericht.get("bbox_size_m"),
+        "n_meshes": blender_bericht.get("n_meshes"),
+        "depth_exr_kanaele": blender_bericht.get("depth_exr_kanaele"),
+        "depth_exr_format": blender_bericht.get("depth_exr_format"),
+        "depth_normalisierung": blender_bericht.get("depth_normalisierung"),
+        "depth_png_fehler": blender_bericht.get("depth_png_fehler"),
+        "dateien": [Path(p).name for p in aus.glob("*") if p.is_file()],
+    }
+
+    # Seit dem 18.08.2026 ist eine gescheiterte Normalisierung für `seams` **nicht mehr
+    # tödlich** — die EXR ist das massgebliche Artefakt, das PNG nur ihre Ableitung.
+    # Für einen Auftrag gilt das nicht, und der Grund ist die Geschichte dieses Ordners:
+    #
+    # `auf-20260818-01` bis `-05` sind allesamt `art: "multipass"` und haben `fehler`
+    # zurückgemeldet — genau daran wurde die Blender-5.2-Sperre überhaupt gefunden. Ohne
+    # diese Prüfung käme derselbe Lauf jetzt als `status: ok, urteil: {multipass: ok}`
+    # zurück, und die einzige Spur wäre ein fehlender Dateiname in einer Liste. Das ist
+    # dieselbe Bauart Fehler wie das Lexikon-Verzeichnis, das Einträge versprach, die es
+    # nie gab: unauffindbar, weil als erledigt abgehakt.
+    #
+    # Ein Auftrag ist ein Bericht an jemanden, der nicht danebensteht. Er muss lauter
+    # sein als eine Bibliotheksfunktion, nicht leiser.
+    if not blender_bericht.get("depth_png"):
+        return auf.baue_ergebnis(
+            auftrag_id=satz["auftrag_id"], status="fehler", messwerte=messwerte,
+            urteil={"multipass": "unvollstaendig",
+                    "was_fehlt": "tiefe_norm.png",
+                    "was_da_ist": "die EXR mit den echten Metern (siehe depth_exr_kanaele)"},
+            fehler=("Multipass lief, aber ohne normalisierte Tiefenkarte: "
+                    + (blender_bericht.get("depth_png_fehler")
+                       or blender_bericht.get("error") or "kein Grund genannt")),
+            dauer_s=round(time.monotonic() - beginn, 1),
+            umgebung=_umgebung())
+
     return auf.baue_ergebnis(
         auftrag_id=satz["auftrag_id"], status="ok",
-        messwerte={
-            "n_elements": glb_bericht.get("n_elements"),
-            "n_triangles": glb_bericht.get("n_triangles"),
-            "bbox_size_m": blender_bericht.get("bbox_size_m"),
-            "n_meshes": blender_bericht.get("n_meshes"),
-            "dateien": [Path(p).name for p in aus.glob("*") if p.is_file()],
-        },
+        messwerte=messwerte,
         urteil={"multipass": "ok"},
         dauer_s=round(time.monotonic() - beginn, 1),
         umgebung=_umgebung())
+
+
+#: Felder, deren Wert ein Pfad ist und die darum gekürzt werden müssen.
+_PFADFELDER = ("bild_png", "depth_png", "beauty_png", "ausgabe_png", "modell_wurzel",
+               "depth_exr", "material_id_png")
+
+
+def _nur_dateinamen(wert):
+    """Pfade auf Dateinamen kürzen — Regel 3, ausführbar statt als Bitte.
+
+    Der Befund, der diese Funktion nötig machte (18.08.2026, adversariale Prüfung): Vier
+    Felder trugen den **vollen Pfad des Arbeitsverzeichnisses der HomeStation** in ein
+    öffentliches Repo — `geometrie_qa.bild_png` sowie `depth_png`, `beauty_png` und
+    `ausgabe_png` in `render.parameter`. Für `render.bild` war derselbe Pfad ausdrücklich
+    gekürzt worden; die anderen vier blieben ganz, weil sie tiefer im Ergebnis lagen.
+
+    Das ist die verräterischste Sorte Regel-3-Verstoss: kein Bild, keine Geometrie — nur
+    ein Pfad. Aber ein Pfad trägt Benutzernamen, Ordnerstruktur und, sobald einmal mit
+    echten Projekten gearbeitet wird, Büro- und Kundennamen. `CLAUDE.md` nennt genau das:
+    „Auch keine Büro-, Kunden- oder Projektnamen in Pfaden."
+
+    Rekursiv, weil die Felder in verschachtelten Wörterbüchern sitzen. Was kein Pfadfeld
+    ist, bleibt unverändert — dies ist keine allgemeine Bereinigung, sondern eine
+    Positivliste.
+    """
+    if isinstance(wert, dict):
+        return {k: (Path(v).name if k in _PFADFELDER and isinstance(v, str) and v
+                    else _nur_dateinamen(v))
+                for k, v in wert.items()}
+    if isinstance(wert, (list, tuple)):
+        return [_nur_dateinamen(v) for v in wert]
+    return wert
 
 
 def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
@@ -207,6 +310,24 @@ def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
         "depth_png_fehler": blender_bericht.get("depth_png_fehler"),
     }
 
+    # Der Lizenzentscheid fällt **vor** dem Render, nicht danach.
+    #
+    # Bisher flog ein unter Regel 1 gesperrter Schätzer erst in der QA-Stufe heraus — als
+    # Ausnahme, hinter der GPU-Stunde, und sie nahm die Messwerte der ersten Hälfte mit.
+    # Das ist die Reihenfolge, die `render.rendere` schon richtig macht („Regel 1
+    # entscheidet, bevor 20 GB Gewichte auf die GPU wandern"); hier fehlte sie.
+    #
+    # Regel 1 ist keine Zusatzprüfung am Ende, sondern die erste Frage.
+    try:
+        tiefenschaetzer.fordere_zulaessigen(
+            params.get("schaetzer", tiefenschaetzer.VORGABE_TIEFENSCHAETZER))
+    except Exception as e:
+        return auf.baue_ergebnis(
+            auftrag_id=satz["auftrag_id"], status="fehler", messwerte=messwerte,
+            urteil={"regel_1": "abgelehnt", "stufe": "vor dem Render"},
+            fehler=f"Tiefenschätzer unter Regel 1 nicht zulässig: {e}",
+            dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
+
     depth_png = blender_bericht.get("depth_png")
     if not depth_png:
         return auf.baue_ergebnis(
@@ -234,11 +355,9 @@ def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
         modell_wurzel=params.get("modell_wurzel"),
     )
     r = render.rendere(a, modell=_render_modell)
-    # Nur Zahlen und Dateinamen (Regel 3) — `bild_png` wäre ein Pfad auf der HomeStation
-    # und ist als Name genug.
     messwerte["render"] = {
         "status": r["status"], "seed": r.get("seed"), "backbone": r.get("backbone"),
-        "dauer_s": r.get("dauer_s"), "parameter": r.get("parameter"),
+        "dauer_s": r.get("dauer_s"), "parameter": _nur_dateinamen(r.get("parameter")),
         "lizenz": r.get("lizenz"), "maengel": r.get("maengel"),
         "hinweise": r.get("hinweise"),
         "bild": Path(r["bild_png"]).name if r.get("bild_png") else None,
@@ -267,7 +386,7 @@ def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
         schaetzer=params.get("schaetzer", tiefenschaetzer.VORGABE_TIEFENSCHAETZER),
         schwelle=params.get("schwelle", None) or geometrie_schwelle(),
     )
-    messwerte["geometrie_qa"] = qa
+    messwerte["geometrie_qa"] = _nur_dateinamen(qa)
 
     # `status` des Auftrags bildet ab, ob **gemessen** wurde — nicht, ob das Bild besteht.
     # Ein Render, der die Schwelle reisst, ist ein gelungener Auftrag mit einem klaren

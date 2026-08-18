@@ -178,8 +178,10 @@ Bekannt und ausdrücklich nicht erledigt:
   `ArchitekturKosmos-Codex`, `architekturkosmos-control-hub`, `Architektur-Cosmos`.
 - **`tools/homeworker.py` war bis 2026-08-18 ohne einen einzigen Test** — ausgerechnet
   das Skript, das unbeaufsichtigt an einer 400-W-Hardwareschranke läuft. Seit Sitzung 07
-  gibt es `tests/test_homeworker.py`; ob die Fail-Closed-Zusage in **allen** Zweigen
-  hält, ist damit erstmals gemessen statt behauptet.
+  gibt es `tests/test_homeworker.py` (75 Fälle). Die erste Messung fand **vier
+  fail-open-Löcher** in der Schranke, die „Fail-closed" im Docstring zusagte — alle
+  behoben. *Erledigt, aber als Warnung stehengelassen:* Ein Docstring ist keine
+  Prüfung.
 - **Der Graph-Kern lässt fünf Dinge vermissen** (aus der Kettenverdrahtung, 2026-08-18):
   `inhalts_hash` rechnet auch Dateipfade ein, sodass ein verschobener Projektordner den
   ganzen Cache verwirft — die Kette umgeht das mit einer eigenen Hashvorbereitung, sauber

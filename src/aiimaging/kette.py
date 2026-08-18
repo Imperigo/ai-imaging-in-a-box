@@ -385,6 +385,36 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
         beauty=p["beauty"], material_id=p["material_id"],
     )
     bericht.setdefault("status", STATUS_OK)
+
+    # Die Naht ist bewusst nachsichtig: Scheitert die Normalisierung, bleibt der
+    # Blender-Lauf gültig, weil die EXR mit den echten Metern das massgebliche Artefakt
+    # ist (siehe `seams._tiefe_nachbearbeiten`). **Für diesen Knoten gilt das nicht.**
+    #
+    # Der Unterschied ist nicht Geschmack, sondern der Zwischenspeicher. Ein Knoten mit
+    # `status="ok"` wird gespeichert; Gescheitertes nicht. Ohne diese Prüfung liefe
+    # folgendes — und es ist gemessen, nicht befürchtet:
+    #
+    #   1. Der Multipass läuft, das PNG scheitert, der Knoten gilt als `ok`.
+    #   2. Der Eintrag landet im Cache. `_fehlende_ausgabedateien` fängt ihn nicht ab:
+    #      Es prüft nur Felder mit einem nicht-leeren Text als Wert, und `depth_png`
+    #      ist `None`.
+    #   3. Wird die Ursache behoben, ändert sich am Cache-Schlüssel nichts — er hängt an
+    #      Parametern und Vorgänger-Hashes, nicht an der Umgebung. Der Treffer bleibt,
+    #      der Ausführer wird nie wieder gerufen, und die Kette scheitert für immer eine
+    #      Stufe später mit einer Meldung, die auf den falschen Knoten zeigt.
+    #
+    # Drei Läufe, ein einziger Blender-Start, und der dritte hätte gelingen müssen. Ein
+    # vergifteter Cache-Eintrag ist teurer als ein neu gerechneter Render.
+    #
+    # Der Knoten braucht das PNG: Sein Nachfolger konditioniert das Bildmodell damit.
+    # Was der Nachfolger braucht, darf hier nicht als gelungen gelten.
+    if not bericht.get("depth_png"):
+        grund = bericht.get("depth_png_fehler") or bericht.get("error") or "kein Grund genannt"
+        return {**bericht, "status": STATUS_FEHLER,
+                "error": (f"Multipass lieferte keine normalisierte Tiefenkarte: {grund} "
+                          f"(Die EXR kann trotzdem in Ordnung sein — sie steht in "
+                          f"`depth_exr`. Ohne das PNG gibt es aber keine Konditionierung "
+                          f"für die Renderstufe.)")}
     return bericht
 
 
@@ -409,7 +439,10 @@ def render_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
         depth_png = multipass.get("depth_png")
         if not depth_png:
             return {"status": STATUS_FEHLER,
-                    "error": f"Vorgänger lieferte kein 'depth_png': {sorted(multipass)}"}
+                    "error": (
+                        f"Vorgänger lieferte kein 'depth_png'. Grund des Vorgängers: "
+                        f"{multipass.get('depth_png_fehler') or multipass.get('error') or 'nicht genannt'}. "
+                        f"Vorhandene Felder: {sorted(multipass)}")}
 
         p = knoten.params
         auftrag = render.RenderAuftrag(

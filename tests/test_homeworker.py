@@ -187,10 +187,6 @@ def test_unbekannter_zustand_startet_nichts(smi, fall):
     assert "unbekannt" in grund
 
 
-@pytest.mark.xfail(strict=True, raises=IndexError,
-                   reason="BEFUND: leere Ausgabe von nvidia-smi stürzt ab, statt "
-                          "'Zustand unbekannt' zu melden — die Zeile mit "
-                          "splitlines()[0] steht ausserhalb des try/except.")
 def test_leere_ausgabe_von_nvidia_smi_gilt_als_unbekannt(smi):
     """``nvidia-smi`` mit Code 0 und leerer Ausgabe — der Fall „Treiber lädt noch".
 
@@ -290,10 +286,6 @@ def test_belegte_karte_wird_abgelehnt_obwohl_die_leistungsgrenze_stimmt(smi):
 
 # ── Die Zweige, in denen die Zusage nicht hält ───────────────────────────────────────
 
-@pytest.mark.xfail(strict=True,
-                   reason="BEFUND: 'nur_bei_leerlauf: false' schaltet nicht nur das "
-                          "Leerlauf-Gate ab, sondern auch die Prüfung der 400-W-Grenze. "
-                          "auftraege/README.md führt beide Auflagen getrennt.")
 def test_abgeschaltetes_leerlauf_gate_prueft_die_leistungsgrenze_weiterhin(smi):
     """Die beiden Auflagen sind zwei — und die gefährlichere ist die Leistungsgrenze.
 
@@ -307,9 +299,6 @@ def test_abgeschaltetes_leerlauf_gate_prueft_die_leistungsgrenze_weiterhin(smi):
     assert frei is False
 
 
-@pytest.mark.xfail(strict=True,
-                   reason="BEFUND: mit 'nur_bei_leerlauf: false' wird auch bei völlig "
-                          "unbekanntem GPU-Zustand gestartet — das ist fail-open.")
 def test_abgeschaltetes_leerlauf_gate_startet_nicht_bei_unbekanntem_zustand(smi):
     """Fail-closed heisst: ohne Auskunft kein Start. Auch mit abgeschaltetem Gate.
 
@@ -324,10 +313,6 @@ def test_abgeschaltetes_leerlauf_gate_startet_nicht_bei_unbekanntem_zustand(smi)
     assert frei is False
 
 
-@pytest.mark.xfail(strict=True,
-                   reason="BEFUND: fehlt 'leistungsgrenze_w' im Zustand, rechnet "
-                          "darf_starten mit 0 W weiter und gibt frei. Ein unbekannter "
-                          "Wert ist kein niedriger Wert.")
 def test_unbekannte_leistungsgrenze_wird_abgelehnt():
     """Ein Zustand ohne Leistungsgrenze ist ein unvollständiger Zustand.
 
@@ -732,6 +717,59 @@ def test_auftrag_darf_eine_eigene_schwelle_setzen(bericht, aus):
     assert ergebnis["urteil"]["bestanden"] is False
 
 
+# ── Regel 1 gilt auch für die zweite Stufe ───────────────────────────────────────────
+
+def test_gemessen_wird_mit_dem_zulaessigen_schaetzer(bericht, aus):
+    """Von Depth-Anything-V2 ist nur das kleinste Modell permissiv lizenziert; die
+    grösseren stehen unter CC-BY-NC-4.0 und sind damit ausgeschlossen (Regel 1)."""
+    ergebnis = rufe_render_und_qa(
+        bericht, aus, {"prompt": "Wohnhaus"},
+        render_modell=Renderattrappe(), tiefen_modell=Tiefenattrappe(treue_ist_karte(bericht)))
+
+    benutzt = ergebnis["messwerte"]["geometrie_qa"]["schaetzer"]
+    assert benutzt == tiefenschaetzer.VORGABE_TIEFENSCHAETZER
+    assert tiefenschaetzer.pruefe_lizenz(benutzt)["zulaessig"] is True
+
+
+def test_gegenprobe_die_groesseren_schaetzer_stehen_in_der_registry():
+    """Ohne diese Probe hinge der Test unten an einem unbekannten Namen statt an der
+    Lizenz — und prüfte nur, dass ein Tippfehler auffällt."""
+    assert tiefenschaetzer.pruefe_lizenz("depth-anything-v2-large")["zulaessig"] is False
+
+
+def test_gesperrter_schaetzer_wird_vor_dem_render_abgewiesen(bericht, aus):
+    """``params.schaetzer: "depth-anything-v2-large"`` ist der wahrscheinlichste
+    Fehlgriff — das grössere Modell misst besser und ist genau deshalb verlockend.
+    Es ist CC-BY-NC-4.0 und unter Regel 1 ausgeschlossen.
+
+    **Der Befund, aus dem dieser Test entstand** (18.08.2026): Die Lizenzprüfung fiel
+    ursprünglich erst in der QA-Stufe — als ungefangene Ausnahme, hinter der GPU-Stunde,
+    und sie nahm die Messwerte der ersten Hälfte mit.
+
+    Die Korrektur ging weiter als der Befund verlangte. Statt die Ausnahme zu fangen und
+    die erste Hälfte zu retten, entscheidet Regel 1 jetzt **vor** dem Render — dieselbe
+    Reihenfolge, die ``render.rendere`` schon hat („Regel 1 entscheidet, bevor 20 GB
+    Gewichte auf die GPU wandern"). Der Test prüft darum die schärfere Zusage: Es wird
+    nicht nur nichts verloren, es wird gar nichts erst gerechnet.
+
+    Regel 1 ist keine Zusatzprüfung am Ende, sondern die erste Frage.
+    """
+    render_attrappe = Renderattrappe()
+    ergebnis = rufe_render_und_qa(
+        bericht, aus, {"prompt": "Wohnhaus", "schaetzer": "depth-anything-v2-large"},
+        render_modell=render_attrappe, tiefen_modell=Tiefenattrappe(treue_ist_karte(bericht)))
+
+    assert ergebnis["status"] == "fehler"
+    assert "Regel 1" in ergebnis["fehler"]
+    assert ergebnis["urteil"]["regel_1"] == "abgelehnt"
+    assert ergebnis["urteil"]["stufe"] == "vor dem Render"
+
+    # Der eigentliche Punkt: keine GPU-Sekunde ausgegeben. Ein Ergebnis mit
+    # `render.status == "ok"` wäre die schwächere Zusage und hier ausdrücklich falsch.
+    assert render_attrappe.aufrufe == [], "Regel 1 fiel erst hinter der GPU-Stunde"
+    assert "render" not in ergebnis["messwerte"]
+
+
 # ── Regel 3: was zurück ins Repo reist ───────────────────────────────────────────────
 
 def test_das_bild_reist_als_dateiname_nicht_als_pfad(bericht, aus):
@@ -781,17 +819,16 @@ def _felder_mit(wert, verzeichnis: str, pfad: str = "messwerte") -> list[tuple[s
     return gefunden
 
 
-@pytest.mark.xfail(strict=True,
-                   reason="BEFUND: messwerte.geometrie_qa.bild_png trägt den vollen "
-                          "Pfad des Arbeitsverzeichnisses zurück ins öffentliche Repo. "
-                          "Für messwerte.render.bild wird derselbe Pfad bewusst auf den "
-                          "Dateinamen gekürzt — die QA-Hälfte tut es nicht.")
 def test_kein_arbeitsverzeichnis_verlaesst_die_homestation(bericht, aus):
     """Was im öffentlichen Repo landet, soll nichts über den Rechner verraten, auf dem
     es entstand — weder Benutzernamen noch Projektordner (Regel 3).
 
-    Reproduktion: ``ergebnis['messwerte']['geometrie_qa']['bild_png']`` ist
-    ``…/build/auf-20260818-99/render.png``, also der komplette Pfad.
+    Reproduktion: ``ergebnis['messwerte']['geometrie_qa']['bild_png']`` und die drei
+    Pfadfelder unter ``messwerte['render']['parameter']`` sind komplette Pfade der Form
+    ``…/build/auf-20260818-99/render.png``. Der Kommentar im Skript hält an der Stelle
+    daneben fest, ein solcher Pfad sei „als Name genug" — für ``bild`` wird er darum
+    gekürzt, für die anderen vier nicht. In den bereits eingecheckten Ergebnissen steht
+    aus derselben Ursache (dort über Fehlertexte) der Heimatordner der HomeStation.
     """
     ergebnis = rufe_render_und_qa(
         bericht, aus, {"prompt": "Wohnhaus"},
@@ -922,6 +959,27 @@ def test_multipass_meldet_nur_zahlen_und_dateinamen(blender_naht, ifc, aus, tmp_
     assert ergebnis["urteil"] == {"multipass": "ok"}
     assert sorted(ergebnis["messwerte"]["dateien"]) == ["beauty.png", "tiefe_norm.png"]
     assert all("/" not in name for name in ergebnis["messwerte"]["dateien"])
+
+
+def test_multipass_ohne_tiefenkarte_gilt_nicht_als_erledigt(blender_naht, ifc, aus, tmp_path):
+    """Für ``seams`` ist eine gescheiterte Normalisierung nicht tödlich — die EXR bleibt
+    das massgebliche Artefakt. Für einen **Auftrag** gilt das nicht.
+
+    Käme ein solcher Lauf als ``ok`` zurück, wäre die einzige Spur ein fehlender
+    Dateiname in einer Liste: als erledigt abgehakt und damit unauffindbar. Genau an
+    diesen Rückmeldungen wurde die Blender-5.2-Sperre gefunden.
+    """
+    blender_naht["depth_png"] = None
+    blender_naht["depth_png_fehler"] = "EXRVarianteError: Kanal V nicht gefunden"
+
+    ergebnis = hw.fuehre_aus(_multipass_satz("multipass", ifc, aus), tmp_path)
+
+    assert ergebnis["status"] == "fehler"
+    assert ergebnis["urteil"]["multipass"] == "unvollstaendig"
+    assert "EXRVarianteError" in ergebnis["fehler"]
+    # Was der Lauf trotzdem herausgefunden hat, bleibt im Ergebnis.
+    assert ergebnis["messwerte"]["n_meshes"] == 7
+    assert ergebnis["messwerte"]["depth_exr_kanaele"] == ["tiefe_.V"]
 
 
 def test_gescheiterte_ifc_konversion_startet_blender_nicht(monkeypatch, ifc, aus, tmp_path):
