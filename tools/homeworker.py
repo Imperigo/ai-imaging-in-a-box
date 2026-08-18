@@ -158,6 +158,46 @@ def _geometrie_bereitstellen(satz: dict, repo: Path) -> str:
     return pfad
 
 
+#: Was die einzelnen Pfade an `params` tatsächlich verbrauchen. Wird ein Auftrag mit
+#: Angaben gestellt, die hier nicht stehen, ist er hier nicht ausführbar — und das muss
+#: er sagen, statt etwas anderes zu messen.
+_GENUTZTE_PARAMS = {
+    "out_dir", "aufloesung", "samples",
+    "prompt", "negativ_prompt", "backbone", "seed", "schritte",
+    "controlnet_staerke", "denoise", "mit_beauty", "modell_wurzel",
+    "schaetzer", "schwelle",
+}
+
+
+def _unverstandene_params(_art: str, params: dict) -> list[str]:
+    """Welche ``params`` dieser Auftrag mitbringt, die kein Pfad hier verbraucht.
+
+    Der Anlass, 18.08.2026: `auf-20260818-10` und `-11` sind beide `art: "qa"` und
+    verlangen eine Schwellenstudie bzw. eine Einbetter-Messung. Der `qa`-Pfad kann
+    beides nicht — er misst den Blender-Multipass. Ohne diese Prüfung wären beide
+    Aufträge mit ``status: ok, urteil: {multipass: ok}`` zurückgekommen: grün, und ohne
+    eine einzige der verlangten Zahlen.
+
+    Das ist dieselbe Bauart Fehler, vor der der Kommentar weiter unten warnt — nur eine
+    Ebene höher. Dort ging es um ein fehlendes Artefakt, hier um einen fehlenden
+    Auswerter. Beide Male ist die stille Variante die schlimme: Ein Auftrag, der
+    abbricht, kostet einen Lauf; ein Auftrag, der grün und leer zurückkommt, kostet das
+    Vertrauen in alle anderen.
+
+    Bewusst eine **Positivliste**: Eine Sperrliste müsste jede künftige Auftragsart
+    vorhersehen. Was hier nicht steht, wird nicht verbraucht — das ist am Quelltext
+    ablesbar und veraltet nicht still.
+
+    Die Liste gilt **artübergreifend**, nicht je Art. Ein ``prompt`` an einem
+    ``multipass``-Auftrag ist bekanntes Vokabular, das dieser Pfad nur nicht braucht —
+    harmlos, und die bestehenden Tests stellen genau solche Aufträge. Gemeint ist der
+    andere Fall: ``stoerungen``, ``einbetter``, ``staerken`` stehen nirgends im
+    Wortschatz dieses Skripts und sagen damit, dass ein **anderer Auswerter** verlangt
+    ist. Die Grenze läuft zwischen „hier ungenutzt" und „hier unbekannt".
+    """
+    return sorted(set(params) - _GENUTZTE_PARAMS)
+
+
 def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=None) -> dict:
     """Einen Auftrag ausführen und ein Ergebnis bauen.
 
@@ -176,6 +216,22 @@ def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=No
     beginn = time.monotonic()
     art = satz["art"]
     params = satz.get("params") or {}
+
+    unverstanden = _unverstandene_params(art, params)
+    if unverstanden:
+        return auf.baue_ergebnis(
+            auftrag_id=satz["auftrag_id"], status="fehler",
+            urteil={"auftrag": "hier nicht ausfuehrbar",
+                    "nicht_verstandene_params": unverstanden},
+            fehler=(
+                f"Dieser Auftrag verlangt {', '.join(unverstanden)} — davon weiss dieses "
+                f"Skript nichts. Der Pfad fuer art={art!r} misst den Blender-Multipass "
+                f"und sonst nichts. Ohne diese Pruefung kaeme der Lauf als "
+                f"'status: ok, urteil: {{multipass: ok}}' zurueck und haette keine "
+                f"einzige der verlangten Zahlen gemessen — gruen und leer. Wer den "
+                f"Auftrag fahren will, braucht eine Auswertung, die diese Angaben "
+                f"verbraucht."),
+            dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
 
     ifc = _geometrie_bereitstellen(satz, repo)
     aus = Path(params.get("out_dir") or (repo / "build" / satz["auftrag_id"]))
