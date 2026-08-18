@@ -491,9 +491,11 @@ def invarianzgrenze(*, dimension: int = 64, seed: int = VORGABE_SEED,
             continue  # schon die Streckung selbst ist keine Zahl mehr — nicht die Metrik
         try:
             ist = kosinus(gestreckt_a, gestreckt_b)
-        except Exception as fehler:                       # noqa: BLE001 — Art ist der Befund
+        except ValueError:
+            # ``StilError`` erbt von ``ValueError``. Der laute Abbruch ist hier kein
+            # Fehlschlag der Messung, sondern ihr Ergebnis: Er ist der *bessere* der
+            # beiden Ausgänge und wird als solcher gezählt.
             laut.append(exponent)
-            del fehler
             continue
         if abs(ist - soll) <= 1e-9:
             sicher.append(exponent)

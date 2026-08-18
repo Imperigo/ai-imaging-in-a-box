@@ -44,7 +44,14 @@ import sys
 import pytest
 
 from aiimaging import einbetter
-from aiimaging.stil_qa import AGG_MAX, AGG_MITTEL, SCHWELLE_STIL, kosinus, stil_score
+from aiimaging.stil_qa import (
+    AGG_MAX,
+    AGG_MITTEL,
+    SCHWELLE_STIL,
+    StilError,
+    kosinus,
+    stil_score,
+)
 from aiimaging.stilstudie import (
     KEGELANTEILE,
     REGISTRY_DIMENSIONEN,
@@ -344,40 +351,50 @@ def test_unbrauchbare_faktoren_sind_ein_fehler(faktoren):
         laengeninvarianz(dimension=8, faktoren=faktoren, n_paare=2)
 
 
-def test_jenseits_von_1e153_faelscht_die_metrik_still():
-    """**Der schwerwiegendste Befund dieser Studie.**
+def test_die_metrik_faelscht_auch_jenseits_von_1e153_nicht_mehr_still():
+    """**Der schwerwiegendste Befund dieser Studie — behoben am 18.08.2026.**
 
-    ``kosinus`` bildet ``sum(x*x)``. Ab Komponenten der Grössenordnung 10¹⁵⁴ läuft diese
-    Summe über. Das Ergebnis ist kein Fehler, sondern **1.0** — der höchstmögliche Score,
-    also ein bestandenes Gate aus einem Überlauf.
+    ``kosinus`` bildete ``sum(x*x)``. Ab Komponenten der Grössenordnung 10¹⁵⁴ lief diese
+    Summe über, `inf/inf` ergab `nan`, und die abschliessende Klammerung zog daraus
+    **1.0** — den höchstmöglichen Score. Zwei rechtwinklige Vektoren bekamen so einen
+    vollen Treffer: **ein bestandenes Gate aus einem Überlauf, ohne Fehlermeldung.** Aus
+    einem echten 0,8 wurde ebenfalls 1,0.
 
     Genau diese Gestalt hat der Fehler, gegen den ``StilError`` angetreten ist: nicht ein
-    Abbruch, sondern eine bedeutungslose Zahl, die ein Gate passiert. Im Betrieb kommt er
-    nicht vor (SigLIP-Komponenten liegen bei ungefähr 1), aber die Zusage der Invarianz
-    gilt eben nicht unbedingt, sondern in einem Bereich — und der gehört benannt.
+    Abbruch, sondern eine bedeutungslose Zahl, die ein Gate passiert. Im Betrieb kam er
+    nicht vor — SigLIP-Komponenten liegen bei ungefähr 1 —, aber ein Gate, das bei Unsinn
+    „bestanden" sagt, ist schlimmer als eines, das abstürzt.
+
+    Behoben durch Normierung auf die grösste Komponente **vor** dem Quadrieren. Das ist
+    mathematisch folgenlos, weil der Kosinus längeninvariant ist — das ist seine
+    definierende Eigenschaft — und macht die Rechnung für jede endliche Eingabe
+    überlauffrei.
     """
     grenze = invarianzgrenze(dimension=64, seed=17, von=-200, bis=200)
-    assert grenze["sicher_bis"] >= 150, "der Alltagsbereich muss sicher sein"
-    assert grenze["sicher_von"] <= -150
 
-    ueberlauf = [f for f in grenze["stille_faelschungen"] if f["exponent"] >= 154]
-    assert ueberlauf, "erwartet: stille Fälschung durch Überlauf"
-    assert any(f["geliefert"] == 1.0 for f in ueberlauf), (
-        "erwartet: der Überlauf liefert einen vollen Treffer, kein Abbruch")
+    assert grenze["stille_faelschungen"] == [], (
+        f"stille Fälschung zurück: {grenze['stille_faelschungen'][:3]}")
+    assert grenze["sicher_bis"] >= 200, "der ganze geprüfte Bereich muss sicher sein"
+    assert grenze["sicher_von"] <= -200
 
 
-def test_unterlauf_bricht_laut_ab_aber_mit_der_falschen_diagnose():
-    """Der bessere der beiden Fälle — und trotzdem irreführend.
+def test_auch_der_unterlauf_ist_weg_und_mit_ihm_die_falsche_diagnose():
+    """Dieselbe Normierung behebt den Gegenfall.
 
-    Bei sehr kleinen Komponenten wird die Norm zu 0, und ``kosinus`` meldet „Nullvektor —
-    das Bild wurde nicht gelesen". Der Vektor war in Ordnung; nur die Rechnung war es
-    nicht. Ein lauter Abbruch mit falscher Begründung ist immer noch besser als ein
-    stiller Treffer, aber er schickt die Fehlersuche in die falsche Richtung.
+    Bei sehr kleinen Komponenten wurde die Norm zu 0, und ``kosinus`` meldete „Nullvektor
+    — das Bild wurde nicht gelesen". Der Vektor war in Ordnung; nur die Rechnung war es
+    nicht. Ein lauter Abbruch mit falscher Begründung ist besser als ein stiller Treffer,
+    aber er schickt die Fehlersuche in die falsche Richtung.
+
+    Der Nullvektor bleibt ein Abbruch — er ist echt.
     """
     grenze = invarianzgrenze(dimension=64, seed=18, von=-200, bis=0)
-    assert grenze["laute_abbrueche"], "erwartet: Unterlauf endet im StilError"
-    assert max(grenze["laute_abbrueche"]) < -150
-    assert "Bild wurde nicht gelesen" in grenze["art_der_faelschung"]
+    assert grenze["laute_abbrueche"] == [], (
+        f"Unterlauf bricht weiterhin ab: {grenze['laute_abbrueche'][:3]}")
+
+    # Gegenprobe: der ECHTE Nullvektor meldet weiterhin, und mit derselben Begründung.
+    with pytest.raises(StilError, match="Bild wurde nicht gelesen"):
+        kosinus([0.0, 0.0, 0.0], [1.0, 2.0, 3.0])
 
 
 def test_der_alltagsbereich_eines_einbetters_ist_unberuehrt():

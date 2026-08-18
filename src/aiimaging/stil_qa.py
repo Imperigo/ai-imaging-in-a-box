@@ -163,6 +163,31 @@ def kosinus(a, b) -> float:
             f"zwei verschiedene Einbettungsmodelle. Ihre Räume sind nicht vergleichbar."
         )
 
+    # Vor dem Quadrieren auf die grösste Komponente normieren.
+    #
+    # BEFUND 18.08.2026 (Stilstudie, Abnahme): Ohne diesen Schritt lief `sum(x*x)` ab
+    # Komponenten von etwa 1e155 in `inf`, und `inf/inf` ergab `nan`, das die Klammerung
+    # anschliessend auf **1.0** zog. Zwei rechtwinklige Vektoren bekamen so den Score
+    # 1.0 — ein **bestandenes Gate aus einem Überlauf**, ohne Fehlermeldung. Aus 0.8
+    # wurde ebenfalls 1.0.
+    #
+    # Betrieblich kommen solche Zahlen aus keinem Einbetter. Aber das ist genau die
+    # Gestalt, gegen die `StilError` angetreten ist: ein still falsches Urteil in die
+    # freisprechende Richtung. Ein Gate, das bei Unsinn „bestanden" sagt, ist schlimmer
+    # als eines, das abstürzt.
+    #
+    # Die Normierung ist mathematisch folgenlos — der Kosinus ist längeninvariant, das
+    # ist seine definierende Eigenschaft — und macht die Rechnung für jede endliche
+    # Eingabe überlauffrei.
+    groesste = max(max(abs(x) for x in va), max(abs(y) for y in vb))
+    if groesste == 0.0:
+        raise StilError(
+            "Nullvektor — keine Richtung, keine Kosinus-Ähnlichkeit. Aus einem "
+            "Einbettungsmodell heisst das in aller Regel: Das Bild wurde nicht gelesen."
+        )
+    va = [x / groesste for x in va]
+    vb = [y / groesste for y in vb]
+
     punkt = sum(x * y for x, y in zip(va, vb))
     norm_a = math.sqrt(sum(x * x for x in va))
     norm_b = math.sqrt(sum(y * y for y in vb))

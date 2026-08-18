@@ -72,6 +72,93 @@ def _lies_urteil(urteil, bezeichnung: str) -> tuple[bool, str | None]:
     return wert, None
 
 
+#: Zustandswörter, die KosmoVis' `kosmovis_query_qa_verdict` je Teil-Gate erwartet.
+STATUS_OK = "ok"
+STATUS_FEHLT = "fehlt"
+STATUS_DEGENERIERT = "degeneriert"
+
+
+def als_kosmovis_verdikt(gesamt: dict) -> dict:
+    """Unser Doppel-Gate in die Feldnamen übersetzen, die das Ökosystem tatsächlich liest.
+
+    **Der Befund, aus dem das entstand (18.08.2026, Ökosystem-Durchsicht):** KosmoVis hat
+    unsere Landestelle längst gebaut. `integrations/odysseus/kosmovis_mcp_server.py`
+    führt ein Werkzeug `kosmovis_query_qa_verdict`, das aus einer `render-result.json`
+    genau ein Doppel-Gate liest — und es erwartet diese Namen::
+
+        released, passed, style_status, geometry_status, fail_reasons,
+        style_score, geometry_fidelity, style_threshold, geometry_threshold
+
+    Unser :func:`gesamturteil` liefert dieselbe Sache unter `bestanden`, `score`,
+    `schwelle`, `maengel`. **Dieselbe Sache, andere Namen — und KosmoOrbit verdrahtet
+    über Feldnamen-Gleichheit, ohne Fehlermeldung.** Das ist der Phase-0-Befund in seiner
+    teuersten Ausprägung: eine tote Kante, die niemand meldet.
+
+    Warum eine Übersetzung und keine Umbenennung
+    ---------------------------------------------
+    Unsere Felder heissen deutsch und bleiben es. Die Begriffe dieses Projekts sind Teil
+    der Arbeit, und eine Registry umzubenennen, weil ein Nachbarsystem andere Wörter
+    benutzt, verlöre die Begründungen, die an ihnen hängen. Übersetzt wird **an der
+    Naht** — genau wie in :mod:`aiimaging.mcp_schemas`, wo die Verträge nach aussen auch
+    englisch heissen.
+
+    Drei Zustände, nicht zwei
+    --------------------------
+    Das fremde Werkzeug kennt je Gate `ok`, `fehlt` und `degeneriert`. Diese Dreiteilung
+    ist **besser als unsere** und trifft genau den Fall, den die Schwellenstudie
+    interessant macht: ein Score von ``None`` heisst „nicht messbar", nicht „durchgefallen".
+    Bisher ging das in `maengel` unter; hier bekommt es einen eigenen Zustand.
+
+    * ``fehlt`` — kein Teilurteil vorhanden oder unlesbar.
+    * ``degeneriert`` — Urteil da, aber ``score`` ist ``None``: nicht messbar.
+    * ``ok`` — gemessen.
+
+    ``released`` ist wie drüben **fail-closed und nie ``None``**: Nur wenn beide Gates
+    ``ok`` sind und beide bestehen. ``passed`` bleibt dreiwertig — ``None``, wenn gar
+    nicht beurteilt werden konnte, denn ein Freispruch aus Mangel an Messung wäre die
+    teuerste Sorte Urteil.
+    """
+    def _teil(urteil, score_feld: str) -> tuple[str, float | None, float | None, bool]:
+        if not isinstance(urteil, dict):
+            return STATUS_FEHLT, None, None, False
+        if "bestanden" not in urteil:
+            return STATUS_FEHLT, None, None, False
+        score = urteil.get("score")
+        schwelle = urteil.get("schwelle")
+        if score is None:
+            return STATUS_DEGENERIERT, None, schwelle, False
+        return STATUS_OK, score, schwelle, bool(urteil.get("bestanden"))
+
+    geo = gesamt.get("geometrie")
+    stil = gesamt.get("stil")
+    geo_status, geo_score, geo_schwelle, geo_ok = _teil(geo, "score")
+    stil_status, stil_score, stil_schwelle, stil_ok = _teil(stil, "score")
+
+    gruende: list[str] = []
+    for name, status, ok in (("geometry", geo_status, geo_ok),
+                             ("style", stil_status, stil_ok)):
+        if status == STATUS_FEHLT:
+            gruende.append(f"{name}_gate_fehlt")
+        elif status == STATUS_DEGENERIERT:
+            gruende.append(f"{name}_nicht_messbar")
+        elif not ok:
+            gruende.append(f"{name}_unter_schwelle")
+
+    beide_messbar = geo_status == STATUS_OK and stil_status == STATUS_OK
+    return {
+        "released": bool(beide_messbar and geo_ok and stil_ok),
+        # Dreiwertig: None heisst „nicht beurteilbar", nicht „durchgefallen".
+        "passed": (geo_ok and stil_ok) if beide_messbar else None,
+        "geometry_status": geo_status,
+        "style_status": stil_status,
+        "geometry_fidelity": geo_score,
+        "geometry_threshold": geo_schwelle,
+        "style_score": stil_score,
+        "style_threshold": stil_schwelle,
+        "fail_reasons": gruende,
+    }
+
+
 def gesamturteil(geometrie_urteil: dict, stil_urteil: dict) -> dict:
     """Doppel-Gate: bestanden **nur**, wenn beide Teilurteile bestanden sind.
 
