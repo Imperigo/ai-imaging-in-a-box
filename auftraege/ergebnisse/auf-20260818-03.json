@@ -4,8 +4,21 @@
   "status": "fehler",
   "beendet": "2026-08-18T12:03:26Z",
   "dauer_s": null,
-  "messwerte": {},
-  "urteil": {},
+  "messwerte": {
+    "blender_version": "5.2.0 LTS",
+    "blender_build": "2026-07-14",
+    "formate_laut_introspektion": 16,
+    "formate_tatsaechlich_zulaessig_knoten": 1
+  },
+  "urteil": {
+    "befund": "CompositorNodeOutputFile akzeptiert in Blender 5.2 auf Knoten-Ebene NUR OPEN_EXR_MULTILAYER.",
+    "falle_introspektion": "bl_rna.properties['file_format'].enum_items meldet 16 Formate inkl. OPEN_EXR — die ZUWEISUNG akzeptiert genau eines. Blender nutzt hier einen dynamischen Enum; die statische RNA-Liste sagt nichts ueber das zur Laufzeit Erlaubte. Wer die Liste ausliest und ihr glaubt, baut denselben Fehler nochmal. Gegenprobe gefahren: Leeren von file_name aendert nichts, die Einschraenkung haengt am Knotentyp.",
+    "weg_1_multilayer": "Zeile 380 (ausgabe.format.file_format = 'OPEN_EXR') kann ERSATZLOS entfallen — OPEN_EXR_MULTILAYER ist bereits der Standardwert eines frischen Knotens. format.color_depth = '32' wird weiterhin angenommen. Tiefenebene beim Lesen herausgreifen.",
+    "weg_2_einzeldateien": "file_output_items.new('RGBA','Tiefe') anlegen, dann item.override_node_format = True setzen — DANACH nimmt item.format.file_format sowohl OPEN_EXR als auch PNG an. Ergibt Einzeldateien je Pass.",
+    "beide_wege_verifiziert": "ja, am Geraet mit Blender 5.2.0 LTS, vier Proben --background",
+    "entscheid_offen": "Welcher Weg passt, haengt an eurem Lesepfad — den kenne ich nicht.",
+    "fortschritt": "3. Anlauf. Bisher gefallen: Scene.node_tree -> compositing_node_group (auf-01), base_path -> directory/file_name (auf-02), jetzt das Format. Jede Stufe kam weiter."
+  },
   "umgebung": {
     "gpu": "NVIDIA GeForce RTX 5090",
     "leistungsgrenze_w": 400.0,
