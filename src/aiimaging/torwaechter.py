@@ -68,6 +68,29 @@ ENTSCHEIDUNG_ABLEHNEN_KONVERSION = "ablehnen_konversion"
 MIN_GEBAEUDE_M = 1.0
 MAX_GEBAEUDE_M = 1000.0
 
+#: Bis zum Wievielfachen der Gebäudegrenze ein Modell als **Kontextmodell** gilt statt
+#: als Einheitenfehler.
+#:
+#: An 40 echten Dateien (`auf-20260818-08`) fielen zwei Modelle mit 1002 m und 1127 m
+#: hier durch — Gelände samt Umgebung, Einheit völlig in Ordnung. Abgelehnt werden sie
+#: weiterhin; die Kette rechnet mit einem Bauwerk. Aber die Meldung nennt jetzt die
+#: richtige Ursache, statt einen Einheitenfehler auszuschliessen und sonst zu schweigen.
+#:
+#: Die Grenze ist grosszügig: Ein echter Faktor-1000-Fehler landet bei mindestens
+#: 1000 m **mal** der wahren Gebäudegrösse, also weit jenseits davon. Eine Verwechslung
+#: der beiden Fälle ist damit praktisch ausgeschlossen.
+KONTEXTMODELL_FAKTOR = 100.0
+
+#: Ab welcher Grösse ein angenommenes Bauwerk **glaubwürdig** ist — für die Prüfung einer
+#: Einheiten-Hypothese, nicht für die Annahme der Geometrie.
+#:
+#: `MIN_GEBAEUDE_M` steht bei 1 m und ist bewusst weit: Ein einzelnes Bauteil darf
+#: durchgehen. Für die Frage „ist das ein Millimeterfehler?" taugt diese Schranke aber
+#: nicht — ein Kontextmodell von 1002 m ergäbe unter dieser Hypothese 1,002 m, was formal
+#: in der Spanne liegt und praktisch kein Bauwerk ist. Drei Meter sind eine Geschosshöhe;
+#: darunter erklärt die Hypothese nichts mehr, sie verschiebt nur die Zahl.
+MIN_GLAUBWUERDIG_M = 3.0
+
 # Ab welchem Koordinatenbetrag float32 zu grob wird.
 #
 # 1e5 m ergibt eine Quantisierung von 1e5 · 2^-23 ≈ 0.012 m — gut ein Zentimeter, die
@@ -195,8 +218,19 @@ def pruefe_massstab(bbox) -> dict:
 
     if not plausibel:
         # Beide Kandidaten in derselben Leserichtung prüfen: gemessen / faktor = wahr.
+        #
+        # Die untere Schranke ist hier **nicht** `MIN_GEBAEUDE_M`, und das ist der Kern
+        # der Korrektur vom 18.08.2026: Ein Kontextmodell von 1002 m ergibt unter der
+        # Millimeter-Hypothese 1,002 m — formal in der Spanne, praktisch kein Bauwerk.
+        # Genau daran sind an 40 echten Dateien zwei Geländemodelle als „Einheitenfehler"
+        # gemeldet worden (`auf-20260818-08`).
+        #
+        # Eine Hypothese ist nur so gut wie das, was sie erklärt. „Millimeter" erklärt
+        # etwas erst dann, wenn dabei ein **glaubwürdiges** Bauwerk herauskommt — nicht,
+        # wenn das Ergebnis gerade so über der Nulllinie liegt.
         for kandidat in (1000.0, 0.001):
-            if MIN_GEBAEUDE_M <= groesste / kandidat <= MAX_GEBAEUDE_M:
+            angenommen = groesste / kandidat
+            if MIN_GLAUBWUERDIG_M <= angenommen <= MAX_GEBAEUDE_M:
                 faktor = kandidat
                 break
 
@@ -218,6 +252,32 @@ def pruefe_massstab(bbox) -> dict:
             warnungen.append(
                 "Bounding Box ohne Ausdehnung — beide Ecken fallen zusammen. Leere oder "
                 "vollständig degenerierte Geometrie; es gibt nichts zu rendern."
+            )
+        elif MAX_GEBAEUDE_M < groesste <= MAX_GEBAEUDE_M * KONTEXTMODELL_FAKTOR:
+            # BEFUND AN 40 ECHTEN DATEIEN (`auf-20260818-08`, 18.08.2026): Zwei Modelle
+            # mit 1002 m und 1127 m grösster Kante wurden hier abgelehnt — mit der
+            # Meldung, der Abstand entspreche keinem Einheitenwechsel. Das stimmte und
+            # half niemandem: **Es waren Kontextmodelle**, also Gelände samt Umgebung,
+            # und ihre Einheit war völlig in Ordnung.
+            #
+            # Der Torwächter lehnt sie weiterhin ab, und das ist richtig — die Kette
+            # rechnet mit einem Bauwerk, und eine Kamera auf einen Quadratkilometer
+            # gerichtet liefert eine Tiefenkarte, in der das Haus ein paar Pixel misst.
+            # Aber er sagt jetzt, **was** er sieht, statt nur, was es nicht ist.
+            #
+            # Der Unterschied ist derselbe wie bei `herkunft.pruefe_einheit_gegen_masse`:
+            # Ein Verdacht kostet jedes Mal einen Menschen, der nachsieht; eine Diagnose
+            # sagt ihm, was zu tun ist.
+            warnungen.append(
+                f"Grösste Kante {groesste:.4g} m — über der Gebäudegrenze "
+                f"({MAX_GEBAEUDE_M:g} m), aber **kein Einheitenfehler**: Ein Faktor 1000 "
+                f"läge bei {groesste / 1000.0:.4g} m oder {groesste * 1000.0:.4g} m, und "
+                f"beides ist keine Gebäudegrösse. Das sieht nach einem **Kontext- oder "
+                f"Geländemodell** aus. Zwei von 40 echten Dateien waren genau das "
+                f"(1002 m und 1127 m). Zu rendern ist so ein Modell nicht sinnvoll: Eine "
+                f"Kamera auf einen Quadratkilometer liefert eine Tiefenkarte, in der das "
+                f"Bauwerk ein paar Bildpunkte misst. Wer es trotzdem braucht, schneidet "
+                f"den Ausschnitt vorher zu — in der Herkunftssoftware, nicht hier."
             )
         else:
             warnungen.append(

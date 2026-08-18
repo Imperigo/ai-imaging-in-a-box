@@ -469,7 +469,10 @@ def test_ein_komma_im_autorennamen_verschiebt_die_felder_nicht(tmp_path, basis_i
     kopf = lies_ifc_kopf(schreibe(tmp_path, "bau.ifc", text))
 
     assert kopf["herkunft"] == "ArchiCAD"
-    assert kopf["erzeuger"] == "IFC add-on 27.0 | ARCHICAD-64 27.0.0 GRAPHISOFT"
+    # Reihenfolge seit dem 18.08.2026: Feld 6 (originating_system) zuerst, dann Feld 5.
+    # An 40 echten Dateien trug Feld 5 in zwei von drei Fällen die Exportbibliothek statt
+    # des Programms — `DDS_IFC` bei ArchiCAD, `ODA SDAI` bei Revit.
+    assert kopf["erzeuger"] == "ARCHICAD-64 27.0.0 GRAPHISOFT | IFC add-on 27.0"
 
 
 # ======================================================================================

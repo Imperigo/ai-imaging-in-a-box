@@ -207,10 +207,18 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Eintrag der Registry — sein Exporter hat einen Schalter, den die Datei nicht
       mitteilt. `fordere_up_axis` nimmt eine *Vermutung* darum nicht an; sie wäre ein
       Default mit besserer Begründung, und Phase 0 wollte an dieser Stelle keinen.
-- [ ] **Connectors, zweite Hälfte** — an **echten** Dateien prüfen. Die Registry ist aus
-      Normen und Dokumentation abgeleitet; keine ArchiCAD-, Revit- oder Rhino-Datei wurde
-      je gesehen. Sicher ist nur die IFC-Einheitenzeile (Norm) und die Z-up-Festlegung
-      (ISO 16739). Welche Zeichenkette ArchiCAD in `FILE_NAME` schreibt, ist es nicht.
+- [x] **Connectors, zweite Hälfte** — erledigt 2026-08-18 (`auf-20260818-08`), an **40
+      echten IFC-Dateien**. 40/40 gedeutet, 40/40 Erzeuger erkannt, **kein einziges
+      `herkunft: null`**, kein einziger `HerkunftError`. Drei Erzeuger in freier
+      Wildbahn: IfcOpenShell (28), ArchiCAD (10), Revit (2).
+      **Zwei echte kaputte Exporte gefunden** — Millimeter erklärt, Meter geliefert.
+      Nicht theoretisch: 2 von 40. Genau der Fall, für den
+      `pruefe_einheit_gegen_masse` gebaut wurde.
+      *Ehrliche Grenze:* Alle 40 stammen aus **einem** Büro. Dass Rhino, Vectorworks oder
+      Allplan erkannt werden, ist damit **nicht** belegt.
+- [ ] **Connectors: die übrigen Autorenprogramme** — Rhino, Vectorworks, Allplan. Die
+      Registry führt sie teils, gesehen hat sie keines. Rhino bleibt der Sonderfall: Seine
+      Up-Achse ist an der Datei gar nicht entscheidbar.
 - [x] **LoRA-Stiltraining als Subprozess-Naht** — erledigt 2026-08-18, `lora.py`.
       Beide Trainer sind jetzt **am Original geprüft** statt aus Sekundärquelle:
       kohya-ss/sd-scripts Apache-2.0, ostris/ai-toolkit MIT.

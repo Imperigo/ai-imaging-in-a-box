@@ -238,7 +238,7 @@ def lies_ifc_kopf(pfad) -> dict:
         warnungen.append("FILE_SCHEMA nicht gefunden — die Schemafassung bleibt offen.")
 
     erzeuger = _erzeuger_aus_file_name(text)
-    herkunft = _erkenne(erzeuger or "")
+    herkunft = _erkenne_aus_file_name(text)
 
     einheit, vorsatz, faktor = _laengeneinheit(text, warnungen)
 
@@ -318,12 +318,28 @@ def _step_felder(inhalt: str) -> list[str]:
     return felder
 
 
-#: Position der beiden Felder in ``FILE_NAME``, die das erzeugende Programm nennen.
+#: Position der beiden Felder in ``FILE_NAME``, die das erzeugende Programm nennen —
+#: **in der Reihenfolge ihrer Verlässlichkeit.**
 #:
-#: ISO 10303-21 legt die Reihenfolge fest:
-#: ``FILE_NAME(name, time_stamp, author, organization, preprocessor_version,
-#: originating_system, authorization)`` — also Index 4 und 5, nullbasiert.
-FILE_NAME_ERZEUGERFELDER = (4, 5)
+#: ISO 10303-21 legt fest: ``FILE_NAME(name, time_stamp, author, organization,
+#: preprocessor_version, originating_system, authorization)`` — Index 4 und 5, nullbasiert.
+#:
+#: BEFUND AN 40 ECHTEN DATEIEN (`auf-20260818-08`, HomeStation, 18.08.2026): **In zwei
+#: von drei Fällen trägt Feld 5 einen FREMDEN Namen** — die Exportbibliothek, nicht das
+#: Programm:
+#:
+#:   ``'DDS_IFC v3.0 | Graphisoft - Archicad - 28.4.0'``       (ArchiCAD, 10 Dateien)
+#:   ``'ODA SDAI 24.3 | Autodesk Revit 24.1.0.66 …'``          (Revit, 2 Dateien)
+#:   ``'IfcOpenShell 0.8.5-… | IfcOpenShell 0.8.5-…'``         (28 Dateien, beide gleich)
+#:
+#: Erkannt wurde trotzdem alles, weil Feld 6 in derselben Zeichenkette steckte. Das ist
+#: aber Glück und keine Eigenschaft: Hiesse eine Exportbibliothek irgendwann „Rhino…"
+#: oder „…Revit…", ergäbe Feld 5 eine **falsche** Herkunft. Darum wird ab jetzt Feld 6
+#: zuerst befragt, und Feld 5 nur, wenn dort nichts steht.
+FILE_NAME_ERZEUGERFELDER = (5, 4)
+
+#: Nur das Feld, das nach der Norm das erzeugende **Programm** trägt.
+FILE_NAME_ORIGINATING_SYSTEM = 5
 
 
 def _erzeuger_aus_file_name(text: str) -> str | None:
@@ -355,15 +371,48 @@ def _erzeuger_aus_file_name(text: str) -> str | None:
     if not treffer:
         return None
     felder = _step_felder(treffer.group(1))
-    teile: list[str] = []
-    for i in FILE_NAME_ERZEUGERFELDER:
-        if i < len(felder):
-            wert = felder[i].strip()
-            if wert.startswith("'") and wert.endswith("'") and len(wert) >= 2:
-                wert = wert[1:-1].replace("''", "'")
-            if wert and wert != "$":
-                teile.append(wert)
+
+    def _feld(i: int) -> str | None:
+        if i >= len(felder):
+            return None
+        wert = felder[i].strip()
+        if wert.startswith("'") and wert.endswith("'") and len(wert) >= 2:
+            wert = wert[1:-1].replace("''", "'")
+        return wert if wert and wert != "$" else None
+
+    teile = [w for w in (_feld(i) for i in FILE_NAME_ERZEUGERFELDER) if w]
     return " | ".join(teile) or None
+
+
+def _erkenne_aus_file_name(text: str) -> "Herkunft | None":
+    """Den Erzeuger erkennen — **Feld 6 zuerst, Feld 5 nur als Rückfall.**
+
+    Beide Felder wandern in die *Auskunft* (``erzeuger``), aber nicht beide in die
+    *Erkennung*. Der Grund steht bei :data:`FILE_NAME_ERZEUGERFELDER`: An 40 echten
+    Dateien trug Feld 5 in zwei von drei Fällen die **Exportbibliothek** statt des
+    Programms — `DDS_IFC` bei ArchiCAD, `ODA SDAI` bei Revit.
+
+    Dass die Erkennung dort trotzdem stimmte, lag daran, dass Feld 6 in derselben
+    zusammengeklebten Zeichenkette steckte. Das ist Glück, keine Eigenschaft: Hiesse eine
+    Exportbibliothek einmal „Rhino…", ergäbe Feld 5 eine **falsche** Herkunft — und eine
+    falsche Herkunft ist schlimmer als keine, weil sie eine Up-Achse zur Bestätigung
+    vorschlägt.
+    """
+    treffer = _RE_FILENAME.search(text)
+    if not treffer:
+        return None
+    felder = _step_felder(treffer.group(1))
+
+    def _feld(i: int) -> str:
+        if i >= len(felder):
+            return ""
+        wert = felder[i].strip()
+        if wert.startswith("'") and wert.endswith("'") and len(wert) >= 2:
+            wert = wert[1:-1].replace("''", "'")
+        return "" if wert == "$" else wert
+
+    return (_erkenne(_feld(FILE_NAME_ORIGINATING_SYSTEM))
+            or _erkenne(_feld(FILE_NAME_ERZEUGERFELDER[1])))
 
 
 def _laengeneinheit(text: str, warnungen: list[str]) -> tuple[str | None, str | None, float | None]:
@@ -639,7 +688,7 @@ def pruefe_einheit_gegen_masse(kopf: dict, bbox) -> dict:
 __all__ = [
     "BELEGT", "HERKUENFTE", "HerkunftError", "Herkunft", "LESEFENSTER_BYTE",
     "SI_VORSAETZE", "UNBEKANNT", "VERMUTET",
-    "FILE_NAME_ERZEUGERFELDER",
+    "FILE_NAME_ERZEUGERFELDER", "FILE_NAME_ORIGINATING_SYSTEM",
     "deute", "fordere_up_axis", "lies_gltf_kopf", "lies_ifc_kopf",
     "pruefe_einheit_gegen_masse",
 ]
