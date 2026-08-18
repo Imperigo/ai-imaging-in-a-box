@@ -1,0 +1,16 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260818-02",
+  "status": "fehler",
+  "beendet": "2026-08-18T11:44:16Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {},
+  "umgebung": {
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "leistungsgrenze_w": 400.0,
+    "python": "3.14.4",
+    "blender": "/snap/bin/blender"
+  },
+  "fehler": "SeamError: Blender schrieb keinen Report (Code 0):\n/home/andrin-baumann/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py:324: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0\n  if not getattr(welt, \"use_nodes\", False) and hasattr(welt, \"use_nodes\"):\nTraceback (most recent call last):\n  File \"/home/andrin-baumann/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py\", line 589, in <module>\n    sys.exit(main())\n             ~~~~^^\n  File \"/home/andrin-baumann/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py\", line 503, in main\n    _compositor_auf_tiefe(out_dir)\n    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/home/andrin-baumann/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py\", line 346, in _compositor_auf_tiefe\n    ausgabe.base_path = str(out_dir)\n    ^^^^^^^^^^^^^^^^^\nAttributeError: 'CompositorNodeOutputFile' object has no attribute 'base_path'"
+}
