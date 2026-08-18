@@ -358,3 +358,41 @@ def test_die_antwort_passt_ohne_umbau_in_einen_renderauftrag():
     )
     assert auftrag.prompt.startswith("a calm, precise architectural photograph")
     assert auftrag.controlnet_staerke == 0.9
+
+
+def test_die_handschrift_wiederholt_den_kompositionsbaustein_nicht():
+    """Ein Mangel meines eigenen ersten Entwurfs, jetzt als Regel.
+
+    Modellfoto sagte in der Handschrift „a photograph of a physical architectural model"
+    und im Kompositionsbaustein gleich noch einmal „photograph of a physical
+    architectural model". Doppelt genannt heisst im Bildmodell **doppelt gewichtet** —
+    der Stil überschreibt dann sich selbst und drängt alles andere aus dem Bild.
+
+    Geprüft wird auf gemeinsame Wortfolgen von drei Wörtern; kürzere Überschneidungen
+    („of the", „in a") sind normale Sprache und kein Mangel.
+    """
+    def dreiergruppen(text):
+        w = [x.strip(",.") for x in text.lower().split()]
+        return {" ".join(w[i:i + 3]) for i in range(len(w) - 2)}
+
+    for stil in p.STILE.values():
+        if not stil.handschrift:
+            continue
+        komposition = p.baustein("composition", stil.bausteine["composition"]).text
+        gemeinsam = dreiergruppen(stil.handschrift) & dreiergruppen(komposition)
+        assert not gemeinsam, f"{stil.slug}: doppelt genannt — {sorted(gemeinsam)}"
+
+
+def test_kein_stil_verlangt_sonne_und_geschlossene_wolkendecke_zugleich():
+    """Der zweite Mangel meines Entwurfs: Morgennebel hatte beides.
+
+    Ein widersprüchlicher Prompt wird nicht gemittelt. Das Modell entscheidet sich für
+    eine Lesart — für die, die in seinen Trainingsbildern häufiger war —, und welche das
+    ist, weiss niemand. Ein Bild, dessen Zustandekommen niemand erklären kann, ist für
+    dieses Projekt wertlos, auch wenn es schön ist.
+    """
+    for stil in p.STILE.values():
+        text = p.komponiere(stil.slug)["prompt"].lower()
+        sonnig = any(w in text for w in ("sunlight", "sun raking", "midday sun"))
+        zu = any(w in text for w in ("heavy low clouds", "uniform overcast"))
+        assert not (sonnig and zu), stil.slug

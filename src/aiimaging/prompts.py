@@ -419,8 +419,10 @@ _stil(Stil(
                "sky": "bedeckt_gleichmaessig", "atmosphere": "klar",
                "material_detail": "fein_strukturiert", "vegetation": "keine",
                "people": "keine"},
-    handschrift="a photograph of a monochrome physical architectural model "
-                "on a neutral studio surface",
+    # Die Handschrift ergänzt den Kompositionsbaustein, sie wiederholt ihn nicht: Der
+    # sagt schon „physical architectural model, studio backdrop". Hier steht, was er
+    # NICHT sagt — dass das Modell einfarbig ist.
+    handschrift="the model built in a single pale material, no applied colour",
     negativ="photorealistic environment, sky background, people",
     treue_geeignet=True,
     empfohlene_controlnet_staerke=0.95,
@@ -454,7 +456,11 @@ _stil(Stil(
         "Tiefer Nebel um den Fuss, oben klar. Gibt einem Baukörper Tiefe und "
         "Massstab — und verdeckt genau das, was die Geometrie-QA misst."
     ),
-    bausteine={"composition": "grossformat", "light_time": "vormittag",
+    # `weich_bedeckt` und nicht `vormittag`: Eine tiefstehende Sonne UND schwere tiefe
+    # Wolken UND Bodennebel schliessen sich gegenseitig aus. Ein widersprüchlicher Prompt
+    # wird nicht etwa gemittelt — das Modell entscheidet sich für eine Lesart, und zwar
+    # für die, die in seinen Trainingsbildern häufiger war. Welche das ist, weiss niemand.
+    bausteine={"composition": "grossformat", "light_time": "weich_bedeckt",
                "sky": "zugezogen", "atmosphere": "morgennebel",
                "material_detail": "bewittert", "vegetation": "baumbestand",
                "people": "keine"},
@@ -480,8 +486,8 @@ _stil(Stil(
                "sky": "bedeckt_gleichmaessig", "atmosphere": "klar",
                "material_detail": "neutral", "vegetation": "sparsam",
                "people": "einzelne_ferne"},
-    handschrift="a hand-drawn architectural sketch, graphite lines with light "
-                "watercolour, the paper left visible at the edges",
+    handschrift="drawn by hand on textured paper, the drawing fading out "
+                "towards the edges of the sheet",
     negativ="photorealistic, photographic texture, sharp photographic detail",
     treue_geeignet=False,
     empfohlene_controlnet_staerke=0.6,
