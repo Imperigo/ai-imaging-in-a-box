@@ -51,7 +51,9 @@ import time
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
-from aiimaging import bildlesen, contracts, geometrie_qa, render, seams, torwaechter
+from aiimaging import (
+    bildlesen, contracts, geometrie_qa, render, seams, tiefenschaetzer, torwaechter,
+)
 from aiimaging.graph import ArtefaktCache, Graph, GraphError, Knoten, inhalts_hash
 
 # --------------------------------------------------------------------------------------
@@ -169,6 +171,9 @@ def baue_kette(
     qa: bool = True,
     qa_schwelle: float = geometrie_qa.SCHWELLE_GEOMETRIE,
     hintergrund: float | None = None,
+    schaetzer: str = tiefenschaetzer.VORGABE_TIEFENSCHAETZER,
+    hintergrund_strategie: str = tiefenschaetzer.HG_WIE_SOLL,
+    hintergrund_anteil: float | None = None,
 ) -> Graph:
     """Die Standardkette als Graph: ``geometrie → multipass → render → qa``.
 
@@ -191,6 +196,10 @@ def baue_kette(
         aufloesung, samples, beauty, material_id: siehe ``seams.glb_zu_multipass``.
         qa: ``False`` lässt den QA-Knoten weg. Für Läufe, die nur ein Bild wollen.
         qa_schwelle, hintergrund: siehe ``geometrie_qa.geometrie_gate``.
+        schaetzer, hintergrund_strategie, hintergrund_anteil: siehe
+            ``tiefenschaetzer.qa_gegen_soll``. Der Schätzername gehört in die Parameter
+            und damit in den Hash: Ein Urteil, das mit einem anderen Schätzer entstanden
+            ist, ist ein anderes Urteil.
 
     Returns:
         Ein ``Graph`` mit drei bzw. vier Knoten. Er wird **nicht** ausgeführt — Bau und
@@ -276,6 +285,10 @@ def baue_kette(
             params={
                 "schwelle": float(qa_schwelle),
                 "hintergrund": None if hintergrund is None else float(hintergrund),
+                "schaetzer": schaetzer,
+                "hintergrund_strategie": hintergrund_strategie,
+                "hintergrund_anteil": (None if hintergrund_anteil is None
+                                       else float(hintergrund_anteil)),
             },
             # Reihenfolge ist Bedeutung: Slot 0 = Soll (Multipass), Slot 1 = Ist (Render).
             eingaenge=(KNOTEN_MULTIPASS, KNOTEN_RENDER),
@@ -375,77 +388,90 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     return bericht
 
 
-def _fuehre_render(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
-    """Tiefenkarte + Prompt → Bild, über ``render.rendere``.
+def render_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
+    """Baut die Render-Stufe — mit optional injiziertem Bildmodell.
 
-    Ohne injizierten Ausführer braucht diese Funktion Gewichte und eine GPU; sie ist die
-    einzige Stufe der Kette, die das tut. ``render.rendere`` beantwortet auch das
-    Scheitern mit einem Ergebnis (``status='abgelehnt'``/``'fehler'``) statt mit einer
-    Ausnahme — das passt hier unverändert durch, weil dieses Modul denselben Statuswörtern
-    folgt.
+    Warum eine Fabrik und nicht einfach eine Funktion: Ein Modell ist ein Objekt und kann
+    nicht in ``Knoten.params`` stehen, denn die müssen JSON-fähig sein (sie gehen in den
+    Hash). Die Naht ``modell=`` aus ``render.rendere`` muss also von aussen an den
+    Ausführer gebunden werden, bevor der Lauf beginnt. Wer nichts injiziert, bekommt die
+    Vorgabe: ``render.rendere`` lädt selbst — und braucht dann Gewichte und GPU.
+
+    ``render.rendere`` beantwortet auch das Scheitern mit einem Ergebnis
+    (``status='abgelehnt'``/``'fehler'``) statt mit einer Ausnahme. Das passt hier
+    unverändert durch, weil dieses Modul dieselben Statuswörter benutzt.
     """
-    if not eingaben:
-        return {"status": STATUS_FEHLER, "error": "Render ohne Vorgänger — keine Tiefenkarte."}
-    multipass = eingaben[0]
-    depth_png = multipass.get("depth_png")
-    if not depth_png:
-        return {"status": STATUS_FEHLER,
-                "error": f"Vorgänger lieferte kein 'depth_png': {sorted(multipass)}"}
+    def fuehre_render(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
+        if not eingaben:
+            return {"status": STATUS_FEHLER,
+                    "error": "Render ohne Vorgänger — keine Tiefenkarte."}
+        multipass = eingaben[0]
+        depth_png = multipass.get("depth_png")
+        if not depth_png:
+            return {"status": STATUS_FEHLER,
+                    "error": f"Vorgänger lieferte kein 'depth_png': {sorted(multipass)}"}
 
-    p = knoten.params
-    auftrag = render.RenderAuftrag(
-        depth_png=depth_png,
-        prompt=p["prompt"],
-        negativ_prompt=p["negativ_prompt"],
-        backbone=p["backbone"],
-        seed=p["seed"],
-        schritte=p["schritte"],
-        controlnet_staerke=p["controlnet_staerke"],
-        denoise=p["denoise"],
-        beauty_png=multipass.get("beauty_png") if p.get("nutze_beauty", True) else None,
-        ausgabe_png=str(out_dir / "bild.png"),
-    )
-    return render.rendere(auftrag)
+        p = knoten.params
+        auftrag = render.RenderAuftrag(
+            depth_png=depth_png,
+            prompt=p["prompt"],
+            negativ_prompt=p["negativ_prompt"],
+            backbone=p["backbone"],
+            seed=p["seed"],
+            schritte=p["schritte"],
+            controlnet_staerke=p["controlnet_staerke"],
+            denoise=p["denoise"],
+            beauty_png=multipass.get("beauty_png") if p.get("nutze_beauty", True) else None,
+            ausgabe_png=str(out_dir / "bild.png"),
+        )
+        return render.rendere(auftrag, modell=modell, _lader=_lader)
+
+    return fuehre_render
 
 
-def _fuehre_qa(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
-    """Soll-Tiefe (Multipass) gegen Ist-Tiefe (Render) — das Geometrie-Gate.
+def qa_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
+    """Baut die QA-Stufe — Soll aus dem Multipass, Ist aus dem erzeugten Bild.
+
+    Der Bogen schliesst sich hier: ``bildlesen.tiefen_aus_report`` liefert das Soll in
+    Metern, ``tiefenschaetzer.qa_gegen_soll`` schätzt das Ist aus dem Bild, markiert
+    dessen Hintergrund und lässt ``geometrie_qa.geometrie_gate`` urteilen. Die Naht
+    ``modell=`` wird wie beim Render von aussen gebunden (siehe ``render_ausfuehrer``);
+    ohne Injektion lädt der Schätzer selbst und braucht Gewichte.
 
     **Ein nicht bestandenes Gate ist kein gescheiterter Knoten.** Der Knoten hat gerechnet
     und ein Urteil geliefert; dass das Urteil „durchgefallen" lautet, ist sein Ergebnis
-    und nicht sein Fehlschlag. Würde hier ``status='fehler'`` gesetzt, verschwände das
-    Urteil hinter einem Skip — und ausgerechnet der interessanteste Fall des Projekts,
-    die erkannte Halluzination, wäre nicht mehr als Messwert lesbar.
+    und nicht sein Fehlschlag. Würde daraus ``status='fehler'``, verschwände das Urteil
+    hinter einem Skip — und ausgerechnet der interessanteste Fall des Projekts, die
+    erkannte Halluzination, wäre nicht mehr als Messwert lesbar. ``qa_gegen_soll`` hält es
+    genauso: ``status`` beschreibt die Messung, ``bestanden`` das Urteil.
 
-    Die Ist-Seite ist der offene Punkt: Sie braucht eine Tiefenschätzung **aus dem
-    erzeugten Bild**, und die gibt es im Kern noch nicht (``docs/PLAN.md``, Phase 4).
-    Solange sie fehlt, meldet diese Stufe das als Fehler mit Begründung — sie erfindet
-    keine Ist-Werte und lässt den Vergleich auch nicht stillschweigend aus.
+    ``breite`` und ``hoehe`` aus dem Soll werden mitgegeben, damit eine Ist-Karte anderer
+    Grösse **auffällt**. Ohne diesen Abgleich verglichen sich zwei Karten punktweise, die
+    verschiedene Bildausschnitte zeigen — und das Ergebnis sähe wie eine Messung aus.
     """
-    if len(eingaben) < 2:
-        return {"status": STATUS_FEHLER,
-                "error": "QA braucht zwei Eingänge: Slot 0 Multipass (Soll), Slot 1 Render (Ist)."}
-    multipass, render_ergebnis = eingaben[0], eingaben[1]
+    def fuehre_qa(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
+        if len(eingaben) < 2:
+            return {"status": STATUS_FEHLER,
+                    "error": ("QA braucht zwei Eingänge: Slot 0 Multipass (Soll), "
+                              "Slot 1 Render (Ist).")}
+        multipass, render_ergebnis = eingaben[0], eingaben[1]
+        bild_png = render_ergebnis.get("bild_png")
+        if not bild_png:
+            return {"status": STATUS_FEHLER,
+                    "error": f"Vorgänger lieferte kein 'bild_png': {sorted(render_ergebnis)}"}
 
-    ist = render_ergebnis.get("ist_tiefen")
-    if ist is None:
-        return {
-            "status": STATUS_FEHLER,
-            "error": (
-                "Für die Ist-Seite fehlt eine Tiefenschätzung aus dem erzeugten Bild "
-                "(Feld 'ist_tiefen' im Render-Ergebnis). Die monokulare Tiefenschätzung "
-                "ist noch nicht gebaut (PLAN.md, Phase 4). Es wird nichts geschätzt und "
-                "nichts übersprungen: Ein Gate ohne Messung wäre ein Freispruch ohne "
-                "Grundlage."
-            ),
-        }
+        soll, breite, hoehe = bildlesen.tiefen_aus_report(multipass)
+        p = knoten.params
+        return tiefenschaetzer.qa_gegen_soll(
+            bild_png, soll,
+            schaetzer=p["schaetzer"], modell=modell, _lader=_lader,
+            schwelle=p["schwelle"], hintergrund=p.get("hintergrund"),
+            hintergrund_strategie=p["hintergrund_strategie"],
+            hintergrund_anteil=p.get("hintergrund_anteil"),
+            breite=breite, hoehe=hoehe,
+        )
 
-    soll, breite, hoehe = bildlesen.tiefen_aus_report(multipass)
-    p = knoten.params
-    urteil = geometrie_qa.geometrie_gate(
-        soll, ist, schwelle=p["schwelle"], hintergrund=p.get("hintergrund"),
-    )
-    return {"status": STATUS_OK, "error": None, "breite": breite, "hoehe": hoehe, **urteil}
+    return fuehre_qa
 
 
 #: Knotenart → Ausführerfunktion. **Die Test-Naht dieses Moduls.**
@@ -458,8 +484,8 @@ def _fuehre_qa(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
 AUSFUEHRER: dict[str, Callable[..., dict]] = {
     ART_GEOMETRIE: _fuehre_geometrie,
     ART_MULTIPASS: _fuehre_multipass,
-    ART_RENDER: _fuehre_render,
-    ART_QA: _fuehre_qa,
+    ART_RENDER: render_ausfuehrer(),
+    ART_QA: qa_ausfuehrer(),
 }
 
 
@@ -795,5 +821,5 @@ __all__ = [
     "KNOTEN_GEOMETRIE", "KNOTEN_MULTIPASS", "KNOTEN_QA", "KNOTEN_RENDER",
     "STATUS_ABGELEHNT", "STATUS_FEHLER", "STATUS_OK", "STATUS_UEBERSPRUNGEN",
     "KettenError",
-    "baue_kette", "fuehre_aus", "standard_out_dir",
+    "baue_kette", "fuehre_aus", "qa_ausfuehrer", "render_ausfuehrer", "standard_out_dir",
 ]
