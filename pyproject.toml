@@ -32,6 +32,11 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest"]
+# Nur fuer die Anbindung an KosmoOrbit. Das MCP-SDK ist MIT (geprueft 2026-08-18 gegen
+# die PyPI-Metadaten von mcp 2.0.0) und damit unter Regel 1 zulaessig, zieht aber 19
+# transitive Abhaengigkeiten nach, die NICHT einzeln geprueft sind. Darum optional:
+# Der Kern laeuft ohne, nur die Cockpit-Anbindung nicht.
+mcp = ["mcp>=2.0"]
 
 # src-Layout: der importierbare Code liegt unter src/, damit Tests gegen das
 # installierte Paket laufen und nicht versehentlich gegen das Arbeitsverzeichnis.

@@ -1,6 +1,6 @@
 # Vorgehensplan
 
-**Angelegt:** 2026-08-14 nach der ersten Sitzung · **Stand:** Phase 0 offen, nichts gebaut
+**Angelegt:** 2026-08-14 · **Stand:** Phasen 0–2 erledigt (2026-08-14 / 08-18), Phase 3 offen
 
 Dieser Plan ist die verbindliche Reihenfolge. Er wird bei jeder Sitzung fortgeschrieben,
 nicht ersetzt. Was erledigt ist, bleibt mit Datum stehen.
@@ -40,16 +40,14 @@ entsteht die Kante nicht, und zwar **ohne Fehlermeldung**.
 Der dünnste Pfad, der jede der vier Regeln einmal berührt. Fast ohne Funktionalität —
 absichtlich. Bricht hier eine Annahme, ist es bei 500 Zeilen zu erfahren, nicht bei 5 000.
 
-- [x] **Synthetische Testgeometrie** — erledigt: 8x5x3 m, deterministisch, stdlib-only — Skript, das eine kleine IFC im Repo erzeugt (Regel 3;
-      macht alles Weitere überhaupt prüfbar)
-- [x] **IFC → glb** als Subprozess — erledigt und ausgeführt: 5 Bauteile, 60 Dreiecke in eigenem `.venv-ifc`
-      → *Praxistest des CGAL-Befunds: trägt die Grenze gegen GPL-Code?*
-- [x] **glb → Blender headless → Tiefenkarte** — erledigt und ausgeführt: EXR mit echten Meterwerten (27.3–39.5 m) über `blender --background`
-      → *Praxistest von Regel 2; zugleich die technisch heikelste Stelle (Compositor,
-      EXR, Normalisierung auf nah = hell)*
-- [x] **Vertrag `render-scene.json`** — erledigt in `contracts.py` (up_axis Pflichtfeld) mit JSON-Schema
-- [x] **Tests ab der ersten Zeile** — erledigt: 76 grün
-- [x] **`NOTICE`** — erledigt: Blender GPL, IfcOpenShell LGPL, CGAL GPL — Blender GPL, IfcOpenShell LGPL, CGAL GPL
+- [x] **Synthetische Testgeometrie** — erledigt: 8×5×3 m, deterministisch, stdlib-only
+- [x] **IFC → glb** als Subprozess im eigenen `.venv-ifc` — ausgeführt: 5 Bauteile, 60 Dreiecke.
+      *Der CGAL-Befund ist damit praktisch entschärft: GPL-Code läuft jenseits der Grenze.*
+- [x] **glb → Blender headless → Tiefenkarte** — ausgeführt: EXR mit echten Meterwerten
+      (27,3–39,5 m). *Regel 2 in der Praxis bestätigt.*
+- [x] **Vertrag `render-scene.json`** — in `contracts.py`, `up_axis` als Pflichtfeld
+- [x] **Tests ab der ersten Zeile** — 82 grün nach den Korrekturen
+- [x] **`NOTICE`** — Blender GPL, IfcOpenShell LGPL, CGAL GPL deklariert
 
 **Enthält bewusst nicht:** keine KI, kein Graph-Kern, kein MCP, keine QA.
 
@@ -71,17 +69,26 @@ synthetischen IFC eine korrekte Tiefenkarte entsteht — und ein Test das festh�
 
 **Aufwand:** mittel · **Setzt voraus:** Phase 0 und 1
 
-- [ ] **Graph-Kern**: typisierter DAG, topologische Sortierung, Artefakt-Cache mit
-      Content-Hashing, serialisierbares Format. Klein halten — die Knoten rufen
-      `diffusers`, sie bauen ComfyUIs Knoten-Zoo nicht nach.
-- [ ] **Auftragsverwaltung**: Auftrag/Freigabe/Status (`awaiting_approval`), Muster aus
-      KosmoVis `render_job_store.py`
-- [ ] **MCP-Schicht**: `…_enqueue_render` + `…_query_render`, je mit `inputSchema` **und**
-      `outputSchema`, Ergebnis in `structuredContent`, Feldnamen aus Phase 0
-- [ ] Eingabe-Schemas **nicht** `additionalProperties: false`
+- [x] **Graph-Kern** — `graph.py`: typisierter DAG, stabile topologische Sortierung,
+      Artefakt-Cache mit Content-Hashing, serialisierbar. Klein gehalten.
+- [x] **Auftragsverwaltung** — `jobs.py`: Zustandsautomat mit Endzuständen, atomares
+      Schreiben, Pfad-Trickserei abgewehrt. Das Token landet **nie** auf der Platte.
+- [x] **MCP-Schicht** — drei Werkzeuge (`enqueue_render`, `query_render`,
+      `check_geometry`), Verträge als reine Daten, Server als optionaler Zusatz.
+- [x] Eingabe-Schemas **nicht** `additionalProperties: false` — per Test bewacht
+- [x] **Torwächter** (aus Phase 1 verschoben) — `torwaechter.py`: mm-als-m und LV95
 
 **Fertig, wenn** KosmoOrbit unsere Werkzeuge sieht, verdrahten kann und
 `pipelineReadiness` keine toten Kanten meldet.
+
+**Erledigt 2026-08-18.** KosmoOrbits Prüfung ist in `mcp_schemas.pruefe_verdrahtbarkeit`
+nachgebaut und läuft in `tests/test_mcp_schemas.py` gegen die **echten** Ausgabeschemas
+von `kosmodraw_export_ifc`, `_export_glb` und `_bim_layers`: keine toten Kanten, keine
+fehlenden Pflichtfelder. 315 Tests grün.
+
+*Ehrliche Grenze:* Das belegt die Verdrahtbarkeit, nicht die Registrierung. Ob Kosmo den
+Server tatsächlich annimmt, lässt sich nur in der laufenden Umgebung prüfen — der Weg ist
+aus `register_in_odysseus.sh` bekannt, aber hier nicht ausgeführt.
 
 ---
 

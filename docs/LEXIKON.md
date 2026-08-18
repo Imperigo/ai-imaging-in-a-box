@@ -701,6 +701,46 @@ blockieren.
 
 **Scheduler** — Das Programm, das entscheidet, wann ein Auftrag ausgeführt wird.
 
+**Freigabe-Token** — Eine Zeichenfolge, die eine Befugnis belegt: Erst mit ihr darf ein
+teurer Vorgang starten. *Hier `CONFIRMED_RENDER_*`. Es wird bewusst **nie** in die
+Auftragsdatei geschrieben — läge es darin, wäre die Befugnis mit der Datei weiterreichbar,
+und jeder, der das Verzeichnis lesen kann, hätte sie.*
+
+**Pfad-Trickserei (Path Traversal)** — Ein Angriff, bei dem in einem Namen `..` oder `/`
+steckt, um aus dem vorgesehenen Verzeichnis auszubrechen — etwa `../../etc/passwd`. Abwehr:
+Namen prüfen, bevor sie zu Pfaden werden.
+
+**Positivliste / Verbotsliste** — Zwei Arten zu prüfen: erlauben, was ausdrücklich zulässig
+ist (Positivliste), oder ablehnen, was ausdrücklich schädlich ist (Verbotsliste). *Bei
+Sicherheitsfragen ist die Positivliste die richtige — eine Verbotsliste übersieht immer
+etwas.*
+
+**fsync** — Betriebssystem-Befehl, der erzwingt, dass Geschriebenes tatsächlich auf dem
+Datenträger liegt und nicht nur in einem Zwischenspeicher. Nötig, wenn ein Stromausfall
+zwischen „geschrieben" und „wirklich da" nicht zu Datenverlust führen darf.
+
+**Atomares Schreiben** — Eine Datei so schreiben, dass sie für Leser entweder ganz alt
+oder ganz neu ist, nie halb. Üblich: erst in eine Nebendatei schreiben, dann in einem
+einzigen Schritt umbenennen. *Nötig, weil ein abgebrochener Schreibvorgang sonst einen
+halben Auftrag hinterlässt, den ein Scheduler später für gültig hält.*
+
+**Zustandsautomat** — Ein Ding mit festgelegten Zuständen und festgelegten Übergängen
+dazwischen. Alles, was nicht ausdrücklich erlaubt ist, ist verboten. *Ein Auftrag geht
+von `awaiting_approval` über `queued` und `running` nach `done` — aber nie rückwärts, und
+nie an der Freigabe vorbei.*
+
+**Endzustand** — Ein Zustand, aus dem es keinen Weg hinaus gibt. *`done`, `error` und
+`cancelled`: Ein abgeschlossener Auftrag lässt sich nicht wieder starten.*
+
+**Content-Hashing** — Einen Zwischenspeicher nicht über Dateinamen oder Änderungsdatum
+adressieren, sondern über eine Prüfsumme des **Inhalts**. Identischer Inhalt ergibt
+denselben Schlüssel, auch unter anderem Namen — und geänderter Inhalt einen anderen, auch
+bei gleichem Namen.
+
+**Mutationsprobe** — Eine Gegenprüfung für Tests: Man baut absichtlich einen Fehler ein
+und schaut, ob die Tests ihn bemerken. Tun sie es nicht, bewachen sie nichts. *Ohne das
+kann eine grüne Testreihe blosse Beruhigung sein.*
+
 **Cache** — Zwischenspeicher für teuer berechnete Ergebnisse, damit sie nicht doppelt
 berechnet werden.
 
@@ -805,6 +845,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus Phase 2: Freigabe-Token, Pfad-Trickserei, Positivliste, fsync, atomares Schreiben, Zustandsautomat, Endzustand, Content-Hashing, Mutationsprobe |
 | 2026-08-18 | Ergaenzt aus der Paketierung: pyproject.toml, src-Layout, optionale Abhaengigkeitsgruppe, SPDX |
 | 2026-08-18 | Ergaenzt aus Phase 1: STEP/ISO-10303-21, Extrusion/SweptSolid, GUID, Determinismus, Testfixture, Orchestrator |
 | 2026-08-14 | Ergaenzt aus Phase 0: stdio, Pfad-Sandbox, write-gated, Runner |
