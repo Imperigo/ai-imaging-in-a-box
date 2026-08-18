@@ -1,0 +1,28 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260818-05",
+  "art": "multipass",
+  "beschreibung": "Fuenfter Anlauf, nach dem Weg-B-Vorschlag aus deiner Diagnose zu auf-04. Dein Befund war richtig und hat einen weiteren Fehlversuch gespart: bl_rna...enum_items ist statisch und nennt alle 16 Formate, auch die nicht zuweisbaren - am Knoten zu fragen war genauso unzuverlaessig wie zu raten. Jetzt wird OPEN_EXR versucht und ein TypeError hingenommen (dein gemessener Typ, nicht ValueError); auf 5.2 bleibt der Knoten damit bei MULTILAYER. Der Leser findet den Tiefenkanal seit auf-04 auch hinter einem Ebenen-Praefix. Der 4.2-Pfad ist hier nachgeprueft: OPEN_EXR, Kanal V, vier Paesse, 999 Tests. WENN ES DURCHLAEUFT, waere mir zweierlei wichtig: die gemeldeten depth_exr_kanaele (heisst der Kanal auf 5.2 tiefe_.V oder anders?) und ob aiimaging.bildlesen die EXR ohne Blender-Rueckfall liest. WENN ES BRICHT, brauche ich keinen weiteren Rundlauf von dir zu erbitten - aendere den Runner gern direkt, du hast das Geraet und hast bewiesen, dass du die Ursache findest. Bitte nur den 4.2-Pfad nicht brechen (die Weiche prueft Faehigkeiten, nicht Versionsnummern) und die Aenderung im Ergebnis begruenden.",
+  "erstellt": "2026-08-18T12:33:32Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "aufloesung": 512,
+    "samples": 32
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
+  }
+}

@@ -398,14 +398,24 @@ def _compositor_auf_tiefe(out_dir: Path) -> str:
         ausgabe.directory = str(out_dir)
         ausgabe.file_name = "tiefe_"
 
-    # Dateiformat — Blender 5.2 laesst am File-Output-Knoten NUR noch OPEN_EXR_MULTILAYER
-    # zu; das einfache OPEN_EXR ist dort aus der Auswahl verschwunden. Belegt durch den
-    # API-Befund aus auf-20260818-03: enum "OPEN_EXR" not found in ('OPEN_EXR_MULTILAYER').
-    # Die Auswahl wird darum nicht geraten, sondern am Knoten selbst erfragt.
-    erlaubte = {e.identifier for e in
-                ausgabe.format.bl_rna.properties["file_format"].enum_items}
-    ausgabe.format.file_format = ("OPEN_EXR" if "OPEN_EXR" in erlaubte
-                                  else "OPEN_EXR_MULTILAYER")
+    # Dateiformat. Blender 5.2 laesst am File-Output-Knoten nur noch OPEN_EXR_MULTILAYER
+    # zu, 4.2 dagegen das einkanalige OPEN_EXR — und das ist uns lieber, weil
+    # `aiimaging.bildlesen` es bitgenau selbst liest.
+    #
+    # Zwei Anlaeufe sind hier gescheitert, beide lehrreich:
+    #   auf-20260818-03: "OPEN_EXR" fest zugewiesen -> wirft auf 5.2.
+    #   auf-20260818-04: die erlaubten Werte ueber `bl_rna...enum_items` erfragt -> die
+    #     Liste ist STATISCH und nennt alle 16 Formate, auch die nicht zuweisbaren. Am
+    #     Knoten zu fragen war also genauso unzuverlaessig wie zu raten (Diagnose des
+    #     lokalen Workers auf der HomeStation).
+    #
+    # Was bleibt: es versuchen und den Fehlschlag hinnehmen. Ein frischer Knoten steht in
+    # 5.2 bereits auf OPEN_EXR_MULTILAYER, das Ergebnis ist also brauchbar. Gefangen wird
+    # `TypeError` — am Geraet gemessen, nicht angenommen; `ValueError` griffe daneben.
+    try:
+        ausgabe.format.file_format = "OPEN_EXR"
+    except TypeError:
+        pass                                              # 5.x: bleibt bei MULTILAYER
     ausgabe.format.color_depth = "32"
     # OPEN_EXR kennt in dieser Einstellung nur RGB/RGBA. Blender schreibt die Tiefe aber
     # als EINEN Kanal namens "V" in die Datei — nachgemessen 2026-08-18 am erzeugten
