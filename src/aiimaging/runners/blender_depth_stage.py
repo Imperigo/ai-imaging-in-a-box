@@ -330,6 +330,27 @@ def _welt_hintergrund(welt):
 
 
 
+def _exr_kanalnamen(pfad) -> list[str]:
+    """Die Kanalnamen einer EXR aus ihrem Kopf lesen — ohne Fremdbibliothek.
+
+    Reine Diagnose fuer den Report: `aiimaging.bildlesen` sucht den Tiefenkanal nach
+    Namen, und Multilayer-EXR benennt ihn anders als eine einkanalige Datei. Die Namen
+    gehoeren darum in den Report — sonst kostet jede Formataenderung einen weiteren
+    Rundlauf zur HomeStation.
+    """
+    try:
+        roh = Path(pfad).read_bytes()
+        i = roh.index(b"chlist", roh.index(b"channels")) + len(b"chlist") + 1 + 4
+        namen = []
+        while i < len(roh) and roh[i] != 0 and len(namen) < 64:
+            ende = roh.index(b"\x00", i)
+            namen.append(roh[i:ende].decode("utf-8", "replace"))
+            i = ende + 1 + 16
+        return namen
+    except Exception as e:                                # noqa: BLE001 — reine Diagnose
+        return [f"<nicht lesbar: {type(e).__name__}>"]
+
+
 def _api_befund(knoten) -> str:
     """Die tatsaechlich vorhandene API eines Knotens als Text.
 
@@ -354,7 +375,7 @@ def _api_befund(knoten) -> str:
     return "\n".join(zeilen)
 
 
-def _compositor_auf_tiefe(out_dir: Path) -> None:
+def _compositor_auf_tiefe(out_dir: Path) -> str:
     """View-Layer-Z-Pass über den Compositor als 32-Bit-EXR ausgeben.
 
     Der Umweg über den Compositor ist der Grund, warum hier volles Blender nötig ist und
@@ -377,7 +398,14 @@ def _compositor_auf_tiefe(out_dir: Path) -> None:
         ausgabe.directory = str(out_dir)
         ausgabe.file_name = "tiefe_"
 
-    ausgabe.format.file_format = "OPEN_EXR"
+    # Dateiformat — Blender 5.2 laesst am File-Output-Knoten NUR noch OPEN_EXR_MULTILAYER
+    # zu; das einfache OPEN_EXR ist dort aus der Auswahl verschwunden. Belegt durch den
+    # API-Befund aus auf-20260818-03: enum "OPEN_EXR" not found in ('OPEN_EXR_MULTILAYER').
+    # Die Auswahl wird darum nicht geraten, sondern am Knoten selbst erfragt.
+    erlaubte = {e.identifier for e in
+                ausgabe.format.bl_rna.properties["file_format"].enum_items}
+    ausgabe.format.file_format = ("OPEN_EXR" if "OPEN_EXR" in erlaubte
+                                  else "OPEN_EXR_MULTILAYER")
     ausgabe.format.color_depth = "32"
     # OPEN_EXR kennt in dieser Einstellung nur RGB/RGBA. Blender schreibt die Tiefe aber
     # als EINEN Kanal namens "V" in die Datei — nachgemessen 2026-08-18 am erzeugten
@@ -423,6 +451,7 @@ def _compositor_auf_tiefe(out_dir: Path) -> None:
     if ziel is None:
         raise RuntimeError("Kein Eingang am File-Output-Knoten. " + _api_befund(ausgabe))
     baum.links.new(render_layer.outputs["Depth"], ziel)
+    return ausgabe.format.file_format
 
 
 def _tiefe_normalisieren(exr: Path, ziel_png: Path) -> dict:
@@ -568,8 +597,9 @@ def main() -> int:
     beauty_png = out_dir / "beauty_.png"
     szene.render.filepath = str(out_dir / "beauty_")
 
+    exr_format = "unbekannt"
     try:
-        _compositor_auf_tiefe(out_dir)
+        exr_format = _compositor_auf_tiefe(out_dir)
     except Exception as e:
         # Jeder Fehler im Kompositor-Aufbau soll die tatsaechliche API mitliefern.
         # Blender 5.x hat diesen Bereich mehrfach umgebaut, und jeder Rundlauf zur
@@ -660,6 +690,11 @@ def main() -> int:
         "material_id_quelle": sorted({e["quelle"] for e in tabelle}) or None,
         "depth_normalisierung": normalisierung,
         "samples": a.samples,
+        # Diagnose fuer den externen Leser: Multilayer-EXR benennt Kanaele anders als eine
+        # einkanalige Datei ("tiefe_.V" statt "V"), und `aiimaging.bildlesen` sucht nach
+        # Namen. Ohne diese Angabe kostete jede Formataenderung einen weiteren Rundlauf.
+        "depth_exr_kanaele": _exr_kanalnamen(exr) if exr is not None else [],
+        "depth_exr_format": exr_format,
     }
     (out_dir / "blender-report.json").write_text(
         json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"

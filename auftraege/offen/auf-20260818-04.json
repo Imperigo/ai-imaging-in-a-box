@@ -1,0 +1,28 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260818-04",
+  "art": "multipass",
+  "beschreibung": "Vierter Anlauf. Die Selbstdiagnose aus 03 hat geliefert, wofuer sie gebaut war: directory, file_name und file_output_items existieren wie angenommen - der Bruch lag woanders. Blender 5.2 laesst am File-Output-Knoten NUR noch OPEN_EXR_MULTILAYER zu, das einfache OPEN_EXR ist aus der Auswahl verschwunden. Das Format wird jetzt nicht mehr geraten, sondern am Knoten selbst erfragt. Zwei Vorkehrungen fuer die Folge: Der Report meldet nun die tatsaechlichen Kanalnamen der geschriebenen EXR mit, und der Leser findet den Tiefenkanal auch hinter einem Ebenen-Praefix (tiefe_.V statt V) - Multilayer benennt anders, und das haette sonst den naechsten Rundlauf gekostet. Der 4.2-Pfad ist nachgeprueft: Format OPEN_EXR, Kanal V, vier Paesse, 999 Tests.",
+  "erstellt": "2026-08-18T12:21:17Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "aufloesung": 512,
+    "samples": 32
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
+  }
+}

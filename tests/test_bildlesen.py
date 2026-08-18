@@ -1045,3 +1045,42 @@ def test_runner_meldet_seine_kopfdaten(tmp_path):
     assert report["dtype"] == "<f4"
     assert report["n_geometriepixel"] == 8, "die acht Hintergrundwerte zählen nicht mit"
     assert report["min_m"] == pytest.approx(5.0)
+
+
+# ── Regression aus Sitzung 07: Multilayer-EXR ────────────────────────────────────────
+
+def test_tiefenkanal_wird_auch_hinter_einem_ebenen_praefix_gefunden():
+    """Multilayer-EXR stellt den Ebenennamen punktgetrennt voran — OpenEXR-Konvention.
+
+    Blender 5.2 schreibt am File-Output-Knoten NUR noch Multilayer (belegt an der
+    HomeStation, auf-20260818-03). Ohne die Suffixsuche faende der Leser den Tiefenkanal
+    nicht und fiele auf Blender zurueck — bei einer Datei, die er selbst lesen kann.
+    """
+    from aiimaging.bildlesen import _tiefenkanal
+
+    kanaele = [{"name": "tiefe_.R"}, {"name": "tiefe_.V"}, {"name": "tiefe_.G"}]
+
+    index, kanal = _tiefenkanal(kanaele)
+
+    assert kanal["name"] == "tiefe_.V"
+    assert index == 1
+
+
+def test_genauer_name_hat_vorrang_vor_dem_praefixierten():
+    """Sonst zoege ein zufaellig passendes Suffix einen echten Kanal ins Hintertreffen."""
+    from aiimaging.bildlesen import _tiefenkanal
+
+    kanaele = [{"name": "irgendwas.V"}, {"name": "V"}]
+
+    _, kanal = _tiefenkanal(kanaele)
+
+    assert kanal["name"] == "V"
+
+
+def test_vorrangliste_gilt_auch_bei_praefixen():
+    """V vor Z vor R — auch wenn alle drei praefixiert sind."""
+    from aiimaging.bildlesen import _tiefenkanal
+
+    _, kanal = _tiefenkanal([{"name": "L.R"}, {"name": "L.Z"}, {"name": "L.V"}])
+
+    assert kanal["name"] == "L.V"

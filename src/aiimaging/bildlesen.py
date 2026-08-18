@@ -589,6 +589,7 @@ _EXR_PIXELTYP_NAME = {0: "UINT", 1: "HALF", 2: "FLOAT"}
 #: In welcher Reihenfolge nach dem Tiefenkanal gesucht wird, wenn die Datei mehrere hat.
 #: ``V`` schreibt Blender für einen einkanaligen Compositor-Ausgang, ``Z`` ist der
 #: OpenEXR-übliche Tiefenkanal, ``R``/``Y`` sind die Rückfälle für RGB- bzw. Luma-Ausgaben.
+#: Gesucht wird auch hinter einem Ebenen-Praefix (``tiefe_.V``) — siehe ``_tiefenkanal``.
 _EXR_TIEFENKANAELE = ("V", "Z", "R", "Y")
 
 
@@ -725,10 +726,23 @@ def _tiefenkanal(kanaele: list[dict]) -> tuple[int, dict] | tuple[None, None]:
     if len(kanaele) == 1:
         return 0, kanaele[0]
     namen = [k["name"] for k in kanaele]
+
+    # Erst der genaue Name.
     for gesucht in _EXR_TIEFENKANAELE:
         if gesucht in namen:
             index = namen.index(gesucht)
             return index, kanaele[index]
+
+    # Dann der Name hinter einem Ebenen-Praefix. Multilayer-EXR stellt den Ebenennamen
+    # punktgetrennt voran (`tiefe_.V`, `ViewLayer.Depth.Z`) — das ist OpenEXR-Konvention,
+    # kein Sonderfall. Blender 5.2 schreibt am File-Output-Knoten NUR noch Multilayer
+    # (belegt an der HomeStation, auf-20260818-03), also ist dieser Weg dort der normale.
+    # Ohne ihn faende der Leser den Tiefenkanal nicht und fiele unnoetig auf Blender
+    # zurueck — bei einer Datei, die er problemlos selbst lesen kann.
+    for gesucht in _EXR_TIEFENKANAELE:
+        for index, name in enumerate(namen):
+            if name.rsplit(".", 1)[-1] == gesucht:
+                return index, kanaele[index]
     return None, None
 
 
