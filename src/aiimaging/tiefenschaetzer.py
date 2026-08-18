@@ -241,8 +241,6 @@ _NC_GRUND = (
     "geerbte Annahme bewusst NICHT."
 )
 
-_QUELLE = "geprueft 2026-08-18 (Modellkarte Hugging Face)"
-
 TIEFENSCHAETZER: dict[str, Tiefenschaetzer] = {
     "depth-anything-v2-small": Tiefenschaetzer(
         name="depth-anything-v2-small",
@@ -258,7 +256,8 @@ TIEFENSCHAETZER: dict[str, Tiefenschaetzer] = {
         ),
         parameter_m=24.8,
         polaritaet=POLARITAET_DISPARITAET,
-        lizenz_quelle=_QUELLE,
+        # Nachgeprueft 2026-08-18: Front-Matter "license: apache-2.0", Repo offen.
+        lizenz_quelle="geprueft 2026-08-18 (https://huggingface.co/depth-anything/Depth-Anything-V2-Small-hf)",
     ),
     "depth-anything-v2-base": Tiefenschaetzer(
         name="depth-anything-v2-base",
@@ -268,7 +267,8 @@ TIEFENSCHAETZER: dict[str, Tiefenschaetzer] = {
         begruendung=_NC_GRUND,
         parameter_m=97.5,
         polaritaet=POLARITAET_DISPARITAET,
-        lizenz_quelle=_QUELLE,
+        # Nachgeprueft 2026-08-18: Front-Matter "license: cc-by-nc-4.0", Repo offen.
+        lizenz_quelle="geprueft 2026-08-18 (https://huggingface.co/depth-anything/Depth-Anything-V2-Base-hf)",
     ),
     "depth-anything-v2-large": Tiefenschaetzer(
         name="depth-anything-v2-large",
@@ -281,7 +281,8 @@ TIEFENSCHAETZER: dict[str, Tiefenschaetzer] = {
         ),
         parameter_m=335.3,
         polaritaet=POLARITAET_DISPARITAET,
-        lizenz_quelle=_QUELLE,
+        # Nachgeprueft 2026-08-18: Front-Matter "license: cc-by-nc-4.0", Repo offen.
+        lizenz_quelle="geprueft 2026-08-18 (https://huggingface.co/depth-anything/Depth-Anything-V2-Large-hf)",
     ),
     "depth-anything-v2-giant": Tiefenschaetzer(
         name="depth-anything-v2-giant",
@@ -295,7 +296,14 @@ TIEFENSCHAETZER: dict[str, Tiefenschaetzer] = {
         ),
         parameter_m=1300.0,
         polaritaet=POLARITAET_DISPARITAET,
-        lizenz_quelle=_QUELLE,
+        # Sonderfall, geprueft 2026-08-18: Das oben eingetragene Repo
+        # "depth-anything/Depth-Anything-V2-Giant-hf" ist oeffentlich NICHT erreichbar
+        # (HTTP 401, und die HF-Suche nach "Depth-Anything-V2-Giant" liefert nichts).
+        # Belegt ist die Lizenz darum nicht an einer Modellkarte, sondern am
+        # LICENSE-Abschnitt des Projekt-README der Autoren: "Depth-Anything-V2-Small model
+        # is under the Apache-2.0 license. Depth-Anything-V2-Base/Large/Giant models are
+        # under the CC-BY-NC-4.0 license."
+        lizenz_quelle="geprueft 2026-08-18 (https://github.com/DepthAnything/Depth-Anything-V2 — README, Abschnitt LICENSE; HF-Repo nicht oeffentlich)",
     ),
 }
 

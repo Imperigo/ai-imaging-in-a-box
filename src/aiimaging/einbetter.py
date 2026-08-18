@@ -76,7 +76,9 @@ EINBETTER: dict[str, Einbetter] = {
         zulaessig=True,
         begruendung="Apache-2.0, nicht gated, keine Auflagen — erfüllt Regel 1 unmittelbar.",
         dimension=768,
-        lizenz_quelle="sekundaer (2026-08-18); vor Auslieferung gegen die Modellkarte pruefen",
+        # Modellkarte am 2026-08-18 selbst gelesen: Front-Matter "license: apache-2.0",
+        # Repo offen (nicht gated).
+        lizenz_quelle="geprueft 2026-08-18 (https://huggingface.co/google/siglip2-base-patch16-224)",
     ),
     "dinov2-base": Einbetter(
         name="dinov2-base",
@@ -89,7 +91,9 @@ EINBETTER: dict[str, Einbetter] = {
             "ein Sprache-Bild-Modell."
         ),
         dimension=768,
-        lizenz_quelle="sekundaer (2026-08-18); vor Auslieferung gegen die Modellkarte pruefen",
+        # Modellkarte am 2026-08-18 selbst gelesen: Front-Matter "license: apache-2.0",
+        # Repo offen (nicht gated) — anders als DINOv3 desselben Herausgebers.
+        lizenz_quelle="geprueft 2026-08-18 (https://huggingface.co/facebook/dinov2-base)",
     ),
     "openclip-vit-b32": Einbetter(
         name="openclip-vit-b32",
@@ -98,7 +102,9 @@ EINBETTER: dict[str, Einbetter] = {
         zulaessig=True,
         begruendung="MIT. Grosses Ökosystem, gut dokumentiert, keine Auflagen.",
         dimension=512,
-        lizenz_quelle="sekundaer (2026-08-18); vor Auslieferung gegen die Modellkarte pruefen",
+        # Modellkarte am 2026-08-18 selbst gelesen: Front-Matter "license: mit".
+        # Eine eigene LICENSE-Datei führt das Repo nicht — die Modellkarte ist die Quelle.
+        lizenz_quelle="geprueft 2026-08-18 (https://huggingface.co/laion/CLIP-ViT-B-32-laion2B-s34B-b79K)",
     ),
     "dinov3": Einbetter(
         name="dinov3",

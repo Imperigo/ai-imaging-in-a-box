@@ -183,7 +183,9 @@ _eintrag(Backbone(
     konditionierung=KOND_DEPTH_CONTROLNET,
     vram_gb=_vram_schaetzung(20.0),
     dateien=_DIFFUSERS_DATEIEN,
-    lizenz_quelle=QUELLE_SEKUNDAER,
+    # Geprüft 2026-08-18 an der Modellkarte selbst: Front-Matter "license: apache-2.0".
+    # https://huggingface.co/Qwen/Qwen-Image-2512 — Repo offen, nicht gated.
+    lizenz_quelle=QUELLE_MODELLKARTE,
 ))
 
 _eintrag(Backbone(
@@ -195,7 +197,9 @@ _eintrag(Backbone(
     konditionierung=KOND_DEPTH_CONTROLNET,
     vram_gb=_vram_schaetzung(6.0),
     dateien=_DIFFUSERS_DATEIEN,
-    lizenz_quelle=QUELLE_SEKUNDAER,
+    # Geprüft 2026-08-18 an der Modellkarte selbst: Front-Matter "license: apache-2.0".
+    # https://huggingface.co/Tongyi-MAI/Z-Image-Turbo — Repo offen, nicht gated.
+    lizenz_quelle=QUELLE_MODELLKARTE,
 ))
 
 _eintrag(Backbone(
@@ -203,7 +207,15 @@ _eintrag(Backbone(
     modell_id="RunDiffusion/Juggernaut-XL-v9",
     # UNet ~2.6B plus zwei Text-Encoder — Grössenordnung, kein Datenblatt.
     parameter_b=3.5,
-    lizenz="OpenRAIL++-M",
+    # KORREKTUR 2026-08-18 (Lizenzprüfung, docs/LIZENZPRUEFUNG_2026-08-18.md): Der Eintrag
+    # führte "OpenRAIL++-M". Die Modellkarte deklariert aber die ältere Variante —
+    # Front-Matter "license: creativeml-openrail-m", im Text "CreativeML Open RAIL-M
+    # license". Beides ist nutzungsbeschränkt und damit unter Regel 1 gleich zu behandeln;
+    # der Bezeichner war trotzdem falsch und wird hier auf die belegte Fassung gesetzt.
+    # ACHTUNG, ungelöst: Dieselbe Modellkarte verbietet zusätzlich den Einsatz "behind
+    # paid API services" ohne gesonderte Lizenz. Diese Schranke trägt das Feld
+    # kommerziell_nutzbar=True nicht — Owner-Entscheid nötig, siehe Prüfbericht.
+    lizenz="CreativeML OpenRAIL-M",
     kommerziell_nutzbar=True,
     konditionierung=KOND_DEPTH_CONTROLNET,
     vram_gb=_vram_schaetzung(3.5),
@@ -211,7 +223,11 @@ _eintrag(Backbone(
     # mit, das ControlNet ist ein eigenes Modell. Dafür ist das Ökosystem riesig — das
     # macht SDXL zum Rückfall, wenn für einen neueren Backbone kein ControlNet existiert.
     dateien=("juggernaut_xl.safetensors", "controlnet-depth-sdxl"),
-    lizenz_quelle=QUELLE_UNGEPRUEFT,
+    # Am Original gelesen. Bewusst NICHT QUELLE_MODELLKARTE: tests/test_backbone.py
+    # (test_ungepruefte_lizenzen_werden_als_solche_gemeldet) hält diesen Eintrag als
+    # ungeprüft fest. Solange Test und Prüflogik nicht mitgezogen sind, meldet
+    # pruefe_lizenz hier weiterhin "NICHT geprüft" — der Widerspruch steht im Prüfbericht.
+    lizenz_quelle="geprueft 2026-08-18 (https://huggingface.co/RunDiffusion/Juggernaut-XL-v9)",
 ))
 
 _eintrag(Backbone(
@@ -240,7 +256,14 @@ _eintrag(Backbone(
     konditionierung=KOND_INTEGRIERTES_EDIT,
     vram_gb=_vram_schaetzung(4.0),
     dateien=_DIFFUSERS_DATEIEN,
-    lizenz_quelle=QUELLE_SEKUNDAER,
+    # Geprüft 2026-08-18 an Modellkarte UND LICENSE.md des 4B-Repos: Front-Matter
+    # "license: apache-2.0", LICENSE.md ist der Apache-2.0-Volltext.
+    # https://huggingface.co/black-forest-labs/FLUX.2-klein-4B
+    # Zwei Befunde dazu im Prüfbericht: (a) die oben eingetragene modell_id
+    # "black-forest-labs/FLUX.2-klein" existiert nicht (401), die Gewichte liegen unter
+    # ".../FLUX.2-klein-4B"; (b) Apache-2.0 gilt nur für die 4B-Grösse — FLUX.2-klein-9B
+    # steht unter der FLUX Non-Commercial License. Die Lizenz hängt an der Grösse.
+    lizenz_quelle=QUELLE_MODELLKARTE,
 ))
 
 _eintrag(Backbone(

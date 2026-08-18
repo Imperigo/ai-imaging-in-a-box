@@ -759,6 +759,15 @@ def fuehre_aus(
             was er sonst noch ruft. Eine stille Ergänzung hiesse, dass ein Test, der eine
             Attrappe vergisst, unbemerkt Blender startet.
         out_dir: Wurzel der Arbeitsverzeichnisse. Vorgabe ``standard_out_dir()``.
+        bedarf: Knotenart → ``Bedarf``. ``None`` nimmt ``BEDARF``. Daran hängt, welche
+            Felder ein Cache-Eintrag zusagen muss, um als Treffer zu gelten. Eine Art
+            ohne Eintrag wird nicht geprüft — dann greift nur die Endungs-Heuristik
+            (``_fehlende_ausgabedateien``), wie vor Sitzung 07.
+        pruefe_verdrahtung: ``True`` prüft den Graphen **vor dem ersten Knoten** gegen
+            ``bedarf`` und bricht bei einem ``error``-Befund ab. Vorgabe ``False``, weil
+            ein Graph mit unbekannten Knotenarten (Attrappen, Versuche) weiterhin laufen
+            können soll; wer eine echte Kette rechnet, schaltet es ein und zahlt den
+            Verdrahtungsfehler nicht mit GPU-Zeit.
 
     Returns:
         ``{status, reihenfolge, knoten, dauer_s, out_dir, gerechnet, cache_treffer,
@@ -800,7 +809,18 @@ def fuehre_aus(
             f"wird über Graph.from_dict gelesen."
         )
     tabelle = dict(AUSFUEHRER if ausfuehrer is None else ausfuehrer)
+    tabelle_bedarf = dict(BEDARF if bedarf is None else bedarf)
     wurzel = Path(out_dir) if out_dir is not None else standard_out_dir()
+
+    if pruefe_verdrahtung:
+        # Vor der Reihenfolge: Auch ein Graph mit Kreis soll seine Verdrahtungsfehler
+        # nennen, statt sie hinter dem Kreis verschwinden zu lassen.
+        schwer = [b for b in pruefe_bedarf(graph, tabelle_bedarf) if b["schwere"] == "error"]
+        if schwer:
+            raise KettenError(
+                "Der Graph ist nicht verdrahtet: "
+                + "; ".join(f"{b['knoten']}: {b['detail']}" for b in schwer)
+            )
 
     reihenfolge = graph.topologische_reihenfolge()
 
@@ -852,13 +872,24 @@ def fuehre_aus(
         arbeit = _arbeitsverzeichnis(wurzel, knoten.art, schluessel)
 
         # --- 1) Nachsehen ------------------------------------------------------------
-        eintrag = cache.hole(schluessel) if cache is not None else None
+        lese_fehler = None
+        try:
+            eintrag = cache.hole(schluessel) if cache is not None else None
+        except GraphError as fehler:
+            # Ein unlesbarer Eintrag ist ein Fund und kein Grund, den Lauf abzubrechen.
+            # ``hole`` meldet ihn laut, weil dort niemand weiterrechnet; hier ist die
+            # richtige Antwort dieselbe wie bei einem Fehltreffer — rechnen, und den
+            # Grund ins Protokoll schreiben. Ein Stapellauf soll nicht an einer fremden
+            # Datei im Cache-Ordner sterben.
+            eintrag, lese_fehler = None, str(fehler)
         if eintrag is not None:
             gespeichert = eintrag.get("ausgaben") or {}
-            if _fehlende_ausgabedateien(gespeichert):
-                # Treffer im Schlüssel, aber die versprochenen Dateien sind weg. Kein
+            maengel = _cache_maengel(knoten.art, gespeichert, tabelle_bedarf)
+            if maengel:
+                # Treffer im Schlüssel, aber der Eintrag hält nicht, was er zusagt. Kein
                 # Treffer also — es wird gerechnet, und der Eintrag wird dabei überschrieben.
                 eintrag = None
+                lese_fehler = "Eintrag verworfen: " + " ".join(maengel)
             else:
                 knoten_ergebnisse[kid] = _knoteneintrag(
                     knoten.art, eintrag.get("status", STATUS_OK), aus_cache=True,
@@ -890,13 +921,14 @@ def fuehre_aus(
             }
         status = antwort.get("status", STATUS_OK)
 
-        cache_fehler = None
+        cache_fehler = lese_fehler
         if status == STATUS_OK and cache is not None:
+            eigen = tabelle_bedarf.get(knoten.art)
             try:
                 cache.lege_ab(schluessel, {
                     "art": knoten.art, "status": status,
                     "ausgaben": antwort, "dauer_s": round(dauer, 4),
-                })
+                }, zusagen=() if eigen is None else eigen.zugesagte_dateien(antwort))
             except GraphError as fehler:
                 # Der Knoten hat gerechnet und ist gelungen — er wird nicht nachträglich
                 # für gescheitert erklärt, nur weil sein Ergebnis nicht speicherbar ist.
@@ -937,9 +969,10 @@ def fuehre_aus(
 
 __all__ = [
     "ART_GEOMETRIE", "ART_MULTIPASS", "ART_QA", "ART_RENDER",
-    "AUSFUEHRER", "EINGABEDATEIEN",
+    "AUSFUEHRER", "BEDARF", "EINGABEDATEIEN",
     "KNOTEN_GEOMETRIE", "KNOTEN_MULTIPASS", "KNOTEN_QA", "KNOTEN_RENDER",
     "STATUS_ABGELEHNT", "STATUS_FEHLER", "STATUS_OK", "STATUS_UEBERSPRUNGEN",
     "KettenError",
-    "baue_kette", "fuehre_aus", "qa_ausfuehrer", "render_ausfuehrer", "standard_out_dir",
+    "baue_kette", "fuehre_aus", "pruefe_kette", "qa_ausfuehrer", "render_ausfuehrer",
+    "standard_out_dir",
 ]
