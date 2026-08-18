@@ -164,6 +164,16 @@ def query_render(args: dict) -> dict:
         return {"job_id": None, "status": None, "geometry_ref": None, "depth_exr": None,
                 "images": [], "erstellt": None, "geaendert": None,
                 "error": "Pflichtfeld 'job_id' fehlt."}
+    if not isinstance(job_id, str):
+        # NICHT `str(job_id)` zurückgeben. Eine 42 als "42" zu spiegeln sähe aus, als
+        # sei nach einem Auftrag dieses Namens gefragt worden — die Antwort wäre im
+        # Schema und trotzdem irreführend. `None` plus die genannte Ursache ist
+        # eindeutig. (Aufgefallen an der Schemaprüfung, die dieser Fall verletzte:
+        # `job_id: 42 passt nicht zu type='string'`.)
+        return {"job_id": None, "status": None, "geometry_ref": None, "depth_exr": None,
+                "images": [], "erstellt": None, "geaendert": None,
+                "error": f"'job_id' muss eine Zeichenkette sein, war "
+                         f"{type(job_id).__name__}: {job_id!r}."}
     try:
         satz = jobs.lies_job(job_id, job_verzeichnis())
     except (jobs.JobError, FileNotFoundError) as e:

@@ -115,10 +115,18 @@ def _ausgang_enqueue() -> dict:
     return {
         "type": "object",
         "properties": {
-            "job_id": {"type": "string"},
-            "status": {"type": "string",
+            # Beide NULLBAR aus demselben Grund wie in `_ausgang_query`: Ein Auftrag,
+            # der gar nicht erst angelegt wurde — abgelehnt vom Torwächter, fehlende
+            # Geometriequelle —, hat weder Kennung noch Zustand. `_fehler` in
+            # `werkzeuge.py` liefert dort korrekt `None`, und die Zusage sagte bis zum
+            # 18.08.2026 etwas anderes. Der Widerspruch wäre im Cockpit als
+            # Schemafehler erschienen — also genau statt der Ursache, die die Antwort
+            # eigentlich mitbringt.
+            "job_id": {"type": ["string", "null"]},
+            "status": {"type": ["string", "null"],
                        "description": "awaiting_approval | queued — nie 'running'. "
-                                      "Dieses Werkzeug führt nichts aus."},
+                                      "Dieses Werkzeug führt nichts aus. null heisst: "
+                                      "kein Auftrag angelegt, siehe 'error'."},
             "geometry_ref": {"type": ["string", "null"],
                              "description": "Ökosystem-Begriff für 'hier liegt die "
                                             "3D-Geometrie'. Zeigt auf die glb."},
@@ -147,8 +155,24 @@ def _ausgang_query() -> dict:
     return {
         "type": "object",
         "properties": {
-            "job_id": {"type": "string"},
-            "status": {"type": "string"},
+            # Nullbar wie `status`: Ohne brauchbare Anfrage gibt es keinen Auftrag, auf
+            # den sich die Antwort bezöge.
+            "job_id": {"type": ["string", "null"]},
+            # NULLBAR, und das ist eine Aussage: Ein Auftrag, den es nicht gibt, hat
+            # keinen Zustand.
+            #
+            # Bis zum 18.08.2026 stand hier `{"type": "string"}`, und Odysseus wies die
+            # Antwort auf einen unbekannten `job_id` mit
+            # `Output validation error: None is not of type 'string'` ab — ein Fehler,
+            # den erst die Registrierung an der HomeStation zutage gefördert hat.
+            #
+            # Der naheliegende Flicken wäre ein Ersatzwert wie "unbekannt" gewesen. Er
+            # wäre falsch: `status` trägt die Zustände des Auftrags-Automaten
+            # (`jobs.py`), und `satz_ist_freigegeben_laut_status` liest genau dieses
+            # Feld. Ein erfundener Zustand stünde in einer Vokabelliste, in der kein
+            # Auftrag je sein kann — und ein Leser könnte ihn für einen echten halten.
+            # Nicht der Wert war falsch, sondern die Zusage darüber.
+            "status": {"type": ["string", "null"]},
             "geometry_ref": {"type": ["string", "null"]},
             "depth_exr": {"type": ["string", "null"]},
             "images": {"type": "array"},

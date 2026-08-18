@@ -27,6 +27,7 @@ from aiimaging.mcp_schemas import (
     voller_name,
     werkzeug,
 )
+from aiimaging.mcp_server import rufe_werkzeug
 
 # ── Die echten Nachbarn, wörtlich aus KosmoDraws _OUT-Block ──────────────────────────
 
@@ -197,3 +198,123 @@ def test_enqueue_kann_niemals_running_melden():
     """Dieses Werkzeug legt nur ab. Rührte es die GPU an, wäre der Freeze-Schutz hinfällig."""
     beschreibung = WERKZEUGE[WERKZEUG_ENQUEUE]["outputSchema"]["properties"]["status"]["description"]
     assert "nie 'running'" in beschreibung
+
+
+# ==========================================================================================
+# Halten die Werkzeuge ihre eigene Zusage — auch auf den Fehlerwegen?
+#
+# Befund vom 18.08.2026 (`docs/HOMESTATION-2026-08-18-MCP-REGISTRIERUNG.md`): Odysseus wies
+# `aiimaging_query_render` auf einen unbekannten Auftrag ab mit
+# `Output validation error: None is not of type 'string'`. Die Antwort war richtig, die
+# ZUSAGE war falsch — `status` war als nicht-nullbar deklariert, obwohl ein Auftrag, den es
+# nicht gibt, keinen Zustand hat.
+#
+# Aufgefallen ist das erst bei der Registrierung an einem fremden Cockpit. Diese Tests
+# holen die Prüfung hierher, damit die nächste solche Lücke vor dem Cockpit anschlägt: Der
+# GLÜCKLICHE Weg wurde geprüft, der Fehlerweg nicht — und Schemaverletzungen leben genau
+# dort.
+# ==========================================================================================
+
+def _passt_zum_typ(wert, typ) -> bool:
+    """Ob ein Wert einem JSON-Schema-``type`` genügt. Nur die hier benutzte Teilmenge.
+
+    Bewusst selbst gebaut statt über ``jsonschema``: Das Paket ist keine Abhängigkeit
+    dieses Projekts, und die Zusagen hier sind flach. Ein Test, der eine neue
+    Abhängigkeit mitbringt, wird beim ersten frischen Environment übersprungen — und
+    dann prüft er nichts mehr.
+    """
+    erlaubt = typ if isinstance(typ, list) else [typ]
+    for t in erlaubt:
+        if t == "null" and wert is None:
+            return True
+        if t == "string" and isinstance(wert, str):
+            return True
+        if t == "array" and isinstance(wert, list):
+            return True
+        if t == "object" and isinstance(wert, dict):
+            return True
+        if t == "boolean" and isinstance(wert, bool):
+            return True
+        if t == "number" and isinstance(wert, (int, float)) and not isinstance(wert, bool):
+            return True
+        if t == "integer" and isinstance(wert, int) and not isinstance(wert, bool):
+            return True
+    return False
+
+
+def pruefe_gegen_schema(ergebnis: dict, schema: dict) -> list[str]:
+    """Alle Verletzungen als Liste — nicht die erste, sondern alle.
+
+    Wer eine Antwort repariert, will wissen, wie viele Felder betroffen sind, nicht nur
+    das alphabetisch erste.
+    """
+    verstoesse = []
+    eigenschaften = schema.get("properties", {})
+    for name, teilschema in eigenschaften.items():
+        if name not in ergebnis:
+            continue
+        if "type" in teilschema and not _passt_zum_typ(ergebnis[name], teilschema["type"]):
+            verstoesse.append(
+                f"{name}: {ergebnis[name]!r} passt nicht zu type={teilschema['type']!r}"
+            )
+    for pflicht in schema.get("required", []):
+        if pflicht not in ergebnis:
+            verstoesse.append(f"{pflicht}: Pflichtfeld fehlt in der Antwort")
+    return verstoesse
+
+
+def test_query_auf_unbekannten_auftrag_haelt_sein_schema():
+    """Der Fall, an dem Odysseus die Antwort abgewiesen hat.
+
+    Ein unbekannter Auftrag ist kein Sonderfall, sondern der häufigste Fehlerweg
+    überhaupt — ein Tippfehler in der `job_id` genügt.
+    """
+    ergebnis = rufe_werkzeug(WERKZEUG_QUERY, {"job_id": "gibt-es-nicht"})
+    verstoesse = pruefe_gegen_schema(ergebnis, WERKZEUGE[WERKZEUG_QUERY]["outputSchema"])
+    assert verstoesse == [], verstoesse
+    assert ergebnis["status"] is None
+    assert ergebnis["error"]
+
+
+def test_status_darf_nullbar_sein_aber_nicht_erfunden():
+    """Der Flicken, der nicht gemacht wurde — und warum.
+
+    Ein Ersatzwert wie ``"unbekannt"`` hätte das Schema erfüllt und wäre falsch gewesen:
+    ``status`` trägt die Zustände des Auftrags-Automaten, und ``kosmo_naht`` liest genau
+    dieses Feld, um zu entscheiden, ob ein Auftrag freigegeben ist. Ein erfundener
+    Zustand stünde in einer Vokabelliste, in der kein Auftrag je sein kann.
+    """
+    from aiimaging import jobs
+    ergebnis = rufe_werkzeug(WERKZEUG_QUERY, {"job_id": "gibt-es-nicht"})
+    zustaende = {jobs.STATUS_AWAITING, jobs.STATUS_QUEUED, jobs.STATUS_RUNNING,
+                 jobs.STATUS_DONE, jobs.STATUS_ERROR, jobs.STATUS_CANCELLED}
+    assert ergebnis["status"] not in zustaende
+    assert ergebnis["status"] is None
+
+
+@pytest.mark.parametrize("name", sorted(WERKZEUGE))
+def test_jedes_werkzeug_haelt_sein_schema_auch_bei_leeren_argumenten(name):
+    """Der Fehlerweg, den niemand aufruft — und in dem Schemaverletzungen leben.
+
+    Keine Argumente ist die härteste Eingabe: Jedes Pflichtfeld fehlt. Was das Werkzeug
+    dann antwortet, muss trotzdem der Zusage genügen, die in der Knotenliste steht — denn
+    das Cockpit prüft sie und weist die Antwort sonst ab.
+    """
+    ergebnis = rufe_werkzeug(name, {})
+    verstoesse = pruefe_gegen_schema(ergebnis, WERKZEUGE[name]["outputSchema"])
+    assert verstoesse == [], verstoesse
+
+
+@pytest.mark.parametrize("name", sorted(WERKZEUGE))
+def test_jedes_werkzeug_haelt_sein_schema_bei_unsinnigen_argumenten(name):
+    """Argumente vom falschen Typ kommen aus einem fremden Cockpit jederzeit an."""
+    for argumente in ({"job_id": 42}, {"job_id": None}, {"unbekannt": "x"}):
+        ergebnis = rufe_werkzeug(name, argumente)
+        verstoesse = pruefe_gegen_schema(ergebnis, WERKZEUGE[name]["outputSchema"])
+        assert verstoesse == [], (argumente, verstoesse)
+
+
+def test_unbekanntes_werkzeug_wird_gemeldet_und_stuerzt_nicht():
+    ergebnis = rufe_werkzeug("aiimaging_gibt_es_nicht", {})
+    assert "error" in ergebnis
+    assert "Unbekanntes Werkzeug" in ergebnis["error"]
