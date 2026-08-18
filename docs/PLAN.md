@@ -129,7 +129,13 @@ aus `register_in_odysseus.sh` bekannt, aber hier nicht ausgeführt.
       *Beauftragt 2026-08-18 als `auf-20260818-06`, samt zwei Wiederholungen mit
       `controlnet_staerke` 0,6 und 1,0 als erste Punkte der Schwellenstudie.*
 - [x] **Geometrie-Treue-QA** — `geometrie_qa.py`, an synthetischen Fällen belegt:
-      treu 0.99, halluziniert 0.24 bei Spearman **+1.000**. Nur die Silhouette fängt ihn.
+      treu 0.995, halluziniert **0.199** bei Spearman +1.000 und `geom_iou` 0.040.
+      *Zahl berichtigt 2026-08-18 (Sitzung 07): Hier stand 0.24 bei IoU 0.057 — Werte
+      einer früheren Fassung des Testfalls. Gemessen wurde gegen `test_geometrie_qa.py`,
+      nicht gegen die Erinnerung.*
+      **Und die Aussage „nur die Silhouette fängt ihn" gilt eingeschränkt:** Sie fängt
+      eine **ersetzende** Halluzination (Bau steht woanders). Eine **ergänzende** —
+      Zusatzkörper neben dem richtigen Bau — besteht mit 0.698, siehe Schwellenstudie.
 - [x] Stil-QA als zweites Gate — `stil_qa.py`, Metrik testbar, Einbetter injizierbar
 - [x] Doppel-Gate — `gate.py`: bestanden nur, wenn beide bestehen
 
@@ -139,7 +145,7 @@ Halluzination nachweislich durchfällt.
 **Stand 2026-08-18 (Sitzung 07):** Alles ohne GPU Machbare ist erledigt, jetzt
 einschliesslich der Ausführungsstufe auf der HomeStation. Die Halluzination fällt
 nachweislich durch — an **synthetischen** Tiefenkarten (Spearman +1.000, IoU 0.057,
-Score 0.24). Was aussteht, ist ein **echter** Render durch ein Bildmodell; das braucht
+Score 0.199). Was aussteht, ist ein **echter** Render durch ein Bildmodell; das braucht
 GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 
 ---
@@ -151,10 +157,13 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       sieben Stärken, jede mit einer prüfbaren Erwartung; alle 48 Zeilen erfüllen sie.
       **Drei Befunde:** (1) Die Rangbasiertheit ist *bestätigt* — streng monotone
       Umrechnung lässt den Score bei exakt 1,000; das war die einzige Prüfung, die die
-      Metrik hätte umwerfen können. (2) **0,65 ist zu mild:** 22 von 36 gestörten Fällen
-      gehen durch; bestes Ergebnis bei 0,90, über drei Auflösungen stabil; bis 0,85 wird
-      **kein treuer Fall** gesperrt. (3) Verlorene Gliederung kostet **vier Tausendstel** —
-      die Metrik misst Kubatur, nicht Detail.
+      Metrik hätte umwerfen können. (2) **0,65 ist zu mild:** 18 von 32 auswertbaren
+      gestörten Fällen gehen durch; bestes Ergebnis bei 0,90, über drei Auflösungen
+      stabil; bis 0,85 wird **kein treuer Fall** gesperrt. (3) Verlorene Gliederung kostet
+      **vier Tausendstel** — die Metrik misst Kubatur, nicht Detail.
+      *Zwei Zahlen der ersten Auswertung waren falsch (Rasterdubletten, zu kleiner
+      Zusatzkörper) — berichtigt, Kapitel 4a der Studie. Beide Fehler sassen in den
+      Messinstrumenten, nicht in der Metrik.*
       *Die Schwelle bleibt trotzdem bei 0,65* — Begründung im Konstanten-Kommentar von
       `geometrie_qa`: ohne den Tiefenschätzer in der Messung wäre 0,90 nur schwächer
       unbegründet.

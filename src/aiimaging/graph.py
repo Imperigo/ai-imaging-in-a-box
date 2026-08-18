@@ -675,6 +675,14 @@ def pruefe_bedarf(graph: Graph, bedarf) -> list[dict]:
             liefernd = bedarf.get(graph.knoten[vorgaenger].art)
             if liefernd is None:
                 continue          # schon als unbekannte-art gemeldet, wenn er drankommt
+            if not isinstance(liefernd, Bedarf):
+                # Der Vorgänger ist in der Sortierung vielleicht noch nicht drangewesen;
+                # eine falsch gefüllte Tabelle soll trotzdem hier auffallen und nicht als
+                # AttributeError zwei Zeilen weiter.
+                raise GraphError(
+                    f"Bedarf für die Art {graph.knoten[vorgaenger].art!r} ist kein "
+                    f"Bedarf-Objekt, sondern {type(liefernd).__name__}."
+                )
             for feld in felder:
                 if feld not in liefernd.liefert:
                     befunde.append({
@@ -817,7 +825,9 @@ def inhalts_hash(
         "art": knoten.art,
         "params": params,
         "vorgaenger": vorgaenger,
-        "dateien": [_datei_hash(p) for p in list(dateien) + [knoten.params[f] for f in gesetzt]],
+        # Erst die ausdrücklich genannten Dateien, dann die aus den Parametern gezogenen.
+        "dateien": [_datei_hash(p)
+                    for p in list(dateien) + [knoten.params[f] for f in gesetzt]],
     }
     # `separators` und `ensure_ascii`: feste, von den Vorgabewerten unabhängige
     # Textform. `sort_keys` wirkt rekursiv, auch auf verschachtelte params.

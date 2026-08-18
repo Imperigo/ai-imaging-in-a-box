@@ -67,6 +67,26 @@ QUELLE_SEKUNDAER = "sekundaerquelle"
 #: Lizenz NICHT geprüft. Vor produktivem Einsatz nachzuholen (Regel 1).
 QUELLE_UNGEPRUEFT = "ungeprueft"
 
+#: Vorsilbe für einen belegten Vermerk mit Quelle, z. B.
+#: ``"geprueft 2026-08-18 (https://huggingface.co/…)"``.
+#:
+#: Warum nicht einfach `QUELLE_MODELLKARTE`: Ein Schlagwort sagt *dass* geprüft wurde,
+#: eine URL sagt **wogegen**. Die Lizenzprüfung vom 18.08.2026 hat den Unterschied
+#: schmerzhaft gemacht — sie trug URLs ein, und `pruefe_lizenz` verglich exakt auf das
+#: Schlagwort und meldete die frisch belegten Einträge weiter als „NICHT geprüft". Ein
+#: Beleg, den die Prüflogik nicht als Beleg erkennt, ist kein Beleg.
+QUELLE_GEPRUEFT_PRAEFIX = "geprueft "
+
+
+def ist_belegt(lizenz_quelle: str) -> bool:
+    """Ist diese Herkunftsangabe ein Beleg am Original?
+
+    ``QUELLE_MODELLKARTE`` oder ein Vermerk der Form ``"geprueft <datum> (<url>)"``.
+    Eine Sekundärquelle und ``ungeprueft`` sind es nicht.
+    """
+    return (lizenz_quelle == QUELLE_MODELLKARTE
+            or str(lizenz_quelle).startswith(QUELLE_GEPRUEFT_PRAEFIX))
+
 #: Lizenznamen, die ohne weitere Auflage unter Regel 1 fallen.
 PERMISSIVE_LIZENZEN = ("Apache-2.0", "MIT", "BSD-3-Clause", "BSD-2-Clause", "MPL-2.0")
 
@@ -384,10 +404,11 @@ def pruefe_lizenz(name: str) -> dict:
         begruendung}``.
 
         ``zulaessig`` ist die Antwort auf „darf verwendet werden", ``auflagen`` sagt
-        „unter welchen Bedingungen". Beides getrennt, weil zwei Einträge (SDXL mit
-        OpenRAIL++-M-Nutzungsauflagen, SD3.5 mit der Umsatzschwelle) kommerziell nutzbar
-        sind, aber eben nicht bedingungslos. Ein einzelnes Ja/Nein müsste eines von
-        beidem unterschlagen.
+        „unter welchen Bedingungen". Beides getrennt, weil zwei Einträge (SDXL mit den
+        CreativeML-OpenRAIL-M-Nutzungsauflagen **und** der Anbieterschranke gegen
+        entgeltliche API-Dienste, SD3.5 mit der Umsatzschwelle) kommerziell nutzbar sind,
+        aber eben nicht bedingungslos. Ein einzelnes Ja/Nein müsste eines von beidem
+        unterschlagen.
 
     Raises:
         BackboneError: Backbone unbekannt.
@@ -428,8 +449,24 @@ def pruefe_lizenz(name: str) -> dict:
             )
         if "OpenRAIL" in backbone.lizenz:
             auflagen.append(
-                "OpenRAIL++-M enthält Nutzungsauflagen (verbotene Verwendungszwecke), "
-                "die an jeden Weitergabeempfänger durchgereicht werden müssen."
+                f"'{backbone.lizenz}' enthält Nutzungsauflagen (verbotene "
+                f"Verwendungszwecke), die an jeden Weitergabeempfänger durchgereicht "
+                f"werden müssen."
+            )
+        if backbone.name == "sdxl-juggernaut":
+            # Wörtlich von der Modellkarte, abgerufen 2026-08-18: "This model may not be
+            # deployed behind paid API services without explicit licensing."
+            #
+            # Diese Schranke liegt OBERHALB der RAIL-Lizenz und ist an keiner der
+            # bisherigen Kategorien ablesbar: `kommerziell_nutzbar=True` bleibt richtig
+            # (persönliche und gestalterische Arbeit ist frei), aber unvollständig. Ein
+            # eigenes Feld dafür wäre eine Registry für Einzelfälle — darum steht sie hier
+            # als benannte Auflage, wo sie gelesen wird.
+            auflagen.append(
+                "ZUSÄTZLICH, oberhalb der Lizenz: Der Anbieter untersagt den Einsatz "
+                "'behind paid API services' ohne gesonderte Lizenz (Modellkarte, geprüft "
+                "2026-08-18). Für einen lokal laufenden Arbeitsplatz unerheblich — für "
+                "einen entgeltlichen Renderdienst nicht. Wer das vorhat, klärt es vorher."
             )
         if not auflagen:
             auflagen.append(
@@ -441,7 +478,7 @@ def pruefe_lizenz(name: str) -> dict:
             f"nicht bedingungslos. " + " ".join(auflagen)
         )
 
-    if backbone.lizenz_quelle != QUELLE_MODELLKARTE:
+    if not ist_belegt(backbone.lizenz_quelle):
         # Auch ein 'zulaessig: True' bleibt eine Behauptung, solange die Lizenz nicht am
         # Original gelesen wurde. Das gehört in dieselbe Antwort, nicht in eine Fussnote.
         hinweis = (

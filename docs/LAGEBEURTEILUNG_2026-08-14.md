@@ -38,7 +38,7 @@ Diese drei Punkte sind die einzigen Dateiänderungen dieses Auftrags. Es wurde n
 | **Fooocus** (lllyasviel) | **GPL-3.0** | ⚠️ nur Sekundärquelle | ⛔ **GPL-Fund** |
 | InvokeAI | Apache-2.0 | ⚠️ nur Sekundärquelle | ✅ zulässig |
 | SwarmUI | MIT — *über GPL-Backend* | ⚠️ nur Sekundärquelle | ⚠️ siehe unten |
-| Krita AI Diffusion | MIT — *über GPL-Backend* | ⚠️ nur Sekundärquelle | ⚠️ siehe unten |
+| **Krita AI Diffusion** | **GPL-3.0** | ✅ LICENSE-Datei gelesen **(18.08.2026)** | ⛔ **GPL-Fund** |
 | **litegraph.js** (Graph-Engine) | **MIT** | ✅ LICENSE-Datei gelesen | ✅ zulässig |
 | **React Flow / xyflow** | **MIT** | ✅ | ✅ zulässig |
 | Ryven (Python-Node-Editor) | MIT | ⚠️ nur Sekundärquelle | ✅ zulässig |
@@ -51,10 +51,32 @@ einzelne Befund dieser Lagebeurteilung, weil ComfyUI faktisch das De-facto-Backe
 gesamten Ökosystems ist: InvokeAI, SwarmUI, Krita AI Diffusion, sämtliche Blender-Brücken
 sind ComfyUI oder umhüllen es.
 
-Der MIT-Schild von SwarmUI und Krita AI Diffusion **löst das Problem nicht**, er verschiebt
-es nur: MIT-lizenziert ist dort die eigene Schale, das ausgelieferte Gesamtpaket enthält
-weiterhin GPL-Code. Wer dieses Muster kopiert, liefert ein GPL-Produkt aus und nennt es
-MIT. Für ein Repo, das ausdrücklich Apache-2.0 sein soll, ist das kein gangbarer Weg.
+Der MIT-Schild von SwarmUI **löst das Problem nicht**, er verschiebt es nur:
+MIT-lizenziert ist dort die eigene Schale, das ausgelieferte Gesamtpaket enthält weiterhin
+GPL-Code. Wer dieses Muster kopiert, liefert ein GPL-Produkt aus und nennt es MIT. Für ein
+Repo, das ausdrücklich Apache-2.0 sein soll, ist das kein gangbarer Weg.
+
+> ### ⛔ BERICHTIGUNG 18.08.2026 — Krita AI Diffusion ist nicht MIT, sondern GPL-3.0
+>
+> Diese Zeile stand hier seit dem 14.08. als „MIT — über GPL-Backend", also als Fall
+> derselben Sorte wie SwarmUI: eigene Schale permissiv, Problem nur im Unterbau. **Das
+> ist falsch.** Die Lizenzprüfung vom 18.08. hat die `LICENSE`-Datei im Vorgabezweig
+> abgerufen — sie ist der **GPLv3-Volltext**, 674 Zeilen:
+> `https://raw.githubusercontent.com/Acly/krita-ai-diffusion/main/LICENSE`
+>
+> **Regel 1 verlangt, GPL-Funde ausdrücklich als solche zu melden. Hiermit geschehen.**
+>
+> Praktische Folge: keine. Krita AI Diffusion liegt in keinem Pfad dieses Projekts, weder
+> als Abhängigkeit noch als Vorbild.
+>
+> Die eigentliche Folge ist eine über die Arbeitsweise: **Die Sekundärquelle lag in die
+> gefährliche Richtung falsch.** Sie meldete permissiv, wo Copyleft steht — nicht
+> umgekehrt. Ein Fehler in diese Richtung fällt nie von selbst auf, weil er niemanden
+> stört; er wird erst teuer, wenn ausgeliefert wird. Genau dafür steht in `CLAUDE.md`
+> „gegen die LICENSE-Datei, nicht gegen eine Suchmaschine", und genau darum ist die
+> Wissensschuld „Lizenzen nur aus Sekundärquellen" keine Formalie gewesen.
+>
+> Voller Prüfbericht: `docs/LIZENZPRUEFUNG_2026-08-18.md`.
 
 Bemerkenswert und nützlich: **litegraph.js — die Graph-Engine, auf der ComfyUIs Oberfläche
 aufsetzt — ist MIT.** Die Knotendarstellung ist also frei verfügbar; GPL ist ausschliesslich
@@ -367,7 +389,10 @@ Regel 1 verlangt, GPL-Funde explizit zu melden. Hier sind sie vollständig an ei
   beherrschbar. Der GPL-Anteil kommt nicht von IfcOpenShell, sondern von CGAL.
 - **Open WebUI: custom mit Branding-Klausel** — nicht OSI, fällt durch automatische Prüfung
 - **FLUX.1-dev / FLUX.2-dev: Non-Commercial** — erstreckt sich auf abgeleitete LoRAs
-- **SwarmUI / Krita AI Diffusion: MIT über GPL-Backend** — der MIT-Schild trügt
+- **Krita AI Diffusion: GPL-3.0** — *berichtigt 18.08.2026, siehe Kapitel 2. Die
+  ursprüngliche Angabe „MIT über GPL-Backend" stammte aus einer Sekundärquelle und war
+  falsch, und zwar in die gefährliche Richtung.*
+- **SwarmUI: MIT über GPL-Backend** — der MIT-Schild trügt
 
 ---
 

@@ -46,6 +46,7 @@ from aiimaging.kette import (
     KettenError,
     baue_kette,
     fuehre_aus,
+    pruefe_kette,
 )
 from conftest import REPO
 
@@ -569,7 +570,243 @@ def test_kreis_hat_keine_reihenfolge(tmp_path):
 
 
 # ======================================================================================
-# 4 · Die eingebauten Ausführer, soweit ohne Blender und ohne GPU prüfbar
+# 4 · Bedarf: was ein Knoten braucht — und was ein Cache-Eintrag zusagt
+# ======================================================================================
+#
+# Beides ist dieselbe Angabe (``kette.BEDARF``), und beides fehlte bis Sitzung 07.
+# Der Preis dafür ist gemessen: Ein Multipass-Knoten galt als `ok`, obwohl seine
+# normalisierte Tiefenkarte `None` war, wanderte in den Zwischenspeicher — und wurde nie
+# wieder gerechnet, auch nicht, nachdem die Ursache behoben war.
+
+
+def test_bedarf_deckt_alle_arten_der_standardkette_ab():
+    g = baue_kette(ifc_path="/tmp/a.ifc", prompt="x")
+    assert {k.art for k in g.knoten.values()} <= set(kette.BEDARF)
+
+
+def test_die_standardkette_ist_verdrahtet():
+    """Die Selbstprobe: Was ``baue_kette`` baut, muss die eigene Prüfung bestehen.
+
+    Sie hält die beiden Hälften zusammen. Wer einen Knoten umbaut und die Deklaration
+    vergisst, bekommt es hier gesagt und nicht erst im Lauf.
+    """
+    assert pruefe_kette(baue_kette(ifc_path="/tmp/a.ifc", prompt="x")) == []
+    assert pruefe_kette(baue_kette(glb_path="/tmp/m.glb", up_axis="Y", bbox=BBOX_HAUS,
+                                   prompt="x", qa=False)) == []
+
+
+def test_render_direkt_hinter_der_geometrie_faellt_ohne_lauf_auf():
+    """Ein von Hand gebauter Graph, dem die teuerste Stufe fehlt.
+
+    Die Kante besteht — die Geometriestufe liefert nur keine Tiefenkarte. Ohne diese
+    Prüfung merkt man das erst, wenn der Renderknoten mit halber Eingabe dasteht.
+    """
+    graph = Graph([
+        Knoten(KNOTEN_GEOMETRIE, ART_GEOMETRIE, {"glb_path": "/tmp/m.glb", "up_axis": "Y"}),
+        Knoten(KNOTEN_RENDER, ART_RENDER, {"prompt": "x"}, (KNOTEN_GEOMETRIE,)),
+    ])
+    befunde = pruefe_kette(graph)
+
+    assert [(b["knoten"], b["befund"]) for b in befunde] == [(KNOTEN_RENDER, "fehlendes-feld")]
+    assert "depth_png" in befunde[0]["detail"]
+
+
+def test_vertauschte_qa_eingaenge_werden_gemeldet():
+    """Slot 0 ist das Soll, Slot 1 das Ist. Vertauscht misst die QA das Bild gegen sich
+    selbst — und das Ergebnis sähe wie eine Messung aus."""
+    g = baue_kette(ifc_path="/tmp/a.ifc", prompt="x")
+    verdreht = Graph([
+        k if k.id != KNOTEN_QA else Knoten(k.id, k.art, k.params, (KNOTEN_RENDER, KNOTEN_MULTIPASS))
+        for k in g.knoten.values()
+    ])
+    befunde = pruefe_kette(verdreht)
+
+    assert len(befunde) == 2
+    assert all(b["knoten"] == KNOTEN_QA and b["schwere"] == "error" for b in befunde)
+
+
+def test_pruefe_verdrahtung_haelt_den_lauf_vor_dem_ersten_knoten_an(tmp_path):
+    """Der ganze Wert liegt im Zeitpunkt: **bevor** Blender startet.
+
+    Nachgebaut nach KosmoOrbits ``pipelineReadiness``, das im Cockpit dieselbe Rolle für
+    den äusseren Graphen spielt (``mcp_schemas.pruefe_verdrahtbarkeit``).
+    """
+    werkbank = Werkbank()
+    graph = Graph([
+        Knoten(KNOTEN_GEOMETRIE, ART_GEOMETRIE, {"glb_path": "/tmp/m.glb", "up_axis": "Y"}),
+        Knoten(KNOTEN_RENDER, ART_RENDER, {"prompt": "x"}, (KNOTEN_GEOMETRIE,)),
+    ])
+    with pytest.raises(KettenError, match="nicht verdrahtet"):
+        fuehre_aus(graph, cache=None, ausfuehrer=werkbank.tabelle(),
+                   out_dir=tmp_path / "out", pruefe_verdrahtung=True)
+
+    assert werkbank.aufrufe.total() == 0
+
+
+def test_ohne_die_pruefung_laeuft_ein_falsch_verdrahteter_graph_wie_bisher(tmp_path):
+    """Rückwärtskompatibilität, ausdrücklich: Die Vorgabe ist ``False``.
+
+    Ein Graph mit fremden oder halben Knotenarten — Attrappen, Versuche — soll weiter
+    laufen und im Lauf scheitern, nicht schon beim Aufruf.
+    """
+    werkbank = Werkbank()
+    glb = schreibe_ifc(tmp_path / "modell.glb", "SYNTHETISCHE-GEOMETRIE")
+    graph = Graph([
+        Knoten(KNOTEN_GEOMETRIE, ART_GEOMETRIE,
+               {"glb_path": str(glb), "up_axis": "Y", "bbox": BBOX_HAUS}),
+        Knoten(KNOTEN_RENDER, ART_RENDER, {"prompt": "x"}, (KNOTEN_GEOMETRIE,)),
+    ])
+    # Der echte Renderausführer statt der Attrappe: Er meldet das fehlende Feld selbst —
+    # eine Stufe zu spät, aber er meldet es. Genau das war der Zustand vor dieser Sitzung.
+    tabelle = {**werkbank.tabelle(), ART_RENDER: kette.AUSFUEHRER[ART_RENDER]}
+    ergebnis = fuehre_aus(graph, cache=None, ausfuehrer=tabelle, out_dir=tmp_path / "out")
+
+    assert ergebnis["knoten"][KNOTEN_RENDER]["status"] == "fehler"
+    assert "depth_png" in ergebnis["knoten"][KNOTEN_RENDER]["error"]
+
+
+# -- Der vergiftete Eintrag ------------------------------------------------------------
+
+def test_multipassstufe_gilt_ohne_normalisierte_tiefenkarte_als_gescheitert(tmp_path, monkeypatch):
+    """Die Sonderregel im Knoten — das erste der beiden Netze.
+
+    Die Bibliotheksfunktion bleibt nachsichtig (die EXR mit den echten Metern ist das
+    massgebliche Artefakt), der **Knoten** nicht: Was sein Nachfolger braucht, darf bei
+    ihm nicht als gelungen gelten. Ein gescheiterter Knoten wird nicht gespeichert — der
+    Cache wird also gar nicht erst vergiftet.
+    """
+    monkeypatch.setattr(seams, "glb_zu_multipass", lambda *a, **k: {
+        "depth_exr": str(tmp_path / "tiefe.exr"), "depth_png": None,
+        "depth_png_fehler": "Blender 5.2 schreibt nur Multilayer"})
+    knoten = Knoten(KNOTEN_MULTIPASS, ART_MULTIPASS,
+                    {"aufloesung": 512, "samples": 16, "beauty": True, "material_id": True})
+
+    ausgaben = kette.AUSFUEHRER[ART_MULTIPASS](
+        knoten=knoten, eingaben=[{"glb_path": "/tmp/m.glb", "up_axis": "Y"}], out_dir=tmp_path)
+
+    assert ausgaben["status"] == "fehler"
+    assert "Tiefenkarte" in ausgaben["error"] and "Multilayer" in ausgaben["error"]
+
+
+def test_ein_eintrag_mit_leerem_pflichtfeld_ist_kein_treffer(tmp_path):
+    """Das zweite Netz — und der eigentliche Befund aus Sitzung 07.
+
+    Hier rechnet **nicht** ``_fuehre_multipass``, sondern eine Attrappe, die sich genau
+    so verhält wie die Naht vor der Korrektur: Blender lief, die Normalisierung nicht,
+    der Knoten meldet ``ok`` und ein leeres ``depth_png``.
+
+    Gemessen wurde damals: drei Läufe, ein einziger Blender-Start. Der Cache-Schlüssel
+    hängt an Parametern und Vorgänger-Hashes, nicht an der Umgebung — die Ursache liess
+    sich beheben, ohne dass sich am Schlüssel etwas änderte, und der Treffer blieb. Mit
+    ``BEDARF`` ist ein Eintrag mit leerem Pflichtfeld kein Treffer mehr: Der zweite Lauf
+    rechnet, und er gelingt.
+    """
+    ifc = schreibe_ifc(tmp_path / "haus.ifc")
+    werkbank, cache = Werkbank(), ArtefaktCache(tmp_path / "cache")
+    aufrufe = Counter()
+    normalisierung_kaputt = [True]
+
+    def multipass_nachsichtig(*, knoten, eingaben, out_dir):
+        aufrufe[ART_MULTIPASS] += 1
+        exr = out_dir / "tiefe.exr"
+        exr.write_text("echte Meter", encoding="utf-8")
+        if normalisierung_kaputt[0]:
+            return {"status": "ok", "depth_exr": str(exr), "depth_png": None,
+                    "depth_png_fehler": "Blender 5.2 schreibt nur Multilayer"}
+        png = out_dir / "tiefe_norm.png"
+        png.write_text("tiefe", encoding="utf-8")
+        return {"status": "ok", "depth_exr": str(exr), "depth_png": str(png)}
+
+    tabelle = {**werkbank.tabelle(), ART_MULTIPASS: multipass_nachsichtig}
+    g = baue_kette(ifc_path=str(ifc), prompt="x")
+
+    erster = fuehre_aus(g, cache=cache, ausfuehrer=tabelle, out_dir=tmp_path / "out")
+    assert erster["knoten"][KNOTEN_MULTIPASS]["status"] == "ok", "die Attrappe meldet ok"
+    gespeichert = cache.hole(erster["knoten"][KNOTEN_MULTIPASS]["hash"])
+    assert gespeichert["ausgaben"]["depth_png"] is None, "der Eintrag liegt im Cache"
+
+    normalisierung_kaputt[0] = False          # Ursache behoben, Schlüssel unverändert
+    zweiter = fuehre_aus(g, cache=cache, ausfuehrer=tabelle, out_dir=tmp_path / "out")
+
+    assert aufrufe[ART_MULTIPASS] == 2, "der vergiftete Eintrag galt wieder als Treffer"
+    assert zweiter["knoten"][KNOTEN_MULTIPASS]["aus_cache"] is False
+    assert "verworfen" in zweiter["knoten"][KNOTEN_MULTIPASS]["cache_fehler"]
+    assert zweiter["status"] == "ok"
+
+
+def test_eine_art_ohne_deklaration_laeuft_und_speichert_wie_bisher(tmp_path):
+    """Wer nichts deklariert, verliert nichts: ungeprüft heisst nicht abgelehnt.
+
+    Sonst wären alle Versuchsketten mit eigenen Knotenarten mit einem Schlag ohne
+    Zwischenspeicher.
+    """
+    graph = Graph([Knoten("eigen", "eigenbau", {"n": 1})])
+    tabelle = {"eigenbau": lambda *, knoten, eingaben, out_dir: {"status": "ok", "zahl": 42}}
+    cache = ArtefaktCache(tmp_path / "cache")
+
+    fuehre_aus(graph, cache=cache, ausfuehrer=tabelle, out_dir=tmp_path / "out")
+    zweiter = fuehre_aus(graph, cache=cache, ausfuehrer=tabelle, out_dir=tmp_path / "out")
+
+    assert zweiter["cache_treffer"] == 1
+    assert zweiter["knoten"]["eigen"]["ausgaben"]["zahl"] == 42
+
+
+# -- Selektive Verwerfung --------------------------------------------------------------
+
+def test_ein_einzelner_knoten_laesst_sich_gezielt_verwerfen(tmp_path):
+    """Der Schlüssel steht im Protokoll — damit ist genau ein Knoten verwerfbar.
+
+    Bis Sitzung 07 half nur ``rm -rf`` auf dem ganzen Ausgabeordner: Um einen
+    verdächtigen Multipass zu wiederholen, fiel die teure Geometriestufe mit.
+
+    Es wird **nicht** kaskadiert, und das ist richtig: Rechnet der verworfene Knoten
+    dasselbe noch einmal, bleibt sein Hash gleich, und alles dahinter ist weiterhin
+    gültig. Nur wer etwas ändert, ändert die Schlüssel — von selbst.
+    """
+    ifc = schreibe_ifc(tmp_path / "haus.ifc")
+    werkbank, cache = Werkbank(), ArtefaktCache(tmp_path / "cache")
+    g = baue_kette(ifc_path=str(ifc), prompt="x")
+    erster = lauf(g, werkbank, cache, tmp_path)
+    assert lauf(g, werkbank, cache, tmp_path)["cache_treffer"] == 4
+
+    assert cache.verwirf(erster["knoten"][KNOTEN_MULTIPASS]["hash"]) is True
+    dritter = lauf(g, werkbank, cache, tmp_path)
+
+    assert werkbank.aufrufe == Counter(
+        {ART_GEOMETRIE: 1, ART_MULTIPASS: 2, ART_RENDER: 1, ART_QA: 1})
+    assert dritter["knoten"][KNOTEN_MULTIPASS]["aus_cache"] is False
+    assert dritter["knoten"][KNOTEN_GEOMETRIE]["aus_cache"] is True
+    assert dritter["knoten"][KNOTEN_RENDER]["aus_cache"] is True
+    assert dritter["status"] == "ok"
+
+
+def test_ein_unlesbarer_cache_eintrag_kostet_einen_knoten_und_nicht_den_lauf(tmp_path):
+    """Eine fremde Datei im Cache-Ordner darf keinen Stapellauf umbringen.
+
+    ``ArtefaktCache.hole`` meldet sie laut — dort weiss niemand, ob weitergerechnet
+    werden darf. Hier ist die richtige Antwort dieselbe wie bei einem Fehltreffer:
+    rechnen, und den Grund ins Protokoll schreiben. Dieselbe Abwägung wie beim
+    gescheiterten Ausführer: ein protokollierter Fund kostet einen Knoten, ein
+    Stapelabbruch die ganze Serie.
+    """
+    ifc = schreibe_ifc(tmp_path / "haus.ifc")
+    werkbank, cache = Werkbank(), ArtefaktCache(tmp_path / "cache")
+    g = baue_kette(ifc_path=str(ifc), prompt="x")
+    erster = lauf(g, werkbank, cache, tmp_path)
+
+    schluessel = erster["knoten"][KNOTEN_GEOMETRIE]["hash"]
+    (tmp_path / "cache" / f"{schluessel}.json").write_text("kein JSON", encoding="utf-8")
+    zweiter = lauf(g, werkbank, cache, tmp_path)
+
+    geometrie = zweiter["knoten"][KNOTEN_GEOMETRIE]
+    assert zweiter["status"] == "ok"
+    assert geometrie["aus_cache"] is False and werkbank.aufrufe[ART_GEOMETRIE] == 2
+    assert "unlesbar" in geometrie["cache_fehler"]
+    assert zweiter["knoten"][KNOTEN_MULTIPASS]["aus_cache"] is True, "der Rest bleibt gültig"
+
+
+# ======================================================================================
+# 5 · Die eingebauten Ausführer, soweit ohne Blender und ohne GPU prüfbar
 # ======================================================================================
 
 def test_ausfuehrer_deckt_alle_arten_der_standardkette_ab():
@@ -730,7 +967,7 @@ def test_schaetzername_gehoert_in_den_hash(tmp_path):
 
 
 # ======================================================================================
-# 5 · Der echte Lauf — über beide Prozessgrenzen, nur das Bildmodell bleibt Attrappe
+# 6 · Der echte Lauf — über beide Prozessgrenzen, nur das Bildmodell bleibt Attrappe
 # ======================================================================================
 
 def blender_fehlt() -> bool:

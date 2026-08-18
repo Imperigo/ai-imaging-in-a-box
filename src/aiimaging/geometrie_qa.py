@@ -111,8 +111,8 @@ from collections.abc import Sequence
 #
 # STAND NACH DER ERSTEN SCHWELLENSTUDIE (18.08.2026, `docs/SCHWELLENSTUDIE_2026-08-18.md`):
 # Diese Zahl ist **zu mild**, und das ist jetzt gemessen statt vermutet. Über acht
-# Störungsarten × sieben Stärken lässt 0.65 **22 von 36** gestörten Fällen durch
-# (Trefferquote 0.39); die beste Schwelle auf der Studienszene ist **0.90**, und sie ist
+# Störungsarten × sieben Stärken lässt 0.65 **18 von 32** auswertbaren gestörten Fällen
+# durch (Trefferquote 0.44); die beste Schwelle auf der Studienszene ist **0.90**, und sie ist
 # über drei Auflösungen dieselbe. Bis 0.85 wird dabei **kein einziger treuer Fall**
 # gesperrt — anheben kostete dort also nichts.
 #

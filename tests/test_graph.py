@@ -33,12 +33,16 @@ import pytest
 
 from aiimaging.graph import (
     GRAPH_SCHEMA_ID,
+    PFAD_MARKE,
+    ZUSAGEN_FELD,
     ArtefaktCache,
+    Bedarf,
     Graph,
     GraphError,
     Knoten,
     ZyklusError,
     inhalts_hash,
+    pruefe_bedarf,
 )
 from conftest import SRC
 
@@ -401,6 +405,216 @@ def test_from_dict_erbt_die_pruefungen_des_konstruktors():
 
 
 # --------------------------------------------------------------------------------------
+# Bedarf — was ein Knoten braucht, und die Prüfung ohne Ausführung
+# --------------------------------------------------------------------------------------
+#
+# Diese Prüfung ist das Gegenstück zu KosmoOrbits `pipelineReadiness`. Ihr ganzer Wert
+# liegt im Zeitpunkt: Was sie meldet, meldet sie **bevor** Blender startet. Ein Test, der
+# dafür etwas ausführen müsste, hätte den Zweck schon verfehlt — hier läuft nichts.
+
+
+def bedarfstabelle() -> dict:
+    """Die Bildkette von oben, als Deklaration. Synthetisch, aber in echter Gestalt."""
+    return {
+        "ifc_zu_glb": Bedarf(liefert=("glb_path",), dateien=("glb_path",)),
+        "tiefenkarte": Bedarf(braucht=(("glb_path",),), liefert=("depth_png",),
+                              dateien=("depth_png",)),
+        "beauty_pass": Bedarf(braucht=(("glb_path",),), liefert=("beauty_png",)),
+        "render": Bedarf(braucht=(("depth_png",), ("beauty_png",)), liefert=("bild_png",)),
+        "geometrie_qa": Bedarf(braucht=(("bild_png",), ("depth_png",)), liefert=("bestanden",)),
+    }
+
+
+def test_vollstaendig_verdrahtete_kette_meldet_nichts():
+    """Leer heisst verdrahtet — dieselbe Zusage wie ``pruefe_verdrahtbarkeit``."""
+    assert pruefe_bedarf(bildkette(), bedarfstabelle()) == []
+
+
+def test_vertauschte_eingaenge_fallen_ohne_lauf_auf():
+    """Slot 0 und Slot 1 vertauscht: Die Kante besteht, sie trägt nur das Falsche.
+
+    Das ist die tote Kante des inneren Graphen. Aussen entsteht sie durch ungleiche
+    Feldnamen, hier durch eine Position — der Fehler ist derselbe, und ohne diese Prüfung
+    fiele er erst nach dem Rendern auf.
+    """
+    graph = Graph([
+        Knoten("geometrie", "ifc_zu_glb", {}),
+        Knoten("tiefe", "tiefenkarte", {}, ("geometrie",)),
+        Knoten("beauty", "beauty_pass", {}, ("geometrie",)),
+        Knoten("bild", "render", {}, ("beauty", "tiefe")),      # verdreht
+    ])
+    befunde = pruefe_bedarf(graph, bedarfstabelle())
+
+    assert [b["befund"] for b in befunde] == ["fehlendes-feld", "fehlendes-feld"]
+    assert all(b["knoten"] == "bild" and b["schwere"] == "error" for b in befunde)
+    assert "depth_png" in befunde[0]["detail"]
+
+
+def test_fehlender_eingang_wird_gemeldet():
+    """Eine QA mit nur einem Vorgänger hätte kein Ist zum Vergleichen."""
+    graph = Graph([
+        Knoten("geometrie", "ifc_zu_glb", {}),
+        Knoten("tiefe", "tiefenkarte", {}, ("geometrie",)),
+        Knoten("beauty", "beauty_pass", {}, ("geometrie",)),
+        Knoten("bild", "render", {}, ("tiefe", "beauty")),
+        Knoten("qa", "geometrie_qa", {}, ("bild",)),
+    ])
+    befunde = pruefe_bedarf(graph, bedarfstabelle())
+
+    assert [(b["knoten"], b["befund"]) for b in befunde] == [("qa", "fehlender-eingang")]
+    assert "Slot 1" in befunde[0]["detail"]
+
+
+def test_unbekannte_art_wird_gemeldet_statt_fuer_richtig_gehalten():
+    """Nicht prüfbar ist nicht dasselbe wie in Ordnung — sonst wäre Schweigen ein Urteil."""
+    graph = Graph([Knoten("x", "irgendwas", {})])
+    befunde = pruefe_bedarf(graph, bedarfstabelle())
+
+    assert [(b["befund"], b["schwere"]) for b in befunde] == [("unbekannte-art", "warn")]
+
+
+def test_kante_in_eine_unbekannte_art_wird_nicht_beurteilt():
+    """Wer nicht weiss, was der Vorgänger liefert, darf ihm nichts vorwerfen."""
+    graph = Graph([
+        Knoten("fremd", "irgendwas", {}),
+        Knoten("tiefe", "tiefenkarte", {}, ("fremd",)),
+    ])
+    befunde = pruefe_bedarf(graph, bedarfstabelle())
+
+    assert [b["befund"] for b in befunde] == ["unbekannte-art"]
+
+
+def test_unbenutzter_eingang_ist_nur_eine_warnung():
+    """Eine Kante darf auch bloss eine Reihenfolge erzwingen — das ist kein Fehler."""
+    graph = Graph([
+        Knoten("geometrie", "ifc_zu_glb", {}),
+        Knoten("beauty", "beauty_pass", {}, ("geometrie",)),
+        Knoten("tiefe", "tiefenkarte", {}, ("geometrie", "beauty")),
+    ])
+    befunde = pruefe_bedarf(graph, bedarfstabelle())
+
+    assert [(b["knoten"], b["befund"], b["schwere"]) for b in befunde] == [
+        ("tiefe", "unbenutzter-eingang", "warn")]
+
+
+def test_ein_kreis_verhindert_die_pruefung_nicht():
+    """Geprüft wird ohne Rechenreihenfolge — sonst verdeckte der eine Fehler den anderen."""
+    graph = Graph([
+        Knoten("a", "tiefenkarte", {}, ("b",)),
+        Knoten("b", "tiefenkarte", {}, ("a",)),
+    ])
+    with pytest.raises(ZyklusError):
+        graph.topologische_reihenfolge()
+
+    befunde = pruefe_bedarf(graph, bedarfstabelle())
+    assert [b["knoten"] for b in befunde] == ["a", "b"]
+    assert all(b["befund"] == "fehlendes-feld" for b in befunde)
+
+
+def test_befunde_sind_nach_knoten_sortiert_und_wiederholbar():
+    """Zwei Läufe, dieselbe Ausgabe — sonst wäre ein Protokoll nicht vergleichbar."""
+    graph = Graph([
+        Knoten("zebra", "tiefenkarte", {}, ("geometrie",)),
+        Knoten("geometrie", "ifc_zu_glb", {}),
+        Knoten("alpha", "render", {}, ("geometrie", "geometrie")),
+    ])
+    befunde = pruefe_bedarf(graph, bedarfstabelle())
+
+    assert [b["knoten"] for b in befunde] == ["alpha", "alpha"]
+    assert pruefe_bedarf(graph, bedarfstabelle()) == befunde
+
+
+def test_leere_deklaration_meldet_jeden_knoten_als_ungeprueft():
+    assert len(pruefe_bedarf(bildkette(), {})) == len(bildkette())
+
+
+@pytest.mark.parametrize("bedarf", [
+    dict(braucht="glb_path"), dict(liefert="glb_path"), dict(dateien="glb_path"),
+])
+def test_einzelner_feldname_statt_folge_wird_gemeldet(bedarf):
+    """Dieselbe Falle wie bei ``Knoten.eingaenge``: Ein String zerfiele in Zeichen."""
+    with pytest.raises(GraphError, match="kein einzelner String"):
+        Bedarf(**bedarf)
+
+
+def test_feldname_muss_text_sein():
+    with pytest.raises(GraphError, match="Feldname"):
+        Bedarf(liefert=(7,))
+
+
+def test_braucht_wird_zu_tupeln_normalisiert():
+    """Eine Liste von Listen ist dieselbe Aussage — sie soll dieselbe Gestalt annehmen."""
+    assert Bedarf(braucht=[["a"], ["b", "c"]]).braucht == (("a",), ("b", "c"))
+
+
+def test_pruefe_bedarf_nimmt_keinen_dict_statt_graph():
+    with pytest.raises(GraphError, match="Graph"):
+        pruefe_bedarf(bildkette().to_dict(), bedarfstabelle())
+
+
+def test_pruefe_bedarf_meldet_eine_falsch_gefuellte_tabelle():
+    with pytest.raises(GraphError, match="kein Bedarf-Objekt"):
+        pruefe_bedarf(Graph([Knoten("a", "render", {})]), {"render": ("bild_png",)})
+
+
+def test_falsch_gefuellte_tabelle_faellt_auch_am_vorgaenger_auf():
+    """Der Vorgänger heisst 'z' und ist in der Sortierung zuletzt dran — ein
+    AttributeError zwei Zeilen weiter wäre eine Fehlermeldung ohne Ursache."""
+    graph = Graph([Knoten("z", "beauty_pass", {}), Knoten("a", "render", {}, ("z", "z"))])
+    with pytest.raises(GraphError, match="kein Bedarf-Objekt"):
+        pruefe_bedarf(graph, {**bedarfstabelle(), "beauty_pass": ("beauty_png",)})
+
+
+# -- Die Zusage einer Ausgabe ----------------------------------------------------------
+
+def test_leeres_pflichtfeld_ist_ein_mangel(tmp_path):
+    """**Der Fehler aus Sitzung 07**, auf seinen Kern eingedampft.
+
+    ``depth_png = None`` bei ``status='ok'``: Die Endungs-Heuristik der Kette sah nur
+    Felder mit nicht-leerem Text und liess es durch. Der Eintrag wanderte in den Cache
+    und galt für immer als Treffer — die teure Stufe wurde nie wieder gerechnet.
+    """
+    bedarf = Bedarf(liefert=("depth_png",), dateien=("depth_png",))
+    assert bedarf.maengel({"status": "ok", "depth_png": None})
+    assert "depth_png" in bedarf.maengel({"status": "ok", "depth_png": None})[0]
+
+
+def test_fehlende_zugesagte_datei_ist_ein_mangel(tmp_path):
+    bedarf = Bedarf(liefert=("bild_png",), dateien=("bild_png",))
+    bild = tmp_path / "bild.png"
+    bild.write_text("x", encoding="utf-8")
+
+    assert bedarf.maengel({"bild_png": str(bild)}) == []
+    bild.unlink()
+    assert "Zugesagte Datei fehlt" in bedarf.maengel({"bild_png": str(bild)})[0]
+
+
+def test_wahlweise_datei_wird_nur_geprueft_wenn_sie_genannt_ist(tmp_path):
+    """Der Beauty-Pass lässt sich abschalten — dann ist sein Feld leer und in Ordnung."""
+    bedarf = Bedarf(liefert=("depth_png",), dateien=("depth_png", "beauty_png"))
+    tiefe = tmp_path / "t.png"
+    tiefe.write_text("x", encoding="utf-8")
+
+    assert bedarf.maengel({"depth_png": str(tiefe), "beauty_png": None}) == []
+    assert bedarf.maengel({"depth_png": str(tiefe), "beauty_png": "/gibt/es/nicht.png"})
+
+
+def test_falsch_ist_kein_fehlendes_feld():
+    """``bestanden=False`` ist ein Urteil, kein Mangel.
+
+    Würde ein durchgefallenes Gate wie ein leeres Feld behandelt, verwürfe der Cache
+    ausgerechnet den interessantesten Fall des Projekts — die erkannte Halluzination.
+    """
+    assert Bedarf(liefert=("bestanden", "score")).maengel({"bestanden": False, "score": 0}) == []
+
+
+def test_zugesagte_dateien_sind_die_gesetzten_in_deklarierter_reihenfolge():
+    bedarf = Bedarf(dateien=("depth_png", "depth_exr", "beauty_png"))
+    ausgaben = {"depth_png": "/a.png", "depth_exr": None, "beauty_png": "/c.png"}
+    assert bedarf.zugesagte_dateien(ausgaben) == ["/a.png", "/c.png"]
+
+
+# --------------------------------------------------------------------------------------
 # inhalts_hash
 # --------------------------------------------------------------------------------------
 
@@ -565,6 +779,109 @@ def test_hash_ist_ueber_prozessgrenzen_hinweg_stabil():
         assert ergebnis.stdout.strip() == hier, f"PYTHONHASHSEED={seed} ergab etwas anderes"
 
 
+# -- param_dateien: die Ausnahmeliste für Pfad-Parameter -------------------------------
+#
+# Die Kette hat sich diese Umschrift bis Sitzung 07 selbst gebaut (eigener Zweitknoten
+# mit ersetzten Pfaden). Hier steht sie jetzt, und diese Tests halten fest, warum sie
+# überhaupt gebraucht wird.
+
+def test_verschobener_projektordner_verwirft_den_cache_nicht(tmp_path):
+    """Derselbe Inhalt an einem anderen Ort ergibt denselben Schlüssel.
+
+    Ohne die Ausnahmeliste hinge der Hash am Dateinamen: Ein umbenannter Projektordner
+    verwürfe den ganzen Zwischenspeicher, obwohl sich an der Geometrie nichts geändert
+    hat. Es ist der teuerste Fehltreffer, den ein Cache machen kann, weil er wie ein
+    korrekter Cache aussieht — er rechnet einfach immer.
+    """
+    alt = tmp_path / "projekt-a" / "haus.ifc"
+    neu = tmp_path / "projekt-b" / "haus.ifc"
+    for pfad in (alt, neu):
+        pfad.parent.mkdir(parents=True)
+        pfad.write_text("SYNTHETISCHE-GEOMETRIE", encoding="utf-8")
+
+    a = inhalts_hash(Knoten("g", "geometrie", {"ifc_path": str(alt)}), [],
+                     param_dateien=("ifc_path",))
+    b = inhalts_hash(Knoten("g", "geometrie", {"ifc_path": str(neu)}), [],
+                     param_dateien=("ifc_path",))
+    assert a == b
+
+
+def test_gleicher_pfad_anderer_inhalt_ergibt_anderen_hash(tmp_path):
+    """Die Gegenprobe: Der Inhalt zählt weiterhin voll mit."""
+    ifc = tmp_path / "haus.ifc"
+    ifc.write_text("STAND-A", encoding="utf-8")
+    knoten = Knoten("g", "geometrie", {"ifc_path": str(ifc)})
+    vorher = inhalts_hash(knoten, [], param_dateien=("ifc_path",))
+
+    ifc.write_text("STAND-B — ein Stockwerk mehr", encoding="utf-8")
+    assert inhalts_hash(knoten, [], param_dateien=("ifc_path",)) != vorher
+
+
+def test_der_feldname_bleibt_stehen_und_unterscheidet(tmp_path):
+    """Ersetzt, nicht gelöscht.
+
+    ``ifc_path`` heisst „konvertiere", ``glb_path`` heisst „reiche durch". Würde der
+    Parameter ganz entfernt, ergäben dieselben Bytes unter beiden Namen denselben Hash —
+    und der Cache lieferte zum glb-Durchreichen das Ergebnis einer Konversion.
+    """
+    datei = tmp_path / "modell"
+    datei.write_text("DIESELBEN BYTES", encoding="utf-8")
+
+    als_ifc = inhalts_hash(Knoten("g", "geometrie", {"ifc_path": str(datei)}), [],
+                           param_dateien=("ifc_path", "glb_path"))
+    als_glb = inhalts_hash(Knoten("g", "geometrie", {"glb_path": str(datei)}), [],
+                           param_dateien=("ifc_path", "glb_path"))
+    assert als_ifc != als_glb
+
+
+def test_ausnahmeliste_ist_gleichbedeutend_mit_der_umschrift_von_hand(tmp_path):
+    """Der Kern rechnet genau das, was die Kette sich vorher selbst gebaut hat.
+
+    Wichtig für den Umstieg: Ein bestehender Zwischenspeicher bleibt gültig. Wäre der
+    Hash auch nur um ein Zeichen anders, wäre er beim ersten Lauf nach dem Umbau
+    vollständig verworfen — ohne dass jemand es gemerkt hätte.
+    """
+    ifc = tmp_path / "haus.ifc"
+    ifc.write_text("SYNTHETISCHE-GEOMETRIE", encoding="utf-8")
+    params = {"ifc_path": str(ifc), "bbox": None}
+
+    von_hand = inhalts_hash(
+        Knoten("g", "geometrie", {**params, "ifc_path": PFAD_MARKE}), ["v"], [str(ifc)])
+    aus_dem_kern = inhalts_hash(
+        Knoten("g", "geometrie", params), ["v"], param_dateien=("ifc_path", "glb_path"))
+    assert von_hand == aus_dem_kern
+
+
+def test_nicht_gesetzte_pfad_parameter_bleiben_folgenlos(tmp_path):
+    """Die Liste nennt beide Eingänge; belegt ist immer nur einer."""
+    ifc = tmp_path / "haus.ifc"
+    ifc.write_text("x", encoding="utf-8")
+    mit_leerem = inhalts_hash(Knoten("g", "geometrie", {"ifc_path": str(ifc)}), [],
+                              param_dateien=("ifc_path", "glb_path"))
+    ohne = inhalts_hash(Knoten("g", "geometrie", {"ifc_path": str(ifc)}), [],
+                        param_dateien=("ifc_path",))
+    assert mit_leerem == ohne
+
+
+def test_fehlende_datei_aus_der_ausnahmeliste_wird_gemeldet(tmp_path):
+    """Kein Hash ohne Datei — sonst ergäbe eine fehlende Eingabe denselben Schlüssel
+    wie eine leere."""
+    with pytest.raises(GraphError, match="fehlt"):
+        inhalts_hash(Knoten("g", "geometrie", {"ifc_path": str(tmp_path / "weg.ifc")}), [],
+                     param_dateien=("ifc_path",))
+
+
+def test_pfad_parameter_der_kein_pfad_ist_wird_gemeldet():
+    with pytest.raises(GraphError, match="kein Pfad"):
+        inhalts_hash(Knoten("g", "geometrie", {"ifc_path": 7}), [],
+                     param_dateien=("ifc_path",))
+
+
+def test_param_dateien_als_einzelner_string_wird_gemeldet(tmp_path):
+    with pytest.raises(GraphError, match="kein einzelner String"):
+        inhalts_hash(Knoten("g", "geometrie", {}), [], param_dateien="ifc_path")
+
+
 # --------------------------------------------------------------------------------------
 # ArtefaktCache
 # --------------------------------------------------------------------------------------
@@ -714,6 +1031,111 @@ def test_unlesbarer_eintrag_wird_gemeldet_statt_als_fehltreffer_verkleidet(tmp_p
     assert cache.hat("kaputt")
     with pytest.raises(GraphError, match="unlesbar"):
         cache.hole("kaputt")
+
+
+# -- Was ein Eintrag zusagt ------------------------------------------------------------
+
+def test_eintrag_ohne_zusage_bleibt_wie_er_uebergeben_wurde(tmp_path):
+    """Wer nichts verspricht, bekommt auch kein zusätzliches Feld untergeschoben."""
+    cache = ArtefaktCache(tmp_path)
+    cache.lege_ab("k", {"n": 1})
+    assert cache.hole("k") == {"n": 1}
+
+
+def test_zugesagte_datei_wird_im_eintrag_vermerkt(tmp_path):
+    cache = ArtefaktCache(tmp_path / "cache")
+    bild = tmp_path / "bild.png"
+    bild.write_text("x", encoding="utf-8")
+
+    cache.lege_ab("k", {"bild_png": str(bild)}, zusagen=[bild])
+
+    assert cache.hole("k")[ZUSAGEN_FELD] == [str(bild)]
+
+
+def test_eintrag_mit_verschwundener_datei_ist_kein_treffer(tmp_path):
+    """Ein Eintrag zeigt auf Dateien ausserhalb des Caches — ein aufgeräumtes ``/tmp``
+    genügt, und die Zusage geht ins Leere.
+
+    ``hat`` sagt weiterhin ja: Es ist eine reine Existenzprüfung auf den Eintrag und
+    beantwortet eine andere Frage. Wer das Ergebnis braucht, fragt ``hole``.
+    """
+    cache = ArtefaktCache(tmp_path / "cache")
+    bild = tmp_path / "bild.png"
+    bild.write_text("x", encoding="utf-8")
+    cache.lege_ab("k", {"bild_png": str(bild)}, zusagen=[str(bild)])
+    assert cache.hole("k") is not None
+
+    bild.unlink()
+
+    assert cache.hole("k") is None
+    assert cache.hat("k") is True
+
+
+def test_ein_verworfener_eintrag_bleibt_liegen_und_wird_ueberschrieben(tmp_path):
+    """Beim Lesen zu löschen wäre bei zwei gleichzeitigen Läufen ein Rennen."""
+    cache = ArtefaktCache(tmp_path / "cache")
+    bild = tmp_path / "bild.png"
+    bild.write_text("x", encoding="utf-8")
+    cache.lege_ab("k", {"lauf": 1}, zusagen=[str(bild)])
+    bild.unlink()
+
+    assert cache.hole("k") is None
+    assert cache.schluessel() == ["k"]
+
+    bild.write_text("wieder da", encoding="utf-8")
+    cache.lege_ab("k", {"lauf": 2}, zusagen=[str(bild)])
+    assert cache.hole("k")["lauf"] == 2
+
+
+def test_einzelner_pfad_statt_folge_von_zusagen_wird_gemeldet(tmp_path):
+    cache = ArtefaktCache(tmp_path)
+    with pytest.raises(GraphError, match="kein einzelner Pfad"):
+        cache.lege_ab("k", {"x": 1}, zusagen="/tmp/bild.png")
+
+
+# -- Selektive Verwerfung --------------------------------------------------------------
+
+def test_verwirf_loescht_genau_einen_eintrag(tmp_path):
+    """Bis Sitzung 07 half nur ``rm -rf`` auf dem ganzen Ausgabeordner — und damit fiel
+    die teure Geometriestufe mit, um einen Render zu wiederholen."""
+    cache = ArtefaktCache(tmp_path)
+    for schluessel in ("geometrie", "multipass", "render"):
+        cache.lege_ab(schluessel, {"x": schluessel})
+
+    assert cache.verwirf("multipass") is True
+
+    assert cache.schluessel() == ["geometrie", "render"]
+    assert cache.hole("multipass") is None
+    assert cache.hole("geometrie") == {"x": "geometrie"}
+
+
+def test_verwirf_meldet_einen_unbekannten_schluessel_als_nichts_getan(tmp_path):
+    assert ArtefaktCache(tmp_path).verwirf("nochnie") is False
+
+
+def test_verwirf_prueft_den_schluessel_wie_jeder_andere_zugriff(tmp_path):
+    """Der Schlüssel wird zum Dateinamen — auch beim Löschen."""
+    cache = ArtefaktCache(tmp_path / "cache")
+    fremd = tmp_path / "wichtig.json"
+    fremd.write_text("{}", encoding="utf-8")
+
+    with pytest.raises(GraphError, match="Schlüssel"):
+        cache.verwirf("../wichtig")
+    assert fremd.exists()
+
+
+def test_schluessel_sind_sortiert_und_nennen_keine_truemmer(tmp_path):
+    cache = ArtefaktCache(tmp_path)
+    for schluessel in ("c3", "a1", "b2"):
+        cache.lege_ab(schluessel, {"x": 1})
+    (tmp_path / ".a1.abc.tmp").write_text("halb", encoding="utf-8")
+    (tmp_path / "notizen.txt").write_text("fremd", encoding="utf-8")
+
+    assert cache.schluessel() == ["a1", "b2", "c3"]
+
+
+def test_schluessel_eines_leeren_caches_ist_leer(tmp_path):
+    assert ArtefaktCache(tmp_path / "neu").schluessel() == []
 
 
 # --------------------------------------------------------------------------------------

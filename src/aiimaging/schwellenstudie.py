@@ -55,8 +55,10 @@ sondern die Metrik selbst:
 """
 from __future__ import annotations
 
+import hashlib
 import math
 import random
+import struct
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -270,12 +272,21 @@ def stoere(soll: Sequence[float], art: str, staerke: float, *,
         raise StudienError(f"Unbekannte Störung {art!r}. Bekannt: {', '.join(sorted(STOERUNGEN))}")
     if not isinstance(staerke, (int, float)) or isinstance(staerke, bool) or staerke < 0:
         raise StudienError(f"staerke: nicht-negative Zahl erwartet, war {staerke!r}.")
+    if breite < 1 or hoehe < 1:
+        raise StudienError(f"Masse müssen positiv sein, waren {breite}×{hoehe}.")
     if breite * hoehe != len(soll):
         raise StudienError(
             f"{breite}×{hoehe} = {breite * hoehe} passt nicht zu {len(soll)} Werten. "
             f"Die räumlichen Störungen brauchen die echten Masse — eine falsche Breite "
             f"verschöbe jede Zeile und sähe wie eine Störung aus, die keine ist."
         )
+    # Ehrliche Grenze, bei der Testabnahme am 18.08.2026 gefunden: Diese Prüfung ist
+    # eine **Längen**prüfung, keine Massprüfung. `breite=1024, hoehe=1` kommt auf einer
+    # 32×32-Karte durch, weil das Produkt stimmt — aus einer flachen Werteliste lässt
+    # sich die wahre Zeilenbreite nicht ablesen. Was danach herauskommt, ist keine
+    # Störung, sondern Unsinn; er fällt erst als „nicht messbar" in der Zeile auf.
+    # Wer hier eine echte Prüfung will, muss die Masse zur Karte mitführen — das wäre
+    # ein anderer Datentyp und nicht die Sache dieses Moduls.
     karte = list(soll)
     idx = _geometrie_indizes(karte)
     if not idx:
@@ -366,23 +377,45 @@ def stoere(soll: Sequence[float], art: str, staerke: float, *,
         return neu
 
     if art == ZUSATZKOERPER:
-        # staerke 1.0 = ein Zusatzkörper von der Fläche des Baus selbst. Er sitzt in der
-        # oberen linken Ecke, wo in der Testszene Hintergrund ist.
-        flaeche = max(1, round(staerke * len(idx)))
-        kante = max(1, int(math.isqrt(flaeche)))
+        # staerke 1.0 = ein Zusatzkörper von der Fläche des Baus selbst.
+        #
+        # BEFUND 18.08.2026, bei der Testabnahme gemessen: Die erste Fassung legte ein
+        # Quadrat der Kantenlänge √(staerke · Baufläche) in die obere linke Ecke — und
+        # der Bau selbst schnitt davon so viel weg, dass bei Stärke 1,0 nur **40 %** der
+        # angekündigten Fläche stehenblieb (780 statt 1936 Punkte auf 64²). Die Rechnung
+        # war harmlos, die Beschriftung der Achse falsch: „Fläche des Baus selbst" war
+        # schlicht nicht wahr, und die Auswertung hat es geglaubt.
+        #
+        # Jetzt wird das Quadrat gewachsen, bis die **tatsächlich gesetzte** Punktzahl
+        # das Ziel erreicht. Was die Achse verspricht, steht danach auch im Bild.
+        ziel = max(1, round(staerke * len(idx)))
         werte = [karte[i] for i in idx]
         tiefe = min(werte)                            # davor, also gut sichtbar
+        frei = [i for i in range(len(karte))
+                if not (math.isfinite(karte[i])
+                        and karte[i] < geometrie_qa.HINTERGRUND_SCHWELLE_M)]
+        if not frei:
+            raise StudienError(
+                "Der Zusatzkörper fand keinen freien Platz — diese Szene hat keinen "
+                "Hintergrund. Die Störung braucht welchen."
+            )
         gesetzt = 0
-        for y in range(min(kante, hoehe)):
-            for x in range(min(kante, breite)):
-                i = y * breite + x
-                if not (math.isfinite(karte[i]) and karte[i] < geometrie_qa.HINTERGRUND_SCHWELLE_M):
-                    karte[i] = tiefe
-                    gesetzt += 1
+        for kante in range(1, max(breite, hoehe) + 1):
+            for y in range(min(kante, hoehe)):
+                for x in range(min(kante, breite)):
+                    i = y * breite + x
+                    if karte[i] == HINTERGRUND_M or not (
+                            math.isfinite(karte[i])
+                            and karte[i] < geometrie_qa.HINTERGRUND_SCHWELLE_M):
+                        if karte[i] != tiefe:
+                            karte[i] = tiefe
+                            gesetzt += 1
+            if gesetzt >= ziel or kante >= max(breite, hoehe):
+                break
         if gesetzt == 0:
             raise StudienError(
-                "Der Zusatzkörper fand keinen freien Platz — in dieser Szene ist die "
-                "obere linke Ecke schon bebaut. Diese Störung braucht Hintergrund."
+                "Der Zusatzkörper konnte keinen einzigen Punkt setzen — die obere linke "
+                "Ecke dieser Szene ist vollständig bebaut."
             )
         return karte
 
@@ -424,6 +457,9 @@ def studienlauf(soll: Sequence[float], *, breite: int, hoehe: int,
             zeile = {
                 "art": art,
                 "staerke": float(staerke),
+                # Fingerabdruck der Ist-Karte. Er ist eine Zahl und reist damit nach
+                # Regel 3 mit; wozu er da ist, steht bei `trennschaerfe_kurve`.
+                "ist_abdruck": _abdruck(ist),
                 "score": urteil["score"],
                 "spearman": urteil["spearman"],
                 "geom_iou": urteil["geom_iou"],
@@ -446,6 +482,19 @@ def studienlauf(soll: Sequence[float], *, breite: int, hoehe: int,
         "kontrollen": _kontrollen(zeilen),
         "warnungen": warnungen,
     }
+
+
+def _abdruck(karte: Sequence[float]) -> str:
+    """Ein kurzer, stabiler Fingerabdruck einer Tiefenkarte.
+
+    Nur zum **Vergleichen zweier Zeilen**, nicht als Prüfsumme gegen Verfälschung —
+    darum genügt eine kurze Kennung. Sie ist eine Zeichenkette aus Ziffern und reist
+    unter Regel 3 mit, weil sich aus ihr keine Karte zurückgewinnen lässt.
+    """
+    h = hashlib.blake2b(digest_size=8)
+    for wert in karte:
+        h.update(struct.pack("<d", wert))
+    return h.hexdigest()
 
 
 def _nullprobe(zeilen: list[dict], art: str) -> dict | None:
@@ -540,16 +589,48 @@ def trennschaerfe_kurve(ergebnis: dict, schwellen: Sequence[float] = tuple(
             darum steht sie im Rückgabewert.
 
     Returns:
-        ``{grenzstaerke, punkte, beste}``. ``beste`` ist die Schwelle mit der höchsten
+        ``{grenzstaerke, punkte, beste, entdoppelt, n_roh, n_ausgewertet}``.
+        ``entdoppelt`` nennt jede Zeile, die als punktgleiche Wiederholung verworfen
+        wurde — siehe die Begründung im Rumpf. ``beste`` ist die Schwelle mit der höchsten
         Trefferquote; bei Gleichstand die **kleinste** von ihnen, denn eine niedrigere
         Schwelle sperrt weniger und ist bei gleicher Güte die mildere Wahl.
     """
-    zeilen = [z for z in ergebnis["zeilen"]
-              if not z["ist_kontrolle"] and z["score"] is not None and z["staerke"] > 0.0]
+    roh = [z for z in ergebnis["zeilen"]
+           if not z["ist_kontrolle"] and z["score"] is not None and z["staerke"] > 0.0]
+
+    # ENTDOPPLUNG — der Befund, der die erste Auswertung dieser Studie verfälscht hat.
+    #
+    # Die räumlichen Störungen rechnen in **ganzen Bildpunkten**: `round(staerke · k)`.
+    # Auf 64² ergeben Stärke 0,2 und 0,3 beide zwei Bildpunkte — die beiden Ist-Karten
+    # sind dann nicht ähnlich, sondern **punktgleich identisch**, mit demselben Score.
+    #
+    # Das ist für sich harmlos. Verheerend wird es, weil `grenzstaerke` genau dazwischen
+    # liegt: Zwei Zeilen mit **derselben Messung** stehen auf verschiedenen Seiten der
+    # Grenze, die eine gilt als treu, die andere als untreu. **Keine Schwelle der Welt
+    # kann sie trennen** — jede zählt zwangsläufig einen Fehler, und der landete in der
+    # ersten Auswertung als `falsch_frei`, also als Aussage über die Metrik.
+    #
+    # Er war eine Aussage über das Stärkeraster. Solche Zeilen werden hier verworfen
+    # statt gezählt, und wie viele es waren, steht im Ergebnis: Eine stillschweigende
+    # Bereinigung wäre nur die zweite Art, dieselbe Zahl zu erfinden.
+    zeilen: list[dict] = []
+    verworfen: list[dict] = []
+    gesehen: dict[tuple[str, str], float] = {}
+    for z in roh:
+        schluessel = (z["art"], z.get("ist_abdruck") or f"ohne-abdruck-{z['staerke']}")
+        if schluessel in gesehen:
+            verworfen.append({"art": z["art"], "staerke": z["staerke"],
+                              "gleich_wie_staerke": gesehen[schluessel],
+                              "score": z["score"]})
+            continue
+        gesehen[schluessel] = z["staerke"]
+        zeilen.append(z)
+
     if not zeilen:
         raise StudienError(
             "Keine auswertbare Zeile: Kontrollen und nicht messbare Fälle zählen nicht "
-            "mit, und Stärke 0 ist die Nullprobe."
+            "mit, Stärke 0 ist die Nullprobe, und punktgleiche Wiederholungen sind "
+            "entdoppelt."
         )
     punkte = []
     for schwelle in schwellen:
@@ -573,7 +654,8 @@ def trennschaerfe_kurve(ergebnis: dict, schwellen: Sequence[float] = tuple(
             "treffer": (rf + rg) / n, "n": n,
         })
     beste = max(punkte, key=lambda p: (p["treffer"], -p["schwelle"]))
-    return {"grenzstaerke": grenzstaerke, "punkte": punkte, "beste": beste}
+    return {"grenzstaerke": grenzstaerke, "punkte": punkte, "beste": beste,
+            "entdoppelt": verworfen, "n_roh": len(roh), "n_ausgewertet": len(zeilen)}
 
 
 __all__ = [

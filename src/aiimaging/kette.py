@@ -88,7 +88,7 @@ STATUS_FEHLER = "fehler"
 STATUS_UEBERSPRUNGEN = "uebersprungen"
 
 #: Welche Parameter eines Knotens **Eingabedateien** benennen. Ihr Inhalt fliesst in den
-#: Hash (``graph.inhalts_hash``, Argument ``dateien``).
+#: Hash, ihr **Pfad** nicht (``graph.inhalts_hash``, Argument ``param_dateien``).
 #:
 #: Warum nur die Geometriestufe darin steht: Alles weitere Material entsteht **in** der
 #: Kette. Die glb des Multipass kommt aus der Geometriestufe, und deren Hash steckt
@@ -456,6 +456,18 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     #
     # Der Knoten braucht das PNG: Sein Nachfolger konditioniert das Bildmodell damit.
     # Was der Nachfolger braucht, darf hier nicht als gelungen gelten.
+    #
+    # **Warum die Regel stehenbleibt, obwohl der Kern den Fall inzwischen selbst fängt.**
+    # Schritt 2 stimmt so nicht mehr: ``BEDARF`` nennt ``depth_png`` als Pflichtfeld, und
+    # ein Eintrag mit leerem Pflichtfeld ist kein Treffer (``_cache_maengel``). Der Cache
+    # bliebe also auch ohne diese Zeilen brauchbar — er würde nur bei jedem Lauf neu
+    # rechnen, statt den Fehlschlag gar nicht erst zu speichern. Was die Regel zusätzlich
+    # leistet, ist die **Meldung am richtigen Knoten**: Ohne sie meldet erst die
+    # Renderstufe ein fehlendes Feld, und die Ursache liegt eine Stufe davor. Sitzung 07
+    # hat genau daran gelernt, dass ein Bericht lauter sein muss als eine
+    # Bibliotheksfunktion — `auf-01` bis `auf-05` haben die Blender-5.2-Sperre nur
+    # deshalb gefunden, weil der Multipass `fehler` zurückmeldete und nicht `ok` mit
+    # einem fehlenden Dateinamen in einer Liste.
     if not bericht.get("depth_png"):
         grund = bericht.get("depth_png_fehler") or bericht.get("error") or "kein Grund genannt"
         return {**bericht, "status": STATUS_FEHLER,
@@ -642,6 +654,10 @@ def _fehlende_ausgabedateien(ausgaben: dict) -> list[str]:
     Datei ist kein Beleg für ihren Inhalt. Deshalb ist die Existenzprüfung hier auch nur
     eine **Verwerfungs**-Bedingung — der Beleg für den Inhalt kommt aus dem Hash und aus
     dem Arbeitsverzeichnis, das an ihm hängt.
+
+    Diese Funktion errät Dateifelder an der Endung und ist seit Sitzung 07 nur noch das
+    erste von zwei Netzen; das zweite zählt sie auf (``BEDARF``). Sie bleibt, weil sie
+    auch fängt, was keine Art deklariert hat — siehe ``_cache_maengel``.
     """
     fehlt = []
     for feld, wert in sorted(ausgaben.items()):

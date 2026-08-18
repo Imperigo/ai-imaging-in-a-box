@@ -495,6 +495,128 @@ Punkt (`tests/test_multipass.py`) ist eine Rauchprobe — er belegt, dass die Pr
 zu Blender trägt, und sagt nichts über Bildqualität. Auch die ersten fünf Aufträge an die
 HomeStation waren Rauchproben: Sie fragten nur, ob der Kompositor überhaupt durchschreibt.
 
+**Metrik (Messgrösse)** — Eine Zahl, die aus Daten berechnet wird, damit etwas
+vergleichbar wird, das man sonst nur beurteilen könnte. Eine Metrik ersetzt kein Urteil:
+Sie sagt „0,84", nicht „gut". Was „0,84" bedeutet, muss eigens festgestellt werden —
+siehe *Kalibrierung*. *In diesem Projekt gibt es zwei: den Stil-Score
+(`src/aiimaging/stil_qa.py`) und den Geometrie-Score (`src/aiimaging/geometrie_qa.py`).*
+
+**Schwelle (Grenzwert)** — Die Zahl, ab der eine Metrik als bestanden gilt. Sie ist nicht
+Teil der Messung, sondern eine Entscheidung darüber, wo „gut genug" anfängt. *In diesem
+Projekt `SCHWELLE_GEOMETRIE = 0,65` und `SCHWELLE_STIL = 0,30`. Beide sind an wenigen
+Einzelfällen gesetzt und nicht hergeleitet worden — der Grund, warum es die
+Schwellenstudie überhaupt gibt.*
+
+**Kalibrierung** — Den Zusammenhang zwischen einer Messgrösse und dem, was sie bedeuten
+soll, an Fällen festmachen, deren Antwort man bereits kennt. Eine Waage kalibriert man mit
+bekannten Gewichten, nicht mit unbekannter Fracht. Kalibrieren heisst dabei nicht
+zwangsläufig, eine bessere Zahl zu finden — zuerst heisst es, die Frage überhaupt messbar
+zu machen: Bei welcher Art und Stärke von Abweichung reagiert die Metrik, und wie stark?
+*In diesem Projekt `src/aiimaging/schwellenstudie.py`: Eine bekannte Soll-Tiefenkarte wird
+in bekannter Art und bekannter Stärke verfälscht, und gemessen wird, wie der Score darauf
+antwortet. Das Ergebnis steht in `docs/SCHWELLENSTUDIE_2026-08-18.md`.*
+
+**Validierung (eines Verfahrens)** — Die Gegenprobe zur Kalibrierung: prüfen, ob das
+ausgerichtete Verfahren auch dort taugt, wo es angewandt werden soll — an Fällen, die beim
+Ausrichten nicht dabei waren. Wer beides an denselben Fällen tut, hat nur geprüft, ob er
+sich selbst zugehört hat. *In diesem Projekt noch offen und ausdrücklich so benannt: Die
+erste Schwellenstudie kalibriert an synthetischen Störungen und ohne Tiefenschätzer;
+validiert wäre die Schwelle erst an echten Renders — die zweite Hälfte, siehe
+`docs/SCHWELLENSTUDIE_2026-08-18.md`, Kapitel 6. Genau darum bleibt 0,65 vorerst stehen,
+obwohl 0,90 auf der Studienszene besser trennt.*
+*Nicht zu verwechseln mit* **Validierung** *in Abschnitt 8 — dort die Prüfung von Daten
+gegen ihr Schema; gleiches Wort, anderer Sachverhalt.*
+
+**Setzung vs. Messung** — Eine Zahl kann zweierlei Herkunft haben: Entweder hat jemand sie
+festgelegt (Setzung), oder sie stammt aus Daten (Messung). In einer Tabelle sehen beide
+gleich aus, sie tragen aber verschiedene Beweislast — eine Messung kann falsch sein, eine
+Setzung kann nur unpassend sein; widerlegen lässt sie sich nicht. Wird der Unterschied
+nicht mitgeschrieben, wird aus einer Verabredung stillschweigend ein Befund. *In diesem
+Projekt darum durchgängig kenntlich gemacht: Dass eine Störung bis zur Stärke 0,2 noch als
+„treu" gilt, ist eine Setzung; sie heisst `grenzstaerke` und steht in jedem Ergebnis von
+`trennschaerfe_kurve` (`src/aiimaging/schwellenstudie.py`), damit niemand sie für ein
+Naturgesetz hält. Auch die Schwelle 0,65 ist eine Setzung —
+`docs/SCHWELLENSTUDIE_2026-08-18.md` nennt sie deshalb „nicht verteidigt, sondern
+beibehalten".*
+
+**Störung / kontrollierte Verfälschung (Perturbation)** — Eine absichtlich eingebrachte
+Abweichung, deren Art und Stärke man selbst bestimmt. Der Sinn liegt darin, die Antwort
+schon zu kennen: Wer weiss, was er verändert hat, kann prüfen, ob das Messverfahren es
+bemerkt — und ob es das Richtige bemerkt. *In diesem Projekt acht Arten in `STOERUNGEN`
+(`src/aiimaging/schwellenstudie.py`), jede einer wirklichen Fehlerart eines Bildmodells
+nachgebildet: Rauschen, Silhouette verbreitern, Silhouette abtragen, die Karte verschieben,
+Detail glätten, einen Baukörper hinzuerfinden, nah und fern vertauschen, die Tiefe streng
+monoton umrechnen. Jede Art trägt eine **Erwartung**, welchen Anteil des Scores sie treffen
+soll — damit ist jede Störung eine Vorhersage, die zutreffen oder scheitern kann, statt
+bloss eine weitere Kurve.*
+
+**Nullprobe** — Der Messpunkt ganz ohne Störung. Sie sagt nichts über den Gegenstand,
+sondern über das Messverfahren: Zeigt schon sie etwas anderes als das Erwartete, ist jede
+weitere Zeile der Messreihe wertlos — dann wird nicht die Störung gemessen, sondern ein
+Fehler im Vergleich. *In diesem Projekt gehört die Stärke 0,0 darum fest zu
+`VORGABE_STAERKEN` (`src/aiimaging/schwellenstudie.py`): Die unverfälschte Karte, mit sich
+selbst verglichen, **muss** den Score 1,000 ergeben. Jede Zeile der Studie wird ausserdem
+gegen ihre eigene Nullprobe gehalten und nicht gegen einen angenommenen Idealwert.*
+
+**Kontrolle (im Experiment)** — Ein mitgeführter Fall, dessen Ergebnis vorher feststeht.
+Er misst nicht den Gegenstand, sondern das Verfahren — und gehört deshalb getrennt
+ausgewiesen und nicht in die Auswertung der übrigen Fälle eingerechnet. *In diesem Projekt
+zwei, beide in `STOERUNGEN` mit `ist_kontrolle=True` markiert: `monoton` (eine
+rangerhaltende Umrechnung darf den Score nicht bewegen — tut sie es doch, ist nicht die
+Schwelle falsch, sondern die Metrik kaputt) und `tiefenumkehr` (vertauschte Tiefenordnung;
+der Score benutzt bewusst den Betrag der Rangkorrelation und **kann** diesen Fall darum
+nicht sehen — mitgeführt, damit diese Grenze in Zahlen steht statt in einem Nebensatz).
+`trennschaerfe_kurve` lässt beide aus der Auswertung heraus.*
+
+**Widerlegbarkeit (Falsifizierbarkeit)** — Eine Aussage ist widerlegbar, wenn sich sagen
+lässt, welches Messergebnis sie umwerfen würde. Aussagen, die jeder Ausgang bestätigt,
+sind bequem und ohne Erkenntniswert. *In diesem Projekt der Grund, warum die
+Monotonie-Kontrolle mehr wiegt als jede Kurve der Schwellenstudie: Die Kurven beschreiben
+nur — sie können gar nicht falsch ausgehen. Die Kontrolle kann es: Fällt der Score unter
+einer rangerhaltenden Umrechnung auch nur geringfügig, ist die Metrik widerlegt. Der
+Modulkopf von `src/aiimaging/schwellenstudie.py` nennt sie darum „die einzige Prüfung
+hier, die widerlegen kann statt nur zu beschreiben".*
+
+**Trennschärfe** — Wie gut eine Grenze zwei Gruppen auseinanderhält. Eine Schwelle mit
+hoher Trennschärfe lässt fast alles Gute durch und hält fast alles Schlechte auf; eine mit
+geringer tut beides nur ungefähr. *In diesem Projekt rechnen `trennschaerfe` und
+`trennschaerfe_kurve` (`src/aiimaging/schwellenstudie.py`) sie für eine ganze Reihe von
+Schwellen durch. Der Ertrag ist nicht die eine beste Zahl, sondern die Kurve: Sie zeigt,
+wie sich das Verhältnis der beiden Fehlerarten verschiebt, wenn man die Grenze bewegt —
+auf der Studienszene wird bis 0,85 kein einziger treuer Fall gesperrt, sie anzuheben
+kostete dort also nichts.*
+
+**Falsch frei / falsch gesperrt** — Die zwei Fehlerarten, die eine Schwelle machen kann:
+*falsch frei* heisst durchgelassen, obwohl hätte aufgehalten werden müssen; *falsch
+gesperrt* heisst aufgehalten, obwohl alles in Ordnung war. In der Statistik heissen sie
+**falsch negativ** und **falsch positiv** — irreführende Namen, solange nicht dazugesagt
+ist, dass „positiv" hier „Alarm" bedeutet und nicht „gut". Entscheidend ist, dass die
+beiden **verschieden teuer** sind: Ein durchgelassenes untreues Bild zeigt einen Entwurf,
+den es nicht gibt, und kann so in eine Präsentation geraten; ein unnötig gesperrtes kostet
+einen weiteren Render. *In diesem Projekt stehen sie darum einzeln in jedem Punkt von
+`trennschaerfe_kurve` (`falsch_frei`, `falsch_gesperrt`) statt nur in einer Gesamtnote —
+wer eine Schwelle wählt, soll sehen, welchen der beiden Fehler er einkauft.*
+
+**Trefferquote** — Der Anteil der richtig eingeordneten Fälle: richtig durchgelassene plus
+richtig gesperrte, geteilt durch alle. Die naheliegendste Kennzahl — und für sich genommen
+irreführend, sobald die beiden Gruppen unterschiedlich gross sind: Dann erreicht schon eine
+Grenze eine ansehnliche Quote, die einfach immer dasselbe sagt. *In diesem Projekt
+vorführbar: Von den 36 gestörten Fällen der Studie gelten 12 als treu und 24 als untreu.
+Eine Schwelle, die schlicht **alles** sperrt, käme allein dadurch auf 0,667 — deutlich mehr
+als die 0,438 der heutigen Schwelle 0,65, und trotzdem wäre sie unbrauchbar. Darum wird die
+Trefferquote nie ohne `falsch_frei` und `falsch_gesperrt` gelesen.*
+
+**Rasterung der Stärkeachse** — Dass eine als Kommazahl angegebene Stärke in Wahrheit nur
+wenige verschiedene Eingriffe erzeugen kann, weil der Eingriff selbst in ganzen Einheiten
+rechnet und die Angabe darauf gerundet wird. *In diesem Projekt rechnen die räumlichen
+Störungen der Schwellenstudie in ganzen Bildpunkten: Auf einer Szene von 64 × 64 Punkten
+ergeben die Stärken 0,2 und 0,3 beide eine Verschiebung um **zwei** Bildpunkte, und die
+zwei Tabellenzeilen sind darum gleich. Wer die Tabelle liest, darf die Stärkeachse deshalb
+nicht für eine feine Skala halten — vergleichbar sind die Kurvenverläufe, nicht die
+einzelnen Stärkewerte untereinander.*
+*Derselbe Sachverhalt wie beim* **Quantisierungsschritt** *in Abschnitt 5 — dort für die
+Graustufen eines Bildes, hier für die Stärkeachse eines Versuchs.*
+
 **Idempotenz** — Eigenschaft eines Vorgangs, der mehrfach ausgeführt dasselbe Ergebnis
 liefert wie einmal ausgeführt. Macht Wiederholung nach Abbruch gefahrlos.
 
@@ -592,6 +714,55 @@ den mittleren Rang. *In Tiefenkarten der Normalfall: Eine Wand parallel zur Bild
 liefert lauter gleiche Werte. Die verbreitete Kurzformel für Spearman rechnet dort
 systematisch falsch.*
 
+**Streng monoton (rangerhaltend)** — Eine Umrechnung heisst streng monoton, wenn sie die
+Reihenfolge unangetastet lässt: Was vorher grösser war, ist es nachher auch. Der
+Zahlenwert darf sich dabei beliebig ändern. Meter in Zentimeter umrechnen ist streng
+monoton, ebenso „mal zehn, minus fünfzig" oder das Quadrieren positiver Zahlen; nah und
+fern zu vertauschen ist es nicht. *Der Begriff trägt die ganze Geometrie-Metrik: Weil die
+Rangkorrelation nur die Reihenfolge liest, muss sie jede streng monotone Umrechnung
+unverändert überstehen. Die Kontrolle `monoton` in `src/aiimaging/schwellenstudie.py`
+wendet Massstab, Nullpunkt und Potenz zugleich an — der Score bleibt bei exakt 1,000.*
+
+**Invarianz** — Eine Eigenschaft, die sich unter einer bestimmten Umformung **nicht**
+ändert. Man verlangt sie überall dort, wo etwas gemessen werden soll, das von der
+Umformung gar nicht betroffen ist: Die Fläche eines Grundrisses ändert sich nicht, wenn
+man den Plan dreht — täte sie es, wäre die Flächenberechnung falsch und nicht der Plan.
+*In diesem Projekt die tragende Zusage der Geometrie-Metrik: Sie soll die Reihenfolge der
+Tiefen vergleichen und nicht deren Zahlenwerte, also muss ihr Ergebnis unter jeder streng
+monotonen Umrechnung der Tiefe gleich bleiben. Erst diese Invarianz macht eine geschätzte
+Tiefenkarte mit echten Metern vergleichbar — Massstab und Nullpunkt der beiden stimmen nie
+überein, die Reihenfolge kann es. Geprüft wird sie von der Kontrolle `monoton` der
+Schwellenstudie; sie ist die einzige dortige Prüfung, die das Verfahren widerlegen könnte.*
+
+**Inkommensurabel** — Zwei Grössen, für die es kein gemeinsames Mass gibt: Keine noch so
+feine Einheit geht in beiden ganzzahlig auf, ihr Verhältnis lässt sich nicht als Bruch
+zweier ganzer Zahlen schreiben. Das Schulbeispiel ist die Diagonale eines Quadrats zu
+seiner Seite — das Verhältnis ist √2 ≈ 1,4142…, und die Nachkommastellen brechen nie ab.
+*In diesem Projekt der Grund für eine unscheinbare Zeile in `baue_testszene`
+(`src/aiimaging/schwellenstudie.py`): Die Tiefe der Testszene entsteht aus zwei
+Achsenanteilen, und die werden nicht gleich gewichtet, sondern im Verhältnis 1 : √2. Bei
+gleicher Gewichtung ergäben (x + 1, y − 1) und (x, y) denselben Tiefenwert, und die Karte
+bestünde grösstenteils aus Bindungen — beim ersten Studienlauf gemessene 1837 auf 1936
+Punkte. Mit dem inkommensurablen Verhältnis fällt die Bindungszahl auf null, und die
+Monotonie-Kontrolle steht bei exakt 1,000 statt bei 0,999997.*
+
+**Normalverteiltes Rauschen / Standardabweichung (σ)** — Zufällige Abweichungen, die sich
+um null häufen: kleine sind häufig, grosse selten, und die bekannte Glockenkurve
+beschreibt, wie häufig genau. Die **Standardabweichung** σ ist das Mass für ihre Breite —
+grob gesagt bleiben rund zwei Drittel aller Abweichungen kleiner als σ. *In diesem Projekt
+die Störung `rauschen` der Schwellenstudie; Stärke 1,0 heisst dort σ = eine halbe
+Bautiefe. Selbst bei dieser Stärke bleibt die Rangkorrelation bei 0,45 — die Reihenfolge
+der Tiefen ist gegen Rauschen erheblich unempfindlicher als der einzelne Tiefenwert.*
+
+**Mittelwertfilter (Glättung)** — Jeder Bildpunkt wird durch den Durchschnitt aus sich
+selbst und seinen Nachbarn ersetzt, je nach Stärke mehrfach hintereinander. Kanten werden
+weich, feine Gliederung verschwindet, die grobe Form bleibt. *In diesem Projekt die
+Störung `glaettung`: Sie bildet nach, was ein Bildmodell an Detail verliert. Ein Nebenbefund
+gehört hierher, weil er leicht in die Irre führt — über einer gleichmässigen Rampe richtet
+ein Mittelwertfilter gar nichts an, denn der Durchschnitt einer gleichmässig ansteigenden
+Folge ist wieder dieselbe Folge. Die erste Testszene war eine solche Rampe, und die Störung
+blieb völlig wirkungslos; erst ein Tiefensprung gibt ihr eine Kante zum Zerstören.*
+
 **Polarität (einer Tiefenkarte)** — Ob grosse Werte *nah* oder *fern* bedeuten. Blender
 liefert Meter (gross = fern), viele Schätzer liefern Disparität (gross = nah). *Wird in
 diesem Projekt nie aus den Daten erraten, sondern deklariert — aus den Daten schliessen
@@ -604,6 +775,10 @@ Bild als Geometrie, und der Silhouettenvergleich wird strukturell unmöglich.
 
 **Silhouette** — Die Menge der Bildpunkte, die überhaupt Geometrie tragen (im Unterschied
 zum Hintergrund). *Der Teil der Geometrie-QA, der die Halluzination fängt.*
+*Die Schwellenstudie vom 18.08.2026 hat das eingegrenzt: Gefangen wird zuverlässig eine
+Halluzination, die die Geometrie **ersetzt** — steht der erfundene Bau woanders, geht die
+Überdeckung gegen null. Ein Bau, der bloss **danebengesetzt** wird, kostet weit weniger:
+Ein Zusatzkörper von der Fläche des Baus selbst besteht mit 0,698 — er geht also durch.*
 
 **IoU (Intersection over Union)** — Überlappungsmass zweier Flächen: gemeinsame Fläche
 geteilt durch Gesamtfläche. 1 heisst deckungsgleich, 0 heisst keine Überlappung.
@@ -611,7 +786,10 @@ geteilt durch Gesamtfläche. 1 heisst deckungsgleich, 0 heisst keine Überlappun
 **Geometrisches Mittel** — Die Wurzel aus dem Produkt zweier Werte, statt ihres
 Durchschnitts. *Hier bewusst gewählt: Es verlangt, dass **beide** Anteile gut sind. Beim
 belegten Halluzinationsfall ergibt der Durchschnitt 0,52 — fast bestanden —, das
-geometrische Mittel 0,20.*
+geometrische Mittel 0,20.* *Das gilt für den geprüften Fall, in dem der erfundene Bau die
+echte Geometrie **ersetzt**. Wird bloss etwas **hinzugefügt**, sinkt allein die
+Silhouetten-Überdeckung, und auch die nur um die hinzugekommene Fläche — dann hilft auch
+das geometrische Mittel wenig; siehe* **Silhouette**.
 
 **Disparität / invertierte Tiefe** — Manche Verfahren geben statt der Entfernung ihren
 Kehrwert aus: gross heisst nah statt fern. Wer das nicht beachtet, misst die Tiefe genau
@@ -1125,6 +1303,8 @@ Schnittstellen maschinell prüfbar statt nur dokumentiert.
 
 **Validierung** — Die Prüfung tatsächlicher Daten gegen ihr Schema. Schlägt sie fehl,
 stimmt die Wirklichkeit nicht mit dem Vertrag überein.
+*Nicht zu verwechseln mit* **Validierung (eines Verfahrens)** *in Abschnitt 4 — dort die
+Gegenprobe zur Kalibrierung; gleiches Wort, anderer Sachverhalt.*
 
 **inputSchema / outputSchema** — Die beiden Schemas eines MCP-Werkzeugs: was es erwartet,
 was es zurückgibt. *In diesem Projekt Pflicht — ohne sie kann KosmoOrbit unsere Werkzeuge
@@ -1212,6 +1392,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus der Schwellenstudie: Metrik, Schwelle, Kalibrierung, Validierung (eines Verfahrens), Setzung vs. Messung, Stoerung/kontrollierte Verfaelschung, Nullprobe, Kontrolle (im Experiment), Widerlegbarkeit, Trennschaerfe, falsch frei/falsch gesperrt, Trefferquote, Rasterung der Staerkeachse, streng monoton, Invarianz, inkommensurabel, normalverteiltes Rauschen/Standardabweichung, Mittelwertfilter. **Validierung** in zwei Bedeutungen getrennt (Verfahren / Daten gegen Schema). Praezisiert: **Silhouette** und **geometrisches Mittel** fangen eine *ersetzende* Halluzination zuverlaessig, eine *ergaenzende* nur schwach (Zusatzkoerper 0,698) |
 | 2026-08-18 | Ergaenzt aus dem eigenen PNG-Schreiber: PNG-Block, Paeth-Praediktor, MSAD-Heuristik, Praediktor (Vorhersage), verlustfrei/verlustbehaftet, Ebene/Multilayer-EXR, float32/float64, LSB, Standardbibliothek, Heuristik, Traceback, Referenzimplementierung, Rueckwaertskompatibilitaet/stiller Bruch, fail-open/Befund als Feld. Ausgebaut: Zeilenfilter (alle fuenf Filter benannt, von Abschnitt 6 nach Abschnitt 5 verschoben), Endianness (Big-/Little-Endian), CRC32, Quantisierungsschritt/-stufe, zlib. **Quantisierung** in zwei Bedeutungen getrennt (Messwerte / Modellgewichte) |
 | 2026-08-18 | Ergaenzt aus der Kettenverdrahtung: Fabrikfunktion, Closure |
 | 2026-08-18 | Ergaenzt aus der Ist-Seite: Polaritaet, Hintergrundmarke |

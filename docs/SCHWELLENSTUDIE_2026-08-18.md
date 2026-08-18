@@ -13,9 +13,9 @@ steht in Kapitel 5, und dieses Kapitel ist das wichtigste des Dokuments.
 1. Die Metrik ist **nachweislich rangbasiert**: streng monotone Umrechnungen der Tiefe
    (Massstab, Nullpunkt, Potenz) lassen den Score bei **exakt 1,000**. Das ist die einzige
    Prüfung hier, die die Metrik hätte widerlegen können, und sie ist bestanden.
-2. Die Schwelle **0,65 ist zu milde**. Von 36 gestörten Fällen lässt sie **22 durch**;
-   die Trefferquote liegt bei **0,39**. Die beste Schwelle auf dieser Szene ist **0,90**
-   (Trefferquote 0,75–0,83), und sie ist über drei Auflösungen hinweg dieselbe.
+2. Die Schwelle **0,65 ist zu milde**. Von 32 auswertbaren gestörten Fällen lässt sie
+   **18 durch**; die Trefferquote liegt bei **0,44**. Die beste Schwelle auf dieser Szene
+   ist **0,90** (Trefferquote 0,84–0,89), und sie ist über drei Auflösungen dieselbe.
 3. Zwei Abweichungsarten sieht die Metrik **fast gar nicht**: verlorene Gliederung
    (Score 0,996 bei stärkster Glättung) und eine **vertauschte Tiefenordnung**
    (Score 1,000 bei Spearman −1,000). Die zweite ist bekannt und gewollt, die erste
@@ -88,7 +88,7 @@ Score bei Störungsstärke 0,0 bis 1,0 (Szene 64×64, `seed=0`). **Fett** = fäl
 | `silhouette_schrumpfen` | 1,000 | 0,955 | 0,909 | 0,909 | 0,818 | 0,727 | **0,636** |
 | `verschiebung` | 1,000 | 0,947 | 0,896 | 0,896 | 0,801 | 0,712 | **0,627** |
 | `glaettung` | 1,000 | 0,999 | 0,998 | 0,998 | 0,997 | 0,997 | 0,996 |
-| `zusatzkoerper` | 1,000 | 0,961 | 0,935 | 0,914 | 0,888 | 0,870 | 0,844 |
+| `zusatzkoerper` | 1,000 | 0,952 | 0,910 | 0,874 | 0,815 | 0,759 | 0,698 |
 | `tiefenumkehr` | 1,000 | 1,000 | 1,000 | 1,000 | 1,000 | 1,000 | 1,000 |
 | `monoton` | 1,000 | 1,000 | 1,000 | 1,000 | 1,000 | 1,000 | 1,000 |
 
@@ -104,11 +104,13 @@ Architekturarbeit ist das keine Fussnote: Ein Render, der die Kubatur hält und 
 Detail verschmiert, gilt der Metrik als treu. Das ist nicht falsch (die Metrik misst
 Geometrietreue, nicht Detailtreue), aber es begrenzt, was ein bestandenes Gate aussagt.
 
-**Ein halluzinierter Baukörper von der Fläche des Baus selbst besteht mit 0,844.** Das
-steht in Spannung zu der bisherigen Projektangabe „halluziniert 0,24". Der Unterschied
-ist real und wichtig: Der frühere Fall **ersetzte** die Geometrie (der Bau stand woanders),
-dieser hier **ergänzt** sie. Ein hinzugefügter Körper senkt nur den IoU, und auch den nur
-so weit, wie er Fläche hinzufügt. **Anbauen wird deutlich milder bestraft als versetzen.**
+**Ein halluzinierter Baukörper von der Fläche des Baus selbst besteht mit 0,698** — er
+liegt über der Schwelle, geht also durch. Das steht in Spannung zur bisherigen
+Projektangabe „halluziniert 0,24" (die selbst falsch abgeschrieben war; der Testfall misst
+**0,199** bei `geom_iou` 0,040). Der Unterschied ist real und wichtig: Der frühere Fall
+**ersetzte** die Geometrie — der Bau stand woanders —, dieser hier **ergänzt** sie. Ein
+hinzugefügter Körper senkt nur den IoU, und auch den nur so weit, wie er Fläche hinzufügt.
+**Anbauen wird deutlich milder bestraft als versetzen.**
 
 **Die Rangkorrelation ist robuster als erwartet.** Selbst bei stärkstem Rauschen
 (σ = eine halbe Bautiefe) bleibt Spearman bei 0,45.
@@ -123,22 +125,56 @@ sie für ein Naturgesetz hält. Kontrollen und nicht messbare Zeilen zählen nic
 
 | Schwelle | Trefferquote | falsch frei | falsch gesperrt |
 |---|---|---|---|
-| 0,05 – 0,60 | 0,333 | 24 | 0 |
-| **0,65** *(heute)* | **0,389** | **22** | **0** |
-| 0,70 | 0,417 | 21 | 0 |
-| 0,75 | 0,500 | 18 | 0 |
-| 0,80 | 0,556 | 16 | 0 |
-| 0,85 | 0,667 | 12 | 0 |
-| **0,90** *(bestes)* | **0,750** | **8** | **1** |
-| 0,95 | 0,750 | 4 | 5 |
+| 0,05 – 0,60 | 0,375 | 20 | 0 |
+| **0,65** *(heute)* | **0,438** | **18** | **0** |
+| 0,70 | 0,500 | 16 | 0 |
+| 0,75 | 0,594 | 13 | 0 |
+| 0,80 | 0,688 | 10 | 0 |
+| 0,85 | 0,812 | 6 | 0 |
+| **0,90** *(bestes)* | **0,844** | **4** | **1** |
+| 0,95 | 0,750 | 3 | 5 |
 
 **Der auffälligste Wert steht in der letzten Spalte:** Bis einschliesslich 0,85 wird
 **kein einziger treuer Fall gesperrt**. Die Schwelle von 0,65 auf 0,85 anzuheben kostet
 auf dieser Szene also *nichts* und fängt zehn zusätzliche untreue Fälle.
 
-Über drei Auflösungen geprüft (48², 64², 96²): Die beste Schwelle ist jedes Mal **0,90**,
-und 0,65 lässt jedes Mal **22 von 36** durch. Das Ergebnis hängt also nicht an der
-Bildgrösse.
+Über drei Auflösungen geprüft: Die beste Schwelle ist jedes Mal **0,90**
+(Trefferquote 0,88 / 0,84 / 0,89 bei 48² / 64² / 96²), und 0,65 lässt jedes Mal
+**18 bis 21** Fälle durch. Das Ergebnis hängt nicht an der Bildgrösse.
+
+---
+
+## 4a · Zwei Zahlen dieser Studie waren falsch — Berichtigung
+
+Die erste Fassung dieses Dokuments nannte „22 von 36 durchgelassen" und „Zusatzkörper
+0,844". Beides ist berichtigt. Die Fehler sassen nicht in der Metrik, sondern in den
+**Messinstrumenten**, und beide fand erst eine unabhängige Testabnahme.
+
+**Das Stärkeraster schnitt mitten durch die Grenze.** Die räumlichen Störungen rechnen in
+ganzen Bildpunkten: `round(staerke · k)`. Auf 64² ergeben Stärke 0,2 und 0,3 beide *zwei*
+Bildpunkte — die Ist-Karten sind dann nicht ähnlich, sondern **punktgleich identisch**,
+mit demselben Score. Für sich harmlos. Verheerend wird es dadurch, dass `grenzstaerke`
+genau dazwischen liegt: Zwei Zeilen mit **derselben Messung** stehen auf verschiedenen
+Seiten der Grenze, eine gilt als treu, die andere als untreu. **Keine Schwelle kann sie
+trennen**; jede zählt zwangsläufig einen Fehler. Vier solche Paare gingen als
+`falsch_frei` in die Auswertung ein — als Aussage über die Metrik, wo eine Aussage über
+das Raster stand.
+
+Sie werden jetzt verworfen, und *dass* und *wieviele* steht im Ergebnis (`entdoppelt`).
+Eine stillschweigende Bereinigung wäre nur die zweite Art, dieselbe Zahl zu erfinden.
+
+**Der Zusatzkörper war 40 % so gross wie angekündigt.** Die Störung legte ein Quadrat der
+Baufläche in die obere linke Ecke — und der Bau selbst schnitt so viel davon weg, dass bei
+Stärke 1,0 nur 780 statt 1936 Punkte übrigblieben. Die Rechnung war korrekt, die
+**Beschriftung der Achse** war es nicht, und die Auswertung hat der Beschriftung geglaubt.
+Jetzt wächst das Quadrat, bis die tatsächlich gesetzte Punktzahl das Ziel erreicht. Der
+korrigierte Wert ist **0,698** statt 0,844 — die Aussage bleibt dieselbe und wird sogar
+schärfer: Er besteht immer noch.
+
+> Beide Fehler haben dieselbe Gestalt wie die zwei aus Kapitel 2, nur eine Ebene höher.
+> Dort war die *Szene* schuld, hier die *Störung*. Ein Messinstrument kann saubere Zahlen
+> über nichts liefern — und wenn seine Achse falsch beschriftet ist, sind die Zahlen sogar
+> richtig und trotzdem irreführend.
 
 ---
 
@@ -159,6 +195,10 @@ gewichtet beide gleich.
 
 **Eine synthetische Szene ist kein Haus.** Zwei Quader mit einem Sprung. Fassadentiefe,
 Fenster, Vor- und Rücksprünge, Umgebung — nichts davon ist da.
+
+**Vier von 36 Zeilen sind Rasterdubletten** und werden verworfen (siehe 4a). Ausgewertet
+werden 32. Eine feinere Stärkeachse würde mehr Punkte liefern, aber auch mehr Rechenzeit
+je Lauf — auf einer 64²-Szene ist das billig, auf einer echten Karte nicht.
 
 **Die Störungen sind unabhängig, die Wirklichkeit nicht.** Ein Bildmodell rauscht,
 verschiebt und halluziniert gleichzeitig. Kombinationen sind nicht gemessen.
