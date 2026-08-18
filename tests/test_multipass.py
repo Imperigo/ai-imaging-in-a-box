@@ -417,7 +417,16 @@ def test_bestandsfelder_behalten_ihre_bedeutung(lauf):
     assert lauf["n_meshes"] == 2
     assert lauf["aufloesung"] == AUFLOESUNG
     assert lauf["rotiert"] is False
-    assert lauf["blender"].startswith("4.")
+    # HomeStation-Befund 18.08. (auf-20260818-06): Hier stand `startswith("4.")` — eine
+    # Versionsnummer-Abfrage, und damit genau das, was die Auflage dieses Projekts
+    # verbietet («die Weiche prueft Faehigkeiten, nicht Versionsnummern»). Auf der
+    # HomeStation laeuft Blender 5.2.0 LTS; der Test schlug dort fehl, obwohl nichts
+    # kaputt war — er mass den Rechner, nicht das Verhalten.
+    #
+    # Was der Test laut seinem eigenen Docstring sichern soll, ist die Rueckwaerts-
+    # kompatibilitaet der FELDER: dass `blender` noch da ist und eine Version traegt.
+    # Genau das wird jetzt geprueft — auf 4.2 wie auf 5.2.
+    assert isinstance(lauf["blender"], str) and lauf["blender"][:1].isdigit(), lauf["blender"]
     assert len(lauf["bbox"]) == 2 and len(lauf["bbox_size_m"]) == 3
     assert Path(lauf["depth_exr"]).suffix == ".exr"
 

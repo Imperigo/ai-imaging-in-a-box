@@ -1,0 +1,71 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260818-06",
+  "status": "ok",
+  "beendet": "2026-08-18T13:50:27Z",
+  "dauer_s": 6.5,
+  "messwerte": {
+    "n_elements": 5,
+    "n_triangles": 60,
+    "bbox_size_m": [
+      8.0,
+      5.0000009872640305,
+      3.2500011920928955
+    ],
+    "n_meshes": 5,
+    "depth_exr_kanaele": [
+      "tiefe_.V"
+    ],
+    "depth_exr_format": "OPEN_EXR_MULTILAYER",
+    "depth_normalisierung": {
+      "min_m": 17.933635711669922,
+      "max_m": 26.625198364257812,
+      "konvention": "nah = hell (ControlNet); Hintergrund = 0. Das entfernteste Geometriepixel liegt ebenfalls bei 0 und ist im PNG nicht vom Hintergrund zu unterscheiden — wer die Silhouette exakt braucht, nimmt die EXR.",
+      "hintergrund_grauwert": 0.0,
+      "rueckrechnung": "meter = max_m - grau * (max_m - min_m), grau in 0..1",
+      "n_geometriepixel": 11151,
+      "hintergrund_ab_m": 10000000.0,
+      "quelle": "produkt",
+      "breite": 256,
+      "hoehe": 256,
+      "bittiefe": 16
+    },
+    "depth_png_fehler": null,
+    "dateien": [
+      "tiefe_norm.png",
+      "tiefe_.exr",
+      "material_id.png",
+      "beauty_.png",
+      "modell.glb",
+      "blender-report.json"
+    ],
+    "png_bittiefe": 16,
+    "png_farbtyp": 0,
+    "png_breite": 256,
+    "png_hoehe": 256,
+    "rueckrechnung_max_abweichung_m": 7e-05,
+    "rueckrechnung_mittlere_abweichung_m": 3.3e-05,
+    "rueckrechnung_quantisierungsstufen": 0.5,
+    "geometriepixel_png": 11150,
+    "geometriepixel_exr": 11151,
+    "testsuite_passed": 1151,
+    "testsuite_failed": 0
+  },
+  "urteil": {
+    "frage_1_status_ok": "JA. status=ok, 6.5 s, kein 0x0-Fehler. Der Multipass laeuft auf 5.2 durch.",
+    "frage_2_normalisierung": "JA, tiefe_norm.png entsteht. depth_normalisierung: min_m=17.933635711669922, max_m=26.625198364257812, n_geometriepixel=11151, quelle='produkt'. BIS ZUR LETZTEN STELLE identisch mit deinen 4.2-Zahlen. Die Verschiebung ist sauber.",
+    "frage_3_depth_png_fehler": "null.",
+    "unabhaengig_nachgeprueft": "Ich habe nicht nur die Felder gelesen, sondern gegengerechnet. (a) Das PNG ist wirklich 16-Bit-Graustufen: 256x256, Bittiefe 16, Farbtyp 0 — aus dem IHDR gelesen. (b) Rueckrechnung PNG->Meter ueber deine Formel gegen die EXR, 11150 gemeinsame Punkte: groesste Abweichung 0.00007 m, mittlere 0.000033 m. Das sind GENAU 0.50 Quantisierungsstufen — das theoretische Optimum fuer Rundung, nicht ein Rest.",
+    "die_eine_pixeldifferenz": "PNG zaehlt 11150 Geometriepixel, die EXR 11151. Das ist kein Fehler, sondern genau das, was deine eigene Konventionszeile ankuendigt: das entfernteste Geometriepixel landet auf Grau 0 und ist dort nicht vom Hintergrund zu unterscheiden. Deine Dokumentation hat es vorhergesagt, die Messung bestaetigt es — es ist exakt EIN Pixel.",
+    "was_ich_geaendert_habe": "Eine Zeile in tests/test_multipass.py. Dort stand assert lauf['blender'].startswith('4.') — eine Versionsnummer-Abfrage, also genau das, was deine Auflage verbietet. Sie schlug auf der HomeStation fehl, obwohl nichts kaputt war: der Test mass den Rechner, nicht das Verhalten. Jetzt wird geprueft, was sein Docstring verspricht (Feld da, traegt eine Version) — auf 4.2 wie auf 5.2. Positivkontrolle gefahren: '5.2.0 LTS' und '4.2.1 LTS' bestehen, None/''/'unbekannt' fallen weiterhin durch.",
+    "testsuite": "1151 passed, 0 failed (vorher 1150/1, der eine war die Versionsabfrage).",
+    "auf_07": "NICHT gestartet, wie gewuenscht."
+  },
+  "umgebung": {
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "leistungsgrenze_w": 400.0,
+    "python": "3.14.4",
+    "blender": "/snap/bin/blender"
+  },
+  "fehler": null
+}
