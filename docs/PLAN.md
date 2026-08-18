@@ -40,26 +40,30 @@ entsteht die Kante nicht, und zwar **ohne Fehlermeldung**.
 Der dünnste Pfad, der jede der vier Regeln einmal berührt. Fast ohne Funktionalität —
 absichtlich. Bricht hier eine Annahme, ist es bei 500 Zeilen zu erfahren, nicht bei 5 000.
 
-- [ ] **Synthetische Testgeometrie** — Skript, das eine kleine IFC im Repo erzeugt (Regel 3;
+- [x] **Synthetische Testgeometrie** — erledigt: 8x5x3 m, deterministisch, stdlib-only — Skript, das eine kleine IFC im Repo erzeugt (Regel 3;
       macht alles Weitere überhaupt prüfbar)
-- [ ] **IFC → glb** als Subprozess in eigenem `.venv-ifc`
+- [x] **IFC → glb** als Subprozess — erledigt und ausgeführt: 5 Bauteile, 60 Dreiecke in eigenem `.venv-ifc`
       → *Praxistest des CGAL-Befunds: trägt die Grenze gegen GPL-Code?*
-- [ ] **glb → Blender headless → Tiefenkarte** über `blender --background`
+- [x] **glb → Blender headless → Tiefenkarte** — erledigt und ausgeführt: EXR mit echten Meterwerten (27.3–39.5 m) über `blender --background`
       → *Praxistest von Regel 2; zugleich die technisch heikelste Stelle (Compositor,
       EXR, Normalisierung auf nah = hell)*
-- [ ] **Vertrag `render-scene.json`** mit JSON-Schema
-- [ ] **Tests ab der ersten Zeile** (pytest)
-- [ ] **`NOTICE`** — Blender GPL, IfcOpenShell LGPL, CGAL GPL
+- [x] **Vertrag `render-scene.json`** — erledigt in `contracts.py` (up_axis Pflichtfeld) mit JSON-Schema
+- [x] **Tests ab der ersten Zeile** — erledigt: 76 grün
+- [x] **`NOTICE`** — erledigt: Blender GPL, IfcOpenShell LGPL, CGAL GPL — Blender GPL, IfcOpenShell LGPL, CGAL GPL
 
 **Enthält bewusst nicht:** keine KI, kein Graph-Kern, kein MCP, keine QA.
 
 **Fertig, wenn** aus Python heraus, ohne Oberfläche und ohne `import bpy`, aus einer
 synthetischen IFC eine korrekte Tiefenkarte entsteht — und ein Test das festhält.
 
-**Prüffragen der Phase:**
-- Trägt die Prozessgrenze in der Praxis, nicht nur auf dem Papier?
-- Ist der Tiefen-Pass geometrisch korrekt (nah = hell, Meter plausibel)?
-- Bleibt das Produkt-venv frei von `bpy` und `ifcopenshell`?
+**Prüffragen der Phase — beantwortet 2026-08-18:**
+- Trägt die Prozessgrenze in der Praxis? **Ja**, beide ausgeführt.
+- Ist der Tiefen-Pass geometrisch korrekt? **Ja** — Blender meldet 8.0 x 5.0 x 3.25 m,
+  exakt die IFC-Masse; die Kette Z-up → Y-up → Z-up ist verlustfrei.
+- Bleibt das Produkt-venv frei von `bpy` und `ifcopenshell`? **Ja**, per Test bewacht.
+
+**Offen geblieben, nach Phase 2 verschoben:** Massstabs- und Georeferenz-Torwächter
+(mm-als-m, LV95 in float32) — Fehlerklasse bekannt, aber ungeprüft.
 
 ---
 
