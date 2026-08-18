@@ -1,0 +1,130 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260818-09",
+  "status": "ok",
+  "beendet": "2026-08-18T16:23:41Z",
+  "dauer_s": 150.7,
+  "messwerte": {
+    "bbox_size_m": [
+      8.0,
+      5.0000009872640305,
+      3.2500011920928955
+    ],
+    "n_meshes": 5,
+    "n_triangles": 60,
+    "depth_exr_kanaele": [
+      "tiefe_.V"
+    ],
+    "depth_exr_format": "OPEN_EXR_MULTILAYER",
+    "depth_png_fehler": null,
+    "render": {
+      "status": "ok",
+      "seed": 20260818,
+      "backbone": "qwen-image-edit-2511",
+      "dauer_s": 147.904,
+      "parameter": {
+        "backbone": "qwen-image-edit-2511",
+        "modell_id": "Qwen/Qwen-Image-Edit-2511",
+        "konditionierung": "depth_controlnet",
+        "modus": "image_edit",
+        "depth_png": "tiefe_norm.png",
+        "beauty_png": "beauty_.png",
+        "ausgabe_png": "render.png",
+        "prompt": "photorealistic architectural visualization of a simple modern concrete building, overcast daylight, matte concrete surfaces, clean flat roof, neutral grey sky, no vegetation, no people, eye-level exterior view",
+        "negativ_prompt": "extra floors, extra windows, added balconies, changed roofline, distorted perspective, fisheye, text, watermark",
+        "seed": 20260818,
+        "schritte": 28,
+        "controlnet_staerke": 0.8,
+        "denoise": 0.6,
+        "modell_wurzel": "qwen-image-edit-2511"
+      },
+      "lizenz": {
+        "regel_1_spannung": null,
+        "name": "qwen-image-edit-2511",
+        "lizenz": "Apache-2.0",
+        "kommerziell_nutzbar": true,
+        "zulaessig": true,
+        "auflagen": [],
+        "lizenz_quelle": "modellkarte",
+        "lizenz_belegt": true,
+        "lizenz_hinweis": null,
+        "begruendung": "qwen-image-edit-2511: 'Apache-2.0' ist permissiv und ohne weitere Auflage mit Regel 1 vereinbar. Auch abgeleitete LoRAs bleiben frei."
+      },
+      "maengel": [],
+      "hinweise": [
+        "Diese Pipeline hat keinen 'control_image'-Eingang. Die Tiefenkarte wurde als 'image' übergeben und ersetzt dabei den Beauty-Pass — die Konditionierung ist damit Bildbearbeitung, nicht ControlNet.",
+        "'controlnet_conditioning_scale' (0.8) kennt diese Pipeline nicht und wurde nicht übergeben. Der Wert ist wirkungslos — eine Vergleichsreihe darüber würde identische Bilder liefern.",
+        "'strength' (0.6) kennt diese Pipeline nicht und wurde nicht übergeben. Der Wert ist wirkungslos — eine Vergleichsreihe darüber würde identische Bilder liefern."
+      ],
+      "bild": "render.png"
+    },
+    "geometrie_qa": {
+      "status": "ok",
+      "bestanden": false,
+      "score": 0.35923871016233844,
+      "spearman": -0.33941188434054564,
+      "geom_iou": 0.3802237247226649,
+      "n_gemeinsam": 24575,
+      "n_soll": 44604,
+      "n_ist": 44604,
+      "methode": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+      "begruendung": "Score 0.359 < Schwelle 0.65 (|spearman| 0.339 über 24575 gemeinsame Punkte, geom_iou 0.380).",
+      "n_punkte": 262144,
+      "hintergrund_strategie": "wie_soll",
+      "n_hintergrund_ist": 217540,
+      "anteil_hintergrund_ist": 0.8298492431640625,
+      "dauer_s": 0.324,
+      "error": null,
+      "warnungen": [
+        "Rangkorrelation ist negativ (-0.339): Die Ist-Karte ordnet die Tiefe genau umgekehrt. Üblichster Grund ist Disparität (nah = grosser Wert); gewertet wird deshalb der Betrag. Falls die Ist-Karte metrische Tiefe sein soll, ist das kein Konventions-, sondern ein Geometriebefund — vorne und hinten sind vertauscht. Diese beiden Fälle kann die Metrik nicht trennen."
+      ],
+      "unsicherheit": [
+        "Hintergrund nach Vorbild der Soll-Silhouette: Die Ist-Karte behaelt genau so viele Geometriepunkte, wie das Soll hat. Damit misst geom_iou nur noch die LAGE der Silhouette, nicht mehr ihre GROESSE — ein Bau an der richtigen Stelle in falscher Groesse faellt hier nicht auf. Die Anzahl ist der Soll-Karte entnommen und nicht geraten; das ist der Grund fuer diese Wahl.",
+        "Die Ist-Karte ist eine Schaetzung, keine Messung: Ein Fehler des Schaetzers ist von einer Halluzination des Bildmodells hier nicht unterscheidbar (geometrie_qa, Vorbehalt 6)."
+      ],
+      "schaetzer": "depth-anything-v2-small",
+      "modell_id": "depth-anything/Depth-Anything-V2-Small-hf",
+      "lizenz": "Apache-2.0",
+      "polaritaet": "disparitaet",
+      "bild_png": "render.png",
+      "breite": 512,
+      "hoehe": 512,
+      "methode_ist": "monokulare Tiefenschaetzung, Rohwerte ohne Umrechnung in Meter, Hintergrund per Vereinbarung markiert, v1",
+      "geom_iou_obergrenze": 0.1701507568359375,
+      "schwelle": 0.65
+    },
+    "vram": {
+      "spitze_mib": 2862,
+      "grundlast_mib": 1071,
+      "weg": "cuda+schichtauslagerung (enable_sequential_cpu_offload)",
+      "gemessen": "nvidia-smi memory.used, 4-s-Raster ueber den ganzen Lauf",
+      "einordnung": "Alles-resident (29,57 GiB) und komponentenweise (29,34 GiB) brechen beide mit OOM ab — der Transformer allein ist 38,05 GiB und passt an keinem Stueck auf die Karte (31,36 GiB nutzbar). Erst schichtweises Auslagern traegt. Antwort auf die offene Frage aus auf-07: Bildmodell und 30B-Q4-Sprachmodell KOENNEN gleichzeitig resident sein — mit 2,86 GiB Spitze bleibt dafuer reichlich Platz, bezahlt wird mit Rechenzeit (148-189 s je 512er-Bild)."
+    },
+    "fassungen": {
+      "torch": "2.11.0+cu128",
+      "torchvision": "0.26.0+cu128",
+      "diffusers": "0.39.0",
+      "transformers": "5.15.0",
+      "accelerate": "1.14.0",
+      "cuda": "12.8",
+      "blackwell_warnung": "geprueft, trifft nicht zu: sm_120 steht in torch.cuda.get_arch_list(), echter Kernel-Test auf der Karte OK"
+    }
+  },
+  "urteil": {
+    "render": "ok",
+    "gemessen": true,
+    "bestanden": false,
+    "score": 0.35923871016233844,
+    "begruendung": "Score 0.359 < Schwelle 0.65 (|spearman| 0.339 über 24575 gemeinsame Punkte, geom_iou 0.380).",
+    "bild_angesehen": "JA, wie verlangt — und das Auge fand, was die Metrik nur andeutet: Die Geometrie ist eine oben OFFENE Schachtel klein in der Bildmitte; der Render zeigt einen GESCHLOSSENEN Quader formatfuellend mit Bodenebene und Horizont. Das Modell hat (1) ein Dach erfunden — der Prompt verlangt eines (\"clean flat roof\"), die Geometrie hat keines — und (2) den Bildausschnitt neu gewaehlt. geom_iou 0.380 ist der verschobene Ausschnitt; das negative spearman (-0.339) ist bei diesem Bildpaar zwangslaeufig, die Tiefenverteilungen sind grundverschieden. LEHRE FUER DIE AUFTRAEGE: Ein Prompt, der Bauteile nennt, die die Geometrie nicht hat, ist eine Aufforderung zur Halluzination. Material/Licht/Stimmung ja, Bauteile nein.",
+    "vergleichsreihe_controlnet_staerke": "ENTFAELLT, nicht aus Zeitmangel: QwenImageEditPlusPipeline kennt weder controlnet_conditioning_scale noch strength — die Werte 0.6/0.8/1.0 haetten dreimal DASSELBE Bild geliefert und wie ein Befund ausgesehen. Der Adapter meldet das jetzt als Hinweis im Ergebnis (siehe messwerte.render.hinweise). Dieses Backbone ist ueber diese Pipeline KEIN Depth-ControlNet, sondern ein instruktionsgefuehrter Bildeditor; der Registry-Eintrag konditionierung=\"depth_controlnet\" gehoert dafuer korrigiert — Entscheid liegt bei dir.",
+    "aenderungen_unter_mandat": "render._lege_auf_geraet (3 Auslagerungsstufen, misst freien VRAM und groesste Komponente statt Versionsnummern), render._vertraegliche_argumente (liest inspect.signature der geladenen Pipeline), render._generator_geraet (meta-Device abgefangen), Aufloesungsvorgabe height/width aus der Tiefenkarte (sonst waehlt die Pipeline 1024 statt 512 und die QA lehnt zu Recht ab), tiefenschaetzer.standard_modell_wurzel (las $AIIMAGING_MODELLE nicht, obwohl der Docstring \"dieselbe Konvention\" behauptete — ruft jetzt render.standard_modell_wurzel auf). Alle Weichen pruefen Faehigkeiten am Objekt, keine Versionsnummern. Testsuite vor/nach identisch: 1503 gruen, 4 rot (die 4 sind vorbestehend, per git stash gegengeprueft — Begruendung in docs/HOMESTATION-2026-08-18-RENDER-UND-CONNECTOR.md §8)."
+  },
+  "umgebung": {
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "leistungsgrenze_w": 400.0,
+    "python": "3.14.4",
+    "blender": "/snap/bin/blender"
+  },
+  "fehler": null
+}
