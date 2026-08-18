@@ -28,11 +28,13 @@ import pytest
 
 from aiimaging.backbone import (
     BACKBONES,
+    FRUEHERER_VORGABE_BACKBONE,
     KOND_DEPTH_CONTROLNET,
     KOND_INTEGRIERTES_EDIT,
     KONDITIONIERUNGEN,
     QUELLE_MODELLKARTE,
     QUELLE_SEKUNDAER,
+    POL_NAH_DUNKEL,
     QUELLE_UNGEPRUEFT,
     RUECKFALL_BACKBONE,
     VORGABE_BACKBONE,
@@ -172,24 +174,54 @@ def test_backbone_laesst_sich_ohne_lizenz_quelle_bauen():
 # 2 · Die belegten Fakten aus der Lagebeurteilung, Kapitel 4
 # --------------------------------------------------------------------------------------
 
-def test_vorgabe_ist_qwen_edit_und_apache(tmp_path=None):
-    """Die Vorgabe ist permissiv und belegt — **aber sie ist kein Depth-ControlNet.**
+def test_die_vorgabe_traegt_endlich_eine_echte_controlnet_naht():
+    """Die Geschichte dieses Tests ist die Geschichte des Projekts.
 
-    Bis zum 18.08.2026 hiess dieser Test „…_und_depth_naht" und prüfte genau das. Der
-    erste echte Render (`auf-20260818-09`) hat es widerlegt: `QwenImageEditPlusPipeline`
-    kennt weder einen `control_image`-Eingang noch `controlnet_conditioning_scale` noch
-    `strength`. Die Tiefenkarte geht als `image` hinein und **ersetzt dabei den
-    Beauty-Pass**; `controlnet_staerke` und `denoise` sind wirkungslos.
+    Er hiess zuerst „…_und_depth_naht" und prüfte, dass die Vorgabe ein Depth-ControlNet
+    ist. `auf-20260818-09` hat das widerlegt: `QwenImageEditPlusPipeline` kennt weder
+    `control_image` noch `controlnet_conditioning_scale`. Daraufhin hiess er
+    „…_ist_qwen_edit_und_apache" und hielt ausdrücklich fest, dass die Vorgabe **keine**
+    Naht hat — damit die alte Annahme nicht über einen anderen Test zurückkommt.
 
-    Der Test hält jetzt fest, was stimmt — und ausdrücklich mit, dass die Vorgabe
-    **keine** ControlNet-Naht hat. Sonst käme die alte Annahme über einen anderen Test
-    zurück.
+    Seit `auf-20260818-13` stimmt der ursprüngliche Anspruch wieder, nur mit einem
+    anderen Modell: Z-Image + Fun-ControlNet-Union nimmt beide Argumente wirklich an, und
+    die Tiefenordnung bleibt mit |spearman| 0.853 erhalten statt bei 0.005 zu
+    verschwinden.
     """
     e = hole(VORGABE_BACKBONE)
-    assert e.name == "qwen-image-edit-2511"
+    assert e.name == "z-image-turbo"
     assert e.lizenz == "Apache-2.0" and e.kommerziell_nutzbar is True
+    assert e.konditionierung == KOND_DEPTH_CONTROLNET
     assert pruefe_lizenz(e.name)["lizenz_quelle"] == QUELLE_MODELLKARTE
-    assert e.konditionierung == KOND_INTEGRIERTES_EDIT, (
+
+
+def test_die_vorgabe_ist_beidseitig_permissiv():
+    """Beide Hälften der Naht — sonst wäre der Wechsel eine Regel-1-Verschlechterung."""
+    urteil = pruefe_lizenz(VORGABE_BACKBONE)
+    assert urteil["zulaessig"] is True
+    assert urteil["controlnet"]["zulaessig"] is True
+    assert urteil["controlnet"]["lizenz"] == "Apache-2.0"
+
+
+def test_die_vorgabe_weiss_welche_tiefenkonvention_sie_erwartet():
+    """Der teuerste ungeprüfte Punkt der Kette — jetzt gemessen und deklariert.
+
+    Keine Modellkarte sagt die Konvention. Eine verkehrte Polarität erklärt einen
+    schlechten Score vollständig und sieht dabei wie ein Problem des Bildmodells aus.
+    """
+    assert hole(VORGABE_BACKBONE).tiefen_polaritaet == POL_NAH_DUNKEL
+
+
+def test_der_frueherer_vorgabewert_bleibt_nachschlagbar():
+    """Damit ein alter Lauf im Protokoll deutbar bleibt.
+
+    Ohne diesen Eintrag hielte jemand ein Ergebnis von gestern für einen Messfehler,
+    statt für ein Ergebnis eines anderen Modells.
+    """
+    assert FRUEHERER_VORGABE_BACKBONE in BACKBONES
+    assert FRUEHERER_VORGABE_BACKBONE != VORGABE_BACKBONE
+    # Und der Grund des Wechsels bleibt am Eintrag ablesbar, nicht nur im Kommentar:
+    assert hole(FRUEHERER_VORGABE_BACKBONE).konditionierung == KOND_INTEGRIERTES_EDIT, (
         "am Gerät gemessen: kein ControlNet, sondern instruktionsgeführte Bildbearbeitung"
     )
 
@@ -200,13 +232,23 @@ def test_die_vorgabe_steht_in_der_auswahl_vorn():
     assert waehle()[0].name == VORGABE_BACKBONE
 
 
-def test_vorschau_pfad_ist_klein_und_apache():
-    """Z-Image-Turbo, 6B, Apache-2.0 — der schnelle Pfad für Vorschauen."""
+def test_vorschau_und_vorgabe_sind_dasselbe_modell_geworden():
+    """Ein Befund, der die Erwartung umdreht — und darum hier festgehalten wird.
+
+    Der Vorschaupfad war als **Kompromiss** gedacht: klein und schnell, dafür weniger
+    treu. Gemessen ist es umgekehrt gekommen. Z-Image ist rund hundertfach schneller als
+    der bisherige Vorgabewert (1.4 s gegen 150 s je Bild) **und** hält die Geometrie
+    deutlich besser (|spearman| 0.853 gegen 0.005).
+
+    Es gibt hier also nichts abzuwägen. Dass die beiden Namen bestehen bleiben, ist
+    Absicht: Sie stehen für zwei verschiedene Fragen, und ein späterer Kandidat kann sie
+    wieder trennen.
+    """
+    assert VORSCHAU_BACKBONE == VORGABE_BACKBONE
     b = hole(VORSCHAU_BACKBONE)
     assert b.parameter_b == 6.0
     assert b.lizenz == "Apache-2.0"
     assert b.konditionierung == KOND_DEPTH_CONTROLNET
-    assert b.vram_gb < hole(VORGABE_BACKBONE).vram_gb
 
 
 def test_rueckfall_ist_sdxl_mit_eigenem_controlnet():
@@ -390,7 +432,13 @@ def test_vram_grenze_filtert_und_ist_nicht_vakuos():
     assert klein, "16 GB sollte für den 6B-Vorschaupfad reichen"
     assert VORSCHAU_BACKBONE in {b.name for b in klein}
     assert all(b.vram_gb <= 16.0 for b in klein)
-    assert VORGABE_BACKBONE not in {b.name for b in klein}, "20B passt nicht in 16 GB"
+    # Bis zum 18.08.2026 stand hier die Gegenprobe „die 20B-Vorgabe passt nicht in 16 GB".
+    # Sie ist mit dem Wechsel gegenstandslos geworden — die Vorgabe IST jetzt das kleine
+    # Modell. Die Gegenprobe bleibt, aber an einem Eintrag, der wirklich zu gross ist:
+    # sonst wäre der Test vakuös und schnitte gar nichts mehr weg.
+    gross = {b.name for b in BACKBONES.values() if b.vram_gb > 16.0}
+    assert gross, "kein einziger Eintrag über 16 GB — dann prüft diese Grenze nichts"
+    assert not (gross & {b.name for b in klein})
 
 
 def test_filter_lassen_sich_kombinieren():

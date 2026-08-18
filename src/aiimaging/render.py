@@ -720,6 +720,13 @@ def _pipeline_adapter(pipeline, eintrag, torch):
         from PIL import Image           # Pillow (MIT-CMU) — ebenfalls nur hier
 
         tiefe = Image.open(parameter["depth_png"]).convert("RGB")
+        if parameter["tiefe_invertiert"]:
+            # Umgedreht, weil das ControlNet dieses Backbones nah = DUNKEL erwartet und
+            # unsere Karte nah = hell schreibt. Kein Kunstgriff, sondern eine Übersetzung
+            # zwischen zwei Konventionen — und sie steht im Parametersatz, damit ein
+            # späterer Leser nicht rätselt, welche Karte das Modell gesehen hat.
+            from PIL import ImageOps                # noqa: PLC0415 — nur hier gebraucht
+            tiefe = ImageOps.invert(tiefe)
         generator = torch.Generator(device=_generator_geraet(pipeline, torch)).manual_seed(
             parameter["seed"]
         )
@@ -845,6 +852,13 @@ def _baue_parameter(a: RenderAuftrag, eintrag) -> dict:
         "schritte": a.schritte,
         "controlnet_staerke": float(a.controlnet_staerke),
         "denoise": float(a.denoise),
+        # Was das Modell erwartet, und ob wir darum drehen. Beides in den Parametersatz:
+        # Die Tiefenkarte auf der Platte ist unverändert, das Modell sieht aber
+        # womöglich ihr Negativ — ohne diesen Eintrag wäre ein Lauf nicht nachvollziehbar.
+        "tiefen_polaritaet_modell": getattr(eintrag, "tiefen_polaritaet",
+                                            backbone.POL_UNBEKANNT),
+        "tiefe_invertiert": (getattr(eintrag, "tiefen_polaritaet", backbone.POL_UNBEKANNT)
+                             == backbone.POL_NAH_DUNKEL),
         # Auftrag schlägt Registry schlägt fremde Vorgabe. `None` bleibt `None` und wird
         # unten als solches gemeldet — ein eingesetzter Ersatzwert wäre eine Erfindung.
         "fuehrung": (float(a.fuehrung) if a.fuehrung is not None
@@ -867,6 +881,26 @@ def _hinweise(a: RenderAuftrag, parameter: dict, lizenz: dict) -> tuple[str, ...
             f"denoise={a.denoise} bleibt im Modus '{MODUS_TXT2IMG}' wirkungslos: Ohne "
             f"'beauty_png' gibt es kein Ausgangsbild, das überschrieben werden könnte."
         )
+    if parameter["tiefe_invertiert"]:
+        hinweise.append(
+            f"Die Tiefenkarte wird für '{parameter['backbone']}' UMGEDREHT übergeben: "
+            f"Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel "
+            f"(am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das "
+            f"Modell sieht ihr Negativ."
+        )
+    elif parameter["tiefen_polaritaet_modell"] == backbone.POL_UNBEKANNT:
+        # NICHT drehen. Raten hiesse, mit halber Wahrscheinlichkeit die Geometrie zu
+        # spiegeln, und zwar lautlos. Aber schweigen wäre schlimmer: Ein schlechter Score
+        # hat hier womöglich eine harmlose Erklärung, und ohne diesen Satz sucht jemand
+        # tagelang am Bildmodell.
+        hinweise.append(
+            f"Für '{parameter['backbone']}' ist nicht gemessen, welche Tiefenkonvention "
+            f"sein ControlNet erwartet. Es wird NICHT gedreht — raten hiesse, mit halber "
+            f"Wahrscheinlichkeit die Geometrie zu spiegeln. Falls der Geometrie-Score "
+            f"schlecht ausfällt: Das kann allein daran liegen. Bei z-image-turbo hat die "
+            f"Umkehrung |spearman| von 0.38–0.52 auf 0.79–0.85 gehoben."
+        )
+
     if parameter["fuehrung"] is None:
         hinweise.append(
             f"Für '{parameter['backbone']}' ist keine Führung (guidance_scale) bestimmt. "

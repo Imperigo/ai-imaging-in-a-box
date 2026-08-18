@@ -79,6 +79,23 @@ KONDITIONIERUNGEN = (KOND_DEPTH_CONTROLNET, KOND_INTEGRIERTES_EDIT)
 PERMISSIVE_LIZENZEN = lizenzquelle.PERMISSIVE_LIZENZEN
 
 
+#: Tiefenkonvention: nah = grosser Grauwert (hell). **Das ist unsere `tiefe_norm.png`.**
+#: Entspricht der Disparitätskonvention aus :mod:`aiimaging.tiefenschaetzer`.
+POL_NAH_HELL = "nah_hell"
+
+#: Tiefenkonvention: nah = kleiner Grauwert (dunkel). Das Gegenteil unserer Karte.
+POL_NAH_DUNKEL = "nah_dunkel"
+
+#: Nicht gemessen. Es wird dann NICHT gedreht — raten hiesse, mit halber
+#: Wahrscheinlichkeit die Geometrie zu spiegeln, und zwar lautlos.
+POL_UNBEKANNT = "unbekannt"
+
+TIEFENPOLARITAETEN = (POL_NAH_HELL, POL_NAH_DUNKEL, POL_UNBEKANNT)
+
+#: Was der Multipass dieses Projekts schreibt. Der Bezugspunkt jeder Umkehrfrage.
+UNSERE_POLARITAET = POL_NAH_HELL
+
+
 class BackboneError(ValueError):
     """Unbekannter Backbone oder unbrauchbares Auswahlkriterium.
 
@@ -147,6 +164,26 @@ class Backbone:
     controlnet_lizenz: str | None = None
     controlnet_lizenz_quelle: str = QUELLE_UNGEPRUEFT
 
+    #: Welche Tiefenkonvention das ControlNet dieses Modells **erwartet**.
+    #:
+    #: Einer aus :data:`TIEFENPOLARITAETEN`. Unsere ``tiefe_norm.png`` ist
+    #: :data:`POL_NAH_HELL` — nah = grosser Grauwert. Erwartet ein ControlNet das
+    #: Gegenteil, muss die Karte **vor** der Übergabe umgedreht werden.
+    #:
+    #: AM GERÄT GEMESSEN (`auf-20260818-13`, 18.08.2026): Bei Z-Image ist genau das der
+    #: Fall, und der Unterschied ist kein Feinschliff — |spearman| springt von 0.38–0.52
+    #: auf 0.79–0.85, also auf rund das Doppelte, bei jeder ControlNet-Stärke.
+    #:
+    #: **Das war der teuerste ungeprüfte Punkt der ganzen Kette.** Keine Modellkarte sagt
+    #: die Konvention. Eine verkehrte Polarität erklärt einen schlechten Score
+    #: vollständig — und sie sieht nach einem Problem des Bildmodells aus, während sie
+    #: eines der Übergabe ist. Darum steht sie hier als Feld und nicht als Annahme.
+    #:
+    #: :data:`POL_UNBEKANNT` heisst: nicht gemessen. Dann wird **nicht** gedreht, und
+    #: :func:`aiimaging.render.rendere` sagt in den Hinweisen, dass ein schlechter Score
+    #: hier eine harmlose Erklärung haben könnte.
+    tiefen_polaritaet: str = "unbekannt"
+
     #: ``guidance_scale`` dieses Modells — wie stark der Prompt das Bild zwingt.
     #:
     #: ``None`` heisst **nicht** „egal", sondern „für dieses Modell nicht bestimmt". Dann
@@ -212,6 +249,42 @@ def _eintrag(backbone: Backbone) -> None:
     BACKBONES[backbone.name] = backbone
 
 
+# Der Vorgabe-Backbone steht ZUERST: `waehle()` gibt die Registry-Reihenfolge
+# zurueck, und `waehle()[0]` ist damit die Empfehlung. Bis zum 18.08.2026 stand
+# hier qwen-image-edit-2511 — der Wechsel ist bei VORGABE_BACKBONE begruendet.
+_eintrag(Backbone(
+    name="z-image-turbo",
+    modell_id="Tongyi-MAI/Z-Image-Turbo",
+    parameter_b=6.0,
+    lizenz="Apache-2.0",
+    kommerziell_nutzbar=True,
+    konditionierung=KOND_DEPTH_CONTROLNET,
+    vram_gb=_vram_schaetzung(6.0),
+    dateien=_DIFFUSERS_DATEIEN,
+    # Geprüft 2026-08-18 an der Modellkarte selbst: Front-Matter "license: apache-2.0".
+    # https://huggingface.co/Tongyi-MAI/Z-Image-Turbo — Repo offen, nicht gated.
+    lizenz_quelle=QUELLE_MODELLKARTE,
+    # Die Basis ALLEIN ist kein ControlNet: `DiffusionPipeline.from_pretrained` liefert
+    # eine `ZImagePipeline` ohne Steuereingang. Die Naht entsteht erst über
+    # `ZImageControlNetPipeline` mit diesem zweiten Repo — `control_image` und
+    # `controlnet_conditioning_scale` (Vorgabe 0.75, empfohlenes Fenster 0.65–1.00) stehen
+    # dort wörtlich in der Signatur von diffusers v0.39.0. Damit ist `controlnet_staerke`
+    # dieses Projekts nicht erfunden, sondern die Angabe der Modellkarte.
+    # Destilliert ("Turbo"): auf 8 Schritte OHNE klassifikatorfreie Führung trainiert.
+    # 0.0 ist hier der richtige Wert, nicht ein ausgeschalteter — und er bedeutet
+    # zugleich, dass ein negativer Prompt an diesem Modell nichts ausrichtet.
+    fuehrung=0.0,
+    # AM GERÄT GEMESSEN (auf-20260818-13): Mit unserer Karte (nah = hell) liegt
+    # |spearman| bei 0.38–0.52, mit umgedrehter bei 0.79–0.85 — bei JEDER
+    # ControlNet-Stärke rund das Doppelte. Das ControlNet erwartet nah = dunkel.
+    tiefen_polaritaet=POL_NAH_DUNKEL,
+    controlnet_id="alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union",
+    controlnet_lizenz="Apache-2.0",
+    # Front-Matter "license: apache-2.0"; das Ursprungsprojekt VideoX-Fun trägt eine
+    # Apache-2.0-LICENSE im Volltext. Geprüft 2026-08-18.
+    controlnet_lizenz_quelle=QUELLE_MODELLKARTE,
+))
+
 _eintrag(Backbone(
     name="qwen-image-edit-2511",
     modell_id="Qwen/Qwen-Image-Edit-2511",
@@ -262,34 +335,6 @@ _eintrag(Backbone(
     controlnet_lizenz_quelle=QUELLE_MODELLKARTE,
 ))
 
-_eintrag(Backbone(
-    name="z-image-turbo",
-    modell_id="Tongyi-MAI/Z-Image-Turbo",
-    parameter_b=6.0,
-    lizenz="Apache-2.0",
-    kommerziell_nutzbar=True,
-    konditionierung=KOND_DEPTH_CONTROLNET,
-    vram_gb=_vram_schaetzung(6.0),
-    dateien=_DIFFUSERS_DATEIEN,
-    # Geprüft 2026-08-18 an der Modellkarte selbst: Front-Matter "license: apache-2.0".
-    # https://huggingface.co/Tongyi-MAI/Z-Image-Turbo — Repo offen, nicht gated.
-    lizenz_quelle=QUELLE_MODELLKARTE,
-    # Die Basis ALLEIN ist kein ControlNet: `DiffusionPipeline.from_pretrained` liefert
-    # eine `ZImagePipeline` ohne Steuereingang. Die Naht entsteht erst über
-    # `ZImageControlNetPipeline` mit diesem zweiten Repo — `control_image` und
-    # `controlnet_conditioning_scale` (Vorgabe 0.75, empfohlenes Fenster 0.65–1.00) stehen
-    # dort wörtlich in der Signatur von diffusers v0.39.0. Damit ist `controlnet_staerke`
-    # dieses Projekts nicht erfunden, sondern die Angabe der Modellkarte.
-    # Destilliert ("Turbo"): auf 8 Schritte OHNE klassifikatorfreie Führung trainiert.
-    # 0.0 ist hier der richtige Wert, nicht ein ausgeschalteter — und er bedeutet
-    # zugleich, dass ein negativer Prompt an diesem Modell nichts ausrichtet.
-    fuehrung=0.0,
-    controlnet_id="alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union",
-    controlnet_lizenz="Apache-2.0",
-    # Front-Matter "license: apache-2.0"; das Ursprungsprojekt VideoX-Fun trägt eine
-    # Apache-2.0-LICENSE im Volltext. Geprüft 2026-08-18.
-    controlnet_lizenz_quelle=QUELLE_MODELLKARTE,
-))
 
 _eintrag(Backbone(
     name="sdxl-juggernaut",
@@ -405,9 +450,37 @@ _eintrag(Backbone(
 ))
 
 
-#: Der Vorgabe-Backbone: Apache-2.0, am Original geprüft, natives Depth-ControlNet.
-#: Die einzige Kombination in der Registry, die alle drei Eigenschaften belegt hat.
-VORGABE_BACKBONE = "qwen-image-edit-2511"
+#: Der Vorgabe-Backbone — **gewechselt am 18.08.2026, nach drei Messungen.**
+#:
+#: Bis dahin stand hier ``qwen-image-edit-2511``, mit der Begründung „Apache-2.0, am
+#: Original geprüft, natives Depth-ControlNet". Der dritte Teil war schlicht falsch, und
+#: das ist am Gerät herausgekommen:
+#:
+#: * ``auf-20260818-09``: ``QwenImageEditPlusPipeline`` kennt weder ``control_image`` noch
+#:   ``controlnet_conditioning_scale``. **Es ist kein ControlNet.** Die Angabe stammte aus
+#:   einem einzigen Satz einer Lagebeurteilung, der Qwen-Edit gar nicht nannte.
+#: * ``auf-20260818-10``: Was daraus folgt — die Nullprobe durch die ganze Kette ergibt
+#:   spearman **+0.005**. Von der Tiefenordnung bleibt nichts übrig; drei verschieden
+#:   gestörte Vorgaben ergeben auf zwölf Stellen denselben Score.
+#: * ``auf-20260818-13``: ``z-image-turbo`` + Fun-ControlNet-Union kommt unter denselben
+#:   Bedingungen auf **-0.853**, ist rund **hundertfach schneller** (1.4 s statt 150 s je
+#:   Bild), und die ControlNet-Stärke wirkt nachweislich — alle sechs Prüfsummen
+#:   verschieden. Beide Repos Apache-2.0, beide am Original geprüft.
+#:
+#: **Warum überhaupt gewechselt wird, obwohl der Score noch durchfällt:** Er hängt an
+#: ``geom_iou``, und dessen Deckel ist nach ``auf-20260818-12`` eine Sache der
+#: Silhouetten-Auswahl, nicht des Backbones — selbst ein perfektes Bild kam unter der
+#: alten Regel nur auf 0.256. Die beiden Baustellen sind unabhängig. Einen Vorgabewert
+#: stehenzulassen, von dem **gemessen** ist, dass er die Geometrie gar nicht überträgt,
+#: wäre die schlechtere Wahl — auch wenn der Nachfolger die Schwelle noch nicht reisst.
+#:
+#: Ehrliche Grenze: Ein Lauf, eine Szene, ein Seed. Dass Z-Image über verschiedene
+#: Bauwerke trägt, ist damit nicht gezeigt.
+VORGABE_BACKBONE = "z-image-turbo"
+
+#: Der frühere Vorgabewert. Steht hier, damit ein alter Lauf im Protokoll deutbar bleibt
+#: und niemand ihn versehentlich für einen Messfehler hält.
+FRUEHERER_VORGABE_BACKBONE = "qwen-image-edit-2511"
 
 #: Der schnelle Pfad für Vorschauen: 6B, 8 Schritte, Apache-2.0. Ein Vorschaubild soll in
 #: Sekunden dastehen; die Geometrie-QA läuft trotzdem, nur eben auf einem gröberen Bild.

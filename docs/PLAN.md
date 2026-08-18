@@ -230,10 +230,28 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       (`None` ≠ `True`). Dazu zwei Adapterfehler behoben — fehlendes `guidance_scale`
       (bei 0.0 wird der negative Prompt still ignoriert) und die SDXL-Falle, die eine
       **tragende** Naht als kaputt gemeldet hätte.
-- [ ] **Die Empfehlung am Gerät messen** — Weiche in `lade_modell`, und vor allem die
-      **Tiefenkonvention** (nah = hell). Sie ist an keinem ControlNet geprüft; ist sie
-      invertiert, erklärt das einen schlechten Score vollständig. Nichts davon ist
-      ausgeführt worden — alles steht auf Signaturen im `diffusers`-Quelltext.
+- [x] **Die Empfehlung am Gerät gemessen** — erledigt 2026-08-18 (`auf-20260818-13`).
+      **Die Tiefenkonvention WAR invertiert.** Unsere Karte schreibt nah = hell, das
+      ControlNet erwartet nah = dunkel; |spearman| springt dadurch von 0.38–0.52 auf
+      0.79–0.85, bei jeder Stärke rund das Doppelte. Keine Modellkarte sagt das.
+      **Z-Image hält die Geometrie, Qwen nicht:** -0.853 gegen +0.005 unter denselben
+      Bedingungen. Rund hundertfach schneller (1.4 s statt 150 s je Bild), 23.4 GiB
+      resident, und der Regler wirkt nachweislich — alle sechs Prüfsummen verschieden.
+      Nicht monoton allerdings: 0.80 ist besser als 1.00.
+      **Der Vorgabe-Backbone ist gewechselt**, und die Polarität ist jetzt ein Feld am
+      Backbone statt einer Annahme. Gedreht wird nur bei erklärter Erwartung; bei
+      `unbekannt` wird NICHT gedreht, aber gewarnt — raten hiesse, mit halber
+      Wahrscheinlichkeit die Geometrie zu spiegeln.
+- [ ] **Die Polarität der übrigen Backbones messen** — sechs Einträge stehen auf
+      `unbekannt`. Für jeden gilt: Ein schlechter Score kann allein daran liegen.
+- [ ] **Z-Image über mehrere Bauwerke prüfen** — ein Lauf, eine Szene, ein Seed. Dass es
+      über verschiedene Baukörper trägt, ist nicht gezeigt.
+- [ ] **Die auf-12-Auswahlregel gegen Z-Image messen** — der Score bleibt mit 0.265 weit
+      unter der Schwelle, und das liegt an `geom_iou` (0.082), nicht am Backbone. Die
+      HomeStation hat einen Nachbau der Regel ausdrücklich **verworfen**, weil er die
+      Ausgabe des Moduls nicht traf: *„Ein Vergleich zwischen zwei Zahlen, von denen eine
+      nicht die ist, für die ich sie halte, ist wertlos."* Die Regel gehört **in**
+      `geometrie_qa` gemessen, nicht daneben nachgebaut.
 - [x] **Die Stil-Schwelle am Gerät gemessen** — erledigt 2026-08-18 (`auf-20260818-11`).
       **0.30 war gar kein Gate:** Der Boden von SigLIP 2 base liegt bei 0.526 ± 0.070,
       die Schwelle lag 3.24 Streuungen darunter, und **alle 4950 geprüften Paare

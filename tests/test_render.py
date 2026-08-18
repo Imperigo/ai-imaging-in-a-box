@@ -35,7 +35,7 @@ from conftest import nachgeladene_module
 
 from aiimaging import auftrag as auftrag_modul
 from aiimaging import backbone, render
-from aiimaging import render
+from aiimaging import backbone, render
 from aiimaging.render import (
     MAX_SCHRITTE,
     MAX_SEED,
@@ -801,3 +801,71 @@ def test_der_name_der_pipeline_entscheidet_nicht():
         __name__ = "SuperControlNetPipelineXL"
         controlnet = None
     assert ist_controlnet_naht(HeisstNachControlNetIstAberKeines(), {"image": "…"}) is False
+
+
+# ==========================================================================================
+# Die Tiefenpolarität — der teuerste ungeprüfte Punkt der Kette
+#
+# `auf-20260818-13` hat gemessen, was keine Modellkarte sagt: Das ControlNet von Z-Image
+# erwartet nah = DUNKEL, unsere `tiefe_norm.png` schreibt nah = hell. Mit unserer Karte
+# liegt |spearman| bei 0.38–0.52, mit umgedrehter bei 0.79–0.85 — bei jeder Stärke rund
+# das Doppelte.
+#
+# Eine verkehrte Polarität erklärt einen schlechten Score VOLLSTÄNDIG. Und sie sieht aus
+# wie ein Problem des Bildmodells, während sie eines der Übergabe ist.
+# ==========================================================================================
+
+def test_die_polaritaet_steht_im_parametersatz(tiefe, ziel):
+    """Was nicht im Parametersatz steht, kann ein späterer Leser nicht nachvollziehen.
+
+    Die Datei auf der Platte bleibt unverändert — das Modell sieht womöglich ihr Negativ.
+    Ohne diesen Eintrag wäre nicht erkennbar, welche Karte gewirkt hat.
+    """
+    ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel), modell=Attrappe())
+    assert "tiefe_invertiert" in ergebnis["parameter"]
+    assert "tiefen_polaritaet_modell" in ergebnis["parameter"]
+
+
+def test_bei_z_image_wird_gedreht_und_es_steht_dabei(tiefe, ziel):
+    ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel, backbone="z-image-turbo"),
+                       modell=Attrappe())
+    assert ergebnis["parameter"]["tiefe_invertiert"] is True
+    assert ergebnis["parameter"]["tiefen_polaritaet_modell"] == backbone.POL_NAH_DUNKEL
+    assert any("UMGEDREHT" in h for h in ergebnis["hinweise"])
+
+
+def test_bei_ungemessener_polaritaet_wird_nicht_gedreht_aber_gewarnt(tiefe, ziel):
+    """Raten hiesse, mit halber Wahrscheinlichkeit die Geometrie zu spiegeln — lautlos.
+
+    Schweigen wäre aber schlimmer als nicht drehen: Ein schlechter Score hat hier
+    womöglich eine harmlose Erklärung, und ohne den Hinweis sucht jemand tagelang am
+    Bildmodell.
+    """
+    ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel, backbone="qwen-image-2512"),
+                       modell=Attrappe())
+    assert ergebnis["parameter"]["tiefe_invertiert"] is False
+    assert any("nicht gemessen" in h and "NICHT gedreht" in h
+               for h in ergebnis["hinweise"])
+
+
+def test_die_warnung_nennt_die_groesse_des_unterschieds(tiefe, ziel):
+    """Ein Hinweis ohne Zahl wird als Formalie gelesen.
+
+    „Kann daran liegen" ist ein Achselzucken; „hebt |spearman| von 0.38 auf 0.85" ist ein
+    Grund, sofort nachzusehen.
+    """
+    ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel, backbone="qwen-image-2512"),
+                       modell=Attrappe())
+    text = " ".join(ergebnis["hinweise"])
+    assert "0.79" in text or "0.85" in text
+
+
+def test_unsere_eigene_konvention_ist_benannt():
+    """Ohne einen benannten Bezugspunkt ist „umgedreht" keine Aussage."""
+    assert backbone.UNSERE_POLARITAET == backbone.POL_NAH_HELL
+    assert backbone.POL_NAH_HELL in backbone.TIEFENPOLARITAETEN
+
+
+def test_jede_polaritaet_in_der_registry_ist_eine_bekannte():
+    for name, eintrag in backbone.BACKBONES.items():
+        assert eintrag.tiefen_polaritaet in backbone.TIEFENPOLARITAETEN, name
