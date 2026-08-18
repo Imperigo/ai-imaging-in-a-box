@@ -227,11 +227,66 @@ def liegt_im_repo(pfad) -> bool:
     try:
         Path(pfad).resolve().relative_to(_repo_wurzel())
         return True
-    except (ValueError, OSError):
+    except (ValueError, OSError, TypeError):
+        # TypeError kam am 18.08. bei der Testabnahme dazu: `datensatz=None` liess
+        # `Path(None)` fliegen, und `pruefe_auftrag` warf statt eine Mängelliste zu
+        # liefern — das Gegenteil dessen, was es zusagt. Ein unbrauchbarer Pfad ist
+        # nicht „im Repo", sondern unbrauchbar; das sagt die Typprüfung unten.
         return False
 
 
-def pruefe_auftrag(a: LoraAuftrag) -> list[str]:
+def pruefe_modell_wurzel(basis: str, modell_wurzel) -> str | None:
+    """Zeigt ``modell_wurzel`` überhaupt auf die Gewichte, über die geurteilt wurde?
+
+    **Das Loch, das die Testabnahme fand (18.08.2026), und es sass in einer Regel, die
+    ausführbar sein sollte:** :func:`lizenz_des_ergebnisses` urteilt über den *Namen*
+    ``basis``. ``modell_wurzel`` zeigt auf die *tatsächlichen* Gewichte — und wurde
+    nirgends dagegen gehalten. Damit lief das hier anstandslos durch::
+
+        baue_kommando(LoraAuftrag(basis="qwen-image-edit-2511", ...),
+                      modell_wurzel="/ai/flux1-dev")
+
+    Ergebnis: eine vollständige Kommandozeile mit ``--pretrained_model_name_or_path
+    /ai/flux1-dev`` — trainiert auf einem Non-Commercial-Modell, ausgewiesen als
+    ``verkaufbar=True``. Regel 1 war gegen den müden Abend abgesichert, aber nicht gegen
+    jemanden, der ``modell_wurzel`` kennt.
+
+    **Was diese Prüfung leistet und was nicht.** Sie vergleicht den Verzeichnisnamen mit
+    dem Registry-Namen. Das ist eine **Namensprüfung, keine Inhaltsprüfung** — was
+    wirklich in dem Verzeichnis liegt, weiss sie nicht, und wer ein FLUX-Verzeichnis in
+    ``qwen-image-edit-2511`` umbenennt, kommt weiterhin durch. Der Riegel richtet sich
+    gegen das Versehen und gegen die bequeme Abkürzung, nicht gegen Vorsatz. Das
+    aufzuschreiben ist wichtiger, als es zu verschweigen: Eine Prüfung, deren Grenze
+    niemand kennt, wird für mehr gehalten, als sie ist.
+
+    Returns:
+        Einen Mängelsatz, oder ``None``, wenn nichts einzuwenden ist.
+    """
+    if modell_wurzel is None:
+        return None
+    try:
+        name = Path(modell_wurzel).resolve().name
+    except (TypeError, OSError):
+        return f"modell_wurzel: {modell_wurzel!r} ist kein brauchbarer Pfad."
+    if name == basis:
+        return None
+    fremd = name in backbone.BACKBONES
+    hinweis = ""
+    if fremd:
+        lage = backbone.pruefe_lizenz(name)
+        hinweis = (f" Das Verzeichnis heisst wie der Registry-Eintrag {name!r} "
+                   f"('{lage['lizenz']}', verwertbar: {lage['zulaessig']}) — die "
+                   f"Lizenzprüfung lief aber gegen {basis!r}.")
+    return (
+        f"REGEL 1: `basis` ist {basis!r}, `modell_wurzel` zeigt aber auf ein Verzeichnis "
+        f"namens {name!r}.{hinweis} Über die Lizenz des LoRA entscheiden die Gewichte, "
+        f"die tatsächlich trainiert werden, nicht der Name im Auftrag. Entweder `basis` "
+        f"richtigstellen oder eine Wurzel angeben, die dazu passt. "
+        f"(Namensprüfung, keine Inhaltsprüfung — siehe pruefe_modell_wurzel.)"
+    )
+
+
+def pruefe_auftrag(a: LoraAuftrag, *, modell_wurzel=None) -> list[str]:
     """Alle Mängel eines Auftrags — **vor** der ersten GPU-Sekunde.
 
     Die Reihenfolge ist bindend und dieselbe wie in ``render.rendere``: **Lizenz zuerst.**
@@ -263,6 +318,8 @@ def pruefe_auftrag(a: LoraAuftrag) -> list[str]:
             )
     except backbone.BackboneError as fehler:
         maengel.append(f"Grundmodell unbekannt: {fehler}")
+    if (wurzel_mangel := pruefe_modell_wurzel(a.basis, modell_wurzel)) is not None:
+        maengel.append(wurzel_mangel)
 
     # 2 — Regel 3: Der Datensatz gehört nicht ins Repo.
     if liegt_im_repo(a.datensatz):
@@ -301,6 +358,32 @@ def pruefe_auftrag(a: LoraAuftrag) -> list[str]:
         maengel.append(
             f"lernrate: Zahl zwischen 0 und 1 erwartet, war {a.lernrate!r}. Übliche "
             f"Werte liegen bei 1e-4 bis 1e-5."
+        )
+    for feld in ("datensatz", "ausgabe"):
+        if not isinstance(getattr(a, feld), (str, Path)) or not str(getattr(a, feld)).strip():
+            maengel.append(f"{feld}: nichtleerer Pfad erwartet, war {getattr(a, feld)!r}.")
+
+    # Zweites Loch aus derselben Testabnahme: `zusatzflaggen` wurde ungeprüft ans Ende
+    # gehängt. `("--pretrained_model_name_or_path", "/ai/flux1-dev")` erzeugte ein
+    # Kommando, in dem die Flagge zweimal steht — und bei einer argparse-Kommandozeile
+    # gewinnt die spätere. Damit hätte man an jeder Prüfung dieses Moduls vorbeitrainiert.
+    #
+    # Ob kohya das tatsächlich so auswertet, ist hier NICHT gemessen (kein Trainer, keine
+    # GPU). Aber eine Flagge, die diese Naht selbst setzt, ein zweites Mal zuzulassen,
+    # ist auch ohne Messung eine schlechte Idee: Der Auftrag im Protokoll sagte dann
+    # etwas anderes als das Kommando.
+    try:
+        eigene = set(hole_trainer(a.trainer).flaggen.values())
+    except LoraError:
+        eigene = set()
+    doppelt = sorted(eigene.intersection(str(z) for z in a.zusatzflaggen))
+    if doppelt:
+        maengel.append(
+            f"zusatzflaggen setzt Flaggen erneut, die diese Naht selbst vergibt: "
+            f"{', '.join(doppelt)}. Bei einer argparse-Kommandozeile gewinnt die "
+            f"spätere — der Auftrag im Protokoll sagte dann etwas anderes als das "
+            f"Kommando, und über `--pretrained_model_name_or_path` liesse sich die "
+            f"ganze Lizenzprüfung umgehen."
         )
     return maengel
 
@@ -345,7 +428,7 @@ def baue_kommando(a: LoraAuftrag, *, modell_wurzel=None) -> list[str]:
             zurückgegeben** — es nimmt eine YAML-Konfiguration entgegen, und eine
             erfundene Kommandozeile wäre schlimmer als eine ehrliche Absage.
     """
-    if (maengel := pruefe_auftrag(a)):
+    if (maengel := pruefe_auftrag(a, modell_wurzel=modell_wurzel)):
         harte = [m for m in maengel if not m.startswith("HINWEIS")]
         if harte:
             raise LoraError("Auftrag abgelehnt: " + " | ".join(harte))
@@ -400,7 +483,7 @@ def trainiere(a: LoraAuftrag, *, timeout: int = 86400, modell_wurzel=None,
         ``fehler``, wenn der Lauf scheiterte, und ``ok`` nur dann, wenn die versprochene
         Datei danach wirklich existiert — dieselbe Nachprüfung wie in ``render.rendere``.
     """
-    maengel = pruefe_auftrag(a)
+    maengel = pruefe_auftrag(a, modell_wurzel=modell_wurzel)
     harte = [m for m in maengel if not m.startswith("HINWEIS")]
     hinweise = [m for m in maengel if m.startswith("HINWEIS")]
     parameter = {
@@ -447,5 +530,6 @@ __all__ = [
     "TRAINER", "UMGEBUNG_TRAINER_PYTHON", "UMGEBUNG_TRAINER_WURZEL", "VORGABE_TRAINER",
     "LoraAuftrag", "LoraError", "Trainer",
     "baue_kommando", "finde_trainer_python", "finde_trainer_wurzel", "hole_trainer",
+    "pruefe_modell_wurzel",
     "liegt_im_repo", "lizenz_des_ergebnisses", "pruefe_auftrag", "trainiere",
 ]
