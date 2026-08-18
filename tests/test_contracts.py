@@ -194,3 +194,47 @@ def test_eingabe_wird_nicht_mutiert():
 
     out["geometry"]["glb_path"] = "verändert.glb"       # Kopie ist wirklich tief
     assert eingang["geometry"]["glb_path"] == "build/testbau.glb"
+
+
+# ── Regressionen aus Sitzung 03 ────────────────────────────────────────────────
+# Drei Befunde aus dem Testschreiben, hier festgenagelt, damit sie nicht wiederkehren.
+
+def test_pfadobjekt_als_geometrie_ist_kein_typfehler(tmp_path):
+    """Ein `Path` als ifc_path ist beim programmatischen Bauen naheliegend.
+
+    Vorher lief die Tiefkopie ueber `json.dumps` und warf darauf einen TypeError — ein
+    Fehler, der nichts mit dem Vertrag zu tun hat und den Aufrufer in die Irre fuehrt.
+    """
+    from pathlib import Path as P
+    szene = {"geometry": {"ifc_path": P("bau.ifc")}, "out_dir": str(tmp_path)}
+
+    geprueft = validate_render_scene(szene)
+
+    assert geprueft["geometry"]["ifc_path"] == "bau.ifc"
+    assert isinstance(geprueft["geometry"]["ifc_path"], str)
+
+
+def test_widersprechende_up_achse_am_ifc_pfad_wird_gemeldet(tmp_path):
+    """Beim eigenen IFC-Pfad erzeugt der Runner Y-up. Ein mitgegebenes "Z" ist ein Irrtum
+    des Aufrufers und wird laut gemeldet, statt stillschweigend ueberschrieben zu werden —
+    genau die Linie, deretwegen dieses Modul existiert."""
+    szene = {"geometry": {"ifc_path": "bau.ifc", "up_axis": "Z"}, "out_dir": str(tmp_path)}
+
+    with pytest.raises(ContractError, match="widerspricht"):
+        validate_render_scene(szene)
+
+
+def test_uebereinstimmende_up_achse_am_ifc_pfad_ist_zulaessig(tmp_path):
+    """Gegenprobe: ein mitgegebenes "Y" widerspricht nicht und darf durchgehen."""
+    szene = {"geometry": {"ifc_path": "bau.ifc", "up_axis": "Y"}, "out_dir": str(tmp_path)}
+
+    assert validate_render_scene(szene)["geometry"]["up_axis"] == "Y"
+
+
+def test_fehlendes_out_dir_wird_vor_der_up_achse_gemeldet():
+    """Fehlen mehrere Pflichtfelder, soll der Aufrufer nicht erst den einen Fehler sehen
+    und nach dessen Behebung den naechsten."""
+    szene = {"geometry": {"glb_path": "bau.glb"}}          # weder out_dir noch up_axis
+
+    with pytest.raises(ContractError, match="out_dir"):
+        validate_render_scene(szene)

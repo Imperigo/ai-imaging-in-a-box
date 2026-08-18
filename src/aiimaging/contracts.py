@@ -19,7 +19,9 @@ wo weder Blender noch ifcopenshell existieren.
 """
 from __future__ import annotations
 
+import copy
 import json
+import os
 from pathlib import Path
 
 SCHEMA_ID = "aiimaging.render-scene/v1"
@@ -102,20 +104,41 @@ def validate_render_scene(scene: dict) -> dict:
     if not ifc_path and not glb_path:
         raise ContractError("geometry braucht ifc_path oder glb_path.")
 
-    out = json.loads(json.dumps(scene))          # tiefe Kopie, Eingabe bleibt unberührt
+    # out_dir zuerst prüfen: Fehlen mehrere Pflichtfelder, soll der Aufrufer nicht erst
+    # den up_axis-Fehler sehen und nach dessen Behebung den nächsten.
+    if not scene.get("out_dir"):
+        raise ContractError("Pflichtfeld 'out_dir' fehlt.")
+
+    # `copy.deepcopy` statt eines JSON-Umwegs: Ein `Path` als ifc_path ist beim
+    # programmatischen Bauen naheliegend, und `json.dumps` wirft darauf einen TypeError
+    # — ein Fehler, der nichts mit dem Vertrag zu tun hat und den Aufrufer in die Irre
+    # führt. Pfadartige Werte werden stattdessen zu str normalisiert.
+    out = copy.deepcopy(scene)
     out["schema"] = SCHEMA_ID
     g = out["geometry"]
+    for feld in ("ifc_path", "glb_path"):
+        if isinstance(g.get(feld), os.PathLike):
+            g[feld] = os.fspath(g[feld])
 
     if glb_path:
         # Der Kern des Phase-0-Befunds: hier wird nicht geraten.
         g["up_axis"] = normalize_up_axis(geom.get("up_axis"))
         g["needs_rotation"] = g["up_axis"] == "Z"
     else:
-        g["up_axis"] = "Y"                       # eigener Pfad → wir erzeugen glTF-konform
+        # Eigener IFC-Pfad → der Runner erzeugt glTF-konformes Y-up. Ein mitgegebenes,
+        # abweichendes up_axis wird NICHT stillschweigend überschrieben: Es deutet auf
+        # eine falsche Annahme des Aufrufers hin, und diese Linie — nie stillschweigend
+        # reparieren — ist der Grund, warum dieses Modul überhaupt existiert.
+        angabe = geom.get("up_axis")
+        if angabe is not None and normalize_up_axis(angabe) != "Y":
+            raise ContractError(
+                f"up_axis={angabe!r} widerspricht dem eigenen IFC-Pfad: Der Runner "
+                f"erzeugt glTF-konformes Y-up. Entweder up_axis weglassen oder eine "
+                f"fertige glb über glb_path übergeben."
+            )
+        g["up_axis"] = "Y"
         g["needs_rotation"] = False
 
-    if not out.get("out_dir"):
-        raise ContractError("Pflichtfeld 'out_dir' fehlt.")
     return out
 
 

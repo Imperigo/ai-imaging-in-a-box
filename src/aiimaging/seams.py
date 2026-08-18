@@ -123,6 +123,13 @@ def glb_zu_tiefenkarte(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Einen Report aus einem frueheren Lauf VOR dem Start entfernen. Ohne das wuerde ein
+    # abgestuerzter Blender-Lauf still gelingen, weil der Erfolg unten an der blossen
+    # Existenz der Datei haengt — und out_dir wird ueblicherweise wiederverwendet. Genau
+    # die Sorte stiller Falschmeldung, gegen die dieses Projekt sonst antritt.
+    bericht = out_dir / "blender-report.json"
+    bericht.unlink(missing_ok=True)
+
     cmd = [
         finde_blender(), "--background", "--factory-startup",
         "--python", str(BLENDER_RUNNER), "--",
@@ -133,7 +140,16 @@ def glb_zu_tiefenkarte(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
         cmd.append("--rotiere-z-up")
 
     ergebnis = starte(cmd, timeout)
-    bericht = out_dir / "blender-report.json"
+
+    # Zwei unabhaengige Bedingungen, beide notwendig: Der Prozess muss sauber geendet
+    # haben UND einen Report hinterlassen haben. Nur die Datei zu pruefen genuegt nicht
+    # (siehe oben), nur den Rueckgabewert auch nicht — Blender kann 0 melden und am
+    # Compositor gescheitert sein.
+    if ergebnis.returncode != 0:
+        raise SeamError(
+            f"Blender endete mit Code {ergebnis.returncode}:\n"
+            f"{(ergebnis.stderr or ergebnis.stdout or '').strip()[-1500:]}"
+        )
     if not bericht.exists():
         raise SeamError(
             f"Blender schrieb keinen Report (Code {ergebnis.returncode}):\n"

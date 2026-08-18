@@ -181,12 +181,43 @@ def test_tiefenkarte_startet_blender_ohne_drehflagge_bei_y_up(tmp_path, blender_
     assert FLAGGE not in aufrufer.kommando
 
 
-def test_tiefenkarte_meldet_fehlenden_report_als_seamerror(tmp_path, blender_attrappe):
-    """Bleibt der Report aus, ist der Lauf gescheitert — das wird gemeldet, nicht verschwiegen."""
+def test_tiefenkarte_meldet_abbruch_des_prozesses(tmp_path, blender_attrappe):
+    """Endet Blender mit Fehlercode, wird das gemeldet — nicht verschwiegen."""
     aufrufer = Aufrufer(Ergebnis(returncode=1, stderr="Cycles: out of memory"))
+
+    with pytest.raises(SeamError, match="Code 1"):
+        glb_zu_tiefenkarte("bau.glb", tmp_path / "depth", up_axis="Y", _starte=aufrufer)
+
+
+def test_tiefenkarte_meldet_fehlenden_report_als_seamerror(tmp_path, blender_attrappe):
+    """Sauberes Ende ohne Report heisst trotzdem gescheitert — Blender kann 0 melden und
+    am Compositor scheitern. Beide Bedingungen sind notwendig, keine genuegt allein."""
+    aufrufer = Aufrufer(Ergebnis(returncode=0))
 
     with pytest.raises(SeamError, match="Report"):
         glb_zu_tiefenkarte("bau.glb", tmp_path / "depth", up_axis="Y", _starte=aufrufer)
+
+
+def test_tiefenkarte_gilt_nicht_wegen_eines_alten_reports_als_gelungen(tmp_path, blender_attrappe):
+    """Regression: ein abgestuerzter Lauf darf sich nicht am Report eines Vorlaufs gesundmelden.
+
+    Gefunden beim Testschreiben (Sitzung 03). Weil `out_dir` ueblicherweise
+    wiederverwendet wird, htte ein Absturz mit liegengebliebenem Report still
+    `status: ok` zurueckgegeben — die Sorte stiller Falschmeldung, gegen die dieses
+    Projekt sonst antritt. Der Report wird darum vor dem Start geloescht.
+    """
+    ziel = tmp_path / "depth"
+    ziel.mkdir()
+    (ziel / "blender-report.json").write_text(
+        '{"status": "ok", "aus": "ALTER LAUF"}', encoding="utf-8")
+
+    aufrufer = Aufrufer(Ergebnis(returncode=137, stderr="Killed"))
+
+    with pytest.raises(SeamError):
+        glb_zu_tiefenkarte("bau.glb", ziel, up_axis="Y", _starte=aufrufer)
+
+    assert not (ziel / "blender-report.json").exists(), \
+        "Der alte Report muss vor dem Lauf entfernt worden sein"
 
 
 def test_tiefenkarte_reicht_timeout_durch(tmp_path, blender_attrappe):

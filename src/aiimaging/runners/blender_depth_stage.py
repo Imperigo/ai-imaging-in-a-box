@@ -22,7 +22,7 @@ Die Tiefe wird über den Compositor als 32-Bit-EXR geführt, nicht über einen
 Emissions-Trick: Nur so stehen echte Meterwerte im Bild. Die Normalisierung auf 16-Bit-
 Graustufen folgt der ControlNet-Konvention **nah = hell**.
 
-Aufruf (immer über `aiimaging.blender_seam`, nicht von Hand):
+Aufruf (immer über `aiimaging.seams`, nicht von Hand):
     blender --background --python blender_depth_stage.py -- \
         --glb <in.glb> --out <verzeichnis> [--aufloesung 512] [--rotiere-z-up]
 """
