@@ -442,9 +442,25 @@ def _compositor_auf_tiefe(out_dir: Path) -> str:
     except Exception:                                     # manche Fassungen kennen kein clear()
         pass
 
+    # Die Reihenfolge IST die Weiche — keine Versionsabfrage. Auf 4.2 greift die erste
+    # Form (`file_slots.new(name)`), die Schleife bricht dort ab, der 4.2-Pfad bleibt
+    # unberuehrt. Erst wenn sie scheitert, kommen die getypten Formen von 5.x.
+    #
+    # HomeStation-Befund 18.08. (Blender 5.2.0 LTS, am Geraet gemessen):
+    #   Signatur: `NodeCompositorFileOutputItems.new(socket_type, name)`
+    #   gueltig:      RGBA, VECTOR, FLOAT
+    #   NICHT gueltig: COLOR und VALUE (TypeError), IMAGE (RuntimeError)
+    # Der bisherige Kandidat "COLOR" war also ausgerechnet einer der ungueltigen —
+    # darum scheiterten alle vier Versuche und der Slot entstand nie.
+    #
+    # FLOAT steht vor RGBA, weil eine Tiefenkarte EIN Wert je Pixel ist und kein
+    # Farbwert; der Depth-Ausgang der Render-Layer ist ein Value-Socket. RGBA bleibt
+    # als Rueckfall, falls eine Fassung FLOAT nicht fuehrt.
     letzter = None
     for versuch in (lambda: sammlung.new(slot_name),
                     lambda: sammlung.new(name=slot_name),
+                    lambda: sammlung.new("FLOAT", slot_name),
+                    lambda: sammlung.new("RGBA", slot_name),
                     lambda: sammlung.new("COLOR", slot_name),
                     lambda: sammlung.new()):
         try:
@@ -490,6 +506,26 @@ def _tiefe_normalisieren(exr: Path, ziel_png: Path) -> dict:
     # die Farbverwaltung sie unterwegs umrechnen.
     quelle.colorspace_settings.name = "Non-Color"
     breite, hoehe = quelle.size
+
+    # HomeStation-Befund 18.08. (Blender 5.2.0 LTS, am Geraet gemessen): Ein MULTILAYER-EXR
+    # laedt hier als 0x0 mit 0 Kanaelen — Blender kann die Datei, die es auf 5.x schreiben
+    # MUSS, selbst nicht wieder einlesen. Gegenprobe im selben Lauf: eine Einzelschicht-EXR
+    # laedt als 64x64 mit 4 Kanaelen; die Multilayer-Datei ist auch nicht kaputt, der
+    # stdlib-Leser des Produkts (`aiimaging.bildlesen.lies_exr_tiefe_stdlib`) holt aus
+    # DERSELBEN Datei 11151 Geometriepixel (17.9-26.6 m) heraus.
+    #
+    # Ohne diese Pruefung liefe die Rechnung auf einem leeren Feld weiter und meldete
+    # "kein einziger Geometriepixel" — eine Meldung, die auf ein Kamera- oder
+    # Schwellenproblem zeigt, wo keines ist. Genau diese falsche Faehrte hat hier Zeit
+    # gekostet, darum steht die Ursache jetzt in der Meldung.
+    if breite == 0 or hoehe == 0:
+        raise RuntimeError(
+            f"Blender laedt diese EXR als {breite}x{hoehe} (0 Pixel). Auf Blender 5.x ist das "
+            f"der Normalfall fuer MULTILAYER-Dateien — und der File-Output-Knoten kann dort "
+            f"NUR multilayer schreiben. Die Datei ist in Ordnung: mit "
+            f"`aiimaging.bildlesen.lies_exr_tiefe_stdlib` ist sie ohne Blender lesbar. "
+            f"Die Normalisierung gehoert damit auf 5.x auf die Produktseite, nicht hierher."
+        )
 
     roh = np.empty(breite * hoehe * 4, dtype=np.float32)
     quelle.pixels.foreach_get(roh)
