@@ -123,11 +123,19 @@ aus `register_in_odysseus.sh` bekannt, aber hier nicht ausgeführt.
 - [x] **Graph-Kern verdrahtet** — `kette.py`: die Bildkette als DAG mit Zwischenspeicher.
       Belegt: Prompt-Änderung ruft die Geometriestufen **gar nicht mehr**, eine
       Geometrieänderung rechnet alles dahinter neu.
-- [ ] **Erster echter Render** — Qwen-Image-Edit-2511 mit echten Gewichten.
-      **Braucht GPU**, läuft über `auftraege/`. Der diffusers-Adapter ist bisher
-      **nie ausgeführt** worden — das ist die offene Fläche.
-      *Beauftragt 2026-08-18 als `auf-20260818-06`, samt zwei Wiederholungen mit
-      `controlnet_staerke` 0,6 und 1,0 als erste Punkte der Schwellenstudie.*
+- [x] **Erster echter Render** — erledigt 2026-08-18 (`auf-20260818-09`).
+      Qwen-Image-Edit-2511 mit echten Gewichten, Score **0,359** — durchgefallen
+      (spearman −0,339, geom_iou 0,380). Der Adapter läuft; das Ergebnis ist ein
+      Messwert, kein Fehlschlag.
+      **Zwei Befunde wiegen schwerer als die Zahl:** (1) Der Vorgabe-Backbone ist über
+      `QwenImageEditPlusPipeline` **kein Depth-ControlNet** — `controlnet_staerke` und
+      `denoise` sind wirkungslos, die Tiefenkarte ersetzt den Beauty-Pass. Registry
+      korrigiert. (2) Mein Prompt verlangte ein Dach („clean flat roof"), das die
+      Geometrie nicht hat — *ein Prompt, der Bauteile nennt, die die Geometrie nicht hat,
+      ist eine Aufforderung zur Halluzination.*
+- [ ] **Ein Render, der besteht** — mit einem Prompt ohne Bauteile und einer Geometrie,
+      die ein Gebäude ist statt einer offenen Schachtel. Bis dahin ist die Kette belegt,
+      die Aussage „geometrietreu" aber noch nicht.
 - [x] **Geometrie-Treue-QA** — `geometrie_qa.py`, an synthetischen Fällen belegt:
       treu 0.995, halluziniert **0.199** bei Spearman +1.000 und `geom_iou` 0.040.
       *Zahl berichtigt 2026-08-18 (Sitzung 07): Hier stand 0.24 bei IoU 0.057 — Werte
