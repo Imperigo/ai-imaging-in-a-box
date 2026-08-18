@@ -211,9 +211,37 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 
 Bekannt und ausdrücklich nicht erledigt:
 
-- **Binärabhängigkeiten ungeprüft** — `torch`, `opencv` und alles weitere mit grossem
+- ~~**Binärabhängigkeiten ungeprüft**~~ — `torch`, `opencv` und alles weitere mit grossem
   Binäranteil kann wie `ifcopenshell` fremde Lizenzen statisch mitbringen. Die
   Wheel-Lizenzangabe sagt darüber nichts.
+  **Abgetragen 2026-08-18** → `docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md`. 39 Pakete am
+  Artefakt geprüft (installierte Datei, sonst Wheel per HTTP-Range geöffnet), 79
+  Fremdkomponenten benannt. Die Vermutung hat sich bestätigt, aber anders als erwartet:
+  **Kein neuer GPL-Fund im Produktivpfad.** Dafür drei Dinge, die vorher niemand wusste:
+  (1) `shapely` deklariert BSD-3 und bringt **GEOS unter LGPL-2.1** mit — in `.venv-ifc`,
+  also bereits hinter der Prozessgrenze, aber **nicht im `NOTICE`**; dasselbe gilt für
+  **libquadmath (LGPL-2.1+)** aus `numpy`. Das ist die einzige Bringschuld des Berichts.
+  (2) `torch` und `numpy` liefern **GNU-Laufzeitbibliotheken** mit (`libgomp`,
+  `libgfortran`, GPL-3.0-or-later **mit** GCC-Ausnahme 3.1), ohne sie zu deklarieren —
+  die Ausnahme greift, es bleibt zulässig. (3) `pip install torch` zieht auf Linux
+  **zwingend** über 1,5 GB NVIDIA-proprietärer Wheels nach; `triton` gibt sich als MIT
+  aus und liefert ~90 MB NVIDIA-Werkzeuge ohne jede Lizenzdatei mit.
+  **`opencv` liegt in keinem Pfad dieses Projekts** — die Schuld war an dieser Stelle zu
+  weit gefasst; die FFmpeg-Frage ist trotzdem vorsorglich beantwortet (LGPL-2.1, nicht
+  GPL; Qt-5-LGPL-3 nur in der Nicht-headless-Variante).
+  *Eine Architekturänderung folgt daraus nicht* — jeder Fund liegt hinter einer bereits
+  gezogenen Grenze oder ist durch eine Ausnahmeklausel entschärft. Was folgt, sind ein
+  ergänztes `NOTICE` und gepinnte Versionen; beides ist Owner-Entscheid (§7 des Berichts).
+- **Was von den Binärabhängigkeiten offen bleibt** (Rest der obigen Schuld, 2026-08-18):
+  Die **Rust-Wheels** (`tokenizers`, `safetensors`, `hf-xet`, `pydantic-core`) linken ihre
+  Kisten statisch ein und liefern **keine** Aufstellung mit — `tokenizers` hat nicht
+  einmal eine eigene Lizenzdatei im Wheel. Zu prüfen wäre mit `cargo-license` gegen die
+  jeweilige `Cargo.lock`, nicht am Wheel. Ebenfalls offen: der Inhalt von
+  `libtorch_cpu.so`/`libtorch_cuda.so`/`libtriton.so` (statische Anteile nicht
+  verifiziert), **`nvidia-nccl-cu13`** und **`nvidia-nvshmem-cu13`** (keinerlei
+  Lizenzangabe in den PyPI-Metadaten), sowie **GMP/MPFR** in `ifcopenshell` (im Binary
+  nachgewiesen, Lizenz nicht am Original geprüft — `gmplib.org` und `www.cgal.org` waren
+  über den Proxy nicht erreichbar).
 - **Rund ein Dutzend Lizenzen nur aus Sekundärquellen** — Liste in
   `LAGEBEURTEILUNG_2026-08-14.md`, Kapitel 9. Vor einer Auslieferung gegen die
   LICENSE-Datei zu prüfen.

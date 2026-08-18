@@ -53,3 +53,89 @@ https://github.com/mikedh/trimesh
 Nur im .venv-ifc (Runner-Environment), nicht im Produkt-Environment.
 
 --------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+GEOS - Geometry Engine Open Source                 LGPL-2.1
+https://libgeos.org/
+
+Statisch mitgeliefert im shapely-Wheel (shapely.libs/libgeos-*.so.3.13.1 und
+libgeos_c-*.so.1.19.2). shapely deklariert selbst BSD-3-Clause; die LGPL-Angabe
+steht in einer zweiten Lizenzdatei des Wheels (dist-info/licenses/LICENSE_GEOS).
+Verifiziert am Wheel-Inhalt (2026-08-18), siehe docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md.
+
+shapely liegt ausschliesslich im .venv-ifc, also jenseits der Prozessgrenze, und
+wird unveraendert verwendet. Damit sind die drei Auflagen der LGPL-Praezisierung
+aus CLAUDE.md erfuellt: eigene Prozessgrenze, unveraendert, austauschbar - und
+hiermit deklariert.
+
+--------------------------------------------------------------------------------
+libquadmath                                        LGPL-2.1-or-later
+Teil der GCC-Laufzeitbibliotheken, https://gcc.gnu.org/
+
+Statisch mitgeliefert in numpy-Wheels. numpy deklariert BSD-3-Clause; die
+LGPL-Komponente wird von der Wheel-Angabe nicht genannt.
+
+Unveraendert verwendet, austauschbar (eine numpy-Fassung ohne libquadmath
+erfuellt denselben Zweck).
+
+--------------------------------------------------------------------------------
+libgomp, libgfortran            GPL-3.0-or-later WITH GCC-exception-3.1
+Teil der GCC-Laufzeitbibliotheken, https://gcc.gnu.org/
+
+Statisch mitgeliefert in torch- und numpy-Wheels.
+
+  KEIN GPL-Problem, und das ist der Grund, warum es hier steht:
+  Die GCC Runtime Library Exception hebt die Copyleft-Wirkung fuer Programme
+  auf, die lediglich mit diesen Laufzeitbibliotheken uebersetzt bzw. gelinkt
+  werden. Ohne diese Ausnahme waere die Lage eine andere - dann waere der
+  Ausweg derselbe wie zweimal zuvor in diesem Projekt: ein eigenes Environment
+  und ein Subprozessaufruf.
+
+  Der Eintrag steht hier, damit ein spaeterer Pruefer die GPL-Zeile findet UND
+  die Ausnahme daneben, statt zu erschrecken.
+
+--------------------------------------------------------------------------------
+Weitere statische Bestandteile des IfcOpenShell-Wheels
+
+Open CASCADE (LGPL-2.1 mit Ausnahme), GMP, MPFR, Boost, HDF5, libxml2,
+Eigen (MPL-2.0). Alle erreichen dieses Produkt ausschliesslich ueber die
+Prozessgrenze zum .venv-ifc.
+
+--------------------------------------------------------------------------------
+Bildmodell-Stufe: torch, diffusers und die NVIDIA-Laufzeit
+
+torch          BSD-3-Clause     https://pytorch.org/
+diffusers      Apache-2.0       https://github.com/huggingface/diffusers
+
+Beide sind KEINE Abhaengigkeiten dieses Pakets: pyproject.toml fuehrt null
+Laufzeitabhaengigkeiten. Sie werden nur dort gebraucht, wo tatsaechlich
+gerendert wird, und nur innerhalb von aiimaging.render.lade_modell importiert.
+
+  PROPRIETAERE VORAUSSETZUNG, ohne die diese Stufe auf Linux nicht laeuft:
+  `pip install torch` zieht auf Linux ZWINGEND (platform_system == "Linux",
+  kein Extra, kein Opt-out) nvidia-cudnn-cu13, nvidia-nccl-cu13,
+  nvidia-cusparselt-cu13 und nvidia-nvshmem-cu13 nach - zusammen rund 1,1 GB
+  NVIDIA-proprietaerer Binaerdateien, dazu triton (~200 MB), das seinerseits
+  NVIDIA-Binaerdateien mitliefert, ohne sie in seiner MIT-Angabe zu erwaehnen.
+  Nachgemessen an den PyPI-Metadaten (2026-08-18).
+
+  Diese Dateien werden von diesem Projekt NICHT ausgeliefert, sondern von pip
+  installiert. Sie sind nicht permissiv - sie tragen eine Endnutzerlizenz mit
+  Weitergabeschranke. Ein oeffentliches Apache-2.0-Repo, das ohne sie nicht
+  rendert, soll das sagen.
+
+  Ohne proprietaeren Anteil: torch von https://download.pytorch.org/whl/cpu
+  zieht keines dieser Pakete nach. Fuer alles, was ohne GPU laeuft - Tests,
+  Trockenlaeufe, die gesamte QA-Kette - ist das die saubere Variante.
+
+  FALLE FUER JEDE KUENFTIGE PRUEFUNG, nachgemessen 2026-08-18:
+  Auf PyPI liegt `nvidia-cublas-cu13` als 1371-Byte-PLATZHALTER in Fassung
+  0.0.1 - und deklariert `License-Expression: Apache-2.0`. cuBLAS selbst ist
+  NVIDIA-proprietaer. Wer eine Lizenzliste aus Paketnamen oder PyPI-Metadaten
+  erzeugt, liest fuer cuBLAS "Apache-2.0" und uebersieht die Lizenz vollstaendig.
+
+  Das ist die Methodenlehre dieses Berichts in einem Beispiel: Die Kurzangabe
+  eines Wheels ist ein Hinweis, `dist-info/licenses/` ist eine Aussage, und
+  `*.libs/` ist die Wahrheit.
+
+--------------------------------------------------------------------------------
