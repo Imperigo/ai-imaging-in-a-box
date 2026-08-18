@@ -1,0 +1,30 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260818-04",
+  "status": "fehler",
+  "beendet": "2026-08-18T12:22:48Z",
+  "dauer_s": null,
+  "messwerte": {
+    "blender_version": "5.2.0 LTS",
+    "standardformat_frischer_knoten": "OPEN_EXR_MULTILAYER",
+    "ausnahmetyp_bei_falscher_zuweisung": "TypeError",
+    "formate_laut_enum_items": 16,
+    "formate_tatsaechlich_am_knoten": 1
+  },
+  "urteil": {
+    "kern": "Die Korrektur ist genau in die Falle gelaufen, vor der auf-03 gewarnt hat.",
+    "was_passiert": "Zeile 407 fragt bl_rna...enum_items ab und findet OPEN_EXR darin (die statische Liste hat alle 16). Also wird OPEN_EXR zugewiesen — und die Zuweisung wirft. Die Liste ist KEINE Auskunft ueber das Erlaubte. Sie am Knoten zu erfragen ist genau so unzuverlaessig wie es zu raten.",
+    "weg_a_empfohlen": "NICHTS setzen. Ein frischer CompositorNodeOutputFile steht bereits auf OPEN_EXR_MULTILAYER (am Geraet bestaetigt). Zeilen 405-408 ersatzlos loeschen. format.color_depth='32' und format.color_mode='RGB' werden danach beide angenommen.",
+    "weg_b_wenn_zuweisung_noetig": "try/except statt Listenabfrage. Die geworfene Ausnahme ist ein TypeError (gemessen), nicht ValueError — ein except ValueError faengt sie NICHT.",
+    "weg_c_einzeldateien": "file_output_items.new('RGBA','Tiefe'); item.override_node_format=True; item.format.file_format='OPEN_EXR' — angenommen, waehrend der Knoten auf OPEN_EXR_MULTILAYER bleibt. So bekommt man einzelne EXR je Pass.",
+    "alle_drei_verifiziert": "ja, Blender 5.2.0 LTS, --background, in diesem Lauf",
+    "fortschritt": "4. Anlauf, dieselbe Stufe wie 03 — kein Rueckschritt, aber auch kein Fortschritt."
+  },
+  "umgebung": {
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "leistungsgrenze_w": 400.0,
+    "python": "3.14.4",
+    "blender": "/snap/bin/blender"
+  },
+  "fehler": "SeamError: Blender schrieb keinen Report (Code 0):\ne/andrin-baumann/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py\", line 707, in <module>\n    sys.exit(main())\n             ~~~~^^\n  File \"/home/andrin-baumann/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py\", line 616, in main\n    raise RuntimeError(f\"Kompositor-Aufbau gescheitert: {e}{befund}\") from e\nRuntimeError: Kompositor-Aufbau gescheitert: bpy_struct: item.attr = val: enum \"OPEN_EXR\" not found in ('OPEN_EXR_MULTILAYER')\nAPI-Befund fuer CompositorNodeOutputFile:\n  Attribute: active_item_index, bl_description, bl_height_default, bl_height_max, bl_height_min, bl_icon, bl_idname, bl_label, bl_rna, bl_static_type, bl_system_properties_get, bl_width_default, bl_width_max, bl_width_min, color, color_tag, debug_zone_body_lazy_function_graph, debug_zone_lazy_function_graph, dimensions, directory, draw_buttons, draw_buttons_ext, file_name, file_output_items, format, height, hide, input_template, inputs, internal_links, is_registered_node_type, label, location, location_absolute, mute, name, output_template, outputs, panel_states, parent, poll, poll_instance, rna_type, save_as_render, select, show_options, show_preview, show_texture, socket_value_update, type, update, use_custom_color, use_file_extension, warning_propagation, width\n  file_output_items: bpy_prop_collection, Methoden ['bl_rna', 'clear', 'find', 'foreach_get', 'foreach_set', 'get', 'items', 'keys', 'move', 'new', 'remove', 'rna_type', 'values']\n  Eingaenge: ['']\n  Blender: 5.2.0 LTS"
+}
