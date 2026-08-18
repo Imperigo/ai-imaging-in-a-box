@@ -216,6 +216,57 @@ def _pfad(job_id: str, verzeichnis) -> Path:
     return Path(verzeichnis) / f"{_pruefe_job_id(job_id)}{DATEI_ENDUNG}"
 
 
+#: Schlüsselnamen, unter denen ein Freigabe-Token in `params` geraten könnte — unserer
+#: und der des Ökosystems (`docs/OEKOSYSTEM_2026-08-18.md`, Kap. 7.2).
+TOKEN_SCHLUESSEL = ("approval_token", "owner_approval_token", "token")
+
+
+def _wehre_token_in_params_ab(params) -> None:
+    """Regel „das Token landet nie auf der Platte" — auch auf dem Umweg über ``params``.
+
+    **Die Lücke, die eine Testabnahme fand (18.08.2026):** `baue_job` kopiert `params`
+    unbesehen und `schreibe_job` schreibt sie. Wer das Token als *Parameter* durchreicht,
+    schrieb es damit in die Auftragsdatei — und `freigegeben` blieb trotzdem `False`. Das
+    Schlimmste beider Welten: Die Befugnis liegt offen, und wirken tut sie nicht.
+
+    Das ist keine erfundene Gefahr. Der MCP-Vertrag des Ökosystems führt
+    `owner_approval_token` als **Eingabefeld**, und Eingabefelder landen bei uns in
+    `params`. Der Weg dorthin ist also der normale, nicht der ausgefallene.
+
+    Geprüft wird auf **beides**: den Schlüsselnamen (jemand nennt das Feld so) und den
+    Wert (jemand nennt es anders und schreibt trotzdem ein Token hinein). Nur eines von
+    beidem zu prüfen liesse die jeweils andere Hälfte offen.
+
+    Raises:
+        JobError: mit dem Fundort, damit der Aufrufer nicht suchen muss.
+    """
+    def _pruefe(wert, pfad: str) -> None:
+        if isinstance(wert, dict):
+            for schluessel, unterwert in wert.items():
+                if str(schluessel).lower() in TOKEN_SCHLUESSEL:
+                    raise JobError(
+                        f"params{pfad}[{schluessel!r}]: Ein Freigabe-Token gehört nicht "
+                        f"in die Parameter. Es würde mit der Auftragsdatei auf die Platte "
+                        f"geschrieben — und wirken würde es trotzdem nicht, denn die "
+                        f"Freigabe läuft über `approval_token=` bzw. `freigeben()`. "
+                        f"Das Token ist eine Befugnis; eine Auftragsdatei ist für jeden "
+                        f"lesbar, der das Verzeichnis sieht."
+                    )
+                _pruefe(unterwert, f"{pfad}[{schluessel!r}]")
+        elif isinstance(wert, (list, tuple)):
+            for i, unterwert in enumerate(wert):
+                _pruefe(unterwert, f"{pfad}[{i}]")
+        elif isinstance(wert, str) and wert.startswith(TOKEN_PRAEFIX):
+            raise JobError(
+                f"params{pfad}: Der Wert beginnt mit {TOKEN_PRAEFIX!r} — das sieht nach "
+                f"einem Freigabe-Token aus, und es gehört nicht in die Parameter. "
+                f"Geprüft wird der Wert und nicht nur der Schlüsselname: Ein Token unter "
+                f"einem harmlosen Namen wäre sonst durchgekommen."
+            )
+
+    _pruefe(params, "")
+
+
 def baue_job(*, job_id: str, art: str, params: dict,
              approval_token: str | None = None,
              idle_window_only: bool = True) -> dict:
@@ -252,6 +303,7 @@ def baue_job(*, job_id: str, art: str, params: dict,
     if not isinstance(params, dict):
         raise JobError(f"params muss ein dict sein, war {type(params).__name__}")
 
+    _wehre_token_in_params_ab(params)
     freigegeben = ist_gueltiges_token(approval_token)
     status = STATUS_QUEUED if freigegeben else STATUS_AWAITING
     jetzt = _jetzt()
@@ -494,6 +546,7 @@ def freigeben(job_id: str, token: str, verzeichnis) -> dict:
 
 
 __all__ = [
+    "TOKEN_SCHLUESSEL",
     "ALLE_STATUS", "ENDZUSTAENDE", "JOB_ID_MUSTER", "JOB_SCHEMA_ID", "TOKEN_PRAEFIX",
     "UEBERGAENGE",
     "STATUS_AWAITING", "STATUS_CANCELLED", "STATUS_DONE", "STATUS_ERROR",

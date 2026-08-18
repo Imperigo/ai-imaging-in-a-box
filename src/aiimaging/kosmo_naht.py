@@ -130,6 +130,21 @@ def resolution_zu_aufloesung(resolution) -> dict:
     }
 
 
+#: Statuswerte, die eine erteilte Freigabe voraussetzen.
+FREIGABE_VORAUSGESETZT = (jobs.STATUS_QUEUED, jobs.STATUS_RUNNING,
+                          jobs.STATUS_DONE, jobs.STATUS_ERROR)
+
+
+def satz_ist_freigegeben_laut_status(status) -> bool:
+    """Setzt dieser Status eine erteilte Freigabe voraus?
+
+    `awaiting_approval` und `cancelled` tun es nicht; alles andere schon — ein Auftrag
+    kommt nur über die Freigabe in die Warteschlange. Die Frage ist nötig, weil Status
+    und Token nach einer Übersetzung auseinanderlaufen können, ohne dass es auffällt.
+    """
+    return status in FREIGABE_VORAUSGESETZT
+
+
 # ── Aufträge ─────────────────────────────────────────────────────────────────────────
 
 def als_kosmo_auftrag(satz: dict, *, approval_token: str | None = None) -> dict:
@@ -228,6 +243,27 @@ def aus_kosmo_auftrag(fremd: dict) -> dict:
             "entspricht — die Freigabe wird NICHT übernommen."
         )
 
+    # DIE STILLE KANTE IN DER EIGENEN NAHT (Testabnahme 18.08.2026).
+    #
+    # Ein Auftrag mit `status="queued"` ist per Definition freigegeben — sonst stünde er
+    # auf `awaiting_approval`. Kommt er ohne brauchbares Token zurück, sagen Status und
+    # Freigabe einander widersprechende Dinge, und bisher **schwieg das Ergebnis dazu**.
+    #
+    # Das ist strukturell exakt der Fehler, gegen den dieses Modul gebaut wurde: nicht ein
+    # Abbruch, sondern eine Angabe, die einfach nicht ankommt. Ihn ausgerechnet hier zu
+    # haben, war die unangenehmste Art, ihn zu lernen.
+    #
+    # Repariert wird er NICHT durch Setzen von `freigegeben` — das erfände eine Befugnis
+    # aus einem Statuswort. Repariert wird er durch **Sagen**.
+    if satz_ist_freigegeben_laut_status(fremd.get("status")) and not unser["freigegeben"]:
+        hinweise.append(
+            f"Der Satz steht auf {fremd.get('status')!r} — das setzt eine Freigabe "
+            f"voraus —, trägt aber kein brauchbares Token. `freigegeben` bleibt darum "
+            f"False. Entweder wurde das Token beim Übergang nicht mitgegeben, oder es "
+            f"entspricht unserer Form nicht. Der Auftrag bliebe bei uns liegen, ohne "
+            f"dass jemand einen Fehler sieht."
+        )
+
     job_id = fremd.get("job_id")
     gueltig = bool(job_id) and bool(jobs.JOB_ID_MUSTER.fullmatch(str(job_id)))
     unser["kennung_bei_uns_gueltig"] = gueltig
@@ -274,6 +310,8 @@ def pruefe_kanten(unsere_felder, fremde_felder) -> dict:
 __all__ = [
     "FREMDES_JOB_ID_MUSTER", "FREMDES_JOB_VERZEICHNIS_ENV", "JOB_FELDER", "MCP_FELDER",
     "NahtError",
+    "FREIGABE_VORAUSGESETZT",
     "als_kosmo_auftrag", "aufloesung_zu_resolution", "aus_kosmo_auftrag",
+    "satz_ist_freigegeben_laut_status",
     "pruefe_kanten", "resolution_zu_aufloesung",
 ]
