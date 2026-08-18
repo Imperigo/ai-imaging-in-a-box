@@ -822,12 +822,7 @@ def lies_exr_tiefe_stdlib(pfad) -> tuple[list[float], int, int]:
 
     breite, hoehe = kopf["breite"], kopf["hoehe"]
     kanaele = kopf["kanaele"]
-    if len(kanaele) == 1:
-        index = 0
-    else:
-        namen = [k["name"] for k in kanaele]
-        index = min(namen.index(n) for n in _EXR_TIEFENKANAELE if n in namen)
-    kanal = kanaele[index]
+    index, kanal = _tiefenkanal(kanaele)
     _, code, groesse = _EXR_PIXELTYP[kanal["typ"]]
 
     # Ein Scanline-Block enthält alle Kanäle nacheinander, jeder über die volle Breite.
@@ -835,11 +830,6 @@ def lies_exr_tiefe_stdlib(pfad) -> tuple[list[float], int, int]:
     # führt) — der Versatz des gesuchten Kanals ist damit die Summe der davor liegenden.
     versatz = sum(breite * k["bytes"] for k in kanaele[:index])
     zeilenbytes = sum(breite * k["bytes"] for k in kanaele)
-    if any(k["bytes"] == 0 for k in kanaele):
-        raise EXRVarianteError(
-            f"{pfad}: mindestens ein Kanal hat einen Typ, dessen Grösse dieser Leser "
-            f"nicht kennt — dann stimmt schon der Zeilenversatz nicht."
-        )
 
     zeilen_je_block = _EXR_ZEILEN_JE_BLOCK[kopf["kompression"]]
     n_bloecke = (hoehe + zeilen_je_block - 1) // zeilen_je_block
