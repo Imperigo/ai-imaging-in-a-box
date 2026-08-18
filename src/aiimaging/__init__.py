@@ -17,6 +17,7 @@ Aufbau
 ``seams``        die Prozessgrenzen zu IfcOpenShell und Blender
 ``torwaechter``  Massstabs- und Georeferenzprüfung vor teurer GPU-Zeit
 ``graph``        der innere Knotengraph der Bildkette
+``kette``        die Bildkette ALS Graph — mit Zwischenspeicher über Inhalts-Hashes
 ``jobs``         Auftragsverwaltung mit Freigabe (Freeze-Schutz)
 ``werkzeuge``    was die MCP-Naht anbietet — gewöhnliche Bibliotheksaufrufe
 ``auftrag``      Aufträge an die HomeStation, über das Repo als Übergabeort
@@ -35,7 +36,8 @@ __version__ = "0.0.2"
 
 from aiimaging import (  # noqa: F401
     auftrag, backbone, bildlesen, contracts, einbetter, gate, geometrie_qa, graph, jobs,
-    mcp_schemas, render, seams, stil_qa, tiefenschaetzer, torwaechter, werkzeuge,
+    kette, mcp_schemas, render, seams, stil_qa, tiefenschaetzer, torwaechter,
+    werkzeuge,
 )
 from aiimaging.contracts import (  # noqa: F401
     ContractError,

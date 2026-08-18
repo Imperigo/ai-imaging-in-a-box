@@ -1,0 +1,799 @@
+"""Die Bildkette als Knotengraph — bauen, ausführen, zwischenspeichern.
+
+Wozu dieses Modul da ist
+------------------------
+``graph.py`` trägt seit Phase 2 den Kern: typisierter DAG, topologische Sortierung,
+Artefakt-Cache mit Inhalts-Hashing. Benutzt hat ihn bis hierher niemand — es gab keine
+echten Knoten zu verketten. Jetzt gibt es sie (IFC→glb, Multipass, Render,
+Geometrie-QA), und ``werkzeuge.enqueue_render`` verdrahtet sie als **gerade Abfolge**:
+fest verdrahtet, ohne Zwischenspeicher, ohne Wiedereinstieg.
+
+Dieses Modul ist der Schritt von der Abfolge zum Graphen. Der Unterschied ist nicht
+Vokabular, sondern messbar:
+
+* Wer nur den **Prompt** ändert, darf die teure Geometriestufe nicht erneut rechnen.
+* Wer die **Geometrie** ändert, muss alles dahinter neu rechnen.
+
+Beides entsteht **allein** aus den Inhalts-Hashes: Der Hash eines Knotens enthält die
+Hashes seiner Vorgänger (``graph.inhalts_hash``). Es gibt in diesem Modul keine einzige
+Zeile programmierter Invalidierung — es gibt nichts zu invalidieren, weil ein geänderter
+Vorgänger schlicht einen anderen Schlüssel ergibt. Wo eine Regel „bei Änderung von X
+lösche Y" stünde, wäre sie der erste Ort, an dem der Cache eines Tages falsche Treffer
+liefert.
+
+Innerer und äusserer Graph
+--------------------------
+Von aussen ist unsere ganze Bildkette **ein** Knoten in KosmoOrbits Pipeline; innen ist
+sie selbst ein Graph (``docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md``, Kap. 2). Der
+Unterschied zeigt sich genau hier, im Datenfluss:
+
+* **Aussen** (KosmoOrbit, ``mergeInputs``): Kanten entstehen über **Feldnamen-Gleichheit**,
+  die Ausgaben aller Vorgänger werden übereinandergelegt und weitergereicht.
+* **Innen** (hier): Kanten sind **Knoten-IDs**, und jeder Knoten bekommt die Ausgaben
+  seiner Vorgänger als Liste **in der Reihenfolge seiner Eingänge** — nicht verschmolzen.
+  Die QA-Stufe hat zwei Eingänge (Soll aus dem Multipass, Ist aus dem Render); würden sie
+  verschmolzen, wäre nicht mehr entscheidbar, welches ``depth_png`` gemeint ist.
+
+Zwei Wege nebeneinander
+-----------------------
+``werkzeuge.enqueue_render`` bleibt unangetastet, bis diese Kette belegt ist. Zwei Wege
+nebeneinander sind vorübergehend in Ordnung; ein halb umgebauter ist es nicht.
+
+Abhängigkeiten: nur stdlib und das eigene Paket. Kein ``bpy``, kein ``ifcopenshell``,
+kein ``torch`` auf Modulebene — die ganze Kette läuft mit Attrappen ohne GPU und ohne
+Blender durch (siehe ``AUSFUEHRER``).
+"""
+from __future__ import annotations
+
+import re
+import tempfile
+import time
+from collections.abc import Callable, Sequence
+from pathlib import Path
+
+from aiimaging import bildlesen, contracts, geometrie_qa, render, seams, torwaechter
+from aiimaging.graph import ArtefaktCache, Graph, GraphError, Knoten, inhalts_hash
+
+# --------------------------------------------------------------------------------------
+# Namen
+# --------------------------------------------------------------------------------------
+
+#: Knotenarten der Standardkette. Die Art entscheidet, **welche** Funktion rechnet
+#: (``AUSFUEHRER``); die Knoten-ID entscheidet nur, wie verdrahtet wird. Beide fallen in
+#: der Standardkette zufällig zusammen — verlassen darf sich darauf nichts.
+ART_GEOMETRIE = "geometrie"
+ART_MULTIPASS = "multipass"
+ART_RENDER = "render"
+ART_QA = "qa"
+
+#: Knoten-IDs der Standardkette.
+KNOTEN_GEOMETRIE = "geometrie"
+KNOTEN_MULTIPASS = "multipass"
+KNOTEN_RENDER = "render"
+KNOTEN_QA = "qa"
+
+#: Zustände eines Knotens im Lauf.
+#:
+#: ``abgelehnt`` ist bewusst von ``fehler`` getrennt und wird **wortgleich** aus
+#: ``render.py`` und dem Torwächter übernommen: „der Auftrag verletzt eine Regel" ist
+#: etwas anderes als „es wurde versucht und ging schief". Wer beides zu ``fehler``
+#: verschmilzt, sucht später die Ursache im falschen Lager.
+STATUS_OK = "ok"
+STATUS_ABGELEHNT = "abgelehnt"
+STATUS_FEHLER = "fehler"
+STATUS_UEBERSPRUNGEN = "uebersprungen"
+
+#: Welche Parameter eines Knotens **Eingabedateien** benennen. Ihr Inhalt fliesst in den
+#: Hash (``graph.inhalts_hash``, Argument ``dateien``).
+#:
+#: Warum nur die Geometriestufe darin steht: Alles weitere Material entsteht **in** der
+#: Kette. Die glb des Multipass kommt aus der Geometriestufe, und deren Hash steckt
+#: bereits im Vorgänger-Hash. Die grosse Datei ein zweites Mal zu lesen kostete Zeit und
+#: brächte keine einzige zusätzliche Aussage.
+EINGABEDATEIEN: dict[str, tuple[str, ...]] = {
+    ART_GEOMETRIE: ("ifc_path", "glb_path"),
+}
+
+#: Endungen von Ausgabefeldern, die auf eine Datei zeigen. Gebraucht beim Cache-Treffer:
+#: siehe ``_fehlende_ausgabedateien``.
+_DATEIFELD_ENDUNGEN = ("_png", "_exr", "_glb", "_path")
+
+#: Was in einem Verzeichnisnamen stehen darf. Die Knotenart ist freier Text und darf den
+#: Arbeitsordner nicht verlassen — dieselbe Überlegung wie beim Cache-Schlüssel in
+#: ``graph.ArtefaktCache._pfad``.
+_UNSICHER = re.compile(r"[^0-9A-Za-z._-]+")
+
+
+class KettenError(RuntimeError):
+    """Die Kette ist nicht schlüssig beschrieben oder wird falsch benutzt.
+
+    Bewusst getrennt von ``GraphError``: Der Graph-Kern meldet Fehler an der *Struktur*
+    (doppelte ID, unbekannter Eingang, Kreis), dieses Modul meldet Fehler an der
+    *Bildkette* (weder IFC noch glb, kein Prompt, keine Ausführerfunktion für eine Art).
+
+    Ein gescheiterter **Knoten** wirft nicht — er wird zum Ergebnis mit
+    ``status='fehler'``. Geworfen wird nur, wo es nichts zu protokollieren gäbe, weil
+    noch gar nicht gerechnet wurde. Dieselbe Linie wie ``RenderError`` in ``render.py``.
+    """
+
+
+# --------------------------------------------------------------------------------------
+# Bau
+# --------------------------------------------------------------------------------------
+
+def _als_bbox(bbox) -> list[list[float]] | None:
+    """bbox in die Form bringen, die ein ``Knoten`` tragen kann — oder ablehnen.
+
+    ``Knoten.params`` verlangt eine verlustfreie JSON-Runde und weist Tupel darum ab.
+    Eine bbox kommt aber ganz natürlich als Tupel daher. Die Umwandlung Tupel→Liste ist
+    reine Schreibweise und keine Bedeutungsänderung, deshalb wird sie hier vorgenommen
+    statt dem Aufrufer aufgebürdet. Alles, was **inhaltlich** keine bbox ist, fliegt.
+    """
+    if bbox is None:
+        return None
+    if isinstance(bbox, (str, bytes)) or not isinstance(bbox, Sequence) or len(bbox) != 2:
+        raise KettenError(
+            f"bbox erwartet [[xmin,ymin,zmin],[xmax,ymax,zmax]], war {bbox!r}."
+        )
+    ecken: list[list[float]] = []
+    for ecke in bbox:
+        if isinstance(ecke, (str, bytes)) or not isinstance(ecke, Sequence) or len(ecke) != 3:
+            raise KettenError(f"bbox-Ecke erwartet drei Zahlen, war {ecke!r}.")
+        werte = []
+        for wert in ecke:
+            if isinstance(wert, bool) or not isinstance(wert, (int, float)):
+                raise KettenError(f"bbox enthält keine Zahl: {wert!r}.")
+            werte.append(float(wert))
+        ecken.append(werte)
+    return ecken
+
+
+def baue_kette(
+    *,
+    ifc_path: str | Path | None = None,
+    glb_path: str | Path | None = None,
+    up_axis=None,
+    bbox=None,
+    prompt: str | None = None,
+    negativ_prompt: str = "",
+    backbone: str = render.VORGABE_BACKBONE,
+    seed: int = 0,
+    schritte: int = 20,
+    controlnet_staerke: float = 0.8,
+    denoise: float = 0.6,
+    nutze_beauty: bool = True,
+    aufloesung: int = 512,
+    samples: int = 16,
+    beauty: bool = True,
+    material_id: bool = True,
+    qa: bool = True,
+    qa_schwelle: float = geometrie_qa.SCHWELLE_GEOMETRIE,
+    hintergrund: float | None = None,
+) -> Graph:
+    """Die Standardkette als Graph: ``geometrie → multipass → render → qa``.
+
+    Args:
+        ifc_path: IFC-Eingang. Genau eines von ``ifc_path`` und ``glb_path``.
+        glb_path: glb-Eingang, wenn die Konversion schon anderswo lief.
+        up_axis: Up-Achse der glb. **Pflicht bei glb-Eingang**, verboten bei IFC-Eingang
+            (dort bestimmt sie der Runner). Der Phase-0-Befund in Person: KosmoDraw
+            liefert Z-up, KosmoVis Y-up, und ein Default wäre eine stille Verdrehung.
+        bbox: ``[[xmin,ymin,zmin],[xmax,ymax,zmax]]`` in Metern. Bei IFC-Eingang liefert
+            sie die Konversion selbst; bei glb-Eingang ist sie die einzige Grundlage des
+            Torwächters — ohne sie wird abgelehnt (siehe ``_fuehre_geometrie``).
+        prompt: Was zu sehen sein soll. Pflicht.
+        negativ_prompt, backbone, seed, schritte, controlnet_staerke, denoise:
+            siehe ``render.RenderAuftrag``.
+        nutze_beauty: Den Beauty-Pass als Anker verwenden (``image_edit``) statt aus dem
+            Nichts zu beginnen (``txt2img``). Steht als Parameter im Knoten, damit die
+            Betriebsart im Hash landet — sonst gälte ein txt2img-Ergebnis als Treffer für
+            einen image_edit-Auftrag.
+        aufloesung, samples, beauty, material_id: siehe ``seams.glb_zu_multipass``.
+        qa: ``False`` lässt den QA-Knoten weg. Für Läufe, die nur ein Bild wollen.
+        qa_schwelle, hintergrund: siehe ``geometrie_qa.geometrie_gate``.
+
+    Returns:
+        Ein ``Graph`` mit drei bzw. vier Knoten. Er wird **nicht** ausgeführt — Bau und
+        Lauf sind getrennt, damit ein Graph auch nur angeschaut, serialisiert oder von
+        Hand verändert werden kann.
+
+    Raises:
+        KettenError: Eingang fehlt, ist doppelt oder ist unvollständig beschrieben.
+
+    **Warum die QA zwei Eingänge hat.** Die Aufgabenstellung nennt die Kette als gerade
+    Folge, die Sache selbst ist aber verzweigt: Die QA vergleicht die Soll-Tiefe aus dem
+    Multipass mit der Ist-Tiefe aus dem erzeugten Bild. Sie hängt also an **beiden**
+    Stufen, nicht nur an der letzten. Genau darum ist die Kette ein Graph und keine
+    Liste — und darum ist ``eingaenge`` eine Reihenfolge und keine Menge: Slot 0 ist
+    Soll, Slot 1 ist Ist.
+    """
+    if bool(ifc_path) == bool(glb_path):
+        raise KettenError(
+            "Genau einer der beiden Eingänge wird gebraucht: ifc_path (dann konvertiert "
+            "die Kette selbst) oder glb_path (dann ist die Konversion schon gelaufen). "
+            f"Bekommen: ifc_path={ifc_path!r}, glb_path={glb_path!r}."
+        )
+    if not isinstance(prompt, str) or not prompt.strip():
+        raise KettenError(
+            f"prompt fehlt oder ist leer ({prompt!r}). Die Kubatur kommt aus der "
+            f"Tiefenkarte, aber Material, Licht und Stimmung kommen aus dem Prompt — "
+            f"ohne ihn ist nicht beschrieben, was entstehen soll."
+        )
+
+    geometrie_params: dict = {"bbox": _als_bbox(bbox)}
+    if ifc_path:
+        if up_axis is not None:
+            raise KettenError(
+                "up_axis zusammen mit ifc_path ist widersprüchlich: Bei IFC-Eingang "
+                "bestimmt der Konversionsrunner die Achse und meldet sie im Report. Ein "
+                "hier gesetzter Wert wäre entweder überflüssig oder eine Behauptung, die "
+                "der Runner gleich widerlegt."
+            )
+        geometrie_params["ifc_path"] = str(ifc_path)
+    else:
+        # Wirft ContractError, wenn die Achse fehlt oder nicht deutbar ist — die Prüfung
+        # gehört an den Bau, nicht in den Lauf: Ein Graph, der schon beim Aufschreiben
+        # falsch ist, soll nicht erst nach der Konversion auffallen.
+        try:
+            geometrie_params["up_axis"] = contracts.normalize_up_axis(up_axis)
+        except contracts.ContractError as fehler:
+            raise KettenError(f"glb-Eingang ohne brauchbare up_axis: {fehler}") from fehler
+        geometrie_params["glb_path"] = str(glb_path)
+
+    knoten = [
+        Knoten(id=KNOTEN_GEOMETRIE, art=ART_GEOMETRIE, params=geometrie_params),
+        Knoten(
+            id=KNOTEN_MULTIPASS,
+            art=ART_MULTIPASS,
+            params={
+                "aufloesung": int(aufloesung),
+                "samples": int(samples),
+                "beauty": bool(beauty),
+                "material_id": bool(material_id),
+            },
+            eingaenge=(KNOTEN_GEOMETRIE,),
+        ),
+        Knoten(
+            id=KNOTEN_RENDER,
+            art=ART_RENDER,
+            params={
+                "prompt": prompt,
+                "negativ_prompt": negativ_prompt,
+                "backbone": backbone,
+                "seed": int(seed),
+                "schritte": int(schritte),
+                "controlnet_staerke": float(controlnet_staerke),
+                "denoise": float(denoise),
+                "nutze_beauty": bool(nutze_beauty),
+            },
+            eingaenge=(KNOTEN_MULTIPASS,),
+        ),
+    ]
+    if qa:
+        knoten.append(Knoten(
+            id=KNOTEN_QA,
+            art=ART_QA,
+            params={
+                "schwelle": float(qa_schwelle),
+                "hintergrund": None if hintergrund is None else float(hintergrund),
+            },
+            # Reihenfolge ist Bedeutung: Slot 0 = Soll (Multipass), Slot 1 = Ist (Render).
+            eingaenge=(KNOTEN_MULTIPASS, KNOTEN_RENDER),
+        ))
+    return Graph(knoten)
+
+
+# --------------------------------------------------------------------------------------
+# Die Ausführer — eine Funktion je Knotenart
+# --------------------------------------------------------------------------------------
+#
+# Vertrag jeder Ausführerfunktion:
+#
+#     fn(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict
+#
+# `eingaben` sind die Ausgaben der Vorgänger **in der Reihenfolge der Eingänge**.
+# `out_dir` ist ein Arbeitsverzeichnis, das allein diesem Knoten und diesem Hash gehört
+# (siehe `_arbeitsverzeichnis`); es existiert bereits, wenn die Funktion gerufen wird.
+#
+# Zurück kommt ein dict. Trägt es ein Feld `status`, entscheidet dieses über Erfolg;
+# fehlt es, gilt der Knoten als gelungen. Der Vorgabewert ist Absicht: Die Runner-Reports
+# aus `seams.py` tragen teils keinen Status, und eine Attrappe im Test soll nicht drei
+# Pflichtfelder ausfüllen müssen, um „hat geklappt" zu sagen.
+
+
+def _fuehre_geometrie(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
+    """IFC → glb (Subprozess im ``.venv-ifc``) oder glb durchreichen — dann Torwächter.
+
+    Der Torwächter läuft in **beiden** Fällen und nicht als eigener Knoten. Begründung:
+    Er ist reine Rechnung auf der bbox, kostet nichts und beantwortet dieselbe Frage wie
+    die Stufe selbst — „ist diese Geometrie brauchbar?". Ein eigener Knoten brächte einen
+    zweiten Cache-Eintrag für null Rechenzeit.
+
+    Lehnt der Torwächter ab, ist der Knoten ``abgelehnt`` und alles dahinter wird
+    übersprungen. Das ist der Zweck der Stufe: Ein um Faktor 1000 fehlskaliertes Modell
+    soll auffallen, **bevor** Blender und GPU laufen.
+    """
+    p = knoten.params
+    if p.get("ifc_path"):
+        bericht = seams.ifc_zu_glb(p["ifc_path"], str(out_dir / "modell.glb"))
+        if bericht.get("status") != "ok":
+            return {
+                "status": STATUS_FEHLER,
+                "error": f"IFC→glb meldete {bericht.get('status')!r}: {bericht.get('error')}",
+                "bericht": bericht,
+            }
+        ausgaben = {
+            "glb_path": bericht.get("glb_path"),
+            "up_axis": bericht.get("up_axis", "Y"),
+            "bbox": bericht.get("bbox", p.get("bbox")),
+            "n_elements": bericht.get("n_elements"),
+            "n_triangles": bericht.get("n_triangles"),
+        }
+    else:
+        ausgaben = {
+            "glb_path": p["glb_path"],
+            "up_axis": p["up_axis"],
+            "bbox": p.get("bbox"),
+            "n_elements": None,
+            "n_triangles": None,
+        }
+
+    urteil = torwaechter.torwaechter({"status": "ok", "bbox": ausgaben["bbox"]})
+    ausgaben["torwaechter"] = urteil
+    ausgaben["empfiehlt_neuzentrierung"] = bool(urteil.get("empfiehlt_neuzentrierung"))
+    if urteil["entscheidung"] != torwaechter.ENTSCHEIDUNG_ANNEHMEN:
+        ausgaben["status"] = STATUS_ABGELEHNT
+        ausgaben["error"] = f"Torwächter: {urteil['begruendung']}"
+        return ausgaben
+    ausgaben["status"] = STATUS_OK
+    ausgaben["error"] = None
+    return ausgaben
+
+
+def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
+    """glb → Beauty, Tiefe (EXR + PNG), Material-ID über ``blender --background``.
+
+    Die teuerste Stufe der Kette und darum der eigentliche Grund für den
+    Zwischenspeicher: Sie darf bei einer blossen Prompt-Änderung nicht wieder anlaufen.
+    """
+    if not eingaben:
+        return {"status": STATUS_FEHLER, "error": "Multipass ohne Vorgänger — keine glb."}
+    geometrie = eingaben[0]
+    glb_path = geometrie.get("glb_path")
+    if not glb_path:
+        return {"status": STATUS_FEHLER,
+                "error": f"Vorgänger lieferte kein 'glb_path': {sorted(geometrie)}"}
+
+    p = knoten.params
+    bericht = seams.glb_zu_multipass(
+        glb_path, out_dir,
+        up_axis=geometrie.get("up_axis"),
+        aufloesung=p["aufloesung"], samples=p["samples"],
+        beauty=p["beauty"], material_id=p["material_id"],
+    )
+    bericht.setdefault("status", STATUS_OK)
+    return bericht
+
+
+def _fuehre_render(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
+    """Tiefenkarte + Prompt → Bild, über ``render.rendere``.
+
+    Ohne injizierten Ausführer braucht diese Funktion Gewichte und eine GPU; sie ist die
+    einzige Stufe der Kette, die das tut. ``render.rendere`` beantwortet auch das
+    Scheitern mit einem Ergebnis (``status='abgelehnt'``/``'fehler'``) statt mit einer
+    Ausnahme — das passt hier unverändert durch, weil dieses Modul denselben Statuswörtern
+    folgt.
+    """
+    if not eingaben:
+        return {"status": STATUS_FEHLER, "error": "Render ohne Vorgänger — keine Tiefenkarte."}
+    multipass = eingaben[0]
+    depth_png = multipass.get("depth_png")
+    if not depth_png:
+        return {"status": STATUS_FEHLER,
+                "error": f"Vorgänger lieferte kein 'depth_png': {sorted(multipass)}"}
+
+    p = knoten.params
+    auftrag = render.RenderAuftrag(
+        depth_png=depth_png,
+        prompt=p["prompt"],
+        negativ_prompt=p["negativ_prompt"],
+        backbone=p["backbone"],
+        seed=p["seed"],
+        schritte=p["schritte"],
+        controlnet_staerke=p["controlnet_staerke"],
+        denoise=p["denoise"],
+        beauty_png=multipass.get("beauty_png") if p.get("nutze_beauty", True) else None,
+        ausgabe_png=str(out_dir / "bild.png"),
+    )
+    return render.rendere(auftrag)
+
+
+def _fuehre_qa(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
+    """Soll-Tiefe (Multipass) gegen Ist-Tiefe (Render) — das Geometrie-Gate.
+
+    **Ein nicht bestandenes Gate ist kein gescheiterter Knoten.** Der Knoten hat gerechnet
+    und ein Urteil geliefert; dass das Urteil „durchgefallen" lautet, ist sein Ergebnis
+    und nicht sein Fehlschlag. Würde hier ``status='fehler'`` gesetzt, verschwände das
+    Urteil hinter einem Skip — und ausgerechnet der interessanteste Fall des Projekts,
+    die erkannte Halluzination, wäre nicht mehr als Messwert lesbar.
+
+    Die Ist-Seite ist der offene Punkt: Sie braucht eine Tiefenschätzung **aus dem
+    erzeugten Bild**, und die gibt es im Kern noch nicht (``docs/PLAN.md``, Phase 4).
+    Solange sie fehlt, meldet diese Stufe das als Fehler mit Begründung — sie erfindet
+    keine Ist-Werte und lässt den Vergleich auch nicht stillschweigend aus.
+    """
+    if len(eingaben) < 2:
+        return {"status": STATUS_FEHLER,
+                "error": "QA braucht zwei Eingänge: Slot 0 Multipass (Soll), Slot 1 Render (Ist)."}
+    multipass, render_ergebnis = eingaben[0], eingaben[1]
+
+    ist = render_ergebnis.get("ist_tiefen")
+    if ist is None:
+        return {
+            "status": STATUS_FEHLER,
+            "error": (
+                "Für die Ist-Seite fehlt eine Tiefenschätzung aus dem erzeugten Bild "
+                "(Feld 'ist_tiefen' im Render-Ergebnis). Die monokulare Tiefenschätzung "
+                "ist noch nicht gebaut (PLAN.md, Phase 4). Es wird nichts geschätzt und "
+                "nichts übersprungen: Ein Gate ohne Messung wäre ein Freispruch ohne "
+                "Grundlage."
+            ),
+        }
+
+    soll, breite, hoehe = bildlesen.tiefen_aus_report(multipass)
+    p = knoten.params
+    urteil = geometrie_qa.geometrie_gate(
+        soll, ist, schwelle=p["schwelle"], hintergrund=p.get("hintergrund"),
+    )
+    return {"status": STATUS_OK, "error": None, "breite": breite, "hoehe": hoehe, **urteil}
+
+
+#: Knotenart → Ausführerfunktion. **Die Test-Naht dieses Moduls.**
+#:
+#: Dieselbe Bauform wie ``_starte`` in ``seams.py`` und ``modell`` in ``render.py``: Die
+#: Ablaufsteuerung kennt keine einzige Fremdabhängigkeit, sie ruft nur, was in dieser
+#: Tabelle steht. Mit Attrappen läuft die ganze Kette ohne Blender, ohne ``.venv-ifc``,
+#: ohne GPU und ohne ein einziges Gewicht durch — und genau das macht den Nachweis über
+#: den Zwischenspeicher überhaupt erst führbar: Man kann die Aufrufe zählen.
+AUSFUEHRER: dict[str, Callable[..., dict]] = {
+    ART_GEOMETRIE: _fuehre_geometrie,
+    ART_MULTIPASS: _fuehre_multipass,
+    ART_RENDER: _fuehre_render,
+    ART_QA: _fuehre_qa,
+}
+
+
+# --------------------------------------------------------------------------------------
+# Lauf
+# --------------------------------------------------------------------------------------
+
+def standard_out_dir() -> Path:
+    """Wo Knotenausgaben landen, solange nichts anderes gesagt ist.
+
+    Unter ``/tmp``, aus demselben Grund wie ``werkzeuge.job_verzeichnis``: Die Pfad-
+    Sandbox des Ökosystems verlangt ``$HOME`` oder ``/tmp``, und ``/tmp`` ist die
+    zurückhaltendere Wahl.
+    """
+    return Path(tempfile.gettempdir()) / "aiimaging-kette"
+
+
+def _arbeitsverzeichnis(out_dir: Path, art: str, schluessel: str) -> Path:
+    """Ein Verzeichnis je Knoten **und Hash**: ``<out_dir>/<art>-<hash[:16]>``.
+
+    Das ist keine Kosmetik, sondern die Bedingung dafür, dass der Cache nicht lügt. Der
+    Cache speichert Pfade, nicht Bilder (``graph.ArtefaktCache``). Schrieben zwei Läufe
+    derselben Stufe in denselben Ordner, zeigte ein alter Eintrag nach dem zweiten Lauf
+    auf **neuen** Inhalt — der Schlüssel spräche von Lauf A, die Datei enthielte Lauf B.
+    Ein Cache, der falsche Treffer liefert, ist schlimmer als keiner: Der Fehler taucht
+    erst im fertigen Bild auf.
+
+    16 Hexzeichen sind 64 Bit; für ein paar tausend Einträge ist das reichlich, und der
+    Ordnername bleibt lesbar. Der Cache-Schlüssel selbst bleibt der volle Hash.
+    """
+    return out_dir / f"{_UNSICHER.sub('_', art)}-{schluessel[:16]}"
+
+
+#: Was anstelle eines Dateipfades in den gehashten Parametern steht. Siehe ``_knoten_hash``.
+_PFAD_MARKE = "<inhalt>"
+
+
+def _knoten_hash(knoten: Knoten, vorgaenger_hashes: list[str]) -> str:
+    """Der Inhalts-Hash eines Knotens — Schlüssel des Zwischenspeichers.
+
+    Er entsteht aus Art, Parametern, den Hashes der Vorgänger und dem **Inhalt** der
+    Eingabedateien (``EINGABEDATEIEN``). Nicht aus Pfaden, nicht aus Zeitstempeln: Eine
+    umbenannte, inhaltlich gleiche IFC soll denselben Hash ergeben, eine neu geschriebene
+    und inhaltlich andere unter gleichem Namen einen anderen.
+
+    **Der Pfad wird darum aus den gehashten Parametern herausgenommen.** Das ist nötig,
+    weil ``graph.inhalts_hash`` die Parameter vollständig einrechnet: Stünde der Pfad
+    dort, hinge der Schlüssel am Dateinamen, und ein blosses Verschieben des
+    Projektordners verwürfe den ganzen Zwischenspeicher — obwohl sich an der Geometrie
+    nichts geändert hat. Der Inhalt kommt stattdessen über ``dateien`` hinein, wo er
+    hingehört.
+
+    Ersetzt, nicht gelöscht: An der Stelle bleibt ``_PFAD_MARKE`` stehen. Der **Name des
+    Feldes** trägt nämlich sehr wohl Bedeutung — ``ifc_path`` heisst „konvertiere",
+    ``glb_path`` heisst „reiche durch". Würde der Schlüssel ganz entfernt, ergäben
+    dieselben Bytes einmal als IFC und einmal als glb denselben Hash und damit einen
+    falschen Treffer.
+
+    Der Umweg über eine Kopie ist Absicht: ``graph.py`` bleibt unangetastet. Es kennt
+    keine Dateifelder und soll auch keine kennen — welche Parameter Pfade sind, weiss die
+    Bildkette, nicht der Ablaufkern.
+    """
+    felder = [feld for feld in EINGABEDATEIEN.get(knoten.art, ()) if knoten.params.get(feld)]
+    if not felder:
+        return inhalts_hash(knoten, vorgaenger_hashes, ())
+
+    dateien = [knoten.params[feld] for feld in felder]
+    ohne_pfade = Knoten(
+        id=knoten.id, art=knoten.art, eingaenge=knoten.eingaenge,
+        params={**knoten.params, **{feld: _PFAD_MARKE for feld in felder}},
+    )
+    return inhalts_hash(ohne_pfade, vorgaenger_hashes, dateien)
+
+
+def _fehlende_ausgabedateien(ausgaben: dict) -> list[str]:
+    """Welche Dateien, die ein Cache-Eintrag verspricht, es nicht mehr gibt.
+
+    Ein Treffer im Zwischenspeicher ist nur so viel wert wie die Dateien, auf die er
+    zeigt. Sie liegen ausserhalb des Caches (bewusst — sonst gäbe es zwei Orte der
+    Wahrheit), also kann sie jemand gelöscht haben: ein aufgeräumtes ``/tmp``, ein
+    ``rm -rf`` auf dem Ausgabeordner. Dann ist der Eintrag kein Treffer, sondern eine
+    Zusage ins Leere; die Stufe rechnet neu.
+
+    Umgekehrt gilt weiter, was dieses Projekt mehrfach bezahlt hat: Die Existenz einer
+    Datei ist kein Beleg für ihren Inhalt. Deshalb ist die Existenzprüfung hier auch nur
+    eine **Verwerfungs**-Bedingung — der Beleg für den Inhalt kommt aus dem Hash und aus
+    dem Arbeitsverzeichnis, das an ihm hängt.
+    """
+    fehlt = []
+    for feld, wert in sorted(ausgaben.items()):
+        if not isinstance(wert, str) or not wert:
+            continue
+        if not feld.endswith(_DATEIFELD_ENDUNGEN):
+            continue
+        if not Path(wert).exists():
+            fehlt.append(feld)
+    return fehlt
+
+
+def _knoteneintrag(
+    art: str, status: str, *, aus_cache: bool, dauer_s: float,
+    dauer_s_original: float | None = None, hash: str | None = None,
+    arbeits_dir: str | None = None, ausgaben: dict | None = None,
+    error: str | None = None, grund: str | None = None,
+    cache_fehler: str | None = None,
+) -> dict:
+    """Ein Knotenergebnis in immer derselben Gestalt.
+
+    Alle Felder immer, auch wenn sie leer sind — wer einen Lauf auswertet, soll nicht bei
+    jedem Zugriff ``.get`` mit Vorgabewert schreiben müssen, und ein fehlendes Feld soll
+    nicht wie ein anderer Fall aussehen als ein leeres.
+
+    Zu den zwei Dauern: ``dauer_s`` ist die Zeit, die **dieser Lauf** an diesem Knoten
+    verbracht hat (bei einem Cache-Treffer nahe null). ``dauer_s_original`` ist die Zeit,
+    die die gespeicherte Rechnung gekostet hat. Erst die zweite Zahl macht sichtbar, was
+    der Zwischenspeicher wert ist; die erste allein sagte nur, dass es schnell ging.
+    """
+    return {
+        "art": art,
+        "status": status,
+        "aus_cache": aus_cache,
+        "dauer_s": round(float(dauer_s), 4),
+        "dauer_s_original": (None if dauer_s_original is None
+                             else round(float(dauer_s_original), 4)),
+        "hash": hash,
+        "arbeits_dir": arbeits_dir,
+        "ausgaben": ausgaben if ausgaben is not None else {},
+        "error": error,
+        "grund": grund,
+        "cache_fehler": cache_fehler,
+    }
+
+
+def fuehre_aus(
+    graph: Graph,
+    *,
+    cache: ArtefaktCache | None = None,
+    ausfuehrer: dict[str, Callable[..., dict]] | None = None,
+    out_dir: str | Path | None = None,
+) -> dict:
+    """Einen Ketten-Graphen abarbeiten: topologisch, zwischengespeichert, skip-on-error.
+
+    Args:
+        graph: Der Graph, üblicherweise aus ``baue_kette``.
+        cache: Zwischenspeicher. ``None`` heisst: kein Speichern und kein Nachsehen —
+            jede Stufe rechnet. Sinnvoll für einen Lauf, dessen Ergebnis niemand
+            wiederverwenden wird, und für Tests, die genau das prüfen wollen.
+        ausfuehrer: Knotenart → Funktion. ``None`` nimmt ``AUSFUEHRER``. Die Tabelle
+            **ersetzt** die Vorgabe, sie ergänzt sie nicht: Wer nur eine Stufe austauschen
+            will, schreibt ``{**kette.AUSFUEHRER, "render": attrappe}`` und sieht dabei,
+            was er sonst noch ruft. Eine stille Ergänzung hiesse, dass ein Test, der eine
+            Attrappe vergisst, unbemerkt Blender startet.
+        out_dir: Wurzel der Arbeitsverzeichnisse. Vorgabe ``standard_out_dir()``.
+
+    Returns:
+        ``{status, reihenfolge, knoten, dauer_s, out_dir, gerechnet, cache_treffer,
+        uebersprungen, gescheitert, error}``.
+
+        ``knoten`` ist die Auswertung je Knoten-ID, jeweils mit ``status``, ``aus_cache``,
+        ``dauer_s``, ``dauer_s_original``, ``hash``, ``arbeits_dir``, ``ausgaben``,
+        ``error``, ``grund`` und ``cache_fehler``.
+
+    Raises:
+        KettenError: ``graph`` ist kein Graph, oder für eine vorkommende Knotenart gibt
+            es keine Ausführerfunktion. Beides wird **vor** dem ersten Knoten geprüft:
+            Eine halb gelaufene Kette, die in der Mitte an einer fehlenden Zuordnung
+            hängenbleibt, hinterlässt Dateien, die zu nichts gehören.
+        ZyklusError: der Graph hat keine Rechenreihenfolge (aus ``graph.py``).
+
+    Der Ablauf, und warum er so ist
+    -------------------------------
+    1. **Reihenfolge** aus ``topologische_reihenfolge`` — bei Gleichrang immer die
+       kleinste ID zuerst, damit zwei Läufe dasselbe Protokoll ergeben.
+    2. **Hash** aus Parametern, Vorgänger-Hashes und Dateiinhalten. Der Hash ist der
+       Cache-Schlüssel *und* der Name des Arbeitsverzeichnisses.
+    3. **Nachsehen** im Cache. Treffer heisst: Die Ausführerfunktion wird **gar nicht
+       gerufen**. Das ist der ganze Nutzen — nicht „schneller", sondern „nicht".
+    4. **Rechnen**, wenn kein Treffer. Gelingt es, wandert das Ergebnis in den Cache.
+    5. **Überspringen** aller Nachfolger eines gescheiterten Knotens
+       (``graph.nachfolger_transitiv``). Mit halben Eingaben weiterzurechnen erzeugt im
+       besten Fall Zeitverlust und im schlechtesten ein plausibel aussehendes Bild auf
+       falscher Grundlage.
+
+    **Gescheitertes wird nicht gespeichert.** Ein Fehlschlag sagt meist etwas über die
+    Umgebung (Blender fehlt, GPU belegt, Datei weg) und nicht über die Rechnung. Ihn zu
+    speichern hiesse, ein behobenes Problem beim nächsten Lauf aus dem Cache erneut zu
+    melden — der Cache würde zum Gedächtnis für Pannen.
+    """
+    if not isinstance(graph, Graph):
+        raise KettenError(
+            f"fuehre_aus erwartet einen Graph, bekam {type(graph).__name__}. Ein dict "
+            f"wird über Graph.from_dict gelesen."
+        )
+    tabelle = dict(AUSFUEHRER if ausfuehrer is None else ausfuehrer)
+    wurzel = Path(out_dir) if out_dir is not None else standard_out_dir()
+
+    reihenfolge = graph.topologische_reihenfolge()
+
+    ohne_ausfuehrer = sorted({graph.knoten[kid].art for kid in reihenfolge} - set(tabelle))
+    if ohne_ausfuehrer:
+        raise KettenError(
+            f"Für die Knotenart(en) {ohne_ausfuehrer} gibt es keine Ausführerfunktion. "
+            f"Bekannt: {sorted(tabelle)}. Die Zuordnung Art → Code liegt bewusst "
+            f"ausserhalb von graph.py; fehlt sie, ist der Graph nicht ausführbar."
+        )
+
+    knoten_ergebnisse: dict[str, dict] = {}
+    hashes: dict[str, str] = {}
+    uebersprungen: dict[str, str] = {}      # Knoten-ID → Grund
+    gescheitert: list[str] = []
+    beginn_gesamt = time.perf_counter()
+
+    for kid in reihenfolge:
+        knoten = graph.knoten[kid]
+
+        if kid in uebersprungen:
+            knoten_ergebnisse[kid] = _knoteneintrag(
+                knoten.art, STATUS_UEBERSPRUNGEN, aus_cache=False, dauer_s=0.0,
+                grund=uebersprungen[kid],
+            )
+            continue
+
+        vorgaenger = graph.vorgaenger(kid)
+        eingaben = [knoten_ergebnisse[v]["ausgaben"] for v in vorgaenger]
+        beginn = time.perf_counter()
+
+        try:
+            schluessel = _knoten_hash(knoten, [hashes[v] for v in vorgaenger])
+        except GraphError as fehler:
+            # Häufigster Fall: Die Eingabedatei gibt es nicht. Das ist ein Fehler dieses
+            # Knotens und kein Grund, den ganzen Lauf abzubrechen — die Kette meldet ihn
+            # wie jeden anderen und überspringt, was dahinter hängt.
+            knoten_ergebnisse[kid] = _knoteneintrag(
+                knoten.art, STATUS_FEHLER, aus_cache=False,
+                dauer_s=time.perf_counter() - beginn,
+                error=f"Hash nicht bildbar: {fehler}",
+            )
+            gescheitert.append(kid)
+            for nachfolger in graph.nachfolger_transitiv([kid]):
+                uebersprungen.setdefault(nachfolger, f"Vorgänger {kid!r} ist gescheitert.")
+            continue
+
+        hashes[kid] = schluessel
+        arbeit = _arbeitsverzeichnis(wurzel, knoten.art, schluessel)
+
+        # --- 1) Nachsehen ------------------------------------------------------------
+        eintrag = cache.hole(schluessel) if cache is not None else None
+        if eintrag is not None:
+            gespeichert = eintrag.get("ausgaben") or {}
+            if _fehlende_ausgabedateien(gespeichert):
+                # Treffer im Schlüssel, aber die versprochenen Dateien sind weg. Kein
+                # Treffer also — es wird gerechnet, und der Eintrag wird dabei überschrieben.
+                eintrag = None
+            else:
+                knoten_ergebnisse[kid] = _knoteneintrag(
+                    knoten.art, eintrag.get("status", STATUS_OK), aus_cache=True,
+                    dauer_s=time.perf_counter() - beginn,
+                    dauer_s_original=eintrag.get("dauer_s"),
+                    hash=schluessel, arbeits_dir=str(arbeit), ausgaben=gespeichert,
+                )
+                continue
+
+        # --- 2) Rechnen --------------------------------------------------------------
+        arbeit.mkdir(parents=True, exist_ok=True)
+        try:
+            antwort = tabelle[knoten.art](knoten=knoten, eingaben=eingaben, out_dir=arbeit)
+        except Exception as fehler:                  # noqa: BLE001 — bewusst breit
+            # Bewusst jede Ausnahme: Was hinter einer Prozessgrenze passiert, ist nicht
+            # vorhersagbar (SeamError, CUDA-OOM, kaputte EXR, ein Fehler im eigenen
+            # Adapter). Ein Stapelabbruch mitten in einer Serie kostet die ganze Serie;
+            # ein protokollierter Fehlschlag kostet einen Knoten. Dieselbe Abwägung wie
+            # in ``render.rendere``.
+            antwort = {"status": STATUS_FEHLER, "error": f"{type(fehler).__name__}: {fehler}"}
+
+        dauer = time.perf_counter() - beginn
+
+        if not isinstance(antwort, dict):
+            antwort = {
+                "status": STATUS_FEHLER,
+                "error": (f"Ausführer für {knoten.art!r} lieferte {type(antwort).__name__}, "
+                          f"erwartet ist ein dict mit den Ausgaben des Knotens."),
+            }
+        status = antwort.get("status", STATUS_OK)
+
+        cache_fehler = None
+        if status == STATUS_OK and cache is not None:
+            try:
+                cache.lege_ab(schluessel, {
+                    "art": knoten.art, "status": status,
+                    "ausgaben": antwort, "dauer_s": round(dauer, 4),
+                })
+            except GraphError as fehler:
+                # Der Knoten hat gerechnet und ist gelungen — er wird nicht nachträglich
+                # für gescheitert erklärt, nur weil sein Ergebnis nicht speicherbar ist.
+                # Stillschweigend übergangen wird es aber auch nicht: Ohne diese Meldung
+                # sähe man nur, dass der Cache nie greift, und suchte an der falschen
+                # Stelle.
+                cache_fehler = str(fehler)
+
+        knoten_ergebnisse[kid] = _knoteneintrag(
+            knoten.art, status, aus_cache=False, dauer_s=dauer, dauer_s_original=dauer,
+            hash=schluessel, arbeits_dir=str(arbeit), ausgaben=antwort,
+            error=antwort.get("error"), cache_fehler=cache_fehler,
+        )
+
+        if status != STATUS_OK:
+            gescheitert.append(kid)
+            for nachfolger in graph.nachfolger_transitiv([kid]):
+                uebersprungen.setdefault(
+                    nachfolger, f"Vorgänger {kid!r} endete mit status={status!r}.")
+
+    treffer = sum(1 for e in knoten_ergebnisse.values() if e["aus_cache"])
+    gerechnet = sum(1 for e in knoten_ergebnisse.values()
+                    if not e["aus_cache"] and e["status"] != STATUS_UEBERSPRUNGEN)
+    return {
+        "status": STATUS_OK if not gescheitert else STATUS_FEHLER,
+        "reihenfolge": reihenfolge,
+        "knoten": knoten_ergebnisse,
+        "dauer_s": round(time.perf_counter() - beginn_gesamt, 4),
+        "out_dir": str(wurzel),
+        "gerechnet": gerechnet,
+        "cache_treffer": treffer,
+        "uebersprungen": sorted(uebersprungen),
+        "gescheitert": gescheitert,
+        "error": None if not gescheitert else "; ".join(
+            f"{kid}: {knoten_ergebnisse[kid]['error']}" for kid in gescheitert),
+    }
+
+
+__all__ = [
+    "ART_GEOMETRIE", "ART_MULTIPASS", "ART_QA", "ART_RENDER",
+    "AUSFUEHRER", "EINGABEDATEIEN",
+    "KNOTEN_GEOMETRIE", "KNOTEN_MULTIPASS", "KNOTEN_QA", "KNOTEN_RENDER",
+    "STATUS_ABGELEHNT", "STATUS_FEHLER", "STATUS_OK", "STATUS_UEBERSPRUNGEN",
+    "KettenError",
+    "baue_kette", "fuehre_aus", "standard_out_dir",
+]

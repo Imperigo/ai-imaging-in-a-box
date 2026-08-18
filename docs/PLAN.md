@@ -106,6 +106,13 @@ aus `register_in_odysseus.sh` bekannt, aber hier nicht ausgeführt.
       Zahlen; PNG-Rückrechnung auf 0,067 mm (= halber Quantisierungsschritt, reine Rundung).
       Blender nur als Rückfall für exotische Kompressionen. Warnt aktiv über den
       Silhouetten-Verlust im PNG — empirisch **genau ein** Punkt, und zwar der entfernteste.
+- [x] **Ist-Seite der QA** — `tiefenschaetzer.py`: monokulare Schätzung als injizierbare
+      Naht. Nur Depth-Anything-V2-**Small** (Apache-2.0) zulässig; Base/Large/Giant sind
+      CC-BY-NC und ausgeschlossen. Fand den `geom_iou`-Deckel, der jeden treuen Render
+      hätte durchfallen lassen.
+- [x] **Graph-Kern verdrahtet** — `kette.py`: die Bildkette als DAG mit Zwischenspeicher.
+      Belegt: Prompt-Änderung ruft die Geometriestufen **gar nicht mehr**, eine
+      Geometrieänderung rechnet alles dahinter neu.
 - [ ] **Erster echter Render** — Qwen-Image-Edit-2511 mit echten Gewichten.
       **Braucht GPU**, läuft über `auftraege/`. Der diffusers-Adapter ist bisher
       **nie ausgeführt** worden — das ist die offene Fläche.
