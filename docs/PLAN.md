@@ -146,9 +146,24 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 
 ## Phase 4 · Wissenschaftlicher Ausbau
 
-- [ ] **Systematische Schwellenstudie** — die Schwellen 0.65 / 0.30 stammen aus wenigen
-      Fällen. Eine ordentliche Kalibrierung ist das, was die Arbeit über einen
-      Werkstattbericht hinaushebt.
+- [x] **Schwellenstudie, erste Hälfte: die Metrik** — erledigt 2026-08-18,
+      `schwellenstudie.py` + `docs/SCHWELLENSTUDIE_2026-08-18.md`. Acht Störungsarten ×
+      sieben Stärken, jede mit einer prüfbaren Erwartung; alle 48 Zeilen erfüllen sie.
+      **Drei Befunde:** (1) Die Rangbasiertheit ist *bestätigt* — streng monotone
+      Umrechnung lässt den Score bei exakt 1,000; das war die einzige Prüfung, die die
+      Metrik hätte umwerfen können. (2) **0,65 ist zu mild:** 22 von 36 gestörten Fällen
+      gehen durch; bestes Ergebnis bei 0,90, über drei Auflösungen stabil; bis 0,85 wird
+      **kein treuer Fall** gesperrt. (3) Verlorene Gliederung kostet **vier Tausendstel** —
+      die Metrik misst Kubatur, nicht Detail.
+      *Die Schwelle bleibt trotzdem bei 0,65* — Begründung im Konstanten-Kommentar von
+      `geometrie_qa`: ohne den Tiefenschätzer in der Messung wäre 0,90 nur schwächer
+      unbegründet.
+- [ ] **Schwellenstudie, zweite Hälfte: die Kette** — dieselben Störungen, aber die
+      Ist-Karte durch den Tiefenschätzer aus einem gerenderten Bild statt durch direkte
+      Verfälschung. **Braucht GPU**, läuft über `auftraege/`. Erst danach lässt sich die
+      Schwelle mit Grund verschieben.
+- [ ] **Die Stil-Schwelle 0.30** ist von alledem unberührt und weiterhin ungeprüft — sie
+      stammt zudem aus DINOv3-Läufen, und der Einbetter ist inzwischen SigLIP 2.
 - [ ] Connectors: ArchiCAD über IFC4, Rhino über glTF
 - [ ] LoRA-Stiltraining über kohya oder ai-toolkit als Subprozess
 

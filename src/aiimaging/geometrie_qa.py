@@ -104,8 +104,27 @@ from __future__ import annotations
 import math
 from collections.abc import Sequence
 
-#: Ab hier gilt ein Render als geometrietreu. Empirisch an wenigen Fällen gesetzt
-#: (treu 0.81–0.93, halluziniert 0.11) — siehe Vorbehalt im Modul-Docstring.
+# Ab hier gilt ein Render als geometrietreu.
+#
+# Ursprünglich an wenigen Fällen gesetzt (treu 0.81–0.93, halluziniert 0.11) — siehe
+# Vorbehalt im Modul-Docstring.
+#
+# STAND NACH DER ERSTEN SCHWELLENSTUDIE (18.08.2026, `docs/SCHWELLENSTUDIE_2026-08-18.md`):
+# Diese Zahl ist **zu mild**, und das ist jetzt gemessen statt vermutet. Über acht
+# Störungsarten × sieben Stärken lässt 0.65 **22 von 36** gestörten Fällen durch
+# (Trefferquote 0.39); die beste Schwelle auf der Studienszene ist **0.90**, und sie ist
+# über drei Auflösungen dieselbe. Bis 0.85 wird dabei **kein einziger treuer Fall**
+# gesperrt — anheben kostete dort also nichts.
+#
+# Warum sie trotzdem steht: Die Studie kalibriert die **Metrik**, nicht die Kette. Im
+# Betrieb liegt zwischen Soll und Ist ein monokularer Tiefenschätzer, dessen Fehler in
+# keiner dieser Zahlen enthalten ist. Er senkt jeden Score, und wie weit, weiss niemand.
+# Eine Schwelle von 0.90 könnte im Betrieb jeden Render sperren, auch den treuen — genau
+# die Falle, in die der `geom_iou`-Deckel in Sitzung 06 schon einmal geführt hat.
+#
+# Sie zu erhöhen, bevor der Schätzer in der Messung steckt, hiesse eine unbegründete Zahl
+# durch eine schwächer unbegründete zu ersetzen. **0.65 ist nicht verteidigt, sondern
+# beibehalten** — der Unterschied gehört in die Arbeit und darum auch hierher.
 SCHWELLE_GEOMETRIE = 0.65
 
 # Wie viele Punkte die gemeinsame Silhouette mindestens tragen muss, damit ein Score

@@ -54,7 +54,9 @@ from pathlib import Path
 from aiimaging import (
     bildlesen, contracts, geometrie_qa, render, seams, tiefenschaetzer, torwaechter,
 )
-from aiimaging.graph import ArtefaktCache, Graph, GraphError, Knoten, inhalts_hash
+from aiimaging.graph import (
+    ArtefaktCache, Bedarf, Graph, GraphError, Knoten, inhalts_hash, pruefe_bedarf,
+)
 
 # --------------------------------------------------------------------------------------
 # Namen
@@ -99,6 +101,52 @@ EINGABEDATEIEN: dict[str, tuple[str, ...]] = {
 #: Endungen von Ausgabefeldern, die auf eine Datei zeigen. Gebraucht beim Cache-Treffer:
 #: siehe ``_fehlende_ausgabedateien``.
 _DATEIFELD_ENDUNGEN = ("_png", "_exr", "_glb", "_path")
+
+#: Was jede Knotenart von ihren Vorgängern **braucht** und was sie **zusagt**
+#: (``graph.Bedarf``). Zwei Dinge hängen daran, und beide sind aus einem gemessenen
+#: Fehler entstanden:
+#:
+#: * ``pruefe_kette`` prüft einen Graphen damit, **ohne ihn auszuführen** — das
+#:   Gegenstück zu KosmoOrbits ``pipelineReadiness`` für den inneren Graphen.
+#: * ``fuehre_aus`` verwirft damit einen Cache-Eintrag, dessen Pflichtfeld leer ist oder
+#:   dessen zugesagte Datei fehlt. Genau das fehlte, als in Sitzung 07 ein
+#:   Multipass-Eintrag mit ``depth_png=None`` als Treffer gültig blieb und die Stufe nie
+#:   wieder gerechnet wurde.
+#:
+#: Die Tabelle steht hier und nicht in ``graph.py``: Welche Felder es gibt, weiss die
+#: Bildkette, nicht der Ablaufkern — dieselbe Grenze wie bei ``AUSFUEHRER``.
+#:
+#: **Was sich nicht ausdrücken lässt.** Die QA liest das Soll bevorzugt aus der EXR und
+#: fällt auf das PNG zurück (``bildlesen.tiefen_aus_report``); gebraucht wird also
+#: *eines von beiden*. Eine flache Pflichtliste kann kein Entweder-oder — dieselbe Grenze
+#: wie bei ``required`` im äusseren Vertrag (siehe ``mcp_schemas``, Modul-Docstring).
+#: Deklariert ist darum ``depth_png``: Es ist das Feld, ohne das der Multipass-Knoten
+#: ohnehin nicht als gelungen gilt, und es ist das, was die Renderstufe konditioniert.
+BEDARF: dict[str, Bedarf] = {
+    ART_GEOMETRIE: Bedarf(
+        liefert=("glb_path", "up_axis"),
+        dateien=("glb_path",),
+    ),
+    ART_MULTIPASS: Bedarf(
+        braucht=(("glb_path",),),
+        liefert=("depth_png",),
+        # Wahlweise und darum nicht in ``liefert``: Der Beauty-Pass lässt sich
+        # abschalten, und die EXR fehlt, wenn der Runner nur das PNG geschrieben hat.
+        # Genannt sind sie trotzdem — steht ein Pfad drin, muss die Datei auch daliegen.
+        dateien=("depth_png", "depth_exr", "beauty_png", "material_id_png"),
+    ),
+    ART_RENDER: Bedarf(
+        braucht=(("depth_png",),),
+        liefert=("bild_png",),
+        dateien=("bild_png",),
+    ),
+    ART_QA: Bedarf(
+        # Slot 0 ist das Soll (Multipass), Slot 1 das Ist (Render) — die Reihenfolge ist
+        # Bedeutung, und genau darum ist ``braucht`` je Slot aufgeschrieben.
+        braucht=(("depth_png",), ("bild_png",)),
+        liefert=("bestanden",),
+    ),
+}
 
 #: Was in einem Verzeichnisnamen stehen darf. Die Knotenart ist freier Text und darf den
 #: Arbeitsordner nicht verlassen — dieselbe Überlegung wie beim Cache-Schlüssel in
@@ -558,10 +606,6 @@ def _arbeitsverzeichnis(out_dir: Path, art: str, schluessel: str) -> Path:
     return out_dir / f"{_UNSICHER.sub('_', art)}-{schluessel[:16]}"
 
 
-#: Was anstelle eines Dateipfades in den gehashten Parametern steht. Siehe ``_knoten_hash``.
-_PFAD_MARKE = "<inhalt>"
-
-
 def _knoten_hash(knoten: Knoten, vorgaenger_hashes: list[str]) -> str:
     """Der Inhalts-Hash eines Knotens — Schlüssel des Zwischenspeichers.
 
@@ -570,33 +614,19 @@ def _knoten_hash(knoten: Knoten, vorgaenger_hashes: list[str]) -> str:
     umbenannte, inhaltlich gleiche IFC soll denselben Hash ergeben, eine neu geschriebene
     und inhaltlich andere unter gleichem Namen einen anderen.
 
-    **Der Pfad wird darum aus den gehashten Parametern herausgenommen.** Das ist nötig,
-    weil ``graph.inhalts_hash`` die Parameter vollständig einrechnet: Stünde der Pfad
-    dort, hinge der Schlüssel am Dateinamen, und ein blosses Verschieben des
-    Projektordners verwürfe den ganzen Zwischenspeicher — obwohl sich an der Geometrie
-    nichts geändert hat. Der Inhalt kommt stattdessen über ``dateien`` hinein, wo er
-    hingehört.
-
-    Ersetzt, nicht gelöscht: An der Stelle bleibt ``_PFAD_MARKE`` stehen. Der **Name des
-    Feldes** trägt nämlich sehr wohl Bedeutung — ``ifc_path`` heisst „konvertiere",
-    ``glb_path`` heisst „reiche durch". Würde der Schlüssel ganz entfernt, ergäben
-    dieselben Bytes einmal als IFC und einmal als glb denselben Hash und damit einen
-    falschen Treffer.
-
-    Der Umweg über eine Kopie ist Absicht: ``graph.py`` bleibt unangetastet. Es kennt
-    keine Dateifelder und soll auch keine kennen — welche Parameter Pfade sind, weiss die
+    Diese Funktion war bis Sitzung 07 eine eigene Hashvorbereitung: Sie baute einen
+    Zweitknoten, in dem die Pfadparameter durch eine Marke ersetzt waren, weil
+    ``graph.inhalts_hash`` die Parameter vollständig einrechnete und der Schlüssel sonst
+    am Dateinamen hinge — ein verschobener Projektordner verwürfe den ganzen
+    Zwischenspeicher. Die Ausnahmeliste steht jetzt im Kern (``param_dateien``), wo sie
+    hingehört; hier bleibt nur noch, **welche** Parameter Pfade sind. Das weiss die
     Bildkette, nicht der Ablaufkern.
-    """
-    felder = [feld for feld in EINGABEDATEIEN.get(knoten.art, ()) if knoten.params.get(feld)]
-    if not felder:
-        return inhalts_hash(knoten, vorgaenger_hashes, ())
 
-    dateien = [knoten.params[feld] for feld in felder]
-    ohne_pfade = Knoten(
-        id=knoten.id, art=knoten.art, eingaenge=knoten.eingaenge,
-        params={**knoten.params, **{feld: _PFAD_MARKE for feld in felder}},
-    )
-    return inhalts_hash(ohne_pfade, vorgaenger_hashes, dateien)
+    Die Hashes sind dieselben wie vorher — die Marke und die Reihenfolge der gehashten
+    Dateien haben sich nicht geändert. Ein bestehender Zwischenspeicher bleibt gültig.
+    """
+    return inhalts_hash(knoten, vorgaenger_hashes,
+                        param_dateien=EINGABEDATEIEN.get(knoten.art, ()))
 
 
 def _fehlende_ausgabedateien(ausgaben: dict) -> list[str]:
@@ -622,6 +652,32 @@ def _fehlende_ausgabedateien(ausgaben: dict) -> list[str]:
         if not Path(wert).exists():
             fehlt.append(feld)
     return fehlt
+
+
+def _cache_maengel(art: str, ausgaben: dict, bedarf: dict[str, Bedarf]) -> list[str]:
+    """Warum ein gefundener Eintrag **kein** Treffer ist. Leer heisst: brauchbar.
+
+    Zwei Netze übereinander, und das ist Absicht:
+
+    * ``_fehlende_ausgabedateien`` errät Dateifelder an der Endung. Es fängt auch, was
+      keine Art deklariert hat — dafür fängt es nur, was als nicht-leerer Text dasteht.
+    * ``BEDARF`` zählt die Felder auf. Es fängt genau das, wo das erste Netz reisst: ein
+      **leeres** Pflichtfeld. In Sitzung 07 war das ``depth_png = None`` — der Eintrag
+      galt als Treffer, die teure Stufe wurde nie wieder gerechnet, und die Kette
+      scheiterte für immer eine Stufe später mit einer Meldung, die auf den falschen
+      Knoten zeigte.
+
+    Ein Netz allein wäre kürzer; das zweite kostet drei Zeilen und hat den bisher
+    teuersten Fehler dieses Projekts gefangen.
+    """
+    fehlende = _fehlende_ausgabedateien(ausgaben)
+    maengel = [f"Datei zum Feld {feld!r} fehlt." for feld in fehlende]
+    eigen = bedarf.get(art)
+    if eigen is not None:
+        # Doppelmeldungen werden in Kauf genommen: Bei einer fehlenden Datei sagen beide
+        # Netze dasselbe. Das ist der Preis dafür, dass keines vom anderen abhängt.
+        maengel.extend(eigen.maengel(ausgaben))
+    return maengel
 
 
 def _knoteneintrag(
@@ -658,12 +714,37 @@ def _knoteneintrag(
     }
 
 
+def pruefe_kette(graph: Graph, *, bedarf: dict[str, Bedarf] | None = None) -> list[dict]:
+    """Einen Ketten-Graphen prüfen, **ohne ihn auszuführen**.
+
+    Das Gegenstück zu KosmoOrbits ``pipelineReadiness`` für den inneren Graphen (siehe
+    ``BEDARF``). Gemeldet wird, was sich vor dem Rechnen sagen lässt: ein Knoten, dem ein
+    Eingang fehlt, und eine Kante, die das erwartete Feld nicht trägt.
+
+    Args:
+        graph: der zu prüfende Graph, üblicherweise aus ``baue_kette``.
+        bedarf: Knotenart → ``Bedarf``. ``None`` nimmt ``BEDARF``.
+
+    Returns:
+        Liste von Befunden ``{knoten, art, befund, schwere, detail}``. **Leer heisst
+        verdrahtet.** Die Gestalt ist dieselbe wie bei
+        ``mcp_schemas.pruefe_verdrahtbarkeit``, damit beide Ebenen gleich gelesen werden.
+
+    Der Nutzen liegt in der Reihenfolge, nicht im Befund: Ein von Hand geschriebener oder
+    aus JSON gelesener Graph soll seine Verdrahtungsfehler melden, bevor Blender startet
+    — nicht nach der teuersten Stufe.
+    """
+    return pruefe_bedarf(graph, BEDARF if bedarf is None else bedarf)
+
+
 def fuehre_aus(
     graph: Graph,
     *,
     cache: ArtefaktCache | None = None,
     ausfuehrer: dict[str, Callable[..., dict]] | None = None,
     out_dir: str | Path | None = None,
+    bedarf: dict[str, Bedarf] | None = None,
+    pruefe_verdrahtung: bool = False,
 ) -> dict:
     """Einen Ketten-Graphen abarbeiten: topologisch, zwischengespeichert, skip-on-error.
 

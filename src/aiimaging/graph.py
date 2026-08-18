@@ -66,6 +66,14 @@ _SCHLUESSEL_MUSTER = re.compile(r"[0-9a-zA-Z][0-9a-zA-Z_.-]{0,127}")
 #: am Stück in den Speicher gehören.
 _BLOCK = 1 << 20
 
+#: Was in den gehashten Parametern anstelle eines Dateipfades steht. Siehe
+#: ``inhalts_hash``, Argument ``param_dateien``.
+PFAD_MARKE = "<inhalt>"
+
+#: Unter diesem Schlüssel vermerkt ein Cache-Eintrag die Dateien, die er zusagt. Der
+#: führende Unterstrich sagt: Das schreibt der Cache selbst, nicht der Aufrufer.
+ZUSAGEN_FELD = "_zusagen"
+
 
 class GraphError(ValueError):
     """Der Graph ist nicht schlüssig gebaut oder wird falsch benutzt.
@@ -445,6 +453,249 @@ class Graph:
 
 
 # --------------------------------------------------------------------------------------
+# Bedarf — was eine Knotenart braucht und was sie zusagt
+# --------------------------------------------------------------------------------------
+#
+# Warum es diesen Begriff gibt, und warum erst jetzt
+# --------------------------------------------------
+# Ein Knoten wusste bis hierher nicht, was er *braucht*. Zwei Folgen, beide gemessen:
+#
+# 1. Es gab keine Entwurfszeit-Prüfung. KosmoOrbit hat dafür `pipelineReadiness`: Es
+#    meldet tote Kanten und fehlende Pflichtfelder, **bevor** irgendetwas läuft
+#    (`docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md`, Kap. 2/3). Für die äussere Naht ist
+#    dieselbe Prüfung in `mcp_schemas.pruefe_verdrahtbarkeit` nachgebaut; im inneren
+#    Graphen fehlte sie. Ein falsch verdrahteter Graph fiel erst auf, nachdem Blender
+#    und GPU gelaufen waren.
+# 2. Der Cache kannte die Dateien nicht, die er zusagt. Sitzung 07 hat den Preis dafür
+#    bezahlt: Ein Multipass-Knoten galt als `ok`, obwohl seine normalisierte Tiefenkarte
+#    `None` war, wanderte in den Zwischenspeicher — und wurde nie wieder gerechnet, auch
+#    nicht, nachdem die Ursache behoben war. Drei Läufe, ein einziger Blender-Start.
+#
+# Beides ist dieselbe fehlende Angabe, darum steht hier **eine** Deklaration.
+#
+# Warum je Knotenart und nicht je Knoten: Was ein Knoten braucht, hängt an dem, was er
+# tut, nicht an seinem Namen. Ein zusätzliches Feld im `Knoten` wäre ausserdem
+# hash-relevant geworden — zwei gleich eingestellte Knoten mit verschieden geschriebener
+# Deklaration dürften sich sonst keinen Cache-Eintrag mehr teilen.
+
+
+def _ist_leer(wert) -> bool:
+    """Zählt ein Wert als „nicht geliefert“?
+
+    ``None`` und leere Behälter ja; ``False`` und ``0`` **nein**. Das ist kein Detail:
+    Die QA gibt ``bestanden=False`` zurück, und ein durchgefallenes Urteil ist ein
+    Ergebnis und kein fehlendes Feld — genau die Unterscheidung, die
+    ``kette.qa_ausfuehrer`` im Docstring festhält.
+    """
+    if wert is None:
+        return True
+    if isinstance(wert, (str, bytes, list, tuple, dict, set, frozenset)):
+        return len(wert) == 0
+    return False
+
+
+def _feldnamen(namen, wo: str) -> tuple[str, ...]:
+    """Eine Folge von Feldnamen einlesen — und einen einzelnen String ablehnen.
+
+    Dieselbe Falle wie bei ``Knoten.eingaenge``: Ein blosser String ist iterierbar und
+    zerfiele lautlos in einzelne Zeichen.
+    """
+    if isinstance(namen, (str, bytes)):
+        raise GraphError(
+            f"{wo} ist eine Folge von Feldnamen, kein einzelner String: {namen!r}. "
+            f"Gemeint war vermutlich ({namen!r},)."
+        )
+    try:
+        werte = tuple(namen)
+    except TypeError as fehler:
+        raise GraphError(f"{wo} ist nicht iterierbar: {namen!r}") from fehler
+    for wert in werte:
+        if not isinstance(wert, str) or not wert.strip():
+            raise GraphError(f"{wo}: Feldname muss ein nicht-leerer String sein, war {wert!r}.")
+    return werte
+
+
+@dataclass(frozen=True)
+class Bedarf:
+    """Was eine Knotenart von ihren Vorgängern braucht und was sie selbst zusagt.
+
+    Attribute:
+        braucht: **Je Eingangsslot** die Feldnamen, die dort erwartet werden. Eine Folge
+            von Folgen, weil die Eingänge im inneren Graphen nach Position unterschieden
+            werden und nicht verschmolzen wie in KosmoOrbits ``mergeInputs``: Slot 0 der
+            QA ist das Soll, Slot 1 das Ist. Ein flaches ``required`` wie im äusseren
+            Vertrag könnte das nicht ausdrücken.
+        liefert: Felder, die ein **gelungener** Lauf dieser Art immer trägt. Sie sind die
+            Pflichtseite: Ist eines davon leer, ist das Ergebnis unbrauchbar, egal was
+            der ``status`` behauptet.
+        dateien: Felder, deren Wert ein Dateipfad ist. Sie werden geprüft, **wenn** sie
+            gesetzt sind — ein Feld darf hier stehen und trotzdem wahlweise sein (der
+            Beauty-Pass lässt sich abschalten). Wer eine Datei zur Pflicht machen will,
+            nennt sie zusätzlich in ``liefert``.
+
+    ``dateien`` wird ausdrücklich **aufgezählt** statt an der Endung des Feldnamens
+    erraten. Das Erraten gibt es weiterhin als zweites Netz in ``kette``, aber es war
+    genau die Stelle, an der der vergiftete Eintrag durchschlüpfte: ``depth_png`` war
+    ``None``, und ein ``None`` sieht keiner Endung ähnlich.
+    """
+
+    braucht: tuple[tuple[str, ...], ...] = ()
+    liefert: tuple[str, ...] = ()
+    dateien: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        slots = []
+        if isinstance(self.braucht, (str, bytes)):
+            raise GraphError(
+                f"Bedarf.braucht ist eine Folge **je Slot**, kein einzelner String: "
+                f"{self.braucht!r}. Gemeint war vermutlich (({self.braucht!r},),)."
+            )
+        for slot in self.braucht:
+            slots.append(_feldnamen(slot, "Bedarf.braucht[i]"))
+        object.__setattr__(self, "braucht", tuple(slots))
+        object.__setattr__(self, "liefert", _feldnamen(self.liefert, "Bedarf.liefert"))
+        object.__setattr__(self, "dateien", _feldnamen(self.dateien, "Bedarf.dateien"))
+
+    def zugesagte_dateien(self, ausgaben) -> list[str]:
+        """Die Dateien, die diese Ausgabe verspricht — für ``ArtefaktCache.lege_ab``.
+
+        In der Reihenfolge von ``dateien``, ohne die nicht gesetzten. Nicht gesetzt heisst
+        nicht zugesagt; ob das erlaubt ist, entscheidet ``liefert`` und nicht diese Liste.
+        """
+        pfade = []
+        for feld in self.dateien:
+            wert = ausgaben.get(feld) if hasattr(ausgaben, "get") else None
+            if isinstance(wert, str) and wert:
+                pfade.append(wert)
+        return pfade
+
+    def maengel(self, ausgaben) -> list[str]:
+        """Was an dieser Ausgabe die Zusage bricht. **Leer heisst brauchbar.**
+
+        Zwei Sorten Mangel, und die erste ist die, die Sitzung 07 gekostet hat:
+
+        * ein Pflichtfeld aus ``liefert`` fehlt oder ist leer,
+        * eine Datei aus ``dateien`` ist genannt, liegt aber nicht mehr da.
+
+        Gedacht als **Verwerfungs**-Bedingung für einen Cache-Treffer. Umgekehrt gilt
+        weiter, was dieses Projekt mehrfach bezahlt hat: Die Existenz einer Datei ist kein
+        Beleg für ihren Inhalt. Der Beleg für den Inhalt kommt aus dem Hash.
+        """
+        if not hasattr(ausgaben, "get"):
+            return [f"Ausgaben sind kein Objekt, sondern {type(ausgaben).__name__}."]
+        maengel: list[str] = []
+        for feld in self.liefert:
+            if _ist_leer(ausgaben.get(feld)):
+                maengel.append(
+                    f"Pflichtfeld {feld!r} fehlt oder ist leer "
+                    f"({ausgaben.get(feld)!r}) — die Art sagt es zu."
+                )
+        for feld in self.dateien:
+            wert = ausgaben.get(feld)
+            if _ist_leer(wert):
+                continue
+            if not isinstance(wert, str):
+                maengel.append(f"Feld {feld!r} sollte ein Dateipfad sein, war {wert!r}.")
+            elif not Path(wert).exists():
+                maengel.append(f"Zugesagte Datei fehlt: {feld}={wert!r}.")
+        return maengel
+
+
+def pruefe_bedarf(graph: Graph, bedarf) -> list[dict]:
+    """Prüft einen Graphen **ohne ihn auszuführen** und meldet, was nicht zusammenpasst.
+
+    Das Gegenstück zu KosmoOrbits ``pipelineReadiness`` für den inneren Graphen, gebaut
+    nach demselben Muster wie ``mcp_schemas.pruefe_verdrahtbarkeit`` für die äussere Naht.
+    Der Zweck ist die Reihenfolge: Ein Graph, dessen Verdrahtung nicht trägt, soll das
+    sagen, bevor Blender startet und die GPU eine Stunde rechnet — nicht danach.
+
+    Args:
+        graph: der zu prüfende Graph.
+        bedarf: Abbildung Knotenart → ``Bedarf``. Arten, die nicht darin stehen, sind
+            nicht prüfbar und werden als ``warn`` gemeldet statt stillschweigend für
+            richtig gehalten.
+
+    Returns:
+        Liste von Befunden ``{knoten, art, befund, schwere, detail}``, nach Knoten-ID
+        sortiert. **Leer heisst verdrahtet.** ``schwere`` ist ``"error"`` (der Lauf kann
+        so nicht gelingen) oder ``"warn"`` (auffällig, aber kein Beweis).
+
+    Befundarten:
+
+    * ``fehlender-eingang`` — der Knoten erwartet einen Slot, den es nicht gibt. Der
+      Fall der QA mit nur einem Vorgänger: Sie hätte kein Ist zum Vergleichen.
+    * ``fehlendes-feld`` — der Vorgänger an diesem Slot sagt das erwartete Feld nicht zu.
+      Das ist die tote Kante des inneren Graphen: Sie existiert, trägt aber nichts.
+    * ``unbenutzter-eingang`` — ein Eingang, für den keine Erwartung deklariert ist. Nur
+      ``warn``: Eine Kante darf auch bloss eine Reihenfolge erzwingen.
+    * ``unbekannte-art`` — für diese Art gibt es keine Deklaration, also ist an ihr und
+      an den Kanten in sie hinein nichts prüfbar.
+
+    Der Graph wird **nicht** topologisch sortiert: Auch ein Graph mit Kreis soll sich
+    prüfen lassen, sonst verdeckte der eine Fehler den anderen. Die Ausgabe ist nach
+    Knoten-ID sortiert und damit zwischen zwei Läufen gleich.
+    """
+    if not isinstance(graph, Graph):
+        raise GraphError(f"pruefe_bedarf erwartet einen Graph, bekam {type(graph).__name__}.")
+    if not hasattr(bedarf, "get"):
+        raise GraphError(
+            f"pruefe_bedarf erwartet eine Abbildung Knotenart → Bedarf, bekam "
+            f"{type(bedarf).__name__}."
+        )
+
+    befunde: list[dict] = []
+    for kid in sorted(graph.knoten):
+        knoten = graph.knoten[kid]
+        eigen = bedarf.get(knoten.art)
+        if eigen is None:
+            befunde.append({
+                "knoten": kid, "art": knoten.art, "befund": "unbekannte-art",
+                "schwere": "warn",
+                "detail": (f"Für die Art {knoten.art!r} ist kein Bedarf deklariert — was "
+                           f"dieser Knoten braucht, ist nicht prüfbar."),
+            })
+            continue
+        if not isinstance(eigen, Bedarf):
+            raise GraphError(
+                f"Bedarf für die Art {knoten.art!r} ist kein Bedarf-Objekt, sondern "
+                f"{type(eigen).__name__}."
+            )
+
+        for slot, felder in enumerate(eigen.braucht):
+            if slot >= len(knoten.eingaenge):
+                befunde.append({
+                    "knoten": kid, "art": knoten.art, "befund": "fehlender-eingang",
+                    "schwere": "error",
+                    "detail": (f"Slot {slot} fehlt: Der Knoten erwartet dort "
+                               f"{', '.join(felder) or '—'}, hat aber nur "
+                               f"{len(knoten.eingaenge)} Eingang/Eingänge."),
+                })
+                continue
+            vorgaenger = knoten.eingaenge[slot]
+            liefernd = bedarf.get(graph.knoten[vorgaenger].art)
+            if liefernd is None:
+                continue          # schon als unbekannte-art gemeldet, wenn er drankommt
+            for feld in felder:
+                if feld not in liefernd.liefert:
+                    befunde.append({
+                        "knoten": kid, "art": knoten.art, "befund": "fehlendes-feld",
+                        "schwere": "error",
+                        "detail": (f"Slot {slot} ({vorgaenger!r}, Art "
+                                   f"{graph.knoten[vorgaenger].art!r}) sagt {feld!r} nicht "
+                                   f"zu. Zugesagt: {', '.join(liefernd.liefert) or '—'}."),
+                    })
+
+        for slot in range(len(eigen.braucht), len(knoten.eingaenge)):
+            befunde.append({
+                "knoten": kid, "art": knoten.art, "befund": "unbenutzter-eingang",
+                "schwere": "warn",
+                "detail": (f"Slot {slot} ({knoten.eingaenge[slot]!r}) ist verdrahtet, aber "
+                           f"die Art {knoten.art!r} erwartet dort nichts."),
+            })
+    return befunde
+
+
+# --------------------------------------------------------------------------------------
 # Inhalts-Hash
 # --------------------------------------------------------------------------------------
 
@@ -475,6 +726,8 @@ def inhalts_hash(
     knoten: Knoten,
     vorgaenger_hashes: Sequence[str],
     dateien: Sequence[str | Path] = (),
+    *,
+    param_dateien: Sequence[str] = (),
 ) -> str:
     """Stabiler Hash aus Knotenart, Parametern, Vorgänger-Hashes und Dateiinhalten.
 
@@ -504,6 +757,27 @@ def inhalts_hash(
     * ``knoten.eingaenge`` — ebenfalls Namen. Was von dort kommt, steckt bereits in
       ``vorgaenger_hashes``.
 
+    Die Ausnahmeliste ``param_dateien``
+    -----------------------------------
+    Ein Parameter, der einen **Dateipfad** trägt, ist ein Sonderfall: Sein Wert soll
+    nicht mitzählen, sein Inhalt schon. Ohne diese Liste hinge der Schlüssel am
+    Dateinamen, und ein blosses Verschieben des Projektordners verwürfe den ganzen
+    Zwischenspeicher, obwohl sich an der Geometrie nichts geändert hat. Die Kette hat
+    sich das bis Sitzung 07 mit einer eigenen Hashvorbereitung selbst gebaut; hier
+    gehört es hin.
+
+    ``param_dateien`` nennt die Parameternamen. Für jeden, der gesetzt ist, wird der
+    **Inhalt** der Datei gehasht (angehängt hinter ``dateien``, in der genannten
+    Reihenfolge), und im Parameter steht stattdessen ``PFAD_MARKE``.
+
+    **Ersetzt, nicht gelöscht.** Der Name des Feldes trägt sehr wohl Bedeutung —
+    ``ifc_path`` heisst „konvertiere“, ``glb_path`` heisst „reiche durch“. Würde der
+    Schlüssel ganz entfernt, ergäben dieselben Bytes einmal als IFC und einmal als glb
+    denselben Hash und damit einen falschen Treffer.
+
+    Welche Parameter Pfade sind, weiss dieses Modul weiterhin nicht — es bekommt die
+    Liste gesagt. Der Knoten-Zoo bleibt draussen.
+
     Raises:
         GraphError: Argumente falscher Gestalt oder eine fehlende Datei.
     """
@@ -526,12 +800,24 @@ def inhalts_hash(
             f"Gemeint war vermutlich [{dateien!r}]."
         )
 
+    felder = _feldnamen(param_dateien, "param_dateien")
+    gesetzt = [feld for feld in felder if knoten.params.get(feld)]
+    params = knoten.params
+    if gesetzt:
+        for feld in gesetzt:
+            if not isinstance(knoten.params[feld], (str, os.PathLike)):
+                raise GraphError(
+                    f"param_dateien nennt {feld!r}, dort steht aber kein Pfad, sondern "
+                    f"{knoten.params[feld]!r}."
+                )
+        params = {**knoten.params, **{feld: PFAD_MARKE for feld in gesetzt}}
+
     rumpf = {
         "verfahren": HASH_SCHEMA_ID,
         "art": knoten.art,
-        "params": knoten.params,
+        "params": params,
         "vorgaenger": vorgaenger,
-        "dateien": [_datei_hash(p) for p in dateien],
+        "dateien": [_datei_hash(p) for p in list(dateien) + [knoten.params[f] for f in gesetzt]],
     }
     # `separators` und `ensure_ascii`: feste, von den Vorgabewerten unabhängige
     # Textform. `sort_keys` wirkt rekursiv, auch auf verschachtelte params.
@@ -597,20 +883,36 @@ class ArtefaktCache:
         Eintrag dagegen schon: Weil ``lege_ab`` atomar schreibt, kann es keine halb
         geschriebene Datei geben — kaputtes JSON heisst also, dass etwas anderes in den
         Cache geschrieben hat. Das wird gemeldet und nicht als Fehltreffer verkleidet.
+
+        **Ein Eintrag, dessen zugesagte Datei fehlt, ist kein Treffer.** Was ``lege_ab``
+        unter ``zusagen`` bekommen hat, wird hier geprüft; fehlt eine der Dateien, gibt
+        es ``None`` wie bei einem Fehltreffer, und der Aufrufer rechnet neu. Der Eintrag
+        selbst bleibt liegen — er wird beim nächsten Ablegen überschrieben, und ein
+        Cache, der beim Lesen löscht, wäre bei zwei gleichzeitigen Läufen ein Rennen.
+
+        Der Grund ist gemessen: Ein Eintrag zeigt auf Dateien, die ausserhalb des Caches
+        liegen (bewusst — sonst gäbe es zwei Orte der Wahrheit). Ein aufgeräumtes
+        ``/tmp`` genügt, und die Zusage geht ins Leere.
         """
         pfad = self._pfad(schluessel)
         if not pfad.is_file():
             return None
         try:
-            return json.loads(pfad.read_text(encoding="utf-8"))
+            eintrag = json.loads(pfad.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError) as fehler:
             raise GraphError(
                 f"Cache-Eintrag {pfad} ist unlesbar ({fehler}). lege_ab schreibt atomar, "
                 f"eine halbe Datei kann hier nicht entstehen — der Eintrag stammt also "
                 f"nicht von uns. Löschen oder leere() aufrufen."
             ) from fehler
+        if isinstance(eintrag, dict):
+            for datei in eintrag.get(ZUSAGEN_FELD) or ():
+                if not isinstance(datei, str) or not Path(datei).exists():
+                    return None
+        return eintrag
 
-    def lege_ab(self, schluessel: str, ergebnis: dict) -> Path:
+    def lege_ab(self, schluessel: str, ergebnis: dict,
+                *, zusagen: Sequence[str | Path] = ()) -> Path:
         """Ergebnis ablegen und den Pfad des Eintrags zurückgeben.
 
         **Atomar**, in zwei Schritten: erst eine temporäre Datei im selben Verzeichnis,
@@ -626,12 +928,28 @@ class ArtefaktCache:
 
         Serialisiert wird **vor** dem Anlegen der temporären Datei. Sonst bliebe bei
         einem nicht JSON-fähigen Ergebnis ein Rest liegen.
+
+        Args:
+            zusagen: Die Dateien, die dieser Eintrag verspricht. Sie werden im Eintrag
+                unter ``ZUSAGEN_FELD`` vermerkt, und ``hole`` prüft sie bei jedem
+                Zugriff. Ohne diesen Vermerk weiss ein Eintrag nicht, wovon er redet: Er
+                speichert Pfade, nicht Bilder, und ein Pfad allein ist eine Behauptung.
+                Leer heisst „verspricht keine Datei“ — dann bleibt der Eintrag so, wie er
+                übergeben wurde.
         """
         if not isinstance(ergebnis, dict):
             raise GraphError(
                 f"Cache speichert Knoten-Berichte als Objekt, bekam "
                 f"{type(ergebnis).__name__}."
             )
+        if isinstance(zusagen, (str, os.PathLike, bytes)):
+            raise GraphError(
+                f"zusagen ist eine Folge von Pfaden, kein einzelner Pfad: {zusagen!r}. "
+                f"Gemeint war vermutlich [{zusagen!r}]."
+            )
+        versprochen = [str(p) for p in zusagen]
+        if versprochen:
+            ergebnis = {**ergebnis, ZUSAGEN_FELD: versprochen}
         ziel = self._pfad(schluessel)
         try:
             text = json.dumps(ergebnis, indent=2, sort_keys=True, ensure_ascii=False,
@@ -661,6 +979,44 @@ class ArtefaktCache:
             raise
         return ziel
 
+    def schluessel(self) -> list[str]:
+        """Alle Schlüssel im Cache, sortiert.
+
+        Damit sich überhaupt etwas gezielt verwerfen **lässt**: Wer nur ``hat`` und
+        ``hole`` hat, muss den Schlüssel schon kennen. Sortiert, weil jede Ausgabe dieses
+        Moduls zwischen zwei Läufen gleich sein soll.
+        """
+        if not self.wurzel.is_dir():
+            return []
+        return sorted(p.stem for p in self.wurzel.glob("*.json") if p.is_file())
+
+    def verwirf(self, schluessel: str) -> bool:
+        """Einen einzelnen Eintrag löschen. ``True``, wenn es ihn gab.
+
+        Bis Sitzung 07 gab es nur ``leere()`` — und in der Praxis ``rm -rf`` auf dem
+        ganzen Ausgabeordner. Das ist die falsche Antwort auf die häufigste Frage: Ein
+        Eintrag ist verdächtig (die Umgebung hat gelogen, ein Runner war fehlerhaft), die
+        teuren Nachbarn daneben sind es nicht. Wer nur den ganzen Cache wegwerfen kann,
+        wirft am Ende die Geometriestufe mit weg, um einen Render zu wiederholen.
+
+        Den Schlüssel liefert ein Lauf selbst mit: ``kette.fuehre_aus`` gibt ihn je Knoten
+        im Feld ``hash`` zurück. Verworfen wird damit **genau ein** Knoten; alles davor
+        bleibt im Cache, und alles dahinter behält seinen Schlüssel, weil sich am Inhalt
+        nichts geändert hat.
+
+        Es wird **nicht** kaskadiert. Ein Nachfolger hängt über seinen Vorgänger-Hash am
+        Ergebnis, nicht am Cache-Eintrag: Rechnet der verworfene Knoten dasselbe noch
+        einmal, sind die Nachfolger weiterhin gültig — und das ist richtig so. Wer eine
+        andere Rechnung will, ändert Parameter oder Eingabe, und dann ändern sich die
+        Schlüssel von selbst (siehe ``kette``, Modul-Docstring: es gibt hier keine
+        programmierte Invalidierung).
+        """
+        pfad = self._pfad(schluessel)
+        if not pfad.is_file():
+            return False
+        pfad.unlink()
+        return True
+
     def leere(self) -> int:
         """Alle Einträge löschen; gibt deren Anzahl zurück.
 
@@ -683,11 +1039,15 @@ class ArtefaktCache:
 
 __all__ = [
     "ArtefaktCache",
+    "Bedarf",
     "GRAPH_SCHEMA_ID",
     "Graph",
     "GraphError",
     "HASH_SCHEMA_ID",
     "Knoten",
+    "PFAD_MARKE",
+    "ZUSAGEN_FELD",
     "ZyklusError",
     "inhalts_hash",
+    "pruefe_bedarf",
 ]
