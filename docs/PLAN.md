@@ -189,6 +189,23 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       das Token landet nie in einer Datei auf unserer Seite. `als_kosmo_auftrag` nimmt es
       als **Argument** und setzt es allein in den übersetzten Satz, im Augenblick des
       Übergangs.
+- [x] **Ein Backbone mit echter ControlNet-Naht gesucht** — erledigt 2026-08-18,
+      `docs/BACKBONE_CONTROLNET_2026-08-18.md`. Empfehlung: `z-image-turbo` +
+      `alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union`, **beide Apache-2.0** — der
+      einzige geprüfte Kandidat, bei dem die Regel-1-Spannung offen bleiben kann.
+      22,0 GiB (resident), 8 Schritte statt 148 s.
+      **Struktureller Befund:** Ein Depth-ControlNet ist immer **zwei** Modelle mit zwei
+      Lizenzen; die Registry kannte nur eine und hat damit systematisch die halbe Naht
+      geprüft. Bei FLUX sind alle drei verbreiteten Depth-ControlNets *selbst*
+      nicht-kommerziell — ein permissives Basismodell hätte „zulässig" ergeben.
+      Behoben: `controlnet_id`/`controlnet_lizenz`, dreiwertiges Urteil
+      (`None` ≠ `True`). Dazu zwei Adapterfehler behoben — fehlendes `guidance_scale`
+      (bei 0.0 wird der negative Prompt still ignoriert) und die SDXL-Falle, die eine
+      **tragende** Naht als kaputt gemeldet hätte.
+- [ ] **Die Empfehlung am Gerät messen** — Weiche in `lade_modell`, und vor allem die
+      **Tiefenkonvention** (nah = hell). Sie ist an keinem ControlNet geprüft; ist sie
+      invertiert, erklärt das einen schlechten Score vollständig. Nichts davon ist
+      ausgeführt worden — alles steht auf Signaturen im `diffusers`-Quelltext.
 - [ ] **Die Stil-Schwelle 0.30** — untersucht 2026-08-18 (`stilstudie.py`,
       `docs/STILSTUDIE_2026-08-18.md`), aber **nicht** entschieden. Die Studie zeigt, wovon
       die Bedeutung der Zahl abhängt: vom **Boden** des Einbetters, und der ist
@@ -224,9 +241,21 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       `pruefe_einheit_gegen_masse` gebaut wurde.
       *Ehrliche Grenze:* Alle 40 stammen aus **einem** Büro. Dass Rhino, Vectorworks oder
       Allplan erkannt werden, ist damit **nicht** belegt.
+- [x] **Connector an echten Dateien geprüft** — erledigt 2026-08-18 (`auf-20260818-08`).
+      40 IFC aus echten Projekten: 40 von 40 gedeutet, 40 von 40 Erzeuger erkannt, kein
+      `herkunft: null`, kein `HerkunftError`. IfcOpenShell 28, ArchiCAD 10, Revit 2.
+      IFC4 30-mal, IFC2X3 10-mal. **Zwei echte kaputte Exporte gefunden** — Millimeter
+      erklärt, Meter geliefert.
+      **Der Befund, der zählt, liegt daneben:** Die Erkennung war Glück. In zwei von drei
+      Fällen trägt Feld 5 (`preprocessor_version`) den Namen der *Exportbibliothek*, nicht
+      des Programms — `DDS_IFC` für ArchiCAD, `ODA SDAI` für Revit. Hiesse eine
+      Bibliothek einmal „Rhino…", ergäbe Feld 5 eine **falsche** Herkunft, und die ist
+      schlimmer als keine: Sie schlägt dem Torwächter eine Up-Achse zur Bestätigung vor.
+      Erkannt wird jetzt aus Feld 6 (`originating_system`) zuerst.
 - [ ] **Connectors: die übrigen Autorenprogramme** — Rhino, Vectorworks, Allplan. Die
-      Registry führt sie teils, gesehen hat sie keines. Rhino bleibt der Sonderfall: Seine
-      Up-Achse ist an der Datei gar nicht entscheidbar.
+      Registry führt sie teils, gesehen hat sie keines: Alle 40 geprüften Dateien stammen
+      aus **einem** Büro und damit aus einer eingeschränkten Werkzeuglandschaft. Rhino
+      bleibt der Sonderfall: Seine Up-Achse ist an der Datei gar nicht entscheidbar.
 - [x] **LoRA-Stiltraining als Subprozess-Naht** — erledigt 2026-08-18, `lora.py`.
       Beide Trainer sind jetzt **am Original geprüft** statt aus Sekundärquelle:
       kohya-ss/sd-scripts Apache-2.0, ostris/ai-toolkit MIT.
@@ -247,6 +276,50 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       zu erfinden: Es wird über YAML gesteuert.
 - [ ] **LoRA-Training an einem echten Lauf prüfen** — braucht GPU, Trainer und Bilder.
       Erst dort zeigt sich, ob die Flaggennamen stimmen.
+
+---
+
+## Phase 5 · Kameras und die Vis-Stufe
+
+**Aufwand:** mittel · **Setzt voraus:** Phase 3
+
+- [x] **Den alten Add-on-Bestand sichten** — erledigt 2026-08-18,
+      `docs/BLENDER_ADDON_BESTAND_2026-08-18.md`. Er existiert, und zwar erheblich:
+      **83 Module, rund 37 000 Zeilen.** Beim ersten Nachsehen waren es fünf Dateien —
+      der Klon war unvollständig ausgecheckt (5 im Arbeitsbaum, 314 in HEAD).
+      *Die Existenz einer Datei ist kein Beleg für ihren Inhalt — und ihr Fehlen ist
+      keiner für ihre Abwesenheit.*
+      Kein GPL/AGPL im übernehmbaren Material; zwei Module mit „Muster adaptiert" aus
+      fremder Quelle ungeprüfter Lizenz sind gemeldet, wir übernehmen davon nichts.
+- [x] **Kameraableitung gebaut** — erledigt 2026-08-18, `kameras.py`, 87 Tests, kein
+      `bpy`. Zwölf Richtungen mit Bias-Regler, analytischer Abstand aus dem Bildwinkel,
+      Eckentest über alle acht Hüllbox-Ecken, Schrittlogik des Heranziehens mit
+      hereingereichter Sichtprüfung.
+      **Zwei Stellen sind besser als die Vorlage:** die richtungsabhängige sichtbare
+      Breite (dort `max(b, t, diagonale)` — die Diagonale gewinnt immer, das `max` ist
+      toter Code, und die Frontale steht auf Diagonalabstand), und der **gerechnete**
+      statt getasteten Rückschub (ein Durchlauf statt zwanzig).
+      **Vertrag entschieden:** `blick_auf` führend, Augenhöhe **absolut 1.70 m**.
+- [ ] **Die zwölf Kameras an einem echten Modell ansehen** — sie rechnen sich und
+      bestehen den Eckentest über fünf Gebäudetypen. **Dass die zwölf Bilder gut
+      aussehen, ist damit nicht gezeigt.** Genau das war schon der schwächste Punkt des
+      Bestands: Dass ein Knoten fehlerfrei registriert, belegt keinen Bildeindruck.
+      Braucht Blender und ein Augenpaar.
+- [ ] **Verdeckungstest im Runner** — der Strahlenschuss gegen den Depsgraph. Die
+      Schrittlogik steht diesseits der Grenze und ist geprüft; die Blender-Seite fehlt.
+      Dabei zu klären, ob Frustum- und Verdeckungstest gegeneinander schwingen — der eine
+      schiebt weg, der andere holt heran, und im Bestand ist das nie geprüft worden.
+- [ ] **Die vier Sockeltypen als Antwort auf die MCP-Frage** — Kameraeinstellung, Bild,
+      Render-Ebene, Variante. Das ist die brauchbarste Erbschaft aus dem alten
+      Node-Tree: nicht sein Code (er hat gar keine Verdrahtungslogik — `links.clear()`
+      beim Aufbau, `links.new` kommt in keinem der 83 Module vor), sondern seine Antwort
+      darauf, welche Datenarten zwischen den Stufen fliessen.
+- [ ] **`RENDER_SCENE_CONTRACT.md` als Vorbild auswerten** — besonders `faithful` als
+      **eine** Zahl von 1.0 (Cycles-treu) bis 0.0 (KI-frei) und `depth_method` in der
+      Ausgabe: Die Ausgabe sagt, wie sie entstanden ist.
+- [ ] **Wo liegen die Renderstile?** — `archviz_styles/` und die Prompt-Bibliothek sind
+      **nicht im Repo** des Bestands. Die Kategorien sind belegt, die Inhalte nicht.
+      **Braucht eine Auskunft des Owners.**
 
 ---
 
