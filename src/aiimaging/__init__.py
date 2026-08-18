@@ -27,6 +27,7 @@ Aufbau
 ``backbone``     Registry der Bildmodelle samt Lizenz (Regel 1 in ausführbarer Form)
 ``render``       die Bildmodell-Stufe über `diffusers`, Modell injizierbar
 ``bildlesen``    EXR und PNG → Zahlen für die Metrik; stdlib, Blender nur als Rückfall
+``tiefenschaetzer`` die **Ist-Seite** der QA: Tiefe aus dem erzeugten Bild schätzen
 ``mcp_schemas``  die Werkzeugverträge als reine Daten
 ``mcp_server``   optionaler Zusatz, braucht das MIT-lizenzierte MCP-SDK
 """
@@ -34,7 +35,7 @@ __version__ = "0.0.2"
 
 from aiimaging import (  # noqa: F401
     auftrag, backbone, bildlesen, contracts, einbetter, gate, geometrie_qa, graph, jobs,
-    mcp_schemas, render, seams, stil_qa, torwaechter, werkzeuge,
+    mcp_schemas, render, seams, stil_qa, tiefenschaetzer, torwaechter, werkzeuge,
 )
 from aiimaging.contracts import (  # noqa: F401
     ContractError,

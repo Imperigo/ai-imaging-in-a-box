@@ -516,6 +516,16 @@ den mittleren Rang. *In Tiefenkarten der Normalfall: Eine Wand parallel zur Bild
 liefert lauter gleiche Werte. Die verbreitete Kurzformel für Spearman rechnet dort
 systematisch falsch.*
 
+**Polarität (einer Tiefenkarte)** — Ob grosse Werte *nah* oder *fern* bedeuten. Blender
+liefert Meter (gross = fern), viele Schätzer liefern Disparität (gross = nah). *Wird in
+diesem Projekt nie aus den Daten erraten, sondern deklariert — aus den Daten schliessen
+hiesse die Ordnung vorauszusetzen, die man gerade messen will.*
+
+**Hintergrundmarke** — Die Festlegung, welche Bildpunkte als „kein Gebäude" gelten. Bei
+gerenderten Tiefenkarten ist das eindeutig (der Himmel hat keine Tiefe); bei *geschätzten*
+nicht — dort bekommt auch der Himmel eine gewöhnliche Zahl. Ohne Marke zählt das ganze
+Bild als Geometrie, und der Silhouettenvergleich wird strukturell unmöglich.
+
 **Silhouette** — Die Menge der Bildpunkte, die überhaupt Geometrie tragen (im Unterschied
 zum Hintergrund). *Der Teil der Geometrie-QA, der die Halluzination fängt.*
 
@@ -1017,6 +1027,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus der Ist-Seite: Polaritaet, Hintergrundmarke |
 | 2026-08-18 | Ergaenzt aus der Tiefenschaetzer-Pruefung: monokulare Tiefenschaetzung, CC-BY-NC |
 | 2026-08-18 | Ergaenzt aus dem EXR-Leser: OpenEXR/Scanline, Half-Float, Praediktor/Byte-Entflechtung, zlib, Endianness, CRC, Quantisierungsschritt |
 | 2026-08-18 | Ergaenzt aus Renderstufe und Bildlesen: diffusers, txt2img/img2img/image-edit, Seed, Zeilenfilter |
