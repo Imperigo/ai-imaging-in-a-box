@@ -72,14 +72,104 @@ import math
 #:   statt eine Messung von Stilunähnlichkeit — und dann ist er auf SigLIP 2 **nicht**
 #:   übertragbar. Der Einbetter hat gewechselt (``einbetter.py``), die Zahl nicht.
 #:
-#: **Die Schwelle bleibt trotzdem bei 0.30 — nicht verteidigt, sondern beibehalten**,
-#: dieselbe Haltung wie bei ``geometrie_qa.SCHWELLE_GEOMETRIE``. Eine neue Zahl liesse
-#: sich hier nur aus synthetischen Vektoren ableiten, und die kennen keine Bilder. Was die
-#: Schwelle wirklich braucht, ist keine bessere Schätzung, sondern ein **Verfahren**: den
-#: Boden des eingesetzten Einbetters an zusammenhanglosen Bildpaaren messen und die
-#: Schwelle als „Boden plus k Streuungen" setzen. Das braucht das Modell und ein
-#: menschliches Urteil — beides liegt hier nicht vor.
-SCHWELLE_STIL = 0.30
+#: **AM GERÄT GEMESSEN, 18.08.2026** (``auf-20260818-11``, HomeStation, 4950 Paare aus
+#: 100 zusammenhanglosen Bildern): Der Boden von SigLIP 2 base liegt bei
+#: **0,526 ± 0,070**, Spanne 0,310 bis 0,845.
+#:
+#: Damit ist die Befürchtung von oben nicht nur eingetreten, sondern übertroffen: Die
+#: Schwelle 0,30 lag **3,24 Streuungen UNTER dem Boden**. Sie war kein strenges Gate und
+#: kein mildes — **sie war gar keines**: Alle 4950 Paare bestanden, 100 Prozent, und
+#: selbst das unähnlichste Paar des ganzen Korpus lag mit 0,3097 noch darüber. Auch ohne
+#: die 5 % ähnlichsten Paare bleibt das Maximum der übrigen bei 0,647, immer noch mehr
+#: als das Doppelte. Es gibt keinen Zuschnitt dieses Korpus, unter dem 0,30 wieder Sinn
+#: ergäbe.
+#:
+#: Und die Herkunft der alten Zahl ist damit auch geklärt: Der überlieferte Fehlbereich
+#: 0,06–0,13 aus den **DINOv3**-Läufen liegt nicht einmal in der Nähe des SigLIP-2-Bodens.
+#: Er war der Boden *jenes* Einbetters, nicht eine Messung von Stilunähnlichkeit. Beim
+#: Wechsel des Einbetters in Sitzung 06 ist die Zahl stillschweigend mitgewandert.
+#:
+#: **Ein Gate, das nie zugeht, ist gefährlicher als gar keines** — es sieht aus wie Schutz.
+#:
+#: Die Schwelle ist darum jetzt **abgeleitet statt gesetzt**: ``Boden + k · Streuung``,
+#: mit dem Boden aus :data:`BODEN_MESSUNGEN`. Für SigLIP 2 base mit ``k = 2`` ergibt das
+#: 0,666 (der p99 des Bodens liegt bei 0,698 — dieselbe Grössenordnung).
+#:
+#: **Ehrlich zur Hälfte:** Der Boden ist gemessen, ``k`` ist gesetzt. Diese Messung sagt,
+#: wo Unähnlichkeit *aufhört* — nicht, wo Ähnlichkeit *anfängt*. Dafür bräuchte es Paare,
+#: die stilistisch ähnlich sein **sollen**, und ein menschliches Urteil darüber. Der Boden
+#: ist die eine Hälfte der Kalibrierung, nicht die ganze. Der Unterschied zu vorher ist
+#: trotzdem grundsätzlich: Die Zahl liegt jetzt auf der richtigen Seite des Bodens, und
+#: sie wandert nicht mehr stillschweigend mit, wenn der Einbetter wechselt — dafür sorgt
+#: die Prüfung in :func:`stil_gate`.
+SCHWELLE_STIL = 0.666
+
+#: Der k-Faktor: wie viele Streuungen über dem Boden die Schwelle liegt.
+#:
+#: **Gesetzt, nicht gemessen** — siehe :data:`SCHWELLE_STIL`. 2 ist die zurückhaltende
+#: Wahl: Sie liegt sicher jenseits des Rauschens (der p99 des gemessenen Bodens liegt bei
+#: k ≈ 2,46), ohne so hoch zu greifen, dass nur noch nahezu identische Bilder bestehen.
+K_STREUUNGEN = 2.0
+
+#: Gemessene Böden je Einbetter **und Ausleseort**.
+#:
+#: Der Ausleseort gehört zwingend zum Schlüssel: ``pooler_output`` und gemittelte
+#: Kachel-Vektoren aus ``last_hidden_state`` sind zwei verschiedene Räume mit zwei
+#: verschiedenen Böden, auch beim selben Modell. Wer die Schwelle übernimmt, ohne den
+#: Ausleseort zu übernehmen, wiederholt genau den Fehler, der 0,30 hierher gebracht hat.
+BODEN_MESSUNGEN = {
+    ("siglip2-base", "pooler_output"): {
+        "mittel": 0.526,
+        "streuung": 0.070,
+        "median": 0.523,
+        "kleinster": 0.310,
+        "groesster": 0.845,
+        "p99": 0.698,
+        "n_paare": 4950,
+        "n_bilder": 100,
+        "dimensionen": 768,
+        "quelle": "auf-20260818-11 (HomeStation, 18.08.2026)",
+    },
+}
+
+
+def boden_fuer(einbetter: str, ausleseort: str = "pooler_output"):
+    """Der gemessene Boden dieses Einbetters — oder ``None``, wenn keiner vorliegt.
+
+    ``None`` heisst **nicht** „Boden bei null". Es heisst: Für diese Kombination aus
+    Modell und Ausleseort hat niemand gemessen, wie ähnlich sich zwei zusammenhanglose
+    Bilder darin sind — und ohne diese Zahl ist jede Schwelle geraten.
+    """
+    return BODEN_MESSUNGEN.get((einbetter, ausleseort))
+
+
+def schwelle_aus_boden(boden: dict, k: float = K_STREUUNGEN) -> float:
+    """``Boden + k · Streuung`` — die Schwelle als Verfahren statt als Zahl.
+
+    Warum überhaupt so
+    ------------------
+    Eine feste Zahl ist an den Einbetter gebunden, der sie hervorgebracht hat, und stirbt
+    mit ihm. Genau das ist hier passiert: 0,30 stammte aus DINOv3-Läufen und wanderte beim
+    Wechsel auf SigLIP 2 stillschweigend mit — in einen Raum, in dem sie unter dem Boden
+    lag und damit jedes Bildpaar durchliess.
+
+    Eine abgeleitete Schwelle wandert nicht mit; sie wird beim Wechsel des Einbetters neu
+    gerechnet oder es gibt sie nicht.
+
+    Raises:
+        StilError: ``boden`` unbrauchbar oder ``k`` negativ. Ein negatives ``k`` ergäbe
+            eine Schwelle **unter** dem Boden — also wieder kein Gate.
+    """
+    if not isinstance(boden, dict) or "mittel" not in boden or "streuung" not in boden:
+        raise StilError(f"boden unbrauchbar, erwartet 'mittel' und 'streuung': {boden!r}")
+    if isinstance(k, bool) or not isinstance(k, (int, float)) or not math.isfinite(float(k)):
+        raise StilError(f"k ist keine endliche Zahl: {k!r}")
+    if float(k) < 0.0:
+        raise StilError(
+            f"k={k} ist negativ. Die Schwelle läge damit UNTER dem Boden — jedes "
+            f"beliebige Bildpaar bestünde, und das Gate wäre wieder keines."
+        )
+    return float(boden["mittel"]) + float(k) * float(boden["streuung"])
 
 #: Aggregation über das Referenzset: Abstand zur NÄCHSTEN Referenz.
 AGG_MAX = "max"
@@ -279,6 +369,8 @@ def stil_score(bild_vektor, referenz_vektoren, *, aggregation: str = AGG_MAX) ->
 
 
 def stil_gate(bild_vektor, referenz_vektoren, *, schwelle: float = SCHWELLE_STIL,
+              einbetter_name: str = "siglip2-base",
+              ausleseort: str = "pooler_output",
               **kw) -> dict:
     """Stil-Score plus Urteil gegen die Schwelle.
 
@@ -286,6 +378,13 @@ def stil_gate(bild_vektor, referenz_vektoren, *, schwelle: float = SCHWELLE_STIL
         bild_vektor: Einbettung des Renders.
         referenz_vektoren: Einbettungen des Referenzsets.
         schwelle: Ab hier gilt der Stil als getroffen. Vorgabe :data:`SCHWELLE_STIL`.
+        einbetter_name: Welcher Einbetter die Vektoren erzeugt hat — der **Name** aus
+            ``einbetter.EINBETTER``, nicht die Funktion (die heisst in
+            :func:`stil_gate_aus_bildern` ``einbetter``). Wird gegen
+            :data:`BODEN_MESSUNGEN` geprüft — siehe unten. ``None`` schaltet die Prüfung
+            ab und ist als Notausgang gedacht, nicht als Normalfall.
+        ausleseort: Wo im Modell die Vektoren abgegriffen wurden. Gehört zwingend dazu:
+            Derselbe Einbetter hat an zwei Ausleseorten zwei verschiedene Böden.
         **kw: an :func:`stil_score` durchgereicht (``aggregation``).
 
     Returns:
@@ -293,8 +392,23 @@ def stil_gate(bild_vektor, referenz_vektoren, *, schwelle: float = SCHWELLE_STIL
         beste_referenz, schlechteste_referenz, streuung, begruendung}``.
 
     Raises:
-        StilError: unbrauchbare Eingabe oder eine Schwelle ausserhalb ``[-1, 1]`` — dort
-            wäre das Gate immer offen oder immer zu, also gar kein Gate.
+        StilError: unbrauchbare Eingabe, eine Schwelle ausserhalb ``[-1, 1]`` — dort wäre
+            das Gate immer offen oder immer zu, also gar kein Gate —, **oder eine
+            Schwelle unterhalb des gemessenen Bodens des benannten Einbetters**.
+
+    Die Bodenprüfung ist die Lehre aus ``auf-20260818-11``
+    ------------------------------------------------------
+    Bis zum 18.08.2026 stand hier 0,30. Gemessen liegt der Boden von SigLIP 2 base bei
+    0,526 — die Schwelle lag also **unter** der Ähnlichkeit zweier zusammenhangloser
+    Bilder, und **alle 4950 geprüften Paare bestanden**. Ein Gate, das nie zugeht, ist
+    gefährlicher als gar keines: Es sieht aus wie Schutz, und niemand sucht dahinter.
+
+    Der Fehler war nicht die Zahl, sondern dass sie einen Modellwechsel überlebt hat. Die
+    Prüfung hier macht genau das unmöglich: Wer den Einbetter wechselt und die Schwelle
+    stehen lässt, bekommt eine Ausnahme statt eines stillschweigend offenen Gates. Und
+    wer einen Einbetter benutzt, für den **kein** Boden gemessen ist, bekommt das als
+    Mangel in die Antwort — nicht als Fehler, denn ein ungemessener Boden ist keine
+    falsche Schwelle, sondern eine unbekannte.
 
     Der Vergleich ist ``>=``: Ein Score genau auf der Schwelle besteht. Die Schwelle ist
     eine gesetzte Zahl, kein Naturgesetz; sie soll nicht ausgerechnet an ihrem eigenen
@@ -316,6 +430,27 @@ def stil_gate(bild_vektor, referenz_vektoren, *, schwelle: float = SCHWELLE_STIL
             f"Kosinus-Ähnlichkeit [-1, 1]. Ein solches Gate wäre immer offen oder immer zu."
         )
 
+    boden = boden_fuer(einbetter_name, ausleseort) if einbetter_name else None
+    boden_maengel: list[str] = []
+    if einbetter_name and boden is None:
+        boden_maengel.append(
+            f"Für den Einbetter '{einbetter_name}' am Ausleseort '{ausleseort}' ist kein "
+            f"Boden "
+            f"gemessen. Die Schwelle {schwelle:.3f} ist damit nicht überprüfbar — sie "
+            f"könnte wie 0.30 bei SigLIP 2 unter dem Boden liegen und jedes beliebige "
+            f"Bildpaar durchlassen. Boden messen, bevor dieses Urteil zählt."
+        )
+    elif boden is not None and schwelle <= boden["mittel"]:
+        raise StilError(
+            f"Schwelle {schwelle:.3f} liegt auf oder unter dem gemessenen Boden von "
+            f"'{einbetter_name}' ({boden['mittel']:.3f} ± {boden['streuung']:.3f}, "
+            f"{boden['quelle']}). Der Boden ist die Ähnlichkeit ZUSAMMENHANGLOSER Bilder "
+            f"— eine Schwelle darunter lässt jedes Bildpaar durch und ist kein Gate, "
+            f"sondern nur die Behauptung eines Gates. Genau das war 0.30 hier: 4950 von "
+            f"4950 Paaren bestanden. Schwelle aus dem Boden ableiten "
+            f"(schwelle_aus_boden), nicht aus einem anderen Modell übernehmen."
+        )
+
     ergebnis = stil_score(bild_vektor, referenz_vektoren, **kw)
     bestanden = ergebnis["score"] >= schwelle
 
@@ -335,6 +470,8 @@ def stil_gate(bild_vektor, referenz_vektoren, *, schwelle: float = SCHWELLE_STIL
         )
 
     return {**ergebnis, "bestanden": bestanden, "schwelle": schwelle,
+            "einbetter_name": einbetter_name, "ausleseort": ausleseort, "boden": boden,
+            "boden_maengel": tuple(boden_maengel),
             "begruendung": begruendung}
 
 

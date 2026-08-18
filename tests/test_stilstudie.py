@@ -49,7 +49,9 @@ from aiimaging.stil_qa import (
     AGG_MITTEL,
     SCHWELLE_STIL,
     StilError,
+    boden_fuer,
     kosinus,
+    schwelle_aus_boden,
     stil_score,
 )
 from aiimaging.stilstudie import (
@@ -270,25 +272,47 @@ def test_die_schranke_bei_nicht_positiver_schwelle_ist_die_triviale_eins():
     assert zufallstreffer_schranke(768, -0.5) == 1.0
 
 
-def test_der_boden_haengt_am_einbetter_und_der_ist_hier_nicht_gemessen():
-    """**Die wichtigste Grenze dieser Studie, in ausführbarer Form.**
+#: Die alte Schwelle. Sie steht hier weiter, weil mehrere Tests dieser Datei die Aussage
+#: festhalten, WARUM sie falsch war — und dafür brauchen sie die Zahl.
+ALTE_SCHWELLE = 0.30
 
-    Die Kegelreihe zeigt: Besetzt ein Einbetter einen Kegel mit Anteil 0,6, liegt der
-    Boden bei 0,36 — **über** der Schwelle. Dann besteht jedes beliebige Bildpaar, auch
-    ein völlig zusammenhangloses.
 
-    Die Zeile ist keine Aussage über SigLIP 2. Sie ist die Aussage, dass 0,30 ohne eine
-    Messung an SigLIP 2 nicht deutbar ist.
+def test_die_warnung_dieser_studie_ist_eingetreten_und_wurde_uebertroffen():
+    """**Die wichtigste Grenze dieser Studie — und ihre Bestätigung am Gerät.**
+
+    Die Kegelreihe sagte vorher: Besetzt ein Einbetter einen Kegel mit Anteil 0,6, liegt
+    der Boden bei 0,36 — **über** der damaligen Schwelle 0,30. Dann besteht jedes
+    beliebige Bildpaar, auch ein völlig zusammenhangloses. Die Studie konnte das nur als
+    Möglichkeit benennen; wo SigLIP 2 liegt, war hier nicht messbar.
+
+    **Gemessen am 18.08.2026** (`auf-20260818-11`, 4950 Paare aus 100 Bildern): Der Boden
+    liegt bei **0,526** — also noch über der ungünstigsten Vorausrechnung dieser Studie.
+    Die Folge war genau die vorhergesagte: 4950 von 4950 Paaren bestanden.
+
+    *Eine synthetische Studie kann eine Zahl nicht widerlegen, aber sie kann sagen, woran
+    sie hängt — und wo man messen muss. Genau das hat sie getan, und die Messung fiel
+    schlechter aus als ihr pessimistischster Fall.*
     """
-    reihe = kegelreihe(dimension=DIM, kegelanteile=KEGELANTEILE, n_proben=200, seed=12)
-    boeden = {z["kegelanteil"]: z["kennzahlen"]["mittel"] for z in reihe["zeilen"]}
+    # Gegen die ALTE Schwelle gerechnet — das ist die Warnung, die damals ausgesprochen
+    # wurde, und sie soll nachvollziehbar bleiben.
+    damals = kegelreihe(dimension=DIM, kegelanteile=KEGELANTEILE, n_proben=200, seed=12,
+                        schwelle=ALTE_SCHWELLE)
+    boeden = {z["kegelanteil"]: z["kennzahlen"]["mittel"] for z in damals["zeilen"]}
     assert boeden[0.0] < boeden[0.3] < boeden[0.6]
-    assert boeden[0.6] > SCHWELLE_STIL
-    assert reihe["kippanteil"] == 0.6
-    # Der Anteil hängt an der Dimension: Bei 256 Dimensionen streut der Boden mit 1/16
-    # und ragt darum noch unter die Schwelle; bei 768 (der Vorgabe) sind es 0,99.
-    zeile = next(z for z in reihe["zeilen"] if z["kegelanteil"] == 0.6)
+    assert boeden[0.6] > ALTE_SCHWELLE          # die Warnung dieser Studie
+    assert damals["kippanteil"] == 0.6
+    zeile = next(z for z in damals["zeilen"] if z["kegelanteil"] == 0.6)
     assert zeile["anteil_ueber_schwelle"] > 0.8
+
+    gemessen = boden_fuer("siglip2-base", "pooler_output")
+    assert gemessen["mittel"] > boeden[0.6], "Die Wirklichkeit war schlimmer als der Kegel 0,6."
+    assert gemessen["mittel"] > ALTE_SCHWELLE
+
+    # Und gegen die NEUE Schwelle kippt keine einzige Zeile mehr: Selbst ein Kegel von 0,6
+    # hebt den Boden nicht bis dorthin. Das ist der Abstand, den ein Gate braucht.
+    heute = kegelreihe(dimension=DIM, kegelanteile=KEGELANTEILE, n_proben=200, seed=12)
+    assert heute["kippanteil"] is None
+    assert SCHWELLE_STIL > max(boeden.values())
 
 
 def test_der_ueberlieferte_fehlbereich_passt_zu_einem_kegel_von_etwa_0_3():
@@ -424,8 +448,16 @@ def test_die_vier_ecken_des_wertebereichs():
     assert ecken["doppelte_laenge"] == pytest.approx(1.0)
 
 
-def test_die_schwelle_entspricht_einem_winkel_von_rund_72_grad():
-    assert winkel_grad(SCHWELLE_STIL) == pytest.approx(72.54, abs=0.01)
+def test_die_schwelle_als_winkel():
+    """Anschaulicher als der Kosinus: Wie weit dürfen zwei Bilder auseinanderstehen?
+
+    Die alte Schwelle 0,30 entsprach **72,5°** — fast ein rechter Winkel, also nahezu
+    „beliebig verschieden". Die abgeleitete Schwelle 0,666 entspricht **48,2°**. Der
+    Unterschied ist kein Feinschliff: Von „fast rechtwinklig darf es sein" zu „etwa ein
+    halber rechter Winkel".
+    """
+    assert winkel_grad(SCHWELLE_STIL) == pytest.approx(48.24, abs=0.01)
+    assert winkel_grad(ALTE_SCHWELLE) == pytest.approx(72.54, abs=0.01)
     assert winkel_grad(1.0) == pytest.approx(0.0)
     assert winkel_grad(0.0) == pytest.approx(90.0)
     assert winkel_grad(-1.0) == pytest.approx(180.0)
@@ -438,20 +470,24 @@ def test_derselbe_kosinus_bedeutet_in_zwei_und_in_768_dimensionen_gegenteiliges(
     (``vektor_mit_kosinus``). Als Prüfung der Arithmetik ist das richtig und bleibt es.
     Als Anschauung für die Schwelle ist es irreführend:
 
-    * In zwei Dimensionen erreichen rund **40 %** aller zufälligen Vektorpaare 0,30 — die
-      Schwelle ist dort ein weiter Kegel und trennt fast nichts.
+    * In zwei Dimensionen erreicht ein guter Teil aller zufälligen Vektorpaare die
+      Schwelle — sie ist dort ein weiter Kegel und trennt wenig.
     * In 768 Dimensionen erreicht es **keines** von hunderten — dieselbe Zahl ist dort
       eine sehr scharfe Grenze.
 
-    Die Zahl 0,30 hat also keine von der Dimension unabhängige Bedeutung, und wer ein
-    Gefühl für sie aus zweidimensionalen Testvektoren zieht, zieht das falsche.
+    Eine Kosinus-Schwelle hat also keine von der Dimension unabhängige Bedeutung, und wer
+    ein Gefühl für sie aus zweidimensionalen Testvektoren zieht, zieht das falsche.
+
+    *Der Befund gilt unverändert für die neue Schwelle — nur die Anteile verschieben sich.
+    Und er ist die zweite Hälfte der Erklärung dafür, wie 0,30 so lange bestehen konnte:
+    In den zweidimensionalen Prüfvektoren sah die Zahl streng aus.*
     """
     zweid = nullverteilung(2, n_proben=1000, seed=21)
     hochd = nullverteilung(768, n_proben=300, seed=21)
-    # Anteil in der Ebene: der Winkel ist gleichverteilt, also acos(0.3)/180°.
+    # Anteil in der Ebene: der Winkel ist gleichverteilt, also acos(schwelle)/180°.
     assert zweid["anteil_ueber_schwelle"] == pytest.approx(
         winkel_grad(SCHWELLE_STIL) / 180.0, abs=0.05)
-    assert zweid["anteil_ueber_schwelle"] > 0.35
+    assert zweid["anteil_ueber_schwelle"] > 0.2
     assert hochd["anteil_ueber_schwelle"] == 0.0
 
 
@@ -670,22 +706,32 @@ def test_die_studie_kennt_kein_einziges_bild():
     assert "open" not in aufgerufene
 
 
-def test_die_schwelle_wird_von_dieser_studie_nicht_veraendert():
-    """0,30 bleibt stehen. Die Studie liefert die Begründung daneben, nicht eine neue Zahl.
+def test_diese_studie_hat_die_schwelle_nicht_veraendert_die_messung_hat_es():
+    """Wer die Zahl verschoben hat — und wer nicht.
 
-    Genau so ist es bei ``SCHWELLE_GEOMETRIE`` gehalten worden: nicht verteidigt, sondern
-    beibehalten.
+    Diese Studie liess 0,30 bewusst stehen: Aus synthetischen Vektoren lässt sich keine
+    Bildschwelle ableiten, und eine neue geratene Zahl wäre keine Verbesserung gewesen.
+    Was sie geliefert hat, ist die **Begründung daneben** und die Anweisung, wo zu messen
+    ist.
+
+    Verschoben hat die Zahl erst die Messung am Gerät (`auf-20260818-11`). Genau so soll
+    die Reihenfolge sein: erst wissen, woran eine Zahl hängt, dann messen, dann setzen —
+    und nicht raten, weil die alte Zahl unbefriedigend aussah.
     """
-    assert SCHWELLE_STIL == 0.30
-    quelle = (PAKET / "stil_qa.py").read_text(encoding="utf-8")
-    assert "SCHWELLE_STIL = 0.30" in quelle
+    assert SCHWELLE_STIL != ALTE_SCHWELLE
+    boden = boden_fuer("siglip2-base", "pooler_output")
+    assert SCHWELLE_STIL == pytest.approx(schwelle_aus_boden(boden), abs=1e-3)
 
 
 def test_der_konstanten_kommentar_nennt_die_offene_frage():
-    """Wer die Zahl liest, muss am selben Ort erfahren, worauf sie sich stützt — und worauf nicht."""
+    """Wer die Zahl liest, muss am selben Ort erfahren, worauf sie sich stützt — und worauf nicht.
+
+    Jetzt zusätzlich: dass die eine Hälfte gemessen und die andere gesetzt ist. Der Boden
+    sagt, wo Unähnlichkeit **aufhört** — nicht, wo Ähnlichkeit **anfängt**.
+    """
     quelle = (PAKET / "stil_qa.py").read_text(encoding="utf-8")
-    kopf = quelle.split("SCHWELLE_STIL = 0.30")[0]
-    for stichwort in ("Boden", "SigLIP", "Kegel", "stilstudie"):
+    kopf = quelle.split("SCHWELLE_STIL = ")[0]
+    for stichwort in ("Boden", "SigLIP", "Kegel", "stilstudie", "auf-20260818-11"):
         assert stichwort in kopf, f"{stichwort!r} fehlt im Kommentar zur Schwelle"
 
 

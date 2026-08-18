@@ -31,9 +31,12 @@ import pytest
 from aiimaging.stil_qa import (
     AGG_MAX,
     AGG_MITTEL,
+    K_STREUUNGEN,
     SCHWELLE_STIL,
     StilError,
+    boden_fuer,
     kosinus,
+    schwelle_aus_boden,
     stil_gate,
     stil_gate_aus_bildern,
     stil_score,
@@ -221,23 +224,103 @@ def test_ein_generator_als_referenzset_ist_zulaessig():
 # 3 · Das Gate
 # --------------------------------------------------------------------------------------
 
-def test_schwelle_ist_030():
-    assert SCHWELLE_STIL == 0.30
+def test_die_schwelle_liegt_ueber_dem_gemessenen_boden():
+    """Die eine Bedingung, ohne die ein Stil-Gate keines ist.
+
+    Der Boden ist die Ähnlichkeit **zusammenhangloser** Bilder. Eine Schwelle darunter
+    lässt jedes beliebige Paar durch. Genau das war 0.30 bei SigLIP 2: **4950 von 4950
+    Paaren bestanden** (`auf-20260818-11`), und selbst das unähnlichste Paar lag mit
+    0.3097 noch darüber.
+    """
+    boden = boden_fuer("siglip2-base", "pooler_output")
+    assert boden is not None
+    assert SCHWELLE_STIL > boden["mittel"], "Die Schwelle liegt unter dem Boden."
+    assert SCHWELLE_STIL > boden["groesster"] - 0.2  # deutlich, nicht knapp
 
 
-def test_belegter_trefferbereich_besteht():
-    """Getroffene Bilder lagen im Vorläufer bei ~0.5–0.6."""
+def test_die_schwelle_ist_aus_dem_boden_abgeleitet_und_nicht_gesetzt():
+    """Eine feste Zahl stirbt mit dem Einbetter, der sie hervorgebracht hat.
+
+    Genau das ist passiert: 0.30 stammte aus DINOv3-Läufen und wanderte beim Wechsel auf
+    SigLIP 2 stillschweigend mit — in einen Raum, in dem sie unter dem Boden lag.
+    """
+    boden = boden_fuer("siglip2-base", "pooler_output")
+    assert SCHWELLE_STIL == pytest.approx(schwelle_aus_boden(boden, K_STREUUNGEN), abs=1e-3)
+
+
+def test_der_ueberlieferte_trefferbereich_war_der_boden_eines_anderen_modells():
+    """Der unbequemste Test dieser Datei — er widerlegt, was hier vorher stand.
+
+    Bis zum 18.08.2026 hielt diese Datei fest: „Getroffene Bilder lagen im Vorläufer bei
+    ~0.5–0.6." Gemessen liegt der **Boden** von SigLIP 2 bei 0.526 ± 0.070 — der
+    überlieferte *Treffer*-Bereich ist also genau der Bereich, in dem sich zwei
+    **zusammenhanglose** Bilder befinden. Er stammte aus DINOv3, wo er etwas anderes
+    bedeutete.
+
+    Deshalb besteht dieser Bereich jetzt **nicht** mehr, und das ist richtig so.
+    """
+    boden = boden_fuer("siglip2-base", "pooler_output")
     for ziel in (0.50, 0.55, 0.60):
         urteil = stil_gate(vektor_mit_kosinus(ziel), [OST])
-        assert urteil["bestanden"] is True, ziel
-        assert urteil["score"] == pytest.approx(ziel)
+        assert urteil["bestanden"] is False, ziel
+        assert abs(ziel - boden["mittel"]) < 3 * boden["streuung"], ziel
 
 
-def test_belegter_fehlbereich_besteht_nicht():
-    """Verfehlte Bilder lagen im Vorläufer bei ~0.06–0.13."""
+def test_der_ueberlieferte_fehlbereich_ist_fuer_siglip_gar_nicht_erreichbar():
+    """0.06–0.13 aus den DINOv3-Läufen liegt weit UNTER allem, was SigLIP 2 je liefert.
+
+    Das kleinste je gemessene Paar liegt bei 0.310. Der überlieferte Fehlbereich ist damit
+    keine strenge Anforderung, sondern eine Angabe über ein anderes Modell — sie kann in
+    diesem Raum gar nicht auftreten.
+    """
+    boden = boden_fuer("siglip2-base", "pooler_output")
     for ziel in (0.06, 0.10, 0.13):
         urteil = stil_gate(vektor_mit_kosinus(ziel), [OST])
         assert urteil["bestanden"] is False, ziel
+        assert ziel < boden["kleinster"], ziel
+
+
+def test_eine_schwelle_unter_dem_boden_ist_ein_fehler_und_kein_urteil():
+    """Wer den Einbetter wechselt und die Schwelle stehen lässt, soll anschlagen.
+
+    Der Fehler war nie die Zahl, sondern dass sie einen Modellwechsel überlebt hat. Ohne
+    diese Prüfung wäre das Gate wieder still offen — und ein Gate, das nie zugeht, ist
+    gefährlicher als gar keines, weil es aussieht wie Schutz.
+    """
+    with pytest.raises(StilError, match="Boden"):
+        stil_gate(OST, [OST], schwelle=0.30)
+
+
+def test_unbekannter_einbetter_ist_ein_mangel_und_kein_fehler():
+    """Ein ungemessener Boden ist keine falsche Schwelle, sondern eine unbekannte."""
+    urteil = stil_gate(OST, [OST], einbetter_name="irgendein-neues-modell")
+    assert urteil["boden"] is None
+    assert urteil["boden_maengel"]
+    assert "kein Boden" in urteil["boden_maengel"][0]
+
+
+def test_ohne_einbetterangabe_wird_nicht_geprueft():
+    """Der Notausgang — ausdrücklich zu wählen, nicht die Vorgabe."""
+    urteil = stil_gate(OST, [OST], einbetter_name=None, schwelle=0.30)
+    assert urteil["bestanden"] is True
+    assert urteil["boden_maengel"] == ()
+
+
+def test_negatives_k_wird_abgewiesen():
+    """Es ergäbe eine Schwelle unter dem Boden — also wieder kein Gate."""
+    boden = boden_fuer("siglip2-base", "pooler_output")
+    with pytest.raises(StilError, match="negativ"):
+        schwelle_aus_boden(boden, -1.0)
+
+
+def test_der_ausleseort_gehoert_zum_schluessel():
+    """Derselbe Einbetter hat an zwei Ausleseorten zwei verschiedene Böden.
+
+    Wer die Schwelle übernimmt, ohne den Ausleseort zu übernehmen, wiederholt genau den
+    Fehler, der 0.30 hierher gebracht hat.
+    """
+    assert boden_fuer("siglip2-base", "pooler_output") is not None
+    assert boden_fuer("siglip2-base", "last_hidden_state_mittel") is None
 
 
 def test_genau_auf_der_schwelle_besteht():
@@ -263,15 +346,23 @@ def test_knapp_darunter_besteht_nicht():
 
 def test_urteil_traegt_seinen_massstab_mit():
     """Ohne Schwelle und Aggregation ist ein protokolliertes ``False`` später nicht deutbar."""
-    urteil = stil_gate(OST, [NORD], schwelle=0.5, aggregation=AGG_MITTEL)
-    assert urteil["schwelle"] == 0.5
+    urteil = stil_gate(OST, [NORD], schwelle=0.6, aggregation=AGG_MITTEL)
+    assert urteil["schwelle"] == 0.6
     assert urteil["aggregation"] == AGG_MITTEL
-    assert "0.50" in urteil["begruendung"]
+    assert "0.60" in urteil["begruendung"]
+
+
+def test_urteil_traegt_den_boden_mit():
+    """Wer ein Urteil nachvollzieht, muss auch sehen, WOGEGEN die Schwelle geprüft wurde."""
+    urteil = stil_gate(OST, [NORD])
+    assert urteil["einbetter_name"] == "siglip2-base"
+    assert urteil["ausleseort"] == "pooler_output"
+    assert urteil["boden"]["quelle"].startswith("auf-20260818-11")
 
 
 def test_eigene_schwelle_verschiebt_das_urteil():
     """Dieselben Daten, anderer Massstab — und das Urteil kippt. Die Schwelle ist gesetzt."""
-    vektor = vektor_mit_kosinus(0.4)
+    vektor = vektor_mit_kosinus(0.8)
     assert stil_gate(vektor, [OST])["bestanden"] is True
     assert stil_gate(vektor, [OST], schwelle=0.9)["bestanden"] is False
 
@@ -306,8 +397,11 @@ def attrappe(pfad):
     im Test ein Wörterbuch — die Metrik darunter merkt keinen Unterschied.
     """
     tabelle = {
-        "treffer.png": vektor_mit_kosinus(0.55),
-        "fehlschlag.png": vektor_mit_kosinus(0.09),
+        # 0.75 liegt über der abgeleiteten Schwelle 0.666, 0.55 mitten im Boden von
+        # SigLIP 2 (0.526 ± 0.070) — die Attrappe bildet damit die gemessene Lage ab und
+        # nicht mehr die überlieferte aus den DINOv3-Läufen.
+        "treffer.png": vektor_mit_kosinus(0.75),
+        "fehlschlag.png": vektor_mit_kosinus(0.55),
         "referenz_a.png": OST,
         "referenz_b.png": [-1.0, 0.0],
     }
@@ -322,7 +416,7 @@ def test_gate_aus_bildern_laeuft_mit_attrappe_ohne_gewichte():
         einbetter=attrappe,
     )
     assert urteil["bestanden"] is True
-    assert urteil["score"] == pytest.approx(0.55)
+    assert urteil["score"] == pytest.approx(0.75)
     assert urteil["n_referenzen"] == 2
 
 
