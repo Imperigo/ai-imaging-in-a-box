@@ -173,7 +173,26 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Schwelle mit Grund verschieben.
 - [ ] **Die Stil-Schwelle 0.30** ist von alledem unberührt und weiterhin ungeprüft — sie
       stammt zudem aus DINOv3-Läufen, und der Einbetter ist inzwischen SigLIP 2.
-- [ ] Connectors: ArchiCAD über IFC4, Rhino über glTF
+- [x] **Connectors, erste Hälfte** — erledigt 2026-08-18, `herkunft.py`. Ein Connector
+      ist hier **kein Import-Filter** (IFC und glTF liest das Projekt längst), sondern die
+      Antwort auf die zwei Fragen, die zwischen Autorenprogrammen wirklich verschieden
+      ausfallen: *in welcher Einheit sind die Zahlen, und wo ist oben?*
+      **ArchiCAD über IFC4 braucht keine Umrechnung — gemessen, nicht angenommen.** Eine
+      realistische Millimeter-Datei (`.MILLI.` **und** tausendfach grössere Koordinaten)
+      läuft durch `ifc_zu_glb` und kommt bei exakt 8,0 × 5,0 × 3,25 m heraus;
+      IfcOpenShell wendet den Faktor selbst an. *Die Annahme, die dieses Modul auslöste,
+      war falsch, und sie ist im Modul-Docstring als widerlegt stehengelassen.*
+      Geblieben ist der Fall, den es wirklich gibt: der **kaputte Export**, der Millimeter
+      erklärt und metergrosse Zahlen trägt. Den fing der `torwaechter` schon — aber nur
+      als *Verdacht*. `pruefe_einheit_gegen_masse` macht daraus eine **Diagnose**.
+      Für glTF bleibt die Up-Achse offen, und das mit Absicht: **Rhino** ist der ehrlichste
+      Eintrag der Registry — sein Exporter hat einen Schalter, den die Datei nicht
+      mitteilt. `fordere_up_axis` nimmt eine *Vermutung* darum nicht an; sie wäre ein
+      Default mit besserer Begründung, und Phase 0 wollte an dieser Stelle keinen.
+- [ ] **Connectors, zweite Hälfte** — an **echten** Dateien prüfen. Die Registry ist aus
+      Normen und Dokumentation abgeleitet; keine ArchiCAD-, Revit- oder Rhino-Datei wurde
+      je gesehen. Sicher ist nur die IFC-Einheitenzeile (Norm) und die Z-up-Festlegung
+      (ISO 16739). Welche Zeichenkette ArchiCAD in `FILE_NAME` schreibt, ist es nicht.
 - [ ] LoRA-Stiltraining über kohya oder ai-toolkit als Subprozess
 
 ---

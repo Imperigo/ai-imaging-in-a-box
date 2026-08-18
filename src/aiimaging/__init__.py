@@ -14,6 +14,7 @@ importiert.
 Aufbau
 ------
 ``contracts``    Verträge, insbesondere die Up-Achsen-Regel
+``herkunft``     Connector-Schicht: was eine Datei selbst über Einheit und Up-Achse sagt
 ``seams``        die Prozessgrenzen zu IfcOpenShell und Blender
 ``torwaechter``  Massstabs- und Georeferenzprüfung vor teurer GPU-Zeit
 ``graph``        der innere Knotengraph der Bildkette
@@ -37,8 +38,8 @@ __version__ = "0.0.2"
 
 from aiimaging import (  # noqa: F401
     auftrag, backbone, bildlesen, bildschreiben, contracts, einbetter, gate, geometrie_qa,
-    graph, jobs, kette, mcp_schemas, render, seams, stil_qa, tiefenschaetzer, torwaechter,
-    werkzeuge,
+    graph, herkunft, jobs, kette, mcp_schemas, render, schwellenstudie, seams, stil_qa,
+    tiefenschaetzer, torwaechter, werkzeuge,
 )
 from aiimaging.contracts import (  # noqa: F401
     ContractError,
