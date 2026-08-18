@@ -32,6 +32,7 @@ from conftest import SRC
 
 from aiimaging import auftrag as auftrag_modul
 from aiimaging import backbone, render
+from aiimaging import render
 from aiimaging.render import (
     MAX_SCHRITTE,
     MAX_SEED,
@@ -292,14 +293,22 @@ def test_gegenprobe_flux2_klein_ist_erlaubt_aber_ohne_depth_naht():
     assert eintrag.konditionierung == backbone.KOND_INTEGRIERTES_EDIT
 
 
-def test_integriertes_edit_wird_abgelehnt(tiefe, ziel):
-    """Kein So-tun-als-ob: Fehlt die Naht, wird nicht gerendert."""
-    ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel, backbone="flux2-klein-4b"),
-                       modell=Attrappe())
+def test_eine_unbekannte_konditionierungsart_wird_abgelehnt(tmp_path):
+    """**Berichtigt am 18.08.2026 durch den ersten echten Render (`auf-20260818-09`).**
 
-    assert ergebnis["status"] == STATUS_ABGELEHNT
-    assert ergebnis["bild_png"] is None
-    assert any("Adapterschicht" in m for m in ergebnis["maengel"])
+    Bis dahin wies diese Prüfung alles ab, was nicht ``depth_controlnet`` war — mit der
+    Begründung, für ``integriertes_edit`` fehle eine Adapterschicht. Der Lauf hat das
+    widerlegt: Der Adapter trägt es, indem er die Tiefenkarte als ``image`` übergibt.
+
+    Was er **nicht** kann, ist ein Regler dafür — und das meldet er je Lauf als Hinweis,
+    statt es in einer Pauschalablehnung zu verstecken. Abgewiesen wird darum nur noch
+    eine Art, die die Registry gar nicht kennt.
+    """
+    a = auftrag(tmp_path, backbone="flux2-klein-4b")
+    assert "Konditionierungsart" not in " ".join(pruefe_auftrag(a)), (
+        "integriertes_edit ist keine Ablehnung mehr"
+    )
+
 
 
 def test_alle_registrierten_depth_backbones_werden_angenommen(tiefe):
@@ -568,9 +577,17 @@ def test_lade_modell_lehnt_nicht_kommerzielle_gewichte_ab(tmp_path):
         render.lade_modell("flux1-dev", tmp_path)
 
 
-def test_lade_modell_lehnt_integriertes_edit_ab(tmp_path):
-    with pytest.raises(RenderError, match="Adapterschicht"):
-        render.lade_modell("flux2-klein-4b", tmp_path)
+def test_lade_modell_traegt_integriertes_edit(tmp_path, monkeypatch):
+    """Die Gegenprobe auf der Ladeseite: kein Abbruch mehr an der Konditionierungsart.
+
+    Gescheitert wird jetzt erst an den Gewichten — also an etwas, das wirklich fehlt.
+    """
+    monkeypatch.setenv("AIIMAGING_MODELLE", str(tmp_path))
+    with pytest.raises(RenderError) as fehler:
+        render.lade_modell("flux2-klein-4b")
+    assert "Konditionierung" not in str(fehler.value)
+    assert "Gewichte" in str(fehler.value)
+
 
 
 def test_lade_modell_meldet_fehlende_gewichte(tmp_path):

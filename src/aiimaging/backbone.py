@@ -184,7 +184,25 @@ _eintrag(Backbone(
     parameter_b=20.0,
     lizenz="Apache-2.0",
     kommerziell_nutzbar=True,
-    konditionierung=KOND_DEPTH_CONTROLNET,
+    # KORREKTUR 2026-08-18, am Gerät gemessen (auf-20260818-09, erster echter Render):
+    # Dieser Eintrag führte `KOND_DEPTH_CONTROLNET`. Das ist über die tatsächlich
+    # geladene Pipeline **falsch**. `QwenImageEditPlusPipeline` kennt weder einen
+    # `control_image`-Eingang noch `controlnet_conditioning_scale` noch `strength`:
+    #
+    #   * Die Tiefenkarte wird als `image` übergeben und **ersetzt dabei den
+    #     Beauty-Pass** — die Konditionierung ist Bildbearbeitung, nicht ControlNet.
+    #   * `controlnet_staerke` und `denoise` sind **wirkungslos**. Eine Vergleichsreihe
+    #     über 0.6/0.8/1.0 hätte dreimal dasselbe Bild geliefert und **wie ein Befund
+    #     ausgesehen** — genau davor hat der Lauf bewahrt.
+    #
+    # Das trifft die Beschreibung von `controlnet_staerke` in `render.RenderAuftrag`
+    # („die eigentliche Regler des Projekts") für den Vorgabe-Backbone: Es gibt ihn hier
+    # nicht. Wer ihn braucht, nimmt einen Eintrag mit echter ControlNet-Naht.
+    #
+    # Die Angabe gilt für **diese Pipeline**, nicht zwingend für das Modell: Ob
+    # Qwen-Image-Edit über einen anderen Weg eine Depth-ControlNet-Naht hat, ist NICHT
+    # geprüft. Darum korrigiert statt gestrichen.
+    konditionierung=KOND_INTEGRIERTES_EDIT,
     vram_gb=_vram_schaetzung(20.0),
     dateien=_DIFFUSERS_DATEIEN,
     # Als einziger Eintrag am Original geprüft (Modellkarte, Lagebeurteilung Kap. 4).

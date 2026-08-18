@@ -172,17 +172,27 @@ def test_backbone_laesst_sich_ohne_lizenz_quelle_bauen():
 # 2 · Die belegten Fakten aus der Lagebeurteilung, Kapitel 4
 # --------------------------------------------------------------------------------------
 
-def test_vorgabe_ist_qwen_edit_apache_und_depth_naht():
-    """Der Vorgabe-Backbone: Apache-2.0, am Original geprüft, native Depth-Naht."""
-    assert VORGABE_BACKBONE == "qwen-image-edit-2511"
-    b = hole(VORGABE_BACKBONE)
-    assert b.lizenz == "Apache-2.0"
-    assert b.kommerziell_nutzbar is True
-    assert b.konditionierung == KOND_DEPTH_CONTROLNET
-    assert b.parameter_b == 20.0
-    # Als einziger Eintrag an der Modellkarte geprüft — das ist der Grund für die Vorgabe.
-    assert b.lizenz_quelle == QUELLE_MODELLKARTE
-    assert pruefe_lizenz(VORGABE_BACKBONE)["auflagen"] == ()
+def test_vorgabe_ist_qwen_edit_und_apache(tmp_path=None):
+    """Die Vorgabe ist permissiv und belegt — **aber sie ist kein Depth-ControlNet.**
+
+    Bis zum 18.08.2026 hiess dieser Test „…_und_depth_naht" und prüfte genau das. Der
+    erste echte Render (`auf-20260818-09`) hat es widerlegt: `QwenImageEditPlusPipeline`
+    kennt weder einen `control_image`-Eingang noch `controlnet_conditioning_scale` noch
+    `strength`. Die Tiefenkarte geht als `image` hinein und **ersetzt dabei den
+    Beauty-Pass**; `controlnet_staerke` und `denoise` sind wirkungslos.
+
+    Der Test hält jetzt fest, was stimmt — und ausdrücklich mit, dass die Vorgabe
+    **keine** ControlNet-Naht hat. Sonst käme die alte Annahme über einen anderen Test
+    zurück.
+    """
+    e = hole(VORGABE_BACKBONE)
+    assert e.name == "qwen-image-edit-2511"
+    assert e.lizenz == "Apache-2.0" and e.kommerziell_nutzbar is True
+    assert pruefe_lizenz(e.name)["lizenz_quelle"] == QUELLE_MODELLKARTE
+    assert e.konditionierung == KOND_INTEGRIERTES_EDIT, (
+        "am Gerät gemessen: kein ControlNet, sondern instruktionsgeführte Bildbearbeitung"
+    )
+
 
 
 def test_die_vorgabe_steht_in_der_auswahl_vorn():

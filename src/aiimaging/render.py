@@ -83,6 +83,8 @@ from aiimaging import backbone
 #: Die Konditionierung, die dieses Modul bedient. Alles andere braucht eine eigene
 #: Adapterschicht und wird abgelehnt (siehe Modul-Docstring).
 KOND_DEPTH_CONTROLNET = backbone.KOND_DEPTH_CONTROLNET
+KOND_INTEGRIERTES_EDIT = backbone.KOND_INTEGRIERTES_EDIT
+KONDITIONIERUNGEN = backbone.KONDITIONIERUNGEN
 
 #: Vorgabe-Backbone, aus der Registry übernommen statt hier zweitgeschrieben. Ein
 #: eigener Vorgabewert an dieser Stelle liefe beim nächsten Registry-Wechsel auseinander.
@@ -241,7 +243,12 @@ def pruefe_auftrag(a: RenderAuftrag) -> list[str]:
 
     1. **Lizenz** (Regel 1) — ein nicht kommerziell nutzbares Modell ist ausgeschlossen,
        und zwar bevor eine einzige Datei angefasst wird.
-    2. **Konditionierungsart** — ``integriertes_edit`` hat keine Depth-ControlNet-Naht.
+    2. **Konditionierungsart** — bis zum 18.08.2026 wies diese Prüfung alles ab, was
+       nicht ``depth_controlnet`` war, mit der Begründung, es fehle eine Adapterschicht.
+       **Der erste echte Render hat das widerlegt** (`auf-20260818-09`): Der Adapter
+       trägt ``integriertes_edit`` sehr wohl — er übergibt die Tiefenkarte als ``image``.
+       Was er nicht kann, ist ein Regler dafür; das meldet er je Lauf als Hinweis.
+       Abgewiesen wird darum nur noch eine **unbekannte** Art.
     3. Eingabedateien, dann Zahlenbereiche.
 
     Die Reihenfolge ist Absicht: Die bindendste und billigste Prüfung zuerst. Ein
@@ -273,14 +280,10 @@ def pruefe_auftrag(a: RenderAuftrag) -> list[str]:
                 f"Backbone {eintrag.name!r} ist unter Regel 1 ausgeschlossen: "
                 f"{lizenz['begruendung']}"
             )
-        if eintrag.konditionierung != KOND_DEPTH_CONTROLNET:
+        if eintrag.konditionierung not in KONDITIONIERUNGEN:
             maengel.append(
-                f"Backbone {eintrag.name!r} konditioniert über "
-                f"{eintrag.konditionierung!r}, nicht über {KOND_DEPTH_CONTROLNET!r}. "
-                f"Für diese Familie existiert die Depth-ControlNet-Naht nicht; sie "
-                f"braucht eine eigene Adapterschicht. Solange die fehlt, wird hier "
-                f"nicht gerendert — ein Render ohne Tiefenkonditionierung erfindet die "
-                f"Kubatur, und genau das soll dieses Projekt verhindern."
+                f"Backbone {eintrag.name!r} nennt eine unbekannte Konditionierungsart "
+                f"{eintrag.konditionierung!r}. Bekannt: {', '.join(KONDITIONIERUNGEN)}."
             )
 
     # --- Eingaben --------------------------------------------------------------------
@@ -384,10 +387,10 @@ def lade_modell(backbone_name: str, modell_wurzel=None):
         raise RenderError(
             f"Backbone {eintrag.name!r} wird nicht geladen: {lizenz['begruendung']}"
         )
-    if eintrag.konditionierung != KOND_DEPTH_CONTROLNET:
+    if eintrag.konditionierung not in KONDITIONIERUNGEN:
         raise RenderError(
-            f"Backbone {eintrag.name!r} konditioniert über {eintrag.konditionierung!r} "
-            f"und hat keine Depth-ControlNet-Naht. Es fehlt eine eigene Adapterschicht."
+            f"Backbone {eintrag.name!r} nennt eine unbekannte Konditionierungsart "
+            f"{eintrag.konditionierung!r}. Bekannt: {', '.join(KONDITIONIERUNGEN)}."
         )
 
     wurzel = Path(modell_wurzel) if modell_wurzel is not None else standard_modell_wurzel(eintrag.name)
