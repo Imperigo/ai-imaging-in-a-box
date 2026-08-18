@@ -96,10 +96,12 @@ aus `register_in_odysseus.sh` bekannt, aber hier nicht ausgeführt.
 
 **Aufwand:** gross · **Setzt voraus:** Phase 2
 
-- [ ] Multipass in Blender vollständig (Beauty, Material-ID, Depth)
+- [x] Multipass in Blender vollständig — Beauty, Material-ID (Goldener Winkel),
+      Depth als EXR **und** normalisiertes PNG mit Rückrechnungsformel
 - [x] Backbone-Adapter — `backbone.py`: Registry mit Lizenz je Modell.
       `waehle(kommerziell=True)` gibt FLUX-dev **nie** zurück — Regel 1 ausführbar.
 - [ ] Erster echter Render: Qwen-Image-Edit-2511 (Apache-2.0) mit ControlNet-Depth
+      — **braucht GPU und Gewichte**, siehe `auftraege/` (HomeStation)
 - [x] **Geometrie-Treue-QA** — `geometrie_qa.py`, an synthetischen Fällen belegt:
       treu 0.99, halluziniert 0.24 bei Spearman **+1.000**. Nur die Silhouette fängt ihn.
 - [x] Stil-QA als zweites Gate — `stil_qa.py`, Metrik testbar, Einbetter injizierbar
@@ -107,6 +109,11 @@ aus `register_in_odysseus.sh` bekannt, aber hier nicht ausgeführt.
 
 **Fertig, wenn** ein Render gegen die Eingangsgeometrie messbar bewertet wird und eine
 Halluzination nachweislich durchfällt.
+
+**Stand 2026-08-18:** Alles ohne GPU Machbare ist erledigt. Die Halluzination fällt
+nachweislich durch — an **synthetischen** Tiefenkarten (Spearman +1.000, IoU 0.057,
+Score 0.24). Was aussteht, ist ein **echter** Render durch ein Bildmodell; das braucht
+GPU und Gewichte und läuft über `auftraege/` auf der HomeStation.
 
 ---
 

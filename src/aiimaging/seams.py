@@ -104,14 +104,53 @@ def ifc_zu_glb(ifc_path, glb_path, *, timeout: int = 300, _starte=None) -> dict:
         raise SeamError(f"Runner lieferte kein JSON: {e}\n{ergebnis.stdout[:400]}") from e
 
 
-def glb_zu_tiefenkarte(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
-                       samples: int = 16, timeout: int = 900, _starte=None) -> dict:
-    """glb → Cycles-Tiefenkarte über `blender --background`.
+def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, samples: int,
+                         beauty: bool, material_id: bool) -> list[str]:
+    """Die Argumente hinter dem `--`-Trenner — eine Stelle für Lauf und Trockenlauf.
+
+    Wären sie zweimal geschrieben, könnten `glb_zu_multipass` und
+    `baue_kommando_multipass` auseinanderlaufen — und dann prüfte der Test ein Kommando,
+    das so nie gestartet wird.
+    """
+    argumente = [
+        "--glb", str(glb_path), "--out", str(out_dir),
+        "--aufloesung", str(aufloesung), "--samples", str(samples),
+    ]
+    if drehen:
+        argumente.append("--rotiere-z-up")
+    if not beauty:
+        argumente.append("--ohne-beauty")
+    if not material_id:
+        argumente.append("--ohne-material-id")
+    return argumente
+
+
+def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
+                     samples: int = 16, beauty: bool = True, material_id: bool = True,
+                     timeout: int = 900, _starte=None) -> dict:
+    """glb → Cycles-Multipass über `blender --background`.
+
+    Vier Ausgaben, in zwei Renderdurchgängen: Beauty und Tiefe (EXR in Metern plus
+    normalisiertes 16-Bit-PNG, nah = hell) entstehen gemeinsam, die Material-ID braucht
+    einen eigenen Durchgang — ihr Emissions-Override würde sonst das Beauty-Bild in eine
+    flache Farbfläche verwandeln.
 
     `up_axis` ist **Pflicht**, kein Vorgabewert. Der Grund ist der Phase-0-Befund: Zwei
     Erzeuger im Ökosystem liefern beide ein Feld `glb_path`, aber mit unterschiedlicher
     Orientierung (KosmoDraw Z-up, KosmoVis Y-up). Ein Default wäre eine stille
     Verdrehung von Tiefenkarte, Kamera und späterer Geometrie-QA.
+
+    Args:
+        beauty: `False` unterdrückt nur das Schreiben des Beauty-PNG. Gerendert wird der
+            Durchgang trotzdem — die Tiefe ist ein Pass desselben Renders und hinge sonst
+            in der Luft. Spart Plattenplatz, keine Rechenzeit.
+        material_id: `False` lässt den zweiten Durchgang ganz aus und spart damit
+            tatsächlich Rechenzeit.
+
+    Returns:
+        Report des Runners mit `beauty_png`, `material_id_png`, `depth_exr`, `depth_png`,
+        `n_materialien` und `depth_normalisierung` (min/max in Metern, für die Rückrechnung
+        des PNG in echte Tiefen).
 
     Raises:
         ContractError: `up_axis` fehlt oder ist nicht deutbar.
@@ -133,11 +172,9 @@ def glb_zu_tiefenkarte(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
     cmd = [
         finde_blender(), "--background", "--factory-startup",
         "--python", str(BLENDER_RUNNER), "--",
-        "--glb", str(glb_path), "--out", str(out_dir),
-        "--aufloesung", str(aufloesung), "--samples", str(samples),
+        *_multipass_argumente(glb_path, out_dir, drehen=drehen, aufloesung=aufloesung,
+                              samples=samples, beauty=beauty, material_id=material_id),
     ]
-    if drehen:
-        cmd.append("--rotiere-z-up")
 
     ergebnis = starte(cmd, timeout)
 
@@ -158,26 +195,37 @@ def glb_zu_tiefenkarte(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
     return json.loads(bericht.read_text(encoding="utf-8"))
 
 
-def baue_kommando_tiefenkarte(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
-                              samples: int = 16) -> list[str]:
+def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
+                            samples: int = 16, beauty: bool = True,
+                            material_id: bool = True) -> list[str]:
     """Nur das Blender-Kommando bauen, ohne es auszuführen.
 
     Für Tests und zur Fehlersuche: zeigt, ob die Prozessgrenze richtig konstruiert ist —
     insbesondere, ob `--rotiere-z-up` bei Z-up-Quellen gesetzt wird.
     """
-    cmd = [
+    return [
         "blender", "--background", "--factory-startup",
         "--python", str(BLENDER_RUNNER), "--",
-        "--glb", str(glb_path), "--out", str(out_dir),
-        "--aufloesung", str(aufloesung), "--samples", str(samples),
+        *_multipass_argumente(glb_path, out_dir, drehen=needs_rotation(up_axis),
+                              aufloesung=aufloesung, samples=samples,
+                              beauty=beauty, material_id=material_id),
     ]
-    if needs_rotation(up_axis):
-        cmd.append("--rotiere-z-up")
-    return cmd
+
+
+# ── Alte Namen ───────────────────────────────────────────────────────────────────────
+# Der Lauf liefert seit dem Multipass nicht mehr nur eine Tiefenkarte, sondern vier
+# Ausgaben; `…_tiefenkarte` benennt also nur noch einen Teil dessen, was passiert. Die
+# alten Namen bleiben als Alias stehen, weil sie in `docs/`, in bestehenden Tests und in
+# der MCP-Anbindung vorkommen: Ein blosses Umbenennen wäre ein stiller Bruch für jeden
+# Aufrufer ausserhalb dieses Repos — und die Prozessgrenze ist genau die Stelle, an der
+# dieses Projekt keine stillen Brüche will. Neuer Code nimmt die `…_multipass`-Namen.
+glb_zu_tiefenkarte = glb_zu_multipass
+baue_kommando_tiefenkarte = baue_kommando_multipass
 
 
 __all__ = [
     "ContractError", "SeamError",
-    "baue_kommando_tiefenkarte", "finde_blender", "finde_ifc_python",
-    "glb_zu_tiefenkarte", "ifc_zu_glb",
+    "baue_kommando_multipass", "baue_kommando_tiefenkarte",
+    "finde_blender", "finde_ifc_python",
+    "glb_zu_multipass", "glb_zu_tiefenkarte", "ifc_zu_glb",
 ]

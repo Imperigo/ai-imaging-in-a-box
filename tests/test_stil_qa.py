@@ -369,6 +369,15 @@ def test_leeres_referenzset_bricht_ab_bevor_eingebettet_wird():
     assert aufrufe == []
 
 
+def test_ein_einzelner_pfad_statt_einer_liste_wird_abgefangen():
+    """``"a.png"`` zerfiele in seine Zeichen — der Einbetter bekäme "/" als Bild.
+
+    Ein häufiger und stiller Fehlgriff: Der Aufruf liefe durch und der Score wäre Unsinn.
+    """
+    with pytest.raises(StilError, match="einzelner Pfad"):
+        stil_gate_aus_bildern("a.png", "b.png", einbetter=attrappe)
+
+
 def test_kaputter_einbetter_wird_als_solcher_gemeldet():
     """Liefert das Modell keinen brauchbaren Vektor, bricht es hier ab — nicht später."""
     with pytest.raises(StilError):

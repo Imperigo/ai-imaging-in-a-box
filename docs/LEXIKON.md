@@ -511,6 +511,16 @@ das KI-Modell an die echte Gebäudeform bindet.*
 **Material-ID-Pass** — Bild, in dem jedes Material eine eigene Farbfläche bekommt.
 Erlaubt der KI, Bereiche zu unterscheiden.
 
+**Goldener Winkel** — Ein Verteilungstrick: Nimmt man bei jedem Schritt rund 137,5°
+(bzw. den Anteil 0,618 eines vollen Kreises), liegen aufeinanderfolgende Werte immer
+weit auseinander, egal wie viele es werden. *Wird hier benutzt, um jedem Bauteil im
+Material-ID-Pass eine gut unterscheidbare Farbe zu geben — auch beim zwanzigsten.*
+In der Natur dasselbe Prinzip wie bei der Blattstellung am Trieb.
+
+**Normalisierung** — Messwerte auf einen festen Bereich umrechnen, meist 0 bis 1.
+*Die Tiefenkarte trägt echte Meter; das Bildmodell erwartet Graustufen. Die
+Rückrechnungsformel wird darum mitgeliefert, sonst wären die Meter verloren.*
+
 **EXR** — Bildformat mit hoher Genauigkeit, das Werte ausserhalb von 0–255 speichern
 kann. Notwendig für Tiefendaten, weil dort echte Meterwerte stehen.
 
@@ -874,6 +884,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus dem Multipass: Goldener Winkel, Normalisierung |
 | 2026-08-18 | Ergaenzt aus der Geometrie-QA: Rangkorrelation, Bindung, Silhouette, IoU, geometrisches Mittel, Disparitaet |
 | 2026-08-18 | Ergaenzt aus Phase 3: Leistungsgrenze, Rauchprobe, fail-closed praezisiert |
 | 2026-08-18 | Ergaenzt aus Phase 2: Skip-on-Error, Freigabe-Token, Pfad-Trickserei, Positivliste, fsync, atomares Schreiben, Zustandsautomat, Endzustand, Content-Hashing, Mutationsprobe |

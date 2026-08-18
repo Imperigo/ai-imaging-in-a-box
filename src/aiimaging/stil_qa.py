@@ -339,6 +339,14 @@ def stil_gate_aus_bildern(bild_pfad, referenz_pfade, *, einbetter=None,
     """
     einbetten = einbetter or _kein_einbetter
 
+    if isinstance(referenz_pfade, (str, bytes)):
+        # Ein einzelner Pfad als String liesse sich in seine Zeichen zerlegen, und das
+        # Modell bekäme "/" als Bildpfad. Der Fehlgriff ist häufig und still — darum hier
+        # abgefangen, statt ihn erst im Einbetter auflaufen zu lassen.
+        raise StilError(
+            f"referenz_pfade ist ein einzelner Pfad, keine Folge: {referenz_pfade!r}. "
+            f"Als Liste übergeben: [{referenz_pfade!r}]."
+        )
     referenzen = list(referenz_pfade)
     if not referenzen:
         raise StilError("Referenzset ist leer — keine Belegbilder, kein Hausstil.")
