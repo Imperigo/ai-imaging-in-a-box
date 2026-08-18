@@ -997,6 +997,33 @@ liefert wie einmal ausgeführt. Macht Wiederholung nach Abbruch gefahrlos.
 **Race Condition (Wettlaufsituation)** — Fehler, der davon abhängt, welcher von zwei
 gleichzeitigen Vorgängen zuerst fertig wird. Schwer zu finden, weil unregelmässig.
 
+**Boden (einer Ähnlichkeitsmetrik)** — Wie ähnlich sich zwei Dinge sind, die **gar nichts**
+miteinander zu tun haben. Man erwartet null; in der Wirklichkeit ist es fast nie null.
+*Gemessen an 4950 zusammenhanglosen Bildpaaren liegt der Boden von SigLIP 2 bei 0,526 —
+zwei beliebige Bilder sind einander in diesem Modell also schon „zur Hälfte ähnlich".
+Der Boden ist die Zahl, unter der eine Schwelle nie liegen darf: Sonst besteht jedes Paar,
+und das Gate ist keines.*
+
+**Abgeleitete Schwelle** — Eine Grenze, die nicht als Zahl gesetzt, sondern aus einer
+Messung gerechnet wird — hier ``Boden + k · Streuung``. *Der Grund ist Haltbarkeit: Eine
+feste Zahl gehört zu dem Modell, das sie hervorgebracht hat, und wandert beim Wechsel
+stillschweigend mit. Genau das ist in diesem Projekt passiert; die Zahl 0,30 stammte aus
+einem anderen Einbetter und war im neuen wirkungslos. Eine abgeleitete Schwelle wird beim
+Wechsel neu gerechnet, oder es gibt sie nicht.*
+
+**Ausleseort** — Die Stelle im Modell, an der man den Vektor abgreift. Bei Bildmodellen
+üblich sind der zusammenfassende Ausgang (``pooler_output``) und der Mittelwert über alle
+Bildkacheln (``last_hidden_state``). *Zwei verschiedene Räume mit zwei verschiedenen
+Böden — auch beim selben Modell. Eine Schwelle gilt darum immer für ein Modell **und**
+einen Ausleseort.*
+
+**Ausgabeschema-Verletzung** — Ein Werkzeug antwortet anders, als es in seinem eigenen
+Vertrag zugesagt hat: Es verspricht Text und liefert „nichts". *Das Cockpit prüft die
+Zusage und verwirft die ganze Antwort — samt der Fehlermeldung, die eigentlich erklärt
+hätte, was schiefging. Der Benutzer sieht dann einen Schemafehler statt der Ursache.
+Solche Verletzungen leben fast immer auf den **Fehlerwegen**, weil nur der glückliche Weg
+geprüft wird.*
+
 **Rundlauf (Round-Trip)** — Etwas in eine andere Form übersetzen und wieder zurück, um zu
 sehen, ob unterwegs etwas verlorengegangen ist. Kommt dasselbe heraus, war die Übersetzung
 verlustfrei; kommt etwas anderes heraus, hat man den Verlust in der Hand statt nur eine
@@ -2139,6 +2166,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-18 | Ergaenzt aus den drei HomeStation-Ergebnissen (auf-10, auf-11, MCP-Registrierung): **Boden (einer Aehnlichkeitsmetrik)**, **abgeleitete Schwelle**, **Ausleseort (pooler_output / last_hidden_state)**, **Ausgabeschema-Verletzung**. **Berichtigt:** **Stil-Score** und **Schwelle** trugen 0.30 als Massstab — gemessen ist die Zahl kleiner als der Boden von SigLIP 2 und laesst jedes beliebige Bildpaar durch; die Schwelle ist jetzt abgeleitet (0.666). **Praezisiert:** Der Eintrag zum Muster "innen stimmig, aussen daneben" nannte nur die erfundene Kubatur als Ursache — die zweite (Silhouettenauswahl aus einer hineingelegten Bodenebene) ist nachgetragen |
 | 2026-08-18 | **Schuld aus drei Straengen beglichen (Sitzung 07, Fortsetzung).** *Kameraableitung* (`src/aiimaging/kameras.py`, aus dem alten Add-on-Bestand nachgebaut): Brennweite, Bildwinkel, Azimut, Deckungsgrad, Frustum, perspektivische Division, Raycast, orthografische Projektion/Ortho-Scale, Axonometrie, Depsgraph; **Bounding Box** zu *Bounding Box (Huellbox)* erweitert und um die Acht-Ecken-Pruefung ergaenzt. *Echte IFC-Dateien:* IFC4/IFC2X3, Pflichtattribut, OwnerHistory, Schema-Validierung, `preprocessor_version`/`originating_system`. *ControlNet-Suche:* ControlNet-Staerke, ControlNet-Union, Blockwise-ControlNet, destilliertes Modell, Fuehrung/`guidance_scale`, `control_context_scale`, Single-File-Konverter, `.safetensors`-Kopf. *Pruefen:* Rundlauf, xfail. *Knotenoberflaeche:* Node-Tree, Socket, Multipass. **Nachgetragen, was ein frueheres Aenderungsverzeichnis behauptet hat:** die Zeile vom selben Tag versprach *tote Kante* im Graph-Kern — der Begriff stand nur in der Prosa eines anderen Eintrags, nie als eigener. Zum zweiten Mal in dieser Sitzung derselbe Befund: Ein Verzeichnis, das Eintraege behauptet, die es nicht gibt, macht die Luecke unauffindbar |
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |

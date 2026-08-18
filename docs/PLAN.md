@@ -175,7 +175,28 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       *Die Schwelle bleibt trotzdem bei 0,65* — Begründung im Konstanten-Kommentar von
       `geometrie_qa`: ohne den Tiefenschätzer in der Messung wäre 0,90 nur schwächer
       unbegründet.
-- [ ] **Schwellenstudie, zweite Hälfte: die Kette** — dieselben Störungen, aber die
+- [x] **Schwellenstudie, zweite Hälfte: die Kette** — erledigt 2026-08-18
+      (`auf-20260818-10`, eine Stunde GPU). **Die Kette hat kein Signal mehr:** Nullprobe
+      0.033 bei |spearman| 0.005; 22 von 24 gestörten Zeilen schneiden besser ab als die
+      ungestörte Geometrie. Drei verschieden gestörte Vorgaben ergeben auf zwölf Stellen
+      denselben Score.
+      **Der Schätzer ist es nicht** — an Blenders eigenem Beauty-Pass |spearman| 0.990.
+      Die Kette verliert an zwei getrennten Stellen: `geom_iou` deckelt schon beim
+      perfekten Bild bei 0.261 (Obergrenze 0.509, damit ist 0.65 unerreichbar), und das
+      Bildmodell drückt |spearman| von 0.990 auf 0.005.
+      **Die Schwelle wurde nicht gesenkt** — eine Schwelle an eine kaputte Kette
+      anzupassen hiesse, das Gate an das anzupassen, wogegen es schützen soll.
+- [ ] **Den `geom_iou`-Deckel beheben** — 0.261 am perfekten Bild. Die Ursache ist
+      benannt: Ein monokularer Schätzer legt in den leeren, gleichmässigen Hintergrund
+      eine Bodenebene, die zur Bildecke hin auf die Kamera zuläuft; nur 34 % der
+      ausgewählten Punkte lagen auf dem Bauwerk. Keine der geprüften
+      Hintergrund-Strategien hebt den Deckel.
+      **Bewusst noch nicht gebaut:** Ein Zusammenhangsfilter läge nahe, ist aber
+      ungemessen — eine geratene Auswahlregel wäre genau das, wogegen dieses Projekt
+      antritt. Braucht eine Messung, keine Idee.
+- [ ] **Schwellenstudie, dritte Hälfte** — dieselben Störungen an einer Kette, die
+      überhaupt ein Signal trägt. Sinnlos, bevor Deckel und Backbone stimmen.
+- [ ] **(alt) Schwellenstudie, zweite Hälfte: die Kette** — dieselben Störungen, aber die
       Ist-Karte durch den Tiefenschätzer aus einem gerenderten Bild statt durch direkte
       Verfälschung. Erst danach lässt sich die Schwelle mit Grund verschieben.
       *Beauftragt 2026-08-18 als `auf-20260818-10`.* Die wichtigste Einzelzahl darin ist
@@ -206,7 +227,19 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       **Tiefenkonvention** (nah = hell). Sie ist an keinem ControlNet geprüft; ist sie
       invertiert, erklärt das einen schlechten Score vollständig. Nichts davon ist
       ausgeführt worden — alles steht auf Signaturen im `diffusers`-Quelltext.
-- [ ] **Die Stil-Schwelle 0.30** — untersucht 2026-08-18 (`stilstudie.py`,
+- [x] **Die Stil-Schwelle am Gerät gemessen** — erledigt 2026-08-18 (`auf-20260818-11`).
+      **0.30 war gar kein Gate:** Der Boden von SigLIP 2 base liegt bei 0.526 ± 0.070,
+      die Schwelle lag 3.24 Streuungen darunter, und **alle 4950 geprüften Paare
+      bestanden**. Der überlieferte Fehlbereich 0.06–0.13 war der Boden von DINOv3 und ist
+      beim Einbetterwechsel stillschweigend mitgewandert.
+      Die Schwelle ist jetzt abgeleitet (`Boden + k · Streuung` = 0.666), der Schlüssel
+      ist Einbetter **und** Ausleseort, und `stil_gate` wirft, wenn eine Schwelle unter
+      dem gemessenen Boden liegt — damit kann derselbe Fehler nicht wiederkehren.
+- [ ] **Die zweite Hälfte der Stil-Kalibrierung** — der Boden ist gemessen, `k = 2` ist
+      gesetzt. Es fehlen Paare, die stilistisch **ähnlich sein sollen**, und ein
+      menschliches Urteil darüber. Der Boden sagt, wo Unähnlichkeit aufhört, nicht wo
+      Ähnlichkeit anfängt.
+- [ ] **(alt) Die Stil-Schwelle 0.30** — untersucht 2026-08-18 (`stilstudie.py`,
       `docs/STILSTUDIE_2026-08-18.md`), aber **nicht** entschieden. Die Studie zeigt, wovon
       die Bedeutung der Zahl abhängt: vom **Boden** des Einbetters, und der ist
       ungemessen. Bei Kegelanteil 0,6 läge er bei 0,36 — *über* der Schwelle, jedes
