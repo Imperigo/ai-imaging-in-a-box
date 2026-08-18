@@ -96,6 +96,17 @@ Bedingungen entscheidend.
 Namensnennung. Der Code darf in geschlossene, verkaufte Produkte einfliessen. Beispiele:
 MIT, Apache-2.0, BSD.
 
+*Permissiv heisst **nicht** dasselbe wie „kommerziell erlaubt", und diese Verwechslung ist
+in diesem Projekt die folgenreichste. „Kommerziell erlaubt" heisst nur: Geldverdienen ist
+nicht untersagt. „Permissiv" heisst darüber hinaus, dass keine weiteren Auflagen mitlaufen
+— keine Liste untersagter Anwendungen, keine Umsatzschwelle, keine Schranke für die
+Weitergabe. Die Lizenz von Juggernaut XL v9 und die Stability Community License erlauben
+kommerzielle Nutzung und sind trotzdem nicht permissiv. Regel 1 verlangt permissiv, nicht
+bloss erlaubt. Damit dieselbe Liste nicht in drei Verzeichnissen dreimal verschieden
+aufgeschrieben wird, stehen die vier zulässigen Familien an genau einer Stelle im Code
+(`PERMISSIVE_LIZENZEN` in `src/aiimaging/lizenzquelle.py`). Was aus dieser Unterscheidung
+im Vollzug geworden ist, steht unter* **Regel-1-Spannung** *am Ende dieses Abschnitts.*
+
 **MIT-Lizenz** — Die kürzeste verbreitete permissive Lizenz. Bedingung: Copyright-Hinweis
 beibehalten.
 
@@ -149,7 +160,32 @@ offenlegen, obwohl er nichts verteilt hat. Für Pipelines besonders heikel.
 Bibliothek nur *benutzt* und nicht *verändert* wird. Zentrale Auflage: Nutzer müssen die
 Bibliothek durch eine eigene Fassung ersetzen können. Wird die Bibliothek selbst geändert,
 sind diese Änderungen offenzulegen — der übrige eigene Code bleibt unberührt.
-*In diesem Projekt: der Grenzfall bei IfcOpenShell.*
+*In diesem Projekt lange nur an IfcOpenShell festgemacht. Die Prüfung der Binärpakete vom
+18.08.2026 hat gezeigt, dass es mehrere sind: **GEOS** reist im Paket `shapely` mit,
+**libquadmath** in `numpy`, **Open CASCADE** in IfcOpenShell — und keines dieser Pakete
+nennt die LGPL in seiner kurzen Lizenzangabe
+(`docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md`, §4.2 und §4.7). Die drei Auflagen aus
+`CLAUDE.md` — hinter einer Prozessgrenze, unverändert, austauschbar und deklariert — waren
+dabei zweimal ohne Zutun erfüllt; geschuldet war allein die Deklaration im `NOTICE`.*
+
+**Ausnahmeklausel (Lizenzausnahme)** — Ein Zusatz, mit dem ein Urheber sein eigenes
+Copyleft für einen bestimmten Fall selbst zurücknimmt. Die Lizenz bleibt formal GPL, aber
+der genannte Fall löst die Ansteckung nicht aus. Wer nur den Lizenznamen liest, sieht
+„GPL" und erschrickt; wer den Zusatz mitliest, sieht, dass er nicht gemeint ist.
+
+**GCC Runtime Library Exception** — Die wichtigste dieser Ausnahmen. Der weit verbreitete
+Übersetzer GCC legt in jedes Programm, das er übersetzt, ein paar kleine
+Hilfsbibliotheken hinein — etwa `libgomp`, damit ein Programm mehrere Rechenkerne nutzen
+kann. Diese Hilfsbibliotheken stehen unter der GPL. Ohne Ausnahme wäre also jedes mit GCC
+übersetzte Programm GPL, was niemand will und auch nie gemeint war. Die Ausnahme sagt
+darum: Wer sie bloss mitliefert, weil sein Übersetzer sie hineingelegt hat, darf sein
+Programm unter Bedingungen seiner Wahl weitergeben.
+*In diesem Projekt betrifft das `libgomp` und `libgfortran`, die in den Wheels von `torch`
+und `numpy` mitreisen, ohne dass deren Lizenzangabe sie erwähnt. Sie stehen als GPL-Zeile
+im `NOTICE` — mit der Ausnahme daneben, damit ein späterer Prüfer den Fund findet **und**
+seine Entwarnung. `libquadmath` aus demselben numpy-Wheel hat diese Ausnahme dagegen
+**nicht**: Es steht unter der LGPL, und dort gelten die drei Auflagen aus `CLAUDE.md`
+(`docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md`, §4.2).*
 
 **MPL-2.0 (Mozilla Public License)** — Copyleft auf **Dateiebene**. Nur veränderte
 Dateien der Bibliothek müssen offen bleiben; der eigene Code in eigenen Dateien nicht.
@@ -164,8 +200,19 @@ Prüfung vom 18.08.2026 bestätigt „CDDL" wörtlich — der Lizenztext nennt a
 Versionsnummer**, die verbreitete Angabe „CDDL-1.0" ist also plausibel und unbelegt
 (`docs/LIZENZPRUEFUNG_2026-08-18.md`, §3.8).*
 
-**Dual License** — Dasselbe Werk unter zwei Lizenzen. Typisches Muster: kostenlos unter
-Copyleft, gegen Geld unter kommerzieller Lizenz. *Beispiel: CGAL.*
+**Dual License (Doppellizenz) / Lizenzwahl** — Dasselbe Werk unter zwei Lizenzen. Das
+bekannte Muster ist das kaufmännische: kostenlos unter Copyleft, gegen Geld unter einer
+kommerziellen Lizenz. *Beispiel: CGAL.*
+
+Es gibt aber auch die Doppellizenz **zwischen zwei offenen Lizenzen**, und die verlangt
+eine Entscheidung des Benutzers. **FreeType**, die Schriftbibliothek in jedem
+Pillow-Paket, liegt unter der FreeType License **oder** der GPL-2.0-or-later, und ihr
+eigener Text sagt wörtlich, man müsse eine von beiden wählen. Wer nicht wählt, hat nicht
+beide, sondern nichts Bestimmtes — und müsste im Streitfall erst erklären, unter welcher
+er das Werk benutzt hat. *Für dieses Projekt ist die Wahl leicht, weil die GPL unter
+Regel 1 ausscheidet; sie bleibt aber eine Wahl, und die FreeType License bringt eine
+Nennungsauflage mit — das Projekt muss in der Produktdokumentation erwähnt werden
+(`docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md`, §4.3).*
 
 **Contributor License Agreement (CLA)** — Eine Vereinbarung, die Beitragende
 unterschreiben, bevor ihr Code angenommen wird: Sie räumen dem Projekt das Recht ein,
@@ -203,6 +250,30 @@ Open Source im Sinne der OSI. *Beispiel: FLUX.1-dev.*
 führt. „Nicht OSI-konform" heisst: offen zugänglich, aber mit Auflagen, die echte
 Weiterverwendung einschränken.
 
+**Proprietär** — Der dritte Fall neben permissiv und copyleft: Software, deren Quelltext
+nicht offenliegt und deren Benutzung ein Vertrag regelt, den allein der Hersteller
+schreibt. Nicht dasselbe wie „kostenpflichtig" — die NVIDIA-Bibliotheken sind gratis zu
+haben und trotzdem proprietär. Für eine Lizenzprüfung ist das die unbequemste Kategorie,
+weil sie durch jedes Raster fällt, das nur permissiv und copyleft kennt: Es gibt kein
+Kürzel, das man nachschlagen könnte, sondern nur einen Vertragstext, den man lesen muss.
+
+**EULA (Endnutzer-Lizenzvertrag)** — Genau dieser Vertragstext: ausformulierte Prosa statt
+eines Kurzbezeichners wie „MIT", oft dutzende Seiten lang, mit Auflagen, die eine
+Open-Source-Lizenz gar nicht kennt.
+*In diesem Projekt am 18.08.2026 gelesen statt vermutet: Jedes `nvidia-*`-Paket bringt
+einen NVIDIA-Vertrag von 59 200 Zeichen mit. Drei seiner Auflagen betreffen ein
+öffentliches Repo unmittelbar — die Bibliotheken dürfen nicht für sich weitergegeben
+werden, sondern nur eingebettet in eine eigene Anwendung; Zurückübersetzen ist untersagt;
+und eine eigene Klausel verbietet, die Software so zu benutzen, dass sie **unter eine
+Open-Source-Lizenz fiele**. Letzteres ist ein sehr konkretes Verbot, CUDA und eine
+GPL-Komponente in dasselbe Programm zu legen — und die Prozessgrenze, die dieses Projekt
+aus ganz anderen Gründen gezogen hat, erfüllt es von selbst. Das ist ein nachträgliches
+Argument für eine früher getroffene Entscheidung, und es gehört festgehalten
+(`docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md`, §4.4).*
+*Der Umfang, damit niemand das für eine Randnotiz hält: Ein `pip install torch` zieht auf
+Linux **zwingend** rund anderthalb Gigabyte solcher Dateien nach — kein Zusatz, keine
+Option.*
+
 **Derivative Work (abgeleitetes Werk)** — Ein Werk, das fremden Code so einbindet, dass
 beide ein Ganzes bilden. Löst das Copyleft aus. Die entscheidende Frage jeder
 Lizenzdiskussion.
@@ -216,6 +287,24 @@ anderer Sachverhalt.*
 *Statisch* = fest einkompiliert; *dynamisch* = zur Laufzeit hinzugeladen. Der
 Unterschied ist lizenzrechtlich erheblich: Statisches Binden gilt als abgeleitetes Werk,
 dynamisches ist umstritten.
+
+**Gebündeltes Binary (mitgelieferte Fremdbibliothek)** — Ein fertiges Paket, das nicht nur
+den eigenen Code enthält, sondern fremde Bibliotheken gleich mit — als übersetzte Datei,
+nicht als lesbaren Quelltext. Zwei Formen: **statisch eingebunden** heisst, die fremde
+Bibliothek steckt unsichtbar in einer grossen Datei des Pakets; **mitgeliefert** heisst,
+sie liegt als eigene Datei daneben. In beiden Fällen kommt sie mit ihrer eigenen Lizenz —
+und in beiden Fällen schweigt die Lizenzangabe des Pakets darüber oft.
+
+*Deshalb sagt die Lizenzangabe eines Pakets nichts über seinen Inhalt, und das ist keine
+Vermutung, sondern das Ergebnis der Prüfung vom 18.08.2026: `numpy` gibt sich als BSD und
+liefert zwei GNU-Bibliotheken mit, eine unter GPL mit Ausnahme, eine unter LGPL;
+`shapely` gibt sich als BSD und liefert GEOS unter LGPL mit; `triton` gibt sich als MIT
+und liefert 90 Megabyte proprietärer NVIDIA-Werkzeuge mit; `ifcopenshell` gibt sich als
+LGPL und hat CGAL unter GPL-3.0 statisch eingebaut. In fünf von fünf geprüften Paketen mit
+nennenswertem Binäranteil wich die Kurzangabe von dem ab, was wirklich drin lag. Die
+Merkregel des Berichts: **Die Kurzangabe eines Pakets ist ein Hinweis, sein
+Lizenzverzeichnis eine Aussage, und der Ordner mit den mitgelieferten Bibliotheken die
+Wahrheit** (`docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md`, §2 und §7).*
 
 **Prozessgrenze** — Die in diesem Projekt tragende Konstruktion. Läuft fremder Code als
 **eigenständiges Programm**, das man von aussen aufruft und mit dem man nur Dateien
@@ -252,6 +341,29 @@ Von 35 prüfbaren Positionen stimmten 30; dieser eine Fehltreffer wiegt schwerer
 Quote (`docs/LIZENZPRUEFUNG_2026-08-18.md`, §3.2 und Kap. 6). Seither gilt im Projekt:
 Lizenz vor Technik, und zwar gegen die Datei des Herausgebers, nicht gegen eine
 Suchmaschine.*
+
+**Regel-1-Spannung** — Der Name, den dieses Projekt einem Widerspruch gegeben hat, der
+nicht in einer Lizenz steckt, sondern in ihrer **Anwendung**: Zwei Verzeichnisse desselben
+Projekts messen dieselbe Art von Lizenz verschieden streng.
+
+*Der Fall, ausgeschrieben (18.08.2026):* `src/aiimaging/einbetter.py` schliesst das Modell
+**DINOv3** aus, wörtlich mit der Begründung „Regel 1 verlangt permissiv, nicht bloss
+erlaubt". `src/aiimaging/backbone.py` lässt **sdxl-juggernaut** und **sd35-large** zu.
+Alle drei erlauben kommerzielle Nutzung, keines der drei ist permissiv — gleiche Lage,
+entgegengesetztes Urteil.
+
+Das ist **keine Auslegungsfrage einer Lizenz, sondern eine Uneinheitlichkeit im Vollzug**:
+Nicht der Vertragstext ist unklar, sondern die eigene Praxis. Der Unterschied ist deshalb
+wichtig, weil er sagt, wer die Sache lösen kann — eine unklare Lizenz braucht eine
+Auskunft, ein uneinheitlicher Vollzug einen Entscheid. Hier ist es ein Owner-Entscheid,
+denn ein Ausschluss nähme dem Projekt sein Rückfallmodell, und das ist keine
+Aufräumarbeit.
+
+*Bis dahin wird der Widerspruch nicht verschwiegen, sondern ausgesprochen: Die Funktion
+`regel_1_spannung` (`src/aiimaging/lizenzquelle.py`) hängt ihn an **jede** einzelne
+Lizenzauskunft an, statt ihn in einem Bericht abzulegen, den später niemand mehr liest.
+Das ist die allgemeine Lehre dieses Eintrags — ein bekannter, aber unaufgelöster
+Widerspruch gehört dorthin, wo gearbeitet wird, nicht in die Ablage.*
 
 ---
 
@@ -330,9 +442,18 @@ Paket und nicht versehentlich gegen die Dateien daneben — Verpackungsfehler fa
 sofort auf statt beim Nutzer.
 
 **Optionale Abhängigkeitsgruppe** — Zusätzliche Pakete, die nur für bestimmte Zwecke
-installiert werden, etwa `dev` für Testwerkzeuge. Sie gehören nicht zur Laufzeit des
-Produkts. *In diesem Projekt hat der Kern **null** Laufzeitabhängigkeiten — alles
-Schwere liegt jenseits der Prozessgrenze in eigenen Environments.*
+installiert werden. Sie gehören nicht zur Laufzeit des Produkts. *In diesem Projekt zwei:
+`dev` für die Testwerkzeuge und `mcp` für die Anbindung an KosmoOrbit (`pyproject.toml`).
+Der Kern selbst hat **null** Laufzeitabhängigkeiten — er ist reine Standardbibliothek.*
+
+*Berichtigt am 18.08.2026: Hier stand bisher, „alles Schwere" liege jenseits der
+Prozessgrenze in eigenen Environments. Das stimmt nicht, und die Prüfung der Binärpakete
+hat es gemessen. Jenseits der Prozessgrenze liegt, was **copyleft** ist — Blender und
+IfcOpenShell. `torch`, `diffusers`, `transformers` und `Pillow` werden im
+Produkt-Environment importiert, wenn auch erst innerhalb der Ladefunktion
+(`src/aiimaging/render.py`), und mit ihnen kommt über ein Gigabyte NVIDIA-Dateien ins
+selbe Environment. Die Grenze trennt nach Lizenz, nicht nach Gewicht
+(`docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md`, §1).*
 
 **SPDX** — Ein standardisiertes Kürzelverzeichnis für Lizenzen (`Apache-2.0`, `MIT`,
 `GPL-3.0-or-later`). Erlaubt es, Lizenzen maschinenlesbar anzugeben, statt sie in Prosa
@@ -342,13 +463,81 @@ zu umschreiben.
 braucht. Jede Abhängigkeit bringt ihre Lizenz mit — deshalb ist die Abhängigkeitsliste
 zugleich eine Lizenzliste.
 
+**Transitive Abhängigkeit** — Die Abhängigkeit einer Abhängigkeit: nichts, was man selbst
+ausgesucht hat, aber alles, was mitkommt. Für die Lizenzprüfung zählt sie genauso, denn
+installiert wird sie ebenso. *In diesem Projekt der Grund, warum die MCP-Anbindung
+optional bleibt: Das MCP-Paket selbst ist MIT, zieht aber 19 weitere Pakete nach, die
+nicht einzeln geprüft sind (`pyproject.toml`). Und der Grund, warum ein
+`pip install torch` auf Linux über ein Gigabyte proprietärer Dateien installiert, ohne
+dass irgendwo „NVIDIA" getippt worden wäre.*
+
 **pip** — Das Installationswerkzeug für Python-Pakete.
 
-**PyPI (Python Package Index)** — Das zentrale Verzeichnis, aus dem `pip` lädt.
+**PyPI (Python Package Index)** — Das zentrale Verzeichnis, aus dem `pip` lädt. Wer dort
+etwas veröffentlicht, gibt Name, Fassungsnummer und Lizenz selbst an; niemand prüft nach.
+
+**Platzhalterpaket** — Ein Paket, das auf PyPI existiert, aber nichts enthält: Es belegt
+nur einen Namen, damit ihn kein anderer bekommt. Wenige Kilobyte, meist in der Fassung
+`0.0.1`, mit einer beliebig eingetragenen Lizenz — geprüft hat die niemand, weil es nichts
+zu prüfen gibt.
+*Der Fund vom 18.08.2026, und er ist lehrreich: Unter dem Namen `nvidia-cublas-cu13` liegt
+ein **1371 Byte** grosser Platzhalter, der `Apache-2.0` deklariert. Die Bibliothek cuBLAS
+selbst heisst `nvidia-cublas`, ist 410 Megabyte gross und NVIDIA-proprietär. Wer eine
+Lizenzliste aus Paketnamen oder aus den PyPI-Angaben erzeugt — die übliche, bequeme
+Methode —, liest für cuBLAS „Apache-2.0" und übersieht den Endnutzervertrag vollständig.
+Es ist derselbe Fehler wie bei Krita AI Diffusion und in dieselbe Richtung: permissiv
+gemeldet, wo es nicht permissiv ist. Nur diesmal ohne fremdes Zutun — es genügt, dass zwei
+Pakete beinahe gleich heissen.*
+
+**Metapaket** — Ein Paket ohne eigenen Inhalt, dessen einziger Zweck es ist, andere Pakete
+nachzuziehen. Beim Installieren bequem, beim Prüfen unangenehm: Es trägt oft gar keine
+Lizenzangabe, und was es hereinholt, sieht man erst, wenn man seine Abhängigkeitsliste
+liest. *In diesem Projekt `cuda-toolkit`, über das `torch` elf einzelne NVIDIA-Pakete
+nachzieht.*
 
 **Wheel** — Ein vorkompiliertes Python-Paket. Praktisch, weil nichts übersetzt werden
 muss — aber undurchsichtig, weil fertige Binärteile mitgeliefert werden, deren Herkunft
-man nicht sieht. *Genau daraus entstand die CGAL-Frage in diesem Projekt.*
+man nicht sieht. *Genau daraus entstand die CGAL-Frage in diesem Projekt.* Technisch ist
+ein Wheel nichts weiter als ein ZIP-Archiv: Man kann hineinsehen, ohne es zu installieren
+— und man muss es, denn was drinliegt, deckt sich nicht zwangsläufig mit dem, was
+draufsteht (siehe *gebündeltes Binary* in Abschnitt 2).
+
+**`dist-info` (Metadatenverzeichnis)** — Der Ordner, den `pip` beim Installieren neben dem
+Paket anlegt und der alles über das Paket sagt, was nicht Code ist: Name, Fassung,
+Lizenzangabe, Abhängigkeitsliste und im Unterordner `licenses/` die beigelegten
+Lizenztexte. Er ist die erste Adresse für die Frage, unter welcher Lizenz etwas steht.
+
+Darin sind drei Angaben zu unterscheiden, und sie sind verschieden viel wert: der
+**Klassifikator** (ein Eintrag aus einer festen Auswahlliste, etwa „License :: OSI
+Approved :: MIT License" — grob, und oft das Einzige, was da ist), die **Lizenzangabe** in
+der Datei `METADATA` (ein Kurzbezeichner wie `MIT`, siehe *SPDX*) und die **beigelegten
+Lizenzdateien**, also die Verträge selbst. *In der Prüfung vom 18.08.2026 fehlte bei
+`tokenizers` sogar die eigene Lizenzdatei im Paket, und bei `numpy` nannte keine der drei
+Angaben die zwei GNU-Bibliotheken, die `pip` tatsächlich mitinstalliert.*
+
+**Symbol / Symbolverweis** — In einer übersetzten Programmdatei stehen die Namen der
+Funktionen und Datenstücke, die sie enthält oder von anderswo braucht; ein solcher Name
+heisst **Symbol**. Sie überleben das Übersetzen, weil die Teile eines Programms sich
+darüber wiederfinden müssen — und werden dadurch zum Nachweismittel: Wer in einer Datei
+von 155 Megabyte 249-mal den Namen `Nef_polyhedron_3` findet, weiss, dass die
+CGAL-Komponente dieses Namens darin steckt, auch wenn keine Lizenzdatei sie erwähnt.
+*So ist der GPL-Fund in IfcOpenShell belegt worden — am 14.08.2026 am Paket, am 18.08.2026
+an der installierten Datei nachgemessen, mit denselben Zahlen; sie stehen im `NOTICE`.
+Was ein Symbolverweis belegt, ist allerdings nur, dass etwas **da** ist — nicht, in
+welchem Umfang es benutzt wird.*
+
+**Versionen festschreiben („pinnen")** — In der Abhängigkeitsliste nicht „irgendeine
+Fassung von torch" verlangen, sondern genau eine (`torch==2.13.0`). Ohne Festschreibung
+installiert jeder Rechner und jeder Tag etwas anderes.
+*Für dieses Projekt ist das keine Ordnungsfrage, sondern die Haltbarkeitsfrage jeder
+Lizenzprüfung: Geprüft wurde, was ein **bestimmtes** Paket enthält. Die nächste Fassung
+desselben Pakets kann eine andere Bibliothek bündeln, **ohne dass sich die deklarierte
+Lizenz ändert** — genau das ist ja der Befund. Eine Lizenzprüfung ohne festgeschriebene
+Version ist deshalb eine Momentaufnahme mit Verfallsdatum
+(`docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md`, §7). Im Projekt ist bisher nichts
+festgeschrieben, weil `pyproject.toml` keine Laufzeitabhängigkeiten führt — die Frage ist
+damit nicht beantwortet, sondern nur auf den Tag verschoben, an dem sie eingetragen
+werden.*
 
 **venv (virtuelle Umgebung)** — Ein abgeschotteter Ordner mit eigener Python-Installation
 und eigenen Paketen. Verhindert, dass Projekte sich gegenseitig stören.
@@ -428,6 +617,21 @@ prüfbar.
 
 **Parsing** — Das Zerlegen einer Datei in eine für das Programm nutzbare Struktur.
 
+**Lesefenster** — Von einer grossen Datei absichtlich nur den Anfang lesen, statt sie ganz
+in den Speicher zu holen. Das lohnt sich, wenn das Gesuchte vorne steht: In einer
+IFC-Datei stehen Kopf und Einheitenzuweisung am Anfang, weil alles Weitere darauf
+verweist. Eine solche Datei kann hunderte Megabyte haben; gelesen werden zwei
+(`LESEFENSTER_BYTE` in `src/aiimaging/herkunft.py`).
+
+Der Preis ist eine Zweideutigkeit, und sie muss ausgesprochen werden: **„im gelesenen
+Anfang nicht gefunden" ist nicht dasselbe wie „nicht vorhanden".** Das eine ist eine
+Aussage über die eigene Suche, das andere eine über die fremde Datei. Wer beides gleich
+meldet, macht aus einer Grenze des eigenen Verfahrens einen Befund über fremde Daten —
+dieselbe Verwechslung wie zwischen „nicht lesbar" und „gibt es nicht" bei den
+*HTTP-Statuscodes* weiter unten. *`lies_ifc_kopf` gibt darum das Feld
+`vollstaendig_gelesen` mit zurück und hängt an eine abgeschnittene Lektüre eine
+ausdrückliche Warnung an, die genau diesen Satz enthält.*
+
 **Serialisierung** — Die Gegenrichtung: eine Datenstruktur in eine speicherbare Form
 bringen.
 
@@ -459,6 +663,15 @@ Zustimmung fehlt; kein Treffer in der Suche heisst, dass es sie gar nicht gibt �
 geschehen bei Depth-Anything-V2-Giant, dessen Gewichte öffentlich schlicht nicht
 vorliegen. Beides sieht von aussen nach „nicht lesbar" aus und ist doch etwas ganz
 anderes (`docs/LIZENZPRUEFUNG_2026-08-18.md`, Kap. 0 und §3.5).*
+
+**Range-Abruf (HTTP Range)** — Von einer Datei im Netz nur einen benannten Bereich
+anfordern statt der ganzen Datei — das *Lesefenster* über die Leitung.
+*In diesem Projekt das Mittel, mit dem die Binärprüfung vom 18.08.2026 in Pakete von
+mehreren hundert Megabyte hineinsehen konnte, ohne sie herunterzuladen oder zu
+installieren: Ein Wheel ist ein ZIP-Archiv, und ein ZIP trägt sein Inhaltsverzeichnis am
+Ende. Man holt also erst das Ende, liest dort, an welcher Stelle die Lizenzdateien liegen,
+und holt dann nur diese. Das ist die härteste erreichbare Quelle — nicht eine Angabe
+**über** das Artefakt, sondern das Artefakt selbst.*
 
 **SSE (Server-Sent Events)** — Technik, mit der ein Server fortlaufend Daten an den
 Client nachliefert, ohne dass dieser wiederholt nachfragt. *Grundlage dafür, dass
