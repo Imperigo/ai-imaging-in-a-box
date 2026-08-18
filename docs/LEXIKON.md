@@ -997,6 +997,24 @@ liefert wie einmal ausgeführt. Macht Wiederholung nach Abbruch gefahrlos.
 **Race Condition (Wettlaufsituation)** — Fehler, der davon abhängt, welcher von zwei
 gleichzeitigen Vorgängen zuerst fertig wird. Schwer zu finden, weil unregelmässig.
 
+**Rundlauf (Round-Trip)** — Etwas in eine andere Form übersetzen und wieder zurück, um zu
+sehen, ob unterwegs etwas verlorengegangen ist. Kommt dasselbe heraus, war die Übersetzung
+verlustfrei; kommt etwas anderes heraus, hat man den Verlust in der Hand statt nur eine
+Vermutung.
+*In diesem Projekt zwischen unserer Auftragsform und der von KosmoVis
+(`src/aiimaging/kosmo_naht.py`). Der Rundlauf hat dort einen echten Verlust gefunden: Die
+Angabe „freigegeben" überlebte den Hinweg, aber nicht den Rückweg — sie verschwand
+stillschweigend, und ein gesperrter Auftrag wäre nach einem Rundlauf als ungeprüft
+zurückgekommen.*
+
+**xfail (erwarteter Fehlschlag)** — Ein Test, von dem man **weiss**, dass er scheitert,
+und der darum als scheiternd angemeldet wird. Er hält damit zweierlei fest: dass die Lücke
+bekannt ist, und wann sie sich schliesst — denn ein `xfail`, der plötzlich besteht, meldet
+sich als `XPASS` und verlangt, dass jemand nachsieht.
+*Der Unterschied zum Auskommentieren oder Überspringen: Ein übersprungener Test schweigt
+für immer. Ein `xfail` ist eine Aussage mit Verfallsdatum — er ist die ehrliche Form,
+einen bekannten Mangel im Testnetz zu führen, statt ihn zu verstecken.*
+
 ---
 
 ## 5 · Geometrie, Daten und Rendering
@@ -1033,9 +1051,14 @@ scheitern. Und dieselbe Vorsicht: Die Fassungsnummer im Kopf wird gelesen und ni
 angenommen. Eine glb-Datei der Fassung 1 hat einen anderen Aufbau; sie wird mit einer
 Begründung abgewiesen, statt versuchsweise falsch gedeutet zu werden.*
 
-**Bounding Box** — Der kleinste achsparallele Quader, der ein Objekt umschliesst.
-Nützlich für schnelle Grössen- und Lageabschätzungen, etwa zur automatischen
+**Bounding Box (Hüllbox)** — Der kleinste achsparallele Quader, der ein Objekt
+umschliesst. Nützlich für schnelle Grössen- und Lageabschätzungen, etwa zur automatischen
 Kamerasetzung.
+*Sechs Zahlen statt einer Million Dreiecke — das ist der Grund, warum der Torwächter
+(`src/aiimaging/torwaechter.py`) einen Massstabsfehler erkennt, bevor eine
+Grafikkartenstunde verbrannt ist. Die Kameraableitung
+(`src/aiimaging/kameras.py`) arbeitet aus demselben Grund darauf: Ob ein Gebäude ins Bild
+passt, entscheidet sich an den **acht Ecken** der Hüllbox, nicht an seiner Geometrie.*
 
 **Up-Achse** — Vereinbarung darüber, welche Achse „oben" bedeutet. IFC und Blender
 verwenden Z, glTF verwendet Y. Wird die Umrechnung vergessen, liegt das Gebäude auf der
@@ -1141,6 +1164,13 @@ rechenintensiv.
 
 **Pass** — Ein einzelner Bildkanal aus dem Renderer. Neben dem fertigen Bild
 (*Beauty-Pass*) etwa Tiefe, Materialzuordnung oder Normalen.
+
+**Multipass** — Ein Renderlauf, der mehrere solche Kanäle **in einem Durchgang** erzeugt,
+statt für jeden neu zu rechnen. *Der Grund ist nicht nur Zeit, sondern Deckungsgleichheit:
+Zwei getrennte Läufe können minimal auseinanderliegen — anderes Rauschen, andere
+Zufallszahlen —, und dann passt die Tiefenkarte nicht mehr pixelgenau zum Bild. Die
+Geometrie-QA dieses Projekts vergleicht aber punktweise; sie lehnt bei ungleicher Länge zu
+Recht ab.*
 
 **Rangkorrelation (Spearman)** — Misst, ob zwei Messreihen dieselbe *Reihenfolge* haben,
 nicht dieselben Werte. Wert zwischen −1 und 1. *Hier zentral: Eine aus einem Bild
@@ -1411,6 +1441,106 @@ kein eigenständiges Programm.
 **bpy** — Blenders Python-Schnittstelle. `import bpy` funktioniert nur *innerhalb* von
 Blender und macht den eigenen Code zum Teil von Blender.
 
+**Depsgraph (Abhängigkeitsgraph)** — Blenders innere Buchhaltung darüber, welches Objekt
+von welchem abhängt, und damit die Liste dessen, was zum Zeitpunkt des Renderns
+tatsächlich in der Szene steht — nach allen Modifikatoren, Kopien und Verknüpfungen.
+*Wer wissen will, ob ein Nachbargebäude die Sicht verstellt, muss dagegen fragen und nicht
+gegen die Rohobjekte. Das ist einer der wenigen Punkte, die sich nur* innerhalb *von
+Blender beantworten lassen — und darum in diesem Projekt jenseits der Prozessgrenze im
+Runner liegen, nicht in `src/aiimaging/kameras.py`.*
+
+---
+
+**Brennweite** — Die Kenngrösse eines Objektivs in Millimetern. Klein heisst weitwinklig
+(28 mm: viel Bild, aber kippende Fluchten), gross heisst teleskopisch (200 mm: enger
+Ausschnitt, flache Wirkung). *In der Architekturfotografie sind 24–35 mm üblich, weil man
+auf der Strasse steht und nicht beliebig weit zurücktreten kann.*
+
+**Bildwinkel (Field of View, FOV)** — Wie viel von der Welt das Bild erfasst, als Winkel.
+Er folgt aus Brennweite und Sensorgrösse: `2·atan(Sensor / (2·Brennweite))`. Ein 28-mm-
+Objektiv auf Kleinbild (36 mm breiter Sensor) sieht rund 65° in die Breite.
+*Der Bildwinkel ist der Grund, warum sich der Kameraabstand ausrechnen und nicht bloss
+schätzen lässt: Wenn man weiss, wie breit ein Gebäude ist und welchen Winkel die Kamera
+erfasst, folgt der Abstand aus dem Tangens. In diesem Projekt `bildwinkel` in
+`src/aiimaging/kameras.py`.*
+
+**Azimut** — Eine Himmelsrichtung als Winkel, im Uhrzeigersinn ab Norden gezählt: 0° Nord,
+90° Ost, 180° Süd, 270° West. *Nicht zu verwechseln mit dem Winkel am Einheitskreis, der
+gegen den Uhrzeigersinn ab der Ost-Achse zählt — wer die beiden verwechselt, dreht eine
+ganze Kameraanlage um 90°, und zwar unauffällig.*
+
+**Deckungsgrad** — Welcher Anteil des Bildes vom Gebäude gefüllt werden soll, als Zahl
+zwischen 0 und 1. Ein Wert unter 1 schiebt die Kamera weiter weg und lässt Luft um das
+Bauwerk. *Das ist die gestalterische „Zweidrittel-Komposition" als Zahl ausgedrückt: 0.55
+heisst, gut die Hälfte des Bildes ist Gebäude, der Rest Himmel und Umgebung.*
+
+**Frustum (Sichtpyramide)** — Der Raumbereich, den eine Kamera sieht: ein Pyramidenstumpf,
+der von der Linse aus nach vorn breiter wird. Was ausserhalb liegt, ist im Bild nicht zu
+sehen. *„Passt das Gebäude ins Bild?" heisst genau: Liegen alle acht Ecken seiner Hüllbox
+innerhalb des Frustums?*
+
+**Perspektivische Division** — Der Rechenschritt, der aus einem Punkt im Raum einen Punkt
+im Bild macht: Man teilt seinen seitlichen Abstand von der Blickachse durch seine Tiefe.
+Weit entfernte Dinge erscheinen dadurch klein, nahe gross. *Sie ist der Grund, warum die
+scheinbare Grösse mit `1 / Abstand` geht — und darum lässt sich umgekehrt ausrechnen, wie
+weit eine Kamera zurück muss, statt es zu ertasten.*
+
+**Raycast (Strahlenschuss)** — Von einem Punkt aus einen Strahl in eine Richtung schicken
+und fragen, was er als Erstes trifft. *In diesem Projekt der Test, ob ein Nachbargebäude
+die Sicht auf das Bauwerk verstellt. Er braucht die vollständige Szene und liegt darum im
+Runner; nur die Schrittlogik — wie weit die Kamera bei verstellter Sicht herangezogen
+wird — ist reine Rechnung und liegt diesseits der Prozessgrenze
+(`ziehe_bis_frei` in `src/aiimaging/kameras.py`).*
+
+**Orthografische Projektion / Ortho-Scale** — Eine Abbildung ohne Perspektive: Parallelen
+bleiben parallel, gleich grosse Dinge erscheinen gleich gross, egal wie weit weg sie sind.
+Statt eines Bildwinkels hat eine solche Kamera eine **Ortho-Scale** — die Breite des
+Ausschnitts in Metern. *Das ist die Darstellung von Grundriss, Schnitt und Ansicht.*
+
+**Axonometrie** — Eine parallele Darstellung aus schräger Richtung, in der man drei Seiten
+eines Baukörpers gleichzeitig sieht. *Ihre Tücke ist die Verkürzung: Aus 30° Höhenwinkel
+erscheint der Grundriss auf die Hälfte gestaucht und die Höhe fast unverkürzt. Wer beim
+Zuschneiden des Rahmens `sin` und `cos` vertauscht, schneidet das Gebäude an — genau
+dieser Vorzeichenfehler ist im Vorläufercode nachweislich passiert und wurde dort von
+einem Test festgehalten.*
+
+---
+
+**IFC4 und IFC2X3** — Zwei Fassungen desselben Austauschformats. IFC2X3 ist von 2006 und
+gilt bis heute als die verlässlichste gemeinsame Sprache; IFC4 von 2013 kann mehr,
+verbreitet sich aber langsamer. *Beide sind in freier Wildbahn anzutreffen — an 40 echten
+Bürodateien gemessen: 30-mal IFC4, 10-mal IFC2X3, und die zehn kamen alle aus ArchiCAD.
+Ein Prüfwerkzeug, das nur eine Fassung kennt, ist damit für ein Viertel der Wirklichkeit
+blind.*
+
+**Pflichtattribut** — Eine Angabe, die eine Norm nicht als „darf" führt, sondern als
+„muss". *Der Unterschied zwischen den beiden IFC-Fassungen liegt genau hier und ist der
+Grund, warum eine selbstgebaute Testdatei danebengehen kann: Die Herkunftsangabe
+`IfcOwnerHistory` ist in IFC2X3 **Pflicht** und in IFC4 **freigestellt**. Wer eine
+IFC4-Datei kennt und daraus eine IFC2X3-Datei baut, lässt sie weg — und erzeugt eine
+Datei, die aussieht wie IFC2X3 und keines ist.*
+
+**OwnerHistory** — Das Feld in einer IFC-Datei, das festhält, wer ein Bauteil wann mit
+welchem Programm angelegt oder geändert hat. *Siehe Pflichtattribut: in IFC2X3 zwingend,
+in IFC4 nicht.*
+
+**Schema-Validierung** — Eine Datei gegen die Regeln ihres Formats prüfen: Sind alle
+Pflichtangaben da, haben alle Felder den richtigen Typ, stimmen die Verweise? *Der
+Unterschied zum blossen Einlesen ist der entscheidende: Eine Datei kann sich fehlerfrei
+öffnen lassen und trotzdem ungültig sein. Eine selbst erzeugte IFC2X3-Testdatei dieses
+Projekts liess sich lesen — und sammelte in der Validierung dreizehn Fehler. **Dass etwas
+gelesen wird, ist kein Beleg dafür, dass es gültig ist.***
+
+**`preprocessor_version` und `originating_system`** — Zwei benachbarte Felder im Kopf
+jeder STEP-/IFC-Datei (Position 5 und 6 im `FILE_NAME`-Eintrag). Das eine nennt die
+Bibliothek, die geschrieben hat, das andere das Programm, aus dem exportiert wurde.
+*An 40 echten Dateien gemessen trägt Feld 5 in **zwei von drei Fällen einen fremden
+Namen** — die Exportbibliothek statt des Programms (`DDS_IFC` für ArchiCAD, `ODA SDAI`
+für Revit). Erkannt wurde trotzdem alles, weil beide Felder in derselben Zeichenkette
+standen. Hiesse eine Exportbibliothek einmal „Rhino…", ergäbe Feld 5 eine **falsche**
+Herkunft — und eine falsche Herkunft ist schlimmer als keine, weil sie eine Up-Achse zur
+Bestätigung vorschlägt. Erkannt wird darum aus Feld 6 zuerst.*
+
 ---
 
 ## 6 · KI-Bildmodelle
@@ -1591,6 +1721,61 @@ Beschriftungen: Das Modell lernt aus der Struktur der Daten selbst, etwa indem e
 verdeckte Bildteile vorhersagt. *DINOv2/v3 sind so trainiert, CLIP und SigLIP dagegen an
 Bild-Text-Paaren.*
 
+---
+
+**ControlNet-Stärke (`controlnet_conditioning_scale`)** — Der Regler dafür, wie streng
+das Bild der vorgegebenen Geometrie folgen muss. 1.0 heisst: die Tiefenkarte bindet
+vollständig, das Modell darf die Kubatur nicht verändern. 0.3 heisst: sie ist ein
+Vorschlag. *Das ist der wichtigste Regler dieses Projekts, weil er genau die Frage stellt,
+um die es geht — wie viel Freiheit darf die Bildmaschine über dem Entwurf haben, ohne ihn
+zu erfinden?*
+
+**ControlNet-Union** — Ein einzelnes ControlNet, das mehrere Steuerarten beherrscht
+(Tiefe, Kanten, Pose, Segmentierung) statt nur eine. *Vorteil: ein Modell statt fünf im
+Speicher. Für dieses Projekt zählt nur der Tiefenzweig, aber die verfügbaren Modelle
+kommen fast alle in dieser gebündelten Form.*
+
+**Blockwise-ControlNet** — Bauart, bei der die Steuerung nicht auf einmal, sondern in
+jede Schicht des Bildmodells einzeln eingespeist wird. *Für die Benutzung unerheblich —
+wichtig nur, weil solche Modelle einen eigenen Ladeweg brauchen und nicht auf jede
+Pipeline passen.*
+
+**Destilliertes Modell (Turbo, Lightning, Schnell)** — Ein grosses Modell, dem ein
+kleineres oder schnelleres beigebracht wurde, dasselbe in wenigen Schritten zu tun. Statt
+40 Diffusionsschritten genügen 4 bis 8.
+*Der Haken steht nicht auf der Packung: Destillierte Modelle sind darauf trainiert, **ohne
+Führung** zu laufen. Wer sie mit der üblichen Führung von 5.0 betreibt, bekommt
+überzeichnete Bilder bei doppelter Rechenzeit — und wer den richtigen Wert 0.0 setzt,
+verliert stillschweigend den negativen Prompt.*
+
+**Führung (`guidance_scale`, klassifikatorfreie Führung)** — Wie stark der Prompt das Bild
+zwingt. Technisch rechnet das Modell zweimal — einmal mit und einmal ohne Prompt — und
+verstärkt den Unterschied um diesen Faktor. Hohe Werte treffen den Prompt genauer und
+sehen härter aus, niedrige wirken natürlicher und weichen ab.
+*Die Falle: **Unterhalb von 1.0 wird gar nicht mehr doppelt gerechnet** — und damit ist
+auch der **negative Prompt** wirkungslos, denn der lebt genau von dieser zweiten
+Rechnung. Er steht dann weiter im Protokoll und hat nie ein Bild beeinflusst. In diesem
+Projekt meldet `src/aiimaging/render.py` diesen Fall ausdrücklich, statt ihn geschehen zu
+lassen.*
+
+**`control_context_scale`** — Ein zusätzlicher Regler mancher ControlNet-Fassungen, der
+neben der Stärke auch die Reichweite der Steuerung einstellt. *Erwähnt, damit er nicht mit
+der ControlNet-Stärke verwechselt wird — dieses Projekt benutzt ihn nicht.*
+
+**Single-File-Konverter** — Eine Hilfsfunktion, die Gewichte aus **einer** grossen
+`.safetensors`-Datei in die Form bringt, die eine Bibliothek erwartet. *Nötig, weil viele
+Modelle in zwei Welten veröffentlicht werden: als aufgeteilter Ordner für `diffusers` und
+als eine einzige Datei für die Oberflächen der Bastlerszene. Ein Konverter, der eine
+neuere Fassung nicht kennt, scheitert erst beim Laden — vorher sieht die Datei
+einwandfrei aus.*
+
+**`.safetensors`-Kopf (Header)** — Die ersten Bytes einer Gewichtsdatei: ein JSON-Verzeichnis,
+das jeden Tensor mit Namen, Datentyp und Grösse nennt, noch vor den eigentlichen Zahlen.
+*Praktischer Nutzen: Man kann den Speicherbedarf eines Modells auf die Nachkommastelle
+genau ausrechnen, ohne die Datei herunterzuladen — es genügen die ersten Kilobyte. So
+wurden die 22,0 GiB des empfohlenen Backbones bestimmt: gerechnet aus gemessenen
+Datentypen, nicht geschätzt.*
+
 
 ---
 
@@ -1727,9 +1912,35 @@ einzigen Schritt auszuführen — auch bei einem Graphen mit Kreis, damit der ei
 anderen nicht verdeckt. Das Vorbild ist KosmoOrbits `pipelineReadiness`, das für die
 äussere Naht dasselbe leistet (`docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md`, Kap. 2/3).*
 
+**Tote Kante** — Eine Verbindung zwischen zwei Arbeitsschritten, die aufgeschrieben ist,
+aber nichts überträgt: Der Empfänger fragt nach einem Feld, das der Absender gar nicht
+liefert. Der Ablauf sieht vollständig verdrahtet aus und läuft mit leeren Händen.
+*Der Vorläufer KosmoOrbit verbindet über Namensgleichheit und sagt **nichts**, wenn keine
+Verbindung zustande kommt — der Befund, mit dem dieses Projekt angefangen hat. Eine tote
+Kante ist darum kein Sonderfall, sondern die häufigste stille Fehlerart einer
+Knotenoberfläche: Sie erzeugt kein Problem, sondern ein plausibel aussehendes Ergebnis.
+`pruefe_kette` (`src/aiimaging/kette.py`) meldet sie vor dem Lauf.*
+
 **Skip-on-Error** — Wenn ein Knoten in einer Kette scheitert, werden alle von ihm
 abhängigen Knoten übersprungen statt mit unvollständigen Eingaben gerechnet. Ein Ergebnis
 aus halben Daten ist schlimmer als gar keines — es sieht gültig aus.
+
+**Node-Tree (Knotenbaum)** — Eine Oberfläche, in der man Arbeitsschritte als Kästchen
+hinlegt und mit Linien verbindet, statt sie hinzuschreiben. Blender, KosmoOrbit und die
+Oberflächen der Bildmodelle arbeiten so.
+*Ein Node-Tree ist nicht automatisch ein Ablaufplan. Der ältere KosmoVis-Baum sieht aus wie
+einer, ist aber keiner: Beim Aufbau werden alle Verbindungen gelöscht, und die Knoten
+reden über Szenen-Eigenschaften am Baum vorbei. Er ist eine **Werkzeugpalette mit
+Reihenfolge** — brauchbar für Menschen, aber nichts, woraus sich ableiten liesse, was
+wovon abhängt.*
+
+**Socket (Sockel, Anschluss)** — Der einzelne Ein- oder Ausgang eines Knotens, an dem eine
+Verbindung andocken kann. Sockeltypen legen fest, was zusammenpasst: Ein Bild-Ausgang
+gehört nicht an einen Zahlen-Eingang.
+*Sockeltypen sind die eigentliche Aussage einer Knotenoberfläche darüber, welche Datenarten
+es überhaupt gibt. Der ältere Bestand kennt vier — Kameraeinstellung, Bild, Render-Ebene
+und Variante —, und das ist die brauchbarste Erbschaft aus jenem Baum: nicht der Code,
+sondern die Antwort auf die Frage, was zwischen den Stufen fliesst.*
 
 **Pipeline** — Eine feste Abfolge von Verarbeitungsschritten.
 
@@ -1928,6 +2139,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-18 | **Schuld aus drei Straengen beglichen (Sitzung 07, Fortsetzung).** *Kameraableitung* (`src/aiimaging/kameras.py`, aus dem alten Add-on-Bestand nachgebaut): Brennweite, Bildwinkel, Azimut, Deckungsgrad, Frustum, perspektivische Division, Raycast, orthografische Projektion/Ortho-Scale, Axonometrie, Depsgraph; **Bounding Box** zu *Bounding Box (Huellbox)* erweitert und um die Acht-Ecken-Pruefung ergaenzt. *Echte IFC-Dateien:* IFC4/IFC2X3, Pflichtattribut, OwnerHistory, Schema-Validierung, `preprocessor_version`/`originating_system`. *ControlNet-Suche:* ControlNet-Staerke, ControlNet-Union, Blockwise-ControlNet, destilliertes Modell, Fuehrung/`guidance_scale`, `control_context_scale`, Single-File-Konverter, `.safetensors`-Kopf. *Pruefen:* Rundlauf, xfail. *Knotenoberflaeche:* Node-Tree, Socket, Multipass. **Nachgetragen, was ein frueheres Aenderungsverzeichnis behauptet hat:** die Zeile vom selben Tag versprach *tote Kante* im Graph-Kern — der Begriff stand nur in der Prosa eines anderen Eintrags, nie als eigener. Zum zweiten Mal in dieser Sitzung derselbe Befund: Ein Verzeichnis, das Eintraege behauptet, die es nicht gibt, macht die Luecke unauffindbar |
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
 | 2026-08-18 | **Connector-Schicht, Binaerpruefung und Lizenzvokabular nachgetragen** (wieder erreichten mehrere Laeufe `docs/` nicht). *Connector-Schicht* (`src/aiimaging/herkunft.py`): SI-Vorsatz, Umrechnungseinheit, Lesefenster, glb-Block, `FILE_NAME` samt Feldreihenfolge, belegt/vermutet/unbekannt; **STEP** um das Lesen des Dateikopfs ergaenzt. *Binaer-Lizenzpruefung:* gebuendeltes Binary, Ausnahmeklausel/GCC Runtime Library Exception, proprietaer, EULA, Platzhalterpaket, Metapaket, transitive Abhaengigkeit, `dist-info`, Symbol/Symbolverweis, Versionen festschreiben, Range-Abruf; **Dual License** um die Lizenzwahl zwischen zwei offenen Lizenzen (FreeType) erweitert, **Wheel**, **PyPI** und **LGPL** ergaenzt. *Lizenzvokabular* (`src/aiimaging/lizenzquelle.py`): **Regel-1-Spannung** neu, **permissive Lizenz** um „permissiv ist nicht kommerziell erlaubt", **vakuoeser Test** um die zweite Bauart — ein Test fand das gesuchte Wort im falschen Eintrag. **Berichtigt:** **Optionale Abhaengigkeitsgruppe** behauptete, „alles Schwere" liege jenseits der Prozessgrenze; torch, diffusers, transformers und Pillow werden im Produkt-Environment importiert — die Grenze trennt nach Lizenz, nicht nach Gewicht. **Runner** nannte zwei Dateien als Beispiele, die es in diesem Repo nicht gibt: Sie gehoeren zu KosmoDraw |
