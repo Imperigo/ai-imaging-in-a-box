@@ -186,14 +186,21 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Bildmodell drückt |spearman| von 0.990 auf 0.005.
       **Die Schwelle wurde nicht gesenkt** — eine Schwelle an eine kaputte Kette
       anzupassen hiesse, das Gate an das anzupassen, wogegen es schützen soll.
-- [ ] **Den `geom_iou`-Deckel beheben** — 0.261 am perfekten Bild. Die Ursache ist
-      benannt: Ein monokularer Schätzer legt in den leeren, gleichmässigen Hintergrund
-      eine Bodenebene, die zur Bildecke hin auf die Kamera zuläuft; nur 34 % der
-      ausgewählten Punkte lagen auf dem Bauwerk. Keine der geprüften
-      Hintergrund-Strategien hebt den Deckel.
-      **Bewusst noch nicht gebaut:** Ein Zusammenhangsfilter läge nahe, ist aber
-      ungemessen — eine geratene Auswahlregel wäre genau das, wogegen dieses Projekt
-      antritt. Braucht eine Messung, keine Idee.
+- [x] **Den `geom_iou`-Deckel beheben** — erledigt 2026-08-18 (`auf-20260818-12`, sechs
+      Regeln gegeneinander gemessen). Gewonnen hat `ohne_randberuehrung`: Punkte auf dem
+      Bauwerk **40.7 % → 99.2 %**, geom_iou 0.256 → 0.406, Score 0.504 → 0.635 — und der
+      **grösste Abstand zum gestörten Fall** von allen sechs.
+      **Die Messung war die ganze Arbeit wert.** `groesste_flaeche`, der naheliegendste
+      Filter und der, den ich ohne Messung gebaut hätte, trifft **0 %**: Die grösste
+      zusammenhängende Fläche der „nächsten n" *ist* der Hintergrundkeil. Und
+      `nur_spearman_in_soll` sah mit 0.997 am besten aus, hat aber den **kleinsten**
+      Abstand zwischen treu und gestört — die Sorte Verbesserung, die alles nach oben
+      schiebt statt zu trennen.
+- [ ] **Den Rest des Deckels** — auch der beste Kandidat erreicht am perfekten Bild nur
+      0.635 und bleibt knapp unter 0.65. Ungemessen: Trägt eine Kombination
+      (`ohne_randberuehrung` **plus** `rand_10`)? Und wie verhält sich die Regel an einer
+      Szene mit **echtem Gelände**, wo eine Bodenebene keine Halluzination ist, sondern
+      Geometrie?
 - [ ] **Schwellenstudie, dritte Hälfte** — dieselben Störungen an einer Kette, die
       überhaupt ein Signal trägt. Sinnlos, bevor Deckel und Backbone stimmen.
 - [ ] **(alt) Schwellenstudie, zweite Hälfte: die Kette** — dieselben Störungen, aber die
@@ -333,11 +340,19 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       toter Code, und die Frontale steht auf Diagonalabstand), und der **gerechnete**
       statt getasteten Rückschub (ein Durchlauf statt zwanzig).
       **Vertrag entschieden:** `blick_auf` führend, Augenhöhe **absolut 1.70 m**.
-- [ ] **Die zwölf Kameras an einem echten Modell ansehen** — sie rechnen sich und
-      bestehen den Eckentest über fünf Gebäudetypen. **Dass die zwölf Bilder gut
-      aussehen, ist damit nicht gezeigt.** Genau das war schon der schwächste Punkt des
-      Bestands: Dass ein Knoten fehlerfrei registriert, belegt keinen Bildeindruck.
-      Braucht Blender und ein Augenpaar.
+- [x] **Die Kameras an Blender angeschlossen** — erledigt 2026-08-18. Zwei Wege über die
+      Prozessgrenze (`--kamera` mit Ableitung aus der dort gemessenen Hüllbox, oder
+      fertige Koordinaten), und der Bericht sagt, welcher gegriffen hat.
+      **Der echte Lauf fand drei Fehler, die 87 grüne Tests nicht gezeigt hatten:** die
+      absolute Augenhöhe (bei Fuss auf 400 m ü. M. eine Kamera 400 m unter dem
+      Erdgeschoss — jetzt `gelaende_z`), ein Blickziel über dem Dach bei niedrigen Bauten,
+      und ein Bauwerk als Fleck in der Bildmitte, das der Eckentest brav durchwinkte
+      (jetzt meldet `kamerasatz` den Füllgrad).
+- [ ] **Die zwölf Bilder ansehen** — sie rechnen sich, bestehen den Eckentest über fünf
+      Gebäudetypen und erreichen den angeforderten Deckungsgrad. **Dass sie gut aussehen,
+      ist damit nicht gezeigt.** Genau das war schon der schwächste Punkt des Bestands:
+      Dass ein Knoten fehlerfrei registriert, belegt keinen Bildeindruck. Braucht ein
+      Augenpaar, keine Zahl.
 - [ ] **Verdeckungstest im Runner** — der Strahlenschuss gegen den Depsgraph. Die
       Schrittlogik steht diesseits der Grenze und ist geprüft; die Blender-Seite fehlt.
       Dabei zu klären, ob Frustum- und Verdeckungstest gegeneinander schwingen — der eine

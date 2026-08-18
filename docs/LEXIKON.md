@@ -1501,6 +1501,27 @@ zwischen 0 und 1. Ein Wert unter 1 schiebt die Kamera weiter weg und lässt Luft
 Bauwerk. *Das ist die gestalterische „Zweidrittel-Komposition" als Zahl ausgedrückt: 0.55
 heisst, gut die Hälfte des Bildes ist Gebäude, der Rest Himmel und Umgebung.*
 
+**Füllgrad** — Welchen Anteil des Bildes das Bauwerk tatsächlich einnimmt. Zu
+unterscheiden vom **Deckungsgrad**, der sagt, welchen Anteil es einnehmen *soll*.
+*Gemessen wird er an der zugewandten Fassade, nicht in der Gebäudemitte — der Abstand
+wird zur Mitte gerechnet, aber gesehen wird die nahe Seite. Und in beiden Richtungen, denn
+bei einem hohen Bau im Breitbild führt die Höhe. Beide Feinheiten sind nicht Pedanterie:
+Ohne sie meldet die Prüfung jedes Hochhaus und jeden langen Riegel als „zu klein im Bild".*
+
+**Zusammenhängende Fläche (Connected Component)** — Eine Gruppe von Bildpunkten, die
+lückenlos aneinandergrenzen. Ob zwei Punkte, die sich nur über eine **Ecke** berühren, als
+verbunden gelten, ist eine Wahl: *Vierer-Nachbarschaft* sagt nein, *Achter-Nachbarschaft*
+sagt ja.
+*In diesem Projekt Vierer — mit Achter genügte ein einziger diagonaler Kontakt zwischen
+Bauwerk und einem Bildfehler, damit beide gemeinsam verworfen würden. Die Regel wäre an
+einer einzigen Pixelecke zerbrechlich.*
+
+**Randberührung** — Ob eine Fläche im Bild bis an dessen Kante reicht. *Klingt nebensächlich
+und ist in diesem Projekt das entscheidende Merkmal: Ein freistehendes Gebäude in der
+Bildmitte berührt den Rand nicht, eine vom Tiefenschätzer in den leeren Grund gelegte
+Bodenebene immer. An dieser einen Eigenschaft liessen sich die beiden trennen — und der
+Anteil echter Bauwerkspunkte stieg dadurch von 41 % auf 99 %.*
+
 **Frustum (Sichtpyramide)** — Der Raumbereich, den eine Kamera sieht: ein Pyramidenstumpf,
 der von der Linse aus nach vorn breiter wird. Was ausserhalb liegt, ist im Bild nicht zu
 sehen. *„Passt das Gebäude ins Bild?" heisst genau: Liegen alle acht Ecken seiner Hüllbox
@@ -2166,6 +2187,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-18 | Ergaenzt aus der Kameraanbindung und auf-12: **Fuellgrad** (abgegrenzt zum Deckungsgrad), **zusammenhaengende Flaeche** samt Vierer-/Achter-Nachbarschaft, **Randberuehrung**. Vor dem Schreiben dieser Zeile nachgezaehlt — die Gegenmassnahme aus der Zeile darunter |
 | 2026-08-18 | Ergaenzt aus den drei HomeStation-Ergebnissen (auf-10, auf-11, MCP-Registrierung): **Boden (einer Aehnlichkeitsmetrik)**, **abgeleitete Schwelle**, **Ausleseort (pooler_output / last_hidden_state)**, **Ausgabeschema-Verletzung**. **Berichtigt:** **Stil-Score** und **Schwelle** trugen 0.30 als Massstab — gemessen ist die Zahl kleiner als der Boden von SigLIP 2 und laesst jedes beliebige Bildpaar durch; die Schwelle ist jetzt abgeleitet (0.666). **Praezisiert:** Der Eintrag zum Muster "innen stimmig, aussen daneben" nannte nur die erfundene Kubatur als Ursache — die zweite (Silhouettenauswahl aus einer hineingelegten Bodenebene) ist nachgetragen |
 | 2026-08-18 | **Schuld aus drei Straengen beglichen (Sitzung 07, Fortsetzung).** *Kameraableitung* (`src/aiimaging/kameras.py`, aus dem alten Add-on-Bestand nachgebaut): Brennweite, Bildwinkel, Azimut, Deckungsgrad, Frustum, perspektivische Division, Raycast, orthografische Projektion/Ortho-Scale, Axonometrie, Depsgraph; **Bounding Box** zu *Bounding Box (Huellbox)* erweitert und um die Acht-Ecken-Pruefung ergaenzt. *Echte IFC-Dateien:* IFC4/IFC2X3, Pflichtattribut, OwnerHistory, Schema-Validierung, `preprocessor_version`/`originating_system`. *ControlNet-Suche:* ControlNet-Staerke, ControlNet-Union, Blockwise-ControlNet, destilliertes Modell, Fuehrung/`guidance_scale`, `control_context_scale`, Single-File-Konverter, `.safetensors`-Kopf. *Pruefen:* Rundlauf, xfail. *Knotenoberflaeche:* Node-Tree, Socket, Multipass. **Nachgetragen, was ein frueheres Aenderungsverzeichnis behauptet hat:** die Zeile vom selben Tag versprach *tote Kante* im Graph-Kern — der Begriff stand nur in der Prosa eines anderen Eintrags, nie als eigener. Zum zweiten Mal in dieser Sitzung derselbe Befund: Ein Verzeichnis, das Eintraege behauptet, die es nicht gibt, macht die Luecke unauffindbar |
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |

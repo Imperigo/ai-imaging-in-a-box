@@ -49,10 +49,19 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest"]
-# Nur fuer die Anbindung an KosmoOrbit. Das MCP-SDK ist MIT (geprueft 2026-08-18 gegen
-# die PyPI-Metadaten von mcp 2.0.0) und damit unter Regel 1 zulaessig, zieht aber 19
-# transitive Abhaengigkeiten nach, die NICHT einzeln geprueft sind. Darum optional:
-# Der Kern laeuft ohne, nur die Cockpit-Anbindung nicht.
+# Nur fuer die Anbindung an KosmoOrbit. Das MCP-SDK ist MIT und damit unter Regel 1
+# zulaessig, zieht aber 19 transitive Abhaengigkeiten nach, die NICHT einzeln geprueft
+# sind. Darum optional: Der Kern laeuft ohne, nur die Cockpit-Anbindung nicht.
+#
+# LIZENZ GEPRUEFT FUER DIE FASSUNG, DIE HIER WIRKLICH STEHT. Der urspruengliche Beleg
+# galt der 2.0.0 — und genau die schliesst die Obergrenze unten aus. Ein Beleg fuer eine
+# Fassung, die niemand installiert, ist kein Beleg; dieselbe Fehlerart wie bei der
+# Stil-Schwelle, die aus DINOv3-Laeufen stammte und auf SigLIP 2 angewendet wurde.
+# Nachgeholt 2026-08-18 an den PyPI-Metadaten BEIDER Enden der Spanne:
+#     mcp 1.27.0  license "MIT", Classifier "License :: OSI Approved :: MIT License"
+#     mcp 1.29.0  dito
+# (1.29.0 ist derzeit die hoechste 1.x-Fassung; 2.0.0 ist ebenfalls MIT, aber wegen der
+# entfernten Schnittstelle ausgeschlossen.)
 #
 # OBERGRENZE <2, gemessen auf der HomeStation am 18.08.2026: `mcp_server.py` ist gegen
 # die 1.x-Dekoratorschnittstelle geschrieben (`@server.list_tools()`), und mcp 2.0.0 hat
