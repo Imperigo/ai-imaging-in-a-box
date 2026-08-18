@@ -158,6 +158,14 @@ Ein Mittelweg, mit permissiven Projekten gut verträglich.
 **Dual License** — Dasselbe Werk unter zwei Lizenzen. Typisches Muster: kostenlos unter
 Copyleft, gegen Geld unter kommerzieller Lizenz. *Beispiel: CGAL.*
 
+**OpenRAIL++-M** — Lizenz von Stable Diffusion XL. Erlaubt kommerzielle Nutzung, knüpft
+sie aber an Nutzungsauflagen: bestimmte Anwendungen sind untersagt, und die Auflagen sind
+weiterzugeben. Nicht permissiv im Sinn von Regel 1, aber auch kein Copyleft.
+
+**Stability Community License** — Lizenz von SD3.5. Frei nutzbar unterhalb einer
+Umsatzschwelle (1 Mio USD), darüber kostenpflichtig. Kommerziell nutzbar, aber nicht
+bedingungslos — eine Einschränkung, die man beim Wachsen bemerkt.
+
 **Non-Commercial (NC)** — Nutzung nur ohne Erwerbszweck. Trotz offenem Zugang **kein**
 Open Source im Sinne der OSI. *Beispiel: FLUX.1-dev.*
 
@@ -169,8 +177,10 @@ Weiterverwendung einschränken.
 beide ein Ganzes bilden. Löst das Copyleft aus. Die entscheidende Frage jeder
 Lizenzdiskussion.
 
-**Aggregation** — Das Gegenteil: zwei eigenständige Programme, die lediglich
-nebeneinander liegen oder sich Daten reichen. Löst **kein** Copyleft aus.
+**Aggregation (Lizenzrecht)** — Das Gegenteil: zwei eigenständige Programme, die
+lediglich nebeneinander liegen oder sich Daten reichen. Löst **kein** Copyleft aus.
+*Nicht zu verwechseln mit* **Aggregation (Messwerte)** *in Abschnitt 6 — gleiches Wort,
+anderer Sachverhalt.*
 
 **Linking (Binden)** — Das technische Verbinden von Programmteilen zu einer Einheit.
 *Statisch* = fest einkompiliert; *dynamisch* = zur Laufzeit hinzugeladen. Der
@@ -389,6 +399,23 @@ Bei langen Renderläufen oft die einzige Möglichkeit nachzuvollziehen, was gesc
 
 **Exception (Ausnahme)** — Ein Fehler, der das Programm an der betreffenden Stelle
 abbricht — falls er nicht abgefangen wird.
+
+**Attrappe (Mock)** — Ein Ersatzstück, das im Test die Stelle eines echten Bausteins
+einnimmt und vorhersehbar antwortet. *Erlaubt, den Stil-Score zu prüfen, obwohl das
+Einbettungsmodell hier gar nicht vorhanden ist.*
+
+**Vakuöser Test** — Ein Test, der besteht, weil die geprüfte Lage nie eintritt — etwa die
+Prüfung „FLUX erscheint nicht in der Auswahl", wenn FLUX gar nicht in der Registry steht.
+Er sieht grün aus und bewacht nichts. Abhilfe ist eine Gegenprobe, die belegt, dass der
+Fall überhaupt vorkommen könnte.
+
+**Registry** — Ein zentrales Verzeichnis, in dem gleichartige Dinge mit ihren Eigenschaften
+eingetragen sind. *Hier die Bildmodelle samt Lizenz — dadurch steht die Lizenz im Code und
+nicht nur in der Doku.*
+
+**Dataclass / unveränderlich (frozen)** — Eine Python-Klasse, die im Wesentlichen nur Daten
+hält. `frozen` heisst: nach dem Anlegen nicht mehr änderbar. *Wichtig überall dort, wo
+etwas gehasht oder als Vertrag weitergereicht wird — es soll sich nicht unbemerkt ändern.*
 
 **Stub** — Ein Platzhalter, der die richtige Form hat, aber noch nichts leistet.
 
@@ -611,6 +638,27 @@ Stil beizubringen.
 
 **IP-Adapter** — Verfahren, das einen Stil aus einem Referenzbild überträgt, **ohne**
 Training. Schnell, aber weniger verbindlich als eine LoRA.
+
+**Depth-ControlNet-Naht** — Der Vertrag, über den in diesem Projekt Bildmodelle
+austauschbar bleiben: Jeder Backbone wird über dieselbe Tiefenkarten-Konditionierung
+angesprochen. Ein Modellwechsel ist dann ein Registry-Eintrag statt eines Umbaus. Modelle,
+die dieses Paradigma verlassen (FLUX.2, HiDream), brauchen je eine eigene Adapterschicht.
+
+**Multi-Reference-Editing** — Neuerer Ansatz, bei dem ein Modell mehrere Referenzbilder
+direkt entgegennimmt, statt über ein ControlNet konditioniert zu werden. Mächtiger, aber
+nicht mit der obigen Naht verträglich.
+
+**Referenzset** — Die kuratierten Bilder, gegen die der Stil gemessen wird. *Hier: eigene
+Renders des Büros — sie bleiben lokal und kommen nie ins Repo (Regel 3).*
+
+**Stil-Score** — Wie nah ein Render am Referenzset liegt, gemessen als
+Kosinus-Ähnlichkeit der Embeddings. Schwelle 0,30.
+
+**Aggregation (Messwerte)** — Wie mehrere Einzelwerte zu einem zusammengefasst werden.
+*Beim Stil-Score: `max` fragt „wie nah ist die **nächste** Referenz?", `mittel` fragt „wie
+nah ist das Set **insgesamt**?". Bei einem bewusst vielfältigen Referenzset urteilen die
+beiden verschieden — `max` ist Vorgabe, weil ein Treffer auf einen der Bürostile genügt.*
+*Nicht zu verwechseln mit* **Aggregation (Lizenzrecht)** *in Abschnitt 2.*
 
 **Embedding** — Die Übersetzung von Inhalten (Text, Bild) in eine Zahlenreihe, in der
 Ähnlichkeit als Nähe messbar wird.
@@ -884,6 +932,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus Backbone/Stil-QA: Registry, Dataclass/frozen, Depth-ControlNet-Naht, Multi-Reference-Editing, Referenzset, Stil-Score, Attrappe, vakuoeser Test, OpenRAIL++-M, Stability Community License. **Aggregation** in zwei Bedeutungen getrennt (Lizenzrecht / Messwerte) |
 | 2026-08-18 | Ergaenzt aus dem Multipass: Goldener Winkel, Normalisierung |
 | 2026-08-18 | Ergaenzt aus der Geometrie-QA: Rangkorrelation, Bindung, Silhouette, IoU, geometrisches Mittel, Disparitaet |
 | 2026-08-18 | Ergaenzt aus Phase 3: Leistungsgrenze, Rauchprobe, fail-closed praezisiert |
