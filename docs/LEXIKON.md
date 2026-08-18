@@ -531,6 +531,27 @@ geometrische Mittel 0,20.*
 Kehrwert aus: gross heisst nah statt fern. Wer das nicht beachtet, misst die Tiefe genau
 verkehrt herum.
 
+**Beauty-Pass** — Das gewöhnliche gerenderte Bild, im Unterschied zu den Hilfskanälen
+(Tiefe, Material-ID). Was man sieht, wenn man „das Rendering" meint.
+
+**Emissions-Shader** — Ein Material, das selbst leuchtet, statt Licht zu empfangen.
+*Für den Material-ID-Pass gebraucht: Die Farben sollen die Bauteile bezeichnen, nicht die
+Beleuchtung wiedergeben.*
+
+**View-Transform (AgX, Standard)** — Die Umrechnung von berechneten Lichtwerten in
+Bildwerte. `AgX` bildet filmisch ab und ist für Ansichtsbilder schöner; `Standard` rechnet
+unverfälscht und ist nötig, wenn aus dem Bild wieder Zahlen werden sollen.
+
+**Dithering** — Absichtliches feines Rauschen, das Farbstufen weicher wirken lässt. *Im
+Material-ID-Pass schädlich: Es zerfaserte jede Kennfarbe um ±1, aus 5 Farben wurden 19.*
+
+**Denoiser (Entrauscher)** — Nachbearbeitung, die das Bildrauschen eines Raytracers
+glättet. Für Ansichtsbilder erwünscht, für Kennfarben schädlich.
+
+**Bittiefe** — Wie viele Abstufungen ein Bildkanal unterscheidet. 8 Bit ergibt 256
+Stufen, 16 Bit rund 65 000. *Die normalisierte Tiefenkarte braucht 16 Bit — mit 8 wären
+Tiefenunterschiede grob gerastert.*
+
 **Depth-Pass / Tiefenkarte** — Graustufenbild, in dem die Helligkeit die Entfernung zur
 Kamera kodiert. *In diesem Projekt der zentrale Baustein: Die Tiefenkarte ist es, die
 das KI-Modell an die echte Gebäudeform bindet.*
@@ -932,6 +953,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus dem Multipass-Ausbau: Beauty-Pass, Emissions-Shader, View-Transform, Dithering, Denoiser, Bittiefe |
 | 2026-08-18 | Ergaenzt aus Backbone/Stil-QA: Registry, Dataclass/frozen, Depth-ControlNet-Naht, Multi-Reference-Editing, Referenzset, Stil-Score, Attrappe, vakuoeser Test, OpenRAIL++-M, Stability Community License. **Aggregation** in zwei Bedeutungen getrennt (Lizenzrecht / Messwerte) |
 | 2026-08-18 | Ergaenzt aus dem Multipass: Goldener Winkel, Normalisierung |
 | 2026-08-18 | Ergaenzt aus der Geometrie-QA: Rangkorrelation, Bindung, Silhouette, IoU, geometrisches Mittel, Disparitaet |

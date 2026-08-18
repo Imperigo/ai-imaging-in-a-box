@@ -162,12 +162,22 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Einen Report aus einem frueheren Lauf VOR dem Start entfernen. Ohne das wuerde ein
-    # abgestuerzter Blender-Lauf still gelingen, weil der Erfolg unten an der blossen
-    # Existenz der Datei haengt — und out_dir wird ueblicherweise wiederverwendet. Genau
-    # die Sorte stiller Falschmeldung, gegen die dieses Projekt sonst antritt.
+    # Ausgaben eines frueheren Laufs VOR dem Start entfernen — nicht nur den Report.
+    #
+    # Vorgeschichte: In Sitzung 03 wurde der Report geloescht, weil ein abgestuerzter Lauf
+    # sich sonst am liegengebliebenen Report gesundmeldete. In Sitzung 05 stellte sich
+    # heraus, dass dasselbe eine Datei weiter noch galt: Der Runner erklaerte den Lauf fuer
+    # gelungen, sobald eine `tiefe_*.exr` im Verzeichnis lag — auch die des Vorlaufs. Weil
+    # `out_dir` ueblicherweise wiederverwendet wird, verwies ein gescheiterter Lauf dann auf
+    # das Bild von gestern.
+    #
+    # Die Lehre, die dieses Projekt mehrfach gelernt hat: Die Existenz einer Datei ist kein
+    # Beleg fuer ihren Inhalt. Darum wird hier abgeraeumt statt geprueft.
     bericht = out_dir / "blender-report.json"
     bericht.unlink(missing_ok=True)
+    for muster in ("tiefe_*.exr", "tiefe_norm.png", "material_id.png", "beauty_*.png"):
+        for alt_datei in out_dir.glob(muster):
+            alt_datei.unlink(missing_ok=True)
 
     cmd = [
         finde_blender(), "--background", "--factory-startup",

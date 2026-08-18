@@ -614,3 +614,35 @@ def test_shutil_which_ist_kein_ersatz_fuer_die_umgebungsvariable(monkeypatch):
     monkeypatch.setenv("AIIMAGING_BLENDER", "/anderswo/blender")
     monkeypatch.setattr(shutil, "which", lambda _n: "/usr/bin/blender")
     assert seams.finde_blender() == "/anderswo/blender"
+
+
+# ── Regression aus Sitzung 05 ────────────────────────────────────────────────────────
+
+def test_alte_ausgaben_werden_vor_dem_lauf_abgeraeumt(tmp_path):
+    """Ein gescheiterter Lauf darf sich nicht an den Dateien des Vorlaufs gesundmelden.
+
+    Sitzung 03 hat das fuer den Report behoben, Sitzung 05 fand dieselbe Luecke eine Datei
+    weiter: Der Erfolg hing an der blossen Existenz einer `tiefe_*.exr`. Weil `out_dir`
+    ueblicherweise wiederverwendet wird, verwies ein abgestuerzter Lauf auf das Bild von
+    gestern. Existenz ist kein Beleg fuer Inhalt.
+    """
+    from aiimaging import seams
+
+    ziel = tmp_path / "aus"
+    ziel.mkdir()
+    reste = ["tiefe_0001.exr", "tiefe_norm.png", "material_id.png", "beauty_.png"]
+    for name in reste:
+        (ziel / name).write_text("ALTER LAUF", encoding="utf-8")
+    (ziel / "blender-report.json").write_text('{"status":"ok","aus":"ALTER LAUF"}',
+                                              encoding="utf-8")
+
+    class _Abbruch:
+        def __init__(self):
+            self.returncode, self.stdout, self.stderr = 137, "", "Killed"
+
+    with pytest.raises(seams.SeamError):
+        seams.glb_zu_multipass("bau.glb", ziel, up_axis="Y",
+                               _starte=lambda cmd, timeout: _Abbruch())
+
+    uebrig = sorted(p.name for p in ziel.iterdir())
+    assert uebrig == [], f"Reste des Vorlaufs nicht abgeraeumt: {uebrig}"
