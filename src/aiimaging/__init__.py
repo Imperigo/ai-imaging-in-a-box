@@ -25,6 +25,7 @@ Aufbau
 ``einbetter``    Registry der Einbettungsmodelle samt Lizenz (DINOv3 ausgeschlossen)
 ``gate``         das Doppel-Gate — bestanden nur, wenn beide bestehen
 ``backbone``     Registry der Bildmodelle samt Lizenz (Regel 1 in ausführbarer Form)
+``render``       die Bildmodell-Stufe über `diffusers`, Modell injizierbar
 ``mcp_schemas``  die Werkzeugverträge als reine Daten
 ``mcp_server``   optionaler Zusatz, braucht das MIT-lizenzierte MCP-SDK
 """
@@ -32,7 +33,7 @@ __version__ = "0.0.2"
 
 from aiimaging import (  # noqa: F401
     auftrag, backbone, contracts, einbetter, gate, geometrie_qa, graph, jobs,
-    mcp_schemas, seams, stil_qa, torwaechter, werkzeuge,
+    mcp_schemas, render, seams, stil_qa, torwaechter, werkzeuge,
 )
 from aiimaging.contracts import (  # noqa: F401
     ContractError,

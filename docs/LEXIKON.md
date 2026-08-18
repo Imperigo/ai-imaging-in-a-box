@@ -691,6 +691,25 @@ Wertebereich −1 bis 1. *In diesem Projekt Grundlage des Stil-Scores.*
 Architekturkontext der entscheidende Mangel: ein schönes Gebäude, das nicht das
 entworfene ist.*
 
+**diffusers** — Die Apache-2.0-Bibliothek von Hugging Face, mit der Diffusionsmodelle
+geladen und ausgeführt werden. *In diesem Projekt der Ersatz für ComfyUI, das wegen
+GPL-3.0 ausscheidet: `diffusers` ist eine Bibliothek, die man aufruft, kein Programm, das
+man umhüllt.*
+
+**txt2img / img2img / image-edit** — Drei Betriebsarten der Bilderzeugung: aus reinem
+Text, ausgehend von einem vorhandenen Bild, oder als gezielte Änderung daran. *Hier
+gebraucht wird die dritte — der Cycles-Render ist der Anker, das Modell soll ihn
+veredeln, nicht ersetzen.*
+
+**Seed (Startwert)** — Die Zahl, mit der der Zufallsgenerator beginnt. Gleicher Seed und
+gleiche Einstellungen ergeben dasselbe Bild. *Voraussetzung dafür, dass ein Ergebnis
+später überprüfbar ist — ohne Seed lässt sich ein Render nicht wiederholen, und die
+Schwellenstudie in Phase 4 wäre nicht durchführbar.*
+
+**Zeilenfilter (PNG)** — PNG speichert jede Bildzeile nicht direkt, sondern als
+Differenz zu ihren Nachbarn — das lässt sich besser packen. Fünf Verfahren stehen zur
+Wahl, und wer ein PNG selbst liest, muss alle fünf rückgängig machen können.
+
 **Backbone** — Das Hauptmodell einer Pipeline, im Unterschied zu den Hilfsmodellen.
 
 **Quantisierung** — Verkleinerung der Gewichte durch gröbere Zahlendarstellung. Spart
@@ -960,6 +979,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus Renderstufe und Bildlesen: diffusers, txt2img/img2img/image-edit, Seed, Zeilenfilter |
 | 2026-08-18 | Ergaenzt aus der Einbetter-Pruefung: Gated Model praezisiert, selbstueberwachtes Lernen |
 | 2026-08-18 | Ergaenzt aus dem Multipass-Ausbau: Beauty-Pass, Emissions-Shader, View-Transform, Dithering, Denoiser, Bittiefe |
 | 2026-08-18 | Ergaenzt aus Backbone/Stil-QA: Registry, Dataclass/frozen, Depth-ControlNet-Naht, Multi-Reference-Editing, Referenzset, Stil-Score, Attrappe, vakuoeser Test, OpenRAIL++-M, Stability Community License. **Aggregation** in zwei Bedeutungen getrennt (Lizenzrecht / Messwerte) |

@@ -100,8 +100,13 @@ aus `register_in_odysseus.sh` bekannt, aber hier nicht ausgeführt.
       Depth als EXR **und** normalisiertes PNG mit Rückrechnungsformel
 - [x] Backbone-Adapter — `backbone.py`: Registry mit Lizenz je Modell.
       `waehle(kommerziell=True)` gibt FLUX-dev **nie** zurück — Regel 1 ausführbar.
-- [ ] Erster echter Render: Qwen-Image-Edit-2511 (Apache-2.0) mit ControlNet-Depth
-      — **braucht GPU und Gewichte**, siehe `auftraege/` (HomeStation)
+- [x] **Renderstufe gebaut** — `render.py` über `diffusers` (Apache-2.0), Modell
+      injizierbar, ohne GPU voll durchlaufbar. Regel 1 im Pfad: FLUX-dev wird abgelehnt.
+- [x] **Bildlesen** — `bildlesen.py` schliesst die Lücke zwischen Dateien und Metrik;
+      warnt aktiv, dass die Silhouette nur aus der EXR exakt ist.
+- [ ] **Erster echter Render** — Qwen-Image-Edit-2511 mit echten Gewichten.
+      **Braucht GPU**, läuft über `auftraege/`. Der diffusers-Adapter ist bisher
+      **nie ausgeführt** worden — das ist die offene Fläche.
 - [x] **Geometrie-Treue-QA** — `geometrie_qa.py`, an synthetischen Fällen belegt:
       treu 0.99, halluziniert 0.24 bei Spearman **+1.000**. Nur die Silhouette fängt ihn.
 - [x] Stil-QA als zweites Gate — `stil_qa.py`, Metrik testbar, Einbetter injizierbar
