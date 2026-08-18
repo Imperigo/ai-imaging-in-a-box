@@ -689,6 +689,10 @@ Eingängen und Ausgängen.
 haben eine Richtung, und kein Weg führt zum Ausgangspunkt zurück. Dadurch ist immer eine
 gültige Reihenfolge bestimmbar. Die übliche Grundform von Bildketten.
 
+**Skip-on-Error** — Wenn ein Knoten in einer Kette scheitert, werden alle von ihm
+abhängigen Knoten übersprungen statt mit unvollständigen Eingaben gerechnet. Ein Ergebnis
+aus halben Daten ist schlimmer als gar keines — es sieht gültig aus.
+
 **Pipeline** — Eine feste Abfolge von Verarbeitungsschritten.
 
 **Frontend / Backend** — Die sichtbare Oberfläche gegenüber dem rechnenden Unterbau.
@@ -845,7 +849,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
-| 2026-08-18 | Ergaenzt aus Phase 2: Freigabe-Token, Pfad-Trickserei, Positivliste, fsync, atomares Schreiben, Zustandsautomat, Endzustand, Content-Hashing, Mutationsprobe |
+| 2026-08-18 | Ergaenzt aus Phase 2: Skip-on-Error, Freigabe-Token, Pfad-Trickserei, Positivliste, fsync, atomares Schreiben, Zustandsautomat, Endzustand, Content-Hashing, Mutationsprobe |
 | 2026-08-18 | Ergaenzt aus der Paketierung: pyproject.toml, src-Layout, optionale Abhaengigkeitsgruppe, SPDX |
 | 2026-08-18 | Ergaenzt aus Phase 1: STEP/ISO-10303-21, Extrusion/SweptSolid, GUID, Determinismus, Testfixture, Orchestrator |
 | 2026-08-14 | Ergaenzt aus Phase 0: stdio, Pfad-Sandbox, write-gated, Runner |
