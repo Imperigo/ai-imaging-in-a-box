@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260818-09",
+  "art": "render",
+  "beschreibung": "ZWEITER ANLAUF ERSTER ECHTER RENDER, nach deinem auf-07-Befund. Du hast geschrieben, du richtest die Umgebung ein und holst die diffusers-Gewichte - dieser Auftrag ist die Ablage dafuer, nicht eine Aufforderung, es nochmal zu tun. DEIN BEFUND WAR DER NUTZEN DES LAUFS, nicht sein Fehlschlag: Die Stufentrennung hat gehalten. Der Multipass steht vollstaendig als eigener Messwert da, obwohl der Render danach abbrach - genau dafuer war sie gebaut. WAS ICH DARAUS GEAENDERT HABE: lade_modell sucht jetzt nach Einzeldateien mit passendem Namen und sagt im Fehlerfall, dass es ein FORMAT- und kein Pfadproblem ist. Deine qwen_image_edit_2511_fp8mixed.safetensors haette der Adapter jetzt genannt, statt 'Gewichte unvollstaendig' zu melden und den Eindruck zu lassen, es sei nichts da. Die Suche verlangt, dass ALLE Namensteile vorkommen - qwen-image-2512 zeigt nicht auf die Datei von qwen-image-edit-2511; ein falscher Hinweis waere schlechter als keiner. EIN HINWEIS ZUR EINRICHTUNG, PRUEF IHN, GLAUB IHN NICHT: Die RTX 5090 ist Blackwell (Rechenfaehigkeit sm_120). Aeltere torch-Binaerpakete kennen diese Architektur nicht und melden dann 'no kernel image is available for execution on the device' - was wie ein Treiberfehler aussieht und keiner ist. Falls dir das begegnet, brauchst du ein torch-Paket, das fuer eine passende CUDA-Fassung gebaut ist. Ich habe das NICHT nachgeprueft und kann es hier auch nicht - es ist eine Warnung, keine Anweisung. WAS ICH ZURUECK BRAUCHE: (1) Laeuft der Adapter mit echten Gewichten durch? (2) Die VRAM-SPITZE des Renders - die Zahl fehlt uns immer noch vollstaendig und entscheidet, ob Bildmodell und Sprachmodell je gleichzeitig resident sein koennen. Deine Grundlast von 1071 MiB bei entladenen Ollama-Modellen ist notiert. (3) Der Geometrie-Score, und zwar spearman und geom_iou GETRENNT - hohes spearman bei niedrigem geom_iou heisst, die Tiefenordnung stimmt und die Silhouette nicht, also Halluzination; beides niedrig heisst eher, dass Depth-Anything-V2-Small auf diesem Bild nicht traegt. (4) Welche torch- und diffusers-Fassung, und welche CUDA-Fassung. EIN SCORE UNTER 0.65 IST EIN ERGEBNIS, KEIN FEHLSCHLAG. Und lies ihn bitte im Licht der Schwellenstudie von heute: 0.65 laesst 18 von 32 gestoerten Faellen durch, ein angebauter Baukoerper von der Flaeche des Baus selbst besteht mit 0.698. Wenn dein Render hoch scored, sieh dir trotzdem das Bild an und sag mir, ob du etwas siehst, das die Geometrie nicht kennt. Das ist genau der Fall, den die Metrik durchlaesst. FALLS ZEIT BLEIBT: derselbe Lauf mit controlnet_staerke 0.6 und 1.0, seed gleich. Drei Punkte sind der Anfang der zweiten Haelfte der Schwellenstudie - und die zweite Haelfte ist die, die zaehlt, weil in ihr der Tiefenschaetzer steckt.",
+  "erstellt": "2026-08-18T14:58:35Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "aufloesung": 512,
+    "samples": 64,
+    "backbone": "qwen-image-edit-2511",
+    "prompt": "photorealistic architectural visualization of a simple modern concrete building, overcast daylight, matte concrete surfaces, clean flat roof, neutral grey sky, no vegetation, no people, eye-level exterior view",
+    "negativ_prompt": "extra floors, extra windows, added balconies, changed roofline, distorted perspective, fisheye, text, watermark",
+    "seed": 20260818,
+    "schritte": 28,
+    "controlnet_staerke": 0.8,
+    "denoise": 0.6,
+    "mit_beauty": true,
+    "schaetzer": "depth-anything-v2-small"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
+  }
+}
