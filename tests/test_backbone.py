@@ -517,3 +517,89 @@ def test_die_lizenzvokabel_zieht_selbst_nichts_nach():
     import aiimaging.lizenzquelle as modul
 
     assert _importierte_wurzelmodule(modul) <= {"__future__"}
+
+
+# ==========================================================================================
+# Die zweite Hälfte der Naht — ein Depth-ControlNet ist immer ZWEI Modelle
+#
+# Befund vom 18.08.2026 (`docs/BACKBONE_CONTROLNET_2026-08-18.md`): Die Registry kannte
+# eine Lizenz, die Naht braucht zwei. Damit war bei jedem ControlNet-Eintrag systematisch
+# die halbe Naht geprüft — und die andere Hälfte galt als geprüft, weil niemand sie
+# vermisste.
+# ==========================================================================================
+
+def test_controlnet_eintraege_werden_beidseitig_beurteilt():
+    """Jeder Depth-ControlNet-Eintrag muss zur ControlNet-Seite etwas zu sagen haben."""
+    for name, eintrag in BACKBONES.items():
+        urteil = pruefe_lizenz(name)
+        cn = urteil["controlnet"]
+        assert cn["noetig"] is (eintrag.konditionierung == KOND_DEPTH_CONTROLNET), name
+
+
+def test_unbenanntes_controlnet_ist_nicht_dasselbe_wie_ein_erlaubtes():
+    """``None`` heisst „nicht beurteilbar", nicht „in Ordnung".
+
+    Genau diese Gleichsetzung war der Fehler: Wo nichts stand, galt nichts als Problem.
+    """
+    for name, eintrag in BACKBONES.items():
+        cn = pruefe_lizenz(name)["controlnet"]
+        if cn["noetig"] and not cn["benannt"]:
+            assert cn["zulaessig"] is None, name
+            assert any("UNVOLLSTÄNDIG" in a for a in cn["auflagen"]), name
+
+
+def test_der_empfohlene_kandidat_ist_beidseitig_permissiv():
+    """`z-image-turbo` — der einzige Kandidat, bei dem beide Hälften Apache-2.0 sind."""
+    urteil = pruefe_lizenz("z-image-turbo")
+    cn = urteil["controlnet"]
+    assert urteil["zulaessig"] is True
+    assert cn["benannt"] is True
+    assert cn["lizenz"] == "Apache-2.0"
+    assert cn["zulaessig"] is True
+    assert cn["lizenz_belegt"] is True
+
+
+def test_flux_ist_beidseitig_zu_und_sagt_es_auch():
+    """Der Fall, der das Loch in Regel 1 sichtbar macht.
+
+    Bei FLUX sind die verbreiteten Depth-ControlNets **selbst** nicht-kommerziell. Ein
+    permissives FLUX-Basismodell hätte hier „zulässig" ergeben, und die fertige Kette
+    wäre trotzdem unverkäuflich gewesen.
+    """
+    urteil = pruefe_lizenz("flux1-dev")
+    assert urteil["zulaessig"] is False
+    assert urteil["controlnet"]["zulaessig"] is False
+    assert "BEIDSEITIG" in urteil["begruendung"]
+
+
+def test_der_aeltere_ausschlussgrund_wird_nicht_verdeckt():
+    """Zwei Gründe sind zwei Gründe — der zweite darf den ersten nicht überschreiben.
+
+    ``flux1-dev`` ist schon wegen des Basismodells ausgeschlossen. Verdeckte die
+    ControlNet-Begründung diese, ginge der Satz über die abgeleiteten LoRAs verloren —
+    und genau der schlägt beim Stil-Training zu.
+    """
+    begruendung = pruefe_lizenz("flux1-dev")["begruendung"]
+    assert "LoRA" in begruendung
+    assert "HINZU KOMMT" in begruendung
+
+
+def test_sd35_nennt_die_beiden_nachgetragenen_auflagen():
+    """Zwei Auflagen der Community License, die bis zum 18.08.2026 nirgends standen.
+
+    Beide sind für dieses Projekt unmittelbar einschlägig — die zweite verbietet genau
+    das, was ein LoRA auf selbst erzeugten Bildern täte.
+    """
+    auflagen = " ".join(pruefe_lizenz("sd35-large")["auflagen"])
+    assert "Powered by Stability AI" in auflagen
+    assert "Basismodelle" in auflagen
+
+
+def test_ein_controlnet_an_einem_edit_modell_ist_ein_widerspruch():
+    """Ein integriertes Edit-Modell braucht kein zweites Repo — steht dort eines, stimmt was nicht."""
+    import dataclasses
+    edit = dataclasses.replace(BACKBONES["qwen-image-edit-2511"],
+                               controlnet_id="irgendwer/irgendwas")
+    from aiimaging.backbone import _pruefe_controlnet
+    cn = _pruefe_controlnet(edit)
+    assert any("Widerspruch" in a for a in cn["auflagen"])

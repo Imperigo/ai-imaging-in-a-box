@@ -43,6 +43,7 @@ from aiimaging.render import (
     STATUS_OK,
     RenderAuftrag,
     RenderError,
+    ist_controlnet_naht,
     pruefe_auftrag,
     rendere,
 )
@@ -691,3 +692,105 @@ def test_kein_comfyui_im_modul():
     """ComfyUI ist GPL-3.0 und als Kern ausgeschlossen (Regel 1) — auch nicht als Import."""
     quelle = Path(render.__file__).read_text(encoding="utf-8")
     assert "comfy" not in {m.lower() for m in _importe(quelle, nur_modulebene=False)}
+
+
+# ==========================================================================================
+# Die Führung (guidance_scale) — der Regler, den niemand gesetzt hat
+#
+# Befund vom 18.08.2026 (`docs/BACKBONE_CONTROLNET_2026-08-18.md`, Kap. 5): `_baue_parameter`
+# kannte kein `guidance_scale`, also griff die Vorgabe von diffusers. Für ein destilliertes
+# Turbo-Modell ist die falsch — und beim richtigen Wert 0.0 wird der negative Prompt still
+# ignoriert. Dieselbe Fehlerklasse wie `auf-20260818-09`, nur an einem anderen Argument.
+# ==========================================================================================
+
+def test_fuehrung_steht_im_parametersatz(tiefe, ziel):
+    """Was nicht im Parametersatz steht, kann das Modell nicht benutzt haben."""
+    ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel), modell=Attrappe())
+    assert "fuehrung" in ergebnis["parameter"]
+
+
+def test_die_fuehrung_des_backbones_greift_ohne_eigene_angabe(tiefe, ziel):
+    """`z-image-turbo` ist destilliert und läuft ohne Führung — 0.0 ist der richtige Wert."""
+    ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel, backbone="z-image-turbo"),
+                       modell=Attrappe())
+    assert ergebnis["parameter"]["fuehrung"] == 0.0
+
+
+def test_der_auftrag_schlaegt_die_registry(tiefe, ziel):
+    ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel, backbone="z-image-turbo",
+                               fuehrung=3.5), modell=Attrappe())
+    assert ergebnis["parameter"]["fuehrung"] == 3.5
+
+
+def test_unbestimmte_fuehrung_wird_gemeldet_statt_ersetzt(tiefe, ziel):
+    """Ein eingesetzter Ersatzwert wäre eine Erfindung — der Hinweis ist die Wahrheit.
+
+    ``None`` heisst: Es greift die Vorgabe von diffusers. Das ist eine fremde
+    Entscheidung, und der Ergebnissatz sagt das, statt sie als eigene auszugeben.
+    """
+    ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel, backbone="qwen-image-2512"),
+                       modell=Attrappe())
+    assert ergebnis["parameter"]["fuehrung"] is None
+    assert any("keine Führung" in h for h in ergebnis["hinweise"])
+
+
+def test_negativer_prompt_unter_fuehrung_eins_wird_als_wirkungslos_gemeldet(tiefe, ziel):
+    """Der stille Fall: Der negative Prompt steht im Protokoll, im Bild wirkt er nicht.
+
+    Unterhalb von 1.0 schaltet diffusers die klassifikatorfreie Führung ab. Ohne diesen
+    Hinweis stünde ein negativer Prompt in der Wiederholvorschrift, hätte aber nie ein
+    Bild beeinflusst — und eine Vergleichsreihe darüber ergäbe dreimal dasselbe Bild.
+    """
+    ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel, backbone="z-image-turbo",
+                               negativ_prompt="unscharf, verzerrt"), modell=Attrappe())
+    treffer = [h for h in ergebnis["hinweise"] if "WIRKUNGSLOS" in h]
+    assert treffer, ergebnis["hinweise"]
+    assert "unscharf, verzerrt" in treffer[0]
+
+
+def test_ohne_negativen_prompt_kein_hinweis(tiefe, ziel):
+    """Ein Hinweis, der immer kommt, wird überlesen."""
+    ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel, backbone="z-image-turbo"),
+                       modell=Attrappe())
+    assert not any("WIRKUNGSLOS" in h for h in ergebnis["hinweise"])
+
+
+# ==========================================================================================
+# Die SDXL-Falle — eine tragende Naht nicht als kaputt melden
+# ==========================================================================================
+
+class _PipelineOhneControlNet:
+    """Eine Bildbearbeitungs-Pipeline: nimmt ein `image`, hat aber kein ControlNet."""
+    controlnet = None
+
+
+class _SdxlControlNet:
+    """SDXL nennt das Steuerbild `image` und kennt `control_image` gar nicht."""
+    controlnet = object()
+
+
+def test_sdxl_naht_wird_als_controlnet_erkannt_obwohl_control_image_fehlt():
+    """Der spiegelbildliche Fehler zu `auf-20260818-09` — hier verhindert.
+
+    Dort wurde eine fehlende Naht für vorhanden gehalten. Hier würde eine tragende für
+    kaputt erklärt, bloss weil sie ihren Eingang anders nennt.
+    """
+    assert ist_controlnet_naht(_SdxlControlNet(), {"image": "…"}) is True
+
+
+def test_controlnet_staerke_im_argumentsatz_genuegt_als_beleg():
+    """Wer eine ControlNet-Stärke zu regeln hat, hat ein ControlNet."""
+    assert ist_controlnet_naht(_PipelineOhneControlNet(),
+                               {"controlnet_conditioning_scale": 0.8}) is True
+
+
+def test_eine_pipeline_ohne_beides_ist_keine_controlnet_naht():
+    assert ist_controlnet_naht(_PipelineOhneControlNet(), {"image": "…"}) is False
+
+
+def test_der_name_der_pipeline_entscheidet_nicht():
+    """Modellname und Fassungsnummer haben sich in diesem Projekt zweimal geirrt."""
+    class HeisstNachControlNetIstAberKeines:
+        __name__ = "SuperControlNetPipelineXL"
+        controlnet = None
+    assert ist_controlnet_naht(HeisstNachControlNetIstAberKeines(), {"image": "…"}) is False

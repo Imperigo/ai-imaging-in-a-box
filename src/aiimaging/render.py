@@ -149,6 +149,11 @@ class RenderAuftrag:
         controlnet_staerke: Wie stark die Tiefenkarte das Bild bindet, 0..1. Klein heisst
             freier und schöner, gross heisst geometrietreuer. Diese Zahl ist der
             eigentliche Regler des Projekts — sie gehört deshalb ins Ergebnis.
+        fuehrung: ``guidance_scale`` — wie stark der Prompt das Bild zwingt. ``None``
+            übernimmt den Wert des Backbones; hat auch der keinen, greift die Vorgabe von
+            ``diffusers``, und das Ergebnis sagt es als Hinweis. Unterhalb von 1.0 ist der
+            **negative Prompt wirkungslos**, weil die klassifikatorfreie Führung dann
+            abgeschaltet ist.
         denoise: Wie stark das Ausgangsbild überschrieben wird, 0..1. Wirkt nur, wenn
             ``beauty_png`` gesetzt ist (Modus ``image_edit``); ohne Ausgangsbild gibt es
             nichts zu überschreiben. Der Wert wird dann nicht heimlich verworfen, sondern
@@ -176,6 +181,7 @@ class RenderAuftrag:
     schritte: int = 20
     controlnet_staerke: float = 0.8
     denoise: float = 0.6
+    fuehrung: float | None = None
     beauty_png: str | None = None
     ausgabe_png: str | None = None
     modell_wurzel: str | None = None
@@ -652,6 +658,40 @@ def _vertraegliche_argumente(pipeline, argumente: dict) -> tuple[dict, list[str]
     return genommen, sorted(set(argumente) - set(genommen))
 
 
+def ist_controlnet_naht(pipeline, genommene_argumente) -> bool:
+    """Trägt diese Pipeline ein ControlNet — auch wenn sie kein ``control_image`` kennt?
+
+    Warum diese Frage nicht am Namen entschieden wird
+    -------------------------------------------------
+    Die ControlNet-Familien nennen ihren Steuereingang verschieden.
+    ``QwenImageControlNetPipeline``, ``StableDiffusion3ControlNetPipeline`` und
+    ``ZImageControlNetPipeline`` nehmen ``control_image``;
+    **``StableDiffusionXLControlNetPipeline`` nennt ihn schlicht ``image``** und kennt
+    ``control_image`` überhaupt nicht (dort heisst so das Ausgangsbild der
+    Img2Img-Variante — dieselbe Zeichenkette, die andere Bedeutung).
+
+    Ohne diese Unterscheidung meldete der Adapter für SDXL, die Konditionierung sei
+    „Bildbearbeitung, nicht ControlNet". Das ist der **spiegelbildliche Fehler** zu
+    `auf-20260818-09`: dort wurde eine fehlende Naht für vorhanden gehalten, hier würde
+    eine tragende für kaputt erklärt. Beide kosten dasselbe — einen Menschen, der
+    nachsieht, und beim zweiten Mal sieht er nicht mehr nach.
+
+    Entschieden wird an zwei ablesbaren Merkmalen, keinem geratenen: Wer
+    ``controlnet_conditioning_scale`` annimmt, hat eine ControlNet-Stärke zu regeln; wer
+    ein ``controlnet``-Attribut trägt, hat ein ControlNet geladen. Der Modellname und
+    die Fassungsnummer bleiben aussen vor — beide haben sich in diesem Projekt schon
+    einmal als unzuverlässig erwiesen.
+
+    Args:
+        pipeline: Die ``diffusers``-Pipeline.
+        genommene_argumente: Die Argumente, die sie tatsächlich annimmt
+            (aus :func:`_vertraegliche_argumente`).
+    """
+    if "controlnet_conditioning_scale" in genommene_argumente:
+        return True
+    return getattr(pipeline, "controlnet", None) is not None
+
+
 def _pipeline_adapter(pipeline, eintrag, torch):
     """Aus einer ``diffusers``-Pipeline ein Modell im Sinne dieses Moduls machen.
 
@@ -690,6 +730,12 @@ def _pipeline_adapter(pipeline, eintrag, torch):
             "control_image": tiefe,
             "controlnet_conditioning_scale": parameter["controlnet_staerke"],
             "num_inference_steps": parameter["schritte"],
+            # Ohne Angabe greift die Vorgabe der jeweiligen Pipeline — bei diffusers
+            # meist 5.0 oder 7.5. Für ein destilliertes Turbo-Modell ist das falsch: Es
+            # ist darauf trainiert, OHNE Führung zu laufen, und ein Wert von 5.0 liefert
+            # überzeichnete Bilder bei doppelter Rechenzeit. Der Wert gehört darum in den
+            # Parametersatz und nicht in die Vorgabe einer fremden Bibliothek.
+            "guidance_scale": parameter["fuehrung"],
             "generator": generator,
             # Das Bild muss die Tiefenkarte treffen, sonst ist es nicht bewertbar:
             # `geometrie_qa` vergleicht Soll und Ist **indexweise** und lehnt bei
@@ -713,15 +759,36 @@ def _pipeline_adapter(pipeline, eintrag, torch):
             # der Geometrieträger, und Geometrietreue ist der Zweck des Ganzen. Ein
             # Beauty-Pass, der hier vorlag, tritt dahinter zurück: Es gibt nur einen
             # Bildeingang, und die Geometrie hat ihn nötiger als die Farbe.
-            if "image" in genommen:
+            #
+            # ABER: Ein fehlendes `control_image` ist NICHT gleichbedeutend mit „kein
+            # ControlNet". `StableDiffusionXLControlNetPipeline` nennt ihr Steuerbild
+            # schlicht `image` und kennt `control_image` gar nicht — dort ist die
+            # Tiefenkarte als `image` die richtige und einzige Übergabe. Die frühere
+            # Fassung hätte für SDXL gemeldet, die Konditionierung sei „Bildbearbeitung,
+            # nicht ControlNet": der spiegelbildliche Fehler zu `auf-20260818-09`, eine
+            # tragende Naht als kaputt gemeldet. Ein Fehlalarm kostet dasselbe wie ein
+            # übersehener Fehler — einen Menschen, der nachsieht.
+            #
+            # Unterschieden wird an der Pipeline selbst, nicht an ihrem Namen: Wer
+            # `controlnet_conditioning_scale` annimmt oder ein `controlnet`-Attribut
+            # trägt, hat ein ControlNet. Beides ist ablesbar, keines ist geraten.
+            if ist_controlnet_naht(pipeline, genommen):
                 hinweise.append(
-                    "Diese Pipeline hat keinen 'control_image'-Eingang. Die Tiefenkarte "
-                    "wurde als 'image' übergeben und ersetzt dabei den Beauty-Pass — die "
-                    "Konditionierung ist damit Bildbearbeitung, nicht ControlNet."
+                    "Diese Pipeline nimmt das Steuerbild als 'image' entgegen und kennt "
+                    "kein 'control_image' (so hält es die SDXL-ControlNet-Familie). Die "
+                    "Tiefenkarte wurde dorthin übergeben — die ControlNet-Naht trägt."
+                )
+            elif "image" in genommen:
+                hinweise.append(
+                    "Diese Pipeline hat keinen 'control_image'-Eingang und kein "
+                    "erkennbares ControlNet. Die Tiefenkarte wurde als 'image' übergeben "
+                    "und ersetzt dabei den Beauty-Pass — die Konditionierung ist damit "
+                    "Bildbearbeitung, nicht ControlNet."
                 )
             genommen["image"] = tiefe
 
         for name, wert in (("controlnet_conditioning_scale", parameter["controlnet_staerke"]),
+                           ("guidance_scale", parameter["fuehrung"]),
                            ("strength", parameter["denoise"])):
             if name in verworfen:
                 hinweise.append(
@@ -731,7 +798,8 @@ def _pipeline_adapter(pipeline, eintrag, torch):
                 )
 
         uebrig = [n for n in verworfen
-                  if n not in ("control_image", "controlnet_conditioning_scale", "strength")]
+                  if n not in ("control_image", "controlnet_conditioning_scale",
+                               "guidance_scale", "strength")]
         if uebrig:
             hinweise.append(f"Nicht übergeben, weil unbekannt: {', '.join(uebrig)}.")
 
@@ -777,6 +845,11 @@ def _baue_parameter(a: RenderAuftrag, eintrag) -> dict:
         "schritte": a.schritte,
         "controlnet_staerke": float(a.controlnet_staerke),
         "denoise": float(a.denoise),
+        # Auftrag schlägt Registry schlägt fremde Vorgabe. `None` bleibt `None` und wird
+        # unten als solches gemeldet — ein eingesetzter Ersatzwert wäre eine Erfindung.
+        "fuehrung": (float(a.fuehrung) if a.fuehrung is not None
+                     else (float(eintrag.fuehrung) if getattr(eintrag, "fuehrung", None)
+                           is not None else None)),
         "modell_wurzel": str(wurzel),
     }
 
@@ -793,6 +866,20 @@ def _hinweise(a: RenderAuftrag, parameter: dict, lizenz: dict) -> tuple[str, ...
         hinweise.append(
             f"denoise={a.denoise} bleibt im Modus '{MODUS_TXT2IMG}' wirkungslos: Ohne "
             f"'beauty_png' gibt es kein Ausgangsbild, das überschrieben werden könnte."
+        )
+    if parameter["fuehrung"] is None:
+        hinweise.append(
+            f"Für '{parameter['backbone']}' ist keine Führung (guidance_scale) bestimmt. "
+            f"Es greift die Vorgabe von diffusers — eine fremde Entscheidung, keine "
+            f"eigene. Bei einem destillierten Turbo-Modell ist sie nachweislich falsch."
+        )
+    elif parameter["fuehrung"] <= 1.0 and a.negativ_prompt:
+        # Der stille Fall: Der negative Prompt steht im Protokoll, im Bild wirkt er nicht.
+        hinweise.append(
+            f"fuehrung={parameter['fuehrung']} schaltet die klassifikatorfreie Führung "
+            f"ab. Der negative Prompt ({a.negativ_prompt!r}) bleibt damit WIRKUNGSLOS — "
+            f"er steht im Protokoll, aber nicht im Bild. Wer ihn braucht, setzt die "
+            f"Führung über 1.0; wer das Turbo-Modell braucht, verzichtet auf ihn."
         )
     if a.ausgabe_png is None:
         hinweise.append(

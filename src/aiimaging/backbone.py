@@ -127,6 +127,40 @@ class Backbone:
     dateien: tuple[str, ...]
     lizenz_quelle: str = QUELLE_UNGEPRUEFT
 
+    # --- Die zweite Hälfte der Naht ----------------------------------------------------
+    #
+    # BEFUND (`docs/BACKBONE_CONTROLNET_2026-08-18.md`, 18.08.2026): Ein Depth-ControlNet
+    # ist **nie ein Modell, sondern immer zwei** — das Basismodell und das ControlNet, in
+    # getrennten Repos mit getrennten Lizenzen. Die Registry kannte bis hierher nur eine
+    # Lizenz und hat damit systematisch die halbe Naht geprüft. Das ist keine
+    # Ungenauigkeit, sondern ein Loch in Regel 1: Ein Apache-2.0-Basismodell mit einem
+    # nicht-kommerziellen ControlNet ergibt eine nicht-kommerzielle Kette, und
+    # `pruefe_lizenz` hätte „zulässig" gemeldet.
+    #
+    # Bei FLUX ist genau das der Fall — dort sind alle drei verbreiteten Depth-ControlNets
+    # *selbst* nicht-kommerziell lizenziert, ein permissives Basismodell würde also nichts
+    # retten.
+    #
+    # ``None`` heisst NICHT „keines nötig", sondern **„noch nicht benannt"**. Bei
+    # ``KOND_DEPTH_CONTROLNET`` ist das ein Mangel, den :func:`pruefe_lizenz` meldet.
+    controlnet_id: str | None = None
+    controlnet_lizenz: str | None = None
+    controlnet_lizenz_quelle: str = QUELLE_UNGEPRUEFT
+
+    #: ``guidance_scale`` dieses Modells — wie stark der Prompt das Bild zwingt.
+    #:
+    #: ``None`` heisst **nicht** „egal", sondern „für dieses Modell nicht bestimmt". Dann
+    #: greift die Vorgabe von ``diffusers`` (meist 5.0 oder 7.5), und das ist eine fremde
+    #: Entscheidung, keine eigene — :func:`aiimaging.render.rendere` sagt das als Hinweis.
+    #:
+    #: Der Wert ist nicht kosmetisch. Destillierte Turbo-Modelle sind darauf trainiert,
+    #: OHNE Führung zu laufen; 5.0 liefert dort überzeichnete Bilder. Und unterhalb von
+    #: 1.0 schaltet ``diffusers`` die klassifikatorfreie Führung ganz ab — **womit der
+    #: negative Prompt wirkungslos wird, ohne dass jemand es merkt.** Dieselbe
+    #: Fehlerklasse wie bei `controlnet_staerke` an einer Pipeline ohne ControlNet
+    #: (`auf-20260818-09`), nur an einem anderen Argument.
+    fuehrung: float | None = None
+
 
 def _vram_schaetzung(parameter_b: float) -> float:
     """Grobe VRAM-Schätzung in GB aus der Parameterzahl.
@@ -222,6 +256,10 @@ _eintrag(Backbone(
     # Geprüft 2026-08-18 an der Modellkarte selbst: Front-Matter "license: apache-2.0".
     # https://huggingface.co/Qwen/Qwen-Image-2512 — Repo offen, nicht gated.
     lizenz_quelle=QUELLE_MODELLKARTE,
+    # Geprüft 2026-08-18 an der Modellkarte: Front-Matter "license: apache-2.0".
+    controlnet_id="alibaba-pai/Qwen-Image-2512-Fun-Controlnet-Union",
+    controlnet_lizenz="Apache-2.0",
+    controlnet_lizenz_quelle=QUELLE_MODELLKARTE,
 ))
 
 _eintrag(Backbone(
@@ -236,6 +274,21 @@ _eintrag(Backbone(
     # Geprüft 2026-08-18 an der Modellkarte selbst: Front-Matter "license: apache-2.0".
     # https://huggingface.co/Tongyi-MAI/Z-Image-Turbo — Repo offen, nicht gated.
     lizenz_quelle=QUELLE_MODELLKARTE,
+    # Die Basis ALLEIN ist kein ControlNet: `DiffusionPipeline.from_pretrained` liefert
+    # eine `ZImagePipeline` ohne Steuereingang. Die Naht entsteht erst über
+    # `ZImageControlNetPipeline` mit diesem zweiten Repo — `control_image` und
+    # `controlnet_conditioning_scale` (Vorgabe 0.75, empfohlenes Fenster 0.65–1.00) stehen
+    # dort wörtlich in der Signatur von diffusers v0.39.0. Damit ist `controlnet_staerke`
+    # dieses Projekts nicht erfunden, sondern die Angabe der Modellkarte.
+    # Destilliert ("Turbo"): auf 8 Schritte OHNE klassifikatorfreie Führung trainiert.
+    # 0.0 ist hier der richtige Wert, nicht ein ausgeschalteter — und er bedeutet
+    # zugleich, dass ein negativer Prompt an diesem Modell nichts ausrichtet.
+    fuehrung=0.0,
+    controlnet_id="alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union",
+    controlnet_lizenz="Apache-2.0",
+    # Front-Matter "license: apache-2.0"; das Ursprungsprojekt VideoX-Fun trägt eine
+    # Apache-2.0-LICENSE im Volltext. Geprüft 2026-08-18.
+    controlnet_lizenz_quelle=QUELLE_MODELLKARTE,
 ))
 
 _eintrag(Backbone(
@@ -266,6 +319,12 @@ _eintrag(Backbone(
     # bleibt bewusst in dieser Form stehen statt auf QUELLE_MODELLKARTE einzudampfen:
     # Das Schlagwort wäre die ärmere Angabe.
     lizenz_quelle="geprueft 2026-08-18 (https://huggingface.co/RunDiffusion/Juggernaut-XL-v9)",
+    # Front-Matter "license: apache-2.0", KEINE LICENSE-Datei im Repo. Geprüft
+    # 2026-08-18. Das ControlNet ist damit freier als das Basismodell — die
+    # Regel-1-Spannung dieses Eintrags liegt allein auf der Basis.
+    controlnet_id="xinsir/controlnet-depth-sdxl-1.0",
+    controlnet_lizenz="Apache-2.0",
+    controlnet_lizenz_quelle=QUELLE_MODELLKARTE,
 ))
 
 _eintrag(Backbone(
@@ -280,6 +339,13 @@ _eintrag(Backbone(
     vram_gb=_vram_schaetzung(8.0),
     dateien=_DIFFUSERS_DATEIEN,
     lizenz_quelle=QUELLE_UNGEPRUEFT,
+    # Anders als das Basismodell ist das ControlNet-Repo NICHT gated und trägt die
+    # LICENSE.md im Volltext (Stability AI Community License, 5. Juli 2024). Geprüft
+    # 2026-08-18 — der einzige Eintrag, dessen zweite Hälfte besser belegt ist als seine
+    # erste.
+    controlnet_id="stabilityai/stable-diffusion-3.5-large-controlnet-depth",
+    controlnet_lizenz="Stability AI Community License",
+    controlnet_lizenz_quelle=QUELLE_MODELLKARTE,
 ))
 
 _eintrag(Backbone(
@@ -318,6 +384,12 @@ _eintrag(Backbone(
     vram_gb=_vram_schaetzung(12.0),
     dateien=_DIFFUSERS_DATEIEN,
     lizenz_quelle=QUELLE_SEKUNDAER,
+    # FLUX ist BEIDSEITIG zu: Alle drei verbreiteten Depth-ControlNets stehen selbst
+    # unter der FLUX.1-[dev]-Non-Commercial-Lizenz. Selbst ein permissives
+    # FLUX-Basismodell würde die Naht darum nicht retten. Geprüft 2026-08-18.
+    controlnet_id="jasperai/Flux.1-dev-Controlnet-Depth",
+    controlnet_lizenz="FLUX.1 [dev] Non-Commercial License",
+    controlnet_lizenz_quelle=QUELLE_MODELLKARTE,
 ))
 
 _eintrag(Backbone(
@@ -414,6 +486,95 @@ def waehle(*, kommerziell: bool = True, max_vram_gb: float | None = None,
     return treffer
 
 
+def _pruefe_controlnet(backbone) -> dict:
+    """Die Lizenz der **zweiten** Hälfte einer ControlNet-Naht.
+
+    Warum das eine eigene Prüfung braucht
+    -------------------------------------
+    Ein Depth-ControlNet ist nie ein Modell, sondern immer zwei: das Basismodell und das
+    ControlNet, in getrennten Repos, unter getrennten Lizenzen. Die Registry kannte bis
+    zum 18.08.2026 nur eine Lizenz — und hat damit bei jedem Eintrag mit
+    ``KOND_DEPTH_CONTROLNET`` die halbe Naht beurteilt und die andere Hälfte als geprüft
+    ausgegeben.
+
+    Das ist nicht theoretisch. Bei FLUX sind **alle drei** verbreiteten Depth-ControlNets
+    selbst nicht-kommerziell lizenziert; ein permissives FLUX-Basismodell hätte hier
+    „zulässig" ergeben, und die Kette wäre trotzdem unverkäuflich gewesen
+    (`docs/BACKBONE_CONTROLNET_2026-08-18.md`, Kap. 2.1 und 4.5).
+
+    Returns:
+        dict mit ``noetig``, ``benannt``, ``id``, ``lizenz``, ``lizenz_quelle``,
+        ``lizenz_belegt``, ``zulaessig`` und ``auflagen``.
+
+        ``zulaessig`` ist **dreiwertig**: ``True`` (permissiv belegt), ``False``
+        (ausgeschlossen), ``None`` (nicht beurteilbar, weil nicht benannt). ``None`` ist
+        nicht dasselbe wie ``True`` — und genau diese Gleichsetzung war der Fehler.
+    """
+    noetig = backbone.konditionierung == KOND_DEPTH_CONTROLNET
+    benannt = backbone.controlnet_id is not None
+    auflagen: list[str] = []
+
+    if not noetig:
+        # Ein integriertes Edit-Modell braucht kein zweites Repo. Ist trotzdem eines
+        # eingetragen, ist das ein Widerspruch im Datensatz und kein stiller Zusatz.
+        if benannt:
+            auflagen.append(
+                f"Widerspruch im Datensatz: '{backbone.name}' ist als "
+                f"'{backbone.konditionierung}' geführt, trägt aber ein ControlNet "
+                f"('{backbone.controlnet_id}'). Eines von beidem ist falsch."
+            )
+        return {"noetig": False, "benannt": benannt, "id": backbone.controlnet_id,
+                "lizenz": backbone.controlnet_lizenz,
+                "lizenz_quelle": backbone.controlnet_lizenz_quelle,
+                "lizenz_belegt": False, "zulaessig": None, "auflagen": tuple(auflagen)}
+
+    if not benannt:
+        # NICHT `zulaessig=False` — das wäre eine Behauptung über eine Lizenz, die
+        # niemand gelesen hat. Aber auch nicht `True`: Die Naht ist unvollständig
+        # beschrieben, und wer sie bauen will, muss das zweite Repo erst suchen.
+        auflagen.append(
+            f"UNVOLLSTÄNDIG: '{backbone.name}' ist als Depth-ControlNet geführt, aber "
+            f"das dazugehörige ControlNet-Repo ist nicht benannt. Damit ist die halbe "
+            f"Naht ungeprüft — Basismodell und ControlNet tragen getrennte Lizenzen, und "
+            f"die Kette ist so frei wie ihr unfreiestes Glied."
+        )
+        return {"noetig": True, "benannt": False, "id": None,
+                "lizenz": None, "lizenz_quelle": backbone.controlnet_lizenz_quelle,
+                "lizenz_belegt": False, "zulaessig": None, "auflagen": tuple(auflagen)}
+
+    lizenz = backbone.controlnet_lizenz or ""
+    belegt = ist_belegt(backbone.controlnet_lizenz_quelle)
+
+    if lizenz in PERMISSIVE_LIZENZEN:
+        zulaessig = True
+    elif "Non-Commercial" in lizenz or "non-commercial" in lizenz:
+        zulaessig = False
+        auflagen.append(
+            f"Das ControlNet '{backbone.controlnet_id}' steht unter '{lizenz}' und ist "
+            f"damit nicht kommerziell nutzbar — unabhängig davon, wie frei das "
+            f"Basismodell ist."
+        )
+    else:
+        zulaessig = True
+        auflagen.append(
+            f"Das ControlNet '{backbone.controlnet_id}' steht unter '{lizenz}' — keine "
+            f"der unter Regel 1 genannten permissiven Lizenzen. Vor Auslieferung im "
+            f"Original prüfen, so wie beim Basismodell auch."
+        )
+
+    hinweis = hinweis_zur_herkunft(backbone.controlnet_lizenz_quelle)
+    if hinweis is not None:
+        auflagen.append(
+            f"ControlNet '{backbone.controlnet_id}': {hinweis} — vor produktivem Einsatz "
+            f"an der Modellkarte prüfen."
+        )
+
+    return {"noetig": True, "benannt": True, "id": backbone.controlnet_id,
+            "lizenz": backbone.controlnet_lizenz,
+            "lizenz_quelle": backbone.controlnet_lizenz_quelle,
+            "lizenz_belegt": belegt, "zulaessig": zulaessig, "auflagen": tuple(auflagen)}
+
+
 def pruefe_lizenz(name: str) -> dict:
     """Darf dieser Backbone unter Regel 1 in ein ausgeliefertes Produkt?
 
@@ -465,6 +626,21 @@ def pruefe_lizenz(name: str) -> dict:
                 "Darüber ist eine kommerzielle Lizenz nötig — das ist eine Bedingung, "
                 "die kein Code prüfen kann und die beim Wachsen des Betriebs zutrifft."
             )
+            # Nachgetragen 2026-08-18 aus dem Volltext der LICENSE.md, die im
+            # ControlNet-Repo lesbar ist (das Basismodell selbst ist gated). Beide
+            # Auflagen standen bisher nirgends — und beide treffen genau das, was dieses
+            # Projekt tut.
+            auflagen.append(
+                "NENNUNGSPFLICHT: Die Lizenz verlangt den Hinweis 'Powered by Stability "
+                "AI' bei Weitergabe. Das betrifft nicht nur das NOTICE, sondern jede "
+                "Auslieferung eines damit erzeugten Bildes im Produkt."
+            )
+            auflagen.append(
+                "Die Ausgaben dürfen NICHT verwendet werden, um fremde Basismodelle zu "
+                "verbessern oder zu trainieren. Für dieses Projekt unmittelbar "
+                "einschlägig: Ein LoRA auf Bildern dieses Modells wäre ein Verstoss, "
+                "auch wenn das LoRA selbst auf einem freien Backbone sässe."
+            )
         if "OpenRAIL" in backbone.lizenz:
             auflagen.append(
                 f"'{backbone.lizenz}' enthält Nutzungsauflagen (verbotene "
@@ -496,6 +672,37 @@ def pruefe_lizenz(name: str) -> dict:
             f"nicht bedingungslos. " + " ".join(auflagen)
         )
 
+    # --- Die zweite Hälfte der Naht ---------------------------------------------------
+    #
+    # Ein Depth-ControlNet ist immer zwei Modelle. Bis zum 18.08.2026 hat diese Funktion
+    # nur das Basismodell geprüft und damit systematisch die halbe Naht beurteilt.
+    controlnet = _pruefe_controlnet(backbone)
+    auflagen.extend(controlnet["auflagen"])
+    if controlnet["zulaessig"] is False:
+        # Die Kette ist so frei wie ihr unfreiestes Glied. Ein permissives Basismodell
+        # rettet ein nicht-kommerzielles ControlNet nicht — beide Gewichte laufen im
+        # selben Bild zusammen.
+        #
+        # Die Begründung wird ERGÄNZT, nicht ersetzt. War das Basismodell schon
+        # ausgeschlossen, ist das der ältere und schwerere Grund; ihn zu überschreiben
+        # hiesse, einen Ausschluss durch einen anderen zu verdecken — und dabei ginge
+        # der Satz über die abgeleiteten LoRAs verloren, der beim Stil-Training zuschlägt.
+        if zulaessig:
+            begruendung = (
+                f"{backbone.name}: Das Basismodell wäre zulässig, das dazugehörige "
+                f"ControlNet '{backbone.controlnet_id}' ({backbone.controlnet_lizenz}) "
+                f"ist es nicht. Unter Regel 1 AUSGESCHLOSSEN — eine Naht ist so frei wie "
+                f"ihr unfreiestes Glied."
+            )
+        else:
+            begruendung += (
+                f" HINZU KOMMT: Auch das ControlNet '{backbone.controlnet_id}' steht "
+                f"unter '{backbone.controlnet_lizenz}'. Die Naht ist damit BEIDSEITIG "
+                f"zu — selbst ein permissives Basismodell derselben Familie würde sie "
+                f"nicht retten."
+            )
+        zulaessig = False
+
     hinweis = hinweis_zur_herkunft(backbone.lizenz_quelle)
     if hinweis is not None:
         # Auch ein 'zulaessig: True' bleibt eine Behauptung, solange die Lizenz nicht am
@@ -508,6 +715,8 @@ def pruefe_lizenz(name: str) -> dict:
         "regel_1_spannung": lizenzquelle.regel_1_spannung(
             backbone.name, backbone.lizenz, zulaessig),
         "name": backbone.name,
+        # Die zweite Hälfte der Naht, als eigenes Feld statt als Textprobe in `auflagen`.
+        "controlnet": controlnet,
         "lizenz": backbone.lizenz,
         "kommerziell_nutzbar": backbone.kommerziell_nutzbar,
         "zulaessig": zulaessig,
