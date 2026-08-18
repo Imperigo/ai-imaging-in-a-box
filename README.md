@@ -3,52 +3,147 @@
 Vertiefungsarbeit ETH Zürich · HS26 · ITA · Betreuung Gonzalo Casas
 
 Ein lokal lauffähiges, knotenbasiertes Framework für geometrie-treue KI-Architektur-
-Visualisierung: IFC-Geometrie hinein, verifizierte Bilder heraus — ohne Cloud, mit
+Visualisierung: IFC-Geometrie hinein, **verifizierte** Bilder heraus — ohne Cloud, mit
 austauschbarem lokalem Bildmodell.
 
-**Status:** Vorbereitung. Es ist noch nichts gebaut.
+Das Wort, auf das es ankommt, ist *verifiziert*. Ein Bildmodell erfindet gern ein
+Geschoss dazu. Der Kern dieser Arbeit ist darum nicht das Erzeugen, sondern das **Messen**:
+ein Verfahren, das ein erzeugtes Bild gegen die Geometrie hält, aus der es entstanden ist,
+und eine erfundene Kubatur nachweislich durchfallen lässt.
 
-- [`docs/LAGEBEURTEILUNG_2026-08-14.md`](docs/LAGEBEURTEILUNG_2026-08-14.md) —
-  Bestandsaufnahme der offenen Bausteine mit Lizenzprüfung
-- [`docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md`](docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md) —
-  der MCP-Vertrag gegenüber KosmoOrbit und was er für die Bauform bedeutet
-- [`docs/LEXIKON.md`](docs/LEXIKON.md) — Fachbegriffe aus Softwareentwicklung, Lizenzrecht
-  und KI, erklärt für Leser:innen mit Architekturhintergrund
-- [`docs/PLAN.md`](docs/PLAN.md) — Vorgehensplan, Phasen 0–4, offene Wissensschulden
-- [`docs/sitzungen/`](docs/sitzungen/) — Sitzungsprotokolle: Entscheidungen und Begründungen
-- [`CLAUDE.md`](CLAUDE.md) — die vier nicht verhandelbaren Regeln
+---
+
+## Stand
+
+Die Kette läuft von einer IFC-Datei bis zum bewerteten Bild — mit **einer** Lücke, und die
+ist ehrlich benannt: **Ein echter Render mit echten Modellgewichten hat nie stattgefunden.**
+Dieses Environment hat keine GPU. Alles davor und alles danach ist gebaut und geprüft.
+
+| | Stand |
+|---|---|
+| IFC → glb, über die Prozessgrenze | läuft, gemessen |
+| glb → Blender-Multipass (Beauty, Material-ID, Tiefe) | läuft auf Blender 4.2 **und** 5.2 |
+| Bildmodell-Stufe (`diffusers`) | gebaut, **nie mit echten Gewichten ausgeführt** |
+| Geometrie-Treue-Metrik | gebaut und kalibriert |
+| Stil-Gate | gebaut, Schwelle ungeprüft |
+| Kette als Graph mit Zwischenspeicher | läuft |
+| MCP-Anbindung an KosmoOrbit | Verdrahtbarkeit belegt, Registrierung nicht ausgeführt |
+| LoRA-Stiltraining | Naht gebaut, **nie ein Training ausgeführt** |
+
+Tests: **1509**, alle grün, ohne GPU.
+
+---
+
+## Die vier Regeln
+
+Sie stehen vollständig in [`CLAUDE.md`](CLAUDE.md) und sind hier keine Absichtserklärung,
+sondern grösstenteils **ausführbar**:
+
+1. **Permissive Lizenzen, kein GPL/AGPL.** `backbone.waehle(kommerziell=True)` gibt
+   FLUX-dev nie zurück. `lora.pruefe_auftrag` lehnt ein Training auf einer
+   Non-Commercial-Grundlage ab, bevor die erste GPU-Sekunde läuft — ein LoRA erbt die
+   Lizenz seines Grundmodells.
+2. **Blender nur als externer Prozess.** Kein `import bpy`, kein bpy-Wheel, kein Add-on.
+   Ein Test bewacht das Produkt-Environment.
+3. **Keine echten Projektdaten im Repo.** Testgeometrie wird erzeugt, nicht abgelegt.
+   `auftrag.baue_ergebnis` weist eingebettete Bilddaten ab; `lora.pruefe_auftrag` weist
+   einen Trainingsdatensatz *innerhalb* des Repos ab.
+4. **Der Kern ist eine Bibliothek.** Jede Fähigkeit ist aus Python heraus nutzbar, ohne
+   dass eine Oberfläche läuft. Die MCP-Schicht ist ein optionaler Zusatz.
+
+---
+
+## Was gemessen wurde, und was behauptet
+
+Dieses Repo unterscheidet die beiden Dinge durchgehend — im Code, in den Dokumenten und in
+den Commit-Nachrichten. Ein paar Beispiele, weil sie die Arbeitsweise besser zeigen als
+eine Beschreibung:
+
+- **Die Geometrie-Metrik ist nachweislich rangbasiert.** Eine streng monotone Umrechnung
+  der Tiefe lässt den Score bei exakt 1,000. Das war die einzige Prüfung der
+  Schwellenstudie, die das Verfahren hätte umwerfen können.
+- **Die Schwelle 0,65 ist zu mild** — 18 von 32 gestörten Fällen gehen durch. Sie steht
+  trotzdem, weil eine bessere Zahl ohne den Tiefenschätzer in der Messung nur schwächer
+  unbegründet wäre. *Nicht verteidigt, sondern beibehalten.*
+- **ArchiCAD über IFC4 braucht keine Einheitenumrechnung.** Die Annahme, die den Connector
+  auslöste, war falsch; IfcOpenShell rechnet selbst um. Gemessen, nicht vermutet.
+- **Zwei GPL-Funde** sind ausdrücklich als solche gemeldet: ComfyUI und Krita AI Diffusion.
+  Beim zweiten lag die Sekundärquelle *in die gefährliche Richtung* falsch — sie meldete
+  permissiv, wo Copyleft steht.
+
+Wo etwas nicht gemessen werden konnte, steht das dabei. Eine benannte Lücke ist besser als
+eine, die nach Vollständigkeit aussieht.
+
+---
+
+## Dokumente
+
+| | |
+|---|---|
+| [`docs/PLAN.md`](docs/PLAN.md) | Vorgehensplan, Phasen 0–4, **offene Wissensschulden** |
+| [`docs/LAGEBEURTEILUNG_2026-08-14.md`](docs/LAGEBEURTEILUNG_2026-08-14.md) | Bestandsaufnahme der Bausteine mit Lizenzprüfung |
+| [`docs/LIZENZPRUEFUNG_2026-08-18.md`](docs/LIZENZPRUEFUNG_2026-08-18.md) | 38 Positionen gegen die Primärquelle |
+| [`docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md`](docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md) | was Binärpakete mitbringen und ihre Wheel-Angabe verschweigt |
+| [`docs/SCHWELLENSTUDIE_2026-08-18.md`](docs/SCHWELLENSTUDIE_2026-08-18.md) | Kalibrierung der Geometrie-Schwelle |
+| [`docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md`](docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md) | der MCP-Vertrag und was er für die Bauform bedeutet |
+| [`docs/LEXIKON.md`](docs/LEXIKON.md) | Fachbegriffe für Leser:innen mit Architekturhintergrund |
+| [`docs/sitzungen/`](docs/sitzungen/) | Sitzungsprotokolle: Entscheidungen **mit Begründung** |
+| [`NOTICE`](NOTICE) | fremde Komponenten samt Lizenz und Prozessgrenze |
+
+Das [`LEXIKON`](docs/LEXIKON.md) ist Anhang der Arbeit, kein Nebenprodukt: Es erklärt jeden
+nicht-architektonischen Fachbegriff für Leser:innen ohne Informatikhintergrund.
+
+---
 
 ## Entwicklung
 
-Voraussetzung: Python 3.11 oder neuer. Der Kern hat keine Laufzeitabhängigkeiten.
+Voraussetzung: Python 3.11 oder neuer. **Der Kern hat keine Laufzeitabhängigkeiten**, und
+das ist Absicht — alles Schwere liegt jenseits einer Prozessgrenze.
 
-**Testgeometrie erzeugen.** Das Repo enthält keine IFC-Datei — sie wird erzeugt (Regel 3):
+**Testgeometrie erzeugen.** Das Repo enthält keine IFC-Datei; sie wird erzeugt (Regel 3):
 
 ```
 python3 tools/make_test_ifc.py build/testbau.ifc
 ```
 
 **Environment hinter der Prozessgrenze anlegen.** `ifcopenshell` steht unter LGPL und
-bringt GPL-Anteile mit. Deshalb liegt es in einem *eigenen* Environment und wird als
-Subprozess aufgerufen, nie in den Kern importiert:
+bringt statisch gelinkten GPL-Code mit (CGAL, am Binary verifiziert). Deshalb liegt es in
+einem *eigenen* Environment und wird als Subprozess aufgerufen, nie in den Kern importiert:
 
 ```
 python3 -m venv .venv-ifc && .venv-ifc/bin/pip install ifcopenshell trimesh numpy
 ```
 
-**Tests laufen lassen:**
+**Tests laufen lassen** — sie brauchen keine GPU:
 
 ```
 python3 -m pytest
 ```
 
-**Umgebungsvariablen.** Beide zeigen auf Programme jenseits der Prozessgrenze; ohne sie
-wird an den üblichen Orten gesucht:
+### Umgebungsvariablen
 
-- `AIIMAGING_IFC_PYTHON` — der Python-Interpreter des IFC-Environments,
-  Rückfall ohne Variable: `.venv-ifc/bin/python`
-- `AIIMAGING_BLENDER` — das Blender-Binary; ohne Variable wird `blender` im PATH gesucht
+Alle zeigen auf etwas jenseits der Prozessgrenze. Für die ersten beiden gibt es einen
+Rückfall auf die üblichen Orte; für die übrigen **bewusst nicht** — ein Rückfall auf das
+Produkt-Python würde genau die Grenze aufheben, die es zu ziehen gilt.
+
+| Variable | wofür | ohne sie |
+|---|---|---|
+| `AIIMAGING_IFC_PYTHON` | Python des IFC-Environments | `.venv-ifc/bin/python` |
+| `AIIMAGING_BLENDER` | das Blender-Binary | `blender` im PATH, dann `/opt/blender/blender` |
+| `AIIMAGING_MODELLE` | Ablage der Modellgewichte | `/ai` |
+| `AIIMAGING_LORA_PYTHON` | Python des Trainer-Environments | **Fehler**, kein Rückfall |
+| `AIIMAGING_LORA_TRAINER` | Verzeichnis des LoRA-Trainers | **Fehler**, kein Rückfall |
+
+### Aufträge an eine Maschine mit GPU
+
+Dieses Environment hat keine GPU. Was eine braucht, läuft über das Repo als Übergabeort —
+ein Auftrag ist eine Datei, ein Ergebnis ist eine Datei, kein Netzwerkdienst. Siehe
+[`auftraege/README.md`](auftraege/README.md).
+
+---
 
 ## Lizenz
 
-Apache-2.0 — siehe [`LICENSE`](LICENSE).
+Apache-2.0 — siehe [`LICENSE`](LICENSE). Fremde Komponenten und ihre Lizenzen stehen im
+[`NOTICE`](NOTICE); keine davon wird eingebaut, alle werden über eine Prozessgrenze
+aufgerufen.
