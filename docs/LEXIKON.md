@@ -299,7 +299,7 @@ und in beiden Fällen schweigt die Lizenzangabe des Pakets darüber oft.
 Vermutung, sondern das Ergebnis der Prüfung vom 18.08.2026: `numpy` gibt sich als BSD und
 liefert zwei GNU-Bibliotheken mit, eine unter GPL mit Ausnahme, eine unter LGPL;
 `shapely` gibt sich als BSD und liefert GEOS unter LGPL mit; `triton` gibt sich als MIT
-und liefert 90 Megabyte proprietärer NVIDIA-Werkzeuge mit; `ifcopenshell` gibt sich als
+und liefert rund 90 Megabyte an proprietären NVIDIA-Werkzeugen mit; `ifcopenshell` gibt sich als
 LGPL und hat CGAL unter GPL-3.0 statisch eingebaut. In fünf von fünf geprüften Paketen mit
 nennenswertem Binäranteil wich die Kurzangabe von dem ab, was wirklich drin lag. Die
 Merkregel des Berichts: **Die Kurzangabe eines Pakets ist ein Hinweis, sein
@@ -580,7 +580,11 @@ Werkzeuge derselben Lane nicht.*
 
 **Runner** — Ein kleines eigenständiges Skript, das genau eine Aufgabe in einem eigenen
 venv erledigt und über Dateien antwortet. Die praktische Bauform der Prozessgrenze.
-*Beispiele: `glb_export_runner.py`, `export_ifc_runner.py`.*
+*Die eigenen liegen unter `src/aiimaging/runners/`: `ifc_to_glb_runner.py` ruft
+IfcOpenShell im `.venv-ifc` auf, `blender_depth_stage.py` und `blender_exr_lesen.py`
+laufen in Blender. Die früher hier genannten `glb_export_runner.py` und
+`export_ifc_runner.py` gehören **nicht** zu diesem Projekt, sondern zu KosmoDraw — sie
+sind das Vorbild, nicht der Bestand (`docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md`).*
 
 **Protokoll** — Eine Vereinbarung darüber, in welcher Form zwei Programme miteinander
 sprechen: welche Nachrichten es gibt, in welcher Reihenfolge, in welchem Format. Nötig,
@@ -759,6 +763,17 @@ Prüfung „FLUX erscheint nicht in der Auswahl", wenn FLUX gar nicht in der Reg
 Er sieht grün aus und bewacht nichts. Abhilfe ist eine Gegenprobe, die belegt, dass der
 Fall überhaupt vorkommen könnte.
 
+*Die zweite Bauart desselben Fehlers, gefunden am 18.08.2026: Ein Test suchte das Wort
+„geprüft" in einer Liste von Auflagen und war zufrieden, als er es fand — nur stand es in
+einem Eintrag, der mit der geprüften Sache nichts zu tun hatte. Der Test bestand also aus
+dem falschen Grund, und er hätte auch bestanden, wenn die Auflage, um die es ging, ganz
+gefehlt hätte. Abhilfe war hier keine Gegenprobe, sondern ein eindeutiges Merkmal: Die
+betroffenen Hinweise beginnen jetzt alle mit einer festgelegten Vorsilbe
+(`HERKUNFT_HINWEIS_PRAEFIX` in `src/aiimaging/lizenzquelle.py`), damit ein Test sie
+erkennen kann, ohne auf ein Wort zu setzen, das anderswo ebenfalls vorkommt. Merksatz: Ein
+grüner Test beweist nur, dass die Bedingung erfüllt war, die dort steht — nicht, dass es
+die gemeinte war.*
+
 **Registry** — Ein zentrales Verzeichnis, in dem gleichartige Dinge mit ihren Eigenschaften
 eingetragen sind. *Hier die Bildmodelle samt Lizenz — dadurch steht die Lizenz im Code und
 nicht nur in der Doku.*
@@ -843,6 +858,33 @@ Projekt darum durchgängig kenntlich gemacht: Dass eine Störung bis zur Stärke
 Naturgesetz hält. Auch die Schwelle 0,65 ist eine Setzung —
 `docs/SCHWELLENSTUDIE_2026-08-18.md` nennt sie deshalb „nicht verteidigt, sondern
 beibehalten".*
+
+**Belegt / vermutet / unbekannt** — Drei Stufen, in denen eine Auskunft gegeben werden
+kann, und sie gehören zusammen mit der Auskunft ausgeliefert. **Belegt** heisst: Die
+Quelle sagt es selbst, und man kann es nachsehen. **Vermutet** heisst: Es spricht etwas
+dafür, aber die Quelle sagt es nicht. **Unbekannt** heisst: nichts davon. Der Sinn der
+Dreiteilung ist, dass eine Vermutung sonst mit der Zeit zur Tatsache wird, ohne dass
+jemand sie je geprüft hätte — sie steht in derselben Tabellenspalte wie ein Beleg und
+sieht dort genauso aus.
+
+*In diesem Projekt an zwei Stellen tragend. Erstens in der Connector-Schicht
+(`src/aiimaging/herkunft.py`, die Werte `BELEGT`, `VERMUTET`, `UNBEKANNT`): Dass eine
+IFC-Datei Z-oben ist, folgt aus der Norm — belegt. Dass eine glTF-Datei aus Blender Y-oben
+ist, folgt aus der Gewohnheit des Exportprogramms — vermutet. Dass eine glTF-Datei aus
+Rhino Y-oben ist, folgt aus gar nichts, denn dort entscheidet beim Export ein Schalter,
+von dem die Datei nichts mitteilt — unbekannt. Und die Folge ist hart: `fordere_up_axis`
+nimmt einen belegten Wert an, eine Vermutung dagegen **nicht**; sie wird in der
+Fehlermeldung genannt, damit ein Mensch sie bestätigen kann. Eine Vermutung, die sich
+selbst durchwinkt, ist ein Vorgabewert mit besserer Begründung.*
+*Zweitens in den Modell-Verzeichnissen, dort für die Herkunft einer Lizenzangabe: am
+Original geprüft, nur aus zweiter Hand bekannt, oder ungeprüft
+(`src/aiimaging/lizenzquelle.py`).*
+
+*Verwandt mit* **Setzung vs. Messung** *im vorigen Eintrag, aber nicht dasselbe: Dort geht
+es darum, **woher** eine Zahl kommt — festgelegt oder gemessen —, hier darum, **wie gut**
+eine Aussage gestützt ist. Eine Setzung kann belegt sein, wenn nachweislich jemand sie so
+beschlossen hat, und eine Messung kann von unbekannter Herkunft sein. Die beiden Fragen
+werden nebeneinander gestellt, nicht nacheinander.*
 
 **Störung / kontrollierte Verfälschung (Perturbation)** — Eine absichtlich eingebrachte
 Abweichung, deren Art und Stärke man selbst bestimmt. Der Sinn liegt darin, die Antwort
@@ -977,6 +1019,20 @@ tatsächlich verarbeiten.
 gepackte Einzeldatei-Variante. *In diesem Projekt das Zwischenformat zwischen IFC und
 Blender.*
 
+**glb-Block (Chunk)** — Wie eine glb-Datei innen aufgebaut ist: zuerst ein **Kopf** von
+zwölf Byte — die Kennung `glTF`, die Fassungsnummer und die Gesamtlänge —, danach eine
+Folge von **Blöcken**. Jeder Block nennt zuerst seine Länge und seine Art und erst dann
+seinen Inhalt. Der erste Block ist nach Norm immer der beschreibende Teil in JSON; die
+eigentliche Geometrie folgt als zweiter. Wer nur wissen will, welches Programm die Datei
+geschrieben hat, liest deshalb den Kopf und den ersten Block und hört dann auf
+(`_glb_json` in `src/aiimaging/herkunft.py`).
+
+*Derselbe Bauplan wie beim* **PNG-Block** *weiter unten — Länge, Kennung, Inhalt —, und
+aus demselben Grund: So kann ein Leser überspringen, was er nicht kennt, statt daran zu
+scheitern. Und dieselbe Vorsicht: Die Fassungsnummer im Kopf wird gelesen und nicht
+angenommen. Eine glb-Datei der Fassung 1 hat einen anderen Aufbau; sie wird mit einer
+Begründung abgewiesen, statt versuchsweise falsch gedeutet zu werden.*
+
 **Bounding Box** — Der kleinste achsparallele Quader, der ein Objekt umschliesst.
 Nützlich für schnelle Grössen- und Lageabschätzungen, etwa zur automatischen
 Kamerasetzung.
@@ -1007,7 +1063,57 @@ eine Quantisierungsstufe ab, kein einziger um mehr — Rundung, kein Fehler im V
 Jede Zeile ist eine nummerierte Entität, die auf andere verweist (`#42= IFCWALL(...)`).
 Lesbar, aber weitschweifig — eine kleine IFC hat schnell Hunderte Zeilen.
 *In diesem Projekt schreibt `tools/make_test_ifc.py` STEP direkt, ohne Bibliothek — so
-braucht das Erzeugen von Testdaten kein GPL-behaftetes Environment.*
+braucht das Erzeugen von Testdaten kein GPL-behaftetes Environment. Seit dem 18.08.2026
+wird STEP auch **gelesen**, aber nur der Dateikopf (`lies_ifc_kopf` in
+`src/aiimaging/herkunft.py`): Für zwei Zeilen einen Subprozess jenseits der Prozessgrenze
+zu starten, wäre eine Prozessgrenze für eine Textsuche.*
+
+**`FILE_NAME` (der Kopfeintrag einer STEP-Datei)** — Die Zeile am Anfang jeder IFC-Datei,
+die sagt, wer sie wann und womit geschrieben hat. Ihre Felder haben **keine Namen**,
+sondern nur eine feste Reihenfolge, die die Norm ISO 10303-21 vorschreibt: Dateiname,
+Zeitstempel, Autor, Organisation, Programmfassung, erzeugendes System, Freigabe. Wer
+daraus etwas herauslesen will, muss also **nach Position** zählen — das fünfte und sechste
+Feld nennen das Programm, alle übrigen nicht.
+
+*Daran hing am 18.08.2026 ein Fehler, und zwar von der Sorte, die man nicht bemerkt: Die
+erste Fassung der Erkennung sammelte einfach alle nichtleeren Texte aus `FILE_NAME` und
+nahm die letzten drei. In der Testdatei sind nur drei Felder gefüllt, darunter der
+**Dateiname** — und damit galt `rhino-haus.ifc` als von Rhino erzeugt, obwohl das
+Programmfeld Rhino nirgends nennt. **Wer eine Datei umbenannte, änderte ihre Herkunft.**
+Das ist keine ungenaue Erkennung, sondern eine falsche. Gelesen werden jetzt nur die zwei
+Felder, die die Norm für diesen Zweck vorsieht; Dateiname, Autor und Organisation bleiben
+draussen, denn ein Autorenfeld „Blenderweg 12" ergäbe sonst „Blender".*
+
+*Zwei Feinheiten des Formats machen dabei Arbeit, und beide sind der Grund, warum ein
+blosses Zerlegen an den Kommas nicht genügt: Autor und Organisation sind selbst Listen und
+dürfen Kommas enthalten — ein Komma darin verschöbe jedes folgende Feld um eine Stelle,
+und dann zählt man an der falschen Position —, und ein Hochkomma im Text wird durch
+Verdoppelung geschrieben. Beides erledigt `_step_felder`
+(`src/aiimaging/herkunft.py`).*
+
+**SI-Vorsatz (Präfix)** — Die Silbe vor einer Masseinheit, die für einen Zehnerfaktor
+steht: *Milli* für ein Tausendstel, *Zenti* für ein Hundertstel, *Kilo* für das
+Tausendfache. Eine IFC-Datei gibt ihre Längeneinheit genau so an — die Grundeinheit
+`METRE` plus einen Vorsatz —, und aus dem Vorsatz folgt die Zahl, mit der die Koordinaten
+der Datei in Meter übergehen: `.MILLI.` heisst 0,001 Meter je Einheit. *Die Tabelle steht
+als `SI_VORSAETZE` in `src/aiimaging/herkunft.py`.*
+
+*Eine Unterscheidung darin ist wichtiger, als sie aussieht: Findet sich kein Faktor, gibt
+die Funktion **nicht** 1,0 zurück, sondern „unbekannt". 1,0 wäre bereits eine Behauptung
+— „die Datei ist in Metern" —, und wäre sie falsch, entstünde genau der Fehler, den der
+Torwächter danach als unplausibel grosses oder kleines Bauwerk auffangen müsste.*
+
+**Umrechnungseinheit (`IfcConversionBasedUnit`)** — Der andere Fall: eine Längeneinheit,
+die sich nicht über einen Zehnerfaktor auf eine SI-Einheit zurückführen lässt, sondern nur
+über eine krumme Zahl — Zoll, Fuss, Yard. Die IFC-Datei nennt dann den Namen der Einheit
+an einer Stelle und ihren Umrechnungsfaktor an einer anderen, auf die sie bloss verweist.
+
+*In diesem Projekt wird der Name gelesen und der Faktor **nicht** aufgelöst: Dem Verweis
+zu folgen hiesse, einen vollständigen Leser des STEP-Formats zu bauen, und das wäre ein
+zweites Projekt. Der Faktor bleibt darum ausdrücklich offen, mit einer Warnung im Klartext
+— damit ihn niemand stillschweigend für 1,0 hält (`_laengeneinheit` in
+`src/aiimaging/herkunft.py`). Eine bekannte Lücke, die sich meldet, ist etwas anderes als
+eine Lücke, die geraten wird.*
 
 **Extrusion / SweptSolid** — Die häufigste Art, wie IFC Geometrie beschreibt: ein
 zweidimensionales Profil, entlang einer Richtung in die Höhe gezogen. Eine Wand ist ein
@@ -1824,6 +1930,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | **Connector-Schicht, Binaerpruefung und Lizenzvokabular nachgetragen** (wieder erreichten mehrere Laeufe `docs/` nicht). *Connector-Schicht* (`src/aiimaging/herkunft.py`): SI-Vorsatz, Umrechnungseinheit, Lesefenster, glb-Block, `FILE_NAME` samt Feldreihenfolge, belegt/vermutet/unbekannt; **STEP** um das Lesen des Dateikopfs ergaenzt. *Binaer-Lizenzpruefung:* gebuendeltes Binary, Ausnahmeklausel/GCC Runtime Library Exception, proprietaer, EULA, Platzhalterpaket, Metapaket, transitive Abhaengigkeit, `dist-info`, Symbol/Symbolverweis, Versionen festschreiben, Range-Abruf; **Dual License** um die Lizenzwahl zwischen zwei offenen Lizenzen (FreeType) erweitert, **Wheel**, **PyPI** und **LGPL** ergaenzt. *Lizenzvokabular* (`src/aiimaging/lizenzquelle.py`): **Regel-1-Spannung** neu, **permissive Lizenz** um „permissiv ist nicht kommerziell erlaubt", **vakuoeser Test** um die zweite Bauart — ein Test fand das gesuchte Wort im falschen Eintrag. **Berichtigt:** **Optionale Abhaengigkeitsgruppe** behauptete, „alles Schwere" liege jenseits der Prozessgrenze; torch, diffusers, transformers und Pillow werden im Produkt-Environment importiert — die Grenze trennt nach Lizenz, nicht nach Gewicht. **Runner** nannte zwei Dateien als Beispiele, die es in diesem Repo nicht gibt: Sie gehoeren zu KosmoDraw |
 | 2026-08-18 | **Aufgelaufene Schuld aus drei Straengen nachgetragen** (drei fruehere Laeufe kamen nicht an `docs/` heran). *Graph-Kern:* Bedarf, Eingangsslot, Pflichtfeld, tote Kante, Entwurfszeit-Pruefung, Zusage eines Cache-Eintrags, selektive Verwerfung. *Lizenzpruefung:* CreativeML OpenRAIL-M (abgegrenzt zu OpenRAIL++-M), CDDL, Contributor License Agreement, Primaerquelle/Sekundaerquelle, Modellkarte, Front-Matter, Markdown, HTTP-Statuscode; **Gated Model** zu *Gated Model / Gated Repository* erweitert. *Schwellenstudie-Abnahme:* Charakterisierungstest, Entdopplung/Dublette, **Rasterung der Staerkeachse** um den Kurznamen *Staerkeraster* ergaenzt. **Berichtigt:** **Trefferquote** nannte 36 Faelle, 24 untreue und 0,667 — Zahlen aus der Auswertung *vor* der Entdopplung; richtig sind 32 ausgewertete, 20 untreue und 0,625 |
 | 2026-08-18 | Ergaenzt aus der Schwellenstudie: Metrik, Schwelle, Kalibrierung, Validierung (eines Verfahrens), Setzung vs. Messung, Stoerung/kontrollierte Verfaelschung, Nullprobe, Kontrolle (im Experiment), Widerlegbarkeit, Trennschaerfe, falsch frei/falsch gesperrt, Trefferquote, Rasterung der Staerkeachse, streng monoton, Invarianz, inkommensurabel, normalverteiltes Rauschen/Standardabweichung, Mittelwertfilter. **Validierung** in zwei Bedeutungen getrennt (Verfahren / Daten gegen Schema). Praezisiert: **Silhouette** und **geometrisches Mittel** fangen eine *ersetzende* Halluzination zuverlaessig, eine *ergaenzende* nur schwach (Zusatzkoerper 0,698) |
 | 2026-08-18 | Ergaenzt aus dem eigenen PNG-Schreiber: PNG-Block, Paeth-Praediktor, MSAD-Heuristik, Praediktor (Vorhersage), verlustfrei/verlustbehaftet, Ebene/Multilayer-EXR, float32/float64, LSB, Standardbibliothek, Heuristik, Traceback, Referenzimplementierung, Rueckwaertskompatibilitaet/stiller Bruch, fail-open/Befund als Feld. Ausgebaut: Zeilenfilter (alle fuenf Filter benannt, von Abschnitt 6 nach Abschnitt 5 verschoben), Endianness (Big-/Little-Endian), CRC32, Quantisierungsschritt/-stufe, zlib. **Quantisierung** in zwei Bedeutungen getrennt (Messwerte / Modellgewichte) |

@@ -16,8 +16,15 @@ classifiers = ["License :: OSI Approved :: Apache Software License"]
 
 # Keine Laufzeitabhängigkeiten — und das ist Absicht, keine Lücke.
 #
-# Der Kern ist reine stdlib. Alles Schwere liegt jenseits einer Prozessgrenze in
-# eigenen Environments und wird als Subprozess aufgerufen:
+# BERICHTIGUNG 2026-08-18: Hier stand „Alles Schwere liegt jenseits einer Prozessgrenze
+# in eigenen Environments". Das ist falsch, und die Lexikon-Durchsicht hat es gefunden.
+# `render.lade_modell` und `tiefenschaetzer.lade_modell` importieren `torch`,
+# `diffusers`, `transformers` und `Pillow` **in diesen Prozess** — verzögert, aber
+# in-process. Mit `torch` kommt auf Linux über ein Gigabyte NVIDIA-Binärdateien in genau
+# dieses Environment (docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md).
+#
+# Die Prozessgrenze trennt nach **Lizenz**, nicht nach Gewicht. Jenseits von ihr liegt,
+# was copyleft ist:
 #
 #   * ifcopenshell (LGPL, bringt CGAL/GPL-Anteile mit) lebt im separaten `.venv-ifc`
 #     und wird über `AIIMAGING_IFC_PYTHON` angesprochen — nie importiert.
@@ -28,6 +35,16 @@ classifiers = ["License :: OSI Approved :: Apache Software License"]
 # Produkt-venv frei von bpy und ifcopenshell (Regel 2). Eine Abhängigkeit hier
 # einzutragen heisst, diese Grenze zu verschieben — das ist eine Lizenzentscheidung,
 # keine Bequemlichkeitsfrage.
+#
+# `torch` und `diffusers` sind BSD-3-Clause bzw. Apache-2.0 und damit unter Regel 1
+# zulässig; die NVIDIA-Laufzeit ist proprietär, aber nicht copyleft und steckt darum
+# Apache-2.0-Code nicht an. Eine Grenze braucht es dafür nicht — sie bräuchte es erst,
+# wenn CUDA und eine GPL-Komponente in denselben Prozess müssten. Genau das verhindern
+# die zwei Grenzen oben.
+#
+# Dass sie hier trotzdem nicht als Abhängigkeit stehen, hat einen anderen Grund: Die
+# gesamte Testsammlung und die ganze QA-Kette laufen **ohne** sie. Wer sie nicht braucht,
+# soll sie nicht installieren müssen.
 dependencies = []
 
 [project.optional-dependencies]

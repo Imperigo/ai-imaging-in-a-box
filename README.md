@@ -97,8 +97,15 @@ nicht-architektonischen Fachbegriff für Leser:innen ohne Informatikhintergrund.
 
 ## Entwicklung
 
-Voraussetzung: Python 3.11 oder neuer. **Der Kern hat keine Laufzeitabhängigkeiten**, und
-das ist Absicht — alles Schwere liegt jenseits einer Prozessgrenze.
+Voraussetzung: Python 3.11 oder neuer. **Das Paket deklariert keine
+Laufzeitabhängigkeiten**, und das ist Absicht: Die gesamte Testsammlung und die ganze
+QA-Kette laufen ohne sie.
+
+*Was das nicht heisst:* Die Bildmodell- und die Schätzstufe importieren `torch`,
+`diffusers` und `transformers` sehr wohl — verzögert, aber **in denselben Prozess**. Die
+Prozessgrenze in diesem Projekt trennt nach **Lizenz**, nicht nach Gewicht: Jenseits von
+ihr liegt, was copyleft ist (Blender, IfcOpenShell). `torch` ist BSD-3-Clause und braucht
+sie nicht.
 
 **Testgeometrie erzeugen.** Das Repo enthält keine IFC-Datei; sie wird erzeugt (Regel 3):
 
