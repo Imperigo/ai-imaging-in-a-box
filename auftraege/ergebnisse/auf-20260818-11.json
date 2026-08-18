@@ -1,0 +1,84 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260818-11",
+  "status": "ok",
+  "beendet": "2026-08-18T21:40:00Z",
+  "dauer_s": null,
+  "messwerte": {
+    "boden": {
+      "einbetter": "google/siglip2-base-patch16-224",
+      "dimension": 768,
+      "n_bilder": 100,
+      "n_paare": 4950,
+      "mittelwert": 0.5259122837753915,
+      "streuung": 0.0698019268602648,
+      "minimum": 0.30966235814754217,
+      "maximum": 0.8447798426765823,
+      "median": 0.5232410601476569,
+      "perzentile": {
+        "p50": 0.5232410601476569,
+        "p90": 0.6166017243923179,
+        "p99": 0.6979369239763472,
+        "p999": 0.7523745804143006
+      },
+      "schwelle_stil": 0.3,
+      "paare_ueber_schwelle": 4950,
+      "anteil_ueber_schwelle": 1.0,
+      "streuungen_bis_schwelle": -3.236476325755894
+    },
+    "empfindlichkeitsprobe": {
+      "n_paare": 4703,
+      "mittelwert": 0.517956228647269,
+      "streuung": 0.06181445603500409,
+      "maximum": 0.6472024384735515,
+      "zweck": "Der Korpus hat bekannte Haeufungen (Studiofreisteller, flache Papierreproduktionen). Sie heben den Boden. Bleibt die Aussage auch ohne die 5 % aehnlichsten Paare dieselbe, haengt sie nicht am Korpus."
+    },
+    "korpus": {
+      "n_bilder": 100,
+      "quelle": "Wikimedia Commons ueber die MediaWiki-API",
+      "lizenzen": {
+        "public_domain": 34,
+        "cc0": 14,
+        "cc_by_2_0": 26,
+        "cc_by_4_0": 15,
+        "cc_by_3_0": 7,
+        "cc_by_2_5": 3,
+        "cc_by_2_0_uk": 1,
+        "share_alike": 0,
+        "unklar": 0
+      },
+      "lizenz_belegt": "je Datei aus extmetadata.License der API gelesen, nicht vermutet; Share-Alike hart abgelehnt",
+      "kurze_bildkante_px": {
+        "min": 443,
+        "median": 720,
+        "max": 960
+      },
+      "motivbereiche": 65,
+      "keine_architekturserie": true,
+      "gebaute_umwelt": 3,
+      "gerenderte_3d_modelle": 0,
+      "dubletten": "keine — MD5 paarweise verschieden, dHash-Distanz aller 4950 Paare > 12 Bit",
+      "bekannte_haeufungen": [
+        "rund 9 Studio-/Museumsfreisteller vor neutralem Grund",
+        "rund 8 Reproduktionen flacher Papierwerke (Karten, Tafeln, Kalligrafie)",
+        "11 Tierbilder als Domaene (je Unterkategorie nur 1-2)",
+        "rund 10 Nicht-Fotografien (Gemaelde, Holzschnitt, Zeichnungen)"
+      ],
+      "haeufungen_richtung": "Alle genannten Haeufungen HEBEN den Boden. Sie sind damit konservativ fuer die gestellte Frage: Wer zeigen will, dass die Schwelle zu HOCH ist, wird durch sie benachteiligt. Die Empfindlichkeitsprobe misst, wieviel sie ausmachen."
+    }
+  },
+  "urteil": {
+    "kurz": "DIE SCHWELLE 0.30 IST WIRKUNGSLOS. Nicht ein einzelnes zusammenhangloses Paar erreicht sie — ALLE 4950 tun es, 100 Prozent. Selbst das UNAEHNLICHSTE Paar des ganzen Korpus liegt mit 0.3097 darueber.",
+    "boden_in_worten": "Der Boden von SigLIP 2 base liegt bei 0.526 +/- 0.070 (Median 0.523, Spanne 0.310 bis 0.845, 4950 Paare aus 100 Bildern, 768 Dimensionen). Die Schwelle liegt damit 3.24 Streuungen UNTER dem Boden — nicht darueber.",
+    "der_verdacht_bestaetigt_sich": "Der Auftrag rechnete vor: bei isotroper Streuung laege der Boden bei 0.000 +/- 0.036, bei einem Kegelanteil von 0.6 bei 0.36. Gemessen sind 0.526. SigLIP 2 besetzt also einen ENGEREN Kegel als der ungueristigste Vorausrechnung — und die Folge ist genau die dort benannte: jedes beliebige Bildpaar besteht das Gate. Der ueberlieferte Fehlbereich 0.06-0.13 aus den DINOv3-Laeufen ist auf SigLIP 2 nachweislich nicht uebertragbar; er liegt nicht einmal in der Naehe des gemessenen Bodens.",
+    "haengt_es_am_korpus": "Nein. Der Korpus hat bekannte stilistische Haeufungen, und sie heben den Boden. Aber ohne die 5 Prozent aehnlichsten Paare bleibt der Mittelwert bei 0.518 +/- 0.062, und das MAXIMUM der verbleibenden 4703 Paare liegt bei 0.647 — immer noch mehr als das Doppelte der Schwelle. Es gibt keinen Zuschnitt dieses Korpus, unter dem 0.30 wieder Sinn ergaebe.",
+    "was_daraus_folgt": "Die Schwelle braucht keinen besseren WERT, sondern ein VERFAHREN — genau wie im Auftrag vermutet. Ein fester Wert ist an den Einbetter gebunden und stirbt mit ihm; 0.30 stammt aus einem anderen Modell und ist beim Wechsel in Sitzung 06 stillschweigend mitgewandert. Vorschlag auf Basis dieser Zahlen: Boden je Einbetter messen, Schwelle als 'Boden + k Streuungen' setzen. Fuer SigLIP 2 base waere k=2 eine Schwelle von 0.666 (p99 des Bodens liegt bei 0.698, k=2.5 ergaebe 0.701). Welches k richtig ist, sagt DIESE Messung nicht — dafuer braucht es Paare, die stilistisch AEHNLICH sein SOLLEN. Der Boden ist die eine Haelfte der Kalibrierung, nicht die ganze.",
+    "warnung_zur_uebertragung": "Diese Zahlen gelten fuer siglip2-base-patch16-224 und pooler_output. Ein anderer Ausleseort desselben Modells (etwa gemittelte Kachel-Vektoren aus last_hidden_state) hat einen ANDEREN Boden. Wer die Schwelle uebernimmt, muss auch den Ausleseort uebernehmen — sonst wiederholt sich genau der Fehler, der 0.30 hierher gebracht hat."
+  },
+  "umgebung": {
+    "geraet": "CPU (die Karte fuhr parallel auf-10)",
+    "python": "3.14.4",
+    "kosinus": "aiimaging.stil_qa.kosinus — dieselbe Funktion, die das Gate benutzt"
+  },
+  "fehler": null
+}
