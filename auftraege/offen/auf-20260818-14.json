@@ -1,0 +1,30 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260818-14",
+  "art": "qa",
+  "beschreibung": "STILREFERENZEN ORDNEN UND VERMESSEN — braucht KEINE GPU, aber Sorgfalt. WORUM ES GEHT: Der Owner hat eine Stilrichtung fuer den KosmoOrbit-Hausstil vorgegeben, anhand veroeffentlichter Wettbewerbsvisualisierungen. Ich habe daraus eine Stilbeschreibung in Worten abgeleitet (aiimaging.prompts, Stil 'kosmo_standard'). Was mir fehlt, sind ZAHLEN: Meine Beschreibung sagt 'bedeckt, entsaettigt, niedriger Kontrast, heller Himmel, quadratisches Format'. Das ist angesehen und nicht gemessen — genau die Sorte Behauptung, die dieses Projekt sonst nicht stehen laesst. DAS WICHTIGSTE ZUERST, ZWEI RIEGEL: (1) KEINE BILDER INS REPO, keine Ausschnitte, keine verkleinerten Fassungen, keine Einbettungsvektoren. Es sind FREMDE urheberrechtlich geschuetzte Arbeiten. Ein Vektor ist eine Ableitung des Bildes, eine Verkleinerung erst recht. Zurueck kommen nur Messwerte und Dateinamen. (2) KEIN LoRA-TRAINING auf diesem Material, auch nicht probeweise. Ein darauf trainiertes LoRA waere ein abgeleitetes Werk fremder Bilder. Falls dich irgendetwas in diese Richtung fuehrt: abbrechen und melden. TEIL A — ORDNEN. Die Bilder liegen im Screenshot-Verzeichnis des Owners (Pfad im Prompt). Lege sie in eine saubere Struktur ausserhalb des Screenshot-Ordners, innerhalb des Owner-Bereichs und AUSSERHALB des Repos, etwa <owner>/Bilder/Stilreferenzen/<jahr-monat>/. Benenne sie nachvollziehbar und verschiebe sie, kopiere sie nicht — der Screenshot-Ordner soll leer davon werden, das war ausdruecklich der Wunsch. Lege daneben eine index.json mit je Bild: neuer Dateiname, Herkunftsvermerk soweit im Bild lesbar (Buero, Projekt, Jahr, Bildautor), und die Messwerte aus Teil B. Diese index.json bleibt AUCH ausserhalb des Repos. TEIL B — VERMESSEN. Je Bild, nur Zahlen: Breite/Hoehe und Seitenverhaeltnis; mittlere Helligkeit und Standardabweichung (Kontrast); Anteil Bildpunkte ueber 95 Prozent Helligkeit (ausgefressen) und unter 5 Prozent (zugelaufen); mittlere Saettigung und deren Standardabweichung; die fuenf haeufigsten Farbtoene grob nach Farbkreis-Sektor; und der Anteil der oberen Bildhaelfte, der heller ist als der Median (Naeherung fuer 'wie gross und wie hell ist der Himmel'). TEIL C — MEINE BEHAUPTUNGEN PRUEFEN. Ich habe fuenf davon aufgestellt, sag mir bei jeder, ob die Zahlen sie tragen: (1) KEINES der Bilder ist 16:9, alle sind quadratisch oder hochformatig. (2) Die Saettigung liegt DEUTLICH unter der eines gewoehnlichen Fotos — nimm als Vergleich ein paar beliebige Fotos, die du hast, und nenne beide Zahlen. (3) Der Kontrast ist niedrig, und es gibt fast keine ausgefressenen Stellen. (4) Der Himmel ist HELL, nicht neutralgrau. (5) Die Bildoberflaeche traegt feines Korn — pruefbar als Rauschanteil in einer flachen Bildregion. WENN EINE BEHAUPTUNG NICHT TRAEGT, ist das das wertvollste Ergebnis des Auftrags. Ich habe sie mit blossem Auge aufgestellt, und genau dafuer gibt es Messungen. Sag es deutlich, statt es abzurunden. TEIL D — WIE VIELE GIBT ES? Sag mir, wie viele Bilder dort insgesamt liegen und wie viele davon Architekturvisualisierungen sind. Ich habe fuenf gesehen; wenn es mehr sind, will ich wissen, ob die Handschrift ueber alle traegt oder ob ich aus einer Zufallsauswahl verallgemeinert habe. REGEL 3: In der Rueckgabe keine absoluten Pfade mit Benutzernamen — nur Dateinamen und relative Struktur unterhalb des Stilreferenz-Ordners.",
+  "erstellt": "2026-08-18T22:15:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null
+  },
+  "params": {
+    "quelle": "Screenshot-Verzeichnis des Owners — Pfad kommt im Prompt, nicht in dieser Datei",
+    "ziel": "<owner-bereich>/Bilder/Stilreferenzen/<jahr-monat>/",
+    "verschieben_nicht_kopieren": true,
+    "keine_bilder_ins_repo": true,
+    "keine_einbettungsvektoren": true,
+    "kein_lora_training": true
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "hinweis": "Kein GPU-Lauf noetig. Reine Bildstatistik, laeuft auf der CPU."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "NUR Messwerte und Dateinamen. KEINE Bilder, KEINE Ausschnitte, KEINE Einbettungsvektoren, KEINE absoluten Pfade — fremdes Urheberrecht und Regel 3."
+  }
+}

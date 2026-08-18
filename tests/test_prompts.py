@@ -360,13 +360,18 @@ def test_die_antwort_passt_ohne_umbau_in_einen_renderauftrag():
     assert auftrag.controlnet_staerke == 0.9
 
 
-def test_die_handschrift_wiederholt_den_kompositionsbaustein_nicht():
-    """Ein Mangel meines eigenen ersten Entwurfs, jetzt als Regel.
+def test_die_handschrift_wiederholt_KEINEN_baustein():
+    """Ein Mangel meines eigenen ersten Entwurfs, jetzt als Regel — und zweimal zugeschlagen.
 
     Modellfoto sagte in der Handschrift „a photograph of a physical architectural model"
-    und im Kompositionsbaustein gleich noch einmal „photograph of a physical
-    architectural model". Doppelt genannt heisst im Bildmodell **doppelt gewichtet** —
-    der Stil überschreibt dann sich selbst und drängt alles andere aus dem Bild.
+    und im Kompositionsbaustein gleich noch einmal dasselbe. Doppelt genannt heisst im
+    Bildmodell **doppelt gewichtet** — der Stil überschreibt dann sich selbst und drängt
+    alles andere aus dem Bild.
+
+    Die erste Fassung dieses Tests prüfte nur gegen den *Kompositions*baustein. Beim
+    KosmoOrbit-Stil stand die Doppelung dann im *Bewuchs*baustein („the building set
+    back"), und der Test sah sie nicht. **Eine Regel, die nur an einer Stelle prüft, ist
+    keine Regel, sondern eine Stichprobe** — jetzt gegen alle sieben Fächer.
 
     Geprüft wird auf gemeinsame Wortfolgen von drei Wörtern; kürzere Überschneidungen
     („of the", „in a") sind normale Sprache und kein Mangel.
@@ -378,9 +383,10 @@ def test_die_handschrift_wiederholt_den_kompositionsbaustein_nicht():
     for stil in p.STILE.values():
         if not stil.handschrift:
             continue
-        komposition = p.baustein("composition", stil.bausteine["composition"]).text
-        gemeinsam = dreiergruppen(stil.handschrift) & dreiergruppen(komposition)
-        assert not gemeinsam, f"{stil.slug}: doppelt genannt — {sorted(gemeinsam)}"
+        for kategorie, slug in stil.bausteine.items():
+            gemeinsam = (dreiergruppen(stil.handschrift)
+                         & dreiergruppen(p.baustein(kategorie, slug).text))
+            assert not gemeinsam, f"{stil.slug}/{kategorie}: doppelt — {sorted(gemeinsam)}"
 
 
 def test_kein_stil_verlangt_sonne_und_geschlossene_wolkendecke_zugleich():
@@ -396,3 +402,76 @@ def test_kein_stil_verlangt_sonne_und_geschlossene_wolkendecke_zugleich():
         sonnig = any(w in text for w in ("sunlight", "sun raking", "midday sun"))
         zu = any(w in text for w in ("heavy low clouds", "uniform overcast"))
         assert not (sonnig and zu), stil.slug
+
+
+# --------------------------------------------------------------------------------------
+# 6 · Der Hausstil
+# --------------------------------------------------------------------------------------
+
+def test_haus_stil_und_mess_stil_sind_verschieden():
+    """Zwei Vorgaben, und das ist Absicht.
+
+    Gemessen wird auf dem Stil, der am wenigsten erfindet; ausgeliefert wird der, der
+    aussieht wie das Büro. Wer beides in einen Stil zwingt, bekommt entweder unbrauchbare
+    Bilder oder unbrauchbare Zahlen.
+    """
+    assert p.HAUS_STIL != p.MESS_STIL
+    assert p.STILE[p.HAUS_STIL].treue_geeignet is False
+    assert p.STILE[p.MESS_STIL].treue_geeignet is True
+
+
+def test_der_hausstil_traegt_ein_seitenverhaeltnis():
+    """Der einzige Befund der Stilanalyse, der bis in die Kamerarechnung reicht.
+
+    Alle fünf Vorlagen sind quadratisch oder hochformatig, **keine** ist 16:9. Das ist
+    keine Kosmetik: Der vertikale Bildwinkel folgt aus dem Seitenverhältnis, und mit ihm
+    der Abstand, aus dem ein Bauwerk gerahmt wird.
+    """
+    assert p.komponiere(p.HAUS_STIL)["seitenverhaeltnis"] == 1.0
+
+
+def test_das_seitenverhaeltnis_geht_ohne_umweg_in_die_kamera():
+    """Die Naht zur Kamerarechnung — sie soll aus einer Zahl bestehen, nicht aus Umrechnung.
+
+    Ein hochformatiger Stil, in einem 16:9-Rahmen gerechnet, ergibt eine Kamera, die zu
+    weit weg steht: Der schmalere vertikale Bildwinkel verlangt mehr Abstand. Das Bild
+    hätte dann mit dem Stil nichts mehr zu tun.
+    """
+    from aiimaging import kameras
+
+    fertig = p.komponiere(p.HAUS_STIL)
+    quadratisch = kameras.kamerasatz(
+        [[-15.0, -15.0, 0.0], [15.0, 15.0, 20.0]], kuerzel=["n"],
+        seitenverhaeltnis=fertig["seitenverhaeltnis"])["kameras"][0]
+    breitbild = kameras.kamerasatz(
+        [[-15.0, -15.0, 0.0], [15.0, 15.0, 20.0]], kuerzel=["n"],
+        seitenverhaeltnis=16 / 9)["kameras"][0]
+    assert quadratisch["abstand_m"] < breitbild["abstand_m"]
+
+
+def test_der_hausstil_nennt_seine_herkunft_und_beansprucht_keinen_namen():
+    """Übernommen wurden Eigenschaften, kein Werk — und das muss dastehen.
+
+    Bedecktes Licht, entsättigte Farben, Vordergrundbewuchs und kleine Figuren sind
+    fotografische Konvention und gehören niemandem. Ein Studioname als Produkt-Preset
+    wäre etwas anderes.
+    """
+    stil = p.STILE[p.HAUS_STIL]
+    assert "Eigenschaften, kein Werk" in stil.beschreibung
+    assert "Urheberrecht" in stil.beschreibung
+    assert "kosmo" in stil.slug          # kein fremder Name im Schlüssel
+
+
+def test_der_hausstil_setzt_das_bauwerk_zurueck():
+    """Der auffälligste Griff der Vorlagen: Es steht immer etwas davor."""
+    text = p.komponiere(p.HAUS_STIL)["prompt"]
+    assert "near foreground" in text
+    assert "small in the frame" in text
+    assert "none posing" in text
+
+
+def test_der_hausstil_warnt_vor_seiner_eigenen_wirkung_auf_die_qa():
+    """Der Vordergrundbewuchs ist der Zweck — und genau das, was die Silhouette verdeckt."""
+    hinweise = " ".join(p.komponiere(p.HAUS_STIL)["hinweise"])
+    assert "nicht geeignet" in hinweise
+    assert p.MESS_STIL in hinweise

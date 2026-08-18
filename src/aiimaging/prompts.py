@@ -139,6 +139,12 @@ BAUSTEINE: dict[str, tuple[Baustein, ...]] = {
            "shallow depth of field, visible material of the model",
            "Löst das Bauwerk bewusst aus der Wirklichkeit. Sehr geometrietreu, weil "
            "das Modell keine erfundenen Details verträgt."),
+        _b("dokumentarisch_ruhig", "Dokumentarisch, ruhig",
+           "quiet documentary photograph, muted film tonality, gentle highlight "
+           "roll-off, fine grain, something in the near foreground giving depth",
+           "Der Bildcharakter des KosmoOrbit-Stils. 'gentle highlight roll-off' ist der "
+           "wichtige Teil: Er verhindert den ausgefressenen HDR-Look, an dem man "
+           "erzeugte Architekturbilder sofort erkennt."),
         _b("skizzenhaft", "Skizzenhaft",
            "loose architectural sketch, graphite and light watercolour wash, "
            "visible pencil strokes, unfinished edges",
@@ -175,6 +181,12 @@ BAUSTEINE: dict[str, tuple[Baustein, ...]] = {
            "high thin cirrus clouds, mostly open sky", ""),
         _b("zugezogen", "Zugezogen",
            "heavy low clouds, diffuse dark grey sky", ""),
+        _b("hell_diffus", "Hell und diffus",
+           "bright luminous overcast sky, almost white, soft cloud structure, "
+           "no blue",
+           "Nicht dasselbe wie 'gleichmässig bedeckt': Der ist neutralgrau, dieser ist "
+           "HELL. Er nimmt oft die halbe Bildhöhe ein und hebt das ganze Bild an, statt "
+           "es zu bedrücken."),
     ),
     "atmosphere": (
         _b("klar", "Klar",
@@ -201,6 +213,11 @@ BAUSTEINE: dict[str, tuple[Baustein, ...]] = {
         _b("bewittert", "Bewittert",
            "weathered surfaces, subtle patina and water staining",
            "Nimmt dem Bild das Neubauhafte."),
+        _b("gedaempft", "Gedämpft",
+           "muted desaturated colours, matte surfaces throughout, nothing glossy, "
+           "no reflections used as an effect",
+           "Der Farbcharakter des KosmoOrbit-Stils. Die Entsättigung ist der Grund, "
+           "warum solche Bilder ruhig wirken — nicht die Motivwahl."),
         _b("praezise", "Präzise",
            "crisp clean surfaces, sharp arrises, precise joints",
            "Für Wettbewerbsbilder. Betont die Kanten der Geometrie — und macht damit "
@@ -213,6 +230,12 @@ BAUSTEINE: dict[str, tuple[Baustein, ...]] = {
            "Silhouette."),
         _b("sparsam", "Sparsam",
            "a few low shrubs at a distance, no trees near the building", ""),
+        _b("vordergrund", "Im Vordergrund",
+           "wild meadow grass and mature trees in the near foreground, partly framing "
+           "the view, the building set back behind them",
+           "Der auffälligste Griff des KosmoOrbit-Stils: Es steht IMMER etwas davor. Das "
+           "Bauwerk posiert nicht, es ist verortet. ACHTUNG: Bewuchs im Vordergrund "
+           "verdeckt die Silhouette und senkt die Geometrie-Treue."),
         _b("baumbestand", "Baumbestand",
            "mature trees in the surroundings, none blocking the view",
            "'none blocking the view' steht dort mit Absicht — ohne diesen Zusatz stellt "
@@ -226,6 +249,11 @@ BAUSTEINE: dict[str, tuple[Baustein, ...]] = {
         _b("einzelne_ferne", "Einzelne, fern",
            "one or two people in the distance, small in frame, giving scale",
            "Massstab ohne Ablenkung. 'small in frame' ist der wichtige Teil."),
+        _b("alltag", "Alltag",
+           "small groups of people going about ordinary everyday activity, "
+           "all of them small in the frame, none posing",
+           "Nicht dasselbe wie 'belebt': 'none posing' und 'small in the frame' sind der "
+           "Unterschied zwischen einem Ort, an dem Leute sind, und einem Werbebild."),
         _b("belebt", "Belebt",
            "several people walking, natural everyday activity",
            "Nur für Präsentationsbilder. Für die QA unbrauchbar."),
@@ -337,6 +365,13 @@ class Stil:
         empfohlene_controlnet_staerke: Wie streng die Tiefenkarte binden sollte, damit
             dieser Stil überhaupt entstehen kann. Ein Skizzenstil bei Stärke 1.0 bleibt
             ein Foto mit Bleistiftfilter.
+        seitenverhaeltnis: Breite geteilt durch Höhe. ``None`` heisst „egal".
+
+            **Das ist keine Kosmetik.** Es geht bis in die Kamerarechnung: Der vertikale
+            Bildwinkel folgt aus dem Seitenverhältnis (:func:`aiimaging.kameras.bildwinkel`),
+            und damit auch der Abstand, aus dem ein Bauwerk gerahmt wird. Wer einen
+            hochformatigen Stil in einem 16:9-Rahmen rechnet, bekommt eine Kamera, die zu
+            weit weg steht — und ein Bild, das mit dem Stil nichts mehr zu tun hat.
     """
 
     slug: str
@@ -347,6 +382,7 @@ class Stil:
     negativ: str = ""
     treue_geeignet: bool = True
     empfohlene_controlnet_staerke: float = 0.9
+    seitenverhaeltnis: float | None = None
     warnung: str = ""
 
 
@@ -497,8 +533,53 @@ _stil(Stil(
             "gelockerte ControlNet-Stärke: Bei 1.0 entsteht ein Foto mit Bleistiftfilter.",
 ))
 
+_stil(Stil(
+    slug="kosmo_standard",
+    name="KosmoOrbit-Standard",
+    beschreibung=(
+        "Der Hausstil des Ökosystems — ruhig, bedeckt, entsättigt, dokumentarisch. Das "
+        "Bauwerk steht ZURÜCK: Es ist immer etwas davor, und die Menschen sind klein und "
+        "beiläufig. Kein Heldenbild, sondern ein Ort, an dem jemand vorbeigekommen ist "
+        "und fotografiert hat.\n\n"
+        "Abgeleitet aus fünf veröffentlichten Wettbewerbsvisualisierungen, die der Owner "
+        "als Richtung vorgegeben hat (2026-08-18). **Was übernommen wurde, sind "
+        "Eigenschaften, kein Werk:** bedecktes Licht, heller entsättigter Himmel, "
+        "niedriger Kontrast mit weicher Lichterzeichnung, Vordergrundbewuchs, kleine "
+        "Figuren im Alltag, matte Materialien, filmische Tonwerte, quadratisches Format. "
+        "Diese Eigenschaften gehören niemandem — sie sind fotografische und "
+        "architektonische Konvention. Der Stil trägt darum auch keinen fremden Namen: "
+        "Ein Studioname als Produkt-Preset wäre eine Anmassung, und die Bilder selbst "
+        "sind fremdes Urheberrecht und liegen nicht in diesem Repo."
+    ),
+    bausteine={"composition": "dokumentarisch_ruhig", "light_time": "weich_bedeckt",
+               "sky": "hell_diffus", "atmosphere": "leichter_dunst",
+               "material_detail": "gedaempft", "vegetation": "vordergrund",
+               "people": "alltag"},
+    handschrift="an ordinary moment at a place someone happened to walk past",
+    negativ="dramatic lighting, saturated colours, glossy reflections, "
+            "heavy contrast, posed figures, empty showroom feeling",
+    treue_geeignet=False,
+    empfohlene_controlnet_staerke=0.85,
+    # Alle fünf Vorlagen sind quadratisch oder hochformatig, KEINE ist 16:9. Das ist der
+    # eine Befund dieser Stilanalyse, der bis in die Kamerarechnung reicht: Der vertikale
+    # Bildwinkel folgt aus dem Seitenverhältnis, und mit ihm der Abstand.
+    seitenverhaeltnis=1.0,
+    warnung="Der Vordergrundbewuchs ist der ZWECK dieses Stils — und genau das, was die "
+            "Silhouette verdeckt. `geom_iou` sinkt dadurch systematisch, ohne dass das "
+            "Bildmodell etwas falsch gemacht hätte. Für die Präsentation gebaut, nicht "
+            "für die Messung: Zum Messen `messschnitt` nehmen und den Stil danach "
+            "wechseln.",
+))
+
 #: Der Stil, auf dem jede Messung dieses Projekts gefahren wird.
 MESS_STIL = "messschnitt"
+
+#: Der Hausstil — was ohne andere Angabe erzeugt wird.
+#:
+#: Zwei verschiedene Vorgaben, und das ist Absicht: Gemessen wird auf dem Stil, der am
+#: wenigsten erfindet; ausgeliefert wird der, der aussieht wie das Büro. Wer beides in
+#: einen Stil zwingt, bekommt entweder unbrauchbare Bilder oder unbrauchbare Zahlen.
+HAUS_STIL = "kosmo_standard"
 
 
 # --------------------------------------------------------------------------------------
@@ -630,6 +711,7 @@ def komponiere(stil: str = MESS_STIL, *, freitext: str = "",
         "stil": s.slug,
         "bausteine": gewaehlt,
         "controlnet_staerke": s.empfohlene_controlnet_staerke,
+        "seitenverhaeltnis": s.seitenverhaeltnis,
         "treue_geeignet": s.treue_geeignet,
         "hinweise": tuple(hinweise),
     }
@@ -654,10 +736,12 @@ def uebersicht() -> dict:
             {"slug": s.slug, "name": s.name, "beschreibung": s.beschreibung,
              "treue_geeignet": s.treue_geeignet, "warnung": s.warnung,
              "controlnet_staerke": s.empfohlene_controlnet_staerke,
+             "seitenverhaeltnis": s.seitenverhaeltnis,
              "bausteine": dict(s.bausteine)}
             for s in STILE.values()
         ],
         "mess_stil": MESS_STIL,
+        "haus_stil": HAUS_STIL,
         "freitextfeld": (
             "Freier Prompt-Text. Er steht im fertigen Prompt VORNE und wiegt damit am "
             "schwersten. Was hier Bauteile nennt — Dach, Fenster, Balkon —, wird gemeldet: "
@@ -668,6 +752,7 @@ def uebersicht() -> dict:
 
 __all__ = [
     "BAUSTEINE", "BAUTEILWOERTER", "KATEGORIEN", "KATEGORIE_ERKLAERUNG", "MESS_STIL",
-    "STILE", "Baustein", "PromptError", "Stil", "baustein", "bauteilwaechter",
+    "HAUS_STIL", "STILE", "Baustein", "PromptError", "Stil", "baustein",
+    "bauteilwaechter",
     "hole_stil", "komponiere", "uebersicht",
 ]

@@ -380,9 +380,33 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Sechs Stile als erster Entwurf, jeder mit der Angabe, ob er **messtauglich** ist:
       Nebel verdeckt den Fuss, eine Skizze löst die Kanten auf — die Geometrie-QA misst
       dann den Stil und nicht das Bildmodell.
-- [ ] **Die sechs Stile durchsehen und den Hausstil bestimmen** — die Form steht, der
-      Geschmack fehlt. Die Stile sind gattungsmässig gebaut (Regel 3: nicht an einem
-      bestimmten Haus abgeschrieben). **Owner-Entscheid.**
+- [x] **Hausstil bestimmt** — 2026-08-18, `kosmo_standard`. Der Owner hat eine Richtung
+      anhand von fünf veröffentlichten Wettbewerbsvisualisierungen vorgegeben; daraus ist
+      eine Beschreibung **in Eigenschaften** entstanden: bedecktes Licht, heller
+      entsättigter Himmel, niedriger Kontrast mit weicher Lichterzeichnung,
+      Vordergrundbewuchs, kleine Figuren im Alltag, matte Materialien, filmische Tonwerte.
+      **Kein fremder Name im Code, keine fremden Bilder im Repo** — die Eigenschaften sind
+      fotografische Konvention und gehören niemandem, die Bilder nicht.
+      `HAUS_STIL` und `MESS_STIL` sind bewusst **verschieden**: Gemessen wird auf dem
+      Stil, der am wenigsten erfindet, ausgeliefert der, der aussieht wie das Büro.
+- [x] **Ein Stil trägt jetzt ein Seitenverhältnis** — der einzige Befund der Stilanalyse,
+      der bis in die Kamerarechnung reicht. Keine der fünf Vorlagen ist 16:9; der
+      vertikale Bildwinkel folgt aus dem Seitenverhältnis, und mit ihm der Abstand.
+- [ ] **Die fünf Behauptungen der Stilanalyse messen** — `auf-20260818-14`. Ich habe sie
+      mit blossem Auge aufgestellt („entsättigt", „niedriger Kontrast", „heller Himmel",
+      „feines Korn", „nie 16:9"). Das ist angesehen und nicht gemessen, und genau die
+      Sorte Behauptung, die dieses Projekt sonst nicht stehen lässt.
+- [ ] **Ein Referenzset, das uns gehört** — die andere Hälfte des Hausstils. Der Prompt
+      sagt, wie man es macht; `stil_qa` prüft gegen ein Referenzset, ob es gelungen ist.
+      Fremde Bilder können das nicht sein: Eine Einbettung ist eine Ableitung des Bildes.
+      Es braucht eigene Renders oder eigene Arbeiten des Owners. **Erst danach ist der
+      Hausstil prüfbar und nicht nur beschrieben.**
+- [ ] **Owner-Entscheid: gelernter Hausstil oder fester Stil?** Der Owner hat beide Wege
+      genannt — Referenzen in KosmoData hochladen („so sollen meine Renderings aussehen")
+      oder ein festes Preset. **Es ist dieselbe Mechanik:** Ein Preset ist ein
+      mitgeliefertes Referenzset. Der gelernte Weg braucht nur einen Ort, an dem die
+      Bilder des Nutzers liegen, und die Messung ihres Bodens (`stil_qa.BODEN_MESSUNGEN`)
+      — ein hochgeladenes Set hat einen anderen Boden als unser eigenes.
 - [ ] **Die Stile am Gerät messen** — ob ein Prompt an einem Backbone wirklich landet,
       ist eine Messung und keine Textarbeit. Erst nach `auf-13`, denn an einem Modell
       ohne ControlNet-Naht sagt eine Prompt-Reihe nichts.
