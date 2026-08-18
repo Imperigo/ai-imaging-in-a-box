@@ -520,6 +520,53 @@ dieselbe Architektur aus zwei Richtungen.
 
 ---
 
+---
+
+## 12 · Nachtrag 2026-08-18: DINOv3 fällt unter Regel 1 durch
+
+Beim Bauen des Stil-Gates wurde die Lizenz des Einbettungsmodells geprüft — eine Frage,
+die diese Lagebeurteilung offengelassen hatte und die der Vorläufer KosmoVis stillschweigend
+mit **DINOv3** beantwortet. Das Ergebnis korrigiert diese geerbte Annahme.
+
+**DINOv3 steht unter einer eigenen Meta-Lizenz**, nicht unter einer der vier zugelassenen.
+Drei Auflagen:
+
+1. **Gated** — Zugang muss beantragt werden, unter Angabe persönlicher Daten.
+2. **Namensnennung** — „Built with DINOv3" ist sichtbar zu führen.
+3. **Weitergabe nur samt Lizenztext** für abgeleitete Werke.
+
+Kommerzielle Nutzung ist dabei ausdrücklich **erlaubt**. Das ändert nichts an der
+Bewertung: Regel 1 verlangt permissive Lizenzen, nicht bloss erlaubte Nutzung. Eine
+Sonderlizenz mit Auflagen ist genau das, was sie ausschliesst.
+
+Dazu kommt ein praktischer Grund, der für ein öffentliches Apache-2.0-Repo schwerer wiegt
+als der formale: **Eine gated Abhängigkeit kann niemand nachvollziehen**, der keinen
+Zugang beantragt hat. Eine wissenschaftliche Arbeit, deren Messkette hinter einem
+Antragsverfahren liegt, ist nicht reproduzierbar.
+
+### Die Alternativen sind sauber
+
+| Modell | Lizenz | Bemerkung |
+|---|---|---|
+| **SigLIP 2** (`google/siglip2-base-patch16-224`) | **Apache-2.0** | **neue Vorgabe** — nicht gated, keine Auflagen |
+| **DINOv2** (`facebook/dinov2-base`) | Apache-2.0 | Vorgänger von DINOv3, selbstüberwacht — verhaltensnäher |
+| **OpenCLIP ViT-B/32** | MIT | grosses Ökosystem |
+| ~~DINOv3~~ | Meta-Sonderlizenz | **ausgeschlossen** |
+
+Festgehalten in `src/aiimaging/einbetter.py` — mitsamt DINOv3 als **ausgeschlossen
+markiertem** Eintrag, damit der Grund auffindbar bleibt und niemand später „das nimmt
+KosmoVis doch auch" denkt. `waehle()` gibt es nie zurück; ein Test hält das fest, mit
+Gegenprobe gegen einen vakuösen Test.
+
+### Was dieser Wechsel kostet
+
+Die überlieferten Wertebereiche des Stil-Scores (Treffer ~0,5–0,6, Verfehlung ~0,06–0,13)
+stammen aus **DINOv3**-Läufen. Ob SigLIP-Embeddings den Haus-Stil ähnlich gut trennen,
+ist **ungeprüft**. Die Schwelle 0,30 ist beim Einbetterwechsel neu zu kalibrieren — was
+ohnehin in die Schwellenstudie (Phase 4) gehört, aber jetzt nicht mehr optional ist.
+
+---
+
 ## Quellen
 
 Direkt geprüft (LICENSE-Datei, Repo-Sidebar oder Modellkarte):

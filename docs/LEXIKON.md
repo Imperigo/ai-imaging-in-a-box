@@ -707,8 +707,15 @@ Hardware.
 
 **Upscaling** — Nachträgliches Vergrössern eines Bildes unter Hinzuerfindung von Details.
 
-**Gated Model** — Modell, dessen Gewichte erst nach Zustimmung zu Nutzungsbedingungen
-heruntergeladen werden können.
+**Gated Model** — Ein Modell, dessen Gewichte erst nach Zustimmung zu Bedingungen und
+oft nach einem Antragsverfahren herunterladbar sind. *Für eine wissenschaftliche Arbeit
+ein Problem: Was hinter einem Antrag liegt, kann niemand nachvollziehen.*
+
+**Selbstüberwachtes Lernen (self-supervised)** — Training ohne von Hand vergebene
+Beschriftungen: Das Modell lernt aus der Struktur der Daten selbst, etwa indem es
+verdeckte Bildteile vorhersagt. *DINOv2/v3 sind so trainiert, CLIP und SigLIP dagegen an
+Bild-Text-Paaren.*
+
 
 ---
 
@@ -953,6 +960,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus der Einbetter-Pruefung: Gated Model praezisiert, selbstueberwachtes Lernen |
 | 2026-08-18 | Ergaenzt aus dem Multipass-Ausbau: Beauty-Pass, Emissions-Shader, View-Transform, Dithering, Denoiser, Bittiefe |
 | 2026-08-18 | Ergaenzt aus Backbone/Stil-QA: Registry, Dataclass/frozen, Depth-ControlNet-Naht, Multi-Reference-Editing, Referenzset, Stil-Score, Attrappe, vakuoeser Test, OpenRAIL++-M, Stability Community License. **Aggregation** in zwei Bedeutungen getrennt (Lizenzrecht / Messwerte) |
 | 2026-08-18 | Ergaenzt aus dem Multipass: Goldener Winkel, Normalisierung |
