@@ -139,3 +139,30 @@ gerendert wird, und nur innerhalb von aiimaging.render.lade_modell importiert.
   `*.libs/` ist die Wahrheit.
 
 --------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+LoRA-Trainer: kohya-ss/sd-scripts und ostris/ai-toolkit
+
+kohya-ss/sd-scripts    Apache-2.0
+  Geprueft am Original 2026-08-18:
+  https://raw.githubusercontent.com/kohya-ss/sd-scripts/main/LICENSE
+
+ostris/ai-toolkit       MIT (Copyright 2024 Ostris, LLC)
+  Geprueft am Original 2026-08-18:
+  https://raw.githubusercontent.com/ostris/ai-toolkit/main/LICENSE
+
+Beide sind permissiv und waeren damit auch als Bibliothek zulaessig. Aufgerufen
+werden sie trotzdem als Subprozess in einem eigenen Environment - hier nicht aus
+Lizenzgruenden, sondern weil ein Trainer torch, accelerate und die CUDA-Laufzeit
+nachzieht. Nichts davon gehoert in ein Produkt-venv, das laut pyproject.toml mit
+null Laufzeitabhaengigkeiten auskommt.
+
+  ZUR LIZENZ DES ERZEUGTEN LoRA:
+  Ein LoRA ist eine Differenz zu den Gewichten seines Grundmodells und ohne sie
+  nutzlos. Er erbt darum dessen Lizenzlage - NICHT die des Trainers. Ein auf
+  FLUX.1-dev oder FLUX.2-dev trainierter Stil ist nicht verwertbar, und daran
+  aendert weder das Eigentum an den Trainingsbildern noch die Rechenzeit etwas.
+  aiimaging.lora.lizenz_des_ergebnisses beantwortet das ausfuehrbar, und
+  pruefe_auftrag lehnt solche Auftraege VOR der ersten GPU-Sekunde ab.
+
+--------------------------------------------------------------------------------

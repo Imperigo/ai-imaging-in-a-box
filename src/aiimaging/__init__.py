@@ -16,6 +16,7 @@ Aufbau
 ``contracts``    Verträge, insbesondere die Up-Achsen-Regel
 ``herkunft``     Connector-Schicht: was eine Datei selbst über Einheit und Up-Achse sagt
 ``lizenzquelle`` eine Vokabel für die Herkunft einer Lizenzangabe, für alle Registries
+``lora``         LoRA-Stiltraining als Subprozess — wo Regel 1 und Regel 3 sich treffen
 ``schwellenstudie`` Kalibrierung der Geometrie-Schwelle: Störung, Kurve, Trennschärfe
 ``seams``        die Prozessgrenzen zu IfcOpenShell und Blender
 ``torwaechter``  Massstabs- und Georeferenzprüfung vor teurer GPU-Zeit
@@ -40,8 +41,8 @@ __version__ = "0.0.2"
 
 from aiimaging import (  # noqa: F401
     auftrag, backbone, bildlesen, bildschreiben, contracts, einbetter, gate, geometrie_qa,
-    graph, herkunft, jobs, kette, lizenzquelle, mcp_schemas, render, schwellenstudie,
-    seams, stil_qa, tiefenschaetzer, torwaechter, werkzeuge,
+    graph, herkunft, jobs, kette, lizenzquelle, lora, mcp_schemas, render,
+    schwellenstudie, seams, stil_qa, tiefenschaetzer, torwaechter, werkzeuge,
 )
 from aiimaging.contracts import (  # noqa: F401
     ContractError,

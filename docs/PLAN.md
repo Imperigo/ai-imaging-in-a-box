@@ -193,7 +193,26 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Normen und Dokumentation abgeleitet; keine ArchiCAD-, Revit- oder Rhino-Datei wurde
       je gesehen. Sicher ist nur die IFC-Einheitenzeile (Norm) und die Z-up-Festlegung
       (ISO 16739). Welche Zeichenkette ArchiCAD in `FILE_NAME` schreibt, ist es nicht.
-- [ ] LoRA-Stiltraining über kohya oder ai-toolkit als Subprozess
+- [x] **LoRA-Stiltraining als Subprozess-Naht** — erledigt 2026-08-18, `lora.py`.
+      Beide Trainer sind jetzt **am Original geprüft** statt aus Sekundärquelle:
+      kohya-ss/sd-scripts Apache-2.0, ostris/ai-toolkit MIT.
+      **Das ist die einzige Stelle im Projekt, an der Regel 1 und Regel 3 gleichzeitig
+      greifen** — und beide sind hier ausführbar:
+      *Regel 1:* Ein LoRA ist eine Differenz zu den Gewichten seiner Grundlage und erbt
+      deren Lizenzlage. Ein auf FLUX-dev trainierter Haus-Stil ist nicht verwertbar, und
+      daran ändert weder das Eigentum an den Bildern noch die Rechenzeit etwas.
+      `pruefe_auftrag` lehnt das **vor der ersten GPU-Sekunde** ab.
+      *Regel 3:* Ein Stil-LoRA wird auf echten Bürobildern trainiert — das ist sein
+      Zweck und genau das, was nie ins Repo darf. Datensatz **und** Ausgabe innerhalb des
+      Repos werden abgewiesen, über `Path.resolve`, damit ein `..`-Umweg nicht daran
+      vorbeikommt. Auch späteres Löschen hilft nicht: Die Git-Historie behält die Bilder.
+      *Ehrliche Grenze:* Hier wurde **nie ein Training ausgeführt** — keine GPU, kein
+      Trainer, keine Gewichte. Die Lizenzen sind gemessen, die Kommandozeilen sind aus
+      der Dokumentation übernommen und im Feld `beleg` als solche gekennzeichnet.
+      Für `ai-toolkit` verweigert `baue_kommando` die Auskunft, statt eine Kommandozeile
+      zu erfinden: Es wird über YAML gesteuert.
+- [ ] **LoRA-Training an einem echten Lauf prüfen** — braucht GPU, Trainer und Bilder.
+      Erst dort zeigt sich, ob die Flaggennamen stimmen.
 
 ---
 
