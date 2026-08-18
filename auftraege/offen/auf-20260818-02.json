@@ -1,0 +1,28 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260818-02",
+  "art": "multipass",
+  "beschreibung": "Nachlauf zu auf-20260818-01. Dort brach die Tiefenstufe, weil Blender 5.2 die Eigenschaft Scene.node_tree entfernt hat - der Runner war gegen 4.2 LTS gebaut. Eingebaut ist jetzt eine Weiche, die per hasattr auf compositing_node_group prueft statt auf die Versionsnummer. Der 4.2-Pfad ist hier nachgeprueft (vier Paesse, Tiefe 17.94-26.59 m); der 5.x-Pfad ist BLIND geschrieben und genau das ist hier zu pruefen. Erwartet werden vier Dateien: beauty_.png, material_id.png, tiefe_0001.exr, tiefe_norm.png - und im Report eine depth_normalisierung mit plausiblen Metern.",
+  "erstellt": "2026-08-18T10:42:36Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "aufloesung": 1024,
+    "samples": 128
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
+  }
+}

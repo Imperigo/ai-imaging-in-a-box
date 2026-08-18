@@ -154,8 +154,7 @@ def _welt_setzen(farbe, staerke: float) -> None:
     Beauty-Bild des Vorgängerstands unsichtbar blieb.
     """
     welt = bpy.data.worlds.new("Welt")
-    welt.use_nodes = True
-    hintergrund = welt.node_tree.nodes["Background"]
+    hintergrund = _welt_hintergrund(welt)
     hintergrund.inputs["Color"].default_value = (*farbe, 1.0)
     hintergrund.inputs["Strength"].default_value = staerke
     bpy.context.scene.world = welt
@@ -290,6 +289,46 @@ def _material_id_zuweisen() -> tuple[list[dict], int]:
 # Tiefe
 # --------------------------------------------------------------------------------------
 
+def _kompositor_baum(szene):
+    """Den Kompositor-Knotenbaum holen — versionsfest über Blender 4.x und 5.x.
+
+    **Belegt auf echter Hardware (2026-08-18, HomeStation, Auftrag `auf-20260818-01`):**
+    Blender 5.0 hat `Scene.node_tree` entfernt. Der Kompositor ist dort ein eigener
+    Datenblock und hängt unter `Scene.compositing_node_group`; `use_nodes` ist abgekündigt.
+    Auf 4.2 LTS — wogegen dieser Runner ursprünglich gebaut und geprüft wurde — gilt
+    weiterhin der alte Weg.
+
+    Die Weiche prüft die **Fähigkeit**, nicht die Versionsnummer: `hasattr` bleibt richtig,
+    auch wenn Blender die Umstellung in einer anderen Fassung nachzieht als angenommen.
+    """
+    if hasattr(szene, "compositing_node_group"):          # Blender 5.x
+        baum = szene.compositing_node_group
+        if baum is None:
+            baum = bpy.data.node_groups.new("Kompositor", "CompositorNodeTree")
+            szene.compositing_node_group = baum
+        return baum
+    szene.use_nodes = True                                # Blender <= 4.x
+    return szene.node_tree
+
+
+def _kompositor_abschalten(szene) -> None:
+    """Den Kompositor für den Material-ID-Durchgang stilllegen — ebenfalls versionsfest."""
+    if hasattr(szene, "compositing_node_group"):
+        szene.compositing_node_group = None
+    else:
+        szene.use_nodes = False
+
+
+def _welt_hintergrund(welt):
+    """Den Hintergrund-Knoten einer Welt holen. `World.use_nodes` ist ab 5.0 abgekündigt."""
+    if not getattr(welt, "use_nodes", False) and hasattr(welt, "use_nodes"):
+        try:
+            welt.use_nodes = True
+        except Exception:                                 # ab Blender 6.0 entfernt
+            pass
+    return welt.node_tree.nodes["Background"]
+
+
 def _compositor_auf_tiefe(out_dir: Path) -> None:
     """View-Layer-Z-Pass über den Compositor als 32-Bit-EXR ausgeben.
 
@@ -299,8 +338,7 @@ def _compositor_auf_tiefe(out_dir: Path) -> None:
     """
     szene = bpy.context.scene
     szene.view_layers[0].use_pass_z = True
-    szene.use_nodes = True
-    baum = szene.node_tree
+    baum = _kompositor_baum(szene)
     baum.nodes.clear()
 
     render_layer = baum.nodes.new("CompositorNodeRLayers")
@@ -470,7 +508,7 @@ def main() -> int:
         tabelle, n_materialien = _material_id_zuweisen()
         # Der Compositor darf hier nicht mitlaufen: Er schriebe die (unveränderte) Tiefe
         # ein zweites Mal über dieselbe Datei.
-        szene.use_nodes = False
+        _kompositor_abschalten(szene)
         _welt_setzen((0.0, 0.0, 0.0), 0.0)               # schwarzer Grund, Farbwert 0 = "nichts"
         # Ein Sample, kein Denoiser, keine Bounces: Jedes Pixel trägt genau die gesetzte
         # Farbe. Mehr Samples würden Kanten mischen und neue, falsche IDs erfinden.
