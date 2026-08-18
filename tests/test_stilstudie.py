@@ -74,7 +74,7 @@ from aiimaging.stilstudie import (
     winkel_grad,
     zufallstreffer_schranke,
 )
-from conftest import PAKET
+from conftest import PAKET, nachgeladene_module
 
 #: Arbeitsmass der Stichprobentests. 256 Dimensionen sind gross genug, dass die
 #: Konzentration greift, und klein genug für eine schnelle Testsuite.
@@ -758,9 +758,27 @@ def test_modul_importiert_nur_stdlib():
 
 
 def test_kein_schweres_paket_wird_nachgeladen():
-    import aiimaging.stilstudie  # noqa: F401
+    """Der Quelltext-Scan darüber sieht nur diese eine Datei — hier zählt die ganze Kette.
 
-    schwer = [m for m in ("torch", "numpy", "transformers") if m in sys.modules]
+    ``stilstudie.py`` importiert ``stil_qa`` und ``einbetter``; ein ``import numpy`` dort
+    machte die Studie ebenso unrechenbar, ohne dass der Scan oben anschlüge.
+
+    Gemessen in einem **frischen Interpreter** (:func:`conftest.nachgeladene_module`) und
+    nicht am ``sys.modules`` des Testlaufs: Das zeigt die Vorgeschichte des Laufs, nicht
+    die Folgen dieses Imports. Wo der GPU-Stack installiert ist, hat ihn eine frühere
+    Testdatei längst geladen — die Prüfung wäre rot, ohne dass an der Studie etwas falsch
+    wäre; wo er fehlt, könnte sie nie rot werden. Ein Test, der nur in einer Umgebung
+    gilt, misst die Umgebung und nicht den Code.
+
+    ``statistics`` steht als Zeuge mit in der Liste: Die Studie importiert es, ein nackter
+    Interpreter hat es nicht. Bleibt der Zeuge aus, schaut die Sonde ins Leere, und ihr
+    Schweigen zu ``torch`` wäre keine Aussage.
+    """
+    geladen = nachgeladene_module(
+        "aiimaging.stilstudie", ("torch", "numpy", "transformers", "statistics"))
+    assert "statistics" in geladen, "Die Sonde sieht nicht einmal den Zeugen — sie misst nichts"
+
+    schwer = [m for m in geladen if m != "statistics"]
     assert not schwer, f"{schwer} wurde durch die Stilstudie geladen"
 
 

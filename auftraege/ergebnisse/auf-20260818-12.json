@@ -1,0 +1,287 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260818-12",
+  "status": "ok",
+  "beendet": "2026-08-18T23:20:00Z",
+  "dauer_s": null,
+  "messwerte": {
+    "referenz": {
+      "bild": "Blenders eigener Beauty-Pass derselben Szene, gleiche Kamera, 512x512, 16 samples — kein Bildmodell beteiligt",
+      "schaetzer": "depth-anything-v2-small",
+      "soll_geometriepunkte": 44604,
+      "bildgroesse": [
+        512,
+        512
+      ]
+    },
+    "treu": [
+      {
+        "kandidat": "wie_soll",
+        "n_ausgewaehlt": 44604,
+        "n_auf_bauwerk": 18159,
+        "anteil_auf_bauwerk": 0.4071159537261232,
+        "geom_iou": 0.2555841743022421,
+        "spearman": -0.992289973036877,
+        "n_gemeinsam": 18159,
+        "score": 0.5036006487555634,
+        "status": null,
+        "begruendung": ""
+      },
+      {
+        "kandidat": "groesste_flaeche",
+        "n_ausgewaehlt": 20764,
+        "n_auf_bauwerk": 0,
+        "anteil_auf_bauwerk": 0.0,
+        "geom_iou": 0.0,
+        "spearman": null,
+        "n_gemeinsam": 0,
+        "score": null,
+        "status": null,
+        "begruendung": ""
+      },
+      {
+        "kandidat": "ohne_randberuehrung",
+        "n_ausgewaehlt": 18311,
+        "n_auf_bauwerk": 18159,
+        "anteil_auf_bauwerk": 0.991698978755939,
+        "geom_iou": 0.4057333095004022,
+        "spearman": -0.992289973036877,
+        "n_gemeinsam": 18159,
+        "score": 0.6345116978782321,
+        "status": null,
+        "begruendung": ""
+      },
+      {
+        "kandidat": "rand_5",
+        "n_ausgewaehlt": 44604,
+        "n_auf_bauwerk": 20833,
+        "anteil_auf_bauwerk": 0.46706573401488655,
+        "geom_iou": 0.3046873857404022,
+        "spearman": -0.9925458419603355,
+        "n_gemeinsam": 20833,
+        "score": 0.5499238109178407,
+        "status": null,
+        "begruendung": ""
+      },
+      {
+        "kandidat": "rand_10",
+        "n_ausgewaehlt": 44604,
+        "n_auf_bauwerk": 23906,
+        "anteil_auf_bauwerk": 0.5359609003676801,
+        "geom_iou": 0.366083734035711,
+        "spearman": -0.993073364153869,
+        "n_gemeinsam": 23906,
+        "score": 0.6029494218596231,
+        "status": null,
+        "begruendung": ""
+      },
+      {
+        "kandidat": "nur_spearman_in_soll",
+        "n_ausgewaehlt": 44604,
+        "n_auf_bauwerk": 44604,
+        "anteil_auf_bauwerk": 1.0,
+        "geom_iou": 1.0,
+        "spearman": -0.9938647044189808,
+        "n_gemeinsam": 44604,
+        "score": 0.9969276782648675,
+        "status": null,
+        "begruendung": ""
+      }
+    ],
+    "gestoert": {
+      "verschiebung@1.0": [
+        {
+          "kandidat": "wie_soll",
+          "n_ausgewaehlt": 44604,
+          "n_auf_bauwerk": 0,
+          "anteil_auf_bauwerk": 0.0,
+          "geom_iou": 0.0,
+          "spearman": null,
+          "n_gemeinsam": 0,
+          "score": null,
+          "status": null,
+          "begruendung": ""
+        },
+        {
+          "kandidat": "groesste_flaeche",
+          "n_ausgewaehlt": 44604,
+          "n_auf_bauwerk": 0,
+          "anteil_auf_bauwerk": 0.0,
+          "geom_iou": 0.0,
+          "spearman": null,
+          "n_gemeinsam": 0,
+          "score": null,
+          "status": null,
+          "begruendung": ""
+        },
+        {
+          "kandidat": "ohne_randberuehrung",
+          "n_ausgewaehlt": 0,
+          "n_auf_bauwerk": 0,
+          "anteil_auf_bauwerk": null,
+          "geom_iou": 0.0,
+          "spearman": null,
+          "n_gemeinsam": 0,
+          "score": null,
+          "status": null,
+          "begruendung": ""
+        },
+        {
+          "kandidat": "rand_5",
+          "n_ausgewaehlt": 44604,
+          "n_auf_bauwerk": 2615,
+          "anteil_auf_bauwerk": 0.05862702896601202,
+          "geom_iou": 0.05021314182572295,
+          "spearman": 0.7306129796943148,
+          "n_gemeinsam": 2615,
+          "score": 0.19153687156551522,
+          "status": null,
+          "begruendung": ""
+        },
+        {
+          "kandidat": "rand_10",
+          "n_ausgewaehlt": 44604,
+          "n_auf_bauwerk": 8975,
+          "anteil_auf_bauwerk": 0.2012151376558156,
+          "geom_iou": 0.1286885951076826,
+          "spearman": -0.5678677882334865,
+          "n_gemeinsam": 8975,
+          "score": 0.27032962818506295,
+          "status": null,
+          "begruendung": ""
+        },
+        {
+          "kandidat": "nur_spearman_in_soll",
+          "n_ausgewaehlt": 44604,
+          "n_auf_bauwerk": 44604,
+          "anteil_auf_bauwerk": 1.0,
+          "geom_iou": 1.0,
+          "spearman": -0.6236126850305225,
+          "n_gemeinsam": 44604,
+          "score": 0.7896924625503683,
+          "status": null,
+          "begruendung": ""
+        }
+      ],
+      "rauschen@1.0": [
+        {
+          "kandidat": "wie_soll",
+          "n_ausgewaehlt": 44604,
+          "n_auf_bauwerk": 11050,
+          "anteil_auf_bauwerk": 0.2477356290915613,
+          "geom_iou": 0.14138028096931857,
+          "spearman": -0.17698497304377672,
+          "n_gemeinsam": 11050,
+          "score": 0.15818402326491898,
+          "status": null,
+          "begruendung": ""
+        },
+        {
+          "kandidat": "groesste_flaeche",
+          "n_ausgewaehlt": 298,
+          "n_auf_bauwerk": 298,
+          "anteil_auf_bauwerk": 1.0,
+          "geom_iou": 0.006681015155591427,
+          "spearman": -0.1296675311848933,
+          "n_gemeinsam": 298,
+          "score": 0.029433157170687552,
+          "status": null,
+          "begruendung": ""
+        },
+        {
+          "kandidat": "ohne_randberuehrung",
+          "n_ausgewaehlt": 43870,
+          "n_auf_bauwerk": 11050,
+          "anteil_auf_bauwerk": 0.25188055618873945,
+          "geom_iou": 0.14272060343046084,
+          "spearman": -0.17698497304377672,
+          "n_gemeinsam": 11050,
+          "score": 0.15893206772370283,
+          "status": null,
+          "begruendung": ""
+        },
+        {
+          "kandidat": "rand_5",
+          "n_ausgewaehlt": 44604,
+          "n_auf_bauwerk": 13400,
+          "anteil_auf_bauwerk": 0.30042148686216485,
+          "geom_iou": 0.1767623469818489,
+          "spearman": -0.19536518827637636,
+          "n_gemeinsam": 13400,
+          "score": 0.1858311308642421,
+          "status": null,
+          "begruendung": ""
+        },
+        {
+          "kandidat": "rand_10",
+          "n_ausgewaehlt": 44604,
+          "n_auf_bauwerk": 16475,
+          "anteil_auf_bauwerk": 0.3693614922428482,
+          "geom_iou": 0.22651341206879957,
+          "spearman": -0.21730393554202787,
+          "n_gemeinsam": 16475,
+          "score": 0.22186089311909665,
+          "status": null,
+          "begruendung": ""
+        },
+        {
+          "kandidat": "nur_spearman_in_soll",
+          "n_ausgewaehlt": 44604,
+          "n_auf_bauwerk": 44604,
+          "anteil_auf_bauwerk": 1.0,
+          "geom_iou": 1.0,
+          "spearman": -0.41636014849625197,
+          "n_gemeinsam": 44604,
+          "score": 0.6452597853336407,
+          "status": null,
+          "begruendung": ""
+        }
+      ]
+    },
+    "abstand_treu_minus_gestoert": {
+      "wie_soll": {
+        "verschiebung@1.0": null,
+        "rauschen@1.0": 0.3454
+      },
+      "groesste_flaeche": {
+        "verschiebung@1.0": null,
+        "rauschen@1.0": null
+      },
+      "ohne_randberuehrung": {
+        "verschiebung@1.0": null,
+        "rauschen@1.0": 0.4756
+      },
+      "rand_5": {
+        "verschiebung@1.0": 0.3584,
+        "rauschen@1.0": 0.3641
+      },
+      "rand_10": {
+        "verschiebung@1.0": 0.3326,
+        "rauschen@1.0": 0.3811
+      },
+      "nur_spearman_in_soll": {
+        "verschiebung@1.0": 0.2072,
+        "rauschen@1.0": 0.3517
+      }
+    },
+    "gegenprobe_aufbau": "Ohne Bildmodell (Auflage). Der gestoerte Fall entsteht, indem die GESCHAETZTE Ist-Karte mit schwellenstudie.stoere verfaelscht wird — gleiche Art von Karte, nur ein bekannter Defekt zusaetzlich. Damit misst der Abstand genau das Gefragte: trennt die Regel eine gute Schaetzung von einer kaputten?"
+  },
+  "urteil": {
+    "kurz": "EIN KANDIDAT TRAEGT, und zwar deutlich: 'ohne_randberuehrung' — nur zusammenhaengende Flaechen behalten, die den Bildrand NICHT beruehren. Er hebt den Anteil der Punkte auf dem Bauwerk von 40.7 % auf 99.2 %, geom_iou von 0.256 auf 0.406, den Score von 0.504 auf 0.635 — UND er hat den groessten Abstand zum gestoerten Fall von allen sechs.",
+    "die_tabelle_am_perfekten_bild": "kandidat              geom_iou  spearman   score   auf Bauwerk   n\nwie_soll (heute)        0.2556   -0.9923  0.5036      40.7 %  44604\ngroesste_flaeche        0.0000      n/a      n/a       0.0 %  20764\nohne_randberuehrung     0.4057   -0.9923  0.6345      99.2 %  18311\nrand_5                  0.3047   -0.9925  0.5499      46.7 %  44604\nrand_10                 0.3661   -0.9931  0.6029      53.6 %  44604\nnur_spearman_in_soll    1.0000   -0.9939  0.9969     100.0 %  44604",
+    "der_abstand_und_warum_er_entscheidet": "Absolutwerte taeuschen; gefragt war der Abstand treu minus gestoert:\n  ohne_randberuehrung   verschiebung: gestoert waehlt NICHTS (n=0)  |  rauschen: +0.4756  <- der groesste\n  rand_10               verschiebung: +0.3326                       |  rauschen: +0.3811\n  rand_5                verschiebung: +0.3584                       |  rauschen: +0.3641\n  wie_soll (heute)      verschiebung: gestoert nicht messbar        |  rauschen: +0.3454\n  nur_spearman_in_soll  verschiebung: +0.2072                       |  rauschen: +0.3517  <- der KLEINSTE\n'ohne_randberuehrung' gewinnt auf beiden Achsen: hoechster treuer Score UND groesster Abstand. Bei 'verschiebung' waehlt es im gestoerten Fall gar nichts mehr aus — es verweigert das Urteil, statt eines zu erfinden.",
+    "warum_es_wirkt": "Der Fehler war nie der Schaetzer, sondern die ORTLOSIGKEIT der Auswahl. 'wie_soll' nimmt die n naechsten Punkte, egal wo sie liegen; ein monokularer Schaetzer legt aber in eine flache Flaeche eine Bodenebene, die zur Bildecke hin auf die Kamera zulaeuft — dieser Keil verdraengt echte Bauwerkspunkte eins zu eins. Die Randberuehrung ist genau das Merkmal, das ihn von einem Bauwerk unterscheidet: Ein freistehender Baukoerper in der Bildmitte beruehrt den Rand nicht, eine hineinhalluzinierte Bodenebene immer.",
+    "gegenbeispiel_das_belehrt": "'groesste_flaeche' — der naheliegendste Filter — faellt komplett durch: 0.0 % der ausgewaehlten Punkte liegen auf dem Bauwerk, geom_iou 0.0000. Die groesste zusammenhaengende Flaeche der 'naechsten n' IST der Hintergrundkeil, nicht der Bau. Haette man ihn eingebaut statt gemessen, waere die Lage schlechter als vorher — und der Grund unauffindbar.",
+    "ist_geom_iou_das_richtige_mass": "JA, es traegt. 'nur_spearman_in_soll' (Silhouette per Zusage aus dem Soll, nur noch Rangkorrelation) erreicht zwar 0.9969 am perfekten Bild — aber auch 0.7897 bzw. 0.6453 an den GESTOERTEN Karten. Es hat den KLEINSTEN Abstand von allen und ist damit genau die Regel, vor der der Auftrag warnt: Sie hebt den treuen Fall und den gestoerten mit. Ohne geom_iou verliert die Metrik ihre Unterscheidungskraft.",
+    "ehrliche_einschraenkung": "Auch der beste Kandidat erreicht am PERFEKTEN Bild nur 0.6345 und bleibt damit knapp unter der heutigen Schwelle 0.65. Der Deckel ist also gehoben (von 0.504 auf 0.635), aber nicht beseitigt. Wer 0.65 behalten will, sperrt weiterhin auch das Treue — knapp. Zwei Folgerungen, beide ungemessen und darum als Frage notiert: Traegt eine Kombination (ohne_randberuehrung PLUS rand_10)? Und wie verhaelt sich die Regel an einer Szene mit echtem Terrain, wo eine Bodenebene kein Artefakt ist, sondern Geometrie?",
+    "nebenbefund": "'zusatzkoerper' liess sich als zweite Stoerung NICHT fahren: Sie bricht mit 'fand keinen freien Platz — diese Szene hat keinen Hintergrund'. Eine GESCHAETZTE Karte hat keinen: Depth-Anything gibt jedem Bildpunkt einen endlichen Wert. Stoerungen, die auf inf-Hintergrund bauen, greifen auf Schaetzungen grundsaetzlich nicht — gefahren wurde stattdessen 'rauschen'.",
+    "nicht_getan": "Keine Regel eingebaut, nichts an geometrie_qa geaendert — wie beauftragt. Die Auswahl geschah im Messskript, das Urteil rechnet unveraendert geometrie_qa.geometrie_score."
+  },
+  "umgebung": {
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "leistungsgrenze_w": 400.0,
+    "python": "3.14.4",
+    "bildmodell": "keines — Auflage ohne_bildmodell"
+  },
+  "fehler": null
+}

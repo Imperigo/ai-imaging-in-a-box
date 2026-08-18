@@ -200,6 +200,39 @@ scheidet als Ursache damit aus. Die Zahlen sind trotzdem so.
 **Der Hebel liegt darum nicht bei der Schwelle.** Solange ein perfektes Bild 0.26 an
 `geom_iou` bekommt, ist jede Schwelle über 0.5 eine Ablehnung aller Fälle und jede
 darunter eine Aussage über die Rangkorrelation allein. Die Auswahlregel gehört repariert,
-bevor die Schwelle wieder verhandelt wird. `qa_gegen_soll` kennt dafür bereits
-`hintergrund`, `hintergrund_strategie` und `hintergrund_anteil` — welche Kombination
-trägt, ist eine eigene Messung und nicht Teil dieses Auftrags.
+bevor die Schwelle wieder verhandelt wird.
+
+### Nachtrag: die Auswahlregel lässt sich reparieren (`auf-20260818-12`)
+
+Sechs Kandidaten gegeneinander gemessen, jeder am perfekten Bild **und** an zwei stark
+gestörten Karten — denn eine Regel, die beides hebt, hat nichts verbessert.
+
+| Kandidat | `geom_iou` | `score` | auf dem Bauwerk |
+|---|---|---|---|
+| `wie_soll` (heute) | 0.2556 | 0.5036 | 40.7 % |
+| `groesste_flaeche` | **0.0000** | — | **0.0 %** |
+| **`ohne_randberuehrung`** | **0.4057** | **0.6345** | **99.2 %** |
+| `rand_5` | 0.3047 | 0.5499 | 46.7 % |
+| `rand_10` | 0.3661 | 0.6029 | 53.6 % |
+| `nur_spearman_in_soll` | 1.0000 | 0.9969 | 100.0 % |
+
+**Nur zusammenhängende Flächen behalten, die den Bildrand nicht berühren** — das trägt,
+und zwar auf beiden Achsen. Es hebt nicht nur den treuen Fall, es hat auch den grössten
+Abstand zum gestörten: bei `verschiebung` wählt es dort **gar nichts** mehr aus und
+verweigert das Urteil, statt eines zu erfinden; bei `rauschen` sind es **+0.4756**.
+
+Der Grund ist derselbe, den §2 beschreibt, nur von der anderen Seite: Ein freistehender
+Baukörper in der Bildmitte berührt den Rand nicht, eine hineinhalluzinierte Bodenebene
+immer. Die Randberührung ist genau das Merkmal, das dem ortlosen Rangschnitt fehlt.
+
+Zwei Dinge, die dabei belehrend waren:
+
+- **`groesste_flaeche` fällt komplett durch** — 0.0 % der ausgewählten Punkte liegen auf
+  dem Bauwerk. Die grösste zusammenhängende Fläche der «nächsten n» *ist* der
+  Hintergrundkeil. Der naheliegendste Filter hätte die Lage verschlechtert.
+- **`geom_iou` trägt.** `nur_spearman_in_soll` erreicht am perfekten Bild 0.9969, aber
+  auch 0.7897 / 0.6453 an den gestörten Karten — der **kleinste** Abstand von allen. Es
+  wegzulassen kostet die Unterscheidungskraft.
+
+**Ehrlich zur Grenze:** Auch der Sieger bleibt mit 0.6345 knapp unter 0.65. Der Deckel ist
+von 0.504 auf 0.635 gehoben, nicht beseitigt.
