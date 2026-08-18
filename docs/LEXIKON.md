@@ -479,6 +479,31 @@ rechenintensiv.
 **Pass** — Ein einzelner Bildkanal aus dem Renderer. Neben dem fertigen Bild
 (*Beauty-Pass*) etwa Tiefe, Materialzuordnung oder Normalen.
 
+**Rangkorrelation (Spearman)** — Misst, ob zwei Messreihen dieselbe *Reihenfolge* haben,
+nicht dieselben Werte. Wert zwischen −1 und 1. *Hier zentral: Eine aus einem Bild
+zurückgerechnete Tiefenkarte hat einen anderen Massstab und Nullpunkt als echte Meter —
+vergleichbar ist nur die Reihenfolge „was ist näher".*
+
+**Bindung (Tie)** — Gleiche Werte in einer Messreihe. Bei Rangkorrelation bekommen sie
+den mittleren Rang. *In Tiefenkarten der Normalfall: Eine Wand parallel zur Bildebene
+liefert lauter gleiche Werte. Die verbreitete Kurzformel für Spearman rechnet dort
+systematisch falsch.*
+
+**Silhouette** — Die Menge der Bildpunkte, die überhaupt Geometrie tragen (im Unterschied
+zum Hintergrund). *Der Teil der Geometrie-QA, der die Halluzination fängt.*
+
+**IoU (Intersection over Union)** — Überlappungsmass zweier Flächen: gemeinsame Fläche
+geteilt durch Gesamtfläche. 1 heisst deckungsgleich, 0 heisst keine Überlappung.
+
+**Geometrisches Mittel** — Die Wurzel aus dem Produkt zweier Werte, statt ihres
+Durchschnitts. *Hier bewusst gewählt: Es verlangt, dass **beide** Anteile gut sind. Beim
+belegten Halluzinationsfall ergibt der Durchschnitt 0,52 — fast bestanden —, das
+geometrische Mittel 0,20.*
+
+**Disparität / invertierte Tiefe** — Manche Verfahren geben statt der Entfernung ihren
+Kehrwert aus: gross heisst nah statt fern. Wer das nicht beachtet, misst die Tiefe genau
+verkehrt herum.
+
 **Depth-Pass / Tiefenkarte** — Graustufenbild, in dem die Helligkeit die Entfernung zur
 Kamera kodiert. *In diesem Projekt der zentrale Baustein: Die Tiefenkarte ist es, die
 das KI-Modell an die echte Gebäudeform bindet.*
@@ -849,6 +874,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus der Geometrie-QA: Rangkorrelation, Bindung, Silhouette, IoU, geometrisches Mittel, Disparitaet |
 | 2026-08-18 | Ergaenzt aus Phase 3: Leistungsgrenze, Rauchprobe, fail-closed praezisiert |
 | 2026-08-18 | Ergaenzt aus Phase 2: Skip-on-Error, Freigabe-Token, Pfad-Trickserei, Positivliste, fsync, atomares Schreiben, Zustandsautomat, Endzustand, Content-Hashing, Mutationsprobe |
 | 2026-08-18 | Ergaenzt aus der Paketierung: pyproject.toml, src-Layout, optionale Abhaengigkeitsgruppe, SPDX |

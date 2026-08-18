@@ -1,0 +1,631 @@
+"""Der Nachweis, dass die Geometrie-QA das trennt, wozu sie gebaut ist.
+
+Der Anlass steht in ``geometrie_qa.py``: Ein reines Stil-Gate meldete ``bestanden``
+(0.42) auf eine **halluzinierte** Kubatur. Ein Test, der nur zeigt, dass identische
+Karten 1.0 ergeben, hätte diesen Fall ebenfalls durchgelassen. Darum sind die zwei
+wichtigsten Tests dieser Datei:
+
+* ``test_halluzination_faellt_durch_obwohl_die_tiefenordnung_stimmt`` — die erfundene
+  Kubatur hat im Überlappungsbereich eine **perfekte** Rangkorrelation (1.000) und fällt
+  trotzdem durch, weil die Silhouetten sich kaum decken (geom_iou 0.040 → Score 0.199).
+* ``test_arithmetisches_mittel_haette_die_halluzination_durchgelassen`` — derselbe Fall
+  mit dem naheliegenden Mittelwert gerechnet: 0.520, also fast bestanden. Das ist der
+  Beleg für das geometrische Mittel; ohne ihn wäre es Geschmack.
+
+Daneben der Fall, der das rangbasierte Verfahren rechtfertigt:
+``test_treue_kubatur_mit_anderem_massstab_und_offset`` — ``ist = 3*soll + 7 + Rauschen``
+erreicht 0.999. Ein Absolutvergleich in Metern läge hier bei einem katastrophalen Fehler,
+obwohl die Geometrie stimmt.
+
+Alle Tiefenkarten sind synthetisch und hier erzeugt (Regel 3): kein EXR, kein Blender,
+keine GPU, kein Netz. Zufall ist mit festem Startwert gezogen, damit jeder Lauf dieselben
+Zahlen liefert.
+"""
+from __future__ import annotations
+
+import ast
+import math
+import random
+import sys
+from pathlib import Path
+
+import pytest
+
+from aiimaging.geometrie_qa import (
+    DIAGNOSE_IOU_NIEDRIG,
+    DIAGNOSE_RHO_HOCH,
+    HINTERGRUND_SCHWELLE_M,
+    METHODE,
+    MIN_GEMEINSAME_PUNKTE,
+    SCHWELLE_GEOMETRIE,
+    QaError,
+    geometrie_gate,
+    geometrie_score,
+    iou,
+    silhouette,
+    spearman,
+)
+from conftest import PAKET
+
+# --------------------------------------------------------------------------------------
+# Synthetische Tiefenkarten
+# --------------------------------------------------------------------------------------
+
+#: Bildraster. Klein genug für schnelle Tests, gross genug, dass eine Silhouette aus
+#: hunderten Punkten besteht und MIN_GEMEINSAME_PUNKTE nicht zufällig unterschritten wird.
+BREITE, HOEHE = 64, 48
+
+#: Hintergrundmarke, wie sie ein Renderer für „Strahl hat nichts getroffen“ schreibt.
+HINTERGRUND = 1.0e10
+
+
+def tiefenkarte(x0: int, x1: int, y0: int, y1: int, *,
+                grund: float = 20.0, dx: float = 0.05, dy: float = 0.08) -> list[float]:
+    """Ein quaderförmiger Baukörper vor leerem Hintergrund, zeilenweise ausgelesen.
+
+    Innerhalb des Rechtecks wächst die Tiefe leicht nach rechts und nach unten — eine
+    schräg zur Bildebene stehende Fassade. Das ist der einfachste Fall, der überhaupt
+    eine *Reihenfolge* trägt: Eine Fläche mit konstanter Tiefe hätte keine, und die
+    Rangkorrelation wäre auf ihr zu Recht nicht definiert.
+    """
+    return [
+        (grund + dx * (x - x0) + dy * (y - y0)) if (x0 <= x < x1 and y0 <= y < y1)
+        else HINTERGRUND
+        for y in range(HOEHE)
+        for x in range(BREITE)
+    ]
+
+
+def abgebildet(karte, funktion) -> list[float]:
+    """Wendet ``funktion`` auf die Geometriepunkte an; der Hintergrund bleibt Hintergrund.
+
+    So entstehen die „Ist“-Karten: dieselbe Geometrie, aber in der Skala eines fremden
+    Verfahrens. Der Hintergrund darf dabei nicht mitgerechnet werden — sonst wäre er
+    keiner mehr, und die Silhouette wanderte.
+    """
+    return [funktion(w) if w < HINTERGRUND_SCHWELLE_M else HINTERGRUND for w in karte]
+
+
+def verrauscht(karte, *, faktor: float, offset: float, streuung: float, seed: int):
+    """``ist = faktor * soll + offset + Rauschen`` — eine treue, aber fremd skalierte Karte."""
+    zufall = random.Random(seed)
+    return abgebildet(
+        karte, lambda w: faktor * w + offset + zufall.uniform(-streuung, streuung)
+    )
+
+
+#: Der Entwurf: ein Baukörper links der Bildmitte, 24 × 24 Punkte = 576 Geometriepunkte.
+SOLL = tiefenkarte(8, 32, 12, 36)
+
+#: Derselbe Bau, in fremder Skala und mit Messrauschen zurückgerechnet. Der Regelfall
+#: eines geglückten Renders.
+IST_TREU = verrauscht(SOLL, faktor=3.0, offset=7.0, streuung=0.5, seed=20260818)
+
+#: Erfundene Kubatur: ein in sich völlig stimmiges Gebäude — nur woanders, etwas näher
+#: und mit leicht anderer Neigung. Die Silhouetten überlappen sich in zwei Spalten.
+IST_HALLUZINIERT = tiefenkarte(30, 54, 14, 38, grund=16.0, dx=0.06, dy=0.07)
+
+
+# --------------------------------------------------------------------------------------
+# spearman — gegen Handrechnungen
+# --------------------------------------------------------------------------------------
+
+def test_spearman_gleichlaeufig_ist_eins():
+    assert spearman([1.0, 2.0, 3.0, 4.0], [10.0, 20.0, 30.0, 40.0]) == 1.0
+
+
+def test_spearman_perfekt_gegenlaeufig_ist_minus_eins():
+    """Handrechnung: umgekehrte Reihenfolge → −1. Das Vorzeichen bleibt hier erhalten."""
+    assert spearman([1.0, 2.0, 3.0], [3.0, 2.0, 1.0]) == -1.0
+
+
+def test_spearman_handbeispiel_null_komma_sechs():
+    """Handrechnung ohne Bindungen: d = (−1, 1, −1, 1), Σd² = 4, ρ = 1 − 6·4/(4·15) = 0.6."""
+    assert spearman([1.0, 2.0, 3.0, 4.0], [2.0, 1.0, 4.0, 3.0]) == pytest.approx(0.6)
+
+
+def test_spearman_mit_bindung_nimmt_den_mittleren_rang():
+    """Handrechnung mit Bindung: a-Ränge (1.5, 1.5, 3), b-Ränge (1, 2, 3) → ρ = √3/2.
+
+    Mit der Kurzformel ``1 − 6Σd²/(n(n²−1))`` käme hier 0.75 heraus — ein anderer Wert.
+    Der Test hält fest, dass die bindungskorrekte Fassung gerechnet wird.
+    """
+    assert spearman([1.0, 1.0, 2.0], [1.0, 2.0, 3.0]) == pytest.approx(math.sqrt(3) / 2)
+
+
+def test_spearman_ist_unempfindlich_gegen_massstab_und_offset():
+    """Der Kern des Verfahrens: eine affine Umrechnung ändert die Reihenfolge nicht.
+
+    Genau deshalb ist die Metrik rangbasiert — die zurückgerechnete Tiefe kennt weder
+    die Meter noch den Nullpunkt der echten Geometrie.
+    """
+    a = [3.0, 1.0, 4.0, 1.5, 9.0, 2.6]
+    b = [1000.0 * w + 7.0 for w in a]
+    assert spearman(a, b) == 1.0
+
+
+def test_spearman_ist_unempfindlich_gegen_jede_monotone_umrechnung():
+    """Auch nichtlinear, solange streng steigend: eine Wurzel ändert keinen Rang."""
+    a = [3.0, 1.0, 4.0, 1.5, 9.0, 2.6]
+    assert spearman(a, [math.sqrt(w) for w in a]) == 1.0
+
+
+def test_spearman_ist_symmetrisch():
+    a = [3.0, 1.0, 4.0, 1.5, 9.0]
+    b = [2.0, 8.0, 1.0, 8.0, 3.0]
+    assert spearman(a, b) == spearman(b, a)
+
+
+def test_spearman_bleibt_im_wertebereich():
+    zufall = random.Random(7)
+    a = [zufall.uniform(-100, 100) for _ in range(200)]
+    b = [zufall.uniform(-100, 100) for _ in range(200)]
+    assert -1.0 <= spearman(a, b) <= 1.0
+
+
+def test_spearman_ungleiche_laenge_ist_ein_fehler():
+    with pytest.raises(QaError, match="unterschiedlich lang"):
+        spearman([1.0, 2.0, 3.0], [1.0, 2.0])
+
+
+def test_spearman_braucht_mindestens_zwei_punkte():
+    with pytest.raises(QaError, match="mindestens 2 Punkte"):
+        spearman([1.0], [2.0])
+
+
+def test_spearman_weist_konstante_folgen_zurueck():
+    """Ohne Streuung gibt es keine Reihenfolge — jeder Rückgabewert wäre erfunden."""
+    with pytest.raises(QaError, match="konstant"):
+        spearman([5.0, 5.0, 5.0], [1.0, 2.0, 3.0])
+
+
+@pytest.mark.parametrize("kaputt", [float("nan"), float("inf"), float("-inf")])
+def test_spearman_weist_nicht_endliche_werte_zurueck(kaputt):
+    """NaN und inf sind Hintergrundmarken, keine Tiefen. Sie gehören vorher aussortiert."""
+    with pytest.raises(QaError):
+        spearman([1.0, 2.0, kaputt], [1.0, 2.0, 3.0])
+
+
+def test_spearman_weist_text_und_wahrheitswerte_zurueck():
+    with pytest.raises(QaError):
+        spearman(["1.0", "2.0"], [1.0, 2.0])
+    with pytest.raises(QaError):
+        spearman([True, False], [1.0, 2.0])
+
+
+def test_spearman_weist_generatoren_zurueck():
+    """Ein Generator wäre nach dem ersten Durchlauf leer — stiller Datenverlust."""
+    with pytest.raises(QaError, match="Generator"):
+        spearman((w for w in [1.0, 2.0, 3.0]), [1.0, 2.0, 3.0])
+
+
+# --------------------------------------------------------------------------------------
+# silhouette
+# --------------------------------------------------------------------------------------
+
+def test_silhouette_trennt_geometrie_vom_hintergrund():
+    assert silhouette([12.5, HINTERGRUND, 30.0, HINTERGRUND]) == [True, False, True, False]
+
+
+@pytest.mark.parametrize("marke", [float("inf"), float("nan"), float("-inf")])
+def test_silhouette_wertet_nicht_endliche_werte_als_hintergrund(marke):
+    """Ein Strahl, der nichts trifft, liefert je nach Renderer inf oder NaN."""
+    assert silhouette([10.0, marke]) == [True, False]
+
+
+def test_silhouette_nimmt_eine_eigene_marke_entgegen():
+    assert silhouette([10.0, 500.0, 999.0], hintergrund=500.0) == [True, False, False]
+
+
+def test_silhouette_zaehlt_die_marke_selbst_zum_hintergrund():
+    """Renderer schreiben die Marke exakt; ``>=`` wäre hier die falsche Grenze."""
+    assert silhouette([1.0e10], hintergrund=1.0e10) == [False]
+
+
+def test_silhouette_haelt_grosse_bauwerksmasse_noch_fuer_geometrie():
+    """Ein Kameraabstand von 900 m ist plausibel; die Vorgabemarke liegt bei 1e6 m."""
+    assert silhouette([900.0, 999_999.0, HINTERGRUND]) == [True, True, False]
+
+
+def test_silhouette_haelt_negative_werte_fuer_geometrie():
+    """Manche Verfahren zählen Tiefe mit umgekehrtem Vorzeichen. Ein Nullpunkt wird nicht
+    angenommen — eine falsche Annahme schnitte halbe Baukörper stumm heraus."""
+    assert silhouette([-5.0, 0.0, 5.0]) == [True, True, True]
+
+
+def test_silhouette_weist_unbrauchbare_marken_zurueck():
+    with pytest.raises(QaError):
+        silhouette([1.0], hintergrund=0.0)
+    with pytest.raises(QaError):
+        silhouette([1.0], hintergrund=float("nan"))
+    with pytest.raises(QaError):
+        silhouette([1.0], hintergrund="viel")
+
+
+def test_silhouette_der_synthetischen_karte_hat_die_erwartete_groesse():
+    """Vorbedingung aller weiteren Tests: 24 × 24 Punkte tragen Geometrie."""
+    assert sum(silhouette(SOLL)) == 576
+
+
+# --------------------------------------------------------------------------------------
+# iou
+# --------------------------------------------------------------------------------------
+
+def test_iou_identisch_ist_eins():
+    assert iou([True, True, False], [True, True, False]) == 1.0
+
+
+def test_iou_disjunkt_ist_null():
+    assert iou([True, False], [False, True]) == 0.0
+
+
+def test_iou_haelfte():
+    """Zwei Punkte gemeinsam, vier in der Vereinigung → 0.5."""
+    assert iou([True, True, True, False], [False, True, True, True]) == 0.5
+
+
+def test_iou_ist_symmetrisch():
+    a = [True, False, True, True]
+    b = [True, True, False, False]
+    assert iou(a, b) == iou(b, a)
+
+
+def test_iou_zweier_leerer_silhouetten_ist_ein_fehler():
+    """0/0. Zwei leere Bilder sind nicht 'perfekt gleich', sondern ungeprüft."""
+    with pytest.raises(QaError, match="nicht definiert"):
+        iou([False, False], [False, False])
+
+
+def test_iou_weist_zahlen_zurueck():
+    """Fängt den wahrscheinlichsten Fehlgriff: Tiefenkarten statt Silhouetten übergeben."""
+    with pytest.raises(QaError, match="Wahrheitswert"):
+        iou([1.0, 0.0], [True, False])
+
+
+def test_iou_ungleiche_laenge_ist_ein_fehler():
+    with pytest.raises(QaError, match="unterschiedlich lang"):
+        iou([True, False], [True])
+
+
+# --------------------------------------------------------------------------------------
+# geometrie_score — die vier Fälle, um die es geht
+# --------------------------------------------------------------------------------------
+
+def test_identische_tiefenkarten_ergeben_eins():
+    ergebnis = geometrie_score(SOLL, list(SOLL))
+    assert ergebnis["score"] == pytest.approx(1.0)
+    assert ergebnis["spearman"] == pytest.approx(1.0)
+    assert ergebnis["geom_iou"] == 1.0
+    assert ergebnis["warnungen"] == []
+
+
+def test_treue_kubatur_mit_anderem_massstab_und_offset():
+    """Der Fall, der das rangbasierte Verfahren rechtfertigt.
+
+    ``ist = 3 · soll + 7 + Rauschen``: In Metern gerechnet wäre der Fehler gewaltig
+    (aus 20 m werden 67 m), die Geometrie stimmt aber vollständig. Gemessen: 0.995.
+    """
+    ergebnis = geometrie_score(SOLL, IST_TREU)
+    assert ergebnis["score"] > 0.8
+    assert ergebnis["score"] == pytest.approx(0.9946, abs=0.002)
+    assert ergebnis["geom_iou"] == 1.0
+    assert ergebnis["n_gemeinsam"] == 576
+
+
+@pytest.mark.parametrize("streuung, mindestens", [(0.15, 0.99), (0.5, 0.98), (1.0, 0.95), (2.0, 0.9)])
+def test_treue_kubatur_bleibt_auch_bei_stärkerem_rauschen_treu(streuung, mindestens):
+    """Die Rangkorrelation bricht unter Rauschen langsam ein, nicht schlagartig.
+
+    Bei ±2.0 übersteigt das Rauschen den Tiefenschritt zwischen Nachbarpunkten (0.05)
+    um das Vierzigfache — der Score sinkt trotzdem nur auf 0.93. Ränge sind robust,
+    weil ein einzelner Ausreisser nur um wenige Plätze verschiebt.
+    """
+    ist = verrauscht(SOLL, faktor=3.0, offset=7.0, streuung=streuung, seed=20260818)
+    assert geometrie_score(SOLL, ist)["score"] > mindestens
+
+
+def test_treue_kubatur_mit_leichtem_versatz_bleibt_ueber_der_schwelle():
+    """Realistischer als der Idealfall: Die zurückgerechnete Silhouette sitzt einen Punkt
+    daneben. Der Score fällt von 0.99 auf 0.90 — spürbar, aber weit über der Schwelle.
+    Das ist die empirisch beobachtete Bandbreite treuer Renders (0.81–0.93)."""
+    versetzt = verrauscht(tiefenkarte(9, 33, 13, 37), faktor=3.0, offset=7.0,
+                          streuung=1.0, seed=4711)
+    ergebnis = geometrie_score(SOLL, versetzt)
+    assert ergebnis["geom_iou"] == pytest.approx(0.849, abs=0.01)
+    assert ergebnis["score"] == pytest.approx(0.902, abs=0.01)
+    assert ergebnis["score"] > SCHWELLE_GEOMETRIE
+
+
+def test_halluzination_faellt_durch_obwohl_die_tiefenordnung_stimmt():
+    """**Der Daseinsgrund der Metrik.**
+
+    Die erfundene Kubatur ist in sich vollkommen stimmig: Im Überlappungsbereich ist die
+    Rangkorrelation exakt 1.000 — ein reines Tiefen-Mass hätte hier Bestnoten vergeben.
+    Sie steht nur an der falschen Stelle, und das sieht ``geom_iou``: 0.040. Der Score
+    fällt auf 0.199.
+    """
+    ergebnis = geometrie_score(SOLL, IST_HALLUZINIERT)
+
+    # Erst der Nachweis, dass der Fall wirklich der schwierige ist ...
+    assert abs(ergebnis["spearman"]) > 0.9, "Testfall entwertet: Tiefenordnung stimmt nicht"
+    assert ergebnis["n_gemeinsam"] >= MIN_GEMEINSAME_PUNKTE, "Testfall entwertet: nicht messbar"
+    # ... und dann, dass die Silhouette ihn trotzdem fängt.
+    assert ergebnis["geom_iou"] < 0.1
+    assert ergebnis["score"] < 0.3
+    assert ergebnis["score"] == pytest.approx(0.199, abs=0.01)
+
+
+def test_arithmetisches_mittel_haette_die_halluzination_durchgelassen():
+    """Warum das geometrische Mittel — als Rechnung, nicht als Behauptung.
+
+    Derselbe halluzinierte Fall: ``(|ρ| + IoU)/2 = 0.520``, also mehr als das Doppelte
+    des tatsächlichen Scores und nahe an der Schwelle. Ein Mittelwert lässt einen
+    perfekten Anteil den ausgefallenen ausgleichen; genau das darf hier nicht passieren.
+    """
+    ergebnis = geometrie_score(SOLL, IST_HALLUZINIERT)
+    arithmetisch = (abs(ergebnis["spearman"]) + ergebnis["geom_iou"]) / 2.0
+    assert arithmetisch > 0.5
+    assert ergebnis["score"] < arithmetisch / 2.0
+
+
+def test_halluzination_wird_als_muster_benannt():
+    """Der Befund steht im Klartext, nicht nur in der Zahl."""
+    ergebnis = geometrie_score(SOLL, IST_HALLUZINIERT)
+    assert any("erfundenen Kubatur" in w for w in ergebnis["warnungen"])
+    assert abs(ergebnis["spearman"]) >= DIAGNOSE_RHO_HOCH
+    assert ergebnis["geom_iou"] <= DIAGNOSE_IOU_NIEDRIG
+
+
+def test_invertierte_tiefe_wird_aufgefangen():
+    """Disparität (nah = grosser Wert) ist eine Konvention, kein Geometriefehler.
+
+    ``ist = 1/soll`` kehrt jeden Rang um: ρ = −1. Gewertet wird der Betrag, der Score
+    bleibt 1.0 — das Vorzeichen erscheint aber als Warnung, weil es auch eine echte
+    Vorne-Hinten-Vertauschung bedeuten könnte.
+    """
+    invertiert = abgebildet(SOLL, lambda w: 1.0 / w)
+    ergebnis = geometrie_score(SOLL, invertiert)
+    assert ergebnis["spearman"] == pytest.approx(-1.0)
+    assert ergebnis["score"] == pytest.approx(1.0)
+    assert any("negativ" in w for w in ergebnis["warnungen"])
+
+
+def test_score_ist_symmetrisch_in_soll_und_ist():
+    """Beide Anteile sind symmetrisch; die Reihenfolge der Argumente darf nichts ändern."""
+    hin = geometrie_score(SOLL, IST_TREU)
+    zurueck = geometrie_score(IST_TREU, SOLL)
+    assert hin["score"] == pytest.approx(zurueck["score"])
+    assert hin["geom_iou"] == zurueck["geom_iou"]
+
+
+def test_score_veraendert_die_eingaben_nicht():
+    soll = list(SOLL)
+    ist = list(IST_TREU)
+    geometrie_score(soll, ist)
+    assert soll == list(SOLL) and ist == list(IST_TREU)
+
+
+def test_score_traegt_den_rechenweg_mit():
+    """Wer eine Zahl später in der Arbeit wiederfindet, soll ihr die Herkunft ansehen."""
+    assert geometrie_score(SOLL, IST_TREU)["methode"] == METHODE
+
+
+# --------------------------------------------------------------------------------------
+# geometrie_score — nicht messbare Fälle. Kein stilles 0 und kein stilles 1.
+# --------------------------------------------------------------------------------------
+
+def test_ohne_gemeinsame_silhouette_gibt_es_keinen_score():
+    """Die Halluzination im Extremfall: kein einziger gemeinsamer Punkt.
+
+    ``None`` statt 0.0 — nicht aus Zimperlichkeit, sondern weil 0.0 eine Messung
+    behauptete, die nicht stattfand. Das Gate lässt den Fall trotzdem nicht durch.
+    """
+    woanders = tiefenkarte(36, 60, 14, 38, grund=16.0)
+    ergebnis = geometrie_score(SOLL, woanders)
+    assert ergebnis["score"] is None
+    assert ergebnis["n_gemeinsam"] == 0
+    assert ergebnis["geom_iou"] == 0.0
+    assert any("Keine gemeinsame Silhouette" in w for w in ergebnis["warnungen"])
+    assert geometrie_gate(SOLL, woanders)["bestanden"] is False
+
+
+def test_zu_kleine_gemeinsame_silhouette_gibt_keinen_score():
+    """22 gemeinsame Punkte liegen unter der Mindestzahl — der Score bliebe Rauschen."""
+    knapp_daneben = tiefenkarte(31, 55, 14, 38, grund=16.0)
+    ergebnis = geometrie_score(SOLL, knapp_daneben)
+    assert 0 < ergebnis["n_gemeinsam"] < MIN_GEMEINSAME_PUNKTE
+    assert ergebnis["score"] is None
+    assert any("zu klein" in w for w in ergebnis["warnungen"])
+    assert geometrie_gate(SOLL, knapp_daneben)["bestanden"] is False
+
+
+def test_leere_sollkarte_wird_benannt_statt_bewertet():
+    """Eine leere Szene ist kein bestandener und kein durchgefallener Render."""
+    leer = [HINTERGRUND] * len(SOLL)
+    ergebnis = geometrie_score(leer, IST_TREU)
+    assert ergebnis["n_soll"] == 0
+    assert ergebnis["score"] is None
+    assert any("Soll-Tiefenkarte trägt keine Geometrie" in w for w in ergebnis["warnungen"])
+
+
+def test_zwei_leere_karten_ergeben_kein_urteil():
+    """0/0 in der Überdeckung: weder 0.0 noch 1.0 wäre eine Feststellung."""
+    leer = [HINTERGRUND] * 100
+    ergebnis = geometrie_score(leer, [float("nan")] * 100)
+    assert ergebnis["score"] is None
+    assert ergebnis["geom_iou"] is None
+    assert any("nicht definiert" in w for w in ergebnis["warnungen"])
+
+
+def test_konstante_tiefe_in_der_ueberlappung_ergibt_keinen_score():
+    """Eine Fläche exakt parallel zur Bildebene trägt keine Reihenfolge.
+
+    Der Score bleibt ``None`` statt 0.0: Nicht die Geometrie ist falsch, sondern die
+    Frage hier unbeantwortbar.
+    """
+    flach = [(25.0 if w < HINTERGRUND_SCHWELLE_M else HINTERGRUND) for w in SOLL]
+    ergebnis = geometrie_score(flach, list(flach))
+    assert ergebnis["geom_iou"] == 1.0
+    assert ergebnis["score"] is None
+    assert ergebnis["spearman"] is None
+    assert any("nicht berechenbar" in w for w in ergebnis["warnungen"])
+
+
+def test_nan_punkte_gelten_als_hintergrund_und_stuerzen_nicht_ab():
+    """Ausfälle der Tiefenschätzung schrumpfen die Silhouette — sie brechen nichts."""
+    # Die ersten 200 Punkte INNERHALB der Silhouette ausfallen lassen — der leere
+    # Bildrand davor wäre kein Test, er ist ohnehin Hintergrund.
+    innen = [k for k, w in enumerate(SOLL) if w < HINTERGRUND_SCHWELLE_M][:200]
+    loechrig = [float("nan") if k in set(innen) else w for k, w in enumerate(IST_TREU)]
+    ergebnis = geometrie_score(SOLL, loechrig)
+    assert ergebnis["score"] is not None
+    assert ergebnis["n_ist"] < ergebnis["n_soll"]
+
+
+def test_ungleich_lange_karten_sind_ein_fehler():
+    """Kein Abschneiden: Wer kürzt, verschiebt die Zuordnung aller Punkte danach."""
+    with pytest.raises(QaError, match="unterschiedlich lang"):
+        geometrie_score(SOLL, IST_TREU[:-1])
+
+
+def test_leere_karten_sind_ein_fehler():
+    with pytest.raises(QaError, match="leer"):
+        geometrie_score([], [])
+
+
+# --------------------------------------------------------------------------------------
+# geometrie_gate — das Urteil
+# --------------------------------------------------------------------------------------
+
+def test_gate_laesst_den_treuen_render_durch():
+    urteil = geometrie_gate(SOLL, IST_TREU)
+    assert urteil["bestanden"] is True
+    assert urteil["schwelle"] == SCHWELLE_GEOMETRIE
+    assert "≥" in urteil["begruendung"]
+
+
+def test_gate_haelt_die_halluzination_auf():
+    urteil = geometrie_gate(SOLL, IST_HALLUZINIERT)
+    assert urteil["bestanden"] is False
+    assert urteil["score"] < SCHWELLE_GEOMETRIE
+    assert "erfundenen Kubatur" in " ".join(urteil["warnungen"])
+
+
+def test_die_schwelle_trennt_beide_faelle():
+    """Der eigentliche Zweck der Zahl 0.65 — beide Seiten geprüft, nicht nur eine.
+
+    Zwischen 0.199 (halluziniert) und 0.995 (treu) liegt eine breite Lücke; die Schwelle
+    darin ist plausibel, aber an wenigen Fällen kalibriert (siehe Modul-Docstring und
+    ``docs/PLAN.md``, Phase 4).
+    """
+    treu = geometrie_score(SOLL, IST_TREU)["score"]
+    halluziniert = geometrie_score(SOLL, IST_HALLUZINIERT)["score"]
+    assert halluziniert < SCHWELLE_GEOMETRIE < treu
+    assert geometrie_gate(SOLL, IST_TREU)["bestanden"] is True
+    assert geometrie_gate(SOLL, IST_HALLUZINIERT)["bestanden"] is False
+
+
+def test_gate_nimmt_eine_eigene_schwelle():
+    """Damit die Schwellenstudie in Phase 4 die Grenze verschieben kann, ohne den
+    Rechenweg anzufassen."""
+    assert geometrie_gate(SOLL, IST_HALLUZINIERT, schwelle=0.1)["bestanden"] is True
+    assert geometrie_gate(SOLL, IST_TREU, schwelle=0.999)["bestanden"] is False
+
+
+def test_gate_reicht_die_hintergrundmarke_durch():
+    """``**kw`` ist kein Zierrat: Renderer schreiben verschiedene Marken."""
+    # 12 Wiederholungen à 3 Geometriepunkte = 36 > MIN_GEMEINSAME_PUNKTE. Mit 10
+    # Wiederholungen bliebe der Score None — die Mindestzahl greift auch hier.
+    soll = [10.0, 20.0, 30.0, 500.0] * 12
+    ist = [1.0, 2.0, 3.0, 500.0] * 12
+    urteil = geometrie_gate(soll, ist, hintergrund=500.0)
+    assert urteil["n_soll"] == 36 and urteil["n_ist"] == 36
+    assert urteil["bestanden"] is True
+
+
+def test_gate_wertet_nicht_messbar_als_nicht_bestanden():
+    """Ein Freispruch aus Mangel an Messung wäre die teuerste Sorte Fehler — niemand
+    sucht danach. Der Torwächter hält es genauso: ungeprüft wird nicht durchgelassen."""
+    leer = [HINTERGRUND] * len(SOLL)
+    urteil = geometrie_gate(SOLL, leer)
+    assert urteil["score"] is None
+    assert urteil["bestanden"] is False
+    assert "Nicht messbar" in urteil["begruendung"]
+
+
+def test_gate_traegt_alle_felder_des_scores_weiter():
+    urteil = geometrie_gate(SOLL, IST_TREU)
+    assert set(urteil) == {
+        "bestanden", "schwelle", "begruendung",
+        "score", "spearman", "geom_iou",
+        "n_gemeinsam", "n_soll", "n_ist", "methode", "warnungen",
+    }
+
+
+@pytest.mark.parametrize("schwelle", [-0.1, 1.5, float("nan"), "hoch", True])
+def test_gate_weist_unbrauchbare_schwellen_zurueck(schwelle):
+    with pytest.raises(QaError):
+        geometrie_gate(SOLL, IST_TREU, schwelle=schwelle)
+
+
+def test_gate_reicht_eingabefehler_durch():
+    """Ein Aufruffehler bleibt ein Fehler und wird nicht zu 'nicht bestanden' geglättet."""
+    with pytest.raises(QaError):
+        geometrie_gate(SOLL, IST_TREU[:-1])
+
+
+# --------------------------------------------------------------------------------------
+# Die bekannten Grenzen — als Test festgehalten, damit sie nicht in Vergessenheit geraten
+# --------------------------------------------------------------------------------------
+
+def test_massstabsblindheit_ist_bekannt_und_gewollt():
+    """Grenze 2 des Modul-Docstrings, hier belegt statt behauptet.
+
+    Eine entlang der Sichtachse gestauchte Kubatur (``ist = log(soll)``) behält die
+    Tiefen*reihenfolge* und erreicht darum fast 1.0 — obwohl die Proportionen in
+    Blickrichtung nicht stimmen. Wer diese Fehlerklasse fangen will, braucht eine zweite
+    Grösse; die Rangkorrelation kann es prinzipiell nicht.
+    """
+    gestaucht = abgebildet(SOLL, math.log)
+    assert geometrie_score(SOLL, gestaucht)["score"] > 0.99
+
+
+def test_metrik_kennt_keine_nachbarschaft():
+    """Grenze 4: Die Punkte sind eine Menge, kein Bild.
+
+    Dieselbe Silhouette und dieselbe Tiefenordnung, aber räumlich durcheinander — die
+    Metrik sieht keinen Unterschied, weil sie punktweise vergleicht und Kanten,
+    Zusammenhang und Glattheit nicht kennt.
+    """
+    zufall = random.Random(99)
+    punkte = [k for k, w in enumerate(SOLL) if w < HINTERGRUND_SCHWELLE_M]
+    werte = [SOLL[k] for k in punkte]
+    zufall.shuffle(werte)
+    gemischt = list(SOLL)
+    for k, wert in zip(punkte, werte):
+        gemischt[k] = wert
+    # Gegen sich selbst gemessen ist die gewürfelte Karte perfekt — obwohl sie kein
+    # Gebäude mehr zeigt, sondern Rauschen in Gebäudeform.
+    assert geometrie_score(gemischt, list(gemischt))["score"] == pytest.approx(1.0)
+
+
+# --------------------------------------------------------------------------------------
+# Hygiene: reine stdlib
+# --------------------------------------------------------------------------------------
+
+def test_modul_importiert_nur_stdlib():
+    """Regel 4 in ihrer praktischen Form: Die Metrik muss überall laufen.
+
+    Ein ``import numpy`` hier bände den wissenschaftlichen Kern an eine Umgebung mit
+    schweren Binärpaketen — deren Lizenzen zudem ungeprüft sind (``docs/PLAN.md``,
+    Wissensschulden). Der Test ist billig und fängt genau den bequemen Moment ab.
+    """
+    quelle = (PAKET / "geometrie_qa.py").read_text(encoding="utf-8")
+    module: set[str] = set()
+    for knoten in ast.walk(ast.parse(quelle)):
+        if isinstance(knoten, ast.Import):
+            module.update(a.name.split(".")[0] for a in knoten.names)
+        elif isinstance(knoten, ast.ImportFrom) and knoten.level == 0 and knoten.module:
+            module.add(knoten.module.split(".")[0])
+    fremd = sorted(m for m in module if m not in sys.stdlib_module_names and m != "aiimaging")
+    assert not fremd, f"geometrie_qa.py importiert {fremd} — die Metrik ist reine Mathematik"

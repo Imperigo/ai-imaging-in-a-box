@@ -20,13 +20,18 @@ Aufbau
 ``jobs``         Auftragsverwaltung mit Freigabe (Freeze-Schutz)
 ``werkzeuge``    was die MCP-Naht anbietet — gewöhnliche Bibliotheksaufrufe
 ``auftrag``      Aufträge an die HomeStation, über das Repo als Übergabeort
+``geometrie_qa`` die Geometrie-Treue-Metrik — der wissenschaftliche Kern
+``stil_qa``      das zweite Gate: Stil-Ähnlichkeit
+``gate``         das Doppel-Gate — bestanden nur, wenn beide bestehen
+``backbone``     Registry der Bildmodelle samt Lizenz (Regel 1 in ausführbarer Form)
 ``mcp_schemas``  die Werkzeugverträge als reine Daten
 ``mcp_server``   optionaler Zusatz, braucht das MIT-lizenzierte MCP-SDK
 """
 __version__ = "0.0.2"
 
 from aiimaging import (  # noqa: F401
-    auftrag, contracts, graph, jobs, mcp_schemas, seams, torwaechter, werkzeuge,
+    auftrag, backbone, contracts, gate, geometrie_qa, graph, jobs, mcp_schemas,
+    seams, stil_qa, torwaechter, werkzeuge,
 )
 from aiimaging.contracts import (  # noqa: F401
     ContractError,
@@ -38,4 +43,7 @@ from aiimaging.contracts import (  # noqa: F401
     validate_render_scene,
 )
 from aiimaging.seams import SeamError, glb_zu_tiefenkarte, ifc_zu_glb  # noqa: F401
+from aiimaging.gate import gesamturteil  # noqa: F401
+from aiimaging.geometrie_qa import geometrie_gate, geometrie_score  # noqa: F401
+from aiimaging.stil_qa import stil_gate, stil_score  # noqa: F401
 from aiimaging.werkzeuge import check_geometry, enqueue_render, query_render  # noqa: F401
