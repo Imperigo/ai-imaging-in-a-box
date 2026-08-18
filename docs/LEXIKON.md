@@ -715,6 +715,16 @@ beiden verschieden — `max` ist Vorgabe, weil ein Treffer auf einen der Bürost
 **Kosinus-Ähnlichkeit** — Das übliche Ähnlichkeitsmass zwischen zwei Embeddings.
 Wertebereich −1 bis 1. *In diesem Projekt Grundlage des Stil-Scores.*
 
+**Monokulare Tiefenschätzung** — Aus einem einzelnen Foto eine Tiefenkarte schätzen, ohne
+zweite Kamera und ohne Messgerät. Ein neuronales Netz leitet aus Bildmerkmalen ab, was
+vorne und was hinten liegt. *In diesem Projekt die **Ist-Seite** der Geometrie-QA: Sie
+rechnet aus dem erzeugten Bild zurück, was das Modell dort für Geometrie hält.*
+
+**CC-BY-NC (Creative Commons, nicht kommerziell)** — Erlaubt Nutzung und Weitergabe mit
+Namensnennung, **verbietet aber kommerzielle Verwertung**. Unter Regel 1 ausgeschlossen.
+*Für eine wissenschaftliche Untersuchung bleibt so lizenziertes Material dennoch nutzbar —
+untersagt ist die Verwertung, nicht die Forschung.*
+
 **Halluzination** — Wenn ein Modell etwas Plausibles, aber Falsches erzeugt. *Im
 Architekturkontext der entscheidende Mangel: ein schönes Gebäude, das nicht das
 entworfene ist.*
@@ -1007,6 +1017,7 @@ System laufen.
 |---|---|
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
+| 2026-08-18 | Ergaenzt aus der Tiefenschaetzer-Pruefung: monokulare Tiefenschaetzung, CC-BY-NC |
 | 2026-08-18 | Ergaenzt aus dem EXR-Leser: OpenEXR/Scanline, Half-Float, Praediktor/Byte-Entflechtung, zlib, Endianness, CRC, Quantisierungsschritt |
 | 2026-08-18 | Ergaenzt aus Renderstufe und Bildlesen: diffusers, txt2img/img2img/image-edit, Seed, Zeilenfilter |
 | 2026-08-18 | Ergaenzt aus der Einbetter-Pruefung: Gated Model praezisiert, selbstueberwachtes Lernen |

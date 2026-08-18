@@ -567,6 +567,57 @@ ohnehin in die Schwellenstudie (Phase 4) gehört, aber jetzt nicht mehr optional
 
 ---
 
+## 13 · Nachtrag 2026-08-18: Depth-Anything-V2 ist nach Grösse verschieden lizenziert
+
+Beim Bau der **Ist-Seite** der Geometrie-QA — der Tiefenschätzung aus dem erzeugten Bild —
+wurde die Lizenz des Schätzers geprüft. Kapitel 4 führte ihn als „offen". Er ist es nicht
+mehr, und die Antwort trifft ausgerechnet den Forschungskern.
+
+**Der Schätzer ist nach Modellgrösse unterschiedlich lizenziert** (direkt an den
+Modellkarten geprüft):
+
+| Variante | Lizenz | Urteil |
+|---|---|---|
+| **Depth-Anything-V2-Small** (25M) | **`apache-2.0`** | ✅ **die einzige brauchbare Wahl** |
+| Depth-Anything-V2-Base (97M) | `cc-by-nc-4.0` | ⛔ Non-Commercial |
+| Depth-Anything-V2-Large (335M) | `cc-by-nc-4.0` | ⛔ Non-Commercial |
+| Depth-Anything-V2-Giant (1.3B) | `cc-by-nc-4.0` | ⛔ Non-Commercial |
+
+**Der Vorläufer KosmoVis benutzt ViT-L** — also Large, also Non-Commercial. Kapitel 6.1 des
+KosmoVis-Berichts führt DepthAnythingV2 pauschal als „offen"; tatsächlich ist die dort
+eingesetzte Variante unter Regel 1 ausgeschlossen. Zweite geerbte Annahme nach DINOv3, die
+der Prüfung nicht standhält — und beide betreffen die QA-Schicht, also genau den Teil, der
+als wissenschaftlicher Beitrag gilt.
+
+### Warum das mehr wiegt als die DINOv3-Frage
+
+Beim Stil-Gate war der Wechsel ein Austausch unter Gleichwertigen: SigLIP 2 statt DINOv3,
+beide gross, beide brauchbar. Hier ist es ein Wechsel **von 335M auf 25M Parameter** —
+gut eine Grössenordnung.
+
+Die Geometrie-Treue-Metrik steht und fällt damit, wie gut das Ist aus dem erzeugten Bild
+zurückgerechnet wird. Ein schwächerer Schätzer verrauscht beide Anteile: die Rangkorrelation
+der Tiefe und die Silhouette. Das verschiebt möglicherweise die Schwelle 0,65 — in welche
+Richtung und wie weit, ist **ungeprüft**.
+
+### Was daraus folgt
+
+1. **Vorgabe ist Small (Apache-2.0).** Die drei anderen stehen in der Registry, aber als
+   ausgeschlossen markiert — mit Begründung, damit der Grund auffindbar bleibt.
+2. **Die Schwellenstudie in Phase 4 wird dadurch wichtiger, nicht unwichtiger.** Sie muss
+   jetzt zwei Dinge leisten: die Schwelle kalibrieren *und* zeigen, ob Small dafür genügt.
+3. **Ein sauberer Nebennutzen für die Arbeit:** Der Vergleich Small gegen Large ist ein
+   ordentliches Experiment. Large darf für eine **wissenschaftliche Untersuchung** benutzt
+   werden — Non-Commercial verbietet die kommerzielle Verwertung, nicht die Forschung. Das
+   ausgelieferte Produkt bleibt bei Small; die Arbeit darf beide vermessen und die Differenz
+   berichten. Das ist ehrlicher als so zu tun, als gäbe es keinen Unterschied.
+
+*Vorbehalt zu Punkt 3: Diese Einordnung von CC-BY-NC im Forschungskontext ist meine
+technische Einschätzung, keine Rechtsberatung. Wer sie nutzt, sollte sie im Rahmen der
+ETH-Arbeit kurz absichern.*
+
+---
+
 ## Quellen
 
 Direkt geprüft (LICENSE-Datei, Repo-Sidebar oder Modellkarte):
