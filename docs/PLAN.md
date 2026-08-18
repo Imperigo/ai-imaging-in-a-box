@@ -365,9 +365,27 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 - [ ] **`RENDER_SCENE_CONTRACT.md` als Vorbild auswerten** — besonders `faithful` als
       **eine** Zahl von 1.0 (Cycles-treu) bis 0.0 (KI-frei) und `depth_method` in der
       Ausgabe: Die Ausgabe sagt, wie sie entstanden ist.
-- [ ] **Wo liegen die Renderstile?** — `archviz_styles/` und die Prompt-Bibliothek sind
-      **nicht im Repo** des Bestands. Die Kategorien sind belegt, die Inhalte nicht.
-      **Braucht eine Auskunft des Owners.**
+- [x] **Prompt-Bibliothek und Renderstile gebaut** — erledigt 2026-08-18, `prompts.py`,
+      45 Tests. Die **sieben Kategorien des Bestands übernommen** (`vegetation`, `people`,
+      `atmosphere`, `light_time`, `sky`, `material_detail`, `composition`) — der Inhalt
+      fehlte im Repo, die Form nicht.
+      **Der Befund beim Übernehmen:** Keine dieser Kategorien nennt ein Bauteil. Sie
+      beschreiben ausnahmslos, was um das Gebäude herum und auf seinen Oberflächen liegt.
+      Die Einteilung ist damit genau die Lehre aus `auf-09` — *ein Prompt, der Bauteile
+      nennt, die die Geometrie nicht hat, ist eine Aufforderung zur Halluzination* —, in
+      Fächer gegossen. Sie wurde nicht erfunden, sondern erkannt.
+      Dazu der `bauteilwaechter`: Er prüft freien Text auf Bauteilwörter (deutsch und
+      englisch) und **meldet, statt zu verbieten** — manchmal hat die Geometrie das
+      Genannte, und das kann ein Textmodul nicht wissen.
+      Sechs Stile als erster Entwurf, jeder mit der Angabe, ob er **messtauglich** ist:
+      Nebel verdeckt den Fuss, eine Skizze löst die Kanten auf — die Geometrie-QA misst
+      dann den Stil und nicht das Bildmodell.
+- [ ] **Die sechs Stile durchsehen und den Hausstil bestimmen** — die Form steht, der
+      Geschmack fehlt. Die Stile sind gattungsmässig gebaut (Regel 3: nicht an einem
+      bestimmten Haus abgeschrieben). **Owner-Entscheid.**
+- [ ] **Die Stile am Gerät messen** — ob ein Prompt an einem Backbone wirklich landet,
+      ist eine Messung und keine Textarbeit. Erst nach `auf-13`, denn an einem Modell
+      ohne ControlNet-Naht sagt eine Prompt-Reihe nichts.
 
 ---
 

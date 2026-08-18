@@ -1771,6 +1771,36 @@ Bild-Text-Paaren.*
 
 ---
 
+**Prompt** — Der Text, mit dem man einem Bildmodell sagt, was zu sehen sein soll.
+*In diesem Projekt trägt er ausdrücklich **nicht** das Gebäude: Was gebaut ist, sagt die
+Tiefenkarte; der Prompt sagt nur, wie es aussieht — Licht, Wetter, Material, Umgebung.*
+
+**Negativ-Prompt** — Der Gegentext: was **nicht** zu sehen sein soll. Technisch rechnet
+das Modell zweimal, einmal mit und einmal ohne, und zieht den Unterschied ab.
+*Die Falle: Unterhalb einer Führung von 1.0 wird gar nicht mehr doppelt gerechnet, und
+dann ist der Negativ-Prompt wirkungslos — er steht im Protokoll und nie im Bild. Bei
+destillierten Turbo-Modellen ist das immer so.*
+
+**Prompt-Baustein** — Ein einzelner, wiederverwendbarer Textabschnitt („weiches
+gleichmässiges Tageslicht"), aus dem sich ein vollständiger Prompt zusammensetzen lässt.
+*Sieben Fächer gibt es in diesem Projekt — Bildcharakter, Licht, Himmel, Atmosphäre,
+Material, Bewuchs, Menschen. **Keines davon nennt ein Bauteil**, und darin liegt ihr
+eigentlicher Wert: Die Einteilung ist die Regel „der Prompt beschreibt alles ausser dem
+Gebäude", in Fächer gegossen.*
+
+**Renderstil** — Eine benannte Zusammenstellung solcher Bausteine, plus einer
+Handschrift: „Wettbewerbsbild", „Modellfoto", „Einskizziert".
+*Nicht jeder Stil taugt zum Messen. Nebel verdeckt den Fuss des Bauwerks, eine Skizze
+löst seine Kanten auf — die Geometrie-Prüfung misst dann den Stil und nicht das
+Bildmodell. Darum trägt jeder Stil die Angabe, ob er messtauglich ist, und warum nicht.*
+
+**Halluzination (bei Bildmodellen)** — Wenn das Modell etwas erzeugt, das in der Vorgabe
+nicht steht: ein Dach auf einem Gebäude, das keines hat.
+*Die gefährliche Sorte, weil das Ergebnis **gut aussieht**. Ein abgestürztes Programm
+merkt jeder; ein erfundenes Dach sieht aus wie ein Dach. In diesem Projekt am 18.08.2026
+selbst erzeugt — der Prompt sagte „clean flat roof", die Geometrie war oben offen, und das
+Modell tat schlicht, was dastand.*
+
 **ControlNet-Stärke (`controlnet_conditioning_scale`)** — Der Regler dafür, wie streng
 das Bild der vorgegebenen Geometrie folgen muss. 1.0 heisst: die Tiefenkarte bindet
 vollständig, das Modell darf die Kubatur nicht verändern. 0.3 heisst: sie ist ein
@@ -2187,6 +2217,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-18 | Ergaenzt aus der Prompt-Bibliothek: **Prompt**, **Negativ-Prompt**, **Prompt-Baustein**, **Renderstil**, **Halluzination (bei Bildmodellen)**. Alle fuenf vor dem Schreiben dieser Zeile im Text nachgezaehlt |
 | 2026-08-18 | Ergaenzt aus der Kameraanbindung und auf-12: **Fuellgrad** (abgegrenzt zum Deckungsgrad), **zusammenhaengende Flaeche** samt Vierer-/Achter-Nachbarschaft, **Randberuehrung**. Vor dem Schreiben dieser Zeile nachgezaehlt — die Gegenmassnahme aus der Zeile darunter |
 | 2026-08-18 | Ergaenzt aus den drei HomeStation-Ergebnissen (auf-10, auf-11, MCP-Registrierung): **Boden (einer Aehnlichkeitsmetrik)**, **abgeleitete Schwelle**, **Ausleseort (pooler_output / last_hidden_state)**, **Ausgabeschema-Verletzung**. **Berichtigt:** **Stil-Score** und **Schwelle** trugen 0.30 als Massstab — gemessen ist die Zahl kleiner als der Boden von SigLIP 2 und laesst jedes beliebige Bildpaar durch; die Schwelle ist jetzt abgeleitet (0.666). **Praezisiert:** Der Eintrag zum Muster "innen stimmig, aussen daneben" nannte nur die erfundene Kubatur als Ursache — die zweite (Silhouettenauswahl aus einer hineingelegten Bodenebene) ist nachgetragen |
 | 2026-08-18 | **Schuld aus drei Straengen beglichen (Sitzung 07, Fortsetzung).** *Kameraableitung* (`src/aiimaging/kameras.py`, aus dem alten Add-on-Bestand nachgebaut): Brennweite, Bildwinkel, Azimut, Deckungsgrad, Frustum, perspektivische Division, Raycast, orthografische Projektion/Ortho-Scale, Axonometrie, Depsgraph; **Bounding Box** zu *Bounding Box (Huellbox)* erweitert und um die Acht-Ecken-Pruefung ergaenzt. *Echte IFC-Dateien:* IFC4/IFC2X3, Pflichtattribut, OwnerHistory, Schema-Validierung, `preprocessor_version`/`originating_system`. *ControlNet-Suche:* ControlNet-Staerke, ControlNet-Union, Blockwise-ControlNet, destilliertes Modell, Fuehrung/`guidance_scale`, `control_context_scale`, Single-File-Konverter, `.safetensors`-Kopf. *Pruefen:* Rundlauf, xfail. *Knotenoberflaeche:* Node-Tree, Socket, Multipass. **Nachgetragen, was ein frueheres Aenderungsverzeichnis behauptet hat:** die Zeile vom selben Tag versprach *tote Kante* im Graph-Kern — der Begriff stand nur in der Prosa eines anderen Eintrags, nie als eigener. Zum zweiten Mal in dieser Sitzung derselbe Befund: Ein Verzeichnis, das Eintraege behauptet, die es nicht gibt, macht die Luecke unauffindbar |
