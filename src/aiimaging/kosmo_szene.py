@@ -69,7 +69,18 @@ FREMDE_FORMATE = ("glb", "gltf", "fbx", "blend", "ifc")
 UNSERE_FORMATE = ("glb", "gltf", "ifc")
 
 #: Die Backbone-Liste des fremden Vertrags, wörtlich.
-FREMDE_BACKBONES = ("qwen", "flux2-klein", "flux-krea", "sdxl")
+#:
+#: **``z-image-turbo`` ergänzt am 19.08.2026, und die Geschichte dazu gehört hierher.**
+#: Bis dahin fehlte es *drüben*: Ihr Vertrag führte ``qwen`` als Vorgabe, obwohl
+#: ``auf-20260818-09`` am Gerät belegt hat, dass ``QwenImageEditPlusPipeline`` kein
+#: ControlNet ist. Das wurde gemeldet und eingebaut — und im nächsten Demolauf wies
+#: **diese** Seite den neuen Namen ab, weil die Liste hier nicht mitgewachsen war.
+#:
+#: Die Zuordnung ist **zweiseitig und an zwei Orten von Hand gepflegt**. Wer eine Seite
+#: ergänzt, hat die Naht noch nicht ergänzt; sie trägt erst, wenn beide es tun. Genau
+#: diese Bauform hat am selben Tag vier widersprüchliche Massstabslisten und drei
+#: Beschriftungsorte für dieselbe Station hervorgebracht.
+FREMDE_BACKBONES = ("qwen", "flux2-klein", "flux-krea", "sdxl", "z-image-turbo")
 
 #: Zuordnung fremd → unsere Registry, soweit sie trägt.
 #:
@@ -79,6 +90,10 @@ BACKBONE_VON_FREMD = {
     "qwen": "qwen-image-edit-2511",
     "flux2-klein": "flux2-klein-4b",
     "sdxl": "sdxl-juggernaut",
+    # Gleicher Name auf beiden Seiten — die Zuordnung ist hier die Identität. Sie steht
+    # trotzdem ausgeschrieben da: Ein Eintrag, der fehlt, sieht von aussen genauso aus
+    # wie ein Name, den es nicht gibt.
+    "z-image-turbo": "z-image-turbo",
 }
 
 #: Die Auftragskennung der fremden Warteschlange — wörtlich aus ihrem Schema.

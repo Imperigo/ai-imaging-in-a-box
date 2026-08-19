@@ -104,18 +104,25 @@ def test_unbrauchbare_kameraspec_wird_abgewiesen(kaputt):
 # 2 · Das Backbone, das sich dort nicht ausdrücken lässt
 # --------------------------------------------------------------------------------------
 
-def test_unser_vorgabe_backbone_passt_nicht_in_ihre_liste():
-    """Der Befund, der nicht überbrückt werden darf.
+def test_unser_vorgabe_backbone_passt_jetzt_in_ihre_liste():
+    """**Umgedreht am 19.08.2026 — der Befund ist erledigt, nicht überbrückt.**
 
-    Ihre Liste kennt ``qwen``, ``flux2-klein``, ``flux-krea``, ``sdxl``. Unser
-    Vorgabewert steht nicht darin — und er ist genau der, der die Geometrie hält, wo ihr
-    vorgegebenes ``qwen`` sie verliert (spearman −0.853 gegen +0.005).
+    Hier stand bis dahin das Gegenteil: Unser Vorgabewert liess sich dort nicht
+    ausdrücken, und das war ausdrücklich **zu melden statt zu überbrücken**. Genau das
+    ist geschehen — die Meldung ging hinüber, und der fremde Vertrag führt
+    ``z-image-turbo`` jetzt selbst.
+
+    Der Test dreht sich damit um, und das ist der ganze Sinn der damaligen Fassung: Sie
+    hat die Lücke festgehalten, bis jemand sie schloss. Ein Test, der eine Lücke
+    beschreibt, gehört geändert, wenn die Lücke zu ist — nicht vorher.
+
+    *Und die Lehre aus dem Demolauf, der es aufdeckte:* Ihre Seite zu ergänzen genügte
+    nicht. Die Naht trägt erst, wenn **beide** Listen den Namen kennen.
     """
     from aiimaging.backbone import VORGABE_BACKBONE
     antwort = ks.backbone_nach_fremd(VORGABE_BACKBONE)
-    assert antwort["ausdrueckbar"] is False
-    assert antwort["kuerzel"] is None
-    assert "gemeldet, nicht überbrückt" in antwort["begruendung"]
+    assert antwort["ausdrueckbar"] is True
+    assert antwort["kuerzel"] == VORGABE_BACKBONE
 
 
 def test_flux2_klein_ist_entgegen_dem_ersten_anschein_zulaessig():
@@ -379,3 +386,26 @@ def test_die_warnung_ueberlebt_die_beschraenkung_auf_vertragsfelder():
     knapp = ks.nur_vertragsfelder(ergebnis)
     assert "hinweise" not in knapp
     assert "NICHT kalibriert" in knapp["qa"]["verdict"]["reason"]
+
+
+# ---------------------------------------------------------------------------------------
+# Die Naht ist zweiseitig — Demolauf 1, 19.08.2026
+# ---------------------------------------------------------------------------------------
+#
+# Der fremde Vertrag bekam `z-image-turbo` auf unsere Meldung hin. Beim naechsten Lauf
+# wies DIESE Seite den Namen ab, weil `FREMDE_BACKBONES` nicht mitgewachsen war. Ein
+# vollstaendiger Auftrag blieb liegen, mit richtiger Begruendung und ohne Wirkung.
+
+def test_unser_vorgabe_backbone_ist_von_drueben_erreichbar():
+    """Was wir selbst als Vorgabe fahren, muss der fremde Vertrag benennen koennen."""
+    from aiimaging import backbone as _b
+    from aiimaging import kosmo_szene as _k
+    assert _b.VORGABE_BACKBONE in _k.FREMDE_BACKBONES
+    assert _k.BACKBONE_VON_FREMD[_b.VORGABE_BACKBONE] == _b.VORGABE_BACKBONE
+
+
+def test_jedes_zulaessige_fremde_kuerzel_hat_eine_zuordnung():
+    """Ausser `flux-krea` — das ist unter Regel 1 ausgeschlossen und soll fehlen."""
+    from aiimaging import kosmo_szene as _k
+    ohne = [k for k in _k.FREMDE_BACKBONES if k not in _k.BACKBONE_VON_FREMD]
+    assert ohne == ["flux-krea"], f"ohne Zuordnung: {ohne}"
