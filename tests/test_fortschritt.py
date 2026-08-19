@@ -6,6 +6,8 @@ Fall nach, für den jener Wächter gebaut wurde, und zeigt, dass er ihn durchlä
 """
 from __future__ import annotations
 
+import time
+
 import pytest
 
 from aiimaging import fortschritt
@@ -722,3 +724,176 @@ def test_ein_schlagender_herzschlag_haelt_den_lauf_am_leben(tmp_path):
         _popen=_popen_attrappe(Prozessattrappe(laeuft_blicke=200)))
     assert starte(["blender"], 900).returncode == 0
     assert uhr.t >= 400, "der Lauf lief über sechs Minuten und wurde nicht abgebrochen"
+
+
+# ======================================================================================
+# Der Beobachter — die Wache läuft mit, während der Lauf blockiert
+# ======================================================================================
+#
+# Geprüft wird an `tick()`, nicht am Faden. Ein Test, der einen Hintergrundfaden über
+# Wartezeiten prüft, prüft die Laune des Betriebssystems mit — und flackert. Der Faden
+# bekommt genau einen Test, und der stellt nur fest, DASS er tickt.
+
+def _ordnerwache(pfad, uhr, *, frist_s=10.0):
+    return fortschritt.wache_fuer_verzeichnis(pfad, frist_s=frist_s, _uhr=lambda: uhr[0])
+
+
+def test_ein_beobachter_ohne_quelle_wird_beim_bauen_abgewiesen():
+    """Eine Wache auf ein Statuswort kann kein Faden holen — das Wort kennt nur der Aufrufer.
+
+    Ohne diese Prüfung liefe der Beobachter los und stolperte bei jedem einzelnen Blick;
+    der Bericht sähe aus wie „nichts Auffälliges" und wäre „nie etwas gesehen".
+    """
+    wache = fortschritt.wache_fuer_status(frist_s=5.0)
+
+    with pytest.raises(fortschritt.FortschrittsError, match="keine eigene Zeichenquelle"):
+        fortschritt.Beobachter(wache)
+
+
+@pytest.mark.parametrize("takt", [0, -1, float("nan"), float("inf"), True, "zwei"])
+def test_ein_untauglicher_takt_wird_abgewiesen(tmp_path, takt):
+    """Takt 0 wäre eine Schleife ohne Pause: ein Kern, der damit beschäftigt ist, nichts zu tun."""
+    with pytest.raises(fortschritt.FortschrittsError):
+        fortschritt.Beobachter(_ordnerwache(tmp_path, [0.0]), takt_s=takt)
+
+
+def test_ohne_stillstand_meldet_der_beobachter_nichts(tmp_path):
+    uhr = [0.0]
+    gemeldet = []
+    b = fortschritt.Beobachter(_ordnerwache(tmp_path, uhr), takt_s=1.0,
+                               bei_stillstand=gemeldet.append)
+
+    for i in range(5):
+        uhr[0] = i * 2.0
+        (tmp_path / f"bild_{i}.png").write_bytes(b"x")
+        b.tick()
+
+    bericht = b.bericht()
+    assert gemeldet == []
+    assert bericht["gestanden"] is False
+    assert bericht["gemessen"] is True
+    assert bericht["blicke"] == 5
+
+
+def test_ein_stillstand_wird_genau_einmal_gemeldet_und_nicht_bei_jedem_blick(tmp_path):
+    """Eine halbe Stunde Stillstand im Zweisekundentakt wären sonst neunhundert Rufe."""
+    uhr = [0.0]
+    gemeldet = []
+    b = fortschritt.Beobachter(_ordnerwache(tmp_path, uhr, frist_s=10.0), takt_s=1.0,
+                               bei_stillstand=gemeldet.append)
+
+    b.tick()                       # erstes Zeichen
+    for schritt in range(20):      # zwanzig Blicke ohne jede Bewegung
+        uhr[0] = 20.0 + schritt
+        b.tick()
+
+    assert len(gemeldet) == 1
+    assert gemeldet[0]["schwere"] == fortschritt.SCHWERE_FEHLER
+    assert b.bericht()["meldungen"] == 1
+
+
+def test_faengt_der_lauf_sich_wieder_ist_das_naechste_stehen_ein_neues_ereignis(tmp_path):
+    uhr = [0.0]
+    gemeldet = []
+    b = fortschritt.Beobachter(_ordnerwache(tmp_path, uhr, frist_s=10.0), takt_s=1.0,
+                               bei_stillstand=gemeldet.append)
+
+    b.tick()
+    uhr[0] = 30.0
+    b.tick()                                  # erster Stillstand
+    uhr[0] = 31.0
+    (tmp_path / "endlich.png").write_bytes(b"x")
+    b.tick()                                  # es geht weiter
+    uhr[0] = 60.0
+    b.tick()                                  # und steht wieder
+
+    assert len(gemeldet) == 2
+
+
+def test_der_bericht_haelt_den_schlimmsten_moment_fest_und_nicht_den_letzten(tmp_path):
+    """Ein Lauf, der zwanzig Minuten stand und sich dann fing, HAT gestanden.
+
+    Nähme der Bericht den letzten Blick, verschwände genau der Befund, für den die Wache
+    gebaut ist — die Rettung in letzter Sekunde löschte die Beobachtung.
+    """
+    uhr = [0.0]
+    b = fortschritt.Beobachter(_ordnerwache(tmp_path, uhr, frist_s=10.0), takt_s=1.0)
+
+    b.tick()
+    uhr[0] = 1200.0
+    b.tick()
+    uhr[0] = 1201.0
+    (tmp_path / "doch_noch.png").write_bytes(b"x")
+    b.tick()
+
+    bericht = b.bericht()
+    assert bericht["gestanden"] is True
+    assert bericht["laengster_stillstand_s"] == pytest.approx(1200.0)
+    assert bericht["schwere"] == fortschritt.SCHWERE_FEHLER
+
+
+def test_eine_stolpernde_quelle_reisst_den_beobachter_nicht_mit(tmp_path):
+    """Eine Datei, die gerade ersetzt wird, ist kein Grund, die Beobachtung aufzugeben."""
+    uhr = [0.0]
+    wache = fortschritt.Wache(frist_s=10.0, art=fortschritt.BELEGT,
+                              _uhr=lambda: uhr[0],
+                              _zeichen=lambda: (_ for _ in ()).throw(OSError("weg")))
+    b = fortschritt.Beobachter(wache, takt_s=1.0)
+
+    assert b.tick() is None
+    assert b.tick() is None
+    assert b.bericht()["quellenfehler"] == 2
+
+
+def test_ein_werfender_rueckruf_wird_vermerkt_statt_zu_beenden(tmp_path):
+    """Wer abbrechen wollte und dabei scheitert, darf die Beobachtung nicht mitnehmen."""
+    uhr = [0.0]
+
+    def bockig(_befund):
+        raise RuntimeError("der Abbruch ging schief")
+
+    b = fortschritt.Beobachter(_ordnerwache(tmp_path, uhr, frist_s=10.0), takt_s=1.0,
+                               bei_stillstand=bockig)
+    b.tick()
+    uhr[0] = 100.0
+    b.tick()
+
+    assert b.bericht()["rueckruffehler"] == ["RuntimeError: der Abbruch ging schief"]
+    assert b.bericht()["gestanden"] is True
+
+
+def test_null_blicke_heisst_nicht_gemessen_und_nicht_in_ordnung(tmp_path):
+    """Dieselbe Dreiteilung wie in `belichtung` und `geometrie_qa`."""
+    b = fortschritt.Beobachter(_ordnerwache(tmp_path, [0.0]), takt_s=1.0)
+    bericht = b.bericht()
+
+    assert bericht["gemessen"] is False
+    assert bericht["laengster_stillstand_s"] is None
+    assert "niemand hingesehen" in bericht["detail"]
+
+
+def test_der_faden_tickt_wirklich_und_laesst_sich_anhalten(tmp_path):
+    """Der einzige Test am Faden — und er prüft nur, DASS er tickt.
+
+    Alles Weitere steht in den Tests an `tick()` und braucht keine Wanduhr.
+    """
+    b = fortschritt.Beobachter(_ordnerwache(tmp_path, [0.0]), takt_s=0.005)
+    with b:
+        frist = time.monotonic() + 5.0
+        while b.blicke < 3 and time.monotonic() < frist:
+            time.sleep(0.005)
+
+    assert b.blicke >= 3
+    vorher = b.blicke
+    time.sleep(0.05)
+    assert b.blicke == vorher, "nach stop() darf kein Blick mehr dazukommen"
+
+
+def test_ein_zweiter_start_wird_abgewiesen(tmp_path):
+    b = fortschritt.Beobachter(_ordnerwache(tmp_path, [0.0]), takt_s=0.01)
+    b.start()
+    try:
+        with pytest.raises(fortschritt.FortschrittsError, match="läuft bereits"):
+            b.start()
+    finally:
+        b.stop()

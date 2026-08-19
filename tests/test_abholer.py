@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import json
 import os
+import threading
+import time
 from pathlib import Path
 
 import pytest
 
-from aiimaging import abholer, bruecke
+from aiimaging import abholer, bruecke, fortschritt
 
 
 # ======================================================================================
@@ -770,3 +772,187 @@ def test_der_anker_gehoert_zur_sollkarte_und_nicht_zu_einem_szenennamen():
     import inspect
     quelle = inspect.getsource(abholer._nullprobe)
     assert "gemessen und nicht nachgeschlagen" in quelle
+
+
+# ======================================================================================
+# Die Wache am Abholer — ein Lauf, der steht, sieht nicht mehr aus wie einer, der rechnet
+# ======================================================================================
+#
+# `verarbeite` blockiert. Zwischen Aufruf und Rückkehr hat der Abholer keinen Moment, in
+# dem er von sich aus nachsehen könnte — darum beobachtet ein Faden nebenher. Die Tests
+# hier prüfen die VERDRAHTUNG: Wird gebaut, wird angehalten, landet der Befund in der
+# Antwort und in den `timings`. Was der Beobachter selbst tut, steht in
+# `test_fortschritt.py` und wird hier nicht doppelt geprüft.
+
+def test_ohne_wache_steht_im_bericht_NICHT_GEMESSEN_und_nicht_in_ordnung(tmp_path):
+    """Der Normalfall — und er darf nicht wie ein sauberer Lauf aussehen."""
+    ordner = _auftrag(tmp_path)
+    antwort = abholer.hole_einen(ordner, verarbeite=_erfolg(), fremde_freigabe_gilt=True)
+
+    assert antwort["tat"] == abholer.TAT_VERARBEITET
+    assert antwort["wache"] is None
+
+
+def test_eine_wache_wird_je_auftrag_neu_gebaut(tmp_path):
+    """Eine geteilte Wache trüge die Stillstandsuhr des Vorgängers in den nächsten Lauf.
+
+    Sie meldete dort einen Stillstand, den es nie gab — und zwar ausgerechnet beim
+    schnellsten Auftrag, weil der am wenigsten Zeit hatte, sie zurückzusetzen.
+    """
+    for name in ("vis-1787123048-098c6e", "vis-1787123049-098c6f"):
+        _auftrag(tmp_path, name)
+    gebaut = []
+
+    def bauen(auftrag):
+        gebaut.append(auftrag["job_id"])
+        return fortschritt.wache_fuer_verzeichnis(tmp_path, frist_s=600.0)
+
+    abholer.durchgang(tmp_path, verarbeite=_erfolg(), fremde_freigabe_gilt=True,
+                      wache_bauen=bauen, beobachtungs_takt_s=0.01)
+
+    assert gebaut == ["vis-1787123048-098c6e", "vis-1787123049-098c6f"]
+
+
+def _zaehluhr(schritt_s=500.0):
+    """Eine Uhr, die bei jedem Blick weiterspringt — und mitzählt, wie oft man hinsah.
+
+    Warum nicht eine Liste mit fester Zeit: Der Beobachter läuft in einem eigenen Faden.
+    Setzte der Test die Zeit von aussen, entschiede die Reihenfolge der beiden Fäden über
+    das Ergebnis, und der Test flackerte. Eine Uhr, die von SELBST weiterläuft, macht das
+    Rennen bedeutungslos — nach zwei Blicken ist die Frist so oder so gerissen.
+    """
+    rufe = []
+
+    def uhr():
+        rufe.append(1)
+        return len(rufe) * schritt_s
+
+    return uhr, rufe
+
+
+def test_ein_stillstand_landet_in_den_timings_und_damit_beim_wartenden(tmp_path):
+    """`timings` ist ein VERTRAGSFELD und übersteht `nur_vertragsfelder` — die Hinweise nicht.
+
+    Wer in der fremden Oberfläche sieht, dass ein Auftrag eine halbe Stunde brauchte,
+    findet dort die Antwort, warum.
+    """
+    ordner = _auftrag(tmp_path)
+    uhr, rufe = _zaehluhr()
+    tot = tmp_path / "nie_beschrieben"
+    tot.mkdir()
+
+    def wache_bauen(auftrag):
+        return fortschritt.wache_fuer_verzeichnis(tot, frist_s=10.0, _uhr=uhr)
+
+    def langsam(auftrag):
+        # So lange rechnen, bis der Beobachter mindestens zweimal hingesehen hat.
+        frist = time.monotonic() + 5.0
+        while len(rufe) < 4 and time.monotonic() < frist:
+            time.sleep(0.005)
+        return {"bilder": ["a.png"], "zeiten": {"render_s": 900.0}}
+
+    antwort = abholer.hole_einen(ordner, verarbeite=langsam, fremde_freigabe_gilt=True,
+                                 wache_bauen=wache_bauen, beobachtungs_takt_s=0.005)
+
+    assert antwort["wache"]["gestanden"] is True
+    assert antwort["ergebnis"]["timings"]["stillstand_s"] >= 500.0
+    assert antwort["ergebnis"]["timings"]["render_s"] == 900.0
+
+
+def test_ein_unbeobachteter_lauf_bekommt_keine_null_in_den_timings(tmp_path):
+    """Eine Null hiesse „stand nie" — das wäre eine Behauptung ohne Beleg."""
+    ordner = _auftrag(tmp_path)
+
+    def mit_zeiten(auftrag):
+        return {"bilder": ["a.png"], "zeiten": {"render_s": 12.0}}
+
+    antwort = abholer.hole_einen(ordner, verarbeite=mit_zeiten, fremde_freigabe_gilt=True)
+
+    assert "stillstand_s" not in antwort["ergebnis"]["timings"]
+
+
+def test_eine_wache_die_beim_bauen_stolpert_verhindert_den_lauf_nicht(tmp_path):
+    """Die Beobachtung ist die Zugabe, nicht der Zweck — aber sie verschwindet nicht spurlos."""
+    ordner = _auftrag(tmp_path)
+
+    def kaputt(auftrag):
+        raise RuntimeError("kein Ausgabepfad bekannt")
+
+    antwort = abholer.hole_einen(ordner, verarbeite=_erfolg(), fremde_freigabe_gilt=True,
+                                 wache_bauen=kaputt)
+
+    assert antwort["tat"] == abholer.TAT_VERARBEITET
+    assert antwort["wache"]["gemessen"] is False
+    assert "unbeobachtet" in antwort["wache"]["detail"]
+
+
+def test_eine_wache_ohne_quelle_wird_gemeldet_statt_zu_werfen(tmp_path):
+    """Eine Statuswort-Wache kann kein Faden holen. Das ist ein Befund, kein Absturz."""
+    ordner = _auftrag(tmp_path)
+    antwort = abholer.hole_einen(
+        ordner, verarbeite=_erfolg(), fremde_freigabe_gilt=True,
+        wache_bauen=lambda a: fortschritt.wache_fuer_status(frist_s=5.0))
+
+    assert antwort["tat"] == abholer.TAT_VERARBEITET
+    assert antwort["wache"]["gemessen"] is False
+    assert "taugt nicht zum Beobachten" in antwort["wache"]["detail"]
+
+
+def test_wache_bauen_darf_none_liefern_und_heisst_dann_nicht_beobachtet(tmp_path):
+    """Nicht jeder Auftrag hat einen Pfad, an dem sich etwas bewegt."""
+    ordner = _auftrag(tmp_path)
+    antwort = abholer.hole_einen(ordner, verarbeite=_erfolg(), fremde_freigabe_gilt=True,
+                                 wache_bauen=lambda a: None)
+
+    assert antwort["wache"] is None
+
+
+def test_wache_bauen_muss_aufrufbar_sein(tmp_path):
+    ordner = _auftrag(tmp_path)
+    with pytest.raises(abholer.AbholerError, match="wache_bauen"):
+        abholer.hole_einen(ordner, verarbeite=_erfolg(), fremde_freigabe_gilt=True,
+                           wache_bauen="ein Pfad")
+
+
+def test_auch_ein_gescheiterter_lauf_haelt_den_faden_an(tmp_path):
+    """Ein Faden, den niemand anhält, sieht einem Auftrag zu, den es nicht mehr gibt."""
+    ordner = _auftrag(tmp_path)
+    behalten = {}
+
+    def bauen(auftrag):
+        w = fortschritt.wache_fuer_verzeichnis(tmp_path, frist_s=600.0)
+        behalten["wache"] = w
+        return w
+
+    def scheitert(auftrag):
+        raise RuntimeError("die Karte ist weg")
+
+    antwort = abholer.hole_einen(ordner, verarbeite=scheitert, fremde_freigabe_gilt=True,
+                                 wache_bauen=bauen, beobachtungs_takt_s=0.005)
+
+    assert antwort["tat"] == abholer.TAT_FEHLER
+    assert antwort["wache"]["gemessen"] is True or antwort["wache"]["blicke"] >= 0
+    lebendige = [f for f in threading.enumerate() if f.name == "fortschrittswache"]
+    assert lebendige == [], "nach hole_einen darf kein Beobachtungsfaden mehr laufen"
+
+
+def test_durchgang_zaehlt_die_laeufe_die_gestanden_haben(tmp_path):
+    _auftrag(tmp_path)
+    uhr, rufe = _zaehluhr()
+    tot = tmp_path / "still"
+    tot.mkdir()
+
+    def bauen(auftrag):
+        return fortschritt.wache_fuer_verzeichnis(tot, frist_s=1.0, _uhr=uhr)
+
+    def steht(auftrag):
+        frist = time.monotonic() + 5.0
+        while len(rufe) < 4 and time.monotonic() < frist:
+            time.sleep(0.005)
+        return {"bilder": ["a.png"]}
+
+    bericht = abholer.durchgang(tmp_path, verarbeite=steht, fremde_freigabe_gilt=True,
+                                wache_bauen=bauen, beobachtungs_takt_s=0.005)
+
+    assert bericht["verarbeitet"] == 1
+    assert bericht["gestanden"] == 1

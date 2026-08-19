@@ -1090,6 +1090,38 @@ liefert wie einmal ausgeführt. Macht Wiederholung nach Abbruch gefahrlos.
 
 **Race Condition (Wettlaufsituation)** — Fehler, der davon abhängt, welcher von zwei
 gleichzeitigen Vorgängen zuerst fertig wird. Schwer zu finden, weil unregelmässig.
+*Auch ein **Test** kann eine Wettlaufsituation enthalten, und dann ist er unbrauchbar: Er
+besteht oder scheitert je nach Tagesform des Rechners. Beim Prüfen des
+Fortschrittsbeobachters (21.08.) trat genau das auf — der Test stellte die künstliche Uhr
+von aussen, während der Beobachtungsfaden sie las, und wer zuerst drankam, entschied über
+das Ergebnis. Die Abhilfe war nicht, länger zu warten, sondern das Rennen bedeutungslos zu
+machen: eine Uhr, die bei **jedem Blick von selbst** weiterspringt. Dann ist die Frist nach
+zwei Blicken gerissen, gleich in welcher Reihenfolge die beiden Fäden zum Zug kommen.*
+
+**Blockierender Aufruf** — Ein Aufruf, der die Kontrolle erst zurückgibt, wenn er fertig
+ist. Während er läuft, kann das Programm an dieser Stelle **nichts anderes** tun — auch
+nicht nachsehen, ob noch etwas vorangeht.
+*Das ist der Grund, warum dieses Projekt an zwei Stellen einen zweiten Faden braucht: Der
+Abholer ruft `verarbeite(auftrag)` auf, und dieser Aufruf blockiert bis zum Ende des
+Renderlaufs. Zwischen Aufruf und Rückkehr gibt es keinen einzigen Moment, in dem der
+Abholer von sich aus nachsehen könnte, ob der Lauf noch vorankommt.*
+
+**Hintergrundfaden und Daemon-Faden** — Ein **Hintergrundfaden** ist ein zweiter
+Ausführungsstrang, der neben dem Hauptstrang herläuft (siehe *Thread*, *GIL*). Ein
+**Daemon-Faden** ist einer, der das Programm nicht am Beenden hindert: Endet der
+Hauptstrang, verschwindet er mit, ohne dass jemand auf ihn wartet.
+*Die Beobachtungsfäden dieses Projekts sind Daemon-Fäden. Sie halten keinen Zustand, den
+jemand vermissen würde — bricht der Hauptstrang ab, soll kein Beobachter den Prozess
+offenhalten, der einem Auftrag zusieht, den es nicht mehr gibt.*
+
+**Fortschrittsbeobachter** — Der Teil, der eine *Fortschrittswache* in Abständen fragt,
+während anderswo ein blockierender Aufruf läuft, und sich den **schlimmsten** gesehenen
+Befund merkt.
+*Dass er den schlimmsten merkt und nicht den letzten, ist die eigentliche Entscheidung:
+Ein Lauf, der zwanzig Minuten stand und sich dann fing, **hat gestanden**. Nähme der
+Bericht den letzten Blick, löschte die Rettung in letzter Sekunde genau die Beobachtung,
+für die das Ganze gebaut ist. Er bricht nichts ab — abgebrochen wird eine Stufe höher, wo
+man weiss, was ein Abbruch kostet.*
 
 **Boden (einer Ähnlichkeitsmetrik)** — Wie ähnlich sich zwei Dinge sind, die **gar nichts**
 miteinander zu tun haben. Man erwartet null; in der Wirklichkeit ist es fast nie null.
@@ -2154,6 +2186,16 @@ jedem Render.*
 abhängt, wo die Grenzen verlaufen. Der Begriff meint dasselbe wie im Bauwesen, nur ist
 das Material Code.
 
+**Vertragsfeld** — Ein Feld, das im vereinbarten Schema einer Schnittstelle
+**vorgesehen** ist — im Unterschied zu einem Zusatzfeld, das man mitschickt, weil es
+nützlich ist, auf das sich aber niemand verlassen kann.
+*Der Unterschied ist praktisch und nicht akademisch: Dieses Projekt kann sein Ergebnis in
+zwei Fassungen abgeben, mit oder ohne Zusatzfelder (`nur_vertragsfelder`). Was in der
+strengen Fassung ankommen soll, muss darum in einem Vertragsfeld stehen. Der längste
+Stillstand eines Laufs wandert deshalb in `timings` und nicht in unsere `hinweise`: Wer in
+der fremden Oberfläche wissen will, warum ein Auftrag eine halbe Stunde brauchte, findet
+die Antwort dort, wo er ohnehin nachsieht.*
+
 **Node (Knoten)** — Ein einzelner Arbeitsschritt in einer Verarbeitungskette, mit
 Eingängen und Ausgängen.
 
@@ -2499,6 +2541,7 @@ System laufen.
 | 2026-08-20 | Aus dem GPU-Ergebnis zu `auf-20260820-18`: **Sandbox-Paket (Snap, Flatpak)** und **Artefakt einer Messung**. Beide sind teuer erworben — das GPU-faehige Blender-Snap liefert bei Dateiumleitung Rueckgabewert 0 ohne Bild, und der am selben Tag gemessene 32-Sekunden-Takt war ein Artefakt der CPU-Messung |
 | 2026-08-20 | Ergaenzt aus dem Abholer (`src/aiimaging/abholer.py`): **Laufzettel**, **Waise (verwaister Auftrag)** |
 | 2026-08-20 | Ergaenzt aus der Taktmessung an Blender: **adaptives Sampling**, **Blockpufferung der Standardausgabe**, **Pipe-Blockade**. **Sample** um die gemessene Einschraenkung ergaenzt: Bei adaptivem Sampling ist die Samplezahl eine OBERGRENZE und keine Angabe der Rechenzeit — 6000 Samples in 12 s gegen 3000 ohne adaptives Sampling in ueber drei Minuten |
+| 2026-08-21 | Ergaenzt beim Anhaengen der Wache an den Abholer: **Blockierender Aufruf**, **Hintergrundfaden und Daemon-Faden**, **Fortschrittsbeobachter**, **Vertragsfeld**. Ausgebaut: **Race Condition** um den Fall, in dem der TEST das Rennen enthaelt — und um die Abhilfe, das Rennen bedeutungslos zu machen statt laenger zu warten |
 | 2026-08-20 | Ergaenzt aus der Fortschrittswache (`src/aiimaging/fortschritt.py`): **Timeout**, **Gesamt-Timeout gegen Fortschrittsfrist**, **Stillstand (Stall)**, **behauptetes gegen belegtes Fortschrittszeichen**, **monotone Uhr**. Anlass war wieder ein Befund: Der geerbte Stillstandswaechter stellt bei den Zustaenden `running` und `queued` die Uhr zurueck — also genau in dem Fall, fuer den er gebaut wurde |
 | 2026-08-20 | Ergaenzt aus der Belichtungspruefung (`src/aiimaging/belichtung.py`) und dem farbfaehigen PNG-Leser: **Farbtyp (PNG)**, **Palette (PNG-Farbtyp 3)**, **Alphakanal**, **Luminanz**, **Rec.709**, **Gammakorrektur/sRGB**, **Clipping (ausgefressen/zugelaufen)**, **Belichtungsrahmen**. Der Anlass war ein Befund und keine Fleissarbeit: Die geerbte Schwelle von 8 % geclippter Lichter haette unseren eigenen, gemessenen Hausstil (7,55 % ± 6,9, Hoechstwert 30,0 %) zum Fehler erklaert — eine Belichtungsschwelle ist keine Eigenschaft guter Belichtung, sondern eines Stils |
 | 2026-08-19 | Aus dem Uebergabeblatt an die Vis-Oberflaeche (`docs/UEBERGABE_VIS_2026-08-19.md`): **nullbares Feld (nullable)** — der Begriff wurde dort gebraucht, um zu erklaeren, warum `job_id` leer sein darf, stand aber nirgends. Alle uebrigen Fachbegriffe jenes Blatts (tote Kante, Bildwinkel, Backbone, SigLIP, Spearman, Freigabe-Token, Bounding Box, Subprozess, MCP) waren bereits erfasst und wurden geprueft, nicht angenommen |

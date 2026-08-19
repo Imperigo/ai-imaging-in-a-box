@@ -57,7 +57,7 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from . import bruecke
+from . import bruecke, fortschritt
 
 #: Ein Auftrag auf ``running``, dessen Laufzettel so lange nicht angefasst wurde, gilt als
 #: **Waise**. Die Zahl ist eine Setzung: Sie muss deutlich über der längsten erwarteten
@@ -121,7 +121,8 @@ def waisen(store, *, frist_s: float = WAISENFRIST_S, _uhr=None) -> list[dict]:
 
 
 def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
-               darf_rechnen=None) -> dict:
+               darf_rechnen=None, wache_bauen=None,
+               beobachtungs_takt_s: float = fortschritt.BEOBACHTUNGS_TAKT_S) -> dict:
     """Einen einzelnen Auftrag bearbeiten — mit allen Entscheidungen davor.
 
     Args:
@@ -136,10 +137,22 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
             ``idle_window_only`` wird dann liegengelassen. Bei **unbekanntem** Zustand
             nicht zu rechnen ist die fail-closed-Regel, die Sitzung 07 vier Löcher
             gekostet hat.
+        wache_bauen: ``(auftrag) -> Wache | None``. Wer eine Wache liefert, bekommt sie
+            **neben** dem Lauf beobachtet — ``verarbeite`` blockiert, der Abholer könnte
+            währenddessen von sich aus nicht nachsehen. Warum die Wache von aussen kommt:
+            Sie braucht einen Pfad, an dem sich etwas bewegt, und wo das Bild landet,
+            weiss der Verarbeiter und nicht dieses Modul. ``None`` heisst **nicht** „lief
+            durch", sondern **nicht beobachtet** — und genau so steht es im Bericht.
+        beobachtungs_takt_s: Sekunden zwischen zwei Blicken der Wache.
 
     Returns:
-        ``{tat, job_id, verzeichnis, grund, ergebnis}``. ``tat`` ist eine der
-        ``TAT_*``-Konstanten.
+        ``{tat, job_id, verzeichnis, grund, ergebnis, wache}``. ``tat`` ist eine der
+        ``TAT_*``-Konstanten. ``wache`` ist der Bericht des Beobachters oder ``None``,
+        wenn keine Wache gebaut wurde.
+
+    Die Wache **bricht nicht ab.** Sie schreibt mit. Ein Lauf, der 1800 s brauchte und
+    davon 1500 s stand, ist damit von einem unterscheidbar, der 1800 s gerechnet hat —
+    und diese Unterscheidung ist der ganze Zweck: Bisher sahen beide gleich aus.
     """
     if not callable(verarbeite):
         raise AbholerError(
@@ -149,7 +162,7 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         )
     ordner = Path(verzeichnis)
     antwort = {"tat": TAT_LIEGENGELASSEN, "job_id": ordner.name,
-               "verzeichnis": ordner, "grund": "", "ergebnis": None}
+               "verzeichnis": ordner, "grund": "", "ergebnis": None, "wache": None}
 
     try:
         auftrag = bruecke.lies_auftrag(ordner, fremde_freigabe_gilt=fremde_freigabe_gilt)
@@ -174,6 +187,9 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
     # Ab hier wird gerechnet. Erst jetzt auf `running` — vorher hätte ein
     # liegengelassener Auftrag ausgesehen, als arbeite jemand an ihm.
     bruecke.setze_status(ordner, bruecke.STATUS_RUNNING)
+    beobachter = _beobachter_bauen(auftrag, wache_bauen, beobachtungs_takt_s, antwort)
+    if beobachter is not None:
+        beobachter.start()
     try:
         ergebnis = verarbeite(auftrag)
     except Exception as fehler:            # noqa: BLE001 — jeder Fehler ist ein Ergebnis
@@ -183,6 +199,11 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
             f"ist auf '{bruecke.STATUS_ERROR}' gesetzt — ein Auftrag ohne Antwort ist "
             f"für den Wartenden dasselbe wie ein hängender Rechner."))
         return antwort
+    finally:
+        # Auch auf dem Fehlerweg: Ein Faden, den niemand anhält, läuft weiter und sieht
+        # einem Auftrag zu, den es nicht mehr gibt.
+        if beobachter is not None:
+            antwort["wache"] = beobachter.stop()
 
     if not isinstance(ergebnis, dict):
         bruecke.setze_status(ordner, bruecke.STATUS_ERROR,
@@ -197,11 +218,67 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         job_id=auftrag.get("job_id"),
         geometrie_urteil=ergebnis.get("geometrie_urteil"),
         stil_urteil=ergebnis.get("stil_urteil"),
-        zeiten=ergebnis.get("zeiten"),
+        zeiten=_zeiten_mit_stillstand(ergebnis.get("zeiten"), antwort["wache"]),
     )
     antwort.update(tat=TAT_VERARBEITET, ergebnis=geschrieben,
                    grund=f"{len(ergebnis.get('bilder') or [])} Bild(er) geschrieben.")
     return antwort
+
+
+def _beobachter_bauen(auftrag: dict, wache_bauen, takt_s, antwort: dict):
+    """Die Wache des Aufrufers bauen lassen — und einen Fehlschlag dabei nicht verschlucken.
+
+    Eine Wache, die beim Bauen stolpert, darf den Lauf **nicht** verhindern: Der Auftrag
+    ist freigegeben, die Karte ist frei, und die Beobachtung ist die Zugabe und nicht der
+    Zweck. Sie darf aber auch nicht spurlos verschwinden, sonst sieht ein unbeobachteter
+    Lauf hinterher aus wie ein beobachteter ohne Befund.
+    """
+    if wache_bauen is None:
+        return None
+    if not callable(wache_bauen):
+        raise AbholerError(
+            f"wache_bauen muss aufrufbar sein oder None, war {type(wache_bauen).__name__}."
+        )
+    try:
+        wache = wache_bauen(auftrag)
+    except Exception as fehler:            # noqa: BLE001 — siehe Docstring
+        antwort["wache"] = {"gemessen": False, "gestanden": False,
+                            "schwere": fortschritt.SCHWERE_WARN,
+                            "laengster_stillstand_s": None, "blicke": 0, "meldungen": 0,
+                            "quellenfehler": 0, "rueckruffehler": [],
+                            "detail": (f"Die Wache liess sich nicht bauen "
+                                       f"({type(fehler).__name__}: {fehler}). Der Lauf "
+                                       f"läuft trotzdem — aber unbeobachtet.")}
+        return None
+    if wache is None:
+        return None
+    try:
+        return fortschritt.Beobachter(wache, takt_s=takt_s)
+    except fortschritt.FortschrittsError as fehler:
+        antwort["wache"] = {"gemessen": False, "gestanden": False,
+                            "schwere": fortschritt.SCHWERE_WARN,
+                            "laengster_stillstand_s": None, "blicke": 0, "meldungen": 0,
+                            "quellenfehler": 0, "rueckruffehler": [],
+                            "detail": f"Die Wache taugt nicht zum Beobachten: {fehler}"}
+        return None
+
+
+def _zeiten_mit_stillstand(zeiten, bericht: dict | None) -> dict | None:
+    """Den längsten Stillstand in die ``timings`` des fremden Vertrags legen.
+
+    Warum dorthin und nicht in unsere ``hinweise``: ``timings`` ist ein **Vertragsfeld**
+    und übersteht ``kosmo_szene.nur_vertragsfelder``. Die Hinweise überstehen es nicht.
+    Wer in der fremden Oberfläche wissen will, warum ein Auftrag eine halbe Stunde
+    brauchte, findet die Antwort damit dort, wo er ohnehin nachsieht.
+
+    Eingetragen wird nur, was **gemessen** ist. Ein unbeobachteter Lauf bekommt keine
+    Null — eine Null hiesse „stand nie", und das wäre eine Behauptung ohne Beleg.
+    """
+    if not bericht or not bericht.get("gemessen"):
+        return zeiten
+    ergaenzt = dict(zeiten or {})
+    ergaenzt["stillstand_s"] = bericht.get("laengster_stillstand_s")
+    return ergaenzt
 
 
 def _karte_frei(laufzettel: dict, darf_rechnen) -> tuple[bool, str]:
@@ -232,7 +309,9 @@ def _karte_frei(laufzettel: dict, darf_rechnen) -> tuple[bool, str]:
 
 def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
               darf_rechnen=None, hoechstens: int | None = None,
-              waisenfrist_s: float = WAISENFRIST_S, _uhr=None) -> dict:
+              waisenfrist_s: float = WAISENFRIST_S, wache_bauen=None,
+              beobachtungs_takt_s: float = fortschritt.BEOBACHTUNGS_TAKT_S,
+              _uhr=None) -> dict:
     """**Ein** Durchgang über den Ablageort. Kein Dauerlauf, keine Schleife, kein Schlaf.
 
     Warum kein Dauerlauf: Wer wie oft nachsieht, ist eine Betriebsfrage — Cron, Dienst,
@@ -248,8 +327,13 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
         hoechstens: höchstens so viele Aufträge in diesem Durchgang. ``None`` heisst alle.
             Nützlich für einen Rechner, der zwischendurch etwas anderes tun soll.
 
+    Jeder Auftrag bekommt seine **eigene** Wache: ``wache_bauen`` wird je Auftrag
+    gerufen. Eine geteilte Wache trüge die Stillstandsuhr des Vorgängers in den nächsten
+    Lauf und meldete dort einen Stillstand, den es nie gab.
+
     Returns:
-        ``{gesehen, verarbeitet, fehler, liegengelassen, waisen, ergebnisse}``.
+        ``{gesehen, verarbeitet, fehler, liegengelassen, waisen, ergebnisse, gestanden}``.
+        ``gestanden`` zählt die Läufe, bei denen die Wache einen Stillstand sah.
         ``ergebnisse`` sind die Antworten von :func:`hole_einen` in Bearbeitungsreihenfolge.
     """
     offen = bruecke.offene_auftraege(store)
@@ -262,7 +346,8 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
 
     ergebnisse = [
         hole_einen(ordner, verarbeite=verarbeite,
-                   fremde_freigabe_gilt=fremde_freigabe_gilt, darf_rechnen=darf_rechnen)
+                   fremde_freigabe_gilt=fremde_freigabe_gilt, darf_rechnen=darf_rechnen,
+                   wache_bauen=wache_bauen, beobachtungs_takt_s=beobachtungs_takt_s)
         for ordner in offen
     ]
     verwaist = waisen(store, frist_s=waisenfrist_s, _uhr=_uhr)
@@ -272,6 +357,7 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
         "verarbeitet": sum(1 for e in ergebnisse if e["tat"] == TAT_VERARBEITET),
         "fehler": sum(1 for e in ergebnisse if e["tat"] == TAT_FEHLER),
         "liegengelassen": sum(1 for e in ergebnisse if e["tat"] == TAT_LIEGENGELASSEN),
+        "gestanden": sum(1 for e in ergebnisse if (e.get("wache") or {}).get("gestanden")),
         "waisen": verwaist,
         "ergebnisse": ergebnisse,
     }

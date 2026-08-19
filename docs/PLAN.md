@@ -755,7 +755,35 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       aus der diffusers-Bauart abgeleitet und an einer Attrappe geprüft, **nicht am
       Gerät**. Wenn sie zutrifft, hat jede bisherige Messreihe über die Schrittzahl im
       Bildbearbeitungsmodus weniger Schritte gerechnet als protokolliert.
-- [ ] **Die Wache an den Abholer hängen** — dort läuft sie noch nicht.
+- [x] **Die Wache an den Abholer hängen — erledigt 21.08.** `fortschritt.Beobachter`
+      fragt eine Wache in Abständen und merkt sich den **schlimmsten** Befund; der
+      Abholer baut je Auftrag eine eigene (`wache_bauen`) und hält sie auch auf dem
+      Fehlerweg an. Der längste Stillstand landet in `timings.stillstand_s` — einem
+      **Vertragsfeld**, das `nur_vertragsfelder` übersteht. Damit ist ein Lauf, der
+      1800 s brauchte und davon 1500 s stand, zum ersten Mal von einem unterscheidbar,
+      der 1800 s gerechnet hat; bisher sahen beide gleich aus.
+
+      Drei Dinge, die dabei entschieden wurden und nicht selbstverständlich sind:
+      **(1)** Keine Wache heisst `wache is None` und **nicht** „lief durch" — ein
+      unbeobachteter Lauf bekommt keine Null in die `timings`, denn eine Null hiesse
+      „stand nie" und wäre eine Behauptung ohne Beleg. **(2)** `bei_stillstand` wird
+      **einmal je Ereignis** gerufen, nicht bei jedem Blick; eine halbe Stunde
+      Stillstand im Zweisekundentakt wären sonst neunhundert Rufe für eine Nachricht.
+      **(3)** Eine Wache, die beim Bauen stolpert, verhindert den Lauf nicht — sie
+      verschwindet aber auch nicht spurlos, sonst sähe ein unbeobachteter Lauf hinterher
+      aus wie ein beobachteter ohne Befund.
+
+      **Was NICHT geprüft ist:** ob eine Wache an einem echten Renderlauf das Richtige
+      sieht. Alle 26 Tests laufen gegen Verzeichnisse, in die der Test selbst schreibt.
+      Welcher Pfad sich während eines Multipass-Laufs wirklich bewegt und welche Frist
+      dort trägt, ist am Gerät zu messen — die 32-s-Takt-Geschichte vom 20.08. ist die
+      Warnung dazu.
+- [ ] **Welche Frist trägt am echten Lauf?** Die Wache hängt, ihre Frist ist geraten.
+      `FRIST_S = 300` ist aus dem Altbestand übernommen, ausdrücklich **nicht** gemessen.
+      Zu kurz bricht gesunde Läufe ab, zu lang merkt nichts. Braucht die HomeStation:
+      längste beobachtete Pause zwischen zwei neuen Dateien im Ausgabeordner, an CPU und
+      GPU getrennt — wie beim Blender-Ausgabetakt, wo genau diese Unterscheidung den
+      Unterschied zwischen 32 s und 175 s ausmachte.
 - [ ] **Variantenreihen** — wir erzeugen ein Bild je Aufruf. Der alte Bestand fährt fünf
       Sampler mit `seed = basis + nummer` und kennt ein `locked_seed` für kontrollierte
       Reihen. Bei 1.4 s je Bild (`auf-13`) ist eine Reihe zum ersten Mal bezahlbar.

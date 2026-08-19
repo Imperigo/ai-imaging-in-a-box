@@ -75,6 +75,7 @@ Abhängigkeiten: reine stdlib. Kein ``bpy``, ohne Oberfläche aufrufbar (Regeln 
 from __future__ import annotations
 
 import math
+import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -334,3 +335,202 @@ def wache_fuer_status(*, frist_s: float = FRIST_S, name: str = "Lauf",
     nach dreissig.
     """
     return Wache(frist_s=frist_s, art=BEHAUPTET, name=name, _uhr=_uhr)
+
+
+# ======================================================================================
+# Der Beobachter — die Wache läuft mit, während der Lauf blockiert
+# ======================================================================================
+#
+# Die Wache oben ist passiv: Der Aufrufer reicht Zeichen herein. Das passt, solange er
+# selbst pollt. Der Abholer tut das **nicht** — er ruft ``verarbeite(auftrag)`` auf, und
+# dieser Aufruf blockiert, bis der Renderlauf fertig ist. Zwischen Aufruf und Rückkehr
+# hat der Abholer keinen einzigen Moment, in dem er nachsehen könnte.
+#
+# Darum beobachtet ein Faden nebenher. Dieselbe Bauform wie der Herzschlag in
+# ``runners/blender_depth_stage.py`` und das Abgiessen der Rohre in ``seams.py`` — und
+# aus demselben Grund: Wo ein Aufruf die Kontrolle behält, bleibt nur ein zweiter Faden.
+#
+# Was der Beobachter NICHT tut: abbrechen. Er sammelt und meldet. Wer abbrechen will,
+# hängt ``bei_stillstand`` daran und entscheidet dort — an der Stelle, die weiss, was ein
+# Abbruch kostet.
+
+#: Wie oft nachgesehen wird. Zwei Sekunden wie ``seams.TAKT_S``: kurz genug, dass ein
+#: Stillstand nicht in der Auflösung untergeht, lang genug, dass das Nachsehen selbst
+#: nichts kostet. ``verzeichnis_marke`` liest ein Verzeichnis, nicht dessen Bäume.
+BEOBACHTUNGS_TAKT_S = 2.0
+
+
+def _schwerer(a: dict | None, b: dict | None) -> dict | None:
+    """Der schlimmere der beiden Befunde. ``None`` verliert immer.
+
+    Rangfolge: ``error`` vor ``warn`` vor ``ok``; bei gleichem Rang der mit dem längeren
+    Stillstand. So bleibt am Ende **der schlimmste Moment** des Laufs stehen und nicht
+    der letzte — ein Lauf, der zwanzig Minuten stand und sich dann fing, hat gestanden.
+    """
+    rang = {SCHWERE_FEHLER: 2, SCHWERE_WARN: 1, SCHWERE_OK: 0}
+    if a is None:
+        return b
+    if b is None:
+        return a
+    schluessel = lambda g: (rang.get(g.get("schwere"), 0), g.get("still_seit_s") or 0.0)
+    return b if schluessel(b) > schluessel(a) else a
+
+
+class Beobachter:
+    """Fragt eine :class:`Wache` in Abständen und merkt sich den schlimmsten Befund.
+
+    Die Arbeit steckt in :meth:`tick`, und die ist **fadenfrei**: ein Aufruf, ein Blick,
+    ein Befund. :meth:`start` hängt nur eine Schleife davor. Das ist Absicht — ein
+    Ablauf, der sich nur mit laufendem Faden prüfen liesse, wäre auf Zeitfenster geprüft
+    statt auf Verhalten, und solche Tests flackern.
+
+    Args:
+        wache: eine Wache **mit eigener Quelle** (:func:`wache_fuer_datei`,
+            :func:`wache_fuer_verzeichnis`). Eine Wache auf ein Statuswort hat keine —
+            das Statuswort kennt nur der Aufrufer, und ein Faden könnte es nicht holen.
+        takt_s: Sekunden zwischen zwei Blicken.
+        bei_stillstand: ``(befund) -> None``, gerufen **einmal je Stillstandsereignis**
+            und nicht bei jedem Blick. Bei einem Stillstand von einer halben Stunde wären
+            das sonst neunhundert Rufe für eine einzige Nachricht. Fängt sich der Lauf
+            wieder, ist das nächste Stillstehen ein neues Ereignis.
+    """
+
+    def __init__(self, wache: Wache, *, takt_s: float = BEOBACHTUNGS_TAKT_S,
+                 bei_stillstand=None) -> None:
+        if not isinstance(wache, Wache):
+            raise FortschrittsError(f"wache ist keine Wache, sondern {type(wache).__name__}.")
+        if getattr(wache, "_zeichen", None) is None:
+            raise FortschrittsError(
+                f"Die Wache {wache.name!r} hat keine eigene Zeichenquelle. Ein Faden kann "
+                f"nur holen, was sich holen lässt — ein Statuswort kennt allein der "
+                f"Aufrufer. Nimm wache_fuer_datei oder wache_fuer_verzeichnis, oder "
+                f"reiche die Zeichen selbst mit Wache.melde(...) herein."
+            )
+        if isinstance(takt_s, bool) or not isinstance(takt_s, (int, float)):
+            raise FortschrittsError(f"takt_s ist keine Zahl: {takt_s!r}")
+        if not math.isfinite(float(takt_s)) or takt_s <= 0:
+            raise FortschrittsError(
+                f"takt_s muss positiv und endlich sein, war {takt_s!r}. Ein Takt von 0 "
+                f"wäre eine Schleife ohne Pause und beschäftigte einen Kern damit, "
+                f"nichts zu tun."
+            )
+        if bei_stillstand is not None and not callable(bei_stillstand):
+            raise FortschrittsError("bei_stillstand muss aufrufbar sein oder None.")
+        self.wache = wache
+        self.takt_s = float(takt_s)
+        self.bei_stillstand = bei_stillstand
+        self.blicke = 0
+        self.meldungen = 0
+        self.quellenfehler = 0
+        self.rueckruffehler: list[str] = []
+        self._schlimmster: dict | None = None
+        self._im_stillstand = False
+        self._halt = threading.Event()
+        self._faden: threading.Thread | None = None
+
+    # ------------------------------------------------------------------ Beobachten
+
+    def tick(self) -> dict | None:
+        """Einmal nachsehen. Gibt den Befund dieses Blicks zurück, oder ``None``.
+
+        Wirft nie. Eine Quelle, die stolpert — eine Datei, die gerade ersetzt wird, ein
+        Verzeichnis, das kurz nicht lesbar ist —, darf den Beobachter nicht mitreissen.
+        Solche Fehlschläge werden gezählt (:attr:`quellenfehler`), nicht verschwiegen.
+        """
+        self.blicke += 1
+        try:
+            befund = self.wache.blick()
+        except Exception:                  # noqa: BLE001 — siehe Docstring
+            self.quellenfehler += 1
+            return None
+        self._schlimmster = _schwerer(self._schlimmster, befund)
+        steht = befund.get("befund") == "stillstand"
+        if steht and not self._im_stillstand:
+            self._im_stillstand = True
+            self.meldungen += 1
+            if self.bei_stillstand is not None:
+                try:
+                    self.bei_stillstand(befund)
+                except Exception as fehler:   # noqa: BLE001
+                    self.rueckruffehler.append(f"{type(fehler).__name__}: {fehler}")
+        elif not steht:
+            self._im_stillstand = False
+        return befund
+
+    def befund(self) -> dict | None:
+        """Der schlimmste Befund dieses Laufs, oder ``None``, wenn nie einer entstand."""
+        return self._schlimmster
+
+    def bericht(self) -> dict:
+        """Was der Beobachter gesehen hat — auch wenn er nichts gesehen hat.
+
+        ``gestanden`` ist ``False``, wenn kein Stillstand auftrat, **und** es hat
+        mindestens einen Blick gebraucht, um das zu wissen: ``blicke == 0`` heisst
+        *nicht gemessen*, nicht *in Ordnung*. Dieselbe Dreiteilung wie überall hier.
+        """
+        schlimmster = self._schlimmster
+        return {
+            "gemessen": self.blicke > 0,
+            "gestanden": bool(schlimmster and schlimmster.get("befund") == "stillstand"),
+            "schwere": (schlimmster or {}).get("schwere", SCHWERE_OK) if self.blicke
+                       else SCHWERE_OK,
+            "laengster_stillstand_s": float((schlimmster or {}).get("still_seit_s") or 0.0)
+                                      if self.blicke else None,
+            "blicke": self.blicke,
+            "meldungen": self.meldungen,
+            "quellenfehler": self.quellenfehler,
+            "rueckruffehler": list(self.rueckruffehler),
+            "detail": (schlimmster or {}).get("detail", "") if self.blicke else (
+                "Nicht beobachtet — kein einziger Blick. Das heisst NICHT, dass der Lauf "
+                "durchlief; es heisst, dass niemand hingesehen hat."),
+        }
+
+    # ------------------------------------------------------------------ Der Faden
+
+    def start(self) -> "Beobachter":
+        """Die Schleife in einem Hintergrundfaden starten."""
+        if self._faden is not None:
+            raise FortschrittsError("Dieser Beobachter läuft bereits.")
+        self._halt.clear()
+
+        def schleife() -> None:
+            while not self._halt.is_set():
+                self.tick()
+                self._halt.wait(self.takt_s)
+
+        # Daemon: Bricht der Hauptfaden ab, soll kein Beobachter den Prozess offenhalten.
+        # Er hält keinen Zustand, den jemand vermissen würde.
+        self._faden = threading.Thread(target=schleife, name="fortschrittswache",
+                                       daemon=True)
+        self._faden.start()
+        return self
+
+    def stop(self, *, warten_s: float = 5.0) -> dict:
+        """Den Faden anhalten und den Bericht abholen.
+
+        Auf das Ende wird **gewartet**, aber nicht ewig: Der Faden hängt am selben
+        ``Event`` wie die Pause, das Anhalten greift also sofort. Bleibt er trotzdem, ist
+        das ein eigener Befund und kein Grund, den Aufrufer festzuhalten.
+        """
+        self._halt.set()
+        faden, self._faden = self._faden, None
+        if faden is not None:
+            faden.join(timeout=warten_s)
+            if faden.is_alive():
+                self.rueckruffehler.append(
+                    f"Der Beobachtungsfaden lief nach {warten_s:.0f} s noch. Der Bericht "
+                    f"kann unvollständig sein.")
+        return self.bericht()
+
+    def __enter__(self) -> "Beobachter":
+        return self.start()
+
+    def __exit__(self, *_ausnahme) -> bool:
+        self.stop()
+        return False
+
+
+def beobachte(wache: Wache, *, takt_s: float = BEOBACHTUNGS_TAKT_S,
+              bei_stillstand=None) -> Beobachter:
+    """Kurzform: ``with beobachte(wache_fuer_verzeichnis(ordner)) as b: ...``"""
+    return Beobachter(wache, takt_s=takt_s, bei_stillstand=bei_stillstand)
