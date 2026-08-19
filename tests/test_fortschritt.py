@@ -503,3 +503,52 @@ def test_ein_eigener_starter_schlaegt_die_wache(monkeypatch, tmp_path):
         seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP", stillstand_frist_s=120,
                                _starte=eigener)
     assert gebaut == []
+
+
+# ======================================================================================
+# Gemessen: Blenders Ausgabe hat einen Takt von 32 Sekunden
+# ======================================================================================
+
+def test_eine_frist_unter_drei_takten_wird_abgewiesen(tmp_path, monkeypatch):
+    """Gemessen am 20.08.2026: Blender schreibt nur alle 32 s. Eine Frist darunter
+    bräche jeden GESUNDEN Lauf ab — und ein Docstring ist keine Prüfung."""
+    from aiimaging import seams
+    monkeypatch.setattr(seams, "finde_blender", lambda: "/bin/true")
+    glb = tmp_path / "m.glb"
+    glb.write_bytes(b"glTF")
+    with pytest.raises(seams.SeamError, match="zu kurz"):
+        seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP", stillstand_frist_s=10)
+
+
+def test_die_abweisung_nennt_die_messung_und_nicht_nur_die_regel(tmp_path, monkeypatch):
+    from aiimaging import seams
+    monkeypatch.setattr(seams, "finde_blender", lambda: "/bin/true")
+    glb = tmp_path / "m.glb"
+    glb.write_bytes(b"glTF")
+    with pytest.raises(seams.SeamError) as fehler:
+        seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP", stillstand_frist_s=30)
+    text = str(fehler.value)
+    assert "34, 66, 98" in text, "die Messpunkte gehören in die Meldung"
+    assert "96 s" in text
+
+
+def test_drei_takte_sind_zugelassen(tmp_path, monkeypatch):
+    from aiimaging import seams
+    monkeypatch.setattr(seams, "finde_blender", lambda: "/bin/true")
+    gebaut = []
+    monkeypatch.setattr(seams, "starter_mit_wache",
+                        lambda *a, **k: gebaut.append(k) or (lambda c, t: (_ for _ in ()).throw(
+                            seams.SeamError("Starter gebaut"))))
+    glb = tmp_path / "m.glb"
+    glb.write_bytes(b"glTF")
+    with pytest.raises(seams.SeamError, match="Starter gebaut"):
+        seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP",
+                               stillstand_frist_s=seams.BLENDER_FRIST_MIN_S)
+    assert gebaut == [{"frist_s": 96.0}]
+
+
+def test_der_gemessene_takt_steht_als_zahl_im_code():
+    """Damit niemand ihn aus der Erinnerung neu erfindet."""
+    from aiimaging import seams
+    assert seams.BLENDER_TAKT_S == 32.0
+    assert seams.BLENDER_FRIST_MIN_S == 96.0

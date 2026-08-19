@@ -53,6 +53,30 @@ def _default_starte(cmd: list[str], timeout: int) -> subprocess.CompletedProcess
 #: Zahl ist eine Setzung und keine Messung, sie steht darum als Parameter.
 TAKT_S = 2.0
 
+#: **Gemessen am 20.08.2026, Blender 4.2, Cycles auf CPU, 512×512, 3000 Samples ohne
+#: adaptives Sampling, stdout in eine Datei umgeleitet.**
+#:
+#: Blender schreibt in diesem Aufbau seine Standardausgabe in einem sehr regelmässigen
+#: Takt: Über einen Lauf von 190 Sekunden wuchs die Datei **sechsmal**, und zwar bei
+#: 34, 66, 98, 130, 162 und 190 Sekunden — also exakt alle **32 Sekunden**, insgesamt um
+#: 937 Bytes. Zwei Läufe (194 s und 190 s) ergaben dasselbe Bild.
+#:
+#: Das ist der Unterschied zwischen „es gibt kein Signal" und „es gibt eines mit grober
+#: Körnung". Die Ausgabe **taugt** als belegtes Fortschrittszeichen — aber eine Frist
+#: unter einem Takt bräche jeden gesunden Lauf ab, und zwar zuverlässig.
+#:
+#: **Vorbehalt, der dazugehört:** gemessen auf der CPU, in einem Container, an einer
+#: Spielzeugszene. Ob GPU-Cycles auf der HomeStation denselben Takt hält, ist offen und
+#: beauftragt. Wer die Zahl übernimmt, übernimmt diesen Vorbehalt mit.
+BLENDER_TAKT_S = 32.0
+
+#: Die kleinste Frist, die wir für einen Blender-Lauf zulassen: **drei Takte**.
+#:
+#: Zwei wären die nackte Grenze; der dritte ist der Abstand zur Grenze, den eine Zahl
+#: braucht, die an einer einzigen Maschine erhoben wurde. Wer weniger will, misst zuerst
+#: nach — und dann steht hier eine andere Zahl.
+BLENDER_FRIST_MIN_S = 3 * BLENDER_TAKT_S
+
 
 def starter_mit_wache(wache=None, *, frist_s: float | None = None,
                       takt_s: float = TAKT_S, _schlaf=None, _popen=None, _uhr=None):
@@ -313,11 +337,12 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
         stillstand_frist_s: Schaltet die **Fortschrittswache** ein (Vorgabe: aus). Sie
             beobachtet die Standardausgabe des Laufs und bricht ab, wenn dort so viele
             Sekunden lang nichts mehr ankommt — deutlich früher als der Gesamt-Timeout.
-            **Bewusst nicht voreingestellt:** Ob Blenders umgeleitete Ausgabe während
-            eines langen Einzelbild-Laufs stetig genug wächst, ist eine Messung und keine
-            Annahme, und ein zu scharf gestellter Wächter bräche gesunde Läufe ab. Der
-            Altbestand macht denselben Fehler in der Gegenrichtung: Er stellt bei
-            ``running`` die Uhr zurück und meldet darum nie etwas.
+            Werte unter :data:`BLENDER_FRIST_MIN_S` werden **abgewiesen**, weil Blenders
+            umgeleitete Ausgabe gemessen nur alle :data:`BLENDER_TAKT_S` Sekunden wächst;
+            eine kürzere Frist bräche jeden gesunden Lauf ab.
+            **Bewusst nicht voreingestellt:** Die Taktmessung stammt von einer CPU in
+            einem Container. Bevor hier eine Vorgabe steht, gehört sie auf der Maschine
+            wiederholt, auf der wirklich gerendert wird.
 
     Returns:
         Report des Runners mit `beauty_png`, `material_id_png`, `depth_exr`, `depth_png`,
@@ -336,6 +361,17 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
     if _starte is not None:
         starte = _starte
     elif stillstand_frist_s is not None:
+        if stillstand_frist_s < BLENDER_FRIST_MIN_S:
+            raise SeamError(
+                f"stillstand_frist_s={stillstand_frist_s} s ist für einen Blender-Lauf "
+                f"zu kurz. Gemessen (20.08.2026, Cycles/CPU, 512x512, 3000 Samples): "
+                f"Blender schreibt seine Standardausgabe nur alle "
+                f"{BLENDER_TAKT_S:.0f} s — sechs Änderungen über 190 s, bei 34, 66, 98, "
+                f"130, 162 und 190 s. Eine kürzere Frist bricht jeden GESUNDEN Lauf ab, "
+                f"und zwar zuverlässig. Kleinster zulässiger Wert: "
+                f"{BLENDER_FRIST_MIN_S:.0f} s (drei Takte). Wer weniger braucht, misst "
+                f"zuerst nach — ein Docstring ist keine Prüfung, darum steht das hier."
+            )
         starte = starter_mit_wache(frist_s=stillstand_frist_s)
     else:
         starte = _default_starte

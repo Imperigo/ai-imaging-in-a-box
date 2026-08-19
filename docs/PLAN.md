@@ -460,9 +460,35 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       dazu, warum es nicht mehr kann. Dieselbe Regel wie beim Belichtungsrahmen.
       Die Wache **bricht nichts ab**: Abgebrochen wird eine Stufe höher, wo man weiss,
       was ein Abbruch kostet.
-- [ ] **Die Wache an die echten Nähte hängen** — gebaut und geprüft ist sie, angeschlossen
-      noch nicht. Anzuschliessen an den Blender-Lauf (`seams.py`, Ausgabedatei wächst),
-      an den Renderlauf und an den Abholer der Brücke. Erst dann zahlt sie sich aus.
+- [x] **Die Wache an die Blender-Naht gehängt** — 2026-08-20, `starter_mit_wache` in
+      `seams.py`. **Als anderer Starter, nicht als Änderung am Vertrag:** Der
+      Injektionspunkt `_starte(cmd, timeout)` gibt es seit Phase 1 für Tests; die
+      Überwachung hat genau dieselbe Gestalt. Kein bestehender Test musste angefasst
+      werden. Ausgaben laufen über temporäre **Dateien**, nicht über Pipes — wer bei
+      `PIPE` pollt statt zu lesen, blockiert den Kindprozess, sobald der Puffer voll ist,
+      und der Lauf bliebe durch genau die Wache stehen, die ihn retten soll.
+- [x] **Blenders Ausgabetakt gemessen** — 2026-08-20,
+      `docs/BLENDER_AUSGABETAKT_2026-08-20.md`. Zwei Läufe, übereinstimmend: Über 190 s
+      wuchs die umgeleitete Standardausgabe **sechsmal** — bei 34, 66, 98, 130, 162 und
+      190 Sekunden, also **exakt alle 32 Sekunden**, insgesamt um 937 Bytes.
+      **Der Befund widerlegt die erste Vermutung**, Blender schreibe während des Renderns
+      gar nichts: Es gibt ein Signal, es hat nur eine grobe Körnung. Und die Körnung ist
+      die Untergrenze jeder Frist — `glb_zu_multipass` **weist** darum Fristen unter
+      96 Sekunden (drei Takte) **ab**, mit den Messpunkten in der Fehlermeldung. Nicht im
+      Docstring: *Ein Docstring ist keine Prüfung* (Lehre aus Sitzung 07).
+      **Nebenbefund mit Folgen:** Mit adaptivem Sampling war derselbe Lauf mit *6000*
+      Samples nach **12 Sekunden** fertig. Die Samplezahl unserer Aufträge ist eine
+      Obergrenze und **keine** Angabe der Rechenzeit — wer daraus eine Dauer schliesst,
+      liegt um mehr als eine Grössenordnung daneben.
+- [ ] **Hält der Takt auch auf der GPU?** — `auf-20260820-18`. Gemessen wurde auf einer
+      CPU, in einem Container, an einer Spielzeugszene, mit einer Blender-Fassung.
+      Solange das nicht auf der richtigen Maschine wiederholt ist, bleibt die Wache in
+      `glb_zu_multipass` **ausgeschaltet**. „Kein Takt erkennbar" wäre dabei die
+      wertvollste Antwort: Dann taugt die Standardausgabe dort nicht als
+      Fortschrittszeichen, und die Wache braucht eine andere Quelle.
+- [ ] **Die Wache an die übrigen Nähte hängen** — Renderlauf (dort zählen wir die
+      Schritte selbst, das ist das sauberste belegte Zeichen, das wir haben) und Abholer
+      der Brücke.
 - [ ] **Variantenreihen** — wir erzeugen ein Bild je Aufruf. Der alte Bestand fährt fünf
       Sampler mit `seed = basis + nummer` und kennt ein `locked_seed` für kontrollierte
       Reihen. Bei 1.4 s je Bild (`auf-13`) ist eine Reihe zum ersten Mal bezahlbar.

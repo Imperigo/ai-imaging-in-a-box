@@ -1,0 +1,30 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260820-18",
+  "art": "qa",
+  "beschreibung": "HAELT BLENDERS AUSGABE AUF DER GPU DENSELBEN TAKT? Kleine Messung, klare Frage, und sie entscheidet einen Zahlenwert, der sonst geraten waere. WAS ICH HIER GEMESSEN HABE (docs/BLENDER_AUSGABETAKT_2026-08-20.md): Blender 4.2, Cycles auf CPU, 512x512, 3000 Samples ohne adaptives Sampling, stdout in eine DATEI umgeleitet. Ueber 190 Sekunden wuchs die Datei genau sechsmal — bei 34, 66, 98, 130, 162 und 190 Sekunden. Also exakt alle 32 Sekunden, insgesamt um 937 Bytes. Zwei Laeufe, dasselbe Bild. WARUM DAS ZAEHLT: Wir haben eine Fortschrittswache gebaut, die einen HAENGENDEN (nicht abgestuerzten) Renderlauf erkennt, lange bevor der Gesamt-Timeout von 900 s greift. Sie beobachtet die Standardausgabe. Ihre Frist muss laenger sein als der Abstand zweier Ausgaben, sonst bricht sie GESUNDE Laeufe ab. Ich habe sie darum bei 96 s (drei Takte) gedeckelt und in glb_zu_multipass AUSGESCHALTET gelassen, bis jemand auf einer echten Maschine nachgemessen hat. DIE MESSUNG, drei Schritte: (1) Nimm eine Szene, die auf der 5090 ungefaehr zwei bis drei Minuten braucht — lieber eine echte aus unseren bisherigen Laeufen als eine neue. WICHTIG: adaptives Sampling ABSCHALTEN (sc.cycles.use_adaptive_sampling = False), sonst ist der Lauf nach Sekunden fertig und misst nichts. (2) Starte blender --background so, dass stdout in eine DATEI geht, nicht in eine Pipe und nicht ins Terminal. Das ist entscheidend: Bei einer Pipe blockiert der Kindprozess, sobald der Puffer voll ist, und bei einem Terminal schreibt Blender anders. (3) Frage jede Sekunde die Dateigroesse ab und notiere die Zeitpunkte, an denen sie sich aendert. WAS ICH ZURUECK BRAUCHE, vier Zahlen: die Zeitpunkte der Groessenaenderungen, die laengste Luecke zwischen zwei Aenderungen, die Gesamtdauer, und das Gesamtwachstum in Bytes. Dazu die Blender-Fassung und ob CUDA/OptiX oder CPU gerechnet hat. DIE EIGENTLICHE FRAGE, in einem Satz: Ist die laengste Luecke auf der GPU groesser, kleiner oder gleich den 32 Sekunden, die ich hier gemessen habe? WENN ES GAR KEINEN TAKT GIBT — also die Datei entweder gar nicht oder nur am Anfang und am Ende waechst —, ist das die WERTVOLLSTE Antwort dieses Auftrags. Dann taugt die Standardausgabe auf der GPU nicht als Fortschrittszeichen, und die Wache braucht dort eine andere Quelle. Bitte melde das ausdruecklich, statt eine Zahl zu runden. NEBENBEFUND, der dich auch betrifft: Ohne abgeschaltetes adaptives Sampling war derselbe Lauf mit 6000 Samples nach 12 Sekunden fertig. Die Samplezahl in unseren Auftraegen ist also eine OBERGRENZE und keine Angabe der Rechenzeit — wer aus '3000 Samples' auf eine Dauer schliesst, liegt um mehr als eine Groessenordnung daneben. Falls du irgendwo Laufzeiten aus Samplezahlen geschaetzt hast, ist das die Erklaerung. NICHT TUN: Nichts an unserem Code aendern. Die Konstante BLENDER_TAKT_S setze ich, wenn deine Zahl da ist. AUFLAGE: Das ist ein GPU-Lauf, also nur bei Leerlauf und unter der Leistungsgrenze. Er ist kurz — zwei bis drei Minuten, plus ein zweiter Lauf zur Bestaetigung. Ein einzelner Lauf beweist keinen Takt. REGEL 3: Keine absoluten Pfade mit Benutzernamen in der Rueckgabe, keine echten Projektdaten als Szene.",
+  "erstellt": "2026-08-20T09:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "eine bereits vorhandene Testszene aus frueheren Auftraegen genuegt"
+  },
+  "params": {
+    "aufloesung": 512,
+    "samples": 3000,
+    "adaptives_sampling": false,
+    "stdout_nach": "datei",
+    "abtastung_s": 1.0,
+    "laeufe": 2
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "hinweis": "GPU-Lauf, aber kurz: zwei Durchgaenge von je zwei bis drei Minuten."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": false,
+    "hinweis": "Aenderungszeitpunkte, laengste Luecke, Dauer, Gesamtwachstum, Blender-Fassung, CPU oder GPU. 'Kein Takt erkennbar' ist eine vollwertige Antwort."
+  }
+}
