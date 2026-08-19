@@ -367,6 +367,34 @@ def test_kommandozeile_und_aufruf_liefern_dieselbe_datei(tmp_path):
     assert (tmp_path / "cli" / "bau.ifc").read_bytes() == direkt.read_bytes()
 
 
+def test_unbekannter_schalter_schreibt_keine_datei(tmp_path):
+    """Ein Tippfehler darf keine IFC erzeugen.
+
+    Das Skript nahm das erste Argument als Zielpfad, ohne hinzusehen. ``--help`` schrieb
+    darum eine IFC namens ``--help`` ins Arbeitsverzeichnis, und ``--gelände`` mit Umlaut
+    eine Datei dieses Namens **ohne** Gelände — beides stillschweigend und mit Rückgabe 0.
+    Geprüft wird an der ausbleibenden Datei, nicht am Text der Meldung.
+    """
+    lauf = subprocess.run(
+        [sys.executable, str(REPO / "tools" / "make_test_ifc.py"), "--gelände"],
+        cwd=tmp_path, capture_output=True, text=True)
+
+    assert lauf.returncode == 2
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_hilfe_beschreibt_alle_vier_stellschrauben(tmp_path):
+    """``--help`` soll den Gebrauch nennen und nichts schreiben."""
+    lauf = subprocess.run(
+        [sys.executable, str(REPO / "tools" / "make_test_ifc.py"), "--help"],
+        cwd=tmp_path, capture_output=True, text=True)
+
+    assert lauf.returncode == 0
+    for stelle in ("ZIEL", "IFC2X3", "MILLI", "--gelaende"):
+        assert stelle in lauf.stdout
+    assert list(tmp_path.iterdir()) == []
+
+
 def test_ohne_angabe_bleibt_es_bei_ifc4_in_metern(tmp_path):
     """Die Vorgabe ist der Stand, auf den alle älteren Tests gebaut sind — sie darf nicht wandern."""
     text = text_von(tmp_path / "bau.ifc")

@@ -287,11 +287,30 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
     return ziel
 
 
+GEBRAUCH = (
+    "Gebrauch: make_test_ifc.py [ZIEL] [IFC4|IFC2X3] [MILLI] [--gelaende]\n"
+    "  ZIEL       Pfad der zu schreibenden Datei (Vorgabe: build/testbau.ifc)\n"
+    "  Schema     IFC4 (Vorgabe) oder IFC2X3\n"
+    "  Vorsatz    MILLI fuer Millimeter, sonst Meter\n"
+    "  --gelaende zusaetzlich eine Gelaendeplatte unter dem Bauwerk\n"
+)
+
+
 if __name__ == "__main__":
     # Zweites und drittes Argument optional: Schema und SI-Vorsatz. Ohne sie bleibt es
     # bei IFC4 in Metern — der Stand, auf den alle bestehenden Tests gebaut sind.
+    if "--help" in sys.argv[1:] or "-h" in sys.argv[1:]:
+        print(GEBRAUCH, end="")
+        raise SystemExit(0)
     argv = [a for a in sys.argv[1:] if a != "--gelaende"]
     mit_gelaende = "--gelaende" in sys.argv
+    # Ein unbekannter Schalter wurde bisher zum Dateinamen: `--help` schrieb eine IFC
+    # namens `--help` ins Arbeitsverzeichnis. Ein Tippfehler darf keine Datei erzeugen.
+    unbekannt = [a for a in argv if a.startswith("-")]
+    if unbekannt:
+        print(f"Unbekannter Schalter: {unbekannt[0]}\n\n{GEBRAUCH}", end="",
+              file=sys.stderr)
+        raise SystemExit(2)
     ziel = Path(argv[0] if argv else "build/testbau.ifc")
     schema = argv[1] if len(argv) > 1 else "IFC4"
     vorsatz = argv[2] if len(argv) > 2 else None
