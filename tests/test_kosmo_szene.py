@@ -326,3 +326,56 @@ def test_die_strikte_fassung_traegt_nur_ihre_felder():
 
 def test_die_schemakennung_steht_im_ergebnis():
     assert ks.als_ergebnis("vis-1-abc123", [])["schema"] == ks.SCHEMA_ERGEBNIS
+
+
+# ======================================================================================
+# Die eigene Schwelle ist noch kein Gate — und das steht in den Daten
+# ======================================================================================
+
+def test_ohne_nullprobe_wird_die_eigene_schwelle_als_unkalibriert_gemeldet():
+    """**Eine Ehrlichkeitspflicht gegenüber der Gegenseite.**
+
+    Wir werfen ihrem Vertrag vor, seine Stil-Schwelle von 0.30 sei kein Gate. Es wäre
+    unredlich, dabei zu verschweigen, was wir am 20.08.2026 über die **eigene** gemessen
+    haben: Weisses Rauschen erreicht 0.7217 und besteht damit; ein perfektes Bild erreicht
+    auf einer freigestellten Szene nur 0.64 und besteht nicht.
+
+    Der Satz muss dort stehen, wo das Abzeichen gelesen wird — nicht nur in einem
+    Übergabeblatt, das niemand aufschlägt, während er auf ein Häkchen sieht.
+    """
+    ergebnis = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"],
+                            geometrie_urteil={"score": 0.71, "bestanden": True})
+    assert "NICHT kalibriert" in ergebnis["qa"]["verdict"]["reason"]
+    hinweise = " ".join(ergebnis["hinweise"])
+    assert "weisses Rauschen" in hinweise
+    assert "0.7217" in hinweise
+    assert "noch nicht kalibriert" in hinweise
+
+
+def test_mit_nullprobe_entfaellt_die_warnung():
+    """Sobald ein Anker vorliegt, ist der Score eingeordnet und die Warnung überflüssig."""
+    ergebnis = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"],
+                            geometrie_urteil={"score": 0.71, "bestanden": True,
+                                              "nullanker": {"rauschen": 0.30}})
+    assert "NICHT kalibriert" not in ergebnis["qa"]["verdict"]["reason"]
+    assert not [h for h in ergebnis["hinweise"] if "kalibriert" in h]
+
+
+def test_ohne_geometrie_urteil_keine_geometriewarnung():
+    """Wo nichts gemessen wurde, wird auch nichts über eine Schwelle behauptet."""
+    ergebnis = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"])
+    assert not [h for h in ergebnis["hinweise"] if "Geometrie-Schwelle" in h]
+    assert "Keine QA gelaufen" in ergebnis["qa"]["verdict"]["reason"]
+
+
+def test_die_warnung_ueberlebt_die_beschraenkung_auf_vertragsfelder():
+    """`nur_vertragsfelder` wirft die Hinweise weg — der Satz im verdict bleibt.
+
+    Wer strikt gegen das fremde Schema sendet, soll die Warnung trotzdem sehen: Sie steht
+    in `verdict.reason`, und das ist ein Vertragsfeld.
+    """
+    ergebnis = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"],
+                            geometrie_urteil={"score": 0.71, "bestanden": True})
+    knapp = ks.nur_vertragsfelder(ergebnis)
+    assert "hinweise" not in knapp
+    assert "NICHT kalibriert" in knapp["qa"]["verdict"]["reason"]

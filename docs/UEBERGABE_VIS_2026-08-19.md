@@ -205,6 +205,42 @@ Wer strikt gegen euer Schema prüft, nimmt unsere Fassung ohne Zusatzfelder; wer
 Begründungen mitlesen will, das volle Wörterbuch. Beides ist eine Funktion, kein
 Handbetrieb.
 
+### Und eine Warnung zu unserer eigenen Zahl, bevor ihr sie anzeigt
+
+Wir sagen euch weiter unten, warum eure Stil-Schwelle von 0.30 nichts taugt. Es wäre
+unredlich, dabei zu verschweigen, was wir am 20.08.2026 über **unsere eigene**
+Geometrie-Schwelle gemessen haben.
+
+> **`geometry_fidelity` mit `threshold: 0.65` ist noch kein tragfähiges Gate.**
+
+Gemessen an vier Kontrollbildern, die *nicht* aus dem Bildmodell stammen, auf derselben
+Soll-Karte und durch dieselbe Kette:
+
+| Kontrollbild | Score | Gate 0.65 |
+|---|---|---|
+| gerenderte Geometrie (perfekt) | 0.984 | ✓ |
+| **weisses Rauschen** | **0.722** | **✓** |
+| leeres Graubild | 0.519 | ✗ |
+
+**Weisses Rauschen besteht das Gate.** Der Grund liegt nicht am Rauschen: Unser
+Tiefenschätzer legt in *jedes* Bild eine zum Horizont laufende Bodenebene, und eine Szene,
+die zu 60 % aus Boden besteht, *ist* im Wesentlichen so eine Rampe. Die Rangkorrelation
+misst dann zwei Bodenrampen gegeneinander.
+
+In der Gegenrichtung dasselbe Problem: Bei einer freigestellten Szene mit wenig Grund
+(17 % der Bildfläche) deckelt die Überdeckung so tief, dass **selbst ein perfektes Bild**
+nur 0.64 erreicht — die Schwelle ist dort **unerreichbar**.
+
+**Was das für euch heisst, konkret:**
+
+* **Zeigt das Abzeichen nicht als „bestanden/durchgefallen" allein.** `threshold` und
+  `method` stehen ohnehin im Ergebnis; bis diese Zange gelöst ist, ist der Zahlenwert
+  aussagekräftiger als das Häkchen.
+* **Ein grünes Geometrie-Abzeichen ist zurzeit kein Beleg für Geometrietreue.** Wir sagen
+  euch das jetzt, statt es in sechs Monaten zu berichtigen.
+* Wir liefern den Wert weiter — er ist nicht wertlos, er ist **noch nicht kalibriert**.
+  Woran wir arbeiten, steht unten unter „Was wir zusätzlich anbieten".
+
 ### Drei Stellen, an denen wir eurem Vertrag *nicht* folgen
 
 Das ist der ehrliche Teil dieses Blatts. Euer Vertrag ist gut gebaut, aber an drei
@@ -438,7 +474,12 @@ ohne Oberfläche aufrufbar:
   der meldet — nicht verbietet —, wenn ein Prompt Bauteile beschreibt, die die Geometrie
   bestimmen soll und nicht der Text.
 - **Geometrie-QA** mit einem Wert, der aus zwei unabhängigen Messungen zusammengesetzt
-  ist, statt aus einem Gefühl.
+  ist, statt aus einem Gefühl — **mit dem Vorbehalt aus Kapitel 2**: Die Schwelle 0.65 ist
+  noch nicht kalibriert, und wir sagen das dazu, statt es zu verschweigen.
+  Was daran gerade gebaut wird: eine **Nullprobe** als fester Bestandteil des Urteils. Ein
+  Score wird dann nicht mehr nur gegen eine Schwelle gehalten, sondern gegen das, was ein
+  Bild *ohne jede Geometrie* auf derselben Soll-Karte erreicht. Dieselbe Medizin, die
+  unsere Stil-QA seit dem 18.08. nimmt — und genau das, was eurer 0.30 fehlt.
 
 Wenn ihr davon etwas braucht, sagt welches — dann bauen wir die Naht dorthin. Was wir
 **nicht** tun, ist eure Oberfläche zu erraten und dafür zu bauen.

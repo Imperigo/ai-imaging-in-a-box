@@ -590,6 +590,14 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Geometrie vom selben Tag: Testbau mit Gelände, Kamera aufs Bauwerk, **24,7 %**.
       **Das ist die nächste Messung**, und sie entscheidet, ob die Geometrie-QA überhaupt
       einen brauchbaren Arbeitsbereich hat.
+- [x] **Die eigene Schwelle steht als unkalibriert in den DATEN, nicht nur im Blatt.**
+      2026-08-20. Wir werfen dem fremden Vertrag vor, seine Stil-Schwelle 0.30 sei kein
+      Gate — es wäre unredlich, dabei zu verschweigen, was wir über die eigene gemessen
+      haben. Kapitel 2 des Übergabeblatts trägt jetzt die Tabelle der Kontrollanker.
+      **Und weil ein Übergabeblatt niemand aufschlägt, während er auf ein Häkchen sieht**,
+      meldet `verdict.reason` *„Geometrie-Schwelle NICHT kalibriert"*, solange keine
+      Nullprobe vorliegt. `verdict.reason` ist ein **Vertragsfeld** und überlebt damit
+      auch `nur_vertragsfelder` — die Warnung erreicht auch den, der strikt sendet.
 - [ ] **Unsere Bilder passen schlechter zur Vorgabe als Rauschen.** `|rho|` 0.23–0.45
       gegen 0.92 beim Rauschen. Das ist keine Aussage über die Metrik, sondern über die
       Bilder. Naheliegender Verdacht: die Tiefen-**Polarität**, die in diese Läufe als

@@ -420,6 +420,19 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
             "passed": bool(geometrie_urteil.get("bestanden")),
             "method": geometrie_qa.METHODE,
         }
+        # Wir werfen dem fremden Vertrag vor, seine Stil-Schwelle sei kein Gate. Es wäre
+        # unredlich, dabei zu verschweigen, was wir über die EIGENE gemessen haben.
+        if geometrie_urteil.get("nullanker") is None:
+            hinweise.append(
+                f"Zur Geometrie-Schwelle {geometrie_qa.SCHWELLE_GEOMETRIE}: Für diesen "
+                f"Lauf liegt KEINE Nullprobe vor. Am 20.08.2026 gemessen "
+                f"(auf-20260820-21): Auf einer Szene mit viel Boden erreicht weisses "
+                f"Rauschen {geometrie_qa.NULLANKER['platte_endlich']['rauschen']}, besteht "
+                f"das Gate also — und auf einer Szene mit wenig Boden erreicht selbst ein "
+                f"perfektes Bild nur 0.64, kann es also nicht bestehen. Ein grünes "
+                f"Abzeichen ist damit zurzeit KEIN Beleg für Geometrietreue. Der Wert ist "
+                f"nicht wertlos, er ist noch nicht kalibriert."
+            )
 
     if stil_urteil is not None:
         schwelle = stil_urteil.get("schwelle", stil_qa.SCHWELLE_STIL)
@@ -452,6 +465,12 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     if not messbar:
         grund = ("Keine QA gelaufen — weder Geometrie noch Stil wurden gemessen. "
                  "'passed: false' heisst hier NICHT durchgefallen, sondern ungeprüft.")
+    elif qa.get("geometry") and geometrie_urteil.get("nullanker") is None:
+        # Der Satz muss dort stehen, wo das Abzeichen gelesen wird — nicht nur in einem
+        # Übergabeblatt, das niemand aufschlägt, während er auf ein Häkchen sieht.
+        teile.append("Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, "
+                     "siehe hinweise)")
+        grund = "; ".join(teile)
         hinweise.append(grund)
     else:
         grund = "; ".join(teile)
