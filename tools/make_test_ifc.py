@@ -23,7 +23,13 @@ Die Geometrie ist absichtlich asymmetrisch (L≠B, Wand ohne Symmetrie), damit e
 verdrehte Up-Achse in Tests **auffällt** statt zufällig gleich auszusehen.
 
 Aufruf:
-    python3 tools/make_test_ifc.py [ziel.ifc]
+    python3 tools/make_test_ifc.py [ziel.ifc] [schema] [vorsatz] [--gelaende]
+
+``--gelaende`` legt eine Platte in 2,5-facher Gebäudespanne darunter. **Ohne sie steht der
+Testbau in der Luft**, und das ist keine Kleinigkeit: Gemessen (`auf-20260819-15`) deckelt
+``geom_iou`` dann bei 0.256, und die Geometrie-Schwelle von 0.65 ist **arithmetisch
+unerreichbar** — selbst ein perfektes Bild käme auf höchstens 0.505. Mit Gelände liegt der
+Deckel bei 0.967.
 """
 from __future__ import annotations
 
@@ -34,6 +40,16 @@ from pathlib import Path
 # Gebäudemass in Metern. Asymmetrisch, damit Verdrehungen sichtbar werden.
 LAENGE_X, BREITE_Y, HOEHE_Z = 8.0, 5.0, 3.0
 WANDDICKE, PLATTENDICKE = 0.30, 0.25
+
+#: Kantenlänge der **Geländeplatte** als Vielfaches der grössten Gebäudespanne.
+#:
+#: 2,5 — dieselbe Grösse wie die Szene ``platte_endlich`` aus `auf-20260819-15`, damit die
+#: Zahlen vergleichbar bleiben.
+GELAENDE_VIELFACHES = 2.5
+
+#: Dicke der Geländeplatte. Dünn, aber nicht null: Eine Fläche ohne Dicke hat keine
+#: Hüllbox-Ausdehnung in Z und verschwindet in mancher Auswertung.
+GELAENDE_DICKE = 0.05
 
 _B64 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$"
 
@@ -111,7 +127,8 @@ def _quader(s: _Step, kontext: str, breite: float, tiefe: float, hoehe: float,
     return shape, ort
 
 
-def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None) -> Path:
+def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
+                mit_gelaende: bool = False) -> Path:
     """Schreibt die synthetische IFC nach `ziel` und gibt den Pfad zurück.
 
     Args:
@@ -193,6 +210,35 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None)
 
     bauteile = []
 
+    # Gelände — eine Platte, die ÜBER das Gebäude hinausreicht. Nicht zu verwechseln mit
+    # der Bodenplatte darunter: Die gehört zum Bauwerk, das Gelände ist der Grund, auf dem
+    # es steht.
+    #
+    # **Warum es das überhaupt gibt** (nachgetragen am 20.08.2026): Ohne Gelände trägt nur
+    # ein kleiner Teil des Bildes Geometrie — beim Testbau 17 %. Und je mehr leere Fläche
+    # ein Bild hat, desto mehr Bodenebene erfindet der monokulare Tiefenschätzer hinein
+    # (`auf-20260818-10`). Gemessen (`auf-20260819-15`) deckelt ``geom_iou`` dadurch bei
+    # **0.256**, und die Geometrie-Schwelle von 0.65 ist dann **arithmetisch
+    # unerreichbar**: Selbst ein perfektes Bild käme auf höchstens 0.505.
+    #
+    # Mit Gelände steigt der Deckel auf 0.967. **Ein Gebäude steht auf dem Boden**, und
+    # eine Testszene ohne Grund misst eine Lage, die es nicht gibt.
+    #
+    # Vorgabe ist trotzdem **aus**: Alle bestehenden Tests hängen an der Hüllbox
+    # 8,0 × 5,0 × 3,25 m, und eine stillschweigend geänderte Testgeometrie wäre genau die
+    # Sorte Änderung, die eine Messreihe unbrauchbar macht, ohne dass es auffällt.
+    if mit_gelaende:
+        kante = GELAENDE_VIELFACHES * max(LAENGE_X, BREITE_Y)
+        shape, ort = _quader(
+            s, kontext, kante, kante, GELAENDE_DICKE,
+            (LAENGE_X - kante) / 2.0, (BREITE_Y - kante) / 2.0,
+            -PLATTENDICKE - GELAENDE_DICKE, ort_gesch,
+            einheit_je_meter=einheit_je_meter)
+        bauteile.append(s.add(
+            f"IFCSLAB('{_ifc_guid(next(g))}',{besitz},'Gelaende',$,$,{ort},{shape},$,"
+            f".BASESLAB.)"
+        ))
+
     # Bodenplatte — bündig mit der Wandaussenflucht und ganz unter Null, damit die
     # erwartete Gesamt-Bounding-Box eine glatte Prüfgrösse bleibt.
     shape, ort = _quader(s, kontext, LAENGE_X, BREITE_Y, PLATTENDICKE,
@@ -244,8 +290,11 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None)
 if __name__ == "__main__":
     # Zweites und drittes Argument optional: Schema und SI-Vorsatz. Ohne sie bleibt es
     # bei IFC4 in Metern — der Stand, auf den alle bestehenden Tests gebaut sind.
-    ziel = Path(sys.argv[1] if len(sys.argv) > 1 else "build/testbau.ifc")
-    schema = sys.argv[2] if len(sys.argv) > 2 else "IFC4"
-    vorsatz = sys.argv[3] if len(sys.argv) > 3 else None
-    p = erzeuge_ifc(ziel, schema=schema, vorsatz=(vorsatz or None))
+    argv = [a for a in sys.argv[1:] if a != "--gelaende"]
+    mit_gelaende = "--gelaende" in sys.argv
+    ziel = Path(argv[0] if argv else "build/testbau.ifc")
+    schema = argv[1] if len(argv) > 1 else "IFC4"
+    vorsatz = argv[2] if len(argv) > 2 else None
+    p = erzeuge_ifc(ziel, schema=schema, vorsatz=(vorsatz or None),
+                    mit_gelaende=mit_gelaende)
     print(f"{p}  ({p.stat().st_size} Bytes, {len(p.read_text().splitlines())} Zeilen)")

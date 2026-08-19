@@ -358,7 +358,7 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
                          beauty: bool, material_id: bool, kamera=None,
                          auge=None, blick_auf=None, brennweite=None,
                          gelaende_z=None, hoehe=None,
-                         herzschlag_takt_s=None) -> list[str]:
+                         herzschlag_takt_s=None, kamera_huellbox=None) -> list[str]:
     """Die Argumente hinter dem `--`-Trenner — eine Stelle für Lauf und Trockenlauf.
 
     Wären sie zweimal geschrieben, könnten `glb_zu_multipass` und
@@ -403,6 +403,10 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
         argumente += ["--hoehe", str(int(hoehe))]
     if herzschlag_takt_s is not None:
         argumente += ["--herzschlag-s", str(float(herzschlag_takt_s))]
+    if kamera_huellbox is not None:
+        lo, hi = kamera_huellbox
+        argumente += ["--kamera-huellbox",
+                      ",".join(str(float(v)) for v in (*lo, *hi))]
     if drehen:
         argumente.append("--rotiere-z-up")
     if not beauty:
@@ -435,7 +439,7 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      gelaende_z=None, hoehe=None,
                      timeout: int = 900, stillstand_frist_s: float | None = None,
                      herzschlag_takt_s: float | None = HERZSCHLAG_TAKT_S,
-                     _starte=None) -> dict:
+                     kamera_huellbox=None, _starte=None) -> dict:
     """glb → Cycles-Multipass über `blender --background`.
 
     Vier Ausgaben, in zwei Renderdurchgängen: Beauty und Tiefe (EXR in Metern plus
@@ -454,6 +458,12 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             in der Luft. Spart Plattenplatz, keine Rechenzeit.
         material_id: `False` lässt den zweiten Durchgang ganz aus und spart damit
             tatsächlich Rechenzeit.
+        kamera_huellbox: ``(lo, hi)`` — die Hüllbox, auf die sich die **Kamera** bezieht.
+            Ohne Angabe alle Meshes. Nötig, sobald die Szene **Gelände** trägt: Eine
+            Geländeplatte bläht die Hüllbox auf, die Kamera zieht sich zurück, und der
+            Geometrieanteil des Bildes *sinkt* (am 20.08.2026 gemessen: 6,9 % statt 21,9 %).
+            Der Bericht beschreibt weiterhin, was dasteht — die Kamera rahmt, was gezeigt
+            werden soll. Zwei verschiedene Fragen, zwei verschiedene Hüllboxen.
         herzschlag_takt_s: Die **Herzschlagwache**, seit dem 20.08.2026 **eingeschaltet**
             (``None`` schaltet sie ab). Der Runner
             schreibt dann alle so viele Sekunden ein Lebenszeichen nach
@@ -560,7 +570,8 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                               samples=samples, beauty=beauty, material_id=material_id,
                               kamera=kamera, auge=auge, blick_auf=blick_auf,
                               brennweite=brennweite, gelaende_z=gelaende_z,
-                              hoehe=hoehe, herzschlag_takt_s=herzschlag_takt_s),
+                              hoehe=hoehe, herzschlag_takt_s=herzschlag_takt_s,
+                              kamera_huellbox=kamera_huellbox),
     ]
 
     ergebnis = starte(cmd, timeout)

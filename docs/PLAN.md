@@ -542,6 +542,26 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       dass es zwischen 20 % und 60 % ungemessen ist, steht in der Warnung selbst.
       *Nebenbei aufgefallen:* Unsere eigene Test-Sollkarte liegt bei **18,8 %** — also
       selbst im unerreichbaren Bereich.
+- [x] **Die Testgeometrie kann jetzt Gelände tragen** — 2026-08-20,
+      `make_test_ifc.py --gelaende`, Platte in 2,5-facher Gebäudespanne wie
+      `platte_endlich`. **Vorgabe bleibt aus:** Alle bestehenden Tests hängen an der
+      Hüllbox 8,0 × 5,0 × 3,25 m, und eine stillschweigend geänderte Testgeometrie macht
+      eine Messreihe unbrauchbar, ohne dass es auffällt.
+- [x] **Gelände allein macht es SCHLECHTER — die Kamera war das Problem.** Beim
+      Nachmessen: Mit Gelände sinkt der Geometrieanteil von 6,9 % auf **0,9 %**. Die
+      Geländeplatte bläht die Hüllbox von 8 × 5 auf 20 × 20 m, die Kamera zieht sich
+      zurück, und das Gebäude wird *kleiner*. Eine flache Platte, von 1,70 m Augenhöhe
+      gesehen, füllt fast keine Bildfläche.
+      **Behoben mit `--kamera-huellbox`:** Die Kamera bezieht sich auf die Hüllbox des
+      **Bauwerks**, der Bericht weiter auf alles, was dasteht. Zwei Fragen, zwei
+      Hüllboxen. Gemessen an drei Läufen derselben Geometrie: **6,9 % → 0,9 % → 24,7 %.**
+      *Dabei wäre mir fast derselbe Fehler unterlaufen, gegen den ich am selben Tag
+      `kontrollierte_reihe` gebaut habe:* Die erste Messung änderte Gelände **und** Kamera
+      zugleich. Mit fester Kamera stieg der Anteil von 21,9 % auf 51,8 % — das Gelände
+      wirkt, nur die Kamera rahmte es mit.
+- [ ] **24,7 % liegen im ungemessenen Mittelfeld.** Unter 20 % war der Deckel
+      unerreichbar, ab 60 % hoch — dazwischen weiss niemand etwas. Entweder eine kleinere
+      Geländeplatte oder ein höherer Standpunkt; beides ungemessen.
 - [ ] **Der Rest ist kein Rechenfehler, sondern ein echter Rückstand.** Der Deckel lag bei
       0.636, die erzeugten Bilder bei 0.265 — zwischen *bestmöglich* und *erreicht* klafft
       noch einmal derselbe Abstand. Beides ist wahr, und keines erklärt das andere weg.

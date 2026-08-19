@@ -1033,3 +1033,74 @@ def test_die_zeichnung_haengt_an_den_materialien_und_nicht_am_pass(lauf):
         f"durchkommen, und das wäre ein Befund am Pass statt an der Szene.")
 
 
+
+
+# ======================================================================================
+# Die Kamera rahmt, was gezeigt werden soll — nicht alles, was dasteht
+# ======================================================================================
+
+@ohne_blender
+def test_die_kamera_huellbox_geht_bis_in_den_runner(tmp_path):
+    """Gemessen am 20.08.2026 an drei Läufen derselben Geometrie:
+
+    ======================================  ================
+    ohne Gelände                            6,9 % Geometrie
+    mit Gelände, Kamera auf **alles**       0,9 % Geometrie
+    mit Gelände, Kamera aufs **Bauwerk**    **24,7 %**
+    ======================================  ================
+
+    Eine Geländeplatte bläht die Hüllbox auf, die Kamera zieht sich zurück, und das
+    Gebäude wird **kleiner** statt grösser. Der Bericht beschreibt weiterhin, was dasteht;
+    die Kamera rahmt, was gezeigt werden soll. Zwei Fragen, zwei Hüllboxen.
+    """
+    glb = schreibe_test_glb(tmp_path / "m.glb")
+    ohne = seams.glb_zu_multipass(glb, tmp_path / "a", up_axis="Y", aufloesung=64,
+                                  samples=4, material_id=False, kamera="sSE")
+    eng = seams.glb_zu_multipass(glb, tmp_path / "b", up_axis="Y", aufloesung=64,
+                                 samples=4, material_id=False, kamera="sSE",
+                                 kamera_huellbox=([0.0, 0.0, 0.0], [1.0, 1.0, 1.0]))
+
+    assert ohne["kamera"]["auge"] != eng["kamera"]["auge"], (
+        "eine andere Hüllbox muss zu einem anderen Standpunkt führen")
+    assert ohne["bbox"] == eng["bbox"], (
+        "der BERICHT beschreibt weiter dieselbe Szene — nur die Kamera bezieht sich "
+        "auf etwas anderes")
+
+
+def test_die_huellbox_steht_im_kommando():
+    argumente = seams._multipass_argumente(
+        "m.glb", "/tmp/aus", drehen=False, aufloesung=512, samples=16,
+        beauty=True, material_id=True,
+        kamera_huellbox=([0.0, 1.0, 2.0], [3.0, 4.0, 5.0]))
+    assert "--kamera-huellbox" in argumente
+    assert argumente[argumente.index("--kamera-huellbox") + 1] == "0.0,1.0,2.0,3.0,4.0,5.0"
+
+
+def test_ohne_huellbox_kein_argument():
+    argumente = seams._multipass_argumente(
+        "m.glb", "/tmp/aus", drehen=False, aufloesung=512, samples=16,
+        beauty=True, material_id=True)
+    assert "--kamera-huellbox" not in argumente
+
+
+@pytest.mark.parametrize("text, muster", [
+    ("1,2,3", "sechs Zahlen"),
+    ("1,2,3,4,5,6,7", "sechs Zahlen"),
+    ("a,b,c,d,e,f", "keine Zahlen"),
+    ("5,0,0,1,1,1", "rückwärts"),
+])
+def test_eine_unbrauchbare_huellbox_wird_im_runner_abgewiesen(text, muster):
+    """Der Runner läuft unbeaufsichtigt — eine falsch geschriebene Hüllbox soll dort
+    scheitern und nicht eine Kamera an einen erfundenen Ort stellen."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "_runner_pruef", Path(seams.BLENDER_RUNNER))
+    quelle = Path(seams.BLENDER_RUNNER).read_text(encoding="utf-8")
+    # Nur die eine Funktion herausschneiden — das Modul selbst braucht `bpy`.
+    raum: dict = {}
+    anfang = quelle.index("def _huellbox_aus_text")
+    ende = quelle.index("def _bbox_aller_meshes")
+    exec(compile(quelle[anfang:ende], "runner", "exec"), raum)  # noqa: S102
+    with pytest.raises(SystemExit, match=muster):
+        raum["_huellbox_aus_text"](text)

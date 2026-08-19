@@ -140,6 +140,12 @@ def _argumente():
     ap.add_argument("--gelaende-z", type=float, default=None,
                     help="Geländehöhe im Weltsystem. Ohne Angabe die Unterkante der "
                          "Hüllbox — bei einem Untergeschoss stünde die Kamera sonst im Keller.")
+    ap.add_argument("--kamera-huellbox", default=None,
+                    help="Sechs Zahlen 'x0,y0,z0,x1,y1,z1' — die Hüllbox, auf die sich "
+                         "die KAMERA bezieht. Ohne Angabe alle Meshes. Gebraucht, sobald "
+                         "die Szene Gelände trägt: Ein Geländestück blaeht die Hüllbox "
+                         "auf, die Kamera zieht sich zurück, und das Gebäude wird kleiner "
+                         "statt grösser. Am 20.08.2026 gemessen — siehe _bbox_aller_meshes.")
     ap.add_argument("--herzschlag-s", type=float, default=None,
                     help="Alle so viele Sekunden ein Lebenszeichen nach "
                          "<out>/herzschlag.txt schreiben. Ohne Angabe: keines. Siehe "
@@ -265,8 +271,43 @@ def _szene_leeren() -> None:
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
 
+def _huellbox_aus_text(text: str):
+    """``"x0,y0,z0,x1,y1,z1"`` → ``(lo, hi)``. Sechs Zahlen, keine fünf und keine sieben."""
+    teile = [t.strip() for t in str(text).split(",")]
+    if len(teile) != 6:
+        raise SystemExit(
+            f"--kamera-huellbox braucht genau sechs Zahlen 'x0,y0,z0,x1,y1,z1', "
+            f"bekam {len(teile)}: {text!r}")
+    try:
+        z = [float(t) for t in teile]
+    except ValueError as fehler:
+        raise SystemExit(f"--kamera-huellbox enthält keine Zahlen: {text!r}") from fehler
+    lo, hi = z[:3], z[3:]
+    for i in range(3):
+        if hi[i] < lo[i]:
+            raise SystemExit(
+                f"--kamera-huellbox: Achse {i} läuft rückwärts ({lo[i]} > {hi[i]}). "
+                f"Die Reihenfolge ist x0,y0,z0,x1,y1,z1 — erst die untere Ecke.")
+    return lo, hi
+
+
 def _bbox_aller_meshes():
-    """Achsparallele Bounding-Box aller Mesh-Objekte in Weltkoordinaten."""
+    """Achsparallele Bounding-Box aller Mesh-Objekte in Weltkoordinaten.
+
+    **Nicht immer die richtige Grundlage für die Kamera** — und das ist am 20.08.2026
+    gemessen worden. Bekommt der Testbau eine Geländeplatte in 2,5-facher Gebäudespanne,
+    wächst die Hüllbox von 8 × 5 m auf 20 × 20 m. Die Kamera zieht sich entsprechend
+    zurück, und der Geometrieanteil des Bildes **sinkt** von 6,9 % auf 0,9 %: Eine flache
+    Platte, von 1,70 m Augenhöhe aus gesehen, füllt fast keine Bildfläche.
+
+    Mit **fester** Kamera — also dem gleichen Standpunkt für beide Szenen — geht derselbe
+    Anteil von 21,9 % auf 51,8 % **hinauf**. Das Gelände wirkt also genau wie erhofft;
+    was nicht wirkt, ist die Kamera, die es mitrahmt.
+
+    Wer Gelände in der Szene hat, gibt der Kamera darum ``--kamera-huellbox`` mit: die
+    Hüllbox des **Bauwerks**. Die Kamera rahmt dann, was gezeigt werden soll, und nicht
+    alles, was dasteht.
+    """
     lo = [float("inf")] * 3
     hi = [float("-inf")] * 3
     for obj in bpy.data.objects:
@@ -785,7 +826,11 @@ def main() -> int:
                 obj.matrix_world = dreh @ obj.matrix_world
 
     lo, hi = _bbox_aller_meshes()
-    _, _, _, kamera_herkunft = _kamera_setzen(lo, hi, a)
+    # Die Kamera darf sich auf eine ANDERE Hüllbox beziehen als der Bericht: Der Bericht
+    # beschreibt, was dasteht; die Kamera rahmt, was gezeigt werden soll.
+    kam_lo, kam_hi = (_huellbox_aus_text(a.kamera_huellbox)
+                      if getattr(a, "kamera_huellbox", None) else (lo, hi))
+    _, _, _, kamera_herkunft = _kamera_setzen(kam_lo, kam_hi, a)
     mitte = [(lo[i] + hi[i]) / 2.0 for i in range(3)]
     spanne = max(hi[i] - lo[i] for i in range(3)) or 1.0
 
