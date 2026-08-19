@@ -2237,6 +2237,29 @@ bei gleichem Namen.
 und schaut, ob die Tests ihn bemerken. Tun sie es nicht, bewachen sie nichts. *Ohne das
 kann eine grüne Testreihe blosse Beruhigung sein.*
 
+**Vakuum-wahre Zusicherung** — Eine Zusicherung über **alle** Elemente einer Sammlung,
+die auch dann hält, wenn die Sammlung **leer** ist: „alle Warnungen sind Zeichenketten"
+stimmt, wenn es gar keine Warnung gibt; „keine Warnung enthält X" ebenso. Ein Test dieser
+Bauart besteht auch dann, wenn der Mechanismus, der die Sammlung füllen soll, vollständig
+kaputt ist.
+*Der lateinische Ausdruck dafür lautet* vacuous truth *— wahr, weil es nichts gibt, was
+sie widerlegen könnte.*
+
+**Vakuumprobe** — Die Gegenprüfung dazu, in diesem Projekt `tools/vakuumprobe.py`: Auf
+einer **Kopie** der Testsuite werden alle solchen Zusicherungen durch eine Fassung
+ersetzt, die bei leerer Sammlung fehlschlägt. Was danach rot ist, war vorher grün **und
+leer**. Verwandt mit der *Mutationsprobe*, aber billiger und enger: Sie sucht nicht nach
+unbemerkten Fehlern überhaupt, sondern nach einer bestimmten, sehr häufigen Bauart.
+*Erste Messung am 20.08.2026: 40 Stellen umgeschrieben, 6 Treffer, und für jeden Treffer
+lag eine Gegenprobe in derselben Datei — kein einziger falsch-grüner Test.*
+
+**Gegenprobe (zu einer Abwesenheits-Zusicherung)** — Der Test, der eine vakuum-wahre
+Zusicherung erst tragfähig macht: Er zeigt am **selben** Mechanismus, dass sich die
+Sammlung im umgekehrten Fall **füllt**. „Bei ausreichender Führung erscheint kein Hinweis"
+sagt für sich nichts; zusammen mit „bei zu geringer Führung erscheint einer" sagt es alles.
+*Merksatz aus dem Anlass:* **Ein bestandener Test ist kein Beleg dafür, dass er etwas
+geprüft hat.*
+
 **Cache** — Zwischenspeicher für teuer berechnete Ergebnisse, damit sie nicht doppelt
 berechnet werden.
 
@@ -2382,6 +2405,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-20 | Ergaenzt aus der Vakuumprobe (`tools/vakuumprobe.py`): **vakuum-wahre Zusicherung**, **Vakuumprobe**, **Gegenprobe zu einer Abwesenheits-Zusicherung**. Anlass war ein Befund der HomeStation ueber sich selbst — ein als gruen gemeldeter Waechter, dessen Fundartefakt `{"geprueft": 0}` trug |
 | 2026-08-20 | Aus dem GPU-Ergebnis zu `auf-20260820-18`: **Sandbox-Paket (Snap, Flatpak)** und **Artefakt einer Messung**. Beide sind teuer erworben — das GPU-faehige Blender-Snap liefert bei Dateiumleitung Rueckgabewert 0 ohne Bild, und der am selben Tag gemessene 32-Sekunden-Takt war ein Artefakt der CPU-Messung |
 | 2026-08-20 | Ergaenzt aus dem Abholer (`src/aiimaging/abholer.py`): **Laufzettel**, **Waise (verwaister Auftrag)** |
 | 2026-08-20 | Ergaenzt aus der Taktmessung an Blender: **adaptives Sampling**, **Blockpufferung der Standardausgabe**, **Pipe-Blockade**. **Sample** um die gemessene Einschraenkung ergaenzt: Bei adaptivem Sampling ist die Samplezahl eine OBERGRENZE und keine Angabe der Rechenzeit — 6000 Samples in 12 s gegen 3000 ohne adaptives Sampling in ueber drei Minuten |

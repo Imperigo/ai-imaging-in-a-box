@@ -300,14 +300,19 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       bei unverdrahteten Knoten. Das ist wörtlich der Befund, mit dem dieses Projekt
       angefangen hat, und genau dagegen sind `kette.pruefe_kette` und `graph.pruefe_bedarf`
       gebaut. Steht als Kapitel 3 im Übergabeblatt.
-- [ ] **„Ein bestandener Test ist kein Beleg dafür, dass er etwas geprüft hat."** Die
-      HomeStation hat im selben Bericht einen eigenen Fehler gemeldet: Sie hatte einen
-      Wächter als *grün* geführt, er habe 1024×768 geprüft — das Fundartefakt aus ihrem
-      Lauf trägt `{"geprueft": 0}`. Er hat **nichts** gemessen.
-      Derselbe Fehler in einer weiteren Verkleidung, und er gehört gegen unsere **eigene**
-      Testsuite geprüft: Wo behauptet ein grüner Test bei uns etwas, das er gar nicht
-      gemessen hat? Die Dreiteilung *bestanden / durchgefallen / nicht gemessen* ist die
-      Antwort im Produktivcode — in den Tests selbst ist sie noch nirgends erzwungen.
+- [x] **„Ein bestandener Test ist kein Beleg dafür, dass er etwas geprüft hat."**
+      Die HomeStation hat einen eigenen Fehler gemeldet: einen als *grün* geführten
+      Wächter, dessen Fundartefakt `{"geprueft": 0}` trug — er hatte **nichts** gemessen.
+      **Dieselbe Frage an unsere eigene Suite gestellt und gemessen**, 2026-08-20,
+      `tools/vakuumprobe.py`, 13 Tests. Gesucht wird die vakuum-wahre Gestalt: `all(...)`
+      und `not any(...)` über eine Sammlung, die leer sein kann. Nicht statisch geraten,
+      sondern **umgeschrieben und ausgeführt** — auf einer Kopie, das Repo bleibt
+      unangetastet.
+      **Ergebnis: 40 Stellen umgeschrieben, 6 Treffer, kein einziger falsch-grüner Test.**
+      Für jeden der sechs lag eine Gegenprobe in derselben Datei — teils drei Zeilen
+      darüber. Das Ergebnis ist damit unspektakulär und genau darum berichtenswert: Die
+      Frage war offen und ist jetzt beantwortet statt vermutet.
+      Das Werkzeug bleibt, weil die nächste schwache Stelle sonst wieder unentdeckt bliebe.
 - [ ] **Weg B, Schritt 5–7** — QA je Kamera statt je Bild, die Verzeichniskonvention
       `<out>/<kamera>/…`, Varianten, und der Treue-Regler des Panels bis in die Kette.
 - [ ] **Die zweite Hälfte der Stil-Kalibrierung** — der Boden ist gemessen, `k = 2` ist
