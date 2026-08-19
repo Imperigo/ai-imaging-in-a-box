@@ -1,0 +1,111 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260819-15",
+  "status": "ok",
+  "beendet": "2026-08-19T14:50:00Z",
+  "dauer_s": null,
+  "messwerte": {
+    "szenen": {
+      "ohne_boden": {
+        "n_soll": 44604,
+        "wie_soll": {
+          "n_ausgewaehlt": 44604,
+          "anteil_auf_bauwerk": 0.4071,
+          "geom_iou": 0.2555841743022421,
+          "spearman": -0.992289973036877,
+          "score": 0.5036006487555634
+        },
+        "ohne_randberuehrung": {
+          "n_ausgewaehlt": 18311,
+          "anteil_auf_bauwerk": 0.9917,
+          "geom_iou": 0.4057333095004022,
+          "spearman": -0.992289973036877,
+          "score": 0.6345116978782321
+        },
+        "soll_spanne_m": 8.74,
+        "grauwerte_auf_bauwerk": 30663
+      },
+      "platte_endlich": {
+        "n_soll": 156801,
+        "wie_soll": {
+          "n_ausgewaehlt": 156801,
+          "anteil_auf_bauwerk": 0.2836,
+          "geom_iou": 0.9666376104502041,
+          "spearman": -0.9976800852354427,
+          "score": 0.9820361976962684
+        },
+        "ohne_randberuehrung": {
+          "n_ausgewaehlt": 0,
+          "anteil_auf_bauwerk": null,
+          "geom_iou": 0.0,
+          "spearman": null,
+          "score": null
+        },
+        "soll_spanne_m": 15.56,
+        "grauwerte_auf_bauwerk": 25820
+      },
+      "ebene_bis_rand": {
+        "n_soll": 246248,
+        "wie_soll": {
+          "n_ausgewaehlt": 246248,
+          "anteil_auf_bauwerk": 0.1811,
+          "geom_iou": 0.9737261848464689,
+          "spearman": -0.9982757091204318,
+          "score": 0.9859245395397872
+        },
+        "ohne_randberuehrung": {
+          "n_ausgewaehlt": 0,
+          "anteil_auf_bauwerk": null,
+          "geom_iou": 0.0,
+          "spearman": null,
+          "score": null
+        },
+        "soll_spanne_m": 79.13,
+        "grauwerte_auf_bauwerk": 7035
+      },
+      "ebene_mit_horizont": {
+        "n_soll": 262144,
+        "wie_soll": {
+          "n_ausgewaehlt": 262144,
+          "anteil_auf_bauwerk": 0.1702,
+          "geom_iou": 1.0,
+          "spearman": -0.9290212581004453,
+          "score": 0.9638574884807636
+        },
+        "ohne_randberuehrung": {
+          "n_ausgewaehlt": 0,
+          "anteil_auf_bauwerk": null,
+          "geom_iou": 0.0,
+          "spearman": null,
+          "score": null
+        },
+        "soll_spanne_m": 98.52,
+        "grauwerte_auf_bauwerk": 5686
+      }
+    },
+    "aufbau": {
+      "geometrie": "synthetischer Testbau, Boden als Platte 0.05 m in vier Groessen",
+      "boden_kantenlaenge": {
+        "ohne_boden": null,
+        "platte_endlich": "20 m (2.5x Bauspanne)",
+        "ebene_bis_rand": "112 m (14x)",
+        "ebene_mit_horizont": "3200 m (400x)"
+      },
+      "kamera": "FEST ueber alle vier Szenen (auge/blick_auf/brennweite aus der Referenz)",
+      "warum_feste_kamera": "Ohne sie rahmt der Multipass je Szene neu ein — dieselben Bildindizes zeigen dann woandershin, und eine Bauwerksmaske aus der Referenz ist wertlos. Mein erster Anlauf ist genau daran gescheitert und lieferte in allen Bodenszenen 0 %."
+    }
+  },
+  "urteil": {
+    "die_frage": "JA, die Szene ohne Boden hat den Deckel verursacht — fast vollstaendig. geom_iou steigt von 0.2556 auf 0.9666 (endliche Platte), 0.9737 (Ebene bis zum Rand) und 1.0000 (mit Horizont). Deine Vermutung trifft zu: Wir haben einem an Naturfotos trainierten Schaetzer ein SCHWEBENDES Gebaeude gezeigt und uns dann gewundert, dass er einen Boden erfindet.",
+    "die_unbequeme_erwartung_trifft_zu_und_zwar_hart": "'ohne_randberuehrung' waehlt in ALLEN DREI Bodenszenen NULL Punkte aus. Nicht wenige — null. Sobald ein Boden da ist, beruehrt jede zusammenhaengende Flaeche den Bildrand, und die Regel verwirft alles.\nDie Regel, die in auf-12 gewonnen hat, ist in der realistischen Szene nicht bloss schlechter — sie ist unbrauchbar. Sie hat dort gewonnen, WEIL die Szene keinen Boden hatte: Der Randkeil war eine Halluzination, und sie hat ihn richtig verworfen. Jetzt verwirft sie richtige Geometrie.\nDu hast sie gestern zur Vorgabe gemacht. Das gehoert zurueckgenommen, und zwar bevor jemand darauf baut.",
+    "eine_warnung_die_ich_nicht_erwartet_habe": "Bei 'ebene_mit_horizont' ist geom_iou EXAKT 1.0000 — und das ist kein Erfolg, sondern eine Leerstelle. n_soll betraegt 262144, also ALLE Bildpunkte: Es gibt keinen Hintergrund mehr. Die Silhouettenmessung vergleicht dann das ganze Bild mit dem ganzen Bild und sagt zwangslaeufig 1.0.\nDer Score ruht in dieser Szene ALLEIN auf der Rangkorrelation (-0.9290, Score 0.9639). Wer geom_iou 1.0 als Beleg fuer eine getroffene Silhouette liest, liest nichts. Eine vollflaechige Szene braucht ein anderes Silhouettenmass — oder den ausdruecklichen Vermerk, dass geom_iou dort nicht misst.",
+    "der_anteil_auf_dem_bauwerk_faellt_und_das_ist_richtig_so": "40.7 % (ohne Boden) -> 28.4 % -> 18.1 % -> 17.0 %. Das sieht nach Verschlechterung aus und ist keine: Mit Boden ist der grosse Rest der ausgewaehlten Punkte BODEN, also echte Geometrie, nicht Hintergrundkeil. Die Zahl misst hier den Bildanteil des Bauwerks, nicht die Guete der Auswahl. Ohne Boden waren 59 % Halluzination; mit Boden sind 83 % Boden.",
+    "zusatzfrage_normalisierung": "Die Tiefenspanne waechst von 8.74 m auf 15.56, 79.13 und 98.52 m. Die Zahl verschiedener Grauwerte AUF DEM BAUWERK faellt entsprechend: 30'663 -> 25'820 -> 7'035 -> 5'686.\nDeine Befuerchtung trifft der Richtung nach zu — der Bau wird zusammengedrueckt, um den Faktor 5.4. Sie trifft im Ausmass nicht: 5'686 Stufen sind reichlich, die 16 Bit geben 65'536 her. Ein Boden bis zum Horizont kostet Aufloesung auf dem Bauwerk, aber er kostet sie nicht kritisch.",
+    "was_ich_empfehlen_wuerde_als_frage": "Die Zahlen sprechen fuer 'ebene_bis_rand' als Vorgabeszene: 0.9737 mit noch 7'035 Stufen auf dem Bau, und im Gegensatz zum Horizont bleibt Hintergrund uebrig, sodass geom_iou wirklich misst. Die Entscheidung liegt bei dir.",
+    "eigener_fehler_im_ersten_anlauf": "Mein erster Durchgang lieferte in allen drei Bodenszenen 0.0000 und 0 % — ich hatte die Kamera nicht festgehalten, und der Multipass rahmt je Szene neu ein. Dieselben Bildindizes zeigten in jeder Szene woandershin. Ausserdem habe ich zwischendurch aus einer messung.json gelesen, die noch vom ersten Lauf stammte, und daraus falsche Nullen berichtet. Beides korrigiert, bevor dieses Ergebnis entstand."
+  },
+  "umgebung": {
+    "python": "3.14.4"
+  },
+  "fehler": null
+}
