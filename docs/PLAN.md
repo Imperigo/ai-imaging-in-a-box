@@ -455,13 +455,39 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       zum Gebrauch**: Ein gemessener Widerspruch ist mehr wert als eine Behauptung.
       Dazu `bildlesen.lies_png_luminanz` — der erste farbfähige Leser des Projekts,
       sauber getrennt vom Tiefenleser, der Farbe weiterhin **ablehnen muss**.
-- [ ] **Variantenbewertung — aber nicht so** — der geerbte Bewerter normalisiert
-      **min-max innerhalb der Charge**: Die beste Variante bekommt ~100, die schlechteste
-      ~0, *auch wenn alle fünf unbrauchbar sind*, und bei einer einzelnen Variante gibt
-      es pauschal 50. Der `final`-Wert sieht absolut aus und ist eine Rangfolge. **Eine
-      Zahl, die absolut aussieht und relativ ist, ist schlimmer als keine Zahl.** Wenn wir
-      das bauen, dann mit absoluten Bezugsgrössen — und mit Gewichten, die am Stil hängen
-      statt an einem Geschmack.
+- [x] **Variantenreihen gebaut — und ausdrücklich KEIN neuer Bewerter.** 2026-08-20,
+      `varianten.py`, 32 Tests.
+      Der geerbte Bewerter normalisiert **min-max innerhalb der Charge** (die beste
+      Variante bekommt ~100, auch wenn alle fünf unbrauchbar sind; eine einzelne bekommt
+      pauschal 50) und gewichtet **Schärfe mit 0.50**, was jeden Nebel- und Skizzenstil
+      systematisch als schlechtestes Bild ausweist. Beides sind Massstäbe, die einen Stil
+      für die Wahrheit halten.
+      **Wir bewerten darum gar nicht neu:** `geometrie_qa` und `belichtung` sind bereits
+      absolut und ihre Schwellen gemessen. Was fehlte, war die Reihe — und die Frage,
+      **ab wann ein Unterschied überhaupt einer ist**.
+      Zwei Reihenarten, und ihre Verwechslung macht beide wertlos: Eine **Saatreihe**
+      ändert nur den Seed und misst den **Rauschboden** der Kette; eine **kontrollierte
+      Reihe** ändert genau eine Grösse bei **festem Seed** und misst deren Wirkung.
+      `kontrollierte_reihe` weigert sich, den Seed mitzufahren.
+      Daraus die eigentliche Leistung: *Ein Unterschied ist erst dann einer, wenn er den
+      Rauschboden übersteigt* — dieselbe Denkweise, mit der `stil_qa` zu seiner Schwelle
+      kam, und mit derselben Zahl (`K_STREUUNGEN = 2.0`, an beiden Stellen).
+      Und `waehle` kann sagen: **keine besteht.** Der geerbte liefert immer eine beste —
+      die Sorte Antwort, die eine Frage beendet, ohne sie zu beantworten.
+- [ ] **Die erste echte Saatreihe am Gerät fahren** — der Rauschboden der Kette ist
+      gebaut, aber nie gemessen. Ohne ihn ist jede Aussage über die Wirkung eines
+      Parameters unbelegt, auch die bisherigen. Erster Kandidat: fünf Seeds bei sonst
+      gleichen Parametern, gegen `geometrie_qa`.
+- [x] **Das Lexikon prüft sich jetzt selbst** — 2026-08-20, `tests/test_lexikon.py`,
+      13 Tests. Anlass: **Seed** stand zweimal darin, in zwei Fassungen, in zwei
+      Abschnitten. Beim Nachzählen waren es sieben Begriffe mit Doppeleinträgen.
+      Drei davon waren echte Dubletten (Seed, Prompt, Halluzination, Tote Kante) und sind
+      zusammengeführt — bei *Tote Kante* trugen **beide** Fassungen eigenen Inhalt, der
+      jetzt in einer steht. Vier sind ausgewiesene Bedeutungstrennungen und stehen als
+      solche in einer Liste, die der Test gegenprüft: Wer dort etwas einträgt, muss es im
+      Lexikon auch am Titel unterscheidbar machen.
+      *Ein Lexikon, das denselben Begriff zweimal erklärt, veraltet an einer der beiden
+      Stellen — und wer die falsche liest, liest die alte.*
 - [x] **Fortschrittsgrenze für den Renderlauf** — 2026-08-20, `fortschritt.py`,
       25 Tests, reine stdlib, Uhr injizierbar.
       **Beim Nachbauen stellte sich heraus, dass wir es gar nicht schlechter hatten.**

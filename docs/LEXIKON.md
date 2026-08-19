@@ -1833,15 +1833,45 @@ Bild.
 
 **Text-Encoder** — Wandelt den Prompt in eine für das Modell verständliche Form.
 
-**Prompt** — Die Textbeschreibung des gewünschten Bildes.
-
 **Negativer Prompt** — Beschreibung dessen, was *nicht* erscheinen soll.
 
 **CFG (Classifier-Free Guidance)** — Regelt, wie streng sich das Modell an den Prompt
 hält. Zu niedrig heisst beliebig, zu hoch heisst überzeichnet.
 
-**Seed** — Startwert des Zufallsgenerators. Gleicher Seed und gleiche Einstellungen
-liefern dasselbe Bild — die Grundlage reproduzierbarer Versuche.
+**Seed (Startwert)** — Die Zahl, mit der der Zufallsgenerator beginnt. Gleicher Seed
+und gleiche Einstellungen ergeben dasselbe Bild — die Grundlage reproduzierbarer Versuche.
+*Voraussetzung dafür, dass ein Ergebnis später überprüfbar ist: Ohne Seed lässt sich ein
+Render nicht wiederholen, und die Schwellenstudie in Phase 4 wäre nicht durchführbar.*
+*Er ist zugleich die Grösse, die eine* **Saatreihe** *durchfährt — und die eine*
+**kontrollierte Reihe** *gerade nicht anfassen darf.*
+
+**Saatreihe** — Mehrere Läufe, die sich **nur im Seed** unterscheiden. Sie messen nicht,
+ob etwas besser wird, sondern **wie stark der Zufall allein streut**. Erst wenn man das
+weiss, lässt sich ein Unterschied zwischen zwei Bildern überhaupt einordnen.
+
+**Kontrollierte Reihe** — Mehrere Läufe, die sich in **genau einer** Grösse unterscheiden,
+bei **festem Seed**. Sie messen die Wirkung dieser Grösse. Läuft der Seed mit, ändern sich
+zwei Ursachen zugleich, und ein Unterschied lässt sich keiner von beiden zuordnen — die
+Reihe beantwortet dann die Frage nicht, für die sie gefahren wurde.
+*In diesem Projekt weigert sich `varianten.kontrollierte_reihe`, den Seed mitzufahren.*
+
+**Rauschboden** — Die Streuung, die eine Saatreihe **bei sonst gleichen Parametern** zeigt.
+Er ist der Massstab für jeden späteren Vergleich:
+
+> Ein Unterschied ist erst dann einer, wenn er den Rauschboden übersteigt.
+
+*Dieselbe Denkweise, mit der die Stil-Schwelle zustande kam: Dort wurde erst der Boden von
+SigLIP 2 gemessen (0,526 an 4950 Bildpaaren), und erst danach war eine Schwelle darüber
+sinnvoll. Eine Schwelle unter dem Boden lässt alles durch — und ein Unterschied unter dem
+Rauschboden belegt nichts.*
+
+**Laplace-Varianz (Schärfemass)** — Ein Zahlenwert dafür, wie stark sich benachbarte
+Bildpunkte unterscheiden: viele harte Kanten ergeben einen hohen Wert, ein weiches Bild
+einen niedrigen. Verbreitet als schnelles Mass für „scharf oder unscharf".
+*Warnung aus dem Altbestand: Sein Variantenbewerter gewichtet die Laplace-Varianz mit 0,50
+— die Hälfte des Urteils. Ein Nebel- oder Skizzenstil bekommt damit systematisch den
+schlechtesten Platz, nicht weil er misslungen wäre, sondern weil er weich ist. Ein
+Schärfemass ist keine Qualität, sondern eine Eigenschaft.*
 
 **img2img** — Bilderzeugung ausgehend von einem vorhandenen Bild statt von Rauschen.
 
@@ -1902,10 +1932,6 @@ Namensnennung, **verbietet aber kommerzielle Verwertung**. Unter Regel 1 ausgesc
 *Für eine wissenschaftliche Untersuchung bleibt so lizenziertes Material dennoch nutzbar —
 untersagt ist die Verwertung, nicht die Forschung.*
 
-**Halluzination** — Wenn ein Modell etwas Plausibles, aber Falsches erzeugt. *Im
-Architekturkontext der entscheidende Mangel: ein schönes Gebäude, das nicht das
-entworfene ist.*
-
 **diffusers** — Die Apache-2.0-Bibliothek von Hugging Face, mit der Diffusionsmodelle
 geladen und ausgeführt werden. *In diesem Projekt der Ersatz für ComfyUI, das wegen
 GPL-3.0 ausscheidet: `diffusers` ist eine Bibliothek, die man aufruft, kein Programm, das
@@ -1915,11 +1941,6 @@ man umhüllt.*
 Text, ausgehend von einem vorhandenen Bild, oder als gezielte Änderung daran. *Hier
 gebraucht wird die dritte — der Cycles-Render ist der Anker, das Modell soll ihn
 veredeln, nicht ersetzen.*
-
-**Seed (Startwert)** — Die Zahl, mit der der Zufallsgenerator beginnt. Gleicher Seed und
-gleiche Einstellungen ergeben dasselbe Bild. *Voraussetzung dafür, dass ein Ergebnis
-später überprüfbar ist — ohne Seed lässt sich ein Render nicht wiederholen, und die
-Schwellenstudie in Phase 4 wäre nicht durchführbar.*
 
 **Backbone** — Das Hauptmodell einer Pipeline, im Unterschied zu den Hilfsmodellen.
 
@@ -1996,8 +2017,10 @@ Handschrift: „Wettbewerbsbild", „Modellfoto", „Einskizziert".
 löst seine Kanten auf — die Geometrie-Prüfung misst dann den Stil und nicht das
 Bildmodell. Darum trägt jeder Stil die Angabe, ob er messtauglich ist, und warum nicht.*
 
-**Halluzination (bei Bildmodellen)** — Wenn das Modell etwas erzeugt, das in der Vorgabe
-nicht steht: ein Dach auf einem Gebäude, das keines hat.
+**Halluzination (bei Bildmodellen)** — Wenn das Modell etwas Plausibles, aber Falsches
+erzeugt — etwas, das in der Vorgabe nicht steht: ein Dach auf einem Gebäude, das keines
+hat. *Im Architekturkontext der entscheidende Mangel: ein schönes Gebäude, das nicht das
+entworfene ist.*
 *Die gefährliche Sorte, weil das Ergebnis **gut aussieht**. Ein abgestürztes Programm
 merkt jeder; ein erfundenes Dach sieht aus wie ein Dach. In diesem Projekt am 18.08.2026
 selbst erzeugt — der Prompt sagte „clean flat roof", die Geometrie war oben offen, und das
@@ -2173,13 +2196,6 @@ Ursache behoben war. „Leer" ist dabei genau abgegrenzt: eine fehlende Angabe u
 leere Liste zählen als leer, ein ausdrückliches „nein" (`False`) und die Zahl `0`
 **nicht**. Ein durchgefallenes QA-Urteil ist ein Ergebnis und kein fehlendes Feld.*
 
-**Tote Kante** — Eine Verbindung zwischen zwei Arbeitsschritten, die zwar da ist, aber
-nichts trägt: Der Vorgänger liefert das Feld nicht, das der Nachfolger dort erwartet. Die
-Kette sieht vollständig aus und rechnet trotzdem mit einer Lücke. *In diesem Projekt der
-Befund `fehlendes-feld` aus `pruefe_bedarf` (`src/aiimaging/graph.py`). Im äusseren
-Graphen entsteht dieselbe Lage aus einem anderen Grund — dort genügen zwei ungleich
-geschriebene Feldnamen (`src/aiimaging/mcp_schemas.py`).*
-
 **Entwurfszeit-Prüfung** — Etwas prüfen, **bevor** es läuft, allein an dem, was
 aufgeschrieben ist. Das Gegenstück ist die **Laufzeit-Prüfung**, die erst beim Rechnen
 zuschlägt — dann ist die teure Arbeit schon getan. Der Gewinn liegt nicht im Befund,
@@ -2198,8 +2214,15 @@ liefert. Der Ablauf sieht vollständig verdrahtet aus und läuft mit leeren Hän
 *Der Vorläufer KosmoOrbit verbindet über Namensgleichheit und sagt **nichts**, wenn keine
 Verbindung zustande kommt — der Befund, mit dem dieses Projekt angefangen hat. Eine tote
 Kante ist darum kein Sonderfall, sondern die häufigste stille Fehlerart einer
-Knotenoberfläche: Sie erzeugt kein Problem, sondern ein plausibel aussehendes Ergebnis.
-`pruefe_kette` (`src/aiimaging/kette.py`) meldet sie vor dem Lauf.*
+Knotenoberfläche: Sie erzeugt kein Problem, sondern ein plausibel aussehendes Ergebnis.*
+*Wo sie in diesem Projekt gemeldet wird: im **inneren** Graphen als Befund
+`fehlendes-feld` aus `pruefe_bedarf`/`pruefe_kette` (`graph.py`, `kette.py`), im
+**äusseren** aus einem anderen Grund — dort genügen zwei ungleich geschriebene Feldnamen
+(`mcp_schemas.py`). Beide melden vor dem Lauf.*
+*Auch in eigener Sache aufgetreten: `Stil.seitenverhaeltnis` wurde am 18.08.2026
+eingeführt, geschrieben und von niemandem gelesen; und ein `pfad`-Parameter der
+Fortschrittswache wurde entgegengenommen und liegengelassen. Beide am Folgetag behoben —
+**dass ein Wert in einem Feld steht, ist kein Beleg dafür, dass ihn jemand liest.***
 
 **Skip-on-Error** — Wenn ein Knoten in einer Kette scheitert, werden alle von ihm
 abhängigen Knoten übersprungen statt mit unvollständigen Eingaben gerechnet. Ein Ergebnis
@@ -2353,7 +2376,8 @@ zugleich Kreise, denn bei einem Kreis bleibt eine gültige Reihenfolge unmöglic
 welche Felder es gibt, welchen Typ sie haben, welche verpflichtend sind. Macht
 Schnittstellen maschinell prüfbar statt nur dokumentiert.
 
-**Validierung** — Die Prüfung tatsächlicher Daten gegen ihr Schema. Schlägt sie fehl,
+**Validierung (Daten gegen Schema)** — Die Prüfung tatsächlicher Daten gegen ihr Schema.
+Schlägt sie fehl,
 stimmt die Wirklichkeit nicht mit dem Vertrag überein.
 *Nicht zu verwechseln mit* **Validierung (eines Verfahrens)** *in Abschnitt 4 — dort die
 Gegenprobe zur Kalibrierung; gleiches Wort, anderer Sachverhalt.*
@@ -2442,6 +2466,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-20 | Ergaenzt aus den Variantenreihen (`src/aiimaging/varianten.py`): **Saatreihe**, **kontrollierte Reihe**, **Rauschboden**, **Laplace-Varianz** (mit der Warnung, dass ein Schaerfemass keine Qualitaet ist). **Berichtigt:** **Seed** stand ZWEIMAL im Lexikon, in Abschnitt 6 als Kurzfassung und als ausfuehrliche Fassung — zusammengefuehrt zu einem Eintrag. Ein Lexikon, das denselben Begriff zweimal erklaert, veraltet an einer der beiden Stellen |
 | 2026-08-20 | Ergaenzt aus dem Schrittzaehler im Renderlauf: **Rueckruf (Callback)** und **Diffusionsschritt** — letzterer mit der Einschraenkung, dass im Bildbearbeitungsmodus nur `schritte x denoise` Schritte laufen |
 | 2026-08-20 | Ergaenzt aus der Herzschlagmessung: **GIL (Global Interpreter Lock)** und **Lebenszeichen gegen Fortschrittszeichen**. Beide sind gemessen: Cycles gibt die GIL frei (61 Faden-Schlaege gegen null Aufrufe der beiden dokumentierten Blender-Haken), und der Herzschlag belegt Leben, nicht Fortschritt |
 | 2026-08-20 | Ergaenzt aus der Vakuumprobe (`tools/vakuumprobe.py`): **vakuum-wahre Zusicherung**, **Vakuumprobe**, **Gegenprobe zu einer Abwesenheits-Zusicherung**. Anlass war ein Befund der HomeStation ueber sich selbst — ein als gruen gemeldeter Waechter, dessen Fundartefakt `{"geprueft": 0}` trug |
