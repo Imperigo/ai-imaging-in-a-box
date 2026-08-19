@@ -816,3 +816,43 @@ def test_bei_dieser_kleinen_szene_warnt_der_kamerasatz(lauf_mit_kamera):
     assert satz["warnungen"], "keine Warnung, obwohl das Bauwerk winzig im Bild steht"
     assert "füllt nur" in satz["warnungen"][0]
     assert satz["kameras"][0]["fuellgrad"] < 0.4
+
+
+@pytest.fixture(scope="module")
+def lauf_breitbild(tmp_path_factory):
+    """Ein echter Lauf im Breitbild — 320 × 180 statt quadratisch."""
+    if blender_fehlt():
+        pytest.skip("Blender nicht vorhanden")
+    ordner = tmp_path_factory.mktemp("multipass_breit")
+    glb = schreibe_test_glb(ordner / "zwei_quader.glb")
+    report = glb_zu_multipass(glb, ordner / "out", up_axis="Y", kamera="n",
+                              aufloesung=64, hoehe=36, samples=SAMPLES, timeout=900)
+    assert report["status"] == "ok", report.get("error")
+    return report
+
+
+@ohne_blender
+def test_das_seitenverhaeltnis_erreicht_wirklich_den_renderer(lauf_breitbild):
+    """Die Probe auf die tote Kante — am gerenderten Bild, nicht am Kommando.
+
+    Dass ein Argument im Kommando steht, ist kein Beleg dafür, dass es wirkt. Genau
+    dieser Unterschied war der Fehler: Das Feld existierte, und der Runner setzte
+    trotzdem `resolution_x = resolution_y`.
+    """
+    assert lauf_breitbild["aufloesung"] == 64
+    assert lauf_breitbild["hoehe"] == 36
+    assert lauf_breitbild["seitenverhaeltnis"] == pytest.approx(64 / 36)
+    bild = Png(Path(lauf_breitbild["beauty_png"]))
+    assert (bild.breite, bild.hoehe) == (64, 36)
+
+
+@ohne_blender
+def test_die_kamera_rechnet_mit_dem_echten_verhaeltnis(lauf_breitbild):
+    """Das Seitenverhältnis geht in den vertikalen Bildwinkel und damit in den Abstand.
+
+    Es ist keine Zuschneidefrage: Ein schmalerer vertikaler Winkel verlangt mehr Abstand.
+    Der Runner darf darum nicht mit einer Annahme rechnen, sondern muss den Wert dieses
+    Laufs nehmen.
+    """
+    assert lauf_breitbild["kamera"]["weg"] == "abgeleitet"
+    assert lauf_breitbild["kamera"]["vollstaendig"] is True

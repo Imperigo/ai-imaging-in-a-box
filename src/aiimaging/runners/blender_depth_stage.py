@@ -104,7 +104,13 @@ def _argumente():
     ap = argparse.ArgumentParser()
     ap.add_argument("--glb", required=True)
     ap.add_argument("--out", required=True)
+    # `--aufloesung` ist die BREITE. `--hoehe` fehlt heisst quadratisch — so war es bis
+    # zum 19.08.2026 immer, und jede bisher gemessene Zahl hängt daran.
     ap.add_argument("--aufloesung", type=int, default=512)
+    ap.add_argument("--hoehe", type=int, default=None,
+                    help="Bildhöhe in Punkten. Ohne Angabe quadratisch. Das "
+                         "Seitenverhältnis geht in den Bildwinkel und damit in den "
+                         "Kameraabstand ein — es ist keine Zuschneidefrage.")
     ap.add_argument("--samples", type=int, default=16)
     ap.add_argument("--rotiere-z-up", action="store_true",
                     help="Quelle ist Z-up (z.B. kosmodraw_export_glb) → vor dem Rendern drehen")
@@ -262,7 +268,12 @@ def _kamera_setzen(lo, hi, a=None):
                 augenhoehe_m=float(getattr(a, "augenhoehe", 1.70)),
                 deckungsgrad=float(getattr(a, "deckungsgrad", 0.55)),
                 gelaende_z=getattr(a, "gelaende_z", None),
-                seitenverhaeltnis=1.0,        # der Runner rendert quadratisch
+                # Das TATSÄCHLICHE Seitenverhältnis dieses Laufs, nicht eine Annahme.
+                # Bis zum 19.08.2026 stand hier fest 1.0 mit dem Kommentar „der Runner
+                # rendert quadratisch" — was stimmte, aber `prompts.Stil.seitenverhaeltnis`
+                # damit zu einer TOTEN KANTE machte: geschrieben, nie gelesen. Genau die
+                # Fehlerart, gegen die dieses Projekt seit Phase 0 antritt.
+                seitenverhaeltnis=a.aufloesung / (a.hoehe or a.aufloesung),
             )
             k = satz["kameras"][0]
             auge = mathutils.Vector(k["auge"])
@@ -655,7 +666,8 @@ def _renderparameter_setzen(a) -> None:
     szene.render.engine = "CYCLES"
     szene.cycles.samples = a.samples
     szene.cycles.device = "CPU"                          # in dieser Umgebung gibt es keine GPU
-    szene.render.resolution_x = szene.render.resolution_y = a.aufloesung
+    szene.render.resolution_x = a.aufloesung
+    szene.render.resolution_y = a.hoehe or a.aufloesung
     szene.render.resolution_percentage = 100
     # Standard statt AgX: AgX ist ein Filmlook mit weicher Kompression der Lichter. Für ein
     # Bild, das gleich wieder maschinell ausgewertet wird, ist eine nachvollziehbare
@@ -796,6 +808,8 @@ def main() -> int:
         "bbox_size_m": [hi[i] - lo[i] for i in range(3)],
         "n_meshes": sum(1 for o in bpy.data.objects if o.type == "MESH"),
         "aufloesung": a.aufloesung,
+        "hoehe": a.hoehe or a.aufloesung,
+        "seitenverhaeltnis": a.aufloesung / (a.hoehe or a.aufloesung),
         "rotiert": bool(getattr(a, "rotiere_z_up", False)),
         "blender": bpy.app.version_string,
         "error": fehler,

@@ -116,7 +116,7 @@ def ifc_zu_glb(ifc_path, glb_path, *, timeout: int = 300, _starte=None) -> dict:
 def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, samples: int,
                          beauty: bool, material_id: bool, kamera=None,
                          auge=None, blick_auf=None, brennweite=None,
-                         gelaende_z=None) -> list[str]:
+                         gelaende_z=None, hoehe=None) -> list[str]:
     """Die Argumente hinter dem `--`-Trenner — eine Stelle für Lauf und Trockenlauf.
 
     Wären sie zweimal geschrieben, könnten `glb_zu_multipass` und
@@ -157,6 +157,8 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
         argumente += ["--brennweite", str(float(brennweite))]
     if gelaende_z is not None:
         argumente += ["--gelaende-z", str(float(gelaende_z))]
+    if hoehe is not None:
+        argumente += ["--hoehe", str(int(hoehe))]
     if drehen:
         argumente.append("--rotiere-z-up")
     if not beauty:
@@ -186,7 +188,8 @@ def _punkt(wert, name: str) -> str:
 def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      samples: int = 16, beauty: bool = True, material_id: bool = True,
                      kamera=None, auge=None, blick_auf=None, brennweite=None,
-                     gelaende_z=None, timeout: int = 900, _starte=None) -> dict:
+                     gelaende_z=None, hoehe=None,
+                     timeout: int = 900, _starte=None) -> dict:
     """glb → Cycles-Multipass über `blender --background`.
 
     Vier Ausgaben, in zwei Renderdurchgängen: Beauty und Tiefe (EXR in Metern plus
@@ -249,7 +252,8 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
         *_multipass_argumente(glb_path, out_dir, drehen=drehen, aufloesung=aufloesung,
                               samples=samples, beauty=beauty, material_id=material_id,
                               kamera=kamera, auge=auge, blick_auf=blick_auf,
-                              brennweite=brennweite, gelaende_z=gelaende_z),
+                              brennweite=brennweite, gelaende_z=gelaende_z,
+                              hoehe=hoehe),
     ]
 
     ergebnis = starte(cmd, timeout)
@@ -348,7 +352,7 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                             samples: int = 16, beauty: bool = True,
                             material_id: bool = True, kamera=None, auge=None,
                             blick_auf=None, brennweite=None,
-                            gelaende_z=None) -> list[str]:
+                            gelaende_z=None, hoehe=None) -> list[str]:
     """Nur das Blender-Kommando bauen, ohne es auszuführen.
 
     Für Tests und zur Fehlersuche: zeigt, ob die Prozessgrenze richtig konstruiert ist —
@@ -361,7 +365,8 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                               aufloesung=aufloesung, samples=samples,
                               beauty=beauty, material_id=material_id,
                               kamera=kamera, auge=auge, blick_auf=blick_auf,
-                              brennweite=brennweite, gelaende_z=gelaende_z),
+                              brennweite=brennweite, gelaende_z=gelaende_z,
+                              hoehe=hoehe),
     ]
 
 

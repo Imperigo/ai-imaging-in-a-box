@@ -386,3 +386,21 @@ def test_gelaendestand_wird_durchgereicht():
     assert kommando[kommando.index("--gelaende-z") + 1] == "412.5"
     ohne = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y", kamera="n")
     assert "--gelaende-z" not in ohne
+
+
+def test_die_hoehe_wird_durchgereicht():
+    """Ohne sie rendert die Kette zwingend quadratisch — und ein Stil-Seitenverhältnis
+    wäre eine tote Kante.
+
+    Genau das war es vom 18. bis zum 19.08.2026: `prompts.Stil.seitenverhaeltnis` wurde
+    geschrieben, der Runner setzte `resolution_x = resolution_y` und rechnete die Kamera
+    fest mit 1.0. Ein Feld, das aussieht als wirke es, und nichts tut.
+    """
+    kommando = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y",
+                                       aufloesung=320, hoehe=180)
+    assert kommando[kommando.index("--hoehe") + 1] == "180"
+
+
+def test_ohne_hoehe_bleibt_es_quadratisch():
+    """Rückwärtssicherung: Jede bisher gemessene Zahl hängt am quadratischen Rahmen."""
+    assert "--hoehe" not in baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y")
