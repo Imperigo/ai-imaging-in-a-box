@@ -837,7 +837,57 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
       ausgerechnet Süd-Südost der richtige einzelne Blick ist, hängt an Sonnenstand und
       Fassadenlage und ist nie begründet worden.
 
-## DAS TOR IST OFFEN — der härteste Befund dieser Sitzung
+## DAS TOR — offen, und der Weg zu, gefunden (auf-25 bis auf-27)
+
+- [x] **`auf-27`: Der Prüfstein fällt, und die Antwort ist trotzdem da.** Verlangt war:
+      Kante deutlich bei perfekt/H3/H4, keine bei H1/H2. Tatsächlich zeigen H1 (+0.0006)
+      und H2 (+0.0007) wie erwartet keine — **aber H3 (+0.0066) und H4 (+0.0021) auch
+      nicht**, alle vier um Faktor 25 bis 75 unter dem perfekten Bild (+0.1615).
+
+      **Der Grund ist zwingend und war vorhersehbar, hätte ich gründlicher nachgedacht:
+      Die Maske ist die Silhouette des RICHTIGEN Bauwerks.** Ein gedrehtes oder anders
+      geformtes hat seine Kanten woanders; an der Maskengrenze steht dann Grund, genau wie
+      bei Abwesenheit. Das Mass fragt nicht *„steht dort etwas"*, sondern *„steht dort das
+      Richtige"*.
+- [x] **UND DAMIT IST DIE LÜCKE GESCHLOSSEN — durch zwei Masse, nicht durch eines.**
+
+      | Fall | ρ über der Maske | Kante | gefangen von |
+      |---|---|---|---|
+      | H1 · Bauwerk weg | −0.6861 ✗ | +0.0006 ✓ | **Kante** |
+      | H2 · 20 m versetzt | −0.6854 ✗ | +0.0007 ✓ | **Kante** |
+      | H3 · andere Kubatur | +0.3842 ✓ | +0.0066 ✗ | **ρ** |
+      | H4 · 90° gedreht | −0.4546 ✓ | +0.0021 ✗ | **ρ** |
+
+      **Jedes Mass fängt genau die Fälle, die das andere verfehlt.** Zusammen decken sie
+      alle vier ab, einzeln keiner von beiden. Der Satz, auf den das hinausläuft, ist der
+      Ertrag dieser ganzen Kette: **Existenz und Richtigkeit sind zwei Fragen und brauchen
+      zwei Messungen.** Ein einzelner Score kann beides nicht leisten — und `geom_iou`, das
+      es versuchte, belohnte am Ende die Abwesenheit.
+- [ ] **Der Paartest — Vorschlag der HomeStation, ausdrücklich UNGEMESSEN.**
+      `ρ ≤ −0.80 UND Kante ≥ 0.05` lässt von allen geprüften Fällen nur das perfekte Bild
+      und den 1-m-Versatz durch. Trennschärfe der Kante unter der Lesart „richtige
+      Silhouette besetzt": **0.0589, Faktor 10** — brauchbar. Wörtlich genommen nur 0.0014,
+      unbrauchbar.
+
+      **Es ist eine Ablesung an sieben Fällen aus einer Szene, keine Kalibrierung.** Das
+      sagt die HomeStation selbst dazu, und es ist der Unterschied, an dem dieses Projekt
+      seit Phase 0 arbeitet.
+- [ ] **DIE UNBEQUEME FOLGERUNG, die niemand ausgesprochen hat: Der Paartest würde jedes
+      Bild abweisen, das wir je erzeugt haben.** Der zweite Nachtrag zu `auf-24` hat
+      gemessen, dass **alle fünf erzeugten Bilder über der Maske schlechter liegen als
+      weisses Rauschen** (−0.5207). Eine Schwelle von −0.80 ist für sie unerreichbar.
+
+      Das ist **kein Argument gegen den Paartest**, sondern der eigentliche Befund: Nicht
+      die Schwelle ist zu streng, sondern unsere erzeugten Bilder sind geometrisch
+      schlecht. Ein Tor, das sie durchlässt, wäre ein Tor ohne Aussage. Die Reihenfolge
+      der nächsten Arbeit steht damit fest — **erst die Bilder, dann die Schwelle**, und
+      die Kamera zuerst.
+- [ ] **Zu bauen: `kante_an_maskengrenze` neben `rho_ueber_maske`**, und ein Urteil, das
+      **beide** Zahlen führt statt sie zu einem Score zu verrechnen. Ein geometrisches
+      Mittel wäre hier genau der Fehler, den `sqrt(|ρ|·geom_iou)` gemacht hat: Es
+      verschmilzt zwei Fragen, die getrennt gehören.
+
+## (erledigt, Verlauf) Das Tor ist offen — der härteste Befund dieser Sitzung
 
 - [ ] **Ein leeres Grundstück besteht die Geometrie-QA mit 0.95.** Gemessen
       (`auf-20260821-26`, `docs/GEOM_IOU_HALLUZINATION_2026-08-21.md`), Szene mit 59.8 %
