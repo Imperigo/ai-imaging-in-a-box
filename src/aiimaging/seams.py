@@ -28,8 +28,11 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
+import time
 from pathlib import Path
 
+from aiimaging import fortschritt
 from aiimaging.contracts import ContractError, needs_rotation
 
 _RUNNER_DIR = Path(__file__).resolve().parent / "runners"
@@ -44,6 +47,104 @@ class SeamError(RuntimeError):
 
 def _default_starte(cmd: list[str], timeout: int) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False)
+
+
+#: Wie oft eine überwachte Ausführung nachsieht. Zwei Sekunden wie im Altbestand — die
+#: Zahl ist eine Setzung und keine Messung, sie steht darum als Parameter.
+TAKT_S = 2.0
+
+
+def starter_mit_wache(wache=None, *, frist_s: float | None = None,
+                      takt_s: float = TAKT_S, _schlaf=None, _popen=None, _uhr=None):
+    """Einen Starter bauen, der während des Laufs auf **Stillstand** achtet.
+
+    Der Rückgabewert hat dieselbe Gestalt wie :func:`_default_starte` — ``(cmd, timeout)``
+    hinein, ``CompletedProcess`` heraus — und lässt sich darum überall dort einsetzen, wo
+    dieses Modul ein ``_starte`` entgegennimmt. **Das ist der ganze Grund, warum es diese
+    Naht gibt:** Die Überwachung ist ein *anderer Starter*, keine Änderung am Vertrag.
+
+    Warum das nötig ist: :func:`subprocess.run` blockiert bis zum Ende. Wer während des
+    Laufs etwas bemerken will, muss den Prozess selbst starten und nachsehen. Der
+    Gesamt-Timeout bleibt daneben bestehen — er fängt den Fall, den keine Wache fängt:
+    einen Lauf, der stetig vorankommt und trotzdem zu lange dauert.
+
+    Args:
+        wache: eine :class:`aiimaging.fortschritt.Wache` **mit eigener Quelle** (aus
+            ``wache_fuer_datei`` oder ``wache_fuer_verzeichnis``). Eine Wache auf ein
+            blosses Statuswort taugt hier nicht: Ein Subprozess sagt uns von sich aus
+            nichts, und ein erfundenes Statuswort wäre der Selbstbetrug, gegen den
+            ``fortschritt.py`` gebaut ist.
+        frist_s: Statt einer eigenen Wache — dann wacht der Starter über **seine eigene
+            Standardausgabe**. Das löst ein Henne-Ei-Problem: Die Ausgabedatei entsteht
+            erst beim Start, eine von aussen gebaute Wache könnte ihren Pfad also gar
+            nicht kennen. Je Aufruf entsteht eine frische Wache — eine wiederverwendete
+            trüge die Stillstandsuhr des vorigen Laufs mit.
+        takt_s: Abstand zwischen zwei Blicken.
+
+    Genau eines von ``wache`` und ``frist_s`` ist anzugeben. Beides zugleich wäre eine
+    stille Vorrangfrage, und keines von beidem hiesse „überwachen ohne zu sagen woran".
+
+    Der Prozess wird **nur bei einem belegten Stillstand** beendet. Eine blosse Warnung
+    beendet nichts — dieselbe Regel wie in :mod:`aiimaging.fortschritt`: Was nicht belegt
+    ist, darf nicht verurteilen. Hier kommt das nicht vor, weil beide Quellen belegt
+    sind; die Bedingung steht trotzdem im Code und nicht nur im Docstring.
+
+    **Ausgaben laufen über temporäre Dateien**, nicht über Pipes. Wer bei ``PIPE`` pollt
+    statt zu lesen, blockiert den Kindprozess, sobald der Puffer voll ist — und Blender
+    ist gesprächig. Der Lauf bliebe dann stehen, und zwar durch die Wache, die den
+    Stillstand verhindern soll.
+    """
+    if (wache is None) == (frist_s is None):
+        raise SeamError(
+            "starter_mit_wache braucht GENAU EINES von 'wache' und 'frist_s'. Beides "
+            "zugleich wäre eine stille Vorrangfrage; keines von beidem hiesse "
+            "überwachen, ohne zu sagen woran."
+        )
+    schlaf = _schlaf or time.sleep
+    oeffne = _popen or subprocess.Popen
+    uhr = _uhr or time.monotonic
+
+    def starte(cmd: list[str], timeout: int) -> subprocess.CompletedProcess:
+        with tempfile.TemporaryDirectory(prefix="aiimaging-lauf-") as tmp:
+            aus = Path(tmp) / "stdout.txt"
+            fehler = Path(tmp) / "stderr.txt"
+            diese = wache if wache is not None else fortschritt.wache_fuer_datei(
+                aus, frist_s=frist_s, name="Standardausgabe des Laufs", _uhr=_uhr)
+            with open(aus, "wb") as fa, open(fehler, "wb") as ff:
+                prozess = oeffne(cmd, stdout=fa, stderr=ff)
+                beginn = float(uhr())
+                try:
+                    while True:
+                        code = prozess.poll()
+                        if code is not None:
+                            break
+                        befund = diese.blick()
+                        if befund["schwere"] == fortschritt.SCHWERE_FEHLER:
+                            prozess.kill()
+                            prozess.wait()
+                            raise SeamError(
+                                f"Lauf abgebrochen wegen Stillstand: {befund['detail']} "
+                                f"Der Gesamt-Timeout ({timeout} s) wäre erst in "
+                                f"{max(0.0, timeout - (float(uhr()) - beginn)):.0f} s "
+                                f"gegriffen."
+                            )
+                        if float(uhr()) - beginn > timeout:
+                            prozess.kill()
+                            prozess.wait()
+                            raise subprocess.TimeoutExpired(cmd, timeout)
+                        schlaf(takt_s)
+                except BaseException:
+                    if prozess.poll() is None:
+                        prozess.kill()
+                        prozess.wait()
+                    raise
+            return subprocess.CompletedProcess(
+                cmd, prozess.returncode,
+                aus.read_text(encoding="utf-8", errors="replace"),
+                fehler.read_text(encoding="utf-8", errors="replace"),
+            )
+
+    return starte
 
 
 def finde_ifc_python() -> str:
@@ -189,7 +290,8 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      samples: int = 16, beauty: bool = True, material_id: bool = True,
                      kamera=None, auge=None, blick_auf=None, brennweite=None,
                      gelaende_z=None, hoehe=None,
-                     timeout: int = 900, _starte=None) -> dict:
+                     timeout: int = 900, stillstand_frist_s: float | None = None,
+                     _starte=None) -> dict:
     """glb → Cycles-Multipass über `blender --background`.
 
     Vier Ausgaben, in zwei Renderdurchgängen: Beauty und Tiefe (EXR in Metern plus
@@ -208,6 +310,14 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             in der Luft. Spart Plattenplatz, keine Rechenzeit.
         material_id: `False` lässt den zweiten Durchgang ganz aus und spart damit
             tatsächlich Rechenzeit.
+        stillstand_frist_s: Schaltet die **Fortschrittswache** ein (Vorgabe: aus). Sie
+            beobachtet die Standardausgabe des Laufs und bricht ab, wenn dort so viele
+            Sekunden lang nichts mehr ankommt — deutlich früher als der Gesamt-Timeout.
+            **Bewusst nicht voreingestellt:** Ob Blenders umgeleitete Ausgabe während
+            eines langen Einzelbild-Laufs stetig genug wächst, ist eine Messung und keine
+            Annahme, und ein zu scharf gestellter Wächter bräche gesunde Läufe ab. Der
+            Altbestand macht denselben Fehler in der Gegenrichtung: Er stellt bei
+            ``running`` die Uhr zurück und meldet darum nie etwas.
 
     Returns:
         Report des Runners mit `beauty_png`, `material_id_png`, `depth_exr`, `depth_png`,
@@ -223,7 +333,12 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
         ContractError: `up_axis` fehlt oder ist nicht deutbar.
         SeamError: Blender fehlt oder der Lauf scheitert.
     """
-    starte = _starte or _default_starte
+    if _starte is not None:
+        starte = _starte
+    elif stillstand_frist_s is not None:
+        starte = starter_mit_wache(frist_s=stillstand_frist_s)
+    else:
+        starte = _default_starte
     drehen = needs_rotation(up_axis)          # wirft ContractError, wenn up_axis fehlt
 
     out_dir = Path(out_dir)
