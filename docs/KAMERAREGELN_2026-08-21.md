@@ -13,9 +13,18 @@ einem Abstand von 1,2 × Gebäudehöhe ergibt das **9,46° Neigung — unabhäng
 Gebäudehöhe**, weil sich Zielhöhe und Abstand beide mit ihr skalieren. Die Vertikalen
 laufen dadurch im Bild aufeinander zu:
 
-| Gebäudehöhe | 6 m | 10 m | 15 m | 20 m | 40 m |
-|---|---|---|---|---|---|
-| Konvergenz | 11,8 % | 16,9 % | 19,2 % | 20,3 % | 21,8 % |
+| Gebäudehöhe | 6 m | 20 m | 40 m | bei 0° Neigung |
+|---|---|---|---|---|
+| Konvergenz | 9,1 % | 11,3 % | 11,7 % | **exakt 0** |
+
+**Zahlenkorrektur 21.08., nachts:** Die hier zuerst genannten 11,8-21,8 % Konvergenz
+waren **falsch gerechnet**. Die Formel benutzte die radiale Entfernung statt der
+senkrechten zur Bildebene und enthielt die Neigung gar nicht - sie lieferte dieselben
+Werte auch bei **null Grad**, wo die Konvergenz zwingend exakt null ist. Richtig sind rund
+**9 bis 12 %** (9,1 % bei 6 m, 11,7 % bei 40 m; eine zweite, ebenso saubere Definition
+ergibt 12,3-12,6 %). Der Befund steht unveraendert: 9,4623 Grad Neigung, unabhaengig von
+der Gebaeudehoehe, gegen die einzige verbindliche Regel des Fachs. Nur die Spanne war zu
+gross und ihr Anstieg mit der Gebaeudehoehe ein Artefakt des Fehlers.
 
 Der Kommentar im Code nennt das *„der übliche Griff der Architekturfotografie"*. **Das
 ist die Umkehrung der Wahrheit.** Parallele Vertikalen entstehen dadurch, dass die
@@ -47,8 +56,8 @@ Boden.** Shift verschiebt ihn nach unten, bis auf etwa 4 % über der Unterkante.
 Praxis regelt also **von 50 % abwärts**, und es gibt keinen Weg darüber hinaus, ohne die
 Kamera zu kippen.
 
-**Unsere Versuchsszene hatte 59,8 %.** Das ist mehr, als eine korrekt gehaltene Kamera
-überhaupt erzeugen kann — und es ist genau die Szene, an der die Geometrie-QA am 20./21.
+**Unsere Versuchsszene hatte 59,8 %.** Das ist mehr, als in der gesichteten Praxis
+irgendwo beschrieben wird — und es ist genau die Szene, an der die Geometrie-QA am 20./21.
 August so verheerend versagte (weisses Rauschen erreichte 0,72; ein leeres Grundstück
 schlug das Rauschen).
 
@@ -57,6 +66,14 @@ Szenen, an denen die Metrik zusammenbrach, waren fotografisch nicht gültig. Das
 die Metrik **nicht** — der Betrieb wird schlechte Bilder liefern, und die QA muss sie
 beurteilen können —, aber es erklärt, warum die Zahlen so extrem waren, und es sagt, wo
 zuerst zu reparieren ist: **an der Kamera, nicht an der Metrik.**
+
+**Zweite Korrektur:** Der Satz „ueber 50 % Bodenanteil geht nur durch Kippen" ist
+**geometrisch falsch**. Der belegte Shift-Weg betraegt plusminus 11 mm - *in beide
+Richtungen*. Ein Shift nach unten hebt den Bodenanteil ueber 50 %, bei lotrechter Bildebene
+und damit ohne jede Konvergenz. Die 59,8 % unserer QA-Szene verlangen -2,35 mm am
+Querformat, ein Zwoelftel des Wegs. Als Aussage ueber die **Praxis** bleibt der Satz
+richtig: Kein gesichteter Text beschreibt einen Shift nach unten. Der Brueckenschlag zur
+Messreihe ist damit schmaler als behauptet - **nicht unmoeglich, sondern unbeschrieben.**
 
 ### 3 · „Vordergrund füllen" ist gedeckt — mit Inhalt, nicht mit Fläche
 
@@ -95,7 +112,7 @@ auch ausserhalb dessen, was die Innenraumfotografie überhaupt nennt (0,91–1,5
 | Nötiger Abstand | `d ≥ max( f·(H−h)/(s/2+v), f·h/(s/2−v) )` | hergeleitet | **Geometrie**, in keiner Quelle so aufgeschrieben |
 | Augenhöhe aussen | 1,43–1,74 m (DIN 33402-2) | BAuA | belegt — **1,70 m liegt nahe dem 95. Perzentil der Männer** |
 | Augenhöhe innen | halbe Raumhöhe | selbst nachgerechnet | **Geometrie** |
-| Bodenanteil | 50 % waagrecht, abwärts per Shift | Geometrie + belegte Shift-Werte | **Geometrie** |
+| Bodenanteil | 50 % waagrecht ohne Shift, per Shift in **beide** Richtungen | Geometrie + belegte Shift-Werte | **Geometrie** |
 | Ansichtenkatalog | frontal + zwei Über-Eck auf **gegenüberliegenden** Diagonalen | HABS | **Norm** |
 | Einpunkt innen | ~90 % der Innenaufnahmen | Mike Kelley | behauptet, eine Quelle |
 | Fluchtpunkt innen | mittig | mehrfach | belegt |

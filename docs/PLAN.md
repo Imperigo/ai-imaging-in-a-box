@@ -720,8 +720,10 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 
 - [ ] **UNSERE KAMERA KIPPT, UND DIE ARCHITEKTURFOTOGRAFIE KIPPT NICHT.** `ZIEL_ANTEIL_HOEHE
       = 0.20` erzeugt bei 1,2 × Gebäudehöhe Abstand **9,46° Neigung, unabhängig von der
-      Gebäudehöhe** — die Vertikalen laufen um 11,8 % (6 m Bau) bis 21,8 % (40 m)
-      aufeinander zu. Der Kommentar im Code nennt das „der übliche Griff der
+      Gebäudehöhe** — die Vertikalen laufen um rund 9 bis 12 % aufeinander zu (bei
+      waagrechter Kamera: exakt null). **Die zuerst hier genannten 11,8-21,8 % waren falsch
+      gerechnet** - die Formel enthielt die Neigung gar nicht und lieferte dieselben Werte
+      auch bei null Grad. Der Befund steht, die Spanne war zu gross. Der Kommentar im Code nennt das „der übliche Griff der
       Architekturfotografie"; **das ist die Umkehrung der Wahrheit.** Parallele Vertikalen
       entstehen dadurch, dass die Sensorebene lotrecht steht, und HABS/NPS schreibt die
       Korrektur **bei der Aufnahme** zwingend vor. Der übliche Griff ist waagrecht halten
@@ -734,8 +736,11 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Aufnahme**, also nicht nebenbei.
 - [ ] **Der Bodenanteil von 59,8 % kann gar nicht entstehen — und das verbindet zwei
       Befunde, die ich für unabhängig hielt.** Eine waagrechte Kamera ohne Shift legt den
-      Horizont exakt in die Bildmitte: 50 % Boden. Shift regelt **abwärts** bis etwa 4 %.
-      Über 50 % kommt man nur durch Kippen. Unsere Versuchsszene hatte 59,8 % — und ist
+      Horizont exakt in die Bildmitte: 50 % Boden. **Korrektur, nachts:** Shift regelt in
+      **beide** Richtungen; ueber 50 % zu kommen ist geometrisch moeglich - die 59,8 %
+      verlangen -2,35 mm, ein Zwoelftel des Wegs. Der Satz "nur durch Kippen" war falsch.
+      Richtig bleibt: **kein gesichteter Text beschreibt einen Shift nach unten.** Nicht
+      unmoeglich, sondern unbeschrieben. Unsere Versuchsszene hatte 59,8 % — und ist
       genau die, an der die Geometrie-QA zusammenbrach (Rauschen 0,72; leeres Grundstück
       schlägt Rauschen).
 
