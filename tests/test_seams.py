@@ -319,8 +319,8 @@ def test_fertige_koordinaten_schlagen_das_kuerzel():
                                        kamera="n", auge=(1.0, -2.0, 1.7),
                                        blick_auf=(0.0, 0.0, 5.0))
     assert "--kamera" not in kommando
-    assert kommando[kommando.index("--auge") + 1] == "1.0,-2.0,1.7"
-    assert kommando[kommando.index("--blick-auf") + 1] == "0.0,0.0,5.0"
+    assert "--auge=1.0,-2.0,1.7" in kommando
+    assert "--blick-auf=0.0,0.0,5.0" in kommando
 
 
 def test_standort_ohne_blickziel_wird_vor_dem_blender_start_abgewiesen():
@@ -356,10 +356,10 @@ def test_brennweite_nur_wenn_gesetzt():
     Optik ändert, verschiebt rückwirkend jede Zahl, die daran kalibriert wurde.
     """
     ohne = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y", kamera="n")
-    assert "--brennweite" not in ohne
+    assert not any(str(a).startswith("--brennweite") for a in ohne)
     mit = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y", kamera="n",
                                   brennweite=35.0)
-    assert mit[mit.index("--brennweite") + 1] == "35.0"
+    assert "--brennweite=35.0" in mit
 
 
 def test_die_kameraargumente_stehen_hinter_dem_trenner():
@@ -383,7 +383,7 @@ def test_gelaendestand_wird_durchgereicht():
     """
     kommando = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y",
                                        kamera="n", gelaende_z=412.5)
-    assert kommando[kommando.index("--gelaende-z") + 1] == "412.5"
+    assert "--gelaende-z=412.5" in kommando
     ohne = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y", kamera="n")
     assert "--gelaende-z" not in ohne
 
@@ -404,3 +404,46 @@ def test_die_hoehe_wird_durchgereicht():
 def test_ohne_hoehe_bleibt_es_quadratisch():
     """Rückwärtssicherung: Jede bisher gemessene Zahl hängt am quadratischen Rahmen."""
     assert "--hoehe" not in baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y")
+
+
+# ---------------------------------------------------------------------------------------
+# Negative Koordinaten — am Gerät gefunden, 19.08.2026
+# ---------------------------------------------------------------------------------------
+#
+# Der erste echte Auftrag der fremden Brücke trug drei Kameras. Zwei liefen; die dritte
+# stand INNEN, mit `auge` [-6.854, 1.6, 6.854], und brach ab mit
+#
+#     blender: error: argument --auge: expected one argument
+#
+# `argparse` liest jedes Wort mit führendem Minus als Option. Der Fehler war nicht selten,
+# er war unerreichbar: Jede bis dahin gemessene Kamera stand VOR dem Bauwerk, also im
+# positiven Bereich. Erst eine Innenraumkamera hat mindestens eine negative Koordinate.
+
+def test_negative_koordinaten_bleiben_am_flag_haengen():
+    """`--auge=-6.854,…` statt `--auge -6.854,…` — sonst frisst argparse den Wert."""
+    cmd = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y",
+                                  auge=(-6.854, 1.6, 6.854), blick_auf=(0.0, 1.6, 0.0))
+    assert "--auge=-6.854,1.6,6.854" in cmd
+    assert "--blick-auf=0.0,1.6,0.0" in cmd
+    # Und das Minus steht NIE allein als eigenes Argument da:
+    assert not any(str(a).startswith("-6.854") for a in cmd)
+
+
+def test_auch_das_gelaende_traegt_das_minus():
+    """Nicht nur die Kamera: Ein Gelände unter dem Nullpunkt ist negativ."""
+    cmd = baue_kommando_multipass("/tmp/a.glb", "/tmp/aus", up_axis="Y",
+                                  kamera="n", gelaende_z=-1.5)
+    assert "--gelaende-z=-1.5" in cmd
+
+
+def test_auch_die_huellbox_traegt_das_minus():
+    """Eine Hüllbox mit Ursprung in der Mitte hat drei negative Ecken.
+
+    `baue_kommando_multipass` reicht sie nicht durch, `glb_zu_multipass` schon —
+    geprüft wird darum die gemeinsame Quelle beider.
+    """
+    from aiimaging.seams import _multipass_argumente
+    args = _multipass_argumente("/tmp/a.glb", "/tmp/aus", drehen=False, aufloesung=512,
+                                samples=16, beauty=True, material_id=True,
+                                kamera_huellbox=((-3.0, -4.0, -0.5), (3.0, 4.0, 9.0)))
+    assert "--kamera-huellbox=-3.0,-4.0,-0.5,3.0,4.0,9.0" in args

@@ -1072,15 +1072,16 @@ def test_die_huellbox_steht_im_kommando():
         "m.glb", "/tmp/aus", drehen=False, aufloesung=512, samples=16,
         beauty=True, material_id=True,
         kamera_huellbox=([0.0, 1.0, 2.0], [3.0, 4.0, 5.0]))
-    assert "--kamera-huellbox" in argumente
-    assert argumente[argumente.index("--kamera-huellbox") + 1] == "0.0,1.0,2.0,3.0,4.0,5.0"
+    # Gleichheitszeichen-Form seit dem 19.08.2026: eine Huellbox mit negativer Ecke
+    # wuerde sonst von argparse als Option gelesen (s. test_seams.py).
+    assert "--kamera-huellbox=0.0,1.0,2.0,3.0,4.0,5.0" in argumente
 
 
 def test_ohne_huellbox_kein_argument():
     argumente = seams._multipass_argumente(
         "m.glb", "/tmp/aus", drehen=False, aufloesung=512, samples=16,
         beauty=True, material_id=True)
-    assert "--kamera-huellbox" not in argumente
+    assert not any(str(a).startswith("--kamera-huellbox") for a in argumente)
 
 
 @pytest.mark.parametrize("text, muster", [

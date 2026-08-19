@@ -390,23 +390,43 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
             f"auge={auge!r}, blick_auf={blick_auf!r}. Ein Standort ohne Blickziel "
             "beschreibt keine Kamera."
         )
+    # ZAHLENWERTE IMMER IN DER GLEICHHEITSZEICHEN-FORM.
+    #
+    # AM GERAET GEFUNDEN (19.08.2026, erster echter Auftrag der fremden Bruecke): Der
+    # Auftrag trug drei Kameras. Zwei liefen, die dritte — Kuerzel "Innenraum", `auge`
+    # [-6.854, 1.6, 6.854] — brach ab mit
+    #
+    #     blender: error: argument --auge: expected one argument
+    #
+    # `argparse` haelt jedes Wort mit fuehrendem Minus fuer eine Option. `--auge` stand
+    # damit ohne Wert da, und `-6.854,1.6,6.854` galt als unbekanntes Flag. Die
+    # Gleichheitszeichen-Form `--auge=-6.854,...` ist der dokumentierte Weg daran vorbei:
+    # Was hinter dem `=` steht, wird nie mehr als Option gelesen.
+    #
+    # Warum es so lange gutging: Jede bis dahin gemessene Kamera stand vor dem Bauwerk,
+    # also im positiven Bereich. Eine Innenraumkamera steht im Gebaeude — und dort ist
+    # mindestens eine Koordinate fast immer negativ. Der Fehler war nicht selten, er war
+    # unerreichbar, solange niemand nach innen schaute.
+    #
+    # Betroffen ist JEDER Zahlenwert, nicht nur `--auge`: Ein Gelaende unter dem Nullpunkt
+    # (`--gelaende-z`) und eine Huellbox mit negativer Ecke tragen dasselbe Minus.
     if auge is not None:
-        argumente += ["--auge", _punkt(auge, "auge"),
-                      "--blick-auf", _punkt(blick_auf, "blick_auf")]
+        argumente += [f"--auge={_punkt(auge, 'auge')}",
+                      f"--blick-auf={_punkt(blick_auf, 'blick_auf')}"]
     elif kamera is not None:
         argumente += ["--kamera", str(kamera)]
     if brennweite is not None:
-        argumente += ["--brennweite", str(float(brennweite))]
+        argumente += [f"--brennweite={float(brennweite)}"]
     if gelaende_z is not None:
-        argumente += ["--gelaende-z", str(float(gelaende_z))]
+        argumente += [f"--gelaende-z={float(gelaende_z)}"]
     if hoehe is not None:
         argumente += ["--hoehe", str(int(hoehe))]
     if herzschlag_takt_s is not None:
         argumente += ["--herzschlag-s", str(float(herzschlag_takt_s))]
     if kamera_huellbox is not None:
         lo, hi = kamera_huellbox
-        argumente += ["--kamera-huellbox",
-                      ",".join(str(float(v)) for v in (*lo, *hi))]
+        argumente += ["--kamera-huellbox="
+                      + ",".join(str(float(v)) for v in (*lo, *hi))]
     if drehen:
         argumente.append("--rotiere-z-up")
     if not beauty:
