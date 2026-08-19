@@ -832,6 +832,39 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
       ausgerechnet Süd-Südost der richtige einzelne Blick ist, hängt an Sonnenstand und
       Fassadenlage und ist nie begründet worden.
 
+## DAS TOR IST OFFEN — der härteste Befund dieser Sitzung
+
+- [ ] **Ein leeres Grundstück besteht die Geometrie-QA mit 0.95.** Gemessen
+      (`auf-20260821-26`, `docs/GEOM_IOU_HALLUZINATION_2026-08-21.md`), Szene mit 59.8 %
+      Bodenanteil:
+
+      | | `geom_iou` | Score |
+      |---|---|---|
+      | perfektes Bild | 0.9703 | 0.9839 |
+      | **H1 · Bauwerk ganz weg** | **0.9848** | **0.9530** |
+      | H2 · 20 m versetzt | 0.9845 | 0.9526 |
+      | weisses Rauschen | 0.5682 | 0.7217 |
+
+      **`geom_iou` fängt die Abwesenheit nicht — es belohnt sie.** Das leere Grundstück hat
+      eine *höhere* Überdeckung als das perfekte Bild und besteht die Schwelle 0.65 mit
+      grossem Abstand. Die Erklärung ist einen Schritt schärfer als vermutet: Das Bauwerk
+      war die einzige Stelle, an der Soll und Ist sich überhaupt unterscheiden konnten;
+      nimmt man es weg, deckt sich fast alles.
+
+      **Weder ρ noch `geom_iou` erkennt ein Bild ohne Bauwerk.** Mein eigener Satz
+      „`geom_iou` darf nicht fallen" war zur Hälfte richtig (ρ allein genügt nicht) und zur
+      Hälfte irreführend: Die Lücke ist damit **offen und nicht gefüllt**. Das ist der
+      elementarste denkbare Fehlerfall — „das Bild zeigt das Gebäude nicht" —, und das Tor
+      lässt ihn durch.
+- [ ] **Übrig ist genau ein ungeprüfter Kandidat: die Tiefenkante an der Maskengrenze.**
+      Ein Bauwerk erzeugt dort einen Tiefensprung, ein leeres Grundstück nicht. Frage 2 von
+      `auf-26` blieb unbeantwortet; sie steht als `auf-20260821-27` neu.
+- [ ] **Bis dahin gilt: Die Geometrie-QA darf kein „bestanden" aussprechen, ohne dazu zu
+      sagen, dass sie Abwesenheit nicht erkennt.** Das ist keine Verfeinerung, sondern die
+      Mindestehrlichkeit — ein Abzeichen, das ein leeres Grundstück durchlässt, behauptet
+      etwas, das es nicht geprüft hat. In den Code zu bringen, sobald der laufende Agent
+      `geometrie_qa.py` freigibt.
+
 ## Die Geometrie-QA neu bauen — der Stand, auf dem morgen anzufangen ist
 
 - [ ] **Der Score wird `polaritaet * spearman` über der Bauwerksmaske.** Gemessen
