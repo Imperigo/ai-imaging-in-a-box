@@ -26,6 +26,58 @@ Die dritte ist die wichtigste, und sie steht am Schluss.
 
 ---
 
+## 0 · Die Naht ist keine Absicht mehr — sie liegt
+
+Zwischen dem ersten Entwurf dieses Blatts und seiner zweiten Fassung ist jemand bei uns
+den ganzen Weg als Nutzer durchgegangen, mit Maus und Tastatur. Das Ergebnis ändert die
+Tonlage dieses Dokuments:
+
+**Eure Kette trägt bis in die Bridge.** Oberfläche → Graph → Knoten → Kanten → Prompt →
+Geometrie-Export → Kamerasetzung → Auftrag in der Warteschlange. Was dort liegt:
+
+```
+vis-1787123048-098c6e/
+  job.json            status queued · approval_token CONFIRMED_RENDER_… ·
+                      idle_window_only true · engine cycles · style lineart
+  model.glb           110 KB — echte Geometrie, exportiert und übertragen
+  render-scene.json   schema kosmovis.render-scene/v1 · drei aus dem Modell
+                      gerechnete Kameras
+```
+
+**Das ist Wort für Wort das Verzeichnis, das `bruecke.py` liest.** Der Ordnername passt
+auf unser Muster, die Auftragskennung auf eure eigene Form, das Schema ist das, gegen das
+wir übersetzen. Wir haben das gegen die echten Werte geprüft, nicht angenommen.
+
+**Und der Auftrag wird nicht abgeholt.** Er stand auf *„wartet auf GPU-Leerlauf"*, auch
+nachdem die Karte frei war (13 W, 1 GB belegt). Ob die Erkennung träge pollt oder eure
+Schranke enger ist als der tatsächliche Leerlauf, ist **ungemessen** — aber die Stelle
+ist eindeutig:
+
+> **Genau da hört eure Seite auf, und genau da fängt unsere an.** Was fehlt, ist der, der
+> das Verzeichnis abholt, rendert, prüft und `render-result.json` danebenlegt. Das ist
+> gebaut und läuft — für unsere eigenen Aufträge seit Wochen.
+
+Zwei Dinge fallen dabei erfreulich zusammen: Euer `idle_window_only: true` ist bei uns
+`nur_bei_leerlauf` und eine **fail-closed** Schranke — bei unbekanntem GPU-Zustand wird
+nicht gerechnet. Und euer `approval_token` heisst genau wie unserer. Über den zweiten
+Punkt müssen wir allerdings reden, siehe unten.
+
+Drei Zahlen, die auseinanderlaufen und die ihr kennen solltet, bevor jemand Bilder
+vergleicht:
+
+- **Augenhöhe.** Eure Auto-Kamera setzt `Eingang` auf **1.30 m** und `Innenraum` auf
+  **1.60 m**. Wir rechnen mit **1.70 m über Terrain** (`AUGENHOEHE_M`), und das
+  Pflichtenheft verlangt dasselbe. Kein Fehler eurer Kette — aber zwei Bilder derselben
+  Szene sehen dadurch verschieden aus, und niemand wüsste warum.
+- **`engine: cycles`** und **`style: lineart`** stehen im Laufzettel, nicht im
+  Szenenvertrag. Wir reichen den Laufzettel unverändert durch, lesen diese Felder aber
+  **nicht** — sagt uns, ob sie verbindlich sein sollen.
+- **`Übersicht` auf 38.04 m** ist eine Vogelperspektive. Unsere zwölf abgeleiteten
+  Standpunkte stehen auf Augenhöhe; die Übersicht ist bei uns ein eigener Fall. Kein
+  Widerspruch, nur eine andere Voreinstellung.
+
+---
+
 ## 1 · Was ihr uns schickt
 
 Es gibt zwei Wege hinein. Beide sind gebaut und geprüft. **Ihr müsst euch nicht
@@ -174,16 +226,36 @@ Das ist eine Betreiberentscheidung und keine Programmentscheidung; sie ist als S
 gebaut, nicht als Verhalten. **Wenn bei euch ein Mensch vor dem Absenden bestätigt, sagt
 uns wo**, dann schalten wir um.
 
+*Am lebenden Auftrag bestätigt:* Der Laufzettel in `vis-1787123048-098c6e` trägt
+`approval_token: CONFIRMED_RENDER_…` neben `idle_window_only: true`. Der Mensch hat dort
+auf **Ausführen** gedrückt — das ist eine Handlung, und sie könnte als Freigabe zählen.
+Aber der Token belegt sie nicht, denn er entsteht unabhängig davon im Code. **Genau darum
+fragen wir**, statt es zu entscheiden: Der Unterschied zwischen „ein Mensch hat gedrückt"
+und „ein Token liegt vor" kostet im schlechten Fall eine Stunde GPU-Zeit, die niemand
+bestellt hat.
+
 ---
 
 ## 3 · Woran ihr erkennt, dass eine Verbindung wirklich trägt
 
 **Das ist die eigentliche Übergabe.**
 
-Der Anlass ist konkret: In der vorgeführten Oberfläche meldet der Knopf **Ausführen** den
-Zustand `bereit` — und tut nichts. Das ist genau der Befund, mit dem dieses ganze Projekt
-angefangen hat, nur an anderer Stelle: **Ein Zustand, der „bereit" behauptet, ohne die
-Verdrahtung geprüft zu haben.**
+Der Anlass ist konkret, und er ist inzwischen **gemessen statt vermutet**: Der Zustand
+eures Render-Panels meldet `bereit` **auch bei unverdrahteten Knoten**.
+
+*Berichtigung an uns selbst, noch am selben Tag:* Wir hatten zuerst notiert, der Knopf
+„sagt nicht, warum er schweigt". **Das war falsch.** Er sagt es sehr genau — die Meldung
+(*„kein Prompt — verbinde Stimmung/Stil oder fülle das Formular"*) war von der
+Node-Palette **verdeckt**. Eure Fehlermeldungen sind gut; eine davon trennt sogar
+sauber **Erreichbarkeit von Berechtigung** (*„Die Bridge antwortet — der Render-Ruf wurde
+trotzdem abgewiesen, wahrscheinlich fehlt der Token"*), und sie stimmte aufs Wort:
+`/health` → 200, geschützte Route → 401. Das ist besser als das meiste, was wir an
+Fehlermeldungen kennen.
+
+**Der eine echte Mangel an dieser Stelle ist also nicht das Schweigen, sondern der
+Zustand:** `bereit` steht dort, bevor irgendeine Kante gezogen ist. Und das ist genau der
+Befund, mit dem dieses ganze Projekt angefangen hat, nur an anderer Stelle: **ein
+Zustand, der Bereitschaft behauptet, ohne sie geprüft zu haben.**
 
 Eine Kante zwischen zwei Knoten kann existieren und trotzdem nichts tragen. Der Vorgänger
 liefert `depth_png`, der Nachfolger erwartet `depth_map` — die Kante ist gezeichnet, der
@@ -279,7 +351,14 @@ Wenn ihr davon etwas braucht, sagt welches — dann bauen wir die Naht dorthin. 
 4. **Welchen Weg wollt ihr** — Szenenvertrag oder Werkzeugnaht? Beide sind gebaut; wir
    fragen nur, damit wir wissen, welcher zuerst gehärtet wird.
 5. **Soll euer Ausführen-Knopf prüfen?** Wenn ja, ist die Prüfung da und braucht nur
-   angeschlossen zu werden.
+   angeschlossen zu werden. Konkret: `bereit` erst, wenn `pruefe_kette` leer ist.
+6. **Warum wird der Auftrag in `/tmp/kosmo-jobs/` nicht abgeholt?** Träge Erkennung oder
+   zu enge Leerlauf-Schranke — bei uns ungemessen. **Das ist die Stelle, an der wir
+   einsteigen können**, und die einzige Frage dieser Liste, die eine Demo aufhält.
+7. **Augenhöhe 1.30/1.60 oder 1.70 m?** Das Pflichtenheft sagt 1.70. Wer nachgibt, ist
+   uns gleich — aber es sollte eine Zahl sein.
+8. **Sind `engine` und `style` im Laufzettel verbindlich?** Wir reichen sie durch und
+   lesen sie nicht.
 
 Solange diese Antworten fehlen, bauen wir **nichts, was an einer bestimmten Oberfläche
 hängt** — und arbeiten weiter an Verträgen, QA und Bildkette. Das trägt in jedem Fall.

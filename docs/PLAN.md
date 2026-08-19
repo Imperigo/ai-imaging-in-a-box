@@ -547,14 +547,35 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 - [ ] **Antwort auf das Übergabeblatt** — solange sie fehlt, wird **nichts gebaut, was an
       einer bestimmten Oberfläche hängt**. Verträge, QA und Bildkette tragen in jedem der
       drei Fälle und laufen weiter.
-- [ ] **Der Ausführen-Knopf meldet `bereit` und tut nichts** — `auf-20260819-16`, und es
-      ist die wichtigere Hälfte jenes Auftrags. **Wörtlich der Befund, mit dem dieses
-      Projekt angefangen hat, nur an anderer Stelle:** ein Zustand, der Bereitschaft
-      behauptet, *ohne sie zu prüfen*. Genau dagegen sind `kette.pruefe_kette` und
-      `graph.pruefe_bedarf` gebaut — mit drei Zuständen statt zwei, denn *ungeprüft* ist
-      nicht *in Ordnung*. Ändert sich mit Verdrahtung etwas, ist es ein Bedienungsproblem;
-      ändert sich nichts, fehlt die Ausführung ganz — und das ist die Lücke, in die unsere
-      Lane gehört.
+- [x] **Der Ausführen-Knopf** — beantwortet 2026-08-19 durch einen Volldurchgang als
+      Nutzer, und **zweimal berichtigt**. Er tut sehr wohl etwas, und er sagt sehr genau,
+      was fehlt — die Meldung war von der Node-Palette *verdeckt*. Eine zweite Meldung
+      trennt sogar sauber Erreichbarkeit von Berechtigung (`/health` 200, geschützte Route
+      401 — gegengeprüft, sie stimmt aufs Wort).
+      **Was bleibt, ist der Befund in schärferer Form:** Der Zustand meldet `bereit`
+      **auch bei unverdrahteten Knoten**. Das ist wörtlich der Befund, mit dem dieses
+      Projekt angefangen hat, nur an anderer Stelle — und genau dagegen sind
+      `kette.pruefe_kette` und `graph.pruefe_bedarf` gebaut, mit drei Zuständen statt
+      zwei: *ungeprüft* ist nicht *in Ordnung*.
+- [x] **Die Naht ist keine Absicht mehr — sie liegt.** 2026-08-19: Nach Verdrahtung und
+      Bridge-Token liegt ein echter Auftrag in `/tmp/kosmo-jobs/vis-1787123048-098c6e/` —
+      `job.json` (queued, `approval_token`, `idle_window_only`), `model.glb` mit 110 KB
+      echter Geometrie, `render-scene.json` nach `kosmovis.render-scene/v1` mit drei aus
+      dem Modell gerechneten Kameras. **Wort für Wort das Verzeichnis, das `bruecke.py`
+      liest** — am selben Tag gebaut, ohne dass eines vom anderen wusste. Ordnername,
+      Kennung und Schema **nachgeprüft**, nicht angenommen.
+- [ ] **Warum wird der Auftrag nicht abgeholt?** Zustand blieb „wartet auf GPU-Leerlauf",
+      auch bei freier Karte (13 W, 1 GB). Träge Erkennung oder zu enge Schranke —
+      **ungemessen**. Das ist die einzige offene Frage, die eine Vorführung aufhält, und
+      **genau die Stelle, an der unsere Lane einsteigt**: Was fehlt, ist der, der das
+      Verzeichnis abholt, rendert, prüft und `render-result.json` danebenlegt. Bei uns
+      gebaut und seit Wochen im Betrieb.
+- [ ] **Drei Zahlen laufen auseinander** (aus demselben Durchgang): Ihre Auto-Kamera setzt
+      die Augenhöhe auf **1.30 m** (Eingang) und **1.60 m** (Innenraum); wir und das
+      Pflichtenheft rechnen mit **1.70 m über Terrain**. `engine: cycles` und
+      `style: lineart` stehen im Laufzettel, den wir durchreichen und **nicht lesen** — ob
+      sie verbindlich sind, ist offen. Und ihre `Übersicht` steht auf 38 m, während unsere
+      zwölf Standpunkte auf Augenhöhe stehen.
 - [ ] **Die Stile am Gerät messen** — ob ein Prompt an einem Backbone wirklich landet,
       ist eine Messung und keine Textarbeit. Erst nach `auf-13`, denn an einem Modell
       ohne ControlNet-Naht sagt eine Prompt-Reihe nichts.
