@@ -536,9 +536,26 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 - [ ] **Gibt Cycles auch bei OptiX auf der GPU die GIL frei?** Sehr wahrscheinlich, aber
       auf der CPU gemessen und auf der GPU **nicht**. Solange das offen ist, bleibt
       `herzschlag_takt_s` ausgeschaltet, wenn niemand es setzt.
-- [ ] **Die Wache an die übrigen Nähte hängen** — Renderlauf (dort zählen wir die
-      Schritte selbst, das ist das sauberste belegte Zeichen, das wir haben) und Abholer
-      der Brücke.
+- [x] **Der Schrittzähler im Renderlauf** — 2026-08-20, `render.rendere(schrittzaehler=…)`
+      über `callback_on_step_end`. **Das sauberste belegte Fortschrittszeichen, das dieses
+      Projekt hat:** Er zählt Diffusionsschritte, die wirklich gerechnet wurden — im
+      Unterschied zum Herzschlag des Blender-Laufs, der nur bezeugt, dass ein Prozess lebt.
+      **Und er förderte sofort etwas zutage, das wir bisher nicht wussten:** Das Ergebnis
+      trägt jetzt `schritte_gerechnet`, und im Bildbearbeitungsmodus rechnen viele
+      Pipelines nur `schritte × denoise`. Der Parametersatz nennt die **bestellte** Zahl —
+      wer zwei Läufe über die Schrittzahl vergleicht, verglich unter Umständen etwas
+      anderes. Weicht die Zahl ab, steht die Rechnung als Hinweis im Ergebnis.
+      Kennt eine Pipeline den Rückruf nicht, ist `schritte_gerechnet` **`None`** und heisst
+      *ungemessen*, nicht null — und es wird ausdrücklich **keine** Abweichung behauptet.
+      Nebenbei prüfbar geworden: `_pipeline_adapter` galt als „die einzige Stelle des
+      Moduls, die hier nie ausgeführt werden kann". Mit einer klar benannten Pillow- und
+      torch-Attrappe ist der Weg jetzt begehbar — die Attrappen ersetzen nichts, sie
+      machen nur unsere eigene Verdrahtung sichtbar.
+- [ ] **Ist die Abweichung `schritte × denoise` bei unseren Backbones real?** Die Regel ist
+      aus der diffusers-Bauart abgeleitet und an einer Attrappe geprüft, **nicht am
+      Gerät**. Wenn sie zutrifft, hat jede bisherige Messreihe über die Schrittzahl im
+      Bildbearbeitungsmodus weniger Schritte gerechnet als protokolliert.
+- [ ] **Die Wache an den Abholer hängen** — dort läuft sie noch nicht.
 - [ ] **Variantenreihen** — wir erzeugen ein Bild je Aufruf. Der alte Bestand fährt fünf
       Sampler mit `seed = basis + nummer` und kennt ein `locked_seed` für kontrollierte
       Reihen. Bei 1.4 s je Bild (`auf-13`) ist eine Reihe zum ersten Mal bezahlbar.

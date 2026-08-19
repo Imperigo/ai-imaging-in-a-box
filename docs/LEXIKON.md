@@ -610,6 +610,23 @@ frei. Ein gewöhnlicher Faden läuft darum weiter, während `bpy.ops.render.rend
 Hauptfaden blockiert — 61 Schläge in 118 Sekunden, während die beiden dokumentierten
 Blender-Haken (`render_stats`, `bpy.app.timers`) **null** Mal feuerten.*
 
+**Rückruf (Callback)** — Eine Funktion, die man einer fremden Bibliothek *übergibt*,
+damit sie sie zum passenden Zeitpunkt selbst aufruft. Man sagt also nicht „gib mir
+Bescheid, wenn du fertig bist", sondern „ruf das hier bei jedem Schritt".
+*In diesem Projekt: `callback_on_step_end` von `diffusers` — der einzige Weg, während
+eines Bildlaufs zu erfahren, wie weit er ist. Nicht jede Pipeline kennt ihn; welche, wird
+an ihrer Signatur abgelesen und im Ergebnis **gemeldet**, denn ein Rückruf, der nie
+gerufen wird, sieht von aussen genauso aus wie ein hängender Lauf.*
+
+**Diffusionsschritt** — Ein Rechenschritt bei der Bilderzeugung: Aus einem verrauschten
+Bild wird schrittweise das Rauschen entfernt, bis das Motiv übrig bleibt. Mehr Schritte
+heissen mehr Rechenzeit und meist mehr Detail.
+*Wichtig und leicht zu übersehen: Im **Bildbearbeitungs**modus rechnen viele Pipelines
+nur `schritte × denoise` — bei 20 bestellten Schritten und einem `denoise` von 0,6 also
+zwölf. Der Auftrag nennt die bestellte Zahl; wer zwei Läufe über die Schrittzahl
+vergleicht, vergleicht unter Umständen etwas anderes als gedacht. `schritte_gerechnet`
+im Ergebnis nennt darum die wirklich gelaufene Zahl — und `None`, wenn sie ungemessen ist.*
+
 **Lebenszeichen gegen Fortschrittszeichen** — Zwei Dinge, die leicht verwechselt werden
 und sehr verschieden viel behaupten. Ein **Lebenszeichen** belegt, dass ein Vorgang noch
 *da* ist: Der Prozess lebt, etwas rührt sich. Ein **Fortschrittszeichen** belegt, dass er
@@ -2425,6 +2442,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-20 | Ergaenzt aus dem Schrittzaehler im Renderlauf: **Rueckruf (Callback)** und **Diffusionsschritt** — letzterer mit der Einschraenkung, dass im Bildbearbeitungsmodus nur `schritte x denoise` Schritte laufen |
 | 2026-08-20 | Ergaenzt aus der Herzschlagmessung: **GIL (Global Interpreter Lock)** und **Lebenszeichen gegen Fortschrittszeichen**. Beide sind gemessen: Cycles gibt die GIL frei (61 Faden-Schlaege gegen null Aufrufe der beiden dokumentierten Blender-Haken), und der Herzschlag belegt Leben, nicht Fortschritt |
 | 2026-08-20 | Ergaenzt aus der Vakuumprobe (`tools/vakuumprobe.py`): **vakuum-wahre Zusicherung**, **Vakuumprobe**, **Gegenprobe zu einer Abwesenheits-Zusicherung**. Anlass war ein Befund der HomeStation ueber sich selbst — ein als gruen gemeldeter Waechter, dessen Fundartefakt `{"geprueft": 0}` trug |
 | 2026-08-20 | Aus dem GPU-Ergebnis zu `auf-20260820-18`: **Sandbox-Paket (Snap, Flatpak)** und **Artefakt einer Messung**. Beide sind teuer erworben — das GPU-faehige Blender-Snap liefert bei Dateiumleitung Rueckgabewert 0 ohne Bild, und der am selben Tag gemessene 32-Sekunden-Takt war ein Artefakt der CPU-Messung |

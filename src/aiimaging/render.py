@@ -353,7 +353,7 @@ def pruefe_auftrag(a: RenderAuftrag) -> list[str]:
 # Die Naht zum Modell
 # --------------------------------------------------------------------------------------
 
-def lade_modell(backbone_name: str, modell_wurzel=None):
+def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None):
     """Ein Bildmodell laden — die einzige Stelle, die ``torch`` und ``diffusers`` kennt.
 
     Args:
@@ -423,7 +423,7 @@ def lade_modell(backbone_name: str, modell_wurzel=None):
 
     pipeline = DiffusionPipeline.from_pretrained(str(wurzel), torch_dtype=torch.bfloat16)
     _lege_auf_geraet(pipeline, wurzel, torch)
-    return _pipeline_adapter(pipeline, eintrag, torch)
+    return _pipeline_adapter(pipeline, eintrag, torch, schrittzaehler=schrittzaehler)
 
 
 #: Vielfaches der Gewichtsgrösse, das frei sein muss, damit das ganze Modell auf der Karte
@@ -627,6 +627,28 @@ def _generator_geraet(pipeline, torch) -> str:
     return str(geraet)
 
 
+def _als_diffusers_rueckruf(schrittzaehler):
+    """Unseren einfachen Zähler in die Gestalt bringen, die ``diffusers`` erwartet.
+
+    Deren ``callback_on_step_end`` wird als ``(pipe, schritt, zeit, wörterbuch)`` gerufen
+    und **muss** ein Wörterbuch zurückgeben — gibt es ``None`` zurück, bricht der Lauf
+    mitten im Sampling ab. Unser Zähler soll davon nichts wissen müssen; er bekommt nur
+    die Schrittnummer.
+
+    Der Zähler wird **abgeschirmt**: Wirft er, wird das geschluckt. Ein Fortschrittszähler,
+    der einen laufenden Render abbricht, kostet mehr, als er je einbringt — und der
+    Abbruch käme dazu als Fehler des Renderers daher, nicht als seiner.
+    """
+    def rueckruf(pipe, schritt, zeit, kwargs):
+        try:
+            schrittzaehler(int(schritt) + 1)
+        except Exception:      # noqa: BLE001 — siehe Docstring
+            pass
+        return kwargs
+
+    return rueckruf
+
+
 def _vertraegliche_argumente(pipeline, argumente: dict) -> tuple[dict, list[str]]:
     """Nur übergeben, was die Pipeline auch entgegennimmt.
 
@@ -692,7 +714,7 @@ def ist_controlnet_naht(pipeline, genommene_argumente) -> bool:
     return getattr(pipeline, "controlnet", None) is not None
 
 
-def _pipeline_adapter(pipeline, eintrag, torch):
+def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
     """Aus einer ``diffusers``-Pipeline ein Modell im Sinne dieses Moduls machen.
 
     **Ungeprüft.** Diese Funktion ist die einzige Stelle des Moduls, die hier nie
@@ -707,6 +729,13 @@ def _pipeline_adapter(pipeline, eintrag, torch):
     (:func:`_vertraegliche_argumente`) und nicht aus ihrem Namen oder ihrer Fassung
     geschlossen. Eine Pipeline ohne ``control_image`` bekommt die Tiefenkarte als
     ``image``; was sie gar nicht kennt, wird nicht übergeben, sondern **gemeldet**.
+
+    ``schrittzaehler`` wird als ``callback_on_step_end`` an die Pipeline gereicht — der
+    einzige **belegte Fortschritt**, den dieses Projekt hat: Er zählt Diffusionsschritte,
+    die wirklich gerechnet wurden, statt zu bezeugen, dass ein Prozess noch lebt.
+    Kennt eine Pipeline das Argument nicht, wird es wie jedes andere **gemeldet und nicht
+    stillschweigend verschluckt** — ein Rückruf, der nie gerufen wird, sähe von aussen
+    genauso aus wie ein hängender Lauf.
 
     Belegt auf der HomeStation (`auf-20260818-09`, 18.08.2026): ``Qwen-Image-Edit-2511``
     ist über ``QwenImageEditPlusPipeline`` **kein ControlNet**. Ihr ``__call__`` kennt
@@ -754,6 +783,14 @@ def _pipeline_adapter(pipeline, eintrag, torch):
             "height": tiefe.height,
             "width": tiefe.width,
         }
+        gerechnet = [0]
+
+        def zaehlen(schritt: int) -> None:
+            gerechnet[0] = schritt
+            if schrittzaehler is not None:
+                schrittzaehler(schritt)
+
+        argumente["callback_on_step_end"] = _als_diffusers_rueckruf(zaehlen)
         if parameter["modus"] == MODUS_IMAGE_EDIT:
             argumente["image"] = Image.open(parameter["beauty_png"]).convert("RGB")
             argumente["strength"] = parameter["denoise"]
@@ -804,18 +841,41 @@ def _pipeline_adapter(pipeline, eintrag, torch):
                     f"würde identische Bilder liefern."
                 )
 
+        if "callback_on_step_end" in verworfen:
+            hinweise.append(
+                "Diese Pipeline kennt 'callback_on_step_end' nicht. Der Schrittzähler "
+                "wurde NICHT verdrahtet — es gibt für diesen Lauf also kein belegtes "
+                "Fortschrittszeichen, sondern höchstens ein Lebenszeichen. Und die Zahl "
+                "der wirklich gerechneten Schritte bleibt unbekannt: 'schritte_gerechnet' "
+                "ist dann None und heisst UNGEMESSEN, nicht null."
+            )
+
         uebrig = [n for n in verworfen
                   if n not in ("control_image", "controlnet_conditioning_scale",
-                               "guidance_scale", "strength")]
+                               "guidance_scale", "strength", "callback_on_step_end")]
         if uebrig:
             hinweise.append(f"Nicht übergeben, weil unbekannt: {', '.join(uebrig)}.")
 
         bild = pipeline(**genommen).images[0]
+
+        bestellt = parameter["schritte"]
+        if "callback_on_step_end" not in verworfen and gerechnet[0] != bestellt:
+            hinweise.append(
+                f"Gerechnet wurden {gerechnet[0]} Diffusionsschritte, bestellt waren "
+                f"{bestellt}. Das ist kein Fehler, sondern die Rechnung mancher Pipelines: "
+                f"Im Bildbearbeitungsmodus laufen nur 'schritte x denoise' Schritte "
+                f"(hier {bestellt} x {parameter['denoise']} = "
+                f"{int(bestellt * parameter['denoise'])}). **Der Parametersatz nennt die "
+                f"bestellte Zahl** — wer zwei Läufe über die Schrittzahl vergleicht, "
+                f"vergleicht in Wahrheit diese hier."
+            )
+
         ziel = parameter["ausgabe_png"] or str(
             Path(parameter["depth_png"]).with_name(f"render_{parameter['seed']}.png")
         )
         bild.save(ziel)
-        return {"bild_png": ziel, "hinweise": hinweise}
+        return {"bild_png": ziel, "hinweise": hinweise,
+                "schritte_gerechnet": gerechnet[0] or None}
 
     modell.backbone = eintrag.name       # zur Fehlersuche: welches Modell steckt drin
     return modell
@@ -925,7 +985,8 @@ def _hinweise(a: RenderAuftrag, parameter: dict, lizenz: dict) -> tuple[str, ...
 
 
 def _ergebnis(status: str, parameter: dict, *, bild_png=None, dauer_s: float = 0.0,
-              error=None, maengel=(), lizenz=None, hinweise=()) -> dict:
+              error=None, maengel=(), lizenz=None, hinweise=(),
+              schritte_gerechnet=None) -> dict:
     """Der Ergebnissatz — eine Form für alle drei Ausgänge.
 
     Ein einheitlicher Satz ist kein Selbstzweck: Wer ein Ergebnis auswertet, soll
@@ -944,10 +1005,15 @@ def _ergebnis(status: str, parameter: dict, *, bild_png=None, dauer_s: float = 0
         "maengel": tuple(maengel),
         "lizenz": lizenz,
         "hinweise": tuple(hinweise),
+        # None heisst UNGEMESSEN und nicht null — dieselbe Dreiteilung wie überall in
+        # diesem Projekt. Eine Pipeline ohne `callback_on_step_end` lässt uns darüber im
+        # Dunkeln, und das ist etwas anderes, als hätte sie keinen Schritt gerechnet.
+        "schritte_gerechnet": schritte_gerechnet,
     }
 
 
-def rendere(a: RenderAuftrag, *, modell=None, _lader=None) -> dict:
+def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
+            schrittzaehler=None) -> dict:
     """Einen Bildauftrag ausführen — oder begründet ablehnen.
 
     Args:
@@ -959,10 +1025,24 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None) -> dict:
         _lader: Ersatz für :func:`lade_modell`, Signatur
             ``(backbone_name, modell_wurzel) -> modell``. Für Tests, die auch das Laden
             beobachten wollen. Unterstrich, weil es eine Naht ist und keine Einstellung.
+        schrittzaehler: ``(schritt: int) -> None``, gerufen nach **jedem**
+            Diffusionsschritt. **Das ist der einzige belegte Fortschritt, den dieses
+            Projekt hat** — er zählt Schritte, die wirklich gerechnet wurden, nicht bloss
+            das Weiterleben eines Prozesses (vergleiche den Herzschlag des Blender-Laufs,
+            der ausdrücklich ein *Lebens*zeichen ist).
+            Kennt die Pipeline ``callback_on_step_end`` nicht, steht das als Hinweis im
+            Ergebnis; verdrahtet wird dann nichts. Ein Rückruf, der nie gerufen wird,
+            sähe von aussen genauso aus wie ein hängender Lauf.
 
     Returns:
         ``{status, bild_png, seed, backbone, parameter, dauer_s, error, maengel, lizenz,
-        hinweise}``.
+        hinweise, schritte_gerechnet}``.
+
+        ``schritte_gerechnet`` ist die Zahl der **wirklich gerechneten**
+        Diffusionsschritte, gezählt am Rückruf der Pipeline. Sie kann von
+        ``parameter['schritte']`` abweichen — im Bildbearbeitungsmodus rechnen viele
+        Pipelines nur ``schritte × denoise``. ``None`` heisst **ungemessen** (die Pipeline
+        kennt keinen Rückruf), nicht null.
 
         * ``status='ok'`` — ``bild_png`` zeigt auf eine Datei, die es wirklich gibt.
         * ``status='abgelehnt'`` — der Auftrag verletzt den Vertrag (Lizenz,
@@ -1034,7 +1114,15 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None) -> dict:
     try:
         if modell is None:
             lader = _lader or lade_modell
-            modell = lader(eintrag.name, a.modell_wurzel)
+            # Der Zähler geht NUR an den echten Lader. Ein Test-Lader mit fester
+            # Signatur soll nicht daran scheitern, dass wir hier ein Argument mehr
+            # durchreichen — und ein Test, der den Zähler beobachten will, übergibt ein
+            # `modell` und braucht den Lader gar nicht.
+            if _lader is None and schrittzaehler is not None:
+                modell = lader(eintrag.name, a.modell_wurzel,
+                               schrittzaehler=schrittzaehler)
+            else:
+                modell = lader(eintrag.name, a.modell_wurzel)
         antwort = modell(parameter)
     except Exception as fehler:                       # noqa: BLE001 — bewusst breit
         # Bewusst jede Ausnahme: Was ein fremdes Modell wirft, ist nicht vorhersagbar
@@ -1054,8 +1142,10 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None) -> dict:
         # genommen hat. Ein wirkungsloser Parameter, der nur im Auftrag steht und nirgends
         # ankommt, ist genau die stillschweigende Unwirksamkeit, die `_hinweise` verhindert.
         hinweise = tuple(hinweise) + tuple(antwort.get("hinweise") or ())
+        gerechnet = antwort.get("schritte_gerechnet")
     else:
         bild_png = antwort
+        gerechnet = None
     if not isinstance(bild_png, str) or not bild_png.strip():
         return _ergebnis(
             STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
@@ -1070,7 +1160,7 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None) -> dict:
         )
 
     return _ergebnis(STATUS_OK, parameter, bild_png=bild_png, dauer_s=dauer,
-                     lizenz=lizenz, hinweise=hinweise)
+                     lizenz=lizenz, hinweise=hinweise, schritte_gerechnet=gerechnet)
 
 
 __all__ = [

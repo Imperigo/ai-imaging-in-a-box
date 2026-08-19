@@ -869,3 +869,287 @@ def test_unsere_eigene_konvention_ist_benannt():
 def test_jede_polaritaet_in_der_registry_ist_eine_bekannte():
     for name, eintrag in backbone.BACKBONES.items():
         assert eintrag.tiefen_polaritaet in backbone.TIEFENPOLARITAETEN, name
+
+
+# ======================================================================================
+# Der Schrittzähler — der einzige BELEGTE Fortschritt, den dieses Projekt hat
+# ======================================================================================
+
+class Pipelineattrappe:
+    """Eine diffusers-Pipeline, die ihren `callback_on_step_end` wirklich ruft."""
+
+    def __init__(self, *, kennt_rueckruf: bool = True, schritte: int = 4):
+        self._kennt = kennt_rueckruf
+        self._schritte = schritte
+        self.gesehen = {}
+
+    def __call__(self, **kw):
+        self.gesehen = kw
+        rueckruf = kw.get("callback_on_step_end")
+        if rueckruf is not None:
+            for i in range(self._schritte):
+                zurueck = rueckruf(self, i, 0.0, {"latents": "x"})
+                assert isinstance(zurueck, dict), (
+                    "diffusers bricht ab, wenn der Rückruf kein Wörterbuch liefert")
+        return type("Aus", (), {"images": [_Bildattrappe()]})()
+
+
+class _Bildattrappe:
+    height = 64
+    width = 64
+
+    def save(self, ziel):
+        Path(ziel).write_bytes(b"\x89PNG")
+
+
+def _schreibe_graustufen_png(pfad):
+    """Ein winziges, gültiges 8-Bit-Graustufen-PNG — Pillow liest es, wir brauchen es nur
+    als Datei, die es gibt."""
+    import struct
+    import zlib
+
+    breite = hoehe = 2
+    roh = b"".join(b"\x00" + bytes([128, 200]) for _ in range(hoehe))
+
+    def block(art, nutz):
+        return (struct.pack(">I", len(nutz)) + art + nutz
+                + struct.pack(">I", zlib.crc32(art + nutz) & 0xFFFFFFFF))
+
+    Path(pfad).write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + block(b"IHDR", struct.pack(">IIBBBBB", breite, hoehe, 8, 0, 0, 0, 0))
+        + block(b"IDAT", zlib.compress(roh))
+        + block(b"IEND", b""))
+    return pfad
+
+
+@pytest.fixture
+def pillow_attrappe(monkeypatch):
+    """Ein winziges `PIL`-Ersatzmodul.
+
+    ``_pipeline_adapter`` galt in diesem Modul bisher als **ungeprüft** — es lädt Pillow,
+    und im Entwicklungscontainer gibt es weder Pillow noch torch. Geprüft werden soll hier
+    aber nicht Pillow, sondern **unsere Verdrahtung**: ob der Schrittzähler ankommt und
+    ob eine Pipeline, die ihn nicht kennt, gemeldet wird.
+
+    Die Attrappe ist darum bewusst dumm und heisst so. Sie ersetzt kein Pillow — sie
+    macht nur den Weg dorthin begehbar.
+    """
+    import sys as _sys
+    import types
+
+    class _Bild:
+        height = width = 64
+
+        def convert(self, _modus):
+            return self
+
+        def save(self, ziel):
+            Path(ziel).write_bytes(b"\x89PNG")
+
+    pil = types.ModuleType("PIL")
+    bildmodul = types.ModuleType("PIL.Image")
+    bildmodul.open = lambda _pfad: _Bild()
+    ops = types.ModuleType("PIL.ImageOps")
+    ops.invert = lambda bild: bild
+    pil.Image = bildmodul
+    pil.ImageOps = ops
+    monkeypatch.setitem(_sys.modules, "PIL", pil)
+    monkeypatch.setitem(_sys.modules, "PIL.Image", bildmodul)
+    monkeypatch.setitem(_sys.modules, "PIL.ImageOps", ops)
+    return pil
+
+
+class _Torchattrappe:
+    """Nur so viel torch, wie der Adapter wirklich anfasst.
+
+    Die Liste ist kurz und soll es bleiben: Was hier fehlt, fällt beim Lauf sofort auf —
+    und jede Zeile mehr wäre eine Zeile, die vorgibt, torch zu sein."""
+
+    class _Cuda:
+        @staticmethod
+        def is_available():
+            return False
+
+    cuda = _Cuda()
+
+    class Generator:
+        def __init__(self, device=None):
+            self.device = device
+
+        def manual_seed(self, seed):
+            self.seed = seed
+            return self
+
+
+def _adapter(pipeline, zaehler=None):
+    eintrag = backbone.hole(render.VORGABE_BACKBONE)
+    return render._pipeline_adapter(pipeline, eintrag, _Torchattrappe(),
+                                    schrittzaehler=zaehler)
+
+
+def test_der_zaehler_wird_je_schritt_gerufen(tmp_path, monkeypatch, pillow_attrappe):
+    gezaehlt = []
+    pipeline = Pipelineattrappe(schritte=5)
+    monkeypatch.setattr(render, "_vertraegliche_argumente",
+                        lambda p, a: (dict(a), []))
+    tiefe = tmp_path / "t.png"
+    _schreibe_graustufen_png(tiefe)
+    modell = _adapter(pipeline, gezaehlt.append)
+    modell({"depth_png": str(tiefe), "tiefe_invertiert": False, "seed": 1,
+            "prompt": "x", "negativ_prompt": "", "controlnet_staerke": 0.8,
+            "schritte": 5, "fuehrung": 1.0, "modus": render.MODUS_TXT2IMG,
+            "denoise": 0.6, "beauty_png": None, "ausgabe_png": str(tmp_path / "b.png")})
+    assert gezaehlt == [1, 2, 3, 4, 5], "ab eins gezählt, nicht ab null"
+
+
+def test_der_rueckruf_wird_auch_ohne_eigenen_zaehler_gesetzt(tmp_path, monkeypatch,
+                                                             pillow_attrappe):
+    """Absicht, und eine Änderung gegenüber der ersten Fassung.
+
+    Der Adapter zählt die Schritte **immer** selbst — nur so lässt sich melden, dass eine
+    Pipeline weniger gerechnet hat als bestellt. Ein eigener `schrittzaehler` hängt sich
+    daran, statt ihn zu ersetzen.
+    """
+    pipeline = Pipelineattrappe(schritte=5)
+    monkeypatch.setattr(render, "_vertraegliche_argumente", lambda p, a: (dict(a), []))
+    tiefe = _schreibe_graustufen_png(tmp_path / "t.png")
+    ergebnis = _adapter(pipeline, None)({
+        "depth_png": str(tiefe), "tiefe_invertiert": False, "seed": 1, "prompt": "x",
+        "negativ_prompt": "", "controlnet_staerke": 0.8, "schritte": 5,
+        "fuehrung": 1.0, "modus": render.MODUS_TXT2IMG, "denoise": 0.6,
+        "beauty_png": None, "ausgabe_png": str(tmp_path / "b.png")})
+    assert "callback_on_step_end" in pipeline.gesehen
+    assert ergebnis["schritte_gerechnet"] == 5
+
+
+def test_eine_pipeline_ohne_rueckruf_wird_GEMELDET(tmp_path, monkeypatch, pillow_attrappe):
+    """Ein Rückruf, der nie gerufen wird, sähe von aussen genauso aus wie ein hängender
+    Lauf. Genau die Fehlerart, gegen die dieses Modul seit `auf-09` gebaut ist."""
+    pipeline = Pipelineattrappe()
+    monkeypatch.setattr(
+        render, "_vertraegliche_argumente",
+        lambda p, a: ({k: v for k, v in a.items() if k != "callback_on_step_end"},
+                      ["callback_on_step_end"]))
+    tiefe = tmp_path / "t.png"
+    _schreibe_graustufen_png(tiefe)
+    ergebnis = _adapter(pipeline, lambda s: None)({
+        "depth_png": str(tiefe), "tiefe_invertiert": False, "seed": 1, "prompt": "x",
+        "negativ_prompt": "", "controlnet_staerke": 0.8, "schritte": 5,
+        "fuehrung": 1.0, "modus": render.MODUS_TXT2IMG, "denoise": 0.6,
+        "beauty_png": None, "ausgabe_png": str(tmp_path / "b.png")})
+    hinweise = " ".join(ergebnis["hinweise"])
+    assert "callback_on_step_end" in hinweise
+    assert "NICHT verdrahtet" in hinweise
+    assert "Lebenszeichen" in hinweise, "der Unterschied gehört in die Meldung"
+
+
+def test_ein_werfender_zaehler_nimmt_den_render_nicht_mit(tmp_path, monkeypatch, pillow_attrappe):
+    """Ein Fortschrittszähler, der einen laufenden Render abbricht, kostet mehr, als er
+    je einbringt — und der Abbruch käme als Fehler des Renderers daher."""
+    pipeline = Pipelineattrappe(schritte=3)
+    monkeypatch.setattr(render, "_vertraegliche_argumente", lambda p, a: (dict(a), []))
+    tiefe = tmp_path / "t.png"
+    _schreibe_graustufen_png(tiefe)
+
+    def kaputt(_schritt):
+        raise RuntimeError("der Zähler ist hin")
+
+    ergebnis = _adapter(pipeline, kaputt)({
+        "depth_png": str(tiefe), "tiefe_invertiert": False, "seed": 1, "prompt": "x",
+        "negativ_prompt": "", "controlnet_staerke": 0.8, "schritte": 3,
+        "fuehrung": 1.0, "modus": render.MODUS_TXT2IMG, "denoise": 0.6,
+        "beauty_png": None, "ausgabe_png": str(tmp_path / "b.png")})
+    assert ergebnis["bild_png"], "das Bild muss trotzdem entstehen"
+
+
+def test_der_rueckruf_liefert_das_woerterbuch_zurueck():
+    """diffusers bricht mitten im Sampling ab, wenn er None bekommt."""
+    rueckruf = render._als_diffusers_rueckruf(lambda s: None)
+    kwargs = {"latents": "etwas"}
+    assert rueckruf(None, 0, 0.0, kwargs) is kwargs
+
+
+def test_die_zahl_der_wirklich_gerechneten_schritte_steht_im_ergebnis(tmp_path,
+                                                                      monkeypatch,
+                                                                      pillow_attrappe):
+    """Im Bildbearbeitungsmodus rechnen viele Pipelines nur `schritte × denoise`.
+
+    Der Parametersatz nennt die **bestellte** Zahl. Wer zwei Läufe über die Schrittzahl
+    vergleicht, verglich bis heute in Wahrheit etwas anderes.
+    """
+    pipeline = Pipelineattrappe(schritte=12)          # 20 bestellt, 12 gerechnet
+    monkeypatch.setattr(render, "_vertraegliche_argumente", lambda p, a: (dict(a), []))
+    tiefe = _schreibe_graustufen_png(tmp_path / "t.png")
+    ergebnis = _adapter(pipeline)({
+        "depth_png": str(tiefe), "tiefe_invertiert": False, "seed": 1, "prompt": "x",
+        "negativ_prompt": "", "controlnet_staerke": 0.8, "schritte": 20,
+        "fuehrung": 1.0, "modus": render.MODUS_TXT2IMG, "denoise": 0.6,
+        "beauty_png": None, "ausgabe_png": str(tmp_path / "b.png")})
+    assert ergebnis["schritte_gerechnet"] == 12
+    hinweise = " ".join(ergebnis["hinweise"])
+    assert "12 Diffusionsschritte, bestellt waren 20" in hinweise
+    assert "20 x 0.6 = 12" in hinweise, "die Rechnung gehört in die Meldung"
+
+
+def test_gleiche_schrittzahl_erzeugt_keinen_hinweis(tmp_path, monkeypatch,
+                                                    pillow_attrappe):
+    pipeline = Pipelineattrappe(schritte=20)
+    monkeypatch.setattr(render, "_vertraegliche_argumente", lambda p, a: (dict(a), []))
+    tiefe = _schreibe_graustufen_png(tmp_path / "t.png")
+    ergebnis = _adapter(pipeline)({
+        "depth_png": str(tiefe), "tiefe_invertiert": False, "seed": 1, "prompt": "x",
+        "negativ_prompt": "", "controlnet_staerke": 0.8, "schritte": 20,
+        "fuehrung": 1.0, "modus": render.MODUS_TXT2IMG, "denoise": 1.0,
+        "beauty_png": None, "ausgabe_png": str(tmp_path / "b.png")})
+    assert ergebnis["schritte_gerechnet"] == 20
+    assert not [h for h in ergebnis["hinweise"] if "bestellt waren" in h]
+
+
+def test_ohne_rueckruf_ist_die_zahl_ungemessen_und_nicht_null(tmp_path, monkeypatch,
+                                                              pillow_attrappe):
+    """None heisst ungemessen. Null hiesse: es lief kein einziger Schritt."""
+    pipeline = Pipelineattrappe()
+    monkeypatch.setattr(
+        render, "_vertraegliche_argumente",
+        lambda p, a: ({k: v for k, v in a.items() if k != "callback_on_step_end"},
+                      ["callback_on_step_end"]))
+    tiefe = _schreibe_graustufen_png(tmp_path / "t.png")
+    ergebnis = _adapter(pipeline)({
+        "depth_png": str(tiefe), "tiefe_invertiert": False, "seed": 1, "prompt": "x",
+        "negativ_prompt": "", "controlnet_staerke": 0.8, "schritte": 20,
+        "fuehrung": 1.0, "modus": render.MODUS_TXT2IMG, "denoise": 0.6,
+        "beauty_png": None, "ausgabe_png": str(tmp_path / "b.png")})
+    assert ergebnis["schritte_gerechnet"] is None
+    assert ergebnis["hinweise"], "die Nichtverdrahtung selbst muss gemeldet sein"
+    assert not [h for h in ergebnis["hinweise"] if "bestellt waren" in h], (
+        "ohne Messung darf keine Abweichung behauptet werden")
+
+
+def test_rendere_reicht_die_zahl_bis_ins_ergebnis(tmp_path):
+    tiefe = _schreibe_graustufen_png(tmp_path / "t.png")
+    ziel = tmp_path / "bild.png"
+
+    def modell(parameter):
+        Path(parameter["ausgabe_png"]).write_bytes(b"\x89PNG")
+        return {"bild_png": parameter["ausgabe_png"], "schritte_gerechnet": 7}
+
+    ergebnis = render.rendere(
+        render.RenderAuftrag(depth_png=str(tiefe), prompt="x", ausgabe_png=str(ziel)),
+        modell=modell)
+    assert ergebnis["status"] == "ok"
+    assert ergebnis["schritte_gerechnet"] == 7
+
+
+def test_ein_modell_das_nur_einen_pfad_liefert_meldet_ungemessen(tmp_path):
+    tiefe = _schreibe_graustufen_png(tmp_path / "t.png")
+    ziel = tmp_path / "bild.png"
+
+    def modell(parameter):
+        Path(parameter["ausgabe_png"]).write_bytes(b"\x89PNG")
+        return parameter["ausgabe_png"]
+
+    ergebnis = render.rendere(
+        render.RenderAuftrag(depth_png=str(tiefe), prompt="x", ausgabe_png=str(ziel)),
+        modell=modell)
+    assert ergebnis["schritte_gerechnet"] is None
