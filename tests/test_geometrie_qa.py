@@ -1145,3 +1145,416 @@ def test_die_sechs_treuesten_laeufe_ergeben_disparitaet():
     assert antwort["polaritaet"] == geometrie_qa.POLARITAET_DISPARITAET
     assert antwort["gemessen"] is True
     assert antwort["n_gewertet"] == 6
+
+
+# ======================================================================================
+# Der Maskenweg — ρ nur über die übergebene Teilmenge der Bildpunkte
+# ======================================================================================
+#
+# Anlass ist `auf-20260821-24` (21.08.2026, `docs/MASKE_2026-08-21.md`): Über das ganze
+# Bild gerechnet misst die Metrik in einer bodenlastigen Szene im Wesentlichen zwei
+# Bodenrampen gegeneinander — weisses Rauschen erreichte dort den Score 0.7217, den
+# Rauschanker jener Szene aus `auf-20260820-21/22`. ρ nur über
+# die Bauwerkspunkte ist dagegen in beiden gemessenen Szenen streng monoton, und die
+# beiden Szenenkurven liegen mit höchstens 0.005 aufeinander.
+#
+# Diese Tests prüfen den Rechenweg und die Fallunterscheidungen. Sie prüfen NICHT, ob ρ
+# über der Maske Halluzination fängt — das ist als `auf-20260821-25` unterwegs und
+# ungemessen. Ein Test kann diese Frage auch gar nicht beantworten: Sie hängt daran, was
+# ein echter Schätzer auf einem echten Bild tut, und nicht daran, was hier von Hand in
+# eine Ist-Karte geschrieben wird.
+
+
+def bodenlastige_szene() -> tuple[list[float], list[float], list[bool]]:
+    """Soll-Karte mit Bodenrampe und Bauwerk, dazu eine Ist-Karte aus reiner Rampe.
+
+    So gebaut, dass der gemessene Mechanismus **im Kleinen nachvollziehbar** wird:
+
+    * Der **Boden** wird nach unten hin näher — eine Rampe, die nur von ``y`` abhängt.
+      Genau so eine Rampe legt ein monokularer Schätzer in eine strukturlose Fläche
+      (`auf-20260818-10`), und genau darum korrelieren die beiden.
+    * Das **Bauwerk** ist eine Fassade, deren Tiefe nur von ``x`` abhängt. Ihre
+      Tiefenstaffelung steht damit senkrecht auf der Bodenrampe — sie hat mit ihr nichts
+      zu tun, und das ist der Punkt.
+    * Die **Ist-Karte** ist die reine Bodenrampe über das ganze Bild, in fremder Skala:
+      das Bild, in dem der Schätzer nur Boden gesehen hat.
+
+    Die dritte Rückgabe ist die Maske: ``True`` genau auf den Bauwerkspunkten.
+    """
+    def boden(y: int) -> float:
+        return 40.0 - 0.5 * y
+
+    soll: list[float] = []
+    maske: list[bool] = []
+    for y in range(HOEHE):
+        for x in range(BREITE):
+            bauwerk = 8 <= x < 32 and 12 <= y < 36
+            soll.append(22.0 + 0.05 * x if bauwerk else boden(y))
+            maske.append(bauwerk)
+    ist = [3.0 * boden(y) + 7.0 for y in range(HOEHE) for _ in range(BREITE)]
+    return soll, ist, maske
+
+
+def maske_mit_punkten(anzahl: int) -> list[bool]:
+    """Eine Maske aus den ersten ``anzahl`` Geometriepunkten von ``SOLL``."""
+    sil = silhouette(SOLL)
+    maske = [False] * len(sil)
+    gewaehlt = 0
+    for k, an in enumerate(sil):
+        if an and gewaehlt < anzahl:
+            maske[k] = True
+            gewaehlt += 1
+    assert sum(maske) == anzahl, "die Vorbedingung des Tests muss selbst stimmen"
+    return maske
+
+
+#: Maske über den ganzen Baukörper von ``SOLL`` — 576 Punkte, weit über der Mindestzahl.
+MASKE_BAUWERK = silhouette(SOLL)
+
+
+# --------------------------------------------------------------------------------------
+# Der Mechanismus, um den es geht
+# --------------------------------------------------------------------------------------
+
+def test_ueber_dem_ganzen_bild_misst_die_bodenrampe_sich_selbst():
+    """Der Befund vom 21.08.2026, im Kleinen nachgebaut — und was die Maske daran ändert.
+
+    Die Ist-Karte zeigt hier **kein Bauwerk**, sondern nur die Bodenrampe. Über das ganze
+    Bild gerechnet sieht das trotzdem nach einem fast perfekten Render aus: Die Silhouette
+    ist randlos (``geom_iou`` 1.0, weil beide Karten überall Werte tragen), und die
+    Rangkorrelation ist hoch, weil der Boden den grössten Teil des Bildes stellt und sich
+    selbst begegnet.
+
+    Über der Maske bleibt davon nichts: Dort steht die Tiefenstaffelung der Fassade
+    (nur ``x``) senkrecht auf der Bodenrampe (nur ``y``), und ρ ist exakt 0.
+
+    **Was dieser Test NICHT zeigt.** Er ist kein Beleg, dass ρ über der Maske
+    Halluzination fängt. Die Ist-Karte ist hier von Hand gesetzt; auf einem echten Bild
+    entscheidet, was ein echter Schätzer an diesen Punkten liefert. Das ist als
+    `auf-20260821-25` unterwegs und ungemessen.
+    """
+    soll, ist, maske = bodenlastige_szene()
+
+    ganzes_bild = geometrie_score(soll, ist, polaritaet=geometrie_qa.POLARITAET_TIEFE)
+    ueber_maske = geometrie_qa.rho_ueber_maske(
+        soll, ist, maske, polaritaet=geometrie_qa.POLARITAET_TIEFE)
+
+    assert ganzes_bild["score"] > 0.95, "so sieht der Boden aus, der sich selbst misst"
+    assert ganzes_bild["geom_iou"] == 1.0
+    assert ueber_maske["rho"] == pytest.approx(0.0, abs=1e-9)
+    assert ueber_maske["gerichtet"] == pytest.approx(0.0, abs=1e-9)
+    assert ueber_maske["n_maske"] == 576
+    assert ueber_maske["anteil_maske"] == pytest.approx(576 / (BREITE * HOEHE))
+
+
+def test_die_gemessenen_maskenkurven_sind_streng_monoton_und_fallen_zusammen():
+    """Die Messung aus `auf-20260821-24`, nachvollzogen — beide Behauptungen einzeln.
+
+    Die Zahlen stehen so in ``docs/MASKE_2026-08-21.md`` und sind hier fest eingetragen,
+    weil sie eine **Messung** sind und keine Erfindung des Tests: ρ mit Vorzeichen über
+    den 44 604 Maskenpunkten, je Versatz, für zwei Szenen mit 29 % und 59.8 %
+    Geometrieanteil.
+
+    Geprüft wird, was die Messung behauptet:
+
+    1. **streng monoton** — jeder Meter Versatz kostet, keiner bringt. Das war über dem
+       ganzen Bild nicht so (dort: 2 m → 0.1191, 4 m → 0.2301, mehr Fehler und besserer
+       Score), und der Kontrast steht am Ende dieses Tests.
+    2. **die beiden Szenenkurven fallen zusammen** — höchstens 0.005 Abstand, ohne jede
+       Normierung. Genau das sollte ``anteil_der_spanne`` leisten und leistet es nicht.
+    3. **der Rauschboden ist keine Null** — auch das schlechteste Glied der Reihe liegt
+       noch deutlich vor weissem Rauschen.
+    """
+    versaetze = (0.0, 0.25, 0.5, 1.0, 2.0, 4.0)
+    szene_29 = (-0.9908, -0.9627, -0.9239, -0.8449, -0.7814, -0.7386)
+    szene_598 = (-0.9874, -0.9594, -0.9211, -0.8437, -0.7843, -0.7435)
+    pol = geometrie_qa.POLARITAET_DISPARITAET
+
+    assert len(szene_29) == len(szene_598) == len(versaetze) == 6
+
+    for name, reihe in (("29 %", szene_29), ("59.8 %", szene_598)):
+        gerichtet = [pol * r for r in reihe]
+        for k in range(1, len(gerichtet)):
+            assert gerichtet[k] < gerichtet[k - 1], (
+                f"Szene {name}: {versaetze[k]} m Versatz ist nicht schlechter als "
+                f"{versaetze[k - 1]} m — dann wäre die Reihe nicht monoton")
+
+    for k in range(len(versaetze)):
+        assert abs(szene_29[k] - szene_598[k]) <= 0.005, (
+            f"bei {versaetze[k]} m liegen die beiden Szenenkurven weiter auseinander "
+            f"als die gemessenen 0.005")
+
+    boden = pol * geometrie_qa.RAUSCHBODEN_UEBER_MASKE
+    for k in range(len(versaetze)):
+        assert pol * szene_29[k] > boden, f"{versaetze[k]} m fällt unter den Rauschboden"
+        assert pol * szene_598[k] > boden, f"{versaetze[k]} m fällt unter den Rauschboden"
+
+    # Der Kontrast: dieselbe Reihe über dem GANZEN Bild, Szene A, aus
+    # `docs/EMPFINDLICHKEIT_2026-08-20.md`. 4 m ist dort besser als 2 m.
+    assert 0.2301 > 0.1191, "so war der Befund, den die Maske aufgehoben hat"
+
+
+def test_der_rauschboden_ueber_der_maske_ist_gemessen_und_keine_null():
+    """−0.5207 ist eine Messung und liegt weit weg von 0 — und weit weg von perfekt.
+
+    Wer ρ über der Maske gegen 0 hält, hält es gegen die falsche Zahl: Ein Bild ohne jede
+    Geometrie erreicht dort −0.52, weil der Schätzer auch in Rauschen eine Rampe sieht.
+
+    Verglichen wird trotzdem **nicht** selbsttätig: Der Boden gehört zum Paar aus Schätzer
+    und Szenenart, und welches Paar vorliegt, weiss der Aufrufer. Ein Ergebnisfeld
+    ``ueber_rauschboden`` gäbe es nur um den Preis, diesen Boden für jeden Schätzer zu
+    behaupten.
+    """
+    boden = geometrie_qa.RAUSCHBODEN_UEBER_MASKE
+    assert boden == pytest.approx(-0.5207)
+    assert -0.9874 < boden < 0.0, "zwischen perfekt und keinem Zusammenhang, nicht bei 0"
+
+    ergebnis = geometrie_qa.rho_ueber_maske(
+        SOLL, IST_TREU, MASKE_BAUWERK, polaritaet=geometrie_qa.POLARITAET_TIEFE)
+    assert "ueber_rauschboden" not in ergebnis
+
+
+# --------------------------------------------------------------------------------------
+# Die drei Fälle, die nicht dasselbe sind: Maske fehlt / leer / zu klein
+# --------------------------------------------------------------------------------------
+
+def test_eine_fehlende_maske_ist_ein_aufruffehler_und_keine_leere_messung():
+    """``None`` als „alle Punkte“ zu deuten ergäbe wieder die Rechnung über den Boden."""
+    with pytest.raises(QaError, match="AUFRUFEFEHLER"):
+        geometrie_qa.rho_ueber_maske(SOLL, IST_TREU, None)
+
+
+def test_eine_leere_maske_ist_nicht_gemessen_und_weder_null_noch_eins():
+    """``None`` heisst in diesem Projekt *kein Wert* — niemals *in Ordnung*.
+
+    Eine leere Maske ist kein Aufrufefehler: Sie kann aus einem Material-ID-Pass kommen,
+    in dem das Bauwerk nicht vorkam. Das ist ein Befund über die Maske und kein Urteil
+    über das Bild.
+    """
+    leer = [False] * len(SOLL)
+    ergebnis = geometrie_qa.rho_ueber_maske(SOLL, IST_TREU, leer,
+                                            polaritaet=geometrie_qa.POLARITAET_TIEFE)
+
+    assert ergebnis["rho"] is None
+    assert ergebnis["gerichtet"] is None
+    assert ergebnis["n_maske"] == 0
+    assert any("NICHT GEMESSEN" in w for w in ergebnis["warnungen"]), ergebnis["warnungen"]
+
+
+def test_eine_zu_kleine_maske_ist_ein_befund_und_kein_wert():
+    """Unter der Mindestzahl wäre ρ Rauschen mit Dezimalpunkt — und ab ihr gibt es einen.
+
+    Die zweite Hälfte gehört dazu: Ohne sie wäre der Test auch dann grün, wenn die
+    Funktion **nie** ein ρ lieferte.
+    """
+    knapp_zu_wenig = geometrie_qa.MIN_MASKENPUNKTE - 1
+    zu_klein = geometrie_qa.rho_ueber_maske(SOLL, IST_TREU,
+                                            maske_mit_punkten(knapp_zu_wenig))
+    gerade_genug = geometrie_qa.rho_ueber_maske(
+        SOLL, IST_TREU, maske_mit_punkten(geometrie_qa.MIN_MASKENPUNKTE))
+
+    assert zu_klein["rho"] is None
+    assert zu_klein["n_maske"] == knapp_zu_wenig
+    assert any("zu klein" in w for w in zu_klein["warnungen"]), zu_klein["warnungen"]
+    assert gerade_genug["rho"] is not None, "ein Punkt mehr, und es ist messbar"
+
+
+def test_die_mindestzahl_ist_dieselbe_wie_fuer_die_gemeinsame_silhouette():
+    """Zwei Zahlen für dasselbe Argument liefen mit der Zeit auseinander."""
+    assert geometrie_qa.MIN_MASKENPUNKTE == MIN_GEMEINSAME_PUNKTE
+
+
+# --------------------------------------------------------------------------------------
+# Eingaben — streng, wie im ganzen Modul
+# --------------------------------------------------------------------------------------
+
+def test_eine_maske_anderer_laenge_wird_nicht_stillschweigend_abgeschnitten():
+    """Abschneiden verschöbe die Zuordnung aller Punkte danach."""
+    with pytest.raises(QaError, match="unterschiedlich lang"):
+        geometrie_qa.rho_ueber_maske(SOLL, IST_TREU, MASKE_BAUWERK[:-1])
+
+
+def test_die_maske_muss_wahrheitswerte_tragen():
+    """0 und 1 als Maske zu deuten wäre die Sorte Reparatur, gegen die das Modul steht."""
+    zahlen = [1 if an else 0 for an in MASKE_BAUWERK]
+    with pytest.raises(QaError, match="Wahrheitswert"):
+        geometrie_qa.rho_ueber_maske(SOLL, IST_TREU, zahlen)
+
+
+def test_ungleich_lange_karten_sind_auch_im_maskenweg_ein_fehler():
+    with pytest.raises(QaError, match="unterschiedlich lang"):
+        geometrie_qa.rho_ueber_maske(SOLL, IST_TREU[:-1], MASKE_BAUWERK)
+
+
+@pytest.mark.parametrize("pol", [0, 2, -2, 0.5, "tiefe"])
+def test_eine_erfundene_polaritaet_wird_auch_im_maskenweg_abgewiesen(pol):
+    with pytest.raises(QaError, match="polaritaet"):
+        geometrie_qa.rho_ueber_maske(SOLL, IST_TREU, MASKE_BAUWERK, polaritaet=pol)
+
+
+def test_der_maskenweg_veraendert_die_eingaben_nicht():
+    soll, ist, maske = list(SOLL), list(IST_TREU), list(MASKE_BAUWERK)
+    geometrie_qa.rho_ueber_maske(soll, ist, maske)
+    assert soll == list(SOLL) and ist == list(IST_TREU) and maske == list(MASKE_BAUWERK)
+
+
+def test_nicht_endliche_werte_an_maskenpunkten_werden_mit_dem_bildindex_gemeldet():
+    """Der Index muss auf das BILD zeigen und nicht auf die Position in der Auswahl.
+
+    ``spearman`` kennt nur die Auswahl; seine Meldung zeigte auf einen Punkt, den es im
+    Bild nicht gibt. Eine Fehlermeldung an der falschen Stelle kostet mehr als keine.
+    """
+    stelle = MASKE_BAUWERK.index(True)
+    kaputt = list(IST_TREU)
+    kaputt[stelle] = float("nan")
+
+    ergebnis = geometrie_qa.rho_ueber_maske(SOLL, kaputt, MASKE_BAUWERK)
+
+    assert ergebnis["rho"] is None
+    assert ergebnis["n_maske"] == 576, "die Maske bleibt, wie sie übergeben wurde"
+    treffer = [w for w in ergebnis["warnungen"] if "NaN oder inf" in w]
+    assert treffer, ergebnis["warnungen"]
+    assert f"Bildindex {stelle}" in treffer[0]
+    assert stelle > 100, "sonst wäre der Bildindex zufällig gleich der Auswahlposition"
+
+
+def test_konstante_tiefe_in_der_maske_ergibt_keinen_wert():
+    """Eine Fläche parallel zur Bildebene trägt keine Reihenfolge — ρ bleibt None."""
+    flach = [(25.0 if an else w) for w, an in zip(SOLL, MASKE_BAUWERK)]
+    ergebnis = geometrie_qa.rho_ueber_maske(flach, IST_TREU, MASKE_BAUWERK)
+
+    assert ergebnis["rho"] is None
+    assert any("nicht berechenbar" in w for w in ergebnis["warnungen"]), ergebnis["warnungen"]
+
+
+# --------------------------------------------------------------------------------------
+# Die Punkte werden DIREKT gewählt — nicht über eine Hintergrundschwelle
+# --------------------------------------------------------------------------------------
+
+def test_die_maske_waehlt_die_punkte_direkt_und_nicht_ueber_eine_hintergrundschwelle():
+    """Der Grund steht in `auf-20260821-24`: Über die übliche Kette bricht es zusammen.
+
+    Dort erreichte das **perfekte** Bild zwei gemeinsame Punkte, weil die
+    Hintergrundstrategie die nächstgelegenen Punkte irgendwo im Bild wählt — und die
+    liegen auf dem Boden. Der Maskenweg fragt die Silhouetten darum gar nicht erst.
+
+    Geprüft an der halluzinierten Kubatur: Ihre Silhouette überlappt die Soll-Silhouette
+    nur in wenigen Spalten. Der Weg über das ganze Bild wertet nur diese Überlappung, der
+    Maskenweg alle übergebenen Punkte.
+    """
+    ganzes_bild = geometrie_score(SOLL, IST_HALLUZINIERT)
+    ueber_maske = geometrie_qa.rho_ueber_maske(SOLL, IST_HALLUZINIERT, MASKE_BAUWERK)
+
+    assert ganzes_bild["n_gemeinsam"] < 100, "die Silhouetten überlappen kaum"
+    assert ueber_maske["n_maske"] == 576, "die Maske bleibt vollständig — sie entscheidet"
+    assert ueber_maske["rho"] is not None
+
+
+def test_eine_maske_ueber_das_ganze_bild_wird_gemeldet():
+    """Eine Maske, die alles auswählt, wählt nichts aus — und misst wieder den Boden."""
+    soll, ist, _ = bodenlastige_szene()
+    ergebnis = geometrie_qa.rho_ueber_maske(soll, ist, [True] * len(soll))
+
+    assert ergebnis["n_maske"] == ergebnis["n_bild"]
+    assert ergebnis["anteil_maske"] == 1.0
+    treffer = [w for w in ergebnis["warnungen"] if "Randlose Maske" in w]
+    assert treffer, ergebnis["warnungen"]
+    assert "0.72" in treffer[0], "die Messung gehört in die Meldung"
+
+
+# --------------------------------------------------------------------------------------
+# Richtung — das vorzeichenbehaftete ρ, sobald die Polarität gemessen ist
+# --------------------------------------------------------------------------------------
+
+def test_ohne_gemessene_polaritaet_gibt_es_keinen_gerichteten_wert():
+    """Und das Ergebnis sagt selbst, dass es ohne Richtung nicht monoton wäre.
+
+    Der Satz gehört in die Warnung und nicht nur in den Docstring: Wer den Rückgabewert
+    liest, liest den Docstring nicht.
+    """
+    ergebnis = geometrie_qa.rho_ueber_maske(SOLL, IST_TREU, MASKE_BAUWERK)
+
+    assert ergebnis["rho"] is not None, "gemessen wird trotzdem"
+    assert ergebnis["gerichtet"] is None
+    assert ergebnis["polaritaet"] is None
+    treffer = [w for w in ergebnis["warnungen"] if "NICHT MONOTON" in w]
+    assert treffer, ergebnis["warnungen"]
+    assert "auf-20260820-23" in treffer[0], "die Messung gehört in die Meldung"
+
+
+def test_mit_gemessener_polaritaet_wird_das_vorzeichenbehaftete_rho_gewertet():
+    """Ein Disparitäts-Schätzer richtig deklariert: aus −1 wird der beste Wert."""
+    invertiert = abgebildet(SOLL, lambda w: 1.0 / w)
+    ergebnis = geometrie_qa.rho_ueber_maske(
+        SOLL, invertiert, MASKE_BAUWERK, polaritaet=geometrie_qa.POLARITAET_DISPARITAET)
+
+    assert ergebnis["rho"] == pytest.approx(-1.0)
+    assert ergebnis["gerichtet"] == pytest.approx(1.0)
+    assert [w for w in ergebnis["warnungen"] if "ERWARTETE" in w]
+    assert not [w for w in ergebnis["warnungen"] if "falsche Richtung" in w]
+
+
+def test_verkehrt_herum_ist_etwas_anderes_als_kein_zusammenhang():
+    """Darum wird ``gerichtet`` NICHT bei 0 abgeschnitten.
+
+    Der Score schneidet ab, weil unter „vollständig verkehrt" nichts Schlechteres in eine
+    Wurzel geht. Hier entsteht kein Score — und dann ist der Unterschied zwischen
+    ``−1`` (vorne und hinten vertauscht) und ``0`` (gar kein Zusammenhang) ein Befund,
+    den wegzuschneiden Auskunft vernichtete.
+    """
+    invertiert = abgebildet(SOLL, lambda w: 1.0 / w)
+    verkehrt = geometrie_qa.rho_ueber_maske(
+        SOLL, invertiert, MASKE_BAUWERK, polaritaet=geometrie_qa.POLARITAET_TIEFE)
+
+    soll, ist, maske = bodenlastige_szene()
+    ohne_zusammenhang = geometrie_qa.rho_ueber_maske(
+        soll, ist, maske, polaritaet=geometrie_qa.POLARITAET_TIEFE)
+
+    assert verkehrt["gerichtet"] == pytest.approx(-1.0)
+    assert ohne_zusammenhang["gerichtet"] == pytest.approx(0.0, abs=1e-9)
+    assert verkehrt["gerichtet"] < ohne_zusammenhang["gerichtet"]
+    assert [w for w in verkehrt["warnungen"] if "falsche Richtung" in w]
+
+
+# --------------------------------------------------------------------------------------
+# Additiv: der bestehende Score bleibt, wie er ist
+# --------------------------------------------------------------------------------------
+
+def test_der_maskenweg_liefert_weder_score_noch_geom_iou():
+    """Beides mit Grund, und die Gründe sind verschieden.
+
+    ``geom_iou`` **über der Maske** ist bedeutungslos: Innerhalb der Maske trägt die
+    Soll-Karte überall Geometrie, die Überdeckung ist dort konstruktionsbedingt 1
+    (`auf-20260821-24`, gemessen).
+
+    Ein **Score** aus ρ allein nähme die Antwort auf `auf-20260821-25` vorweg: ``geom_iou``
+    war der Halluzinationsfänger, und ob ρ über der Maske dieselbe Arbeit tut, ist
+    ungemessen. Wäre die Antwort nein, hätte dieses Modul die Erpressbarkeit wieder
+    eingebaut, gegen die ``geom_iou`` gebaut wurde.
+    """
+    ergebnis = geometrie_qa.rho_ueber_maske(SOLL, IST_TREU, MASKE_BAUWERK)
+
+    assert "geom_iou" not in ergebnis
+    assert "score" not in ergebnis
+    assert set(ergebnis) == {"rho", "gerichtet", "n_maske", "n_bild", "anteil_maske",
+                             "methode", "polaritaet", "warnungen"}
+
+
+def test_das_ergebnis_traegt_den_eigenen_rechenweg_mit():
+    """Drei Rechenwege im selben Modul liefern drei verschiedene Zahlen zum selben Bild."""
+    ergebnis = geometrie_qa.rho_ueber_maske(SOLL, IST_TREU, MASKE_BAUWERK)
+
+    assert ergebnis["methode"] == geometrie_qa.METHODE_MASKE
+    assert ergebnis["methode"] != METHODE
+    assert ergebnis["methode"] != geometrie_qa.METHODE_GERICHTET
+    assert "kein Score" in ergebnis["methode"]
+
+
+def test_der_maskenweg_laesst_den_bestehenden_score_unangetastet():
+    """Alle bisher gemessenen Zahlen des Projekts sind mit ``sqrt(|ρ| * geom_iou)``
+    entstanden und müssen reproduzierbar bleiben. Ein zweiter Weg ist kein Ersatz.
+    """
+    assert geometrie_score(SOLL, IST_TREU)["score"] == pytest.approx(0.99459, abs=1e-5)
+    assert METHODE.startswith("sqrt(abs(spearman) * geom_iou)")
+    assert geometrie_qa.METHODE_GERICHTET.startswith(
+        "sqrt(max(0, polaritaet * spearman) * geom_iou)")

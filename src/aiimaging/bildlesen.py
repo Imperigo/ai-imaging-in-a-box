@@ -392,15 +392,26 @@ def _png_entpacken(pfad) -> tuple[bytearray, int, int, int, int, int, int]:
     return aus, breite, hoehe, bittiefe, farbtyp, kanaele, bpp
 
 
+def _kanalbytes(aus: bytearray, *, bpp: int, versatz: int) -> bytearray:
+    """Einen 8-Bit-Kanal als **rohe Bytes** herausziehen — ohne jede Skalierung.
+
+    Der Unterschied zu ``_kanalwerte`` ist nicht die Rechnung, sondern die Frage. Wer
+    eine Helligkeit will, will einen Anteil in ``0..1``; wer eine **Kennfarbe** will,
+    will die Zahl, die in der Datei steht. Ein Umweg über ``float`` wäre hier nicht
+    falsch (``255 * (v/255)`` trifft bei 8 Bit exakt), aber er machte aus einer Kennung
+    eine Grösse — und lüde jeden späteren Leser dazu ein, sie zu skalieren.
+
+    ``bpp == 1`` ist der Fall „ein Kanal, ein Byte": Dann ist der ganze Puffer schon der
+    Kanal, und das Slicing wäre nur eine Kopie.
+    """
+    return aus if bpp == 1 else aus[versatz::bpp]
+
+
 def _kanalwerte(aus: bytearray, *, n: int, kanaele: int, bpp: int, bittiefe: int,
                 versatz: int) -> list[float]:
     """Einen Kanal aus den entfilterten Bytes ziehen, skaliert auf ``0..1``."""
     if bittiefe == 8:
-        if kanaele == 1:
-            roh = aus
-        else:
-            roh = aus[versatz::bpp]
-        return [wert / 255.0 for wert in roh]
+        return [wert / 255.0 for wert in _kanalbytes(aus, bpp=bpp, versatz=versatz)]
     zahlen = array("H")
     zahlen.frombytes(bytes(aus))
     if sys.byteorder == "little":
@@ -470,6 +481,64 @@ def lies_png_luminanz(pfad) -> tuple[list[float], int, int]:
     b = _kanalwerte(aus, n=n, kanaele=kanaele, bpp=bpp, bittiefe=bittiefe, versatz=2)
     werte = [LUMA_R * r[i] + LUMA_G * g[i] + LUMA_B * b[i] for i in range(n)]
     return werte, breite, hoehe
+
+
+def lies_png_farben(pfad) -> tuple[list[tuple[int, int, int]], int, int]:
+    """Ein 8-Bit-PNG → ``([(r, g, b), …] in 0..255, Breite, Hoehe)``. Reine stdlib.
+
+    Der dritte Leseweg dieses Moduls — und der einzige, der die Kanäle **nicht**
+    zusammenrechnet. Er ist für den Material-ID-Pass gebaut (``material_id.png``, siehe
+    ``aiimaging.maske``): Dort ist eine Farbe eine **Kennung** und keine Helligkeit.
+    Zwei verschiedene Kennfarben können dieselbe Luminanz haben — durch
+    :func:`lies_png_luminanz` gelesen wären sie ununterscheidbar, und zwar lautlos.
+
+    **Warum Ganzzahlen und keine Anteile in 0..1.** Die Zuordnung Farbe → Materialname
+    läuft über einen Vergleich **Byte für Byte** mit der Tabelle im Blender-Report
+    (``material_id_tabelle[*].farbe_srgb_8bit``). Ein Gleitkommawert dazwischen wäre bei
+    8 Bit zwar exakt, aber er lüde zum Runden, Skalieren und Vergleichen-mit-Toleranz
+    ein — und eine Kennung mit Toleranz zu vergleichen heisst, Nachbarfarben zu
+    verwechseln.
+
+    **Warum nur 8 Bit.** Der Runner schreibt den Material-ID-Pass ausdrücklich mit
+    ``color_depth = "8"``. Eine 16-Bit-Datei auf 8 Bit herunterzurechnen wäre eine
+    Annahme darüber, welche der 256 Stufen gemeint war — genau die Sorte stille
+    Reparatur, gegen die dieses Modul gebaut ist. Sie wird darum gemeldet.
+
+    Graustufenbilder werden angenommen und zu ``(v, v, v)`` aufgefaltet. Das ist keine
+    Deutung, sondern die verlustfreie Schreibweise desselben Werts; ob ein graues Bild
+    als Material-ID **taugt**, entscheidet nicht der Leser, sondern
+    ``aiimaging.maske``. Ein Alphakanal wird ignoriert — dieselbe Begründung wie bei
+    :func:`lies_png_luminanz`: Was hinter einem halbdurchsichtigen Punkt liegt, weiss
+    diese Funktion nicht.
+
+    Args:
+        pfad: Pfad zur PNG-Datei.
+
+    Returns:
+        ``(farben, breite, hoehe)`` mit ``len(farben) == breite * hoehe``, zeilenweise
+        von oben nach unten — dieselbe Reihenfolge wie bei allen anderen Lesern dieses
+        Moduls, und damit indexgleich zu einer Tiefenkarte desselben Laufs.
+
+    Raises:
+        BildError: keine PNG-Datei, beschädigt, verschränkt, Palette — oder eine andere
+            Bittiefe als 8.
+    """
+    aus, breite, hoehe, bittiefe, farbtyp, kanaele, bpp = _png_entpacken(pfad)
+    if bittiefe != 8:
+        raise BildError(
+            f"{pfad}: Bittiefe {bittiefe}. Kennfarben werden Byte für Byte mit der "
+            f"Material-ID-Tabelle verglichen; aus 16 Bit auf 8 Bit herunterzurechnen "
+            f"hiesse zu raten, welche der 256 Stufen gemeint war. Der Multipass "
+            f"schreibt den Material-ID-Pass mit 8 Bit."
+        )
+    n = breite * hoehe
+    if farbtyp in _PNG_GRAUSTUFEN_KANAELE:
+        grau = _kanalbytes(aus, bpp=bpp, versatz=0)
+        return [(w, w, w) for w in grau], breite, hoehe
+    r = _kanalbytes(aus, bpp=bpp, versatz=0)
+    g = _kanalbytes(aus, bpp=bpp, versatz=1)
+    b = _kanalbytes(aus, bpp=bpp, versatz=2)
+    return [(r[i], g[i], b[i]) for i in range(n)], breite, hoehe
 
 
 # ======================================================================================
@@ -1271,5 +1340,6 @@ __all__ = [
     "EXR_RUNNER", "GRAU_NULL_GEOMETRIE", "GRAU_NULL_HINTERGRUND",
     "QUELLE_AUTO", "QUELLE_EXR", "QUELLE_PNG",
     "exr_kopf", "lies_exr_tiefe", "lies_exr_tiefe_stdlib", "lies_exr_tiefe_ueber_blender",
-    "lies_png_graustufen", "png_befund", "tiefen_aus_png", "tiefen_aus_report",
+    "lies_png_farben", "lies_png_graustufen", "png_befund", "tiefen_aus_png",
+    "tiefen_aus_report",
 ]

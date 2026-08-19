@@ -1481,6 +1481,20 @@ das KI-Modell an die echte Gebäudeform bindet.*
 **Material-ID-Pass** — Bild, in dem jedes Material eine eigene Farbfläche bekommt.
 Erlaubt der KI, Bereiche zu unterscheiden.
 
+**Bauwerksmaske** — Eine Liste mit einem Ja/Nein je Bildpunkt: *hier steht das Bauwerk*
+oder *hier steht es nicht*. Sie wird aus dem Material-ID-Pass gewonnen, indem man
+Hintergrund und Gelände abzieht. *Wozu: Die Geometrieprüfung dieses Projekts rechnete
+über das ganze Bild und verglich damit in einer bodenlastigen Szene vor allem zwei
+Bodenflächen miteinander — weisses Rauschen kam so auf 72 von 100 Punkten. Über der
+Bauwerksmaske gerechnet wird dieselbe Prüfung wieder scharf.*
+
+**Geländeregel** — Die ausdrückliche Vorschrift, woran das Gelände in einem Modell zu
+erkennen ist — im einfachsten Fall eine Liste von Namen («Boden_Platte», «IfcSite…»).
+Sie ist nötig, weil ein Rechner einem Bauteil nicht ansieht, ob es Boden oder Wand ist;
+er sieht nur einen Namen. *Der wunde Punkt der Bauwerksmaske: Greift die Regel nicht,
+steckt der ganze Boden unbemerkt im «Bauwerk». Deshalb meldet dieses Projekt in dem Fall
+«nicht gemessen» statt eine Maske auszuliefern, die niemand nachprüft.*
+
 **Goldener Winkel** — Ein Verteilungstrick: Nimmt man bei jedem Schritt rund 137,5°
 (bzw. den Anteil 0,618 eines vollen Kreises), liegen aufeinanderfolgende Werte immer
 weit auseinander, egal wie viele es werden. *Wird hier benutzt, um jedem Bauteil im
@@ -2569,6 +2583,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-21 | Ergaenzt aus der Bauwerksmaske (`src/aiimaging/maske.py`): **Bauwerksmaske** und **Geländeregel**. Beide aus der Messung vom 21.08.2026: Der Material-ID-Pass liefert dieselbe Maske wie eine zweite Blender-Aufnahme (100.000 % Uebereinstimmung), aber nur, solange eine Regel sagt, woran das Gelaende zu erkennen ist |
 | 2026-08-20 | Ergaenzt: **Erreichbarkeit einer Schwelle (Deckel)**. Nachgerechnet: Auf der Szene ohne Boden — der einzigen, auf der je gerendert wurde — war die Geometrie-Schwelle 0.65 arithmetisch unerreichbar |
 | 2026-08-20 | Ergaenzt: **Schluss aus einer Abwesenheit**. Der Begriff fasst einen Fehler zusammen, der an diesem Tag in FUENF Verkleidungen auftrat — geschlossenes Menue, veralteter Klon, ein Verzeichnis das gerade entsteht, ein gruener Waechter der nichts mass, und ein Klick der einen anderen Knopf traf |
 | 2026-08-20 | Ergaenzt aus den Variantenreihen (`src/aiimaging/varianten.py`): **Saatreihe**, **kontrollierte Reihe**, **Rauschboden**, **Laplace-Varianz** (mit der Warnung, dass ein Schaerfemass keine Qualitaet ist). **Berichtigt:** **Seed** stand ZWEIMAL im Lexikon, in Abschnitt 6 als Kurzfassung und als ausfuehrliche Fassung — zusammengefuehrt zu einem Eintrag. Ein Lexikon, das denselben Begriff zweimal erklaert, veraltet an einer der beiden Stellen |

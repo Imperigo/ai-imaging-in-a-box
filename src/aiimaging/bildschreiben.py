@@ -228,6 +228,88 @@ def schreibe_graustufen_png(ziel, werte: Sequence[float], breite: int, hoehe: in
     return ziel
 
 
+def schreibe_farb_png(ziel, farben: Sequence[Sequence[int]], breite: int,
+                      hoehe: int) -> Path:
+    """``(r, g, b)``-Tripel in 0..255 → 8-Bit-RGB-PNG. Reine stdlib.
+
+    Das Gegenstück zu :func:`aiimaging.bildlesen.lies_png_farben`, und aus demselben
+    Grund gebaut: Ein **Material-ID-Pass** trägt Kennfarben, keine Helligkeiten. Ohne
+    einen Schreiber dafür wäre ``aiimaging.maske`` nur mit Blender prüfbar — also mit
+    GPU, GPL-Prozess und Minuten je Lauf. Ein Modul, das sich nur mit dem Werkzeug
+    prüfen lässt, dessen Ausgabe es liest, ist nicht geprüft, sondern nur benutzt.
+
+    **Warum 8 Bit ohne Wahlmöglichkeit.** Der Multipass schreibt den Material-ID-Pass
+    fest mit ``color_depth = "8"``, und die Zuordnung Farbe → Material vergleicht Byte
+    für Byte. Eine 16-Bit-Fassung wäre eine Datei, die es in dieser Kette nicht gibt —
+    und der Leser lehnt sie mit Begründung ab. Ein Schalter dafür wäre ein Schalter für
+    einen Fehlerfall.
+
+    **Warum Ganzzahlen und keine Anteile.** Aus ``0.15`` wird über ``round(0.15 * 255)``
+    der Wert 38; aus ``38/255`` wieder 0.15. Das trifft — aber es lädt dazu ein, eine
+    Kennfarbe zu skalieren, und eine skalierte Kennung kennzeichnet nichts mehr. Wer
+    Grauwerte in 0..1 schreiben will, nimmt :func:`schreibe_graustufen_png`.
+
+    Args:
+        farben: ``breite * hoehe`` Tripel ``(r, g, b)`` mit ganzen Zahlen in 0..255,
+            zeilenweise von **oben** nach unten — dieselbe Reihenfolge, die
+            :func:`aiimaging.bildlesen.lies_png_farben` zurückgibt.
+        breite, hoehe: Bildmasse.
+
+    Returns:
+        Den geschriebenen Pfad.
+
+    Raises:
+        SchreibError: Masse und Anzahl passen nicht zusammen, ein Eintrag hat nicht
+            genau drei Werte, oder ein Wert liegt ausserhalb 0..255. Anders als bei
+            :func:`schreibe_graustufen_png` wird hier **nicht** beschnitten: Ein Grauwert
+            über 1.0 ist ein Rundungsrest, ein Farbwert über 255 ist ein Denkfehler in
+            der Palette — und aus 256 stillschweigend 255 zu machen erzeugte zwei
+            Materialien mit derselben Kennfarbe.
+    """
+    ziel = Path(ziel)
+    if breite <= 0 or hoehe <= 0:
+        raise SchreibError(f"Masse müssen positiv sein, waren {breite}×{hoehe}.")
+    if len(farben) != breite * hoehe:
+        raise SchreibError(
+            f"{len(farben)} Farben für {breite}×{hoehe} = {breite * hoehe} Bildpunkte. "
+            f"Ein Bild mit fehlenden Werten wäre stillschweigend verschoben."
+        )
+
+    roh = bytearray()
+    vorige = bytes(breite * 3)
+    for y in range(hoehe):
+        zeile = bytearray()
+        for x in range(breite):
+            i = y * breite + x
+            farbe = farben[i]
+            if len(farbe) != 3:
+                raise SchreibError(
+                    f"Farbe an Stelle {i} (Zeile {y}, Spalte {x}) hat {len(farbe)} statt "
+                    f"3 Werte. Erwartet wird (r, g, b); ein Alphakanal gehört nicht in "
+                    f"eine Kennfarbe."
+                )
+            for kanal in farbe:
+                if not isinstance(kanal, int) or isinstance(kanal, bool) \
+                        or not 0 <= kanal <= 255:
+                    raise SchreibError(
+                        f"Farbe an Stelle {i} (Zeile {y}, Spalte {x}) ist {tuple(farbe)!r}. "
+                        f"Erwartet werden ganze Zahlen in 0..255."
+                    )
+                zeile.append(kanal)
+        zeile = bytes(zeile)
+        roh += _zeile_filtern(zeile, vorige, 3)
+        vorige = zeile
+
+    ihdr = struct.pack(">IIBBBBB", breite, hoehe, 8, 2, 0, 0, 0)
+    ziel.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + _block(b"IHDR", ihdr)
+        + _block(b"IDAT", zlib.compress(bytes(roh), 6))
+        + _block(b"IEND", b"")
+    )
+    return ziel
+
+
 # ── Normalisierung ────────────────────────────────────────────────────────────────────
 
 def normalisiere_tiefe(tiefe: Sequence[float], *,
@@ -331,7 +413,8 @@ def tiefe_exr_zu_png(exr, ziel_png, *, hintergrund_ab_m: float = HINTERGRUND_AB_
 __all__ = [
     "HINTERGRUND_AB_M", "HINTERGRUND_GRAUWERT", "KONVENTION", "RUECKRECHNUNG",
     "SchreibError",
-    "normalisiere_tiefe", "schreibe_graustufen_png", "tiefe_exr_zu_png",
+    "normalisiere_tiefe", "schreibe_farb_png", "schreibe_graustufen_png",
+    "tiefe_exr_zu_png",
 ]
 
 

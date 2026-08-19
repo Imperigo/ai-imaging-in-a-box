@@ -76,6 +76,34 @@ arithmetisches Mittel liesse sich genau umgekehrt missbrauchen — perfekte Tief
 im überlappenden Rest kompensierte dort eine fast verfehlte Silhouette. Genau diese
 Kompensation ist der Fehler, gegen den das Modul gebaut ist.
 
+Der Maskenweg (21.08.2026) — ein zweiter Weg, kein Ersatz
+---------------------------------------------------------
+Der Score oben rechnet über das **ganze Bild**. Am 21.08.2026 ist gemessen worden, was
+das in einer bodenlastigen Szene bedeutet (`auf-20260821-24`,
+``docs/MASKE_2026-08-21.md``): Es werden im Wesentlichen zwei **Bodenrampen**
+gegeneinander gehalten. Weisses Rauschen erreichte auf der Szene mit 59.8 % Bodenanteil
+den Score 0.7217 — der Rauschanker jener Szene, gemessen in `auf-20260820-21/22` und
+hier als ``NULLANKER['platte_endlich']`` hinterlegt —, und die Reihe war nicht monoton.
+
+Rechnet man ρ **nur über die Punkte, an denen das Bauwerk steht** (dort 17.02 % des
+Bildes), ist die Reihe in beiden gemessenen Szenen **streng monoton**, und die Kurven
+zweier ganz verschiedener Szenen liegen mit höchstens 0.005 aufeinander — ohne jede
+Normierung. Genau das sollte die frühere Normierung ``anteil_der_spanne`` leisten; sie
+ist am 20.08.2026 widerlegt worden.
+
+:func:`rho_ueber_maske` ist dieser Weg. Er ist **additiv**: ``geometrie_score`` bleibt
+unverändert, weil alle bisher gemessenen Zahlen des Projekts mit ihm entstanden sind und
+reproduzierbar bleiben müssen. Und er liefert bewusst **keinen Score und kein
+``geom_iou``**:
+
+* ``geom_iou`` **über der Maske** ist bedeutungslos — innerhalb der Maske trägt die
+  Soll-Karte überall Geometrie, die Überdeckung ist dort konstruktionsbedingt 1.
+* ``geom_iou`` **darf trotzdem nicht wegfallen**: Es war der Halluzinationsfänger. ρ
+  fragt nur, ob die Tiefen *innerhalb* der Maske richtig gestaffelt sind — nicht, ob dort
+  überhaupt ein Gebäude steht. Ob ρ über der Maske Halluzination fängt, ist als Auftrag
+  ``auf-20260821-25`` unterwegs und **ungemessen**. Dieses Modul nimmt die Antwort nicht
+  vorweg; darum steht der Maskenweg neben dem Score und nicht an seiner Stelle.
+
 Vorbehalt zur Schwelle
 ----------------------
 ``SCHWELLE_GEOMETRIE = 0.65`` ist **empirisch an wenigen Fällen** gesetzt: treue Renders
@@ -241,6 +269,14 @@ METHODE = "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame 
 #: einen Score in der Arbeit wiederfindet, muss ihm ansehen, welche Rechnung dahinterstand.
 METHODE_GERICHTET = ("sqrt(max(0, polaritaet * spearman) * geom_iou), Rangkorrelation "
                      "über die gemeinsame Silhouette, v2 (gerichtet)")
+
+#: Und dieselbe Kurzform für den **Maskenweg** (:func:`rho_ueber_maske`). Sie gehört
+#: dazu, weil dort eine dritte, wieder andere Zahl entsteht: keine Wurzel, kein
+#: ``geom_iou``, keine Silhouettenauswahl — nur ρ über die übergebenen Punkte. Ein Wert
+#: ohne diese Angabe wäre später nicht mehr einzuordnen; drei Rechenwege im selben Modul
+#: liefern drei verschiedene Zahlen zum selben Bild.
+METHODE_MASKE = ("polaritaet * spearman über die ÜBERGEBENEN Maskenpunkte, ohne "
+                 "geom_iou und ohne Wurzel — kein Score, v3 (Maskenweg)")
 
 # Reine Diagnose-Schwellen. Sie gehen NICHT in den Score ein; sie benennen ein Muster:
 # hohe Rangkorrelation bei kaum überlappenden Silhouetten.
@@ -883,6 +919,280 @@ def geometrie_gate(soll, ist, *, schwelle: float = SCHWELLE_GEOMETRIE, **kw) -> 
     urteil = {"bestanden": bestanden, "schwelle": schwelle, "begruendung": begruendung}
     urteil.update(ergebnis)
     return urteil
+
+
+# ======================================================================================
+# Der Maskenweg — ρ nur über die Punkte, an denen das Bauwerk steht
+# ======================================================================================
+#
+# **Der Befund, aus dem dieser Weg entstanden ist** (`auf-20260821-24`, 21.08.2026,
+# `docs/MASKE_2026-08-21.md`): Über das ganze Bild gerechnet misst die Metrik in einer
+# bodenlastigen Szene im Wesentlichen **zwei Bodenrampen gegeneinander**. Ein monokularer
+# Schätzer legt in jede strukturlose Fläche eine glatte Rampe von unten nach oben, und die
+# Soll-Karte einer Bodenszene *ist* eine solche Rampe. Weisses Rauschen erreichte damit auf
+# der Szene mit 59.8 % Bodenanteil den Score 0.7217 — das ist der Rauschanker jener Szene
+# aus `auf-20260820-21/22`, hier als `NULLANKER['platte_endlich']` hinterlegt.
+#
+# ρ nur über die Bauwerkspunkte (dort 44 604 von 262 144 Punkten = 17.02 %):
+#
+#     Versatz      0 m      0.25     0.5      1 m      2 m      4 m     Rauschen
+#     29   %    −0.9908  −0.9627  −0.9239  −0.8449  −0.7814  −0.7386   −0.5207
+#     59.8 %    −0.9874  −0.9594  −0.9211  −0.8437  −0.7843  −0.7435   −0.5207
+#
+# **Streng monoton in beiden Szenen** — jeder Meter Versatz kostet, keiner bringt —, und
+# die Kurven zweier ganz verschiedener Szenen liegen mit höchstens **0.005** aufeinander,
+# **ohne jede Normierung**. Die Szenenabhängigkeit war nie eine Eigenschaft der Metrik,
+# sie war der Boden. (Die Normierung `anteil_der_spanne`, die genau das leisten sollte,
+# ist am 20.08.2026 widerlegt worden — siehe `einordnung`.)
+#
+# **Was hier NICHT gebaut wird, und warum jedes Mal:**
+#
+# 1. **Kein `geom_iou` über der Maske.** Es ist dort konstruktionsbedingt 1: Innerhalb der
+#    Maske trägt die Soll-Karte überall Geometrie, es gibt keinen Hintergrund mehr, gegen
+#    den sich eine Silhouette abheben könnte. Eine Überdeckungszahl über einer Menge, die
+#    per Definition ganz Geometrie ist, misst nichts. Gemessen, nicht vermutet.
+# 2. **Kein Weg über die Hintergrundschwelle.** Die Maske als Soll-Karte durch die übliche
+#    Kette zu schicken bricht zusammen: Das *perfekte* Bild erreichte so **zwei** gemeinsame
+#    Punkte, weil die Hintergrundstrategie die nächstgelegenen Punkte *irgendwo im Bild*
+#    wählt — und die liegen auf dem Boden. Der Maskenweg wählt die Punkte darum **direkt**.
+# 3. **Kein Score, und `geometrie_score` bleibt unangetastet.** `geom_iou` war der
+#    Halluzinationsfänger; ρ fragt nur, ob die Tiefen *innerhalb* der Maske richtig
+#    gestaffelt sind, nicht ob dort überhaupt ein Gebäude steht. Ob ρ über der Maske
+#    Halluzination fängt, ist als `auf-20260821-25` unterwegs und **ungemessen**. Ein
+#    Score aus ρ allein nähme diese Antwort vorweg — und wäre genau dann falsch, wenn sie
+#    nein lautet.
+
+#: Wie viele Punkte eine Maske mindestens tragen muss, damit ρ über ihr ausgegeben wird.
+#:
+#: **Ausdrücklich an :data:`MIN_GEMEINSAME_PUNKTE` gebunden und nicht daneben gesetzt**,
+#: weil die Begründung dieselbe ist: 32 Punkte sind in einer 512×512-Karte 0.012 % des
+#: Bildes, also ein paar Pixel entlang einer Kante. Dort dominieren Resampling- und
+#: Kantenartefakte; ein ρ daraus wäre Rauschen mit Dezimalpunkt. Zwei Zahlen für dasselbe
+#: Argument würden mit der Zeit auseinanderlaufen, und niemand wüsste, welche gilt.
+#:
+#: Auch hier absolut und nicht relativ zur Bildgrösse — eine relative Grenze wüchse mit
+#: der Auflösung. Die gemessene Bauwerksmaske lag mit 44 604 Punkten weit darüber; wie
+#: 0.65 ist auch diese Zahl bislang plausibel und nicht kalibriert.
+MIN_MASKENPUNKTE = MIN_GEMEINSAME_PUNKTE
+
+#: Das ρ, das **weisses Rauschen** über der Bauwerksmaske erreicht. **Gemessen**, nicht
+#: gesetzt: `auf-20260821-24`, beide Szenen, auf vier Stellen derselbe Wert.
+#:
+#: **Es ist keine Null.** Ein Bild ohne jede Geometrie erreicht über der Maske ρ = −0.52,
+#: nicht 0 — weil der Schätzer auch in Rauschen eine Rampe sieht und die Fassade in der
+#: Soll-Karte ebenfalls von oben nach unten näher kommt. Wer ρ gegen 0 hält statt gegen
+#: diesen Boden, hält es gegen die falsche Zahl.
+#:
+#: **Der Wert gehört zum PAAR aus Schätzer und Szenenart** (`depth-anything-v2-small`
+#: gegen unsere Blender-Soll-Karte, bodenlastige Aussenszene, feste Kamera) — genau wie
+#: die Polarität. Ein anderer Schätzer oder eine andere Szenenart hat einen anderen Boden,
+#: und der ist dann **ungemessen**. Darum vergleicht dieses Modul nicht selbsttätig
+#: dagegen: Welcher Boden gilt, weiss der Aufrufer und nicht diese Datei.
+RAUSCHBODEN_UEBER_MASKE = -0.5207
+
+
+def rho_ueber_maske(soll: Sequence[float], ist: Sequence[float],
+                    maske: Sequence[bool], *, polaritaet: int | None = None) -> dict:
+    """Rangkorrelation **nur über die übergebene Teilmenge** der Bildpunkte.
+
+    Der zweite Weg neben :func:`geometrie_score`, nicht sein Ersatz. Warum es ihn gibt,
+    was er bewusst **nicht** rechnet und woher die Zahlen stammen, steht im Abschnitt
+    darüber und im Modul-Docstring.
+
+    Args:
+        soll: Tiefenkarte aus der echten Geometrie (Blender, Meter).
+        ist: Tiefenkarte, aus dem erzeugten Bild zurückgerechnet. Massstab und Nullpunkt
+            dürfen beliebig anders sein — dafür ist das Verfahren rangbasiert.
+        maske: **Indexgleiche** Folge von Wahrheitswerten, ein Eintrag je Bildpunkt.
+            ``True`` heisst: dieser Punkt wird gewertet. Woher die Maske stammt, ist
+            dieser Funktion gleichgültig und bleibt es mit Absicht — sie kann aus einem
+            Material-ID-Pass kommen, aus einer zweiten Aufnahme oder von Hand. Was sie
+            auswählt, verantwortet, wer sie erzeugt.
+        polaritaet: :data:`POLARITAET_TIEFE` (+1) oder :data:`POLARITAET_DISPARITAET`
+            (−1), wenn für den verwendeten Schätzer **gemessen**. ``None`` heisst
+            *ungemessen* und nicht *egal*: Dann bleibt ``gerichtet`` ``None``, und das
+            Ergebnis sagt in ``warnungen``, dass ρ ohne Richtung **nicht monoton** im
+            geometrischen Fehler ist — ``abs()`` faltet die Skala in der Mitte.
+
+    Returns:
+        ``{rho, gerichtet, n_maske, n_bild, anteil_maske, methode, polaritaet, warnungen}``
+
+        * ``rho`` — Spearman über die Maskenpunkte, **mit Vorzeichen**, unverändert wie
+          gemessen. ``None`` heisst *nicht gemessen* — nicht 0 und nicht 1.
+        * ``gerichtet`` — ``polaritaet * rho`` in ``[−1, 1]``: ``+1`` perfekt geordnet,
+          ``−1`` vollständig verkehrt herum. **Nicht** bei 0 abgeschnitten, weil hier
+          kein Score entsteht, in den ein negativer Wert einginge; die Unterscheidung
+          zwischen „kein Zusammenhang“ (0) und „genau umgekehrt“ (−1) ist ein Befund und
+          gehört nicht weggeschnitten. ``None``, solange die Polarität ungemessen ist.
+        * ``n_maske``/``n_bild`` — Punkte in der Maske und im Bild. ``anteil_maske`` ist
+          ihr Verhältnis; die gemessene Bauwerksmaske lag bei 0.1702.
+        * ``methode`` — :data:`METHODE_MASKE`. Drei Rechenwege im selben Modul liefern
+          drei verschiedene Zahlen zum selben Bild; ohne diese Angabe wäre eine Zahl
+          später nicht mehr einzuordnen.
+        * ``warnungen`` — Klartextsätze. Leer heisst: nichts aufgefallen.
+
+    Raises:
+        QaError: ``maske`` fehlt (``None``), trägt keine Wahrheitswerte, oder ihre Länge
+            passt nicht zu den Karten; ebenso ungleich lange oder leere Karten, oder eine
+            erfundene Polarität.
+
+    **Die drei Fälle, die nicht dasselbe sind**, und die dieses Modul auseinanderhält:
+
+    1. **Maske fehlt** (``None``) — ein *Aufrufefehler*. Wer keine Maske hat, ruft diesen
+       Weg nicht auf; ``None`` stillschweigend als „alle Punkte“ zu deuten wäre genau die
+       Reparatur, gegen die dieses Modul gebaut ist, und ergäbe wieder den ganzen Boden.
+    2. **Maske leer** (kein ``True``) — eine gefahrene Messung ohne Punkte, also **nicht
+       gemessen**: ``rho`` bleibt ``None``. Weder 0 (Verurteilung ohne Grundlage) noch 1
+       (Freispruch ohne Grundlage). ``None`` heisst in diesem Projekt durchgehend *kein
+       Wert*, niemals *in Ordnung*.
+    3. **Maske zu klein** (unter :data:`MIN_MASKENPUNKTE`) — ein **Befund** und kein
+       Score: So wenige Punkte liegen an Kanten, wo Resampling und Schätzrauschen
+       dominieren. ``rho`` bleibt ``None``, und die Warnung nennt die Zahl.
+
+    **Was dieser Weg nicht tut.** Er prüft nicht nach, ob die Maske sinnvoll ist. Zeigt sie
+    auf Punkte, an denen die Soll-Karte gar keine Geometrie trägt, dann gehen deren
+    Hintergrundmarken als gewöhnliche Zahlen in die Rangfolge ein — eine Hintergrund*marke*
+    ist eine endliche Zahl und von einer sehr grossen Tiefe hier nicht zu unterscheiden.
+    Das ist Absicht: Eine Schwellenprüfung an dieser Stelle wäre wieder die
+    Hintergrundstrategie, an der der Weg über die übliche Kette zerbrochen ist (zwei
+    gemeinsame Punkte beim perfekten Bild). Die Maske entscheidet, und wer sie erzeugt,
+    verantwortet sie.
+    """
+    if polaritaet is not None and polaritaet not in (POLARITAET_TIEFE, POLARITAET_DISPARITAET):
+        raise QaError(
+            f"polaritaet muss {POLARITAET_TIEFE:+d} (Tiefe), {POLARITAET_DISPARITAET:+d} "
+            f"(Disparität) oder None (ungemessen) sein, war {polaritaet!r}. Ein anderer "
+            f"Wert würde ρ skalieren statt es zu richten."
+        )
+    if maske is None:
+        raise QaError(
+            "maske fehlt (None). Eine fehlende Maske ist ein AUFRUFEFEHLER und keine "
+            "leere Messung: Ohne Maske gibt es diesen Rechenweg nicht, und sie als "
+            "'alle Punkte' zu deuten ergäbe wieder die Rechnung über das ganze Bild — "
+            "also genau den Boden, dessentwegen dieser Weg existiert. Wer eine leere "
+            "Auswahl übergeben will, übergibt eine Maske aus lauter False; das ist dann "
+            "eine gefahrene Messung ohne Punkte und liefert rho=None mit Begründung."
+        )
+
+    s = _als_zahlen(soll, "soll")
+    i = _als_zahlen(ist, "ist")
+    m = _als_wahrheitswerte(maske, "maske")
+    if len(s) != len(i):
+        raise QaError(
+            f"soll und ist sind unterschiedlich lang ({len(s)} vs. {len(i)}). Beide "
+            f"Karten müssen denselben Bildausschnitt in derselben Punktreihenfolge "
+            f"zeigen. Abschneiden wäre eine stillschweigende Reparatur mit falschem "
+            f"Ergebnis."
+        )
+    if len(m) != len(s):
+        raise QaError(
+            f"maske und Karten sind unterschiedlich lang ({len(m)} vs. {len(s)}). Eine "
+            f"Maske ist eine indexgleiche Folge zu Soll und Ist — ein Eintrag je "
+            f"Bildpunkt. Wird sie abgeschnitten oder aufgefüllt, verschiebt sich die "
+            f"Zuordnung aller Punkte danach, und gemessen würde eine andere Stelle des "
+            f"Bildes als die gemeinte."
+        )
+    if not s:
+        raise QaError("soll und ist sind leer — es gibt nichts zu vergleichen.")
+
+    punkte = [k for k, an in enumerate(m) if an]
+    n_maske = len(punkte)
+    n_bild = len(s)
+    warnungen: list[str] = []
+
+    # NaN und inf müssen VOR spearman abgefangen werden, und zwar hier: spearman kennt
+    # nur die Position innerhalb der Auswahl und meldete darum einen Index, den es im
+    # Bild nicht gibt. Eine Fehlermeldung, die auf die falsche Stelle zeigt, kostet mehr
+    # als keine.
+    unbrauchbar = [k for k in punkte
+                   if not (math.isfinite(s[k]) and math.isfinite(i[k]))]
+
+    rho: float | None = None
+    if n_maske == 0:
+        warnungen.append(
+            "Leere Maske: kein einziger Punkt ausgewählt. Das ist eine gefahrene Messung "
+            "ohne Punkte, also NICHT GEMESSEN — rho bleibt None. Weder 0 noch 1 wäre "
+            "hier eine Feststellung: Das eine verurteilte, das andere spräche frei, und "
+            "belegt ist keines von beidem."
+        )
+    elif n_maske < MIN_MASKENPUNKTE:
+        warnungen.append(
+            f"Maske zu klein: {n_maske} Punkte, nötig sind {MIN_MASKENPUNKTE}. So wenige "
+            f"Punkte liegen an Kanten, wo Resampling und Schätzrauschen dominieren; ein "
+            f"rho daraus wäre Rauschen mit Dezimalpunkt. rho bleibt None — dass die Maske "
+            f"so klein ist, ist für sich schon ein Befund: Entweder trifft sie das "
+            f"Bauwerk nicht, oder das Bauwerk füllt im Bild kaum Fläche."
+        )
+    elif unbrauchbar:
+        warnungen.append(
+            f"{len(unbrauchbar)} von {n_maske} Maskenpunkten tragen NaN oder inf, der "
+            f"erste an Bildindex {unbrauchbar[0]}. In einer Rangfolge haben sie keinen "
+            f"Platz, und sie stillschweigend zu übergehen änderte die gemessene "
+            f"Punktmenge — dann stünde ein rho da, das über etwas anderes gerechnet ist "
+            f"als über die übergebene Maske. rho bleibt None; die Maske gehört auf die "
+            f"Punkte gelegt, an denen beide Karten Werte haben."
+        )
+    else:
+        try:
+            rho = spearman([s[k] for k in punkte], [i[k] for k in punkte])
+        except QaError as fehler:
+            warnungen.append(f"Rangkorrelation nicht berechenbar: {fehler}")
+
+    gerichtet = None if (rho is None or polaritaet is None) else polaritaet * rho
+
+    if polaritaet is None:
+        warnungen.append(
+            "Polarität des Schätzers ungemessen — es gibt darum keinen gerichteten Wert. "
+            "Ohne Richtung bliebe nur abs(rho), und in diesem Modus ist die Grösse NICHT "
+            "MONOTON im geometrischen Fehler: abs() faltet die Skala in der Mitte, der "
+            "schlechteste Wert liegt bei rho = 0 und beide Enden sind gleich gut. Am "
+            "20.08.2026 gemessen (auf-20260820-23): 2 m Versatz gaben 0.1191, 4 m Versatz "
+            "0.2301 — mehr Fehler, besserer Score. Genau diese Monotonie ist der Grund, "
+            "aus dem der Maskenweg gebaut wurde; ohne gemessene Polarität ist sie dahin. "
+            "Abhilfe: die Polarität einmal bestimmen (polaritaet_aus_messungen) und "
+            "mitgeben."
+        )
+    elif rho is not None and polaritaet * rho < 0.0:
+        warnungen.append(
+            f"Rangkorrelation zeigt in die falsche Richtung ({rho:+.4f} bei Polarität "
+            f"{polaritaet:+d}): Die Ist-Karte ordnet die Tiefe innerhalb der Maske "
+            f"umgekehrt. Weil die Polarität GEMESSEN ist, ist das kein Konventionsbefund "
+            f"mehr, sondern ein Geometriebefund — vorne und hinten sind vertauscht. "
+            f"Gewertet wird {polaritaet * rho:+.4f}, und der Wert ist NICHT bei 0 "
+            f"abgeschnitten: 'genau umgekehrt' ist etwas anderes als 'kein Zusammenhang'."
+        )
+    elif rho is not None and rho < 0.0:
+        warnungen.append(
+            f"Rangkorrelation ist negativ ({rho:+.4f}), und das ist hier der ERWARTETE "
+            f"Fall: Die gemessene Polarität {polaritaet:+d} sagt, dass dieser Schätzer "
+            f"Disparität liefert (nah = grosser Wert). Gewertet wird "
+            f"{polaritaet:+d} * rho = {polaritaet * rho:+.4f}."
+        )
+
+    if n_maske == n_bild:
+        # Eine Maske über das ganze Bild ist keine Maske, sondern der alte Weg unter neuem
+        # Namen — und der ist am 21.08.2026 gerade daran gescheitert, dass er in einer
+        # bodenlastigen Szene zwei Bodenrampen gegeneinander misst (weisses Rauschen: 0.72).
+        warnungen.append(
+            "Randlose Maske: ALLE Bildpunkte sind ausgewählt. Dann rechnet dieser Weg "
+            "über dasselbe wie die Fassung über das ganze Bild, und der Sinn der Maske "
+            "ist dahin: In einer bodenlastigen Szene misst er dann wieder im Wesentlichen "
+            "zwei Bodenrampen gegeneinander — dort erreichte weisses Rauschen den Score "
+            "0.7217 (Rauschanker der Szene mit 59.8 % Bodenanteil, NULLANKER"
+            "['platte_endlich'], gemessen in auf-20260820-21/22). Eine Maske, die alles "
+            "auswählt, wählt nichts aus."
+        )
+
+    return {
+        "rho": rho,
+        "gerichtet": gerichtet,
+        "n_maske": n_maske,
+        "n_bild": n_bild,
+        "anteil_maske": n_maske / n_bild,
+        "methode": METHODE_MASKE,
+        "polaritaet": polaritaet,
+        "warnungen": warnungen,
+    }
 
 
 # ======================================================================================
