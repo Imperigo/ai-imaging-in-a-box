@@ -443,9 +443,26 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Zahl, die absolut aussieht und relativ ist, ist schlimmer als keine Zahl.** Wenn wir
       das bauen, dann mit absoluten Bezugsgrössen — und mit Gewichten, die am Stil hängen
       statt an einem Geschmack.
-- [ ] **Fortschrittsgrenze für den Renderlauf** — der alte Bestand hat eine
-      `no_progress`-Zeitgrenze, die ein **hängendes**, nicht abgestürztes Backend fängt.
-      Wir haben nur einen Gesamt-Timeout. Das ist etwas, das wir schlechter haben.
+- [x] **Fortschrittsgrenze für den Renderlauf** — 2026-08-20, `fortschritt.py`,
+      25 Tests, reine stdlib, Uhr injizierbar.
+      **Beim Nachbauen stellte sich heraus, dass wir es gar nicht schlechter hatten.**
+      Der `no_progress_timeout` des Altbestands setzt bei `status in ("running",
+      "queued")` die Uhr zurück und wartet weiter — also in genau den beiden Zuständen,
+      in denen ein hängender Sampler steckt. Er feuert nur bei `unknown` und bei
+      Statuswörtern, die das Programm nicht kennt; den Rest fängt der harte
+      `max_seconds`, den wir schon haben.
+      **Die Ursache ist kein Programmierfehler, sondern das Signal:** Ein Statuswort ist
+      eine Behauptung, kein Beleg — aus einem unveränderten „running" lässt sich
+      *langsam* nicht von *hängend* trennen. Unsere Wache löst das nicht durch eine
+      klügere Frist, sondern indem sie die Frage dorthin verschiebt, wo sie beantwortbar
+      ist: Ein **belegtes** Zeichen (Schrittzähler, wachsende Datei, neue Datei im
+      Ausgabeordner) darf `error` melden, ein **behauptetes** höchstens `warn` — und sagt
+      dazu, warum es nicht mehr kann. Dieselbe Regel wie beim Belichtungsrahmen.
+      Die Wache **bricht nichts ab**: Abgebrochen wird eine Stufe höher, wo man weiss,
+      was ein Abbruch kostet.
+- [ ] **Die Wache an die echten Nähte hängen** — gebaut und geprüft ist sie, angeschlossen
+      noch nicht. Anzuschliessen an den Blender-Lauf (`seams.py`, Ausgabedatei wächst),
+      an den Renderlauf und an den Abholer der Brücke. Erst dann zahlt sie sich aus.
 - [ ] **Variantenreihen** — wir erzeugen ein Bild je Aufruf. Der alte Bestand fährt fünf
       Sampler mit `seed = basis + nummer` und kennt ein `locked_seed` für kontrollierte
       Reihen. Bei 1.4 s je Bild (`auf-13`) ist eine Reihe zum ersten Mal bezahlbar.

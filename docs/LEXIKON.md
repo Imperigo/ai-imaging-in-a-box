@@ -575,6 +575,38 @@ nicht vermischen und einzeln weiterverarbeiten lassen.
 geklappt", alles andere signalisiert einen Fehler. So erfährt das aufrufende Programm,
 ob der Subprozess erfolgreich war.
 
+**Timeout (Zeitgrenze)** — Eine Frist, nach der ein Aufrufer aufgibt und den Vorgang für
+gescheitert erklärt. Sie ist nötig, weil ein Programm, das nicht antwortet, sonst ewig
+Wartezeit bindet. *In diesem Projekt: `subprocess.run(..., timeout=…)` in `seams.py`.*
+
+**Gesamt-Timeout gegen Fortschrittsfrist** — Zwei verschiedene Fristen mit sehr
+verschiedenem Nutzen. Der **Gesamt-Timeout** begrenzt die ganze Dauer („nach 30 Minuten
+ist Schluss"). Die **Fortschrittsfrist** begrenzt die Zeit *ohne erkennbares Vorankommen*
+(„wenn sich fünf Minuten lang nichts rührt, stimmt etwas nicht"). Die zweite meldet
+dieselbe Auskunft viel früher — aber nur, wenn es etwas gibt, woran sich Vorankommen
+ablesen lässt. *`src/aiimaging/fortschritt.py`.*
+
+**Stillstand (Stall / Hänger)** — Ein Vorgang, der weder fertig wird noch abstürzt: Der
+Prozess lebt, die Grafikkarte ist belegt, und es geschieht nichts mehr. Der unangenehmste
+Fehlerfall, weil er sich von aussen genau wie *sehr langsam* anfühlt. *Ein Absturz meldet
+sich; ein Stillstand nicht.*
+
+**Behauptetes gegen belegtes Fortschrittszeichen** — In diesem Projekt die Unterscheidung,
+an der die Stillstandserkennung hängt. Ein **behauptetes** Zeichen ist ein Statuswort:
+„läuft" sagt nur, dass jemand das behauptet. Ein **belegtes** Zeichen kommt aus etwas, das
+sich unabhängig davon bewegt — ein Schrittzähler, der zählt, eine Datei, die wächst, eine
+neue Datei im Ausgabeordner. Aus einem unveränderten Statuswort lässt sich *langsam* nicht
+von *hängend* trennen; aus einer Datei, die seit fünf Minuten nicht mehr wächst, schon.
+*Darum darf ein bloss behaupteter Stillstand höchstens warnen und nie einen Fehler melden
+— dieselbe Regel wie beim* **Belichtungsrahmen** *in Abschnitt 5.*
+
+**Monotone Uhr (monotonic clock)** — Eine Uhr, die nur vorwärts läuft und nie springt, im
+Gegensatz zur *Wanduhr*, die durch Zeitumstellung oder Zeitabgleich rückwärts gehen kann.
+Für Zeitmessungen („wie lange läuft das schon") ist die monotone Uhr die richtige — eine
+rückwärts gestellte Wanduhr ergäbe negative Laufzeiten. *`time.monotonic()`; in
+`fortschritt.py` ist sie zusätzlich austauschbar, damit sich eine Frist von fünf Minuten
+prüfen lässt, ohne fünf Minuten zu warten.*
+
 **stdio (Standard-Ein-/Ausgabe)** — Der einfachste Weg, wie zwei Programme sprechen: Das
 eine schreibt in seine Ausgabe, das andere liest sie als Eingabe. Ohne Netzwerk, ohne
 Port. *MCP-Server im ArchitekturKosmos laufen über stdio — Kosmo startet sie und
@@ -2285,6 +2317,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-20 | Ergaenzt aus der Fortschrittswache (`src/aiimaging/fortschritt.py`): **Timeout**, **Gesamt-Timeout gegen Fortschrittsfrist**, **Stillstand (Stall)**, **behauptetes gegen belegtes Fortschrittszeichen**, **monotone Uhr**. Anlass war wieder ein Befund: Der geerbte Stillstandswaechter stellt bei den Zustaenden `running` und `queued` die Uhr zurueck — also genau in dem Fall, fuer den er gebaut wurde |
 | 2026-08-20 | Ergaenzt aus der Belichtungspruefung (`src/aiimaging/belichtung.py`) und dem farbfaehigen PNG-Leser: **Farbtyp (PNG)**, **Palette (PNG-Farbtyp 3)**, **Alphakanal**, **Luminanz**, **Rec.709**, **Gammakorrektur/sRGB**, **Clipping (ausgefressen/zugelaufen)**, **Belichtungsrahmen**. Der Anlass war ein Befund und keine Fleissarbeit: Die geerbte Schwelle von 8 % geclippter Lichter haette unseren eigenen, gemessenen Hausstil (7,55 % ± 6,9, Hoechstwert 30,0 %) zum Fehler erklaert — eine Belichtungsschwelle ist keine Eigenschaft guter Belichtung, sondern eines Stils |
 | 2026-08-19 | Aus dem Uebergabeblatt an die Vis-Oberflaeche (`docs/UEBERGABE_VIS_2026-08-19.md`): **nullbares Feld (nullable)** — der Begriff wurde dort gebraucht, um zu erklaeren, warum `job_id` leer sein darf, stand aber nirgends. Alle uebrigen Fachbegriffe jenes Blatts (tote Kante, Bildwinkel, Backbone, SigLIP, Spearman, Freigabe-Token, Bounding Box, Subprozess, MCP) waren bereits erfasst und wurden geprueft, nicht angenommen |
 | 2026-08-18 | Ergaenzt aus der Prompt-Bibliothek: **Prompt**, **Negativ-Prompt**, **Prompt-Baustein**, **Renderstil**, **Halluzination (bei Bildmodellen)**. Alle fuenf vor dem Schreiben dieser Zeile im Text nachgezaehlt |
