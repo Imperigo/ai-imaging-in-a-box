@@ -1034,6 +1034,33 @@ def lies_exr_tiefe_ueber_blender(pfad, *, timeout: int = 300,
                                  _starte=None) -> tuple[list[float], int, int]:
     """32-Bit-EXR → echte Meter, über ``blender --background`` als Subprozess.
 
+    **AM GERÄT GEMESSEN (19.08.2026): Für unsere EIGENEN Multipass-EXR trägt dieser Weg
+    NICHT — und das ist eine Grenze von Blender, nicht von uns.**
+
+    ``runners/blender_depth_stage.py`` schreibt ``OPEN_EXR_MULTILAYER``
+    (``depth_exr_format`` im Report). Blenders Python-Bild-API kann eine mehrschichtige
+    EXR nicht auspacken; gemessen an Blender 5.2.0 LTS::
+
+        bpy.data.images.load(exr)  →  size (0, 0),  type 'MULTILAYER'
+        .update()                  →  RuntimeError: does not have any image data
+        .pixels                    →  leer
+        .reload()                  →  size bleibt (0, 0)
+
+    Der Runner meldet das ehrlich als ``Blender liest die EXR als 0x0``. Die Zahlen einer
+    mehrschichtigen EXR sind in Blender nur über den Kompositor beziehungsweise das
+    Render-Ergebnis erreichbar, nicht über ``Image.pixels``.
+
+    **Was das praktisch heisst:** Der Rückfall ist für den Fall gebaut, in dem
+    :func:`lies_exr_tiefe_stdlib` eine Spielart nicht kennt — und ausgerechnet für unsere
+    eigene Spielart kann er nicht einspringen. Der stdlib-Weg ist damit für unseren
+    Multipass **der einzige**, nicht der bevorzugte. Für fremde, EINSCHICHTIGE EXR bleibt
+    dieser Weg brauchbar; dort ist er ungeprüft.
+
+    *Nicht behoben, sondern benannt:* Die Behebung wäre eine Entscheidung über das
+    Ausgabeformat des Multipass (einschichtig schreiben) oder ein Kompositor-Weg im
+    Runner. Beides ändert ein Artefakt, an dem jede bisher gemessene Zahl hängt — das
+    gehört gemessen und nicht nebenbei umgestellt.
+
     Der Rückfall für EXR-Spielarten, die ``lies_exr_tiefe_stdlib`` nicht kann (PIZ,
     DWAA/DWAB, B44, PXR24, gekachelt, mehrteilig). Blender ist ohnehin der Erzeuger
     dieser Dateien und steht als GPL-Komponente bereits im ``NOTICE``; ihn zu rufen
