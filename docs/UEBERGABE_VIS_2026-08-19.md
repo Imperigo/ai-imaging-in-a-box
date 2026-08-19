@@ -16,13 +16,16 @@ Es beschreibt sie **in Verträgen, nicht in Bildschirmen**. Das ist Absicht: Eur
 Oberfläche entsteht gerade, unsere Kette auch, und wer die andere Seite nachbaut, baut am
 Tag der Fertigstellung daneben. Ein Vertrag hält, während sich beide Seiten bewegen.
 
-Drei Fragen, mehr steht hier nicht:
+Drei Fragen, und sie sind der Kern:
 
 1. **Was schicke ich euch?**
 2. **Was bekomme ich zurück?**
 3. **Woran erkenne ich, dass eine Verbindung wirklich trägt?**
 
-Die dritte ist die wichtigste, und sie steht am Schluss.
+Die dritte ist die wichtigste. Dazu ein viertes Kapitel, das nicht die Naht betrifft,
+sondern **drei Dinge auf eurer Seite**, die uns beim Messen aufgefallen sind. Sie stehen
+hier, weil sie euch gehören und weil wir sie nicht stillschweigend umgehen wollen — eines
+davon betrifft eure Grafikkarte.
 
 ---
 
@@ -49,9 +52,11 @@ auf unser Muster, die Auftragskennung auf eure eigene Form, das Schema ist das, 
 wir übersetzen. Wir haben das gegen die echten Werte geprüft, nicht angenommen.
 
 **Und der Auftrag wird nicht abgeholt.** Er stand auf *„wartet auf GPU-Leerlauf"*, auch
-nachdem die Karte frei war (13 W, 1 GB belegt). Ob die Erkennung träge pollt oder eure
-Schranke enger ist als der tatsächliche Leerlauf, ist **ungemessen** — aber die Stelle
-ist eindeutig:
+nachdem die Karte frei war.
+
+*Nachgemessen am 20.08.2026, und die Antwort ist einfacher als die Vermutungen:* Es liegt
+weder an einer trägen Erkennung noch an einer zu engen Schranke. **Es läuft schlicht kein
+Abholer** — Einzelheiten in Kapitel 4.1. Die Stelle ist damit eindeutig:
 
 > **Genau da hört eure Seite auf, und genau da fängt unsere an.** Was fehlt, ist der, der
 > das Verzeichnis abholt, rendert, prüft und `render-result.json` danebenlegt.
@@ -260,6 +265,12 @@ fragen wir**, statt es zu entscheiden: Der Unterschied zwischen „ein Mensch ha
 und „ein Token liegt vor" kostet im schlechten Fall eine Stunde GPU-Zeit, die niemand
 bestellt hat.
 
+*Und die Frage ist inzwischen dringender als beim ersten Entwurf:* Solange **niemand**
+abholt, richtet ein grosszügig gelesener Token keinen Schaden an. Sobald ein Abholer
+läuft — unserer oder eurer —, entscheidet diese eine Einstellung darüber, ob ein Klick
+eine GPU-Stunde auslöst. Siehe auch 4.2: Eure vorhandene Worker-Komponente liest die
+Auflage **gar nicht**.
+
 ---
 
 ## 3 · Woran ihr erkennt, dass eine Verbindung wirklich trägt
@@ -345,6 +356,57 @@ und `verdict.reason` sagt das dann wörtlich. Ein Abzeichen, das nicht zwischen
 
 ---
 
+## 4 · Drei Dinge auf eurer Seite, die ihr wissen solltet
+
+Wir haben am 19. und 20.08. an eurer Maschine gemessen — mit Erlaubnis und ohne etwas zu
+ändern. Dabei sind drei Dinge aufgefallen, die **nicht** unsere Naht betreffen, sondern
+eure Komponenten. Sie stehen hier, weil sie euch gehören und weil wir sie nicht
+stillschweigend umgehen wollen.
+
+### 4.1 · Der Auftrag bleibt liegen, weil **niemand ihn abholt**
+
+Nicht: „die Erkennung ist träge". Nicht: „die Schranke ist zu eng". Sondern:
+
+> Es läuft **kein Abholer**. Kein `blender_worker`-Prozess, kein ComfyUI-Worker, kein
+> Dienst — nur die Bridge selbst. Und keine Schranke stand im Weg: **0 % Auslastung gegen
+> eine Schwelle von 10 %.** Der Auftrag lag seit 09:04 unberührt.
+
+Das ist eine gute Nachricht, denn es ist die Sorte Lücke, die man füllen kann. **Wir haben
+den Abholer** — Kapitel 0 beschreibt ihn, und er liest euer Verzeichnisformat, wie es ist.
+
+### 4.2 · Euer `blender_worker` hat **kein Leerlauf-Tor** — und das ist der unangenehme
+
+Die Komponente existiert, sie läuft nur gerade nicht. Beim Nachsehen fiel auf:
+
+> Sie prüft **nirgends**, ob die Grafikkarte frei ist. Wer sie startet, umgeht
+> `idle_window_only` — **unbemerkt.** Der Auftrag trägt die Auflage, und niemand liest sie.
+
+Das ist genau die Fehlerart, die uns in Sitzung 07 vier Löcher gekostet hat: eine Zusage,
+die im Dokument steht und im Code nicht. Bei uns ist die Prüfung darum **fail-closed** —
+ohne Auskunft über die Karte wird nicht gerechnet, weil *ungeprüft* nicht *frei* heisst.
+
+**Wir melden das und tun nichts daran.** Es ist eure Komponente und eure Grafikkarte. Aber
+wer den Worker in Betrieb nimmt, sollte es vorher wissen — sonst belegt der erste Auftrag
+mit `idle_window_only` die Karte mitten in einer Vorführung.
+
+### 4.3 · Die Kamerahöhe steht zweimal im Code, mit **zwei verschiedenen Bezugspunkten**
+
+Beide Male 1600 mm — einmal gerechnet ab dem **Hüllbox-Minimum**, einmal ab der
+**Geschosshöhe**. Wir und das Pflichtenheft rechnen mit **1700 mm über Terrain**.
+
+Das sind zwei Zahlen und **drei Bezugspunkte** für dieselbe Grösse — und der gefährliche
+Teil ist nicht die Differenz von 100 mm, sondern der Bezugspunkt: Bei einem Gebäude mit
+Untergeschoss liegt das Hüllbox-Minimum **im Erdreich**, und eine Kamera 1,6 m darüber
+steht im Keller. Der Fehler ist dann nicht klein, sondern ein ganzes Geschoss gross, und
+er sieht auf dem Zahlenweg nach nichts aus.
+
+Bei uns hat genau das drei Fehler erzeugt, die **kein einziger Test gefunden hat** — sie
+fielen erst auf, als jemand zwölf gerenderte Bilder ansah. Wir führen die Augenhöhe
+seitdem ausdrücklich als *über Terrain* mit einem eigenen Parameter `gelaende_z`, weil die
+Bodenhöhe eine Angabe der Szene ist und keine Annahme des Renderers.
+
+---
+
 ## Was wir zusätzlich anbieten, wenn ihr es wollt
 
 Nichts davon ist Voraussetzung für die Naht. Es liegt fertig da und ist aus Python heraus
@@ -381,18 +443,25 @@ Wenn ihr davon etwas braucht, sagt welches — dann bauen wir die Naht dorthin. 
 6. **Warum wird der Auftrag in `/tmp/kosmo-jobs/` nicht abgeholt?** Träge Erkennung oder
    zu enge Leerlauf-Schranke — bei uns ungemessen. **Das ist die Stelle, an der wir
    einsteigen können**, und die einzige Frage dieser Liste, die eine Demo aufhält.
-7. **Augenhöhe 1.30/1.60 oder 1.70 m?** Das Pflichtenheft sagt 1.70. Wer nachgibt, ist
-   uns gleich — aber es sollte eine Zahl sein.
+7. **Augenhöhe 1.30/1.60 oder 1.70 m — und ab wo gemessen?** Das Pflichtenheft sagt
+   1.70 m **über Terrain**. Im Code stehen zwei verschiedene Bezugspunkte, siehe 4.3. Wer
+   nachgibt, ist uns gleich — aber es sollte **eine** Zahl mit **einem** Bezugspunkt sein.
 8. **Sind `engine` und `style` im Laufzettel verbindlich?** Wir reichen sie durch und
    lesen sie nicht.
-9. **Welche Hochachse hat eure `model.glb`?** `render-scene/v1` hat **kein Feld dafür**.
+9. **Nehmt ihr den Abholer?** Es läuft keiner, und wir haben einen. Wenn ja, sagt uns,
+   ob `fremde_freigabe_gilt` gesetzt werden soll (Frage 3) — das ist die einzige
+   Einstellung, die noch fehlt.
+10. **Soll euer `blender_worker` ein Leerlauf-Tor bekommen?** Wir bauen es nicht in eure
+    Komponente, aber wir sagen gern, wie unseres aussieht: fail-closed, und bei unbekanntem
+    Zustand wird nicht gerechnet.
+11. **Welche Hochachse hat eure `model.glb`?** `render-scene/v1` hat **kein Feld dafür**.
    Wir nehmen `Y_UP` an, weil die glTF-Spezifikation es vorschreibt — aber genau hier
    liegt der Befund, mit dem dieses Projekt angefangen hat: Zwei Erzeuger eures
    Ökosystems liefern beide ein `glb_path`, mit **unterschiedlicher** Orientierung. Eine
    verdrehte Hochachse dreht Tiefenkarte, Kamera und Geometrie-QA gemeinsam und **fällt
    an einem einzelnen Bild nicht auf**. Ein Feld im Vertrag wäre uns lieber als unsere
    Annahme.
-10. **Wie viele automatische Standpunkte soll `cameras: "auto"` bedeuten?** Wir rendern
+12. **Wie viele automatische Standpunkte soll `cameras: "auto"` bedeuten?** Wir rendern
     **einen**. Zwölf wären zwölf GPU-Läufe, und wie viele ein Auftrag wert ist, ist eure
     Entscheidung und nicht unsere.
 
