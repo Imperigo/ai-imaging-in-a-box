@@ -260,6 +260,24 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Die Schwelle ist jetzt abgeleitet (`Boden + k · Streuung` = 0.666), der Schlüssel
       ist Einbetter **und** Ausleseort, und `stil_gate` wirft, wenn eine Schwelle unter
       dem gemessenen Boden liegt — damit kann derselbe Fehler nicht wiederkehren.
+- [x] **Weg B, Schritt 1–4: die Naht zur Designzentrale** — 2026-08-19,
+      `kosmo_szene.py` (48 Tests) und `bruecke.py` (28 Tests). Die Verträge sind
+      **wörtlich aus ihren Schemadateien gelesen**, nicht aus einem Bericht abgeschrieben.
+      Drei Stellen, an denen wir ihnen bewusst NICHT folgen: ihre Stil-Schwelle 0.30 und
+      „dinov3" (gemessen wirkungslos), ihre Backbone-Liste (kennt unseren Vorgabewert
+      nicht), und `faithful` als eine Zahl (bildet drei Regler nicht ab, und die Wirkung
+      ist nicht monoton).
+- [ ] **DER BEFUND, DER EINEN OWNER-ENTSCHEID BRAUCHT: Die Brücke erteilt sich die
+      Freigabe selbst.** Ihr `create_job` erzeugt den `approval_token` mit
+      `secrets.token_hex` — **jeder Auftrag kommt mit einer Freigabe an, die kein Mensch
+      erteilt hat.** Unser `enqueue_render` lässt einen Auftrag ohne menschliche Freigabe
+      ausdrücklich liegen und rührt die Grafikkarte nicht an; das ist der Freeze-Schutz
+      und der Grund, warum die Leistungsgrenze eingehalten wird.
+      `bruecke.lies_auftrag` verlangt darum `fremde_freigabe_gilt=True` als ausdrückliche
+      Entscheidung des Betreibers. **Diese Entscheidung gehört dem Owner**, nicht dem
+      Programm — und sie gehört getroffen, bevor die Naht in Betrieb geht.
+- [ ] **Weg B, Schritt 5–7** — QA je Kamera statt je Bild, die Verzeichniskonvention
+      `<out>/<kamera>/…`, Varianten, und der Treue-Regler des Panels bis in die Kette.
 - [ ] **Die zweite Hälfte der Stil-Kalibrierung** — der Boden ist gemessen, `k = 2` ist
       gesetzt. Es fehlen Paare, die stilistisch **ähnlich sein sollen**, und ein
       menschliches Urteil darüber. Der Boden sagt, wo Unähnlichkeit aufhört, nicht wo
