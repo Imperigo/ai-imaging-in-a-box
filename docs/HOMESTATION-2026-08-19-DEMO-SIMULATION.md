@@ -123,6 +123,36 @@ Leerlauf. **Ungemessen**, welches von beidem.
 stehen auf 1,30 m (Eingang) und 1,60 m (Innenraum). Kein Fehler der Kette, aber ein
 Zahlenwert, der auseinanderläuft.
 
+
+> ## KORREKTUR, 19.08.2026 abends — mein Klick ging daneben
+>
+> Oben steht: «Gedrückt — über das DOM, mit echten Mauskoordinaten, und nach Betätigen
+> des Schalters daneben. **Dreimal keine Zustandsänderung.**» Daraus habe ich geschlossen,
+> der Zustand melde «bereit», ohne die Verdrahtung zu prüfen.
+>
+> **Die Koordinatenklicks haben den Knopf nie erreicht.** Gemessen mit
+> `document.elementFromPoint` an genau der Koordinate, die ich benutzt habe:
+>
+> ```
+> 911,759  ->  island-render-senden-popup-vergroessern
+> ```
+>
+> Der Vergrössern-Knopf (44 × 44 bei 895,741) überdeckt die obere linke Ecke des
+> Ausführen-Knopfs (84 × 32 bei 911,759). Mein Klickpunkt lag darin. Unabhängig davon hat
+> der Insel-Überdeckungs-Wächter dieselbe Stelle gefunden — Station `vis`, Zustand
+> `popup:render-senden`, bei 1400×900, also genau meiner Fenstergrösse.
+>
+> **Was stehen bleibt:** Das Panel zeigte «bereit», während die Knoten unverdrahtet waren.
+> Das ist eine Ablesung der Beschriftung und hängt nicht an einem Klick.
+>
+> **Was nicht mehr gilt:** dass ein Druck auf «Ausführen» im unverdrahteten Zustand
+> wirkungslos bleibt. Ich habe ihn nie ausgelöst. Ob «bereit» dort lügt oder nur
+> ungeprüft ist, bleibt **ungemessen**.
+>
+> **Und die Lehre ist dieselbe wie dreimal zuvor an diesem Tag:** Ich habe aus einem
+> ausbleibenden Effekt auf eine Ursache geschlossen, ohne zu prüfen, ob meine Handlung
+> überhaupt ankam.
+
 ## 4 · Was darunter trägt
 
 **Die Einrichtung misst.** Schritt 2 prüft die Bridge auf :8600 live — «Zentrale gefunden»,
