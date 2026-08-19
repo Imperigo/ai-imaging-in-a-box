@@ -1,0 +1,33 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260820-22",
+  "art": "render",
+  "beschreibung": "TRAEGT DIE CONTROLNET-NAHT UEBERHAUPT? Vier Bilder, rund fuenf Sekunden Rechenzeit, und es ist die Frage, mit der dieses ganze Projekt angefangen hat — nur diesmal an unserer eigenen Kette. WAS DEINE NULLPROBE GEZEIGT HAT, und es ist mir seit gestern nicht aus dem Kopf gegangen: Ein LEERES GRAUBILD erreicht |rho| 0.889. Unsere fuenf konditionierten Renders erreichen 0.238 bis 0.45. Weisses Rauschen erreicht 0.917. Das heisst: Die Tiefenstruktur unserer erzeugten Bilder passt SCHLECHTER zur Vorgabe als die eines leeren Bildes. Eine schwache Konditionierung wuerde Werte irgendwo zwischen 'wie ein leeres Bild' und 'perfekt' liefern. Werte DARUNTER bedeuten etwas anderes: Entweder kommt die Konditionierung gar nicht an, oder sie zieht aktiv in die falsche Richtung. Beides ist pruefbar, und beides mit demselben Aufbau. VIER RENDERLAEUFE, ALLE MIT DEMSELBEN SEED (nimm 1004, den besten aus auf-21), derselben Szene platte_endlich, derselben festen Kamera, demselben Prompt — es aendert sich je Lauf GENAU EINE Sache: A) controlnet_staerke = 0.0. Die Konditionierung ist damit abgeschaltet. B) controlnet_staerke = 0.8, Tiefenkarte wie bisher, also INVERTIERT (Registrywert POL_NAH_DUNKEL). Das ist unser heutiger Vorgabeweg. C) controlnet_staerke = 0.8, Tiefenkarte NICHT invertiert, also so wie Blender sie schreibt (nah = hell). D) controlnet_staerke = 1.0, sonst wie B. WAS DIE VIER BEANTWORTEN: Wenn A und B praktisch gleich sind, KOMMT DIE KONDITIONIERUNG NICHT AN — die Naht ist tot, und jede Messreihe ueber die ControlNet-Staerke war eine Messreihe ueber nichts. Wenn C deutlich besser ist als B, ist die POLARITAET verdreht, und wir haben die Tiefenkarte seit auf-13 falsch herum hineingegeben. Wenn B besser ist als A und C schlechter, ist alles in Ordnung und der Rueckstand hat eine dritte Ursache. WAS ICH ZURUECK BRAUCHE, je Lauf: score, spearman, geom_iou, n_gemeinsam — und ZUSAETZLICH die HINWEISE, die render.rendere im Ergebnis mitliefert. Die sind diesmal so wichtig wie die Zahlen: Unser Adapter meldet dort, wenn die Pipeline ein Argument NICHT angenommen hat. Steht dort etwas ueber control_image oder controlnet_conditioning_scale, ist die Frage schon beantwortet, bevor eine Zahl gerechnet wird. Bitte woertlich mitschicken, auch wenn die Liste leer ist — eine leere Liste ist selbst eine Auskunft. NEU SEIT HEUTE, und es hilft dir beim Einordnen: render.rendere gibt jetzt 'schritte_gerechnet' zurueck, die Zahl der wirklich gerechneten Diffusionsschritte. Im Bildbearbeitungsmodus rechnen viele Pipelines nur schritte x denoise. Bitte mitmelden. DIE ANKER NICHT VERGESSEN: Deine vier Kontrollbilder von gestern (beauty, rauschen, grau, verlauf) bitte noch einmal gegen DIESELBE Soll-Karte messen, damit die vier neuen Laeufe unmittelbar dagegen stehen. Das kostet keinen Render. Falls die Soll-Karte unveraendert ist, genuegen die gestrigen Zahlen — dann sag das. NICHT TUN: Nicht mehr als eine Sache je Lauf aendern. Nichts an unserem Code aendern. Der Seed bleibt ueber alle vier gleich, sonst misst du die Streuung mit, die du gestern schon gemessen hast. ZWEITE, KLAR GETRENNTE FRAGE, nur falls es ohne Aufwand geht — sie hat mit der ersten nichts zu tun und darf sie nicht verwaessern: Wir stecken in einer Zange. Bei 17 % Geometrieanteil ist das Gate unerreichbar (Deckel 0.64), bei 60 % trennt es nicht (Rauschen 0.72). Dazwischen weiss niemand etwas. Falls du eine Szene mit ETWA 25 BIS 30 % Geometrieanteil bauen kannst — kleinere Bodenplatte oder hoehere Kamera —, miss dort bitte einmal die vier Kontrollanker. Nur die Anker, keine Renderreihe. Die Frage ist: Erreicht weisses Rauschen dort AUCH das Gate? Wenn nein, haben wir einen Arbeitsbereich gefunden. AUFLAGE: GPU-Lauf, nur bei Leerlauf, unter der Leistungsgrenze. Vier Bilder zu je rund 1.3 Sekunden. REGEL 3: keine absoluten Pfade mit Benutzernamen, nur Zahlen, Dateinamen und die Hinweise.",
+  "erstellt": "2026-08-20T19:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "Szene 'platte_endlich' wie in auf-20260820-21, dieselbe feste Kamera"
+  },
+  "params": {
+    "seed": 1004,
+    "laeufe": {
+      "A": {"controlnet_staerke": 0.0, "polaritaet": "invertiert"},
+      "B": {"controlnet_staerke": 0.8, "polaritaet": "invertiert"},
+      "C": {"controlnet_staerke": 0.8, "polaritaet": "nicht invertiert"},
+      "D": {"controlnet_staerke": 1.0, "polaritaet": "invertiert"}
+    },
+    "hintergrund_strategie": "wie_soll",
+    "schaetzer": "depth-anything-v2-small"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "hinweis": "Vier Bilder. Der Aufbau steht seit auf-21, es aendert sich je Lauf eine Zahl."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": false,
+    "hinweis": "Je Lauf score, spearman, geom_iou, n_gemeinsam, schritte_gerechnet — und die HINWEISE aus render.rendere woertlich, auch wenn sie leer sind."
+  }
+}
