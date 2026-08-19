@@ -194,3 +194,69 @@ wichtigste — sie ist die Antwort auf den Knopf, der `bereit` meldet und schwei
 **Bis dahin baue ich nichts, was an einer bestimmten Oberfläche hängt.** Was
 weitergebaut werden kann, ohne diese Antwort: alles an den Verträgen, an der QA und an
 der Bildkette — das trägt in jedem der drei Fälle.
+
+
+---
+
+# VIERTE BERICHTIGUNG — die Prämisse dieses Dokuments trug nicht
+
+**`auf-20260819-16` ist beantwortet (20.08.2026). Die drei Zeilen:**
+
+| Frage | Antwort |
+|---|---|
+| Welches Verzeichnis? | `apps/kosmo-orbit` — genau der Bestand, den der Bericht genannt hatte |
+| `package.json`? | `@kosmo/orbit-app`, **0.9.36** (die Oberfläche zeigt 0.9.35, weil der laufende Build älter ist als die Versionszeile) |
+| `git remote` / `git log`? | **`Imperigo/Architektur-Cosmos` — das eigene Repo des Owners.** Letzter Commit **am selben Tag, 10:00:56**, null uncommittete Änderungen |
+
+**Und damit fällt die Prämisse, auf der dieses Dokument aufgebaut ist.**
+
+Der Anlass war der Satz: *„`KosmoSpez` kommt in keinem Quelltext vor, den wir haben."*
+Er stimmte — aber er belegte nicht, was ich daraus gemacht habe. Dort steht `KosmoSpez`
+in **31 Dateien**. **Unser Klon ist schlicht älter als der Arbeitsstand.**
+
+Es war nie ein unbekannter Bestand. Es war unser eigener, veralteter Blick darauf.
+
+## Warum das trotzdem kein verlorener Tag war
+
+Die dritte Berichtigung — die des Owners, dass der Cloud-Worker gerade an KosmoOrbit
+baut — war **richtig und ist jetzt belegt**: Der letzte Commit ist von heute Vormittag,
+`VisWorkspace.tsx` liegt dort, `NodePipeline` und `pipelineReadiness` noch nicht. Die
+Vis-Oberfläche entsteht in diesem Moment.
+
+Und die Kehrtwende, die daraus folgte, wird durch diesen Befund **bestätigt statt
+widerlegt**:
+
+> Einen bewegten Bestand rückwärts zu lesen ist verschwendete Arbeit.
+
+Ein Bestand, dessen letzter Commit vom selben Vormittag ist, war beim Beginn meiner
+Bestandsaufnahme schon nicht mehr der, den ich beschrieb. Das Übergabeblatt
+(`docs/UEBERGABE_VIS_2026-08-19.md`) ist die richtige Antwort darauf, und es bleibt
+gültig — es beschreibt Verträge und keine Bildschirme.
+
+## Der Merksatz, um einen Halbsatz erweitert
+
+Bisher hiess er:
+
+> Die Existenz einer Datei ist kein Beleg für ihren Inhalt — und ihr Fehlen keiner für
+> ihre Abwesenheit.
+
+Der zweite Halbsatz stimmte und war zu eng gefasst. **Ihr Fehlen in einem Klon ist nicht
+einmal ein Beleg für ihr Fehlen im Bestand.** Ich habe eine Momentaufnahme mit dem
+Gegenstand verwechselt — dreimal an einem Tag, in drei Verkleidungen: das geschlossene
+Menü, das fehlende `KosmoSpez`, das nirgends auffindbare `Design/Vis`.
+
+## Und ein Befund der HomeStation über sich selbst, der hierher gehört
+
+Sie hat im selben Bericht einen eigenen Fehler gemeldet: Sie hatte den vierten Wächter
+als *grün* gemeldet, er habe eine Auflösung von 1024×768 geprüft. Das Fundartefakt aus
+ihrem eigenen Lauf trägt `{"geprueft": 0}`. **Er hat nichts gemessen.**
+
+Sie hatte aus *„Test bestanden"* auf *„Wächter hat geprüft"* geschlossen, ohne
+nachzusehen. Das ist derselbe Fehler in einer weiteren Verkleidung, und er verdient einen
+eigenen Satz:
+
+> **Ein bestandener Test ist kein Beleg dafür, dass er etwas geprüft hat.**
+
+Genau dagegen steht in diesem Projekt die Dreiteilung *bestanden / durchgefallen /
+**nicht gemessen***, inzwischen an fünf Stellen — und die Regel, dass eine ungemessene
+Schwelle nicht verurteilen darf.

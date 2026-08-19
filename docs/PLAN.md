@@ -276,24 +276,38 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       `bruecke.lies_auftrag` verlangt darum `fremde_freigabe_gilt=True` als ausdrückliche
       Entscheidung des Betreibers. **Diese Entscheidung gehört dem Owner**, nicht dem
       Programm — und sie gehört getroffen, bevor die Naht in Betrieb geht.
-- [ ] **ZUERST: Welche App wird vorgeführt?** — `auf-20260819-16`,
-      `docs/WELCHE_APP_2026-08-19.md`. Es gibt **vier** Bestände, und die vorgeführte App
-      ist keiner davon: Sie zeigt vier Stationen mit `KosmoSpez` und `KosmoOffice`, und
-      **`KosmoSpez` kommt in keinem Quelltext vor, den wir haben.**
-      **Bis das geklärt ist, wird nichts gebaut, was an einer bestimmten Oberfläche
-      hängt.** Verträge, QA und Bildkette tragen in jedem der Fälle.
-      *Berichtigt am selben Tag:* Die HomeStation hat ihren Bericht korrigiert — die App
-      **hat** einen Bereich Vis und einen Knotengraph mit typisierten Anschlüssen,
-      darunter einen **Render-Knoten mit dem Eingang `Geometrie-Treue`** und einen
-      Auto-Kamera-Knoten. Die Lage ist besser als gedacht; der offene Punkt bleibt.
-- [ ] **„Bereit" ohne Prüfung — schon wieder, und diesmal in der Demo-App.** Der Knopf
-      «Ausführen» meldet `bereit` und tut nichts: kein Fortschritt, kein Fehler, keine
-      Begründung. Wahrscheinlich sind die Knoten gesetzt, aber **nicht verdrahtet**.
-      **Das ist wörtlich der Befund, mit dem dieses Projekt angefangen hat** — ein
-      Zustand, der Bereitschaft behauptet, ohne sie zu prüfen. `kette.pruefe_kette` und
-      `graph.pruefe_bedarf` beantworten genau diese Frage vor dem Lauf. Das ist die
-      Stelle, an der unsere Arbeit dort beitragen könnte, **unabhängig vom gewählten
-      Weg**. `auf-20260819-16` prüft es nach.
+- [x] **Welche App wird vorgeführt? — Das eigene Repo des Owners, Stand von heute.**
+      `auf-20260819-16` beantwortet: `apps/kosmo-orbit`, `@kosmo/orbit-app` **0.9.36**,
+      Remote `Imperigo/Architektur-Cosmos`, **letzter Commit am selben Vormittag**, null
+      uncommittete Änderungen.
+      **Meine Prämisse trug nicht.** Der Anlass war „`KosmoSpez` kommt in keinem
+      Quelltext vor, den wir haben". Dort steht es in **31 Dateien** — *unser Klon ist
+      schlicht älter als der Arbeitsstand.* Es war nie ein unbekannter Bestand, sondern
+      unser eigener veralteter Blick darauf.
+      **Der Merksatz ist damit um einen Halbsatz zu erweitern:** Das Fehlen einer Datei
+      in einem Klon ist nicht einmal ein Beleg für ihr Fehlen im Bestand. Dreimal an einem
+      Tag derselbe Fehler in drei Verkleidungen — das geschlossene Menü, das fehlende
+      `KosmoSpez`, das nirgends auffindbare `Design/Vis`.
+      Die Kehrtwende zum Übergabeblatt wird davon **bestätigt statt widerlegt**: Ein
+      Bestand, dessen letzter Commit vom selben Vormittag ist, war schon beim Beginn der
+      Bestandsaufnahme nicht mehr der, den sie beschrieb.
+- [x] **„Bereit" ohne Prüfung — gemessen: es ist ein Bedienungsproblem, kein Loch.**
+      `auf-20260819-16`: Unverdrahtet bleibt der Zustand dreimal auf `bereit`. Verdrahtet
+      wechselt er auf `fehler` **mit präziser Begründung**, nach dem Nachtragen des
+      Bridge-Tokens auf „auf GPU-Leerlauf" — und in der Warteschlange liegt ein
+      vollständiger Auftrag.
+      **Was bleibt, ist der Befund in schärferer Form:** Der Zustand meldet `bereit` auch
+      bei unverdrahteten Knoten. Das ist wörtlich der Befund, mit dem dieses Projekt
+      angefangen hat, und genau dagegen sind `kette.pruefe_kette` und `graph.pruefe_bedarf`
+      gebaut. Steht als Kapitel 3 im Übergabeblatt.
+- [ ] **„Ein bestandener Test ist kein Beleg dafür, dass er etwas geprüft hat."** Die
+      HomeStation hat im selben Bericht einen eigenen Fehler gemeldet: Sie hatte einen
+      Wächter als *grün* geführt, er habe 1024×768 geprüft — das Fundartefakt aus ihrem
+      Lauf trägt `{"geprueft": 0}`. Er hat **nichts** gemessen.
+      Derselbe Fehler in einer weiteren Verkleidung, und er gehört gegen unsere **eigene**
+      Testsuite geprüft: Wo behauptet ein grüner Test bei uns etwas, das er gar nicht
+      gemessen hat? Die Dreiteilung *bestanden / durchgefallen / nicht gemessen* ist die
+      Antwort im Produktivcode — in den Tests selbst ist sie noch nirgends erzwungen.
 - [ ] **Weg B, Schritt 5–7** — QA je Kamera statt je Bild, die Verzeichniskonvention
       `<out>/<kamera>/…`, Varianten, und der Treue-Regler des Panels bis in die Kette.
 - [ ] **Die zweite Hälfte der Stil-Kalibrierung** — der Boden ist gemessen, `k = 2` ist
