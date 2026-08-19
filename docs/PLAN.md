@@ -474,10 +474,31 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       kam, und mit derselben Zahl (`K_STREUUNGEN = 2.0`, an beiden Stellen).
       Und `waehle` kann sagen: **keine besteht.** Der geerbte liefert immer eine beste —
       die Sorte Antwort, die eine Frage beendet, ohne sie zu beantworten.
-- [ ] **Die erste echte Saatreihe am Gerät fahren** — der Rauschboden der Kette ist
-      gebaut, aber nie gemessen. Ohne ihn ist jede Aussage über die Wirkung eines
-      Parameters unbelegt, auch die bisherigen. Erster Kandidat: fünf Seeds bei sonst
-      gleichen Parametern, gegen `geometrie_qa`.
+- [x] **Die erste Saatreihe ist gefahren — und die Streuung ist gross.**
+      `auf-20260820-20`, fünf Seeds, sonst identisch, `docs/RAUSCHBODEN_2026-08-20.md`.
+      Standardabweichung **0.0331** bei einem Mittel von 0.0493 — **67 %
+      Variationskoeffizient**. Und: **zwei von fünf Läufen sind gar nicht messbar**,
+      `n_gemeinsam` schwankt von **0 bis 1925**. Bei Seed 1002 gibt es keinen einzigen
+      gemeinsamen Bildpunkt.
+      *Ein Einzellauf als Vergleichsgrundlage ist damit wertlos.*
+- [ ] **Der Rauschboden gilt noch nicht für den Fall, der zählt — meine Schuld.**
+      Die Messung lief auf dem Testbau **ohne Boden**, und ich hatte am selben Tag die
+      Vorgabe auf `wie_soll` zurückgenommen. Das ist genau die Szenenart, in der die
+      *zurückgenommene* Regel gewinnt: `geom_iou` fiel von 0.082 (`auf-13`) auf ≈ 0.006 —
+      ein Dreizehntel. Beide Messungen stehen damit an **zwei Betriebspunkten**.
+      Die HomeStation konnte das nicht wissen; der Auftrag sagte „mit der Vorgabe messen".
+      **Zum dritten Mal an einem Tag: Eine Messung gilt so weit, wie gemessen wurde.**
+      `auf-20260820-21` wiederholt sie auf einer Szene **mit** Boden und wertet **beide
+      Strategien auf denselben Bildern** aus — das kostet keinen zweiten Renderlauf und
+      beendet die Vermutung.
+- [ ] **„0.80 schlägt 1.00" gilt bis dahin als UNBELEGT** — nicht als widerlegt. Der
+      Unterschied von 0.0228 liegt unter der gemessenen Streuung von 0.0331, aber die
+      beiden Zahlen stammen von verschiedenen Betriebspunkten. Der Unterschied zwischen
+      *unbelegt* und *widerlegt* ist wichtig genug, um ihn stehen zu lassen.
+- [ ] **Die Kette hat noch NIE ein erzeugtes Bild geliefert, das das Geometrie-Gate
+      besteht.** `auf-13` bestes 0.265, `auf-20` bestes 0.080, Schwelle **0.65**. Das
+      steht seit dem 18.08. in den Zahlen und war nie als eigener Satz aufgeschrieben.
+      Es ist der grösste offene Posten des Projekts.
 - [x] **Das Lexikon prüft sich jetzt selbst** — 2026-08-20, `tests/test_lexikon.py`,
       13 Tests. Anlass: **Seed** stand zweimal darin, in zwei Fassungen, in zwei
       Abschnitten. Beim Nachzählen waren es sieben Begriffe mit Doppeleinträgen.
