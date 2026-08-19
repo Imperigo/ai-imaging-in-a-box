@@ -280,11 +280,20 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       `docs/WELCHE_APP_2026-08-19.md`. Es gibt **vier** Bestände, und die vorgeführte App
       ist keiner davon: Sie zeigt vier Stationen mit `KosmoSpez` und `KosmoOffice`, und
       **`KosmoSpez` kommt in keinem Quelltext vor, den wir haben.**
-      **Beide Wege zielen damit auf Programme, die nicht das vorgeführte sind** — Weg A
-      auf den Knoten-Cockpit, Weg B auf die Designzentrale V1. Meine Empfehlung von heute
-      früh stand auf einer Voraussetzung, die ich nicht geprüft hatte.
       **Bis das geklärt ist, wird nichts gebaut, was an einer bestimmten Oberfläche
       hängt.** Verträge, QA und Bildkette tragen in jedem der Fälle.
+      *Berichtigt am selben Tag:* Die HomeStation hat ihren Bericht korrigiert — die App
+      **hat** einen Bereich Vis und einen Knotengraph mit typisierten Anschlüssen,
+      darunter einen **Render-Knoten mit dem Eingang `Geometrie-Treue`** und einen
+      Auto-Kamera-Knoten. Die Lage ist besser als gedacht; der offene Punkt bleibt.
+- [ ] **„Bereit" ohne Prüfung — schon wieder, und diesmal in der Demo-App.** Der Knopf
+      «Ausführen» meldet `bereit` und tut nichts: kein Fortschritt, kein Fehler, keine
+      Begründung. Wahrscheinlich sind die Knoten gesetzt, aber **nicht verdrahtet**.
+      **Das ist wörtlich der Befund, mit dem dieses Projekt angefangen hat** — ein
+      Zustand, der Bereitschaft behauptet, ohne sie zu prüfen. `kette.pruefe_kette` und
+      `graph.pruefe_bedarf` beantworten genau diese Frage vor dem Lauf. Das ist die
+      Stelle, an der unsere Arbeit dort beitragen könnte, **unabhängig vom gewählten
+      Weg**. `auf-20260819-16` prüft es nach.
 - [ ] **Weg B, Schritt 5–7** — QA je Kamera statt je Bild, die Verzeichniskonvention
       `<out>/<kamera>/…`, Varianten, und der Treue-Regler des Panels bis in die Kette.
 - [ ] **Die zweite Hälfte der Stil-Kalibrierung** — der Boden ist gemessen, `k = 2` ist

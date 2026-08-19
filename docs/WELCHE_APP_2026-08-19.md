@@ -12,6 +12,37 @@ kam etwas Grösseres heraus als der Widerspruch.
 
 Beide haben recht. Sie haben **verschiedene Programme** angesehen.
 
+> ## BERICHTIGUNG, wenige Stunden später
+>
+> **Die HomeStation hat ihren eigenen Bericht korrigiert, und die zweite Fassung dreht
+> den zweiten Spiegelstrich um.** Es gibt sehr wohl einen Bereich KosmoVis — er liegt
+> eine Ebene tiefer, im Menü `Prepare · Vis · Publish`. Und es gibt einen **Knotengraph
+> mit typisierten Anschlüssen**: zwölf Knoten in vier Gruppen, darunter ein
+> **Render-Knoten mit den Eingängen `Szene`, `Prompt`, `Geometrie-Treue`, `Samples`,
+> `Kamera-Standpunkte`** und ein **Auto-Kamera-Knoten** mit drei benannten Standpunkten.
+> Dreimal war aus einem geschlossenen Menü auf Nichtvorhandensein geschlossen worden.
+>
+> **Was das an diesem Dokument ändert und was nicht.** Der Satz „die vorgeführte App hat
+> keine Vis-Oberfläche" ist widerlegt — er stand hier und war falsch, und das gehört
+> hierher und nicht in eine Fussnote. **Der Befund darunter steht unverändert:**
+> `KosmoSpez` kommt in keinem Quelltext vor, den wir haben, und die Fassungsnummer passt
+> zu keinem unserer Bestände. Wir wissen weiterhin nicht, welchen Code wir vor uns haben
+> — nur, dass er mehr kann als gedacht.
+>
+> **Und die Lage ist damit deutlich besser, als sie gestern aussah:** Der Regler, um den
+> sich diese Vertiefungsarbeit dreht, heisst dort schon `Geometrie-Treue` und ist ein
+> Anschluss am Render-Knoten. Die Kameras, die der Demoplan für den grössten Mangel
+> hielt, gibt es als Knoten.
+>
+> **Der eine Befund, der uns unmittelbar angeht:** Der Knopf «Ausführen» meldet
+> *«bereit»* und tut nichts — kein Fortschritt, kein Fehler, keine Begründung. Die
+> wahrscheinliche Ursache ist, dass die Knoten gesetzt, aber **nicht verdrahtet** sind.
+> **Das ist wörtlich der Befund, mit dem dieses Projekt angefangen hat**, nur an anderer
+> Stelle: *ein Zustand, der Bereitschaft behauptet, ohne sie zu prüfen.* Unser
+> `kette.pruefe_kette` und `graph.pruefe_bedarf` beantworten genau diese Frage vor dem
+> Lauf — das ist die Stelle, an der unsere Arbeit dort etwas beitragen könnte, und zwar
+> unabhängig davon, welcher Weg gewählt wird.
+
 ---
 
 ## Die vier Bestände
