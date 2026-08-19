@@ -1,0 +1,28 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260820-20",
+  "art": "render",
+  "beschreibung": "WIE STARK STREUT DIE KETTE, WENN SICH NUR DER ZUFALL AENDERT? Das ist die Messung, die allen bisherigen Parameteraussagen erst ihren Boden gibt — auch rueckwirkend. WORUM ES GEHT: Wir haben inzwischen mehrfach zwei Renderlaeufe verglichen und aus dem Unterschied etwas gefolgert — 0.80 schneidet besser ab als 1.00 bei der ControlNet-Staerke (auf-13), z-image haelt die Geometrie und qwen nicht. Was wir NIE gemessen haben: wie stark zwei Laeufe mit VOELLIG GLEICHEN Parametern auseinanderliegen, wenn nur der Seed anders ist. Ohne diese Zahl ist jeder dieser Vergleiche unbelegt. Ein Unterschied ist erst dann einer, wenn er den Zufall uebersteigt. Genau dieselbe Luecke hatten wir bei der Stil-Schwelle: Dort war 0.30 gesetzt, bis auf-11 den Boden von SigLIP 2 bei 0.526 gemessen hat — und damit stand fest, dass 0.30 gar kein Gate war. DIE MESSUNG, denkbar einfach: FUENF Renderlaeufe mit EXAKT denselben Parametern, bei denen sich NUR der Seed unterscheidet. Nimm eine Szene und Einstellungen, die einem echten Auftrag nahekommen — am liebsten dieselbe wie in auf-13, damit die Zahlen vergleichbar sind. Seeds fortlaufend, etwa 1000 bis 1004. Alles andere bleibt gleich: Prompt, Backbone, ControlNet-Staerke, Schritte, denoise, Aufloesung, Kamera, Tiefenkarte. Miss von jedem Bild den Geometrie-Score mit unserer eigenen Kette (tiefenschaetzer.qa_gegen_soll gegen die Soll-Karte aus der EXR). ACHTUNG, DAS IST NEU SEIT HEUTE: Die Vorgabe fuer die Hintergrundstrategie ist auf wie_soll zurueckgenommen — ohne_randberuehrung waehlt in Szenen MIT Boden null Punkte, das hat dein auf-15 gezeigt. Bitte git pull, bevor du misst, sonst misst du mit der alten Vorgabe. WAS ICH ZURUECK BRAUCHE: die fuenf Scores, dazu spearman und geom_iou je Lauf, und die Rechendauer. Mehr nicht. Die Auswertung mache ich hier mit varianten.rauschboden. DIE FRAGE IN EINEM SATZ: Wie gross ist die Streuung der fuenf Scores — und wie gross die Spanne zwischen dem besten und dem schlechtesten? WARUM DAS ZAEHLT, in Zahlen: Liegt die Streuung bei 0.01, dann ist ein Unterschied von 0.05 zwischen zwei Parameterwerten ein Befund. Liegt sie bei 0.08, dann war der Unterschied 0.80 gegen 1.00 aus auf-13 moeglicherweise Rauschen, und wir haetten eine Empfehlung auf Zufall gebaut. Beide Ergebnisse sind wertvoll; das zweite waere unangenehm und muesste trotzdem gemeldet werden. WORAUF DU ACHTEN SOLLTEST: Wenn ein Lauf gar keinen Score liefert (Messung faellt aus), melde ihn als ungemessen und NICHT als Null. Der Unterschied ist bei genau dieser Messung entscheidend — vier Werte statt fuenf ergeben eine andere Streuung, und eine Null zoege den Mittelwert nach unten, als waere das Bild schlecht gewesen. NICHT TUN: Nicht mehrere Parameter zugleich variieren, auch nicht 'zur Sicherheit'. Nichts an unserem Code aendern. AUFLAGE: GPU-Lauf, nur bei Leerlauf, unter der Leistungsgrenze. Fuenf Bilder — nach deiner eigenen Messung aus auf-13 rund 1.4 Sekunden je Bild plus Blender-Vorlauf, das ist die billigste aussagekraeftige Messung, die wir je beauftragt haben. REGEL 3: keine absoluten Pfade mit Benutzernamen, keine echten Projektdaten. Nur Zahlen und Dateinamen zurueck, keine Bilder.",
+  "erstellt": "2026-08-20T14:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "dieselbe Testszene wie in auf-20260818-13, damit die Zahlen vergleichbar sind"
+  },
+  "params": {
+    "seeds": [1000, 1001, 1002, 1003, 1004],
+    "alles_andere": "unveraendert",
+    "hintergrund_strategie": "vorgabe (seit 2026-08-20 wie_soll)",
+    "schaetzer": "depth-anything-v2-small"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "hinweis": "Fuenf Bilder. Die billigste aussagekraeftige Messung dieses Projekts."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Fuenf Scores, je spearman und geom_iou, Dauer. Ein ausgefallener Lauf ist UNGEMESSEN und nicht null."
+  }
+}
