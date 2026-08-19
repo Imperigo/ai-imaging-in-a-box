@@ -542,3 +542,121 @@ def test_die_zeiten_werden_je_kamera_und_gesamt_berichtet(tmp_path):
     ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
     assert "gesamt" in ergebnis["timings"]
     assert abholer.AUTO_RICHTUNGEN[0] in ergebnis["timings"]
+
+
+# ======================================================================================
+# Belichtung — dazugeschaltet, nicht aufhaltend
+# ======================================================================================
+
+def test_ohne_stil_wird_die_belichtung_gar_nicht_gemessen(tmp_path):
+    """Eine Belichtungsschwelle ist keine Eigenschaft guter Belichtung, sondern eines
+    Stils. Ohne Stil gibt es nichts, wogegen man prüfen könnte."""
+    ordner = _auftrag(tmp_path)
+    protokoll, attrappen = _kette()
+    gerufen = []
+    abholer.hole_einen(
+        ordner, fremde_freigabe_gilt=True,
+        verarbeite=abholer.verarbeiter(
+            out_wurzel=tmp_path / "aus",
+            _belichtung=lambda b, r: gerufen.append(b) or {"bestanden": True},
+            **attrappen))
+    assert gerufen == []
+
+
+def test_mit_stil_wird_je_kamera_gemessen(tmp_path):
+    ordner = _auftrag(tmp_path)
+    _, attrappen = _kette()
+    gerufen = []
+
+    def pruefe(bild, rahmen):
+        gerufen.append(rahmen.slug)
+        return {"bestanden": True, "schwere": "ok", "zusammenfassung": "gut"}
+
+    verarbeite = abholer.verarbeiter(out_wurzel=tmp_path / "aus", stil="kosmo_standard",
+                                     _belichtung=pruefe, **attrappen)
+    antwort = abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
+                                 verarbeite=verarbeite)
+    assert antwort["tat"] == abholer.TAT_VERARBEITET
+    assert gerufen == ["kosmo_standard"]
+
+
+def test_ein_stil_ohne_rahmen_bekommt_keinen_untergeschoben(tmp_path):
+    """Das wäre ein Urteil über einen Stil anhand der Zahlen eines anderen — und es stünde
+    nirgends, dass es so war."""
+    from aiimaging import belichtung
+    assert belichtung.rahmen_fuer("morgennebel") is None
+
+    urteil = abholer._belichtung_urteil("bild.png", "morgennebel", None,
+                                        lambda b, r: pytest.fail("darf nicht rufen"))
+    assert urteil["gemessen"] is False
+    assert "NICHT auf einen anderen zurückgefallen" in urteil["grund"]
+
+
+def test_nicht_verlangt_und_nicht_gemessen_sind_zweierlei():
+    """Und beides ist etwas anderes als 'in Ordnung'."""
+    from aiimaging import belichtung
+    assert abholer._belichtung_urteil("b.png", None, None, None) is None
+
+    ohne_rahmen = abholer._belichtung_urteil("b.png", "gibtsnicht", None, None)
+    assert ohne_rahmen is not None and ohne_rahmen["gemessen"] is False
+
+
+def test_eine_gerissene_belichtung_haelt_den_auftrag_nicht_auf(tmp_path):
+    """Ein Bild, das die Belichtung reisst, ist ein Befund und kein Fehler.
+
+    Die Geometrie entscheidet über `passed`, die Belichtung erklärt.
+    """
+    ordner = _auftrag(tmp_path)
+    _, attrappen = _kette(scores=(0.9,))
+    antwort = abholer.hole_einen(
+        ordner, fremde_freigabe_gilt=True,
+        verarbeite=abholer.verarbeiter(
+            out_wurzel=tmp_path / "aus", stil="kosmo_standard",
+            _belichtung=lambda b, r: {"bestanden": False, "schwere": "error"},
+            **attrappen))
+    assert antwort["tat"] == abholer.TAT_VERARBEITET
+    ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
+    assert ergebnis["qa"]["geometry"]["passed"] is True
+
+
+def test_ein_fehler_beim_messen_nimmt_den_lauf_nicht_mit(tmp_path):
+    """Ein unlesbares Bild ist ein Befund der Geometrie-QA, die dasselbe Bild ohnehin
+    anfasst — hier wäre es ein zweiter Abbruch aus demselben Grund."""
+    ordner = _auftrag(tmp_path)
+    _, attrappen = _kette()
+
+    def kaputt(bild, rahmen):
+        raise OSError("Bild nicht lesbar")
+
+    antwort = abholer.hole_einen(
+        ordner, fremde_freigabe_gilt=True,
+        verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                                       stil="kosmo_standard",
+                                       _belichtung=kaputt, **attrappen))
+    assert antwort["tat"] == abholer.TAT_VERARBEITET
+
+
+def test_das_belichtungsurteil_haengt_am_kameraurteil(tmp_path):
+    """Damit sichtbar bleibt, WELCHE Kamera zu hell war — nicht nur, dass eine es war."""
+    szene = {
+        "geometry": {"path": "model.glb", "format": "glb"},
+        "cameras": [{"name": "a", "position": [0, -20, 2], "target": [0, 0, 2], "fov": 60},
+                    {"name": "b", "position": [20, 0, 2], "target": [0, 0, 2], "fov": 60}],
+        "render": {"resolution": [512, 512]}, "style": {"prompt": "x"},
+        "vis": {"backbone": "qwen"},
+    }
+    ordner = _auftrag(tmp_path, szene=szene)
+    _, attrappen = _kette(scores=(0.9, 0.8))
+    gesehen = {}
+
+    def merke(auftrag):
+        ergebnis = abholer.verarbeiter(
+            out_wurzel=tmp_path / "aus", stil="kosmo_standard",
+            _belichtung=lambda b, r: {"bestanden": b.endswith("a.png")},
+            **attrappen)(auftrag)
+        gesehen.update({u["kamera"]: u["belichtung"]["bestanden"]
+                        for u in ergebnis["kameras"]})
+        return ergebnis
+
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True, verarbeite=merke)
+    assert gesehen == {"a": True, "b": False}

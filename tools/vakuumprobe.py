@@ -132,9 +132,16 @@ def schreibe_um(datei: Path) -> int:
     return len(treffer)
 
 
-def probe(wurzel: Path, ziel: Path) -> dict:
-    """Die Suite kopieren, umschreiben, laufen lassen. Gibt den Befund zurück."""
-    for teil in ("tests", "src", "tools", "pyproject.toml"):
+#: Was in die Arbeitskopie mitmuss, damit die Suite dort überhaupt läuft.
+#:
+#: ``docs`` steht hier, seit `tests/test_lexikon.py` das Lexikon liest. Ohne es scheitern
+#: dreizehn Tests aus einem Grund, der mit Vakuum nichts zu tun hat — und die erste
+#: Fassung dieses Werkzeugs meldete sie prompt als Treffer.
+MITKOPIEREN = ("tests", "src", "tools", "docs", "pyproject.toml")
+
+
+def _kopiere(wurzel: Path, ziel: Path) -> None:
+    for teil in MITKOPIEREN:
         quelle = wurzel / teil
         if not quelle.exists():
             continue
@@ -144,15 +151,45 @@ def probe(wurzel: Path, ziel: Path) -> dict:
         else:
             shutil.copy2(quelle, ziel / teil)
 
-    umgeschrieben = sum(schreibe_um(d) for d in sorted((ziel / "tests").glob("test_*.py")))
+
+def _rote(ziel: Path) -> tuple[set[str], str]:
+    """Die Suite laufen lassen und die Namen der roten Tests einsammeln."""
     lauf = subprocess.run(
         [sys.executable, "-m", "pytest", "-q", "-p", "no:randomly", "--no-header"],
         cwd=ziel, capture_output=True, text=True, check=False)
     ausgabe = lauf.stdout + lauf.stderr
-    treffer = sorted({z.split(" ")[1] for z in ausgabe.splitlines()
-                      if z.startswith("FAILED ") and len(z.split(" ")) > 1}
-                     if "VAKUUM" in ausgabe else set())
-    return {"umgeschrieben": umgeschrieben, "treffer": treffer, "ausgabe": ausgabe}
+    namen = {z.split(" ")[1] for z in ausgabe.splitlines()
+             if z.startswith("FAILED ") and len(z.split(" ")) > 1}
+    return namen, ausgabe
+
+
+def probe(wurzel: Path, ziel: Path) -> dict:
+    """Zweimal laufen lassen: einmal unverändert, einmal umgeschrieben.
+
+    **Die Nullprobe ist der Punkt.** Ein Test, der schon vorher rot war, ist kein
+    Vakuumtreffer — er ist einfach rot. Die erste Fassung dieses Werkzeugs zählte jeden
+    roten Test mit, sobald irgendwo im Protokoll das Wort ``VAKUUM`` auftauchte, und
+    meldete am 20.08.2026 **19 Treffer statt 6**: dreizehn davon waren Lexikon-Tests, die
+    nur scheiterten, weil ``docs/`` nicht mitkopiert wurde.
+
+    Ein Werkzeug, das schwache Tests sucht und selbst über-meldet, verliert seinen Zweck
+    beim ersten Fehlalarm. Gezählt wird darum nur, was **erst durch das Umschreiben** rot
+    wird.
+    """
+    _kopiere(wurzel, ziel / "vorher")
+    vorher, _ = _rote(ziel / "vorher")
+
+    _kopiere(wurzel, ziel / "nachher")
+    umgeschrieben = sum(schreibe_um(d)
+                        for d in sorted((ziel / "nachher" / "tests").glob("test_*.py")))
+    nachher, ausgabe = _rote(ziel / "nachher")
+
+    return {
+        "umgeschrieben": umgeschrieben,
+        "treffer": sorted(nachher - vorher),
+        "schon_vorher_rot": sorted(vorher),
+        "ausgabe": ausgabe,
+    }
 
 
 def main(argv=None) -> int:
@@ -167,6 +204,11 @@ def main(argv=None) -> int:
     try:
         befund = probe(wurzel, ordner)
         print(f"Umgeschriebene Stellen: {befund['umgeschrieben']}")
+        if befund["schon_vorher_rot"]:
+            print(f"Schon vor dem Umschreiben rot (NICHT gezählt): "
+                  f"{len(befund['schon_vorher_rot'])}")
+            for t in befund["schon_vorher_rot"]:
+                print(f"  · {t}")
         if not befund["treffer"]:
             print("Treffer: keine — jede geprüfte Sammlung war gefüllt.")
             return 0

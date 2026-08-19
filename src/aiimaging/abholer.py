@@ -304,9 +304,9 @@ AUTO_RICHTUNGEN = ("sSE",)
 
 def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 up_axis: str = ANGENOMMENE_HOCHACHSE, schwelle: float | None = None,
-                stillstand_frist_s: float | None = None,
+                stillstand_frist_s: float | None = None, stil: str | None = None,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
-                _render_modell=None, _tiefen_modell=None):
+                _belichtung=None, _render_modell=None, _tiefen_modell=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
 
     Je Kamera ein Durchgang: **Multipass → Render → Geometrie-QA**. Ein Auftrag mit drei
@@ -316,6 +316,15 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
     erzeugte Bild gemessen wird, und sie gilt nur für **den einen** Blickwinkel, aus dem
     sie entstand. Ein Bild gegen die Tiefenkarte einer anderen Kamera zu messen ergäbe
     eine Zahl, und die Zahl wäre Unsinn.
+
+    ``stil`` schaltet die **Belichtungsprüfung** dazu — sie braucht einen Stil, weil eine
+    Belichtungsschwelle keine Eigenschaft guter Belichtung ist, sondern eines Stils (siehe
+    :mod:`aiimaging.belichtung`). Ohne Angabe wird sie **nicht** gefahren, und das
+    Ergebnis sagt das; ein Stil ohne Rahmen ebenso. Ein untergeschobener Rahmen wäre ein
+    Urteil über einen Stil anhand der Zahlen eines anderen.
+
+    Sie hält **nichts** auf: Ein Bild, das die Belichtung reisst, ist ein Befund und kein
+    Fehler. Die Geometrie entscheidet über `passed`, die Belichtung erklärt.
 
     **Die Stil-QA läuft hier nicht**, und das ist kein Versehen: Sie braucht ein
     Referenzset, das uns gehört. Die bisherigen Referenzen sind fremde Bildschirmfotos und
@@ -335,13 +344,16 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         einen Mittelwert über Urteile zu bilden hiesse, ein durchgefallenes Bild hinter
         zwei bestandenen verschwinden zu lassen.
     """
+    from . import belichtung as _bel
     from . import bildlesen, geometrie_qa, render, seams, tiefenschaetzer
 
     multipass = _multipass or seams.glb_zu_multipass
     rendern = _rendere or render.rendere
     messen = _qa or tiefenschaetzer.qa_gegen_soll
     soll_lesen = _soll or bildlesen.tiefen_aus_report
+    belichtung_pruefen = _belichtung or _bel.pruefe_bild
     grenze = geometrie_qa.SCHWELLE_GEOMETRIE if schwelle is None else schwelle
+    rahmen = _bel.rahmen_fuer(stil) if stil else None
 
     def verarbeite(auftrag: dict) -> dict:
         szene = auftrag["szene"]
@@ -414,7 +426,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             soll, breite, hoch = soll_lesen(bericht)
             urteil = messen(ergebnis["bild_png"], soll, breite=breite, hoehe=hoch,
                             modell=_tiefen_modell, schwelle=grenze)
-            urteil = dict(urteil, kamera=kuerzel)
+            urteil = dict(urteil, kamera=kuerzel,
+                          belichtung=_belichtung_urteil(
+                              ergebnis["bild_png"], stil, rahmen, belichtung_pruefen))
             urteile.append(urteil)
             zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
 
@@ -427,6 +441,33 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         }
 
     return verarbeite
+
+
+def _belichtung_urteil(bild, stil, rahmen, pruefen) -> dict | None:
+    """Die Belichtung eines Bildes — oder eine benannte Lücke.
+
+    Gibt ``None`` **nur**, wenn gar kein Stil verlangt wurde. Ist ein Stil verlangt und
+    hat keinen Rahmen, entsteht ein Wörterbuch mit ``gemessen: False`` und dem Grund —
+    denn *nicht gemessen* ist etwas anderes als *nicht verlangt*, und beides ist etwas
+    anderes als *in Ordnung*.
+
+    Ein Fehler beim Messen hält den Auftrag **nicht** auf: Ein unlesbares Bild ist ein
+    Befund der Geometrie-QA, die dasselbe Bild ohnehin anfasst; hier wäre es ein zweiter
+    Abbruch aus demselben Grund.
+    """
+    if not stil:
+        return None
+    if rahmen is None:
+        return {"gemessen": False, "stil": stil, "grund": (
+            f"Für den Stil {stil!r} gibt es keinen Belichtungsrahmen. Es wird NICHT auf "
+            f"einen anderen zurückgefallen — das wäre ein Urteil über einen Stil anhand "
+            f"der Zahlen eines anderen, und es stünde nirgends, dass es so war.")}
+    try:
+        urteil = pruefen(bild, rahmen)
+    except Exception as fehler:      # noqa: BLE001 — siehe Docstring
+        return {"gemessen": False, "stil": stil,
+                "grund": f"Belichtung nicht messbar: {type(fehler).__name__}: {fehler}"}
+    return dict(urteil, gemessen=True)
 
 
 def _schlechtestes(urteile: list[dict]) -> dict | None:

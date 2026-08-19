@@ -123,3 +123,52 @@ def test_das_repo_wird_nicht_angefasst(tmp_path):
     vorher = (quelle / "tests" / "test_mini.py").read_text(encoding="utf-8")
     vakuumprobe.probe(quelle, tmp_path / "ziel")
     assert (quelle / "tests" / "test_mini.py").read_text(encoding="utf-8") == vorher
+
+
+# ======================================================================================
+# Die Nullprobe — ohne sie meldet das Werkzeug Fehlalarme
+# ======================================================================================
+
+def test_ein_schon_vorher_roter_test_ist_kein_treffer(tmp_path):
+    """Der Fehler, den dieses Werkzeug am 20.08.2026 selbst gemacht hat.
+
+    Die erste Fassung zählte jeden roten Test mit, sobald irgendwo im Protokoll das Wort
+    ``VAKUUM`` auftauchte, und meldete **19 Treffer statt 6** — dreizehn davon waren
+    Lexikon-Tests, die nur scheiterten, weil ``docs/`` nicht mitkopiert wurde.
+
+    Ein Werkzeug, das schwache Tests sucht und selbst über-meldet, verliert seinen Zweck
+    beim ersten Fehlalarm.
+    """
+    quelle = tmp_path / "quelle"
+    (quelle / "tests").mkdir(parents=True)
+    (quelle / "tests" / "test_mini.py").write_text(
+        "def test_schon_immer_rot():\n"
+        "    assert False, 'mit Vakuum hat das nichts zu tun'\n"
+        "\n"
+        "def test_leer_und_damit_wertlos():\n"
+        "    assert not any('x' in w for w in [])\n",
+        encoding="utf-8")
+
+    befund = vakuumprobe.probe(quelle, tmp_path / "ziel")
+    assert befund["treffer"] == ["tests/test_mini.py::test_leer_und_damit_wertlos"]
+    assert befund["schon_vorher_rot"] == ["tests/test_mini.py::test_schon_immer_rot"]
+
+
+def test_die_arbeitskopie_traegt_die_dokumente_mit(tmp_path):
+    """`tests/test_lexikon.py` liest `docs/LEXIKON.md`. Fehlt der Ordner in der Kopie,
+    scheitern dreizehn Tests aus einem Grund, der mit Vakuum nichts zu tun hat."""
+    assert "docs" in vakuumprobe.MITKOPIEREN
+
+    quelle = tmp_path / "quelle"
+    (quelle / "tests").mkdir(parents=True)
+    (quelle / "docs").mkdir()
+    (quelle / "docs" / "etwas.md").write_text("da", encoding="utf-8")
+    (quelle / "tests" / "test_mini.py").write_text(
+        "from pathlib import Path\n"
+        "def test_liest_ein_dokument():\n"
+        "    assert (Path(__file__).parents[1] / 'docs' / 'etwas.md').is_file()\n",
+        encoding="utf-8")
+
+    befund = vakuumprobe.probe(quelle, tmp_path / "ziel")
+    assert befund["schon_vorher_rot"] == [], "das Dokument muss in der Kopie liegen"
+    assert befund["treffer"] == []

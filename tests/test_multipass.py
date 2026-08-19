@@ -925,3 +925,111 @@ def test_der_herzschlag_laesst_sich_abschalten(tmp_path):
                            up_axis="Y_UP", aufloesung=128, samples=8, material_id=False,
                            herzschlag_takt_s=None)
     assert not (tmp_path / seams.HERZSCHLAG_DATEI).exists()
+
+
+# ======================================================================================
+# Der Beauty-Pass: was er trennt, und was unsere Testszene über ihn NICHT sagen kann
+# ======================================================================================
+
+@ohne_blender
+def test_der_beauty_pass_trennt_bauwerk_und_hintergrund_sehr_wohl(lauf):
+    """Der Plan führte als Störgrösse: „Gebäudegrau und Weltgrau liegen dicht beieinander".
+
+    Am 20.08.2026 zum ersten Mal gemessen, statt sie am Bildschirm zu schätzen — und für
+    die **Mittelwerte** trifft sie nicht zu. Möglich wurde die Messung erst durch
+    ``bildlesen.lies_png_luminanz`` (farbfähig, vom selben Tag) und die Silhouette aus der
+    Tiefen-EXR: Sie sagt Punkt für Punkt, was Bauwerk ist und was nicht.
+    """
+    import math
+
+    from aiimaging import bildlesen, geometrie_qa
+
+    soll, breite, hoehe = bildlesen.tiefen_aus_report(lauf)
+    luma, lb, lh = bildlesen.lies_png_luminanz(lauf["beauty_png"])
+    assert (breite, hoehe) == (lb, lh), "Tiefe und Beauty müssen indexgleich sein"
+
+    sil = geometrie_qa.silhouette(soll)
+    bau = [l for l, s in zip(luma, sil) if s]
+    welt = [l for l, s in zip(luma, sil) if not s]
+    assert bau and welt, "die Szene braucht beides, sonst misst dieser Test nichts"
+
+    def kenn(xs):
+        m = sum(xs) / len(xs)
+        return m, math.sqrt(sum((x - m) ** 2 for x in xs) / len(xs))
+
+    mb, sb = kenn(bau)
+    mw, sw = kenn(welt)
+    trennschaerfe = abs(mb - mw) / max((sb + sw) / 2, 1e-9)
+
+    assert trennschaerfe > 5.0, (
+        f"Bauwerk {mb:.4f}±{sb:.4f} gegen Hintergrund {mw:.4f}±{sw:.4f} — "
+        f"Trennschärfe {trennschaerfe:.1f}. Gemessen am 20.08.2026: 13.9.")
+
+
+@ohne_blender
+def test_die_wertebereiche_ueberlappen_trotz_getrennter_mittel(lauf):
+    """Die Behauptung war nicht ganz aus der Luft gegriffen, nur an der falschen Grösse.
+
+    Die *Mittelwerte* liegen weit auseinander, die *Wertebereiche* aber überlappen: Der
+    hellste Hintergrundpunkt ist heller als der dunkelste Bauwerkspunkt. Wer eine
+    Silhouette allein aus der Helligkeit gewinnen wollte, käme damit nicht durch — und
+    genau darum kommt sie bei uns aus der Tiefen-EXR.
+    """
+    from aiimaging import bildlesen, geometrie_qa
+
+    soll, _, _ = bildlesen.tiefen_aus_report(lauf)
+    luma, _, _ = bildlesen.lies_png_luminanz(lauf["beauty_png"])
+    sil = geometrie_qa.silhouette(soll)
+    bau = [l for l, s in zip(luma, sil) if s]
+    welt = [l for l, s in zip(luma, sil) if not s]
+    assert max(welt) > min(bau), (
+        "keine Überlappung — dann wäre eine Helligkeitsschwelle als Silhouette denkbar, "
+        "und dieser Test müsste umgeschrieben statt gelöscht werden")
+
+
+@ohne_blender
+def test_die_zeichnung_haengt_an_den_materialien_und_nicht_am_pass(lauf):
+    """**Die eigentliche Antwort auf die Sorge des Plans.**
+
+    Sie lautete: Das Bildmodell bekomme „ein Ausgangsbild mit sehr wenig Zeichnung".
+    Gemessen am 20.08.2026 an **zwei** Szenen, und der Unterschied zwischen ihnen ist die
+    Antwort:
+
+    ===================  ===========================================
+    Testbau, 0 Materialien   90 % der Fläche in **3** von 42 Grauwerten
+    Testszene, 2 Materialien  90 % der Fläche in **18** von 39 Grauwerten
+    ===================  ===========================================
+
+    **Sechsmal so viele Töne, nur weil Materialien da sind.** Die wenige Zeichnung ist
+    also keine Eigenschaft des Beauty-Passes, sondern eine der Geometrie, die man ihm
+    gibt — ein ungefärbter Körper hat drei sichtbare Flächen und darum drei Töne.
+
+    Der Vorbehalt gehört dazu: Die Fixture rendert klein und mit wenigen Samples, hier
+    sind es nur rund 500 Bauwerkspunkte. Die Richtung ist belastbar, die Nachkommastelle
+    nicht.
+    """
+    import collections
+
+    from aiimaging import bildlesen, geometrie_qa
+
+    assert lauf.get("n_materialien") == 2, "diese Szene ist die mit den Materialien"
+
+    soll, _, _ = bildlesen.tiefen_aus_report(lauf)
+    luma, _, _ = bildlesen.lies_png_luminanz(lauf["beauty_png"])
+    sil = geometrie_qa.silhouette(soll)
+    bau = [l for l, s in zip(luma, sil) if s]
+
+    stufen = collections.Counter(round(x * 255) for x in bau)
+    kum = noetig = 0
+    for _, n in stufen.most_common():
+        kum += n
+        noetig += 1
+        if kum >= 0.9 * len(bau):
+            break
+
+    assert noetig >= 6, (
+        f"90 % der Bauwerksfläche stecken in {noetig} Grauwerten. Bei einem Körper OHNE "
+        f"Materialien waren es drei — so wenige hier hiesse, dass die Materialien nicht "
+        f"durchkommen, und das wäre ein Befund am Pass statt an der Szene.")
+
+

@@ -622,10 +622,28 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Quadraten nicht leer, sondern voller Wiese, Bäume und Menschen; unsere Szene hat
       nichts davon. **Der Widerspruch liegt nicht im Stil** — entweder bekommt die Szene
       einen Vordergrund, oder das Format folgt dem Baukörper.
-- [ ] **Der Beauty-Pass trennt Bauwerk und Hintergrund kaum** — Gebäudegrau und Weltgrau
-      liegen dicht beieinander. Für die Tiefenkarte gleichgültig, für ein Bildmodell nicht:
-      Es bekommt ein Ausgangsbild mit sehr wenig Zeichnung. Eine Störgrösse, die niemand
-      angemeldet hat.
+- [x] **Der Beauty-Pass trennt Bauwerk und Hintergrund — gemessen, und die Sorge trifft
+      so nicht zu.** 2026-08-20, an zwei Szenen. Möglich wurde die Messung erst durch den
+      farbfähigen Leser vom selben Tag und die Silhouette aus der Tiefen-EXR: Sie sagt
+      Punkt für Punkt, was Bauwerk ist.
+
+      | | Bauwerk | Hintergrund | Trennschärfe |
+      |---|---|---|---|
+      | Testbau (0 Materialien) | 0.676 ± 0.033 | 0.423 ± 0.003 | **13.9** |
+      | Testszene (2 Materialien) | 0.660 ± 0.039 | 0.424 ± 0.007 | **10.2** |
+
+      **Die Mittelwerte liegen weit auseinander**, nicht dicht beieinander. *Aber* die
+      Wertebereiche **überlappen** — der hellste Hintergrundpunkt ist heller als der
+      dunkelste Bauwerkspunkt. Wer eine Silhouette aus der Helligkeit gewinnen wollte,
+      käme nicht durch; genau darum kommt sie bei uns aus der EXR.
+- [x] **„Sehr wenig Zeichnung" — die Zeichnung hängt an den Materialien, nicht am Pass.**
+      Dieselbe Messung: 90 % der Bauwerksfläche liegen bei **0 Materialien in 3** von 42
+      Grauwerten, bei **2 Materialien in 18** von 39. Sechsmal so viele Töne, nur weil
+      Materialien da sind — ein ungefärbter Körper hat drei sichtbare Flächen und darum
+      drei Töne. Das ist eine Eigenschaft der Geometrie, die man dem Pass gibt, und keine
+      des Passes.
+      *Vorbehalt: Die Testszene rendert klein, rund 500 Bauwerkspunkte. Die Richtung ist
+      belastbar, die Nachkommastelle nicht.*
 - [ ] **Verdeckungstest im Runner** — der Strahlenschuss gegen den Depsgraph. Die
       Schrittlogik steht diesseits der Grenze und ist geprüft; die Blender-Seite fehlt.
       Dabei zu klären, ob Frustum- und Verdeckungstest gegeneinander schwingen — der eine
@@ -807,6 +825,19 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 - [ ] **Die Stil-QA im Abholer** — läuft dort bewusst nicht, weil ihr das Referenzset
       fehlt, das uns gehört. Das Ergebnis sagt darum *ungeprüft* und nicht
       *durchgefallen*. Hängt am Planpunkt „Ein Referenzset, das uns gehört".
+- [x] **Die Belichtungsprüfung im Abholer** — 2026-08-20, `verarbeiter(stil=…)`, je Kamera.
+      Sie **hält nichts auf**: Ein Bild, das die Belichtung reisst, ist ein Befund und
+      kein Fehler — die Geometrie entscheidet über `passed`, die Belichtung erklärt.
+      Ohne Stil wird gar nicht gemessen, und ein Stil ohne Rahmen bekommt **keinen
+      untergeschoben**: *nicht verlangt*, *nicht gemessen* und *in Ordnung* sind drei
+      verschiedene Dinge, und alle drei stehen unterscheidbar im Ergebnis.
+- [x] **Die Vakuumprobe hat über-gemeldet — behoben mit einer Nullprobe.** Am selben Tag
+      sprang sie von 6 auf **19 Treffer**: dreizehn Lexikon-Tests, die nur scheiterten,
+      weil `docs/` nicht in die Arbeitskopie kam. Die erste Fassung zählte jeden roten
+      Test mit, sobald irgendwo das Wort `VAKUUM` im Protokoll stand.
+      Sie läuft jetzt **zweimal** — einmal unverändert, einmal umgeschrieben — und zählt
+      nur, was *erst durch das Umschreiben* rot wird. *Ein Werkzeug, das schwache Tests
+      sucht und selbst über-meldet, verliert seinen Zweck beim ersten Fehlalarm.*
 - [ ] **Drei Zahlen laufen auseinander** (aus demselben Durchgang): Ihre Auto-Kamera setzt
       die Augenhöhe auf **1.30 m** (Eingang) und **1.60 m** (Innenraum); wir und das
       Pflichtenheft rechnen mit **1.70 m über Terrain**. `engine: cycles` und
