@@ -1,0 +1,118 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260821-26",
+  "status": "ok",
+  "beendet": "2026-08-19T19:48:51Z",
+  "dauer_s": 90.0,
+  "messwerte": {
+    "aufbau": {
+      "was": "geom_iou (und Score, rho, n) fuer dieselben H-Faelle wie auf-25 — gemessen gegen die URSPRUENGLICHE Soll-Karte MIT Gelaende, hintergrund_strategie wie_soll, wie in auf-23",
+      "neu_gerendert": "nichts, alle Bilder aus auf-23/auf-25"
+    },
+    "szene_59_8_prozent": {
+      "perfekt": {
+        "score": 0.9838595008920372,
+        "spearman": -0.9975881995036281,
+        "geom_iou": 0.9703197351143168,
+        "n_gemeinsam": 154439
+      },
+      "versatz_4m": {
+        "score": 0.8910592453741101,
+        "spearman": -0.8415073886830763,
+        "geom_iou": 0.9435289451340816,
+        "n_gemeinsam": 152245
+      },
+      "H1": {
+        "score": 0.9529732153301061,
+        "spearman": -0.9221419111818782,
+        "geom_iou": 0.9848353470591587,
+        "n_gemeinsam": 155603
+      },
+      "H2": {
+        "score": 0.9525534103658435,
+        "spearman": -0.9216587665288499,
+        "geom_iou": 0.9844836641839686,
+        "n_gemeinsam": 155575
+      },
+      "H3": {
+        "score": 0.7402403554712439,
+        "spearman": -0.6646788573139079,
+        "geom_iou": 0.8243917763272715,
+        "n_gemeinsam": 141708
+      },
+      "H4": {
+        "score": 0.9236095875572466,
+        "spearman": -0.9196904687833587,
+        "geom_iou": 0.9275454070500015,
+        "n_gemeinsam": 150907
+      },
+      "weisses Rauschen": {
+        "score": 0.7216784104688618,
+        "spearman": -0.9165404202647888,
+        "geom_iou": 0.5682452367855179,
+        "n_gemeinsam": 113632
+      }
+    },
+    "szene_29_prozent": {
+      "perfekt": {
+        "score": 0.4148407735266738,
+        "spearman": -0.9618658580846702,
+        "geom_iou": 0.1789156626506024,
+        "n_gemeinsam": 23166
+      },
+      "versatz_4m": {
+        "score": 0.23011588074594674,
+        "spearman": 0.33704534333445957,
+        "geom_iou": 0.15711036992116434,
+        "n_gemeinsam": 20726
+      },
+      "H1": {
+        "score": 0.3722961267032917,
+        "spearman": -0.97688081320694,
+        "geom_iou": 0.14188466400855781,
+        "n_gemeinsam": 18967
+      },
+      "H2": {
+        "score": 0.37171987175280186,
+        "spearman": -0.9772110245608909,
+        "geom_iou": 0.1413979781061195,
+        "n_gemeinsam": 18910
+      },
+      "H3": {
+        "score": 0.1842038155407455,
+        "spearman": 0.12688611817980308,
+        "geom_iou": 0.2674133793870756,
+        "n_gemeinsam": 32207
+      },
+      "H4": {
+        "score": 0.29397333900074224,
+        "spearman": -0.4693714090052159,
+        "geom_iou": 0.1841192760897053,
+        "n_gemeinsam": 23735
+      },
+      "weisses Rauschen": {
+        "score": 0.25464318641410233,
+        "spearman": -0.9485742571844331,
+        "geom_iou": 0.0683585411432051,
+        "n_gemeinsam": 9767
+      }
+    },
+    "die_antwort": {
+      "frage": "Faengt geom_iou die Abwesenheit des Bauwerks?",
+      "antwort": "NEIN. Bei 59.8 % BELOHNT es sie sogar.",
+      "kernzahlen_59_8": "perfekt iou 0.9703 / score 0.9839 — H1 (Bauwerk ganz weg) iou 0.9848 / score 0.9530. Das leere Grundstueck hat eine HOEHERE Ueberdeckung als das perfekte Bild und besteht das Gate 0.65 mit grossem Abstand.",
+      "kernzahlen_29": "perfekt score 0.4148 — H1 score 0.3723, Rauschanker 0.2546. Hier liegt H1 unter dem perfekten Bild, aber immer noch deutlich UEBER dem Rauschen. Auch hier nicht gefangen, nur gedaempft.",
+      "warum": "Ihr Verdacht trifft genau: die Silhouette ist zu mehr als der Haelfte Boden, und der Boden bleibt liegen. H1 hat sogar eine hoehere Ueberdeckung als das perfekte Bild, weil das Bauwerk die einzige Stelle war, an der Soll und Ist sich unterscheiden konnten — ohne es deckt sich fast alles.",
+      "folge_fuer_auf25": "Mein Schluss 'geom_iou darf nicht fallen' war in der einen Haelfte richtig (rho allein genuegt nicht) und in der anderen irrefuehrend: geom_iou ist nicht die fehlende Anwesenheitspruefung. WEDER rho NOCH geom_iou faengt die Abwesenheit. Die Luecke ist offen, nicht gefuellt."
+    }
+  },
+  "urteil": {
+    "kernsatz": "Weder rho noch geom_iou faengt ein Bild ohne Bauwerk. Bei 59.8 % belohnt geom_iou die Abwesenheit sogar."
+  },
+  "umgebung": {
+    "leistungsgrenze_w": 400,
+    "gpu_bildmodell": "nicht benutzt",
+    "neu_gerendert": "nichts"
+  },
+  "fehler": null
+}
