@@ -100,6 +100,48 @@ ist damit wertlos, und das gilt unabhängig vom Betriebspunkt.
 besteht.** `auf-13` bestes: 0.265. Heute bestes: 0.080. Die Schwelle ist **0.65**. Das
 steht so seit dem 18.08. in den Zahlen und ist nie als eigener Satz aufgeschrieben worden.
 
+---
+
+## Nachtrag am selben Tag: Ein Teil davon ist Arithmetik
+
+Beim Zusammenrechnen der bisherigen Läufe zeigt sich, dass Punkt 3 nicht ganz das heisst,
+wonach er klingt.
+
+Der Score ist ``sqrt(|spearman| × geom_iou)``. Umgestellt: Für ``score ≥ 0.65`` braucht es
+bei einer Rangkorrelation von 1.0 — dem bestmöglichen Wert — ein ``geom_iou`` von
+mindestens **0.4225**.
+
+Und die gemessenen Deckel:
+
+| Szene · Strategie | `geom_iou`-Deckel | höchstmöglicher Score | 0.65 erreichbar? |
+|---|---|---|---|
+| ohne Boden · `wie_soll` | 0.256 | 0.505 | **nein** |
+| ohne Boden · `ohne_randberuehrung` | 0.406 | 0.636 | **nein** |
+| Platte endlich · `wie_soll` | 0.967 | 0.982 | ja |
+| Ebene bis Rand · `wie_soll` | 0.974 | 0.986 | ja |
+
+Die Deckel stammen aus `auf-12` und `auf-15` und sind an **gerenderten** Bildern gemessen
+— also am bestmöglichen Fall, den diese Kette auf dieser Szene überhaupt hergibt.
+
+> **Alle unsere Renderläufe liefen auf der Szene ohne Boden. Dort war die Schwelle 0.65
+> arithmetisch unerreichbar.**
+
+Ein durchgefallenes Bild belegte dort **nichts** über seine Geometrietreue — der Lauf
+misst dann nicht das Bild, sondern die Szene.
+
+### Und trotzdem ist das nicht die ganze Erklärung
+
+Der Deckel lag bei 0.636, die erzeugten Bilder bei **0.265**. Zwischen „bestmöglich" und
+„erreicht" klafft noch einmal derselbe Abstand. **Beides ist wahr, und keines erklärt das
+andere weg:**
+
+* Das Gate war unerreichbar — deshalb *bedeutet* „nie bestanden" weniger, als es klingt.
+* Die Bilder blieben weit unter dem Erreichbaren — das ist ein echter Rückstand und bleibt
+  einer.
+
+`geometrie_qa.erreichbarkeit()` beantwortet die Frage jetzt **vor** dem Rechnen. Sie
+kostet nichts und hätte den Unterschied gemerkt, bevor er drei Aufträge gekostet hat.
+
 **4 · Die HomeStation meldet eine Lücke, die sie nicht erklären kann**, statt sie zu
 glätten: Der `auf-13`-Lauf erreichte 0.2649, der beste heute 0.0803 — bei angeblich
 identischen Einstellungen. Sie nennt es ausdrücklich als offene Frage. Die

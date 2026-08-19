@@ -2297,6 +2297,17 @@ bei gleichem Namen.
 und schaut, ob die Tests ihn bemerken. Tun sie es nicht, bewachen sie nichts. *Ohne das
 kann eine grüne Testreihe blosse Beruhigung sein.*
 
+**Erreichbarkeit einer Schwelle (Deckel)** — Die Frage, ob ein Messwert eine Schwelle
+unter den gegebenen Umständen **überhaupt** erreichen kann — unabhängig davon, wie gut das
+Geprüfte ist. Liegt die beste erreichbare Zahl unter der Schwelle, misst die Prüfung nicht
+mehr den Gegenstand, sondern die Umstände.
+*In diesem Projekt am 20.08.2026 nachgerechnet: Der Geometrie-Score ist
+`sqrt(|spearman| × geom_iou)`, für 0.65 braucht es also ein `geom_iou` von 0,4225. Auf der
+Testszene **ohne Boden** — der einzigen, auf der je gerendert wurde — deckelt `geom_iou`
+bei 0,406. Die Schwelle war dort **arithmetisch unerreichbar**, und ein durchgefallenes
+Bild belegte nichts über seine Geometrietreue.*
+*Die Prüfung kostet nichts und gehört vor den Lauf:* `geometrie_qa.erreichbarkeit()`.
+
 **Schluss aus einer Abwesenheit** — Aus dem Ausbleiben eines Zeichens auf eine Ursache
 schliessen: „ich sehe es nicht, also gibt es das nicht", „nichts ist passiert, also tut
 der Knopf nichts". Der Schluss trägt nur, wenn feststeht, dass das Zeichen **erschienen
@@ -2479,6 +2490,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-20 | Ergaenzt: **Erreichbarkeit einer Schwelle (Deckel)**. Nachgerechnet: Auf der Szene ohne Boden — der einzigen, auf der je gerendert wurde — war die Geometrie-Schwelle 0.65 arithmetisch unerreichbar |
 | 2026-08-20 | Ergaenzt: **Schluss aus einer Abwesenheit**. Der Begriff fasst einen Fehler zusammen, der an diesem Tag in FUENF Verkleidungen auftrat — geschlossenes Menue, veralteter Klon, ein Verzeichnis das gerade entsteht, ein gruener Waechter der nichts mass, und ein Klick der einen anderen Knopf traf |
 | 2026-08-20 | Ergaenzt aus den Variantenreihen (`src/aiimaging/varianten.py`): **Saatreihe**, **kontrollierte Reihe**, **Rauschboden**, **Laplace-Varianz** (mit der Warnung, dass ein Schaerfemass keine Qualitaet ist). **Berichtigt:** **Seed** stand ZWEIMAL im Lexikon, in Abschnitt 6 als Kurzfassung und als ausfuehrliche Fassung — zusammengefuehrt zu einem Eintrag. Ein Lexikon, das denselben Begriff zweimal erklaert, veraltet an einer der beiden Stellen |
 | 2026-08-20 | Ergaenzt aus dem Schrittzaehler im Renderlauf: **Rueckruf (Callback)** und **Diffusionsschritt** — letzterer mit der Einschraenkung, dass im Bildbearbeitungsmodus nur `schritte x denoise` Schritte laufen |

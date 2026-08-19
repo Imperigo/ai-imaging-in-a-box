@@ -31,6 +31,7 @@ from pathlib import Path
 
 import pytest
 
+from aiimaging import geometrie_qa
 from aiimaging.geometrie_qa import (
     DIAGNOSE_IOU_NIEDRIG,
     DIAGNOSE_RHO_HOCH,
@@ -694,3 +695,85 @@ def test_auch_eine_einseitig_randlose_karte_wird_gemeldet():
     urteil = geometrie_score(soll, ist)
     warnung = [w for w in urteil["warnungen"] if "Randlose Silhouette" in w]
     assert warnung and "Ist (" in warnung[0] and "Soll (" not in warnung[0]
+
+
+# ======================================================================================
+# Erreichbarkeit — die Frage, die drei Aufträge früher hätte gestellt werden müssen
+# ======================================================================================
+
+def test_die_schwelle_war_auf_der_szene_ohne_boden_unerreichbar():
+    """**Der Befund, der seit dem 18.08.2026 in den Zahlen stand.**
+
+    Alle Renderläufe dieses Projekts liefen auf dem Testbau *ohne Boden*. Dort deckelt
+    ``geom_iou`` bei 0.256 (`wie_soll`) bzw. 0.406 (`ohne_randberuehrung`) — gemessen an
+    einem *gerenderten* Bild, also am bestmöglichen Fall. Bei einer Rangkorrelation von
+    0.998 ergibt das höchstens 0.505 bzw. 0.636.
+
+    Die Schwelle liegt bei 0.65. **Sie war dort arithmetisch unerreichbar**, und ein
+    durchgefallenes Bild belegte nichts über seine Geometrietreue.
+    """
+    for strategie in ("wie_soll", "ohne_randberuehrung"):
+        urteil = geometrie_qa.erreichbarkeit_fuer("ohne_boden", strategie)
+        assert urteil["erreichbar"] is False, strategie
+        assert urteil["hoechster_score"] < geometrie_qa.SCHWELLE_GEOMETRIE
+        assert "UNERREICHBAR" in urteil["begruendung"]
+        assert "belegt hier NICHTS" in urteil["begruendung"]
+
+
+def test_mit_boden_ist_die_schwelle_erreichbar():
+    """Und zwar deutlich — der Deckel liegt bei 0.98 statt bei 0.64."""
+    for szene in ("platte_endlich", "ebene_bis_rand", "ebene_mit_horizont"):
+        urteil = geometrie_qa.erreichbarkeit_fuer(szene, "wie_soll")
+        assert urteil["erreichbar"] is True, szene
+        assert urteil["hoechster_score"] > 0.95
+
+
+def test_die_formel_ist_die_umkehrung_des_scores():
+    """Kein neues Verfahren, nur die Umstellung von score = sqrt(|rho| * iou)."""
+    import math
+    for schwelle in (0.5, 0.65, 0.9):
+        for rho in (1.0, 0.9, 0.7):
+            iou = geometrie_qa.noetiges_iou(schwelle, rho)
+            assert math.sqrt(rho * iou) == pytest.approx(schwelle)
+
+
+def test_bei_perfekter_ordnung_verlangt_die_schwelle_das_quadrat():
+    assert geometrie_qa.noetiges_iou(0.65, 1.0) == pytest.approx(0.4225)
+
+
+def test_eine_schlechtere_ordnung_verlangt_mehr_ueberdeckung():
+    """Die beiden Grössen ersetzen einander nicht — das geometrische Mittel lässt keine
+    von beiden die andere ausgleichen."""
+    assert (geometrie_qa.noetiges_iou(0.65, 0.85)
+            > geometrie_qa.noetiges_iou(0.65, 1.0))
+
+
+def test_eine_ungemessene_kombination_bekommt_keine_schaetzung():
+    """Ein geratener Deckel wäre genau die Sorte Zahl, gegen die dieses Modul antritt."""
+    assert geometrie_qa.erreichbarkeit_fuer("gibtsnicht", "wie_soll") is None
+    assert geometrie_qa.erreichbarkeit_fuer("ohne_boden", "quantil") is None
+
+
+def test_die_luecke_wird_beziffert_und_nicht_nur_behauptet():
+    urteil = geometrie_qa.erreichbarkeit_fuer("ohne_boden", "ohne_randberuehrung")
+    assert urteil["luecke"] == pytest.approx(
+        urteil["noetiges_iou"] - geometrie_qa.IOU_DECKEL[("ohne_boden",
+                                                          "ohne_randberuehrung")])
+    assert urteil["luecke"] > 0
+
+
+def test_erreichbar_heisst_nicht_erreicht():
+    """Die Prüfung sagt, ob die Frage sinnvoll ist — nicht, wie sie ausgeht."""
+    urteil = geometrie_qa.erreichbarkeit_fuer("platte_endlich", "wie_soll")
+    assert "sagt das NICHT" in urteil["begruendung"]
+
+
+@pytest.mark.parametrize("schwelle, rho", [(-0.1, 1.0), (1.1, 1.0), (0.65, 0.0)])
+def test_unbrauchbare_eingaben_werden_abgewiesen(schwelle, rho):
+    with pytest.raises(QaError):
+        geometrie_qa.noetiges_iou(schwelle, rho)
+
+
+def test_ein_deckel_ausserhalb_von_null_bis_eins_wird_abgewiesen():
+    with pytest.raises(QaError, match="iou_deckel"):
+        geometrie_qa.erreichbarkeit(iou_deckel=1.5)

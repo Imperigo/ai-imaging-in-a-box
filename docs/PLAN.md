@@ -506,10 +506,28 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Unterschied von 0.0228 liegt unter der gemessenen Streuung von 0.0331, aber die
       beiden Zahlen stammen von verschiedenen Betriebspunkten. Der Unterschied zwischen
       *unbelegt* und *widerlegt* ist wichtig genug, um ihn stehen zu lassen.
-- [ ] **Die Kette hat noch NIE ein erzeugtes Bild geliefert, das das Geometrie-Gate
-      besteht.** `auf-13` bestes 0.265, `auf-20` bestes 0.080, Schwelle **0.65**. Das
-      steht seit dem 18.08. in den Zahlen und war nie als eigener Satz aufgeschrieben.
-      Es ist der grösste offene Posten des Projekts.
+- [x] **Warum nie ein erzeugtes Bild das Gate bestanden hat — zur Hälfte Arithmetik.**
+      2026-08-20, `geometrie_qa.erreichbarkeit()`, 10 Tests. Der Score ist
+      `sqrt(|spearman| × geom_iou)`; für 0.65 braucht es bei perfekter Ordnung ein
+      `geom_iou` von **0.4225**. Gemessene Deckel:
+
+      | Szene · Strategie | Deckel | höchstmöglich | 0.65? |
+      |---|---|---|---|
+      | ohne Boden · `wie_soll` | 0.256 | 0.505 | **nein** |
+      | ohne Boden · `ohne_randberuehrung` | 0.406 | 0.636 | **nein** |
+      | Platte endlich · `wie_soll` | 0.967 | 0.982 | ja |
+
+      **Alle unsere Renderläufe liefen auf der Szene ohne Boden. Dort war die Schwelle
+      arithmetisch unerreichbar** — ein durchgefallenes Bild belegte nichts über seine
+      Geometrietreue, der Lauf mass nicht das Bild, sondern die Szene.
+      `erreichbarkeit()` beantwortet das jetzt **vor** dem Rechnen, kostet nichts, und
+      hätte den Unterschied gemerkt, bevor er drei Aufträge gekostet hat. Eine ungemessene
+      Kombination bekommt **`None`** und keine Schätzung.
+- [ ] **Der Rest ist kein Rechenfehler, sondern ein echter Rückstand.** Der Deckel lag bei
+      0.636, die erzeugten Bilder bei 0.265 — zwischen *bestmöglich* und *erreicht* klafft
+      noch einmal derselbe Abstand. Beides ist wahr, und keines erklärt das andere weg.
+      `auf-21` misst zum ersten Mal auf einer Szene, auf der die Schwelle überhaupt
+      erreichbar ist; erst dort sagt ein Ergebnis etwas über das Bild.
 - [x] **Das Lexikon prüft sich jetzt selbst** — 2026-08-20, `tests/test_lexikon.py`,
       13 Tests. Anlass: **Seed** stand zweimal darin, in zwei Fassungen, in zwei
       Abschnitten. Beim Nachzählen waren es sieben Begriffe mit Doppeleinträgen.

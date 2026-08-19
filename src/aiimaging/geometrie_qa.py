@@ -683,3 +683,121 @@ def geometrie_gate(soll, ist, *, schwelle: float = SCHWELLE_GEOMETRIE, **kw) -> 
     urteil = {"bestanden": bestanden, "schwelle": schwelle, "begruendung": begruendung}
     urteil.update(ergebnis)
     return urteil
+
+
+# ======================================================================================
+# Erreichbarkeit — die Frage VOR dem Rechnen
+# ======================================================================================
+
+#: Gemessene Obergrenzen von ``geom_iou`` je Szenenart und Hintergrundstrategie.
+#:
+#: **Warum diese Tabelle der wichtigste Teil dieses Moduls sein könnte.** Am 20.08.2026
+#: fiel beim Zusammenrechnen der bisherigen Läufe etwas auf, das seit dem 18.08. in den
+#: Zahlen stand und nie jemand ausgesprochen hatte:
+#:
+#:     Auf der Szene **ohne Boden** — der einzigen, auf der wir je gerendert haben — war
+#:     die Schwelle 0.65 **arithmetisch unerreichbar.**
+#:
+#: Der Score ist ``sqrt(|spearman| * geom_iou)``. Bei einer Rangkorrelation von 1.0, dem
+#: bestmöglichen Wert, braucht ``score >= 0.65`` ein ``geom_iou`` von mindestens
+#: **0.4225**. Der gemessene Deckel jener Szene liegt bei 0.256 (``wie_soll``) bzw. 0.406
+#: (``ohne_randberuehrung``). Selbst ein *perfektes* Bild kommt dort auf höchstens 0.634.
+#:
+#: Die Werte stammen aus `auf-20260818-12` und `auf-20260819-15`; sie messen den Deckel
+#: an einem **gerenderten** Bild durch den Tiefenschätzer — also die beste Silhouette, die
+#: diese Kette auf dieser Szene überhaupt hergibt.
+IOU_DECKEL = {
+    ("ohne_boden", "wie_soll"): 0.2556,
+    ("ohne_boden", "ohne_randberuehrung"): 0.4057,
+    ("platte_endlich", "wie_soll"): 0.9666,
+    ("ebene_bis_rand", "wie_soll"): 0.9737,
+    ("ebene_mit_horizont", "wie_soll"): 1.0000,
+}
+
+#: Bestes je gemessenes ``|spearman|`` an einem gerenderten Bild (`auf-20260819-15`).
+#: Es ist nahe an 1.0 — die Tiefen*ordnung* war nie das Problem, die Silhouette schon.
+SPEARMAN_BESTENFALLS = 0.998
+
+
+def noetiges_iou(schwelle: float = SCHWELLE_GEOMETRIE,
+                 spearman: float = SPEARMAN_BESTENFALLS) -> float:
+    """Welches ``geom_iou`` eine Schwelle bei gegebener Rangkorrelation verlangt.
+
+    Reine Umstellung von ``score = sqrt(|rho| * iou)`` nach ``iou``. Der Nutzen liegt
+    nicht in der Formel, sondern darin, sie **vor** dem Rechnen anzuwenden: Eine Schwelle,
+    die mehr Überdeckung verlangt, als die Szene hergibt, ist kein strenges Gate — sie ist
+    gar keines.
+
+    Raises:
+        QaError: Schwelle ausserhalb ``[0, 1]`` oder Rangkorrelation nicht positiv.
+    """
+    if not (0.0 <= schwelle <= 1.0):
+        raise QaError(f"Schwelle muss in [0,1] liegen, war {schwelle}.")
+    if not (0.0 < abs(spearman) <= 1.0):
+        raise QaError(
+            f"|spearman| muss in (0,1] liegen, war {spearman}. Bei 0 wäre der Score "
+            f"immer 0, und die Frage nach dem nötigen iou hätte keine Antwort."
+        )
+    return schwelle ** 2 / abs(spearman)
+
+
+def erreichbarkeit(*, iou_deckel: float, schwelle: float = SCHWELLE_GEOMETRIE,
+                   spearman: float = SPEARMAN_BESTENFALLS, name: str = "diese Szene") -> dict:
+    """Kann eine Szene die Schwelle **überhaupt** erreichen? — vor dem ersten Renderlauf.
+
+    Args:
+        iou_deckel: das beste ``geom_iou``, das diese Szene mit dieser
+            Hintergrundstrategie an einem *gerenderten* Bild erreicht. Aus
+            :data:`IOU_DECKEL` oder selbst gemessen.
+        spearman: das bestenfalls erreichbare ``|spearman|``.
+
+    Returns:
+        ``{erreichbar, hoechster_score, noetiges_iou, luecke, begruendung}``.
+
+    **Wozu das gut ist.** Eine GPU-Stunde, die ein Bild erzeugt, das die Schwelle gar
+    nicht erreichen *kann*, misst nicht das Bild, sondern die Szene. Diese Prüfung kostet
+    nichts und hätte den Unterschied gemerkt, bevor er drei Aufträge gekostet hat.
+    """
+    if not (0.0 <= iou_deckel <= 1.0):
+        raise QaError(f"iou_deckel muss in [0,1] liegen, war {iou_deckel}.")
+    noetig = noetiges_iou(schwelle, spearman)
+    hoechster = math.sqrt(abs(spearman) * iou_deckel)
+    erreichbar = hoechster >= schwelle
+
+    if erreichbar:
+        grund = (
+            f"{name}: Deckel geom_iou {iou_deckel:.4f} bei |spearman| {abs(spearman):.3f} "
+            f"ergibt höchstens {hoechster:.4f} — die Schwelle {schwelle:.2f} ist "
+            f"erreichbar. Ob ein erzeugtes Bild sie erreicht, sagt das NICHT; es sagt "
+            f"nur, dass die Frage sinnvoll ist."
+        )
+    else:
+        grund = (
+            f"{name}: Deckel geom_iou {iou_deckel:.4f} bei |spearman| {abs(spearman):.3f} "
+            f"ergibt höchstens {hoechster:.4f} — die Schwelle {schwelle:.2f} ist auf "
+            f"dieser Szene UNERREICHBAR. Nötig wären {noetig:.4f}, es fehlen "
+            f"{noetig - iou_deckel:.4f}.\n"
+            f"Ein Lauf gegen diese Schwelle misst dann nicht das Bild, sondern die Szene. "
+            f"Ein durchgefallenes Bild belegt hier NICHTS über seine Geometrietreue."
+        )
+    return {
+        "erreichbar": erreichbar,
+        "hoechster_score": hoechster,
+        "noetiges_iou": noetig,
+        "luecke": max(0.0, noetig - iou_deckel),
+        "begruendung": grund,
+    }
+
+
+def erreichbarkeit_fuer(szene: str, strategie: str, **kw) -> dict | None:
+    """:func:`erreichbarkeit` für eine Szenenart aus :data:`IOU_DECKEL`.
+
+    Gibt **``None``** für eine Kombination, die nicht gemessen ist — und **nicht** eine
+    Schätzung aus einer benachbarten Zeile. Ein geratener Deckel wäre genau die Sorte
+    Zahl, gegen die dieses Modul antritt: eine, die eine Frage beantwortet, die sie nicht
+    beantworten kann.
+    """
+    deckel = IOU_DECKEL.get((szene, strategie))
+    if deckel is None:
+        return None
+    return erreichbarkeit(iou_deckel=deckel, name=f"{szene}/{strategie}", **kw)
