@@ -707,6 +707,10 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 - [ ] **Antwort auf das Übergabeblatt** — solange sie fehlt, wird **nichts gebaut, was an
       einer bestimmten Oberfläche hängt**. Verträge, QA und Bildkette tragen in jedem der
       drei Fälle und laufen weiter.
+      *Stand 2026-08-20:* Das Blatt trägt **zwölf** Fragen und ein viertes Kapitel mit
+      drei Befunden auf ihrer Seite — kein Abholer, ein Worker ohne Leerlauf-Tor, und eine
+      Kamerahöhe mit zwei Bezugspunkten. Die dringendste Frage ist nicht mehr, welcher Weg
+      zur Demo führt, sondern **ob sie unseren Abholer nehmen**.
 - [x] **Der Ausführen-Knopf** — beantwortet 2026-08-19 durch einen Volldurchgang als
       Nutzer, und **zweimal berichtigt**. Er tut sehr wohl etwas, und er sagt sehr genau,
       was fehlt — die Meldung war von der Node-Palette *verdeckt*. Eine zweite Meldung
