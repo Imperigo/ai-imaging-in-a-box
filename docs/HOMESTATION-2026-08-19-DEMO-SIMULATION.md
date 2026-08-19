@@ -210,8 +210,14 @@ die laufende App hat ihren eigenen Graphen — die Aussage traf für den falsche
 
 - **Verdrahtung der Knoten.** Ich habe sie gesetzt, nicht verbunden. Ob die Kette mit
   Kanten läuft, ist damit **offen** — der wichtigste nächste Handgriff.
-- **Materialien-Durchgriff** (Schritt 2), **Bereich Publish** (Schritt 8), **Export und
-  Blätter** durchlaufen, **Kosmo selbst** befragt.
+- **Materialien-Durchgriff** (Schritt 2) — bleibt offen, hängt an der Knoten-Verdrahtung.
+- ~~**Bereich Publish** (Schritt 8), **Export und Blätter** durchlaufen, **Kosmo selbst**
+  befragt.~~ **Am Abend des 19.08. nachgeholt**, s.
+  `Architektur-Cosmos/kosmo-orbit/docs/HOMESTATION-2026-08-19-PUBLISH-UND-KOSMO.md`:
+  Der Plansatz läuft end-to-end (A1 → Grundriss mit Nordpfeil und Massstabsleiste →
+  Auto-Pack → PDF, 212 945 Byte), und Kosmo antwortet aus dem echten Modell (3 Wohnungen
+  im EG, 264,0 m², mit selbst genannter Grenze). Neun Befunde, darunter ein blockierender
+  Layout-Fehler am Auto-Pack-Fenster und der erfundene Massstab 1:75.
 - **Warum «Ausführen» schweigt.** Meine Erklärung (fehlende Kanten) ist plausibel und
   ungeprüft.
 
