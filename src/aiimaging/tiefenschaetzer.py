@@ -205,22 +205,47 @@ HG_WIE_SOLL = "wie_soll"
 #: gewinnt auf **beiden** Achsen: höchster treuer Score UND grösster Abstand.
 #:
 #: **Ehrliche Grenze:** Auch damit erreicht das perfekte Bild nur 0.635 und bleibt knapp
-#: unter der Schwelle 0.65. Der Deckel ist gehoben, nicht beseitigt. Und an einer Szene
-#: mit echtem Gelände — wo eine Bodenebene keine Halluzination ist, sondern Geometrie —
-#: ist die Regel ungeprüft.
+#: unter der Schwelle 0.65. Der Deckel ist gehoben, nicht beseitigt.
+#:
+#: **Und der Vorbehalt hat sich bewahrheitet (20.08.2026, `auf-20260819-15`).** Hier stand:
+#: *„an einer Szene mit echtem Gelände ist die Regel ungeprüft".* Sie ist jetzt geprüft,
+#: an drei Szenen mit Boden, und wählt in **allen dreien null Punkte** — sobald ein Boden
+#: da ist, berührt jede Fläche den Rand.
+#:
+#: Die Regel ist damit **kein Vorgabewert mehr**, sondern das Werkzeug für genau einen
+#: Fall: eine freigestellte Szene ohne Grund, in der eine grosse randberührende Fläche
+#: wirklich eine Halluzination ist. Wer sie wählt, soll wissen, was er wählt.
 HG_OHNE_RANDBERUEHRUNG = "ohne_randberuehrung"
 
-#: Vorgabe von :func:`qa_gegen_soll`: :data:`HG_OHNE_RANDBERUEHRUNG`, **wenn die
-#: Bildmasse bekannt sind** — sonst :data:`HG_WIE_SOLL`.
+#: Vorgabe von :func:`qa_gegen_soll`: :data:`HG_WIE_SOLL`.
 #:
-#: Die bessere Regel ist nicht immer *möglich*: Sie beruht auf der Randberührung, und ohne
-#: Breite und Höhe ist nicht entscheidbar, welcher Punkt am Rand liegt. Eine Naht, die nur
-#: eine Zahlenreihe zurückgibt, kann sie nicht bedienen.
+#: **Zurückgenommen am 20.08.2026.** Vom 18. bis zum 20.08. stand hier
+#: :data:`HG_OHNE_RANDBERUEHRUNG`, sobald die Bildmasse bekannt waren. Das war an einer
+#: Szene **ohne Boden** gemessen, und der Docstring jener Regel trug den Vorbehalt
+#: wörtlich: *„an einer Szene mit echtem Gelände ist die Regel ungeprüft".*
 #:
-#: Das ist **keine stille Reparatur**: Welche Regel gegriffen hat, steht in jedem Ergebnis
-#: unter ``hintergrund_strategie``, und der Rückfall trägt eine eigene Warnung. Der
-#: Aufrufer kann beide Regeln jederzeit erzwingen — dann gilt seine Wahl, auch wenn sie
-#: scheitert.
+#: `auf-20260819-15` hat sie geprüft, an vier Szenen. Das Ergebnis ist eindeutig:
+#:
+#: =====================  ==================  ===========================
+#: Szene                  ``wie_soll``        ``ohne_randberuehrung``
+#: =====================  ==================  ===========================
+#: ohne Boden             iou 0.256           iou **0.406** (besser)
+#: Platte, endlich        iou 0.967           **0 Punkte gewählt**
+#: Ebene bis zum Rand     iou 0.974           **0 Punkte gewählt**
+#: Ebene mit Horizont     iou 1.000           **0 Punkte gewählt**
+#: =====================  ==================  ===========================
+#:
+#: **Sobald ein Boden da ist, berührt jede Fläche den Rand.** Die Regel gewann in
+#: `auf-20260818-12`, *weil* die Szene keinen Boden hatte — dort verwarf sie eine
+#: Halluzination. In jeder Szene mit Gelände verwirft sie **richtige Geometrie**, und zwar
+#: restlos: kein einziger Punkt bleibt übrig, ``score`` ist ``None``.
+#:
+#: Ein echtes Gebäude steht auf dem Boden. Die Vorgabe ist damit zurückgenommen; die Regel
+#: bleibt **wählbar** für den Fall, den sie wirklich löst — eine freigestellte Szene.
+#:
+#: *Die Lehre, und sie ist dieselbe wie beim Blender-Takt drei Tage später: Eine Messung
+#: gilt so weit, wie gemessen wurde. Der Vorbehalt stand da, und er war die halbe
+#: Erkenntnis.*
 HG_VORGABE = "vorgabe"
 
 HG_STRATEGIEN = (HG_KEINE, HG_QUANTIL, HG_WIE_SOLL, HG_OHNE_RANDBERUEHRUNG)
@@ -238,14 +263,7 @@ def loese_strategie(strategie: str, *, breite=None, hoehe=None) -> tuple[str, tu
     """
     if strategie != HG_VORGABE:
         return strategie, ()
-    if breite is not None and hoehe is not None:
-        return HG_OHNE_RANDBERUEHRUNG, ()
-    return HG_WIE_SOLL, (
-        f"Bildmasse unbekannt — es gilt {HG_WIE_SOLL!r} statt "
-        f"{HG_OHNE_RANDBERUEHRUNG!r}. Am Geraet gemessen (auf-20260818-12) liegen damit "
-        f"nur 40.7 % der gewaehlten Punkte auf dem Bauwerk statt 99.2 %, und geom_iou "
-        f"deckelt entsprechend tiefer. Wer die Bildmasse kennt, sollte sie mitgeben.",
-    )
+    return HG_WIE_SOLL, ()
 
 #: Anteil des Bildes, den :data:`HG_QUANTIL` ohne eigene Angabe als Hintergrund wertet.
 #:

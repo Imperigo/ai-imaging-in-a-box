@@ -576,32 +576,36 @@ def test_der_bogen_lehnt_die_nc_groessen_ab(bild, name):
         ts.qa_gegen_soll(bild, soll_karte(), schaetzer=name, modell=attrappe([1.0]))
 
 
-def test_ohne_bildmasse_faellt_die_vorgabe_auf_wie_soll_zurueck(bild):
-    """Die bessere Regel ist nicht immer *möglich* — und der Rückfall sagt es.
+def test_die_vorgabe_ist_wie_soll_mit_und_ohne_bildmasse(bild):
+    """**Zurückgenommen am 20.08.2026.**
 
-    ``HG_OHNE_RANDBERUEHRUNG`` beruht auf der Randberührung; ohne Breite und Höhe ist
-    nicht entscheidbar, welcher Punkt am Rand liegt. Eine Naht, die nur eine Zahlenreihe
-    zurückgibt, kann sie nicht bedienen — wie die Attrappe hier.
+    Vom 18. bis zum 20.08. war ``ohne_randberuehrung`` die Vorgabe, sobald die Bildmasse
+    bekannt waren. `auf-20260819-15` hat sie an drei Szenen **mit Boden** gemessen: Sie
+    wählt dort **null Punkte** — sobald ein Boden da ist, berührt jede Fläche den Rand.
 
-    **Das ist keine stille Reparatur:** Welche Regel gegriffen hat, steht im Ergebnis, und
-    der Rückfall trägt eine eigene Warnung mit der gemessenen Zahl.
+    Ein echtes Gebäude steht auf dem Boden. Die Vorgabe ist darum zurück auf ``wie_soll``,
+    und sie hängt nicht mehr davon ab, ob die Bildmasse bekannt sind.
     """
     soll = soll_karte()
-    urteil = ts.qa_gegen_soll(bild, soll, modell=attrappe(disparitaets_karte(soll)))
+    ohne = ts.qa_gegen_soll(bild, soll, modell=attrappe(disparitaets_karte(soll)))
+    mit = ts.qa_gegen_soll(bild, soll,
+                           modell=attrappe(disparitaets_karte(soll), breite=16, hoehe=8))
 
-    assert urteil["hintergrund_strategie"] == ts.HG_WIE_SOLL
-    assert urteil["n_ist"] == urteil["n_soll"] == 64
-    assert any("Bildmasse unbekannt" in w for w in urteil["warnungen"])
-    assert any("40.7" in w for w in urteil["warnungen"])
+    assert ohne["hintergrund_strategie"] == ts.HG_WIE_SOLL
+    assert mit["hintergrund_strategie"] == ts.HG_WIE_SOLL
+    assert ohne["n_ist"] == ohne["n_soll"] == 64
+    assert not [w for w in ohne["warnungen"] if "Bildmasse unbekannt" in w], (
+        "die Warnung gehörte zu einem Rückfall, den es nicht mehr gibt")
 
 
-def test_mit_bildmassen_greift_die_gemessene_regel(bild):
-    """Sobald die Naht Breite und Höhe meldet, gilt die Regel aus `auf-20260818-12`."""
+def test_ohne_randberuehrung_bleibt_waehlbar(bild):
+    """Sie löst genau einen Fall: eine freigestellte Szene ohne Grund. Wer sie wählt,
+    soll sie bekommen — sonst wäre die Vergleichsmessung nicht wiederholbar."""
     soll = soll_karte()
-    urteil = ts.qa_gegen_soll(bild, soll,
-                              modell=attrappe(disparitaets_karte(soll), breite=16, hoehe=8))
+    urteil = ts.qa_gegen_soll(
+        bild, soll, hintergrund_strategie=ts.HG_OHNE_RANDBERUEHRUNG,
+        modell=attrappe(disparitaets_karte(soll), breite=16, hoehe=8))
     assert urteil["hintergrund_strategie"] == ts.HG_OHNE_RANDBERUEHRUNG
-    assert not any("Bildmasse unbekannt" in w for w in urteil["warnungen"])
 
 
 def test_die_wahl_des_aufrufers_wird_nicht_ueberstimmt(bild):

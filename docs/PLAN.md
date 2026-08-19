@@ -559,13 +559,31 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 - [ ] **Variantenreihen** — wir erzeugen ein Bild je Aufruf. Der alte Bestand fährt fünf
       Sampler mit `seed = basis + nummer` und kennt ein `locked_seed` für kontrollierte
       Reihen. Bei 1.4 s je Bild (`auf-13`) ist eine Reihe zum ersten Mal bezahlbar.
-- [ ] **Hat die Szene ohne Boden den `geom_iou`-Deckel mitverursacht?** —
-      `auf-20260819-15`. Auf jedem der zwölf Bilder **schwebt der Baukörper in Grau**. In
-      `auf-10` wurde gemessen, dass der Tiefenschätzer genau dort eine Bodenebene
-      hineinlegt. *Wir haben ihm ein Bild ohne Boden gegeben und uns gewundert, dass er
-      einen erfindet.* Ob ein echter Boden das ändert, ist ungemessen — und ein Boden
-      reicht bis zum Horizont und verschiebt über die Normalisierung jeden Grauwert.
-      **Nicht eingebaut, sondern beauftragt** — derselbe Grund wie bei `groesste_flaeche`.
+- [x] **Hat die Szene ohne Boden den `geom_iou`-Deckel verursacht? — JA, und die
+      gestrige Vorgabe ist damit unbrauchbar.** `auf-20260819-15`, vier Szenen:
+
+      | Szene | `wie_soll` | `ohne_randberuehrung` |
+      |---|---|---|
+      | ohne Boden | iou 0.256 | iou **0.406** |
+      | Platte, endlich | iou 0.967 | **0 Punkte** |
+      | Ebene bis Rand | iou 0.974 | **0 Punkte** |
+      | Ebene mit Horizont | iou 1.000 | **0 Punkte** |
+
+      **Sobald ein Boden da ist, berührt jede Fläche den Rand.** `ohne_randberuehrung`
+      gewann in `auf-12`, *weil* die Szene keinen Boden hatte — dort verwarf sie eine
+      Halluzination. Mit Gelände verwirft sie **richtige Geometrie**, und zwar restlos.
+      Die Vorgabe ist auf `wie_soll` zurückgenommen; die Regel bleibt **wählbar** für den
+      einen Fall, den sie löst — eine freigestellte Szene.
+      *Der Vorbehalt stand im Docstring jener Regel, wörtlich. Er war die halbe
+      Erkenntnis — dieselbe Lehre wie beim Blender-Takt am selben Tag.*
+- [x] **Eine randlose Silhouette macht `geom_iou` bedeutungslos** — Nebenbefund derselben
+      Messung, und niemand hatte danach gefragt. Bei *Ebene mit Horizont* war `geom_iou`
+      **exakt 1.0000**, weil `n_soll` gleich der Bildpunktzahl war: 262 144 von 262 144.
+      Es gab keinen Hintergrund mehr. Eine Silhouette, die das ganze Bild ist, überdeckt
+      jede andere, die das ganze Bild ist — der Wert sieht nach perfekt getroffener Kontur
+      aus und misst nichts; der Score ruht dort allein auf `spearman`.
+      `geometrie_score` **meldet** das jetzt, verwirft es aber nicht: Welche der beiden
+      Karten randlos ist, weiss der Aufrufer besser als die Funktion.
 - [ ] **Format oder Vordergrund? — Owner-Entscheid.** Ein 40 m breiter, 15 m hoher Bau
       kann ein Quadrat nicht füllen. Die Referenzbilder des Hausstils sind in ihren
       Quadraten nicht leer, sondern voller Wiese, Bäume und Menschen; unsere Szene hat
@@ -699,9 +717,23 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       dem Modell gerechneten Kameras. **Wort für Wort das Verzeichnis, das `bruecke.py`
       liest** — am selben Tag gebaut, ohne dass eines vom anderen wusste. Ordnername,
       Kennung und Schema **nachgeprüft**, nicht angenommen.
-- [ ] **Warum wird der Auftrag nicht abgeholt?** Zustand blieb „wartet auf GPU-Leerlauf",
-      auch bei freier Karte (13 W, 1 GB). Träge Erkennung oder zu enge Schranke —
-      **ungemessen**, `auf-20260819-17` fragt danach.
+- [x] **Warum wird der Auftrag nicht abgeholt? — ES LÄUFT KEIN ABHOLER.**
+      `auf-20260819-17`: kein `blender_worker`, kein ComfyUI-Worker, kein systemd-Dienst;
+      nur die Bridge selbst auf 8600. **Keine Schranke war im Weg** — 0 % Auslastung gegen
+      eine Schwelle von 10 %. Der Auftrag lag seit 09:04 unberührt.
+      **Damit ist die Lücke, in die unsere Lane gehört, nicht mehr argumentiert, sondern
+      belegt** — und `abholer.py` vom selben Tag ist genau das fehlende Stück.
+- [ ] **Der vorhandene `blender_worker` hat GAR KEIN Leerlauf-Tor** — Nebenbefund
+      derselben Messung, und der unangenehmste. Wer ihn startet, umgeht `idle_window_only`
+      **unbemerkt**: Der Auftrag trägt die Auflage, und niemand liest sie. Genau dagegen
+      steht `abholer._karte_frei` fail-closed. **Das gehört der Gegenseite gemeldet**, es
+      ist ihre Komponente und ihre Grafikkarte.
+- [ ] **Die Kamerahöhe ist zweimal fest verdrahtet — mit zwei verschiedenen Bezugspunkten**
+      (Hüllbox-Minimum gegen Geschosshöhe), beide auf 1600 mm. Wir und das Pflichtenheft
+      rechnen mit 1700 mm **über Terrain**. Zwei Zahlen und zwei Bezugspunkte für dieselbe
+      Grösse sind ein stiller Massstabsfehler — genau die Fehlerart, die uns bei der
+      Augenhöhe schon drei Fehler gekostet hat, die kein Test fand. Steht als Frage 7 im
+      Übergabeblatt.
 - [x] **Der Abholer gebaut** — 2026-08-20, `abholer.py`, 28 Tests. **Kein neuer Baustein,
       sondern der Ablauf zwischen den vorhandenen:** `bruecke.py` hatte seit dem 19.08.
       alle Teile — `offene_auftraege`, `lies_auftrag`, `setze_status`,

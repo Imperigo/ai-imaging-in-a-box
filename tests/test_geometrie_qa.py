@@ -653,3 +653,44 @@ def test_modul_importiert_nur_stdlib():
             module.add(knoten.module.split(".")[0])
     fremd = sorted(m for m in module if m not in sys.stdlib_module_names and m != "aiimaging")
     assert not fremd, f"geometrie_qa.py importiert {fremd} — die Metrik ist reine Mathematik"
+
+
+# ======================================================================================
+# Randlose Silhouette — die Zahl, die gut aussieht und leer ist
+# ======================================================================================
+
+def test_eine_silhouette_ueber_das_ganze_bild_wird_gemeldet():
+    """`auf-20260819-15`, Szene mit Bodenebene bis zum Horizont: geom_iou exakt 1.0000,
+    weil n_soll gleich der Bildpunktzahl war. Es gab keinen Hintergrund mehr.
+
+    Eine Silhouette, die das ganze Bild ist, überdeckt jede andere, die das ganze Bild
+    ist. Der Wert 1.0 misst dort nichts.
+    """
+    soll = [1.0, 2.0, 3.0, 4.0]
+    ist = [1.0, 2.0, 3.0, 4.0]
+    urteil = geometrie_score(soll, ist)
+    assert urteil["geom_iou"] == 1.0
+    assert urteil["n_soll"] == urteil["n_ist"] == 4
+    warnung = [w for w in urteil["warnungen"] if "Randlose Silhouette" in w]
+    assert warnung, urteil["warnungen"]
+    assert "KEIN Beleg" in warnung[0]
+    assert "auf-20260819-15" in warnung[0], "die Messung gehört in die Meldung"
+
+
+def test_mit_hintergrund_entsteht_die_warnung_nicht():
+    soll = [1.0, 2.0, float("inf"), float("inf")]
+    ist = [1.0, 2.0, float("inf"), float("inf")]
+    urteil = geometrie_score(soll, ist)
+    assert urteil["geom_iou"] == 1.0
+    assert not [w for w in urteil["warnungen"] if "Randlose Silhouette" in w], (
+        "hier ist 1.0 echt verdient — die Hälfte des Bildes ist Hintergrund")
+
+
+def test_auch_eine_einseitig_randlose_karte_wird_gemeldet():
+    """Wenn nur die Ist-Karte randlos ist, ist der Vergleich ebenso wenig aussagekräftig
+    — und der Text nennt, welche der beiden es war."""
+    soll = [1.0, 2.0, float("inf"), float("inf")]
+    ist = [1.0, 2.0, 3.0, 4.0]
+    urteil = geometrie_score(soll, ist)
+    warnung = [w for w in urteil["warnungen"] if "Randlose Silhouette" in w]
+    assert warnung and "Ist (" in warnung[0] and "Soll (" not in warnung[0]

@@ -567,6 +567,32 @@ def geometrie_score(soll: Sequence[float], ist: Sequence[float],
             f"hinten sind vertauscht. Diese beiden Fälle kann die Metrik nicht trennen."
         )
 
+    if n_soll == len(s) or n_ist == len(i):
+        # Am 19.08.2026 an einer Szene mit Bodenebene bis zum Horizont gemessen
+        # (`auf-20260819-15`): geom_iou war **exakt 1.0000**, weil n_soll gleich der
+        # Bildpunktzahl war — 262 144 von 262 144. Es gab keinen Hintergrund mehr.
+        #
+        # Eine Silhouette, die das ganze Bild ist, überdeckt jede andere Silhouette, die
+        # das ganze Bild ist. Der Wert 1.0 sieht dort nach perfekt getroffener Kontur aus
+        # und misst in Wahrheit gar nichts — der Score ruht dann allein auf `spearman`.
+        #
+        # Das ist genau die Sorte Zahl, gegen die dieses Projekt antritt: eine, die gut
+        # aussieht und leer ist. Sie wird darum gemeldet und **nicht** verworfen — welche
+        # der beiden Karten randlos ist, weiss der Aufrufer besser als diese Funktion.
+        welche = []
+        if n_soll == len(s):
+            welche.append(f"Soll ({n_soll} von {len(s)})")
+        if n_ist == len(i):
+            welche.append(f"Ist ({n_ist} von {len(i)})")
+        warnungen.append(
+            f"Randlose Silhouette: {' und '.join(welche)} umfasst ALLE Bildpunkte — es "
+            f"gibt keinen Hintergrund. 'geom_iou' misst dann nichts mehr, denn eine "
+            f"Silhouette, die das ganze Bild ist, überdeckt jede andere, die das ganze "
+            f"Bild ist. Ein Wert nahe 1.0 ist hier KEIN Beleg für eine getroffene Kontur; "
+            f"der Score ruht allein auf der Rangkorrelation. Gemessen an einer Szene mit "
+            f"Bodenebene bis zum Horizont (auf-20260819-15): geom_iou exakt 1.0000."
+        )
+
     if score is not None and abs(rho) >= DIAGNOSE_RHO_HOCH and geom_iou <= DIAGNOSE_IOU_NIEDRIG:
         warnungen.append(
             f"Innen stimmig, aussen daneben: Die Tiefenordnung stimmt im Überlappungs"

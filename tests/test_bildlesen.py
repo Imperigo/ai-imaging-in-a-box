@@ -911,7 +911,12 @@ def test_die_metrik_laeuft_auf_echten_dateien_statt_auf_listen(tmp_path):
     assert ergebnis["spearman"] == 1.0
     assert ergebnis["geom_iou"] == 1.0
     assert ergebnis["n_gemeinsam"] == 64
-    assert ergebnis["warnungen"] == []
+    # Genau eine Warnung, und sie ist richtig: Diese synthetische Karte hat KEINEN
+    # Hintergrund — jeder der 64 Punkte trägt Geometrie. `geom_iou` von 1.0 ist hier also
+    # trivial wahr und belegt keine getroffene Kontur. Seit dem 20.08.2026 sagt die
+    # Metrik das (auf-20260819-15).
+    assert [w for w in ergebnis["warnungen"] if "Randlose Silhouette" in w]
+    assert len(ergebnis["warnungen"]) == 1, ergebnis["warnungen"]
 
 
 def test_png_und_exr_derselben_szene_stimmen_bis_auf_die_quantisierung_ueberein(tmp_path):
