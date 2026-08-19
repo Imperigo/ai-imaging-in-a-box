@@ -1,0 +1,66 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260819-17",
+  "status": "ok",
+  "beendet": "2026-08-19T12:00:00Z",
+  "dauer_s": null,
+  "messwerte": {
+    "1_wer_holt_ab": {
+      "antwort": "NIEMAND",
+      "laufende_bridge_prozesse": 1,
+      "kommandozeile": "kosmo_bridge/main.py --host 0.0.0.0 --port 8600",
+      "blender_worker_laeuft": false,
+      "comfyui_worker_laeuft": false,
+      "systemd_dienste_mit_worker": "keiner aktiv"
+    },
+    "2_schranken_im_code": {
+      "blender_worker_py": {
+        "idle_gate": "KEINES — 0 Treffer auf nvidia-smi und idle_window_only",
+        "abfrageintervall_s": 2.0,
+        "quelle": "--intervall, Vorgabe aus der Aufrufzeile im Docstring"
+      },
+      "kosmo_worker_comfyui_py": {
+        "groesse": "GPU-AUSLASTUNG in Prozent, NICHT Watt und NICHT Speicher",
+        "schwelle_prozent": 10.0,
+        "verhalten_wenn_nicht_messbar": "lehnt ab — «GPU-Auslastung nicht messbar … sicherheitshalber nicht»",
+        "zusaetzlich": "Zeitfenster (§GPU-Leerlauf-Fenster)"
+      }
+    },
+    "3_was_die_karte_sagt": {
+      "auslastung_prozent": 0,
+      "leistung_w": 16.0,
+      "speicher_belegt_mib": 1072,
+      "speicher_gesamt_mib": 32607,
+      "rechenprozesse": "einer: sunshine, 508 MiB",
+      "urteil": "0 % liegt WEIT unter der 10-%-Schranke — das Tor wuerde durchlassen"
+    },
+    "4_protokoll": {
+      "journal": "keine Eintraege",
+      "job_json_veraendert_seit": "09:04 unveraendert",
+      "status": "queued",
+      "worker": null,
+      "progress": null,
+      "urteil": "Niemand hat den Auftrag in zweieinhalb Stunden angefasst"
+    },
+    "kamerahoehe": {
+      "wert_im_code": "1600 mm (1.6 m), fest verdrahtet, zweimal",
+      "datei": "packages/kosmo-kernel/src/derive/kamera.ts",
+      "eingang": "b.minZ + 1600 — relativ zum TIEFSTEN PUNKT der Huellbox",
+      "innenraum": "storeyElevation + 1600 — relativ zur GESCHOSSHOEHE",
+      "uebersicht": "b.minZ + max(hoehe*1.8, hoehe+6000)",
+      "minZ_herkunft": "kleinster z-Wert ueber ALLE Mesh-Punkte"
+    }
+  },
+  "urteil": {
+    "die_antwort_in_einem_satz": "ES LAEUFT KEIN ABHOLER. Die Bridge fuehrt nur main.py auf Port 8600; weder blender_worker.py noch kosmo_worker_comfyui.py laufen, und kein systemd-Dienst haelt einen bereit. Die Luecke ist damit BEWIESEN, nicht vermutet.",
+    "es_ist_keine_schranke": "Das laesst sich ausschliessen, und zwar mit Zahlen: Die Karte meldet 0 % Auslastung bei 16 W und 1072 von 32607 MiB. Die Schranke des einzigen Workers mit Leerlauf-Tor liegt bei 10 % Auslastung. Das Tor wuerde also durchlassen — es wird nur nie gefragt.\nNebenbei korrigiert das meine eigene Vermutung von heute frueh: Ich hatte 13 W und 1 GB gemessen und daraus geschlossen, die Karte gelte als frei. Die Groesse, auf die es ankommt, ist AUSLASTUNG IN PROZENT — Watt und Speicher stehen nirgends im Code.",
+    "und_es_ist_kein_stiller_fehlschlag": "Der Auftragsordner ist seit 09:04 unveraendert: status queued, worker null, progress null, keine Ergebnisdatei, kein Journal-Eintrag. Es hat nicht jemand angefangen und aufgegeben — es hat nie jemand hingesehen.",
+    "was_das_fuer_eure_lane_heisst": "Nach eurer eigenen Unterscheidung: Es ist eine KOMPONENTE, keine Zeile. Dort holt niemand ab, und ihr habt den Abholer.\nZwei Dinge dazu, damit die Entscheidung auf Zahlen steht: Der vorhandene blender_worker.py hat GAR KEIN Leerlauf-Tor — er wuerde alle 2 Sekunden abfragen und sofort loslegen, unabhaengig davon, was auf der Karte liegt. Das Tor steckt nur im ComfyUI-Worker. Wer den Blender-Worker startet, umgeht die Auflage idle_window_only, ohne dass es jemand merkt.",
+    "die_kamerahoehe_ist_der_zweite_fund": "Die Zahl steht im Code, und sie ist 1600 mm — nicht 1700. Sie ist zweimal fest verdrahtet in derive/kamera.ts.\nSCHWERER WIEGT DER BEZUG, und er ist NICHT EINHEITLICH:\n  Eingang    b.minZ + 1600      — ueber dem TIEFSTEN PUNKT der Huellbox\n  Innenraum  storeyElevation + 1600 — ueber der GESCHOSSHOEHE\nDieselbe «Augenhoehe» wird also aus zwei verschiedenen Groessen gerechnet. Sie fallen nur zusammen, wenn der tiefste Punkt des Modells genau die Erdgeschossebene ist. Bei unserem Testbau liegt minZ bei -0.2 m — daher die gemessenen 1.30 m statt 1.60 m. Weder absolut noch ueber Gelaende: ueber dem tiefsten Mesh-Punkt, was immer der ist (Fundament, Terrainnetz, Deckenunterseite).\nDas ist genau die Verwechslung, die euch drei Fehler gekostet hat, nur an einer vierten Stelle.",
+    "nicht_getan": "Nichts gestartet, nichts geaendert, nichts neu konfiguriert — auch nicht, als die Ursache offensichtlich wurde. Nur nachgesehen."
+  },
+  "umgebung": {
+    "python": "3.14.4"
+  },
+  "fehler": null
+}
