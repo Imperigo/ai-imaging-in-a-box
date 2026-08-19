@@ -17,8 +17,8 @@ eine Oberfläche, inklusive Knoten-Graph mit typisierten Anschlüssen, Auto-Kame
 Stimmung, «Aufs Plakat» und einem Render-Knoten, dessen Eingänge `Geometrie-Treue` und
 `Samples` heissen — der Kern der Vertiefungsarbeit, sichtbar verdrahtbar.
 
-**Der letzte Knopf löst nichts aus.** «Ausführen» meldet weiter «bereit», ohne Wirkung und
-ohne Begründung.
+**Die Kette laeuft bis in die Bridge.** Ein Render-Auftrag liegt dort mit echter Geometrie,
+drei gerechneten Kameras und Freigabe-Token — abgeholt wird er nicht.
 
 **Und der Entwurfsteil darunter trägt** — 81 Werkzeuge, ein Beispielprojekt mit echtem
 Grundriss, eine Einrichtung, die live misst statt zu behaupten.
@@ -61,22 +61,67 @@ Regler, um den sich die Vertiefungsarbeit dreht — und er ist hier schon vorges
 Demoplan (Stufe 1) hält Kameras für den grössten Mangel; die Oberfläche hat einen
 Auto-Kamera-Knoten mit drei benannten Standpunkten.
 
-## 3 · Wo es aufhört
+## 3 · Wo es aufhört — **nachgetragen: es hört später auf als gedacht**
 
-Vier Knoten gesetzt (Modell, Auto-Kamera, Prompt, Render), dann «Render senden» →
-ein Panel erscheint:
+> Die vorige Fassung meldete hier: «Ausführen tut nichts und sagt nicht warum». **Auch das
+> war falsch.** Es sagt sehr genau, was fehlt — die Meldung war nur von der Node-Palette
+> verdeckt. Nach dem Schliessen stand im Prompt-Knoten:
+> *«kein Prompt — verbinde Stimmung/Stil oder fülle das Formular»*.
 
-> **Render 1** · bereit · Als Strichzeichnung (Line-Art) · **[Ausführen]**
+**Der Durchgang, der wirklich zählt.** Vier Knoten gesetzt, dann:
 
-Gedrückt — über das DOM, mit echten Mauskoordinaten, und nach Betätigen des Schalters
-daneben. **Dreimal keine Zustandsänderung.** Kein Fortschritt, kein Fehler, keine
-Begründung. Der Zustand bleibt «bereit».
+1. **Prompt gebaut.** Die Fassaden-Auswahl bietet echte Optionen — und die letzte ist
+   **aus dem Modell gerechnet**: «regelmässiges Fassadenraster 2.5 × 3.5 m, Fensteranteil
+   ~39 %». Gewählt «Sichtbeton-Fassade», dazu Freitext. Ergebnis im Knoten:
+   *«Sichtbeton-Fassade, Sichtbeton, bedeckter Himmel, ruhige Stimmung»*.
+   **Vorbehalt:** Der Freitext allein zählt nicht als Prompt — er ist ein «Zusatz». Die
+   Meldung «fülle das Formular» blieb stehen, obwohl ein Feld gefüllt war.
+2. **Verdrahtet mit echten Mausgesten.** `Modell.Szene → Render.Szene`,
+   `Prompt → Render.Prompt`, `Auto-Kamera → Render.Kamera-Standpunkte`. Die Kanten
+   erscheinen sichtbar. Vorher blieb der Zustand «bereit» — **auch bei unverdrahteten
+   Knoten**, das ist der eine echte Mangel an dieser Stelle.
+3. **Ausgeführt → «fehler»**, mit einer sehr guten Begründung:
+   > «Die Bridge ANTWORTET (Health-Probe erfolgreich) — der Render-Ruf wurde trotzdem
+   > abgewiesen. Wahrscheinlich fehlt der Bridge-Token in den Einstellungen …»
 
-Die wahrscheinliche Ursache ist sichtbar und **nicht gemessen**: Die Knoten sind gesetzt,
-aber **nicht verdrahtet** — die Eingänge des Render-Knotens hängen an nichts. Dass das
-Panel trotzdem «bereit» meldet, ist der eigentliche Befund: **Ein Zustand, der Bereitschaft
-behauptet, ohne sie zu prüfen, und ein Knopf, der schweigt.** Wer hier steht, weiss nicht,
-ob er etwas falsch gemacht hat oder ob die Funktion fehlt.
+   Sie trennt **Erreichbarkeit von Berechtigung** und nennt den nächsten Handgriff.
+   Gegengeprüft: `/health` → 200, geschützte Route → 401. Die Meldung stimmt aufs Wort.
+4. **Token in den Einstellungen nachgetragen** (48 Zeichen, aus der Umgebung des
+   Bridge-Dienstes) → erneut ausgeführt → **«Abbrechen» erscheint, Zustand «AUF
+   GPU-LEERLAUF»**. Der Auftrag ist eingereiht und wartet, dass die Karte frei wird.
+
+### Der Auftrag liegt in der Bridge — mit allem, was dazugehört
+
+```
+/tmp/kosmo-jobs/vis-1787123048-098c6e/
+  job.json            status queued · approval_token CONFIRMED_RENDER_… ·
+                      idle_window_only true · engine cycles · style lineart
+  model.glb           110 KB — die echte Geometrie, exportiert und übertragen
+  render-scene.json   schema kosmovis.render-scene/v1
+```
+
+**Drei Kameras, aus dem Modell gerechnet:**
+
+| Name | Höhe |
+|---|---|
+| Eingang | 1.30 m |
+| Übersicht | 38.04 m |
+| Innenraum | 1.60 m |
+
+**Damit ist die Kette vollständig belegt:** Oberfläche → Graph → Knoten → Kanten → Prompt
+→ Geometrie-Export → Kamerasetzung → Auftrag in der Bridge, mit Freigabe-Token und
+eingehaltener Leerlauf-Auflage.
+
+### Die zwei Stellen, an denen es dann doch stehen bleibt
+
+**Der Auftrag wird nicht abgeholt.** Ich habe die Karte freigemacht (Ollama entladen,
+13 W, 1 GB belegt) — der Zustand blieb «wartet auf GPU-Leerlauf», auch nach einer Minute.
+Entweder pollt die Erkennung träge, oder ihre Schranke ist enger als der tatsächliche
+Leerlauf. **Ungemessen**, welches von beidem.
+
+**Die Augenhöhe stimmt nicht mit dem Pflichtenheft.** Es verlangt 1,70 m; die Kameras
+stehen auf 1,30 m (Eingang) und 1,60 m (Innenraum). Kein Fehler der Kette, aber ein
+Zahlenwert, der auseinanderläuft.
 
 ## 4 · Was darunter trägt
 
