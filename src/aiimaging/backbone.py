@@ -164,6 +164,16 @@ class Backbone:
     controlnet_lizenz: str | None = None
     controlnet_lizenz_quelle: str = QUELLE_UNGEPRUEFT
 
+    #: Ordnername der ControlNet-Gewichte **neben** der Modellwurzel, wenn sie dort
+    #: liegen. ``None`` heisst: kein zweites Verzeichnis, das ControlNet steckt in der
+    #: Basis (oder es gibt keines).
+    #:
+    #: **Warum das ein eigenes Feld ist und nicht aus ``controlnet_id`` abgeleitet wird:**
+    #: Der Ordner auf der Platte heisst ``z-image-controlnet-union``, die Repo-Kennung
+    #: ``alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union``. Aus dem einen folgt das andere
+    #: nicht. Eine Ableitung wäre eine Vermutung, und sie schlüge erst beim Laden fehl.
+    controlnet_ordner: str | None = None
+
     #: Welche Tiefenkonvention das ControlNet dieses Modells **erwartet**.
     #:
     #: Einer aus :data:`TIEFENPOLARITAETEN`. Unsere ``tiefe_norm.png`` ist
@@ -259,7 +269,14 @@ _eintrag(Backbone(
     lizenz="Apache-2.0",
     kommerziell_nutzbar=True,
     konditionierung=KOND_DEPTH_CONTROLNET,
-    vram_gb=_vram_schaetzung(6.0),
+    # GEMESSEN, nicht geschätzt (`auf-20260818-13`, HomeStation, zweimal bestätigt in
+    # `auf-20260820-21` und `-22`): Basis + ControlNet-Union in bfloat16 belegen
+    # **23 391 MiB** Spitze — transformer 11.46, text_encoder 7.49, controlnet 4.24,
+    # vae 0.16 GiB. Die Schätzung aus der Parameterzahl lag bei 14.4 und zählte das
+    # ControlNet nicht mit; wir laden es aber immer mit, sonst gibt es keine
+    # Konditionierung. Der Docstring von `_vram_schaetzung` verlangt genau diesen
+    # Austausch: «wer eine gemessene Zahl hat, trägt sie an die Stelle der Schätzung ein».
+    vram_gb=23.4,
     dateien=_DIFFUSERS_DATEIEN,
     # Geprüft 2026-08-18 an der Modellkarte selbst: Front-Matter "license: apache-2.0".
     # https://huggingface.co/Tongyi-MAI/Z-Image-Turbo — Repo offen, nicht gated.
@@ -279,6 +296,7 @@ _eintrag(Backbone(
     # ControlNet-Stärke rund das Doppelte. Das ControlNet erwartet nah = dunkel.
     tiefen_polaritaet=POL_NAH_DUNKEL,
     controlnet_id="alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union",
+    controlnet_ordner="z-image-controlnet-union",
     controlnet_lizenz="Apache-2.0",
     # Front-Matter "license: apache-2.0"; das Ursprungsprojekt VideoX-Fun trägt eine
     # Apache-2.0-LICENSE im Volltext. Geprüft 2026-08-18.

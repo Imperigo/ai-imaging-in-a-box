@@ -421,9 +421,75 @@ def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None):
             f"ihn nicht. Für Tests und Trockenläufe 'modell=' oder '_lader=' übergeben."
         ) from fehler
 
-    pipeline = DiffusionPipeline.from_pretrained(str(wurzel), torch_dtype=torch.bfloat16)
-    _lege_auf_geraet(pipeline, wurzel, torch)
-    return _pipeline_adapter(pipeline, eintrag, torch, schrittzaehler=schrittzaehler)
+    if eintrag.konditionierung == KOND_DEPTH_CONTROLNET and eintrag.controlnet_id:
+        pipeline, weg = _lade_mit_controlnet(eintrag, wurzel, torch)
+    else:
+        pipeline = DiffusionPipeline.from_pretrained(str(wurzel), torch_dtype=torch.bfloat16)
+        weg = None
+
+    erwartet = None
+    if eintrag.vram_gb:
+        # Die Registry trägt für dieses Backbone eine GEMESSENE Zahl; die Platte trägt
+        # eine irreführende (s. `_lege_auf_geraet`). Die grösste Einzelkomponente wird
+        # als Hälfte der Summe angesetzt — grob, aber auf der sicheren Seite: sie ist
+        # nie grösser, und ein zu grosser Wert wählt höchstens den langsameren Weg.
+        summe = int(eintrag.vram_gb * 2**30)
+        erwartet = (summe, summe // 2)
+    geraet = _lege_auf_geraet(pipeline, wurzel, torch, erwartet=erwartet)
+
+    modell = _pipeline_adapter(pipeline, eintrag, torch, schrittzaehler=schrittzaehler)
+    modell.geraet = geraet
+    if weg:
+        modell.ladeweg = weg
+    return modell
+
+
+def _lade_mit_controlnet(eintrag, wurzel, torch):
+    """Basis **plus** ControlNet — der Ladeweg, ohne den es keine Konditionierung gibt.
+
+    **Der Befund, aus dem das entstand (Demolauf 2, 19.08.2026):** Bis hierher rief
+    :func:`lade_modell` schlicht ``DiffusionPipeline.from_pretrained`` und bekam für
+    ``z-image-turbo`` eine blanke ``ZImagePipeline`` — reines Text-zu-Bild, **ohne
+    Steuereingang**. Der Adapter reichte die Tiefenkarte darum als ``image`` durch, und
+    auch das kennt sie nicht: ``TypeError: got an unexpected keyword argument 'image'``.
+
+    Bitter daran ist nicht der Fehler, sondern was er über die Messungen sagt: Jede Zahl
+    dieses Projekts zu ``z-image-turbo`` — `auf-13`, `auf-21`, `auf-22` — entstand über
+    eine **von Hand** gebaute ``ZImageControlNetPipeline`` in einem Messskript. Der Weg,
+    den die Anwendung geht, hat diese Pipeline nie bekommen. Die Messungen bleiben
+    gültig; sie haben einen Pfad gemessen, den niemand ausser dem Messenden benutzt.
+
+    **Warum ``from_single_file``:** Das ControlNet-Repo liefert **kein**
+    diffusers-Verzeichnis; ``from_pretrained`` bricht dort mit *«Error no file named
+    config.json»* ab (`auf-20260818-13`). Die Einzeldatei ist nicht der bequemere, sondern
+    der einzige Weg.
+    """
+    # Die zwei Prüfungen stehen VOR dem Import: Ein fehlender Ordner ist kein Grund,
+    # erst 20 GB Bibliothekscode zu laden — und so bleiben sie ohne GPU-Stack prüfbar,
+    # dieselbe Trennung wie in `lade_modell` selbst.
+    if not eintrag.controlnet_ordner:
+        raise RenderError(
+            f"Backbone {eintrag.name!r} nennt ein ControlNet ({eintrag.controlnet_id!r}), "
+            f"aber keinen Ordner, in dem seine Gewichte liegen. Ohne 'controlnet_ordner' "
+            f"lässt sich der Ort nicht erraten — die Repo-Kennung ist kein Pfad."
+        )
+    ordner = Path(wurzel).parent / eintrag.controlnet_ordner
+    dateien = sorted(ordner.glob("*.safetensors")) if ordner.is_dir() else []
+    if not dateien:
+        raise RenderError(
+            f"ControlNet-Gewichte für {eintrag.name!r} nicht gefunden: {str(ordner)!r} "
+            f"(Verzeichnis existiert: {ordner.is_dir()}). Erwartet wird dort eine "
+            f"'.safetensors'-Datei. Ohne sie gibt es keine Konditionierung, und ein Lauf "
+            f"ohne sie wäre genau die erfundene Kubatur, gegen die dieses Projekt antritt."
+        )
+
+    from diffusers import ZImageControlNetModel, ZImageControlNetPipeline
+
+    controlnet = ZImageControlNetModel.from_single_file(str(dateien[0]),
+                                                       torch_dtype=torch.bfloat16)
+    pipeline = ZImageControlNetPipeline.from_pretrained(str(wurzel), controlnet=controlnet,
+                                                       torch_dtype=torch.bfloat16)
+    return pipeline, f"ZImageControlNetPipeline + from_single_file({dateien[0].name})"
 
 
 #: Vielfaches der Gewichtsgrösse, das frei sein muss, damit das ganze Modell auf der Karte
@@ -461,8 +527,17 @@ def _gewichte_byte(wurzel) -> tuple[int, int]:
         return 0, 0
 
 
-def _lege_auf_geraet(pipeline, wurzel, torch) -> str:
+def _lege_auf_geraet(pipeline, wurzel, torch, *, erwartet=None) -> str:
     """Modell auf die Karte legen — ganz, komponentenweise, schichtweise, oder gar nicht.
+
+    ``erwartet`` ist ``(summe_byte, groesster_byte)`` und **schlägt die Plattengrösse**.
+
+    **Warum es das gibt (Demolauf 2, 19.08.2026):** Die Plattengrösse ist keine
+    Speichergrösse. ``z-image-turbo`` liegt mit einem **fp32**-Transformer auf der Platte —
+    23 GB — und wiegt in bfloat16 11,46 GiB. Wer die Datei misst, kommt auf 38,6 GiB,
+    entscheidet sich gegen die Karte und lagert aus, obwohl 23,4 GiB bequem hineinpassen.
+    Genau das ist passiert, und die Auslagerung scheiterte danach an einem Geräte-
+    konflikt. Eine gemessene Zahl aus der Registry ist hier richtiger als jede Datei.
 
     Entschieden wird an dem, was die Karte **jetzt** frei hat, nicht an ihrem Namen und
     nicht an einer Fassungsnummer: ``torch.cuda.mem_get_info`` fragt den Treiber. Dieselbe
@@ -491,7 +566,7 @@ def _lege_auf_geraet(pipeline, wurzel, torch) -> str:
         return "cpu"
 
     frei, _gesamt = torch.cuda.mem_get_info()
-    summe, groesster = _gewichte_byte(wurzel)
+    summe, groesster = _gewichte_byte(wurzel) if erwartet is None else erwartet
 
     if not summe:                                  # nichts messbar: wie bisher verfahren
         pipeline.to("cuda")

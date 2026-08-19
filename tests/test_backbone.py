@@ -427,10 +427,28 @@ def test_unbrauchbare_vram_grenze_ist_ein_fehler(grenze):
 
 
 def test_vram_grenze_filtert_und_ist_nicht_vakuos():
-    """Die Grenze schneidet die grossen Modelle weg — und lässt die kleinen stehen."""
+    """Die Grenze schneidet die grossen Modelle weg — und lässt die kleinen stehen.
+
+    **Berichtigt am 19.08.2026 durch eine Messung.** Hier stand: *«16 GB sollte für den
+    6B-Vorschaupfad reichen»*, und der Test verlangte, dass
+    :data:`VORSCHAU_BACKBONE` in der 16-GB-Auswahl auftaucht. Das war eine Folgerung aus
+    der Parameterzahl (6 B → 14,4 GB geschätzt) — und sie ist falsch.
+
+    Am Gerät gemessen (`auf-20260818-13`, bestätigt in `auf-20260820-21` und `-22`)
+    belegen Basis **und ControlNet** in bfloat16 **23,4 GiB**. Das ControlNet ist nicht
+    optional: ohne es gibt es keine Konditionierung, und dann rendert die Kette an der
+    Geometrie vorbei. Die ehrliche Zahl ist darum die gemeinsame.
+
+    **Was daraus folgt und hier festgehalten gehört:** Der Vorschaupfad passt **nicht**
+    auf eine 16-GB-Karte. Er passt auf die RTX 5090 (31,4 GiB nutzbar, Spitze 23 391 MiB
+    gemessen). Wer ihn auf kleinerer Hardware braucht, braucht Auslagerung oder
+    Quantisierung — nicht eine kleinere Schätzung.
+    """
     klein = waehle(max_vram_gb=16.0)
-    assert klein, "16 GB sollte für den 6B-Vorschaupfad reichen"
-    assert VORSCHAU_BACKBONE in {b.name for b in klein}
+    assert klein, "unter 16 GB sollte mindestens ein Eintrag bleiben"
+    assert VORSCHAU_BACKBONE not in {b.name for b in klein}, (
+        "z-image-turbo braucht mit ControlNet 23,4 GiB — gemessen, nicht geschätzt"
+    )
     assert all(b.vram_gb <= 16.0 for b in klein)
     # Bis zum 18.08.2026 stand hier die Gegenprobe „die 20B-Vorgabe passt nicht in 16 GB".
     # Sie ist mit dem Wechsel gegenstandslos geworden — die Vorgabe IST jetzt das kleine

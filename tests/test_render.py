@@ -1153,3 +1153,46 @@ def test_ein_modell_das_nur_einen_pfad_liefert_meldet_ungemessen(tmp_path):
         render.RenderAuftrag(depth_png=str(tiefe), prompt="x", ausgabe_png=str(ziel)),
         modell=modell)
     assert ergebnis["schritte_gerechnet"] is None
+
+
+# ---------------------------------------------------------------------------------------
+# Der ControlNet-Ladeweg — Demolauf 2, 19.08.2026
+# ---------------------------------------------------------------------------------------
+#
+# `lade_modell` rief bis dahin schlicht `DiffusionPipeline.from_pretrained` und bekam fuer
+# `z-image-turbo` eine blanke `ZImagePipeline` — reines Text-zu-Bild, ohne Steuereingang.
+# Der Adapter reichte die Tiefenkarte als `image` durch, und auch das kennt sie nicht.
+# Geprueft wird hier, was OHNE GPU pruefbar ist: dass der Weg ueberhaupt genommen wird und
+# dass er bei fehlenden Gewichten sprechend abbricht statt spaeter.
+
+def test_vorgabe_backbone_nennt_seinen_controlnet_ordner():
+    """Ohne Ordner ist die Repo-Kennung kein Pfad — und der Ladeweg raet nicht."""
+    from aiimaging.backbone import BACKBONES, VORGABE_BACKBONE
+    e = BACKBONES[VORGABE_BACKBONE]
+    assert e.controlnet_id, "der Vorgabe-Backbone konditioniert ueber ein ControlNet"
+    assert e.controlnet_ordner, "…und muss sagen, wo dessen Gewichte liegen"
+
+
+def test_ohne_controlnet_ordner_bricht_es_sprechend_ab(tmp_path):
+    from dataclasses import replace
+    from aiimaging import render
+    from aiimaging.backbone import BACKBONES, VORGABE_BACKBONE
+    e = replace(BACKBONES[VORGABE_BACKBONE], controlnet_ordner=None)
+    with pytest.raises(render.RenderError) as fehler:
+        render._lade_mit_controlnet(e, tmp_path / "basis", torch=None)
+    assert "controlnet_ordner" in str(fehler.value)
+    assert "kein Pfad" in str(fehler.value)
+
+
+def test_fehlende_controlnet_gewichte_brechen_vor_dem_laden_ab(tmp_path):
+    """Der Ordner ist da, die Datei nicht — das soll JETZT auffallen, nicht nach 20 GB."""
+    from aiimaging import render
+    from aiimaging.backbone import BACKBONES, VORGABE_BACKBONE
+    (tmp_path / "cn").mkdir()
+    e = BACKBONES[VORGABE_BACKBONE]
+    e = type(e)(**{**e.__dict__, "controlnet_ordner": "cn"})
+    with pytest.raises(render.RenderError) as fehler:
+        render._lade_mit_controlnet(e, tmp_path / "basis", torch=None)
+    text = str(fehler.value)
+    assert "safetensors" in text
+    assert "erfundene Kubatur" in text        # der Grund, nicht nur der Umstand
