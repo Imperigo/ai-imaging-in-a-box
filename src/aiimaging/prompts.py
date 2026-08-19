@@ -140,11 +140,18 @@ BAUSTEINE: dict[str, tuple[Baustein, ...]] = {
            "Löst das Bauwerk bewusst aus der Wirklichkeit. Sehr geometrietreu, weil "
            "das Modell keine erfundenen Details verträgt."),
         _b("dokumentarisch_ruhig", "Dokumentarisch, ruhig",
-           "quiet documentary photograph, muted film tonality, gentle highlight "
-           "roll-off, fine grain, something in the near foreground giving depth",
-           "Der Bildcharakter des KosmoOrbit-Stils. 'gentle highlight roll-off' ist der "
-           "wichtige Teil: Er verhindert den ausgefressenen HDR-Look, an dem man "
-           "erzeugte Architekturbilder sofort erkennt."),
+           "quiet documentary photograph, film tonality, shadows kept open and never "
+           "crushed, something in the near foreground giving depth",
+           "AM KORPUS GEMESSEN (`auf-20260818-14`): Hier stand zuerst die Anweisung "
+           "einer weichen Lichterzeichnung, mit der Begründung, das verhindere den "
+           "ausgefressenen HDR-Look. "
+           "**Die Referenzen fressen aber aus** — 7.5 % der Fläche über 95 % Helligkeit "
+           "gegen 1.3 % bei gewöhnlichen Fotos. Zugelaufen sind sie dagegen kaum (0.5 % "
+           "unter 5 %). Die Handschrift ist also nicht Clippingfreiheit, sondern "
+           "**oben hell, unten offen** — und genau das steht jetzt da. Das feine Korn ist "
+           "ebenfalls raus: Die Kornmessung war nicht entscheidbar (die Streuung der "
+           "Streuung war so gross wie der Wert), und was ungemessen ist, wird nicht "
+           "behauptet."),
         _b("skizzenhaft", "Skizzenhaft",
            "loose architectural sketch, graphite and light watercolour wash, "
            "visible pencil strokes, unfinished edges",
@@ -182,11 +189,15 @@ BAUSTEINE: dict[str, tuple[Baustein, ...]] = {
         _b("zugezogen", "Zugezogen",
            "heavy low clouds, diffuse dark grey sky", ""),
         _b("hell_diffus", "Hell und diffus",
-           "bright luminous overcast sky, almost white, soft cloud structure, "
-           "no blue",
-           "Nicht dasselbe wie 'gleichmässig bedeckt': Der ist neutralgrau, dieser ist "
-           "HELL. Er nimmt oft die halbe Bildhöhe ein und hebt das ganze Bild an, statt "
-           "es zu bedrücken."),
+           "bright luminous overcast sky, close to white and allowed to clip, "
+           "soft cloud structure, no blue",
+           "AM KORPUS GEMESSEN und BESTÄTIGT (`auf-20260818-14`): Himmelshelligkeit "
+           "**0.782 ± 0.132** bei einer Gesamthelligkeit von 0.574 — deutlich heller als "
+           "das übrige Bild und nahe an Weiss, nicht bei Neutralgrau (das wäre rund 0.5). "
+           "Dazu ein Befund, der einer anderen Behauptung widersprach: **7.5 %** der "
+           "Fläche liegen über 95 % Helligkeit, bei gewöhnlichen Fotos nur 1.3 %. Die "
+           "Referenzen fressen also aus — sechsfach —, und zwar oben. `allowed to clip` "
+           "steht darum ausdrücklich da: Es ist Absicht, kein Fehler."),
     ),
     "atmosphere": (
         _b("klar", "Klar",
@@ -213,11 +224,16 @@ BAUSTEINE: dict[str, tuple[Baustein, ...]] = {
         _b("bewittert", "Bewittert",
            "weathered surfaces, subtle patina and water staining",
            "Nimmt dem Bild das Neubauhafte."),
-        _b("gedaempft", "Gedämpft",
-           "muted desaturated colours, matte surfaces throughout, nothing glossy, "
-           "no reflections used as an effect",
-           "Der Farbcharakter des KosmoOrbit-Stils. Die Entsättigung ist der Grund, "
-           "warum solche Bilder ruhig wirken — nicht die Motivwahl."),
+        _b("gedaempft", "Zurückhaltend",
+           "restrained colour held to a narrow range, no area louder than the rest, "
+           "matte surfaces throughout, nothing glossy, no reflections used as an effect",
+           "AM KORPUS GEMESSEN (`auf-20260818-14`, 74 Werke): Der frühere Name war "
+           "falsch begründet. Die Sättigung der Referenzen liegt bei **0.193**, die "
+           "gewöhnlicher Fotos bei **0.197** — praktisch gleich. Sie sind NICHT blasser. "
+           "Was sich deutlich unterscheidet, ist die STREUUNG: 0.072 gegen 0.162. Die "
+           "Referenzen sind **einheitlicher**, nicht farbärmer — und genau das steht "
+           "jetzt im Text. Für eine Stilvorgabe ist Beständigkeit ohnehin die brauchbarere "
+           "Grösse als ein Pegel."),
         _b("praezise", "Präzise",
            "crisp clean surfaces, sharp arrises, precise joints",
            "Für Wettbewerbsbilder. Betont die Kanten der Geometrie — und macht damit "
@@ -541,11 +557,14 @@ _stil(Stil(
         "Bauwerk steht ZURÜCK: Es ist immer etwas davor, und die Menschen sind klein und "
         "beiläufig. Kein Heldenbild, sondern ein Ort, an dem jemand vorbeigekommen ist "
         "und fotografiert hat.\n\n"
-        "Abgeleitet aus fünf veröffentlichten Wettbewerbsvisualisierungen, die der Owner "
-        "als Richtung vorgegeben hat (2026-08-18). **Was übernommen wurde, sind "
-        "Eigenschaften, kein Werk:** bedecktes Licht, heller entsättigter Himmel, "
-        "niedriger Kontrast mit weicher Lichterzeichnung, Vordergrundbewuchs, kleine "
-        "Figuren im Alltag, matte Materialien, filmische Tonwerte, quadratisches Format. "
+        "Abgeleitet aus veröffentlichten Wettbewerbsvisualisierungen, die der Owner als "
+        "Richtung vorgegeben hat (2026-08-18), und am 74 Werke umfassenden Korpus "
+        "nachgemessen (`auf-20260818-14`). **Was übernommen wurde, sind Eigenschaften, "
+        "kein Werk:** bedecktes Licht, sehr heller Himmel (0.782 gegen 0.574 im übrigen "
+        "Bild), **einheitliche statt blasser Farbe** (die Sättigung ist so hoch wie bei "
+        "gewöhnlichen Fotos — nur ihre Streuung ist halb so gross), oben hell bis zum "
+        "Ausfressen und unten offen, Vordergrundbewuchs, kleine Figuren im Alltag, matte "
+        "Materialien, kein Breitbild. "
         "Diese Eigenschaften gehören niemandem — sie sind fotografische und "
         "architektonische Konvention. Der Stil trägt darum auch keinen fremden Namen: "
         "Ein Studioname als Produkt-Preset wäre eine Anmassung, und die Bilder selbst "
@@ -560,9 +579,22 @@ _stil(Stil(
             "heavy contrast, posed figures, empty showroom feeling",
     treue_geeignet=False,
     empfohlene_controlnet_staerke=0.85,
-    # Alle fünf Vorlagen sind quadratisch oder hochformatig, KEINE ist 16:9. Das ist der
-    # eine Befund dieser Stilanalyse, der bis in die Kamerarechnung reicht: Der vertikale
-    # Bildwinkel folgt aus dem Seitenverhältnis, und mit ihm der Abstand.
+    # AM KORPUS GEMESSEN (`auf-20260818-14`, 74 Werke) — und meine Behauptung war in
+    # dieser Schärfe FALSCH. Ich hatte an fünf Bildern gesehen: „alle quadratisch oder
+    # hochformatig, keines 16:9". Gemessen sind 18 hochformatig und 23 quadratisch
+    # (zusammen gut die Hälfte), aber **30 sind leicht quer** (1.15–1.6). Richtig ist
+    # allein: **16:9 ist die Ausnahme** — 3 von 74.
+    #
+    # 1.0 bleibt trotzdem der Vorgabewert: Es ist die grösste einzelne Gruppe, und ein
+    # Stil braucht EINEN Wert, um benutzbar zu sein. Aber er ist eine Vereinfachung eines
+    # Korpus, der von hochformatig bis leicht quer reicht — und das gehört hierher und
+    # nicht in eine Fussnote. Wer ein liegendes Bauwerk rahmt, darf ohne schlechtes
+    # Gewissen auf 1.4 gehen; was der Stil ausschliesst, ist Breitbild.
+    #
+    # Die Falle, in die ich ohne die Messung gelaufen wäre: Die Vorlagen sind
+    # BILDSCHIRMFOTOS, alle 2560×1440. Wer die Dateimasse misst, misst den Bildschirm und
+    # nicht die Arbeit — und hätte die Behauptung scheinbar widerlegt, ohne sie geprüft
+    # zu haben.
     seitenverhaeltnis=1.0,
     warnung="Der Vordergrundbewuchs ist der ZWECK dieses Stils — und genau das, was die "
             "Silhouette verdeckt. `geom_iou` sinkt dadurch systematisch, ohne dass das "

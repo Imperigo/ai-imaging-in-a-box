@@ -443,10 +443,24 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 - [x] **Ein Stil trägt jetzt ein Seitenverhältnis** — der einzige Befund der Stilanalyse,
       der bis in die Kamerarechnung reicht. Keine der fünf Vorlagen ist 16:9; der
       vertikale Bildwinkel folgt aus dem Seitenverhältnis, und mit ihm der Abstand.
-- [ ] **Die fünf Behauptungen der Stilanalyse messen** — `auf-20260818-14`. Ich habe sie
-      mit blossem Auge aufgestellt („entsättigt", „niedriger Kontrast", „heller Himmel",
-      „feines Korn", „nie 16:9"). Das ist angesehen und nicht gemessen, und genau die
-      Sorte Behauptung, die dieses Projekt sonst nicht stehen lässt.
+- [x] **Die fünf Behauptungen der Stilanalyse gemessen** — erledigt 2026-08-18
+      (`auf-20260818-14`, 74 Werke). **Eine trägt, zwei tragen nicht, eine ist in ihrer
+      Schärfe falsch, eine ist nicht entscheidbar.**
+      *Entsättigt* — nein: 0.193 gegen 0.197 bei gewöhnlichen Fotos. Aber die **Streuung**
+      unterscheidet sich (0.072 gegen 0.162): Die Referenzen sind **einheitlicher**, nicht
+      blasser. *Kaum ausgefressen* — nein: 7.5 % über 95 % Helligkeit, **sechsfach** mehr
+      als gewöhnliche Fotos; zugelaufen sind sie dagegen kaum. *Nie 16:9* — zu scharf:
+      41 von 74 sind hochformatig oder quadratisch, aber **30 leicht quer**; richtig ist
+      allein, dass 16:9 die Ausnahme ist (3 von 74). *Heller Himmel* — **trägt**: 0.782
+      gegen 0.574 im übrigen Bild. *Feines Korn* — nicht entscheidbar.
+      Alle vier Befunde sind in `prompts.py` eingearbeitet, mit den Zahlen am Baustein.
+      **Und die HomeStation hat eine Falle abgefangen**, in die ich gelaufen wäre: Die
+      Vorlagen sind Bildschirmfotos, alle 2560×1440. Wer die Dateimasse misst, misst den
+      Bildschirm und nicht die Arbeit.
+- [ ] **Wie viele der 74 sind wirklich Architekturvisualisierungen?** Die HomeStation hat
+      **strukturell** klassifiziert (heller Grund + eingebettetes Werk) und ausdrücklich
+      gesagt, dass sie nur zwei Bilder wirklich angesehen hat. Wer die Zahl braucht, muss
+      sie sehen — das ist ein eigener Durchgang, keine Nebenbemerkung.
 - [ ] **Ein Referenzset, das uns gehört** — die andere Hälfte des Hausstils. Der Prompt
       sagt, wie man es macht; `stil_qa` prüft gegen ein Referenzset, ob es gelungen ist.
       Fremde Bilder können das nicht sein: Eine Einbettung ist eine Ableitung des Bildes.

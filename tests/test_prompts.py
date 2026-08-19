@@ -475,3 +475,77 @@ def test_der_hausstil_warnt_vor_seiner_eigenen_wirkung_auf_die_qa():
     hinweise = " ".join(p.komponiere(p.HAUS_STIL)["hinweise"])
     assert "nicht geeignet" in hinweise
     assert p.MESS_STIL in hinweise
+
+
+# --------------------------------------------------------------------------------------
+# 7 · Was die Messung am Korpus mit meinen Behauptungen gemacht hat
+#
+# `auf-20260818-14`, 74 Werke: Von fünf Behauptungen, die ich an fünf Bildern mit blossem
+# Auge aufgestellt hatte, **trägt eine**. Zwei tragen nicht, eine ist in ihrer Schärfe
+# falsch, eine ist nicht entscheidbar. Das ist der Grund, warum der Auftrag ausdrücklich
+# sagte, eine nicht tragende Behauptung wäre das wertvollste Ergebnis.
+# --------------------------------------------------------------------------------------
+
+def test_der_farbbaustein_behauptet_keine_entsaettigung_mehr():
+    """Behauptung 2 trug nicht — und der Befund dahinter ist besser als die Behauptung.
+
+    Gemessen: Sättigung der Referenzen **0.193**, gewöhnlicher Fotos **0.197**. Sie sind
+    nicht blasser. Was sich unterscheidet, ist die STREUUNG: 0.072 gegen 0.162. Die
+    Handschrift liegt in der **Beständigkeit**, nicht im Pegel — und für eine Stilvorgabe
+    ist das ohnehin die brauchbarere Grösse.
+    """
+    text = p.baustein("material_detail", "gedaempft").text
+    assert "desaturated" not in text
+    assert "narrow range" in text
+    assert "0.193" in p.baustein("material_detail", "gedaempft").hinweis
+
+
+def test_der_himmelbaustein_erlaubt_das_ausfressen_ausdruecklich():
+    """Behauptung 3 trug im zweiten Teil nicht — die Referenzen fressen aus, sechsfach.
+
+    7.5 % der Fläche liegen über 95 % Helligkeit, bei gewöhnlichen Fotos 1.3 %. Zugelaufen
+    sind sie dagegen kaum (0.5 %). Die Handschrift ist **oben hell, unten offen**.
+    """
+    text = p.baustein("sky", "hell_diffus").text
+    assert "allowed to clip" in text
+    assert "7.5" in p.baustein("sky", "hell_diffus").hinweis
+
+
+def test_der_bildcharakter_verspricht_keine_weiche_lichterzeichnung_mehr():
+    """Sie widerspräche den gemessenen 7.5 % ausgefressener Fläche."""
+    text = p.baustein("composition", "dokumentarisch_ruhig").text
+    assert "roll-off" not in text
+    assert "shadows kept open" in text
+
+
+def test_ungemessenes_wird_nicht_behauptet():
+    """Behauptung 5 war nicht entscheidbar — die Streuung der Streuung war so gross wie
+    der Wert selbst. Also steht `fine grain` nicht mehr im Prompt.
+
+    Ungemessen heisst ungemessen. Ein Prompt, der eine Eigenschaft verlangt, die niemand
+    belegt hat, verlangt sie trotzdem — das Bildmodell fragt nicht nach.
+    """
+    assert "grain" not in p.komponiere(p.HAUS_STIL)["prompt"]
+
+
+def test_der_himmel_bleibt_die_eine_behauptung_die_traegt():
+    """0.782 gegen 0.574 im übrigen Bild — deutlich heller, nahe an Weiss."""
+    assert "0.782" in p.baustein("sky", "hell_diffus").hinweis
+    assert "bright luminous overcast sky" in p.komponiere(p.HAUS_STIL)["prompt"]
+
+
+def test_das_seitenverhaeltnis_traegt_seine_eigene_einschraenkung():
+    """Behauptung 1 war in ihrer Schärfe falsch, und das steht am Wert.
+
+    Gemessen: 18 hochformatig, 23 quadratisch, aber **30 leicht quer** (1.15–1.6).
+    Richtig ist allein: 16:9 ist die Ausnahme — 3 von 74. Der Vorgabewert 1.0 bleibt,
+    weil ein Stil einen Wert braucht; dass er eine Vereinfachung ist, steht dabei.
+    """
+    import inspect
+    quelle = inspect.getsource(p)
+    stelle = quelle[quelle.index("slug=\"kosmo_standard\""):]
+    stelle = stelle[:stelle.index("MESS_STIL")]
+    assert "FALSCH" in stelle
+    assert "30 sind leicht quer" in stelle or "30 sind **leicht quer**" in stelle
+    assert "Bildschirmfotos" in stelle or "BILDSCHIRMFOTOS" in stelle
+    assert p.STILE[p.HAUS_STIL].seitenverhaeltnis == 1.0
