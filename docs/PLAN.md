@@ -654,6 +654,32 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       **Was es NICHT löst, damit es niemand für mehr hält:** die Stumpfheit gar nicht
       (kein Lauf der Szene B fällt unter den Rauschanker, vorher wie nachher), und zwei
       der drei Knicke nicht — die sitzen in `geom_iou`, nicht in ρ.
+- [x] **Die Widerlegung ist im Code angekommen, nicht nur in den Dokumenten (21.08.).**
+      `einordnung` rechnet `anteil_der_spanne` weiter — sie ist eine nachvollziehbare
+      Ableitung aus zwei gemessenen Ankern und steht in älteren Ergebnissen —, **deutet
+      sie aber nicht mehr**. Neues Feld `anteil_gilt`, immer `False`, damit die Warnung
+      den Aufrufer erreicht und nicht bloss den Docstring. Was überlebt, ist
+      `ueber_rauschen`: ein **Vergleich innerhalb einer Szene**, kein Abstand — und
+      darum weder auf Monotonie noch auf Szenenunabhängigkeit angewiesen.
+- [x] **Ein grüner Test hat eine Unwahrheit dokumentiert, und das ist die eigentliche
+      Lehre des Abends.** `test_der_anteil_der_spanne_ist_die_szenenunabhaengige_groesse`
+      setzte in beide Szenen die Mitte zwischen Rauschanker und perfekt ein und stellte
+      fest, dass beide Male 0.5 herauskommt. Grün seit dem 20.08. — und **tautologisch**:
+      Der Anteil ist als lineare Abbildung von `[rauschen, beauty]` auf `[0, 1]`
+      definiert, also trifft ihre Mitte per Konstruktion 0.5. In jeder Szene. Auch in
+      einer, in der die Normierung völlig falsch wäre. Geprüft wurde die Umkehrfunktion
+      der eigenen Definition, nicht die Behauptung im Namen.
+
+      Ersetzt durch eine Prüfung an **demselben geometrischen Fehler** in beiden Szenen
+      (1 m Versatz, Messwerte aus `auf-23`): 0.40 gegen 0.92.
+- [ ] **Blinder Fleck der Vakuumprobe — benannt, nicht behoben.** Sie findet
+      Zusicherungen, die über einer leeren Sammlung *immer* wahr sind. Sie findet
+      **nicht** den Fall oben: eine Zusicherung, die etwas prüft, nur nicht das, was ihr
+      Name behauptet. Ob sich das überhaupt maschinell fassen lässt, ist offen — der
+      Verdacht ist, dass es auf „stimmt der Name mit der Zusicherung überein" hinausläuft
+      und damit auf eine Frage, die kein Werkzeug beantwortet. Bis dahin bleibt es eine
+      Lesepflicht: **Wer einen Test schreibt, dessen Name eine Behauptung trägt, muss
+      prüfen, ob die Zusicherung diese Behauptung wirklich falsifizieren KÖNNTE.**
 - [ ] **Der neue Verdächtige heisst `geom_iou`, und der Verdacht heisst Boden.** In
       Szene B fällt ρ sauber, während `geom_iou` STEIGT (0.5 m → 1 m: 0.9324 → 0.9579).
       Bei 59.8 % Geometrieanteil ist mehr als die Hälfte aller Punkte Bodenebene; ein

@@ -954,28 +954,73 @@ def test_bei_29_prozent_besteht_rauschen_das_gate_nicht_mehr():
     assert anker["beauty"] < geometrie_qa.SCHWELLE_GEOMETRIE
 
 
-def test_der_anteil_der_spanne_ist_die_szenenunabhaengige_groesse():
-    """**Die eigentliche Konsequenz.** Decke und Boden schwanken je Szene um mehr als das
-    Doppelte — eine feste Schwelle kann es darum nicht geben.
+def test_der_alte_szenenunabhaengigkeits_test_war_tautologisch():
+    """**Ein grüner Test, der eine Unwahrheit dokumentierte** — und der Grund dafür.
 
-    Derselbe *relative* Stand ergibt in beiden Szenen denselben Anteil, obwohl die
-    absoluten Scores weit auseinanderliegen.
+    Bis zum 21.08. stand hier ein Test namens
+    `test_der_anteil_der_spanne_ist_die_szenenunabhaengige_groesse`. Er setzte in beide
+    Szenen den Mittelwert zwischen Rauschanker und perfekt ein und stellte fest, dass
+    beide Male 0.5 herauskommt. Das war grün, und es bewies **nichts**: Der Anteil ist
+    als lineare Abbildung von [rauschen, beauty] auf [0, 1] definiert, also trifft ihre
+    Mitte per Konstruktion 0.5. In beiden Szenen. In jeder Szene. Auch in einer, in der
+    die Normierung völlig falsch wäre.
+
+    Geprüft wurde die Umkehrfunktion der eigenen Definition, nicht die Behauptung im
+    Namen. Genau die Fehlerart, gegen die die Vakuumprobe antritt — nur dass sie hier
+    nicht greift, weil die Zusicherung ja etwas prüft, bloss nicht das Behauptete.
     """
     for szene in ("platte_11m", "platte_endlich"):
         anker = geometrie_qa.anker_fuer(szene)
         mitte = anker[geometrie_qa.ANKER_RAUSCHEN] + 0.5 * (
             anker["beauty"] - anker[geometrie_qa.ANKER_RAUSCHEN])
-        urteil = geometrie_qa.einordnung(mitte, anker)
-        assert urteil["anteil_der_spanne"] == pytest.approx(0.5)
+        # Immer noch 0.5 — und immer noch ohne jede Aussage über Szenenunabhängigkeit.
+        assert geometrie_qa.einordnung(mitte, anker)["anteil_der_spanne"] == pytest.approx(0.5)
 
 
-def test_die_absoluten_scores_derselben_lage_liegen_weit_auseinander():
-    """Zum Beleg, dass die Normierung nötig ist und nicht bloss elegant."""
+def test_die_szenenunabhaengigkeit_ist_gemessen_und_widerlegt():
+    """Die echte Prüfung: DERSELBE geometrische Fehler in beiden Szenen.
+
+    Nicht derselbe *Anteil* — der kommt per Definition gleich heraus —, sondern
+    dieselbe Verschiebung von 1 m. Die Messwerte stammen aus `auf-20260820-23`
+    (`docs/EMPFINDLICHKEIT_2026-08-20.md`) und sind hier fest eingetragen, weil sie
+    eine Messung sind.
+
+    Wäre der Anteil szenenunabhängig, müssten beide Zahlen nahe beieinanderliegen. Sie
+    liegen um Faktor 2,3 auseinander.
+    """
     a11 = geometrie_qa.anker_fuer("platte_11m")
     a60 = geometrie_qa.anker_fuer("platte_endlich")
-    halb11 = a11["rauschen"] + 0.5 * (a11["beauty"] - a11["rauschen"])
-    halb60 = a60["rauschen"] + 0.5 * (a60["beauty"] - a60["rauschen"])
-    assert abs(halb60 - halb11) > 0.5, "derselbe Anteil, mehr als 0.5 Score Unterschied"
+
+    anteil_11 = geometrie_qa.einordnung(0.3184, a11)["anteil_der_spanne"]
+    anteil_60 = geometrie_qa.einordnung(0.9617, a60)["anteil_der_spanne"]
+
+    assert anteil_11 == pytest.approx(0.40, abs=0.02)
+    assert anteil_60 == pytest.approx(0.92, abs=0.02)
+    assert anteil_60 / anteil_11 > 2.0, "derselbe Fehler, mehr als doppelter Anteil"
+
+
+def test_die_einordnung_erklaert_den_anteil_fuer_ungueltig():
+    """Die Widerlegung muss den Aufrufer erreichen, nicht nur den Docstring."""
+    urteil = geometrie_qa.einordnung(0.35, geometrie_qa.anker_fuer("platte_11m"))
+
+    assert urteil["anteil_der_spanne"] is not None, "gerechnet wird sie weiter"
+    assert urteil["anteil_gilt"] is False, "gedeutet wird sie nicht mehr"
+    assert "widerlegt" in urteil["begruendung"]
+
+
+def test_ueber_rauschen_ueberlebt_die_widerlegung():
+    """Was von der Einordnung bleibt — und warum ausgerechnet das.
+
+    `ueber_rauschen` ist ein **Vergleich innerhalb einer Szene**, kein Abstand: Erreicht
+    dieses Bild mehr als eines ganz ohne Geometrie, auf derselben Soll-Karte? Diese
+    Aussage braucht keine Monotonie und keine Szenenunabhängigkeit; sie braucht nur
+    einen gemessenen Anker. Darum trägt sie weiter, während der Anteil fällt.
+    """
+    a60 = geometrie_qa.anker_fuer("platte_endlich")
+    rauschen = a60[geometrie_qa.ANKER_RAUSCHEN]
+
+    assert geometrie_qa.einordnung(rauschen + 0.01, a60)["ueber_rauschen"] is True
+    assert geometrie_qa.einordnung(rauschen - 0.01, a60)["ueber_rauschen"] is False
 
 
 def test_ein_anker_ohne_grau_und_verlauf_ist_trotzdem_brauchbar():

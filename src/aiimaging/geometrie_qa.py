@@ -1120,21 +1120,43 @@ def einordnung(score: float | None, anker: dict | None, *,
             Schlüsseln. ``None`` heisst: Für diese Szene ist keine Nullprobe gefahren.
 
     Returns:
-        ``{ueber_rauschen, ueber_gate, anteil_der_spanne, begruendung}``.
+        ``{ueber_rauschen, ueber_gate, anteil_der_spanne, anteil_gilt, begruendung}``.
 
-        ``anteil_der_spanne`` ist ``(score − rauschen) / (beauty − rauschen)`` — wieviel
-        von dem Weg, den ein Bild über das Rauschen hinaus gehen *kann*, es gegangen ist.
-        Negativ heisst: schlechter als Rauschen. ``None``, wenn kein Anker vorliegt.
+        ``ueber_rauschen`` ist die Aussage, die **trägt**: Erreicht dieses Bild auf dieser
+        Soll-Karte mehr als eines ganz ohne Geometrie? Ein Vergleich innerhalb einer
+        Szene, kein Abstand — und darum von der Nicht-Monotonie des Scores nicht
+        betroffen.
+
+        ``anteil_der_spanne`` ist ``(score − rauschen) / (beauty − rauschen)``.
+
+        .. warning::
+           **Diese Grösse ist am 20.08.2026 widerlegt worden** (`auf-20260820-23`,
+           `docs/EMPFINDLICHKEIT_2026-08-20.md`), und zwar in beiden Behauptungen, die
+           sie einmal trug:
+
+           * *Sie sei szenenunabhängig.* Ist sie nicht. Dieselbe Verschiebung von 1 m
+             ergibt bei 29 % Geometrieanteil rund 0.40, bei 59.8 % rund 0.92 — Faktor 2,3.
+           * *Sie messe den Abstand vom Richtigen.* Tut sie nicht. Der zugrunde liegende
+             Score ist nicht monoton im geometrischen Fehler; eine lineare Umrechnung
+             erbt den Knick unverändert. Zwei verschiedene Fehler ergeben denselben
+             Anteil, und der grössere von beiden kann der bessere sein.
+
+           Sie wird weiter **gerechnet**, weil sie eine nachvollziehbare Ableitung aus
+           zwei gemessenen Ankern ist und in älteren Ergebnissen steht. Sie wird nicht
+           mehr **gedeutet**. ``anteil_gilt`` ist deshalb immer ``False``: Das Feld sagt
+           dem Aufrufer, dass er die Zahl nicht als Güte lesen darf, statt darauf zu
+           hoffen, dass er den Docstring liest.
 
     **Ohne Anker gibt es keine Einordnung, sondern die Feststellung, dass keine vorliegt.**
     Eine geschätzte Einordnung wäre schlimmer als keine — sie sähe aus wie ein Urteil.
     """
     if score is None:
         return {"ueber_rauschen": None, "ueber_gate": None, "anteil_der_spanne": None,
+                "anteil_gilt": False,
                 "begruendung": "Kein Score — es gibt nichts einzuordnen."}
     if not anker or ANKER_RAUSCHEN not in anker:
         return {"ueber_rauschen": None, "ueber_gate": score >= schwelle,
-                "anteil_der_spanne": None, "begruendung": (
+                "anteil_der_spanne": None, "anteil_gilt": False, "begruendung": (
                     f"Score {score:.4f} gegen Schwelle {schwelle:.2f} — aber für diese "
                     f"Szene ist KEINE Nullprobe gefahren. Ohne sie ist nicht bekannt, was "
                     f"ein Bild ohne jede Geometrie hier erreicht; auf einer anderen Szene "
@@ -1149,9 +1171,15 @@ def einordnung(score: float | None, anker: dict | None, *,
 
     if ueber:
         grund = (f"Score {score:.4f} liegt über dem Rauschanker {rauschen:.4f} — er trägt "
-                 f"also mehr als ein Bild ohne jede Geometrie. Vom Weg bis zur perfekten "
-                 f"Geometrie ({beauty:.4f}) ist er "
-                 f"{anteil:.1%} gegangen.")
+                 f"also mehr als ein Bild ohne jede Geometrie auf derselben Soll-Karte. "
+                 f"DAS ist die Aussage, und weiter reicht sie nicht.\n"
+                 f"Zum perfekten Bild dieser Szene ({beauty:.4f}) verhält er sich wie "
+                 f"{anteil:.1%} der Spanne. Diese Zahl ist am 20.08.2026 widerlegt worden "
+                 f"(auf-20260820-23) und steht hier nur noch als Ableitung, nicht als "
+                 f"Urteil: Sie ist weder szenenunabhängig (dieselbe Verschiebung ergab in "
+                 f"zwei Szenen 0.40 gegen 0.92) noch ein Abstand vom Richtigen (der Score "
+                 f"darunter ist nicht monoton im Fehler). Wer sie als Güte liest, liest "
+                 f"sie falsch.")
     else:
         grund = (
             f"Score {score:.4f} liegt UNTER dem Rauschanker {rauschen:.4f}. Auf derselben "
@@ -1163,7 +1191,7 @@ def einordnung(score: float | None, anker: dict | None, *,
             f"Wesentlichen so eine Rampe. Gemessen am 20.08.2026 (auf-20260820-21)."
         )
     return {"ueber_rauschen": ueber, "ueber_gate": score >= schwelle,
-            "anteil_der_spanne": anteil, "begruendung": grund}
+            "anteil_der_spanne": anteil, "anteil_gilt": False, "begruendung": grund}
 
 
 def anker_fuer(szene: str) -> dict | None:
