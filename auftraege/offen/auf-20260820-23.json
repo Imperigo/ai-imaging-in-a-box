@@ -7,7 +7,7 @@
   "geometrie": {
     "synthetisch": true,
     "pfad": null,
-    "erzeugen_mit": "Testbau auf Bodenplatte; zwei Groessen (11 m fuer ~29 %, 20 m fuer ~60 %). tools/make_test_ifc.py kennt seit heute --gelaende."
+    "erzeugen_mit": "Deine beiden bereits vermessenen Szenen weiterverwenden: die 11-m-Platte (~29 % Geometrieanteil) und platte_endlich (~59.8 %). Unser tools/make_test_ifc.py kennt zwar seit heute --gelaende, hat aber KEINEN Groessenschalter — es taugt hier nur als Rueckfallebene, falls deine Szenen nicht mehr greifbar sind. Dann bitte melden, statt zu improvisieren: die Anker rauschen/perfekt gehoeren zur Szene und waeren sonst nicht mehr gueltig."
   },
   "params": {
     "kamera": "fest, je Szene unveraendert ueber alle Laeufe",
