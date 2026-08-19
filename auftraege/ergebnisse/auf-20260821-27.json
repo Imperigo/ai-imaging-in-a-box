@@ -1,0 +1,111 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260821-27",
+  "status": "ok",
+  "beendet": "2026-08-19T20:14:03Z",
+  "dauer_s": 95.0,
+  "messwerte": {
+    "mass": {
+      "formel": "(Median Randband INNEN - Median Randband AUSSEN) / (p95-p05 der ganzen Schaetzkarte)",
+      "randband": "je 2 Bildpunkte beiderseits der Maskengrenze; innen 2295, aussen 2334 Punkte",
+      "vorzeichen": "Der Schaetzer liefert Disparitaet (nah = gross). Ein Bauwerk vor fernem Grund ergibt also einen POSITIVEN Wert.",
+      "maske": "unveraendert, 44604 Punkte",
+      "kein_bildmodell": true,
+      "keine_neuen_renderlaeufe": true
+    },
+    "szene_59_8_prozent": {
+      "perfekt": 0.161538847967767,
+      "versatz_1m": 0.06554478831034954,
+      "H1": 0.0006151267457602064,
+      "H2": 0.0006500864279635095,
+      "H3": 0.006570272243360406,
+      "H4": 0.002141581665806963
+    },
+    "szene_29_prozent": {
+      "perfekt": 0.24739250152739645,
+      "versatz_1m": 0.10707305018259931,
+      "H1": -0.00032131300148993534,
+      "H2": -0.0002168341543355566,
+      "H3": 0.009442647391885198,
+      "H4": 0.005100921395253458
+    },
+    "weisses_rauschen": -0.004365486088905983,
+    "der_pruefstein": {
+      "wortlaut": "Perfekt, H3 und H4 muessen eine DEUTLICHE Kante zeigen; H1 und H2 keine.",
+      "ergebnis": "NICHT ERFUELLT. H1 und H2 zeigen erwartungsgemaess keine Kante (+0.0006 / +0.0007 bei 59.8 %, -0.0003 / -0.0002 bei 29 %) — aber H3 (+0.0066) und H4 (+0.0021) auch nicht. Sie liegen um Faktor 25 bis 75 unter dem perfekten Bild (+0.1615).",
+      "warum": "Die Maske ist die Silhouette des RICHTIGEN Bauwerks. Ein gedrehtes oder anders geformtes Bauwerk hat seine Kanten woanders — an der Maskengrenze steht dann Grund, genau wie bei Abwesenheit. Das Mass fragt nicht 'steht dort etwas', sondern 'steht dort DAS RICHTIGE'."
+    },
+    "was_es_stattdessen_leistet": {
+      "trennung": "Es trennt 'richtige Silhouette besetzt' von allem anderen, und zwar sauber: perfekt +0.1615, Versatz 1 m +0.0655 gegen H3 +0.0066 als groessten Wert der uebrigen. Faktor 10.",
+      "abstand": {
+        "kleinste_kante_der_richtigen": 0.0655,
+        "groesste_kante_der_uebrigen": 0.0066,
+        "abstand": 0.0589,
+        "hinweis": "Unter der WOERTLICHEN Lesart des Pruefsteins (H3/H4 zaehlen als anwesend) betraegt der Abstand 0.0021 - 0.0007 = 0.0014 und taugt zu nichts. Beide Zahlen stehen hier, damit die Wahl der Lesart sichtbar bleibt."
+      }
+    },
+    "die_paarung": {
+      "kern": "rho und Kante fangen GENAU DIE JEWEILS ANDEREN Faelle. Zusammen decken sie alle vier ab — einzeln keiner von beiden.",
+      "tabelle": {
+        "H1 Bauwerk weg": {
+          "rho": -0.6861,
+          "rho_faengt": false,
+          "kante": 0.0006,
+          "kante_faengt": true
+        },
+        "H2 20 m versetzt": {
+          "rho": -0.6854,
+          "rho_faengt": false,
+          "kante": 0.0007,
+          "kante_faengt": true
+        },
+        "H3 andere Kubatur": {
+          "rho": 0.3842,
+          "rho_faengt": true,
+          "kante": 0.0066,
+          "kante_faengt": false
+        },
+        "H4 90 Grad gedreht": {
+          "rho": -0.4546,
+          "rho_faengt": true,
+          "kante": 0.0021,
+          "kante_faengt": false
+        },
+        "perfekt": {
+          "rho": -0.9874,
+          "rho_faengt": null,
+          "kante": 0.1615,
+          "kante_faengt": null
+        },
+        "Versatz 1 m": {
+          "rho": -0.8437,
+          "rho_faengt": null,
+          "kante": 0.0655,
+          "kante_faengt": null
+        },
+        "Versatz 4 m": {
+          "rho": -0.7386,
+          "rho_faengt": true,
+          "kante": null,
+          "kante_faengt": null
+        },
+        "weisses Rauschen": {
+          "rho": -0.5207,
+          "rho_faengt": true,
+          "kante": -0.0044,
+          "kante_faengt": true
+        }
+      },
+      "vorschlag_ungemessen": "Ein Paartest 'rho <= -0.80 UND Kante >= 0.05' laesst von allen hier gemessenen Bildern nur das perfekte und den 1-m-Versatz durch. Das ist eine Ablesung aus diesen Zahlen, KEINE Kalibrierung — die Schwellen sind an einer Szene und einem Baukoerper abgelesen."
+    }
+  },
+  "urteil": {
+    "kernsatz": "Der Pruefstein faellt, der Kandidat lebt: die Kante faengt die Abwesenheit, die rho nicht faengt — und rho faengt die falsche Kubatur, die die Kante nicht faengt. Zusammen decken sie alle vier."
+  },
+  "umgebung": {
+    "leistungsgrenze_w": 400,
+    "gpu_bildmodell": "nicht benutzt",
+    "neu_gerendert": "nichts"
+  },
+  "fehler": null
+}
