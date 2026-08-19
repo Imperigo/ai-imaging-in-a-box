@@ -291,7 +291,18 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Die Kehrtwende zum Übergabeblatt wird davon **bestätigt statt widerlegt**: Ein
       Bestand, dessen letzter Commit vom selben Vormittag ist, war schon beim Beginn der
       Bestandsaufnahme nicht mehr der, den sie beschrieb.
-- [x] **„Bereit" ohne Prüfung — gemessen: es ist ein Bedienungsproblem, kein Loch.**
+- [ ] **Lügt „bereit"? — UNGEMESSEN, und die frühere Antwort war ein Fehlschluss.**
+      Wir hatten notiert, ein Druck im unverdrahteten Zustand bleibe wirkungslos. Die
+      HomeStation hat den Klick nachgemessen (`document.elementFromPoint`): Der
+      Vergrössern-Knopf (44 × 44 bei 895,741) überdeckt die obere linke Ecke des
+      Ausführen-Knopfs (84 × 32 bei 911,759) — **der Klick hat den Knopf nie erreicht.**
+      Unabhängig bestätigt durch ihren eigenen Insel-Überdeckungs-Wächter.
+      **Was steht:** Das Panel *zeigt* `bereit` bei unverdrahteten Knoten — eine Ablesung,
+      kein Klick. **Was nicht mehr gilt:** dass ein Druck dort wirkungslos bleibt.
+      *Aus einem ausbleibenden Effekt auf eine Ursache geschlossen, ohne zu prüfen, ob die
+      Handlung überhaupt ankam* — derselbe Fehler wie dreimal zuvor an diesem Tag, nur
+      diesmal unserer.
+- [x] **Die Verdrahtung ändert alles — das steht unabhängig davon.**
       `auf-20260819-16`: Unverdrahtet bleibt der Zustand dreimal auf `bereit`. Verdrahtet
       wechselt er auf `fehler` **mit präziser Begründung**, nach dem Nachtragen des
       Bridge-Tokens auf „auf GPU-Leerlauf" — und in der Warteschlange liegt ein

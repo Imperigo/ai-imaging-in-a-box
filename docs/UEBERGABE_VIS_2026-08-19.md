@@ -294,6 +294,22 @@ Zustand:** `bereit` steht dort, bevor irgendeine Kante gezogen ist. Und das ist 
 Befund, mit dem dieses ganze Projekt angefangen hat, nur an anderer Stelle: **ein
 Zustand, der Bereitschaft behauptet, ohne sie geprüft zu haben.**
 
+*Zweite Berichtigung, und sie schränkt uns ein:* Wir hatten zusätzlich notiert, ein Druck
+im unverdrahteten Zustand bleibe **wirkungslos**. Das gilt nicht mehr. Nachgemessen mit
+`document.elementFromPoint` an genau der Klickkoordinate: Der Vergrössern-Knopf (44 × 44
+bei 895,741) überdeckt die obere linke Ecke des Ausführen-Knopfs (84 × 32 bei 911,759),
+und der Klick lag darin. **Er hat den Ausführen-Knopf nie erreicht.**
+
+Was steht: Das Panel **zeigt** `bereit` bei unverdrahteten Knoten — das ist eine Ablesung
+und kein Klick. Was **ungemessen** ist: ob dieser Zustand auch lügt, wenn man ihn drückt.
+
+Zwei Dinge nehmen wir daraus mit. Erstens gehört die Überdeckung selbst gemeldet: Ein
+44-Pixel-Knopf, der die Ecke des Hauptknopfs verdeckt, trifft nicht nur uns. Euer eigener
+Insel-Überdeckungs-Wächter hat dieselbe Stelle unabhängig gefunden — Station `vis`,
+Zustand `popup:render-senden`, bei 1400 × 900. Zweitens: *Aus einem ausbleibenden Effekt
+auf eine Ursache zu schliessen, ohne zu prüfen, ob die Handlung überhaupt ankam*, ist
+derselbe Fehler wie überall sonst in diesem Blatt — nur diesmal unserer.
+
 Eine Kante zwischen zwei Knoten kann existieren und trotzdem nichts tragen. Der Vorgänger
 liefert `depth_png`, der Nachfolger erwartet `depth_map` — die Kante ist gezeichnet, der
 Graph sieht vollständig aus, und der Fehler erscheint erst nach der teuersten Stufe. Bei

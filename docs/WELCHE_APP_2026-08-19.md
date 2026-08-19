@@ -260,3 +260,52 @@ eigenen Satz:
 Genau dagegen steht in diesem Projekt die Dreiteilung *bestanden / durchgefallen /
 **nicht gemessen***, inzwischen an fünf Stellen — und die Regel, dass eine ungemessene
 Schwelle nicht verurteilen darf.
+
+
+---
+
+# FÜNFTE BERICHTIGUNG — der Klick ging daneben
+
+**20.08.2026.** Die HomeStation hat einen weiteren eigenen Befund gemeldet, und er trifft
+einen Satz, den ich dreimal weitergegeben habe.
+
+Notiert war: *„Ausführen dreimal gedrückt — keine Zustandsänderung."* Daraus geschlossen:
+Der Zustand melde `bereit`, ohne die Verdrahtung zu prüfen.
+
+Nachgemessen mit `document.elementFromPoint` an genau der Klickkoordinate:
+
+```
+911,759  →  island-render-senden-popup-vergroessern
+```
+
+Der **Vergrössern-Knopf** (44 × 44 bei 895,741) überdeckt die obere linke Ecke des
+**Ausführen-Knopfs** (84 × 32 bei 911,759). Der Klickpunkt lag darin. Unabhängig
+bestätigt: Ihr eigener Insel-Überdeckungs-Wächter hat dieselbe Stelle gefunden — Station
+`vis`, Zustand `popup:render-senden`, bei 1400 × 900, also genau jener Fenstergrösse.
+
+**Was steht:** Das Panel *zeigte* `bereit` bei unverdrahteten Knoten. Das ist eine
+**Ablesung** und kein Klick, und es bleibt der Befund, um den es geht.
+
+**Was nicht mehr gilt:** dass ein Druck im unverdrahteten Zustand wirkungslos bleibt. Der
+Druck ist nie ausgelöst worden. Ob `bereit` dort lügt, ist **ungemessen**.
+
+## Und es ist derselbe Fehler wie an vier anderen Stellen dieses Tages
+
+> **Aus einem ausbleibenden Effekt auf eine Ursache geschlossen, ohne zu prüfen, ob die
+> Handlung überhaupt ankam.**
+
+Die Reihe wird lang, und sie hat immer dieselbe Form — ein Schluss aus einer Abwesenheit,
+ohne die Voraussetzung zu prüfen:
+
+| Abwesenheit | Falscher Schluss | Was wirklich war |
+|---|---|---|
+| geschlossenes Menü | „gibt es nicht" | war nur nicht aufgeklappt |
+| `KosmoSpez` fehlt im Klon | „fremder Bestand" | Klon veraltet |
+| `Design/Vis` nirgends auffindbar | „andere App" | wird gerade gebaut |
+| Wächter grün | „hat geprüft" | `{"geprueft": 0}` |
+| kein Effekt beim Klick | „Knopf tut nichts" | Klick kam nie an |
+
+Fünf Verkleidungen, ein Fehler. Er verdient den Satz, der ihn abkürzt:
+
+> **Bevor du aus einem Ausbleiben etwas schliesst, prüfe, ob die Ursache überhaupt
+> gewirkt haben konnte.**

@@ -2297,6 +2297,19 @@ bei gleichem Namen.
 und schaut, ob die Tests ihn bemerken. Tun sie es nicht, bewachen sie nichts. *Ohne das
 kann eine grüne Testreihe blosse Beruhigung sein.*
 
+**Schluss aus einer Abwesenheit** — Aus dem Ausbleiben eines Zeichens auf eine Ursache
+schliessen: „ich sehe es nicht, also gibt es das nicht", „nichts ist passiert, also tut
+der Knopf nichts". Der Schluss trägt nur, wenn feststeht, dass das Zeichen **erschienen
+wäre**, hätte es die Ursache gegeben.
+*In diesem Projekt an einem einzigen Tag in fünf Verkleidungen aufgetreten: ein
+geschlossenes Menü („gibt es nicht" — war nur zugeklappt), ein Begriff, der in einem
+veralteten Klon fehlte („fremder Bestand"), ein Verzeichnis, das nirgends auffindbar war
+(„andere App" — wurde gerade gebaut), ein grüner Wächter („hat geprüft" — sein Artefakt
+trug `{"geprueft": 0}`) und ein wirkungsloser Klick („der Knopf tut nichts" — der Klick
+traf einen anderen Knopf).*
+*Merksatz:* **Bevor du aus einem Ausbleiben etwas schliesst, prüfe, ob die Ursache
+überhaupt gewirkt haben konnte.**
+
 **Vakuum-wahre Zusicherung** — Eine Zusicherung über **alle** Elemente einer Sammlung,
 die auch dann hält, wenn die Sammlung **leer** ist: „alle Warnungen sind Zeichenketten"
 stimmt, wenn es gar keine Warnung gibt; „keine Warnung enthält X" ebenso. Ein Test dieser
@@ -2466,6 +2479,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-20 | Ergaenzt: **Schluss aus einer Abwesenheit**. Der Begriff fasst einen Fehler zusammen, der an diesem Tag in FUENF Verkleidungen auftrat — geschlossenes Menue, veralteter Klon, ein Verzeichnis das gerade entsteht, ein gruener Waechter der nichts mass, und ein Klick der einen anderen Knopf traf |
 | 2026-08-20 | Ergaenzt aus den Variantenreihen (`src/aiimaging/varianten.py`): **Saatreihe**, **kontrollierte Reihe**, **Rauschboden**, **Laplace-Varianz** (mit der Warnung, dass ein Schaerfemass keine Qualitaet ist). **Berichtigt:** **Seed** stand ZWEIMAL im Lexikon, in Abschnitt 6 als Kurzfassung und als ausfuehrliche Fassung — zusammengefuehrt zu einem Eintrag. Ein Lexikon, das denselben Begriff zweimal erklaert, veraltet an einer der beiden Stellen |
 | 2026-08-20 | Ergaenzt aus dem Schrittzaehler im Renderlauf: **Rueckruf (Callback)** und **Diffusionsschritt** — letzterer mit der Einschraenkung, dass im Bildbearbeitungsmodus nur `schritte x denoise` Schritte laufen |
 | 2026-08-20 | Ergaenzt aus der Herzschlagmessung: **GIL (Global Interpreter Lock)** und **Lebenszeichen gegen Fortschrittszeichen**. Beide sind gemessen: Cycles gibt die GIL frei (61 Faden-Schlaege gegen null Aufrufe der beiden dokumentierten Blender-Haken), und der Herzschlag belegt Leben, nicht Fortschritt |
