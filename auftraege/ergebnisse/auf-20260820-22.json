@@ -1,0 +1,187 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260820-22",
+  "status": "ok",
+  "beendet": "2026-08-19T18:03:02Z",
+  "dauer_s": 9.1,
+  "messwerte": {
+    "aufbau": {
+      "szene": "unveraendert aus auf-21: Testbau auf Platte 20 m, Geometrieanteil 59.8 %",
+      "soll_karte": "UNVERAENDERT — die Kontrollanker von auf-21 gelten weiter, sie sind unten wiederholt",
+      "kamera": "fest, wie auf-21",
+      "seed": 1004,
+      "seed_ueber_alle_vier": "gleich",
+      "schritte": 8,
+      "guidance_scale": 0.0,
+      "negativ_prompt": "",
+      "aufloesung": 512,
+      "schaetzer": "depth-anything-v2-small",
+      "hintergrund_strategie": "wie_soll",
+      "vram_spitze_mib": 23391,
+      "beleg_reproduktion": "Lauf B traegt die Pruefsumme 34cbbaa7af540bf3 — identisch mit seed 1004 aus auf-21. Der Aufbau ist Byte fuer Byte derselbe.",
+      "wie_lauf_C_gebaut_ist": "render.py dreht fuer dieses Backbone IMMER um (POL_NAH_DUNKEL). Fuer C habe ich eine bereits umgedrehte Kopie der Karte eingereicht; die Umkehr im Renderweg hebt sie auf. Das Modell sieht die Karte, WIE BLENDER SIE SCHREIBT. Im Parametersatz steht darum auch bei C 'tiefe_invertiert: true' — das bezieht sich auf den Renderweg, nicht auf das, was beim ControlNet ankommt. An unserem Code wurde nichts geaendert."
+    },
+    "laeufe": [
+      {
+        "lauf": "A",
+        "was": "controlnet_staerke 0.0 — Konditionierung abgeschaltet",
+        "seed": 1004,
+        "sha256_16": "d10742abff4219f3",
+        "render_dauer_s": 1.58,
+        "schritte_gerechnet": 8,
+        "schritte_bestellt": 8,
+        "hinweise": [
+          "denoise=0.6 bleibt im Modus 'txt2img' wirkungslos: Ohne 'beauty_png' gibt es kein Ausgangsbild, das überschrieben werden könnte.",
+          "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ."
+        ],
+        "score": 0.6032343702834817,
+        "spearman": -0.4792409857401403,
+        "geom_iou": 0.7593083987366271,
+        "n_gemeinsam": 135349,
+        "bestanden": false,
+        "mess_dauer_s": 2.47
+      },
+      {
+        "lauf": "B",
+        "was": "controlnet_staerke 0.8, Karte invertiert — heutiger Vorgabeweg",
+        "seed": 1004,
+        "sha256_16": "34cbbaa7af540bf3",
+        "render_dauer_s": 1.28,
+        "schritte_gerechnet": 8,
+        "schritte_bestellt": 8,
+        "hinweise": [
+          "denoise=0.6 bleibt im Modus 'txt2img' wirkungslos: Ohne 'beauty_png' gibt es kein Ausgangsbild, das überschrieben werden könnte.",
+          "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ."
+        ],
+        "score": 0.6567975040571001,
+        "spearman": -0.4528919080374363,
+        "geom_iou": 0.9525075491081156,
+        "n_gemeinsam": 152987,
+        "bestanden": true,
+        "mess_dauer_s": 0.38
+      },
+      {
+        "lauf": "C",
+        "was": "controlnet_staerke 0.8, Karte NICHT invertiert",
+        "seed": 1004,
+        "sha256_16": "f467cf03b90ba413",
+        "render_dauer_s": 1.28,
+        "schritte_gerechnet": 8,
+        "schritte_bestellt": 8,
+        "hinweise": [
+          "denoise=0.6 bleibt im Modus 'txt2img' wirkungslos: Ohne 'beauty_png' gibt es kein Ausgangsbild, das überschrieben werden könnte.",
+          "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ."
+        ],
+        "score": 0.6985974634154036,
+        "spearman": -0.4934528580942279,
+        "geom_iou": 0.9890274377481512,
+        "n_gemeinsam": 155936,
+        "bestanden": true,
+        "mess_dauer_s": 0.39
+      },
+      {
+        "lauf": "D",
+        "was": "controlnet_staerke 1.0, sonst wie B",
+        "seed": 1004,
+        "sha256_16": "fcdbe0e47ef698b9",
+        "render_dauer_s": 1.28,
+        "schritte_gerechnet": 8,
+        "schritte_bestellt": 8,
+        "hinweise": [
+          "denoise=0.6 bleibt im Modus 'txt2img' wirkungslos: Ohne 'beauty_png' gibt es kein Ausgangsbild, das überschrieben werden könnte.",
+          "Die Tiefenkarte wird für 'z-image-turbo' UMGEDREHT übergeben: Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel (am Gerät gemessen). Die Datei auf der Platte bleibt unverändert — das Modell sieht ihr Negativ."
+        ],
+        "score": 0.6783620052281165,
+        "spearman": -0.47994253422015865,
+        "geom_iou": 0.9588127272045872,
+        "n_gemeinsam": 153504,
+        "bestanden": true,
+        "mess_dauer_s": 0.4
+      }
+    ],
+    "die_antwort": {
+      "hinweise_zu_control_image": "KEINE. In keinem der vier Laeufe steht ein Hinweis zu 'control_image' oder 'controlnet_conditioning_scale'. Beide Argumente werden von der Pipeline angenommen. Die Naht traegt.",
+      "hinweise_die_dastehen": "Zwei je Lauf, in allen vier identisch: (1) denoise 0.6 ist im txt2img-Modus wirkungslos, weil kein beauty_png vorliegt; (2) die Tiefenkarte wird umgedreht uebergeben. Beides erwartet, keines betrifft die Naht.",
+      "A_gegen_B": {
+        "score": [
+          0.6032,
+          0.6568
+        ],
+        "geom_iou": [
+          0.7593,
+          0.9525
+        ],
+        "pruefsummen_verschieden": true,
+        "urteil": "A ist NICHT gleich B. Die Konditionierung kommt an und wirkt."
+      },
+      "C_gegen_B": {
+        "score": [
+          0.6986,
+          0.6568
+        ],
+        "abstand": 0.0418,
+        "rauschboden_seed_auf21_stdabw": 0.0758,
+        "urteil": "C liegt ueber B, aber der Abstand ist KLEINER als die Seed-Streuung derselben Szene. Kein 'C viel groesser als B'. Die Polaritaet ist damit nicht als verdreht belegt — und auch nicht als richtig. Der Unterschied ist nicht messbar."
+      },
+      "wo_die_konditionierung_wirkt": "Ausschliesslich auf geom_iou (0.759 -> 0.953, +0.19). |spearman| bleibt ueber alle vier Laeufe bei 0.453 bis 0.494 — die Konditionierung bewegt die SILHOUETTE, nicht die Tiefenordnung.",
+      "zieht_sie_falsch": "NEIN, und das ist mit einem Anker in den eigenen Daten belegt: Lauf A hat die Konditionierung ABGESCHALTET und erreicht |rho| 0.479 — genauso niedrig wie die drei konditionierten Laeufe. Das niedrige |rho| ist eine Eigenschaft der erzeugten Bilder als solcher, nicht eine Wirkung des ControlNets."
+    },
+    "kontrollanker_59_8_prozent": {
+      "quelle": "auf-21, dieselbe Soll-Karte, unveraendert — nicht neu gemessen",
+      "beauty": 0.9839,
+      "weisses_rauschen": 0.7217,
+      "leeres_graubild": 0.5188,
+      "verlauf_quer": 0.3483,
+      "einordnung": "Alle vier Laeufe (0.6032 bis 0.6986) liegen zwischen Graubild und Rauschen. Keiner erreicht das Rauschen."
+    },
+    "zweite_frage_arbeitsbereich": {
+      "szene": "gleicher Testbau, Bodenplatte 11 m statt 20 m, gleiche feste Kamera",
+      "geometrieanteil_prozent": 29.11,
+      "anker": {
+        "beauty (perfekte Geometrie)": {
+          "score": 0.4149082484271045,
+          "spearman": -0.9604675869729791,
+          "geom_iou": 0.17923442388659278,
+          "n_gemeinsam": 23201,
+          "bestanden": false
+        },
+        "weisses Rauschen": {
+          "score": 0.25464318641410233,
+          "spearman": -0.9485742571844331,
+          "geom_iou": 0.0683585411432051,
+          "n_gemeinsam": 9767,
+          "bestanden": false
+        },
+        "leeres Graubild": {
+          "score": null,
+          "spearman": null,
+          "geom_iou": 0.0,
+          "n_gemeinsam": 0,
+          "bestanden": false
+        },
+        "Verlauf quer": {
+          "score": null,
+          "spearman": null,
+          "geom_iou": 0.0,
+          "n_gemeinsam": 0,
+          "bestanden": false
+        }
+      },
+      "antwort": "NEIN — weisses Rauschen erreicht bei 29 % das Gate NICHT (0.2546 gegen 0.65).",
+      "aber": "Das perfekte Bild erreicht es auch nicht (0.4149). Bei 29 % ist die Decke so niedrig wie bei 17 %, nur die Trennung ist besser: Verhaeltnis perfekt zu Rauschen 1.63 gegen 1.36 bei 59.8 %. Grau und Verlauf sind dort gar nicht messbar (n_gemeinsam 0) — auch das trennt.",
+      "was_daraus_folgt": "Ein Arbeitsbereich bei rund 29 % existiert, aber NUR mit neu gesetzter Schwelle. Rauschen 0.25, perfekt 0.41 — eine Grenze um 0.33 bis 0.35 trennt beides. Die 0.65 sind an keinem dieser drei Betriebspunkte kalibriert.",
+      "nicht_monoton": "17 % perfekt 0.504 (auf-12, wie_soll), 29 % perfekt 0.4149, 59.8 % perfekt 0.9839. Die Mitte ist NICHT besser als die Raender, sie ist die schlechteste Decke von dreien."
+    }
+  },
+  "urteil": {
+    "kernsatz": "Die ControlNet-Naht traegt — sie transportiert aber die Silhouette und nicht die Tiefenordnung. Das niedrige |rho| hat nichts mit ihr zu tun: der unkonditionierte Lauf A hat dasselbe."
+  },
+  "umgebung": {
+    "leistungsgrenze_w": 400,
+    "leerlauf": true,
+    "gpu_last_vorher_prozent": 0,
+    "diffusers": "0.39.0",
+    "blender": "5.2.0 LTS"
+  },
+  "fehler": null
+}
