@@ -26,6 +26,18 @@ Grafikkarte. Die kommt hier aus ``nvidia-smi`` — und wenn ``nvidia-smi`` fehlt
 oder etwas Unlesbares liefert, lautet die Antwort **nein**, nicht "vermutlich schon".
 Ungeprueft ist nicht in Ordnung.
 
+**Frage 3 — wo bewegt sich etwas?** Seit dem 21.08. haengt eine Fortschrittswache am
+Abholer, aber sie braucht einen Pfad, an dem sich waehrend des Laufs etwas tut. Den kennt
+der Betrieb und nicht die Bibliothek: Er haengt daran, wohin dieser Aufruf schreiben
+laesst. Darum wird sie hier gebaut, auf den Ausgabeordner des jeweiligen Auftrags.
+
+Sie **bricht nichts ab.** Der erste vollstaendige Lauf am 19.08. brauchte 292,2 s fuer
+drei Kameras; eine Frist, die kuerzer waere als ein einzelner Cycles-Lauf, riefe bei
+jedem gesunden Auftrag Alarm. Die Voreinstellung von 300 s ist aus dem Altbestand
+uebernommen und ausdruecklich **nicht gemessen** — sie steht als Schalter da, damit sie
+sich aendern laesst, sobald jemand die laengste Pause zwischen zwei neuen Dateien
+wirklich gemessen hat.
+
 REGEL 3: Der Bericht nennt Auftrags-IDs und Dateinamen, keine Benutzerpfade.
 """
 from __future__ import annotations
@@ -39,7 +51,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from aiimaging import abholer  # noqa: E402
+from aiimaging import abholer, fortschritt  # noqa: E402
 
 #: Ab welcher Auslastung die Karte als belegt gilt. Nicht 0 %: `nvidia-smi` meldet auch
 #: im Leerlauf gelegentlich 1-2 %, und ein Abholer, der darauf wartet, laeuft nie.
@@ -87,6 +99,13 @@ def main() -> int:
     ap.add_argument("--stil", default=None, help="Stil fuer die Belichtungspruefung.")
     ap.add_argument("--ohne-nullprobe", action="store_true",
                     help="Die Kontrollanker weglassen. Nicht empfohlen — siehe auf-21.")
+    ap.add_argument("--stillstand-frist-s", type=float, default=fortschritt.FRIST_S,
+                    help=("Sekunden ohne neue Datei im Ausgabeordner, ab denen ein "
+                          "Stillstand berichtet wird. Bricht NICHTS ab. Voreinstellung "
+                          "ist uebernommen, nicht gemessen."))
+    ap.add_argument("--ohne-wache", action="store_true",
+                    help=("Ohne Fortschrittsbeobachtung laufen. Der Bericht sagt dann "
+                          "'nicht gemessen' und nicht 'lief durch'."))
     ap.add_argument("--probe", action="store_true",
                     help="Nur berichten, was anlaege: Karte pruefen, offene Auftraege zaehlen.")
     a = ap.parse_args()
@@ -109,15 +128,42 @@ def main() -> int:
         return 0
 
     verarbeite = abholer.verarbeiter(stil=a.stil, nullprobe=not a.ohne_nullprobe)
+
+    def wache_bauen(auftrag):
+        """Eine Wache auf den Ausgabeordner DIESES Auftrags.
+
+        Eine neue Datei dort ist ein **belegtes** Fortschrittszeichen: Sie taucht auf,
+        weil etwas fertig geworden ist, und nicht, weil jemand `running` sagt. Der Ordner
+        wird gleich angelegt — sonst faende der erste Blick nichts vor und die Uhr liefe
+        ab Beginn statt ab dem ersten Zeichen.
+        """
+        ziel = Path(auftrag["ausgabe"])
+        ziel.mkdir(parents=True, exist_ok=True)
+        return fortschritt.wache_fuer_verzeichnis(
+            ziel, frist_s=a.stillstand_frist_s,
+            name=f"Auftrag {auftrag.get('job_id') or ziel.parent.name}")
+
     bericht = abholer.durchgang(store, verarbeite=verarbeite,
                                 fremde_freigabe_gilt=a.fremde_freigabe,
                                 darf_rechnen=karte_auskunft,
-                                hoechstens=a.hoechstens)
+                                hoechstens=a.hoechstens,
+                                wache_bauen=None if a.ohne_wache else wache_bauen)
     schlank = {k: v for k, v in bericht.items() if k != "ergebnisse"}
     print(json.dumps(schlank, ensure_ascii=False, indent=1))
     for e in bericht.get("ergebnisse", []):
         kennung = e.get("job_id") or e.get("auftrag") or "?"
         print(f"  {kennung}: {e.get('status', '?')} — {str(e.get('grund') or e.get('begruendung') or '')[:160]}")
+        w = e.get("wache")
+        if w is None:
+            print("    Wache: nicht beobachtet")
+        elif not w.get("gemessen"):
+            print(f"    Wache: NICHT GEMESSEN — {w.get('detail', '')[:140]}")
+        elif w.get("gestanden"):
+            print(f"    Wache: STILLSTAND, laengste Pause {w['laengster_stillstand_s']:.0f} s "
+                  f"({w['blicke']} Blicke)")
+        else:
+            print(f"    Wache: kein Stillstand ({w['blicke']} Blicke, laengste Pause "
+                  f"{w['laengster_stillstand_s']:.0f} s)")
     return 0
 
 

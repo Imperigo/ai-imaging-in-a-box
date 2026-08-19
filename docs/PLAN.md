@@ -838,7 +838,18 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Welcher Pfad sich während eines Multipass-Laufs wirklich bewegt und welche Frist
       dort trägt, ist am Gerät zu messen — die 32-s-Takt-Geschichte vom 20.08. ist die
       Warnung dazu.
+- [x] **Die Wache läuft im Betrieb mit (21.08.).** `tools/abholen.py` baut sie je Auftrag
+      auf dessen Ausgabeordner — dort, wo eine neue Datei ein **belegtes** Zeichen ist.
+      Der Pfad gehört zum Betrieb und nicht zur Bibliothek, darum wird sie dort gebaut
+      und nicht im Abholer. Schalter `--stillstand-frist-s` und `--ohne-wache`; der
+      Bericht sagt je Auftrag „nicht beobachtet", „NICHT GEMESSEN" oder die längste Pause.
+      Sechs Tests in `tests/test_abholen_cli.py`, alle drei Verdrahtungen an einer
+      Mutationsprobe geprüft: Jede Kappung macht genau einen Test rot.
 - [ ] **Welche Frist trägt am echten Lauf?** Die Wache hängt, ihre Frist ist geraten.
+      **Erster Anhaltspunkt seit 19.08.:** Der erste vollständige Lauf brauchte 292,2 s
+      für drei Kameras, also rund 97 s je Kamera. Die Vorgabe von 300 s wäre damit länger
+      als der ganze Auftrag und bliebe wirkungslos — die Frist muss unter die längste
+      Pause zwischen zwei neuen Dateien, und die ist noch niemand gemessen.
       `FRIST_S = 300` ist aus dem Altbestand übernommen, ausdrücklich **nicht** gemessen.
       Zu kurz bricht gesunde Läufe ab, zu lang merkt nichts. Braucht die HomeStation:
       längste beobachtete Pause zwischen zwei neuen Dateien im Ausgabeordner, an CPU und
