@@ -71,3 +71,49 @@ nächste billige Messung — dieselben acht Bilder liegen schon da.
 
 *Acht Blender-Läufe, elf Auswertungen, kein Bildmodell. Maske, Soll-Karte und Kamera
 unverändert aus `auf-24`; geändert wurde ausschliesslich das gerenderte Bild.*
+
+---
+
+# Nachtrag: Mein eigener Kandidat für die Anwesenheitsprüfung fällt durch
+
+Ich habe oben den Tiefen**umfang** innerhalb der Maske als «nächste billige Messung»
+vorgeschlagen. Sie war billig — dieselben Bilder, nur elf Schätzungen — und sie ist
+**negativ ausgefallen**. Damit steht sie hier, bevor jemand Zeit hineinsteckt.
+
+Gemessen als **Spannenanteil**: der Abstand vom 5.- zum 95.-Perzentil *innerhalb der
+Maske*, geteilt durch denselben Abstand über das *ganze Bild*. Das Verhältnis ist
+massstabsfrei, weil der Schätzer jedes Bild anders normiert.
+
+| Bild | Spannenanteil |
+|---|---|
+| perfekt (unverstellt) | **0.4691** |
+| **H1 · Bauwerk ganz weg** | **0.4443** |
+| **H2 · 20 m versetzt** | **0.4492** |
+| H3 · andere Kubatur | 0.6392 |
+| H4 · 90° gedreht | 0.6709 |
+| Versatz 1 m | 0.5184 |
+| Versatz 4 m | 0.7158 |
+| weisses Rauschen | 0.3344 |
+| leeres Graubild | 0.1046 |
+| erzeugt, `seed` 1000 | 0.2367 |
+| erzeugt, `seed` 1004 | 0.1775 |
+
+**H1 und H2 liegen innerhalb von 5 % des perfekten Bildes.** Genau die zwei Fälle, für die
+die Prüfung gebaut wäre, unterscheidet sie nicht. Der Grund ist im Nachhinein
+offensichtlich: An den Maskenpunkten spannt Boden-plus-Himmel einen ganz ähnlichen
+Tiefenbereich auf wie eine Fassade davor — die Maske liegt ja genau dort, wo das Gebäude
+den Blick auf beides verstellt.
+
+**Und die Grösse zeigt sogar in die falsche Richtung:** H3, H4 und der 4-m-Versatz liegen
+**über** dem perfekten Wert. Der Spannenanteil wächst mit dem geometrischen Fehler, statt
+mit der Abwesenheit zu fallen. Als Anwesenheitsprüfung ist er damit nicht nur unbrauchbar,
+sondern irreführend.
+
+*Was die Zahlen nebenbei bestätigen:* Die erzeugten Bilder (0.18–0.24) liegen unter dem
+Rauschen (0.33) und nahe beim leeren Graubild (0.10). Auch auf dieser Achse ist die Kette
+näher an einem leeren Bild als an einem Bauwerk — dasselbe Bild wie bei ρ.
+
+**Die Frage «was ersetzt `geom_iou`» bleibt damit offen**, und mein erster Vorschlag ist
+vom Tisch. Der nächste, den ich nicht gemessen habe: eine Prüfung nicht auf Zahlen der
+Tiefenkarte, sondern auf **Kanten** — ein Bauwerk hat an der Maskengrenze eine
+Tiefenkante, ein leeres Grundstück nicht.
