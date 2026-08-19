@@ -680,20 +680,64 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       und damit auf eine Frage, die kein Werkzeug beantwortet. Bis dahin bleibt es eine
       Lesepflicht: **Wer einen Test schreibt, dessen Name eine Behauptung trägt, muss
       prüfen, ob die Zusicherung diese Behauptung wirklich falsifizieren KÖNNTE.**
-- [ ] **Der neue Verdächtige heisst `geom_iou`, und der Verdacht heisst Boden.** In
-      Szene B fällt ρ sauber, während `geom_iou` STEIGT (0.5 m → 1 m: 0.9324 → 0.9579).
-      Bei 59.8 % Geometrieanteil ist mehr als die Hälfte aller Punkte Bodenebene; ein
-      verschobenes Gebäude ändert daran fast nichts, und die Silhouetten decken sich
-      weiter, weil sie sich **im Boden** decken. Passt zur Nullprobe (weisses Rauschen:
-      0.7217 auf derselben Szene). **Vermutung, nicht Messung.** Zu messen: dieselben
-      Reihen, aber `geom_iou` nur über die Punkte, an denen das BAUWERK steht. Der
-      frühere Anlauf (`ohne_randberuehrung`, 20.08. zurückgenommen) war richtig gedacht
-      und falsch gebaut — er wählte mit Boden null Punkte aus.
-- [ ] **Die Polarität der Nullproben ist ungemessen — und sie entscheidet mit.** Wenn
-      weisses Rauschen ein POSITIVES ρ liefert, fällt der Rauschanker mit der Richtung
-      auf 0, und das Tor trennte plötzlich sauber. Liefert es ein negatives, bleibt alles
-      wie gehabt. Wir wissen es nicht: `auf-21`/`auf-22` haben die Anker als Score
-      gemeldet, nicht als ρ. Billig nachzuholen, ohne Bildmodell.
+- [x] **BESTÄTIGT (`auf-20260821-24`): Es liegt am Boden — und die Heilung ist eine
+      andere, als ich vorgeschlagen habe.** Meine Vorgabe war `geom_iou` über der
+      Bauwerksmaske. Das geht nicht: Innerhalb der Maske trägt die Soll-Karte **überall**
+      Geometrie, `geom_iou` ist dort konstruktionsbedingt 1 und misst nichts. Und mit der
+      Maske als Soll-Karte durch die übliche Kette bricht es zusammen — das perfekte Bild
+      erreicht in Szene B **zwei** gemeinsame Punkte, weil `wie_soll` die 44 604 nächsten
+      Punkte *irgendwo im Bild* wählt und die auf dem Boden liegen. Derselbe Fehler wie
+      bei `ohne_randberuehrung`, und ich bin ihm ein zweites Mal aufgesessen.
+
+      **Was trägt: ρ über der Bauwerksmaske, ohne `geom_iou`, ohne Normierung.**
+
+      | Versatz | 0 m | 0.25 | 0.5 | 1 m | 2 m | 4 m | Rauschen |
+      |---|---|---|---|---|---|---|---|
+      | 29 % | −0.9908 | −0.9627 | −0.9239 | −0.8449 | −0.7814 | −0.7386 | −0.5207 |
+      | 59.8 % | −0.9874 | −0.9594 | −0.9211 | −0.8437 | −0.7843 | −0.7435 | −0.5207 |
+
+      **Streng monoton** in beiden Szenen, deutlicher Abstand zum Rauschen — und die
+      beiden Kurven liegen mit höchstens **0.005** aufeinander. **Was die Normierung
+      nicht leistete, leistet die Maske ohne jede Normierung: Die Szenenabhängigkeit war
+      nie eine Eigenschaft der Metrik, sie war der Boden.**
+- [x] **Die Maske kostet keinen zweiten Renderdurchgang.** Der Material-ID-Pass des
+      Multipass liefert exakt dieselbe: 44 604 Punkte aus beiden Quellen, Differenz in
+      beide Richtungen null. Bedingung, die die HomeStation ausdrücklich nennt: Es geht,
+      weil das Gelände ein eigenes Objekt mit eigenem Eintrag ist. Für eine Automatik
+      braucht es eine Regel, **woran das Gelände zu erkennen ist** (Objektname, `IfcSite`,
+      vereinbartes Material) — solange die Zuordnung am Namen hängt, ist der Weg für
+      einen Messstand gut und für den Betrieb noch nicht fertig.
+- [x] **Die Polarität der Nullproben ist gemessen — und meine Hoffnung war falsch.** Alle
+      Nullproben haben ein **negatives** ρ (Rauschen −0.9165 bei 59.8 %, −0.9486 bei
+      29 %). Der Rauschanker fällt mit der gerichteten Rechnung also **nicht** auf 0. Der
+      Grund ist derselbe wie beim Graubild: Ein monokularer Schätzer legt in eine
+      strukturlose Fläche eine glatte Rampe, und die Soll-Karte einer Bodenszene **ist**
+      im Wesentlichen eine Rampe. Zwei Rampen korrelieren.
+
+## Die Geometrie-QA neu bauen — der Stand, auf dem morgen anzufangen ist
+
+- [ ] **Der Score wird `polaritaet * spearman` über der Bauwerksmaske.** Gemessen
+      monoton, gemessen szenenunabhängig, ohne Normierung und ohne Anker-Arithmetik. Die
+      Bausteine liegen: `polaritaet` seit 21.08. im Modul, die Maske aus dem
+      Material-ID-Pass. Zu bauen sind der Maskenweg durch `abholer`/`seams` und die
+      Ablösung des alten Scores — **nicht** durch stilles Ersetzen: Alle bisherigen Zahlen
+      sind mit `sqrt(|ρ| · geom_iou)` entstanden und müssen unterscheidbar bleiben
+      (`METHODE` gegen `METHODE_GERICHTET`, jetzt eine dritte Zeile dazu).
+- [ ] **NICHT VERLIEREN: `geom_iou` war der Halluzinationsfänger.** Er fragt, ob das
+      Gebäude **dort** ist, wo es hingehört; ρ fragt nur, ob die Tiefen **innerhalb** der
+      Maske richtig gestaffelt sind. Ein erfundenes Gebäude an falscher Stelle könnte über
+      der Maske eine hohe Rangkorrelation erreichen — das ist die Erpressbarkeit, gegen
+      die `geom_iou` überhaupt eingeführt wurde.
+
+      **Der Verdacht, dass es trotzdem gutgeht, ist eine Vermutung und keine Messung:**
+      Weisses Rauschen erreicht über der Maske −0.5207 gegen −0.99 beim perfekten Bild,
+      die Trennung ist also da. Ob eine *halluzinierte Kubatur* dort ebenfalls tief fällt,
+      ist **nicht gemessen** — und genau dieser Fall ist der Grund für den zweiten Faktor.
+      Nächster Auftrag: dieselbe Reihe, aber mit einem Bauwerk an falscher Stelle statt
+      eines verschobenen. Erst danach darf `geom_iou` fallen.
+- [ ] **Der Rauschboden über der Maske ist eine Zahl, keine Null.** −0.5207 in beiden
+      Szenen — bemerkenswert genau gleich, was für sich schon einen Blick wert ist. Eine
+      Schwelle muss darüber liegen; wo genau, ist die alte offene Frage in neuer Form.
 - [ ] **(hinfällig) Eine feste Schwelle kann es nicht geben — welcher ANTEIL genügt, ist ungemessen.**
       Decke und Boden schwanken je Szene um mehr als das Doppelte; die szenenunabhängige
       Grösse ist `(score − rauschen) / (perfekt − rauschen)`. `einordnung()` rechnet sie,
