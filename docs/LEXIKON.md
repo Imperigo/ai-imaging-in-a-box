@@ -1559,6 +1559,36 @@ und ausgegeben werden.
 
 **Sample** — Ein einzelner Rechenschritt pro Bildpunkt beim Raytracing. Mehr Samples
 bedeuten weniger Bildrauschen und längere Rechenzeit.
+*Wichtige Einschränkung, am 20.08.2026 gemessen: Bei eingeschaltetem* **adaptivem
+Sampling** *ist die eingestellte Samplezahl eine* **Obergrenze** *und keine Angabe der
+Rechenzeit — derselbe Lauf brauchte mit 6000 Samples zwölf Sekunden und mit 3000
+Samples ohne adaptives Sampling über drei Minuten. Wer aus einer Samplezahl auf eine
+Dauer schliesst, kann um mehr als eine Grössenordnung danebenliegen.*
+
+**Adaptives Sampling** — Der Renderer misst während des Rechnens, wie stark ein
+Bildbereich noch rauscht, und **hört dort früher auf**, wo es schon ruhig ist. Eine
+glatte weisse Wand braucht wenige Rechenschritte, eine Spiegelung mit Unschärfe viele.
+Das spart oft ein Vielfaches an Zeit — und macht die eingestellte Samplezahl zu einer
+Obergrenze statt zu einer Vorgabe. *In Blender/Cycles voreingestellt; für Messungen der
+Laufzeit muss es abgeschaltet werden, sonst misst man das Abbruchkriterium statt den
+Renderer.*
+
+**Blockpufferung (der Standardausgabe)** — Ein Programm schreibt seine Ausgabe nicht
+Zeichen für Zeichen, sondern sammelt sie und gibt sie in Blöcken ab. Wohin geschrieben
+wird, ändert das Verhalten: Auf einem Terminal wird meist zeilenweise abgegeben, in eine
+**Datei** oder **Pipe** blockweise. Wer die Ausgabe eines fremden Programms beobachtet,
+sieht darum nicht, was es sagt, sondern was es **abgegeben** hat.
+*Praktische Folge in diesem Projekt: Blenders umgeleitete Ausgabe wächst gemessen nur
+alle 32 Sekunden (`docs/BLENDER_AUSGABETAKT_2026-08-20.md`) — jede Stillstandsfrist muss
+über diesem Takt liegen, sonst bricht sie gesunde Läufe ab.*
+
+**Pipe-Blockade (deadlock beim Lesen)** — Startet ein Programm ein anderes und leitet
+dessen Ausgabe in eine **Pipe**, ohne sie zu lesen, so bleibt das gestartete Programm
+stehen, sobald der Puffer der Pipe voll ist: Es wartet darauf, weiterschreiben zu dürfen.
+Der Aufrufer wartet gleichzeitig darauf, dass es fertig wird — beide warten aufeinander.
+*Die Fortschrittswache dieses Projekts leitet darum in eine temporäre Datei um und nicht
+in eine Pipe. Sonst hätte ausgerechnet die Wache, die einen Stillstand verhindern soll,
+selbst einen erzeugt.*
 
 **Add-on / Plugin** — Eine Erweiterung, die *innerhalb* eines Wirtsprogramms läuft und
 dessen Innenleben mitbenutzt. Technisch bequem, lizenzrechtlich heikel: Ein Add-on ist
@@ -2317,6 +2347,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-20 | Ergaenzt aus der Taktmessung an Blender: **adaptives Sampling**, **Blockpufferung der Standardausgabe**, **Pipe-Blockade**. **Sample** um die gemessene Einschraenkung ergaenzt: Bei adaptivem Sampling ist die Samplezahl eine OBERGRENZE und keine Angabe der Rechenzeit — 6000 Samples in 12 s gegen 3000 ohne adaptives Sampling in ueber drei Minuten |
 | 2026-08-20 | Ergaenzt aus der Fortschrittswache (`src/aiimaging/fortschritt.py`): **Timeout**, **Gesamt-Timeout gegen Fortschrittsfrist**, **Stillstand (Stall)**, **behauptetes gegen belegtes Fortschrittszeichen**, **monotone Uhr**. Anlass war wieder ein Befund: Der geerbte Stillstandswaechter stellt bei den Zustaenden `running` und `queued` die Uhr zurueck — also genau in dem Fall, fuer den er gebaut wurde |
 | 2026-08-20 | Ergaenzt aus der Belichtungspruefung (`src/aiimaging/belichtung.py`) und dem farbfaehigen PNG-Leser: **Farbtyp (PNG)**, **Palette (PNG-Farbtyp 3)**, **Alphakanal**, **Luminanz**, **Rec.709**, **Gammakorrektur/sRGB**, **Clipping (ausgefressen/zugelaufen)**, **Belichtungsrahmen**. Der Anlass war ein Befund und keine Fleissarbeit: Die geerbte Schwelle von 8 % geclippter Lichter haette unseren eigenen, gemessenen Hausstil (7,55 % ± 6,9, Hoechstwert 30,0 %) zum Fehler erklaert — eine Belichtungsschwelle ist keine Eigenschaft guter Belichtung, sondern eines Stils |
 | 2026-08-19 | Aus dem Uebergabeblatt an die Vis-Oberflaeche (`docs/UEBERGABE_VIS_2026-08-19.md`): **nullbares Feld (nullable)** — der Begriff wurde dort gebraucht, um zu erklaeren, warum `job_id` leer sein darf, stand aber nirgends. Alle uebrigen Fachbegriffe jenes Blatts (tote Kante, Bildwinkel, Backbone, SigLIP, Spearman, Freigabe-Token, Bounding Box, Subprozess, MCP) waren bereits erfasst und wurden geprueft, nicht angenommen |
