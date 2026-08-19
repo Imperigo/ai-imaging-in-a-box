@@ -261,3 +261,99 @@ Das ist keine Aussage über die Metrik, sondern über die Bilder: **Die erzeugte
 haben eine Tiefenstruktur, die schlechter zur Vorgabe passt als Rauschen.** Ein
 naheliegender Verdacht ist die Polarität der Tiefenkarte, die in diese Läufe als
 `invertiert` einging. Geprüft ist er nicht — er steht als eigener Planpunkt.
+
+
+---
+
+# Teil 3 · Die Naht trägt — meine Hypothese ist widerlegt
+
+**`auf-20260820-22`**, vier Läufe, Seed 1004 über alle vier. Lauf B trägt die Prüfsumme
+aus `auf-21`/Seed 1004 — der Aufbau ist Byte für Byte derselbe.
+
+## Die Hinweise, bevor eine Zahl gerechnet wird
+
+**Kein einziger Hinweis nennt `control_image` oder `controlnet_conditioning_scale`.**
+Beide Argumente werden von der Pipeline angenommen. `schritte_gerechnet`: 8 von 8.
+
+Die zwei Hinweise, die dastehen, waren erwartet: `denoise` ist im txt2img-Modus wirkungslos,
+und die Karte wird umgedreht übergeben.
+
+## Die vier Läufe
+
+| | Score | `\|rho\|` | `geom_iou` |
+|---|---|---|---|
+| **A** Stärke 0.0 | 0.6032 | 0.479 | 0.7593 |
+| **B** 0.8, invertiert | 0.6568 | 0.453 | **0.9525** |
+| **C** 0.8, nicht invertiert | 0.6986 | 0.494 | **0.9890** |
+| **D** 1.0, invertiert | 0.6784 | 0.480 | 0.9588 |
+
+**A ≠ B: Die Konditionierung kommt an.** `geom_iou` steigt von 0.76 auf 0.95.
+
+> **Die Naht transportiert die Silhouette — nicht die Tiefenordnung.**
+
+## Meine Hypothese ist widerlegt, und das ist die beste Nachricht seit Tagen
+
+Ich hatte vermutet: Unsere Bilder erreichen `|rho|` 0.23–0.45, ein leeres Graubild 0.889 —
+*„entweder kommt die Konditionierung nicht an, oder sie zieht aktiv in die falsche
+Richtung."*
+
+**Beides ist falsch.** `|rho|` bleibt über alle vier Läufe bei 0.45–0.49 — **auch beim
+unkonditionierten Lauf A.** Die niedrige Rangkorrelation hat also nichts mit der
+Konditionierung zu tun.
+
+> Der Rückstand gegenüber dem leeren Graubild ist ein **Artefakt der Metrik auf einer
+> Bodenszene**, keine Eigenschaft der Naht.
+
+Ich hatte zwei Erklärungen angeboten und beide für erschöpfend gehalten. Es gab eine
+dritte.
+
+## Die Polarität ist nicht messbar — weder verdreht noch bestätigt
+
+C liegt 0.0418 über B. Die Seed-Streuung derselben Szene beträgt **0.0758**. Der
+Unterschied liegt **unter dem Rauschen**, und damit sagt diese Messung über die Polarität
+nichts.
+
+*Genau dafür wurde `varianten.ist_unterschied_belegt` gebaut, und hier greift es zum ersten
+Mal.* Ohne den am Vortag gemessenen Rauschboden hätte man C für besser gehalten und die
+Polarität „korrigiert" — auf Rauschen hin.
+
+## Der Arbeitsbereich: Es gibt einen, aber nicht den, den ich erwartet hatte
+
+Bei **29,1 %** Geometrieanteil:
+
+| | Score | Gate 0.65 |
+|---|---|---|
+| perfekte Geometrie | **0.4149** | ✗ |
+| weisses Rauschen | **0.2546** | ✗ |
+| leeres Graubild | nicht messbar | — |
+| Querverlauf | nicht messbar | — |
+
+**Weisses Rauschen besteht das Gate dort nicht mehr.** Das perfekte Bild aber auch nicht.
+
+Und der Zusammenhang ist **nicht monoton**:
+
+| Geometrieanteil | perfekt | Rauschen | Verhältnis |
+|---|---|---|---|
+| 17 % | 0.504 | — | — |
+| **29,1 %** | **0.415** | 0.255 | **1.63** |
+| 59,8 % | 0.984 | 0.722 | 1.36 |
+
+**Die Mitte hat die niedrigste Decke von dreien — und die beste Trennung.** Mein Bild
+„zwischen den beiden Fehlerbereichen liegt der gute Bereich" war zu einfach. Es gibt
+keinen Anteil, bei dem Decke *und* Trennung zugleich stimmen.
+
+## Was daraus folgt, und es ist die Konsequenz des ganzen Tages
+
+> **Eine feste Schwelle kann es nicht geben.**
+
+Decke und Boden schwanken je Szene um mehr als das Doppelte. Die szenenunabhängige Grösse
+ist der **Anteil der Spanne**:
+
+```
+anteil = (score − rauschen) / (perfekt − rauschen)
+```
+
+Den rechnet `geometrie_qa.einordnung()` seit heute Nachmittag, und der Abholer misst die
+beiden Anker seit heute Abend selbst — je Soll-Karte, ohne zusätzlichen Renderlauf.
+
+**Welcher Anteil genügen soll, ist ungemessen.** Er steht darum nirgends als Schwelle.

@@ -903,3 +903,69 @@ def test_die_anker_sind_geordnet_wie_die_bilder():
     hätte die Nullprobe selbst einen Fehler."""
     a = geometrie_qa.NULLANKER["platte_endlich"]
     assert a["beauty"] > a["rauschen"] > a["grau"] > a["verlauf"]
+
+
+# ======================================================================================
+# Der Zusammenhang ist NICHT monoton — und eine feste Schwelle kann es nicht geben
+# ======================================================================================
+
+def test_die_mitte_hat_die_niedrigste_decke_von_dreien():
+    """`auf-20260820-22`: „Zwischen den beiden Fehlerbereichen liegt der gute Bereich"
+    war zu einfach gedacht.
+
+    Bei 29,1 % Geometrieanteil erreicht das perfekte Bild nur 0.415 — weniger als bei
+    17 % (0.504) und weit weniger als bei 59,8 % (0.984).
+    """
+    mitte = geometrie_qa.erreichbarkeit_fuer("platte_11m", "wie_soll")
+    viel = geometrie_qa.erreichbarkeit_fuer("platte_endlich", "wie_soll")
+    wenig = geometrie_qa.erreichbarkeit_fuer("ohne_boden", "wie_soll")
+    assert mitte["hoechster_score"] < wenig["hoechster_score"] < viel["hoechster_score"]
+
+
+def test_die_mitte_trennt_trotzdem_am_besten():
+    """Niedrigste Decke und beste Trennung zugleich — beides gehört in denselben Satz."""
+    def verhaeltnis(szene):
+        a = geometrie_qa.NULLANKER[szene]
+        return a["beauty"] / a[geometrie_qa.ANKER_RAUSCHEN]
+
+    assert verhaeltnis("platte_11m") > verhaeltnis("platte_endlich")
+
+
+def test_bei_29_prozent_besteht_rauschen_das_gate_nicht_mehr():
+    """Die gute Nachricht der Messung — und die halbe."""
+    anker = geometrie_qa.anker_fuer("platte_11m")
+    assert anker[geometrie_qa.ANKER_RAUSCHEN] < geometrie_qa.SCHWELLE_GEOMETRIE
+    # Aber das perfekte Bild besteht es auch nicht.
+    assert anker["beauty"] < geometrie_qa.SCHWELLE_GEOMETRIE
+
+
+def test_der_anteil_der_spanne_ist_die_szenenunabhaengige_groesse():
+    """**Die eigentliche Konsequenz.** Decke und Boden schwanken je Szene um mehr als das
+    Doppelte — eine feste Schwelle kann es darum nicht geben.
+
+    Derselbe *relative* Stand ergibt in beiden Szenen denselben Anteil, obwohl die
+    absoluten Scores weit auseinanderliegen.
+    """
+    for szene in ("platte_11m", "platte_endlich"):
+        anker = geometrie_qa.anker_fuer(szene)
+        mitte = anker[geometrie_qa.ANKER_RAUSCHEN] + 0.5 * (
+            anker["beauty"] - anker[geometrie_qa.ANKER_RAUSCHEN])
+        urteil = geometrie_qa.einordnung(mitte, anker)
+        assert urteil["anteil_der_spanne"] == pytest.approx(0.5)
+
+
+def test_die_absoluten_scores_derselben_lage_liegen_weit_auseinander():
+    """Zum Beleg, dass die Normierung nötig ist und nicht bloss elegant."""
+    a11 = geometrie_qa.anker_fuer("platte_11m")
+    a60 = geometrie_qa.anker_fuer("platte_endlich")
+    halb11 = a11["rauschen"] + 0.5 * (a11["beauty"] - a11["rauschen"])
+    halb60 = a60["rauschen"] + 0.5 * (a60["beauty"] - a60["rauschen"])
+    assert abs(halb60 - halb11) > 0.5, "derselbe Anteil, mehr als 0.5 Score Unterschied"
+
+
+def test_ein_anker_ohne_grau_und_verlauf_ist_trotzdem_brauchbar():
+    """Bei 29 % sind beide gar nicht messbar (n_gemeinsam 0) — sie fehlen darum im
+    Anker, statt als Null zu erscheinen."""
+    anker = geometrie_qa.anker_fuer("platte_11m")
+    assert "grau" not in anker and "verlauf" not in anker
+    assert geometrie_qa.einordnung(0.35, anker)["anteil_der_spanne"] is not None

@@ -723,6 +723,8 @@ def geometrie_gate(soll, ist, *, schwelle: float = SCHWELLE_GEOMETRIE, **kw) -> 
 #: an einem **gerenderten** Bild durch den Tiefenschätzer — also die beste Silhouette, die
 #: diese Kette auf dieser Szene überhaupt hergibt.
 IOU_DECKEL = {
+    # 29,1 % Geometrieanteil, gemessen am perfekten Bild (`auf-20260820-22`).
+    ("platte_11m", "wie_soll"): 0.1792,
     ("ohne_boden", "wie_soll"): 0.2556,
     ("ohne_boden", "ohne_randberuehrung"): 0.4057,
     ("platte_endlich", "wie_soll"): 0.9666,
@@ -879,12 +881,39 @@ def erreichbarkeit_fuer(szene: str, strategie: str, **kw) -> dict | None:
 #: Das ist dieselbe Lage wie bei der Stil-Schwelle vom 18.08.: Dort liess 0.30 jedes
 #: beliebige Bildpaar durch, bis der Boden von SigLIP 2 bei 0.526 gemessen war. Ein Gate
 #: ohne Nullprobe ist kein Gate.
+#: **Nachtrag 20.08.2026 abends** (`auf-20260820-22`): Bei **29,1 %** Geometrieanteil
+#: besteht weisses Rauschen das Gate **nicht** mehr (0.2546) — aber das perfekte Bild auch
+#: nicht (0.4149). Und der Zusammenhang ist **nicht monoton**:
+#:
+#: ================  =========  ==========  ===================
+#: Geometrieanteil   perfekt    Rauschen    Verhältnis
+#: ================  =========  ==========  ===================
+#: 17 %              0.504      —           —
+#: **29,1 %**        **0.415**  **0.255**   **1.63**
+#: 59,8 %            0.984      0.722       1.36
+#: ================  =========  ==========  ===================
+#:
+#: Die Mitte hat die **niedrigste Decke von dreien** und trotzdem die **beste Trennung**.
+#: „Zwischen den beiden Fehlerbereichen liegt der gute Bereich" war damit zu einfach
+#: gedacht — es gibt keinen Anteil, bei dem beides zugleich stimmt.
+#:
+#: **Was daraus folgt, ist die eigentliche Konsequenz dieses Moduls:** Eine *feste*
+#: Schwelle kann es nicht geben. Decke und Boden schwanken je Szene um mehr als das
+#: Doppelte. Die szenenunabhängige Grösse ist der **Anteil der Spanne** —
+#: ``(score − rauschen) / (perfekt − rauschen)`` — und den rechnet :func:`einordnung`.
 NULLANKER = {
     "platte_endlich": {
         "beauty": 0.9839,
         "rauschen": 0.7217,
         "grau": 0.5188,
         "verlauf": 0.3483,
+    },
+    # 11-m-Platte, 29,1 % Geometrieanteil. `grau` und `verlauf` sind dort gar nicht
+    # messbar (n_gemeinsam 0) — auch das trennt, und es fehlt hier darum, statt als Null
+    # zu erscheinen.
+    "platte_11m": {
+        "beauty": 0.4149,
+        "rauschen": 0.2546,
     },
 }
 

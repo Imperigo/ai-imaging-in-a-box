@@ -612,10 +612,34 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Gradienten liefert, den der Schätzer ohnehin erfindet, prüfte nichts.
       Ein einzelner gescheiterter Anker macht die Probe nicht wertlos: Gemeldet wird, was
       gemessen wurde.
-- [ ] **Unsere Bilder passen schlechter zur Vorgabe als Rauschen.** `|rho|` 0.23–0.45
-      gegen 0.92 beim Rauschen. Das ist keine Aussage über die Metrik, sondern über die
-      Bilder. Naheliegender Verdacht: die Tiefen-**Polarität**, die in diese Läufe als
-      `invertiert` einging. **Ungeprüft.**
+- [x] **Trägt die ControlNet-Naht? — JA, und meine Hypothese ist widerlegt.**
+      `auf-20260820-22`. Kein Hinweis nennt `control_image` oder
+      `controlnet_conditioning_scale`: Beide werden angenommen. **A (Stärke 0.0) ≠ B
+      (0.8):** `geom_iou` steigt von 0.76 auf 0.95.
+      *Die Naht transportiert die Silhouette — nicht die Tiefenordnung.*
+      **Widerlegt:** Ich hatte vermutet, die niedrige Rangkorrelation komme entweder von
+      einer toten Naht oder von verdrehter Polarität, und hielt beides für erschöpfend.
+      `|rho|` bleibt über alle vier Läufe bei 0.45–0.49 — **auch beim unkonditionierten
+      Lauf A.** Der Rückstand gegenüber dem Graubild ist ein Artefakt der Metrik auf einer
+      Bodenszene, keine Eigenschaft der Naht. Es gab eine dritte Erklärung.
+- [x] **Die Polarität ist nicht messbar** — C liegt 0.0418 über B, die Seed-Streuung
+      derselben Szene beträgt 0.0758. Der Unterschied liegt **unter dem Rauschen**.
+      *Hier greift `varianten.ist_unterschied_belegt` zum ersten Mal:* Ohne den am Vortag
+      gemessenen Rauschboden hätte man C für besser gehalten und die Polarität „korrigiert"
+      — auf Rauschen hin.
+- [x] **Es gibt einen Arbeitsbereich — aber nicht den erwarteten.** Bei 29,1 %
+      Geometrieanteil besteht weisses Rauschen das Gate **nicht** mehr (0.2546). Das
+      perfekte Bild aber auch nicht (0.4149).
+      **Und der Zusammenhang ist nicht monoton:** 17 % → 0.504, **29,1 % → 0.415**,
+      59,8 % → 0.984. Die Mitte hat die *niedrigste Decke von dreien* und die *beste
+      Trennung* (1.63 gegen 1.36). Mein Bild „zwischen den Fehlerbereichen liegt der gute
+      Bereich" war zu einfach — es gibt keinen Anteil, bei dem beides zugleich stimmt.
+- [ ] **Eine feste Schwelle kann es nicht geben — welcher ANTEIL genügt, ist ungemessen.**
+      Decke und Boden schwanken je Szene um mehr als das Doppelte; die szenenunabhängige
+      Grösse ist `(score − rauschen) / (perfekt − rauschen)`. `einordnung()` rechnet sie,
+      der Abholer misst die Anker selbst. **Welcher Anteil genügen soll, steht nirgends —
+      weil es niemand gemessen hat.** Das ist die nächste Frage, und sie ist die letzte
+      grosse offene an der Geometrie-QA.
 - [ ] **Der Rest ist kein Rechenfehler, sondern ein echter Rückstand.** Der Deckel lag bei
       0.636, die erzeugten Bilder bei 0.265 — zwischen *bestmöglich* und *erreicht* klafft
       noch einmal derselbe Abstand. Beides ist wahr, und keines erklärt das andere weg.
