@@ -415,9 +415,34 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       `kosmovis_render.py` macht `import nodes` und `import execution` — ComfyUI-Interna,
       GPL-3.0, in-process ausgeführt. Für uns in jeder Form gesperrt. Die Bestandsaufnahme
       vom 18.08. führte das nicht; sie ist berichtigt.
-- [ ] **`archviz_variant_scorer.py` und `archviz_exposure_check.py` öffnen** — vom
-      Agenten als die beiden nächstwichtigsten ungeöffneten Module benannt. Wir haben
-      weder eine Variantenbewertung noch eine Belichtungsprüfung.
+- [x] **`archviz_variant_scorer.py` und `archviz_exposure_check.py` geöffnet** —
+      2026-08-20. Beide **ohne jede Lizenzdatei** in jenem Bestand (Regel 1: ohne
+      Lizenzangabe gilt „alle Rechte vorbehalten" — nicht übernehmbar, was ohnehin nie
+      der Plan war), und beide laden ihr Bild zuerst über `bpy`, also für uns unter
+      Regel 2 und 4 verschlossen. Übernommen wurde **nichts ausser den Fragen**.
+      **Der Befund, der mehr wert ist als die fehlende Prüfung:** Beide Module kodieren
+      *einen* Stil in einer Konstante und geben das Ergebnis als objektives Qualitätsmass
+      aus. `HIGHLIGHT_WARN_PCT = 8.0` erklärt mehr als 8 % geclippte Lichter zum Fehler
+      „Überbelichtet" — unser am Vortag gemessener Hausstil liegt bei **7,55 % ± 6,9 mit
+      einem Höchstwert von 30,0 %**. Und der Variantenbewerter gewichtet *Schärfe* mit
+      **0,50**, was jeden Nebel- und Skizzenstil systematisch als schlechtestes Bild
+      ausweist.
+- [x] **Belichtungsprüfung gebaut** — 2026-08-20, `belichtung.py`, 31 Tests, reine
+      stdlib. Die Schwellen hängen an einem `Rahmen` je Stil, und **jeder Rahmen sagt,
+      welche seiner Zahlen gemessen sind**. Daraus die einzige harte Regel des Moduls:
+      *Eine ungemessene Schwelle darf nie `error` melden, höchstens `warn`* — dieselbe
+      Dreiteilung wie überall sonst, denn *nicht gemessen* ist nicht *in Ordnung*.
+      Der geerbte Rahmen ist als `GEERBTER_RAHMEN` mitgeführt, **zum Vergleich und nicht
+      zum Gebrauch**: Ein gemessener Widerspruch ist mehr wert als eine Behauptung.
+      Dazu `bildlesen.lies_png_luminanz` — der erste farbfähige Leser des Projekts,
+      sauber getrennt vom Tiefenleser, der Farbe weiterhin **ablehnen muss**.
+- [ ] **Variantenbewertung — aber nicht so** — der geerbte Bewerter normalisiert
+      **min-max innerhalb der Charge**: Die beste Variante bekommt ~100, die schlechteste
+      ~0, *auch wenn alle fünf unbrauchbar sind*, und bei einer einzelnen Variante gibt
+      es pauschal 50. Der `final`-Wert sieht absolut aus und ist eine Rangfolge. **Eine
+      Zahl, die absolut aussieht und relativ ist, ist schlimmer als keine Zahl.** Wenn wir
+      das bauen, dann mit absoluten Bezugsgrössen — und mit Gewichten, die am Stil hängen
+      statt an einem Geschmack.
 - [ ] **Fortschrittsgrenze für den Renderlauf** — der alte Bestand hat eine
       `no_progress`-Zeitgrenze, die ein **hängendes**, nicht abgestürztes Backend fängt.
       Wir haben nur einen Gesamt-Timeout. Das ist etwas, das wir schlechter haben.

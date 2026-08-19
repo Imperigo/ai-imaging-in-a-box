@@ -170,6 +170,16 @@ class BlenderRueckfall(UserWarning):
 #: hier absichtlich, sie sind keine Tiefenkarten und werden mit Begründung abgewiesen.
 _PNG_GRAUSTUFEN_KANAELE = {0: 1, 4: 2}      # Grau, Grau + Alpha
 
+#: Alle Farbtypen mit fester Kanalzahl — also **ohne** Palette (3), die ohne den
+#: PLTE-Block gar nicht gedeutet werden kann.
+_PNG_KANAELE = {0: 1, 2: 3, 4: 2, 6: 4}
+
+#: Rec.709-Gewichte für die Luminanz. Dieselben, die auch der Altbestand benutzt und die
+#: in der Bildtechnik üblich sind. Sie sind **eine Konvention und keine Messung**: Rec.601
+#: gewichtet Rot deutlich höher, und wer beide Zahlen vergleicht, vergleicht Äpfel mit
+#: Birnen. Darum stehen sie hier einmal und nicht in drei Modulen.
+LUMA_R, LUMA_G, LUMA_B = 0.2126, 0.7152, 0.0722
+
 _PNG_FARBTYP_NAME = {
     0: "Graustufen", 2: "RGB", 3: "Palette", 4: "Graustufen+Alpha", 6: "RGBA",
 }
@@ -298,13 +308,26 @@ def lies_png_graustufen(pfad) -> tuple[list[float], int, int]:
     return werte, breite, hoehe
 
 
-def _png_lesen(pfad) -> tuple[list[float], int, int, int]:
-    """Wie ``lies_png_graustufen``, gibt aber zusätzlich die Bittiefe zurück.
+def _png_entpacken(pfad) -> tuple[bytearray, int, int, int, int, int, int]:
+    """Eine PNG-Datei bis auf die entfilterten Rohbytes öffnen — **ohne Farbtyp-Urteil**.
 
-    Die Bittiefe interessiert nur ``png_befund`` — für den Quantisierungsschritt. Sie aus
-    den gelesenen Werten zurückzuschliessen (etwa über den kleinsten Wert über 0) wäre
-    eine Schätzung, die bei einem Bild aus wenigen Grautönen falsch ausgeht. Lieber eine
-    interne Funktion mehr als eine geratene Zahl in einem Bericht.
+    Alles, was für jeden Farbtyp gleich ist: Signatur, Kopf, Prüfsummen, Verschränkung,
+    Bittiefe, Entpacken, Entfiltern. Was der Aufrufer damit anfängt, entscheidet er
+    selbst — ``_png_lesen`` nimmt nur Graustufen an, ``lies_png_luminanz`` auch Farbe.
+
+    Die Trennung ist der Punkt: Der Graustufen-Weg **muss** farbige Bilder ablehnen (aus
+    drei Kanälen eine Entfernung zu machen wäre geraten), der Luminanz-Weg **muss** sie
+    annehmen. Beides in einer Funktion mit einem Schalter wäre die Stelle, an der später
+    jemand den Schalter falsch setzt und eine Tiefenkarte aus einer Farbe liest.
+
+    Returns:
+        ``(bytes, breite, hoehe, bittiefe, farbtyp, kanaele, bpp)`` — ``bytes`` sind die
+        entfilterten Scanlines ohne Filterbyte, in Dateireihenfolge (oben nach unten).
+
+    Raises:
+        BildError: alles, was schon vor der Farbfrage schiefgeht. Palette (Farbtyp 3)
+            wird hier abgelehnt, weil sie ohne den PLTE-Block nicht deutbar ist — ihre
+            Zahlen sind Indizes und keine Helligkeiten.
     """
     pfad = Path(pfad)
     try:
@@ -345,11 +368,11 @@ def _png_lesen(pfad) -> tuple[list[float], int, int, int]:
             f"Dateien; sie hier zu deuten hiesse, sieben Teilbilder zu einer Reihenfolge "
             f"zusammenzuraten."
         )
-    if farbtyp not in _PNG_GRAUSTUFEN_KANAELE:
+    if farbtyp not in _PNG_KANAELE:
         raise BildError(
             f"{pfad}: Farbtyp {farbtyp} ({_PNG_FARBTYP_NAME.get(farbtyp, 'unbekannt')}). "
-            f"Eine Tiefenkarte hat genau eine Dimension — aus drei Farbkanälen eine "
-            f"Entfernung zu machen wäre geraten, nicht gelesen."
+            f"Eine Palette speichert Indizes und keine Helligkeiten; ohne den PLTE-Block "
+            f"wären ihre Zahlen bedeutungslos."
         )
     if bittiefe not in (8, 16):
         raise BildError(
@@ -363,25 +386,90 @@ def _png_lesen(pfad) -> tuple[list[float], int, int, int]:
     except zlib.error as fehler:
         raise BildError(f"{pfad}: IDAT lässt sich nicht entpacken: {fehler}") from fehler
 
-    kanaele = _PNG_GRAUSTUFEN_KANAELE[farbtyp]
+    kanaele = _PNG_KANAELE[farbtyp]
     bpp = kanaele * (bittiefe // 8)
     aus = _entfiltern(roh, breite, hoehe, bpp, pfad)
+    return aus, breite, hoehe, bittiefe, farbtyp, kanaele, bpp
 
-    n = breite * hoehe
+
+def _kanalwerte(aus: bytearray, *, n: int, kanaele: int, bpp: int, bittiefe: int,
+                versatz: int) -> list[float]:
+    """Einen Kanal aus den entfilterten Bytes ziehen, skaliert auf ``0..1``."""
     if bittiefe == 8:
-        grau = aus if kanaele == 1 else aus[0::bpp]
-        werte = [wert / 255.0 for wert in grau]
-    else:
-        zahlen = array("H")
-        zahlen.frombytes(bytes(aus))
-        if sys.byteorder == "little":
-            # PNG legt Mehrbytewerte big-endian ab. `array` liest in Maschinenordnung —
-            # ohne diesen Tausch käme auf jeder üblichen Maschine Unsinn heraus, und zwar
-            # plausibel aussehender Unsinn.
-            zahlen.byteswap()
-        werte = [zahlen[i * kanaele] / 65535.0 for i in range(n)]
+        if kanaele == 1:
+            roh = aus
+        else:
+            roh = aus[versatz::bpp]
+        return [wert / 255.0 for wert in roh]
+    zahlen = array("H")
+    zahlen.frombytes(bytes(aus))
+    if sys.byteorder == "little":
+        # PNG legt Mehrbytewerte big-endian ab. `array` liest in Maschinenordnung —
+        # ohne diesen Tausch käme auf jeder üblichen Maschine Unsinn heraus, und zwar
+        # plausibel aussehender Unsinn.
+        zahlen.byteswap()
+    return [zahlen[i * kanaele + versatz] / 65535.0 for i in range(n)]
 
+
+def _png_lesen(pfad) -> tuple[list[float], int, int, int]:
+    """Wie ``lies_png_graustufen``, gibt aber zusätzlich die Bittiefe zurück.
+
+    Die Bittiefe interessiert nur ``png_befund`` — für den Quantisierungsschritt. Sie aus
+    den gelesenen Werten zurückzuschliessen (etwa über den kleinsten Wert über 0) wäre
+    eine Schätzung, die bei einem Bild aus wenigen Grautönen falsch ausgeht. Lieber eine
+    interne Funktion mehr als eine geratene Zahl in einem Bericht.
+    """
+    aus, breite, hoehe, bittiefe, farbtyp, kanaele, bpp = _png_entpacken(pfad)
+    if farbtyp not in _PNG_GRAUSTUFEN_KANAELE:
+        raise BildError(
+            f"{pfad}: Farbtyp {farbtyp} ({_PNG_FARBTYP_NAME.get(farbtyp, 'unbekannt')}). "
+            f"Eine Tiefenkarte hat genau eine Dimension — aus drei Farbkanälen eine "
+            f"Entfernung zu machen wäre geraten, nicht gelesen."
+        )
+    werte = _kanalwerte(aus, n=breite * hoehe, kanaele=kanaele, bpp=bpp,
+                        bittiefe=bittiefe, versatz=0)
     return werte, breite, hoehe, bittiefe
+
+
+def lies_png_luminanz(pfad) -> tuple[list[float], int, int]:
+    """Ein PNG **beliebigen** Farbtyps → ``(Luminanz 0..1, Breite, Hoehe)``. Reine stdlib.
+
+    Das Gegenstück zu :func:`lies_png_graustufen` für die Belichtungsprüfung: Dort ist
+    Farbe ein Fehler, hier ist sie der Normalfall — ein gerendertes Bild ist farbig.
+
+    Gerechnet wird die **Rec.709-Luminanz** (:data:`LUMA_R`/``G``/``B``). Bei
+    Graustufenbildern ist sie der Grauwert selbst; ein Alphakanal wird **ignoriert** und
+    nicht als Deckung verrechnet, denn ein halbdurchsichtiges Pixel hat trotzdem eine
+    Helligkeit, und was dahinter liegt, weiss diese Funktion nicht.
+
+    **Was hier ausdrücklich NICHT passiert:** Es wird keine Gammakorrektur gerechnet. Die
+    Werte sind die Zahlen aus der Datei, also in aller Regel sRGB-kodiert und **nicht**
+    linear. Für Anteilsfragen („wieviel Fläche liegt über 0.95") ist das die richtige
+    Grösse, denn die Schwelle meint, was man sieht. Für physikalische Rechnungen wäre es
+    falsch — und dass es falsch wäre, steht hier, statt dass es jemand später herausfindet.
+
+    Args:
+        pfad: Pfad zur PNG-Datei.
+
+    Returns:
+        ``(werte, breite, hoehe)`` mit ``len(werte) == breite * hoehe``, zeilenweise von
+        oben nach unten — dieselbe Reihenfolge wie bei allen anderen Lesern dieses Moduls.
+
+    Raises:
+        BildError: keine PNG-Datei, beschädigt, verschränkt, Palette, oder eine Bittiefe
+            unter 8.
+    """
+    aus, breite, hoehe, bittiefe, farbtyp, kanaele, bpp = _png_entpacken(pfad)
+    n = breite * hoehe
+    if farbtyp in _PNG_GRAUSTUFEN_KANAELE:
+        werte = _kanalwerte(aus, n=n, kanaele=kanaele, bpp=bpp, bittiefe=bittiefe,
+                            versatz=0)
+        return werte, breite, hoehe
+    r = _kanalwerte(aus, n=n, kanaele=kanaele, bpp=bpp, bittiefe=bittiefe, versatz=0)
+    g = _kanalwerte(aus, n=n, kanaele=kanaele, bpp=bpp, bittiefe=bittiefe, versatz=1)
+    b = _kanalwerte(aus, n=n, kanaele=kanaele, bpp=bpp, bittiefe=bittiefe, versatz=2)
+    werte = [LUMA_R * r[i] + LUMA_G * g[i] + LUMA_B * b[i] for i in range(n)]
+    return werte, breite, hoehe
 
 
 # ======================================================================================

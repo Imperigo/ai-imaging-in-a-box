@@ -1461,6 +1461,64 @@ kleinste, die dieses Format überhaupt ausdrücken kann. Kleiner ginge nur, inde
 Werte gleich wären. *Genau diese Grössenordnung trennt den eigenen Normalisierer von
 Blender.*
 
+**Farbtyp (PNG)** — Die Zahl im PNG-Kopf, die sagt, was in einem Bildpunkt steht:
+0 = Graustufen, 2 = RGB, 3 = Palette, 4 = Graustufen mit Deckungskanal, 6 = RGB mit
+Deckungskanal. Sie entscheidet, wie viele Zahlen pro Bildpunkt in der Datei liegen — wer
+sie ignoriert, liest die richtigen Bytes in der falschen Bedeutung.
+*In diesem Projekt trennt sie zwei Leser mit entgegengesetzter Absicht: `lies_png_graustufen`
+**lehnt** Farbe ab (aus drei Farbkanälen eine Entfernung zu machen wäre geraten, nicht
+gelesen), `lies_png_luminanz` **nimmt** sie an (ein gerendertes Bild ist farbig).*
+
+**Palette (PNG-Farbtyp 3)** — Eine Speicherweise, bei der in der Datei nicht Farben
+stehen, sondern **Nummern**, die in eine mitgelieferte Farbtabelle zeigen. Ohne diese
+Tabelle sind die Zahlen bedeutungslos: Die 7 ist keine Helligkeit, sondern der siebte
+Eintrag. *Beide PNG-Leser dieses Projekts weisen Palettenbilder darum ausdrücklich ab,
+statt ihre Indizes als Helligkeiten zu deuten.*
+
+**Alphakanal (Deckungskanal)** — Ein vierter Wert je Bildpunkt neben Rot, Grün und Blau,
+der sagt, wie **deckend** dieser Punkt ist: 0 heisst völlig durchsichtig, der Höchstwert
+völlig deckend. *In der Belichtungsmessung dieses Projekts wird er bewusst **ignoriert**:
+Ein halbdurchsichtiges Pixel hat trotzdem eine Helligkeit, und was dahinter liegt, weiss
+der Leser nicht — es hineinzurechnen hiesse, einen Hintergrund zu erfinden.*
+
+**Luminanz (Leuchtdichte, Luma)** — Die Helligkeit eines Farbwerts als **eine** Zahl. Sie
+entsteht durch Gewichten der drei Farbkanäle, denn das Auge sieht Grün viel heller als
+Blau: Ein reines Grün wirkt hell, ein reines Blau fast schwarz, obwohl beide „voll
+aufgedreht" sind.
+
+**Rec.709** — Die verbreitete Vereinbarung, mit welchen Gewichten man aus Rot, Grün und
+Blau eine Luminanz rechnet: **0,2126 · R + 0,7152 · G + 0,0722 · B**. Der Name stammt aus
+einer Fernsehnorm. Es gibt ältere Gewichte (Rec.601, dort zählt Rot deutlich mehr) — wer
+Zahlen aus beiden Rechnungen vergleicht, vergleicht Äpfel mit Birnen.
+*In diesem Projekt stehen die Gewichte an genau einer Stelle (`LUMA_R/G/B` in
+`bildlesen.py`), damit nicht drei Module drei Begriffe von Helligkeit führen.*
+
+**Gammakorrektur / sRGB** — Bildzahlen in einer üblichen Datei sind **nicht**
+proportional zur Lichtmenge, sondern gekrümmt gespeichert: Die dunklen Stufen liegen
+enger beieinander als die hellen, weil das Auge dort feiner unterscheidet. Diese Krümmung
+heisst Gamma, die verbreitete Ausprägung **sRGB**. Wer physikalisch rechnen will (Licht
+addieren, Mittelwerte über Helligkeiten bilden), muss sie zuerst herausrechnen —
+*linearisieren*; wer fragt „wie viel Fläche sieht hell aus", darf und soll es nicht.
+*In diesem Projekt wird ausdrücklich **nicht** linearisiert, und im Docstring steht
+warum: Die Schwellen der Belichtungsprüfung meinen, was man sieht.*
+
+**Clipping (ausgefressen / zugelaufen)** — Wenn ein Bildbereich am oberen oder unteren
+Ende der Skala anstösst und dort **keine Zeichnung mehr** trägt: Alles ist gleich weiss
+beziehungsweise gleich schwarz, und die Unterschiede, die es einmal gab, sind
+unwiederbringlich fort. Oben heisst es umgangssprachlich *ausgefressen*, unten
+*zugelaufen*.
+*In diesem Projekt ist es ausdrücklich **nicht** immer ein Fehler: Die Messung des
+Referenzkorpus (`auf-20260818-14`) ergab „oben hell, unten offen" — 7,55 % der Fläche
+liegen über 0,95, das Sechsfache gewöhnlicher Fotos. Der Prompt-Baustein sagt darum
+`allowed to clip`, ausdrücklich, weil es Absicht ist.*
+
+**Belichtungsrahmen** — In diesem Projekt der Satz von Schwellen, gegen den ein Bild auf
+Helligkeit geprüft wird (`Rahmen` in `src/aiimaging/belichtung.py`). Der Begriff ist eigens
+eingeführt, weil die geerbte Lösung diese Schwellen als **feste Konstanten** führt — und
+eine feste Schwelle beschreibt nicht gute Belichtung, sondern einen **Stil**. Jeder Rahmen
+sagt darum mit, **welche seiner Zahlen gemessen sind**; eine ungemessene Schwelle darf
+höchstens warnen und nie einen Fehler melden.
+
 **EXR** — Bildformat mit hoher Genauigkeit, das Werte ausserhalb von 0–255 speichern
 kann. Notwendig für Tiefendaten, weil dort echte Meterwerte stehen.
 
@@ -2227,6 +2285,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-20 | Ergaenzt aus der Belichtungspruefung (`src/aiimaging/belichtung.py`) und dem farbfaehigen PNG-Leser: **Farbtyp (PNG)**, **Palette (PNG-Farbtyp 3)**, **Alphakanal**, **Luminanz**, **Rec.709**, **Gammakorrektur/sRGB**, **Clipping (ausgefressen/zugelaufen)**, **Belichtungsrahmen**. Der Anlass war ein Befund und keine Fleissarbeit: Die geerbte Schwelle von 8 % geclippter Lichter haette unseren eigenen, gemessenen Hausstil (7,55 % ± 6,9, Hoechstwert 30,0 %) zum Fehler erklaert — eine Belichtungsschwelle ist keine Eigenschaft guter Belichtung, sondern eines Stils |
 | 2026-08-19 | Aus dem Uebergabeblatt an die Vis-Oberflaeche (`docs/UEBERGABE_VIS_2026-08-19.md`): **nullbares Feld (nullable)** — der Begriff wurde dort gebraucht, um zu erklaeren, warum `job_id` leer sein darf, stand aber nirgends. Alle uebrigen Fachbegriffe jenes Blatts (tote Kante, Bildwinkel, Backbone, SigLIP, Spearman, Freigabe-Token, Bounding Box, Subprozess, MCP) waren bereits erfasst und wurden geprueft, nicht angenommen |
 | 2026-08-18 | Ergaenzt aus der Prompt-Bibliothek: **Prompt**, **Negativ-Prompt**, **Prompt-Baustein**, **Renderstil**, **Halluzination (bei Bildmodellen)**. Alle fuenf vor dem Schreiben dieser Zeile im Text nachgezaehlt |
 | 2026-08-18 | Ergaenzt aus der Kameraanbindung und auf-12: **Fuellgrad** (abgegrenzt zum Deckungsgrad), **zusammenhaengende Flaeche** samt Vierer-/Achter-Nachbarschaft, **Randberuehrung**. Vor dem Schreiben dieser Zeile nachgezaehlt — die Gegenmassnahme aus der Zeile darunter |
