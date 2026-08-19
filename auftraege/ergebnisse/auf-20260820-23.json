@@ -1,0 +1,242 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260820-23",
+  "status": "ok",
+  "beendet": "2026-08-19T18:30:38Z",
+  "dauer_s": 147.0,
+  "messwerte": {
+    "aufbau": {
+      "was_gemessen_wird": "Empfindlichkeit der Metrik gegen geometrischen Fehler bei PERFEKTER Bildqualitaet — Blenders eigener Beauty-Pass, kein Bildmodell.",
+      "kamera": "fest, je Szene ueber alle Laeufe unveraendert (auge/blick_auf/brennweite identisch mit auf-21 und auf-22)",
+      "soll_karte": "einmal je Szene vom UNVERSTELLTEN Bauwerk; jedes verstellte Bauwerk wird mit seinem eigenen Beauty-Pass gegen genau diese Karte gemessen",
+      "verstellt": "NUR das Bauwerk. Die Bodenplatte entsteht nach der Verstellung an unveraenderter Stelle — das Gelaende bleibt stehen.",
+      "drehachse": "Hochachse durch die Bauwerksmitte (4.0, 2.5)",
+      "aufloesung": 512,
+      "samples": 64,
+      "hintergrund_strategie": "wie_soll",
+      "schaetzer": "depth-anything-v2-small",
+      "kein_bildmodell": true,
+      "keine_seeds": true,
+      "keine_controlnet_staerke": true,
+      "szenen_wiederverwendet": "ja — dieselben zwei Szenen wie in auf-21/auf-22, nicht neu gebaut. Die Anker bleiben damit gueltig.",
+      "gegenprobe": "Versatz 0 liefert in beiden Szenen exakt den perfekt-Anker aus auf-22 (0.4148 gegen 0.4149 bei 29 %, 0.98386 gegen 0.9839 bei 59.8 %)."
+    },
+    "szene_a": {
+      "kante_bodenplatte_m": 11,
+      "anteil_geometrie": 0.2911,
+      "anker_aus_auf22": {
+        "perfekt": 0.4149,
+        "weisses_rauschen": 0.2546,
+        "leeres_graubild": null,
+        "verlauf_quer": null,
+        "hinweis": "grau und Verlauf sind auf dieser Szene ungemessen (n_gemeinsam 0), nicht null"
+      },
+      "verschiebung_waagerecht_m": [
+        {
+          "wert": 0,
+          "score": 0.4148407735266738,
+          "spearman": -0.9618658580846702,
+          "geom_iou": 0.1789156626506024,
+          "n_gemeinsam": 23166
+        },
+        {
+          "wert": 0.25,
+          "score": 0.39905381409160073,
+          "spearman": -0.8947822204741965,
+          "geom_iou": 0.17796950240770465,
+          "n_gemeinsam": 23062
+        },
+        {
+          "wert": 0.5,
+          "score": 0.3729617486619754,
+          "spearman": -0.7817569252958725,
+          "geom_iou": 0.17793314195758866,
+          "n_gemeinsam": 23058
+        },
+        {
+          "wert": 1,
+          "score": 0.31843493820152424,
+          "spearman": -0.5490626303334843,
+          "geom_iou": 0.18467986030267752,
+          "n_gemeinsam": 23796
+        },
+        {
+          "wert": 2,
+          "score": 0.11910857584806592,
+          "spearman": -0.07289559603749274,
+          "geom_iou": 0.19461879196731832,
+          "n_gemeinsam": 24868
+        },
+        {
+          "wert": 4,
+          "score": 0.23011588074594674,
+          "spearman": 0.33704534333445957,
+          "geom_iou": 0.15711036992116434,
+          "n_gemeinsam": 20726
+        }
+      ],
+      "drehung_hochachse_grad": [
+        {
+          "wert": 0,
+          "score": 0.4148407735266738,
+          "spearman": -0.9618658580846702,
+          "geom_iou": 0.1789156626506024,
+          "n_gemeinsam": 23166
+        },
+        {
+          "wert": 2,
+          "score": 0.40935800639677183,
+          "spearman": -0.9612652703647183,
+          "geom_iou": 0.17432646592709986,
+          "n_gemeinsam": 22660
+        },
+        {
+          "wert": 5,
+          "score": 0.3915894613141212,
+          "spearman": -0.9016964422813721,
+          "geom_iou": 0.17005978844090142,
+          "n_gemeinsam": 22186
+        },
+        {
+          "wert": 10,
+          "score": 0.3723868526026811,
+          "spearman": -0.822492325066141,
+          "geom_iou": 0.16859971061757884,
+          "n_gemeinsam": 22023
+        },
+        {
+          "wert": 20,
+          "score": 0.340079231042576,
+          "spearman": -0.7144242943178898,
+          "geom_iou": 0.16188402928953097,
+          "n_gemeinsam": 21268
+        },
+        {
+          "wert": 45,
+          "score": 0.32677298850078335,
+          "spearman": -0.6411489937895202,
+          "geom_iou": 0.16654566574705967,
+          "n_gemeinsam": 21793
+        }
+      ]
+    },
+    "szene_b": {
+      "kante_bodenplatte_m": 20,
+      "anteil_geometrie": 0.5981,
+      "anker_aus_auf21": {
+        "perfekt": 0.9839,
+        "weisses_rauschen": 0.7217,
+        "leeres_graubild": 0.5188,
+        "verlauf_quer": 0.3483
+      },
+      "verschiebung_waagerecht_m": [
+        {
+          "wert": 0,
+          "score": 0.9838595008920372,
+          "spearman": -0.9975881995036281,
+          "geom_iou": 0.9703197351143168,
+          "n_gemeinsam": 154439
+        },
+        {
+          "wert": 0.25,
+          "score": 0.9678380222244591,
+          "spearman": -0.9923679300978504,
+          "geom_iou": 0.9439144583914458,
+          "n_gemeinsam": 152277
+        },
+        {
+          "wert": 0.5,
+          "score": 0.9585463841275774,
+          "spearman": -0.9854728300752656,
+          "geom_iou": 0.9323556596216649,
+          "n_gemeinsam": 151312
+        },
+        {
+          "wert": 1,
+          "score": 0.9617316808830961,
+          "spearman": -0.965558556097037,
+          "geom_iou": 0.9579199730288255,
+          "n_gemeinsam": 153431
+        },
+        {
+          "wert": 2,
+          "score": 0.9408903063314256,
+          "spearman": -0.924257739162454,
+          "geom_iou": 0.9578221864289327,
+          "n_gemeinsam": 153423
+        },
+        {
+          "wert": 4,
+          "score": 0.8910592453741101,
+          "spearman": -0.8415073886830763,
+          "geom_iou": 0.9435289451340816,
+          "n_gemeinsam": 152245
+        }
+      ],
+      "drehung_hochachse_grad": [
+        {
+          "wert": 0,
+          "score": 0.9838595008920372,
+          "spearman": -0.9975881995036281,
+          "geom_iou": 0.9703197351143168,
+          "n_gemeinsam": 154439
+        },
+        {
+          "wert": 2,
+          "score": 0.9792743362161667,
+          "spearman": -0.9965037858185056,
+          "geom_iou": 0.9623427820536887,
+          "n_gemeinsam": 153792
+        },
+        {
+          "wert": 5,
+          "score": 0.9717464711467645,
+          "spearman": -0.9923993783625491,
+          "geom_iou": 0.9515233733260318,
+          "n_gemeinsam": 152906
+        },
+        {
+          "wert": 10,
+          "score": 0.9768745054206681,
+          "spearman": -0.9862378487109026,
+          "geom_iou": 0.9676000577225927,
+          "n_gemeinsam": 154219
+        },
+        {
+          "wert": 20,
+          "score": 0.9642358446023267,
+          "spearman": -0.9740676837704302,
+          "geom_iou": 0.9545032439810285,
+          "n_gemeinsam": 153151
+        },
+        {
+          "wert": 45,
+          "score": 0.9584830538162086,
+          "spearman": -0.9444262669238878,
+          "geom_iou": 0.9727490611258941,
+          "n_gemeinsam": 154635
+        }
+      ]
+    },
+    "aufloesungsgrenze": {
+      "frage": "Ab welcher Verschiebung faellt der Score unter den Rauschanker?",
+      "szene_a_29_prozent": "zwischen 1 m (0.3184) und 2 m (0.1191). Der Rauschanker liegt bei 0.2546.",
+      "szene_b_59_8_prozent": "GAR NICHT im gemessenen Bereich. Selbst 4 m Versatz liefert 0.8911 und liegt damit weit ueber dem Rauschanker 0.7217.",
+      "drehung_beide_szenen": "GAR NICHT. 45 Grad liefern 0.3268 (Szene A) und 0.9585 (Szene B) — beide ueber ihrem Rauschanker."
+    },
+    "nicht_monoton": {
+      "szene_a_versatz": "2 m gibt 0.1191, 4 m gibt 0.2301 — der Score STEIGT wieder. spearman kippt dabei das Vorzeichen (-0.073 auf +0.337), und gewertet wird der Betrag.",
+      "szene_b_versatz": "0.5 m gibt 0.9585, 1 m gibt 0.9617 — ebenfalls hoeher trotz groesserem Fehler.",
+      "folge": "Der Score ist keine monotone Funktion des geometrischen Fehlers. Er laesst sich darum nicht als 'Abstand vom Richtigen' lesen, auch nicht normiert."
+    }
+  },
+  "urteil": {
+    "kernsatz": "Die beiden Anteilskurven liegen NICHT aufeinander. Dieselbe Verschiebung von 1 m ergibt in den zwei Szenen weit auseinanderliegende Anteile — die Normierung traegt nicht."
+  },
+  "umgebung": {
+    "leistungsgrenze_w": 400,
+    "blender": "5.2.0 LTS",
+    "gpu_bildmodell": "nicht benutzt"
+  },
+  "fehler": null
+}
