@@ -634,10 +634,26 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Kennung und Schema **nachgeprüft**, nicht angenommen.
 - [ ] **Warum wird der Auftrag nicht abgeholt?** Zustand blieb „wartet auf GPU-Leerlauf",
       auch bei freier Karte (13 W, 1 GB). Träge Erkennung oder zu enge Schranke —
-      **ungemessen**. Das ist die einzige offene Frage, die eine Vorführung aufhält, und
-      **genau die Stelle, an der unsere Lane einsteigt**: Was fehlt, ist der, der das
-      Verzeichnis abholt, rendert, prüft und `render-result.json` danebenlegt. Bei uns
-      gebaut und seit Wochen im Betrieb.
+      **ungemessen**, `auf-20260819-17` fragt danach.
+- [x] **Der Abholer gebaut** — 2026-08-20, `abholer.py`, 28 Tests. **Kein neuer Baustein,
+      sondern der Ablauf zwischen den vorhandenen:** `bruecke.py` hatte seit dem 19.08.
+      alle Teile — `offene_auftraege`, `lies_auftrag`, `setze_status`,
+      `schreibe_ergebnis` —, nur fasste sie niemand in der richtigen Reihenfolge an. Das
+      war die Lücke, die die HomeStation empirisch gezeigt hat.
+      **Das Rendern steckt ausdrücklich nicht darin**, sondern wird als `verarbeite`
+      hereingereicht. Grund ist nicht Bequemlichkeit, sondern Prüfbarkeit: Die
+      interessanten Fehler dieses Moduls sind Reihenfolge- und Entscheidungsfehler, und
+      ein Abholer, der nur mit 20 GB Gewichten prüfbar wäre, wäre gar nicht geprüft.
+      Fünf Entscheidungen fallen dort: keine Rechnung ohne menschliche Freigabe; bei
+      `idle_window_only` **ohne Auskunft nicht rechnen** (fail-closed — das Loch hat
+      Sitzung 07 viermal gefunden); Ergebnis vor Laufzettel; ein Fehler ist ein Ergebnis
+      und keine Stille; und **Waisen werden gemeldet, nicht wiederbelebt**.
+      Kein Dauerlauf, kein Schlaf: Wie oft nachgesehen wird, ist eine Betriebsfrage und
+      gehört nicht in eine Bibliothek.
+- [ ] **Den Abholer an die echte Kette hängen** — `verarbeite` muss den Auftrag der
+      Brücke durch unseren Multipass, Render und die QA schicken. Der Weg dorthin liegt
+      in `tools/homeworker.py` und ist für **unser** Auftragsformat gebaut; die
+      Übersetzung dazwischen fehlt noch.
 - [ ] **Drei Zahlen laufen auseinander** (aus demselben Durchgang): Ihre Auto-Kamera setzt
       die Augenhöhe auf **1.30 m** (Eingang) und **1.60 m** (Innenraum); wir und das
       Pflichtenheft rechnen mit **1.70 m über Terrain**. `engine: cycles` und

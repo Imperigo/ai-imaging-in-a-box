@@ -840,6 +840,21 @@ Vertretbar nur dort, wo das Hauptergebnis auch ohne den gestörten Teilschritt g
 bleibt — sonst entsteht genau das halbe Ergebnis, das gültig aussieht (siehe
 *Skip-on-Error*).
 
+**Laufzettel** — Die kleine Datei, die neben einem Auftrag liegt und seinen **Zustand**
+führt: Wer ihn gestellt hat, ob er wartet, läuft, fertig ist oder gescheitert.
+Beim Ökosystem heisst sie `job.json`. Sie ist nicht der Auftrag selbst — der steht
+daneben in `render-scene.json` — sondern der Zettel, auf dem der Bearbeitungsstand
+mitgeschrieben wird. *Wer ihn liest, weiss, was zu tun ist; wer ihn fortschreibt, sagt
+allen anderen, dass er es tut.*
+
+**Waise (verwaister Auftrag)** — Ein Auftrag, der auf „läuft" steht, den aber niemand
+mehr bearbeitet: Der Rechner ging mitten im Lauf aus, und der Laufzettel blieb stehen,
+wo er war. Von aussen sieht das genau aus wie ein sehr langer Lauf.
+*Erkannt an der Änderungszeit des Laufzettels und nicht an einem Feld darin — ein Feld
+müsste jemand fortschreiben, und genau dieser Jemand ist im Waisenfall gestorben. In
+diesem Projekt werden Waisen **gemeldet und nicht neu eingereiht**: Ein zweiter Lauf
+kostet eine GPU-Stunde und kann ein zweites Bild unter derselben Kennung erzeugen.*
+
 **Befund als Feld statt Absturz** — Die Form, in der dieses Projekt fail-open umsetzt:
 Ein gescheiterter Teilschritt bricht den Lauf nicht ab, sondern schreibt seinen Grund in
 ein eigenes Feld des Ergebnisberichts. *`_tiefe_nachbearbeiten` in
@@ -2347,6 +2362,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-20 | Ergaenzt aus dem Abholer (`src/aiimaging/abholer.py`): **Laufzettel**, **Waise (verwaister Auftrag)** |
 | 2026-08-20 | Ergaenzt aus der Taktmessung an Blender: **adaptives Sampling**, **Blockpufferung der Standardausgabe**, **Pipe-Blockade**. **Sample** um die gemessene Einschraenkung ergaenzt: Bei adaptivem Sampling ist die Samplezahl eine OBERGRENZE und keine Angabe der Rechenzeit — 6000 Samples in 12 s gegen 3000 ohne adaptives Sampling in ueber drei Minuten |
 | 2026-08-20 | Ergaenzt aus der Fortschrittswache (`src/aiimaging/fortschritt.py`): **Timeout**, **Gesamt-Timeout gegen Fortschrittsfrist**, **Stillstand (Stall)**, **behauptetes gegen belegtes Fortschrittszeichen**, **monotone Uhr**. Anlass war wieder ein Befund: Der geerbte Stillstandswaechter stellt bei den Zustaenden `running` und `queued` die Uhr zurueck — also genau in dem Fall, fuer den er gebaut wurde |
 | 2026-08-20 | Ergaenzt aus der Belichtungspruefung (`src/aiimaging/belichtung.py`) und dem farbfaehigen PNG-Leser: **Farbtyp (PNG)**, **Palette (PNG-Farbtyp 3)**, **Alphakanal**, **Luminanz**, **Rec.709**, **Gammakorrektur/sRGB**, **Clipping (ausgefressen/zugelaufen)**, **Belichtungsrahmen**. Der Anlass war ein Befund und keine Fleissarbeit: Die geerbte Schwelle von 8 % geclippter Lichter haette unseren eigenen, gemessenen Hausstil (7,55 % ± 6,9, Hoechstwert 30,0 %) zum Fehler erklaert — eine Belichtungsschwelle ist keine Eigenschaft guter Belichtung, sondern eines Stils |
