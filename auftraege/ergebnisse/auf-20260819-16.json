@@ -1,0 +1,41 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260819-16",
+  "status": "ok",
+  "beendet": "2026-08-19T11:45:00Z",
+  "dauer_s": 120,
+  "messwerte": {
+    "frage_1_welches_verzeichnis": "apps/kosmo-orbit innerhalb des kosmo-orbit-Baums",
+    "frage_2_package_json": {
+      "name": "@kosmo/orbit-app",
+      "version": "0.9.36"
+    },
+    "frage_3_git": {
+      "remote": "github.com/Imperigo/Architektur-Cosmos",
+      "letzter_commit": "38871eca «Der vierte Waechter war gruen, weil er nichts gemessen hatte (ROADMAP 997)»",
+      "commit_datum": "2026-08-19 10:00:56 +0000",
+      "uncommittete_aenderungen": 0
+    },
+    "zusatzfrage_dateien": {
+      "VisWorkspace": "vorhanden — src/modules/vis/VisWorkspace.tsx",
+      "NodePipeline": "nicht vorhanden",
+      "pipelineReadiness": "nicht vorhanden"
+    },
+    "kosmospez_im_quelltext": {
+      "dateien": 31,
+      "anmerkung": "Die Praemisse des Auftrags trifft nicht zu: KosmoSpez steht in 31 Dateien."
+    }
+  },
+  "urteil": {
+    "die_drei_zeilen": "1. apps/kosmo-orbit — also GENAU der Bestand, den mein Bericht genannt hat.\n2. name @kosmo/orbit-app, version 0.9.36. Die Oberflaeche zeigt v0.9.35, weil der laufende Build aelter ist als die Versionszeile.\n3. remote github.com/Imperigo/Architektur-Cosmos — DEIN eigenes Repo.",
+    "deine_praemisse_traegt_nicht": "Du schreibst, «KosmoSpez» komme in keinem Quelltext vor, den du hast. Hier steht es in 31 Dateien. Und der letzte Commit ist von HEUTE, 10:00:56 — also 90 Minuten vor dieser Messung, mit null uncommitteten Aenderungen. Dein Klon ist schlicht aelter als der Arbeitsstand. Deine eigene zweite Nachtragsvermutung war richtig: Die Vis-Oberflaeche entsteht GERADE.",
+    "zur_wichtigeren_frage_verdrahtung": "SIE AENDERT ALLES — gemessen, bevor dein Auftrag hier ankam (siehe docs/HOMESTATION-2026-08-19-DEMO-SIMULATION.md, Kapitel 3).\nUnverdrahtet: «Ausfuehren» gedrueckt ueber DOM, ueber echte Mauskoordinaten und nach Betaetigen des Schalters daneben — dreimal keine Zustandsaenderung, Zustand bleibt «bereit».\nVerdrahtet (Modell.Szene -> Render.Szene, Prompt -> Render.Prompt, Auto-Kamera -> Render.Kamera-Standpunkte, mit echten Ziehgesten): Zustand wechselt auf «fehler», mit einer praezisen Begruendung — «Die Bridge ANTWORTET (Health-Probe erfolgreich) — der Render-Ruf wurde trotzdem abgewiesen. Wahrscheinlich fehlt der Bridge-Token.»\nToken nachgetragen: Zustand «AUF GPU-LEERLAUF», Abbrechen erscheint, und in /tmp/kosmo-jobs/ liegt ein vollstaendiger Auftrag mit model.glb (110 KB echte Geometrie), render-scene.json mit drei aus dem Modell gerechneten Kameras und einem Freigabe-Token.\nALSO: Es ist ein Bedienungsproblem, kein Loch. Die Ausfuehrung ist da. Der eine echte Mangel ist der, den du benennst — der Zustand meldet «bereit», OHNE die Verdrahtung zu pruefen.",
+    "was_ich_dabei_an_mir_korrigieren_muss": "Dein letzter Commit hat mich auf einen eigenen Fehler gestossen, und der ist schwerer als alles andere in diesem Ergebnis.\nIch habe heute frueh gemeldet: «Alle vier Waechter gruen», und ausdruecklich, der Insel-Ueberdeckungs-Waechter habe KosmoDev @ 1024x768 gefahren und bestanden — mit der Folgerung, er sei nicht hardwareabhaengig.\nNachgesehen: Das Fundartefakt AUS MEINEM LAUF (Zeitstempel 09:41:40, mitten in meiner Suite) traegt {geprueft: 0, funde: 0}. Er hat auch bei mir NICHTS gemessen, obwohl mein Lauf null Fehlschlaege hatte.\nMeine Aussage ruht damit auf nichts. Ich habe aus «Test bestanden» auf «Waechter hat geprueft» geschlossen, ohne das Artefakt anzusehen — genau die Verwechslung, gegen die dieses Projekt antritt. Der Bericht wird korrigiert.",
+    "nicht_getan": "Nichts an jenem Bestand geaendert. Nur nachgesehen."
+  },
+  "umgebung": {
+    "python": "3.14.4",
+    "gpu_genutzt": false
+  },
+  "fehler": null
+}
