@@ -520,11 +520,22 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       der Bauart der HomeStation — Pipe plus ein Faden, der sie **laufend** in die Datei
       giesst. Damit fällt beides weg: Der Puffer läuft nie voll, und die Datei wächst
       genau dann, wenn der Prozess schreibt.
-- [ ] **Eine tragende Fortschrittsquelle für Blender finden** — drei Kandidaten, alle
-      ungemessen: die Leistungsaufnahme der Karte, die Änderungszeit der Zieldatei (nach
-      dieser Messung schreibt Blender sie nicht fort), oder **ein Fortschritts-Schreiber
-      im Runner selbst**. Nur der letzte hängt nicht von fremdem Verhalten ab und ist
-      darum der aussichtsreichste.
+- [x] **Eine tragende Quelle gefunden — gemessen, nicht geraten.** 2026-08-20, alle drei
+      Kandidaten im selben Blender-Lauf geprüft: `bpy.app.handlers.render_stats` feuerte
+      **null** Mal, `bpy.app.timers` **null** Mal, ein gewöhnlicher `threading.Thread`
+      **61** Mal. **Cycles gibt während des Renderns die GIL frei** — die beiden
+      dokumentierten Haken nützen nichts, ein einfacher Faden schon.
+      Gebaut als `--herzschlag-s` im Runner (`<out>/herzschlag.txt`, **angehängt**, damit
+      die Datei wächst) und `glb_zu_multipass(herzschlag_takt_s=…)` auf unserer Seite.
+      An einem echten Lauf nachgewiesen: **22 Schläge über 42 s, längste Lücke 2,1 s.**
+      Die Wache schlägt bei **fünf** ausgefallenen Schlägen an — bei 2 s Takt also nach
+      10 s, *neunzigmal* früher als der Gesamt-Timeout von 900 s.
+      **Die Einschränkung steht im Docstring und im Namen:** Das ist ein *Lebenszeichen*
+      und kein *Fortschrittszeichen*. Ein festgefahrener Cycles-Kern schlägt weiter; die
+      Wache schlägt nur auf Stille an, und nur darauf trägt der Schluss.
+- [ ] **Gibt Cycles auch bei OptiX auf der GPU die GIL frei?** Sehr wahrscheinlich, aber
+      auf der CPU gemessen und auf der GPU **nicht**. Solange das offen ist, bleibt
+      `herzschlag_takt_s` ausgeschaltet, wenn niemand es setzt.
 - [ ] **Die Wache an die übrigen Nähte hängen** — Renderlauf (dort zählen wir die
       Schritte selbst, das ist das sauberste belegte Zeichen, das wir haben) und Abholer
       der Brücke.

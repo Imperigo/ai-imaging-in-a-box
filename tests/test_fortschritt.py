@@ -627,3 +627,99 @@ def test_ein_rueckgabewert_ungleich_null_kommt_durch():
     from aiimaging import seams
     starte = seams.starter_mit_wache(frist_s=1000, takt_s=0.01)
     assert starte([_sys.executable, "-c", "raise SystemExit(3)"], 60).returncode == 3
+
+
+# ======================================================================================
+# Der Herzschlag — die einzige Quelle, die gemessen trägt
+# ======================================================================================
+
+def test_der_dateiname_ist_auf_beiden_seiten_derselbe():
+    """Ein Dateiname, den zwei Seiten einer Prozessgrenze unabhängig raten, ist eine tote
+    Kante mit Ansage."""
+    from pathlib import Path as P
+    from aiimaging import seams
+    quelle = (P(seams.__file__).parent / "runners" / "blender_depth_stage.py").read_text(
+        encoding="utf-8")
+    assert f'HERZSCHLAG_DATEI = "{seams.HERZSCHLAG_DATEI}"' in quelle
+
+
+def test_der_takt_kommt_beim_runner_an():
+    """Ohne das Argument schriebe niemand den Herzschlag, auf den die Wache wartet —
+    und die Wache bräche jeden Lauf ab."""
+    from aiimaging import seams
+    argumente = seams._multipass_argumente(
+        "m.glb", "/tmp/aus", drehen=False, aufloesung=512, samples=16,
+        beauty=True, material_id=True, herzschlag_takt_s=2.0)
+    assert "--herzschlag-s" in argumente
+    assert argumente[argumente.index("--herzschlag-s") + 1] == "2.0"
+
+
+def test_ohne_takt_kein_argument():
+    from aiimaging import seams
+    argumente = seams._multipass_argumente(
+        "m.glb", "/tmp/aus", drehen=False, aufloesung=512, samples=16,
+        beauty=True, material_id=True)
+    assert "--herzschlag-s" not in argumente
+
+
+def test_die_frist_ist_ein_vielfaches_des_takts(tmp_path, monkeypatch):
+    """Fünf ausgefallene Schläge, nicht einer: Ein Faden kann ins Hintertreffen geraten,
+    ohne dass etwas kaputt ist."""
+    from aiimaging import seams
+    monkeypatch.setattr(seams, "finde_blender", lambda: "/bin/true")
+    gebaut = {}
+
+    def merke(wache=None, **kw):
+        gebaut["frist"] = wache.frist_s
+        gebaut["art"] = wache.art
+        raise seams.SeamError("Wache gebaut")
+
+    monkeypatch.setattr(seams, "starter_mit_wache", merke)
+    glb = tmp_path / "m.glb"
+    glb.write_bytes(b"glTF")
+    with pytest.raises(seams.SeamError, match="Wache gebaut"):
+        seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP", herzschlag_takt_s=2.0)
+    assert gebaut["frist"] == 10.0 == seams.HERZSCHLAG_AUSFAELLE * 2.0
+    assert gebaut["art"] == fortschritt.BELEGT
+
+
+def test_die_frist_ist_neunzigmal_kuerzer_als_der_gesamt_timeout():
+    from aiimaging import seams
+    frist = seams.HERZSCHLAG_AUSFAELLE * seams.HERZSCHLAG_TAKT_S
+    assert 900 / frist == 90.0
+
+
+def test_ein_ausbleibender_herzschlag_bricht_ab(tmp_path):
+    """Der Fall, für den das Ganze gebaut ist: Der Prozess lebt und schreibt nichts mehr."""
+    from aiimaging import seams
+    uhr = Uhr()
+    schlag = tmp_path / seams.HERZSCHLAG_DATEI
+    schlag.write_text("1 0.0\n", encoding="utf-8")
+    wache = fortschritt.wache_fuer_datei(schlag, frist_s=10.0, _uhr=uhr)
+    prozess = Prozessattrappe(laeuft_blicke=None)
+    starte = seams.starter_mit_wache(wache, takt_s=2, _schlaf=lambda s: uhr.weiter(s),
+                                     _popen=_popen_attrappe(prozess), _uhr=uhr)
+    with pytest.raises(seams.SeamError, match="Stillstand"):
+        starte(["blender"], 900)
+    assert prozess.getoetet
+
+
+def test_ein_schlagender_herzschlag_haelt_den_lauf_am_leben(tmp_path):
+    from aiimaging import seams
+    uhr = Uhr()
+    schlag = tmp_path / seams.HERZSCHLAG_DATEI
+    schlag.write_text("1 0.0\n", encoding="utf-8")
+    wache = fortschritt.wache_fuer_datei(schlag, frist_s=10.0, _uhr=uhr)
+    nummer = [1]
+
+    def schlagen(s):
+        uhr.weiter(s)
+        nummer[0] += 1
+        with open(schlag, "a", encoding="utf-8") as f:
+            f.write(f"{nummer[0]} {uhr.t:.1f}\n")
+
+    starte = seams.starter_mit_wache(
+        wache, takt_s=2, _schlaf=schlagen, _uhr=uhr,
+        _popen=_popen_attrappe(Prozessattrappe(laeuft_blicke=200)))
+    assert starte(["blender"], 900).returncode == 0
+    assert uhr.t >= 400, "der Lauf lief über sechs Minuten und wurde nicht abgebrochen"

@@ -83,6 +83,22 @@ BLENDER_TAKT_S = 32.0
 #: Der Takt von 32 s ist damit ein Artefakt der CPU-Messung und **nicht übertragbar**.
 BLENDER_GPU_STILLE_S = 175.0
 
+#: Der Dateiname des Herzschlags, den unser Runner schreibt. **Dieselbe Zeichenkette wie
+#: `blender_depth_stage.HERZSCHLAG_DATEI`** — ein Dateiname, den zwei Seiten einer
+#: Prozessgrenze unabhängig raten, ist eine tote Kante mit Ansage.
+HERZSCHLAG_DATEI = "herzschlag.txt"
+
+#: Vorgabetakt des Herzschlags im Runner, in Sekunden.
+HERZSCHLAG_TAKT_S = 2.0
+
+#: Wie viele ausgefallene Schläge nötig sind, bevor die Wache anschlägt.
+#:
+#: Fünf statt zwei, weil ein Faden ins Hintertreffen geraten kann, ohne dass etwas kaputt
+#: ist — eine ausgelastete Maschine, ein Dateisystem, das kurz hängt. Bei einem Takt von
+#: 2 s macht das eine Frist von 10 s: immer noch **neunzigmal** früher als der
+#: Gesamt-Timeout von 900 s.
+HERZSCHLAG_AUSFAELLE = 5
+
 #: Die kleinste Frist, die wir für einen Blender-Lauf zulassen — **es gibt keine.**
 #:
 #: Solange die Standardausgabe zwischen Start und Ende schweigt, bricht **jede** Frist,
@@ -324,7 +340,8 @@ def ifc_zu_glb(ifc_path, glb_path, *, timeout: int = 300, _starte=None) -> dict:
 def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, samples: int,
                          beauty: bool, material_id: bool, kamera=None,
                          auge=None, blick_auf=None, brennweite=None,
-                         gelaende_z=None, hoehe=None) -> list[str]:
+                         gelaende_z=None, hoehe=None,
+                         herzschlag_takt_s=None) -> list[str]:
     """Die Argumente hinter dem `--`-Trenner — eine Stelle für Lauf und Trockenlauf.
 
     Wären sie zweimal geschrieben, könnten `glb_zu_multipass` und
@@ -367,6 +384,8 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
         argumente += ["--gelaende-z", str(float(gelaende_z))]
     if hoehe is not None:
         argumente += ["--hoehe", str(int(hoehe))]
+    if herzschlag_takt_s is not None:
+        argumente += ["--herzschlag-s", str(float(herzschlag_takt_s))]
     if drehen:
         argumente.append("--rotiere-z-up")
     if not beauty:
@@ -398,7 +417,7 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      kamera=None, auge=None, blick_auf=None, brennweite=None,
                      gelaende_z=None, hoehe=None,
                      timeout: int = 900, stillstand_frist_s: float | None = None,
-                     _starte=None) -> dict:
+                     herzschlag_takt_s: float | None = None, _starte=None) -> dict:
     """glb → Cycles-Multipass über `blender --background`.
 
     Vier Ausgaben, in zwei Renderdurchgängen: Beauty und Tiefe (EXR in Metern plus
@@ -417,6 +436,19 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             in der Luft. Spart Plattenplatz, keine Rechenzeit.
         material_id: `False` lässt den zweiten Durchgang ganz aus und spart damit
             tatsächlich Rechenzeit.
+        herzschlag_takt_s: Schaltet die **Herzschlagwache** ein (Vorgabe: aus). Der Runner
+            schreibt dann alle so viele Sekunden ein Lebenszeichen nach
+            ``<out>/herzschlag.txt``, und dieser Aufruf bricht ab, wenn
+            :data:`HERZSCHLAG_AUSFAELLE` Schläge nacheinander ausbleiben.
+            **Das ist die Antwort auf die Messung vom 20.08.2026:** Blenders eigene
+            Ausgabe schweigt auf der GPU zwischen Start und Ende, taugt also nicht; ein
+            Faden, den wir selbst starten, läuft weiter, weil Cycles die GIL freigibt
+            (gemessen: 61 Schläge in 118 s, während ``render_stats`` und
+            ``bpy.app.timers`` **null** Mal feuerten).
+            **Was er belegt und was nicht:** Ein ausbleibender Herzschlag heisst
+            zuverlässig, dass der Prozess tot oder eingefroren ist. Ein *laufender*
+            belegt **keinen Fortschritt** — ein festgefahrener Cycles-Kern schlägt
+            weiter. Die Wache schlägt nur auf Stille an, und nur darauf.
         stillstand_frist_s: **Wird immer abgewiesen** — der Parameter bleibt nur
             bestehen, damit ein Aufrufer eine Begründung bekommt statt eines
             ``TypeError``. Blenders Standardausgabe schweigt auf der GPU zwischen Start
@@ -443,6 +475,13 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
     """
     if _starte is not None:
         starte = _starte
+    elif herzschlag_takt_s is not None:
+        starte = starter_mit_wache(
+            fortschritt.wache_fuer_datei(
+                Path(out_dir) / HERZSCHLAG_DATEI,
+                frist_s=HERZSCHLAG_AUSFAELLE * herzschlag_takt_s,
+                name="Herzschlag des Blender-Laufs"),
+            takt_s=min(TAKT_S, herzschlag_takt_s))
     elif stillstand_frist_s is not None:
         raise SeamError(
             f"stillstand_frist_s={stillstand_frist_s} s — für einen Blender-Lauf gibt es "
@@ -491,7 +530,7 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                               samples=samples, beauty=beauty, material_id=material_id,
                               kamera=kamera, auge=auge, blick_auf=blick_auf,
                               brennweite=brennweite, gelaende_z=gelaende_z,
-                              hoehe=hoehe),
+                              hoehe=hoehe, herzschlag_takt_s=herzschlag_takt_s),
     ]
 
     ergebnis = starte(cmd, timeout)

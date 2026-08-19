@@ -70,6 +70,7 @@ from __future__ import annotations
 import colorsys
 import json
 import math
+import os
 import sys
 import time
 from pathlib import Path
@@ -139,7 +140,82 @@ def _argumente():
     ap.add_argument("--gelaende-z", type=float, default=None,
                     help="Geländehöhe im Weltsystem. Ohne Angabe die Unterkante der "
                          "Hüllbox — bei einem Untergeschoss stünde die Kamera sonst im Keller.")
+    ap.add_argument("--herzschlag-s", type=float, default=None,
+                    help="Alle so viele Sekunden ein Lebenszeichen nach "
+                         "<out>/herzschlag.txt schreiben. Ohne Angabe: keines. Siehe "
+                         "`_herzschlag_starten` — es ist ein LEBENSzeichen und kein "
+                         "Fortschrittszeichen, und der Unterschied ist der ganze Punkt.")
     return ap.parse_args(argv)
+
+
+#: Name der Datei, in die der Herzschlag geschrieben wird. Auch auf der anderen Seite der
+#: Prozessgrenze bekannt (``aiimaging.seams.HERZSCHLAG_DATEI``) — ein Dateiname, den zwei
+#: Seiten unabhängig raten, ist eine tote Kante mit Ansage.
+HERZSCHLAG_DATEI = "herzschlag.txt"
+
+
+def _herzschlag_starten(ziel, takt_s: float):
+    """Einen Faden starten, der während des Renderns ein Lebenszeichen schreibt.
+
+    **Warum ein eigener Faden und keiner der beiden naheliegenden Haken.** Am 20.08.2026
+    an Blender 4.2 gemessen, alle drei Kandidaten im selben Lauf, 512×512 mit 3000 Samples
+    ohne adaptives Sampling:
+
+    ===========================  ==========================================
+    ``bpy.app.handlers.render_stats``  registriert, **null** Aufrufe während des Renders
+    ``bpy.app.timers``                 **null** Aufrufe während des Renders
+    ein einfacher ``threading.Thread``  **61** Einträge, alle 2 s, durchgehend
+    ===========================  ==========================================
+
+    Cycles gibt während des Renderns die GIL frei; ein gewöhnlicher Python-Faden läuft
+    also weiter, während ``bpy.ops.render.render()`` den Hauptfaden blockiert. Die beiden
+    dokumentierten Haken tun es nicht.
+
+    **Und jetzt die Einschränkung, ohne die dieser Faden schädlich wäre.**
+
+        Was hier entsteht, ist ein **Lebenszeichen** und kein **Fortschrittszeichen**.
+
+    Es belegt: Der Prozess lebt, und sein Python-Interpreter kommt zum Zug. Es belegt
+    **nicht**, dass der Renderer vorankommt — ein Cycles-Kern, der sich festgefahren hat,
+    ohne den Prozess mitzunehmen, schlägt weiter. Wer aus einem laufenden Herzschlag auf
+    Fortschritt schliesst, macht genau den Fehler, gegen den
+    :mod:`aiimaging.fortschritt` gebaut ist.
+
+    Der Umkehrschluss trägt dagegen: Ein **ausbleibender** Herzschlag heisst zuverlässig,
+    dass der Prozess tot, eingefroren oder vom Betriebssystem angehalten ist. Und genau
+    darauf — und nur darauf — schlägt die Wache an.
+
+    Geschrieben wird **angehängt**, damit die Datei wächst: Eine Datei gleicher Grösse mit
+    neuem Zeitstempel ist auf manchen Dateisystemen nicht von einer unveränderten zu
+    unterscheiden.
+
+    Returns:
+        ``(faden, stoppen)`` — ``stoppen`` ist ein Ereignis, das den Faden beendet.
+    """
+    import threading
+
+    ziel = Path(ziel)
+    stoppen = threading.Event()
+    beginn = time.monotonic()
+
+    def schlagen():
+        schlag = 0
+        while not stoppen.is_set():
+            schlag += 1
+            try:
+                with open(ziel, "a", encoding="utf-8") as datei:
+                    datei.write(f"{schlag} {time.monotonic() - beginn:.1f}\n")
+                    datei.flush()
+                    os.fsync(datei.fileno())
+            except OSError:
+                # Ein Herzschlag, der sich nicht schreiben lässt, darf den Lauf nicht
+                # mitnehmen. Sein Ausbleiben meldet die Wache ohnehin.
+                pass
+            stoppen.wait(takt_s)
+
+    faden = threading.Thread(target=schlagen, name="herzschlag", daemon=True)
+    faden.start()
+    return faden, stoppen
 
 
 def _punkt_aus_text(text, name: str):
@@ -692,6 +768,10 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     beginn = time.time() - 1.0                           # 1 s Luft für grobe mtime-Auflösung
 
+    herzschlag = None
+    if getattr(a, "herzschlag_s", None):
+        herzschlag = _herzschlag_starten(out_dir / HERZSCHLAG_DATEI, a.herzschlag_s)
+
     _szene_leeren()
     bpy.ops.import_scene.gltf(filepath=a.glb)
 
@@ -830,6 +910,15 @@ def main() -> int:
         "depth_exr_kanaele": _exr_kanalnamen(exr) if exr is not None else [],
         "depth_exr_format": exr_format,
     }
+    if herzschlag is not None:
+        # Der Faden ist daemonisch und stürbe auch von selbst — aber ein Herzschlag, der
+        # nach dem letzten Bild noch weiterschlägt, ist ein Lebenszeichen für einen
+        # Zustand, den es nicht mehr gibt.
+        _faden, stoppen = herzschlag
+        stoppen.set()
+        _faden.join(timeout=5.0)
+        report["herzschlag"] = str(out_dir / HERZSCHLAG_DATEI)
+
     (out_dir / "blender-report.json").write_text(
         json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
     )

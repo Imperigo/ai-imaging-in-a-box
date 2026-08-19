@@ -219,3 +219,68 @@ Das ist für die Messung nur lästig, für den Renderauftrag aber eine Notiz wer
 Samplezahl in unserem Auftrag ist eine Obergrenze und keine Angabe der Rechenzeit.** Wer
 aus „3000 Samples" auf eine Dauer schliesst, schliesst falsch, und zwar um mehr als eine
 Grössenordnung.
+
+
+---
+
+# Teil 3 · Die Quelle, die trägt — gemessen, nicht geraten
+
+Nach dem GPU-Befund blieben drei Kandidaten für ein Fortschrittszeichen, alle ungemessen.
+Zwei davon liessen sich hier sofort prüfen, weil sie **in** Blender liegen. Also geprüft,
+alle drei im selben Lauf, Blender 4.2, 512 × 512, 3000 Samples ohne adaptives Sampling:
+
+| Kandidat | Aufrufe während des Renders |
+|---|---|
+| `bpy.app.handlers.render_stats` | **0** — registriert, nie gefeuert |
+| `bpy.app.timers` | **0** — feuern bei blockierendem Render nicht |
+| **ein gewöhnlicher `threading.Thread`** | **61**, alle 2 s, durchgehend |
+
+**Cycles gibt während des Renderns die GIL frei.** Ein einfacher Python-Faden läuft also
+weiter, während `bpy.ops.render.render()` den Hauptfaden blockiert — die beiden
+dokumentierten Haken tun es nicht.
+
+Das ist Kandidat (c) aus dem Vorschlag der HomeStation, und es war der einzige, von dem
+sie schrieb, er hänge **nicht von fremdem Verhalten ab**. Genau das bestätigt sich: Wir
+schreiben selbst, statt auf Cycles zu warten.
+
+## Gebaut und am echten Lauf nachgewiesen
+
+`blender_depth_stage.py` kennt jetzt `--herzschlag-s`. Der Runner startet damit einen
+Faden, der alle *n* Sekunden eine Zeile nach `<out>/herzschlag.txt` **anhängt** —
+angehängt, damit die Datei *wächst*: Gleiche Grösse mit neuem Zeitstempel ist auf manchen
+Dateisystemen nicht von unverändert zu unterscheiden.
+
+Nachgewiesen an einem echten Multipass-Lauf über 42 Sekunden:
+
+```
+22 Schläge · längste Lücke 2,1 s · keine Lücke über 3 s
+stdout im selben Lauf: 14 629 Byte, in Schüben
+```
+
+Auf unserer Seite der Prozessgrenze schaltet `glb_zu_multipass(herzschlag_takt_s=…)` die
+Wache darauf. Sie schlägt an, wenn **fünf** Schläge nacheinander ausbleiben — fünf statt
+einem, weil ein Faden ins Hintertreffen geraten kann, ohne dass etwas kaputt ist. Bei
+2 Sekunden Takt sind das 10 Sekunden Frist: **neunzigmal früher als der Gesamt-Timeout.**
+
+## Und die Einschränkung, ohne die das Ganze schädlich wäre
+
+> Was hier entsteht, ist ein **Lebenszeichen** und kein **Fortschrittszeichen**.
+
+Es belegt: Der Prozess lebt, und sein Python-Interpreter kommt zum Zug. Es belegt
+**nicht**, dass der Renderer vorankommt — ein Cycles-Kern, der sich festfährt, ohne den
+Prozess mitzunehmen, schlägt weiter.
+
+Der Umkehrschluss trägt dagegen, und nur auf ihn schlägt die Wache an: Ein
+**ausbleibender** Herzschlag heisst zuverlässig, dass der Prozess tot, eingefroren oder
+vom Betriebssystem angehalten ist.
+
+Wer aus einem laufenden Herzschlag auf Fortschritt schliesst, macht genau den Fehler,
+gegen den `fortschritt.py` gebaut wurde — und den der Altbestand gemacht hat, als er
+`status == "running"` für einen Beleg hielt.
+
+## Was offen bleibt
+
+Gemessen wurde wieder auf der **CPU**. Dass Cycles auch bei **OptiX auf der GPU** die GIL
+freigibt, ist sehr wahrscheinlich und **nicht gemessen**. Solange das offen ist, bleibt
+`herzschlag_takt_s` ausgeschaltet, wenn niemand es setzt — und diese Zeile steht hier,
+damit sie nicht in sechs Monaten als Gewissheit gelesen wird.

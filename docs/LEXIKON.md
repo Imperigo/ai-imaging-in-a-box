@@ -600,6 +600,26 @@ von *hängend* trennen; aus einer Datei, die seit fünf Minuten nicht mehr wäch
 *Darum darf ein bloss behaupteter Stillstand höchstens warnen und nie einen Fehler melden
 — dieselbe Regel wie beim* **Belichtungsrahmen** *in Abschnitt 5.*
 
+**GIL (Global Interpreter Lock)** — Eine Sperre im Python-Kern, die dafür sorgt, dass
+immer nur **ein** Faden zugleich Python-Anweisungen ausführt. Wer rechenintensiven
+Python-Code in mehrere Fäden verteilt, gewinnt darum nichts. Eine in C oder C++
+geschriebene Bibliothek darf die Sperre aber **freigeben**, solange sie rechnet — dann
+laufen andere Python-Fäden weiter.
+*Am 20.08.2026 gemessen und entscheidend: Cycles gibt die Sperre während des Renderns
+frei. Ein gewöhnlicher Faden läuft darum weiter, während `bpy.ops.render.render()` den
+Hauptfaden blockiert — 61 Schläge in 118 Sekunden, während die beiden dokumentierten
+Blender-Haken (`render_stats`, `bpy.app.timers`) **null** Mal feuerten.*
+
+**Lebenszeichen gegen Fortschrittszeichen** — Zwei Dinge, die leicht verwechselt werden
+und sehr verschieden viel behaupten. Ein **Lebenszeichen** belegt, dass ein Vorgang noch
+*da* ist: Der Prozess lebt, etwas rührt sich. Ein **Fortschrittszeichen** belegt, dass er
+*vorankommt*.
+*In diesem Projekt schreibt der Blender-Runner ein Lebenszeichen (`herzschlag.txt`) und
+ausdrücklich kein Fortschrittszeichen: Ein festgefahrener Renderkern, der den Prozess
+nicht mitnimmt, schlägt weiter. Der Umkehrschluss trägt aber — ein **ausbleibender**
+Herzschlag heisst zuverlässig, dass der Prozess tot oder eingefroren ist —, und nur auf
+ihn schlägt die Wache an.*
+
 **Monotone Uhr (monotonic clock)** — Eine Uhr, die nur vorwärts läuft und nie springt, im
 Gegensatz zur *Wanduhr*, die durch Zeitumstellung oder Zeitabgleich rückwärts gehen kann.
 Für Zeitmessungen („wie lange läuft das schon") ist die monotone Uhr die richtige — eine
@@ -2405,6 +2425,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-20 | Ergaenzt aus der Herzschlagmessung: **GIL (Global Interpreter Lock)** und **Lebenszeichen gegen Fortschrittszeichen**. Beide sind gemessen: Cycles gibt die GIL frei (61 Faden-Schlaege gegen null Aufrufe der beiden dokumentierten Blender-Haken), und der Herzschlag belegt Leben, nicht Fortschritt |
 | 2026-08-20 | Ergaenzt aus der Vakuumprobe (`tools/vakuumprobe.py`): **vakuum-wahre Zusicherung**, **Vakuumprobe**, **Gegenprobe zu einer Abwesenheits-Zusicherung**. Anlass war ein Befund der HomeStation ueber sich selbst — ein als gruen gemeldeter Waechter, dessen Fundartefakt `{"geprueft": 0}` trug |
 | 2026-08-20 | Aus dem GPU-Ergebnis zu `auf-20260820-18`: **Sandbox-Paket (Snap, Flatpak)** und **Artefakt einer Messung**. Beide sind teuer erworben — das GPU-faehige Blender-Snap liefert bei Dateiumleitung Rueckgabewert 0 ohne Bild, und der am selben Tag gemessene 32-Sekunden-Takt war ein Artefakt der CPU-Messung |
 | 2026-08-20 | Ergaenzt aus dem Abholer (`src/aiimaging/abholer.py`): **Laufzettel**, **Waise (verwaister Auftrag)** |

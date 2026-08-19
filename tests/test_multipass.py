@@ -348,8 +348,29 @@ def test_runner_rendert_genau_zweimal():
     Liefe er im selben Render wie Beauty, färbte der Emissions-Override das Beauty-Bild
     flach ein. Zwei Aufrufe von ``render.render`` sind die knappste Fassung dieser Zusage
     — und die einzige, die ohne Blender prüfbar ist.
+
+    **Gezählt wird im Syntaxbaum, nicht im Text.** Die erste Fassung zählte Vorkommen der
+    Zeichenkette und schlug am 20.08.2026 fehl, weil ein neuer *Docstring* den Aufruf
+    erwähnte. Ein Test, der Quelltext liest statt ihn zu verstehen, findet die eigene
+    Prosa — derselbe Fehler war am selben Tag schon einmal zu beheben.
     """
-    assert RUNNER_QUELLE.count("bpy.ops.render.render(") == 2
+    import ast
+
+    def ist_render_aufruf(knoten) -> bool:
+        # bpy.ops.render.render(...) → Attribute-Kette 'render' ← 'render' ← 'ops' ← 'bpy'
+        if not isinstance(knoten, ast.Call):
+            return False
+        teile = []
+        ziel = knoten.func
+        while isinstance(ziel, ast.Attribute):
+            teile.append(ziel.attr)
+            ziel = ziel.value
+        if isinstance(ziel, ast.Name):
+            teile.append(ziel.id)
+        return list(reversed(teile)) == ["bpy", "ops", "render", "render"]
+
+    aufrufe = [k for k in ast.walk(ast.parse(RUNNER_QUELLE)) if ist_render_aufruf(k)]
+    assert len(aufrufe) == 2, [k.lineno for k in aufrufe]
 
 
 def test_runner_verteilt_die_farben_ueber_den_goldenen_winkel():
@@ -856,3 +877,47 @@ def test_die_kamera_rechnet_mit_dem_echten_verhaeltnis(lauf_breitbild):
     """
     assert lauf_breitbild["kamera"]["weg"] == "abgeleitet"
     assert lauf_breitbild["kamera"]["vollstaendig"] is True
+
+
+# ======================================================================================
+# Der Herzschlag am echten Blender
+# ======================================================================================
+
+@pytest.mark.skipif(not shutil.which("blender") and not Path("/opt/blender/blender").exists(),
+                    reason="kein Blender")
+def test_der_herzschlag_schlaegt_waehrend_eines_echten_laufs(tmp_path):
+    """Der Beweis, den keine Attrappe liefern kann.
+
+    Gemessen am 20.08.2026: `bpy.app.handlers.render_stats` und `bpy.app.timers` feuerten
+    während eines blockierenden Renders **null** Mal, ein gewöhnlicher Python-Faden
+    **61** Mal. Cycles gibt die GIL frei — dieser Test hält das fest, damit ein künftiges
+    Blender es nicht stillschweigend ändert.
+    """
+    from aiimaging import seams
+
+    bericht = seams.glb_zu_multipass(
+        schreibe_test_glb(tmp_path / "m.glb"), tmp_path, up_axis="Y_UP",
+        aufloesung=256, samples=200,
+        material_id=False, herzschlag_takt_s=0.5)
+
+    schlag = tmp_path / seams.HERZSCHLAG_DATEI
+    assert schlag.is_file(), "der Runner muss den Herzschlag geschrieben haben"
+    assert bericht.get("herzschlag"), "und ihn im Report nennen"
+
+    zeilen = [z.split() for z in schlag.read_text(encoding="utf-8").splitlines() if z.strip()]
+    assert len(zeilen) >= 2, f"zu wenige Schläge: {zeilen}"
+    nummern = [int(n) for n, _ in zeilen]
+    assert nummern == list(range(1, len(nummern) + 1)), "lückenlos gezählt"
+    zeiten = [float(t) for _, t in zeilen]
+    assert zeiten == sorted(zeiten), "monoton steigend"
+
+
+@pytest.mark.skipif(not shutil.which("blender") and not Path("/opt/blender/blender").exists(),
+                    reason="kein Blender")
+def test_ohne_takt_entsteht_keine_herzschlagdatei(tmp_path):
+    """Vorgabe ist aus. Eine Datei, die man nicht bestellt hat, im Ausgabeordner
+    aufzuräumen ist Arbeit für jemanden, der nicht weiss, woher sie kommt."""
+    from aiimaging import seams
+    seams.glb_zu_multipass(schreibe_test_glb(tmp_path / "m.glb"), tmp_path,
+                           up_axis="Y_UP", aufloesung=128, samples=8, material_id=False)
+    assert not (tmp_path / seams.HERZSCHLAG_DATEI).exists()
