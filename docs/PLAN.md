@@ -366,11 +366,28 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Erdgeschoss — jetzt `gelaende_z`), ein Blickziel über dem Dach bei niedrigen Bauten,
       und ein Bauwerk als Fleck in der Bildmitte, das der Eckentest brav durchwinkte
       (jetzt meldet `kamerasatz` den Füllgrad).
-- [ ] **Die zwölf Bilder ansehen** — sie rechnen sich, bestehen den Eckentest über fünf
-      Gebäudetypen und erreichen den angeforderten Deckungsgrad. **Dass sie gut aussehen,
-      ist damit nicht gezeigt.** Genau das war schon der schwächste Punkt des Bestands:
-      Dass ein Knoten fehlerfrei registriert, belegt keinen Bildeindruck. Braucht ein
-      Augenpaar, keine Zahl.
+- [x] **Die zwölf Bilder angesehen** — erledigt 2026-08-19,
+      `docs/KAMERABLICK_2026-08-19.md`. Zwölf echte Blender-Läufe an einem synthetischen
+      Wohnhaus. Alle zwölf bestehen den Eckentest, alle melden `vollstaendig`, der
+      Füllgrad liegt bei allen zwischen 0.548 und 0.550 — **und die Bilder taugen nicht.**
+      Der Füllgrad ist über alle zwölf konstant, die tatsächliche Bildfläche schwankt von
+      3.3 % bis 9.6 %. Behoben mit `flaechenanteil`, gegen alle zwölf Messungen geprüft.
+- [ ] **Hat die Szene ohne Boden den `geom_iou`-Deckel mitverursacht?** —
+      `auf-20260819-15`. Auf jedem der zwölf Bilder **schwebt der Baukörper in Grau**. In
+      `auf-10` wurde gemessen, dass der Tiefenschätzer genau dort eine Bodenebene
+      hineinlegt. *Wir haben ihm ein Bild ohne Boden gegeben und uns gewundert, dass er
+      einen erfindet.* Ob ein echter Boden das ändert, ist ungemessen — und ein Boden
+      reicht bis zum Horizont und verschiebt über die Normalisierung jeden Grauwert.
+      **Nicht eingebaut, sondern beauftragt** — derselbe Grund wie bei `groesste_flaeche`.
+- [ ] **Format oder Vordergrund? — Owner-Entscheid.** Ein 40 m breiter, 15 m hoher Bau
+      kann ein Quadrat nicht füllen. Die Referenzbilder des Hausstils sind in ihren
+      Quadraten nicht leer, sondern voller Wiese, Bäume und Menschen; unsere Szene hat
+      nichts davon. **Der Widerspruch liegt nicht im Stil** — entweder bekommt die Szene
+      einen Vordergrund, oder das Format folgt dem Baukörper.
+- [ ] **Der Beauty-Pass trennt Bauwerk und Hintergrund kaum** — Gebäudegrau und Weltgrau
+      liegen dicht beieinander. Für die Tiefenkarte gleichgültig, für ein Bildmodell nicht:
+      Es bekommt ein Ausgangsbild mit sehr wenig Zeichnung. Eine Störgrösse, die niemand
+      angemeldet hat.
 - [ ] **Verdeckungstest im Runner** — der Strahlenschuss gegen den Depsgraph. Die
       Schrittlogik steht diesseits der Grenze und ist geprüft; die Blender-Seite fehlt.
       Dabei zu klären, ob Frustum- und Verdeckungstest gegeneinander schwingen — der eine

@@ -747,3 +747,107 @@ def test_die_warnung_nennt_die_ursache_und_nicht_nur_die_zahl():
     assert "füllt nur" in text
     assert "Gebäudemasse" in text or "zurückgeschoben" in text
     assert "die Ursache liegt hier" in text
+
+
+# --------------------------------------------------------------------------------------
+# Der Flächenanteil — was der Füllgrad nicht sagt
+#
+# Am 19.08.2026 an ZWÖLF echten Blender-Läufen gemessen (40 × 26 × 15 m Baukörper,
+# quadratischer Rahmen, 256 px):
+#
+#     gemeldeter Füllgrad   0.548 – 0.550   bei ALLEN ZWÖLF, praktisch konstant
+#     tatsächliche Fläche   3.3 % – 9.6 %   also Faktor DREI Unterschied
+#
+# Die Zahl war richtig und sagte nichts. Ein breiter, niedriger Bau kann einen
+# quadratischen Rahmen nicht füllen: Erfüllt er die Breite, ist die Höhe zwangsläufig leer.
+# --------------------------------------------------------------------------------------
+
+#: Der Baukörper der Messung — Sockel, Hauptkörper, Attika, Anbau.
+GEMESSENES_HAUS = [[-10.0, 0.0, 0.0], [30.0, 26.0, 15.0]]
+
+#: Was die zwölf Renders wirklich zeigten, Kürzel → Flächenanteil.
+GEMESSENE_FLAECHE = {
+    "n": 0.0654, "e": 0.0961, "s": 0.0803, "w": 0.0756,
+    "nNE": 0.0421, "eEN": 0.0447, "eES": 0.0449, "sSE": 0.0457,
+    "sSW": 0.0440, "wWS": 0.0410, "wWN": 0.0327, "nNW": 0.0343,
+}
+
+
+def test_der_fuellgrad_ist_ueber_alle_zwoelf_praktisch_konstant():
+    """Die eine Hälfte des Befunds: Die Zahl unterscheidet die zwölf Ansichten nicht.
+
+    Sie ist damit nicht falsch — sie beantwortet die Frage „wurde der Deckungsgrad
+    eingehalten", und die Antwort ist zwölfmal ja. Sie beantwortet nur nicht die Frage,
+    die ein Mensch stellt.
+    """
+    satz = kameras.kamerasatz(GEMESSENES_HAUS, seitenverhaeltnis=1.0)
+    werte = [k["fuellgrad"] for k in satz["kameras"]]
+    assert max(werte) - min(werte) < 0.01, werte
+
+
+def test_der_flaechenanteil_unterscheidet_sie_deutlich():
+    """Die andere Hälfte: Dieselben zwölf Kameras, Faktor zwei bis drei Unterschied."""
+    satz = kameras.kamerasatz(GEMESSENES_HAUS, seitenverhaeltnis=1.0)
+    werte = [k["flaechenanteil"] for k in satz["kameras"]]
+    assert max(werte) / min(werte) > 2.0, werte
+
+
+@pytest.mark.parametrize("kuerzel,gemessen", sorted(GEMESSENE_FLAECHE.items()))
+def test_die_rechnung_ist_eine_obergrenze_der_messung(kuerzel, gemessen):
+    """Gegen zwölf echte Blender-Läufe geprüft — nicht gegen eine Erwartung.
+
+    Die Hüllbox ist voller als das Gebäude in ihr, die Rechnung muss also **über** dem
+    Gemessenen liegen. Läge sie darunter, wäre sie schlicht falsch. Und sie darf auch
+    nicht beliebig weit darüber liegen, sonst wäre sie als Auskunft wertlos: Der
+    gemessene Baukörper ist ein gestufter Bau, der rund die Hälfte bis zwei Drittel
+    seiner Hüllbox füllt.
+    """
+    kamera = kameras.kamerasatz(GEMESSENES_HAUS, kuerzel=[kuerzel],
+                                seitenverhaeltnis=1.0)["kameras"][0]
+    gerechnet = kamera["flaechenanteil"]
+    assert gerechnet >= gemessen, f"unter dem Gemessenen — die Rechnung ist falsch"
+    assert gerechnet <= gemessen * 2.5, f"{gerechnet:.3f} gegen {gemessen:.3f} — zu grob"
+
+
+def test_die_rangfolge_stimmt_mit_der_messung_ueberein():
+    """Eine Obergrenze nützt nur, wenn sie die Ansichten richtig ORDNET.
+
+    Die Frontalen zeigen mehr als die Diagonalen — gerechnet wie gemessen.
+    """
+    satz = kameras.kamerasatz(GEMESSENES_HAUS, seitenverhaeltnis=1.0)
+    gerechnet = {k["kuerzel"]: k["flaechenanteil"] for k in satz["kameras"]}
+    frontal = [gerechnet[k] for k in ("n", "e", "s", "w")]
+    diagonal = [gerechnet[k] for k in ("nNE", "eES", "sSW", "wWN")]
+    assert min(frontal) > max(diagonal)
+    gemessen_frontal = [GEMESSENE_FLAECHE[k] for k in ("n", "e", "s", "w")]
+    gemessen_diagonal = [GEMESSENE_FLAECHE[k] for k in ("nNE", "eES", "sSW", "wWN")]
+    assert min(gemessen_frontal) > max(gemessen_diagonal)
+
+
+def test_ein_breitbild_zeigt_denselben_bau_groesser():
+    """Die Folgerung aus dem Befund: Es ist eine Frage des FORMATS, nicht des Abstands.
+
+    Ein 40 m breiter, 15 m hoher Bau passt nicht in ein Quadrat. Im Breitbild nimmt
+    derselbe Bau bei demselben Deckungsgrad deutlich mehr Fläche ein — weil weniger
+    Rahmen leer bleibt.
+    """
+    quadrat = kameras.kamerasatz(GEMESSENES_HAUS, kuerzel=["n"],
+                                 seitenverhaeltnis=1.0)["kameras"][0]
+    breit = kameras.kamerasatz(GEMESSENES_HAUS, kuerzel=["n"],
+                               seitenverhaeltnis=16 / 9)["kameras"][0]
+    assert breit["flaechenanteil"] > quadrat["flaechenanteil"]
+
+
+def test_hinter_der_kamera_ist_keine_flaeche():
+    """Eine Projektion hinter der Linse ist keine Fläche, sondern ein Befund."""
+    assert kameras.flaechenanteil((0.0, 0.0, 1.7), (0.0, 10.0, 5.0), WUERFEL) == 0.0
+
+
+def test_die_huellenflaeche_rechnet_bekannte_figuren_richtig():
+    """Selbstprobe der Hülle — ein Test, der nichts prüft, bewacht nichts."""
+    quadrat = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
+    assert kameras._huellen_flaeche(quadrat) == pytest.approx(1.0)
+    # Ein Punkt innen darf nichts ändern.
+    assert kameras._huellen_flaeche(quadrat + [(0.5, 0.5)]) == pytest.approx(1.0)
+    assert kameras._huellen_flaeche([(0.0, 0.0), (1.0, 0.0), (0.0, 1.0)]) == pytest.approx(0.5)
+    assert kameras._huellen_flaeche([(0.0, 0.0), (1.0, 1.0)]) == 0.0      # eine Linie

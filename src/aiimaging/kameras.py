@@ -450,6 +450,90 @@ def _kamerabasis(auge, blick_auf):
     return vorwaerts, rechts, oben
 
 
+def _huellen_flaeche(punkte) -> float:
+    """Fläche der konvexen Hülle einer Punktmenge in der Ebene.
+
+    Andrews Monotone Chain plus Schnürsenkelformel — beides Lehrbuch, beides in dreissig
+    Zeilen. Für acht Punkte ist jede Bibliothek dafür zu schwer, und eine Abhängigkeit ist
+    in diesem Projekt eine Lizenzentscheidung (Regel 1).
+    """
+    p = sorted(set(punkte))
+    if len(p) < 3:
+        return 0.0
+
+    def halb(pp):
+        stapel = []
+        for q in pp:
+            while len(stapel) >= 2:
+                (ax, ay), (bx, by) = stapel[-2], stapel[-1]
+                if (bx - ax) * (q[1] - ay) - (by - ay) * (q[0] - ax) > 0:
+                    break
+                stapel.pop()
+            stapel.append(q)
+        return stapel[:-1]
+
+    huelle = halb(p) + halb(list(reversed(p)))
+    flaeche = 0.0
+    for i in range(len(huelle)):
+        x1, y1 = huelle[i]
+        x2, y2 = huelle[(i + 1) % len(huelle)]
+        flaeche += x1 * y2 - x2 * y1
+    return abs(flaeche) / 2.0
+
+
+def flaechenanteil(auge, blick_auf, bbox, *,
+                   brennweite_mm: float = BRENNWEITE_MM,
+                   seitenverhaeltnis: float = 16 / 9) -> float:
+    """Welchen Anteil der BILDFLÄCHE die Hüllbox einnimmt.
+
+    Warum diese Zahl neben ``fuellgrad`` stehen muss
+    ------------------------------------------------
+    ``fuellgrad`` misst die führende Länge — Breite oder Höhe, je nachdem welche den
+    Abstand gesetzt hat. Das ist richtig für die Frage „wurde der Deckungsgrad
+    eingehalten", und es ist **blind für das, was ein Mensch sieht.**
+
+    Am 19.08.2026 an zwölf echten Blender-Läufen gemessen (40 × 26 × 15 m, quadratischer
+    Rahmen): Der gemeldete Füllgrad lag bei **allen zwölf** zwischen 0.548 und 0.550 —
+    praktisch konstant. Die tatsächlich eingenommene Bildfläche schwankte von **3.3 % bis
+    9.6 %**, also um den Faktor drei. Die Zahl war richtig und sagte nichts.
+
+    Der Grund ist keine Fehlfunktion, sondern Geometrie: Ein breiter, niedriger Bau kann
+    einen quadratischen Rahmen gar nicht füllen. Erfüllt er die Breite, ist die Höhe
+    zwangsläufig leer. Das ist eine Frage des **Formats** oder des **Vordergrunds**, nicht
+    des Abstands — und darum gehört die Zahl gemeldet und nicht wegoptimiert.
+
+    Gerechnet als konvexe Hülle der acht projizierten Hüllbox-Ecken. Das ist für einen
+    Quader exakt und für ein Gebäude eine **Obergrenze**: Die Hüllbox ist voller als der
+    Bau. Die gemessenen 3.3–9.6 % liegen entsprechend darunter.
+
+    Returns:
+        Anteil in ``[0, 1]``. ``0.0``, wenn die Kamerabasis entartet ist oder Ecken hinter
+        der Kamera liegen — dort ist die Projektion keine Fläche mehr.
+    """
+    gelesen = _lies_bbox(bbox)
+    basis = _kamerabasis(auge, blick_auf)
+    if gelesen is None or basis is None:
+        return 0.0
+    vorwaerts, rechts, oben = basis
+    hfov, vfov = bildwinkel(brennweite_mm, seitenverhaeltnis=seitenverhaeltnis)
+    grenze_h = math.tan(hfov / 2.0)
+    grenze_v = math.tan(vfov / 2.0)
+
+    unten, obenecke = gelesen
+    flach = []
+    for x in (unten[0], obenecke[0]):
+        for y in (unten[1], obenecke[1]):
+            for z in (unten[2], obenecke[2]):
+                v = _minus((x, y, z), auge)
+                tiefe = _punkt(v, vorwaerts)
+                if tiefe < MIN_TIEFE_M:
+                    return 0.0
+                # Auf den Bildrahmen normiert: -0.5 .. +0.5 ist der sichtbare Bereich.
+                flach.append((_punkt(v, rechts) / tiefe / grenze_h / 2.0,
+                              _punkt(v, oben) / tiefe / grenze_v / 2.0))
+    return min(1.0, _huellen_flaeche(flach))
+
+
 def ecken_im_bild(auge, blick_auf, bbox, *,
                   brennweite_mm: float = BRENNWEITE_MM,
                   seitenverhaeltnis: float = 16 / 9,
@@ -816,12 +900,17 @@ def kamerasatz(bbox, *,
         f_hoehe = (2.0 * rechnung["halbe_hoehe_m"] / bildhoehe) if bildhoehe > 0.0 else 0.0
         fuellgrad = max(f_breite, f_hoehe)
 
+        flaeche = flaechenanteil(geschoben["auge"], ziel, bbox,
+                                 brennweite_mm=brennweite_mm,
+                                 seitenverhaeltnis=seitenverhaeltnis)
+
         warnungen = []
         if fuellgrad < deckungsgrad * FUELLGRAD_WARNSCHWELLE:
             warnungen.append(
                 f"Das Bauwerk füllt nur {fuellgrad:.1%} des Bildes statt der "
                 f"angeforderten {deckungsgrad:.0%} (Breite {f_breite:.1%}, Höhe "
-                f"{f_hoehe:.1%}) — massgebend war '{rechnung['massgebend']}'. "
+                f"{f_hoehe:.1%}, Fläche {flaeche:.1%}) — massgebend war "
+                f"'{rechnung['massgebend']}'. "
                 + (f"Bei kleinen Bauten setzt der Mindestabstand von {WANDABSTAND_M:.0f} m "
                    "den Standort, nicht der Bildwinkel; das Verfahren ist auf "
                    "Gebäudemasse ausgelegt. "
@@ -847,6 +936,10 @@ def kamerasatz(bbox, *,
             "fuellgrad": fuellgrad,
             "fuellgrad_breite": f_breite,
             "fuellgrad_hoehe": f_hoehe,
+            # Was ein MENSCH sieht — siehe `flaechenanteil`. Der Füllgrad oben war über
+            # zwölf gemessene Kameras praktisch konstant, während diese Zahl um den
+            # Faktor drei schwankte.
+            "flaechenanteil": flaeche,
             "warnungen": tuple(warnungen),
             "begruendung": geschoben["begruendung"],
         })

@@ -1,0 +1,40 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260819-15",
+  "art": "qa",
+  "beschreibung": "HAT DIE SZENE OHNE BODEN DEN geom_iou-DECKEL MITVERURSACHT? BRAUCHT GPU. DER BEFUND, DER DEN AUFTRAG AUSLOEST (docs/KAMERABLICK_2026-08-19.md): Ich habe die zwoelf Automatikkameras zum ersten Mal als BILDER angesehen, nicht als Zahlen. Auf jedem davon SCHWEBT der Baukoerper in gleichmaessigem Grau — es gibt keine Bodenplatte, kein Gelaende, keinen Horizont. In auf-20260818-10 hast du gemessen, warum geom_iou schon beim perfekten Bild bei 0.261 deckelt: Der Tiefenschaetzer legt in eine flache gleichmaessige Flaeche eine Bodenebene hinein, die zur Bildecke hin auf die Kamera zulaeuft, und nur 34 Prozent der ausgewaehlten Punkte lagen auf dem Bauwerk. Wir haben ihm also ein Bild OHNE Boden gegeben und uns dann gewundert, dass er einen erfindet. Ein an Naturfotos trainierter Schaetzer hat noch nie ein schwebendes Gebaeude gesehen. Ein realer Architekturrender hat immer einen Boden. DIE FRAGE: Verhaelt sich der Schaetzer anders, wenn die Szene einen echten Boden hat? WARUM ICH ES NICHT EINFACH EINGEBAUT HABE: Ein Boden reicht bis zum Horizont, veraendert damit die Tiefenspanne und ueber die Normalisierung JEDEN Grauwert der Karte. Er koennte den Deckel heben oder ihn nur verschieben. Ihn einzubauen, weil er offensichtlich richtig ist, waere genau der Fehler, den 'groesste_flaeche' in auf-12 vorgefuehrt hat: der naheliegendste Griff traf null Prozent. WAS ZU TUN IST: Dieselbe Messung wie in auf-12 — Schaetzer auf Blenders EIGENEN Beauty-Pass, also ein Bild, das die Geometrie exakt zeigt —, aber ueber VIER Szenen: (a) wie heute, ohne Boden (der Bezugspunkt, muss 0.261 reproduzieren oder du sagst warum nicht); (b) mit einer endlichen Bodenplatte, die deutlich ueber den Bau hinausreicht, aber im Bild NICHT bis zum Rand; (c) mit einer sehr grossen Bodenebene, die im Bild bis zum unteren Rand und in die Ecken laeuft — das ist der realistische Fall; (d) wie (c), aber mit einem Horizont, also so gross, dass sie oben an den Himmel stoesst. Je Szene: geom_iou, spearman, score, und der ANTEIL der ausgewaehlten Punkte auf dem BAUWERK (nicht auf dem Boden) — das ist die Zahl, um die es geht. Fahre jede Szene mit BEIDEN Auswahlregeln, wie_soll und ohne_randberuehrung. DIE UNBEQUEME ERWARTUNG, die du pruefen sollst: Bei (c) und (d) beruehrt der ECHTE Boden den Bildrand. 'ohne_randberuehrung' verwirft dann alles Randberuehrende — und das ist jetzt richtige Geometrie, nicht mehr eine Halluzination. Moeglicherweise ist die Regel, die in auf-12 gewonnen hat, in einer realistischen Szene die schlechtere. WENN DAS SO IST, WILL ICH ES WISSEN, und zwar deutlich. Ich habe sie gestern zur Vorgabe gemacht. ZUSATZ, falls die Zeit reicht: Wie sieht die SOLL-Karte in (c) und (d) aus? Ein Boden bis zum Horizont spreizt die Tiefenspanne enorm; die 16-Bit-Normalisierung koennte den Bau dann in wenige Grauwerte druecken. Nenne die Spanne in Metern und wieviele verschiedene Grauwerte auf dem BAUWERK liegen. REGEL 3: synthetische Geometrie, keine echten Projektdaten. Nur Zahlen zurueck.",
+  "erstellt": "2026-08-19T06:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc — oder die glb aus scratchpad/kamerablick nachbauen (Sockel, Hauptkoerper, zurueckgesetzte Attika, Anbau)"
+  },
+  "params": {
+    "aufloesung": 512,
+    "samples": 16,
+    "ohne_bildmodell": true,
+    "szenen": [
+      "ohne_boden",
+      "platte_endlich",
+      "ebene_bis_rand",
+      "ebene_mit_horizont"
+    ],
+    "auswahlregeln": [
+      "wie_soll",
+      "ohne_randberuehrung"
+    ],
+    "kamera": "n"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte und Urteile. KEINE Bilder — Regel 3."
+  }
+}
