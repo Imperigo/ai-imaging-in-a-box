@@ -372,6 +372,22 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Füllgrad liegt bei allen zwischen 0.548 und 0.550 — **und die Bilder taugen nicht.**
       Der Füllgrad ist über alle zwölf konstant, die tatsächliche Bildfläche schwankt von
       3.3 % bis 9.6 %. Behoben mit `flaechenanteil`, gegen alle zwölf Messungen geprüft.
+- [x] **Die zwei grössten KI-Module geöffnet** — erledigt 2026-08-19,
+      `docs/KI_MODULE_BESTAND_2026-08-19.md`. Beide sind Regel-1-**sauber**: Sie bauen
+      ComfyUI-Workflows als JSON (Daten) und sprechen einen laufenden Server über HTTP an
+      (Prozessgrenze). **Aber nebenan liegt ein GPL-Fund ersten Ranges:**
+      `kosmovis_render.py` macht `import nodes` und `import execution` — ComfyUI-Interna,
+      GPL-3.0, in-process ausgeführt. Für uns in jeder Form gesperrt. Die Bestandsaufnahme
+      vom 18.08. führte das nicht; sie ist berichtigt.
+- [ ] **`archviz_variant_scorer.py` und `archviz_exposure_check.py` öffnen** — vom
+      Agenten als die beiden nächstwichtigsten ungeöffneten Module benannt. Wir haben
+      weder eine Variantenbewertung noch eine Belichtungsprüfung.
+- [ ] **Fortschrittsgrenze für den Renderlauf** — der alte Bestand hat eine
+      `no_progress`-Zeitgrenze, die ein **hängendes**, nicht abgestürztes Backend fängt.
+      Wir haben nur einen Gesamt-Timeout. Das ist etwas, das wir schlechter haben.
+- [ ] **Variantenreihen** — wir erzeugen ein Bild je Aufruf. Der alte Bestand fährt fünf
+      Sampler mit `seed = basis + nummer` und kennt ein `locked_seed` für kontrollierte
+      Reihen. Bei 1.4 s je Bild (`auf-13`) ist eine Reihe zum ersten Mal bezahlbar.
 - [ ] **Hat die Szene ohne Boden den `geom_iou`-Deckel mitverursacht?** —
       `auf-20260819-15`. Auf jedem der zwölf Bilder **schwebt der Baukörper in Grau**. In
       `auf-10` wurde gemessen, dass der Tiefenschätzer genau dort eine Bodenebene

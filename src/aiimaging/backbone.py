@@ -315,6 +315,16 @@ _eintrag(Backbone(
     # Als einziger Eintrag am Original geprüft (Modellkarte, Lagebeurteilung Kap. 4).
     # Das ist der Grund, warum gerade dieses Modell die Vorgabe ist: permissiv UND belegt.
     lizenz_quelle=QUELLE_MODELLKARTE,
+    # PRÄZISIERUNG 19.08.2026 (`docs/KI_MODULE_BESTAND_2026-08-19.md`): `auf-20260818-09`
+    # hat gemessen, dass `QwenImageEditPlusPipeline` **kein** ControlNet ist — das bleibt
+    # richtig. Es war aber nicht die ganze Geschichte: Für die Qwen-Familie existiert ein
+    # **separates** ControlNet (`qwen_image_controlnet_union`), das der ältere Bestand
+    # über den ComfyUI-Weg einbindet. `KOND_INTEGRIERTES_EDIT` beschreibt also die
+    # Pipeline, die wir benutzen, und NICHT die Familie.
+    #
+    # Wer daraus liest „Qwen kann kein ControlNet", liest falsch. Nachgetragen, damit die
+    # Registry nicht eine engere Aussage macht, als die Messung hergibt — der Eintrag
+    # `qwen-image-2512` trägt den ControlNet-Weg bereits.
 ))
 
 _eintrag(Backbone(

@@ -794,7 +794,41 @@ Rotationskonventionen), `rotation_euler` als abgeleitete Zusatzangabe für Blend
 
 # TEIL F · Lizenz und Herkunft (Regel 1)
 
-**Kein GPL- oder AGPL-Fund im übernehmbaren Material.** Zwei Punkte zur Kenntnis:
+> ## NACHTRAG 19.08.2026 — EIN GPL-FUND ERSTEN RANGES, DEN DIESE AUFNAHME ÜBERSAH
+>
+> Die Aussage unten — „kein GPL- oder AGPL-Fund im übernehmbaren Material" — **stimmte
+> für das damals untersuchte Material und war als Gesamtaussage falsch.** Teil C.4 hat
+> zwei Module ausdrücklich als *nicht geöffnet* geführt; beim Öffnen (19.08.2026,
+> `docs/KI_MODULE_BESTAND_2026-08-19.md`) fiel nebenan ein drittes auf:
+>
+> **`01_workflow/kosmovis_render.py`** — laut eigenem Kopfkommentar der „produktionsreife
+> Render-Einstieg" — enthält
+>
+> ```
+> Zeile 231:  import nodes
+> Zeile 248:  import execution
+> Zeile 281:  import execution
+> ```
+>
+> Das sind **ComfyUI-Interna**. ComfyUI steht unter **GPL-3.0**. Der Code instanziiert
+> `execution.PromptExecutor`, baut einen Server-Stub und führt ComfyUI **im eigenen
+> Prozess** aus; ein Kommentar nennt eine Funktion ausdrücklich „Mirror von
+> `execution.validate_prompt`".
+>
+> **Das ist Fall (b): GPL-Code importiert und in-process ausgeführt — für dieses Projekt
+> in jeder Form gesperrt** (Regel 1, Regel 2). Es ist die einzige Datei jenes Bestands,
+> die das tut; die beiden beauftragten KI-Module sind sauber (sie bauen ComfyUI-Workflows
+> als **JSON** und sprechen einen laufenden Server über HTTP an — Daten und eine
+> Prozessgrenze, beides zulässig).
+>
+> **Die Lehre über diese Aufnahme selbst:** Ihr Satz „kein GPL-Fund" stand neben dem Satz
+> „zwei Module nicht geöffnet". Beide zusammen ergeben keine Unbedenklichkeit, sondern
+> eine **ungeprüfte Fläche** — und die liest sich als Freispruch, wenn der erste Satz
+> allein zitiert wird. Eine Lizenzaussage gilt nur so weit, wie gelesen wurde, und das
+> gehört in denselben Satz.
+
+**Kein GPL- oder AGPL-Fund im übernehmbaren Material** (Stand 18.08., siehe Nachtrag
+oben). Zwei Punkte zur Kenntnis:
 
 1. **Zwei Verweise auf eine fremde Quelle.** `archviz_style_skills.py` und
    `archviz_qa_gate.py` tragen den Vermerk, ein Muster sei aus einem fremden
