@@ -1,0 +1,61 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260820-19",
+  "status": "ok",
+  "beendet": "2026-08-19T15:20:00Z",
+  "dauer_s": 353.1,
+  "messwerte": {
+    "umgebung": {
+      "blender": "5.2.0 LTS",
+      "geraet": "OPTIX:NVIDIA GeForce RTX 5090",
+      "engine": "CYCLES",
+      "adaptives_sampling": false,
+      "aufloesung": 512,
+      "samples": 220000,
+      "takt_s": 2.0,
+      "gpu_vor_dem_lauf": "0 % Auslastung, 14.9 W, 1069 MiB",
+      "leistungsgrenze_w": 400.0
+    },
+    "lauf_1": {
+      "schlaege": 88,
+      "erster_s": 0.0,
+      "letzter_s": 174.8,
+      "laengste_luecke_s": 2.1,
+      "kuerzeste_luecke_s": 2.0,
+      "mittlere_luecke_s": 2.009,
+      "nummern_lueckenlos": true,
+      "spruenge": []
+    },
+    "lauf_2": {
+      "schlaege": 88,
+      "erster_s": 0.0,
+      "letzter_s": 174.8,
+      "laengste_luecke_s": 2.1,
+      "kuerzeste_luecke_s": 2.0,
+      "mittlere_luecke_s": 2.009,
+      "nummern_lueckenlos": true,
+      "spruenge": []
+    },
+    "die_vier_zahlen": {
+      "schlaege": 88,
+      "gesamtdauer_s": 176.6,
+      "laengste_luecke_s": 2.1,
+      "nummern_lueckenlos": true,
+      "renderdauer_s": 175.3,
+      "beide_laeufe_identisch": true
+    }
+  },
+  "urteil": {
+    "die_frage_in_einem_satz": "Die laengste Luecke bleibt NAHE AM TAKT: 2.10 s bei eingestellten 2.0 s. Keine lange Stille, kein Verhungern. Cycles gibt die GIL AUCH UNTER OPTIX frei.",
+    "die_vier_zahlen": "88 Schlaege · Gesamtdauer 176.6 s · laengste Luecke 2.10 s · Nummern lueckenlos von 1 bis 88, kein einziger Sprung. Zweimal gefahren, BEIDE LAEUFE IDENTISCH — gleiche Schlagzahl, gleiche 174.8 s, gleiche 2.10 s Hoechstluecke. Geraet: OptiX auf der RTX 5090, Blender 5.2.0 LTS.",
+    "der_kontrast_der_es_belegt": "Dieselbe Szene, dieselbe Dauer, derselbe Rechner wie in auf-18 — dort schwieg die Standardausgabe 175 Sekunden am Stueck. Hier feuert der Faden im selben Zeitraum 88 Mal mit hoechstens 2.10 s Abstand. Der Unterschied liegt also nicht am Renderer und nicht am Geraet, sondern daran, WER schreibt: Cycles schweigt, ein eigener Faden nicht.",
+    "keine_verhungerten_schlaege": "Ausdruecklich geprueft, weil du danach gefragt hast: Die Nummern in Spalte 1 zaehlen in beiden Laeufen lueckenlos von 1 bis 88. Kein Sprung, keine verlorenen Schlaege. Der Faden wurde nicht zwischendurch verdraengt.",
+    "abweichung_vom_auftrag_und_warum": "Der Auftrag verlangt, den AKTUELLEN RUNNER zu nehmen. Das geht nicht: blender_depth_stage.py setzt in Zeile 744 `szene.cycles.device = \"CPU\"` fest verdrahtet, mit dem Kommentar «in dieser Umgebung gibt es keine GPU», und hat dafuer keinen Schalter. Ihn auf die GPU zu bringen hiesse, euren Code zu aendern — das verbietet derselbe Auftrag.\nERSATZ: `_herzschlag_starten` (Zeilen 196-217) WORTGLEICH nachgebildet — gleiche Schleife, gleiches Format '<nr> <sekunden>', gleiches flush plus fsync, gleiches stoppen.wait(takt), gleicher daemon-Thread — und neben eine OptiX-Szene gestellt. An eurem Code ist nichts geaendert. Was gemessen wurde, ist damit exakt euer Faden unter OptiX; was NICHT gemessen wurde, ist der Runner als Ganzes auf der GPU.\nDAS IST SELBST EIN BEFUND: Solange die Geraetezeile fest verdrahtet ist, kann der Runner auf dieser Maschine gar nicht auf der Karte rechnen — unabhaengig vom Herzschlag.",
+    "keine_frist_vorgeschlagen": "Wie verlangt keine Vorgabefrist. Die Zahl, auf der sie ruhen kann, lautet: hoechste beobachtete Luecke 2.10 s bei Takt 2.0 s, ueber zwei Laeufe und 176 Schlaege zusammen. Was daraus fuer eine Frist folgt, entscheidest du.",
+    "und_die_einschraenkung_die_ihr_selbst_schreibt": "Euer eigener Docstring sagt es, und die Messung aendert daran nichts: Das ist ein LEBENSzeichen, kein FORTSCHRITTSzeichen. Es belegt, dass der Prozess lebt und sein Interpreter zum Zug kommt — nicht, dass der Renderer vorankommt. Ein festgefahrener Cycles-Kern, der den Prozess nicht mitnimmt, schlaegt weiter."
+  },
+  "umgebung": {
+    "python": "3.14.4"
+  },
+  "fehler": null
+}
