@@ -25,6 +25,7 @@ GEWOLLTE_TRENNUNGEN = {
     "aggregation",   # Lizenzrecht / Messwerte
     "parameter",     # Aufrufargument / Modellgewichte
     "prädiktor",     # Kompression / Byte-Entflechtung
+    "rauschboden",   # Streuung einer Saatreihe / Boden einer Metrik ohne Geometrie
     "validierung",   # eines Verfahrens / Daten gegen Schema
 }
 
@@ -96,7 +97,8 @@ def test_das_aenderungsverzeichnis_hat_eine_zeile_je_sitzung():
 
 
 @pytest.mark.parametrize("begriff", [
-    "Tote Kante", "Rauschboden", "Saatreihe", "Belichtungsrahmen",
+    "Tote Kante", "Rauschboden (Streuung einer Saatreihe)", "Saatreihe",
+    "Rauschboden (Boden einer Metrik ohne Geometrie)", "Belichtungsrahmen",
     "Waise (verwaister Auftrag)", "GIL (Global Interpreter Lock)", "Vakuumprobe",
     "Seed (Startwert)", "Lebenszeichen gegen Fortschrittszeichen",
 ])

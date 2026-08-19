@@ -1147,6 +1147,20 @@ zwei beliebige Bilder sind einander in diesem Modell also schon „zur Hälfte �
 Der Boden ist die Zahl, unter der eine Schwelle nie liegen darf: Sonst besteht jedes Paar,
 und das Gate ist keines.*
 
+**Rauschboden (Boden einer Metrik ohne Geometrie)** — Der Wert, den eine Qualitätsmetrik
+erreicht, wenn das geprüfte Bild von der gesuchten Eigenschaft **gar nichts** enthält. Man
+erwartet null und bekommt es fast nie.
+*Gemessen: Ein Bild ohne jede Geometrie erreicht über der Bauwerksmaske eine
+Rangkorrelation von −0,52 statt 0 — weil der Tiefenschätzer auch in reinem Rauschen eine
+Rampe von oben nach unten sieht und die Soll-Karte ebenfalls eine hat
+(`RAUSCHBODEN_UEBER_MASKE` in `src/aiimaging/geometrie_qa.py`). Wer gegen 0 prüft statt
+gegen diesen Boden, prüft gegen die falsche Zahl. Der Wert gehört zum Paar aus Schätzer und
+Szenenart; für eine andere Szenenart ist er ungemessen.*
+*Dasselbe Wort bezeichnet in Abschnitt 6 einen anderen Sachverhalt — dort die Streuung
+einer Saatreihe, also wie weit der blosse Zufall zwei Läufe auseinandertreibt. Hier geht es
+um den Nullpunkt einer Skala, dort um ihre Körnigkeit. Die Trennung ist gewollt und in
+`tests/test_lexikon.py` als solche ausgewiesen.*
+
 **Abgeleitete Schwelle** — Eine Grenze, die nicht als Zahl gesetzt, sondern aus einer
 Messung gerechnet wird — hier ``Boden + k · Streuung``. *Der Grund ist Haltbarkeit: Eine
 feste Zahl gehört zu dem Modell, das sie hervorgebracht hat, und wandert beim Wechsel
@@ -1391,6 +1405,14 @@ grob gesagt bleiben rund zwei Drittel aller Abweichungen kleiner als σ. *In die
 die Störung `rauschen` der Schwellenstudie; Stärke 1,0 heisst dort σ = eine halbe
 Bautiefe. Selbst bei dieser Stärke bleibt die Rangkorrelation bei 0,45 — die Reihenfolge
 der Tiefen ist gegen Rauschen erheblich unempfindlicher als der einzelne Tiefenwert.*
+
+**Perzentil** — Der Wert, unter dem ein bestimmter Anteil aller Messwerte liegt: Das
+95. Perzentil ist die Zahl, die 95 % aller Fälle unterschreiten, das 5. Perzentil die, die
+nur 5 % unterschreiten. Anders als der Mittelwert sagt es etwas über die **Spanne** aus.
+*In den Kamerarecherchen die Form, in der Körpermasse angegeben werden: Die Augenhöhe im
+Stehen reicht vom 5. Perzentil der Frauen (1,43 m) bis zum 95. der Männer (1,74 m). Der im
+Projekt gesetzte Wert 1,70 m ist damit keine Durchschnitts-Augenhöhe, sondern ein hoher
+Wert — wer 1,70 gegen 1,60 verteidigt, verteidigt einen Geschmack und keine Zahl.*
 
 **Mittelwertfilter (Glättung)** — Jeder Bildpunkt wird durch den Durchschnitt aus sich
 selbst und seinen Nachbarn ersetzt, je nach Stärke mehrfach hintereinander. Kanten werden
@@ -1776,6 +1798,148 @@ schätzen lässt: Wenn man weiss, wie breit ein Gebäude ist und welchen Winkel 
 erfasst, folgt der Abstand aus dem Tangens. In diesem Projekt `bildwinkel` in
 `src/aiimaging/kameras.py`.*
 
+**Sensor / Bildebene** — Die lichtempfindliche Fläche in der Kamera, auf der das Bild
+entsteht: früher der Film, heute ein Chip. Ihre **Grösse** in Millimetern bestimmt zusammen
+mit der Brennweite, wie viel ins Bild passt (siehe *Bildwinkel*); ihre **Lage im Raum**
+bestimmt, ob senkrechte Kanten des Bauwerks im Bild senkrecht bleiben (siehe *stürzende
+Linien*). *Im Renderer gibt es keinen Chip — „Sensorbreite" ist dort eine gesetzte Zahl,
+und die Bildebene steht genau so, wie die Kamera ausgerichtet wird.*
+
+**Kleinbild (Vollformat, 35 mm)** — Das Sensor- bzw. Filmformat 36 × 24 mm, in den 1920er-
+Jahren von Oskar Barnack für Leica aus dem Kinofilm abgeleitet und bis heute der
+Bezugsmassstab der Fotografie. Weil eine Brennweite nur zusammen mit einem Format etwas
+aussagt — 90 mm sind an einer Grossformatkamera weitwinklig und am Kleinbild ein Tele —,
+rechnet man fremde Formate um: Das **Kleinbild-Äquivalent** ist die Brennweite, die am
+Kleinbild denselben Bildwinkel ergäbe. *Alle Brennweitenzahlen der Kamerarecherchen sind
+Kleinbild-Äquivalente. Der Objektivsatz, den die Dokumentationsnorm für 4 × 5 Zoll
+vorschreibt (65/90/150/210 mm), entspricht umgerechnet 18/25/42/59 mm Kleinbild.*
+
+**Seitenverhältnis** — Breite zu Höhe des Bildrahmens, meist als Verhältnis (3:2) oder als
+Dezimalzahl (1,50) angegeben. Gebräuchlich sind 1:1 (Quadrat), 4:5 hoch = 1,25 (Planfilm
+4 × 5 Zoll, heute auch Instagram), 5:7 = 1,40, 3:2 = 1,50 (Kleinbild), 16:9 = 1,78
+(Bildschirm) und ab 2,0 „Panorama". *Für dieses Projekt ein wunder Punkt: Der Hausstil
+`kosmo_standard` schreibt ein Quadrat vor, und kein einziger geprüfter fotografischer
+Standard arbeitet quadratisch. Das Quadrat ist eine Stilentscheidung gegen die Konvention,
+nicht innerhalb ihrer — für einen 40 × 15 m breiten Bau (8:3) das ungünstigste verfügbare
+Format.*
+
+**Fachkamera (Grossformat)** — Eine Kamera, bei der Objektivträger und Bildebene als zwei
+getrennte, gegeneinander verschieb- und neigbare Standarten auf einer Schiene sitzen.
+Genau diese Verstellbarkeit erlaubt es, den Bildausschnitt zu verschieben, ohne die Kamera
+zu neigen. Übliche Formate 4 × 5, 5 × 7 und 8 × 10 Zoll. *Die amerikanische
+Bauwerksdokumentationsnorm HABS schreibt sie ausdrücklich vor. Im Renderer gibt es keine
+Standarten — was sie leistet, ist dort der Zahlenwert* **Shift**.
+
+**Planfilm (Blattfilm)** — Film in einzelnen Blättern statt auf einer Rolle, in Zoll
+gemessen (4 × 5, 5 × 7, 8 × 10). Er ist der Bildträger der Fachkamera und die Herkunft der
+Seitenverhältnisse 1,25 und 1,40, die bis heute benutzt werden — auch von Leuten, die nie
+einen Planfilm in der Hand hatten.
+
+**Bildkreis** — Ein Objektiv wirft keinen rechteckigen Ausschnitt, sondern einen runden
+Lichtfleck. Das Rechteck des Sensors liegt darin. Ist der Kreis deutlich grösser als das
+Rechteck, lässt sich das Rechteck darin verschieben, ohne dass eine Ecke dunkel bleibt —
+und genau das ist die technische Voraussetzung für *Shift* und *Shift-Stitch*. Ein
+Objektiv mit knappem Bildkreis kann beides nicht.
+
+**Stürzende Linien (konvergierende Vertikalen)** — Senkrechte Kanten eines Bauwerks, die
+im Bild nicht parallel bleiben, sondern aufeinander zulaufen. Sie entstehen **allein**
+dadurch, dass die Kamera geneigt wird, die Bildebene also nicht mehr lotrecht steht — nicht
+durch die Brennweite, nicht durch den Standort und ausdrücklich unabhängig von der
+Augenhöhe der Fotografin. Steht die Bildebene lotrecht, bleiben die Vertikalen parallel,
+egal wie hoch oder tief die Kamera sitzt.
+*Das ist die einzige institutionell verbindliche Regel des ganzen Fachs: Die
+US-Bundesnorm HABS/NPS verlangt die Perspektivkorrektur zwingend und **bei der Aufnahme**.
+Und dieses Projekt verletzt sie in jedem Bild, das es bisher erzeugt hat:
+`src/aiimaging/kameras.py` legt das Blickziel über die Augenhöhe
+(`ZIEL_ANTEIL_HOEHE = 0.20`), was 9,46° Neigung und 11,8 bis 21,8 % Konvergenz ergibt. Der
+Kommentar an dieser Stelle nannte das „den üblichen Griff der Architekturfotografie" — der
+übliche Griff ist das Gegenteil: waagrecht halten und shiften (`docs/KAMERAREGELN_2026-08-21.md`).*
+
+**Perspektivkorrektur** — Das Vermeiden oder Beseitigen stürzender Linien. Zwei Wege: bei
+der Aufnahme (Fachkamera oder Shift-Objektiv, Kamera bleibt waagrecht) oder nachträglich
+am Rechner, indem das Bild verzogen wird. Der zweite Weg kostet Bildfläche und Auflösung
+und wirkt bei starker Korrektur unnatürlich. *Die Dokumentationsnorm lässt nur den ersten
+zu; in einem Renderer ist er ohnehin der billigere.*
+
+**Shift (Tilt-Shift-Objektiv, PC-Objektiv)** — Das Verschieben des Objektivs **parallel**
+zur Bildebene, meist nach oben. Die Kamera bleibt dabei waagrecht, der Ausschnitt wandert
+trotzdem nach oben — man bekommt das Dach ins Bild, ohne zu kippen. Übliche Höchstwerte am
+Kleinbild sind 11 bis 12 mm. Das **Tilt** desselben Objektivtyps meint etwas anderes: das
+Neigen der Objektivebene, um die Schärfe schräg durch den Raum zu legen; mit der
+Perspektive hat es nichts zu tun. *Im Renderer ist Shift ein reiner Zahlenwert und kein
+Bauteil — die häufigste handwerkliche Fehlerquelle der realen Architekturfotografie lässt
+sich hier per Konstruktion ausschliessen, indem Neigung und Rollwinkel auf 0 geklemmt
+werden und die Höhenkorrektur über Shift läuft.*
+
+**Shift-Stitch** — Mehrere Aufnahmen vom **selben Standort** mit seitlich versetztem
+Objektiv, die anschliessend zu einem breiteren Bild zusammengesetzt werden. Weil der
+Aufnahmepunkt sich nicht bewegt, bleibt das Ergebnis eine einzige, geometrisch korrekte
+Zentralprojektion — anders als beim Schwenken der Kamera, wo die Teilbilder verschiedene
+Perspektiven haben. Erreichbar ist damit am Kleinbild ein Seitenverhältnis von rund 2,42:1.
+
+**Einpunkt-, Zweipunkt- und Dreipunktperspektive** — Wie viele Fluchtpunkte ein Bild hat,
+und was dadurch parallel bleibt. **Einpunkt:** Kamera waagrecht und senkrecht auf die
+Fassade — Vertikalen *und* Horizontalen der Fassade bleiben parallel, es gibt einen
+Fluchtpunkt, meist im Bild. **Zweipunkt:** Kamera waagrecht, aber schräg zur Fassade — nur
+die Vertikalen bleiben parallel, zwei Fluchtpunkte liegen auf dem Horizont, meist
+ausserhalb des Bildes. **Dreipunkt:** Kamera geneigt — nichts bleibt parallel, der dritte
+Fluchtpunkt liegt über oder unter dem Bild. *Für den Code der entscheidende Satz: Ein- und
+Zweipunkt unterscheiden sich **nur im Azimut**, beide haben Neigung 0°. Die
+Dreipunktperspektive ist die einzige mit Neigung ≠ 0 — und damit der Fall der stürzenden
+Linien.*
+
+**Fluchtpunkt** — Der Punkt, in dem sich im Bild Linien treffen, die in Wirklichkeit
+parallel verlaufen. *Es gibt eine belegte Konvention dafür, wo er sitzt, und sie gilt nur
+im Innenraum: Bei der frontalen Einpunktaufnahme gehört er in die Bildmitte, die Kamera
+also auf die Mittelachse des Raums und senkrecht zur Stirnwand. Für Aussenaufnahmen sagt
+keine gefundene Quelle, wo er sitzen soll — nur, wo er geometrisch landet.*
+
+**Horizontlinie** — Die Linie im Bild, die auf Höhe des Objektivs liegt; alles, was in der
+Welt auf Kamerahöhe liegt, liegt im Bild auf dieser Linie. Bei waagrechter Kamera **ohne**
+Shift liegt sie exakt in der Bildmitte — das ist keine Gestaltungswahl, sondern eine
+Zwangsfolge, unabhängig von Brennweite und Abstand. Shift verschiebt sie nach unten, bei
+vollem Shift bis auf wenige Prozent über die Bildunterkante.
+*Damit ist der Bodenanteil eines Aussenbildes eine eingestellte Grösse zwischen rund 50 %
+(kein Shift) und rund 4 % (voller Shift) — und die an der Versuchsszene gemessenen 59,8 %
+Boden sind mit korrekt gehaltener Kamera überhaupt nicht erzeugbar.*
+
+**Über-Eck-Ansicht (Drei-Viertel-Ansicht)** — Die Aufnahme schräg auf eine Gebäudeecke, bei
+der zwei Fassaden gleichzeitig sichtbar sind; üblicherweise um 45° zur Fassadennormale,
+geometrisch eine Zweipunktperspektive. *Sie ist der Regelfall, nicht die Ausnahme: Die
+HABS-Norm verlangt zwei Über-Eck-Ansichten gegen eine einzige frontale. Für dieses Projekt
+ist sie der übersehene dritte Weg — ein 40 × 15 m breiter Bau (8:3) projiziert sich schräg
+betrachtet nicht mehr als 8:3. Die Perspektive erledigt die Formatanpassung, die weder der
+Rahmen noch ein gefüllter Vordergrund leisten kann.*
+
+**Rektilineare Projektion** — Die Abbildung, bei der jede Gerade der Welt auch im Bild eine
+Gerade bleibt. Sie ist der Normalfall gewöhnlicher Objektive und die Abbildung jeder
+gerenderten Lochkamera; das Gegenstück ist das Fischauge, das gerade Kanten krümmt. Ihr
+Preis ist die Randstreckung (siehe *Volumenanamorphose*).
+
+**Volumenanamorphose (Randstreckung)** — Räumliche Körper am Bildrand erscheinen gedehnt:
+Kugeln werden zu Ellipsen, Köpfe breit. Das ist kein Objektivfehler, sondern die
+unvermeidliche Folge der rektilinearen Projektion, und sie wächst mit dem Bildwinkel. Die
+Flächenstreckung in der Bildecke gegenüber der Bildmitte beträgt `1/cos³θ`, wobei θ der
+halbe Diagonal-Bildwinkel ist: bei 35 mm rund 1,6-fach, bei 24 mm 2,4-fach, bei 17 mm über
+4-fach. *Das ist eine harte Grenze für Personen, Bäume und Fahrzeuge am Bildrand — nicht
+für den Baukörper selbst, dessen ebene Flächen korrekt abgebildet werden.*
+
+**Objektivverzeichnung** — Ein optischer Fehler, bei dem gerade Kanten gekrümmt abgebildet
+werden, nach aussen (Tonne) oder nach innen (Kissen). Mit Perspektive hat sie nichts zu
+tun. *Drei Dinge werden in der Ratgeberliteratur ständig zu einer „Weitwinkelverzerrung"
+verrührt und sind sauber zu trennen: die perspektivische Wirkung (hängt am **Abstand**),
+die Randstreckung (hängt am **Bildwinkel**) und die Verzeichnung (hängt am **Objektiv**).
+Eine gerenderte Lochkamera hat die dritte per Definition nicht — sie kann nur absichtlich
+eingebaut werden.*
+
+**Streckungsverhältnis** — Der Abstand zum entferntesten wichtigen Objekt im Bild, geteilt
+durch den Abstand zum nächsten. Je grösser die Zahl, desto stärker übertreibt das Bild die
+Tiefe: Ein Sessel 0,8 m vor der Linse und die Stirnwand in 6,4 m ergeben 8:1, und der
+Sessel wirkt riesig. *Diese Grösse ist als Prüfwert robuster als eine Brennweitenschwelle,
+weil die Übertreibung nicht von der Brennweite abhängt, sondern vom Verhältnis der
+Abstände — dieselbe Brennweite lügt nah und sagt fern die Wahrheit. Die Ableitung stammt
+aus `docs/recherche/KOMPOSITION_INNEN.md` und steht in keiner Quelle.*
+
 **Azimut** — Eine Himmelsrichtung als Winkel, im Uhrzeigersinn ab Norden gezählt: 0° Nord,
 90° Ost, 180° Süd, 270° West. *Nicht zu verwechseln mit dem Winkel am Einheitskreis, der
 gegen den Uhrzeigersinn ab der Ost-Achse zählt — wer die beiden verwechselt, dreht eine
@@ -1836,6 +2000,132 @@ erscheint der Grundriss auf die Hälfte gestaucht und die Höhe fast unverkürzt
 Zuschneiden des Rahmens `sin` und `cos` vertauscht, schneidet das Gebäude an — genau
 dieser Vorzeichenfehler ist im Vorläufercode nachweislich passiert und wurde dort von
 einem Test festgehalten.*
+
+**Bildebenen: Vordergrund, Mittelgrund, Hintergrund** — Die Gliederung eines Bildes in
+drei Tiefenschichten. Der Vordergrund liegt nah bei der Kamera und gibt dem Bild Massstab
+und einen Einstieg, der Mittelgrund trägt meist das Hauptmotiv, der Hintergrund liefert
+den Zusammenhang. *Zwei Feststellungen dazu gehören zusammen: Ein Vordergrund entsteht
+nicht durch die Kamerasetzung, sondern durch **Szeneninhalt** — eine Kamerabibliothek kann
+ihn anfordern, aber nicht herstellen. Und dieses Projekt hat gemessen, was passiert, wenn
+er fehlt: In `docs/KAMERABLICK_2026-08-19.md` wirken zwölf Ansichten eines Baukörpers ohne
+Boden und ohne Umgebung falsch, obwohl alle Kennzahlen grün waren, und der Tiefenschätzer
+erfindet eine Bodenebene, die es nicht gibt.*
+
+**Anschnitt** — Ein Motiv, das der Bildrand durchschneidet, statt es ganz zu zeigen. *Hier
+trennen sich zwei Welten sauber, und beide sind belegt: Die Bauwerksdokumentation verbietet
+ihn (HABS verlangt die vollständige Fassade und untersagt sogar das nachträgliche
+Beschneiden), die redaktionelle und künstlerische Fotografie benutzt ihn routinemässig als
+Mittel. Für dieses Projekt heisst das: Anschnitt ist **kein Fehlerzustand, sondern ein
+Modus**. Ein Prüfwert `vollstaendig: True` beantwortet die Dokumentationsfrage, nicht die
+Bildfrage — zwölf Kameras meldeten ihn und lieferten trotzdem unbrauchbare Bilder.*
+
+**Negativraum / funktionaler Raum** — Der bewusst leer gelassene Teil der Bildfläche.
+**Und ein benannter Streit, kein Lehrsatz.** Die eine Seite hält mindestens ein Drittel
+Negativraum für nötig, damit ein Bauwerk „atmen" kann, und meint damit meist den Himmel.
+Die Gegenposition stammt vom Architekturfotografen Joel Tjintjelaar (BWVision):
+grosszügige Leerflächen im Sinne der minimalistischen Fotografie „works against the purpose
+of architectural photography"; er setzt dagegen den *functional space* — genau so viel
+freie Fläche, wie das Bauwerk braucht, um eindeutig als Motiv gelesen zu werden, „no more
+and no less". *Beide Positionen stammen von arbeitenden Fotografen, keine Norm entscheidet:
+Geschmackssache mit Begründung, nicht Wissen. Für den Entscheid „Vordergrund füllen" ist
+das der Kern — nicht belegbar ist ein grosser Bodenanteil **ohne Inhalt**; leere Fläche
+wird in keiner geprüften Quelle als Gestaltungsmittel genannt, sondern als Fehler.*
+
+**Axial / nicht-axial** — Tjintjelaars Ersatz für die üblichen Kompositionsregeln:
+**axial** heisst, die waagrechten Linien des Baus laufen parallel zu den waagrechten
+Bildkanten — man steht frontal davor; **nicht-axial** heisst, man sieht den Bau schräg.
+Dazu kommt als zweite Grösse die Zahl der sichtbaren Fassaden. *Für ein Programm ist dieses
+Begriffspaar brauchbarer als die Drittelregel, weil beides aus der Geometrie ablesbar ist:
+axial heisst Azimut 0° zur Fassadennormale, nicht-axial alles andere.*
+
+**Drittelregel** — Die verbreitetste Kompositionslehre der Fotografie: Man denkt sich zwei
+waagrechte und zwei senkrechte Linien ins Bild, die es in Drittel teilen, und legt Motive
+auf diese Linien oder ihre Schnittpunkte. **Sie wird breit gelehrt und ist als Beschreibung
+der Praxis widerlegt.** Amirshahi, Hayn-Leichsenring, Denzler und Redies verglichen in
+*Art & Perception* 2 (2014) 163–182 grosse Bildmengen — darunter 679 regelkonforme und 403
+nicht regelkonforme Fotografien, 200 hochbewertete Aufnahmen und 727 Gemälde — mit
+subjektiven Bewertungen: Die ästhetische Bewertung hing nur schwach mit der beurteilten
+Drittelregel zusammen (Rangkorrelation ρ = 0,17) und **gar nicht** mit den gerechneten
+Werten; hochbewertete Bilder erreichten ungefähr so niedrige Werte wie Bilder, die der
+Regel nicht folgen.
+Dazu die Begriffsgeschichte, die den zweiten Teil der Sache erklärt: 1797 meinte John
+Thomas Smith mit „Rule of Thirds" ein **Flächenverhältnis von hell zu dunkel** (⅓ zu ⅔),
+nicht die Lage eines Motivs; 1908 lautete die Fassung „nahe, aber nicht **in** der Mitte";
+**1955 vermischte das *British Journal of Photography* Drittelregel und goldenen Schnitt**
+erstmals, und seither werden beide in einem Atemzug genannt; die heute gelehrte Fassung
+(„exakt auf den Schnittpunkten") entstand erst um 1960.
+*Für dieses Projekt: Die Drittelregel darf als wählbare Voreinstellung im Code stehen — als
+**Setzung des Owners**. Sie darf nicht mit „so machen es Architekturfotografen" begründet
+werden, und sie sollte im Code auch nicht so heissen.*
+
+**Goldener Schnitt** — Die Teilung einer Strecke im Verhältnis 1 : 1,618, im Bild also bei
+etwa 0,382 der Kante. Als ästhetisches Gesetz ist er unhaltbar: George Markowsky wies 1992
+im *College Mathematics Journal* 23, 2–19 nach, dass die verbreiteten Behauptungen zu
+Kunst und Architektur grösstenteils falsch oder aus wählbaren Massen zusammengesucht sind
+— und dass Versuchspersonen zwischen 48 Rechtecken im Bereich 1,6 bis 1,7 überhaupt keinen
+Unterschied sahen. *Er ist ausserdem **nicht** dasselbe wie die Drittelregel (0,382 gegen
+0,333); dass beide gemeinsam genannt werden, geht auf einen Redaktionsfehler von 1955
+zurück. Wer sie in einem Atemzug nennt, wiederholt ihn.*
+
+**Bürgerliche, nautische und astronomische Dämmerung** — Die drei Dämmerungsphasen, über
+den Winkel der Sonne unter dem Horizont definiert: bürgerlich 0° bis −6°, nautisch −6° bis
+−12°, astronomisch −12° bis −18°. *Das sind feste astronomische Konventionen, in jedem
+Sonnenstandsrechner gleich implementiert — im Gegensatz zur „goldenen Stunde" also Zahlen,
+auf die sich ein Programm stützen darf.*
+
+**Goldene Stunde / blaue Stunde** — Die Tageszeiten kurz nach Sonnenaufgang und kurz vor
+Sonnenuntergang (goldene Stunde, warmes flaches Licht) beziehungsweise die Zeit danach, in
+der der Himmel tiefblau steht (blaue Stunde). **Beide haben keine definierte Dauer und
+keinen definierten Winkel** — die vielzitierten Werte (goldene Stunde +6° bis −4°
+Sonnenhöhe, blaue Stunde −4° bis −6°) sind Konventionen von Planungsprogrammen, keine Norm.
+*Ein Programm darf mit ihnen rechnen, aber nur als **Setzung**, nicht als gefundenes
+Faktum — dieselbe Unterscheidung wie unter* Setzung vs. Messung. *Die blaue Stunde hat
+dabei ein technisches Argument für sich: Nur dann zeichnen Kunstlicht im Gebäude und
+Himmelshelligkeit gleichzeitig, der Kontrast ist also klein genug für ein Bild.*
+
+**Blendenstufe (EV, Lichtwert)** — Die Masseinheit für Helligkeitsunterschiede in der
+Fotografie: Eine Stufe ist eine Verdopplung oder Halbierung der Lichtmenge, zwei Stufen das
+Vierfache, zehn Stufen das Tausendfache. „EV" (exposure value) meint dasselbe. *Die einzige
+wiederkehrende Zielgrösse der Innenraumfotografie ist in dieser Einheit formuliert: Die
+Fensterflächen sollen im fertigen Bild ein bis zwei Blendenstufen heller wirken als der
+Innenraum — also Faktor 2 bis 4, nicht mehr (ausgebrannt) und nicht weniger (wirkt tot). Es
+ist kein Normwert, sondern die Faustregel arbeitender Fotografen.*
+
+**Dynamikumfang (Kontrastumfang)** — Der Abstand zwischen der hellsten und der dunkelsten
+Stelle, die eine Szene enthält oder eine Kamera in einer Aufnahme festhalten kann,
+gemessen in Blendenstufen. *Das ist der Grund für den Fenster-Innen-Konflikt: Ein
+tageslichtbeleuchteter Innenraum umfasst je nach Quelle 14 bis 18 Stufen, mit der Sonne im
+Bild noch weit mehr; eine Einzelaufnahme fasst grob 12 bis 14. Was nicht hineinpasst,
+läuft zu oder frisst aus (siehe* Clipping*). Im Renderer entschärft sich das, weil dort
+Helligkeitswerte ungeklippt gespeichert werden können (siehe* EXR *und* Half-Float*).*
+
+**Belichtungsreihe (Bracketing)** — Dieselbe Aufnahme mehrfach mit verschiedener Belichtung,
+anschliessend zu einem Bild verrechnet. In der Innenraumfotografie das Standardverfahren:
+drei Bilder bei −2/0/+2 EV im Normalfall, fünf bei schwierigem Licht, sieben bei
+Dämmerung. *Für dieses Projekt kein Verfahren, sondern eine Auskunft: Die Zahl der nötigen
+Stufen sagt, wie gross der Kontrast eines echten Innenraums ist.*
+
+**flambient (flash + ambient)** — Ein Verfahren der Innenraumfotografie: Man belichtet auf
+das **Fenster** — die Aussenwelt ist dann richtig gezeichnet, der Raum zu dunkel — und
+hebt anschliessend den Raum mit entfesseltem Blitz auf dieselbe Belichtung an. Der Blitz
+muss neben der Kamera stehen, sonst spiegelt er sich im Fenster. Das Kunstwort mischt
+*flash* und *ambient* (vorhandenes Licht).
+
+**dpi (dots per inch, Punkte pro Zoll)** — Wie fein ein Bild gedruckt wird. 300 dpi gilt
+als Druckqualität, 72 dpi als Bildschirmwert. *Die Zahl ist für sich genommen ohne
+Aussage: Sie sagt erst zusammen mit der Ausgabegrösse etwas, und was ein Bild wirklich
+hergibt, ist seine Pixelzahl. Genau so verfahren die Publikationen — die geprüften
+Einreichungsvorschriften regeln Pixelzahl und Auflösung, aber **kein einziges
+Seitenverhältnis**.*
+
+**HABS (Historic American Buildings Survey)** — Das Bauwerksdokumentationsprogramm des
+US-amerikanischen National Park Service, dessen Aufnahmen in die Library of Congress
+eingehen. Seine Fotografie-Richtlinien sind die **einzige verbindliche Vorschrift**, die
+die Recherchen dieses Projekts gefunden haben: Grossformat-Fachkamera, Perspektivkorrektur
+zwingend bei der Aufnahme, Formate 4 × 5 / 5 × 7 / 8 × 10 Zoll mit Vorzug für 5 × 7, ein
+fester Objektivsatz, kein Beschneiden — und ein Katalog der verlangten Ansichten, in dem
+zwei Über-Eck-Ansichten einer frontalen gegenüberstehen. *Alles andere, was in der
+Architekturfotografie „Regel" heisst, ist Ratgeberliteratur.*
 
 ---
 
@@ -1938,15 +2228,16 @@ zwei Ursachen zugleich, und ein Unterschied lässt sich keiner von beiden zuordn
 Reihe beantwortet dann die Frage nicht, für die sie gefahren wurde.
 *In diesem Projekt weigert sich `varianten.kontrollierte_reihe`, den Seed mitzufahren.*
 
-**Rauschboden** — Die Streuung, die eine Saatreihe **bei sonst gleichen Parametern** zeigt.
-Er ist der Massstab für jeden späteren Vergleich:
+**Rauschboden (Streuung einer Saatreihe)** — Die Streuung, die eine Saatreihe **bei
+sonst gleichen Parametern** zeigt. Er ist der Massstab für jeden späteren Vergleich:
 
 > Ein Unterschied ist erst dann einer, wenn er den Rauschboden übersteigt.
 
 *Dieselbe Denkweise, mit der die Stil-Schwelle zustande kam: Dort wurde erst der Boden von
 SigLIP 2 gemessen (0,526 an 4950 Bildpaaren), und erst danach war eine Schwelle darüber
 sinnvoll. Eine Schwelle unter dem Boden lässt alles durch — und ein Unterschied unter dem
-Rauschboden belegt nichts.*
+Rauschboden belegt nichts. Dasselbe Wort bezeichnet in Abschnitt 4 den Boden einer
+Metrik über einem Bild ohne Geometrie — ein anderer Sachverhalt, siehe dort.*
 
 **Laplace-Varianz (Schärfemass)** — Ein Zahlenwert dafür, wie stark sich benachbarte
 Bildpunkte unterscheiden: viele harte Kanten ergeben einen hohen Wert, ein weiches Bild
@@ -2583,6 +2874,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-21 | Ergaenzt aus den drei Kompositionsrecherchen (`docs/recherche/KOMPOSITION_AUSSEN.md`, `KOMPOSITION_INNEN.md`, `BILDPROPORTIONEN.md`): 34 Begriffe der Architekturfotografie — Aufnahmetechnik (**Sensor/Bildebene**, **Kleinbild**, **Seitenverhältnis**, **Fachkamera**, **Planfilm**, **Bildkreis**, **Shift**, **Shift-Stitch**, **Perspektivkorrektur**), Projektionsgeometrie (**stürzende Linien**, **Ein-/Zwei-/Dreipunktperspektive**, **Fluchtpunkt**, **Horizontlinie**, **Über-Eck-Ansicht**, **rektilineare Projektion**, **Volumenanamorphose**, **Objektivverzeichnung**, **Streckungsverhältnis**), Bildaufbau (**Bildebenen**, **Anschnitt**, **Negativraum/funktionaler Raum**, **axial/nicht-axial**, **Drittelregel**, **goldener Schnitt**), Licht (**Dämmerungsphasen**, **goldene/blaue Stunde**, **Blendenstufe/EV**, **Dynamikumfang**, **Belichtungsreihe**, **flambient**) und Ausgabe (**dpi**, **HABS**); dazu **Perzentil**. Zwei Eintraege tragen den Befund der Recherche und nicht die Lehrmeinung: Die **Drittelregel** ist als Beschreibung der Praxis widerlegt (Amirshahi et al. 2014, ρ = 0,17) und wurde 1955 mit dem goldenen Schnitt verwechselt; **stuerzende Linien** sind die einzige institutionell verbindliche Regel des Fachs — und unser eigener Code verletzt sie in jedem Bild (9,46° Neigung, 11,8–21,8 % Konvergenz). **Getrennt:** **Rauschboden** bezeichnet zwei Sachverhalte — die Streuung einer Saatreihe und den Boden einer Metrik ueber einem Bild ohne Geometrie; beide Titel tragen jetzt einen Klammerzusatz, die Trennung steht in `tests/test_lexikon.py` |
 | 2026-08-21 | Ergaenzt aus der Bauwerksmaske (`src/aiimaging/maske.py`): **Bauwerksmaske** und **Geländeregel**. Beide aus der Messung vom 21.08.2026: Der Material-ID-Pass liefert dieselbe Maske wie eine zweite Blender-Aufnahme (100.000 % Uebereinstimmung), aber nur, solange eine Regel sagt, woran das Gelaende zu erkennen ist |
 | 2026-08-20 | Ergaenzt: **Erreichbarkeit einer Schwelle (Deckel)**. Nachgerechnet: Auf der Szene ohne Boden — der einzigen, auf der je gerendert wurde — war die Geometrie-Schwelle 0.65 arithmetisch unerreichbar |
 | 2026-08-20 | Ergaenzt: **Schluss aus einer Abwesenheit**. Der Begriff fasst einen Fehler zusammen, der an diesem Tag in FUENF Verkleidungen auftrat — geschlossenes Menue, veralteter Klon, ein Verzeichnis das gerade entsteht, ein gruener Waechter der nichts mass, und ein Klick der einen anderen Knopf traf |
