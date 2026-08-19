@@ -333,3 +333,79 @@ __all__ = [
     "SchreibError",
     "normalisiere_tiefe", "schreibe_graustufen_png", "tiefe_exr_zu_png",
 ]
+
+
+# ======================================================================================
+# Kontrollbilder — was ein Bild OHNE Geometrie auf derselben Soll-Karte erreicht
+# ======================================================================================
+
+#: Die Kontrollbilder, die eine Nullprobe ausmachen.
+#:
+#: **Warum es sie gibt.** Am 20.08.2026 hat die HomeStation ungefragt vier Bilder durch
+#: die Geometrie-QA geschickt, die *nicht* aus dem Bildmodell stammten
+#: (`auf-20260820-21`). Ergebnis: **Weisses Rauschen erreichte 0.7217 und bestand damit
+#: das Gate von 0.65** — mehr als jeder der fünf echten Läufe derselben Messung.
+#:
+#: Der Grund liegt nicht am Rauschen: Ein monokularer Schätzer legt in *jedes* Bild eine
+#: zum Horizont laufende Bodenebene, und eine Szene mit viel Boden **ist** so eine Rampe.
+#:
+#:     Ein Score sagt erst etwas, wenn danebensteht, was **nichts** erreicht.
+#:
+#: Dieselbe Medizin, die ``stil_qa`` seit dem 18.08. nimmt.
+KONTROLLARTEN = ("rauschen", "grau", "verlauf")
+
+#: Fester Startwert für das Rauschen. **Eine Nullprobe, die bei jedem Aufruf anders
+#: ausfällt, ist keine** — der Anker wäre dann selbst eine Zufallsgrösse, und ein Score
+#: liesse sich nicht zweimal gleich einordnen.
+KONTROLL_SEED = 20260820
+
+
+def kontrollwerte(art: str, breite: int, hoehe: int, *, seed: int = KONTROLL_SEED):
+    """Die Grauwerte eines Kontrollbildes — ohne Datei, damit es prüfbar bleibt.
+
+    * ``rauschen`` — gleichverteiltes weisses Rauschen. Der **härteste** der drei: Er ist
+      der einzige, der in der Messung vom 20.08. das Gate bestanden hat.
+    * ``grau`` — eine leere Fläche mit 0.5. Belegt, was ein Bild ohne jede Information
+      erreicht.
+    * ``verlauf`` — ein Verlauf **quer** zur Bildachse, also strukturlos in Bezug auf die
+      Tiefe. Er prüft, ob schon ein blosser Helligkeitsgradient reicht.
+
+    Gerechnet wird mit :mod:`random` und festem Startwert — nicht mit ``os.urandom``:
+    Reproduzierbarkeit ist hier wichtiger als Güte des Zufalls, und ein Anker, der bei
+    jedem Aufruf anders ausfällt, ist kein Anker.
+
+    Raises:
+        SchreibError: unbekannte Art, oder unbrauchbare Bildmasse.
+    """
+    if art not in KONTROLLARTEN:
+        raise SchreibError(
+            f"Unbekannte Kontrollart {art!r}. Bekannt: {', '.join(KONTROLLARTEN)}."
+        )
+    if breite < 1 or hoehe < 1:
+        raise SchreibError(f"Bildmasse {breite}×{hoehe} ergeben kein Bild.")
+
+    n = breite * hoehe
+    if art == "grau":
+        return [0.5] * n
+    if art == "verlauf":
+        # Quer, also von links nach rechts — eine Tiefenrampe läuft von unten nach oben.
+        # Der Verlauf soll gerade NICHT wie eine Bodenebene aussehen.
+        teiler = max(1, breite - 1)
+        return [(x / teiler) for _ in range(hoehe) for x in range(breite)]
+
+    import random
+
+    wuerfel = random.Random(seed)
+    return [wuerfel.random() for _ in range(n)]
+
+
+def schreibe_kontrollbild(ziel, art: str, breite: int, hoehe: int, *,
+                          seed: int = KONTROLL_SEED, bittiefe: int = 8) -> Path:
+    """Ein Kontrollbild als PNG — die Datei, die der Tiefenschätzer bekommt.
+
+    Acht Bit statt sechzehn: Das Bild soll dem gleichen, das ein Bildmodell liefert, und
+    ein 16-Bit-Rauschen wäre kein realistischerer Anker, sondern ein anderer.
+    """
+    return schreibe_graustufen_png(
+        ziel, kontrollwerte(art, breite, hoehe, seed=seed), breite, hoehe,
+        bittiefe=bittiefe)

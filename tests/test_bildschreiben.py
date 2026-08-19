@@ -948,3 +948,61 @@ def test_ohne_eingesetzten_leser_ist_der_exr_leser_des_projekts_zustaendig():
     assert vorgabe is None, "die Vorgabe wird erst im Rumpf aufgelöst"
     quelle = inspect.getsource(tiefe_exr_zu_png)
     assert "bildlesen.lies_exr_tiefe" in quelle
+
+
+# ======================================================================================
+# Kontrollbilder — ein Score sagt erst etwas, wenn danebensteht, was NICHTS erreicht
+# ======================================================================================
+
+def test_das_rauschen_ist_reproduzierbar():
+    """**Eine Nullprobe, die bei jedem Aufruf anders ausfällt, ist keine.**
+
+    Der Anker wäre dann selbst eine Zufallsgrösse, und ein Score liesse sich nicht zweimal
+    gleich einordnen.
+    """
+    a = bildschreiben.kontrollwerte("rauschen", 16, 8)
+    b = bildschreiben.kontrollwerte("rauschen", 16, 8)
+    assert a == b
+    assert bildschreiben.kontrollwerte("rauschen", 16, 8, seed=1) != a
+
+
+def test_das_rauschen_fuellt_die_ganze_spanne():
+    werte = bildschreiben.kontrollwerte("rauschen", 64, 64)
+    assert min(werte) < 0.05 and max(werte) > 0.95
+    assert 0.45 < sum(werte) / len(werte) < 0.55
+
+
+def test_die_graue_flaeche_ist_wirklich_leer():
+    werte = bildschreiben.kontrollwerte("grau", 8, 4)
+    assert set(werte) == {0.5}
+
+
+def test_der_verlauf_laeuft_QUER_und_nicht_wie_eine_bodenebene():
+    """Eine Tiefenrampe läuft von unten nach oben. Der Kontrollverlauf soll gerade NICHT
+    so aussehen — sonst prüfte er nicht, ob ein Gradient schon reicht, sondern lieferte
+    genau den Gradienten, den der Schätzer ohnehin erfindet."""
+    breite, hoehe = 8, 4
+    werte = bildschreiben.kontrollwerte("verlauf", breite, hoehe)
+    zeilen = [werte[y * breite:(y + 1) * breite] for y in range(hoehe)]
+    assert all(z == zeilen[0] for z in zeilen), "alle Zeilen gleich — also kein Verlauf in Y"
+    assert zeilen[0] == sorted(zeilen[0]), "in X steigend"
+    assert zeilen[0][0] == 0.0 and zeilen[0][-1] == 1.0
+
+
+def test_ein_kontrollbild_ist_ein_lesbares_png(tmp_path):
+    from aiimaging import bildlesen
+    for art in bildschreiben.KONTROLLARTEN:
+        pfad = bildschreiben.schreibe_kontrollbild(tmp_path / f"{art}.png", art, 12, 6)
+        werte, breite, hoehe = bildlesen.lies_png_graustufen(pfad)
+        assert (breite, hoehe) == (12, 6) and len(werte) == 72
+
+
+def test_eine_unbekannte_kontrollart_wird_abgewiesen():
+    with pytest.raises(bildschreiben.SchreibError, match="Bekannt:"):
+        bildschreiben.kontrollwerte("beauty", 8, 8)
+
+
+@pytest.mark.parametrize("breite, hoehe", [(0, 8), (8, 0), (-1, 4)])
+def test_unbrauchbare_masse_werden_abgewiesen(breite, hoehe):
+    with pytest.raises(bildschreiben.SchreibError, match="kein Bild"):
+        bildschreiben.kontrollwerte("grau", breite, hoehe)

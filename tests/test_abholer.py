@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 
 import pytest
 
@@ -336,7 +337,7 @@ def test_ein_zweiter_durchgang_fasst_erledigte_nicht_wieder_an(tmp_path):
 
 def _kette(*, scores=(0.8,), fehlt_tiefe=False, render_status="ok"):
     """Attrappen für Multipass, Render, Soll-Karte und QA. Zählt, was gerufen wurde."""
-    protokoll = {"multipass": [], "render": [], "qa": []}
+    protokoll = {"multipass": [], "render": [], "qa": [], "nullprobe": []}
     werte = list(scores)
 
     def multipass(glb, out, **kw):
@@ -362,6 +363,18 @@ def _kette(*, scores=(0.8,), fehlt_tiefe=False, render_status="ok"):
         return [0.0, 1.0, 2.0, 3.0], 2, 2
 
     def qa(bild, soll_werte, **kw):
+        # Kontrollbilder der Nullprobe zählen nicht in die Reihe der echten Läufe — sonst
+        # verschöbe die Nullprobe die Scores, die dieser Test setzt.
+        #
+        # Geprüft wird der DATEINAME, nicht der ganze Pfad: pytest baut sein tmp_path aus
+        # dem Testnamen, und ein Test, der „nullprobe" heisst, legt seine Bilder in einem
+        # Ordner ab, der „nullprobe" enthält. Die erste Fassung hielt darum das echte
+        # Renderbild für ein Kontrollbild — ein Namenszufall, der genau die Tests traf,
+        # die die Nullprobe prüfen.
+        name = Path(bild).name
+        if name.startswith("nullprobe_"):
+            protokoll["nullprobe"].append(name[len("nullprobe_"):])
+            return {"status": "ok", "score": 0.30, "bestanden": False}
         protokoll["qa"].append(kw)
         wert = werte.pop(0) if werte else 0.5
         return {"status": "ok", "score": wert, "bestanden": wert >= 0.65,
@@ -660,3 +673,100 @@ def test_das_belichtungsurteil_haengt_am_kameraurteil(tmp_path):
 
     abholer.hole_einen(ordner, fremde_freigabe_gilt=True, verarbeite=merke)
     assert gesehen == {"a": True, "b": False}
+
+
+# ======================================================================================
+# Nullprobe — der Anker wird gemessen, nicht nachgeschlagen
+# ======================================================================================
+
+def test_die_nullprobe_misst_drei_kontrollbilder_je_kamera(tmp_path):
+    """Kostet keinen Renderlauf — nur je einen Durchgang des Tiefenschätzers."""
+    ordner = _auftrag(tmp_path)
+    protokoll, attrappen = _kette()
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
+                       verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                                                      **attrappen))
+    assert sorted(a.removesuffix(".png") for a in protokoll["nullprobe"]) == [
+        "grau", "rauschen", "verlauf"]
+    assert len(protokoll["render"]) == 1, "die Nullprobe rendert nichts"
+
+
+def test_der_anker_landet_beim_kameraurteil(tmp_path):
+    ordner = _auftrag(tmp_path)
+    _, attrappen = _kette(scores=(0.8,))
+    gesehen = {}
+
+    def merke(auftrag):
+        e = abholer.verarbeiter(out_wurzel=tmp_path / "aus", **attrappen)(auftrag)
+        gesehen.update(e["kameras"][0])
+        return e
+
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True, verarbeite=merke)
+    assert gesehen["nullanker"] == {"rauschen": 0.30, "grau": 0.30, "verlauf": 0.30}
+    assert gesehen["einordnung"]["ueber_rauschen"] is True
+
+
+def test_ein_score_unter_dem_rauschen_wird_als_solcher_gemeldet(tmp_path):
+    """Der Fall aus `auf-20260820-21`: Das Gate bestanden und trotzdem unter Rauschen."""
+    ordner = _auftrag(tmp_path)
+    _, attrappen = _kette(scores=(0.20,))
+    gesehen = {}
+
+    def merke(auftrag):
+        e = abholer.verarbeiter(out_wurzel=tmp_path / "aus", **attrappen)(auftrag)
+        gesehen.update(e["kameras"][0]["einordnung"])
+        return e
+
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True, verarbeite=merke)
+    assert gesehen["ueber_rauschen"] is False
+    assert "belegt keine Geometrietreue" in gesehen["begruendung"]
+
+
+def test_ohne_nullprobe_gibt_es_keinen_anker_und_die_einordnung_sagt_es(tmp_path):
+    ordner = _auftrag(tmp_path)
+    protokoll, attrappen = _kette()
+    gesehen = {}
+
+    def merke(auftrag):
+        e = abholer.verarbeiter(out_wurzel=tmp_path / "aus", nullprobe=False,
+                                **attrappen)(auftrag)
+        gesehen.update(e["kameras"][0])
+        return e
+
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True, verarbeite=merke)
+    assert protokoll["nullprobe"] == []
+    assert gesehen["nullanker"] is None
+    assert gesehen["einordnung"]["ueber_rauschen"] is None
+    assert "KEINE Nullprobe" in gesehen["einordnung"]["begruendung"]
+
+
+def test_ein_gescheiterter_anker_macht_die_nullprobe_nicht_wertlos(tmp_path):
+    """Gemeldet wird, was gemessen wurde."""
+    ordner = _auftrag(tmp_path)
+    _, attrappen = _kette()
+    echte_qa = attrappen["_qa"]
+
+    def waehlerisch(bild, soll, **kw):
+        if "nullprobe_grau" in str(bild):
+            raise RuntimeError("dieser Anker geht schief")
+        return echte_qa(bild, soll, **kw)
+
+    attrappen["_qa"] = waehlerisch
+    gesehen = {}
+
+    def merke(auftrag):
+        e = abholer.verarbeiter(out_wurzel=tmp_path / "aus", **attrappen)(auftrag)
+        gesehen.update(e["kameras"][0])
+        return e
+
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True, verarbeite=merke)
+    assert set(gesehen["nullanker"]) == {"rauschen", "verlauf"}
+    assert gesehen["einordnung"]["ueber_rauschen"] is not None
+
+
+def test_der_anker_gehoert_zur_sollkarte_und_nicht_zu_einem_szenennamen():
+    """Eine Tabelle nach Szenennamen hätte zwei Fehler: Der Aufrufer kennt den Namen
+    nicht, und zwei Szenen desselben Namens sind nicht dieselbe Szene."""
+    import inspect
+    quelle = inspect.getsource(abholer._nullprobe)
+    assert "gemessen und nicht nachgeschlagen" in quelle

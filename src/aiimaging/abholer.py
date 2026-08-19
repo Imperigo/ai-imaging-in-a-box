@@ -305,6 +305,7 @@ AUTO_RICHTUNGEN = ("sSE",)
 def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 up_axis: str = ANGENOMMENE_HOCHACHSE, schwelle: float | None = None,
                 stillstand_frist_s: float | None = None, stil: str | None = None,
+                nullprobe: bool = True,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
@@ -316,6 +317,16 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
     erzeugte Bild gemessen wird, und sie gilt nur für **den einen** Blickwinkel, aus dem
     sie entstand. Ein Bild gegen die Tiefenkarte einer anderen Kamera zu messen ergäbe
     eine Zahl, und die Zahl wäre Unsinn.
+
+    ``nullprobe`` misst je Kamera, was ein Bild **ohne jede Geometrie** auf derselben
+    Soll-Karte erreicht — weisses Rauschen, eine graue Fläche, ein Querverlauf. Das kostet
+    **keinen Renderlauf**, nur je einen Durchgang des Tiefenschätzers, und es ist der
+    Unterschied zwischen einer Zahl und einer eingeordneten Zahl.
+
+    **Warum voreingestellt:** Am 20.08.2026 gemessen (`auf-20260820-21`) erreichte weisses
+    Rauschen auf einer Szene mit viel Boden **0.7217** und bestand damit das Gate von 0.65
+    — mehr als jeder echte Lauf derselben Messung. Ein Score ohne Anker ist auf einer
+    solchen Szene nicht einzuordnen, und ein grünes Abzeichen wäre eine Behauptung.
 
     ``stil`` schaltet die **Belichtungsprüfung** dazu — sie braucht einen Stil, weil eine
     Belichtungsschwelle keine Eigenschaft guter Belichtung ist, sondern eines Stils (siehe
@@ -345,7 +356,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         zwei bestandenen verschwinden zu lassen.
     """
     from . import belichtung as _bel
-    from . import bildlesen, geometrie_qa, render, seams, tiefenschaetzer
+    from . import bildlesen, bildschreiben, geometrie_qa, render, seams, tiefenschaetzer
 
     multipass = _multipass or seams.glb_zu_multipass
     rendern = _rendere or render.rendere
@@ -426,7 +437,14 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             soll, breite, hoch = soll_lesen(bericht)
             urteil = messen(ergebnis["bild_png"], soll, breite=breite, hoehe=hoch,
                             modell=_tiefen_modell, schwelle=grenze)
-            urteil = dict(urteil, kamera=kuerzel,
+            anker = None
+            if nullprobe:
+                anker = _nullprobe(aus, soll, breite, hoch, bildschreiben=bildschreiben,
+                                   messen=messen, grenze=grenze,
+                                   tiefen_modell=_tiefen_modell)
+            urteil = dict(urteil, kamera=kuerzel, nullanker=anker,
+                          einordnung=geometrie_qa.einordnung(
+                              urteil.get("score"), anker, schwelle=grenze),
                           belichtung=_belichtung_urteil(
                               ergebnis["bild_png"], stil, rahmen, belichtung_pruefen))
             urteile.append(urteil)
@@ -441,6 +459,38 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         }
 
     return verarbeite
+
+
+def _nullprobe(ordner, soll, breite, hoehe, *, bildschreiben, messen, grenze,
+               tiefen_modell=None) -> dict | None:
+    """Was Bilder **ohne jede Geometrie** auf dieser Soll-Karte erreichen.
+
+    Die Anker werden **gemessen und nicht nachgeschlagen.** Eine Tabelle nach Szenennamen
+    hätte zwei Fehler: Der Aufrufer kennt den Namen nicht, und zwei Szenen desselben
+    Namens sind nicht dieselbe Szene. Der Anker gehört zur **Soll-Karte**, und die liegt
+    vor.
+
+    Kostet keinen Renderlauf — nur je einen Durchgang des Tiefenschätzers auf einem
+    synthetischen Bild.
+
+    Ein einzelner gescheiterter Anker macht die Nullprobe **nicht** wertlos: Gemeldet wird,
+    was gemessen wurde. Scheitert alles, gibt es ``None``, und :func:`geometrie_qa.einordnung`
+    sagt dann ausdrücklich, dass keine Einordnung vorliegt — statt eine zu erfinden.
+    """
+    if breite is None or hoehe is None:
+        return None
+    anker: dict[str, float] = {}
+    for art in bildschreiben.KONTROLLARTEN:
+        try:
+            bild = bildschreiben.schreibe_kontrollbild(
+                Path(ordner) / f"nullprobe_{art}.png", art, int(breite), int(hoehe))
+            urteil = messen(str(bild), soll, breite=breite, hoehe=hoehe,
+                            modell=tiefen_modell, schwelle=grenze)
+        except Exception:      # noqa: BLE001 — ein Anker darf den Auftrag nicht mitnehmen
+            continue
+        if urteil and urteil.get("score") is not None:
+            anker[art] = float(urteil["score"])
+    return anker or None
 
 
 def _belichtung_urteil(bild, stil, rahmen, pruefen) -> dict | None:

@@ -598,6 +598,20 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       meldet `verdict.reason` *„Geometrie-Schwelle NICHT kalibriert"*, solange keine
       Nullprobe vorliegt. `verdict.reason` ist ein **Vertragsfeld** und überlebt damit
       auch `nur_vertragsfelder` — die Warnung erreicht auch den, der strikt sendet.
+- [x] **Die Nullprobe ist angeschlossen — und der Anker wird GEMESSEN, nicht
+      nachgeschlagen.** 2026-08-20, `abholer.verarbeiter(nullprobe=True)`, voreingestellt.
+      Je Kamera drei Kontrollbilder (`bildschreiben.schreibe_kontrollbild`): weisses
+      Rauschen, graue Fläche, Querverlauf. **Kostet keinen Renderlauf** — nur je einen
+      Durchgang des Tiefenschätzers.
+      **Warum gemessen statt nachgeschlagen:** Eine Tabelle nach Szenennamen hätte zwei
+      Fehler — der Aufrufer kennt den Namen nicht, und zwei Szenen desselben Namens sind
+      nicht dieselbe Szene. Der Anker gehört zur **Soll-Karte**, und die liegt vor.
+      Das Rauschen hat einen **festen Startwert**: Eine Nullprobe, die bei jedem Aufruf
+      anders ausfällt, ist keine. Und der Querverlauf läuft ausdrücklich *quer* — eine
+      Tiefenrampe läuft von unten nach oben, und ein Kontrollbild, das genau den
+      Gradienten liefert, den der Schätzer ohnehin erfindet, prüfte nichts.
+      Ein einzelner gescheiterter Anker macht die Probe nicht wertlos: Gemeldet wird, was
+      gemessen wurde.
 - [ ] **Unsere Bilder passen schlechter zur Vorgabe als Rauschen.** `|rho|` 0.23–0.45
       gegen 0.92 beim Rauschen. Das ist keine Aussage über die Metrik, sondern über die
       Bilder. Naheliegender Verdacht: die Tiefen-**Polarität**, die in diese Läufe als
