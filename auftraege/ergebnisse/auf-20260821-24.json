@@ -1,0 +1,235 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260821-24",
+  "status": "ok",
+  "beendet": "2026-08-19T18:58:01Z",
+  "dauer_s": 180.0,
+  "messwerte": {
+    "frage_1_vorzeichen_der_nullproben": {
+      "antwort": "ALLE gemessenen Nullproben haben ein NEGATIVES rho. Die gerichtete Rechnung laesst den Rauschanker damit NICHT auf 0 fallen — es bleibt, wie es war.",
+      "szene_59_8_prozent": {
+        "weisses_rauschen": {
+          "spearman": -0.9165404202647888,
+          "geom_iou": 0.5682452367855179,
+          "n_gemeinsam": 113632
+        },
+        "leeres_graubild": {
+          "spearman": -0.8893438615972613,
+          "geom_iou": 0.3026801143160973,
+          "n_gemeinsam": 72866
+        },
+        "verlauf_quer": {
+          "spearman": -0.4165288618625958,
+          "geom_iou": 0.291202094896161,
+          "n_gemeinsam": 70726
+        }
+      },
+      "szene_29_prozent": {
+        "weisses_rauschen": {
+          "spearman": -0.9485742571844331,
+          "geom_iou": 0.0683585411432051,
+          "n_gemeinsam": 9767
+        },
+        "leeres_graubild": {
+          "spearman": null,
+          "geom_iou": 0.0,
+          "n_gemeinsam": 0,
+          "ungemessen": true
+        },
+        "verlauf_quer": {
+          "spearman": null,
+          "geom_iou": 0.0,
+          "n_gemeinsam": 0,
+          "ungemessen": true
+        }
+      }
+    },
+    "frage_2_maske": {
+      "maske": {
+        "quelle": "zweite Soll-Karte, nur Bauwerk, kein Gelaende, gleiche feste Kamera",
+        "n_punkte": 44604,
+        "anteil_bild": 0.1702,
+        "gilt_fuer_beide_szenen": "ja — Bauwerk und Kamera sind in beiden Szenen identisch, die Platte verdeckt es aus diesem Blickwinkel nicht. Eine Maske, nicht zwei."
+      },
+      "warum_zwei_varianten": "Die woertliche Vorgabe — rho UND geom_iou ausschliesslich ueber die Maskenpunkte — macht geom_iou konstruktionsbedingt 1: innerhalb der Maske traegt die Soll-Karte ueberall Geometrie, es gibt dort keinen Hintergrund mehr, gegen den sich eine Silhouette abheben koennte. Darum beides gemessen.",
+      "variante_A_ganzes_bild_gegen_maskenkarte": {
+        "was": "die uebliche Kette (qa_gegen_soll, wie_soll), nur mit der Bauwerks-Sollkarte",
+        "szene_29_prozent": [
+          {
+            "versatz_m": 0.0,
+            "a_score": 0.11145401007178055,
+            "a_spearman": -0.8899733223516838,
+            "a_geom_iou": 0.013957717663105251,
+            "a_n_gemeinsam": 1228,
+            "b_spearman_nur_maske": -0.9908241300318091
+          },
+          {
+            "versatz_m": 0.25,
+            "a_score": 0.09764282743600063,
+            "a_spearman": -0.5710255595110092,
+            "a_geom_iou": 0.01669648860877791,
+            "a_n_gemeinsam": 1465,
+            "b_spearman_nur_maske": -0.9627495401651841
+          },
+          {
+            "versatz_m": 0.5,
+            "a_score": 0.04945662009046589,
+            "a_spearman": -0.13478609066072966,
+            "a_geom_iou": 0.01814695610490995,
+            "a_n_gemeinsam": 1590,
+            "b_spearman_nur_maske": -0.9238970948967371
+          },
+          {
+            "versatz_m": 1.0,
+            "a_score": 0.01603136217180186,
+            "a_spearman": -0.009544989422483455,
+            "a_geom_iou": 0.026925600617021032,
+            "a_n_gemeinsam": 2339,
+            "b_spearman_nur_maske": -0.8449424839277915
+          },
+          {
+            "versatz_m": 2.0,
+            "a_score": 0.15351857484199227,
+            "a_spearman": 0.5721957012736476,
+            "a_geom_iou": 0.04118862264965744,
+            "a_n_gemeinsam": 3529,
+            "b_spearman_nur_maske": -0.781404288029633
+          },
+          {
+            "versatz_m": 4.0,
+            "a_score": 0.15077230590064108,
+            "a_spearman": 0.7687985346142385,
+            "a_geom_iou": 0.02956858943286476,
+            "a_n_gemeinsam": 2562,
+            "b_spearman_nur_maske": -0.7386262111848638
+          }
+        ],
+        "szene_59_8_prozent": [
+          {
+            "versatz_m": 0.0,
+            "a_score": null,
+            "a_spearman": 1.0,
+            "a_geom_iou": 2.2420016590812277e-05,
+            "a_n_gemeinsam": 2,
+            "b_spearman_nur_maske": -0.9874022298786629
+          },
+          {
+            "versatz_m": 0.25,
+            "a_score": 0.01226152544830485,
+            "a_spearman": 0.18875074406049025,
+            "a_geom_iou": 0.0007965266948629637,
+            "a_n_gemeinsam": 71,
+            "b_spearman_nur_maske": -0.9593978028375513
+          },
+          {
+            "versatz_m": 0.5,
+            "a_score": null,
+            "a_spearman": -0.5428571428571428,
+            "a_geom_iou": 6.726306585054147e-05,
+            "a_n_gemeinsam": 6,
+            "b_spearman_nur_maske": -0.9210927941450412
+          },
+          {
+            "versatz_m": 1.0,
+            "a_score": 0.011233702408744235,
+            "a_spearman": 0.01564088935799601,
+            "a_geom_iou": 0.008068343616516375,
+            "a_n_gemeinsam": 714,
+            "b_spearman_nur_maske": -0.8436662111578518
+          },
+          {
+            "versatz_m": 2.0,
+            "a_score": 0.09041229960277983,
+            "a_spearman": 0.3542612227840358,
+            "a_geom_iou": 0.02307445295655764,
+            "a_n_gemeinsam": 2012,
+            "b_spearman_nur_maske": -0.7842787326168181
+          },
+          {
+            "versatz_m": 4.0,
+            "a_score": 0.0913396516367547,
+            "a_spearman": 0.7086669662931379,
+            "a_geom_iou": 0.011772711806736986,
+            "a_n_gemeinsam": 1038,
+            "b_spearman_nur_maske": -0.7435079442040771
+          }
+        ],
+        "rauschen": {
+          "a_score": null,
+          "a_spearman": null,
+          "a_geom_iou": 0.0,
+          "a_n_gemeinsam": 0,
+          "b_spearman_nur_maske": -0.520706115005052
+        }
+      },
+      "variante_B_nur_maskenpunkte": {
+        "was": "rho ueber genau die 44604 Maskenpunkte, beide Karten dort abgegriffen; geom_iou entfaellt aus dem oben genannten Grund",
+        "szene_29_prozent": [
+          {
+            "versatz_m": 0.0,
+            "spearman": -0.9908241300318091
+          },
+          {
+            "versatz_m": 0.25,
+            "spearman": -0.9627495401651841
+          },
+          {
+            "versatz_m": 0.5,
+            "spearman": -0.9238970948967371
+          },
+          {
+            "versatz_m": 1.0,
+            "spearman": -0.8449424839277915
+          },
+          {
+            "versatz_m": 2.0,
+            "spearman": -0.781404288029633
+          },
+          {
+            "versatz_m": 4.0,
+            "spearman": -0.7386262111848638
+          }
+        ],
+        "szene_59_8_prozent": [
+          {
+            "versatz_m": 0.0,
+            "spearman": -0.9874022298786629
+          },
+          {
+            "versatz_m": 0.25,
+            "spearman": -0.9593978028375513
+          },
+          {
+            "versatz_m": 0.5,
+            "spearman": -0.9210927941450412
+          },
+          {
+            "versatz_m": 1.0,
+            "spearman": -0.8436662111578518
+          },
+          {
+            "versatz_m": 2.0,
+            "spearman": -0.7842787326168181
+          },
+          {
+            "versatz_m": 4.0,
+            "spearman": -0.7435079442040771
+          }
+        ],
+        "weisses_rauschen": {
+          "spearman": -0.520706115005052
+        }
+      }
+    }
+  },
+  "urteil": {
+    "kernsatz": "Die Vermutung stimmt, und zwar deutlicher als erwartet — aber nicht fuer geom_iou, sondern statt seiner."
+  },
+  "umgebung": {
+    "leistungsgrenze_w": 400,
+    "blender": "5.2.0 LTS",
+    "gpu_bildmodell": "nicht benutzt",
+    "neu_gerendert": "nur die eine Maskenkarte; alle Bildreihen aus auf-23 wiederverwendet"
+  },
+  "fehler": null
+}
