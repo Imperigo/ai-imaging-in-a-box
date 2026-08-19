@@ -274,6 +274,44 @@ def backbone_nach_fremd(unser: str) -> dict:
 # Ihre Szene lesen
 # --------------------------------------------------------------------------------------
 
+#: Vielfaches, auf das Bildbreite und -höhe fallen müssen.
+#:
+#: **Am Gerät gefunden (Demolauf 3, 19.08.2026):** Der fremde Vertrag verlangt
+#: standardmässig 1600 × 1000. 1600 ist durch 16 teilbar, 1000 nicht (62,5) — und die
+#: Pipeline weist das ab::
+#:
+#:     ValueError: Height must be divisible by 16 (got 1000)
+#:
+#: Der Grund liegt im Bauplan latenter Diffusionsmodelle: Der VAE verkleinert um 8, der
+#: Transformer arbeitet auf 2×2-Kacheln. 16 ist das Produkt, keine Marotte.
+RASTER = 16
+
+
+def _auf_raster(aufl):
+    """Bildmasse auf ein Vielfaches von :data:`RASTER` bringen — **und es sagen**.
+
+    Gerundet wird **abwärts**: Ein grösseres Bild als bestellt wäre eine stille
+    Erweiterung des Ausschnitts, ein kleineres ist ein sichtbarer Beschnitt. Wer den
+    Unterschied kennt, kann ihn ausgleichen; wer ihn nicht gesagt bekommt, sucht später
+    einen Massstabsfehler.
+
+    Returns:
+        ``(masse, hinweis)``. ``hinweis`` ist ``""``, wenn nichts zu tun war.
+    """
+    b, h = int(aufl[0]), int(aufl[1])
+    nb, nh = max(RASTER, b - b % RASTER), max(RASTER, h - h % RASTER)
+    if (nb, nh) == (b, h):
+        return [b, h], ""
+    return [nb, nh], (
+        f"Bildmasse {b}x{h} auf {nb}x{nh} gebracht: Breite und Höhe müssen Vielfache von "
+        f"{RASTER} sein, sonst weist die Pipeline den Lauf ab (Demolauf 3: 'Height must "
+        f"be divisible by 16 (got 1000)'). Abgerundet, nicht aufgerundet — ein grösseres "
+        f"Bild wäre eine stille Erweiterung des Ausschnitts. Das Seitenverhältnis "
+        f"verschiebt sich dabei von {b/h:.4f} auf {nb/nh:.4f}; wer die Kamera daran "
+        f"kalibriert hat, rechnet mit diesem Wert."
+    )
+
+
 def lies_szene(fremd: dict) -> dict:
     """``kosmovis.render-scene/v1`` → unsere Felder, mit allem, was dabei auffällt.
 
@@ -324,6 +362,9 @@ def lies_szene(fremd: dict) -> dict:
     if not (isinstance(aufl, (list, tuple)) and len(aufl) == 2):
         warnungen.append(f"'render.resolution' ist kein Paar: {aufl!r} — es gilt 1600x1000.")
         aufl = [1600, 1000]
+    aufl, hinweis = _auf_raster(aufl)
+    if hinweis:
+        warnungen.append(hinweis)
 
     treue = render.get("faithful", 0.8)
     warnungen.append(

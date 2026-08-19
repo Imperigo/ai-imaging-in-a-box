@@ -166,9 +166,16 @@ def test_ein_unbekanntes_backbone_ist_ein_mangel_und_keine_warnung():
 # --------------------------------------------------------------------------------------
 
 def test_die_aufloesung_ist_dort_ein_paar_und_traegt_das_seitenverhaeltnis():
-    """Unsere Kette rendert seit dem 19.08. nicht mehr zwingend quadratisch — gut so."""
+    """Unsere Kette rendert seit dem 19.08. nicht mehr zwingend quadratisch — gut so.
+
+    **Angepasst am selben Abend (Demolauf 3):** Hier stand ``(1600, 1000)``, also die
+    Zahl des fremden Vertrags unverändert. Die ist nicht renderbar — 1000 ist kein
+    Vielfaches von 16, und die Pipeline weist ab. Gelesen wird jetzt die **gerasterte**
+    Höhe, und die Warnung dazu steht im Ergebnis.
+    """
     gelesen = ks.lies_szene(szene())
-    assert (gelesen["aufloesung"], gelesen["hoehe"]) == (1600, 1000)
+    assert (gelesen["aufloesung"], gelesen["hoehe"]) == (1600, 992)
+    assert any("1600x1000 auf 1600x992" in w for w in gelesen["warnungen"])
 
 
 def test_faithful_wird_abgebildet_und_der_verlust_dabei_benannt():
@@ -409,3 +416,40 @@ def test_jedes_zulaessige_fremde_kuerzel_hat_eine_zuordnung():
     from aiimaging import kosmo_szene as _k
     ohne = [k for k in _k.FREMDE_BACKBONES if k not in _k.BACKBONE_VON_FREMD]
     assert ohne == ["flux-krea"], f"ohne Zuordnung: {ohne}"
+
+
+# ---------------------------------------------------------------------------------------
+# Bildmasse muessen auf ein Vielfaches von 16 fallen — Demolauf 3, 19.08.2026
+# ---------------------------------------------------------------------------------------
+#
+# Der fremde Vertrag verlangt standardmaessig 1600 x 1000. 1600 ist durch 16 teilbar,
+# 1000 nicht — und die Pipeline weist ab:
+#     ValueError: Height must be divisible by 16 (got 1000)
+# Ein vollstaendiger Auftrag scheiterte daran nach 17 Sekunden, mit geladenem Modell.
+
+def test_die_vorgabe_des_fremden_vertrags_wird_gerastert_und_gemeldet():
+    szene = ks.lies_szene({"schema": "kosmovis.render-scene/v1",
+                           "geometry": {"path": "/tmp/x.glb", "format": "glb"},
+                           "out": "/tmp/aus",
+                           "cameras": [{"name": "a", "position": [1, 2, 3],
+                                        "target": [0, 0, 0], "fov": 45}]})
+    assert szene["aufloesung"] % ks.RASTER == 0
+    assert szene["hoehe"] % ks.RASTER == 0
+    assert (szene["aufloesung"], szene["hoehe"]) == (1600, 992)
+    assert any("Vielfache von 16" in w for w in szene["warnungen"]), (
+        "still runden waere der Fehler — die Kamera haengt am Seitenverhaeltnis"
+    )
+
+
+def test_passende_masse_werden_nicht_angefasst_und_nicht_kommentiert():
+    masse, hinweis = ks._auf_raster([512, 512])
+    assert masse == [512, 512]
+    assert hinweis == ""
+
+
+def test_gerastert_wird_abwaerts():
+    """Aufrunden waere eine stille Erweiterung des Ausschnitts."""
+    masse, hinweis = ks._auf_raster([1920, 1080])
+    assert masse == [1920, 1072]
+    assert "Abgerundet" in hinweis
+    assert "Seitenverhältnis" in hinweis
