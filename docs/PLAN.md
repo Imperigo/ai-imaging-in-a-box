@@ -714,7 +714,93 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       strukturlose Fläche eine glatte Rampe, und die Soll-Karte einer Bodenszene **ist**
       im Wesentlichen eine Rampe. Zwei Rampen korrelieren.
 
-## Kamerasetzung — was die Recherche vom 21.08. treffen muss
+## Kamerasetzung — die Recherche ist da, und sie trifft härter als erwartet
+
+*Drei Recherchen unter `docs/recherche/`, Synthese in `docs/KAMERAREGELN_2026-08-21.md`.*
+
+- [ ] **UNSERE KAMERA KIPPT, UND DIE ARCHITEKTURFOTOGRAFIE KIPPT NICHT.** `ZIEL_ANTEIL_HOEHE
+      = 0.20` erzeugt bei 1,2 × Gebäudehöhe Abstand **9,46° Neigung, unabhängig von der
+      Gebäudehöhe** — die Vertikalen laufen um 11,8 % (6 m Bau) bis 21,8 % (40 m)
+      aufeinander zu. Der Kommentar im Code nennt das „der übliche Griff der
+      Architekturfotografie"; **das ist die Umkehrung der Wahrheit.** Parallele Vertikalen
+      entstehen dadurch, dass die Sensorebene lotrecht steht, und HABS/NPS schreibt die
+      Korrektur **bei der Aufnahme** zwingend vor. Der übliche Griff ist waagrecht halten
+      und **shiften**.
+
+      Das ist die einzige institutionell verbindliche Regel des Fachs, und wir verletzen
+      sie in jedem Bild, das dieses Projekt je erzeugt hat. Zu bauen: waagrechte Kamera
+      plus Shift statt Blickziel über Augenhöhe. `komposition.py` rechnet es bereits;
+      `kameras.py` umzustellen ist der nächste Schritt und ändert **jede bisher gemessene
+      Aufnahme**, also nicht nebenbei.
+- [ ] **Der Bodenanteil von 59,8 % kann gar nicht entstehen — und das verbindet zwei
+      Befunde, die ich für unabhängig hielt.** Eine waagrechte Kamera ohne Shift legt den
+      Horizont exakt in die Bildmitte: 50 % Boden. Shift regelt **abwärts** bis etwa 4 %.
+      Über 50 % kommt man nur durch Kippen. Unsere Versuchsszene hatte 59,8 % — und ist
+      genau die, an der die Geometrie-QA zusammenbrach (Rauschen 0,72; leeres Grundstück
+      schlägt Rauschen).
+
+      **Die Szenen, an denen die Metrik versagte, waren fotografisch nicht gültig.** Das
+      entlastet die Metrik nicht — der Betrieb wird schlechte Bilder liefern —, aber es
+      sagt, wo zuerst zu reparieren ist: **an der Kamera, nicht an der Metrik.**
+- [ ] **„Vordergrund füllen" ist bei uns behauptet, nicht umgesetzt.** Vordergrund mit
+      **Inhalt** ist belegt (bis in die HABS-Pflichtansicht); **leerer Boden** wird in
+      keiner Quelle als Mittel genannt, sondern durchgehend als Fehler. Unsere
+      synthetischen Szenen haben nichts, was als Vordergrund taugte — kein Belag, keine
+      Bepflanzung, nichts. Solange das so bleibt, erzeugt der Entscheid des Owners genau
+      den Fehlerfall, den er vermeiden soll.
+- [ ] **Ich habe dem Owner eine falsche Alternative vorgelegt.** Format anpassen *oder*
+      Vordergrund füllen — die Praxis kennt einen dritten und üblicheren Weg: **den
+      Standort.** HABS verlangt zwei Über-Eck-Ansichten gegen eine frontale; ein 8:3-Bau
+      projiziert sich schräg nicht mehr als 8:3. Der Entscheid bleibt gültig, aber er fiel
+      auf unvollständiger Auswahl, und das steht hier statt stillschweigend korrigiert zu
+      werden.
+- [ ] **Innen gibt es eine beweisbare Regel, und sie widerlegt unsere Zahl.** Boden und
+      Decke bekommen **exakt** gleich viel Bildfläche, wenn die Kamera auf halber Raumhöhe
+      steht — unabhängig von Brennweite und Abstand (nachgerechnet über 24/35/50 mm und
+      3/5/8 m, Differenz jedes Mal 0,000000). Bei 2,55 m Raumhöhe: 1,275 m. Unsere 1,70 m
+      erzeugen dort 28 Prozentpunkte Ungleichgewicht und liegen ausserhalb dessen, was die
+      Innenraumfotografie überhaupt nennt (0,91–1,52 m).
+- [ ] **1,70 m ist keine Mitte, sondern eine Setzung.** DIN 33402-2: Augenhöhe Erwachsener
+      1,43–1,74 m — **1,70 m liegt nahe dem 95. Perzentil der Männer.** Wichtiger als die
+      Zahl ist aber der Nullpunkt: 1,60 gegen 1,70 m verschiebt den Horizont am Baukörper
+      um 0,6–1,2 Prozentpunkte (unsichtbar), ein falscher **Bezugspunkt** um 2,3–17,5
+      (sichtbar). **Die 100 mm sind gleichgültig, der Nullpunkt nicht.**
+- [ ] **Bildpositionsregeln gibt es nicht — und das ist das Ergebnis, nicht die Lücke.**
+      Regeln der Form „Bauteil X gehört an Bildstelle Y" stehen in der Fachliteratur
+      praktisch nirgends. Zur **Stütze** (dem Beispiel des Owners) findet sich keine
+      einzige Positionsaussage, nur Aussagen über ihre Funktion. Belegt sind genau zwei
+      Konventionen: mittiger Fluchtpunkt innen, und die Horizontlinie aussen — die aber
+      nicht gewählt wird, sondern aus der waagrechten Kamera folgt.
+
+      **Die 2/3-Regel des Owners für die Stütze ist damit eine Projektsetzung.** Mit der
+      Drittelregel verträglich, keiner Fachaussage widersprechend — aber sie als „so machen
+      es Architekturfotografen" auszugeben wäre falsch. Sie kommt gekennzeichnet in den
+      Code, mit Datum und Urheber.
+- [ ] **Die Drittelregel ist als Beschreibung der Praxis widerlegt**, nicht bloss
+      zweifelhaft: Amirshahi et al., *Art & Perception* 2 (2014), ρ = 0,17 über grosse
+      Bildkorpora; hochbewertete Fotos zeigen dieselben Werte wie Kontrollbilder.
+- [ ] **Die grösste Lücke der Recherche, und sie trifft die Vertiefungsarbeit:** Die
+      Fachbücher (Schulz, McGrath, Heinrich) waren nicht im Volltext erreichbar. Alles
+      Belegte stützt sich auf Normen, Behördenvorschriften, begutachtete Studien und
+      Geometrie — **nicht auf die Lehrbücher des Fachs.** Für die schriftliche Arbeit wird
+      das nachzuholen sein, notfalls in einer Bibliothek.
+- [ ] **Es gibt weiterhin gar keinen Innenraum-Modus.** `WANDABSTAND_M = 10.0` macht eine
+      Innenaufnahme rechnerisch unmöglich. Die Recherche liefert dafür jetzt Zahlen: der
+      PBRS-Datensatz (arXiv 1612.07429) nennt 0,25-m-Raster, Ausschluss aller Standpunkte
+      innerhalb 10 cm eines Hindernisses, 6 Sektoren à 60° je Raum. Und die Fotografie
+      liefert die Eskalationskaskade für enge Räume: Ecke → Türöffnung → Nachbarraum →
+      16 mm → **aufgeben und Teilausschnitt zeigen**. Schritt 5 ist der, den ein Programm
+      auslässt und ein Fotograf selbstverständlich geht.
+- [ ] **`AUTO_RICHTUNGEN = ("sSE",)` ist eine einzige Richtung — HABS verlangt drei.**
+      Umgebungsansicht, Frontalansicht, und zwei Über-Eck-Ansichten auf **gegenüberliegenden**
+      Diagonalen. Unsere Richtungstabelle kann das bereits abbilden; es ist eine
+      Betriebsentscheidung über Renderzeit, keine technische.
+- [ ] **Arbeitsbrennweite: 24–25 mm statt unserer 28.** Der HABS-Objektivsatz
+      (65/90/150/210 mm auf 4×5 = 18/25/42/59 mm Kleinbild) und die heutige
+      Ratgeberliteratur treffen sich **unabhängig** bei 24–25 mm. Kein grosser Unterschied,
+      aber einer mit zwei Belegen gegen unsere eine Herleitung aus dem Bestand.
+
+## (überholt) Kamerasetzung — was die Recherche vom 21.08. treffen muss
 
 *Beim Lesen von `kameras.py` vor der Recherche aufgefallen. Der Befund steht hier, damit
 die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauchgefühl.*
