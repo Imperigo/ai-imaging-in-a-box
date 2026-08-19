@@ -914,10 +914,14 @@ def test_der_herzschlag_schlaegt_waehrend_eines_echten_laufs(tmp_path):
 
 @pytest.mark.skipif(not shutil.which("blender") and not Path("/opt/blender/blender").exists(),
                     reason="kein Blender")
-def test_ohne_takt_entsteht_keine_herzschlagdatei(tmp_path):
-    """Vorgabe ist aus. Eine Datei, die man nicht bestellt hat, im Ausgabeordner
-    aufzuräumen ist Arbeit für jemanden, der nicht weiss, woher sie kommt."""
+def test_der_herzschlag_laesst_sich_abschalten(tmp_path):
+    """`herzschlag_takt_s=None` — der Weg für einen Aufrufer, der ihn nicht will.
+
+    Seit `auf-20260820-19` ist er voreingestellt: 88 Schläge über 176 s auf der GPU,
+    längste Lücke 2,10 s. Vorher war er ausgeschaltet, weil nur die CPU gemessen war.
+    """
     from aiimaging import seams
     seams.glb_zu_multipass(schreibe_test_glb(tmp_path / "m.glb"), tmp_path,
-                           up_axis="Y_UP", aufloesung=128, samples=8, material_id=False)
+                           up_axis="Y_UP", aufloesung=128, samples=8, material_id=False,
+                           herzschlag_takt_s=None)
     assert not (tmp_path / seams.HERZSCHLAG_DATEI).exists()

@@ -278,9 +278,35 @@ Wer aus einem laufenden Herzschlag auf Fortschritt schliesst, macht genau den Fe
 gegen den `fortschritt.py` gebaut wurde — und den der Altbestand gemacht hat, als er
 `status == "running"` für einen Beleg hielt.
 
-## Was offen bleibt
+## Nachgemessen auf der GPU — und der Kontrast ist der Beleg
 
-Gemessen wurde wieder auf der **CPU**. Dass Cycles auch bei **OptiX auf der GPU** die GIL
-freigibt, ist sehr wahrscheinlich und **nicht gemessen**. Solange das offen ist, bleibt
-`herzschlag_takt_s` ausgeschaltet, wenn niemand es setzt — und diese Zeile steht hier,
-damit sie nicht in sechs Monaten als Gewissheit gelesen wird.
+Der Absatz hier lautete zuerst: *„Dass Cycles auch bei OptiX die GIL freigibt, ist sehr
+wahrscheinlich und nicht gemessen. Solange das offen ist, bleibt `herzschlag_takt_s`
+ausgeschaltet."*
+
+**Gemessen (`auf-20260820-19`, Blender 5.2.0 LTS, OptiX auf einer RTX 5090, 220 000
+Samples, zwei Läufe):**
+
+| | |
+|---|---|
+| Schläge | **88** |
+| Renderdauer | 175,3 s |
+| Längste Lücke | **2,10 s** bei 2,0 s Takt |
+| Nummern | **lückenlos 1 … 88**, kein Sprung |
+| Beide Läufe | identisch |
+
+**Der Kontrast, der es belegt:** Dieselbe Szene, dieselbe Dauer, derselbe Rechner wie in
+Teil 2 — dort schwieg Blenders Standardausgabe **175 Sekunden am Stück**. Im selben
+Zeitraum feuert der Faden 88 Mal.
+
+> Der Unterschied liegt nicht am Renderer und nicht am Gerät, sondern daran, **wer**
+> schreibt: Cycles schweigt, ein eigener Faden nicht.
+
+Ausdrücklich mitgeprüft, weil danach gefragt war: Es gibt **keine verhungerten Schläge**.
+Die Nummern zählen in beiden Läufen lückenlos hoch — der Faden wurde nicht zwischendurch
+verdrängt.
+
+**Damit ist der Herzschlag voreingestellt.** Vorher war er ausgeschaltet, weil nur die CPU
+gemessen war, und Vermutungen bleiben in diesem Projekt ausgeschaltet. Die Frist von fünf
+ausgefallenen Schlägen (10 s) liegt fast beim **Fünffachen** der grössten je beobachteten
+Lücke — und lässt einen hängenden Lauf nach 10 statt nach 900 Sekunden auffallen.

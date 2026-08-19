@@ -88,7 +88,21 @@ BLENDER_GPU_STILLE_S = 175.0
 #: Prozessgrenze unabhängig raten, ist eine tote Kante mit Ansage.
 HERZSCHLAG_DATEI = "herzschlag.txt"
 
-#: Vorgabetakt des Herzschlags im Runner, in Sekunden.
+#: Vorgabetakt des Herzschlags im Runner, in Sekunden — und seit dem 20.08.2026
+#: **eingeschaltet**, nicht mehr nur möglich.
+#:
+#: Gemessen auf beiden Maschinen, jeweils zweimal und jeweils deckungsgleich:
+#:
+#: * **CPU** (Blender 4.2, hier): 22 Schläge über 42 s, längste Lücke 2,1 s.
+#: * **GPU** (`auf-20260820-19`, Blender 5.2.0 LTS, OptiX auf einer RTX 5090, 220 000
+#:   Samples): **88 Schläge über 176,6 s, längste Lücke 2,10 s**, Nummern lückenlos von
+#:   1 bis 88, kein einziger Sprung. Beide Läufe identisch.
+#:
+#: **Der Kontrast ist der Beleg:** Dieselbe Szene, dieselbe Dauer, derselbe Rechner wie in
+#: `auf-20260820-18` — dort schwieg Blenders Standardausgabe **175 Sekunden am Stück**.
+#: Der Unterschied liegt also nicht am Renderer und nicht am Gerät, sondern daran, *wer*
+#: schreibt: Cycles schweigt, ein eigener Faden nicht. Auch unter OptiX gibt Cycles die
+#: GIL frei.
 HERZSCHLAG_TAKT_S = 2.0
 
 #: Wie viele ausgefallene Schläge nötig sind, bevor die Wache anschlägt.
@@ -97,6 +111,9 @@ HERZSCHLAG_TAKT_S = 2.0
 #: ist — eine ausgelastete Maschine, ein Dateisystem, das kurz hängt. Bei einem Takt von
 #: 2 s macht das eine Frist von 10 s: immer noch **neunzigmal** früher als der
 #: Gesamt-Timeout von 900 s.
+#:
+#: Gegen die Messung gehalten ist der Abstand komfortabel: Die grösste je beobachtete
+#: Lücke war **2,10 s** — die Frist liegt fast beim Fünffachen davon.
 HERZSCHLAG_AUSFAELLE = 5
 
 #: Die kleinste Frist, die wir für einen Blender-Lauf zulassen — **es gibt keine.**
@@ -417,7 +434,8 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      kamera=None, auge=None, blick_auf=None, brennweite=None,
                      gelaende_z=None, hoehe=None,
                      timeout: int = 900, stillstand_frist_s: float | None = None,
-                     herzschlag_takt_s: float | None = None, _starte=None) -> dict:
+                     herzschlag_takt_s: float | None = HERZSCHLAG_TAKT_S,
+                     _starte=None) -> dict:
     """glb → Cycles-Multipass über `blender --background`.
 
     Vier Ausgaben, in zwei Renderdurchgängen: Beauty und Tiefe (EXR in Metern plus
@@ -436,7 +454,8 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             in der Luft. Spart Plattenplatz, keine Rechenzeit.
         material_id: `False` lässt den zweiten Durchgang ganz aus und spart damit
             tatsächlich Rechenzeit.
-        herzschlag_takt_s: Schaltet die **Herzschlagwache** ein (Vorgabe: aus). Der Runner
+        herzschlag_takt_s: Die **Herzschlagwache**, seit dem 20.08.2026 **eingeschaltet**
+            (``None`` schaltet sie ab). Der Runner
             schreibt dann alle so viele Sekunden ein Lebenszeichen nach
             ``<out>/herzschlag.txt``, und dieser Aufruf bricht ab, wenn
             :data:`HERZSCHLAG_AUSFAELLE` Schläge nacheinander ausbleiben.
@@ -449,6 +468,12 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             zuverlässig, dass der Prozess tot oder eingefroren ist. Ein *laufender*
             belegt **keinen Fortschritt** — ein festgefahrener Cycles-Kern schlägt
             weiter. Die Wache schlägt nur auf Stille an, und nur darauf.
+            *Warum jetzt voreingestellt:* Am 20.08. auf der GPU nachgemessen
+            (`auf-20260820-19`) — 88 Schläge, längste Lücke 2,10 s, keine verlorenen
+            Nummern. Vorher war es eine Vermutung von der CPU, und Vermutungen bleiben in
+            diesem Projekt ausgeschaltet. Der Preis ist ein Faden und rund zehn Bytes je
+            zwei Sekunden; der Gewinn ist, dass ein hängender Lauf nach 10 statt nach 900
+            Sekunden auffällt.
         stillstand_frist_s: **Wird immer abgewiesen** — der Parameter bleibt nur
             bestehen, damit ein Aufrufer eine Begründung bekommt statt eines
             ``TypeError``. Blenders Standardausgabe schweigt auf der GPU zwischen Start
@@ -473,6 +498,28 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
         ContractError: `up_axis` fehlt oder ist nicht deutbar.
         SeamError: Blender fehlt oder der Lauf scheitert.
     """
+    # Die Abweisung steht VOR jeder Starterwahl. Sonst verschluckt der Herzschlag-Zweig
+    # sie, seit er voreingestellt ist — und ein Aufrufer, der stillstand_frist_s setzt,
+    # bekäme stillschweigend etwas anderes als bestellt.
+    if stillstand_frist_s is not None:
+        raise SeamError(
+            f"stillstand_frist_s={stillstand_frist_s} s — für Blenders STANDARDAUSGABE "
+            f"gibt es keinen zulässigen Wert, und das ist gemessen und nicht "
+            f"vorsichtshalber.\n"
+            f"Auf der GPU (auf-20260820-18: Blender 5.2.0 LTS, OptiX, RTX 5090, zwei "
+            f"Läufe auf die Zehntelsekunde identisch) wächst sie genau dreimal: bei "
+            f"1,0 s, bei 2,0 s und bei {BLENDER_GPU_STILLE_S + 2:.0f} s. Dazwischen "
+            f"{BLENDER_GPU_STILLE_S:.0f} Sekunden Stille, ohne eine einzige "
+            f"Fortschrittszeile. Das ist kein langsamer Takt, sondern keiner.\n"
+            f"Damit bricht JEDE Frist, die kürzer ist als der ganze Lauf, einen gesunden "
+            f"Lauf ab — und wie lange ein Lauf dauert, weiss man vorher nicht; das ist "
+            f"der Grund, warum es eine Wache gibt.\n"
+            f"**Was du stattdessen willst, gibt es schon:** 'herzschlag_takt_s' ist "
+            f"voreingestellt und schreibt ein eigenes Lebenszeichen, statt auf Cycles zu "
+            f"warten. Auf derselben Karte gemessen (auf-20260820-19): 88 Schläge über "
+            f"176 s, längste Lücke 2,10 s."
+        )
+
     if _starte is not None:
         starte = _starte
     elif herzschlag_takt_s is not None:
@@ -482,23 +529,6 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                 frist_s=HERZSCHLAG_AUSFAELLE * herzschlag_takt_s,
                 name="Herzschlag des Blender-Laufs"),
             takt_s=min(TAKT_S, herzschlag_takt_s))
-    elif stillstand_frist_s is not None:
-        raise SeamError(
-            f"stillstand_frist_s={stillstand_frist_s} s — für einen Blender-Lauf gibt es "
-            f"KEINEN zulässigen Wert, und das ist gemessen und nicht vorsichtshalber.\n"
-            f"Auf der GPU (auf-20260820-18: Blender 5.2.0 LTS, OptiX, RTX 5090, zwei "
-            f"Läufe auf die Zehntelsekunde identisch) wächst die Standardausgabe genau "
-            f"dreimal: bei 1,0 s, bei 2,0 s und bei {BLENDER_GPU_STILLE_S + 2:.0f} s. "
-            f"Dazwischen {BLENDER_GPU_STILLE_S:.0f} Sekunden Stille, ohne eine einzige "
-            f"Fortschrittszeile. Das ist kein langsamer Takt, sondern keiner.\n"
-            f"Damit bricht JEDE Frist, die kürzer ist als der ganze Lauf, einen gesunden "
-            f"Lauf ab — und wie lange ein Lauf dauert, weiss man vorher nicht; das ist "
-            f"der Grund, warum es eine Wache gibt.\n"
-            f"Die Wache braucht für Blender eine ANDERE Quelle. Kandidaten, alle "
-            f"ungemessen: die Leistungsaufnahme der Karte, die Änderungszeit der "
-            f"Zieldatei, oder ein Fortschritts-Schreiber im Runner selbst — nur der "
-            f"letzte hängt nicht von fremdem Verhalten ab."
-        )
     else:
         starte = _default_starte
     drehen = needs_rotation(up_axis)          # wirft ContractError, wenn up_axis fehlt
@@ -629,7 +659,9 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                             samples: int = 16, beauty: bool = True,
                             material_id: bool = True, kamera=None, auge=None,
                             blick_auf=None, brennweite=None,
-                            gelaende_z=None, hoehe=None) -> list[str]:
+                            gelaende_z=None, hoehe=None,
+                            herzschlag_takt_s: float | None = HERZSCHLAG_TAKT_S,
+                            ) -> list[str]:
     """Nur das Blender-Kommando bauen, ohne es auszuführen.
 
     Für Tests und zur Fehlersuche: zeigt, ob die Prozessgrenze richtig konstruiert ist —
@@ -643,7 +675,8 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                               beauty=beauty, material_id=material_id,
                               kamera=kamera, auge=auge, blick_auf=blick_auf,
                               brennweite=brennweite, gelaende_z=gelaende_z,
-                              hoehe=hoehe),
+                              hoehe=hoehe,
+                              herzschlag_takt_s=herzschlag_takt_s),
     ]
 
 

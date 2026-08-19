@@ -482,37 +482,36 @@ def test_genau_eines_von_wache_und_frist():
         seams.starter_mit_wache(fortschritt.wache_fuer_status(), frist_s=100)
 
 
-def test_multipass_baut_fuer_blender_gar_keine_wache_mehr(monkeypatch, tmp_path):
-    """Vorgabe war AUS; seit der GPU-Messung ist es eine Abweisung.
+def test_die_wache_ist_seit_der_gpu_messung_voreingestellt(monkeypatch, tmp_path):
+    """Zweimal umgestellt an einem Tag, und beide Male aus einer Messung.
 
-    Der Test hiess bis zum 20.08. „schaltet die Wache nur auf ausdrückliche Ansage" und
-    prüfte, dass `stillstand_frist_s=120` einen Starter baut. Genau das wäre auf der
-    HomeStation der Abbruch jedes Laufs über 122 Sekunden gewesen.
+    Vormittags war `stillstand_frist_s=120` erlaubt — auf der HomeStation wäre das der
+    Abbruch jedes Laufs über 122 Sekunden gewesen. Nachmittags wurde jede Frist auf die
+    Standardausgabe abgewiesen, weil sie dort 175 s schweigt. Und seit `auf-20260820-19`
+    ist die HERZSCHLAG-Wache voreingestellt: 88 Schläge über 176 s, längste Lücke 2,10 s,
+    auf derselben Karte.
     """
     from aiimaging import seams
-    gesehen = {}
-
-    def merke(cmd, timeout):
-        gesehen["cmd"] = cmd
-        raise seams.SeamError("hier endet der Test — der Starter war die Frage")
-
-    monkeypatch.setattr(seams, "_default_starte", merke)
-    monkeypatch.setattr(seams, "finde_blender", lambda: "/bin/true")
     gebaut = []
-    monkeypatch.setattr(seams, "starter_mit_wache",
-                        lambda *a, **k: gebaut.append(k) or merke)
-
+    monkeypatch.setattr(seams, "finde_blender", lambda: "/bin/true")
+    monkeypatch.setattr(
+        seams, "starter_mit_wache",
+        lambda wache=None, **kw: gebaut.append(wache) or (lambda c, t: (_ for _ in ()).throw(
+            seams.SeamError("Wache gebaut"))))
     glb = tmp_path / "m.glb"
     glb.write_bytes(b"glTF")
-    with pytest.raises(seams.SeamError):
+
+    with pytest.raises(seams.SeamError, match="Wache gebaut"):
         seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP")
-    assert gebaut == [], "ohne Ansage darf keine Wache gebaut werden"
+    assert len(gebaut) == 1, "ohne Zutun wird gewacht"
+    assert gebaut[0].art == fortschritt.BELEGT
+    assert gebaut[0].frist_s == seams.HERZSCHLAG_AUSFAELLE * seams.HERZSCHLAG_TAKT_S
 
-    with pytest.raises(seams.SeamError, match="KEINEN zulässigen Wert"):
+    # Und die Abweisung der Standardausgaben-Frist steht VOR der Starterwahl, sonst
+    # verschluckte der Herzschlag-Zweig sie stillschweigend.
+    with pytest.raises(seams.SeamError, match="keinen zulässigen Wert"):
         seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP", stillstand_frist_s=120)
-    assert gebaut == [], ("seit der GPU-Messung wird die Wache für Blender gar nicht "
-                          "mehr gebaut — es gibt keine tragende Frist")
-
+    assert len(gebaut) == 1, "nach der Abweisung darf nichts gebaut worden sein"
 
 def test_ein_eigener_starter_schlaegt_die_wache(monkeypatch, tmp_path):
     """Die Tests dieses Projekts reichen `_starte` herein — das muss weiter gelten."""
@@ -527,8 +526,7 @@ def test_ein_eigener_starter_schlaegt_die_wache(monkeypatch, tmp_path):
     glb = tmp_path / "m.glb"
     glb.write_bytes(b"glTF")
     with pytest.raises(seams.SeamError, match="eigener Starter"):
-        seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP", stillstand_frist_s=120,
-                               _starte=eigener)
+        seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP", _starte=eigener)
     assert gebaut == []
 
 
@@ -548,7 +546,7 @@ def test_fuer_blender_gibt_es_KEINE_zulaessige_frist(tmp_path, monkeypatch, fris
     monkeypatch.setattr(seams, "finde_blender", lambda: "/bin/true")
     glb = tmp_path / "m.glb"
     glb.write_bytes(b"glTF")
-    with pytest.raises(seams.SeamError, match="KEINEN zulässigen Wert"):
+    with pytest.raises(seams.SeamError, match="keinen zulässigen Wert"):
         seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP", stillstand_frist_s=frist)
 
 
@@ -562,11 +560,12 @@ def test_die_abweisung_nennt_die_messung_und_nicht_nur_die_regel(tmp_path, monke
     text = str(fehler.value)
     assert "1,0 s" in text and "175 Sekunden Stille" in text
     assert "kein langsamer Takt, sondern keiner" in text
-    assert "ANDERE Quelle" in text, "die Meldung muss einen Ausweg nennen"
+    assert "herzschlag_takt_s" in text, "die Meldung muss den Ausweg NENNEN"
+    assert "88 Schläge" in text, "und ihn belegen, statt ihn vorzuschlagen"
 
 
-def test_ohne_frist_laeuft_der_multipass_unveraendert(tmp_path, monkeypatch):
-    """Die Abweisung darf nur den einen Parameter treffen."""
+def test_ohne_herzschlag_laeuft_der_multipass_auf_dem_normalen_weg(tmp_path, monkeypatch):
+    """`herzschlag_takt_s=None` schaltet die Wache ab — dann gilt wieder subprocess.run."""
     from aiimaging import seams
     monkeypatch.setattr(seams, "finde_blender", lambda: "/bin/true")
     monkeypatch.setattr(seams, "_default_starte",
@@ -575,7 +574,7 @@ def test_ohne_frist_laeuft_der_multipass_unveraendert(tmp_path, monkeypatch):
     glb = tmp_path / "m.glb"
     glb.write_bytes(b"glTF")
     with pytest.raises(seams.SeamError, match="normaler Weg"):
-        seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP")
+        seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP", herzschlag_takt_s=None)
 
 
 def test_beide_messungen_stehen_als_zahl_im_code():

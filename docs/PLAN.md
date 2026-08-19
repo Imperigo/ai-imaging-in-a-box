@@ -533,9 +533,16 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       **Die Einschränkung steht im Docstring und im Namen:** Das ist ein *Lebenszeichen*
       und kein *Fortschrittszeichen*. Ein festgefahrener Cycles-Kern schlägt weiter; die
       Wache schlägt nur auf Stille an, und nur darauf trägt der Schluss.
-- [ ] **Gibt Cycles auch bei OptiX auf der GPU die GIL frei?** Sehr wahrscheinlich, aber
-      auf der CPU gemessen und auf der GPU **nicht**. Solange das offen ist, bleibt
-      `herzschlag_takt_s` ausgeschaltet, wenn niemand es setzt.
+- [x] **Gibt Cycles auch bei OptiX die GIL frei? — JA.** `auf-20260820-19`, RTX 5090,
+      Blender 5.2.0 LTS, zwei Läufe identisch: **88 Schläge über 175,3 s, längste Lücke
+      2,10 s** bei 2,0 s Takt, Nummern lückenlos von 1 bis 88, **keine verhungerten
+      Schläge**.
+      **Der Kontrast ist der Beleg:** dieselbe Szene, dieselbe Dauer, derselbe Rechner wie
+      in `auf-20260820-18` — dort schwieg die Standardausgabe 175 Sekunden am Stück. Der
+      Unterschied liegt nicht am Renderer und nicht am Gerät, sondern daran, *wer* schreibt.
+      **Der Herzschlag ist damit voreingestellt.** Die Frist von 10 s liegt fast beim
+      Fünffachen der grössten je beobachteten Lücke; ein hängender Lauf fällt nach 10
+      statt nach 900 Sekunden auf.
 - [x] **Der Schrittzähler im Renderlauf** — 2026-08-20, `render.rendere(schrittzaehler=…)`
       über `callback_on_step_end`. **Das sauberste belegte Fortschrittszeichen, das dieses
       Projekt hat:** Er zählt Diffusionsschritte, die wirklich gerechnet wurden — im
