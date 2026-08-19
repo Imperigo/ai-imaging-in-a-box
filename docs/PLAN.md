@@ -508,6 +508,53 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       mitgeliefertes Referenzset. Der gelernte Weg braucht nur einen Ort, an dem die
       Bilder des Nutzers liegen, und die Messung ihres Bodens (`stil_qa.BODEN_MESSUNGEN`)
       — ein hochgeladenes Set hat einen anderen Boden als unser eigenes.
+- [x] **Die Szenennaht gebaut** — erledigt 2026-08-19, `kosmo_szene.py`, 48 Tests.
+      `kosmovis.render-scene/v1` und `render-result/v2`, **wörtlich aus den Schemadateien
+      gelesen** statt aus einem Bericht abgeschrieben — ein erratener Feldname erzeugt in
+      diesem Ökosystem keine Fehlermeldung, sondern eine tote Kante.
+      **Drei Stellen, an denen wir dem fremden Vertrag bewusst nicht folgen:** ihre
+      Stil-Schwelle 0.30 mit `dinov3` (gegen 0.30 besteht jedes beliebige Bildpaar,
+      `auf-11`), ihre Backbone-Liste (kennt unser Vorgabemodell nicht — gemeldet, nicht
+      geraten), und `faithful` als einzelner Regler (auf `controlnet_staerke` abgebildet,
+      mit der Angabe, was dabei unter den Tisch fällt).
+      *Von einem Test gefangen:* Der erste Entwurf behauptete im Docstring, zwei der vier
+      fremden Einträge seien FLUX-Ableger. Falsch — `flux2-klein` ist Apache-2.0.
+- [x] **Die Brückennaht gebaut** — erledigt 2026-08-19, `bruecke.py`, 28 Tests. Liest und
+      schreibt das Auftragsverzeichnis der Designzentrale (`model.glb`,
+      `render-scene.json`, `job.json` → `render-result.json`).
+      **Der Befund, der aufhielt:** Ihr `create_job` prägt den Freigabe-Token selbst
+      (`secrets.token_hex`). Jeder Auftrag kommt mit einer Freigabe an, **die kein Mensch
+      erteilt hat** — und hebelt unseren Freeze-Schutz aus, ohne dass irgendwo etwas rot
+      wird. `fremde_freigabe_gilt` ist darum als ausdrücklicher Schalter gebaut, Vorgabe
+      `False`. **Owner-Entscheid, siehe unten.**
+- [ ] **Owner-Entscheid: gilt der selbst geprägte Freigabe-Token der Brücke?** Eine
+      Freigabe, die eine Maschine sich selbst erteilt, ist keine — aber ob bei der
+      Designzentrale ein Mensch *davor* bestätigt, wissen wir nicht. Das ist eine
+      Entscheidung des Betreibers und keine des Programms; sie ist als Schalter gebaut und
+      nicht als Verhalten.
+- [x] **Übergabeblatt an die Vis-Oberfläche** — erledigt 2026-08-19,
+      `docs/UEBERGABE_VIS_2026-08-19.md`. **Eine Kehrtwende, keine weitere
+      Bestandsaufnahme:** Nachdem der Owner mitteilte, dass der Cloud-Worker gerade an
+      KosmoOrbit baut, ist klar, warum `Design/Vis` in keinem unserer Klone steht — die
+      Oberfläche *entsteht gerade*. Einen bewegten Bestand rückwärts zu lesen ist
+      verschwendete Arbeit, und je genauer man ihn nachbaut, desto sicherer baut man am
+      selben Tag daneben. **Die wirtschaftliche Antwort ist nicht Nachbauen, sondern
+      Zusagen** — Verträge halten, während sich Oberflächen ändern.
+      Das Blatt beantwortet drei Fragen: was wir bekommen, was wir zurückgeben, und
+      **woran man erkennt, dass eine Verbindung wirklich trägt**. Es nennt fünf offene
+      Fragen an die Gegenseite (`fov`-Achse, Stil-Schwelle, wo ein Mensch bestätigt,
+      welcher Weg zuerst, ob der Ausführen-Knopf prüfen soll).
+- [ ] **Antwort auf das Übergabeblatt** — solange sie fehlt, wird **nichts gebaut, was an
+      einer bestimmten Oberfläche hängt**. Verträge, QA und Bildkette tragen in jedem der
+      drei Fälle und laufen weiter.
+- [ ] **Der Ausführen-Knopf meldet `bereit` und tut nichts** — `auf-20260819-16`, und es
+      ist die wichtigere Hälfte jenes Auftrags. **Wörtlich der Befund, mit dem dieses
+      Projekt angefangen hat, nur an anderer Stelle:** ein Zustand, der Bereitschaft
+      behauptet, *ohne sie zu prüfen*. Genau dagegen sind `kette.pruefe_kette` und
+      `graph.pruefe_bedarf` gebaut — mit drei Zuständen statt zwei, denn *ungeprüft* ist
+      nicht *in Ordnung*. Ändert sich mit Verdrahtung etwas, ist es ein Bedienungsproblem;
+      ändert sich nichts, fehlt die Ausführung ganz — und das ist die Lücke, in die unsere
+      Lane gehört.
 - [ ] **Die Stile am Gerät messen** — ob ein Prompt an einem Backbone wirklich landet,
       ist eine Messung und keine Textarbeit. Erst nach `auf-13`, denn an einem Modell
       ohne ControlNet-Naht sagt eine Prompt-Reihe nichts.

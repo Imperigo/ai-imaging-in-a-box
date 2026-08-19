@@ -397,6 +397,16 @@ Näherungswert genügt.
 Programme miteinander sprechen: welche Aufrufe es gibt, welche Angaben sie erwarten,
 was zurückkommt. Nicht die Umsetzung, sondern der Vertrag darüber.
 
+**Nullbares Feld (nullable)** — Ein Feld einer Schnittstelle, das ausdrücklich auch
+*leer* sein darf — im Vertrag als „Text **oder** nichts" geschrieben statt nur als „Text".
+Das ist keine Nachlässigkeit, sondern eine Aussage: Es gibt einen ehrlichen Fall, in dem
+es diesen Wert nicht gibt. *In diesem Projekt:* `job_id` und `status` der Werkzeugnaht
+sind nullbar, weil ein Auftrag, der gar nicht erst angelegt wurde — abgewiesen vom
+Torwächter, fehlende Geometriequelle —, weder Kennung noch Zustand hat; der Grund steht
+dann in `error`. Wer das Feld als nicht-nullbar zusagt, erzeugt beim Empfänger einen
+Schemafehler *anstelle* der Ursache, die die Antwort eigentlich mitbringt — genau das war
+bis zum 18.08.2026 der Fall.
+
 **CLI (Command Line Interface)** — Bedienung über eingetippte Befehle im Terminal statt
 über Fenster und Knöpfe. Für Automatisierung unverzichtbar, weil ein Befehl
 wiederholbar und skriptbar ist.
@@ -2217,6 +2227,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-19 | Aus dem Uebergabeblatt an die Vis-Oberflaeche (`docs/UEBERGABE_VIS_2026-08-19.md`): **nullbares Feld (nullable)** — der Begriff wurde dort gebraucht, um zu erklaeren, warum `job_id` leer sein darf, stand aber nirgends. Alle uebrigen Fachbegriffe jenes Blatts (tote Kante, Bildwinkel, Backbone, SigLIP, Spearman, Freigabe-Token, Bounding Box, Subprozess, MCP) waren bereits erfasst und wurden geprueft, nicht angenommen |
 | 2026-08-18 | Ergaenzt aus der Prompt-Bibliothek: **Prompt**, **Negativ-Prompt**, **Prompt-Baustein**, **Renderstil**, **Halluzination (bei Bildmodellen)**. Alle fuenf vor dem Schreiben dieser Zeile im Text nachgezaehlt |
 | 2026-08-18 | Ergaenzt aus der Kameraanbindung und auf-12: **Fuellgrad** (abgegrenzt zum Deckungsgrad), **zusammenhaengende Flaeche** samt Vierer-/Achter-Nachbarschaft, **Randberuehrung**. Vor dem Schreiben dieser Zeile nachgezaehlt — die Gegenmassnahme aus der Zeile darunter |
 | 2026-08-18 | Ergaenzt aus den drei HomeStation-Ergebnissen (auf-10, auf-11, MCP-Registrierung): **Boden (einer Aehnlichkeitsmetrik)**, **abgeleitete Schwelle**, **Ausleseort (pooler_output / last_hidden_state)**, **Ausgabeschema-Verletzung**. **Berichtigt:** **Stil-Score** und **Schwelle** trugen 0.30 als Massstab — gemessen ist die Zahl kleiner als der Boden von SigLIP 2 und laesst jedes beliebige Bildpaar durch; die Schwelle ist jetzt abgeleitet (0.666). **Praezisiert:** Der Eintrag zum Muster "innen stimmig, aussen daneben" nannte nur die erfundene Kubatur als Ursache — die zweite (Silhouettenauswahl aus einer hineingelegten Bodenebene) ist nachgetragen |

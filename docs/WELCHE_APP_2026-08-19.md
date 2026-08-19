@@ -56,9 +56,46 @@ Beide haben recht. Sie haben **verschiedene Programme** angesehen.
 
 ---
 
-## Der Befund, der zählt
+> ## ZWEITE BERICHTIGUNG — vom Owner, und sie ordnet das Ganze
+>
+> **„Das, was wir hier machen, ist KosmoVis innerhalb von KosmoDesign. Hat nichts mit
+> KosmoSpez zu tun."**
+>
+> Damit fällt die Beweisführung unten in sich zusammen, und zwar zu Recht. `KosmoSpez`
+> ist eine **eigene Lane** — Sonnenstudie, Klimasteckbrief, Tageslicht, Thermik, Wind,
+> Statik. Dass sie in unseren Klonen fehlt, ist **kein Rätsel, sondern richtig**: Wir
+> haben die Lanes geklont, die uns angehen, und diese gehört nicht dazu.
+>
+> Ich habe aus der Abwesenheit einer fremden Lane auf die Unbekanntheit der ganzen App
+> geschlossen. Das ist derselbe Fehlschluss, den die HomeStation im selben Bericht an
+> sich selbst protokolliert hat — *aus einem geschlossenen Menü auf Nichtvorhandensein
+> schliessen* —, nur eine Ebene höher: **aus einer nicht geklonten Lane auf einen
+> unbekannten Bestand.**
+>
+> **Was übrig bleibt, und es ist kleiner und schärfer:** Die vorgeführte App ist eine
+> **Schale**, die mehrere Lanes als Stationen zeigt. Wir haben die Lanes, nicht die
+> Schale. Die einzige Frage, die uns wirklich angeht, lautet damit nicht „welche App",
+> sondern:
+>
+> > **Wo liegt der Quelltext von `Design/Vis` — der Knotenoberfläche mit dem
+> > Render-Knoten?**
+>
+> Das sind die vierzehn Werkzeuge `palette, ausrichten, verbinden, zoom, raster, routing,
+> ansichten, legende, stimmung, render-senden, aufs-plakat, kamera-vorschlagen, report,
+> sonnenstunden`. Dort sitzt der Eingang `Geometrie-Treue`, dort schweigt der Knopf
+> «Ausführen», und dort gehört unsere Lane hin.
+>
+> Die vier Bestände unten bleiben als Bestandsaufnahme richtig. Nur die Folgerung war zu
+> breit.
 
-**`KosmoSpez` kommt in keinem einzigen Quelltext vor, den wir haben.**
+---
+
+## Der Befund, der zählt — und wie weit er trägt
+
+**`KosmoSpez` kommt in keinem einzigen Quelltext vor, den wir haben.** *(Siehe die
+Berichtigung oben: Das ist erwartbar, weil es eine fremde Lane ist. Der Abschnitt bleibt
+stehen, weil er zeigt, wie die Frage entstanden ist — und woran ich zu weit geschlossen
+habe.)*
 
 ```
 grep -rln "KosmoSpez"  über alle Klone und /workspace  →  nichts
@@ -106,6 +143,53 @@ führt, ist offen — und zwar aus einem Grund, der vorher nicht auf der Liste s
 :5183 bedient, was steht in dessen `package.json`, und was sagen `git remote -v` und
 `git log -1`. Das ist in zwei Minuten beantwortet und entscheidet, wohin die nächsten
 Tage Arbeit gehen.
+
+**Nach der Berichtigung des Owners ist die Frage schärfer und kleiner:** Nicht „welche
+App", sondern **wo `Design/Vis` liegt** — der Bereich mit dem Knotengraph, dem
+Render-Knoten und dem Eingang `Geometrie-Treue`. Alles andere an jener Schale geht uns
+nichts an.
+
+---
+
+## DRITTE BERICHTIGUNG — und sie erklärt vermutlich alles
+
+**Der Owner: „Beachte auch, dass der Cloud-Worker an der KosmoOrbit-Software ebenfalls
+baut, in anderen Bereichen."**
+
+Damit löst sich das Rätsel wahrscheinlich ohne weitere Suche auf. Nachgesehen:
+
+```
+grep -rn "render-senden|kamera-vorschlagen|Design/Vis"  über alle Bestände  →  nichts
+```
+
+Die vierzehn Werkzeuge von `Design/Vis` liegen in **keinem** Quelltext, den wir haben.
+Die naheliegendste Erklärung ist nicht mehr „ein unbekannter Bestand", sondern:
+
+> **Diese Oberfläche wird gerade gebaut — nach dem Stand unserer Klone.**
+
+Ein Auto-Kamera-Knoten mit drei benannten Standpunkten und ein Render-Knoten mit dem
+Eingang `Geometrie-Treue` sind kein Zufallsfund in altem Code. Das ist frische Arbeit an
+genau der Stelle, an der auch wir stehen.
+
+### Was daraus folgt — und es ist eine Kehrtwende
+
+**Einen bewegten Bestand rückwärts zu lesen ist verschwendete Arbeit.** Jede
+Bestandsaufnahme ist am Tag ihrer Fertigstellung überholt, und je genauer wir eine
+fremde Oberfläche nachbauen, desto sicherer bauen wir am selben Tag daneben.
+
+Und es besteht eine reale Gefahr der **Doppelarbeit**: Wenn dort eine Vis-Oberfläche
+entsteht und wir hier eine Brücke zu einer *anderen* Oberfläche bauen, hat am Ende
+niemand etwas davon.
+
+**Die wirtschaftliche Antwort ist nicht Nachbauen, sondern Zusagen.** Was unsere Lane
+braucht und liefert, steht in Verträgen, nicht in Bildschirmen — und Verträge halten,
+während eine Oberfläche sich ändert. Darum entsteht statt weiterer Bestandsaufnahmen ein
+**Übergabeblatt**: `docs/UEBERGABE_VIS_2026-08-19.md`, geschrieben für den, der die
+Vis-Oberfläche baut.
+
+Es beantwortet drei Fragen und sonst nichts: *Was schicke ich euch? Was bekomme ich
+zurück? Und woran erkenne ich, dass eine Verbindung wirklich trägt?* Die letzte ist die
+wichtigste — sie ist die Antwort auf den Knopf, der `bereit` meldet und schweigt.
 
 **Bis dahin baue ich nichts, was an einer bestimmten Oberfläche hängt.** Was
 weitergebaut werden kann, ohne diese Antwort: alles an den Verträgen, an der QA und an
