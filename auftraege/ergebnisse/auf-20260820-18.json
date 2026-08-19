@@ -1,0 +1,76 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260820-18",
+  "status": "ok",
+  "beendet": "2026-08-19T11:30:00Z",
+  "dauer_s": 354.0,
+  "messwerte": {
+    "umgebung": {
+      "blender": "5.2.0 LTS",
+      "geraet": "OPTIX:NVIDIA GeForce RTX 5090",
+      "engine": "CYCLES",
+      "adaptives_sampling": false,
+      "denoising": false,
+      "aufloesung": 512,
+      "samples": 220000,
+      "warum_220000_und_nicht_3000": "Auf der 5090 mit OptiX braucht die Szene bei 3000 Samples 2.2 s — gemessen. Der Auftrag verlangt 2-3 Minuten, dafuer sind rund 220'000 noetig. Kalibriert an zwei Punkten: 20'000 -> 8.7 s, 100'000 -> 69.1 s."
+    },
+    "lauf_1": {
+      "zeitpunkte_s": [
+        1.0,
+        2.0,
+        177.0
+      ],
+      "luecken_s": [
+        1.0,
+        175.0
+      ],
+      "laengste_luecke_s": 175.0,
+      "dauer_s": 177.0,
+      "gesamtwachstum_byte": 739,
+      "n_aenderungen": 3
+    },
+    "lauf_2": {
+      "zeitpunkte_s": [
+        1.0,
+        2.0,
+        177.0
+      ],
+      "luecken_s": [
+        1.0,
+        175.0
+      ],
+      "laengste_luecke_s": 175.0,
+      "dauer_s": 177.0,
+      "gesamtwachstum_byte": 739,
+      "n_aenderungen": 3
+    },
+    "die_vier_zahlen": {
+      "zeitpunkte_der_aenderungen_s": [
+        1.0,
+        2.0,
+        177.0
+      ],
+      "laengste_luecke_s": 175.0,
+      "gesamtdauer_s": 177.0,
+      "gesamtwachstum_byte": 739,
+      "beide_laeufe_identisch": true
+    },
+    "inhalt_der_ausgabe": "13 Zeilen: glTF-Importmeldungen, eine HIPEW-Warnung, die drei MESS-Zeilen des Messskripts, die Blender-Versionszeile — und ganz am Ende '02:56.274 render | Saved: ...'. KEINE EINZIGE Fortschrittszeile ('Sample x/y', 'Fra:', 'Remaining') waehrend der 175 Sekunden."
+  },
+  "urteil": {
+    "die_frage_in_einem_satz": "GROESSER, und zwar um mehr als das Fuenffache: 175 s gegen deine 32 s. Aber die Zahl ist die harmlosere Haelfte der Antwort.",
+    "es_gibt_gar_keinen_takt": "DAS IST DER EIGENTLICHE BEFUND. Die Datei waechst DREIMAL: bei 1.0 s, bei 2.0 s und bei 177.0 s. Dazwischen 175 Sekunden absolute Stille. Das ist kein langsamer Takt, das ist KEIN Takt — Anfang und Ende, nichts dazwischen.\nDer Inhalt bestaetigt es: In den 739 Byte steht keine einzige Fortschrittszeile. Die einzige Render-Zeile ist die Schlussmeldung 'Saved:'. Blender 5.2 im Hintergrundbetrieb mit OptiX gibt waehrend des Renderns NICHTS aus.\nBEIDE LAEUFE SIND AUF DIE ZEHNTELSEKUNDE IDENTISCH — 1.0 / 2.0 / 177.0, je 739 Byte. Ein Zufall ist das nicht.",
+    "was_das_fuer_die_wache_heisst": "Die Standardausgabe taugt auf der GPU NICHT als Fortschrittszeichen. Eine Wache mit 96 s Frist wuerde JEDEN GESUNDEN GPU-Lauf abbrechen, der laenger als rund 98 s braucht — bei uns also praktisch jeden echten. Deine Vorsicht, sie in glb_zu_multipass ausgeschaltet zu lassen, war berechtigt.\nDie Wache braucht dort eine andere Quelle. Drei Kandidaten, ungemessen und darum als Vorschlag und nicht als Empfehlung: (a) die GPU-Leistungsaufnahme via nvidia-smi — sie war waehrend des Laufs durchgehend hoch und faellt bei einem Haenger sofort; (b) die mtime der Zieldatei, sofern Blender sie fortschreibt; (c) ein Fortschritts-Callback im Blender-Skript selbst, der aktiv schreibt statt auf Cycles-Ausgabe zu warten. (c) ist das einzige, das nicht von fremdem Verhalten abhaengt.",
+    "abweichung_vom_auftrag_und_warum": "Der Auftrag verlangt stdout in eine DATEI. Das ist mit dem hier verfuegbaren Blender NICHT MOEGLICH, und das ist selbst ein Befund:\nDas Snap-Paket 5.2.0 LTS — das einzige mit OptiX/CUDA — beendet sich bei einer Dateiumleitung nach 1.3 s mit Rueckgabe 0, ohne Ausgabe und OHNE BILD. Gegengeprueft mit reiner Shell-Umleitung, unter der Datenplatte, unter dem Benutzerverzeichnis und im Snap-eigenen Bereich: jedes Mal null Byte, jedes Mal kein Bild. Ueber eine Pipe rendert dasselbe Blender einwandfrei.\nDer nicht eingesperrte Fork (KosmoDesign 5.1.2) schreibt zwar in eine Datei, hat aber KEINE GPU-Kernel — CUDA meldet 'keine', OptiX ist gar nicht verfuegbar. GPU und Dateiumleitung sind mit dem Installierten nicht kombinierbar.\nERSATZ: Die Ausgabe wird LAUFEND und byteweise aus der Pipe in die Datei gezogen. Damit laeuft der Puffer nie voll — die Blockiergefahr, wegen der du Pipes ausschliesst, entfaellt —, und die Datei waechst genau dann, wenn Blender schreibt. Gemessen wurde weiterhin die Dateigroesse im Sekundentakt; zusaetzlich der Zeitpunkt jedes Pipe-Blocks. Beide Messungen stimmen ueberein (175.0 gegen 175.2 s).",
+    "dein_nebenbefund_bestaetigt_und_verschaerft": "Du schreibst, die Samplezahl sei eine Obergrenze und keine Angabe der Rechenzeit. Auf der GPU ist der Abstand noch groesser: 3000 Samples ohne adaptives Sampling brauchen hier 2.2 SEKUNDEN, wo dein CPU-Lauf 190 s brauchte. Um ueberhaupt drei Minuten zu messen, musste ich auf 220'000 Samples gehen — das 73-fache deiner Vorgabe. Wer eine Laufzeit aus einer Samplezahl schaetzt, liegt hier um zwei Groessenordnungen daneben.",
+    "nicht_getan": "Nichts an eurem Code geaendert — die Konstante setzt du. Das Messskript liegt ausserhalb des Repos. Szene ist der synthetische Testbau aus unseren bisherigen Laeufen, keine Projektdaten."
+  },
+  "umgebung": {
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "leistungsgrenze_w": 400.0,
+    "gpu_vor_dem_lauf": "16.4 W, 1070 MiB (Leerlauf)",
+    "python": "3.14.4"
+  },
+  "fehler": null
+}
