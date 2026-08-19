@@ -1,0 +1,59 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260821-25",
+  "status": "ok",
+  "beendet": "2026-08-19T19:13:38Z",
+  "dauer_s": 200.0,
+  "messwerte": {
+    "aufbau": {
+      "gemessen": "ausschliesslich rho MIT VORZEICHEN ueber den 44604 Maskenpunkten",
+      "maske": "unveraendert die urspruengliche vom unverstellten Bauwerk (17.02 %)",
+      "soll_karte": "unveraendert",
+      "kamera": "fest wie bisher",
+      "geaendert": "nur das gerenderte Bild",
+      "schaetzer": "depth-anything-v2-small",
+      "rauschboden": -0.5207
+    },
+    "faelle": {
+      "H1_bauwerk_ganz_weg": {
+        "szene_59_8": -0.6860994073908437,
+        "szene_29": -0.688505030815585
+      },
+      "H2_bauwerk_20m_versetzt": {
+        "szene_59_8": -0.6854306155575928,
+        "szene_29": -0.6885619315986772
+      },
+      "H3_andere_kubatur_am_richtigen_ort": {
+        "szene_59_8": 0.3842416531550533,
+        "szene_29": 0.3959884134291642,
+        "was": "Block 4 x 10 x 5 m statt offener Kasten 8 x 5 x 3.25 m, gleiche Mitte"
+      },
+      "H4_bauwerk_90_grad_gedreht": {
+        "szene_59_8": -0.45461594460658816,
+        "szene_29": -0.459413951097433
+      }
+    },
+    "anker_ueber_der_maske": {
+      "weisses_rauschen": -0.520706115005052,
+      "leeres_graubild": 0.317421517730794,
+      "verlauf_quer": 0.5729359739998052
+    },
+    "die_antwort": {
+      "frage": "Darf geom_iou fallen?",
+      "antwort": "NEIN.",
+      "begruendung": "H1 (-0.6861) und H2 (-0.6854) liegen BESSER als der Rauschboden (-0.5207), nicht auf oder unter ihm. Die falsifizierbare Behauptung ist damit widerlegt: rho ueber der Maske faengt genau die Halluzination NICHT, gegen die geom_iou gebaut wurde. Ein leeres Grundstueck schlaegt weisses Rauschen.",
+      "was_rho_dagegen_faengt": "H3 (+0.3842) und H4 (-0.4546) liegen beide schlechter als der Rauschboden. rho erkennt eine FALSCHE Kubatur am richtigen Ort sehr gut — es erkennt nur nicht, ob dort ueberhaupt eine steht.",
+      "H1_gleich_H2": "H1 und H2 unterscheiden sich um 0.0007. Ob das Bauwerk fehlt oder 20 m entfernt steht, macht an den Maskenpunkten keinen Unterschied — beide zeigen dort Boden und Himmel. Genau der befuerchtete Fall.",
+      "was_bleibt": "Die Szenenunabhaengigkeit haelt auch hier: alle vier Faelle liegen ueber beide Szenen auf hoechstens 0.012 beieinander. Was die Maske loest, loest sie weiter — sie loest nur nicht alles."
+    }
+  },
+  "urteil": {
+    "kernsatz": "geom_iou darf NICHT fallen. rho ueber der Maske ist gegen ein leeres Grundstueck erpressbar — es faengt die falsche Kubatur, nicht die fehlende."
+  },
+  "umgebung": {
+    "leistungsgrenze_w": 400,
+    "blender": "5.2.0 LTS",
+    "gpu_bildmodell": "nicht benutzt"
+  },
+  "fehler": null
+}
