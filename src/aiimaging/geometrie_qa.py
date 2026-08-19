@@ -33,11 +33,35 @@ Rangkorrelation ist gegen jede streng monoton steigende Umrechnung unempfindlich
 ``ist = 3 * soll + 7`` ändert an ihr nichts. Das ist keine Bequemlichkeit, sondern die
 einzige Grösse, die über die Naht zwischen zwei Verfahren hinweg dasselbe bedeutet.
 
-**Warum der Betrag.** Manche Verfahren liefern Disparität (invertierte Tiefe): nah = gross.
-Dann ist die Reihenfolge exakt umgekehrt und die Korrelation −1, obwohl die Geometrie
-perfekt stimmt. Gewertet wird darum ``abs(spearman)``. Der Preis dieser Entscheidung ist
-benannt: Eine echte Vorne-Hinten-Vertauschung ist von einer Vorzeichenkonvention hier
-nicht zu unterscheiden. Ein negatives Vorzeichen erscheint deshalb immer als Warnung.
+**Warum der Betrag — und warum er ab dem 21.08.2026 nur noch die Notlösung ist.** Manche
+Verfahren liefern Disparität (invertierte Tiefe): nah = gross. Dann ist die Reihenfolge
+exakt umgekehrt und die Korrelation −1, obwohl die Geometrie perfekt stimmt. Gewertet
+wurde darum ``abs(spearman)``.
+
+**Diese Entscheidung ist am 20.08.2026 gemessen worden, und sie kostet mehr als gedacht**
+(`auf-20260820-23`, 24 Blender-Läufe, `docs/EMPFINDLICHKEIT_2026-08-20.md`). Der bekannte
+Preis war: Eine echte Vorne-Hinten-Vertauschung ist von einer Vorzeichenkonvention nicht
+zu unterscheiden. Der unbekannte Preis ist grösser:
+
+    Versatz 2 m → Score 0.1191   (ρ = −0.073)
+    Versatz 4 m → Score 0.2301   (ρ = +0.337)
+
+**Mehr Fehler, besserer Score.** ``abs()`` faltet die Skala in der Mitte: Der schlechteste
+Wert liegt bei ρ = 0, mitten im Fehlerbereich, und beide Enden sind gleich gut. Eine
+Grösse mit einem Minimum in der Mitte kann nicht monoton im Fehler sein — und was nicht
+monoton ist, misst keinen Abstand. Nebenbei war das ein **Loch im Tor**: Eine vollständig
+invertierte Tiefenkarte erreichte 1.0, also denselben Wert wie eine perfekte.
+
+Der Ausweg steht in ``polaritaet``: Die Umkehrung gehört zum **Schätzer**, nicht zum Bild.
+Wer sie einmal an Läufen bekannt guter Geometrie bestimmt (:func:`polaritaet_aus_messungen`),
+darf danach das vorzeichenbehaftete ρ werten; dann liegt der schlechteste Wert am Ende der
+Skala, und die invertierte Karte fällt auf 0. Ohne gemessene Polarität bleibt es beim
+Betrag — **und das Ergebnis sagt dann in ``warnungen``, dass sein Score nicht monoton ist**.
+
+Was das **nicht** löst, damit es niemand für mehr hält, als es ist: Die Metrik bleibt
+stumpf. In der Szene mit 59.8 % Geometrieanteil liegt auch ein um vier Meter versetztes
+Gebäude noch weit über dem Rauschanker, und dort ist ρ durchweg negativ — die Richtung
+ändert an diesen Zahlen nichts. Nachgerechnet in ``docs/POLARITAET_2026-08-21.md``.
 
 **Warum zusätzlich die Silhouette.** Die Rangkorrelation allein ist erpressbar: Ein
 erfundenes Vollgebäude in einer leeren Szene hat eine völlig eigene, in sich stimmige
@@ -172,9 +196,51 @@ MIN_GEMEINSAME_PUNKTE = 32
 # konkreten Wert kennen muss.
 HINTERGRUND_SCHWELLE_M = 1.0e6
 
+# --------------------------------------------------------------------------------------
+# Polarität — die Antwort auf den Befund vom 20.08.2026
+# --------------------------------------------------------------------------------------
+#
+# `auf-20260820-23` hat gemessen, was der Betrag kostet: **Der Score ist nicht monoton.**
+# In Szene A gab ein Versatz von 2 m den Score 0.1191 und einer von 4 m den Score 0.2301
+# — mehr Fehler, besserer Score. Die Ursache steht in derselben Zeile: ρ kippte von
+# −0.073 auf +0.337, und gewertet wurde der Betrag.
+#
+# Der Grund ist geometrisch und nicht zufällig: `abs()` **faltet die Skala in der Mitte**.
+# Der schlechteste Wert liegt dann bei ρ = 0, also mitten im Fehlerbereich, und beide
+# Enden (+1 und −1) sind gleich gut. Eine Grösse mit einem Minimum in der Mitte kann
+# nicht monoton in den Fehler sein — und was nicht monoton ist, misst keinen Abstand.
+#
+# Der Ausweg: Die Umkehrung ist eine Eigenschaft **des Schätzers**, nicht des Bildes. Ein
+# Schätzer, der Disparität liefert, liefert sie bei jedem Bild. Wer sie **einmal**
+# bestimmt, darf danach das vorzeichenbehaftete ρ werten — und dann liegt der schlechteste
+# Wert am Ende der Skala, wo er hingehört, und eine echte Vorne-Hinten-Vertauschung fällt
+# auf 0 statt auf „so gut wie perfekt".
+
+#: Die Ist-Karte ordnet wie die Soll-Karte: grosser Wert = weit weg (metrische Tiefe).
+POLARITAET_TIEFE = +1
+#: Die Ist-Karte ordnet umgekehrt: grosser Wert = nah (Disparität, invertierte Tiefe).
+POLARITAET_DISPARITAET = -1
+
+#: Gemessene Polarität je Schätzer — gegen **unsere** Soll-Karte (Blender, Meter).
+#:
+#: `depth-anything-v2-small`: **Disparität**, an 24 Läufen auf zwei Szenen
+#: (`auf-20260820-23`). Jeder Lauf mit kleinem geometrischem Fehler liefert ρ zwischen
+#: −0.96 und −0.998; kein einziger liefert dort ein positives ρ. Das ist keine Annahme
+#: aus der Modellkarte, sondern eine Messung an unserer eigenen Naht — und nur die zählt,
+#: denn die Polarität ist eine Eigenschaft des **Paars** aus Schätzer und Soll-Konvention.
+GEMESSENE_POLARITAET = {
+    "depth-anything-v2-small": POLARITAET_DISPARITAET,
+}
+
 #: Kurzform des Rechenwegs, wandert in jedes Ergebnis. Wer später eine Zahl in der Arbeit
 #: wiederfindet, soll ihr ansehen, wie sie entstanden ist — und an welcher Fassung.
 METHODE = "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1"
+
+#: Dieselbe Kurzform für den Fall, dass die Polarität bekannt ist. Sie steht als eigene
+#: Zeichenkette da, weil die beiden Fassungen **verschiedene Zahlen** liefern: Wer später
+#: einen Score in der Arbeit wiederfindet, muss ihm ansehen, welche Rechnung dahinterstand.
+METHODE_GERICHTET = ("sqrt(max(0, polaritaet * spearman) * geom_iou), Rangkorrelation "
+                     "über die gemeinsame Silhouette, v2 (gerichtet)")
 
 # Reine Diagnose-Schwellen. Sie gehen NICHT in den Score ein; sie benennen ein Muster:
 # hohe Rangkorrelation bei kaum überlappenden Silhouetten.
@@ -448,7 +514,8 @@ def iou(a: Sequence[bool], b: Sequence[bool]) -> float:
 # --------------------------------------------------------------------------------------
 
 def geometrie_score(soll: Sequence[float], ist: Sequence[float],
-                    hintergrund: float | None = None) -> dict:
+                    hintergrund: float | None = None, *,
+                    polaritaet: int | None = None) -> dict:
     """Geometrie-Treue zweier indexgleicher Tiefenkarten.
 
     Args:
@@ -456,9 +523,19 @@ def geometrie_score(soll: Sequence[float], ist: Sequence[float],
         ist: Tiefenkarte, aus dem erzeugten Bild zurückgerechnet. Massstab und Nullpunkt
             dürfen beliebig anders sein — genau dafür ist das Verfahren rangbasiert.
         hintergrund: Hintergrundmarke für **beide** Karten, siehe ``silhouette()``.
+        polaritaet: :data:`POLARITAET_TIEFE` (+1) oder :data:`POLARITAET_DISPARITAET`
+            (−1), wenn für den verwendeten Schätzer **gemessen** — siehe
+            :data:`GEMESSENE_POLARITAET` und :func:`polaritaet_aus_messungen`.
+
+            ``None`` heisst **ungemessen** und nicht „egal": Dann fällt die Rechnung auf
+            ``abs(spearman)`` zurück, und das Ergebnis sagt in ``warnungen`` ausdrücklich,
+            dass der Score in diesem Modus **nicht monoton** im geometrischen Fehler ist.
+            Zwei verschiedene Fehler können denselben Score ergeben, und der grössere von
+            beiden kann der bessere sein (`auf-20260820-23`, gemessen).
 
     Returns:
-        ``{score, spearman, geom_iou, n_gemeinsam, n_soll, n_ist, methode, warnungen}``
+        ``{score, spearman, geom_iou, n_gemeinsam, n_soll, n_ist, methode, polaritaet,
+        warnungen}``
 
         * ``score`` — ``sqrt(abs(spearman) * geom_iou)`` in ``[0, 1]``, oder ``None``,
           wenn nicht messbar. **``None`` ist kein schlechter Wert, sondern kein Wert.**
@@ -485,6 +562,13 @@ def geometrie_score(soll: Sequence[float], ist: Sequence[float],
     Silhouetten wird separat und ehrlich von ``geom_iou`` gemessen; sie zusätzlich in die
     Rangkorrelation zu mischen zählte sie doppelt und verwässerte beide Anteile.
     """
+    if polaritaet is not None and polaritaet not in (POLARITAET_TIEFE, POLARITAET_DISPARITAET):
+        raise QaError(
+            f"polaritaet muss {POLARITAET_TIEFE:+d} (Tiefe), {POLARITAET_DISPARITAET:+d} "
+            f"(Disparität) oder None (ungemessen) sein, war {polaritaet!r}. Ein anderer "
+            f"Wert würde den Score skalieren statt ihn zu richten — und eine Skalierung "
+            f"ist genau das, wogegen ein rangbasiertes Verfahren gebaut ist."
+        )
     s = _als_zahlen(soll, "soll")
     i = _als_zahlen(ist, "ist")
     if len(s) != len(i):
@@ -555,16 +639,48 @@ def geometrie_score(soll: Sequence[float], ist: Sequence[float],
             f"kaum, was für sich schon ein Befund ist."
         )
     elif rho is not None and geom_iou is not None:
-        # Betrag: invertierte Tiefe (Disparität) ist eine Konvention, kein Geometriefehler.
-        score = math.sqrt(abs(rho) * geom_iou)
+        if polaritaet is None:
+            # Ungemessene Polarität: Betrag, wie bisher — und der Preis steht unten.
+            score = math.sqrt(abs(rho) * geom_iou)
+        else:
+            # Gerichtet: negativ heisst jetzt wirklich falsch herum und nicht bloss
+            # „andere Konvention". Abgeschnitten bei 0, weil es unter „vollständig
+            # verkehrt" nichts Schlechteres gibt.
+            score = math.sqrt(max(0.0, polaritaet * rho) * geom_iou)
 
-    if rho is not None and rho < 0.0:
+    if polaritaet is None:
         warnungen.append(
-            f"Rangkorrelation ist negativ ({rho:+.3f}): Die Ist-Karte ordnet die Tiefe "
-            f"genau umgekehrt. Üblichster Grund ist Disparität (nah = grosser Wert); "
-            f"gewertet wird deshalb der Betrag. Falls die Ist-Karte metrische Tiefe sein "
-            f"soll, ist das kein Konventions-, sondern ein Geometriebefund — vorne und "
-            f"hinten sind vertauscht. Diese beiden Fälle kann die Metrik nicht trennen."
+            "Polarität des Schätzers ungemessen — gewertet wird abs(spearman). In diesem "
+            "Modus ist der Score NICHT MONOTON im geometrischen Fehler: abs() faltet die "
+            "Skala in der Mitte, der schlechteste Wert liegt bei spearman = 0 und beide "
+            "Enden sind gleich gut. Am 20.08.2026 gemessen (auf-20260820-23): 2 m Versatz "
+            "gaben 0.1191, 4 m Versatz 0.2301 — mehr Fehler, besserer Score. Wer den "
+            "Score als Abstand vom Richtigen liest, liest ihn hier falsch. Abhilfe: die "
+            "Polarität einmal bestimmen (polaritaet_aus_messungen) und mitgeben."
+        )
+        if rho is not None and rho < 0.0:
+            warnungen.append(
+                f"Rangkorrelation ist negativ ({rho:+.3f}): Die Ist-Karte ordnet die "
+                f"Tiefe genau umgekehrt. Üblichster Grund ist Disparität (nah = grosser "
+                f"Wert); gewertet wird deshalb der Betrag. Falls die Ist-Karte metrische "
+                f"Tiefe sein soll, ist das kein Konventions-, sondern ein Geometriebefund "
+                f"— vorne und hinten sind vertauscht. Ohne gemessene Polarität kann die "
+                f"Metrik diese beiden Fälle nicht trennen."
+            )
+    elif rho is not None and polaritaet * rho < 0.0:
+        warnungen.append(
+            f"Rangkorrelation zeigt in die falsche Richtung ({rho:+.3f} bei Polarität "
+            f"{polaritaet:+d}): Die Ist-Karte ordnet die Tiefe umgekehrt. Weil die "
+            f"Polarität GEMESSEN ist, ist das kein Konventionsbefund mehr, sondern ein "
+            f"Geometriebefund — vorne und hinten sind vertauscht. Der Score ist auf 0 "
+            f"abgeschnitten."
+        )
+    elif rho is not None and rho < 0.0:
+        warnungen.append(
+            f"Rangkorrelation ist negativ ({rho:+.3f}), und das ist hier der ERWARTETE "
+            f"Fall: Die gemessene Polarität {polaritaet:+d} sagt, dass dieser Schätzer "
+            f"Disparität liefert (nah = grosser Wert). Gewertet wird "
+            f"{polaritaet:+d} * spearman = {polaritaet * rho:+.3f}."
         )
 
     anteil_soll = n_soll / len(s) if s else 0.0
@@ -636,9 +752,77 @@ def geometrie_score(soll: Sequence[float], ist: Sequence[float],
         # Aus der Soll-Karte ABGELESEN, nicht aus der Szene geraten — und der beste
         # Vorhersager des Deckels, den wir haben.
         "anteil_soll": anteil_soll,
-        "methode": METHODE,
+        # Welche Rechnung dahinterstand — die beiden Fassungen liefern verschiedene
+        # Zahlen, und ein Score ohne diese Angabe wäre später nicht mehr einzuordnen.
+        "methode": METHODE if polaritaet is None else METHODE_GERICHTET,
+        "polaritaet": polaritaet,
         "warnungen": warnungen,
     }
+
+
+#: Wie viele Läufe eine Polaritätsbestimmung mindestens braucht.
+#:
+#: Einer genügt nicht: Ein einzelner Lauf könnte ein echter Vorne-Hinten-Fehler sein, und
+#: dann bestimmte man die Polarität aus genau dem Fehler, den man später fangen will.
+MIN_POLARITAETSLAEUFE = 3
+
+#: Ab welchem Betrag ein ρ als Richtungszeuge zählt. Ein ρ nahe 0 hat keine Richtung —
+#: es aus Trotz einer Seite zuzuschlagen wäre geraten und nicht gemessen.
+POLARITAET_MIN_BETRAG = 0.5
+
+
+def polaritaet_aus_messungen(spearman_werte: Sequence[float]) -> dict:
+    """Die Polarität eines Schätzers aus Läufen bekannt guter Geometrie bestimmen.
+
+    **Das ist der Kern des Auswegs aus dem Befund vom 20.08.2026.** Die Umkehrung ist eine
+    Eigenschaft des Schätzers und nicht des einzelnen Bildes; wer sie einmal bestimmt,
+    darf danach das vorzeichenbehaftete ρ werten.
+
+    Die Läufe müssen **bekannt gute Geometrie** zeigen — Blender-Renders derselben Szene,
+    aus der die Soll-Karte stammt, oder etwas gleichwertig Sicheres. Aus einem Lauf, dessen
+    Geometrie fraglich ist, liesse sich die Polarität nicht bestimmen, ohne genau den
+    Fehler mitzubestimmen, den sie später aufdecken soll.
+
+    Args:
+        spearman_werte: die gemessenen ρ dieser Läufe, **mit Vorzeichen**.
+
+    Returns:
+        ``{polaritaet, gemessen, einig, n, n_gewertet, begruendung}``. ``polaritaet`` ist
+        ``None``, solange die Sache nicht eindeutig ist — und ``None`` heisst hier wie
+        überall in diesem Projekt *nicht gemessen* und nicht *egal*.
+    """
+    werte = [float(w) for w in (spearman_werte or []) if w is not None]
+    deutlich = [w for w in werte if abs(w) >= POLARITAET_MIN_BETRAG]
+    antwort = {"polaritaet": None, "gemessen": False, "einig": False,
+               "n": len(werte), "n_gewertet": len(deutlich), "begruendung": ""}
+
+    if len(deutlich) < MIN_POLARITAETSLAEUFE:
+        antwort["begruendung"] = (
+            f"Nur {len(deutlich)} von {len(werte)} Läufen zeigen eine deutliche Richtung "
+            f"(|ρ| ≥ {POLARITAET_MIN_BETRAG}); nötig sind {MIN_POLARITAETSLAEUFE}. Ein "
+            f"einzelner Lauf könnte selbst ein Vorne-Hinten-Fehler sein — dann bestimmte "
+            f"man die Polarität aus genau dem Fehler, den man später fangen will."
+        )
+        return antwort
+
+    negativ = sum(1 for w in deutlich if w < 0)
+    positiv = len(deutlich) - negativ
+    if negativ and positiv:
+        antwort["begruendung"] = (
+            f"Die Läufe sind sich nicht einig: {negativ} mit negativem, {positiv} mit "
+            f"positivem ρ. Eine Polarität, die von Lauf zu Lauf kippt, ist keine "
+            f"Eigenschaft des Schätzers — dann stimmt eine Annahme weiter oben nicht, "
+            f"etwa dass alle diese Läufe wirklich gute Geometrie zeigen."
+        )
+        return antwort
+
+    pol = POLARITAET_DISPARITAET if negativ else POLARITAET_TIEFE
+    art = "Disparität (nah = grosser Wert)" if negativ else "metrische Tiefe"
+    antwort.update(
+        polaritaet=pol, gemessen=True, einig=True,
+        begruendung=(f"{len(deutlich)} Läufe, alle mit demselben Vorzeichen: {art}. "
+                     f"Gewertet wird künftig {pol:+d} * spearman."))
+    return antwort
 
 
 def geometrie_gate(soll, ist, *, schwelle: float = SCHWELLE_GEOMETRIE, **kw) -> dict:

@@ -302,7 +302,21 @@ def test_identische_tiefenkarten_ergeben_eins():
     # unerreichbar wäre. Für Soll-gegen-Soll ist das gleichgültig; für ein erzeugtes
     # Bild wäre es der ganze Unterschied.
     assert [w for w in ergebnis["warnungen"] if "Geringer Geometrieanteil" in w]
-    assert len(ergebnis["warnungen"]) == 1, ergebnis["warnungen"]
+    # Seit dem 21.08. kommt eine zweite dazu, und zwar bei JEDEM ungerichteten Score:
+    # ohne gemessene Polarität ist er nicht monoton im geometrischen Fehler. Das gilt
+    # auch hier — nur fällt es an Soll-gegen-Soll nicht auf, weil es keinen Fehler gibt.
+    assert [w for w in ergebnis["warnungen"] if "NICHT MONOTON" in w]
+    assert len(ergebnis["warnungen"]) == 2, ergebnis["warnungen"]
+
+
+def test_mit_gemessener_polaritaet_faellt_der_monotonie_vorbehalt_weg():
+    ergebnis = geometrie_score(SOLL, list(SOLL),
+                               polaritaet=geometrie_qa.POLARITAET_TIEFE)
+
+    assert ergebnis["score"] == pytest.approx(1.0)
+    assert ergebnis["polaritaet"] == 1
+    assert "gerichtet" in ergebnis["methode"]
+    assert not [w for w in ergebnis["warnungen"] if "NICHT MONOTON" in w]
 
 
 def test_treue_kubatur_mit_anderem_massstab_und_offset():
@@ -588,7 +602,8 @@ def test_gate_traegt_alle_felder_des_scores_weiter():
     assert set(urteil) == {
         "bestanden", "schwelle", "begruendung",
         "score", "spearman", "geom_iou",
-        "n_gemeinsam", "n_soll", "n_ist", "anteil_soll", "methode", "warnungen",
+        "n_gemeinsam", "n_soll", "n_ist", "anteil_soll", "methode", "polaritaet",
+            "warnungen",
     }
 
 
@@ -969,3 +984,119 @@ def test_ein_anker_ohne_grau_und_verlauf_ist_trotzdem_brauchbar():
     anker = geometrie_qa.anker_fuer("platte_11m")
     assert "grau" not in anker and "verlauf" not in anker
     assert geometrie_qa.einordnung(0.35, anker)["anteil_der_spanne"] is not None
+
+
+# ======================================================================================
+# Polarität — der Ausweg aus dem Nicht-Monotonie-Befund vom 20.08.2026
+# ======================================================================================
+#
+# `auf-20260820-23` hat gemessen: Mit `abs(spearman)` gab 2 m Versatz den Score 0.1191
+# und 4 m Versatz 0.2301. Mehr Fehler, besserer Score. Der Grund ist geometrisch: `abs()`
+# faltet die Skala in der Mitte, der schlechteste Wert liegt bei ρ = 0 statt an einem
+# Ende. Diese Tests prüfen die Richtungsentscheidung, nicht die Messung.
+
+def test_die_gemessene_nicht_monotonie_verschwindet_mit_der_polaritaet():
+    """Die beiden Zahlen aus `auf-20260820-23`, nachgerechnet.
+
+    Sie sind hier fest eingetragen, weil sie eine MESSUNG sind und keine Erfindung des
+    Tests: ρ und `geom_iou` stehen so in `docs/EMPFINDLICHKEIT_2026-08-20.md`.
+    """
+    zwei_m = (-0.073, 0.1946)      # Versatz 2 m, Szene A
+    vier_m = (+0.337, 0.1571)      # Versatz 4 m, Szene A — mehr Fehler
+
+    ungerichtet = [math.sqrt(abs(r) * i) for r, i in (zwei_m, vier_m)]
+    gerichtet = [math.sqrt(max(0.0, -1 * r) * i) for r, i in (zwei_m, vier_m)]
+
+    assert ungerichtet[1] > ungerichtet[0], "so war der Befund: mehr Fehler, besserer Score"
+    assert gerichtet[1] < gerichtet[0], "gerichtet dreht sich das um"
+    assert gerichtet[1] == 0.0, "vollständig verkehrt herum ist 0 und nicht 0.23"
+
+
+def test_eine_falsch_herum_gedrehte_karte_faellt_auf_null_statt_auf_perfekt():
+    """Die eigentliche Lücke: Bisher bestand eine INVERTIERTE Tiefenkarte das Gate.
+
+    Mit `abs()` erreicht sie 1.0 — dasselbe wie eine perfekte. Das ist kein
+    Genauigkeitsproblem, sondern ein Loch im Tor: Vorne und hinten vertauscht ist der
+    grösstmögliche Geometriefehler und sah bisher aus wie der kleinste.
+    """
+    invertiert = abgebildet(SOLL, lambda w: 1.0 / w)
+
+    ohne = geometrie_score(SOLL, invertiert)
+    mit = geometrie_score(SOLL, invertiert, polaritaet=geometrie_qa.POLARITAET_TIEFE)
+
+    assert ohne["score"] == pytest.approx(1.0)
+    assert mit["score"] == 0.0
+    assert [w for w in mit["warnungen"] if "falsche Richtung" in w]
+
+
+def test_bei_disparitaet_ist_das_negative_vorzeichen_der_erwartete_fall():
+    """Derselbe Schätzer, richtig deklariert: aus der Warnung wird eine Feststellung."""
+    invertiert = abgebildet(SOLL, lambda w: 1.0 / w)
+    ergebnis = geometrie_score(SOLL, invertiert,
+                               polaritaet=geometrie_qa.POLARITAET_DISPARITAET)
+
+    assert ergebnis["score"] == pytest.approx(1.0)
+    assert [w for w in ergebnis["warnungen"] if "ERWARTETE" in w]
+    assert not [w for w in ergebnis["warnungen"] if "falsche Richtung" in w]
+
+
+@pytest.mark.parametrize("pol", [0, 2, -2, 0.5, "tiefe"])
+def test_eine_erfundene_polaritaet_wird_abgewiesen(pol):
+    """Ein anderer Wert würde den Score SKALIEREN statt ihn zu richten.
+
+    `0` ist der heimtückischste davon: Er machte jeden Score zu 0 und sähe aus wie ein
+    Befund. `1.0` und `True` sind dagegen zugelassen, weil sie in Python `+1` SIND und
+    sich rechnerisch nicht davon unterscheiden — eine Strenge ohne Fehlerfall dahinter
+    wäre Lärm.
+    """
+    with pytest.raises(geometrie_qa.QaError, match="polaritaet"):
+        geometrie_score(SOLL, list(SOLL), polaritaet=pol)
+
+
+def test_die_polaritaet_von_depth_anything_ist_gemessen_und_nicht_angenommen():
+    """Sie steht in einer Tabelle, weil sie zum PAAR aus Schätzer und Soll-Konvention gehört.
+
+    Eine Polarität aus der Modellkarte des Schätzers wäre nur die halbe Auskunft — sie
+    hinge davon ab, wie unsere eigene Soll-Karte herum liegt.
+    """
+    assert geometrie_qa.GEMESSENE_POLARITAET["depth-anything-v2-small"] == -1
+
+
+def test_ein_einzelner_lauf_bestimmt_keine_polaritaet():
+    """Sonst bestimmte man die Polarität aus genau dem Fehler, den man fangen will."""
+    antwort = geometrie_qa.polaritaet_aus_messungen([-0.98])
+
+    assert antwort["polaritaet"] is None
+    assert antwort["gemessen"] is False
+
+
+def test_uneinige_laeufe_bestimmen_keine_polaritaet():
+    """Eine Polarität, die von Lauf zu Lauf kippt, ist keine Eigenschaft des Schätzers."""
+    antwort = geometrie_qa.polaritaet_aus_messungen([-0.98, -0.96, +0.94, -0.97])
+
+    assert antwort["polaritaet"] is None
+    assert antwort["einig"] is False
+    assert "nicht einig" in antwort["begruendung"]
+
+
+def test_ein_rho_nahe_null_zaehlt_nicht_als_richtungszeuge():
+    """Ein ρ ohne Richtung einer Seite zuzuschlagen wäre geraten und nicht gemessen."""
+    antwort = geometrie_qa.polaritaet_aus_messungen([-0.98, -0.96, 0.02, -0.03])
+
+    assert antwort["n"] == 4
+    assert antwort["n_gewertet"] == 2
+    assert antwort["polaritaet"] is None
+
+
+def test_die_sechs_treuesten_laeufe_ergeben_disparitaet():
+    """Die Messung, aus der `GEMESSENE_POLARITAET` stammt — hier nachvollzogen.
+
+    Sechs Läufe mit kleinem geometrischem Fehler, aus zwei verschiedenen Szenen
+    (`auf-20260820-23`). Zwei Szenen, damit die Antwort nicht an einer hängt.
+    """
+    antwort = geometrie_qa.polaritaet_aus_messungen(
+        [-0.962, -0.895, -0.782, -0.998, -0.992, -0.985])
+
+    assert antwort["polaritaet"] == geometrie_qa.POLARITAET_DISPARITAET
+    assert antwort["gemessen"] is True
+    assert antwort["n_gewertet"] == 6

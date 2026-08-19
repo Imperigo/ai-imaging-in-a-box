@@ -1123,6 +1123,23 @@ Bericht den letzten Blick, löschte die Rettung in letzter Sekunde genau die Beo
 für die das Ganze gebaut ist. Er bricht nichts ab — abgebrochen wird eine Stufe höher, wo
 man weiss, was ein Abbruch kostet.*
 
+**Monotonie (einer Metrik)** — Eine Metrik ist **monoton im Fehler**, wenn ein grösserer
+Fehler immer einen schlechteren Wert ergibt. Klingt selbstverständlich, ist es nicht.
+*Der Geometrie-Score dieses Projekts war es nicht: Gemessen am 20.08.2026 gab ein Versatz
+von 2 m den Wert 0.1191 und einer von 4 m den Wert 0.2301 — mehr Fehler, besserer Wert.
+Wer eine solche Zahl als „Abstand vom Richtigen" liest, liest sie falsch, denn zwei
+verschiedene Fehler können denselben Wert ergeben, und der grössere von beiden kann der
+bessere sein. Eine nicht-monotone Grösse lässt sich auch durch keine Umrechnung
+(Normierung) monoton machen — die Umrechnung erbt den Knick.*
+
+**Faltung der Skala (durch den Betrag)** — Was passiert, wenn man von einer Grösse, die
+von −1 bis +1 läuft, nur noch den **Betrag** wertet: Aus zwei Enden wird eines, und der
+schlechteste Wert liegt danach in der **Mitte** statt am Rand.
+*Genau das war die Ursache der Nicht-Monotonie oben. Die Rangkorrelation ist bei −1 und
+bei +1 gleich aussagekräftig (nur mit umgekehrter Richtung) und bei 0 wertlos. Wer ihren
+Betrag wertet, erklärt 0 zum schlechtesten Wert — und der liegt mitten im Fehlerbereich.
+Eine Metrik mit einem Minimum in der Mitte kann nicht monoton sein.*
+
 **Boden (einer Ähnlichkeitsmetrik)** — Wie ähnlich sich zwei Dinge sind, die **gar nichts**
 miteinander zu tun haben. Man erwartet null; in der Wirklichkeit ist es fast nie null.
 *Gemessen an 4950 zusammenhanglosen Bildpaaren liegt der Boden von SigLIP 2 bei 0,526 —
@@ -1388,6 +1405,26 @@ blieb völlig wirkungslos; erst ein Tiefensprung gibt ihr eine Kante zum Zerstö
 liefert Meter (gross = fern), viele Schätzer liefern Disparität (gross = nah). *Wird in
 diesem Projekt nie aus den Daten erraten, sondern deklariert — aus den Daten schliessen
 hiesse die Ordnung vorauszusetzen, die man gerade messen will.*
+
+*Seit dem 21.08.2026 gibt es dazu eine Präzisierung, und sie beantwortet genau den
+Einwand im Satz davor. Die Polarität gehört zum **Schätzer** und nicht zum einzelnen
+Bild: Ein Verfahren, das Disparität liefert, liefert sie bei jedem Bild. Man darf sie
+darum einmal **bestimmen** — aber nur an Läufen mit **bekannt guter** Geometrie
+(Blender-Renders derselben Szene, aus der die Vergleichskarte stammt). Genau diese
+Auflage schliesst den Zirkel aus: Aus einem Lauf, dessen Geometrie fraglich ist, liesse
+sich die Polarität nicht bestimmen, ohne den Fehler mitzubestimmen, den sie später
+aufdecken soll. Aus demselben Grund genügt ein einzelner Lauf nicht.*
+
+*Und sie gehört zum **Paar** aus Schätzer und Vergleichskonvention, nicht zum Schätzer
+allein — eine Angabe aus der Modellkarte des Schätzers wäre nur die halbe Auskunft, weil
+sie nichts darüber sagt, wie die eigene Vergleichskarte herum liegt. Für
+`depth-anything-v2-small` gegen unsere Blender-Karte ist sie an 24 Läufen gemessen:
+Disparität.*
+
+*Warum das mehr ist als Buchhaltung: Solange die Polarität unbekannt ist, muss man den
+**Betrag** der Rangkorrelation werten — und der faltet die Skala (siehe dort), was die
+Metrik nicht-monoton macht und nebenbei eine vollständig invertierte Tiefenkarte wie eine
+perfekte bewertet.*
 
 **Hintergrundmarke** — Die Festlegung, welche Bildpunkte als „kein Gebäude" gelten. Bei
 gerenderten Tiefenkarten ist das eindeutig (der Himmel hat keine Tiefe); bei *geschätzten*
@@ -2541,6 +2578,7 @@ System laufen.
 | 2026-08-20 | Aus dem GPU-Ergebnis zu `auf-20260820-18`: **Sandbox-Paket (Snap, Flatpak)** und **Artefakt einer Messung**. Beide sind teuer erworben — das GPU-faehige Blender-Snap liefert bei Dateiumleitung Rueckgabewert 0 ohne Bild, und der am selben Tag gemessene 32-Sekunden-Takt war ein Artefakt der CPU-Messung |
 | 2026-08-20 | Ergaenzt aus dem Abholer (`src/aiimaging/abholer.py`): **Laufzettel**, **Waise (verwaister Auftrag)** |
 | 2026-08-20 | Ergaenzt aus der Taktmessung an Blender: **adaptives Sampling**, **Blockpufferung der Standardausgabe**, **Pipe-Blockade**. **Sample** um die gemessene Einschraenkung ergaenzt: Bei adaptivem Sampling ist die Samplezahl eine OBERGRENZE und keine Angabe der Rechenzeit — 6000 Samples in 12 s gegen 3000 ohne adaptives Sampling in ueber drei Minuten |
+| 2026-08-21 | Ergaenzt aus dem Nicht-Monotonie-Befund: **Monotonie (einer Metrik)**, **Faltung der Skala (durch den Betrag)**, ausgebaut **Polaritaet (einer Tiefenkarte)** um die Frage, wann man sie bestimmen DARF, ohne im Kreis zu messen. Alle drei aus einer Messung, die eine eigene Entscheidung widerlegt hat |
 | 2026-08-21 | Ergaenzt beim Anhaengen der Wache an den Abholer: **Blockierender Aufruf**, **Hintergrundfaden und Daemon-Faden**, **Fortschrittsbeobachter**, **Vertragsfeld**. Ausgebaut: **Race Condition** um den Fall, in dem der TEST das Rennen enthaelt — und um die Abhilfe, das Rennen bedeutungslos zu machen statt laenger zu warten |
 | 2026-08-20 | Ergaenzt aus der Fortschrittswache (`src/aiimaging/fortschritt.py`): **Timeout**, **Gesamt-Timeout gegen Fortschrittsfrist**, **Stillstand (Stall)**, **behauptetes gegen belegtes Fortschrittszeichen**, **monotone Uhr**. Anlass war wieder ein Befund: Der geerbte Stillstandswaechter stellt bei den Zustaenden `running` und `queued` die Uhr zurueck — also genau in dem Fall, fuer den er gebaut wurde |
 | 2026-08-20 | Ergaenzt aus der Belichtungspruefung (`src/aiimaging/belichtung.py`) und dem farbfaehigen PNG-Leser: **Farbtyp (PNG)**, **Palette (PNG-Farbtyp 3)**, **Alphakanal**, **Luminanz**, **Rec.709**, **Gammakorrektur/sRGB**, **Clipping (ausgefressen/zugelaufen)**, **Belichtungsrahmen**. Der Anlass war ein Befund und keine Fleissarbeit: Die geerbte Schwelle von 8 % geclippter Lichter haette unseren eigenen, gemessenen Hausstil (7,55 % ± 6,9, Hoechstwert 30,0 %) zum Fehler erklaert — eine Belichtungsschwelle ist keine Eigenschaft guter Belichtung, sondern eines Stils |

@@ -634,7 +634,41 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       59,8 % → 0.984. Die Mitte hat die *niedrigste Decke von dreien* und die *beste
       Trennung* (1.63 gegen 1.36). Mein Bild „zwischen den Fehlerbereichen liegt der gute
       Bereich" war zu einfach — es gibt keinen Anteil, bei dem beides zugleich stimmt.
-- [ ] **Eine feste Schwelle kann es nicht geben — welcher ANTEIL genügt, ist ungemessen.**
+- [x] **WIDERLEGT am 20.08. (`auf-20260820-23`): Die Normierung trägt nicht.** Dieselbe
+      Verschiebung von 1 m ergibt bei 29 % Geometrieanteil rund 0.40 der Spanne, bei
+      59.8 % rund 0.92 — Faktor 2,3. Und härter noch: Der Score ist **nicht monoton**
+      (2 m → 0.1191, 4 m → 0.2301). Eine nicht-monotone Grösse lässt sich durch keine
+      Normierung in ein Mass für Abstand vom Richtigen verwandeln; der Anteil der Spanne
+      erbt die Nicht-Monotonie unverändert. Damit ist das Gebäude vom 20.08. weg.
+- [x] **Die Richtung ist eingebaut (21.08.), und sie repariert einen von drei Knicken.**
+      `geometrie_score(..., polaritaet=...)` wertet das vorzeichenbehaftete ρ, sobald die
+      Polarität gemessen ist (`polaritaet_aus_messungen`, `GEMESSENE_POLARITAET`); ohne
+      Messung bleibt es beim Betrag, und das Ergebnis **sagt dann selbst**, dass sein
+      Score nicht monoton ist. Nachgerechnet in `docs/POLARITAET_2026-08-21.md`.
+
+      **Der Gewinn, den niemand gesucht hat:** Eine vollständig invertierte Tiefenkarte
+      erreichte mit `abs()` den Score 1.0 und bestand das Tor — vorne und hinten
+      vertauscht, der grösstmögliche Geometriefehler, bewertet wie ein perfektes Bild.
+      Jetzt fällt sie auf 0.0. Das war kein Genauigkeits-, sondern ein Sicherheitsloch.
+
+      **Was es NICHT löst, damit es niemand für mehr hält:** die Stumpfheit gar nicht
+      (kein Lauf der Szene B fällt unter den Rauschanker, vorher wie nachher), und zwei
+      der drei Knicke nicht — die sitzen in `geom_iou`, nicht in ρ.
+- [ ] **Der neue Verdächtige heisst `geom_iou`, und der Verdacht heisst Boden.** In
+      Szene B fällt ρ sauber, während `geom_iou` STEIGT (0.5 m → 1 m: 0.9324 → 0.9579).
+      Bei 59.8 % Geometrieanteil ist mehr als die Hälfte aller Punkte Bodenebene; ein
+      verschobenes Gebäude ändert daran fast nichts, und die Silhouetten decken sich
+      weiter, weil sie sich **im Boden** decken. Passt zur Nullprobe (weisses Rauschen:
+      0.7217 auf derselben Szene). **Vermutung, nicht Messung.** Zu messen: dieselben
+      Reihen, aber `geom_iou` nur über die Punkte, an denen das BAUWERK steht. Der
+      frühere Anlauf (`ohne_randberuehrung`, 20.08. zurückgenommen) war richtig gedacht
+      und falsch gebaut — er wählte mit Boden null Punkte aus.
+- [ ] **Die Polarität der Nullproben ist ungemessen — und sie entscheidet mit.** Wenn
+      weisses Rauschen ein POSITIVES ρ liefert, fällt der Rauschanker mit der Richtung
+      auf 0, und das Tor trennte plötzlich sauber. Liefert es ein negatives, bleibt alles
+      wie gehabt. Wir wissen es nicht: `auf-21`/`auf-22` haben die Anker als Score
+      gemeldet, nicht als ρ. Billig nachzuholen, ohne Bildmodell.
+- [ ] **(hinfällig) Eine feste Schwelle kann es nicht geben — welcher ANTEIL genügt, ist ungemessen.**
       Decke und Boden schwanken je Szene um mehr als das Doppelte; die szenenunabhängige
       Grösse ist `(score − rauschen) / (perfekt − rauschen)`. `einordnung()` rechnet sie,
       der Abholer misst die Anker selbst. **Welcher Anteil genügen soll, steht nirgends —

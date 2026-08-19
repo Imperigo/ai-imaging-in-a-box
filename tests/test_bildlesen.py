@@ -916,7 +916,11 @@ def test_die_metrik_laeuft_auf_echten_dateien_statt_auf_listen(tmp_path):
     # trivial wahr und belegt keine getroffene Kontur. Seit dem 20.08.2026 sagt die
     # Metrik das (auf-20260819-15).
     assert [w for w in ergebnis["warnungen"] if "Randlose Silhouette" in w]
-    assert len(ergebnis["warnungen"]) == 1, ergebnis["warnungen"]
+    # Seit dem 21.08. kommt der Monotonie-Vorbehalt dazu: ohne gemessene Polarität ist
+    # der Score nicht monoton im geometrischen Fehler. Hier ohne Folgen — es gibt keinen
+    # Fehler —, aber die Warnung gehört an jeden ungerichteten Score.
+    assert [w for w in ergebnis["warnungen"] if "NICHT MONOTON" in w]
+    assert len(ergebnis["warnungen"]) == 2, ergebnis["warnungen"]
 
 
 def test_png_und_exr_derselben_szene_stimmen_bis_auf_die_quantisierung_ueberein(tmp_path):
