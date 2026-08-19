@@ -1,0 +1,26 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260819-17",
+  "art": "qa",
+  "beschreibung": "WARUM WIRD DER AUFTRAG NICHT ABGEHOLT? Das ist ab sofort die wichtigste offene Frage des Projekts, und sie ist die einzige, die eine Vorfuehrung aufhaelt. AUSGANGSLAGE, aus deinem eigenen Volldurchgang: In /tmp/kosmo-jobs/vis-1787123048-098c6e/ liegt ein vollstaendiger Auftrag — job.json mit status queued, approval_token CONFIRMED_RENDER_*, idle_window_only true, engine cycles, style lineart; model.glb mit 110 KB echter Geometrie; render-scene.json nach kosmovis.render-scene/v1 mit drei aus dem Modell gerechneten Kameras. Du hast die Karte freigemacht (13 W, 1 GB) und der Zustand blieb 'wartet auf GPU-Leerlauf'. Traege Erkennung oder zu enge Schranke — du hast selbst geschrieben: ungemessen. GENAU DAS SOLL JETZT GEMESSEN WERDEN. WAS ICH BRAUCHE, in dieser Reihenfolge: (1) WER holt ab? Laeuft ueberhaupt ein Prozess, der jenes Verzeichnis abfragt? Suche den Dienst, der die Bridge bedient, und sieh nach, ob er eine Abhol-Schleife hat oder ob dort schlicht niemand ist. Ein 'es laeuft gar kein Abholer' waere die wertvollste Antwort dieses Auftrags, denn dann ist die Luecke bewiesen statt vermutet. (2) WENN es einen Abholer gibt: Welche Schranke prueft er, mit welchen Zahlen? Watt, belegter Speicher, Prozentwert, Zeitfenster? Und wie oft fragt er nach? Nenne die Werte, die im Code stehen, nicht die vermuteten. (3) WAS SAGT DIE KARTE WIRKLICH? nvidia-smi zum Zeitpunkt des Wartens: Leistung, belegter Speicher, laufende Prozesse. Wenn 13 W und 1 GB nicht als Leerlauf gelten, will ich die Schwelle sehen, an der sie scheitern. (4) GIBT ES EIN PROTOKOLL? Schreibt der Dienst irgendwohin, warum er nicht abholt? Journal, Logdatei, stdout. Ein Satz von ihm ist mehr wert als drei Vermutungen von mir. NICHT TUN: Nichts an jenem Dienst aendern, nichts starten, nichts neu konfigurieren. Nur nachsehen und berichten. Auch dann nicht, wenn die Ursache offensichtlich aussieht — es ist fremder Code, an dem gerade jemand baut. WARUM ES ZAEHLT: Wenn dort niemand abholt, ist das exakt die Stelle, an der unsere Lane einsteigt: Wir haben den Abholer, er laeuft seit Wochen fuer unsere eigenen Auftraege, und bruecke.py liest genau jenes Verzeichnisformat — Ordnername, Auftragskennung und Schema habe ich heute gegen die echten Werte geprueft, alle drei passen. Wenn dort jemand abholt und nur die Schranke zu eng ist, ist es ein Zahlenwert und kein Bau. Der Unterschied entscheidet, ob wir eine Komponente liefern oder eine Zeile. ZWEITE FRAGE, kleiner, aber sie gehoert in dieselbe Sitzung: Die Auto-Kamera setzt die Augenhoehe auf 1.30 m (Eingang) und 1.60 m (Innenraum). Unsere Kameraableitung und das Pflichtenheft rechnen mit 1.70 m ueber Terrain. Steht die Zahl dort im Code, und wenn ja: ist sie absolut oder ueber Gelaende gerechnet? Der Unterschied hat uns hier drei Fehler gekostet, die kein Test gefunden hat. REGEL 3: In der Rueckgabe keine absoluten Pfade mit Benutzernamen, keine Bueronamen, keine Projektnamen. Verzeichnisname und Dienstname genuegen.",
+  "erstellt": "2026-08-19T21:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null
+  },
+  "params": {
+    "auftragsverzeichnis": "/tmp/kosmo-jobs",
+    "nur_nachsehen": true
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "hinweis": "Kein GPU-Lauf. Reines Nachsehen und Messen. nvidia-smi lesen ist kein Lauf."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": false,
+    "hinweis": "Vier Antworten, kurz. Zahlen aus dem Code, nicht vermutete. Keine absoluten Pfade mit Benutzernamen (Regel 3)."
+  }
+}
