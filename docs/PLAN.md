@@ -523,6 +523,25 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       `erreichbarkeit()` beantwortet das jetzt **vor** dem Rechnen, kostet nichts, und
       hätte den Unterschied gemerkt, bevor er drei Aufträge gekostet hat. Eine ungemessene
       Kombination bekommt **`None`** und keine Schätzung.
+- [x] **Der Deckel lässt sich aus der Soll-Karte ABLESEN** — kein Szenenname nötig.
+      Derselbe Tag, und es macht die Tabelle oben fast überflüssig: Der **Geometrieanteil**
+      (wieviel Prozent der Bildpunkte überhaupt Geometrie tragen) sagt fast alles.
+
+      | Szene | Anteil | Deckel |
+      |---|---|---|
+      | ohne Boden | 17,0 % | 0,256 |
+      | Platte endlich | 59,8 % | 0,967 |
+      | Ebene bis Rand | 93,9 % | 0,974 |
+      | Ebene mit Horizont | 100 % | 1,000 |
+
+      Der Grund ist bekannt: Ein monokularer Schätzer legt in eine leere Fläche eine
+      Bodenebene hinein (`auf-10`) — je mehr leere Fläche, desto mehr erfundene Geometrie
+      in der Ist-Silhouette. `geometrie_score` meldet den Anteil jetzt in jedem Ergebnis
+      und **warnt** unter 20 %, mit der Messung in der Meldung.
+      **Vier Punkte sind keine Kurve:** Es stehen die untere und die obere Marke da, und
+      dass es zwischen 20 % und 60 % ungemessen ist, steht in der Warnung selbst.
+      *Nebenbei aufgefallen:* Unsere eigene Test-Sollkarte liegt bei **18,8 %** — also
+      selbst im unerreichbaren Bereich.
 - [ ] **Der Rest ist kein Rechenfehler, sondern ein echter Rückstand.** Der Deckel lag bei
       0.636, die erzeugten Bilder bei 0.265 — zwischen *bestmöglich* und *erreicht* klafft
       noch einmal derselbe Abstand. Beides ist wahr, und keines erklärt das andere weg.

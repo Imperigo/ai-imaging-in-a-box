@@ -567,6 +567,19 @@ def geometrie_score(soll: Sequence[float], ist: Sequence[float],
             f"hinten sind vertauscht. Diese beiden Fälle kann die Metrik nicht trennen."
         )
 
+    anteil_soll = n_soll / len(s) if s else 0.0
+    if 0 < n_soll < ANTEIL_GEMESSEN_NIEDRIG * len(s):
+        warnungen.append(
+            f"Geringer Geometrieanteil: nur {anteil_soll:.1%} der Bildpunkte tragen "
+            f"Geometrie. Am 19.08.2026 gemessen (auf-20260819-15): Bei 17 % deckelt "
+            f"'geom_iou' bei 0.256 — die Schwelle {SCHWELLE_GEOMETRIE} ist dann "
+            f"ARITHMETISCH UNERREICHBAR, und ein durchgefallenes Bild belegt nichts über "
+            f"seine Geometrietreue. Ab 60 % lag der Deckel bei 0.967. Der Grund: Ein "
+            f"monokularer Schätzer legt in eine leere Fläche eine Bodenebene hinein "
+            f"(auf-20260818-10), und je mehr leere Fläche, desto mehr erfundene Geometrie "
+            f"in der Ist-Silhouette. Was zwischen 20 % und 60 % geschieht, ist ungemessen."
+        )
+
     if n_soll == len(s) or n_ist == len(i):
         # Am 19.08.2026 an einer Szene mit Bodenebene bis zum Horizont gemessen
         # (`auf-20260819-15`): geom_iou war **exakt 1.0000**, weil n_soll gleich der
@@ -620,6 +633,9 @@ def geometrie_score(soll: Sequence[float], ist: Sequence[float],
         "n_gemeinsam": n_gemeinsam,
         "n_soll": n_soll,
         "n_ist": n_ist,
+        # Aus der Soll-Karte ABGELESEN, nicht aus der Szene geraten — und der beste
+        # Vorhersager des Deckels, den wir haben.
+        "anteil_soll": anteil_soll,
         "methode": METHODE,
         "warnungen": warnungen,
     }
@@ -717,6 +733,30 @@ IOU_DECKEL = {
 #: Bestes je gemessenes ``|spearman|`` an einem gerenderten Bild (`auf-20260819-15`).
 #: Es ist nahe an 1.0 — die Tiefen*ordnung* war nie das Problem, die Silhouette schon.
 SPEARMAN_BESTENFALLS = 0.998
+
+#: Was `auf-20260819-15` über den Zusammenhang von **Geometrieanteil** und Deckel sagt.
+#:
+#: Der Geometrieanteil — wieviel Prozent der Bildpunkte überhaupt Geometrie tragen — lässt
+#: sich aus der Soll-Karte **ablesen**, ohne die Szene zu kennen. Und er sagt fast alles:
+#:
+#: =================  ===============  ==================
+#: Szene              Geometrieanteil  ``geom_iou``-Deckel
+#: =================  ===============  ==================
+#: ohne Boden         17,0 %           0,256
+#: Platte, endlich    59,8 %           0,967
+#: Ebene bis Rand     93,9 %           0,974
+#: Ebene mit Horizont 100 %            1,000
+#: =================  ===============  ==================
+#:
+#: **Der Grund ist bekannt:** Ein monokularer Schätzer legt in eine leere Fläche eine
+#: Bodenebene hinein (`auf-20260818-10`). Je mehr leere Fläche, desto mehr erfundene
+#: Geometrie in der Ist-Silhouette — und desto kleiner die Überdeckung.
+#:
+#: **Vier Punkte sind keine Kurve.** Was hier steht, ist die untere und die obere Marke,
+#: nicht eine Formel dazwischen: Unterhalb von 20 % war der Deckel unerreichbar, ab 60 %
+#: war er hoch. Was zwischen 20 % und 60 % geschieht, ist **ungemessen**.
+ANTEIL_GEMESSEN_NIEDRIG = 0.20
+ANTEIL_GEMESSEN_HOCH = 0.60
 
 
 def noetiges_iou(schwelle: float = SCHWELLE_GEOMETRIE,

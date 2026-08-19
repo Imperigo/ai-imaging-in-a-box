@@ -297,7 +297,12 @@ def test_identische_tiefenkarten_ergeben_eins():
     assert ergebnis["score"] == pytest.approx(1.0)
     assert ergebnis["spearman"] == pytest.approx(1.0)
     assert ergebnis["geom_iou"] == 1.0
-    assert ergebnis["warnungen"] == []
+    # Genau eine Warnung, und sie ist lehrreich: Diese Testkarte trägt nur auf 18.8 %
+    # der Punkte Geometrie und liegt damit selbst in dem Bereich, in dem die Schwelle
+    # unerreichbar wäre. Für Soll-gegen-Soll ist das gleichgültig; für ein erzeugtes
+    # Bild wäre es der ganze Unterschied.
+    assert [w for w in ergebnis["warnungen"] if "Geringer Geometrieanteil" in w]
+    assert len(ergebnis["warnungen"]) == 1, ergebnis["warnungen"]
 
 
 def test_treue_kubatur_mit_anderem_massstab_und_offset():
@@ -583,7 +588,7 @@ def test_gate_traegt_alle_felder_des_scores_weiter():
     assert set(urteil) == {
         "bestanden", "schwelle", "begruendung",
         "score", "spearman", "geom_iou",
-        "n_gemeinsam", "n_soll", "n_ist", "methode", "warnungen",
+        "n_gemeinsam", "n_soll", "n_ist", "anteil_soll", "methode", "warnungen",
     }
 
 
@@ -777,3 +782,50 @@ def test_unbrauchbare_eingaben_werden_abgewiesen(schwelle, rho):
 def test_ein_deckel_ausserhalb_von_null_bis_eins_wird_abgewiesen():
     with pytest.raises(QaError, match="iou_deckel"):
         geometrie_qa.erreichbarkeit(iou_deckel=1.5)
+
+
+# ======================================================================================
+# Der Geometrieanteil — aus der Karte abgelesen statt aus der Szene geraten
+# ======================================================================================
+
+def test_der_geometrieanteil_steht_im_ergebnis():
+    """Er ist der beste Vorhersager des Deckels, den wir haben — und er kostet nichts."""
+    hg = float("inf")
+    soll = [1.0, 2.0, hg, hg, hg, hg, hg, hg, hg, hg]
+    ergebnis = geometrie_score(soll, soll)
+    assert ergebnis["anteil_soll"] == pytest.approx(0.2)
+
+
+def test_ein_geringer_anteil_wird_gewarnt_mit_der_messung_dabei():
+    """`auf-20260819-15`: Bei 17 % Geometrieanteil deckelt geom_iou bei 0.256, ab 60 %
+    bei 0.967. Der Anteil ist ablesbar, die Szene nicht."""
+    hg = float("inf")
+    soll = [1.0] + [hg] * 19            # 5 %
+    warnung = [w for w in geometrie_score(soll, soll)["warnungen"]
+               if "Geringer Geometrieanteil" in w]
+    assert warnung
+    assert "UNERREICHBAR" in warnung[0]
+    assert "auf-20260819-15" in warnung[0]
+    assert "ungemessen" in warnung[0], "die Lücke zwischen 20 % und 60 % gehört dazu"
+
+
+def test_ein_hoher_anteil_wird_nicht_gewarnt():
+    hg = float("inf")
+    soll = [1.0] * 15 + [hg] * 5        # 75 %
+    assert not [w for w in geometrie_score(soll, soll)["warnungen"]
+                if "Geringer Geometrieanteil" in w]
+
+
+def test_die_marken_sind_die_gemessenen_und_keine_gerundeten():
+    """Vier Punkte sind keine Kurve — es stehen die untere und die obere Marke da,
+    nicht eine Formel dazwischen."""
+    assert geometrie_qa.ANTEIL_GEMESSEN_NIEDRIG == 0.20
+    assert geometrie_qa.ANTEIL_GEMESSEN_HOCH == 0.60
+
+
+def test_eine_leere_sollkarte_warnt_nicht_zweimal_ueber_dasselbe():
+    """Ohne Geometrie gibt es schon eine eigene, deutlichere Warnung."""
+    hg = float("inf")
+    warnungen = geometrie_score([hg] * 10, [1.0] * 10)["warnungen"]
+    assert [w for w in warnungen if "trägt keine Geometrie" in w]
+    assert not [w for w in warnungen if "Geringer Geometrieanteil" in w]
