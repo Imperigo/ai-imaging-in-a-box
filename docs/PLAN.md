@@ -714,6 +714,38 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       strukturlose Fläche eine glatte Rampe, und die Soll-Karte einer Bodenszene **ist**
       im Wesentlichen eine Rampe. Zwei Rampen korrelieren.
 
+## Kamerasetzung — was die Recherche vom 21.08. treffen muss
+
+*Beim Lesen von `kameras.py` vor der Recherche aufgefallen. Der Befund steht hier, damit
+die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauchgefühl.*
+
+- [ ] **Es gibt gar keinen Innenraum-Modus. Nicht schwach, sondern gar nicht.**
+      `kameras.py` rechnet ausschliesslich Aussenstandpunkte um eine Hüllbox herum. Die
+      Konstanten machen Innenaufnahmen **rechnerisch unmöglich**: `WANDABSTAND_M = 10.0`
+      (Mindestabstand zur Fassade) und `MIN_ZIEH_ABSTAND_M = 6.0` — in einem 4 m breiten
+      Zimmer gibt es keinen zulässigen Standpunkt. Wer heute „Innenbild" sagt, bekommt
+      eine Kamera zehn Meter ausserhalb der Wand.
+
+      Zu bauen ist damit nicht eine Anpassung, sondern ein **zweiter Weg**: Raum finden
+      (aus dem IFC, nicht aus der Hüllbox), Standpunkt im Raum, Verdeckung gegen Wände.
+      Der Verdeckungstest steht ohnehin offen — für innen ist er nicht Kür, sondern
+      Voraussetzung.
+- [ ] **Das Seitenverhältnis ist kein Kompositionsentscheid, sondern ein Durchreicher.**
+      Es kommt aus `render.resolution` des fremden Vertrags (Vorgabe 1600×1000 = 1.6:1)
+      und geht unverändert in die Bildwinkelrechnung. **Keine Regel im Code verbindet die
+      Proportion des Baukörpers mit der Proportion des Bildes.** Für einen 40 m breiten,
+      15 m hohen Bau (8:3) heisst 1.6:1 zwangsläufig viel Vordergrund und Himmel — was
+      der Owner am 21.08. so entschieden hat, aber eben nicht, weil es gerechnet wurde.
+- [ ] **Die Aussen-Konstanten sind begründet, aber nicht belegt.** `BRENNWEITE_MM = 28`,
+      `AUGENHOEHE_M = 1.70`, `DECKUNGSGRAD = 0.55`, `BIAS_GRAD = 35`,
+      `ZIEL_ANTEIL_HOEHE = 0.20`. Jede trägt im Modul eine Begründung, und die meisten
+      stammen aus dem Bestand (KosmoVis) statt aus der Fachliteratur. Die Recherche soll
+      sie **prüfen, nicht bestätigen** — wo sie widerlegt werden, ist das ein Ergebnis.
+- [ ] **`AUTO_RICHTUNGEN = ("sSE",)` ist eine einzige Richtung.** Eine, nicht zwölf, und
+      das war eine Betriebsentscheidung (zwölf Standpunkte sind zwölf Renderläufe). Ob
+      ausgerechnet Süd-Südost der richtige einzelne Blick ist, hängt an Sonnenstand und
+      Fassadenlage und ist nie begründet worden.
+
 ## Die Geometrie-QA neu bauen — der Stand, auf dem morgen anzufangen ist
 
 - [ ] **Der Score wird `polaritaet * spearman` über der Bauwerksmaske.** Gemessen
@@ -935,11 +967,19 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       aus und misst nichts; der Score ruht dort allein auf `spearman`.
       `geometrie_score` **meldet** das jetzt, verwirft es aber nicht: Welche der beiden
       Karten randlos ist, weiss der Aufrufer besser als die Funktion.
-- [ ] **Format oder Vordergrund? — Owner-Entscheid.** Ein 40 m breiter, 15 m hoher Bau
-      kann ein Quadrat nicht füllen. Die Referenzbilder des Hausstils sind in ihren
-      Quadraten nicht leer, sondern voller Wiese, Bäume und Menschen; unsere Szene hat
-      nichts davon. **Der Widerspruch liegt nicht im Stil** — entweder bekommt die Szene
-      einen Vordergrund, oder das Format folgt dem Baukörper.
+- [x] **ENTSCHIEDEN 21.08. (Owner): VORDERGRUND FÜLLEN.** Festes Bildformat, die Szene
+      bekommt Vordergrund — Wiese, Bäume, Umgebung —, das Format folgt nicht dem
+      Baukörper. Einheitlich über alle Aufträge und konventionell für
+      Architekturvisualisierung.
+
+      **Der Entscheid ging gegen meine Empfehlung, und die Folge gehört hierher, nicht in
+      eine Fussnote:** Vordergrund füllen heisst bodenlastige Szenen als Regelfall. Genau
+      dort war die Geometrie-QA am 20./21.08. stumpf — bei 59.8 % Bodenanteil erreichte
+      weisses Rauschen den Score 0.72, und die Reihe war nicht monoton. **Damit ist die
+      Bauwerksmaske keine Verbesserung mehr, sondern Voraussetzung:** Eine QA über das
+      ganze Bild misst bei diesen Szenen zwei Bodenrampen gegeneinander. Was vorher eine
+      Option war, ist jetzt der einzige Weg — und das ist ein sauberes Ergebnis, weil die
+      Entscheidung die Technik bestimmt und nicht umgekehrt.
 - [x] **Der Beauty-Pass trennt Bauwerk und Hintergrund — gemessen, und die Sorge trifft
       so nicht zu.** 2026-08-20, an zwei Szenen. Möglich wurde die Messung erst durch den
       farbfähigen Leser vom selben Tag und die Silhouette aus der Tiefen-EXR: Sie sagt
@@ -1015,16 +1055,33 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       **Und die HomeStation hat eine Falle abgefangen**, in die ich gelaufen wäre: Die
       Vorlagen sind Bildschirmfotos, alle 2560×1440. Wer die Dateimasse misst, misst den
       Bildschirm und nicht die Arbeit.
-- [ ] **Wie viele der 74 sind wirklich Architekturvisualisierungen?** Die HomeStation hat
+- [ ] **(entfällt mit dem Stil-Entscheid vom 21.08.) Wie viele der 74 sind wirklich Architekturvisualisierungen?** Die HomeStation hat
       **strukturell** klassifiziert (heller Grund + eingebettetes Werk) und ausdrücklich
       gesagt, dass sie nur zwei Bilder wirklich angesehen hat. Wer die Zahl braucht, muss
       sie sehen — das ist ein eigener Durchgang, keine Nebenbemerkung.
-- [ ] **Ein Referenzset, das uns gehört** — die andere Hälfte des Hausstils. Der Prompt
+- [ ] **(entfällt mit dem Stil-Entscheid vom 21.08. — der feste Stil braucht keins) Ein Referenzset, das uns gehört** — die andere Hälfte des Hausstils. Der Prompt
       sagt, wie man es macht; `stil_qa` prüft gegen ein Referenzset, ob es gelungen ist.
       Fremde Bilder können das nicht sein: Eine Einbettung ist eine Ableitung des Bildes.
       Es braucht eigene Renders oder eigene Arbeiten des Owners. **Erst danach ist der
       Hausstil prüfbar und nicht nur beschrieben.**
-- [ ] **Owner-Entscheid: gelernter Hausstil oder fester Stil?** Der Owner hat beide Wege
+- [x] **ENTSCHIEDEN 21.08. (Owner): FESTER STIL, fest formuliert.** Der Hausstil steht
+      als Prompt und als gemessener Belichtungsrahmen im Repo, **ohne Referenzset**. Was
+      damit erledigt ist und was folgt:
+
+      * Die Stil-QA misst gegen den **Belichtungsrahmen** (`belichtung.py`,
+        `HAUSSTIL_RAHMEN`, Mittel ± 2σ aus `auf-20260818-14`) und nicht gegen
+        Bildähnlichkeit. Das ist der Teil, der schon gemessen ist.
+      * Damit entfällt der Grund, aus dem die Stil-QA im Abholer bewusst nicht lief: Sie
+        war an ein Referenzset gebunden, das es nicht gibt. **Neu zu bauen:** die
+        Stil-Prüfung im Abholer gegen den Rahmen statt gegen Einbettungen.
+      * Die 74 gefundenen fremden Referenzen werden damit **nicht gebraucht** — und die
+        lizenzrechtlich ungeklärte Frage nach ihnen erledigt sich, statt beantwortet zu
+        werden. Das ist der angenehmste Weg, eine Rechtsfrage loszuwerden.
+      * **Was der Entscheid NICHT löst:** Ein fest formulierter Stil ist beschrieben und
+        nicht geprüft. Ob ein Prompt an einem Backbone wirklich landet, bleibt eine
+        Messung am Gerät — und `stil_qa` mit SigLIP 2 behält seinen Wert für den
+        Vergleich *unserer eigenen* Bilder untereinander.
+- [ ] **(hinfällig) Owner-Entscheid: gelernter Hausstil oder fester Stil?** Der Owner hat beide Wege
       genannt — Referenzen in KosmoData hochladen („so sollen meine Renderings aussehen")
       oder ein festes Preset. **Es ist dieselbe Mechanik:** Ein Preset ist ein
       mitgeliefertes Referenzset. Der gelernte Weg braucht nur einen Ort, an dem die
@@ -1049,11 +1106,15 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       erteilt hat** — und hebelt unseren Freeze-Schutz aus, ohne dass irgendwo etwas rot
       wird. `fremde_freigabe_gilt` ist darum als ausdrücklicher Schalter gebaut, Vorgabe
       `False`. **Owner-Entscheid, siehe unten.**
-- [ ] **Owner-Entscheid: gilt der selbst geprägte Freigabe-Token der Brücke?** Eine
-      Freigabe, die eine Maschine sich selbst erteilt, ist keine — aber ob bei der
-      Designzentrale ein Mensch *davor* bestätigt, wissen wir nicht. Das ist eine
-      Entscheidung des Betreibers und keine des Programms; sie ist als Schalter gebaut und
-      nicht als Verhalten.
+- [x] **ENTSCHIEDEN 21.08. (Owner): NEIN, der Token gilt nicht.** `--fremde-freigabe`
+      bleibt ausgeschaltet. Aufträge der fremden Oberfläche bleiben liegen, mit
+      Begründung im Bericht; wer rechnen will, gibt den Schalter bewusst mit.
+
+      Die Begründung, die damit bestätigt ist: Die Brücke prägt ihren `approval_token`
+      mit `secrets.token_hex` **selbst**. Er sieht aus wie unserer und bedeutet etwas
+      anderes — nämlich „in der Oberfläche wurde auf Rendern geklickt", nicht „ein Mensch
+      hat die Kosten freigegeben". Der Schalter bleibt als Schalter bestehen; die
+      Voreinstellung ist jetzt ein Entscheid und keine Vorsichtsmassnahme mehr.
 - [x] **Übergabeblatt an die Vis-Oberfläche** — erledigt 2026-08-19,
       `docs/UEBERGABE_VIS_2026-08-19.md`. **Eine Kehrtwende, keine weitere
       Bestandsaufnahme:** Nachdem der Owner mitteilte, dass der Cloud-Worker gerade an
