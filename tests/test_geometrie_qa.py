@@ -829,3 +829,77 @@ def test_eine_leere_sollkarte_warnt_nicht_zweimal_ueber_dasselbe():
     warnungen = geometrie_score([hg] * 10, [1.0] * 10)["warnungen"]
     assert [w for w in warnungen if "trägt keine Geometrie" in w]
     assert not [w for w in warnungen if "Geringer Geometrieanteil" in w]
+
+
+# ======================================================================================
+# Nullanker — weisses Rauschen besteht das Gate
+# ======================================================================================
+
+def test_weisses_rauschen_besteht_das_gate():
+    """**Der schwerste Befund dieses Moduls** (`auf-20260820-21`, 20.08.2026).
+
+    Auf der Szene ``platte_endlich`` erreicht weisses Rauschen **0.7217** — mehr als die
+    Schwelle 0.65 und mehr als jeder der fünf echten Läufe derselben Messung.
+
+    Der Grund liegt nicht am Rauschen: Ein monokularer Schätzer legt in *jedes* Bild eine
+    zum Horizont laufende Bodenebene (`auf-20260818-10`). Eine Szene mit 60 % Boden **ist**
+    im Wesentlichen so eine Rampe — die Rangkorrelation misst dann zwei Bodenrampen
+    gegeneinander und nicht das Bauwerk.
+    """
+    anker = geometrie_qa.anker_fuer("platte_endlich")
+    assert anker[geometrie_qa.ANKER_RAUSCHEN] > geometrie_qa.SCHWELLE_GEOMETRIE
+
+
+def test_der_eine_lauf_ueber_dem_gate_lag_unter_dem_rauschen():
+    """0.6568 bestand die Schwelle — und liegt trotzdem 24,8 % unter dem Rauschanker.
+
+    Ein Wert, den Rauschen übertrifft, belegt keine Geometrietreue. Auch dann nicht, wenn
+    er die Schwelle überschreitet.
+    """
+    urteil = geometrie_qa.einordnung(0.6568,
+                                     geometrie_qa.anker_fuer("platte_endlich"))
+    assert urteil["ueber_gate"] is True
+    assert urteil["ueber_rauschen"] is False
+    assert urteil["anteil_der_spanne"] < 0
+    assert "belegt keine Geometrietreue" in urteil["begruendung"]
+
+
+def test_die_perfekte_geometrie_geht_die_ganze_spanne():
+    urteil = geometrie_qa.einordnung(0.9839,
+                                     geometrie_qa.anker_fuer("platte_endlich"))
+    assert urteil["ueber_rauschen"] is True
+    assert urteil["anteil_der_spanne"] == pytest.approx(1.0)
+
+
+def test_ohne_anker_gibt_es_keine_einordnung_sondern_deren_fehlen():
+    """Eine geschätzte Einordnung wäre schlimmer als keine — sie sähe aus wie ein Urteil."""
+    urteil = geometrie_qa.einordnung(0.9, None)
+    assert urteil["ueber_rauschen"] is None
+    assert urteil["anteil_der_spanne"] is None
+    assert "KEINE Nullprobe" in urteil["begruendung"]
+    assert urteil["ueber_gate"] is True, "die Schwelle allein lässt sich weiter prüfen"
+
+
+def test_die_meldung_ohne_anker_nennt_die_groessenordnung():
+    """Damit niemand 'kein Anker' für 'wahrscheinlich egal' hält."""
+    urteil = geometrie_qa.einordnung(0.7, None)
+    assert "0.72" in urteil["begruendung"]
+    assert "mehr als das Gate" in urteil["begruendung"]
+
+
+def test_kein_score_heisst_nichts_einzuordnen():
+    urteil = geometrie_qa.einordnung(None, geometrie_qa.anker_fuer("platte_endlich"))
+    assert urteil["ueber_rauschen"] is None
+    assert "nichts einzuordnen" in urteil["begruendung"]
+
+
+def test_eine_ungemessene_szene_bekommt_keinen_fremden_anker():
+    assert geometrie_qa.anker_fuer("ohne_boden") is None
+    assert geometrie_qa.anker_fuer("platte_endlich") is not None
+
+
+def test_die_anker_sind_geordnet_wie_die_bilder():
+    """Perfekt > Rauschen > Grau > strukturloser Verlauf. Wäre die Ordnung anders,
+    hätte die Nullprobe selbst einen Fehler."""
+    a = geometrie_qa.NULLANKER["platte_endlich"]
+    assert a["beauty"] > a["rauschen"] > a["grau"] > a["verlauf"]

@@ -562,6 +562,38 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 - [ ] **24,7 % liegen im ungemessenen Mittelfeld.** Unter 20 % war der Deckel
       unerreichbar, ab 60 % hoch — dazwischen weiss niemand etwas. Entweder eine kleinere
       Geländeplatte oder ein höherer Standpunkt; beides ungemessen.
+- [x] **Rauschboden mit Boden gemessen — und weisses Rauschen besteht das Gate.**
+      `auf-20260820-21`, `docs/RAUSCHBODEN_2026-08-20.md` Teil 2. Streuung relativ viel
+      kleiner (14,2 % statt 67 %), **null Ausfälle**. Und `ohne_randberuehrung` liefert
+      fünfmal `n_ist = 0` — die Rücknahme der Vorgabe war richtig, jetzt auch am
+      *erzeugten* Bild belegt.
+      **Die Nullprobe, die niemand verlangt hatte, ist der eigentliche Ertrag:**
+
+      | Kontrollbild | Score | Gate 0.65 |
+      |---|---|---|
+      | Beauty (perfekt) | 0.9839 | ✓ |
+      | **weisses Rauschen** | **0.7217** | **✓** |
+      | leeres Graubild | 0.5188 | ✗ |
+      | unsere fünf Läufe | 0.471 – 0.657 | einmal knapp |
+
+      Der eine Lauf über der Schwelle liegt **24,8 % unter dem Rauschanker**. Grund: Ein
+      monokularer Schätzer legt in *jedes* Bild eine Bodenrampe, und eine Szene mit 60 %
+      Boden **ist** so eine Rampe. *Auf einer Szene mit viel Boden misst die Kette nicht
+      mehr das Bauwerk, sondern die Bodenrampe.*
+- [x] **`NULLANKER` und `einordnung()` gebaut** — ein Score wird nicht mehr nur gegen die
+      Schwelle gehalten, sondern gegen das, was **nichts** auf derselben Soll-Karte
+      erreicht. Dieselbe Medizin wie bei `stil_qa` seit dem 18.08. Ohne Nullprobe gibt es
+      **keine** Einordnung, sondern die Feststellung, dass keine vorliegt.
+- [ ] **Die Zange — und das Mittelfeld ist ungemessen.** Bei 17 % Geometrieanteil ist das
+      Gate *unerreichbar* (Deckel 0.64); bei 60 % *trennt es nicht* (Rauschen 0.72).
+      Beides gemessen. Dazwischen weiss niemand etwas — und ausgerechnet dort liegt die
+      Geometrie vom selben Tag: Testbau mit Gelände, Kamera aufs Bauwerk, **24,7 %**.
+      **Das ist die nächste Messung**, und sie entscheidet, ob die Geometrie-QA überhaupt
+      einen brauchbaren Arbeitsbereich hat.
+- [ ] **Unsere Bilder passen schlechter zur Vorgabe als Rauschen.** `|rho|` 0.23–0.45
+      gegen 0.92 beim Rauschen. Das ist keine Aussage über die Metrik, sondern über die
+      Bilder. Naheliegender Verdacht: die Tiefen-**Polarität**, die in diese Läufe als
+      `invertiert` einging. **Ungeprüft.**
 - [ ] **Der Rest ist kein Rechenfehler, sondern ein echter Rückstand.** Der Deckel lag bei
       0.636, die erzeugten Bilder bei 0.265 — zwischen *bestmöglich* und *erreicht* klafft
       noch einmal derselbe Abstand. Beides ist wahr, und keines erklärt das andere weg.

@@ -841,3 +841,118 @@ def erreichbarkeit_fuer(szene: str, strategie: str, **kw) -> dict | None:
     if deckel is None:
         return None
     return erreichbarkeit(iou_deckel=deckel, name=f"{szene}/{strategie}", **kw)
+
+
+
+# ======================================================================================
+# Nullanker — was ein Score wert ist, hängt davon ab, was NICHTS erreicht
+# ======================================================================================
+
+#: Was Bilder **ohne jede Geometrie** auf derselben Soll-Karte erreichen.
+#:
+#: **Der wichtigste Befund dieses Moduls, und er kam von einer Nullprobe, die niemand
+#: verlangt hatte** (`auf-20260820-21`, 20.08.2026). Szene ``platte_endlich``,
+#: 59,8 % Geometrieanteil, dieselbe Soll-Karte, dieselbe Kette — vier Bilder, die **nicht**
+#: aus dem Modell stammen:
+#:
+#: ===========================  =======  ==========  ============
+#: Kontrollbild                 Score    ``iou``     ``|rho|``
+#: ===========================  =======  ==========  ============
+#: Beauty (perfekte Geometrie)  0.9839   0.970       0.998
+#: **weisses Rauschen**         **0.7217**  0.568    0.917
+#: leeres Graubild              0.5188   0.303       0.889
+#: strukturloser Verlauf        0.3483   0.291       0.417
+#: ===========================  =======  ==========  ============
+#:
+#: **Weisses Rauschen besteht das Gate von 0.65.** Und es schlägt jeden der fünf echten
+#: Läufe derselben Messung (0.471 … 0.657).
+#:
+#: Der Grund ist bekannt und liegt nicht am Rauschen: Ein monokularer Schätzer legt in
+#: **jedes** Bild eine zum Horizont laufende Bodenebene (`auf-20260818-10`). Eine Szene,
+#: die zu 60 % aus Boden besteht, **ist** im Wesentlichen so eine Rampe — die
+#: Rangkorrelation misst dann die Übereinstimmung zweier Bodenrampen und nicht die des
+#: Bauwerks.
+#:
+#:     Auf einer Szene mit viel Boden misst die Kette nicht mehr das Bauwerk, sondern die
+#:     Bodenrampe.
+#:
+#: Das ist dieselbe Lage wie bei der Stil-Schwelle vom 18.08.: Dort liess 0.30 jedes
+#: beliebige Bildpaar durch, bis der Boden von SigLIP 2 bei 0.526 gemessen war. Ein Gate
+#: ohne Nullprobe ist kein Gate.
+NULLANKER = {
+    "platte_endlich": {
+        "beauty": 0.9839,
+        "rauschen": 0.7217,
+        "grau": 0.5188,
+        "verlauf": 0.3483,
+    },
+}
+
+#: Der Name des Ankers, gegen den ein Score sich behaupten muss.
+#: Weisses Rauschen ist der härteste der drei geometriefreien — und der einzige, der das
+#: Gate besteht.
+ANKER_RAUSCHEN = "rauschen"
+
+
+def einordnung(score: float | None, anker: dict | None, *,
+               schwelle: float = SCHWELLE_GEOMETRIE) -> dict:
+    """Wo liegt ein Score zwischen **nichts** und **perfekt**?
+
+    Ein Score allein sagt wenig. Er sagt erst etwas, wenn danebensteht, was ein Bild
+    **ohne jede Geometrie** auf derselben Soll-Karte erreicht — und was ein perfektes
+    erreicht.
+
+    Args:
+        anker: Ein Eintrag aus :data:`NULLANKER` oder ein eigener mit denselben
+            Schlüsseln. ``None`` heisst: Für diese Szene ist keine Nullprobe gefahren.
+
+    Returns:
+        ``{ueber_rauschen, ueber_gate, anteil_der_spanne, begruendung}``.
+
+        ``anteil_der_spanne`` ist ``(score − rauschen) / (beauty − rauschen)`` — wieviel
+        von dem Weg, den ein Bild über das Rauschen hinaus gehen *kann*, es gegangen ist.
+        Negativ heisst: schlechter als Rauschen. ``None``, wenn kein Anker vorliegt.
+
+    **Ohne Anker gibt es keine Einordnung, sondern die Feststellung, dass keine vorliegt.**
+    Eine geschätzte Einordnung wäre schlimmer als keine — sie sähe aus wie ein Urteil.
+    """
+    if score is None:
+        return {"ueber_rauschen": None, "ueber_gate": None, "anteil_der_spanne": None,
+                "begruendung": "Kein Score — es gibt nichts einzuordnen."}
+    if not anker or ANKER_RAUSCHEN not in anker:
+        return {"ueber_rauschen": None, "ueber_gate": score >= schwelle,
+                "anteil_der_spanne": None, "begruendung": (
+                    f"Score {score:.4f} gegen Schwelle {schwelle:.2f} — aber für diese "
+                    f"Szene ist KEINE Nullprobe gefahren. Ohne sie ist nicht bekannt, was "
+                    f"ein Bild ohne jede Geometrie hier erreicht; auf einer anderen Szene "
+                    f"waren das {NULLANKER['platte_endlich'][ANKER_RAUSCHEN]:.4f}, also "
+                    f"mehr als das Gate. Der Score ist damit nicht eingeordnet.")}
+
+    rauschen = float(anker[ANKER_RAUSCHEN])
+    beauty = float(anker.get("beauty", 1.0))
+    spanne = beauty - rauschen
+    anteil = (score - rauschen) / spanne if abs(spanne) > 1e-12 else None
+    ueber = score > rauschen
+
+    if ueber:
+        grund = (f"Score {score:.4f} liegt über dem Rauschanker {rauschen:.4f} — er trägt "
+                 f"also mehr als ein Bild ohne jede Geometrie. Vom Weg bis zur perfekten "
+                 f"Geometrie ({beauty:.4f}) ist er "
+                 f"{anteil:.1%} gegangen.")
+    else:
+        grund = (
+            f"Score {score:.4f} liegt UNTER dem Rauschanker {rauschen:.4f}. Auf derselben "
+            f"Soll-Karte erreicht weisses Rauschen mehr. Ein Wert, den Rauschen "
+            f"übertrifft, belegt keine Geometrietreue — auch dann nicht, wenn er die "
+            f"Schwelle {schwelle:.2f} überschreitet.\n"
+            f"Der Grund liegt an der Szene und nicht am Bild: Ein monokularer Schätzer "
+            f"legt in jedes Bild eine Bodenrampe, und eine Szene mit viel Boden ist im "
+            f"Wesentlichen so eine Rampe. Gemessen am 20.08.2026 (auf-20260820-21)."
+        )
+    return {"ueber_rauschen": ueber, "ueber_gate": score >= schwelle,
+            "anteil_der_spanne": anteil, "begruendung": grund}
+
+
+def anker_fuer(szene: str) -> dict | None:
+    """Die Nullprobe einer Szene, oder ``None``. **Keine Schätzung aus einer anderen.**"""
+    return NULLANKER.get(szene)

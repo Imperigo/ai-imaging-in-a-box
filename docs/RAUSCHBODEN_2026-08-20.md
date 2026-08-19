@@ -175,3 +175,89 @@ Dass ich die Folgerung jetzt einschränke, ist **keine** Zurückweisung dieser M
 Einschränkung stammt aus einer Änderung, die ich am selben Tag gemacht habe und die im
 Auftrag nicht erwähnt war. Der Befund selbst — dass die Streuung gross ist und dass jeder
 zweite bis dritte Lauf ausfällt — steht.
+
+
+---
+
+# Teil 2 · Mit Boden — und der Befund ist schwerer als der erste
+
+**`auf-20260820-21`**, fünf Läufe auf `platte_endlich` (59,8 % Geometrieanteil), **feste
+Kamera**, jedes Bild **zweimal** ausgewertet.
+
+## Die beiden gestellten Fragen
+
+**Wie gross ist die Streuung mit Boden?**
+
+| | ohne Boden (`auf-20`) | mit Boden (`auf-21`) |
+|---|---|---|
+| Mittel | 0.0493 | **0.5356** |
+| Standardabweichung | 0.0331 | **0.0758** |
+| Variationskoeffizient | **67 %** | **14,2 %** |
+| Ausfälle | 2 von 5 | **0 von 5** |
+
+Absolut **grösser** (Faktor 2,29), relativ **deutlich kleiner**. Und keine Ausfälle mehr:
+Die Messbarkeit war ein Problem der Szene, nicht des Verfahrens.
+
+**Wie weit liegen die Strategien auseinander?** `ohne_randberuehrung` liefert **fünfmal
+`n_ist = 0`** und keinen einzigen Score. Damit ist die Erklärung für den Faktor 13 auch am
+**erzeugten** Bild belegt, nicht nur an Blenders Beauty-Pass. Die Rücknahme der Vorgabe war
+richtig.
+
+## Und dann die Nullprobe, die niemand verlangt hatte
+
+Die HomeStation hat aus eigenem Antrieb vier Kontrollbilder durch dieselbe Kette geschickt
+— Bilder, die **nicht** aus dem Modell stammen. Das kostet keinen Renderlauf und ist der
+eigentliche Ertrag des Auftrags:
+
+| Kontrollbild | Score | `geom_iou` | \|rho\| | Gate 0.65 |
+|---|---|---|---|---|
+| Beauty (perfekte Geometrie) | 0.9839 | 0.970 | 0.998 | ✓ |
+| **weisses Rauschen** | **0.7217** | 0.568 | 0.917 | **✓** |
+| leeres Graubild | 0.5188 | 0.303 | 0.889 | ✗ |
+| strukturloser Verlauf | 0.3483 | 0.291 | 0.417 | ✗ |
+
+**Unsere fünf Läufe: 0.4708 … 0.6568.**
+
+> **Weisses Rauschen besteht das Gate — und schlägt jeden unserer fünf Läufe.**
+
+Der eine Lauf über der Schwelle (0.6568, Seed 1004) liegt **24,8 % unter dem
+Rauschanker**. Er hat das Gate bestanden und belegt nichts.
+
+### Warum, und es liegt nicht am Rauschen
+
+Ein monokularer Schätzer legt in **jedes** Bild eine zum Horizont laufende Bodenebene
+(`auf-20260818-10`). Eine Szene, die zu 60 % aus Boden besteht, **ist** im Wesentlichen so
+eine Rampe. Die Rangkorrelation misst dann die Übereinstimmung zweier Bodenrampen — und
+die ist hoch, egal was im Bild steht.
+
+> **Auf einer Szene mit viel Boden misst die Kette nicht mehr das Bauwerk, sondern die
+> Bodenrampe.**
+
+## Die Zange, in der wir stecken
+
+| Szenenart | Fehler |
+|---|---|
+| **wenig Boden** (17 %) | Der Deckel liegt bei 0.64 — das Gate ist **unerreichbar** |
+| **viel Boden** (60 %) | Rauschen erreicht 0.72 — das Gate **trennt nicht** |
+
+Beides ist gemessen. Was **dazwischen** liegt, ist es nicht — und ausgerechnet dort liegt
+die Geometrie, die wir am selben Tag gebaut haben: Testbau mit Gelände, Kamera aufs
+Bauwerk, **24,7 %**.
+
+## Was gebaut wurde
+
+`geometrie_qa.NULLANKER` und `einordnung()`. Ein Score wird ab jetzt nicht mehr nur gegen
+die Schwelle gehalten, sondern gegen das, was **nichts** auf derselben Soll-Karte erreicht
+— genau wie `stil_qa` seit dem 18.08. gegen den gemessenen Boden von SigLIP 2 hält.
+
+**Ohne Nullprobe gibt es keine Einordnung, sondern die Feststellung, dass keine vorliegt.**
+Eine geschätzte wäre schlimmer als keine: Sie sähe aus wie ein Urteil.
+
+## Der zweite Befund, den ich nicht überlesen will
+
+Unsere Renders erreichen \|rho\| von **0.23 bis 0.45**. Weisses Rauschen erreicht **0.92**.
+
+Das ist keine Aussage über die Metrik, sondern über die Bilder: **Die erzeugten Bilder
+haben eine Tiefenstruktur, die schlechter zur Vorgabe passt als Rauschen.** Ein
+naheliegender Verdacht ist die Polarität der Tiefenkarte, die in diese Läufe als
+`invertiert` einging. Geprüft ist er nicht — er steht als eigener Planpunkt.
