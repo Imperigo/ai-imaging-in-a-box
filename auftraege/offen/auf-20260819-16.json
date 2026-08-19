@@ -1,0 +1,26 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260819-16",
+  "art": "qa",
+  "beschreibung": "WELCHE APP LAEUFT AUF :5183? BRAUCHT KEINE GPU, DAUERT ZWEI MINUTEN — und entscheidet, wohin die naechsten Tage Arbeit gehen. WARUM: Deine Demo-Simulation (docs/HOMESTATION-2026-08-19-DEMO-SIMULATION.md) beschreibt die App mit vier Stationen KosmoData, KosmoDesign, KosmoSpez, KosmoOffice und 81 Werkzeugen in Inseln, und nimmt an, das sei Architektur-Cosmos/kosmo-orbit. DAS KANN NICHT SEIN: Jener Bestand hat fuenf Kacheln statt vier Stationen, traegt die Fassung 1.0.0-v1 statt 0.9.35, und die Zeichenkette 'KosmoSpez' kommt in KEINEM Quelltext vor, den ich hier habe — weder in den Oekosystem-Klonen noch in den drei Repos unter /workspace. 'KosmoOffice' steht nur in zwei Planungsdokumenten, nicht in Code. Du hast die App richtig beschrieben und nur den Bestand danebengegriffen. Aufgefallen ist es beim Aufloesen eines Widerspruchs zwischen zwei Berichten desselben Vormittags — siehe docs/WELCHE_APP_2026-08-19.md. WAS ICH BRAUCHE, drei Zeilen: (1) Welches Verzeichnis bedient der Dienst auf :5183? (2) Was steht in dessen package.json unter name und version? (3) Was sagen dort 'git remote -v' und 'git log --oneline -1'? WARUM ES ZAEHLT: Unsere beiden Wege zur Demo zielen auf zwei verschiedene Programme. Weg A (MCP-Knoten) zielt auf Imperigo/kosmoorbit, wo der Knotengraph und pipelineReadiness liegen — in der vorgefuehrten App gibt es keinen Knotengraph. Weg B (HTTP-Bruecke) zielt auf die Designzentrale V1, wo eine bedienbare Vis-Oberflaeche mit QA-Abzeichen liegt — in der vorgefuehrten App gibt es keinen Bereich KosmoVis. Beide Wege koennten am vorgefuehrten Programm vorbeigehen, und das steht seit heute frueh in meiner Empfehlung, ohne dass ich es geprueft haette. ZUSATZ, falls es ohne Aufwand geht: Gibt es in jenem Bestand eine Datei, die VisWorkspace, NodePipeline oder pipelineReadiness heisst? Ein einfaches 'find' genuegt. Wenn ja, ist einer der beiden Wege doch der richtige, und ich will wissen welcher. NICHT TUN: nichts an jenem Bestand aendern. Nur nachsehen und berichten. REGEL 3: In der Rueckgabe keine absoluten Pfade mit Benutzernamen — der Verzeichnisname genuegt, der Rest umschrieben.",
+  "erstellt": "2026-08-19T09:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null
+  },
+  "params": {
+    "port": 5183,
+    "nur_nachsehen": true
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "hinweis": "Kein GPU-Lauf. Reines Nachsehen."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": false,
+    "hinweis": "Drei Zeilen genuegen. Keine absoluten Pfade mit Benutzernamen (Regel 3)."
+  }
+}

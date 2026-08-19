@@ -276,6 +276,15 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       `bruecke.lies_auftrag` verlangt darum `fremde_freigabe_gilt=True` als ausdrückliche
       Entscheidung des Betreibers. **Diese Entscheidung gehört dem Owner**, nicht dem
       Programm — und sie gehört getroffen, bevor die Naht in Betrieb geht.
+- [ ] **ZUERST: Welche App wird vorgeführt?** — `auf-20260819-16`,
+      `docs/WELCHE_APP_2026-08-19.md`. Es gibt **vier** Bestände, und die vorgeführte App
+      ist keiner davon: Sie zeigt vier Stationen mit `KosmoSpez` und `KosmoOffice`, und
+      **`KosmoSpez` kommt in keinem Quelltext vor, den wir haben.**
+      **Beide Wege zielen damit auf Programme, die nicht das vorgeführte sind** — Weg A
+      auf den Knoten-Cockpit, Weg B auf die Designzentrale V1. Meine Empfehlung von heute
+      früh stand auf einer Voraussetzung, die ich nicht geprüft hatte.
+      **Bis das geklärt ist, wird nichts gebaut, was an einer bestimmten Oberfläche
+      hängt.** Verträge, QA und Bildkette tragen in jedem der Fälle.
 - [ ] **Weg B, Schritt 5–7** — QA je Kamera statt je Bild, die Verzeichniskonvention
       `<out>/<kamera>/…`, Varianten, und der Treue-Regler des Panels bis in die Kette.
 - [ ] **Die zweite Hälfte der Stil-Kalibrierung** — der Boden ist gemessen, `k = 2` ist
