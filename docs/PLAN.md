@@ -480,12 +480,32 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Samples nach **12 Sekunden** fertig. Die Samplezahl unserer Aufträge ist eine
       Obergrenze und **keine** Angabe der Rechenzeit — wer daraus eine Dauer schliesst,
       liegt um mehr als eine Grössenordnung daneben.
-- [ ] **Hält der Takt auch auf der GPU?** — `auf-20260820-18`. Gemessen wurde auf einer
-      CPU, in einem Container, an einer Spielzeugszene, mit einer Blender-Fassung.
-      Solange das nicht auf der richtigen Maschine wiederholt ist, bleibt die Wache in
-      `glb_zu_multipass` **ausgeschaltet**. „Kein Takt erkennbar" wäre dabei die
-      wertvollste Antwort: Dann taugt die Standardausgabe dort nicht als
-      Fortschrittszeichen, und die Wache braucht eine andere Quelle.
+- [x] **Hält der Takt auch auf der GPU? — NEIN, dort gibt es gar keinen.**
+      `auf-20260820-18`, Blender 5.2.0 LTS, OptiX auf einer RTX 5090, zwei Läufe **auf
+      die Zehntelsekunde identisch**: Die Ausgabe wächst **dreimal** — bei 1,0 s, 2,0 s
+      und 177,0 s. Dazwischen **175 Sekunden Stille**, ohne eine einzige Fortschrittszeile
+      in 739 Bytes.
+      **Die Zahl 32 war ein Artefakt der CPU-Messung.** Die daraus abgeleitete Frist von
+      96 s hätte auf der HomeStation *jeden gesunden Lauf über 98 Sekunden abgebrochen*.
+      `glb_zu_multipass` **weist darum jeden Wert von `stillstand_frist_s` ab** — nicht
+      mehr „zu kurz", sondern „es gibt keinen".
+      *Eine Messung gilt so weit, wie gemessen wurde. Der Vorbehalt war nicht Höflichkeit,
+      sondern die halbe Erkenntnis.*
+- [x] **Ein Blender, das bei Dateiumleitung schweigend nichts tut** — derselbe Auftrag,
+      und der gefährlichere Befund. Das Snap-Paket **Blender 5.2.0 LTS** (das einzige dort
+      mit OptiX/CUDA) beendet sich bei `>` in eine Datei nach 1,3 s mit **Rückgabewert 0,
+      ohne Ausgabe und ohne Bild**. An vier Ablageorten gegengeprüft. Über eine Pipe
+      rendert dasselbe Blender einwandfrei.
+      **Das traf Code vom selben Vormittag:** `starter_mit_wache` leitete `stdout` in eine
+      temporäre Datei um und hätte auf der HomeStation nie ein Bild erzeugt. Behoben mit
+      der Bauart der HomeStation — Pipe plus ein Faden, der sie **laufend** in die Datei
+      giesst. Damit fällt beides weg: Der Puffer läuft nie voll, und die Datei wächst
+      genau dann, wenn der Prozess schreibt.
+- [ ] **Eine tragende Fortschrittsquelle für Blender finden** — drei Kandidaten, alle
+      ungemessen: die Leistungsaufnahme der Karte, die Änderungszeit der Zieldatei (nach
+      dieser Messung schreibt Blender sie nicht fort), oder **ein Fortschritts-Schreiber
+      im Runner selbst**. Nur der letzte hängt nicht von fremdem Verhalten ab und ist
+      darum der aussichtsreichste.
 - [ ] **Die Wache an die übrigen Nähte hängen** — Renderlauf (dort zählen wir die
       Schritte selbst, das ist das sauberste belegte Zeichen, das wir haben) und Abholer
       der Brücke.

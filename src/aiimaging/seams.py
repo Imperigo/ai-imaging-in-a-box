@@ -29,6 +29,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from pathlib import Path
 
@@ -70,11 +71,28 @@ TAKT_S = 2.0
 #: beauftragt. Wer die Zahl übernimmt, übernimmt diesen Vorbehalt mit.
 BLENDER_TAKT_S = 32.0
 
-#: Die kleinste Frist, die wir für einen Blender-Lauf zulassen: **drei Takte**.
+#: **Und auf der GPU gibt es gar keinen Takt.** Gemessen von der HomeStation am
+#: 19.08.2026 (`auf-20260820-18`), Blender 5.2.0 LTS, OptiX auf einer RTX 5090,
+#: 220 000 Samples, zwei Läufe **auf die Zehntelsekunde identisch**:
 #:
-#: Zwei wären die nackte Grenze; der dritte ist der Abstand zur Grenze, den eine Zahl
-#: braucht, die an einer einzigen Maschine erhoben wurde. Wer weniger will, misst zuerst
-#: nach — und dann steht hier eine andere Zahl.
+#: Die Ausgabedatei wächst **dreimal** — bei 1,0 s, bei 2,0 s und bei 177,0 s.
+#: Dazwischen **175 Sekunden absolute Stille**, und in den 739 Bytes steht keine einzige
+#: Fortschrittszeile; die einzige Render-Zeile ist die Schlussmeldung ``Saved:``.
+#:
+#: Das ist kein langsamer Takt, sondern **keiner**: Anfang und Ende, nichts dazwischen.
+#: Der Takt von 32 s ist damit ein Artefakt der CPU-Messung und **nicht übertragbar**.
+BLENDER_GPU_STILLE_S = 175.0
+
+#: Die kleinste Frist, die wir für einen Blender-Lauf zulassen — **es gibt keine.**
+#:
+#: Solange die Standardausgabe zwischen Start und Ende schweigt, bricht **jede** Frist,
+#: die kürzer ist als der ganze Lauf, einen gesunden Lauf ab. Und wie lange ein Lauf
+#: dauert, weiss man vorher nicht — das ist ja der Grund, warum es eine Wache gibt.
+#: Es gibt darum keinen zulässigen Wert, und :func:`glb_zu_multipass` weist jeden ab.
+#:
+#: Die Zahl steht trotzdem hier, weil sie eine **Messung** ist und weil der Weg dorthin
+#: lehrreich war: Sie war die Antwort auf die CPU-Messung und wäre auf der Maschine, die
+#: wirklich rechnet, ein Werkzeug zur Zerstörung jedes Laufs über 98 Sekunden gewesen.
 BLENDER_FRIST_MIN_S = 3 * BLENDER_TAKT_S
 
 
@@ -134,8 +152,9 @@ def starter_mit_wache(wache=None, *, frist_s: float | None = None,
             fehler = Path(tmp) / "stderr.txt"
             diese = wache if wache is not None else fortschritt.wache_fuer_datei(
                 aus, frist_s=frist_s, name="Standardausgabe des Laufs", _uhr=_uhr)
-            with open(aus, "wb") as fa, open(fehler, "wb") as ff:
-                prozess = oeffne(cmd, stdout=fa, stderr=ff)
+            prozess = oeffne(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            faeden = [_giesse(prozess.stdout, aus), _giesse(prozess.stderr, fehler)]
+            try:
                 beginn = float(uhr())
                 try:
                     while True:
@@ -162,13 +181,77 @@ def starter_mit_wache(wache=None, *, frist_s: float | None = None,
                         prozess.kill()
                         prozess.wait()
                     raise
+            finally:
+                for faden in faeden:
+                    if faden is not None:
+                        faden.join(timeout=30)
             return subprocess.CompletedProcess(
                 cmd, prozess.returncode,
-                aus.read_text(encoding="utf-8", errors="replace"),
-                fehler.read_text(encoding="utf-8", errors="replace"),
+                aus.read_text(encoding="utf-8", errors="replace")
+                if aus.exists() else "",
+                fehler.read_text(encoding="utf-8", errors="replace")
+                if fehler.exists() else "",
             )
 
     return starte
+
+
+def _giesse(quelle, ziel: Path):
+    """Einen Ausgabestrom **laufend** in eine Datei giessen, in einem eigenen Faden.
+
+    Zwei Fliegen mit einer Klappe, und beide sind gemessen:
+
+    **Erstens** läuft der Puffer nie voll. Wer bei ``PIPE`` nur pollt statt zu lesen,
+    blockiert den Kindprozess, sobald der Puffer voll ist — der Lauf bliebe stehen, und
+    zwar durch genau die Wache, die den Stillstand verhindern soll. Ein Faden, der
+    ununterbrochen liest, kann das nicht passieren.
+
+    **Zweitens** wächst die Datei genau dann, wenn der Prozess schreibt. Sie ist damit
+    dasselbe belegte Fortschrittszeichen wie eine echte Umleitung — ohne deren Preis.
+
+    Und der Preis wäre hoch. Am 19.08.2026 hat die HomeStation gemessen: Das
+    Snap-Paket von **Blender 5.2.0 LTS** — das einzige dort mit OptiX und CUDA —
+    **beendet sich bei einer Umleitung nach `>` in eine Datei nach 1,3 Sekunden mit
+    Rückgabewert 0, ohne Ausgabe und ohne Bild.** Gegengeprüft an vier Ablageorten,
+    jedes Mal null Byte, jedes Mal kein Bild. Über eine Pipe rendert dasselbe Blender
+    einwandfrei.
+
+    Ein Erfolgsmeldung ohne Ergebnis ist die teuerste Sorte Fehler, die dieses Projekt
+    kennt. Diese Funktion ist die Antwort darauf.
+
+    Returns:
+        Den laufenden Faden, oder ``None``, wenn es nichts zu giessen gibt (der Fall bei
+        Test-Attrappen ohne echte Ströme).
+    """
+    if quelle is None:
+        return None
+
+    # `read1` gibt zurück, was DA ist, statt auf die volle Blockgrösse zu warten. Damit
+    # wächst die Datei so prompt wie bei byteweisem Lesen, ohne dessen Preis — zwei
+    # Millionen Systemaufrufe für zwei Megabyte. Attrappen ohne `read1` fallen auf `read`
+    # zurück.
+    lies = getattr(quelle, "read1", None) or quelle.read
+
+    def giessen():
+        try:
+            with open(ziel, "wb") as datei:
+                while True:
+                    block = lies(65536)
+                    if not block:
+                        break
+                    datei.write(block)
+                    datei.flush()
+        except (OSError, ValueError):
+            return
+        finally:
+            try:
+                quelle.close()
+            except Exception:      # noqa: BLE001 — beim Aufräumen zählt nur, dass es endet
+                pass
+
+    faden = threading.Thread(target=giessen, daemon=True)
+    faden.start()
+    return faden
 
 
 def finde_ifc_python() -> str:
@@ -334,15 +417,15 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             in der Luft. Spart Plattenplatz, keine Rechenzeit.
         material_id: `False` lässt den zweiten Durchgang ganz aus und spart damit
             tatsächlich Rechenzeit.
-        stillstand_frist_s: Schaltet die **Fortschrittswache** ein (Vorgabe: aus). Sie
-            beobachtet die Standardausgabe des Laufs und bricht ab, wenn dort so viele
-            Sekunden lang nichts mehr ankommt — deutlich früher als der Gesamt-Timeout.
-            Werte unter :data:`BLENDER_FRIST_MIN_S` werden **abgewiesen**, weil Blenders
-            umgeleitete Ausgabe gemessen nur alle :data:`BLENDER_TAKT_S` Sekunden wächst;
-            eine kürzere Frist bräche jeden gesunden Lauf ab.
-            **Bewusst nicht voreingestellt:** Die Taktmessung stammt von einer CPU in
-            einem Container. Bevor hier eine Vorgabe steht, gehört sie auf der Maschine
-            wiederholt, auf der wirklich gerendert wird.
+        stillstand_frist_s: **Wird immer abgewiesen** — der Parameter bleibt nur
+            bestehen, damit ein Aufrufer eine Begründung bekommt statt eines
+            ``TypeError``. Blenders Standardausgabe schweigt auf der GPU zwischen Start
+            und Ende (gemessen: 175 s am Stück, `auf-20260820-18`), und damit gibt es
+            keine Frist, die einen Hänger fängt, ohne gesunde Läufe abzubrechen.
+            *Diese Zeile stand am Vormittag desselben Tages noch anders.* Sie erlaubte
+            96 Sekunden, hergeleitet aus einer CPU-Messung — auf der Maschine, die
+            wirklich rechnet, wäre das ein Werkzeug zur Zerstörung jedes Laufs über
+            98 Sekunden gewesen.
 
     Returns:
         Report des Runners mit `beauty_png`, `material_id_png`, `depth_exr`, `depth_png`,
@@ -361,18 +444,22 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
     if _starte is not None:
         starte = _starte
     elif stillstand_frist_s is not None:
-        if stillstand_frist_s < BLENDER_FRIST_MIN_S:
-            raise SeamError(
-                f"stillstand_frist_s={stillstand_frist_s} s ist für einen Blender-Lauf "
-                f"zu kurz. Gemessen (20.08.2026, Cycles/CPU, 512x512, 3000 Samples): "
-                f"Blender schreibt seine Standardausgabe nur alle "
-                f"{BLENDER_TAKT_S:.0f} s — sechs Änderungen über 190 s, bei 34, 66, 98, "
-                f"130, 162 und 190 s. Eine kürzere Frist bricht jeden GESUNDEN Lauf ab, "
-                f"und zwar zuverlässig. Kleinster zulässiger Wert: "
-                f"{BLENDER_FRIST_MIN_S:.0f} s (drei Takte). Wer weniger braucht, misst "
-                f"zuerst nach — ein Docstring ist keine Prüfung, darum steht das hier."
-            )
-        starte = starter_mit_wache(frist_s=stillstand_frist_s)
+        raise SeamError(
+            f"stillstand_frist_s={stillstand_frist_s} s — für einen Blender-Lauf gibt es "
+            f"KEINEN zulässigen Wert, und das ist gemessen und nicht vorsichtshalber.\n"
+            f"Auf der GPU (auf-20260820-18: Blender 5.2.0 LTS, OptiX, RTX 5090, zwei "
+            f"Läufe auf die Zehntelsekunde identisch) wächst die Standardausgabe genau "
+            f"dreimal: bei 1,0 s, bei 2,0 s und bei {BLENDER_GPU_STILLE_S + 2:.0f} s. "
+            f"Dazwischen {BLENDER_GPU_STILLE_S:.0f} Sekunden Stille, ohne eine einzige "
+            f"Fortschrittszeile. Das ist kein langsamer Takt, sondern keiner.\n"
+            f"Damit bricht JEDE Frist, die kürzer ist als der ganze Lauf, einen gesunden "
+            f"Lauf ab — und wie lange ein Lauf dauert, weiss man vorher nicht; das ist "
+            f"der Grund, warum es eine Wache gibt.\n"
+            f"Die Wache braucht für Blender eine ANDERE Quelle. Kandidaten, alle "
+            f"ungemessen: die Leistungsaufnahme der Karte, die Änderungszeit der "
+            f"Zieldatei, oder ein Fortschritts-Schreiber im Runner selbst — nur der "
+            f"letzte hängt nicht von fremdem Verhalten ab."
+        )
     else:
         starte = _default_starte
     drehen = needs_rotation(up_axis)          # wirft ContractError, wenn up_axis fehlt

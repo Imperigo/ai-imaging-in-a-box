@@ -1,6 +1,21 @@
-# Blenders Standardausgabe hat einen Takt von 32 Sekunden
+# Blenders Standardausgabe taugt nicht als Fortschrittszeichen
 
-**Messung vom 20.08.2026 · Anlass: Fortschrittswache · zwei Läufe, übereinstimmend**
+**Zwei Messungen vom 20.08.2026 · Anlass: Fortschrittswache**
+
+> **Kurzfassung für Eilige.** Auf der **CPU** schreibt Blender alle 32 Sekunden — ein
+> grober, aber brauchbarer Takt. Auf der **GPU**, also auf der Maschine, die wirklich
+> rendert, schreibt es **dreimal: am Anfang, eine Sekunde später, und am Ende.**
+> Dazwischen 175 Sekunden Stille. Es gibt dort keine Frist, die einen Hänger fängt, ohne
+> gesunde Läufe abzubrechen.
+>
+> Dieses Dokument hiess bis zum Nachtrag *„Blenders Standardausgabe hat einen Takt von
+> 32 Sekunden"*. Der Titel stimmte für die Maschine, auf der gemessen wurde, und für
+> keine andere. Die erste Hälfte ist absichtlich stehengeblieben — sie zeigt, wie
+> überzeugend eine Zahl aussehen kann, die nicht überträgt.
+
+---
+
+## Teil 1 · Die CPU-Messung, und was sie zu beweisen schien
 
 ---
 
@@ -80,6 +95,104 @@ Multipass-Laufs steht bei 900 Sekunden. Ein Hänger fällt damit **neunmal früh
 
 ---
 
+---
+
+# NACHTRAG: Auf der GPU gibt es gar keinen Takt
+
+**HomeStation, `auf-20260820-18` · Blender 5.2.0 LTS · OptiX auf einer RTX 5090 · zwei
+Läufe, auf die Zehntelsekunde identisch**
+
+Der Vorbehalt unten war berechtigt, und die Antwort fällt schärfer aus als befürchtet.
+
+| | CPU (hier) | GPU (HomeStation) |
+|---|---|---|
+| Dauer | 190 s | 177 s |
+| Änderungen der Ausgabe | 6 | **3** |
+| Zeitpunkte | 34, 66, 98, 130, 162, 190 s | **1,0 · 2,0 · 177,0 s** |
+| Längste Lücke | 32 s | **175 s** |
+| Gesamtwachstum | 937 Bytes | 739 Bytes |
+
+**Das ist kein langsamer Takt, sondern keiner: Anfang und Ende, nichts dazwischen.**
+
+Der Inhalt bestätigt es. In den 739 Bytes stehen dreizehn Zeilen — glTF-Importmeldungen,
+eine Treiberwarnung, die Messzeilen des Prüfskripts, die Versionszeile — und ganz am Ende
+`02:56.274 render | Saved: …`. **Keine einzige Fortschrittszeile** während der
+175 Sekunden. Blender 5.2 im Hintergrundbetrieb mit OptiX gibt während des Renderns
+nichts aus.
+
+Beide Läufe sind auf die Zehntelsekunde gleich — 1,0 / 2,0 / 177,0, je 739 Bytes. Ein
+Zufall ist das nicht.
+
+## Was daraus folgt, und es ist eine Rücknahme
+
+**Die Zahl 32 war ein Artefakt der CPU-Messung.** Sie war keine Eigenschaft von Blender,
+sondern eine von Cycles-auf-CPU in diesem Container — und sie hätte auf der Maschine, die
+wirklich rechnet, aktiv Schaden angerichtet: Eine Wache mit der daraus abgeleiteten Frist
+von 96 Sekunden hätte **jeden gesunden GPU-Lauf über 98 Sekunden abgebrochen**, also
+praktisch jeden echten.
+
+> Eine Messung gilt so weit, wie gemessen wurde. Der Vorbehalt in diesem Dokument war
+> nicht Höflichkeit, sondern die halbe Erkenntnis.
+
+**Die Standardausgabe taugt für Blender nicht als Fortschrittszeichen — auf keiner Frist.**
+Solange sie zwischen Start und Ende schweigt, bricht jede Frist, die kürzer ist als der
+ganze Lauf, einen gesunden Lauf ab; und wie lange ein Lauf dauert, weiss man vorher nicht
+— genau darum gibt es ja eine Wache. `glb_zu_multipass` **weist darum jeden Wert von
+`stillstand_frist_s` ab**, mit den Messpunkten in der Meldung. Nicht mehr „zu kurz",
+sondern „es gibt keinen".
+
+Was stattdessen tragen könnte — drei Kandidaten, **alle ungemessen**, als Vorschlag und
+nicht als Empfehlung:
+
+1. **Die Leistungsaufnahme der Karte** (`nvidia-smi`). Sie lag während des Laufs
+   durchgehend hoch und fällt bei einem Hänger sofort.
+2. **Die Änderungszeit der Zieldatei**, sofern Blender sie fortschreibt — nach dieser
+   Messung tut es das nicht.
+3. **Ein Fortschritts-Schreiber im Runner selbst**, der aktiv schreibt, statt auf
+   Cycles-Ausgabe zu warten.
+
+Nur der dritte hängt nicht von fremdem Verhalten ab.
+
+## Der zweite Befund, und er ist der gefährlichere
+
+Der Auftrag verlangte `stdout` in eine **Datei**. Das ist mit dem dort verfügbaren Blender
+**nicht möglich** — und das ist selbst ein Befund:
+
+> Das Snap-Paket **Blender 5.2.0 LTS** — das einzige mit OptiX und CUDA — beendet sich bei
+> einer Umleitung nach `>` in eine Datei **nach 1,3 Sekunden mit Rückgabewert 0, ohne
+> Ausgabe und ohne Bild.**
+
+Gegengeprüft mit reiner Shell-Umleitung, unter der Datenplatte, unter dem
+Benutzerverzeichnis und im Bereich des Pakets selbst: jedes Mal null Byte, jedes Mal kein
+Bild. Über eine **Pipe** rendert dasselbe Blender einwandfrei. Der nicht eingesperrte Fork
+(5.1.2) schreibt zwar in eine Datei, hat aber keine GPU-Kernel — GPU und Dateiumleitung
+sind mit dem Installierten nicht kombinierbar.
+
+**Eine Erfolgsmeldung ohne Ergebnis ist die teuerste Sorte Fehler, die dieses Projekt
+kennt.** Rückgabewert 0, kein Bild, keine Zeile Begründung.
+
+Und es trifft Code, der am Vormittag desselben Tages entstanden ist: `starter_mit_wache`
+leitete `stdout` in eine temporäre **Datei** um — genau der Fall. Auf der HomeStation
+hätte er nie ein Bild erzeugt.
+
+**Behoben mit der Bauart, die die HomeStation selbst benutzt hat:** Die Ausgabe läuft über
+eine **Pipe**, und ein eigener Faden giesst sie **laufend** in die Datei. Damit fällt
+beides weg — der Puffer läuft nie voll (die Blockiergefahr, wegen der die Datei überhaupt
+gewählt wurde), und die Datei wächst genau dann, wenn der Prozess schreibt. Ein Test mit
+zwei Megabyte durch die Pipe hält das fest.
+
+## Der Nebenbefund, bestätigt und verschärft
+
+Oben steht, die Samplezahl sei eine Obergrenze und keine Angabe der Rechenzeit. Auf der
+GPU ist der Abstand grösser: **3000 Samples ohne adaptives Sampling brauchen dort 2,2
+Sekunden**, wo der CPU-Lauf hier 190 Sekunden brauchte. Um überhaupt drei Minuten zu
+messen, waren **220 000** Samples nötig — das 73-fache der Vorgabe.
+
+> Wer eine Laufzeit aus einer Samplezahl schätzt, liegt zwischen diesen beiden Maschinen
+> um **zwei Grössenordnungen** daneben.
+
+---
+
 ## Der Vorbehalt, und er ist nicht klein
 
 Gemessen wurde auf einer **CPU**, in einem **Container**, an einer **Spielzeugszene**, mit
@@ -92,7 +205,7 @@ Konstante `BLENDER_TAKT_S` mit der Messung im Kommentar — und **nicht** als Vo
 irgendeiner Funktion. Die Wache ist in `glb_zu_multipass` ausgeschaltet, bis jemand auf
 der richtigen Maschine nachgemessen hat.
 
-Das ist der Auftrag `auf-20260820-18`.
+Das war der Auftrag `auf-20260820-18`. **Er ist beantwortet — siehe den Nachtrag oben.**
 
 ---
 

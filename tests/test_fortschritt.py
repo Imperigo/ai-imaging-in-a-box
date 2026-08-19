@@ -291,11 +291,30 @@ class Prozessattrappe:
         return self.returncode
 
 
-def _popen_attrappe(prozess):
+class Strom:
+    """Ein Ausgabestrom, der eine feste Bytefolge liefert und dann endet."""
+
+    def __init__(self, inhalt: bytes = b""):
+        self._rest = bytearray(inhalt)
+        self.zu = False
+
+    def read(self, n: int = 1) -> bytes:
+        if not self._rest:
+            return b""
+        heraus = bytes(self._rest[:n])
+        del self._rest[:n]
+        return heraus
+
+    def close(self):
+        self.zu = True
+
+
+def _popen_attrappe(prozess, *, ausgabe: bytes = b"blender sagt etwas\n"):
+    """Ein Popen-Ersatz. Seit dem 20.08. laufen die Ströme über PIPE und einen Faden,
+    der sie laufend in eine Datei giesst — siehe `seams._giesse`."""
     def oeffne(cmd, stdout=None, stderr=None):
-        if stdout is not None:
-            stdout.write(b"blender sagt etwas\n")
-            stdout.flush()
+        prozess.stdout = Strom(ausgabe)
+        prozess.stderr = Strom(b"")
         return prozess
     return oeffne
 
@@ -431,7 +450,10 @@ def test_stille_standardausgabe_gilt_als_stillstand():
     uhr = Uhr()
 
     def stumm(cmd, stdout=None, stderr=None):
-        return Prozessattrappe(laeuft_blicke=None)   # schreibt nie etwas
+        p = Prozessattrappe(laeuft_blicke=None)      # schreibt nie etwas
+        p.stdout = Strom(b"")
+        p.stderr = Strom(b"")
+        return p
 
     starte = seams.starter_mit_wache(frist_s=100, takt_s=30,
                                      _schlaf=lambda s: uhr.weiter(s),
@@ -460,9 +482,13 @@ def test_genau_eines_von_wache_und_frist():
         seams.starter_mit_wache(fortschritt.wache_fuer_status(), frist_s=100)
 
 
-def test_multipass_schaltet_die_wache_nur_auf_ausdrueckliche_ansage(monkeypatch, tmp_path):
-    """Vorgabe ist AUS. Eine Wache, die man nicht bestellt hat, bricht irgendwann einen
-    gesunden Lauf ab — und niemand weiss warum."""
+def test_multipass_baut_fuer_blender_gar_keine_wache_mehr(monkeypatch, tmp_path):
+    """Vorgabe war AUS; seit der GPU-Messung ist es eine Abweisung.
+
+    Der Test hiess bis zum 20.08. „schaltet die Wache nur auf ausdrückliche Ansage" und
+    prüfte, dass `stillstand_frist_s=120` einen Starter baut. Genau das wäre auf der
+    HomeStation der Abbruch jedes Laufs über 122 Sekunden gewesen.
+    """
     from aiimaging import seams
     gesehen = {}
 
@@ -482,9 +508,10 @@ def test_multipass_schaltet_die_wache_nur_auf_ausdrueckliche_ansage(monkeypatch,
         seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP")
     assert gebaut == [], "ohne Ansage darf keine Wache gebaut werden"
 
-    with pytest.raises(seams.SeamError):
+    with pytest.raises(seams.SeamError, match="KEINEN zulässigen Wert"):
         seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP", stillstand_frist_s=120)
-    assert gebaut == [{"frist_s": 120}]
+    assert gebaut == [], ("seit der GPU-Messung wird die Wache für Blender gar nicht "
+                          "mehr gebaut — es gibt keine tragende Frist")
 
 
 def test_ein_eigener_starter_schlaegt_die_wache(monkeypatch, tmp_path):
@@ -509,15 +536,20 @@ def test_ein_eigener_starter_schlaegt_die_wache(monkeypatch, tmp_path):
 # Gemessen: Blenders Ausgabe hat einen Takt von 32 Sekunden
 # ======================================================================================
 
-def test_eine_frist_unter_drei_takten_wird_abgewiesen(tmp_path, monkeypatch):
-    """Gemessen am 20.08.2026: Blender schreibt nur alle 32 s. Eine Frist darunter
-    bräche jeden GESUNDEN Lauf ab — und ein Docstring ist keine Prüfung."""
+@pytest.mark.parametrize("frist", [10, 96, 300, 100_000])
+def test_fuer_blender_gibt_es_KEINE_zulaessige_frist(tmp_path, monkeypatch, frist):
+    """Auf der GPU schweigt die Ausgabe 175 s am Stück (auf-20260820-18).
+
+    Damit bricht jede Frist, die kürzer ist als der ganze Lauf, einen gesunden Lauf ab —
+    und wie lange ein Lauf dauert, weiss man vorher nicht. Auch eine sehr grosse Frist
+    ist keine Lösung: Sie wäre keine Wache, sondern ein zweiter Gesamt-Timeout.
+    """
     from aiimaging import seams
     monkeypatch.setattr(seams, "finde_blender", lambda: "/bin/true")
     glb = tmp_path / "m.glb"
     glb.write_bytes(b"glTF")
-    with pytest.raises(seams.SeamError, match="zu kurz"):
-        seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP", stillstand_frist_s=10)
+    with pytest.raises(seams.SeamError, match="KEINEN zulässigen Wert"):
+        seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP", stillstand_frist_s=frist)
 
 
 def test_die_abweisung_nennt_die_messung_und_nicht_nur_die_regel(tmp_path, monkeypatch):
@@ -528,27 +560,70 @@ def test_die_abweisung_nennt_die_messung_und_nicht_nur_die_regel(tmp_path, monke
     with pytest.raises(seams.SeamError) as fehler:
         seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP", stillstand_frist_s=30)
     text = str(fehler.value)
-    assert "34, 66, 98" in text, "die Messpunkte gehören in die Meldung"
-    assert "96 s" in text
+    assert "1,0 s" in text and "175 Sekunden Stille" in text
+    assert "kein langsamer Takt, sondern keiner" in text
+    assert "ANDERE Quelle" in text, "die Meldung muss einen Ausweg nennen"
 
 
-def test_drei_takte_sind_zugelassen(tmp_path, monkeypatch):
+def test_ohne_frist_laeuft_der_multipass_unveraendert(tmp_path, monkeypatch):
+    """Die Abweisung darf nur den einen Parameter treffen."""
     from aiimaging import seams
     monkeypatch.setattr(seams, "finde_blender", lambda: "/bin/true")
-    gebaut = []
-    monkeypatch.setattr(seams, "starter_mit_wache",
-                        lambda *a, **k: gebaut.append(k) or (lambda c, t: (_ for _ in ()).throw(
-                            seams.SeamError("Starter gebaut"))))
+    monkeypatch.setattr(seams, "_default_starte",
+                        lambda cmd, timeout: (_ for _ in ()).throw(
+                            seams.SeamError("normaler Weg")))
     glb = tmp_path / "m.glb"
     glb.write_bytes(b"glTF")
-    with pytest.raises(seams.SeamError, match="Starter gebaut"):
-        seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP",
-                               stillstand_frist_s=seams.BLENDER_FRIST_MIN_S)
-    assert gebaut == [{"frist_s": 96.0}]
+    with pytest.raises(seams.SeamError, match="normaler Weg"):
+        seams.glb_zu_multipass(glb, tmp_path, up_axis="Y_UP")
 
 
-def test_der_gemessene_takt_steht_als_zahl_im_code():
-    """Damit niemand ihn aus der Erinnerung neu erfindet."""
+def test_beide_messungen_stehen_als_zahl_im_code():
+    """Damit niemand sie aus der Erinnerung neu erfindet — und damit sichtbar bleibt,
+    dass die CPU-Zahl ein Artefakt war."""
     from aiimaging import seams
-    assert seams.BLENDER_TAKT_S == 32.0
-    assert seams.BLENDER_FRIST_MIN_S == 96.0
+    assert seams.BLENDER_TAKT_S == 32.0, "CPU, Blender 4.2 — nicht übertragbar"
+    assert seams.BLENDER_GPU_STILLE_S == 175.0, "GPU, Blender 5.2 LTS, OptiX"
+    assert seams.BLENDER_GPU_STILLE_S > 5 * seams.BLENDER_TAKT_S
+
+
+# ======================================================================================
+# Echte Prozesse: die Blockade, gegen die der Faden gebaut ist
+# ======================================================================================
+
+def test_ein_sehr_gespraechiges_kind_blockiert_nicht(tmp_path):
+    """Der Test, der die Bauform rechtfertigt.
+
+    Ein Kind, das mehr schreibt, als in einen Pipe-Puffer passt (üblich 64 KB), bliebe
+    stehen, wenn niemand liest — und zwar durch genau die Wache, die den Stillstand
+    verhindern soll. Hier laufen 2 MB durch.
+    """
+    import sys as _sys
+    from aiimaging import seams
+    # Echte Uhr und echter Schlaf: Hier wird ein echter Prozess gemessen, und eine
+    # gefälschte Uhr würde den Gesamt-Timeout sofort reissen.
+    starte = seams.starter_mit_wache(frist_s=1000, takt_s=0.01)
+    ergebnis = starte(
+        [_sys.executable, "-c",
+         "import sys\nfor i in range(20000): sys.stdout.write('x'*100 + '\\n')"],
+        60)
+    assert ergebnis.returncode == 0
+    assert len(ergebnis.stdout) > 2_000_000
+
+
+def test_die_ausgabe_eines_echten_prozesses_kommt_vollstaendig_an(tmp_path):
+    import sys as _sys
+    from aiimaging import seams
+    starte = seams.starter_mit_wache(frist_s=1000, takt_s=0.01)
+    ergebnis = starte(
+        [_sys.executable, "-c",
+         "import sys; sys.stdout.write('hallo'); sys.stderr.write('achtung')"], 60)
+    assert ergebnis.stdout == "hallo"
+    assert ergebnis.stderr == "achtung"
+
+
+def test_ein_rueckgabewert_ungleich_null_kommt_durch():
+    import sys as _sys
+    from aiimaging import seams
+    starte = seams.starter_mit_wache(frist_s=1000, takt_s=0.01)
+    assert starte([_sys.executable, "-c", "raise SystemExit(3)"], 60).returncode == 3

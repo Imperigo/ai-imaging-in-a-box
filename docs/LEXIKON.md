@@ -1597,6 +1597,26 @@ sieht darum nicht, was es sagt, sondern was es **abgegeben** hat.
 alle 32 Sekunden (`docs/BLENDER_AUSGABETAKT_2026-08-20.md`) — jede Stillstandsfrist muss
 über diesem Takt liegen, sonst bricht sie gesunde Läufe ab.*
 
+**Sandbox-Paket (Snap, Flatpak)** — Eine Art, ein Programm samt allem, was es braucht,
+in einem abgeschlossenen Bereich auszuliefern. Der Vorteil: Es läuft überall gleich. Der
+Preis: Es sieht nur einen Ausschnitt des Systems, und was ausserhalb liegt, darf es
+manchmal nicht anfassen.
+*Am 19.08.2026 gemessen und teuer: Das Snap-Paket von Blender 5.2.0 LTS — das einzige mit
+GPU-Unterstützung — **beendet sich bei einer Umleitung der Ausgabe in eine Datei nach
+1,3 Sekunden mit Rückgabewert 0, ohne Ausgabe und ohne Bild**. An vier Ablageorten
+gegengeprüft. Über eine Pipe rendert dasselbe Programm einwandfrei. Eine Erfolgsmeldung
+ohne Ergebnis ist die teuerste Sorte Fehler, die dieses Projekt kennt.*
+
+**Artefakt einer Messung** — Ein Ergebnis, das nicht die untersuchte Sache beschreibt,
+sondern den Aufbau, mit dem gemessen wurde. Es sieht genauso überzeugend aus wie ein
+echtes — oft überzeugender, weil es sauber und reproduzierbar ist.
+*In diesem Projekt am 20.08.2026 in Reinform: Blenders Ausgabetakt von 32 Sekunden war an
+zwei CPU-Läufen sauber reproduzierbar und beschrieb doch nur Cycles-auf-CPU. Auf der GPU
+gibt es gar keinen Takt. Die daraus abgeleitete Frist hätte auf der Maschine, die
+wirklich rechnet, jeden gesunden Lauf abgebrochen.*
+*Merksatz: Eine Messung gilt so weit, wie gemessen wurde — und das gehört in denselben
+Satz wie das Ergebnis.*
+
 **Pipe-Blockade (deadlock beim Lesen)** — Startet ein Programm ein anderes und leitet
 dessen Ausgabe in eine **Pipe**, ohne sie zu lesen, so bleibt das gestartete Programm
 stehen, sobald der Puffer der Pipe voll ist: Es wartet darauf, weiterschreiben zu dürfen.
@@ -2362,6 +2382,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-20 | Aus dem GPU-Ergebnis zu `auf-20260820-18`: **Sandbox-Paket (Snap, Flatpak)** und **Artefakt einer Messung**. Beide sind teuer erworben — das GPU-faehige Blender-Snap liefert bei Dateiumleitung Rueckgabewert 0 ohne Bild, und der am selben Tag gemessene 32-Sekunden-Takt war ein Artefakt der CPU-Messung |
 | 2026-08-20 | Ergaenzt aus dem Abholer (`src/aiimaging/abholer.py`): **Laufzettel**, **Waise (verwaister Auftrag)** |
 | 2026-08-20 | Ergaenzt aus der Taktmessung an Blender: **adaptives Sampling**, **Blockpufferung der Standardausgabe**, **Pipe-Blockade**. **Sample** um die gemessene Einschraenkung ergaenzt: Bei adaptivem Sampling ist die Samplezahl eine OBERGRENZE und keine Angabe der Rechenzeit — 6000 Samples in 12 s gegen 3000 ohne adaptives Sampling in ueber drei Minuten |
 | 2026-08-20 | Ergaenzt aus der Fortschrittswache (`src/aiimaging/fortschritt.py`): **Timeout**, **Gesamt-Timeout gegen Fortschrittsfrist**, **Stillstand (Stall)**, **behauptetes gegen belegtes Fortschrittszeichen**, **monotone Uhr**. Anlass war wieder ein Befund: Der geerbte Stillstandswaechter stellt bei den Zustaenden `running` und `queued` die Uhr zurueck — also genau in dem Fall, fuer den er gebaut wurde |
