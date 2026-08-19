@@ -54,8 +54,34 @@ Schranke enger ist als der tatsächliche Leerlauf, ist **ungemessen** — aber d
 ist eindeutig:
 
 > **Genau da hört eure Seite auf, und genau da fängt unsere an.** Was fehlt, ist der, der
-> das Verzeichnis abholt, rendert, prüft und `render-result.json` danebenlegt. Das ist
-> gebaut und läuft — für unsere eigenen Aufträge seit Wochen.
+> das Verzeichnis abholt, rendert, prüft und `render-result.json` danebenlegt.
+
+**Nachtrag vom 20.08.2026: Den gibt es jetzt.** `abholer.py` liest ein Auftragsverzeichnis
+eurer Warteschlange, schickt es je Kamera durch Multipass, Render und Geometrie-QA und legt
+`render-result.json` nach eurem Vertrag daneben. Der echte Auftrag mit seinen drei Kameras
+(Eingang, Übersicht, Innenraum) ergibt drei Bilder und drei Urteile.
+
+Fünf Entscheidungen fallen dabei, und ihr solltet sie kennen, weil sie euer Verhalten
+betreffen:
+
+- **Ohne menschliche Freigabe wird nicht gerechnet** — der Auftrag geht dann nicht einmal
+  auf `running`, damit er nicht aussieht, als arbeite jemand daran. Siehe die
+  Token-Frage unten.
+- **`idle_window_only` wird eingehalten, und zwar fail-closed:** Ohne Auskunft über die
+  Grafikkarte wird *nicht* gerechnet. Ungeprüft ist nicht dasselbe wie frei.
+- **Erst das Ergebnis, dann der Laufzettel** — sonst gibt es ein Zeitfenster, in dem eure
+  Oberfläche ein Ergebnis sucht, das noch nicht da ist.
+- **Ein Fehler ist ein Ergebnis:** Scheitert etwas, steht der Auftrag auf `error` **mit
+  Begründung**, nie einfach still. Ein Auftrag ohne Antwort ist für den Wartenden dasselbe
+  wie ein hängender Rechner.
+- **Verwaiste Aufträge werden gemeldet, nicht wiederbelebt.** Steht einer auf `running`,
+  weil unser Rechner mitten im Lauf ausging, reihen wir ihn **nicht** automatisch neu ein —
+  ein zweiter Lauf kostet eine GPU-Stunde und kann ein zweites Bild unter derselben
+  Kennung erzeugen.
+
+Was noch **nicht** läuft: die Stil-QA. Sie braucht ein Referenzset, das uns gehört; die
+bisherigen Referenzen sind fremde Bildschirmfotos. Das Ergebnis sagt dann ausdrücklich
+*ungeprüft* und nicht *durchgefallen*.
 
 Zwei Dinge fallen dabei erfreulich zusammen: Euer `idle_window_only: true` ist bei uns
 `nur_bei_leerlauf` und eine **fail-closed** Schranke — bei unbekanntem GPU-Zustand wird
@@ -359,6 +385,16 @@ Wenn ihr davon etwas braucht, sagt welches — dann bauen wir die Naht dorthin. 
    uns gleich — aber es sollte eine Zahl sein.
 8. **Sind `engine` und `style` im Laufzettel verbindlich?** Wir reichen sie durch und
    lesen sie nicht.
+9. **Welche Hochachse hat eure `model.glb`?** `render-scene/v1` hat **kein Feld dafür**.
+   Wir nehmen `Y_UP` an, weil die glTF-Spezifikation es vorschreibt — aber genau hier
+   liegt der Befund, mit dem dieses Projekt angefangen hat: Zwei Erzeuger eures
+   Ökosystems liefern beide ein `glb_path`, mit **unterschiedlicher** Orientierung. Eine
+   verdrehte Hochachse dreht Tiefenkarte, Kamera und Geometrie-QA gemeinsam und **fällt
+   an einem einzelnen Bild nicht auf**. Ein Feld im Vertrag wäre uns lieber als unsere
+   Annahme.
+10. **Wie viele automatische Standpunkte soll `cameras: "auto"` bedeuten?** Wir rendern
+    **einen**. Zwölf wären zwölf GPU-Läufe, und wie viele ein Auftrag wert ist, ist eure
+    Entscheidung und nicht unsere.
 
 Solange diese Antworten fehlen, bauen wir **nichts, was an einer bestimmten Oberfläche
 hängt** — und arbeiten weiter an Verträgen, QA und Bildkette. Das trägt in jedem Fall.

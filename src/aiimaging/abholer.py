@@ -275,3 +275,170 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
         "waisen": verwaist,
         "ergebnisse": ergebnisse,
     }
+
+
+# ======================================================================================
+# Der Weg vom Brückenauftrag durch unsere Kette
+# ======================================================================================
+
+#: Was wir annehmen, wenn die fremde Szene die Hochachse nicht nennt.
+#:
+#: ``kosmovis.render-scene/v1`` **hat kein Feld dafür.** Die glTF-Spezifikation schreibt
+#: Y-up vor, also ist das die begründete Annahme — aber es bleibt eine Annahme, und
+#: ausgerechnet an dieser Stelle hat dieses Projekt seinen Phase-0-Befund: Zwei Erzeuger
+#: des Ökosystems liefern beide ein Feld ``glb_path``, mit **unterschiedlicher**
+#: Orientierung. Eine verdrehte Hochachse dreht Tiefenkarte, Kamera und Geometrie-QA
+#: gemeinsam — und fällt an einem einzelnen Bild nicht auf.
+#:
+#: Sie steht darum als benannte Konstante und wandert in jedes Ergebnis, statt still
+#: mitzulaufen. Die Frage ist im Übergabeblatt gestellt.
+ANGENOMMENE_HOCHACHSE = "Y_UP"
+
+#: Welche Richtung gerendert wird, wenn die Szene ``cameras: "auto"`` sagt.
+#:
+#: **Eine**, nicht zwölf. Wie viele automatische Standpunkte ein Auftrag wert ist, ist
+#: eine Betriebs- und keine Programmentscheidung — zwölf Standpunkte sind zwölf
+#: GPU-Läufe. Der Aufrufer kann es überschreiben.
+AUTO_RICHTUNGEN = ("sSE",)
+
+
+def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
+                up_axis: str = ANGENOMMENE_HOCHACHSE, schwelle: float | None = None,
+                stillstand_frist_s: float | None = None,
+                _multipass=None, _rendere=None, _qa=None, _soll=None,
+                _render_modell=None, _tiefen_modell=None):
+    """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
+
+    Je Kamera ein Durchgang: **Multipass → Render → Geometrie-QA**. Ein Auftrag mit drei
+    Kameras — wie der echte vom 19.08.2026 — ergibt drei Bilder und drei Urteile.
+
+    Warum je Kamera ein eigener Multipass: Die Tiefenkarte ist der Massstab, gegen den das
+    erzeugte Bild gemessen wird, und sie gilt nur für **den einen** Blickwinkel, aus dem
+    sie entstand. Ein Bild gegen die Tiefenkarte einer anderen Kamera zu messen ergäbe
+    eine Zahl, und die Zahl wäre Unsinn.
+
+    **Die Stil-QA läuft hier nicht**, und das ist kein Versehen: Sie braucht ein
+    Referenzset, das uns gehört. Die bisherigen Referenzen sind fremde Bildschirmfotos und
+    taugen als Anschauung, nicht als Messgrundlage — eine Einbettung ist eine Ableitung
+    des Bildes. ``kosmo_szene.als_ergebnis`` schreibt bei fehlendem Stil-Urteil
+    ausdrücklich „ungeprüft" statt „durchgefallen", die Lücke ist also sichtbar und nicht
+    stillschweigend.
+
+    Alle vier Schwergewichte sind injizierbar (``_multipass``, ``_rendere``, ``_qa``,
+    ``_soll``). Ohne das wäre dieser Weg nur auf einem Rechner mit Blender, GPU und 20 GB
+    Gewichten prüfbar — also faktisch gar nicht.
+
+    Returns:
+        Ein ``verarbeite(auftrag) -> {bilder, geometrie_urteil, zeiten, kameras}``, wie
+        :func:`hole_einen` es erwartet. ``geometrie_urteil`` ist das Urteil der
+        **schlechtesten** Kamera: Ein Auftrag ist so gut wie sein schwächstes Bild, und
+        einen Mittelwert über Urteile zu bilden hiesse, ein durchgefallenes Bild hinter
+        zwei bestandenen verschwinden zu lassen.
+    """
+    from . import bildlesen, geometrie_qa, render, seams, tiefenschaetzer
+
+    multipass = _multipass or seams.glb_zu_multipass
+    rendern = _rendere or render.rendere
+    messen = _qa or tiefenschaetzer.qa_gegen_soll
+    soll_lesen = _soll or bildlesen.tiefen_aus_report
+    grenze = geometrie_qa.SCHWELLE_GEOMETRIE if schwelle is None else schwelle
+
+    def verarbeite(auftrag: dict) -> dict:
+        szene = auftrag["szene"]
+        ordner = Path(auftrag["verzeichnis"])
+        ziel = Path(out_wurzel) / ordner.name if out_wurzel else Path(auftrag["ausgabe"])
+        ziel.mkdir(parents=True, exist_ok=True)
+
+        kameras = szene.get("kameras")
+        if kameras == "auto" or not isinstance(kameras, list):
+            aufgaben = [{"kuerzel": r, "richtung": r} for r in auto_richtungen]
+        else:
+            aufgaben = [dict(k, kuerzel=k.get("kuerzel") or f"kamera{i}")
+                        for i, k in enumerate(kameras)]
+        if not aufgaben:
+            raise AbholerError(
+                "Der Auftrag nennt keine einzige Kamera, und auch keine automatische "
+                "Richtung ist eingestellt. Es gibt nichts zu rendern."
+            )
+
+        bilder: list[str] = []
+        urteile: list[dict] = []
+        zeiten: dict[str, float] = {}
+        beginn_gesamt = time.monotonic()
+
+        for aufgabe in aufgaben:
+            kuerzel = aufgabe["kuerzel"]
+            aus = ziel / str(kuerzel)
+            aus.mkdir(parents=True, exist_ok=True)
+            beginn = time.monotonic()
+
+            bericht = multipass(
+                str(auftrag["modell"]), aus, up_axis=up_axis,
+                aufloesung=szene.get("aufloesung", 512), hoehe=szene.get("hoehe"),
+                samples=szene.get("samples", 128),
+                kamera=aufgabe.get("richtung"),
+                auge=aufgabe.get("auge"), blick_auf=aufgabe.get("blick_auf"),
+                brennweite=aufgabe.get("brennweite_mm"),
+                stillstand_frist_s=stillstand_frist_s,
+            )
+            tiefe = bericht.get("depth_png")
+            if not tiefe:
+                raise AbholerError(
+                    f"Kamera {kuerzel!r}: keine Tiefenkarte. Ohne sie gibt es keine "
+                    f"Konditionierung, und ein Render ohne sie wäre genau die erfundene "
+                    f"Kubatur, gegen die dieses Projekt antritt. Grund: "
+                    f"{bericht.get('depth_png_fehler')}"
+                )
+
+            ergebnis = rendern(
+                render.RenderAuftrag(
+                    depth_png=tiefe,
+                    prompt=szene.get("prompt", ""),
+                    controlnet_staerke=szene.get("controlnet_staerke", 0.8),
+                    backbone=szene.get("backbone") or render.VORGABE_BACKBONE,
+                    beauty_png=bericht.get("beauty_png"),
+                    ausgabe_png=str(aus / f"{kuerzel}.png"),
+                ),
+                modell=_render_modell,
+            )
+            if ergebnis.get("status") != "ok":
+                raise AbholerError(
+                    f"Kamera {kuerzel!r}: Render {ergebnis.get('status')} — "
+                    f"{ergebnis.get('error') or ergebnis.get('maengel')}"
+                )
+            bilder.append(ergebnis["bild_png"])
+
+            # Die Soll-Karte kommt aus der EXR, nicht aus dem PNG: nur sie trägt die
+            # Silhouette exakt. Das PNG war die Eingabe des Modells, die EXR ist der
+            # Massstab.
+            soll, breite, hoch = soll_lesen(bericht)
+            urteil = messen(ergebnis["bild_png"], soll, breite=breite, hoehe=hoch,
+                            modell=_tiefen_modell, schwelle=grenze)
+            urteil = dict(urteil, kamera=kuerzel)
+            urteile.append(urteil)
+            zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
+
+        zeiten["gesamt"] = round(time.monotonic() - beginn_gesamt, 1)
+        return {
+            "bilder": bilder,
+            "geometrie_urteil": _schlechtestes(urteile),
+            "kameras": urteile,
+            "zeiten": zeiten,
+        }
+
+    return verarbeite
+
+
+def _schlechtestes(urteile: list[dict]) -> dict | None:
+    """Das Urteil der schwächsten Kamera — **kein Mittelwert**.
+
+    Ein Mittelwert über Urteile liesse ein durchgefallenes Bild hinter zwei bestandenen
+    verschwinden. Ein Auftrag ist so gut wie sein schwächstes Bild.
+
+    Urteile ohne Wert (``score is None`` — die Messung ist gar nicht gelaufen) gelten als
+    die schlechtesten überhaupt: *ungemessen* ist nicht *in Ordnung*.
+    """
+    if not urteile:
+        return None
+    return min(urteile, key=lambda u: (u.get("score") is not None,
+                                       u.get("score") if u.get("score") is not None else 0.0))

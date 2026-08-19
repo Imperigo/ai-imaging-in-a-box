@@ -650,10 +650,27 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       und keine Stille; und **Waisen werden gemeldet, nicht wiederbelebt**.
       Kein Dauerlauf, kein Schlaf: Wie oft nachgesehen wird, ist eine Betriebsfrage und
       gehört nicht in eine Bibliothek.
-- [ ] **Den Abholer an die echte Kette hängen** — `verarbeite` muss den Auftrag der
-      Brücke durch unseren Multipass, Render und die QA schicken. Der Weg dorthin liegt
-      in `tools/homeworker.py` und ist für **unser** Auftragsformat gebaut; die
-      Übersetzung dazwischen fehlt noch.
+- [x] **Den Abholer an die echte Kette gehängt** — 2026-08-20, `abholer.verarbeiter`.
+      **Je Kamera ein eigener Durchgang:** Multipass → Render → Geometrie-QA. Der echte
+      Auftrag vom 19.08. mit seinen drei Kameras ergibt drei Bilder und drei Urteile.
+      Der Grund für „je Kamera ein eigener Multipass": Die Tiefenkarte gilt nur für **den
+      einen** Blickwinkel, aus dem sie entstand. Ein Bild gegen die Tiefenkarte einer
+      anderen Kamera zu messen ergäbe eine Zahl, und die Zahl wäre Unsinn.
+      Berichtet wird das Urteil der **schlechtesten** Kamera, kein Mittelwert — der liesse
+      ein durchgefallenes Bild hinter zwei bestandenen verschwinden. Ein *ungemessenes*
+      Urteil gilt dabei als das schlechteste von allen.
+      Alle vier Schwergewichte (Multipass, Render, Soll-Karte, QA) sind injizierbar; ohne
+      das wäre der Weg nur mit Blender, GPU und 20 GB Gewichten prüfbar, also faktisch
+      gar nicht.
+- [ ] **Welche Hochachse hat die `model.glb` der Brücke?** `render-scene/v1` hat **kein
+      Feld dafür**. Wir nehmen `Y_UP` an (glTF-Spezifikation) und schreiben die Annahme
+      als `ANGENOMMENE_HOCHACHSE` in den Code statt in einen Kopf. **Genau hier liegt der
+      Phase-0-Befund**: Zwei Erzeuger des Ökosystems liefern beide ein `glb_path`, mit
+      unterschiedlicher Orientierung — und eine verdrehte Hochachse fällt an einem
+      einzelnen Bild nicht auf. Frage steht im Übergabeblatt.
+- [ ] **Die Stil-QA im Abholer** — läuft dort bewusst nicht, weil ihr das Referenzset
+      fehlt, das uns gehört. Das Ergebnis sagt darum *ungeprüft* und nicht
+      *durchgefallen*. Hängt am Planpunkt „Ein Referenzset, das uns gehört".
 - [ ] **Drei Zahlen laufen auseinander** (aus demselben Durchgang): Ihre Auto-Kamera setzt
       die Augenhöhe auf **1.30 m** (Eingang) und **1.60 m** (Innenraum); wir und das
       Pflichtenheft rechnen mit **1.70 m über Terrain**. `engine: cycles` und

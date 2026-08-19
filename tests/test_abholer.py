@@ -328,3 +328,217 @@ def test_ein_zweiter_durchgang_fasst_erledigte_nicht_wieder_an(tmp_path):
     zweiter = abholer.durchgang(tmp_path, verarbeite=_nie_aufgerufen,
                                 fremde_freigabe_gilt=True)
     assert zweiter["gesehen"] == 0
+
+
+# ======================================================================================
+# Der Weg durch unsere Kette — je Kamera einmal
+# ======================================================================================
+
+def _kette(*, scores=(0.8,), fehlt_tiefe=False, render_status="ok"):
+    """Attrappen für Multipass, Render, Soll-Karte und QA. Zählt, was gerufen wurde."""
+    protokoll = {"multipass": [], "render": [], "qa": []}
+    werte = list(scores)
+
+    def multipass(glb, out, **kw):
+        protokoll["multipass"].append(kw)
+        from pathlib import Path as P
+        P(out).mkdir(parents=True, exist_ok=True)
+        if fehlt_tiefe:
+            return {"depth_png": None, "depth_png_fehler": "Kompositor kaputt"}
+        return {"depth_png": str(P(out) / "tiefe.png"),
+                "beauty_png": str(P(out) / "beauty.png"),
+                "depth_exr": str(P(out) / "tiefe.exr")}
+
+    def rendere(a, **kw):
+        protokoll["render"].append(a)
+        if render_status != "ok":
+            return {"status": render_status, "error": "kein Modell"}
+        from pathlib import Path as P
+        P(a.ausgabe_png).parent.mkdir(parents=True, exist_ok=True)
+        P(a.ausgabe_png).write_bytes(b"png")
+        return {"status": "ok", "bild_png": a.ausgabe_png}
+
+    def soll(bericht):
+        return [0.0, 1.0, 2.0, 3.0], 2, 2
+
+    def qa(bild, soll_werte, **kw):
+        protokoll["qa"].append(kw)
+        wert = werte.pop(0) if werte else 0.5
+        return {"status": "ok", "score": wert, "bestanden": wert >= 0.65,
+                "schwelle": kw.get("schwelle")}
+
+    return protokoll, dict(_multipass=multipass, _rendere=rendere, _soll=soll, _qa=qa)
+
+
+def test_drei_kameras_ergeben_drei_bilder_und_drei_urteile(tmp_path):
+    """Der echte Auftrag vom 19.08.2026 trug genau drei Kameras."""
+    szene = {
+        "schema": bruecke.kosmo_szene.SCHEMA_SZENE,
+        "geometry": {"path": "model.glb", "format": "glb"},
+        "cameras": [
+            {"name": "Eingang", "position": [0, -20, 1.3], "target": [0, 0, 1.3],
+             "fov": 60},
+            {"name": "Uebersicht", "position": [0, -60, 38], "target": [0, 0, 5],
+             "fov": 50},
+            {"name": "Innenraum", "position": [1, 1, 1.6], "target": [4, 4, 1.6],
+             "fov": 80},
+        ],
+        "render": {"resolution": [512, 512], "samples": 64, "faithful": 0.8},
+        "style": {"prompt": "ein Haus"},
+        "vis": {"backbone": "qwen"},
+    }
+    ordner = _auftrag(tmp_path, szene=szene)
+    protokoll, attrappen = _kette(scores=(0.9, 0.7, 0.8))
+    antwort = abholer.hole_einen(
+        ordner, fremde_freigabe_gilt=True,
+        verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus", **attrappen))
+
+    assert antwort["tat"] == abholer.TAT_VERARBEITET
+    assert len(protokoll["multipass"]) == 3, "je Kamera ein eigener Multipass"
+    assert len(protokoll["render"]) == 3
+    ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
+    assert len(ergebnis["images"]) == 3
+
+
+def test_je_kamera_eine_eigene_tiefenkarte(tmp_path):
+    """Ein Bild gegen die Tiefenkarte einer anderen Kamera zu messen ergäbe eine Zahl,
+    und die Zahl wäre Unsinn."""
+    szene = {
+        "geometry": {"path": "model.glb", "format": "glb"},
+        "cameras": [
+            {"name": "a", "position": [0, -20, 2], "target": [0, 0, 2], "fov": 60},
+            {"name": "b", "position": [20, 0, 2], "target": [0, 0, 2], "fov": 60},
+        ],
+        "render": {"resolution": [512, 512]},
+        "style": {"prompt": "x"},
+        "vis": {"backbone": "qwen"},
+    }
+    ordner = _auftrag(tmp_path, szene=szene)
+    protokoll, attrappen = _kette(scores=(0.9, 0.9))
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
+                       verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                                                      **attrappen))
+    augen = [kw["auge"] for kw in protokoll["multipass"]]
+    assert augen == [(0.0, -20.0, 2.0), (20.0, 0.0, 2.0)]
+
+
+def test_das_schlechteste_urteil_zaehlt_und_nicht_der_mittelwert(tmp_path):
+    """Ein Mittelwert liesse ein durchgefallenes Bild hinter zwei bestandenen
+    verschwinden."""
+    szene = {
+        "geometry": {"path": "model.glb", "format": "glb"},
+        "cameras": [{"name": f"k{i}", "position": [0, -20, 2], "target": [0, 0, 2],
+                     "fov": 60} for i in range(3)],
+        "render": {"resolution": [512, 512]}, "style": {"prompt": "x"},
+        "vis": {"backbone": "qwen"},
+    }
+    ordner = _auftrag(tmp_path, szene=szene)
+    _, attrappen = _kette(scores=(0.95, 0.20, 0.90))
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
+                       verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                                                      **attrappen))
+    ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
+    assert ergebnis["qa"]["geometry"]["geometry_fidelity"] == 0.20
+    assert ergebnis["qa"]["geometry"]["passed"] is False
+
+
+def test_ein_ungemessenes_urteil_ist_das_schlechteste_von_allen():
+    """Ungemessen ist nicht in Ordnung — dieselbe Regel wie überall sonst."""
+    schlecht = abholer._schlechtestes([
+        {"score": 0.9, "kamera": "a"},
+        {"score": None, "kamera": "b"},
+        {"score": 0.1, "kamera": "c"},
+    ])
+    assert schlecht["kamera"] == "b"
+
+
+def test_ohne_kameras_wird_nichts_gerendert(tmp_path):
+    ordner = _auftrag(tmp_path)
+    _, attrappen = _kette()
+    antwort = abholer.hole_einen(
+        ordner, fremde_freigabe_gilt=True,
+        verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                                       auto_richtungen=(), **attrappen))
+    assert antwort["tat"] == abholer.TAT_FEHLER
+    assert "keine einzige Kamera" in antwort["grund"]
+
+
+def test_auto_rendert_eine_richtung_und_nicht_zwoelf(tmp_path):
+    """Zwölf Standpunkte sind zwölf GPU-Läufe. Wie viele ein Auftrag wert ist, ist eine
+    Betriebsentscheidung."""
+    ordner = _auftrag(tmp_path)          # die Vorgabeszene sagt cameras: "auto"
+    protokoll, attrappen = _kette()
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
+                       verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                                                      **attrappen))
+    assert len(protokoll["multipass"]) == 1
+    assert protokoll["multipass"][0]["kamera"] == abholer.AUTO_RICHTUNGEN[0]
+
+
+def test_ohne_tiefenkarte_wird_nicht_gerendert(tmp_path):
+    """Ein Render ohne Konditionierung wäre genau die erfundene Kubatur, gegen die
+    dieses Projekt antritt."""
+    ordner = _auftrag(tmp_path)
+    protokoll, attrappen = _kette(fehlt_tiefe=True)
+    antwort = abholer.hole_einen(
+        ordner, fremde_freigabe_gilt=True,
+        verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus", **attrappen))
+    assert antwort["tat"] == abholer.TAT_FEHLER
+    assert "Kompositor kaputt" in antwort["grund"]
+    assert protokoll["render"] == [], "gar nicht erst gerendert"
+
+
+def test_ein_gescheiterter_render_wird_nicht_als_bild_gezaehlt(tmp_path):
+    ordner = _auftrag(tmp_path)
+    _, attrappen = _kette(render_status="fehler")
+    antwort = abholer.hole_einen(
+        ordner, fremde_freigabe_gilt=True,
+        verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus", **attrappen))
+    assert antwort["tat"] == abholer.TAT_FEHLER
+    assert not (ordner / bruecke.DATEI_ERGEBNIS).exists()
+
+
+def test_die_angenommene_hochachse_steht_als_konstante_und_wird_benutzt(tmp_path):
+    """kosmovis.render-scene/v1 hat kein Feld dafür. Die Annahme wandert darum in den
+    Code und nicht in einen Kopf."""
+    ordner = _auftrag(tmp_path)
+    protokoll, attrappen = _kette()
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
+                       verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                                                      **attrappen))
+    assert protokoll["multipass"][0]["up_axis"] == abholer.ANGENOMMENE_HOCHACHSE
+    assert abholer.ANGENOMMENE_HOCHACHSE == "Y_UP", "die glTF-Spezifikation sagt Y-up"
+
+
+def test_prompt_und_treue_der_szene_kommen_beim_render_an(tmp_path):
+    ordner = _auftrag(tmp_path)
+    protokoll, attrappen = _kette()
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
+                       verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                                                      **attrappen))
+    a = protokoll["render"][0]
+    assert a.prompt == "ein Haus"
+    assert a.controlnet_staerke == 0.8
+
+
+def test_die_stil_qa_laeuft_hier_nicht_und_das_ergebnis_sagt_es(tmp_path):
+    """Sie braucht ein Referenzset, das uns gehört. Die Lücke ist sichtbar, nicht still."""
+    ordner = _auftrag(tmp_path)
+    _, attrappen = _kette()
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
+                       verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                                                      **attrappen))
+    ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
+    assert "style" not in ergebnis["qa"]
+    assert "geometry" in ergebnis["qa"]
+
+
+def test_die_zeiten_werden_je_kamera_und_gesamt_berichtet(tmp_path):
+    ordner = _auftrag(tmp_path)
+    _, attrappen = _kette()
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
+                       verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                                                      **attrappen))
+    ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
+    assert "gesamt" in ergebnis["timings"]
+    assert abholer.AUTO_RICHTUNGEN[0] in ergebnis["timings"]
