@@ -1,0 +1,122 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260820-20",
+  "status": "ok",
+  "beendet": "2026-08-19T16:20:00Z",
+  "dauer_s": 6.7,
+  "messwerte": {
+    "aufbau": {
+      "backbone": "z-image-turbo + ControlNet-Union",
+      "polaritaet": "invertiert",
+      "controlnet_staerke": 0.8,
+      "schritte": 8,
+      "guidance_scale": 0.0,
+      "negativ_prompt": "",
+      "aufloesung": 512,
+      "schaetzer": "depth-anything-v2-small",
+      "hintergrund_strategie": "Vorgabe wie_soll (nach git pull, zurueckgenommen seit 20.08.)",
+      "szene": "synthetischer Testbau, OHNE Boden — wie in auf-13",
+      "unveraendert": "Szene, Kamera, Soll-Karte, Prompt, alle Parameter ausser dem Seed"
+    },
+    "laeufe": [
+      {
+        "seed": 1000,
+        "dauer_s": 1.6,
+        "sha256_16": "64d586e8b343c27f",
+        "status": "ok",
+        "score": null,
+        "spearman": -1.0,
+        "geom_iou": 2.2420016590812277e-05,
+        "n_gemeinsam": 2,
+        "ungemessen": true,
+        "grund": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Rangkorrelation ist negativ (-1.000): Die Ist-Karte ordnet die Tiefe genau umgekehrt. Üblichster Grund "
+      },
+      {
+        "seed": 1001,
+        "dauer_s": 1.28,
+        "sha256_16": "b0470edd49b10f8a",
+        "status": "ok",
+        "score": 0.08034328598416418,
+        "spearman": -0.292683413390837,
+        "geom_iou": 0.022054695645200097,
+        "n_gemeinsam": 1925
+      },
+      {
+        "seed": 1002,
+        "dauer_s": 1.27,
+        "sha256_16": "5da9a907c8a569c4",
+        "status": "ok",
+        "score": null,
+        "spearman": null,
+        "geom_iou": 0.0,
+        "n_gemeinsam": 0,
+        "ungemessen": true,
+        "grund": "Nicht messbar, damit nicht bestanden — ein Score, den es nicht gibt, ist kein bestandener Score. Keine gemeinsame Silhouette: Es gibt keinen einzigen Bildpunkt, an dem beide Karten Geometrie sehen. Da"
+      },
+      {
+        "seed": 1003,
+        "dauer_s": 1.27,
+        "sha256_16": "7a40bfc5bd1e525c",
+        "status": "ok",
+        "score": 0.06406984644745906,
+        "spearman": -0.3602671478357393,
+        "geom_iou": 0.011394170266317472,
+        "n_gemeinsam": 1005
+      },
+      {
+        "seed": 1004,
+        "dauer_s": 1.28,
+        "sha256_16": "0f81ba8120cef073",
+        "status": "ok",
+        "score": 0.0033663939263791666,
+        "spearman": -0.007367932359020898,
+        "geom_iou": 0.0015380988200424381,
+        "n_gemeinsam": 137
+      }
+    ],
+    "die_fuenf_scores": {
+      "gemessen": [
+        0.0803,
+        0.0641,
+        0.0034
+      ],
+      "UNGEMESSEN": [
+        1000,
+        1002
+      ],
+      "hinweis": "NICHT als Null gewertet — zwei von fuenf liefern keinen Score"
+    },
+    "streuung": {
+      "n_gemessen": 3,
+      "mittel": 0.0493,
+      "standardabweichung": 0.0331,
+      "spanne": 0.077,
+      "min": 0.0034,
+      "max": 0.0803,
+      "variationskoeffizient_prozent": 67.2
+    },
+    "pruefsummen_alle_verschieden": true,
+    "n_gemeinsam_je_lauf": [
+      2,
+      1925,
+      0,
+      1005,
+      137
+    ]
+  },
+  "urteil": {
+    "die_frage_in_einem_satz": "Die Streuung ist RIESIG: Standardabweichung 0.0331 bei einem Mittel von 0.0493 — ein Variationskoeffizient von 67 %. Die Spanne zwischen bestem und schlechtestem Lauf betraegt 0.0770 (0.0034 bis 0.0803), und das bei absolut identischen Parametern.",
+    "zwei_von_fuenf_sind_ungemessen_nicht_null": "Seed 1000 und 1002 liefern KEINEN Score, und ich melde sie als ungemessen — nicht als Null, wie du ausdruecklich verlangt hast.\n  seed 1000: n_gemeinsam = 2. Zwei Bildpunkte. Die Kette lehnt zu Recht ab.\n  seed 1002: n_gemeinsam = 0. Keine gemeinsame Silhouette ueberhaupt.\nDas ist selbst ein Befund: Bei gleichen Parametern faellt jeder zweite bis dritte Lauf aus der Messbarkeit. Die n_gemeinsam-Reihe ueber alle fuenf lautet 2, 1925, 0, 1005, 137 — sie schwankt um den Faktor 1000.",
+    "die_unangenehme_folgerung_und_sie_ist_deutlich": "DER auf-13-VERGLEICH WAR RAUSCHEN. Dort lag 0.80 mit 0.2649 vor 1.00 mit 0.2421 — ein Unterschied von 0.0228. Die hier gemessene Standardabweichung allein betraegt 0.0331, die Spanne 0.0770. Der Unterschied liegt also DEUTLICH UNTER dem Zufall, und die Empfehlung «0.80 schlaegt 1.00» war auf Rauschen gebaut.\nDu hast geschrieben, dieses Ergebnis waere unangenehm und muesste trotzdem gemeldet werden. Hier ist es.",
+    "und_es_ist_noch_schlimmer_als_die_streuung": "Der auf-13-Lauf mit seed 12345 erreichte 0.2649. Der BESTE der fuenf Laeufe hier erreicht 0.0803 — ein Abstand von 0.1846, mehr als das Doppelte der gesamten Spanne. Bei identischen Einstellungen. Ich kann das mit dieser Messung nicht erklaeren und sage es darum als offene Frage: Entweder ist der Seed-Einfluss noch groesser als die fuenf Werte zeigen, oder zwischen auf-13 und heute hat sich etwas geaendert, das ich nicht kontrolliert habe. Der Unterschied zur Vorgabe der Hintergrundstrategie kommt NICHT in Frage — auf-13 lief vor deren Einfuehrung, also ebenfalls mit wie_soll.",
+    "was_daraus_folgt_als_frage_nicht_als_empfehlung": "Mit einem Rauschboden dieser Groesse ist ein Einzellauf als Vergleichsgrundlage wertlos. Jede kuenftige Parameterfrage braucht n Laeufe je Wert und einen Abstand, der die Streuung uebersteigt. Wieviele, sagt diese Messung nicht — dafuer braeuchte es die Streuung bei MEHREREN Parameterwerten, nicht nur bei einem.",
+    "nicht_getan": "Nur der Seed variiert, nichts sonst — auch nicht «zur Sicherheit». Nichts an eurem Code geaendert. Die Soll-Karte wurde EINMAL erzeugt und fuer alle fuenf Laeufe verwendet, damit auch sie nicht streut."
+  },
+  "umgebung": {
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "leistungsgrenze_w": 400.0,
+    "gpu_vor_dem_lauf": "0 % Auslastung, 15.7 W",
+    "python": "3.14.4"
+  },
+  "fehler": null
+}
