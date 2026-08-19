@@ -897,3 +897,37 @@ def test_ein_zweiter_start_wird_abgewiesen(tmp_path):
             b.start()
     finally:
         b.stop()
+
+
+def test_ohne_jeden_stillstand_berichtet_die_wache_die_laengste_PAUSE(tmp_path):
+    """**Damit misst der Betrieb die Frist, ohne dass jemand etwas dafür bauen muss.**
+
+    Die Frist ist bis heute geraten (aus dem Altbestand übernommen, nicht gemessen). Zu
+    messen wäre die längste Pause zwischen zwei Fortschrittszeichen an einem gesunden
+    Lauf — und genau die steht schon im Bericht, auch wenn nie ein Stillstand eintrat:
+    Unter lauter unauffälligen Befunden behält `_schwerer` den mit der längsten Pause.
+
+    Wer die Frist bestimmen will, fährt also einen echten Auftrag mit einer absichtlich
+    riesigen Frist und liest ab. Ohne diese Eigenschaft bräuchte es eine eigene Messung.
+
+    **Was der Wert nicht ist:** genau. Gemessen wird die Pause an den Blicken, nicht an
+    den Dateien — die längste Pause wird also um bis zu einen Takt **unterschätzt**,
+    nämlich wenn die neue Datei kurz nach dem letzten Blick auftaucht. Für eine Frist,
+    die ohnehin mit Sicherheitsabstand gewählt wird, ist das die harmlose Richtung.
+    """
+    uhr = [0.0]
+    b = fortschritt.Beobachter(_ordnerwache(tmp_path, uhr, frist_s=10_000.0), takt_s=1.0)
+
+    (tmp_path / "erstes.png").write_bytes(b"x")
+    for zeit in (0.0, 5.0, 12.0, 90.0):        # Blicke ohne neue Datei
+        uhr[0] = zeit
+        b.tick()
+    uhr[0] = 90.0                              # nach 90 s kommt endlich das zweite Bild
+    (tmp_path / "zweites.png").write_bytes(b"x")
+    b.tick()
+    uhr[0] = 95.0
+    b.tick()
+
+    bericht = b.bericht()
+    assert bericht["gestanden"] is False, "keine Frist gerissen — es gab keinen Stillstand"
+    assert bericht["laengster_stillstand_s"] == pytest.approx(90.0)

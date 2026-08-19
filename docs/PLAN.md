@@ -845,11 +845,19 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Bericht sagt je Auftrag „nicht beobachtet", „NICHT GEMESSEN" oder die längste Pause.
       Sechs Tests in `tests/test_abholen_cli.py`, alle drei Verdrahtungen an einer
       Mutationsprobe geprüft: Jede Kappung macht genau einen Test rot.
-- [ ] **Welche Frist trägt am echten Lauf?** Die Wache hängt, ihre Frist ist geraten.
-      **Erster Anhaltspunkt seit 19.08.:** Der erste vollständige Lauf brauchte 292,2 s
-      für drei Kameras, also rund 97 s je Kamera. Die Vorgabe von 300 s wäre damit länger
-      als der ganze Auftrag und bliebe wirkungslos — die Frist muss unter die längste
-      Pause zwischen zwei neuen Dateien, und die ist noch niemand gemessen.
+- [ ] **Welche Frist trägt am echten Lauf? — und die Messung kostet nichts mehr.**
+      Die Frist ist geraten (aus dem Altbestand, nicht gemessen). **Erster Anhaltspunkt
+      seit 19.08.:** Der erste vollständige Lauf brauchte 292,2 s für drei Kameras, rund
+      97 s je Kamera. Die Vorgabe von 300 s wäre damit länger als der ganze Auftrag und
+      bliebe wirkungslos.
+
+      **Es braucht dafür keinen eigenen Auftrag mehr.** Der Bericht der Wache nennt die
+      längste Pause auch dann, wenn nie ein Stillstand eintrat — unter lauter
+      unauffälligen Befunden behält sie den mit der längsten Pause. Ein Lauf mit
+      `--stillstand-frist-s 99999` misst sie also nebenbei und schlägt nirgends Alarm.
+      Der Wert unterschätzt um bis zu einen Takt (2 s), weil an den Blicken gemessen wird
+      und nicht an den Dateien — für eine Frist mit Sicherheitsabstand die harmlose
+      Richtung.
       `FRIST_S = 300` ist aus dem Altbestand übernommen, ausdrücklich **nicht** gemessen.
       Zu kurz bricht gesunde Läufe ab, zu lang merkt nichts. Braucht die HomeStation:
       längste beobachtete Pause zwischen zwei neuen Dateien im Ausgabeordner, an CPU und
