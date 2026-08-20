@@ -470,11 +470,29 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
                 "error": f"Vorgänger lieferte kein 'glb_path': {sorted(geometrie)}"}
 
     p = knoten.params
+    # Innenansicht: NUR auf ausdrückliche Bestellung. Ein Auftrag, der nicht danach
+    # gefragt hat, soll keine Innenaufnahme bekommen — und ein Auftrag, der danach
+    # gefragt hat und sie nicht bekommen kann, soll scheitern statt aussen zu rendern.
+    auge = blick_auf = None
+    if p.get("innenraum"):
+        wunsch = p["innenraum"]
+        wahl = raumkamera.waehle(geometrie.get("raeume"),
+                                 raum=wunsch.get("raum"),
+                                 art=wunsch.get("art", raumkamera.ART_FRONTAL))
+        if not wahl["gefunden"]:
+            return {"status": STATUS_FEHLER,
+                    "error": ("Innenansicht verlangt, aber kein Standpunkt: "
+                              + wahl["grund"]),
+                    "innenraum": wahl}
+        auge = list(wahl["standpunkt"]["auge"])
+        blick_auf = list(wahl["standpunkt"]["blick_auf"])
+
     bericht = seams.glb_zu_multipass(
         glb_path, out_dir,
         up_axis=geometrie.get("up_axis"),
         aufloesung=p["aufloesung"], samples=p["samples"],
         beauty=p["beauty"], material_id=p["material_id"],
+        auge=auge, blick_auf=blick_auf,
     )
     bericht.setdefault("status", STATUS_OK)
 

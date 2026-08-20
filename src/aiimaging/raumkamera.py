@@ -511,3 +511,73 @@ def standpunkte(raum: dict, *, wandabstand_m: float = WANDABSTAND_INNEN_M,
     }
 
 
+
+
+# --------------------------------------------------------------------------------------
+# Auswahl — welcher Raum, welche Blickart
+# --------------------------------------------------------------------------------------
+#
+# **Wie viele Räume eines Gebäudes gerendert werden, ist eine Betriebsfrage.** Dieses
+# Projekt hat sie für die Aussenansicht schon einmal beantwortet: ``abholer.AUTO_RICHTUNGEN``
+# kennt **eine** Richtung, nicht zwölf, mit der Begründung, dass zwölf Standpunkte zwölf
+# Renderläufe sind und das eine Entscheidung des Betriebs ist.
+#
+# Innen ist die Vorgabe darum **keine**: Standpunkte werden gerechnet (das kostet nichts)
+# und berichtet, gerendert wird nur, was ausdrücklich verlangt ist. Ein Auftrag, der nicht
+# nach Innenansichten gefragt hat, soll nicht stillschweigend ein Dutzend Renderläufe
+# auslösen.
+
+
+def waehle(raeume_ausgabe: dict | None, *, raum: str | None = None,
+           art: str = ART_FRONTAL) -> dict:
+    """Einen bestimmten Standpunkt aus der Raumliste holen.
+
+    Args:
+        raeume_ausgabe: die Ausgabe von ``kette._raeume_lesen``, oder ``None``.
+        raum: Name oder ``global_id``. ``None`` heisst **der erste Raum mit einem
+            brauchbaren Standpunkt** — nicht „irgendeiner": Ein Raum ohne Standpunkt zu
+            wählen und dann zu scheitern, wäre eine Auswahl, die keine ist.
+        art: :data:`ART_FRONTAL` oder :data:`ART_UEBER_ECK`.
+
+    Returns:
+        ``{gefunden, standpunkt, raum, grund}``. ``gefunden`` ist ``False`` mit einem
+        Grund, wenn es den Raum nicht gibt, die Blickart dort nicht geht, oder gar keine
+        Räume vorliegen.
+
+    **Es wird nicht ausgewichen.** Wer frontal verlangt und frontal nicht bekommt,
+    bekommt einen Befund und nicht die Über-Eck-Ansicht. Ein stiller Ersatz wäre ein
+    anderes Bild als das bestellte — und niemand sähe es dem Ergebnis an.
+    """
+    if art not in (ART_FRONTAL, ART_UEBER_ECK):
+        raise RaumkameraError(
+            f"art ist {art!r}; erlaubt sind {ART_FRONTAL!r} und {ART_UEBER_ECK!r}.")
+    leer = {"gefunden": False, "standpunkt": None, "raum": None, "grund": ""}
+    if not raeume_ausgabe or not raeume_ausgabe.get("raeume"):
+        return dict(leer, grund=(
+            "Keine Räume. Entweder wurde über eine glb eingestiegen — dann gibt es keinen "
+            "Raumbegriff — oder der Raumleser hat nichts gefunden. Beides ist NICHT "
+            "GEMESSEN und nicht 'dieses Gebäude hat keine Räume'."))
+
+    eintraege = raeume_ausgabe["raeume"]
+    if raum is not None:
+        eintraege = [e for e in eintraege
+                     if raum in (e["raum"].get("name"), e["raum"].get("global_id"))]
+        if not eintraege:
+            vorhanden = [e["raum"].get("name") for e in raeume_ausgabe["raeume"]]
+            return dict(leer, grund=(
+                f"Kein Raum namens {raum!r}. Vorhanden: {vorhanden}. Es wird NICHT auf "
+                f"einen anderen ausgewichen — ein stiller Ersatz wäre ein anderes Bild "
+                f"als das bestellte."))
+
+    for eintrag in eintraege:
+        for s in eintrag["kamera"]["standpunkte"]:
+            if s["art"] == art and s["auge"] is not None:
+                return {"gefunden": True, "standpunkt": s,
+                        "raum": eintrag["raum"].get("name"), "grund": ""}
+
+    namen = [e["raum"].get("name") for e in eintraege]
+    gruende = [s["befund"] for e in eintraege for s in e["kamera"]["standpunkte"]
+               if s["art"] == art and s["befund"]]
+    return dict(leer, grund=(
+        f"Blickart {art!r} ist in {namen} nicht möglich. "
+        + (gruende[0] if gruende else "Ohne näheren Grund.")))

@@ -542,3 +542,39 @@ hängt** — und arbeiten weiter an Verträgen, QA und Bildkette. Das trägt in 
     ist das dort zu ändern und nicht bei uns durch eine erfundene Zahl. Sagt uns bitte,
     was ihr braucht: `null` zulassen, ein eigenes Feld, oder das Abzeichen weglassen,
     solange keine Ähnlichkeit gemessen wurde.
+
+14. **Wie soll ein Auftrag Innenansichten verlangen — und könnt ihr IFC schicken?**
+    Seit dem 22.08. können wir aus einer IFC die **Räume** lesen und je Raum zwei
+    Standpunkte rechnen: frontal auf eine Wand und über Eck. Die Kamera steht dabei auf
+    halber Raumhöhe (dann bekommen Boden und Decke gleich viel Bild) und bleibt
+    **waagrecht**, damit die Vertikalen parallel bleiben.
+
+    **Bei euch ankommen kann das heute nicht**, und zwar aus zwei Gründen:
+
+    * **Es fehlt der Auslöser.** `render-scene/v1` kennt `cameras: "auto"`, eine Liste mit
+      `position`/`target`, oder `"saved"`. Ein Innenraum-Standpunkt liesse sich als
+      `position`/`target` **durchreichen** — aber es gibt kein Feld, das sagt *„gib mir
+      Innenansichten der Räume dieses Modells"*. Wir könnten es nur raten, und das tun
+      wir nicht.
+    * **Es fehlt die Geometrie.** Euer Schema führt `ifc` als zulässiges Format, der
+      Auftrag vom 19.08. schickte aber eine `model.glb`. **Aus einer glb gibt es keine
+      Räume** — dort sind Wände und Böden Dreiecke ohne Raumbegriff. Der einzige Moment,
+      in dem sich die Frage beantworten lässt, liegt *vor* der Umwandlung.
+
+    Konkret gefragt:
+
+    1. Könnt ihr die **IFC** mitschicken statt oder neben der glb? Wenn ja, brauchen wir
+       nichts weiter — der Rest steht.
+    2. Wollt ihr ein eigenes Feld (etwa `interior: {rooms: "auto" | [...], view:
+       "frontal" | "corner"}`), oder sollen wir die Standpunkte rechnen und **ihr**
+       schreibt sie als gewöhnliche `cameras`-Einträge in den Auftrag? Das zweite braucht
+       auf eurer Seite mehr Arbeit, auf unserer keine Vertragsänderung.
+    3. **Wie viele Räume sind ein Auftrag wert?** Bei uns ist die Vorgabe **keine** —
+       gerechnet werden die Standpunkte immer (das kostet nichts), gerendert wird nur, was
+       ausdrücklich verlangt ist. Ein Gebäude mit zwanzig Räumen wären sonst vierzig
+       Renderläufe, und das soll niemand versehentlich auslösen.
+
+    **Was wir NICHT von euch brauchen:** eine Entscheidung darüber, ob frontal oder über
+    Eck das richtige Bild ist. Das hängt daran, ob die Stirnwand ein Motiv trägt — einen
+    Kamin, eine Küchenzeile —, und das steht in keiner IFC-Datei. Wir rechnen beide und
+    reichen beide weiter.

@@ -1202,3 +1202,74 @@ def test_auf_dem_IFC_weg_kommen_die_raeume_wirklich_durch(monkeypatch, tmp_path)
         "gelesen, aber ohne Standpunkt — die halbe Verdrahtung")
     standpunkt = ausgaben["raeume"]["raeume"][0]["kamera"]["standpunkte"][0]
     assert standpunkt["auge"] is not None
+
+
+def test_ohne_bestellung_bleibt_der_multipass_aussen(monkeypatch, tmp_path):
+    """Die Vorgabe ist KEINE Innenansicht — wie `AUTO_RICHTUNGEN` aussen eine Richtung
+    kennt und nicht zwölf. Ein Gebäude mit zwanzig Räumen wären vierzig Renderläufe."""
+    import aiimaging.kette as kette_modul
+    gesehen = {}
+
+    def falscher_multipass(glb, out, **kw):
+        gesehen.update(kw)
+        return {"status": "ok", "depth_exr": str(tmp_path / "t.exr")}
+
+    monkeypatch.setattr(kette_modul.seams, "glb_zu_multipass", falscher_multipass)
+    knoten = Knoten(id="mp", art=kette_modul.ART_MULTIPASS,
+                    params={"aufloesung": 512, "samples": 8, "beauty": True,
+                            "material_id": True})
+    kette_modul._fuehre_multipass(
+        knoten=knoten, eingaben=[{"glb_path": "m.glb", "up_axis": "Y", "raeume": None}],
+        out_dir=tmp_path)
+
+    assert gesehen["auge"] is None and gesehen["blick_auf"] is None
+
+
+def test_eine_bestellte_innenansicht_erreicht_den_multipass(monkeypatch, tmp_path):
+    """Sonst wäre die ganze Raumrechnung wieder eine tote Kante — zum dritten Mal heute."""
+    import aiimaging.kette as kette_modul
+    gesehen = {}
+
+    def falscher_multipass(glb, out, **kw):
+        gesehen.update(kw)
+        return {"status": "ok", "depth_exr": str(tmp_path / "t.exr")}
+
+    monkeypatch.setattr(kette_modul.seams, "glb_zu_multipass", falscher_multipass)
+    raum = {"name": "Raum-Sued", "z_unten_m": 0.1, "hoehe_m": 2.4,
+            "grundriss_m": [[7.7, 0.3], [7.7, 2.5], [5.0, 2.5], [5.0, 0.3]]}
+    raeume = {"status": "ok",
+              "raeume": [{"raum": raum, "kamera": raumkamera.standpunkte(raum)}]}
+
+    knoten = Knoten(id="mp", art=kette_modul.ART_MULTIPASS,
+                    params={"aufloesung": 512, "samples": 8, "beauty": True,
+                            "material_id": True,
+                            "innenraum": {"raum": "Raum-Sued", "art": "frontal"}})
+    kette_modul._fuehre_multipass(
+        knoten=knoten,
+        eingaben=[{"glb_path": "m.glb", "up_axis": "Y", "raeume": raeume}],
+        out_dir=tmp_path)
+
+    assert gesehen["auge"] is not None, "die Innenansicht kommt gar nicht an"
+    assert gesehen["auge"][2] == pytest.approx(1.3), "halbe Raumhöhe ab z_unten"
+    assert gesehen["auge"][2] == pytest.approx(gesehen["blick_auf"][2]), "Kamera waagrecht"
+
+
+def test_eine_unerfuellbare_innenansicht_rendert_NICHT_ersatzweise_aussen(monkeypatch, tmp_path):
+    """Wer innen bestellt und aussen bekommt, sieht es dem Ergebnis nicht an."""
+    import aiimaging.kette as kette_modul
+
+    def darf_nicht_laufen(glb, out, **kw):
+        raise AssertionError("es darf gar nicht erst gerendert werden")
+
+    monkeypatch.setattr(kette_modul.seams, "glb_zu_multipass", darf_nicht_laufen)
+    knoten = Knoten(id="mp", art=kette_modul.ART_MULTIPASS,
+                    params={"aufloesung": 512, "samples": 8, "beauty": True,
+                            "material_id": True, "innenraum": {"raum": "Kueche"}})
+
+    ergebnis = kette_modul._fuehre_multipass(
+        knoten=knoten,
+        eingaben=[{"glb_path": "m.glb", "up_axis": "Y", "raeume": None}],
+        out_dir=tmp_path)
+
+    assert ergebnis["status"] == kette_modul.STATUS_FEHLER
+    assert "Innenansicht verlangt" in ergebnis["error"]

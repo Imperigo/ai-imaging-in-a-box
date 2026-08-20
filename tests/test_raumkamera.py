@@ -273,3 +273,69 @@ def test_der_verdeckungstest_fehlt_und_das_steht_im_modul():
 
     assert "Verdeckungstest" in fliesstext
     assert "notwendig und nicht hinreichend" in fliesstext
+
+
+# ======================================================================================
+# Auswahl — und warum nicht ausgewichen wird
+# ======================================================================================
+
+def _raumliste():
+    """Die Form, in der `kette._raeume_lesen` seine Räume liefert."""
+    return {"status": "ok", "raeume": [
+        {"raum": L_FOERMIG, "kamera": rk.standpunkte(L_FOERMIG)},
+        {"raum": RECHTECKIG, "kamera": rk.standpunkte(RECHTECKIG)},
+    ]}
+
+
+def test_ohne_angabe_kommt_der_erste_raum_MIT_standpunkt():
+    """`None` heisst nicht „irgendeiner": Einen Raum ohne Standpunkt zu wählen und dann
+    zu scheitern wäre eine Auswahl, die keine ist."""
+    w = rk.waehle(_raumliste())
+
+    assert w["gefunden"] is True
+    assert w["raum"] == "Raum-Nord"
+    assert w["standpunkt"]["art"] == rk.ART_FRONTAL
+
+
+def test_ein_raum_laesst_sich_beim_namen_nennen():
+    w = rk.waehle(_raumliste(), raum="Raum-Sued", art=rk.ART_UEBER_ECK)
+
+    assert w["raum"] == "Raum-Sued"
+    assert w["standpunkt"]["art"] == rk.ART_UEBER_ECK
+
+
+def test_auf_einen_anderen_raum_wird_NICHT_ausgewichen():
+    """Ein stiller Ersatz wäre ein anderes Bild als das bestellte — und niemand sähe es
+    dem Ergebnis an."""
+    w = rk.waehle(_raumliste(), raum="Kueche")
+
+    assert w["gefunden"] is False
+    assert w["standpunkt"] is None
+    assert "Raum-Nord" in w["grund"], "der Befund soll nennen, was es stattdessen gibt"
+
+
+def test_auf_eine_andere_BLICKART_wird_ebenfalls_nicht_ausgewichen():
+    """Wer frontal verlangt, bekommt nicht über Eck."""
+    kammer = {"name": "zu eng", "z_unten_m": 0.0, "hoehe_m": 2.4,
+              "grundriss_m": [[0, 0], [0.4, 0], [0.4, 0.4], [0, 0.4]]}
+    liste = {"status": "ok",
+             "raeume": [{"raum": kammer, "kamera": rk.standpunkte(kammer)}]}
+
+    w = rk.waehle(liste, art=rk.ART_FRONTAL)
+
+    assert w["gefunden"] is False
+    assert w["standpunkt"] is None
+
+
+def test_ohne_raeume_heisst_es_NICHT_GEMESSEN():
+    """Entweder wurde über eine glb eingestiegen — dann gibt es keinen Raumbegriff — oder
+    der Raumleser fand nichts. Beides ist etwas anderes als „hat keine Räume"."""
+    w = rk.waehle(None)
+
+    assert w["gefunden"] is False
+    assert "NICHT GEMESSEN" in w["grund"]
+
+
+def test_eine_erfundene_blickart_wird_abgewiesen():
+    with pytest.raises(rk.RaumkameraError, match="art ist"):
+        rk.waehle(_raumliste(), art="von_oben")

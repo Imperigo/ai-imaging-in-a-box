@@ -941,6 +941,25 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
 
       Der Test, der die Lücke offenhielt, ist **gelöscht** und nicht angepasst worden —
       so, wie es in seinem eigenen Docstring stand.
+- [ ] **ERSTER BEOBACHTETER FEHLALARM des Stillstandswächters (22.08.).** Der echte
+      Blender-Lauf in `test_kette.py` brach ab mit *„seit 10 s kein Fortschritt"* — und
+      war kerngesund: Drei Wiederholungen danach liefen in 3,7 bis 8,2 s durch. Der
+      Unterschied war die **Last**: Während des Fehlschlags lief im Hintergrund eine volle
+      Suite.
+
+      Die Zahlen: Blender startet auf dieser Maschine in 1,3 s (kalt) bzw. 0,4 s (warm),
+      der ganze Lauf braucht im Leerlauf rund 4 s. Die Frist ist
+      `HERZSCHLAG_TAKT_S × HERZSCHLAG_AUSFAELLE = 2,0 × 5 = 10 s` — also nur etwa das
+      Zweieinhalbfache eines gesunden Laufs. **Das ist knapp**, und unter Last reicht es
+      nicht: Der Herzschlag ist ein gewöhnlicher Python-Faden und wird bei Gedränge
+      einfach nicht mehr eingeplant.
+
+      **NICHT geändert.** Eine Sicherheitsschwelle nach einer einzigen Beobachtung in
+      einem künstlich ausgelasteten Behälter zu lockern, wäre genau das Ablesen statt
+      Kalibrieren, gegen das dieses Projekt seit Tagen antritt. Aber es gehört gemessen —
+      auf der HomeStation, wo echte Aufträge laufen und die Maschine ohnehin belastet ist.
+      **Ein Fehlalarm bricht einen gesunden Auftrag ab**, und das ist teurer als ein
+      Stillstand, der ein paar Sekunden später auffällt.
 - [ ] **Was die Kante kostet, gemessen: 0,94 s bei 1600×1000.** `_randpunkte` läuft in
       reinem Python über jeden Bildpunkt. Je Kamera fällt das viermal an (ein echtes Bild
       und drei Kontrollbilder), also rund vier Sekunden — gegen ~97 s Renderzeit je Kamera
