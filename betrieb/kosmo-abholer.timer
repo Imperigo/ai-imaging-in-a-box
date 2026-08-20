@@ -1,0 +1,14 @@
+[Unit]
+Description=Taktgeber fuer den KosmoVis-Abholer
+
+[Timer]
+# Warum ein Timer und keine Schleife im Programm: `abholer.durchgang` ist mit Absicht
+# EIN Durchgang — «wer wie oft nachsieht, ist eine Betriebsfrage, und sie gehoert nicht
+# in eine Bibliothek» (abholer.py). Der Takt steht hier, wo man ihn sieht und aendern kann.
+OnBootSec=2min
+OnUnitInactiveSec=30s
+AccuracySec=5s
+Unit=kosmo-abholer.service
+
+[Install]
+WantedBy=timers.target
