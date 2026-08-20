@@ -1255,6 +1255,338 @@ ANTEIL_GEMESSEN_NIEDRIG = 0.20
 ANTEIL_GEMESSEN_HOCH = 0.60
 
 
+# ======================================================================================
+# Die Tiefenkante an der Maskengrenze — die zweite Frage
+# ======================================================================================
+#
+# ρ über der Maske fragt: **Stimmt die Tiefenstaffelung dort, wo das Bauwerk stehen
+# müsste?** Es fragt nicht, ob dort überhaupt etwas steht. Gemessen (`auf-20260821-27`):
+#
+#     H1 · Bauwerk ganz weg    ρ −0.6861  — von ρ NICHT gefangen
+#     H2 · 20 m versetzt       ρ −0.6854  — von ρ NICHT gefangen
+#
+# Beide liegen über dem Rauschboden (−0.5207) und sähen an ρ allein brauchbar aus. Und
+# `geom_iou`, das diese Frage einmal beantworten sollte, **belohnt** die Abwesenheit:
+# Das leere Grundstück erreichte 0.9848 gegen 0.9703 beim perfekten Bild
+# (`auf-20260821-26`) — weil das Bauwerk die einzige Stelle war, an der Soll und Ist sich
+# überhaupt unterscheiden konnten.
+#
+# Die Kante fragt die andere Hälfte: **Steht an der Silhouettengrenze ein Tiefensprung?**
+# Ein Bauwerk erzeugt dort einen — vorne die Fassade, dahinter der ferne Hintergrund. Ein
+# leeres Grundstück nicht, weil Boden und Himmel stetig ineinander übergehen.
+#
+#     perfekt +0.1615 | H1 +0.0006 | H2 +0.0007 | H3 +0.0066 | H4 +0.0021
+#
+# **H3 und H4 zeigen ebenfalls keine Kante, und das ist kein Mangel, sondern die
+# Definition:** Die Maske ist die Silhouette des RICHTIGEN Bauwerks. Ein gedrehtes oder
+# anders geformtes hat seine Kanten woanders; an dieser Grenze steht dann Grund, genau wie
+# bei Abwesenheit. Die Kante fragt nicht „steht dort etwas", sondern „steht dort DAS
+# RICHTIGE" — und genau die Fälle, die sie verfehlt, fängt ρ.
+#
+# > **Existenz und Richtigkeit sind zwei Fragen und brauchen zwei Messungen.**
+#
+# Das ist der Ertrag der ganzen Kette `auf-25` bis `auf-27`, und es ist zugleich die
+# Diagnose für den Konstruktionsfehler von ``sqrt(|ρ| · geom_iou)``: Ein einzelner Score
+# verschmolz zwei Fragen, die getrennt gehören.
+
+#: Wie viele Randpunkte es mindestens braucht. **Deutlich weniger als Maskenpunkte** —
+#: der Rand einer Fläche wächst mit ihrem Umfang und nicht mit ihrem Inhalt. Bei der
+#: gemessenen Bauwerksmaske (44 604 Punkte) liegt der Rand in der Grössenordnung von
+#: tausend. Die Zahl ist **gesetzt, nicht kalibriert**, und sie steht aus demselben Grund
+#: da wie ``MIN_GEMEINSAME_PUNKTE``: Ein Median über eine Handvoll Punkte ist Rauschen
+#: mit Dezimalpunkt.
+MIN_RANDPUNKTE = 16
+
+#: Kurzform des Rechenwegs. Vierter Weg im selben Modul — ohne diese Angabe wäre eine
+#: Zahl später nicht mehr einzuordnen.
+METHODE_KANTE = ("(Median innen − Median aussen) an der Maskengrenze, geteilt durch die "
+                 "Spanne der ganzen Schätzkarte, gerichtet über die Polarität")
+
+
+def kante_an_maskengrenze(ist: Sequence[float], maske: Sequence[bool], *,
+                          breite: int, polaritaet: int | None = None) -> dict:
+    """Steht an der Silhouettengrenze ein Tiefensprung?
+
+    Args:
+        ist: die **geschätzte** Tiefenkarte. Die Soll-Karte wird hier nicht gebraucht —
+            sie steckt bereits in der Maske. Gefragt wird allein, ob das Bild an dieser
+            Grenze eine Kante zeigt.
+        maske: indexgleiche Wahrheitswerte, ``True`` = Bauwerk.
+        breite: Bildbreite in Punkten. **Pflichtangabe**: Die Karten kommen flach herein,
+            und ohne Breite gibt es keine Nachbarschaft und damit keinen Rand.
+        polaritaet: :data:`POLARITAET_TIEFE` oder :data:`POLARITAET_DISPARITAET`, wenn
+            gemessen. ``None`` heisst *ungemessen*; dann bleibt ``gerichtet`` ``None``.
+
+    Returns:
+        ``{roh, gerichtet, n_innen, n_aussen, spanne, methode, polaritaet, warnungen}``
+
+        * ``roh`` — ``(Median innen − Median aussen) / Spanne(ist)``, ohne Richtung.
+        * ``gerichtet`` — ``−polaritaet · roh``. **Positiv heisst: dort steht etwas.**
+
+    **Warum das Vorzeichen so herum steht.** Das Bauwerk ist *näher* als das, was hinter
+    seiner Silhouette liegt. Was „näher" für die Zahl heisst, hängt an der Polarität:
+
+    * Disparität (−1, nah = gross): innen **grösser** → ``roh`` positiv
+    * Tiefe (+1, nah = klein): innen **kleiner** → ``roh`` negativ
+
+    In beiden Fällen soll ``gerichtet`` positiv sein, also ``gerichtet = −polaritaet · roh``.
+    Gegenprobe an der Messung: Der Schätzer ist Disparität, das perfekte Bild lieferte
+    **+0.1615 roh** — positiv, wie es sein muss.
+
+    **Warum durch die Spanne geteilt wird.** Ohne das misst man die Skala des Schätzers
+    statt der Kante: Ein Modell, das seine Ausgabe auf 0–1000 legt, bekäme das
+    Tausendfache eines Modells mit 0–1, bei identischer Geometrie.
+
+    Raises:
+        QaError: ``breite`` passt nicht zur Länge, ``maske`` fehlt oder ist ungleich lang.
+
+    **Nicht gemessen ist nicht null.** Zu wenige Randpunkte, eine Maske ohne Grenze (leer
+    oder das ganze Bild) und eine Schätzkarte ohne Spanne liefern ``roh = None`` mit
+    Begründung — nicht 0, was „keine Kante" hiesse und damit ein Urteil wäre.
+    """
+    werte = _als_zahlen(ist, "ist")
+    if maske is None:
+        raise QaError(
+            "maske fehlt. Ohne Maske gibt es keine Grenze, an der sich eine Kante messen "
+            "liesse — und 'alle Punkte' wäre keine Grenze, sondern das ganze Bild."
+        )
+    m = _als_wahrheitswerte(maske, "maske")
+    if len(m) != len(werte):
+        raise QaError(
+            f"maske und ist sind unterschiedlich lang ({len(m)} vs. {len(werte)}). "
+            f"Abschneiden wäre eine stillschweigende Reparatur mit falschem Ergebnis."
+        )
+    if isinstance(breite, bool) or not isinstance(breite, int) or breite <= 0:
+        raise QaError(f"breite muss eine positive ganze Zahl sein, war {breite!r}.")
+    if len(werte) % breite != 0:
+        raise QaError(
+            f"Die Karte hat {len(werte)} Punkte, das ist kein Vielfaches der Breite "
+            f"{breite}. Eine der beiden Angaben stimmt nicht — geraten wird hier nicht."
+        )
+
+    hoehe = len(werte) // breite
+    antwort = {"roh": None, "gerichtet": None, "n_innen": 0, "n_aussen": 0,
+               "spanne": None, "methode": METHODE_KANTE, "polaritaet": polaritaet,
+               "warnungen": []}
+
+    innen, aussen = _randpunkte(m, breite, hoehe)
+    antwort["n_innen"], antwort["n_aussen"] = len(innen), len(aussen)
+
+    if not innen or not aussen:
+        antwort["warnungen"].append(
+            f"Die Maske hat keine Grenze: {len(innen)} Randpunkte innen, {len(aussen)} "
+            f"aussen. Eine leere Maske und eine, die das ganze Bild füllt, haben beide "
+            f"keinen Rand — und ohne Rand gibt es nichts zu messen. NICHT GEMESSEN, "
+            f"weder 0 noch 1.")
+        return antwort
+    if len(innen) < MIN_RANDPUNKTE or len(aussen) < MIN_RANDPUNKTE:
+        antwort["warnungen"].append(
+            f"Zu wenige Randpunkte: {len(innen)} innen, {len(aussen)} aussen, nötig sind "
+            f"je {MIN_RANDPUNKTE}. Ein Median über eine Handvoll Punkte ist Rauschen mit "
+            f"Dezimalpunkt. NICHT GEMESSEN.")
+        return antwort
+
+    spanne = max(werte) - min(werte)
+    antwort["spanne"] = spanne
+    if spanne <= 0.0:
+        antwort["warnungen"].append(
+            "Die Schätzkarte hat keine Spanne — alle Punkte tragen denselben Wert. Ein "
+            "massstabsfreies Mass liesse sich daraus nur durch Division durch null "
+            "gewinnen. NICHT GEMESSEN. (Ein Bild ohne jede Tiefenstaffelung ist für sich "
+            "schon ein Befund.)")
+        return antwort
+
+    roh = (_median([werte[i] for i in innen]) - _median([werte[i] for i in aussen])) / spanne
+    antwort["roh"] = roh
+
+    if polaritaet is None:
+        antwort["warnungen"].append(
+            "Polarität ungemessen — 'roh' steht da, 'gerichtet' nicht. Ohne Richtung ist "
+            "nicht entscheidbar, ob ein positives Vorzeichen 'dort steht etwas' oder "
+            "'dort ist ein Loch' bedeutet: Bei Disparität liegt das Bauwerk oben, bei "
+            "metrischer Tiefe unten. Abhilfe: polaritaet_aus_messungen.")
+        return antwort
+    if polaritaet not in (POLARITAET_TIEFE, POLARITAET_DISPARITAET):
+        raise QaError(
+            f"polaritaet muss {POLARITAET_TIEFE:+d}, {POLARITAET_DISPARITAET:+d} oder "
+            f"None sein, war {polaritaet!r}.")
+
+    antwort["gerichtet"] = -polaritaet * roh
+    return antwort
+
+
+def _randpunkte(maske: list[bool], breite: int, hoehe: int) -> tuple[list[int], list[int]]:
+    """Die Punkte beiderseits der Maskengrenze, als Indizes in die flache Karte.
+
+    **Innen** ist ein Maskenpunkt mit mindestens einem 4-Nachbarn ausserhalb, **aussen**
+    umgekehrt. Vier Nachbarn und nicht acht: Die Diagonalen machen den Rand dicker, ohne
+    ihn schärfer zu machen, und ein dickerer Rand mischt Fassade und Hintergrund in
+    beide Mediane.
+
+    Der Bildrand zählt **nicht** als Maskengrenze. Berührt das Bauwerk die Bildkante, ist
+    dort keine Silhouette, sondern ein Anschnitt — die Tiefe dahinter ist nicht im Bild,
+    und ein Sprung liesse sich dort nicht messen, sondern nur erfinden.
+    """
+    innen: list[int] = []
+    aussen: list[int] = []
+    for y in range(hoehe):
+        for x in range(breite):
+            i = y * breite + x
+            # Am Bildrand fehlt mindestens ein Nachbar — siehe Docstring.
+            if x == 0 or y == 0 or x == breite - 1 or y == hoehe - 1:
+                continue
+            hier = maske[i]
+            nachbarn = (maske[i - 1], maske[i + 1], maske[i - breite], maske[i + breite])
+            if hier and not all(nachbarn):
+                innen.append(i)
+            elif not hier and any(nachbarn):
+                aussen.append(i)
+    return innen, aussen
+
+
+def _median(werte: list[float]) -> float:
+    """Median statt Mittelwert — ein einzelner Ausreisser am Rand darf nicht durchschlagen.
+
+    Randpunkte liegen dort, wo Resampling und Schätzrauschen am stärksten sind; genau
+    dort ist ein Mittelwert am wenigsten belastbar.
+    """
+    s = sorted(werte)
+    n = len(s)
+    mitte = n // 2
+    return s[mitte] if n % 2 else (s[mitte - 1] + s[mitte]) / 2.0
+
+
+# ======================================================================================
+# Das Paarurteil — beide Zahlen führen, keine verrechnen
+# ======================================================================================
+
+#: Schwelle für die gerichtete Rangkorrelation über der Maske.
+#:
+#: Die HomeStation schlug ``ρ ≤ −0.80`` vor (`auf-20260821-27`). Hier steht sie als
+#: **gerichteter** Wert ``≥ +0.80``: Das ist dieselbe Aussage für diesen Schätzer, gilt
+#: aber auch für einen mit umgekehrter Polarität. Eine Schwelle auf dem rohen ρ wäre an
+#: die Konvention *eines* Schätzers gebunden, ohne das irgendwo zu sagen.
+#:
+#: **ABGELESEN, NICHT KALIBRIERT.** Sieben Fälle aus einer Szene. Die HomeStation sagt
+#: das selbst dazu, und der Unterschied ist der, an dem dieses Projekt seit Phase 0
+#: arbeitet.
+PAAR_RHO_SCHWELLE = 0.80
+
+#: Schwelle für die gerichtete Tiefenkante. Ebenfalls abgelesen (`auf-20260821-27`).
+#: Trennschärfe dort: 0.0589 zwischen der kleinsten Kante der Anwesenden und der grössten
+#: der Abwesenden — Faktor 10, brauchbar.
+PAAR_KANTE_SCHWELLE = 0.05
+
+
+def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
+               rho_schwelle: float = PAAR_RHO_SCHWELLE,
+               kante_schwelle: float = PAAR_KANTE_SCHWELLE) -> dict:
+    """Beide Messungen zusammen — **ohne sie zu verrechnen**.
+
+    Args:
+        rho_ergebnis: Antwort von :func:`rho_ueber_maske`, oder ``None``.
+        kante_ergebnis: Antwort von :func:`kante_an_maskengrenze`, oder ``None``.
+
+    Returns:
+        ``{bestanden, gemessen, rho, kante, traeger, schwellen, begruendung}``
+
+        * ``bestanden`` — ``None``, solange auch nur eine der beiden Zahlen fehlt.
+          **Nicht** „bestanden aufgrund der anderen": Ein Urteil aus der halben Messung
+          wäre eine Behauptung über die Hälfte, die niemand angesehen hat.
+        * ``traeger`` — welches Mass ein „durchgefallen" trägt: ``"rho"``, ``"kante"``,
+          ``"beide"`` oder ``None``. *„ρ in Ordnung, Kante fehlt"* ist eine andere
+          Diagnose als umgekehrt, und der Aufrufer soll sie unterscheiden können.
+
+    **Kein Score, und das ist der ganze Punkt.** Kein Produkt, kein geometrisches Mittel,
+    keine Verrechnung. ``sqrt(|ρ| · geom_iou)`` ist genau daran gescheitert: Es
+    verschmolz **Existenz** und **Richtigkeit** zu einer Zahl, und der Faktor, der die
+    Existenz beantworten sollte, belohnte am Ende die Abwesenheit — ein leeres Grundstück
+    erreichte `geom_iou` 0.9848 gegen 0.9703 beim perfekten Bild (`auf-20260821-26`).
+
+    Die beiden Masse decken **zusammen** alle vier gemessenen Halluzinationsfälle ab und
+    **einzeln keiner von beiden** — gemessen gegen den jeweiligen **Rauschboden**, nicht
+    gegen die Schwellen unten:
+
+    ==========================  ========  =======  ================
+    Fall                        ρ         Kante    trennt vom Boden
+    ==========================  ========  =======  ================
+    Bauwerk ganz weg            −0.6861   +0.0006  **Kante**
+    20 m versetzt               −0.6854   +0.0007  **Kante**
+    andere Kubatur              +0.3842   +0.0066  **ρ**
+    90° gedreht                 −0.4546   +0.0021  **ρ**
+    ==========================  ========  =======  ================
+
+    **Diese Spalte ist genau zu lesen, sonst führt sie in die Irre.** Sie sagt, welches
+    Mass den Fall vom Rauschboden (:data:`RAUSCHBODEN_UEBER_MASKE`, −0.5207) trennt: ρ
+    liegt bei „Bauwerk weg" mit −0.686 zwar über dem Boden, aber so knapp, dass es nichts
+    belegt — die Kante dagegen fällt von +0.1615 auf +0.0006, um mehr als zwei
+    Zehnerpotenzen. Gegen die **Schwellen** dieser Funktion fallen H1 und H2 auch an ρ
+    durch, weil ``0.80`` strenger ist als der Rauschboden. Beides ist wahr und meint
+    Verschiedenes: Die Spalte beschreibt, was ein Mass **unterscheiden kann**, die
+    Schwelle, was es **durchlässt**.
+
+    .. warning::
+       **Dieser Paartest würde jedes Bild abweisen, das dieses Projekt je erzeugt hat.**
+       Alle fünf gemessenen erzeugten Bilder liegen über der Maske schlechter als weisses
+       Rauschen (:data:`RAUSCHBODEN_UEBER_MASKE`, −0.5207); ``0.80`` ist für sie
+       unerreichbar.
+
+       Das ist **kein Argument gegen die Schwelle.** Nicht sie ist zu streng — unsere
+       Bilder sind geometrisch schlecht, und bis heute konnten wir es nur nicht messen.
+       Ein Urteil, das sie durchliesse, wäre ein Urteil ohne Aussage. Wer die Schwelle
+       senkt, weil sonst nichts besteht, hat nicht kalibriert, sondern aufgegeben.
+    """
+    rho = (rho_ergebnis or {}).get("gerichtet")
+    kante = (kante_ergebnis or {}).get("gerichtet")
+    antwort = {
+        "bestanden": None, "gemessen": False, "rho": rho, "kante": kante,
+        "traeger": None,
+        "schwellen": {"rho": rho_schwelle, "kante": kante_schwelle},
+        "begruendung": "",
+    }
+
+    fehlt = [n for n, w in (("ρ über der Maske", rho), ("Tiefenkante", kante)) if w is None]
+    if fehlt:
+        antwort["begruendung"] = (
+            f"NICHT GEMESSEN: {' und '.join(fehlt)} liegt nicht vor. Ein Urteil aus der "
+            f"halben Messung wäre eine Behauptung über die Hälfte, die niemand angesehen "
+            f"hat — und die beiden Masse beantworten verschiedene Fragen: ρ die "
+            f"Richtigkeit, die Kante die Existenz. Für die fehlende gibt es keinen "
+            f"Ersatz.")
+        return antwort
+
+    rho_ok = rho >= rho_schwelle
+    kante_ok = kante >= kante_schwelle
+    antwort["gemessen"] = True
+    antwort["bestanden"] = rho_ok and kante_ok
+    if not rho_ok and not kante_ok:
+        antwort["traeger"] = "beide"
+    elif not rho_ok:
+        antwort["traeger"] = "rho"
+    elif not kante_ok:
+        antwort["traeger"] = "kante"
+
+    teile = [f"ρ (gerichtet) {rho:+.4f} gegen {rho_schwelle:.2f} — "
+             f"{'in Ordnung' if rho_ok else 'ZU NIEDRIG'}",
+             f"Kante {kante:+.4f} gegen {kante_schwelle:.2f} — "
+             f"{'in Ordnung' if kante_ok else 'ZU NIEDRIG'}"]
+    if antwort["bestanden"]:
+        schluss = "Beide Masse tragen."
+    elif antwort["traeger"] == "kante":
+        schluss = ("Die Tiefenstaffelung stimmt, aber an der Silhouettengrenze steht kein "
+                   "Sprung — das Muster eines Bildes, in dem das Bauwerk FEHLT oder "
+                   "anderswo steht.")
+    elif antwort["traeger"] == "rho":
+        schluss = ("An der Grenze steht ein Sprung, aber die Tiefen dahinter stimmen "
+                   "nicht — das Muster einer FALSCHEN Kubatur am richtigen Ort.")
+    else:
+        schluss = "Beide Masse fallen durch."
+    antwort["begruendung"] = " · ".join(teile) + " · " + schluss + (
+        "  [Schwellen ABGELESEN an sieben Fällen aus einer Szene (auf-20260821-27), "
+        "nicht kalibriert.]")
+    return antwort
+
+
 def noetiges_iou(schwelle: float = SCHWELLE_GEOMETRIE,
                  spearman: float = SPEARMAN_BESTENFALLS) -> float:
     """Welches ``geom_iou`` eine Schwelle bei gegebener Rangkorrelation verlangt.

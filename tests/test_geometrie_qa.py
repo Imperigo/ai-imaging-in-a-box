@@ -1558,3 +1558,235 @@ def test_der_maskenweg_laesst_den_bestehenden_score_unangetastet():
     assert METHODE.startswith("sqrt(abs(spearman) * geom_iou)")
     assert geometrie_qa.METHODE_GERICHTET.startswith(
         "sqrt(max(0, polaritaet * spearman) * geom_iou)")
+
+
+# ======================================================================================
+# Die Tiefenkante an der Maskengrenze — die zweite der beiden Fragen
+# ======================================================================================
+
+def _quadratmaske(breite=32, von=8, bis=23):
+    return [(von <= x <= bis and von <= y <= bis)
+            for y in range(breite) for x in range(breite)]
+
+
+def test_ein_tiefensprung_an_der_grenze_wird_gefunden():
+    breite = 32
+    maske = _quadratmaske(breite)
+    ist = [(9.0 if m else 1.0) for m in maske]     # Disparität: nah = gross
+
+    e = geometrie_qa.kante_an_maskengrenze(
+        ist, maske, breite=breite, polaritaet=geometrie_qa.POLARITAET_DISPARITAET)
+
+    assert e["roh"] == pytest.approx(1.0)
+    assert e["gerichtet"] == pytest.approx(1.0)
+
+
+def test_eine_glatte_rampe_zeigt_keine_kante():
+    """Das leere Grundstück: Boden und Himmel gehen stetig ineinander über.
+
+    Genau der Fall, den ρ **nicht** von einem echten Bild trennt (−0.6861 gegen einen
+    Rauschboden von −0.5207) und den `geom_iou` sogar belohnt (0.9848 gegen 0.9703).
+    """
+    breite = 32
+    maske = _quadratmaske(breite)
+    rampe = [1.0 + 0.25 * y for y in range(breite) for _x in range(breite)]
+
+    e = geometrie_qa.kante_an_maskengrenze(
+        rampe, maske, breite=breite, polaritaet=geometrie_qa.POLARITAET_DISPARITAET)
+
+    assert e["gerichtet"] == pytest.approx(0.0, abs=1e-9)
+
+
+@pytest.mark.parametrize("polaritaet,nah,fern", [
+    (geometrie_qa.POLARITAET_DISPARITAET, 9.0, 1.0),   # nah = gross
+    (geometrie_qa.POLARITAET_TIEFE, 1.0, 9.0),         # nah = klein
+])
+def test_beide_polaritaeten_ergeben_ein_POSITIVES_gerichtetes_mass(polaritaet, nah, fern):
+    """**Die Vorzeichenprobe.** Das Bauwerk ist näher als das dahinter — in beiden
+    Konventionen, und das gerichtete Mass muss das in beiden gleich sagen.
+
+    Ein verdrehtes Vorzeichen hier hiesse: Ein Bild MIT Bauwerk fiele durch und eines
+    ohne bestünde. Das ist die Art Fehler, die dieses Projekt schon zweimal gekostet hat.
+    """
+    breite = 32
+    maske = _quadratmaske(breite)
+    ist = [(nah if m else fern) for m in maske]
+
+    e = geometrie_qa.kante_an_maskengrenze(ist, maske, breite=breite, polaritaet=polaritaet)
+
+    assert e["gerichtet"] > 0.9, "in BEIDEN Konventionen positiv"
+
+
+def test_ohne_polaritaet_gibt_es_rohwert_aber_keine_richtung():
+    """Ohne Richtung ist nicht entscheidbar, ob ein positives Vorzeichen ein Bauwerk
+    oder ein Loch bedeutet."""
+    breite = 32
+    maske = _quadratmaske(breite)
+    ist = [(9.0 if m else 1.0) for m in maske]
+
+    e = geometrie_qa.kante_an_maskengrenze(ist, maske, breite=breite)
+
+    assert e["roh"] is not None
+    assert e["gerichtet"] is None
+    assert [w for w in e["warnungen"] if "Polarität ungemessen" in w]
+
+
+@pytest.mark.parametrize("maske_wert", [True, False])
+def test_eine_maske_ohne_grenze_ist_nicht_gemessen_und_nicht_null(maske_wert):
+    """Leer und ganzes Bild haben beide keinen Rand — und 0 hiesse „keine Kante",
+    also ein Urteil."""
+    breite = 32
+    maske = [maske_wert] * (breite * breite)
+    ist = [float(i) for i in range(breite * breite)]
+
+    e = geometrie_qa.kante_an_maskengrenze(
+        ist, maske, breite=breite, polaritaet=geometrie_qa.POLARITAET_DISPARITAET)
+
+    assert e["roh"] is None and e["gerichtet"] is None
+    assert [w for w in e["warnungen"] if "keine Grenze" in w]
+
+
+def test_zu_wenige_randpunkte_sind_ein_befund_und_kein_wert():
+    """Ein Median über eine Handvoll Punkte ist Rauschen mit Dezimalpunkt."""
+    breite = 8
+    maske = [(3 <= x <= 4 and 3 <= y <= 4) for y in range(breite) for x in range(breite)]
+    ist = [(9.0 if m else 1.0) for m in maske]
+
+    e = geometrie_qa.kante_an_maskengrenze(
+        ist, maske, breite=breite, polaritaet=geometrie_qa.POLARITAET_DISPARITAET)
+
+    assert e["roh"] is None
+    assert [w for w in e["warnungen"] if "Zu wenige Randpunkte" in w]
+
+
+def test_eine_karte_ohne_spanne_wird_nicht_durch_null_geteilt():
+    breite = 32
+    maske = _quadratmaske(breite)
+    flach = [5.0] * (breite * breite)
+
+    e = geometrie_qa.kante_an_maskengrenze(
+        flach, maske, breite=breite, polaritaet=geometrie_qa.POLARITAET_DISPARITAET)
+
+    assert e["roh"] is None
+    assert [w for w in e["warnungen"] if "keine Spanne" in w]
+
+
+def test_das_mass_ist_massstabsfrei():
+    """Ohne die Division durch die Spanne misst man die Skala des Schätzers.
+
+    Ein Modell, das seine Ausgabe auf 0–1000 legt, bekäme sonst das Tausendfache eines
+    Modells mit 0–1 — bei identischer Geometrie.
+    """
+    breite = 32
+    maske = _quadratmaske(breite)
+    klein = [(9.0 if m else 1.0) for m in maske]
+    gross = [w * 1000.0 for w in klein]
+
+    a = geometrie_qa.kante_an_maskengrenze(klein, maske, breite=breite)
+    b = geometrie_qa.kante_an_maskengrenze(gross, maske, breite=breite)
+
+    assert a["roh"] == pytest.approx(b["roh"])
+
+
+def test_eine_breite_die_nicht_aufgeht_wird_abgewiesen():
+    with pytest.raises(geometrie_qa.QaError, match="Vielfaches der Breite"):
+        geometrie_qa.kante_an_maskengrenze([1.0] * 10, [True] * 10, breite=3)
+
+
+def test_ohne_maske_gibt_es_keine_grenze_und_das_ist_ein_fehler():
+    """`None` als „alle Punkte" zu deuten hiesse: das ganze Bild als Grenze."""
+    with pytest.raises(geometrie_qa.QaError, match="maske fehlt"):
+        geometrie_qa.kante_an_maskengrenze([1.0] * 16, None, breite=4)
+
+
+# ======================================================================================
+# Das Paarurteil
+# ======================================================================================
+
+#: Die gemessenen Fälle aus `auf-20260821-27`, als GERICHTETE Werte (Polarität −1).
+GEMESSENE_FAELLE = {
+    "perfekt":      (0.9874, 0.1615),
+    "H1_weg":       (0.6861, 0.0006),
+    "H2_versetzt":  (0.6854, 0.0007),
+    "H3_kubatur":   (-0.3842, 0.0066),
+    "H4_gedreht":   (0.4546, 0.0021),
+}
+
+
+def test_nur_das_perfekte_bild_besteht_den_paartest():
+    """Die gemessene Tabelle, nachgerechnet — sie ist eine Messung und keine Erfindung."""
+    ergebnisse = {
+        name: geometrie_qa.paarurteil({"gerichtet": r}, {"gerichtet": k})["bestanden"]
+        for name, (r, k) in GEMESSENE_FAELLE.items()
+    }
+
+    assert ergebnisse["perfekt"] is True
+    assert all(v is False for n, v in ergebnisse.items() if n != "perfekt"), ergebnisse
+
+
+def test_die_kante_trennt_die_abwesenheit_und_rho_die_falsche_form():
+    """**Der Ertrag der ganzen Kette:** Jedes Mass trennt, was das andere nicht trennt.
+
+    Geprüft am Rauschboden, nicht an der Schwelle — die Spalte „trennt vom Boden" im
+    Docstring meint genau das. ρ liegt bei „Bauwerk weg" mit 0.686 knapp über dem Boden
+    (0.5207) und belegt damit nichts; die Kante fällt von 0.1615 auf 0.0006.
+    """
+    boden = abs(geometrie_qa.RAUSCHBODEN_UEBER_MASKE)
+    perfekt_rho, perfekt_kante = GEMESSENE_FAELLE["perfekt"]
+
+    for name in ("H1_weg", "H2_versetzt"):
+        rho, kante = GEMESSENE_FAELLE[name]
+        assert rho > boden, f"{name}: ρ liegt ÜBER dem Rauschboden — es trennt nicht"
+        assert kante < perfekt_kante / 100, f"{name}: die Kante bricht ein"
+
+    for name in ("H3_kubatur", "H4_gedreht"):
+        rho, kante = GEMESSENE_FAELLE[name]
+        assert rho < boden, f"{name}: ρ fällt unter den Rauschboden — es trennt"
+        assert kante < perfekt_kante / 10, f"{name}: die Kante trennt hier NICHT"
+    assert perfekt_rho > boden
+
+
+def test_eine_halbe_messung_ergibt_kein_urteil():
+    """Ein Urteil aus der halben Messung wäre eine Behauptung über die Hälfte, die
+    niemand angesehen hat — und die beiden Masse beantworten verschiedene Fragen."""
+    u = geometrie_qa.paarurteil({"gerichtet": 0.99}, None)
+
+    assert u["bestanden"] is None
+    assert u["gemessen"] is False
+    assert "NICHT GEMESSEN" in u["begruendung"]
+
+
+def test_das_urteil_nennt_welches_mass_es_traegt():
+    """„ρ in Ordnung, Kante fehlt" ist eine andere Diagnose als umgekehrt."""
+    nur_kante_fehlt = geometrie_qa.paarurteil({"gerichtet": 0.99}, {"gerichtet": 0.001})
+    nur_rho_fehlt = geometrie_qa.paarurteil({"gerichtet": 0.10}, {"gerichtet": 0.20})
+
+    assert nur_kante_fehlt["traeger"] == "kante"
+    assert "FEHLT oder" in nur_kante_fehlt["begruendung"]
+    assert nur_rho_fehlt["traeger"] == "rho"
+    assert "FALSCHEN Kubatur" in nur_rho_fehlt["begruendung"]
+
+
+def test_das_paarurteil_rechnet_die_beiden_zahlen_NICHT_zusammen():
+    """**Der ganze Punkt.** `sqrt(|ρ| · geom_iou)` ist daran gescheitert, zwei Fragen zu
+    einer Zahl zu verschmelzen.
+
+    Geprüft am Verhalten und nicht am Quelltext: Zwei Paare mit gleichem Produkt, aber
+    verschiedener Verteilung, müssen verschieden ausgehen. Ein Score könnte sie nicht
+    unterscheiden.
+    """
+    a = geometrie_qa.paarurteil({"gerichtet": 0.90}, {"gerichtet": 0.10})   # beide ok
+    b = geometrie_qa.paarurteil({"gerichtet": 0.30}, {"gerichtet": 0.30})   # ρ fällt
+
+    assert a["rho"] * a["kante"] == pytest.approx(b["rho"] * b["kante"])
+    assert a["bestanden"] is True and b["bestanden"] is False
+    assert "score" not in a and "score" not in b
+
+
+def test_die_schwellen_sind_als_abgelesen_gekennzeichnet():
+    """Sieben Fälle aus einer Szene sind eine Ablesung und keine Kalibrierung — und wer
+    die Zahl später liest, muss das erfahren, ohne den Quelltext zu öffnen."""
+    u = geometrie_qa.paarurteil({"gerichtet": 0.99}, {"gerichtet": 0.20})
+
+    assert "ABGELESEN" in u["begruendung"]
+    assert "nicht kalibriert" in u["begruendung"]

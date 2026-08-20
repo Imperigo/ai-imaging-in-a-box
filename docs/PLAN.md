@@ -903,13 +903,26 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
       schlecht. Ein Tor, das sie durchlässt, wäre ein Tor ohne Aussage. Die Reihenfolge
       der nächsten Arbeit steht damit fest — **erst die Bilder, dann die Schwelle**, und
       die Kamera zuerst.
-- [ ] **Zu bauen: `kante_an_maskengrenze` neben `rho_ueber_maske`**, und ein Urteil, das
-      **beide** Zahlen führt statt sie zu einem Score zu verrechnen. Ein geometrisches
-      Mittel wäre hier genau der Fehler, den `sqrt(|ρ|·geom_iou)` gemacht hat: Es
-      verschmilzt zwei Fragen, die getrennt gehören.
+- [x] **Gebaut (22.08.): `kante_an_maskengrenze` und `paarurteil`.** Die Kante misst den
+      Tiefensprung an der Silhouettengrenze — Median innen gegen Median aussen, geteilt
+      durch die Spanne der ganzen Schätzkarte (sonst misst man die Skala des Schätzers
+      statt der Kante). Gerichtet über die Polarität: ``gerichtet = −polaritaet · roh``,
+      hergeleitet und an **beiden** Konventionen geprüft, weil ein verdrehtes Vorzeichen
+      hier hiesse, dass ein Bild MIT Bauwerk durchfällt und eines ohne besteht.
 
-## (erledigt, Verlauf) Das Tor ist offen — der härteste Befund dieser Sitzung
+      Das `paarurteil` **führt beide Zahlen und verrechnet sie nicht**. Ein Test prüft
+      das am Verhalten statt am Quelltext: Zwei Paare mit gleichem Produkt, aber
+      verschiedener Verteilung, gehen verschieden aus — ein Score könnte sie nicht
+      unterscheiden. Fehlt eine der beiden Zahlen, ist das Urteil *nicht gemessen* und
+      nicht „bestanden aufgrund der anderen".
 
+      Nachgerechnet: Von den fünf gemessenen Fällen besteht nur das perfekte Bild.
+      Mutationsprobe: sieben Kappungen, sieben Mal rot, jedes Muster nachweislich
+      gegriffen.
+
+      **Der Vorbehalt steht als Warnung im Docstring, nicht in einer Fussnote:** Dieser
+      Paartest würde jedes Bild abweisen, das dieses Projekt je erzeugt hat. Wer die
+      Schwelle senkt, weil sonst nichts besteht, hat nicht kalibriert, sondern aufgegeben.
 - [ ] **Ein leeres Grundstück besteht die Geometrie-QA mit 0.95.** Gemessen
       (`auf-20260821-26`, `docs/GEOM_IOU_HALLUZINATION_2026-08-21.md`), Szene mit 59.8 %
       Bodenanteil:
