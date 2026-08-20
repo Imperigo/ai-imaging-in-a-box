@@ -789,6 +789,58 @@ def ist_controlnet_naht(pipeline, genommene_argumente) -> bool:
     return getattr(pipeline, "controlnet", None) is not None
 
 
+def _tiefe_als_rgb(bild):
+    """Tiefenkarte nach RGB — **skaliert, nicht geklippt**.
+
+    **DER FEHLER, DEN DAS BEHEBT (20.08.2026), und er erklärt ein halbes Dutzend
+    Messungen rückwirkend.** Unser Multipass schreibt ``tiefe_norm.png`` als 16-Bit-PNG
+    (PIL-Modus ``I;16``). Bis hierher stand an dieser Stelle schlicht
+    ``Image.open(pfad).convert("RGB")`` — und PIL **klippt** dabei bei 255, statt den
+    Wertebereich zu skalieren. Am Gerät gemessen, an unserer eigenen Karte::
+
+        roh (I;16)              235 verschiedene Werte, sauberer Tiefenverlauf
+        nach convert("RGB")       2 verschiedene Werte — 40 % schwarz, 60 % weiss
+
+    **Das ControlNet hat nie eine Tiefenkarte gesehen. Es hat eine Schwarzweiss-Schablone
+    gesehen.** Damit ist erklärt, was `auf-20260820-22` gemessen und nicht verstanden hat:
+    *«die Naht transportiert die Silhouette und nicht die Tiefenordnung»* — eine Silhouette
+    war buchstäblich alles, was ankam. Und warum |ρ| dort über **alle** Varianten flach
+    bei 0.45–0.49 lag, auch mit abgeschalteter Konditionierung: Eine Schablone trägt keine
+    Ordnung, die sich übertragen liesse.
+
+    **Der Beleg, dass es die Ursache war** (gleiche Szene, gleicher Prompt, n = 3 Seeds,
+    ρ über der Bauwerksmaske — je negativer, desto besser)::
+
+        16 Bit, geklippt      Mittel -0.1393   stdabw 0.1004
+        8 Bit, skaliert       Mittel -0.7445   stdabw 0.1635
+        perfektes Blenderbild        -0.9874
+        weisses Rauschen             -0.5207
+
+    Der Unterschied ist das 3,7-Fache der grösseren Streuung, und **jeder** skalierte Lauf
+    schlägt **jeden** geklippten. Der beste erreicht −0.9059 und liegt damit nahe am
+    perfekten Bild.
+
+    *Warum es so lange unentdeckt blieb:* Die Schablone trägt die **Silhouette** exakt —
+    und ``geom_iou`` misst genau die. Die eine Zahl, die wir hatten, war blind für den
+    Verlust; sie lag bei 0.95, während die Tiefe verschwunden war.
+    """
+    from PIL import Image                     # Pillow (MIT-CMU) — nur hier
+    # `getattr` statt `bild.mode`: Die Tests dieses Moduls reichen eine Bild-Attrappe
+    # herein, die nur `convert` kann. Sie soll den Weg unten nehmen, nicht hier abstuerzen
+    # — die Naht ist fuer Attrappen gebaut, und das gilt auch fuer diese Abzweigung.
+    if getattr(bild, "mode", "") in ("I;16", "I;16B", "I;16L", "I", "I;32"):
+        import numpy as np                    # NumPy (BSD-3) — nur für diesen Fall
+        werte = np.asarray(bild, dtype=np.float64)
+        spanne = float(werte.max())
+        # Skaliert wird auf den TATSÄCHLICHEN Höchstwert, nicht auf 65535: Die Karte ist
+        # bereits je Bild normiert, und eine zweite Normierung auf die formale Obergrenze
+        # verschenkte Kontrast, sobald der Höchstwert darunter liegt.
+        acht = (werte / spanne * 255.0).round().clip(0, 255).astype(np.uint8) if spanne \
+            else np.zeros_like(werte, dtype=np.uint8)
+        return Image.fromarray(acht, mode="L").convert("RGB")
+    return bild.convert("RGB")
+
+
 def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
     """Aus einer ``diffusers``-Pipeline ein Modell im Sinne dieses Moduls machen.
 
@@ -823,7 +875,7 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
     def modell(parameter: dict) -> dict:
         from PIL import Image           # Pillow (MIT-CMU) — ebenfalls nur hier
 
-        tiefe = Image.open(parameter["depth_png"]).convert("RGB")
+        tiefe = _tiefe_als_rgb(Image.open(parameter["depth_png"]))
         if parameter["tiefe_invertiert"]:
             # Umgedreht, weil das ControlNet dieses Backbones nah = DUNKEL erwartet und
             # unsere Karte nah = hell schreibt. Kein Kunstgriff, sondern eine Übersetzung

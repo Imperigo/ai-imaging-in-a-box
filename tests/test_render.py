@@ -1196,3 +1196,60 @@ def test_fehlende_controlnet_gewichte_brechen_vor_dem_laden_ab(tmp_path):
     text = str(fehler.value)
     assert "safetensors" in text
     assert "erfundene Kubatur" in text        # der Grund, nicht nur der Umstand
+
+
+# ---------------------------------------------------------------------------------------
+# Die Tiefenkarte darf nicht geklippt werden — 20.08.2026
+# ---------------------------------------------------------------------------------------
+#
+# `Image.open(pfad).convert("RGB")` klippt eine 16-Bit-Karte bei 255, statt zu skalieren.
+# Unser Multipass schreibt 16 Bit. Das ControlNet bekam darum eine Schwarzweiss-Schablone
+# statt einer Tiefe — gemessen: 235 verschiedene Werte vorher, ZWEI nachher.
+
+def _sechzehn_bit_rampe(breite=256, hoehe=32):
+    """256 Punkte breit, damit ueberhaupt 256 Stufen entstehen KOENNEN — bei 64 Punkten
+    ist eine Obergrenze von 64 Stufen die Breite und nicht der Fehler."""
+    import numpy as np
+    from PIL import Image
+    zeile = np.linspace(0, 65535, breite, dtype=np.uint16)
+    return Image.fromarray(np.tile(zeile, (hoehe, 1)), mode="I;16")
+
+
+def test_sechzehn_bit_wird_skaliert_und_nicht_geklippt():
+    import numpy as np
+    from aiimaging.render import _tiefe_als_rgb
+    a = np.asarray(_tiefe_als_rgb(_sechzehn_bit_rampe()))[:, :, 0]
+    assert len(np.unique(a)) > 200, (
+        f"nur {len(np.unique(a))} Stufen — geklippt statt skaliert; das ControlNet saehe "
+        f"eine Schablone statt einer Tiefe"
+    )
+    assert a.min() == 0 and a.max() == 255
+
+
+def test_der_alte_weg_haette_zwei_stufen_geliefert():
+    """Die Gegenprobe — sonst prueft der Test oben nichts Bestimmtes."""
+    import numpy as np
+    a = np.asarray(_sechzehn_bit_rampe().convert("RGB"))[:, :, 0]
+    assert len(np.unique(a)) <= 2, (
+        "Wenn PIL das inzwischen selbst richtig macht, gehoert unser Umweg geprueft "
+        "statt blind mitgeschleppt"
+    )
+
+
+def test_acht_bit_bleibt_unangetastet():
+    import numpy as np
+    from PIL import Image
+    from aiimaging.render import _tiefe_als_rgb
+    grau = Image.fromarray(np.arange(256, dtype=np.uint8).reshape(16, 16), mode="L")
+    a = np.asarray(_tiefe_als_rgb(grau))[:, :, 0]
+    assert len(np.unique(a)) == 256
+
+
+def test_eine_leere_karte_bricht_nicht_ab():
+    """Hoechstwert 0 — die Division muss das aushalten."""
+    import numpy as np
+    from PIL import Image
+    from aiimaging.render import _tiefe_als_rgb
+    leer = Image.fromarray(np.zeros((8, 8), dtype=np.uint16), mode="I;16")
+    a = np.asarray(_tiefe_als_rgb(leer))[:, :, 0]
+    assert a.max() == 0
