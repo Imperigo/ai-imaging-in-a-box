@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260822-28",
+  "art": "render",
+  "beschreibung": "WARUM SIND UNSERE ERZEUGTEN BILDER GEOMETRISCH SO SCHLECHT? Das ist ab heute die erste Frage, und alles andere haengt daran.\n\nWAS WIR SEIT GESTERN WISSEN. Die Geometrie-QA ist repariert, jedenfalls im Ansatz: rho ueber der Bauwerksmaske faengt falsche Form und falsche Drehung, die Tiefenkante an der Maskengrenze faengt Abwesenheit und Versatz. Zusammen decken sie alle vier Halluzinationsfaelle ab, einzeln keiner von beiden. Dein Paarvorschlag lautete rho <= -0.80 UND Kante >= 0.05.\n\nUND JETZT DER PUNKT, DER MIR DEN SCHLAF KOSTET: Dieser Paartest wuerde JEDES BILD ABWEISEN, DAS WIR JE ERZEUGT HABEN. Dein zweiter Nachtrag zu auf-24 hat gemessen, dass alle fuenf erzeugten Bilder ueber der Maske SCHLECHTER liegen als weisses Rauschen (-0.5207). Eine Schwelle von -0.80 ist fuer sie unerreichbar. Das ist kein Argument gegen die Schwelle — es heisst, dass unsere Bilder geometrisch nichts taugen, und dass wir das bisher nur nicht messen konnten.\n\nDER ERSTE VERDACHT IST DER BACKBONE. auf-09 hat belegt, dass Qwen kein ControlNet ist; der fremde Vertrag fuehrt aber qwen, und der erste vollstaendige Abholerlauf vom 19.08. hat genau damit gerendert. Seit gestern kennt unsere Seite auch z-image-turbo. Wenn die Bilder schlecht sind, weil die Tiefenfuehrung gar nicht ankommt, dann ist das der billigste denkbare Grund — und der einzige, den wir vor allem anderen ausschliessen muessen.\n\nDIE MESSUNG. Eine Szene, eine Kamera, ein Seed. Dieselbe Soll-Karte und dieselbe Bauwerksmaske wie in auf-24/27. Erzeuge je Backbone ein Bild und miss BEIDE Zahlen: rho ueber der Maske und die Tiefenkante an der Maskengrenze, mit demselben Verfahren wie in auf-27.\n\n  A · qwen, so wie der Abholer am 19.08. gerendert hat\n  B · z-image-turbo mit ControlNet-Tiefenfuehrung\n  C · z-image-turbo OHNE Fuehrung (Fuehrungsstaerke 0) — die Nullprobe der Naht\n\nDazu als Anker, die du schon hast: das perfekte Blender-Bild (rho -0.9874, Kante +0.1615) und weisses Rauschen (rho -0.5207).\n\nDIE FALSIFIZIERBARE BEHAUPTUNG: Liegt der Grund am Backbone, muss B DEUTLICH besser sein als A und als C. Ist B ungefaehr gleich C, kommt die Fuehrung auch bei z-image-turbo nicht an, und das Problem sitzt woanders. Ist A ungefaehr gleich B, war der Backbone nie die Ursache — dann haben wir einen Verdacht weniger und muessen tiefer suchen. Alle drei Ausgaenge sind brauchbar; sag mir, welcher es ist.\n\nWENN B WIRKLICH GUT IST, interessiert mich sofort die zweite Zahl: Erreicht es die -0.80? Oder nur -0.65? Davon haengt ab, ob die Schwelle bleiben kann oder ob sie an das anzupassen ist, was ueberhaupt erreichbar ist — und Letzteres waere ein Eingestaendnis und keine Kalibrierung.\n\nNICHT TUN: Keine Seedreihen, keine Staerkereihen, keine Prompt-Varianten. Genau drei Bilder. Wenn der Backbone es ist, sehen wir es an dreien; wenn nicht, waeren dreissig auch verschwendet. Nichts an unserem Code aendern.\n\nREGEL 3: keine absoluten Pfade mit Benutzernamen, nur Zahlen zurueck.",
+  "erstellt": "2026-08-22T07:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "Szene, Kamera, Soll-Karte und Maske unveraendert aus auf-24/auf-27."
+  },
+  "params": {
+    "backbones": [
+      "qwen",
+      "z-image-turbo mit Tiefenfuehrung",
+      "z-image-turbo ohne Fuehrung"
+    ],
+    "seed": "einer, fuer alle drei derselbe",
+    "gemessen_wird": "rho ueber der Maske UND Tiefenkante an der Maskengrenze (Verfahren wie auf-27)",
+    "anker": {
+      "perfekt_rho": -0.9874,
+      "perfekt_kante": 0.1615,
+      "rauschen_rho": -0.5207
+    }
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "hinweis": "GPU noetig. Drei Bilder, keine Reihen."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Je Backbone rho und Kante. Ein Satz: Liegt es am Backbone, an der Fuehrung, oder an keinem von beiden?"
+  }
+}
