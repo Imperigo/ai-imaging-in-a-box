@@ -875,12 +875,25 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
       hätte wie ein glänzendes Ergebnis ausgesehen. Und mein Verdrahtungstest prüfte nur,
       dass das *Schlüsselwort* ankommt: `maske=None` bestand ihn. Beides behoben, der Test
       fängt jetzt auch `maske=None` und `maske=[]`.
-- [ ] **Die Nullprobe fährt den Maskenweg NICHT — benannt, nicht behoben.** Der
-      Rauschboden über der Maske ist gemessen (−0.5207), aber unsere eigene Nullprobe
-      rechnet ihn nicht: Sie ruft dieselbe QA ohne Maske. Wir haben damit je Szene einen
-      Rauschboden über dem *ganzen Bild* und keinen über der Maske — obwohl die Schwelle
-      des Paartests sich auf Letzteren bezieht. Ein Test hält den Zustand fest und wird
-      rot, sobald jemand es umstellt.
+- [x] **Die Nullprobe fährt den Maskenweg — geschlossen am 22.08., am selben Tag benannt.**
+      Sie liefert jetzt **zwei Ankersätze aus einem Durchgang**: den Score über das ganze
+      Bild und ρ/Kante über der Maske. Die Kontrollbilder werden dabei nur **einmal**
+      geschrieben und einmal geschätzt — der erste Anlauf machte daraus zwei Durchgänge
+      und hätte die Schätzerläufe verdoppelt, ohne eine einzige neue Zahl zu liefern.
+
+      **Warum je Soll-Karte gemessen und nicht nachgeschlagen:**
+      `RAUSCHBODEN_UEBER_MASKE` (−0.5207) stammt aus **einer** Szene, und die Schwelle des
+      Paartests bezieht sich darauf. Eine feste Zahl für alle Szenen ist genau der Fehler,
+      an dem die Geometrie-Schwelle 0.65 gescheitert ist.
+
+      Der Test, der die Lücke offenhielt, ist **gelöscht** und nicht angepasst worden —
+      so, wie es in seinem eigenen Docstring stand.
+- [ ] **Was die Kante kostet, gemessen: 0,94 s bei 1600×1000.** `_randpunkte` läuft in
+      reinem Python über jeden Bildpunkt. Je Kamera fällt das viermal an (ein echtes Bild
+      und drei Kontrollbilder), also rund vier Sekunden — gegen ~97 s Renderzeit je Kamera
+      (erster vollständiger Lauf, 19.08.) vertretbar, aber nicht umsonst. **Nicht
+      optimiert, weil nicht nötig; hier steht die Zahl, damit sie niemand raten muss.**
+      Falls die Auflösung steigt, wächst das linear mit der Punktzahl.
 - [ ] **Zwei Polaritäts-Schreibweisen im selben Projekt.** `tiefenschaetzer` führt sie als
       Zeichenkette, `geometrie_qa` als Vorzeichen. Übersetzt wird über die benannte Tabelle
       `POLARITAETSZEICHEN` — und **gemessen schlägt deklariert**: Die Zeichenkette gehört

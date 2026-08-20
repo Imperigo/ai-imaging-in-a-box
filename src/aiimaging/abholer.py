@@ -526,12 +526,14 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                             modell=_tiefen_modell, schwelle=grenze,
                             maske=maskenbefund.get("maske"))
             anker = None
+            maskenanker = None
             if nullprobe:
-                anker = _nullprobe(aus, soll, breite, hoch, bildschreiben=bildschreiben,
-                                   messen=messen, grenze=grenze,
-                                   tiefen_modell=_tiefen_modell)
+                anker, maskenanker = _nullprobe(
+                    aus, soll, breite, hoch, bildschreiben=bildschreiben,
+                    messen=messen, grenze=grenze, tiefen_modell=_tiefen_modell,
+                    maske=maskenbefund.get("maske"))
             urteil = dict(urteil, kamera=kuerzel, nullanker=anker,
-                          maskenbefund=maskenbefund,
+                          maskenbefund=maskenbefund, maskenanker=maskenanker,
                           einordnung=geometrie_qa.einordnung(
                               urteil.get("score"), anker, schwelle=grenze),
                           belichtung=_belichtung_urteil(
@@ -552,7 +554,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
 
 
 def _nullprobe(ordner, soll, breite, hoehe, *, bildschreiben, messen, grenze,
-               tiefen_modell=None) -> dict | None:
+               tiefen_modell=None, maske=None) -> tuple[dict | None, dict | None]:
     """Was Bilder **ohne jede Geometrie** auf dieser Soll-Karte erreichen.
 
     Die Anker werden **gemessen und nicht nachgeschlagen.** Eine Tabelle nach Szenennamen
@@ -566,21 +568,44 @@ def _nullprobe(ordner, soll, breite, hoehe, *, bildschreiben, messen, grenze,
     Ein einzelner gescheiterter Anker macht die Nullprobe **nicht** wertlos: Gemeldet wird,
     was gemessen wurde. Scheitert alles, gibt es ``None``, und :func:`geometrie_qa.einordnung`
     sagt dann ausdrücklich, dass keine Einordnung vorliegt — statt eine zu erfinden.
+
+    **Zwei Ankersätze aus EINEM Durchgang** (seit 22.08.): der Score über das ganze Bild
+    und, wenn eine Maske vorliegt, ρ und Kante über der Maske. Die Kontrollbilder werden
+    dabei nur **einmal** geschrieben und einmal geschätzt — ein zweiter Durchgang würde
+    die Schätzerläufe verdoppeln, ohne eine einzige neue Zahl zu liefern.
+
+    Getrennt zurückgegeben und nicht vermischt: Der erste Satz ist ``{art: score}`` und
+    wird von :func:`geometrie_qa.einordnung` als **Zahlen** gelesen; der zweite ist
+    ``{art: {rho, kante}}``. Beide in ein Wörterbuch zu legen hiesse, einen reservierten
+    Schlüssel zu erfinden, der mit einer Kontrollart kollidieren kann.
+
+    **Warum der Maskenboden je Soll-Karte gemessen wird und nicht nachgeschlagen:**
+    :data:`geometrie_qa.RAUSCHBODEN_UEBER_MASKE` (−0.5207) stammt aus **einer** Szene
+    (`auf-20260821-24`), und die Schwelle des Paartests bezieht sich darauf. Eine feste
+    Zahl für alle Szenen ist genau der Fehler, an dem die Geometrie-Schwelle 0.65
+    gescheitert ist.
     """
     if breite is None or hoehe is None:
-        return None
+        return None, None
     anker: dict[str, float] = {}
+    maskenanker: dict[str, dict] = {}
     for art in bildschreiben.KONTROLLARTEN:
         try:
             bild = bildschreiben.schreibe_kontrollbild(
                 Path(ordner) / f"nullprobe_{art}.png", art, int(breite), int(hoehe))
             urteil = messen(str(bild), soll, breite=breite, hoehe=hoehe,
-                            modell=tiefen_modell, schwelle=grenze)
+                            modell=tiefen_modell, schwelle=grenze, maske=maske)
         except Exception:      # noqa: BLE001 — ein Anker darf den Auftrag nicht mitnehmen
             continue
-        if urteil and urteil.get("score") is not None:
+        if not urteil:
+            continue
+        if urteil.get("score") is not None:
             anker[art] = float(urteil["score"])
-    return anker or None
+        rho = (urteil.get("rho_maske") or {}).get("gerichtet")
+        kante = (urteil.get("kante") or {}).get("gerichtet")
+        if rho is not None or kante is not None:
+            maskenanker[art] = {"rho": rho, "kante": kante}
+    return (anker or None), (maskenanker or None)
 
 
 def _belichtung_urteil(bild, stil, rahmen, pruefen) -> dict | None:

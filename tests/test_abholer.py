@@ -1105,24 +1105,57 @@ def test_die_maske_erreicht_die_qa_wirklich(tmp_path):
     assert all(sum(kw["maske"]) > 0 for kw in echte), "die Maske wählt keinen Punkt aus"
 
 
-def test_die_nullprobe_faehrt_den_maskenweg_NICHT_und_das_ist_eine_luecke():
-    """**Benannt, nicht behoben.**
+def test_die_nullprobe_liefert_BEIDE_ankersaetze_aus_einem_durchgang():
+    """Die Lücke von heute Morgen, geschlossen — und der Vorgängertest dazu gelöscht.
 
-    Der Rauschboden über der Maske ist gemessen (−0.5207, `auf-20260821-24`) — aber
-    unsere eigene Nullprobe rechnet ihn nicht: Sie ruft dieselbe QA ohne Maske. Damit
-    haben wir für jede Szene einen Rauschboden über dem GANZEN Bild und keinen über der
-    Maske, obwohl die Schwelle des Paartests sich auf Letzteren bezieht.
+    Hier stand bis eben ein Test, der festhielt, dass die Nullprobe den Maskenweg NICHT
+    fährt. Sein Docstring sagte: *„Er wird rot, sobald jemand die Nullprobe umstellt — und
+    dann gehört er gelöscht, nicht angepasst."* Genau das ist geschehen.
 
-    Dieser Test hält den Zustand fest, damit er nicht unbemerkt bleibt. Er wird rot,
-    sobald jemand die Nullprobe umstellt — und dann gehört er gelöscht, nicht angepasst.
+    Der Maskenboden muss **je Soll-Karte** gemessen werden: `RAUSCHBODEN_UEBER_MASKE`
+    (−0.5207) stammt aus einer einzigen Szene, und die Schwelle des Paartests bezieht sich
+    darauf. Eine feste Zahl für alle Szenen ist der Fehler, an dem die Geometrie-Schwelle
+    0.65 gescheitert ist.
     """
     import inspect
     quelle = inspect.getsource(abholer._nullprobe)
 
-    assert "maske" not in quelle, (
-        "Die Nullprobe fährt jetzt den Maskenweg — dann ist diese Lücke geschlossen und "
-        "dieser Test gehört gelöscht statt angepasst.")
+    assert "maske=maske" in quelle, "die Nullprobe reicht die Maske nicht durch"
+    assert "maskenanker" in quelle
 
+
+def test_die_kontrollbilder_werden_nur_EINMAL_geschaetzt(tmp_path):
+    """Zwei Ankersätze, ein Durchgang.
+
+    Ein zweiter Durchgang für den Maskenboden hätte die Schätzerläufe verdoppelt, ohne
+    eine einzige neue Zahl zu liefern — dieselben Bilder, dieselbe Schätzung. Der erste
+    Anlauf heute machte genau das, und dieser Test hält fest, dass es beim einen bleibt.
+    """
+    ordner = _auftrag(tmp_path)
+    protokoll, attrappen = _kette()
+
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
+                       verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                                                      **attrappen))
+
+    assert sorted(a.removesuffix(".png") for a in protokoll["nullprobe"]) == [
+        "grau", "rauschen", "verlauf"], "je Kontrollbild genau eine Schätzung"
+
+
+def test_der_maskenanker_haengt_an_der_kamera(tmp_path):
+    """Ohne diese Verdrahtung wäre der gemessene Boden gerechnet und nie gemeldet."""
+    ordner = _auftrag(tmp_path)
+    _protokoll, attrappen = _kette(scores=(0.9,))
+    gesehen = {}
+
+    def merke(auftrag):
+        e = abholer.verarbeiter(out_wurzel=tmp_path / "aus", **attrappen)(auftrag)
+        gesehen.update(e)
+        return e
+
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True, verarbeite=merke)
+
+    assert all("maskenanker" in k for k in gesehen["kameras"])
 
 def test_ohne_material_id_pass_ist_die_maske_ungemessen_und_der_lauf_geht_weiter(tmp_path):
     """Die Maske ist die ZUSÄTZLICHE Messung, nicht die einzige.
