@@ -992,3 +992,104 @@ def test_vierer_nachbarschaft_trennt_was_sich_nur_ueber_eine_ecke_beruehrt():
 
 def test_die_neue_strategie_steht_in_der_liste():
     assert ts.HG_OHNE_RANDBERUEHRUNG in ts.HG_STRATEGIEN
+
+
+# ======================================================================================
+# Der Maskenweg durch `qa_gegen_soll` — die Verdrahtung, nicht die Masse
+# ======================================================================================
+#
+# Was die beiden Masse tun, steht in `test_geometrie_qa.py`. Hier wird geprüft, dass sie
+# überhaupt gerufen werden und die richtige Karte bekommen. Ein Modul, das nie läuft, ist
+# von einem fehlenden Modul nicht zu unterscheiden — das ist die Lehre, wegen der
+# `tools/abholen.py` existiert.
+
+_MASKE_B = 32
+_MASKE_VON, _MASKE_BIS = 8, 23
+
+
+def _zweidimensionale_szene():
+    """Ein Bauwerk als Quadrat vor Himmel, gross genug für eine Maskengrenze.
+
+    Die eindimensionalen Karten weiter oben taugen hier nicht: Eine Grenze braucht
+    Nachbarschaft, und die entsteht erst mit einer Breite.
+    """
+    maske = [(_MASKE_VON <= x <= _MASKE_BIS and _MASKE_VON <= y <= _MASKE_BIS)
+             for y in range(_MASKE_B) for x in range(_MASKE_B)]
+    # Soll: Meter, von 10 nach 20 über das Bauwerk, Himmel unendlich.
+    soll = []
+    n = 0
+    for m in maske:
+        if m:
+            soll.append(10.0 + 10.0 * n / sum(maske))
+            n += 1
+        else:
+            soll.append(float("inf"))
+    # Ist: Disparität — nah = gross. Himmel bekommt einen kleinen Wert, kein inf.
+    ist = [(1.0 / s if s != float("inf") else 0.001) for s in soll]
+    return soll, ist, maske
+
+
+def _urteil_mit(maske, bild):
+    soll, ist, _ = _zweidimensionale_szene()
+    return ts.qa_gegen_soll(bild, soll, modell=attrappe(ist),
+                            breite=_MASKE_B, hoehe=_MASKE_B, maske=maske)
+
+
+def test_ohne_maske_bleibt_der_maskenweg_ungemessen(bild):
+    """`None` heisst hier nicht gemessen — nicht in Ordnung.
+
+    Der Score über das ganze Bild beantwortet weder Existenz noch Richtigkeit: Ein leeres
+    Grundstück erreicht dort 0.9530 und besteht das Tor (auf-20260821-26).
+    """
+    urteil = _urteil_mit(None, bild)
+
+    assert urteil["rho_maske"] is None
+    assert urteil["kante"] is None
+    assert urteil["paarurteil"] is None
+
+
+def test_mit_maske_entstehen_beide_masse_und_ein_paarurteil(bild):
+    _soll, _ist, maske = _zweidimensionale_szene()
+
+    urteil = _urteil_mit(maske, bild)
+
+    assert urteil["rho_maske"]["n_maske"] == sum(maske)
+    assert urteil["kante"]["n_innen"] >= geometrie_qa.MIN_RANDPUNKTE
+    assert urteil["paarurteil"]["schwellen"]["rho"] == geometrie_qa.PAAR_RHO_SCHWELLE
+
+
+def test_die_kante_bekommt_die_ROHE_karte_und_nicht_die_markierte(bild):
+    """**Die Entscheidung, die man übersehen kann.**
+
+    Die Hintergrundmarkierung setzt alles ausserhalb der Geometrie auf eine Marke.
+    Innerhalb der Maske wäre das gleichgültig — aber die Kante liest ausdrücklich auch
+    AUSSERHALB, und dort verdürbe die Marke den Median. Sie misst den Sprung zwischen
+    Fassade und dem, was dahinter liegt; dafür braucht sie, was der Schätzer dort
+    wirklich gesehen hat.
+    """
+    _soll, ist, maske = _zweidimensionale_szene()
+
+    urteil = _urteil_mit(maske, bild)
+
+    assert urteil["kante"]["spanne"] == pytest.approx(max(ist) - min(ist)), (
+        "Die Spanne stammt nicht aus der rohen Schätzkarte — dann steckt die "
+        "Hintergrundmarke darin, und das Mass misst die Marke statt die Kante"
+    )
+    assert urteil["kante"]["gerichtet"] > 0, "das Bauwerk ist näher als der Himmel"
+
+
+def test_die_gemessene_polaritaet_schlaegt_die_deklarierte(bild):
+    """Zwei Quellen für dieselbe Tatsache, und sie behaupten nicht dasselbe.
+
+    Die Zeichenkette am Schätzer beschreibt den SCHÄTZER. Das Vorzeichen in
+    `GEMESSENE_POLARITAET` beschreibt das PAAR aus Schätzer und unserer Soll-Karte und ist
+    an 24 Läufen gemessen. Wo beides vorliegt, gilt das Gemessene.
+    """
+    _soll, _ist, maske = _zweidimensionale_szene()
+
+    urteil = _urteil_mit(maske, bild)
+
+    assert urteil["rho_maske"]["polaritaet"] == geometrie_qa.POLARITAET_DISPARITAET
+    assert (geometrie_qa.GEMESSENE_POLARITAET["depth-anything-v2-small"]
+            == ts.POLARITAETSZEICHEN["disparitaet"]), (
+        "hier stimmen sie überein — dass sie es tun, ist ein Befund und keine Regel")

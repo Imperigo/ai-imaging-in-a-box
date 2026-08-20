@@ -348,9 +348,22 @@ def _kette(*, scores=(0.8,), fehlt_tiefe=False, render_status="ok"):
         P(out).mkdir(parents=True, exist_ok=True)
         if fehlt_tiefe:
             return {"depth_png": None, "depth_png_fehler": "Kompositor kaputt"}
+        # Ein echter kleiner Material-ID-Pass: 2x2, ein Punkt Bauwerk, einer Gelände,
+        # zwei Hintergrund. Klein, aber echt — sonst liesse sich der Maskenweg nur
+        # behaupten und nicht prüfen.
+        mid = P(out) / "material_id.png"
+        from aiimaging import bildschreiben as _bs
+        _bs.schreibe_farb_png(mid, [(10, 20, 30), (40, 50, 60), (0, 0, 0), (0, 0, 0)], 2, 2)
         return {"depth_png": str(P(out) / "tiefe.png"),
                 "beauty_png": str(P(out) / "beauty.png"),
-                "depth_exr": str(P(out) / "tiefe.exr")}
+                "depth_exr": str(P(out) / "tiefe.exr"),
+                "material_id_png": str(mid),
+                "material_id_tabelle": [
+                    {"index": 1, "name": "Wand", "farbe_srgb_8bit": [10, 20, 30],
+                     "quelle": "material"},
+                    {"index": 2, "name": "Boden_Platte", "farbe_srgb_8bit": [40, 50, 60],
+                     "quelle": "material"},
+                ]}
 
     def rendere(a, **kw):
         protokoll["render"].append(a)
@@ -1047,3 +1060,107 @@ def test_der_verarbeiter_reicht_das_stil_urteil_durch(tmp_path):
     assert "stil_urteil" in gesehen
     assert gesehen["stil_urteil"] is not None
     assert gesehen["stil_urteil"]["verfahren"] == abholer.VERFAHREN_BELICHTUNG
+
+
+# ======================================================================================
+# Die Bauwerksmaske im Betrieb — die Verdrahtung, die sonst tot bliebe
+# ======================================================================================
+#
+# Vier Teile (maske, rho_ueber_maske, kante_an_maskengrenze, paarurteil) hätten fertig
+# dagelegen, ohne dass ein einziger echter Lauf sie berührt. Genau dafür gibt es
+# `tools/abholen.py`: Ein Modul, das nie läuft, ist von einem fehlenden nicht zu
+# unterscheiden.
+#
+# ACHTUNG bei diesen Tests: Die QA-Attrappe der übrigen Tests nimmt `**kw` und
+# VERSCHLUCKT ein `maske=` lautlos. Ein Test, der nur „grün" prüft, prüft hier nichts.
+
+def test_die_maske_erreicht_die_qa_wirklich(tmp_path):
+    """Der Test, der die tote Kante ausschliesst — geprüft am ANGEKOMMENEN Argument."""
+    ordner = _auftrag(tmp_path)
+    _protokoll, attrappen = _kette(scores=(0.9,))
+    gesehen = {}
+    echte_qa = attrappen["_qa"]
+
+    def mitschreibende_qa(bild, soll_werte, **kw):
+        gesehen.setdefault("kw", []).append(kw)
+        gesehen.setdefault("bilder", []).append(bild)
+        return echte_qa(bild, soll_werte, **kw)
+
+    attrappen["_qa"] = mitschreibende_qa
+    abholer.hole_einen(
+        ordner, fremde_freigabe_gilt=True,
+        verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus", **attrappen))
+
+    assert gesehen["kw"], "die QA wurde gar nicht gerufen"
+    echte = [kw for kw, b in zip(gesehen["kw"], gesehen["bilder"])
+             if not Path(b).name.startswith("nullprobe_")]
+    assert echte, "kein einziger echter Renderlauf in der Mitschrift"
+    assert all("maske" in kw for kw in echte), (
+        "Die QA bekommt kein 'maske'-Argument — der Maskenweg ist eine tote Kante")
+    # Und der Wert muss eine Maske sein, nicht None. Ein Test, der nur das SCHLÜSSELWORT
+    # prüft, besteht auch dann, wenn jemand `maske=None` fest verdrahtet — meine eigene
+    # Mutationsprobe hat genau das gefunden.
+    assert all(kw["maske"] is not None for kw in echte), (
+        "Das Schlüsselwort kommt an, aber ohne Maske — die Leitung liegt, führt aber nichts")
+    assert all(sum(kw["maske"]) > 0 for kw in echte), "die Maske wählt keinen Punkt aus"
+
+
+def test_die_nullprobe_faehrt_den_maskenweg_NICHT_und_das_ist_eine_luecke():
+    """**Benannt, nicht behoben.**
+
+    Der Rauschboden über der Maske ist gemessen (−0.5207, `auf-20260821-24`) — aber
+    unsere eigene Nullprobe rechnet ihn nicht: Sie ruft dieselbe QA ohne Maske. Damit
+    haben wir für jede Szene einen Rauschboden über dem GANZEN Bild und keinen über der
+    Maske, obwohl die Schwelle des Paartests sich auf Letzteren bezieht.
+
+    Dieser Test hält den Zustand fest, damit er nicht unbemerkt bleibt. Er wird rot,
+    sobald jemand die Nullprobe umstellt — und dann gehört er gelöscht, nicht angepasst.
+    """
+    import inspect
+    quelle = inspect.getsource(abholer._nullprobe)
+
+    assert "maske" not in quelle, (
+        "Die Nullprobe fährt jetzt den Maskenweg — dann ist diese Lücke geschlossen und "
+        "dieser Test gehört gelöscht statt angepasst.")
+
+
+def test_ohne_material_id_pass_ist_die_maske_ungemessen_und_der_lauf_geht_weiter(tmp_path):
+    """Die Maske ist die ZUSÄTZLICHE Messung, nicht die einzige.
+
+    Ein Auftrag, der an einer fehlenden Materialtabelle scheiterte, wäre ein Auftrag ohne
+    Bild — und das ist teurer als eine ungemessene Zusatzfrage. Verschwinden darf der
+    Befund trotzdem nicht, sonst sähe ein Lauf ohne Maske aus wie einer mit Maske und
+    ohne Auffälligkeit.
+    """
+    befund = abholer._maske_bauen({"beauty_png": "x.png"})
+
+    assert befund["maske"] is None
+    assert befund["gemessen"] is False
+    assert "UNGEMESSEN" in befund["grund"]
+
+
+def test_eine_kaputte_materialtabelle_haelt_den_lauf_nicht_auf(tmp_path):
+    """Auch hier: melden, nicht abbrechen — aber melden."""
+    befund = abholer._maske_bauen(
+        {"material_id_png": str(tmp_path / "gibtsnicht.png"), "material_id_tabelle": []})
+
+    assert befund["maske"] is None
+    assert befund["gemessen"] is False
+    assert befund["grund"], "ein leerer Grund wäre so gut wie kein Befund"
+
+
+def test_der_maskenbefund_haengt_an_jeder_kamera(tmp_path):
+    """Je Kamera, nicht je Auftrag: Zwei Kameras können verschieden gut liegen."""
+    ordner = _auftrag(tmp_path)
+    _protokoll, attrappen = _kette(scores=(0.9,))
+    gesehen = {}
+
+    def merke(auftrag):
+        e = abholer.verarbeiter(out_wurzel=tmp_path / "aus", **attrappen)(auftrag)
+        gesehen.update(e)
+        return e
+
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True, verarbeite=merke)
+
+    assert gesehen["kameras"], "keine Kamera ausgewertet"
+    assert all("maskenbefund" in k for k in gesehen["kameras"])

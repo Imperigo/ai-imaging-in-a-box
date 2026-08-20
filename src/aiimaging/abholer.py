@@ -57,7 +57,7 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from . import bruecke, fortschritt
+from . import bruecke, fortschritt, maske as maske_modul
 
 #: Ein Auftrag auf ``running``, dessen Laufzettel so lange nicht angefasst wurde, gilt als
 #: **Waise**. Die Zahl ist eine Setzung: Sie muss deutlich über der längsten erwarteten
@@ -521,14 +521,17 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Silhouette exakt. Das PNG war die Eingabe des Modells, die EXR ist der
             # Massstab.
             soll, breite, hoch = soll_lesen(bericht)
+            maskenbefund = _maske_bauen(bericht)
             urteil = messen(ergebnis["bild_png"], soll, breite=breite, hoehe=hoch,
-                            modell=_tiefen_modell, schwelle=grenze)
+                            modell=_tiefen_modell, schwelle=grenze,
+                            maske=maskenbefund.get("maske"))
             anker = None
             if nullprobe:
                 anker = _nullprobe(aus, soll, breite, hoch, bildschreiben=bildschreiben,
                                    messen=messen, grenze=grenze,
                                    tiefen_modell=_tiefen_modell)
             urteil = dict(urteil, kamera=kuerzel, nullanker=anker,
+                          maskenbefund=maskenbefund,
                           einordnung=geometrie_qa.einordnung(
                               urteil.get("score"), anker, schwelle=grenze),
                           belichtung=_belichtung_urteil(
@@ -621,6 +624,39 @@ def _belichtung_urteil(bild, stil, rahmen, pruefen) -> dict | None:
 #: Belichtungsprüfung hat keinen natürlichen Skalar, und einen zu erfinden wäre genau die
 #: Bequemlichkeit, gegen die dieses Projekt gebaut ist.
 VERFAHREN_BELICHTUNG = "belichtungsrahmen"
+
+
+def _maske_bauen(bericht: dict) -> dict:
+    """Die Bauwerksmaske aus dem Material-ID-Pass — oder eine benannte Lücke.
+
+    **Warum ein Fehlschlag hier den Lauf nicht aufhält.** Die Maske ist die *zusätzliche*
+    Messung, nicht die einzige; der Score über das ganze Bild entsteht ohnehin. Ein
+    Auftrag, der an einer fehlenden Materialtabelle scheiterte, wäre ein Auftrag ohne
+    Bild — und das ist teurer als eine ungemessene Zusatzfrage.
+
+    **Warum er trotzdem nicht verschwindet.** Ohne diesen Befund sähe ein Lauf ohne Maske
+    hinterher aus wie einer mit Maske und ohne Auffälligkeit. Genau diese Verwechslung
+    ist der Grund, warum das ganze Modul die Dreiteilung durchhält.
+
+    Returns:
+        ``{maske, gemessen, grund, ...}``. ``maske`` ist ``None``, wenn sie sich nicht
+        bauen liess — dann bleibt der Maskenweg in der QA ungemessen.
+    """
+    png = bericht.get("material_id_png")
+    if not png:
+        return {"maske": None, "gemessen": False, "grund": (
+            "Kein Material-ID-Pass im Bericht. Ohne ihn gibt es keine Bauwerksmaske — und "
+            "damit keine Antwort auf die Frage, ob im Bild überhaupt ein Bauwerk steht. "
+            "Der Lauf geht weiter; die Frage bleibt UNGEMESSEN.")}
+    try:
+        gebaut = maske_modul.bauwerksmaske_aus_lauf(png, bericht)
+    except Exception as fehler:        # noqa: BLE001 — siehe Docstring
+        return {"maske": None, "gemessen": False, "grund": (
+            f"Bauwerksmaske nicht baubar: {type(fehler).__name__}: {fehler}")}
+    if gebaut.get("maske") is None:
+        return dict(gebaut, gemessen=False, grund=" ".join(gebaut.get("warnungen") or [])
+                    or "Die Geländeregel hat nicht gegriffen.")
+    return dict(gebaut, gemessen=True, grund="")
 
 
 def _stil_urteil_aus_belichtung(urteile: list[dict], stil: str | None) -> dict | None:

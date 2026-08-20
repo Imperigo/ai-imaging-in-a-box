@@ -858,6 +858,37 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
       ausgerechnet Süd-Südost der richtige einzelne Blick ist, hängt an Sonnenstand und
       Fassadenlage und ist nie begründet worden.
 
+- [x] **Der Maskenweg läuft jetzt im Betrieb (22.08.).** Vier Teile lagen fertig da, ohne
+      dass ein einziger echter Lauf sie berührte — genau die tote Kante, wegen der es
+      `tools/abholen.py` gibt. Jetzt: Der Abholer baut je Kamera die Bauwerksmaske aus dem
+      Material-ID-Pass, `qa_gegen_soll` nimmt sie entgegen und liefert `rho_maske`,
+      `kante` und `paarurteil` mit.
+
+      **Zwei Entscheidungen, die man übersehen kann.** (1) Die Maske geht *hinein*, die
+      Schätzkarte kommt nicht heraus — sie ist gross und wird danach nicht mehr gebraucht.
+      (2) Beide Masse bekommen die **rohe** Schätzkarte, nicht die hintergrundmarkierte:
+      Die Kante liest ausdrücklich auch *ausserhalb* der Maske, und dort verdürbe die
+      Hintergrundmarke den Median.
+
+      **Zwei eigene Fehler dabei, beide von der Mutationsprobe gefunden.** Erst hätte ich
+      die Schätzkarte als Soll *und* als Ist übergeben — ρ wäre trivial 1.0 geworden und
+      hätte wie ein glänzendes Ergebnis ausgesehen. Und mein Verdrahtungstest prüfte nur,
+      dass das *Schlüsselwort* ankommt: `maske=None` bestand ihn. Beides behoben, der Test
+      fängt jetzt auch `maske=None` und `maske=[]`.
+- [ ] **Die Nullprobe fährt den Maskenweg NICHT — benannt, nicht behoben.** Der
+      Rauschboden über der Maske ist gemessen (−0.5207), aber unsere eigene Nullprobe
+      rechnet ihn nicht: Sie ruft dieselbe QA ohne Maske. Wir haben damit je Szene einen
+      Rauschboden über dem *ganzen Bild* und keinen über der Maske — obwohl die Schwelle
+      des Paartests sich auf Letzteren bezieht. Ein Test hält den Zustand fest und wird
+      rot, sobald jemand es umstellt.
+- [ ] **Zwei Polaritäts-Schreibweisen im selben Projekt.** `tiefenschaetzer` führt sie als
+      Zeichenkette, `geometrie_qa` als Vorzeichen. Übersetzt wird über die benannte Tabelle
+      `POLARITAETSZEICHEN` — und **gemessen schlägt deklariert**: Die Zeichenkette gehört
+      zum Schätzer, das Vorzeichen zum *Paar* aus Schätzer und unserer Soll-Konvention.
+      Für `depth-anything-v2-small` stimmen beide überein; dass sie das tun, ist ein
+      Befund und keine Regel. Ob die beiden Schreibweisen zusammengelegt gehören, ist
+      offen.
+
 ## DAS TOR — offen, und der Weg zu, gefunden (auf-25 bis auf-27)
 
 - [x] **`auf-27`: Der Prüfstein fällt, und die Antwort ist trotzdem da.** Verlangt war:

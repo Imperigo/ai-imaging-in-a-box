@@ -570,7 +570,8 @@ def _verwirf_randflaechen(werte, breite: int, hoehe: int):
 def markiere_hintergrund(tiefen: Sequence[float], *, polaritaet: str,
                          strategie: str = HG_KEINE, anteil: float | None = None,
                          n_geometrie: int | None = None,
-                         breite: int | None = None, hoehe: int | None = None) -> dict:
+                         breite: int | None = None, hoehe: int | None = None,
+                  maske: Sequence[bool] | None = None) -> dict:
     """Aus einer geschätzten Karte eine Karte mit **Hintergrundmarke** machen.
 
     Markiert wird durch Ersetzen mit ``math.inf``. Das ist kein Trick, sondern die
@@ -1068,13 +1069,74 @@ def schaetze_tiefe(bild_png, *, schaetzer: str = VORGABE_TIEFENSCHAETZER, modell
 # Der Bogen zum Schluss: Ist schätzen und gegen das Soll messen
 # --------------------------------------------------------------------------------------
 
+#: Übersetzung der beiden Polaritäts-Schreibweisen dieses Projekts.
+#:
+#: :mod:`aiimaging.tiefenschaetzer` führt sie als **Zeichenkette** (``"disparitaet"``),
+#: :mod:`aiimaging.geometrie_qa` als **Vorzeichen** (``−1``). Beide beschreiben dieselbe
+#: Sache, aber **sie behaupten nicht dasselbe**, und darum steht die Übersetzung hier als
+#: benannte Tabelle statt als beiläufiger Vergleich:
+#:
+#: * Die Zeichenkette gehört zum **Schätzer** und stammt aus seiner Beschreibung.
+#: * Das Vorzeichen in ``geometrie_qa.GEMESSENE_POLARITAET`` gehört zum **Paar** aus
+#:   Schätzer und *unserer* Soll-Konvention und ist an 24 Läufen gemessen
+#:   (`auf-20260820-23`).
+#:
+#: Für ``depth-anything-v2-small`` stimmen beide überein. Dass sie das tun, ist ein
+#: Befund und keine Selbstverständlichkeit — eine gedrehte Soll-Karte würde das Vorzeichen
+#: kippen, ohne dass sich am Schätzer etwas ändert.
+POLARITAETSZEICHEN = {
+    POLARITAET_DISPARITAET: geometrie_qa.POLARITAET_DISPARITAET,
+    POLARITAET_TIEFE: geometrie_qa.POLARITAET_TIEFE,
+    POLARITAET_UNBEKANNT: None,
+}
+
+
+def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
+               schaetzer_name: str, polaritaet_wort: str) -> dict:
+    """Die beiden Maskenmasse und ihr Paarurteil — oder drei ehrliche ``None``.
+
+    **Warum das hier steht und nicht beim Aufrufer.** Beide Masse brauchen die
+    *geschätzte* Karte, und die entsteht in dieser Funktion. Sie herauszureichen hiesse,
+    ein Bild voller Zahlen an jede Aufrufstelle mitzuschleppen, die es nicht braucht — die
+    Maske hereinzureichen kostet dagegen nichts.
+
+    **Und warum die ROHE Karte, nicht die hintergrundmarkierte.** Die Markierung setzt
+    den Hintergrund auf eine Marke. Innerhalb der Maske wäre das gleichgültig — aber
+    :func:`~aiimaging.geometrie_qa.kante_an_maskengrenze` liest ausdrücklich auch
+    **ausserhalb**, und dort verdürbe die Marke den Median. Die Kante misst den Sprung
+    zwischen Fassade und dem, was dahinter liegt; sie braucht das, was der Schätzer dort
+    wirklich gesehen hat.
+
+    Ohne Maske bleibt alles ``None``. Das heisst **nicht gemessen** und nicht *in
+    Ordnung*: Wer den Maskenweg nicht gefahren ist, hat über Existenz und Richtigkeit des
+    Bauwerks nichts erfahren — der Score über das ganze Bild beantwortet beides nicht
+    (`auf-20260821-26`: ein leeres Grundstück erreicht dort 0.9530 und besteht das Tor).
+    """
+    leer = {"rho_maske": None, "kante": None, "paarurteil": None}
+    if maske is None or breite is None:
+        return leer
+
+    # Gemessen schlägt deklariert: Das Vorzeichen aus `GEMESSENE_POLARITAET` gilt für das
+    # PAAR aus Schätzer und unserer Soll-Karte, die Zeichenkette nur für den Schätzer.
+    zeichen = geometrie_qa.GEMESSENE_POLARITAET.get(schaetzer_name)
+    if zeichen is None:
+        zeichen = POLARITAETSZEICHEN.get(polaritaet_wort)
+
+    rho = geometrie_qa.rho_ueber_maske(list(soll), list(roh), maske, polaritaet=zeichen)
+    kante = geometrie_qa.kante_an_maskengrenze(list(roh), maske, breite=breite,
+                                               polaritaet=zeichen)
+    return {"rho_maske": rho, "kante": kante,
+            "paarurteil": geometrie_qa.paarurteil(rho, kante)}
+
+
 def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
                   schaetzer: str = VORGABE_TIEFENSCHAETZER, modell=None, _lader=None,
                   schwelle: float = geometrie_qa.SCHWELLE_GEOMETRIE,
                   hintergrund: float | None = None,
                   hintergrund_strategie: str = HG_VORGABE,
                   hintergrund_anteil: float | None = None,
-                  breite: int | None = None, hoehe: int | None = None) -> dict:
+                  breite: int | None = None, hoehe: int | None = None,
+                  maske: Sequence[bool] | None = None) -> dict:
     """Die Funktion, die die Geometrie-Metrik endlich **anwendbar** macht.
 
     Sie schliesst den Bogen: Aus dem erzeugten Bild wird eine Ist-Tiefenkarte geschätzt,
@@ -1232,6 +1294,12 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         "n_punkte": len(roh),
         "hintergrund_strategie": markierung["strategie"],
         "n_hintergrund_ist": markierung["n_hintergrund"],
+        # Der Maskenweg. `None`, wenn keine Maske hereingereicht wurde — NICHT gemessen
+        # und nicht in Ordnung. Warum die Maske hier hinein und die Schätzkarte nicht
+        # heraus geht: Die Karte ist gross und wird nach diesem Aufruf nicht mehr
+        # gebraucht; sie herauszureichen hiesse, sie an jeder Aufrufstelle mitzuschleppen.
+        **_maskenweg(soll, roh, maske, ist_ergebnis["breite"], schaetzer,
+                     eintrag.polaritaet),
         "anteil_hintergrund_ist": markierung["anteil_hintergrund"],
         "dauer_s": round(time.perf_counter() - beginn, 3),
         "error": None,
