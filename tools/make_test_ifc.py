@@ -23,13 +23,21 @@ Die Geometrie ist absichtlich asymmetrisch (L≠B, Wand ohne Symmetrie), damit e
 verdrehte Up-Achse in Tests **auffällt** statt zufällig gleich auszusehen.
 
 Aufruf:
-    python3 tools/make_test_ifc.py [ziel.ifc] [schema] [vorsatz] [--gelaende]
+    python3 tools/make_test_ifc.py [ziel.ifc] [schema] [vorsatz] [--gelaende] [--raeume]
 
 ``--gelaende`` legt eine Platte in 2,5-facher Gebäudespanne darunter. **Ohne sie steht der
 Testbau in der Luft**, und das ist keine Kleinigkeit: Gemessen (`auf-20260819-15`) deckelt
 ``geom_iou`` dann bei 0.256, und die Geometrie-Schwelle von 0.65 ist **arithmetisch
 unerreichbar** — selbst ein perfektes Bild käme auf höchstens 0.505. Mit Gelände liegt der
 Deckel bei 0.967.
+
+``--raeume`` legt zwei ``IfcSpace`` ins Wandinnere. **Ohne sie hat die Testgeometrie
+keinen einzigen Raum** — und damit gab es im ganzen Projekt kein Beispiel, an dem sich
+das Lesen von Räumen überhaupt prüfen liess. Zwei sind es und nicht einer, weil ein
+Verfahren, das nur an einem Raum geprüft wird, an einer Konstanten hängen kann, die
+zufällig passt; sie unterscheiden sich in Form, Fläche, Höhe, Fussbodenhöhe **und** in
+der Art, wie ihr Grundriss in der Datei geschrieben ist. Auch dieser Schalter ist
+**standardmässig aus**, aus demselben Grund wie ``--gelaende``.
 """
 from __future__ import annotations
 
@@ -50,6 +58,60 @@ GELAENDE_VIELFACHES = 2.5
 #: Dicke der Geländeplatte. Dünn, aber nicht null: Eine Fläche ohne Dicke hat keine
 #: Hüllbox-Ausdehnung in Z und verschwindet in mancher Auswertung.
 GELAENDE_DICKE = 0.05
+
+#: Die beiden Räume, die ``--raeume`` schreibt — **in Metern, in Geschosskoordinaten.**
+#:
+#: Warum zwei und warum ungleich: Ein Verfahren, das nur an einem Raum geprüft wird, kann
+#: an einer Konstanten hängen, die zufällig passt. Die beiden hier unterscheiden sich in
+#: **jeder** Grösse, die ein Leser verwechseln könnte — Fläche, Form, Höhe *und*
+#: Fussbodenhöhe. Wer die Höhe des einen Raums für die des anderen ausgibt, wird rot;
+#: wer die Wandhöhe (3,0 m) für eine Raumhöhe hält, ebenso.
+#:
+#: ``ring_relativ`` ist der Grundriss **relativ zum Einfügepunkt** des Raums, gegen den
+#: Uhrzeigersinn. Dass der Einfügepunkt nicht im Ursprung liegt, ist Absicht: Ein Leser,
+#: der die Platzierungskette nicht anwendet, bekommt den Raum an der falschen Stelle.
+#:
+#: ``z_unten`` ist die Oberkante des Fussbodens, ab der der Raumkörper nach oben läuft.
+#: Die beiden Werte sind verschieden (0,00 m und 0,10 m — ein Raum mit Hohlboden), damit
+#: sichtbar wird, ob der Bezugspunkt je Raum gelesen oder einmal angenommen wurde.
+#:
+#: ``profil`` sagt, **wie** die Form in der Datei steht: ``"polylinie"`` als Punktzug
+#: (``IfcArbitraryClosedProfileDef``), ``"rechteck"`` als zwei Zahlen plus Platzierung
+#: (``IfcRectangleProfileDef``, siehe :func:`_prisma_rechteck`). Beide Schreibweisen
+#: kommen in echten Dateien vor, und ein Leser, der nur eine kennt, ist an der Hälfte
+#: davon blind. Der Rechteck-Raum ist dabei der schärfere Fall: Seine Punkte stehen
+#: **nirgends** in der Datei, sie entstehen erst aus Breite, Tiefe, einer gedrehten
+#: Profilplatzierung und der Objektplatzierung. Wer eine davon auslässt, bekommt den Raum
+#: an der falschen Stelle, verkehrt herum — oder beides.
+#:
+#: Zusammen füllen die beiden das Wandinnere lückenlos aus: 26,62 m² + 5,94 m² = 32,56 m²
+#: = 7,40 m × 4,40 m. Diese Probe ist mehr als Kosmetik — sie belegt, dass die Zahlen
+#: hier zueinander passen und nicht bloss nebeneinander stehen.
+RAEUME = (
+    {
+        "name": "Raum-Nord",
+        "lang_name": "Aufenthalt Nord",
+        "einfuegepunkt": (WANDDICKE, WANDDICKE),
+        "z_unten": 0.00,
+        "hoehe": 2.70,
+        # L-förmig, damit der Grundriss ein echtes Polygon ist und kein Rechteck, das
+        # sich auch aus einer Hüllbox erraten liesse.
+        "ring_relativ": ((0.0, 0.0), (4.7, 0.0), (4.7, 2.2),
+                         (7.4, 2.2), (7.4, 4.4), (0.0, 4.4)),
+        "flaeche": 26.62,
+        "profil": "polylinie",
+    },
+    {
+        "name": "Raum-Sued",
+        "lang_name": None,          # bewusst leer: fehlende Felder müssen `None` werden
+        "einfuegepunkt": (5.0, WANDDICKE),
+        "z_unten": 0.10,
+        "hoehe": 2.40,
+        "ring_relativ": ((0.0, 0.0), (2.7, 0.0), (2.7, 2.2), (0.0, 2.2)),
+        "flaeche": 5.94,
+        "profil": "rechteck",
+    },
+)
 
 _B64 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$"
 
@@ -127,8 +189,103 @@ def _quader(s: _Step, kontext: str, breite: float, tiefe: float, hoehe: float,
     return shape, ort
 
 
+def _prisma(s: _Step, kontext: str, ring: tuple[tuple[float, float], ...],
+            hoehe: float, x: float, y: float, z: float, grund: str, *,
+            einheit_je_meter: float = 1.0) -> tuple[str, str]:
+    """Ein extrudiertes Prisma über einem **frei geformten** Grundriss.
+
+    Der Unterschied zu :func:`_quader` ist nicht Bequemlichkeit, sondern der Prüfzweck:
+    ``IFCRECTANGLEPROFILEDEF`` trägt seine Form in zwei Zahlen und einer Platzierung,
+    ``IFCARBITRARYCLOSEDPROFILEDEF`` trägt sie als Punktzug. Ein Leser, der nur den einen
+    Weg kennt, ist an echten Dateien zur Hälfte blind — beide Profilarten kommen dort vor.
+
+    `ring` ist **relativ zum Einfügepunkt** ``(x, y)`` und **offen**: Der Schlusspunkt
+    wird hier angehängt, denn ``IFCPOLYLINE`` einer geschlossenen Kurve muss den ersten
+    Punkt am Ende wiederholen. Wer ihn schon im Ring mitschickt, bekommt eine Kante der
+    Länge null — und die ist in jeder späteren Auswertung ein Sonderfall.
+
+    Anders als bei :func:`_quader` gibt es hier **keine Profilplatzierung**:
+    ``IfcArbitraryClosedProfileDef`` erbt von ``IfcProfileDef`` und hat gar kein
+    ``Position``-Attribut. Die Punkte liegen also unmittelbar im Koordinatensystem des
+    Extrusionskörpers.
+    """
+    e = einheit_je_meter
+    punkte = [s.add(f"IFCCARTESIANPOINT(({px * e:.6f},{py * e:.6f}))") for px, py in ring]
+    linie = s.add(f"IFCPOLYLINE(({','.join(punkte + [punkte[0]])}))")
+    profil = s.add(f"IFCARBITRARYCLOSEDPROFILEDEF(.AREA.,$,{linie})")
+    richtung = s.add("IFCDIRECTION((0.,0.,1.))")
+    koerper = s.add(
+        f"IFCEXTRUDEDAREASOLID({profil},{s.platzierung()},{richtung},{hoehe * e:.6f})"
+    )
+    rep = s.add(f"IFCSHAPEREPRESENTATION({kontext},'Body','SweptSolid',({koerper}))")
+    shape = s.add(f"IFCPRODUCTDEFINITIONSHAPE($,$,({rep}))")
+    ort = s.add(f"IFCLOCALPLACEMENT({grund},{s.platzierung(x * e, y * e, z * e)})")
+    return shape, ort
+
+
+#: Versatz der **Profilplatzierung** des Rechteck-Raums, in Metern, im Koordinatensystem
+#: des Extrusionskörpers. Krumm und ungleich in X und Y, damit ein Leser, der ihn
+#: auslässt, nicht zufällig richtig liegt.
+RECHTECKPROFIL_VERSATZ = (0.4, -0.2)
+
+
+def _prisma_rechteck(s: _Step, kontext: str, breite: float, tiefe: float, hoehe: float,
+                     x: float, y: float, z: float, grund: str, *,
+                     einheit_je_meter: float = 1.0) -> tuple[str, str]:
+    """Ein Quader über einem ``IfcRectangleProfileDef`` — in der **unbequemsten zulässigen
+    Schreibweise**.
+
+    Warum nicht einfach :func:`_quader`: Dort steht die Profilplatzierung auf der
+    Einheitsmatrix — Ursprung, keine Drehung. Ein Leser, der sie schlicht **ignoriert**,
+    bekommt dann trotzdem das richtige Rechteck, und kein Test der Welt merkt es. Genau
+    das war der Befund der Mutationsprobe vom 22.08.2026: Die Profilplatzierung liess sich
+    aus dem Leser herausschneiden, ohne dass ein Test rot wurde.
+
+    Hier steht sie darum bewusst schief und versetzt, und beides wird in der
+    Objektplatzierung wieder herausgerechnet. Das Ergebnis in der Welt ist **exakt**
+    dasselbe Rechteck wie bei :func:`_quader` — nur muss der Leser jetzt dreimal richtig
+    rechnen, statt zweimal richtig und einmal gar nicht:
+
+    * ``RefDirection = (0,1)`` dreht das Profil um 90°. Darum stehen ``XDim`` und ``YDim``
+      **vertauscht** in der Datei. Wer die Drehung auslässt, bekommt ein Rechteck von
+      2,2 m × 2,7 m statt 2,7 m × 2,2 m — verkehrt herum, aber plausibel aussehend.
+    * ``Location`` versetzt das Profil um :data:`RECHTECKPROFIL_VERSATZ`. Wer ihn auslässt,
+      bekommt den Raum um denselben Betrag verschoben.
+
+    Beides ist in echten Dateien alltäglich: Ein gedrehter Raum ist in jedem Grundriss zu
+    finden, der nicht rechtwinklig zum Nordpfeil steht.
+    """
+    e = einheit_je_meter
+    vx, vy = RECHTECKPROFIL_VERSATZ
+
+    ort2d = s.add(f"IFCCARTESIANPOINT(({vx * e:.6f},{vy * e:.6f}))")
+    # 90°-Drehung: die lokale X-Achse des Profils zeigt in Welt-Y.
+    ref2d = s.add("IFCDIRECTION((0.,1.))")
+    platz2d = s.add(f"IFCAXIS2PLACEMENT2D({ort2d},{ref2d})")
+    # Vertauscht, weil die Drehung sie wieder zurücktauscht.
+    profil = s.add(
+        f"IFCRECTANGLEPROFILEDEF(.AREA.,$,{platz2d},{tiefe * e:.6f},{breite * e:.6f})"
+    )
+    richtung = s.add("IFCDIRECTION((0.,0.,1.))")
+    koerper = s.add(
+        f"IFCEXTRUDEDAREASOLID({profil},{s.platzierung()},{richtung},{hoehe * e:.6f})"
+    )
+    rep = s.add(f"IFCSHAPEREPRESENTATION({kontext},'Body','SweptSolid',({koerper}))")
+    shape = s.add(f"IFCPRODUCTDEFINITIONSHAPE($,$,({rep}))")
+    # `Location` verschiebt den MITTELPUNKT des Profils, und die Drehung geht darüber
+    # hinweg — sie dreht die Profilpunkte um diesen Mittelpunkt, nicht den Mittelpunkt
+    # selbst. Abgezogen wird der Versatz darum ungedreht. (Beim ersten Versuch stand hier
+    # die gedrehte Fassung; der Raum landete 0,2 m zu weit rechts und 0,6 m zu weit unten,
+    # und der End-to-End-Test hat es gemeldet — wofür er da ist.)
+    ort = s.add(
+        f"IFCLOCALPLACEMENT({grund},"
+        f"{s.platzierung((x + breite / 2 - vx) * e, (y + tiefe / 2 - vy) * e, z * e)})"
+    )
+    return shape, ort
+
+
 def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
-                mit_gelaende: bool = False) -> Path:
+                mit_gelaende: bool = False, mit_raeumen: bool = False) -> Path:
     """Schreibt die synthetische IFC nach `ziel` und gibt den Pfad zurück.
 
     Args:
@@ -142,6 +299,14 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
             Die Koordinaten werden entsprechend skaliert, damit das Bauwerk **dieselbe
             wirkliche Grösse** behält — eine Datei, die Millimeter erklärt und
             Meterzahlen trägt, wäre ein kaputter Export und keine Testgeometrie.
+        mit_gelaende: Zusätzlich eine Geländeplatte unter dem Bauwerk.
+        mit_raeumen: Zusätzlich zwei ``IfcSpace`` im Wandinneren — siehe :data:`RAEUME`.
+            **Vorgabe aus**, aus demselben Grund wie bei ``mit_gelaende``: Jede bestehende
+            Messung hängt an der Hüllbox 8,0 × 5,0 × 3,25 m und an der Zahl der Bauteile.
+            Ein Raum ist zwar innen und ändert die Hüllbox nicht, aber er ist ein weiteres
+            ``IfcProduct`` mit Geometrie — ``ifc_zu_glb`` zählte danach andere Elemente und
+            Dreiecke. Eine stillschweigend geänderte Testgeometrie macht eine Messreihe
+            unbrauchbar, ohne dass es auffällt.
     """
     if schema not in ("IFC4", "IFC2X3"):
         raise ValueError(f"schema: 'IFC4' oder 'IFC2X3' erwartet, war {schema!r}.")
@@ -271,6 +436,47 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
         f"({','.join(bauteile)}),{geschoss})"
     )
 
+    # ── Räume ────────────────────────────────────────────────────────────────────────
+    # Ein `IfcSpace` ist kein Bauteil, sondern ein Luftvolumen: die Zone, in der sich
+    # jemand aufhält. Er gehört darum **nicht** in die Bauteilliste oben. IFC ordnet
+    # Räume dem Geschoss über `IfcRelAggregates` zu (Zerlegung), nicht über
+    # `IfcRelContainedInSpatialStructure` (Einlagerung) — letzteres ist für Elemente
+    # gedacht, und ein Raum dort drin machte die Datei für einen strengen Leser ungültig.
+    #
+    # Das zehnte Attribut ist die einzige Stelle, an der sich die beiden Schemata bei
+    # `IfcSpace` unterscheiden — und zwar **nicht in der Zahl** der Attribute (elf sind
+    # es hier wie dort), sondern in der Bedeutung: IFC2X3 hat dort
+    # `InteriorOrExteriorSpace` (`IfcInternalOrExternalEnum`), IFC4 hat `PredefinedType`
+    # (`IfcSpaceTypeEnum`). `.INTERNAL.` ist in **beiden** Aufzählungen enthalten und in
+    # beiden richtig gemeint — ein Zufall, aber ein geprüfter (siehe
+    # `test_raeume.py::test_raum_traegt_in_beiden_schemata_INTERNAL`). Wer hier
+    # stattdessen `.SPACE.` schriebe (IFC4-typisch), machte die IFC2X3-Datei ungültig,
+    # **ohne dass die Attributzahl es verriete** — genau die Fehlerklasse, die schon
+    # einmal dreizehn unbemerkte `OwnerHistory`-Verstösse erzeugt hat.
+    if mit_raeumen:
+        raeume = []
+        for r in RAEUME:
+            ex, ey = r["einfuegepunkt"]
+            if r["profil"] == "rechteck":
+                (bx, by), (tx, ty) = r["ring_relativ"][0], r["ring_relativ"][2]
+                shape, ort = _prisma_rechteck(
+                    s, kontext, tx - bx, ty - by, r["hoehe"],
+                    ex + bx, ey + by, r["z_unten"], ort_gesch,
+                    einheit_je_meter=einheit_je_meter)
+            else:
+                shape, ort = _prisma(
+                    s, kontext, r["ring_relativ"], r["hoehe"], ex, ey, r["z_unten"],
+                    ort_gesch, einheit_je_meter=einheit_je_meter)
+            lang = "$" if r["lang_name"] is None else f"'{r['lang_name']}'"
+            raeume.append(s.add(
+                f"IFCSPACE('{_ifc_guid(next(g))}',{besitz},'{r['name']}',$,$,{ort},"
+                f"{shape},{lang},.ELEMENT.,.INTERNAL.,$)"
+            ))
+        s.add(
+            f"IFCRELAGGREGATES('{_ifc_guid(next(g))}',{besitz},$,$,{geschoss},"
+            f"({','.join(raeume)}))"
+        )
+
     text = (
         "ISO-10303-21;\n"
         "HEADER;\n"
@@ -287,12 +493,18 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
     return ziel
 
 
+#: Die Schalter, die keine Stellungsargumente sind. Einmal aufgeschrieben, damit die
+#: Filterung unten nicht bei jedem neuen Schalter an zwei Stellen nachgezogen werden muss
+#: — ein vergessener Eintrag machte den Schalter stillschweigend zum Dateinamen.
+SCHALTER = ("--gelaende", "--raeume")
+
 GEBRAUCH = (
-    "Gebrauch: make_test_ifc.py [ZIEL] [IFC4|IFC2X3] [MILLI] [--gelaende]\n"
+    "Gebrauch: make_test_ifc.py [ZIEL] [IFC4|IFC2X3] [MILLI] [--gelaende] [--raeume]\n"
     "  ZIEL       Pfad der zu schreibenden Datei (Vorgabe: build/testbau.ifc)\n"
     "  Schema     IFC4 (Vorgabe) oder IFC2X3\n"
     "  Vorsatz    MILLI fuer Millimeter, sonst Meter\n"
     "  --gelaende zusaetzlich eine Gelaendeplatte unter dem Bauwerk\n"
+    "  --raeume   zusaetzlich zwei IfcSpace im Wandinneren\n"
 )
 
 
@@ -302,8 +514,9 @@ if __name__ == "__main__":
     if "--help" in sys.argv[1:] or "-h" in sys.argv[1:]:
         print(GEBRAUCH, end="")
         raise SystemExit(0)
-    argv = [a for a in sys.argv[1:] if a != "--gelaende"]
+    argv = [a for a in sys.argv[1:] if a not in SCHALTER]
     mit_gelaende = "--gelaende" in sys.argv
+    mit_raeumen = "--raeume" in sys.argv
     # Ein unbekannter Schalter wurde bisher zum Dateinamen: `--help` schrieb eine IFC
     # namens `--help` ins Arbeitsverzeichnis. Ein Tippfehler darf keine Datei erzeugen.
     unbekannt = [a for a in argv if a.startswith("-")]
@@ -315,5 +528,5 @@ if __name__ == "__main__":
     schema = argv[1] if len(argv) > 1 else "IFC4"
     vorsatz = argv[2] if len(argv) > 2 else None
     p = erzeuge_ifc(ziel, schema=schema, vorsatz=(vorsatz or None),
-                    mit_gelaende=mit_gelaende)
+                    mit_gelaende=mit_gelaende, mit_raeumen=mit_raeumen)
     print(f"{p}  ({p.stat().st_size} Bytes, {len(p.read_text().splitlines())} Zeilen)")

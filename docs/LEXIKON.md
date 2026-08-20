@@ -1327,6 +1327,46 @@ zweidimensionales Profil, entlang einer Richtung in die Höhe gezogen. Eine Wand
 Rechteck, drei Meter hochgezogen. Deshalb steht in einer IFC kein fertiges 3D-Modell,
 sondern eine Bauanweisung — jemand muss daraus erst Dreiecke rechnen.
 
+**Raum (`IfcSpace`)** — In einem Gebäudemodell ist ein Raum kein Bauteil, sondern ein
+**Luftvolumen**: der Bereich, in dem sich jemand aufhält, begrenzt von Wänden, Boden und
+Decke. In IFC steht er als eigener Eintrag namens `IfcSpace` neben den Wänden — mit Namen,
+Grundriss und Höhe, aber ohne Material. Viele Modelle tragen gar keine; sie zu setzen ist
+Arbeit, die jemand im Autorenprogramm bewusst machen muss. *In diesem Projekt die
+Voraussetzung für jede Aufnahme von innen: Ohne Räume gibt es nichts, worin eine Kamera
+stehen könnte.*
+
+**Grundriss (als Polygon)** — Der Umriss eines Raums, waagerecht gesehen, als Kette von
+Eckpunkten. Vier Punkte bei einem rechteckigen Zimmer, sechs bei einem L-förmigen. Das ist
+die schlichteste Form, in der sich „wo ist dieser Raum" weiterreichen lässt — sie kommt
+ohne Geometriebibliothek aus, und genau darum kann der Kern des Projekts sie verarbeiten,
+obwohl der Leser der IFC-Datei hinter einer Prozessgrenze liegt.
+
+**Umlaufsinn** — Die Richtung, in der die Eckpunkte eines Polygons aufgezählt sind: gegen
+den Uhrzeigersinn oder mit ihm. Für die Fläche ist es gleichgültig, für manche Rechnungen
+nicht — etwa für die Frage, welche Seite einer Kante „innen" ist. *Hier wird er gemeldet
+und nicht begradigt: Wer den Ring dreht, soll wissen, dass er es getan hat.*
+
+**Platzierungskette** — In IFC steht kein Bauteil bei absoluten Koordinaten. Es hängt an
+einer Kette: Der Raum liegt im Geschoss, das Geschoss im Gebäude, das Gebäude auf dem
+Grundstück — und jedes Glied trägt eine eigene Verschiebung und Drehung. Wer die Kette
+nicht bis oben durchrechnet, bekommt ein Bauteil an der falschen Stelle. Besonders
+tückisch: Lässt man **ein** Glied aus, liegen alle Bauteile gleich falsch, und der
+Grundriss sieht trotzdem plausibel aus.
+
+**Bezugspunkt (einer Höhenangabe)** — Der Nullpunkt, von dem aus eine Höhe gemessen wird.
+„2,70 m" ist ohne ihn keine Angabe: über Fussboden, über Geschossnull, über Meer — das
+sind drei verschiedene Orte. *Dieses Projekt hat an genau dieser Verwechslung zweimal
+verloren; eine Kamerahöhe „absolut" gemeint landete bei einem Bauwerk auf 400 m über Meer
+vierhundert Meter unter dem Erdgeschoss. Seither trägt jede Höhe im Code den Namen ihres
+Bezugspunkts mit sich.*
+
+**Lichte Höhe** — Der freie Abstand zwischen Fussboden und Decke eines Raums, also das,
+was ein Mensch darin wirklich an Luft über sich hat. Zu unterscheiden von der
+**Geschosshöhe**, die von Rohdecke zu Rohdecke misst und die Deckenstärke mit einschliesst.
+Der Unterschied beträgt leicht einen halben Meter. *Welche der beiden ein IFC-Raumkörper
+darstellt, sagt die Datei nicht — das ist eine Gewohnheit des erzeugenden Programms, und
+darum wird die Zahl hier keiner von beiden gleichgesetzt.*
+
 **GUID (Globally Unique Identifier)** — Eine Kennung, die ein Objekt weltweit eindeutig
 bezeichnet. IFC schreibt jedem Bauteil eine vor, in einer eigenen 22-Zeichen-Schreibweise.
 *In diesem Projekt werden sie für Testdaten bewusst **deterministisch** erzeugt.*
@@ -2874,6 +2914,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-22 | Ergaenzt aus dem Raumleser (`src/aiimaging/runners/ifc_raeume_runner.py`, `seams.ifc_raeume`): **Raum (`IfcSpace`)**, **Grundriss (als Polygon)**, **Umlaufsinn**, **Platzierungskette**, **Bezugspunkt (einer Höhenangabe)**, **lichte Höhe**. Die letzten beiden tragen den Grund, warum es diesen Auftrag ueberhaupt so gab: Eine Zahl ohne Bezugspunkt ist in diesem Projekt keine Zahl |
 | 2026-08-21 | Ergaenzt aus den drei Kompositionsrecherchen (`docs/recherche/KOMPOSITION_AUSSEN.md`, `KOMPOSITION_INNEN.md`, `BILDPROPORTIONEN.md`): 34 Begriffe der Architekturfotografie — Aufnahmetechnik (**Sensor/Bildebene**, **Kleinbild**, **Seitenverhältnis**, **Fachkamera**, **Planfilm**, **Bildkreis**, **Shift**, **Shift-Stitch**, **Perspektivkorrektur**), Projektionsgeometrie (**stürzende Linien**, **Ein-/Zwei-/Dreipunktperspektive**, **Fluchtpunkt**, **Horizontlinie**, **Über-Eck-Ansicht**, **rektilineare Projektion**, **Volumenanamorphose**, **Objektivverzeichnung**, **Streckungsverhältnis**), Bildaufbau (**Bildebenen**, **Anschnitt**, **Negativraum/funktionaler Raum**, **axial/nicht-axial**, **Drittelregel**, **goldener Schnitt**), Licht (**Dämmerungsphasen**, **goldene/blaue Stunde**, **Blendenstufe/EV**, **Dynamikumfang**, **Belichtungsreihe**, **flambient**) und Ausgabe (**dpi**, **HABS**); dazu **Perzentil**. Zwei Eintraege tragen den Befund der Recherche und nicht die Lehrmeinung: Die **Drittelregel** ist als Beschreibung der Praxis widerlegt (Amirshahi et al. 2014, ρ = 0,17) und wurde 1955 mit dem goldenen Schnitt verwechselt; **stuerzende Linien** sind die einzige institutionell verbindliche Regel des Fachs — und unser eigener Code verletzt sie in jedem Bild (9,46° Neigung, rund 9–12 % Konvergenz; die urspruenglich genannten 11,8–21,8 % waren falsch gerechnet und noch in derselben Nacht korrigiert). **Getrennt:** **Rauschboden** bezeichnet zwei Sachverhalte — die Streuung einer Saatreihe und den Boden einer Metrik ueber einem Bild ohne Geometrie; beide Titel tragen jetzt einen Klammerzusatz, die Trennung steht in `tests/test_lexikon.py` |
 | 2026-08-21 | Ergaenzt aus der Bauwerksmaske (`src/aiimaging/maske.py`): **Bauwerksmaske** und **Geländeregel**. Beide aus der Messung vom 21.08.2026: Der Material-ID-Pass liefert dieselbe Maske wie eine zweite Blender-Aufnahme (100.000 % Uebereinstimmung), aber nur, solange eine Regel sagt, woran das Gelaende zu erkennen ist |
 | 2026-08-20 | Ergaenzt: **Erreichbarkeit einer Schwelle (Deckel)**. Nachgerechnet: Auf der Szene ohne Boden — der einzigen, auf der je gerendert wurde — war die Geometrie-Schwelle 0.65 arithmetisch unerreichbar |

@@ -39,6 +39,7 @@ from aiimaging.contracts import ContractError, needs_rotation
 _RUNNER_DIR = Path(__file__).resolve().parent / "runners"
 
 IFC_RUNNER = _RUNNER_DIR / "ifc_to_glb_runner.py"
+IFC_RAEUME_RUNNER = _RUNNER_DIR / "ifc_raeume_runner.py"
 BLENDER_RUNNER = _RUNNER_DIR / "blender_depth_stage.py"
 
 
@@ -347,6 +348,116 @@ def ifc_zu_glb(ifc_path, glb_path, *, timeout: int = 300, _starte=None) -> dict:
         raise SeamError(
             f"IFC→glb fehlgeschlagen (Code {ergebnis.returncode}):\n"
             f"{(ergebnis.stderr or ergebnis.stdout or '').strip()[:800]}"
+        )
+    try:
+        return json.loads(ergebnis.stdout)
+    except json.JSONDecodeError as e:
+        raise SeamError(f"Runner lieferte kein JSON: {e}\n{ergebnis.stdout[:400]}") from e
+
+
+def _fehlertext(ergebnis) -> str:
+    """Die aussagekräftigste Fehlermeldung aus einem gescheiterten Lauf.
+
+    Warum nicht einfach ``stderr``: Der Raum-Runner schreibt seine Diagnose als **Report
+    auf stdout** und meldet den Fehlschlag über den Rückgabewert. Auf stderr landet
+    derweil, was die fremde Bibliothek dort hinterlässt — bei ifcopenshell 0.8.5 zum
+    Beispiel ein ``KeyError`` aus einem Destruktor beim Herunterfahren des Interpreters,
+    der mit der Ursache nichts zu tun hat.
+
+    Gemessen am 22.08.2026 an einer Datei, die keine IFC ist: Auf stdout stand
+    ``"Unable to parse IFC SPF header"``, auf stderr die Destruktor-Meldung. Wer nur
+    stderr zeigt, zeigt dem Aufrufer ausgerechnet das Rauschen und verschweigt die
+    Diagnose.
+
+    Darum: erst der ``error``-Eintrag des Reports, dann stderr, dann die rohe Ausgabe.
+    Beides zusammen, wenn es beides gibt — was die fremde Bibliothek sagt, kann bei einem
+    Absturz die einzige Spur sein.
+    """
+    teile: list[str] = []
+    try:
+        report = json.loads(ergebnis.stdout)
+        if isinstance(report, dict) and report.get("error"):
+            teile.append(str(report["error"]))
+    except (json.JSONDecodeError, TypeError):
+        pass
+    if (ergebnis.stderr or "").strip():
+        teile.append(ergebnis.stderr.strip())
+    if not teile and (ergebnis.stdout or "").strip():
+        teile.append(ergebnis.stdout.strip())
+    return "\n".join(teile)[:800] or "(keine Ausgabe)"
+
+
+def ifc_raeume(ifc_path, *, timeout: int = 300, _starte=None) -> dict:
+    """Räume (``IfcSpace``) aus einer IFC — über den Subprozess im `.venv-ifc`.
+
+    Gebaut wie :func:`ifc_zu_glb` und aus demselben Grund: `ifcopenshell` bringt statisch
+    gelinktes GPL-CGAL mit und darf nach Regel 1 nur jenseits einer Prozessgrenze laufen.
+    Diese Funktion ist die diesseitige Hälfte davon — sie startet ein Programm und liest
+    JSON, sie importiert nichts.
+
+    Sie ist die **Voraussetzung** für Innenaufnahmen, nicht deren Umsetzung: `kameras.py`
+    rechnet ausschliesslich Standpunkte um eine Hüllbox herum, und ``WANDABSTAND_M = 10.0``
+    macht eine Innenaufnahme rechnerisch unmöglich. Bevor sich daran etwas ändern lässt,
+    muss bekannt sein, wo die Räume sind. Hier steht nur das.
+
+    **IFC4 *und* IFC2X3**, in Metern *und* in Millimetern — alle vier Kombinationen sind
+    durch den echten Runner gemessen und ergeben dieselben Räume (siehe
+    ``tests/test_raeume.py``, Gruppe C). Die Messung an 40 echten Dateien
+    (`auf-20260818-08`) sagt, warum das nötig ist: 25 von 40 standen in Millimetern, und
+    alle zehn ArchiCAD-Dateien waren IFC2X3.
+
+    Args:
+        ifc_path: Die zu lesende IFC-Datei.
+        timeout: Frist des Subprozesses in Sekunden.
+        _starte: Testnaht — ersetzt den Subprozessaufruf, damit die Aufrufkonstruktion
+            auch ohne `.venv-ifc` prüfbar bleibt.
+
+    Returns:
+        Report des Runners: ``status``, ``schema``, ``einheit``, ``n_raeume``,
+        ``n_mit_grundriss``, ``n_ohne_grundriss``, ``n_mit_hoehe``, ``n_ohne_hoehe``,
+        ``raeume``, ``masse_plausibel``, ``masse_befund``, ``warnungen``.
+
+        Je Raum: ``global_id``, ``name``, ``lang_name``, ``geschoss_global_id``,
+        ``geschoss_name``, ``grundriss_m`` (Polygon in der Waagerechten, in Metern),
+        ``grundriss_quelle``, ``umlaufsinn``, ``flaeche_m2``, ``z_unten_m``, ``hoehe_m``,
+        ``hoehe_bezug``, ``hoehe_begruendung``, ``befund``, ``hoehe_befund``,
+        ``hinweise``.
+
+        **Zwei Urteile, nicht eines.** ``grundriss_m is None`` genau dann, wenn ``befund``
+        gesetzt ist; ``hoehe_m is None`` genau dann, wenn ``hoehe_befund`` gesetzt ist.
+        Der Fall, der das erzwungen hat, ist die schiefe Extrusion: Der Fussbodenumriss
+        steht dann einwandfrei in der Datei, aber der Körper darüber schert weg. Ein
+        einziges Urteil hätte entweder eine gültige Messung weggeworfen oder eine
+        erfundene Höhe geliefert.
+
+        **Der Bezugspunkt der Höhe ist Teil der Antwort, nicht ihr Beiwerk:**
+        ``hoehe_m`` ist die Länge des modellierten Raumkörpers **nach oben ab**
+        ``z_unten_m``, und ``z_unten_m`` liegt in IFC-Weltkoordinaten — nicht über Meer,
+        nicht über Gelände. Dieses Projekt hat an genau dieser Verwechslung schon zweimal
+        verloren (siehe Modulkopf von ``kameras.py``: eine Kamerahöhe „absolut" gemeint
+        landete bei einem Bauwerk auf 400 m über Meer vierhundert Meter unter dem
+        Erdgeschoss).
+
+        **Kein Raum wird stillschweigend weggelassen.** ``len(raeume) == n_raeume`` ist die
+        Zahl der ``IfcSpace`` in der Datei; ein Raum ohne lesbaren Grundriss steht mit
+        ``grundriss_m = None`` und einem ``befund`` da. Sonst sähe der Aufrufer drei Räume
+        und hielte sie für alle.
+
+        **Null Räume sind kein Fehler**, sondern ein Befund: Die meisten IFC-Dateien tragen
+        gar keine ``IfcSpace``. Der Report sagt dann ``status: "ok"``, ``n_raeume: 0`` und
+        nennt es in ``warnungen``.
+
+    Raises:
+        SeamError: venv fehlt, Subprozess scheitert oder liefert keinen lesbaren Report.
+    """
+    starte = _starte or _default_starte
+    cmd = [finde_ifc_python(), str(IFC_RAEUME_RUNNER), str(ifc_path)]
+
+    ergebnis = starte(cmd, timeout)
+    if ergebnis.returncode != 0:
+        raise SeamError(
+            f"IFC-Räume fehlgeschlagen (Code {ergebnis.returncode}):\n"
+            f"{_fehlertext(ergebnis)}"
         )
     try:
         return json.loads(ergebnis.stdout)
@@ -726,5 +837,5 @@ __all__ = [
     "ContractError", "SeamError",
     "baue_kommando_multipass", "baue_kommando_tiefenkarte",
     "finde_blender", "finde_ifc_python",
-    "glb_zu_multipass", "glb_zu_tiefenkarte", "ifc_zu_glb",
+    "glb_zu_multipass", "glb_zu_tiefenkarte", "ifc_raeume", "ifc_zu_glb",
 ]

@@ -20,7 +20,9 @@ Aufbau
 ``kosmo_naht``   Übersetzung unserer Felder in die Protokollnamen des Ökosystems
 ``stilstudie``   der Boden des Einbetters — wovon die Stil-Schwelle abhängt
 ``schwellenstudie`` Kalibrierung der Geometrie-Schwelle: Störung, Kurve, Trennschärfe
-``seams``        die Prozessgrenzen zu IfcOpenShell und Blender
+``seams``        die Prozessgrenzen zu IfcOpenShell und Blender — dort auch
+                 ``ifc_raeume``: Räume aus einer IFC als schlichte Daten, die
+                 Voraussetzung für alles Innere
 ``torwaechter``  Massstabs- und Georeferenzprüfung vor teurer GPU-Zeit
 ``graph``        der innere Knotengraph der Bildkette
 ``kette``        die Bildkette ALS Graph — mit Zwischenspeicher über Inhalts-Hashes
@@ -55,7 +57,9 @@ from aiimaging.contracts import (  # noqa: F401
     normalize_up_axis,
     validate_render_scene,
 )
-from aiimaging.seams import SeamError, glb_zu_tiefenkarte, ifc_zu_glb  # noqa: F401
+from aiimaging.seams import (  # noqa: F401
+    SeamError, glb_zu_tiefenkarte, ifc_raeume, ifc_zu_glb,
+)
 from aiimaging.gate import gesamturteil  # noqa: F401
 from aiimaging.geometrie_qa import geometrie_gate, geometrie_score  # noqa: F401
 from aiimaging.stil_qa import stil_gate, stil_score  # noqa: F401

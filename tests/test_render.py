@@ -1206,17 +1206,38 @@ def test_fehlende_controlnet_gewichte_brechen_vor_dem_laden_ab(tmp_path):
 # Unser Multipass schreibt 16 Bit. Das ControlNet bekam darum eine Schwarzweiss-Schablone
 # statt einer Tiefe — gemessen: 235 verschiedene Werte vorher, ZWEI nachher.
 
+#: Diese vier Prüfungen brauchen NumPy und Pillow. Beide sind **nicht** in
+#: ``pyproject.toml`` deklariert, und ``render.py`` importiert NumPy ausdrücklich nur
+#: örtlich („nur für diesen Fall"). Sie sind also *nachrüstbar* und nicht Voraussetzung.
+#:
+#: **Darum wird hier übersprungen und nicht rot.** Am 22.08.2026 verschwand NumPy aus
+#: dieser Umgebung, und vier Tests wurden rot — mit ``ModuleNotFoundError`` als
+#: Begründung. Das sieht aus wie ein kaputtes Modul und ist ein fehlendes Paket, und
+#: genau diese beiden Dinge trennt dieses Projekt überall sonst: *durchgefallen* ist
+#: nicht *nicht gemessen*. Ein übersprungener Test sagt, dass er nicht lief; ein roter
+#: behauptet, etwas sei falsch.
+#:
+#: **Offen und benannt:** Ob NumPy in ``pyproject.toml`` gehört, ist nicht entschieden.
+#: Es ist BSD-3 und damit unter Regel 1 zulässig. Solange es nicht dort steht, gilt es
+#: als optional — und dann ist Überspringen die richtige Antwort und keine Nachsicht.
+def _numpy_oder_ueberspringen():
+    """NumPy holen oder den Test mit Begründung überspringen."""
+    return pytest.importorskip(
+        "numpy", reason="NumPy ist nicht installiert und nicht deklariert — diese vier "
+                        "Prüfungen sind damit NICHT GEMESSEN, nicht durchgefallen.")
+
+
 def _sechzehn_bit_rampe(breite=256, hoehe=32):
     """256 Punkte breit, damit ueberhaupt 256 Stufen entstehen KOENNEN — bei 64 Punkten
     ist eine Obergrenze von 64 Stufen die Breite und nicht der Fehler."""
-    import numpy as np
+    np = _numpy_oder_ueberspringen()
     from PIL import Image
     zeile = np.linspace(0, 65535, breite, dtype=np.uint16)
     return Image.fromarray(np.tile(zeile, (hoehe, 1)), mode="I;16")
 
 
 def test_sechzehn_bit_wird_skaliert_und_nicht_geklippt():
-    import numpy as np
+    np = _numpy_oder_ueberspringen()
     from aiimaging.render import _tiefe_als_rgb
     a = np.asarray(_tiefe_als_rgb(_sechzehn_bit_rampe()))[:, :, 0]
     assert len(np.unique(a)) > 200, (
@@ -1228,7 +1249,7 @@ def test_sechzehn_bit_wird_skaliert_und_nicht_geklippt():
 
 def test_der_alte_weg_haette_zwei_stufen_geliefert():
     """Die Gegenprobe — sonst prueft der Test oben nichts Bestimmtes."""
-    import numpy as np
+    np = _numpy_oder_ueberspringen()
     a = np.asarray(_sechzehn_bit_rampe().convert("RGB"))[:, :, 0]
     assert len(np.unique(a)) <= 2, (
         "Wenn PIL das inzwischen selbst richtig macht, gehoert unser Umweg geprueft "
@@ -1237,7 +1258,7 @@ def test_der_alte_weg_haette_zwei_stufen_geliefert():
 
 
 def test_acht_bit_bleibt_unangetastet():
-    import numpy as np
+    np = _numpy_oder_ueberspringen()
     from PIL import Image
     from aiimaging.render import _tiefe_als_rgb
     grau = Image.fromarray(np.arange(256, dtype=np.uint8).reshape(16, 16), mode="L")
@@ -1247,7 +1268,7 @@ def test_acht_bit_bleibt_unangetastet():
 
 def test_eine_leere_karte_bricht_nicht_ab():
     """Hoechstwert 0 — die Division muss das aushalten."""
-    import numpy as np
+    np = _numpy_oder_ueberspringen()
     from PIL import Image
     from aiimaging.render import _tiefe_als_rgb
     leer = Image.fromarray(np.zeros((8, 8), dtype=np.uint16), mode="I;16")

@@ -789,14 +789,27 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Belegte stützt sich auf Normen, Behördenvorschriften, begutachtete Studien und
       Geometrie — **nicht auf die Lehrbücher des Fachs.** Für die schriftliche Arbeit wird
       das nachzuholen sein, notfalls in einer Bibliothek.
-- [ ] **Räume aus IFC lesen — in Arbeit (22.08.), die Voraussetzung für alles Innere.**
-      Das Projekt kennt heute **kein einziges `IfcSpace`**. Ohne Räume gibt es keinen
-      Standpunkt im Raum, keine Raumhöhe für die Gleichgewichtsregel und keinen
-      Verdeckungstest gegen Wände. Gebaut wird hinter der Prozessgrenze
-      (`runners/ifc_raeume_runner.py` im `.venv-ifc`, Naht in `seams.py`) — `ifcopenshell`
-      bringt statisch gelinktes GPL-CGAL mit und darf nach Regel 1 nie in den Kern.
+- [x] **Räume aus IFC lesen — erledigt 22.08. (Sitzung 11), die Voraussetzung für alles
+      Innere.** `runners/ifc_raeume_runner.py` im `.venv-ifc`, Naht `seams.ifc_raeume`,
+      Testgeometrie `make_test_ifc.py --raeume` (zwei Räume, standardmässig aus).
+      Gemessen an allen vier Kombinationen IFC4/IFC2X3 × Meter/Millimeter: dieselben zwei
+      Räume, 26,62 m² und 5,94 m², Höhen 2,70 m und 2,40 m. Vierzehn Mutationen einzeln
+      gekappt, alle vierzehn rot.
+
+      **Die Höhe trägt ihren Bezugspunkt mit:** `z_unten_m` ist die Unterkante des
+      Raumkörpers in IFC-Weltkoordinaten — nicht über Meer, nicht über Gelände —, und
+      `hoehe_m` die Länge nach oben ab dort. Ob das die lichte Raumhöhe oder die
+      Geschosshöhe meint, sagt die Datei nicht, und der Report behauptet es auch nicht.
+
+      **Kein Raum wird stillschweigend weggelassen:** `len(raeume) == n_raeume` ist die
+      Zahl der `IfcSpace`; was nicht lesbar war, steht mit `None` und einem benannten
+      Befund da. Zwei Urteile je Raum (Grundriss / Höhe), weil eine schiefe Extrusion den
+      Bezugspunkt kostet, aber nicht den Fussbodenumriss.
+
       Ausdrücklich **nicht** mitgebaut: Kamerasetzung im Raum. Die braucht eigene
-      Entscheidungen und würde hier ungeprüft mitgeliefert.
+      Entscheidungen und wäre hier ungeprüft mitgeliefert.
+      Offen geblieben: `IfcIndexedPolyCurve` als Profilkurve (moderne Revit-IFC4-Exporte),
+      das Auspacken von `IfcBooleanClippingResult`, Aussparungen im Grundriss.
 - [ ] **Es gibt weiterhin gar keinen Innenraum-Modus.** `WANDABSTAND_M = 10.0` macht eine
       Innenaufnahme rechnerisch unmöglich. Die Recherche liefert dafür jetzt Zahlen: der
       PBRS-Datensatz (arXiv 1612.07429) nennt 0,25-m-Raster, Ausschluss aller Standpunkte
