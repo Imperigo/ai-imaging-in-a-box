@@ -956,3 +956,94 @@ def test_durchgang_zaehlt_die_laeufe_die_gestanden_haben(tmp_path):
 
     assert bericht["verarbeitet"] == 1
     assert bericht["gestanden"] == 1
+
+
+# ======================================================================================
+# Der Stil kommt aus dem Belichtungsrahmen — Folge des Owner-Entscheids vom 21.08.2026
+# ======================================================================================
+#
+# Bis dahin lief die Stil-QA im Abholer bewusst nicht: Sie war an ein Referenzset
+# gebunden, das es nicht gibt. Mit einem FEST FORMULIERTEN Hausstil ist die Frage nicht
+# mehr "ähnelt das unseren Referenzen", sondern "liegt das im gemessenen Rahmen" — und
+# die können wir beantworten.
+
+def test_ohne_stil_gibt_es_kein_stil_urteil(tmp_path):
+    """*Nicht verlangt* ist etwas anderes als *nicht gemessen*."""
+    assert abholer._stil_urteil_aus_belichtung([{"belichtung": None}], None) is None
+
+
+def test_ein_verlangter_stil_ohne_jede_messung_ist_ungemessen_und_nicht_bestanden():
+    """Der gefährlichste Fall: Es sieht aus, als sei geprüft worden, und es wurde nicht."""
+    urteil = abholer._stil_urteil_aus_belichtung([{"belichtung": None}], "hausstil")
+
+    assert urteil["gemessen"] is False
+    assert urteil["bestanden"] is None, "None heisst ungemessen — nicht False, nicht True"
+    assert "Ungeprüft ist nicht in Ordnung" in urteil["grund"]
+
+
+def test_es_zaehlt_die_schwaechste_kamera_und_kein_mittelwert():
+    """Ein Mittelwert liesse ein durchgefallenes Bild hinter zwei bestandenen verschwinden."""
+    urteile = [
+        {"belichtung": {"gemessen": True, "bestanden": True, "zusammenfassung": "gut"}},
+        {"belichtung": {"gemessen": True, "bestanden": False, "zusammenfassung": "zu dunkel"}},
+        {"belichtung": {"gemessen": True, "bestanden": True, "zusammenfassung": "gut"}},
+    ]
+    urteil = abholer._stil_urteil_aus_belichtung(urteile, "hausstil")
+
+    assert urteil["bestanden"] is False
+    assert urteil["grund"] == "zu dunkel"
+
+
+def test_eine_einzige_ungemessene_kamera_macht_das_ganze_urteil_ungemessen():
+    """Sonst stünde ein 'bestanden' über einem Auftrag, von dem ein Bild nie geprüft wurde."""
+    urteile = [
+        {"belichtung": {"gemessen": True, "bestanden": True, "zusammenfassung": "gut"}},
+        {"belichtung": {"gemessen": False, "grund": "Bild nicht lesbar"}},
+    ]
+    urteil = abholer._stil_urteil_aus_belichtung(urteile, "hausstil")
+
+    assert urteil["gemessen"] is False
+    assert urteil["bestanden"] is None
+
+
+def test_das_stil_urteil_erfindet_keine_aehnlichkeitszahl():
+    """**Der Kern dieser Änderung.**
+
+    Der fremde Vertrag führt `style_score` und meint eine BILDÄHNLICHKEIT. Eine
+    Belichtungsprüfung hat keinen natürlichen Skalar. Eine Zahl hineinzuschreiben wäre
+    erfunden — und sie sähe in ihrer Oberfläche genau wie eine Ähnlichkeit aus.
+    """
+    urteile = [{"belichtung": {"gemessen": True, "bestanden": True, "zusammenfassung": "gut"}}]
+    urteil = abholer._stil_urteil_aus_belichtung(urteile, "hausstil")
+
+    assert urteil["score"] is None
+    assert urteil["schwelle"] is None
+    assert urteil["verfahren"] == abholer.VERFAHREN_BELICHTUNG
+
+
+def test_das_verfahren_steht_im_namen_damit_das_abzeichen_nicht_luegt():
+    """Ein Abzeichen, das nicht sagt, womit es verdient wurde, ist eine stille Falschaussage."""
+    urteile = [{"belichtung": {"gemessen": True, "bestanden": True, "zusammenfassung": ""}}]
+    urteil = abholer._stil_urteil_aus_belichtung(urteile, "hausstil")
+
+    assert urteil["einbetter_name"] == "belichtungsrahmen/hausstil"
+    assert "hausstil" in urteil["einbetter_name"]
+
+
+def test_der_verarbeiter_reicht_das_stil_urteil_durch(tmp_path):
+    """Ohne diese Verdrahtung bliebe die Prüfung eine tote Kante — gerechnet, nie gemeldet."""
+    ordner = _auftrag(tmp_path)
+    _protokoll, attrappen = _kette(scores=(0.9,))
+    gesehen = {}
+
+    def merke(auftrag):
+        e = abholer.verarbeiter(out_wurzel=tmp_path / "aus", stil="hausstil",
+                                **attrappen)(auftrag)
+        gesehen.update(e)
+        return e
+
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True, verarbeite=merke)
+
+    assert "stil_urteil" in gesehen
+    assert gesehen["stil_urteil"] is not None
+    assert gesehen["stil_urteil"]["verfahren"] == abholer.VERFAHREN_BELICHTUNG

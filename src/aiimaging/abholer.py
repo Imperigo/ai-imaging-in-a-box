@@ -540,6 +540,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         return {
             "bilder": bilder,
             "geometrie_urteil": _schlechtestes(urteile),
+            "stil_urteil": _stil_urteil_aus_belichtung(urteile, stil),
             "kameras": urteile,
             "zeiten": zeiten,
         }
@@ -604,6 +605,67 @@ def _belichtung_urteil(bild, stil, rahmen, pruefen) -> dict | None:
         return {"gemessen": False, "stil": stil,
                 "grund": f"Belichtung nicht messbar: {type(fehler).__name__}: {fehler}"}
     return dict(urteil, gemessen=True)
+
+
+#: Wie das Stil-Urteil zustande kam, wenn es aus dem Belichtungsrahmen stammt.
+#:
+#: **Warum das ein eigener Name sein muss.** Der fremde Vertrag führt für den Stil ein
+#: Feld ``style_score`` und meint damit eine **Bildähnlichkeit** — eine Zahl aus dem
+#: Vergleich zweier Einbettungen. Unser Stil-Urteil ist seit dem Owner-Entscheid vom
+#: 21.08.2026 etwas anderes: ein **fest formulierter** Stil, geprüft gegen einen
+#: gemessenen Belichtungsrahmen (Mittel ± 2σ aus `auf-20260818-14`). Beides beantwortet
+#: dieselbe Frage — *sieht das aus wie gewollt?* —, aber mit verschiedenen Mitteln.
+#:
+#: Ein Abzeichen, das nicht sagt, womit es verdient wurde, ist eine stille Falschaussage.
+#: Darum wandert dieser Name in ``method``, und ``style_score`` bleibt **leer**: Eine
+#: Belichtungsprüfung hat keinen natürlichen Skalar, und einen zu erfinden wäre genau die
+#: Bequemlichkeit, gegen die dieses Projekt gebaut ist.
+VERFAHREN_BELICHTUNG = "belichtungsrahmen"
+
+
+def _stil_urteil_aus_belichtung(urteile: list[dict], stil: str | None) -> dict | None:
+    """Aus den Belichtungsurteilen der Kameras ein Stil-Urteil für den Vertrag machen.
+
+    **Was dieser Entscheid möglich gemacht hat.** Bis zum 21.08.2026 lief die Stil-QA im
+    Abholer bewusst **nicht**: Sie war an ein Referenzset gebunden, das es nicht gibt, und
+    fremde Bilder können es nicht sein (eine Einbettung ist eine Ableitung des Bildes).
+    Der Owner hat sich an jenem Tag für einen **fest formulierten** Hausstil entschieden —
+    und damit ist die Frage nicht mehr *„ähnelt das unseren Referenzen"*, sondern *„liegt
+    das im gemessenen Rahmen"*. Diese Frage können wir beantworten.
+
+    Gewertet wird das **schwächste** Bild, wie überall hier: Ein Auftrag ist so gut wie
+    seine schlechteste Kamera, und ein Mittelwert liesse ein durchgefallenes Bild hinter
+    zwei bestandenen verschwinden.
+
+    Returns:
+        ``None``, wenn gar kein Stil verlangt war — *nicht verlangt* ist etwas anderes als
+        *nicht gemessen*. Sonst ein Wörterbuch mit ``score: None`` (siehe
+        :data:`VERFAHREN_BELICHTUNG`), ``bestanden``, ``gemessen`` und dem Verfahren.
+    """
+    if not stil:
+        return None
+    belichtungen = [u.get("belichtung") for u in urteile if u.get("belichtung")]
+    if not belichtungen:
+        return {"score": None, "schwelle": None, "bestanden": None, "gemessen": False,
+                "verfahren": VERFAHREN_BELICHTUNG, "stil": stil,
+                "einbetter_name": f"{VERFAHREN_BELICHTUNG}/{stil}",
+                "grund": (f"Stil {stil!r} war verlangt, aber kein einziges Bild wurde auf "
+                          f"die Belichtung geprüft. Ungeprüft ist nicht in Ordnung.")}
+
+    ungemessen = [b for b in belichtungen if not b.get("gemessen")]
+    if ungemessen:
+        return {"score": None, "schwelle": None, "bestanden": None, "gemessen": False,
+                "verfahren": VERFAHREN_BELICHTUNG, "stil": stil,
+                "einbetter_name": f"{VERFAHREN_BELICHTUNG}/{stil}",
+                "grund": ungemessen[0].get("grund", "Belichtung nicht messbar.")}
+
+    # Alle gemessen: Es zählt das schwächste Bild.
+    schlechtestes = min(belichtungen, key=lambda b: bool(b.get("bestanden")))
+    return {"score": None, "schwelle": None,
+            "bestanden": bool(schlechtestes.get("bestanden")), "gemessen": True,
+            "verfahren": VERFAHREN_BELICHTUNG, "stil": stil,
+            "einbetter_name": f"{VERFAHREN_BELICHTUNG}/{stil}",
+            "grund": schlechtestes.get("zusammenfassung", "")}
 
 
 def _schlechtestes(urteile: list[dict]) -> dict | None:

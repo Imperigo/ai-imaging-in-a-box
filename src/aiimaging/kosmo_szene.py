@@ -491,20 +491,56 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
             )
 
     if stil_urteil is not None:
-        schwelle = stil_urteil.get("schwelle", stil_qa.SCHWELLE_STIL)
         einbetter = stil_urteil.get("einbetter_name") or "unbekannt"
-        qa["style"] = {
-            "style_score": stil_urteil.get("score"),
-            # NICHT ihre 0.3 — siehe Docstring.
-            "threshold": schwelle,
-            "passed": bool(stil_urteil.get("bestanden")),
-            "method": einbetter,
-        }
-        hinweise.append(
-            f"Stil-Schwelle {schwelle:.3f} statt der fremden Vorgabe 0.30, Verfahren "
-            f"{einbetter!r} statt 'dinov3'. Grund: Der Boden von SigLIP 2 liegt bei "
-            f"0.526 — gegen 0.30 besteht jedes beliebige Bildpaar (auf-20260818-11)."
-        )
+        aus_belichtung = stil_urteil.get("verfahren") == "belichtungsrahmen"
+
+        if aus_belichtung:
+            # Seit dem Owner-Entscheid vom 21.08.2026 ist der Hausstil FEST FORMULIERT und
+            # wird gegen einen gemessenen Belichtungsrahmen geprüft, nicht gegen ein
+            # Referenzset. Damit beantworten wir ihre Frage — *sieht das aus wie gewollt?*
+            # — mit einem anderen Mittel als ihrem.
+            #
+            # `style_score` bleibt darum LEER. Eine Belichtungsprüfung hat keinen
+            # natürlichen Skalar; eine Zahl hineinzuschreiben wäre erfunden, und sie sähe
+            # in ihrer Oberfläche genau wie eine Bildähnlichkeit aus. Dasselbe gilt für
+            # `threshold`: Ein Rahmen ist kein Schwellwert, sondern ein Intervall je Feld.
+            #
+            # OFFENE FRAGE AN DIE GEGENSEITE (Übergabeblatt): Nimmt ihr Schema `null` für
+            # `style_score` an? Ihre Schemadatei liegt uns nicht vor. Wenn nicht, kommt der
+            # Fehler erst in ihrer Warteschlange — und dann ist das dort zu ändern und
+            # nicht hier durch eine erfundene Zahl.
+            gemessen = bool(stil_urteil.get("gemessen"))
+            qa["style"] = {
+                "style_score": None,
+                "threshold": None,
+                "passed": bool(stil_urteil.get("bestanden")) if gemessen else False,
+                "method": einbetter,
+            }
+            if gemessen:
+                hinweise.append(
+                    f"Stil gegen den BELICHTUNGSRAHMEN geprüft ({einbetter!r}), nicht "
+                    f"gegen ein Referenzset — der Hausstil ist seit 21.08.2026 fest "
+                    f"formuliert. 'style_score' ist darum leer und nicht 0: Eine "
+                    f"Belichtungsprüfung hat keinen Skalar, und einen zu erfinden hiesse, "
+                    f"in ihrer Oberfläche eine Bildähnlichkeit vorzutäuschen.")
+            else:
+                hinweise.append(
+                    f"Stil NICHT GEMESSEN: {stil_urteil.get('grund', 'ohne Angabe')} "
+                    f"'passed: false' heisst hier ungeprüft und nicht durchgefallen.")
+        else:
+            schwelle = stil_urteil.get("schwelle", stil_qa.SCHWELLE_STIL)
+            qa["style"] = {
+                "style_score": stil_urteil.get("score"),
+                # NICHT ihre 0.3 — siehe Docstring.
+                "threshold": schwelle,
+                "passed": bool(stil_urteil.get("bestanden")),
+                "method": einbetter,
+            }
+            hinweise.append(
+                f"Stil-Schwelle {schwelle:.3f} statt der fremden Vorgabe 0.30, Verfahren "
+                f"{einbetter!r} statt 'dinov3'. Grund: Der Boden von SigLIP 2 liegt bei "
+                f"0.526 — gegen 0.30 besteht jedes beliebige Bildpaar (auf-20260818-11)."
+            )
 
     geo_ok = qa.get("geometry", {}).get("passed")
     stil_ok = qa.get("style", {}).get("passed")
@@ -516,8 +552,14 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         teile.append(f"Geometrie {qa['geometry']['geometry_fidelity']} "
                      f"gegen {qa['geometry']['threshold']}")
     if qa.get("style"):
-        teile.append(f"Stil {qa['style']['style_score']} gegen {qa['style']['threshold']} "
-                     f"({qa['style']['method']})")
+        if qa["style"]["style_score"] is None:
+            # Kein Skalar, also auch kein "x gegen y" — der Satz muss sagen, WOMIT
+            # geprüft wurde, sonst liest sich ein leeres Feld wie ein Fehler.
+            teile.append(f"Stil gegen den Belichtungsrahmen ({qa['style']['method']}), "
+                         f"ohne Ähnlichkeitszahl")
+        else:
+            teile.append(f"Stil {qa['style']['style_score']} gegen "
+                         f"{qa['style']['threshold']} ({qa['style']['method']})")
     if not messbar:
         grund = ("Keine QA gelaufen — weder Geometrie noch Stil wurden gemessen. "
                  "'passed: false' heisst hier NICHT durchgefallen, sondern ungeprüft.")

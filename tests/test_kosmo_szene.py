@@ -453,3 +453,79 @@ def test_gerastert_wird_abwaerts():
     assert masse == [1920, 1072]
     assert "Abgerundet" in hinweis
     assert "Seitenverhältnis" in hinweis
+
+
+# ======================================================================================
+# Das Stil-Abzeichen darf nicht lügen — Folge des Owner-Entscheids vom 21.08.2026
+# ======================================================================================
+
+def _stil_aus_belichtung(bestanden=True, gemessen=True, grund=""):
+    return {"score": None, "schwelle": None, "bestanden": bestanden, "gemessen": gemessen,
+            "verfahren": "belichtungsrahmen", "stil": "hausstil",
+            "einbetter_name": "belichtungsrahmen/hausstil", "grund": grund}
+
+
+def test_aus_dem_belichtungsrahmen_bleibt_der_style_score_LEER():
+    """**Der Kern.** Ihr `style_score` meint eine Bildähnlichkeit.
+
+    Eine Belichtungsprüfung hat keinen natürlichen Skalar. Eine Zahl hineinzuschreiben —
+    auch eine ehrlich gemeinte wie 1.0 für „bestanden" — sähe in ihrer Oberfläche genau
+    wie eine gemessene Ähnlichkeit aus. Leer ist die einzige wahre Angabe.
+    """
+    e = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"],
+                                 stil_urteil=_stil_aus_belichtung())
+
+    assert e["qa"]["style"]["style_score"] is None
+    assert e["qa"]["style"]["threshold"] is None
+    assert e["qa"]["style"]["passed"] is True
+
+
+def test_das_verfahren_steht_im_abzeichen_und_nicht_nur_in_den_hinweisen():
+    """`hinweise` überlebt `nur_vertragsfelder` nicht — `method` schon.
+
+    Wer drüben ein grünes Stil-Abzeichen sieht, muss ihm ansehen können, womit es
+    verdient wurde. Sonst liest er 'dinov3' hinein, weil das ihre Vorgabe ist.
+    """
+    e = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"],
+                                 stil_urteil=_stil_aus_belichtung())
+    schlank = ks.nur_vertragsfelder(e)
+
+    assert schlank["qa"]["style"]["method"] == "belichtungsrahmen/hausstil"
+
+
+def test_ein_ungemessener_stil_ist_nicht_bestanden_und_sagt_das():
+    """`passed: false` heisst hier ungeprüft und nicht durchgefallen — und der Satz dazu
+    muss mitkommen, sonst ist die Unterscheidung für den Leser nicht da."""
+    e = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"],
+                                 stil_urteil=_stil_aus_belichtung(
+                                     bestanden=None, gemessen=False,
+                                     grund="Bild nicht lesbar."))
+
+    assert e["qa"]["style"]["passed"] is False
+    assert [h for h in e["hinweise"] if "NICHT GEMESSEN" in h]
+    assert [h for h in e["hinweise"] if "ungeprüft und nicht durchgefallen" in h]
+
+
+def test_die_begruendung_verspricht_keine_aehnlichkeitszahl():
+    """Ohne diesen Zweig stünde dort 'Stil None gegen None' — das liest sich wie ein Fehler."""
+    e = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"],
+                                 stil_urteil=_stil_aus_belichtung())
+    grund = e["qa"]["verdict"]["reason"]
+
+    assert "Belichtungsrahmen" in grund
+    assert "None" not in grund
+
+
+def test_der_alte_weg_ueber_einbettungen_bleibt_unveraendert():
+    """Additiv, nicht ersetzend: Ein Stil-Urteil aus `stil_qa` rechnet weiter wie bisher.
+
+    Sonst wäre die Umstellung ein stiller Bruch für jede Messreihe, die es schon gibt.
+    """
+    e = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"],
+                                 stil_urteil={"score": 0.71, "schwelle": 0.60,
+                                              "bestanden": True,
+                                              "einbetter_name": "siglip2"})
+
+    assert e["qa"]["style"]["style_score"] == 0.71
+    assert e["qa"]["style"]["threshold"] == 0.60
+    assert e["qa"]["style"]["method"] == "siglip2"

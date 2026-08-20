@@ -524,3 +524,21 @@ Wenn ihr davon etwas braucht, sagt welches — dann bauen wir die Naht dorthin. 
 
 Solange diese Antworten fehlen, bauen wir **nichts, was an einer bestimmten Oberfläche
 hängt** — und arbeiten weiter an Verträgen, QA und Bildkette. Das trägt in jedem Fall.
+
+
+13. **Nimmt euer Schema `null` für `style_score` an?** Seit dem 21.08.2026 ist unser
+    Hausstil **fest formuliert** und wird gegen einen gemessenen **Belichtungsrahmen**
+    geprüft (Mittel ± 2σ), nicht gegen ein Referenzset. Das beantwortet dieselbe Frage wie
+    euer Feld — *sieht das aus wie gewollt?* —, aber mit einem anderen Mittel.
+
+    Eine Belichtungsprüfung hat **keinen natürlichen Skalar.** Wir schicken darum
+    `style_score: null` und `threshold: null`, und schreiben in `method`, womit geprüft
+    wurde (`belichtungsrahmen/<stil>`). Eine Zahl zu erfinden — auch eine ehrlich gemeinte
+    wie 1.0 für „bestanden" — sähe in eurer Oberfläche genau wie eine gemessene
+    Bildähnlichkeit aus, und das wäre eine stille Falschaussage.
+
+    **Eure Schemadatei liegt uns nicht vor**, also wissen wir nicht, ob `null` dort
+    durchgeht. Wenn nicht, schlägt der Auftrag erst in eurer Warteschlange fehl — und dann
+    ist das dort zu ändern und nicht bei uns durch eine erfundene Zahl. Sagt uns bitte,
+    was ihr braucht: `null` zulassen, ein eigenes Feld, oder das Abzeichen weglassen,
+    solange keine Ähnlichkeit gemessen wurde.
