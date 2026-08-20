@@ -810,13 +810,47 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Entscheidungen und wäre hier ungeprüft mitgeliefert.
       Offen geblieben: `IfcIndexedPolyCurve` als Profilkurve (moderne Revit-IFC4-Exporte),
       das Auspacken von `IfcBooleanClippingResult`, Aussparungen im Grundriss.
-- [ ] **Es gibt weiterhin gar keinen Innenraum-Modus.** `WANDABSTAND_M = 10.0` macht eine
-      Innenaufnahme rechnerisch unmöglich. Die Recherche liefert dafür jetzt Zahlen: der
-      PBRS-Datensatz (arXiv 1612.07429) nennt 0,25-m-Raster, Ausschluss aller Standpunkte
-      innerhalb 10 cm eines Hindernisses, 6 Sektoren à 60° je Raum. Und die Fotografie
-      liefert die Eskalationskaskade für enge Räume: Ecke → Türöffnung → Nachbarraum →
-      16 mm → **aufgeben und Teilausschnitt zeigen**. Schritt 5 ist der, den ein Programm
-      auslässt und ein Fotograf selbstverständlich geht.
+- [x] **Der Innenraum-Standpunkt steht (22.08.), `raumkamera.py`, 24 Tests.** Aus einem
+      Raum des Raumlesers werden **beide** Blickarten gerechnet — frontal und über Eck —
+      und **gewählt wird anderswo** (Owner-Entscheid 22.08.). Der Grund: Ob frontal oder
+      über Eck richtig ist, hängt daran, ob die Stirnwand ein *Motiv* trägt, und das steht
+      in keiner IFC-Datei. Ein Programm, das hier entscheidet, tut so, als wüsste es
+      etwas, das es nicht wissen kann.
+
+      **Kamerahöhe = halbe Raumhöhe**, ab `z_unten_m` gerechnet — dann bekommen Boden und
+      Decke exakt gleich viel Bildfläche. **Keine Ersatzhöhe**, wenn die Raumhöhe fehlt:
+      `kameras.AUGENHOEHE_M` (1,70 m) erzeugt in einem 2,55-m-Raum 28 Prozentpunkte
+      Ungleichgewicht. **Kamera waagrecht**, Blickziel auf Kamerahöhe — anders als
+      `kameras.py`, das 9,46° kippt.
+
+      Geprüft an den **echten** Räumen des Runners (L-förmig 26,62 m², rechteckig
+      5,94 m²), nicht an erfundenen. Mutationsprobe: sechs Kappungen, fünf gefangen — und
+      die sechste war der eigentliche Ertrag (siehe unten).
+- [x] **Ein Wächter, der nie greift, ist eine tote Kante — auch wenn er richtig gedacht
+      ist.** Im Eck-Standpunkt stand eine Abfrage, die einspringende Ecken übergeht. Die
+      Mutationsprobe überlebte sie. Die Nachprüfung zeigte warum: An einer einspringenden
+      Ecke zeigt die Winkelhalbierende nach **aussen**, und der Lauf nach innen findet von
+      dort keinen gültigen Punkt — die Ecke schliesst sich **selbst** aus. Am L-Raum
+      nachgemessen: fünf vorspringende Ecken mit Lauf, die einspringende ohne. Der Wächter
+      ist entfernt, die Tatsache steht als Test.
+- [ ] **Der frontale Standpunkt fasst seine Zielwand nicht immer — und sagt es jetzt.**
+      Am L-Raum: 4,10 m vor einer 7,40 m breiten Wand, bei 24 mm davon 6,15 m im Bild.
+      Nötig wären 20 mm. Das Sichtfeld wird darum mitgerechnet und mit der **belegten**
+      Grenze verglichen (Airbnb: *„never capture wider than 16mm"*). Unterhalb davon macht
+      das Objektiv den Raum grösser, als er ist — für ein Projekt, das Geometrietreue
+      prüft, wäre das der Fehler, den es finden soll, selbst eingebaut.
+
+      **Was daraus folgt und noch offen ist:** Ein Raum, dessen Wand nicht ins Bild passt,
+      braucht die fotografische Kaskade — Türöffnung, Nachbarraum, Teilausschnitt. Davon
+      kann dieses Modul nichts.
+- [ ] **Der Verdeckungstest fehlt weiterhin, und für innen ist er keine Kür.** Ob zwischen
+      Kamera und Ziel ein Möbel, eine Stütze oder eine Brüstung steht, weiss nur die
+      Szene. Was `raumkamera.py` prüft, ist die Lage im **Raumumriss** — notwendig, nicht
+      hinreichend, und das steht in jedem Befund.
+- [ ] **Die Zielwand wird nach LÄNGE gewählt, und das ist eine schwache Setzung.** Die
+      Praxis wählt die Wand mit dem Motiv. Ein Kamin oder eine Küchenzeile ist ein Motiv
+      und hat keine Öffnung; die längste Wand ist oft, aber nicht immer, die richtige. Der
+      Hinweis steht bei jedem Standpunkt.
 - [ ] **`AUTO_RICHTUNGEN = ("sSE",)` ist eine einzige Richtung — HABS verlangt drei.**
       Umgebungsansicht, Frontalansicht, und zwei Über-Eck-Ansichten auf **gegenüberliegenden**
       Diagonalen. Unsere Richtungstabelle kann das bereits abbilden; es ist eine

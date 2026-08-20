@@ -1550,6 +1550,15 @@ Hintergrund und Gelände abzieht. *Wozu: Die Geometrieprüfung dieses Projekts r
 Bodenflächen miteinander — weisses Rauschen kam so auf 72 von 100 Punkten. Über der
 Bauwerksmaske gerechnet wird dieselbe Prüfung wieder scharf.*
 
+**Einspringende Ecke (Innenecke)** — Eine Ecke eines Grundrisses, an der der Innenwinkel
+grösser als 180° ist — die Ecke eines L-förmigen Raums, gesehen von innen. Der Gegensatz
+ist die *vorspringende* Ecke, die gewöhnliche Zimmerecke mit weniger als 180°.
+*Sie ist der Grund, warum sich Räume nicht mit einfacher Mittelpunktsmathematik behandeln
+lassen: In der Kerbe eines L-förmigen Raums liegen Punkte, die innerhalb der umgebenden
+Rechteckfläche liegen und trotzdem ausserhalb des Raums — eine Kamera dort stünde im
+Nachbarzimmer. Und eine Winkelhalbierende zeigt an einer solchen Ecke nach aussen statt
+nach innen, weshalb dort kein Kamerastandpunkt entsteht.*
+
 **Tiefenkante (an der Maskengrenze)** — Der Sprung in der geschätzten Tiefe genau dort,
 wo die Silhouette des Bauwerks endet: vorne die Fassade, dahinter der ferne Hintergrund.
 Gemessen als Unterschied zwischen den Punkten knapp innerhalb und knapp ausserhalb der
@@ -2952,6 +2961,7 @@ System laufen.
 | 2026-08-20 | Aus dem GPU-Ergebnis zu `auf-20260820-18`: **Sandbox-Paket (Snap, Flatpak)** und **Artefakt einer Messung**. Beide sind teuer erworben — das GPU-faehige Blender-Snap liefert bei Dateiumleitung Rueckgabewert 0 ohne Bild, und der am selben Tag gemessene 32-Sekunden-Takt war ein Artefakt der CPU-Messung |
 | 2026-08-20 | Ergaenzt aus dem Abholer (`src/aiimaging/abholer.py`): **Laufzettel**, **Waise (verwaister Auftrag)** |
 | 2026-08-20 | Ergaenzt aus der Taktmessung an Blender: **adaptives Sampling**, **Blockpufferung der Standardausgabe**, **Pipe-Blockade**. **Sample** um die gemessene Einschraenkung ergaenzt: Bei adaptivem Sampling ist die Samplezahl eine OBERGRENZE und keine Angabe der Rechenzeit — 6000 Samples in 12 s gegen 3000 ohne adaptives Sampling in ueber drei Minuten |
+| 2026-08-22 | Ergaenzt aus dem Innenraum-Standpunkt: **Einspringende Ecke (Innenecke)** — der Grund, warum Raeume nicht mit Mittelpunktsmathematik zu behandeln sind |
 | 2026-08-22 | Ergaenzt aus dem Umbau der Geometrie-QA: **Tiefenkante (an der Maskengrenze)** und **Paarurteil**. Beide tragen den Grund mit, aus dem sie entstanden sind — ein einzelner Score kann Existenz und Richtigkeit nicht zugleich beantworten |
 | 2026-08-21 | Ergaenzt aus dem Nicht-Monotonie-Befund: **Monotonie (einer Metrik)**, **Faltung der Skala (durch den Betrag)**, ausgebaut **Polaritaet (einer Tiefenkarte)** um die Frage, wann man sie bestimmen DARF, ohne im Kreis zu messen. Alle drei aus einer Messung, die eine eigene Entscheidung widerlegt hat |
 | 2026-08-21 | Ergaenzt beim Anhaengen der Wache an den Abholer: **Blockierender Aufruf**, **Hintergrundfaden und Daemon-Faden**, **Fortschrittsbeobachter**, **Vertragsfeld**. Ausgebaut: **Race Condition** um den Fall, in dem der TEST das Rennen enthaelt — und um die Abhilfe, das Rennen bedeutungslos zu machen statt laenger zu warten |
