@@ -1,0 +1,125 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260822-29",
+  "status": "ok",
+  "beendet": "2026-08-20T07:49:06Z",
+  "dauer_s": 210.0,
+  "messwerte": {
+    "aufbau": {
+      "szene": "Testbau auf Platte 20 m, unveraendert",
+      "standort": "fest je Reihe; nur die Ausrichtung aendert sich",
+      "augenhoehe_m": 1.7,
+      "abstand_m": 12.0,
+      "brennweite_mm": 28.0,
+      "shift_ersatz": "Der Aufbau kann keinen Shift. B ist darum waagrecht mit hoeherem Bildformat (512x768) gefahren — so, wie der Auftrag es erlaubt.",
+      "soll_und_maske": "je Ausrichtung aus DERSELBEN Aufnahme; Maske aus dem Material-ID-Pass (alles ausser Hintergrund und Boden_Platte)",
+      "kein_bildmodell": true
+    },
+    "reihe_1_frontal": {
+      "standort": "frontal vor der Langseite",
+      "werte": {
+        "A": {
+          "was": "gekippt 9.4623 Grad",
+          "bild": "512x512",
+          "maske_punkte": 48038,
+          "anteil": 0.1833,
+          "randband": [
+            2854,
+            2898
+          ],
+          "spearman_maske": -0.8304995576989606,
+          "kante": 0.33704575023633593
+        },
+        "B": {
+          "was": "waagrecht, hoeheres Bildformat als Shift-Ersatz",
+          "bild": "512x768",
+          "maske_punkte": 102816,
+          "anteil": 0.2615,
+          "randband": [
+            4212,
+            4260
+          ],
+          "spearman_maske": 0.6508754967524965,
+          "kante": 0.06691264118423405
+        },
+        "C": {
+          "was": "waagrecht ohne Shift, gleiches Format wie A",
+          "bild": "512x512",
+          "maske_punkte": 45696,
+          "anteil": 0.1743,
+          "randband": [
+            2796,
+            2844
+          ],
+          "spearman_maske": 0.8158807777699001,
+          "kante": 0.2184234243791945
+        }
+      },
+      "warum_verworfen": "Von vorn zeigt das Bauwerk EINE flache Wand. Innerhalb der Maske gibt es dann kaum Tiefe zu ordnen — rho misst die Vermutung des Schaetzers statt der Geometrie und schwankt entsprechend (-0.8305 / +0.6509 / +0.8159, mit Vorzeichenwechsel). Als Pruefstand fuer eine Tiefenordnung untauglich; steht hier, weil es der erste Anlauf war und weil der Befund selbst brauchbar ist."
+    },
+    "reihe_2_eckansicht": {
+      "standort": "45 Grad zur Ecke, zwei Fassaden sichtbar",
+      "werte": {
+        "A": {
+          "was": "gekippt 9.4623 Grad",
+          "bild": "512x512",
+          "maske_punkte": 45249,
+          "anteil": 0.1726,
+          "randband": [
+            2512,
+            2556
+          ],
+          "spearman_maske": -0.9835257964822642,
+          "kante": 0.20342545946678872
+        },
+        "B": {
+          "was": "waagrecht, hoeheres Bildformat als Shift-Ersatz",
+          "bild": "512x768",
+          "maske_punkte": 97100,
+          "anteil": 0.2469,
+          "randband": [
+            3711,
+            3759
+          ],
+          "spearman_maske": -0.9650277435427671,
+          "kante": 0.11005538150313396
+        },
+        "C": {
+          "was": "waagrecht ohne Shift, gleiches Format wie A",
+          "bild": "512x512",
+          "maske_punkte": 43113,
+          "anteil": 0.1645,
+          "randband": [
+            2463,
+            2508
+          ],
+          "spearman_maske": -0.964999334167001,
+          "kante": 0.13967343880515828
+        }
+      },
+      "massgeblich": true
+    },
+    "die_antwort": {
+      "frage": "Stoert die Kameraneigung den Tiefenschaetzer?",
+      "antwort": "NEIN. Die Ausrichtung ist ihm praktisch gleichgueltig.",
+      "beleg": "Eckansicht: A -0.9835, B -0.9650, C -0.9650. Alle drei innerhalb von 0.019. Die falsifizierbare Behauptung verlangte, B und C muessten DEUTLICH besser sein als A; sie sind marginal SCHLECHTER, und der Abstand liegt im Rauschen.",
+      "folge": "Der Umbau von kameras.py bleibt richtig, weil die Fachnorm ihn verlangt — aber er ist KEIN Beitrag zur Bildqualitaet. Genau das war zu wissen, bevor er gebaut wird.",
+      "kante": "A 0.2034, C 0.1397, B 0.1101 — das Kippen hilft der Kante sogar leicht. Alle drei weit ueber dem Abwesenheitswert (~0.005) und dem Rauschen (-0.0044)."
+    },
+    "nebenbefund": {
+      "was": "Ein frontaler Standort auf eine flache Fassade ist ein untauglicher Pruefstand fuer rho ueber der Maske.",
+      "beleg": "Dieselben drei Ausrichtungen, nur frontal statt ueber Eck: -0.8305 / +0.6509 / +0.8159 — mit Vorzeichenwechsel. Ueber Eck: -0.9835 / -0.9650 / -0.9650.",
+      "warum": "Wo die sichtbare Flaeche fast parallel zur Bildebene liegt, gibt es keine Tiefenstaffelung, die sich ordnen liesse. Der Schaetzer traegt dann seine eigene Annahme ein (oben = ferner), und die kann jedes Vorzeichen haben.",
+      "folge": "Fuer jede kuenftige Messung mit dieser Groesse: Blickrichtung so waehlen, dass MEHR ALS EINE Flaeche sichtbar ist. Sonst misst man den Schaetzer."
+    }
+  },
+  "urteil": {
+    "kernsatz": "Die Kameraneigung stoert den Tiefenschaetzer nicht — alle drei Ausrichtungen liegen innerhalb von 0.019. Der Normumbau bleibt richtig, traegt aber nichts zur Bildqualitaet bei."
+  },
+  "umgebung": {
+    "blender": "5.2.0 LTS",
+    "gpu_bildmodell": "nicht benutzt",
+    "leistungsgrenze_w": 400
+  },
+  "fehler": null
+}
