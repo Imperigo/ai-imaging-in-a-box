@@ -18,6 +18,32 @@ Diese Liste sagt, was das betrifft.
 
 ---
 
+## 0 · Vorher: Ohne einen Abholer passiert überhaupt nichts
+
+Am 19.08.2026 lagen zwei vollständige Aufträge in `/tmp/kosmo-jobs/`, einer **seit elf
+Stunden**, beide auf `queued`. Eure Oberfläche meldete *„wartet auf GPU-Leerlauf"* — bei
+0 % Last und 15,5 W. Sie wartete nicht auf die Karte, sondern auf jemanden, der abholt.
+
+Auf dieser Seite gibt es den Abholer inzwischen: `tools/abholen.py`. Er trifft nur die
+zwei Entscheidungen, die eine Bibliothek nicht treffen darf — gilt die fremde Freigabe,
+und ist die Karte frei. Am selben Abend lief damit der erste Auftrag durch: drei Bilder,
+`render-result/v2`, 292,2 s.
+
+**Was ihr entscheiden müsst:** Nehmt ihr diesen Abholer, oder baut ihr einen eigenen?
+Beides ist in Ordnung — aber solange **keiner** läuft, bleibt jeder Auftrag liegen, und
+alle Felder unten sind gegenstandslos. Das ist Frage 9 im Übergabeblatt und die einzige
+auf dieser Liste, die den Betrieb wirklich blockiert.
+
+**Ein Betreiber-Entscheid steckt darin, den ihr kennen solltet:** Der `approval_token`,
+den eure Brücke selbst prägt (`secrets.token_hex`), gilt auf dieser Seite **nicht** als
+menschliche Freigabe. Er sieht aus wie einer und bedeutet etwas anderes — *„in der
+Oberfläche wurde auf Rendern geklickt"*, nicht *„ein Mensch hat die Kosten freigegeben"*.
+Der Abholer lässt solche Aufträge darum liegen, mit Begründung, bis jemand `--fremde-freigabe`
+mitgibt. Wenn bei euch **davor** ein Mensch bestätigt, sagt es uns — dann ist das eine
+Zeile.
+
+---
+
 ## 1 · Der wichtigste Punkt: die guten QA-Zahlen kommen nicht an
 
 `render-result/v2` trägt unter `qa.geometry` genau vier Zahlen: `geometry_fidelity`
@@ -114,6 +140,42 @@ nicht bei uns durch eine erfundene Zahl. Übergabeblatt **Frage 13**.
 
 Euren Vertrag dafür zu erweitern ist **eure** Entscheidung, nicht unsere. Die Dateien
 liegen bereit, falls ihr sie wollt.
+
+---
+
+## 6 · Der Backbone: was euer Auftrag bestellt, und was gemessen ist
+
+Der Auftrag vom 19.08. führte `backbone: "qwen"`. Dazu zwei Messungen:
+
+* **Qwen ist kein ControlNet** (`auf-20260818-09`). Die Tiefenkarte geht dort als
+  gewöhnliches Bild ein, nicht als Führung.
+* **Trotzdem fängt es etwas damit an** (`auf-20260822-28`): ρ −0.7406 gegen −0.9059 bei
+  z-image-turbo mit echter Führung. Der Abstand von 0.165 entspricht aber etwa **einer
+  Standardabweichung der Seed-Streuung** — an drei Bildern ist damit **nicht entschieden**,
+  welcher Backbone besser ist. Wir behaupten es darum auch nicht.
+
+**Was sicher ist:** Die Führung kommt bei z-image-turbo an (mit gegen ohne: Abstand
+0.650). Und der eigentliche Übeltäter war keiner von beiden, sondern eine **geklippte
+Tiefenkarte** — eine Karte mit zwei Graustufen statt 235 war für das ControlNet exakt so
+viel wert wie gar keine Konditionierung. Behoben seit dem 20.08.
+
+`z-image-turbo` steht seit dem 22.08. in unserer Backbone-Tabelle, euer Vertrag führt es
+auch. Ihr könnt es also bestellen.
+
+---
+
+## Wo die Belege stehen
+
+Jede Zahl auf diesem Blatt ist gemessen und nicht geschätzt. Die Berichte liegen im
+selben Repo:
+
+| | |
+|---|---|
+| `docs/EMPFINDLICHKEIT_2026-08-20.md` | warum der alte Score nicht monoton ist |
+| `docs/MASKE_2026-08-21.md` | warum die Bauwerksmaske trägt, wo das ganze Bild versagt |
+| `docs/GEOM_IOU_HALLUZINATION_2026-08-21.md` | wie ein leeres Grundstück das Tor besteht |
+| `docs/SEEDAUSWAHL_2026-08-22.md` | Streuung über Startwerte gegen Parametereffekt |
+| `auftraege/ergebnisse/` | die Rohzahlen jeder einzelnen Messung |
 
 ---
 
