@@ -1,0 +1,75 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260822-28",
+  "status": "ok",
+  "beendet": "2026-08-20T07:51:34Z",
+  "dauer_s": 99.0,
+  "messwerte": {
+    "aufbau": {
+      "szene": "platte_endlich, unveraendert aus auf-24/27",
+      "soll_und_maske": "unveraendert; Maske 44604 Punkte, Randband innen 2295 aussen 2334",
+      "seed": 1004,
+      "einer_fuer_alle_drei": true,
+      "schritte": 8,
+      "aufloesung": 512,
+      "wichtig": "Gemessen NACH dem Fund von heute Morgen: bis dahin wurde die 16-Bit-Tiefenkarte beim Wandeln nach RGB GEKLIPPT (2 statt 235 Stufen). Der Auftrag ist davor geschrieben; seine Praemisse «alle unsere Bilder liegen schlechter als Rauschen» galt fuer die geklippte Karte."
+    },
+    "laeufe": {
+      "A_qwen": {
+        "was": "wie der Abholer am 19.08. — kein ControlNet, Tiefe als 'image'",
+        "spearman_maske": -0.7406102859839834,
+        "kante": 0.004797673377477624,
+        "dauer_s": 65.4,
+        "sha256_16": "57662e287bf99a92"
+      },
+      "B_z_image_mit_fuehrung": {
+        "spearman_maske": -0.9059310961239968,
+        "kante": 0.005771435759381813,
+        "dauer_s": 12.2,
+        "sha256_16": "ffeedb5351d20c5c"
+      },
+      "C_z_image_ohne_fuehrung": {
+        "was": "controlnet_staerke 0 — die Nullprobe der Naht",
+        "spearman_maske": -0.255765474051095,
+        "kante": 0.0036752863065060777,
+        "dauer_s": 21.1,
+        "sha256_16": "d10742abff4219f3"
+      }
+    },
+    "anker": {
+      "perfekt_rho": -0.9874,
+      "perfekt_kante": 0.1615,
+      "rauschen_rho": -0.5207
+    },
+    "die_antwort": {
+      "frage": "Liegt es am Backbone?",
+      "antwort": "TEILWEISE — aber die Hauptursache war eine andere, und sie ist seit heute Morgen behoben.",
+      "B_gegen_C": "-0.9059 gegen -0.2558, Abstand 0.650. Die Fuehrung kommt bei z-image-turbo eindeutig an. Der zweite Ausgang des Auftrags («B ungefaehr gleich C») ist damit ausgeschlossen.",
+      "B_gegen_A": "-0.9059 gegen -0.7406, Abstand 0.165. B ist besser, aber der Abstand entspricht etwa EINER Standardabweichung der Seed-Streuung dieser Messreihe (0.1635, heute an n=3 erhoben). Mit einem Seed ist das suggestiv und nicht entschieden.",
+      "der_eigentliche_befund": "C (ohne jede Fuehrung) liegt bei -0.2558. Die GEKLIPPTE Karte lieferte gestern mit voller Fuehrung -0.2540. Abstand 0.002. Die Schablone war also EXAKT so viel wert wie gar keine Konditionierung. Nicht der Backbone war die Ursache, sondern die geklippte Tiefenkarte.",
+      "qwen_ueberrascht": "A erreicht -0.7406, obwohl qwen kein ControlNet ist und die Tiefenkarte dort als 'image' eingeht (Bildbearbeitung statt Konditionierung). Das ist deutlich besser als erwartet — und es zeigt, dass auch der Bildbearbeitungsweg eine ECHTE Tiefenkarte verwertet, sobald sie eine ist."
+    },
+    "die_schwelle": {
+      "frage": "Erreicht B die -0.80 oder nur -0.65?",
+      "antwort": "-0.9059. Die Schwelle -0.80 kann bleiben; sie muss nicht an das Erreichbare angepasst werden.",
+      "einordnung": "perfekt -0.9874 | B -0.9059 | A -0.7406 | Rauschen -0.5207 | C -0.2558"
+    },
+    "die_kante": {
+      "werte": {
+        "A": 0.004797673377477624,
+        "B": 0.005771435759381813,
+        "C": 0.0036752863065060777
+      },
+      "befund": "Alle drei liegen bei 0.004 bis 0.006 und damit auf dem Niveau der ABWESENHEIT (H1/H2 in auf-27: 0.0006/0.0007) statt beim perfekten Bild (0.1615). Die Tiefenkante an der Maskengrenze fehlt allen drei erzeugten Bildern — auch dem guten. Das erzeugte Bild ordnet die Tiefen INNERHALB der Silhouette richtig, setzt aber an ihrem Rand keinen Sprung.",
+      "was_das_heisst": "Der Paartest rho <= -0.80 UND Kante >= 0.05 wuerde B trotz seines sehr guten rho ABWEISEN. Ob das richtig ist, haengt daran, ob die fehlende Randkante ein echter Mangel ist oder ein Artefakt des Schaetzers an weichen Uebergaengen — ungemessen."
+    }
+  },
+  "urteil": {
+    "kernsatz": "Nicht der Backbone war die Ursache, sondern die geklippte Tiefenkarte: ohne Fuehrung -0.2558, mit geklippter Fuehrung -0.2540. Mit echter Karte erreicht z-image-turbo -0.9059 und damit die Schwelle."
+  },
+  "umgebung": {
+    "leistungsgrenze_w": 400,
+    "gpu_bildmodell": "z-image-turbo, qwen-image-edit-2511"
+  },
+  "fehler": null
+}
