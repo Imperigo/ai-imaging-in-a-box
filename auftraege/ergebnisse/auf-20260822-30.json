@@ -1,0 +1,463 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260822-30",
+ "status": "ok",
+ "beendet": "2026-08-20T18:20:00Z",
+ "messwerte": {
+  "aufbau": {
+   "bild": "s60/versatz_0/beauty_.png (das perfekte Blender-Bild)",
+   "maske": "unveraendert, 44604 Punkte, Randband innen 2295 aussen 2334",
+   "schaetzer": "depth-anything-v2-small",
+   "kontrolle": "Radius 0 reproduziert BEIDE Anker exakt: rho -0.9874, Kante +0.1615.",
+   "gegenprobe_geometrie": "Die Tiefenkarte, auf die auf-28 konditioniert hat, ist BYTE-IDENTISCH mit der des perfekten Bildes (sha16 698a004e98eea34d). Gleiche Geometrie; der Vergleich traegt.",
+   "keine_renderlaeufe": true,
+   "kein_bildmodell": true,
+   "code_unveraendert": true
+  },
+  "unschaerfereihe": [
+   {
+    "radius_px": 0,
+    "rho": -0.9874022298786629,
+    "kante": 0.161538847967767
+   },
+   {
+    "radius_px": 0.25,
+    "rho": -0.9874023803177967,
+    "kante": 0.16179127638706534
+   },
+   {
+    "radius_px": 0.5,
+    "rho": -0.9881008072826257,
+    "kante": 0.16160971596809778
+   },
+   {
+    "radius_px": 0.75,
+    "rho": -0.9887708006126142,
+    "kante": 0.1578753981580437
+   },
+   {
+    "radius_px": 1,
+    "rho": -0.9885787296050313,
+    "kante": 0.15558416496497474
+   },
+   {
+    "radius_px": 1.5,
+    "rho": -0.9865670151292274,
+    "kante": 0.14570919803129243
+   },
+   {
+    "radius_px": 2,
+    "rho": -0.9830114886215617,
+    "kante": 0.13382207784225386
+   },
+   {
+    "radius_px": 3,
+    "rho": -0.9750823799649054,
+    "kante": 0.09194757819941794
+   },
+   {
+    "radius_px": 4,
+    "rho": -0.965722363314723,
+    "kante": 0.06282504173428309
+   },
+   {
+    "radius_px": 6,
+    "rho": -0.9361556373149381,
+    "kante": 0.04679774231652352
+   },
+   {
+    "radius_px": 8,
+    "rho": -0.887514607970854,
+    "kante": 0.02767019084150047
+   },
+   {
+    "radius_px": 12,
+    "rho": -0.7832991867363912,
+    "kante": 0.0051141410003904
+   },
+   {
+    "radius_px": 16,
+    "rho": -0.6996426259159276,
+    "kante": 0.00016530156782658926
+   }
+  ],
+  "pruefstein": {
+   "frage": "Faellt die Kante schon bei kleinem Radius auf 0.004-0.006, waehrend rho hoch bleibt?",
+   "antwort": "NEIN.",
+   "bei_radius_1": {
+    "rho": -0.9886,
+    "kante": 0.1556,
+    "anteil_vom_ausgang": 0.963
+   },
+   "bei_radius_2": {
+    "rho": -0.983,
+    "kante": 0.1338,
+    "anteil_vom_ausgang": 0.828
+   },
+   "bei_radius_4": {
+    "rho": -0.9657,
+    "kante": 0.0628,
+    "bemerkung": "immer noch UEBER der Schwelle 0.05"
+   },
+   "kante_erreicht_0_005_erst_bei_radius": 12.1,
+   "rho_dort": -0.7814,
+   "schwelle_0_05_entspricht_radius": 4.7
+  },
+  "wo_die_erzeugten_bilder_auf_der_kurve_liegen": {
+   "B_z_fuehrung": {
+    "rho": -0.9059,
+    "entspricht_radius": 7.2,
+    "kante_auf_der_kurve": 0.0349,
+    "kante_gemessen": 0.005771,
+    "faktor_daneben": 6.0
+   },
+   "A_qwen": {
+    "rho": -0.7406,
+    "entspricht_radius": 14.0,
+    "kante_auf_der_kurve": 0.0026,
+    "kante_gemessen": 0.004798,
+    "faktor_daneben": 0.5
+   },
+   "C_z_ohne": {
+    "rho": -0.2558,
+    "bemerkung": "liegt unterhalb der ganzen Kurve (Radius 16 gibt -0.6996)"
+   }
+  },
+  "versatzprobe_maske_minus8_bis_plus8": {
+   "perfekt": {
+    "kante_0": 0.161538847967767,
+    "kante_best": 0.161538847967767,
+    "versatz": [
+     0,
+     0
+    ]
+   },
+   "unscharf_8": {
+    "kante_0": 0.02767019084150047,
+    "kante_best": 0.041800475743292,
+    "versatz": [
+     0,
+     -4
+    ]
+   },
+   "A_qwen": {
+    "kante_0": 0.004797673377477624,
+    "kante_best": 0.005621021600092112,
+    "versatz": [
+     -2,
+     8
+    ]
+   },
+   "B_z_fuehrung": {
+    "kante_0": 0.005771435759381813,
+    "kante_best": 0.011746332148434352,
+    "versatz": [
+     3,
+     -6
+    ]
+   },
+   "C_z_ohne": {
+    "kante_0": 0.0036752863065060777,
+    "kante_best": 0.0039127896966153946,
+    "versatz": [
+     7,
+     4
+    ]
+   }
+  },
+  "tiefenprofil_quer_zur_grenze": {
+   "perfekt": {
+    "1": 0.0447891014276458,
+    "2": 0.06738879968491901,
+    "3": 0.06015735618719711,
+    "4": 0.06382616518498674,
+    "5": 0.0656884271535464,
+    "6": 0.06819714047489599,
+    "7": 0.07062315069836113,
+    "8": 0.07289849350078789,
+    "9": 0.07527953663137561,
+    "10": 0.07764825134985633,
+    "11": 0.07836746799397647,
+    "12": 0.08024865723625169,
+    "13": 0.0814129414116768,
+    "14": 0.08388231840529396,
+    "15": 0.08411118431210077,
+    "16": 0.08705149084254862,
+    "-1": -0.019432896668500663,
+    "-2": -0.12822088947159058,
+    "-3": -0.15589957740381521,
+    "-4": -0.15521066810612474,
+    "-5": -0.15582305826905496,
+    "-6": -0.15587772608363837,
+    "-7": -0.15631955345535112,
+    "-8": -0.15625433536502228,
+    "-9": -0.15636735568787175,
+    "-10": -0.1563105936237958,
+    "-11": -0.1564985525157508,
+    "-12": -0.15653119119652123,
+    "-13": -0.15660123989063238,
+    "-14": -0.15710613183196936,
+    "-15": -0.1575365890095033,
+    "-16": -0.15767730874545213
+   },
+   "unscharf_8": {
+    "1": -0.07024048588234011,
+    "2": -0.06098571092053055,
+    "3": -0.055426080864769404,
+    "4": -0.050406073264295595,
+    "5": -0.04387230871273337,
+    "6": -0.03853455113745042,
+    "7": -0.030382447166274893,
+    "8": -0.02355869279033025,
+    "9": -0.01670369136315341,
+    "10": -0.012015074395217212,
+    "11": -0.005984958287111156,
+    "12": -0.001368019230803078,
+    "13": 0.003066434590745023,
+    "14": 0.008363429804499133,
+    "15": 0.011967755677948494,
+    "16": 0.015416447908404015,
+    "-1": -0.08209831824017785,
+    "-2": -0.0913853838678973,
+    "-3": -0.09516026093532169,
+    "-4": -0.11339123940691435,
+    "-5": -0.12663086670930077,
+    "-6": -0.1384409260705395,
+    "-7": -0.1475209631018435,
+    "-8": -0.15148572892932965,
+    "-9": -0.15392163608745013,
+    "-10": -0.15592791777731244,
+    "-11": -0.1577738879748609,
+    "-12": -0.159442161287347,
+    "-13": -0.16076300913471822,
+    "-14": -0.16195037252590222,
+    "-15": -0.16298956718849286,
+    "-16": -0.16376721973503308
+   },
+   "A_qwen": {
+    "1": 0.09581983091870531,
+    "2": 0.09778659110276705,
+    "3": 0.09931827835955201,
+    "4": 0.10158479531654797,
+    "5": 0.1026063273116156,
+    "6": 0.1051619895067342,
+    "7": 0.1061740169256576,
+    "8": 0.10809153653451428,
+    "9": 0.11021071347578046,
+    "10": 0.11189325247924008,
+    "11": 0.11341688565744498,
+    "12": 0.11460743878972805,
+    "13": 0.11671314137204276,
+    "14": 0.11831849863669262,
+    "15": 0.11940270739492823,
+    "16": 0.12155299369184717,
+    "-1": 0.09441315364935951,
+    "-2": 0.09311327880592354,
+    "-3": 0.09139428650841679,
+    "-4": 0.08943420624734799,
+    "-5": 0.08798294526339792,
+    "-6": 0.08611527696556277,
+    "-7": 0.08468978139887116,
+    "-8": 0.08273111346437802,
+    "-9": 0.08148570862157584,
+    "-10": 0.07908368465529468,
+    "-11": 0.07802627193100788,
+    "-12": 0.07631338699166608,
+    "-13": 0.07435803993317512,
+    "-14": 0.07308755675090806,
+    "-15": 0.07163007389582744,
+    "-16": 0.07044761301311295
+   },
+   "B_z_fuehrung": {
+    "1": 0.08998364935508416,
+    "2": 0.09241125389639926,
+    "3": 0.09438698866119423,
+    "4": 0.09672513206364088,
+    "5": 0.09931742817702593,
+    "6": 0.10220028709512789,
+    "7": 0.10515222262776457,
+    "8": 0.10832025975924998,
+    "9": 0.1109109148543239,
+    "10": 0.11396443967678482,
+    "11": 0.11694152894322199,
+    "12": 0.11985151594528005,
+    "13": 0.12284739999956204,
+    "14": 0.12599351415204704,
+    "15": 0.12896488549530633,
+    "16": 0.1321271021399694,
+    "-1": 0.08802540169166731,
+    "-2": 0.08623699942345385,
+    "-3": 0.0844495202280404,
+    "-4": 0.0830772955880797,
+    "-5": 0.0811346119577076,
+    "-6": 0.07934354303473855,
+    "-7": 0.07666483705090732,
+    "-8": 0.07477569164293629,
+    "-9": 0.07305482753459085,
+    "-10": 0.07106393899132891,
+    "-11": 0.06907843503940041,
+    "-12": 0.0675094420475691,
+    "-13": 0.06610301243218548,
+    "-14": 0.06458673715359968,
+    "-15": 0.06303597484956874,
+    "-16": 0.06185833908403414
+   },
+   "C_z_ohne": {
+    "1": 0.06708938795657368,
+    "2": 0.06822123367056719,
+    "3": 0.06930615030939903,
+    "4": 0.07149534123014374,
+    "5": 0.07241437295488064,
+    "6": 0.07368174618736811,
+    "7": 0.07495209751879113,
+    "8": 0.07626543914936428,
+    "9": 0.07788699000283891,
+    "10": 0.07875042254180342,
+    "11": 0.08063993024869597,
+    "12": 0.08220614610259412,
+    "13": 0.08333583029316667,
+    "14": 0.08421230402343761,
+    "15": 0.08613130451656277,
+    "16": 0.08735900178581224,
+    "-1": 0.06590333603856798,
+    "-2": 0.06422253542643222,
+    "-3": 0.06297836254532968,
+    "-4": 0.06206276524113942,
+    "-5": 0.06100818198098166,
+    "-6": 0.05990518059619448,
+    "-7": 0.05877955526626795,
+    "-8": 0.05755923119357662,
+    "-9": 0.055926104181336415,
+    "-10": 0.05472136709420288,
+    "-11": 0.05370864533763098,
+    "-12": 0.05234630917618282,
+    "-13": 0.05101000736349373,
+    "-14": 0.049896222378528664,
+    "-15": 0.048560905259842455,
+    "-16": 0.04769341386023193
+   }
+  },
+  "bauwerk_gegen_grund_ganze_flaeche": {
+   "perfekt": 0.31257099440951813,
+   "unscharf_8": 0.16675797384491553,
+   "A_qwen": 0.2144943121944384,
+   "B_z_fuehrung": 0.21366017385635164,
+   "C_z_ohne": 0.19202354435063235
+  },
+  "kontrast_im_bild_ohne_schaetzer": {
+   "perfekt": {
+    "spanne": 90.0,
+    "band_unterschied": 0.07777777777777778,
+    "gradient_grenze": 0.08678055195451838,
+    "gradient_ueberall": 0.005555555555555556
+   },
+   "unscharf_2": {
+    "spanne": 90.0,
+    "band_unterschied": 0.03888888888888889,
+    "gradient_grenze": 0.03333333333333333,
+    "gradient_ueberall": 0.0
+   },
+   "unscharf_8": {
+    "spanne": 88.0,
+    "band_unterschied": 0.011363636363636364,
+    "gradient_grenze": 0.011363636363636364,
+    "gradient_ueberall": 0.0
+   },
+   "A_qwen": {
+    "spanne": 109.0,
+    "band_unterschied": -0.009174311926605505,
+    "gradient_grenze": 0.018913328557879177,
+    "gradient_ueberall": 0.01653922603423848
+   },
+   "B_z_fuehrung": {
+    "spanne": 111.0,
+    "band_unterschied": -0.02702702702702703,
+    "gradient_grenze": 0.018018018018018018,
+    "gradient_ueberall": 0.006370331362040969
+   },
+   "C_z_ohne": {
+    "spanne": 104.0,
+    "band_unterschied": 0.0,
+    "gradient_grenze": 0.02150065362980567,
+    "gradient_ueberall": 0.01359820733051053
+   }
+  },
+  "liegt_die_staerkste_kante_an_der_maskengrenze": {
+   "perfekt": {
+    "anteil_starker_kanten_in_naehe": 0.20206851971557854,
+    "anreicherung": 11.443303096202337,
+    "grenzpunkte_mit_starker_kante": 0.8737046632124352
+   },
+   "unscharf_8": {
+    "anteil_starker_kanten_in_naehe": 0.15131973605278945,
+    "anreicherung": 8.569358584537143,
+    "grenzpunkte_mit_starker_kante": 0.4384715025906736
+   },
+   "A_qwen": {
+    "anteil_starker_kanten_in_naehe": 0.009747619767266133,
+    "anreicherung": 0.5520155619507914,
+    "grenzpunkte_mit_starker_kante": 0.027849740932642485
+   },
+   "B_z_fuehrung": {
+    "anteil_starker_kanten_in_naehe": 0.09030967550748259,
+    "anreicherung": 5.114309694584903,
+    "grenzpunkte_mit_starker_kante": 0.24287564766839378
+   },
+   "C_z_ohne": {
+    "anteil_starker_kanten_in_naehe": 0.024138191144301123,
+    "anreicherung": 1.366965214804855,
+    "grenzpunkte_mit_starker_kante": 0.06411917098445596
+   }
+  },
+  "nachgeschaerft_B": {
+   "roh": {
+    "rho": -0.9059310961239968,
+    "kante": 0.005771435759381813,
+    "grenzpunkte_starke_kante": 0.24287564766839378
+   },
+   "scharf_r1_100": {
+    "rho": -0.9009972090675779,
+    "kante": 0.005156432099008513,
+    "grenzpunkte_starke_kante": 0.17098445595854922
+   },
+   "scharf_r1_300": {
+    "rho": -0.886989962704444,
+    "kante": 0.008098555817342158,
+    "grenzpunkte_starke_kante": 0.2033678756476684
+   },
+   "scharf_r2_200": {
+    "rho": -0.8991793994073869,
+    "kante": 0.0057743556866767295,
+    "grenzpunkte_starke_kante": 0.25647668393782386
+   },
+   "scharf_r3_400": {
+    "rho": -0.9059658278890833,
+    "kante": 0.0061019159622560425,
+    "grenzpunkte_starke_kante": 0.2979274611398964
+   }
+  }
+ },
+ "die_antwort": {
+  "ein_satz": "Die Kante misst WEDER Anwesenheit NOCH Randschaerfe, sondern ob die MEHRHEIT des Umrisses ueberhaupt gezeichnet ist — und weil sie ein Median ueber das ganze Randband ist, faellt sie auf das Niveau der Abwesenheit, sobald weniger als die Haelfte der Grenze eine Stufe traegt.",
+  "gegen_b": "Weichzeichnen nimmt die Kante NUR LANGSAM: bei Radius 1 stehen noch 96 %, bei Radius 2 noch 83 %, bei Radius 4 ist sie mit 0.0628 immer noch ueber der Schwelle. Das Niveau der erzeugten Bilder wird erst bei Radius 12 erreicht. Der Schaetzer verliert eine vorhandene Kante also NICHT schon bei leichter Weichheit.",
+  "gegen_a": "Aber B ist auch nicht einfach ein weiches Bild. Bei seinem rho -0.9059 muesste die Kante auf der Weichzeichner-Kurve 0.0349 sein; gemessen sind 0.0058 — Faktor 6 daneben. Diese Kombination ist durch Unschaerfe nicht herstellbar.",
+  "was_es_wirklich_ist": "Ohne jeden Schaetzer nachgemessen: beim perfekten Bild tragen 87.4 % der Maskengrenze eine Kante aus den staerksten 5 % des Bildes, beim auf 8 Punkte weichgezeichneten noch 43.8 %, bei B nur 24.3 %, bei A 2.8 % (UNTER Zufall), bei C 6.4 %. B zeichnet also ein Viertel seines Umrisses wirklich — und weil die Kante ein Median ueber das ganze Band ist, sieht ein Viertel aus wie nichts.",
+  "verschiebung": "Ein globaler Versatz erklaert es nicht: die beste Kante ueber alle Verschiebungen -8..+8 liegt bei B bei 0.0117 (Faktor 2, bei Versatz 3/-6) — nicht bei 0.035. Beim perfekten Bild liegt das Beste bei Versatz 0/0, die Maske sitzt also richtig.",
+  "profil": "Das Tiefenprofil quer zur Grenze zeigt es unmittelbar: das perfekte Bild springt zwischen Ring -1 und +1 von -0.019 auf +0.045; alle drei erzeugten Bilder steigen ueber die ganzen +-16 Punkte flach und ohne jeden Sprung an. Grossflaechig stimmt die Staffelung trotzdem (Bauwerk gegen Grund +0.2137 bei B gegen +0.3126 beim perfekten Bild).",
+  "was_das_fuer_den_paartest_heisst": "Die Schwelle 0.05 als Ja-Nein-Tor taugt fuer erzeugte Bilder nicht — nicht weil sie zu streng waere, sondern weil das Mass unter dem Median zusammenbricht statt allmaehlich zu fallen. Der Paartest wuerde B abweisen und haette im Ergebnis recht (drei Viertel des Umrisses fehlen), aber aus dem falschen Grund und ohne Abstufung.",
+  "vorschlag": "Als zweites Bein nicht die Kante, sondern den ANTEIL DER GRENZE MIT KANTE nehmen. Er braucht keinen Schaetzer, wird direkt aus dem Bild gerechnet, faellt allmaehlich statt abrupt, und trennt die Faelle sauber: perfekt 87.4 %, weichgezeichnet-8 43.8 %, B 24.3 %, C 6.4 %, A 2.8 %.",
+  "warnung_zu_rho_allein": "A erreicht rho -0.7406, zeichnet den Umriss aber an 2.8 % der Grenze — UNTER Zufall (0.6-fache Anreicherung). Ein anstaendiges rho ist also ohne jede Umrisstreue erreichbar. Ein zweites Bein braucht der Paartest wirklich; nur dieses hier taugt in dieser Form nicht."
+ },
+ "zur_zweiten_zeile_nachschaerfen": {
+  "gefragt": "Beweist Nachschaerfen eines erzeugten Bildes etwas?",
+  "meine_einschaetzung": "Nein, und zwar aus drei Gruenden. (1) Es ist nicht die Umkehrung des Weichzeichnens: Weichzeichnen ist eine saubere Verschlechterung eines Bildes, dessen Geometrie bekannt und richtig ist; Nachschaerfen soll Information zurueckholen, die nicht da ist. (2) Die Unscharfmaske erzeugt Ueber- und Unterschwinger GENAU an der Grenze — also genau dort, wo die beiden Baender abgetastet werden. Ein Anstieg der Kante waere zum Teil vom Werkzeug gemacht. (3) Der Schaerfegrad war nach der Weichzeichnerreihe ohnehin nicht mehr der Verdaechtige.",
+  "trotzdem_gemessen": "Weil die Zahl mehr sagt als die Weigerung: selbst bei Radius 3 und 400 % bleibt die Kante bei 0.0061 (roh 0.0058) und rho bei -0.9060. Der Anteil der Grenze mit Kante steigt nur von 24.3 % auf 29.8 %. Nachschaerfen kann keinen Umriss herstellen, den das Bild nicht zeichnet — das ist die beste Bestaetigung der Deutung, die dieser Versuch liefern konnte.",
+  "was_stattdessen_taugt": "Die entscheidende Gegenprobe brauchte gar keine Manipulation: der Kontrast an der Maskengrenze wird direkt im Bild gemessen, ohne Schaetzer und ohne Filter."
+ },
+ "grenzen_dieser_messung": [
+  "Je Bedingung EIN Bild. Die Seed-Streuung dieser Reihe ist gross (0.2269 fuer rho, an n=3 erhoben); fuer den Anteil der Grenze mit Kante ist die Streuung UNBEKANNT.",
+  "Der vorgeschlagene Anteil ist an fuenf Bildern gepruefte Aussage, keine geeichte Schwelle. Bevor er ein Tor wird, braucht er dieselbe Ankerreihe wie die Kante (perfekt, Rauschen, grau) und eine Streuungsmessung.",
+  "Gemessen wurde nur die 59.8-%-Szene. Fuer 29 % liegt der perfekte Anker bei 0.2474; ob sich dort dasselbe zeigt, ist nicht geprueft.",
+  "Der Anteil haengt an einer relativen Schwelle (staerkste 5 % der Gradienten im selben Bild). Beim Nachschaerfen sieht man den Preis: r1/100 senkt den Anteil auf 17.1 %, weil das Schaerfen auch die Textur ueberall anhebt."
+ ]
+}
