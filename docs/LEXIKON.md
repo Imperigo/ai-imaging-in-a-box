@@ -1550,6 +1550,32 @@ Hintergrund und Gelände abzieht. *Wozu: Die Geometrieprüfung dieses Projekts r
 Bodenflächen miteinander — weisses Rauschen kam so auf 72 von 100 Punkten. Über der
 Bauwerksmaske gerechnet wird dieselbe Prüfung wieder scharf.*
 
+**Tiefenkante (an der Maskengrenze)** — Der Sprung in der geschätzten Tiefe genau dort,
+wo die Silhouette des Bauwerks endet: vorne die Fassade, dahinter der ferne Hintergrund.
+Gemessen als Unterschied zwischen den Punkten knapp innerhalb und knapp ausserhalb der
+*Bauwerksmaske*, geteilt durch die Spanne der ganzen Schätzung — sonst misst man den
+Zahlenbereich des Schätzers statt der Kante.
+*Sie beantwortet die Frage, an der alle bisherigen Masse dieses Projekts gescheitert
+sind: **Steht dort überhaupt etwas?** Ein leeres Grundstück hat an dieser Stelle keinen
+Sprung, weil Boden und Himmel stetig ineinander übergehen — gemessen 0,0006 gegen 0,1615
+beim richtigen Bild.*
+*Der Preis, und er ist keine Schwäche, sondern die Definition: Die Maske ist die
+Silhouette des **richtigen** Bauwerks. Ein gedrehtes oder anders geformtes hat seine
+Kanten woanders, und dort steht dann Grund — die Tiefenkante fragt also nicht «steht dort
+etwas», sondern «steht dort **das Richtige**». Genau die Fälle, die sie darum verfehlt,
+fängt die Rangkorrelation.*
+
+**Paarurteil** — Ein Urteil, das **zwei Messwerte nebeneinander stehen lässt**, statt sie
+zu einer Zahl zu verrechnen. Es besteht nur, wenn beide bestehen, und es sagt dazu,
+welcher der beiden ein Nein trägt.
+*Warum das eine eigene Bauform ist: Der frühere Geometrie-Score multiplizierte zwei Masse
+zu einer Zahl und verschmolz damit zwei verschiedene Fragen — «steht dort etwas» und
+«stimmt, was dort steht». Der Faktor, der die erste beantworten sollte, belohnte am Ende
+sogar die Abwesenheit. Zwei Fragen brauchen zwei Antworten; eine Zahl, die beide
+behauptet, beantwortet keine.*
+*Und ein Urteil aus nur einer der beiden Zahlen gilt als **nicht gemessen** — nicht als
+«bestanden aufgrund der anderen». Für eine fehlende Antwort gibt es keinen Ersatz.*
+
 **Geländeregel** — Die ausdrückliche Vorschrift, woran das Gelände in einem Modell zu
 erkennen ist — im einfachsten Fall eine Liste von Namen («Boden_Platte», «IfcSite…»).
 Sie ist nötig, weil ein Rechner einem Bauteil nicht ansieht, ob es Boden oder Wand ist;
@@ -2926,6 +2952,7 @@ System laufen.
 | 2026-08-20 | Aus dem GPU-Ergebnis zu `auf-20260820-18`: **Sandbox-Paket (Snap, Flatpak)** und **Artefakt einer Messung**. Beide sind teuer erworben — das GPU-faehige Blender-Snap liefert bei Dateiumleitung Rueckgabewert 0 ohne Bild, und der am selben Tag gemessene 32-Sekunden-Takt war ein Artefakt der CPU-Messung |
 | 2026-08-20 | Ergaenzt aus dem Abholer (`src/aiimaging/abholer.py`): **Laufzettel**, **Waise (verwaister Auftrag)** |
 | 2026-08-20 | Ergaenzt aus der Taktmessung an Blender: **adaptives Sampling**, **Blockpufferung der Standardausgabe**, **Pipe-Blockade**. **Sample** um die gemessene Einschraenkung ergaenzt: Bei adaptivem Sampling ist die Samplezahl eine OBERGRENZE und keine Angabe der Rechenzeit — 6000 Samples in 12 s gegen 3000 ohne adaptives Sampling in ueber drei Minuten |
+| 2026-08-22 | Ergaenzt aus dem Umbau der Geometrie-QA: **Tiefenkante (an der Maskengrenze)** und **Paarurteil**. Beide tragen den Grund mit, aus dem sie entstanden sind — ein einzelner Score kann Existenz und Richtigkeit nicht zugleich beantworten |
 | 2026-08-21 | Ergaenzt aus dem Nicht-Monotonie-Befund: **Monotonie (einer Metrik)**, **Faltung der Skala (durch den Betrag)**, ausgebaut **Polaritaet (einer Tiefenkarte)** um die Frage, wann man sie bestimmen DARF, ohne im Kreis zu messen. Alle drei aus einer Messung, die eine eigene Entscheidung widerlegt hat |
 | 2026-08-21 | Ergaenzt beim Anhaengen der Wache an den Abholer: **Blockierender Aufruf**, **Hintergrundfaden und Daemon-Faden**, **Fortschrittsbeobachter**, **Vertragsfeld**. Ausgebaut: **Race Condition** um den Fall, in dem der TEST das Rennen enthaelt — und um die Abhilfe, das Rennen bedeutungslos zu machen statt laenger zu warten |
 | 2026-08-20 | Ergaenzt aus der Fortschrittswache (`src/aiimaging/fortschritt.py`): **Timeout**, **Gesamt-Timeout gegen Fortschrittsfrist**, **Stillstand (Stall)**, **behauptetes gegen belegtes Fortschrittszeichen**, **monotone Uhr**. Anlass war wieder ein Befund: Der geerbte Stillstandswaechter stellt bei den Zustaenden `running` und `queued` die Uhr zurueck — also genau in dem Fall, fuer den er gebaut wurde |
