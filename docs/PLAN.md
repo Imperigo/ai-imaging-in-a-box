@@ -789,6 +789,14 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Belegte stützt sich auf Normen, Behördenvorschriften, begutachtete Studien und
       Geometrie — **nicht auf die Lehrbücher des Fachs.** Für die schriftliche Arbeit wird
       das nachzuholen sein, notfalls in einer Bibliothek.
+- [ ] **Räume aus IFC lesen — in Arbeit (22.08.), die Voraussetzung für alles Innere.**
+      Das Projekt kennt heute **kein einziges `IfcSpace`**. Ohne Räume gibt es keinen
+      Standpunkt im Raum, keine Raumhöhe für die Gleichgewichtsregel und keinen
+      Verdeckungstest gegen Wände. Gebaut wird hinter der Prozessgrenze
+      (`runners/ifc_raeume_runner.py` im `.venv-ifc`, Naht in `seams.py`) — `ifcopenshell`
+      bringt statisch gelinktes GPL-CGAL mit und darf nach Regel 1 nie in den Kern.
+      Ausdrücklich **nicht** mitgebaut: Kamerasetzung im Raum. Die braucht eigene
+      Entscheidungen und würde hier ungeprüft mitgeliefert.
 - [ ] **Es gibt weiterhin gar keinen Innenraum-Modus.** `WANDABSTAND_M = 10.0` macht eine
       Innenaufnahme rechnerisch unmöglich. Die Recherche liefert dafür jetzt Zahlen: der
       PBRS-Datensatz (arXiv 1612.07429) nennt 0,25-m-Raster, Ausschluss aller Standpunkte
@@ -1375,9 +1383,23 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
       Phase-0-Befund**: Zwei Erzeuger des Ökosystems liefern beide ein `glb_path`, mit
       unterschiedlicher Orientierung — und eine verdrehte Hochachse fällt an einem
       einzelnen Bild nicht auf. Frage steht im Übergabeblatt.
-- [ ] **Die Stil-QA im Abholer** — läuft dort bewusst nicht, weil ihr das Referenzset
-      fehlt, das uns gehört. Das Ergebnis sagt darum *ungeprüft* und nicht
-      *durchgefallen*. Hängt am Planpunkt „Ein Referenzset, das uns gehört".
+- [x] **Die Stil-QA im Abholer läuft wieder — 22.08., mit dem Rahmen statt mit
+      Einbettungen.** Der Owner-Entscheid vom 21.08. (fester Hausstil, kein Referenzset)
+      hat die Blockade aufgelöst: Die Frage lautet nicht mehr *„ähnelt das unseren
+      Referenzen"*, sondern *„liegt das im gemessenen Belichtungsrahmen"* — und die können
+      wir beantworten. Es zählt die schwächste Kamera; eine einzige ungemessene macht das
+      ganze Urteil ungemessen.
+
+      **Die heikle Stelle war die Naht, nicht die Messung.** Ihr `style_score` meint eine
+      Bildähnlichkeit; eine Belichtungsprüfung hat keinen natürlichen Skalar. Wir senden
+      darum `style_score: null`, `threshold: null` und in `method` das Verfahren
+      (`belichtungsrahmen/<stil>`). Eine Zahl zu erfinden — auch eine ehrlich gemeinte wie
+      1.0 für „bestanden" — sähe drüben wie eine gemessene Ähnlichkeit aus. `method` und
+      nicht `hinweise`, weil die Hinweise `nur_vertragsfelder` nicht überstehen.
+
+      **Offen und an sie gestellt (Übergabeblatt Frage 13):** Nimmt ihr Schema `null` für
+      `style_score` an? Ihre Schemadatei liegt uns nicht vor. Geht es nicht durch, ist das
+      dort zu ändern und nicht hier durch eine erfundene Zahl.
 - [x] **Die Belichtungsprüfung im Abholer** — 2026-08-20, `verarbeiter(stil=…)`, je Kamera.
       Sie **hält nichts auf**: Ein Bild, das die Belichtung reisst, ist ein Befund und
       kein Fehler — die Geometrie entscheidet über `passed`, die Belichtung erklärt.
