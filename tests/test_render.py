@@ -1221,7 +1221,23 @@ def test_fehlende_controlnet_gewichte_brechen_vor_dem_laden_ab(tmp_path):
 #: Es ist BSD-3 und damit unter Regel 1 zulässig. Solange es nicht dort steht, gilt es
 #: als optional — und dann ist Überspringen die richtige Antwort und keine Nachsicht.
 def _numpy_oder_ueberspringen():
-    """NumPy holen oder den Test mit Begründung überspringen."""
+    """NumPy **und Pillow** holen oder den Test mit Begründung überspringen.
+
+    Beide, weil diese Prüfungen beide brauchen. Die erste Fassung deckte nur NumPy ab —
+    und als es wieder da war, fielen dieselben vier Tests erneut rot um, diesmal an
+    ``PIL``. Ein Überspringer, der nur die halbe Voraussetzung kennt, verschiebt das
+    Problem, statt es zu benennen.
+
+    **Und warum das hier mehr zählt als anderswo:** Diese vier Prüfungen bewachen die
+    16-Bit-Skalierung. Am 22.08.2026 hat sich gemessen gezeigt, dass die **geklippte
+    Tiefenkarte** die Ursache für monatelang schlechte Bilder war — eine Karte mit zwei
+    Graustufen statt 235 war für das ControlNet exakt so viel wert wie **gar keine**
+    Konditionierung (`auf-20260822-28`: ohne Führung −0.2558, mit geklippter Karte
+    −0.2540, Abstand 0.002). Der Wächter für genau diesen Fehler darf nicht stillschweigend
+    aussetzen.
+    """
+    pytest.importorskip(
+        "PIL", reason="Pillow fehlt — diese vier Prüfungen sind NICHT GEMESSEN.")
     return pytest.importorskip(
         "numpy", reason="NumPy ist nicht installiert und nicht deklariert — diese vier "
                         "Prüfungen sind damit NICHT GEMESSEN, nicht durchgefallen.")

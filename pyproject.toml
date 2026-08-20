@@ -48,7 +48,23 @@ classifiers = ["License :: OSI Approved :: Apache Software License"]
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest"]
+# `numpy` und `Pillow` gehoeren hierher und nicht zu den Laufzeitabhaengigkeiten: Der
+# Kern rechnet ohne sie, `render.py` importiert sie ausdruecklich nur oertlich. Beide
+# sind permissiv (numpy BSD-3, Pillow MIT-CMU) und unter Regel 1 unproblematisch; die
+# Binaerpruefung dazu steht in docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md.
+#
+# WARUM SIE TROTZDEM HIER STEHEN MUESSEN, und das ist keine Formalie: Vier Tests in
+# `test_render.py` bewachen die 16-Bit-Skalierung. Am 22.08.2026 hat `auf-20260822-28`
+# gemessen, dass die GEKLIPPTE Tiefenkarte die Ursache fuer monatelang schlechte Bilder
+# war — eine Karte mit zwei Graustufen statt 235 war fuer das ControlNet exakt so viel
+# wert wie GAR KEINE Konditionierung (ohne Fuehrung -0.2558, mit geklippter Karte
+# -0.2540, Abstand 0.002).
+#
+# Am selben Tag verschwand `numpy` aus einer Umgebung, und genau diese vier Waechter
+# setzten stillschweigend aus. Nachgeprueft: Stellt man den alten Fehler wieder her,
+# faellt der Test — er taugt also. Ein Waechter, der nur laeuft, wenn zufaellig das
+# richtige Paket da ist, bewacht nichts.
+dev = ["pytest", "numpy", "Pillow"]
 # Nur fuer die Anbindung an KosmoOrbit. Das MCP-SDK ist MIT und damit unter Regel 1
 # zulaessig, zieht aber 19 transitive Abhaengigkeiten nach, die NICHT einzeln geprueft
 # sind. Darum optional: Der Kern laeuft ohne, nur die Cockpit-Anbindung nicht.

@@ -941,6 +941,21 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
 
       Der Test, der die Lücke offenhielt, ist **gelöscht** und nicht angepasst worden —
       so, wie es in seinem eigenen Docstring stand.
+- [x] **Der Wächter für den teuersten Fehler des Projekts lief nicht — behoben 22.08.**
+      `auf-20260822-28` hat gemessen: Nicht der Backbone war die Ursache für monatelang
+      schlechte Bilder, sondern die **geklippte Tiefenkarte**. Ohne jede Führung −0.2558,
+      mit der geklippten Karte und voller Führung −0.2540 — **Abstand 0.002.** Die
+      Schablone war exakt so viel wert wie gar keine Konditionierung.
+
+      Am selben Tag verschwanden `numpy` und `Pillow` aus dieser Umgebung, und die vier
+      Tests, die genau diese Skalierung bewachen, setzten aus. Erst als Fehlschlag
+      (`ModuleNotFoundError` sieht aus wie ein kaputtes Modul), dann als ehrliches
+      Überspringen — und beides heisst: **der Wächter lief nicht.**
+
+      Behoben: beide in `dev` deklariert, beide permissiv und bereits binärgeprüft.
+      **Und nachgeprüft, dass der Wächter taugt:** Stellt man den alten Fehler wieder her
+      (`bild.convert("RGB")` statt der Skalierung), fällt der Test. Ein Wächter, der nur
+      läuft, wenn zufällig das richtige Paket da ist, bewacht nichts.
 - [ ] **ERSTER BEOBACHTETER FEHLALARM des Stillstandswächters (22.08.).** Der echte
       Blender-Lauf in `test_kette.py` brach ab mit *„seit 10 s kein Fortschritt"* — und
       war kerngesund: Drei Wiederholungen danach liefen in 3,7 bis 8,2 s durch. Der
