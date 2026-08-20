@@ -1790,3 +1790,33 @@ def test_die_schwellen_sind_als_abgelesen_gekennzeichnet():
 
     assert "ABGELESEN" in u["begruendung"]
     assert "nicht kalibriert" in u["begruendung"]
+
+
+def test_die_schwelle_ist_erreichbar_und_das_ist_gemessen():
+    """**Die Korrektur einer eigenen Behauptung, durch Messung.**
+
+    Am 22.08. stand im Docstring von `paarurteil`: „Dieser Paartest würde jedes Bild
+    abweisen, das dieses Projekt je erzeugt hat." Die Seed-Messung desselben Tages
+    (`docs/SEEDAUSWAHL_2026-08-22.md`) hat das widerlegt: Derselbe Aufbau liefert je nach
+    Startwert 0.4152 bis 0.9139 — und 0.9139 liegt über der Schwelle.
+
+    Der Test hält die Widerlegung fest, damit der alte Satz nicht durch eine spätere
+    Umformulierung wieder hereinrutscht.
+    """
+    bester_gemessener_seed = 0.9139
+    schlechtester = 0.4152
+
+    assert bester_gemessener_seed > geometrie_qa.PAAR_RHO_SCHWELLE
+    assert schlechtester < geometrie_qa.PAAR_RHO_SCHWELLE
+    assert "widerlegt" in geometrie_qa.paarurteil.__doc__
+
+
+def test_die_seed_streuung_uebertrifft_jeden_gemessenen_parametereffekt():
+    """Solange das gilt, ist die Frage nicht «welche Stärke», sondern «welcher Lauf».
+
+    Gemessen am 22.08.: Streuung über Startwerte 0.2269, grösster Parametereffekt 0.14.
+    """
+    seed_streuung = 0.9139 - 0.4152
+    groesster_parametereffekt = 0.14
+
+    assert seed_streuung > groesster_parametereffekt

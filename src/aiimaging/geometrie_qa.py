@@ -1526,15 +1526,26 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
     Schwelle, was es **durchlässt**.
 
     .. warning::
-       **Dieser Paartest würde jedes Bild abweisen, das dieses Projekt je erzeugt hat.**
-       Alle fünf gemessenen erzeugten Bilder liegen über der Maske schlechter als weisses
-       Rauschen (:data:`RAUSCHBODEN_UEBER_MASKE`, −0.5207); ``0.80`` ist für sie
-       unerreichbar.
+       **Bis zum 22.08.2026 stand hier: „Dieser Paartest würde jedes Bild abweisen, das
+       dieses Projekt je erzeugt hat." Das ist gemessen widerlegt, und zwar am selben
+       Tag.**
 
-       Das ist **kein Argument gegen die Schwelle.** Nicht sie ist zu streng — unsere
-       Bilder sind geometrisch schlecht, und bis heute konnten wir es nur nicht messen.
-       Ein Urteil, das sie durchliesse, wäre ein Urteil ohne Aussage. Wer die Schwelle
-       senkt, weil sonst nichts besteht, hat nicht kalibriert, sondern aufgegeben.
+       Der Satz stützte sich auf fünf erzeugte Bilder, die über der Maske alle schlechter
+       lagen als weisses Rauschen (:data:`RAUSCHBODEN_UEBER_MASKE`, −0.5207). Die
+       Seed-Messung (`docs/SEEDAUSWAHL_2026-08-22.md`) zeigt: Derselbe Aufbau liefert je
+       nach Startwert **0.4152 bis 0.9139** — und 0.9139 liegt **über**
+       :data:`PAAR_RHO_SCHWELLE`. Erreichbar ist die Schwelle also; nur nicht
+       zuverlässig.
+
+       **Damit hat sich die Frage verschoben, nicht erledigt.** Die Seed-Streuung
+       (0.2269) ist grösser als jeder gemessene Parametereffekt (0.10–0.14). Die Frage
+       lautet nicht mehr *„ist die Schwelle erreichbar"*, sondern *„warum liefert derselbe
+       Aufbau einmal 0.91 und einmal 0.42"* — und die ist offen.
+
+       Was unverändert gilt: Wer die Schwelle senkt, weil sonst nichts besteht, hat nicht
+       kalibriert, sondern aufgegeben. Eine Auswahl unter mehreren Startwerten ist etwas
+       anderes als eine gesenkte Schwelle — sie macht keine besseren Bilder, sondern
+       findet das bessere unter denselben.
     """
     rho = (rho_ergebnis or {}).get("gerichtet")
     kante = (kante_ergebnis or {}).get("gerichtet")

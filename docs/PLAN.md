@@ -843,6 +843,25 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       **Was daraus folgt und noch offen ist:** Ein Raum, dessen Wand nicht ins Bild passt,
       braucht die fotografische Kaskade — Türöffnung, Nachbarraum, Teilausschnitt. Davon
       kann dieses Modul nichts.
+- [x] **Die Räume hängen an der Kette (22.08.).** `_raeume_lesen` läuft auf dem
+      **IFC-Weg** von `baue_kette` — und nur dort. Aus einer glb sind Wände und Böden
+      Dreiecke ohne Raumbegriff; wer über `glb_path` einsteigt, bekommt `raeume: None`,
+      und das heisst *nicht gemessen*, nicht „dieses Gebäude hat keine Räume". Der einzige
+      Moment, in dem die Frage beantwortbar ist, liegt **vor** der Umwandlung.
+
+      Ein Fehlschlag hält die Kette nicht an: Innenaufnahmen sind eine Zugabe, und eine
+      Kette, die daran stürbe, lieferte **kein einziges** Bild statt eines ohne
+      Innenansichten.
+
+      **Zum zweiten Mal an einem Tag dieselbe Lehre.** Die Mutationsprobe fand, dass sich
+      *beide* Verdrahtungszeilen des IFC-Zweigs herausschneiden liessen, ohne dass ein
+      Test rot wurde — ich hatte `_raeume_lesen` direkt geprüft und den glb-Zweig, nie den
+      IFC-Zweig. **Ein Test am Baustein ersetzt keinen Test an der Naht.**
+- [ ] **Was die Standpunkte noch nicht erreichen: den Renderer.** Sie stehen in der
+      Ausgabe des Geometrie-Knotens, aber kein Multipass fährt sie. Der nächste Schritt
+      wäre, sie als Kameraliste weiterzureichen — und dabei fällt die Entscheidung, wie
+      viele Räume eines Gebäudes überhaupt gerendert werden. Das ist eine Betriebs- und
+      keine Programmfrage, so wie `AUTO_RICHTUNGEN` aussen.
 - [ ] **Der Verdeckungstest fehlt weiterhin, und für innen ist er keine Kür.** Ob zwischen
       Kamera und Ziel ein Möbel, eine Stütze oder eine Brüstung steht, weiss nur die
       Szene. Was `raumkamera.py` prüft, ist die Lage im **Raumumriss** — notwendig, nicht

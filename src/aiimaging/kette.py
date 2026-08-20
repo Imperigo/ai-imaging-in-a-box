@@ -52,7 +52,8 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from aiimaging import (
-    bildlesen, contracts, geometrie_qa, render, seams, tiefenschaetzer, torwaechter,
+    bildlesen, contracts, geometrie_qa, raumkamera, render, seams, tiefenschaetzer,
+    torwaechter,
 )
 from aiimaging.graph import (
     ArtefaktCache, Bedarf, Graph, GraphError, Knoten, inhalts_hash, pruefe_bedarf,
@@ -362,6 +363,42 @@ def baue_kette(
 # Pflichtfelder ausfüllen müssen, um „hat geklappt" zu sagen.
 
 
+def _raeume_lesen(ifc_path) -> dict | None:
+    """Räume und ihre Kamerastandpunkte — oder eine benannte Lücke.
+
+    **Warum das an dieser Stelle steht.** Räume gibt es nur in der IFC. Sobald daraus eine
+    glb geworden ist, sind Wände und Böden Dreiecke ohne Raumbegriff — der einzige Moment,
+    in dem die Frage beantwortbar ist, ist **vor** der Umwandlung.
+
+    **Warum ein Fehlschlag hier die Kette nicht anhält.** Innenaufnahmen sind eine
+    Zugabe; der Aussenweg funktioniert ohne sie. Eine Kette, die an einer unlesbaren
+    Raumliste stürbe, lieferte kein einziges Bild, statt eines ohne Innenansichten. Der
+    Befund verschwindet trotzdem nicht — sonst sähe eine Datei ohne Räume aus wie eine,
+    die nie gefragt wurde.
+    """
+    try:
+        bericht = seams.ifc_raeume(str(ifc_path))
+    except Exception as fehler:      # noqa: BLE001 — siehe Docstring
+        return {"status": "fehler", "raeume": [],
+                "grund": f"Räume nicht lesbar: {type(fehler).__name__}: {fehler}"}
+    if bericht.get("status") != "ok":
+        return {"status": bericht.get("status"), "raeume": [],
+                "grund": bericht.get("error") or "Der Raumleser meldete keinen Erfolg."}
+
+    mit_standpunkten = []
+    for raum in bericht.get("raeume") or []:
+        try:
+            punkte = raumkamera.standpunkte(raum)
+        except raumkamera.RaumkameraError as fehler:
+            punkte = {"raum": raum.get("name"), "standpunkte": [], "n_brauchbar": 0,
+                      "befund": f"Kein Standpunkt berechenbar: {fehler}"}
+        mit_standpunkten.append({"raum": raum, "kamera": punkte})
+    return {"status": "ok", "raeume": mit_standpunkten,
+            "n_mit_standpunkt": sum(1 for r in mit_standpunkten
+                                    if r["kamera"]["n_brauchbar"] > 0),
+            "grund": ""}
+
+
 def _fuehre_geometrie(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
     """IFC → glb (Subprozess im ``.venv-ifc``) oder glb durchreichen — dann Torwächter.
 
@@ -383,8 +420,14 @@ def _fuehre_geometrie(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
                 "error": f"IFC→glb meldete {bericht.get('status')!r}: {bericht.get('error')}",
                 "bericht": bericht,
             }
+        raeume = _raeume_lesen(p["ifc_path"])
         ausgaben = {
             "glb_path": bericht.get("glb_path"),
+            # Räume gibt es NUR auf dem IFC-Weg. Aus einer glb lassen sie sich nicht
+            # gewinnen: Dort sind Wände und Böden Dreiecke, kein Raumbegriff. Wer über
+            # `glb_path` einsteigt, bekommt darum `raeume: None` — nicht gemessen, nicht
+            # „keine Räume".
+            "raeume": raeume,
             "up_axis": bericht.get("up_axis", "Y"),
             "bbox": bericht.get("bbox", p.get("bbox")),
             "n_elements": bericht.get("n_elements"),
@@ -393,6 +436,7 @@ def _fuehre_geometrie(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     else:
         ausgaben = {
             "glb_path": p["glb_path"],
+            "raeume": None,
             "up_axis": p["up_axis"],
             "bbox": p.get("bbox"),
             "n_elements": None,

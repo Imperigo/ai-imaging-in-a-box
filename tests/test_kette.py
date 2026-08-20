@@ -32,6 +32,7 @@ from pathlib import Path
 
 import pytest
 
+from aiimaging import raumkamera
 from aiimaging import kette, seams, tiefenschaetzer, torwaechter
 from aiimaging.graph import ArtefaktCache, Graph, GraphError, Knoten, ZyklusError
 from aiimaging.kette import (
@@ -1080,3 +1081,124 @@ def test_echter_lauf_ueber_beide_prozessgrenzen_und_dann_aus_dem_cache(tmp_path)
     dritter = starte("Sichtbeton, Morgenlicht")
     assert dritter["cache_treffer"] == 4, "der erste Prompt liegt vollständig im Speicher"
     assert aufrufe.total() == 8, "der dritte Lauf hat gar nichts mehr gerechnet"
+
+
+# ======================================================================================
+# Räume auf dem IFC-Weg — und warum es sie auf dem glb-Weg nicht gibt
+# ======================================================================================
+
+def test_auf_dem_glb_weg_gibt_es_KEINE_raeume_und_das_heisst_nicht_gemessen():
+    """Aus einer glb sind Wände und Böden Dreiecke ohne Raumbegriff.
+
+    `None` heisst hier *nicht gemessen* — nicht „dieses Gebäude hat keine Räume". Der
+    Unterschied ist der zwischen einer Auskunft und einer Behauptung.
+    """
+    import aiimaging.kette as kette_modul
+    knoten = Knoten(id="geo", art=kette_modul.ART_GEOMETRIE,
+                    params={"glb_path": "modell.glb", "up_axis": "Y",
+                            "bbox": [[0, 0, 0], [10, 10, 10]]})
+
+    ausgaben = kette_modul._fuehre_geometrie(knoten=knoten, eingaben=[],
+                                             out_dir=Path("."))
+
+    assert ausgaben["raeume"] is None
+
+
+def test_ein_unlesbarer_raumleser_haelt_die_kette_NICHT_an(monkeypatch, tmp_path):
+    """Innenaufnahmen sind eine Zugabe; der Aussenweg funktioniert ohne sie.
+
+    Eine Kette, die an einer unlesbaren Raumliste stürbe, lieferte **kein einziges Bild**
+    statt eines ohne Innenansichten. Der Befund verschwindet trotzdem nicht — sonst sähe
+    eine Datei ohne Räume aus wie eine, die nie gefragt wurde.
+    """
+    import aiimaging.kette as kette_modul
+
+    def kaputt(_pfad):
+        raise RuntimeError("venv-ifc fehlt")
+
+    monkeypatch.setattr(kette_modul.seams, "ifc_raeume", kaputt)
+    ergebnis = kette_modul._raeume_lesen(tmp_path / "egal.ifc")
+
+    assert ergebnis["status"] == "fehler"
+    assert ergebnis["raeume"] == []
+    assert "venv-ifc fehlt" in ergebnis["grund"]
+
+
+def test_jeder_gelesene_raum_bekommt_seine_standpunkte(monkeypatch, tmp_path):
+    """Die Verdrahtung, die sonst tot bliebe: gelesen UND gerechnet.
+
+    Die Räume hier sind die **echten** aus dem Runner-Lauf vom 22.08. — L-förmig mit
+    einspringender Ecke und rechteckig. Erfundene Rechtecke würden den Fall nicht treffen,
+    für den die Standpunktrechnung überhaupt gebaut ist.
+    """
+    import aiimaging.kette as kette_modul
+
+    monkeypatch.setattr(kette_modul.seams, "ifc_raeume", lambda _p: {
+        "status": "ok",
+        "raeume": [
+            {"name": "Raum-Nord", "z_unten_m": 0.0, "hoehe_m": 2.7,
+             "grundriss_m": [[0.3, 0.3], [5.0, 0.3], [5.0, 2.5],
+                             [7.7, 2.5], [7.7, 4.7], [0.3, 4.7]]},
+            {"name": "Raum-Sued", "z_unten_m": 0.1, "hoehe_m": 2.4,
+             "grundriss_m": [[7.7, 0.3], [7.7, 2.5], [5.0, 2.5], [5.0, 0.3]]},
+        ]})
+
+    ergebnis = kette_modul._raeume_lesen(tmp_path / "egal.ifc")
+
+    assert ergebnis["n_mit_standpunkt"] == 2
+    for eintrag in ergebnis["raeume"]:
+        arten = [s["art"] for s in eintrag["kamera"]["standpunkte"]]
+        assert arten == [raumkamera.ART_FRONTAL, raumkamera.ART_UEBER_ECK], (
+            "beide Blickarten müssen durchkommen — gewählt wird anderswo")
+
+
+def test_ein_raum_ohne_hoehe_verhindert_die_uebrigen_nicht(monkeypatch, tmp_path):
+    """Ein Raum ohne Bezugspunkt ist ein Befund, kein Kettenabbruch."""
+    import aiimaging.kette as kette_modul
+
+    monkeypatch.setattr(kette_modul.seams, "ifc_raeume", lambda _p: {
+        "status": "ok",
+        "raeume": [
+            {"name": "ohne Hoehe", "z_unten_m": None, "hoehe_m": None,
+             "grundriss_m": [[0, 0], [4, 0], [4, 3], [0, 3]]},
+            {"name": "mit Hoehe", "z_unten_m": 0.0, "hoehe_m": 2.5,
+             "grundriss_m": [[0, 0], [4, 0], [4, 3], [0, 3]]},
+        ]})
+
+    ergebnis = kette_modul._raeume_lesen(tmp_path / "egal.ifc")
+
+    assert ergebnis["n_mit_standpunkt"] == 1
+    assert ergebnis["raeume"][0]["kamera"]["n_brauchbar"] == 0
+
+
+def test_auf_dem_IFC_weg_kommen_die_raeume_wirklich_durch(monkeypatch, tmp_path):
+    """**Der Test, der die tote Kante ausschliesst.**
+
+    Die Tests darüber prüfen `_raeume_lesen` direkt und den glb-Zweig — den **IFC-Zweig**,
+    in dem die Verdrahtung wirklich sitzt, prüfte keiner. Die Mutationsprobe hat es
+    gefunden: Sowohl `raeume = _raeume_lesen(...)` als auch `"raeume": raeume` liessen
+    sich herausschneiden, ohne dass ein Test rot wurde.
+
+    Zweimal an einem Tag dieselbe Lehre: Ein Test am Baustein ersetzt keinen Test an der
+    Naht.
+    """
+    import aiimaging.kette as kette_modul
+
+    monkeypatch.setattr(kette_modul.seams, "ifc_zu_glb", lambda _i, o: {
+        "status": "ok", "glb_path": o, "up_axis": "Y",
+        "bbox": [[0, 0, 0], [8, 5, 3]], "n_elements": 7, "n_triangles": 84})
+    monkeypatch.setattr(kette_modul.seams, "ifc_raeume", lambda _p: {
+        "status": "ok",
+        "raeume": [{"name": "Raum-Sued", "z_unten_m": 0.1, "hoehe_m": 2.4,
+                    "grundriss_m": [[7.7, 0.3], [7.7, 2.5], [5.0, 2.5], [5.0, 0.3]]}]})
+
+    knoten = Knoten(id="geo", art=kette_modul.ART_GEOMETRIE,
+                    params={"ifc_path": str(tmp_path / "haus.ifc")})
+    ausgaben = kette_modul._fuehre_geometrie(knoten=knoten, eingaben=[], out_dir=tmp_path)
+
+    assert ausgaben["raeume"] is not None, "die Räume kommen gar nicht erst an"
+    assert ausgaben["raeume"]["status"] == "ok"
+    assert ausgaben["raeume"]["n_mit_standpunkt"] == 1, (
+        "gelesen, aber ohne Standpunkt — die halbe Verdrahtung")
+    standpunkt = ausgaben["raeume"]["raeume"][0]["kamera"]["standpunkte"][0]
+    assert standpunkt["auge"] is not None
