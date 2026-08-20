@@ -1197,3 +1197,82 @@ def test_der_maskenbefund_haengt_an_jeder_kamera(tmp_path):
 
     assert gesehen["kameras"], "keine Kamera ausgewertet"
     assert all("maskenbefund" in k for k in gesehen["kameras"])
+
+
+# ---------------------------------------------------------------------------------------
+# Seed-Auswahl — 22.08.2026
+# ---------------------------------------------------------------------------------------
+#
+# Gemessen (docs/POLARITAET_UND_STAERKE_2026-08-22.md): bei identischen Einstellungen
+# liefert derselbe Aufbau einmal rho -0.91 und einmal -0.27. Streuung 0.2269 — groesser
+# als jeder Parametereffekt (0.10-0.14). Drei von neun Laeufen erreichten die Schwelle.
+# Darum die Auswahl; und darum traegt sie ALLE Seeds, nicht nur den Sieger.
+
+def _attrappen(werte, tmp_path):
+    """(rendere_seed, messe) — `werte` ordnet je Seed einen `gerichtet`-Wert zu."""
+    def rendere_seed(seed, ziel_png):
+        Path(ziel_png).write_text(f"bild seed {seed}")
+        return {"status": "ok", "bild_png": ziel_png, "seed": seed}
+    def messe(png):
+        seed = int(Path(png).read_text().rsplit(" ", 1)[1])
+        g = werte[seed]
+        return {"score": 0.5, "rho_maske": None if g is None else {"gerichtet": g},
+                "paarurteil": {"bestanden": g is not None and g >= 0.8}}
+    return rendere_seed, messe
+
+
+def test_ein_seed_waehlt_nicht_aus(tmp_path):
+    r, m = _attrappen({0: 0.9}, tmp_path)
+    erg, urteil, auswahl = abholer._bester_seed([0], tmp_path, "n", r, m, maske_da=True)
+    assert auswahl["ausgewaehlt"] is False
+    assert auswahl["gewaehlt"] == 0
+    assert "Nur ein Seed" in auswahl["grund"]
+
+
+def test_ohne_maske_wird_nicht_ausgewaehlt_und_es_steht_da_warum(tmp_path):
+    """Der Score ueber das ganze Bild taugt als Kriterium NICHT — auf-20260821-26."""
+    r, m = _attrappen({1: 0.1, 2: 0.9}, tmp_path)
+    erg, urteil, auswahl = abholer._bester_seed([1, 2], tmp_path, "n", r, m, maske_da=False)
+    assert auswahl["ausgewaehlt"] is False
+    assert auswahl["gewaehlt"] == 1, "ohne Kriterium wird der erste genommen, nicht geraten"
+    assert "KEINE Bauwerksmaske" in auswahl["grund"]
+    assert "UNGEMESSEN" in auswahl["grund"]
+
+
+def test_bester_seed_gewinnt_und_alle_stehen_im_bericht(tmp_path):
+    r, m = _attrappen({1: -0.30, 2: 0.91, 3: 0.55}, tmp_path)
+    erg, urteil, auswahl = abholer._bester_seed([1, 2, 3], tmp_path, "n", r, m, maske_da=True)
+    assert auswahl["gewaehlt"] == 2
+    assert auswahl["ausgewaehlt"] is True
+    assert [k["seed"] for k in auswahl["kandidaten"]] == [1, 2, 3]
+    assert [k["gerichtet"] for k in auswahl["kandidaten"]] == [-0.30, 0.91, 0.55]
+    assert "0.9100" in auswahl["grund"] and "-0.3000" in auswahl["grund"]
+
+
+def test_der_sieger_liegt_unter_dem_erwarteten_namen(tmp_path):
+    """Was danach kommt, sucht `<kuerzel>.png` — nicht `<kuerzel>_seed2.png`."""
+    r, m = _attrappen({1: 0.2, 2: 0.8}, tmp_path)
+    erg, _, _ = abholer._bester_seed([1, 2], tmp_path, "eingang", r, m, maske_da=True)
+    assert erg["bild_png"].endswith("eingang.png")
+    assert Path(erg["bild_png"]).read_text() == "bild seed 2"
+
+
+def test_alle_ungemessen_heisst_ungemessen_und_nicht_bestanden(tmp_path):
+    r, m = _attrappen({1: None, 2: None}, tmp_path)
+    erg, urteil, auswahl = abholer._bester_seed([1, 2], tmp_path, "n", r, m, maske_da=True)
+    assert auswahl["ausgewaehlt"] is False
+    assert "UNGEMESSEN" in auswahl["grund"]
+    assert auswahl["gewaehlt"] == 1
+
+
+def test_der_auswahlbericht_liegt_neben_den_bildern(tmp_path):
+    """Der fremde Vertrag (render-result/v2) fuehrt nur images/qa/timings — der Bericht
+    darf trotzdem nicht verschwinden: wer nur den Sieger sieht, haelt die Kette fuer
+    besser, als sie ist."""
+    r, m = _attrappen({1: 0.2, 2: 0.8, 3: 0.5}, tmp_path)
+    abholer._bester_seed([1, 2, 3], tmp_path, "eingang", r, m, maske_da=True)
+    p = tmp_path / "eingang_seedauswahl.json"
+    assert p.exists(), "kein Auswahlbericht neben den Bildern"
+    d = json.loads(p.read_text())
+    assert d["gewaehlt"] == 2
+    assert [k["seed"] for k in d["kandidaten"]] == [1, 2, 3], "ALLE Seeds, nicht nur der Sieger"

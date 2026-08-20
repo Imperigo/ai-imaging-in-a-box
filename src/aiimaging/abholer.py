@@ -391,7 +391,7 @@ AUTO_RICHTUNGEN = ("sSE",)
 def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 up_axis: str = ANGENOMMENE_HOCHACHSE, schwelle: float | None = None,
                 stillstand_frist_s: float | None = None, stil: str | None = None,
-                nullprobe: bool = True,
+                nullprobe: bool = True, seeds=(0,),
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
@@ -499,32 +499,39 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     f"{bericht.get('depth_png_fehler')}"
                 )
 
-            ergebnis = rendern(
-                render.RenderAuftrag(
-                    depth_png=tiefe,
-                    prompt=szene.get("prompt", ""),
-                    controlnet_staerke=szene.get("controlnet_staerke", 0.8),
-                    backbone=szene.get("backbone") or render.VORGABE_BACKBONE,
-                    beauty_png=bericht.get("beauty_png"),
-                    ausgabe_png=str(aus / f"{kuerzel}.png"),
-                ),
-                modell=_render_modell,
-            )
-            if ergebnis.get("status") != "ok":
-                raise AbholerError(
-                    f"Kamera {kuerzel!r}: Render {ergebnis.get('status')} — "
-                    f"{ergebnis.get('error') or ergebnis.get('maengel')}"
-                )
-            bilder.append(ergebnis["bild_png"])
-
             # Die Soll-Karte kommt aus der EXR, nicht aus dem PNG: nur sie trägt die
             # Silhouette exakt. Das PNG war die Eingabe des Modells, die EXR ist der
             # Massstab.
             soll, breite, hoch = soll_lesen(bericht)
             maskenbefund = _maske_bauen(bericht)
-            urteil = messen(ergebnis["bild_png"], soll, breite=breite, hoehe=hoch,
-                            modell=_tiefen_modell, schwelle=grenze,
-                            maske=maskenbefund.get("maske"))
+
+            def _rendere_seed(seed, ziel_png):
+                erg = rendern(
+                    render.RenderAuftrag(
+                        depth_png=tiefe,
+                        prompt=szene.get("prompt", ""),
+                        controlnet_staerke=szene.get("controlnet_staerke", 0.8),
+                        backbone=szene.get("backbone") or render.VORGABE_BACKBONE,
+                        beauty_png=bericht.get("beauty_png"),
+                        seed=seed,
+                        ausgabe_png=ziel_png,
+                    ),
+                    modell=_render_modell,
+                )
+                if erg.get("status") != "ok":
+                    raise AbholerError(
+                        f"Kamera {kuerzel!r}, seed {seed}: Render {erg.get('status')} — "
+                        f"{erg.get('error') or erg.get('maengel')}"
+                    )
+                return erg
+
+            ergebnis, urteil, auswahl = _bester_seed(
+                seeds, aus, kuerzel, _rendere_seed,
+                lambda png: messen(png, soll, breite=breite, hoehe=hoch,
+                                   modell=_tiefen_modell, schwelle=grenze,
+                                   maske=maskenbefund.get("maske")),
+                maske_da=maskenbefund.get("maske") is not None)
+            bilder.append(ergebnis["bild_png"])
             anker = None
             maskenanker = None
             if nullprobe:
@@ -533,6 +540,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     messen=messen, grenze=grenze, tiefen_modell=_tiefen_modell,
                     maske=maskenbefund.get("maske"))
             urteil = dict(urteil, kamera=kuerzel, nullanker=anker,
+                          seedauswahl=auswahl,
                           maskenbefund=maskenbefund, maskenanker=maskenanker,
                           einordnung=geometrie_qa.einordnung(
                               urteil.get("score"), anker, schwelle=grenze),
@@ -649,6 +657,112 @@ def _belichtung_urteil(bild, stil, rahmen, pruefen) -> dict | None:
 #: Belichtungsprüfung hat keinen natürlichen Skalar, und einen zu erfinden wäre genau die
 #: Bequemlichkeit, gegen die dieses Projekt gebaut ist.
 VERFAHREN_BELICHTUNG = "belichtungsrahmen"
+
+
+def _bester_seed(seeds, aus, kuerzel, rendere_seed, messe, *, maske_da: bool):
+    """Mehrere Seeds rendern und den besten behalten — oder begründet nur einen.
+
+    **Warum es das gibt (gemessen am 22.08.2026, `docs/POLARITAET_UND_STAERKE_2026-08-22.md`):**
+    Bei identischen Einstellungen liefert derselbe Aufbau einmal ρ = −0.91 und einmal
+    −0.27. Über neun Läufe: Mittel −0.66, Streuung **0.2269** — und damit **grösser als
+    jeder Parametereffekt**, den die Kette noch hergibt (Stärke 0.65 ↔ 1.00: 0.10 bis
+    0.14). Drei von neun Läufen erreichten die Schwelle, sechs nicht.
+
+    Solange das so ist, ist die Auswahl über mehrere Seeds der billigste Qualitätssprung
+    der ganzen Kette: Ein Bild kostet rund 1,3 Sekunden, die Messung je Bild einen
+    Tiefenschätzer-Durchgang. Aus dem Mittel wird der beste von dreien.
+
+    **Ausgewählt wird nach ``gerichtet``** (Polarität × ρ über der Bauwerksmaske, +1
+    perfekt) — **nicht** nach ``score``. Der Score über das ganze Bild belohnt auf einer
+    Bodenszene die Bodenfläche und hat am 21.08. ein Bild OHNE Bauwerk höher bewertet als
+    das perfekte (`auf-20260821-26`). Wer danach auswählte, wählte das Falsche.
+
+    **Ohne Maske wird NICHT ausgewählt.** Dann gibt es kein Mass, dem hier zu trauen wäre,
+    und die Funktion rendert genau einen Seed und sagt, warum. Eine Auswahl nach einem
+    Mass, das die Abwesenheit belohnt, wäre schlechter als keine.
+
+    Returns:
+        ``(ergebnis, urteil, auswahl)``. ``auswahl`` trägt **alle** Seeds mit ihren
+        Werten, nicht nur den Sieger: Wer nur den besten sähe, hielte die Kette für
+        besser, als sie ist.
+    """
+    import shutil
+
+    seeds = list(seeds) if seeds else [0]
+    ziel_png = str(aus / f"{kuerzel}.png")
+
+    if len(seeds) == 1 or not maske_da:
+        erg = rendere_seed(seeds[0], ziel_png)
+        urteil = messe(erg["bild_png"])
+        grund = ("Nur ein Seed angefordert." if len(seeds) == 1 else
+                 f"{len(seeds)} Seeds angefordert, aber es gibt KEINE Bauwerksmaske — "
+                 f"und ohne sie kein Mass, nach dem sich auswaehlen liesse. Der Score "
+                 f"ueber das ganze Bild taugt dafuer nicht (auf-20260821-26: ein Bild "
+                 f"ohne Bauwerk erreichte dort 0.9848 gegen 0.9703 fuer das perfekte). "
+                 f"Gerendert wurde seed {seeds[0]}; die uebrigen sind UNGEMESSEN.")
+        return erg, urteil, {"gewaehlt": seeds[0], "kandidaten": [seeds[0]],
+                             "ausgewaehlt": False, "grund": grund}
+
+    kandidaten = []
+    for seed in seeds:
+        png = str(aus / f"{kuerzel}_seed{seed}.png")
+        erg = rendere_seed(seed, png)
+        urteil = messe(erg["bild_png"])
+        # Die Form ist AM CODE ABGELESEN, nicht geraten: `qa_gegen_soll` reicht
+        # `_maskenweg` mit `**` durch, also stehen `rho_maske`, `kante` und `paarurteil`
+        # ganz oben — und `gerichtet` liegt IN `rho_maske` (tiefenschaetzer.py:1128,
+        # geometrie_qa.rho_ueber_maske). Ein erster Versuch griff auf `urteil["maske"]`
+        # zu; das gibt es nicht, und die Auswahl waere still auf «ungemessen» gefallen.
+        rm = urteil.get("rho_maske")
+        gerichtet = rm.get("gerichtet") if isinstance(rm, dict) else None
+        paar = urteil.get("paarurteil")
+        kandidaten.append({"seed": seed, "gerichtet": gerichtet, "paarurteil": paar,
+                           "bild": erg["bild_png"], "_erg": erg, "_urteil": urteil})
+
+    messbar = [k for k in kandidaten if k["gerichtet"] is not None]
+    if not messbar:
+        # Alle ungemessen: dann ist der erste so gut wie jeder andere, und das gehoert
+        # gesagt statt kaschiert.
+        sieger = kandidaten[0]
+        grund = ("Keiner der Seeds lieferte ein Maskenurteil — ausgewaehlt wurde nicht, "
+                 "sondern der erste genommen. UNGEMESSEN, nicht bestanden.")
+        ausgewaehlt = False
+    else:
+        sieger = max(messbar, key=lambda k: k["gerichtet"])
+        werte = [k["gerichtet"] for k in messbar]
+        grund = (f"Bester von {len(messbar)} gemessenen Seeds nach 'gerichtet' "
+                 f"(Polaritaet x rho ueber der Maske, +1 perfekt). "
+                 f"Spanne {min(werte):+.4f} bis {max(werte):+.4f}.")
+        ausgewaehlt = True
+
+    shutil.copyfile(sieger["bild"], ziel_png)
+    erg = dict(sieger["_erg"], bild_png=ziel_png)
+    auswahl = {"gewaehlt": sieger["seed"], "ausgewaehlt": ausgewaehlt, "grund": grund,
+               "kandidaten": [{"seed": k["seed"], "gerichtet": k["gerichtet"],
+                               "paarurteil": k.get("paarurteil")} for k in kandidaten]}
+    _auswahl_ablegen(aus, kuerzel, auswahl)
+    return erg, sieger["_urteil"], auswahl
+
+
+def _auswahl_ablegen(aus, kuerzel, auswahl) -> None:
+    """Den Auswahlbericht **neben die Bilder** schreiben — der Vertrag trägt ihn nicht.
+
+    ``kosmovis.render-result/v2`` führt genau ``images``, ``qa`` und ``timings``. Der
+    Auswahlbericht passt dort nicht hinein, und den fremden Vertrag zu erweitern ist nicht
+    meine Entscheidung. Verloren gehen darf er trotzdem nicht: **Wer nur den Sieger sieht,
+    hält die Kette für besser, als sie ist** — genau die Verwechslung, gegen die dieses
+    Projekt seit dem Rauschanker antritt.
+
+    Also eine Datei daneben. Sie verlässt das Repo nie und trägt nur Zahlen.
+    """
+    import json as _json
+    try:
+        (Path(aus) / f"{kuerzel}_seedauswahl.json").write_text(
+            _json.dumps(auswahl, ensure_ascii=False, indent=1), encoding="utf-8")
+    except OSError:
+        # Ein fehlgeschlagener Bericht darf den Lauf nicht kosten — das Bild ist da, die
+        # Auswahl ist getroffen, und `auswahl` geht ohnehin auch im Urteil mit.
+        pass
 
 
 def _maske_bauen(bericht: dict) -> dict:

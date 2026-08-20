@@ -97,6 +97,10 @@ def main() -> int:
     ap.add_argument("--hoechstens", type=int, default=None,
                     help="Hoechstens so viele Auftraege in diesem Durchgang.")
     ap.add_argument("--stil", default=None, help="Stil fuer die Belichtungspruefung.")
+    ap.add_argument("--seeds", default="0",
+                    help="Kommagetrennte Seeds. Mehr als einer heisst: alle rendern und "
+                         "den besten nach 'gerichtet' behalten (Polaritaet x rho ueber "
+                         "der Bauwerksmaske). Ohne Maske wird NICHT ausgewaehlt.")
     ap.add_argument("--ohne-nullprobe", action="store_true",
                     help="Die Kontrollanker weglassen. Nicht empfohlen — siehe auf-21.")
     ap.add_argument("--stillstand-frist-s", type=float, default=fortschritt.FRIST_S,
@@ -127,7 +131,9 @@ def main() -> int:
         print(f"Fremde Freigabe gilt: {'ja' if a.fremde_freigabe else 'NEIN — nichts wird gerechnet'}")
         return 0
 
-    verarbeite = abholer.verarbeiter(stil=a.stil, nullprobe=not a.ohne_nullprobe)
+    seeds = tuple(int(x) for x in a.seeds.split(",") if x.strip())
+    verarbeite = abholer.verarbeiter(stil=a.stil, nullprobe=not a.ohne_nullprobe,
+                                     seeds=seeds or (0,))
 
     def wache_bauen(auftrag):
         """Eine Wache auf den Ausgabeordner DIESES Auftrags.
