@@ -86,12 +86,26 @@ eine, die nach Vollständigkeit aussieht.
 | [`docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md`](docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md) | was Binärpakete mitbringen und ihre Wheel-Angabe verschweigt |
 | [`docs/SCHWELLENSTUDIE_2026-08-18.md`](docs/SCHWELLENSTUDIE_2026-08-18.md) | Kalibrierung der Geometrie-Schwelle |
 | [`docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md`](docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md) | der MCP-Vertrag und was er für die Bauform bedeutet |
+| **[`docs/EINBAU_CLOUDWORKER_2026-08-22.md`](docs/EINBAU_CLOUDWORKER_2026-08-22.md)** | **FÜR DEN CLOUD-WORKER:** was hier fertig ist und die KosmoOrbit-Seite **nicht erreicht** — mit dem, was dort dafür zu bauen wäre |
+| [`docs/UEBERGABE_VIS_2026-08-19.md`](docs/UEBERGABE_VIS_2026-08-19.md) | die ausführliche Fassung: 14 Fragen an die Vis-Oberfläche, mit Begründung |
 | [`docs/LEXIKON.md`](docs/LEXIKON.md) | Fachbegriffe für Leser:innen mit Architekturhintergrund |
 | [`docs/sitzungen/`](docs/sitzungen/) | Sitzungsprotokolle: Entscheidungen **mit Begründung** |
 | [`NOTICE`](NOTICE) | fremde Komponenten samt Lizenz und Prozessgrenze |
 
 Das [`LEXIKON`](docs/LEXIKON.md) ist Anhang der Arbeit, kein Nebenprodukt: Es erklärt jeden
 nicht-architektonischen Fachbegriff für Leser:innen ohne Informatikhintergrund.
+
+### Wer an KosmoOrbit baut, fängt hier an
+
+[`docs/EINBAU_CLOUDWORKER_2026-08-22.md`](docs/EINBAU_CLOUDWORKER_2026-08-22.md) listet die
+Stellen, an denen **diese Seite mehr weiss, als sie der Vis-Oberfläche sagen kann.** Die
+Verbindung zwischen beiden ist ausschliesslich die Brücke über Dateien in
+`/tmp/kosmo-jobs/` — kein gemeinsamer Code. Was dort kein Feld im Vertrag hat, kommt drüben
+nicht an, egal wie fertig es hier ist.
+
+Der wichtigste Punkt daraus: **Die Geometrie-Zahlen, die der Vertrag heute trägt, haben wir
+selbst als unbrauchbar gemessen** — `geom_iou` belohnt ein Bild ohne Bauwerk, und der Score
+ist nicht monoton im Fehler. Was stattdessen trägt, ist gebaut und hat drüben kein Feld.
 
 ---
 
