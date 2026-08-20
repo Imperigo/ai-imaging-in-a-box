@@ -989,6 +989,41 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
       Befund und keine Regel. Ob die beiden Schreibweisen zusammengelegt gehören, ist
       offen.
 
+- [ ] **DIE FRAGE, DIE ÜBER DAS PAARURTEIL ENTSCHEIDET (`auf-30` unterwegs).** Alle drei
+      Bilder aus `auf-28` haben eine Kante von 0.004–0.006 — auf dem Niveau der
+      **Abwesenheit**, nicht der Anwesenheit (perfektes Bild: 0.1615). Der Paartest würde
+      das beste davon abweisen, obwohl sein ρ mit −0.9059 über der Schwelle liegt.
+
+      Zwei Möglichkeiten, und sie führen zu entgegengesetztem Handeln: **(a)** Erzeugte
+      Bilder haben an der Silhouette wirklich weiche Ränder — dann hat der Paartest recht.
+      **(b)** Der Schätzer sieht die Kante nicht, obwohl sie da ist — dann misst die Kante
+      Randschärfe statt Anwesenheit, und 0.05 ist für erzeugte Bilder falsch angesetzt.
+
+      Getrennt wird das, indem das **perfekte** Blender-Bild künstlich weichgezeichnet
+      wird (Radius 0/1/2/4/8): Die Geometrie bleibt exakt dieselbe, nur der Rand ändert
+      sich. Fällt die Kante schon bei kleinem Radius auf 0.004–0.006, während ρ hoch
+      bleibt, ist (b) belegt.
+- [ ] **Verdacht gegen die frontale INNENANSICHT — ungemessen, und deshalb nicht
+      abgeschaltet.** `auf-29` fand: Für ρ über der Maske muss der Blick **mehr als eine
+      Fläche** zeigen, sonst misst man den Schätzer statt der Geometrie (frontal vor einer
+      Langseite: −0.8305, +0.6509, +0.8159 — mit Vorzeichenwechsel).
+
+      Eine frontale Innenaufnahme zeigt genau das: eine Wand senkrecht zur Blickachse.
+      **Aber innen ist die Lage nicht dieselbe** — Boden, Decke und die anschneidenden
+      Seitenwände liegen schräg im Bild und tragen Tiefe. Die Ansicht wird darum weiter
+      geliefert; sie wegzulassen wäre ein Schluss von einer Messung auf einen Fall, den
+      sie nicht enthält. Die Messung ist billig: dieselbe Szene, beide Blickarten, ρ und
+      Kante vergleichen.
+- [x] **`auf-29`: Die Kameraneigung stört den Schätzer NICHT.** Eckansicht, drei
+      Ausrichtungen, alle innerhalb von 0.019 — die waagrechten sind sogar marginal
+      schlechter. **Der Umbau von `kameras.py` bleibt richtig, weil die Fachnorm ihn
+      verlangt, ist aber kein Beitrag zur Bildqualität.** Genau dafür war die Messung da:
+      Ich wollte es wissen, *bevor* ich baue.
+- [x] **`auf-28`: Nicht der Backbone war es, die Schablone war es.** Die Führung kommt an
+      (z-image-turbo mit gegen ohne: Abstand 0.650). Ob qwen oder z-image-turbo besser
+      ist, bleibt **unentschieden** — 0.165 Abstand entspricht etwa einer
+      Standardabweichung der Seed-Streuung, und drei Bilder klären das nicht.
+
 ## DAS TOR — offen, und der Weg zu, gefunden (auf-25 bis auf-27)
 
 - [x] **`auf-27`: Der Prüfstein fällt, und die Antwort ist trotzdem da.** Verlangt war:

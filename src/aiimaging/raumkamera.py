@@ -12,6 +12,32 @@ Wand.
 Seit demselben Tag lassen sich Räume aus IFC lesen (:mod:`aiimaging.runners.ifc_raeume_runner`).
 Dieses Modul ist der Schritt danach: aus einem Raum Standpunkte rechnen.
 
+Ein Befund von aussen, der die frontale Ansicht trifft
+------------------------------------------------------
+`auf-20260822-29` hat nebenbei etwas gemessen, das hier zählt und beim Bauen dieses
+Moduls noch nicht bekannt war:
+
+> **Für ρ über der Bauwerksmaske muss die Blickrichtung MEHR ALS EINE Fläche zeigen —
+> sonst misst man den Schätzer statt der Geometrie.**
+
+Gemessen an einer Aussenaufnahme: Frontal vor der Langseite lieferte dieselbe Szene
+−0.8305, +0.6509 und +0.8159 — **mit Vorzeichenwechsel**. Der Grund ist geometrisch: Von
+vorn zeigt ein Bauwerk *eine* flache Wand, fast parallel zur Bildebene. Innerhalb der
+Maske gibt es dann keine Tiefenstaffelung, die sich ordnen liesse, und der Tiefenschätzer
+trägt seine eigene Annahme ein.
+
+**Was das für :func:`frontaler_standpunkt` heisst.** Eine frontale Innenaufnahme zeigt
+genau das: eine Wand, senkrecht zur Blickachse. Die Vermutung liegt nahe, dass unsere
+Geometrie-QA sie nicht sinnvoll bewerten kann — **aber sie ist ungemessen.** Innen ist die
+Lage nicht dieselbe wie aussen: Boden, Decke und die anschneidenden Seitenwände liegen
+schräg im Bild und tragen Tiefe, auch wenn die Stirnwand es nicht tut.
+
+Die frontale Ansicht wird darum **weiter gerechnet und weiter geliefert**. Sie
+wegzulassen, weil ein Aussenbefund sie verdächtig macht, wäre ein Schluss von einer
+Messung auf einen Fall, den sie nicht enthält. Der Verdacht steht als eigener Punkt in
+``docs/PLAN.md``, und die Messung dazu ist billig: dieselbe Szene, beide Blickarten, ρ und
+Kante vergleichen.
+
 Was hier NICHT drin ist
 -----------------------
 Der **Verdeckungstest**. Ob zwischen Kamera und Blickziel ein Möbel, eine Stütze oder

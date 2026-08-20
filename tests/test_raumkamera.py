@@ -339,3 +339,22 @@ def test_ohne_raeume_heisst_es_NICHT_GEMESSEN():
 def test_eine_erfundene_blickart_wird_abgewiesen():
     with pytest.raises(rk.RaumkameraError, match="art ist"):
         rk.waehle(_raumliste(), art="von_oben")
+
+
+def test_der_verdacht_gegen_die_frontale_ansicht_steht_im_modul_und_ist_UNGEMESSEN():
+    """`auf-20260822-29`: Für ρ über der Maske muss der Blick mehr als eine Fläche zeigen.
+
+    Aussen gemessen — frontal vor der Langseite lieferte dieselbe Szene −0.8305, +0.6509
+    und +0.8159, mit Vorzeichenwechsel. Innen ist die Lage aber **nicht dieselbe**: Boden,
+    Decke und die anschneidenden Seitenwände tragen Tiefe, auch wenn die Stirnwand es
+    nicht tut.
+
+    Die frontale Ansicht wird darum weiter geliefert. Dieser Test hält fest, dass der
+    Verdacht **benannt** ist — und dass er als ungemessen dasteht und nicht als Befund.
+    """
+    fliesstext = " ".join(rk.__doc__.split())
+
+    assert "MEHR ALS EINE Fläche" in fliesstext
+    assert "ungemessen" in fliesstext
+    assert rk.frontaler_standpunkt(RECHTECKIG)["auge"] is not None, (
+        "der Verdacht darf die Ansicht nicht stillschweigend abschalten")

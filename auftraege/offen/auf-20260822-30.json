@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260822-30",
+  "art": "qa",
+  "beschreibung": "IST DIE FEHLENDE RANDKANTE EIN MANGEL DES BILDES ODER EIN ARTEFAKT DES SCHAETZERS? Du hast die Frage selbst gestellt, und sie entscheidet ueber den Paartest.\n\nDER STAND. auf-28 hat gemessen: z-image-turbo mit Fuehrung erreicht rho -0.9059 — das ist besser als die Schwelle -0.80, die Tiefenstaffelung stimmt also. Aber die Kante liegt bei +0.0058, und alle drei Bilder liegen zwischen 0.004 und 0.006. Das perfekte Blender-Bild hat +0.1615. Auf dem Niveau der ABWESENHEIT, nicht der Anwesenheit.\n\nDer Paartest wuerde B damit abweisen, trotz -0.9059. Und ich weiss nicht, ob er recht haette.\n\nZWEI MOEGLICHKEITEN, und sie fuehren zu entgegengesetztem Handeln:\n\n  (a) DAS BILD IST WIRKLICH SCHLECHT an der Silhouettengrenze. Ein erzeugtes Bild hat dort weiche Uebergaenge, wo Blender eine harte Kante hat — Dunst, Unschaerfe, ein verwaschener Rand. Dann ist die Kante ein echter Mangel, der Paartest hat recht, und wir muessen an den Bildern arbeiten.\n\n  (b) DER SCHAETZER SIEHT DIE KANTE NICHT, obwohl sie da ist. Monokulare Schaetzer glaetten Tiefensprunge; an einem gerenderten Bild mit perfekter Kante gelingt es ihnen, an einem erzeugten mit weicherem Rand vielleicht nicht. Dann misst die Kante am erzeugten Bild etwas anderes als am gerenderten, und die Schwelle 0.05 ist fuer erzeugte Bilder schlicht falsch angesetzt.\n\nWIE SICH DAS TRENNEN LAESST, und das ist der Kern des Auftrags: Nimm das perfekte Blender-Bild — das mit Kante +0.1615 — und WEICHE ES KUENSTLICH AUF. Ein Gauss-Weichzeichner mit wachsendem Radius, etwa 0, 1, 2, 4, 8 Bildpunkte. Miss je Stufe rho ueber der Maske UND die Kante.\n\nDie Geometrie bleibt dabei exakt dieselbe. Was sich aendert, ist allein die Schaerfe des Randes.\n\nDER PRUEFSTEIN: Faellt die Kante schon bei kleinem Radius auf das Niveau der erzeugten Bilder (0.004-0.006), waehrend rho hoch bleibt, dann ist (b) belegt — die Kante misst Randschaerfe und nicht Anwesenheit, und die Schwelle taugt fuer erzeugte Bilder nicht. Bleibt die Kante bis zu grossen Radien hoch, ist (a) wahrscheinlicher, und die erzeugten Bilder haben an der Silhouette wirklich ein Problem.\n\nWENN DU ZEIT HAST, eine zweite Zeile: Miss dasselbe an einem der erzeugten Bilder aus auf-28, nur mit einem SCHAERFER gemachten Rand — oder sag mir, dass das nicht sinnvoll geht. Ich weiss nicht, ob Nachschaerfen hier etwas beweist; frag dich das auch und sag deine Einschaetzung.\n\nNICHT TUN: kein Bildmodell, keine neuen Renderlaeufe. Alle Bilder liegen vor. Nichts an unserem Code aendern.\n\nREGEL 3: keine absoluten Pfade mit Benutzernamen, nur Zahlen zurueck.",
+  "erstellt": "2026-08-22T18:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "Nichts neu rendern. Bilder, Soll-Karte und Maske aus auf-23, auf-25 und auf-28."
+  },
+  "params": {
+    "reihe": "perfektes Blender-Bild, Gauss-Weichzeichner mit Radius 0, 1, 2, 4, 8 Bildpunkten",
+    "gemessen_wird": "rho ueber der Maske UND Tiefenkante je Stufe",
+    "anker": {
+      "perfekt_rho": -0.9874,
+      "perfekt_kante": 0.1615,
+      "erzeugte_kante_bereich": [
+        0.004,
+        0.006
+      ],
+      "rauschen_rho": -0.5207
+    },
+    "schaetzer": "depth-anything-v2-small"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "hinweis": "Kein Bildmodell, keine Renderlaeufe. Reine Auswertung."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Je Radius rho und Kante. Ein Satz: Misst die Kante die Anwesenheit oder die Randschaerfe?"
+  }
+}
