@@ -1,5 +1,6 @@
 {
   "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
   "auftrag_id": "auf-20260818-04",
   "art": "multipass",
   "beschreibung": "Vierter Anlauf. Die Selbstdiagnose aus 03 hat geliefert, wofuer sie gebaut war: directory, file_name und file_output_items existieren wie angenommen - der Bruch lag woanders. Blender 5.2 laesst am File-Output-Knoten NUR noch OPEN_EXR_MULTILAYER zu, das einfache OPEN_EXR ist aus der Auswahl verschwunden. Das Format wird jetzt nicht mehr geraten, sondern am Knoten selbst erfragt. Zwei Vorkehrungen fuer die Folge: Der Report meldet nun die tatsaechlichen Kanalnamen der geschriebenen EXR mit, und der Leser findet den Tiefenkanal auch hinter einem Ebenen-Praefix (tiefe_.V statt V) - Multilayer benennt anders, und das haette sonst den naechsten Rundlauf gekostet. Der 4.2-Pfad ist nachgeprueft: Format OPEN_EXR, Kanal V, vier Paesse, 999 Tests.",

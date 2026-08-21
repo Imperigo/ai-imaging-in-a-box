@@ -50,6 +50,22 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+#: **Es gibt zwei Worker, und sie können nicht dasselbe.** Ein Auftrag, der nicht sagt,
+#: an wen er geht, landet bei niemandem — oder schlimmer, beim Falschen.
+#:
+#: * :data:`WORKER_LOCAL` — die HomeStation. Hat GPU, Blender, `.venv-ifc`, unser Repo.
+#:   Misst, rendert, prüft. Liest ``auftraege/offen/`` und legt Ergebnisse daneben.
+#: * :data:`WORKER_CLOUD` — der Worker an KosmoOrbit. Hat **unser Repo nicht**; er baut
+#:   an der Vis-Oberfläche. Was er tun soll, betrifft **ihren** Vertrag und ihre
+#:   Oberfläche, nie unseren Code.
+#:
+#: Die Trennung ist nicht Ordnungsliebe: Ein Messauftrag an den Cloud-Worker wäre
+#: unerfüllbar (keine GPU, keine Geometrie), und ein Vertragsauftrag an die HomeStation
+#: liefe ins Leere (sie kann ihr Schema nicht ändern).
+WORKER_LOCAL = "local"
+WORKER_CLOUD = "cloud"
+WORKER = (WORKER_LOCAL, WORKER_CLOUD)
+
 SCHEMA_AUFTRAG = "aiimaging.homeworker-auftrag/v1"
 SCHEMA_ERGEBNIS = "aiimaging.homeworker-ergebnis/v1"
 
@@ -98,6 +114,7 @@ def _pruefe_id(auftrag_id) -> str:
 
 
 def baue_auftrag(*, auftrag_id: str, art: str, beschreibung: str,
+                 worker: str = WORKER_LOCAL,
                  synthetisch: bool = True, geometrie_pfad: str | None = None,
                  params: dict | None = None,
                  leistungsgrenze_w: int = LEISTUNGSGRENZE_W,
@@ -106,6 +123,11 @@ def baue_auftrag(*, auftrag_id: str, art: str, beschreibung: str,
 
     Args:
         art: ``multipass`` (nur Blender), ``render`` (mit Bildmodell), ``qa`` (nur Messen).
+        worker: :data:`WORKER_LOCAL` oder :data:`WORKER_CLOUD`. Vorgabe ist die
+            HomeStation, weil sie bis zum 22.08.2026 die einzige war — aber die Angabe
+            gehört ausdrücklich in jeden neuen Auftrag. Ein Messauftrag an den
+            Cloud-Worker wäre unerfüllbar, ein Vertragsauftrag an die HomeStation liefe
+            ins Leere.
         synthetisch: ``True`` = die Testgeometrie wird vor Ort erzeugt, es reist nichts.
             ``False`` verlangt ``geometrie_pfad`` auf der HomeStation.
         geometrie_pfad: Pfad **auf der HomeStation**, nie eine Datei im Repo (Regel 3).
@@ -135,6 +157,7 @@ def baue_auftrag(*, auftrag_id: str, art: str, beschreibung: str,
 
     return {
         "schema": SCHEMA_AUFTRAG,
+        "worker": worker,
         "auftrag_id": auftrag_id,
         "art": art,
         "beschreibung": beschreibung.strip(),
@@ -176,6 +199,16 @@ def pruefe_auftrag(satz: dict) -> list[str]:
             maengel.append(f"Pflichtfeld {feld!r} fehlt")
     if satz.get("art") and satz["art"] not in ARTEN:
         maengel.append(f"Unbekannte Art {satz['art']!r}")
+    # `worker` ist seit dem 22.08.2026 Pflicht. Ohne die Angabe weiss niemand, wer den
+    # Auftrag ausführen soll — und die beiden können nicht dasselbe.
+    if "worker" not in satz:
+        maengel.append(
+            f"Kein 'worker'. Pflicht seit 22.08.2026: {WORKER_LOCAL!r} (HomeStation, hat "
+            f"GPU und Repo) oder {WORKER_CLOUD!r} (KosmoOrbit, hat unser Repo NICHT). Ein "
+            f"Auftrag ohne Empfänger landet bei niemandem.")
+    elif satz["worker"] not in WORKER:
+        maengel.append(
+            f"Unbekannter worker {satz['worker']!r}; bekannt: {', '.join(WORKER)}")
     geom = satz.get("geometrie") or {}
     if isinstance(geom, dict) and not geom.get("synthetisch") and not geom.get("pfad"):
         maengel.append("Geometriequelle fehlt: weder synthetisch noch Pfad")

@@ -1,5 +1,6 @@
 {
   "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
   "auftrag_id": "auf-20260818-05",
   "art": "multipass",
   "beschreibung": "Fuenfter Anlauf, nach dem Weg-B-Vorschlag aus deiner Diagnose zu auf-04. Dein Befund war richtig und hat einen weiteren Fehlversuch gespart: bl_rna...enum_items ist statisch und nennt alle 16 Formate, auch die nicht zuweisbaren - am Knoten zu fragen war genauso unzuverlaessig wie zu raten. Jetzt wird OPEN_EXR versucht und ein TypeError hingenommen (dein gemessener Typ, nicht ValueError); auf 5.2 bleibt der Knoten damit bei MULTILAYER. Der Leser findet den Tiefenkanal seit auf-04 auch hinter einem Ebenen-Praefix. Der 4.2-Pfad ist hier nachgeprueft: OPEN_EXR, Kanal V, vier Paesse, 999 Tests. WENN ES DURCHLAEUFT, waere mir zweierlei wichtig: die gemeldeten depth_exr_kanaele (heisst der Kanal auf 5.2 tiefe_.V oder anders?) und ob aiimaging.bildlesen die EXR ohne Blender-Rueckfall liest. WENN ES BRICHT, brauche ich keinen weiteren Rundlauf von dir zu erbitten - aendere den Runner gern direkt, du hast das Geraet und hast bewiesen, dass du die Ursache findest. Bitte nur den 4.2-Pfad nicht brechen (die Weiche prueft Faehigkeiten, nicht Versionsnummern) und die Aenderung im Ergebnis begruenden.",

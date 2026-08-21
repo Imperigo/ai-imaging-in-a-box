@@ -1,5 +1,6 @@
 {
   "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
   "auftrag_id": "auf-20260818-01",
   "art": "multipass",
   "beschreibung": "Erster Lauf auf der HomeStation: synthetische Testgeometrie durch die volle Kette (IFC -> glb -> Blender-Multipass) mit Produktionsaufloesung. Zweck: belegen, dass die Kette auf echter Hardware laeuft, und Laufzeiten fuer die Planung gewinnen. Keine GPU noetig - Cycles auf CPU.",

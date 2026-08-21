@@ -1,5 +1,6 @@
 {
   "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
   "auftrag_id": "auf-20260820-21",
   "art": "render",
   "beschreibung": "DERSELBE RAUSCHBODEN NOCH EINMAL — ABER AUF EINER SZENE MIT BODEN, UND MIT BEIDEN STRATEGIEN. Dein auf-20 war richtig gemessen und richtig gemeldet. Die Einschraenkung kommt von MIR und stand nicht im Auftrag. WAS ICH UEBERSEHEN HABE: Ich habe am selben Tag die Vorgabe fuer die Hintergrundstrategie von ohne_randberuehrung auf wie_soll zurueckgenommen — wegen deines auf-15, das gezeigt hat, dass die erste Regel in jeder Szene MIT Boden null Punkte waehlt. Dein Auftrag sagte 'nach git pull mit der Vorgabe messen', und genau das hast du getan. Aber die Szene aus auf-13 hat KEINEN Boden, und das ist der eine Fall, fuer den die zurueckgenommene Regel gebaut war und in dem sie gewinnt. Die Zahlen zeigen es: geom_iou lag in auf-13 bei 0.082 mit n_gemeinsam 3670, bei dir jetzt bei rund 0.006 mit n_gemeinsam zwischen 0 und 1925. Das ist ein Dreizehntel. Deine Messung und auf-13 stehen damit an ZWEI VERSCHIEDENEN BETRIEBSPUNKTEN, und eine Standardabweichung, die bei einem Mittel von 0.049 erhoben wurde, laesst sich nicht ohne Weiteres gegen einen Unterschied halten, der bei einem Mittel von 0.25 gemessen wurde. Der Rauschboden ist an der einen Szenenart gemessen, fuer die die zurueckgenommene Regel gebaut war — und ein Gebaeude steht auf dem Boden. DEIN BEFUND STEHT TROTZDEM, und zwar in drei Punkten: die Streuung ueber den Seed ist real und gross (67 % Variationskoeffizient); jeder zweite bis dritte Lauf ist NICHT MESSBAR, bei seed 1002 gibt es keinen einzigen gemeinsamen Bildpunkt; und die Luecke zwischen 0.2649 und 0.0803 hast du als offene Frage gemeldet statt sie zu glaetten. Genau richtig. WAS ICH JETZT BRAUCHE, und es ist derselbe Aufbau mit zwei Aenderungen: (1) SZENE MIT BODEN. Nimm eine der drei aus deinem auf-15 — am liebsten 'platte_endlich', also die Bodenplatte in etwa 2.5-facher Bauspanne. Das ist die realistische Szenenart, und dort gilt die heutige Vorgabe. (2) BEIDE STRATEGIEN je Lauf. Miss jedes Bild ZWEIMAL: einmal mit wie_soll und einmal mit ohne_randberuehrung. Dieselben Bilder, zwei Auswertungen — das kostet keinen zusaetzlichen Renderlauf, nur eine zweite Messung, und es beantwortet die Erklaerung fuer den Faktor 13 endgueltig statt sie zu vermuten. Wieder fuenf Seeds, 1000 bis 1004, alles andere identisch und wie in auf-13. WAS ZURUECK KOMMT: je Lauf und je Strategie der Score, spearman, geom_iou und n_gemeinsam. Dazu die Dauer. Die Auswertung mache ich hier. DIE ZWEI FRAGEN: Wie gross ist die Streuung ueber den Seed auf einer Szene MIT Boden — und liegt sie ueber oder unter den 0.0331 von gestern? Und: Wie weit liegen die beiden Strategien auf DENSELBEN Bildern auseinander? FALLS WIEDER LAEUFE AUSFALLEN: dasselbe wie beim letzten Mal — ungemessen und nicht null, und bitte n_gemeinsam mitmelden. Ob die Ausfaelle mit Boden seltener werden, ist selbst eine der Fragen. UND EINE, DIE MIR SEIT GESTERN KEINE RUHE LAESST: Die Kette hat noch NIE ein erzeugtes Bild geliefert, das das Geometrie-Gate von 0.65 besteht. auf-13 bestes 0.265, dein auf-20 bestes 0.080. Falls in dieser Reihe irgendein Lauf ueber 0.3 kommt, sag es ausdruecklich — das waere die erste gute Nachricht an dieser Front. NICHT TUN: nicht zusaetzlich Parameter variieren. Nichts an unserem Code aendern. AUFLAGE: GPU-Lauf, nur bei Leerlauf, unter der Leistungsgrenze. Fuenf Bilder, zwei Auswertungen je Bild. REGEL 3: keine absoluten Pfade mit Benutzernamen, nur Zahlen und Dateinamen.",
@@ -10,8 +11,17 @@
     "erzeugen_mit": "Szene 'platte_endlich' aus auf-20260819-15 — Testbau mit Bodenplatte in etwa 2.5-facher Bauspanne"
   },
   "params": {
-    "seeds": [1000, 1001, 1002, 1003, 1004],
-    "hintergrund_strategien": ["wie_soll", "ohne_randberuehrung"],
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004
+    ],
+    "hintergrund_strategien": [
+      "wie_soll",
+      "ohne_randberuehrung"
+    ],
     "alles_andere": "wie in auf-20260818-13",
     "schaetzer": "depth-anything-v2-small"
   },

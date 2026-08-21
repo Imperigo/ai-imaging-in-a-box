@@ -1,5 +1,6 @@
 {
   "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
   "auftrag_id": "auf-20260818-00",
   "art": "multipass",
   "beschreibung": "Rauchprobe im Entwicklungscontainer: belegt, dass das Auftragsprotokoll traegt - Auftrag lesen, Geometrie vor Ort erzeugen, Kette laufen lassen, Ergebnis ablegen. Bewusst kleine Aufloesung, keine GPU noetig.",

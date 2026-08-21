@@ -1,5 +1,6 @@
 {
   "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
   "auftrag_id": "auf-20260818-02",
   "art": "multipass",
   "beschreibung": "Nachlauf zu auf-20260818-01. Dort brach die Tiefenstufe, weil Blender 5.2 die Eigenschaft Scene.node_tree entfernt hat - der Runner war gegen 4.2 LTS gebaut. Eingebaut ist jetzt eine Weiche, die per hasattr auf compositing_node_group prueft statt auf die Versionsnummer. Der 4.2-Pfad ist hier nachgeprueft (vier Paesse, Tiefe 17.94-26.59 m); der 5.x-Pfad ist BLIND geschrieben und genau das ist hier zu pruefen. Erwartet werden vier Dateien: beauty_.png, material_id.png, tiefe_0001.exr, tiefe_norm.png - und im Report eine depth_normalisierung mit plausiblen Metern.",

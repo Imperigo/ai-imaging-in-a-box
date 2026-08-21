@@ -89,24 +89,32 @@ und was am Ende offen blieb. Kein wörtliches Gesprächsprotokoll — die Substa
 `docs/PLAN.md` wird in derselben Sitzung fortgeschrieben: Erledigtes abhaken, nicht
 löschen.
 
-### Aufträge an die HomeStation kommen mit einem kopierbaren Prompt
+### Aufträge gehören in das Repo, nicht in den Chat
 
-Ein Auftrag im Repo ist die Hälfte. Die andere Hälfte ist der Text, den der Owner ohne
-Nachdenken weiterreichen kann — **fertig formuliert, in einem Block, zum Kopieren**
-(Owner-Wunsch 2026-08-18).
+**Es gibt zwei Worker, und sie können nicht dasselbe** (Owner-Hinweis 2026-08-22):
 
-Wer etwas von der HomeStation will, liefert beides:
+* **`local` — die HomeStation.** GPU, Blender, `.venv-ifc`, unser Repo. Misst, rendert,
+  prüft. Liest `auftraege/offen/` und legt Ergebnisse daneben.
+* **`cloud` — der Worker an KosmoOrbit.** Hat unser Repo **nicht**; er baut an der
+  Vis-Oberfläche. Was er tun soll, betrifft **ihren** Vertrag und ihre Oberfläche, nie
+  unseren Code.
 
-1. Die Auftragsdatei unter `auftraege/offen/`, **committet und gepusht**, bevor der
-   Prompt herausgeht. Ein Prompt, der auf einen Auftrag zeigt, den es auf dem Remote
-   noch nicht gibt, ist eine Fehlanweisung.
-2. Einen Prompt-Block im Chat: was zu tun ist, in welcher Reihenfolge, was
-   zurückkommen soll — und was **nicht** getan werden soll. Kein „siehe Auftrag XY",
-   sondern der Inhalt.
+Ein Messauftrag an den Cloud-Worker wäre unerfüllbar, ein Vertragsauftrag an die
+HomeStation liefe ins Leere. `auftrag.py` verlangt das Feld `worker` darum als Pflicht.
 
-Faustregel wie bei der Oberfläche: Was der Owner erst zusammensuchen muss, existiert
-nicht.
+**Der Auftrag trägt seine Anweisung vollständig in sich** (Owner-Wunsch 2026-08-22). Bis
+dahin galt: Auftragsdatei ins Repo, Prompt in den Chat. Das hiess für den Owner, jeden
+Auftrag von Hand hin- und herzukopieren — Arbeit, die niemand tun sollte, und eine
+Fehlerquelle obendrein.
 
+Neu gilt: **Was der Worker wissen muss, steht in der Auftragsdatei.** Was zu tun ist, in
+welcher Reihenfolge, was zurückkommen soll, und was **nicht** getan werden soll. Kein
+„siehe Dokument XY", sondern der Inhalt — ein Auftrag, der auf etwas verweist, das der
+Worker erst suchen muss, ist ein halber Auftrag.
+
+Im Chat steht danach höchstens **ein Satz**: dass der Auftrag liegt und was er fragt.
+
+Faustregel wie bei der Oberfläche: Was der Owner erst zusammensuchen muss, existiert nicht.
 ### Git
 
 Innerhalb dieses Repos entscheidet Claude eigenständig über Zweige und Zusammenführungen

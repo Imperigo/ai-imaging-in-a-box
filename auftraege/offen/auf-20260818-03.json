@@ -1,5 +1,6 @@
 {
   "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
   "auftrag_id": "auf-20260818-03",
   "art": "multipass",
   "beschreibung": "Dritter Anlauf am Blender-5.2-Kompositor. auf-20260818-02 kam weiter als 01 - der Knotenbaum wird jetzt gefunden - brach dann aber an CompositorNodeOutputFile.base_path, das in 5.0 zu directory + file_name getrennt wurde. Ebenfalls umgestellt: file_slots heisst jetzt file_output_items. Beides ist eingebaut, aber wieder BLIND - die Blender-Doku ist von hier aus nicht erreichbar (403). NEU und wichtig: Der Runner diagnostiziert sich jetzt selbst. Schlaegt der Kompositor-Aufbau fehl, steht im Fehlertext die tatsaechlich vorhandene API des Knotens - Attribute, Sammlungsmethoden, Eingangsnamen, Blender-Version. Damit liefert auch ein Fehlschlag verwertbare Fakten statt nur einen Traceback, und der naechste Anlauf muss nicht wieder raten. Der 4.2-Pfad ist hier nachgeprueft.",
