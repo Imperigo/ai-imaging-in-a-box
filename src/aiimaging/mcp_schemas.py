@@ -51,6 +51,14 @@ LANE = "aiimaging"
 WERKZEUG_ENQUEUE = f"{LANE}_enqueue_render"
 WERKZEUG_QUERY = f"{LANE}_query_render"
 WERKZEUG_PRUEFE = f"{LANE}_check_geometry"
+#: Argumentloses Auskunftswerkzeug. Es gibt es nicht, weil jemand eine Auskunft braucht —
+#: es gibt es, damit die Naht PRUEFBAR ist. Der Seam-Healthcheck des Ökosystems probt
+#: jeden Server per echtem Werkzeugaufruf und verweigert das Raten von Argumenten
+#: (fail-closed). Ohne ein argumentloses read-only-Werkzeug bleibt ein Server dauerhaft
+#: UNPROBED: er gilt als verbunden, und ob er antwortet, weiss niemand — genau die
+#: Verwechslung, die am 17.06.2026 Stunden gekostet hat. Alle fünf Nachbar-Lanes führen
+#: dasselbe (`kosmodraw_capabilities`, `kosmodesign_capabilities`, …); hier fehlte es.
+WERKZEUG_FAEHIGKEITEN = f"{LANE}_capabilities"
 
 #: Feldnamen der Nachbar-Lanes, belegt in Phase 0 aus `kosmodraw_mcp_server.py:274-300`.
 #: Sie sind bindend: Ein abweichender Name erzeugt keine Kante und keine Fehlermeldung.
@@ -226,6 +234,30 @@ WERKZEUGE: dict[str, dict] = {
         "description": "Status und Ergebnis eines Render-Auftrags lesen. Rein lesend.",
         "inputSchema": _eingang_query(),
         "outputSchema": _ausgang_query(),
+        "readonly": True,
+    },
+    WERKZEUG_FAEHIGKEITEN: {
+        "name": WERKZEUG_FAEHIGKEITEN,
+        "description": (
+            "Was diese Lane kann, und woran sie gemessen wird. Argumentlos, rein lesend, "
+            "ohne Nebenwirkung — auch der Prüfstein, an dem der Seam-Healthcheck erkennt, "
+            "dass diese Naht nicht nur verbunden ist, sondern antwortet."
+        ),
+        # KEIN additionalProperties:false — KosmoOrbits `mergeInputs` reicht alle Felder
+        # der Vorgaengerknoten durch; ein striktes Schema wuerde daran scheitern und die
+        # Kante als tot melden (ihre Vertragspruefung faengt genau das ab).
+        "inputSchema": {"type": "object", "properties": {}},
+        "outputSchema": {
+            "type": "object",
+            "properties": {
+                "lane": {"type": "string"},
+                "werkzeuge": {"type": "array", "items": {"type": "string"}},
+                "vertraege": {"type": "array", "items": {"type": "string"}},
+                "geometrie_schwelle": {"type": "number"},
+                "vorbehalte": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["lane", "werkzeuge"],
+        },
         "readonly": True,
     },
     WERKZEUG_PRUEFE: {

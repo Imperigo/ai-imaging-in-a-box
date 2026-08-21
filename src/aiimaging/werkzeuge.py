@@ -30,7 +30,10 @@ from pathlib import Path
 
 from aiimaging import contracts, jobs, seams, torwaechter
 from aiimaging.mcp_schemas import (
+    LANE,
+    WERKZEUGE,
     WERKZEUG_ENQUEUE,
+    WERKZEUG_FAEHIGKEITEN,
     WERKZEUG_PRUEFE,
     WERKZEUG_QUERY,
 )
@@ -208,9 +211,41 @@ def _fehler(text: str, *, torwaechter_urteil: dict | None = None) -> dict:
     }
 
 
-#: Namensauflösung für den Server. Getrennt gehalten, damit `mcp_server.py` keine
-#: Fallunterscheidung braucht und wirklich nur übersetzt.
+def capabilities(argumente: dict) -> dict:
+    """Was diese Lane kann — und wo ihr Urteil (noch) nicht trägt.
+
+    **Warum die Vorbehalte mit ausgeliefert werden.** Ein Auskunftswerkzeug, das nur
+    Fähigkeiten aufzählt, lädt dazu ein, dem grünen Abzeichen zu glauben. Die
+    Geometrie-Schwelle ist bis heute nicht kalibriert; wer diese Naht benutzt, soll das
+    aus derselben Antwort erfahren und nicht erst aus einem Bericht.
+
+    Argumentlos und ohne Nebenwirkung — siehe ``WERKZEUG_FAEHIGKEITEN``.
+    """
+    del argumente                     # bewusst ohne: das ist der Punkt dieses Werkzeugs
+    from aiimaging import geometrie_qa as _g
+    from aiimaging import kosmo_szene as _k
+    return {
+        "lane": LANE,
+        "werkzeuge": sorted(WERKZEUGE),
+        "vertraege": [_k.SCHEMA_SZENE, _k.SCHEMA_ERGEBNIS],
+        "geometrie_schwelle": _g.SCHWELLE_GEOMETRIE,
+        "vorbehalte": [
+            "Die Geometrie-Schwelle ist NICHT kalibriert: auf einer Szene mit viel Boden "
+            "besteht weisses Rauschen das Gate, auf einer mit wenig Boden faellt selbst "
+            "ein perfektes Bild durch (gemessen 20.08.2026, auf-20260820-21).",
+            "Die Tiefenkante misst weder Anwesenheit noch Randschaerfe, sondern ob die "
+            "MEHRHEIT des Umrisses gezeichnet ist, und bricht unter dem Median zusammen "
+            "statt allmaehlich zu fallen (gemessen 22.08.2026, auf-20260822-30).",
+            "Die Seed-Streuung ist groesser als jeder bisher gemessene Parametereffekt. "
+            "Vergleiche zwischen zwei Varianten tragen nur GEPAART ueber denselben Seed.",
+        ],
+    }
+
+
+#: Namensaufloesung fuer den Server. Getrennt gehalten, damit `mcp_server.py` keine
+#: Fallunterscheidung braucht und wirklich nur uebersetzt.
 RUFTABELLE = {
+    WERKZEUG_FAEHIGKEITEN: capabilities,
     WERKZEUG_ENQUEUE: enqueue_render,
     WERKZEUG_QUERY: query_render,
     WERKZEUG_PRUEFE: check_geometry,
