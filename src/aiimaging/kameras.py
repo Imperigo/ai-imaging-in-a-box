@@ -1058,6 +1058,15 @@ def kamerasatz(bbox, *,
     # Modulkopf: Weder „absolut" noch „über der Hüllbox" ist allgemein richtig, aber die
     # Unterkante liegt im Zweifel eine Geschosshöhe daneben und nicht vierhundert Meter.
     grund = fuss if gelaende_z is None else float(gelaende_z)
+    # WOHER der Nullpunkt kommt, nicht nur wie hoch er liegt.
+    #
+    # „Eine Zahl ohne Bezugspunkt ist keine Zahl" — der Satz steht seit dem Raumleser im
+    # Projekt, und hier fehlte er noch. Der Unterschied ist nicht kosmetisch: Die
+    # Hüllbox-Unterkante liegt bei einem Untergeschoss im Erdreich, und dann steht die
+    # Kamera im Keller. `komposition.BEZUGSPUNKTE` führt genau diese Unterscheidung samt
+    # ihrer Verlässlichkeit — ohne dieses Feld könnte die Beurteilung sie nicht treffen.
+    gelaende_bezug = ("huellbox_unterkante" if gelaende_z is None
+                      else "terrain_an_kamera")
     auge_z = grund + augenhoehe_m
     # Das Blickziel liegt darüber, aber niemals über dem Bauwerk hinaus (ZIEL_HOECHSTANTEIL).
     ziel_z = min(auge_z + masse[2] * ZIEL_ANTEIL_HOEHE,
@@ -1192,6 +1201,7 @@ def kamerasatz(bbox, *,
         "bias_grad": float(bias_grad),
         "augenhoehe_m": float(augenhoehe_m),
         "gelaende_z": grund,
+        "gelaende_bezug": gelaende_bezug,
         "unvollstaendig": unvollstaendig,
         "warnungen": tuple(alle_warnungen),
     }

@@ -62,6 +62,8 @@ from . import bruecke, fortschritt, maske as maske_modul
 # belegt (die Kameraliste der Szene) — darum wird das Modul ausschliesslich in
 # der Vorgabe von `verarbeiter` benutzt, wo noch Modulgeltung herrscht.
 from . import kameras as _kameras_modul
+from . import komposition as _komposition
+from . import varianten
 
 #: Ein Auftrag auf ``running``, dessen Laufzettel so lange nicht angefasst wurde, gilt als
 #: **Waise**. Die Zahl ist eine Setzung: Sie muss deutlich über der längsten erwarteten
@@ -555,6 +557,13 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     maske=maskenbefund.get("maske"))
             urteil = dict(urteil, kamera=kuerzel, nullanker=anker,
                           seedauswahl=auswahl,
+                          # Die Kompositionsprüfung — bis zum 23.08.2026 rief SIE
+                          # niemand, obwohl `komposition.py` 1400 Zeilen gerechnetes
+                          # Fachwissen trägt. Ein Regelwerk, das nur seine eigenen Tests
+                          # beurteilt, beurteilt nichts. Hier bekommt es die Kamera zu
+                          # sehen, mit der wirklich gerendert wurde.
+                          komposition=_komposition.beurteile_bericht(
+                              bericht.get("kamera")),
                           maskenbefund=maskenbefund, maskenanker=maskenanker,
                           einordnung=geometrie_qa.einordnung(
                               urteil.get("score"), anker, schwelle=grenze),
@@ -704,6 +713,7 @@ def _bester_seed(seeds, aus, kuerzel, rendere_seed, messe, *, maske_da: bool):
 
     seeds = list(seeds) if seeds else [0]
     ziel_png = str(aus / f"{kuerzel}.png")
+    vorsprung = None
 
     if len(seeds) == 1 or not maske_da:
         erg = rendere_seed(seeds[0], ziel_png)
@@ -714,8 +724,12 @@ def _bester_seed(seeds, aus, kuerzel, rendere_seed, messe, *, maske_da: bool):
                  f"ueber das ganze Bild taugt dafuer nicht (auf-20260821-26: ein Bild "
                  f"ohne Bauwerk erreichte dort 0.9848 gegen 0.9703 fuer das perfekte). "
                  f"Gerendert wurde seed {seeds[0]}; die uebrigen sind UNGEMESSEN.")
+        # `vorsprung: None` steht hier ausdrücklich und fehlt nicht bloss. Ein
+        # abwesender Schlüssel zwingt jeden Leser zu einem `.get(...)` und damit zu der
+        # Frage, ob „nicht da" nun „kein Vorsprung" heisst oder „nicht geprüft". Es
+        # heisst: nicht geprüft, denn es gab nichts zu vergleichen.
         return erg, urteil, {"gewaehlt": seeds[0], "kandidaten": [seeds[0]],
-                             "ausgewaehlt": False, "grund": grund}
+                             "ausgewaehlt": False, "vorsprung": None, "grund": grund}
 
     kandidaten = []
     for seed in seeds:
@@ -743,15 +757,36 @@ def _bester_seed(seeds, aus, kuerzel, rendere_seed, messe, *, maske_da: bool):
         ausgewaehlt = False
     else:
         sieger = max(messbar, key=lambda k: k["gerichtet"])
-        werte = [k["gerichtet"] for k in messbar]
+        werte = sorted((k["gerichtet"] for k in messbar), reverse=True)
+        # IST der Sieger besser — oder hatte er nur Glück?
+        #
+        # Die Handlung bleibt dieselbe: Das bestbewertete Bild wird behalten, und das ist
+        # richtig, denn man nimmt den besten Wurf, den man hat. Die BEHAUPTUNG ist eine
+        # andere: „Seed X ist besser als Seed Y" hält nur, wenn der Abstand grösser ist
+        # als das Rauschen der Kette. Gemessen sind dort 0.2269 — mehr als jeder
+        # Parametereffekt, den die Kette hergibt.
+        #
+        # Geprüft wird gegen den UNABHÄNGIG gemessenen Boden, nicht gegen die Streuung
+        # dieser drei Werte: Wer den Bestwert einer Reihe an der Streuung derselben Reihe
+        # misst, misst im Kreis.
+        vorsprung = (varianten.ist_unterschied_belegt(
+            werte[0], werte[1], varianten.GEMESSENER_BODEN)
+            if len(werte) > 1 else None)
         grund = (f"Bester von {len(messbar)} gemessenen Seeds nach 'gerichtet' "
                  f"(Polaritaet x rho ueber der Maske, +1 perfekt). "
                  f"Spanne {min(werte):+.4f} bis {max(werte):+.4f}.")
+        if vorsprung is not None and not vorsprung["belegt"]:
+            grund += (f" ABER: {vorsprung['begruendung']} Das behaltene Bild ist der "
+                      f"beste WURF, nicht der bessere Seed — wer diesen Startwert "
+                      f"kuenftig bevorzugt, bevorzugt Rauschen.")
+        elif vorsprung is not None:
+            grund += f" Der Vorsprung ist belegt: {vorsprung['begruendung']}"
         ausgewaehlt = True
 
     shutil.copyfile(sieger["bild"], ziel_png)
     erg = dict(sieger["_erg"], bild_png=ziel_png)
     auswahl = {"gewaehlt": sieger["seed"], "ausgewaehlt": ausgewaehlt, "grund": grund,
+               "vorsprung": vorsprung,
                "kandidaten": [{"seed": k["seed"], "gerichtet": k["gerichtet"],
                                "paarurteil": k.get("paarurteil")} for k in kandidaten]}
     _auswahl_ablegen(aus, kuerzel, auswahl)

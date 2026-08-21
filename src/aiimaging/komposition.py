@@ -1410,3 +1410,138 @@ def aufnahme(*, kamerahoehe_m: float, bezugspunkt: str, gebaeudehoehe_m: float,
         "abstand_genuegt": bool(genuegt),
         "warnungen": warnungen,
     }
+
+
+# --------------------------------------------------------------------------------------
+# Die Brücke zu den wirklichen Kameras
+# --------------------------------------------------------------------------------------
+
+def beurteile_kamera(kamera: dict, *, gebaeudehoehe_m: float, gelaende_z: float,
+                     bezugspunkt: str) -> dict:
+    """Eine Kamera aus :func:`aiimaging.kameras.kamerasatz` gegen das Regelwissen halten.
+
+    Args:
+        kamera: Ein Eintrag aus ``kamerasatz(...)["kameras"]``.
+        gebaeudehoehe_m: Höhe des Bauwerks **über dem Geländestand**, nicht die Höhe der
+            Hüllbox. Bei einem Untergeschoss sind das zwei verschiedene Zahlen.
+        gelaende_z: Der Geländestand im Weltsystem, aus ``kamerasatz(...)["gelaende_z"]``.
+        bezugspunkt: Woher dieser Stand kommt, aus ``["gelaende_bezug"]``. **Pflicht** —
+            :func:`kamerahoehe` verlangt ihn aus demselben Grund: Eine Kamerahöhe ohne
+            Bezugspunkt ist keine Höhe.
+
+    Returns:
+        Die Antwort von :func:`aufnahme`, plus ``kuerzel``. Ihre ``warnungen`` sind die
+        eigentliche Ausbeute: Sie sagen, was an dieser Kamera gegen die Norm steht.
+
+    Die Sensorhöhe wird aus dem **Seitenverhältnis dieser Kamera** gerechnet und nicht
+    aus :data:`SENSOR_HOEHE_HOCH_MM` übernommen. Der Vorgabewert dort ist die Hochlage
+    (36 mm); wer ihn für ein quadratisches Bild stehen liesse, bekäme einen zu grossen
+    Bildwinkel und damit einen zu kleinen Mindestabstand — eine Prüfung, die zu milde
+    urteilt, ist schlimmer als keine.
+    """
+    from .kameras import SENSOR_BREITE_MM
+
+    seitenverhaeltnis = float(kamera.get("seitenverhaeltnis") or 1.0)
+    return dict(
+        aufnahme(
+            kamerahoehe_m=float(kamera["auge"][2]) - float(gelaende_z),
+            bezugspunkt=bezugspunkt,
+            gebaeudehoehe_m=float(gebaeudehoehe_m),
+            abstand_m=float(kamera["abstand_m"]),
+            brennweite_mm=float(kamera["brennweite_mm"]),
+            sensor_hoehe_mm=SENSOR_BREITE_MM / seitenverhaeltnis,
+            shift_mm=float(kamera.get("shift_mm") or 0.0),
+            neigung_grad=float(kamera.get("neigung_grad") or 0.0),
+        ),
+        kuerzel=kamera.get("kuerzel"),
+    )
+
+
+def beurteile_kamerasatz(satz: dict) -> dict:
+    """Den ganzen Kamerasatz gegen das Regelwissen halten — und zusammenfassen.
+
+    **Warum es diese Funktion gibt.** Dieses Modul war bis zum 23.08.2026 von *nichts*
+    aufgerufen ausser seinen eigenen Tests: 1400 Zeilen gerechnetes Fachwissen, das kein
+    Lauf je zu sehen bekam. Das ist die tote Kante dieses Projekts in ihrer bisher
+    grössten Ausführung — und sie fällt nicht auf, weil ein ungenutztes Modul grün ist
+    wie jedes andere. Ein Regelwerk, das nur seine Tests beurteilt, beurteilt nichts.
+
+    Args:
+        satz: die vollständige Antwort von :func:`aiimaging.kameras.kamerasatz`.
+
+    Returns:
+        ``{kameras, n_mit_warnung, warnungen, gebaeudehoehe_m, bezugspunkt,
+        alle_waagrecht}``.
+
+        ``alle_waagrecht`` ist die eine Zahl, auf die es normativ ankommt: ob **jede**
+        Kamera dieses Satzes die lotrechte Sensorebene einhält (HABS/NPS). Sie steht
+        getrennt, weil sie in den vielen Warnungen sonst untergeht.
+    """
+    kameras = satz.get("kameras") or []
+    gelaende_z = float(satz.get("gelaende_z") or 0.0)
+    bezugspunkt = satz.get("gelaende_bezug") or "huellbox_unterkante"
+    mitte_z = float(satz["mitte"][2])
+    hoehe_bbox = float(satz["masse_m"][2])
+    # Höhe ÜBER GELÄNDE, nicht Höhe der Hüllbox. Liegt der Geländestand unter der
+    # Hüllbox-Unterkante (Untergeschoss), ist das Bauwerk über Gelände niedriger.
+    gebaeudehoehe = (mitte_z + hoehe_bbox / 2.0) - gelaende_z
+
+    urteile = [beurteile_kamera(k, gebaeudehoehe_m=gebaeudehoehe,
+                                gelaende_z=gelaende_z, bezugspunkt=bezugspunkt)
+               for k in kameras]
+    warnungen = [f"{u['kuerzel']}: {w}" for u in urteile for w in u["warnungen"]]
+
+    return {
+        "kameras": urteile,
+        "n_mit_warnung": sum(1 for u in urteile if u["warnungen"]),
+        "warnungen": tuple(warnungen),
+        "gebaeudehoehe_m": gebaeudehoehe,
+        "bezugspunkt": bezugspunkt,
+        "alle_waagrecht": bool(urteile) and all(
+            u["neigung_grad"] == NEIGUNG_WAAGRECHT_GRAD for u in urteile),
+    }
+
+
+#: Die Felder, die ein Kamerabericht des Runners tragen muss, damit er beurteilbar ist.
+#:
+#: Sie stehen hier als Liste und nicht als ``try/except``, weil das Fehlen eines Feldes
+#: keine Ausnahme ist, sondern eine **Auskunft**: Der Rückfallweg des Runners (Kamera
+#: diagonal von vorn-oben, ohne Rechnung) liefert sie gar nicht — und dann gibt es nichts
+#: zu beurteilen, wohl aber etwas zu melden.
+BERICHTSFELDER = ("auge", "abstand_m", "brennweite_mm", "gelaende_z",
+                  "gelaende_bezug", "gebaeudehoehe_m")
+
+
+def beurteile_bericht(kamera_bericht: dict) -> dict:
+    """Den Kamerablock eines Multipass-Berichts beurteilen — oder sagen, warum nicht.
+
+    Das ist die Fassung für den **Produktivweg**: Der Kamerasatz wird in Blender
+    gerechnet, nicht hier; was zurückkommt, ist der ``kamera``-Block des Berichts. Die
+    Beurteilung läuft trotzdem diesseits der Prozessgrenze — sie ist reine Arithmetik,
+    und im Runner wäre sie eine Fähigkeit, die ohne Blender niemand hätte (Regel 4).
+
+    Returns:
+        ``{beurteilt, grund, ...}``. Bei ``beurteilt=False`` steht in ``grund``, was
+        fehlt; die Felder von :func:`aufnahme` fehlen dann. **Kein Rückfall auf
+        Ersatzwerte** — eine Beurteilung aus geratenen Zahlen sähe aus wie eine Prüfung
+        und wäre keine.
+    """
+    if not isinstance(kamera_bericht, dict):
+        return {"beurteilt": False,
+                "grund": f"Kein Kamerablock: {type(kamera_bericht).__name__}."}
+
+    fehlt = [f for f in BERICHTSFELDER if kamera_bericht.get(f) is None]
+    if fehlt:
+        return {"beurteilt": False, "grund": (
+            f"Der Kamerablock trägt {', '.join(fehlt)} nicht — er stammt vermutlich vom "
+            f"Rückfallweg des Runners ('weg': {kamera_bericht.get('weg')!r}), der die "
+            f"Kamera ohne Rechnung setzt. Ohne diese Zahlen ist nichts zu beurteilen. "
+            f"Geraten wird nicht.")}
+
+    urteil = beurteile_kamera(
+        kamera_bericht,
+        gebaeudehoehe_m=float(kamera_bericht["gebaeudehoehe_m"]),
+        gelaende_z=float(kamera_bericht["gelaende_z"]),
+        bezugspunkt=str(kamera_bericht["gelaende_bezug"]),
+    )
+    return dict(urteil, beurteilt=True, grund="")

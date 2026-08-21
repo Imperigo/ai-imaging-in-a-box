@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from aiimaging import abholer, bruecke, fortschritt
+from aiimaging import abholer, bruecke, fortschritt, varianten
 
 
 # ======================================================================================
@@ -1284,3 +1284,97 @@ def test_der_auswahlbericht_liegt_neben_den_bildern(tmp_path):
     d = json.loads(p.read_text())
     assert d["gewaehlt"] == 2
     assert [k["seed"] for k in d["kandidaten"]] == [1, 2, 3], "ALLE Seeds, nicht nur der Sieger"
+
+
+# ======================================================================================
+# Der Vorsprung des Siegers — behalten ist erlaubt, behaupten nicht
+# ======================================================================================
+
+def _seedlauf(tmp_path, werte: dict):
+    """Drei Seeds mit vorgegebenen `gerichtet`-Werten durch die Auswahl schicken."""
+    def rendere_seed(seed, png):
+        Path(png).write_bytes(b"x")
+        return {"bild_png": png}
+
+    def messe(png):
+        seed = int(png.split("seed")[-1].split(".")[0]) if "seed" in png else 0
+        return {"rho_maske": {"gerichtet": werte[seed]}}
+
+    return abholer._bester_seed(sorted(werte), tmp_path, "k", rendere_seed, messe,
+                                maske_da=True)
+
+
+def test_der_beste_wurf_wird_behalten_aber_nicht_zum_besseren_seed_erklaert(tmp_path):
+    """Die Handlung bleibt richtig, die Behauptung wird eingeschränkt.
+
+    Gerade der Fall, den die Dokumentation dieses Projekts als dramatisch zitiert —
+    ρ = −0.91 gegen −0.27 —, ist gegen den gemessenen Rauschboden (0.2269) **nicht**
+    belegt: 0.29 Abstand gegen eine Grenze von 0.454. Das ist unbequem und richtig.
+    """
+    _, _, auswahl = _seedlauf(tmp_path, {0: 0.91, 1: 0.62, 2: 0.27})
+
+    assert auswahl["gewaehlt"] == 0, "das bestbewertete Bild wird behalten"
+    assert auswahl["vorsprung"]["belegt"] is False
+    assert "beste WURF" in auswahl["grund"]
+
+
+def test_ein_wirklich_grosser_vorsprung_wird_als_belegt_gemeldet(tmp_path):
+    """Gegenprobe — sonst prüfte der Test oben nur, dass immer dasselbe dasteht."""
+    _, _, auswahl = _seedlauf(tmp_path, {0: 0.95, 1: 0.10, 2: 0.05})
+
+    assert auswahl["vorsprung"]["belegt"] is True
+    assert "Der Vorsprung ist belegt" in auswahl["grund"]
+    assert "beste WURF" not in auswahl["grund"]
+
+
+def test_geprueft_wird_gegen_den_zweiten_und_nicht_gegen_den_letzten(tmp_path):
+    """Wer gegen den schlechtesten prüft, bekommt fast immer einen 'belegten' Vorsprung.
+
+    Hier liegen der beste und der zweite dicht beieinander, der dritte weit darunter.
+    Gegen den dritten gemessen wäre der Abstand 0.90 und damit 'belegt' — gegen den
+    zweiten sind es 0.02 und damit nichts.
+    """
+    _, _, auswahl = _seedlauf(tmp_path, {0: 0.92, 1: 0.90, 2: 0.02})
+
+    assert auswahl["vorsprung"]["abstand"] == pytest.approx(0.02, abs=1e-9)
+    assert auswahl["vorsprung"]["belegt"] is False
+
+
+def test_der_zweite_wird_der_groesse_nach_bestimmt_und_nicht_der_reihenfolge_nach(tmp_path):
+    """Der Sieger ist hier **nicht** der erste Seed — und darauf kommt es an.
+
+    Ohne Sortierung verglich die Prüfung schlicht die ersten beiden Einträge. In allen
+    anderen Tests stand der Beste zufällig vorn, und die Mutation ``sorted(...)`` weg
+    überlebte deshalb. Hier ist der schlechteste vorn: Ungeordnet ergäbe der Vergleich
+    0.10 gegen 0.95 — einen 'belegten' Vorsprung —, richtig sind 0.95 gegen 0.90.
+    """
+    _, _, auswahl = _seedlauf(tmp_path, {0: 0.10, 1: 0.95, 2: 0.90})
+
+    assert auswahl["gewaehlt"] == 1
+    assert auswahl["vorsprung"]["abstand"] == pytest.approx(0.05, abs=1e-9)
+    assert auswahl["vorsprung"]["belegt"] is False
+
+
+def test_bei_einem_einzigen_seed_wird_kein_vorsprung_behauptet(tmp_path):
+    def rendere_seed(seed, png):
+        Path(png).write_bytes(b"x")
+        return {"bild_png": png}
+
+    _, _, auswahl = abholer._bester_seed(
+        [0], tmp_path, "k", rendere_seed,
+        lambda png: {"rho_maske": {"gerichtet": 0.9}}, maske_da=True)
+    assert auswahl["vorsprung"] is None
+    assert auswahl["ausgewaehlt"] is False
+
+
+def test_der_rauschboden_ist_unabhaengig_gemessen_und_nicht_aus_der_reihe(tmp_path):
+    """Der Kreisschluss, der hier vermieden wird: Wer den Bestwert einer Reihe an der
+    Streuung DERSELBEN Reihe misst, misst sich selbst.
+
+    Drei sehr eng beieinander liegende Werte hätten einen winzigen Eigen-Rauschboden —
+    und jeder Abstand wäre dagegen 'belegt'. Gegen den unabhängigen Boden ist er es nicht.
+    """
+    _, _, auswahl = _seedlauf(tmp_path, {0: 0.9002, 1: 0.9001, 2: 0.9000})
+    assert auswahl["vorsprung"]["grenze"] == pytest.approx(
+        2.0 * varianten.GEMESSENE_SEED_STREUUNG)
+    assert auswahl["vorsprung"]["belegt"] is False

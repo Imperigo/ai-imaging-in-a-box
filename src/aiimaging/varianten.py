@@ -73,6 +73,35 @@ K_STREUUNGEN = 2.0
 #: **nicht** eine kleine Zahl, die nach Genauigkeit aussieht.
 MIN_SAATREIHE = 3
 
+#: Die **gemessene** Streuung über Startwerte bei sonst gleichen Einstellungen.
+#:
+#: Neun Läufe, derselbe Aufbau, nur der Startwert verschieden: Mittel −0.6644,
+#: Standardabweichung **0.2269** (`docs/POLARITAET_UND_STAERKE_2026-08-22.md`,
+#: 22.08.2026). Drei der neun erreichten die Schwelle, sechs nicht.
+#:
+#: Die Zahl stand bisher an **neun** Stellen dieses Repos in Prosa und an keiner als
+#: Wert. Eine gemessene Grösse, die nur in Kommentaren lebt, kann nicht rechnen und
+#: veraltet an acht Stellen gleichzeitig — darum steht sie jetzt hier.
+#:
+#: **Wozu sie NICHT taugt:** als Rauschboden für eine Reihe, die man gerade selbst
+#: gemessen hat. Wer die Streuung derselben drei Werte benutzt, um deren Bestwert gegen
+#: sie zu prüfen, prüft im Kreis. Diese Zahl ist ein **unabhängiger** Massstab, weil sie
+#: aus einer anderen Reihe stammt — und genau deshalb ist sie brauchbar.
+#:
+#: Ihre Grenze gehört dazu: Sie ist an *einem* Aufbau gemessen. Ob sie für einen anderen
+#: gilt, ist ungemessen. Sie taugt als Grössenordnung, nicht als Naturkonstante.
+GEMESSENE_SEED_STREUUNG = 0.2269
+
+#: Der Rauschboden aus :data:`GEMESSENE_SEED_STREUUNG`, in der Form, die
+#: :func:`ist_unterschied_belegt` erwartet.
+GEMESSENER_BODEN = {
+    "n": 9, "n_ungemessen": 0, "mittel": -0.6644,
+    "streuung": GEMESSENE_SEED_STREUUNG, "spanne": None, "belastbar": True,
+    "begruendung": ("9 Läufe desselben Aufbaus, nur der Startwert verschieden: Mittel "
+                    "-0.664, Streuung 0.227 (POLARITAET_UND_STAERKE_2026-08-22.md). "
+                    "UNABHÄNGIG von der Reihe, gegen die hier geprüft wird."),
+}
+
 #: Die Felder eines Renderauftrags, die eine kontrollierte Reihe sinnvoll durchfahren kann.
 #:
 #: ``seed`` steht bewusst **nicht** darin — er ist der Gegenstand der Saatreihe, und ihn in

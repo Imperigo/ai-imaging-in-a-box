@@ -431,7 +431,14 @@ def _kamera_setzen(lo, hi, a=None):
                 # "passt es hinein" fragt.
                 "fuellgrad": k["fuellgrad"],
                 "abstand_m": k["abstand_m"],
+                "seitenverhaeltnis": k["seitenverhaeltnis"],
                 "gelaende_z": satz["gelaende_z"],
+                # Woher der Nullpunkt kommt und wie hoch das Bauwerk ÜBER IHM ist.
+                # Beides braucht die Kompositionsprüfung diesseits der Prozessgrenze —
+                # ohne sie könnte sie nur raten, und eine ratende Prüfung urteilt zu mild.
+                "gelaende_bezug": satz["gelaende_bezug"],
+                "gebaeudehoehe_m": round(
+                    satz["mitte"][2] + satz["masse_m"][2] / 2.0 - satz["gelaende_z"], 4),
                 "warnungen": list(k["warnungen"]),
                 "begruendung": k["begruendung"],
             }

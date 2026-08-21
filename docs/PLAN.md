@@ -980,6 +980,45 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Ob Blender `shift_y` so annimmt, wie wir es meinen, ob die Senkrechten im Bild
       wirklich senkrecht werden, ob der Umbau für den gekippten Modus wirklich bitgleich
       additiv war — `auf-20260823-33` fragt genau das, in fünf Fällen und ohne Bildmodell.
+- [x] **`komposition.py` war ein halbes Jahr lang ungerufen — jetzt hängt es am Lauf.**
+      1400 Zeilen fotografisches Regelwissen mit Belegstufen, Quellenangaben und 117
+      eigenen Tests, und **kein einziger Produktivweg** hat je eine seiner Zahlen gesehen.
+      Das ist die tote Kante dieses Projekts in ihrer bisher grössten Ausführung, und sie
+      fällt nicht auf: Ein ungenutztes Modul ist grün wie jedes andere, seine Abdeckung
+      sieht vorbildlich aus, die Suite meldet nichts.
+
+      Angeschlossen über `beurteile_bericht`, das den Kamerablock des Multipass-Berichts
+      liest — die Beurteilung läuft diesseits der Prozessgrenze, weil sie reine
+      Arithmetik ist und im Runner eine Fähigkeit wäre, die ohne Blender niemand hat
+      (Regel 4). Der Abholer hängt sie an **jede** Kamera.
+
+      Die Wahrheitstafel, die dabei herauskommt, zeigt, dass die Prüfung wirklich
+      unterscheidet: gekippt + unerklärter Boden → zwei Warnungen; gekippt + erklärter
+      Boden → nur die Normverletzung; Shift + unerklärter Boden → nur der Bezugspunkt;
+      Shift + erklärter Boden → **nichts zu melden**.
+- [ ] **Drei weitere Module ruft nur ihr Test — aber aus anderem Grund.** `lora.py`,
+      `stilstudie.py` und `varianten.py` (zusammen rund 1800 Zeilen) stehen ebenfalls in
+      keinem Produktivpfad. Anders als `komposition.py` sind sie aber **absichtlich**
+      Werkzeuge zum gezielten Aufruf — ein Trainingslauf, eine Kalibrierung, eine
+      Vergleichsreihe —, und Regel 4 verlangt nur, dass sie aus Python heraus benutzbar
+      sind. Sie sind also nicht dasselbe. Offen bleibt, ob sie es je werden.
+- [x] **Die Seedauswahl behält das beste Bild — und sagt jetzt, ob der Vorsprung einer ist.**
+      Behalten ist richtig: Man nimmt den besten Wurf, den man hat. Die *Behauptung*
+      „Startwert X ist besser" hält aber nur, wenn der Abstand grösser ist als das
+      Rauschen der Kette — und aus ihr folgt, dass man diesen Startwert künftig bevorzugt.
+
+      Geprüft wird gegen den **unabhängig** gemessenen Boden (0,2269 aus neun Läufen),
+      nicht gegen die Streuung derselben drei Werte: Wer den Bestwert einer Reihe an
+      ihrer eigenen Streuung misst, misst im Kreis. Und gegen den **Zweiten**, nicht gegen
+      den Letzten — sonst ist fast jeder Vorsprung „belegt".
+
+      Unbequemes Ergebnis: Selbst der oft zitierte Fall ρ = −0,91 gegen −0,27 ist damit
+      **nicht** belegt (Abstand 0,29 gegen eine Grenze von 0,454).
+- [x] **0,2269 stand an neun Stellen in Prosa und an keiner als Wert.** Jetzt
+      `varianten.GEMESSENE_SEED_STREUUNG`, mit Herkunft und mit der Grenze dazu: Sie ist
+      an *einem* Aufbau gemessen und taugt als Grössenordnung, nicht als Naturkonstante.
+      Eine gemessene Grösse, die nur in Kommentaren lebt, kann nicht rechnen und veraltet
+      an acht Stellen gleichzeitig.
 - [ ] **`AUTO_RICHTUNGEN = ("sSE",)` ist eine einzige Richtung — HABS verlangt drei.**
       Umgebungsansicht, Frontalansicht, und zwei Über-Eck-Ansichten auf **gegenüberliegenden**
       Diagonalen. Unsere Richtungstabelle kann das bereits abbilden; es ist eine

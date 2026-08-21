@@ -1979,6 +1979,32 @@ Shift lässt die Kamera näher heran; beim flachen Bau aus der Nähe bindet der 
 kostet Abstand. Im Grenzfall — 12 mm Shift bei 24 mm Sensorhöhe — liegt der Horizont
 exakt auf der Bildunterkante, und zwar **unabhängig von der Brennweite**.*
 
+**Ungerufenes Modul (die tote Kante im Grossen)** — Ein Modul, das vollständig gebaut,
+getestet und dokumentiert ist — und von keiner Stelle des Produktivwegs aufgerufen wird.
+*Es fällt nicht auf, und das ist der Punkt: Seine Tests sind grün, seine Abdeckung sieht
+vorbildlich aus, die Suite meldet nichts. Nur beurteilt es nie etwas Wirkliches. In
+diesem Projekt traf es `komposition.py` — 1400 Zeilen fotografisches Regelwissen mit
+Belegstufen und Quellenangaben, ein halbes Jahr lang ausschliesslich von den eigenen
+Tests gerufen. Ein Regelwerk, das nur seine eigenen Tests beurteilt, beurteilt nichts.
+Die Prüfung dagegen ist billig: auflisten, welche Module ausserhalb von `tests/`
+niemand nennt.*
+
+**Auswählen gegen den eigenen Rauschboden (Kreisschluss)** — Den besten Wert einer
+Messreihe daran messen, wie stark **dieselbe** Reihe streut.
+*Sieht nach Statistik aus und ist keine: Der Abstand zwischen dem Besten und dem Zweiten
+einer Stichprobe hängt systematisch mit deren eigener Streuung zusammen — die Prüfung
+bestätigt sich selbst. Der Ausweg ist ein **unabhängig** gemessener Boden aus einer
+anderen Reihe. In diesem Projekt sind das 0,2269 aus neun Läufen desselben Aufbaus.*
+
+**Bester Wurf gegen besserer Startwert** — Zwei verschiedene Aussagen über dasselbe
+Ergebnis. „Ich behalte das bestbewertete von drei Bildern" ist immer richtig — man nimmt
+den besten Wurf, den man hat. „Startwert 2 ist besser als Startwert 0" ist nur richtig,
+wenn der Abstand grösser ist als das Rauschen.
+*Der Unterschied ist nicht akademisch: Aus der zweiten Aussage folgt, dass man diesen
+Startwert künftig bevorzugt — und damit bevorzugt man Rauschen. In diesem Projekt trennt
+der Auswahlbericht die beiden seit dem 23.08.2026 ausdrücklich; selbst der oft zitierte
+Fall ρ = −0,91 gegen −0,27 ist gegen den gemessenen Boden **nicht** belegt.*
+
 **Sensorbezug (`sensor_fit`)** — Die Angabe, auf welche Bildkante sich eine genannte
 Sensorgrösse bezieht. Bei `AUTO` bezieht das Renderprogramm sie auf die **grössere**
 Bildkante, bei `HORIZONTAL` immer auf die Breite.
@@ -3037,6 +3063,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-23 | Ergaenzt aus dem Anschluss von `komposition.py` und der Seedauswahl: **Ungerufenes Modul (die tote Kante im Grossen)**, **Auswaehlen gegen den eigenen Rauschboden (Kreisschluss)**, **Bester Wurf gegen besserer Startwert**. Alle drei aus Befunden ueber dieses Repo selbst: `komposition.py` war ein halbes Jahr lang nur von den eigenen Tests gerufen, und die Seedauswahl behielt zu Recht das beste Bild — sagte aber nicht dazu, dass der Vorsprung im Rauschen liegt |
 | 2026-08-22 | Ergaenzt aus der waagrechten Kamera (`kameras.MODUS_SHIFT`): **Unsymmetrischer Bildrahmen (durch Shift)** und **Sensorbezug (`sensor_fit`)**. Der erste traegt den Befund, den zwei Testanlaeufe gebraucht haben: Ob ein Shift Abstand kostet oder spart, haengt daran, WELCHE Rahmenkante bindet — beim Turm das Dach (spart), beim flachen Bau aus der Naehe der Fuss (kostet). **Berichtigt:** Vier Dokumente sagten „`kameras.py` kippt 9,46°". Nachgemessen ueber zwoelf Richtungen, vier Gebaeudehoehen und zwei Formate sind es **1,92°–4,70°**; die 9,46° gelten bei 1,2 × Gebaeudehoehe Abstand, und dort steht `kamerasatz` nie |
 | 2026-08-22 | Ergaenzt aus der Prompt-Uebersetzung (`src/aiimaging/sprache.py`): **Trainingssprache (eines Bildmodells)**, **Glossar (Uebersetzungsglossar)**, **Signalwort (bei der Spracherkennung)**, **Dreiwertiges Urteil (ja / nein / nicht entscheidbar)**, **Uebermelden (einer Pruefung)**. Der erste Eintrag traegt die Messung, aus der die ganze Sache folgt: Ueber acht gepaarte Startwerte ergab „bedeckter Himmel" bei 8 von 8 einen deutlich blaueren Himmel als „overcast sky" — das Modell versteht das Wort nicht und fuellt die Luecke |
 | 2026-08-22 | Ergaenzt aus dem Raumleser (`src/aiimaging/runners/ifc_raeume_runner.py`, `seams.ifc_raeume`): **Raum (`IfcSpace`)**, **Grundriss (als Polygon)**, **Umlaufsinn**, **Platzierungskette**, **Bezugspunkt (einer Höhenangabe)**, **lichte Höhe**. Die letzten beiden tragen den Grund, warum es diesen Auftrag ueberhaupt so gab: Eine Zahl ohne Bezugspunkt ist in diesem Projekt keine Zahl |
