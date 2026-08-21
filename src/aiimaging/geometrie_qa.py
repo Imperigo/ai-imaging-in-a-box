@@ -1456,6 +1456,156 @@ def _median(werte: list[float]) -> float:
     return s[mitte] if n % 2 else (s[mitte - 1] + s[mitte]) / 2.0
 
 
+#: Welcher Anteil der Bildpunkte als „trägt eine Kante" gilt.
+#:
+#: Die stärksten 5 % des Bildes. **Die Zahl hat eine Eigenschaft, die keine Schwelle
+#: dieses Projekts bisher hatte: Sie erzeugt ihren eigenen Nullwert.** Wenn 5 % aller
+#: Bildpunkte über der Schranke liegen, trägt eine Maskengrenze **ohne jeden Bezug zum
+#: Bild** ebenfalls rund 5 %. Alles darüber ist Signal, alles darunter ist schlechter als
+#: Zufall — und das ist gemessen vorgekommen (`auf-20260822-30`: 2.8 %).
+KANTENANTEIL_STAERKSTE = 0.05
+
+#: Kurzform des Rechenwegs. Fünfter Weg im selben Modul.
+METHODE_KANTENANTEIL = ("Anteil der Maskengrenze, der eine Kante aus den stärksten 5 % "
+                        "des Bildes trägt")
+
+
+def anteil_grenze_mit_kante(ist: Sequence[float], maske: Sequence[bool], *,
+                            breite: int,
+                            staerkste: float = KANTENANTEIL_STAERKSTE) -> dict:
+    """Wieviel vom Umriss das Bild **wirklich zeichnet**.
+
+    **Warum es dieses zweite Mass gibt, obwohl es schon eines gibt.**
+    :func:`kante_an_maskengrenze` bildet den **Median** über das ganze Randband. Das ist
+    gegen Ausreisser robust und hat einen Preis, den erst die Messung gezeigt hat: Zeichnet
+    ein Bild nur ein Viertel seines Umrisses, sieht der Median **nichts** — er bricht
+    zusammen, statt allmählich zu fallen (`auf-20260822-30`).
+
+    Gemessen an denselben Bildern, ganz **ohne Tiefenschätzer**:
+
+    ==========================  =========  ====================
+    Bild                        Anteil     Median-Kante
+    ==========================  =========  ====================
+    perfektes Blender-Bild      87.4 %     0.1615
+    weichgezeichnet (Radius 8)  43.8 %     ~0.03
+    z-image-turbo mit Führung   24.3 %     0.0058
+    z-image-turbo ohne Führung    6.4 %    0.0037
+    qwen                          2.8 %    0.0048
+    ==========================  =========  ====================
+
+    Der Anteil trennt, was der Median zu einer Zahl zusammenschiebt: 24.3 % gegen 6.4 %
+    ist ein Faktor 4, die zugehörigen Mediane liegen 0.0021 auseinander.
+
+    .. warning::
+       **Die letzte Zeile ist die eigentliche Warnung.** Qwen erreicht ρ = −0.7406 —
+       ordentlich — und zeichnet den Umriss an **2.8 %** der Grenze, also **unter
+       Zufall**. Ein anständiges ρ ist ohne jede Umrisstreue erreichbar. Wer ρ allein
+       wertet, wertet ein Bild, das die Tiefen richtig staffelt und das Gebäude nicht
+       zeichnet.
+
+    Args:
+        ist: die geschätzte Tiefenkarte. Der Vergleich läuft **innerhalb** dieser Karte —
+            gefragt ist nicht, ob sie zur Soll-Karte passt, sondern ob sie an der
+            Silhouettengrenze überhaupt eine Kante hat.
+        staerkste: Anteil der Bildpunkte, der als Kante gilt. Ändert man ihn, ändert man
+            **auch den Nullwert** — bei 10 % läge Zufall bei 10 %.
+
+    Returns:
+        ``{anteil, n_grenze, n_mit_kante, schranke, zufall, ueber_zufall, methode,
+        warnungen}``. ``zufall`` ist ``staerkste`` — die Zahl, gegen die der Anteil zu
+        lesen ist. ``anteil`` ist ``None``, wenn es keine Grenze gibt.
+    """
+    werte = _als_zahlen(ist, "ist")
+    if maske is None:
+        raise QaError("maske fehlt — ohne Maske gibt es keine Grenze.")
+    m = _als_wahrheitswerte(maske, "maske")
+    if len(m) != len(werte):
+        raise QaError(
+            f"maske und ist sind unterschiedlich lang ({len(m)} vs. {len(werte)}).")
+    if isinstance(breite, bool) or not isinstance(breite, int) or breite <= 0:
+        raise QaError(f"breite muss eine positive ganze Zahl sein, war {breite!r}.")
+    if len(werte) % breite != 0:
+        raise QaError(f"{len(werte)} Punkte sind kein Vielfaches der Breite {breite}.")
+    if not (0.0 < staerkste < 1.0):
+        raise QaError(
+            f"staerkste muss zwischen 0 und 1 liegen, war {staerkste}. Bei 0 trüge kein "
+            f"Punkt je eine Kante, bei 1 jeder — beides misst nichts.")
+
+    hoehe = len(werte) // breite
+    antwort = {"anteil": None, "n_grenze": 0, "n_mit_kante": 0, "schranke": None,
+               "zufall": staerkste, "zufall_verlangt": staerkste, "ueber_zufall": None,
+               "methode": METHODE_KANTENANTEIL, "warnungen": []}
+
+    staerken = _kantenstaerken(werte, breite, hoehe)
+    innen, _aussen = _randpunkte(m, breite, hoehe)
+    antwort["n_grenze"] = len(innen)
+    if not innen:
+        antwort["warnungen"].append(
+            "Die Maske hat keine Grenze — leer oder das ganze Bild. NICHT GEMESSEN.")
+        return antwort
+    if len(innen) < MIN_RANDPUNKTE:
+        antwort["warnungen"].append(
+            f"Nur {len(innen)} Randpunkte, nötig sind {MIN_RANDPUNKTE}. Ein Anteil aus "
+            f"einer Handvoll Punkten springt in groben Stufen. NICHT GEMESSEN.")
+        return antwort
+
+    sortiert = sorted(staerken, reverse=True)
+    schranke = sortiert[max(0, int(len(sortiert) * staerkste) - 1)]
+    antwort["schranke"] = schranke
+
+    # **Der Nullwert ist der TATSÄCHLICHE Anteil und nicht der verlangte.** Bei vielen
+    # gleichen Werten — eine Karte mit zwei Stufen, ein Bild mit grossen einfarbigen
+    # Flächen — liegen weit mehr als `staerkste` Punkte auf oder über der Schranke, weil
+    # sich Gleichstände nicht trennen lassen. Dann trifft auch eine bezugslose Grenze
+    # entsprechend öfter, und gegen die verlangten 5 % zu prüfen behauptete ein Signal, wo
+    # Gleichstand ist. Aufgefallen an einem Testbild aus Streifen: nominal 5 %, tatsächlich
+    # weit mehr — und der Anteil an der Grenze stieg folgerichtig mit.
+    ueber_schranke = sum(1 for s in staerken if s >= schranke)
+    zufall = ueber_schranke / len(staerken)
+    antwort["zufall"] = zufall
+    antwort["zufall_verlangt"] = staerkste
+    if zufall > 2 * staerkste:
+        antwort["warnungen"].append(
+            f"Die Schranke trennt schlecht: verlangt waren die stärksten {staerkste:.0%}, "
+            f"tatsächlich liegen {zufall:.0%} der Bildpunkte darüber. Ursache sind "
+            f"Gleichstände — eine Karte mit wenigen verschiedenen Werten. Der Nullwert "
+            f"steigt entsprechend, und der Anteil unten ist gegen IHN zu lesen.")
+
+    mit_kante = sum(1 for i in innen if staerken[i] >= schranke)
+    antwort["n_mit_kante"] = mit_kante
+    antwort["anteil"] = mit_kante / len(innen)
+    antwort["ueber_zufall"] = antwort["anteil"] > zufall
+    if not antwort["ueber_zufall"]:
+        antwort["warnungen"].append(
+            f"Der Umriss ist an {antwort['anteil']:.1%} der Grenze gezeichnet — das ist "
+            f"NICHT MEHR als Zufall ({zufall:.1%}). Eine Maskengrenze ohne jeden Bezug "
+            f"zum Bild träfe genauso oft. Gemessen vorgekommen (auf-20260822-30: 2.8 % "
+            f"bei einem Bild, dessen ρ mit −0.7406 ordentlich aussah).")
+    return antwort
+
+
+def _kantenstaerken(werte: list[float], breite: int, hoehe: int) -> list[float]:
+    """Je Bildpunkt: wie stark sich die Tiefe zu den Nachbarn ändert.
+
+    Grösster Betrag der Differenz zu den vier Nachbarn — nicht die Summe und nicht der
+    Mittelwert. Eine Kante ist eine Richtung: Ein Punkt auf einer senkrechten Silhouette
+    hat links-rechts einen Sprung und oben-unten keinen, und ein Mittelwert halbierte ihn
+    genau deshalb.
+
+    Am Bildrand fehlen Nachbarn; dort steht 0.0. Das ist kein Messwert, sondern die
+    Feststellung, dass die Nachbarschaft nicht vollständig ist — und der Bildrand zählt
+    ohnehin nicht als Maskengrenze (siehe :func:`_randpunkte`).
+    """
+    staerken = [0.0] * len(werte)
+    for y in range(1, hoehe - 1):
+        for x in range(1, breite - 1):
+            i = y * breite + x
+            hier = werte[i]
+            staerken[i] = max(abs(hier - werte[i - 1]), abs(hier - werte[i + 1]),
+                              abs(hier - werte[i - breite]), abs(hier - werte[i + breite]))
+    return staerken
+
+
 # ======================================================================================
 # Das Paarurteil — beide Zahlen führen, keine verrechnen
 # ======================================================================================
@@ -1472,15 +1622,39 @@ def _median(werte: list[float]) -> float:
 #: arbeitet.
 PAAR_RHO_SCHWELLE = 0.80
 
-#: Schwelle für die gerichtete Tiefenkante. Ebenfalls abgelesen (`auf-20260821-27`).
-#: Trennschärfe dort: 0.0589 zwischen der kleinsten Kante der Anwesenden und der grössten
-#: der Abwesenden — Faktor 10, brauchbar.
+#: Schwelle für die gerichtete Tiefenkante. Abgelesen (`auf-20260821-27`).
+#:
+#: **Sie ist am 22.08. als Tor ausgemustert worden** und steht nur noch für die Zahl, die
+#: weiter mitgemessen wird. Grund (`auf-20260822-30`): Das Mass ist ein **Median** über das
+#: Randband und **bricht zusammen, statt allmählich zu fallen** — zeichnet ein Bild ein
+#: Viertel seines Umrisses, sieht der Median nichts. Ein Ja-Nein-Tor auf einer Grösse mit
+#: dieser Eigenschaft trennt nicht, es kippt.
 PAAR_KANTE_SCHWELLE = 0.05
+
+#: Schwelle für den **Anteil der Grenze mit Kante** — das zweite Bein des Paartests.
+#:
+#: **Abgelesen, provisorisch, und die Zahl ist unbequem.** Gemessen (`auf-20260822-30`):
+#:
+#:     Zufall 5 % · qwen 2.8 % · ohne Führung 6.4 % · mit Führung 24.3 %
+#:     · weichgezeichnet 43.8 % · perfektes Bild 87.4 %
+#:
+#: 0.20 liegt beim **Vierfachen des Zufalls** und bei **einem knappen Viertel** des
+#: perfekten Bildes. Es lässt unser bestes erzeugtes Bild durch und weist das ungeführte
+#: ab — aber es liegt damit sehr viel näher am Zufall als am Richtigen.
+#:
+#: **Das ist ausdrücklich keine Kalibrierung.** Welche Umrisstreue ein Bild haben *muss*,
+#: hat niemand entschieden; die Zahl markiert nur die Lücke zwischen dem, was wir heute
+#: erreichen, und dem, was gut wäre. Wer sie später senkt, weil sonst nichts besteht, hat
+#: aufgegeben — wer sie hebt, verlangt bessere Bilder. Beides ist eine Entscheidung und
+#: keine Messung.
+PAAR_KANTENANTEIL_SCHWELLE = 0.20
 
 
 def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
+               anteil_ergebnis: dict | None = None,
                rho_schwelle: float = PAAR_RHO_SCHWELLE,
-               kante_schwelle: float = PAAR_KANTE_SCHWELLE) -> dict:
+               kante_schwelle: float = PAAR_KANTE_SCHWELLE,
+               anteil_schwelle: float = PAAR_KANTENANTEIL_SCHWELLE) -> dict:
     """Beide Messungen zusammen — **ohne sie zu verrechnen**.
 
     Args:
@@ -1549,14 +1723,24 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
     """
     rho = (rho_ergebnis or {}).get("gerichtet")
     kante = (kante_ergebnis or {}).get("gerichtet")
+    anteil = (anteil_ergebnis or {}).get("anteil")
+    # Das zweite Bein ist seit dem 22.08. der ANTEIL und nicht mehr die Median-Kante.
+    # Liegt kein Anteil vor, fällt der Test auf die alte Form zurück — mit einem Satz
+    # dazu, denn die alte Form kippt statt zu trennen.
+    zweites_bein = "anteil" if anteil is not None else "kante"
     antwort = {
         "bestanden": None, "gemessen": False, "rho": rho, "kante": kante,
-        "traeger": None,
-        "schwellen": {"rho": rho_schwelle, "kante": kante_schwelle},
+        "anteil": anteil, "zweites_bein": zweites_bein, "traeger": None,
+        "schwellen": {"rho": rho_schwelle, "kante": kante_schwelle,
+                      "anteil": anteil_schwelle},
         "begruendung": "",
     }
 
-    fehlt = [n for n, w in (("ρ über der Maske", rho), ("Tiefenkante", kante)) if w is None]
+    zweiter_wert = anteil if zweites_bein == "anteil" else kante
+    zweiter_name = ("Anteil der Grenze mit Kante" if zweites_bein == "anteil"
+                    else "Tiefenkante (Median)")
+    fehlt = [n for n, w in (("ρ über der Maske", rho), (zweiter_name, zweiter_wert))
+             if w is None]
     if fehlt:
         antwort["begruendung"] = (
             f"NICHT GEMESSEN: {' und '.join(fehlt)} liegt nicht vor. Ein Urteil aus der "
@@ -1566,24 +1750,29 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
             f"Ersatz.")
         return antwort
 
+    schwelle_zwei = anteil_schwelle if zweites_bein == "anteil" else kante_schwelle
     rho_ok = rho >= rho_schwelle
-    kante_ok = kante >= kante_schwelle
+    zwei_ok = zweiter_wert >= schwelle_zwei
     antwort["gemessen"] = True
-    antwort["bestanden"] = rho_ok and kante_ok
-    if not rho_ok and not kante_ok:
+    antwort["bestanden"] = rho_ok and zwei_ok
+    if not rho_ok and not zwei_ok:
         antwort["traeger"] = "beide"
     elif not rho_ok:
         antwort["traeger"] = "rho"
-    elif not kante_ok:
-        antwort["traeger"] = "kante"
+    elif not zwei_ok:
+        antwort["traeger"] = zweites_bein
 
     teile = [f"ρ (gerichtet) {rho:+.4f} gegen {rho_schwelle:.2f} — "
              f"{'in Ordnung' if rho_ok else 'ZU NIEDRIG'}",
-             f"Kante {kante:+.4f} gegen {kante_schwelle:.2f} — "
-             f"{'in Ordnung' if kante_ok else 'ZU NIEDRIG'}"]
+             f"{zweiter_name} {zweiter_wert:+.4f} gegen {schwelle_zwei:.2f} — "
+             f"{'in Ordnung' if zwei_ok else 'ZU NIEDRIG'}"]
+    if zweites_bein == "kante":
+        teile.append("ACHTUNG: Als zweites Bein dient die Median-Kante, weil kein Anteil "
+                     "vorliegt. Sie KIPPT, statt zu trennen (auf-20260822-30) — dieses "
+                     "Urteil ist schwächer als eines mit Anteil")
     if antwort["bestanden"]:
         schluss = "Beide Masse tragen."
-    elif antwort["traeger"] == "kante":
+    elif antwort["traeger"] in ("kante", "anteil"):
         schluss = ("Die Tiefenstaffelung stimmt, aber an der Silhouettengrenze steht kein "
                    "Sprung — das Muster eines Bildes, in dem das Bauwerk FEHLT oder "
                    "anderswo steht.")

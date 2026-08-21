@@ -989,20 +989,45 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
       Befund und keine Regel. Ob die beiden Schreibweisen zusammengelegt gehören, ist
       offen.
 
-- [ ] **DIE FRAGE, DIE ÜBER DAS PAARURTEIL ENTSCHEIDET (`auf-30` unterwegs).** Alle drei
-      Bilder aus `auf-28` haben eine Kante von 0.004–0.006 — auf dem Niveau der
-      **Abwesenheit**, nicht der Anwesenheit (perfektes Bild: 0.1615). Der Paartest würde
-      das beste davon abweisen, obwohl sein ρ mit −0.9059 über der Schwelle liegt.
+- [x] **`auf-30` beantwortet: Die Kante misst weder Anwesenheit noch Schärfe, sondern die
+      MEHRHEIT DES UMRISSES.** Beide von mir angebotenen Möglichkeiten sind widerlegt.
 
-      Zwei Möglichkeiten, und sie führen zu entgegengesetztem Handeln: **(a)** Erzeugte
-      Bilder haben an der Silhouette wirklich weiche Ränder — dann hat der Paartest recht.
-      **(b)** Der Schätzer sieht die Kante nicht, obwohl sie da ist — dann misst die Kante
-      Randschärfe statt Anwesenheit, und 0.05 ist für erzeugte Bilder falsch angesetzt.
+      Gegen *(b) Schätzer-Artefakt*: Weichzeichnen nimmt die Kante nur langsam — Radius 4
+      liegt mit 0.0628 noch über der Schwelle, das Niveau der erzeugten Bilder wird erst
+      bei Radius 12.1 erreicht. Gegen *(a) weiches Bild*: Bei ρ = −0.9059 müsste die Kante
+      auf der Kurve 0.0349 sein, gemessen 0.0058 — Faktor 6 daneben, durch Unschärfe nicht
+      herstellbar.
 
-      Getrennt wird das, indem das **perfekte** Blender-Bild künstlich weichgezeichnet
-      wird (Radius 0/1/2/4/8): Die Geometrie bleibt exakt dieselbe, nur der Rand ändert
-      sich. Fällt die Kante schon bei kleinem Radius auf 0.004–0.006, während ρ hoch
-      bleibt, ist (b) belegt.
+      **Die Ursache ist der Median.** Das Mass bildet ihn über das ganze Randband; zeichnet
+      ein Bild nur ein Viertel seines Umrisses, sieht der Median **nichts**. Ohne jeden
+      Schätzer nachgemessen — Anteil der Grenze, der eine Kante trägt:
+
+      | perfekt | weichgezeichnet-8 | mit Führung | ohne Führung | qwen |
+      |---|---|---|---|---|
+      | 87.4 % | 43.8 % | 24.3 % | 6.4 % | **2.8 %** |
+- [x] **Das zweite Bein ist gebaut (22.08.): `anteil_grenze_mit_kante`.** Es fällt
+      allmählich statt zu kippen, braucht keinen Schätzer — und **bringt seinen eigenen
+      Nullwert mit**: Werden die stärksten 5 % als Kante gewertet, trifft eine bezugslose
+      Grenze ebenfalls rund 5 %. Keine andere Schwelle dieses Moduls hat das; überall
+      sonst kostet der Nullwert eine eigene Nullprobe je Szene.
+
+      **Eine Berichtigung beim Bauen, gefunden am eigenen Testbild:** Bei vielen
+      Gleichständen sind die „stärksten 5 %" gar nicht 5 %. Gemeldet wird darum der
+      **tatsächliche** Anteil über der Schranke, und gegen ihn wird gelesen. An einer
+      Streifenkarte: roh 57.9 % der Grenze getroffen — sähe nach viel aus —, echter
+      Nullwert 59.4 %, also **nicht mehr als Zufall**. Gegen die verlangten 5 % gelesen
+      hätte das Mass ein Signal behauptet, wo keines ist.
+- [ ] **DIE WARNUNG, die den Paartest überhaupt rechtfertigt.** Qwen erreicht ρ = −0.7406
+      — ordentlich, deutlich über dem Rauschboden — und zeichnet den Umriss an **2.8 %**
+      der Grenze, also **unter Zufall**. **Ein anständiges ρ ist ohne jede Umrisstreue
+      erreichbar.** Wer ρ allein wertet, wertet ein Bild, das die Tiefen richtig staffelt
+      und das Gebäude nicht zeichnet.
+- [ ] **`PAAR_KANTENANTEIL_SCHWELLE = 0.20` ist abgelesen und unbequem.** Sie liegt beim
+      Vierfachen des Zufalls und bei einem knappen Viertel des perfekten Bildes. Sie lässt
+      unser bestes erzeugtes Bild durch (24.3 %) und weist das ungeführte ab (6.4 %) —
+      aber sie liegt damit **sehr viel näher am Zufall als am Richtigen**. Welche
+      Umrisstreue ein Bild haben *muss*, hat niemand entschieden. Die Zahl markiert die
+      Lücke, sie behauptet nicht, dass 20 % genügen.
 - [ ] **Verdacht gegen die frontale INNENANSICHT — ungemessen, und deshalb nicht
       abgeschaltet.** `auf-29` fand: Für ρ über der Maske muss der Blick **mehr als eine
       Fläche** zeigen, sonst misst man den Schätzer statt der Geometrie (frontal vor einer

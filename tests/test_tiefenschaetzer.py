@@ -1093,3 +1093,15 @@ def test_die_gemessene_polaritaet_schlaegt_die_deklarierte(bild):
     assert (geometrie_qa.GEMESSENE_POLARITAET["depth-anything-v2-small"]
             == ts.POLARITAETSZEICHEN["disparitaet"]), (
         "hier stimmen sie überein — dass sie es tun, ist ein Befund und keine Regel")
+
+
+def test_der_kantenanteil_kommt_mit_und_traegt_das_paarurteil(bild):
+    """Das zweite Bein muss auch wirklich ankommen — sonst fällt der Paartest still auf
+    die Median-Kante zurück, die kippt statt zu trennen."""
+    _soll, _ist, maske = _zweidimensionale_szene()
+
+    urteil = _urteil_mit(maske, bild)
+
+    assert urteil["kantenanteil"] is not None
+    assert urteil["paarurteil"]["zweites_bein"] == "anteil", (
+        "der Paartest nimmt den Anteil und nicht die Median-Kante")

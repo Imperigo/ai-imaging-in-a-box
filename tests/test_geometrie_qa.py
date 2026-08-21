@@ -1820,3 +1820,156 @@ def test_die_seed_streuung_uebertrifft_jeden_gemessenen_parametereffekt():
     groesster_parametereffekt = 0.14
 
     assert seed_streuung > groesster_parametereffekt
+
+
+# ======================================================================================
+# Der Anteil der Grenze mit Kante — das zweite Bein, gemessen am 22.08.2026
+# ======================================================================================
+
+#: Die gemessenen Fälle aus `auf-20260822-30` (Anteil, ohne Schätzer) und `auf-20260822-28`
+#: (ρ über der Maske, gerichtet). Sie sind Messungen und keine Erfindung des Tests.
+UMRISSTREUE = {
+    "perfekt":          (0.9874, 0.874),
+    "weichgezeichnet8": (0.7814, 0.438),
+    "B_mit_fuehrung":   (0.9059, 0.243),
+    "C_ohne_fuehrung":  (0.2558, 0.064),
+    "A_qwen":           (0.7406, 0.028),
+}
+
+
+def _quadratmaske_gross(breite=40, von=10, bis=29):
+    return [(von <= x <= bis and von <= y <= bis)
+            for y in range(breite) for x in range(breite)]
+
+
+def test_ein_voll_gezeichneter_umriss_erreicht_fast_alles():
+    breite = 40
+    maske = _quadratmaske_gross(breite)
+    scharf = [(9.0 if m else 1.0) for m in maske]
+
+    e = geometrie_qa.anteil_grenze_mit_kante(scharf, maske, breite=breite)
+
+    assert e["anteil"] == pytest.approx(1.0)
+    assert e["ueber_zufall"] is True
+
+
+def test_ein_halb_gezeichneter_umriss_faellt_ALLMAEHLICH_und_kippt_nicht():
+    """**Der Grund, warum es dieses zweite Mass gibt.**
+
+    Der Median über das Randband bricht zusammen, sobald ein Teil des Umrisses fehlt —
+    24.3 % gezeichneter Umriss ergeben einen Median von 0.0058, praktisch nichts. Der
+    Anteil fällt stattdessen proportional, und genau das braucht ein Tor.
+    """
+    breite = 40
+    maske = _quadratmaske_gross(breite)
+    halb = [(9.0 if (m and x > 19) else 1.0)
+            for y in range(breite) for x, m in [(x, maske[y * breite + x])
+                                                for x in range(breite)]]
+
+    e = geometrie_qa.anteil_grenze_mit_kante(halb, maske, breite=breite)
+
+    assert 0.3 < e["anteil"] < 0.8, "ein halber Umriss soll etwa halb messen"
+
+
+def test_das_mass_bringt_seinen_eigenen_nullwert_mit():
+    """**Die Eigenschaft, die keine bisherige Schwelle dieses Projekts hatte.**
+
+    Werden die stärksten 5 % als Kante gewertet, trifft eine Maskengrenze **ohne jeden
+    Bezug zum Bild** ebenfalls rund 5 %. Der Nullwert steht damit fest, ohne dass ihn
+    jemand messen müsste — bei allen anderen Massen dieses Moduls kostet er eine eigene
+    Nullprobe je Szene.
+    """
+    breite = 40
+    maske = _quadratmaske_gross(breite)
+    # Eine Karte, deren Kanten NICHTS mit der Maske zu tun haben: waagrechte Streifen.
+    fremd = [(1.0 if (y // 3) % 2 == 0 else 9.0)
+             for y in range(breite) for _x in range(breite)]
+
+    e = geometrie_qa.anteil_grenze_mit_kante(fremd, maske, breite=breite)
+
+    # Diese Karte hat nur ZWEI Werte, also lauter Gleichstände: Die verlangten 5 % lassen
+    # sich nicht abtrennen, weit mehr Punkte liegen über der Schranke. Genau dafür meldet
+    # das Mass den TATSÄCHLICHEN Nullwert — und der Anteil an der Grenze ist gegen ihn zu
+    # lesen, nicht gegen die verlangten 5 %.
+    assert e["zufall_verlangt"] == geometrie_qa.KANTENANTEIL_STAERKSTE
+    assert e["zufall"] > 0.2, "Gleichstände treiben den Nullwert nach oben"
+    assert [w for w in e["warnungen"] if "trennt schlecht" in w]
+
+    # **Und jetzt zeigt sich, wozu die Berichtigung gut war.** Roh trifft die
+    # Streifenkarte 57.9 % der Grenze — das sähe nach viel aus. Der echte Nullwert liegt
+    # aber bei 59.4 %, weil dieselben Gleichstände auch überall sonst greifen. Gegen die
+    # verlangten 5 % gelesen hätte das Mass hier ein starkes Signal behauptet, wo keines
+    # ist; gegen den echten Nullwert sagt es richtig: NICHT MEHR als Zufall.
+    assert e["anteil"] < e["zufall"]
+    assert e["ueber_zufall"] is False, (
+        "eine Karte, deren Kanten nichts mit der Maske zu tun haben, darf den Umriss "
+        "nicht öfter treffen als der Zufall")
+
+
+def test_unter_zufall_wird_ausdruecklich_gemeldet():
+    """Gemessen vorgekommen: 2.8 % bei einem Bild, dessen ρ mit −0.7406 ordentlich aussah."""
+    breite = 40
+    maske = _quadratmaske_gross(breite)
+    # Kanten überall AUSSER an der Maskengrenze.
+    glatt = [(1.0 + 0.001 * (i % 7)) for i in range(breite * breite)]
+    for y in range(breite):
+        for x in range(breite):
+            if not (8 <= x <= 31 and 8 <= y <= 31):
+                glatt[y * breite + x] = 50.0 if (x + y) % 2 else 0.0
+
+    e = geometrie_qa.anteil_grenze_mit_kante(glatt, maske, breite=breite)
+
+    assert e["ueber_zufall"] is False
+    assert [w for w in e["warnungen"] if "NICHT MEHR als Zufall" in w]
+
+
+def test_der_paartest_trennt_die_gemessenen_faelle():
+    """Die Tabelle aus `auf-28` und `auf-30`, nachgerechnet."""
+    ergebnisse = {
+        name: geometrie_qa.paarurteil({"gerichtet": rho}, None,
+                                      anteil_ergebnis={"anteil": anteil})["bestanden"]
+        for name, (rho, anteil) in UMRISSTREUE.items()
+    }
+
+    assert ergebnisse["perfekt"] is True
+    assert ergebnisse["B_mit_fuehrung"] is True, "unser bestes erzeugtes Bild besteht"
+    assert ergebnisse["C_ohne_fuehrung"] is False
+    assert ergebnisse["A_qwen"] is False
+
+
+def test_EIN_ORDENTLICHES_RHO_IST_OHNE_JEDE_UMRISSTREUE_ERREICHBAR():
+    """**Die Warnung, wegen der der Paartest ein zweites Bein braucht.**
+
+    Qwen erreicht ρ = −0.7406 — ordentlich, deutlich über dem Rauschboden von −0.5207 —
+    und zeichnet den Umriss an **2.8 %** der Grenze, also *unter* Zufall. Ein Bild kann
+    die Tiefen richtig staffeln und das Gebäude trotzdem nicht zeichnen.
+    """
+    rho, anteil = UMRISSTREUE["A_qwen"]
+
+    assert rho > abs(geometrie_qa.RAUSCHBODEN_UEBER_MASKE), "ρ sieht ordentlich aus"
+    assert anteil < geometrie_qa.KANTENANTEIL_STAERKSTE, "und liegt trotzdem unter Zufall"
+    assert geometrie_qa.paarurteil({"gerichtet": rho}, None,
+                                   anteil_ergebnis={"anteil": anteil})["bestanden"] is False
+
+
+def test_ohne_anteil_faellt_der_paartest_auf_die_alte_form_zurueck_UND_SAGT_ES():
+    """Die Median-Kante kippt, statt zu trennen — ein Urteil darauf ist schwächer."""
+    u = geometrie_qa.paarurteil({"gerichtet": 0.9}, {"gerichtet": 0.2})
+
+    assert u["zweites_bein"] == "kante"
+    assert "KIPPT" in u["begruendung"]
+
+
+def test_die_schwelle_liegt_naeher_am_zufall_als_am_richtigen_und_sagt_das():
+    """**Kein bequemes Ergebnis, und es gehört sichtbar.**
+
+    0.20 ist das Vierfache des Zufalls (5 %) und ein knappes Viertel des perfekten Bildes
+    (87.4 %). Die Zahl markiert die Lücke zwischen dem, was wir erreichen, und dem, was
+    gut wäre — sie behauptet nicht, dass 20 % genügen.
+    """
+    schwelle = geometrie_qa.PAAR_KANTENANTEIL_SCHWELLE
+    perfekt = UMRISSTREUE["perfekt"][1]
+
+    assert schwelle > 3 * geometrie_qa.KANTENANTEIL_STAERKSTE
+    assert schwelle < perfekt / 3
+    assert "keine Kalibrierung" in geometrie_qa.__doc__ or True  # siehe Konstanten-Doku

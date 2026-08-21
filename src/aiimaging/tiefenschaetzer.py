@@ -1112,7 +1112,8 @@ def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
     Bauwerks nichts erfahren — der Score über das ganze Bild beantwortet beides nicht
     (`auf-20260821-26`: ein leeres Grundstück erreicht dort 0.9530 und besteht das Tor).
     """
-    leer = {"rho_maske": None, "kante": None, "paarurteil": None}
+    leer = {"rho_maske": None, "kante": None, "kantenanteil": None,
+            "paarurteil": None}
     if maske is None or breite is None:
         return leer
 
@@ -1125,8 +1126,12 @@ def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
     rho = geometrie_qa.rho_ueber_maske(list(soll), list(roh), maske, polaritaet=zeichen)
     kante = geometrie_qa.kante_an_maskengrenze(list(roh), maske, breite=breite,
                                                polaritaet=zeichen)
-    return {"rho_maske": rho, "kante": kante,
-            "paarurteil": geometrie_qa.paarurteil(rho, kante)}
+    # Das zweite Bein des Paartests seit dem 22.08.: der ANTEIL der Grenze mit Kante.
+    # Die Median-Kante bleibt daneben stehen, weil sie gemessen ist — aber sie kippt,
+    # statt zu trennen, und taugt darum nicht als Tor (`auf-20260822-30`).
+    anteil = geometrie_qa.anteil_grenze_mit_kante(list(roh), maske, breite=breite)
+    return {"rho_maske": rho, "kante": kante, "kantenanteil": anteil,
+            "paarurteil": geometrie_qa.paarurteil(rho, kante, anteil_ergebnis=anteil)}
 
 
 def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
