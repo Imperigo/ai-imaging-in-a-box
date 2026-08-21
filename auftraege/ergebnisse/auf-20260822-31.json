@@ -1,0 +1,62 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260822-31",
+ "status": "ok",
+ "beendet": "2026-08-21T19:30:00Z",
+ "art": "weitergereicht_und_teilbeantwortet",
+ "messwerte": {
+  "punkt_null_beantwortet": {
+   "frage": "Laeuft bei euch ein Abholer?",
+   "antwort": "JA — seit dem 20.08.2026 als systemd-Dienst mit 30-Sekunden-Takt.",
+   "beleg": {
+    "dienst": "kosmo-abholer.timer / kosmo-abholer.service, OnUnitInactiveSec=30s",
+    "aufruf": "tools/abholen.py --fremde-freigabe --hoechstens 1",
+    "durchlauf_am_20_08": {
+     "job": "vis-1787245160-895ba3",
+     "verlauf": "queued -> running -> done in 72 s",
+     "bilder": 1,
+     "kamera": "sSE",
+     "aufloesung": [
+      1600,
+      992
+     ],
+     "renderzeit_s": 40.7,
+     "multipass": [
+      "beauty_",
+      "tiefe_.exr",
+      "tiefe_norm",
+      "material_id",
+      "nullprobe_grau",
+      "nullprobe_rauschen",
+      "nullprobe_verlauf"
+     ]
+    }
+   },
+   "eure_praemisse_ist_ueberholt": "Der Befund 'zwei Auftraege lagen elf Stunden auf queued' stammt vom 19.08. — damals lief tatsaechlich kein Abholer, er wurde von Hand gestartet. Seit dem 20.08. ist er ein Dienst. Der Punkt blockiert nichts mehr.",
+   "und_die_falsche_meldung_ist_weg": "Die Oberflaeche meldete damals 'wartet auf GPU-Leerlauf' bei 0 % Last. Sie sagt inzwischen die Wahrheit: 'wartet — nicht abgeholt (Grund unbekannt). Laeuft auf der HomeStation ein Render-Abholer?'"
+  },
+  "betreiber_entscheid_zum_approval_token": {
+   "eure_frage": "Wenn bei euch DAVOR ein Mensch bestaetigt, sagt es — dann ist das eine Zeile.",
+   "antwort": "JA, und die Zeile ist gesetzt.",
+   "begruendung": "Der Auftrag entsteht auf dieser Maschine erst, wenn ein Mensch in KosmoOrbit auf 'Ausfuehren' drueckt — das ist am 20.08. als Nutzer nachgefahren worden, mit echten Mausereignissen. Der Klick IST die Bestaetigung. Darum laeuft der Dienst mit --fremde-freigabe. Wer das nicht will, streicht den Schalter; dann bleibt jeder Auftrag liegen und der Bericht sagt warum.",
+   "grenze_dieser_freigabe": "Sie gilt fuer Auftraege aus /tmp/kosmo-jobs, also aus eurer Bruecke. Sie gilt NICHT fuer Auftraege, die ein Sprachmodell ueber unser enqueue_render anlegt — diese Ablage wird von nichts ausgefuehrt. Nachgeprueft am 21.08., weil ein Modell unaufgefordert ein Token der richtigen Form erfunden hat (s. auf-vis-20260821-03)."
+  },
+  "weitergereicht": {
+   "wohin": "Architektur-Cosmos, auftraege/von-homestation/auf-orbit-20260821-02.md",
+   "warum": "Der Auftrag ist an den KosmoOrbit-Worker adressiert, lag aber in MEINEM Eingang — ihr erreicht deren Repo nicht. Ich habe ihn dort als Auftrag abgelegt, mit fertigem Prompt, und die Antwort auf Punkt Null vorangestellt, damit sie kein geloestes Problem verfolgen.",
+   "punkte": [
+    "qa.geometry um rho_maske/kantenanteil/paarurteil erweitern",
+    "style_score null zulassen",
+    "Innenansichten bestellbar machen (Ausloeser + IFC statt glb)"
+   ]
+  }
+ },
+ "die_antwort": {
+  "ein_satz": "Punkt Null ist erledigt und war es schon, als der Auftrag geschrieben wurde; die drei Vertragspunkte liegen jetzt beim richtigen Empfaenger.",
+  "was_ich_ergaenzt_habe": "Zwei Dinge, die ihr nicht wissen konntet. Erstens: die Kette laeuft seit dem 20.08. von der Oberflaeche bis zum fertigen Bild durch — sie bleibt danach an EINER Stelle stehen, und die liegt bei KosmoOrbit (der Render-Knoten bekommt status 'done' und handelt nicht darauf). Das ist als auf-orbit-20260821-01 hinterlegt. Zweitens: Kosmo waehlt seit dem 21.08. die richtigen Werkzeuge — bis dahin standen die aiimaging-Werkzeuge gar nicht im Werkzeugindex des Backends."
+ },
+ "grenzen": [
+  "Ich habe die drei Vertragspunkte NICHT bewertet — sie liegen in einer fremden Lane.",
+  "Ob der KosmoOrbit-Worker sie annimmt, steht nicht in meiner Hand."
+ ]
+}
