@@ -1019,6 +1019,50 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       an *einem* Aufbau gemessen und taugt als Grössenordnung, nicht als Naturkonstante.
       Eine gemessene Grösse, die nur in Kommentaren lebt, kann nicht rechnen und veraltet
       an acht Stellen gleichzeitig.
+- [x] **Der Verdeckungstest trägt — und V3 hat keine Lücke (`auf-32`, am Gerät).**
+      Alle vier vorhergesagten Fälle sind eingetroffen. Der Fall **ohne** Vorhersage —
+      Kamera *in* der Wand — ist beantwortet: Blender meldet die Rückseite bei genau der
+      halben Wandstärke, in **beide** Blickrichtungen. Rückseiten werden nicht
+      übersprungen.
+
+      **Meine notierte Grenze war falsch, und der Worker hat sie nachgemessen statt
+      stehenzulassen.** Ich hatte vermutet, eine sehr dünne Wand könne durchrutschen (bei
+      4 cm läge die Rückseite bei 2 cm, innerhalb der Toleranz von 5 cm). Gemessen von
+      30 cm bis 2 cm: **jede** Stärke wird als verdeckt gemeldet. Der Grund ist die
+      Semantik der Toleranz — sie misst gegen das **Ziel**, nicht gegen die Kamera. Bei
+      einem Ziel in 14 m liegt ein Treffer nach 1 cm dreizehn Meter davor.
+
+      Die Toleranz selbst ist nachgemessen: bis 4 cm im Bauteil frei, ab 5 cm verdeckt —
+      wirksam ist also „echt kleiner als 5 cm". In allen sechs Fällen, in denen ein Ziel
+      auf einer Fläche lag, wurde sie **gar nicht gebraucht**: Treffer und Ziel fielen
+      exakt zusammen.
+- [x] **`IfcSpace` steckte als massives Mesh in der glb — gefunden neben dem Auftrag.**
+      Der wertvollste Teil von `auf-32` stand gar nicht im Auftrag: Der Verdeckungstest
+      stiess darauf, weil sein getroffenes Objekt in einem Raum nicht die Wand war,
+      sondern der **Raumkörper selbst**. Sieben Meshes in der glb, davon zwei `IfcSpace`.
+
+      Ein `IfcSpace` ist Luft; als Mesh ist es ein massiver Quader, und eine
+      Innenaufnahme steht mitten darin. Die Tiefenkarte sähe eine graue Fläche
+      unmittelbar vor dem Objektiv — in **jedem** Raum, in dem je gerendert wird.
+      Aufgefallen wäre das erst beim ersten Innenraum-Render, und dann als „das
+      Bildmodell liefert Grau". Genau die Fehlerart, die dieses Projekt am teuersten
+      bezahlt.
+
+      `NICHT_GEBAUTE_SUBSTANZ` im Konversions-Runner überspringt jetzt fünf Typen, jeden
+      mit eigenem Grund, und **zählt sie im Report**. Mit auf der Liste steht
+      `IfcOpeningElement`, obwohl unsere Testgeometrie keinen hat: Er ist der
+      *Ausschnitt*, nicht das Bauteil — wer ihn mitnimmt, mauert jedes Fenster mit einem
+      Körper zu, der genau die Fensterform hat. In jeder echten IFC kommt er vor.
+
+      Geprüft **ohne** `ifcopenshell` (die Liste ist eine Liste von Namen und eine reine
+      Funktion darüber) — eine Regel, die sich nur dort prüfen liesse, wo die Bibliothek
+      liegt, würde nie geprüft. Die Konversion selbst ist damit **nicht** geprüft:
+      `auf-20260823-34`.
+- [ ] **Über die Eck-Standpunkte sagt der Verdeckungstest wenig.** Ihr Blickziel liegt im
+      offenen Raum, nicht auf einer Fläche: `getroffen=False`, und geprüft ist damit nur,
+      dass *nichts* dazwischensteht. Beim frontalen Standpunkt liegt das Ziel auf der
+      Wand und der Test greift voll. Kein Fehler, aber eine ungleiche Absicherung — und
+      sie steht hier, damit niemand beide für gleich geprüft hält.
 - [ ] **`AUTO_RICHTUNGEN = ("sSE",)` ist eine einzige Richtung — HABS verlangt drei.**
       Umgebungsansicht, Frontalansicht, und zwei Über-Eck-Ansichten auf **gegenüberliegenden**
       Diagonalen. Unsere Richtungstabelle kann das bereits abbilden; es ist eine

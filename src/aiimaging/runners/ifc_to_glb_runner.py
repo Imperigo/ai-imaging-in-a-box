@@ -32,6 +32,48 @@ import json
 import sys
 
 
+#: IFC-Produkttypen, die **keine gebaute Substanz** sind und darum nicht in die glb gehören.
+#:
+#: Am Gerät gefunden (`auf-20260822-32`, 21.08.2026), als Befund *neben* dem eigentlichen
+#: Auftrag: Die aus `make_test_ifc.py --raeume` erzeugte glb trägt sieben Meshes — ein
+#: `IfcSlab`, vier `IfcWall` und **zwei `IfcSpace`**. Ein `IfcSpace` ist ein Luftvolumen,
+#: und als Mesh ist es ein **massiver Quader**. Eine Innenaufnahme steht mitten darin:
+#: Die Tiefenkarte sähe eine graue Fläche unmittelbar vor dem Objektiv, und zwar in jedem
+#: Raum, in dem je gerendert wird.
+#:
+#: Jeder Eintrag mit seinem eigenen Grund, denn eine Sammelbegründung lädt zum
+#: Weiterwachsen ein:
+#:
+#: * ``IfcSpace`` — Luft. Die Zone, in der sich jemand aufhält; kein Bauteil.
+#: * ``IfcOpeningElement`` — der **Ausschnitt**, nicht das Bauteil. Er wird von der Wand
+#:   abgezogen; wer ihn wieder hinzufügt, füllt jedes Fenster und jede Tür mit einem
+#:   Block. Bei unserer Testgeometrie kommt er nicht vor, in jeder echten IFC schon.
+#: * ``IfcVirtualElement`` — laut Norm ausdrücklich eine nicht-körperliche Grenze.
+#: * ``IfcAnnotation``, ``IfcGrid`` — Zeichnungshilfen. Achsen und Beschriftungen sind
+#:   nichts, was ein Bildmodell abbilden soll.
+#:
+#: **Weggelassen wird nichts stillschweigend:** Der Report zählt, was übersprungen wurde,
+#: je Typ. Eine Konversion, die Geometrie verschluckt und schweigt, ist genau der Fehler,
+#: gegen den dieses Projekt antritt.
+NICHT_GEBAUTE_SUBSTANZ = (
+    "IfcSpace",
+    "IfcOpeningElement",
+    "IfcVirtualElement",
+    "IfcAnnotation",
+    "IfcGrid",
+)
+
+
+def ist_gebaute_substanz(typname: str) -> bool:
+    """Gehört ein IFC-Typ in die glb? — dieselbe Frage ohne ``ifcopenshell``.
+
+    Die Konversion selbst fragt mit ``produkt.is_a(...)``, weil das die Vererbung kennt.
+    Diese Funktion beantwortet dieselbe Frage für einen blossen Typnamen — und ist damit
+    **ohne die Bibliothek prüfbar**, also auch dort, wo es kein `.venv-ifc` gibt.
+    """
+    return str(typname) not in NICHT_GEBAUTE_SUBSTANZ
+
+
 def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
     """Konvertiert IFC (IFC4 oder IFC2X3) → glb (Y-up) und liefert einen Report.
 
@@ -49,8 +91,16 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
 
     szene = trimesh.Scene()
     n_elemente = n_dreiecke = 0
+    uebersprungen: dict[str, int] = {}
     for produkt in modell.by_type("IfcProduct"):
         if not getattr(produkt, "Representation", None):
+            continue
+        # `is_a(name)` und nicht `is_a() in ...`: Es kennt die Vererbung, und ein
+        # Untertyp von IfcSpace ist genauso wenig gebaute Substanz wie IfcSpace selbst.
+        nicht_substanz = next(
+            (t for t in NICHT_GEBAUTE_SUBSTANZ if produkt.is_a(t)), None)
+        if nicht_substanz is not None:
+            uebersprungen[produkt.is_a()] = uebersprungen.get(produkt.is_a(), 0) + 1
             continue
         try:
             form = ifcopenshell.geom.create_shape(einst, produkt)
@@ -66,7 +116,20 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
         n_dreiecke += len(flaechen)
 
     if n_elemente == 0:
-        return {"status": "error", "error": "keine Geometrie im IFC", "glb_path": None}
+        return {
+            "status": "error",
+            "error": (
+                "keine Geometrie im IFC"
+                + (f" — {sum(uebersprungen.values())} Produkte waren zwar da, sind aber "
+                   f"keine gebaute Substanz ({', '.join(sorted(uebersprungen))}) und "
+                   f"wurden übersprungen. Eine Datei, die nur Räume oder nur Achsen "
+                   f"enthält, ergibt kein Bauwerk."
+                   if uebersprungen else ".")
+            ),
+            "glb_path": None,
+            "n_uebersprungen": sum(uebersprungen.values()),
+            "uebersprungen": dict(sorted(uebersprungen.items())),
+        }
 
     bbox_zup = szene.bounds.tolist()                  # noch in nativen IFC-Metern (Z oben)
 
@@ -82,6 +145,16 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
         "bbox": bbox_zup,
         "n_elements": n_elemente,
         "n_triangles": n_dreiecke,
+        # Was NICHT in der glb steht, und warum. Ohne diese beiden Felder wäre der
+        # Ausschluss unsichtbar — und ein unsichtbarer Ausschluss ist ein Datenverlust,
+        # auch wenn er richtig ist.
+        "n_uebersprungen": sum(uebersprungen.values()),
+        "uebersprungen": dict(sorted(uebersprungen.items())),
+        "uebersprungen_grund": (
+            "Kein Bauteil, sondern Luft, Ausschnitt oder Zeichnungshilfe — siehe "
+            "NICHT_GEBAUTE_SUBSTANZ. Ein IfcSpace als Mesh ist ein massiver Quader; "
+            "eine Innenaufnahme stünde mitten darin."
+        ),
         "bbox_note": "bbox in nativen IFC-Metern (Z oben); die glb selbst ist Y-up",
         "error": None,
     }

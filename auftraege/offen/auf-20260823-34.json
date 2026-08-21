@@ -1,0 +1,35 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260823-34",
+  "art": "multipass",
+  "erstellt": "2026-08-23T02:00:00Z",
+  "beschreibung": "DEINEN BEFUND AUS auf-32 ZU ENDE MESSEN. Du hast neben dem Auftrag gemeldet, dass die IfcSpace-Koerper als massive Meshes in der glb stecken — 7 Meshes, davon zwei IfcSpace, und beim frontalen Standpunkt in Raum-Sued war das getroffene Objekt der Raumkoerper selbst. Das war der wertvollste Teil des Ergebnisses, und du hast richtig gehandelt: gemeldet, nichts geaendert.\n\nGEAENDERT HABE ICH ES JETZT, und zwar in src/aiimaging/runners/ifc_to_glb_runner.py. Neu dort:\n    NICHT_GEBAUTE_SUBSTANZ = ('IfcSpace', 'IfcOpeningElement', 'IfcVirtualElement', 'IfcAnnotation', 'IfcGrid')\nDie Konversion ueberspringt diese Produkte und ZAEHLT sie im Report (n_uebersprungen, uebersprungen je Typ). Weggelassen wird nichts stillschweigend.\n\nDie Auswahl ist hier ohne ifcopenshell geprueft (tests/test_ifc_glb_filter.py, 6 Faelle) — das ist eine Pruefung der LISTE, nicht der Konversion. Dieses Environment hat kein .venv-ifc. Ob die Konversion mit der Aenderung noch laeuft und was danach in der glb steht, kann nur dein Rechner sagen.\n\n=== WARUM DAS DRINGT ===\nEin IfcSpace ist Luft, als Mesh aber ein massiver Quader. Eine Innenaufnahme steht MITTEN DARIN. Die Tiefenkarte saehe eine graue Flaeche unmittelbar vor dem Objektiv, und zwar in jedem Raum, in dem je gerendert wird. Aufgefallen waere es erst beim ersten Innenraum-Render — und dann als 'das Bildmodell liefert Grau'.\n\nIfcOpeningElement steht mit auf der Liste, obwohl unsere Testgeometrie keinen hat. Es ist der AUSSCHNITT, nicht das Bauteil: Er wird von der Wand abgezogen, und wer ihn wieder hinzufuegt, mauert jedes Fenster und jede Tuer mit einem Koerper zu, der genau die Fensterform hat. In jeder echten IFC kommt er vor.\n\n=== WAS ZU TUN IST ===\n\nR1 · KONVERTIEREN, WIE BISHER. tools/make_test_ifc.py --raeume, dann die Konversion. ERWARTUNG: status ok, n_elements = 5 (ein IfcSlab, vier IfcWall), n_uebersprungen = 2, uebersprungen = {'IfcSpace': 2}. Vorher waren es 7 Elemente. Wenn eine andere Zahl herauskommt, sag welche und welche Typen — die 7 stammen aus deiner eigenen Messung.\n\nR2 · IST DIE BBOX DIESELBE? Vergleiche bbox aus R1 mit der aus auf-32 ([[0,-0,-0.25],[8,5,3]] nach deiner Messung, in glb-Koordinaten). ERWARTUNG: unveraendert, denn die Raumkoerper liegen INNERHALB der Waende. Weicht sie ab, ist das ein Befund: Dann ragte ein Raumkoerper heraus, und die Kamerarechnung hat sich bisher an Luft orientiert.\n\nR3 · DER STRAHL TRIFFT JETZT DIE WAND. Wiederhole V5 aus auf-32 (die vier Innenraum-Standpunkte, _sicht_frei). ERWARTUNG bei den FRONTALEN: frei=True wie vorher, aber 'objekt' nennt jetzt eine IfcWall statt eines IfcSpace, und abstand_treffer aendert sich nicht (der Raumkoerper endete ohnehin an der Wand). Wenn abstand_treffer sich AENDERT, sag um wieviel.\n\nR4 · DIE EIGENTLICHE FRAGE: EIN INNENRAUM-MULTIPASS. Fahre einen Multipass mit --auge und --blick-auf aus einem der frontalen Standpunkte (Raum-Nord: auge 4.0,0.60,1.35 in IFC-Koordinaten — rechne selbst um, falls der Runner Y-up erwartet). Kein Bildmodell, nur der Multipass.\n  ERWARTUNG: Die Tiefenkarte zeigt einen Raum — Wandflaechen in 1.9 bis 4.1 m, nicht eine einzige Flaeche bei ~0 m. Miss den Anteil der Bildpunkte, die naeher als 0.5 m liegen. Ist er gross, steckt die Kamera immer noch in etwas.\n  Wenn du magst, fahre denselben Standpunkt EINMAL mit der alten Konversion (git stash oder eine Kopie des Runners von vor der Aenderung) — dann ist der Unterschied belegt statt behauptet. Nur wenn es dich nicht mehr als ein paar Minuten kostet.\n\nR5 · EINE IFC MIT OEFFNUNGEN, WENN DU EINE HAST. Falls in deinem Bestand eine synthetische oder eine offen lizenzierte IFC mit IfcOpeningElement liegt: konvertieren und melden, wieviele uebersprungen wurden und ob die Fenster im Beauty-Bild jetzt offen sind. Wenn du keine hast, ueberspring das — ich baue dann eine.\n\n=== WAS NICHT ZU TUN IST ===\n- Die Liste NICHT erweitern, ohne es zu melden. Eine wachsende Ausschlussliste loescht irgendwann etwas Gebautes, und das faellt genauso spaet auf wie der IfcSpace.\n- Kein Bildmodell. Es geht um Geometrie.\n- Wenn R1 fehlschlaegt (die Konversion laeuft nicht mehr), NICHT reparieren — schick mir den Traceback. Der Fehler waere dann meiner.",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_ifc.py --raeume (dieselbe wie in auf-32)"
+  },
+  "params": {
+    "faelle": {
+      "R1": "konvertieren — n_elements, n_uebersprungen, uebersprungen je Typ",
+      "R2": "bbox gegen auf-32 vergleichen",
+      "R3": "V5 wiederholen — trifft der Strahl jetzt die Wand?",
+      "R4": "Innenraum-Multipass: zeigt die Tiefenkarte einen Raum oder eine graue Flaeche?",
+      "R5": "IFC mit Oeffnungen, falls vorhanden"
+    },
+    "erwartung_R1": {"n_elements": 5, "n_uebersprungen": 2, "uebersprungen": {"IfcSpace": 2}},
+    "erwartung_R2": "bbox unveraendert gegenueber auf-32",
+    "gemessen_wird_R4": "Anteil der Bildpunkte naeher als 0.5 m in der Tiefen-EXR"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 200,
+    "nur_bei_leerlauf": false,
+    "hinweis": "Kein Bildmodell. Samplezahl darf klein sein."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": false,
+    "hinweis": "R1 und R4 ausfuehrlich. R4 ist die Frage, wegen der die Aenderung ueberhaupt gemacht wurde — alles andere ist Beiwerk. Wenn die Konversion nicht mehr laeuft: Traceback statt Reparatur."
+  }
+}
