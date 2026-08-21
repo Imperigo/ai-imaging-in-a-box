@@ -1,0 +1,341 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260822-32",
+ "status": "ok",
+ "beendet": "2026-08-21T20:10:00Z",
+ "messwerte": {
+  "aufbau": {
+   "blender": "5.2.0 LTS",
+   "warum_dieser": "Derselbe, den die Kette nimmt: seams.finde_blender() faellt auf den PATH zurueck.",
+   "toleranz_m": 0.05,
+   "kein_rendern": true,
+   "kein_bildmodell": true,
+   "code_unveraendert": true,
+   "geometrie": "synthetisch (Quader 6x6x3) fuer V0-V4; make_test_ifc.py --raeume fuer V5"
+  },
+  "faelle": {
+   "V1": {
+    "was": "freie Sicht aufs Bauwerk",
+    "erwartung": "frei=True, getroffen=True, abstand_treffer nahe abstand_ziel",
+    "ergebnis": {
+     "frei": true,
+     "getroffen": true,
+     "abstand_ziel_m": 11.001818,
+     "abstand_treffer_m": 11.001818,
+     "objekt": "Bauwerk",
+     "grund": ""
+    }
+   },
+   "V2": {
+    "was": "Quader im Weg (halbe Strecke)",
+    "erwartung": "frei=False, objekt nennt den Quader, Grund nennt den Abstand",
+    "ergebnis": {
+     "frei": false,
+     "getroffen": true,
+     "abstand_ziel_m": 11.001818,
+     "abstand_treffer_m": 4.750785,
+     "objekt": "Hindernis",
+     "grund": "Verdeckt: 'Hindernis' steht 6.251 m vor dem Blickziel."
+    }
+   },
+   "V3": {
+    "was": "Kamera IN der Wand",
+    "erwartung": "KEINE VORHERSAGE",
+    "ergebnis": {
+     "frei": false,
+     "getroffen": true,
+     "abstand_ziel_m": 14.0,
+     "abstand_treffer_m": 0.15,
+     "objekt": "Wand",
+     "grund": "Verdeckt: 'Wand' steht 13.850 m vor dem Blickziel."
+    }
+   },
+   "V3b": {
+    "was": "Kamera IN der Wand, Blick aufs Bauwerk",
+    "erwartung": "KEINE VORHERSAGE",
+    "ergebnis": {
+     "frei": false,
+     "getroffen": true,
+     "abstand_ziel_m": 3.0,
+     "abstand_treffer_m": 0.15,
+     "objekt": "Wand",
+     "grund": "Verdeckt: 'Wand' steht 2.850 m vor dem Blickziel."
+    }
+   },
+   "V4": {
+    "was": "Blickziel im Himmel",
+    "erwartung": "frei=True, getroffen=False",
+    "ergebnis": {
+     "frei": true,
+     "getroffen": false,
+     "abstand_ziel_m": 58.29999907871461,
+     "abstand_treffer_m": null,
+     "objekt": null,
+     "grund": "Nichts auf der Sichtlinie — auch am Blickziel nicht. Die Sicht ist frei; ob dort etwas STEHEN sollte, sagt dieser Test nicht."
+    }
+   },
+   "V0": {
+    "was": "Auge und Ziel fallen zusammen",
+    "erwartung": "frei=None, NICHT GEMESSEN",
+    "ergebnis": {
+     "frei": null,
+     "getroffen": null,
+     "abstand_ziel_m": 0.0,
+     "abstand_treffer_m": null,
+     "objekt": null,
+     "grund": "Auge und Blickziel fallen zusammen — es gibt keine Sichtlinie, auf der etwas stehen könnte. NICHT GEMESSEN."
+    }
+   }
+  },
+  "toleranzprobe": {
+   "0cm": {
+    "ziel_im_bauteil_cm": 0,
+    "frei": true,
+    "abstand_ziel_m": 11.001818,
+    "abstand_treffer_m": 11.001818,
+    "treffer_vor_ziel_m": 0.0
+   },
+   "2cm": {
+    "ziel_im_bauteil_cm": 2,
+    "frei": true,
+    "abstand_ziel_m": 11.021815,
+    "abstand_treffer_m": 11.001812,
+    "treffer_vor_ziel_m": 0.02
+   },
+   "4cm": {
+    "ziel_im_bauteil_cm": 4,
+    "frei": true,
+    "abstand_ziel_m": 11.041811,
+    "abstand_treffer_m": 11.001805,
+    "treffer_vor_ziel_m": 0.04
+   },
+   "5cm": {
+    "ziel_im_bauteil_cm": 5,
+    "frei": false,
+    "abstand_ziel_m": 11.05181,
+    "abstand_treffer_m": 11.001803,
+    "treffer_vor_ziel_m": 0.05
+   },
+   "6cm": {
+    "ziel_im_bauteil_cm": 6,
+    "frei": false,
+    "abstand_ziel_m": 11.061808,
+    "abstand_treffer_m": 11.001798,
+    "treffer_vor_ziel_m": 0.06
+   },
+   "8cm": {
+    "ziel_im_bauteil_cm": 8,
+    "frei": false,
+    "abstand_ziel_m": 11.081805,
+    "abstand_treffer_m": 11.001793,
+    "treffer_vor_ziel_m": 0.08
+   },
+   "10cm": {
+    "ziel_im_bauteil_cm": 10,
+    "frei": false,
+    "abstand_ziel_m": 11.101802,
+    "abstand_treffer_m": 11.001785,
+    "treffer_vor_ziel_m": 0.1
+   },
+   "20cm": {
+    "ziel_im_bauteil_cm": 20,
+    "frei": false,
+    "abstand_ziel_m": 11.201785,
+    "abstand_treffer_m": 11.001754,
+    "treffer_vor_ziel_m": 0.2
+   }
+  },
+  "V5_innenraum": [
+   {
+    "raum": "Raum-Nord",
+    "art": "frontal",
+    "auge": [
+     4.0,
+     0.6000000000000432,
+     1.35
+    ],
+    "ziel": [
+     4.0,
+     4.7,
+     1.35
+    ],
+    "ergebnis": {
+     "frei": true,
+     "getroffen": true,
+     "abstand_ziel_m": 4.1,
+     "abstand_treffer_m": 4.1,
+     "objekt": "IfcWall_1FMjVFy01IOxjjEoyOZm1b",
+     "grund": ""
+    }
+   },
+   {
+    "raum": "Raum-Nord",
+    "art": "ueber_eck",
+    "auge": [
+     0.6040559159102156,
+     0.6040559159102156,
+     1.35
+    ],
+    "ziel": [
+     4.394148263070054,
+     4.394148263070054,
+     1.35
+    ],
+    "ergebnis": {
+     "frei": true,
+     "getroffen": false,
+     "abstand_ziel_m": 5.3600000845496325,
+     "abstand_treffer_m": null,
+     "objekt": null,
+     "grund": "Nichts auf der Sichtlinie — auch am Blickziel nicht. Die Sicht ist frei; ob dort etwas STEHEN sollte, sagt dieser Test nicht."
+    }
+   },
+   {
+    "raum": "Raum-Sued",
+    "art": "frontal",
+    "auge": [
+     6.35,
+     0.6099999999999985,
+     1.3
+    ],
+    "ziel": [
+     6.35,
+     2.5,
+     1.3
+    ],
+    "ergebnis": {
+     "frei": true,
+     "getroffen": true,
+     "abstand_ziel_m": 1.89,
+     "abstand_treffer_m": 1.89,
+     "objekt": "IfcSpace_1FQqu1iFXK1Buvx2f6ifNQ",
+     "grund": ""
+    }
+   },
+   {
+    "raum": "Raum-Sued",
+    "art": "ueber_eck",
+    "auge": [
+     7.395944084089785,
+     0.6040559159102156,
+     1.3
+    ],
+    "ziel": [
+     5.804953826420062,
+     2.195046173579938,
+     1.3
+    ],
+    "ergebnis": {
+     "frei": true,
+     "getroffen": false,
+     "abstand_ziel_m": 2.2499998940361845,
+     "abstand_treffer_m": null,
+     "objekt": null,
+     "grund": "Nichts auf der Sichtlinie — auch am Blickziel nicht. Die Sicht ist frei; ob dort etwas STEHEN sollte, sagt dieser Test nicht."
+    }
+   }
+  ],
+  "glb_bbox": {
+   "min": [
+    0.0,
+    -0.0,
+    -0.25
+   ],
+   "max": [
+    8.0,
+    5.0,
+    3.0
+   ]
+  },
+  "duenne_waende": {
+   "0.30m": {
+    "wandstaerke_m": 0.3,
+    "halbe_staerke_m": 0.15,
+    "frei": false,
+    "abstand_treffer_m": 0.15,
+    "objekt": "Wand"
+   },
+   "0.12m": {
+    "wandstaerke_m": 0.12,
+    "halbe_staerke_m": 0.06,
+    "frei": false,
+    "abstand_treffer_m": 0.06,
+    "objekt": "Wand"
+   },
+   "0.10m": {
+    "wandstaerke_m": 0.1,
+    "halbe_staerke_m": 0.05,
+    "frei": false,
+    "abstand_treffer_m": 0.05,
+    "objekt": "Wand"
+   },
+   "0.08m": {
+    "wandstaerke_m": 0.08,
+    "halbe_staerke_m": 0.04,
+    "frei": false,
+    "abstand_treffer_m": 0.04,
+    "objekt": "Wand"
+   },
+   "0.06m": {
+    "wandstaerke_m": 0.06,
+    "halbe_staerke_m": 0.03,
+    "frei": false,
+    "abstand_treffer_m": 0.03,
+    "objekt": "Wand"
+   },
+   "0.04m": {
+    "wandstaerke_m": 0.04,
+    "halbe_staerke_m": 0.02,
+    "frei": false,
+    "abstand_treffer_m": 0.02,
+    "objekt": "Wand"
+   },
+   "0.02m": {
+    "wandstaerke_m": 0.02,
+    "halbe_staerke_m": 0.01,
+    "frei": false,
+    "abstand_treffer_m": 0.01,
+    "objekt": "Wand"
+   }
+  }
+ },
+ "die_antwort": {
+  "die_regel_traegt": "JA. Alle vier vorhergesagten Faelle sind eingetroffen.",
+  "V1": "Eingetroffen. frei=True, getroffen=True, und abstand_treffer ist EXAKT gleich abstand_ziel (11.001818 beide). Die Toleranz wurde hier gar nicht gebraucht — das Ziel liegt genau auf der Flaeche.",
+  "V2": "Eingetroffen. frei=False, objekt='Hindernis', Treffer bei 4.751 m gegen ein Ziel bei 11.002 m, und der Grund nennt den Abstand: 'steht 6.251 m vor dem Blickziel'.",
+  "V3": "KEINE LUECKE — und das ist der Fall, fuer den es keine Vorhersage gab. Die Kamera steht mitten in einer 0.30 m starken Wand. Blender meldet die Rueckseite: Treffer bei genau 0.15 m, also der halben Wandstaerke. frei=False, objekt='Wand'. Rueckseiten werden also NICHT uebersprungen. Ich habe zusaetzlich den Blick in die Gegenrichtung geprueft (V3b, aufs Bauwerk statt ins Freie): dasselbe Bild, Treffer wieder bei 0.15 m. Eine Kamera in der Wand wird in beide Richtungen als verdeckt gemeldet.",
+  "V4": "Eingetroffen. frei=True, getroffen=False, und der Grund lautet woertlich wie angekuendigt: 'Nichts auf der Sichtlinie — auch am Blickziel nicht.'",
+  "V0_zusatz": "Zusaetzlich geprueft, weil der Docstring es zusagt: Auge und Ziel identisch gibt frei=None mit 'NICHT GEMESSEN'. Eingetroffen.",
+  "V5": "Alle vier Standpunkte aus zwei Raeumen melden frei=True. Bei den FRONTALEN liegt das Ziel exakt auf der Wand — abstand_treffer gleich abstand_ziel (4.100 bzw. 1.890), wieder ohne dass die Toleranz gebraucht wurde. Bei den ECK-Standpunkten ist getroffen=False: ihr Blickziel liegt im offenen Raum, nicht auf einer Flaeche. Das ist kein Fehler, aber es heisst, dass der Eck-Standpunkt vom Verdeckungstest weniger geprueft wird als der frontale.",
+  "V3_nachtrag_duenne_waende": "Ich hatte als Grenze notiert, eine sehr duenne Wand koenne durchrutschen: Bei 4 cm Staerke laege die Rueckseite bei 2 cm und damit INNERHALB der Toleranz von 5 cm. DAS WAR FALSCH, und ich habe es nachgemessen statt es stehen zu lassen. Von 30 cm hinunter bis 2 cm meldet der Test JEDE Wandstaerke als verdeckt. Der Grund: Die Toleranz misst gegen das ZIEL, nicht gegen die Kamera. Bei einem Ziel in 14 m Entfernung liegt ein Treffer nach 1 cm ueber dreizehn Meter vor dem Ziel — weit ausserhalb jeder Toleranz. Die Toleranz greift nur, wenn der Treffer NAHE AM ZIEL liegt, und genau dafuer ist sie da."
+ },
+ "zur_toleranz": {
+  "gefragt": "Taugt ZIELTOLERANZ_M = 0.05?",
+  "gemessen": "Das Blickziel schrittweise INS Bauteil hinein verschoben und gemessen, wann der Test kippt:",
+  "reihe": {
+   "0cm": true,
+   "2cm": true,
+   "4cm": true,
+   "5cm": false,
+   "6cm": false,
+   "8cm": false,
+   "10cm": false,
+   "20cm": false
+  },
+  "befund": "Die Grenze liegt exakt dort, wo sie stehen soll: bis 4 cm im Bauteil frei, ab 5 cm verdeckt. Bei genau 5 cm meldet der Test bereits FALSE — die Regel 'abstand >= weite - toleranz' steht dort auf der Kippe, und die Gleitkomma-rechnung entscheidet sie nach unten. Wirksam ist die Toleranz also 'echt kleiner als 5 cm'. Das ist kein Mangel, aber wer 5.0 cm als noch zulaessig liest, irrt sich um einen Grenzfall.",
+  "urteil": "Sie taugt. In allen sechs Faellen, in denen ein Ziel auf einer Flaeche lag (V1, V5 frontal x2), wurde sie gar nicht gebraucht — Treffer und Ziel fielen exakt zusammen. Sie ist die Reserve fuer Rundungen, und 4 cm Reserve sind reichlich, ohne dass ein davorstehendes Moebel durchrutscht."
+ },
+ "ein_befund_ausserhalb_des_auftrags": {
+  "was": "Die IfcSpace-Koerper stecken als MASSIVE Meshes in der glb.",
+  "beleg": "Die aus make_test_ifc.py --raeume erzeugte glb traegt 7 Meshes: 1 IfcSlab, 4 IfcWall und ZWEI IfcSpace. Beim frontalen Standpunkt in Raum-Sued ist das getroffene Objekt denn auch nicht die Wand, sondern 'IfcSpace_1FQqu1iFXK1Buvx2f6ifNQ' — der Raumkoerper selbst.",
+  "warum_das_zaehlt": "Fuer _sicht_frei ist es hier folgenlos: der Raumkoerper endet dort, wo die Wand beginnt, Treffer und Ziel fallen zusammen. Fuer das RENDERN ist es das nicht. Ein IfcSpace ist ein gefuellter Quader, und bei einer Innenaufnahme steht die Kamera darin. Ob der Multipass ihn ausschliesst, ist HIER NICHT GEPRUEFT — es lag ausserhalb des Auftrags. Ich melde es, weil es sonst erst beim ersten Innenraum-Render auffaellt, und dann als graue Flaeche.",
+  "was_ich_nicht_getan_habe": "Nichts geaendert. Ob der Ausschluss in ifc_zu_glb, im Runner oder gar nicht gehoert, ist eure Entscheidung."
+ },
+ "grenzen_dieser_messung": [
+  "Synthetische Geometrie, achsparallele Quader. Schraege Flaechen und gekruemmte Koerper sind nicht geprueft.",
+  "Wandstaerken von 30 cm bis 2 cm sind fuer V3 geprueft — alle melden verdeckt. Was NICHT geprueft ist: eine duenne Wand DIREKT VOR dem Blickziel, wo die Toleranz wirklich greift.",
+  "Die Eck-Standpunkte treffen nichts; ueber sie sagt der Test daher wenig.",
+  "Blender 5.2.0 LTS. Ob eine andere Fassung Rueckseiten anders behandelt, ist nicht geprueft.",
+  "Ob der Multipass die IfcSpace-Koerper ausschliesst, ist nicht geprueft — es lag ausserhalb des Auftrags."
+ ]
+}
