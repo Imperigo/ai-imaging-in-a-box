@@ -862,10 +862,21 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       wäre, sie als Kameraliste weiterzureichen — und dabei fällt die Entscheidung, wie
       viele Räume eines Gebäudes überhaupt gerendert werden. Das ist eine Betriebs- und
       keine Programmfrage, so wie `AUTO_RICHTUNGEN` aussen.
-- [ ] **Der Verdeckungstest fehlt weiterhin, und für innen ist er keine Kür.** Ob zwischen
-      Kamera und Ziel ein Möbel, eine Stütze oder eine Brüstung steht, weiss nur die
-      Szene. Was `raumkamera.py` prüft, ist die Lage im **Raumumriss** — notwendig, nicht
-      hinreichend, und das steht in jedem Befund.
+- [x] **Der Verdeckungstest ist gebaut (22.08.) — die Regel geprüft, der Schuss nicht.**
+      `_sicht_frei` im Blender-Runner, als Gegenstück zu `kameras.ziehe_bis_frei`, das die
+      Schrittlogik seit Wochen rechnet und die Funktion hereingereicht bekommt.
+
+      **Die Semantik ist die Stelle, an der man sich vertut.** Naiv gefragt — *„trifft der
+      Strahl etwas?"* — lautet die Antwort praktisch immer ja, denn das Blickziel liegt
+      auf einer Oberfläche. Gefragt ist: *Trifft er etwas, das NÄHER liegt als das Ziel?*
+      Ein Test mit der naiven Frage meldete bei **jeder** Kamera eine Verdeckung. Die
+      Entscheidungsregel ist diesseits der Prozessgrenze geprüft (sechs Tests, ohne
+      Blender); der Strahlenschuss selbst läuft nur am Gerät — `auf-20260822-32`.
+
+      **Ein Fall ohne Vorhersage** steht ausdrücklich im Auftrag: Kamera *in* der Wand.
+      Ein Strahl, der in einem Bauteil startet, trifft womöglich sofort dessen Rückseite —
+      oder gar nichts, weil Blender Rückseiten je nach Einstellung überspringt. Meldet er
+      „frei", während die Kamera steckt, ist das eine Lücke.
 - [ ] **Die Zielwand wird nach LÄNGE gewählt, und das ist eine schwache Setzung.** Die
       Praxis wählt die Wand mit dem Motiv. Ein Kamin oder eine Küchenzeile ist ein Motiv
       und hat keine Öffnung; die längste Wand ist oft, aber nicht immer, die richtige. Der

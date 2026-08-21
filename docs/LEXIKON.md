@@ -1574,6 +1574,28 @@ Kanten woanders, und dort steht dann Grund — die Tiefenkante fragt also nicht 
 etwas», sondern «steht dort **das Richtige**». Genau die Fälle, die sie darum verfehlt,
 fängt die Rangkorrelation.*
 
+**Umrisstreue (Anteil der Grenze mit Kante)** — Wieviel vom Umriss eines Bauwerks ein
+erzeugtes Bild **wirklich zeichnet**. Gemessen als Anteil der Silhouettengrenze, an dem
+das Bild einen Tiefensprung zeigt — nicht wie stark der Sprung im Mittel ist, sondern an
+**wievielen Stellen** es überhaupt einen gibt.
+*Der Unterschied ist der ganze Witz: Ein Mittel- oder Medianwert über die ganze Grenze
+bricht zusammen, sobald ein Teil des Umrisses fehlt. Ein Bild, das ein Viertel seines
+Umrisses zeichnet, sieht im Median aus wie eines, das gar nichts zeichnet. Der Anteil
+fällt stattdessen allmählich — und nur eine allmählich fallende Grösse taugt als Tor.*
+*Gemessen am 22.08.2026: perfektes Bild 87,4 %, bestes erzeugtes 24,3 %, ohne
+Tiefenführung 6,4 %, ein Bild ohne echte Führung 2,8 %.*
+
+**Zufallsniveau (eines Anteilsmasses)** — Der Wert, den ein Mass erreicht, wenn zwischen
+den beiden verglichenen Dingen **gar kein Zusammenhang** besteht. Bei den meisten Massen
+muss man ihn eigens messen (siehe *Rauschboden*); bei manchen folgt er aus der
+Konstruktion.
+*Bei der Umrisstreue folgt er: Werden die stärksten 5 % der Bildpunkte als „Kante"
+gewertet, trifft eine beliebige, bezugslose Linie ebenfalls rund 5 % davon. Alles darüber
+ist Signal. Das spart die Nullprobe — mit einer Einschränkung, die beim Bauen auffiel:
+Hat ein Bild viele **gleiche** Werte, lassen sich die stärksten 5 % gar nicht abtrennen,
+und das Zufallsniveau steigt. Es wird darum nicht angenommen, sondern jedes Mal
+mitgerechnet.*
+
 **Paarurteil** — Ein Urteil, das **zwei Messwerte nebeneinander stehen lässt**, statt sie
 zu einer Zahl zu verrechnen. Es besteht nur, wenn beide bestehen, und es sagt dazu,
 welcher der beiden ein Nein trägt.
@@ -2961,6 +2983,7 @@ System laufen.
 | 2026-08-20 | Aus dem GPU-Ergebnis zu `auf-20260820-18`: **Sandbox-Paket (Snap, Flatpak)** und **Artefakt einer Messung**. Beide sind teuer erworben — das GPU-faehige Blender-Snap liefert bei Dateiumleitung Rueckgabewert 0 ohne Bild, und der am selben Tag gemessene 32-Sekunden-Takt war ein Artefakt der CPU-Messung |
 | 2026-08-20 | Ergaenzt aus dem Abholer (`src/aiimaging/abholer.py`): **Laufzettel**, **Waise (verwaister Auftrag)** |
 | 2026-08-20 | Ergaenzt aus der Taktmessung an Blender: **adaptives Sampling**, **Blockpufferung der Standardausgabe**, **Pipe-Blockade**. **Sample** um die gemessene Einschraenkung ergaenzt: Bei adaptivem Sampling ist die Samplezahl eine OBERGRENZE und keine Angabe der Rechenzeit — 6000 Samples in 12 s gegen 3000 ohne adaptives Sampling in ueber drei Minuten |
+| 2026-08-22 | Ergaenzt aus dem zweiten Bein des Paartests: **Umrisstreue (Anteil der Grenze mit Kante)** und **Zufallsniveau (eines Anteilsmasses)**. Das zweite ist der erste Fall in diesem Projekt, in dem der Nullwert aus der Konstruktion folgt statt gemessen werden zu muessen — mit der Einschraenkung, die beim Bauen auffiel |
 | 2026-08-22 | Ergaenzt aus dem Innenraum-Standpunkt: **Einspringende Ecke (Innenecke)** — der Grund, warum Raeume nicht mit Mittelpunktsmathematik zu behandeln sind |
 | 2026-08-22 | Ergaenzt aus dem Umbau der Geometrie-QA: **Tiefenkante (an der Maskengrenze)** und **Paarurteil**. Beide tragen den Grund mit, aus dem sie entstanden sind — ein einzelner Score kann Existenz und Richtigkeit nicht zugleich beantworten |
 | 2026-08-21 | Ergaenzt aus dem Nicht-Monotonie-Befund: **Monotonie (einer Metrik)**, **Faltung der Skala (durch den Betrag)**, ausgebaut **Polaritaet (einer Tiefenkarte)** um die Frage, wann man sie bestimmen DARF, ohne im Kreis zu messen. Alle drei aus einer Messung, die eine eigene Entscheidung widerlegt hat |

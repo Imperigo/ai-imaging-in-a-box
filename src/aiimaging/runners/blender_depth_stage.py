@@ -581,6 +581,93 @@ def _material_id_zuweisen() -> tuple[list[dict], int]:
 # --------------------------------------------------------------------------------------
 # Tiefe
 # --------------------------------------------------------------------------------------
+# Verdeckungstest — der Strahlenschuss, den `kameras.ziehe_bis_frei` hereingereicht bekommt
+# --------------------------------------------------------------------------------------
+#
+# `aiimaging.kameras.ziehe_bis_frei` rechnet die Schrittlogik — 12 % der Reststrecke,
+# Untergrenze, Stopp am Hüllbox-Rand — und lässt sich `_sicht_frei(auge, blick_auf)`
+# hereinreichen. Diesseits gibt es die Antwort nicht: Ob etwas im Weg steht, weiss nur
+# die Szene, und die lebt in Blender. Hier steht sie.
+#
+# **Für Innenräume ist das keine Kür.** Eine Kamera im Raum kann in einer Wand stehen oder
+# durch sie hindurchschauen; `raumkamera.py` prüft nur die Lage im Raumumriss und sagt
+# ausdrücklich, dass das notwendig und nicht hinreichend ist. Das hier ist die andere
+# Hälfte.
+
+#: Wie nah ein Treffer am Blickziel liegen darf, um noch als „das Ziel selbst" zu gelten.
+#:
+#: **Ohne diese Toleranz meldete der Test IMMER eine Verdeckung.** Das Blickziel liegt in
+#: aller Regel *auf* einer Oberfläche — bei der frontalen Innenaufnahme auf der Zielwand,
+#: aussen auf dem Bauwerk. Ein Strahl dorthin trifft also etwas, und zwar genau das, was
+#: er treffen soll. Verdeckt ist er erst, wenn er **vorher** auf etwas anderes trifft.
+#:
+#: 5 cm sind eine Setzung: gross genug für Rundungen und für ein Ziel, das ein paar
+#: Millimeter in der Wand liegt, klein genug, dass ein davorstehendes Möbel auffällt.
+ZIELTOLERANZ_M = 0.05
+
+
+def _sicht_frei(auge, blick_auf, *, toleranz_m: float = ZIELTOLERANZ_M) -> dict:
+    """Steht zwischen Kamera und Blickziel etwas im Weg?
+
+    Args:
+        auge, blick_auf: Weltkoordinaten als Dreiergruppen.
+
+    Returns:
+        ``{frei, getroffen, abstand_ziel_m, abstand_treffer_m, objekt, grund}``.
+        ``frei`` ist ``None``, wenn sich die Frage nicht stellen lässt — Auge und Ziel
+        fallen zusammen. Das ist **nicht gemessen** und nicht „frei".
+
+    **Die Semantik ist die Stelle, an der man sich vertut.** Naiv gefragt — *„trifft der
+    Strahl etwas?"* — lautet die Antwort praktisch immer ja, denn das Blickziel liegt auf
+    einer Oberfläche. Gefragt ist stattdessen: **Trifft er etwas, das NÄHER liegt als das
+    Ziel?** Alles andere ist das Ziel selbst.
+
+    Es wird **nichts abgebrochen und nichts korrigiert.** Diese Funktion beantwortet eine
+    Frage; was ein „nein" kostet, weiss die Schrittlogik diesseits der Prozessgrenze.
+    """
+    import mathutils
+
+    a = mathutils.Vector(auge)
+    z = mathutils.Vector(blick_auf)
+    richtung = z - a
+    weite = richtung.length
+    if weite <= 1e-9:
+        return {"frei": None, "getroffen": None, "abstand_ziel_m": 0.0,
+                "abstand_treffer_m": None, "objekt": None,
+                "grund": ("Auge und Blickziel fallen zusammen — es gibt keine Sichtlinie, "
+                          "auf der etwas stehen könnte. NICHT GEMESSEN.")}
+    richtung.normalize()
+
+    szene = bpy.context.scene
+    tiefe = bpy.context.evaluated_depsgraph_get()
+    # Ein Hauch Versatz, damit der Strahl nicht auf der Fläche startet, auf der die
+    # Kamera womöglich sitzt — sonst trifft er beim Start sich selbst.
+    start = a + richtung * 1e-4
+    treffer, _ort, _normale, _index, objekt, _matrix = szene.ray_cast(
+        tiefe, start, richtung, distance=weite + toleranz_m)
+
+    if not treffer:
+        # Nichts getroffen, auch das Ziel nicht — die Sicht ist frei, aber am Ziel steht
+        # nichts. Das ist ein anderer Befund als „frei mit Ziel" und wird als solcher
+        # gemeldet.
+        return {"frei": True, "getroffen": False, "abstand_ziel_m": weite,
+                "abstand_treffer_m": None, "objekt": None,
+                "grund": ("Nichts auf der Sichtlinie — auch am Blickziel nicht. Die Sicht "
+                          "ist frei; ob dort etwas STEHEN sollte, sagt dieser Test nicht.")}
+
+    abstand = (_ort - a).length
+    frei = abstand >= weite - toleranz_m
+    return {
+        "frei": frei, "getroffen": True, "abstand_ziel_m": round(weite, 6),
+        "abstand_treffer_m": round(abstand, 6),
+        "objekt": getattr(objekt, "name", None),
+        "grund": ("" if frei else
+                  f"Verdeckt: {getattr(objekt, 'name', '?')!r} steht {weite - abstand:.3f} m "
+                  f"vor dem Blickziel."),
+    }
+
+
+# --------------------------------------------------------------------------------------
 
 def _kompositor_baum(szene):
     """Den Kompositor-Knotenbaum holen — versionsfest über Blender 4.x und 5.x.

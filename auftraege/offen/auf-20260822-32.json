@@ -1,0 +1,34 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260822-32",
+  "art": "multipass",
+  "beschreibung": "DEN VERDECKUNGSTEST AM GERAET PRUEFEN. Er ist neu im Runner (src/aiimaging/runners/blender_depth_stage.py, Funktion `_sicht_frei`) und hier nie gelaufen — dieses Environment hat kein Blender mit Szene. Die ENTSCHEIDUNGSREGEL ist diesseits geprueft, der Strahlenschuss selbst nicht.\n\n=== WORUM ES GEHT ===\n`aiimaging.kameras.ziehe_bis_frei` rechnet seit Wochen die Schrittlogik und laesst sich `_sicht_frei(auge, blick_auf)` hereinreichen. Diese Funktion gab es nicht — jetzt gibt es sie. Fuer Innenraeume ist sie keine Kuer: Eine Kamera im Raum kann in einer Wand stehen oder durch sie hindurchschauen, und `raumkamera.py` prueft nur die Lage im Raumumriss (notwendig, nicht hinreichend).\n\n=== DIE SEMANTIK, AN DER MAN SICH VERTUT ===\nNaiv gefragt — 'trifft der Strahl etwas?' — lautet die Antwort praktisch IMMER ja, denn das Blickziel liegt auf einer Oberflaeche. Gefragt ist stattdessen: Trifft er etwas, das NAEHER liegt als das Ziel? Die Regel im Code lautet\n    frei = abstand >= weite - ZIELTOLERANZ_M   (ZIELTOLERANZ_M = 0.05)\nGenau die soll deine Messung bestaetigen oder widerlegen.\n\n=== WAS ZU TUN IST ===\nVier Faelle, alle an einer Szene, die du schon hast. Kein Bildmodell noetig.\n\nV1 · FREIE SICHT AUF DAS BAUWERK. Aussenkamera wie gewohnt, Blickziel auf dem Bauwerk. ERWARTUNG: frei = True, getroffen = True, abstand_treffer nahe abstand_ziel. Faellt das durch, ist die Toleranz zu eng oder das Vorzeichen verdreht — und dann meldet der Test bei JEDER Kamera eine Verdeckung.\n\nV2 · ETWAS STEHT IM WEG. Setz einen Quader zwischen Kamera und Bauwerk, etwa auf halber Strecke. ERWARTUNG: frei = False, `objekt` nennt den Quader, und der Grund nennt den Abstand.\n\nV3 · KAMERA IN DER WAND. Setz die Kamera INNERHALB eines Bauteils, Blickziel irgendwo draussen. Das ist der Fall, den ich am wenigsten einschaetzen kann: Ein Strahl, der in einer Wand startet, trifft womoeglich sofort deren Rueckseite — oder gar nichts, weil Blender Rueckseiten je nach Einstellung ueberspringt. SAG MIR, WAS ER TUT. Wenn er 'frei' meldet, waehrend die Kamera in der Wand steckt, ist das eine Luecke, die ich kennen muss.\n\nV4 · BLICKZIEL IM FREIEN. Blickziel in den Himmel, kein Bauteil auf der Linie. ERWARTUNG: frei = True, getroffen = False. Der Runner meldet dafuer ausdruecklich 'Nichts auf der Sichtlinie — auch am Blickziel nicht'.\n\n=== WENN ZEIT BLEIBT ===\nV5 · Ein Innenraum. Nimm die Raeume aus tools/make_test_ifc.py --raeume (die gibt es seit heute) und einen Standpunkt aus `raumkamera.standpunkte`. Frontal auf die Zielwand: ERWARTUNG frei = True, weil das Ziel AUF der Wand liegt. Genau hier zeigt sich, ob die Toleranz taugt.\n\n=== WAS ZURUECKKOMMEN SOLL ===\nJe Fall das ganze Woerterbuch, das `_sicht_frei` liefert: frei, getroffen, abstand_ziel_m, abstand_treffer_m, objekt, grund. Dazu ein Satz je Fall, ob die Erwartung eingetroffen ist. Und wenn V3 etwas Unerwartetes tut, lieber ausfuehrlich — das ist der Fall, fuer den ich keine Vorhersage habe.\n\n=== NICHT TUN ===\nKein Bildmodell, keine Renderlaeufe ausser dem, was der Strahlenschuss braucht (er braucht keinen — ray_cast laeuft ohne Rendern). Nichts an unserem Code aendern; wenn die Regel falsch ist, sag es, dann aendere ich sie hier.\n\nREGEL 3: keine absoluten Pfade mit Benutzernamen, synthetische Geometrie, nur Zahlen zurueck.",
+  "erstellt": "2026-08-22T21:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "Bestehende Szene. Fuer V2 einen Quader dazwischensetzen, fuer V5 tools/make_test_ifc.py --raeume."
+  },
+  "params": {
+    "faelle": {
+      "V1": "freie Sicht aufs Bauwerk",
+      "V2": "Quader im Weg",
+      "V3": "Kamera IN der Wand — keine Vorhersage",
+      "V4": "Blickziel im Freien",
+      "V5": "Innenraum, frontal (wenn Zeit)"
+    },
+    "regel": "frei = abstand >= weite - 0.05",
+    "gemessen_wird": "das ganze Woerterbuch von _sicht_frei je Fall"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 200,
+    "nur_bei_leerlauf": false,
+    "hinweis": "Kein Bildmodell. ray_cast braucht kein Rendern."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": false,
+    "hinweis": "Je Fall das Woerterbuch plus ein Satz, ob die Erwartung eintraf. V3 ausfuehrlich, dafuer gibt es keine Vorhersage."
+  }
+}

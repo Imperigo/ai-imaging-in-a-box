@@ -1105,3 +1105,76 @@ def test_eine_unbrauchbare_huellbox_wird_im_runner_abgewiesen(text, muster):
     exec(compile(quelle[anfang:ende], "runner", "exec"), raum)  # noqa: S102
     with pytest.raises(SystemExit, match=muster):
         raum["_huellbox_aus_text"](text)
+
+
+# ======================================================================================
+# Der Verdeckungstest — die Semantik, ohne Blender geprüft
+# ======================================================================================
+#
+# Der Strahlenschuss selbst braucht eine Szene und läuft nur jenseits der Prozessgrenze.
+# Was sich hier prüfen lässt, ist die **Entscheidung**: Ab wann gilt ein Treffer als
+# Verdeckung? Genau daran vertut man sich, und ein Blender-Lauf würde es nicht zeigen —
+# er lieferte nur eine Zahl, die plausibel aussieht.
+
+
+def _sicht_frei_nachgebaut(weite, treffer_abstand, toleranz):
+    """Die Entscheidungsregel des Runners, aus seiner Quelle abgeleitet nachgebaut.
+
+    Kein zweiter Code, sondern eine Prüfung der Regel: `frei = abstand >= weite − toleranz`.
+    Der Test darunter hält fest, dass im Runner wirklich diese Form steht — sonst prüfte
+    diese Datei ihre eigene Erfindung.
+    """
+    return treffer_abstand >= weite - toleranz
+
+
+def test_ein_treffer_AM_BLICKZIEL_ist_keine_verdeckung():
+    """**Der Fehler, den man ohne Nachdenken baut.**
+
+    Naiv gefragt — „trifft der Strahl etwas?" — lautet die Antwort praktisch immer ja: Das
+    Blickziel liegt auf einer Oberfläche, bei der frontalen Innenaufnahme auf der
+    Zielwand. Ein Test mit dieser Frage meldete IMMER eine Verdeckung.
+    """
+    assert _sicht_frei_nachgebaut(weite=3.0, treffer_abstand=3.0, toleranz=0.05) is True
+    assert _sicht_frei_nachgebaut(weite=3.0, treffer_abstand=2.97, toleranz=0.05) is True
+
+
+def test_ein_treffer_DAVOR_ist_eine_verdeckung():
+    assert _sicht_frei_nachgebaut(weite=3.0, treffer_abstand=1.4, toleranz=0.05) is False
+
+
+def test_die_toleranz_entscheidet_und_ist_gesetzt():
+    """5 cm: gross genug für ein Ziel, das ein paar Millimeter in der Wand liegt, klein
+    genug, dass ein davorstehendes Möbel auffällt."""
+    knapp_davor = 3.0 - 0.06
+
+    assert _sicht_frei_nachgebaut(3.0, knapp_davor, toleranz=0.05) is False
+    assert _sicht_frei_nachgebaut(3.0, knapp_davor, toleranz=0.10) is True
+
+
+def test_der_runner_traegt_wirklich_diese_regel():
+    """Sonst prüfte die Datei oben ihre eigene Erfindung statt den Runner."""
+    assert "frei = abstand >= weite - toleranz_m" in RUNNER_QUELLE
+    assert "ZIELTOLERANZ_M = 0.05" in RUNNER_QUELLE
+
+
+def test_der_verdeckungstest_bricht_nichts_ab():
+    """Er beantwortet eine Frage; was ein Nein kostet, weiss die Schrittlogik diesseits.
+
+    Geprüft an der Quelle: kein `raise`, kein `sys.exit` in der Funktion.
+    """
+    import ast
+
+    baum = ast.parse(RUNNER_QUELLE)
+    funktion = next(k for k in ast.walk(baum)
+                    if isinstance(k, ast.FunctionDef) and k.name == "_sicht_frei")
+    abbrueche = [k for k in ast.walk(funktion)
+                 if isinstance(k, ast.Raise)
+                 or (isinstance(k, ast.Call) and getattr(k.func, "attr", "") == "exit")]
+
+    assert abbrueche == [], "der Verdeckungstest darf nichts abbrechen"
+
+
+def test_auge_gleich_ziel_ist_NICHT_GEMESSEN_und_nicht_frei():
+    """Es gibt dann keine Sichtlinie, auf der etwas stehen könnte — das ist kein Freispruch."""
+    assert "NICHT GEMESSEN" in RUNNER_QUELLE
+    assert "Auge und Blickziel fallen zusammen" in RUNNER_QUELLE
