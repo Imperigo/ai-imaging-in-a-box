@@ -222,18 +222,24 @@ def test_eine_unbekannte_farbe_zaehlt_nicht_zum_bauwerk_und_wird_gemeldet(tabell
 
 
 def test_ohne_unbekannte_farben_steht_darueber_auch_nichts_in_den_warnungen(bild, tabelle):
-    """Die Gegenprobe zur vorigen Zusicherung.
+    """Gegenstück zum Test darüber — und die Gegenprobe steht **hier**, nicht dort.
 
-    Ohne sie könnte die Warnung immer erscheinen, und der Test darüber bliebe trotzdem
-    grün — eine Warnung, die immer kommt, ist keine.
+    Die Vakuumprobe hat diese Zusicherung als schwach gemeldet: `not any(...)` über einer
+    Sammlung, die auch leer sein könnte. Die Gegenprobe gab es, aber sie prüfte eine
+    **andere** Zeichenfolge (die Farbe statt „Tabelle nicht"). Wäre der Warntext geändert
+    worden, hätte dieser Test vakuum-wahr bestanden und der andere wäre gefallen — zwei
+    Tests am selben Mechanismus, die einander nicht decken.
+
+    Jetzt steht beides hier: dieselbe Zeichenfolge, einmal erwartet und einmal nicht.
     """
-    ergebnis = m.bauwerksmaske(bild, tabelle)
-    assert not any("Tabelle nicht" in w for w in ergebnis["warnungen"])
+    ohne = m.bauwerksmaske([SLAB, SLAB], tabelle)
+    mit = m.bauwerksmaske([SLAB, (7, 200, 91)], tabelle)
 
-
-# ======================================================================================
-# Die Weigerung — der eigentliche Zweck
-# ======================================================================================
+    assert ohne["n_unbekannt"] == 0
+    assert not any("Tabelle nicht" in w for w in ohne["warnungen"])
+    # Und der Beleg, dass diese Zeichenfolge überhaupt vorkommen KANN:
+    assert mit["n_unbekannt"] == 1
+    assert any("Tabelle nicht" in w for w in mit["warnungen"])
 
 def test_greift_die_regel_nicht_gibt_es_keine_maske(bild):
     """Der Kern: Keine Maske ist besser als eine, in der heimlich der Boden steckt.

@@ -266,3 +266,156 @@ def test_saatreihe_rauschboden_und_urteil_zusammen(basis):
 
     wahl = varianten.waehle(gemessen, schwelle=geometrie_qa.SCHWELLE_GEOMETRIE)
     assert wahl["beste"]["staerke"] == 0.8 and wahl["bestanden"] is True
+
+
+# ======================================================================================
+# Die gepaarte Reihe — dasselbe Paar über viele Startwerte
+# ======================================================================================
+#
+# `kontrollierte_reihe` hält EINEN Startwert fest. Das schliesst aus, dass ein Unterschied
+# vom Zufall dieses Startwerts kommt — aber nur für ihn. Zweimal an einem Tag ist genau
+# daran eine Messung gescheitert (22.08.2026).
+
+#: Die gemessene Sprachreihe (`auf-20260822`, HomeStation): Blauüberschuss des oberen
+#: Bildfünftels je Startwert, deutscher gegen englischen Prompt. **Weniger Blau ist
+#: besser** — verlangt war ein bedeckter Himmel.
+SPRACHREIHE_DEUTSCH = [51, 50, 7, 95, 69, 46, -3, 6]
+SPRACHREIHE_ENGLISCH = [9, 23, -1, 41, 27, 18, -11, 4]
+
+
+def _sprachpaare(n=None):
+    d = SPRACHREIHE_DEUTSCH[:n]
+    e = SPRACHREIHE_ENGLISCH[:n]
+    return [[-a, -b] for a, b in zip(d, e)]      # höher ist besser → Vorzeichen drehen
+
+
+def test_die_gemessene_sprachreihe_wird_nachgerechnet():
+    """Acht Paare, acht Siege für Englisch — und der Test rechnet es nach.
+
+    Die Zahlen sind eine Messung: Blauüberschuss des oberen Bildfünftels, je Startwert
+    einmal mit deutschem und einmal mit englischem Prompt. Verlangt war ein *bedeckter*
+    Himmel, weniger Blau ist also besser.
+    """
+    e = varianten.zaehle_siege(_sprachpaare())
+
+    assert e["siege"] == [0, 8]
+    assert e["gewinner"] == 1, "der englische Prompt"
+    assert e["belegt"] is True
+    assert e["p_zufall"] < 0.01
+
+
+def test_DIESELBE_reihe_mit_DREI_paaren_belegt_NICHTS():
+    """**Die Klemme, in der die Messung zuerst steckte.**
+
+    Bei n = 3 trug der Befund nicht — der Abstand der Mittelwerte (25.5) lag unter der
+    Streuung (20.7), die Bereiche überlappten. Auch der Vorzeichentest sagt hier nein,
+    und zwar aus einem klareren Grund: Drei Siege in Folge kommen in 25 % der Fälle
+    zufällig vor.
+    """
+    e = varianten.zaehle_siege(_sprachpaare(3))
+
+    assert e["siege"] == [0, 3], "Englisch gewinnt auch hier alle drei"
+    assert e["belegt"] is False
+    assert e["p_zufall"] > 0.2
+    assert "NICHT BELEGT" in e["begruendung"]
+    assert "heisst NICHT, dass kein Unterschied besteht" in e["begruendung"]
+
+
+def test_weniger_als_sechs_paare_koennen_im_besten_fall_nichts_belegen():
+    """Bei fünf Paaren liegt die Wahrscheinlichkeit für einen Durchmarsch bei 6.25 % —
+    über der Fünfprozentmarke. Eine Reihe, die im besten Fall nichts belegen kann, ist
+    verschwendete Rechenzeit."""
+    fuenf_durchmaersche = [[0.0, 1.0]] * 5
+
+    e = varianten.zaehle_siege(fuenf_durchmaersche)
+
+    assert e["siege"] == [0, 5]
+    assert e["belegt"] is False, "fünf reichen selbst bei 5:0 nicht"
+    assert varianten.zaehle_siege([[0.0, 1.0]] * 6)["belegt"] is True
+
+
+def test_ein_halbes_paar_ist_kein_paar():
+    """Eine Gruppe mit fehlender Bewertung wird GANZ übersprungen — sonst verglichen wir
+    einen gemessenen Wert mit nichts."""
+    e = varianten.zaehle_siege([[1.0, 0.0], [1.0, None], [1.0, 0.0]])
+
+    assert e["n_paare"] == 2
+    assert e["n_uebersprungen"] == 1
+    assert "übersprungen" in e["begruendung"]
+
+
+def test_ohne_eine_einzige_vollstaendige_gruppe_ist_es_NICHT_GEMESSEN():
+    e = varianten.zaehle_siege([[None, None], [1.0, None]])
+
+    assert e["gewinner"] is None
+    assert e["belegt"] is False
+    assert "NICHT GEMESSEN" in e["begruendung"]
+
+
+def test_die_wahrscheinlichkeit_ist_ZWEISEITIG_gerechnet():
+    """Einseitig zu rechnen, NACHDEM man das Ergebnis gesehen hat, halbiert die Zahl und
+    die Ehrlichkeit gleich mit.
+
+    Bei acht von acht: einseitig 0.39 %, zweiseitig 0.78 %. Die HomeStation nannte die
+    einseitige; hier steht die vorsichtigere.
+    """
+    e = varianten.zaehle_siege([[0.0, 1.0]] * 8)
+
+    assert e["p_zufall"] == pytest.approx(2 * 0.5 ** 8, rel=1e-6)
+
+
+def test_die_gepaarte_reihe_baut_je_startwert_eine_ganze_reihe():
+    basis = render.RenderAuftrag(depth_png="t.png", prompt="ein Haus",
+                                 ausgabe_png="a.png", seed=1)
+
+    gruppen = varianten.gepaarte_reihe(basis, "controlnet_staerke", [0.6, 0.9],
+                                       seeds=[10, 11, 12, 13, 14, 15])
+
+    assert len(gruppen) == 6
+    assert all(len(g) == 2 for g in gruppen)
+    # Innerhalb einer Gruppe derselbe Startwert, zwischen den Gruppen verschiedene.
+    assert all(g[0].seed == g[1].seed for g in gruppen)
+    assert len({g[0].seed for g in gruppen}) == 6
+
+
+def test_doppelte_startwerte_werden_abgewiesen():
+    """Zwei Gruppen mit demselben Startwert sind dasselbe Paar zweimal — sie zu zählen
+    behauptete eine Sicherheit, die nicht da ist."""
+    basis = render.RenderAuftrag(depth_png="t.png", prompt="x", ausgabe_png="a.png")
+
+    with pytest.raises(varianten.VariantenError, match="Doppelte Startwerte"):
+        varianten.gepaarte_reihe(basis, "controlnet_staerke", [0.6, 0.9],
+                                 seeds=[10, 11, 12, 13, 14, 10])
+
+
+def test_zu_wenige_startwerte_werden_abgewiesen():
+    basis = render.RenderAuftrag(depth_png="t.png", prompt="x", ausgabe_png="a.png")
+
+    with pytest.raises(varianten.VariantenError, match="zu wenige"):
+        varianten.gepaarte_reihe(basis, "controlnet_staerke", [0.6, 0.9], seeds=[1, 2, 3])
+
+
+def test_die_mindestzahl_greift_erst_bei_DREI_werten_wirklich():
+    """**Von der Mutationsprobe gefunden, und der Befund ist lehrreich.**
+
+    Streicht man `and n >= MIN_PAARE`, bleiben alle Tests grün — solange nur **zwei**
+    Werte verglichen werden. Dort ist die Schranke rechnerisch redundant: Drei Paare
+    ergeben 25 % Zufall, vier 12.5 %, fünf 6.25 % — die Fünfprozentmarke wird erst bei
+    sechs unterschritten, also genau bei `MIN_PAARE`.
+
+    Bei **drei** Werten ist das anders. Ein Durchmarsch über drei Paare kommt zufällig in
+    3.7 % der Fälle vor, liegt also unter 5 % — ohne die Schranke gälte das als belegt.
+    Drei Paare sind aber drei Bilder je Wert, und daraus eine Aussage abzuleiten ist genau
+    die Klemme, in der die Sprachmessung zuerst steckte.
+
+    Der Wächter ist also **nicht** tot, er greift nur nicht dort, wo ich zuerst hingesehen
+    habe. Das ist der Unterschied zum Eckenwächter in `raumkamera.py`, der wirklich nie
+    griff und darum entfernt wurde.
+    """
+    drei_werte_drei_paare = [[0.0, 0.0, 1.0]] * 3
+
+    e = varianten.zaehle_siege(drei_werte_drei_paare)
+
+    assert e["p_zufall"] < 0.05, "rechnerisch wäre das signifikant"
+    assert e["belegt"] is False, "die Mindestzahl hält es trotzdem auf"
+    assert "zu wenige Paare" in e["begruendung"]

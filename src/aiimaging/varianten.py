@@ -344,3 +344,151 @@ def waehle(bewertungen: Sequence[dict], *, schwelle: float,
                "ist etwas anderes als eine gute.")
         ),
     }
+
+
+# ======================================================================================
+# Die gepaarte Reihe — dasselbe Paar über viele Startwerte
+# ======================================================================================
+#
+# :func:`kontrollierte_reihe` hält **einen** Startwert fest. Das schliesst aus, dass ein
+# Unterschied vom Zufall des Startwerts kommt — aber nur für *diesen einen* Startwert. Ob
+# der Parameter allgemein wirkt oder ausgerechnet dort, bleibt offen.
+#
+# **Zweimal an einem Tag ist genau daran eine Messung gescheitert** (22.08.2026):
+#
+# * `auf-20260822-28`: qwen gegen z-image-turbo, Abstand 0.165 — etwa **eine**
+#   Standardabweichung der Startwert-Streuung. An drei Bildern nicht entscheidbar.
+# * Der Sprachbefund: bei n = 3 trug er nicht (Abstand 25.5 gegen Streuung 20.7, die
+#   Bereiche überlappten). **Erst das Paaren über acht Startwerte entschied** — bei
+#   gleichem Startwert gewann der deutsche Prompt 8 von 8 Mal.
+#
+# Die Streuung über Startwerte (0.2269) ist in diesem Projekt **grösser als jeder gemessene
+# Parametereffekt** (0.10–0.14). Ein Mittelwertvergleich braucht deshalb sehr viele Läufe;
+# ein **Paarvergleich** braucht wenige, weil er den Startwert herausrechnet, statt gegen
+# ihn anzumessen.
+#
+# > Gleicher Startwert, eine Sache anders, zählen wer gewinnt.
+
+#: Kleinste gepaarte Reihe, die überhaupt etwas belegen kann.
+#:
+#: Bei fünf Paaren liegt die Wahrscheinlichkeit, dass eine Seite **alle** gewinnt, ohne
+#: dass ein Unterschied besteht, bei 6.25 % — knapp über der üblichen Fünfprozentmarke.
+#: Ab sechs Paaren sind es 3.1 %. Vier Paare können also selbst im besten Fall nichts
+#: belegen, und eine Reihe, die im besten Fall nichts belegen kann, ist verschwendete
+#: Rechenzeit.
+MIN_PAARE = 6
+
+
+def gepaarte_reihe(basis: render.RenderAuftrag, feld: str, werte: Sequence,
+                   seeds: Sequence[int]) -> list[list[render.RenderAuftrag]]:
+    """Je Startwert **eine** vollständige kontrollierte Reihe.
+
+    Returns:
+        Eine Liste je Startwert, darin ein Auftrag je Wert — also ``len(seeds)`` Gruppen
+        zu ``len(werte)`` Aufträgen. Die Gruppierung ist die Aussage: Verglichen wird
+        **innerhalb** einer Gruppe, nie über Gruppen hinweg.
+
+    Raises:
+        VariantenError: zu wenige Startwerte, doppelte Startwerte, oder dieselben Gründe
+            wie bei :func:`kontrollierte_reihe`.
+
+    **Warum doppelte Startwerte abgewiesen werden:** Zwei Gruppen mit demselben Startwert
+    sind keine zwei Paare, sondern dasselbe Paar zweimal. Sie zu zählen behauptete eine
+    Sicherheit, die nicht da ist — und genau das soll dieses Verfahren verhindern.
+    """
+    seeds = list(seeds)
+    if len(seeds) < MIN_PAARE:
+        raise VariantenError(
+            f"{len(seeds)} Startwerte sind zu wenige, nötig sind {MIN_PAARE}. Bei fünf "
+            f"Paaren läge die Wahrscheinlichkeit, dass eine Seite zufällig alle gewinnt, "
+            f"bei 6.25 % — eine Reihe, die im besten Fall nichts belegen kann, ist "
+            f"verschwendete Rechenzeit.")
+    if len(set(seeds)) != len(seeds):
+        raise VariantenError(
+            "Doppelte Startwerte. Zwei Gruppen mit demselben Startwert sind nicht zwei "
+            "Paare, sondern dasselbe Paar zweimal — sie zu zählen behauptete eine "
+            "Sicherheit, die nicht da ist.")
+    gruppen = []
+    for seed in seeds:
+        mit_seed = dataclasses.replace(basis, seed=int(seed))
+        gruppen.append(kontrollierte_reihe(mit_seed, feld, werte))
+    return gruppen
+
+
+def zaehle_siege(gruppen_bewertungen: Sequence[Sequence[float | None]]) -> dict:
+    """Wer gewinnt wie oft — der Vorzeichentest über gepaarte Gruppen.
+
+    Args:
+        gruppen_bewertungen: je Gruppe eine Folge von Bewertungen, in derselben
+            Reihenfolge wie die Werte. **Höher ist besser.** ``None`` heisst *nicht
+            gemessen*; eine Gruppe mit einer fehlenden Bewertung wird **ganz**
+            übersprungen — ein halbes Paar ist kein Paar.
+
+    Returns:
+        ``{siege, n_paare, n_uebersprungen, gewinner, p_zufall, belegt, begruendung}``.
+
+        ``p_zufall`` ist die **zweiseitige** Wahrscheinlichkeit, dass der Gewinner rein
+        zufällig mindestens so oft gewinnt. Zweiseitig, weil vorher nicht feststand,
+        welche Seite gewinnen würde — einseitig zu rechnen, nachdem man das Ergebnis
+        gesehen hat, halbiert die Zahl und die Ehrlichkeit gleich mit.
+
+    **Was dieses Verfahren NICHT sagt:** wie gross der Unterschied ist. Es zählt Siege,
+    nicht Abstände. Acht von acht Siegen belegen, **dass** eine Seite besser ist, und sagen
+    nichts darüber, **um wieviel** — dafür braucht es die Bewertungen selbst.
+    """
+    vollstaendig = [g for g in gruppen_bewertungen
+                    if g and all(w is not None for w in g)]
+    n_uebersprungen = len(list(gruppen_bewertungen)) - len(vollstaendig)
+    antwort = {"siege": [], "n_paare": len(vollstaendig),
+               "n_uebersprungen": n_uebersprungen, "gewinner": None,
+               "p_zufall": None, "belegt": False, "begruendung": ""}
+    if not vollstaendig:
+        antwort["begruendung"] = (
+            "Keine vollständige Gruppe. Ein halbes Paar ist kein Paar — NICHT GEMESSEN.")
+        return antwort
+
+    breite = len(vollstaendig[0])
+    if any(len(g) != breite for g in vollstaendig):
+        raise VariantenError(
+            "Die Gruppen sind unterschiedlich breit. Verglichen wird innerhalb einer "
+            "Gruppe; unterschiedlich viele Werte je Gruppe hiesse, verschiedene Fragen "
+            "zu vermengen.")
+
+    siege = [0] * breite
+    for gruppe in vollstaendig:
+        bester = max(range(breite), key=lambda i: gruppe[i])
+        siege[bester] += 1
+    antwort["siege"] = siege
+
+    n = len(vollstaendig)
+    beste = max(range(breite), key=lambda i: siege[i])
+    antwort["gewinner"] = beste
+    p = _binomial_zweiseitig(siege[beste], n, 1.0 / breite)
+    antwort["p_zufall"] = p
+    antwort["belegt"] = p < 0.05 and n >= MIN_PAARE
+    antwort["begruendung"] = (
+        f"{siege[beste]} von {n} Paaren gewinnt Wert {beste}. Zufällig wäre das in "
+        f"{p:.2%} der Fälle. "
+        + ("BELEGT." if antwort["belegt"] else
+           f"NICHT BELEGT — {'zu wenige Paare' if n < MIN_PAARE else 'zu häufig zufällig'}. "
+           f"Das heisst NICHT, dass kein Unterschied besteht; es heisst, dass diese Reihe "
+           f"keinen zeigt.")
+        + (f" {n_uebersprungen} Gruppe(n) übersprungen, weil eine Bewertung fehlte."
+           if n_uebersprungen else ""))
+    return antwort
+
+
+def _binomial_zweiseitig(treffer: int, n: int, p_einzeln: float) -> float:
+    """Wahrscheinlichkeit, mindestens so viele Treffer zu sehen — auf beide Seiten.
+
+    Reine Rechnung mit ``math.comb``; kein ``scipy``, weil dieses Modul überall laufen
+    muss, wo der Kern läuft (Regel 4).
+    """
+    def genau(k: int) -> float:
+        return math.comb(n, k) * (p_einzeln ** k) * ((1.0 - p_einzeln) ** (n - k))
+
+    beobachtet = genau(treffer)
+    # Zweiseitig nach der üblichen Konvention: alle Ausgänge, die mindestens so
+    # unwahrscheinlich sind wie der beobachtete.
+    return min(1.0, sum(genau(k) for k in range(n + 1)
+                        if genau(k) <= beobachtet * (1 + 1e-12)))

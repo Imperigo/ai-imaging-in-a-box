@@ -1060,6 +1060,51 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
       ist, bleibt **unentschieden** — 0.165 Abstand entspricht etwa einer
       Standardabweichung der Seed-Streuung, und drei Bilder klären das nicht.
 
+## Die gepaarte Reihe — die Methode, an der zwei Messungen gescheitert sind
+
+- [x] **`gepaarte_reihe` und `zaehle_siege` gebaut (22.08.), auf Bitte der HomeStation.**
+      Sie hat es zweimal an einem Tag erlebt: Bei `auf-28` war der Abstand zwischen zwei
+      Backbones (0.165) etwa **eine Standardabweichung** der Startwert-Streuung — an drei
+      Bildern nicht entscheidbar. Beim Sprachbefund trug n = 3 nicht (Abstand 25.5 gegen
+      Streuung 20.7), **erst acht Paare entschieden**: bei gleichem Startwert gewann der
+      englische Prompt 8 von 8 Mal.
+
+      > Gleicher Startwert, eine Sache anders, zählen wer gewinnt.
+
+      Der Grund, warum das so viel billiger ist: Die Streuung über Startwerte (0.2269) ist
+      in diesem Projekt **grösser als jeder gemessene Parametereffekt** (0.10–0.14). Ein
+      Mittelwertvergleich muss dagegen anmessen, ein Paarvergleich rechnet sie heraus.
+
+      Die Sprachreihe ist als Test hinterlegt und wird nachgerechnet — 8 von 8, p = 0.78 %.
+      **Zweiseitig gerechnet**, nicht einseitig: Einseitig zu rechnen, *nachdem* man das
+      Ergebnis gesehen hat, halbiert die Zahl und die Ehrlichkeit gleich mit.
+- [x] **Ein Wächter, der nur unter meinen Testbedingungen tot aussah.** Die
+      Mutationsprobe überlebte `and n >= MIN_PAARE`. Grund: Bei **zwei** Werten ist die
+      Schranke rechnerisch redundant (fünf Paare ergeben 6.25 %, sechs 3.1 % — die
+      Fünfprozentmarke fällt genau bei `MIN_PAARE`). Bei **drei** Werten nicht: Ein
+      Durchmarsch über drei Paare kommt in 3.7 % der Fälle vor und gälte ohne Schranke als
+      belegt.
+
+      **Der Unterschied zum Eckenwächter in `raumkamera.py` ist der Punkt:** Der griff
+      wirklich nie und wurde entfernt. Dieser greift, nur nicht dort, wo ich zuerst
+      hingesehen habe. Test nachgezogen statt Code entfernt.
+- [ ] **DER SPRACHBEFUND TRIFFT DEN PRODUKTPFAD, und er ist ungelöst.** Die Oberfläche
+      sammelt **deutsch** und legt es wörtlich in `style.prompt`; das Modell versteht
+      **englisch**. Gemessen: `overcast sky` +0.3 gegen `bedeckter Himmel` +17.8
+      Blauüberschuss. Verlangt war ein bedeckter Himmel, geliefert wurde blauer.
+
+      Drei Auswege, und keiner ist bei uns allein zu haben: die Oberfläche sammelt
+      englisch, wir übersetzen vor dem Rendern, oder das Modell bekommt beides. Das erste
+      ist eine Frage an den Cloud-Worker, das zweite eine Entscheidung des Owners (eine
+      Übersetzung ist eine stille Änderung am Prompt des Nutzers).
+- [ ] **Vakuumprobe: 9 Treffer statt 6 — alle drei neuen sind gedeckt.** Zwei tragen ihre
+      Gegenprobe **im selben Test** (`test_komposition.py`), die Probe sieht das nicht,
+      weil sie je Zusicherung urteilt und nicht je Mechanismus. Der dritte
+      (`test_maske.py`) hatte eine Gegenprobe, die aber eine **andere Zeichenfolge**
+      prüfte — wäre der Warntext geändert worden, hätte der eine vakuum-wahr bestanden und
+      der andere wäre gefallen. Zusammengezogen: dieselbe Zeichenfolge, einmal erwartet,
+      einmal nicht.
+
 ## DAS TOR — offen, und der Weg zu, gefunden (auf-25 bis auf-27)
 
 - [x] **`auf-27`: Der Prüfstein fällt, und die Antwort ist trotzdem da.** Verlangt war:
