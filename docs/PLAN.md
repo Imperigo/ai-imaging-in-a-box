@@ -821,7 +821,9 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Decke exakt gleich viel Bildfläche. **Keine Ersatzhöhe**, wenn die Raumhöhe fehlt:
       `kameras.AUGENHOEHE_M` (1,70 m) erzeugt in einem 2,55-m-Raum 28 Prozentpunkte
       Ungleichgewicht. **Kamera waagrecht**, Blickziel auf Kamerahöhe — anders als
-      `kameras.py`, das 9,46° kippt.
+      `kameras.py`, das kippt. (**Nachgemessen 22.08.:** um 1,92°–4,70°, nicht um die
+      vielzitierten 9,46° — die gelten bei 1,2 × Gebäudehöhe Abstand, und dort steht
+      `kamerasatz` nie. Siehe unten.)
 
       Geprüft an den **echten** Räumen des Runners (L-förmig 26,62 m², rechteckig
       5,94 m²), nicht an erfundenen. Mutationsprobe: sechs Kappungen, fünf gefangen — und
@@ -926,6 +928,58 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Praxis wählt die Wand mit dem Motiv. Ein Kamin oder eine Küchenzeile ist ein Motiv
       und hat keine Öffnung; die längste Wand ist oft, aber nicht immer, die richtige. Der
       Hinweis steht bei jedem Standpunkt.
+- [x] **Die waagrechte Kamera steht (22.08.), `kameras.MODUS_SHIFT`, 24 Tests.**
+      Additiv: `MODUS_GEKIPPT` bleibt Vorgabe, jede bisher gemessene Aufnahme bleibt
+      reproduzierbar. Der Grund für den Umbau ist die Norm und **nicht** die Bildqualität
+      — `auf-29` hat gemessen, dass die Kippung dem Tiefenschätzer nichts nimmt (über Eck
+      −0,9835 gekippt gegen −0,9650 waagrecht, alle drei innerhalb von 0,019). Wer den
+      Modus wählt, wählt die Norm, nicht eine bessere Zahl.
+
+      **Der Kern in einem Satz:** `shift_mm = brennweite · tan(Neigung)`. In
+      Tangenseinheiten *ist* der Shift der Winkel, um den sonst gekippt würde. Verdrahtet
+      bis ans Gerät: `kamerasatz` → `seams` → `--kamera-modus` / `--shift-y` →
+      `kam_daten.shift_y`, und der Abholer reicht ihn durch.
+- [x] **Nachgemessen: `kameras.py` kippt nicht um 9,46°, sondern um 1,92°–4,70°.**
+      Die Zahl steht in vier Dokumenten dieses Projekts. Sie ist `atan(0.20 / 1.2)` und
+      gilt bei einem Abstand von **1,2 × Gebäudehöhe** — den `kamerasatz` nie einnimmt:
+      `DECKUNGSGRAD = 0.55` stellt die Kamera auf 2,5–5,5 × Gebäudehöhe. Gemessen über
+      zwölf Richtungen, vier Gebäudehöhen und zwei Formate.
+
+      Das ändert das Urteil nicht (2° Konvergenz sind auch Konvergenz), aber die
+      Grössenordnung — und die andere Seite derselben Rechnung ist eine gute Nachricht:
+      Der nötige Shift beträgt **0,94–2,30 mm** gegen die 12 mm, die ein wirkliches
+      Objektiv leistet. Der normgerechte Modus ist nicht an der Grenze des Machbaren,
+      sondern weit innerhalb.
+- [x] **Der Rahmen wird durch den Shift unsymmetrisch — und das ist die ganze Wirkung.**
+      Oben `grenze_v + s`, unten `grenze_v − s`. Ob ein Shift Abstand *kostet* oder
+      *spart*, hängt daran, welche Kante bindet: Beim hohen Turm bindet das Dach, und die
+      Kamera darf näher heran; beim flachen Bau aus der Nähe bindet der Fuss, und sie
+      muss weiter weg (der Term aus Recherche §4.3, den man übersieht). Der erste Anlauf
+      des Tests prüfte einen breiten, niedrigen Bau — dort bindet die **Breite**, und der
+      Shift änderte gar nichts. Er wäre grün geworden und hätte nichts gezeigt.
+
+      Gegenprobe an einer belegten Zahl: Bei 24 mm Sensorhöhe verlässt die Achse den
+      Rahmen bei genau 12 mm Shift — der Horizont sitzt dann auf der Bildunterkante
+      (Recherche §4.4), **unabhängig von der Brennweite**, weil Rahmengrenze und Versatz
+      dasselbe `f` im Nenner tragen.
+- [x] **Ein Gleitkomma-ULP zwischen „unmöglich" und „1,5 · 10^16 Meter".** Genau am
+      Grenzfall oben ist `grenze_v` rechnerisch gleich dem Versatz, im Gleitkomma aber um
+      ein ULP daneben. Auf der falschen Seite lieferte die Umstellung keinen Fehler,
+      sondern einen Rückschub mit sechzehn Stellen. Der Vergleich ist jetzt relativ
+      (`DEGENERIERT_ANTEIL`). Gefunden nicht durch Nachdenken, sondern weil ein Test an
+      der belegten 12-mm-Zahl auf die Grenze zielte.
+- [x] **Der Sensorbezug wird ausdrücklich gesetzt, nicht Blender überlassen.**
+      `kameras.bildwinkel` legt die Sensorbreite auf 36 mm fest; Blenders Vorgabe `AUTO`
+      bezieht sie auf die **grössere** Bildkante. Für quer und quadratisch dasselbe — und
+      alle bisherigen Läufe waren quer oder quadratisch, weshalb es nie auffiel. Im
+      **Hochformat** gingen unser Bildwinkel und Blenders auseinander, still und in beide
+      Richtungen. Der Hausstil ist quadratisch bis hochformatig; der Fall steht bevor.
+      `sensor_fit = 'HORIZONTAL'` steht jetzt im Runner — **am Gerät ungeprüft**,
+      `auf-20260823-33` Fall S4.
+- [ ] **Was am Shift noch ungemessen ist: alles jenseits der Prozessgrenze.**
+      Ob Blender `shift_y` so annimmt, wie wir es meinen, ob die Senkrechten im Bild
+      wirklich senkrecht werden, ob der Umbau für den gekippten Modus wirklich bitgleich
+      additiv war — `auf-20260823-33` fragt genau das, in fünf Fällen und ohne Bildmodell.
 - [ ] **`AUTO_RICHTUNGEN = ("sSE",)` ist eine einzige Richtung — HABS verlangt drei.**
       Umgebungsansicht, Frontalansicht, und zwei Über-Eck-Ansichten auf **gegenüberliegenden**
       Diagonalen. Unsere Richtungstabelle kann das bereits abbilden; es ist eine

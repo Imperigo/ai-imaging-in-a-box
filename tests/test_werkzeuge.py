@@ -163,3 +163,73 @@ def test_ruftabelle_deckt_alle_werkzeuge_ab():
     """Ein neues Werkzeug im Vertrag ohne Eintrag hier wäre im Cockpit sichtbar, aber tot."""
     from aiimaging.mcp_schemas import WERKZEUGE
     assert set(werkzeuge.RUFTABELLE) == set(WERKZEUGE)
+
+
+# ======================================================================================
+# Die Selbstauskunft — bisher ungeprüft, obwohl sie das Aushängeschild der Lane ist
+# ======================================================================================
+
+def test_die_selbstauskunft_haelt_ihren_eigenen_vertrag():
+    """Ein Auskunftswerkzeug, dessen Antwort nicht zum eigenen Schema passt, ist die
+    Pointe seines eigenen Zwecks: Es soll dem Ökosystem sagen, was hier gilt."""
+    from aiimaging.mcp_schemas import WERKZEUG_FAEHIGKEITEN, werkzeug
+
+    antwort = werkzeuge.capabilities({})
+    schema = werkzeug(WERKZEUG_FAEHIGKEITEN)["outputSchema"]
+
+    for pflicht in schema["required"]:
+        assert pflicht in antwort, f"Pflichtfeld {pflicht!r} fehlt in der Antwort"
+    unbekannt = set(antwort) - set(schema["properties"])
+    assert not unbekannt, (
+        f"Die Antwort trägt Felder, die ihr Schema nicht kennt: {sorted(unbekannt)}. "
+        f"Eine Oberfläche, die gegen das Schema baut, sieht sie nie."
+    )
+
+
+def test_die_selbstauskunft_bleibt_an_den_konstanten_haengen():
+    """Abgeschriebene Zahlen veralten still. Diese sind es nicht — der Test hält sie fest."""
+    from aiimaging import geometrie_qa, sprache
+    from aiimaging.mcp_schemas import WERKZEUGE
+
+    antwort = werkzeuge.capabilities({})
+    assert antwort["werkzeuge"] == sorted(WERKZEUGE)
+    assert antwort["geometrie_schwelle"] == geometrie_qa.SCHWELLE_GEOMETRIE
+    assert antwort["prompt_sprache"]["verfahren"] == sprache.VERFAHREN_GLOSSAR
+
+
+def test_die_behauptete_uebersetzung_wird_am_verhalten_geprueft():
+    """`uebersetzt_deutsch: true` ist eine Behauptung — hier wird sie zur Messung.
+
+    Der Unterschied ist der ganze Punkt dieses Projekts: Eine Selbstauskunft, die nur
+    ein `True` trägt, bleibt auch dann grün, wenn jemand die Übersetzung morgen
+    ausbaut. Also wird gegen den echten Weg geprüft, den ein Auftrag nimmt.
+    """
+    from aiimaging import kosmo_szene
+
+    antwort = werkzeuge.capabilities({})
+    gelesen = kosmo_szene.lies_szene({
+        "schema": kosmo_szene.SCHEMA_SZENE,
+        "geometry": {"path": "/irgendwo/haus.glb"},
+        "style": {"prompt": "bedeckter Himmel, keine Menschen"},
+    })
+
+    assert antwort["prompt_sprache"]["uebersetzt_deutsch"] is True
+    assert gelesen["prompt"] == "overcast sky, no people", (
+        "die Lane behauptet zu übersetzen — dann muss sie es auch tun"
+    )
+    assert gelesen["prompt_original"] == "bedeckter Himmel, keine Menschen", (
+        "und der ursprüngliche Wortlaut darf dabei nicht verloren gehen"
+    )
+    for feld in antwort["prompt_sprache"]["deklariert_in"]:
+        assert feld in gelesen, f"als deklariert genanntes Feld {feld!r} gibt es gar nicht"
+
+
+def test_die_vorbehalte_nennen_die_prompt_umschreibung():
+    """Wer `style.prompt` schickt, bekommt womöglich einen anderen zurück, als er schickte.
+
+    Das ist keine Fähigkeit, sondern ein Eingriff in die Eingabe des Aufrufers — und
+    gehört darum dorthin, wo auch die unkalibrierte Schwelle steht.
+    """
+    text = " ".join(werkzeuge.capabilities({})["vorbehalte"]).lower()
+    assert "prompt" in text and "uebersetzt" in text.replace("übersetzt", "uebersetzt")
+    assert "prompt_original" in text, "die Rettungsleine gehört in denselben Satz"

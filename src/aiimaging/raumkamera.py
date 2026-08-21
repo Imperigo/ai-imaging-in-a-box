@@ -61,7 +61,10 @@ ausserdem ausserhalb dessen, was die Innenraumfotografie überhaupt nennt (0,91�
 Bildebene lotrecht steht — HABS/NPS schreibt die Perspektivkorrektur *bei der Aufnahme*
 zwingend vor, und es ist die einzige institutionell verbindliche Regel des Fachs. Das
 Blickziel liegt darum **auf Kamerahöhe**, nicht darüber. (``kameras.py`` tut das bis heute
-anders und erzeugt 9,46° Neigung; die Umstellung dort ist ein eigener Schritt.)
+anders und erzeugt Neigung; die Umstellung dort ist ein eigener Schritt — seit dem
+22.08.2026 gibt es sie als `kameras.MODUS_SHIFT`. Die dort gemessene Neigung liegt bei
+1,92°–4,70°, nicht bei den früher genannten 9,46°: Jene gelten bei 1,2 × Gebäudehöhe
+Abstand, und so nah steht `kamerasatz` nie.)
 
 **3 · Es werden BEIDE Blickarten gerechnet, und gewählt wird anderswo.** Ob eine frontale
 Einpunktaufnahme oder ein Blick über Eck richtig ist, hängt laut allen gesichteten Quellen

@@ -58,6 +58,10 @@ import time
 from pathlib import Path
 
 from . import bruecke, fortschritt, maske as maske_modul
+# Nur fuer die Modus-Konstante. Der Name `kameras` ist in `verarbeite` lokal
+# belegt (die Kameraliste der Szene) — darum wird das Modul ausschliesslich in
+# der Vorgabe von `verarbeiter` benutzt, wo noch Modulgeltung herrscht.
+from . import kameras as _kameras_modul
 
 #: Ein Auftrag auf ``running``, dessen Laufzettel so lange nicht angefasst wurde, gilt als
 #: **Waise**. Die Zahl ist eine Setzung: Sie muss deutlich über der längsten erwarteten
@@ -400,6 +404,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 up_axis: str = ANGENOMMENE_HOCHACHSE, schwelle: float | None = None,
                 stillstand_frist_s: float | None = None, stil: str | None = None,
                 nullprobe: bool = True, seeds=(0,),
+                kamera_modus: str = _kameras_modul.MODUS_GEKIPPT,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
@@ -494,6 +499,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 aufloesung=szene.get("aufloesung", 512), hoehe=szene.get("hoehe"),
                 samples=szene.get("samples", 128),
                 kamera=aufgabe.get("richtung"),
+                kamera_modus=kamera_modus,
                 auge=aufgabe.get("auge"), blick_auf=aufgabe.get("blick_auf"),
                 brennweite=aufgabe.get("brennweite_mm"),
                 stillstand_frist_s=stillstand_frist_s,

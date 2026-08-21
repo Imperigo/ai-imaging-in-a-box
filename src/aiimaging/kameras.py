@@ -119,6 +119,160 @@ FRONTAL_VERSATZ = 0.10
 #: Vorgabe für ``bias_grad`` — siehe ``richtungen``.
 BIAS_GRAD = 35.0
 
+# --------------------------------------------------------------------------------------
+# Waagrechte Kamera und Shift — die einzige verbindliche Regel des Fachs
+# --------------------------------------------------------------------------------------
+
+#: Die Kamera kippt, um zu rahmen. Bisheriger und **weiterhin vorgegebener** Modus.
+#:
+#: Er verletzt die einzige institutionell verbindliche Regel der Architekturfotografie
+#: (HABS/NPS: senkrechte Kanten bleiben senkrecht). Er bleibt trotzdem die Vorgabe, weil
+#: ein Wechsel **jede bisher gemessene Aufnahme** verändern würde und am Gerät gemessen
+#: ist, dass er dem Tiefenschätzer nichts nimmt (``auf-20260822-29``: über Eck −0,9835
+#: gekippt gegen −0,9650 waagrecht, alle drei innerhalb von 0,019).
+#:
+#: **Wieviel er kippt — nachgemessen, und die überlieferte Zahl war falsch.** Vier
+#: Dokumente dieses Projekts sagen „`kameras.py` kippt 9,46°". Diese Zahl ist
+#: ``atan(0.20 / 1.2)`` und gilt bei einem Abstand von **1,2 × Gebäudehöhe** — einem
+#: Abstand, den :func:`kamerasatz` nie einnimmt. Über die zwölf Richtungen, vier
+#: Gebäudehöhen (8/15/30/60 m) und zwei Formate gemessen, steht die Kamera bei
+#: **2,5–5,5 × Gebäudehöhe**, und die Neigung liegt bei **1,92°–4,70°**. Der Grund ist
+#: ``DECKUNGSGRAD = 0.55``: Es soll Luft um das Bauwerk bleiben, und dafür geht die
+#: Kamera weit zurück.
+#:
+#: Das ändert das Urteil nicht — 2° Konvergenz sind auch Konvergenz —, aber es ändert
+#: die Grössenordnung des Problems, und eine Zahl, die durch vier Dokumente gewandert
+#: ist, ohne je nachgerechnet zu werden, gehört richtiggestellt.
+MODUS_GEKIPPT = "gekippt"
+
+#: Die Kamera bleibt waagrecht, das Objektiv wird verschoben. Der normgerechte Weg.
+#:
+#: **Was er kostet und was er bringt, ist gemessen und nicht behauptet:** Er bringt
+#: senkrechte Senkrechte — und er bringt der Bildqualität nach heutigem Stand *nichts*
+#: (``auf-20260822-29``). Wer ihn wählt, wählt die Norm, nicht eine bessere Zahl.
+MODUS_SHIFT = "shift"
+
+#: Beide, in der Reihenfolge ihrer Vorgabe.
+MODI = (MODUS_GEKIPPT, MODUS_SHIFT)
+
+#: Grösster Shift eines wirklichen Kleinbild-Shift-Objektivs, in Millimetern.
+#:
+#: **Belegt** (`docs/recherche/KOMPOSITION_AUSSEN.md`, §2): 11 mm ist der übliche
+#: Höchstwert von PC/TS-E-Objektiven, neuere Modelle erreichen 12 mm. Die Grenze ist
+#: physikalisch — jenseits davon reicht der **Bildkreis** des Objektivs nicht mehr.
+#:
+#: Unsere Kamera ist gerechnet und kennt diese Grenze nicht; sie könnte beliebig
+#: schieben. Genau darum steht die Zahl hier: Ein Bild jenseits von 12 mm ist mit einer
+#: wirklichen Kamera nicht aufnehmbar, und die Behauptung „so fotografiert man
+#: Architektur" hört dort auf zu gelten. Gemeldet wird das, nicht verboten — die Grenze
+#: ist eine Aussage über Objektive, keine über Geometrie.
+#:
+#: **Für unsere Kameras ist sie bequem eingehalten:** über dieselben vier Gebäudehöhen
+#: und zwölf Richtungen gemessen, verlangt der Shift-Modus **0,94–2,30 mm**, also weniger
+#: als ein Fünftel des Verfügbaren. Das ist die andere Seite des weiten Abstands aus
+#: :data:`MODUS_GEKIPPT`: Wer weit weg steht, muss wenig schieben. Der normgerechte Modus
+#: ist damit nicht eine Annäherung an das Machbare, sondern deutlich innerhalb davon.
+MAX_SHIFT_MM = 12.0
+
+#: Ab welchem Anteil der ungeschobenen Rahmengrenze eine Rahmenhälfte als entartet gilt.
+#:
+#: Siehe die Begründung in :func:`ecken_im_bild`: Der Fall „Achse genau auf der
+#: Rahmenkante" ist bei 12 mm Shift im Querformat exakt erreicht, und ein Gleitkomma-ULP
+#: entscheidet sonst zwischen einer Meldung und einer Zahl mit sechzehn Stellen.
+DEGENERIERT_ANTEIL = 1e-9
+
+
+def shift_aus_ziel(auge, blick_auf, *, brennweite_mm: float = BRENNWEITE_MM) -> dict:
+    """Wieviel Shift ersetzt genau diese Kippung?
+
+    **Der Kern in einem Satz:** ``shift_mm = brennweite_mm · tan(Neigungswinkel)``. Der
+    Shift in Tangenseinheiten ist nichts anderes als der Winkel, um den sonst gekippt
+    würde — ``s = Δh / d``, Höhenunterschied durch waagrechten Abstand.
+
+    Daraus folgt die Eigenschaft, die alles Weitere trägt: Ein Shift verschiebt den
+    **Rahmen**, er dreht ihn nicht. Der Rahmen ist danach **nicht mehr symmetrisch zur
+    Achse** — oben bleibt mehr Platz, unten weniger. Das ist der Grund, warum ein
+    stärkerer Shift den Gebäudefuss aus dem Bild drängt und die Kamera weiter
+    zurückzwingt (Recherche §4.3: der zweite Term, den man übersieht).
+
+    Args:
+        auge: Standort der Kamera.
+        blick_auf: Das Ziel, das der **gekippte** Modus anvisieren würde.
+        brennweite_mm: Kleinbild-Brennweite.
+
+    Returns:
+        ``{shift_mm, shift_tangens, neigung_grad, waagrechtes_ziel, abstand_m,
+        ueber_grenze, grenze_mm, warnungen}``.
+
+        ``waagrechtes_ziel`` ist das Ziel, das die Kamera im Shift-Modus tatsächlich
+        anschaut: dieselbe Richtung in der Grundrissebene, aber auf Augenhöhe. Damit ist
+        die Achse waagrecht, und senkrechte Kanten bleiben senkrecht.
+
+        ``shift_mm`` ist ``0.0``, wenn das Ziel schon auf Augenhöhe liegt — dann ist
+        nichts zu ersetzen, und der Shift-Modus liefert dasselbe Bild wie der gekippte.
+    """
+    ax, ay, az = float(auge[0]), float(auge[1]), float(auge[2])
+    zx, zy, zz = float(blick_auf[0]), float(blick_auf[1]), float(blick_auf[2])
+    abstand = math.hypot(zx - ax, zy - ay)
+    waagrecht = (zx, zy, az)
+
+    if abstand <= 1e-9:
+        # Ein Ziel senkrecht über oder unter der Kamera. Kein Shift der Welt bildet das
+        # mit waagrechter Achse ab — gemeldet, nicht durch eine Zahl überspielt.
+        return {"shift_mm": 0.0, "shift_tangens": 0.0, "neigung_grad": 0.0,
+                "waagrechtes_ziel": waagrecht, "abstand_m": 0.0,
+                "ueber_grenze": False, "grenze_mm": float(MAX_SHIFT_MM),
+                "warnungen": (
+                    "Das Blickziel liegt senkrecht über oder unter der Kamera "
+                    "(waagrechter Abstand 0). Mit waagrechter Achse ist es nicht "
+                    "abzubilden; der Shift-Modus kann hier nichts leisten.",)}
+
+    tangens = (zz - az) / abstand
+    shift_mm = float(brennweite_mm) * tangens
+    ueber = abs(shift_mm) > MAX_SHIFT_MM
+
+    warnungen = []
+    if ueber:
+        warnungen.append(
+            f"Der nötige Shift beträgt {shift_mm:.1f} mm und übersteigt damit die "
+            f"{MAX_SHIFT_MM:.0f} mm, die ein wirkliches Kleinbild-Shift-Objektiv leistet "
+            f"(Bildkreis). Gerechnet wird er trotzdem — unsere Kamera hat keinen "
+            f"Bildkreis. Aber dieses Bild ist mit einer wirklichen Kamera nicht "
+            f"aufnehmbar, und es ist damit kein Beleg dafür, wie Architektur fotografiert "
+            f"wird. Wer es echt haben will: weiter weg oder längere Brennweite."
+        )
+
+    return {
+        "shift_mm": shift_mm,
+        "shift_tangens": tangens,
+        "neigung_grad": math.degrees(math.atan(tangens)),
+        "waagrechtes_ziel": waagrecht,
+        "abstand_m": abstand,
+        "ueber_grenze": ueber,
+        "grenze_mm": float(MAX_SHIFT_MM),
+        "warnungen": tuple(warnungen),
+    }
+
+
+def blender_shift_y(shift_mm: float,
+                    sensor_breite_mm: float = SENSOR_BREITE_MM) -> float:
+    """Millimeter auf dem Sensor → Blenders ``shift_y``.
+
+    Blender gibt den Shift als **Anteil der grösseren Sensorkante** an, nicht in
+    Millimetern. Bei uns ist die Bezugskante immer ``SENSOR_BREITE_MM`` — denn
+    :func:`bildwinkel` setzt die Sensorbreite fest auf 36 mm und leitet die Höhe aus dem
+    Seitenverhältnis ab.
+
+    **Was daran ungeprüft ist, und zwar ausdrücklich:** Diese Festlegung stimmt mit
+    Blenders Einstellung ``sensor_fit='HORIZONTAL'`` überein. Steht dort ``AUTO`` — die
+    Vorgabe —, bezieht Blender sich auf die **grössere Bildkante**. Für Quer- und
+    Quadratformate ist das dasselbe; für ein **Hochformat** ist es das nicht, und dann
+    gingen unser Bildwinkel und Blenders Bildwinkel auseinander. Alle bisherigen Läufe
+    waren quer oder quadratisch, der Fall ist also nie aufgetreten — aber der Hausstil
+    ist quadratisch bis hochformatig, und damit steht er bevor.
+    """
+    return float(shift_mm) / float(sensor_breite_mm)
+
 #: Ab welchem Anteil des angeforderten Deckungsgrads eine Kamera als „zu weit weg"
 #: gemeldet wird.
 #:
@@ -483,7 +637,8 @@ def _huellen_flaeche(punkte) -> float:
 
 def flaechenanteil(auge, blick_auf, bbox, *,
                    brennweite_mm: float = BRENNWEITE_MM,
-                   seitenverhaeltnis: float = 16 / 9) -> float:
+                   seitenverhaeltnis: float = 16 / 9,
+                   shift_mm: float = 0.0) -> float:
     """Welchen Anteil der BILDFLÄCHE die Hüllbox einnimmt.
 
     Warum diese Zahl neben ``fuellgrad`` stehen muss
@@ -518,6 +673,9 @@ def flaechenanteil(auge, blick_auf, bbox, *,
     hfov, vfov = bildwinkel(brennweite_mm, seitenverhaeltnis=seitenverhaeltnis)
     grenze_h = math.tan(hfov / 2.0)
     grenze_v = math.tan(vfov / 2.0)
+    # Der Shift verschiebt den Rahmen gegen die Achse — in Tangenseinheiten ist er
+    # ``shift_mm / brennweite``. Bei 0 fällt der Term weg und die Rechnung ist die alte.
+    versatz = float(shift_mm) / float(brennweite_mm)
 
     unten, obenecke = gelesen
     flach = []
@@ -530,14 +688,15 @@ def flaechenanteil(auge, blick_auf, bbox, *,
                     return 0.0
                 # Auf den Bildrahmen normiert: -0.5 .. +0.5 ist der sichtbare Bereich.
                 flach.append((_punkt(v, rechts) / tiefe / grenze_h / 2.0,
-                              _punkt(v, oben) / tiefe / grenze_v / 2.0))
+                              (_punkt(v, oben) / tiefe - versatz) / grenze_v / 2.0))
     return min(1.0, _huellen_flaeche(flach))
 
 
 def ecken_im_bild(auge, blick_auf, bbox, *,
                   brennweite_mm: float = BRENNWEITE_MM,
                   seitenverhaeltnis: float = 16 / 9,
-                  bildrand: float = BILDRAND) -> dict:
+                  bildrand: float = BILDRAND,
+                  shift_mm: float = 0.0) -> dict:
     """Liegen alle acht Hüllbox-Ecken im Bild?
 
     Geprüft werden **alle acht Ecken einzeln**, nicht die Box als Ganzes. Für jede Ecke
@@ -548,6 +707,13 @@ def ecken_im_bild(auge, blick_auf, bbox, *,
     Der Eckentest ist der Grund, warum die analytische Rechnung allein nicht genügt: Sie
     arbeitet mit einer Ersatzausdehnung und einem Ziel in der Mitte; der Eckentest prüft
     die Wirklichkeit einschliesslich der Kippung.
+
+    ``shift_mm`` verschiebt den Rahmen gegen die Blickachse (Shift-Objektiv). Der Rahmen
+    ist dann **nicht mehr symmetrisch**: nach oben ``grenze_v + s``, nach unten
+    ``grenze_v - s``. Die Umstellung nach dem Rückschub bleibt geschlossen lösbar, weil
+    ``s`` nicht von der Tiefe abhängt — nur wird jede Ecke jetzt gegen *ihre* Grenze
+    gerechnet statt gegen eine gemeinsame. Bei ``shift_mm=0`` ist es Zeile für Zeile die
+    frühere Rechnung.
 
     Mitgeliefert wird ``noetiger_rueckschub_m``: **wie weit** die Kamera entlang ihrer
     Blickachse zurück muss, damit alle acht Ecken hineinpassen. Diese Zahl ist nicht
@@ -580,6 +746,30 @@ def ecken_im_bild(auge, blick_auf, bbox, *,
     grenze_h = math.tan(hfov / 2.0) * bildrand
     grenze_v = math.tan(vfov / 2.0) * bildrand
 
+    # **Hier steckt die ganze Wirkung des Shifts.** Er verschiebt den Rahmen gegen die
+    # Achse, und damit ist der Rahmen nicht mehr symmetrisch: Nach oben reicht er
+    # ``grenze_v + versatz``, nach unten nur noch ``grenze_v - versatz``. Genau das ist
+    # der Grund, warum ein stärkerer Shift den Gebäudefuss aus dem Bild drängt und die
+    # Kamera weiter zurückzwingt (Recherche §4.3 — der Term, den man übersieht).
+    versatz = float(shift_mm) / float(brennweite_mm)
+    grenze_oben = grenze_v + versatz
+    grenze_unten = grenze_v - versatz
+    # **Relativ verglichen, nicht gegen die harte Null.** Der Grenzfall ist erreichbar
+    # und keineswegs exotisch: Bei 24 mm Sensorhöhe (Kleinbild quer) verlässt die Achse
+    # den Rahmen bei genau 12 mm Shift — dem Höchstwert wirklicher Objektive (Recherche
+    # §4.4). Dort ist ``grenze_v`` rechnerisch exakt gleich ``versatz``, im Gleitkomma
+    # aber um ein ULP daneben. Auf der falschen Seite dieses ULP liefert die Umstellung
+    # keinen Fehler, sondern einen Rückschub von 1,5·10^16 Metern — eine Zahl, die
+    # entsteht und nichts bedeutet. Der Vergleich ist darum relativ.
+    if min(grenze_oben, grenze_unten) <= grenze_v * DEGENERIERT_ANTEIL:
+        return {"passt": False, "max_ueberstehen": float("inf"),
+                "noetiger_rueckschub_m": None, "ecken_hinter_kamera": 0,
+                "begruendung": (
+                    f"Der Shift von {shift_mm:.1f} mm ist bei {brennweite_mm:.0f} mm "
+                    f"Brennweite grösser als der halbe Bildwinkel: Die Blickachse liegt "
+                    f"dann ausserhalb des Rahmens. Rechnerisch möglich, fotografisch "
+                    f"sinnlos — und keine Rückschubweite bringt das in Ordnung.")}
+
     unten, obenecke = gelesen
     ecken = [(x, y, z)
              for x in (unten[0], obenecke[0])
@@ -592,8 +782,14 @@ def ecken_im_bild(auge, blick_auf, bbox, *,
     for ecke in ecken:
         v = _minus(ecke, auge)
         tiefe = _punkt(v, vorwaerts)
+        hoch = _punkt(v, oben)
+        # Die Tiefe, die diese Ecke MINDESTENS braucht, um in den Rahmen zu passen.
+        # Waagrecht symmetrisch, senkrecht getrennt nach oben und unten — bei
+        # ``shift_mm=0`` sind beide Grenzen gleich und der Ausdruck fällt auf das
+        # frühere ``max(|rechts|/grenze_h, |oben|/grenze_v)`` zurück.
         seitlich = max(abs(_punkt(v, rechts)) / grenze_h,
-                       abs(_punkt(v, oben)) / grenze_v)
+                       hoch / grenze_oben if hoch > 0.0 else 0.0,
+                       -hoch / grenze_unten if hoch < 0.0 else 0.0)
 
         # Die Tiefe, ab der diese Ecke im Bild läge — und was daran heute fehlt.
         # MIN_TIEFE_M steht mit im Maximum, damit eine Ecke direkt auf der Blickachse
@@ -628,6 +824,7 @@ def ecken_im_bild(auge, blick_auf, bbox, *,
 
 
 def schiebe_bis_im_bild(auge, blick_auf, bbox, *,
+                        shift_mm: float = 0.0,
                         brennweite_mm: float = BRENNWEITE_MM,
                         seitenverhaeltnis: float = 16 / 9,
                         bildrand: float = BILDRAND,
@@ -665,7 +862,8 @@ def schiebe_bis_im_bild(auge, blick_auf, bbox, *,
     augenhoehe = aktuell[2]
 
     for durchlauf in range(max_durchlaeufe):
-        pruefung = ecken_im_bild(aktuell, ziel, bbox, brennweite_mm=brennweite_mm,
+        pruefung = ecken_im_bild(aktuell, ziel, bbox, shift_mm=shift_mm,
+                                 brennweite_mm=brennweite_mm,
                                  seitenverhaeltnis=seitenverhaeltnis, bildrand=bildrand)
         if pruefung["passt"]:
             return {"auge": aktuell, "vollstaendig": True, "durchlaeufe": durchlauf,
@@ -689,7 +887,8 @@ def schiebe_bis_im_bild(auge, blick_auf, bbox, *,
                    aktuell[1] - richtung[1] * schub,
                    augenhoehe)
 
-    letzte = ecken_im_bild(aktuell, ziel, bbox, brennweite_mm=brennweite_mm,
+    letzte = ecken_im_bild(aktuell, ziel, bbox, shift_mm=shift_mm,
+                           brennweite_mm=brennweite_mm,
                            seitenverhaeltnis=seitenverhaeltnis, bildrand=bildrand)
     return {
         "auge": aktuell,
@@ -780,6 +979,7 @@ def kamerasatz(bbox, *,
                gelaende_z: float | None = None,
                bias_grad: float = BIAS_GRAD,
                bildrand: float = BILDRAND,
+               modus: str = MODUS_GEKIPPT,
                kuerzel=None) -> dict:
     """Aus einer Hüllbox die zwölf Kameras — mit Begründung je Kamera.
 
@@ -794,6 +994,15 @@ def kamerasatz(bbox, *,
             Unterkante der Hüllbox. Angeben, wenn das Bauwerk ein **Untergeschoss** hat —
             sonst steht die Kamera im Keller. Nicht angeben heisst nicht „egal", sondern
             „die Unterkante ist die beste Schätzung, die die Daten hergeben".
+        modus: ``MODUS_GEKIPPT`` (Vorgabe, unverändert) oder ``MODUS_SHIFT``.
+
+            Im Shift-Modus bleibt die Achse **waagrecht** und das Objektiv wird
+            verschoben; senkrechte Kanten bleiben damit senkrecht. Der Shift wird am
+            **analytischen** Abstand bestimmt und danach nicht mehr nachgeführt — ein
+            wirkliches Shift-Objektiv verstellt sich auch nicht von selbst, wenn der
+            Fotograf einen Schritt zurücktritt. Schiebt der Eckentest die Kamera zurück,
+            sitzt das Bauwerk darum etwas tiefer im Rahmen als im gekippten Modus. Das
+            ist kein Fehler der Rechnung, sondern was eine Kamera tut.
         kuerzel: Auswahl aus ``RICHTUNGSFOLGE``, oder ``None`` für alle zwölf.
 
     Returns:
@@ -808,9 +1017,20 @@ def kamerasatz(bbox, *,
         Bauwerk ein Fleck in der Bildmitte ist. Zu klein fällt keiner Prüfung auf, die
         nur nach „passt es hinein" fragt.
 
+        Je Kamera stehen ausserdem ``modus``, ``neigung_grad``, ``shift_mm`` und
+        ``shift_y``. ``neigung_grad`` steht **auch im gekippten Modus** dabei, und zwar
+        absichtlich: Es sind rund 9,5°, sie verletzen die einzige verbindliche Regel des
+        Fachs, und diese Tatsache gehört an jedes einzelne Bild statt in ein Dokument,
+        das niemand neben dem Bild liest.
+
     Raises:
-        ValueError: bbox unbrauchbar, oder ``kuerzel`` enthält einen unbekannten Namen.
+        ValueError: bbox unbrauchbar, ``modus`` unbekannt, oder ``kuerzel`` enthält
+            einen unbekannten Namen.
     """
+    if modus not in MODI:
+        raise ValueError(
+            f"Unbekannter Kameramodus {modus!r}. Bekannt: {', '.join(MODI)}."
+        )
     gelesen = _lies_bbox(bbox)
     if gelesen is None:
         raise ValueError(
@@ -866,7 +1086,19 @@ def kamerasatz(bbox, *,
                 mitte[1] + standort[1] * rechnung["abstand_m"] + quer[1] * versatz,
                 auge_z)
 
-        geschoben = schiebe_bis_im_bild(auge, ziel, bbox, brennweite_mm=brennweite_mm,
+        # Der Modus entscheidet nur, WIE gerahmt wird — nicht, WAS. Das Ziel oben ist in
+        # beiden Fällen dasselbe; im Shift-Modus wird es auf Augenhöhe zurückgeholt und
+        # der Höhenunterschied wandert in den Shift.
+        schief = shift_aus_ziel(auge, ziel, brennweite_mm=brennweite_mm)
+        if modus == MODUS_SHIFT:
+            blick = schief["waagrechtes_ziel"]
+            shift_mm = schief["shift_mm"]
+            alle_warnungen.extend(f"{k}: {w}" for w in schief["warnungen"])
+        else:
+            blick, shift_mm = ziel, 0.0
+
+        geschoben = schiebe_bis_im_bild(auge, blick, bbox, shift_mm=shift_mm,
+                                        brennweite_mm=brennweite_mm,
                                         seitenverhaeltnis=seitenverhaeltnis,
                                         bildrand=bildrand)
         if not geschoben["vollstaendig"]:
@@ -882,8 +1114,8 @@ def kamerasatz(bbox, *,
         # dann eine Warnung für jedes Hochhaus, obwohl der Rahmen vertikal gut gefüllt
         # ist. (Genau dieser Fehler stand hier zuerst: Ein 30 × 30 × 20 m Kubus meldete
         # 27 % Füllung, während er die Bildhöhe zu 46 % einnahm.)
-        endgueltig = _laenge((ziel[0] - geschoben["auge"][0],
-                              ziel[1] - geschoben["auge"][1], 0.0))
+        endgueltig = _laenge((blick[0] - geschoben["auge"][0],
+                              blick[1] - geschoben["auge"][1], 0.0))
         hfov = math.radians(rechnung["hfov_grad"])
         vfov = math.radians(rechnung["vfov_grad"])
         # Gemessen an der NAHEN Fassade, nicht in der Gebäudemitte. Der Abstand wird zur
@@ -900,9 +1132,10 @@ def kamerasatz(bbox, *,
         f_hoehe = (2.0 * rechnung["halbe_hoehe_m"] / bildhoehe) if bildhoehe > 0.0 else 0.0
         fuellgrad = max(f_breite, f_hoehe)
 
-        flaeche = flaechenanteil(geschoben["auge"], ziel, bbox,
+        flaeche = flaechenanteil(geschoben["auge"], blick, bbox,
                                  brennweite_mm=brennweite_mm,
-                                 seitenverhaeltnis=seitenverhaeltnis)
+                                 seitenverhaeltnis=seitenverhaeltnis,
+                                 shift_mm=shift_mm)
 
         warnungen = []
         if fuellgrad < deckungsgrad * FUELLGRAD_WARNSCHWELLE:
@@ -925,7 +1158,15 @@ def kamerasatz(bbox, *,
             "kuerzel": k,
             "azimut_grad": azimut,
             "auge": geschoben["auge"],
-            "blick_auf": ziel,
+            "blick_auf": blick,
+            "modus": modus,
+            # Wie stark die Achse gegen die Waagrechte geneigt ist. Im Shift-Modus 0.0 —
+            # das IST die Aussage des Modus. Im gekippten Modus rund 9,5°, und die Zahl
+            # steht hier, damit die Normverletzung an jedem Bild klebt.
+            "neigung_grad": (0.0 if modus == MODUS_SHIFT else schief["neigung_grad"]),
+            "shift_mm": float(shift_mm),
+            "shift_y": blender_shift_y(shift_mm),
+            "shift_ueber_grenze": bool(modus == MODUS_SHIFT and schief["ueber_grenze"]),
             "brennweite_mm": float(brennweite_mm),
             "seitenverhaeltnis": float(seitenverhaeltnis),
             "abstand_analytisch_m": rechnung["abstand_m"],

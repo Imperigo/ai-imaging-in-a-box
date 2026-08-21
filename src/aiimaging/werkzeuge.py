@@ -224,12 +224,30 @@ def capabilities(argumente: dict) -> dict:
     del argumente                     # bewusst ohne: das ist der Punkt dieses Werkzeugs
     from aiimaging import geometrie_qa as _g
     from aiimaging import kosmo_szene as _k
+    from aiimaging import sprache as _s
     return {
         "lane": LANE,
         "werkzeuge": sorted(WERKZEUGE),
         "vertraege": [_k.SCHEMA_SZENE, _k.SCHEMA_ERGEBNIS],
         "geometrie_schwelle": _g.SCHWELLE_GEOMETRIE,
+        # Was wir mit der EINGABE des Aufrufers tun. Das gehoert in eine
+        # Selbstauskunft, nicht nur ins Ergebnis: Wer `style.prompt` schickt, bekommt
+        # womoeglich einen anderen zurueck, als er geschickt hat.
+        "prompt_sprache": {
+            "uebersetzt_deutsch": True,
+            "verfahren": _s.VERFAHREN_GLOSSAR,
+            "deklariert_in": ["prompt", "prompt_original", "prompt_sprache"],
+            "warnt_bei_nicht_englisch": True,
+        },
         "vorbehalte": [
+            "Diese Lane SCHREIBT den Prompt um: Ein deutscher `style.prompt` wird vor "
+            "dem Rendern ins Englische uebersetzt (Glossar, deterministisch). Grund ist "
+            "eine Messung — gepaart ueber acht Startwerte ergab 'bedeckter Himmel' bei "
+            "8 von 8 einen deutlich blaueren Himmel als 'overcast sky'; die Bildmodelle "
+            "sind an englischen Bild-Text-Paaren trainiert. Der urspruengliche Wortlaut "
+            "geht nicht verloren, er steht als `prompt_original` daneben. Das Glossar "
+            "kennt Wendungen, keine Grammatik: Gebeugtes und Zusammengesetztes bleibt "
+            "stehen und wird als solches gemeldet, nicht stillschweigend uebergangen.",
             "Die Geometrie-Schwelle ist NICHT kalibriert: auf einer Szene mit viel Boden "
             "besteht weisses Rauschen das Gate, auf einer mit wenig Boden faellt selbst "
             "ein perfektes Bild durch (gemessen 20.08.2026, auf-20260820-21).",

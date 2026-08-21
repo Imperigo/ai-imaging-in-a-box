@@ -134,6 +134,16 @@ def _argumente():
     # `_kamera_setzen`: Der Rückfall ist die Bezugsgrösse aller bisherigen Messungen,
     # und eine stillschweigend geänderte Optik verschöbe sie alle.
     ap.add_argument("--brennweite", type=float, default=None)
+    ap.add_argument("--kamera-modus", dest="kamera_modus", default=None,
+                    help="'gekippt' (Vorgabe) oder 'shift'. Wirkt nur zusammen mit "
+                         "--kamera: Der Modus geht in `kameras.kamerasatz`, und der von "
+                         "dort gerechnete Shift wird gestellt. Ein ausdrücklich "
+                         "gesetztes --shift-y schlägt ihn.")
+    ap.add_argument("--shift-y", dest="shift_y", type=float, default=None,
+                    help="Objektiv-Shift nach oben, als Anteil der GRÖSSEREN Sensorkante "
+                         "(Blenders Einheit). Gesetzt heisst: waagrechte Kamera, "
+                         "senkrechte Kanten bleiben senkrecht. Gerechnet wird er in "
+                         "`kameras.MODUS_SHIFT`; hier wird er nur gestellt.")
     ap.add_argument("--bias", type=float, default=35.0)
     ap.add_argument("--augenhoehe", type=float, default=1.70)
     ap.add_argument("--deckungsgrad", type=float, default=0.55)
@@ -351,6 +361,10 @@ def _kamera_setzen(lo, hi, a=None):
     # Brennweite — er ist die Bezugsgrösse aller bisher gemessenen Tiefenkarten, und wer
     # seine Optik ändert, verschiebt rückwirkend jede Zahl, die daran kalibriert wurde.
     brennweite = getattr(a, "brennweite", None)
+    # Ausdrücklich gesetzt schlägt gerechnet. `None` heisst hier wie bei der Brennweite
+    # „nicht angefasst", nicht „null" — der Unterschied entscheidet, ob der aus
+    # `--kamera-modus shift` gerechnete Wert überhaupt zum Zug kommt.
+    shift_y = getattr(a, "shift_y", None)
 
     auge = ziel = None
     herkunft = {"weg": "rueckfall", "kuerzel": None,
@@ -391,13 +405,22 @@ def _kamera_setzen(lo, hi, a=None):
                 # damit zu einer TOTEN KANTE machte: geschrieben, nie gelesen. Genau die
                 # Fehlerart, gegen die dieses Projekt seit Phase 0 antritt.
                 seitenverhaeltnis=a.aufloesung / (a.hoehe or a.aufloesung),
+                modus=(getattr(a, "kamera_modus", None) or kameras.MODUS_GEKIPPT),
             )
             k = satz["kameras"][0]
             auge = mathutils.Vector(k["auge"])
             ziel = mathutils.Vector(k["blick_auf"])
+            # Der gerechnete Shift wird gestellt — es sei denn, jemand hat von Hand
+            # einen gesetzt. Ohne diese Zeile wäre `MODUS_SHIFT` eine tote Kante: Die
+            # Kamera stünde waagrecht, ohne Shift, und das Bauwerk sässe zu hoch im Bild.
+            if shift_y is None:
+                shift_y = k["shift_y"]
             herkunft = {
                 "weg": "abgeleitet", "kuerzel": k["kuerzel"],
                 "azimut_grad": k["azimut_grad"],
+                "modus": k["modus"],
+                "neigung_grad": k["neigung_grad"],
+                "shift_mm": k["shift_mm"],
                 "massgebend": k["massgebend"],
                 "durchlaeufe": k["durchlaeufe"],
                 # Wenn der Eckentest nicht aufging, steht das hier — und nicht nur in
@@ -420,6 +443,24 @@ def _kamera_setzen(lo, hi, a=None):
     kam_daten = bpy.data.cameras.new("Kamera")
     if brennweite is not None:
         kam_daten.lens = brennweite
+
+    # Der Sensorbezug wird AUSDRÜCKLICH gestellt, nicht Blender überlassen.
+    #
+    # `kameras.bildwinkel` setzt die Sensorbreite fest auf 36 mm und leitet die Höhe aus
+    # dem Seitenverhältnis ab. Blenders Vorgabe `AUTO` bezieht `sensor_width` dagegen auf
+    # die GRÖSSERE Bildkante. Für Quer- und Quadratformate ist das dasselbe — und alle
+    # bisherigen Läufe waren quer oder quadratisch, weshalb es nie auffiel. Für ein
+    # HOCHFORMAT ist es das nicht: Dort wären unser Bildwinkel und Blenders Bildwinkel
+    # verschieden, still, und in beiden Richtungen falsch — die Tiefenkarte zeigte einen
+    # anderen Ausschnitt als die Geometrie-QA erwartet. Der Hausstil ist quadratisch bis
+    # hochformatig; der Fall steht also bevor.
+    kam_daten.sensor_fit = "HORIZONTAL"
+    _km = _kameras_modul()
+    if _km is not None:
+        kam_daten.sensor_width = _km.SENSOR_BREITE_MM
+    if shift_y is not None:
+        kam_daten.shift_y = float(shift_y)
+
     kam = bpy.data.objects.new("Kamera", kam_daten)
     bpy.context.scene.collection.objects.link(kam)
     kam.location = auge
@@ -430,6 +471,12 @@ def _kamera_setzen(lo, hi, a=None):
     # Die tatsächlich gestellte Brennweite, nicht die angeforderte: Beim Rückfall steht
     # hier Blenders eigene, und genau das soll ablesbar sein.
     herkunft["brennweite_mm"] = round(float(kam_daten.lens), 4)
+    # Was WIRKLICH an der Kamera steht, nicht was bestellt war — dieselbe Regel wie bei
+    # der Brennweite. Ohne diese Zeilen wäre ein nicht angekommener Shift von einem
+    # angekommenen nicht zu unterscheiden.
+    herkunft["shift_y"] = round(float(kam_daten.shift_y), 6)
+    herkunft["sensor_fit"] = str(kam_daten.sensor_fit)
+    herkunft["sensor_breite_mm"] = round(float(kam_daten.sensor_width), 4)
     herkunft["auge"] = [round(float(v), 4) for v in auge]
     herkunft["blick_auf"] = [round(float(v), 4) for v in ziel]
     return kam, mitte, spanne, herkunft

@@ -254,6 +254,18 @@ WERKZEUGE: dict[str, dict] = {
                 "werkzeuge": {"type": "array", "items": {"type": "string"}},
                 "vertraege": {"type": "array", "items": {"type": "string"}},
                 "geometrie_schwelle": {"type": "number"},
+                # Was diese Lane mit der EINGABE des Aufrufers tut. Steht im Schema und
+                # nicht nur in der Prosa der Vorbehalte, damit eine Oberflaeche es
+                # anzeigen kann, ohne Text zu lesen.
+                "prompt_sprache": {
+                    "type": "object",
+                    "properties": {
+                        "uebersetzt_deutsch": {"type": "boolean"},
+                        "verfahren": {"type": "string"},
+                        "deklariert_in": {"type": "array", "items": {"type": "string"}},
+                        "warnt_bei_nicht_englisch": {"type": "boolean"},
+                    },
+                },
                 "vorbehalte": {"type": "array", "items": {"type": "string"}},
             },
             "required": ["lane", "werkzeuge"],

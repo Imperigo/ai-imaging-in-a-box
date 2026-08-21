@@ -1,0 +1,35 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260823-33",
+  "art": "multipass",
+  "erstellt": "2026-08-23T00:30:00Z",
+  "beschreibung": "DIE WAAGRECHTE KAMERA AM GERAET PRUEFEN. Neu im Code seit 22.08.: `kameras.MODUS_SHIFT` stellt die Kamera waagrecht und verschiebt statt zu kippen, damit senkrechte Kanten senkrecht bleiben. Die GEOMETRIE ist diesseits der Prozessgrenze geprueft (24 Tests, tests/test_shift.py). Was NICHT geprueft ist: ob Blender die drei Zahlen so annimmt, wie wir sie meinen. Genau dafuer ist dieser Auftrag da — und er ist klein.\n\n=== WORUM ES GEHT ===\nBisher kippt unsere Kamera, um zu rahmen. Das verletzt die einzige institutionell verbindliche Regel der Architekturfotografie (HABS/NPS: senkrechte Kanten bleiben senkrecht). auf-29 hat gemessen, dass die Kippung dem Tiefenschaetzer NICHTS nimmt — der Umbau ist also eine Normfrage, keine Qualitaetsfrage, und er ist ADDITIV: `MODUS_GEKIPPT` bleibt die Vorgabe, jede bisher gemessene Aufnahme bleibt reproduzierbar.\n\nNebenbei nachgemessen und hiermit berichtigt: Vier Dokumente dieses Projekts sagen '`kameras.py` kippt 9,46 Grad'. Diese Zahl ist atan(0.20/1.2) und gilt bei 1,2 x Gebaeudehoehe Abstand — einem Abstand, den `kamerasatz` nie einnimmt. Ueber zwoelf Richtungen, vier Gebaeudehoehen (8/15/30/60 m) und zwei Formate gemessen sind es 1,92 bis 4,70 Grad, und der noetige Shift betraegt 0,94 bis 2,30 mm — weniger als ein Fuenftel dessen, was ein wirkliches Shift-Objektiv leistet (12 mm).\n\n=== WAS DER RUNNER JETZT KANN ===\nDrei neue Dinge in src/aiimaging/runners/blender_depth_stage.py, Funktion `_kamera_setzen`:\n  1. --kamera-modus=shift  ->  geht in kameras.kamerasatz(..., modus=...), der von dort gerechnete shift_y wird gestellt\n  2. --shift-y=<zahl>      ->  stellt kam_daten.shift_y direkt (schlaegt 1.)\n  3. kam_daten.sensor_fit = 'HORIZONTAL' und sensor_width = 36.0 werden AUSDRUECKLICH gesetzt\nDer Bericht traegt jetzt herkunft.shift_y, herkunft.sensor_fit, herkunft.sensor_breite_mm, herkunft.modus, herkunft.neigung_grad, herkunft.shift_mm.\n\n=== WAS ZU TUN IST ===\nFuenf Faelle. Kein Bildmodell noetig, nur Multipass. Nimm eine Szene, die du schon hast (Testbau auf Platte), und ein Bauwerk mit klar erkennbaren senkrechten Kanten.\n\nS1 · GEKIPPT, WIE BISHER. Ein gewoehnlicher Lauf ohne --kamera-modus, mit --kamera sSE. ERWARTUNG: herkunft.modus = 'gekippt', neigung_grad zwischen 1,9 und 4,7, shift_y = 0.0. Das ist die Kontrolle: Wenn sich hier irgendetwas gegenueber frueheren Laeufen geaendert hat, ist der Umbau NICHT additiv gewesen, und das ist der wichtigste Einzelbefund dieses Auftrags. Vergleiche wenn moeglich mit einem alten Lauf derselben Szene und Kamera — sind die Tiefenkarten bitgleich?\n\nS2 · GESHIFTET. Derselbe Lauf mit --kamera-modus=shift. ERWARTUNG: herkunft.modus = 'shift', neigung_grad = 0.0, shift_y ungleich 0 (bei unseren Groessen rund 0,03 bis 0,06), sensor_fit = 'HORIZONTAL', sensor_breite_mm = 36.0.\n  DIE EIGENTLICHE FRAGE: Sind im Beauty-Bild die senkrechten Gebaeudekanten senkrecht? Miss es, schaetze es nicht — nimm zwei Punkte auf derselben Gebaeudekante (oben und unten) und rechne den Winkel gegen die Bildsenkrechte. In S1 muss dieser Winkel deutlich von 0 abweichen, in S2 muss er praktisch 0 sein. Ein Auge sieht 2 Grad Konvergenz nicht; eine Messung schon.\n\nS3 · RAHMT ES NOCH? Vergleiche S1 und S2: Welchen Anteil der Bildflaeche nimmt das Bauwerk ein (Maske aus dem Material-ID-Pass, alles ausser Hintergrund und Boden)? ERWARTUNG: nahe beieinander, innerhalb von rund 10 Prozent relativ. Weicht es stark ab, ist der Shift falsch skaliert — und der wahrscheinlichste Grund ist die Einheit: Blender rechnet shift_y als Anteil der GROESSEREN Sensorkante, wir liefern shift_mm/36.\n\nS4 · DER SENSORBEZUG IM HOCHFORMAT. Das ist der Fall, den wir hier nicht pruefen koennen und der uns bevorsteht (der Hausstil ist quadratisch bis hochformatig). Fahre S2 zweimal: einmal 512x512, einmal 512x768 (hoeher als breit). ERWARTUNG: In BEIDEN Faellen meldet der Bericht sensor_fit = 'HORIZONTAL' und sensor_breite_mm = 36.0, und der horizontale Bildwinkel ist in beiden gleich (das Hochformat zeigt oben und unten MEHR, nicht seitlich weniger).\n  Wenn das Hochformat stattdessen seitlich enger wird, ist unsere Annahme falsch, und dann sag das bitte deutlich — `kameras.bildwinkel` setzt die Sensorbreite fest auf 36 mm, und die ganze Abstandsrechnung haengt daran.\n\nS5 · DIE BILDKREISGRENZE, WENN ZEIT IST. Ein Lauf mit --shift-y=0.34 (das sind rund 12,2 mm, knapp ueber dem, was ein wirkliches Objektiv leistet). Kein Erwartungswert — die Frage ist nur, ob Blender das ueberhaupt annimmt oder ob etwas Merkwuerdiges passiert. Wir warnen davor, wir verbieten es nicht.\n\n=== WAS NICHT ZU TUN IST ===\n- KEIN Bildmodell, kein Render. Es geht ausschliesslich um die Kamera.\n- Die Vorgabe NICHT umstellen. `MODUS_GEKIPPT` bleibt Vorgabe, bis der Owner anders entscheidet — ein Wechsel veraendert jede bisher gemessene Aufnahme.\n- Nicht 'reparieren', wenn S4 anders ausfaellt als erwartet. Miss es und melde es. Eine falsche Annahme, die gemessen wurde, ist mehr wert als eine richtige, die geraten wurde.",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "Bestehende Szene (Testbau auf Platte). Wichtig ist nur, dass das Bauwerk klar erkennbare senkrechte Kanten hat."
+  },
+  "params": {
+    "faelle": {
+      "S1": "gekippt wie bisher, --kamera sSE — die Kontrolle auf Additivitaet",
+      "S2": "--kamera-modus=shift, gleiche Kamera — sind die Senkrechten senkrecht?",
+      "S3": "Flaechenanteil S1 gegen S2 — rahmt der Shift dasselbe?",
+      "S4": "Sensorbezug im Hochformat, 512x512 gegen 512x768",
+      "S5": "--shift-y=0.34 ueber der Bildkreisgrenze (wenn Zeit)"
+    },
+    "gemessen_wird": "je Fall der ganze herkunft-Block plus der Kantenwinkel gegen die Bildsenkrechte",
+    "kantenwinkel": "zwei Punkte auf derselben senkrechten Gebaeudekante, Winkel gegen die Bildsenkrechte in Grad",
+    "erwartung_kantenwinkel": "S1 deutlich ungleich 0, S2 praktisch 0"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 200,
+    "nur_bei_leerlauf": false,
+    "hinweis": "Kein Bildmodell. Nur Multipass, und die Samplezahl darf klein sein — es geht um Geometrie, nicht um Rauschen."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": false,
+    "hinweis": "Je Fall der herkunft-Block und ein Satz, ob die Erwartung eintraf. S1 und S4 ausfuehrlich: S1 sagt, ob der Umbau wirklich additiv war, S4 pruefen wir zum ersten Mal ueberhaupt."
+  }
+}

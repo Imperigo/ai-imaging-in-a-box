@@ -468,6 +468,7 @@ def ifc_raeume(ifc_path, *, timeout: int = 300, _starte=None) -> dict:
 def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, samples: int,
                          beauty: bool, material_id: bool, kamera=None,
                          auge=None, blick_auf=None, brennweite=None,
+                         kamera_modus=None, shift_y=None,
                          gelaende_z=None, hoehe=None,
                          herzschlag_takt_s=None, kamera_huellbox=None) -> list[str]:
     """Die Argumente hinter dem `--`-Trenner — eine Stelle für Lauf und Trockenlauf.
@@ -528,6 +529,13 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
         argumente += ["--kamera", str(kamera)]
     if brennweite is not None:
         argumente += [f"--brennweite={float(brennweite)}"]
+    # Der Kameramodus geht in die Rechnung des Runners, `shift_y` stellt das Objektiv.
+    # Beide `None` heisst „nicht angefasst" — der Runner behält dann seinen gekippten
+    # Weg, und jede bisher gemessene Aufnahme bleibt reproduzierbar.
+    if kamera_modus is not None:
+        argumente += [f"--kamera-modus={str(kamera_modus)}"]
+    if shift_y is not None:
+        argumente += [f"--shift-y={float(shift_y)}"]
     if gelaende_z is not None:
         argumente += [f"--gelaende-z={float(gelaende_z)}"]
     if hoehe is not None:
@@ -567,6 +575,7 @@ def _punkt(wert, name: str) -> str:
 def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      samples: int = 16, beauty: bool = True, material_id: bool = True,
                      kamera=None, auge=None, blick_auf=None, brennweite=None,
+                     kamera_modus=None, shift_y=None,
                      gelaende_z=None, hoehe=None,
                      timeout: int = 900, stillstand_frist_s: float | None = None,
                      herzschlag_takt_s: float | None = HERZSCHLAG_TAKT_S,
@@ -700,7 +709,8 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
         *_multipass_argumente(glb_path, out_dir, drehen=drehen, aufloesung=aufloesung,
                               samples=samples, beauty=beauty, material_id=material_id,
                               kamera=kamera, auge=auge, blick_auf=blick_auf,
-                              brennweite=brennweite, gelaende_z=gelaende_z,
+                              brennweite=brennweite, kamera_modus=kamera_modus,
+                              shift_y=shift_y, gelaende_z=gelaende_z,
                               hoehe=hoehe, herzschlag_takt_s=herzschlag_takt_s,
                               kamera_huellbox=kamera_huellbox),
     ]
@@ -801,6 +811,7 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                             samples: int = 16, beauty: bool = True,
                             material_id: bool = True, kamera=None, auge=None,
                             blick_auf=None, brennweite=None,
+                            kamera_modus=None, shift_y=None,
                             gelaende_z=None, hoehe=None,
                             herzschlag_takt_s: float | None = HERZSCHLAG_TAKT_S,
                             ) -> list[str]:
@@ -816,7 +827,8 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                               aufloesung=aufloesung, samples=samples,
                               beauty=beauty, material_id=material_id,
                               kamera=kamera, auge=auge, blick_auf=blick_auf,
-                              brennweite=brennweite, gelaende_z=gelaende_z,
+                              brennweite=brennweite, kamera_modus=kamera_modus,
+                              shift_y=shift_y, gelaende_z=gelaende_z,
                               hoehe=hoehe,
                               herzschlag_takt_s=herzschlag_takt_s),
     ]

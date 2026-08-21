@@ -1968,6 +1968,27 @@ Bauteil — die häufigste handwerkliche Fehlerquelle der realen Architekturfoto
 sich hier per Konstruktion ausschliessen, indem Neigung und Rollwinkel auf 0 geklemmt
 werden und die Höhenkorrektur über Shift läuft.*
 
+**Unsymmetrischer Bildrahmen (durch Shift)** — Die Folge, die man beim Shift übersieht:
+Weil der Rahmen gegen die Blickachse verschoben ist, reicht er **oben weiter und unten
+weniger weit**. Die Achse — bei waagrechter Kamera zugleich der Horizont — sitzt nicht
+mehr in der Bildmitte.
+*Daraus folgt eine Regel, die dem Gefühl widerspricht: Wer stärker shiftet, muss unter
+Umständen **weiter weg** statt näher heran, weil ihm sonst der Gebäudefuss aus dem Bild
+fällt. Welche Kante bindet, entscheidet der Bau: Beim hohen Turm bindet das Dach, und der
+Shift lässt die Kamera näher heran; beim flachen Bau aus der Nähe bindet der Fuss, und er
+kostet Abstand. Im Grenzfall — 12 mm Shift bei 24 mm Sensorhöhe — liegt der Horizont
+exakt auf der Bildunterkante, und zwar **unabhängig von der Brennweite**.*
+
+**Sensorbezug (`sensor_fit`)** — Die Angabe, auf welche Bildkante sich eine genannte
+Sensorgrösse bezieht. Bei `AUTO` bezieht das Renderprogramm sie auf die **grössere**
+Bildkante, bei `HORIZONTAL` immer auf die Breite.
+*Für Quer- und Quadratformate ist das dasselbe, und darum fällt ein falscher Bezug nie
+auf, solange nur quer gerendert wird. Im **Hochformat** gehen die beiden auseinander:
+Bildwinkel und Ausschnitt sind dann andere als die, mit denen die Kamera gerechnet wurde
+— still und in beide Richtungen. Der Hausstil dieses Projekts ist quadratisch bis
+hochformatig; der Bezug wird deshalb seit dem 22.08.2026 ausdrücklich gesetzt statt
+überlassen.*
+
 **Shift-Stitch** — Mehrere Aufnahmen vom **selben Standort** mit seitlich versetztem
 Objektiv, die anschliessend zu einem breiteren Bild zusammengesetzt werden. Weil der
 Aufnahmepunkt sich nicht bewegt, bleibt das Ergebnis eine einzige, geometrisch korrekte
@@ -3016,6 +3037,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-22 | Ergaenzt aus der waagrechten Kamera (`kameras.MODUS_SHIFT`): **Unsymmetrischer Bildrahmen (durch Shift)** und **Sensorbezug (`sensor_fit`)**. Der erste traegt den Befund, den zwei Testanlaeufe gebraucht haben: Ob ein Shift Abstand kostet oder spart, haengt daran, WELCHE Rahmenkante bindet — beim Turm das Dach (spart), beim flachen Bau aus der Naehe der Fuss (kostet). **Berichtigt:** Vier Dokumente sagten „`kameras.py` kippt 9,46°". Nachgemessen ueber zwoelf Richtungen, vier Gebaeudehoehen und zwei Formate sind es **1,92°–4,70°**; die 9,46° gelten bei 1,2 × Gebaeudehoehe Abstand, und dort steht `kamerasatz` nie |
 | 2026-08-22 | Ergaenzt aus der Prompt-Uebersetzung (`src/aiimaging/sprache.py`): **Trainingssprache (eines Bildmodells)**, **Glossar (Uebersetzungsglossar)**, **Signalwort (bei der Spracherkennung)**, **Dreiwertiges Urteil (ja / nein / nicht entscheidbar)**, **Uebermelden (einer Pruefung)**. Der erste Eintrag traegt die Messung, aus der die ganze Sache folgt: Ueber acht gepaarte Startwerte ergab „bedeckter Himmel" bei 8 von 8 einen deutlich blaueren Himmel als „overcast sky" — das Modell versteht das Wort nicht und fuellt die Luecke |
 | 2026-08-22 | Ergaenzt aus dem Raumleser (`src/aiimaging/runners/ifc_raeume_runner.py`, `seams.ifc_raeume`): **Raum (`IfcSpace`)**, **Grundriss (als Polygon)**, **Umlaufsinn**, **Platzierungskette**, **Bezugspunkt (einer Höhenangabe)**, **lichte Höhe**. Die letzten beiden tragen den Grund, warum es diesen Auftrag ueberhaupt so gab: Eine Zahl ohne Bezugspunkt ist in diesem Projekt keine Zahl |
 | 2026-08-21 | Ergaenzt aus den drei Kompositionsrecherchen (`docs/recherche/KOMPOSITION_AUSSEN.md`, `KOMPOSITION_INNEN.md`, `BILDPROPORTIONEN.md`): 34 Begriffe der Architekturfotografie — Aufnahmetechnik (**Sensor/Bildebene**, **Kleinbild**, **Seitenverhältnis**, **Fachkamera**, **Planfilm**, **Bildkreis**, **Shift**, **Shift-Stitch**, **Perspektivkorrektur**), Projektionsgeometrie (**stürzende Linien**, **Ein-/Zwei-/Dreipunktperspektive**, **Fluchtpunkt**, **Horizontlinie**, **Über-Eck-Ansicht**, **rektilineare Projektion**, **Volumenanamorphose**, **Objektivverzeichnung**, **Streckungsverhältnis**), Bildaufbau (**Bildebenen**, **Anschnitt**, **Negativraum/funktionaler Raum**, **axial/nicht-axial**, **Drittelregel**, **goldener Schnitt**), Licht (**Dämmerungsphasen**, **goldene/blaue Stunde**, **Blendenstufe/EV**, **Dynamikumfang**, **Belichtungsreihe**, **flambient**) und Ausgabe (**dpi**, **HABS**); dazu **Perzentil**. Zwei Eintraege tragen den Befund der Recherche und nicht die Lehrmeinung: Die **Drittelregel** ist als Beschreibung der Praxis widerlegt (Amirshahi et al. 2014, ρ = 0,17) und wurde 1955 mit dem goldenen Schnitt verwechselt; **stuerzende Linien** sind die einzige institutionell verbindliche Regel des Fachs — und unser eigener Code verletzt sie in jedem Bild (9,46° Neigung, rund 9–12 % Konvergenz; die urspruenglich genannten 11,8–21,8 % waren falsch gerechnet und noch in derselben Nacht korrigiert). **Getrennt:** **Rauschboden** bezeichnet zwei Sachverhalte — die Streuung einer Saatreihe und den Boden einer Metrik ueber einem Bild ohne Geometrie; beide Titel tragen jetzt einen Klammerzusatz, die Trennung steht in `tests/test_lexikon.py` |
