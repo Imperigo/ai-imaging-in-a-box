@@ -146,9 +146,15 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         beobachtungs_takt_s: Sekunden zwischen zwei Blicken der Wache.
 
     Returns:
-        ``{tat, job_id, verzeichnis, grund, ergebnis, wache}``. ``tat`` ist eine der
-        ``TAT_*``-Konstanten. ``wache`` ist der Bericht des Beobachters oder ``None``,
-        wenn keine Wache gebaut wurde.
+        ``{tat, job_id, verzeichnis, grund, ergebnis, wache, warnungen}``. ``tat`` ist
+        eine der ``TAT_*``-Konstanten. ``wache`` ist der Bericht des Beobachters oder
+        ``None``, wenn keine Wache gebaut wurde.
+
+        ``warnungen`` sind die des gelesenen Auftrags (:func:`aiimaging.bruecke.lies_auftrag`)
+        — darunter der Hinweis, dass ein deutscher Prompt übersetzt wurde. Sie standen
+        bis zum 22.08.2026 in ``lies_auftrag`` und wurden hier **nicht weitergereicht**:
+        eine tote Kante, wie sie dieses Projekt schon mehrfach gefunden hat. Eine
+        Warnung, die niemanden erreicht, ist keine.
 
     Die Wache **bricht nicht ab.** Sie schreibt mit. Ein Lauf, der 1800 s brauchte und
     davon 1500 s stand, ist damit von einem unterscheidbar, der 1800 s gerechnet hat —
@@ -162,7 +168,8 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         )
     ordner = Path(verzeichnis)
     antwort = {"tat": TAT_LIEGENGELASSEN, "job_id": ordner.name,
-               "verzeichnis": ordner, "grund": "", "ergebnis": None, "wache": None}
+               "verzeichnis": ordner, "grund": "", "ergebnis": None, "wache": None,
+               "warnungen": ()}
 
     try:
         auftrag = bruecke.lies_auftrag(ordner, fremde_freigabe_gilt=fremde_freigabe_gilt)
@@ -171,6 +178,7 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         return antwort
 
     antwort["job_id"] = auftrag.get("job_id") or ordner.name
+    antwort["warnungen"] = tuple(auftrag.get("warnungen") or ())
 
     if auftrag["maengel"]:
         antwort["grund"] = (

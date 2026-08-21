@@ -44,6 +44,15 @@ Die Bausteine sind **englisch**. Nicht aus Bequemlichkeit: Die Bildmodelle sind 
 messbar schlechter. Die *Namen* und Erklärungen bleiben deutsch, weil sie für Menschen
 sind — dieselbe Trennung wie im ganzen Projekt.
 
+„Messbar schlechter" ist inzwischen wirklich gemessen (HomeStation, ``9a33353``): über
+8 gepaarte Startwerte hinweg ergab ein deutscher Prompt einen deutlich blaueren Himmel
+als der gleichbedeutende englische — bei **8 von 8** Startwerten, ``bedeckter Himmel``
+gegen ``overcast sky``. Der **Freitext** kommt aber von Menschen und ist deshalb oft
+deutsch. Er wird darum vor dem Zusammensetzen übersetzt, und zwar **deklariert**: Im
+Ergebnis stehen Original und Übersetzung nebeneinander (Owner-Entscheid 2026-08-21).
+Wer das nicht will, ruft mit ``uebersetzen=False`` auf — dann steht der deutsche Text
+im Prompt, und ein Hinweis sagt, was das kostet.
+
 Abhängigkeiten: keine. Reine stdlib, kein ``bpy``, aus Python heraus ohne Oberfläche
 aufrufbar (Regel 4). Regel 3: keine Büro-, Kunden- oder Projektnamen — die Stile sind
 gattungsmässig beschrieben, nicht an einem Haus abgeschrieben.
@@ -52,6 +61,8 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+
+from . import sprache
 
 # --------------------------------------------------------------------------------------
 # Die sieben Kategorien
@@ -661,7 +672,9 @@ def hole_stil(slug: str) -> Stil:
 
 def komponiere(stil: str = MESS_STIL, *, freitext: str = "",
                ersetzungen: dict[str, str] | None = None,
-               fuehrung: float | None = None) -> dict:
+               fuehrung: float | None = None,
+               uebersetzen: bool = True,
+               uebersetzer=None) -> dict:
     """Aus einem Stil und dem freien Feld des Knotens einen fertigen Prompt bauen.
 
     Args:
@@ -676,10 +689,21 @@ def komponiere(stil: str = MESS_STIL, *, freitext: str = "",
         fuehrung: Die ``guidance_scale`` des Laufs, wenn bekannt. Nur zur **Auskunft**:
             Unterhalb von 1.0 ist der Negativ-Prompt wirkungslos, und dann soll das hier
             stehen und nicht erst im Renderergebnis auffallen.
+        uebersetzen: Deutschen Freitext vor dem Zusammensetzen nach Englisch bringen.
+            Vorgabe ``True`` — siehe den Abschnitt „Sprache" im Modulkopf. ``False``
+            lässt den Text, wie er ist, und meldet das als Hinweis; es schweigt nicht.
+        uebersetzer: Die Naht aus :func:`aiimaging.sprache.uebersetze`. ``None`` nimmt
+            das Glossar. Hier hängt ein Übersetzungsmodell ein.
 
     Returns:
         ``{prompt, negativ_prompt, stil, bausteine, controlnet_staerke, treue_geeignet,
-        hinweise}``.
+        freitext, hinweise}``.
+
+        ``freitext`` ist der Sprachbefund: ``{original, uebersetzt, noetig, verfahren,
+        vollstaendig, unbekannt, …}`` aus :func:`aiimaging.sprache.uebersetze`. **Beide
+        Fassungen stehen darin** — was gerendert wurde und was die Person geschrieben
+        hat. Ein Protokoll, das nur die Übersetzung führt, macht die Übersetzung
+        unüberprüfbar.
 
         ``hinweise`` ist der Teil, der zählt: Bauteilfunde im Freitext, die Warnung eines
         nicht messtauglichen Stils, und ein wirkungsloser Negativ-Prompt. Alle drei sind
@@ -707,7 +731,18 @@ def komponiere(stil: str = MESS_STIL, *, freitext: str = "",
     teile: list[str] = []
     if s.handschrift:
         teile.append(s.handschrift)
-    text = (freitext or "").strip().rstrip(",").strip()
+
+    roh = (freitext or "").strip().rstrip(",").strip()
+    if uebersetzen:
+        sprachbefund = sprache.uebersetze(roh, uebersetzer=uebersetzer)
+        text = sprachbefund["uebersetzt"].strip().rstrip(",").strip()
+    else:
+        sprachbefund = dict(sprache.uebersetze(roh, uebersetzer=lambda t: {
+            "text": t, "verfahren": sprache.VERFAHREN_KEINE, "unbekannt": ()}))
+        # Nicht übersetzt heisst: nichts ersetzt, nichts vollständig behauptet.
+        sprachbefund["uebersetzt"] = roh
+        sprachbefund["noetig"] = False
+        text = roh
     if text:
         teile.append(text)
     for kategorie in KATEGORIEN:
@@ -717,9 +752,16 @@ def komponiere(stil: str = MESS_STIL, *, freitext: str = "",
 
     hinweise: list[str] = []
 
-    fund = bauteilwaechter(text)
-    if fund["gefunden"]:
-        hinweise.append(fund["hinweis"])
+    # Der Wächter prüft BEIDE Fassungen. Original, weil er deutsche Bauteilwörter kennt;
+    # Übersetzung, weil ein deutsches „Dach" erst als ``roof`` sicher gefunden wird —
+    # und weil sonst genau die Wörter durchrutschten, die die Übersetzung erzeugt hat.
+    woerter: list[str] = []
+    for fassung in (roh, text):
+        for wort in bauteilwaechter(fassung)["woerter"]:
+            if wort not in woerter:
+                woerter.append(wort)
+    if woerter:
+        hinweise.append(bauteilwaechter(" ".join(woerter))["hinweis"])
 
     if not s.treue_geeignet:
         hinweise.append(
@@ -737,9 +779,23 @@ def komponiere(stil: str = MESS_STIL, *, freitext: str = "",
             f"im Bild. Destillierte Turbo-Modelle laufen mit 0.0 — dort ist er nie wirksam."
         )
 
+    if sprachbefund["noetig"]:
+        hinweise.append(
+            f"Der Freitext war deutsch und wurde übersetzt ({sprachbefund['verfahren']}): "
+            f"{sprachbefund['original']!r} → {sprachbefund['uebersetzt']!r}. Gerendert "
+            f"wird die englische Fassung; die deutsche steht unter 'freitext.original'."
+        )
+        hinweise.extend(sprachbefund["warnungen"])
+    elif not uebersetzen and sprache.ist_deutsch(roh):
+        hinweise.append(
+            "Der Freitext sieht deutsch aus und wird auf Wunsch NICHT übersetzt "
+            "(uebersetzen=False). " + sprache.sprachwarnung(roh)
+        )
+
     return {
         "prompt": ", ".join(teile),
         "negativ_prompt": s.negativ,
+        "freitext": sprachbefund,
         "stil": s.slug,
         "bausteine": gewaehlt,
         "controlnet_staerke": s.empfohlene_controlnet_staerke,

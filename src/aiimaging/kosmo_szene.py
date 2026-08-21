@@ -55,7 +55,7 @@ import math
 import re
 
 from . import backbone as _backbone
-from . import geometrie_qa, stil_qa
+from . import geometrie_qa, sprache, stil_qa
 
 #: Die beiden Vertragskennungen, wörtlich aus den Schemadateien der Designzentrale.
 SCHEMA_SZENE = "kosmovis.render-scene/v1"
@@ -317,8 +317,14 @@ def lies_szene(fremd: dict) -> dict:
 
     Returns:
         ``{geometrie, out, kameras, aufloesung, hoehe, samples, controlnet_staerke,
-        prompt, stil_modus, stil_referenzen, backbone, ueberspringen, hochskalieren,
-        sonne, warnungen, maengel}``
+        prompt, prompt_original, prompt_sprache, stil_modus, stil_referenzen, backbone,
+        ueberspringen, hochskalieren, sonne, warnungen, maengel}``
+
+        ``prompt`` ist die Fassung, mit der gerendert wird — englisch, wenn der Text der
+        Oberfläche deutsch war. ``prompt_original`` hält den Wortlaut fest, wie er
+        ankam, und ``prompt_sprache`` den ganzen Befund samt Verfahren. Drei Felder für
+        einen Text, und das ist der Punkt: Wer nur die Übersetzung protokolliert, kann
+        sie nie mehr prüfen.
 
         ``maengel`` hält den Lauf auf, ``warnungen`` nicht. Der Unterschied ist wichtig:
         Ein unbekanntes Backbone ist ein Mangel (wir wüssten nicht, womit wir rendern),
@@ -401,6 +407,30 @@ def lies_szene(fremd: dict) -> dict:
             "vorn-oben; der Sonnenstand des Auftrags wird damit NICHT bedient."
         )
 
+    # Der Prompt der Oberfläche ist deutsch — gemessen, nicht vermutet.
+    #
+    # Die Vis sammelt deutschen Text und legt ihn wörtlich in `style.prompt`. Am Gerät
+    # (HomeStation `9a33353`) über 8 gepaarte Startwerte: der deutsche Prompt ergab
+    # 8 von 8 Mal einen deutlich blaueren Himmel als der gleichbedeutende englische.
+    # Deshalb wird hier übersetzt — und zwar an DIESER Stelle, weil es die Naht ist, an
+    # der fremder Text in unsere Rechnung eintritt. Weiter innen wüsste niemand mehr,
+    # dass der Text je deutsch war.
+    #
+    # Deklariert, nicht heimlich (Owner-Entscheid 2026-08-21): `prompt_original` behält
+    # den Wortlaut der Oberfläche, und eine Warnung sagt, dass übersetzt wurde.
+    roh_prompt = stil.get("prompt", "")
+    sprachbefund = sprache.uebersetze(roh_prompt)
+    if sprachbefund["noetig"]:
+        warnungen.append(
+            f"Der Prompt der Oberfläche war deutsch und wurde übersetzt "
+            f"({sprachbefund['verfahren']}): {sprachbefund['original']!r} → "
+            f"{sprachbefund['uebersetzt']!r}. Gerendert wird die englische Fassung. "
+            f"Grund: Die Bildmodelle sind an englischen Bild-Text-Paaren trainiert; "
+            f"am Gerät ergab 'bedeckter Himmel' bei 8 von 8 gepaarten Startwerten einen "
+            f"deutlich blaueren Himmel als 'overcast sky'."
+        )
+        warnungen.extend(sprachbefund["warnungen"])
+
     return {
         "geometrie": pfad,
         "format": fmt or None,
@@ -410,7 +440,9 @@ def lies_szene(fremd: dict) -> dict:
         "hoehe": int(aufl[1]),
         "samples": int(render.get("samples", 128)),
         "controlnet_staerke": float(treue),
-        "prompt": stil.get("prompt", ""),
+        "prompt": sprachbefund["uebersetzt"],
+        "prompt_original": sprachbefund["original"],
+        "prompt_sprache": sprachbefund,
         "stil_modus": stil.get("mode", "none"),
         "stil_referenzen": list(stil.get("refs") or []),
         "backbone": bb["name"],

@@ -539,13 +539,21 @@ def test_die_angenommene_hochachse_steht_als_konstante_und_wird_benutzt(tmp_path
 
 
 def test_prompt_und_treue_der_szene_kommen_beim_render_an(tmp_path):
+    """Der Prompt kommt an — und zwar ÜBERSETZT, weil er deutsch aus der Oberfläche kam.
+
+    Dieser Test stand vorher auf ``a.prompt == "ein Haus"``. Dass er beim Einbau der
+    Übersetzung fiel, ist der Beweis, dass die Naht wirkt: Der deutsche Text der
+    Oberfläche erreicht das Bildmodell nicht mehr als Deutsch. Der ursprüngliche
+    Wortlaut geht dabei nicht verloren — er steht in ``prompt_original`` der gelesenen
+    Szene und in der Warnung, die den Auftraggeber erreicht.
+    """
     ordner = _auftrag(tmp_path)
     protokoll, attrappen = _kette()
     abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
                        verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
                                                       **attrappen))
     a = protokoll["render"][0]
-    assert a.prompt == "ein Haus"
+    assert a.prompt == "a house"
     assert a.controlnet_staerke == 0.8
 
 

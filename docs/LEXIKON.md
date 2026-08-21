@@ -2482,6 +2482,51 @@ Material, Bewuchs, Menschen. **Keines davon nennt ein Bauteil**, und darin liegt
 eigentlicher Wert: Die Einteilung ist die Regel „der Prompt beschreibt alles ausser dem
 Gebäude", in Fächer gegossen.*
 
+**Trainingssprache (eines Bildmodells)** — Die Sprache der Bildbeschreibungen, mit
+denen ein Bildmodell trainiert wurde. Bei allen heute gebräuchlichen ist das ganz
+überwiegend Englisch.
+*Das ist keine Feinheit für Sprachliebhaber, sondern eine Messgrösse. Ein Prompt in einer
+anderen Sprache wird nicht „etwas schlechter" verstanden, sondern **anders**: Das Modell
+kennt das Wort nicht und füllt die Lücke mit dem, was seine Trainingsbilder zu einem
+unverstandenen Prompt am häufigsten zeigen. Am 21.08.2026 im Projekt gemessen, über acht
+gepaarte Startwerte: „bedeckter Himmel" ergab bei **8 von 8** einen deutlich blaueren
+Himmel als „overcast sky" — also genau das Gegenteil dessen, was dastand.*
+
+**Glossar (Übersetzungsglossar)** — Eine feste Liste „deutsches Wort → englisches Wort",
+die einen Text Wendung für Wendung übersetzt. Kein Übersetzungsmodell, sondern ein
+Nachschlagewerk.
+*Warum in diesem Projekt ein Glossar und kein Modell: Es ist **bestimmt** — derselbe Text
+ergibt immer denselben Prompt, und ohne das wäre keine Vergleichsreihe mehr lesbar —,
+es ist **lizenzfrei** (Text statt Gewichte, siehe Regel 1) und es braucht kein Netz. Ein
+Übersetzungsmodell lässt sich später an derselben Stelle einhängen; die Stelle heisst
+`uebersetzer` und ist genau dafür da.*
+
+**Signalwort (bei der Spracherkennung)** — Ein Wort, dessen blosses Vorkommen für eine
+Sprache spricht: „ohne", „zwischen", „keine" für Deutsch; „the", „without", „between"
+für Englisch.
+*Die Kunst liegt im Weglassen. Wörter, die es in **beiden** Sprachen gibt — „die", „in",
+„am", „war", „hell", „see", „wind", „film" — dürfen nicht in der Liste stehen: Sie
+entscheiden nichts und erzeugen Fehlalarme. Ein Signalwort, das in beiden Sprachen
+vorkommt, ist kein Signal.*
+
+**Dreiwertiges Urteil (ja / nein / nicht entscheidbar)** — Ein Befund, der neben „trifft
+zu" und „trifft nicht zu" ausdrücklich einen dritten Zustand kennt: *dazu sagt die
+Messung nichts*.
+*Beispiel aus dem Projekt: „Ist dieser Prompt englisch?" Bei ``24mm f8`` steht kein
+einziges Signalwort und kein Umlaut — die ehrliche Antwort ist weder ja noch nein. Wer
+hier „ja" zurückgäbe, machte die Warnung stumm; wer „nein" zurückgäbe, warnte vor jeder
+Objektivangabe, und nach dem dritten Fehlalarm wird auch die richtige Warnung
+weggeklickt. Derselbe Gedanke wie bei `raeume: None` („nicht gemessen") gegen
+`raeume: []` („gemessen, keine gefunden").*
+
+**Übermelden (einer Prüfung)** — Eine Prüfung so einstellen, dass sie im Zweifel zu viel
+meldet statt zu wenig.
+*Bewusst gewählte Richtung, kein Mangel: Der Rest eines übersetzten Prompts wird gegen
+einen sehr kleinen englischen Wortschatz gehalten, und alles Unbekannte gilt als „nicht
+übersetzt". Damit fallen „Nordfassade" und „langen" auf — und „cantilevered" fällt
+mit auf. Ein Fehlalarm kostet einen Blick, ein übersehenes deutsches Wort ein Bild.
+Dieselbe Richtung wie beim Bauteilwächter.*
+
 **Renderstil** — Eine benannte Zusammenstellung solcher Bausteine, plus einer
 Handschrift: „Wettbewerbsbild", „Modellfoto", „Einskizziert".
 *Nicht jeder Stil taugt zum Messen. Nebel verdeckt den Fuss des Bauwerks, eine Skizze
@@ -2971,6 +3016,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-22 | Ergaenzt aus der Prompt-Uebersetzung (`src/aiimaging/sprache.py`): **Trainingssprache (eines Bildmodells)**, **Glossar (Uebersetzungsglossar)**, **Signalwort (bei der Spracherkennung)**, **Dreiwertiges Urteil (ja / nein / nicht entscheidbar)**, **Uebermelden (einer Pruefung)**. Der erste Eintrag traegt die Messung, aus der die ganze Sache folgt: Ueber acht gepaarte Startwerte ergab „bedeckter Himmel" bei 8 von 8 einen deutlich blaueren Himmel als „overcast sky" — das Modell versteht das Wort nicht und fuellt die Luecke |
 | 2026-08-22 | Ergaenzt aus dem Raumleser (`src/aiimaging/runners/ifc_raeume_runner.py`, `seams.ifc_raeume`): **Raum (`IfcSpace`)**, **Grundriss (als Polygon)**, **Umlaufsinn**, **Platzierungskette**, **Bezugspunkt (einer Höhenangabe)**, **lichte Höhe**. Die letzten beiden tragen den Grund, warum es diesen Auftrag ueberhaupt so gab: Eine Zahl ohne Bezugspunkt ist in diesem Projekt keine Zahl |
 | 2026-08-21 | Ergaenzt aus den drei Kompositionsrecherchen (`docs/recherche/KOMPOSITION_AUSSEN.md`, `KOMPOSITION_INNEN.md`, `BILDPROPORTIONEN.md`): 34 Begriffe der Architekturfotografie — Aufnahmetechnik (**Sensor/Bildebene**, **Kleinbild**, **Seitenverhältnis**, **Fachkamera**, **Planfilm**, **Bildkreis**, **Shift**, **Shift-Stitch**, **Perspektivkorrektur**), Projektionsgeometrie (**stürzende Linien**, **Ein-/Zwei-/Dreipunktperspektive**, **Fluchtpunkt**, **Horizontlinie**, **Über-Eck-Ansicht**, **rektilineare Projektion**, **Volumenanamorphose**, **Objektivverzeichnung**, **Streckungsverhältnis**), Bildaufbau (**Bildebenen**, **Anschnitt**, **Negativraum/funktionaler Raum**, **axial/nicht-axial**, **Drittelregel**, **goldener Schnitt**), Licht (**Dämmerungsphasen**, **goldene/blaue Stunde**, **Blendenstufe/EV**, **Dynamikumfang**, **Belichtungsreihe**, **flambient**) und Ausgabe (**dpi**, **HABS**); dazu **Perzentil**. Zwei Eintraege tragen den Befund der Recherche und nicht die Lehrmeinung: Die **Drittelregel** ist als Beschreibung der Praxis widerlegt (Amirshahi et al. 2014, ρ = 0,17) und wurde 1955 mit dem goldenen Schnitt verwechselt; **stuerzende Linien** sind die einzige institutionell verbindliche Regel des Fachs — und unser eigener Code verletzt sie in jedem Bild (9,46° Neigung, rund 9–12 % Konvergenz; die urspruenglich genannten 11,8–21,8 % waren falsch gerechnet und noch in derselben Nacht korrigiert). **Getrennt:** **Rauschboden** bezeichnet zwei Sachverhalte — die Streuung einer Saatreihe und den Boden einer Metrik ueber einem Bild ohne Geometrie; beide Titel tragen jetzt einen Klammerzusatz, die Trennung steht in `tests/test_lexikon.py` |
 | 2026-08-21 | Ergaenzt aus der Bauwerksmaske (`src/aiimaging/maske.py`): **Bauwerksmaske** und **Geländeregel**. Beide aus der Messung vom 21.08.2026: Der Material-ID-Pass liefert dieselbe Maske wie eine zweite Blender-Aufnahme (100.000 % Uebereinstimmung), aber nur, solange eine Regel sagt, woran das Gelaende zu erkennen ist |

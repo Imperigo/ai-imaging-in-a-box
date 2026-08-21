@@ -877,6 +877,51 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Ein Strahl, der in einem Bauteil startet, trifft womöglich sofort dessen Rückseite —
       oder gar nichts, weil Blender Rückseiten je nach Einstellung überspringt. Meldet er
       „frei", während die Kamera steckt, ist das eine Lücke.
+- [x] **Der Prompt wird übersetzt — und die Übersetzung wird deklariert (22.08.).**
+      `src/aiimaging/sprache.py`, 48 Tests. Anlass ist eine Messung der HomeStation
+      (`9a33353`): gepaart über acht Startwerte, gemessen am Blauüberschuss des oberen
+      Bildfünftels, ergab der deutsche Prompt **+40,1** gegen **+13,9** englisch — und
+      war bei **8 von 8** gleichen Startwerten blauer. Isoliert nachgestellt:
+      `overcast sky` +0,3 gegen `bedeckter Himmel` +17,8. Die Vis-Oberfläche sammelt
+      deutschen Text und legt ihn wörtlich in `style.prompt`.
+
+      **Owner-Entscheid 21.08.:** übersetzen **und deklarieren** — im Ergebnis stehen
+      beide Fassungen nebeneinander (`prompt` und `prompt_original`, dazu der ganze
+      Befund unter `prompt_sprache`). Dazu, ebenfalls entschieden: **die QA warnt**, wenn
+      ein Prompt nicht englisch aussieht.
+
+      **Glossar als Vorgabe, Modell als Naht.** Das Glossar ist bestimmt (dieselbe
+      Eingabe, derselbe Prompt — sonst wäre keine Vergleichsreihe mehr lesbar),
+      lizenzfrei und netzlos. Ein Übersetzungsmodell hängt an `uebersetzer` ein, ohne dass
+      ein Aufrufer sich ändert. Die Frage, *welches*, ist damit bewusst offen und nicht
+      vertagt.
+
+      Verdrahtet an drei Stellen, weil ein Prompt auf drei Wegen ankommt:
+      `kosmo_szene.lies_szene` (Oberfläche), `prompts.komponiere` (Bibliothek),
+      `render` (von Hand gebauter Auftrag — dort nur noch die Warnung).
+- [x] **Vier Fehler beim Bauen, die alle dieselbe Form hatten: eine Meldung, die schweigt.**
+      (1) `unbekannt` meldete `()` für „evening light with **langen** shadows" — es suchte
+      nur nach Umlauten und Signalwörtern, und `langen` hat weder. Ein halb übersetzter
+      Prompt, der sich selbst für vollständig hält, ist schlimmer als gar keiner.
+      (2) `sprachwarnung` schwieg zu `Sichtbeton`, das die Übersetzung unmittelbar davor
+      erkannt hätte — **zwei Antworten auf dieselbe Frage im selben Programm**; jetzt
+      beantwortet sie `ist_deutsch` an einer Stelle.
+      (3) Der Abholer reichte `auftrag["warnungen"]` **gar nicht weiter**: eine tote Kante
+      auf dem Weg der Warnung selbst.
+      (4) `ENGLISCH_AUCH` nannte acht Wörter, die im Glossar gar nicht vorkommen — Vorsicht,
+      die vor nichts schützt. Ein Test hält die Liste jetzt an ihre Schlüssel.
+- [x] **Ein Test, der aus dem falschen Grund grün war.** `test_laengste_wendung_zuerst`
+      prüfte „bedeckter Himmel" und „keine Menschen" — und überlebte die Mutation
+      `-len(s)` → `len(s)`. Grund: Bei beiden ergibt die Wort-für-Wort-Übersetzung
+      zufällig dasselbe wie die Wendung (`keine`+`menschen` = `no`+`people`). Der Test
+      prüfte also nie die Reihenfolge. Ersetzt durch `hell gestrichen` (wo es
+      auseinandergeht) **und** durch eine Eigenschaft über das ganze Glossar, damit die
+      Regel auch für morgen hinzugefügte Wendungen geprüft bleibt.
+- [ ] **Was das Glossar nicht kann, und was daraus folgt.** Es kennt Wendungen, keine
+      Grammatik: `langen` (gebeugt) und `Nordfassade` (zusammengesetzt) bleiben stehen.
+      Gemeldet werden sie — übersetzt nicht. Offen ist, ob das genügt oder ob ein
+      Übersetzungsmodell an die Naht gehört; entscheidbar wird das erst an echten
+      Eingaben der Oberfläche, nicht am Schreibtisch.
 - [ ] **Die Zielwand wird nach LÄNGE gewählt, und das ist eine schwache Setzung.** Die
       Praxis wählt die Wand mit dem Motiv. Ein Kamin oder eine Küchenzeile ist ein Motiv
       und hat keine Öffnung; die längste Wand ist oft, aber nicht immer, die richtige. Der

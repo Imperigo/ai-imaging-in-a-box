@@ -78,7 +78,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from aiimaging import backbone
+from aiimaging import backbone, sprache
 
 #: Die Konditionierung, die dieses Modul bedient. Alles andere braucht eine eigene
 #: Adapterschicht und wird abgelehnt (siehe Modul-Docstring).
@@ -1063,6 +1063,27 @@ def _hinweise(a: RenderAuftrag, parameter: dict, lizenz: dict) -> tuple[str, ...
     ohne Ausgangsbild wird nicht kommentarlos verworfen, sondern benannt.
     """
     hinweise: list[str] = []
+
+    # Die letzte Stelle, an der ein deutscher Prompt noch auffallen kann.
+    #
+    # Übersetzt wird weiter vorne (`kosmo_szene.lies_szene`, `prompts.komponiere`) — hier
+    # steht nur noch die Kontrolle. Sie ist trotzdem nötig: Ein `RenderAuftrag` lässt sich
+    # von Hand bauen, aus einem Skript, aus einem Auftrag, und dann kommt der Text an
+    # keiner Übersetzung vorbei. Eine Warnung im Ergebnis erreicht denjenigen, der das
+    # Bild ansieht; ein Hinweis in einem Modul, das nicht aufgerufen wurde, erreicht
+    # niemanden. Sie warnt nur beim entschiedenen Fall — siehe `sprache.sprachwarnung`.
+    warnung = sprache.sprachwarnung(a.prompt if isinstance(a.prompt, str) else "")
+    if warnung:
+        hinweise.append(warnung)
+    if isinstance(a.negativ_prompt, str) and a.negativ_prompt.strip() \
+            and sprache.sprachwarnung(a.negativ_prompt):
+        hinweise.append(
+            "Auch der Negativ-Prompt sieht nicht englisch aus. Er wirkt damit "
+            "doppelt wenig: schon der positive Teil wird auf Deutsch schlechter "
+            "verstanden, und der negative wirkt ohnehin nur oberhalb einer Führung "
+            "von 1.0."
+        )
+
     if parameter["modus"] == MODUS_TXT2IMG and a.denoise != 0.0:
         hinweise.append(
             f"denoise={a.denoise} bleibt im Modus '{MODUS_TXT2IMG}' wirkungslos: Ohne "
