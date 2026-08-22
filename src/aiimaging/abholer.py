@@ -563,6 +563,31 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
 #: mitzulaufen. Die Frage ist im Übergabeblatt gestellt.
 ANGENOMMENE_HOCHACHSE = "Y_UP"
 
+#: Welche Startwerte je Kamera gerendert werden.
+#:
+#: **Drei** (Owner-Entscheid 23.08.2026), vorher einer. Gerendert werden alle drei, und
+#: behalten wird das nach ``gerichtet`` beste — vorausgesetzt, es gibt eine
+#: Bauwerksmaske; ohne sie gibt es kein Mass, dem hier zu trauen wäre.
+#:
+#: **Die Kostenrechnung, die den Ausschlag gab.** Der Multipass kostet rund **97 s je
+#: Kamera** (erster vollständiger Lauf, 19.08.), ein Bild des Bildmodells rund **1,3 s**.
+#: Startwerte sind damit billig neben Ansichten: Zwei zusätzliche Bilder je Kamera kosten
+#: rund 2,6 s gegen 97 s, dazu je eine Tiefenschätzung für die Messung. Und die
+#: Seed-Streuung (0,2269) ist grösser als jeder Parametereffekt, den die Kette je gezeigt
+#: hat — die Auswahl ist der billigste Qualitätssprung, den es hier gibt.
+#:
+#: **Feste Werte, nicht gewürfelt.** ``(0, 1, 2)`` steht hier, damit derselbe Auftrag
+#: dieselben Bilder ergibt. Ein zufälliger Startwert machte jeden Lauf unwiederholbar,
+#: und ohne Wiederholbarkeit gibt es keine Vergleichsreihe.
+#:
+#: **Was das mit dem Auftragsurteil macht, und was daran ungemessen ist.** Je Kamera wird
+#: das BESTE von drei genommen, über die Kameras das SCHLECHTESTE von drei — die beiden
+#: Auswahleffekte zeigen in entgegengesetzte Richtungen und sind gleich gross, *sofern*
+#: die Streuung über Startwerte und die über Blickrichtungen ähnlich gross sind. Ob sie
+#: das sind, ist **nicht gemessen**: 0,2269 stammt von Startwerten. Dass sich die beiden
+#: Effekte aufheben, ist damit eine plausible Erwartung und kein Befund.
+VORGABE_SEEDS = (0, 1, 2)
+
 #: Welche Richtungen gerendert werden, wenn die Szene ``cameras: "auto"`` sagt.
 #:
 #: **Drei** (Owner-Entscheid 23.08.2026), vorher eine. Wie viele automatische Standpunkte
@@ -591,7 +616,7 @@ AUTO_RICHTUNGEN = ("s", "sSE", "nNW")
 def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 up_axis: str = ANGENOMMENE_HOCHACHSE, schwelle: float | None = None,
                 stillstand_frist_s: float | None = None, stil: str | None = None,
-                nullprobe: bool = True, seeds=(0,),
+                nullprobe: bool = True, seeds=VORGABE_SEEDS,
                 kamera_modus: str = _kameras_modul.MODUS_GEKIPPT,
                 brennweite_mm: float | None = None,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,

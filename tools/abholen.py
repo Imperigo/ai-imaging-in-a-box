@@ -97,10 +97,13 @@ def main() -> int:
     ap.add_argument("--hoechstens", type=int, default=None,
                     help="Hoechstens so viele Auftraege in diesem Durchgang.")
     ap.add_argument("--stil", default=None, help="Stil fuer die Belichtungspruefung.")
-    ap.add_argument("--seeds", default="0",
+    ap.add_argument("--seeds",
+                    default=",".join(str(s) for s in abholer.VORGABE_SEEDS),
                     help="Kommagetrennte Seeds. Mehr als einer heisst: alle rendern und "
                          "den besten nach 'gerichtet' behalten (Polaritaet x rho ueber "
-                         "der Bauwerksmaske). Ohne Maske wird NICHT ausgewaehlt.")
+                         "der Bauwerksmaske). Ohne Maske wird NICHT ausgewaehlt. "
+                         "Voreinstellung aus abholer.VORGABE_SEEDS — abgeschrieben "
+                         "waere sie an einer der beiden Stellen bereits falsch.")
     ap.add_argument("--ohne-nullprobe", action="store_true",
                     help="Die Kontrollanker weglassen. Nicht empfohlen — siehe auf-21.")
     ap.add_argument("--stillstand-frist-s", type=float, default=fortschritt.FRIST_S,

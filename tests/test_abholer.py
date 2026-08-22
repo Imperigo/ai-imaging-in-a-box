@@ -423,9 +423,11 @@ def test_drei_kameras_ergeben_drei_bilder_und_drei_urteile(tmp_path):
 
     assert antwort["tat"] == abholer.TAT_VERARBEITET
     assert len(protokoll["multipass"]) == 3, "je Kamera ein eigener Multipass"
-    assert len(protokoll["render"]) == 3
+    # Je Kamera EIN Multipass, aber je Startwert ein eigener Render — das ist der Grund,
+    # warum Startwerte billig sind: Der Multipass wiederholt sich nicht.
+    assert len(protokoll["render"]) == 3 * len(abholer.VORGABE_SEEDS)
     ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
-    assert len(ergebnis["images"]) == 3
+    assert len(ergebnis["images"]) == 3, "behalten wird je Kamera genau ein Bild"
 
 
 def test_je_kamera_eine_eigene_tiefenkarte(tmp_path):
@@ -462,9 +464,11 @@ def test_das_schlechteste_urteil_zaehlt_und_nicht_der_mittelwert(tmp_path):
     }
     ordner = _auftrag(tmp_path, szene=szene)
     _, attrappen = _kette(scores=(0.95, 0.20, 0.90))
+    # EIN Startwert: Dieser Test handelt von der Auswahl über die KAMERAS, und die
+    # Auswahl über Startwerte würde die vorgegebenen Scores vorher schon wegräumen.
     abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
                        verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
-                                                      **attrappen))
+                                                      seeds=(0,), **attrappen))
     ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
     assert ergebnis["qa"]["geometry"]["geometry_fidelity"] == 0.20
     assert ergebnis["qa"]["geometry"]["passed"] is False
@@ -734,7 +738,7 @@ def test_die_nullprobe_misst_drei_kontrollbilder_je_kamera(tmp_path):
     ordner = _auftrag(tmp_path)
     protokoll, attrappen = _kette()
     abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
-                       verarbeite=abholer.verarbeiter(auto_richtungen=("sSE",),
+                       verarbeite=abholer.verarbeiter(auto_richtungen=("sSE",), seeds=(0,),
                                                       out_wurzel=tmp_path / "aus",
                                                       **attrappen))
     assert sorted(a.removesuffix(".png") for a in protokoll["nullprobe"]) == [
@@ -1407,3 +1411,52 @@ def test_der_rauschboden_ist_unabhaengig_gemessen_und_nicht_aus_der_reihe(tmp_pa
     assert auswahl["vorsprung"]["grenze"] == pytest.approx(
         2.0 * varianten.GEMESSENE_SEED_STREUUNG)
     assert auswahl["vorsprung"]["belegt"] is False
+
+
+def test_die_vorgabe_faehrt_drei_startwerte_je_kamera(tmp_path):
+    """Owner-Entscheid 23.08.2026 — und der Grund steht in der Kostenrechnung.
+
+    Der Multipass kostet rund 97 s je Kamera, ein Bild des Bildmodells rund 1,3 s.
+    Startwerte sind damit billig neben Ansichten, und die Seed-Streuung (0,2269) ist
+    grösser als jeder Parametereffekt der Kette.
+    """
+    ordner = _auftrag(tmp_path)
+    protokoll, attrappen = _kette()
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
+                       verarbeite=abholer.verarbeiter(
+                           out_wurzel=tmp_path / "aus",
+                           auto_richtungen=("sSE",), **attrappen))
+
+    assert abholer.VORGABE_SEEDS == (0, 1, 2)
+    assert len(protokoll["render"]) == len(abholer.VORGABE_SEEDS)
+    assert len(protokoll["multipass"]) == 1, (
+        "der Multipass wiederholt sich NICHT je Startwert — genau darum sind sie billig"
+    )
+
+
+def test_die_startwerte_sind_fest_und_nicht_gewuerfelt():
+    """Ein zufälliger Startwert machte jeden Lauf unwiederholbar, und ohne
+    Wiederholbarkeit gibt es keine Vergleichsreihe."""
+    assert abholer.VORGABE_SEEDS == tuple(sorted(abholer.VORGABE_SEEDS))
+    assert len(set(abholer.VORGABE_SEEDS)) == len(abholer.VORGABE_SEEDS)
+    assert all(isinstance(s, int) and not isinstance(s, bool)
+               for s in abholer.VORGABE_SEEDS)
+
+
+def test_das_werkzeug_schreibt_die_startwerte_nicht_ab():
+    """Eine Zahl, die an zwei Stellen steht, ist an einer davon bereits falsch.
+
+    `tools/abholen.py` liest die Voreinstellung aus der Konstante — dasselbe Muster wie
+    bei der Brennweite, wo genau das schiefgegangen wäre.
+    """
+    import importlib.util
+    from pathlib import Path as _P
+
+    pfad = _P(__file__).resolve().parents[1] / "tools" / "abholen.py"
+    spez = importlib.util.spec_from_file_location("abholen_seeds", pfad)
+    modul = importlib.util.module_from_spec(spez)
+    spez.loader.exec_module(modul)
+
+    quelle = pfad.read_text(encoding="utf-8")
+    assert "VORGABE_SEEDS" in quelle
+    assert 'default="0"' not in quelle, "die alte, abgeschriebene Voreinstellung"

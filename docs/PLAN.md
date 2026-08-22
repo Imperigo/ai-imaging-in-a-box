@@ -1180,6 +1180,33 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 
       Getrennt gehalten: „geprüft und beanstandet" gegen „gar nicht beurteilbar". Wer sie
       zusammenwirft, hält eine Lücke für ein Urteil.
+- [x] **Das Auftragsurteil bleibt das der schwächsten Ansicht (Owner-Entscheid
+      23.08.2026).** Zur Wahl standen der Median (fällt nicht mit N, lässt aber eine
+      wirklich schlechte Ansicht hinter zwei guten verschwinden — und Halluzinationen
+      zeigen sich oft nur aus einer Richtung) und eine an N angepasste Schwelle
+      (rechnerisch sauber, praktisch nicht belastbar: Es hiesse, eine **nicht
+      kalibrierte** Schwelle um eine **ungemessene** Streuung zu korrigieren; zwei
+      unsichere Zahlen ergeben keine sichere).
+
+      Am Code ändert das nichts. Was zählt, ist die Begründung: Die Regel ist innerhalb
+      eines festen N vergleichbar, über ein wechselndes N erkennbar nicht — und seit
+      heute trägt jedes Ergebnis mit, aus wie vielen Ansichten es das Minimum ist.
+- [x] **Drei Startwerte je Kamera (Owner-Entscheid 23.08.2026), vorher einer.**
+      Den Ausschlag gab die Kostenrechnung: Der Multipass kostet rund **97 s je Kamera**,
+      ein Bild des Bildmodells rund **1,3 s**. Startwerte sind damit billig neben
+      Ansichten — der Multipass wiederholt sich je Startwert *nicht*. Und die
+      Seed-Streuung (0,2269) ist grösser als jeder Parametereffekt der Kette; die Auswahl
+      ist der billigste Qualitätssprung, den es hier gibt.
+
+      **Feste Werte `(0, 1, 2)`, nicht gewürfelt** — ein zufälliger Startwert machte jeden
+      Lauf unwiederholbar, und ohne Wiederholbarkeit gibt es keine Vergleichsreihe.
+- [ ] **Ob sich die beiden Auswahleffekte wirklich aufheben, ist NICHT gemessen.**
+      Je Kamera wird das beste von drei genommen (hebt), über die Kameras das
+      schlechteste von drei (senkt). Beide betragen rund 0,845 Streuungen — sie heben
+      sich also auf, **sofern** die Streuung über Startwerte und die über Blickrichtungen
+      ähnlich gross sind. 0,2269 stammt von Startwerten. Dass es sich ausgleicht, ist
+      eine plausible Erwartung und kein Befund; die Kameraspanne im Befund sammelt jetzt
+      die Zahlen, mit denen es entscheidbar wird.
 - [ ] **Die Streuung ZWISCHEN Kameras ist ungemessen — und jetzt erstmals messbar.**
       0,2269 ist über Startwerte gemessen, nicht über Blickrichtungen. Verschiedene
       Richtungen zeigen verschieden viel Geometrie; die Streuung könnte grösser oder
