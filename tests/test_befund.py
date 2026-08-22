@@ -170,3 +170,140 @@ def test_der_befund_wird_NACH_dem_vertragsergebnis_geschrieben(lauf):
     assert (ordner / bruecke.DATEI_ERGEBNIS).is_file()
     assert (ordner / abholer.DATEI_BEFUND).stat().st_mtime >= \
         (ordner / bruecke.DATEI_ERGEBNIS).stat().st_mtime
+
+
+# ======================================================================================
+# Gelesen, nicht nur geschrieben
+# ======================================================================================
+
+def test_der_befund_wird_wirklich_zurueckgelesen(lauf):
+    """Eine Datei, die niemand liest, ist die tote Kante in ihrer geduldigsten Form.
+
+    Sie fällt nie auf, und wenn eines Tages jemand hinsieht, steht seit Monaten Unsinn
+    darin. Darum liest das Betreiber-Werkzeug sie wirklich.
+    """
+    ordner, _ = lauf
+    befund = abholer.lies_befund(ordner)
+    assert befund is not None
+    assert befund["schema"] == "aiimaging.befund/v1"
+
+
+def test_ein_fehlender_befund_ist_eine_auskunft_und_kein_fehler(tmp_path):
+    assert abholer.lies_befund(tmp_path) is None
+    assert abholer.lies_befund(tmp_path / "gibtsnicht") is None
+
+
+def test_ein_kaputter_befund_wirft_nicht(tmp_path):
+    (tmp_path / abholer.DATEI_BEFUND).write_text("{kein json", encoding="utf-8")
+    assert abholer.lies_befund(tmp_path) is None
+    (tmp_path / abholer.DATEI_BEFUND).write_text('["Liste statt Woerterbuch"]',
+                                                 encoding="utf-8")
+    assert abholer.lies_befund(tmp_path) is None
+
+
+# ======================================================================================
+# Die kurze Fassung — was einen Menschen am Terminal erreicht
+# ======================================================================================
+
+def test_die_kurzfassung_nennt_die_uebersetzung_und_die_kameraspanne(lauf):
+    ordner, _ = lauf
+    zeilen = abholer.befund_kurz(abholer.lies_befund(ordner))
+    text = "\n".join(zeilen)
+
+    assert "uebersetzt" in text
+    assert "bedeckter Himmel" in text, "der ursprüngliche Wortlaut gehört dazu"
+    assert "schlechteste von 3 Kameras" in text
+
+
+def test_eine_halbe_uebersetzung_bekommt_ihre_eigene_zeile():
+    """Der Fall, auf den es ankommt: Der Prompt WURDE übersetzt, aber nicht ganz.
+
+    Ohne diese Zeile stünde nur „Prompt uebersetzt" da, und der Betreiber hielte einen
+    halbdeutschen Prompt für einen englischen. Ein halb übersetzter Prompt ist für das
+    Bildmodell schlechter als ein ganz deutscher — er steht zwischen zwei Sprachen.
+    """
+    zeilen = abholer.befund_kurz({
+        "prompt": "overcast sky, a Fensterbank",
+        "prompt_sprache": {"noetig": True, "verfahren": "glossar",
+                           "original": "bedeckter Himmel, eine Fensterbank",
+                           "vollstaendig": False, "unbekannt": ("fensterbank",)}})
+    assert any("NICHT vollstaendig" in z and "fensterbank" in z for z in zeilen)
+
+
+def test_eine_ganze_uebersetzung_bekommt_diese_zeile_nicht():
+    """Gegenprobe — sonst stünde die Warnung immer da und bedeutete nichts."""
+    zeilen = abholer.befund_kurz({
+        "prompt": "overcast sky",
+        "prompt_sprache": {"noetig": True, "verfahren": "glossar",
+                           "original": "bedeckter Himmel", "vollstaendig": True}})
+    assert any("uebersetzt" in z for z in zeilen)
+    assert not any("NICHT vollstaendig" in z for z in zeilen)
+
+
+def test_zeilen_ohne_inhalt_entfallen_ganz():
+    """Eine Ausgabe, in der jede Zeile immer dasteht, liest sich nach dem dritten Mal
+    wie eine leere."""
+    still = abholer.befund_kurz({
+        "prompt_sprache": {"noetig": False},
+        "geometrie_urteil": {"kameraspanne": {"n_gemessen": 1, "schlechtester": 0.7,
+                                              "bester": 0.7}},
+        "kameras": [{"kamera": "sSE", "komposition": {"beurteilt": True,
+                                                      "warnungen": []}}],
+    })
+    assert len(still) == 1, still
+    assert "Geometrie" in still[0]
+
+
+def test_die_kurzfassung_meldet_beanstandete_komposition():
+    zeilen = abholer.befund_kurz({
+        "kameras": [
+            {"kamera": "s", "komposition": {"beurteilt": True, "warnungen": ["Neigung"]}},
+            {"kamera": "sSE", "komposition": {"beurteilt": True, "warnungen": []}},
+        ]})
+    assert any("Komposition beanstandet: s" in z for z in zeilen)
+    assert not any("sSE" in z for z in zeilen), "die unbeanstandete gehört nicht in die Liste"
+
+
+def test_die_kurzfassung_trennt_beanstandet_von_nicht_beurteilbar():
+    """Zwei verschiedene Aussagen: „geprüft und bemängelt" gegen „gar nicht prüfbar".
+    Wer sie zusammenwirft, hält eine Lücke für ein Urteil."""
+    zeilen = abholer.befund_kurz({
+        "kameras": [{"kamera": "s", "komposition": {"beurteilt": False, "grund": "..."}}]})
+    assert any("NICHT beurteilbar" in z for z in zeilen)
+    assert not any("beanstandet" in z for z in zeilen)
+
+
+def test_die_kurzfassung_meldet_einen_unbelegten_seedvorsprung():
+    zeilen = abholer.befund_kurz({
+        "kameras": [{"kamera": "s",
+                     "seedauswahl": {"vorsprung": {"belegt": False}}},
+                    {"kamera": "sSE",
+                     "seedauswahl": {"vorsprung": {"belegt": True}}}]})
+    treffer = [z for z in zeilen if "Seedvorsprung" in z]
+    assert len(treffer) == 1
+    assert "s" in treffer[0] and "sSE" not in treffer[0]
+
+
+def test_ohne_seedauswahl_wird_dazu_nichts_behauptet():
+    """`vorsprung: None` heisst „nicht geprüft" — und darf nicht als „nicht belegt"
+    erscheinen.
+
+    Die Gegenprobe steht im selben Test, weil das ``not any`` sonst über eine **leere**
+    Liste liefe und immer wahr wäre. Die Vakuumprobe hat genau das gefunden, als dieser
+    Test neu war.
+    """
+    ungeprueft = abholer.befund_kurz({
+        "kameras": [{"kamera": "s", "seedauswahl": {"vorsprung": None}}]})
+    assert ungeprueft == (), "aus 'nicht geprüft' folgt gar keine Zeile"
+
+    geprueft = abholer.befund_kurz({
+        "kameras": [{"kamera": "s", "seedauswahl": {"vorsprung": {"belegt": False}}}]})
+    assert any("Seedvorsprung" in z for z in geprueft), (
+        "dieselbe Sammlung, derselbe Aufbau — sie füllt sich, wenn es etwas zu melden gibt"
+    )
+
+
+def test_gar_kein_befund_ergibt_gar_keine_zeilen():
+    assert abholer.befund_kurz(None) == ()
+    assert abholer.befund_kurz("kein Woerterbuch") == ()
+    assert abholer.befund_kurz({}) == ()

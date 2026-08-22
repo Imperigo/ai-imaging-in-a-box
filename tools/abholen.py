@@ -170,6 +170,17 @@ def main() -> int:
         else:
             print(f"    Wache: kein Stillstand ({w['blicke']} Blicke, laengste Pause "
                   f"{w['laengster_stillstand_s']:.0f} s)")
+
+        # Der Befund, den der Lauf neben das Vertragsergebnis gelegt hat.
+        #
+        # GELESEN und nicht bloss geschrieben: Eine Datei, die niemand liest, ist die
+        # tote Kante in ihrer geduldigsten Form — sie faellt nie auf, und wenn eines
+        # Tages jemand hinsieht, steht seit Monaten Unsinn darin. Hier steht sie zwischen
+        # dem Lauf und dem Menschen davor, und damit traegt sie.
+        for zeile in abholer.befund_kurz(abholer.lies_befund(e.get("verzeichnis") or "")):
+            print(f"    {zeile}")
+        for warnung in (e.get("warnungen") or ())[:3]:
+            print(f"    ! {str(warnung)[:150]}")
     return 0
 
 

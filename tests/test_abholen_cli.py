@@ -124,3 +124,82 @@ def test_der_betreiber_entscheid_zur_fremden_freigabe_bleibt_voreingestellt_aus(
 
     assert ohne["fremde_freigabe_gilt"] is False
     assert mit["fremde_freigabe_gilt"] is True
+
+
+# ======================================================================================
+# Der Befund erreicht den Menschen davor
+# ======================================================================================
+
+def _lauf_mit_ergebnissen(monkeypatch, tmp_path, capsys, ergebnisse):
+    """Den Einstieg mit vorgegebenen Auftragsantworten fahren und die Ausgabe fangen."""
+    modul = _abholen()
+
+    monkeypatch.setattr(modul.abholer, "durchgang", lambda store, **kw: {
+        "gesehen": len(ergebnisse), "verarbeitet": len(ergebnisse), "fehler": 0,
+        "liegengelassen": 0, "gestanden": 0, "waisen": [], "ergebnisse": ergebnisse})
+    monkeypatch.setattr(modul.abholer, "verarbeiter", lambda **kw: (lambda a: {}))
+    monkeypatch.setattr(modul, "karte_auskunft", lambda: (True, "Attrappe"))
+    monkeypatch.setattr(sys, "argv", ["abholen.py", "--store", str(tmp_path)])
+
+    assert modul.main() == 0
+    return capsys.readouterr().out
+
+
+def _befund_ablegen(ordner, inhalt):
+    import json
+
+    from aiimaging import abholer
+
+    ordner.mkdir(parents=True, exist_ok=True)
+    (ordner / abholer.DATEI_BEFUND).write_text(json.dumps(inhalt, ensure_ascii=False),
+                                               encoding="utf-8")
+    return ordner
+
+
+def test_der_befund_erscheint_in_der_ausgabe(monkeypatch, tmp_path, capsys):
+    """Der eigentliche Zweck: Was der Lauf gemessen hat, soll den Betreiber erreichen,
+    ohne dass er eine Datei suchen muss.
+
+    Bis zum 23.08.2026 sah er „3 Bild(er) geschrieben" und die Wache — von der
+    Übersetzung, der Kameraspanne und der Kompositionsprüfung nichts.
+    """
+    ordner = _befund_ablegen(tmp_path / "vis-1-abcdef", {
+        "prompt": "overcast sky", "prompt_sprache": {
+            "noetig": True, "verfahren": "glossar", "original": "bedeckter Himmel",
+            "vollstaendig": True},
+        "geometrie_urteil": {"kameraspanne": {
+            "n_gemessen": 3, "schlechtester": 0.66, "bester": 0.81}},
+        "kameras": [{"kamera": "s", "komposition": {"beurteilt": True,
+                                                    "warnungen": ["Neigung 2.5°"]}}],
+    })
+    ausgabe = _lauf_mit_ergebnissen(monkeypatch, tmp_path, capsys, [
+        {"job_id": "vis-1-abcdef", "status": "verarbeitet", "grund": "3 Bild(er).",
+         "verzeichnis": ordner, "wache": None, "warnungen": ()}])
+
+    assert "Prompt uebersetzt" in ausgabe
+    assert "bedeckter Himmel" in ausgabe
+    assert "schlechteste von 3 Kameras" in ausgabe
+    assert "Komposition beanstandet: s" in ausgabe
+
+
+def test_ohne_befund_bleibt_die_ausgabe_wie_vorher(monkeypatch, tmp_path, capsys):
+    """Gegenprobe. Ein Auftrag ohne Befund darf keine leeren Zeilen erzeugen — und der
+    Einstieg darf daran nicht scheitern."""
+    ausgabe = _lauf_mit_ergebnissen(monkeypatch, tmp_path, capsys, [
+        {"job_id": "vis-1-abcdef", "status": "liegengelassen", "grund": "Kein Token.",
+         "verzeichnis": tmp_path / "leer", "wache": None, "warnungen": ()}])
+
+    assert "vis-1-abcdef" in ausgabe
+    assert "Prompt uebersetzt" not in ausgabe
+    assert "Geometrie:" not in ausgabe
+
+
+def test_die_warnungen_des_auftrags_erscheinen_ebenfalls(monkeypatch, tmp_path, capsys):
+    """Sie kommen aus `lies_auftrag` und wurden bis zum 22.08.2026 gar nicht
+    weitergereicht — eine tote Kante auf dem Weg der Warnung selbst."""
+    ausgabe = _lauf_mit_ergebnissen(monkeypatch, tmp_path, capsys, [
+        {"job_id": "vis-1-abcdef", "status": "verarbeitet", "grund": "1 Bild.",
+         "verzeichnis": tmp_path / "leer", "wache": None,
+         "warnungen": ("Keine Sonnenangabe.",)}])
+
+    assert "! Keine Sonnenangabe." in ausgabe

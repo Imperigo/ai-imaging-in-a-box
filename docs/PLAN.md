@@ -1165,6 +1165,21 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Wörterbücher und Listen; ein Test liest die geschriebene Datei als **Text** und
       sucht nach `"/` — nicht nach einzelnen Feldern, denn geprüft gehört, was wirklich
       auf der Platte steht.
+- [x] **Der Befund wird gelesen, nicht nur geschrieben — sonst wäre er die nächste tote
+      Kante.** Eine Datei, die niemand liest, ist die geduldigste Form davon: Sie fällt
+      nie auf, und wenn eines Tages jemand hinsieht, steht seit Monaten Unsinn darin.
+      `tools/abholen.py` liest sie darum wirklich und zeigt dem Betreiber vier Dinge, die
+      eine Entscheidung auslösen könnten — dass der Prompt übersetzt wurde (und ob ganz),
+      die Kameraspanne samt der Zahl, aus wie vielen das Urteil das schlechteste ist,
+      welche Kameras die Kompositionsprüfung beanstandet, und ob der Vorsprung des
+      gewählten Startwerts belegt ist.
+
+      **Zeilen ohne Inhalt entfallen ganz.** Eine Ausgabe, in der jede Zeile immer
+      dasteht, liest sich nach dem dritten Mal wie eine leere — und dann übersieht man
+      auch die eine, die zählt.
+
+      Getrennt gehalten: „geprüft und beanstandet" gegen „gar nicht beurteilbar". Wer sie
+      zusammenwirft, hält eine Lücke für ein Urteil.
 - [ ] **Die Streuung ZWISCHEN Kameras ist ungemessen — und jetzt erstmals messbar.**
       0,2269 ist über Startwerte gemessen, nicht über Blickrichtungen. Verschiedene
       Richtungen zeigen verschieden viel Geometrie; die Streuung könnte grösser oder

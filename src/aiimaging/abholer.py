@@ -323,6 +323,91 @@ def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> Non
                             " Der Befund konnte nicht geschrieben werden.").strip()
 
 
+def lies_befund(verzeichnis):
+    """Den Befund eines Auftrags zurücklesen — oder ``None``.
+
+    **Warum es diese Funktion gibt und nicht nur die schreibende.** Eine Datei, die
+    geschrieben und nie gelesen wird, ist die tote Kante in ihrer geduldigsten Form: Sie
+    fällt nie auf, weil niemand hinsieht, und wenn eines Tages jemand hinsieht, steht
+    Unsinn darin, seit Monaten. Der Befund wird darum vom Betreiber-Werkzeug
+    (`tools/abholen.py`) wirklich gelesen — damit er **trägt** und nicht nur existiert.
+
+    Ein fehlender oder unlesbarer Befund ist kein Fehler, sondern eine Auskunft: Es gibt
+    ihn nicht, mehr sagt diese Funktion nicht. Sie wirft nichts — sie wird auf einem
+    Verzeichnis aufgerufen, über das nichts feststeht.
+    """
+    import json as _json
+
+    pfad = Path(verzeichnis) / DATEI_BEFUND
+    try:
+        gelesen = _json.loads(pfad.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return gelesen if isinstance(gelesen, dict) else None
+
+
+def befund_kurz(befund: dict | None) -> tuple[str, ...]:
+    """Der Befund in wenigen Zeilen — für einen Menschen an einem Terminal.
+
+    **Was hier NICHT hineingehört:** alles. Ein Werkzeug, das dreissig Zeilen je Auftrag
+    ausgibt, wird überflogen, und dann übersieht man auch die eine Zeile, die zählt. Es
+    steht darum nur da, was eine **Entscheidung** auslösen könnte:
+
+    * dass der Prompt übersetzt wurde (der Betreiber hat etwas anderes geschrieben, als
+      gerendert wurde),
+    * die Spanne über die Kameras samt der Zahl, aus wie vielen das Urteil das
+      schlechteste ist,
+    * wie viele Kameras die Kompositionsprüfung beanstandet,
+    * ob der Vorsprung des gewählten Startwerts belegt ist.
+
+    Zeilen ohne Inhalt entfallen ganz. Eine Ausgabe, in der jede Zeile immer dasteht,
+    liest sich nach dem dritten Mal wie eine leere.
+    """
+    if not isinstance(befund, dict):
+        return ()
+
+    zeilen: list[str] = []
+
+    sprache = befund.get("prompt_sprache") or {}
+    if sprache.get("noetig"):
+        zeilen.append(f"Prompt uebersetzt ({sprache.get('verfahren')}): "
+                      f"{sprache.get('original')!r} -> {befund.get('prompt')!r}")
+        if not sprache.get("vollstaendig", True):
+            zeilen.append(f"  NICHT vollstaendig uebersetzt: "
+                          f"{', '.join(sprache.get('unbekannt') or ())}")
+
+    urteil = befund.get("geometrie_urteil") or {}
+    spanne = urteil.get("kameraspanne") or {}
+    if spanne.get("n_gemessen"):
+        teil = (f"Geometrie: {spanne.get('schlechtester'):.4f} "
+                f"(schlechteste von {spanne['n_gemessen']} Kameras")
+        if spanne.get("bester") is not None and spanne["n_gemessen"] > 1:
+            teil += f", beste {spanne['bester']:.4f}"
+        zeilen.append(teil + ")")
+    elif spanne:
+        zeilen.append("Geometrie: UNGEMESSEN — keine Kamera lieferte einen Wert.")
+
+    kameras = befund.get("kameras") or []
+    beanstandet = [k.get("kamera") for k in kameras
+                   if (k.get("komposition") or {}).get("warnungen")]
+    if beanstandet:
+        zeilen.append(f"Komposition beanstandet: {', '.join(str(k) for k in beanstandet)}")
+    unbeurteilt = [k.get("kamera") for k in kameras
+                   if (k.get("komposition") or {}).get("beurteilt") is False]
+    if unbeurteilt:
+        zeilen.append(f"Komposition NICHT beurteilbar: "
+                      f"{', '.join(str(k) for k in unbeurteilt)}")
+
+    ungesichert = [k.get("kamera") for k in kameras
+                   if ((k.get("seedauswahl") or {}).get("vorsprung") or {})
+                   .get("belegt") is False]
+    if ungesichert:
+        zeilen.append(f"Seedvorsprung NICHT belegt (bestes Bild behalten, aber kein "
+                      f"besserer Startwert): {', '.join(str(k) for k in ungesichert)}")
+
+    return tuple(zeilen)
+
+
 def _beobachter_bauen(auftrag: dict, wache_bauen, takt_s, antwort: dict):
     """Die Wache des Aufrufers bauen lassen — und einen Fehlschlag dabei nicht verschlucken.
 
