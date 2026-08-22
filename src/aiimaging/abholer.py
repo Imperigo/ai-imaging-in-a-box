@@ -236,7 +236,91 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
     )
     antwort.update(tat=TAT_VERARBEITET, ergebnis=geschrieben,
                    grund=f"{len(ergebnis.get('bilder') or [])} Bild(er) geschrieben.")
+    # NACH dem Vertragsergebnis und nach setze_status: Der Befund ist unsere eigene
+    # Buchführung, nicht Teil der Abmachung — er darf die Reihenfolge nicht stören, an
+    # der die fremde Oberfläche hängt.
+    _befund_ablegen(ordner, auftrag, ergebnis, antwort)
     return antwort
+
+
+#: Dateiname des vollständigen Befunds, neben dem Vertragsergebnis.
+DATEI_BEFUND = "befund.json"
+
+
+def _ohne_pfade(wert):
+    """Absolute Pfade auf ihren Dateinamen kürzen — **Regel 3**, rekursiv.
+
+    Der Befund verlässt dieses Repo nicht, aber er liegt im Auftragsverzeichnis der
+    fremden Oberfläche, und ein absoluter Pfad trägt den Rechnernamen und das
+    Benutzerkonto nach draussen. Dasselbe Argument wie bei den Bildnamen in
+    :func:`aiimaging.bruecke.schreibe_ergebnis` — dort war es bereits erledigt, hier
+    wäre es beim ersten Befund wieder aufgemacht worden.
+
+    Gekürzt wird alles, was wie ein absoluter Pfad aussieht. Ein Text, der zufällig mit
+    ``/`` beginnt, verliert damit Information — die Richtung ist gewollt: Ein zu kurzer
+    Pfad kostet einen Blick, ein durchgereichter Benutzername ist ein Regelbruch.
+    """
+    if isinstance(wert, dict):
+        return {k: _ohne_pfade(v) for k, v in wert.items()}
+    if isinstance(wert, (list, tuple)):
+        return [_ohne_pfade(v) for v in wert]
+    if isinstance(wert, Path):
+        return wert.name
+    if isinstance(wert, str) and wert.startswith("/") and len(wert) > 1:
+        return Path(wert).name
+    return wert
+
+
+def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> None:
+    """Alles, was gemessen wurde, in **eine Datei** neben das Vertragsergebnis.
+
+    **Warum es das gibt.** ``kosmovis.render-result/v2`` führt genau ``images``, ``qa``
+    und ``timings``; alles Übrige streicht :func:`aiimaging.kosmo_szene.nur_vertragsfelder`
+    heraus, und das ist richtig so — den fremden Vertrag zu erweitern ist nicht unsere
+    Entscheidung.
+
+    Nur: Bis zum 23.08.2026 hiess das, dass **nichts davon irgendwo landete**. Der
+    Kompositionsbefund je Kamera, die Kameraspanne, der Maskenbefund, die Einordnung
+    gegen den Nullanker, das Sprachurteil über den Prompt, die Warnungen des Auftrags —
+    alles wurde gerechnet, in ein Wörterbuch gelegt und mit dem Prozess vergessen. Nur
+    die Seedauswahl hatte eine eigene Datei.
+
+    `CLAUDE.md` sagt den Satz, um den es geht: **Was nicht in einer Datei steht, ist
+    weg.** Er stand dort für die Sitzungsprotokolle; er gilt für Messwerte genauso.
+
+    Ein fehlgeschlagener Befund darf den Lauf nicht kosten — die Bilder sind da, das
+    Vertragsergebnis ist geschrieben. Dieselbe Entscheidung wie bei
+    :func:`_auswahl_ablegen`.
+    """
+    import json as _json
+
+    szene = (auftrag.get("szene") or {})
+    inhalt = {
+        "schema": "aiimaging.befund/v1",
+        "job_id": auftrag.get("job_id"),
+        "kameras": ergebnis.get("kameras") or [],
+        "geometrie_urteil": ergebnis.get("geometrie_urteil"),
+        "stil_urteil": ergebnis.get("stil_urteil"),
+        "zeiten": ergebnis.get("zeiten"),
+        "bilder": [Path(b).name for b in (ergebnis.get("bilder") or [])],
+        # Der Prompt in BEIDEN Fassungen — was gerendert wurde und was ankam.
+        "prompt": szene.get("prompt"),
+        "prompt_original": szene.get("prompt_original"),
+        "prompt_sprache": szene.get("prompt_sprache"),
+        "warnungen_auftrag": list(antwort.get("warnungen") or ()),
+        "wache": antwort.get("wache"),
+    }
+    try:
+        (Path(ordner) / DATEI_BEFUND).write_text(
+            _json.dumps(_ohne_pfade(inhalt), ensure_ascii=False, indent=1),
+            encoding="utf-8")
+    except (OSError, TypeError, ValueError):
+        # TypeError/ValueError: etwas im Befund ist nicht JSON-fähig. Auch das darf den
+        # Lauf nicht kosten — aber es ist ein Fehler unserer Seite und kein Betriebsfall,
+        # weshalb er hier NICHT stillschweigend gleich behandelt wird wie ein voller
+        # Datenträger: Er steht im Grund der Antwort.
+        antwort["grund"] = ((antwort.get("grund") or "") +
+                            " Der Befund konnte nicht geschrieben werden.").strip()
 
 
 def _beobachter_bauen(auftrag: dict, wache_bauen, takt_s, antwort: dict):

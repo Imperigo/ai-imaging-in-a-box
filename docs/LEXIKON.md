@@ -2754,6 +2754,12 @@ strengen Fassung ankommen soll, muss darum in einem Vertragsfeld stehen. Der lä
 Stillstand eines Laufs wandert deshalb in `timings` und nicht in unsere `hinweise`: Wer in
 der fremden Oberfläche wissen will, warum ein Auftrag eine halbe Stunde brauchte, findet
 die Antwort dort, wo er ohnehin nachsieht.*
+*Die Falle liegt auf der anderen Seite: Alles, was **kein** Vertragsfeld ist, muss
+irgendwo daneben landen — und wenn „daneben" in Wahrheit „gar nicht" heisst, ist es
+umsonst gerechnet. Genau das war hier bis zum 23.08.2026 der Fall: Kompositionsbefund,
+Kameraspanne, Maskenbefund und Sprachurteil wurden gerechnet, in ein Wörterbuch gelegt
+und mit dem Prozess vergessen. Der Code sah dabei gründlich aus und die Tests waren grün.
+Seither gibt es `befund.json` neben dem Vertragsergebnis.*
 
 **Node (Knoten)** — Ein einzelner Arbeitsschritt in einer Verarbeitungskette, mit
 Eingängen und Ausgängen.
@@ -3091,6 +3097,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-23 | **Vertragsfeld** ausgebaut statt verdoppelt: Ich hatte einen zweiten Eintrag dazu geschrieben, `test_lexikon` fing ihn, und der Test hatte recht — der Begriff stand laengst da. Ergaenzt ist die andere Seite derselben Sache: Alles, was KEIN Vertragsfeld ist, muss daneben landen, und wenn „daneben" in Wahrheit „gar nicht" heisst, ist es umsonst gerechnet |
 | 2026-08-23 | Ergaenzt: **Auswahleffekt beim Minimum (Extremwertstatistik)**. Anlass ist eine Nebenwirkung der Umstellung auf drei Ansichten: Das Urteil ist das der schwaechsten Kamera, und ein Minimum faellt mit der Zahl der Ziehungen — um rund 0,19, also mehr als jeder Parametereffekt der Kette. Niemand hatte das entschieden |
 | 2026-08-23 | Ergaenzt aus den zwei Uebersetzungsregeln: **Kompositum (zusammengesetztes Wort)** und **Beugung (Flexion)**. Beide tragen den gemessenen Ertrag mit: An dreizehn Prompts war vorher **einer** vollstaendig uebersetzt, nachher **dreizehn** — und die Wahl der Endungen ist keine Kleinigkeit, `s` musste weichen (Dachs → roof), `n` musste bleiben (Fassaden) |
 | 2026-08-23 | Ergaenzt aus dem Anschluss von `komposition.py` und der Seedauswahl: **Ungerufenes Modul (die tote Kante im Grossen)**, **Auswaehlen gegen den eigenen Rauschboden (Kreisschluss)**, **Bester Wurf gegen besserer Startwert**. Alle drei aus Befunden ueber dieses Repo selbst: `komposition.py` war ein halbes Jahr lang nur von den eigenen Tests gerufen, und die Seedauswahl behielt zu Recht das beste Bild — sagte aber nicht dazu, dass der Vorsprung im Rauschen liegt |

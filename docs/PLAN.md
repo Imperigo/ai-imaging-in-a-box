@@ -1144,6 +1144,27 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Geometrie-Urteil und trägt n, bester, schlechtester, Spanne, Streuung und den
       Abschlag — samt dem Satz, dass ein Ergebnis aus drei Kameras nicht mit einem
       älteren aus einer verglichen werden kann.
+- [x] **Alles Gemessene landete nirgends — jetzt gibt es `befund.json`.**
+      Der fremde Vertrag führt genau `images`, `qa` und `timings`; alles Übrige streicht
+      `nur_vertragsfelder` heraus, und das ist richtig so. Nur hiess das bis zum
+      23.08.2026, dass **nichts davon irgendwo landete**: Kompositionsbefund je Kamera,
+      Kameraspanne, Maskenbefund, Einordnung gegen den Nullanker, Sprachurteil über den
+      Prompt, Warnungen des Auftrags — gerechnet, in ein Wörterbuch gelegt, mit dem
+      Prozess vergessen. Geschrieben wurde einzig die Seedauswahl.
+
+      `CLAUDE.md` sagt den Satz, um den es geht: **Was nicht in einer Datei steht, ist
+      weg.** Er stand dort für die Sitzungsprotokolle; er gilt für Messwerte genauso.
+
+      Der Befund liegt neben dem Vertragsergebnis, wird **nach** ihm geschrieben (die
+      Reihenfolge, an der die fremde Oberfläche hängt, darf er nicht stören) und kostet
+      den Lauf nicht, wenn er scheitert — dann steht es im Grund der Antwort, statt zu
+      schweigen.
+- [x] **Regel 3 wäre am ersten Befund wieder aufgegangen.** Er liegt im
+      Auftragsverzeichnis der fremden Oberfläche, und ein absoluter Pfad trägt
+      Rechnernamen und Benutzerkonto nach draussen. `_ohne_pfade` kürzt rekursiv durch
+      Wörterbücher und Listen; ein Test liest die geschriebene Datei als **Text** und
+      sucht nach `"/` — nicht nach einzelnen Feldern, denn geprüft gehört, was wirklich
+      auf der Platte steht.
 - [ ] **Die Streuung ZWISCHEN Kameras ist ungemessen — und jetzt erstmals messbar.**
       0,2269 ist über Startwerte gemessen, nicht über Blickrichtungen. Verschiedene
       Richtungen zeigen verschieden viel Geometrie; die Streuung könnte grösser oder
