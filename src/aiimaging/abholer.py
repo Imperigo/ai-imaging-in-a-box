@@ -592,9 +592,16 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
 
         zeiten["gesamt"] = round(time.monotonic() - beginn_gesamt, 1)
+        # Die gemeldete Zahl traegt mit, wie sie entstanden ist — siehe `_kameraspanne`.
+        # Ohne das waere der Uebergang von einer auf drei Kameras eine stille
+        # Verschaerfung des Gates gewesen.
+        schlechtestes = _schlechtestes(urteile)
+        if schlechtestes is not None:
+            schlechtestes = dict(schlechtestes, kameraspanne=_kameraspanne(urteile))
+
         return {
             "bilder": bilder,
-            "geometrie_urteil": _schlechtestes(urteile),
+            "geometrie_urteil": schlechtestes,
             "stil_urteil": _stil_urteil_aus_belichtung(urteile, stil),
             "kameras": urteile,
             "zeiten": zeiten,
@@ -909,6 +916,72 @@ def _stil_urteil_aus_belichtung(urteile: list[dict], stil: str | None) -> dict |
             "verfahren": VERFAHREN_BELICHTUNG, "stil": stil,
             "einbetter_name": f"{VERFAHREN_BELICHTUNG}/{stil}",
             "grund": schlechtestes.get("zusammenfassung", "")}
+
+
+def _kameraspanne(urteile: list[dict]) -> dict:
+    """Wie die eine gemeldete Zahl aus mehreren Kameras entstanden ist.
+
+    **Der Anlass ist eine Nebenwirkung, die niemand entschieden hat.** Am 23.08.2026
+    gingen die automatischen Richtungen von einer auf drei. Das Urteil eines Auftrags ist
+    das seiner schwächsten Kamera — richtig so —, aber ein **Minimum fällt mit der Zahl
+    der Ziehungen**, ganz ohne dass sich an der Sache etwas ändert. Das Gate wurde damit
+    strenger, und zwar um rund 0,845 Streuungen
+    (:func:`aiimaging.geometrie_qa.minimum_abschlag`).
+
+    Wäre die Streuung zwischen Kameras so gross wie die einzige, die dieses Projekt
+    gemessen hat (0,2269 über Startwerte), wären das **0,19** — mehr als jeder
+    Parametereffekt, den die Kette je gezeigt hat.
+
+    Die Regel wird deshalb nicht geändert; sie ist gut begründet. Was sich ändert, ist,
+    dass die gemeldete Zahl **mitträgt, wie sie entstanden ist**: aus wie vielen Kameras,
+    wie weit sie auseinanderlagen, und was das Minimum daran kostet.
+
+    Returns:
+        ``{n, n_gemessen, bester, schlechtester, spanne, streuung, abschlag_streuungen,
+        hinweis}``. ``streuung`` ist ``None`` bei weniger als drei gemessenen Kameras —
+        aus zweien lässt sie sich ausrechnen und sagt nichts.
+    """
+    # Lokal importiert wie in `verarbeiter`: Der Modulkopf dieses Moduls bleibt leicht,
+    # damit `import aiimaging` nicht die halbe Kette mitzieht.
+    from . import geometrie_qa
+
+    werte = [u.get("score") for u in urteile or []]
+    messbar = [float(w) for w in werte if isinstance(w, (int, float))
+               and not isinstance(w, bool)]
+    n = len(urteile or [])
+    abschlag = geometrie_qa.minimum_abschlag(len(messbar))
+
+    streuung = None
+    if len(messbar) >= 3:
+        mittel = sum(messbar) / len(messbar)
+        streuung = (sum((w - mittel) ** 2 for w in messbar) / len(messbar)) ** 0.5
+
+    if not messbar:
+        hinweis = (f"Keine der {n} Kameras ist gemessen. Das gemeldete Urteil ist "
+                   f"UNGEPRUEFT, nicht durchgefallen.")
+    elif len(messbar) == 1:
+        hinweis = ("Eine gemessene Kamera — das gemeldete Urteil IST ihr Urteil, ohne "
+                   "Auswahleffekt.")
+    else:
+        hinweis = (
+            f"Gemeldet wird das SCHLECHTESTE von {len(messbar)} gemessenen Kameras "
+            f"(Spanne {min(messbar):.4f} bis {max(messbar):.4f}). Ein Minimum faellt mit "
+            f"der Zahl der Ziehungen: bei {len(messbar)} liegt es rechnerisch "
+            f"{abschlag:.3f} Streuungen unter dem Mittel, auch wenn sich an der Sache "
+            f"nichts aendert. Wer dieses Ergebnis mit einem aelteren aus EINER Kamera "
+            f"vergleicht, vergleicht zwei verschieden strenge Masse."
+        )
+
+    return {
+        "n": n,
+        "n_gemessen": len(messbar),
+        "bester": max(messbar) if messbar else None,
+        "schlechtester": min(messbar) if messbar else None,
+        "spanne": (max(messbar) - min(messbar)) if len(messbar) > 1 else None,
+        "streuung": streuung,
+        "abschlag_streuungen": abschlag,
+        "hinweis": hinweis,
+    }
 
 
 def _schlechtestes(urteile: list[dict]) -> dict | None:

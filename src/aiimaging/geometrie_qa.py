@@ -200,6 +200,45 @@ from collections.abc import Sequence
 # überhaupt hält (`qwen-image-edit-2511` ist kein ControlNet, `auf-20260818-09`).
 SCHWELLE_GEOMETRIE = 0.65
 
+#: Wie weit das **Minimum** von N Ziehungen unter dem Mittel liegt, in Streuungen.
+#:
+#: Der Eintrag zu ``N`` steht an Position ``N-1``. ``N=1`` ist null (ein Wert ist sein
+#: eigenes Minimum), ``N=3`` sind 0,845 Streuungen.
+#:
+#: **Wozu diese Tabelle da ist.** Das Urteil eines Auftrags ist das seiner **schwächsten**
+#: Kamera — richtig so, denn ein Auftrag ist so gut wie sein schlechtestes Bild. Aber ein
+#: Minimum fällt mit der Zahl der Ziehungen, ganz ohne dass sich an der Sache etwas
+#: ändert. Als die automatischen Richtungen am 23.08.2026 von **einer auf drei** gingen,
+#: wurde das Gate damit strenger — und niemand hatte das entschieden.
+#:
+#: **Die Grössenordnung:** 0,845 Streuungen. Die einzige Streuung, die dieses Projekt
+#: gemessen hat, ist die über Startwerte (0,2269, siehe
+#: ``varianten.GEMESSENE_SEED_STREUUNG``). Wäre die Streuung zwischen Kameras ähnlich
+#: gross, kostete der Wechsel rund **0,19** — mehr als jeder Parametereffekt, den die
+#: Kette je gezeigt hat (0,10-0,14).
+#:
+#: **Was daran ungemessen ist, und zwar ausdrücklich:** Die Streuung zwischen KAMERAS ist
+#: nicht die zwischen Startwerten. Sie könnte grösser sein (verschiedene Blickrichtungen
+#: zeigen verschieden viel Geometrie) oder kleiner. Die Zahl 0,19 ist darum eine
+#: Grössenordnung und keine Vorhersage. Seit drei Kameras je Auftrag gefahren werden, ist
+#: sie erstmals nebenbei messbar.
+#:
+#: Simuliert mit 600 000 Ziehungen je N; die Werte für N <= 5 stimmen mit der Tabelle der
+#: Extremwertstatistik auf drei Stellen überein (0; 0,5642; 0,8463; 1,0294; 1,1630).
+MINIMUM_ABSCHLAG = (0.0, 0.5626, 0.8453, 1.0286, 1.1627, 1.2679,
+                    1.3523, 1.4244, 1.4856, 1.5391, 1.5861, 1.6295)
+
+
+def minimum_abschlag(n):
+    """Wie viele Streuungen unter dem Mittel das Minimum von ``n`` Werten liegt.
+
+    ``None`` jenseits der Tabelle - extrapoliert wird nicht. Eine erfundene Zahl sähe
+    hier genau wie eine gerechnete aus.
+    """
+    if not isinstance(n, int) or isinstance(n, bool) or n < 1:
+        return None
+    return MINIMUM_ABSCHLAG[n - 1] if n <= len(MINIMUM_ABSCHLAG) else None
+
 # Wie viele Punkte die gemeinsame Silhouette mindestens tragen muss, damit ein Score
 # überhaupt ausgegeben wird.
 #

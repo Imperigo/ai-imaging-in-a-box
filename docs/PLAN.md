@@ -1128,6 +1128,27 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       gerendert wird. Und ein Test hatte die 28 abgeschrieben statt die Konstante zu
       lesen. Beide lesen jetzt `kameras.BRENNWEITE_MM`. Abgeschriebene Zahlen veralten
       still — dasselbe Muster wie bei 0,2269 und bei den 9,46°.
+- [x] **Drei Ansichten haben das Gate stiller verschärft, als irgendjemand entschieden
+      hatte.** Das Geometrie-Urteil eines Auftrags ist das seiner **schwächsten** Kamera —
+      gut begründet, denn ein Auftrag ist so gut wie sein schlechtestes Bild. Aber ein
+      Minimum fällt mit der Zahl der Ziehungen: bei drei um **0,845 Streuungen**
+      (Extremwertstatistik, simuliert und gegen die geschlossenen Werte für N ≤ 5
+      geprüft).
+
+      Wäre die Streuung zwischen Kameras so gross wie die einzige gemessene (0,2269 über
+      Startwerte), kostete der Wechsel rund **0,19** — mehr als jeder Parametereffekt, den
+      die Kette je gezeigt hat (0,10–0,14). Die Entscheidung galt der Renderzeit; diese
+      Folge stand nicht zur Debatte, weil sie niemand gesehen hatte.
+
+      **Die Regel bleibt, ihre Sichtbarkeit ändert sich:** `kameraspanne` hängt am
+      Geometrie-Urteil und trägt n, bester, schlechtester, Spanne, Streuung und den
+      Abschlag — samt dem Satz, dass ein Ergebnis aus drei Kameras nicht mit einem
+      älteren aus einer verglichen werden kann.
+- [ ] **Die Streuung ZWISCHEN Kameras ist ungemessen — und jetzt erstmals messbar.**
+      0,2269 ist über Startwerte gemessen, nicht über Blickrichtungen. Verschiedene
+      Richtungen zeigen verschieden viel Geometrie; die Streuung könnte grösser oder
+      kleiner sein. Seit drei Kameras je Auftrag gefahren werden, fällt sie als Nebenprodukt
+      an — `kameraspanne.streuung` sammelt sie ab drei gemessenen Kameras.
 - [ ] **Die Vorgabe für den Kameramodus wechselt erst, wenn `auf-33` zurück ist**
       (Owner-Entscheid 23.08.2026). Der Shift ist diesseits der Prozessgrenze geprüft, am
       Gerät nicht: Ob Blender `shift_y` so annimmt, wie wir es meinen, und ob die

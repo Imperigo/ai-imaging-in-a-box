@@ -1989,6 +1989,17 @@ Tests gerufen. Ein Regelwerk, das nur seine eigenen Tests beurteilt, beurteilt n
 Die Prüfung dagegen ist billig: auflisten, welche Module ausserhalb von `tests/`
 niemand nennt.*
 
+**Auswahleffekt beim Minimum (Extremwertstatistik)** — Das Kleinste aus mehreren
+zufälligen Werten ist im Mittel kleiner als ein einzelner Wert — und zwar umso mehr, je
+mehr Werte man zieht. Bei drei Ziehungen liegt das Minimum rechnerisch **0,845
+Streuungen** unter dem Mittel, bei fünf 1,163.
+*In diesem Projekt ist das keine Theorie: Das Urteil eines Auftrags ist das seiner
+schwächsten Kamera. Als die automatischen Ansichten am 23.08.2026 von einer auf drei
+gingen, wurde das Gate dadurch strenger — ohne dass jemand das entschieden hätte, und um
+eine Grössenordnung (rund 0,19), die grösser ist als jeder Parametereffekt, den die Kette
+je gezeigt hat. Die Regel bleibt richtig; was sie kostet, steht seither im Ergebnis.
+Merksatz: **Wer mehr misst, misst nicht dasselbe strenger, sondern etwas anderes.***
+
 **Auswählen gegen den eigenen Rauschboden (Kreisschluss)** — Den besten Wert einer
 Messreihe daran messen, wie stark **dieselbe** Reihe streut.
 *Sieht nach Statistik aus und ist keine: Der Abstand zwischen dem Besten und dem Zweiten
@@ -3080,6 +3091,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-23 | Ergaenzt: **Auswahleffekt beim Minimum (Extremwertstatistik)**. Anlass ist eine Nebenwirkung der Umstellung auf drei Ansichten: Das Urteil ist das der schwaechsten Kamera, und ein Minimum faellt mit der Zahl der Ziehungen — um rund 0,19, also mehr als jeder Parametereffekt der Kette. Niemand hatte das entschieden |
 | 2026-08-23 | Ergaenzt aus den zwei Uebersetzungsregeln: **Kompositum (zusammengesetztes Wort)** und **Beugung (Flexion)**. Beide tragen den gemessenen Ertrag mit: An dreizehn Prompts war vorher **einer** vollstaendig uebersetzt, nachher **dreizehn** — und die Wahl der Endungen ist keine Kleinigkeit, `s` musste weichen (Dachs → roof), `n` musste bleiben (Fassaden) |
 | 2026-08-23 | Ergaenzt aus dem Anschluss von `komposition.py` und der Seedauswahl: **Ungerufenes Modul (die tote Kante im Grossen)**, **Auswaehlen gegen den eigenen Rauschboden (Kreisschluss)**, **Bester Wurf gegen besserer Startwert**. Alle drei aus Befunden ueber dieses Repo selbst: `komposition.py` war ein halbes Jahr lang nur von den eigenen Tests gerufen, und die Seedauswahl behielt zu Recht das beste Bild — sagte aber nicht dazu, dass der Vorsprung im Rauschen liegt |
 | 2026-08-22 | Ergaenzt aus der waagrechten Kamera (`kameras.MODUS_SHIFT`): **Unsymmetrischer Bildrahmen (durch Shift)** und **Sensorbezug (`sensor_fit`)**. Der erste traegt den Befund, den zwei Testanlaeufe gebraucht haben: Ob ein Shift Abstand kostet oder spart, haengt daran, WELCHE Rahmenkante bindet — beim Turm das Dach (spart), beim flachen Bau aus der Naehe der Fuss (kostet). **Berichtigt:** Vier Dokumente sagten „`kameras.py` kippt 9,46°". Nachgemessen ueber zwoelf Richtungen, vier Gebaeudehoehen und zwei Formate sind es **1,92°–4,70°**; die 9,46° gelten bei 1,2 × Gebaeudehoehe Abstand, und dort steht `kamerasatz` nie |
