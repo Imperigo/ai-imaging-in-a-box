@@ -2548,6 +2548,23 @@ es ist **lizenzfrei** (Text statt Gewichte, siehe Regel 1) und es braucht kein N
 Übersetzungsmodell lässt sich später an derselben Stelle einhängen; die Stelle heisst
 `uebersetzer` und ist genau dafür da.*
 
+**Kompositum (zusammengesetztes Wort)** — Deutsch fügt Wörter zu neuen zusammen:
+*Holz* + *Fassade* = *Holzfassade*. Der letzte Teil bestimmt, was das Ding ist (der
+„Kopf"), die vorderen beschreiben es näher.
+*Für ein Übersetzungsglossar ist das die grösste einzelne Lücke: Jede denkbare
+Zusammensetzung müsste einen eigenen Eintrag haben. In diesem Projekt wird stattdessen
+zerlegt — beide Teile müssen im Glossar stehen, und die Zerlegung wird im Ergebnis
+mitgeführt. Ihre Grenze: Ein Kompositum ist nicht immer die Summe seiner Teile.
+`Hochhaus` wird so zu „tall house" statt „high-rise".*
+
+**Beugung (Flexion)** — Die Veränderung eines Wortes je nach seiner Rolle im Satz:
+*lang*, *langen*, *langem*; *Baum*, *Bäume*, *Bäumen*.
+*Ein Glossar kennt nur die Grundform. Die Endung abzustreifen und die Grundform
+nachzuschlagen ist darum die zweite grosse Verbesserung — und sie kann nichts erfinden,
+weil sie nur gilt, wenn danach wirklich ein Eintrag dasteht. Welche Endungen mitspielen,
+ist eine Entscheidung mit Folgen: `s` musste weichen, weil `Dachs` sonst zu „roof" wird;
+`n` musste bleiben, weil ohne es jede Mehrzahl stehenbliebe (`Fassaden`).*
+
 **Signalwort (bei der Spracherkennung)** — Ein Wort, dessen blosses Vorkommen für eine
 Sprache spricht: „ohne", „zwischen", „keine" für Deutsch; „the", „without", „between"
 für Englisch.
@@ -3063,6 +3080,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-23 | Ergaenzt aus den zwei Uebersetzungsregeln: **Kompositum (zusammengesetztes Wort)** und **Beugung (Flexion)**. Beide tragen den gemessenen Ertrag mit: An dreizehn Prompts war vorher **einer** vollstaendig uebersetzt, nachher **dreizehn** — und die Wahl der Endungen ist keine Kleinigkeit, `s` musste weichen (Dachs → roof), `n` musste bleiben (Fassaden) |
 | 2026-08-23 | Ergaenzt aus dem Anschluss von `komposition.py` und der Seedauswahl: **Ungerufenes Modul (die tote Kante im Grossen)**, **Auswaehlen gegen den eigenen Rauschboden (Kreisschluss)**, **Bester Wurf gegen besserer Startwert**. Alle drei aus Befunden ueber dieses Repo selbst: `komposition.py` war ein halbes Jahr lang nur von den eigenen Tests gerufen, und die Seedauswahl behielt zu Recht das beste Bild — sagte aber nicht dazu, dass der Vorsprung im Rauschen liegt |
 | 2026-08-22 | Ergaenzt aus der waagrechten Kamera (`kameras.MODUS_SHIFT`): **Unsymmetrischer Bildrahmen (durch Shift)** und **Sensorbezug (`sensor_fit`)**. Der erste traegt den Befund, den zwei Testanlaeufe gebraucht haben: Ob ein Shift Abstand kostet oder spart, haengt daran, WELCHE Rahmenkante bindet — beim Turm das Dach (spart), beim flachen Bau aus der Naehe der Fuss (kostet). **Berichtigt:** Vier Dokumente sagten „`kameras.py` kippt 9,46°". Nachgemessen ueber zwoelf Richtungen, vier Gebaeudehoehen und zwei Formate sind es **1,92°–4,70°**; die 9,46° gelten bei 1,2 × Gebaeudehoehe Abstand, und dort steht `kamerasatz` nie |
 | 2026-08-22 | Ergaenzt aus der Prompt-Uebersetzung (`src/aiimaging/sprache.py`): **Trainingssprache (eines Bildmodells)**, **Glossar (Uebersetzungsglossar)**, **Signalwort (bei der Spracherkennung)**, **Dreiwertiges Urteil (ja / nein / nicht entscheidbar)**, **Uebermelden (einer Pruefung)**. Der erste Eintrag traegt die Messung, aus der die ganze Sache folgt: Ueber acht gepaarte Startwerte ergab „bedeckter Himmel" bei 8 von 8 einen deutlich blaueren Himmel als „overcast sky" — das Modell versteht das Wort nicht und fuellt die Luecke |

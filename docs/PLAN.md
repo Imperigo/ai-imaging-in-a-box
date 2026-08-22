@@ -919,11 +919,39 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       prüfte also nie die Reihenfolge. Ersetzt durch `hell gestrichen` (wo es
       auseinandergeht) **und** durch eine Eigenschaft über das ganze Glossar, damit die
       Regel auch für morgen hinzugefügte Wendungen geprüft bleibt.
-- [ ] **Was das Glossar nicht kann, und was daraus folgt.** Es kennt Wendungen, keine
-      Grammatik: `langen` (gebeugt) und `Nordfassade` (zusammengesetzt) bleiben stehen.
-      Gemeldet werden sie — übersetzt nicht. Offen ist, ob das genügt oder ob ein
-      Übersetzungsmodell an die Naht gehört; entscheidbar wird das erst an echten
-      Eingaben der Oberfläche, nicht am Schreibtisch.
+- [x] **Das Glossar kann jetzt Grammatik — zwei Regeln, und der Ertrag ist gemessen.**
+      Erst gemessen, dann gebaut: An dreizehn Prompts, wie sie aus der Oberfläche kommen
+      könnten, war mit dem blossen Nachschlagewerk **einer von dreizehn** vollständig
+      übersetzt. Das war deutlich schlechter, als meine zwei Beispiele hatten ahnen
+      lassen. Die Lücken lagen in drei Klassen: gebeugte Wörter (12 von 23), Komposita
+      (5), schlicht fehlende Wörter (5).
+
+      `grundform` streift Endungen ab und schlägt nach — sie kann finden, nicht erfinden.
+      `zerlege_kompositum` teilt in zwei Glossarteile. Dazu rund 30 neue Einträge
+      (Himmelsrichtungen, Jahreszeiten, `seite`, `struktur`). Danach: **dreizehn von
+      dreizehn.**
+
+      Nicht behauptet wird gutes Englisch: „die Fassaden der Stadt" wird zu „the facade
+      the city". Für eine Aufzählung durch Kommata trägt das, für einen Satz nicht.
+- [x] **Die Wahl der Endungen ist keine Kleinigkeit — zwei Befunde in beide Richtungen.**
+      `s` musste weichen: Ein Test fing `Dachs` → `dach` → `roof`, und in einem Modul,
+      das gegen erfundene Dächer gebaut ist, ist das die denkbar falscheste Sorte Fehler.
+      `n` flog im selben Zug mit heraus und **musste zurück**: Der reguläre Plural der
+      Feminina bildet sich damit (`Fassade` → `Fassaden`), und ohne die Endung bleibt
+      jede Mehrzahl stehen. Zwei Endungen, die gleich aussahen, und nur eine war das
+      Risiko.
+- [x] **Ein Wächter, der wirklich greift — nachgewiesen statt behauptet.** Die Regeln
+      laufen im zweiten Durchgang über bereits übersetzten Text und dürfen dort nichts
+      anfassen. Ob dieser Schutz je nötig ist, war offen; über alle englischen Wörter
+      unserer Übersetzungen geprüft, gibt es **genau einen** zerstörerischen Fall:
+      `under` → `und` → „and". Ihn fängt der Wächter. Der Fall ist nicht theoretisch —
+      gemischte Prompts zählen ausdrücklich als nicht englisch und gehen durch die
+      Übersetzung.
+- [ ] **Was die Regeln weiterhin nicht können.** Ein Kompositum, dessen Teil fehlt
+      (`Fensterbank`), eine unregelmässige Form ohne Stammeintrag, und die Mehrzahl
+      (`Fassaden` wird zu `facade`, nicht `facades`). Alles davon wird **gemeldet**, nicht
+      stillschweigend durchgereicht. Ob das genügt oder ob ein Übersetzungsmodell an die
+      Naht gehört, entscheidet sich an echten Eingaben der Oberfläche.
 - [ ] **Die Zielwand wird nach LÄNGE gewählt, und das ist eine schwache Setzung.** Die
       Praxis wählt die Wand mit dem Motiv. Ein Kamin oder eine Küchenzeile ist ein Motiv
       und hat keine Öffnung; die längste Wand ist oft, aber nicht immer, die richtige. Der

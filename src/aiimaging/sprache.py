@@ -46,6 +46,21 @@ Wer ein Modell will, hängt es an :func:`uebersetze` als ``uebersetzer`` ein. Di
 ist genau dafür da; sie ist der Grund, warum hier nicht die Glossarfunktion selbst
 aufgerufen wird.
 
+Was das Glossar kann, und wie viel — gemessen
+----------------------------------------------
+An dreizehn Prompts, wie sie aus der Oberfläche kommen könnten, waren mit dem blossen
+Nachschlagewerk **eins von dreizehn** vollständig übersetzt. Das war deutlich weniger,
+als die beiden Beispiele („langen", „Nordfassade") hatten ahnen lassen. Die Lücken
+verteilten sich auf drei Klassen, und zwei davon sind mit je einer Regel erledigt —
+:func:`grundform` für gebeugte Wörter, :func:`zerlege_kompositum` für zusammengesetzte.
+Danach: **dreizehn von dreizehn.**
+
+Was dabei NICHT behauptet wird: gutes Englisch. „die Fassaden der Stadt" wird zu „the
+facade the city" — Mehrzahl und Genitiv gehen verloren. Für eine **Aufzählung durch
+Kommata**, wie ein Bildprompt sie ist (siehe :func:`aiimaging.prompts.komponiere`),
+trägt das; für einen Satz trüge es nicht. Wer ganze Sätze übersetzen will, hängt ein
+Modell an die Naht.
+
 Abhängigkeiten: keine. Reine stdlib, kein ``bpy``, aus Python heraus ohne Oberfläche
 aufrufbar (Regel 4). Regel 3: keine Büro-, Kunden- oder Projektnamen — das Glossar
 enthält Gattungsbegriffe der Architektur- und Fotosprache.
@@ -75,6 +90,39 @@ import re
 #:
 #: Mehrwortwendungen zuerst nachschlagen — siehe :func:`glossar_uebersetzung`.
 GLOSSAR: dict[str, str] = {
+    # --- Himmelsrichtungen und Lage ---------------------------------------------------
+    # Sie stehen hier vor allem als **Kompositionsteile**: „Nordfassade", „Südseite".
+    # Ohne sie bleibt jede Himmelsrichtung im Prompt deutsch stehen — und die
+    # Himmelsrichtung ist bei einem Gebäude selten Beiwerk.
+    "nord": "north",
+    "norden": "north",
+    "nördlich": "northern",
+    "süd": "south",
+    "sued": "south",
+    "süden": "south",
+    "südlich": "southern",
+    "ost": "east",
+    "osten": "east",
+    "östlich": "eastern",
+    "west": "west",
+    "westen": "west",
+    "westlich": "western",
+    "seite": "side",
+    "ecke": "corner",
+    "mitte": "middle",
+    "grund": "ground",
+    "davor": "in front",
+    "dahinter": "behind",
+    "daneben": "beside",
+    "gegenüber": "opposite",
+
+    # --- Jahreszeiten -------------------------------------------------------------------
+    "sommer": "summer",
+    "winter": "winter",
+    "frühling": "spring",
+    "herbst": "autumn",
+    "jahreszeit": "season",
+
     # --- Himmel und Wetter ------------------------------------------------------------
     "bedeckter himmel": "overcast sky",
     "bedeckt": "overcast",
@@ -110,6 +158,8 @@ GLOSSAR: dict[str, str] = {
     "beleuchtung": "lighting",
     "tageslicht": "daylight",
     "weiches licht": "soft light",
+    "weich": "soft",
+    "hart": "hard",
     "hartes licht": "hard light",
     "diffuses licht": "diffuse light",
     "gegenlicht": "backlight",
@@ -144,6 +194,8 @@ GLOSSAR: dict[str, str] = {
     "material": "material",
     "materialien": "materials",
     "oberfläche": "surface",
+    "struktur": "texture",
+    "strukturiert": "textured",
     "oberflächen": "surfaces",
     "beton": "concrete",
     "sichtbeton": "exposed concrete",
@@ -236,6 +288,7 @@ GLOSSAR: dict[str, str] = {
     "foto": "photograph",
     "fotografie": "photography",
     "aufnahme": "photograph",
+    "detailaufnahme": "close-up photograph",
     "architekturfoto": "architectural photograph",
     "architekturfotografie": "architectural photography",
     "modellfoto": "photograph of an architectural model",
@@ -416,6 +469,13 @@ GLOSSAR: dict[str, str] = {
     "groß": "large",
     "klein": "small",
     "hoch": "tall",
+    # STÄMME, keine Wörter. Sie stehen hier, weil die Endungsregel etwas zum
+    # Nachschlagen braucht: Deutsch beugt `hoch` zu `hohe/hohen/hoher/hohes/hohem` und
+    # `dunkel` zu `dunkle/dunklen`. Abgestreift bleibt `hoh` bzw. `dunkl` übrig — kein
+    # Wort, aber der Schlüssel, unter dem alle fünf Formen zu finden sind. Ein Eintrag
+    # statt fünf, und die Unregelmässigkeit steht an genau einer Stelle.
+    "hoh": "tall",
+    "dunkl": "dark",
     "niedrig": "low",
     "weit": "wide",
     "eng": "narrow",
@@ -641,6 +701,127 @@ def _nicht_englisch(text: str) -> tuple[str, ...]:
     ))
 
 
+# --------------------------------------------------------------------------------------
+# Zwei Regeln gegen die Grammatik, die ein Glossar nicht hat
+# --------------------------------------------------------------------------------------
+#
+# **Der Anlass ist eine Messung, und sie fiel schlecht aus.** An zwölf Prompts, wie sie
+# aus der Oberfläche kommen könnten, war vor diesen beiden Regeln **einer von zwölf**
+# vollständig übersetzt. Meine beiden Beispiele („langen", „Nordfassade") hatten das
+# Ausmass nicht ahnen lassen; die Lücken verteilten sich auf drei Klassen, und zwei davon
+# sind mit einer Regel je erledigt:
+#
+# * **Gebeugte Adjektive und Substantive** — 12 der 23 Lücken. ``langen``, ``feiner``,
+#   ``ruhiges``, ``weichem``, ``bewölkter``, ``bäumen``. Der Stamm steht jeweils im
+#   Glossar; nur die Endung fehlt dort.
+# * **Komposita** — 5 der 23. ``Nordfassade``, ``Holzfassade``, ``Südseite``. Beide Teile
+#   stehen im Glossar.
+# * **Schlicht fehlende Wörter** — 5. Dagegen hilft keine Regel, nur ein Eintrag.
+
+#: Deutsche Endungen, die an einen Stamm treten, in absteigender Länge.
+#:
+#: Die Liste ist **kurz und geschlossen**: Es sind die Endungen der Adjektivdeklination,
+#: nicht ein Stemmer. Ein echter Stemmer riete; hier wird nur abgestreift und dann **im
+#: Glossar nachgeschlagen** — schlägt das fehl, bleibt das Wort stehen und wird gemeldet.
+#: Das ist der ganze Sicherheitsgurt.
+#:
+#: **``s`` stand zuerst mit dabei und ist wieder heraus.** Ein Test fing ``Dachs`` →
+#: ``dach`` → ``roof``: Ein Dachs ist ein Tier. In einem Modul, das gegen erfundene
+#: Dächer gebaut ist, ist das die denkbar falscheste Sorte Fehler. Was ``s`` einbrächte,
+#: sind Fremdwortplurale wie ``Autos``; die bleiben jetzt stehen und werden gemeldet.
+#: Ein gemeldetes Wort kostet einen Blick, ein falsch übersetztes ein Bild.
+#:
+#: **``n`` flog im selben Zug mit heraus und musste zurück.** Es sah nach derselben
+#: Sorte Risiko aus und ist keine: Der reguläre Plural der Femininа bildet sich mit ``n``
+#: — ``Fassade`` → ``Fassaden``, ``Terrasse`` → ``Terrassen``. Ohne diese eine Endung
+#: bleibt jede Mehrzahl stehen. Die Gegenprobe über die englischen Wörter unserer
+#: Übersetzungen fand genau einen gefährlichen Fall (``seen`` → ``see`` → ``lake``), und
+#: den fängt der Wortschatz-Wächter in :func:`glossar_uebersetzung`.
+ENDUNGEN = ("en", "em", "es", "er", "e", "n")
+
+#: Umlaute, die beim Beugen entstehen: ``Baum`` → ``Bäume``, ``Haus`` → ``Häuser``.
+_ENTUMLAUTUNG = {"ä": "a", "ö": "o", "ü": "u"}
+
+#: Kleinste Länge eines Kompositumsteils.
+#:
+#: **Drei**, und zwar gemessen. Vier war der erste Wert und schien vorsichtiger — er
+#: verliert aber genau die Himmelsrichtungen: ``süd``, ``ost``, ``west`` haben drei
+#: Zeichen, und ``Südseite`` blieb damit unübersetzt. An dreissig zusammengesetzten
+#: Wörtern nachgesehen, was drei zusätzlich zerlegt: **neunzehn Treffer, kein einziger
+#: falsch**. Der Schutz liegt ohnehin nicht in der Länge, sondern in der Bedingung, dass
+#: **beide** Teile im Glossar stehen.
+MIN_TEILLAENGE = 3
+
+#: Verfahrensnamen für das Protokoll. Was durch eine REGEL übersetzt wurde und nicht
+#: durch einen Eintrag, soll unterscheidbar bleiben — eine Regel irrt anders als ein
+#: Nachschlagewerk.
+ART_EINTRAG = "eintrag"
+ART_BEUGUNG = "beugung"
+ART_KOMPOSITUM = "kompositum"
+
+
+def _entumlautet(wort: str) -> str:
+    return "".join(_ENTUMLAUTUNG.get(z, z) for z in wort)
+
+
+def grundform(wort: str) -> str | None:
+    """Die Glossarform eines gebeugten Wortes — oder ``None``.
+
+    Abgestreift wird **nur**, was danach im Glossar steht. ``matter`` würde zu ``matt``
+    und damit zu ``matte``; ``sommer`` bliebe ``sommer``, weil ``somm`` kein Eintrag ist.
+    Die Regel kann also nichts erfinden, sie kann nur finden.
+
+    Umlaute werden **nachrangig** aufgelöst: erst der Stamm wie er ist, dann entumlautet.
+    ``bäumen`` → ``bäum`` (kein Eintrag) → ``baum`` (Eintrag). Und weil das nur bei
+    Unbekanntem greift, wird aus ``grün`` nie ``grun``.
+    """
+    klein = (wort or "").lower()
+    if not klein or klein in GLOSSAR:
+        return klein if klein in GLOSSAR else None
+    for endung in ENDUNGEN:
+        if not klein.endswith(endung) or len(klein) - len(endung) < 3:
+            continue
+        stamm = klein[: -len(endung)]
+        for kandidat in (stamm, _entumlautet(stamm)):
+            if kandidat in GLOSSAR:
+                return kandidat
+    return None
+
+
+def zerlege_kompositum(wort: str) -> tuple[str, ...] | None:
+    """Ein zusammengesetztes Wort in seine Glossarteile — oder ``None``.
+
+    Deutsch setzt **kopf-final** zusammen: ``Holz`` + ``Fassade``. Englisch stellt in
+    diesen Fällen genauso — ``wood facade`` —, weshalb die Übersetzung der Teile in
+    derselben Reihenfolge stehenbleiben darf. Für Fälle, in denen das nicht gilt, gibt es
+    diese Regel nicht; es gibt einen Glossareintrag.
+
+    Zerlegt wird in **genau zwei** Teile, beide mindestens :data:`MIN_TEILLAENGE` lang,
+    beide im Glossar. Der zweite Teil darf gebeugt sein (``Nordfassaden``).
+
+    **Was das falsch machen kann, und warum es trotzdem so steht.** Ein Kompositum ist
+    nicht immer die Summe seiner Teile. Zwei echte Fälle aus unserem eigenen Glossar:
+    ``Hochhaus`` wird zu ``tall house`` statt ``high-rise``, und ``Blaulicht`` zu
+    ``blue light`` statt ``emergency light``. Beide sind nicht absurd, aber falsch.
+
+    Der Schutz ist nicht Vermeidung, sondern **Sichtbarkeit**: Jede Zerlegung steht im
+    Ergebnis unter ``regeln``, mit ihren Teilen. Wer den Prompt liest, sieht, was das
+    Glossar sich gedacht hat — und ein Wort, das oft genug falsch zerlegt wird, bekommt
+    einen eigenen Eintrag, der die Regel dann schlägt.
+    """
+    klein = (wort or "").lower()
+    if len(klein) < 2 * MIN_TEILLAENGE or klein in GLOSSAR:
+        return None
+    for schnitt in range(MIN_TEILLAENGE, len(klein) - MIN_TEILLAENGE + 1):
+        vorn, hinten = klein[:schnitt], klein[schnitt:]
+        if vorn not in GLOSSAR:
+            continue
+        hinten_grund = hinten if hinten in GLOSSAR else grundform(hinten)
+        if hinten_grund:
+            return (vorn, hinten_grund)
+    return None
+
+
 def _glossar_muster() -> re.Pattern:
     """Ein Muster über alle Glossareinträge, **längste Wendung zuerst**.
 
@@ -698,10 +879,39 @@ def glossar_uebersetzung(text: str) -> dict:
 
     neu = _GLOSSAR_MUSTER.sub(_tausch, text or "")
 
+    # Zweiter Durchgang: Was das Nachschlagewerk nicht kannte, bekommen die beiden
+    # Regeln. Sie laufen NUR über Wörter, die der englische Wortschatz nicht kennt —
+    # damit können sie nichts anfassen, was der erste Durchgang schon übersetzt hat.
+    regeln: list[dict] = []
+
+    def _regel(fund: re.Match) -> str:
+        wort = fund.group(0)
+        if wort.lower() in _ENGLISCHER_WORTSCHATZ:
+            return wort
+        stamm = grundform(wort)
+        if stamm:
+            regeln.append({"wort": wort.lower(), "art": ART_BEUGUNG,
+                           "teile": (stamm,), "englisch": GLOSSAR[stamm]})
+            return GLOSSAR[stamm]
+        teile = zerlege_kompositum(wort)
+        if teile:
+            englisch = " ".join(GLOSSAR[t] for t in teile)
+            regeln.append({"wort": wort.lower(), "art": ART_KOMPOSITUM,
+                           "teile": teile, "englisch": englisch})
+            return englisch
+        return wort
+
+    neu = _WORT.sub(_regel, neu)
+
     return {
         "text": neu,
         "verfahren": VERFAHREN_GLOSSAR,
         "ersetzt": tuple(ersetzt),
+        # Was eine REGEL übersetzt hat, steht getrennt von dem, was ein EINTRAG
+        # übersetzt hat. Eine Regel irrt anders als ein Nachschlagewerk — sie kann ein
+        # Kompositum zerlegen, das keines ist —, und wer das Ergebnis prüft, soll die
+        # beiden Sorten auseinanderhalten können, ohne den Code zu lesen.
+        "regeln": tuple(regeln),
         "unbekannt": _nicht_englisch(neu),
     }
 
@@ -803,6 +1013,7 @@ def uebersetze(text: str, *, uebersetzer=None) -> dict:
             "anlass": "keiner",
             "evidenz": (),
             "ersetzt": (),
+            "regeln": (),
             "unbekannt": (),
             "vollstaendig": True,
             "verfahren": VERFAHREN_KEINE,
@@ -838,6 +1049,7 @@ def uebersetze(text: str, *, uebersetzer=None) -> dict:
         "anlass": anlass,
         "evidenz": evidenz,
         "ersetzt": tuple(ergebnis.get("ersetzt") or ()),
+        "regeln": tuple(ergebnis.get("regeln") or ()),
         "unbekannt": unbekannt,
         "vollstaendig": not unbekannt,
         "verfahren": ergebnis["verfahren"],
@@ -879,5 +1091,7 @@ __all__ = [
     "DEUTSCHE_SIGNALWOERTER", "ENGLISCHE_SIGNALWOERTER", "GLOSSAR", "SprachError",
     "VERFAHREN_ERKENNUNG", "VERFAHREN_GLOSSAR", "VERFAHREN_KEINE",
     "ENGLISCH_AUCH", "glossar_evidenz", "glossar_uebersetzung",
-    "ist_deutsch", "sieht_englisch_aus", "sprachwarnung", "uebersetze",
+    "ART_BEUGUNG", "ART_EINTRAG", "ART_KOMPOSITUM", "ENDUNGEN", "MIN_TEILLAENGE",
+    "grundform", "ist_deutsch", "sieht_englisch_aus", "sprachwarnung", "uebersetze",
+    "zerlege_kompositum",
 ]

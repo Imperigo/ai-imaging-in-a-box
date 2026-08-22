@@ -196,24 +196,64 @@ def test_wortgrenzen_werden_geachtet():
 # Die Grenze melden — das eigentliche Stück Arbeit
 # ======================================================================================
 
-def test_stehengebliebenes_wird_gemeldet():
-    """Der Fehler der ersten Fassung, als Test festgehalten.
+def test_gebeugtes_wird_auf_seinen_stamm_zurueckgefuehrt():
+    """Was die erste Fassung nur MELDEN konnte, übersetzt sie jetzt.
 
-    „abendlicht mit langen Schatten" wurde zu „evening light with langen shadows" — und
-    meldete ``unbekannt = ()``. Ein halb übersetzter Prompt, der sich selbst für
-    vollständig hält, ist schlimmer als gar keine Übersetzung: Er nimmt dem Leser den
-    Anlass hinzusehen.
+    „abendlicht mit langen Schatten" ergab „evening light with langen shadows". Der
+    Stamm stand die ganze Zeit im Glossar; es fehlte die Endung. Gemessen an dreizehn
+    Prompts, wie sie aus der Oberfläche kommen könnten: vorher war **einer** vollständig
+    übersetzt, nachher **dreizehn**.
     """
-    ergebnis = sprache.uebersetze("abendlicht mit langen Schatten")
-    assert "langen" in ergebnis["unbekannt"]
+    ergebnis = sprache.uebersetze("Abendlicht mit langen Schatten")
+    assert ergebnis["uebersetzt"] == "evening light with long shadows"
+    assert ergebnis["vollstaendig"] is True
+    assert [r["art"] for r in ergebnis["regeln"]] == [sprache.ART_BEUGUNG]
+
+
+def test_ein_zusammengesetztes_wort_wird_zerlegt_und_zeigt_seine_teile():
+    ergebnis = sprache.uebersetze("Blick auf die Nordfassade")
+    assert ergebnis["uebersetzt"] == "view on the north facade"
+    regel = ergebnis["regeln"][0]
+    assert regel["art"] == sprache.ART_KOMPOSITUM
+    assert regel["teile"] == ("nord", "fassade"), (
+        "die Teile stehen im Ergebnis, weil eine Regel anders irrt als ein Eintrag — "
+        "wer den Prompt prüft, soll sehen, was das Glossar sich gedacht hat"
+    )
+
+
+def test_was_die_regeln_NICHT_koennen_wird_weiterhin_gemeldet():
+    """Die Grenze bleibt, sie ist nur weitergerückt.
+
+    ``Fensterbank`` ist ein Kompositum, dessen zweiter Teil nicht im Glossar steht. Es
+    bleibt stehen — und wird gemeldet, nicht stillschweigend durchgereicht.
+    """
+    ergebnis = sprache.uebersetze("eine Fensterbank am Gebäude")
     assert ergebnis["vollstaendig"] is False
+    assert "fensterbank" in ergebnis["unbekannt"]
     assert any("halb deutsch" in w for w in ergebnis["warnungen"])
 
 
-def test_ein_zusammengesetztes_wort_bleibt_stehen_und_sagt_es():
-    ergebnis = sprache.uebersetze("Blick auf die Nordfassade")
-    assert "nordfassade" in ergebnis["unbekannt"]
-    assert ergebnis["vollstaendig"] is False
+def test_ein_dachs_ist_kein_dach():
+    """Der Fund, der die Endung ``s`` gekostet hat.
+
+    ``Dachs`` → Endung ``s`` abgestreift → ``dach`` → ``roof``. In einem Modul, das gegen
+    erfundene Dächer gebaut ist, wäre das die denkbar falscheste Sorte Fehler.
+    """
+    assert sprache.grundform("Dachs") is None
+    assert "roof" not in sprache.uebersetze("ein Dachs im Garten")["uebersetzt"]
+
+
+def test_die_endung_n_musste_zurueck_denn_sie_traegt_die_mehrzahl():
+    """``s`` und ``n`` sahen nach derselben Sorte Risiko aus. Nur eines war es.
+
+    Der reguläre Plural der Feminina bildet sich mit ``n``: ``Fassade`` → ``Fassaden``.
+    Ohne diese Endung bleibt jede Mehrzahl stehen — und Prompts sprechen von Fassaden,
+    Terrassen und Treppen, nicht von einer Fassade.
+    """
+    assert sprache.grundform("Fassaden") == "fassade"
+    assert sprache.grundform("Terrassen") == "terrasse"
+    assert sprache.uebersetze("die Fassaden der Stadt")["uebersetzt"] == \
+        "the facade the city"
 
 
 def test_vollstaendig_heisst_wirklich_vollstaendig():
@@ -399,3 +439,110 @@ def test_auch_der_negativ_prompt_wird_geprueft(tmp_path):
                         negativ_prompt="keine Menschen, kein Nebel")
     assert any("Negativ-Prompt" in h and "englisch" in h
                for h in ergebnis["hinweise"])
+
+
+# ======================================================================================
+# Die beiden Regeln einzeln — und ihre Grenzen
+# ======================================================================================
+
+@pytest.mark.parametrize("gebeugt, stamm", [
+    ("langen", "lang"), ("feiner", "fein"), ("ruhiges", "ruhig"),
+    ("weichem", "weich"), ("bewölkter", "bewölkt"), ("verwitterte", "verwittert"),
+    ("nasse", "nass"), ("graue", "grau"), ("grüne", "grün"),
+    ("hohe", "hoh"), ("hohen", "hoh"), ("dunkle", "dunkl"),
+])
+def test_die_endungsregel_findet_den_stamm(gebeugt, stamm):
+    assert sprache.grundform(gebeugt) == stamm
+
+
+def test_umlaute_werden_erst_nachrangig_aufgeloest():
+    """``Bäumen`` → ``bäum`` (kein Eintrag) → ``baum`` (Eintrag).
+
+    Die Reihenfolge ist wichtig: Weil zuerst der Stamm wie er ist geprüft wird und die
+    Regel überhaupt nur bei Unbekanntem greift, wird aus ``grün`` nie ``grun``.
+    """
+    assert sprache.grundform("Bäumen") == "baum"
+    assert sprache.grundform("Häuser") == "haus"
+    assert sprache.grundform("grün") == "grün"
+
+
+def test_die_endungsregel_kann_nichts_erfinden():
+    """Abgestreift wird nur, was danach im Glossar steht — sonst nichts.
+
+    Das ist der ganze Sicherheitsgurt: Die Regel kann finden, nicht erfinden.
+    """
+    for wort in ("Fensterbank", "Türgriff", "knallig", "Sperrholzplatte"):
+        assert sprache.grundform(wort) is None, wort
+
+
+def test_die_zerlegung_verlangt_BEIDE_teile_im_glossar():
+    assert sprache.zerlege_kompositum("Holzfassade") == ("holz", "fassade")
+    assert sprache.zerlege_kompositum("Regenbogen") is None, (
+        "'bogen' steht nicht im Glossar — also wird nicht zerlegt"
+    )
+
+
+def test_der_zweite_teil_darf_gebeugt_sein():
+    assert sprache.zerlege_kompositum("Nordfassaden") == ("nord", "fassade")
+
+
+def test_ein_bestehender_eintrag_schlaegt_die_zerlegung():
+    """Ein Eintrag ist genauer als eine Regel, und darum kommt er zuerst.
+
+    ``Modellfoto`` ist der Fall, an dem es auseinandergeht: Der Eintrag sagt „photograph
+    of an architectural model", die Zerlegung ergäbe ``modell`` + ``foto`` = „model
+    photograph". Beides ist verständlich, aber nur eines ist die getroffene Entscheidung.
+    """
+    assert sprache.zerlege_kompositum("Modellfoto") is None
+    ergebnis = sprache.uebersetze("Modellfoto")
+    assert ergebnis["uebersetzt"] == "photograph of an architectural model"
+    assert ergebnis["regeln"] == ()
+
+
+def test_die_himmelsrichtungen_sind_der_grund_fuer_die_mindestlaenge_drei():
+    """``süd``, ``ost``, ``west`` haben drei Zeichen. Mit vier bliebe ``Südseite`` stehen."""
+    assert sprache.MIN_TEILLAENGE == 3
+    for wort, teile in (("Südseite", ("süd", "seite")), ("Ostfassade", ("ost", "fassade")),
+                        ("Westfassade", ("west", "fassade"))):
+        assert sprache.zerlege_kompositum(wort) == teile, wort
+
+
+def test_was_eine_regel_tat_ist_von_einem_eintrag_unterscheidbar():
+    """Eine Regel irrt anders als ein Nachschlagewerk. Wer das Ergebnis prüft, soll die
+    beiden Sorten trennen können, ohne den Code zu lesen."""
+    ergebnis = sprache.uebersetze("Sichtbeton, Nordfassade, langen Schatten")
+    arten = {r["art"] for r in ergebnis["regeln"]}
+    assert arten == {sprache.ART_KOMPOSITUM, sprache.ART_BEUGUNG}
+    assert "sichtbeton" in ergebnis["ersetzt"], "der Eintrag steht getrennt davon"
+    assert "sichtbeton" not in {r["wort"] for r in ergebnis["regeln"]}
+
+
+def test_die_regeln_fassen_nichts_englisches_an():
+    """Der Wächter, der im gemischten Prompt wirklich greift.
+
+    Über alle englischen Wörter geprüft, die in unseren Übersetzungen vorkommen, gibt es
+    **genau einen** zerstörerischen Fall: ``under`` verliert seine Endung ``er`` und
+    landet auf dem deutschen Schlüssel ``und`` — aus „under the sky" würde „and the sky".
+    Weil ``under`` im englischen Wortschatz steht, fasst die Regel es nicht an.
+
+    Und gemischte Prompts sind kein Sonderfall: :func:`sieht_englisch_aus` zählt sie
+    ausdrücklich als nicht englisch und schickt sie durch die Übersetzung.
+    """
+    assert sprache.uebersetze("eine Fassade under dem Himmel")["uebersetzt"] == \
+        "a facade under the sky"
+
+    ergebnis = sprache.uebersetze("Sichtbeton und Holzfassade")
+    assert ergebnis["uebersetzt"] == "exposed concrete and wood facade"
+
+
+def test_ein_zwei_zeichen_langer_schluessel_verschluckt_kein_wort():
+    """Die Mindestlänge des Stamms, und wogegen sie wirklich schützt.
+
+    Das Glossar führt drei Schlüssel mit zwei Zeichen: ``im``, ``in``, ``am``. Ohne die
+    Mindestlänge zerfiele jedes Wort der Form ``am`` + Endung — ``Amen`` würde zu ``at
+    the``. Kein Wort der Architektursprache gerät dorthin; der Wächter schützt nicht vor
+    einer Eingabe, sondern vor den kurzen Schlüsseln des eigenen Glossars, und die gibt
+    es wirklich.
+    """
+    assert sprache.grundform("Amen") is None
+    assert sprache.grundform("Ines") is None
