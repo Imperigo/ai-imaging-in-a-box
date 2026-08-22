@@ -491,16 +491,41 @@ def test_ohne_kameras_wird_nichts_gerendert(tmp_path):
     assert "keine einzige Kamera" in antwort["grund"]
 
 
-def test_auto_rendert_eine_richtung_und_nicht_zwoelf(tmp_path):
+def test_auto_rendert_drei_richtungen_und_nicht_zwoelf(tmp_path):
     """Zwölf Standpunkte sind zwölf GPU-Läufe. Wie viele ein Auftrag wert ist, ist eine
-    Betriebsentscheidung."""
+    Betriebsentscheidung — der Owner hat sie am 23.08.2026 auf drei gesetzt.
+
+    Geprüft wird gegen die Konstante, nicht gegen die Zahl 3: Wer sie morgen ändert,
+    soll diesen Test nicht anfassen müssen. Was der Test wirklich festhält, ist, dass
+    **genau die Richtungen** gefahren werden, die dort stehen — nicht mehr und nicht
+    weniger.
+    """
     ordner = _auftrag(tmp_path)          # die Vorgabeszene sagt cameras: "auto"
     protokoll, attrappen = _kette()
     abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
                        verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
                                                       **attrappen))
-    assert len(protokoll["multipass"]) == 1
-    assert protokoll["multipass"][0]["kamera"] == abholer.AUTO_RICHTUNGEN[0]
+    assert [m["kamera"] for m in protokoll["multipass"]] == \
+        list(abholer.AUTO_RICHTUNGEN)
+    assert len(abholer.AUTO_RICHTUNGEN) < 12, "der Punkt bleibt: nicht alle zwölf"
+
+
+def test_die_beiden_eckansichten_liegen_sich_gegenueber(tmp_path):
+    """Die eigentliche Aussage der Norm: Ein Bauwerk wird nicht von einer Seite
+    dokumentiert.
+
+    HABS verlangt zwei Über-Eck-Ansichten auf **gegenüberliegenden** Diagonalen; erst
+    dann sind alle vier Fassaden gezeigt. Nachgerechnet statt geschätzt.
+    """
+    from aiimaging import kameras
+
+    azimute = kameras.richtungen()
+    ecken = [r for r in abholer.AUTO_RICHTUNGEN if kameras.RICHTUNGEN[r][1] != 0]
+    assert len(ecken) == 2, f"zwei Über-Eck-Ansichten erwartet, gefunden: {ecken}"
+    assert (azimute[ecken[1]] - azimute[ecken[0]]) % 360 == 180.0
+
+    frontal = [r for r in abholer.AUTO_RICHTUNGEN if kameras.RICHTUNGEN[r][1] == 0]
+    assert len(frontal) == 1, "und genau eine frontale"
 
 
 def test_ohne_tiefenkarte_wird_nicht_gerendert(tmp_path):
@@ -608,7 +633,8 @@ def test_mit_stil_wird_je_kamera_gemessen(tmp_path):
         gerufen.append(rahmen.slug)
         return {"bestanden": True, "schwere": "ok", "zusammenfassung": "gut"}
 
-    verarbeite = abholer.verarbeiter(out_wurzel=tmp_path / "aus", stil="kosmo_standard",
+    verarbeite = abholer.verarbeiter(auto_richtungen=("sSE",),
+                                                      out_wurzel=tmp_path / "aus", stil="kosmo_standard",
                                      _belichtung=pruefe, **attrappen)
     antwort = abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
                                  verarbeite=verarbeite)
@@ -646,7 +672,8 @@ def test_eine_gerissene_belichtung_haelt_den_auftrag_nicht_auf(tmp_path):
     _, attrappen = _kette(scores=(0.9,))
     antwort = abholer.hole_einen(
         ordner, fremde_freigabe_gilt=True,
-        verarbeite=abholer.verarbeiter(
+        verarbeite=abholer.verarbeiter(auto_richtungen=("sSE",),
+                                                      
             out_wurzel=tmp_path / "aus", stil="kosmo_standard",
             _belichtung=lambda b, r: {"bestanden": False, "schwere": "error"},
             **attrappen))
@@ -707,7 +734,8 @@ def test_die_nullprobe_misst_drei_kontrollbilder_je_kamera(tmp_path):
     ordner = _auftrag(tmp_path)
     protokoll, attrappen = _kette()
     abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
-                       verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                       verarbeite=abholer.verarbeiter(auto_richtungen=("sSE",),
+                                                      out_wurzel=tmp_path / "aus",
                                                       **attrappen))
     assert sorted(a.removesuffix(".png") for a in protokoll["nullprobe"]) == [
         "grau", "rauschen", "verlauf"]
@@ -1143,7 +1171,8 @@ def test_die_kontrollbilder_werden_nur_EINMAL_geschaetzt(tmp_path):
     protokoll, attrappen = _kette()
 
     abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
-                       verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                       verarbeite=abholer.verarbeiter(auto_richtungen=("sSE",),
+                                                      out_wurzel=tmp_path / "aus",
                                                       **attrappen))
 
     assert sorted(a.removesuffix(".png") for a in protokoll["nullprobe"]) == [

@@ -162,8 +162,13 @@ SENSOR_HOEHE_HOCH_MM = 36.0
 #: Zwei unabhängige Wege, ein Ergebnis: Der HABS-Objektivsatz von 1933 (90 mm auf 4×5)
 #: entspricht 25,3 mm Kleinbild; die heutige Ratgeber- und Herstellerliteratur nennt
 #: übereinstimmend 24 mm. Das ist die belastbarste Brennweitenaussage der Recherche.
-#: ``kameras.BRENNWEITE_MM`` steht auf 28 — eine Abweichung, kein Fehler, aber eine, die
-#: benannt gehört.
+#:
+#: **``kameras.BRENNWEITE_MM`` steht auf 35 mm** — eine Setzung des Owners vom
+#: 23.08.2026, ausdrücklich als eigene Vorliebe benannt. Die Abweichung von der Recherche
+#: ist damit grösser geworden, und sie bleibt hier stehen, statt geglättet zu werden:
+#: Dieses Modul führt, was das Fach sagt, nicht was das Projekt entscheidet. Genau dafür
+#: gibt es die Dreiteilung ``belegt`` / ``gesetzt`` / ``ungemessen``. Ein Modul, das seine
+#: Belege an die Vorgaben anpasst, ist kein Beleg mehr.
 ARBEITSBRENNWEITE_AUSSEN_MM = 24.0
 
 #: Arbeitsbereich innen, Kleinbild, in Millimetern: ``(untere, obere)``.

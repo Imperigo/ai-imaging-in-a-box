@@ -56,6 +56,7 @@ import re
 
 from . import backbone as _backbone
 from . import geometrie_qa, sprache, stil_qa
+from . import kameras as _kameras
 
 #: Die beiden Vertragskennungen, wörtlich aus den Schemadateien der Designzentrale.
 SCHEMA_SZENE = "kosmovis.render-scene/v1"
@@ -181,7 +182,12 @@ def kamera_zu_spec(kamera: dict) -> dict:
         if not isinstance(wert, (list, tuple)) or len(wert) != 3:
             raise SzenenError(f"Kamera ohne brauchbares '{feld}': {kamera.get(feld)!r}")
 
-    fov = brennweite_zu_fov(kamera.get("brennweite_mm", 28.0))
+    # Der Rückfall ist die VORGABE aus `kameras`, keine abgeschriebene Zahl. Hier stand
+    # bis zum 23.08.2026 fest `28.0` — als der Owner die Vorgabe auf 35 mm setzte, wäre
+    # eine Kamera ohne eigene Brennweite still mit 28 mm in den fremden Vertrag gegangen,
+    # während gerendert wurde mit 35. Zwei Zahlen für dieselbe Optik, und kein Test hätte
+    # angeschlagen.
+    fov = brennweite_zu_fov(kamera.get("brennweite_mm", _kameras.BRENNWEITE_MM))
     if not (FOV_MIN_GRAD <= fov <= FOV_MAX_GRAD):
         raise SzenenError(
             f"Brennweite {kamera.get('brennweite_mm')} mm ergibt {fov:.1f}° — der fremde "

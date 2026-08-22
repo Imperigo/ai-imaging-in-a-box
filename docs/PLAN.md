@@ -1091,14 +1091,49 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       dass *nichts* dazwischensteht. Beim frontalen Standpunkt liegt das Ziel auf der
       Wand und der Test greift voll. Kein Fehler, aber eine ungleiche Absicherung — und
       sie steht hier, damit niemand beide für gleich geprüft hält.
-- [ ] **`AUTO_RICHTUNGEN = ("sSE",)` ist eine einzige Richtung — HABS verlangt drei.**
-      Umgebungsansicht, Frontalansicht, und zwei Über-Eck-Ansichten auf **gegenüberliegenden**
-      Diagonalen. Unsere Richtungstabelle kann das bereits abbilden; es ist eine
-      Betriebsentscheidung über Renderzeit, keine technische.
-- [ ] **Arbeitsbrennweite: 24–25 mm statt unserer 28.** Der HABS-Objektivsatz
-      (65/90/150/210 mm auf 4×5 = 18/25/42/59 mm Kleinbild) und die heutige
-      Ratgeberliteratur treffen sich **unabhängig** bei 24–25 mm. Kein grosser Unterschied,
-      aber einer mit zwei Belegen gegen unsere eine Herleitung aus dem Bestand.
+- [x] **`AUTO_RICHTUNGEN` steht auf drei Ansichten (Owner-Entscheid 23.08.2026).**
+      `("s", "sSE", "nNW")` — eine frontale und zwei über Eck. Die beiden Eckansichten
+      liegen **exakt 180° auseinander** (nachgerechnet, nicht geschätzt: 145° und 325°)
+      und zeigen zusammen alle vier Fassaden. Das ist die eigentliche Aussage der Norm —
+      ein Bauwerk wird nicht von einer Seite dokumentiert.
+
+      Die vierte HABS-Ansicht (Umgebung) ist weggelassen: Sie zeigt ohne echtes Gelände
+      wenig, und Gelände haben wir nicht. Für Messreihen bleibt die einzelne Richtung die
+      saubere Wahl — `verarbeiter(auto_richtungen=("sSE",))`. Drei Standpunkte
+      verdreifachen die Renderzeit je Auftrag; das war der Grund, warum die Entscheidung
+      dem Owner gehörte.
+- [x] **Arbeitsbrennweite steht auf 35 mm (Owner-Setzung 23.08.2026) — und die Recherche
+      sagt etwas anderes.** Der HABS-Objektivsatz (umgerechnet 18/25/42/59 mm) und die
+      heutige Ratgeberliteratur treffen sich unabhängig bei **24–25 mm**. Der Owner hat
+      35 mm gewählt und es ausdrücklich als eigene Vorliebe benannt.
+
+      **Der Widerspruch bleibt sichtbar statt weggeräumt.** `kameras.BRENNWEITE_MM` trägt
+      die Setzung mit ihrem Datum und dem Gegenbeleg daneben;
+      `komposition.ARBEITSBRENNWEITE_AUSSEN_MM` bleibt bei 24 mm, weil jenes Modul führt,
+      was das Fach sagt, und nicht, was das Projekt entscheidet. Ein Modul, das seine
+      Belege an die Vorgaben anpasst, ist kein Beleg mehr.
+
+      **Nachgemessen, was der Wechsel kostet:** Die Kamera steht rund 19 % weiter weg
+      (bei 15 m Bauhöhe 106 statt 90 m), der Füllgrad bleibt beim angeforderten Wert, der
+      sichtbare Flächenanteil steigt sogar leicht (0.0623 → 0.0672), und kein Eckentest
+      schlägt fehl.
+- [x] **Einstellbar heisst bis an die Naht, nicht nur im Modul.** Die automatischen
+      Richtungen fuhren bisher **ohne** Brennweitenangabe — die Zahl kam erst im Runner
+      aus der Konstante, und ein Betreiber konnte sie je Lauf gar nicht setzen.
+      `verarbeiter(brennweite_mm=…)` reicht sie jetzt durch; `None` heisst weiterhin
+      „nicht angefasst", nicht „null".
+- [x] **Zwei abgeschriebene 28er gefunden, die still auseinandergelaufen wären.**
+      `kosmo_szene` setzte beim Umsetzen in den fremden Vertrag `28.0` als Rückfall — eine
+      Kamera ohne eigene Brennweite wäre mit 28 mm hinausgegangen, während mit 35
+      gerendert wird. Und ein Test hatte die 28 abgeschrieben statt die Konstante zu
+      lesen. Beide lesen jetzt `kameras.BRENNWEITE_MM`. Abgeschriebene Zahlen veralten
+      still — dasselbe Muster wie bei 0,2269 und bei den 9,46°.
+- [ ] **Die Vorgabe für den Kameramodus wechselt erst, wenn `auf-33` zurück ist**
+      (Owner-Entscheid 23.08.2026). Der Shift ist diesseits der Prozessgrenze geprüft, am
+      Gerät nicht: Ob Blender `shift_y` so annimmt, wie wir es meinen, und ob die
+      Senkrechten im Bild wirklich senkrecht werden, fragt jener Auftrag. Eine
+      unverifizierte Vorgabe wäre genau die Sorte Zusage, die dieses Projekt sonst meldet,
+      statt sie zu machen.
 
 ## (überholt) Kamerasetzung — was die Recherche vom 21.08. treffen muss
 

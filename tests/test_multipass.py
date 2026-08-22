@@ -793,11 +793,19 @@ def test_die_berichtete_brennweite_ist_die_gestellte(lauf_mit_kamera, lauf):
     """Nicht die angeforderte, sondern die, die in der Szene steht.
 
     Beim Rückfall bleibt Blenders eigene stehen (50 mm); auf dem abgeleiteten Weg greift
-    die Vorgabe aus `kameras.py` (28 mm). Genau dieser Unterschied soll ablesbar sein —
-    sonst hätte eine stillschweigend geänderte Optik alle bisher gemessenen Tiefenkarten
+    die Vorgabe aus `kameras.py`. Genau dieser Unterschied soll ablesbar sein — sonst
+    hätte eine stillschweigend geänderte Optik alle bisher gemessenen Tiefenkarten
     verschoben, ohne dass es irgendwo stünde.
+
+    Geprüft wird gegen die **Konstante**, nicht gegen eine Zahl. Als der Owner die
+    Vorgabe am 23.08.2026 von 28 auf 35 mm setzte, fiel dieser Test — zu Recht, denn er
+    hatte die Zahl abgeschrieben. Abgeschriebene Zahlen veralten still; die Konstante
+    nicht.
     """
-    assert lauf_mit_kamera["kamera"]["brennweite_mm"] == pytest.approx(28.0)
+    from aiimaging import kameras as kameras_modul
+    assert lauf_mit_kamera["kamera"]["brennweite_mm"] == \
+        pytest.approx(kameras_modul.BRENNWEITE_MM)
+    assert lauf_mit_kamera["kamera"]["brennweite_mm"] != lauf["kamera"]["brennweite_mm"]
     assert lauf["kamera"]["brennweite_mm"] == pytest.approx(50.0)
 
 
@@ -833,7 +841,12 @@ def test_bei_dieser_kleinen_szene_warnt_der_kamerasatz(lauf_mit_kamera):
     `aiimaging.kameras` den erreichten Füllgrad, statt ihn nur zu erzeugen.
     """
     from aiimaging import kameras as kameras_modul
-    satz = kameras_modul.kamerasatz(lauf_mit_kamera["bbox"], kuerzel=["n"])
+    # Die Brennweite steht hier AUSDRÜCKLICH und wird nicht geerbt: Bei 35 mm füllt
+    # dieser 2-m-Körper aus dem Mindestabstand bereits über die Warnschwelle, und der
+    # Test prüfte dann nicht mehr, was er prüfen will. Ein Test, dessen Aussage an einer
+    # Vorgabe hängt, misst die Vorgabe und nicht den Mechanismus.
+    satz = kameras_modul.kamerasatz(lauf_mit_kamera["bbox"], kuerzel=["n"],
+                                    brennweite_mm=28.0)
     assert satz["warnungen"], "keine Warnung, obwohl das Bauwerk winzig im Bild steht"
     assert "füllt nur" in satz["warnungen"][0]
     assert satz["kameras"][0]["fuellgrad"] < 0.4

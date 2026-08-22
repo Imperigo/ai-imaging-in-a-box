@@ -694,7 +694,12 @@ def test_der_eckentest_allein_bemerkt_ein_winziges_bauwerk_nicht():
     sieht wie ein Fehler des Bildmodells aus — die Ursache liegt in der Kamera, und dort
     würde niemand suchen.
     """
-    winzig = [[0.0, 0.0, 0.0], [2.0, 2.0, 2.0]]
+    # 1,5 m und nicht 2 m: Bei der Vorgabe-Brennweite von 35 mm füllt ein 2-m-Körper
+    # aus dem Mindestabstand bereits 34,6 % und liegt damit über der Warnschwelle.
+    # Die Aussage des Tests hängt nicht an der Grösse, sondern daran, dass es
+    # überhaupt einen Bereich gibt, in dem der Eckentest schweigt und der Füllgrad
+    # nicht — und den gibt es weiterhin.
+    winzig = [[0.0, 0.0, 0.0], [1.5, 1.5, 1.5]]
     satz = kameras.kamerasatz(winzig, kuerzel=["n"])
     assert satz["unvollstaendig"] == []          # der Eckentest ist zufrieden …
     assert satz["warnungen"]                     # … der Füllgrad nicht
@@ -742,7 +747,12 @@ def test_der_abstand_ist_der_endgueltige_nicht_der_gerechnete():
 
 def test_die_warnung_nennt_die_ursache_und_nicht_nur_die_zahl():
     """Ein Verdacht kostet einen Menschen, der nachsieht; eine Diagnose sagt ihm, wo."""
-    winzig = [[0.0, 0.0, 0.0], [2.0, 2.0, 2.0]]
+    # 1,5 m und nicht 2 m: Bei der Vorgabe-Brennweite von 35 mm füllt ein 2-m-Körper
+    # aus dem Mindestabstand bereits 34,6 % und liegt damit über der Warnschwelle.
+    # Die Aussage des Tests hängt nicht an der Grösse, sondern daran, dass es
+    # überhaupt einen Bereich gibt, in dem der Eckentest schweigt und der Füllgrad
+    # nicht — und den gibt es weiterhin.
+    winzig = [[0.0, 0.0, 0.0], [1.5, 1.5, 1.5]]
     text = " ".join(kameras.kamerasatz(winzig, kuerzel=["n"])["warnungen"])
     assert "füllt nur" in text
     assert "Gebäudemasse" in text or "zurückgeschoben" in text

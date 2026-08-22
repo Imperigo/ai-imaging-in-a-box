@@ -67,10 +67,30 @@ from .torwaechter import _lies_bbox
 #: jede Brennweitenangabe in der Architekturfotografie stillschweigend bezieht.
 SENSOR_BREITE_MM = 36.0
 
-#: Vorgabe-Brennweite. 28 mm ist der Weitwinkel, mit dem Gebäude fotografiert werden,
-#: ohne dass die Fluchten kippen. Der Bestand nutzt 28 mm (V6) und 35 mm (Vorläufer);
-#: 28 mm gewinnt, weil es zum engeren Standort auf der Strasse passt.
-BRENNWEITE_MM = 28.0
+#: Vorgabe-Brennweite in Millimetern, Kleinbild.
+#:
+#: **35 mm ist eine SETZUNG des Owners (23.08.2026), keine Ableitung.** Er hat sie als
+#: eigene Vorliebe benannt, und genau so steht sie hier — die Unterscheidung zwischen
+#: „belegt" und „gesetzt" ist in diesem Projekt keine Formalie (siehe
+#: :mod:`aiimaging.komposition`).
+#:
+#: **Die Recherche sagt etwas anderes, und das gehört danebengeschrieben:** Der
+#: HABS-Objektivsatz ergibt umgerechnet 18/25/42/59 mm Kleinbild, und die heutige
+#: Ratgeberliteratur trifft sich unabhängig davon bei 24–25 mm
+#: (`docs/recherche/KOMPOSITION_AUSSEN.md` §4.2). Zwei unabhängige Quellen gegen eine
+#: Vorliebe — die Vorliebe gewinnt, weil es das Bild des Owners ist, und der Widerspruch
+#: bleibt sichtbar statt weggeräumt.
+#:
+#: Vorher stand hier 28 mm, hergeleitet aus dem KosmoVis-Bestand (V6 nutzt 28, der
+#: Vorläufer 35). **Nachgemessen, was der Wechsel kostet:** Die Kamera steht rund 19 %
+#: weiter weg (bei 15 m Bauhöhe 106 statt 90 m), der Füllgrad bleibt beim angeforderten
+#: Wert, und der sichtbare Flächenanteil steigt sogar leicht (0.0623 → 0.0672), weil das
+#: längere Objektiv weniger staucht. Kein Eckentest schlägt fehl, keine neue Warnung.
+#:
+#: **Einstellbar bleibt sie überall**: ``kamerasatz(brennweite_mm=…)``,
+#: ``verarbeiter(brennweite_mm=…)``, ``--brennweite`` am Runner, und je Kamera über das
+#: Feld ``brennweite_mm`` einer fremden ``CameraSpec``.
+BRENNWEITE_MM = 35.0
 
 #: Augenhöhe in Metern, gemessen **über dem Geländestand** — siehe Modulkopf.
 #: Ohne bekannten Geländestand über der Unterkante der Hüllbox.
@@ -130,6 +150,12 @@ BIAS_GRAD = 35.0
 #: ein Wechsel **jede bisher gemessene Aufnahme** verändern würde und am Gerät gemessen
 #: ist, dass er dem Tiefenschätzer nichts nimmt (``auf-20260822-29``: über Eck −0,9835
 #: gekippt gegen −0,9650 waagrecht, alle drei innerhalb von 0,019).
+#:
+#: **Wann die Vorgabe wechselt** (Owner-Entscheid 23.08.2026): erst wenn ``auf-33``
+#: zurück ist. Der Shift ist diesseits der Prozessgrenze geprüft, am Gerät nicht — ob
+#: Blender ``shift_y`` so annimmt, wie wir es meinen, und ob die Senkrechten im Bild
+#: wirklich senkrecht werden, ist die Frage jenes Auftrags. Eine unverifizierte Vorgabe
+#: wäre genau die Sorte Zusage, die dieses Projekt sonst meldet, statt sie zu machen.
 #:
 #: **Wieviel er kippt — nachgemessen, und die überlieferte Zahl war falsch.** Vier
 #: Dokumente dieses Projekts sagen „`kameras.py` kippt 9,46°". Diese Zahl ist

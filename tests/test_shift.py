@@ -153,10 +153,13 @@ def test_ein_shift_nach_unten_kehrt_die_unsymmetrie_um():
     """
     # (a) Oben wird es enger: Ein schmaler 5-m-Bau, der aus 12 m ohne Shift bequem
     #     hineinpasst, braucht mit Shift nach unten 9,4 m Rückschub — das Dach bindet.
+    # Brennweite ausdrücklich: Die Zahlen unten sind an 28 mm gerechnet, und ein Test,
+    # dessen Aussage an der Vorgabe hängt, misst die Vorgabe statt den Mechanismus.
     schmal = [[0.0, 0.0, 0.0], [3.0, 3.0, 5.0]]
     auge, ziel = (1.5, -12.0, 1.7), (1.5, 1.5, 1.7)
-    assert kameras.ecken_im_bild(auge, ziel, schmal)["noetiger_rueckschub_m"] == 0.0
     assert kameras.ecken_im_bild(auge, ziel, schmal,
+                                 brennweite_mm=28.0)["noetiger_rueckschub_m"] == 0.0
+    assert kameras.ecken_im_bild(auge, ziel, schmal, brennweite_mm=28.0,
                                  shift_mm=-5.0)["noetiger_rueckschub_m"] > 9.0
 
     # (b) Unten wird es weiter — und GENAU das prüft die Zahl. Bei diesem flachen Bau
@@ -164,7 +167,7 @@ def test_ein_shift_nach_unten_kehrt_die_unsymmetrie_um():
     #     Punkte UNTER der Achse anwendet, macht daraus 3,03 m.
     flach = [[0.0, 0.0, 0.0], [10.0, 10.0, 3.0]]
     runter = kameras.ecken_im_bild((5.0, -8.0, 1.7), (5.0, 5.0, 1.7), flach,
-                                   shift_mm=-5.0)
+                                   brennweite_mm=28.0, shift_mm=-5.0)
     assert runter["noetiger_rueckschub_m"] == pytest.approx(0.454, abs=0.01)
 
 
@@ -332,3 +335,89 @@ def test_der_abholer_bleibt_ohne_angabe_beim_gekippten_modus(tmp_path):
     with pytest.raises(RuntimeError):
         verarbeite(auftrag)
     assert gesehen.get("kamera_modus") == kameras.MODUS_GEKIPPT
+
+
+# ======================================================================================
+# Die Vorgabewerte — Entscheidungen des Owners, festgehalten statt vorausgesetzt
+# ======================================================================================
+
+def test_die_vorgabe_brennweite_ist_eine_setzung_und_steht_als_solche_da():
+    """35 mm ist die Vorliebe des Owners (23.08.2026), nicht die Aussage der Recherche.
+
+    Die sagt 24–25 mm, aus zwei unabhängigen Quellen. Der Widerspruch bleibt sichtbar:
+    `komposition.ARBEITSBRENNWEITE_AUSSEN_MM` trägt weiterhin den belegten Wert, und
+    dieses Modul führt, was das Fach sagt, nicht was das Projekt entscheidet.
+    """
+    from aiimaging import komposition
+
+    assert kameras.BRENNWEITE_MM == 35.0
+    assert komposition.ARBEITSBRENNWEITE_AUSSEN_MM == 24.0
+    assert kameras.BRENNWEITE_MM != komposition.ARBEITSBRENNWEITE_AUSSEN_MM, (
+        "die Abweichung ist gewollt — wer sie glättet, verliert den Beleg"
+    )
+
+
+def test_der_vertragsumsetzer_erbt_die_vorgabe_statt_sie_abzuschreiben():
+    """Der stille Fall, gegen den das gebaut ist.
+
+    Hier stand eine fest verdrahtete 28. Als die Vorgabe auf 35 ging, wäre eine Kamera
+    ohne eigene Brennweite mit 28 mm in den fremden Vertrag gegangen, während mit 35
+    gerendert wird — zwei Zahlen für dieselbe Optik, und kein Test hätte angeschlagen.
+    """
+    from aiimaging import kosmo_szene
+
+    ohne = kosmo_szene.kamera_zu_spec(
+        {"auge": (0.0, -30.0, 1.7), "blick_auf": (0.0, 0.0, 5.0)})
+    assert ohne["fov"] == pytest.approx(
+        kosmo_szene.brennweite_zu_fov(kameras.BRENNWEITE_MM), abs=0.01)
+
+
+def test_die_brennweite_ist_je_lauf_einstellbar(tmp_path):
+    """„soll ja dann einstellbar sein" — und zwar bis an die Naht, nicht nur im Modul.
+
+    Geprüft wird der WERT, nicht das Schlüsselwort: `brennweite_mm=None` hätte einen
+    Test bestanden, der nur nach dem Vorhandensein des Arguments fragt.
+    """
+    from aiimaging import abholer
+
+    gesehen = {}
+
+    def multipass_attrappe(glb, aus, **kw):
+        gesehen.update(kw)
+        raise RuntimeError("hier endet der Test")
+
+    verarbeite = abholer.verarbeiter(out_wurzel=tmp_path, brennweite_mm=24.0,
+                                     auto_richtungen=("sSE",),
+                                     _multipass=multipass_attrappe)
+    auftrag = {"modell": tmp_path / "m.glb", "job_id": "vis-1-aaaaaa",
+               "verzeichnis": tmp_path,
+               "szene": {"kameras": "auto", "aufloesung": 64, "hoehe": 64,
+                         "samples": 1, "prompt": "a house"}}
+    with pytest.raises(RuntimeError):
+        verarbeite(auftrag)
+    assert gesehen.get("brennweite") == 24.0
+
+
+def test_ohne_angabe_bleibt_die_brennweite_offen_und_der_runner_entscheidet(tmp_path):
+    """`None` heisst „nicht angefasst", nicht „null".
+
+    Der Runner setzt dann `kameras.BRENNWEITE_MM` — an genau einer Stelle, statt dass
+    zwei Module dieselbe Zahl führen.
+    """
+    from aiimaging import abholer
+
+    gesehen = {}
+
+    def multipass_attrappe(glb, aus, **kw):
+        gesehen.update(kw)
+        raise RuntimeError("hier endet der Test")
+
+    verarbeite = abholer.verarbeiter(out_wurzel=tmp_path, auto_richtungen=("sSE",),
+                                     _multipass=multipass_attrappe)
+    auftrag = {"modell": tmp_path / "m.glb", "job_id": "vis-1-aaaaaa",
+               "verzeichnis": tmp_path,
+               "szene": {"kameras": "auto", "aufloesung": 64, "hoehe": 64,
+                         "samples": 1, "prompt": "a house"}}
+    with pytest.raises(RuntimeError):
+        verarbeite(auftrag)
+    assert gesehen.get("brennweite") is None

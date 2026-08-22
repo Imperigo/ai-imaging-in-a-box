@@ -394,12 +394,29 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
 #: mitzulaufen. Die Frage ist im Übergabeblatt gestellt.
 ANGENOMMENE_HOCHACHSE = "Y_UP"
 
-#: Welche Richtung gerendert wird, wenn die Szene ``cameras: "auto"`` sagt.
+#: Welche Richtungen gerendert werden, wenn die Szene ``cameras: "auto"`` sagt.
 #:
-#: **Eine**, nicht zwölf. Wie viele automatische Standpunkte ein Auftrag wert ist, ist
-#: eine Betriebs- und keine Programmentscheidung — zwölf Standpunkte sind zwölf
-#: GPU-Läufe. Der Aufrufer kann es überschreiben.
-AUTO_RICHTUNGEN = ("sSE",)
+#: **Drei** (Owner-Entscheid 23.08.2026), vorher eine. Wie viele automatische Standpunkte
+#: ein Auftrag wert ist, ist eine Betriebs- und keine Programmentscheidung — jeder
+#: Standpunkt ist ein GPU-Lauf —, und darum hat der Owner sie getroffen.
+#:
+#: **Warum genau diese drei.** HABS/NPS verlangt für die Dokumentation eines Bauwerks
+#: vier Ansichten: Umgebung, Frontal und zwei Über-Eck auf **gegenüberliegenden**
+#: Diagonalen. Die Umgebungsansicht ist hier weggelassen — sie zeigt ohne echtes Gelände
+#: wenig, und Gelände haben wir nicht. Die übrigen drei sind:
+#:
+#: * ``s`` — frontal auf eine Fassade, Azimut 180°.
+#: * ``sSE`` — über Eck, Azimut 145°: Süd- und Ostfassade.
+#: * ``nNW`` — über Eck, Azimut 325°: Nord- und Westfassade.
+#:
+#: ``sSE`` und ``nNW`` liegen **exakt 180° auseinander** (nachgerechnet, nicht geschätzt).
+#: Zusammen zeigen sie alle vier Fassaden; das ist die eigentliche Aussage der Norm — ein
+#: Bauwerk wird nicht von einer Seite dokumentiert.
+#:
+#: **Für Messreihen bleibt die einzelne Richtung die saubere Wahl**, und der Aufrufer
+#: kann es überschreiben: ``verarbeiter(auto_richtungen=("sSE",))``. Drei Standpunkte
+#: verdreifachen die Renderzeit je Auftrag.
+AUTO_RICHTUNGEN = ("s", "sSE", "nNW")
 
 
 def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
@@ -407,6 +424,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 stillstand_frist_s: float | None = None, stil: str | None = None,
                 nullprobe: bool = True, seeds=(0,),
                 kamera_modus: str = _kameras_modul.MODUS_GEKIPPT,
+                brennweite_mm: float | None = None,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
@@ -475,7 +493,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
 
         kameras = szene.get("kameras")
         if kameras == "auto" or not isinstance(kameras, list):
-            aufgaben = [{"kuerzel": r, "richtung": r} for r in auto_richtungen]
+            aufgaben = [{"kuerzel": r, "richtung": r, "brennweite_mm": brennweite_mm}
+                        for r in auto_richtungen]
         else:
             aufgaben = [dict(k, kuerzel=k.get("kuerzel") or f"kamera{i}")
                         for i, k in enumerate(kameras)]
