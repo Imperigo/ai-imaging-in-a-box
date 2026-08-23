@@ -666,7 +666,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 up_axis: str = ANGENOMMENE_HOCHACHSE, schwelle: float | None = None,
                 stillstand_frist_s: float | None = None, stil: str | None = None,
                 nullprobe: bool = True, seeds=VORGABE_SEEDS,
-                kamera_modus: str = _kameras_modul.MODUS_GEKIPPT,
+                kamera_modus: str = _kameras_modul.MODUS_SHIFT,
                 brennweite_mm: float | None = None,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None):

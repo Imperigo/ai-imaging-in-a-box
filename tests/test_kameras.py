@@ -552,8 +552,14 @@ def test_diagonalen_bekommen_keinen_zusaetzlichen_versatz():
 
 
 def test_blickziel_liegt_ueber_der_augenhoehe():
-    """Die Kamera kippt leicht nach oben, das Gebäude sitzt tiefer im Bild."""
-    satz = kameras.kamerasatz(WUERFEL, kuerzel=["n"])
+    """Die Kamera kippt leicht nach oben, das Gebäude sitzt tiefer im Bild.
+
+    Der Modus steht hier ausdrücklich: Seit dem 23.08.2026 ist ``MODUS_SHIFT`` die
+    Vorgabe, und dort liegt ``blick_auf`` auf Augenhöhe — der Höhenunterschied wandert
+    in den Shift. Die Regel, die dieser Test festhält, gilt trotzdem weiter: Sie ist es,
+    aus der der Shift gerechnet wird.
+    """
+    satz = kameras.kamerasatz(WUERFEL, kuerzel=["n"], modus=kameras.MODUS_GEKIPPT)
     kamera = satz["kameras"][0]
     assert kamera["blick_auf"][2] > kamera["auge"][2]
     assert kamera["blick_auf"][2] == pytest.approx(1.70 + 20.0 * kameras.ZIEL_ANTEIL_HOEHE)
@@ -670,7 +676,7 @@ def test_bei_gebaeudemassen_aendert_die_schranke_nichts():
     gewinnt weiterhin das erste. Eine Schranke, die auch den Normalfall verschöbe, hätte
     jede bisher gemessene Tiefenkarte mitverschoben.
     """
-    satz = kameras.kamerasatz(WUERFEL, kuerzel=["n"])
+    satz = kameras.kamerasatz(WUERFEL, kuerzel=["n"], modus=kameras.MODUS_GEKIPPT)
     ungeschraenkt = kameras.AUGENHOEHE_M + 20.0 * kameras.ZIEL_ANTEIL_HOEHE
     assert satz["kameras"][0]["blick_auf"][2] == pytest.approx(ungeschraenkt)
 
@@ -678,7 +684,8 @@ def test_bei_gebaeudemassen_aendert_die_schranke_nichts():
 def test_bei_einem_niedrigen_bau_schaut_die_kamera_leicht_nach_unten():
     """Und das ist richtig so — der Betrachter ist höher als das Dach."""
     niedrig = [[0.0, 0.0, 0.0], [2.0, 2.0, 2.0]]
-    kamera = kameras.kamerasatz(niedrig, kuerzel=["n"])["kameras"][0]
+    kamera = kameras.kamerasatz(niedrig, kuerzel=["n"],
+                                modus=kameras.MODUS_GEKIPPT)["kameras"][0]
     assert kamera["blick_auf"][2] < kamera["auge"][2]
     assert kamera["blick_auf"][2] <= 2.0
 

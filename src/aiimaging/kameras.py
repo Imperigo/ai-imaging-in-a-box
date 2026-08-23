@@ -151,31 +151,51 @@ BIAS_GRAD = 35.0
 #: ist, dass er dem Tiefenschätzer nichts nimmt (``auf-20260822-29``: über Eck −0,9835
 #: gekippt gegen −0,9650 waagrecht, alle drei innerhalb von 0,019).
 #:
-#: **Wann die Vorgabe wechselt** (Owner-Entscheid 23.08.2026): erst wenn ``auf-33``
-#: zurück ist. Der Shift ist diesseits der Prozessgrenze geprüft, am Gerät nicht — ob
-#: Blender ``shift_y`` so annimmt, wie wir es meinen, und ob die Senkrechten im Bild
-#: wirklich senkrecht werden, ist die Frage jenes Auftrags. Eine unverifizierte Vorgabe
-#: wäre genau die Sorte Zusage, die dieses Projekt sonst meldet, statt sie zu machen.
+#: **Seit dem 23.08.2026 ist er nicht mehr die Vorgabe** — siehe :data:`MODUS_SHIFT`.
+#: Er bleibt vollständig erhalten und ist mit ``modus=MODUS_GEKIPPT`` zu haben: Jede vor
+#: diesem Tag gemessene Aufnahme ist damit weiterhin bitgleich reproduzierbar, und
+#: ``auf-33`` hat genau das nachgewiesen.
 #:
-#: **Wieviel er kippt — nachgemessen, und die überlieferte Zahl war falsch.** Vier
-#: Dokumente dieses Projekts sagen „`kameras.py` kippt 9,46°". Diese Zahl ist
+#: **Wieviel er kippt — nachgemessen, zweimal, und beide Male anders als behauptet.**
+#:
+#: Vier Dokumente dieses Projekts sagten „`kameras.py` kippt 9,46°". Diese Zahl ist
 #: ``atan(0.20 / 1.2)`` und gilt bei einem Abstand von **1,2 × Gebäudehöhe** — einem
-#: Abstand, den :func:`kamerasatz` nie einnimmt. Über die zwölf Richtungen, vier
-#: Gebäudehöhen (8/15/30/60 m) und zwei Formate gemessen, steht die Kamera bei
-#: **2,5–5,5 × Gebäudehöhe**, und die Neigung liegt bei **1,92°–4,70°**. Der Grund ist
-#: ``DECKUNGSGRAD = 0.55``: Es soll Luft um das Bauwerk bleiben, und dafür geht die
-#: Kamera weit zurück.
+#: Abstand, den :func:`kamerasatz` nie einnimmt (``DECKUNGSGRAD = 0.55`` stellt die
+#: Kamera auf 2,5–5,5 × Gebäudehöhe).
 #:
-#: Das ändert das Urteil nicht — 2° Konvergenz sind auch Konvergenz —, aber es ändert
-#: die Grössenordnung des Problems, und eine Zahl, die durch vier Dokumente gewandert
-#: ist, ohne je nachgerechnet zu werden, gehört richtiggestellt.
+#: Meine Richtigstellung vom 23.08. lautete **1,92°–4,70°** und war ebenfalls zu eng.
+#: Gemessen hatte ich über vier Gebäudehöhen und **zwei** Formate — quer und quadratisch.
+#: Die HomeStation fuhr am selben Tag ein Hochformat (``auf-33``) und mass **5,985°**.
+#: Über flache Bauten, hohe Türme und drei Formate hinweg liegt die Spanne bei
+#: **−0,51° bis +5,98°**; negativ, weil ``ZIEL_HOECHSTANTEIL`` das Blickziel bei
+#: niedrigen Bauten unter die Augenhöhe holt und die Kamera dann leicht nach unten sieht.
+#:
+#: Die Lehre ist nicht die Zahl, sondern der Weg dorthin: **Eine Spanne, die aus einer
+#: Stichprobe stammt, ist eine Aussage über die Stichprobe.** Ich hatte die negativen
+#: Werte am 3-m-Bau sogar gesehen und sie nicht in die genannte Spanne aufgenommen.
 MODUS_GEKIPPT = "gekippt"
 
 #: Die Kamera bleibt waagrecht, das Objektiv wird verschoben. Der normgerechte Weg.
 #:
+#: **Seit dem 23.08.2026 die Vorgabe** (Owner-Entscheid, unter der Bedingung, dass
+#: ``auf-33`` das Verhalten am Gerät bestätigt — was es getan hat).
+#:
 #: **Was er kostet und was er bringt, ist gemessen und nicht behauptet:** Er bringt
 #: senkrechte Senkrechte — und er bringt der Bildqualität nach heutigem Stand *nichts*
 #: (``auf-20260822-29``). Wer ihn wählt, wählt die Norm, nicht eine bessere Zahl.
+#:
+#: **Am Gerät nachgewiesen** (``auf-33``, 23.08.2026), in fünf Fällen:
+#:
+#: * **Die Senkrechten werden senkrecht.** Gekippt weichen die senkrechten
+#:   Gebäudekanten um **0,47°–0,98°** von der Bildsenkrechten ab, geshiftet um
+#:   **0,004°–0,016°** — und das ist der Rauschboden der Messung.
+#: * **Der Umbau war additiv, bis auf das letzte Bit.** Der Stand vor dem Umbau, der
+#:   danach und HEAD mit ``--brennweite=28`` liefern bildpunktgleiche Tiefen-, Beauty-
+#:   und Material-ID-Ausgaben. Was sich änderte, war die Brennweite, nicht der Umbau.
+#: * **Die Rahmung bleibt.** Der Flächenanteil ändert sich um 0,02 %, 2,45 % und 5,05 %
+#:   relativ — und in allen drei Fällen rahmt der Shift *grosszügiger*, nicht enger.
+#: * **Blender bildet mit genau der Kamera ab, die wir meinen:** Eine unabhängige
+#:   Lochkamera-Rechnung trifft die gekippten Kantenwinkel auf 0,004°.
 MODUS_SHIFT = "shift"
 
 #: Beide, in der Reihenfolge ihrer Vorgabe.
@@ -284,18 +304,22 @@ def blender_shift_y(shift_mm: float,
                     sensor_breite_mm: float = SENSOR_BREITE_MM) -> float:
     """Millimeter auf dem Sensor → Blenders ``shift_y``.
 
-    Blender gibt den Shift als **Anteil der grösseren Sensorkante** an, nicht in
-    Millimetern. Bei uns ist die Bezugskante immer ``SENSOR_BREITE_MM`` — denn
-    :func:`bildwinkel` setzt die Sensorbreite fest auf 36 mm und leitet die Höhe aus dem
-    Seitenverhältnis ab.
+    Blender gibt den Shift als **Anteil der Sensorkante an, die ``sensor_fit``
+    bestimmt** — nicht in Millimetern und, anders als hier zuerst stand, auch nicht
+    pauschal als Anteil der grösseren *Bild*kante. Bei uns ist die Bezugskante immer
+    ``SENSOR_BREITE_MM``, denn :func:`bildwinkel` setzt die Sensorbreite fest auf 36 mm
+    und leitet die Höhe aus dem Seitenverhältnis ab.
 
-    **Was daran ungeprüft ist, und zwar ausdrücklich:** Diese Festlegung stimmt mit
-    Blenders Einstellung ``sensor_fit='HORIZONTAL'`` überein. Steht dort ``AUTO`` — die
-    Vorgabe —, bezieht Blender sich auf die **grössere Bildkante**. Für Quer- und
-    Quadratformate ist das dasselbe; für ein **Hochformat** ist es das nicht, und dann
-    gingen unser Bildwinkel und Blenders Bildwinkel auseinander. Alle bisherigen Läufe
-    waren quer oder quadratisch, der Fall ist also nie aufgetreten — aber der Hausstil
-    ist quadratisch bis hochformatig, und damit steht er bevor.
+    **Am Gerät geprüft** (``auf-33``, 23.08.2026), und die Prüfung war nötig: Ein Shift
+    von 0,34 verschob das Bild um **174,088 Bildpunkte** gegen 174,080 vorhergesagte —
+    exakt linear. Im Hochformat ergaben sich **36,595 Bildpunkte** gegen 36,616
+    vorhergesagte; die Alternative „Anteil der grösseren Bildkante" hätte 54,924
+    verlangt und ist damit **widerlegt**.
+
+    ``shift_mm / 36`` ist also richtig — **aber nur, weil der Runner ``sensor_fit``
+    ausdrücklich stellt.** Mit Blenders Vorgabe ``AUTO`` wäre die Sensorbreite im
+    Hochformat 24 statt 36 mm und der waagrechte Bildwinkel 37,8° statt 54,4°. Die
+    Vorsichtsmassnahme war also nicht überflüssig, sondern tragend.
     """
     return float(shift_mm) / float(sensor_breite_mm)
 
@@ -1005,7 +1029,7 @@ def kamerasatz(bbox, *,
                gelaende_z: float | None = None,
                bias_grad: float = BIAS_GRAD,
                bildrand: float = BILDRAND,
-               modus: str = MODUS_GEKIPPT,
+               modus: str = MODUS_SHIFT,
                kuerzel=None) -> dict:
     """Aus einer Hüllbox die zwölf Kameras — mit Begründung je Kamera.
 
@@ -1020,7 +1044,7 @@ def kamerasatz(bbox, *,
             Unterkante der Hüllbox. Angeben, wenn das Bauwerk ein **Untergeschoss** hat —
             sonst steht die Kamera im Keller. Nicht angeben heisst nicht „egal", sondern
             „die Unterkante ist die beste Schätzung, die die Daten hergeben".
-        modus: ``MODUS_GEKIPPT`` (Vorgabe, unverändert) oder ``MODUS_SHIFT``.
+        modus: ``MODUS_SHIFT`` (Vorgabe seit 23.08.2026) oder ``MODUS_GEKIPPT``.
 
             Im Shift-Modus bleibt die Achse **waagrecht** und das Objektiv wird
             verschoben; senkrechte Kanten bleiben damit senkrecht. Der Shift wird am

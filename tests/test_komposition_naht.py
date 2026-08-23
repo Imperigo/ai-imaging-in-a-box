@@ -51,7 +51,8 @@ def test_die_vier_faelle_ergeben_vier_verschiedene_urteile():
 def test_alle_waagrecht_trennt_die_beiden_modi():
     """Die eine Zahl, auf die es normativ ankommt. Sie steht getrennt, weil sie in den
     vielen Warnungen sonst untergeht."""
-    gekippt = komposition.beurteile_kamerasatz(kameras.kamerasatz(BBOX))
+    gekippt = komposition.beurteile_kamerasatz(
+        kameras.kamerasatz(BBOX, modus=kameras.MODUS_GEKIPPT))
     geshiftet = komposition.beurteile_kamerasatz(
         kameras.kamerasatz(BBOX, modus=kameras.MODUS_SHIFT))
     assert gekippt["alle_waagrecht"] is False
@@ -61,7 +62,8 @@ def test_alle_waagrecht_trennt_die_beiden_modi():
 def test_die_konvergenz_wird_beziffert_und_nicht_nur_behauptet():
     """Eine Warnung, die nur „nicht waagrecht" sagt, hilft niemandem beim Abwägen."""
     urteil = komposition.beurteile_kamerasatz(
-        kameras.kamerasatz(BBOX, kuerzel=["sSE"], gelaende_z=0.0))["kameras"][0]
+        kameras.kamerasatz(BBOX, kuerzel=["sSE"], gelaende_z=0.0,
+                           modus=kameras.MODUS_GEKIPPT))["kameras"][0]
     assert 0.0 < urteil["konvergenz"] < 0.20
     assert "%" in " ".join(urteil["warnungen"])
 
@@ -149,7 +151,7 @@ def _bericht(**kw):
 
 
 def test_ein_berichteter_kamerablock_wird_beurteilt():
-    urteil = komposition.beurteile_bericht(_bericht())
+    urteil = komposition.beurteile_bericht(_bericht(modus=kameras.MODUS_GEKIPPT))
     assert urteil["beurteilt"] is True
     assert urteil["kuerzel"] == "sSE"
     assert urteil["neigung_grad"] > 0.0

@@ -204,7 +204,8 @@ def test_im_shift_modus_bleiben_senkrechte_senkrecht():
 def test_im_gekippten_modus_kippen_sie_und_die_zahl_steht_dabei():
     """Gegenprobe — und der Grund, warum ``neigung_grad`` auch dort mitgeführt wird:
     Die Normverletzung soll an jedem Bild kleben, nicht in einem Dokument stehen."""
-    kamera = kameras.kamerasatz(BBOX, kuerzel=["sSE"])["kameras"][0]
+    kamera = kameras.kamerasatz(BBOX, kuerzel=["sSE"],
+                                modus=kameras.MODUS_GEKIPPT)["kameras"][0]
     _, _, oben = kameras._kamerabasis(kamera["auge"], kamera["blick_auf"])
     assert oben[2] < 1.0, "die Hochachse ist gekippt"
     assert kamera["neigung_grad"] > 0.5
@@ -260,10 +261,20 @@ def test_unbekannter_modus_ist_ein_fehler_und_kein_rueckfall():
         kameras.kamerasatz(BBOX, modus="waagerecht-ish")
 
 
-def test_die_vorgabe_bleibt_der_gekippte_modus():
-    """Ein Wechsel der Vorgabe änderte jede bisher gemessene Aufnahme. Der Test hält
-    die Entscheidung fest, damit sie nicht nebenbei kippt."""
+def test_die_vorgabe_ist_seit_dem_23_08_der_shift_modus():
+    """Der Owner hatte den Wechsel an eine Bedingung geknüpft: erst wenn `auf-33` das
+    Verhalten am Gerät bestätigt. Es hat — in fünf Fällen, darunter der entscheidende:
+    Gekippt weichen die senkrechten Kanten um 0,47°–0,98° ab, geshiftet um 0,004°–0,016°,
+    und das ist der Rauschboden der Messung.
+
+    Der gekippte Modus bleibt vollständig erhalten. `auf-33` hat nachgewiesen, dass er
+    **bildpunktgleich** dasselbe liefert wie vor dem Umbau — jede vor diesem Tag
+    gemessene Aufnahme ist damit weiterhin reproduzierbar.
+    """
     assert kameras.kamerasatz(BBOX, kuerzel=["n"])["kameras"][0]["modus"] == \
+        kameras.MODUS_SHIFT
+    assert kameras.kamerasatz(BBOX, kuerzel=["n"],
+                              modus=kameras.MODUS_GEKIPPT)["kameras"][0]["modus"] == \
         kameras.MODUS_GEKIPPT
 
 
@@ -317,7 +328,7 @@ def test_der_abholer_reicht_den_modus_bis_an_die_naht(tmp_path):
     assert gesehen.get("kamera_modus") == kameras.MODUS_SHIFT
 
 
-def test_der_abholer_bleibt_ohne_angabe_beim_gekippten_modus(tmp_path):
+def test_der_abholer_faehrt_ohne_angabe_den_shift_modus(tmp_path):
     from aiimaging import abholer
 
     gesehen = {}
@@ -334,7 +345,7 @@ def test_der_abholer_bleibt_ohne_angabe_beim_gekippten_modus(tmp_path):
                          "samples": 1, "prompt": "a house"}}
     with pytest.raises(RuntimeError):
         verarbeite(auftrag)
-    assert gesehen.get("kamera_modus") == kameras.MODUS_GEKIPPT
+    assert gesehen.get("kamera_modus") == kameras.MODUS_SHIFT
 
 
 # ======================================================================================

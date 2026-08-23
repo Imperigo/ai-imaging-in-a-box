@@ -821,7 +821,7 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Decke exakt gleich viel Bildfläche. **Keine Ersatzhöhe**, wenn die Raumhöhe fehlt:
       `kameras.AUGENHOEHE_M` (1,70 m) erzeugt in einem 2,55-m-Raum 28 Prozentpunkte
       Ungleichgewicht. **Kamera waagrecht**, Blickziel auf Kamerahöhe — anders als
-      `kameras.py`, das kippt. (**Nachgemessen 22.08.:** um 1,92°–4,70°, nicht um die
+      `kameras.py`, das kippt. (**Nachgemessen:** um −0,51° bis +5,98°, nicht um die
       vielzitierten 9,46° — die gelten bei 1,2 × Gebäudehöhe Abstand, und dort steht
       `kamerasatz` nie. Siehe unten.)
 
@@ -967,11 +967,21 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Tangenseinheiten *ist* der Shift der Winkel, um den sonst gekippt würde. Verdrahtet
       bis ans Gerät: `kamerasatz` → `seams` → `--kamera-modus` / `--shift-y` →
       `kam_daten.shift_y`, und der Abholer reicht ihn durch.
-- [x] **Nachgemessen: `kameras.py` kippt nicht um 9,46°, sondern um 1,92°–4,70°.**
-      Die Zahl steht in vier Dokumenten dieses Projekts. Sie ist `atan(0.20 / 1.2)` und
-      gilt bei einem Abstand von **1,2 × Gebäudehöhe** — den `kamerasatz` nie einnimmt:
-      `DECKUNGSGRAD = 0.55` stellt die Kamera auf 2,5–5,5 × Gebäudehöhe. Gemessen über
-      zwölf Richtungen, vier Gebäudehöhen und zwei Formate.
+- [x] **Nachgemessen — zweimal, und beide Male anders als behauptet: `kameras.py` kippt
+      um −0,51° bis +5,98°.** Die Zahl 9,46° steht in vier Dokumenten dieses Projekts.
+      Sie ist `atan(0.20 / 1.2)` und gilt bei einem Abstand von **1,2 × Gebäudehöhe** —
+      den `kamerasatz` nie einnimmt: `DECKUNGSGRAD = 0.55` stellt die Kamera auf
+      2,5–5,5 × Gebäudehöhe.
+
+      **Meine erste Richtigstellung (1,92°–4,70°) war ebenfalls zu eng.** Sie stammte aus
+      vier Gebäudehöhen und **zwei** Formaten — quer und quadratisch. Die HomeStation
+      fuhr am selben Tag ein Hochformat (`auf-33`) und mass 5,985°; nachgerechnet stimmt
+      das auf 0,01° mit unserer Rechnung überein. Negative Werte kommen von flachen
+      Bauten, wo `ZIEL_HOECHSTANTEIL` das Blickziel unter die Augenhöhe holt — die hatte
+      ich sogar gesehen und nicht in die Spanne aufgenommen.
+
+      **Die Lehre ist nicht die Zahl, sondern der Weg:** Eine Spanne, die aus einer
+      Stichprobe stammt, ist eine Aussage über die Stichprobe.
 
       Das ändert das Urteil nicht (2° Konvergenz sind auch Konvergenz), aber die
       Grössenordnung — und die andere Seite derselben Rechnung ist eine gute Nachricht:
@@ -1236,12 +1246,30 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Richtungen zeigen verschieden viel Geometrie; die Streuung könnte grösser oder
       kleiner sein. Seit drei Kameras je Auftrag gefahren werden, fällt sie als Nebenprodukt
       an — `kameraspanne.streuung` sammelt sie ab drei gemessenen Kameras.
-- [ ] **Die Vorgabe für den Kameramodus wechselt erst, wenn `auf-33` zurück ist**
-      (Owner-Entscheid 23.08.2026). Der Shift ist diesseits der Prozessgrenze geprüft, am
-      Gerät nicht: Ob Blender `shift_y` so annimmt, wie wir es meinen, und ob die
-      Senkrechten im Bild wirklich senkrecht werden, fragt jener Auftrag. Eine
-      unverifizierte Vorgabe wäre genau die Sorte Zusage, die dieses Projekt sonst meldet,
-      statt sie zu machen.
+- [x] **`MODUS_SHIFT` ist die Vorgabe (23.08.2026) — die Bedingung des Owners ist
+      erfüllt.** `auf-33` kam mit allen fünf Fällen wie erwartet zurück:
+
+      * **Die Senkrechten werden senkrecht.** Gekippt weichen die senkrechten
+        Gebäudekanten um **0,47°–0,98°** ab, geshiftet um **0,004°–0,016°** — der
+        Rauschboden der Messung.
+      * **Der Umbau war additiv, bis auf das letzte Bit.** Der Stand vor dem Umbau, der
+        danach und HEAD mit `--brennweite=28` liefern bildpunktgleiche Ausgaben. Was sich
+        änderte, war die Brennweite, nicht der Umbau. Jede vor heute gemessene Aufnahme
+        bleibt mit `modus=MODUS_GEKIPPT` reproduzierbar.
+      * **Die Rahmung bleibt** (0,02 %, 2,45 %, 5,05 % relativ) — und der Shift rahmt in
+        allen drei Fällen *grosszügiger*, nicht enger.
+      * **Blender bildet mit genau der Kamera ab, die wir meinen:** Eine unabhängige
+        Lochkamera-Rechnung trifft die gekippten Kantenwinkel auf 0,004°.
+      * **`shift_y = shift_mm / 36` ist richtig — aber nur, weil der Runner `sensor_fit`
+        ausdrücklich stellt.** Im Hochformat: 36,595 gemessene Bildpunkte gegen 36,616
+        vorhergesagte; die Alternative „Anteil der grösseren Bildkante" hätte 54,924
+        verlangt und ist widerlegt. Mit Blenders Vorgabe `AUTO` wäre die Sensorbreite im
+        Hochformat 24 statt 36 mm und der waagrechte Bildwinkel 37,8° statt 54,4°. Die
+        Vorsichtsmassnahme war tragend, nicht überflüssig.
+
+      **Folge im Betrieb:** Der Neigungs-Warner der Kompositionsprüfung verstummt
+      vollständig. Übrig bleibt die eine Zeile, die eine echte Eigenschaft der Eingabe
+      ist — der unbekannte Geländestand.
 
 ## (überholt) Kamerasetzung — was die Recherche vom 21.08. treffen muss
 
