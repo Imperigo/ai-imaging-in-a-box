@@ -203,3 +203,49 @@ def test_die_warnungen_des_auftrags_erscheinen_ebenfalls(monkeypatch, tmp_path, 
          "warnungen": ("Keine Sonnenangabe.",)}])
 
     assert "! Keine Sonnenangabe." in ausgabe
+
+
+def test_der_gelaendestand_des_betriebs_kommt_an(monkeypatch, tmp_path):
+    """Die Warnung war da, der Handgriff fehlte.
+
+    Die Kompositionsprüfung meldet bei jedem Auftrag den unzuverlässigen Bezugspunkt —
+    zu Recht, denn aus einer glb ist der Geländestand nicht zu erfahren. Nur konnte ihn
+    ein Betreiber bis zum 23.08.2026 auch nicht **setzen**: `verarbeiter` nahm ihn nicht
+    entgegen, obwohl die Naht und der Runner ihn seit langem kennen. Eine Dauerwarnung
+    ohne Handgriff ist keine Warnung mehr, sondern Möblierung.
+
+    Dieselbe Lücke wie bei der Brennweite: im Modul längst einstellbar, auf dem Weg, den
+    ein Auftrag nimmt, nicht.
+    """
+    modul = _abholen()
+    gesehen: dict = {}
+
+    monkeypatch.setattr(modul.abholer, "durchgang", lambda store, **kw: {
+        "gesehen": 0, "verarbeitet": 0, "fehler": 0, "liegengelassen": 0,
+        "gestanden": 0, "waisen": [], "ergebnisse": []})
+    monkeypatch.setattr(modul.abholer, "verarbeiter",
+                        lambda **kw: gesehen.update(kw) or (lambda a: {}))
+    monkeypatch.setattr(modul, "karte_auskunft", lambda: (True, "Attrappe"))
+    monkeypatch.setattr(sys, "argv",
+                        ["abholen.py", "--store", str(tmp_path), "--gelaende-z", "412.5"])
+
+    assert modul.main() == 0
+    assert gesehen["gelaende_z"] == 412.5
+
+
+def test_ohne_angabe_bleibt_der_gelaendestand_offen(monkeypatch, tmp_path):
+    """`None` heisst „nicht gesagt", nicht „null" — und null wäre bei einem Bauwerk auf
+    412 m über Meer die schlimmste aller Antworten."""
+    modul = _abholen()
+    gesehen: dict = {}
+
+    monkeypatch.setattr(modul.abholer, "durchgang", lambda store, **kw: {
+        "gesehen": 0, "verarbeitet": 0, "fehler": 0, "liegengelassen": 0,
+        "gestanden": 0, "waisen": [], "ergebnisse": []})
+    monkeypatch.setattr(modul.abholer, "verarbeiter",
+                        lambda **kw: gesehen.update(kw) or (lambda a: {}))
+    monkeypatch.setattr(modul, "karte_auskunft", lambda: (True, "Attrappe"))
+    monkeypatch.setattr(sys, "argv", ["abholen.py", "--store", str(tmp_path)])
+
+    assert modul.main() == 0
+    assert gesehen["gelaende_z"] is None

@@ -104,6 +104,13 @@ def main() -> int:
                          "der Bauwerksmaske). Ohne Maske wird NICHT ausgewaehlt. "
                          "Voreinstellung aus abholer.VORGABE_SEEDS — abgeschrieben "
                          "waere sie an einer der beiden Stellen bereits falsch.")
+    ap.add_argument("--gelaende-z", dest="gelaende_z", type=float, default=None,
+                    help="Hoehe des Gelaendes im Weltsystem, in Metern. OHNE Angabe "
+                         "rechnet die Kamera mit der Huellbox-Unterkante — bei einem "
+                         "Bauwerk mit Untergeschoss steht sie damit im Keller, und die "
+                         "Kompositionspruefung meldet den unzuverlaessigen Bezugspunkt "
+                         "bei jeder Kamera. Aus einer glb ist der Stand nicht zu "
+                         "erfahren; wer ihn kennt, sagt ihn hier.")
     ap.add_argument("--ohne-nullprobe", action="store_true",
                     help="Die Kontrollanker weglassen. Nicht empfohlen — siehe auf-21.")
     ap.add_argument("--stillstand-frist-s", type=float, default=fortschritt.FRIST_S,
@@ -136,7 +143,8 @@ def main() -> int:
 
     seeds = tuple(int(x) for x in a.seeds.split(",") if x.strip())
     verarbeite = abholer.verarbeiter(stil=a.stil, nullprobe=not a.ohne_nullprobe,
-                                     seeds=seeds or (0,))
+                                     gelaende_z=a.gelaende_z,
+                                     seeds=seeds or abholer.VORGABE_SEEDS)
 
     def wache_bauen(auftrag):
         """Eine Wache auf den Ausgabeordner DIESES Auftrags.

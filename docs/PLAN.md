@@ -1229,7 +1229,21 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Mutationsprobe, weil die Rechnung darunter bei leerer Eingabe ohnehin nichts
       ergibt. Entfernt, die Tatsache steht als Test — dieselbe Entscheidung wie bei der
       einspringenden Ecke in `raumkamera`.
-- [ ] **Der Geländestand ist aus einer glb nicht zu erfahren.** Der fremde Vertrag führt
+- [x] **Der Geländestand ist jetzt wenigstens SETZBAR — die Warnung war da, der Handgriff
+      fehlte.** Die Kompositionsprüfung meldet bei jedem Auftrag den unzuverlässigen
+      Bezugspunkt, zu Recht. Nur konnte ein Betreiber ihn bis zum 23.08.2026 gar nicht
+      angeben: `verarbeiter` nahm ihn nicht entgegen, obwohl Naht und Runner ihn seit
+      langem kennen. Eine Dauerwarnung ohne Handgriff ist keine Warnung mehr, sondern
+      Möblierung.
+
+      **Dieselbe Lücke wie bei der Brennweite:** im Modul längst einstellbar, auf dem
+      Weg, den ein Auftrag nimmt, nicht. Zweimal am selben Tag dieselbe Form —
+      offensichtlich ist „einstellbar" eine Zusage, die man an der Naht prüfen muss und
+      nicht am Modul.
+
+      Die Zeile auf dem Terminal nennt den Handgriff jetzt mit
+      (`--gelaende-z setzen, dann entfällt das`). Aus der Klage wird ein Angebot.
+- [ ] **Der Geländestand ist aus einer glb nicht zu ERFAHREN — nur zu sagen.** Der fremde Vertrag führt
       keine Geländeangabe, und in einer glb gibt es kein Gelände. Solange das so ist,
       rechnet `kamerasatz` mit der Hüllbox-Unterkante — bei einem Bauwerk mit
       Untergeschoss steht die Kamera damit im Keller. Aus der IFC wäre es zu haben; der

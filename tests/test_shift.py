@@ -432,3 +432,52 @@ def test_ohne_angabe_bleibt_die_brennweite_offen_und_der_runner_entscheidet(tmp_
     with pytest.raises(RuntimeError):
         verarbeite(auftrag)
     assert gesehen.get("brennweite") is None
+
+
+def test_der_gelaendestand_erreicht_die_naht(tmp_path):
+    """Bis an den Multipass, nicht nur bis zum `verarbeiter`.
+
+    Die Mutationsprobe fand genau diese Lücke: Ein Test am Werkzeug zeigte, dass der Wert
+    entgegengenommen wird — dass er auch weitergereicht wird, prüfte niemand. Ein
+    Parameter, der ankommt und dann liegenbleibt, sieht an einem Werkzeugtest richtig aus.
+    """
+    from aiimaging import abholer
+
+    gesehen = {}
+
+    def multipass_attrappe(glb, aus, **kw):
+        gesehen.update(kw)
+        raise RuntimeError("hier endet der Test")
+
+    verarbeite = abholer.verarbeiter(out_wurzel=tmp_path, gelaende_z=412.5,
+                                     auto_richtungen=("sSE",),
+                                     _multipass=multipass_attrappe)
+    auftrag = {"modell": tmp_path / "m.glb", "job_id": "vis-1-aaaaaa",
+               "verzeichnis": tmp_path,
+               "szene": {"kameras": "auto", "aufloesung": 64, "hoehe": 64,
+                         "samples": 1, "prompt": "a house"}}
+    with pytest.raises(RuntimeError):
+        verarbeite(auftrag)
+    assert gesehen.get("gelaende_z") == 412.5
+
+
+def test_ohne_angabe_bleibt_der_gelaendestand_bis_zur_naht_offen(tmp_path):
+    """`None` heisst „nicht gesagt". Erst der Runner setzt dann die Hüllbox-Unterkante —
+    an genau einer Stelle, und mit der Warnung, die dazugehört."""
+    from aiimaging import abholer
+
+    gesehen = {}
+
+    def multipass_attrappe(glb, aus, **kw):
+        gesehen.update(kw)
+        raise RuntimeError("hier endet der Test")
+
+    verarbeite = abholer.verarbeiter(out_wurzel=tmp_path, auto_richtungen=("sSE",),
+                                     _multipass=multipass_attrappe)
+    auftrag = {"modell": tmp_path / "m.glb", "job_id": "vis-1-aaaaaa",
+               "verzeichnis": tmp_path,
+               "szene": {"kameras": "auto", "aufloesung": 64, "hoehe": 64,
+                         "samples": 1, "prompt": "a house"}}
+    with pytest.raises(RuntimeError):
+        verarbeite(auftrag)
+    assert gesehen.get("gelaende_z") is None

@@ -284,7 +284,7 @@ def test_was_ALLE_kameras_betrifft_steht_einmal_da():
     zeilen = abholer.befund_kurz({"kameras": kameras})
 
     assert len(zeilen) == 1, zeilen
-    assert zeilen[0] == "Komposition, alle 3 Kameras: Bezugspunkt, Neigung"
+    assert zeilen[0].startswith("Komposition, alle 3 Kameras: Bezugspunkt, Neigung")
 
 
 def test_gemeinsames_und_einzelnes_werden_getrennt():
@@ -296,8 +296,9 @@ def test_gemeinsames_und_einzelnes_werden_getrennt():
         for k in ("s", "sSE", "nNW")]
     zeilen = abholer.befund_kurz({"kameras": kameras})
 
-    assert zeilen == ("Komposition, alle 3 Kameras: Bezugspunkt, Neigung",
-                      "Komposition, nur nNW: Abstand")
+    assert len(zeilen) == 2
+    assert zeilen[0].startswith("Komposition, alle 3 Kameras: Bezugspunkt, Neigung")
+    assert zeilen[1] == "Komposition, nur nNW: Abstand"
 
 
 def test_eine_einzige_kamera_gilt_als_alle():
@@ -365,3 +366,36 @@ def test_gar_kein_befund_ergibt_gar_keine_zeilen():
     assert abholer.befund_kurz(None) == ()
     assert abholer.befund_kurz("kein Woerterbuch") == ()
     assert abholer.befund_kurz({}) == ()
+
+
+def test_die_dauerwarnung_nennt_den_handgriff():
+    """Eine Warnung, die immer erscheint und gegen die man nichts tun kann, ist keine
+    Warnung mehr, sondern Möblierung.
+
+    Der unbekannte Geländestand erscheint bei jedem Auftrag — aus einer glb ist er nicht
+    zu erfahren. Seit `verarbeiter(gelaende_z=…)` gibt es aber den Handgriff, und damit
+    wird aus der Klage ein Angebot.
+    """
+    zeilen = abholer.befund_kurz({
+        "kameras": [{"kamera": k, "komposition": {
+            "beurteilt": True, "warnungen": ["Bezugspunkt 'huellbox_unterkante' …"]}}
+            for k in ("s", "sSE", "nNW")]})
+
+    assert len(zeilen) == 1
+    assert "--gelaende-z" in zeilen[0]
+
+
+def test_andere_dauerwarnungen_bekommen_keinen_falschen_handgriff():
+    """Gegenprobe: Der Hinweis hängt an DIESER Warnung, nicht an jeder gemeinsamen.
+
+    Stünde er überall, wäre er in dem Moment falsch, in dem eine andere Warnung alle
+    Kameras betrifft — und ein falscher Rat ist schlimmer als keiner.
+    """
+    zeilen = abholer.befund_kurz({
+        "kameras": [{"kamera": k, "komposition": {
+            "beurteilt": True, "warnungen": ["Abstand 9.00 m unterschreitet …"]}}
+            for k in ("s", "sSE")]})
+
+    assert len(zeilen) == 1
+    assert "Abstand" in zeilen[0]
+    assert "gelaende" not in zeilen[0]

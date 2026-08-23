@@ -393,8 +393,18 @@ def _kompositionszeilen(kameras: list) -> list:
     gemeinsam = sorted(a for a in alle_arten
                        if all(a in arten for arten in je_kamera.values()))
     if gemeinsam:
-        zeilen.append(f"Komposition, alle {len(beurteilt)} Kameras: "
-                      f"{', '.join(gemeinsam)}")
+        zeile = (f"Komposition, alle {len(beurteilt)} Kameras: "
+                 f"{', '.join(gemeinsam)}")
+        # Was der Betreiber dagegen TUN kann, gehört in dieselbe Zeile.
+        #
+        # Der unbekannte Geländestand erscheint bei jedem Auftrag — er ist aus einer glb
+        # nicht zu erfahren. Eine Dauerwarnung ohne Handgriff ist aber keine Warnung
+        # mehr, sondern Möblierung: Sie steht da, man kann nichts tun, also liest man sie
+        # nicht. Seit `verarbeiter(gelaende_z=…)` gibt es den Handgriff, und damit wird
+        # aus der Klage ein Angebot.
+        if "Bezugspunkt" in gemeinsam:
+            zeile += "  (Geländestand mit --gelaende-z setzen, dann entfällt das)"
+        zeilen.append(zeile)
 
     for kuerzel, arten in je_kamera.items():
         eigen = sorted(arten - set(gemeinsam))
@@ -668,6 +678,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 nullprobe: bool = True, seeds=VORGABE_SEEDS,
                 kamera_modus: str = _kameras_modul.MODUS_SHIFT,
                 brennweite_mm: float | None = None,
+                gelaende_z: float | None = None,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
@@ -764,6 +775,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 samples=szene.get("samples", 128),
                 kamera=aufgabe.get("richtung"),
                 kamera_modus=kamera_modus,
+                gelaende_z=gelaende_z,
                 auge=aufgabe.get("auge"), blick_auf=aufgabe.get("blick_auf"),
                 brennweite=aufgabe.get("brennweite_mm"),
                 stillstand_frist_s=stillstand_frist_s,

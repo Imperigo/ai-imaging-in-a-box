@@ -1,0 +1,49 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260823-35",
+  "art": "qa",
+  "erstellt": "2026-08-23T04:00:00Z",
+  "beschreibung": "NEU EINMESSEN — und dabei die eine Zahl mitnehmen, die seit heute erstmals messbar ist.\n\n=== WARUM ===\nAm 23.08. haben sich VIER Vorgaben geaendert, alle auf Owner-Entscheid:\n    Kameramodus   gekippt -> shift      (senkrechte Kanten bleiben senkrecht)\n    Brennweite    28 -> 35 mm           (Setzung des Owners, nicht der Recherche)\n    Ansichten     ('sSE',) -> ('s','sSE','nNW')\n    Startwerte    (0,) -> (0,1,2)\nJede davon veraendert die Bilder. Ein Vergleich mit aelteren Zahlen traegt damit NICHT mehr — weder mit der Schwellenstudie noch mit auf-26 bis auf-30. Es braucht einen neuen Bezugspunkt, und der soll einmal sauber gesetzt werden, statt dass ihn spaeter jemand aus verstreuten Laeufen zusammensucht.\n\n=== DIE ZWEITE FRAGE, UND SIE IST DIE INTERESSANTERE ===\nDas Auftragsurteil ist das der SCHLECHTESTEN Ansicht. Seit es drei sind, faellt dieses Minimum systematisch — bei drei Ziehungen um 0.845 Streuungen. Zugleich wird je Kamera das BESTE von drei Startwerten behalten, was um denselben Betrag hebt.\n\nHeben sich die beiden auf? Das haengt daran, ob die Streuung ZWISCHEN BLICKRICHTUNGEN aehnlich gross ist wie die ueber Startwerte. Letztere ist gemessen (0.2269, neun Laeufe). Erstere ist es NICHT — und seit drei Ansichten je Auftrag laufen, faellt sie nebenbei an.\n\nWICHTIG, sonst misst du das Falsche: Der behaltene Wert je Kamera ist bereits ein Maximum ueber drei Startwerte. Die Streuung ZWISCHEN diesen Maxima ist nicht die rohe Kamerastreuung. Gebraucht wird die volle 3x3-Matrix der ROHEN Werte — und die steht bereits in befund.json, unter kameras[].seedauswahl.kandidaten. Du musst also nichts zusaetzlich rendern, nur richtig auslesen.\n\n=== WAS ZU TUN IST ===\n\nB1 · DREI VOLLE LAEUFE mit den heutigen Vorgaben, auf drei verschiedenen Geometrien deiner Wahl (gern die, die du schon hast — Testbau auf Platte, ein hoher, ein flacher). Nichts von Hand ueberschreiben: Es geht genau um die Vorgabewerte.\n  Je Lauf entstehen 3 Ansichten x 3 Startwerte = 9 Bilder, davon 3 behalten.\n  ERWARTUNG zur Laufzeit: grob das Drei- bis Vierfache eines Laufs vom 20.08. (dort 72 s bei einer Ansicht). Wenn es deutlich mehr ist, sag es — dann stimmt unsere Kostenrechnung nicht.\n\nB2 · DIE 3x3-MATRIX JE LAUF. Aus befund.json, kameras[].seedauswahl.kandidaten: je Ansicht und Startwert der Wert 'gerichtet'. Neun Zahlen je Lauf, als Tabelle Ansicht x Startwert.\n\nB3 · DIE BEIDEN STREUUNGEN, GETRENNT.\n  (a) SEEDSTREUUNG: je Ansicht die Streuung ueber die drei Startwerte. Mittel ueber die Ansichten und Laeufe. Vergleich mit den gemessenen 0.2269.\n  (b) KAMERASTREUUNG: je Startwert die Streuung ueber die drei Ansichten — also SPALTENWEISE, bei festem Startwert. Mittel ueber die Startwerte und Laeufe.\n  DIE ANTWORT, um die es geht: Ist (b) aehnlich gross wie (a), groesser, oder kleiner? Ein Satz genuegt, aber mit den Zahlen daneben.\n\nB4 · DIE NEUE GRUNDMESSUNG. Je Lauf: der gemeldete Geometrie-Score (das Minimum), die Kameraspanne (bester/schlechtester), und ob das Gate bestanden wurde. Das sind die Zahlen, gegen die kuenftig verglichen wird.\n\nB5 · TRAEGT DAS NEUE ZEUG? Zwei Dinge, die heute entstanden sind und am Geraet nie liefen:\n  - Liegt befund.json neben render-result.json, ist es lesbar, und steht KEIN absoluter Pfad darin? (grep nach '\"/' sollte nichts finden — Regel 3.)\n  - Was gibt tools/abholen.py auf dem Terminal aus? Bitte woertlich mitschicken. Erwartet werden hoechstens ein paar Zeilen je Auftrag; erscheint dort eine Warnung bei JEDEM Auftrag und JEDER Kamera, ist sie Rauschen und ich baue sie um.\n\n=== WAS NICHT ZU TUN IST ===\n- KEINE Vorgabe ueberschreiben. Der ganze Zweck ist, die heutigen Werte einzumessen.\n- Die 3x3-Matrix NICHT mitteln, bevor du sie schickst. Gemittelt ist die Frage aus B3 nicht mehr zu beantworten.\n- Wenn ein Lauf scheitert: Traceback und den Befund schicken, nicht reparieren.",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "Drei Geometrien deiner Wahl aus dem Bestand — gern ein flacher, ein mittlerer und ein hoher Bau, damit die Spanne nicht an einer Form haengt."
+  },
+  "params": {
+    "vorgaben_die_gelten_sollen": {
+      "kamera_modus": "shift",
+      "brennweite_mm": 35.0,
+      "auto_richtungen": [
+        "s",
+        "sSE",
+        "nNW"
+      ],
+      "seeds": [
+        0,
+        1,
+        2
+      ]
+    },
+    "faelle": {
+      "B1": "drei volle Laeufe mit den heutigen Vorgaben",
+      "B2": "die 3x3-Matrix je Lauf, roh und ungemittelt",
+      "B3": "Seedstreuung (zeilenweise) gegen Kamerastreuung (spaltenweise)",
+      "B4": "die neue Grundmessung: Score, Kameraspanne, bestanden",
+      "B5": "traegt befund.json und die Terminalausgabe?"
+    },
+    "quelle_der_matrix": "befund.json -> kameras[].seedauswahl.kandidaten[].gerichtet",
+    "vergleichswert_seedstreuung": 0.2269,
+    "warum_roh": "Der behaltene Wert je Kamera ist bereits ein Maximum ueber drei Startwerte. Die Streuung zwischen den Maxima ist NICHT die rohe Kamerastreuung."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "hinweis": "Mit Bildmodell. Drei Laeufe a neun Bildern — das ist der teuerste Auftrag seit der Schwellenstudie, darum nur bei Leerlauf."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": false,
+    "hinweis": "B2 und B3 sind der Kern. Die Matrizen bitte vollstaendig und ungemittelt; B3 mit einem Satz Antwort und den Zahlen daneben. B5 woertlich, auch wenn es haesslich aussieht — gerade dann."
+  }
+}
