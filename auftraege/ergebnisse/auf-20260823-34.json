@@ -1,0 +1,253 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260823-34",
+ "status": "ok",
+ "beendet": "2026-08-23T13:40:00Z",
+ "messwerte": {
+  "aufbau": {
+   "blender": "5.2.0 LTS",
+   "renderer": "Cycles auf CPU (der Runner setzt cycles.device = CPU)",
+   "gpu_waehrend_des_laufs": "17.27 W, 0 % Auslastung ueber 24 Proben — die Karte wurde nicht angefasst.",
+   "cpu_leistung": "NICHT GEMESSEN. Die RAPL-Zaehler sind ohne root nicht lesbar. Die Leistungsgrenze ist damit nur von der GPU-Seite belegt.",
+   "kein_bildmodell": true,
+   "repo_code_unveraendert": true,
+   "repo_stand": "HEAD 8a16d73 zum Zeitpunkt der Messung. Die benutzten Dateien (ifc_to_glb_runner.py, seams.py, raumkamera.py, blender_depth_stage.py) sind seit 4f7f7e9 unveraendert — der neuere Commit betrifft sie nicht.",
+   "wie_der_vergleich_alt_gegen_neu_lief": "Die Fassung des Runners von VOR der Aenderung wurde als Kopie ins Arbeitsverzeichnis ausserhalb des Repos gelegt und von dort gestartet. Im Repo wurde nichts angefasst, kein stash, kein checkout.",
+   "geometrie_R1_R4": "make_test_ifc.py --raeume, dieselbe wie in auf-32 (6541 Bytes, GUIDs identisch zur Datei von gestern)",
+   "geometrie_R5": "PROBE-DEMOHAUS.ifc — synthetisches Demohaus aus der eigenen KosmoOrbit-Lane, im Bestand gefunden, nicht neu gebaut",
+   "samples": 16,
+   "aufloesung_R4": "512 x 512",
+   "aufloesung_R5": "640 x 360"
+  },
+
+  "R1_konversion": {
+   "erwartung": "status ok, n_elements 5, n_uebersprungen 2, uebersprungen {IfcSpace: 2}",
+   "eingetroffen": true,
+   "neu": {
+    "status": "ok",
+    "n_elements": 5,
+    "n_triangles": 60,
+    "n_uebersprungen": 2,
+    "uebersprungen": {"IfcSpace": 2},
+    "up_axis": "Y",
+    "bbox": [[0.0, 0.0, -0.25], [8.0, 5.0, 3.0]],
+    "glb_bytes": 3512,
+    "dauer_s": 0.38
+   },
+   "alt_zum_vergleich": {
+    "status": "ok",
+    "n_elements": 7,
+    "n_triangles": 92,
+    "bbox": [[0.0, 0.0, -0.25], [8.0, 5.0, 3.0]],
+    "glb_bytes": 5388
+   },
+   "was_verschwand": "Zwei Elemente, 32 Dreiecke, 1876 Bytes. Die 7 aus meiner eigenen Messung in auf-32 sind damit unabhaengig bestaetigt: 1 IfcSlab, 4 IfcWall, 2 IfcSpace.",
+   "die_zaehlung_stimmt_mit_der_szene_ueberein": "In Blender nach glTF-Import: 5 Meshes (1 IfcSlab, 4 IfcWall) gegen vorher 7 (dieselben plus IfcSpace_1FQqu1iFXK1Buvx2f6ifNQ und IfcSpace_32QJWq$cjP0QoY$HoB4lel)."
+  },
+
+  "R2_bbox": {
+   "erwartung": "unveraendert gegenueber auf-32",
+   "eingetroffen": true,
+   "auf32_gemessen": {"min": [0.0, -0.0, -0.25], "max": [8.0, 5.0, 3.0]},
+   "heute_report_neu": {"min": [0.0, 0.0, -0.25], "max": [8.0, 5.0, 3.0]},
+   "heute_report_alt": {"min": [0.0, 0.0, -0.25], "max": [8.0, 5.0, 3.0]},
+   "heute_in_blender_neu": {"min": [0.0, -0.0, -0.25], "max": [8.0, 5.0, 3.0]},
+   "heute_in_blender_alt": {"min": [0.0, -0.0, -0.25], "max": [8.0, 5.0, 3.0]},
+   "urteil": "Gleich, auf alle sechs Stellen. Das -0.0 ist ein Vorzeichen-Null aus der Blender-Messung und kein Unterschied.",
+   "aber": "AUF DER SYNTHETISCHEN GEOMETRIE. An der echten Datei aus R5 aendert sich die bbox sehr wohl — siehe R5_bbox. Der Fall, den du fuer moeglich gehalten hast, tritt ein, nur nicht hier."
+  },
+
+  "R3_sichtlinie": {
+   "erwartung": "frontal: frei=True wie vorher, aber objekt nennt jetzt eine IfcWall statt eines IfcSpace, abstand_treffer unveraendert",
+   "eingetroffen": "NUR ZUR HAELFTE — siehe die_antwort.R3",
+   "vier_standpunkte": "neu gerechnet mit seams.ifc_raeume + raumkamera.standpunkte, Ergebnis bis auf die letzte Stelle identisch mit auf-32",
+   "faelle": [
+    {
+     "raum": "Raum-Nord", "art": "frontal",
+     "auge": [4.0, 0.6, 1.35], "ziel": [4.0, 4.7, 1.35],
+     "auf32": {"frei": true, "getroffen": true, "abstand_treffer_m": 4.1,
+               "objekt": "IfcWall_1FMjVFy01IOxjjEoyOZm1b"},
+     "heute": {"frei": true, "getroffen": true, "abstand_treffer_m": 4.1,
+               "objekt": "IfcWall_1FMjVFy01IOxjjEoyOZm1b"},
+     "geaendert": false,
+     "bemerkung": "Traf schon gestern die Wand. Hier gab es nichts zu verbessern."
+    },
+    {
+     "raum": "Raum-Nord", "art": "ueber_eck",
+     "auge": [0.6041, 0.6041, 1.35], "ziel": [4.3941, 4.3941, 1.35],
+     "auf32": {"frei": true, "getroffen": false, "abstand_treffer_m": null, "objekt": null},
+     "heute": {"frei": true, "getroffen": false, "abstand_treffer_m": null, "objekt": null},
+     "geaendert": false,
+     "langstrahl_alt_m": 5.7925, "langstrahl_alt_objekt": "IfcSpace_1FQqu1iFXK1Buvx2f6ifNQ",
+     "langstrahl_neu_m": 5.7925, "langstrahl_neu_objekt": "IfcWall_1FMjVFy01IOxjjEoyOZm1b",
+     "bemerkung": "Urteil unveraendert. Wer es traegt, hat gewechselt: frueher die Austrittsflaeche des eigenen Raumkoerpers, jetzt die Nordwand — beide liegen auf denselben 5.7925 m."
+    },
+    {
+     "raum": "Raum-Sued", "art": "frontal",
+     "auge": [6.35, 0.61, 1.3], "ziel": [6.35, 2.5, 1.3],
+     "auf32": {"frei": true, "getroffen": true, "abstand_treffer_m": 1.89,
+               "objekt": "IfcSpace_1FQqu1iFXK1Buvx2f6ifNQ"},
+     "heute": {"frei": true, "getroffen": false, "abstand_treffer_m": null, "objekt": null},
+     "geaendert": true,
+     "langstrahl_neu_m": 4.09, "langstrahl_neu_objekt": "IfcWall_1FMjVFy01IOxjjEoyOZm1b",
+     "bemerkung": "HIER TRAF DIE ERWARTUNG NICHT ZU. Der Strahl trifft keine Wand — er trifft NICHTS. Die naechste gebaute Substanz in dieser Richtung steht 4.090 m weit weg, also 2.200 m HINTER dem Blickziel."
+    },
+    {
+     "raum": "Raum-Sued", "art": "ueber_eck",
+     "auge": [7.3959, 0.6041, 1.3], "ziel": [5.805, 2.195, 1.3],
+     "auf32": {"frei": true, "getroffen": false, "abstand_treffer_m": null, "objekt": null},
+     "heute": {"frei": true, "getroffen": false, "abstand_treffer_m": null, "objekt": null},
+     "geaendert": false,
+     "langstrahl_alt_m": 2.6813, "langstrahl_alt_objekt": "IfcSpace_32QJWq$cjP0QoY$HoB4lel",
+     "langstrahl_neu_m": 5.7925, "langstrahl_neu_objekt": "IfcWall_1FMjVFy01IOxjjEoyOZm1b",
+     "bemerkung": "Urteil unveraendert, aber die naechste Substanz liegt jetzt 3.111 m weiter weg als vorher der Raumkoerper."
+    }
+   ],
+   "korrektur_zu_auf32": {
+    "was_ich_gestern_geschrieben_habe": "In Raum-Sued sei das getroffene Objekt 'der Raumkoerper selbst' gewesen.",
+    "was_stimmt": "Der getroffene Koerper IfcSpace_1FQqu1iFXK1Buvx2f6ifNQ ist der Raumkoerper von Raum-NORD, nicht der von Raum-Sued. Nachgemessen an den Objekt-Huellboxen: 1FQqu... liegt bei [0.3, 0.3, 0.0] bis [7.7, 4.7, 2.7] (der L-foermige Nordraum), 32QJWq... bei [5.0, 0.3, 0.1] bis [7.7, 2.5, 2.5] (Sued). Die Kamera in Raum-Sued schaute also in den Luftblock des NACHBARRAUMS. Das macht den Befund nicht kleiner, aber er stand falsch da."
+   }
+  },
+
+  "R4_innenraum_multipass": {
+   "standpunkt": {
+    "raum": "Raum-Nord", "art": "frontal",
+    "auge": [4.0, 0.6, 1.35], "blick_auf": [4.0, 4.7, 1.35],
+    "koordinaten": "IFC-Meter, Z oben. Der glTF-Import dreht Y-up wieder auf Z-up, damit sind Szene und IFC deckungsgleich — im Report des Runners steht rotiert=false und der Kameraweg 'vorgegeben'.",
+    "brennweite_mm": 24.0, "sensor_mm": 36.0, "aufloesung": "512 x 512", "samples": 16
+   },
+   "laufzeit_s": {"neu": 4.2, "alt": 4.2},
+   "tiefenkarte_neu": {
+    "n_bildpunkte": 262144,
+    "n_geometrie": 201216, "anteil_geometrie": 0.767578,
+    "n_hintergrund": 60928, "anteil_hintergrund": 0.232422,
+    "min_m": 1.8035, "max_m": 4.1, "spanne_m": 2.2965,
+    "median_m": 4.1, "mittel_m": 3.567,
+    "anteil_unter_0.5_m": 0.0,
+    "anteil_unter_1.0_m": 0.0,
+    "anteil_auf_der_naechsten_stufe_1cm": 0.003906,
+    "anteil_auf_der_naechsten_stufe_5cm": 0.013672,
+    "histogramm": {
+     "1.80-2.03 m": 0.07379, "2.03-2.26 m": 0.05852, "2.26-2.49 m": 0.04835,
+     "2.49-2.72 m": 0.04071, "2.72-2.95 m": 0.03308, "2.95-3.18 m": 0.02799,
+     "3.18-3.41 m": 0.02545, "3.41-3.64 m": 0.02036, "3.64-3.87 m": 0.02036,
+     "3.87-4.10 m": 0.6514
+    }
+   },
+   "tiefenkarte_alt": {
+    "n_bildpunkte": 262144,
+    "n_geometrie": 262144, "anteil_geometrie": 1.0,
+    "n_hintergrund": 0, "anteil_hintergrund": 0.0,
+    "min_m": 1.3359, "max_m": 4.1, "spanne_m": 2.7641,
+    "median_m": 3.0618, "mittel_m": 3.0294,
+    "anteil_unter_0.5_m": 0.0,
+    "anteil_unter_1.0_m": 0.0,
+    "anteil_auf_der_naechsten_stufe_1cm": 0.003906,
+    "anteil_auf_der_naechsten_stufe_5cm": 0.019531,
+    "histogramm": {
+     "1.34-1.61 m": 0.08594, "1.61-1.89 m": 0.10056, "1.89-2.17 m": 0.10498,
+     "2.17-2.44 m": 0.07983, "2.44-2.72 m": 0.0632, "2.72-2.99 m": 0.05322,
+     "2.99-3.27 m": 0.04324, "3.27-3.55 m": 0.03659, "3.55-3.82 m": 0.02994,
+     "3.82-4.10 m": 0.4025
+    }
+   },
+   "beauty_neu": {"mittel": 0.6163, "median": 0.71626, "max": 0.8902,
+                  "anteil_unter_0.02": 0.0, "anteil_ueber_0.5": 0.627},
+   "beauty_alt": {"mittel": 0.00032, "median": 0.0, "max": 0.00392,
+                  "anteil_unter_0.02": 1.0, "anteil_ueber_0.5": 0.0},
+   "punktweiser_vergleich": {
+    "bildpunkte_identisch": 160511, "anteil_identisch": 0.612301,
+    "geometrie_nur_in_alt": 60928, "anteil": 0.232422,
+    "geometrie_nur_in_neu": 0,
+    "beide_geometrie_aber_verschieden": 40705,
+    "davon_in_alt_naeher": 40705,
+    "groesster_vorsprung_von_alt_m": 2.7641
+   },
+   "wo_der_unterschied_im_bild_liegt": {
+    "hintergrundzeilen_neu": "Zeile 0 bis 118 von 512, also die obersten 119 Zeilen, durchgehend Hintergrund.",
+    "hintergrundzeilen_alt": 0,
+    "spalten_mit_naechstwert_unter_1.5_m_alt": 28,
+    "spalten_index_alt": "484 bis 511, also der rechte Bildrand",
+    "dieselben_spalten_in_neu_m": 1.804
+   }
+  },
+
+  "R5_ifc_mit_oeffnungen": {
+   "datei": "PROBE-DEMOHAUS.ifc (FILE_NAME 'Demohaus MFH (Probe).ifc', Erzeuger 'KosmoOrbit V1', IFC4, Millimeter, 70920 Bytes)",
+   "herkunft": "Eigener Bestand, eigene Lane. Keine fremden Projektdaten, nichts ins Repo kopiert.",
+   "inhalt": {"IfcWall": 32, "IfcOpeningElement": 39, "IfcSpace": 26, "IfcSlab": 2,
+              "IfcFurnishingElement": 1, "produkte_mit_geometrie": 100},
+   "konversion_neu": {
+    "status": "ok", "n_elements": 35, "n_triangles": 1096,
+    "n_uebersprungen": 65, "uebersprungen": {"IfcOpeningElement": 39, "IfcSpace": 26},
+    "bbox": [[-0.18, -0.18, -0.4], [15.18, 10.18, 5.6]],
+    "glb_bytes": 33832, "dauer_s": 0.36
+   },
+   "konversion_alt": {
+    "status": "ok", "n_elements": 100, "n_triangles": 1876,
+    "bbox": [[-0.18, -0.19, -0.4], [15.18, 10.19, 5.6]],
+    "glb_bytes": 72896
+   },
+   "R5_bbox": {
+    "befund": "DIE BBOX AENDERT SICH — um 1 cm an beiden Y-Enden.",
+    "alt_y": [-0.19, 10.19], "neu_y": [-0.18, 10.18],
+    "y_spanne_alt_m": 10.38, "y_spanne_neu_m": 10.36,
+    "ursache_gemessen": "Huellbox je Produkttyp, direkt aus der IFC: IfcWall [-0.18, -0.18, 0.0] bis [15.18, 10.18, 5.6]; IfcOpeningElement [0.3, -0.19, 0.0] bis [12.06, 10.19, 5.3]; IfcSpace [0.0, 0.0, 0.0] bis [15.0, 10.0, 5.6]. Die OEFFNUNGEN ragen 1 cm ueber die Wandflaechen hinaus — sie sind 0.38 m tief bei 0.36 m Wand, damit der Abzug sauber schneidet. Die Raumkoerper liegen ganz innen und aendern nichts.",
+    "was_das_heisst": "Die Huellbox dieses Hauses wurde bisher an zwei Seiten von Luft gesetzt, nicht von Substanz. Wer die Kamera aus der bbox ableitet — und `--kamera <kuerzel>` tut genau das —, rahmte 2 cm Luft mit."
+   },
+   "strahl_durch_die_suedfassade": {
+    "was": "Waagrechter Strahl von aussen (y = -3.0) durch die Mitte je einer Oeffnung nach innen, plus eine Gegenprobe auf volle Wand.",
+    "proben": [
+     {"probe": "Tuer x=1.1, z=1.05",   "alt_m": 2.81, "alt_objekt": "IfcOpeningElement_6QUrkPgT11S0Ta6NRp01Ai",
+      "neu_m": 7.45, "neu_objekt": "IfcWall_i05XrB_ZIKej0Ket1lEkIo"},
+     {"probe": "Fenster x=3.0, z=1.7", "alt_m": 2.81, "alt_objekt": "IfcOpeningElement_e5W3Excd7y8ZVdScjhTP3_",
+      "neu_m": 7.45, "neu_objekt": "IfcWall_i05XrB_ZIKej0Ket1lEkIo"},
+     {"probe": "Fenster x=5.4, z=1.7", "alt_m": 2.81, "alt_objekt": "IfcOpeningElement_0SZfG8d_zD53Hy$FaDkuoq",
+      "neu_m": 8.75, "neu_objekt": "IfcWall_onYGip_GNW5zCr2F5A5YT1"},
+     {"probe": "GEGENPROBE volle Wand x=2.0, z=1.7", "alt_m": 2.82, "alt_objekt": "IfcWall_81k8_ZZkEUV7uhfoAGqOuP",
+      "neu_m": 2.82, "neu_objekt": "IfcWall_81k8_ZZkEUV7uhfoAGqOuP"}
+    ],
+    "lesart": "Alt schlaegt der Strahl jedes Mal bei 2.81 m an — 1 cm VOR der Wandflaeche, die bei 2.82 m liegt. Neu geht er durch und trifft erst Innenwaende in 7.45 bis 8.75 m Tiefe. Die Gegenprobe auf volle Wand ist in beiden Faellen dieselbe Zahl: es ging nichts Gebautes verloren."
+   },
+   "fassadenbild": {
+    "aufbau": "35 mm, 640 x 360, 16 Samples, auge (7.5, -16.0, 2.8) -> blick_auf (7.5, 0.0, 2.8), je 2.2 s",
+    "tiefe_neu": {"min_m": 15.82, "max_m": 26.1225, "spanne_m": 10.3025,
+                  "anteil_geometrie": 0.544019, "anteil_tiefer_als_16.2_m": 0.174674},
+    "tiefe_alt": {"min_m": 15.81, "max_m": 16.0, "spanne_m": 0.19,
+                  "anteil_geometrie": 0.55056, "anteil_tiefer_als_16.2_m": 0.0},
+    "beauty_neu": {"mittel": 0.54025, "anteil_unter_0.20": 0.018164, "anteil_unter_0.10": 0.002461},
+    "beauty_alt": {"mittel": 0.56506, "anteil_unter_0.20": 0.0, "anteil_unter_0.10": 0.0},
+    "im_bild": "Neu: sechs offene Oeffnungen mit sichtbaren Laibungen und Innenraum dahinter. Alt: sechs flache Platten, nur als 1-cm-Schattenkante erkennbar.",
+    "die_zahl_die_alles_sagt": "Tiefenspanne der Fassadenansicht: 10.3025 m neu gegen 0.19 m alt. Die 'graue Flaeche ohne Spanne', die du fuer den Innenraum vorhergesagt hast, ist genau das hier — nur aussen, und ausgeloest von IfcOpeningElement."
+   }
+  }
+ },
+
+ "die_antwort": {
+  "R1": "Eingetroffen, Zahl fuer Zahl. status ok, n_elements 5, n_uebersprungen 2, uebersprungen {IfcSpace: 2}. Die Konversion laeuft, es gibt keinen Traceback. Zum Beleg habe ich dieselbe Datei mit der Fassung von VOR deiner Aenderung konvertiert (Kopie ausserhalb des Repos): 7 Elemente, 92 Dreiecke, 5388 Bytes gegen jetzt 5, 60 und 3512. Die 7 aus auf-32 sind damit unabhaengig bestaetigt und die Differenz ist genau die zwei Raumkoerper.",
+
+  "R2": "Eingetroffen: bbox unveraendert, [[0.0, 0.0, -0.25], [8.0, 5.0, 3.0]] im Report, [0.0, -0.0, -0.25] bis [8.0, 5.0, 3.0] in Blender gemessen — dieselbe Zahl wie in auf-32, auf allen Stellen. ABER: Das gilt fuer die synthetische Geometrie, in der die Raumkoerper wirklich ganz innen liegen. An der echten Datei aus R5 aendert sich die bbox sehr wohl, und zwar um 1 cm an beiden Y-Enden. Der Fall, den du fuer moeglich gehalten hast, tritt ein — nur ist der Schuldige nicht der Raum, sondern die Oeffnung. Siehe R5.",
+
+  "R3": "NUR ZUR HAELFTE EINGETROFFEN, und die andere Haelfte ist der interessantere Teil. Raum-Nord frontal ist unveraendert: frei=True, Treffer bei 4.100 m, Objekt IfcWall_1FMjVFy01IOxjjEoyOZm1b — dieser Standpunkt traf schon gestern die Wand. Raum-Sued frontal aber trifft jetzt KEINE Wand, sondern GAR NICHTS: getroffen=False, objekt=None, abstand_treffer=None, wo gestern ein Treffer bei 1.890 m stand. Ich habe mit einem 60-m-Strahl nachgemessen, wo die naechste gebaute Substanz auf dieser Sichtlinie steht: bei 4.090 m, also 2.200 m HINTER dem Blickziel. Der Grund ist die Geometrie und nicht der Filter: Das Blickziel von Raum-Sued liegt auf y = 2.5, und das ist die Grenze zu Raum-Nord — eine Raum-zu-Raum-Kante, an der ueberhaupt keine Wand steht. raumkamera waehlt die laengste Kante des Raumumrisses als Zielwand, und bei diesem Raum ist die laengste Kante keine Wand. Bis gestern fiel das nicht auf, weil der Raumkoerper des NACHBARRAUMS dort eine Flaeche hatte und der Test brav einen exakten Treffer meldete. Der Filter hat einen zweiten Fehler sichtbar gemacht, den er selbst nicht verursacht hat.\n\nDas Urteil frei=True ist an allen vier Standpunkten gleich geblieben, vorher wie nachher. Was sich geaendert hat, ist wovon es getragen wird. Bei zwei der vier trug es vorher Luft.",
+
+  "R4": "DIE TIEFENKARTE ZEIGT EINEN RAUM. Und zwar in BEIDEN Faellen — auch mit der alten Konversion. Der Anteil der Bildpunkte naeher als 0.5 m ist 0.000000, in neu wie in alt, null von 262144. Naeher als 1.0 m ebenfalls null.\n\nNEU: 201216 von 262144 Bildpunkten tragen Geometrie (76.8 %), Tiefe von 1.8035 bis 4.1000 m, Spanne 2.2965 m. Die 4.1000 m sind auf den Millimeter der Abstand, den raumkamera fuer diesen Standpunkt gerechnet hat; die 1.8035 m sind der Fussboden am unteren Bildrand (1.35 m Augenhoehe geteilt durch tan der halben Bildhoehe ergibt 1.80 m — gerechnet und dann gemessen). Auf der naechsten Tiefenstufe (Minimum plus 1 cm) liegen 0.39 % der Bildpunkte, exakt 1024 Stueck, also zwei Bildspalten. Das ist eine Staffelung, keine Flaeche.\n\nALT: 262144 von 262144 (100 %), Tiefe 1.3359 bis 4.1000 m, Spanne 2.7641 m. Auch ein Raum. Auch null Bildpunkte unter 0.5 m.\n\nDIE ERWARTUNG IST NICHT EINGETROFFEN, und das ist der Teil, den ich am wichtigsten finde. Es gab nie eine graue Flaeche unmittelbar vor dem Objektiv, auch nicht mit den Raumkoerpern. Der Grund ist nachgemessen: Der Raumkoerper von Raum-Nord fuellt das Wandinnere lueckenlos aus, seine Flaechen fallen mit den Wandflaechen zusammen. Die einzige Flaeche, die wirklich nah gewesen waere, ist seine Suedflaeche bei y = 0.30 — und die Kamera steht bei y = 0.60, also 0.30 m DAHINTER und mit dem Ruecken zu ihr. Sie ist nie im Bild. Die naechste Flaeche des Raumkoerpers, die im Bild liegt, ist die Kante der L-Form bei x = 5.0: 1.3359 m Tiefe, 28 Bildspalten am rechten Rand, 5.5 % der Bildbreite.\n\nDER FEHLER IST TROTZDEM DA, nur in einem anderen Durchgang und in einer anderen Farbe: DAS BEAUTY-BILD DER ALTEN KONVERSION IST SCHWARZ. Mittlere Leuchtdichte 0.00032, Maximum 0.00392, 100 % der Bildpunkte unter 0.02. Neu: Mittel 0.61630, Median 0.71626, 62.7 % der Bildpunkte ueber 0.5. Der Raumkoerper ist ein geschlossener Quader, die Kamera steht darin, und Sonne wie Umgebungslicht kommen nicht hinein. Nicht Grau, sondern Schwarz; nicht die Tiefe, sondern das Bild. Deine Diagnose war richtig, deine Vorhersage der Zahl nicht — und wer die Kette an der Tiefenkarte geprueft haette, haette den Fehler durchgewinkt.\n\nEIN ZWEITER UNTERSCHIED, DEN NIEMAND BESTELLT HAT: Der Raumkoerper war die DECKE. Der Testbau hat kein Dach; die Waende enden bei z = 3.0. Neu sind darum die obersten 119 von 512 Bildzeilen (23.2 %) offener Himmel, Hintergrund. Alt schloss die Deckflaeche des Raumkoerpers bei z = 2.7 das Bild vollstaendig: 0 Hintergrundpunkte. Punktweise verglichen: 61.2 % der Bildpunkte identisch, 23.2 % nur in alt Geometrie (der Himmel), 0 nur in neu, 15.5 % in beiden aber verschieden — und in ALLEN 40705 davon lag alt naeher, mit bis zu 2.7641 m Vorsprung. Der Raumkoerper hat also nie etwas weiter weg gerueckt, immer nur naeher. Wer nach der Aenderung Innenbilder mit Himmel im oberen Viertel bekommt, hat keinen neuen Fehler, sondern zum ersten Mal ein Modell ohne Dach gesehen.",
+
+  "R5": "ICH HATTE EINE. PROBE-DEMOHAUS.ifc aus der eigenen KosmoOrbit-Lane, IFC4 in Millimetern, 32 IfcWall, 39 IfcOpeningElement, 26 IfcSpace, 2 IfcSlab, 1 IfcFurnishingElement, alle 100 mit Geometrie.\n\nUebersprungen wurden 65: {IfcOpeningElement: 39, IfcSpace: 26}. n_elements 35 gegen 100 vorher, 1096 Dreiecke gegen 1876, glb 33832 Bytes gegen 72896.\n\nSIND DIE FENSTER OFFEN? JA, und es ist auf drei Arten gemessen. Erstens der Strahl: waagrecht von aussen durch die Mitte je einer Oeffnung. Alt schlaegt er jedes Mal bei 2.81 m an, am IfcOpeningElement, 1 cm VOR der Wandflaeche. Neu geht er durch und trifft erst Innenwaende in 7.45, 7.45 und 8.75 m. Gegenprobe auf volle Wand: 2.82 m in beiden Faellen, es ging nichts Gebautes verloren. Zweitens das Bild: sechs offene Laibungen mit Innenraum dahinter gegen sechs flache Platten. Drittens und am schaerfsten die Tiefenspanne der Fassadenansicht — 10.3025 m neu gegen 0.19 m alt. 17.5 % der Geometriepunkte liegen neu tiefer als 16.2 m, alt kein einziger.\n\nDie graue Flaeche ohne Spanne, die du fuer den Innenraum vorhergesagt hast, gibt es also wirklich. Sie stand nur an einer anderen Stelle: aussen, an jeder Fassade mit Fenstern, und sie kam von IfcOpeningElement.\n\nUND SIE HAT DIE BBOX BEWEGT. Alt [-0.18, -0.19, -0.4] bis [15.18, 10.19, 5.6], neu [-0.18, -0.18, -0.4] bis [15.18, 10.18, 5.6]. Ein Zentimeter an beiden Y-Enden. Nachgemessen je Produkttyp: die Oeffnungen reichen von y = -0.19 bis y = 10.19, die Waende nur von -0.18 bis 10.18. Die Oeffnungen sind 0.38 m tief bei 0.36 m Wandstaerke — sie ragen bewusst 1 cm heraus, damit der boolesche Abzug sauber schneidet. Bis heute setzte also Luft die Huellbox dieses Hauses, und `--kamera <kuerzel>` leitet den Standort aus genau dieser Huellbox ab. Das ist die Antwort auf R2, nur an der Datei, an der sie sich zeigt."
+ },
+
+ "was_ich_nicht_geaendert_habe": [
+  "Nichts am Repo-Code. Der Vergleich mit der alten Fassung lief ueber eine Kopie des Runners im Arbeitsverzeichnis ausserhalb des Repos.",
+  "Die Ausschlussliste habe ich nicht angefasst und schlage auch keine Erweiterung vor.",
+  "Der Befund zu raumkamera (Zielwand von Raum-Sued ist keine Wand) ist gemeldet, nicht repariert."
+ ],
+
+ "grenzen_dieser_messung": [
+  "R4 ist an EINEM Standpunkt in EINEM Raum gemessen. Der zweite frontale Standpunkt (Raum-Sued) wurde nicht gerendert — sein Blickziel liegt auf einer Raumgrenze ohne Wand, und ein Multipass von dort haette den Raumkoerper-Effekt mit dem R3-Befund vermischt.",
+  "Die Aussage 'kein Bildpunkt naeher als 0.5 m' gilt fuer diese Geometrie, in der die Raumkoerper das Wandinnere lueckenlos ausfuellen und die Kamera mit dem Ruecken zur naechsten Flaeche steht. Ein Raumkoerper, der GROESSER ist als der Raum, oder eine Kamera naeher an einer Raumgrenze, sind nicht geprueft — dort waere die Zahl eine andere.",
+  "Die CPU-Leistung waehrend der Laeufe ist NICHT GEMESSEN (RAPL ohne root nicht lesbar). Belegt ist nur, dass die GPU unbeteiligt blieb: 17.27 W, 0 % ueber 24 Proben.",
+  "Die Fassadenansicht in R5 ist EINE Ansicht von EINER Seite. Ob alle 39 Oeffnungen frei sind, ist an drei davon geprueft und an den restlichen 36 nicht.",
+  "R5 laeuft auf einer synthetischen Datei aus der eigenen Lane. Wie sich IfcOpeningElement in einer ArchiCAD- oder Revit-Datei verhaelt — ob dort auch 1 cm ueberstehen oder mehr — ist NICHT GEMESSEN.",
+  "Bei gleichem Abstand entscheidet Blenders ray_cast willkuerlich, welches Objekt es nennt. In der alten Szene fielen Raumkoerperflaechen und Wandflaechen mehrfach exakt zusammen; welcher Name dort fiel, ist darum kein Beleg dafuer, dass der andere Koerper nicht auch da war.",
+  "Blender 5.2.0 LTS, Cycles auf CPU, 16 Samples. Andere Fassungen und andere Samplezahlen sind nicht geprueft."
+ ]
+}
