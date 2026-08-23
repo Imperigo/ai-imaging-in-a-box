@@ -1363,7 +1363,57 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Himmelanteils (5/10/20/30/45 %), die aus `MIN_HIMMELANTEIL` eine Messung macht statt
       einer Setzung.
 
-      Ein zweiter Schätzer ist erlaubt, **wenn seine Lizenz vorher genannt ist** und
+      **Nachtrag am selben Abend: Die HomeStation ist unabhängig auf dieselbe Sperre
+      gekommen — und hat die Frage danach besser gestellt** (`auf-vis-20260823-08`).
+      Nachgerechnet an derselben Szene: Bauwerk 1,7124, Nachbar 1,6112. **Der Schätzer
+      ordnet richtig**; er staucht nur den Betrag auf 3 % der Kartenspanne. Ein
+      monokularer Schätzer liefert *relative* Tiefe, die absolute Skala ist willkürlich —
+      und unser zweites Bein benutzt den Betrag. Es ist also gar keine Frage der
+      Modellgrösse gewesen, sondern eine der Masskonstruktion. Die Abstandsreihe, die ich
+      dafür angesetzt hatte, ist damit hinfällig und aus `auf-36` wieder entfernt.
+- [ ] **R2 (Rang statt Betrag) ist der beste Kandidat, den dieses Projekt für die zweite
+      Zeile hatte — und wird trotzdem noch nicht gebaut.** Je Grenzabschnitt Median innen
+      gegen Median aussen im selben Fenster; gezählt wird der **Anteil der Abschnitte**,
+      an denen das Bauwerk lokal näher liegt. Kein Betrag, keine Normierung.
+
+          g0 flach 68,1 % · g1 geneigt 70,3 % · g2 Nachbar 67,0 % · s60 75,5 % · s29 82,5 %
+          Anker: Rauschen 33,7 / 16,1 % · grau 0,0–0,4 % · Verlauf 0,2–0,4 %
+
+      **In g2 trägt es, wo A und F ganz ausfallen.** Fünf Szenen, drei Gebäude, jeder
+      echte Fall 52,6–82,5 %, jeder Anker höchstens 33,7 %.
+
+      **Die HomeStation empfiehlt es mit Vorbehalt und benennt den Vorbehalt selbst:**
+      Als *Anwesenheitsprüfung* taugt R2, als **Gütemass nicht** — die Versatzreihe fällt
+      nicht monoton (auf s60 springt sie bei 0,5 m wieder hoch), und der Szenenabstand
+      liegt bei 8,5 Punkten, wo ρ 0,4 % hat. Der Rauschwert hängt an der Szene (33,7
+      gegen 16,1 %), die Schwelle 45 % braucht darum Luft.
+
+      **Warum trotzdem nicht sofort:** Es gilt der Owner-Entscheid vom 23.08. zu
+      Variante F, und er passt hier genauso — *ein Mass wird nicht gebaut, bis eine
+      weitere Szene es trägt.* Die HomeStation hat diese Vorsicht selbst angeboten.
+
+      **Die eigentliche Lücke ist aber eine andere, und sie hat sie selbst benannt: Kein
+      einziger R2-Wert stammt von einem erzeugten Bild.** Alle Zahlen kommen aus
+      Blender-Renders und den drei Ankern; die Versatzreihe ist der *Ersatz* für
+      schlechter werdende Geometrie. Die Schwelle 45 % entscheidet aber über unsere
+      erzeugten Bilder. Liegt unser bestes (`auf-30`: Umrisstreue 24,3 %) darunter, ist
+      sie unbrauchbar; liegt das ungeführte (6,4 %) darüber, ist sie zahnlos. Das steht
+      als G1 in `auf-36` und ist wichtiger als eine sechste Szene.
+
+      **Offene Frage an die HomeStation, nicht an uns:** Wenn R2 kein Gütemass ist —
+      gehört es dann *neben* das Kantenmass statt an seine Stelle? R2 beantwortete
+      «steht da etwas», das Kantenmass «wie gut», und wo kein Himmel steht, schweigt das
+      zweite und das erste trägt allein. Das wäre ein **drittes Bein** und kein Ersatz.
+      Ich habe ausdrücklich mitgefragt, ob das sauber ist oder bloss mein Unwille,
+      etwas wegzuwerfen.
+
+      **Und was daraus für heute folgt:** Die Zuständigkeitsgrenze aus
+      `MIN_HIMMELANTEIL` gehört zum **Betragsmass**, nicht zur Frage. Kommt ein Rangmass
+      als zweites Bein, muss sie mitgeprüft und vermutlich abgeschaltet werden — sonst
+      brächte sie ein Mass zum Schweigen, das dort antworten kann. Das ist derselbe
+      Fehler in der anderen Richtung und steht darum als Warnung im Code.
+
+      Ein zweiter Schätzer bleibt erlaubt, **wenn seine Lizenz vorher genannt ist** und
       permissiv ausfällt. Eine ungeklärte Lizenz ist ein Befund und kein Hindernis.
 - [x] **Der Bauteilwächter lief auf keinem einzigen echten Auftrag — bis 23.08.2026.**
       Er ist die direkte Antwort auf den teuersten Fehler dieses Projekts: „clean flat

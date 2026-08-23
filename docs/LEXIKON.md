@@ -1396,6 +1396,22 @@ Zufallszahlen —, und dann passt die Tiefenkarte nicht mehr pixelgenau zum Bild
 Geometrie-QA dieses Projekts vergleicht aber punktweise; sie lehnt bei ungleicher Länge zu
 Recht ab.*
 
+**Betragsmass gegen Rangmass** — Zwei Arten, aus derselben Messreihe eine Aussage zu
+gewinnen. Ein **Betragsmass** fragt *wie gross* ein Unterschied ist, ein **Rangmass** nur,
+*welches von beiden grösser* ist.
+*Der Unterschied entscheidet, wo ein Mass noch trägt. Ein Tiefenschätzer, der nur ein
+einzelnes Bild sieht, gibt **relative** Tiefe: Die Reihenfolge stimmt, die Skala ist
+willkürlich. Fragt man ihn nach dem Betrag, bekommt man eine Zahl, die von der Skala
+abhängt — und die staucht er dort, wo ihm der Bildhinweis fehlt.*
+*Am 23.08.2026 gemessen, an derselben Stelle desselben Bildes: Bauwerk 1,7124, Nachbar
+1,6112. Die Reihenfolge ist richtig — der Nachbar liegt hinten. Der Betrag beträgt aber nur
+3 % der Kartenspanne, obwohl in Wirklichkeit 15 m dazwischen liegen. Ein Betragsmass misst
+dort nichts mehr, ein Rangmass auf denselben Daten 67 % gegen einen Zufallswert von 34 %.*
+*Der Preis ist gleich mitgemessen: Das Rangmass beantwortet «steht da etwas», nicht «wie
+gut ist es gezeichnet» — seine Werte fallen nicht gleichmässig, wenn das Bauwerk
+schrittweise verschoben wird. Ein Rangmass ist darum kein besseres Mass, sondern ein
+anderes.*
+
 **Rangkorrelation (Spearman)** — Misst, ob zwei Messreihen dieselbe *Reihenfolge* haben,
 nicht dieselben Werte. Wert zwischen −1 und 1. *Hier zentral: Eine aus einem Bild
 zurückgerechnete Tiefenkarte hat einen anderen Massstab und Nullpunkt als echte Meter —
@@ -3123,6 +3139,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-23 | Ergaenzt: **Betragsmass gegen Rangmass**. Am selben Abend nachgereicht, weil die HomeStation die Frage nach dem groesseren Schaetzer als falsch gestellte entlarvt hat: Der Schaetzer ORDNET richtig und staucht nur den Betrag. Damit ist es keine Frage der Modellgroesse, sondern eine der Masskonstruktion — und der Preis des Rangmasses (es beantwortet Anwesenheit, nicht Guete) steht mit im Eintrag |
 | 2026-08-23 | Ergaenzt aus einer Messung, die ein Mass erledigt hat: **Himmel hinter dem Umriss** und **Zustaendigkeitsgrenze (eines Messverfahrens)**. Die HomeStation hat dieselbe Kamera dreimal gerechnet und nur den Hintergrund getauscht — mit einem Nachbargebaeude dahinter trennt die Umrisstreue ein perfektes Bild nicht mehr von weissem Rauschen. Daraus folgt keine bessere Normierung, sondern eine dritte Antwort neben bestanden und durchgefallen |
 | 2026-08-23 | **Vertragsfeld** ausgebaut statt verdoppelt: Ich hatte einen zweiten Eintrag dazu geschrieben, `test_lexikon` fing ihn, und der Test hatte recht — der Begriff stand laengst da. Ergaenzt ist die andere Seite derselben Sache: Alles, was KEIN Vertragsfeld ist, muss daneben landen, und wenn „daneben" in Wahrheit „gar nicht" heisst, ist es umsonst gerechnet |
 | 2026-08-23 | Ergaenzt: **Auswahleffekt beim Minimum (Extremwertstatistik)**. Anlass ist eine Nebenwirkung der Umstellung auf drei Ansichten: Das Urteil ist das der schwaechsten Kamera, und ein Minimum faellt mit der Zahl der Ziehungen — um rund 0,19, also mehr als jeder Parametereffekt der Kette. Niemand hatte das entschieden |

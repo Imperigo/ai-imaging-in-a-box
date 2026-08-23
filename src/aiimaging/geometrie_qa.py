@@ -1715,6 +1715,21 @@ def anteil_grenze_mit_kante(ist: Sequence[float], maske: Sequence[bool], *,
 #:
 #: Der Wert ist eine **Setzung**: 10 % gemessene Himmelabschnitte. Zwischen 0 % (nichts)
 #: und 63 % (trägt) liegt nichts Gemessenes; wer die Lücke füllt, ändert die Zahl.
+#:
+#: .. important::
+#:    **Diese Grenze gehört zum BETRAGSMASS, nicht zur Frage.** Sie ist die Antwort
+#:    darauf, dass unser zweites Bein den *Betrag* des Tiefensprungs benutzt — und der
+#:    wird gestaucht, wo kein Himmel dahintersteht.
+#:
+#:    Der Schätzer selbst **ordnet dort richtig**: an derselben Szene Bauwerk 1.7124,
+#:    Nachbar 1.6112, der Nachbar liegt also hinten (`auf-vis-20260823-08`). Ein
+#:    monokularer Schätzer liefert *relative* Tiefe; die absolute Skala ist willkürlich.
+#:    Ein **rangbasiertes** Mass trägt dort darum weiter — die HomeStation misst mit einer
+#:    solchen Variante in derselben Szene 67,0 % gegen einen Rauschanker von 33,7 %.
+#:
+#:    Wer das zweite Bein einmal auf ein Rangmass umstellt, muss diese Grenze also
+#:    **mitprüfen und vermutlich abschalten**. Sie hier stehenzulassen wäre dann derselbe
+#:    Fehler in der anderen Richtung: ein Mass zum Schweigen bringen, das antworten kann.
 MIN_HIMMELANTEIL = 0.10
 
 
@@ -1891,6 +1906,11 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
     siehe :data:`MIN_HIMMELANTEIL`). Darum fragt ``himmel_ergebnis`` **vor** dem Urteil,
     ob hier überhaupt gemessen werden kann. Nicht messbar ist nicht dasselbe wie schlecht
     — und ein grünes Abzeichen wäre dort in die gefährliche Richtung falsch.
+
+    **Und die Grenze hängt am Mass, nicht an der Szene.** Der Schätzer ordnet auch dort
+    richtig; nur der *Betrag* wird gestaucht. Ein rangbasiertes zweites Bein bräuchte
+    ``himmel_ergebnis`` darum nicht — wer eines einbaut, prüft diese Grenze mit
+    (`auf-vis-20260823-08`).
 
     .. warning::
        **Bis zum 22.08.2026 stand hier: „Dieser Paartest würde jedes Bild abweisen, das

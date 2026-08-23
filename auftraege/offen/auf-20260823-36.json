@@ -2,9 +2,9 @@
   "schema": "aiimaging.homeworker-auftrag/v1",
   "worker": "local",
   "auftrag_id": "auf-20260823-36",
-  "art": "qa",
-  "beschreibung": "NEU GESCHRIEBEN — dein auf-vis-20260823-07 hat die alte Fassung dieses Auftrags erledigt, bevor er lief. Variante F wird nicht gebaut. Was hier steht, ist das, was DEIN Befund offen gelassen hat.\n\n=== WAS DU GEFUNDEN HAST, IN EINEM ABSATZ ===\nDrei Szenen, gleiche Kamera, gleiches Bauwerk, nur der Hintergrund anders:\n  g0 flach              63.3 % Himmel hinter dem Umriss   Kante +0.4227\n  g1 geneigt             0.0 %                            Kante +0.1442\n  g2 Nachbargebaeude     0.0 %                            Kante +0.0016  (Rauschanker -0.0024)\nIn g2 trennt das Mass ein PERFEKTES Bild nicht mehr von weissem Rauschen. Der Nachbar steht im Soll 15.05 m weiter hinten, der Schaetzer legt beide nur 3.0 % der Kartenspanne auseinander. Der wahre Sprung ist dort am groessten, der gemessene am kleinsten — die Beziehung ist umgekehrt.\n\n=== WAS ICH DARAUFHIN GEBAUT HABE (schon erledigt, nicht nachbauen) ===\nGenau deinen Vorschlag: geometrie_qa.himmel_hinter_umriss() liest AUS DEM SOLL, wieviel des Umrisses Himmel hinter sich hat. Liegt der Anteil unter 10 %, faellt paarurteil() kein Urteil mehr — zustaendig=False, bestanden=None, mit benanntem Grund. Der Kurzbefund nennt die betroffenen Kameras. Nicht messbar ist weder bestanden noch durchgefallen.\n\n=== DIE MELDUNG, DIE DU KENNEN MUSST (Regel 1) ===\nDein interessantester Punkt war: 'Loest ein groesserer Schaetzer die 15 m auf, ist der ganze Befund eine Frage der Modellgroesse.'\n\nDIESER WEG IST LIZENZRECHTLICH ZU. depth-anything-v2 in base, large und giant steht unter CC-BY-NC-4.0 — NonCommercial. Nach Regel 1 sind Modellgewichte mit Non-Commercial-Lizenz ausgeschlossen, genau wie FLUX.1-dev. Zulaessig ist bei uns nur depth-anything-v2-small (Apache-2.0). Bitte lade die groesseren NICHT herunter und miss NICHT mit ihnen, auch nicht 'nur zum Vergleich' — ein Messwert, den wir nicht benutzen duerfen, ist Arbeit ohne Ertrag und im Repo eine Altlast.\n\nDie Frage bleibt trotzdem beantwortbar, nur anders. Darum die drei Punkte unten.\n\n=== G1 · AB WELCHEM ABSTAND TRENNT DER KLEINE SCHAETZER UEBERHAUPT? ===\nDeine g2 mit EINEM Parameter durchgefahren: der Abstand des Nachbargebaeudes hinter dem Bauwerk. Nimm 15 m (dein gemessener Fall), 30 m, 60 m, 120 m. Alles andere unveraendert — gleiche Kamera, gleiches Bauwerk, gleicher Schaetzer, perfektes Bild.\n\nJe Abstand zurueck:\n  - der WAHRE Sprung an der Silhouette (aus dem Soll, in Metern)\n  - der GEMESSENE Sprung (in Anteilen der Kartenspanne)\n  - die gerichtete Kante und der Anteil der Grenze mit Kante\n  - derselbe Lauf auf weissem Rauschen als Anker\n\nWOZU: Das trennt zwei Erklaerungen, die heute beide passen. Entweder braucht der Schaetzer nur genug Abstand — dann ist deine Beobachtung eine Aufloesungsgrenze in Metern, und wir koennen sie hinschreiben. Oder auch 120 m aendern nichts — dann ist es keine Frage der Feinheit, sondern eine des Bildhinweises, und ein groesserer Schaetzer haette vermutlich auch nichts genuetzt. Das ist die billigste Art, deine Modellgroessen-Frage zu beantworten, ohne ein Gewicht anzufassen, das wir nicht benutzen duerfen.\n\n=== G2 · DIE 10 % SIND EINE SETZUNG. MACH EINE MESSUNG DARAUS. ===\nIch habe die Schwelle auf 10 % Himmel hinter dem Umriss gesetzt. Zwischen deinen 0.0 % (misst nichts) und 63.3 % (misst) liegt NICHTS Gemessenes — die Zahl ist geraten, und das steht auch so im Code.\n\nBau dieselbe Szene mit gestuftem Himmelanteil: ungefaehr 5, 10, 20, 30, 45 %. Am einfachsten ueber die Hoehe der Rueckwand oder des Nachbarbaus, oder ueber die Kamerahoehe — wie du es billiger hinbekommst, entscheidest du.\n\nJe Stufe zurueck:\n  - der gemessene Himmelanteil hinter dem Umriss (nach DEINER Rechnung, ganz nach vorn)\n  - gerichtete Kante und Anteil der Grenze mit Kante, je fuer: perfektes Bild, Versatz 1 m, Versatz 4 m, weisses Rauschen\n  - die Zahl der Grenzabschnitte, aus denen der Wert entstand\n\nWOZU: Gesucht ist die Stufe, ab der das perfekte Bild wieder sicher ueber dem Rauschanker liegt. Das ist der ehrliche Wert fuer die Schwelle. Faellt er deutlich neben 10 %, aendere ich die Zahl — dafuer ist sie da.\n\n=== G3 · NUR WENN ES BILLIG IST: EIN ZWEITER ZULAESSIGER SCHAETZER ===\nWenn auf der HomeStation ohnehin ein anderer Tiefenschaetzer liegt: nenne ihn mit LIZENZ, bevor du misst. Ist sie MIT, Apache-2.0, BSD oder MPL-2.0, lauf damit deine drei Originalszenen g0/g1/g2 nach und schick die Tabelle. Ist sie es nicht — oder findest du sie nicht sicher heraus — dann NICHT messen und stattdessen genau das melden. Eine ungeklaerte Lizenz ist ein Befund und kein Hindernis.\n\n=== WAS DU NICHT TUN SOLLST ===\n- Kein depth-anything-v2 in base/large/giant, aus dem Grund oben.\n- Variante F nicht weiterbauen. Sie ist erledigt, und zwar durch deine eigene Messung.\n- Kein Bildmodell noetig. Versatz und Nullanker sind rechnerisch erzeugbar wie bisher.\n- Keine Geometrie ins Repo. Zahlen, Dateinamen und Pfade auf der HomeStation, sonst nichts (Regel 3).\n\n=== RUECKGABE ===\nNach auftraege/ergebnisse/auf-20260823-36.json. G1 und G2 sind der Kern; G3 ist Zugabe. Bei G1 interessiert mich deine Einschaetzung so sehr wie die Zahl: Wuerdest du nach diesen vier Abstaenden sagen, dass es an der Aufloesung liegt oder am fehlenden Bildhinweis? Und wenn keiner der vier Abstaende hilft — sag das deutlich, das waere das aussagekraeftigste Ergebnis von allen.",
-  "erstellt": "2026-08-23T20:00:06Z",
+  "art": "render",
+  "beschreibung": "ZUM ZWEITEN MAL AN EINEM TAG NEU GESCHRIEBEN — und beide Male, weil DU schneller warst als der Auftrag. Die Fassung von heute Morgen fragte nach Variante F; auf-vis-07 hat sie erledigt. Die Fassung von heute Abend fragte nach der Aufloesungsgrenze in Metern; auf-vis-08 hat sie erledigt, bevor du sie gelesen hast. Lies also nur, was hier steht.\n\n=== WAS ICH GERADE VERWORFEN HABE, DAMIT DU ES NICHT DOCH MISST ===\nIch wollte deine g2 mit wachsendem Abstand durchfahren (15 / 30 / 60 / 120 m), um zu trennen, ob es an der Aufloesung liegt oder am fehlenden Bildhinweis. Deine Zahl macht das ueberfluessig: Bauwerk 1.7124, Nachbar 1.6112 — der Schaetzer ORDNET richtig, er staucht nur den Betrag. Es ist also keine Aufloesungsfrage. Miss die Abstandsreihe NICHT.\n\nUnd zur Lizenz sind wir unabhaengig voneinander auf dasselbe gekommen: base/large/giant sind CC-BY-NC-4.0 und nach Regel 1 ausgeschlossen, auch zum blossen Vergleich. Das ist damit geklaert und braucht keine Messung.\n\n=== WAS ICH INZWISCHEN GEBAUT HABE (nicht nachbauen) ===\nDeinen Vorschlag aus auf-07: himmel_hinter_umriss() liest AUS DEM SOLL, wieviel des Umrisses Himmel hinter sich hat; unter 10 % faellt paarurteil kein Urteil mehr (zustaendig=False, bestanden=None, mit Grund). Der Kurzbefund nennt die betroffenen Kameras.\n\nWICHTIG FUER DICH: Diese Grenze gehoert zum BETRAGSMASS, nicht zur Frage. Wenn R2 das zweite Bein wird, gehoert sie mitgeprueft und vermutlich abgeschaltet — sonst brachte ich ein Mass zum Schweigen, das dort antworten kann. Das steht so im Code, damit es niemand uebersieht.\n\n=== R2: DIE ENTSCHEIDUNG IST NOCH NICHT GEFALLEN, UND DAS IST KEINE ABLEHNUNG ===\nDeine Tabelle ist die beste Beleglage, die ein Vorschlag in diesem Projekt bisher hatte: fuenf Szenen, drei Gebaeude, jeder echte Fall 52.6-82.5 %, jeder Anker hoechstens 33.7 %. Dass du den Irrweg (Maximum gegen Einzelpunkt, Rauschen 71.3 %) dazugeschrieben hast, erspart dem Naechsten genau diesen Anlauf.\n\nEs gilt trotzdem der Entscheid des Owners vom 23.08. zu Variante F, und er gilt hier genauso: EIN MASS WIRD NICHT GEBAUT, BIS EINE WEITERE SZENE ES TRAEGT. Das ist keine Skepsis gegen dich — du hast heute selbst zwei eigene Vorschlaege zurueckgezogen, beide nachdem eine Eichung sie erledigt hatte. Du hast diese Vorsicht selbst angeboten, und wir nehmen sie an.\n\n=== G1 · DIE LUECKE, DIE DU SELBST BENANNT HAST: ERZEUGTE BILDER ===\nDas ist der Kern dieses Auftrags, und er ist wichtiger als eine sechste Szene.\n\nAlle R2-Werte stammen aus Blender-Renders und den drei Ankern. Die Versatzreihe ist dein Ersatz fuer 'schlechter werdende Geometrie' — aber ein versetztes perfektes Bild ist etwas anderes als ein erzeugtes Bild. Kein einziger R2-Wert stammt bisher von einem Bild, das unser Bildmodell gemacht hat.\n\nLauf R2 auf den erzeugten Bildern, die wir haben oder die du erzeugen kannst:\n  - unser bestes erzeugtes Bild (aus auf-30: Umrisstreue 24.3 %, rho_maske 0.9059)\n  - eines ohne Tiefenfuehrung (auf-30: 6.4 %, rho_maske 0.2558)\n  - das qwen-Bild ohne echte Fuehrung (auf-30: 2.8 %, rho_maske 0.7406)\n  - dazu je die drei Anker derselben Szene\n\nJe Bild zurueck: R2 in Prozent, die Zahl der gewerteten Grenzabschnitte, rho_maske daneben.\n\nWOZU, und das ist die eigentliche Frage: Die Schwelle 45 % entscheidet ueber unsere erzeugten Bilder, nicht ueber Blender-Renders. Liegt unser bestes erzeugtes Bild darunter, ist die Schwelle unbrauchbar. Liegt das ungefuehrte darueber, ist sie zahnlos. Beides waere ein Ergebnis, und beide will ich vor dem Einbau wissen und nicht danach.\n\n=== G2 · DIE SECHSTE SZENE, DIE DU ANGEBOTEN HAST ===\nEine Szene, die von den fuenf bisherigen moeglichst weit weg liegt — nicht noch ein Quader vor Hintergrund. Waehle du; wenn du keine Praeferenz hast, waere ein schmaler hoher Bau in einer engen Gasse interessant, weil dort BEIDE Seiten des Umrisses verbaut sind statt einer.\n\nDieselbe Tabelle wie in auf-08: perfekt, Versatzreihe, drei Anker, R2 und A nebeneinander, und der gemessene Himmelanteil ganz nach vorn.\n\n=== G3 · NUR WENN BEIDES BILLIG WAR ===\nDer Fensterradius 6 px und 'jeder dritte Grenzpunkt' sind gesetzt, nicht gemessen. Wenn G1 und G2 stehen: derselbe Lauf mit Radius 3 und 12. Faellt R2 dabei deutlich anders aus, ist der Radius ein verstecktes Stellrad und gehoert deklariert.\n\n=== WAS DU NICHT TUN SOLLST ===\n- Keine Abstandsreihe (15/30/60/120 m) — deine eigene Zahl hat sie erledigt.\n- Kein depth-anything-v2 in base/large/giant. Lizenz, siehe oben.\n- Variante F nicht weiterbauen.\n- R2 noch nicht in unseren Code einbauen — das ist unsere Seite, und erst nach G1.\n- Keine Geometrie und keine Bilder ins Repo. Zahlen, Dateinamen, Pfade auf der HomeStation (Regel 3).\n\n=== RUECKGABE ===\nNach auftraege/ergebnisse/auf-20260823-36.json. G1 ist der Kern; G2 die Absicherung; G3 Zugabe.\n\nUnd eine Frage, deren Antwort ich als Einschaetzung will und nicht als Zahl: Du sagst, R2 taugt als Anwesenheitspruefung und NICHT als Guetemass — die Versatzreihe faellt nicht monoton. Wuerdest du R2 dann NEBEN das Kantenmass stellen statt an seine Stelle? Also: R2 beantwortet 'steht da etwas', das Kantenmass 'wie gut', und wo kein Himmel steht, schweigt das zweite und das erste traegt allein. Das waere ein DRITTES Bein und kein Ersatz. Sag mir, ob das aus deiner Sicht sauber ist oder ob es nur mein Unwille ist, etwas wegzuwerfen.",
+  "erstellt": "2026-08-23T20:04:43Z",
   "geometrie": {
     "synthetisch": true,
     "pfad": null,
@@ -12,23 +12,56 @@
   },
   "params": {
     "kernfragen": {
-      "G1": "Ab welchem Abstand trennt depth-anything-v2-small zwei Betonkoerper? 15/30/60/120 m",
-      "G2": "Ab welchem Himmelanteil traegt das zweite Bein wieder? 5/10/20/30/45 %",
-      "G3": "Zweiter Schaetzer nur, wenn die Lizenz permissiv ist — Lizenz zuerst nennen"
+      "G1": "R2 auf ERZEUGTEN Bildern — haelt die Schwelle 45 % dort, wo sie entscheidet?",
+      "G2": "Sechste Szene, moeglichst weit weg von den fuenf bisherigen",
+      "G3": "Fensterradius 3 / 6 / 12 — ist der Radius ein verstecktes Stellrad?"
+    },
+    "erledigt_nicht_messen": {
+      "abstandsreihe_15_30_60_120_m": "hinfaellig: der Schaetzer ordnet richtig (Bauwerk 1.7124, Nachbar 1.6112), er staucht nur den Betrag",
+      "groesserer_schaetzer": "lizenzgesperrt, CC-BY-NC-4.0, Regel 1"
     },
     "bereits_gemessen_nicht_wiederholen": {
-      "g0_himmelanteil": 0.633,
-      "g0_kante": 0.4227,
-      "g1_himmelanteil": 0.0,
-      "g1_kante": 0.1442,
-      "g2_himmelanteil": 0.0,
-      "g2_kante": 0.0016,
-      "g2_rauschanker": -0.0024,
-      "g2_wahrer_abstand_m": 15.05,
-      "g2_gemessener_abstand_anteil_kartenspanne": 0.03
+      "R2_perfekt": {
+        "g0": 0.681,
+        "g1": 0.703,
+        "g2": 0.67,
+        "s60": 0.755,
+        "s29": 0.825
+      },
+      "R2_anker_rauschen": {
+        "g_szenen": 0.337,
+        "s_szenen": 0.161
+      },
+      "R2_schwellenvorschlag": 0.45,
+      "A_gerichtet": {
+        "g0": 0.4267,
+        "g1": 0.1442,
+        "g2": 0.0016
+      },
+      "himmelanteil": {
+        "g0": 0.633,
+        "g1": 0.0,
+        "g2": 0.0
+      }
+    },
+    "vergleichswerte_erzeugte_bilder_aus_auf30": {
+      "B_mit_fuehrung": {
+        "umrisstreue": 0.243,
+        "rho_maske": 0.9059
+      },
+      "C_ohne_fuehrung": {
+        "umrisstreue": 0.064,
+        "rho_maske": 0.2558
+      },
+      "A_qwen": {
+        "umrisstreue": 0.028,
+        "rho_maske": 0.7406
+      }
     },
     "gesetzt_nicht_gemessen": {
-      "MIN_HIMMELANTEIL": 0.1
+      "MIN_HIMMELANTEIL": 0.1,
+      "R2_fensterradius_px": 6,
+      "R2_jeder_nte_grenzpunkt": 3
     },
     "lizenzsperre": {
       "verboten": [
@@ -37,7 +70,7 @@
         "depth-anything-v2-giant"
       ],
       "lizenz": "CC-BY-NC-4.0",
-      "grund": "NonCommercial — nach Regel 1 ausgeschlossen, auch fuer Vergleichsmessungen",
+      "grund": "NonCommercial — Regel 1, auch fuer blosse Vergleichsmessungen",
       "zulaessig": [
         "depth-anything-v2-small (Apache-2.0)"
       ]
