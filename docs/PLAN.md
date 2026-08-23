@@ -1345,6 +1345,38 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 
       **Offen bleibt die Stadtfrage.** Ist der Hintergrund verbaut, beantwortet heute
       *niemand* die Existenzfrage — ρ beantwortet die Richtigkeit und ersetzt sie nicht.
+- [x] **Fünf Felder der Bestellung erreichen nichts — gezählt, gemeldet, nicht
+      stillschweigend repariert** (23.08.2026). Anlass sind die zwei Fehler desselben
+      Tages: Brennweite und Geländestand waren im Kern einstellbar und kamen an der
+      Aussenkante nicht durch. Daraufhin umgedreht und abgezählt, welche Felder aus
+      `kosmovis.render-scene/v1` unsere Kette wirklich erreichen — **zehn ja, fünf nein**:
+
+      * `render.sun` — **der gefährlichste.** Die Sonne steht in `blender_depth_stage`
+        fest auf 50°/35°. Wer einen Abendstand bestellt, bekommt ein sauber belichtetes,
+        gut aussehendes, **falsches** Bild, und nichts daran sieht nach einem Fehler aus.
+      * `vis.skip` — **der unangenehmste.** Gelesen und nicht beachtet: Wer etwas
+        *abbestellt*, bekommt es geliefert.
+      * `vis.upscale` — es gibt keinen Hochskalierer; `true` liefert dasselbe wie `false`.
+      * `style.mode` / `style.refs` — die Stil-QA läuft nicht (kein eigenes Referenzset).
+        Bei `refs` kommt dazu, dass der Betreiber eigene Dateien mitschickt, also Arbeit
+        hineinsteckt, die verfällt.
+
+      **Gebaut wurde der Wächter, nicht die Behebung.** `kosmo_szene.DURCHGEREICHT` und
+      `STEHENGEBLIEBEN` führen **jedes** gelesene Feld in genau einer der beiden Listen;
+      ein Test verhindert die dritte Möglichkeit — «steht nirgends» —, und die ist die
+      bequemste. Jeder stehengebliebene Eintrag trägt **was fehlt**, nicht bloss *dass*
+      etwas fehlt; mein erster Versuch schrieb dort «siehe oben», und der eigene Test hat
+      ihn zurückgewiesen.
+
+      Gemeldet wird nur, was auch wirklich gesetzt war — sonst wäre es die nächste
+      Dauerwarnung, und die Lehre dazu ist von heute Vormittag.
+
+      **Behoben ist nichts davon, und das ist Absicht.** Alle fünf verlangen eine
+      Festlegung im *fremden* Vertrag: Wogegen wird `azimuth` gemessen? Was soll `skip`
+      zurückgeben? Misst unsere QA vor oder nach dem Hochskalieren? Wie gelangen fremde
+      Referenzbilder zu uns, ohne durch ein öffentliches Repo zu reisen? Das steht als
+      `auf-37` beim **Cloud-Worker** — ein Vertragsauftrag an die HomeStation liefe ins
+      Leere.
 - [ ] **LIZENZMELDUNG (Regel 1): Der naheliegende nächste Versuch ist gesperrt.** Die
       HomeStation hat gefragt, ob ein *grösserer* Tiefenschätzer die 15 m auflöst — dann
       wäre der ganze Befund eine Frage der Modellgrösse. **Das ist mit erlaubten Gewichten

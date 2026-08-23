@@ -1,0 +1,52 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "cloud",
+  "auftrag_id": "auf-20260823-37",
+  "art": "qa",
+  "beschreibung": "FUENF FELDER EURES VERTRAGS BEWIRKEN BEI UNS NICHTS. Das ist unsere Meldung, nicht eure Schuld — aber die Entscheidung, was daraus wird, gehoert in euren Vertrag und nicht in unseren Code.\n\n=== WIE ES AUFFIEL ===\nWir haben am 23.08.2026 zweimal denselben Fehler gemacht: Ein Parameter war im Kern einstellbar und kam an der Aussenkante trotzdem nicht durch (Brennweite, Gelaendestand). Daraufhin haben wir es umgedreht und ABGEZAEHLT, welche Felder aus 'kosmovis.render-scene/v1' unsere Kette wirklich erreichen. Ergebnis: zehn ja, fuenf nein.\n\n=== DIE FUENF, MIT DEM, WAS HEUTE PASSIERT ===\n\n1. render.sun — DER GEFAEHRLICHSTE.\n   Die Sonne steht in unserem Blender-Schritt FEST auf 50 Grad Hoehe und 35 Grad Azimut. Wer einen Abendstand bestellt, bekommt ein sauber belichtetes, gut aussehendes, FALSCHES Bild. Nichts daran sieht nach einem Fehler aus — das ist der Punkt.\n   WAS WIR BRAUCHEN, UM ES ZU BAUEN: eine Festlegung, wogegen 'azimuth' gemessen wird. Gegen Norden? Gegen die +Y-Achse der Szene? Und ist 'elevation' der Sonnenstand ueber dem Horizont oder der Einfallswinkel? Wir koennen das raten, aber ein geratener Sonnenstand ist genau der Fehler, den wir gerade melden.\n\n2. vis.skip — DIE UNANGENEHMSTE.\n   Wird gelesen und nicht beachtet. Wer einen Auftrag ABBESTELLT, bekommt ihn geliefert.\n   WAS WIR BRAUCHEN: Was soll 'skip: true' bedeuten? Gar kein Ergebnis? Oder ein Ergebnis mit leerer Bildliste und einem Grund im Vertrag? Euer Schema hat fuer 'uebersprungen' derzeit kein Feld, und ein leeres 'images' ist von einem Fehlschlag nicht zu unterscheiden.\n\n3. vis.upscale — es gibt keinen Hochskalierer in unserer Kette. 'true' liefert dasselbe wie 'false'.\n   WAS WIR BRAUCHEN: erstens einen Hochskalierer mit permissiver Lizenz (Regel 1 — MIT, Apache-2.0, BSD oder MPL-2.0; kein GPL, kein NonCommercial). Zweitens einen Entscheid, ob unsere Geometriemessung auf dem hochskalierten oder auf dem urspruenglichen Bild laeuft. Beides ist offen, und das zweite ist die interessantere Frage: Ein Hochskalierer erfindet Bildinhalt, und wir messen Bildinhalt.\n\n4./5. style.mode und style.refs — die Stil-QA laeuft bei uns nicht.\n   Das ist ausdruecklich entschieden und nicht vergessen: Sie braeuchte ein Referenzset, das uns gehoert; unsere bisherigen Referenzen sind fremde Bildschirmfotos und taugen als Anschauung, nicht als Messgrundlage. Unser Ergebnis schreibt bei fehlendem Stilurteil bereits 'ungeprueft' statt 'durchgefallen' — die Luecke ist also im ERGEBNIS sichtbar, nur nicht in der BESTELLUNG.\n   Bei 'refs' kommt etwas dazu: Der Betreiber schickt eigene Dateien mit, steckt also Arbeit hinein, die verfaellt. Und es ist ungeklaert, wie fremde Referenzbilder ueberhaupt zu uns gelangen sollen — Regel 3 verbietet Bilder in unserem Repo, ein Pfad auf eurem Rechner nuetzt uns nichts.\n\n=== WAS WIR INZWISCHEN GETAN HABEN ===\nNichts stillschweigend repariert. Wir melden es:\n  - Eine Tabelle im Code fuehrt JEDES gelesene Feld in genau einer von zwei Listen: 'kommt an' oder 'bleibt stehen, aus diesem Grund, und dies muesste geschehen'. Ein Test verhindert die dritte Moeglichkeit ('steht nirgends'), denn die ist die bequemste.\n  - Der Befund neben dem Vertragsergebnis nennt je Auftrag, was bestellt und nicht ausgefuehrt wurde — aber nur, wenn es auch wirklich gesetzt war. Eine Meldung bei jedem Auftrag waere nach dem dritten Mal unsichtbar.\n\n=== WAS WIR VON EUCH BRAUCHEN ===\nKein Code, keine Messung — Entscheidungen an eurem Vertrag:\n\n  F1 · Sonnenstand: Bezugsrichtung fuer 'azimuth' und Bedeutung von 'elevation', schriftlich im Schema. Das ist die wichtigste der fuenf.\n  F2 · skip: Was soll zurueckkommen? Wenn ihr ein Feld dafuer wollt, schlagt es vor — wir richten uns danach.\n  F3 · upscale: Wollt ihr es ueberhaupt, oder ist es ein Ueberbleibsel? Wenn ja, misst unsere QA vorher oder nachher?\n  F4 · style.refs: Wie sollen Referenzbilder zu uns gelangen, ohne dass sie durch ein oeffentliches Repo reisen?\n  F5 · Und die allgemeine: Wollt ihr, dass Felder, die wir nicht erfuellen, im ERGEBNIS auftauchen? Wir haben die Angabe heute nur neben dem Vertrag. Ein Feld wie 'unfulfilled': ['sun', 'skip'] waere ehrlicher als Schweigen — aber es ist euer Schema.\n\n=== WAS DIESER AUFTRAG NICHT IST ===\nKeine Messung. Keine GPU. Kein Zugriff auf unser Repo noetig. Wenn hier etwas nach einer Renderaufgabe klingt, ist es falsch gelesen — dann sagt es uns, das waere selbst schon ein Befund ueber diesen Auftrag.\n\n=== RUECKGABE ===\nAntworten auf F1 bis F5, in Worten. Wo ihr euch nicht sicher seid, ist 'noch offen' eine gueltige Antwort — eine geratene Festlegung waere schlechter, denn wir wuerden danach bauen.",
+  "erstellt": "2026-08-23T20:23:40Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "art_der_frage": "Vertrag, nicht Messung",
+    "stehengebliebene_felder": {
+      "render.sun": "Sonne steht fest auf 50 Grad Hoehe / 35 Grad Azimut",
+      "vis.skip": "gelesen, nicht beachtet — abbestellt und trotzdem geliefert",
+      "vis.upscale": "kein Hochskalierer in der Kette",
+      "style.mode": "Stil-QA laeuft nicht (kein eigenes Referenzset)",
+      "style.refs": "Referenzbilder werden gelesen und von niemandem benutzt"
+    },
+    "durchgereicht_zum_vergleich": [
+      "geometry.path",
+      "render.resolution",
+      "render.samples",
+      "render.faithful",
+      "vis.backbone",
+      "prompt",
+      "cameras",
+      "out"
+    ],
+    "fragen": {
+      "F1": "azimuth-Bezugsrichtung und Bedeutung von elevation — die wichtigste",
+      "F2": "Was soll skip:true zurueckgeben?",
+      "F3": "upscale ueberhaupt gewollt? QA vor oder nach dem Hochskalieren?",
+      "F4": "Wie gelangen Referenzbilder zu uns, ohne durch ein oeffentliches Repo zu reisen?",
+      "F5": "Soll das Ergebnis nennen, was unerfuellt blieb? (z. B. unfulfilled: [...])"
+    }
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
+  }
+}

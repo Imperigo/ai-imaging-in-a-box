@@ -2802,6 +2802,24 @@ umsonst gerechnet. Genau das war hier bis zum 23.08.2026 der Fall: Kompositionsb
 Kameraspanne, Maskenbefund und Sprachurteil wurden gerechnet, in ein Wörterbuch gelegt
 und mit dem Prozess vergessen. Der Code sah dabei gründlich aus und die Tests waren grün.
 Seither gibt es `befund.json` neben dem Vertragsergebnis.*
+*Und dieselbe Falle gibt es spiegelverkehrt, auf der **Eingangsseite**: Ein Vertragsfeld,
+das die Gegenseite ausfüllen darf und das bei uns nichts bewirkt. Am 23.08.2026 waren es
+fünf — Sonnenstand, Hochskalieren, Überspringen und die beiden Stilfelder. Das
+gefährlichste ist der Sonnenstand: Er wird gelesen, verworfen, und das Bild kommt sauber
+belichtet und **falsch** zurück, ohne dass irgendetwas nach einem Fehler aussieht.*
+
+**Stehengebliebenes Feld** — Ein Feld, das eine Schnittstelle **entgegennimmt** und das
+danach nichts bewirkt. Es ist die Eingangsseite derselben Sache wie eine *tote Kante*: Die
+Bestellung wird angenommen, quittiert und nicht ausgeführt.
+*Warum es schlimmer ist als eine Fehlermeldung: Wer ein Feld setzt und eine Fehlermeldung
+bekommt, weiss Bescheid. Wer ein Feld setzt und ein tadelloses Ergebnis bekommt, glaubt,
+es habe gewirkt — und wundert sich später über etwas anderes.*
+*Die Gegenmassnahme in diesem Projekt ist eine Tabelle, in der **jedes** gelesene Feld in
+genau einer von zwei Listen steht: «kommt an» oder «bleibt stehen, und zwar aus diesem
+Grund, und dies müsste geschehen». Ein Test prüft, dass keine dritte Möglichkeit entsteht —
+denn die dritte, «steht nirgends», ist die bequemste.*
+*Gemeldet wird nur, was auch wirklich bestellt wurde. Eine Meldung bei jedem Auftrag wäre
+die nächste Dauerwarnung und damit wieder unsichtbar.*
 
 **Node (Knoten)** — Ein einzelner Arbeitsschritt in einer Verarbeitungskette, mit
 Eingängen und Ausgängen.
@@ -3139,6 +3157,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-23 | Ergaenzt: **Stehengebliebenes Feld**, und **Vertragsfeld** um seine Eingangsseite erweitert. Anlass ist eine Zaehlung am eigenen Code: Fuenf Felder, die die Oberflaeche setzen darf, bewirken bei uns nichts — der Sonnenstand darunter, und der ist der gefaehrlichste, weil das Bild sauber belichtet und falsch zurueckkommt. Dieselbe Fehlerart wie die tote Kante, nur von der Eingangsseite |
 | 2026-08-23 | Ergaenzt: **Betragsmass gegen Rangmass**. Am selben Abend nachgereicht, weil die HomeStation die Frage nach dem groesseren Schaetzer als falsch gestellte entlarvt hat: Der Schaetzer ORDNET richtig und staucht nur den Betrag. Damit ist es keine Frage der Modellgroesse, sondern eine der Masskonstruktion — und der Preis des Rangmasses (es beantwortet Anwesenheit, nicht Guete) steht mit im Eintrag |
 | 2026-08-23 | Ergaenzt aus einer Messung, die ein Mass erledigt hat: **Himmel hinter dem Umriss** und **Zustaendigkeitsgrenze (eines Messverfahrens)**. Die HomeStation hat dieselbe Kamera dreimal gerechnet und nur den Hintergrund getauscht — mit einem Nachbargebaeude dahinter trennt die Umrisstreue ein perfektes Bild nicht mehr von weissem Rauschen. Daraus folgt keine bessere Normierung, sondern eine dritte Antwort neben bestanden und durchgefallen |
 | 2026-08-23 | **Vertragsfeld** ausgebaut statt verdoppelt: Ich hatte einen zweiten Eintrag dazu geschrieben, `test_lexikon` fing ihn, und der Test hatte recht — der Begriff stand laengst da. Ergaenzt ist die andere Seite derselben Sache: Alles, was KEIN Vertragsfeld ist, muss daneben landen, und wenn „daneben" in Wahrheit „gar nicht" heisst, ist es umsonst gerechnet |

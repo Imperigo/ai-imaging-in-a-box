@@ -63,6 +63,7 @@ from . import bruecke, fortschritt, maske as maske_modul
 # der Vorgabe von `verarbeiter` benutzt, wo noch Modulgeltung herrscht.
 from . import kameras as _kameras_modul
 from . import komposition as _komposition
+from . import kosmo_szene as _kosmo_szene
 from . import varianten
 
 #: Ein Auftrag auf ``running``, dessen Laufzettel so lange nicht angefasst wurde, gilt als
@@ -308,6 +309,11 @@ def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> Non
         "prompt_original": szene.get("prompt_original"),
         "prompt_sprache": szene.get("prompt_sprache"),
         "prompt_bauteile": list(szene.get("prompt_bauteile") or ()),
+        # Was der Betreiber bestellt hat und nicht bekommt. Steht im Befund, weil es
+        # sonst nirgends stünde: Der Vertrag hat für «gelesen und nicht beachtet» kein
+        # Feld, und ein Bild sieht auch dann richtig aus, wenn die halbe Bestellung
+        # unterwegs verlorenging.
+        "stehengeblieben": [dict(e) for e in _kosmo_szene.stehengebliebene_felder(szene)],
         "warnungen_auftrag": list(antwort.get("warnungen") or ()),
         "wache": antwort.get("wache"),
     }
@@ -427,7 +433,8 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
       schlechteste ist,
     * wie viele Kameras die Kompositionsprüfung beanstandet,
     * ob der Vorsprung des gewählten Startwerts belegt ist,
-    * bei welchen Kameras das zweite Bein des Paartests **gar nichts messen kann**.
+    * bei welchen Kameras das zweite Bein des Paartests **gar nichts messen kann**,
+    * was der Betreiber bestellt hat und **nicht bekommt**.
 
     Zeilen ohne Inhalt entfallen ganz. Eine Ausgabe, in der jede Zeile immer dasteht,
     liest sich nach dem dritten Mal wie eine leere.
@@ -482,6 +489,14 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
                       f"auf-vis-20260823-07): {', '.join(str(k) for k in unzustaendig)}"
                       f"  — nicht messbar heisst weder bestanden noch durchgefallen; "
                       f"eine Kamera mit freierem Hintergrund misst wieder")
+
+    # Zuletzt und ganz oben im Rang, wenn es denn vorkommt: eine Bestellung, die nicht
+    # ausgefuehrt wurde. Alles Uebrige auf dieser Liste sind Befunde ueber das ERGEBNIS —
+    # dies ist einer ueber die EINGABE, und der Betreiber sieht ihn sonst nirgends.
+    stehen = befund.get("stehengeblieben") or ()
+    for eintrag in stehen:
+        zeilen.append(f"BESTELLT UND NICHT AUSGEFUEHRT: {eintrag.get('feld')} "
+                      f"= {eintrag.get('wert')!r} — {eintrag.get('grund')}")
 
     return tuple(zeilen)
 

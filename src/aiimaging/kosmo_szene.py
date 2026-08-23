@@ -483,6 +483,119 @@ def lies_szene(fremd: dict) -> dict:
 
 
 # --------------------------------------------------------------------------------------
+# Was von der Bestellung wirklich ankommt — und was nicht
+# --------------------------------------------------------------------------------------
+#
+# **Der Anlass ist ein Fehler, den dieses Projekt am 23.08.2026 zweimal an einem Tag
+# gemacht hat, beide Male an derselben Stelle: an der Naht.** Die Brennweite war im Kern
+# längst einstellbar und kam an der Aussenkante trotzdem nicht durch — zwei fest
+# verdrahtete `28.0` standen im Weg. Der Geländestand ebenso. Beide Male hiess es
+# «einstellbar», und beide Male stimmte es im Modul und nicht im Betrieb.
+#
+# **Einstellbar ist ein Versprechen, das man an der Naht prüft, nicht am Modul.** Diese
+# Tabelle ist die ausführbare Form davon: Jedes Feld, das :func:`lies_szene` aus der
+# Bestellung liest, steht in genau einer der beiden Listen — es kommt an, oder es bleibt
+# stehen und der Grund steht dabei. Ein neues Feld im fremden Vertrag kann damit nicht
+# mehr stillschweigend ins Leere laufen; es fällt beim ersten Testlauf auf.
+
+#: Felder, die unsere Kette wirklich erreichen — mit der Stelle, an der sie ankommen.
+DURCHGEREICHT = {
+    "geometrie": "abholer: Pfad der glb",
+    "format": "lies_szene selbst — unbekannte Formate werden als Mangel abgelehnt",
+    "out": "abholer: Ausgabeverzeichnis",
+    "kameras": "abholer.verarbeiter → Kameraaufgaben",
+    "aufloesung": "seams.glb_zu_multipass(aufloesung=…)",
+    "hoehe": "seams.glb_zu_multipass(hoehe=…)",
+    "samples": "seams.glb_zu_multipass(samples=…)",
+    "controlnet_staerke": "render.RenderAuftrag(controlnet_staerke=…)",
+    "backbone": "render.RenderAuftrag(backbone=…)",
+    "prompt": "render.RenderAuftrag(prompt=…)",
+    "prompt_original": "befund.json",
+    "prompt_sprache": "befund.json und befund_kurz",
+    "prompt_bauteile": "befund.json und befund_kurz",
+    "warnungen": "Antwort des Auftrags",
+    "maengel": "halten den Lauf auf",
+}
+
+#: Felder, die der Betreiber setzen **kann** und die heute **nichts** bewirken.
+#:
+#: Jeder Eintrag trägt, was fehlt — nicht bloss, dass etwas fehlt. Ein «wird nicht
+#: unterstützt» ohne den nächsten Schritt ist eine Sackgasse; mit ihm ist es eine Aufgabe.
+STEHENGEBLIEBEN = {
+    "sonne": {
+        "neutral": None,
+        "grund": "Die Sonne steht in `blender_depth_stage` FEST auf 50° Höhe und 35° "
+                 "Azimut. Eine Bestellung mit anderem Sonnenstand wird gerendert, als "
+                 "wäre sie nicht gestellt worden — und das Bild sieht danach richtig aus.",
+        "noetig": "Sonnenstand als Parameter durch `glb_zu_multipass` bis in den "
+                  "Blender-Runner, dazu die Frage, ob Azimut gegen Norden oder gegen die "
+                  "Y-Achse gemeint ist. Die beantwortet nur der fremde Vertrag.",
+    },
+    "hochskalieren": {
+        "neutral": False,
+        "grund": "Es gibt keinen Hochskalierer in dieser Kette. Ein `upscale: true` "
+                 "liefert dasselbe Bild wie `false`.",
+        "noetig": "Ein Hochskalierer mit permissiver Lizenz (Regel 1) — und ein Entscheid "
+                  "darüber, ob die Geometrie-QA auf dem hochskalierten Bild oder auf dem "
+                  "ursprünglichen gemessen wird. Beides ist offen.",
+    },
+    "ueberspringen": {
+        "neutral": False,
+        "grund": "`skip: true` wird gelesen und dann nicht beachtet — der Auftrag läuft "
+                 "trotzdem. Das ist die unangenehmste der fünf: Wer etwas ABBESTELLT, "
+                 "bekommt es geliefert.",
+        "noetig": "Ein Entscheid, was Überspringen bedeuten soll — kein Bild, oder ein "
+                  "Ergebnis mit leerer Bildliste und einem Grund? Der fremde Vertrag "
+                  "sagt es nicht, und stillschweigend zu raten wäre schlechter als heute.",
+    },
+    "stil_modus": {
+        "neutral": "none",
+        "grund": "Die Stil-QA läuft in dieser Kette nicht. Das ist ausdrücklich "
+                 "entschieden und nicht vergessen: Sie bräuchte ein Referenzset, das uns "
+                 "gehört, und die bisherigen Referenzen sind fremde Bildschirmfotos.",
+        "noetig": "Ein eigenes Referenzset. `als_ergebnis` schreibt bei fehlendem "
+                  "Stil-Urteil bereits «ungeprüft» statt «durchgefallen» — die Lücke ist "
+                  "also im Ergebnis sichtbar, nur eben nicht in der Bestellung.",
+    },
+    "stil_referenzen": {
+        "neutral": [],
+        "grund": "Referenzbilder werden aus der Bestellung gelesen und danach von "
+                 "niemandem. Anders als bei `stil_modus` schickt der Betreiber hier "
+                 "eigene Dateien mit — er hat also Arbeit hineingesteckt, die verfällt.",
+        "noetig": "Dasselbe eigene Referenzset wie bei `stil_modus`, und zusätzlich ein "
+                  "Entscheid, wie fremde Referenzbilder überhaupt zu uns gelangen sollen: "
+                  "Regel 3 verbietet Bilder im Repo, ein Pfad auf ihrem Rechner nützt uns "
+                  "nichts. Diese Frage ist offen und gehört in ihren Vertrag.",
+    },
+}
+
+
+def stehengebliebene_felder(szene: dict) -> tuple[dict, ...]:
+    """Welche Felder dieser **einen** Bestellung ins Leere laufen.
+
+    Gemeldet wird nur, was der Betreiber auch wirklich **gesetzt** hat. Ein Feld auf
+    seinem neutralen Wert ist keine unerfüllte Bestellung, und eine Warnung, die bei
+    jedem Auftrag erscheint, ist nach dem dritten Mal keine mehr — das ist am
+    23.08.2026 an der Kompositionsprüfung gemessen worden (zwölf von zwölf Kameras
+    trugen dieselben zwei Warnungen).
+
+    Returns:
+        Je betroffenem Feld ``{feld, wert, grund, noetig}``, in der Reihenfolge der
+        Tabelle. Leer, wenn die Bestellung nichts verlangt, was wir nicht liefern.
+    """
+    if not isinstance(szene, dict):
+        raise SzenenError(f"szene ist kein Wörterbuch: {type(szene).__name__}")
+    offen = []
+    for feld, eintrag in STEHENGEBLIEBEN.items():
+        wert = szene.get(feld, eintrag["neutral"])
+        if wert == eintrag["neutral"]:
+            continue
+        offen.append({"feld": feld, "wert": wert,
+                      "grund": eintrag["grund"], "noetig": eintrag["noetig"]})
+    return tuple(offen)
+
+
+# --------------------------------------------------------------------------------------
 # Unser Ergebnis in ihren Vertrag
 # --------------------------------------------------------------------------------------
 
