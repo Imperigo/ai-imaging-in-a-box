@@ -1627,6 +1627,20 @@ fällt stattdessen allmählich — und nur eine allmählich fallende Grösse tau
 *Gemessen am 22.08.2026: perfektes Bild 87,4 %, bestes erzeugtes 24,3 %, ohne
 Tiefenführung 6,4 %, ein Bild ohne echte Führung 2,8 %.*
 
+**Anwesenheitsmass gegen Gütemass** — Zwei Fragen, die man leicht verwechselt, weil beide
+mit «ist das Bild gut» anfangen. Ein **Anwesenheitsmass** beantwortet *«steht dort
+überhaupt etwas»*, ein **Gütemass** *«wie gut ist es getroffen»*.
+*Der Unterschied ist daran erkennbar, wie sich ein Mass verhält, wenn man das Bauwerk
+schrittweise verschiebt. Ein Gütemass muss dabei gleichmässig fallen — sonst kann man aus
+seinem Wert nicht auf die Güte schliessen. Ein Anwesenheitsmass darf zwischendurch wieder
+steigen; es sagt nur, dass etwas da ist.*
+*Am 23.08.2026 gemessen: Das Rangmass dieses Projekts ging bei wachsendem Versatz 75,5 →
+71,7 → **73,8** → 71,1 → 63,1 → 59,4 Prozent — der Sprung nach oben in der Mitte ist der
+Beweis, dass es kein Gütemass ist. Es bleibt trotzdem nützlich, denn es trägt in Szenen,
+in denen das Gütemass gar nichts mehr misst.*
+*Daraus folgt: Man ersetzt das eine nicht durch das andere. Wer ein Gütemass durch ein
+Anwesenheitsmass ersetzt, gibt eine Frage auf, statt eine zu beantworten.*
+
 **Zufallsniveau (eines Anteilsmasses)** — Der Wert, den ein Mass erreicht, wenn zwischen
 den beiden verglichenen Dingen **gar kein Zusammenhang** besteht. Bei den meisten Massen
 muss man ihn eigens messen (siehe *Rauschboden*); bei manchen folgt er aus der
@@ -1637,6 +1651,14 @@ ist Signal. Das spart die Nullprobe — mit einer Einschränkung, die beim Bauen
 Hat ein Bild viele **gleiche** Werte, lassen sich die stärksten 5 % gar nicht abtrennen,
 und das Zufallsniveau steigt. Es wird darum nicht angenommen, sondern jedes Mal
 mitgerechnet.*
+*Beim Rangmass folgt er ebenfalls, und noch einfacher: Hat die Schätzung **gar keinen**
+Bezug zum Umriss, ist der Vergleich zweier unabhängiger Mittelwerte ein Münzwurf — also
+**50 %**. Das ist am 23.08.2026 zum Anlass geworden, eine vorgeschlagene Schwelle
+zurückzuweisen: Sie lag bei 45 % und damit **unter** dem Zufall. Weisses Rauschen bestand
+sie in 138 von 200 Versuchen. Die Schwelle war an **einem einzigen** Rauschwert abgelesen,
+und derselbe Wert streute über viele Versuche von 23 % bis 77 %.*
+*Die Lehre daraus ist dieselbe wie bei einer Spanne aus einer Stichprobe: Ein einzelner
+Nullwert ist keine Nulllinie, sondern eine Ziehung.*
 
 **Paarurteil** — Ein Urteil, das **zwei Messwerte nebeneinander stehen lässt**, statt sie
 zu einer Zahl zu verrechnen. Es besteht nur, wenn beide bestehen, und es sagt dazu,
@@ -3157,6 +3179,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-23 | Ergaenzt: **Anwesenheitsmass gegen Guetemass**, und **Zufallsniveau** um den Fall des Rangmasses erweitert. Anlass ist ein Befund beim Nachbauen eines fremden Vorschlags: Sein Zufallsniveau ist 50 % und folgt aus der Konstruktion, die vorgeschlagene Schwelle lag bei 45 % — also darunter. Sie war an einer einzigen Ziehung abgelesen, und dieselbe Ziehung streut von 23 bis 77 % |
 | 2026-08-23 | Ergaenzt: **Stehengebliebenes Feld**, und **Vertragsfeld** um seine Eingangsseite erweitert. Anlass ist eine Zaehlung am eigenen Code: Fuenf Felder, die die Oberflaeche setzen darf, bewirken bei uns nichts — der Sonnenstand darunter, und der ist der gefaehrlichste, weil das Bild sauber belichtet und falsch zurueckkommt. Dieselbe Fehlerart wie die tote Kante, nur von der Eingangsseite |
 | 2026-08-23 | Ergaenzt: **Betragsmass gegen Rangmass**. Am selben Abend nachgereicht, weil die HomeStation die Frage nach dem groesseren Schaetzer als falsch gestellte entlarvt hat: Der Schaetzer ORDNET richtig und staucht nur den Betrag. Damit ist es keine Frage der Modellgroesse, sondern eine der Masskonstruktion — und der Preis des Rangmasses (es beantwortet Anwesenheit, nicht Guete) steht mit im Eintrag |
 | 2026-08-23 | Ergaenzt aus einer Messung, die ein Mass erledigt hat: **Himmel hinter dem Umriss** und **Zustaendigkeitsgrenze (eines Messverfahrens)**. Die HomeStation hat dieselbe Kamera dreimal gerechnet und nur den Hintergrund getauscht — mit einem Nachbargebaeude dahinter trennt die Umrisstreue ein perfektes Bild nicht mehr von weissem Rauschen. Daraus folgt keine bessere Normierung, sondern eine dritte Antwort neben bestanden und durchgefallen |

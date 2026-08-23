@@ -1424,8 +1424,8 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       und unser zweites Bein benutzt den Betrag. Es ist also gar keine Frage der
       Modellgrösse gewesen, sondern eine der Masskonstruktion. Die Abstandsreihe, die ich
       dafür angesetzt hatte, ist damit hinfällig und aus `auf-36` wieder entfernt.
-- [ ] **R2 (Rang statt Betrag) ist der beste Kandidat, den dieses Projekt für die zweite
-      Zeile hatte — und wird trotzdem noch nicht gebaut.** Je Grenzabschnitt Median innen
+- [x] **R2 (Rang statt Betrag) ist gebaut — als DRITTES Bein, und es entscheidet über
+      nichts.** Owner-Freigabe zur Entscheidung am 23.08.2026 («entscheide du»).** Je Grenzabschnitt Median innen
       gegen Median aussen im selben Fenster; gezählt wird der **Anteil der Abschnitte**,
       an denen das Bauwerk lokal näher liegt. Kein Betrag, keine Normierung.
 
@@ -1441,9 +1441,50 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       liegt bei 8,5 Punkten, wo ρ 0,4 % hat. Der Rauschwert hängt an der Szene (33,7
       gegen 16,1 %), die Schwelle 45 % braucht darum Luft.
 
-      **Warum trotzdem nicht sofort:** Es gilt der Owner-Entscheid vom 23.08. zu
-      Variante F, und er passt hier genauso — *ein Mass wird nicht gebaut, bis eine
-      weitere Szene es trägt.* Die HomeStation hat diese Vorsicht selbst angeboten.
+      **Mein Entscheid, und die Begründung in zwei Teilen.**
+
+      *Warum gebaut:* Es trägt dort, wo die beiden anderen ausfallen, und das ist in der
+      Stadt der Normalfall. Es liegt jetzt als `geometrie_qa.anteil_naeher_am_rand` in der
+      Bibliothek — **an einer** Stelle, nicht an zweien. Die HomeStation misst ab jetzt
+      mit unserer Fassung; weichen ihre Zahlen davon ab, ist genau das der Befund.
+
+      *Warum nicht als Ersatz:* Sie sagt selbst, R2 sei kein Gütemass. Ein Gütemass durch
+      ein Anwesenheitsmass zu ersetzen hiesse, eine Frage **aufzugeben** statt eine zu
+      beantworten. Damit ist auch ihre Rückfrage beantwortet: Es ist nicht mein Unwille,
+      etwas wegzuwerfen — es sind zwei Fragen.
+
+      *Warum es nichts entscheidet:* **streng additiv.** Kein Bild besteht durch R2, das
+      ohne R2 durchgefallen wäre; es fügt Auskunft hinzu und nimmt keine weg. Der Grund
+      dafür steht im nächsten Punkt und ist beim Bauen aufgefallen.
+- [ ] **Die vorgeschlagene R2-Schwelle liegt UNTER dem Zufallsniveau — gefunden beim
+      Nachbauen, gemeldet vor der nächsten Messung.**
+
+      **Das Zufallsniveau von R2 ist 50 % und folgt aus der Konstruktion.** Hat die
+      Schätzung gar keinen Bezug zur Maske, sind Median innen und Median aussen zwei
+      unabhängige Ziehungen aus derselben Verteilung; welcher grösser ausfällt, ist ein
+      Münzwurf. Für eine symmetrische Werteverteilung gilt das exakt.
+
+      **Nachgemessen** (200 Startwerte, synthetische Szene, 79 Abschnitte): Median
+      **0,5063**, Spanne **0,228 bis 0,772**. Über der vorgeschlagenen Schwelle 0,45 liegen
+      **138 von 200** — weisses Rauschen besteht sie in mehr als zwei Dritteln der Fälle.
+
+      Ihr Rauschanker von 33,7 % ist **eine Ziehung** und liegt bequem in dieser Spanne.
+      Das ist derselbe Fehler wie meine Kameraneigung von heute früh: *Eine Spanne aus
+      einer Stichprobe ist eine Aussage über die Stichprobe.* Möglich bleibt, dass ihr
+      Anker etwas anderes ist als meiner — sie messen vermutlich den *Schätzer auf einem
+      Rauschbild*, ich das Rauschen selbst als Karte. Dann wären 33,7 % keine
+      Münzwurfzahl, sondern eine Eigenschaft des Schätzers, und das wäre sogar
+      interessanter. **In beiden Fällen braucht der Anker mehrere Startwerte.**
+
+      **Und eine zweite Sache fiel beim Messen auf:** Die Fenster benachbarter Abschnitte
+      überlappen (Radius 6, jeder dritte Punkt). Die Abschnitte sind also **nicht
+      unabhängig**, und die binomiale Streuung ist zu klein — gemessen ist der Faktor 1,93
+      bei `jeder_nte=3` und 1,34 bei 7, auf **einer** Szene, also nichts Belastbares. Die
+      Funktion meldet `ueber_zufall` darum **nicht** als `True`, sondern gar nicht: Das
+      wäre eine Behauptung über einen Abstand, den niemand kennt.
+
+      Das steht als **G2** in `auf-36` und ist dort wichtiger geworden als die sechste
+      Szene: Erst danach weiss überhaupt jemand, wo bei R2 der Zufall liegt.
 
       **Die eigentliche Lücke ist aber eine andere, und sie hat sie selbst benannt: Kein
       einziger R2-Wert stammt von einem erzeugten Bild.** Alle Zahlen kommen aus

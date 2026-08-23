@@ -1688,6 +1688,236 @@ def anteil_grenze_mit_kante(ist: Sequence[float], maske: Sequence[bool], *,
     return antwort
 
 
+# --------------------------------------------------------------------------------------
+# Die Anwesenheitsfrage über den RANG statt über den Betrag — das dritte Bein
+# --------------------------------------------------------------------------------------
+
+#: Halbe Fensterbreite in Bildpunkten, in der je Grenzabschnitt innen gegen aussen
+#: verglichen wird. **Gesetzt, nicht gemessen** (HomeStation, `auf-vis-20260823-08`).
+R2_FENSTERRADIUS = 6
+
+#: Jeder wievielte innere Randpunkt einen Abschnitt bildet. Ebenfalls **gesetzt**.
+#:
+#: Benachbarte Randpunkte teilen fast dasselbe Fenster; jeden zu werten hiesse, dieselbe
+#: Beobachtung mehrfach zu zählen. Drei ist die Zahl, mit der die Eichung lief.
+R2_JEDER_NTE = 3
+
+#: So viele Abschnitte muss ein Umriss hergeben, sonst ist der Anteil **nicht gemessen**.
+#:
+#: Ein Anteil aus fünf Abschnitten hat fünf mögliche Werte. Die Eichung lief auf 276 und
+#: 515 Abschnitten; hier steht bewusst eine viel kleinere Zahl, weil ein kleines Bauwerk
+#: im Bild ein kurzer Umriss ist und deswegen nicht unmessbar sein soll.
+R2_MIN_ABSCHNITTE = 24
+
+#: Das Zufallsniveau dieses Masses — **es folgt aus der Konstruktion und ist nicht gemessen.**
+#:
+#: Hat die Schätzkarte **gar keinen Bezug** zur Maske, sind der Median innen und der Median
+#: aussen zwei unabhängige Ziehungen aus derselben Verteilung. Welcher grösser ausfällt,
+#: ist dann ein Münzwurf: **50 %**. Für eine symmetrische Werteverteilung gilt das exakt,
+#: sonst annähernd.
+#:
+#: **Nachgemessen, weil «folgt aus der Konstruktion» schon einmal falsch war:** weisses
+#: Rauschen über 200 Startwerte auf einer synthetischen Szene ergibt einen Median von
+#: **0,5063** (Spanne 0,228 bis 0,772).
+#:
+#: Das ist die zweite Grösse in diesem Modul, die ihren eigenen Nullwert mitbringt — nach
+#: :data:`KANTENANTEIL_STAERKSTE`. Der Vorteil ist derselbe und er ist gross: Er kostet
+#: keine Nullprobe je Szene und **hängt nicht an der Szene**.
+R2_ZUFALLSNIVEAU = 0.50
+
+#: Vorgeschlagene Schwelle für den Anteil — **abgelesen, sie torschliesst NICHT, und sie
+#: liegt UNTER dem Zufallsniveau.**
+#:
+#: **Gemessen** (`auf-vis-20260823-08`, fünf Szenen, drei Gebäude, nur Blender-Renders):
+#:
+#:     g0 flach 68,1 % · g1 geneigt 70,3 % · g2 Nachbargebäude 67,0 %
+#:     s60 75,5 % · s29 82,5 %
+#:     Anker: Rauschen 33,7 / 16,1 % · grau 0,0–0,4 % · Verlauf 0,2–0,4 %
+#:
+#: Jeder echte Fall liegt zwischen 52,6 und 82,5 %, jeder Anker bei höchstens 33,7 %.
+#: 45 % hat damit 7 Punkte Abstand nach unten und 11 nach oben. **Der Rauschwert hängt an
+#: der Szene** (33,7 gegen 16,1 %), die Schwelle braucht darum Luft; 40 % wäre schon knapp.
+#:
+#: **Sie entscheidet aus zwei Gründen nichts — Entscheid vom 23.08.2026.**
+#:
+#: **Erstens, und das ist der schwerere: 0,45 liegt unter dem Zufallsniveau von 0,50**
+#: (:data:`R2_ZUFALLSNIVEAU`). Nachgemessen auf einer synthetischen Szene besteht weisses
+#: Rauschen diese Schwelle in **138 von 200** Startwerten. Der eine gemessene Rauschanker
+#: von 33,7 % ist **eine Ziehung** aus einer Verteilung, deren Median bei 0,50 liegt und
+#: die von 0,23 bis 0,77 streut — und aus einer Ziehung eine Schwelle abzulesen ist
+#: derselbe Fehler wie eine Spanne aus einer Stichprobe für die Wahrheit zu nehmen.
+#:
+#: Möglich ist, dass ihr Anker etwas anderes ist als meiner: Sie messen den *Schätzer auf
+#: einem Rauschbild*, ich das Rauschen selbst als Karte. Dann ist ihre 33,7 % kein
+#: Münzwurf, sondern eine Eigenschaft des Schätzers — und **auch dann braucht der Anker
+#: mehrere Startwerte**, statt einen.
+#:
+#: **Zweitens:** Kein einziger der fünf Werte stammt von einem **erzeugten** Bild. Alle
+#: kommen aus Blender-Renders und den Nullankern; die Versatzreihe ist der *Ersatz* für
+#: schlechter werdende Geometrie. Eine Schwelle, die über erzeugte Bilder entscheidet, an
+#: keinem erzeugten Bild geeicht — das ist die Reihenfolge, die dieses Projekt am selben
+#: Tag zweimal zurückgenommen hat.
+R2_SCHWELLE = 0.45
+
+METHODE_R2 = ("Anteil der Grenzabschnitte, an denen der Median INNEN näher liegt als der "
+              "Median AUSSEN im selben Fenster — Rang statt Betrag, v1")
+
+
+def anteil_naeher_am_rand(ist: Sequence[float], maske: Sequence[bool], *, breite: int,
+                          polaritaet: int | None = None,
+                          fensterradius: int = R2_FENSTERRADIUS,
+                          jeder_nte: int = R2_JEDER_NTE) -> dict:
+    """An wieviel Prozent des Umrisses liegt das Bauwerk **lokal näher** als sein Hintergrund.
+
+    Je Grenzabschnitt der Median der Maskenpunkte gegen den Median der Aussenpunkte
+    **im selben Fenster**. Gezählt wird nur, *welcher* der beiden näher liegt — kein
+    Betrag, keine Normierung über die Karte.
+
+    **Warum das ein anderes Mass ist und nicht ein besseres.** Ein monokularer Schätzer
+    liefert *relative* Tiefe: Die Reihenfolge stimmt, die absolute Skala ist willkürlich.
+    An derselben Stelle desselben Bildes gemessen (`auf-vis-20260823-08`): Bauwerk 1,7124,
+    Nachbar 1,6112 — die Ordnung ist richtig, der Betrag beträgt aber nur 3 % der
+    Kartenspanne, obwohl 15 m dazwischenliegen. :func:`kante_an_maskengrenze` und
+    :func:`anteil_grenze_mit_kante` fragen nach dem Betrag und messen dort nichts mehr;
+    dieses Mass fragt nach dem Rang und trägt weiter.
+
+    Der Preis ist mitgemessen und gehört in denselben Satz: **Es ist kein Gütemass.** Die
+    Versatzreihe fällt nicht monoton — auf einer Szene ging sie 75,5 → 71,7 → **73,8** →
+    71,1 → 63,1 → 59,4, also zwischendurch wieder hinauf. Es beantwortet *«steht da ein
+    Bauwerk»*, nicht *«wie gut ist es gezeichnet»*.
+
+    **Gleiches gegen Gleiches, und das ist keine Feinheit.** Die HomeStation hat einen
+    ersten Anlauf dokumentiert, der das **Maximum** über das Innenfenster gegen einen
+    **einzelnen** Aussenpunkt verglich. Das ist strukturell nach oben verzerrt: Weisses
+    Rauschen erreichte damit 71,3 % — mehr als jedes perfekte Bild. Median gegen Median
+    behebt es. Dieser Irrweg steht als Test in `tests/test_r2_anwesenheit.py`, damit ihn
+    niemand ein zweites Mal geht.
+
+    Args:
+        polaritaet: ``+1`` metrische Tiefe (nah = klein), ``-1`` Disparität (nah = gross),
+            ``None`` ungemessen. Ohne sie steht ``anteil`` nicht da: Ob „grösser" näher
+            oder ferner heisst, entscheidet die Polarität, und raten hiesse, in der Hälfte
+            der Fälle das Gegenteil zu melden.
+
+    Returns:
+        ``{anteil, n_abschnitte, n_naeher, n_unentschieden, schwelle, ueber_schwelle,
+        methode, polaritaet, fensterradius, jeder_nte, warnungen}``.
+
+        ``anteil`` ist ``None``, wenn nicht gemessen werden konnte — **nicht** 0, was
+        „nirgends näher" hiesse und damit ein Urteil wäre.
+
+        ``ueber_schwelle`` ist eine **Auskunft und kein Tor**: Diese Funktion entscheidet
+        über nichts (siehe :data:`R2_SCHWELLE`).
+
+    Raises:
+        QaError: Masse fehlen, sind ungleich lang, ``breite`` passt nicht, oder
+            ``fensterradius``/``jeder_nte`` sind nicht positiv.
+    """
+    werte = _als_zahlen(ist, "ist")
+    if maske is None:
+        raise QaError(
+            "maske fehlt. Ohne Maske gibt es keinen Umriss, an dem sich innen von aussen "
+            "unterscheiden liesse.")
+    m = _als_wahrheitswerte(maske, "maske")
+    if len(m) != len(werte):
+        raise QaError(
+            f"maske und ist sind unterschiedlich lang ({len(m)} vs. {len(werte)}). "
+            f"Abschneiden wäre eine stillschweigende Reparatur mit falschem Ergebnis.")
+    if isinstance(breite, bool) or not isinstance(breite, int) or breite <= 0:
+        raise QaError(f"breite muss eine positive ganze Zahl sein, war {breite!r}.")
+    if len(werte) % breite != 0:
+        raise QaError(
+            f"Die Karte hat {len(werte)} Punkte, das ist kein Vielfaches der Breite "
+            f"{breite}. Eine der beiden Angaben stimmt nicht — geraten wird hier nicht.")
+    if isinstance(fensterradius, bool) or not isinstance(fensterradius, int) or fensterradius <= 0:
+        raise QaError(f"fensterradius muss eine positive ganze Zahl sein, war {fensterradius!r}.")
+    if isinstance(jeder_nte, bool) or not isinstance(jeder_nte, int) or jeder_nte <= 0:
+        raise QaError(f"jeder_nte muss eine positive ganze Zahl sein, war {jeder_nte!r}.")
+
+    hoehe = len(werte) // breite
+    antwort = {"anteil": None, "n_abschnitte": 0, "n_naeher": 0, "n_unentschieden": 0,
+               "schwelle": R2_SCHWELLE, "ueber_schwelle": None,
+               "zufallsniveau": R2_ZUFALLSNIVEAU, "ueber_zufall": None,
+               "methode": METHODE_R2,
+               "polaritaet": polaritaet, "fensterradius": fensterradius,
+               "jeder_nte": jeder_nte, "warnungen": []}
+
+    if polaritaet is None:
+        antwort["warnungen"].append(
+            "Polarität ungemessen. Ohne Richtung ist nicht entscheidbar, ob der GRÖSSERE "
+            "Median den näheren Körper meint: Bei Disparität liegt das Bauwerk oben, bei "
+            "metrischer Tiefe unten. NICHT GEMESSEN. Abhilfe: polaritaet_aus_messungen.")
+        return antwort
+    if polaritaet not in (POLARITAET_TIEFE, POLARITAET_DISPARITAET):
+        raise QaError(
+            f"polaritaet muss {POLARITAET_TIEFE:+d}, {POLARITAET_DISPARITAET:+d} oder "
+            f"None sein, war {polaritaet!r}.")
+
+    innen, _aussen = _randpunkte(m, breite, hoehe)
+    abschnitte = innen[::jeder_nte]
+
+    naeher = 0
+    unentschieden = 0
+    gewertet = 0
+    for i in abschnitte:
+        x0, y0 = i % breite, i // breite
+        drin: list[float] = []
+        draussen: list[float] = []
+        for y in range(max(0, y0 - fensterradius), min(hoehe, y0 + fensterradius + 1)):
+            for x in range(max(0, x0 - fensterradius), min(breite, x0 + fensterradius + 1)):
+                k = y * breite + x
+                (drin if m[k] else draussen).append(werte[k])
+        # Ein Fenster ohne beide Seiten trägt keinen Vergleich. Es wird NICHT als
+        # „nicht näher" gezählt — das wäre eine Aussage über etwas Ungesehenes.
+        if not drin or not draussen:
+            continue
+        gewertet += 1
+        # Gleiches gegen Gleiches: Median gegen Median. Siehe Docstring — die Fassung
+        # mit Maximum gegen Einzelpunkt liess weisses Rauschen auf 71,3 % steigen.
+        gerichtet = -polaritaet * (_median(drin) - _median(draussen))
+        if gerichtet > 0.0:
+            naeher += 1
+        elif gerichtet == 0.0:
+            unentschieden += 1
+
+    antwort["n_abschnitte"] = gewertet
+    antwort["n_naeher"] = naeher
+    antwort["n_unentschieden"] = unentschieden
+
+    if gewertet < R2_MIN_ABSCHNITTE:
+        antwort["warnungen"].append(
+            f"Nur {gewertet} Abschnitte, nötig sind {R2_MIN_ABSCHNITTE}. Ein Anteil aus so "
+            f"wenigen hat so wenige mögliche Werte — das ist Rauschen mit Dezimalpunkt. "
+            f"NICHT GEMESSEN, weder 0 noch 1.")
+        return antwort
+
+    antwort["anteil"] = naeher / gewertet
+    antwort["ueber_schwelle"] = antwort["anteil"] >= R2_SCHWELLE
+    if antwort["anteil"] > R2_ZUFALLSNIVEAU:
+        # Ueber dem Muenzwurf — aber um WIEVIEL es dafuer sein muss, steht nicht fest.
+        # Die Fenster benachbarter Abschnitte ueberlappen (Radius 6, jeder 3. Punkt), also
+        # sind die Abschnitte nicht unabhaengig und die binomiale Streuung zu klein.
+        # Gemessen betraegt der Faktor auf einer synthetischen Szene 1.93 bei jeder_nte=3
+        # und 1.34 bei 7 — auf EINER Szene, also keine Zahl, auf die sich etwas stuetzen
+        # laesst. Darum bleibt `ueber_zufall` None statt True: Das waere eine Behauptung
+        # ueber einen Abstand, den niemand kennt.
+        antwort["warnungen"].append(
+            f"Anteil {antwort['anteil']:.4f} liegt über dem Zufallsniveau "
+            f"{R2_ZUFALLSNIVEAU:.2f} — um wieviel er darüberliegen MUSS, ist offen: Die "
+            f"Fenster benachbarter Abschnitte überlappen, die Abschnitte sind also nicht "
+            f"unabhängig und die binomiale Streuung zu klein. NICHT als 'über Zufall' "
+            f"gemeldet, solange die Zahl fehlt.")
+    else:
+        antwort["ueber_zufall"] = False
+    if antwort["ueber_schwelle"] and antwort["anteil"] < R2_ZUFALLSNIVEAU:
+        antwort["warnungen"].append(
+            f"Die vorgeschlagene Schwelle {R2_SCHWELLE:.2f} liegt UNTER dem Zufallsniveau "
+            f"{R2_ZUFALLSNIVEAU:.2f}. Dieser Wert besteht sie und ist trotzdem schlechter "
+            f"als ein Münzwurf. Die Schwelle ist an EINEM Rauschanker abgelesen (33,7 %) — "
+            f"weisses Rauschen besteht sie in 138 von 200 Startwerten.")
+    return antwort
+
+
 #: Ab welchem Anteil Himmel hinter dem Umriss die Tiefenkante überhaupt etwas messen kann.
 #:
 #: **Am Gerät gemessen und schwer erkauft** (HomeStation, `auf-vis-20260823-07`,
@@ -1842,6 +2072,7 @@ PAAR_KANTENANTEIL_SCHWELLE = 0.20
 def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
                anteil_ergebnis: dict | None = None,
                himmel_ergebnis: dict | None = None,
+               anwesenheit_ergebnis: dict | None = None,
                rho_schwelle: float = PAAR_RHO_SCHWELLE,
                kante_schwelle: float = PAAR_KANTE_SCHWELLE,
                anteil_schwelle: float = PAAR_KANTENANTEIL_SCHWELLE) -> dict:
@@ -1850,6 +2081,12 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
     Args:
         rho_ergebnis: Antwort von :func:`rho_ueber_maske`, oder ``None``.
         kante_ergebnis: Antwort von :func:`kante_an_maskengrenze`, oder ``None``.
+        anwesenheit_ergebnis: Antwort von :func:`anteil_naeher_am_rand`, oder ``None``.
+            **Sie wird mitgeführt und entscheidet nichts** — auch dort nicht, wo die
+            beiden anderen Beine schweigen. Warum, steht in :data:`R2_SCHWELLE`: Die
+            vorgeschlagene Schwelle liegt unter dem Zufallsniveau, und geeicht ist sie an
+            keinem erzeugten Bild. Ein Mass, das trägt, und eine Schwelle, die nicht
+            trägt, sind zwei Dinge.
         himmel_ergebnis: Antwort von :func:`himmel_hinter_umriss`, oder ``None``. Wird
             sie übergeben und trägt sie **nicht**, fällt das zweite Bein aus — nicht
             durch. Ohne sie urteilt der Paartest wie bisher; das ist die alte Form und
@@ -1944,11 +2181,12 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
     # Zuständigkeit VOR Messung: Steht hinter dem Umriss kein Himmel, misst das zweite
     # Bein nichts — dann darf hier kein Urteil stehen, auch kein schlechtes.
     himmel_anteil = (himmel_ergebnis or {}).get("anteil")
+    anwesenheit = (anwesenheit_ergebnis or {}).get("anteil")
     zustaendig = True if himmel_ergebnis is None else bool(himmel_ergebnis.get("traegt"))
     antwort = {
         "bestanden": None, "gemessen": False, "zustaendig": zustaendig,
         "rho": rho, "kante": kante,
-        "anteil": anteil, "himmel": himmel_anteil,
+        "anteil": anteil, "himmel": himmel_anteil, "anwesenheit": anwesenheit,
         "zweites_bein": zweites_bein, "traeger": None,
         "schwellen": {"rho": rho_schwelle, "kante": kante_schwelle,
                       "anteil": anteil_schwelle, "himmel": MIN_HIMMELANTEIL},
@@ -1967,6 +2205,15 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
             f"Ein Urteil aus dieser Zahl wäre in die gefährliche Richtung falsch. "
             f"ρ über der Maske ist davon nicht betroffen und {rho_wort}; es beantwortet "
             f"aber die Existenzfrage nicht und ersetzt das zweite Bein nicht.")
+        if anwesenheit is not None:
+            # Das Rangmass traegt hier — aber eine Zahl ohne tragende Schwelle ist eine
+            # Auskunft und kein Urteil. Sie steht darum in der Begruendung und nicht in
+            # `bestanden`.
+            antwort["begruendung"] += (
+                f" Der Rang-Anteil steht bei {anwesenheit:.4f} (Zufallsniveau "
+                f"{R2_ZUFALLSNIVEAU:.2f}) und misst hier sehr wohl — er entscheidet aber "
+                f"nichts, solange seine Schwelle unter dem Zufallsniveau liegt und an "
+                f"keinem erzeugten Bild geeicht ist (siehe R2_SCHWELLE).")
         return antwort
 
     zweiter_wert = anteil if zweites_bein == "anteil" else kante

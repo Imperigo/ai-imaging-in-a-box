@@ -1113,7 +1113,7 @@ def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
     (`auf-20260821-26`: ein leeres Grundstück erreicht dort 0.9530 und besteht das Tor).
     """
     leer = {"rho_maske": None, "kante": None, "kantenanteil": None,
-            "himmel": None, "paarurteil": None}
+            "himmel": None, "anwesenheit": None, "paarurteil": None}
     if maske is None or breite is None:
         return leer
 
@@ -1134,9 +1134,18 @@ def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
     # vor dem Urteil beantwortbar. Wo kein Himmel hinter dem Umriss steht, misst die
     # Tiefenkante nichts (`auf-vis-20260823-07`), und der Paartest schweigt.
     himmel = geometrie_qa.himmel_hinter_umriss(list(soll), maske, breite=breite)
+    # Das DRITTE Bein: die Anwesenheitsfrage ueber den RANG statt ueber den Betrag. Es
+    # traegt genau dort, wo die beiden anderen ausfallen — hinter dem Umriss steht ein
+    # Nachbargebaeude, der Schaetzer ordnet richtig und staucht nur den Betrag
+    # (auf-vis-20260823-08). Es MISST und entscheidet nichts; warum, steht in
+    # `geometrie_qa.R2_SCHWELLE`.
+    anwesenheit = geometrie_qa.anteil_naeher_am_rand(list(roh), maske, breite=breite,
+                                                     polaritaet=zeichen)
     return {"rho_maske": rho, "kante": kante, "kantenanteil": anteil, "himmel": himmel,
+            "anwesenheit": anwesenheit,
             "paarurteil": geometrie_qa.paarurteil(rho, kante, anteil_ergebnis=anteil,
-                                                  himmel_ergebnis=himmel)}
+                                                  himmel_ergebnis=himmel,
+                                                  anwesenheit_ergebnis=anwesenheit)}
 
 
 def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,

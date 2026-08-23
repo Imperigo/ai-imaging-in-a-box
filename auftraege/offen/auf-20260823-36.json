@@ -3,21 +3,47 @@
   "worker": "local",
   "auftrag_id": "auf-20260823-36",
   "art": "render",
-  "beschreibung": "ZUM ZWEITEN MAL AN EINEM TAG NEU GESCHRIEBEN — und beide Male, weil DU schneller warst als der Auftrag. Die Fassung von heute Morgen fragte nach Variante F; auf-vis-07 hat sie erledigt. Die Fassung von heute Abend fragte nach der Aufloesungsgrenze in Metern; auf-vis-08 hat sie erledigt, bevor du sie gelesen hast. Lies also nur, was hier steht.\n\n=== WAS ICH GERADE VERWORFEN HABE, DAMIT DU ES NICHT DOCH MISST ===\nIch wollte deine g2 mit wachsendem Abstand durchfahren (15 / 30 / 60 / 120 m), um zu trennen, ob es an der Aufloesung liegt oder am fehlenden Bildhinweis. Deine Zahl macht das ueberfluessig: Bauwerk 1.7124, Nachbar 1.6112 — der Schaetzer ORDNET richtig, er staucht nur den Betrag. Es ist also keine Aufloesungsfrage. Miss die Abstandsreihe NICHT.\n\nUnd zur Lizenz sind wir unabhaengig voneinander auf dasselbe gekommen: base/large/giant sind CC-BY-NC-4.0 und nach Regel 1 ausgeschlossen, auch zum blossen Vergleich. Das ist damit geklaert und braucht keine Messung.\n\n=== WAS ICH INZWISCHEN GEBAUT HABE (nicht nachbauen) ===\nDeinen Vorschlag aus auf-07: himmel_hinter_umriss() liest AUS DEM SOLL, wieviel des Umrisses Himmel hinter sich hat; unter 10 % faellt paarurteil kein Urteil mehr (zustaendig=False, bestanden=None, mit Grund). Der Kurzbefund nennt die betroffenen Kameras.\n\nWICHTIG FUER DICH: Diese Grenze gehoert zum BETRAGSMASS, nicht zur Frage. Wenn R2 das zweite Bein wird, gehoert sie mitgeprueft und vermutlich abgeschaltet — sonst brachte ich ein Mass zum Schweigen, das dort antworten kann. Das steht so im Code, damit es niemand uebersieht.\n\n=== R2: DIE ENTSCHEIDUNG IST NOCH NICHT GEFALLEN, UND DAS IST KEINE ABLEHNUNG ===\nDeine Tabelle ist die beste Beleglage, die ein Vorschlag in diesem Projekt bisher hatte: fuenf Szenen, drei Gebaeude, jeder echte Fall 52.6-82.5 %, jeder Anker hoechstens 33.7 %. Dass du den Irrweg (Maximum gegen Einzelpunkt, Rauschen 71.3 %) dazugeschrieben hast, erspart dem Naechsten genau diesen Anlauf.\n\nEs gilt trotzdem der Entscheid des Owners vom 23.08. zu Variante F, und er gilt hier genauso: EIN MASS WIRD NICHT GEBAUT, BIS EINE WEITERE SZENE ES TRAEGT. Das ist keine Skepsis gegen dich — du hast heute selbst zwei eigene Vorschlaege zurueckgezogen, beide nachdem eine Eichung sie erledigt hatte. Du hast diese Vorsicht selbst angeboten, und wir nehmen sie an.\n\n=== G1 · DIE LUECKE, DIE DU SELBST BENANNT HAST: ERZEUGTE BILDER ===\nDas ist der Kern dieses Auftrags, und er ist wichtiger als eine sechste Szene.\n\nAlle R2-Werte stammen aus Blender-Renders und den drei Ankern. Die Versatzreihe ist dein Ersatz fuer 'schlechter werdende Geometrie' — aber ein versetztes perfektes Bild ist etwas anderes als ein erzeugtes Bild. Kein einziger R2-Wert stammt bisher von einem Bild, das unser Bildmodell gemacht hat.\n\nLauf R2 auf den erzeugten Bildern, die wir haben oder die du erzeugen kannst:\n  - unser bestes erzeugtes Bild (aus auf-30: Umrisstreue 24.3 %, rho_maske 0.9059)\n  - eines ohne Tiefenfuehrung (auf-30: 6.4 %, rho_maske 0.2558)\n  - das qwen-Bild ohne echte Fuehrung (auf-30: 2.8 %, rho_maske 0.7406)\n  - dazu je die drei Anker derselben Szene\n\nJe Bild zurueck: R2 in Prozent, die Zahl der gewerteten Grenzabschnitte, rho_maske daneben.\n\nWOZU, und das ist die eigentliche Frage: Die Schwelle 45 % entscheidet ueber unsere erzeugten Bilder, nicht ueber Blender-Renders. Liegt unser bestes erzeugtes Bild darunter, ist die Schwelle unbrauchbar. Liegt das ungefuehrte darueber, ist sie zahnlos. Beides waere ein Ergebnis, und beide will ich vor dem Einbau wissen und nicht danach.\n\n=== G2 · DIE SECHSTE SZENE, DIE DU ANGEBOTEN HAST ===\nEine Szene, die von den fuenf bisherigen moeglichst weit weg liegt — nicht noch ein Quader vor Hintergrund. Waehle du; wenn du keine Praeferenz hast, waere ein schmaler hoher Bau in einer engen Gasse interessant, weil dort BEIDE Seiten des Umrisses verbaut sind statt einer.\n\nDieselbe Tabelle wie in auf-08: perfekt, Versatzreihe, drei Anker, R2 und A nebeneinander, und der gemessene Himmelanteil ganz nach vorn.\n\n=== G3 · NUR WENN BEIDES BILLIG WAR ===\nDer Fensterradius 6 px und 'jeder dritte Grenzpunkt' sind gesetzt, nicht gemessen. Wenn G1 und G2 stehen: derselbe Lauf mit Radius 3 und 12. Faellt R2 dabei deutlich anders aus, ist der Radius ein verstecktes Stellrad und gehoert deklariert.\n\n=== WAS DU NICHT TUN SOLLST ===\n- Keine Abstandsreihe (15/30/60/120 m) — deine eigene Zahl hat sie erledigt.\n- Kein depth-anything-v2 in base/large/giant. Lizenz, siehe oben.\n- Variante F nicht weiterbauen.\n- R2 noch nicht in unseren Code einbauen — das ist unsere Seite, und erst nach G1.\n- Keine Geometrie und keine Bilder ins Repo. Zahlen, Dateinamen, Pfade auf der HomeStation (Regel 3).\n\n=== RUECKGABE ===\nNach auftraege/ergebnisse/auf-20260823-36.json. G1 ist der Kern; G2 die Absicherung; G3 Zugabe.\n\nUnd eine Frage, deren Antwort ich als Einschaetzung will und nicht als Zahl: Du sagst, R2 taugt als Anwesenheitspruefung und NICHT als Guetemass — die Versatzreihe faellt nicht monoton. Wuerdest du R2 dann NEBEN das Kantenmass stellen statt an seine Stelle? Also: R2 beantwortet 'steht da etwas', das Kantenmass 'wie gut', und wo kein Himmel steht, schweigt das zweite und das erste traegt allein. Das waere ein DRITTES Bein und kein Ersatz. Sag mir, ob das aus deiner Sicht sauber ist oder ob es nur mein Unwille ist, etwas wegzuwerfen.",
-  "erstellt": "2026-08-23T20:04:43Z",
+  "beschreibung": "ZUM DRITTEN MAL NEU GESCHRIEBEN. Diesmal nicht, weil du schneller warst, sondern weil ich beim Nachbauen von R2 etwas gefunden habe, das du vor der sechsten Szene wissen musst.\n\n################################################################\n# ZUERST: R2 IST GEBAUT, UND ZWAR BEI UNS IM REPO\n################################################################\n\ngeometrie_qa.anteil_naeher_am_rand(ist, maske, breite=..., polaritaet=...)\nFensterradius 6, jeder dritte Grenzpunkt, Median innen gegen Median aussen im selben Fenster — deine Bauart, so genau ich sie aus auf-08 lesen konnte.\n\nBITTE MISS AB JETZT MIT UNSERER FASSUNG statt mit deiner eigenen. Grund ist eine unserer Regeln: Eine Zahl, die an zwei Stellen gerechnet wird, ist an einer davon bereits falsch — nur weiss man nicht, an welcher. Wenn deine Zahlen mit unserer Fassung NICHT herauskommen, ist genau das der wertvollste Befund dieses Auftrags, und ich will ihn hoeren.\n\nDeinen dokumentierten Irrweg (Maximum innen gegen einen einzelnen Aussenpunkt, Rauschen 71.3 %) habe ich als Test nachgebaut, damit ihn niemand ein zweites Mal geht.\n\n################################################################\n# UND JETZT DER BEFUND, DER DEINE SCHWELLE TRIFFT\n################################################################\n\nDAS ZUFALLSNIVEAU VON R2 IST 50 %, NICHT 34 %. Und es folgt aus der Konstruktion, es muss gar nicht gemessen werden:\n\nHat die Karte GAR KEINEN Bezug zur Maske, sind Median innen und Median aussen zwei unabhaengige Ziehungen aus derselben Verteilung. Welcher groesser ausfaellt, ist ein Muenzwurf. Fuer eine symmetrische Werteverteilung gilt das exakt.\n\nNACHGEMESSEN, weil 'folgt aus der Konstruktion' bei uns schon einmal falsch war — weisses Rauschen ueber 200 Startwerte, synthetische Szene, 79 Abschnitte:\n\n    Median 0.5063     Spanne 0.228 bis 0.772\n    ueber deiner Schwelle 0.45:  138 von 200\n\nDEINE SCHWELLE LIEGT ALSO UNTER DEM ZUFALL. Weisses Rauschen besteht sie bei mir in mehr als zwei Dritteln der Faelle.\n\nWARUM DEIN ANKER TROTZDEM 33.7 % ZEIGT — zwei Moeglichkeiten, und ich kann sie von hier aus nicht trennen:\n\n  (a) EINE ZIEHUNG. Dein Rauschanker ist EIN Startwert. Bei mir streut derselbe Anker von 0.228 bis 0.772. 33.7 % liegt bequem in dieser Spanne. Dann ist die Schwelle an einer einzelnen Ziehung abgelesen — derselbe Fehler, den ich heute mit der Kameraneigung gemacht habe: Eine Spanne aus einer Stichprobe ist eine Aussage ueber die Stichprobe.\n\n  (b) UNSERE ANKER SIND NICHT DASSELBE. Ich lege weisses Rauschen ALS TIEFENKARTE ein. Du laesst vermutlich den SCHAETZER auf ein Rauschbild los und misst dessen Ausgabe. Das ist etwas anderes — die Ausgabe eines Schaetzers ist nie weisses Rauschen, sie hat Struktur. Dann waeren deine 33.7 % keine Muenzwurfzahl, sondern eine Eigenschaft des Schaetzers, und das waere sogar interessanter.\n\n  ABER: In beiden Faellen braucht der Anker MEHRERE Startwerte. Bei (a), weil einer nichts sagt. Bei (b), weil auch die Schaetzerausgabe je Rauschbild anders ausfaellt.\n\nNOCH ETWAS, das mir beim Messen auffiel: Die Fenster benachbarter Abschnitte UEBERLAPPEN (Radius 6, jeder dritte Punkt). Die Abschnitte sind also nicht unabhaengig, und die binomiale Streuung ist zu klein. Gemessen betraegt der Faktor bei mir 1.93 bei jeder_nte=3 und 1.34 bei 7 — auf EINER Szene, also nichts, worauf man bauen kann. Deswegen meldet unsere Fassung 'ueber Zufall' NICHT als True, sondern gar nicht: Wir wuessten nicht, um wieviel ein Wert ueber 0.50 liegen muss.\n\n################################################################\n# MEIN ENTSCHEID (der Owner hat mir die Entscheidung ueberlassen)\n################################################################\n\nR2 IST GEBAUT UND LAEUFT MIT — ALS DRITTES BEIN, NICHT ALS ERSATZ. Und es entscheidet ueber NICHTS.\n\n  - rho_maske beantwortet weiterhin 'stimmt die Tiefenstaffelung'.\n  - Der Kantenanteil beantwortet 'wie gut ist der Umriss gezeichnet' — und schweigt, wo hinter dem Umriss kein Himmel steht.\n  - R2 beantwortet 'steht ueberhaupt etwas da' und traegt genau dort weiter.\n  - Kein Bild besteht durch R2, das ohne R2 durchgefallen waere. Streng additiv.\n\nWARUM NICHT ALS ERSATZ: Du sagst selbst, R2 ist kein Guetemass — die Versatzreihe faellt nicht monoton. Ein Guetemass durch ein Anwesenheitsmass zu ersetzen hiesse, eine Frage aufzugeben statt eine zu beantworten. Sie beantworten verschiedene Dinge, also stehen sie nebeneinander. Das ist die Antwort auf deine Rueckfrage aus auf-08: Es ist nicht mein Unwille, etwas wegzuwerfen — es ist der Unterschied zwischen zwei Fragen.\n\nWARUM ES NICHTS ENTSCHEIDET: aus den zwei Gruenden oben — Schwelle unter dem Zufall, und kein einziger Wert von einem erzeugten Bild.\n\n################################################################\n# G1 · R2 AN ERZEUGTEN BILDERN — weiterhin der Kern\n################################################################\n\nUnveraendert gegenueber der letzten Fassung, mit unserer Implementierung:\n  - unser bestes erzeugtes Bild (auf-30: Umrisstreue 24.3 %, rho_maske 0.9059)\n  - eines ohne Tiefenfuehrung (auf-30: 6.4 %, rho_maske 0.2558)\n  - das qwen-Bild ohne echte Fuehrung (auf-30: 2.8 %, rho_maske 0.7406)\nJe Bild: R2 in Prozent, Zahl der gewerteten Abschnitte, rho_maske daneben.\n\n################################################################\n# G2 · DER RAUSCHANKER MIT MEHREREN STARTWERTEN — NEU UND WICHTIGER ALS DIE SECHSTE SZENE\n################################################################\n\nAuf DEINEN Szenen g0/g1/g2, mit mindestens acht Startwerten je Szene:\n  - R2 des Rauschankers je Startwert, dazu Median und Spanne\n  - und sag dazu, WAS dein Rauschanker ist: das Rauschbild durch den Schaetzer, oder Rauschen direkt als Karte?\n\nWOZU: Erst danach weiss irgendjemand, wo bei R2 der Zufall liegt und wieviel Luft eine Schwelle braucht. Ohne das ist jede Schwelle geraten — meine 0.50 aus der Konstruktion so gut wie deine 0.45 aus einer Ziehung.\n\n################################################################\n# G3 · DIE SECHSTE SZENE — jetzt nachrangig\n################################################################\n\nWenn G1 und G2 stehen. Moeglichst weit weg von den fuenf bisherigen; ein schmaler hoher Bau in einer engen Gasse waere interessant, weil dort BEIDE Seiten des Umrisses verbaut sind statt einer.\n\n################################################################\n# WAS DU NICHT TUN SOLLST\n################################################################\n\n- Keine Abstandsreihe (15/30/60/120 m) — deine eigene Zahl hat sie erledigt.\n- Kein depth-anything-v2 in base/large/giant: CC-BY-NC-4.0, Regel 1, auch nicht zum Vergleich.\n- Variante F nicht weiterbauen.\n- R2 nicht mit einer eigenen zweiten Implementierung messen — nimm unsere, siehe oben.\n- Keine Geometrie und keine Bilder ins Repo (Regel 3).\n\n################################################################\n# RUECKGABE\n################################################################\n\nNach auftraege/ergebnisse/auf-20260823-36.json. Reihenfolge nach Wichtigkeit: G2, G1, G3.\n\nUnd eine Bitte in eigener Sache: Wenn unsere Fassung von R2 deine Zahlen nicht reproduziert, sag es deutlich und mit den beiden Zahlenreihen nebeneinander. Ich habe deine Bauart aus einer Beschreibung nachgebaut, und das geht schief, ohne dass es auffaellt — genau das ist der Grund, warum die Zahl kuenftig nur noch an einer Stelle gerechnet werden soll.",
+  "erstellt": "2026-08-23T20:41:52Z",
   "geometrie": {
     "synthetisch": true,
     "pfad": null,
     "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
   },
   "params": {
+    "befund_vorab": {
+      "R2_zufallsniveau": 0.5,
+      "herleitung": "zwei unabhaengige Mediane — welcher groesser ist, ist ein Muenzwurf",
+      "nachgemessen_200_startwerte": {
+        "median": 0.5063,
+        "min": 0.228,
+        "max": 0.772,
+        "n_abschnitte": 79
+      },
+      "eure_schwelle_0.45": "besteht weisses Rauschen in 138 von 200 Startwerten",
+      "ueberlappung": {
+        "faktor_jeder_nte_3": 1.93,
+        "faktor_jeder_nte_7": 1.34,
+        "gemessen_auf": "EINER synthetischen Szene — keine belastbare Zahl"
+      }
+    },
+    "implementierung": {
+      "funktion": "aiimaging.geometrie_qa.anteil_naeher_am_rand",
+      "bitte": "mit UNSERER Fassung messen, nicht mit einer zweiten eigenen",
+      "grund": "eine Zahl an zwei Stellen ist an einer davon bereits falsch"
+    },
+    "entscheid": {
+      "R2": "drittes Bein, nicht Ersatz — und es entscheidet ueber nichts",
+      "streng_additiv": "kein Bild besteht durch R2, das ohne R2 durchgefallen waere",
+      "antwort_auf_eure_rueckfrage": "nicht Unwille, etwas wegzuwerfen — zwei Fragen"
+    },
     "kernfragen": {
-      "G1": "R2 auf ERZEUGTEN Bildern — haelt die Schwelle 45 % dort, wo sie entscheidet?",
-      "G2": "Sechste Szene, moeglichst weit weg von den fuenf bisherigen",
-      "G3": "Fensterradius 3 / 6 / 12 — ist der Radius ein verstecktes Stellrad?"
+      "G1": "R2 an ERZEUGTEN Bildern (mit unserer Fassung)",
+      "G2": "Rauschanker mit >= 8 Startwerten je Szene — und was euer Anker ist",
+      "G3": "sechste Szene, jetzt nachrangig"
     },
     "erledigt_nicht_messen": {
-      "abstandsreihe_15_30_60_120_m": "hinfaellig: der Schaetzer ordnet richtig (Bauwerk 1.7124, Nachbar 1.6112), er staucht nur den Betrag",
+      "abstandsreihe": "der Schaetzer ordnet richtig (1.7124 gegen 1.6112)",
       "groesserer_schaetzer": "lizenzgesperrt, CC-BY-NC-4.0, Regel 1"
     },
     "bereits_gemessen_nicht_wiederholen": {
@@ -28,11 +54,6 @@
         "s60": 0.755,
         "s29": 0.825
       },
-      "R2_anker_rauschen": {
-        "g_szenen": 0.337,
-        "s_szenen": 0.161
-      },
-      "R2_schwellenvorschlag": 0.45,
       "A_gerichtet": {
         "g0": 0.4267,
         "g1": 0.1442,
@@ -57,23 +78,6 @@
         "umrisstreue": 0.028,
         "rho_maske": 0.7406
       }
-    },
-    "gesetzt_nicht_gemessen": {
-      "MIN_HIMMELANTEIL": 0.1,
-      "R2_fensterradius_px": 6,
-      "R2_jeder_nte_grenzpunkt": 3
-    },
-    "lizenzsperre": {
-      "verboten": [
-        "depth-anything-v2-base",
-        "depth-anything-v2-large",
-        "depth-anything-v2-giant"
-      ],
-      "lizenz": "CC-BY-NC-4.0",
-      "grund": "NonCommercial — Regel 1, auch fuer blosse Vergleichsmessungen",
-      "zulaessig": [
-        "depth-anything-v2-small (Apache-2.0)"
-      ]
     }
   },
   "auflagen": {
