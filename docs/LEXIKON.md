@@ -1574,6 +1574,32 @@ Kanten woanders, und dort steht dann Grund — die Tiefenkante fragt also nicht 
 etwas», sondern «steht dort **das Richtige**». Genau die Fälle, die sie darum verfehlt,
 fängt die Rangkorrelation.*
 
+**Himmel hinter dem Umriss** — Der Anteil der Silhouettengrenze eines Bauwerks, hinter
+dem im *Entwurf* nichts mehr steht — kein Nachbargebäude, kein ansteigendes Gelände,
+sondern offener Himmel. Abgelesen wird er am Entwurf und **nicht** am erzeugten Bild.
+*Er entscheidet, ob die Umrisstreue überhaupt etwas messen kann. Wo Himmel dahintersteht,
+ist der Tiefensprung an der Silhouette riesig und für jedes Verfahren sichtbar. Steht dort
+ein Nachbarhaus, ist der Sprung im Entwurf zwar immer noch gross — gemessen 15 m — aber
+ein Tiefenschätzer, der nur ein einzelnes Bild sieht, legt zwei ähnliche Betonkörper in 34
+und 49 m praktisch nicht auseinander. Er hat dafür keinen Bildhinweis.*
+*Am 23.08.2026 gemessen: bei 63 % Himmel misst die Umrisstreue 0,42, bei 0 % nur noch
+0,0016 — und ein zufälliges Rauschbild kommt dort auf −0,0024. Das Mass trennt in solchen
+Szenen ein perfektes Bild nicht mehr von Rauschen. Dass es trotzdem eine Zahl ausgab, war
+der gefährliche Teil.*
+
+**Zuständigkeitsgrenze (eines Messverfahrens)** — Die vorab beantwortbare Frage, ob ein
+Verfahren in einer bestimmten Lage **überhaupt etwas messen kann** — gestellt, *bevor*
+gemessen wird, und beantwortet aus dem, was ohnehin schon vorliegt.
+*Der Unterschied zu einer Schwelle: Eine Schwelle trennt gute von schlechten Messwerten.
+Eine Zuständigkeitsgrenze trennt Messwerte von Nicht-Messwerten. Wer sie weglässt, bekommt
+statt einer Fehlanzeige eine Zahl — und Zahlen werden geglaubt.*
+*Eine Prüfung, die das Ergebnis der Messung braucht, ist keine: Sie käme zu spät und hinge
+von genau der Messung ab, die sie beurteilen soll. Darum liest die Zuständigkeitsprüfung
+in diesem Projekt ausschliesslich den Entwurf, der in der Kette immer vorher vorliegt.*
+*Die Folge im Betrieb ist ungewohnt: Das Prüfergebnis lautet dann weder «bestanden» noch
+«durchgefallen», sondern «hier ist nichts zu messen». Das ist eine dritte Antwort, und sie
+muss eigens gemeldet werden — sonst sieht sie aus wie ein bestandenes Tor.*
+
 **Umrisstreue (Anteil der Grenze mit Kante)** — Wieviel vom Umriss eines Bauwerks ein
 erzeugtes Bild **wirklich zeichnet**. Gemessen als Anteil der Silhouettengrenze, an dem
 das Bild einen Tiefensprung zeigt — nicht wie stark der Sprung im Mittel ist, sondern an
@@ -3097,6 +3123,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-23 | Ergaenzt aus einer Messung, die ein Mass erledigt hat: **Himmel hinter dem Umriss** und **Zustaendigkeitsgrenze (eines Messverfahrens)**. Die HomeStation hat dieselbe Kamera dreimal gerechnet und nur den Hintergrund getauscht — mit einem Nachbargebaeude dahinter trennt die Umrisstreue ein perfektes Bild nicht mehr von weissem Rauschen. Daraus folgt keine bessere Normierung, sondern eine dritte Antwort neben bestanden und durchgefallen |
 | 2026-08-23 | **Vertragsfeld** ausgebaut statt verdoppelt: Ich hatte einen zweiten Eintrag dazu geschrieben, `test_lexikon` fing ihn, und der Test hatte recht — der Begriff stand laengst da. Ergaenzt ist die andere Seite derselben Sache: Alles, was KEIN Vertragsfeld ist, muss daneben landen, und wenn „daneben" in Wahrheit „gar nicht" heisst, ist es umsonst gerechnet |
 | 2026-08-23 | Ergaenzt: **Auswahleffekt beim Minimum (Extremwertstatistik)**. Anlass ist eine Nebenwirkung der Umstellung auf drei Ansichten: Das Urteil ist das der schwaechsten Kamera, und ein Minimum faellt mit der Zahl der Ziehungen — um rund 0,19, also mehr als jeder Parametereffekt der Kette. Niemand hatte das entschieden |
 | 2026-08-23 | Ergaenzt aus den zwei Uebersetzungsregeln: **Kompositum (zusammengesetztes Wort)** und **Beugung (Flexion)**. Beide tragen den gemessenen Ertrag mit: An dreizehn Prompts war vorher **einer** vollstaendig uebersetzt, nachher **dreizehn** — und die Wahl der Endungen ist keine Kleinigkeit, `s` musste weichen (Dachs → roof), `n` musste bleiben (Fassaden) |

@@ -1272,8 +1272,7 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       **Danach verhalten sich alle vier Anker richtig:** grau und Verlauf nicht messbar,
       **weisses Rauschen messbar und NICHT über Zufall** (vorher galt es als Signal), das
       perfekte Bild deutlich darüber.
-- [ ] **Variante F ist ein Kandidat und wird NICHT gebaut, bis eine dritte Szene sie
-      trägt.** Die HomeStation hat selbst darum gebeten (`auf-vis-20260823-06`): Bänder
+- [x] **Variante F ist tot — und der Grund trifft die ganze Geometrie-QA.** Die HomeStation hat selbst darum gebeten (`auf-vis-20260823-06`): Bänder
       nur dort messen, wo das Soll Himmel führt, senkt den relativen Szenenabstand von
       42,4 % auf 11,3 %. Ihre Begründung ist präzise und darum prüfbar — die
       Szenenabhängigkeit kommt vom **Anteil Himmel hinter der Silhouette**.
@@ -1294,6 +1293,78 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Hof, Nachbarwand, Mulde? Dann bleiben ihm kaum Grenzabschnitte, und die richtige
       Antwort ist vermutlich „nicht messbar" und nicht „eine Zahl aus sieben Punkten".
       Denselben Fehler haben wir heute an `kantenanteil` korrigiert.
+      **Erledigt am 23.08.2026, und zwar anders als geplant** (`auf-vis-20260823-07`).
+      Der Owner hatte entschieden, F erst an geneigtem Gelände zu prüfen — die richtige
+      Reihenfolge, denn genau dort ist F durchgefallen. Drei Szenen, dieselbe Kamera,
+      dasselbe Bauwerk, nur der Hintergrund verschieden:
+
+          g0 flach        63,3 % Himmel     F +0,4227   A +0,4267
+          g1 geneigt       0,0 %            F nicht rechenbar   A +0,1442
+          g2 Nachbargebäude 0,0 %           F nicht rechenbar   A +0,0016
+
+      F braucht Himmel hinter dem Umriss, und in beiden nicht-flachen Szenen gibt es
+      keinen. Das ist keine Ungenauigkeit, sondern eine fehlende Grundlage — **und in der
+      Stadt ist das der Normalfall.** F wird nicht gebaut; `auf-36` ist damit gegenstandslos.
+
+      **Der grössere Befund liegt aber bei A, dem Mass, das wir benutzen.** In g2 misst A
+      am perfekten Bild +0,0016 gegen einen Rauschanker von −0,0024 — es trennt dort ein
+      perfektes Bild nicht mehr von weissem Rauschen. Der Mechanismus liegt nicht im Mass:
+      Der Nachbar steht im Soll 15,05 m weiter hinten, der Schätzer legt beide nur 3,0 %
+      der Kartenspanne auseinander. Ein monokularer Schätzer hat für zwei ähnliche
+      Betonkörper in 34 und 49 m keinen Bildhinweis. Die Gegenprobe macht es endgültig:
+      Der **wahre** Sprung ist in g2 am grössten, der **gemessene** dort am kleinsten —
+      die Beziehung ist umgekehrt.
+
+      Die HomeStation hat den Vorschlag ausdrücklich nicht als Empfehlung markiert und
+      dazugesagt, dass sie für die Stadtfälle keinen guten Einfall hat. Das ist die
+      richtige Auskunft: **ungemessen** ist, ob ein grösserer Schätzer die 15 m auflöst —
+      dann wäre der ganze Befund eine Frage der Modellgrösse und keine des Masses.
+- [x] **Das zweite Bein schweigt jetzt, wo es nichts messen kann** (23.08.2026).
+      Umgesetzt ist genau der Vorschlag aus `auf-vis-20260823-07`: `himmel_hinter_umriss`
+      liest **aus dem Soll** (nicht aus der Schätzung), wieviel des Umrisses Himmel hinter
+      sich hat, und `paarurteil` fällt kein Urteil, wo dieser Anteil unter 10 % liegt —
+      `zustaendig: False`, `bestanden: None`, mit benanntem Grund.
+
+      **Warum aus dem Soll.** Eine Zuständigkeitsprüfung, die das Ergebnis der Messung
+      braucht, ist keine. Die Soll-Karte liegt in dieser Kette immer vorher vor; die Frage
+      *«kann hier überhaupt gemessen werden»* ist damit **vor** dem ersten Renderlauf
+      beantwortbar.
+
+      **Warum schweigen und nicht durchfallen.** Nicht messbar ist weder bestanden noch
+      durchgefallen — dieselbe Unterscheidung wie heute schon zweimal (`kantenanteil`
+      ohne trennende Schranke, `minimum_abschlag` jenseits der Tabelle). Ein grünes
+      Abzeichen wäre hier in die **gefährliche** Richtung falsch, ein rotes bloss unfair.
+
+      Die 10 % sind eine **Setzung**, kein Ablesewert: Zwischen 0 % (misst nichts) und
+      63 % (misst) liegt nichts Gemessenes. Wer die Lücke füllt, ändert die Zahl.
+
+      Und weil dieses Projekt dieselbe Fehlerart heute dreimal gefunden hat, steht die
+      dritte Antwort auch im Kurzbefund: `befund_kurz` nennt die Kameras, deren Umrisstreue
+      nicht messbar war. Ein „nicht zuständig", das niemand sieht, ist ein bestandenes Tor
+      mit Extraschritt.
+
+      **Offen bleibt die Stadtfrage.** Ist der Hintergrund verbaut, beantwortet heute
+      *niemand* die Existenzfrage — ρ beantwortet die Richtigkeit und ersetzt sie nicht.
+- [ ] **LIZENZMELDUNG (Regel 1): Der naheliegende nächste Versuch ist gesperrt.** Die
+      HomeStation hat gefragt, ob ein *grösserer* Tiefenschätzer die 15 m auflöst — dann
+      wäre der ganze Befund eine Frage der Modellgrösse. **Das ist mit erlaubten Gewichten
+      nicht zu beantworten:** `depth-anything-v2` in **base, large und giant** steht unter
+      **CC-BY-NC-4.0**, also NonCommercial, und ist damit nach Regel 1 ausgeschlossen —
+      dieselbe Sperre wie bei FLUX.1-dev. Zulässig ist allein `depth-anything-v2-small`
+      (Apache-2.0). Die Registry führt das seit Phase 3 korrekt (`zulaessig: False`); neu
+      ist, dass die Sperre jetzt eine **inhaltliche** Frage blockiert und nicht nur eine
+      Bequemlichkeit.
+
+      `auf-36` ist darum neu geschrieben und beantwortet dieselbe Frage ohne fremdes
+      Gewicht: **denselben Fall mit wachsendem Abstand** (15 / 30 / 60 / 120 m). Trennt der
+      kleine Schätzer bei 120 m, ist es eine Auflösungsgrenze in Metern und aufschreibbar.
+      Trennt er nie, fehlt der **Bildhinweis** — dann hätte auch ein grösseres Modell
+      nichts genützt, und die Sperre kostet uns nichts. Dazu die Stufung des
+      Himmelanteils (5/10/20/30/45 %), die aus `MIN_HIMMELANTEIL` eine Messung macht statt
+      einer Setzung.
+
+      Ein zweiter Schätzer ist erlaubt, **wenn seine Lizenz vorher genannt ist** und
+      permissiv ausfällt. Eine ungeklärte Lizenz ist ein Befund und kein Hindernis.
 - [x] **Der Bauteilwächter lief auf keinem einzigen echten Auftrag — bis 23.08.2026.**
       Er ist die direkte Antwort auf den teuersten Fehler dieses Projekts: „clean flat
       roof" für einen oben offenen Quader, und das Bildmodell lieferte ein Dach

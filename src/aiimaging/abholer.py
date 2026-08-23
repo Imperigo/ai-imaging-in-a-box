@@ -426,7 +426,8 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     * die Spanne über die Kameras samt der Zahl, aus wie vielen das Urteil das
       schlechteste ist,
     * wie viele Kameras die Kompositionsprüfung beanstandet,
-    * ob der Vorsprung des gewählten Startwerts belegt ist.
+    * ob der Vorsprung des gewählten Startwerts belegt ist,
+    * bei welchen Kameras das zweite Bein des Paartests **gar nichts messen kann**.
 
     Zeilen ohne Inhalt entfallen ganz. Eine Ausgabe, in der jede Zeile immer dasteht,
     liest sich nach dem dritten Mal wie eine leere.
@@ -469,6 +470,18 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     if ungesichert:
         zeilen.append(f"Seedvorsprung NICHT belegt (bestes Bild behalten, aber kein "
                       f"besserer Startwert): {', '.join(str(k) for k in ungesichert)}")
+
+    # Ein „nicht zustaendig", das niemand sieht, ist ein bestandenes Tor mit Extraschritt.
+    # Die Zeile nennt darum die Kameras UND den Handgriff: In einer Szene, in der ein
+    # Nachbargebaeude hinter dem Umriss steht, ist die Existenzfrage mit diesem Schaetzer
+    # nicht zu beantworten — eine andere Kamera kann sie beantwortbar machen.
+    unzustaendig = [k.get("kamera") for k in kameras
+                    if (k.get("paarurteil") or {}).get("zustaendig") is False]
+    if unzustaendig:
+        zeilen.append(f"Umrisstreue NICHT messbar (kein Himmel hinter dem Umriss, "
+                      f"auf-vis-20260823-07): {', '.join(str(k) for k in unzustaendig)}"
+                      f"  — nicht messbar heisst weder bestanden noch durchgefallen; "
+                      f"eine Kamera mit freierem Hintergrund misst wieder")
 
     return tuple(zeilen)
 

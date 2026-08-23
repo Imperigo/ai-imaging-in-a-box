@@ -1688,6 +1688,76 @@ def anteil_grenze_mit_kante(ist: Sequence[float], maske: Sequence[bool], *,
     return antwort
 
 
+#: Ab welchem Anteil Himmel hinter dem Umriss die Tiefenkante überhaupt etwas messen kann.
+#:
+#: **Am Gerät gemessen und schwer erkauft** (HomeStation, `auf-vis-20260823-07`,
+#: 23.08.2026): Dieselbe Kamera, dasselbe Bauwerk, nur der Hintergrund verschieden.
+#:
+#:     g0 flaches Gelände      63,3 % Himmel hinter dem Umriss    Kante +0,4227
+#:     g1 geneigtes Gelände     0,0 %                             Kante +0,1442
+#:     g2 Nachbargebäude        0,0 %                             Kante +0,0016
+#:
+#: In g2 trennt die Kante ein **perfektes** Bild nicht mehr von weissem Rauschen
+#: (+0,0016 gegen −0,0024; der Abstand ist kleiner als die Streuung der Nullanker
+#: untereinander). Ein grünes Abzeichen wäre dort in die **gefährliche** Richtung falsch.
+#:
+#: **Der Mechanismus liegt nicht im Mass.** Der Nachbar steht im Soll 15,05 m weiter
+#: hinten; der Schätzer legt beide nur 3,0 % der Kartenspanne auseinander. Ein
+#: monokularer Schätzer trennt zwei ähnliche Betonkörper in 34 und 49 m praktisch nicht —
+#: er hat dafür keinen Bildhinweis. Die Gegenprobe macht es endgültig: Der **wahre**
+#: Sprung ist in g2 am grössten und der **gemessene** dort am kleinsten. Die Beziehung
+#: ist umgekehrt.
+#:
+#: Daraus folgt keine bessere Normierung, sondern eine Zuständigkeitsgrenze: Wo kein
+#: Himmel hinter dem Umriss steht, misst die Tiefenkante nichts, und sie soll dann
+#: **schweigen statt bestehen**. Ob ein grösserer Schätzer die 15 m auflöst, ist
+#: ungemessen — dann wäre der ganze Befund eine Frage der Modellgrösse.
+#:
+#: Der Wert ist eine **Setzung**: 10 % gemessene Himmelabschnitte. Zwischen 0 % (nichts)
+#: und 63 % (trägt) liegt nichts Gemessenes; wer die Lücke füllt, ändert die Zahl.
+MIN_HIMMELANTEIL = 0.10
+
+
+def himmel_hinter_umriss(soll, maske, *, breite: int,
+                         grenze_m: float = HINTERGRUND_SCHWELLE_M) -> dict:
+    """Wieviel des Umrisses hat **Himmel** dahinter — aus dem SOLL, nicht aus der Schätzung.
+
+    Der Anteil der äusseren Randpunkte, deren Soll-Tiefe Hintergrund ist (nicht endlich
+    oder jenseits von ``grenze_m``). Das ist genau die Grösse, an der die Tiefenkante
+    hängt: Wo Himmel dahintersteht, ist der Sprung unendlich; wo ein Nachbargebäude
+    dahintersteht, ist er im Soll gross und in der Schätzung praktisch null.
+
+    **Aus dem Soll und nicht aus dem Bild** — das ist der Punkt. Die Frage *«kann hier
+    überhaupt gemessen werden»* muss beantwortbar sein, **bevor** gemessen wird, und die
+    Soll-Karte liegt in dieser Kette immer vor. Eine Zuständigkeitsprüfung, die das
+    Ergebnis der Messung braucht, ist keine.
+
+    Returns:
+        ``{anteil, n_aussen, n_himmel, traegt, methode}``. ``traegt`` ist ``False``,
+        wenn der Anteil unter :data:`MIN_HIMMELANTEIL` liegt — dann misst die Tiefenkante
+        nichts, und das ist etwas anderes als ein schlechter Wert.
+    """
+    werte = _als_zahlen(soll, "soll")
+    m = _als_wahrheitswerte(maske, "maske")
+    if len(werte) != len(m):
+        raise QaError(
+            f"soll und maske sind verschieden lang ({len(werte)} gegen {len(m)}). "
+            f"Zwei Karten verschiedener Grösse zu vergleichen ergäbe eine Zahl ohne Sinn.")
+    hoehe = len(werte) // breite
+    _innen, aussen = _randpunkte(m, breite, hoehe)
+
+    n_himmel = sum(1 for i in aussen
+                   if not math.isfinite(werte[i]) or werte[i] >= grenze_m)
+    anteil = (n_himmel / len(aussen)) if aussen else 0.0
+    return {
+        "anteil": anteil,
+        "n_aussen": len(aussen),
+        "n_himmel": n_himmel,
+        "traegt": bool(aussen) and anteil >= MIN_HIMMELANTEIL,
+        "methode": "himmelanteil_am_aussenrand",
+    }
+
+
 def _kantenstaerken(werte: list[float], breite: int, hoehe: int) -> list[float]:
     """Je Bildpunkt: wie stark sich die Tiefe zu den Nachbarn ändert.
 
@@ -1756,6 +1826,7 @@ PAAR_KANTENANTEIL_SCHWELLE = 0.20
 
 def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
                anteil_ergebnis: dict | None = None,
+               himmel_ergebnis: dict | None = None,
                rho_schwelle: float = PAAR_RHO_SCHWELLE,
                kante_schwelle: float = PAAR_KANTE_SCHWELLE,
                anteil_schwelle: float = PAAR_KANTENANTEIL_SCHWELLE) -> dict:
@@ -1764,13 +1835,22 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
     Args:
         rho_ergebnis: Antwort von :func:`rho_ueber_maske`, oder ``None``.
         kante_ergebnis: Antwort von :func:`kante_an_maskengrenze`, oder ``None``.
+        himmel_ergebnis: Antwort von :func:`himmel_hinter_umriss`, oder ``None``. Wird
+            sie übergeben und trägt sie **nicht**, fällt das zweite Bein aus — nicht
+            durch. Ohne sie urteilt der Paartest wie bisher; das ist die alte Form und
+            keine bessere.
 
     Returns:
-        ``{bestanden, gemessen, rho, kante, traeger, schwellen, begruendung}``
+        ``{bestanden, gemessen, zustaendig, rho, kante, anteil, himmel, zweites_bein,
+        traeger, schwellen, begruendung}``
 
         * ``bestanden`` — ``None``, solange auch nur eine der beiden Zahlen fehlt.
           **Nicht** „bestanden aufgrund der anderen": Ein Urteil aus der halben Messung
           wäre eine Behauptung über die Hälfte, die niemand angesehen hat.
+        * ``zustaendig`` — ``False``, wenn hinter dem Umriss kein Himmel steht. Dann misst
+          das zweite Bein nichts (siehe :data:`MIN_HIMMELANTEIL`), und der Paartest
+          **schweigt statt zu bestehen**. ``rho`` steht trotzdem im Ergebnis: Das erste
+          Bein ist von der Frage nicht betroffen.
         * ``traeger`` — welches Mass ein „durchgefallen" trägt: ``"rho"``, ``"kante"``,
           ``"beide"`` oder ``None``. *„ρ in Ordnung, Kante fehlt"* ist eine andere
           Diagnose als umgekehrt, und der Aufrufer soll sie unterscheiden können.
@@ -1803,6 +1883,15 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
     Verschiedenes: Die Spalte beschreibt, was ein Mass **unterscheiden kann**, die
     Schwelle, was es **durchlässt**.
 
+    **Und beide Spalten gelten nur, wo Himmel hinter dem Umriss steht.** Alle vier Fälle
+    oben sind an einer freistehenden Szene gemessen. Steht dort ein Nachbargebäude, fällt
+    das zweite Bein von +0,4227 auf +0,0016 und trennt das perfekte Bild nicht mehr von
+    weissem Rauschen — nicht weil das Bild schlechter wäre, sondern weil ein monokularer
+    Schätzer zwei Betonkörper in 34 und 49 m nicht auseinanderlegt (`auf-vis-20260823-07`,
+    siehe :data:`MIN_HIMMELANTEIL`). Darum fragt ``himmel_ergebnis`` **vor** dem Urteil,
+    ob hier überhaupt gemessen werden kann. Nicht messbar ist nicht dasselbe wie schlecht
+    — und ein grünes Abzeichen wäre dort in die gefährliche Richtung falsch.
+
     .. warning::
        **Bis zum 22.08.2026 stand hier: „Dieser Paartest würde jedes Bild abweisen, das
        dieses Projekt je erzeugt hat." Das ist gemessen widerlegt, und zwar am selben
@@ -1832,13 +1921,33 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
     # Liegt kein Anteil vor, fällt der Test auf die alte Form zurück — mit einem Satz
     # dazu, denn die alte Form kippt statt zu trennen.
     zweites_bein = "anteil" if anteil is not None else "kante"
+    # Zuständigkeit VOR Messung: Steht hinter dem Umriss kein Himmel, misst das zweite
+    # Bein nichts — dann darf hier kein Urteil stehen, auch kein schlechtes.
+    himmel_anteil = (himmel_ergebnis or {}).get("anteil")
+    zustaendig = True if himmel_ergebnis is None else bool(himmel_ergebnis.get("traegt"))
     antwort = {
-        "bestanden": None, "gemessen": False, "rho": rho, "kante": kante,
-        "anteil": anteil, "zweites_bein": zweites_bein, "traeger": None,
+        "bestanden": None, "gemessen": False, "zustaendig": zustaendig,
+        "rho": rho, "kante": kante,
+        "anteil": anteil, "himmel": himmel_anteil,
+        "zweites_bein": zweites_bein, "traeger": None,
         "schwellen": {"rho": rho_schwelle, "kante": kante_schwelle,
-                      "anteil": anteil_schwelle},
+                      "anteil": anteil_schwelle, "himmel": MIN_HIMMELANTEIL},
         "begruendung": "",
     }
+
+    if not zustaendig:
+        rho_wort = "liegt nicht vor" if rho is None else f"steht bei {rho:+.4f}"
+        antwort["begruendung"] = (
+            f"NICHT ZUSTÄNDIG: Hinter dem Umriss steht zu wenig Himmel "
+            f"({himmel_anteil:.1%} der äusseren Randpunkte, verlangt sind "
+            f"{MIN_HIMMELANTEIL:.0%}). Das zweite Bein misst dort den Sprung zwischen "
+            f"Fassade und Nachbargebäude — und ein monokularer Schätzer legt zwei "
+            f"Betonkörper in 34 und 49 m praktisch nicht auseinander "
+            f"(auf-vis-20260823-07: +0.0016 gegen einen Rauschanker von −0.0024). "
+            f"Ein Urteil aus dieser Zahl wäre in die gefährliche Richtung falsch. "
+            f"ρ über der Maske ist davon nicht betroffen und {rho_wort}; es beantwortet "
+            f"aber die Existenzfrage nicht und ersetzt das zweite Bein nicht.")
+        return antwort
 
     zweiter_wert = anteil if zweites_bein == "anteil" else kante
     zweiter_name = ("Anteil der Grenze mit Kante" if zweites_bein == "anteil"

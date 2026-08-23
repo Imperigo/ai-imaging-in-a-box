@@ -3,38 +3,56 @@
   "worker": "local",
   "auftrag_id": "auf-20260823-36",
   "art": "qa",
-  "erstellt": "2026-08-23T06:15:00Z",
-  "beschreibung": "NEU GESCHRIEBEN — die erste Fassung dieses Auftrags verlangte die falsche Messung, und du hast es gemerkt, bevor ich es gemerkt habe.\n\n=== WAS ICH FALSCH VERLANGT HABE ===\nIch hatte eine dritte Szene mit EXTREM VIEL Himmel hinter der Silhouette verlangt (90 bis 100 %), mit der Begruendung, ein Extrem belaste deine Erklaerung staerker als eine weitere mittlere Szene.\n\nDas Argument war richtig und die Richtung falsch. Bei 100 % Himmel hat F nichts einzuschraenken — F IST DORT A. Du hast genau das gemessen (+0.2710 fuer beide) und den Vorbehalt selbst dazugeschrieben: 'Der Gewinn von F zeigt sich nur dort, wo Boden hinter dem Umriss steht.' Das von mir verlangte Extrem ist also der einzige Fall, in dem sich die beiden GAR NICHT unterscheiden koennen.\n\nDeine drei Szenen stehen und sind gut: F streut halb so stark wie A, die Schwelle 0.15 trennt auf allen dreien. Was sie NICHT zeigen, ist der Fall, fuer den F gebaut wurde.\n\n=== DIE ZWEI FRAGEN, DIE WIRKLICH OFFEN SIND ===\n\nG1 · DAS ANDERE EXTREM: MOEGLICHST WENIG HIMMEL. Eine Szene, in der hinter dem Umriss ueberwiegend BODEN steht — Kamera hoeher, grosse Platte, Bauwerk klein im Bild. Ziel: 10 bis 20 % Himmel hinter der Silhouette, das Gegenteil deiner s29.\n  Das ist der Fall, in dem A am staerksten versagt und F am meisten leisten muss. Dieselbe Tabelle wie bisher: perfekt, Versatz 0.25 / 0.5 / 1 / 2 / 4 m, die drei Nullanker, F und A nebeneinander.\n  ERWARTUNG: A weicht hier deutlich von den anderen Szenen ab, F nicht. Trifft das nicht zu, ist F nicht besser als A, sondern nur anders — und dann wird nichts gebaut.\n\nG2 · WAS TUT F, WENN GAR KEIN HIMMEL DAHINTERSTEHT? Das ist eine Frage an die BAUART, nicht an die Szene, und sie entscheidet, ob F ueberhaupt gebaut werden kann.\n  F waehlt Grenzabschnitte danach aus, ob das SOLL dort Himmel fuehrt. In einem dichten Hof, vor einer Nachbarwand, in geneigtem Gelaende gibt es solche Abschnitte kaum oder gar nicht. Dann misst F an sehr wenigen Punkten — oder an keinem.\n  Bau eine Szene, in der hinter dem Umriss praktisch KEIN Himmel steht (Bauwerk vor einer grossen Wand oder in einer Mulde), und melde: Wie viele Grenzabschnitte bleiben F? Was gibt F zurueck? Und ab wie wenigen Punkten wuerdest DU sagen, dass die Zahl nichts mehr bedeutet?\n  Die richtige Antwort ist vermutlich 'nicht messbar' und nicht 'eine Zahl aus sieben Punkten'. Wir haben heute genau diesen Fehler an anderer Stelle korrigiert: kantenanteil lieferte eine Zahl mit Fussnote, wo es haette schweigen muessen — und eine Zahl mit Fussnote wird ohne die Fussnote weitergereicht.\n\nG3 · DIE DRITTE KATEGORIE, DIE DU SELBST BENANNT HAST. Du schreibst: geneigtes Gelaende, Nachbargebaeude, Bewuchs — 'dort steht hinter dem Umriss weder Himmel noch flacher Boden'. Fuer F ist die Welt aber zweiwertig: Himmel oder nicht. Wenn du eine dieser Szenen billig bauen kannst (ein zweiter Quader hinter dem Bauwerk genuegt), miss sie mit. Wenn nicht: ueberspring es und sag es — dann steht es als benannte Luecke, und das ist besser als eine erfundene Szene.\n\n=== WAS SICH BEI UNS GEAENDERT HAT (unveraendert aus der ersten Fassung) ===\nDein Befund zu kantenanteil hat bei uns einen echten Defekt aufgedeckt. Nachgemessen an den drei Nullankern:\n  VORHER  grau 100 % gegen Nullwert 100.0 % -> fiel richtig durch\n          Verlauf 100 % gegen 93.9 % -> galt als 'ueber Zufall'\n          Rauschen 6.9 % gegen 5.0 % -> galt als 'ueber Zufall'\nZwei Berichtigungen: (1) Trennt die Schranke nicht, ist das Mass NICHT MESSBAR und liefert anteil=None. (2) 'ueber Zufall' verlangt zwei Binomialstreuungen statt eines strikten Groesserzeichens — bei 92 Grenzpunkten sind das rund 2.3 Prozentpunkte, und 5.43 gegen 5.06 war nichts.\nNACHHER: grau und Verlauf nicht messbar, Rauschen messbar und NICHT ueber Zufall.\nGegenmessungen bitte gegen den heutigen Stand.\n\n=== WAS NICHT ZU TUN IST ===\n- NICHTS bauen. Auch nach G1 nicht — gebaut wird, wenn G1 und G2 beide beantwortet sind.\n- Die drei bestehenden Szenen NICHT wiederholen. Sie stehen.\n- Wenn G1 zeigt, dass F nicht besser ist als A: melden, nicht retten. Ein widerlegter Kandidat vor dem Bauen ist ein guter Tag, und du hast heute schon einen davon gehabt.",
+  "beschreibung": "NEU GESCHRIEBEN — dein auf-vis-20260823-07 hat die alte Fassung dieses Auftrags erledigt, bevor er lief. Variante F wird nicht gebaut. Was hier steht, ist das, was DEIN Befund offen gelassen hat.\n\n=== WAS DU GEFUNDEN HAST, IN EINEM ABSATZ ===\nDrei Szenen, gleiche Kamera, gleiches Bauwerk, nur der Hintergrund anders:\n  g0 flach              63.3 % Himmel hinter dem Umriss   Kante +0.4227\n  g1 geneigt             0.0 %                            Kante +0.1442\n  g2 Nachbargebaeude     0.0 %                            Kante +0.0016  (Rauschanker -0.0024)\nIn g2 trennt das Mass ein PERFEKTES Bild nicht mehr von weissem Rauschen. Der Nachbar steht im Soll 15.05 m weiter hinten, der Schaetzer legt beide nur 3.0 % der Kartenspanne auseinander. Der wahre Sprung ist dort am groessten, der gemessene am kleinsten — die Beziehung ist umgekehrt.\n\n=== WAS ICH DARAUFHIN GEBAUT HABE (schon erledigt, nicht nachbauen) ===\nGenau deinen Vorschlag: geometrie_qa.himmel_hinter_umriss() liest AUS DEM SOLL, wieviel des Umrisses Himmel hinter sich hat. Liegt der Anteil unter 10 %, faellt paarurteil() kein Urteil mehr — zustaendig=False, bestanden=None, mit benanntem Grund. Der Kurzbefund nennt die betroffenen Kameras. Nicht messbar ist weder bestanden noch durchgefallen.\n\n=== DIE MELDUNG, DIE DU KENNEN MUSST (Regel 1) ===\nDein interessantester Punkt war: 'Loest ein groesserer Schaetzer die 15 m auf, ist der ganze Befund eine Frage der Modellgroesse.'\n\nDIESER WEG IST LIZENZRECHTLICH ZU. depth-anything-v2 in base, large und giant steht unter CC-BY-NC-4.0 — NonCommercial. Nach Regel 1 sind Modellgewichte mit Non-Commercial-Lizenz ausgeschlossen, genau wie FLUX.1-dev. Zulaessig ist bei uns nur depth-anything-v2-small (Apache-2.0). Bitte lade die groesseren NICHT herunter und miss NICHT mit ihnen, auch nicht 'nur zum Vergleich' — ein Messwert, den wir nicht benutzen duerfen, ist Arbeit ohne Ertrag und im Repo eine Altlast.\n\nDie Frage bleibt trotzdem beantwortbar, nur anders. Darum die drei Punkte unten.\n\n=== G1 · AB WELCHEM ABSTAND TRENNT DER KLEINE SCHAETZER UEBERHAUPT? ===\nDeine g2 mit EINEM Parameter durchgefahren: der Abstand des Nachbargebaeudes hinter dem Bauwerk. Nimm 15 m (dein gemessener Fall), 30 m, 60 m, 120 m. Alles andere unveraendert — gleiche Kamera, gleiches Bauwerk, gleicher Schaetzer, perfektes Bild.\n\nJe Abstand zurueck:\n  - der WAHRE Sprung an der Silhouette (aus dem Soll, in Metern)\n  - der GEMESSENE Sprung (in Anteilen der Kartenspanne)\n  - die gerichtete Kante und der Anteil der Grenze mit Kante\n  - derselbe Lauf auf weissem Rauschen als Anker\n\nWOZU: Das trennt zwei Erklaerungen, die heute beide passen. Entweder braucht der Schaetzer nur genug Abstand — dann ist deine Beobachtung eine Aufloesungsgrenze in Metern, und wir koennen sie hinschreiben. Oder auch 120 m aendern nichts — dann ist es keine Frage der Feinheit, sondern eine des Bildhinweises, und ein groesserer Schaetzer haette vermutlich auch nichts genuetzt. Das ist die billigste Art, deine Modellgroessen-Frage zu beantworten, ohne ein Gewicht anzufassen, das wir nicht benutzen duerfen.\n\n=== G2 · DIE 10 % SIND EINE SETZUNG. MACH EINE MESSUNG DARAUS. ===\nIch habe die Schwelle auf 10 % Himmel hinter dem Umriss gesetzt. Zwischen deinen 0.0 % (misst nichts) und 63.3 % (misst) liegt NICHTS Gemessenes — die Zahl ist geraten, und das steht auch so im Code.\n\nBau dieselbe Szene mit gestuftem Himmelanteil: ungefaehr 5, 10, 20, 30, 45 %. Am einfachsten ueber die Hoehe der Rueckwand oder des Nachbarbaus, oder ueber die Kamerahoehe — wie du es billiger hinbekommst, entscheidest du.\n\nJe Stufe zurueck:\n  - der gemessene Himmelanteil hinter dem Umriss (nach DEINER Rechnung, ganz nach vorn)\n  - gerichtete Kante und Anteil der Grenze mit Kante, je fuer: perfektes Bild, Versatz 1 m, Versatz 4 m, weisses Rauschen\n  - die Zahl der Grenzabschnitte, aus denen der Wert entstand\n\nWOZU: Gesucht ist die Stufe, ab der das perfekte Bild wieder sicher ueber dem Rauschanker liegt. Das ist der ehrliche Wert fuer die Schwelle. Faellt er deutlich neben 10 %, aendere ich die Zahl — dafuer ist sie da.\n\n=== G3 · NUR WENN ES BILLIG IST: EIN ZWEITER ZULAESSIGER SCHAETZER ===\nWenn auf der HomeStation ohnehin ein anderer Tiefenschaetzer liegt: nenne ihn mit LIZENZ, bevor du misst. Ist sie MIT, Apache-2.0, BSD oder MPL-2.0, lauf damit deine drei Originalszenen g0/g1/g2 nach und schick die Tabelle. Ist sie es nicht — oder findest du sie nicht sicher heraus — dann NICHT messen und stattdessen genau das melden. Eine ungeklaerte Lizenz ist ein Befund und kein Hindernis.\n\n=== WAS DU NICHT TUN SOLLST ===\n- Kein depth-anything-v2 in base/large/giant, aus dem Grund oben.\n- Variante F nicht weiterbauen. Sie ist erledigt, und zwar durch deine eigene Messung.\n- Kein Bildmodell noetig. Versatz und Nullanker sind rechnerisch erzeugbar wie bisher.\n- Keine Geometrie ins Repo. Zahlen, Dateinamen und Pfade auf der HomeStation, sonst nichts (Regel 3).\n\n=== RUECKGABE ===\nNach auftraege/ergebnisse/auf-20260823-36.json. G1 und G2 sind der Kern; G3 ist Zugabe. Bei G1 interessiert mich deine Einschaetzung so sehr wie die Zahl: Wuerdest du nach diesen vier Abstaenden sagen, dass es an der Aufloesung liegt oder am fehlenden Bildhinweis? Und wenn keiner der vier Abstaende hilft — sag das deutlich, das waere das aussagekraeftigste Ergebnis von allen.",
+  "erstellt": "2026-08-23T20:00:06Z",
   "geometrie": {
     "synthetisch": true,
     "pfad": null,
-    "erzeugen_mit": "G1: grosse Platte, Kamera hoeher, Bauwerk klein im Bild — Ziel 10 bis 20 % Himmel hinter der Silhouette. G2: Bauwerk vor einer grossen Wand oder in einer Mulde, praktisch kein Himmel dahinter. G3 (wenn billig): ein zweiter Quader hinter dem Bauwerk."
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
   },
   "params": {
-    "faelle": {
-      "G1": "wenig Himmel (10-20 %) — der Fall, fuer den F gebaut wurde",
-      "G2": "gar kein Himmel — was gibt F zurueck, und ab wann bedeutet es nichts?",
-      "G3": "dritte Kategorie hinter dem Umriss (Nachbarbau), wenn billig"
+    "kernfragen": {
+      "G1": "Ab welchem Abstand trennt depth-anything-v2-small zwei Betonkoerper? 15/30/60/120 m",
+      "G2": "Ab welchem Himmelanteil traegt das zweite Bein wieder? 5/10/20/30/45 %",
+      "G3": "Zweiter Schaetzer nur, wenn die Lizenz permissiv ist — Lizenz zuerst nennen"
     },
     "bereits_gemessen_nicht_wiederholen": {
-      "s60_himmelanteil": 0.403,
-      "s29_himmelanteil": 0.541,
-      "drittes_gebaeude_himmelanteil": 1.0,
-      "F_werte": [0.3217, 0.3416, 0.2710],
-      "A_werte": [0.1615, 0.2474, 0.2710],
-      "streubreite_F": 0.11,
-      "streubreite_A": 0.26
+      "g0_himmelanteil": 0.633,
+      "g0_kante": 0.4227,
+      "g1_himmelanteil": 0.0,
+      "g1_kante": 0.1442,
+      "g2_himmelanteil": 0.0,
+      "g2_kante": 0.0016,
+      "g2_rauschanker": -0.0024,
+      "g2_wahrer_abstand_m": 15.05,
+      "g2_gemessener_abstand_anteil_kartenspanne": 0.03
     },
-    "warum_die_erste_fassung_falsch_war": "Bei 100 % Himmel ist F identisch mit A — das verlangte Extrem kann die beiden nicht unterscheiden."
+    "gesetzt_nicht_gemessen": {
+      "MIN_HIMMELANTEIL": 0.1
+    },
+    "lizenzsperre": {
+      "verboten": [
+        "depth-anything-v2-base",
+        "depth-anything-v2-large",
+        "depth-anything-v2-giant"
+      ],
+      "lizenz": "CC-BY-NC-4.0",
+      "grund": "NonCommercial — nach Regel 1 ausgeschlossen, auch fuer Vergleichsmessungen",
+      "zulaessig": [
+        "depth-anything-v2-small (Apache-2.0)"
+      ]
+    }
   },
   "auflagen": {
     "leistungsgrenze_w": 400,
     "nur_bei_leerlauf": true,
-    "hinweis": "Kein Bildmodell noetig — Versatz und Nullanker sind rechnerisch erzeugbar wie bisher."
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
   },
   "rueckgabe": {
     "verzeichnis": "auftraege/ergebnisse",
-    "nur_zahlen": false,
-    "hinweis": "G1 und G2 sind der Kern. Bei G2 interessiert mich deine Einschaetzung genauso wie die Zahl: ab wie wenigen Grenzabschnitten wuerdest du sagen, dass F nichts mehr misst? Der gemessene Himmelanteil gehoert bei jeder Szene ganz nach vorn."
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
   }
 }

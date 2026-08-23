@@ -1093,7 +1093,7 @@ POLARITAETSZEICHEN = {
 
 def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
                schaetzer_name: str, polaritaet_wort: str) -> dict:
-    """Die beiden Maskenmasse und ihr Paarurteil — oder drei ehrliche ``None``.
+    """Die beiden Maskenmasse und ihr Paarurteil — oder lauter ehrliche ``None``.
 
     **Warum das hier steht und nicht beim Aufrufer.** Beide Masse brauchen die
     *geschätzte* Karte, und die entsteht in dieser Funktion. Sie herauszureichen hiesse,
@@ -1113,7 +1113,7 @@ def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
     (`auf-20260821-26`: ein leeres Grundstück erreicht dort 0.9530 und besteht das Tor).
     """
     leer = {"rho_maske": None, "kante": None, "kantenanteil": None,
-            "paarurteil": None}
+            "himmel": None, "paarurteil": None}
     if maske is None or breite is None:
         return leer
 
@@ -1130,8 +1130,13 @@ def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
     # Die Median-Kante bleibt daneben stehen, weil sie gemessen ist — aber sie kippt,
     # statt zu trennen, und taugt darum nicht als Tor (`auf-20260822-30`).
     anteil = geometrie_qa.anteil_grenze_mit_kante(list(roh), maske, breite=breite)
-    return {"rho_maske": rho, "kante": kante, "kantenanteil": anteil,
-            "paarurteil": geometrie_qa.paarurteil(rho, kante, anteil_ergebnis=anteil)}
+    # Zuständigkeit des zweiten Beins — aus dem SOLL, nicht aus der Schätzung, und darum
+    # vor dem Urteil beantwortbar. Wo kein Himmel hinter dem Umriss steht, misst die
+    # Tiefenkante nichts (`auf-vis-20260823-07`), und der Paartest schweigt.
+    himmel = geometrie_qa.himmel_hinter_umriss(list(soll), maske, breite=breite)
+    return {"rho_maske": rho, "kante": kante, "kantenanteil": anteil, "himmel": himmel,
+            "paarurteil": geometrie_qa.paarurteil(rho, kante, anteil_ergebnis=anteil,
+                                                  himmel_ergebnis=himmel)}
 
 
 def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
