@@ -1377,6 +1377,27 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Referenzbilder zu uns, ohne durch ein öffentliches Repo zu reisen? Das steht als
       `auf-37` beim **Cloud-Worker** — ein Vertragsauftrag an die HomeStation liefe ins
       Leere.
+- [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
+      heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
+      Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und
+      `spearman` **null** sind und ihr Schema kein null annimmt. Zwei fertige Bilder liegen
+      auf der Platte, ohne dass ein Nutzer sie sieht.
+
+      **Eine Zahl zu erfinden kommt nicht in Frage.** `0.0` heisst *gemessen,
+      katastrophal*; `null` heisst *nicht gemessen*. Die Verwechslung dieser beiden ist der
+      Fehler, gegen den diese ganze QA gebaut ist — am 21.08. erreichte ein Bild **ohne
+      Bauwerk** 0,9848 gegen 0,9703 für das perfekte.
+
+      **Und es sind seit heute drei Zustände, nicht zwei:** gemessen · nicht gemessen ·
+      **nicht zuständig**. Der dritte ist die Zuständigkeitsgrenze von heute Mittag, und er
+      muss bei ihnen ankommen können, sonst ist er auf halbem Weg verloren — dieselbe tote
+      Kante wie dreimal heute, nur über die Vertragsgrenze hinweg.
+
+      In `auf-37` steht das jetzt als **F1** und mit drei Vorschlägen in dieser Reihenfolge:
+      ein `status`-Feld je Messung (löst alle drei Zustände), `null` zulassen (löst den
+      Stau, unterscheidet 2 von 3 nicht), oder — falls beides teuer ist — uns sagen, ob ihr
+      Schema ein **fehlendes** Feld akzeptiert. Das dritte könnten wir sofort umsetzen; es
+      ist unsere Seite und braucht nur die Auskunft.
 - [ ] **LIZENZMELDUNG (Regel 1): Der naheliegende nächste Versuch ist gesperrt.** Die
       HomeStation hat gefragt, ob ein *grösserer* Tiefenschätzer die 15 m auflöst — dann
       wäre der ganze Befund eine Frage der Modellgrösse. **Das ist mit erlaubten Gewichten
