@@ -1278,10 +1278,22 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       42,4 % auf 11,3 %. Ihre Begründung ist präzise und darum prüfbar — die
       Szenenabhängigkeit kommt vom **Anteil Himmel hinter der Silhouette**.
 
-      `auf-36` verlangt darum keine dritte *mittlere* Szene, sondern eine **extreme**
-      (90–100 % Himmel): Eine Szene bei 45 % prüfte nichts, sie läge zwischen den
-      vorhandenen 40 % und 54 %. Hält F über 40/54/90, trägt die Erklärung; fällt sie
-      dort auseinander, ist es vor dem Bauen bekannt.
+      **Meine erste Vorgabe dazu war falsch, und die HomeStation hat es gemerkt, bevor
+      ich es gemerkt habe.** Ich verlangte ein Extrem mit 90–100 % Himmel — das Argument
+      (ein Extrem belastet stärker als eine weitere Mitte) war richtig, die Richtung
+      falsch: **Bei 100 % Himmel hat F nichts einzuschränken, F *ist* dort A.** Genau das
+      hat sie gemessen (+0.2710 für beide) und den Vorbehalt selbst dazugeschrieben.
+
+      Ihre drei Szenen stehen und sind gut: F streut mit ±11 % halb so stark wie A mit
+      ±26 %, die Schwelle 0.15 trennt auf allen dreien. Was sie **nicht** zeigen, ist der
+      Fall, für den F gebaut wurde.
+
+      `auf-36` ist darum neu geschrieben und fragt jetzt das Gegenteil: **wenig Himmel**
+      (10–20 %), wo A am stärksten versagt und F am meisten leisten muss. Dazu eine
+      Frage an die *Bauart*: Was tut F, wenn **gar kein** Himmel dahintersteht — dichter
+      Hof, Nachbarwand, Mulde? Dann bleiben ihm kaum Grenzabschnitte, und die richtige
+      Antwort ist vermutlich „nicht messbar" und nicht „eine Zahl aus sieben Punkten".
+      Denselben Fehler haben wir heute an `kantenanteil` korrigiert.
 - [ ] **Ob sich die beiden Auswahleffekte wirklich aufheben, ist NICHT gemessen.**
       Je Kamera wird das beste von drei genommen (hebt), über die Kameras das
       schlechteste von drei (senkt). Beide betragen rund 0,845 Streuungen — sie heben
