@@ -1248,6 +1248,40 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       rechnet `kamerasatz` mit der Hüllbox-Unterkante — bei einem Bauwerk mit
       Untergeschoss steht die Kamera damit im Keller. Aus der IFC wäre es zu haben; der
       Weg dorthin führt über den Vertrag und ist keine Programmfrage.
+- [x] **Eine fremde Eichung hat unseren Umrissanteil erledigt — und unsere Fassung hatte
+      denselben Defekt, nur halb verdeckt.** `docs/EICHUNG_2026-08-23.md` (HomeStation)
+      prüfte dieselbe Idee in zwei Fassungen und zog sie zurück: In der relativen Fassung
+      erreichen grau und ein Verlauf **100 %** — wo der Gradient überall gleich ist, ist
+      „über dem 95. Perzentil" für jeden Punkt wahr. Das Mass belohnt dann
+      Strukturlosigkeit, also genau die Krankheit von `geom_iou`.
+
+      Nachgemessen an unseren drei Nullankern: grau meldete 100 % gegen einen Nullwert
+      von 100 % (und fiel richtig durch), ein **Verlauf** aber 100 % gegen 93,9 % — und
+      galt als „über Zufall". Rechnerisch richtig, inhaltlich nichts: Wo 94 % aller
+      Bildpunkte als „stärkste 5 %" gelten, sagt ein Anteil von 100 % an der Grenze nichts.
+
+      **Zwei Berichtigungen:**
+      (1) Trennt die Schranke nicht (`zufall > MAX_ZUFALL_FAKTOR · verlangt`), ist das
+      Mass **nicht messbar** und liefert `anteil = None`. Eine Zahl mit Fussnote wird
+      ohne die Fussnote weitergereicht — `paarurteil` verglich sie mit 0.20, und ein
+      reiner Verlauf bestand das zweite Bein.
+      (2) „Über Zufall" verlangt jetzt **zwei Binomialstreuungen** Abstand statt eines
+      strikten `>`. Bei 92 Grenzpunkten ist die Streuung rund 2,3 Prozentpunkte; 5,43
+      gegen 5,06 war nichts.
+
+      **Danach verhalten sich alle vier Anker richtig:** grau und Verlauf nicht messbar,
+      **weisses Rauschen messbar und NICHT über Zufall** (vorher galt es als Signal), das
+      perfekte Bild deutlich darüber.
+- [ ] **Variante F ist ein Kandidat und wird NICHT gebaut, bis eine dritte Szene sie
+      trägt.** Die HomeStation hat selbst darum gebeten (`auf-vis-20260823-06`): Bänder
+      nur dort messen, wo das Soll Himmel führt, senkt den relativen Szenenabstand von
+      42,4 % auf 11,3 %. Ihre Begründung ist präzise und darum prüfbar — die
+      Szenenabhängigkeit kommt vom **Anteil Himmel hinter der Silhouette**.
+
+      `auf-36` verlangt darum keine dritte *mittlere* Szene, sondern eine **extreme**
+      (90–100 % Himmel): Eine Szene bei 45 % prüfte nichts, sie läge zwischen den
+      vorhandenen 40 % und 54 %. Hält F über 40/54/90, trägt die Erklärung; fällt sie
+      dort auseinander, ist es vor dem Bauen bekannt.
 - [ ] **Ob sich die beiden Auswahleffekte wirklich aufheben, ist NICHT gemessen.**
       Je Kamera wird das beste von drei genommen (hebt), über die Kameras das
       schlechteste von drei (senkt). Beide betragen rund 0,845 Streuungen — sie heben

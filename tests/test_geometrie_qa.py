@@ -1888,37 +1888,55 @@ def test_das_mass_bringt_seinen_eigenen_nullwert_mit():
     e = geometrie_qa.anteil_grenze_mit_kante(fremd, maske, breite=breite)
 
     # Diese Karte hat nur ZWEI Werte, also lauter Gleichstände: Die verlangten 5 % lassen
-    # sich nicht abtrennen, weit mehr Punkte liegen über der Schranke. Genau dafür meldet
-    # das Mass den TATSÄCHLICHEN Nullwert — und der Anteil an der Grenze ist gegen ihn zu
-    # lesen, nicht gegen die verlangten 5 %.
+    # sich nicht abtrennen, weit mehr Punkte liegen über der Schranke. Seit dem
+    # 23.08.2026 ist das kein Messwert mit Fussnote mehr, sondern **nicht messbar** —
+    # die fremde Eichung (EICHUNG_2026-08-23.md) hat gezeigt, dass eine Zahl mit
+    # Vorbehalt ohne den Vorbehalt weitergereicht wird.
     assert e["zufall_verlangt"] == geometrie_qa.KANTENANTEIL_STAERKSTE
     assert e["zufall"] > 0.2, "Gleichstände treiben den Nullwert nach oben"
-    assert [w for w in e["warnungen"] if "trennt schlecht" in w]
+    assert e["messbar"] is False
+    assert e["anteil"] is None
+    assert "Nicht messbar" in e["grund"]
 
-    # **Und jetzt zeigt sich, wozu die Berichtigung gut war.** Roh trifft die
-    # Streifenkarte 57.9 % der Grenze — das sähe nach viel aus. Der echte Nullwert liegt
-    # aber bei 59.4 %, weil dieselben Gleichstände auch überall sonst greifen. Gegen die
-    # verlangten 5 % gelesen hätte das Mass hier ein starkes Signal behauptet, wo keines
-    # ist; gegen den echten Nullwert sagt es richtig: NICHT MEHR als Zufall.
-    assert e["anteil"] < e["zufall"]
-    assert e["ueber_zufall"] is False, (
-        "eine Karte, deren Kanten nichts mit der Maske zu tun haben, darf den Umriss "
-        "nicht öfter treffen als der Zufall")
+    # **Und jetzt zeigt sich, wozu die zweite Berichtigung gut war.** Roh trifft die
+    # Streifenkarte 58.7 % der Grenze — das sähe nach viel aus. Der echte Nullwert liegt
+    # aber bei 59.4 %, weil dieselben Gleichstände auch überall sonst greifen.
+    #
+    # Die erste Fassung meldete darum eine Zahl mit Warnung. Das genügte nicht: Eine Zahl
+    # mit Fussnote wird ohne die Fussnote weitergereicht, und `paarurteil` verglich sie
+    # mit der Schwelle 0.20. Jetzt gibt es hier gar keine Zahl — nur die rohe Zählung,
+    # aus der jemand sie zurückrechnen könnte, wenn er weiss, was er tut.
+    assert e["n_mit_kante"] / e["n_grenze"] < e["zufall"], (
+        "eine Karte, deren Kanten nichts mit der Maske zu tun haben, trifft den Umriss "
+        "nicht öfter als der Zufall — auch roh gezählt nicht")
+    assert e["ueber_zufall"] is None, "nicht messbar heisst auch: kein Urteil zum Zufall"
 
 
 def test_unter_zufall_wird_ausdruecklich_gemeldet():
-    """Gemessen vorgekommen: 2.8 % bei einem Bild, dessen ρ mit −0.7406 ordentlich aussah."""
+    """Gemessen vorgekommen: 2.8 % bei einem Bild, dessen ρ mit −0.7406 ordentlich aussah.
+
+    Die Karte war zuerst mit zwei abwechselnden Werten ausserhalb gebaut — damit landete
+    sie im Gleichstandsfall und galt seit dem 23.08.2026 als *nicht messbar*, was den
+    eigentlichen Punkt verdeckte. Jetzt trägt sie ausserhalb **viele verschiedene** Werte:
+    Die Schranke trennt sauber, das Mass ist messbar, und der Umriss ist trotzdem nicht
+    gezeichnet. Genau so sah der echte Fall aus.
+    """
+    import random as _random
+
     breite = 40
     maske = _quadratmaske_gross(breite)
-    # Kanten überall AUSSER an der Maskengrenze.
-    glatt = [(1.0 + 0.001 * (i % 7)) for i in range(breite * breite)]
+    wuerfel = _random.Random(11)
+    glatt = []
     for y in range(breite):
         for x in range(breite):
-            if not (8 <= x <= 31 and 8 <= y <= 31):
-                glatt[y * breite + x] = 50.0 if (x + y) % 2 else 0.0
+            drin = 8 <= x <= 31 and 8 <= y <= 31
+            glatt.append(1.0 + 0.0001 * ((x * 7 + y * 13) % 11) if drin
+                         else 10.0 * wuerfel.random())
 
     e = geometrie_qa.anteil_grenze_mit_kante(glatt, maske, breite=breite)
 
+    assert e["messbar"] is True, "die Schranke trennt hier sauber"
+    assert e["zufall"] == pytest.approx(0.05, abs=0.02)
     assert e["ueber_zufall"] is False
     assert [w for w in e["warnungen"] if "NICHT MEHR als Zufall" in w]
 

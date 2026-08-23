@@ -1,0 +1,40 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260823-36",
+  "art": "qa",
+  "erstellt": "2026-08-23T05:30:00Z",
+  "beschreibung": "JA — miss die dritte Szene, bevor gebaut wird. Und waehle sie so, dass sie deine Erklaerung BELASTET statt sie zu bestaetigen.\n\n=== ANTWORT AUF DEINE FRAGE ===\nDu hast gefragt, ob du eine dritte Szene messen sollst, bevor Variante F gebaut wird, und begruendet: 'Ich moechte nicht zum zweiten Mal etwas empfehlen, das an neun Bildern plausibel ist und am zehnten faellt.' Das ist die richtige Haltung, und die Antwort ist ja. Nichts wird an F gebaut, bis die dritte Szene da ist.\n\n=== DIE WICHTIGSTE VORGABE: NICHT NOCH EINE MITTLERE SZENE ===\nDeine Erklaerung ist praezise und darum pruefbar: Die Szenenabhaengigkeit kommt vom ANTEIL HIMMEL hinter der Silhouette (s60: 40.3 %, s29: 54.1 %). Wo Himmel dahintersteht, ist der Sprung unendlich; wo Boden dahintersteht, klein.\n\nEine dritte Szene mit 45 % Himmel wuerde das nicht pruefen, sondern nur bestaetigen, was zwischen 40 und 54 ohnehin liegt. Waehle stattdessen EXTREM: moeglichst nahe an 90 bis 100 % Himmel hinter der Silhouette — Bauwerk frei vor dem Himmel, Kamera so tief, dass kaum Boden dahinter liegt, oder Platte kleiner/weiter weg. Wenn F bei 40 %, 54 % UND 90 % denselben relativen Abstand haelt, ist deine Erklaerung getragen. Faellt sie dort auseinander, hast du es vor dem Bauen gewusst — und das ist der ganze Zweck.\n\nWenn ein zweites Extrem billig zu haben ist (moeglichst WENIG Himmel, Bauwerk tief in Gelaende oder vor einer Wand), nimm es mit. Dann liegen vier Punkte auf der Achse statt drei.\n\n=== WAS SICH BEI UNS GEAENDERT HAT, UND ES BETRIFFT DEINE EICHUNG ===\nDein Befund zu kantenanteil hat auf unserer Seite einen echten Defekt aufgedeckt. Ich habe unsere Fassung gegen die drei Nullanker nachgemessen:\n\n  VORHER:  grau     100 % gegen Nullwert 100.0 %  -> fiel richtig durch\n           Verlauf  100 % gegen Nullwert  93.9 %  -> galt als 'ueber Zufall'\n           Rauschen 6.9 % gegen Nullwert   5.0 %  -> galt als 'ueber Zufall'\n\nDer Verlauf war also genau der Fall, den du in Fassung A gefunden hast — bei uns nur halb verdeckt durch die Zufallsprobe. Zwei Aenderungen, beide seit heute im Code:\n\n  1. Trennt die Schranke nicht (tatsaechlicher Nullwert > 2x der verlangte), ist das Mass NICHT MESSBAR und liefert anteil=None statt einer Zahl mit Fussnote. Eine Zahl mit Fussnote wird ohne die Fussnote weitergereicht — paarurteil verglich sie mit der Schwelle 0.20, und ein reiner Verlauf bestand.\n  2. 'ueber Zufall' verlangt jetzt zwei Streuungen Abstand statt eines strikten Groesserzeichens. Bei 92 Grenzpunkten ist die Binomialstreuung rund 2.3 Prozentpunkte; 5.43 gegen 5.06 war nichts.\n\n  NACHHER: grau und Verlauf -> nicht messbar, Rauschen -> messbar und NICHT ueber Zufall.\n\nFuer dich heisst das: Wenn du kantenanteil noch einmal gegenmisst, tu es gegen den HEUTIGEN Stand. Die alte Fassung war grosszuegiger, als sie aussah.\n\n=== WAS ZU TUN IST ===\n\nF1 · DIE DRITTE SZENE. Wie oben: extremer Himmelanteil hinter der Silhouette. Miss und melde zuerst diesen Anteil selbst — er ist die unabhaengige Groesse, an der alles haengt.\n\nF2 · DIESELBE TABELLE WIE IN auf-vis-06, fuer alle drei (oder vier) Szenen: perfekt, Versatz 0.25 / 0.5 / 1 / 2 / 4 m, plus die drei Nullanker. Fuer Variante F UND fuer rho_maske, damit der Vergleich seinen Massstab behaelt.\n\nF3 · DIE EINE ZAHL: relativer Szenenabstand von F ueber ALLE Szenen, nicht nur ueber das beste Paar. Deine 11.3 % stammen aus zwei Szenen; mit drei ist der schlechteste Paarabstand die ehrliche Zahl.\n\nF4 · HAELT DIE SCHWELLE 0.15 IHRE AUSSAGE? Du hast sie damit begruendet, dass sie dieselbe Grenze setzt wie rho_maske bei 0.80 — Versatz 1 m besteht, 2 m faellt durch. Gilt das auf der dritten Szene auch? Wenn nicht, sag bei welchem Versatz die beiden auseinanderlaufen. Zwei Masse, die denselben Fehler an derselben Stelle abweisen, sind mehr wert als zwei, die sich widersprechen — aber nur, wenn sie es wirklich tun.\n\nF5 · DER SCHLECHTESTE FALL. Du hast Versatz 4 m mit 27.4 % selbst als schwaechste Stelle benannt und erklaert (kleine Absolutwerte blaehen relative Abstaende auf). Pruef das nach: Ist der ABSOLUTE Abstand dort klein? Wenn ja, gehoert das in die Empfehlung — ein relativer Abstand ohne den absoluten daneben ist irrefuehrend.\n\n=== WAS NICHT ZU TUN IST ===\n- NICHTS bauen. Dieser Auftrag misst; gebaut wird danach und mit deinen Zahlen.\n- Die Sorge um 'F braucht die Soll-Karte' kannst du fallenlassen: In unserer Kette liegt die Soll-Tiefenkarte immer vor, sie kommt aus dem Multipass. F waere nur dort unbrauchbar, wo jemand bloss Bild und Maske hat — und diesen Weg gibt es bei uns nicht.\n- Wenn die dritte Szene F widerlegt: melden, nicht retten. Ein widerlegter Kandidat vor dem Bauen ist ein guter Tag.",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "Dieselbe Bauwerk-Geometrie wie s60/s29, aber Platte und Kamera so, dass der Anteil Himmel hinter der Silhouette moeglichst extrem wird (Ziel 90 bis 100 %). Wenn billig zu haben, zusaetzlich ein Gegenextrem mit moeglichst wenig Himmel."
+  },
+  "params": {
+    "faelle": {
+      "F1": "dritte Szene mit extremem Himmelanteil; den Anteil zuerst melden",
+      "F2": "dieselbe Tabelle wie auf-vis-06, fuer F und rho_maske, alle Szenen",
+      "F3": "relativer Szenenabstand ueber ALLE Szenen — schlechtester Paarabstand",
+      "F4": "haelt Schwelle 0.15 dieselbe Grenze wie rho_maske 0.80?",
+      "F5": "Versatz 4 m: ist der ABSOLUTE Abstand dort klein?"
+    },
+    "vergleichswerte_aus_auf_vis_06": {
+      "himmelanteil_s60": 0.403,
+      "himmelanteil_s29": 0.541,
+      "rel_abstand_F_zwei_szenen": 0.113,
+      "vorschlag_schwelle_F": 0.15,
+      "schwelle_rho_maske": 0.80
+    },
+    "hinweis_zu_kantenanteil": "Unsere Fassung ist seit 23.08. strenger: nicht trennende Schranke -> nicht messbar; 'ueber Zufall' verlangt zwei Streuungen. Gegenmessungen bitte gegen den heutigen Stand."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "hinweis": "Kein Bildmodell noetig — Versatz und Nullanker sind rechnerisch erzeugbar, wie in auf-vis-06."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": false,
+    "hinweis": "F1 und F3 sind der Kern. Der gemessene Himmelanteil der dritten Szene gehoert ganz nach vorn — ohne ihn ist die Tabelle nicht einzuordnen. Bei Widerlegung: melden, nicht retten."
+  }
+}

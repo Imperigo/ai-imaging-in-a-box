@@ -1504,6 +1504,46 @@ def _median(werte: list[float]) -> float:
 #: Zufall — und das ist gemessen vorgekommen (`auf-20260822-30`: 2.8 %).
 KANTENANTEIL_STAERKSTE = 0.05
 
+#: Um wieviel der **tatsächliche** Nullwert den verlangten übersteigen darf, bevor das
+#: Mass als *nicht messbar* gilt.
+#:
+#: **Der Anlass ist eine fremde Eichung, die meinen eigenen Vorschlag erledigt hat**
+#: (`docs/EICHUNG_2026-08-23.md`, HomeStation). Sie prüfte dieselbe Idee in zwei
+#: Fassungen und zog sie zurück: In der relativen Fassung erreichen **grau und ein
+#: Verlauf 100 %** — bei einem strukturlosen Bild ist der Gradient überall gleich, und
+#: „über dem 95. Perzentil von lauter Gleichständen" ist für jeden Punkt wahr. Das Mass
+#: belohnt dann Strukturlosigkeit, also genau die Krankheit von ``geom_iou``, gegen die
+#: es antreten sollte.
+#:
+#: **Meine Fassung hatte denselben Defekt, nur halb verdeckt.** Nachgemessen an den drei
+#: Nullankern: grau meldete 100 % gegen einen Nullwert von 100 % (und fiel damit richtig
+#: durch), ein **Verlauf** aber 100 % gegen 93,9 % — und galt als „über Zufall".
+#: Rechnerisch stimmt das und bedeutet nichts: Wo 94 % aller Bildpunkte als „stärkste
+#: 5 %" gelten, sagt ein Anteil von 100 % an der Grenze nichts über den Umriss.
+#:
+#: Die Antwort ist nicht ein strengerer Vergleich, sondern die **richtige Kategorie**:
+#: Trennt die Schranke nicht, ist das Mass auf diesem Bild **nicht anwendbar**. Es
+#: liefert dann ``anteil = None`` statt einer Zahl mit Fussnote — dieselbe Regel wie
+#: überall hier: *ungemessen* ist nicht *schlecht*, und eine Zahl mit Vorbehalt wird
+#: ohne den Vorbehalt weitergereicht.
+MAX_ZUFALL_FAKTOR = 2.0
+
+#: Wie viele Streuungen der Anteil über dem Zufall liegen muss, um als Signal zu gelten.
+#:
+#: **Zwei** — dieselbe Zahl wie ``varianten.K_STREUUNGEN`` und ``stil_qa.K_STREUUNGEN``,
+#: damit dieses Projekt nicht drei Begriffe von „deutlich mehr als Zufall" führt.
+#:
+#: Vorher stand hier ein striktes ``>``. Ein Anteil von 5,43 % gegen einen Nullwert von
+#: 5,06 % galt damit als „über Zufall" — bei 92 Grenzpunkten ist das nichts. Die Streuung
+#: einer Binomialverteilung ist ``sqrt(p·(1−p)/n)``, hier rund 2,3 Prozentpunkte; der
+#: Vorsprung betrug 0,4. Ein strikter Vergleich auf einer verrauschten Grösse prüft nicht,
+#: er würfelt.
+#:
+#: Die Folge ist sichtbar und erwünscht: **Weisses Rauschen gilt seither nicht mehr als
+#: „über Zufall".** Es lag mit 6,9 % gegen 5,0 % knapp darüber und ist damit genau der
+#: Fall, für den der Abstand gedacht ist.
+K_STREUUNGEN_ANTEIL = 2.0
+
 #: Kurzform des Rechenwegs. Fünfter Weg im selben Modul.
 METHODE_KANTENANTEIL = ("Anteil der Maskengrenze, der eine Kante aus den stärksten 5 % "
                         "des Bildes trägt")
@@ -1573,6 +1613,8 @@ def anteil_grenze_mit_kante(ist: Sequence[float], maske: Sequence[bool], *,
     hoehe = len(werte) // breite
     antwort = {"anteil": None, "n_grenze": 0, "n_mit_kante": 0, "schranke": None,
                "zufall": staerkste, "zufall_verlangt": staerkste, "ueber_zufall": None,
+               "messbar": False, "grund": "",
+               "zufall_streuung": None, "zufall_grenze": None,
                "methode": METHODE_KANTENANTEIL, "warnungen": []}
 
     staerken = _kantenstaerken(werte, breite, hoehe)
@@ -1603,23 +1645,46 @@ def anteil_grenze_mit_kante(ist: Sequence[float], maske: Sequence[bool], *,
     zufall = ueber_schranke / len(staerken)
     antwort["zufall"] = zufall
     antwort["zufall_verlangt"] = staerkste
-    if zufall > 2 * staerkste:
-        antwort["warnungen"].append(
-            f"Die Schranke trennt schlecht: verlangt waren die stärksten {staerkste:.0%}, "
-            f"tatsächlich liegen {zufall:.0%} der Bildpunkte darüber. Ursache sind "
-            f"Gleichstände — eine Karte mit wenigen verschiedenen Werten. Der Nullwert "
-            f"steigt entsprechend, und der Anteil unten ist gegen IHN zu lesen.")
-
     mit_kante = sum(1 for i in innen if staerken[i] >= schranke)
     antwort["n_mit_kante"] = mit_kante
+
+    if zufall > MAX_ZUFALL_FAKTOR * staerkste:
+        # NICHT MESSBAR — und das ist etwas anderes als ein schlechter Wert.
+        #
+        # Hier stand bis zum 23.08.2026 eine Warnung und trotzdem eine Zahl. Eine Zahl
+        # mit Fussnote wird ohne die Fussnote weitergereicht: `paarurteil` las sie, die
+        # Schwelle 0.20 verglich sie, und ein reiner Verlauf bestand mit 100 %.
+        antwort["grund"] = (
+            f"Nicht messbar: Die Schranke trennt nicht. Verlangt waren die stärksten "
+            f"{staerkste:.0%}, tatsächlich liegen {zufall:.0%} der Bildpunkte darüber — "
+            f"Gleichstände, also eine Karte mit wenigen verschiedenen Werten. Wo fast "
+            f"jeder Punkt als 'starke Kante' gilt, sagt ein Anteil an der Grenze nichts "
+            f"über den Umriss. (Fremd geeicht, EICHUNG_2026-08-23.md: grau und ein "
+            f"Verlauf erreichen in dieser Bauart 100 %.)")
+        antwort["warnungen"].append(antwort["grund"])
+        return antwort
+
+    antwort["messbar"] = True
     antwort["anteil"] = mit_kante / len(innen)
-    antwort["ueber_zufall"] = antwort["anteil"] > zufall
+
+    # Der Abstand zum Zufall, an der Streuung gemessen und nicht am blossen Vorzeichen.
+    #
+    # Ob eine Maskengrenze mit `n` Punkten `k` Treffer zeigt, ist ein Münzwurf je Punkt:
+    # binomialverteilt mit der Trefferwahrscheinlichkeit `zufall`. Ihre Streuung ist
+    # `sqrt(p·(1-p)/n)`. Alles innerhalb von zwei davon ist Zufall — dieselbe Regel wie
+    # bei den Variantenreihen und der Stil-QA.
+    streuung = math.sqrt(max(zufall * (1.0 - zufall), 0.0) / len(innen))
+    antwort["zufall_streuung"] = streuung
+    antwort["zufall_grenze"] = zufall + K_STREUUNGEN_ANTEIL * streuung
+    antwort["ueber_zufall"] = antwort["anteil"] > antwort["zufall_grenze"]
     if not antwort["ueber_zufall"]:
         antwort["warnungen"].append(
             f"Der Umriss ist an {antwort['anteil']:.1%} der Grenze gezeichnet — das ist "
-            f"NICHT MEHR als Zufall ({zufall:.1%}). Eine Maskengrenze ohne jeden Bezug "
-            f"zum Bild träfe genauso oft. Gemessen vorgekommen (auf-20260822-30: 2.8 % "
-            f"bei einem Bild, dessen ρ mit −0.7406 ordentlich aussah).")
+            f"NICHT MEHR als Zufall. Erwartet wären {zufall:.1%} ± {streuung:.1%}; "
+            f"belegt wäre erst ab {antwort['zufall_grenze']:.1%}. Eine Maskengrenze ohne "
+            f"jeden Bezug zum Bild träfe bei {len(innen)} Punkten genauso oft. Gemessen "
+            f"vorgekommen (auf-20260822-30: 2.8 % bei einem Bild, dessen ρ mit −0.7406 "
+            f"ordentlich aussah).")
     return antwort
 
 
