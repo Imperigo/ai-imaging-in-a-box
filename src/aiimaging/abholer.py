@@ -346,6 +346,63 @@ def lies_befund(verzeichnis):
     return gelesen if isinstance(gelesen, dict) else None
 
 
+def _warnungsart(warnung: str) -> str:
+    """Das erste Wort einer Warnung — ihre Art, nicht ihr Wortlaut.
+
+    Die Warnungen aus :mod:`aiimaging.komposition` beginnen mit dem Gegenstand
+    (``Bezugspunkt …``, ``Neigung 2.05° …``, ``Abstand 12.00 m …``). Nach diesem Wort
+    lassen sie sich zusammenfassen, ohne ihren Text zu zerlegen — und wenn dort einmal
+    etwas anderes steht, gruppiert diese Funktion eben feiner. Falsch wird sie davon
+    nicht, nur ausführlicher.
+    """
+    return str(warnung).split(" ", 1)[0].rstrip(":")
+
+
+def _kompositionszeilen(kameras: list) -> list:
+    """Kompositionsbefunde zusammenfassen — **was alle betrifft, steht einmal da.**
+
+    **Der Anlass ist eine Messung am eigenen Ausgabetext.** Ohne Geländestand meldet die
+    Kompositionsprüfung für *jede* Kamera zwei Warnungen: den unzuverlässigen
+    Bezugspunkt und die Neigung. Bei zwölf Kameras sind das zwölf von zwölf, immer
+    dieselben zwei. Eine Warnung, die bei jedem Lauf und für jede Kamera erscheint, ist
+    kein Signal mehr — es ist dasselbe Versagen wie ein Wächter, der nie greift, nur von
+    der anderen Seite.
+
+    Beide sind dabei **richtig**. Der Bezugspunkt ist aus einer glb gar nicht besser zu
+    wissen (dort gibt es kein Gelände), und die Neigung bleibt, bis die Vorgabe auf
+    `MODUS_SHIFT` wechselt. Sie sind also keine Befunde über *diesen* Auftrag, sondern
+    Eigenschaften der Eingabe — und gehören einmal genannt, nicht dreimal.
+
+    Was nur einen Teil der Kameras betrifft, bleibt einzeln aufgeführt: **das** ist die
+    Zeile, die jemanden hinsehen lässt.
+    """
+    beurteilt = [k for k in kameras if (k.get("komposition") or {}).get("beurteilt")]
+    zeilen: list = []
+
+    unbeurteilt = [k.get("kamera") for k in kameras
+                   if (k.get("komposition") or {}).get("beurteilt") is False]
+    if unbeurteilt:
+        zeilen.append(f"Komposition NICHT beurteilbar: "
+                      f"{', '.join(str(k) for k in unbeurteilt)}")
+
+    je_kamera = {str(k.get("kamera")): {_warnungsart(w) for w in
+                                        (k.get("komposition") or {}).get("warnungen") or ()}
+                 for k in beurteilt}
+    alle_arten = set().union(*je_kamera.values()) if je_kamera else set()
+
+    gemeinsam = sorted(a for a in alle_arten
+                       if all(a in arten for arten in je_kamera.values()))
+    if gemeinsam:
+        zeilen.append(f"Komposition, alle {len(beurteilt)} Kameras: "
+                      f"{', '.join(gemeinsam)}")
+
+    for kuerzel, arten in je_kamera.items():
+        eigen = sorted(arten - set(gemeinsam))
+        if eigen:
+            zeilen.append(f"Komposition, nur {kuerzel}: {', '.join(eigen)}")
+    return zeilen
+
+
 def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     """Der Befund in wenigen Zeilen — für einen Menschen an einem Terminal.
 
@@ -388,15 +445,7 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
         zeilen.append("Geometrie: UNGEMESSEN — keine Kamera lieferte einen Wert.")
 
     kameras = befund.get("kameras") or []
-    beanstandet = [k.get("kamera") for k in kameras
-                   if (k.get("komposition") or {}).get("warnungen")]
-    if beanstandet:
-        zeilen.append(f"Komposition beanstandet: {', '.join(str(k) for k in beanstandet)}")
-    unbeurteilt = [k.get("kamera") for k in kameras
-                   if (k.get("komposition") or {}).get("beurteilt") is False]
-    if unbeurteilt:
-        zeilen.append(f"Komposition NICHT beurteilbar: "
-                      f"{', '.join(str(k) for k in unbeurteilt)}")
+    zeilen.extend(_kompositionszeilen(kameras))
 
     ungesichert = [k.get("kamera") for k in kameras
                    if ((k.get("seedauswahl") or {}).get("vorsprung") or {})

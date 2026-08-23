@@ -179,7 +179,7 @@ def test_der_befund_erscheint_in_der_ausgabe(monkeypatch, tmp_path, capsys):
     assert "Prompt uebersetzt" in ausgabe
     assert "bedeckter Himmel" in ausgabe
     assert "schlechteste von 3 Kameras" in ausgabe
-    assert "Komposition beanstandet: s" in ausgabe
+    assert "Komposition, alle 1 Kameras: Neigung" in ausgabe
 
 
 def test_ohne_befund_bleibt_die_ausgabe_wie_vorher(monkeypatch, tmp_path, capsys):

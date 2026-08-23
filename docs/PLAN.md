@@ -1200,6 +1200,30 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 
       **Feste Werte `(0, 1, 2)`, nicht gewürfelt** — ein zufälliger Startwert machte jeden
       Lauf unwiederholbar, und ohne Wiederholbarkeit gibt es keine Vergleichsreihe.
+- [x] **Eine Warnung, die immer feuert, ist kein Signal — am eigenen Ausgabetext
+      gemessen.** Ohne Geländestand meldet die Kompositionsprüfung für **jede** Kamera
+      dieselben zwei Warnungen: unzuverlässiger Bezugspunkt und Neigung. Nachgezählt:
+      **zwölf von zwölf**, immer dieselben. Das ist dasselbe Versagen wie ein Wächter,
+      der nie greift, nur von der anderen Seite — und es traf ausgerechnet die Zeile, die
+      seit heute auf dem Terminal des Betreibers steht.
+
+      Beide Warnungen sind **richtig**. Der Bezugspunkt ist aus einer glb gar nicht
+      besser zu wissen (dort gibt es kein Gelände), und die Neigung bleibt, bis die
+      Vorgabe auf `MODUS_SHIFT` wechselt. Sie sind keine Befunde über *diesen* Auftrag,
+      sondern Eigenschaften der Eingabe — und gehören einmal genannt, nicht dreimal.
+
+      Was **nur einen Teil** der Kameras betrifft, steht weiterhin einzeln da. Das ist
+      die Zeile, die jemanden hinsehen lässt.
+- [x] **Wieder ein Wächter, der nie greift — diesmal von mir, im selben Zug.** Der
+      `if not beurteilt: return`-Vorbehalt in der Zusammenfassung überlebte die
+      Mutationsprobe, weil die Rechnung darunter bei leerer Eingabe ohnehin nichts
+      ergibt. Entfernt, die Tatsache steht als Test — dieselbe Entscheidung wie bei der
+      einspringenden Ecke in `raumkamera`.
+- [ ] **Der Geländestand ist aus einer glb nicht zu erfahren.** Der fremde Vertrag führt
+      keine Geländeangabe, und in einer glb gibt es kein Gelände. Solange das so ist,
+      rechnet `kamerasatz` mit der Hüllbox-Unterkante — bei einem Bauwerk mit
+      Untergeschoss steht die Kamera damit im Keller. Aus der IFC wäre es zu haben; der
+      Weg dorthin führt über den Vertrag und ist keine Programmfrage.
 - [ ] **Ob sich die beiden Auswahleffekte wirklich aufheben, ist NICHT gemessen.**
       Je Kamera wird das beste von drei genommen (hebt), über die Kameras das
       schlechteste von drei (senkt). Beide betragen rund 0,845 Streuungen — sie heben

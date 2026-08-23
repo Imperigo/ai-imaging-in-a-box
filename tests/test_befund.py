@@ -254,14 +254,59 @@ def test_zeilen_ohne_inhalt_entfallen_ganz():
     assert "Geometrie" in still[0]
 
 
-def test_die_kurzfassung_meldet_beanstandete_komposition():
+def test_was_nur_EINE_kamera_betrifft_wird_einzeln_genannt():
+    """Das ist die Zeile, die jemanden hinsehen lässt."""
     zeilen = abholer.befund_kurz({
         "kameras": [
-            {"kamera": "s", "komposition": {"beurteilt": True, "warnungen": ["Neigung"]}},
+            {"kamera": "s", "komposition": {"beurteilt": True,
+                                            "warnungen": ["Neigung 2.0° statt 0°"]}},
             {"kamera": "sSE", "komposition": {"beurteilt": True, "warnungen": []}},
         ]})
-    assert any("Komposition beanstandet: s" in z for z in zeilen)
-    assert not any("sSE" in z for z in zeilen), "die unbeanstandete gehört nicht in die Liste"
+    assert any("nur s: Neigung" in z for z in zeilen)
+    assert not any("alle" in z for z in zeilen), (
+        "nichts betrifft hier alle — sSE ist unbeanstandet"
+    )
+
+
+def test_was_ALLE_kameras_betrifft_steht_einmal_da():
+    """Der Anlass, gemessen am eigenen Ausgabetext: Ohne Geländestand meldet die Prüfung
+    für JEDE Kamera denselben unzuverlässigen Bezugspunkt und dieselbe Neigung — bei
+    zwölf Kameras zwölf von zwölf, immer dieselben zwei.
+
+    Eine Warnung, die bei jedem Lauf und für jede Kamera erscheint, ist kein Signal mehr.
+    Beide sind richtig; sie sind nur keine Befunde über DIESEN Auftrag, sondern
+    Eigenschaften der Eingabe.
+    """
+    kameras = [{"kamera": k, "komposition": {
+        "beurteilt": True,
+        "warnungen": ["Bezugspunkt 'huellbox_unterkante' ist …", f"Neigung 2.{i}° …"]}}
+        for i, k in enumerate(("s", "sSE", "nNW"))]
+    zeilen = abholer.befund_kurz({"kameras": kameras})
+
+    assert len(zeilen) == 1, zeilen
+    assert zeilen[0] == "Komposition, alle 3 Kameras: Bezugspunkt, Neigung"
+
+
+def test_gemeinsames_und_einzelnes_werden_getrennt():
+    """Der Fall, um den es geht: Das Dauerrauschen fällt auf eine Zeile zusammen, und
+    die eine Kamera mit einem echten Problem steht heraus."""
+    kameras = [{"kamera": k, "komposition": {
+        "beurteilt": True, "warnungen": ["Bezugspunkt …", "Neigung …"]
+        + (["Abstand 9.00 m unterschreitet …"] if k == "nNW" else [])}}
+        for k in ("s", "sSE", "nNW")]
+    zeilen = abholer.befund_kurz({"kameras": kameras})
+
+    assert zeilen == ("Komposition, alle 3 Kameras: Bezugspunkt, Neigung",
+                      "Komposition, nur nNW: Abstand")
+
+
+def test_eine_einzige_kamera_gilt_als_alle():
+    """Bei einer Kamera ist „alle" und „nur diese" dasselbe — dann gewinnt die kürzere
+    Fassung, statt beide Zeilen zu schreiben."""
+    zeilen = abholer.befund_kurz({
+        "kameras": [{"kamera": "sSE", "komposition": {"beurteilt": True,
+                                                      "warnungen": ["Neigung …"]}}]})
+    assert zeilen == ("Komposition, alle 1 Kameras: Neigung",)
 
 
 def test_die_kurzfassung_trennt_beanstandet_von_nicht_beurteilbar():
@@ -269,8 +314,7 @@ def test_die_kurzfassung_trennt_beanstandet_von_nicht_beurteilbar():
     Wer sie zusammenwirft, hält eine Lücke für ein Urteil."""
     zeilen = abholer.befund_kurz({
         "kameras": [{"kamera": "s", "komposition": {"beurteilt": False, "grund": "..."}}]})
-    assert any("NICHT beurteilbar" in z for z in zeilen)
-    assert not any("beanstandet" in z for z in zeilen)
+    assert zeilen == ("Komposition NICHT beurteilbar: s",)
 
 
 def test_die_kurzfassung_meldet_einen_unbelegten_seedvorsprung():
@@ -301,6 +345,20 @@ def test_ohne_seedauswahl_wird_dazu_nichts_behauptet():
     assert any("Seedvorsprung" in z for z in geprueft), (
         "dieselbe Sammlung, derselbe Aufbau — sie füllt sich, wenn es etwas zu melden gibt"
     )
+
+
+def test_ohne_beurteilte_kamera_faellt_die_zusammenfassung_ganz_weg():
+    """Hier stand ein Wächter (`if not beurteilt: return`). Die Mutationsprobe zeigte,
+    dass er nie greift: Ist keine Kamera beurteilt, ergibt die Rechnung darunter ohnehin
+    nichts. Entfernt und als Tatsache festgehalten — dieselbe Entscheidung wie bei der
+    einspringenden Ecke in `raumkamera` (Sitzung 11).
+    """
+    assert abholer._kompositionszeilen([]) == []
+    assert abholer._kompositionszeilen(
+        [{"kamera": "s", "komposition": {"beurteilt": True, "warnungen": []}}]) == []
+    assert abholer._kompositionszeilen(
+        [{"kamera": "s", "komposition": {"beurteilt": False}}]) == \
+        ["Komposition NICHT beurteilbar: s"]
 
 
 def test_gar_kein_befund_ergibt_gar_keine_zeilen():
