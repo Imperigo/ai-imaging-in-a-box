@@ -1,0 +1,448 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260823-33",
+ "status": "ok",
+ "beendet": "2026-08-23T15:45:00Z",
+ "messwerte": {
+  "aufbau": {
+   "blender": "5.2.0 LTS",
+   "geraet": "CPU-Cycles — der Runner setzt szene.cycles.device fest auf CPU",
+   "samples": 16,
+   "laeufe": 21,
+   "rechenzeit_gesamt_s": 39.3,
+   "rechenzeit_je_lauf_s": [
+    1.8,
+    2.2
+   ],
+   "gpu_vor_und_nach_der_arbeit_w": [
+    36.2,
+    35.0
+   ],
+   "leistungsgrenze_w": 400,
+   "kein_bildmodell": true,
+   "kein_ki_renderlauf": true,
+   "code_unveraendert": true,
+   "szenen": {
+    "flachbau": "vorhandener Testbau auf 20-m-Platte. Bauwerk 8 x 5 x 3.25 m (Fuss -0.25, Dach 3.0).",
+    "turm": "derselbe Testbau, die vier Waende in WELT-Z auf 15 m gestreckt. Bauwerk 8 x 5 x 15.25 m auf derselben Platte. Erzeugt von einem eigenen Blender-Skript ausserhalb des Repos (turm15.glb).",
+    "warum_zwei": "Der Flachbau kippt im gekippten Modus nur -0.20 Grad — negativ und praktisch null (siehe S1). An ihm allein waere S2 nicht messbar gewesen, weil es nichts zu verbessern gaebe."
+   },
+   "kamera_huellbox": "immer die des BAUWERKS, ohne Platte. Ohne sie rahmt die Kamera die 20-m-Platte mit und das Bauwerk wird ein Fleck — der Befund von auf-30.",
+   "richtung": "sSE (Azimut 145 Grad) in allen Faellen",
+   "hilfslaeufe_ohne_render": "Szenenbau (turm15.glb), Huellbox-Abfrage, Rahmenrechnung (Camera.view_frame) — je ein eigener Blender-Start ohne Render."
+  },
+  "S1_additivitaet": {
+   "frage": "Hat sich ein gewoehnlicher Lauf ohne --kamera-modus gegenueber frueher geaendert?",
+   "der_alte_lauf_war_weg": "Das im Auftrag genannte Verzeichnis unter /tmp/kosmo-jobs war LEER — tmpfs, seit dem letzten Neustand geraeumt. Ein Vergleich gegen einen echten alten Lauf war damit NICHT MOEGLICH. Ersatz: die drei Codestaende selbst gefahren, ausgepackt in ein Arbeitsverzeichnis ausserhalb des Repos. Das Repo blieb unberuehrt.",
+   "die_drei_staende": {
+    "A": "der Commit VOR dem Shift-Umbau",
+    "B": "der Shift-Umbau selbst",
+    "C": "HEAD"
+   },
+   "eine_falle_zuerst": {
+    "was": "sha256 ueber die DATEI taugt als Gleichheitsprobe NICHT.",
+    "beleg": "Zwei Laeufe derselben Konfiguration, zwei Sekunden auseinander: die EXR unterscheidet sich in GENAU EINEM Byte (Kopfzeile 'Date', '...15:27:33' gegen '...15:27:35'), das Beauty-PNG in 10 Bytes (tIME-Block samt CRC). Die Bildpunkte sind identisch.",
+    "folge": "Alle Gleichheitsaussagen hier sind sha256 ueber die BILDPUNKTE — Tiefe als 32-Bit-Gleitkommafeld aus der EXR, Beauty und Material-ID als RGB-Bytes.",
+    "determinismusprobe": "Zwei identische Laeufe, dieselbe Szene, dieselbe Kamera: Tiefe, Beauty und Material-ID bildpunktgleich. Cycles ist hier reproduzierbar."
+   },
+   "ergebnis_der_gleichheitsprobe": {
+    "A_gegen_B": "BILDPUNKTGLEICH in allen drei Ausgaben, auf BEIDEN Szenen.",
+    "B_gegen_C_mit_brennweite_28": "BILDPUNKTGLEICH in allen drei Ausgaben, auf beiden Szenen.",
+    "A_gegen_C_mit_den_Vorgabewerten": "VERSCHIEDEN.",
+    "die_ursache_ist_nicht_der_umbau": "kameras.BRENNWEITE_MM ist in einem SPAETEREN Commit von 28.0 auf 35.0 gewechselt (Owner-Setzung). Der gekippte Lauf steht damit weiter weg: Flachbau 17.665 -> 20.996 m, Turm 34.039 -> 41.463 m. Mit --brennweite=28.0 liefert HEAD wieder Punkt fuer Punkt dasselbe Bild wie vor dem Umbau.",
+    "urteil": "Der Shift-Umbau IST additiv — bis auf das letzte Bit. Was NICHT mehr reproduzierbar ist, ist jede Aufnahme von vor dem Brennweitenwechsel, und das ist eine andere Entscheidung mit eigener Begruendung."
+   },
+   "herkunft_flachbau_512x512": {
+    "weg": "abgeleitet",
+    "kuerzel": "sSE",
+    "azimut_grad": 145.0,
+    "modus": "gekippt",
+    "neigung_grad": -0.20466937895008083,
+    "shift_mm": 0.0,
+    "shift_y": 0.0,
+    "sensor_fit": "HORIZONTAL",
+    "sensor_breite_mm": 36.0,
+    "brennweite_mm": 35.0,
+    "abstand_m": 20.9956428643262,
+    "fuellgrad": 0.55,
+    "vollstaendig": true,
+    "gebaeudehoehe_m": 3.25,
+    "warnungen": []
+   },
+   "herkunft_turm_512x512": {
+    "weg": "abgeleitet",
+    "kuerzel": "sSE",
+    "azimut_grad": 145.0,
+    "modus": "gekippt",
+    "neigung_grad": 4.207034790080583,
+    "shift_mm": 0.0,
+    "shift_y": 0.0,
+    "sensor_fit": "HORIZONTAL",
+    "sensor_breite_mm": 36.0,
+    "brennweite_mm": 35.0,
+    "abstand_m": 41.46339797733878,
+    "fuellgrad": 0.55,
+    "vollstaendig": true,
+    "gebaeudehoehe_m": 15.25,
+    "warnungen": []
+   },
+   "herkunft_turm_512x768": {
+    "modus": "gekippt",
+    "neigung_grad": 5.985492977747978,
+    "shift_mm": 0.0,
+    "shift_y": 0.0,
+    "sensor_fit": "HORIZONTAL",
+    "sensor_breite_mm": 36.0,
+    "abstand_m": 29.08966060360141,
+    "seitenverhaeltnis": 0.6666666666666666
+   },
+   "erwartung_modus_und_shift_y": "EINGETROFFEN. modus 'gekippt', shift_y genau 0.0, sensor_fit 'HORIZONTAL', sensor_breite_mm 36.0 in jedem gekippten Lauf.",
+   "erwartung_neigung_1_9_bis_4_7": "NUR IN EINEM VON DREI FAELLEN EINGETROFFEN. Turm 512x512: 4.207 — drin. Flachbau 512x512: -0.205 — negativ und um eine Groessenordnung darunter. Turm 512x768: 5.985 — darueber. Die Spanne gilt nicht allgemein.",
+   "warum_die_spanne_nicht_traegt": {
+    "flachbau": "ZIEL_HOECHSTANTEIL deckelt das Blickziel bei fuss + 0.5 * Bauhoehe, also bei 1.375 m. Die Augenhoehe liegt bei 1.45 m. Die Kamera schaut also leicht ABWAERTS, und die Neigung wird negativ. Bei jedem Bau unter rund 3.4 m Hoehe ist das so. Der Commit-Text nennt diesen Weg fuer negative Shifts bereits — hier ist er am Geraet gemessen.",
+    "hochformat": "Die zitierte Spanne wurde ueber zwei Formate gemessen. Im Hochformat 2:3 wird der senkrechte Bildwinkel enger, die Kamera muss naeher heran, und die Neigung waechst.",
+    "nachgerechnet_mit_35_mm": "Ueber 12 Richtungen x 4 Bauhoehen (8/15/30/60 m, Grundriss 20 x 12) x 3 Formate: 1:1 -> 1.77 bis 4.05 Grad, shift_y 0.030 bis 0.069; 16:9 -> 1.77 bis 2.43 Grad, shift_y 0.030 bis 0.041; 2:3 -> 1.77 bis 5.95 Grad, shift_y 0.030 bis 0.101. Die im Auftrag zitierten 1.92 bis 4.70 Grad und 0.94 bis 2.30 mm stammen aus der Zeit mit 28 mm und decken das Hochformat nicht ab."
+   }
+  },
+  "S2_sind_die_senkrechten_senkrecht": {
+   "verfahren": "Im BEAUTY-Bild, nicht in der Maske. Je Bildzeile innerhalb eines Fensters von plus/minus 5 Bildpunkten um die aus dem Material-ID-Pass bekannte Umrissspalte das groesste waagrechte Gefaelle der Luminanz suchen (Zentraldifferenz), Feinlage aus einer Parabel durch die drei Gefaellewerte. Ueber die so gewonnenen Punkte eine Ausgleichsgerade, Winkel = arctan(dx/dy). Oberste 10 und unterste 15 Prozent der Zeilen weggelassen (Dachkante, Sockel, Platte). Zwei Runden Ausreisserabweisung bei 2.5 Sigma; die abgewiesenen Zeilen sind gezaehlt.",
+   "warum_die_erste_fassung_verworfen_wurde": "Ohne Ausreisserabweisung sprang das Gefaellemaximum dort, wo die Bodenplatte die Gebaeudekante kreuzt, auf die Plattenkante. Ein einzelner Ausreisser von 50 Bildpunkten verdrehte die Gerade und ergab -0.63 statt -0.47 Grad, bei einer Streuung von 0.73 statt 0.025 Bildpunkten. Die Streuung hat es verraten, nicht das Auge.",
+   "gemessene_kanten": "die beiden senkrechten Umrisskanten des Bauwerks (Gebaeudeecken bei Weltpunkt (0,0) links und (8,5) rechts), gegen den Himmel. Die NAHE Gebaeudeecke (8,0) liegt zwischen zwei Fassaden und hat ein schwaecheres Gefaelle — sie ist NICHT GEMESSEN.",
+   "turm_512x512": {
+    "gekippt_neigung_4_207": {
+     "kante_links_grad": -0.4734,
+     "kante_rechts_grad": 0.4786,
+     "streuung_px": [
+      0.025,
+      0.028
+     ],
+     "zeilen": [
+      151,
+      148
+     ],
+     "verworfen": [
+      0,
+      3
+     ]
+    },
+    "shift_neigung_0": {
+     "kante_links_grad": 0.0076,
+     "kante_rechts_grad": 0.0063,
+     "streuung_px": [
+      0.026,
+      0.032
+     ],
+     "zeilen": [
+      150,
+      149
+     ],
+     "verworfen": [
+      4,
+      5
+     ]
+    },
+    "verbesserung_faktor": [
+     62,
+     76
+    ]
+   },
+   "turm_512x768": {
+    "gekippt_neigung_5_985": {
+     "kante_links_grad": -0.9606,
+     "kante_rechts_grad": 0.9793,
+     "streuung_px": [
+      0.034,
+      0.031
+     ],
+     "zeilen": [
+      213,
+      216
+     ],
+     "verworfen": [
+      9,
+      6
+     ]
+    },
+    "shift_neigung_0": {
+     "kante_links_grad": -0.016,
+     "kante_rechts_grad": 0.0036,
+     "streuung_px": [
+      0.149,
+      0.026
+     ],
+     "zeilen": [
+      220,
+      223
+     ],
+     "verworfen": [
+      11,
+      8
+     ]
+    },
+    "verbesserung_faktor": [
+     60,
+     272
+    ]
+   },
+   "flachbau_512x512": {
+    "gekippt_neigung_minus_0_205": {
+     "kante_links_grad": 0.0627,
+     "kante_rechts_grad": -0.0235,
+     "streuung_px": [
+      0.03,
+      0.033
+     ],
+     "zeilen": [
+      70,
+      69
+     ]
+    },
+    "shift_neigung_0": {
+     "kante_links_grad": -0.0088,
+     "kante_rechts_grad": 0.0127,
+     "streuung_px": [
+      0.036,
+      0.034
+     ],
+     "zeilen": [
+      71,
+      70
+     ]
+    },
+    "anmerkung": "Hier ist der Unterschied nicht mehr sicher aufloesbar — die gekippte Aufnahme kippt nur 0.2 Grad, und beide Werte liegen im Rauschboden des Verfahrens."
+   },
+   "gegenrechnung": {
+    "was": "Dieselben Kanten mit einer EIGENEN Lochkamera vorhergesagt: Kamerabasis aus auge und blick_auf, Sensorbreite 36 mm auf die Bildbreite, shift_y als Anteil davon. Die Vorhersage ist unabhaengig von Blender.",
+    "turm_512x512_gekippt": {
+     "vorhergesagt": [
+      -0.4747,
+      0.4804
+     ],
+     "gemessen": [
+      -0.4734,
+      0.4786
+     ],
+     "abweichung_grad": [
+      0.0013,
+      0.0018
+     ]
+    },
+    "turm_512x768_gekippt": {
+     "vorhergesagt": [
+      -0.9593,
+      0.9757
+     ],
+     "gemessen": [
+      -0.9606,
+      0.9793
+     ],
+     "abweichung_grad": [
+      0.0013,
+      0.0036
+     ]
+    },
+    "flachbau_gekippt": {
+     "vorhergesagt": [
+      0.0454,
+      -0.0465
+     ],
+     "gemessen": [
+      0.0627,
+      -0.0235
+     ],
+     "abweichung_grad": [
+      0.017,
+      0.023
+     ]
+    },
+    "alle_shift_faelle": {
+     "vorhergesagt": 0.0,
+     "gemessen": "zwischen -0.016 und +0.013"
+    },
+    "urteil": "Blender bildet mit genau der Kamera ab, die wir meinen. Wo die Kanten lang sind (Turm), stimmt die Vorhersage auf 0.004 Grad."
+   },
+   "rauschboden_des_verfahrens": "rund 0.02 Grad. Er ergibt sich aus den Shift-Faellen, in denen die Wahrheit 0.0 ist: gemessen wurde dort zwischen -0.016 und +0.013 Grad.",
+   "erwartung": "EINGETROFFEN, und zwar deutlich. Im gekippten Modus weichen die Senkrechten um 0.47 bis 0.98 Grad ab, im Shift-Modus um 0.004 bis 0.016 Grad — das ist der Rauschboden der Messung, also praktisch null. Beim Flachbau trifft die Erwartung NICHT zu, aber nicht wegen des Shifts: dort ist schon die gekippte Aufnahme fast senkrecht."
+  },
+  "S3_rahmt_es_noch": {
+   "verfahren": "Maske aus dem Material-ID-Pass, alles ausser Hintergrund (0,0,0) und Boden_Platte. Anteil an der Bildflaeche.",
+   "flachbau_512x512": {
+    "gekippt_prozent": 7.3917,
+    "shift_prozent": 7.3933,
+    "relativ_prozent": 0.02,
+    "punkte": [
+     19377,
+     19381
+    ]
+   },
+   "turm_512x512": {
+    "gekippt_prozent": 8.1432,
+    "shift_prozent": 8.3427,
+    "relativ_prozent": 2.45,
+    "punkte": [
+     21347,
+     21870
+    ]
+   },
+   "turm_512x768": {
+    "gekippt_prozent": 11.0435,
+    "shift_prozent": 11.6015,
+    "relativ_prozent": 5.05,
+    "punkte": [
+     43425,
+     45619
+    ]
+   },
+   "erwartung": "EINGETROFFEN. Alle drei Paare liegen innerhalb von rund 10 Prozent relativ, und in allen dreien rahmt der Shift ETWAS GROSSZUEGIGER, nicht enger. Der Shift ist also nicht falsch skaliert."
+  },
+  "S4_sensorbezug_im_hochformat": {
+   "warum_zwei_messungen": "Der im Auftrag beschriebene Weg — S2 zweimal fahren, einmal quadratisch, einmal hochformatig — beantwortet die Frage NICHT allein: kamerasatz rechnet fuer das Hochformat einen anderen Abstand (29.09 statt 41.46 m) und einen anderen Shift (3.670 statt 2.575 mm). Die Kamera steht dann woanders, und ein Unterschied im Bild sagt nichts ueber den Sensorbezug. Also zusaetzlich mit FESTER Kamera gefahren, bei der sich nur die Bildhoehe aendert.",
+   "messung_a_an_blenders_eigener_rahmenrechnung": {
+    "wie": "Camera.view_frame(scene=...) liefert die vier Ecken des Bildrahmens in Kamerakoordinaten, mit Sensorbezug, Seitenverhaeltnis und Shift eingerechnet. Kein Render noetig. Standalone-Skript ausserhalb des Repos, Brennweite 35 mm, sensor_width 36, sensor_height 24.",
+    "sensor_fit_HORIZONTAL": {
+     "512x512": {
+      "breite_mm": 36.0,
+      "hoehe_mm": 36.0
+     },
+     "512x768": {
+      "breite_mm": 36.0,
+      "hoehe_mm": 54.0
+     },
+     "768x512": {
+      "breite_mm": 36.0,
+      "hoehe_mm": 24.0
+     }
+    },
+    "sensor_fit_AUTO": {
+     "512x512": {
+      "breite_mm": 36.0,
+      "hoehe_mm": 36.0
+     },
+     "512x768": {
+      "breite_mm": 24.0,
+      "hoehe_mm": 36.0
+     },
+     "768x512": {
+      "breite_mm": 36.0,
+      "hoehe_mm": 24.0
+     }
+    },
+    "was_die_zeile_im_runner_wert_ist": "Mit AUTO waere die Sensorbreite im Hochformat 24 statt 36 mm. Der waagrechte Bildwinkel waere 37.8 statt 54.4 Grad — und kameras.bildwinkel, an dem die ganze Abstandsrechnung haengt, rechnet mit 36 mm. Die ausdrueckliche Zeile kam_daten.sensor_fit = 'HORIZONTAL' ist also nicht Vorsicht, sondern der Unterschied zwischen richtig und falsch.",
+    "worauf_sich_shift_y_bezieht": {
+     "AUTO_und_HORIZONTAL": "shift_y 0.071516 ergibt 2.57458 mm Rahmenversatz = 0.071516 x 36.",
+     "VERTICAL": "dasselbe shift_y ergibt 1.71638 mm = 0.071516 x 24 (sensor_height).",
+     "regel": "shift_y ist ein Anteil DER SENSORKANTE, DIE sensor_fit BESTIMMT — nicht der groesseren Bildkante in Bildpunkten. Der Unterschied wird erst im Hochformat sichtbar, weil sich dort die Umrechnung mm -> Bildpunkte zwischen AUTO und HORIZONTAL unterscheidet."
+    }
+   },
+   "messung_b_am_gerenderten_bild": {
+    "wie": "Feste Kamera (auge, blick_auf, brennweite 35 mm von Hand), einmal mit shift_y 0.07151555160525934 und einmal mit shift_y 0.0, je in 512x512 und 512x768. Der Abstand der Maskenschwerpunkte IST der Shift in Bildpunkten.",
+    "512x512": {
+     "gemessen_px": 36.595,
+     "hypothese_A_anteil_der_36mm_sensorbreite_px": 36.616,
+     "hypothese_B_anteil_der_groesseren_bildkante_px": 36.616,
+     "anmerkung": "im Quadrat unterscheiden die beiden Hypothesen nicht"
+    },
+    "512x768": {
+     "gemessen_px": 36.595,
+     "hypothese_A_px": 36.616,
+     "hypothese_B_px": 54.924,
+     "urteil": "Hypothese A bestaetigt, Hypothese B widerlegt. Abweichung 0.021 Bildpunkte."
+    },
+    "waagrechter_umriss": {
+     "512x512": [
+      200,
+      312
+     ],
+     "512x768": [
+      200,
+      312
+     ],
+     "urteil": "IDENTISCH. Das Hochformat wird seitlich NICHT enger."
+    },
+    "umrisshoehe_px": {
+     "512x512": 203,
+     "512x768": 203,
+     "urteil": "IDENTISCH. Der Massstab ist derselbe; das Hochformat zeigt oben und unten MEHR."
+    }
+   },
+   "der_im_auftrag_beschriebene_weg": {
+    "512x512": {
+     "modus": "shift",
+     "neigung_grad": 0.0,
+     "shift_mm": 2.5745598577893363,
+     "shift_y": 0.071516,
+     "sensor_fit": "HORIZONTAL",
+     "sensor_breite_mm": 36.0,
+     "abstand_m": 41.46339797733878
+    },
+    "512x768": {
+     "modus": "shift",
+     "neigung_grad": 0.0,
+     "shift_mm": 3.66968874111869,
+     "shift_y": 0.101936,
+     "sensor_fit": "HORIZONTAL",
+     "sensor_breite_mm": 36.0,
+     "abstand_m": 29.08966060360141
+    },
+    "anmerkung": "sensor_fit und sensor_breite_mm sind in BEIDEN Formaten wie erwartet. Der Abstand und der Shift unterscheiden sich, weil kamerasatz das Seitenverhaeltnis in die Rahmung nimmt — das ist gewollt und nicht der Sensorbezug."
+   },
+   "erwartung": "VOLLSTAENDIG EINGETROFFEN. sensor_fit 'HORIZONTAL' und sensor_breite_mm 36.0 in beiden Formaten; der waagrechte Bildwinkel ist in beiden gleich (Umriss bildpunktgenau identisch); das Hochformat zeigt oben und unten mehr. Und blender_shift_y = shift_mm / 36 stimmt in beiden Formaten — aber NUR, WEIL der Runner sensor_fit ausdruecklich stellt."
+  },
+  "S5_bildkreisgrenze": {
+   "lauf": "--shift-y=0.34 auf der Turmszene, 512x512, sonst wie S2.",
+   "nimmt_blender_es_an": "JA, und ohne jede Auffaelligkeit. Kein Fehler, keine Warnung, keine Verzerrung, kein Abschneiden der Optik.",
+   "gemessene_verschiebung_px": 174.088,
+   "erwartete_verschiebung_px": 174.08,
+   "abweichung_px": 0.008,
+   "urteil_linearitaet": "Von shift_y 0.0715 (36.6 px) bis 0.34 (174.1 px) ist der Zusammenhang exakt linear. Blender kennt keinen Bildkreis.",
+   "senkrechte_bleiben_senkrecht": {
+    "kante_links_grad": 0.0077,
+    "kante_rechts_grad": -0.0035
+   },
+   "bauwerk_im_bild": "vollstaendig, Zeilen 248 bis 452 von 512. Die Bodenplatte reicht bis nahe an den unteren Rand.",
+   "shift_in_mm": "0.34 x 36 = 12.24 mm — knapp ueber den 12 mm, die ein wirkliches Objektiv leistet, wie der Auftrag es beschreibt.",
+   "ABER_EIN_BEFUND_IM_BERICHT": {
+    "was": "Der Bericht widerspricht sich selbst, sobald --shift-y von Hand gesetzt wird.",
+    "beleg": "herkunft.shift_y meldet 0.34 (was wirklich an der Kamera steht), herkunft.shift_mm meldet 2.5745598577893363. Das sind 0.0715 in shift_y-Einheiten. Der Bericht nennt zwei Zahlen, die um den Faktor 4.75 auseinanderliegen und beide 'der Shift' heissen.",
+    "warum": "shift_mm kommt aus dem kamerasatz-Block und wird uebernommen, bevor --shift-y die gerechnete Zahl schlaegt. shift_y wird danach von der Kamera zurueckgelesen. Die eine Zahl ist bestellt, die andere gestellt — und nur bei der Brennweite und beim Shift-Anteil steht das ausdruecklich im Code.",
+    "zweite_folge": "herkunft.warnungen bleibt LEER. Die 12-mm-Bildkreiswarnung aus shift_aus_ziel erreicht den Bericht nicht, wenn der Shift von Hand gesetzt wird — sie entsteht nur im gerechneten Weg. Ein Bild jenseits der Grenze traegt damit keinen Hinweis darauf.",
+    "was_ich_nicht_getan_habe": "Nichts geaendert. Ob shift_mm aus dem gestellten shift_y zurueckgerechnet gehoert oder ob ein zweites Feld noetig ist, ist eure Entscheidung."
+   }
+  },
+  "befunde_ausserhalb_der_fuenf_faelle": [
+   {
+    "was": "Der Produktpfad und der Direktaufruf liefern dasselbe Bild.",
+    "beleg": "seams.glb_zu_multipass(kamera='sSE', kamera_modus='shift') gegen denselben Runner von Hand aufgerufen: Tiefe, Beauty und Material-ID bildpunktgleich. Der Nachlauf (tiefe_norm.png) lief ohne Fehler durch.",
+    "warum_das_zaehlt": "Die Naht traegt den neuen Modus bis ans Geraet, nicht nur der Runner."
+   },
+   {
+    "was": "Der Bericht taugt NICHT als Reproduktionsanweisung — er rundet zu frueh.",
+    "beleg": "Mit den Zahlen AUS DEM BERICHT nachgestellt (auge auf 4 Stellen, shift_y auf 6 Stellen) weicht das Bild ab: Tiefe und Beauty sind verschieden, nur die Material-ID bleibt gleich. Mit den Zahlen in VOLLER Genauigkeit (auge 27.782428050847145, -31.46482721630511, 1.45; shift_y 0.07151555160525934) ist das Bild in ALLEN DREI Ausgaben bildpunktgleich zum Lauf ueber --kamera-modus=shift.",
+    "was_es_gleichzeitig_belegt": "Der Weg ueber --auge/--blick-auf/--shift-y und der Weg ueber --kamera-modus=shift sind exakt derselbe. Der Runner rechnet den Shift nicht anders, wenn er ihn selbst herleitet.",
+    "was_es_kostet": "Wer einen Lauf aus dem Bericht nachstellt, bekommt eine andere Tiefenkarte. Fuer die Geometrie-QA ist das folgenlos (die Maske stimmt), fuer eine Bitgleichheitsprobe nicht."
+   },
+   {
+    "was": "Der gerechnete Shift ist im Flachbau NEGATIV.",
+    "beleg": "Flachbau 8 x 5 x 3.25 m: shift_mm -0.125, shift_y -0.003473. Das Blickziel liegt bei 1.375 m unter der Augenhoehe von 1.45 m, weil ZIEL_HOECHSTANTEIL bei halber Bauhoehe deckelt.",
+    "warum_das_zaehlt": "Der Shift-Modus schiebt bei niedrigen Bauten also nach UNTEN. Das ist geometrisch richtig, aber es heisst: bei einem Bau unter rund 3.4 m Hoehe leistet der Shift-Modus nichts, was der gekippte nicht auch leistet — dort ist auch die gekippte Aufnahme schon senkrecht (gemessen 0.06 Grad)."
+   }
+  ]
+ },
+ "die_antwort": {
+  "S1": "ADDITIV, bis auf das letzte Bit — aber der alte Lauf war weg und musste rekonstruiert werden. Der Stand vor dem Umbau, der Stand unmittelbar nach dem Umbau und HEAD mit --brennweite=28.0 liefern auf beiden Szenen bildpunktgleiche Tiefen-, Beauty- und Material-ID-Ausgaben. HEAD mit den heutigen Vorgabewerten liefert etwas anderes, und die Ursache ist NICHT der Umbau, sondern der spaetere Wechsel von kameras.BRENNWEITE_MM 28 -> 35. Der herkunft-Block ist wie erwartet (modus 'gekippt', shift_y 0.0, sensor_fit 'HORIZONTAL', 36.0 mm). NICHT eingetroffen ist die Neigungsspanne 1.9 bis 4.7 Grad: gemessen -0.205 (Flachbau), 4.207 (Turm quadratisch) und 5.985 (Turm hochformatig).",
+  "S2": "EINGETROFFEN, mit Zahlen. Gekippt weichen die senkrechten Gebaeudekanten um 0.47 bis 0.98 Grad von der Bildsenkrechten ab; geshiftet um 0.004 bis 0.016 Grad, und das ist der Rauschboden der Messung. Die Vorhersage aus einer eigenen Lochkamera-Rechnung trifft die gekippten Werte auf 0.004 Grad — Blender bildet mit genau der Kamera ab, die wir meinen. Am Flachbau trifft die Erwartung nicht zu, weil dort schon die gekippte Aufnahme mit 0.06 Grad praktisch senkrecht ist.",
+  "S3": "EINGETROFFEN. Der Flaechenanteil aendert sich um 0.02 Prozent (Flachbau), 2.45 Prozent (Turm quadratisch) und 5.05 Prozent (Turm hochformatig) relativ — alles innerhalb der genannten 10 Prozent, und in allen drei Faellen rahmt der Shift GROSSZUEGIGER statt enger. Der Shift ist nicht falsch skaliert.",
+  "S4": "EINGETROFFEN, in beiden unabhaengigen Messungen. sensor_fit meldet 'HORIZONTAL' und sensor_breite_mm 36.0 in beiden Formaten; Blenders eigene Rahmenrechnung bestaetigt 36.000 mm Sensorbreite bei 512x512, 512x768 UND 768x512; und am gerenderten Bild ist der waagrechte Umriss des Bauwerks in beiden Formaten BILDPUNKTGENAU identisch (Spalten 200 bis 312). Das Hochformat zeigt oben und unten mehr, es wird seitlich nicht enger. Die Einheit von shift_y ist der Anteil DER SENSORKANTE, DIE sensor_fit BESTIMMT: 36.595 Bildpunkte gemessen in beiden Formaten, gegen 36.616 vorhergesagt — die Alternative (Anteil der groesseren Bildkante) haette im Hochformat 54.924 verlangt und ist damit widerlegt. blender_shift_y = shift_mm / 36 ist RICHTIG. Es ist aber nur deshalb richtig, weil der Runner sensor_fit ausdruecklich stellt: mit Blenders Vorgabe AUTO waere die Sensorbreite im Hochformat 24 statt 36 mm und der waagrechte Bildwinkel 37.8 statt 54.4 Grad.",
+  "S5": "Blender nimmt es an, und zwar exakt linear: shift_y 0.34 verschiebt das Bild um 174.088 Bildpunkte gegen die vorhergesagten 174.080. Keine Warnung, keine Verzerrung, kein Abschneiden — Blenders Kamera hat keinen Bildkreis. Die Senkrechten bleiben senkrecht (0.008 Grad). Dabei ist aber ein Fehler im Bericht aufgefallen: bei von Hand gesetztem --shift-y meldet herkunft.shift_mm weiter den GERECHNETEN Wert (2.575 mm) statt der gestellten 12.24 mm, und herkunft.warnungen bleibt leer. Wer ueber --shift-y die Bildkreisgrenze ueberschreitet, bekommt vom Bericht keinen Hinweis darauf."
+ },
+ "grenzen_dieser_messung": [
+  "Der im Auftrag genannte alte Lauf war nicht mehr da — /tmp/kosmo-jobs war leer. Ein Vergleich gegen einen WIRKLICH alten Lauf ist NICHT GEMESSEN; ersetzt durch drei selbst gefahrene Codestaende.",
+  "Nur die Richtung sSE. Die uebrigen elf Richtungen sind nicht am Geraet geprueft.",
+  "Nur zwei Bauwerkshoehen (3.25 und 15.25 m) und ein Grundriss (8 x 5 m). Die Turmvariante ist von mir erzeugt, indem die vier Waende des vorhandenen Testbaus in Welt-Z gestreckt wurden — sie stammt nicht aus einer IFC.",
+  "Kein Gelaende ausser einer ebenen Platte. Wie sich der Shift bei geneigtem Gelaende verhaelt, ist nicht geprueft.",
+  "Der Kantenwinkel ist nur an den beiden Umriss-Senkrechten gemessen. Die NAHE Gebaeudeecke zwischen zwei Fassaden ist NICHT GEMESSEN — dort ist das Gefaelle schwaecher und die Messung waere unsicherer gewesen.",
+  "Ob der Shift die TIEFENSCHAETZUNG veraendert, ist hier NICHT GEMESSEN — kein Bildmodell war zugelassen, und auf-20260822-29 hat die Frage bereits beantwortet.",
+  "Blender 5.2.0 LTS, CPU-Cycles, 16 Samples. Ob eine andere Fassung sensor_fit oder shift_y anders auslegt, ist nicht geprueft.",
+  "Die Neigungs- und Shift-Spannen sind mit dem Grundriss 20 x 12 m nachgerechnet, nicht mit dem Grundriss der gerenderten Szene. Sie beschreiben die Groessenordnung, nicht die Szene."
+ ]
+}
