@@ -307,6 +307,7 @@ def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> Non
         "prompt": szene.get("prompt"),
         "prompt_original": szene.get("prompt_original"),
         "prompt_sprache": szene.get("prompt_sprache"),
+        "prompt_bauteile": list(szene.get("prompt_bauteile") or ()),
         "warnungen_auftrag": list(antwort.get("warnungen") or ()),
         "wache": antwort.get("wache"),
     }
@@ -442,6 +443,11 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
         if not sprache.get("vollstaendig", True):
             zeilen.append(f"  NICHT vollstaendig uebersetzt: "
                           f"{', '.join(sprache.get('unbekannt') or ())}")
+
+    bauteile = befund.get("prompt_bauteile") or ()
+    if bauteile:
+        zeilen.append(f"Prompt nennt Bauteile: {', '.join(str(b) for b in bauteile)} — "
+                      f"hat die Geometrie sie? Wenn nicht, erfindet sie das Bildmodell.")
 
     urteil = befund.get("geometrie_urteil") or {}
     spanne = urteil.get("kameraspanne") or {}

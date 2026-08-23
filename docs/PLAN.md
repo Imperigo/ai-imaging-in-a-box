@@ -1294,6 +1294,41 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Hof, Nachbarwand, Mulde? Dann bleiben ihm kaum Grenzabschnitte, und die richtige
       Antwort ist vermutlich „nicht messbar" und nicht „eine Zahl aus sieben Punkten".
       Denselben Fehler haben wir heute an `kantenanteil` korrigiert.
+- [x] **Der Bauteilwächter lief auf keinem einzigen echten Auftrag — bis 23.08.2026.**
+      Er ist die direkte Antwort auf den teuersten Fehler dieses Projekts: „clean flat
+      roof" für einen oben offenen Quader, und das Bildmodell lieferte ein Dach
+      (`auf-20260818-09`). Gerufen wurde er nur von `komponiere` — und `komponiere` liegt
+      **nicht** auf dem Weg, den ein Auftrag der Oberfläche nimmt. Der bringt seinen
+      Prompt roh mit.
+
+      Dieselbe Fehlerart wie bei `komposition.py` am selben Tag, und hier teurer: Es ist
+      der Wächter gegen genau die Sorte Fehler, die das Projekt begründet hat.
+
+      Angeschlossen in `lies_szene`, direkt neben der Sprachprüfung — und er prüft
+      **beide** Fassungen. Die Begründung dafür ist keine Gründlichkeit, sondern zwei
+      gemessene Fälle: `Flachdach` entgeht dem Wächter (Kompositum, und die Wortgrenzen
+      sind Absicht — sonst schlüge „Betonung" bei „Beton" an), wird aber zu `flat roof`
+      und **dort** gefunden. Umgekehrt wird `Laibung` zu `reveal`, das der Wächter nicht
+      kennt — dort fängt es nur das Original. Es gibt genau zwei solche Wörter
+      (`laibung`, `dächer`), und einer davon steht jetzt als Test.
+- [ ] **Was `verarbeiter` NICHT durchreicht — systematisch nachgesehen.** Nach zweimal
+      derselben Lücke an einem Tag (Brennweite, Geländestand) einmal alle Parameter
+      verglichen. `glb_zu_multipass` kennt 17, elf werden gereicht; nicht gereicht sind
+      `beauty`, `material_id`, `shift_y`, `timeout`, `herzschlag_takt_s`,
+      `kamera_huellbox`. `RenderAuftrag` kennt zwölf Felder, fünf werden nicht gesetzt:
+      `negativ_prompt`, `schritte`, `denoise`, `fuehrung`, `modell_wurzel`.
+
+      **Nicht alle davon gehören durchgereicht** — `material_id=False` schaltete
+      stillschweigend die Bauwerksmaske ab, an der die ganze QA hängt. Aber der
+      Unterschied zwischen *bewusst nicht* und *vergessen* steht nirgends, und genau
+      darin lagen die beiden gefundenen Lücken. Zu entscheiden je Parameter, und danach
+      als Prüfung festzuhalten, damit der nächste hinzukommende nicht still in dasselbe
+      Loch fällt.
+- [ ] **Die Negativ-Prompts der Stile erreichen keinen Render.** `prompts.Stil.negativ`
+      ist geschrieben und wird auf dem Produktivweg nie gelesen: `RenderAuftrag.negativ_prompt`
+      setzt niemand, und der fremde Vertrag führt gar kein Feld dafür. Das ist eine
+      Vertragsfrage und keine Programmfrage — aber es gehört benannt, statt als
+      scheinbar wirksame Einstellung dazustehen.
 - [ ] **Ob sich die beiden Auswahleffekte wirklich aufheben, ist NICHT gemessen.**
       Je Kamera wird das beste von drei genommen (hebt), über die Kameras das
       schlechteste von drei (senkt). Beide betragen rund 0,845 Streuungen — sie heben

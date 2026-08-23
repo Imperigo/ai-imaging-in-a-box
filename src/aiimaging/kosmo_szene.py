@@ -55,7 +55,7 @@ import math
 import re
 
 from . import backbone as _backbone
-from . import geometrie_qa, sprache, stil_qa
+from . import geometrie_qa, prompts, sprache, stil_qa
 from . import kameras as _kameras
 
 #: Die beiden Vertragskennungen, wörtlich aus den Schemadateien der Designzentrale.
@@ -437,6 +437,27 @@ def lies_szene(fremd: dict) -> dict:
         )
         warnungen.extend(sprachbefund["warnungen"])
 
+    # DER BAUTEILWÄCHTER — die direkte Antwort auf den teuersten Fehler dieses Projekts,
+    # und bis zum 23.08.2026 lief er auf keinem einzigen echten Auftrag.
+    #
+    # Er entstand aus `auf-20260818-09`: „clean flat roof" für einen oben offenen Quader,
+    # und das Bildmodell lieferte ein Dach. Es hat nichts falsch gemacht — es tat, was
+    # dastand. Seither steht in `prompts.py` ein Wächter dagegen, geprüft und begründet,
+    # **von nichts aufgerufen**: `komponiere` ruft ihn, aber `komponiere` liegt nicht auf
+    # dem Weg, den ein Auftrag der Oberfläche nimmt. Der bringt seinen Prompt roh mit.
+    #
+    # Geprüft werden BEIDE Fassungen. Das Original, weil der Wächter deutsche
+    # Bauteilwörter kennt; die Übersetzung, weil ein deutsches „Dach" erst als ``roof``
+    # sicher gefunden wird — und weil sonst genau die Wörter durchrutschten, die die
+    # Übersetzung selbst erzeugt hat.
+    bauteile: list[str] = []
+    for fassung in (sprachbefund["original"], sprachbefund["uebersetzt"]):
+        for wort in prompts.bauteilwaechter(fassung)["woerter"]:
+            if wort not in bauteile:
+                bauteile.append(wort)
+    if bauteile:
+        warnungen.append(prompts.bauteilwaechter(" ".join(bauteile))["hinweis"])
+
     return {
         "geometrie": pfad,
         "format": fmt or None,
@@ -449,6 +470,7 @@ def lies_szene(fremd: dict) -> dict:
         "prompt": sprachbefund["uebersetzt"],
         "prompt_original": sprachbefund["original"],
         "prompt_sprache": sprachbefund,
+        "prompt_bauteile": tuple(bauteile),
         "stil_modus": stil.get("mode", "none"),
         "stil_referenzen": list(stil.get("refs") or []),
         "backbone": bb["name"],
