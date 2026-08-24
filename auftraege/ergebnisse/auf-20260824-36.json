@@ -1,0 +1,951 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260824-36",
+ "status": "ok",
+ "beendet": "2026-08-24T13:47:27Z",
+ "die_frage": "Steigen 'geom_iou' und 'n_gemeinsam', wenn die Kamera das BAUWERK rahmt statt die ganze Szene?",
+ "messwerte": {
+  "aufbau": {
+   "was_gefahren_wurde": "Vier volle Laeufe ueber tools/abholen.py --fremde-freigabe auf einem eigenen Ablageort ausserhalb des Repos, ein Prozess je Auftrag mit --hoechstens 1. EINE Szene, EIN Azimut (s, 180 Grad), EIN Startwert (seed 0). Einzige Veraenderliche ist der Kamerastandort.",
+   "geometrie": {
+    "bauwerk_m": [
+     15.36,
+     10.36,
+     6.0
+    ],
+    "bauwerk_grundflaeche_m2": 159.1296,
+    "plattenseite_m": 39.8910516281534,
+    "plattenflaeche_m2": 1591.296,
+    "plattenverhaeltnis": 10.0,
+    "namen": {
+     "bauwerk": "Bauwerk",
+     "platte": "Boden_Platte"
+    },
+    "warum_diese_namen": "maske.GELAENDE_MUSTER vergleicht mit fnmatch gegen den GANZEN Namen. 'boden_platte' steht dort woertlich, 'Bauwerk' nicht. Am Geraet gegengeprueft: ist_gelaende('Boden_Platte') True, ist_gelaende('Bauwerk') False, ist_gelaende('Boden_Platte_gross') False. In allen sechs Kameras kam die Maske denn auch zustande (maskenbefund.gemessen True, quelle ['objekt']).",
+    "platte_ohne_dicke": "Die Platte ist eine ebene Flaeche auf z = 0, keine Scheibe. Damit sitzt die Szenen-Huellbox unten GENAU auf dem Gebaeudefuss und die Auto-Kamera von Stufe 0 rechnet mit demselben Gelaendestand wie meine ausdruecklichen Kameras. Beleg: gelaende_z 0.0 und auge_z 1.7 in allen vier blender-report.json.",
+    "hochachse": "Y-up, export_yup=True (der IFC-glb-Runner liefert Y-up)",
+    "huellbox_geprueft": {
+     "wie": "eigener Blender-Import der EXPORTIERTEN glb mit den Vorgabewerten (up_axis Y_UP), Huellbox aller Meshes",
+     "szene_zurueckgelesen": {
+      "size": [
+       39.8911,
+       39.8911,
+       6.0
+      ],
+      "min": [
+       -19.9455,
+       -19.9455,
+       0.0
+      ],
+      "max": [
+       19.9455,
+       19.9455,
+       6.0
+      ]
+     },
+     "meshes_zurueckgelesen": [
+      "Bauwerk",
+      "Boden_Platte"
+     ],
+     "urteil": "Die dritte Zahl ist die senkrechte und exakt die 6.0 m des Auftrags. Die Szene steht also nach dem Rueckweg aufrecht; die Kipp-Falle (up_axis='Z' beim Import) hat nicht zugeschlagen."
+    }
+   },
+   "bestellung": {
+    "schema": "kosmovis.render-scene/v1",
+    "aufloesung_bestellt": [
+     1600,
+     1000
+    ],
+    "aufloesung_gefahren": [
+     1600,
+     992
+    ],
+    "samples": 128,
+    "faithful": 0.8,
+    "backbone": "z-image-turbo",
+    "prompt": "prompts.komponiere('messschnitt')['prompt'], 373 Zeichen, in allen vier Laeufen woertlich derselbe",
+    "prompt_gegen_auf_35_geprueft": "Zeichenweise verglichen mit style.prompt aus der render-scene.json des G4-Laufs von auf-20260823-35: identisch.",
+    "seeds": [
+     0
+    ],
+    "abweichung_gegen_auf_35": "auf-20260823-35 fuhr die Vorgabe-Startwerte (0, 1, 2) und behielt je Kamera den besten nach 'gerichtet'. Hier ist es NUR seed 0, in allen vier Stufen — der Auftrag verlangt EINEN Startwert, und damit faellt die Seedauswahl als zweite Veraenderliche weg. Es ist die einzige Abweichung von der Bestellung aus auf-35."
+   },
+   "geraet": {
+    "blender": "5.2.0 LTS, Cycles auf CPU (der Runner setzt cycles.device fest)",
+    "bildmodell": "z-image-turbo + ControlNet-Union, 20 Schritte",
+    "schaetzer": "depth-anything-v2-small (Apache-2.0), Polaritaet -1 (Disparitaet)",
+    "modell_id": "depth-anything/Depth-Anything-V2-Small-hf",
+    "lizenzlage": "Nur Small. Base/Large/Giant sind CC-BY-NC und waren nicht im Spiel — modell_id steht in allen sechs Kameras auf Small.",
+    "gpu_leistungsgrenze_w": 400,
+    "gpu_vor_dem_start": "14.49 W, 0 %, 1143 MiB — Leerlauf, wie die Auflage verlangt",
+    "gpu_mitgeschrieben": {
+     "verfahren": "nvidia-smi alle 10 s, durchgehend von vor dem Start bis nach dem letzten Lauf",
+     "fenster_mitschrieb_utc": [
+      "13:37:08",
+      "13:48:10"
+     ],
+     "fenster_der_vier_laeufe_utc": [
+      "13:37:08",
+      "13:42:34"
+     ],
+     "beleg_fensterdeckung": "Die vier befund.json tragen 13:39:22, 13:40:33, 13:41:25 und 13:42:24 UTC — der Mitschrieb beginnt davor und endet danach, es fehlt keine Probe.",
+     "proben_gesamt": 67,
+     "proben_im_laufzeitfenster": 33,
+     "proben_unter_last": 12,
+     "watt_median_unter_last": 350.04,
+     "watt_maximum_ueber_alle_proben": 355.27,
+     "vram_maximum_mib_ueber_alle_proben": 30172.0,
+     "vram_maximum_mib_im_laufzeitfenster": 30172.0,
+     "grenze_400_w_eingehalten": true,
+     "nach_den_laeufen": "letzte Probe 14.80 W, 0 %, 1153 MiB — die Karte ist wieder im Leerlauf",
+     "was_hier_NICHT_steht": "Der Mitschrieb misst die KARTE, nicht die Steckdose. Ob die Leistungsgrenze von 400 W auch am Netzteil eingehalten wird, ist NICHT GEMESSEN."
+    }
+   },
+   "vorgaben_unangetastet": {
+    "brennweite_mm": 35.0,
+    "beleg_brennweite": "blender-report.json jeder Kamera: brennweite_mm 35.0, sensor_fit HORIZONTAL, sensor_breite_mm 36.0",
+    "fov_im_auftrag": 54.43222311461495,
+    "fov_rueckrechnung": "kosmo_szene.fov_zu_brennweite(54.43222311461495) gibt exakt 35.0 zurueck — der Bildwinkel im Vertrag traegt dieselbe Optik wie der Bezugslauf",
+    "auto_richtungen_stufe_0": [
+     "s",
+     "sSE",
+     "nNW"
+    ],
+    "azimut_abgelesen": {
+     "s": 180.0,
+     "sSE": 145.0,
+     "nNW": 325.0,
+     "quelle": "blender-report.json von Stufe 0"
+    },
+    "nichts_ueberschrieben": "Kein Schalter ausser --store, --fremde-freigabe, --hoechstens 1 und --seeds 0. Kein --stil, kein --gelaende-z, kein --kein-gelaende, keine Aufloesungsvorgabe von Hand."
+   },
+   "repo_code_unveraendert": true,
+   "beleg_repo_unveraendert": "git status --porcelain im Repo ist leer, HEAD 3165b31. Die ausdruecklichen Kameras stehen im AUFTRAG (render-scene.json, cameras als Liste von CameraSpec) und nicht im Modul. Aus dem Repo wurde nur gelesen: kameras.kamerasatz fuer die Standortrechnung, prompts.komponiere fuer den Prompt, maske.ist_gelaende fuer die Namensprobe.",
+   "wie_die_kameras_gerechnet_wurden": {
+    "grundsatz": "Aus der BAUWERKS-Huellbox [[-7.68,-5.18,0],[7.68,5.18,6]], nicht aus der Szenen-Huellbox. Genau das ist der Unterschied, den die Frage prueft: kameras.py Z. 1091 bildet 'masse' aus der Huellbox der ganzen Szene, und die ist hier 39.89 m breit statt 15.36 m.",
+    "azimut": "180.0 Grad, abgelesen aus blender-report.json der s-Ansicht von Stufe 0 und gegen den gerechneten Wert geprueft — bei Abweichung haette das Skript abgebrochen.",
+    "deckungsgrad_bestellt": [
+     0.3,
+     0.5,
+     0.7
+    ],
+    "seitenverhaeltnis": 1.6129032258064515,
+    "je_stufe": {
+     "s30": {
+      "deckungsgrad_bestellt": 0.3,
+      "spec": {
+       "position": [
+        -1.536,
+        -54.957778,
+        1.7
+       ],
+       "target": [
+        0.0,
+        0.0,
+        2.9
+       ],
+       "name": "s30",
+       "fov": 54.43222311461495
+      },
+      "azimut_grad": 180.0,
+      "abstand_m": 54.97923821108843,
+      "abstand_analytisch_m": 54.957777777777785,
+      "fuellgrad": 0.2998707183036435,
+      "fuellgrad_breite": 0.2998707183036435,
+      "fuellgrad_hoehe": 0.1952283322289345,
+      "flaechenanteil": 0.05656947340415855,
+      "vollstaendig": true,
+      "massgebend": "breite",
+      "modus": "gekippt",
+      "warnungen": []
+     },
+     "s50": {
+      "deckungsgrad_bestellt": 0.5,
+      "spec": {
+       "position": [
+        -1.536,
+        -35.046667,
+        1.7
+       ],
+       "target": [
+        0.0,
+        0.0,
+        2.9
+       ],
+       "name": "s50",
+       "fov": 54.43222311461495
+      },
+      "azimut_grad": 180.0,
+      "abstand_m": 35.08030986813607,
+      "abstand_analytisch_m": 35.046666666666674,
+      "fuellgrad": 0.4994374104880891,
+      "fuellgrad_breite": 0.4994374104880891,
+      "fuellgrad_hoehe": 0.3251545641198496,
+      "flaechenanteil": 0.1565203020630112,
+      "vollstaendig": true,
+      "massgebend": "breite",
+      "modus": "gekippt",
+      "warnungen": []
+     },
+     "s70": {
+      "deckungsgrad_bestellt": 0.7,
+      "spec": {
+       "position": [
+        -1.536,
+        -26.513333,
+        1.7
+       ],
+       "target": [
+        0.0,
+        0.0,
+        2.9
+       ],
+       "name": "s70",
+       "fov": 54.43222311461495
+      },
+      "azimut_grad": 180.0,
+      "abstand_m": 26.557788696434134,
+      "abstand_analytisch_m": 26.51333333333334,
+      "fuellgrad": 0.6985443417646022,
+      "fuellgrad_breite": 0.6985443417646022,
+      "fuellgrad_hoehe": 0.4547814725029961,
+      "flaechenanteil": 0.30513106631384634,
+      "vollstaendig": true,
+      "massgebend": "breite",
+      "modus": "gekippt",
+      "warnungen": []
+     }
+    }
+   }
+  },
+  "die_vier_stufen": {
+   "stufe_0_bezug": {
+    "was": "cameras \"auto\" — heutiger Zustand",
+    "job_id": "vis-1787910000-b10000",
+    "kamera_aus_dem_auftrag": null,
+    "je_kamera": {
+     "s": {
+      "anteil_maske": 0.019292464717741934,
+      "geom_iou": 0.00018285356042004074,
+      "n_gemeinsam": 14,
+      "geometrie_score": null,
+      "bestanden": false,
+      "gerichtet": 0.3879556122852936,
+      "rho_maske_roh": -0.3879556122852936,
+      "n_maske": 30621,
+      "n_soll": 38289,
+      "n_ist": 38289,
+      "n_punkte": 1587200,
+      "soll_geometrieanteil": 0.024124,
+      "kameraabstand_m": 90.548,
+      "fuellgrad_breite_nachgerechnet": 0.1749,
+      "kamera_weg": "abgeleitet",
+      "kamera_modus_gemeldet": "shift",
+      "shift_y_gestellt": 0.012885,
+      "shift_mm_gemeldet": 0.46384276372996686,
+      "neigung_grad_gemeldet": 0.0,
+      "brennweite_mm_gestellt": 35.0,
+      "auge": [
+       -3.9891,
+       -90.46,
+       1.7
+      ],
+      "blick_auf": [
+       0.0,
+       0.0,
+       1.7
+      ],
+      "abstand_m_bericht": 90.54792546995722,
+      "fuellgrad_bericht_gegen_szenenbbox": 0.5493151482135463,
+      "maske_gemessen": true,
+      "maske_quelle": [
+       "objekt"
+      ],
+      "maske_grund": "",
+      "maske_gelaendetreffer": [
+       "Boden_Platte"
+      ],
+      "paarurteil_bestanden": false,
+      "paarurteil_zustaendig": true,
+      "nullanker_rauschen": null,
+      "maskenanker_rauschen_rho": 0.7807875935311117,
+      "einordnung": null,
+      "dauer_s": 2.807,
+      "schaetzer": "depth-anything-v2-small",
+      "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+     },
+     "sSE": {
+      "anteil_maske": 0.011076738911290322,
+      "geom_iou": 0.0,
+      "n_gemeinsam": 0,
+      "geometrie_score": null,
+      "bestanden": false,
+      "gerichtet": -0.25842239130597544,
+      "rho_maske_roh": 0.25842239130597544,
+      "n_maske": 17581,
+      "n_soll": 20125,
+      "n_ist": 20125,
+      "n_punkte": 1587200,
+      "soll_geometrieanteil": 0.01268,
+      "kameraabstand_m": 125.986,
+      "fuellgrad_breite_nachgerechnet": 0.1236,
+      "kamera_weg": "abgeleitet",
+      "kamera_modus_gemeldet": "shift",
+      "shift_y_gestellt": 0.00926,
+      "shift_mm_gemeldet": 0.333369750931423,
+      "neigung_grad_gemeldet": 0.0,
+      "brennweite_mm_gestellt": 35.0,
+      "auge": [
+       72.2627,
+       -103.2019,
+       1.7
+      ],
+      "blick_auf": [
+       0.0,
+       0.0,
+       1.7
+      ],
+      "abstand_m_bericht": 125.98623565171566,
+      "fuellgrad_bericht_gegen_szenenbbox": 0.5499999999999999,
+      "maske_gemessen": true,
+      "maske_quelle": [
+       "objekt"
+      ],
+      "maske_grund": "",
+      "maske_gelaendetreffer": [
+       "Boden_Platte"
+      ],
+      "paarurteil_bestanden": false,
+      "paarurteil_zustaendig": true,
+      "nullanker_rauschen": null,
+      "maskenanker_rauschen_rho": -0.2719840634963297,
+      "einordnung": null,
+      "dauer_s": 2.894,
+      "schaetzer": "depth-anything-v2-small",
+      "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+     },
+     "nNW": {
+      "anteil_maske": 0.011076738911290322,
+      "geom_iou": 0.0,
+      "n_gemeinsam": 0,
+      "geometrie_score": null,
+      "bestanden": false,
+      "gerichtet": -0.2297489062310602,
+      "rho_maske_roh": 0.2297489062310602,
+      "n_maske": 17581,
+      "n_soll": 20125,
+      "n_ist": 20125,
+      "n_punkte": 1587200,
+      "soll_geometrieanteil": 0.01268,
+      "kameraabstand_m": 125.986,
+      "fuellgrad_breite_nachgerechnet": 0.1236,
+      "kamera_weg": "abgeleitet",
+      "kamera_modus_gemeldet": "shift",
+      "shift_y_gestellt": 0.00926,
+      "shift_mm_gemeldet": 0.333369750931423,
+      "neigung_grad_gemeldet": 0.0,
+      "brennweite_mm_gestellt": 35.0,
+      "auge": [
+       -72.2627,
+       103.2019,
+       1.7
+      ],
+      "blick_auf": [
+       0.0,
+       0.0,
+       1.7
+      ],
+      "abstand_m_bericht": 125.98623565171566,
+      "fuellgrad_bericht_gegen_szenenbbox": 0.5499999999999999,
+      "maske_gemessen": true,
+      "maske_quelle": [
+       "objekt"
+      ],
+      "maske_grund": "",
+      "maske_gelaendetreffer": [
+       "Boden_Platte"
+      ],
+      "paarurteil_bestanden": false,
+      "paarurteil_zustaendig": true,
+      "nullanker_rauschen": null,
+      "maskenanker_rauschen_rho": -0.27196576242239895,
+      "einordnung": null,
+      "dauer_s": 2.86,
+      "schaetzer": "depth-anything-v2-small",
+      "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+     }
+    },
+    "geometrie_score_gemeldet": null,
+    "gemeldete_kamera": "s",
+    "gate_bestanden": false,
+    "gate_schwelle": 0.65,
+    "kameraspanne": {
+     "n": 3,
+     "n_gemessen": 0,
+     "bester": null,
+     "schlechtester": null,
+     "spanne": null,
+     "streuung": null,
+     "abschlag_streuungen": null,
+     "hinweis": "Keine der 3 Kameras ist gemessen. Das gemeldete Urteil ist UNGEPRUEFT, nicht durchgefallen."
+    },
+    "zeiten_s": {
+     "s": 43.1,
+     "sSE": 41.7,
+     "nNW": 41.7,
+     "gesamt": 126.4
+    },
+    "vertragsergebnis_qa": {
+     "geometry": {
+      "geometry_fidelity": null,
+      "spearman": 0.20094056143439096,
+      "geom_iou": 0.00018285356042004074,
+      "threshold": 0.65,
+      "passed": false,
+      "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1"
+     },
+     "verdict": {
+      "passed": false,
+      "reason": "Geometrie None gegen 0.65; Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, siehe hinweise)"
+     }
+    }
+   },
+   "stufe_1_s30": {
+    "was": "ausdrueckliche Kamera, ~30 % Bildbreite",
+    "job_id": "vis-1787910001-b10001",
+    "kamera_aus_dem_auftrag": {
+     "deckungsgrad_bestellt": 0.3,
+     "spec": {
+      "position": [
+       -1.536,
+       -54.957778,
+       1.7
+      ],
+      "target": [
+       0.0,
+       0.0,
+       2.9
+      ],
+      "name": "s30",
+      "fov": 54.43222311461495
+     },
+     "abstand_m": 54.97923821108843,
+     "fuellgrad_breite": 0.2998707183036435,
+     "flaechenanteil": 0.05656947340415855,
+     "vollstaendig": true,
+     "massgebend": "breite",
+     "modus": "gekippt",
+     "warnungen": []
+    },
+    "je_kamera": {
+     "s30": {
+      "anteil_maske": 0.05650516633064516,
+      "geom_iou": 0.0,
+      "n_gemeinsam": 0,
+      "geometrie_score": null,
+      "bestanden": false,
+      "gerichtet": -0.7718698696119352,
+      "rho_maske_roh": 0.7718698696119352,
+      "n_maske": 89685,
+      "n_soll": 133021,
+      "n_ist": 133021,
+      "n_punkte": 1587200,
+      "soll_geometrieanteil": 0.083809,
+      "kameraabstand_m": 54.979,
+      "fuellgrad_breite_nachgerechnet": 0.2999,
+      "kamera_weg": "vorgegeben",
+      "kamera_modus_gemeldet": null,
+      "shift_y_gestellt": 0.0,
+      "shift_mm_gemeldet": null,
+      "neigung_grad_gemeldet": null,
+      "brennweite_mm_gestellt": 35.0,
+      "auge": [
+       -1.536,
+       -54.9578,
+       1.7
+      ],
+      "blick_auf": [
+       0.0,
+       0.0,
+       2.9
+      ],
+      "abstand_m_bericht": null,
+      "fuellgrad_bericht_gegen_szenenbbox": null,
+      "maske_gemessen": true,
+      "maske_quelle": [
+       "objekt"
+      ],
+      "maske_grund": "",
+      "maske_gelaendetreffer": [
+       "Boden_Platte"
+      ],
+      "paarurteil_bestanden": false,
+      "paarurteil_zustaendig": true,
+      "nullanker_rauschen": null,
+      "maskenanker_rauschen_rho": 0.8476713899870315,
+      "einordnung": null,
+      "dauer_s": 3.026,
+      "schaetzer": "depth-anything-v2-small",
+      "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+     }
+    },
+    "geometrie_score_gemeldet": null,
+    "gemeldete_kamera": "s30",
+    "gate_bestanden": false,
+    "gate_schwelle": 0.65,
+    "kameraspanne": {
+     "n": 1,
+     "n_gemessen": 0,
+     "bester": null,
+     "schlechtester": null,
+     "spanne": null,
+     "streuung": null,
+     "abschlag_streuungen": null,
+     "hinweis": "Keine der 1 Kameras ist gemessen. Das gemeldete Urteil ist UNGEPRUEFT, nicht durchgefallen."
+    },
+    "zeiten_s": {
+     "s30": 45.6,
+     "gesamt": 45.6
+    },
+    "vertragsergebnis_qa": {
+     "geometry": {
+      "geometry_fidelity": null,
+      "spearman": null,
+      "geom_iou": 0.0,
+      "threshold": 0.65,
+      "passed": false,
+      "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1"
+     },
+     "verdict": {
+      "passed": false,
+      "reason": "Geometrie None gegen 0.65; Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, siehe hinweise)"
+     }
+    }
+   },
+   "stufe_2_s50": {
+    "was": "ausdrueckliche Kamera, ~50 % Bildbreite",
+    "job_id": "vis-1787910002-b10002",
+    "kamera_aus_dem_auftrag": {
+     "deckungsgrad_bestellt": 0.5,
+     "spec": {
+      "position": [
+       -1.536,
+       -35.046667,
+       1.7
+      ],
+      "target": [
+       0.0,
+       0.0,
+       2.9
+      ],
+      "name": "s50",
+      "fov": 54.43222311461495
+     },
+     "abstand_m": 35.08030986813607,
+     "fuellgrad_breite": 0.4994374104880891,
+     "flaechenanteil": 0.1565203020630112,
+     "vollstaendig": true,
+     "massgebend": "breite",
+     "modus": "gekippt",
+     "warnungen": []
+    },
+    "je_kamera": {
+     "s50": {
+      "anteil_maske": 0.15651902721774194,
+      "geom_iou": 0.0014413285289049036,
+      "n_gemeinsam": 1196,
+      "geometrie_score": 0.03176929653034413,
+      "bestanden": false,
+      "gerichtet": 0.696719573798963,
+      "rho_maske_roh": -0.696719573798963,
+      "n_maske": 248427,
+      "n_soll": 415493,
+      "n_ist": 415493,
+      "n_punkte": 1587200,
+      "soll_geometrieanteil": 0.261777,
+      "kameraabstand_m": 35.08,
+      "fuellgrad_breite_nachgerechnet": 0.4994,
+      "kamera_weg": "vorgegeben",
+      "kamera_modus_gemeldet": null,
+      "shift_y_gestellt": 0.0,
+      "shift_mm_gemeldet": null,
+      "neigung_grad_gemeldet": null,
+      "brennweite_mm_gestellt": 35.0,
+      "auge": [
+       -1.536,
+       -35.0467,
+       1.7
+      ],
+      "blick_auf": [
+       0.0,
+       0.0,
+       2.9
+      ],
+      "abstand_m_bericht": null,
+      "fuellgrad_bericht_gegen_szenenbbox": null,
+      "maske_gemessen": true,
+      "maske_quelle": [
+       "objekt"
+      ],
+      "maske_grund": "",
+      "maske_gelaendetreffer": [
+       "Boden_Platte"
+      ],
+      "paarurteil_bestanden": false,
+      "paarurteil_zustaendig": true,
+      "nullanker_rauschen": 0.025132616317012142,
+      "maskenanker_rauschen_rho": 0.6444514677362316,
+      "einordnung": null,
+      "dauer_s": 2.781,
+      "schaetzer": "depth-anything-v2-small",
+      "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+     }
+    },
+    "geometrie_score_gemeldet": 0.03176929653034413,
+    "gemeldete_kamera": "s50",
+    "gate_bestanden": false,
+    "gate_schwelle": 0.65,
+    "kameraspanne": {
+     "n": 1,
+     "n_gemessen": 1,
+     "bester": 0.03176929653034413,
+     "schlechtester": 0.03176929653034413,
+     "spanne": null,
+     "streuung": null,
+     "abschlag_streuungen": 0.0,
+     "hinweis": "Eine gemessene Kamera — das gemeldete Urteil IST ihr Urteil, ohne Auswahleffekt."
+    },
+    "zeiten_s": {
+     "s50": 45.6,
+     "gesamt": 45.6
+    },
+    "vertragsergebnis_qa": {
+     "geometry": {
+      "geometry_fidelity": 0.03176929653034413,
+      "spearman": -0.7002485427800248,
+      "geom_iou": 0.0014413285289049036,
+      "threshold": 0.65,
+      "passed": false,
+      "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1"
+     },
+     "verdict": {
+      "passed": false,
+      "reason": "Geometrie 0.03176929653034413 gegen 0.65"
+     }
+    }
+   },
+   "stufe_3_s70": {
+    "was": "ausdrueckliche Kamera, ~70 % Bildbreite",
+    "job_id": "vis-1787910003-b10003",
+    "kamera_aus_dem_auftrag": {
+     "deckungsgrad_bestellt": 0.7,
+     "spec": {
+      "position": [
+       -1.536,
+       -26.513333,
+       1.7
+      ],
+      "target": [
+       0.0,
+       0.0,
+       2.9
+      ],
+      "name": "s70",
+      "fov": 54.43222311461495
+     },
+     "abstand_m": 26.557788696434134,
+     "fuellgrad_breite": 0.6985443417646022,
+     "flaechenanteil": 0.30513106631384634,
+     "vollstaendig": true,
+     "massgebend": "breite",
+     "modus": "gekippt",
+     "warnungen": []
+    },
+    "je_kamera": {
+     "s70": {
+      "anteil_maske": 0.30512474798387096,
+      "geom_iou": 0.932323330116148,
+      "n_gemeinsam": 934105,
+      "geometrie_score": 0.959856424434278,
+      "bestanden": true,
+      "gerichtet": 0.9318283488042319,
+      "rho_maske_roh": -0.9318283488042319,
+      "n_maske": 484294,
+      "n_soll": 968008,
+      "n_ist": 968008,
+      "n_punkte": 1587200,
+      "soll_geometrieanteil": 0.609884,
+      "kameraabstand_m": 26.558,
+      "fuellgrad_breite_nachgerechnet": 0.6985,
+      "kamera_weg": "vorgegeben",
+      "kamera_modus_gemeldet": null,
+      "shift_y_gestellt": 0.0,
+      "shift_mm_gemeldet": null,
+      "neigung_grad_gemeldet": null,
+      "brennweite_mm_gestellt": 35.0,
+      "auge": [
+       -1.536,
+       -26.5133,
+       1.7
+      ],
+      "blick_auf": [
+       0.0,
+       0.0,
+       2.9
+      ],
+      "abstand_m_bericht": null,
+      "fuellgrad_bericht_gegen_szenenbbox": null,
+      "maske_gemessen": true,
+      "maske_quelle": [
+       "objekt"
+      ],
+      "maske_grund": "",
+      "maske_gelaendetreffer": [
+       "Boden_Platte"
+      ],
+      "paarurteil_bestanden": true,
+      "paarurteil_zustaendig": true,
+      "nullanker_rauschen": 0.5375134911000522,
+      "maskenanker_rauschen_rho": 0.37634476644047454,
+      "einordnung": null,
+      "dauer_s": 3.713,
+      "schaetzer": "depth-anything-v2-small",
+      "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+     }
+    },
+    "geometrie_score_gemeldet": 0.959856424434278,
+    "gemeldete_kamera": "s70",
+    "gate_bestanden": true,
+    "gate_schwelle": 0.65,
+    "kameraspanne": {
+     "n": 1,
+     "n_gemessen": 1,
+     "bester": 0.959856424434278,
+     "schlechtester": 0.959856424434278,
+     "spanne": null,
+     "streuung": null,
+     "abschlag_streuungen": 0.0,
+     "hinweis": "Eine gemessene Kamera — das gemeldete Urteil IST ihr Urteil, ohne Auswahleffekt."
+    },
+    "zeiten_s": {
+     "s70": 52.6,
+     "gesamt": 52.6
+    },
+    "vertragsergebnis_qa": {
+     "geometry": {
+      "geometry_fidelity": 0.959856424434278,
+      "spearman": -0.9882026178761172,
+      "geom_iou": 0.932323330116148,
+      "threshold": 0.65,
+      "passed": true,
+      "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1"
+     },
+     "verdict": {
+      "passed": true,
+      "reason": "Geometrie 0.959856424434278 gegen 0.65"
+     }
+    }
+   }
+  },
+  "die_zahlenreihen": {
+   "leitkamera_je_stufe": {
+    "stufe_0_bezug": "s",
+    "stufe_1_s30": "s30",
+    "stufe_2_s50": "s50",
+    "stufe_3_s70": "s70"
+   },
+   "reihen": {
+    "kameraabstand_m": {
+     "stufe_0_bezug": 90.548,
+     "stufe_1_s30": 54.979,
+     "stufe_2_s50": 35.08,
+     "stufe_3_s70": 26.558
+    },
+    "fuellgrad_breite_nachgerechnet": {
+     "stufe_0_bezug": 0.1749,
+     "stufe_1_s30": 0.2999,
+     "stufe_2_s50": 0.4994,
+     "stufe_3_s70": 0.6985
+    },
+    "anteil_maske": {
+     "stufe_0_bezug": 0.019292464717741934,
+     "stufe_1_s30": 0.05650516633064516,
+     "stufe_2_s50": 0.15651902721774194,
+     "stufe_3_s70": 0.30512474798387096
+    },
+    "geom_iou": {
+     "stufe_0_bezug": 0.00018285356042004074,
+     "stufe_1_s30": 0.0,
+     "stufe_2_s50": 0.0014413285289049036,
+     "stufe_3_s70": 0.932323330116148
+    },
+    "n_gemeinsam": {
+     "stufe_0_bezug": 14,
+     "stufe_1_s30": 0,
+     "stufe_2_s50": 1196,
+     "stufe_3_s70": 934105
+    },
+    "geometrie_score": {
+     "stufe_0_bezug": null,
+     "stufe_1_s30": null,
+     "stufe_2_s50": 0.03176929653034413,
+     "stufe_3_s70": 0.959856424434278
+    },
+    "bestanden": {
+     "stufe_0_bezug": false,
+     "stufe_1_s30": false,
+     "stufe_2_s50": false,
+     "stufe_3_s70": true
+    },
+    "gerichtet": {
+     "stufe_0_bezug": 0.3879556122852936,
+     "stufe_1_s30": -0.7718698696119352,
+     "stufe_2_s50": 0.696719573798963,
+     "stufe_3_s70": 0.9318283488042319
+    },
+    "soll_geometrieanteil": {
+     "stufe_0_bezug": 0.024124,
+     "stufe_1_s30": 0.083809,
+     "stufe_2_s50": 0.261777,
+     "stufe_3_s70": 0.609884
+    },
+    "n_maske": {
+     "stufe_0_bezug": 30621,
+     "stufe_1_s30": 89685,
+     "stufe_2_s50": 248427,
+     "stufe_3_s70": 484294
+    },
+    "n_soll": {
+     "stufe_0_bezug": 38289,
+     "stufe_1_s30": 133021,
+     "stufe_2_s50": 415493,
+     "stufe_3_s70": 968008
+    },
+    "n_punkte": {
+     "stufe_0_bezug": 1587200,
+     "stufe_1_s30": 1587200,
+     "stufe_2_s50": 1587200,
+     "stufe_3_s70": 1587200
+    },
+    "maskenanker_rauschen_rho": {
+     "stufe_0_bezug": 0.7807875935311117,
+     "stufe_1_s30": 0.8476713899870315,
+     "stufe_2_s50": 0.6444514677362316,
+     "stufe_3_s70": 0.37634476644047454
+    },
+    "paarurteil_bestanden": {
+     "stufe_0_bezug": false,
+     "stufe_1_s30": false,
+     "stufe_2_s50": false,
+     "stufe_3_s70": true
+    },
+    "anteil_hintergrund_ist": {
+     "stufe_0_bezug": null,
+     "stufe_1_s30": null,
+     "stufe_2_s50": null,
+     "stufe_3_s70": null
+    }
+   },
+   "kurz": {
+    "fuellgrad_breite": [
+     0.1749,
+     0.2999,
+     0.4994,
+     0.6985
+    ],
+    "anteil_maske": [
+     0.019292,
+     0.056505,
+     0.156519,
+     0.305125
+    ],
+    "geom_iou": [
+     0.000183,
+     0.0,
+     0.001441,
+     0.932323
+    ],
+    "n_gemeinsam": [
+     14,
+     0,
+     1196,
+     934105
+    ],
+    "geometrie_score": [
+     null,
+     null,
+     0.031769,
+     0.959856
+    ],
+    "gerichtet": [
+     0.388,
+     -0.7719,
+     0.6967,
+     0.9318
+    ],
+    "kameraabstand_m": [
+     90.548,
+     54.979,
+     35.08,
+     26.558
+    ],
+    "soll_geometrieanteil": [
+     0.024124,
+     0.083809,
+     0.261777,
+     0.609884
+    ],
+    "rauschboden_rho_derselben_maskenlage": [
+     0.7808,
+     0.8477,
+     0.6445,
+     0.3763
+    ]
+   },
+   "warum_score_bei_stufe_0_und_s30_fehlt": "geometrie_qa.MIN_GEMEINSAME_PUNKTE ist 32. Stufe 0/s hat 14 gemeinsame Punkte, s30 hat 0 — beide unter der Schranke, also None. Das ist eine fehlende Messung und kein Nullwert.",
+   "soll_geometrieanteil_ist_was": "n_soll / n_punkte, also der Anteil der Bildpunkte, die in der SOLL-Karte Geometrie tragen (Bauwerk UND Platte). auf-20260823-35 fuehrt dieselbe Zahl unter dem Namen 'geom_iou_obergrenze'; das ist sie NICHT — bei s70 liegt der Anteil bei 0.6099 und das gemessene geom_iou bei 0.9323, also deutlich darueber. Die Zahl ist ein Rahmungsmass, keine arithmetische Schranke."
+  },
+  "was_die_bilder_zeigen": {
+   "stufe_0_s": "Von dem Quader ist nichts uebrig. Das Bildmodell hat aus dem schmalen Tiefenband einen Maschendrahtzaun vor einer Hallenwand gemacht — bei 2.4 % Soll-Geometrieanteil bleibt ihm kaum etwas anderes.",
+   "stufe_1_s30": "Der Quader ist da, klein und mittig. Aber aus der nahen Plattenkante ist eine Backsteinmauer im Vordergrund geworden. Genau die kippt die Tiefenordnung: 'gerichtet' faellt auf -0.7719, schlechter als im Bezugslauf.",
+   "stufe_2_s50": "Der Quader stimmt und steht auf einer Ebene. Die Platte lauft aber bis zum Horizont durch — der Schaetzer legt seine 'naechsten n' Punkte auf diesen Boden statt auf das Bauwerk, und geom_iou bleibt bei 0.0014.",
+   "stufe_3_s70": "Quader und Boden stimmen beide. geom_iou 0.9323, n_gemeinsam 934105, Score 0.9599 — das Gate faellt zum ersten Mal auf dieser Naht auf 'passed: true'.",
+   "vorbehalt": "Diese vier Saetze sind eine BESCHREIBUNG der Bilder durch mich, keine Messung. Die Bilder bleiben ausserhalb des Repos."
+  },
+  "nebenbefunde": [
+   "Der Rauschboden derselben Maskenlage faellt mit der Rahmung: +0.7808 (Stufe 0/s), +0.8477 (s30), +0.6445 (s50), +0.3763 (s70). Bei s30 liegt er UEBER der rho-Schwelle 0.80 — das Tor liesse dort weisses Rauschen durch. Erst bei s70 steht der Messwert (0.9318) deutlich ueber seinem eigenen Boden. Die Rahmung hebt also nicht nur den Messwert, sie senkt zugleich den Boden, gegen den er zaehlt.",
+   "Der Fuellgrad, den die Kamerapruefung meldet, und der Fuellgrad, den die Geometrie-QA braucht, sind zwei verschiedene Zahlen. Der blender-report von Stufe 0/s meldet fuellgrad 0.5493 und 'vollstaendig: true' — gemessen an der SZENEN-Huellbox. Das Bauwerk fuellt dort 17.5 % der Bildbreite und 2.4 % der Bildpunkte. Die Kamerapruefung hat also nichts zu bemaengeln, waehrend die Messung dahinter nicht stattfinden kann.",
+   "Der Verlauf ist NICHT monoton. Von Stufe 0 auf s30 faellt geom_iou von 0.000183 auf 0.0 und 'gerichtet' von +0.388 auf -0.7719 — mehr Bauwerk im Bild, schlechtere Zahlen. Erst zwischen s50 und s70 springt geom_iou um den Faktor 647. Wer den Zusammenhang als Gerade liest, liest ihn falsch.",
+   "Die Luecke, die geometrie_qa selbst als offen fuehrt ('Was zwischen 20 % und 60 % geschieht, ist ungemessen', aus auf-20260819-15), ist damit zur Haelfte gefuellt: bei 26.2 % Soll-Geometrieanteil liegt geom_iou bei 0.0014, bei 61.0 % bei 0.9323. Die frueher gemessenen Eckwerte (17 % -> 0.256, 60 % -> 0.967) passen zur oberen Zahl und NICHT zur unteren.",
+   "Ausdrueckliche Kameras aus dem fremden Vertrag rendern OHNE Shift, und das laesst sich ohne Repo-Aenderung nicht abstellen. Der Runner rechnet den Shift nur auf dem Weg 'abgeleitet' (--kamera <kuerzel>); auf dem Weg 'vorgegeben' (--auge/--blick-auf) bleibt shift_y unberuehrt. Beleg: shift_y 0.012885 bei Stufe 0, 0.0 bei allen drei ausdruecklichen Kameras. Der fremde CameraSpec hat kein Feld dafuer.",
+   "Der Abholer sperrt sich weiterhin selbst aus: nach dem ersten Auftrag liegen rund 29 GiB Gewichte auf der Karte (gemessenes Maximum 30172 MiB), und die 4096-MiB-Schranke von abholen.karte_auskunft laesst alles Weitere liegen. Ein Prozess je Auftrag mit --hoechstens 1 war noetig; das ist derselbe Befund wie in auf-35.",
+   "Laufzeiten: Stufe 0 mit drei Ansichten 127.9 s Wanduhr, die drei Einzelkameras 46.7 / 46.6 / 53.6 s. Der Aufschlag von s70 gegenueber s50 ist der groessere Cycles-Anteil bei naeherem Standort."
+  ]
+ },
+ "die_antwort": {
+  "in_einem_satz": "JA — aber nicht allmaehlich: 'anteil_maske' steigt streng monoton mit der Rahmung (0.0193 / 0.0565 / 0.1565 / 0.3051), 'geom_iou' und 'n_gemeinsam' bleiben bis 50 % Bildbreite praktisch null und springen dann auf 0.9323 und 934105, sodass bei 70 % Bildbreite zum ersten Mal ein Score entsteht, der die Schwelle 0.65 nicht nur erreicht, sondern mit 0.9599 deutlich uebertrifft.",
+  "die_hypothese_traegt": true,
+  "was_damit_belegt_ist": "Die Schwelle 0.65 ist nicht arithmetisch unerreichbar. Sie ist unerreichbar bei der Rahmung, die 'cameras: auto' auf dieser Szene erzeugt. Ursache ist der Bildausschnitt, nicht die Schwelle — dieselbe Szene, dasselbe Modell, derselbe Startwert, derselbe Prompt, nur ein anderer Standort.",
+  "was_damit_NICHT_belegt_ist": "Dass 70 % die richtige Rahmung ist, oder dass 0.65 die richtige Schwelle ist. Gemessen sind vier Punkte auf einer Achse an EINER Szene. Und der Weg dorthin ist nicht gerade: bei 30 % sind die Zahlen SCHLECHTER als im Bezugslauf.",
+  "was_mich_ueberrascht_hat": [
+   "Die Nichtmonotonie bei s30. Ich hatte einen glatten Anstieg erwartet und bekam einen Einbruch: geom_iou 0.0, 'gerichtet' -0.7719. Das Bild erklaert es — das Bildmodell macht aus der nahen Plattenkante eine Mauer im Vordergrund und dreht damit die Tiefenordnung um.",
+   "Die Groesse des Sprungs. Zwischen s50 und s70 liegt beim geom_iou der Faktor 647 und bei n_gemeinsam der Faktor 781. Ich hatte mit einem Anstieg gerechnet, nicht mit einer Schwelle.",
+   "Dass der Rauschboden mitwandert. Er faellt von +0.8477 auf +0.3763, waehrend der Messwert steigt — die Rahmung wirkt auf beiden Seiten des Vergleichs, und das macht den Effekt groesser als die Messwerte allein zeigen."
+  ]
+ },
+ "grenzen_dieser_messung": [
+  "EIN Startwert je Stufe (seed 0). Wie gross die Seedstreuung an diesen Kameralagen ist, ist NICHT GEMESSEN. auf-20260823-35 beziffert sie an anderen Lagen mit 0.3155 — der Sprung von s50 auf s70 liegt weit darueber, der Einbruch bei s30 (0.388 auf -0.772, also 1.16) ebenfalls, aber eine Wiederholung mit anderen Startwerten hat nicht stattgefunden.",
+  "EIN Azimut. Nur die s-Ansicht (180 Grad) wurde variiert. sSE und nNW liefen nur im Bezugslauf; ob sie bei 70 % Bildbreite dasselbe tun, ist NICHT GEMESSEN.",
+  "EINE Szene: ein glatter Quader auf einer ebenen Platte, ohne Fassadengliederung, ohne Oeffnungen, ohne Gelaende, ohne Bewuchs, ohne Nachbarbebauung. Was ein echtes Projekt tut, ist NICHT GEMESSEN.",
+  "EIN Plattenverhaeltnis (10-fach, fest). Ob dieselbe Rahmung ohne Bodenkoerper oder mit ansteigendem Gelaende dasselbe ergibt, ist NICHT GEMESSEN.",
+  "DREI Fuellgrade plus Bezug. Wo genau zwischen 50 % und 70 % der Sprung liegt, ist NICHT GEMESSEN — es koennte eine Schwelle sein oder eine steile Rampe.",
+  "Die ausdruecklichen Kameras rendern OHNE Shift (shift_y 0.0), der Bezugslauf MIT (shift_y 0.012885). Ersatzweise wurde die Achse auf das gerechnete Ziel (0,0,2.9) gekippt; die Neigung betraegt 1.25 / 1.96 / 2.59 Grad. Wie gross der Beitrag dieser Kippung zum Ergebnis ist, ist NICHT GEMESSEN. Ueber den fremden Vertrag ist er ohne Repo-Aenderung auch nicht messbar.",
+  "EIN Backbone (z-image-turbo), EIN Schaetzer (depth-anything-v2-small), EINE Aufloesung (1600x992), EIN Prompt, EINE Schrittzahl. Alles andere ist NICHT GEMESSEN.",
+  "Die Kausalitaet ist nur so weit belegt, wie ein Ein-Faktor-Versuch sie belegt: Mit dem Standort aendert sich zwangslaeufig auch das erzeugte Bild. Dass die RAHMUNG und nicht eine begleitende Eigenschaft des Bildes die Zahlen hebt, ist plausibel und nicht bewiesen.",
+  "'anwesenheit' ist in ALLEN SECHS Kameras null. Warum, sagt der Befund nicht; das Mass ist hier NICHT GEMESSEN und faellt als Gegenprobe aus.",
+  "Die Belichtungspruefung lief NICHT (kein --stil uebergeben). Ob die naeheren Standorte die Belichtung reissen, ist NICHT GEMESSEN.",
+  "Ob 0.65 die richtige Schwelle ist, ist NICHT GEMESSEN und war nicht die Frage. Gemessen ist nur, dass sie bei dieser Rahmung erreichbar wird.",
+  "Der Bezugslauf hat drei Ansichten mit zwei verschiedenen Abstaenden (90.5 m und 125.99 m), die Stufen 1-3 je eine. Der Vergleich laeuft ueber die s-Ansicht; die beiden Diagonalen stehen als Zahlen daneben und gehen in die Reihe nicht ein.",
+  "Bilder, Tiefenkarten und die glb bleiben ausserhalb des Repos. Wer die vier Bilder nachsehen will, braucht den Ablageort auf dem Geraet — hier stehen nur Zahlen."
+ ]
+}
