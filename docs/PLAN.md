@@ -1521,10 +1521,44 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       als Test.
 
       **Die echte Lücke bleibt und ist gemeinsam:** Belegt ist nur, dass die Konversion
-      **durchläuft** — nicht, ob die Geometrie **stimmt**. Kein Mass vergleicht die 27 000
-      Dreiecke mit dem, was in der IFC steht. Dazu kommt: **IFC2X3 aus ArchiCAD** — genau
-      die auffällige Gruppe vom 18.08. — ist auf der Maschine nicht mehr vorhanden und
-      bleibt ungemessen.
+      **durchläuft** — nicht, ob die Geometrie **stimmt**. Dazu kommt: **IFC2X3 aus
+      ArchiCAD** — genau die auffällige Gruppe vom 18.08. — ist auf der Maschine nicht mehr
+      vorhanden und bleibt ungemessen.
+- [x] **Und dafür gibt es jetzt ein Mass: `konversionstreue.pruefe_konversion`.**
+      Es liest den Bericht des Runners (`bbox`, `n_elements`, `n_triangles`) und vergleicht
+      ihn mit der **bekannten** Wahrheit. Kein `ifcopenshell`, kein Runner-Import — es liest
+      ein Wörterbuch (Regel 2, und ein Test prüft die Importliste, nachdem mir genau dieser
+      Fehler am selben Tag schon einmal unterlaufen ist).
+
+      **Der Ertrag ist nicht «stimmt / stimmt nicht», sondern die Diagnose.** Die zwei
+      häufigsten IFC-Fehler sehen in einer reinen Zahlenabweichung gleich aus und sind es
+      nicht:
+
+      * **MASSSTAB** — alle drei Achsen um denselben Faktor daneben. 1000 heisst
+        *«Millimeter als Meter gelesen, `IfcUnitAssignment` übergangen»*; 100, 10 und
+        0,3048 (Fuss) sind ebenfalls benannt. **Ein Faktor, der zu keinem passt, wird
+        nicht geraten** — eine erfundene Diagnose ist schlimmer als keine.
+      * **ACHSEN VERTAUSCHT** — dieselben drei Kantenlängen in anderer Reihenfolge. Das
+        Bauwerk ist dann nicht falsch *gross*, sondern falsch *gedreht*; wer das als «zwei
+        Achsen daneben» liest, sucht am falschen Ort.
+
+      **Warum synthetisch und nicht an ihren neun Dateien** — und das ist keine Bequemlichkeit:
+      Bei einer echten IFC kennt niemand die Wahrheit; man müsste sie mit demselben Werkzeug
+      ausrechnen, das man prüfen will. Bei `make_test_ifc.py` kennen wir jede Kante, weil wir
+      sie geschrieben haben. **Regel 3 ist hier nicht bloss eingehalten, sie ist die
+      Voraussetzung.**
+
+      Was das Mass wert ist, steht mit im Modul: Läuft es am Testfall schief, läuft es
+      überall schief. Läuft es richtig, ist über echte Dateien **nichts** bewiesen — nur
+      etwas ausgeschlossen.
+
+      **`auf-39` lässt es am Gerät laufen**, mit G3 (die gefälschten Berichte) **zuerst**:
+      Wenn die drei Fälschungen nicht anschlagen, ist die Prüfung kaputt und alles Übrige
+      wertlos. G2 ist der Millimeter-Fall — ohne ihn wäre G1 eine Vakuumprobe.
+
+      **Offen und mitgefragt:** Reicht die Hüllbox? Eine Geometrie mit richtiger Hüllbox
+      könnte innen völlig falsch sein — vertauschte Wände, fehlende Decke. Die Dreieckszahl
+      fängt einen Teil davon; ob das genügt, ist ungemessen.
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und

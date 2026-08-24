@@ -1641,6 +1641,22 @@ in denen das Gütemass gar nichts mehr misst.*
 *Daraus folgt: Man ersetzt das eine nicht durch das andere. Wer ein Gütemass durch ein
 Anwesenheitsmass ersetzt, gibt eine Frage auf, statt eine zu beantworten.*
 
+**Durchgelaufen gegen richtig** — Der Unterschied zwischen «ein Arbeitsschritt hat keinen
+Fehler gemeldet» und «sein Ergebnis stimmt». Der erste ist billig zu haben und wird
+regelmässig für den zweiten gehalten.
+*Am 24.08.2026 an neun echten Gebäudedateien vorgeführt: Zwei verschiedene Leseprogramme
+verarbeiteten alle neun ohne einen einzigen Fehler — und **kein einziger Vergleich prüfte,
+ob die herausgekommene Geometrie der Vorlage entspricht.* Genau dieselbe Verwechslung stand
+am Anfang der Bildprüfung dieses Projekts: Eine Bewertung über das ganze Bild lief ebenfalls
+immer durch und beantwortete nicht, ob im Bild überhaupt ein Gebäude steht.*
+*Prüfen lässt sich das nur dort, wo die Wahrheit **unabhängig** feststeht. Bei einer echten
+Datei kennt sie niemand — man müsste sie mit demselben Werkzeug ausrechnen, das man prüfen
+will, und das ist ein Zirkelschluss. Bei einer selbst erzeugten Testdatei kennt man jede
+Kante, weil man sie geschrieben hat.*
+*Was so eine Prüfung wert ist, gehört mitgesagt: Läuft sie am Testfall schief, läuft es
+überall schief. Läuft sie richtig, ist über echte Dateien **nichts bewiesen** — nur etwas
+ausgeschlossen.*
+
 **Ortsfeld (eines Tiefenschätzers)** — Die Neigung eines Schätzers, einem Bildpunkt eine
 Tiefe **nach seiner Lage im Bild** zuzuweisen — unten nah, oben und in der Mitte fern —
 weitgehend unabhängig davon, was dort tatsächlich zu sehen ist.
@@ -3215,6 +3231,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-24 | Ergaenzt: **Durchgelaufen gegen richtig**. Anlass ist eine Luecke, die beide IFC-Leser teilen: neun echte Dateien, null Fehler — und kein einziger Vergleich, ob die herausgekommene Geometrie der Vorlage entspricht. Der Eintrag traegt mit, warum sich das nur an selbst erzeugten Dateien pruefen laesst, und was so eine Pruefung ueber echte Dateien NICHT beweist |
 | 2026-08-24 | Ergaenzt: **Ortsfeld (eines Tiefenschaetzers)**. Der schwerwiegendste Befund dieser Woche, und er sass unter dem Tor: Was unser Schaetzer auf einem leeren Bild ausgibt, ist zu 95,75 % eine Funktion des ORTES. Dieselbe Maske verschoben laesst den Nullwert von -0,62 auf +0,65 wandern, mit Vorzeichenwechsel — eine Konstante, die wir seit dem 21.08. als solche gefuehrt haben, ist eine Zahl fuer EINE Bildlage |
 | 2026-08-23 | Ergaenzt: **Klassifikatorfreie Fuehrung (und warum ein Negativ-Prompt daran haengt)**. Anlass ist eine Zaehlung: Sieben von sieben Stilen fuehren einen negativen Prompt, keiner erreicht je ein Bild — und auf dem voreingestellten Modell koennte er ohnehin nichts bewirken. Der Begriff erklaert, warum das kein Fehler im Prompt ist, sondern eine Eigenschaft des Verfahrens |
 | 2026-08-23 | Ergaenzt: **Anwesenheitsmass gegen Guetemass**, und **Zufallsniveau** um den Fall des Rangmasses erweitert. Anlass ist ein Befund beim Nachbauen eines fremden Vorschlags: Sein Zufallsniveau ist 50 % und folgt aus der Konstruktion, die vorgeschlagene Schwelle lag bei 45 % — also darunter. Sie war an einer einzigen Ziehung abgelesen, und dieselbe Ziehung streut von 23 bis 77 % |

@@ -45,8 +45,9 @@ __version__ = "0.0.2"
 
 from aiimaging import (  # noqa: F401
     auftrag, backbone, bildlesen, bildschreiben, contracts, einbetter, gate, geometrie_qa,
-    graph, herkunft, jobs, kette, kosmo_naht, lizenzquelle, lora, mcp_schemas, render,
-    schwellenstudie, seams, stil_qa, stilstudie, tiefenschaetzer, torwaechter, werkzeuge,
+    graph, herkunft, jobs, kette, konversionstreue, kosmo_naht, lizenzquelle, lora,
+    mcp_schemas, render, schwellenstudie, seams, stil_qa, stilstudie, tiefenschaetzer,
+    torwaechter, werkzeuge,
 )
 from aiimaging.contracts import (  # noqa: F401
     ContractError,

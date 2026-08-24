@@ -1,0 +1,55 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260824-39",
+  "art": "multipass",
+  "beschreibung": "DIE LUECKE, DIE IHR SELBST BENANNT HABT: 'Belegt ist bisher nur, dass die Konversion DURCHLAEUFT. Nicht, ob die Geometrie STIMMT. Kein Mass vergleicht die 27000 Dreiecke mit dem, was in der IFC steht.'\n\nDas trifft beide Leser, und es ist dieselbe Verwechslung, die am Anfang unserer Geometrie-QA stand: Ein Score ueber das ganze Bild lief auch durch und beantwortete nicht, ob im Bild ein Bauwerk steht.\n\n=== WAS ICH DAFUER GEBAUT HABE ===\naiimaging.konversionstreue.pruefe_konversion(bericht, huellbox_m=..., n_bauteile=..., n_dreiecke=...)\n\nEs liest den Bericht des Runners (bbox, n_elements, n_triangles) und vergleicht ihn mit der BEKANNTEN Wahrheit. Kein ifcopenshell, kein Runner-Import — es liest ein Woerterbuch (Regel 2).\n\nDer eigentliche Ertrag ist nicht 'stimmt/stimmt nicht', sondern die DIAGNOSE. Die zwei haeufigsten IFC-Fehler haben einen Namen, und in einer reinen Zahlenabweichung sehen sie gleich aus:\n  - MASSSTAB: alle drei Achsen um denselben Faktor daneben. 1000 heisst 'Millimeter als Meter gelesen, IfcUnitAssignment uebergangen'. Auch 100, 10, 0.3048 (Fuss) sind benannt. Ein Faktor, der zu keinem passt, wird NICHT geraten — er wird als unbekannt gemeldet.\n  - ACHSEN VERTAUSCHT: dieselben drei Kantenlaengen in anderer Reihenfolge. Das Bauwerk ist dann nicht falsch GROSS, sondern falsch GEDREHT — meist ein uebersehener Z-oben/Y-oben-Wechsel.\n  - Alles andere: 'weder Einheiten- noch Drehfehler, die Geometrie selbst ist eine andere'.\n\nWARUM SYNTHETISCH UND NICHT AN EUREN NEUN DATEIEN: Bei einer echten IFC kennt niemand die Wahrheit — man muesste sie mit demselben Werkzeug ausrechnen, das man pruefen will. Das ist ein Kreisschluss. Bei tools/make_test_ifc.py kennen wir jede Kante, WEIL WIR SIE GESCHRIEBEN HABEN. Regel 3 ist hier nicht bloss eingehalten, sie ist die Voraussetzung.\n\nUnd ausdruecklich: Laeuft es dort richtig, ist ueber echte Dateien NICHTS bewiesen — nur etwas ausgeschlossen. Laeuft es dort schief, laeuft es ueberall schief.\n\n=== G1 · DER GERADE FALL ===\n  python3 tools/make_test_ifc.py build/testbau.ifc\n  Runner darueber laufen lassen, Bericht behalten.\n  Dann: aiimaging.konversionstreue.pruefe_konversion(bericht, huellbox_m=(...), n_bauteile=..., n_dreiecke=...)\n\nDie erwarteten Zahlen stehen in make_test_ifc.py als Konstanten (LAENGE_X, BREITE_Y, HOEHE_Z, PLATTENDICKE, GELAENDE_VIELFACHES, GELAENDE_DICKE). Bitte sie VON DORT lesen und nicht abschreiben — eine Zahl an zwei Stellen ist an einer davon bereits falsch, und das ist uns diese Woche zweimal passiert.\n\nZurueck: das ganze Ergebnis von pruefe_konversion, dazu bbox, n_elements, n_triangles roh.\n\n=== G2 · DER MILLIMETER-FALL — der Test des TESTS ===\n  python3 tools/make_test_ifc.py build/testbau_mm.ifc --mm\nDieselbe Geometrie, aber in Millimetern mit IfcSIUnit-Vorsatz MILLI geschrieben.\n\nERWARTUNG: Der Runner liest die Einheit richtig und liefert DIESELBE Huellbox in Metern; pruefe_konversion meldet stimmt=True. Meldet es stattdessen 'MASSSTAB ... Millimeter als Meter gelesen', haben wir einen echten Fehler gefunden — und das waere das wertvollste Ergebnis dieses Auftrags.\n\nDAS IST DER WICHTIGSTE PUNKT: G1 allein koennte gruen sein, weil die Pruefung nichts prueft. G2 zeigt, dass sie greift, wenn etwas schiefgeht. Ohne G2 ist G1 eine Vakuumprobe.\n\n=== G3 · DIE GEGENPROBE AM WERKZEUG SELBST ===\nNimm den Bericht aus G1 und faelsche ihn von Hand, dreimal:\n  a) alle drei bbox-Kanten mal 1000\n  b) Y und Z der bbox vertauscht\n  c) n_elements um eins verringert\nErwartung: (a) meldet MASSSTAB/Millimeter, (b) ACHSEN VERTAUSCHT, (c) eine Abweichung 'Bauteile'.\n\nDas kostet keinen Renderlauf und keine Sekunde GPU — es ist reines Rechnen auf einem Woerterbuch. Wenn eine der drei nicht anschlaegt, ist die Pruefung kaputt und G1/G2 sind wertlos.\n\n=== G4 · NUR WENN G1 BIS G3 STEHEN: --raeume ===\n  python3 tools/make_test_ifc.py build/testbau_raeume.ifc --raeume\nErwartung: Die Huellbox aendert sich NICHT (Raeume liegen innerhalb der Waende), und n_uebersprungen == 2 (die beiden IfcSpace). Damit ist erstmals gemessen, dass das Ueberspringen die Geometrie nicht antastet — bisher ist nur gezaehlt, dass es passiert.\n\n=== WAS DU NICHT TUN SOLLST ===\n- Keine zweite eigene Fassung der Pruefung schreiben. Nimm unsere.\n- Die erwarteten Zahlen nicht abschreiben, sondern aus make_test_ifc.py lesen.\n- Keine echten IFC dafuer verwenden — dort ist die Wahrheit unbekannt, und ein Vergleich waere ein Kreisschluss. (Eure neun Dateien sind fuer diese Frage ausdruecklich UNGEEIGNET, nicht zu klein.)\n- Nichts ins Repo legen ausser Zahlen (Regel 3).\n\n=== RUECKGABE ===\nNach auftraege/ergebnisse/auf-20260824-39.json. Reihenfolge: G3 zuerst (billig und entscheidet, ob der Rest zaehlt), dann G2, dann G1, dann G4.\n\nUnd die Frage dazu, deren Antwort ich als Einschaetzung will: Reicht die Huellbox als Treuemass, oder braucht es mehr? Mir faellt auf, dass eine Geometrie mit richtiger Huellbox innen voellig falsch sein koennte — vertauschte Waende, fehlende Decke. Die Dreieckszahl faengt einen Teil davon. Ob das genuegt, weiss ich nicht, und ich moechte deine Einschaetzung, bevor ich mehr baue.",
+  "erstellt": "2026-08-24T14:30:37Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "kernfrage": "Stimmt die umgewandelte Geometrie — oder ist sie bloss durchgelaufen?",
+    "reihenfolge": [
+      "G3 (billig, entscheidet ob der Rest zaehlt)",
+      "G2",
+      "G1",
+      "G4"
+    ],
+    "pruefung": {
+      "funktion": "aiimaging.konversionstreue.pruefe_konversion",
+      "liest": [
+        "bbox",
+        "n_elements",
+        "n_triangles"
+      ],
+      "diagnosen": [
+        "MASSSTAB (1000/100/10/0.3048 benannt)",
+        "ACHSEN VERTAUSCHT",
+        "andere Geometrie"
+      ],
+      "bitte": "unsere Fassung benutzen, keine zweite eigene"
+    },
+    "erwartete_zahlen": {
+      "quelle": "tools/make_test_ifc.py (LAENGE_X, BREITE_Y, HOEHE_Z, PLATTENDICKE, GELAENDE_VIELFACHES, GELAENDE_DICKE)",
+      "bitte": "von dort lesen, nicht abschreiben"
+    },
+    "warum_synthetisch": "Bei echter IFC kennt niemand die Wahrheit — man muesste sie mit demselben Werkzeug ausrechnen, das man pruefen will",
+    "g2_ist_der_test_des_tests": "Ohne den Millimeter-Fall ist G1 eine Vakuumprobe",
+    "offene_frage": "Reicht die Huellbox als Treuemass? Eine Geometrie mit richtiger Huellbox koennte innen voellig falsch sein."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
+  }
+}
