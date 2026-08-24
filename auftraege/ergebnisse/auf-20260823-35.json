@@ -1,0 +1,899 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260823-35",
+ "status": "ok",
+ "beendet": "2026-08-24T13:20:00Z",
+ "messwerte": {
+  "aufbau": {
+   "was_gefahren_wurde": "Fuenf volle Laeufe ueber tools/abholen.py --fremde-freigabe auf einem eigenen Ablageort ausserhalb des Repos. Drei nach Auftrag (L1-L3), zwei nachgeschoben (G4/G5) — warum, steht unter B1_zusatzlaeufe.",
+   "vorgaben_unangetastet": {
+    "kamera_modus": "shift (kameras.MODUS_SHIFT, Vorgabe von verarbeiter)",
+    "brennweite_mm": 35.0,
+    "beleg_brennweite": "blender-report.json jeder Kamera: brennweite_mm 35.0, modus 'shift', neigung_grad 0.0",
+    "auto_richtungen": [
+     "s",
+     "sSE",
+     "nNW"
+    ],
+    "beleg_richtungen": "azimut_grad 180.0 / 145.0 / 325.0 in den Blender-Berichten",
+    "seeds": [
+     0,
+     1,
+     2
+    ],
+    "nichts_ueberschrieben": "Kein Schalter gesetzt ausser --store und --fremde-freigabe. Kein --seeds, kein --stil, kein --gelaende-z, keine Aufloesungsvorgabe von Hand."
+   },
+   "bestellung": {
+    "schema": "kosmovis.render-scene/v1",
+    "aufloesung_bestellt": [
+     1600,
+     1000
+    ],
+    "aufloesung_gefahren": [
+     1600,
+     992
+    ],
+    "samples": 128,
+    "faithful": 0.8,
+    "backbone": "z-image-turbo",
+    "cameras": "auto",
+    "prompt": "prompts.komponiere('messschnitt')['prompt'], englisch, in allen fuenf Laeufen woertlich derselbe",
+    "warum_diese_werte": "Die Vorgabewerte des fremden Vertrags (kosmo-contracts/src/render-scene.ts: resolution [1600,1000], samples 128, faithful 0.8, backbone z-image-turbo) — dieselben, mit denen der Lauf vom 20.08. lief (1600x992)."
+   },
+   "geraet": {
+    "blender": "5.2.0 LTS, Cycles auf CPU (der Runner setzt cycles.device fest)",
+    "bildmodell": "z-image-turbo + ControlNet-Union, 20 Schritte",
+    "schaetzer": "depth-anything-v2-small (Apache-2.0), Polaritaet -1 (Disparitaet)",
+    "gpu_leistungsgrenze_w": 400,
+    "gpu_gemessen_w": [
+     347.5,
+     352.1,
+     355.2
+    ],
+    "gpu_vor_dem_start": "14.11 W, 0 %, 1143 MiB — Leerlauf, wie die Auflage verlangt"
+   },
+   "geometrien": {
+    "L1": "Testbau 8 x 5 x 3.25 m auf 20x20-m-Platte 'Boden_Platte'",
+    "L2": "Demohaus 15.36 x 10.36 x 6.0 m, ohne Gelaendekoerper",
+    "L3": "Bauwerk + ansteigendes Gelaende ('Gelaende_Hang'/'Gelaende_vorn')",
+    "G4": "ZUSATZ: Demohaus + Platte 'Boden_Platte' (1.4x Grundflaeche)",
+    "G5": "ZUSATZ: Gelaendeszene, Koerper auf 'Gelaende'/'Terrain' umbenannt"
+   },
+   "hochachse_gegengeprueft": {
+    "wie": "eigener Blender-Import je glb, Huellbox aller Meshes, senkrechte Ausdehnung an dritter Stelle",
+    "s60_versatz_0": [
+     20.0,
+     20.0,
+     3.3
+    ],
+    "demohaus": [
+     15.36,
+     10.36,
+     6.0
+    ],
+    "g1_geneigt": [
+     40.0,
+     47.0,
+     9.3
+    ],
+    "urteil": "Alle drei Y-up. Die dritte Zahl ist jeweils die senkrechte — beim Demohaus exakt die 6.0 m des Auftrags. up_axis 'Y_UP' ist damit belegt und nicht angenommen."
+   },
+   "repo_code_unveraendert": true,
+   "das_repo_hat_sich_waehrend_der_laeufe_geaendert": {
+    "was": "HEAD ging um 14:52 von 25c0800 auf 264f650; die Moduldateien wurden um 14:58:38 neu geschrieben. L1, L2, L3 und G4 liefen mit dem alten Stand, G5 mit dem neuen (kenntlich am Feld 'anwesenheit', das der neue Stand nicht mehr schreibt).",
+    "traegt_es": "JA, und das ist geprueft statt behauptet: rho_ueber_maske, _bester_seed, _nullprobe und render.rendere sind zwischen beiden Staenden BYTE-GLEICH (Pruefsummen der Funktionsrumpfe). Zusaetzlicher Beleg: meine Nachmessung des Rauschbodens lief mit dem NEUEN Stand und trifft die Werte, die der Lauf L1 mit dem ALTEN geschrieben hat, auf die letzte Stelle (0.755955285980854).",
+    "was_sich_aenderte": "Additiv: rho_gegen_gemessenen_boden, negativ_wirksam; entfernt: das R2-Bein 'anwesenheit'."
+   }
+  },
+  "B1_drei_volle_laeufe": {
+   "gefahren": {
+    "L1": {
+     "job_id": "vis-1787900001-a10001",
+     "geometrie": "Testbau 8 x 5 x 3.25 m auf 20x20-m-Platte 'Boden_Platte'",
+     "bilder": [
+      "s.png",
+      "sSE.png",
+      "nNW.png"
+     ],
+     "zeiten_s": {
+      "s": 104.4,
+      "sSE": 99.2,
+      "nNW": 98.9,
+      "gesamt": 302.6
+     },
+     "bilder_gerendert": 9
+    },
+    "L2": {
+     "job_id": "vis-1787900002-a10002",
+     "geometrie": "Demohaus 15.36 x 10.36 x 6.0 m, ohne Gelaendekoerper",
+     "bilder": [
+      "s.png",
+      "sSE.png",
+      "nNW.png"
+     ],
+     "zeiten_s": {
+      "s": 44.4,
+      "sSE": 37.8,
+      "nNW": 37.6,
+      "gesamt": 119.8
+     },
+     "bilder_gerendert": 3
+    },
+    "L3": {
+     "job_id": "vis-1787900003-a10003",
+     "geometrie": "Bauwerk + ansteigendes Gelaende ('Gelaende_Hang'/'Gelaende_vorn')",
+     "bilder": [
+      "s.png",
+      "sSE.png",
+      "nNW.png"
+     ],
+     "zeiten_s": {
+      "s": 37.2,
+      "sSE": 36.0,
+      "nNW": 36.0,
+      "gesamt": 109.2
+     },
+     "bilder_gerendert": 3
+    },
+    "G4": {
+     "job_id": "vis-1787900004-a10004",
+     "geometrie": "ZUSATZ: Demohaus + Platte 'Boden_Platte' (1.4x Grundflaeche)",
+     "bilder": [
+      "s.png",
+      "sSE.png",
+      "nNW.png"
+     ],
+     "zeiten_s": {
+      "s": 96.3,
+      "sSE": 95.0,
+      "nNW": 95.1,
+      "gesamt": 286.4
+     },
+     "bilder_gerendert": 9
+    },
+    "G5": {
+     "job_id": "vis-1787900005-a10005",
+     "geometrie": "ZUSATZ: Gelaendeszene, Koerper auf 'Gelaende'/'Terrain' umbenannt",
+     "bilder": [
+      "s.png",
+      "sSE.png",
+      "nNW.png"
+     ],
+     "zeiten_s": {
+      "s": 91.4,
+      "sSE": 90.9,
+      "nNW": 91.0,
+      "gesamt": 273.3
+     },
+     "bilder_gerendert": 9
+    }
+   },
+   "laufzeit_gegen_erwartung": {
+    "erwartet": "grob das Drei- bis Vierfache von 72 s, also 216-288 s",
+    "gemessen_volle_laeufe_9_bilder": {
+     "L1": 302.6,
+     "G4": 286.4,
+     "G5": 273.3
+    },
+    "faktor": {
+     "L1": 4.2,
+     "G4": 3.98,
+     "G5": 3.8
+    },
+    "urteil": "Die Erwartung ist getroffen: 3.8 bis 4.2 mal 72 s. ABER die Summe stimmt aus zwei Fehlern, die sich aufheben — siehe die naechste Zeile."
+   },
+   "die_kostenrechnung_stimmt_nicht": {
+    "was_im_code_steht": "Multipass rund 97 s je Kamera, ein Bild des Bildmodells rund 1,3 s. Daraus die Begruendung fuer drei Startwerte: 'Zwei zusaetzliche Bilder je Kamera kosten rund 2,6 s gegen 97 s.'",
+    "gemessen_an_G4_kamera_s": {
+     "blender_multipass_s": 7.8,
+     "exr_nach_png_s": 2.9,
+     "bild_1_inkl_modellaufbau_und_messung_s": 23.3,
+     "bild_2_s": 24.6,
+     "bild_3_s": 24.8,
+     "auswahl_und_kopie_s": 3.6,
+     "nullprobe_drei_kontrollbilder_s": 9.3,
+     "kamera_gesamt_s": 96.3
+    },
+    "beleg_multipass": "herzschlag.txt zaehlt 2 bis 3 Schlaege a 2 s je Kamera — der Blenderlauf selbst dauert 4 bis 6 s, nicht 97; die 7.8 s oben enthalten den Prozessstart. WARUM er so kurz ist, ist NICHT GEMESSEN — naheliegend ist die adaptive Abtastung von Cycles auf diesen sehr einfachen Szenen, belegt ist sie hier nicht. Fuer die Kostenrechnung genuegt die Dauer.",
+    "beleg_bild": "Neun Bilder, neun Meldungen 'There are modules in ZImageControlNetModel...' im Terminal: die Pipeline wird fuer JEDES Bild neu aufgebaut. Dazu 20 Schritte bei rund 1,2 it/s auf 1600x992.",
+    "urteil": "Das Verhaeltnis ist UMGEKEHRT. Gemessen kostet eine zusaetzliche Ansicht rund 7,8 s Blender, ein zusaetzlicher Startwert rund 24,5 s. Startwerte sind nicht das Billige neben den Ansichten, sondern das Teure. Die 1,3 s stammen von 512x512; bei 1600x992 — der Aufloesung, die der Vertrag vorgibt — sind es rund 24,5 s. Die Begruendung fuer VORGABE_SEEDS ist an der Aufloesung gemessen, die niemand bestellt.",
+    "dass_die_summe_trotzdem_passt": "Mit den Zahlen aus dem Code: 3 x 97 + 9 x 1,3 = 302,7 s. Gemessen: 302,6 / 286,4 / 273,3 s. Die beiden Fehler heben sich fast genau auf — deshalb ist er nie aufgefallen."
+   },
+   "der_abholer_blockiert_sich_selbst": {
+    "was": "Der erste Durchgang bekam alle drei Auftraege vorgelegt. Verarbeitet wurde EINER; die beiden anderen blieben liegen, woertlich: 'Der Auftrag traegt idle_window_only und die Karte ist nicht frei: 30104 MiB belegt (Grenze 4096) — es haelt jemand Gewichte auf der Karte.'",
+    "wer_die_gewichte_haelt": "Der Abholer selbst. Nach Auftrag 1 liegt sein eigenes Bildmodell auf der Karte.",
+    "folge": "durchgang() kann mit idle_window_only NIE mehr als einen Auftrag abarbeiten. Im Betrieb faellt es nicht auf, weil der Dienst mit --hoechstens 1 laeuft und der Prozess danach endet — aber --hoechstens ohne Angabe ist eine Falle, und der Grund, den sie nennt, zeigt auf einen Fremden, den es nicht gibt.",
+    "wie_ich_weitergefahren_bin": "Je Auftrag ein eigener Prozess, --hoechstens 1 — genau wie der Dienst."
+   },
+   "B1_zusatzlaeufe_warum": {
+    "befund": "Auf L2 und L3 gab es KEINE Bauwerksmaske. Ohne sie rendert _bester_seed genau EINEN Startwert und sagt es. Die heutige Vorgabe (0,1,2) hat auf zwei von drei Geometrien gar nicht gegriffen — es gibt dort keine 3x3-Matrix, weil es acht der neun Bilder nie gegeben hat.",
+    "grund_L2": "Demohaus: kein einziger Objektname trifft maske.GELAENDE_MUSTER ('ifcsite*','boden_platte','gelaende','gelände','terrain'). Die Szene hat schlicht kein Gelaende — das Modul kann 'kein Gelaende' aber nicht von 'Regel verfehlt' unterscheiden und liefert darum maske=None.",
+    "grund_L3": "Gelaendeszene: die Koerper heissen 'Gelaende_Hang' und 'Gelaende_vorn'. Verglichen wird mit fnmatch auf den GANZEN Namen; nur 'ifcsite*' traegt einen Platzhalter. 'gelaende_hang' trifft 'gelaende' NICHT. Eine Szene mit ausgeschriebenem Gelaende faellt durch die Gelaenderegel.",
+    "was_ich_getan_habe": "Zwei Geometrien nachgebaut, ausserhalb des Repos, ohne eine Vorgabe anzufassen: G4 = Demohaus + Platte namens 'Boden_Platte'; G5 = dieselbe Gelaendeszene, Koerper auf 'Gelaende' und 'Terrain' umbenannt. Beide liefern sofort die volle 3x3-Matrix. Damit ist belegt, dass die Namensregel der einzige Riegel war."
+   }
+  },
+  "B2_matrizen": {
+   "quelle": "befund.json -> kameras[].seedauswahl.kandidaten[].gerichtet, roh und ungemittelt",
+   "L1": {
+    "kopf": [
+     "Ansicht",
+     "seed 0",
+     "seed 1",
+     "seed 2"
+    ],
+    "zeilen": [
+     [
+      "s",
+      null,
+      null,
+      null
+     ],
+     [
+      "sSE",
+      null,
+      null,
+      null
+     ],
+     [
+      "nNW",
+      null,
+      null,
+      null
+     ]
+    ]
+   },
+   "L2": {
+    "matrix": null,
+    "grund": "keine Bauwerksmaske -> nur seed 0 gerendert, kandidaten = [0]"
+   },
+   "L3": {
+    "matrix": null,
+    "grund": "keine Bauwerksmaske -> nur seed 0 gerendert, kandidaten = [0]"
+   },
+   "G4": {
+    "kopf": [
+     "Ansicht",
+     "seed 0",
+     "seed 1",
+     "seed 2"
+    ],
+    "zeilen": [
+     [
+      "s",
+      null,
+      null,
+      null
+     ],
+     [
+      "sSE",
+      null,
+      null,
+      null
+     ],
+     [
+      "nNW",
+      null,
+      null,
+      null
+     ]
+    ]
+   },
+   "G5": {
+    "kopf": [
+     "Ansicht",
+     "seed 0",
+     "seed 1",
+     "seed 2"
+    ],
+    "zeilen": [
+     [
+      "s",
+      null,
+      null,
+      null
+     ],
+     [
+      "sSE",
+      null,
+      null,
+      null
+     ],
+     [
+      "nNW",
+      null,
+      null,
+      null
+     ]
+    ]
+   },
+   "gewaehlt_je_kamera": {
+    "L1": {
+     "s": 2,
+     "sSE": 0,
+     "nNW": 0
+    },
+    "L2": {
+     "s": 0,
+     "sSE": 0,
+     "nNW": 0
+    },
+    "L3": {
+     "s": 0,
+     "sSE": 0,
+     "nNW": 0
+    },
+    "G4": {
+     "s": 2,
+     "sSE": 1,
+     "nNW": 0
+    },
+    "G5": {
+     "s": 0,
+     "sSE": 2,
+     "nNW": 2
+    }
+   },
+   "L1_zwei_der_drei_ansichten_sind_dieselbe": {
+    "befund": "Bei L1 sind sSE und nNW nicht zwei Ansichten, sondern eine. Die drei erzeugten Bilder sind BYTE-GLEICH (sha256 der PNG stimmt fuer seed 0, 1 und 2 ueberein), die Maske hat beide Male exakt 19234 Punkte.",
+    "warum": "Der Testbau ist ein Quader und hat eine zweizaehlige Drehsymmetrie um die Senkrechte. sSE (145 Grad) und nNW (325 Grad) liegen exakt 180 Grad auseinander; die Tiefenkarten unterscheiden sich um hoechstens 1 von 65535, also gar nicht. Der Sonnenstand steht fest im Weltsystem, darum unterscheiden sich die Beauty-Bilder (maxdiff 120) — konditioniert wird aber ueber die Tiefenkarte, und die ist dieselbe.",
+    "was_das_heisst": "Die HABS/NPS-Begruendung fuer 'zwei gegenueberliegende Diagonalen' traegt bei einem einfachen Quader NICHT: die beiden Ueber-Eck-Ansichten zeigen dasselbe Bild. Jede Baumasse mit zweizaehliger Symmetrie kostet damit einen Renderlauf fuer nichts. Bei G4 und G5 (unsymmetrisch) sind die drei Ansichten wirklich drei.",
+    "nebenbei_gemessen": "Aus byte-gleichen Bildern liest der Tiefenschaetzer rho, die sich um 4e-05 unterscheiden (0.5049690 gegen 0.5049284). Das ist die Wiederholgenauigkeit der ganzen Messkette — vier Groessenordnungen unter jedem Effekt hier."
+   }
+  },
+  "B3_die_beiden_streuungen": {
+   "rechenweg": "Streuung = Standardabweichung ueber die Grundgesamtheit (Nenner n), derselbe Begriff wie in abholer._kameraspanne. Grundlage sind die drei Laeufe mit vollstaendiger Matrix: L1, G4, G5.",
+   "a_seedstreuung_je_ansicht": {
+    "L1": {
+     "s": 0.0572,
+     "sSE": 0.4229,
+     "nNW": 0.4229
+    },
+    "G4": {
+     "s": 0.0978,
+     "sSE": 0.5184,
+     "nNW": 0.7241
+    },
+    "G5": {
+     "s": 0.0628,
+     "sSE": 0.1157,
+     "nNW": 0.4175
+    }
+   },
+   "a_mittel": 0.3155,
+   "b_kamerastreuung_je_startwert_roh": {
+    "L1": {
+     "0": 0.4187,
+     "1": 0.0674,
+     "2": 0.1015
+    },
+    "G4": {
+     "0": 0.3951,
+     "1": 0.3403,
+     "2": 0.382
+    },
+    "G5": {
+     "0": 0.0413,
+     "1": 0.323,
+     "2": 0.1441
+    }
+   },
+   "b_mittel_roh": 0.2459,
+   "b_kamerastreuung_je_startwert_nach_abzug_des_rauschbodens": {
+    "L1": {
+     "0": 0.94,
+     "1": 0.5886,
+     "2": 0.4197
+    },
+    "G4": {
+     "0": 0.6426,
+     "1": 0.5797,
+     "2": 0.1523
+    },
+    "G5": {
+     "0": 0.589,
+     "1": 0.3723,
+     "2": 0.7684
+    }
+   },
+   "b_mittel_nach_abzug": 0.5614,
+   "gegenprobe_ohne_L1": {
+    "warum": "L1 hat nur zwei verschiedene Ansichten (s. B2) und drueckt (b) kuenstlich.",
+    "a_mittel": 0.3227,
+    "b_mittel_roh": 0.271,
+    "b_mittel_nach_abzug": 0.5174,
+    "urteil": "Dasselbe Bild. Der Befund haengt nicht an L1."
+   },
+   "vergleich_mit_0_2269": {
+    "vergleichswert": 0.2269,
+    "gemessen_a": 0.3155,
+    "urteil": "Die Seedstreuung liegt hier um rund 40 % HOEHER als die 0.2269. Und der Vergleich ist ohnehin schief: die 0.2269 stammen aus neun Laeufen, in denen drei Startwerte MIT drei ControlNet-Staerken gekreuzt wurden (POLARITAET_UND_STAERKE_2026-08-22.md, Tabelle 3x3). Sie enthalten also den Staerkeeffekt mit. Meine 0.3155 sind reine Seedstreuung bei fester Staerke 0.8 — der saubere Wert ist der GROESSERE. Wer 0.2269 als Seedstreuung zitiert, zitiert eine Mischung und zu niedrig."
+   },
+   "heben_sich_die_beiden_auswahleffekte_auf": {
+    "rechnung": "Bei drei Ziehungen liegt ein Minimum rechnerisch 0.846 Streuungen unter dem Mittel (geometrie_qa.minimum_abschlag(3)); ein Maximum ebenso darueber.",
+    "roh": {
+     "hub_durch_seedwahl": 0.2669,
+     "abzug_durch_kameraminimum": -0.2081,
+     "netto": 0.0588
+    },
+    "nach_abzug_des_rauschbodens": {
+     "hub_durch_seedwahl": 0.2669,
+     "abzug_durch_kameraminimum": -0.4749,
+     "netto": -0.2081
+    }
+   }
+  },
+  "B3_zusatz_der_rauschboden_ist_keine_konstante": {
+   "wie_gemessen": "Je Ansicht mit der Maske und der Bildgroesse GENAU DIESES Laufs: geometrie_qa.rho_ueber_maske(soll, Schaetzung des Kontrollbildes 'rauschen', maske). Das faehrt die Kette ohnehin — abholer._nullprobe schreibt es als 'maskenanker'. Ich habe es zusaetzlich in einem eigenen Prozess nachgerechnet und treffe die Werte der Kette auf die letzte Stelle.",
+   "das_rauschbild_ist_ueber_alle_ansichten_dasselbe": "sha256 von nullprobe_rauschen.png ist in allen neun Ansichten f48f30f38b2b24f8... — fester Startwert 20260820, gleiche Bildgroesse. Was sich zwischen den Ansichten aendert, ist also NICHT das Rauschen.",
+   "boden_je_ansicht_rho_gerichtet": {
+    "L1": {
+     "s": 0.756,
+     "sSE": -0.3498,
+     "nNW": -0.3499
+    },
+    "G4": {
+     "s": 0.172,
+     "sSE": -0.2687,
+     "nNW": -0.4121
+    },
+    "G5": {
+     "s": 0.6785,
+     "sSE": -0.2216,
+     "nNW": -0.8462
+    }
+   },
+   "boden_streuung_ueber_die_ansichten": {
+    "L1": 0.5213,
+    "G4": 0.2485,
+    "G5": 0.6258
+   },
+   "boden_spanne_ueber_alle_neun": {
+    "min": -0.8462,
+    "max": 0.756,
+    "spanne": 1.6021
+   },
+   "zerlegung_3x3": {
+    "aufbau": "EINE Rauschkarte, EINE Schaetzung davon, dann alle Kombinationen aus Soll-Karte der Ansicht v und Maske der Ansicht w. Zeile = Soll fest, Maske getauscht. Spalte = Maske fest, Soll getauscht.",
+    "gitter": {
+     "L1": {
+      "soll_x_maske": {
+       "s": {
+        "s": 0.756,
+        "sSE": 0.8187,
+        "nNW": 0.8187
+       },
+       "sSE": {
+        "s": 0.112,
+        "sSE": -0.3498,
+        "nNW": -0.3498
+       },
+       "nNW": {
+        "s": 0.1126,
+        "sSE": -0.3499,
+        "nNW": -0.3499
+       }
+      },
+      "n_maske": {
+       "s": 34097,
+       "sSE": 19234,
+       "nNW": 19234
+      }
+     },
+     "G4": {
+      "soll_x_maske": {
+       "s": {
+        "s": 0.172,
+        "sSE": 0.1411,
+        "nNW": 0.2693
+       },
+       "sSE": {
+        "s": -0.219,
+        "sSE": -0.2687,
+        "nNW": 0.0546
+       },
+       "nNW": {
+        "s": -0.4164,
+        "sSE": -0.5596,
+        "nNW": -0.4121
+       }
+      },
+      "n_maske": {
+       "s": 124059,
+       "sSE": 78784,
+       "nNW": 81388
+      }
+     },
+     "G5": {
+      "soll_x_maske": {
+       "s": {
+        "s": 0.6785,
+        "sSE": 0.8163,
+        "nNW": 0.803
+       },
+       "sSE": {
+        "s": -0.1131,
+        "sSE": -0.2216,
+        "nNW": -0.7692
+       },
+       "nNW": {
+        "s": -0.8702,
+        "sSE": -0.854,
+        "nNW": -0.8462
+       }
+      },
+      "n_maske": {
+       "s": 11256,
+       "sSE": 6381,
+       "nNW": 1279
+      }
+     }
+    },
+    "ausschlag_wenn_nur_die_maske_wechselt": {
+     "L1": [
+      0.063,
+      0.462,
+      0.462
+     ],
+     "G4": [
+      0.128,
+      0.323,
+      0.147
+     ],
+     "G5": [
+      0.138,
+      0.656,
+      0.024
+     ]
+    },
+    "ausschlag_wenn_nur_die_sollkarte_wechselt": {
+     "L1": [
+      0.644,
+      1.169,
+      1.169
+     ],
+     "G4": [
+      0.588,
+      0.701,
+      0.681
+     ],
+     "G5": [
+      1.549,
+      1.67,
+      1.649
+     ]
+    },
+    "was_daraus_folgt": "Beides schlaegt aus, aber nicht gleich stark. Nur die Maske verschieben bewegt den Boden um 0.02 bis 0.66; nur die Soll-Karte tauschen um 0.59 bis 1.67. Am Produktpfad ist der groessere Teil des Ausschlags also die Soll-Karte der Ansicht und nicht die Lage der Maske. Die Warnung, das Ortsfeld stecke in der Kamerastreuung, trifft trotzdem zu — sie unterschaetzt nur, welcher Anteil woher kommt. Fuer die Folgerung macht es keinen Unterschied: der Nullpunkt wandert zwischen den Ansichten um bis zu 1.60, und das ist mehr als die ganze rohe Kamerastreuung von 0.2459."
+   }
+  },
+  "B4_die_neue_grundmessung": {
+   "je_lauf": {
+    "L1": {
+     "gemeldeter_geometrie_score": null,
+     "gemeldete_kamera": "s",
+     "gate_bestanden": false,
+     "schwelle": 0.65,
+     "kameraspanne": {
+      "n": 3,
+      "n_gemessen": 0,
+      "bester": null,
+      "schlechtester": null,
+      "spanne": null
+     },
+     "score_je_kamera": {
+      "s": null,
+      "sSE": null,
+      "nNW": null
+     },
+     "anteil_maske_je_kamera": {
+      "s": 0.0215,
+      "sSE": 0.0121,
+      "nNW": 0.0121
+     },
+     "geom_iou_obergrenze_je_kamera": {
+      "s": 0.0322,
+      "sSE": 0.0158,
+      "nNW": 0.0158
+     },
+     "gerichtet_der_behaltenen_bilder": {
+      "s": -0.2696,
+      "sSE": 0.505,
+      "nNW": 0.5049
+     }
+    },
+    "L2": {
+     "gemeldeter_geometrie_score": null,
+     "gemeldete_kamera": "sSE",
+     "gate_bestanden": false,
+     "schwelle": 0.65,
+     "kameraspanne": {
+      "n": 3,
+      "n_gemessen": 1,
+      "bester": 0.2307,
+      "schlechtester": 0.2307,
+      "spanne": null
+     },
+     "score_je_kamera": {
+      "s": 0.2307,
+      "sSE": null,
+      "nNW": null
+     },
+     "anteil_maske_je_kamera": {
+      "s": null,
+      "sSE": null,
+      "nNW": null
+     },
+     "geom_iou_obergrenze_je_kamera": {
+      "s": 0.1688,
+      "sSE": 0.1002,
+      "nNW": 0.105
+     },
+     "gerichtet_der_behaltenen_bilder": {
+      "s": null,
+      "sSE": null,
+      "nNW": null
+     }
+    },
+    "L3": {
+     "gemeldeter_geometrie_score": null,
+     "gemeldete_kamera": "s",
+     "gate_bestanden": false,
+     "schwelle": 0.65,
+     "kameraspanne": {
+      "n": 3,
+      "n_gemessen": 0,
+      "bester": null,
+      "schlechtester": null,
+      "spanne": null
+     },
+     "score_je_kamera": {
+      "s": null,
+      "sSE": null,
+      "nNW": null
+     },
+     "anteil_maske_je_kamera": {
+      "s": null,
+      "sSE": null,
+      "nNW": null
+     },
+     "geom_iou_obergrenze_je_kamera": {
+      "s": 0.0531,
+      "sSE": 0.0233,
+      "nNW": 0.0313
+     },
+     "gerichtet_der_behaltenen_bilder": {
+      "s": null,
+      "sSE": null,
+      "nNW": null
+     }
+    },
+    "G4": {
+     "gemeldeter_geometrie_score": null,
+     "gemeldete_kamera": "sSE",
+     "gate_bestanden": false,
+     "schwelle": 0.65,
+     "kameraspanne": {
+      "n": 3,
+      "n_gemessen": 2,
+      "bester": 0.2672,
+      "schlechtester": 0.1991,
+      "spanne": 0.068
+     },
+     "score_je_kamera": {
+      "s": 0.2672,
+      "sSE": null,
+      "nNW": 0.1991
+     },
+     "anteil_maske_je_kamera": {
+      "s": 0.0782,
+      "sSE": 0.0496,
+      "nNW": 0.0513
+     },
+     "geom_iou_obergrenze_je_kamera": {
+      "s": 0.0879,
+      "sSE": 0.055,
+      "nNW": 0.0566
+     },
+     "gerichtet_der_behaltenen_bilder": {
+      "s": 0.1736,
+      "sSE": 0.8197,
+      "nNW": 0.8241
+     }
+    },
+    "G5": {
+     "gemeldeter_geometrie_score": null,
+     "gemeldete_kamera": "s",
+     "gate_bestanden": false,
+     "schwelle": 0.65,
+     "kameraspanne": {
+      "n": 3,
+      "n_gemessen": 0,
+      "bester": null,
+      "schlechtester": null,
+      "spanne": null
+     },
+     "score_je_kamera": {
+      "s": null,
+      "sSE": null,
+      "nNW": null
+     },
+     "anteil_maske_je_kamera": {
+      "s": 0.0071,
+      "sSE": 0.004,
+      "nNW": 0.0008
+     },
+     "geom_iou_obergrenze_je_kamera": {
+      "s": 0.0531,
+      "sSE": 0.0233,
+      "nNW": 0.0313
+     },
+     "gerichtet_der_behaltenen_bilder": {
+      "s": 0.0512,
+      "sSE": 0.1487,
+      "nNW": 0.2381
+     }
+    }
+   },
+   "der_befund": {
+    "score": "In ALLEN FUENF Laeufen ist der gemeldete Geometrie-Score None. Das Gate ist in allen fuenf nicht bestanden — aber als UNGEPRUEFT, nicht als durchgefallen.",
+    "warum": "Zwei Gruende, beide messbar. Erstens: von 15 Kameras liefern nur 3 ueberhaupt einen Score (L2/s 0.2307, G4/s 0.2672, G4/nNW 0.1991); bei den uebrigen ist n_gemeinsam 0 oder 1 — es gibt keinen Bildpunkt, an dem beide Karten Geometrie sehen. Zweitens: _schlechtestes wertet 'ungemessen' als schlechter als jede Zahl, und so faellt auch bei G4 (wo zwei Kameras gemessen haben) die None-Kamera durch und der gemeldete Score ist None.",
+    "und_die_schwelle_waere_ohnehin_unerreichbar": "Die Obergrenze von geom_iou liegt ueber alle 15 Kameras zwischen 0.0158 und 0.1688. Bei einem Score sqrt(|rho| * geom_iou) ist die Schwelle 0.65 damit arithmetisch nicht erreichbar: selbst der beste Fall deckelt bei sqrt(0.1688) = 0.411. Der Grund ist die Rahmung — der SOLL-Geometrieanteil liegt bei 1.6 bis 16.9 %, und das BAUWERK allein (Maskenanteil, 9 Kameras) bei 0.08 bis 7.8 %.",
+    "was_kuenftig_der_bezugspunkt_ist": "NICHT der Score — der ist auf dieser Naht durchgehend None und taugt als Vergleichszahl nicht. Vergleichbar sind: 'gerichtet' je Kamera ueber der Maske, der Anteil der Maske am Bild, und der Rauschboden derselben Maskenlage. Alle drei stehen oben, je Lauf und je Ansicht."
+   },
+   "paarurteil": {
+    "L1": {
+     "s": {
+      "bestanden": false,
+      "zustaendig": true
+     },
+     "sSE": {
+      "bestanden": false,
+      "zustaendig": true
+     },
+     "nNW": {
+      "bestanden": false,
+      "zustaendig": true
+     }
+    },
+    "L2": {
+     "s": {
+      "bestanden": null,
+      "zustaendig": null
+     },
+     "sSE": {
+      "bestanden": null,
+      "zustaendig": null
+     },
+     "nNW": {
+      "bestanden": null,
+      "zustaendig": null
+     }
+    },
+    "L3": {
+     "s": {
+      "bestanden": null,
+      "zustaendig": null
+     },
+     "sSE": {
+      "bestanden": null,
+      "zustaendig": null
+     },
+     "nNW": {
+      "bestanden": null,
+      "zustaendig": null
+     }
+    },
+    "G4": {
+     "s": {
+      "bestanden": false,
+      "zustaendig": true
+     },
+     "sSE": {
+      "bestanden": false,
+      "zustaendig": true
+     },
+     "nNW": {
+      "bestanden": true,
+      "zustaendig": true
+     }
+    },
+    "G5": {
+     "s": {
+      "bestanden": null,
+      "zustaendig": false
+     },
+     "sSE": {
+      "bestanden": null,
+      "zustaendig": false
+     },
+     "nNW": {
+      "bestanden": null,
+      "zustaendig": false
+     }
+    }
+   }
+  },
+  "B5_traegt_das_neue_zeug": {
+   "befund_json": {
+    "liegt_neben_render_result": true,
+    "lesbar": true,
+    "regel_3_probe": "Gesucht nach einem Anfuehrungszeichen gefolgt von einem Schraegstrich (dem Anfang eines absoluten Pfades in JSON): 0 Treffer in allen fuenf befund.json. Benutzername ebenfalls 0. Auch render-result.json: 0.",
+    "urteil": "Traegt. Alles drin, kein absoluter Pfad.",
+    "eine_luecke": "Der Auswahlbericht steht doppelt: einmal als <kuerzel>_seedauswahl.json neben den Bildern, einmal in befund.json unter kameras[].seedauswahl. Kein Fehler, aber die kleinere Datei wird jetzt von nichts mehr gebraucht."
+   },
+   "terminalausgabe": {
+    "woertlich_ein_voller_auftrag": [
+     "Karte: frei — Auslastung 0 %, 1143 MiB belegt.",
+     "{",
+     " \"gesehen\": 1,",
+     " \"verarbeitet\": 1,",
+     " \"fehler\": 0,",
+     " \"liegengelassen\": 0,",
+     " \"gestanden\": 0,",
+     " \"waisen\": []",
+     "}",
+     "  vis-1787900004-a10004: ? — 3 Bild(er) geschrieben.",
+     "    Wache: kein Stillstand (143 Blicke, laengste Pause 286 s)",
+     "    Geometrie: 0.1991 (schlechteste von 2 Kameras, beste 0.2672)",
+     "    Komposition, alle 3 Kameras: Bezugspunkt  (Geländestand mit --gelaende-z setzen, dann entfällt das)",
+     "    Seedvorsprung NICHT belegt (bestes Bild behalten, aber kein besserer Startwert): s, sSE, nNW",
+     "    ! Bildmasse 1600x1000 auf 1600x992 gebracht: Breite und Höhe müssen Vielfache von 16 sein, sonst weist die Pipeline den Lauf ab (Demolauf 3: 'Height mus",
+     "    ! 'faithful' (0.8) wird auf 'controlnet_staerke' abgebildet — die einzige ehrliche Zuordnung. Was dabei NICHT abgebildet wird: 'denoise' und die Schritt",
+     "    ! Keine Sonnenangabe. Unser Runner setzt eine feste Sonne von schräg vorn-oben; der Sonnenstand des Auftrags wird damit NICHT bedient."
+    ],
+    "und_der_lauf_mit_dem_neuen_stand_G5": [
+     "  vis-1787900005-a10005: ? — 3 Bild(er) geschrieben.",
+     "    Wache: kein Stillstand (137 Blicke, laengste Pause 273 s)",
+     "    Geometrie: UNGEMESSEN — keine Kamera lieferte einen Wert.",
+     "    Komposition, alle 3 Kameras: Bezugspunkt  (Geländestand mit --gelaende-z setzen, dann entfällt das)",
+     "    Seedvorsprung NICHT belegt (bestes Bild behalten, aber kein besserer Startwert): s, sSE, nNW",
+     "    Umrisstreue NICHT messbar (kein Himmel hinter dem Umriss, auf-vis-20260823-07): s, sSE, nNW  — nicht messbar heisst weder bestanden noch durchgefallen; eine Kamera mit freierem Hintergrund misst wieder",
+     "    SCHWELLE TRAEGT HIER NICHT: bei s liegt der gemessene Rauschboden ueber der Schwelle — das Tor liesse Rauschen durch. Andere Kameralage, nicht andere Schwelle (auf-vis-20260824-10)",
+     "    ! Bildmasse 1600x1000 auf 1600x992 gebracht: Breite und Höhe müssen Vielfache von 16 sein, sonst weist die Pipeline den Lauf ab (Demolauf 3: 'Height mus",
+     "    ! 'faithful' (0.8) wird auf 'controlnet_staerke' abgebildet — die einzige ehrliche Zuordnung. Was dabei NICHT abgebildet wird: 'denoise' und die Schritt",
+     "    ! Keine Sonnenangabe. Unser Runner setzt eine feste Sonne von schräg vorn-oben; der Sonnenstand des Auftrags wird damit NICHT bedient."
+    ],
+    "laenge": "10 bis 13 Zeilen je Auftrag. Ihr habt 'hoechstens ein paar Zeilen' erwartet — das ist es nicht ganz, aber nah.",
+    "was_bei_JEDEM_auftrag_und_JEDER_kamera_erscheint": {
+     "drei_ausrufezeichen_zeilen": "Bildmasse-Raster, faithful-Abbildung, fehlende Sonnenangabe — 5 von 5 Auftraegen, wortgleich. Sie sind Eigenschaften der VORGABEWERTE des fremden Vertrags, nicht dieses Auftrags: resolution [1600,1000] ist nie durch 16 teilbar, faithful ist immer gesetzt, sun ist optional und wird nie mitgeschickt. Das ist Rauschen. Sie sind zudem bei 150 Zeichen ABGESCHNITTEN, mitten im Wort ('Height mus'), also ohnehin nicht lesbar.",
+     "kompositionszeile": "'Komposition, alle 3 Kameras: Bezugspunkt' erscheint bei 5 von 5 Auftraegen und 15 von 15 Kameras. Sie traegt einen Handgriff (--gelaende-z) und ist damit besser als die drei oben — aber aus einer glb ist der Gelaendestand nicht zu erfahren, und ein Auftrag der Bruecke bringt ihn nie mit. Fuer diesen Weg ist auch sie Dauerinventar.",
+     "seedvorsprung": "'Seedvorsprung NICHT belegt' erschien bei 7 der 9 Kameras, die ueberhaupt auswaehlen konnten. Das ist KEIN Rauschen, sondern der richtige Satz: In 7 von 9 Faellen liegt der Abstand des besten zum zweitbesten Startwert unter dem Rauschboden. Belegt war er nur zweimal — bei L1/sSE und L1/nNW, und das sind dieselbe Ansicht (s. B2). Damit sagt die Zeile etwas ueber die Vorgabe selbst: Drei Startwerte liefern das beste BILD, aber fast nie einen besseren Startwert."
+    },
+    "zwei_fehler_in_der_ausgabe": {
+     "status_ist_immer_fragezeichen": "Die Zeile lautet '<job>: ? — ...'. tools/abholen.py liest e.get('status'), aber abholer.hole_einen liefert das Feld 'tat' (verarbeitet/fehler/liegengelassen/waise). Der Schluessel 'status' existiert dort nicht. Es steht damit in JEDER Zeile ein Fragezeichen statt des Ergebnisses — 5 von 5.",
+     "geometrie_zeile_verschweigt_die_ungemessenen": "'Geometrie: 0.1991 (schlechteste von 2 Kameras, beste 0.2672)' — gelaufen sind DREI Kameras. Dass die dritte nichts gemessen hat und dass genau sie das gemeldete Urteil auf None zieht, steht nirgends. Wer die Zeile liest, haelt 0.1991 fuer das Ergebnis; im Vertragsergebnis steht null."
+    },
+    "was_NICHT_von_abholen_py_kommt_aber_auf_dem_terminal_steht": "Je Bild eine Zeile 'There are modules in ZImageControlNetModel that should be kept in float32: []...' (9 je vollem Auftrag) plus die tqdm-Balken von diffusers (Ladebalken und 20 Schrittbalken je Bild). Das uebertoent die eigene Ausgabe bei weitem — die 13 gewollten Zeilen stehen zwischen ueber 200 fremden."
+   },
+   "die_fortschrittswache_ist_blind": {
+    "was": "Die Wache meldet in allen fuenf Laeufen als laengsten Stillstand exakt die GESAMTDAUER des Laufs: 302 s bei 302,6 s Laufzeit; 120 bei 119,8; 107 bei 109,2; 286 bei 286,4; 273 bei 273,3.",
+    "warum": "wache_bauen setzt sie auf auftrag['ausgabe'], also out/. Der Verarbeiter schreibt aber in out/<kuerzel>/. fortschritt.verzeichnis_marke zaehlt ausdruecklich NICHT rekursiv und zaehlt nur Dateien, keine Unterverzeichnisse — die Marke bleibt (0, 0), vom ersten bis zum letzten Blick.",
+    "folge": "'kein Stillstand' heisst hier nur 'der Lauf war kuerzer als 300 s'. Bei L1 (302,6 s) schlug sie mit schwere='error' an, obwohl der Lauf tadellos durchlief — ein Fehlalarm, und zwar der einzige, den sie ueberhaupt geben kann. Die Wache vom 21.08. unterscheidet auf dem Produktweg einen haengenden Lauf von einem gesunden NICHT.",
+    "abhilfe_die_ich_nicht_gemacht_habe": "Ein Zeichen, das sich wirklich bewegt — rekursiv zaehlen, oder die Wache auf out/<kuerzel> setzen. Beides ist Repo-Code und damit eure Entscheidung."
+   }
+  }
+ },
+ "die_antwort": {
+  "B3_in_einem_satz": "ROH sind die beiden fast gleich gross — Seedstreuung 0.3155, Kamerastreuung 0.2459 —, und die beiden Auswahleffekte heben sich damit bis auf +0.06 auf; MISST man die Kamerastreuung aber gegen den Rauschboden der jeweiligen Maskenlage, steigt sie auf 0.5614 und ist dann mehr als das Anderthalbfache der Seedstreuung: dann heben sie sich NICHT auf, das Kamera-Minimum kostet netto rund 0.21.",
+  "welche_der_beiden_zahlen_gilt": "Die zweite ist die ehrlichere, und der Grund ist gemessen: derselbe Rauschbogen ergibt je nach Ansicht rho von -0.8462 bis +0.7560. Die drei Ansichten werden also gegen drei verschiedene Nullpunkte gemessen, und die Nullpunkte liegen weiter auseinander (Spanne 1.60) als die Messwerte selbst. Eine rohe Kamerastreuung von 0.2459 ist unter diesen Umstaenden keine Aussage ueber die Ansichten, sondern ueber die Ansichten PLUS ihre verschobenen Nullpunkte.",
+  "was_der_bodenabzug_NICHT_aendert": "Die Rangfolge der Ansichten. In allen drei Laeufen ist 's' sowohl roh als auch nach Abzug die schlechteste — ich hatte den Wechsel erwartet und er tritt nicht ein. Nachgerechnet, statt behauptet: L1 s -0.2696/-1.0255, sSE +0.5050/+0.8547, nNW +0.5049/+0.8548; G4 s +0.1736/+0.0016, sSE +0.8197/+1.0885, nNW +0.8241/+1.2363; G5 s +0.0512/-0.6273, sSE +0.1487/+0.3703, nNW +0.2381/+1.0842 (behalten / behalten minus Boden).",
+  "was_er_sehr_wohl_aendert": "Die AUSSAGE. Roh sieht die frontale Ansicht nach einer etwas schwaecheren Kamera aus. Gegen den Boden ihrer eigenen Maskenlage gehalten liegt sie in zwei von drei Laeufen DARUNTER (-1.0255 und -0.6273) und im dritten genau darauf (+0.0016): das erzeugte Bild ordnet die Tiefe ueber dem Bauwerk nicht besser als weisses Rauschen an derselben Stelle. Die Ueber-Eck-Ansichten liegen 0.37 bis 1.24 darueber. Aus 'etwas schlechter' wird damit 'nicht besser als nichts' — und das ist ein anderer Satz. Nebenbei: die frontale Ansicht hat in allen drei Laeufen auch den hoechsten Boden (+0.7560 / +0.1720 / +0.6785). Ob das ein Zusammenhang ist oder drei Mal derselbe Zufall, ist bei n=3 NICHT GEMESSEN.",
+  "was_ich_zusaetzlich_gefunden_habe": [
+   "Die Drei-Seed-Vorgabe greift nur mit Bauwerksmaske, und die Maske haengt an einer Namensregel, die 'Gelaende_Hang' nicht erkennt. Auf zwei von drei Auftragsgeometrien wurde deshalb genau EIN Bild je Kamera gerendert statt drei.",
+   "Die Kostenrechnung, die drei Startwerte begruendet hat, ist an 512x512 gemessen und stimmt bei 1600x992 nicht mehr: Startwert 24,5 s, Ansicht 7,8 s Blender — umgekehrt zur Annahme.",
+   "durchgang() kann mit idle_window_only nie mehr als einen Auftrag abarbeiten; der Abholer sperrt sich mit seinen eigenen Gewichten aus.",
+   "Die Fortschrittswache sieht auf dem Produktweg nie ein Zeichen; ihr 'kein Stillstand' ist unverdient und ihr einziger moeglicher Alarm ein Fehlalarm.",
+   "Bei einem Quader sind sSE und nNW dasselbe Bild — byte-gleich. Eine von drei Ansichten ist dort umsonst gerendert.",
+   "Die Zeile im Terminal zeigt bei jedem Auftrag '?' statt des Ergebnisses: tools/abholen.py liest ein Feld, das es nicht gibt."
+  ]
+ },
+ "grenzen_dieser_messung": [
+  "Fuenf Laeufe, drei davon mit vollstaendiger Matrix. Neun Seedstreuungen und neun Kamerastreuungen — genug fuer eine Groessenordnung, nicht fuer eine Schwelle.",
+  "Alle Geometrien sind synthetisch und schlicht. Ein echtes Projekt mit Fassadengliederung kann sich anders verhalten.",
+  "Der Abzug des Rauschbodens ist eine Verschiebung um eine Konstante je Ansicht. Ob der Zusammenhang zwischen Boden und Messwert wirklich additiv ist, ist NICHT GEMESSEN — die Zahl 0.5614 ist damit eine Korrektur erster Ordnung und keine bereinigte Wahrheit.",
+  "Die Zerlegung 'Maske tauschen' gegen 'Sollkarte tauschen' ist an drei Szenen gemessen. Dass die Sollkarte dort staerker wiegt als die Maskenlage, gilt fuer diese drei und ist nicht verallgemeinert.",
+  "Das Repo wechselte waehrend der Laeufe den Stand. Dass keine der berichteten Zahlen davon beruehrt ist, ist geprueft (byte-gleiche Funktionsrumpfe, plus eine Nachmessung mit dem neuen Stand, die den alten auf die letzte Stelle trifft) — aber L1..G4 und G5 sind nicht unter demselben Commit gelaufen.",
+  "G4 und G5 sind von mir gebaute Geometrien. Sie beweisen, dass die Namensregel der Riegel war; sie sind KEIN Beleg dafuer, wie oft echte Auftraege der Bruecke daran scheitern.",
+  "Die GPU-Leistung ist stichprobenartig gemessen (drei Proben, hoechstens 355,2 W bei 400 W Deckel), nicht ueber die ganze Laufzeit protokolliert.",
+  "Die Belichtungspruefung lief nicht (kein --stil, das ist die Vorgabe). Ueber die Belichtung der Bilder sagt dieser Auftrag nichts."
+ ]
+}
