@@ -490,7 +490,8 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     * bei welchen Kameras das zweite Bein des Paartests **gar nichts messen kann**,
     * was der Betreiber bestellt hat und **nicht bekommt**,
     * dass der negative Prompt des Stils den Render nicht erreicht,
-    * ob die Schwelle an **dieser** Maskenlage überhaupt noch etwas trennt.
+    * ob die Schwelle an **dieser** Maskenlage überhaupt noch etwas trennt,
+    * ob der Lauf bei dieser **Rahmung** überhaupt bestehen konnte.
 
     Zeilen ohne Inhalt entfallen ganz. Eine Ausgabe, in der jede Zeile immer dasteht,
     liest sich nach dem dritten Mal wie eine leere.
@@ -549,6 +550,18 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     # Zuletzt und ganz oben im Rang, wenn es denn vorkommt: eine Bestellung, die nicht
     # ausgefuehrt wurde. Alles Uebrige auf dieser Liste sind Befunde ueber das ERGEBNIS —
     # dies ist einer ueber die EINGABE, und der Betreiber sieht ihn sonst nirgends.
+    # Die Rahmung. Diese Zeile steht bewusst weit oben: Sie sagt, ob der Lauf ueberhaupt
+    # bestehen KONNTE — und wenn nicht, sind alle folgenden Zahlen Auskunft ueber die
+    # Rahmung und nicht ueber das Bild.
+    zu_klein = [k.get("kamera") for k in kameras
+                if (k.get("torchance") or {}).get("lage") == "zu_klein"]
+    if zu_klein:
+        zeilen.append(f"RAHMUNG ZU WEIT: bei {', '.join(str(k) for k in zu_klein)} fuellt "
+                      f"das Bauwerk so wenig Bild, dass das Geometrie-Tor GEMESSEN nicht "
+                      f"bestehen kann. Das ist kein Urteil ueber das Bild. Abhilfe ist "
+                      f"eine naehere Kamera, keine gesenkte Schwelle (auf-13: bei 70 % "
+                      f"Bildbreite entstand Score 0.9599)")
+
     bs = urteil.get("bodenspanne") or {}
     if bs.get("einig") is False:
         zeilen.append(f"KAMERAWAHL UNEINIG: roh ist {bs.get('schlechteste_roh')!r} die "
@@ -976,6 +989,13 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                           # und nie gelesen. Seit `auf-vis-20260824-10` ist er die
                           # entscheidende Zahl: Der Schaetzer hat ein festes Ortsfeld,
                           # und dieselbe Maske verschoben ergibt rho von -0.62 bis +0.65.
+                          # Konnte dieser Lauf ueberhaupt bestehen? Aus der RAHMUNG
+                          # allein beantwortbar, und zwar VOR dem Renderlauf. Gemessen:
+                          # Bei anteil_maske 0.0193 ist geom_iou 0.000183, bei 0.3051
+                          # dagegen 0.9323 — Faktor 647 dazwischen (auf-35/auf-13).
+                          # Die Kamera rahmt die SZENE, gemessen wird das BAUWERK.
+                          torchance=geometrie_qa.torchance(
+                              ((urteil.get("rho_maske") or {}).get("anteil_maske"))),
                           bodenabstand=geometrie_qa.rho_gegen_gemessenen_boden(
                               ((urteil.get("rho_maske") or {}).get("gerichtet")),
                               maskenanker),

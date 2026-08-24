@@ -1410,6 +1410,39 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       **Ein Ergebnis ist ausdrücklich mitgedacht:** Zeigt A gegen B nichts, gehören die
       sieben Negativ-Prompts **gelöscht** statt angeschlossen. Dann wären sie sieben
       Stellen, an denen etwas Wirkungsloses gepflegt wird.
+- [x] **Die Schwelle 0,65 ist NICHT unerreichbar — die Rahmung war es.** Eine Behauptung,
+      die dieses Projekt eine Woche lang mitgeführt hat, ist widerlegt (HomeStation,
+      `auf-13`/`auf-35`, 24.08.2026).
+
+      Ein Quader 15,36 × 10,36 × 6,0 m auf einer Platte mit **zehnfacher** Grundfläche,
+      ein Startwert, eine Ansicht, vier Abstände:
+
+          anteil_maske 0.0193 → geom_iou 0.000183   (`cameras: auto`, 90,6 m)
+          anteil_maske 0.0565 → geom_iou 0.0        (55,0 m)
+          anteil_maske 0.1565 → geom_iou 0.00144    (35,1 m)
+          anteil_maske 0.3051 → geom_iou 0.9323     (26,6 m) — Score 0.9599, **bestanden**
+
+      **Der Sprung zwischen den letzten beiden ist Faktor 647.** Keine Rampe, sondern eine
+      Schwelle — in einer Grösse, die niemand als Schwelle angelegt hat.
+
+      **Die Ursache liegt in unserem Code, und sie ist benannt:** `kameras.py` rechnet aus
+      der Hüllbox der **ganzen Szene**. Steht das Bauwerk auf einer zehnfach grossen
+      Platte, rahmt die Kamera Platte plus Bauwerk — und die Maske deckt nur das Bauwerk.
+      *Die Kamera rahmt die Szene, gemessen wird das Bauwerk.* Ihre Zahlen zeigen es
+      monoton: je grösser der Bodenkörper, desto kleiner `anteil_maske`, bis hinunter auf
+      0,0008.
+
+      **Gebaut ist die Vorwarnung, nicht die neue Rahmung.** `geometrie_qa.torchance`
+      beantwortet aus der Kameraaufstellung allein — **vor** dem Renderlauf —, ob das Tor
+      überhaupt bestehen kann; `befund_kurz` meldet es als erste Zeile, weil danach alle
+      weiteren Zahlen Auskunft über die Rahmung sind und nicht über das Bild. Zwischen den
+      gemessenen Punkten steht ausdrücklich `None`: Bei Faktor 647 wäre eine Gerade
+      hindurch keine Schätzung, sondern eine Erfindung.
+
+      **Die Rahmung selbst ändere ich nicht** — das änderte jedes Bild, und die HomeStation
+      hat die Zuständigkeit selbst geklärt: Die Gegenmessung braucht Renderläufe und liegt
+      bei ihr, die Gestaltungsfrage danach beim Cloud-Worker (*soll ein formatfüllendes
+      Bauwerk den Kontext aus dem Bild drängen?*).
 - [ ] **`RAUSCHBODEN_UEBER_MASKE` ist keine Konstante — der Schätzer hat ein Ortsfeld.**
       Der schwerwiegendste Befund dieser Tage, und er sass **unter** dem Tor
       (`auf-vis-20260824-10`).

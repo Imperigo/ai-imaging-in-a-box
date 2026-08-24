@@ -2389,6 +2389,94 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
     return antwort
 
 
+#: Was an **gemessenen** Punkten aus dem Maskenanteil wird — die Rahmungsmessung.
+#:
+#: **Gemessen** (HomeStation, 24.08.2026): ein Quader 15,36 × 10,36 × 6,0 m auf einer
+#: Platte mit **zehnfacher** Grundfläche, ein Startwert, eine Ansicht, vier Abstände:
+#:
+#:     anteil_maske 0.0193  →  geom_iou 0.000183   (`cameras: auto`, 90,6 m)
+#:     anteil_maske 0.0565  →  geom_iou 0.0        (55,0 m)
+#:     anteil_maske 0.1565  →  geom_iou 0.00144    (35,1 m)
+#:     anteil_maske 0.3051  →  geom_iou 0.9323     (26,6 m) — Score 0.9599, **bestanden**
+#:
+#: **Der Sprung zwischen den letzten beiden ist Faktor 647.** Das ist keine Rampe, sondern
+#: eine Schwelle — und sie liegt in einer Grösse, die niemand als Schwelle angelegt hat.
+#:
+#: Damit ist die Behauptung widerlegt, :data:`SCHWELLE_GEOMETRIE` sei arithmetisch
+#: unerreichbar. Sie ist es **bei der Rahmung, die `cameras: auto` erzeugt** — und das ist
+#: etwas ganz anderes, weil es sich beheben lässt, ohne eine Schwelle zu senken.
+#:
+#: **Die Tabelle ist eine Stichprobe: eine Szene, ein Startwert, eine Ansicht.** Sie sagt,
+#: was dort herauskam, und nicht, was allgemein gilt. :func:`torchance` gibt darum
+#: ausserhalb der gemessenen Punkte ``None`` zurück, statt zu interpolieren.
+RAHMUNG_GEMESSEN = (
+    (0.0193, 0.000183),
+    (0.0565, 0.0),
+    (0.1565, 0.00144),
+    (0.3051, 0.9323),
+)
+
+#: Unterhalb dieses Maskenanteils ist **gemessen**, dass das Tor nicht besteht.
+#: Der grösste gemessene Punkt ohne Bestehen — nicht ein Wert dazwischen.
+ANTEIL_MASKE_GEMESSEN_ZU_KLEIN = 0.1565
+
+#: Ab diesem Maskenanteil ist **gemessen**, dass das Tor bestehen kann.
+ANTEIL_MASKE_GEMESSEN_REICHT = 0.3051
+
+
+def torchance(anteil_maske: float | None) -> dict:
+    """Kann das Geometrie-Tor bei diesem Maskenanteil überhaupt bestehen? — **vor** dem Lauf.
+
+    **Warum das eine eigene Frage ist.** Ein Renderlauf, der nicht bestehen *kann*, ist
+    keine schlechte Nachricht über das Bildmodell — er ist verlorene Rechenzeit und ein
+    irreführendes Urteil obendrein. Die Frage ist aus der Kameraaufstellung allein
+    beantwortbar, also **bevor** eine GPU anläuft.
+
+    Returns:
+        ``{lage, anteil_maske, gemessen_zu_klein, gemessen_reicht, begruendung}``.
+
+        ``lage`` ist ``"zu_klein"``, ``"reicht"`` oder ``None``. **``None`` heisst: liegt
+        zwischen den gemessenen Punkten oder darüber** — dort steht nichts Gemessenes, und
+        zu interpolieren hiesse, eine Kurve durch vier Punkte einer einzigen Szene zu
+        legen. Der Sprung dazwischen beträgt Faktor 647; eine Gerade dadurch wäre keine
+        Schätzung, sondern eine Erfindung.
+    """
+    antwort = {"lage": None, "anteil_maske": anteil_maske,
+               "gemessen_zu_klein": ANTEIL_MASKE_GEMESSEN_ZU_KLEIN,
+               "gemessen_reicht": ANTEIL_MASKE_GEMESSEN_REICHT, "begruendung": ""}
+    if anteil_maske is None:
+        antwort["begruendung"] = (
+            "Kein Maskenanteil bekannt — die Frage ist NICHT BEANTWORTET und nicht "
+            "verneint.")
+        return antwort
+
+    wert = float(anteil_maske)
+    if wert <= ANTEIL_MASKE_GEMESSEN_ZU_KLEIN:
+        antwort["lage"] = "zu_klein"
+        antwort["begruendung"] = (
+            f"Maskenanteil {wert:.4f} liegt bei oder unter {ANTEIL_MASKE_GEMESSEN_ZU_KLEIN}, "
+            f"wo GEMESSEN kein Tor besteht (geom_iou 0.00144 und darunter). Das ist kein "
+            f"Urteil über das Bild: Bei dieser Rahmung KANN es nicht bestehen. Abhilfe ist "
+            f"eine nähere Kamera, keine gesenkte Schwelle — bei 0.3051 entstand ein Score "
+            f"von 0.9599. Achtung, der Sprung dazwischen ist Faktor 647.")
+        return antwort
+    if wert >= ANTEIL_MASKE_GEMESSEN_REICHT:
+        antwort["lage"] = "reicht"
+        antwort["begruendung"] = (
+            f"Maskenanteil {wert:.4f} liegt bei oder über {ANTEIL_MASKE_GEMESSEN_REICHT}, "
+            f"wo GEMESSEN ein Tor bestanden hat (geom_iou 0.9323). Die Rahmung steht der "
+            f"Messung nicht im Weg; über das Bild sagt das nichts.")
+        return antwort
+
+    antwort["begruendung"] = (
+        f"Maskenanteil {wert:.4f} liegt ZWISCHEN den gemessenen Punkten "
+        f"({ANTEIL_MASKE_GEMESSEN_ZU_KLEIN} und {ANTEIL_MASKE_GEMESSEN_REICHT}). Dort "
+        f"steht nichts Gemessenes, und der Sprung dazwischen beträgt Faktor 647 — eine "
+        f"Gerade hindurchzulegen wäre keine Schätzung, sondern eine Erfindung. NICHT "
+        f"BEANTWORTET.")
+    return antwort
+
+
 def noetiges_iou(schwelle: float = SCHWELLE_GEOMETRIE,
                  spearman: float = SPEARMAN_BESTENFALLS) -> float:
     """Welches ``geom_iou`` eine Schwelle bei gegebener Rangkorrelation verlangt.
