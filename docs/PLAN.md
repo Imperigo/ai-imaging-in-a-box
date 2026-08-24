@@ -1377,6 +1377,39 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Referenzbilder zu uns, ohne durch ein öffentliches Repo zu reisen? Das steht als
       `auf-37` beim **Cloud-Worker** — ein Vertragsauftrag an die HomeStation liefe ins
       Leere.
+- [x] **Sieben von sieben Stilen führen einen negativen Prompt, und keiner erreicht je ein
+      Bild — gemeldet, nicht angeschlossen** (23.08.2026). Zwei Wirkungslosigkeiten
+      übereinander, und beide sehen wie Sorgfalt aus:
+
+      1. **Kein Weg.** Gesetzt wird er von `prompts.komponiere`, und `komponiere` liegt
+         nicht auf dem Weg, den ein Auftrag der Oberfläche nimmt. Dieselbe Fehlerart wie
+         beim Bauteilwächter, nur an einem anderen Feld.
+      2. **Auch mit Weg keine Wirkung.** `z-image-turbo` läuft mit `fuehrung = 0.0`;
+         unterhalb von 1.0 ist die klassifikatorfreie Führung abgeschaltet, und dann gibt
+         es nichts, wovon sich ein negativer Prompt abziehen liesse.
+
+      **Der Hinweis dazu stand seit Monaten im Code** (`render.py`) — und ist nie jemandem
+      begegnet, weil er nur feuert, *wenn* ein negativer Prompt gesetzt ist. Er war nie
+      gesetzt. Eine Warnung, die von der Bedingung abhängt, die sie melden soll, ist keine.
+
+      **Nicht angeschlossen, und das ist Absicht.** Ihn durchzureichen ergäbe den
+      schlechtesten Zustand von allen: Er stünde im Protokoll, sähe nach Wirkung aus und
+      änderte kein Bildpunkt. Gebaut ist stattdessen `render.negativ_wirksam` (drei
+      Zustände — wirkt, wirkt nicht, **unbekannt**, weil bei unbestimmter Führung die
+      Vorgabe von `diffusers` greift) und `abholer.negativ_lage`, das beide Gründe in
+      **einer** Zeile des Kurzbefunds nennt. Wer nur den ersten liest, baut den Weg und
+      wundert sich, dass sich nichts ändert.
+
+      **Ob er sich überhaupt lohnt, ist ungemessen** — und das ist die eigentliche Frage.
+      `auf-38` misst es auf einem Backbone mit Führung: A ohne / B mit negativem Prompt,
+      dazu **C** (gleiche Führung ohne Prompt, damit wir nicht die Führung für den Prompt
+      halten) und **D** (Prompt bei Führung 1.0, Gegenprobe zur Wirkungsgrenze), je drei
+      Startwerte — weil die Seed-Streuung von 0,2269 grösser ist als jeder gemessene
+      Parametereffekt.
+
+      **Ein Ergebnis ist ausdrücklich mitgedacht:** Zeigt A gegen B nichts, gehören die
+      sieben Negativ-Prompts **gelöscht** statt angeschlossen. Dann wären sie sieben
+      Stellen, an denen etwas Wirkungsloses gepflegt wird.
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und

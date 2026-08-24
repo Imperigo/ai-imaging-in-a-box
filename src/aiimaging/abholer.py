@@ -64,6 +64,7 @@ from . import bruecke, fortschritt, maske as maske_modul
 from . import kameras as _kameras_modul
 from . import komposition as _komposition
 from . import kosmo_szene as _kosmo_szene
+from . import prompts, render
 from . import varianten
 
 #: Ein Auftrag auf ``running``, dessen Laufzettel so lange nicht angefasst wurde, gilt als
@@ -314,6 +315,10 @@ def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> Non
         # Feld, und ein Bild sieht auch dann richtig aus, wenn die halbe Bestellung
         # unterwegs verlorenging.
         "stehengeblieben": [dict(e) for e in _kosmo_szene.stehengebliebene_felder(szene)],
+        # Der negative Prompt des Stils: keine Wirkung und kein Weg dorthin. Steht hier,
+        # weil er sonst nirgends stuende — `komponiere` liegt nicht auf diesem Weg.
+        "negativ_lage": negativ_lage(
+            ((ergebnis.get("stil_urteil") or {}).get("stil")), szene.get("backbone")),
         "warnungen_auftrag": list(antwort.get("warnungen") or ()),
         "wache": antwort.get("wache"),
     }
@@ -363,6 +368,55 @@ def _warnungsart(warnung: str) -> str:
     nicht, nur ausführlicher.
     """
     return str(warnung).split(" ", 1)[0].rstrip(":")
+
+
+def negativ_lage(stil: str | None, backbone_name: str | None) -> dict | None:
+    """Was mit dem negativen Prompt des Stils geschieht — **nämlich nichts.**
+
+    **Zwei Wirkungslosigkeiten übereinander, und beide sehen wie Sorgfalt aus.**
+
+    1. **Er hat keinen Weg.** Alle sieben Stile führen einen sorgfältig geschriebenen
+       negativen Prompt. Gesetzt wird er von :func:`aiimaging.prompts.komponiere` — und
+       ``komponiere`` liegt **nicht** auf dem Weg, den ein Auftrag der Oberfläche nimmt.
+       Der bringt seinen Prompt roh mit, und :class:`~aiimaging.render.RenderAuftrag`
+       bekommt hier nie ein ``negativ_prompt``. Dieselbe Fehlerart wie beim
+       Bauteilwächter, nur an einem anderen Feld.
+    2. **Und er hätte auch mit Weg keine Wirkung.** Unser Vorgabe-Backbone
+       ``z-image-turbo`` läuft mit ``fuehrung = 0.0``; unterhalb von
+       :data:`aiimaging.render.FUEHRUNG_MINDESTENS` ist die klassifikatorfreie Führung
+       abgeschaltet, und dann gibt es nichts, wovon sich ein negativer Prompt abziehen
+       liesse.
+
+    **Darum wird er hier gemeldet und nicht durchgereicht.** Ihn anzuschliessen ergäbe den
+    schlechtesten Zustand von allen: Er stünde im Protokoll, sähe nach Wirkung aus und
+    änderte kein Bildpunkt. Ob er auf einem Backbone mit Führung überhaupt etwas
+    verbessert, ist **ungemessen** — und eine ungemessene Änderung am Bild ist kein
+    Anschluss, sondern ein Eingriff.
+
+    Returns:
+        ``None``, wenn kein Stil gewählt ist oder der Stil keinen negativen Prompt führt —
+        dann gibt es nichts zu melden. Sonst ``{stil, negativ, erreicht_render,
+        waere_wirksam, grund}``.
+    """
+    if not stil:
+        return None
+    try:
+        s = prompts.hole_stil(stil)
+    except Exception:                       # noqa: BLE001 — unbekannter Stil ist anderswo ein Mangel
+        return None
+    if not getattr(s, "negativ", ""):
+        return None
+    wirkung = render.negativ_wirksam(backbone_name or render.VORGABE_BACKBONE)
+    return {
+        "stil": stil,
+        "negativ": s.negativ,
+        # Heute unveraenderlich False. Es steht trotzdem als Feld da und nicht als
+        # Kommentar: Wer den Weg spaeter baut, soll hier eine Zeile aendern und nicht
+        # einen Satz Prosa suchen muessen.
+        "erreicht_render": False,
+        "waere_wirksam": wirkung["wirksam"],
+        "grund": wirkung["grund"],
+    }
 
 
 def _kompositionszeilen(kameras: list) -> list:
@@ -434,7 +488,8 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     * wie viele Kameras die Kompositionsprüfung beanstandet,
     * ob der Vorsprung des gewählten Startwerts belegt ist,
     * bei welchen Kameras das zweite Bein des Paartests **gar nichts messen kann**,
-    * was der Betreiber bestellt hat und **nicht bekommt**.
+    * was der Betreiber bestellt hat und **nicht bekommt**,
+    * dass der negative Prompt des Stils den Render nicht erreicht.
 
     Zeilen ohne Inhalt entfallen ganz. Eine Ausgabe, in der jede Zeile immer dasteht,
     liest sich nach dem dritten Mal wie eine leere.
@@ -493,6 +548,21 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     # Zuletzt und ganz oben im Rang, wenn es denn vorkommt: eine Bestellung, die nicht
     # ausgefuehrt wurde. Alles Uebrige auf dieser Liste sind Befunde ueber das ERGEBNIS —
     # dies ist einer ueber die EINGABE, und der Betreiber sieht ihn sonst nirgends.
+    neg = befund.get("negativ_lage")
+    if neg and not neg.get("erreicht_render"):
+        # Drei Zustaende, nicht zwei. `None` heisst UNBEKANNT (die Fuehrung ist nicht
+        # bestimmt, es greift die Vorgabe von diffusers) — als "wirkungslos" zu melden
+        # waere genau die Ueberbehauptung, gegen die dieses Modul steht.
+        wirksam = neg.get("waere_wirksam")
+        if wirksam is False:
+            zusatz = "  — und auf diesem Backbone waere er ohnehin wirkungslos"
+        elif wirksam is None:
+            zusatz = "  (ob er auf diesem Backbone wirken wuerde, ist UNBEKANNT)"
+        else:
+            zusatz = "  — auf diesem Backbone wuerde er wirken, wenn er ankaeme"
+        zeilen.append(f"Negativ-Prompt des Stils {neg.get('stil')!r} erreicht den Render "
+                      f"NICHT{zusatz}")
+
     stehen = befund.get("stehengeblieben") or ()
     for eintrag in stehen:
         zeilen.append(f"BESTELLT UND NICHT AUSGEFUEHRT: {eintrag.get('feld')} "

@@ -2830,6 +2830,22 @@ fünf — Sonnenstand, Hochskalieren, Überspringen und die beiden Stilfelder. D
 gefährlichste ist der Sonnenstand: Er wird gelesen, verworfen, und das Bild kommt sauber
 belichtet und **falsch** zurück, ohne dass irgendetwas nach einem Fehler aussieht.*
 
+**Klassifikatorfreie Führung (und warum ein Negativ-Prompt daran hängt)** — Das Verfahren,
+mit dem ein Bildmodell dazu gebracht wird, dem Prompt *stärker* zu folgen: Es rechnet jeden
+Schritt **zweimal** — einmal mit dem Prompt, einmal ohne — und verstärkt dann die
+Differenz.
+*Daran hängt der **negative Prompt**, also die Liste dessen, was **nicht** im Bild sein
+soll. Er wirkt, indem er den «ohne Prompt»-Durchlauf ersetzt: Statt von nichts entfernt
+sich das Bild von dem, was man ausgeschlossen hat.*
+*Die Folge ist unangenehm konkret: Wird die Verstärkung ganz abgeschaltet — bei schnellen
+«Turbo»-Modellen ist das üblich, weil sie sonst ihre Geschwindigkeit verlieren —, gibt es
+keinen zweiten Durchlauf mehr, und ein negativer Prompt hat **nichts, worauf er wirken
+könnte**. Er wird trotzdem entgegengenommen, erscheint im Protokoll und ändert kein
+Bildpunkt.*
+*In diesem Projekt am 23.08.2026 nachgezählt: Alle sieben Bildstile führen einen negativen
+Prompt, das voreingestellte Modell schaltet die Verstärkung ab, und der Prompt hätte
+ohnehin keinen Weg dorthin gefunden. Beides zugleich, und beides sah nach Sorgfalt aus.*
+
 **Stehengebliebenes Feld** — Ein Feld, das eine Schnittstelle **entgegennimmt** und das
 danach nichts bewirkt. Es ist die Eingangsseite derselben Sache wie eine *tote Kante*: Die
 Bestellung wird angenommen, quittiert und nicht ausgeführt.
@@ -3179,6 +3195,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-23 | Ergaenzt: **Klassifikatorfreie Fuehrung (und warum ein Negativ-Prompt daran haengt)**. Anlass ist eine Zaehlung: Sieben von sieben Stilen fuehren einen negativen Prompt, keiner erreicht je ein Bild — und auf dem voreingestellten Modell koennte er ohnehin nichts bewirken. Der Begriff erklaert, warum das kein Fehler im Prompt ist, sondern eine Eigenschaft des Verfahrens |
 | 2026-08-23 | Ergaenzt: **Anwesenheitsmass gegen Guetemass**, und **Zufallsniveau** um den Fall des Rangmasses erweitert. Anlass ist ein Befund beim Nachbauen eines fremden Vorschlags: Sein Zufallsniveau ist 50 % und folgt aus der Konstruktion, die vorgeschlagene Schwelle lag bei 45 % — also darunter. Sie war an einer einzigen Ziehung abgelesen, und dieselbe Ziehung streut von 23 bis 77 % |
 | 2026-08-23 | Ergaenzt: **Stehengebliebenes Feld**, und **Vertragsfeld** um seine Eingangsseite erweitert. Anlass ist eine Zaehlung am eigenen Code: Fuenf Felder, die die Oberflaeche setzen darf, bewirken bei uns nichts — der Sonnenstand darunter, und der ist der gefaehrlichste, weil das Bild sauber belichtet und falsch zurueckkommt. Dieselbe Fehlerart wie die tote Kante, nur von der Eingangsseite |
 | 2026-08-23 | Ergaenzt: **Betragsmass gegen Rangmass**. Am selben Abend nachgereicht, weil die HomeStation die Frage nach dem groesseren Schaetzer als falsch gestellte entlarvt hat: Der Schaetzer ORDNET richtig und staucht nur den Betrag. Damit ist es keine Frage der Modellgroesse, sondern eine der Masskonstruktion — und der Preis des Rangmasses (es beantwortet Anwesenheit, nicht Guete) steht mit im Eintrag |

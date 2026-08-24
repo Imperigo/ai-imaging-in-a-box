@@ -1055,6 +1055,66 @@ def _baue_parameter(a: RenderAuftrag, eintrag) -> dict:
     }
 
 
+#: Unterhalb dieser Führung ist die klassifikatorfreie Führung abgeschaltet — und damit
+#: der negative Prompt wirkungslos. Keine Setzung dieses Projekts, sondern die Bauart des
+#: Verfahrens: Ohne zweiten, ungeführten Durchlauf gibt es nichts, wovon sich der negative
+#: Prompt abziehen liesse.
+FUEHRUNG_MINDESTENS = 1.0
+
+
+def negativ_wirksam(backbone_name: str, *, fuehrung: float | None = None) -> dict:
+    """Kann ein negativer Prompt auf diesem Backbone **überhaupt** etwas bewirken?
+
+    **Die Frage ist vor dem Rendern zu stellen und nicht danach.** Ein negativer Prompt,
+    der unterhalb von :data:`FUEHRUNG_MINDESTENS` mitgeschickt wird, erscheint im
+    Protokoll und ändert kein einziges Bildpunkt. Das ist die unangenehmste Sorte
+    Wirkungslosigkeit: Sie sieht wie Sorgfalt aus.
+
+    Und sie trifft **unseren Vorgabefall**: ``z-image-turbo`` ist ein destilliertes
+    Turbo-Modell und läuft mit ``fuehrung = 0.0``.
+
+    Args:
+        fuehrung: Ausdrücklich gesetzte Führung; ``None`` heisst «die des Backbones».
+
+    Returns:
+        ``{wirksam, fuehrung, mindestens, backbone, grund}``. ``wirksam`` ist ``None``,
+        wenn die Führung **unbestimmt** ist — dann greift die Vorgabe von ``diffusers``,
+        eine fremde Entscheidung, und was sie ist, wissen wir hier nicht. Nicht ``False``:
+        Das hiesse «wirkt nicht», und behauptet würde damit etwas Ungemessenes.
+    """
+    eintrag = backbone.BACKBONES.get(backbone_name)
+    wert = fuehrung
+    if wert is None and eintrag is not None:
+        wert = getattr(eintrag, "fuehrung", None)
+
+    antwort = {"wirksam": None, "fuehrung": wert, "mindestens": FUEHRUNG_MINDESTENS,
+               "backbone": backbone_name, "grund": ""}
+    if eintrag is None and fuehrung is None:
+        antwort["grund"] = (
+            f"Backbone {backbone_name!r} ist unbekannt, und es wurde keine Führung "
+            f"mitgegeben. Ob ein negativer Prompt wirkt, ist damit UNBEKANNT — nicht nein.")
+        return antwort
+    if wert is None:
+        antwort["grund"] = (
+            f"Für {backbone_name!r} ist keine Führung bestimmt; es greift die Vorgabe von "
+            f"diffusers. Ob ein negativer Prompt wirkt, hängt damit an einer fremden "
+            f"Entscheidung und ist hier UNBEKANNT — nicht nein.")
+        return antwort
+
+    antwort["wirksam"] = wert > FUEHRUNG_MINDESTENS
+    if antwort["wirksam"]:
+        antwort["grund"] = (
+            f"Führung {wert} liegt über {FUEHRUNG_MINDESTENS} — die klassifikatorfreie "
+            f"Führung ist aktiv, ein negativer Prompt kann wirken.")
+    else:
+        antwort["grund"] = (
+            f"Führung {wert} schaltet die klassifikatorfreie Führung ab. Ein negativer "
+            f"Prompt bliebe WIRKUNGSLOS: Er stünde im Protokoll und nicht im Bild. Wer "
+            f"ihn braucht, setzt die Führung über {FUEHRUNG_MINDESTENS}; wer das "
+            f"Turbo-Modell braucht, verzichtet auf ihn.")
+    return antwort
+
+
 def _hinweise(a: RenderAuftrag, parameter: dict, lizenz: dict) -> tuple[str, ...]:
     """Was auffällt, ohne ein Mangel zu sein.
 

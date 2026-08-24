@@ -1,0 +1,49 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260823-38",
+  "art": "render",
+  "beschreibung": "EINE FRAGE, DIE SEIT MONATEN OFFEN IST UND DIE NIEMAND GESTELLT HAT: Nuetzt der negative Prompt ueberhaupt etwas?\n\n=== WAS ICH HEUTE GEFUNDEN HABE ===\nAlle SIEBEN unserer Stile fuehren einen sorgfaeltig geschriebenen negativen Prompt ('dramatic lighting, lens flare, heavy vignette, oversaturated colours' und aehnlich). Zwei Befunde uebereinander, und beide sehen wie Sorgfalt aus:\n\n  1. ER HAT KEINEN WEG. Gesetzt wird er von prompts.komponiere — und komponiere liegt NICHT auf dem Weg, den ein Auftrag der Oberflaeche nimmt. Der bringt seinen Prompt roh mit, und RenderAuftrag bekommt dort nie ein negativ_prompt. Dieselbe Fehlerart wie beim Bauteilwaechter, nur an einem anderen Feld.\n\n  2. UND ER HAETTE AUCH MIT WEG KEINE WIRKUNG. Unser Vorgabe-Backbone z-image-turbo laeuft mit fuehrung = 0.0. Unterhalb von 1.0 ist die klassifikatorfreie Fuehrung abgeschaltet — dann gibt es nichts, wovon sich ein negativer Prompt abziehen liesse. Das stand seit Monaten als Hinweis im Code und ist nie jemandem begegnet, weil der Hinweis nur feuert, WENN ein negativer Prompt gesetzt ist. Er war nie gesetzt.\n\nICH HABE IHN NICHT ANGESCHLOSSEN, und das ist Absicht. Ihn jetzt durchzureichen ergaebe den schlechtesten Zustand von allen: Er stuende im Protokoll, saehe nach Wirkung aus und aenderte kein Bildpunkt. Gemeldet wird er stattdessen — im Befund und im Kurzbefund.\n\n=== DIE FRAGE AN DICH ===\nBevor wir den Weg bauen: LOHNT ER SICH? Das ist mit einer Messung zu beantworten und mit keiner Ueberlegung.\n\nG1 · NUETZT DER NEGATIVE PROMPT AUF EINEM BACKBONE MIT FUEHRUNG?\n  Nimm ein Backbone, das klassifikatorfreie Fuehrung kann (sdxl-juggernaut oder sd35-large — pruefe vorher die Lizenz und nenne sie). Dieselbe Szene, derselbe Prompt, dieselben drei Startwerte, viermal:\n\n    A · ohne negativen Prompt, fuehrung nach Vorgabe des Backbones\n    B · MIT dem negativen Prompt aus unserem Stil kosmo_standard, gleiche Fuehrung\n    C · ohne negativen Prompt, fuehrung ausdruecklich auf denselben Wert wie B\n    D · mit negativem Prompt, aber fuehrung 1.0 — die Gegenprobe zur Wirkungslosigkeit\n\n  Je Lauf zurueck: rho_maske, Kantenanteil, R2 (mit unserer Fassung), und die Belichtungswerte, weil der negative Prompt gerade auf die Belichtung zielt ('dramatic lighting', 'oversaturated colours').\n\n  WORAUF ES ANKOMMT: A gegen B ist die eigentliche Frage. C ist dazu da, dass wir nicht die FUEHRUNG fuer den negativen PROMPT halten — wer nur A gegen B vergleicht und dabei die Fuehrung mitaendert, misst zwei Dinge auf einmal. D muss sich von B praktisch nicht unterscheiden; tut es das doch, stimmt unsere Annahme ueber die Wirkungsgrenze nicht.\n\n  UND DIE STARTWERTE SIND NICHT VERHANDELBAR: Die Seed-Streuung liegt bei uns bei 0.2269 und ist groesser als jeder gemessene Parametereffekt (0.10-0.14). Ein Unterschied zwischen A und B, der kleiner ist als das, ist kein Unterschied. Drei Startwerte je Fall sind das Minimum; mehr ist besser, wenn es billig ist.\n\nG2 · NUR WENN G1 EINEN UNTERSCHIED ZEIGT: WELCHER TEIL WIRKT?\n  Unser kosmo_standard-Negativ hat sechs Bestandteile. Lass je einen weg und miss noch einmal. Wenn fuenf davon nichts tun, gehoeren sie geloescht — ein negativer Prompt, der aus Gewohnheit waechst, verduennt die Teile, die wirken.\n\n=== WAS DU NICHT TUN SOLLST ===\n- Nicht auf z-image-turbo messen. Dort ist die Antwort schon bekannt und lautet nein.\n- Kein flux1-dev oder flux2-dev (NonCommercial, Regel 1).\n- Den Weg nicht bauen — das ist unsere Seite, und erst nach deiner Antwort.\n\n=== RUECKGABE ===\nNach auftraege/ergebnisse/auf-20260823-38.json. Und die Einschaetzung dazu: Wuerdest du nach diesen Zahlen den negativen Prompt anschliessen? Wenn A und B sich nicht unterscheiden, ist die richtige Antwort, die sieben Negativ-Prompts ZU LOESCHEN statt einen Weg fuer sie zu bauen — dann waeren sie sieben Stellen, an denen etwas Wirkungsloses gepflegt wird.",
+  "erstellt": "2026-08-24T12:30:57Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "befund": {
+      "stile_mit_negativ": 7,
+      "stile_gesamt": 7,
+      "erreicht_render": false,
+      "vorgabe_backbone": "z-image-turbo",
+      "fuehrung_vorgabe": 0.0,
+      "wirkungsgrenze": 1.0
+    },
+    "faelle": {
+      "A": "ohne negativ, Fuehrung nach Vorgabe",
+      "B": "mit negativ (kosmo_standard), gleiche Fuehrung",
+      "C": "ohne negativ, Fuehrung ausdruecklich wie B — trennt Fuehrung von Prompt",
+      "D": "mit negativ, Fuehrung 1.0 — Gegenprobe zur Wirkungsgrenze"
+    },
+    "seeds_mindestens": 3,
+    "seed_streuung_zum_vergleich": 0.2269,
+    "groesster_parametereffekt_bisher": 0.14,
+    "nicht_messen": {
+      "z-image-turbo": "Antwort bekannt: nein (fuehrung 0.0)",
+      "flux1-dev/flux2-dev": "NonCommercial, Regel 1"
+    },
+    "moegliches_ergebnis": "Zeigt A gegen B nichts, gehoeren die sieben Negativ-Prompts geloescht statt angeschlossen"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
+  }
+}
