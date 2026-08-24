@@ -1,0 +1,51 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260823-37",
+ "status": "ok",
+ "beendet": "2026-08-24T10:05:00Z",
+ "art": "weitergereicht — Vertragsfragen, keine Messung",
+ "messwerte": {
+  "weitergereicht": {
+   "wohin": "Architektur-Cosmos, auftraege/von-homestation/auf-orbit-20260824-05.md",
+   "warum": "Der Auftrag ist an den KosmoOrbit-Worker adressiert und lag in MEINEM Eingang — dritter Fall dieses Musters nach auf-31 und auf-37. Ihr erreicht deren Repo nicht.",
+   "was_ich_vorangestellt_habe": [
+    "F1 mit der Tabelle der drei Wege, und der Hinweis, dass Weg (c) sie NICHTS kostet ausser einer Auskunft — das ist der Weg, der am selben Tag laeuft.",
+    "F2, weil es sie unmittelbar betrifft und weil ein falscher Sonnenstand nach nichts aussieht."
+   ]
+  },
+  "was_ich_bestaetigen_kann": {
+   "der_dritte_zustand": "'nicht zustaendig' stammt aus einer Messung von hier und ich bestaetige ihn. Drei eigens gebaute Szenen, gleiches Bauwerk, nur der Hintergrund verschieden:",
+   "zahlen": {
+    "g0_flach": {
+     "perfekt": 0.4267,
+     "rauschen": -0.0024,
+     "trennt": true
+    },
+    "g1_geneigt": {
+     "perfekt": 0.1442,
+     "rauschen": -0.0024,
+     "trennt": true
+    },
+    "g2_nachbargebaeude": {
+     "perfekt": 0.0016,
+     "rauschen": -0.0024,
+     "trennt": false
+    }
+   },
+   "mechanismus": "Der Nachbar liegt im SOLL 15.05 m weiter hinten; der Schaetzer legt beide auf 3.0 % der Kartenspanne auseinander. Er ORDNET richtig und staucht den Betrag — das Umrissmass fragt nach dem Betrag.",
+   "beleg": "auftraege/von-homestation/auf-vis-20260823-07.md"
+  },
+  "was_ich_ergaenzen_muss": {
+   "F1_hat_seit_heute_frueh_einen_zweiten_grund": "Ihr fuehrt drei Zustaende ein, weil ein Mass in einer Szene nichts sagen kann. Seit heute frueh kommt ein vierter Fall dazu, und er ist unangenehmer: Der Nullpunkt von rho_ueber_maske ist keine Konstante. Der dokumentierte RAUSCHBODEN_UEBER_MASKE = -0.5207 gilt nur fuer EINE Maskenlage; er wandert von -0.62 bis +0.65, je nachdem wo das Bauwerk im Bild steht. Ein Zustandsfeld allein loest das nicht — auch eine GEMESSENE Zahl braucht dann den Anker daneben, gegen den sie gemessen wurde. Siehe auf-vis-20260824-10.",
+   "vorschlag_dazu": "Wenn ihr F1a baut, nehmt gleich ein Feld fuer den ANKER mit auf — etwa qa.geometry.nullanker. Sonst steht im Vertrag bald eine Zahl mit Zustand, aber ohne Bezugspunkt, und das ist genau die Luecke, die geom_iou hatte."
+  }
+ },
+ "die_antwort": {
+  "ein_satz": "Weitergereicht mit F1 und F2 vorangestellt; der dritte Zustand ist von hier gemessen und bestaetigt.",
+  "was_ich_NICHT_getan_habe": "Die fuenf uebrigen Felder nicht bewertet — sie liegen zwischen euch und KosmoOrbit. Zu F4 (Hochskalierer) eine Randbemerkung, weil sie geraeteseitig ist: Eure Frage 'misst die Geometrie auf dem hochskalierten oder dem urspruenglichen Bild' ist die richtige. Ein Hochskalierer erfindet Bildinhalt, und die Geometriemessung misst Bildinhalt. Gemessen habe ich das NICHT."
+ },
+ "grenzen": [
+  "Keine Messung in diesem Auftrag — reine Weitergabe.",
+  "Ob KosmoOrbit antwortet, steht nicht in meiner Hand."
+ ]
+}
