@@ -733,6 +733,38 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         else:
             teile.append(f"Stil {qa['style']['style_score']} gegen "
                          f"{qa['style']['threshold']} ({qa['style']['method']})")
+    # ── Die dritte Antwort an der Vertragsgrenze ──────────────────────────────────────
+    #
+    # `passed` ist im fremden Vertrag ein Wahrheitswert und kann kein Drittes tragen. Ein
+    # `bestanden: None` unserer Seite wird darum unweigerlich zu `passed: false` — und
+    # sieht dort aus wie ein durchgefallenes Bild.
+    #
+    # Seit P-NULLGEOMETRIE nehmen die ZAHLENFELDER null an (KosmoOrbit, 24.08.2026). Die
+    # Zahlen stehen also schon richtig auf null. Was fehlte, war der Satz daneben: WARUM
+    # keine Zahl da steht. `reason` ist ein Vertragsfeld und ueberlebt
+    # `nur_vertragsfelder` — ein eigenes Statusfeld taete das nicht.
+    #
+    # Die drei Lagen verlangen verschiedene Handgriffe, und genau darum muessen sie
+    # unterscheidbar sein:
+    #   nicht gemessen  -> einen Lauf nachholen
+    #   nicht zustaendig -> andere Szene oder anderer Schaetzer
+    #   Rahmung zu weit  -> naeher heranfahren
+    lage = None
+    if qa.get("geometry") and geometrie_urteil.get("bestanden") is None:
+        if (geometrie_urteil.get("torchance") or {}).get("lage") == "zu_klein":
+            lage = ("NICHT BEURTEILBAR (Rahmung): Das Bauwerk fuellt so wenig Bild, dass "
+                    "das Tor GEMESSEN nicht bestehen kann. 'passed: false' heisst hier "
+                    "nicht durchgefallen — eine naehere Kamera behebt es, eine gesenkte "
+                    "Schwelle nicht.")
+        elif (geometrie_urteil.get("paarurteil") or {}).get("zustaendig") is False:
+            lage = ("NICHT ZUSTAENDIG: Hinter dem Umriss steht kein Himmel; das zweite "
+                    "Mass misst in dieser Szene nichts. 'passed: false' heisst hier nicht "
+                    "durchgefallen, sondern nicht beantwortbar.")
+        else:
+            lage = ("NICHT GEMESSEN: Es liegt keine Zahl vor. 'passed: false' heisst hier "
+                    "nicht durchgefallen, sondern ungeprueft — ein Lauf fehlt.")
+        teile.insert(0, lage)
+
     if not messbar:
         grund = ("Keine QA gelaufen — weder Geometrie noch Stil wurden gemessen. "
                  "'passed: false' heisst hier NICHT durchgefallen, sondern ungeprüft.")

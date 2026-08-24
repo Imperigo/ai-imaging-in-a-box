@@ -1592,6 +1592,36 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       **Offen und mitgefragt:** Reicht die Hüllbox? Eine Geometrie mit richtiger Hüllbox
       könnte innen völlig falsch sein — vertauschte Wände, fehlende Decke. Die Dreieckszahl
       fängt einen Teil davon; ob das genügt, ist ungemessen.
+- [x] **Die dritte Antwort kommt jetzt durch die Vertragsgrenze — zur Hälfte von ihnen,
+      zur Hälfte von uns.**
+
+      **Ihre Hälfte ist erledigt:** Seit **P-NULLGEOMETRIE** (KosmoOrbit, 24.08.2026)
+      nehmen die **Zahlenfelder** null an, `threshold` eingeschlossen, mit
+      Regressionstest. Damit stehen unsere Zahlen richtig auf `null` statt auf einer
+      erfundenen 0.0 — und `0.0` hiesse *gemessen, katastrophal*.
+
+      **Unsere Hälfte fehlte noch, und sie ist die unangenehmere.** `passed` ist im fremden
+      Vertrag ein **Wahrheitswert** und trägt kein Drittes: Ein `bestanden: None` unserer
+      Seite wird dort unweigerlich zu `passed: false` — und liest sich wie ein
+      durchgefallenes Bild.
+
+      Gebaut ist darum der **Satz daneben**, in `verdict.reason`, weil das ein
+      **Vertragsfeld** ist und `nur_vertragsfelder` überlebt; ein eigenes `status`-Feld
+      verschwände dort lautlos — genau die Falle, die im Lexikon unter *Vertragsfeld*
+      steht. Die drei Lagen verlangen verschiedene Handgriffe, und darum müssen sie
+      unterscheidbar sein:
+
+          NICHT GEMESSEN            → einen Lauf nachholen
+          NICHT ZUSTAENDIG          → andere Szene oder anderer Schätzer
+          NICHT BEURTEILBAR (Rahmung) → näher heranfahren, NICHT die Schwelle senken
+
+      **Und die Gegenprobe steht als Test:** Ein wirklich durchgefallenes Bild bekommt
+      **keinen** Erklärsatz. Wer jedem roten Abzeichen eine Begründung beigibt, hat kein
+      Tor mehr, sondern eine Ausredenmaschine.
+
+      `passed` bleibt in allen drei Lagen `false`. Es auf `true` zu setzen, weil «es ja
+      nicht durchgefallen ist», wäre die gefährliche Richtung: ein grünes Abzeichen ohne
+      Messung.
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und
