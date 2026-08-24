@@ -1450,6 +1450,36 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 
       Offen bleibt, ob die Konstante überhaupt noch irgendwo als Vergleich dient; sie steht
       jetzt nur noch als Bezugspunkt für ältere Messungen, mit ihrer Widerlegung daneben.
+- [ ] **Und daraus folgt etwas über zwei meiner eigenen Entscheidungen: Der Shift
+      verschiebt die Maske genau dort, wo das Ortsfeld am stärksten wirkt.**
+      Nachgerechnet für `MODUS_SHIFT` — die Vorgabe seit dem 23.08. — bei 1600 × 992:
+
+          Flachbau  8 m auf 40 m   Shift  2,0 mm →  89 px senkrecht
+          Wohnhaus 15 m auf 35 m   Shift  5,8 mm → 258 px
+          Wohnhaus 15 m auf 25 m   Shift  8,1 mm → 361 px
+          Grenze `MAX_SHIFT_MM` 12 mm          → 533 px
+
+      Das Ortsfeld ist in Schritten von **96 px** vermessen worden, und dort drehte der
+      Rauschboden um 1,28 **mit Vorzeichenwechsel**. Unsere Kameras liegen also ein bis
+      fünf Schritte auseinander — **zwei Kameras desselben Auftrags vergleichen Zahlen auf
+      verschiedenen Skalen.**
+
+      Das ist kein Argument gegen den Shift: Senkrechte, die stürzen, sind ein echter
+      Mangel, und die Alternative wäre nicht besser, sondern nur anders falsch. Es ist ein
+      Argument dafür, dass der **je Lauf gemessene** Boden keine Feinheit ist, sondern die
+      Voraussetzung dafür, dass die drei Ansichten überhaupt vergleichbar sind.
+
+      **Gebaut ist die zweite Rechnung daneben, nicht die neue Regel.** `_bodenspanne`
+      trifft dieselbe Auswahl noch einmal, aber nach ρ **minus dem gemessenen Boden dieser
+      Kamera**. Stimmen beide überein, hat die Sache keine Folgen; weichen sie ab, meldet
+      der Kurzbefund **KAMERAWAHL UNEINIG** und sagt dazu, dass weiterhin die rohe Zahl
+      gilt — «schlechteste bleibt» ist ein Owner-Entscheid vom 22.08. und wird nicht
+      nebenbei umgeschrieben. Ein Test prüft, dass die Nebenrechnung die Urteile nicht
+      anfasst; eine stille Regeländerung ist in diesem Projekt schon einmal vorgekommen.
+
+      **Offen und zu entscheiden:** Welche der beiden Zahlen das Urteil tragen soll. Erst
+      messen, wie oft sie überhaupt auseinandergehen — das kostet keinen eigenen Lauf, es
+      steht ab jetzt in jedem Befund.
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und

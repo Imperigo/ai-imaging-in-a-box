@@ -161,3 +161,118 @@ def test_die_schwelle_ist_dieselbe_wie_im_paartest():
     e = g.rho_gegen_gemessenen_boden(0.9, _anker(rauschen=-0.5))
 
     assert e["schwelle"] == PAAR_RHO_SCHWELLE
+
+
+# --------------------------------------------------------------------------------------
+# 3 · Zwei Kameras eines Auftrags vergleichen Zahlen auf verschiedenen Skalen
+# --------------------------------------------------------------------------------------
+#
+# Nachgerechnet fuer MODUS_SHIFT, den Vorgabemodus seit dem 23.08., bei 1600x992:
+#
+#     Flachbau  8 m auf 40 m   Shift 2.0 mm ->  89 px senkrecht
+#     Wohnhaus 15 m auf 35 m   Shift 5.8 mm -> 258 px
+#     Wohnhaus 15 m auf 25 m   Shift 8.1 mm -> 361 px
+#     Grenze MAX_SHIFT_MM 12 mm            -> 533 px
+#
+# Das Ortsfeld wurde in Schritten von 96 px vermessen, und dort drehte der Rauschboden um
+# 1.28 mit Vorzeichenwechsel. Unsere Kameras liegen also ein bis fuenf Schritte auseinander.
+
+def _kamera(name, rho, abstand):
+    return {"kamera": name, "rho_maske": {"gerichtet": rho},
+            "bodenabstand": {"abstand": abstand}}
+
+
+def test_die_zweite_rechnung_deckt_eine_gedrehte_reihenfolge_auf():
+    """**Der Fall, für den es diese Rechnung gibt.**
+
+    Kamera `s` hat das niedrigere ρ, steht aber an einer Maskenlage mit sehr tiefem Boden
+    — gemessen ist sie die bessere. Roh ausgewählt trüge das Urteil die falsche Kamera.
+    """
+    e = abholer._bodenspanne([_kamera("s", 0.60, 1.12), _kamera("sSE", 0.72, 0.20)])
+
+    assert e["einig"] is False
+    assert e["schlechteste_roh"] == "s"
+    assert e["schlechteste_nach_boden"] == "sSE"
+    assert "NICHT entschieden" in e["hinweis"], (
+        "die Rechnung entscheidet nichts — 'schlechteste bleibt' ist ein Owner-Entscheid")
+
+
+def test_gegenprobe_stimmen_beide_ueberein_hat_es_keine_folgen():
+    """Ohne sie zeigte der Test darüber nur, dass die Rechnung immer streitet."""
+    e = abholer._bodenspanne([_kamera("s", 0.60, 0.20), _kamera("sSE", 0.72, 1.12)])
+
+    assert e["einig"] is True
+    assert "keine Folgen" in e["hinweis"]
+
+
+def test_die_rechnung_fasst_die_uebergebenen_urteile_nicht_an():
+    """Die Rechnung steht **daneben** und nicht anstelle.
+
+    «Schlechteste bleibt» ist ein Owner-Entscheid vom 22.08. Eine Nebenrechnung, die
+    unbemerkt die Auswahl verschiebt, wäre eine stille Regeländerung — und die ist in
+    diesem Projekt schon einmal vorgekommen (drei Ansichten haben das Gate verschärft,
+    ohne dass es jemand entschieden hatte).
+    """
+    urteile = [_kamera("s", 0.60, 1.12), _kamera("sSE", 0.72, 0.20)]
+    vorher = [dict(u) for u in urteile]
+
+    e = abholer._bodenspanne(urteile)
+
+    assert e["schlechteste_nach_boden"] == "sSE"
+    assert urteile == vorher, "die Nebenrechnung hat die Urteile veraendert"
+
+
+def test_eine_einzelne_kamera_ergibt_keinen_vergleich():
+    assert abholer._bodenspanne([_kamera("s", 0.60, 1.12)]) is None
+    assert abholer._bodenspanne([]) is None
+
+
+def test_kameras_ohne_gemessenen_boden_zaehlen_nicht_mit():
+    """Nicht gemessen ist nicht null — auch hier nicht.
+
+    Eine Kamera ohne Nullprobe hat keinen Abstand, und sie mit 0 einzusetzen hiesse, ihr
+    einen Boden von genau ρ zuzuschreiben.
+    """
+    e = abholer._bodenspanne([_kamera("s", 0.60, 1.12), _kamera("sSE", 0.72, 0.20),
+                              {"kamera": "nNW", "rho_maske": {"gerichtet": 0.10},
+                               "bodenabstand": {"abstand": None}}])
+
+    assert e["n"] == 2
+    assert "nNW" not in (e["schlechteste_roh"], e["schlechteste_nach_boden"])
+
+
+def test_der_kurzbefund_meldet_die_uneinigkeit():
+    befund = {"kameras": [], "geometrie_urteil": {
+        "bodenspanne": {"einig": False, "schlechteste_roh": "s",
+                        "schlechteste_nach_boden": "sSE"}}}
+
+    treffer = [z for z in abholer.befund_kurz(befund) if "KAMERAWAHL UNEINIG" in z]
+
+    assert len(treffer) == 1
+    assert "NICHT" in treffer[0]
+
+
+def test_gegenprobe_bei_einigkeit_steht_die_zeile_nicht_da():
+    befund = {"kameras": [], "geometrie_urteil": {"bodenspanne": {"einig": True}}}
+
+    assert not [z for z in abholer.befund_kurz(befund) if "KAMERAWAHL UNEINIG" in z]
+
+
+def test_der_shift_verschiebt_die_maske_in_der_groessenordnung_des_ortsfelds():
+    """**Die Rechnung, aus der die ganze Sache folgt** — hier nachvollziehbar, nicht als
+    Zahl im Kommentar.
+
+    `MODUS_SHIFT` ist seit dem 23.08. die Vorgabe. Er verschiebt die Bildlage des Bauwerks
+    senkrecht, und senkrecht ist die Achse, auf der das Ortsfeld am stärksten wirkt.
+    """
+    from aiimaging import kameras as k
+
+    sensor_hoehe_mm = k.SENSOR_BREITE_MM * 992 / 1600
+    e = k.shift_aus_ziel((0.0, -35.0, k.AUGENHOEHE_M), (0.0, 0.0, 7.5),
+                         brennweite_mm=k.BRENNWEITE_MM)
+    px = e["shift_mm"] / sensor_hoehe_mm * 992
+
+    assert 96 < px, ("ein gewoehnliches Wohnhaus verschiebt die Maske um mehr als einen "
+                     "Schritt des vermessenen Ortsfelds")
+    assert k.MAX_SHIFT_MM / sensor_hoehe_mm * 992 > 5 * 96, (
+        "die zugelassene Obergrenze allein sind mehr als fuenf Schritte")

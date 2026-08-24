@@ -549,6 +549,14 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     # Zuletzt und ganz oben im Rang, wenn es denn vorkommt: eine Bestellung, die nicht
     # ausgefuehrt wurde. Alles Uebrige auf dieser Liste sind Befunde ueber das ERGEBNIS —
     # dies ist einer ueber die EINGABE, und der Betreiber sieht ihn sonst nirgends.
+    bs = urteil.get("bodenspanne") or {}
+    if bs.get("einig") is False:
+        zeilen.append(f"KAMERAWAHL UNEINIG: roh ist {bs.get('schlechteste_roh')!r} die "
+                      f"schwaechste, nach gemessenem Rauschboden "
+                      f"{bs.get('schlechteste_nach_boden')!r}. Gemeldet wird die rohe "
+                      f"(Owner-Entscheid 22.08.) — welche tragen soll, ist NICHT "
+                      f"entschieden (auf-vis-20260824-10)")
+
     # Der gemessene Rauschboden dieser Maskenlage. Zwei verschiedene Zeilen, weil es zwei
     # verschiedene Befunde sind: eine Schwelle, die hier nichts mehr trennt, ist etwas
     # anderes als ein knapper Abstand.
@@ -983,7 +991,12 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # Verschaerfung des Gates gewesen.
         schlechtestes = _schlechtestes(urteile)
         if schlechtestes is not None:
-            schlechtestes = dict(schlechtestes, kameraspanne=_kameraspanne(urteile))
+            schlechtestes = dict(schlechtestes, kameraspanne=_kameraspanne(urteile),
+                                 # Die zweite Rechnung daneben: dieselbe Auswahl, aber
+                                 # gegen den je Kamera GEMESSENEN Rauschboden. Sie
+                                 # entscheidet nichts und deckt auf, wenn das Ortsfeld
+                                 # des Schaetzers die Reihenfolge dreht.
+                                 bodenspanne=_bodenspanne(urteile))
 
         return {
             "bilder": bilder,
@@ -1302,6 +1315,67 @@ def _stil_urteil_aus_belichtung(urteile: list[dict], stil: str | None) -> dict |
             "verfahren": VERFAHREN_BELICHTUNG, "stil": stil,
             "einbetter_name": f"{VERFAHREN_BELICHTUNG}/{stil}",
             "grund": schlechtestes.get("zusammenfassung", "")}
+
+
+def _bodenspanne(urteile: list[dict]) -> dict | None:
+    """Vergleicht die Kameras **gegen ihren jeweils eigenen Rauschboden** — und meldet, wenn
+    das eine andere schwächste Kamera ergibt als der rohe Vergleich.
+
+    **Warum das seit dem 24.08.2026 nötig ist.** Der Schätzer hat ein festes Ortsfeld
+    (:data:`geometrie_qa.RAUSCHBODEN_UEBER_MASKE`): Wo die Maske im Bild liegt, bestimmt
+    den Nullpunkt von ρ — über 96 Bildpunkte hinweg gemessen von −0,62 bis +0,65, **mit
+    Vorzeichenwechsel**.
+
+    **Und unsere Kameras liegen genau in dieser Grössenordnung auseinander.** Nachgerechnet
+    für `MODUS_SHIFT`, den Vorgabemodus seit dem 23.08., bei 1600 × 992:
+
+        Flachbau  8 m auf 40 m   Shift  2,0 mm →  89 px senkrecht
+        Wohnhaus 15 m auf 35 m   Shift  5,8 mm → 258 px
+        Wohnhaus 15 m auf 25 m   Shift  8,1 mm → 361 px
+        Grenze MAX_SHIFT_MM 12 mm            → 533 px
+
+    Ein bis fünf Schritte des Rasters also, auf dem der Rauschboden um mehr als eine ganze
+    ρ-Einheit wandert. **Zwei Kameras desselben Auftrags vergleichen damit Zahlen auf
+    verschiedenen Skalen.**
+
+    **Die Regel wird trotzdem nicht geändert** — «schlechteste bleibt» ist ein
+    Owner-Entscheid vom 22.08. Was hier entsteht, ist die **zweite Rechnung daneben**:
+    dieselbe Auswahl, aber nach ρ **minus dem gemessenen Boden dieser Kamera**. Stimmen
+    beide überein, ist die Sache ohne Folgen; weichen sie ab, ist das ein Befund, den
+    jemand entscheiden muss — und kein stiller Skalenfehler.
+
+    Returns:
+        ``None``, wenn weniger als zwei Kameras einen Bodenabstand haben — dann gibt es
+        nichts zu vergleichen. Sonst ``{schlechteste_roh, schlechteste_nach_boden,
+        einig, n, hinweis}``.
+    """
+    mit_boden = [u for u in urteile or []
+                 if isinstance((u.get("bodenabstand") or {}).get("abstand"), (int, float))
+                 and isinstance(((u.get("rho_maske") or {}).get("gerichtet")), (int, float))]
+    if len(mit_boden) < 2:
+        return None
+
+    roh = min(mit_boden, key=lambda u: u["rho_maske"]["gerichtet"])
+    nach_boden = min(mit_boden, key=lambda u: u["bodenabstand"]["abstand"])
+    einig = roh.get("kamera") == nach_boden.get("kamera")
+
+    if einig:
+        hinweis = (f"Roh und nach Rauschboden dieselbe schwaechste Kamera "
+                   f"({roh.get('kamera')}) — die Ortsfeld-Frage hat hier keine Folgen.")
+    else:
+        hinweis = (
+            f"UNEINIG: Roh ist {roh.get('kamera')!r} die schwaechste Kamera "
+            f"(rho {roh['rho_maske']['gerichtet']:+.4f}), nach Abzug des GEMESSENEN "
+            f"Rauschbodens aber {nach_boden.get('kamera')!r} "
+            f"(Abstand {nach_boden['bodenabstand']['abstand']:+.4f} gegen "
+            f"{roh['bodenabstand']['abstand']:+.4f}). Der Unterschied ist das Ortsfeld des "
+            f"Schaetzers: Wo die Maske im Bild liegt, verschiebt den Nullpunkt von rho um "
+            f"mehr als eine ganze Einheit (auf-vis-20260824-10). Welche der beiden Zahlen "
+            f"das Urteil tragen soll, ist NICHT entschieden — gemeldet wird weiterhin die "
+            f"rohe, weil das der Owner-Entscheid vom 22.08. ist.")
+    return {"schlechteste_roh": roh.get("kamera"),
+            "schlechteste_nach_boden": nach_boden.get("kamera"),
+            "einig": einig, "n": len(mit_boden), "hinweis": hinweis}
 
 
 def _kameraspanne(urteile: list[dict]) -> dict:
