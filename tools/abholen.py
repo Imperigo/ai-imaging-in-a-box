@@ -111,6 +111,15 @@ def main() -> int:
                          "Kompositionspruefung meldet den unzuverlaessigen Bezugspunkt "
                          "bei jeder Kamera. Aus einer glb ist der Stand nicht zu "
                          "erfahren; wer ihn kennt, sagt ihn hier.")
+    ap.add_argument("--kein-gelaende", dest="kein_gelaende", action="store_true",
+                    help="Diese Szene enthaelt gar kein Gelaende. Ein reines "
+                         "Gebaeude-IFC bringt keines mit — der eine IfcSite darin traegt "
+                         "keine Geometrie und taucht in der Ausgabe nicht auf (an neun "
+                         "echten Dateien gemessen, BEFUND_2026-08-24_IFC-LESER.md). Ohne "
+                         "diesen Schalter meldet die Maske 'kein Gelaende erkannt', und "
+                         "das ist dann ein FEHLALARM: Es fehlt nichts, es war nie welches "
+                         "da. Mit dem Schalter erklaert der Aufrufer die Lage, statt dass "
+                         "die Maske raet.")
     ap.add_argument("--ohne-nullprobe", action="store_true",
                     help="Die Kontrollanker weglassen. Nicht empfohlen — siehe auf-21.")
     ap.add_argument("--stillstand-frist-s", type=float, default=fortschritt.FRIST_S,
@@ -144,6 +153,7 @@ def main() -> int:
     seeds = tuple(int(x) for x in a.seeds.split(",") if x.strip())
     verarbeite = abholer.verarbeiter(stil=a.stil, nullprobe=not a.ohne_nullprobe,
                                      gelaende_z=a.gelaende_z,
+                                     gelaende_erwartet=not a.kein_gelaende,
                                      seeds=seeds or abholer.VORGABE_SEEDS)
 
     def wache_bauen(auftrag):

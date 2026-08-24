@@ -1480,6 +1480,51 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       **Offen und zu entscheiden:** Welche der beiden Zahlen das Urteil tragen soll. Erst
       messen, wie oft sie überhaupt auseinandergehen — das kostet keinen eigenen Lauf, es
       steht ab jetzt in jedem Befund.
+- [x] **`auf-34` beantwortet: Der Rückfall auf Objektnamen ist der bessere Weg — und zwei
+      Folgen davon sind gebaut** (`BEFUND_2026-08-24_IFC-LESER.md`, neun echte IFC, beide
+      Leser, 9 von 9 ok).
+
+      **Die Annahme des Plans fällt.** Wir hatten vermutet, der Maskenbildung fehlten die
+      Materialien und sie müsse *notgedrungen* auf Objektnamen zurückfallen. Gemessen ist
+      es umgekehrt: Der Knotenname `{IFC-Klasse}_{GUID}` überlebt das glb (im **Graphen**,
+      nicht in den Geometrie-Schlüsseln) und kommt vollständig in Blender an — an 2 250
+      Bauteilen geprüft. Ein Materialname wie `Stahlbeton_C25` steht dagegen an Wänden
+      *und* Böden zugleich und trennt sie nicht; an 999 Bauteilen einer Datei fehlt er ganz.
+      **`IfcWall` kann, was `Stahlbeton_C25` nicht kann.**
+
+      **Damit fällt auch die Erwartung, das Zusammenführen der beiden Leser sei der
+      schnellste Gewinn.** Geschoss, Materialschichten und `LoadBearing` haben in der
+      Bildkette heute **keinen Abnehmer** — Geschoss bräuchte die Innenaufnahme, die es
+      nicht gibt. Ein Zusammenbau transportierte Daten, die am anderen Ende niemand liest.
+
+      **Zwei Folgen sind gebaut, beide an der Naht:**
+
+      * **`gelaende_erwartet` reicht jetzt durch** (`verarbeiter` → `_maske_bauen` →
+        `bauwerksmaske`, dazu `--kein-gelaende`). Ein reines Gebäude-IFC bringt gar kein
+        Gelände mit: Der eine `IfcSite` darin trägt keine Geometrie. Die Maske meldete
+        dann «kein Gelände erkannt» — ein **Fehlalarm**, es fehlt nichts. Der Schalter
+        existierte seit jeher in `maske.py` und war von aussen nicht erreichbar; **das ist
+        dieselbe Naht-Sache wie Brennweite und Geländestand, zum dritten Mal.** Die Vorgabe
+        bleibt die strenge Lesart — ein Schalter, der voreingestellt wegschaut, wäre
+        schlimmer als keiner.
+      * **Die Ein-Eintrag-Tabelle wird gemeldet.** `Bestand_Kontext.ifc` (56 MB) kommt als
+        **ein** namenloses Bauteil mit 502 002 Dreiecken an, bei beiden Lesern gleich. Die
+        Warnung ist bewusst genauer als «unbrauchbar»: Vom **Himmel** trennt so eine Maske
+        weiterhin richtig; was nicht geht, ist der Entwurf gegen seine **Nachbarschaft**.
+        Wer im Kontext rendert, misst sonst den ganzen Klumpen und hält das für eine
+        Aussage über sein Bauwerk. Die Maske wird darum **nicht** verworfen — das wäre
+        Überbehauptung in die andere Richtung.
+
+      **Und ein Befund über den fremden Leser, den unserer richtig macht:** Ein
+      `IfcTransportElement` — ein Aufzug — landet dort in «Unbekannt» und geht verloren,
+      wer stromabwärts filtert. Unser `ist_gebaute_substanz` behält ihn; das steht jetzt
+      als Test.
+
+      **Die echte Lücke bleibt und ist gemeinsam:** Belegt ist nur, dass die Konversion
+      **durchläuft** — nicht, ob die Geometrie **stimmt**. Kein Mass vergleicht die 27 000
+      Dreiecke mit dem, was in der IFC steht. Dazu kommt: **IFC2X3 aus ArchiCAD** — genau
+      die auffällige Gruppe vom 18.08. — ist auf der Maschine nicht mehr vorhanden und
+      bleibt ungemessen.
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und

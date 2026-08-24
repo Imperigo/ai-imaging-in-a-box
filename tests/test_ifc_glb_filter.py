@@ -90,3 +90,21 @@ def test_die_liste_bleibt_klein_und_begruendet():
 def test_kein_typ_steht_doppelt():
     liste = _runner().NICHT_GEBAUTE_SUBSTANZ
     assert len(set(liste)) == len(liste)
+
+
+def test_ein_aufzug_ist_gebaute_substanz_und_bleibt_drin():
+    """Ein Befund aus der Lesermessung vom 24.08.2026, an unserem Runner bestätigt.
+
+    In `zug_kosmodraw_gebaeude.ifc` steht ein `IfcTransportElement` — ein **Aufzug**. Der
+    fremde Klassifikator kennt den Typ nicht und legt ihn nach «Unbekannt»; wer
+    stromabwärts auf die Klasse filtert, verliert ihn. Unser Runner behält ihn, und das ist
+    richtig: Ein Aufzug ist gebaute Substanz und gehört ins Bild.
+
+    Aus derselben Datei ebenfalls belegt: 132 `IfcStairFlight`.
+    """
+    modul = _runner()
+
+    assert modul.ist_gebaute_substanz("IfcTransportElement") is True
+    assert modul.ist_gebaute_substanz("IfcStairFlight") is True
+    assert modul.ist_gebaute_substanz("IfcSpace") is False, (
+        "die Gegenprobe — sonst hiesse der Test nur, dass alles durchgeht")

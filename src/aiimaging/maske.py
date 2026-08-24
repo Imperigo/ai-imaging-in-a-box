@@ -453,6 +453,30 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
             f"Punkte aus der Maske genommen. Eine der beiden Angaben stimmt nicht."
         )
 
+    # ── Der Klumpen ───────────────────────────────────────────────────────────────────
+    #
+    # Gemessen an neun echten IFC (HomeStation, BEFUND_2026-08-24_IFC-LESER.md):
+    # `Bestand_Kontext.ifc`, 56 MB, kommt als EIN namenloses Bauteil mit 502 002
+    # Dreiecken an — bei beiden Lesern gleich. Keine Klassen, keine Geschosse, keine
+    # Materialien.
+    #
+    # Was das FUER DIE MASKE heisst, ist genauer als «unbrauchbar»: Vom Himmel lässt sich
+    # so ein Klumpen sehr wohl trennen — das tut diese Maske weiterhin richtig. Was NICHT
+    # geht, ist der Entwurf gegen seine Nachbarschaft. Wer im Kontext rendert, misst dann
+    # den ganzen Klumpen und hält das Ergebnis für eine Aussage über sein Bauwerk.
+    #
+    # Darum eine Warnung und KEIN None: Die Maske ist nicht falsch, sie beantwortet nur
+    # eine engere Frage, als der Aufrufer vermutlich meint.
+    if len(tabelle) == 1:
+        warnungen.append(
+            f"Die Materialtabelle hat genau EINEN Eintrag ({sorted(bauwerk_namen) or '—'}). "
+            f"Diese Maske trennt die Geometrie noch vom Himmel, aber NICHTS INNERHALB der "
+            f"Geometrie — weder Bauwerk von Gelände noch Entwurf von Nachbarschaft. "
+            f"Gemessen kommt das an echten Dateien vor: eine 56-MB-Kontext-IFC lieferte "
+            f"ein einziges namenloses Bauteil mit 502 002 Dreiecken "
+            f"(BEFUND_2026-08-24_IFC-LESER.md). Wird im Kontext gerendert, misst die "
+            f"Geometrie-QA den ganzen Klumpen und nicht den Entwurf.")
+
     if n_bauwerk == 0:
         warnungen.append(
             "Kein einziger Bildpunkt trägt Bauwerk. Entweder steht das Bauwerk ausserhalb "

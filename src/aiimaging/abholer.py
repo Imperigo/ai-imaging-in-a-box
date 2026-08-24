@@ -811,6 +811,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 kamera_modus: str = _kameras_modul.MODUS_SHIFT,
                 brennweite_mm: float | None = None,
                 gelaende_z: float | None = None,
+                gelaende_erwartet: bool = True,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
@@ -925,7 +926,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Silhouette exakt. Das PNG war die Eingabe des Modells, die EXR ist der
             # Massstab.
             soll, breite, hoch = soll_lesen(bericht)
-            maskenbefund = _maske_bauen(bericht)
+            maskenbefund = _maske_bauen(bericht, gelaende_erwartet=gelaende_erwartet)
 
             def _rendere_seed(seed, ziel_png):
                 erg = rendern(
@@ -1239,7 +1240,7 @@ def _auswahl_ablegen(aus, kuerzel, auswahl) -> None:
         pass
 
 
-def _maske_bauen(bericht: dict) -> dict:
+def _maske_bauen(bericht: dict, *, gelaende_erwartet: bool = True) -> dict:
     """Die Bauwerksmaske aus dem Material-ID-Pass — oder eine benannte Lücke.
 
     **Warum ein Fehlschlag hier den Lauf nicht aufhält.** Die Maske ist die *zusätzliche*
@@ -1250,6 +1251,16 @@ def _maske_bauen(bericht: dict) -> dict:
     **Warum er trotzdem nicht verschwindet.** Ohne diesen Befund sähe ein Lauf ohne Maske
     hinterher aus wie einer mit Maske und ohne Auffälligkeit. Genau diese Verwechslung
     ist der Grund, warum das ganze Modul die Dreiteilung durchhält.
+
+    **Und warum ``gelaende_erwartet`` hier durchgereicht wird.** Ein reines Gebäude-IFC
+    bringt **gar kein Gelände** mit — der eine ``IfcSite`` darin trägt keine Geometrie und
+    taucht in der Ausgabe nicht auf (HomeStation, `BEFUND_2026-08-24_IFC-LESER.md`, an
+    neun echten Dateien gemessen). Die Maske meldet dann «kein Gelände erkannt», und das
+    ist ein **Fehlalarm und kein Befund**: Es fehlt nichts, es war nie welches da.
+
+    Bis zum 24.08.2026 kam der Schalter hier nicht an — er stand in :mod:`aiimaging.maske`
+    und war von aussen nicht erreichbar. Dieselbe Naht-Sache wie bei Brennweite und
+    Geländestand: einstellbar im Modul, nicht im Betrieb.
 
     Returns:
         ``{maske, gemessen, grund, ...}``. ``maske`` ist ``None``, wenn sie sich nicht
@@ -1262,7 +1273,8 @@ def _maske_bauen(bericht: dict) -> dict:
             "damit keine Antwort auf die Frage, ob im Bild überhaupt ein Bauwerk steht. "
             "Der Lauf geht weiter; die Frage bleibt UNGEMESSEN.")}
     try:
-        gebaut = maske_modul.bauwerksmaske_aus_lauf(png, bericht)
+        gebaut = maske_modul.bauwerksmaske_aus_lauf(
+            png, bericht, gelaende_erwartet=gelaende_erwartet)
     except Exception as fehler:        # noqa: BLE001 — siehe Docstring
         return {"maske": None, "gemessen": False, "grund": (
             f"Bauwerksmaske nicht baubar: {type(fehler).__name__}: {fehler}")}
