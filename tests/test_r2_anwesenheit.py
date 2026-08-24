@@ -22,10 +22,12 @@ from __future__ import annotations
 import math
 import random
 import statistics
+from pathlib import Path
 
 import pytest
 
 from aiimaging import geometrie_qa as g
+from aiimaging import tiefenschaetzer as ts
 from aiimaging.geometrie_qa import (
     POLARITAET_DISPARITAET,
     POLARITAET_TIEFE,
@@ -277,61 +279,58 @@ def test_zwei_karten_verschiedener_groesse_ergeben_keine_zahl():
 
 
 # --------------------------------------------------------------------------------------
-# 5 · Die Naht: es läuft mit, und es entscheidet nichts
+# 5 · Und warum es trotzdem NICHT am Produktpfad hängt
 # --------------------------------------------------------------------------------------
 #
-# Ein Mass, das nie gerufen wird, ist von einem fehlenden nicht zu unterscheiden — dieses
-# Projekt hat die Fehlerart am 23.08.2026 dreimal an einem Tag gefunden. Und ein Mass, das
-# heimlich doch entscheidet, wäre der umgekehrte Fehler.
+# Am 23.08.2026 habe ich R2 als drittes Bein angeschlossen — mit dem Argument, der
+# Anschluss sei streng additiv: Kein Bild besteht durch R2, das ohne R2 durchgefallen
+# waere. Am 24.08. hat die HomeStation es an ERZEUGTEN Bildern gemessen, und es ist wieder
+# heraus. Diese Tests halten den Grund fest, damit ihn niemand noch einmal wegargumentiert.
 
-def test_das_dritte_bein_kommt_im_paarurteil_an():
+def test_das_rangmass_haengt_NICHT_mehr_am_maskenweg():
+    """**Die Bitte war ausdrücklich: nicht anzeigen, auch nicht als Beifahrer.**
+
+    Sieben von zehn erzeugten Bildern lagen über dem perfekten Blender-Bild derselben
+    Szene, sechs davon mit `|rho| < 0.32`. Eine Zahl, die bei schlechteren Bildern höher
+    ausfällt, ist schlimmer als keine — und «sie entscheidet ja nichts» genügt nicht,
+    solange ein Mensch sie liest.
+    """
+    quelle = (Path(ts.__file__)).read_text(encoding="utf-8")
+
+    assert "anteil_naeher_am_rand" not in quelle, (
+        "R2 haengt wieder am Maskenweg. Wer das will, misst zuerst an ERZEUGTEN Bildern "
+        "und prueft die Y-Verschiebung (auf-vis-20260824-09)")
+
+
+def test_das_paarurteil_kennt_das_rangmass_nicht():
     u = g.paarurteil({"gerichtet": 0.95}, {"gerichtet": 0.30},
-                     anteil_ergebnis={"anteil": 0.90},
-                     anwesenheit_ergebnis={"anteil": 0.67})
+                     anteil_ergebnis={"anteil": 0.90})
 
-    assert u["anwesenheit"] == pytest.approx(0.67)
+    assert "anwesenheit" not in u
 
 
-def test_das_dritte_bein_macht_aus_durchgefallen_kein_bestanden():
-    """**Der Entscheid vom 23.08.2026 in ausführbarer Form.**
-
-    R2 trägt dort, wo die anderen ausfallen — aber seine Schwelle liegt unter dem
-    Zufallsniveau und ist an keinem erzeugten Bild geeicht. Bis das gemessen ist, darf es
-    kein Bild bestehen lassen, das ohne es durchgefallen wäre. Streng additiv: Es fügt
-    Auskunft hinzu und nimmt keine weg.
+def test_der_grund_steht_in_der_funktion_und_nicht_nur_im_protokoll():
+    """Ein zurückgezogenes Mass, dessen Grund nur im Sitzungsprotokoll steht, wird wieder
+    angeschlossen. Der Beleg gehört dorthin, wo jemand hinsieht, der es anschliessen will.
     """
-    ohne = g.paarurteil({"gerichtet": 0.10}, {"gerichtet": 0.01},
-                        anteil_ergebnis={"anteil": 0.02})
-    mit = g.paarurteil({"gerichtet": 0.10}, {"gerichtet": 0.01},
-                       anteil_ergebnis={"anteil": 0.02},
-                       anwesenheit_ergebnis={"anteil": 0.99})
+    doc = g.anteil_naeher_am_rand.__doc__
 
-    assert ohne["bestanden"] is mit["bestanden"] is False
-    assert ohne["traeger"] == mit["traeger"]
+    assert "NICHT AM PRODUKTPFAD" in doc
+    assert "0,8405" in doc, "die Y-Verschiebung ist der entscheidende Beleg"
 
 
-def test_wo_das_zweite_bein_schweigt_sagt_das_dritte_wenigstens_etwas():
-    """Nicht zuständig bleibt nicht zuständig — aber nicht mehr sprachlos.
+def test_die_zurueckgezogene_schwelle_traegt_ihre_ruecknahme_bei_sich():
+    """Die Zahl bleibt stehen, damit Messungen und Protokolle sich auf sie beziehen können.
 
-    Genau die Stadtszene: Hinter dem Umriss steht ein Nachbargebäude, das Betragsmass
-    misst dort nichts, das Rangmass sehr wohl. Der Unterschied gehört in die Begründung
-    und **nicht** in `bestanden`.
+    Aber sie muss ihre Rücknahme mittragen, sonst liest sie jemand als Vorschlag. Ihr
+    Urheber hat sie selbst zurückgezogen — mit einem Grund, der schwerer wiegt als der
+    Anker: Eine Schwelle unter dem Zufallsniveau ist grundsätzlich unhaltbar.
     """
-    stumm = g.paarurteil({"gerichtet": 0.95}, {"gerichtet": 0.30},
-                         anteil_ergebnis={"anteil": 0.90},
-                         himmel_ergebnis={"anteil": 0.0, "traegt": False},
-                         anwesenheit_ergebnis={"anteil": 0.67})
+    quelle = Path(g.__file__).read_text(encoding="utf-8")
+    ende = quelle.index("R2_SCHWELLE = 0.45")
+    beginn = quelle.rindex("#: **ZURÜCKGEZOGEN", 0, ende)
+    block = quelle[beginn:ende]
 
-    assert stumm["bestanden"] is None
-    assert stumm["zustaendig"] is False
-    assert "Rang-Anteil" in stumm["begruendung"]
-    assert "0.6700" in stumm["begruendung"]
-
-
-def test_gegenprobe_ohne_drittes_bein_steht_der_satz_nicht_da():
-    """Sonst hiesse der Test darüber nur, dass der Satz immer erscheint."""
-    stumm = g.paarurteil({"gerichtet": 0.95}, {"gerichtet": 0.30},
-                         anteil_ergebnis={"anteil": 0.90},
-                         himmel_ergebnis={"anteil": 0.0, "traegt": False})
-
-    assert "Rang-Anteil" not in stumm["begruendung"]
+    assert "24.08.2026" in block
+    assert "0,4942" in block and "0,1440" in block, (
+        "beide Rauschanker gehoeren dazu — sie massen Verschiedenes, und beide hatten recht")

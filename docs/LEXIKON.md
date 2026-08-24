@@ -1641,6 +1641,26 @@ in denen das Gütemass gar nichts mehr misst.*
 *Daraus folgt: Man ersetzt das eine nicht durch das andere. Wer ein Gütemass durch ein
 Anwesenheitsmass ersetzt, gibt eine Frage auf, statt eine zu beantworten.*
 
+**Ortsfeld (eines Tiefenschätzers)** — Die Neigung eines Schätzers, einem Bildpunkt eine
+Tiefe **nach seiner Lage im Bild** zuzuweisen — unten nah, oben und in der Mitte fern —
+weitgehend unabhängig davon, was dort tatsächlich zu sehen ist.
+*Am 24.08.2026 zirkelfrei gemessen: Was unser Schätzer auf einem **leeren** Bild ausgibt,
+ist zu **95,75 %** eine Funktion des Ortes. Das Feld wurde aus fünfzehn Zufallsbildern
+gewonnen und an fünfzehn anderen geprüft — es sagt deren Ausgabe voraus, ohne sie gesehen
+zu haben.*
+*Die Folge trifft jedes Mass, das «innerhalb des Bauwerks» gegen «ausserhalb» vergleicht.
+Verschiebt man dieselbe Maske über dieselbe Zufallskarte, wandert der gemessene Nullwert
+von −0,62 auf +0,65 — er wechselt sogar das Vorzeichen. **Der Nullwert misst dann die Lage
+des Bauwerks im Bild und nicht die Bildqualität.** Wer einen einmal gemessenen Nullwert als
+Konstante weiterverwendet, vergleicht mit der Zahl einer anderen Bildlage.*
+*Das Feld hängt an der **Bildgrösse**, nicht am Seitenverhältnis: Zwei Felder derselben
+Grössenklasse stimmen zu 97 % überein, auch wenn eines breit und eines quadratisch ist;
+zwei verschiedene Grössen nur zu 85 %. Ein Feld einfach herauszurechnen trägt darum nur je
+Bildgrösse — und am oberen Bildrand am wenigsten, also genau dort, wo bei einer
+Aussenaufnahme der Himmel steht.*
+*Der Ausweg, den dieses Projekt gewählt hat: den Nullwert **je Lauf** an der tatsächlichen
+Lage messen. Er wurde ohnehin schon gemessen — nur nie gelesen.*
+
 **Zufallsniveau (eines Anteilsmasses)** — Der Wert, den ein Mass erreicht, wenn zwischen
 den beiden verglichenen Dingen **gar kein Zusammenhang** besteht. Bei den meisten Massen
 muss man ihn eigens messen (siehe *Rauschboden*); bei manchen folgt er aus der
@@ -3195,6 +3215,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-24 | Ergaenzt: **Ortsfeld (eines Tiefenschaetzers)**. Der schwerwiegendste Befund dieser Woche, und er sass unter dem Tor: Was unser Schaetzer auf einem leeren Bild ausgibt, ist zu 95,75 % eine Funktion des ORTES. Dieselbe Maske verschoben laesst den Nullwert von -0,62 auf +0,65 wandern, mit Vorzeichenwechsel — eine Konstante, die wir seit dem 21.08. als solche gefuehrt haben, ist eine Zahl fuer EINE Bildlage |
 | 2026-08-23 | Ergaenzt: **Klassifikatorfreie Fuehrung (und warum ein Negativ-Prompt daran haengt)**. Anlass ist eine Zaehlung: Sieben von sieben Stilen fuehren einen negativen Prompt, keiner erreicht je ein Bild — und auf dem voreingestellten Modell koennte er ohnehin nichts bewirken. Der Begriff erklaert, warum das kein Fehler im Prompt ist, sondern eine Eigenschaft des Verfahrens |
 | 2026-08-23 | Ergaenzt: **Anwesenheitsmass gegen Guetemass**, und **Zufallsniveau** um den Fall des Rangmasses erweitert. Anlass ist ein Befund beim Nachbauen eines fremden Vorschlags: Sein Zufallsniveau ist 50 % und folgt aus der Konstruktion, die vorgeschlagene Schwelle lag bei 45 % — also darunter. Sie war an einer einzigen Ziehung abgelesen, und dieselbe Ziehung streut von 23 bis 77 % |
 | 2026-08-23 | Ergaenzt: **Stehengebliebenes Feld**, und **Vertragsfeld** um seine Eingangsseite erweitert. Anlass ist eine Zaehlung am eigenen Code: Fuenf Felder, die die Oberflaeche setzen darf, bewirken bei uns nichts — der Sonnenstand darunter, und der ist der gefaehrlichste, weil das Bild sauber belichtet und falsch zurueckkommt. Dieselbe Fehlerart wie die tote Kante, nur von der Eingangsseite |

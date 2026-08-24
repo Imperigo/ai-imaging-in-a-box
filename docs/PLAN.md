@@ -1410,6 +1410,46 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       **Ein Ergebnis ist ausdrücklich mitgedacht:** Zeigt A gegen B nichts, gehören die
       sieben Negativ-Prompts **gelöscht** statt angeschlossen. Dann wären sie sieben
       Stellen, an denen etwas Wirkungsloses gepflegt wird.
+- [ ] **`RAUSCHBODEN_UEBER_MASKE` ist keine Konstante — der Schätzer hat ein Ortsfeld.**
+      Der schwerwiegendste Befund dieser Tage, und er sass **unter** dem Tor
+      (`auf-vis-20260824-10`).
+
+      Was `depth-anything-v2-small` auf einem leeren Bild ausgibt, ist zu **95,75 %** eine
+      Funktion des **Ortes** — zirkelfrei gemessen (Feld aus 15 Rauschbildern, geprüft an
+      15 anderen). Gestalt: Schüssel mit starkem Unterrand-Bonus. Dieselbe Rauschkarte,
+      dieselbe Maske, nur verschoben:
+
+          96 px hoch  ρ −0,6249 · Mitte ρ +0,5207 · 96 px runter ρ +0,6387 · rechts ρ +0,6513
+
+      **Ausschlag 1,28 mit Vorzeichenwechsel.** Zwei Kontrollen schliessen das Mass als
+      Ursache aus: Karte *und* Maske gemeinsam verschoben ändert nichts, und das mittlere
+      Feld allein sagt den Boden an allen 13 Lagen vorher (Korrelation 0,9993).
+
+      **Es trifft auch ihre eigene ρ-Eichung** — sie sagt es über ihre eigene Arbeit: In
+      allen drei Szenen lag die Maske an derselben Stelle. Die schöne Übereinstimmung von
+      0,4 % zeigt nicht, dass ρ szenenfest ist, sondern dass ρ **bei gleicher Maskenlage**
+      szenenfest ist. Über verschiedene Lagen schwankt der Abstand der Schwelle 0,80 zum
+      Boden zwischen **0,15 und 1,42**.
+
+      **Und das Feld hängt an der BILDGRÖSSE, nicht am Seitenverhältnis** (`25c0800`): Zwei
+      Felder derselben Grössenklasse stimmen zu 0,97 überein, auch bei 1,61:1 gegen
+      quadratisch; 512 gegen 992 nur zu 0,85. Ein bei 512 bestimmtes Feld erklärt an
+      Produktionsgrösse nur ~72 % — wer es dort abzieht, zieht **oben** am stärksten das
+      Falsche ab, also genau dort, wo bei einer Aussenaufnahme der Himmel steht. Damit
+      scheidet «Feld einmal bestimmen und herausrechnen» aus.
+
+      **Umgesetzt ist ihre Empfehlung (a).** Der Boden wird je Lauf an der tatsächlichen
+      Maskenlage *und* Bildgrösse gemessen — `_nullprobe` tat das ohnehin schon, **nur
+      gelesen hat ihn nie jemand.** Das war die fünfte tote Kante dieser Woche und die
+      teuerste, weil sie unter dem Tor sass. Neu:
+      `geometrie_qa.rho_gegen_gemessenen_boden` vergleicht ρ gegen den **höchsten**
+      Nullanker dieses Laufs, und `befund_kurz` meldet die Kameras, an deren Maskenlage
+      **die Schwelle nichts mehr trennt** — ein Befund über die Kameralage, nicht über das
+      Bild. Die Abhilfe steht in derselben Zeile: eine andere Lage, **keine** andere
+      Schwelle.
+
+      Offen bleibt, ob die Konstante überhaupt noch irgendwo als Vergleich dient; sie steht
+      jetzt nur noch als Bezugspunkt für ältere Messungen, mit ihrer Widerlegung daneben.
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und
@@ -1457,8 +1497,9 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       und unser zweites Bein benutzt den Betrag. Es ist also gar keine Frage der
       Modellgrösse gewesen, sondern eine der Masskonstruktion. Die Abstandsreihe, die ich
       dafür angesetzt hatte, ist damit hinfällig und aus `auf-36` wieder entfernt.
-- [x] **R2 (Rang statt Betrag) ist gebaut — als DRITTES Bein, und es entscheidet über
-      nichts.** Owner-Freigabe zur Entscheidung am 23.08.2026 («entscheide du»).** Je Grenzabschnitt Median innen
+- [x] **R2 ist gebaut, angeschlossen — und am 24.08.2026 wieder herausgenommen worden.**
+      Owner-Freigabe zur Entscheidung am 23.08. («entscheide du»); zurückgenommen auf
+      ausdrückliche Bitte der HomeStation und mit ihrem Beleg.** Je Grenzabschnitt Median innen
       gegen Median aussen im selben Fenster; gezählt wird der **Anteil der Abschnitte**,
       an denen das Bauwerk lokal näher liegt. Kein Betrag, keine Normierung.
 
@@ -1487,10 +1528,48 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       etwas wegzuwerfen — es sind zwei Fragen.
 
       *Warum es nichts entscheidet:* **streng additiv.** Kein Bild besteht durch R2, das
-      ohne R2 durchgefallen wäre; es fügt Auskunft hinzu und nimmt keine weg. Der Grund
-      dafür steht im nächsten Punkt und ist beim Bauen aufgefallen.
-- [ ] **Die vorgeschlagene R2-Schwelle liegt UNTER dem Zufallsniveau — gefunden beim
-      Nachbauen, gemeldet vor der nächsten Messung.**
+      ohne R2 durchgefallen wäre; es fügt Auskunft hinzu und nimmt keine weg.
+
+      **24.08.2026 — wieder heraus, und mein Argument war zu kurz.** Die HomeStation hat
+      R2 zum ersten Mal an **erzeugten** Bildern gemessen (`auf-vis-20260824-09`, zehn
+      Bilder, unsere Fassung): **Sieben von zehn liegen über dem perfekten Blender-Bild
+      derselben Szene**, sechs davon mit `|rho| < 0.32`. Das einzige Bild *unter* dem Band
+      hat das zweitbeste ρ.
+
+      Der Mechanismus lässt keine Rettung zu: Eine **in Y verschobene** Maske bekommt
+      denselben Wert — 0,8405 gegen 0,8405, identisch; in X sehr wohl. **R2 beantwortet am
+      Produktpfad nicht «steht da ein Bauwerk», sondern «liegt die Maske im unteren
+      Bilddrittel».** Ihre Bitte: *nicht anzeigen, auch nicht als Beifahrer. Eine Zahl, die
+      bei schlechteren Bildern höher ausfällt, ist schlimmer als keine.*
+
+      **«Streng additiv» genügt nicht, und das ist mein Fehler.** Kein Bild bestand durch
+      R2 — richtig. Übersehen habe ich, dass eine **angezeigte** Zahl den Menschen in die
+      Irre führt, der das Urteil liest, und der gehört zum Tor. Die Funktion bleibt mit
+      dem Befund im Docstring; ein Test hält fest, dass sie nicht mehr am Maskenweg hängt.
+
+      **Ihre Schwelle hat sie selbst zurückgezogen** — mit einem Grund, der schwerer wiegt
+      als der Anker: Eine Schwelle **unter** dem Zufallsniveau ist grundsätzlich unhaltbar,
+      und über 0,50 bliebe zwischen 52,6 und 82,5 % ein Fenster von zwei Punkten. Beide
+      Rauschanker waren übrigens richtig und massen Verschiedenes: Rauschen *als* Karte
+      Median 0,4942 (mein Objekt, 160/200 über 0,45), *Schätzer auf* Rauschbildern Median
+      0,1440 (ihr Objekt, 0/30). Die Frage, die ich von hier aus nicht trennen konnte, hat
+      sie am Gerät getrennt.
+- [ ] **DAS MUSTER hinter drei gefallenen Vorschlägen — und es ist eine Regel, keine
+      Anekdote.** `kantenanteil`, Variante F und R2 sind alle drei gefallen, **alle drei
+      an Blender-Renders geeicht und alle drei am Produktpfad gescheitert.** Die
+      HomeStation hat es selbst benannt: *«Eine Eichung, die nur perfekte Renders und
+      Nullanker kennt, sagt über erzeugte Bilder nichts.»*
+
+      Daraus folgt für jedes künftige Mass dieses Projekts: **Ein Vorschlag wird an
+      erzeugten Bildern gemessen, bevor er angeschlossen wird — nicht danach.** Renders
+      und Nullanker sind die *Vorprüfung*; sie können ein Mass widerlegen, aber nicht
+      tragen. Alle drei Male hat die Vorprüfung grün gezeigt.
+
+      Dass alle drei fielen, **bevor jemand darauf gebaut hat**, ist kein Zufall, sondern
+      das Verfahren — und das ist der Teil, der bleiben soll.
+- [x] **Die vorgeschlagene R2-Schwelle liegt UNTER dem Zufallsniveau — gefunden beim
+      Nachbauen, gemeldet vor der nächsten Messung, am 24.08. bestätigt und
+      zurückgezogen.**
 
       **Das Zufallsniveau von R2 ist 50 % und folgt aus der Konstruktion.** Hat die
       Schätzung gar keinen Bezug zur Maske, sind Median innen und Median aussen zwei

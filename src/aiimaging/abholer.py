@@ -489,7 +489,8 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     * ob der Vorsprung des gewählten Startwerts belegt ist,
     * bei welchen Kameras das zweite Bein des Paartests **gar nichts messen kann**,
     * was der Betreiber bestellt hat und **nicht bekommt**,
-    * dass der negative Prompt des Stils den Render nicht erreicht.
+    * dass der negative Prompt des Stils den Render nicht erreicht,
+    * ob die Schwelle an **dieser** Maskenlage überhaupt noch etwas trennt.
 
     Zeilen ohne Inhalt entfallen ganz. Eine Ausgabe, in der jede Zeile immer dasteht,
     liest sich nach dem dritten Mal wie eine leere.
@@ -548,6 +549,25 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     # Zuletzt und ganz oben im Rang, wenn es denn vorkommt: eine Bestellung, die nicht
     # ausgefuehrt wurde. Alles Uebrige auf dieser Liste sind Befunde ueber das ERGEBNIS —
     # dies ist einer ueber die EINGABE, und der Betreiber sieht ihn sonst nirgends.
+    # Der gemessene Rauschboden dieser Maskenlage. Zwei verschiedene Zeilen, weil es zwei
+    # verschiedene Befunde sind: eine Schwelle, die hier nichts mehr trennt, ist etwas
+    # anderes als ein knapper Abstand.
+    untragbar = [k.get("kamera") for k in kameras
+                 if (k.get("bodenabstand") or {}).get("schwelle_traegt") is False]
+    if untragbar:
+        zeilen.append(f"SCHWELLE TRAEGT HIER NICHT: bei {', '.join(str(k) for k in untragbar)} "
+                      f"liegt der gemessene Rauschboden ueber der Schwelle — das Tor liesse "
+                      f"Rauschen durch. Andere Kameralage, nicht andere Schwelle "
+                      f"(auf-vis-20260824-10)")
+
+    ohne_boden = [k.get("kamera") for k in kameras
+                  if (k.get("bodenabstand") or {}).get("boden") is None
+                  and k.get("bodenabstand") is not None]
+    if ohne_boden:
+        zeilen.append(f"Kein gemessener Rauschboden fuer die Maskenlage von "
+                      f"{', '.join(str(k) for k in ohne_boden)} — rho steht dort gegen "
+                      f"nichts. Die Konstante gilt fuer eine ANDERE Lage")
+
     neg = befund.get("negativ_lage")
     if neg and not neg.get("erreicht_render"):
         # Drei Zustaende, nicht zwei. `None` heisst UNBEKANNT (die Fuehrung ist nicht
@@ -943,6 +963,13 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                           komposition=_komposition.beurteile_bericht(
                               bericht.get("kamera")),
                           maskenbefund=maskenbefund, maskenanker=maskenanker,
+                          # Der Boden DIESER Maskenlage — er wurde seit jeher gemessen
+                          # und nie gelesen. Seit `auf-vis-20260824-10` ist er die
+                          # entscheidende Zahl: Der Schaetzer hat ein festes Ortsfeld,
+                          # und dieselbe Maske verschoben ergibt rho von -0.62 bis +0.65.
+                          bodenabstand=geometrie_qa.rho_gegen_gemessenen_boden(
+                              ((urteil.get("rho_maske") or {}).get("gerichtet")),
+                              maskenanker),
                           einordnung=geometrie_qa.einordnung(
                               urteil.get("score"), anker, schwelle=grenze),
                           belichtung=_belichtung_urteil(

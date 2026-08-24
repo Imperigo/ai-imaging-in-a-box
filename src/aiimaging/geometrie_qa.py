@@ -1027,6 +1027,38 @@ MIN_MASKENPUNKTE = MIN_GEMEINSAME_PUNKTE
 #: die Polarität. Ein anderer Schätzer oder eine andere Szenenart hat einen anderen Boden,
 #: und der ist dann **ungemessen**. Darum vergleicht dieses Modul nicht selbsttätig
 #: dagegen: Welcher Boden gilt, weiss der Aufrufer und nicht diese Datei.
+#:
+#: .. danger::
+#:    **Und diese Zahl ist gar keine Konstante — sie ist eine Zahl für EINE MASKENLAGE**
+#:    (HomeStation, `auf-vis-20260824-10`, 24.08.2026). Der Schätzer hat ein **festes
+#:    Ortsfeld**: Was `depth-anything-v2-small` auf einem leeren Bild ausgibt, ist zu
+#:    **95,75 %** eine Funktion des **Ortes** — zirkelfrei gemessen, Feld aus 15
+#:    Rauschbildern, geprüft an 15 anderen. Gestalt: eine Schüssel mit starkem
+#:    Unterrand-Bonus (Mitte z −1,25, unterer Rand z +2,4).
+#:
+#:    **Dieselbe Rauschkarte, dieselbe Maske, nur verschoben:**
+#:
+#:        96 px hoch    ρ −0,6249
+#:        Mitte         ρ +0,5207   ← genau der Betrag dieser Konstanten
+#:        96 px runter  ρ +0,6387
+#:        96 px rechts  ρ +0,6513
+#:
+#:    Ausschlag **1,28** auf einer Skala von −1 bis +1, **mit Vorzeichenwechsel**. Zwei
+#:    Kontrollen schliessen aus, dass es am Mass liegt: Karte *und* Maske gemeinsam
+#:    verschoben lässt beide Masse unverändert (das Mass ist ortsneutral), und das
+#:    mittlere Feld allein sagt den Boden an allen 13 Lagen vorher (Korrelation 0,9993).
+#:    **Der Rauschanker misst die Maskenlage.**
+#:
+#:    **Es trifft auch die ρ-Eichung vom 23.08.** — die HomeStation sagt es über ihre
+#:    eigene Arbeit: In allen drei Szenen lag die Maske an *derselben Stelle*. Die schöne
+#:    Übereinstimmung von 0,4 % zeigt nicht, dass ρ szenenfest ist, sondern dass ρ **bei
+#:    gleicher Maskenlage** szenenfest ist. Über verschiedene Lagen schwankt der Abstand
+#:    der Schwelle 0,80 zu diesem Boden zwischen **0,15 und 1,42**.
+#:
+#:    **Was daraus folgt:** Wer diese Zahl liest, liest eine Zahl für eine Lage. Der Boden
+#:    gehört **je Lauf an der tatsächlichen Maskenlage gemessen** — die Nullprobe wird
+#:    ohnehin gerendert, siehe :func:`einordnung` und `abholer._nullprobe`. Diese
+#:    Konstante bleibt als **Bezugspunkt** stehen, für Protokolle und ältere Messungen.
 RAUSCHBODEN_UEBER_MASKE = -0.5207
 
 
@@ -1725,6 +1757,24 @@ R2_MIN_ABSCHNITTE = 24
 #: keine Nullprobe je Szene und **hängt nicht an der Szene**.
 R2_ZUFALLSNIVEAU = 0.50
 
+#: **ZURÜCKGEZOGEN am 24.08.2026 — von ihrem Urheber.** Steht nur noch als Zahl da, auf
+#: die sich Messungen und Protokolle beziehen; sie entscheidet nichts und soll es nie.
+#:
+#: Die HomeStation hat sie selbst zurückgenommen, und mit einer Begründung, die schwerer
+#: wiegt als der Anker: *«Das Zufallsniveau folgt aus der Konstruktion und beträgt 0,50.
+#: Eine Schwelle darunter ist grundsätzlich unhaltbar. Eine Schwelle muss über 0,50
+#: liegen. Die echten Fälle lagen zwischen 52,6 und 82,5 % — das lässt ein Fenster von
+#: rund ZWEI Punkten, und das ist keine Schwelle, sondern eine Zufallsgrenze.»*
+#:
+#: **Beide Rauschanker waren richtig, sie massen Verschiedenes** — die Frage, die ich von
+#: hier aus nicht trennen konnte, hat sie am Gerät getrennt:
+#:
+#:     Rauschen ALS Tiefenkarte, 200 Ziehungen   Median 0,4942, über 0,45 in 160/200
+#:     SCHÄTZER auf Rauschbildern, 30 Ziehungen  Median 0,1440, über 0,45 in   0/30
+#:
+#: Ihre 33,7 % waren also keine glücklich gezogene Zahl, sondern eine **Eigenschaft des
+#: Schätzers** — und das ist der Faden, an dem :data:`RAUSCHBODEN_UEBER_MASKE` hängt.
+#:
 #: Vorgeschlagene Schwelle für den Anteil — **abgelesen, sie torschliesst NICHT, und sie
 #: liegt UNTER dem Zufallsniveau.**
 #:
@@ -1768,6 +1818,32 @@ def anteil_naeher_am_rand(ist: Sequence[float], maske: Sequence[bool], *, breite
                           fensterradius: int = R2_FENSTERRADIUS,
                           jeder_nte: int = R2_JEDER_NTE) -> dict:
     """An wieviel Prozent des Umrisses liegt das Bauwerk **lokal näher** als sein Hintergrund.
+
+    .. danger::
+       **NICHT AM PRODUKTPFAD VERWENDEN. Diese Funktion sortiert an erzeugten Bildern
+       verkehrt.** Sie ist am 23.08.2026 angeschlossen und am 24.08.2026 wieder
+       herausgenommen worden — auf Bitte der HomeStation und mit ihrem Beleg
+       (`auf-vis-20260824-09`), der erstmals an **erzeugten** Bildern gemessen wurde:
+
+       * **Sieben von zehn** erzeugten Bildern liegen **über** dem perfekten Blender-Bild
+         derselben Szene. Sechs davon haben ``|rho| < 0.32``, also praktisch keine
+         Tiefenordnung. Das einzige Bild *unter* dem Band hat das zweitbeste ρ.
+       * Der Mechanismus ist gemessen und lässt keine Rettung zu: Eine **in Y verschobene**
+         Maske bekommt denselben Wert — 0,8405 gegen 0,8405, identisch. In X sehr wohl.
+         Der Schätzer sieht im unteren Bildteil eine grosse Nah-Region; jede Maske dort
+         bekommt denselben Wert. **Das Mass beantwortet am Produktpfad nicht «steht da ein
+         Bauwerk», sondern «liegt die Maske im unteren Bilddrittel».**
+
+       *«Eine Zahl, die bei schlechteren Bildern höher ausfällt, ist schlimmer als keine.»*
+
+       **Und mein Gegenargument von gestern genügt nicht.** Ich hatte den Anschluss damit
+       gerechtfertigt, er sei streng additiv: Kein Bild besteht durch R2, das ohne R2
+       durchgefallen wäre. Das stimmt — und es übersieht, dass eine **angezeigte** Zahl den
+       Menschen in die Irre führt, der das Urteil liest. Der gehört zum Tor.
+
+       Die Funktion bleibt erhalten, weil der Befund an ihr hängt und weil die Tests
+       festhalten, *warum* sie nicht taugt. Wer sie wieder anschliessen will, misst zuerst
+       an erzeugten Bildern und prüft die Y-Verschiebung.
 
     Je Grenzabschnitt der Median der Maskenpunkte gegen den Median der Aussenpunkte
     **im selben Fenster**. Gezählt wird nur, *welcher* der beiden näher liegt — kein
@@ -2069,10 +2145,72 @@ PAAR_KANTE_SCHWELLE = 0.05
 PAAR_KANTENANTEIL_SCHWELLE = 0.20
 
 
+def rho_gegen_gemessenen_boden(rho_gerichtet: float | None, maskenanker: dict | None, *,
+                               schwelle: float = PAAR_RHO_SCHWELLE) -> dict:
+    """ρ gegen den Rauschboden **dieser** Maskenlage — nicht gegen die Konstante.
+
+    **Der Anlass ist ein Befund über unseren Schätzer** (HomeStation,
+    `auf-vis-20260824-10`, 24.08.2026): `depth-anything-v2-small` hat ein **festes
+    Ortsfeld**, das 95,75 % der Varianz seiner Ausgabe auf einem leeren Bild erklärt.
+    Dieselbe Rauschkarte mit derselben, nur **verschobenen** Maske ergibt ρ von −0,6249
+    bis +0,6513 — ein Ausschlag von 1,28 **mit Vorzeichenwechsel**.
+
+    :data:`RAUSCHBODEN_UEBER_MASKE` ist damit keine Konstante, sondern eine Zahl für eine
+    Lage. Der Abstand der Schwelle 0,80 zum Boden schwankt über verschiedene Lagen
+    zwischen **0,15 und 1,42**.
+
+    **Gemessen wird der Boden ohnehin schon** — die Nullprobe läuft je Kamera und je
+    Soll-Karte (`abholer._nullprobe`). Sie wurde nur nie **gelesen**. Diese Funktion liest
+    sie.
+
+    Args:
+        maskenanker: ``{art: {rho, kante}}`` aus der Nullprobe **dieses** Laufs.
+
+    Returns:
+        ``{abstand, boden, boden_art, schwelle, schwelle_traegt, warnungen}``.
+
+        * ``boden`` — der **höchste** Wert unter den Nullankern. Ein echtes Bild muss den
+          besten Nullanker schlagen und nicht den bequemsten; sonst schlüge man den
+          Boden, indem man sich den Anker aussucht.
+        * ``schwelle_traegt`` — ``False``, wenn der gemessene Boden die Schwelle
+          **erreicht oder übersteigt**. Dann lässt das Tor an dieser Maskenlage Rauschen
+          durch, und das ist ein Befund über den Lauf und nicht über das Bild.
+        * ``abstand`` — ``ρ − boden``. ``None``, wenn eines von beidem fehlt: **nicht
+          gemessen ist nicht null.**
+    """
+    antwort = {"abstand": None, "boden": None, "boden_art": None, "schwelle": schwelle,
+               "schwelle_traegt": None, "warnungen": []}
+    boeden = {art: e.get("rho") for art, e in (maskenanker or {}).items()
+              if isinstance(e, dict) and e.get("rho") is not None}
+    if not boeden:
+        antwort["warnungen"].append(
+            "Keine Nullprobe für diese Maskenlage. ρ steht damit gegen NICHTS — und die "
+            "Konstante RAUSCHBODEN_UEBER_MASKE hilft nicht, sie gilt für eine andere "
+            "Lage (Ausschlag 1,28 mit Vorzeichenwechsel, auf-vis-20260824-10).")
+        return antwort
+
+    art = max(boeden, key=lambda a: boeden[a])
+    boden = boeden[art]
+    antwort["boden"], antwort["boden_art"] = boden, art
+    antwort["schwelle_traegt"] = boden < schwelle
+    if not antwort["schwelle_traegt"]:
+        antwort["warnungen"].append(
+            f"Der gemessene Rauschboden dieser Maskenlage liegt bei {boden:+.4f} "
+            f"({art}) und damit NICHT unter der Schwelle {schwelle:.2f}. Das Tor lässt "
+            f"hier Rauschen durch — ein Befund über die Kameralage, nicht über das Bild. "
+            f"Abhilfe ist eine andere Maskenlage, keine andere Schwelle.")
+    if rho_gerichtet is None:
+        antwort["warnungen"].append(
+            "ρ liegt nicht vor; der Abstand zum Boden ist damit NICHT GEMESSEN, nicht 0.")
+        return antwort
+
+    antwort["abstand"] = rho_gerichtet - boden
+    return antwort
+
+
 def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
                anteil_ergebnis: dict | None = None,
                himmel_ergebnis: dict | None = None,
-               anwesenheit_ergebnis: dict | None = None,
                rho_schwelle: float = PAAR_RHO_SCHWELLE,
                kante_schwelle: float = PAAR_KANTE_SCHWELLE,
                anteil_schwelle: float = PAAR_KANTENANTEIL_SCHWELLE) -> dict:
@@ -2081,12 +2219,6 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
     Args:
         rho_ergebnis: Antwort von :func:`rho_ueber_maske`, oder ``None``.
         kante_ergebnis: Antwort von :func:`kante_an_maskengrenze`, oder ``None``.
-        anwesenheit_ergebnis: Antwort von :func:`anteil_naeher_am_rand`, oder ``None``.
-            **Sie wird mitgeführt und entscheidet nichts** — auch dort nicht, wo die
-            beiden anderen Beine schweigen. Warum, steht in :data:`R2_SCHWELLE`: Die
-            vorgeschlagene Schwelle liegt unter dem Zufallsniveau, und geeicht ist sie an
-            keinem erzeugten Bild. Ein Mass, das trägt, und eine Schwelle, die nicht
-            trägt, sind zwei Dinge.
         himmel_ergebnis: Antwort von :func:`himmel_hinter_umriss`, oder ``None``. Wird
             sie übergeben und trägt sie **nicht**, fällt das zweite Bein aus — nicht
             durch. Ohne sie urteilt der Paartest wie bisher; das ist die alte Form und
@@ -2181,12 +2313,11 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
     # Zuständigkeit VOR Messung: Steht hinter dem Umriss kein Himmel, misst das zweite
     # Bein nichts — dann darf hier kein Urteil stehen, auch kein schlechtes.
     himmel_anteil = (himmel_ergebnis or {}).get("anteil")
-    anwesenheit = (anwesenheit_ergebnis or {}).get("anteil")
     zustaendig = True if himmel_ergebnis is None else bool(himmel_ergebnis.get("traegt"))
     antwort = {
         "bestanden": None, "gemessen": False, "zustaendig": zustaendig,
         "rho": rho, "kante": kante,
-        "anteil": anteil, "himmel": himmel_anteil, "anwesenheit": anwesenheit,
+        "anteil": anteil, "himmel": himmel_anteil,
         "zweites_bein": zweites_bein, "traeger": None,
         "schwellen": {"rho": rho_schwelle, "kante": kante_schwelle,
                       "anteil": anteil_schwelle, "himmel": MIN_HIMMELANTEIL},
@@ -2205,15 +2336,6 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
             f"Ein Urteil aus dieser Zahl wäre in die gefährliche Richtung falsch. "
             f"ρ über der Maske ist davon nicht betroffen und {rho_wort}; es beantwortet "
             f"aber die Existenzfrage nicht und ersetzt das zweite Bein nicht.")
-        if anwesenheit is not None:
-            # Das Rangmass traegt hier — aber eine Zahl ohne tragende Schwelle ist eine
-            # Auskunft und kein Urteil. Sie steht darum in der Begruendung und nicht in
-            # `bestanden`.
-            antwort["begruendung"] += (
-                f" Der Rang-Anteil steht bei {anwesenheit:.4f} (Zufallsniveau "
-                f"{R2_ZUFALLSNIVEAU:.2f}) und misst hier sehr wohl — er entscheidet aber "
-                f"nichts, solange seine Schwelle unter dem Zufallsniveau liegt und an "
-                f"keinem erzeugten Bild geeicht ist (siehe R2_SCHWELLE).")
         return antwort
 
     zweiter_wert = anteil if zweites_bein == "anteil" else kante
