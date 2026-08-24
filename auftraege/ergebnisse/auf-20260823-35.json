@@ -409,16 +409,16 @@
     "urteil": "Die Seedstreuung liegt hier um rund 40 % HOEHER als die 0.2269. Und der Vergleich ist ohnehin schief: die 0.2269 stammen aus neun Laeufen, in denen drei Startwerte MIT drei ControlNet-Staerken gekreuzt wurden (POLARITAET_UND_STAERKE_2026-08-22.md, Tabelle 3x3). Sie enthalten also den Staerkeeffekt mit. Meine 0.3155 sind reine Seedstreuung bei fester Staerke 0.8 — der saubere Wert ist der GROESSERE. Wer 0.2269 als Seedstreuung zitiert, zitiert eine Mischung und zu niedrig."
    },
    "heben_sich_die_beiden_auswahleffekte_auf": {
-    "rechnung": "Bei drei Ziehungen liegt ein Minimum rechnerisch 0.846 Streuungen unter dem Mittel (geometrie_qa.minimum_abschlag(3)); ein Maximum ebenso darueber.",
+    "rechnung": "Bei drei Ziehungen liegt ein Minimum rechnerisch 0.8453 Streuungen unter dem Mittel; ein Maximum ebenso darueber. Der Wert ist am Code abgefragt (geometrie_qa.minimum_abschlag(3)) und nicht aus dem Auftrag abgeschrieben, der ihn als 0.845 fuehrt.",
     "roh": {
-     "hub_durch_seedwahl": 0.2669,
-     "abzug_durch_kameraminimum": -0.2081,
+     "hub_durch_seedwahl": 0.2667,
+     "abzug_durch_kameraminimum": -0.2079,
      "netto": 0.0588
     },
     "nach_abzug_des_rauschbodens": {
-     "hub_durch_seedwahl": 0.2669,
-     "abzug_durch_kameraminimum": -0.4749,
-     "netto": -0.2081
+     "hub_durch_seedwahl": 0.2667,
+     "abzug_durch_kameraminimum": -0.4746,
+     "netto": -0.2079
     }
    }
   },
