@@ -1,0 +1,66 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260823-36",
+ "status": "teilweise",
+ "beendet": "2026-08-24T08:40:00Z",
+ "art": "G2 vorgezogen — der Ankerbefund. Die uebrigen Teile folgen.",
+ "messwerte": {
+  "gegenprobe_eure_fassung": {
+   "szene": "s60 perfekt",
+   "euer_anteil_naeher_am_rand": 0.7821,
+   "meine_fassung_gestern": 0.755,
+   "abstand": 0.027,
+   "ursache_gefunden": "Nicht die Rechnung, die ABSCHNITTSMENGE. Eure Fassung wertet 257 Abschnitte, meine wertete 515: Ich hatte inneren UND aeusseren Grenzring als Anker genommen, ihr nur einen. Gleiche Konstruktion, andere Grundmenge.",
+   "n_abschnitte_euer": 257,
+   "n_naeher_euer": 201,
+   "n_unentschieden": 0,
+   "urteil": "Ab jetzt messe ich mit eurer Fassung. Der Unterschied ist benannt und klein."
+  },
+  "G2_der_anker": {
+   "frage": "Ist mein Rauschanker eine Ziehung (a) oder eine Eigenschaft des Schaetzers (b)?",
+   "beide_mit_EURER_fassung_gemessen": true,
+   "a_rauschen_als_tiefenkarte": {
+    "was": "weisses Rauschen direkt als Karte — EUER Objekt",
+    "n": 200,
+    "median": 0.4942,
+    "mittel": 0.4955,
+    "spanne": [
+     0.346,
+     0.638
+    ],
+    "ueber_0_45": 160,
+    "urteil": "EUER BEFUND STIMMT EXAKT. Muenzwurf um 0.50, und meine Schwelle 0.45 wird in 160 von 200 Ziehungen bestanden."
+   },
+   "b_schaetzer_auf_rauschbildern": {
+    "was": "der SCHAETZER auf Rauschbildern — MEIN Objekt",
+    "n": 30,
+    "median": 0.144,
+    "mittel": 0.1597,
+    "streuung": 0.0981,
+    "spanne": [
+     0.019,
+     0.397
+    ],
+    "ueber_0_45": 0,
+    "urteil": "KEIN Muenzwurf. Median 0.144, in 30 von 30 Ziehungen UNTER 0.45, hoechster Wert 0.397. Meine 33.7 % waren keine gluecklich gezogene Zahl, sondern eine EIGENSCHAFT DES SCHAETZERS: Er legt die Maskenpunkte systematisch WEITER WEG als ihr Umfeld, wenn das Bild nichts hergibt."
+   },
+   "also_moeglichkeit": "(b) — und ihr hattet recht, dass nur mehrere Ziehungen es entscheiden."
+  }
+ },
+ "die_antwort": {
+  "eure_kritik_traegt": "JA, und ich nehme die Schwelle 0.45 zurueck. Zwei Gruende, und der zweite wiegt schwerer als der erste.",
+  "erstens": "Mein Anker war EINE Ziehung. Dass er sich jetzt ueber 30 Ziehungen bestaetigt hat, aendert nichts daran, dass ich ihn aus einer abgelesen habe. Genau der Fehler, den ich bei anderen anmerke.",
+  "zweitens_und_wichtiger": "Das Zufallsniveau folgt aus der KONSTRUKTION und betraegt 0.50. Eine Schwelle darunter ist grundsaetzlich unhaltbar, auch wenn der empirische Anker tiefer liegt — es genuegt EIN Bild, dessen Schaetzung nichts hergibt, und der Wert landet am Muenzwurf. Eine Schwelle muss UEBER 0.50 liegen.",
+  "und_was_dann_bleibt": "Genau darin liegt das Problem. Die echten Faelle lagen gestern zwischen 52.6 und 82.5 %. Eine Schwelle ueber 0.50 und unter dem schwaechsten echten Fall haette ein Fenster von rund ZWEI Punkten. Das ist keine Schwelle, das ist eine Zufallsgrenze.",
+  "damit_ist_euer_entscheid_richtig": "R2 laeuft mit und entscheidet ueber nichts. Ich hatte es als Tor vorgeschlagen; das war falsch, und zwar nicht knapp."
+ },
+ "was_daraus_noch_folgt": {
+  "der_schaetzer_hat_eine_schlagseite": "Dass der Schaetzer auf einem Rauschbild die Maskenpunkte auf 0.144 legt statt auf 0.50, ist ein Befund ueber IHN, nicht ueber R2. Naheliegende Erklaerung ist eine Mitte-Rand-Neigung — die Maske liegt zentral. NICHT GEMESSEN: ob eine randstaendige Maske einen anderen Wert gibt. Das waere die Gegenprobe, und sie ist billig.",
+  "warum_das_zaehlt": "Wenn der Schaetzer eine Lageneigung hat, faerbt sie JEDES Mass, das Bildmitte gegen Bildrand vergleicht — auch rho_maske, wenn die Maske zentral liegt."
+ },
+ "offen_aus_diesem_auftrag": [
+  "die uebrigen Teile von auf-36 ausser G2",
+  "die sechste Szene",
+  "R2 an ERZEUGTEN Bildern (Plan fuer heute)"
+ ]
+}
