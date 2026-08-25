@@ -86,6 +86,7 @@ Reine Standardbibliothek. Kein ``bpy``, kein Oberflächen-Import (Regeln 2 und 4
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Sequence
 from fnmatch import fnmatchcase
 from pathlib import Path
@@ -130,6 +131,32 @@ GELAENDE_MUSTER: tuple[str, ...] = (
     "ifcsite*", "boden_platte", "gelaende", "gelände", "terrain",
 )
 
+#: Geländewörter, die auch als **Namensteil** zählen — auf Wortgrenzen, nicht als Teilstring.
+#:
+#: **Der Anlass ist eine Messung, und sie ist unangenehm** (HomeStation,
+#: `auf-vis-20260824-12`, 24.08.2026): :data:`GELAENDE_MUSTER` vergleicht mit ``fnmatch``
+#: gegen den **ganzen** Namen, und nur ``ifcsite*`` trägt einen Platzhalter. Ein Objekt
+#: namens ``Gelaende_Hang`` fällt damit durch die Regel — die Maske kommt als ``None``
+#: zurück, und `_bester_seed` rendert dann **einen** Startwert statt drei.
+#:
+#: **Auf zwei von drei Auftragsgeometrien griff die Drei-Seed-Vorgabe deshalb gar nicht.**
+#: Das ist eine Owner-Vorgabe vom 22.08., die seither still abgeschaltet war, und das
+#: Ergebnis hiess fälschlich «ein Startwert genügt».
+#:
+#: **Warum Wortgrenzen und nicht ``*gelaende*``.** Der Docstring von :func:`ist_gelaende`
+#: nennt den Grund gegen Teilstrings: ``"boden" in "Bodenplatte des 2. OG"`` wäre wahr,
+#: und ein Geschossboden ist kein Gelände. Ein blosses Präfix wäre ebenso falsch:
+#: ``gelände*`` trifft **``Geländer_Balkon``** — ein Geländer ist kein Gelände. Genau
+#: dieselbe Falle wie beim Bauteilwächter, wo «Betonung» bei «Beton» anschlug.
+#:
+#: Darum wird der Name in **Wörter zerlegt** (an ``_``, ``-``, Leerzeichen, Punkt) und
+#: jedes Wort einzeln verglichen. ``Gelaende_Hang`` trägt das Wort, ``Geländer_Balkon``
+#: nicht.
+GELAENDE_WOERTER: tuple[str, ...] = ("gelaende", "gelände", "terrain", "site")
+
+#: Woran ein Name in Wörter zerfällt.
+_WORTTRENNER = re.compile(r"[\s_\-.,;:/\\()\[\]]+")
+
 #: Kurzform des Rechenwegs, wandert in jedes Ergebnis. Dieselbe Bauart wie
 #: ``geometrie_qa.METHODE``: Wer später eine Zahl in der Arbeit wiederfindet, soll ihr
 #: ansehen, wie sie entstanden ist.
@@ -166,6 +193,19 @@ def ist_gelaende(name: str, muster: Sequence[str] = GELAENDE_MUSTER) -> bool:
     Geschossboden ist kein Gelände. Wer Teilstrings will, schreibt sie als ``"*boden*"``
     hin — dann steht die Entscheidung wenigstens da.
 
+    **Und seit dem 25.08.2026 zusätzlich auf Wortgrenzen** (:data:`GELAENDE_WOERTER`): Der
+    Name wird an ``_``, ``-``, Leerzeichen und Satzzeichen zerlegt, und jedes Wort einzeln
+    verglichen. ``Gelaende_Hang`` gilt damit als Gelände, ``Geländer_Balkon`` nicht.
+
+    Der Anlass steht bei :data:`GELAENDE_WOERTER` und ist gemessen: Ohne diese Ergänzung
+    fiel auf **zwei von drei** Auftragsgeometrien die Maske aus, und mit ihr still die
+    Drei-Startwert-Vorgabe des Owners.
+
+    **Die Wortliste ist nicht dasselbe wie die Musterliste** und darf es nicht werden: Ein
+    Muster beschreibt den ganzen Namen, ein Wort einen Teil davon. Wer ``boden`` hier
+    einträgt, macht jeden Geschossboden zu Gelände — das ist der Grund, warum genau vier
+    Wörter darin stehen und keines davon mehrdeutig ist.
+
     Args:
         name: Material- oder Objektname aus der Material-ID-Tabelle.
         muster: Die Regel. Leer heisst: keine Regel, nichts ist Gelände — das ist
@@ -176,7 +216,14 @@ def ist_gelaende(name: str, muster: Sequence[str] = GELAENDE_MUSTER) -> bool:
         ``True``, wenn mindestens ein Muster passt.
     """
     n = str(name).strip().lower()
-    return any(fnmatchcase(n, str(m).strip().lower()) for m in muster)
+    if any(fnmatchcase(n, str(m).strip().lower()) for m in muster):
+        return True
+    # Wortgrenzen, nicht Teilstrings — siehe GELAENDE_WOERTER. Nur wirksam, wenn der
+    # Aufrufer die Vorgabemuster benutzt: Wer eine EIGENE Regel uebergibt, bekommt genau
+    # sie und keine stille Zugabe.
+    if tuple(muster) != GELAENDE_MUSTER:
+        return False
+    return bool(set(_WORTTRENNER.split(n)) & set(GELAENDE_WOERTER))
 
 
 # ======================================================================================

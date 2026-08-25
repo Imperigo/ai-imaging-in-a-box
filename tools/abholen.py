@@ -88,6 +88,25 @@ def karte_auskunft() -> tuple[bool, str]:
     return True, f"Auslastung {last} %, {speicher} MiB belegt."
 
 
+#: Wieviel Text eine Zeile traegt, bevor gekuerzt wird.
+GEKUERZT_AUF = 160
+
+
+def _gekuerzt(text: str, laenge: int = GEKUERZT_AUF) -> str:
+    """Auf ganze Woerter kuerzen und das Kuerzen sichtbar machen.
+
+    **Der Anlass ist eine Beobachtung am eigenen Ausgabetext** (HomeStation,
+    `auf-vis-20260824-12`): Die Zeilen wurden bei 150 Zeichen **mitten im Wort**
+    abgeschnitten — bei 15 von 15 Kameras. Ein abgeschnittenes Wort sieht wie ein Fehler
+    aus, und das Fehlen des Restes sieht nach gar nichts aus.
+    """
+    text = str(text).strip()
+    if len(text) <= laenge:
+        return text
+    schnitt = text[:laenge].rsplit(" ", 1)[0].rstrip(" ,;:-")
+    return f"{schnitt} … (+{len(text) - len(schnitt)} Zeichen)"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--store", default="/tmp/kosmo-jobs",

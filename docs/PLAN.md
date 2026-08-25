@@ -1860,6 +1860,45 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       * **`fortschritt.beobachte`** — ein einzeiliger Bequemlichkeitsmantel, den niemand
         benutzt. Der harmloseste der vier; er bleibt, weil er nichts kostet und die
         Kurzform lesbar ist.
+- [x] **Die Geländeregel sperrte Szenen mit ausgeschriebenem Namen aus — und schaltete
+      damit eine Owner-Vorgabe still ab** (HomeStation, `auf-vis-20260824-12`).
+
+      `GELAENDE_MUSTER` vergleicht mit `fnmatch` gegen den **ganzen** Namen, und nur
+      `ifcsite*` trägt einen Platzhalter. `Gelaende_Hang` fiel durch die Regel, die Maske
+      kam als `None` zurück — und ohne Maske rendert `_bester_seed` **einen** Startwert
+      statt drei. **Auf zwei von drei Auftragsgeometrien griff die Drei-Seed-Vorgabe
+      deshalb gar nicht**, und das Ergebnis hiess fälschlich «ein Startwert genügt».
+      *Eine Vorgabe, die von einem Namen abhängt, ist keine Vorgabe.*
+
+      **Die Lösung ist nicht `*gelaende*`.** Ein blosses Präfix trifft `Geländer_Balkon` —
+      ein Geländer ist kein Gelände; dieselbe Falle wie beim Bauteilwächter, wo «Betonung»
+      bei «Beton» anschlug. Verglichen wird darum auf **Wortgrenzen**: Der Name zerfällt an
+      `_`, `-`, Leerzeichen und Satzzeichen, und jedes Wort wird einzeln geprüft.
+      `Bodenplatte des 2. OG` bleibt damit ebenfalls draussen.
+
+      **Die Grenze steht dabei und ist nicht verschwiegen:** `Baugelaende` — Kompositum
+      ohne Trenner — wird nicht erfasst. Das ist der Preis dafür, dass `Geländer` nicht
+      erfasst wird; beides zugleich ginge nur mit einem Wörterbuch. Und wer eine **eigene**
+      Musterliste übergibt, bekommt genau sie: keine stille Zugabe.
+- [x] **Die Statuszeile zeigte fünfmal `?`** — sie las `status`, das Feld heisst `tat`.
+      Dazu das Kürzen **mitten im Wort** bei 15 von 15 Kameras; jetzt auf ganze Wörter, mit
+      sichtbarer Angabe, wieviel fehlt. Ein abgeschnittenes Wort sieht wie ein Fehler aus,
+      und das Fehlen des Restes sieht nach gar nichts aus.
+- [ ] **Die Fortschrittswache ist blind** (`auf-vis-20260824-12`, offen). Sie wacht über
+      `out/`, geschrieben wird in `out/<kuerzel>/`, und sie zählt **nicht rekursiv**. In
+      fünf Läufen meldete sie als längsten Stillstand exakt die **Gesamtdauer**; ihren
+      einzigen Alarm gab sie bei einem Lauf von 302,6 s — ein Fehlalarm.
+- [ ] **Bei symmetrischer Baumasse ist eine der drei Ansichten umsonst**
+      (`auf-vis-20260824-12`, offen). Bei einem Quader sind `sSE` und `nNW`
+      **byte-identisch** — zweizählige Drehsymmetrie, die beiden Über-Eck-Ansichten fallen
+      zusammen. Ein Renderlauf für nichts, 24,5 s, und zwar gerade bei den einfachen
+      Demofällen. Ob sich das billig vorab erkennen lässt (Hüllbox plus Symmetrieprobe),
+      ist die Frage.
+- [ ] **Drei `!`-Zeilen sind bei fünf von fünf Aufträgen wortgleich**
+      (`auf-vis-20260824-12`, offen): Bildmasse-Raster, `faithful`, fehlende Sonne. Sie
+      beschreiben die **Vorgabewerte des fremden Vertrags**, nicht den Auftrag — also
+      Rauschen. **Die immer feuernde Warnung, zum zweiten Mal**, und diesmal im eigenen
+      Werkzeug.
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und
