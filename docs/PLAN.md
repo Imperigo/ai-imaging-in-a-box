@@ -1805,6 +1805,29 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
         23.08.; jetzt steht in `argparse` `None` und `_vorgabe()` holt den Wert aus der
         **Bibliothek**. Ein Vorgabewert an zwei Stellen ist an einer davon bereits falsch —
         nur merkt es niemand, solange beide gleich sind.
+- [x] **Drei veraltete Zahlen im Lexikon berichtigt — und ein Wächter dagegen gebaut**
+      (25.08.2026). Das Lexikon ist **Anhang der Vertiefungsarbeit**; eine Zahl darin, die
+      im Code längst anders steht, ist schlimmer als keine — sie sieht nachgeschlagen aus.
+
+      * **`SCHWELLE_STIL = 0,30`** — der Code steht seit dem **18.08.** auf 0,666. Die
+        Korrektur war damals gemacht und im Änderungsverzeichnis vermerkt; **der Eintrag
+        log weiter.** Eine Korrektur, die nur im Verzeichnis steht, erreicht niemanden, der
+        den Begriff nachschlägt. Dieselbe Zahl stand auch im Kopf von `stilstudie.py`.
+      * **9,46° Neigung** unter *stürzende Linien* — zweimal nachgemessen und zuletzt auf
+        −0,51° bis +5,98° korrigiert. Auch hier stand die Korrektur nur im Verzeichnis.
+      * **Deckungsgrad 0,55** — an diesem Tag auf 0,70 gehoben.
+
+      **Der Wächter** prüft, was das Lexikon **mit Namen und Wert** zitiert, gegen den
+      Code. Er ist bewusst eng: «rund die Hälfte» lässt sich nicht prüfen und soll es nicht.
+      Wer eine Zahl belastbar nennen will, nennt sie mit ihrem Bezeichner — dann greift die
+      Prüfung. Eine Mutationsprobe zeigt, dass er beisst.
+
+      **Und der Eintrag zur Schwelle trägt jetzt die Lehre statt nur der Zahl:** Die
+      Stil-Schwelle stand unter dem **Boden ihres eigenen Verfahrens** (0,526) und liess
+      damit jedes beliebige Bildpaar durch. *Eine Schwelle unterhalb des eigenen
+      Zufallsniveaus ist kein Tor, sondern eine Verzierung* — dieselbe Sache, die am 24.08.
+      bei der vorgeschlagenen R2-Schwelle auffiel. **Zweimal derselbe Fehler in acht Tagen,
+      in zwei verschiedenen Massen.**
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und

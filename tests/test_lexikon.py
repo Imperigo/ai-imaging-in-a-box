@@ -109,3 +109,64 @@ def test_die_tragenden_begriffe_dieses_projekts_stehen_darin(begriff):
     nur Fehlen. Was hier steht, ist das, dessen Verlust am meisten kosten würde.
     """
     assert f"**{begriff}**" in LEXIKON.read_text(encoding="utf-8")
+
+
+# ======================================================================================
+# Zitierte Konstanten — eine Zahl im Anhang veraltet mit dem Code
+# ======================================================================================
+#
+# Am 25.08.2026 gefunden: Das Lexikon fuehrte `SCHWELLE_STIL = 0,30`, der Code stand auf
+# 0.666 — seit dem 18.08. Die Korrektur war damals gemacht und im Aenderungsverzeichnis
+# vermerkt; der EINTRAG log weiter. Eine Korrektur, die nur im Verzeichnis steht, erreicht
+# niemanden, der den Begriff nachschlaegt.
+#
+# Am selben Tag noch zwei weitere: 9,46 Grad Neigung (zweimal nachgemessen, zuletzt -0,51
+# bis +5,98) und der Deckungsgrad 0,55 (an diesem Tag auf 0,70 gehoben).
+
+#: Wo eine im Lexikon zitierte Konstante im Code steht.
+KONSTANTEN_HERKUNFT = {
+    "SCHWELLE_GEOMETRIE": "aiimaging.geometrie_qa",
+    "SCHWELLE_STIL": "aiimaging.stil_qa",
+}
+
+_ZITAT = re.compile(r"`([A-Z][A-Z0-9_]{3,})\s*=\s*([0-9]+[.,][0-9]+)`")
+
+
+def test_jede_zitierte_konstante_stimmt_mit_dem_code_ueberein():
+    """**Der Wächter, der am 25.08.2026 gefehlt hat.**
+
+    Das Lexikon ist Anhang der Vertiefungsarbeit. Eine Zahl darin, die im Code längst
+    anders steht, ist schlimmer als keine: Sie sieht nachgeschlagen aus.
+
+    Geprüft wird nur, was das Lexikon **mit Namen und Wert** zitiert — «rund die Hälfte»
+    lässt sich nicht prüfen und soll es auch nicht. Wer eine Zahl belastbar nennen will,
+    nennt sie mit ihrem Bezeichner; dann greift diese Prüfung.
+    """
+    import importlib
+
+    text = LEXIKON.read_text(encoding="utf-8")
+    funde = _ZITAT.findall(text)
+    assert funde, "kein Zitat gefunden — dann prueft dieser Test nichts"
+
+    fehler = []
+    for name, zitat in funde:
+        modulname = KONSTANTEN_HERKUNFT.get(name)
+        if modulname is None:
+            fehler.append(f"{name}: im Lexikon mit Wert zitiert, aber KONSTANTEN_HERKUNFT "
+                          f"sagt nicht, wo sie im Code steht")
+            continue
+        echt = getattr(importlib.import_module(modulname), name)
+        if abs(float(zitat.replace(",", ".")) - float(echt)) > 1e-9:
+            fehler.append(f"{name}: Lexikon {zitat}, Code {echt} ({modulname})")
+
+    assert not fehler, "Veraltete Zahlen im Lexikon:\n  " + "\n  ".join(fehler)
+
+
+def test_die_herkunftstabelle_zeigt_auf_wirklich_vorhandene_konstanten():
+    """Eine Tabelle, die Konstanten behauptet, die es nicht gibt, macht die Lücke
+    unauffindbar — derselbe Befund wie beim Änderungsverzeichnis am 18.08.2026."""
+    import importlib
+
+    for name, modulname in KONSTANTEN_HERKUNFT.items():
+        modul = importlib.import_module(modulname)
+        assert hasattr(modul, name), f"{modulname} kennt {name} nicht (mehr)"

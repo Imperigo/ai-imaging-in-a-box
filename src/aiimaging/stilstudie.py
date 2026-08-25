@@ -2,11 +2,17 @@
 
 Warum es dieses Modul gibt
 --------------------------
-``stil_qa.SCHWELLE_STIL`` steht auf **0,30**. Die Zahl stammt aus wenigen Fällen des
-Vorläufers KosmoVis, gemessen mit **DINOv3**. Der Einbetter dieses Projekts ist seit dem
-18.08.2026 **SigLIP 2** (``einbetter.py``, Regel 1: DINOv3 ist gated und
-sonderlizenziert). Damit ist die Schwelle nicht nur ungeprüft, sondern an einem anderen
-Messgerät geeicht als dem, das sie später anwenden soll.
+**Stand beim Schreiben dieses Moduls: ``stil_qa.SCHWELLE_STIL = 0,30``. Heute steht sie
+auf 0,666** — seit dem 18.08.2026 **abgeleitet statt gesetzt** (Boden plus zwei
+Streuungen, gemessen an 4950 Paaren). Der Abschnitt unten beschreibt den **alten** Zustand
+und den Weg, der aus ihm herausführte; er bleibt lesenswert, weil er zeigt, woran eine
+gesetzte Schwelle scheitert.
+
+Die alte Zahl stammte aus wenigen Fällen des Vorläufers KosmoVis, gemessen mit
+**DINOv3**. Der Einbetter dieses Projekts ist seit dem 18.08.2026 **SigLIP 2**
+(``einbetter.py``, Regel 1: DINOv3 ist gated und sonderlizenziert). Damit war die
+Schwelle nicht nur ungeprüft, sondern an einem anderen Messgerät geeicht als dem,
+das sie anwenden sollte.
 
 Der Unterschied zur Geometriestudie — und warum er den Aufbau bestimmt
 ----------------------------------------------------------------------

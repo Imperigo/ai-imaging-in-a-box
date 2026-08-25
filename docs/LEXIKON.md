@@ -916,10 +916,19 @@ siehe *Kalibrierung*. *In diesem Projekt gibt es zwei: den Stil-Score
 (`src/aiimaging/stil_qa.py`) und den Geometrie-Score (`src/aiimaging/geometrie_qa.py`).*
 
 **Schwelle (Grenzwert)** — Die Zahl, ab der eine Metrik als bestanden gilt. Sie ist nicht
-Teil der Messung, sondern eine Entscheidung darüber, wo „gut genug" anfängt. *In diesem
-Projekt `SCHWELLE_GEOMETRIE = 0,65` und `SCHWELLE_STIL = 0,30`. Beide sind an wenigen
-Einzelfällen gesetzt und nicht hergeleitet worden — der Grund, warum es die
-Schwellenstudie überhaupt gibt.*
+Teil der Messung, sondern eine Entscheidung darüber, wo „gut genug" anfängt.
+*In diesem Projekt `SCHWELLE_GEOMETRIE = 0.65` und `SCHWELLE_STIL = 0.666`. Die beiden
+stehen inzwischen auf verschiedenen Beinen, und der Unterschied ist lehrreich.*
+*Die **Stil-Schwelle** stand bis zum 18.08.2026 auf 0,30 und war damit **wirkungslos**: Der
+Boden des Verfahrens — was zwei völlig unähnliche Bilder erreichen — liegt bei 0,526. Eine
+Schwelle darunter lässt **jedes beliebige Bildpaar** durch. Sie ist seither **abgeleitet
+statt gesetzt**: Boden plus zwei Streuungen, gemessen an 4950 Paaren.*
+*Die **Geometrie-Schwelle** ist weiterhin gesetzt und nicht hergeleitet — der Grund, warum
+es die Schwellenstudie gibt. Sie galt lange als unerreichbar; am 24.08.2026 hat sich
+gezeigt, dass nicht sie zu hoch stand, sondern die Kamera zu weit (siehe **Rahmen gegen
+Messen**).*
+*Die Lehre aus der Stil-Schwelle gilt für jede: **Eine Schwelle unterhalb des eigenen
+Zufallsniveaus ist kein Tor, sondern eine Verzierung** — und sie sieht aus wie Schutz.*
 
 **Kalibrierung** — Den Zusammenhang zwischen einer Messgrösse und dem, was sie bedeuten
 soll, an Fällen festmachen, deren Antwort man bereits kennt. Eine Waage kalibriert man mit
@@ -2046,11 +2055,18 @@ Augenhöhe der Fotografin. Steht die Bildebene lotrecht, bleiben die Vertikalen 
 egal wie hoch oder tief die Kamera sitzt.
 *Das ist die einzige institutionell verbindliche Regel des ganzen Fachs: Die
 US-Bundesnorm HABS/NPS verlangt die Perspektivkorrektur zwingend und **bei der Aufnahme**.
-Und dieses Projekt verletzt sie in jedem Bild, das es bisher erzeugt hat:
-`src/aiimaging/kameras.py` legt das Blickziel über die Augenhöhe
-(`ZIEL_ANTEIL_HOEHE = 0.20`), was 9,46° Neigung und rund 9 bis 12 % Konvergenz ergibt (bei waagrechter Kamera waere sie exakt null). Der
-Kommentar an dieser Stelle nannte das „den üblichen Griff der Architekturfotografie" — der
-übliche Griff ist das Gegenteil: waagrecht halten und shiften (`docs/KAMERAREGELN_2026-08-21.md`).*
+Und dieses Projekt hat sie in jedem Bild verletzt, das es bis zum 23.08.2026 erzeugt hat:
+Die Kamerarechnung legte das Blickziel über die Augenhöhe und neigte die Kamera dadurch.*
+*Wie stark, ist zweimal falsch behauptet worden, und beide Male von uns.* **Vier Dokumente
+sagten «9,46°»** — diese Zahl gilt bei einem Abstand von 1,2 × Gebäudehöhe, den die
+Rechnung nie einnimmt. Nachgemessen über zwölf Richtungen, vier Gebäudehöhen und zwei
+Formate waren es zunächst 1,92°–4,70°, und nach einer Nachmessung im Hochformat
+**−0,51° bis +5,98°** — die negativen Werte fehlten in der ersten Stichprobe, weil sie kein
+Hochformat und keine flachen Bauten enthielt.
+*Seit dem 23.08.2026 ist die Vorgabe **waagrecht mit Shift**; die geneigte Rechnung bleibt
+erhalten und ist ausdrücklich anzufordern. Der Kommentar an jener Stelle nannte das Neigen
+einst „den üblichen Griff der Architekturfotografie" — der übliche Griff ist das Gegenteil
+(`docs/KAMERAREGELN_2026-08-21.md`).*
 
 **Perspektivkorrektur** — Das Vermeiden oder Beseitigen stürzender Linien. Zwei Wege: bei
 der Aufnahme (Fachkamera oder Shift-Objektiv, Kamera bleibt waagrecht) oder nachträglich
@@ -2106,6 +2122,11 @@ Messreihe daran messen, wie stark **dieselbe** Reihe streut.
 einer Stichprobe hängt systematisch mit deren eigener Streuung zusammen — die Prüfung
 bestätigt sich selbst. Der Ausweg ist ein **unabhängig** gemessener Boden aus einer
 anderen Reihe. In diesem Projekt sind das 0,2269 aus neun Läufen desselben Aufbaus.*
+*Und auch dieser Boden hat eine Grenze, die am 24.08.2026 gemessen wurde: Er gehört der
+**Bildlage**, nicht dem Verfahren. Am selben Standort, nur mit anderer Achsenlage, streuten
+dieselben Startwerte um 0,0088 statt um 0,1216 — Faktor vierzehn. Die Zahl taugt als
+Grössenordnung; wer sie als feste Untergrenze verrechnet, urteilt **zu vorsichtig und nicht
+falsch**, aber er urteilt an der Lage vorbei. Dieselbe Ursache wie beim **Ortsfeld**.*
 
 **Bester Wurf gegen besserer Startwert** — Zwei verschiedene Aussagen über dasselbe
 Ergebnis. „Ich behalte das bestbewertete von drei Bildern" ist immer richtig — man nimmt
@@ -2200,10 +2221,32 @@ aus `docs/recherche/KOMPOSITION_INNEN.md` und steht in keiner Quelle.*
 gegen den Uhrzeigersinn ab der Ost-Achse zählt — wer die beiden verwechselt, dreht eine
 ganze Kameraanlage um 90°, und zwar unauffällig.*
 
-**Deckungsgrad** — Welcher Anteil des Bildes vom Gebäude gefüllt werden soll, als Zahl
+**Deckungsgrad** — Welcher Anteil der Bildbreite vom Gebäude gefüllt werden soll, als Zahl
 zwischen 0 und 1. Ein Wert unter 1 schiebt die Kamera weiter weg und lässt Luft um das
-Bauwerk. *Das ist die gestalterische „Zweidrittel-Komposition" als Zahl ausgedrückt: 0.55
-heisst, gut die Hälfte des Bildes ist Gebäude, der Rest Himmel und Umgebung.*
+Bauwerk. *Das ist die gestalterische „Zweidrittel-Komposition" als Zahl ausgedrückt.*
+*In diesem Projekt **0,70 seit dem 25.08.2026**, vorher 0,55. Der Wechsel ist keine
+Geschmacksfrage gewesen, sondern eine gemessene: Die automatische Prüfung, die vergleicht,
+ob das erzeugte Bild dieselbe Geometrie zeigt wie der Entwurf, **kann unterhalb von rund
+0,60 gar nicht bestehen** — es steht dann zu wenig Gebäude im Bild, als dass sich etwas
+vergleichen liesse. Die alte 0,55 lag knapp darunter — und eine Woche lang galt die
+Prüfung deshalb als zu streng eingestellt, obwohl die Kameraaufstellung schuld war.*
+*Der Preis ist gestalterisch und gehört dazu: Ein höherer Deckungsgrad heisst weniger
+Umgebung im Bild — mehr Bauwerk, weniger Ort.*
+
+**Rahmen gegen Messen (der Rahmungsbruch)** — Der Fehler, der entsteht, wenn eine Kamera
+auf etwas **anderes** ausgerichtet wird, als anschliessend geprüft wird.
+*Der Fall aus diesem Projekt: Die Kamera stellte sich so, dass die **ganze Szene** gut ins
+Bild passt — Gebäude *und* Geländeplatte. Geprüft wurde danach nur das **Gebäude**. Steht
+es auf einer Platte mit zehnfacher Grundfläche, füllt es keine 2 % des Bildes, und die
+Prüfung kann rechnerisch nicht bestehen. Sie meldete dann «durchgefallen», und alle sahen
+auf das Bildmodell — die Ursache lag in der Kameraaufstellung.*
+*Woran man es erkennt: Die Prüfung fällt nicht **manchmal** durch, sondern **immer**, und
+ihr Wert wird umso schlechter, je grösser die Umgebung ist — nicht je schlechter das Bild.
+Ein Mass, das an etwas hängt, das mit der gestellten Frage nichts zu tun hat, ist daran zu
+erkennen, dass es sich mit der falschen Grösse ändert.*
+*Die Abhilfe ist nicht, die Anforderung zu senken. Sie ist, beides auf dasselbe
+auszurichten — und dafür muss überhaupt bekannt sein, wo das Gebäude ohne seine Umgebung
+steht. Genau diese Angabe fehlte: Es wurde nur **eine** Umgrenzung mitgeführt.*
 
 **Füllgrad** — Welchen Anteil des Bildes das Bauwerk tatsächlich einnimmt. Zu
 unterscheiden vom **Deckungsgrad**, der sagt, welchen Anteil es einnehmen *soll*.
@@ -3231,6 +3274,8 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-25 | **Zwei veraltete Zahlen im Text berichtigt, die nur im Aenderungsverzeichnis korrigiert waren.** *Stuerzende Linien* nannte weiterhin 9,46° Neigung, obwohl die Zahl zweimal nachgemessen und zuletzt auf -0,51 bis +5,98 Grad korrigiert worden ist. *Kreisschluss* fuehrte 0,2269 als unabhaengigen Boden, ohne dass er der Bildlage gehoert (Faktor 14). Eine Korrektur, die nur im Verzeichnis steht, erreicht niemanden, der den Begriff nachschlaegt — genau die Falle, gegen die dieses Verzeichnis gebaut ist |
+| 2026-08-25 | **Deckungsgrad** berichtigt (0.70 statt 0.55) und um den Grund erweitert — der Wechsel war eine gemessene Entscheidung und keine Geschmacksfrage. Dazu ergaenzt: **Rahmen gegen Messen (der Rahmungsbruch)**, der groesste Einzelbefund dieser Woche. Ein Eintrag, der eine Zahl nennt, veraltet mit ihr — das ist dieselbe Falle wie eine Zahl an zwei Stellen im Code, nur im Anhang |
 | 2026-08-24 | Ergaenzt: **Durchgelaufen gegen richtig**. Anlass ist eine Luecke, die beide IFC-Leser teilen: neun echte Dateien, null Fehler — und kein einziger Vergleich, ob die herausgekommene Geometrie der Vorlage entspricht. Der Eintrag traegt mit, warum sich das nur an selbst erzeugten Dateien pruefen laesst, und was so eine Pruefung ueber echte Dateien NICHT beweist |
 | 2026-08-24 | Ergaenzt: **Ortsfeld (eines Tiefenschaetzers)**. Der schwerwiegendste Befund dieser Woche, und er sass unter dem Tor: Was unser Schaetzer auf einem leeren Bild ausgibt, ist zu 95,75 % eine Funktion des ORTES. Dieselbe Maske verschoben laesst den Nullwert von -0,62 auf +0,65 wandern, mit Vorzeichenwechsel — eine Konstante, die wir seit dem 21.08. als solche gefuehrt haben, ist eine Zahl fuer EINE Bildlage |
 | 2026-08-23 | Ergaenzt: **Klassifikatorfreie Fuehrung (und warum ein Negativ-Prompt daran haengt)**. Anlass ist eine Zaehlung: Sieben von sieben Stilen fuehren einen negativen Prompt, keiner erreicht je ein Bild — und auf dem voreingestellten Modell koennte er ohnehin nichts bewirken. Der Begriff erklaert, warum das kein Fehler im Prompt ist, sondern eine Eigenschaft des Verfahrens |
