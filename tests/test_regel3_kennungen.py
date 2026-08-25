@@ -141,6 +141,15 @@ def test_ein_ergebnis_ebenfalls(tmp_path):
 # 3 · Und das ganze Repo bleibt sauber
 # --------------------------------------------------------------------------------------
 
+#: Die einzige Datei, die Beispielpfade tragen **muss** — diese hier.
+#:
+#: Die Ausnahme steht auf **einer** Datei und nicht in :data:`ERLAUBT`. Der Unterschied
+#: ist wesentlich: Eine wachsende Erlaubnisliste höhlt die Prüfung überall aus, eine
+#: benannte Datei nur hier. Und hier stehen ausschliesslich Beispiele — wer in dieser
+#: Datei einen echten Namen unterbringt, tut es mit Absicht.
+AUSGENOMMEN = {"tests/test_regel3_kennungen.py"}
+
+
 def _versionierte_textdateien() -> list[Path]:
     """Nur, was wirklich im Repo steht — nicht das Arbeitsverzeichnis mit Bauresten."""
     roh = subprocess.run(["git", "ls-files"], cwd=WURZEL, capture_output=True,
@@ -158,6 +167,8 @@ def test_im_ganzen_repo_steht_kein_benutzername_in_einem_pfad():
     """
     funde: list[str] = []
     for pfad in _versionierte_textdateien():
+        if str(pfad.relative_to(WURZEL)) in AUSGENOMMEN:
+            continue
         try:
             text = pfad.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
@@ -181,6 +192,16 @@ def test_gegenprobe_die_pruefung_findet_ueberhaupt_etwas():
     """
     assert SUCHE.search("/home/echter-name/x") is not None
     assert SUCHE.search(f"/home/{NUTZER_ERSATZ}/x") is None
+
+
+def test_die_ausnahme_ist_genau_eine_datei_und_zwar_diese():
+    """Eine Ausnahmeliste, die wächst, ist keine Prüfung mehr.
+
+    Sie steht auf **einer** Datei — dieser —, weil eine Prüfung auf Beispielpfade
+    notwendig Beispielpfade enthält. Jede weitere Datei hier wäre ein Loch.
+    """
+    assert AUSGENOMMEN == {"tests/test_regel3_kennungen.py"}
+    assert (WURZEL / "tests/test_regel3_kennungen.py").resolve() == Path(__file__).resolve()
 
 
 def test_jeder_erlaubte_platzhalter_ist_auch_wirklich_einer():

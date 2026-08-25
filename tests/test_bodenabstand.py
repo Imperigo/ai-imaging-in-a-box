@@ -110,13 +110,25 @@ def test_die_konstante_traegt_ihre_eigene_widerlegung():
     Eine Konstante, deren Widerlegung nur im Sitzungsprotokoll steht, wird weiterbenutzt.
     """
     from pathlib import Path
+
     quelle = Path(g.__file__).read_text(encoding="utf-8")
     ende = quelle.index("RAUSCHBODEN_UEBER_MASKE = -0.5207")
-    block = quelle[ende - 2600:ende]
+    # Den ganzen zusammenhaengenden Kommentarblock nehmen und nicht eine feste
+    # Zeichenzahl davor: Ein Docstring waechst, und ein Fenster in Zeichen bricht dann
+    # aus einem Grund, der mit der Sache nichts zu tun hat. (Genau das ist passiert.)
+    zeilen = quelle[:ende].splitlines()
+    block_zeilen = []
+    for zeile in reversed(zeilen):
+        if not zeile.startswith("#:"):
+            break
+        block_zeilen.append(zeile)
+    block = "\n".join(reversed(block_zeilen))
 
     assert "Ortsfeld" in block
     assert "95,75" in block
     assert "Vorzeichenwechsel" in block
+    assert "nicht additiv" in block, (
+        "auch die Widerlegung des Abzugs gehoert an die Konstante — sonst baut ihn jemand")
 
 
 # --------------------------------------------------------------------------------------
@@ -276,3 +288,64 @@ def test_der_shift_verschiebt_die_maske_in_der_groessenordnung_des_ortsfelds():
                      "Schritt des vermessenen Ortsfelds")
     assert k.MAX_SHIFT_MM / sensor_hoehe_mm * 992 > 5 * 96, (
         "die zugelassene Obergrenze allein sind mehr als fuenf Schritte")
+
+
+# --------------------------------------------------------------------------------------
+# 4 · Der Abstand ist ein ANZEIGER und kein besseres ρ
+# --------------------------------------------------------------------------------------
+#
+# Am 24.08.2026 gemessen (acht Bildlagen desselben Bauwerks, gleicher Fuellgrad, ein
+# Startwert): Das Ortsfeld legt sich NICHT additiv auf den Inhalt. Alle drei Formen, es
+# herauszurechnen, ERHOEHTEN die Streuung — 0.1374 ohne Abzug gegen 0.2882 / 0.3090 /
+# 0.4051 — und drehten bei 7, 6 bzw. 1 von 8 Lagen das Vorzeichen um.
+#
+# Die Verunreinigung selbst ist bestaetigt und beziffert: r = 0.9361 zwischen 'wie gut das
+# Feld allein die Wahrheit trifft' und 'wie gut das Mass aussieht'.
+
+def test_zwei_gleich_hohe_rho_sind_verschieden_viel_wert():
+    """**Der Kern des Befunds vom 24.08.**
+
+    Eine Lage erreichte ρ 0,9318 bei einem Feldbeitrag von 0,0240 — ehrlich. Eine andere
+    sah nur deshalb gut aus, weil das Feld zufällig mit der Geometrie übereinstimmte.
+    Die Bildlage entscheidet nicht, ob das Mass gut sein *kann*, sondern ob die Zahl
+    ehrlich ist.
+    """
+    ehrlich = g.rho_gegen_gemessenen_boden(0.9318, _anker(rauschen=0.0240))
+    geschmeichelt = g.rho_gegen_gemessenen_boden(0.9414, _anker(rauschen=0.70))
+
+    assert ehrlich["boden_erklaert_anteil"] < 0.05
+    assert geschmeichelt["boden_erklaert_anteil"] > 0.7
+    assert ehrlich["warnungen"] == []
+    assert any("BILDLAGE" in w for w in geschmeichelt["warnungen"])
+
+
+def test_die_warnung_sagt_dazu_dass_herausrechnen_NICHT_hilft():
+    """**Sonst ist der naheliegende Griff der falsche.**
+
+    Wer liest «der Boden erklärt 74 %», will ihn abziehen. Genau das ist gemessen und
+    macht die Streuung grösser — die Warnung muss es mitsagen, sonst baut es jemand.
+    """
+    e = g.rho_gegen_gemessenen_boden(0.94, _anker(rauschen=0.70))
+
+    assert any("Herausrechnen hilft nicht" in w for w in e["warnungen"])
+
+
+def test_bei_negativem_boden_wird_kein_anteil_behauptet():
+    """Ein Boden unter null erklärt nichts von einem positiven ρ — dann steht dort auch
+    keine Zahl. Eine Quote aus einem Vorzeichenwechsel wäre Unsinn mit Dezimalpunkt."""
+    e = g.rho_gegen_gemessenen_boden(0.91, _anker(rauschen=-0.52))
+
+    assert "boden_erklaert_anteil" not in e
+    assert e["abstand"] == pytest.approx(1.43)
+
+
+def test_der_docstring_traegt_die_widerlegung_des_abzugs():
+    """Ein widerlegter Griff, dessen Widerlegung nur im Protokoll steht, wird gebaut.
+
+    Die HomeStation hat uns denselben Dienst mit ihrem Irrweg erwiesen.
+    """
+    doc = g.rho_gegen_gemessenen_boden.__doc__
+
+    assert "nicht additiv" in doc
+    assert "0,9361" in doc
+    assert "kein besseres ρ" in doc.replace("**", "")

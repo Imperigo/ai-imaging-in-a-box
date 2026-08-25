@@ -1059,6 +1059,27 @@ MIN_MASKENPUNKTE = MIN_GEMEINSAME_PUNKTE
 #:    gehört **je Lauf an der tatsächlichen Maskenlage gemessen** — die Nullprobe wird
 #:    ohnehin gerendert, siehe :func:`einordnung` und `abholer._nullprobe`. Diese
 #:    Konstante bleibt als **Bezugspunkt** stehen, für Protokolle und ältere Messungen.
+#:
+#: .. note::
+#:    **Und der naheliegende Griff ist gemessen widerlegt: Das Feld HERAUSZURECHNEN macht
+#:    es schlechter** (HomeStation, 24.08.2026, acht Bildlagen desselben Bauwerks bei
+#:    gleichem Füllgrad, ein Startwert, eine Ansicht).
+#:
+#:    Zuerst die Bestätigung: Die Verunreinigung ist real und beziffert — **r = 0,9361**
+#:    zwischen *«wie gut das Feld allein die Wahrheit trifft»* und *«wie gut das Mass
+#:    aussieht»*. Dasselbe Bauwerk, nur anders im Bild platziert, wandert von 0,55 auf
+#:    0,94.
+#:
+#:    Dann die Überraschung: **Alle drei Abzugsformen ERHÖHEN die Streuung** — von 0,1374
+#:    ohne Abzug auf 0,2882 / 0,3090 / 0,4051 — und drehen bei 7, 6 bzw. 1 von 8 Lagen das
+#:    **Vorzeichen** um. Das Feld legt sich also **nicht additiv** auf den Inhalt.
+#:
+#:    Die Gegenprobe zeigt, dass es nicht hoffnungslos ist: Eine Lage erreicht 0,9318 bei
+#:    einem Feldbeitrag von 0,0240. **Die Bildlage entscheidet nicht, ob das Mass gut sein
+#:    KANN, sondern ob die Zahl ehrlich ist.**
+#:
+#:    Darum bleibt der gemessene Boden ein **Anzeiger** und wird nicht abgezogen — siehe
+#:    :func:`rho_gegen_gemessenen_boden`.
 RAUSCHBODEN_UEBER_MASKE = -0.5207
 
 
@@ -2163,6 +2184,18 @@ def rho_gegen_gemessenen_boden(rho_gerichtet: float | None, maskenanker: dict | 
     Soll-Karte (`abholer._nullprobe`). Sie wurde nur nie **gelesen**. Diese Funktion liest
     sie.
 
+    **Der Abstand ist ein ANZEIGER und kein besseres ρ.** Am 24.08.2026 ist gemessen
+    worden, dass das Ortsfeld sich **nicht additiv** auf den Inhalt legt: Alle drei
+    Formen, es herauszurechnen, erhöhten die Streuung (0,1374 → 0,2882 / 0,3090 / 0,4051)
+    und drehten bei bis zu 7 von 8 Bildlagen das Vorzeichen um. Wer ``abstand`` für das
+    *richtigere* ρ hält, wiederholt diesen Fehler.
+
+    Wozu er dann taugt: Eine Lage erreichte ρ 0,9318 bei einem Feldbeitrag von 0,0240,
+    eine andere sah nur deshalb gut aus, weil das Feld zufällig mit der Geometrie
+    übereinstimmte (r = 0,9361 über sieben Lagen). **Die Bildlage entscheidet nicht, ob
+    das Mass gut sein kann, sondern ob die Zahl ehrlich ist** — und genau das sagt der
+    Abstand.
+
     Args:
         maskenanker: ``{art: {rho, kante}}`` aus der Nullprobe **dieses** Laufs.
 
@@ -2205,6 +2238,18 @@ def rho_gegen_gemessenen_boden(rho_gerichtet: float | None, maskenanker: dict | 
         return antwort
 
     antwort["abstand"] = rho_gerichtet - boden
+    # Wieviel von rho koennte allein die BILDLAGE erklaeren? Kein Tor und keine Korrektur
+    # — eine Auskunft. Zwei gleich hohe rho sind verschieden viel wert, je nachdem, ob der
+    # Boden an dieser Lage bei 0.02 oder bei 0.7 liegt.
+    if rho_gerichtet > 0 and boden > 0:
+        antwort["boden_erklaert_anteil"] = min(1.0, boden / rho_gerichtet)
+        if antwort["boden_erklaert_anteil"] >= 0.5:
+            antwort["warnungen"].append(
+                f"Der Rauschboden dieser Maskenlage ({boden:+.4f}) erklärt bereits "
+                f"{antwort['boden_erklaert_anteil']:.0%} von ρ ({rho_gerichtet:+.4f}). "
+                f"Die Zahl ist damit zu einem grossen Teil eine Aussage über die BILDLAGE "
+                f"und nicht über das Bild. Herausrechnen hilft nicht — das ist gemessen "
+                f"und macht die Streuung grösser (24.08.2026).")
     return antwort
 
 

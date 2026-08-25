@@ -1656,6 +1656,36 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       **NOCH OFFEN, und es ist Ihre Entscheidung:** Die **Git-Historie** trägt den Namen
       weiterhin. Ihn dort zu entfernen hiesse, die Historie eines öffentlichen Repos
       umzuschreiben und mit `--force` zu überschreiben. Das tue ich nicht ohne Ihr Wort.
+- [x] **Der Feldabzug ist gemessen durchgefallen — und der Bodenwert ist ein ANZEIGER,
+      kein Subtrahend** (HomeStation, 24.08.2026, acht Bildlagen desselben Bauwerks bei
+      gleichem Füllgrad, ein Startwert, eine Ansicht).
+
+      **Zuerst die Bestätigung, und sie ist scharf:** Die Verunreinigung ist real und
+      beziffert — **r = 0,9361** zwischen *«wie gut das Feld allein die Wahrheit trifft»*
+      und *«wie gut das Mass aussieht»*. Dasselbe Bauwerk, dieselbe Grösse, derselbe
+      Startwert, nur anders im Bild platziert: **0,55 bis 0,94.** Das ist mehr als die
+      Startwertstreuung (0,2269).
+
+      **Dann die Überraschung: Abziehen hilft nicht, es schadet.** Alle drei Formen
+      **erhöhen** die Streuung — 0,1374 ohne Abzug gegen 0,2882 / 0,3090 / 0,4051 — und
+      drehen bei 7, 6 bzw. 1 von 8 Lagen das **Vorzeichen** um. Das Feld legt sich **nicht
+      additiv** auf den Inhalt. Der naheliegende Griff ist widerlegt, **bevor er eingebaut
+      wurde** — genau die Reihenfolge, die diese Woche dreimal Vorschläge gerettet hat.
+
+      **Die Gegenprobe zeigt, dass es nicht hoffnungslos ist:** Eine Lage erreicht 0,9318
+      bei einem Feldbeitrag von 0,0240. **Die Bildlage entscheidet nicht, ob das Mass gut
+      sein KANN, sondern ob die Zahl ehrlich ist.**
+
+      Umgesetzt: `rho_gegen_gemessenen_boden` meldet jetzt `boden_erklaert_anteil` — wieviel
+      von ρ allein die Bildlage erklären könnte — und warnt ab der Hälfte. Die Warnung sagt
+      **mitsamt dem Grund dazu, dass Herausrechnen nicht hilft**; ohne diesen Halbsatz baut
+      es der nächste Leser. Die Widerlegung steht auch an der Konstanten selbst, und ein
+      Test hält sie dort fest.
+
+      **Nebenbefund, der zu `torchance` passt:** In allen acht Lagen lag `anteil_maske` bei
+      0,305 bis 0,315 — und **alle acht bestanden das Tor** (Score 0,665 bis 0,960). Der
+      gemessene Punkt 0,3051 aus `RAHMUNG_GEMESSEN` ist damit von acht weiteren Läufen
+      gestützt.
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und
