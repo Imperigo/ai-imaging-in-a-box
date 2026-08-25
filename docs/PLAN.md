@@ -1733,6 +1733,26 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       `geom_iou_obergrenze_gilt`. Ist es `False`, ist die Zahl eine **Auskunft über die
       Szene** — wieviel Bild das Bauwerk füllt — und keine Schranke. Und genau diese
       Auskunft ist die nützlichere: Es ist dieselbe Grösse, an der `torchance` hängt.
+- [x] **Eine Szene ohne Bauwerk ergibt keinen gesund aussehenden Kamerasatz mehr** —
+      unsere Hälfte eines Befunds, dessen andere Hälfte als `auf-40` beim Cloud-Worker liegt.
+
+      Im dritten Demolauf meldete der Modell-Knoten den ganzen Lauf «Szene: 0 Bauteile
+      (GLB)», weil das aktive Projekt den Stationswechsel nicht überlebte. Das ist ihre
+      Seite. **Was danach kommt, ist unsere:** Aus einer leeren Szene entsteht eine Hüllbox
+      ohne Ausdehnung, und `kamerasatz` rechnet darauf weiter.
+
+      Der **leere** Fall warnte schon vorher — über den Füllgrad von 0,0 %. Der
+      gefährlichere ist der andere: Eine Hüllbox **ohne Höhe** — Gelände ohne Bauwerk, oder
+      ein Bauwerk, dessen Umwandlung stillschweigend nichts lieferte — ergab einen
+      Kamerasatz, der **völlig gesund aussieht**: Füllgrad 0,549, **keine einzige Warnung**.
+      Die Kamera steht dann sauber gerahmt vor einer Platte.
+
+      Neu: `kameras.huellbox_taugt`, und der Kamerasatz meldet es **ganz vorn** in den
+      Warnungen — danach sind alle weiteren Zahlen Auskunft über eine leere Szene. Die
+      Grenze ist **absolut** (10 cm) und nicht anteilig: 200 m lang und 10 cm hoch fiele
+      unter jede anteilige Schranke und ist trotzdem kein Bauwerk. Gerechnet wird weiterhin
+      — ein Standpunkt um eine Platte ist wohldefiniert; er darf nur nicht so tun, als wäre
+      nichts.
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und

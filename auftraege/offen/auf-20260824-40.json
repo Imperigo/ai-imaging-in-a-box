@@ -1,0 +1,61 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "cloud",
+  "auftrag_id": "auf-20260824-40",
+  "art": "qa",
+  "beschreibung": "DREI LAEUFE IN FOLGE, UND DIE EINE FRAGE BLEIBT UNGEMESSEN: Zeigt der Render-Knoten das fertige Bild? Jedes Mal aus einem ANDEREN Grund, jedes Mal vor der Bildkette. Der Befund ist nicht unserer — die HomeStation hat ihn erhoben (docs/HOMESTATION-2026-08-24-DEMO-SIMULATION.md). Wir reichen ihn weiter, weil er in eurer Lane liegt und weil er die Demo blockiert.\n\nVorweg: Das ist KEINE Messaufgabe und braucht keine GPU. Es sind Fragen an eure Oberflaeche.\n\n################################################################\n# F1 · DIE OBERFLAECHE WIRD STUMM — OHNE MELDUNG UND OHNE RUECKWEG\n################################################################\n\nEin Druck auf 'Zur Zentrale' blendet die Startseite ein, RAEUMT DIE STATION ABER NICHT AB. Beide Ebenen stehen gleichzeitig im Bild. Ab da nimmt die Oberflaeche keine echten Mausereignisse mehr an:\n\n  - elementFromPoint liefert an 10 von 10 verteilten Punkten HTML — auch dort, wo ein Knopf liegt\n  - derselbe Knopf: pointer-events auto, opacity 1, visibility visible, getBoundingClientRect (14, 600.5, 34, 88)\n  - pointer-events an html, body und Wurzel-DIV ueberall auto — die Sperre sitzt NICHT dort\n  - kein modaler Dialog, kein Vollbild, kein Zeigerfang\n  - .click() im DOM traegt weiter, die echte Maus nicht\n\nFUER DEN NUTZER HEISST DAS: Das Programm ist tot, es sagt nichts, und es gibt keinen Rueckweg ausser Neuladen. Aufgeloest wurde es im Versuch erst durch einen DOM-Klick — den ein Nutzer nicht hat.\n\nWAS WIR FRAGEN: Raeumt 'Zur Zentrale' die Vis-Station ab, oder legt es die Startseite darueber? Falls darueber — ist das Absicht (eine Art Overlay) oder ein vergessenes Abraeumen? Und falls Absicht: Was faengt die Mausereignisse ab, wenn es weder pointer-events noch ein Dialog ist?\n\nDas ist die dringendste der drei. Die anderen kosten Zeit, diese kostet den ganzen Lauf.\n\n################################################################\n# F2 · DAS BEISPIELPROJEKT KOMMT IN DER VIS-STATION NICHT AN\n################################################################\n\nDer Modell-Knoten meldete den GANZEN Lauf 'Szene: 0 Bauteile (GLB)', der Auto-Kamera-Knoten 'Keine Geometrie im Modell — nichts abzuleiten.' — obwohl ein Projekt aktiv war (kosmo.projekt.aktiv gesetzt).\n\nDer Grund liegt vermutlich daneben: 'Beispielprojekt laden' steht NUR AUF DER STARTSEITE. Aus der Vis-Station heraus gibt es keinen Weg zu Geometrie. Wer mit dem Modell beginnt, hat es; wer direkt in Vis geht, steht vor einer leeren Szene.\n\nWAS WIR FRAGEN: Soll die Vis-Station das aktive Projekt vom Stationswechsel mitnehmen? Wenn ja, ist kosmo.projekt.aktiv der richtige Schluessel dafuer, oder braucht es einen zweiten? Wenn nein — dann fehlt in der Vis-Station ein Weg zu Geometrie, und der Modell-Knoten sollte sagen, dass keiner da ist, statt eine leere Szene zu melden.\n\nFuer uns hat das eine unangenehme Folge: Ein Lauf mit 0 Bauteilen erzeugt eine leere Huellbox. Unsere Kameraaufstellung rechnet dann auf einem Punkt, und was danach an Zahlen entsteht, ist Unsinn mit Dezimalpunkt. Wir bauen dagegen einen eigenen Waechter — aber die Ursache liegt bei euch.\n\n################################################################\n# F3 · DIE ZWEITE KANTE IN FOLGE GEHT VERLOREN — DRITTER LAUF IN FOLGE\n################################################################\n\nReproduzierbar, an derselben Stelle, mit vorher geprueften Anschluessen (alle neun trugen die Klasse vis-node-port-hit):\n\n    Zug 1: Modell.Szene        -> Render.Szene               Kanten 1\n    Zug 2: Auto-Kamera.Kameras -> Render.Kamera-Standpunkte  Kanten 1   VERLOREN\n    Zug 3: Prompt.Prompt       -> Render.Prompt              Kanten 1   VERLOREN\n    (Pause 2 s)\n    Zug 4: Prompt.Prompt       -> Render.Prompt              Kanten 1   VERLOREN\n    (Pause 2 s)\n    Zug 5: Auto-Kamera.Kameras -> Render.Kamera-Standpunkte  Kanten 2   traegt\n    (Pause 2 s)\n    Zug 6/7: Prompt.Prompt     -> Render.Prompt              Kanten 2   traegt\n\nDAS MUSTER: Der Zug unmittelbar nach einem anderen Zug kommt nicht an; mit Pause traegt die Wiederholung. Neu im dritten Lauf: Zwei Zuege in derselben Ausfuehrung gehen BEIDE verloren, nicht nur der zweite. Sieben Versuche fuer zwei Kanten.\n\nWAS WIR FRAGEN: Gibt es nach einem Verbindungszug einen Zustand, der erst nach einer Weile zurueckgesetzt wird — eine Animation, ein Neuzeichnen, ein 'gerade beschaeftigt'? Wir raten nicht; ihr seht den Code.\n\n################################################################\n# F4 · DREI KLEINERE, DIE ZUSAMMEN DIE DEMO ZAEHFLUESSIG MACHEN\n################################################################\n\n  a) Knoten stapeln sich auf demselben Platz. Jeder Klick in der Palette setzt den neuen Knoten an dieselbe Stelle; nach zwei Knoten liegt der zweite fast deckungsgleich auf dem ersten. Ein Nutzer muss jeden erst wegziehen.\n  b) 'Kamera vorschlagen' hinterlaesst einen stillen Modus: sichtbar nur als Textzeile 'KAMERA VORSCHLAGEN AKTIV', ohne Abbruchknopf, und Escape beendet ihn nicht.\n  c) Die Inseln sind erst nach einem Hover treffbar. Der erste Klick laeuft ins Leere; ein Nutzer klickt hier zweimal.\n\nDazu die Zahl, die den Preis zeigt: '+ Graph erstellen' liefert seit dem 23.08. einen LEEREN Graph statt des vorverdrahteten. Zusammen mit F3 sind das mindestens 12 Zuege bis zum ersten bestellbaren Render. Am 20.08. waren es null.\n\n################################################################\n# WAS DIESER AUFTRAG NICHT IST\n################################################################\n\nKeine Messung, keine GPU, kein Zugriff auf unser Repo. Auch keine Schuldzuweisung: Zwei eurer Empfehlungen vom 20.08. sind angekommen und wirken (die Bruecke sendet cache-control no-store, die Auto-Kamera verspricht nicht mehr als sie bestellt), und das null-Schema aus P-NULLGEOMETRIE hat unsere dritte Antwort erst moeglich gemacht. Das hier ist die Liste dessen, was vor der Bildkette liegt und sie am Laufen hindert.\n\n################################################################\n# RUECKGABE\n################################################################\n\nAntworten auf F1 bis F4, in Worten. F1 ist das Dringende — dort genuegt uns fuer den Anfang die Auskunft, ob 'Zur Zentrale' abraeumen SOLL.\n\nWo ihr euch nicht sicher seid, ist 'noch offen' eine gueltige Antwort. Und wenn einer der Punkte bei euch schon behoben ist, sagt es — dann messen wir nach, statt dass ihr zweimal repariert.",
+  "erstellt": "2026-08-25T06:53:21Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "art_der_frage": "Oberflaeche, nicht Messung",
+    "quelle": "docs/HOMESTATION-2026-08-24-DEMO-SIMULATION.md (dritter Lauf)",
+    "die_eine_frage_seit_drei_laeufen": "Zeigt der Render-Knoten das fertige Bild?",
+    "F1_stumme_oberflaeche": {
+      "ausloeser": "'Zur Zentrale' raeumt die Vis-Station nicht ab",
+      "elementFromPoint": "10 von 10 Punkten liefern HTML",
+      "knopfzustand": "pointer-events auto, opacity 1, visibility visible",
+      "ausgeschlossen": [
+        "modaler Dialog",
+        "Vollbild",
+        "Zeigerfang",
+        "pointer-events an html/body/Wurzel"
+      ],
+      "fuer_den_nutzer": "kein Rueckweg ausser Neuladen, keine Meldung"
+    },
+    "F2_projekt_kommt_nicht_mit": {
+      "symptom": "Modell-Knoten meldet 'Szene: 0 Bauteile (GLB)' den ganzen Lauf",
+      "obwohl": "kosmo.projekt.aktiv war gesetzt",
+      "vermutung": "'Beispielprojekt laden' steht nur auf der Startseite",
+      "folge_bei_uns": "leere Huellbox — Kameraaufstellung rechnet auf einem Punkt"
+    },
+    "F3_zweite_kante": {
+      "muster": "Zug unmittelbar nach einem Zug kommt nicht an; mit Pause traegt er",
+      "neu_im_dritten_lauf": "zwei Zuege in derselben Ausfuehrung gehen BEIDE verloren",
+      "kosten": "7 Versuche fuer 2 Kanten",
+      "ausgeschlossen": "Anschluesse geprueft, alle neun mit Klasse vis-node-port-hit"
+    },
+    "F4_kleinere": [
+      "Knoten stapeln sich am selben Platz",
+      "'Kamera vorschlagen' hinterlaesst stillen Modus ohne Abbruch",
+      "Inseln erst nach Hover treffbar",
+      "'+ Graph erstellen' liefert leeren Graph (seit 23.08.)"
+    ],
+    "preis": "mindestens 12 Zuege bis zum ersten bestellbaren Render; am 20.08. null"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
+  }
+}

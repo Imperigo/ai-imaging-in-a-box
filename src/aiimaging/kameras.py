@@ -1021,6 +1021,65 @@ def ziehe_bis_frei(auge, blick_auf, bbox, _sicht_frei, *,
 # Der Kamerasatz
 # --------------------------------------------------------------------------------------
 
+#: Unterhalb dieser Kantenlänge in Metern gilt eine Achse der Hüllbox als **leer**.
+#:
+#: Zehn Zentimeter. Ein Bauwerk, das in einer Richtung weniger misst, ist keines — und
+#: die Zahl ist bewusst absolut und nicht relativ: Ein Anteil an der grössten Kante liesse
+#: eine 200 m lange, 10 cm hohe Platte als „normal" durchgehen.
+LEERE_KANTE_M = 0.10
+
+
+def huellbox_taugt(bbox) -> dict:
+    """Steht in dieser Hüllbox überhaupt ein Bauwerk? — **vor** allem anderen.
+
+    **Der Anlass ist ein Demolauf, der nicht bei uns lag** (HomeStation, 24.08.2026): Der
+    Modell-Knoten meldete den ganzen Lauf «Szene: 0 Bauteile (GLB)», weil das aktive
+    Projekt den Stationswechsel nicht überlebte. Was danach kommt, ist unsere Sache: Aus
+    einer leeren Szene entsteht eine Hüllbox ohne Ausdehnung, und :func:`kamerasatz`
+    rechnet darauf weiter.
+
+    **Der leere Fall warnt bereits** — «das Bauwerk füllt 0.0 % des Bildes». Der
+    gefährlichere ist der andere: Eine Hüllbox **ohne Höhe** — Gelände ohne Bauwerk, oder
+    ein Bauwerk, dessen Umwandlung stillschweigend nichts lieferte — ergibt einen
+    Kamerasatz, der **völlig gesund aussieht**: Füllgrad 0,549, keine einzige Warnung. Die
+    Kamera steht dann sauber gerahmt vor einer Platte.
+
+    Returns:
+        ``{taugt, masse_m, leere_achsen, grund}``. ``taugt`` ist ``False``, wenn eine
+        Achse unter :data:`LEERE_KANTE_M` liegt.
+
+    Raises:
+        ValueError: Die Hüllbox hat nicht die Form zweier Punkte mit je drei Zahlen.
+    """
+    try:
+        unten, oben = bbox
+        masse = tuple(float(oben[i]) - float(unten[i]) for i in range(3))
+    except (TypeError, ValueError, IndexError) as fehler:
+        raise ValueError(
+            f"bbox braucht zwei Punkte mit je drei Zahlen, war {bbox!r}.") from fehler
+
+    leer = [name for name, wert in zip("XYZ", masse) if wert < LEERE_KANTE_M]
+    if not leer:
+        return {"taugt": True, "masse_m": masse, "leere_achsen": (), "grund": ""}
+
+    if len(leer) == 3:
+        grund = ("Die Hüllbox hat in KEINER Richtung Ausdehnung — die Szene ist leer. "
+                 "Ein Kamerasatz darauf beschreibt einen Standpunkt um einen Punkt; jede "
+                 "Zahl, die danach entsteht, ist Unsinn mit Dezimalpunkt.")
+    elif leer == ["Z"]:
+        grund = (f"Die Hüllbox hat keine HÖHE ({masse[2]:.3f} m) — das ist Gelände ohne "
+                 f"Bauwerk, oder das Bauwerk ist bei der Umwandlung stillschweigend "
+                 f"ausgefallen. Der gefährlichere der beiden Fälle: Der Kamerasatz sieht "
+                 f"danach völlig gesund aus, Füllgrad und alles, und die Kamera steht "
+                 f"sauber gerahmt vor einer Platte.")
+    else:
+        grund = (f"Die Hüllbox hat in {', '.join(leer)} keine Ausdehnung "
+                 f"({', '.join(f'{w:.3f} m' for w in masse)}). Ein Bauwerk, das in einer "
+                 f"Richtung nichts misst, ist keines.")
+    return {"taugt": False, "masse_m": masse, "leere_achsen": tuple(leer),
+            "grund": grund}
+
+
 def berichtsfelder_aus_stellung(auge, blick_auf, bbox, *,
                                 brennweite_mm: float = BRENNWEITE_MM,
                                 gelaende_z: float | None = None) -> dict:
@@ -1318,8 +1377,18 @@ def kamerasatz(bbox, *,
             "begruendung": geschoben["begruendung"],
         })
 
+    # Steht ueberhaupt ein Bauwerk in dieser Huellbox? Die Antwort gehoert nach VORN in
+    # die Warnungen, denn wenn sie nein lautet, sind alle uebrigen Zahlen Auskunft ueber
+    # eine leere Szene. Der leere Fall warnt ohnehin ueber den Fuellgrad; der Fall OHNE
+    # HOEHE tat es bis zum 24.08.2026 nicht — dort sah der ganze Satz gesund aus.
+    tauglich = huellbox_taugt(bbox)
+    if not tauglich["taugt"]:
+        alle_warnungen.insert(0, tauglich["grund"])
+
     return {
         "kameras": kameras,
+        "huellbox_taugt": tauglich["taugt"],
+        "leere_achsen": tauglich["leere_achsen"],
         "masse_m": masse,
         "mitte": mitte,
         "bias_grad": float(bias_grad),
