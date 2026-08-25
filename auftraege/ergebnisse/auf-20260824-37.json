@@ -1,0 +1,1649 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260824-37",
+ "status": "ok",
+ "beendet": "2026-08-24T15:48:47Z",
+ "die_zwei_fragen": {
+  "A": "Kontrollprobe zum Vorbehalt aus auf-36: Kommt ein Teil des Sprungs von der KAMERAART (Shift beim auto-Weg gegen Kippung beim ausdruecklichen Weg) statt vom Bildausschnitt?",
+  "B": "Wo genau zwischen 50 % und 70 % Fuellgrad der Bildbreite liegt die Kante — und ist es eine Stufe oder eine Rampe?"
+ },
+ "aufbau": {
+  "geometrie_wiederverwendet": {
+   "quelle": "die glb von auf-20260824-36, unveraendert uebernommen",
+   "md5_gleich_wie_auf36": true,
+   "md5": "286067d0dc468b6509a6a24ecfa2e20e",
+   "bauwerk_m": [
+    15.36,
+    10.36,
+    6.0
+   ],
+   "plattenseite_m": 39.8910516281534,
+   "plattenverhaeltnis": 10.0,
+   "namen": {
+    "bauwerk": "Bauwerk",
+    "platte": "Boden_Platte"
+   },
+   "huellbox_neu_geprueft": {
+    "wie": "eigener Blender-Import der glb mit den Vorgabewerten (up_axis Y_UP)",
+    "size": [
+     39.8911,
+     39.8911,
+     6.0
+    ],
+    "min": [
+     -19.9455,
+     -19.9455,
+     0.0
+    ],
+    "max": [
+     19.9455,
+     19.9455,
+     6.0
+    ],
+    "meshes": [
+     "Bauwerk",
+     "Boden_Platte"
+    ],
+    "erwartet": [
+     39.8911,
+     39.8911,
+     6.0
+    ],
+    "trifft": true,
+    "urteil": "Die dritte Zahl ist die senkrechte und exakt die 6.0 m. Die Szene steht aufrecht; die Kipp-Falle (up_axis 'Z') hat nicht zugeschlagen."
+   }
+  },
+  "bestellung_gegen_auf36_geprueft": {
+   "wie": "render-scene.json von auf-37 Feld fuer Feld gegen die von auf-36 verglichen",
+   "schema": "kosmovis.render-scene/v1",
+   "gleich": [
+    "schema",
+    "geometry",
+    "out",
+    "render",
+    "style.mode",
+    "style.refs",
+    "style.prompt",
+    "vis"
+   ],
+   "prompt_zeichen": 373,
+   "prompt_zeichenweise_identisch": true,
+   "einziger_unterschied": "das Feld 'cameras'",
+   "aufloesung_bestellt": [
+    1600,
+    1000
+   ],
+   "aufloesung_gefahren": [
+    1600,
+    992
+   ],
+   "samples": 128,
+   "faithful": 0.8,
+   "backbone": "z-image-turbo"
+  },
+  "startwerte": {
+   "frage_a_und_b": "seed 0, wie in auf-36",
+   "kippprobe": "seeds 0, 1, 2 je Kamera — je ein eigener Auftrag mit --seeds <n>, damit keine Seedauswahl dazwischenkommt"
+  },
+  "repo_code_unveraendert": true,
+  "beleg_repo_unveraendert": "git status --porcelain leer, HEAD 65cf7a2 vor und nach der Messung. Zwischen dem HEAD von auf-36 (3165b31) und heute hat sich an src/ und tools/ NICHTS geaendert — der Unterschied sind drei Dateien unter auftraege/ und docs/. Die Zahlen bleiben damit vergleichbar. Ausdrueckliche Kameras stehen im AUFTRAG (cameras als Liste von CameraSpec), nicht im Modul.",
+  "geraet": {
+   "blender": "5.2.0 LTS, Cycles auf CPU (der Runner setzt cycles.device fest)",
+   "bildmodell": "z-image-turbo + ControlNet-Union, 20 Schritte",
+   "schaetzer": "depth-anything-v2-small (Apache-2.0)",
+   "modell_id": "depth-anything/Depth-Anything-V2-Small-hf",
+   "lizenzlage": "Nur Small. Base/Large/Giant sind CC-BY-NC und waren nicht im Spiel — modell_id steht in allen zehn Kameras auf Small.",
+   "torch": "2.11.0+cu128",
+   "gpu": {
+    "leistungsgrenze_w_gestellt": 400.0,
+    "grenze_in_jeder_probe_w": [
+     400.0
+    ],
+    "verfahren": "nvidia-smi alle 10 s, durchgehend von vor dem ersten bis nach dem letzten Lauf",
+    "vor_dem_start": "16.66 W, 1 %, 1155 MiB — Leerlauf",
+    "nach_den_laeufen": "15.85 W, 0 %, 1160 MiB",
+    "proben_gesamt": 69,
+    "proben_unter_last_ab_50_prozent": 20,
+    "watt_median_unter_last": 350.1,
+    "watt_maximum_ueber_alle_proben": 354.24,
+    "vram_maximum_mib": 30119,
+    "grenze_400_w_eingehalten": true,
+    "was_hier_NICHT_steht": "Der Mitschrieb misst die KARTE, nicht die Steckdose. Ob die 400 W auch am Netzteil eingehalten werden, ist NICHT GEMESSEN.",
+    "fenster_mitschrieb_utc": [
+     "15:33:43",
+     "15:45:05"
+    ],
+    "fenster_der_zehn_laeufe_utc": [
+     "15:34:35",
+     "15:44:38"
+    ],
+    "beleg_fensterdeckung": "Die zehn befund.json tragen 15:34:35 bis 15:44:38 UTC; der Mitschrieb beginnt davor (15:33:43) und endet danach (15:45:05). Es fehlt keine Probe.",
+    "watt_maximum_unter_last": 354.24
+   }
+  },
+  "wie_gefahren": "Zehn volle Laeufe ueber tools/abholen.py --fremde-freigabe auf einem eigenen Ablageort ausserhalb des Repos, EIN Prozess je Auftrag mit --hoechstens 1. Kein weiterer Schalter.",
+  "schranken_aus_dem_repo": {
+   "SCHWELLE_GEOMETRIE": 0.65,
+   "MIN_GEMEINSAME_PUNKTE": 32
+  }
+ },
+ "frage_a": {
+  "der_vorbehalt_aus_auf36": "Ausdrueckliche Kameras rendern grundsaetzlich ohne Shift. Der Runner rechnet den Shift nur auf dem Weg 'abgeleitet'; auf dem Weg 'vorgegeben' bleibt shift_y unberuehrt. Ersatzweise wurde die Achse gekippt. Dieser Beitrag war NICHT GEMESSEN.",
+  "probe_1_am_auto_standort": {
+   "was": "Eine AUSDRUECKLICHE Kamera an Position, Ziel und Brennweite des auto-Laufs von auf-36 — alle drei aus dessen blender-report.json GELESEN, nicht gerechnet. Damit ist der Bildausschnitt festgehalten und der Shift die einzige Veraenderliche.",
+   "gelesene_herkunft": {
+    "weg": "abgeleitet",
+    "kuerzel": "s",
+    "azimut_grad": 180.0,
+    "modus": "shift",
+    "neigung_grad": 0.0,
+    "shift_mm": 0.46384276372996686,
+    "massgebend": "breite",
+    "durchlaeufe": 0,
+    "vollstaendig": true,
+    "fuellgrad": 0.5493151482135463,
+    "abstand_m": 90.54792546995722,
+    "seitenverhaeltnis": 1.6129032258064515,
+    "gelaende_z": 0.0,
+    "gelaende_bezug": "huellbox_unterkante",
+    "gebaeudehoehe_m": 6.0,
+    "warnungen": [],
+    "begruendung": "Alle acht Ecken im Bild.",
+    "brennweite_mm": 35.0,
+    "shift_y": 0.012885,
+    "sensor_fit": "HORIZONTAL",
+    "sensor_breite_mm": 36.0,
+    "auge": [
+     -3.9891,
+     -90.46,
+     1.7
+    ],
+    "blick_auf": [
+     0.0,
+     0.0,
+     1.7
+    ]
+   },
+   "gestellte_kamera": {
+    "position": [
+     -3.9891,
+     -90.46,
+     1.7
+    ],
+    "target": [
+     0.0,
+     0.0,
+     1.7
+    ],
+    "name": "sauto",
+    "fov": 54.43222311461495
+   },
+   "shift_bezug": 0.012885,
+   "shift_probe": 0.0,
+   "neigung_bezug_grad": 0.0,
+   "neigung_probe_grad": 0.0,
+   "was_dadurch_isoliert_ist": "Beide Kameras stehen am selben Punkt, blicken auf denselben Punkt, mit derselben Brennweite und WAAGRECHTER Achse. Der einzige Unterschied ist shift_y 0.012885 gegen 0.0.",
+   "vergleich": {
+    "anteil_maske": {
+     "auf36_auto_mit_shift": 0.019292464717741934,
+     "auf37_ausdruecklich_ohne_shift": 0.019205519153225808,
+     "unterschied_absolut": -8.7e-05,
+     "unterschied_relativ": -0.004507
+    },
+    "geom_iou": {
+     "auf36_auto_mit_shift": 0.00018285356042004074,
+     "auf37_ausdruecklich_ohne_shift": 0.0,
+     "unterschied_absolut": -0.000183,
+     "unterschied_relativ": -1.0
+    },
+    "n_gemeinsam": {
+     "auf36_auto_mit_shift": 14,
+     "auf37_ausdruecklich_ohne_shift": 0,
+     "unterschied_absolut": -14,
+     "unterschied_relativ": -1.0
+    },
+    "geometrie_score": {
+     "auf36_auto_mit_shift": null,
+     "auf37_ausdruecklich_ohne_shift": null,
+     "unterschied_absolut": null,
+     "unterschied_relativ": null
+    },
+    "n_maske": {
+     "auf36_auto_mit_shift": 30621,
+     "auf37_ausdruecklich_ohne_shift": 30483,
+     "unterschied_absolut": -138,
+     "unterschied_relativ": -0.004507
+    },
+    "n_soll": {
+     "auf36_auto_mit_shift": 38289,
+     "auf37_ausdruecklich_ohne_shift": 38234,
+     "unterschied_absolut": -55,
+     "unterschied_relativ": -0.001436
+    },
+    "soll_geometrieanteil": {
+     "auf36_auto_mit_shift": 0.024124,
+     "auf37_ausdruecklich_ohne_shift": 0.024089,
+     "unterschied_absolut": -3.5e-05,
+     "unterschied_relativ": -0.001451
+    },
+    "gerichtet": {
+     "auf36_auto_mit_shift": 0.3879556122852936,
+     "auf37_ausdruecklich_ohne_shift": -0.400868821040781,
+     "unterschied_absolut": -0.788824,
+     "unterschied_relativ": -2.033285
+    },
+    "maskenanker_rauschen_rho": {
+     "auf36_auto_mit_shift": 0.7807875935311117,
+     "auf37_ausdruecklich_ohne_shift": 0.8384297174080932,
+     "unterschied_absolut": 0.057642,
+     "unterschied_relativ": 0.073826
+    },
+    "fuellgrad_breite_nachgerechnet": {
+     "auf36_auto_mit_shift": 0.1749,
+     "auf37_ausdruecklich_ohne_shift": 0.1749,
+     "unterschied_absolut": 0.0,
+     "unterschied_relativ": 0.0
+    },
+    "kameraabstand_m": {
+     "auf36_auto_mit_shift": 90.548,
+     "auf37_ausdruecklich_ohne_shift": 90.548,
+     "unterschied_absolut": 0.0,
+     "unterschied_relativ": 0.0
+    }
+   },
+   "silhouette_gemessen": {
+    "auf36_auto_mit_shift": {
+     "bild_hxb": [
+      992,
+      1600
+     ],
+     "bauwerk_pixel": 30621,
+     "platte_pixel": 7668,
+     "geometrie_pixel": 38289,
+     "bauwerk_bbox_xyxy": [
+      664,
+      438,
+      942,
+      547
+     ],
+     "bauwerk_breite_px": 279,
+     "bauwerk_hoehe_px": 110,
+     "bauwerk_schwerpunkt_xy": [
+      802.72,
+      492.5
+     ]
+    },
+    "auf37_ohne_shift": {
+     "bild_hxb": [
+      992,
+      1600
+     ],
+     "bauwerk_pixel": 30483,
+     "platte_pixel": 7751,
+     "geometrie_pixel": 38234,
+     "bauwerk_bbox_xyxy": [
+      664,
+      417,
+      942,
+      526
+     ],
+     "bauwerk_breite_px": 279,
+     "bauwerk_hoehe_px": 110,
+     "bauwerk_schwerpunkt_xy": [
+      802.76,
+      471.87
+     ]
+    },
+    "unterschied": {
+     "breite_px": 0,
+     "hoehe_px": 0,
+     "schwerpunkt_dy_px": -20.63,
+     "schwerpunkt_dx_px": 0.04,
+     "shift_y_mal_bildbreite_px": 20.616,
+     "urteil": "Die Silhouette ist in Breite und Hoehe auf das Bildpunkt genau dieselbe (279 x 110 px in beiden). Sie steht nur 20.63 px hoeher — und das ist auf 0.01 px genau shift_y * 1600 = 20.62 px. Der Shift ist damit eine REINE senkrechte Bildverschiebung um 2.1 % der Bildhoehe und sonst nichts."
+    }
+   },
+   "roh_auf37": {
+    "anteil_maske": 0.019205519153225808,
+    "geom_iou": 0.0,
+    "n_gemeinsam": 0,
+    "geometrie_score": null,
+    "bestanden": false,
+    "spearman": null,
+    "gerichtet": -0.400868821040781,
+    "n_maske": 30483,
+    "n_soll": 38234,
+    "n_punkte": 1587200,
+    "soll_geometrieanteil": 0.024089,
+    "geom_iou_obergrenze": 0.024088961693548388,
+    "kameraabstand_m": 90.548,
+    "fuellgrad_breite_nachgerechnet": 0.1749,
+    "kamera_weg": "vorgegeben",
+    "kamera_modus_gemeldet": null,
+    "shift_y_gestellt": 0.0,
+    "neigung_grad_gemeldet": null,
+    "neigung_grad_aus_achse_gerechnet": 0.0,
+    "brennweite_mm_gestellt": 35.0,
+    "auge": [
+     -3.9891,
+     -90.46,
+     1.7
+    ],
+    "blick_auf": [
+     0.0,
+     0.0,
+     1.7
+    ],
+    "maske_gemessen": true,
+    "maske_quelle": [
+     "objekt"
+    ],
+    "maske_gelaendetreffer": [
+     "Boden_Platte"
+    ],
+    "paarurteil_bestanden": false,
+    "maskenanker_rauschen_rho": 0.8384297174080932,
+    "nullanker_rauschen": null,
+    "einordnung_ueber_rauschen": null,
+    "einordnung_ueber_gate": null,
+    "einordnung_anteil_der_spanne": null,
+    "anwesenheit": null,
+    "dauer_s": 2.666,
+    "schaetzer": "depth-anything-v2-small",
+    "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+   },
+   "roh_auf36": {
+    "anteil_maske": 0.019292464717741934,
+    "geom_iou": 0.00018285356042004074,
+    "n_gemeinsam": 14,
+    "geometrie_score": null,
+    "bestanden": false,
+    "gerichtet": 0.3879556122852936,
+    "n_maske": 30621,
+    "n_soll": 38289,
+    "n_punkte": 1587200,
+    "soll_geometrieanteil": 0.024124,
+    "kameraabstand_m": 90.548,
+    "fuellgrad_breite_nachgerechnet": 0.1749,
+    "kamera_weg": "abgeleitet",
+    "kamera_modus_gemeldet": "shift",
+    "shift_y_gestellt": 0.012885,
+    "neigung_grad_gemeldet": 0.0,
+    "brennweite_mm_gestellt": 35.0,
+    "auge": [
+     -3.9891,
+     -90.46,
+     1.7
+    ],
+    "blick_auf": [
+     0.0,
+     0.0,
+     1.7
+    ],
+    "maske_gemessen": true,
+    "maske_quelle": [
+     "objekt"
+    ],
+    "maske_gelaendetreffer": [
+     "Boden_Platte"
+    ],
+    "paarurteil_bestanden": false,
+    "maskenanker_rauschen_rho": 0.7807875935311117,
+    "nullanker_rauschen": null,
+    "dauer_s": 2.807,
+    "schaetzer": "depth-anything-v2-small",
+    "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+   }
+  },
+  "probe_2_kippung_am_s70_standort": {
+   "warum": "Probe 1 haelt den Ausschnitt bei 17.5 % fest — dort entsteht in beiden Faellen gar kein Score. Damit ist offen, ob die Kameraart bei 70 % Bildbreite etwas beitraegt, also genau dort, wo das Tor besteht. Ein Shift ist ueber den fremden Vertrag nicht zu stellen; die naechste erreichbare Frage ist: Was traegt die KIPPUNG bei?",
+   "was": "Derselbe Standort wie s70, dieselbe Brennweite, aber WAAGRECHTE Achse (target z = Augenhoehe 1.7 statt 2.9). Der waagrechte Abstand und damit der Fuellgrad der Bildbreite (0.6985) sind in beiden Faellen identisch.",
+   "gekippt": {
+    "position": [
+     -1.536,
+     -26.513333,
+     1.7
+    ],
+    "target": [
+     0.0,
+     0.0,
+     2.9
+    ],
+    "neigung_grad": 2.59
+   },
+   "waagrecht": {
+    "position": [
+     -1.536,
+     -26.513333,
+     1.7
+    ],
+    "target": [
+     0.0,
+     0.0,
+     1.7
+    ],
+    "neigung_grad": 0.0
+   },
+   "drei_startwerte_je_kamera": {
+    "geometrie_score": {
+     "gekippt_2_59_grad_seeds_012": {
+      "werte": [
+       0.959856424434278,
+       0.9510718023406999,
+       0.9538662565768022
+      ],
+      "mittel": 0.954931,
+      "spanne": 0.008785,
+      "kleinster": 0.9510718023406999,
+      "groesster": 0.959856424434278
+     },
+     "waagrecht_0_grad_seeds_012": {
+      "werte": [
+       0.8166066699581352,
+       0.7140778958005121,
+       0.8356426607184041
+      ],
+      "mittel": 0.788776,
+      "spanne": 0.121565,
+      "kleinster": 0.7140778958005121,
+      "groesster": 0.8356426607184041
+     }
+    },
+    "geom_iou": {
+     "gekippt_2_59_grad_seeds_012": {
+      "werte": [
+       0.932323330116148,
+       0.9272009827051069,
+       0.9257249259954802
+      ],
+      "mittel": 0.928416,
+      "spanne": 0.006598,
+      "kleinster": 0.9257249259954802,
+      "groesster": 0.932323330116148
+     },
+     "waagrecht_0_grad_seeds_012": {
+      "werte": [
+       0.7273568089479213,
+       0.5480586095310835,
+       0.725330771863738
+      ],
+      "mittel": 0.666915,
+      "spanne": 0.179298,
+      "kleinster": 0.5480586095310835,
+      "groesster": 0.7273568089479213
+     }
+    },
+    "n_gemeinsam": {
+     "gekippt_2_59_grad_seeds_012": {
+      "werte": [
+       934105,
+       931442,
+       930672
+      ],
+      "mittel": 932073,
+      "spanne": 3433,
+      "kleinster": 930672,
+      "groesster": 934105
+     },
+     "waagrecht_0_grad_seeds_012": {
+      "werte": [
+       810797,
+       681689,
+       809488
+      ],
+      "mittel": 767324.666667,
+      "spanne": 129108,
+      "kleinster": 681689,
+      "groesster": 810797
+     }
+    },
+    "anteil_maske": {
+     "gekippt_2_59_grad_seeds_012": {
+      "werte": [
+       0.30512474798387096,
+       0.30512474798387096,
+       0.30512474798387096
+      ],
+      "mittel": 0.305125,
+      "spanne": 0.0,
+      "kleinster": 0.30512474798387096,
+      "groesster": 0.30512474798387096
+     },
+     "waagrecht_0_grad_seeds_012": {
+      "werte": [
+       0.3067048891129032,
+       0.3067048891129032,
+       0.3067048891129032
+      ],
+      "mittel": 0.306705,
+      "spanne": 0.0,
+      "kleinster": 0.3067048891129032,
+      "groesster": 0.3067048891129032
+     }
+    },
+    "spearman": {
+     "gekippt_2_59_grad_seeds_012": {
+      "werte": [
+       -0.9882026178761172,
+       -0.9755571770088086,
+       -0.982863062110401
+      ],
+      "mittel": -0.982208,
+      "spanne": 0.012645,
+      "kleinster": -0.9882026178761172,
+      "groesster": -0.9755571770088086
+     },
+     "waagrecht_0_grad_seeds_012": {
+      "werte": [
+       -0.9168078791819779,
+       -0.9303881599582228,
+       -0.9627313268651967
+      ],
+      "mittel": -0.936642,
+      "spanne": 0.045923,
+      "kleinster": -0.9627313268651967,
+      "groesster": -0.9168078791819779
+     }
+    },
+    "nullanker_rauschen": {
+     "gekippt_2_59_grad_seeds_012": {
+      "werte": [
+       0.5375134911000522,
+       0.5375134911000522,
+       0.5375134911000522
+      ],
+      "mittel": 0.537513,
+      "spanne": 0.0,
+      "kleinster": 0.5375134911000522,
+      "groesster": 0.5375134911000522
+     },
+     "waagrecht_0_grad_seeds_012": {
+      "werte": [
+       0.4809985026807042,
+       0.4809985026807042,
+       0.4809985026807042
+      ],
+      "mittel": 0.480999,
+      "spanne": 0.0,
+      "kleinster": 0.4809985026807042,
+      "groesster": 0.4809985026807042
+     }
+    },
+    "maskenanker_rauschen_rho": {
+     "gekippt_2_59_grad_seeds_012": {
+      "werte": [
+       0.37634476644047454,
+       0.37634476644047454,
+       0.37634476644047454
+      ],
+      "mittel": 0.376345,
+      "spanne": 0.0,
+      "kleinster": 0.37634476644047454,
+      "groesster": 0.37634476644047454
+     },
+     "waagrecht_0_grad_seeds_012": {
+      "werte": [
+       0.29171067809081075,
+       0.29171067809081075,
+       0.29171067809081075
+      ],
+      "mittel": 0.291711,
+      "spanne": 0.0,
+      "kleinster": 0.29171067809081075,
+      "groesster": 0.29171067809081075
+     }
+    },
+    "urteil": {
+     "mittel_gekippt": 0.954931,
+     "mittel_waagrecht": 0.788776,
+     "unterschied_der_mittel": 0.166156,
+     "spanne_gekippt": 0.008785,
+     "spanne_waagrecht": 0.121565,
+     "kleinster_gekippt_gegen_groesster_waagrecht": 0.115429,
+     "getrennt": true,
+     "beide_bestehen_das_tor": true
+    },
+    "silhouette": {
+     "auf36_s70_gekippt": {
+      "bild_hxb": [
+       992,
+       1600
+      ],
+      "bauwerk_pixel": 484294,
+      "platte_pixel": 483714,
+      "geometrie_pixel": 968008,
+      "bauwerk_bbox_xyxy": [
+       250,
+       249,
+       1369,
+       692
+      ],
+      "bauwerk_breite_px": 1120,
+      "bauwerk_hoehe_px": 444,
+      "bauwerk_schwerpunkt_xy": [
+       805.87,
+       473.08
+      ]
+     },
+     "auf37_s70_waagrecht": {
+      "bild_hxb": [
+       992,
+       1600
+      ],
+      "bauwerk_pixel": 486802,
+      "platte_pixel": 475955,
+      "geometrie_pixel": 962757,
+      "bauwerk_bbox_xyxy": [
+       253,
+       177,
+       1367,
+       621
+      ],
+      "bauwerk_breite_px": 1115,
+      "bauwerk_hoehe_px": 445,
+      "bauwerk_schwerpunkt_xy": [
+       806.14,
+       400.89
+      ]
+     },
+     "schwerpunkt_dy_px": -72.19,
+     "breite_px_unterschied": -5,
+     "hoehe_px_unterschied": 1
+    }
+   },
+   "wiederholung_von_auf36": {
+    "was": "s70 gekippt, seed 0 — woertlich dieselbe Kamera wie Stufe 3 von auf-36, neu gefahren",
+    "auf36_score": 0.959856424434278,
+    "auf37_score": 0.959856424434278,
+    "unterschied": 0.0,
+    "auf36_geom_iou": 0.932323330116148,
+    "auf37_geom_iou": 0.932323330116148,
+    "auf36_n_gemeinsam": 934105,
+    "auf37_n_gemeinsam": 934105
+   },
+   "roh": {
+    "s70gekippt_seed0": {
+     "anteil_maske": 0.30512474798387096,
+     "geom_iou": 0.932323330116148,
+     "n_gemeinsam": 934105,
+     "geometrie_score": 0.959856424434278,
+     "bestanden": true,
+     "spearman": -0.9882026178761172,
+     "gerichtet": 0.9318283488042319,
+     "n_maske": 484294,
+     "n_soll": 968008,
+     "n_punkte": 1587200,
+     "soll_geometrieanteil": 0.609884,
+     "geom_iou_obergrenze": 0.6098840725806451,
+     "kameraabstand_m": 26.558,
+     "fuellgrad_breite_nachgerechnet": 0.6985,
+     "kamera_weg": "vorgegeben",
+     "kamera_modus_gemeldet": null,
+     "shift_y_gestellt": 0.0,
+     "neigung_grad_gemeldet": null,
+     "neigung_grad_aus_achse_gerechnet": 2.5871,
+     "brennweite_mm_gestellt": 35.0,
+     "auge": [
+      -1.536,
+      -26.5133,
+      1.7
+     ],
+     "blick_auf": [
+      0.0,
+      0.0,
+      2.9
+     ],
+     "maske_gemessen": true,
+     "maske_quelle": [
+      "objekt"
+     ],
+     "maske_gelaendetreffer": [
+      "Boden_Platte"
+     ],
+     "paarurteil_bestanden": true,
+     "maskenanker_rauschen_rho": 0.37634476644047454,
+     "nullanker_rauschen": 0.5375134911000522,
+     "einordnung_ueber_rauschen": true,
+     "einordnung_ueber_gate": true,
+     "einordnung_anteil_der_spanne": 0.9132005479225633,
+     "anwesenheit": null,
+     "dauer_s": 3.695,
+     "schaetzer": "depth-anything-v2-small",
+     "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+    },
+    "s70gekippt_seed1": {
+     "anteil_maske": 0.30512474798387096,
+     "geom_iou": 0.9272009827051069,
+     "n_gemeinsam": 931442,
+     "geometrie_score": 0.9510718023406999,
+     "bestanden": true,
+     "spearman": -0.9755571770088086,
+     "gerichtet": 0.9578885199841767,
+     "n_maske": 484294,
+     "n_soll": 968008,
+     "n_punkte": 1587200,
+     "soll_geometrieanteil": 0.609884,
+     "geom_iou_obergrenze": 0.6098840725806451,
+     "kameraabstand_m": 26.558,
+     "fuellgrad_breite_nachgerechnet": 0.6985,
+     "kamera_weg": "vorgegeben",
+     "kamera_modus_gemeldet": null,
+     "shift_y_gestellt": 0.0,
+     "neigung_grad_gemeldet": null,
+     "neigung_grad_aus_achse_gerechnet": 2.5871,
+     "brennweite_mm_gestellt": 35.0,
+     "auge": [
+      -1.536,
+      -26.5133,
+      1.7
+     ],
+     "blick_auf": [
+      0.0,
+      0.0,
+      2.9
+     ],
+     "maske_gemessen": true,
+     "maske_quelle": [
+      "objekt"
+     ],
+     "maske_gelaendetreffer": [
+      "Boden_Platte"
+     ],
+     "paarurteil_bestanden": false,
+     "maskenanker_rauschen_rho": 0.37634476644047454,
+     "nullanker_rauschen": 0.5375134911000522,
+     "einordnung_ueber_rauschen": true,
+     "einordnung_ueber_gate": true,
+     "einordnung_anteil_der_spanne": 0.8942062163593079,
+     "anwesenheit": null,
+     "dauer_s": 3.913,
+     "schaetzer": "depth-anything-v2-small",
+     "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+    },
+    "s70gekippt_seed2": {
+     "anteil_maske": 0.30512474798387096,
+     "geom_iou": 0.9257249259954802,
+     "n_gemeinsam": 930672,
+     "geometrie_score": 0.9538662565768022,
+     "bestanden": true,
+     "spearman": -0.982863062110401,
+     "gerichtet": 0.8943098358642542,
+     "n_maske": 484294,
+     "n_soll": 968008,
+     "n_punkte": 1587200,
+     "soll_geometrieanteil": 0.609884,
+     "geom_iou_obergrenze": 0.6098840725806451,
+     "kameraabstand_m": 26.558,
+     "fuellgrad_breite_nachgerechnet": 0.6985,
+     "kamera_weg": "vorgegeben",
+     "kamera_modus_gemeldet": null,
+     "shift_y_gestellt": 0.0,
+     "neigung_grad_gemeldet": null,
+     "neigung_grad_aus_achse_gerechnet": 2.5871,
+     "brennweite_mm_gestellt": 35.0,
+     "auge": [
+      -1.536,
+      -26.5133,
+      1.7
+     ],
+     "blick_auf": [
+      0.0,
+      0.0,
+      2.9
+     ],
+     "maske_gemessen": true,
+     "maske_quelle": [
+      "objekt"
+     ],
+     "maske_gelaendetreffer": [
+      "Boden_Platte"
+     ],
+     "paarurteil_bestanden": false,
+     "maskenanker_rauschen_rho": 0.37634476644047454,
+     "nullanker_rauschen": 0.5375134911000522,
+     "einordnung_ueber_rauschen": true,
+     "einordnung_ueber_gate": true,
+     "einordnung_anteil_der_spanne": 0.9002484558243015,
+     "anwesenheit": null,
+     "dauer_s": 3.926,
+     "schaetzer": "depth-anything-v2-small",
+     "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+    },
+    "s70flach_seed0": {
+     "anteil_maske": 0.3067048891129032,
+     "geom_iou": 0.7273568089479213,
+     "n_gemeinsam": 810797,
+     "geometrie_score": 0.8166066699581352,
+     "bestanden": true,
+     "spearman": -0.9168078791819779,
+     "gerichtet": 0.5152198072357592,
+     "n_maske": 486802,
+     "n_soll": 962757,
+     "n_punkte": 1587200,
+     "soll_geometrieanteil": 0.606576,
+     "geom_iou_obergrenze": 0.6065757308467742,
+     "kameraabstand_m": 26.558,
+     "fuellgrad_breite_nachgerechnet": 0.6985,
+     "kamera_weg": "vorgegeben",
+     "kamera_modus_gemeldet": null,
+     "shift_y_gestellt": 0.0,
+     "neigung_grad_gemeldet": null,
+     "neigung_grad_aus_achse_gerechnet": 0.0,
+     "brennweite_mm_gestellt": 35.0,
+     "auge": [
+      -1.536,
+      -26.5133,
+      1.7
+     ],
+     "blick_auf": [
+      0.0,
+      0.0,
+      1.7
+     ],
+     "maske_gemessen": true,
+     "maske_quelle": [
+      "objekt"
+     ],
+     "maske_gelaendetreffer": [
+      "Boden_Platte"
+     ],
+     "paarurteil_bestanden": false,
+     "maskenanker_rauschen_rho": 0.29171067809081075,
+     "nullanker_rauschen": 0.4809985026807042,
+     "einordnung_ueber_rauschen": true,
+     "einordnung_ueber_gate": true,
+     "einordnung_anteil_der_spanne": 0.6466420020190442,
+     "anwesenheit": null,
+     "dauer_s": 3.699,
+     "schaetzer": "depth-anything-v2-small",
+     "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+    },
+    "s70flach_seed1": {
+     "anteil_maske": 0.3067048891129032,
+     "geom_iou": 0.5480586095310835,
+     "n_gemeinsam": 681689,
+     "geometrie_score": 0.7140778958005121,
+     "bestanden": true,
+     "spearman": -0.9303881599582228,
+     "gerichtet": 0.9299510768028538,
+     "n_maske": 486802,
+     "n_soll": 962757,
+     "n_punkte": 1587200,
+     "soll_geometrieanteil": 0.606576,
+     "geom_iou_obergrenze": 0.6065757308467742,
+     "kameraabstand_m": 26.558,
+     "fuellgrad_breite_nachgerechnet": 0.6985,
+     "kamera_weg": "vorgegeben",
+     "kamera_modus_gemeldet": null,
+     "shift_y_gestellt": 0.0,
+     "neigung_grad_gemeldet": null,
+     "neigung_grad_aus_achse_gerechnet": 0.0,
+     "brennweite_mm_gestellt": 35.0,
+     "auge": [
+      -1.536,
+      -26.5133,
+      1.7
+     ],
+     "blick_auf": [
+      0.0,
+      0.0,
+      1.7
+     ],
+     "maske_gemessen": true,
+     "maske_quelle": [
+      "objekt"
+     ],
+     "maske_gelaendetreffer": [
+      "Boden_Platte"
+     ],
+     "paarurteil_bestanden": false,
+     "maskenanker_rauschen_rho": 0.29171067809081075,
+     "nullanker_rauschen": 0.4809985026807042,
+     "einordnung_ueber_rauschen": true,
+     "einordnung_ueber_gate": true,
+     "einordnung_anteil_der_spanne": 0.44909194737142477,
+     "anwesenheit": null,
+     "dauer_s": 3.645,
+     "schaetzer": "depth-anything-v2-small",
+     "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+    },
+    "s70flach_seed2": {
+     "anteil_maske": 0.3067048891129032,
+     "geom_iou": 0.725330771863738,
+     "n_gemeinsam": 809488,
+     "geometrie_score": 0.8356426607184041,
+     "bestanden": true,
+     "spearman": -0.9627313268651967,
+     "gerichtet": 0.9411079799480327,
+     "n_maske": 486802,
+     "n_soll": 962757,
+     "n_punkte": 1587200,
+     "soll_geometrieanteil": 0.606576,
+     "geom_iou_obergrenze": 0.6065757308467742,
+     "kameraabstand_m": 26.558,
+     "fuellgrad_breite_nachgerechnet": 0.6985,
+     "kamera_weg": "vorgegeben",
+     "kamera_modus_gemeldet": null,
+     "shift_y_gestellt": 0.0,
+     "neigung_grad_gemeldet": null,
+     "neigung_grad_aus_achse_gerechnet": 0.0,
+     "brennweite_mm_gestellt": 35.0,
+     "auge": [
+      -1.536,
+      -26.5133,
+      1.7
+     ],
+     "blick_auf": [
+      0.0,
+      0.0,
+      1.7
+     ],
+     "maske_gemessen": true,
+     "maske_quelle": [
+      "objekt"
+     ],
+     "maske_gelaendetreffer": [
+      "Boden_Platte"
+     ],
+     "paarurteil_bestanden": false,
+     "maskenanker_rauschen_rho": 0.29171067809081075,
+     "nullanker_rauschen": 0.4809985026807042,
+     "einordnung_ueber_rauschen": true,
+     "einordnung_ueber_gate": true,
+     "einordnung_anteil_der_spanne": 0.6833201057597694,
+     "anwesenheit": null,
+     "dauer_s": 3.709,
+     "schaetzer": "depth-anything-v2-small",
+     "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+    }
+   }
+  }
+ },
+ "frage_b": {
+  "was_gefahren_wurde": "Drei weitere Stufen bei 0.55, 0.60 und 0.65 Fuellgrad der Bildbreite. Dieselbe Szene, dieselbe Ansicht (s, 180 Grad), derselbe Startwert (seed 0), dieselbe Kameraart wie s50/s70 (ausdruecklich, MODUS_GEKIPPT, aus der BAUWERKS-Huellbox gerechnet). Die Reihe ist damit in sich vergleichbar.",
+  "gerechnete_kameras": {
+   "bauwerk_bbox": [
+    [
+     -7.68,
+     -5.18,
+     0.0
+    ],
+    [
+     7.68,
+     5.18,
+     6.0
+    ]
+   ],
+   "azimut_bezug_grad": 180.0,
+   "seitenverhaeltnis": 1.6129032258064515,
+   "brennweite_mm": 35.0,
+   "fov": 54.43222311461495,
+   "stufen": {
+    "s55": {
+     "deckungsgrad_bestellt": 0.55,
+     "spec": {
+      "position": [
+       -1.536,
+       -32.331515,
+       1.7
+      ],
+      "target": [
+       0.0,
+       0.0,
+       2.9
+      ],
+      "name": "s55",
+      "fov": 54.43222311461495
+     },
+     "azimut_grad": 180.0,
+     "abstand_m": 32.36798059800231,
+     "abstand_analytisch_m": 32.331515151515156,
+     "fuellgrad": 0.5492623212490666,
+     "fuellgrad_breite": 0.5492623212490666,
+     "fuellgrad_hoehe": 0.3575926570631943,
+     "flaechenanteil": 0.18915730123672647,
+     "vollstaendig": true,
+     "massgebend": "breite",
+     "modus": "gekippt",
+     "warnungen": []
+    },
+    "s60": {
+     "deckungsgrad_bestellt": 0.6,
+     "spec": {
+      "position": [
+       -1.536,
+       -30.068889,
+       1.7
+      ],
+      "target": [
+       0.0,
+       0.0,
+       2.9
+      ],
+      "name": "s60",
+      "fov": 54.43222311461495
+     },
+     "azimut_grad": 180.0,
+     "abstand_m": 30.10809484195813,
+     "abstand_analytisch_m": 30.068888888888893,
+     "fuellgrad": 0.5990563429740348,
+     "fuellgrad_breite": 0.5990563429740348,
+     "fuellgrad_hoehe": 0.39001063995705376,
+     "flaechenanteil": 0.2248177561020972,
+     "vollstaendig": true,
+     "massgebend": "breite",
+     "modus": "gekippt",
+     "warnungen": []
+    },
+    "s65": {
+     "deckungsgrad_bestellt": 0.65,
+     "spec": {
+      "position": [
+       -1.536,
+       -28.154359,
+       1.7
+      ],
+      "target": [
+       0.0,
+       0.0,
+       2.9
+      ],
+      "name": "s65",
+      "fov": 54.43222311461495
+     },
+     "azimut_grad": 180.0,
+     "abstand_m": 28.19622714579147,
+     "abstand_analytisch_m": 28.154358974358978,
+     "fuellgrad": 0.6488176032822957,
+     "fuellgrad_breite": 0.6488176032822957,
+     "fuellgrad_hoehe": 0.42240729380357783,
+     "flaechenanteil": 0.26348226949380543,
+     "vollstaendig": true,
+     "massgebend": "breite",
+     "modus": "gekippt",
+     "warnungen": []
+    }
+   }
+  },
+  "je_stufe": {
+   "auto_bezug": {
+    "fuellgrad_breite": 0.1749,
+    "herkunft": "auf-20260824-36, cameras auto (mit Shift)",
+    "anteil_maske": 0.019292464717741934,
+    "geom_iou": 0.00018285356042004074,
+    "n_gemeinsam": 14,
+    "geometrie_score": null,
+    "bestanden": false,
+    "spearman": null,
+    "gerichtet": 0.3879556122852936,
+    "n_maske": 30621,
+    "n_soll": 38289,
+    "n_punkte": 1587200,
+    "soll_geometrieanteil": 0.024124,
+    "geom_iou_obergrenze": null,
+    "kameraabstand_m": 90.548,
+    "fuellgrad_breite_nachgerechnet": 0.1749,
+    "kamera_weg": "abgeleitet",
+    "kamera_modus_gemeldet": "shift",
+    "shift_y_gestellt": 0.012885,
+    "neigung_grad_gemeldet": 0.0,
+    "neigung_grad_aus_achse_gerechnet": null,
+    "brennweite_mm_gestellt": 35.0,
+    "auge": [
+     -3.9891,
+     -90.46,
+     1.7
+    ],
+    "blick_auf": [
+     0.0,
+     0.0,
+     1.7
+    ],
+    "maske_gemessen": true,
+    "maske_quelle": [
+     "objekt"
+    ],
+    "maske_gelaendetreffer": [
+     "Boden_Platte"
+    ],
+    "paarurteil_bestanden": false,
+    "maskenanker_rauschen_rho": 0.7807875935311117,
+    "nullanker_rauschen": null,
+    "einordnung_ueber_rauschen": null,
+    "einordnung_ueber_gate": null,
+    "einordnung_anteil_der_spanne": null,
+    "anwesenheit": null,
+    "dauer_s": 2.807,
+    "schaetzer": "depth-anything-v2-small",
+    "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+   },
+   "s30": {
+    "fuellgrad_breite": 0.2999,
+    "herkunft": "auf-20260824-36",
+    "anteil_maske": 0.05650516633064516,
+    "geom_iou": 0.0,
+    "n_gemeinsam": 0,
+    "geometrie_score": null,
+    "bestanden": false,
+    "spearman": null,
+    "gerichtet": -0.7718698696119352,
+    "n_maske": 89685,
+    "n_soll": 133021,
+    "n_punkte": 1587200,
+    "soll_geometrieanteil": 0.083809,
+    "geom_iou_obergrenze": null,
+    "kameraabstand_m": 54.979,
+    "fuellgrad_breite_nachgerechnet": 0.2999,
+    "kamera_weg": "vorgegeben",
+    "kamera_modus_gemeldet": null,
+    "shift_y_gestellt": 0.0,
+    "neigung_grad_gemeldet": null,
+    "neigung_grad_aus_achse_gerechnet": null,
+    "brennweite_mm_gestellt": 35.0,
+    "auge": [
+     -1.536,
+     -54.9578,
+     1.7
+    ],
+    "blick_auf": [
+     0.0,
+     0.0,
+     2.9
+    ],
+    "maske_gemessen": true,
+    "maske_quelle": [
+     "objekt"
+    ],
+    "maske_gelaendetreffer": [
+     "Boden_Platte"
+    ],
+    "paarurteil_bestanden": false,
+    "maskenanker_rauschen_rho": 0.8476713899870315,
+    "nullanker_rauschen": null,
+    "einordnung_ueber_rauschen": null,
+    "einordnung_ueber_gate": null,
+    "einordnung_anteil_der_spanne": null,
+    "anwesenheit": null,
+    "dauer_s": 3.026,
+    "schaetzer": "depth-anything-v2-small",
+    "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+   },
+   "s50": {
+    "fuellgrad_breite": 0.4994,
+    "herkunft": "auf-20260824-36",
+    "anteil_maske": 0.15651902721774194,
+    "geom_iou": 0.0014413285289049036,
+    "n_gemeinsam": 1196,
+    "geometrie_score": 0.03176929653034413,
+    "bestanden": false,
+    "spearman": null,
+    "gerichtet": 0.696719573798963,
+    "n_maske": 248427,
+    "n_soll": 415493,
+    "n_punkte": 1587200,
+    "soll_geometrieanteil": 0.261777,
+    "geom_iou_obergrenze": null,
+    "kameraabstand_m": 35.08,
+    "fuellgrad_breite_nachgerechnet": 0.4994,
+    "kamera_weg": "vorgegeben",
+    "kamera_modus_gemeldet": null,
+    "shift_y_gestellt": 0.0,
+    "neigung_grad_gemeldet": null,
+    "neigung_grad_aus_achse_gerechnet": null,
+    "brennweite_mm_gestellt": 35.0,
+    "auge": [
+     -1.536,
+     -35.0467,
+     1.7
+    ],
+    "blick_auf": [
+     0.0,
+     0.0,
+     2.9
+    ],
+    "maske_gemessen": true,
+    "maske_quelle": [
+     "objekt"
+    ],
+    "maske_gelaendetreffer": [
+     "Boden_Platte"
+    ],
+    "paarurteil_bestanden": false,
+    "maskenanker_rauschen_rho": 0.6444514677362316,
+    "nullanker_rauschen": 0.025132616317012142,
+    "einordnung_ueber_rauschen": null,
+    "einordnung_ueber_gate": null,
+    "einordnung_anteil_der_spanne": null,
+    "anwesenheit": null,
+    "dauer_s": 2.781,
+    "schaetzer": "depth-anything-v2-small",
+    "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+   },
+   "s55": {
+    "fuellgrad_breite": 0.5493,
+    "herkunft": "auf-20260824-37, NEU",
+    "anteil_maske": 0.18913495463709679,
+    "geom_iou": 0.18170164141399728,
+    "n_gemeinsam": 159173,
+    "geometrie_score": 0.42598138672555214,
+    "bestanden": false,
+    "spearman": -0.9986709004085293,
+    "gerichtet": 0.2113416277114552,
+    "n_maske": 300195,
+    "n_soll": 517593,
+    "n_punkte": 1587200,
+    "soll_geometrieanteil": 0.326104,
+    "geom_iou_obergrenze": 0.3261044606854839,
+    "kameraabstand_m": 32.368,
+    "fuellgrad_breite_nachgerechnet": 0.5493,
+    "kamera_weg": "vorgegeben",
+    "kamera_modus_gemeldet": null,
+    "shift_y_gestellt": 0.0,
+    "neigung_grad_gemeldet": null,
+    "neigung_grad_aus_achse_gerechnet": 2.1232,
+    "brennweite_mm_gestellt": 35.0,
+    "auge": [
+     -1.536,
+     -32.3315,
+     1.7
+    ],
+    "blick_auf": [
+     0.0,
+     0.0,
+     2.9
+    ],
+    "maske_gemessen": true,
+    "maske_quelle": [
+     "objekt"
+    ],
+    "maske_gelaendetreffer": [
+     "Boden_Platte"
+    ],
+    "paarurteil_bestanden": false,
+    "maskenanker_rauschen_rho": 0.5620847891274615,
+    "nullanker_rauschen": 0.08248862827618252,
+    "einordnung_ueber_rauschen": true,
+    "einordnung_ueber_gate": false,
+    "einordnung_anteil_der_spanne": 0.3743743881931583,
+    "anwesenheit": null,
+    "dauer_s": 3.239,
+    "schaetzer": "depth-anything-v2-small",
+    "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+   },
+   "s60": {
+    "fuellgrad_breite": 0.5991,
+    "herkunft": "auf-20260824-37, NEU",
+    "anteil_maske": 0.22482862903225806,
+    "geom_iou": 0.39941131428959525,
+    "n_gemeinsam": 364615,
+    "geometrie_score": 0.6207935407738147,
+    "bestanden": false,
+    "spearman": -0.9648815806631474,
+    "gerichtet": -0.16215881163659626,
+    "n_maske": 356848,
+    "n_soll": 638748,
+    "n_punkte": 1587200,
+    "soll_geometrieanteil": 0.402437,
+    "geom_iou_obergrenze": 0.40243699596774196,
+    "kameraabstand_m": 30.108,
+    "fuellgrad_breite_nachgerechnet": 0.5991,
+    "kamera_weg": "vorgegeben",
+    "kamera_modus_gemeldet": null,
+    "shift_y_gestellt": 0.0,
+    "neigung_grad_gemeldet": null,
+    "neigung_grad_aus_achse_gerechnet": 2.2824,
+    "brennweite_mm_gestellt": 35.0,
+    "auge": [
+     -1.536,
+     -30.0689,
+     1.7
+    ],
+    "blick_auf": [
+     0.0,
+     0.0,
+     2.9
+    ],
+    "maske_gemessen": true,
+    "maske_quelle": [
+     "objekt"
+    ],
+    "maske_gelaendetreffer": [
+     "Boden_Platte"
+    ],
+    "paarurteil_bestanden": false,
+    "maskenanker_rauschen_rho": 0.4835499429018971,
+    "nullanker_rauschen": 0.15262561100955785,
+    "einordnung_ueber_rauschen": true,
+    "einordnung_ueber_gate": false,
+    "einordnung_anteil_der_spanne": 0.5524924234753306,
+    "anwesenheit": null,
+    "dauer_s": 3.412,
+    "schaetzer": "depth-anything-v2-small",
+    "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+   },
+   "s65": {
+    "fuellgrad_breite": 0.6488,
+    "herkunft": "auf-20260824-37, NEU",
+    "anteil_maske": 0.26349483366935483,
+    "geom_iou": 0.6372887186302869,
+    "n_gemeinsam": 611367,
+    "geometrie_score": 0.7644285551890485,
+    "bestanden": true,
+    "spearman": -0.9169329362119436,
+    "gerichtet": 0.5731156772871755,
+    "n_maske": 418219,
+    "n_soll": 785346,
+    "n_punkte": 1587200,
+    "soll_geometrieanteil": 0.4948,
+    "geom_iou_obergrenze": 0.49479964717741937,
+    "kameraabstand_m": 28.196,
+    "fuellgrad_breite_nachgerechnet": 0.6488,
+    "kamera_weg": "vorgegeben",
+    "kamera_modus_gemeldet": null,
+    "shift_y_gestellt": 0.0,
+    "neigung_grad_gemeldet": null,
+    "neigung_grad_aus_achse_gerechnet": 2.437,
+    "brennweite_mm_gestellt": 35.0,
+    "auge": [
+     -1.536,
+     -28.1544,
+     1.7
+    ],
+    "blick_auf": [
+     0.0,
+     0.0,
+     2.9
+    ],
+    "maske_gemessen": true,
+    "maske_quelle": [
+     "objekt"
+    ],
+    "maske_gelaendetreffer": [
+     "Boden_Platte"
+    ],
+    "paarurteil_bestanden": false,
+    "maskenanker_rauschen_rho": 0.42205428275138046,
+    "nullanker_rauschen": 0.3881037165452337,
+    "einordnung_ueber_rauschen": true,
+    "einordnung_ueber_gate": true,
+    "einordnung_anteil_der_spanne": 0.6150140944133291,
+    "anwesenheit": null,
+    "dauer_s": 3.449,
+    "schaetzer": "depth-anything-v2-small",
+    "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+   },
+   "s70": {
+    "fuellgrad_breite": 0.6985,
+    "herkunft": "auf-20260824-36 (hier mit seed 0 wiederholt: gleiches Ergebnis)",
+    "anteil_maske": 0.30512474798387096,
+    "geom_iou": 0.932323330116148,
+    "n_gemeinsam": 934105,
+    "geometrie_score": 0.959856424434278,
+    "bestanden": true,
+    "spearman": null,
+    "gerichtet": 0.9318283488042319,
+    "n_maske": 484294,
+    "n_soll": 968008,
+    "n_punkte": 1587200,
+    "soll_geometrieanteil": 0.609884,
+    "geom_iou_obergrenze": null,
+    "kameraabstand_m": 26.558,
+    "fuellgrad_breite_nachgerechnet": 0.6985,
+    "kamera_weg": "vorgegeben",
+    "kamera_modus_gemeldet": null,
+    "shift_y_gestellt": 0.0,
+    "neigung_grad_gemeldet": null,
+    "neigung_grad_aus_achse_gerechnet": null,
+    "brennweite_mm_gestellt": 35.0,
+    "auge": [
+     -1.536,
+     -26.5133,
+     1.7
+    ],
+    "blick_auf": [
+     0.0,
+     0.0,
+     2.9
+    ],
+    "maske_gemessen": true,
+    "maske_quelle": [
+     "objekt"
+    ],
+    "maske_gelaendetreffer": [
+     "Boden_Platte"
+    ],
+    "paarurteil_bestanden": true,
+    "maskenanker_rauschen_rho": 0.37634476644047454,
+    "nullanker_rauschen": 0.5375134911000522,
+    "einordnung_ueber_rauschen": null,
+    "einordnung_ueber_gate": null,
+    "einordnung_anteil_der_spanne": null,
+    "anwesenheit": null,
+    "dauer_s": 3.713,
+    "schaetzer": "depth-anything-v2-small",
+    "modell_id": "depth-anything/Depth-Anything-V2-Small-hf"
+   }
+  },
+  "kurz": {
+   "fuellgrad_breite": [
+    0.1749,
+    0.2999,
+    0.4994,
+    0.5493,
+    0.5991,
+    0.6488,
+    0.6985
+   ],
+   "anteil_maske": [
+    0.019292,
+    0.056505,
+    0.156519,
+    0.189135,
+    0.224829,
+    0.263495,
+    0.305125
+   ],
+   "soll_geometrieanteil": [
+    0.024124,
+    0.083809,
+    0.261777,
+    0.326104,
+    0.402437,
+    0.4948,
+    0.609884
+   ],
+   "geom_iou": [
+    0.000183,
+    0.0,
+    0.001441,
+    0.181702,
+    0.399411,
+    0.637289,
+    0.932323
+   ],
+   "n_gemeinsam": [
+    14,
+    0,
+    1196,
+    159173,
+    364615,
+    611367,
+    934105
+   ],
+   "geometrie_score": [
+    null,
+    null,
+    0.031769,
+    0.425981,
+    0.620794,
+    0.764429,
+    0.959856
+   ],
+   "bestanden": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true
+   ],
+   "rauschboden_maskenanker_rho": [
+    0.7807875935311117,
+    0.8476713899870315,
+    0.6444514677362316,
+    0.5620847891274615,
+    0.4835499429018971,
+    0.42205428275138046,
+    0.37634476644047454
+   ],
+   "nullanker_rauschen": [
+    null,
+    null,
+    0.025132616317012142,
+    0.08248862827618252,
+    0.15262561100955785,
+    0.3881037165452337,
+    0.5375134911000522
+   ]
+  },
+  "abschnitte": [
+   {
+    "von": "auto_bezug",
+    "nach": "s30",
+    "fuellgrad_von": 0.1749,
+    "fuellgrad_nach": 0.2999,
+    "geom_iou_von": 0.000183,
+    "geom_iou_nach": 0.0,
+    "faktor": 0.0,
+    "zuwachs_geom_iou_je_fuellgradpunkt": -0.0015
+   },
+   {
+    "von": "s30",
+    "nach": "s50",
+    "fuellgrad_von": 0.2999,
+    "fuellgrad_nach": 0.4994,
+    "geom_iou_von": 0.0,
+    "geom_iou_nach": 0.001441,
+    "faktor": null,
+    "zuwachs_geom_iou_je_fuellgradpunkt": 0.0072
+   },
+   {
+    "von": "s50",
+    "nach": "s55",
+    "fuellgrad_von": 0.4994,
+    "fuellgrad_nach": 0.5493,
+    "geom_iou_von": 0.001441,
+    "geom_iou_nach": 0.181702,
+    "faktor": 126.1,
+    "zuwachs_geom_iou_je_fuellgradpunkt": 3.6124
+   },
+   {
+    "von": "s55",
+    "nach": "s60",
+    "fuellgrad_von": 0.5493,
+    "fuellgrad_nach": 0.5991,
+    "geom_iou_von": 0.181702,
+    "geom_iou_nach": 0.399411,
+    "faktor": 2.2,
+    "zuwachs_geom_iou_je_fuellgradpunkt": 4.3717
+   },
+   {
+    "von": "s60",
+    "nach": "s65",
+    "fuellgrad_von": 0.5991,
+    "fuellgrad_nach": 0.6488,
+    "geom_iou_von": 0.399411,
+    "geom_iou_nach": 0.637289,
+    "faktor": 1.6,
+    "zuwachs_geom_iou_je_fuellgradpunkt": 4.7863
+   },
+   {
+    "von": "s65",
+    "nach": "s70",
+    "fuellgrad_von": 0.6488,
+    "fuellgrad_nach": 0.6985,
+    "geom_iou_von": 0.637289,
+    "geom_iou_nach": 0.932323,
+    "faktor": 1.5,
+    "zuwachs_geom_iou_je_fuellgradpunkt": 5.9363
+   }
+  ],
+  "wo_entsteht_ueberhaupt_ein_score": {
+   "schranke": "geometrie_qa.MIN_GEMEINSAME_PUNKTE = 32 gemeinsame Punkte",
+   "n_gemeinsam_je_stufe": {
+    "auto_bezug": 14,
+    "s30": 0,
+    "s50": 1196,
+    "s55": 159173,
+    "s60": 364615,
+    "s65": 611367,
+    "s70": 934105
+   },
+   "erste_stufe_mit_score": "s50 (Fuellgrad 0.4994, 1196 gemeinsame Punkte)",
+   "darunter": "auto (0.1749) hat 14 und s30 (0.2999) hat 0 — beide unter 32, also kein Score, nicht ein Score von null."
+  },
+  "wo_wird_die_schwelle_ueberschritten": {
+   "schwelle": 0.65,
+   "letzte_stufe_darunter": {
+    "name": "s60",
+    "fuellgrad_breite": 0.5991,
+    "score": 0.6207935407738147
+   },
+   "erste_stufe_darueber": {
+    "name": "s65",
+    "fuellgrad_breite": 0.6488,
+    "score": 0.7644285551890485
+   },
+   "kreuzung_linear_geschaetzt": 0.6092,
+   "wie_die_kreuzung_zu_lesen_ist": "Gerade Verbindung zwischen den beiden Nachbarn, an EINEM Startwert. Eine Schaetzung, keine Messung — die Kante ist gemessen zwischen 0.5991 und 0.6488 eingeklemmt und nicht feiner.",
+   "was_zu_bestellen_ist": "0.65 Fuellgrad der Bildbreite ist der kleinste GEMESSENE Wert, der das Tor besteht (0.7644). 0.60 verfehlt es knapp (0.6208). Wer Reserve will, bestellt 0.70 (0.9599)."
+  },
+  "stufe_oder_rampe": {
+   "befund": "RAMPE mit einem Knie, keine Stufe.",
+   "das_knie": "Zwischen 0.4994 und 0.5493 springt geom_iou von 0.0014 auf 0.1817, Faktor 126. Das ist der einzige sprunghafte Abschnitt.",
+   "darueber": "Ab 0.55 steigt geom_iou stetig und leicht beschleunigend: 0.1817 -> 0.3994 -> 0.6373 -> 0.9323, also je 0.05 Fuellgrad rund +0.22, +0.24, +0.30. Der Score folgt gedaempft, weil er die Wurzel zieht: 0.4260 -> 0.6208 -> 0.7644 -> 0.9599.",
+   "der_faktor_647_aus_auf36": "Der Faktor 647 zwischen s50 und s70 war kein Sprung, sondern die Folge zu grober Schritte. Aufgeloest besteht er aus einem Knie (Faktor 126 auf den ersten 0.05) und einer stetigen Rampe darueber.",
+   "was_der_score_begrenzt": "Nicht die Rangkorrelation. |spearman| liegt ab 0.55 durchweg zwischen 0.92 und 1.00; allein geom_iou traegt den Verlauf."
+  }
+ },
+ "die_antworten": {
+  "A_in_einem_satz": "Die Aussage von auf-36 TRAEGT, aber der Vorbehalt war nicht leer: Am auto-Standort stimmen die ausdrueckliche Kamera ohne Shift und der auto-Lauf mit Shift eng ueberein — 'anteil_maske' 0.019206 gegen 0.019292 (-0.45 %), die Silhouette ist auf den Bildpunkt genau gleich gross (279 x 110 px) und nur um 20.63 px verschoben, was auf 0.01 px genau shift_y * 1600 ist, und BEIDE liefern gar keinen Score (n_gemeinsam 0 gegen 14, beide unter der Schranke 32) — der Sprung gehoert also nicht der Kameraart; bei 70 % Bildbreite ist die KIPPUNG hingegen messbar etwas wert (0.9549 gekippt gegen 0.7888 waagrecht im Mittel von je drei Startwerten, die Gruppen ueberschneiden sich nicht), aber sie entscheidet das Tor nicht: beide Kameraarten bestehen dort, und keine besteht bei 50 %.",
+  "A_die_aussage_von_auf36_traegt": true,
+  "A_was_der_vorbehalt_wert_war": "Der Shift ist eine reine senkrechte Bildverschiebung um 20.62 px (2.1 % der Bildhoehe) und traegt am auto-Standort nichts bei — das ist jetzt GEMESSEN und nicht mehr argumentiert. Die Kippung dagegen traegt bei 70 % Bildbreite 0.166 Scorepunkte. Das ist gegen die 0.928, die der Ausschnitt zwischen 50 % und 70 % wert ist, klein (rund ein Sechstel), aber es ist nicht null. Wer aus auf-36 liest 'der Ausschnitt allein macht es', liest zu grob.",
+  "A_was_NICHT_gemessen_ist": "Ein Shift BEI 70 % Bildbreite. Ueber den fremden Vertrag ist er nicht zu stellen (CameraSpec hat kein Feld dafuer, und der Runner rechnet ihn nur auf dem Weg 'abgeleitet'). Die waagrechte Kamera ist der naechste erreichbare Ersatz. Dass eine Shift-Kamera bei 70 % zwischen 0.7888 und 0.9549 laege, ist eine SCHLUSSFOLGERUNG aus der Rahmung und keine Messung.",
+  "B_in_einem_satz": "Ein Score entsteht ab rund 0.50 Fuellgrad der Bildbreite (darunter liegen mit 14 und 0 gemeinsamen Punkten beide Stufen unter der Schranke 32), die Schwelle 0.65 wird zwischen 0.5991 (Score 0.6208, faellt durch) und 0.6488 (Score 0.7644, besteht) ueberschritten — linear geschaetzt bei rund 0.61 —, und der Uebergang ist keine Stufe, sondern eine RAMPE mit einem Knie: zwischen 0.4994 und 0.5493 steigt geom_iou um den Faktor 126, darueber stetig und leicht beschleunigend (0.1817 / 0.3994 / 0.6373 / 0.9323).",
+  "B_was_der_cloud_worker_bestellen_soll": "0.70 Fuellgrad der Bildbreite. Das ist der einzige Fuellgrad, der hier mit MEHREREN Startwerten gemessen wurde und bei dem jeder einzelne Lauf besteht — kleinster Abstand zur Schwelle 0.301. 0.65 besteht bei EINEM Startwert mit Abstand 0.114; ob dieser Abstand die Startwertstreuung ueberlebt, haengt daran, welche Streuung man ansetzt (siehe Grenzen). 0.60 faellt bei einem Startwert um 0.029 durch — das ist der knappste Wert der ganzen Reihe.",
+  "B_der_faktor_647_aufgeloest": "Er war ein Artefakt der Schrittweite. Mit 0.05er-Schritten bleibt ein einziger sprunghafter Abschnitt (0.4994 -> 0.5493, Faktor 126) und darueber eine gewoehnliche Rampe. 'Stufe' ist die falsche Vorstellung, 'Rampe mit Knie' die richtige."
+ },
+ "was_mich_ueberrascht_hat": [
+  "Die Wiederholung von auf-36 ist BITGENAU. s70 gekippt, seed 0, in einem anderen Ablageort neu gefahren, gibt 0.959856424434278 — Ziffer fuer Ziffer denselben Wert, dazu dasselbe geom_iou (0.932323330116148) und dieselbe Zahl gemeinsamer Punkte (934105). Die Kette ist von der glb bis zum Urteil deterministisch. Damit ist jeder Unterschied in dieser Messung ein echter Unterschied und kein Rauschen des Aufbaus.",
+  "Die Kippung wirkt, und sie wirkt zugunsten der gekippten Kamera. Ich hatte einen vernachlaessigbaren Beitrag erwartet, weil die Silhouette gleich gross bleibt (1120x444 gegen 1115x445 px). Sie sitzt nur 72 px hoeher im Bild — und das kostet 0.166 Scorepunkte. Was die Zahlen bewegt, ist offenbar nicht die GROESSE des Bauwerks im Bild, sondern wie viel Boden und wie viel Himmel daneben liegt.",
+  "Die Startwertstreuung ist keine Konstante der Kette, sondern eine Eigenschaft der Kameralage. Am selben Standort, mit demselben Fuellgrad, streut die gekippte Kamera ueber drei Startwerte um 0.0088 und die waagrechte um 0.1216 — Faktor 14. Die 0.3155 aus auf-35 ist damit keine Zahl der Kette; sie gehoert der Lage, an der sie gemessen wurde, und darf nicht als allgemeiner Rauschboden verrechnet werden.",
+  "Bei 55 % Bildbreite ist die Rangkorrelation bereits so gut wie perfekt (|spearman| 0.9987), waehrend geom_iou noch bei 0.18 steht. Der Schaetzer ORDNET die Tiefe also schon richtig, lange bevor das Tor besteht — begrenzt wird der Score allein durch die Ueberdeckung der Silhouetten, nie durch die Ordnung. Das passt zum Befund 'Rang statt Betrag' und heisst: das Tor misst hier vor allem Rahmung.",
+  "Die beiden Anker laufen gegeneinander. Mit steigender Rahmung faellt der Rauschboden des Maskenankers (0.8384 / 0.5621 / 0.4835 / 0.4221 / 0.2917) und STEIGT zugleich das Rauschen des Nullankers (0.0825 / 0.1526 / 0.3881 / 0.4810). Ein Bild ohne jede Geometrie schneidet auf einer voll gerahmten Soll-Karte also immer besser ab — die Reserve des Messwerts ueber seinem eigenen Boden waechst langsamer, als der Messwert selbst es vermuten laesst."
+ ],
+ "nebenbefunde": [
+  "Der Shift ist GEMESSEN eine reine Bildverschiebung. Silhouette 279 x 110 px in beiden Laeufen, Schwerpunkt um 20.63 px senkrecht versetzt, waagrecht um 0.04 px. shift_y * Bildbreite = 0.012885 * 1600 = 20.62 px. Damit ist der Vorbehalt aus auf-36 nicht mehr eine Vermutung, sondern eine Zahl.",
+  "Das Feld 'geom_iou_obergrenze' im Befund ist keine Obergrenze. Es traegt n_soll / n_punkte, und das gemessene geom_iou liegt bei drei Stufen DARUEBER: s65 0.6373 gegen 0.4948, s70 0.9323 gegen 0.6099, s70 waagrecht 0.7274 gegen 0.6066. auf-36 hat das fuer auf-35 schon angemerkt; hier steht der falsche Name im Befund selbst. Nichts geaendert, nur gemeldet.",
+  "'komposition.beurteilt' ist bei ALLEN zehn ausdruecklichen Kameras false, mit der Begruendung, der Kamerablock trage abstand_m, gelaende_z, gelaende_bezug und gebaeudehoehe_m nicht. Der Weg 'vorgegeben' schreibt diese Zahlen nicht in den Bericht. Wer ueber den fremden Vertrag rendert, bekommt also grundsaetzlich keine Kompositionspruefung — derselbe Befund wie in auf-36.",
+  "'anwesenheit' ist in allen zehn Kameras null, wie in auf-36. Das Mass faellt als Gegenprobe weiterhin aus; warum, sagt der Befund nicht. NICHT GEMESSEN.",
+  "Der Abholer sperrt sich weiterhin selbst aus: nach jedem Auftrag liegen rund 29 GiB Gewichte auf der Karte (gemessenes Maximum 30119 MiB), und die 4096-MiB-Schranke von abholen.karte_auskunft laesst alles Weitere liegen. Ein Prozess je Auftrag mit --hoechstens 1 war noetig — derselbe Befund wie in auf-35 und auf-36.",
+  "Die Warnung des Moduls zur Polaritaet steht bei jeder Kamera: gewertet wird abs(spearman), und in diesem Modus ist der Score NICHT MONOTON im geometrischen Fehler. Fuer diese Messung faellt es nicht ins Gewicht, weil spearman durchweg deutlich negativ ist (-0.92 bis -1.00) und die Faltung bei 0 damit nicht erreicht wird — aber die Reihe ist nur deshalb lesbar.",
+  "Laufzeiten Wanduhr je Auftrag: 43.4 s (sauto), 48.4 / 48.8 / 49.5 s (s55 / s60 / s65), 52.5 / 52.7 / 53.0 s (s70 gekippt, seeds 0/1/2), 52.2 / 52.3 / 52.0 s (s70 waagrecht, seeds 0/1/2). Der Aufschlag der naeheren Standorte ist der groessere Cycles-Anteil; gekippt und waagrecht kosten am selben Standort gleich viel."
+ ],
+ "grenzen_dieser_messung": [
+  "Die Kante ist EINGEKLEMMT, nicht aufgeloest. Gemessen ist: 0.5991 faellt durch (0.6208), 0.6488 besteht (0.7644). Die lineare Kreuzung bei rund 0.61 ist eine Schaetzung zwischen zwei Punkten an EINEM Startwert, keine Messung.",
+  "Die Startwertstreuung bei 0.55, 0.60 und 0.65 ist NICHT GEMESSEN — dort lief je EIN Startwert. Gemessen ist sie nur am s70-Standort, und dort haengt sie stark von der Kameralage ab: 0.0088 gekippt, 0.1216 waagrecht. Setzt man die gekippte Streuung an (s55/s60/s65 sind gekippte Kameras), dann liegt s60 mit -0.029 sicher unter und s65 mit +0.114 sicher ueber der Schwelle. Setzt man die waagrechte an, ist beides offen. Welche gilt, ist NICHT GEMESSEN. Deshalb lautet die belastbare Empfehlung 0.70 und nicht 0.65.",
+  "Ein SHIFT bei 70 % Bildbreite ist NICHT GEMESSEN und ueber den fremden Vertrag ohne Repo-Aenderung auch nicht messbar. Gemessen ist der Shift nur am auto-Standort (17.5 % Bildbreite) und die Kippung nur am s70-Standort.",
+  "Die Kippprobe vergleicht 2.59 Grad gegen 0 Grad. Ob der Beitrag mit dem Winkel waechst, faellt oder umschlaegt, ist NICHT GEMESSEN — es sind zwei Punkte.",
+  "EIN Azimut (s, 180 Grad). sSE und nNW liefen in dieser Messung gar nicht.",
+  "EINE Szene: ein glatter Quader auf einer ebenen Platte, ohne Fassadengliederung, ohne Oeffnungen, ohne Gelaende, ohne Bewuchs, ohne Nachbarbebauung. Was ein echtes Projekt tut, ist NICHT GEMESSEN.",
+  "EIN Plattenverhaeltnis (10-fach, fest), EIN Backbone (z-image-turbo), EIN Schaetzer (depth-anything-v2-small), EINE Aufloesung (1600x992), EIN Prompt, EINE Schrittzahl (20), EINE Samplezahl (128). Alles andere ist NICHT GEMESSEN.",
+  "Ob 0.65 die richtige Schwelle ist, war nicht die Frage und ist NICHT GEMESSEN. Gemessen ist nur, wo sie bei dieser Rahmung ueberschritten wird.",
+  "Die Kompositionspruefung hat bei keiner Kamera geurteilt (Weg 'vorgegeben' liefert die noetigen Zahlen nicht), und die Belichtungspruefung lief nicht (kein --stil uebergeben). Beides NICHT GEMESSEN.",
+  "Der GPU-Mitschrieb misst die Karte, nicht die Steckdose. Ob die Leistungsgrenze von 400 W am Netzteil eingehalten wird, ist NICHT GEMESSEN.",
+  "Bilder, Tiefenkarten und die glb bleiben ausserhalb des Repos. Hier stehen nur Zahlen; wer die Bilder nachsehen will, braucht den Ablageort auf dem Geraet.",
+  "Die Silhouettenzahlen (279 x 110 px usw.) sind aus den material_id-Bildern gemessen, also aus der SOLL-Seite. Ueber das erzeugte Bild sagen sie nichts."
+ ]
+}

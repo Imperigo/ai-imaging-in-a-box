@@ -1,0 +1,578 @@
+{
+ "schema": "kosmovis.auftragsergebnis/v1",
+ "auftrag_id": "auf-20260824-38",
+ "status": "teilweise — gerettet aus einem abgebrochenen Lauf",
+ "beendet": "2026-08-25",
+ "die_frage": "Laesst sich das Ortsfeld abziehen, und senkt der Abzug die Streuung, wenn dasselbe Bauwerk an verschiedenen Stellen im Bild sitzt?",
+ "wie_dieses_ergebnis_entstand": "Der Lauf wurde durch ein Ausgabelimit abgebrochen, bevor die Ergebnisdatei geschrieben war. Die Rohdaten der Renderlaeufe lagen vollstaendig vor und sind hier ausgewertet. Was der abgebrochene Lauf nicht mehr geschrieben hat — Maskenschwerpunkte in Bildpunkten, Silhouettengroessen je Lage und der GPU-Mitschrieb — steht als NICHT GEMESSEN.",
+ "aufbau": {
+  "geometrie": "Quader 15.36 x 10.36 x 6.0 m auf Platte mit zehnfacher Grundflaeche, aus auf-36/37 wiederverwendet",
+  "veraenderliche": "allein die Bildlage des Bauwerks, ueber die Achsenkippung erzeugt",
+  "konstant_gehalten": {
+   "fuellgrad": "0.70",
+   "startwert": 1,
+   "ansicht": 1,
+   "anteil_maske_min": 0.305,
+   "anteil_maske_max": 0.3146
+  },
+  "lagen": 8,
+  "feld": {
+   "quelle": "eine Schaetzung auf einem einfarbigen Bild (Grauwert 128) in 1600x992",
+   "dauer_s": 0.419,
+   "roh_min": 0.296334,
+   "roh_max": 6.005413,
+   "roh_spannweite": 5.709078,
+   "roh_mittel": 2.33674,
+   "pearson_mit_mittenabstand": 0.8266,
+   "pearson_mit_zeile": -0.1865,
+   "pearson_mit_spalte": -0.0657
+  }
+ },
+ "messwerte": {
+  "gerichtet_je_lage": {
+   "L1": {
+    "ohne_abzug": 0.705021,
+    "mit_abzug_spannweite": -0.469382,
+    "mit_abzug_roh": -0.458026,
+    "mit_abzug_kleinste_quadrate": -0.377302,
+    "anteil_maske": 0.3141,
+    "gate_score": 0.665199,
+    "gate_bestanden": true
+   },
+   "L2": {
+    "ohne_abzug": 0.732346,
+    "mit_abzug_spannweite": -0.242692,
+    "mit_abzug_roh": -0.229841,
+    "mit_abzug_kleinste_quadrate": 0.243898,
+    "anteil_maske": 0.3092,
+    "gate_score": 0.747837,
+    "gate_bestanden": true
+   },
+   "L3": {
+    "ohne_abzug": 0.631611,
+    "mit_abzug_spannweite": -0.019291,
+    "mit_abzug_roh": 0.005746,
+    "mit_abzug_kleinste_quadrate": 0.222407,
+    "anteil_maske": 0.3059,
+    "gate_score": 0.855461,
+    "gate_bestanden": true
+   },
+   "L4": {
+    "ohne_abzug": 0.551685,
+    "mit_abzug_spannweite": -0.050145,
+    "mit_abzug_roh": -0.028049,
+    "mit_abzug_kleinste_quadrate": 0.143555,
+    "anteil_maske": 0.305,
+    "gate_score": 0.94363,
+    "gate_bestanden": true
+   },
+   "L5": {
+    "ohne_abzug": 0.772545,
+    "mit_abzug_spannweite": -0.337484,
+    "mit_abzug_roh": -0.317419,
+    "mit_abzug_kleinste_quadrate": 0.628977,
+    "anteil_maske": 0.3061,
+    "gate_score": 0.93985,
+    "gate_bestanden": true
+   },
+   "L6": {
+    "ohne_abzug": 0.941365,
+    "mit_abzug_spannweite": -0.591557,
+    "mit_abzug_roh": -0.557079,
+    "mit_abzug_kleinste_quadrate": 0.890095,
+    "anteil_maske": 0.3095,
+    "gate_score": 0.957938,
+    "gate_bestanden": true
+   },
+   "L7": {
+    "ohne_abzug": 0.922183,
+    "mit_abzug_spannweite": -0.793883,
+    "mit_abzug_roh": -0.788663,
+    "mit_abzug_kleinste_quadrate": 0.918808,
+    "anteil_maske": 0.3146,
+    "gate_score": 0.954781,
+    "gate_bestanden": true
+   },
+   "K": {
+    "ohne_abzug": 0.931828,
+    "mit_abzug_spannweite": 0.101283,
+    "mit_abzug_roh": 0.218529,
+    "mit_abzug_kleinste_quadrate": 0.559137,
+    "anteil_maske": 0.3051,
+    "gate_score": 0.959856,
+    "gate_bestanden": true
+   }
+  },
+  "zusammenfassung": {
+   "ohne_abzug": {
+    "mittel": 0.773573,
+    "streuung": 0.137419,
+    "min": 0.551685,
+    "max": 0.941365
+   },
+   "mit_abzug_spannweite": {
+    "mittel": -0.300394,
+    "streuung": 0.288218,
+    "min": -0.793883,
+    "max": 0.101283
+   },
+   "mit_abzug_roh": {
+    "mittel": -0.26935,
+    "streuung": 0.309005,
+    "min": -0.788663,
+    "max": 0.218529
+   },
+   "mit_abzug_kleinste_quadrate": {
+    "mittel": 0.403697,
+    "streuung": 0.405103,
+    "min": -0.377302,
+    "max": 0.918808
+   }
+  },
+  "vorzeichenwechsel_von_8": {
+   "ohne_abzug": 0,
+   "mit_abzug_spannweite": 7,
+   "mit_abzug_roh": 6,
+   "mit_abzug_kleinste_quadrate": 1
+  },
+  "diagnose_je_lage": {
+   "L1": {
+    "rho_soll_gegen_ist_gerichtet": 0.705021,
+    "rho_soll_gegen_FELD_gerichtet": 0.484152,
+    "rho_ist_gegen_feld_ueber_maske": 0.876028,
+    "rho_ist_gegen_feld_ganzes_bild": 0.117359,
+    "ist_ueber_maske": {
+     "min": 1.8355,
+     "max": 2.2171,
+     "spannweite": 0.3816,
+     "streuung": 0.0904
+    },
+    "feld_ueber_maske": {
+     "min": 0.3013,
+     "max": 5.2214,
+     "spannweite": 4.9201,
+     "streuung": 1.4259
+    },
+    "ist_ganzes_bild": {
+     "min": -0.3417,
+     "max": 9.5426,
+     "spannweite": 9.8842
+    },
+    "verhaeltnis_streuung_feld_zu_ist_ueber_maske": 15.7749
+   },
+   "L2": {
+    "rho_soll_gegen_ist_gerichtet": 0.732346,
+    "rho_soll_gegen_FELD_gerichtet": 0.281684,
+    "rho_ist_gegen_feld_ueber_maske": 0.360083,
+    "rho_ist_gegen_feld_ganzes_bild": 0.012034,
+    "ist_ueber_maske": {
+     "min": 2.0418,
+     "max": 2.2644,
+     "spannweite": 0.2226,
+     "streuung": 0.0493
+    },
+    "feld_ueber_maske": {
+     "min": 0.2963,
+     "max": 4.4761,
+     "spannweite": 4.1798,
+     "streuung": 1.0994
+    },
+    "ist_ganzes_bild": {
+     "min": -0.3091,
+     "max": 7.298,
+     "spannweite": 7.6072
+    },
+    "verhaeltnis_streuung_feld_zu_ist_ueber_maske": 22.3055
+   },
+   "L3": {
+    "rho_soll_gegen_ist_gerichtet": 0.631611,
+    "rho_soll_gegen_FELD_gerichtet": 0.049201,
+    "rho_ist_gegen_feld_ueber_maske": -0.009705,
+    "rho_ist_gegen_feld_ganzes_bild": -0.054493,
+    "ist_ueber_maske": {
+     "min": 2.7149,
+     "max": 3.0456,
+     "spannweite": 0.3307,
+     "streuung": 0.0362
+    },
+    "feld_ueber_maske": {
+     "min": 0.2963,
+     "max": 3.2903,
+     "spannweite": 2.994,
+     "streuung": 0.6343
+    },
+    "ist_ganzes_bild": {
+     "min": -0.3335,
+     "max": 10.3493,
+     "spannweite": 10.6828
+    },
+    "verhaeltnis_streuung_feld_zu_ist_ueber_maske": 17.5395
+   },
+   "L4": {
+    "rho_soll_gegen_ist_gerichtet": 0.551685,
+    "rho_soll_gegen_FELD_gerichtet": 0.082724,
+    "rho_ist_gegen_feld_ueber_maske": -0.498406,
+    "rho_ist_gegen_feld_ganzes_bild": -0.104718,
+    "ist_ueber_maske": {
+     "min": 2.3499,
+     "max": 2.576,
+     "spannweite": 0.2261,
+     "streuung": 0.0305
+    },
+    "feld_ueber_maske": {
+     "min": 0.2963,
+     "max": 2.2435,
+     "spannweite": 1.9471,
+     "streuung": 0.3366
+    },
+    "ist_ganzes_bild": {
+     "min": -0.2958,
+     "max": 9.4985,
+     "spannweite": 9.7943
+    },
+    "verhaeltnis_streuung_feld_zu_ist_ueber_maske": 11.023
+   },
+   "L5": {
+    "rho_soll_gegen_ist_gerichtet": 0.772545,
+    "rho_soll_gegen_FELD_gerichtet": 0.444312,
+    "rho_ist_gegen_feld_ueber_maske": 0.540804,
+    "rho_ist_gegen_feld_ganzes_bild": -0.070043,
+    "ist_ueber_maske": {
+     "min": 2.2955,
+     "max": 2.7017,
+     "spannweite": 0.4062,
+     "streuung": 0.0698
+    },
+    "feld_ueber_maske": {
+     "min": 0.2963,
+     "max": 2.7506,
+     "spannweite": 2.4543,
+     "streuung": 0.4467
+    },
+    "ist_ganzes_bild": {
+     "min": -0.2964,
+     "max": 6.4192,
+     "spannweite": 6.7156
+    },
+    "verhaeltnis_streuung_feld_zu_ist_ueber_maske": 6.3983
+   },
+   "L6": {
+    "rho_soll_gegen_ist_gerichtet": 0.941365,
+    "rho_soll_gegen_FELD_gerichtet": 0.720451,
+    "rho_ist_gegen_feld_ueber_maske": 0.827983,
+    "rho_ist_gegen_feld_ganzes_bild": -0.034408,
+    "ist_ueber_maske": {
+     "min": 3.2762,
+     "max": 4.4387,
+     "spannweite": 1.1625,
+     "streuung": 0.1802
+    },
+    "feld_ueber_maske": {
+     "min": 0.2963,
+     "max": 3.9083,
+     "spannweite": 3.612,
+     "streuung": 0.8593
+    },
+    "ist_ganzes_bild": {
+     "min": -0.5393,
+     "max": 6.431,
+     "spannweite": 6.9703
+    },
+    "verhaeltnis_streuung_feld_zu_ist_ueber_maske": 4.7676
+   },
+   "L7": {
+    "rho_soll_gegen_ist_gerichtet": 0.922183,
+    "rho_soll_gegen_FELD_gerichtet": 0.820408,
+    "rho_ist_gegen_feld_ueber_maske": 0.916553,
+    "rho_ist_gegen_feld_ganzes_bild": 0.003274,
+    "ist_ueber_maske": {
+     "min": 1.7661,
+     "max": 3.6898,
+     "spannweite": 1.9237,
+     "streuung": 0.1903
+    },
+    "feld_ueber_maske": {
+     "min": 0.2963,
+     "max": 4.542,
+     "spannweite": 4.2457,
+     "streuung": 1.171
+    },
+    "ist_ganzes_bild": {
+     "min": -0.3353,
+     "max": 6.2393,
+     "spannweite": 6.5746
+    },
+    "verhaeltnis_streuung_feld_zu_ist_ueber_maske": 6.1553
+   },
+   "K": {
+    "rho_soll_gegen_ist_gerichtet": 0.931828,
+    "rho_soll_gegen_FELD_gerichtet": 0.024024,
+    "rho_ist_gegen_feld_ueber_maske": 0.134171,
+    "rho_ist_gegen_feld_ganzes_bild": -0.059676,
+    "ist_ueber_maske": {
+     "min": 2.0325,
+     "max": 2.5617,
+     "spannweite": 0.5292,
+     "streuung": 0.0942
+    },
+    "feld_ueber_maske": {
+     "min": 0.2963,
+     "max": 2.6037,
+     "spannweite": 2.3074,
+     "streuung": 0.413
+    },
+    "ist_ganzes_bild": {
+     "min": -0.2841,
+     "max": 10.9694,
+     "spannweite": 11.2534
+    },
+    "verhaeltnis_streuung_feld_zu_ist_ueber_maske": 4.3828
+   }
+  },
+  "kippprobe_mit_abzug": {
+   "gekippt_seed0": {
+    "ohne_abzug": {
+     "score": 0.959856424434278,
+     "geom_iou": 0.932323330116148,
+     "spearman": -0.9882026178761172,
+     "n_gemeinsam": 934105,
+     "bestanden": true
+    },
+    "mit_abzug_spannweite": {
+     "score": 0.4029295465446183,
+     "geom_iou": 0.9300694560060454,
+     "spearman": -0.17455924224824396,
+     "n_gemeinsam": 932935,
+     "bestanden": false,
+     "k": 1.971148
+    },
+    "mit_abzug_roh": {
+     "score": 0.8646918783388664,
+     "geom_iou": 0.9321864065422333,
+     "spearman": -0.8020842604202063,
+     "n_gemeinsam": 934034,
+     "bestanden": true,
+     "k": 1.0
+    },
+    "mit_abzug_kleinste_quadrate": {
+     "score": 0.9257395952191679,
+     "geom_iou": 0.9316793797923661,
+     "spearman": -0.9198376788670996,
+     "n_gemeinsam": 933771,
+     "bestanden": true,
+     "k": 0.349952
+    },
+    "rho_maske_ohne_abzug": 0.931828,
+    "rho_maske_mit_abzug_spannweite": 0.101283,
+    "rho_maske_mit_abzug_kleinste_quadrate": 0.559137
+   },
+   "gekippt_seed1": {
+    "ohne_abzug": {
+     "score": 0.9510718023406999,
+     "geom_iou": 0.9272009827051069,
+     "spearman": -0.9755571770088086,
+     "n_gemeinsam": 931442,
+     "bestanden": true
+    },
+    "mit_abzug_spannweite": {
+     "score": 0.3390120950300791,
+     "geom_iou": 0.8943924099681791,
+     "spearman": -0.12849974943411288,
+     "n_gemeinsam": 914044,
+     "bestanden": false,
+     "k": 1.710115
+    },
+    "mit_abzug_roh": {
+     "score": 0.7998426429394352,
+     "geom_iou": 0.9260774404074973,
+     "spearman": -0.6908150717750294,
+     "n_gemeinsam": 930856,
+     "bestanden": true,
+     "k": 1.0
+    },
+    "mit_abzug_kleinste_quadrate": {
+     "score": 0.8952586879377743,
+     "geom_iou": 0.9266390477545785,
+     "spearman": -0.8649410148106993,
+     "n_gemeinsam": 931149,
+     "bestanden": true,
+     "k": 0.365504
+    },
+    "rho_maske_ohne_abzug": 0.957889,
+    "rho_maske_mit_abzug_spannweite": 0.085042,
+    "rho_maske_mit_abzug_kleinste_quadrate": 0.502629
+   },
+   "gekippt_seed2": {
+    "ohne_abzug": {
+     "score": 0.9538662565768022,
+     "geom_iou": 0.9257249259954802,
+     "spearman": -0.982863062110401,
+     "n_gemeinsam": 930672,
+     "bestanden": true
+    },
+    "mit_abzug_spannweite": {
+     "score": 0.5038668216194234,
+     "geom_iou": 0.9069277244906201,
+     "spearman": -0.27993606003328836,
+     "n_gemeinsam": 920762,
+     "bestanden": false,
+     "k": 1.800454
+    },
+    "mit_abzug_roh": {
+     "score": 0.8459969405227915,
+     "geom_iou": 0.9268212091897465,
+     "spearman": -0.7722210241602244,
+     "n_gemeinsam": 931244,
+     "bestanden": true,
+     "k": 1.0
+    },
+    "mit_abzug_kleinste_quadrate": {
+     "score": 0.9001284462485012,
+     "geom_iou": 0.9268039503135509,
+     "spearman": -0.8742207232410135,
+     "n_gemeinsam": 931235,
+     "bestanden": true,
+     "k": 0.423262
+    },
+    "rho_maske_ohne_abzug": 0.89431,
+    "rho_maske_mit_abzug_spannweite": 0.04639,
+    "rho_maske_mit_abzug_kleinste_quadrate": 0.299443
+   },
+   "waagrecht_seed0": {
+    "ohne_abzug": {
+     "score": 0.8166066699581352,
+     "geom_iou": 0.7273568089479213,
+     "spearman": -0.9168078791819779,
+     "n_gemeinsam": 810797,
+     "bestanden": true
+    },
+    "mit_abzug_spannweite": {
+     "score": 0.26650155392229935,
+     "geom_iou": 0.7267077737603306,
+     "spearman": -0.09773265239133627,
+     "n_gemeinsam": 810378,
+     "bestanden": false,
+     "k": 1.809619
+    },
+    "mit_abzug_roh": {
+     "score": 0.7250539095622254,
+     "geom_iou": 0.7270500441737711,
+     "spearman": -0.7230632553896389,
+     "n_gemeinsam": 810599,
+     "bestanden": true,
+     "k": 1.0
+    },
+    "mit_abzug_kleinste_quadrate": {
+     "score": 0.7815333355737275,
+     "geom_iou": 0.7273816027795794,
+     "spearman": -0.8397165288191752,
+     "n_gemeinsam": 810813,
+     "bestanden": true,
+     "k": 0.24541
+    },
+    "rho_maske_ohne_abzug": 0.51522,
+    "rho_maske_mit_abzug_spannweite": -0.09292,
+    "rho_maske_mit_abzug_kleinste_quadrate": 0.025756
+   },
+   "waagrecht_seed1": {
+    "ohne_abzug": {
+     "score": 0.7140778958005121,
+     "geom_iou": 0.5480586095310835,
+     "spearman": -0.9303881599582228,
+     "n_gemeinsam": 681689,
+     "bestanden": true
+    },
+    "mit_abzug_spannweite": {
+     "score": 0.5587962275499893,
+     "geom_iou": 0.6786061437148404,
+     "spearman": -0.4601391054533576,
+     "n_gemeinsam": 778423,
+     "bestanden": false,
+     "k": 1.165074
+    },
+    "mit_abzug_roh": {
+     "score": 0.6464191078346383,
+     "geom_iou": 0.6810168266334685,
+     "spearman": -0.6135790580085413,
+     "n_gemeinsam": 780068,
+     "bestanden": false,
+     "k": 1.0
+    },
+    "mit_abzug_kleinste_quadrate": {
+     "score": 0.7548015719914156,
+     "geom_iou": 0.6838760963042446,
+     "spearman": -0.83308279988083,
+     "n_gemeinsam": 782013,
+     "bestanden": true,
+     "k": 0.344251
+    },
+    "rho_maske_ohne_abzug": 0.929951,
+    "rho_maske_mit_abzug_spannweite": 0.018857,
+    "rho_maske_mit_abzug_kleinste_quadrate": 0.242822
+   },
+   "waagrecht_seed2": {
+    "ohne_abzug": {
+     "score": 0.8356426607184041,
+     "geom_iou": 0.725330771863738,
+     "spearman": -0.9627313268651967,
+     "n_gemeinsam": 809488,
+     "bestanden": true
+    },
+    "mit_abzug_spannweite": {
+     "score": 0.23704450441338745,
+     "geom_iou": 0.7741816295447237,
+     "spearman": 0.07257999276685552,
+     "n_gemeinsam": 840217,
+     "bestanden": false,
+     "k": 0.782005
+    },
+    "mit_abzug_roh": {
+     "score": 0.3746463260014086,
+     "geom_iou": 0.8092055996173965,
+     "spearman": 0.1734539030040299,
+     "n_gemeinsam": 861227,
+     "bestanden": false,
+     "k": 1.0
+    },
+    "mit_abzug_kleinste_quadrate": {
+     "score": 0.8378058901609117,
+     "geom_iou": 0.7242292066454202,
+     "spearman": -0.9691941489622555,
+     "n_gemeinsam": 808775,
+     "bestanden": true,
+     "k": -0.052473
+    },
+    "rho_maske_ohne_abzug": 0.941108,
+    "rho_maske_mit_abzug_spannweite": 0.144338,
+    "rho_maske_mit_abzug_kleinste_quadrate": 0.97262
+   }
+  }
+ },
+ "die_antwort": {
+  "urteil": "DURCHGEFALLEN",
+  "in_einem_satz": "Das Feld verunreinigt das Mass nachweislich — ueber sieben Bildlagen betraegt der Zusammenhang zwischen 'wie gut das Feld allein die Wahrheit trifft' und 'wie gut das Mass aussieht' r = 0.9361 — aber es abzuziehen macht es schlechter statt besser: alle drei Abzugsformen ERHOEHEN die Streuung (von 0.1374 auf 0.2882 / 0.3090 / 0.4051) und drehen bei 7, 6 bzw. 1 von 8 Lagen das Vorzeichen um.",
+  "zusammenhang_feld_trifft_wahrheit_gegen_mass_sieht_gut_aus": 0.9361,
+  "feld_allein_gegen_die_wahrheit": {
+   "spanne": [
+    0.024,
+    0.8204
+   ],
+   "bemerkung": "Das Feld traegt keine Information ueber die Szene. Es erreicht dennoch bis 0.82 gegen die wahre Geometrie — allein dadurch, WO das Bauwerk liegt."
+  },
+  "die_gegenprobe": {
+   "lage": "K",
+   "mass": 0.9318,
+   "feldbeitrag": 0.024,
+   "bemerkung": "Ein hoher Wert IST ohne Feldbeitrag erreichbar. Die Bildlage entscheidet also nicht, ob das Mass gut sein kann, sondern ob die Zahl ehrlich ist."
+  },
+  "was_daraus_folgt": "Der Abzug ist die falsche Form der Berichtigung — das Feld legt sich nicht additiv auf den Inhalt. Wer es abzieht, verschlimmert genau das, was er beheben wollte. Die Verunreinigung bleibt damit ein offenes Problem, und der naheliegende Griff ist widerlegt, bevor er eingebaut wurde."
+ },
+ "grenzen_dieser_messung": [
+  "Ein Bauwerk, eine Ansicht, ein Startwert, ein Fuellgrad (0.70). Ob der Befund bei anderen Baumassen gleich ausfaellt: NICHT GEMESSEN.",
+  "Maskenschwerpunkte in Bildpunkten und Silhouettengroessen je Lage: NICHT GEMESSEN (der Lauf brach vorher ab). Der konstante anteil_maske ueber alle acht Lagen belegt aber, dass die Ueberdeckung nicht mitgewandert ist.",
+  "GPU-Mitschrieb: NICHT GEMESSEN. Die Karte lief unter derselben 400-W-Grenze wie in auf-36/37, ohne Nachweis je Probe.",
+  "Drei Abzugsformen geprueft (Spannweite, roh mit k=1, kleinste Quadrate). Andere Formen — etwa multiplikativ oder ortsabhaengig gewichtet — sind NICHT GEMESSEN.",
+  "Das Feld stammt aus EINER Schaetzung auf einfarbigem Grau in der Lauf-Aufloesung. Dass das genuegt, stuetzt sich auf den Ortsfeld-Befund (kein Paar unter r = 0.993), nicht auf eine eigene Wiederholung hier.",
+  "Der Lauf wurde nicht zu Ende gefuehrt; die Auswertung stammt von der HomeStation-Lane, nicht vom messenden Agenten."
+ ]
+}
