@@ -2444,8 +2444,19 @@ def paarurteil(rho_ergebnis: dict | None, kante_ergebnis: dict | None, *,
 #:     anteil_maske 0.1565  →  geom_iou 0.00144    (35,1 m)
 #:     anteil_maske 0.3051  →  geom_iou 0.9323     (26,6 m) — Score 0.9599, **bestanden**
 #:
-#: **Der Sprung zwischen den letzten beiden ist Faktor 647.** Das ist keine Rampe, sondern
-#: eine Schwelle — und sie liegt in einer Grösse, die niemand als Schwelle angelegt hat.
+#: **Der Sprung zwischen den letzten beiden ist Faktor 647** — aber *«eine Schwelle, keine
+#: Rampe»* war zu grob, und zwar von beiden Seiten korrigiert.
+#:
+#: **Feiner nachgemessen** (HomeStation, Nachtrag vom 24.08.2026) ist es eine **Rampe mit
+#: Knie**: Der Score steigt ab rund 0,50 Bildbreite, überschreitet die Schwelle zwischen
+#: **0,5991 und 0,6488** und liegt linear bei 0,61. Der Faktor 647 war eine Folge der
+#: groben Abstufung — vier Punkte über einen weiten Bereich sehen wie ein Sprung aus, wenn
+#: das Knie zwischen zwei von ihnen liegt.
+#:
+#: **Warum trotzdem nicht interpoliert wird:** Eine Rampe mit Knie ist keine Gerade, und
+#: die vier Punkte hier liegen beidseits des Knies. Die feinen Zahlen oben stehen in
+#: *Bildbreite*, die Tabelle hier in *Maskenanteil* — die beiden ineinander umzurechnen
+#: verlangt die Szene, und dann wäre es keine Tabelle mehr, sondern ein Modell.
 #:
 #: Damit ist die Behauptung widerlegt, :data:`SCHWELLE_GEOMETRIE` sei arithmetisch
 #: unerreichbar. Sie ist es **bei der Rahmung, die `cameras: auto` erzeugt** — und das ist
@@ -2503,7 +2514,8 @@ def torchance(anteil_maske: float | None) -> dict:
             f"wo GEMESSEN kein Tor besteht (geom_iou 0.00144 und darunter). Das ist kein "
             f"Urteil über das Bild: Bei dieser Rahmung KANN es nicht bestehen. Abhilfe ist "
             f"eine nähere Kamera, keine gesenkte Schwelle — bei 0.3051 entstand ein Score "
-            f"von 0.9599. Achtung, der Sprung dazwischen ist Faktor 647.")
+            f"von 0.9599. Der Anstieg dazwischen ist eine Rampe mit Knie, kein "
+            f"gleichmässiges Steigen: Bestellempfehlung ist 0.70 Bildbreite, nicht 0.65.")
         return antwort
     if wert >= ANTEIL_MASKE_GEMESSEN_REICHT:
         antwort["lage"] = "reicht"
@@ -2516,9 +2528,9 @@ def torchance(anteil_maske: float | None) -> dict:
     antwort["begruendung"] = (
         f"Maskenanteil {wert:.4f} liegt ZWISCHEN den gemessenen Punkten "
         f"({ANTEIL_MASKE_GEMESSEN_ZU_KLEIN} und {ANTEIL_MASKE_GEMESSEN_REICHT}). Dort "
-        f"steht nichts Gemessenes, und der Sprung dazwischen beträgt Faktor 647 — eine "
-        f"Gerade hindurchzulegen wäre keine Schätzung, sondern eine Erfindung. NICHT "
-        f"BEANTWORTET.")
+        f"steht nichts Gemessenes. Der Anstieg dazwischen ist eine RAMPE MIT KNIE, und "
+        f"die vier Punkte liegen beidseits davon — eine Gerade hindurchzulegen wäre keine "
+        f"Schätzung, sondern eine Erfindung. NICHT BEANTWORTET.")
     return antwort
 
 

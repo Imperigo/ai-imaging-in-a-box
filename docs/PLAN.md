@@ -1686,6 +1686,43 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       0,305 bis 0,315 — und **alle acht bestanden das Tor** (Score 0,665 bis 0,960). Der
       gemessene Punkt 0,3051 aus `RAHMUNG_GEMESSEN` ist damit von acht weiteren Läufen
       gestützt.
+- [x] **Vier Präzisierungen aus dem `auf-13`-Nachtrag, und zwei davon waren echte
+      Defekte** (HomeStation, 24.08.2026).
+
+      **1 · `komposition.beurteilt` war auf dem Produktivweg IMMER false — die vierte tote
+      Kante dieser Woche und die folgenreichste.** Kommt der Kamerastandort als Zahlen
+      herein — und **so schickt ihn die Oberfläche** —, rechnet `kamerasatz` gar nicht, und
+      der Bericht trägt `abstand_m`, `gelaende_z`, `gelaende_bezug`, `gebaeudehoehe_m`
+      nicht. `beurteile_bericht` antwortete darauf völlig richtig «nicht beurteilbar» — bei
+      **jedem** Auftrag, der über die Oberfläche kommt. Am 23.08. hatten wir `komposition.py`
+      angeschlossen und gemeint, es sei erledigt; angeschlossen war der *gerechnete* Weg.
+
+      **Die Zahlen fehlten nicht, sie wurden nur nie ausgerechnet.** Neu:
+      `kameras.berichtsfelder_aus_stellung` — in der **Bibliothek**, weil es reine
+      Arithmetik ist und im Runner eine Fähigkeit wäre, die ohne Blender niemand hätte
+      (Regel 4). Der Runner ruft sie und schreibt `setdefault`, damit der gerechnete Weg
+      seine genaueren Zahlen behält; ist die Bibliothek von dort nicht erreichbar, bleibt
+      das Feld leer und die Prüfung sagt weiterhin ehrlich «nicht beurteilbar».
+
+      **2 · `GEMESSENE_SEED_STREUUNG = 0.2269` gehört der KAMERALAGE, nicht der Kette.** Am
+      selben Standort und Füllgrad, nur mit anderer Achsenlage: **0,0088 gegen 0,1216 —
+      Faktor 14.** Dieselbe Fehlerart wie bei `RAUSCHBODEN_UEBER_MASKE` und dieselbe
+      Ursache: das **Ortsfeld**. Die Zahl bleibt als Grössenordnung stehen und trägt ihre
+      Grenze jetzt mit. Wer sie als Boden verrechnet, urteilt **zu vorsichtig und nicht
+      falsch** — aber an der Lage vorbei. Ausdrücklich gilt das auch für die 0,3155 aus
+      `auf-35`.
+
+      **3 · «Eine Schwelle, keine Rampe» war zu grob** — ihre eigene Formulierung, die ich
+      übernommen hatte. Feiner nachgemessen ist es eine **Rampe mit Knie**: Score ab rund
+      0,50 Bildbreite, Schwelle überschritten zwischen **0,5991 und 0,6488**, linear bei
+      0,61. Der Faktor 647 war eine Folge der groben Abstufung. **Die Zurückhaltung beim
+      Interpolieren bleibt trotzdem richtig** — die vier Punkte liegen beidseits des Knies.
+      Bestellempfehlung ist **0,70** statt 0,65: Dort besteht jeder von drei Startwerten
+      mit Abstand 0,301, bei 0,65 steht einer bei 0,114.
+
+      **4 · Offen geblieben:** `geom_iou_obergrenze` **ist keine Obergrenze** — das
+      gemessene `geom_iou` liegt bei drei Stufen darüber. Der Name behauptet mehr, als die
+      Zahl hält; das gehört korrigiert, sobald klar ist, was sie stattdessen ist.
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und

@@ -1021,6 +1021,80 @@ def ziehe_bis_frei(auge, blick_auf, bbox, _sicht_frei, *,
 # Der Kamerasatz
 # --------------------------------------------------------------------------------------
 
+def berichtsfelder_aus_stellung(auge, blick_auf, bbox, *,
+                                brennweite_mm: float = BRENNWEITE_MM,
+                                gelaende_z: float | None = None) -> dict:
+    """Die Felder, die die Kompositionsprüfung braucht — aus einer **gestellten** Kamera.
+
+    **Der Anlass ist ein Wächter, der auf dem Produktivweg nie greift** (HomeStation,
+    24.08.2026): *«`komposition.beurteilt` ist bei ausdrücklichen Kameras immer false.»*
+
+    Und das ist der schlechteste denkbare Ort dafür. Kommt der Kamerastandort als Zahlen
+    herein — und **so schickt ihn die Oberfläche** —, rechnet :func:`kamerasatz` gar
+    nicht, und der Bericht trägt ``abstand_m``, ``gelaende_z``, ``gelaende_bezug`` und
+    ``gebaeudehoehe_m`` nicht. :func:`aiimaging.komposition.beurteile_bericht` antwortet
+    dann völlig richtig «nicht beurteilbar» — und zwar bei **jedem** Auftrag, der über die
+    Oberfläche kommt. Die vierte tote Kante dieser Woche, und die folgenreichste: Das
+    Regelwerk läuft genau dort nicht, wo Bilder für Menschen entstehen.
+
+    **Die Zahlen fehlen nicht, sie wurden nur nie ausgerechnet.** Standort, Blickziel und
+    Hüllbox liegen alle vor.
+
+    **Warum das hier steht und nicht im Runner.** Es ist reine Arithmetik. Im Runner wäre
+    es eine Fähigkeit, die ohne Blender niemand hätte — Regel 4. Der Runner ruft es auf,
+    wenn er dieses Modul erreicht, und schreibt sonst gar nichts, statt zu raten.
+
+    Args:
+        auge: Standort der Kamera, ``(x, y, z)`` im Weltsystem.
+        blick_auf: Punkt, auf den sie zielt.
+        bbox: ``[[xmin,ymin,zmin],[xmax,ymax,zmax]]`` der Szene.
+        gelaende_z: Geländestand, oder ``None`` für die Unterkante der Hüllbox — dieselbe
+            Regel wie in :func:`kamerasatz`.
+
+    Returns:
+        ``{abstand_m, gelaende_z, gelaende_bezug, gebaeudehoehe_m, brennweite_mm}``.
+
+    .. note::
+       ``abstand_m`` ist hier die **waagrechte Entfernung vom Auge zum Blickziel**. Auf dem
+       gerechneten Weg ist es die Komponente **längs der Blickachse**; die beiden
+       unterscheiden sich um den seitlichen Versatz (:data:`FRONTAL_VERSATZ`) und fallen
+       ohne ihn zusammen. Für ein Urteil über die Aufnahme ist die Aufnahmeentfernung die
+       gemeinte Grösse — der Unterschied steht hier, damit ihn niemand für einen Fehler
+       hält.
+
+    Raises:
+        ValueError: Punkte oder Hüllbox haben nicht drei Zahlen. ``ValueError`` und keine
+            eigene Klasse — dieses Modul wirft durchgehend ``ValueError``, und eine
+            zweite Fehlerart für dieselbe Sorte Fehler zwänge jeden Aufrufer, beide zu
+            fangen.
+    """
+    def _punkt(p, name):
+        try:
+            x, y, z = (float(w) for w in p)
+        except (TypeError, ValueError) as fehler:
+            raise ValueError(f"{name} braucht drei Zahlen, war {p!r}.") from fehler
+        return x, y, z
+
+    ax, ay, _az = _punkt(auge, "auge")
+    zx, zy, _zz = _punkt(blick_auf, "blick_auf")
+    try:
+        unten, oben = bbox
+    except (TypeError, ValueError) as fehler:
+        raise ValueError(f"bbox braucht zwei Punkte, war {bbox!r}.") from fehler
+    _ux, _uy, uz = _punkt(unten, "bbox[min]")
+    _ox, _oy, oz = _punkt(oben, "bbox[max]")
+
+    grund = float(uz) if gelaende_z is None else float(gelaende_z)
+    bezug = "huellbox_unterkante" if gelaende_z is None else "gesetzt"
+    return {
+        "abstand_m": round(math.hypot(ax - zx, ay - zy), 4),
+        "gelaende_z": round(grund, 4),
+        "gelaende_bezug": bezug,
+        "gebaeudehoehe_m": round(float(oz) - grund, 4),
+        "brennweite_mm": float(brennweite_mm),
+    }
+
+
 def kamerasatz(bbox, *,
                brennweite_mm: float = BRENNWEITE_MM,
                seitenverhaeltnis: float = 16 / 9,

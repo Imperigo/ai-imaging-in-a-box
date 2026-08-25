@@ -23,6 +23,8 @@ Sie sass unter dem Tor.
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from aiimaging import abholer, geometrie_qa as g
@@ -349,3 +351,44 @@ def test_der_docstring_traegt_die_widerlegung_des_abzugs():
     assert "nicht additiv" in doc
     assert "0,9361" in doc
     assert "kein besseres ρ" in doc.replace("**", "")
+
+
+# --------------------------------------------------------------------------------------
+# 5 · Dieselbe Fehlerart bei der Startwertstreuung
+# --------------------------------------------------------------------------------------
+
+def test_die_seedstreuung_traegt_ihre_lageabhaengigkeit_mit():
+    """**Dieselbe Ursache wie beim Rauschboden: das Ortsfeld.**
+
+    Gemessen am 24.08.2026: Am selben Standort und Füllgrad, nur mit anderer Achsenlage,
+    ist die Startwertstreuung 0,0088 gegen 0,1216 — **Faktor 14**. Eine Zahl, die man für
+    eine Eigenschaft der Kette hält, ist eine Eigenschaft der Bildlage.
+
+    Sie bleibt stehen, weil sie als Grössenordnung taugt — aber sie muss ihre Grenze
+    mittragen, sonst wird sie als Naturkonstante verrechnet. Genau das ist mit
+    `RAUSCHBODEN_UEBER_MASKE` eine Woche lang passiert.
+    """
+    from aiimaging import varianten
+
+    quelle = Path(varianten.__file__).read_text(encoding="utf-8")
+    ende = quelle.index("GEMESSENE_SEED_STREUUNG = 0.2269")
+    block = "\n".join(z for z in quelle[:ende].splitlines()[-40:] if z.startswith("#:"))
+
+    assert "KAMERALAGE" in block
+    assert "Faktor 14" in block
+    assert "Ortsfeld" in block, "die gemeinsame Ursache gehoert dazu, nicht nur die Zahl"
+
+
+def test_der_boden_sagt_im_grund_dass_er_zu_gross_sein_kann():
+    """Wer ihn benutzt, urteilt **vorsichtig** und nicht falsch — aber an der Lage vorbei.
+
+    Der Unterschied gehört in den Text: «zu streng» ist eine andere Auskunft als «falsch»,
+    und nur die erste erlaubt es, das Ergebnis trotzdem zu benutzen.
+    """
+    from aiimaging import varianten
+
+    grund = varianten.GEMESSENER_BODEN["begruendung"]
+
+    assert "KAMERALAGE" in grund
+    assert "ZU GROSS" in grund
+    assert "vorsichtig und nicht falsch" in grund

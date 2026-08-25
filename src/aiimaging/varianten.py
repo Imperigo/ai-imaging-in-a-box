@@ -90,6 +90,21 @@ MIN_SAATREIHE = 3
 #:
 #: Ihre Grenze gehört dazu: Sie ist an *einem* Aufbau gemessen. Ob sie für einen anderen
 #: gilt, ist ungemessen. Sie taugt als Grössenordnung, nicht als Naturkonstante.
+#:
+#: .. danger::
+#:    **Und seit dem 24.08.2026 ist gemessen, dass sie der KAMERALAGE gehört und nicht der
+#:    Kette** (HomeStation, Nachtrag zu `auf-13`): *«Am selben Standort und Füllgrad, nur
+#:    mit anderer Achsenlage, ist die Startwertstreuung 0,0088 gegen 0,1216 — Faktor 14.»*
+#:
+#:    Das ist dieselbe Fehlerart wie bei
+#:    :data:`aiimaging.geometrie_qa.RAUSCHBODEN_UEBER_MASKE`, und sie hat dieselbe Ursache:
+#:    das **Ortsfeld** des Tiefenschätzers. Eine Zahl, die man für eine Eigenschaft der
+#:    Kette hält, ist eine Eigenschaft der Bildlage.
+#:
+#:    **Was daraus folgt:** Diese Zahl ist eine **Grössenordnung** und darf nicht als
+#:    allgemeiner Rauschboden verrechnet werden. Wo es auf den Vergleich ankommt, gehört
+#:    die Streuung **derselben Kameralage** gemessen — die Seedreihe läuft ohnehin je
+#:    Kamera. Ausdrücklich gilt das auch für die 0,3155 aus `auf-35`.
 GEMESSENE_SEED_STREUUNG = 0.2269
 
 #: Der Rauschboden aus :data:`GEMESSENE_SEED_STREUUNG`, in der Form, die
@@ -99,7 +114,12 @@ GEMESSENER_BODEN = {
     "streuung": GEMESSENE_SEED_STREUUNG, "spanne": None, "belastbar": True,
     "begruendung": ("9 Läufe desselben Aufbaus, nur der Startwert verschieden: Mittel "
                     "-0.664, Streuung 0.227 (POLARITAET_UND_STAERKE_2026-08-22.md). "
-                    "UNABHÄNGIG von der Reihe, gegen die hier geprüft wird."),
+                    "UNABHÄNGIG von der Reihe, gegen die hier geprüft wird. ACHTUNG: "
+                    "Diese Streuung gehört der KAMERALAGE — an derselben Stelle mit "
+                    "anderer Achsenlage sind es 0.0088 statt 0.1216, Faktor 14 "
+                    "(24.08.2026). Als allgemeiner Boden ist sie ZU GROSS und weist "
+                    "damit echte Unterschiede ab; wer sie benutzt, urteilt vorsichtig "
+                    "und nicht falsch — aber er urteilt an der Lage vorbei."),
 }
 
 #: Die Felder eines Renderauftrags, die eine kontrollierte Reihe sinnvoll durchfahren kann.

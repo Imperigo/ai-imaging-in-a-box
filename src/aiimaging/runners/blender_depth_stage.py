@@ -486,6 +486,32 @@ def _kamera_setzen(lo, hi, a=None):
     herkunft["sensor_breite_mm"] = round(float(kam_daten.sensor_width), 4)
     herkunft["auge"] = [round(float(v), 4) for v in auge]
     herkunft["blick_auf"] = [round(float(v), 4) for v in ziel]
+
+    # Die Felder, ohne die die Kompositionspruefung nicht urteilen kann. Auf dem
+    # GERECHNETEN Weg stehen sie laengst; auf dem VORGEGEBENEN — und so schickt die
+    # Oberflaeche ihre Kameras — fehlten sie, und `komposition.beurteilt` war dort IMMER
+    # false (HomeStation, 24.08.2026). Das Regelwerk lief also genau dort nicht, wo Bilder
+    # fuer Menschen entstehen.
+    #
+    # Die Zahlen fehlten nicht, sie wurden nur nie ausgerechnet: Standort, Blickziel und
+    # Huellbox liegen alle vor. Gerechnet wird in der BIBLIOTHEK (Regel 4) — ist sie von
+    # diesem Blender aus nicht erreichbar, bleibt das Feld leer und die Pruefung sagt
+    # weiterhin ehrlich «nicht beurteilbar», statt aus geratenen Zahlen zu urteilen.
+    if any(herkunft.get(f) is None for f in
+           ("abstand_m", "gelaende_z", "gelaende_bezug", "gebaeudehoehe_m")):
+        kameras = _kameras_modul()
+        if kameras is not None and hasattr(kameras, "berichtsfelder_aus_stellung"):
+            abgeleitet = kameras.berichtsfelder_aus_stellung(
+                list(auge), list(ziel), [list(lo), list(hi)],
+                brennweite_mm=float(kam_daten.lens),
+                gelaende_z=getattr(a, "gelaende_z", None) if a is not None else None)
+            for feld, wert in abgeleitet.items():
+                herkunft.setdefault(feld, wert)
+            herkunft["berichtsfelder"] = "aus der Stellung abgeleitet"
+        else:
+            herkunft["berichtsfelder"] = (
+                "FEHLEN: 'aiimaging.kameras' ist von diesem Blender aus nicht erreichbar. "
+                "Die Kompositionspruefung kann nicht urteilen — geraten wird nicht.")
     return kam, mitte, spanne, herkunft
 
 

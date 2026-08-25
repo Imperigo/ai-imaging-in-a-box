@@ -70,6 +70,8 @@ def test_dazwischen_wird_NICHT_interpoliert():
     assert e["lage"] is None
     assert "NICHT BEANTWORTET" in e["begruendung"]
     assert "Erfindung" in e["begruendung"]
+    assert "RAMPE MIT KNIE" in e["begruendung"], (
+        "der Grund ist ein Knie und kein Sprung — die grobe Fassung war widerlegt")
 
 
 def test_ohne_maskenanteil_ist_die_frage_nicht_beantwortet_und_nicht_verneint():
@@ -93,13 +95,23 @@ def test_die_tabelle_ist_eine_stichprobe_und_sagt_das():
         "beide Grenzen sind GEMESSENE Punkte und keine gewaehlten Werte dazwischen")
 
 
-def test_der_sprung_ist_wirklich_ein_sprung_und_keine_rampe():
-    """Der Beleg für die Zurückhaltung darüber — aus den Zahlen selbst."""
+def test_der_anstieg_ist_gross_genug_dass_eine_gerade_unsinn_waere():
+    """Der Beleg für die Zurückhaltung darüber — aus den Zahlen selbst.
+
+    **Und eine Korrektur:** «Faktor 647, also eine Schwelle und keine Rampe» stand hier
+    bis zum 24.08.2026 und war zu grob — von beiden Seiten. Feiner nachgemessen ist es
+    eine **Rampe mit Knie** (Score ab rund 0,50 Bildbreite, Schwelle zwischen 0,5991 und
+    0,6488). Der Faktor war eine Folge der groben Abstufung.
+
+    Die Zurückhaltung bleibt trotzdem richtig: Die vier Punkte liegen **beidseits** des
+    Knies, und eine Gerade durch ein Knie ist keine Schätzung.
+    """
     nach_anteil = dict(RAHMUNG_GEMESSEN)
     klein = nach_anteil[ANTEIL_MASKE_GEMESSEN_ZU_KLEIN]
     gross = nach_anteil[ANTEIL_MASKE_GEMESSEN_REICHT]
 
-    assert gross / klein > 500, "Faktor 647 — das ist keine Rampe"
+    assert gross / klein > 500
+    assert "RAMPE MIT KNIE" in g.torchance(0.22)["begruendung"]
 
 
 def test_die_schwelle_ist_damit_NICHT_unerreichbar():
