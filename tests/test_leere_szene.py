@@ -164,29 +164,25 @@ def test_ohne_bauwerksbox_ist_es_NICHT_FESTSTELLBAR_und_nicht_in_ordnung():
     assert "NICHT FESTSTELLBAR" in e["grund"]
 
 
-def test_BEFUND_unser_deckungsgrad_liegt_UNTER_dem_gemessenen_knie():
-    """**Ein Befund über unseren eigenen Vorgabewert, und er war nicht gesucht.**
+def test_der_deckungsgrad_liegt_ueber_dem_gemessenen_knie():
+    """**Hier stand bis zum 25.08.2026 ein Befund — er ist erledigt.**
 
-    Selbst im besten Fall — die Szene besteht **nur** aus dem Bauwerk, kein Gelände —
-    zielt `DECKUNGSGRAD = 0.55` auf 55 % Bildbreite. Das gemessene Knie liegt bei 0,5991,
-    die Bestellempfehlung bei 0,70.
+    Der Test hiess `test_BEFUND_unser_deckungsgrad_liegt_UNTER_dem_gemessenen_knie` und
+    trug den Satz: *«wird die Vorgabe je gehoben, fällt er auf und gehört ENTFERNT statt
+    angepasst.»* Der Owner hat sie am 25.08.2026 auf 0.70 gehoben. Also entfernt — und
+    ersetzt durch die Zusicherung, die jetzt gilt.
 
-    Die grosse Geländeplatte ist also **nicht die einzige** Ursache. Auch ohne sie rahmt
-    die Vorgabe knapp unterhalb dessen, was das Tor gemessen verlangt.
-
-    **Geändert wird die Vorgabe hier nicht** — das änderte jedes Bild, und ob ein
-    formatfüllendes Bauwerk den Kontext aus dem Bild drängen soll, ist eine
-    Gestaltungsfrage und keine Messfrage. Der Test hält den Befund fest, damit er nicht
-    wieder verlorengeht.
+    Sie ist nicht dasselbe wie der alte Test mit umgedrehtem Vorzeichen: Der alte hielt
+    einen **Missstand** fest, dieser hält eine **Eigenschaft** fest, die niemand aus
+    Versehen aufgeben soll.
     """
     ohne_gelaende = kameras.rahmungsverhaeltnis(BAUWERK, BAUWERK)
 
     assert ohne_gelaende["breitenanteil"] == pytest.approx(1.0)
-    assert ohne_gelaende["wirksame_bildbreite"] == pytest.approx(kameras.DECKUNGSGRAD)
-    assert kameras.DECKUNGSGRAD < kameras.BILDBREITE_KNIE, (
-        "wenn das einmal nicht mehr gilt, ist der Befund erledigt — dann gehoert dieser "
-        "Test weg und nicht angepasst")
-    assert ohne_gelaende["traegt"] is False
+    assert kameras.DECKUNGSGRAD >= kameras.BILDBREITE_KNIE
+    assert ohne_gelaende["traegt"] is True, (
+        "eine Szene ohne Gelaende muss die Rahmungspruefung bestehen — sonst steht die "
+        "Vorgabe wieder unter dem Knie")
 
 
 def test_ein_hoeherer_deckungsgrad_traegt():

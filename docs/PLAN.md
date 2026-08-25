@@ -1772,7 +1772,9 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Damit ist `kameras.rahmungsverhaeltnis` möglich: Es beantwortet **vor** dem
       Renderlauf, ob das Bauwerk genug Bild füllt — und meldet «NICHT FESTSTELLBAR», wo
       die zweite Box fehlt, statt «in Ordnung».
-- [ ] **BEFUND, nicht gesucht: `DECKUNGSGRAD = 0.55` liegt UNTER dem gemessenen Knie.**
+- [x] **`DECKUNGSGRAD` steht auf 0.70 — Owner-Entscheid 25.08.2026.** Der Befund darunter
+      ist damit erledigt; er steht als Begründung.
+- [ ] **BEFUND (erledigt): `DECKUNGSGRAD = 0.55` lag UNTER dem gemessenen Knie.**
       Selbst im besten Fall — die Szene besteht **nur** aus dem Bauwerk, kein Gelände —
       zielt unsere Vorgabe auf 55 % Bildbreite. Das gemessene Knie liegt bei **0,5991**,
       die Bestellempfehlung der HomeStation bei **0,70**.
@@ -1781,12 +1783,28 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       die Vorgabe knapp unterhalb dessen, was das Tor gemessen verlangt — und das erklärt,
       warum die Schwelle so lange als unerreichbar galt.
 
-      **Geändert wird die Vorgabe nicht von mir.** Das änderte jedes Bild, und ob ein
-      formatfüllendes Bauwerk den Kontext aus dem Bild drängen soll, ist eine
-      **Gestaltungsfrage** und keine Messfrage — die HomeStation hat die Zuständigkeit
-      dafür beim Cloud-Worker verortet. Ein Test hält den Befund fest, damit er nicht
-      wieder verlorengeht; wird die Vorgabe je gehoben, fällt er auf und gehört **entfernt
-      statt angepasst**.
+      **Der Owner hat entschieden: 0.70.** Was der Wechsel geometrisch kostet, ist
+      nachgerechnet und nicht geraten — über drei Bauformen und alle zwölf Richtungen sinkt
+      der Abstand um den Faktor 0,79, der Eckentest bleibt **vollständig**, und **kein
+      einziger Shift** überschreitet `MAX_SHIFT_MM`. Was er am **Bild** tut, ist die Frage
+      von `auf-41`.
+
+      **Drei Folgen, die dazugehören:**
+
+      * Der Test, der den Befund festhielt, ist **entfernt** — er trug den Satz *«wird die
+        Vorgabe je gehoben, gehört er entfernt statt angepasst»*, und daran halte ich mich.
+        An seiner Stelle steht die Zusicherung, die jetzt gilt: Eine Szene ohne Gelände muss
+        die Rahmungsprüfung bestehen. Das ist nicht derselbe Test mit umgedrehtem Vorzeichen
+        — der alte hielt einen **Missstand** fest, dieser eine **Eigenschaft**.
+      * **Zwölf Bestandsrenders sind bei 0,55 gemessen**, und unsere Flächenanteil-Rechnung
+        ist gegen sie geprüft. Die Messung ist jetzt an ihren Deckungsgrad gebunden
+        (`GEMESSEN_BEI_DECKUNGSGRAD`) — sie mit der neuen Vorgabe zu vergleichen hiesse,
+        eine Messung gegen einen Aufbau zu halten, in dem sie nie stattfand. **Dieselbe
+        Lehre wie beim Rauschboden und bei der Startwertstreuung, zum dritten Mal.**
+      * **Die zwei fest verdrahteten `0.55` im Runner sind weg.** Genau die 28-mm-Falle vom
+        23.08.; jetzt steht in `argparse` `None` und `_vorgabe()` holt den Wert aus der
+        **Bibliothek**. Ein Vorgabewert an zwei Stellen ist an einer davon bereits falsch —
+        nur merkt es niemand, solange beide gleich sind.
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und

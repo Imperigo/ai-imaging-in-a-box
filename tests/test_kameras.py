@@ -782,6 +782,16 @@ def test_die_warnung_nennt_die_ursache_und_nicht_nur_die_zahl():
 #: Der Baukörper der Messung — Sockel, Hauptkörper, Attika, Anbau.
 GEMESSENES_HAUS = [[-10.0, 0.0, 0.0], [30.0, 26.0, 15.0]]
 
+#: Der Deckungsgrad, bei dem die zwölf Renders unten entstanden sind.
+#:
+#: **Die Messung gehört an ihn.** Am 25.08.2026 ist die Vorgabe auf 0.70 gestiegen
+#: (Owner-Entscheid); die Zahlen unten stammen von vorher. Sie mit der neuen Vorgabe zu
+#: vergleichen hiesse, eine Messung gegen einen Aufbau zu halten, in dem sie nie
+#: stattgefunden hat — derselbe Fehler wie ein Rauschboden ohne seine Maskenlage.
+#:
+#: **Eine Neumessung bei 0.70 steht aus** und gehört in die nächste Grundmessung.
+GEMESSEN_BEI_DECKUNGSGRAD = 0.55
+
 #: Was die zwölf Renders wirklich zeigten, Kürzel → Flächenanteil.
 GEMESSENE_FLAECHE = {
     "n": 0.0654, "e": 0.0961, "s": 0.0803, "w": 0.0756,
@@ -797,14 +807,16 @@ def test_der_fuellgrad_ist_ueber_alle_zwoelf_praktisch_konstant():
     eingehalten", und die Antwort ist zwölfmal ja. Sie beantwortet nur nicht die Frage,
     die ein Mensch stellt.
     """
-    satz = kameras.kamerasatz(GEMESSENES_HAUS, seitenverhaeltnis=1.0)
+    satz = kameras.kamerasatz(GEMESSENES_HAUS, seitenverhaeltnis=1.0,
+                              deckungsgrad=GEMESSEN_BEI_DECKUNGSGRAD)
     werte = [k["fuellgrad"] for k in satz["kameras"]]
     assert max(werte) - min(werte) < 0.01, werte
 
 
 def test_der_flaechenanteil_unterscheidet_sie_deutlich():
     """Die andere Hälfte: Dieselben zwölf Kameras, Faktor zwei bis drei Unterschied."""
-    satz = kameras.kamerasatz(GEMESSENES_HAUS, seitenverhaeltnis=1.0)
+    satz = kameras.kamerasatz(GEMESSENES_HAUS, seitenverhaeltnis=1.0,
+                              deckungsgrad=GEMESSEN_BEI_DECKUNGSGRAD)
     werte = [k["flaechenanteil"] for k in satz["kameras"]]
     assert max(werte) / min(werte) > 2.0, werte
 
@@ -820,7 +832,8 @@ def test_die_rechnung_ist_eine_obergrenze_der_messung(kuerzel, gemessen):
     seiner Hüllbox füllt.
     """
     kamera = kameras.kamerasatz(GEMESSENES_HAUS, kuerzel=[kuerzel],
-                                seitenverhaeltnis=1.0)["kameras"][0]
+                                seitenverhaeltnis=1.0,
+                                deckungsgrad=GEMESSEN_BEI_DECKUNGSGRAD)["kameras"][0]
     gerechnet = kamera["flaechenanteil"]
     assert gerechnet >= gemessen, f"unter dem Gemessenen — die Rechnung ist falsch"
     assert gerechnet <= gemessen * 2.5, f"{gerechnet:.3f} gegen {gemessen:.3f} — zu grob"
@@ -831,7 +844,8 @@ def test_die_rangfolge_stimmt_mit_der_messung_ueberein():
 
     Die Frontalen zeigen mehr als die Diagonalen — gerechnet wie gemessen.
     """
-    satz = kameras.kamerasatz(GEMESSENES_HAUS, seitenverhaeltnis=1.0)
+    satz = kameras.kamerasatz(GEMESSENES_HAUS, seitenverhaeltnis=1.0,
+                              deckungsgrad=GEMESSEN_BEI_DECKUNGSGRAD)
     gerechnet = {k["kuerzel"]: k["flaechenanteil"] for k in satz["kameras"]}
     frontal = [gerechnet[k] for k in ("n", "e", "s", "w")]
     diagonal = [gerechnet[k] for k in ("nNE", "eES", "sSW", "wWN")]

@@ -146,7 +146,11 @@ def _argumente():
                          "`kameras.MODUS_SHIFT`; hier wird er nur gestellt.")
     ap.add_argument("--bias", type=float, default=35.0)
     ap.add_argument("--augenhoehe", type=float, default=1.70)
-    ap.add_argument("--deckungsgrad", type=float, default=0.55)
+    # KEIN fester Vorgabewert hier. Am 23.08.2026 sind zwei abgeschriebene 28.0
+    # aufgefallen, die beim Wechsel der Brennweite still auseinandergelaufen
+    # waeren; dies ist dieselbe Stelle fuer den Deckungsgrad. None heisst: was
+    # die Bibliothek sagt.
+    ap.add_argument("--deckungsgrad", type=float, default=None)
     ap.add_argument("--gelaende-z", type=float, default=None,
                     help="Geländehöhe im Weltsystem. Ohne Angabe die Unterkante der "
                          "Hüllbox — bei einem Untergeschoss stünde die Kamera sonst im Keller.")
@@ -252,6 +256,21 @@ def _punkt_aus_text(text, name: str):
     if any(w != w or w in (float("inf"), float("-inf")) for w in werte):
         raise RuntimeError(f"{name} enthält nan oder inf: {text!r}")
     return werte
+
+
+def _vorgabe(a, feld: str, aus_der_bibliothek):
+    """Der Wert vom Aufrufer — oder der aus der Bibliothek, **nicht** einer von hier.
+
+    **Der Anlass sind zwei abgeschriebene ``28.0``** (23.08.2026): Die Brennweite war im
+    Kern längst einstellbar, und zwei fest verdrahtete Kopien an der Aussenkante wären beim
+    Wechsel auf 35 mm still auseinandergelaufen. Ein Vorgabewert, der an zwei Stellen
+    steht, ist an einer davon bereits falsch — nur merkt es niemand, solange beide gleich
+    sind.
+
+    Darum steht in ``argparse`` ``None`` und hier die einzige Quelle.
+    """
+    wert = getattr(a, feld, None) if a is not None else None
+    return float(aus_der_bibliothek if wert is None else wert)
 
 
 def _kameras_modul():
@@ -397,7 +416,7 @@ def _kamera_setzen(lo, hi, a=None):
                 brennweite_mm=brennweite,
                 bias_grad=float(getattr(a, "bias", 35.0)),
                 augenhoehe_m=float(getattr(a, "augenhoehe", 1.70)),
-                deckungsgrad=float(getattr(a, "deckungsgrad", 0.55)),
+                deckungsgrad=_vorgabe(a, "deckungsgrad", kameras.DECKUNGSGRAD),
                 gelaende_z=getattr(a, "gelaende_z", None),
                 # Das TATSÄCHLICHE Seitenverhältnis dieses Laufs, nicht eine Annahme.
                 # Bis zum 19.08.2026 stand hier fest 1.0 mit dem Kommentar „der Runner

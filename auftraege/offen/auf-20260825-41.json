@@ -1,0 +1,79 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260825-41",
+  "art": "render",
+  "beschreibung": "DER DECKUNGSGRAD IST VON 0.55 AUF 0.70 GESTIEGEN (Owner-Entscheid 25.08.2026). Das aendert JEDES Bild, und darum braucht es eine neue Grundmessung — wie beim letzten Vorgabewechsel (auf-35).\n\n=== WARUM DER WECHSEL ===\nEuer auf-13 hat das Knie der Rampe vermessen: Der Score ueberschreitet die Schwelle zwischen 0.5991 und 0.6488 Bildbreite, Bestellempfehlung 0.70. Beim Bauen der Rahmungspruefung fiel mir auf, dass unsere Vorgabe 0.55 DARUNTER lag — auch dann, wenn gar kein Gelaende in der Szene ist.\n\nDas war die zweite Haelfte einer Erklaerung, die eine Woche lang gefehlt hat. Dass die Schwelle 0.65 als unerreichbar galt, lag zum einen an der Rahmung der ganzen Szene statt des Bauwerks — und zum anderen daran, dass die Vorgabe selbst zu weit stand.\n\n=== WAS ICH VORAB GERECHNET HABE (nicht nachrechnen) ===\nUeber drei Bauformen und alle zwoelf Richtungen, 0.55 gegen 0.70:\n\n  Flachbau 8 m   Abstand 50.5 -> 41.4 m   Fuellgrad 0.549 -> 0.699\n  Wohnhaus 15 m  Abstand 69.8 -> 55.9 m   Fuellgrad 0.550 -> 0.700\n  Turm 45 m      Abstand 224.6 -> 178.4 m Fuellgrad 0.550 -> 0.700\n\nDer Eckentest bleibt bei allen vollstaendig, und KEIN einziger Shift ueberschreitet MAX_SHIFT_MM. Der Wechsel ist geometrisch also folgenlos — was er am BILD tut, weiss ich nicht, und genau das ist eure Frage.\n\n=== AUSSERDEM NEU SEIT DER LETZTEN GRUNDMESSUNG ===\n1. Der Runner meldet eine ZWEITE Huellbox: bbox_bauwerk, die gebaute Substanz ohne IfcSite. Sie ist der eigentliche Rahmen — bisher rahmte die Kamera die ganze Szene und die Maske deckte nur das Bauwerk.\n2. gelaende_erwartet reicht durch (--kein-gelaende), fuer reine Gebaeude-IFC ohne IfcSite-Geometrie.\n3. komposition.beurteile_bericht urteilt jetzt auch bei ausdruecklichen Kameras — vorher war beurteilt bei jedem Auftrag der Oberflaeche false.\n4. Der Rauschboden wird gegen die tatsaechliche Maskenlage gelesen, nicht gegen die Konstante.\n\n=== G1 · DIE GRUNDMESSUNG ===\nDieselbe Szene und derselbe Aufbau wie in auf-35, damit die Zahlen vergleichbar bleiben. Drei Startwerte, drei Ansichten.\n\nJe Lauf zurueck: rho_maske (gerichtet), anteil_maske, Kantenanteil, geom_iou, Score, bestanden — und den Rauschanker derselben Maskenlage, mehrere Ziehungen.\n\nDIE FRAGE: Besteht das Tor jetzt, und wie oft? Bei auf-13 bestand bei 0.70 jeder von drei Startwerten mit Abstand 0.301. Haelt das an einer zweiten Szene?\n\n=== G2 · WAS DIE ENGERE RAHMUNG KOSTET — die Frage, die mir wichtiger ist ===\nDer Wechsel ist geometrisch folgenlos. Gestalterisch ist er es nicht: weniger Umgebung, mehr Bauwerk.\n\nZeig mir bitte je ein Bildpaar (0.55 gegen 0.70) bei sonst gleichen Werten, aus zwei Ansichten. KEINE Messung — ich will wissen, ob die engere Rahmung noch nach Architekturfotografie aussieht oder nach Produktfoto. Deine Einschaetzung dazu ist mir mehr wert als eine Zahl, und wenn du sagst 'zu eng', nehme ich das mit zum Owner zurueck.\n\nFalls die Bilder nicht ins Repo duerfen (Regel 3): Dateinamen und deine Beschreibung in Worten genuegen.\n\n=== G3 · NUR WENN G1 UND G2 STEHEN: DIE ZWEITE HUELLBOX AM WERK ===\nEine Szene mit grosser Gelaendeplatte, einmal gerahmt nach bbox (wie bisher) und einmal nach bbox_bauwerk. Erwartung: anteil_maske steigt deutlich, und das Tor besteht im zweiten Fall.\n\nDas ist die eigentliche Behebung des Rahmungsbruchs — ich habe sie NICHT eingebaut, weil sie jedes Bild aendert und die Gestaltungsfrage beim Cloud-Worker liegt. Deine Zahlen entscheiden, ob es sich lohnt, sie dort zu stellen.\n\n=== WAS DU NICHT TUN SOLLST ===\n- Die drei Zahlen oben nicht nachrechnen, sie sind gerechnet und nicht geraten.\n- Die Rahmung nach bbox_bauwerk NICHT zur Vorgabe machen — das ist G3, eine Messung, keine Umstellung.\n- Keine Bilder ins Repo (Regel 3).\n\n=== RUECKGABE ===\nNach auftraege/ergebnisse/auf-20260825-41.json. Reihenfolge: G1, G2, G3.\n\nUnd die Frage, die ich mitschicke, weil sie mich beschaeftigt: Zwoelf Renders aus dem Bestand sind bei 0.55 gemessen worden, und unsere Flaechenanteil-Rechnung ist gegen sie geprueft. Diese Eichung gilt jetzt fuer einen Deckungsgrad, den wir nicht mehr benutzen. Lohnt eine Neumessung derselben zwoelf bei 0.70, oder reicht es, die alte Zahl an ihren Deckungsgrad zu binden — was ich vorerst getan habe?",
+  "erstellt": "2026-08-25T08:01:01Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "anlass": "DECKUNGSGRAD 0.55 -> 0.70, Owner-Entscheid 25.08.2026",
+    "vorab_gerechnet_nicht_nachrechnen": {
+      "flachbau_8m": {
+        "abstand_m": [
+          50.5,
+          41.4
+        ],
+        "fuellgrad": [
+          0.549,
+          0.699
+        ]
+      },
+      "wohnhaus_15m": {
+        "abstand_m": [
+          69.8,
+          55.9
+        ],
+        "fuellgrad": [
+          0.55,
+          0.7
+        ]
+      },
+      "turm_45m": {
+        "abstand_m": [
+          224.6,
+          178.4
+        ],
+        "fuellgrad": [
+          0.55,
+          0.7
+        ]
+      },
+      "eckentest": "bei allen vollstaendig",
+      "shift": "kein einziger ueber MAX_SHIFT_MM"
+    },
+    "neu_seit_auf35": [
+      "bbox_bauwerk — zweite Huellbox, gebaute Substanz ohne IfcSite",
+      "gelaende_erwartet reicht durch (--kein-gelaende)",
+      "komposition urteilt jetzt auch bei ausdruecklichen Kameras",
+      "Rauschboden gegen die tatsaechliche Maskenlage statt gegen die Konstante"
+    ],
+    "kernfragen": {
+      "G1": "Besteht das Tor jetzt, und wie oft? Drei Startwerte, drei Ansichten",
+      "G2": "Was kostet die engere Rahmung GESTALTERISCH? Bildpaare, keine Messung",
+      "G3": "Rahmung nach bbox_bauwerk gegen bbox — die eigentliche Behebung, gemessen"
+    },
+    "knie_aus_auf13": {
+      "unten": 0.5991,
+      "oben": 0.6488,
+      "empfehlung": 0.7
+    },
+    "offene_frage": "Zwoelf Bestandsrenders sind bei 0.55 geeicht. Neumessung bei 0.70, oder die alte Zahl an ihren Deckungsgrad binden?"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": {
+    "verzeichnis": "auftraege/ergebnisse",
+    "nur_zahlen": true,
+    "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
+  }
+}

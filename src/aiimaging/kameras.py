@@ -96,10 +96,29 @@ BRENNWEITE_MM = 35.0
 #: Ohne bekannten Geländestand über der Unterkante der Hüllbox.
 AUGENHOEHE_M = 1.70
 
-#: Anteil des Bildes, den das Gebäude füllen soll. Ein Wert unter 1 schiebt die Kamera
-#: weiter weg und lässt Luft — das ist die „2/3-Komposition" als Zahl. 0.55 stammt aus
-#: dem Bestand und ist dort erprobt.
-DECKUNGSGRAD = 0.55
+#: Anteil der Bildbreite, den das Gebäude füllen soll. Ein Wert unter 1 schiebt die Kamera
+#: weiter weg und lässt Luft — das ist die „2/3-Komposition" als Zahl.
+#:
+#: **0.70 seit dem 25.08.2026 (Owner-Entscheid). Vorher 0.55, aus dem Bestand übernommen
+#: und dort erprobt — aber gemessen zu wenig.**
+#:
+#: Der Anlass ist eine Messung der HomeStation (`auf-13`, 24.08.2026) und ein Befund
+#: daraus, der beim Bauen von :func:`rahmungsverhaeltnis` anfiel: Das Geometrie-Tor
+#: überschreitet die Schwelle erst zwischen **0,5991 und 0,6488** Bildbreite; bei 0,70
+#: besteht **jeder von drei Startwerten** mit Abstand 0,301, bei 0,65 steht einer bei
+#: 0,114. Die alte Vorgabe von 0,55 lag also **unter dem Knie** — auch dann, wenn gar kein
+#: Gelände in der Szene war.
+#:
+#: **Das war die zweite Hälfte einer Erklärung, die eine Woche lang fehlte.** Dass die
+#: Schwelle 0,65 als unerreichbar galt, lag zum einen an der Rahmung der ganzen Szene
+#: statt des Bauwerks — und zum anderen daran, dass die Vorgabe selbst zu weit stand.
+#:
+#: **Was der Wechsel kostet, ist nachgerechnet und nicht geraten:** Der Abstand sinkt um
+#: den Faktor 0,55/0,70 ≈ 0,79. Über drei Bauformen (Flachbau 8 m, Wohnhaus 15 m, Turm
+#: 45 m) und alle zwölf Richtungen bleibt der Eckentest vollständig, und **kein einziger
+#: Shift** überschreitet :data:`MAX_SHIFT_MM`. Der Preis ist gestalterisch: weniger
+#: Umgebung, mehr Bauwerk — und das war die Frage, die der Owner entschieden hat.
+DECKUNGSGRAD = 0.70
 
 #: Sicherheitsrand beim Eckentest: 8 % des Bildes bleiben frei. Ohne ihn sitzt eine
 #: Gebäudeecke rechnerisch genau auf der Bildkante — und liegt nach der ersten
@@ -160,7 +179,7 @@ BIAS_GRAD = 35.0
 #:
 #: Vier Dokumente dieses Projekts sagten „`kameras.py` kippt 9,46°". Diese Zahl ist
 #: ``atan(0.20 / 1.2)`` und gilt bei einem Abstand von **1,2 × Gebäudehöhe** — einem
-#: Abstand, den :func:`kamerasatz` nie einnimmt (``DECKUNGSGRAD = 0.55`` stellt die
+#: Abstand, den :func:`kamerasatz` nie einnimmt (``DECKUNGSGRAD`` stellt die
 #: Kamera auf 2,5–5,5 × Gebäudehöhe).
 #:
 #: Meine Richtigstellung vom 23.08. lautete **1,92°–4,70°** und war ebenfalls zu eng.
