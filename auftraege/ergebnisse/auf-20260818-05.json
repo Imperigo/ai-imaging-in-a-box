@@ -33,5 +33,6 @@
     "python": "3.14.4",
     "blender": "/snap/bin/blender"
   },
-  "fehler": "SeamError: Blender endete mit Code 1:\n/home/andrin-baumann/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py:324: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0\n  if not getattr(welt, \"use_nodes\", False) and hasattr(welt, \"use_nodes\"):\n/home/andrin-baumann/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py:210: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0\n  mat.use_nodes = True"
+  "fehler": "SeamError: Blender endete mit Code 1:\n/home/<nutzer>/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py:324: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0\n  if not getattr(welt, \"use_nodes\", False) and hasattr(welt, \"use_nodes\"):\n/home/<nutzer>/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py:210: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0\n  mat.use_nodes = True",
+  "regel3_ersetzt": 2
 }

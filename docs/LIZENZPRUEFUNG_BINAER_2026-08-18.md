@@ -572,7 +572,7 @@ Alle URLs in den Tabellen oben, alle abgerufen am **2026-08-18** über den Agent
 ohne Zwischenschaltung einer Suchmaschine.
 
 Abrufwege:
-- **Installierte Dateien** unter `/home/user/ai-imaging-in-a-box/.venv-ifc/lib/python3.11/site-packages/`
+- **Installierte Dateien** unter `/home/<nutzer>/ai-imaging-in-a-box/.venv-ifc/lib/python3.11/site-packages/`
   (`dist-info/METADATA`, `dist-info/licenses/`, `*.libs/`, `_ifcopenshell_wrapper…so`),
   ausgewertet mit `strings`, `readelf -d`, `nm -D`.
 - **PyPI-Metadaten** `https://pypi.org/pypi/<paket>/json`.

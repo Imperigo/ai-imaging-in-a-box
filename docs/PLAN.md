@@ -1622,6 +1622,40 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       `passed` bleibt in allen drei Lagen `false`. Es auf `true` zu setzen, weil «es ja
       nicht durchgefallen ist», wäre die gefährliche Richtung: ein grünes Abzeichen ohne
       Messung.
+- [x] **REGEL-3-MELDUNG: Der Klarname des Owners stand seit dem 18.08.2026 im
+      öffentlichen Repo — gefunden, gesäubert, und der Wächter dagegen gebaut.**
+
+      **Was war.** In fünf Ergebnisdateien (`auf-20260818-01` bis `-05`) und zwei
+      Dokumenten stand `/home/<vorname-nachname>/…`. **Hingeschrieben hat ihn niemand:** Er
+      kam über **Blender-Fehlertexte** herein — ein Traceback bringt den vollen Pfad des
+      Skripts mit, und darin steht der Benutzername.
+
+      **Warum ihn nichts abfing.** `_wehre_bilddaten_ab` sah genau diese Felder an — aber
+      nur auf **Binärdaten** und **Länge**. Ein Name in einem Pfad ist beides nicht. Und
+      ein **Auftrag** wurde überhaupt nicht geprüft; die Funktion lief nur über Ergebnisse.
+
+      Am selben Tag hat die HomeStation denselben Fehler auf ihrer Seite gefunden und von
+      Hand behoben — *«die Anleitung zur Regel verletzte die Regel»*. **Von Hand heisst:
+      beim nächsten Mal wieder.**
+
+      **Was jetzt gilt.** `auftrag.regel3_saeubern` läuft in `schreibe_auftrag` **und**
+      `schreibe_ergebnis`, ersetzt den Namen durch `<nutzer>` und **behält den Rest des
+      Pfades** — der sagt, welches Skript gestolpert ist, und ist die Auskunft. Die Zahl
+      der Ersetzungen steht danach als `regel3_ersetzt` in der Datei: **keine stille
+      Reparatur.**
+
+      **Warum ersetzen und nicht ablehnen:** Diese Namen stecken in Fehlertexten, und ein
+      Fehlertext ist die wertvollste Zeile eines fehlgeschlagenen Laufs. Ihn
+      zurückzuweisen hiesse, die Messung wegzuwerfen, um die Regel einzuhalten — und die
+      nächste Rückmeldung käme von Hand gekürzt oder gar nicht.
+
+      Dazu ein Test, der **das ganze eingecheckte Repo** absucht (`git ls-files`, nicht das
+      Arbeitsverzeichnis). Die Liste erlaubter Platzhalter ist kurz und wird gelesen, nicht
+      gepflegt — dasselbe Prinzip wie `GEWOLLTE_TRENNUNGEN` im Lexikon-Test.
+
+      **NOCH OFFEN, und es ist Ihre Entscheidung:** Die **Git-Historie** trägt den Namen
+      weiterhin. Ihn dort zu entfernen hiesse, die Historie eines öffentlichen Repos
+      umzuschreiben und mit `--force` zu überschreiben. Das tue ich nicht ohne Ihr Wort.
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und

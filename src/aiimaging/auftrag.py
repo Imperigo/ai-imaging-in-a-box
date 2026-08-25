@@ -216,10 +216,17 @@ def pruefe_auftrag(satz: dict) -> list[str]:
 
 
 def schreibe_auftrag(satz: dict, repo_wurzel) -> Path:
-    """Auftrag ins Repo legen — atomar, damit kein halber Auftrag eingecheckt wird."""
+    """Auftrag ins Repo legen — atomar, damit kein halber Auftrag eingecheckt wird.
+
+    **Regel 3 wird hier durchgesetzt und nicht bloss erwähnt:** Benutzernamen in Pfaden
+    werden durch :data:`NUTZER_ERSATZ` ersetzt, und die Zahl der Ersetzungen steht danach
+    als ``regel3_ersetzt`` in der Datei. Bis zum 24.08.2026 wurde ein Auftrag darauf
+    **überhaupt nicht** geprüft — :func:`_wehre_bilddaten_ab` lief nur über Ergebnisse.
+    """
     maengel = pruefe_auftrag(satz)
     if maengel:
         raise AuftragError("Auftrag unvollständig: " + "; ".join(maengel))
+    satz, _ = regel3_saeubern(satz)
 
     ziel_verz = Path(repo_wurzel) / VERZ_OFFEN
     ziel_verz.mkdir(parents=True, exist_ok=True)
@@ -284,6 +291,94 @@ def baue_ergebnis(*, auftrag_id: str, status: str, messwerte: dict | None = None
     return satz
 
 
+#: Pfadmuster, in denen ein **Benutzername** steckt. Regel 3, dritter Absatz.
+#:
+#: **Der Anlass ist ein Fund im eigenen Repo** (24.08.2026): In fünf Ergebnisdateien und
+#: einem Sitzungsprotokoll stand seit dem 18.08. der Klarname des Owners — hereingekommen
+#: nicht durch Nachlässigkeit beim Schreiben, sondern durch **Blender-Fehlertexte**, die
+#: den vollen Pfad des Skripts mitbringen. Niemand hat ihn dort hingeschrieben; er ist
+#: mitgereist.
+#:
+#: :func:`_wehre_bilddaten_ab` sah genau diese Felder an — aber nur auf Binärdaten und
+#: Länge. Ein Name in einem Pfad ist beides nicht.
+#:
+#: Am selben Tag hat die HomeStation denselben Fehler auf ihrer Seite gefunden und von
+#: Hand behoben (*«die Anleitung zur Regel verletzte die Regel»*). Von Hand heisst: beim
+#: nächsten Mal wieder.
+HEIMATMUSTER = (
+    r"(/home/)([^/\s\"']+)",
+    r"(/Users/)([^/\s\"']+)",
+    r"([Cc]:\\Users\\)([^\\\s\"']+)",
+)
+
+#: Was anstelle des Namens steht. Der **Rest des Pfades bleibt** — er ist die Auskunft.
+NUTZER_ERSATZ = "<nutzer>"
+
+
+def ohne_kennungen(text: str) -> tuple[str, int]:
+    """Benutzernamen aus Pfaden entfernen, den Rest des Pfades behalten.
+
+    ``/home/vorname-nachname/projekt/datei.py`` → ``/home/<nutzer>/projekt/datei.py``
+
+    **Warum ersetzen und nicht ablehnen.** Diese Namen stecken in Fehlertexten, und ein
+    Fehlertext ist die wertvollste Zeile eines fehlgeschlagenen Laufs. Ihn zurückzuweisen
+    hiesse, die Messung wegzuwerfen, um die Regel einzuhalten — und die nächste
+    Rückmeldung käme dann von Hand gekürzt oder gar nicht.
+
+    **Und warum es trotzdem keine stille Reparatur ist:** :func:`schreibe_auftrag` und
+    :func:`schreibe_ergebnis` schreiben die Zahl der Ersetzungen in den Satz. Wer eine
+    Datei liest, sieht, dass etwas ersetzt wurde.
+
+    Returns:
+        ``(text, anzahl)``.
+    """
+    import re
+
+    gesamt = 0
+    for muster in HEIMATMUSTER:
+        text, n = re.subn(muster, lambda m: m.group(1) + NUTZER_ERSATZ, text)
+        gesamt += n
+    return text, gesamt
+
+
+def _kennungen_ersetzen(wert):
+    """Rekursiv durch den Satz — Zeichenketten, Listen, Wörterbücher, auch Schlüssel."""
+    if isinstance(wert, str):
+        return ohne_kennungen(wert)
+    if isinstance(wert, dict):
+        neu, gesamt = {}, 0
+        for k, v in wert.items():
+            k2, nk = _kennungen_ersetzen(k) if isinstance(k, str) else (k, 0)
+            v2, nv = _kennungen_ersetzen(v)
+            neu[k2] = v2
+            gesamt += nk + nv
+        return neu, gesamt
+    if isinstance(wert, list):
+        paare = [_kennungen_ersetzen(v) for v in wert]
+        return [w for w, _ in paare], sum(n for _, n in paare)
+    if isinstance(wert, tuple):
+        paare = [_kennungen_ersetzen(v) for v in wert]
+        return tuple(w for w, _ in paare), sum(n for _, n in paare)
+    return wert, 0
+
+
+def regel3_saeubern(satz: dict) -> tuple[dict, int]:
+    """Den ganzen Satz von Benutzernamen befreien und die Zahl zurückgeben.
+
+    Der Satz wird **nicht** an Ort und Stelle geändert — eine Funktion, die ihr Argument
+    umschreibt, macht aus einer Prüfung eine Nebenwirkung.
+
+    Raises:
+        AuftragError: ``satz`` ist kein Wörterbuch.
+    """
+    if not isinstance(satz, dict):
+        raise AuftragError(f"satz ist kein Wörterbuch: {type(satz).__name__}")
+    sauber, n = _kennungen_ersetzen(satz)
+    if n:
+        sauber["regel3_ersetzt"] = n
+    return sauber, n
+
+
 def _wehre_bilddaten_ab(satz: dict) -> None:
     """Regel 3 in ausführbarer Form: Bilddaten dürfen nicht ins Repo.
 
@@ -315,9 +410,16 @@ def _wehre_bilddaten_ab(satz: dict) -> None:
 
 
 def schreibe_ergebnis(satz: dict, repo_wurzel) -> Path:
-    """Ergebnis ins Repo legen — atomar."""
+    """Ergebnis ins Repo legen — atomar.
+
+    **Und hier greift Regel 3 am ehesten**, denn hier kommen die Fehlertexte an: Ein
+    Blender-Traceback bringt den vollen Pfad des Skripts mit, und darin steht der
+    Benutzername. Genau so sind am 18.08.2026 fünf Ergebnisdateien mit dem Klarnamen des
+    Owners in dieses öffentliche Repo gelangt — hingeschrieben hat ihn niemand.
+    """
     if satz.get("schema") != SCHEMA_ERGEBNIS:
         raise AuftragError(f"Falsches Schema: {satz.get('schema')!r}")
+    satz, _ = regel3_saeubern(satz)
     _wehre_bilddaten_ab(satz)
 
     ziel_verz = Path(repo_wurzel) / VERZ_ERGEBNISSE
