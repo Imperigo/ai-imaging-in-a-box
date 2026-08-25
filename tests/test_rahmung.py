@@ -161,3 +161,66 @@ def test_eine_unbeantwortete_rahmung_erzeugt_ebenfalls_keine_zeile():
     befund = {"kameras": [{"kamera": "s", "torchance": g.torchance(0.22)}]}
 
     assert not [z for z in abholer.befund_kurz(befund) if "RAHMUNG" in z]
+
+
+# --------------------------------------------------------------------------------------
+# 3 · Und ein Name, der mehr behauptet, als die Zahl hält
+# --------------------------------------------------------------------------------------
+#
+# HomeStation, 24.08.2026: «geom_iou_obergrenze ist keine Obergrenze — das gemessene
+# geom_iou liegt bei drei Stufen darueber.»
+#
+# Der Grund liegt in der Rechnung: Die Schranke folgt daraus, dass die geschaetzte
+# Silhouette unter HG_KEINE das GANZE BILD ist. Markiert eine andere Strategie den
+# Hintergrund weg, ist die Vereinigung kleiner, und geom_iou darf darueber liegen. Das ist
+# richtig so und kein Fehler der Messung — der Name war der Fehler.
+
+def _qa(strategie, bild, soll, ist):
+    from aiimaging import tiefenschaetzer as ts
+
+    def modell(_p):
+        return list(ist)
+
+    return ts.qa_gegen_soll(bild, soll, modell=modell, breite=4, hoehe=4,
+                            hintergrund_strategie=strategie)
+
+
+@pytest.fixture()
+def bild(tmp_path):
+    pfad = tmp_path / "r.png"
+    pfad.write_bytes(b"\x89PNG\r\n\x1a\n")
+    return pfad
+
+
+def test_die_schranke_gilt_nur_wo_sie_aus_der_rechnung_folgt(bild):
+    """**Der Name bleibt, weil ältere Berichte auf ihn zeigen — die Wahrheit steht daneben.**
+
+    Ihn stillschweigend umzubenennen machte jedes Messprotokoll unlesbar, das ihn nennt.
+    Ihn stehenzulassen ohne den Zusatz hiesse, eine Behauptung zu pflegen, die gemessen
+    widerlegt ist.
+    """
+    from aiimaging import tiefenschaetzer as ts
+
+    soll = [10.0, 10.0, 1e10, 1e10] * 4
+    ist = [1.0, 1.0, 0.01, 0.01] * 4
+
+    ohne = _qa(ts.HG_KEINE, bild, soll, ist)
+    mit = _qa(ts.HG_QUANTIL, bild, soll, ist)
+
+    assert ohne["geom_iou_obergrenze_gilt"] is True
+    assert mit["geom_iou_obergrenze_gilt"] is False
+    assert ohne["geom_iou_obergrenze"] == mit["geom_iou_obergrenze"], (
+        "die ZAHL ist dieselbe — nur ihre Bedeutung nicht"
+    )
+
+
+def test_der_docstring_nennt_den_grund_und_nicht_nur_die_einschraenkung():
+    """Wer liest «gilt nur bei HG_KEINE», fragt warum. Steht die Antwort nicht dabei,
+    hält er es für eine Vorsichtsmassnahme statt für eine Rechnung."""
+    from aiimaging import tiefenschaetzer as ts
+
+    doc = ts.qa_gegen_soll.__doc__
+
+    assert "ganze Bild" in doc
+    assert "Vereinigung" in doc
+    assert "kein Fehler der Messung" in doc

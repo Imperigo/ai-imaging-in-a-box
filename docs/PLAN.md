@@ -1720,9 +1720,19 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Bestellempfehlung ist **0,70** statt 0,65: Dort besteht jeder von drei Startwerten
       mit Abstand 0,301, bei 0,65 steht einer bei 0,114.
 
-      **4 · Offen geblieben:** `geom_iou_obergrenze` **ist keine Obergrenze** — das
-      gemessene `geom_iou` liegt bei drei Stufen darüber. Der Name behauptet mehr, als die
-      Zahl hält; das gehört korrigiert, sobald klar ist, was sie stattdessen ist.
+      **4 · `geom_iou_obergrenze` ist keine Obergrenze — erledigt, und der Grund liegt in
+      der Rechnung.** Das gemessene `geom_iou` lag bei drei Stufen darüber. Die Schranke
+      folgt daraus, dass die geschätzte Silhouette unter `HG_KEINE` das **ganze Bild** ist:
+      Dann ist die Vereinigung so gross wie das Bild und die Überdeckung höchstens so gross
+      wie der Soll-Anteil. Markiert eine andere Strategie den Hintergrund weg, ist die
+      Vereinigung kleiner, und `geom_iou` darf darüber liegen. **Das ist richtig so und war
+      kein Fehler der Messung — der Name war der Fehler.**
+
+      Der Name bleibt, weil ältere Berichte und Messprotokolle auf ihn zeigen; ihn
+      stillschweigend umzubenennen machte jedes davon unlesbar. Daneben steht jetzt
+      `geom_iou_obergrenze_gilt`. Ist es `False`, ist die Zahl eine **Auskunft über die
+      Szene** — wieviel Bild das Bauwerk füllt — und keine Schranke. Und genau diese
+      Auskunft ist die nützlichere: Es ist dieselbe Grösse, an der `torchance` hängt.
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und

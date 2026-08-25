@@ -1208,9 +1208,26 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         freigesprochen. Ein Freispruch aus Mangel an Messung wäre die teuerste Sorte
         Fehler, denn niemand sucht danach.
 
-        ``geom_iou_obergrenze`` ist der Anteil der Soll-Geometrie am Bild. Bei
+        ``geom_iou_obergrenze`` ist der **Anteil der Soll-Geometrie am Bild**. Bei
         :data:`HG_KEINE` ist er zugleich die obere Schranke für ``geom_iou`` — die Zahl,
         die erklärt, warum ein treues Bild dort trotzdem durchfällt.
+
+        **Bei jeder anderen Strategie ist er KEINE Schranke, und der Name behauptet mehr,
+        als die Zahl hält** (HomeStation, 24.08.2026: *«geom_iou_obergrenze ist keine
+        Obergrenze — das gemessene geom_iou liegt bei drei Stufen darüber»*).
+
+        Der Grund liegt in der Rechnung und nicht im Zufall: Die Schranke folgt daraus,
+        dass die geschätzte Silhouette unter :data:`HG_KEINE` das **ganze Bild** ist —
+        dann ist die Vereinigung so gross wie das Bild und die Überdeckung höchstens so
+        gross wie der Soll-Anteil. Markiert eine andere Strategie den Hintergrund weg, ist
+        die Vereinigung kleiner, und ``geom_iou`` darf darüber liegen. **Das ist richtig
+        so und kein Fehler der Messung.**
+
+        Der Name bleibt, weil ältere Berichte und Messprotokolle auf ihn zeigen; daneben
+        steht seit dem 24.08.2026 ``geom_iou_obergrenze_gilt``. Ist es ``False``, ist die
+        Zahl eine **Auskunft über die Szene** (wieviel Bild das Bauwerk füllt) und keine
+        Schranke — und genau diese Auskunft ist die nützlichere, siehe
+        :func:`aiimaging.geometrie_qa.torchance`.
 
     Raises:
         TiefenschaetzerError: Schätzer unbekannt oder unter Regel 1 ausgeschlossen, oder
@@ -1255,6 +1272,11 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         "hoehe": ist_ergebnis["hoehe"],
         "methode_ist": METHODE_IST,
         "geom_iou_obergrenze": obergrenze,
+        # Ob die Zahl daneben ueberhaupt eine Schranke IST. Nur unter HG_KEINE ist die
+        # geschaetzte Silhouette das ganze Bild, und nur dann folgt die Schranke aus der
+        # Rechnung. Sonst ist es der Anteil des Bauwerks am Bild — nuetzlich, aber etwas
+        # anderes, und das gemessene geom_iou liegt dann zu Recht darueber (24.08.2026).
+        "geom_iou_obergrenze_gilt": (hintergrund_strategie == HG_KEINE),
         "schwelle": float(schwelle),
     }
 
