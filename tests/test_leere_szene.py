@@ -127,3 +127,79 @@ def test_gegenprobe_eine_gewoehnliche_szene_bleibt_ohne_warnung():
     assert satz["huellbox_taugt"] is True
     assert satz["leere_achsen"] == ()
     assert not [w for w in satz["warnungen"] if "Ausdehnung" in w or "HÖHE" in w]
+
+
+# --------------------------------------------------------------------------------------
+# 3 · Die Rahmung, vor dem Renderlauf beantwortet
+# --------------------------------------------------------------------------------------
+#
+# Bis zum 25.08.2026 war das gar nicht beantwortbar: Der Runner fuehrte nur EINE Huellbox,
+# und ohne die zweite ist der Bruch zwischen Rahmung und Messung nicht feststellbar.
+
+BAUWERK = [[-8.0, -5.0, 0.0], [8.0, 5.0, 15.0]]
+MIT_PLATTE = [[-80.0, -50.0, 0.0], [80.0, 50.0, 15.0]]
+
+
+def test_die_grosse_gelaendeplatte_wird_vor_dem_rendern_erkannt():
+    """**Der gemessene Fall** (`auf-13`): zehnfache Grundfläche, 1,9 % Bild, Tor
+    rechnerisch nicht bestehbar. Das kostet einen Renderlauf — und kostete ihn bisher.
+    """
+    e = kameras.rahmungsverhaeltnis(MIT_PLATTE, BAUWERK)
+
+    assert e["traegt"] is False
+    assert e["breitenanteil"] == pytest.approx(0.10)
+    assert "RAHMUNG ZU WEIT" in e["grund"]
+    assert "keine gesenkte Schwelle" in e["grund"]
+
+
+def test_ohne_bauwerksbox_ist_es_NICHT_FESTSTELLBAR_und_nicht_in_ordnung():
+    """Die dritte Antwort, auch hier.
+
+    Ein Runner ohne `bbox_bauwerk` — jede Aufnahme vor dem 25.08.2026 — liefert kein
+    «alles gut», sondern «nicht feststellbar».
+    """
+    e = kameras.rahmungsverhaeltnis(MIT_PLATTE, None)
+
+    assert e["traegt"] is None
+    assert "NICHT FESTSTELLBAR" in e["grund"]
+
+
+def test_BEFUND_unser_deckungsgrad_liegt_UNTER_dem_gemessenen_knie():
+    """**Ein Befund über unseren eigenen Vorgabewert, und er war nicht gesucht.**
+
+    Selbst im besten Fall — die Szene besteht **nur** aus dem Bauwerk, kein Gelände —
+    zielt `DECKUNGSGRAD = 0.55` auf 55 % Bildbreite. Das gemessene Knie liegt bei 0,5991,
+    die Bestellempfehlung bei 0,70.
+
+    Die grosse Geländeplatte ist also **nicht die einzige** Ursache. Auch ohne sie rahmt
+    die Vorgabe knapp unterhalb dessen, was das Tor gemessen verlangt.
+
+    **Geändert wird die Vorgabe hier nicht** — das änderte jedes Bild, und ob ein
+    formatfüllendes Bauwerk den Kontext aus dem Bild drängen soll, ist eine
+    Gestaltungsfrage und keine Messfrage. Der Test hält den Befund fest, damit er nicht
+    wieder verlorengeht.
+    """
+    ohne_gelaende = kameras.rahmungsverhaeltnis(BAUWERK, BAUWERK)
+
+    assert ohne_gelaende["breitenanteil"] == pytest.approx(1.0)
+    assert ohne_gelaende["wirksame_bildbreite"] == pytest.approx(kameras.DECKUNGSGRAD)
+    assert kameras.DECKUNGSGRAD < kameras.BILDBREITE_KNIE, (
+        "wenn das einmal nicht mehr gilt, ist der Befund erledigt — dann gehoert dieser "
+        "Test weg und nicht angepasst")
+    assert ohne_gelaende["traegt"] is False
+
+
+def test_ein_hoeherer_deckungsgrad_traegt():
+    """Gegenprobe: Die Prüfung sagt nicht immer nein — und 0,70 ist die Empfehlung."""
+    e = kameras.rahmungsverhaeltnis(BAUWERK, BAUWERK, deckungsgrad=0.70)
+
+    assert e["traegt"] is True
+    assert "sagt das nichts" in e["grund"], (
+        "'die Rahmung steht nicht im Weg' ist nicht dasselbe wie 'das Bild ist gut'")
+
+
+def test_eine_szene_ohne_waagrechte_ausdehnung_ist_nicht_feststellbar():
+    e = kameras.rahmungsverhaeltnis([[0, 0, 0], [0, 0, 15]], BAUWERK)
+
+    assert e["traegt"] is None
+    assert "NICHT FESTSTELLBAR" in e["grund"]

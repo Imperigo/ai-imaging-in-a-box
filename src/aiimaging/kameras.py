@@ -1080,6 +1080,87 @@ def huellbox_taugt(bbox) -> dict:
             "grund": grund}
 
 
+#: Bildbreite, ab der das Geometrie-Tor **gemessen** bestehen kann.
+#:
+#: Abgelesen am Knie der Rampe (HomeStation, 24.08.2026): Der Score steigt ab rund 0,50,
+#: überschreitet die Schwelle zwischen **0,5991 und 0,6488** und liegt linear bei 0,61.
+#: Die Bestellempfehlung ist **0,70**, nicht 0,65 — dort besteht jeder von drei Startwerten
+#: mit Abstand 0,301, bei 0,65 steht einer bei 0,114.
+#:
+#: Hier steht die **untere** Kante des Knies: Alles darunter ist gemessen zu wenig.
+#: Zwischen ihr und 0,70 liegt der Bereich, in dem es auf den Startwert ankommt.
+BILDBREITE_KNIE = 0.5991
+
+
+def rahmungsverhaeltnis(szene_bbox, bauwerk_bbox, *,
+                        deckungsgrad: float = DECKUNGSGRAD) -> dict:
+    """Wieviel Bild füllt das **Bauwerk**, wenn die Kamera die **Szene** rahmt?
+
+    **Die Frage, die vor dem Renderlauf beantwortet gehört** — und bis zum 25.08.2026 gar
+    nicht beantwortbar war, weil der Runner nur *eine* Hüllbox führte.
+
+    :func:`kamerasatz` stellt die Kamera so, dass die übergebene Box ``deckungsgrad`` der
+    Bildbreite einnimmt. Ist das die Box der **ganzen Szene**, füllt das Bauwerk darin nur
+    seinen Anteil davon. Gemessen (`auf-13`): Ein Quader auf einer Platte mit zehnfacher
+    Grundfläche kommt so auf 1,9 % des Bildes, und das Tor kann rechnerisch nicht bestehen.
+
+    **Das ist eine Rechnung und keine Messung**, und der Unterschied gehört dazu: Der
+    Breitenanteil folgt aus den beiden Boxen, der Flächenanteil im Bild hängt zusätzlich
+    an der Form des Bauwerks und am Blickwinkel. Die Zahl hier sagt darum, ob die
+    **Rahmung** trägt — nicht, welchen Wert die QA erreichen wird.
+
+    Returns:
+        ``{breitenanteil, wirksame_bildbreite, traegt, empfehlung_m, grund}``.
+        ``traegt`` ist ``None``, wenn eine der Boxen fehlt — **nicht** ``False``.
+
+    Raises:
+        ValueError: Eine Box hat nicht die Form zweier Punkte mit je drei Zahlen.
+    """
+    antwort = {"breitenanteil": None, "wirksame_bildbreite": None, "traegt": None,
+               "knie": BILDBREITE_KNIE, "grund": ""}
+    if bauwerk_bbox is None or szene_bbox is None:
+        antwort["grund"] = (
+            "Eine der beiden Hüllboxen fehlt. Ohne die Box der gebauten Substanz ist der "
+            "Bruch zwischen Rahmung und Messung NICHT FESTSTELLBAR — das ist etwas "
+            "anderes als 'die Rahmung ist in Ordnung'.")
+        return antwort
+
+    szene = huellbox_taugt(szene_bbox)["masse_m"]
+    bau = huellbox_taugt(bauwerk_bbox)["masse_m"]
+    # Die WAAGRECHTE Ausdehnung entscheidet über die Bildbreite. Die grössere der beiden
+    # Grundrisskanten, wie in `kamerasatz`: Eine Kamera über Eck sieht die Diagonale, eine
+    # frontale die längere Seite — die kleinere anzusetzen unterschätzte den Bedarf.
+    szene_breit = max(szene[0], szene[1])
+    bau_breit = max(bau[0], bau[1])
+    if szene_breit <= 0.0:
+        antwort["grund"] = ("Die Szenenbox hat keine waagrechte Ausdehnung — siehe "
+                            "huellbox_taugt. NICHT FESTSTELLBAR.")
+        return antwort
+
+    anteil = bau_breit / szene_breit
+    wirksam = float(deckungsgrad) * anteil
+    antwort["breitenanteil"] = anteil
+    antwort["wirksame_bildbreite"] = wirksam
+    antwort["traegt"] = wirksam >= BILDBREITE_KNIE
+
+    if antwort["traegt"]:
+        antwort["grund"] = (
+            f"Das Bauwerk misst {anteil:.1%} der Szenenbreite; bei Deckungsgrad "
+            f"{deckungsgrad:.2f} füllt es {wirksam:.1%} der Bildbreite und liegt damit "
+            f"über dem gemessenen Knie von {BILDBREITE_KNIE:.2f}. Über das Bild sagt das "
+            f"nichts — nur, dass die Rahmung der Messung nicht im Weg steht.")
+    else:
+        antwort["grund"] = (
+            f"RAHMUNG ZU WEIT: Das Bauwerk misst nur {anteil:.1%} der Szenenbreite. Bei "
+            f"Deckungsgrad {deckungsgrad:.2f} füllt es {wirksam:.1%} der Bildbreite, "
+            f"gemessen nötig sind mindestens {BILDBREITE_KNIE:.2f} (Empfehlung 0.70). "
+            f"Die Kamera rahmt die SZENE, gemessen wird das BAUWERK — auf einer grossen "
+            f"Geländeplatte kann das Tor so rechnerisch nicht bestehen (auf-13). Abhilfe "
+            f"ist eine nähere Kamera oder die Bauwerksbox als Rahmen, keine gesenkte "
+            f"Schwelle.")
+    return antwort
+
+
 def berichtsfelder_aus_stellung(auge, blick_auf, bbox, *,
                                 brennweite_mm: float = BRENNWEITE_MM,
                                 gelaende_z: float | None = None) -> dict:

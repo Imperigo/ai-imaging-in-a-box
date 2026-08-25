@@ -1753,6 +1753,40 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       unter jede anteilige Schranke und ist trotzdem kein Bauwerk. Gerechnet wird weiterhin
       — ein Standpunkt um eine Platte ist wohldefiniert; er darf nur nicht so tun, als wäre
       nichts.
+- [x] **Der Runner führt jetzt ZWEI Hüllboxen — ohne die zweite war der Rahmungsbruch
+      nicht einmal feststellbar** (25.08.2026).
+
+      Der Runner kennt die IFC-Klasse jedes Bauteils; er schreibt sie in den Knotennamen.
+      Geführt hat er trotzdem nur **eine** Box, die der ganzen Szene. Neu: `bbox_bauwerk`,
+      die Box der **gebauten Substanz ohne Gelände**, samt `n_bauwerk` und einer Notiz zum
+      Bezugsrahmen. Fehlt gebaute Substanz, steht dort `None` — **kein Rückfall auf die
+      Szenenbox**, das wäre genau die Verwechslung, gegen die das Feld gebaut ist.
+
+      Die Geländeregel steht damit an **zwei** Stellen (Runner und `maske`), weil der
+      Runner im `.venv-ifc` läuft und das Produkt-Paket nicht erreichen darf (Regel 2). Ein
+      Test prüft ihre **Verträglichkeit** — nicht Gleichheit: Was der Runner aussortiert,
+      muss die Maskenregel ebenfalls als Gelände erkennen; mehr darf sie kennen, sie sieht
+      Materialnamen statt IFC-Klassen. **Der Test ersetzt den Import, den es nicht geben
+      darf.**
+
+      Damit ist `kameras.rahmungsverhaeltnis` möglich: Es beantwortet **vor** dem
+      Renderlauf, ob das Bauwerk genug Bild füllt — und meldet «NICHT FESTSTELLBAR», wo
+      die zweite Box fehlt, statt «in Ordnung».
+- [ ] **BEFUND, nicht gesucht: `DECKUNGSGRAD = 0.55` liegt UNTER dem gemessenen Knie.**
+      Selbst im besten Fall — die Szene besteht **nur** aus dem Bauwerk, kein Gelände —
+      zielt unsere Vorgabe auf 55 % Bildbreite. Das gemessene Knie liegt bei **0,5991**,
+      die Bestellempfehlung der HomeStation bei **0,70**.
+
+      **Die grosse Geländeplatte ist also nicht die einzige Ursache.** Auch ohne sie rahmt
+      die Vorgabe knapp unterhalb dessen, was das Tor gemessen verlangt — und das erklärt,
+      warum die Schwelle so lange als unerreichbar galt.
+
+      **Geändert wird die Vorgabe nicht von mir.** Das änderte jedes Bild, und ob ein
+      formatfüllendes Bauwerk den Kontext aus dem Bild drängen soll, ist eine
+      **Gestaltungsfrage** und keine Messfrage — die HomeStation hat die Zuständigkeit
+      dafür beim Cloud-Worker verortet. Ein Test hält den Befund fest, damit er nicht
+      wieder verlorengeht; wird die Vorgabe je gehoben, fällt er auf und gehört **entfernt
+      statt angepasst**.
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und

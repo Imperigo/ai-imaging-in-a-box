@@ -64,6 +64,22 @@ NICHT_GEBAUTE_SUBSTANZ = (
 )
 
 
+#: IFC-Typen, die **Gelände** sind und nicht Bauwerk.
+#:
+#: **Warum diese Liste hier steht und nicht importiert wird.** Der Runner läuft im
+#: ``.venv-ifc`` und darf sich nicht darauf verlassen, das Produkt-Paket zu erreichen —
+#: das ist die Prozessgrenze aus Regel 2. Eine Liste an zwei Stellen ist an einer davon
+#: bereits falsch; darum prüft ``tests/test_bauwerksbox.py``, dass sie mit
+#: ``aiimaging.maske.GELAENDE_MUSTER`` zusammenpasst. **Der Test ersetzt den Import, den
+#: es nicht geben darf.**
+GELAENDE_TYPEN = ("IfcSite",)
+
+
+def ist_gelaende_typ(typname: str) -> bool:
+    """Ist dieser IFC-Typ Gelände? — dieselbe Frage wie die Maskenregel, eine Ebene früher."""
+    return str(typname) in GELAENDE_TYPEN
+
+
 def ist_gebaute_substanz(typname: str) -> bool:
     """Gehört ein IFC-Typ in die glb? — dieselbe Frage ohne ``ifcopenshell``.
 
@@ -91,6 +107,9 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
 
     szene = trimesh.Scene()
     n_elemente = n_dreiecke = 0
+    # Die ZWEITE Huellbox: nur gebaute Substanz, ohne Gelaende. Siehe unten.
+    n_bauwerk = 0
+    bau_min = bau_max = None
     uebersprungen: dict[str, int] = {}
     for produkt in modell.by_type("IfcProduct"):
         if not getattr(produkt, "Representation", None):
@@ -114,6 +133,17 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
                            node_name=f"{produkt.is_a()}_{produkt.GlobalId}")
         n_elemente += 1
         n_dreiecke += len(flaechen)
+        # Der groesste gemessene Fehler dieser Woche: Die Kamera rahmt die Huellbox der
+        # GANZEN SZENE, die Maske deckt nur das Bauwerk. Auf einer Platte mit zehnfacher
+        # Grundflaeche fuellt das Bauwerk dann 1.9 % des Bildes, und das Geometrie-Tor
+        # kann rechnerisch nicht bestehen (auf-13/auf-35). Ohne diese zweite Box ist der
+        # Bruch nicht einmal FESTSTELLBAR, geschweige denn behebbar.
+        if not ist_gelaende_typ(produkt.is_a()):
+            n_bauwerk += 1
+            unten = ecken.min(axis=0)
+            oben = ecken.max(axis=0)
+            bau_min = unten if bau_min is None else np.minimum(bau_min, unten)
+            bau_max = oben if bau_max is None else np.maximum(bau_max, oben)
 
     if n_elemente == 0:
         return {
@@ -143,6 +173,16 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
         "glb_path": glb_path,
         "up_axis": "Y",
         "bbox": bbox_zup,
+        # Die Huellbox der gebauten Substanz allein — ``None``, wenn ausser Gelaende
+        # nichts da war. NICHT die Szenenbox als Ersatz: Das waere genau die
+        # Verwechslung, gegen die dieses Feld gebaut ist.
+        "bbox_bauwerk": (None if bau_min is None
+                         else [bau_min.tolist(), bau_max.tolist()]),
+        "n_bauwerk": n_bauwerk,
+        "bbox_bauwerk_note": (
+            "Nur gebaute Substanz, ohne " + ", ".join(GELAENDE_TYPEN) + "; in nativen "
+            "IFC-Metern (Z oben) wie 'bbox'. Die Kamera soll DIESE Box rahmen, gemessen "
+            "wird ohnehin nur das Bauwerk."),
         "n_elements": n_elemente,
         "n_triangles": n_dreiecke,
         # Was NICHT in der glb steht, und warum. Ohne diese beiden Felder wäre der
