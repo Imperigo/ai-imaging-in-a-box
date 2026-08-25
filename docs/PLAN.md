@@ -1884,6 +1884,27 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Dazu das Kürzen **mitten im Wort** bei 15 von 15 Kameras; jetzt auf ganze Wörter, mit
       sichtbarer Angabe, wieviel fehlt. Ein abgeschnittenes Wort sieht wie ein Fehler aus,
       und das Fehlen des Restes sieht nach gar nichts aus.
+- [x] **OWNER-ENTSCHEIDE 25.08.2026, drei auf einmal — hier festgehalten, weil sie sonst
+      nur im Gesprächsverlauf stünden.**
+
+      **1 · Die Git-Historie bleibt, wie sie ist.** Der Klarname steht dort weiterhin; die
+      Arbeitsdateien sind gesäubert und `regel3_saeubern` verhindert Neues. Begründung: Ein
+      `filter-repo` mit `--force` auf ein öffentliches Repo bricht **jeden vorhandenen
+      Klon** — auch den der HomeStation, die laufend pusht — und macht alle bisherigen
+      Commit-Kennungen ungültig, auf die Protokolle und Aufträge verweisen. Es ist zudem
+      der eigene Name des Owners in seinem eigenen Repo, nicht der eines Dritten. **Der
+      Schaden des Umschreibens wäre grösser als der des Zustands.**
+
+      **2 · Die Rahmung wird nicht umgestellt, bis `auf-41` gemessen hat.** Die
+      Bauwerksbox ist der richtige Rahmen — das ist gemessen und nicht strittig. Aber G3
+      misst genau, was die Umstellung brächte, und **diese Woche sind drei Vorschläge
+      gefallen, die vor der Messung gut aussahen** (`kantenanteil`, Variante F, R2).
+      Umzustellen, bevor die eigene Messung vorliegt, wäre genau die Reihenfolge, die
+      dreimal schiefging.
+
+      **3 · Die nächste Sitzung nimmt alle drei offenen Befunde**, nicht nur die
+      Rückmeldungen: blinde Fortschrittswache, doppelte Ansicht bei symmetrischer
+      Baumasse, drei Dauerwarnungen. Sie stehen unten einzeln.
 - [ ] **Die Fortschrittswache ist blind** (`auf-vis-20260824-12`, offen). Sie wacht über
       `out/`, geschrieben wird in `out/<kuerzel>/`, und sie zählt **nicht rekursiv**. In
       fünf Läufen meldete sie als längsten Stillstand exakt die **Gesamtdauer**; ihren
