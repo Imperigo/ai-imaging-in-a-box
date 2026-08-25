@@ -1828,6 +1828,38 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       Zufallsniveaus ist kein Tor, sondern eine Verzierung* — dieselbe Sache, die am 24.08.
       bei der vorgeschlagenen R2-Schwelle auffiel. **Zweimal derselbe Fehler in acht Tagen,
       in zwei verschiedenen Massen.**
+- [x] **Statt der sechsten toten Kante: eine Zählung** (25.08.2026). Diese Woche sind
+      **fünf** einzeln aufgefallen — `komposition.py`, `befund.json`, der Bauteilwächter,
+      der Maskenanker, die Kompositionsprüfung auf dem Produktivweg. Jede war ein
+      Zufallsfund. Also gezählt statt weiter zu stolpern.
+
+      **256 öffentliche Funktionen, davon 67 vom Produktpfad nicht gerufen** — und die
+      allermeisten davon zu Recht: Einstiegspunkte für Werkzeuge, MCP-Werkzeuge über eine
+      Registry, Studienläufe. **Eine rohe Zahl ist hier keine Prüfung**, ein Test darauf
+      wären 67 Fehlalarme. Darum bleibt es bei der Zählung und wird kein Wächter.
+
+      **Vier sind es wirklich: null Produktrufe UND null Testrufe.**
+
+      * **`gate.als_kosmovis_verdikt` — die bitterste.** Ihr eigener Docstring nennt den
+        Anlass: *«Das ist der Phase-0-Befund in seiner teuersten Ausprägung: eine tote
+        Kante, die niemand meldet.»* **Sie ist selbst eine.** Sie übersetzt unser
+        Doppel-Gate in neun flache Feldnamen, die `kosmovis_query_qa_verdict` einst las;
+        wir liefern heute `render-result/v2`, wo dieselbe Zahl ein Stockwerk tiefer steht.
+        **Ob sie weg gehört oder angeschlossen, entscheidet eine Auskunft, die wir nicht
+        haben** — steht als **F5** in `auf-40`. Wäre die Antwort «flach», hätten wir eine
+        tote Kante **auf dem Lieferweg**: Sie lesen Felder, die wir nie schreiben, ohne
+        Fehlermeldung. Bis dahin ist sie wenigstens **geprüft** — ungetestet ist schlimmer
+        als ungerufen.
+      * **`contracts.load_render_scene`** — in `aiimaging.__init__` exportiert und damit
+        öffentliche Zusage, aber ohne einen einzigen Test. Jetzt zwei.
+      * **`auftrag.neue_auftrag_id`** — **ein Befund über meine eigene Arbeitsweise.** Die
+        Funktion steht seit Phase 0 da; ich habe die Kennungen dieser Woche trotzdem von
+        Hand geschrieben. Genau dabei ist eine **Kollision** entstanden: `auf-20260823-38`
+        und `auf-20260824-38` tragen dieselbe Nummer an verschiedenen Tagen. Von Hand
+        gezählt heisst irgendwann doppelt.
+      * **`fortschritt.beobachte`** — ein einzeiliger Bequemlichkeitsmantel, den niemand
+        benutzt. Der harmloseste der vier; er bleibt, weil er nichts kostet und die
+        Kurzform lesbar ist.
 - [ ] **`null` im QA-Schema hält zwei fertige Bilder auf — und trifft genau das, was wir
       heute gebaut haben.** Der Befund ist ihrer, nicht unserer (`auf-orbit-20260823-04`):
       Die Oberfläche verwirft unser Ergebnis, weil `qa.geometry.geometry_fidelity` und
