@@ -711,7 +711,7 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         # `rho_maske is None` heisst: Der Maskenweg lief nicht, die gemessene Polarität
         # wurde nicht angewandt, und der Score ist im geometrischen Fehler NICHT MONOTON.
         # Das gehört zum Abzeichen, nicht in eine Datei auf unserer Seite.
-        if geometrie_urteil.get("rho_maske") is None:
+        if geometrie_urteil.get("rho_maske") is None and qa["geometry"]["passed"]:
             hinweise.append(
                 "RICHTUNG NICHT GEPRUEFT: Der Maskenweg lief nicht (rho_maske fehlt), "
                 "darum wurde die gemessene Polaritaet des Tiefenschaetzers nicht "
@@ -852,6 +852,31 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     # Ohne diese Zeilen steht im Vertragsergebnis nur, DASS nichts gemessen wurde. Der
     # Unterschied zwischen «wir haben es abgelehnt, und hier ist die Zahl» und «da ist
     # etwas schiefgegangen» ist für die andere Seite der ganze Informationsgehalt.
+    # **Die Richtung gehoert auch in `verdict.reason`, nicht nur in `hinweise`.**
+    #
+    # `nur_vertragsfelder` streicht `hinweise` weg — es ist kein Feld ihres Vertrags. Wer
+    # strikt gegen ihr Schema liest, saehe die Warnung also NIE. Genau dieselbe Luecke wie
+    # beim Grund fuer einen nicht gerenderten Lauf, und am selben Tag zum zweiten Mal: Die
+    # Auskunft war da und nahm einen Weg, der bei der anderen Seite nicht ankommt.
+    # **Nur bei einem BESTANDENEN Bild** — und das ist keine Milde, sondern Arithmetik.
+    #
+    # Der ungerichtete Score ist der Betrag: ``sqrt(abs(rho) * iou)``. Der gerichtete ist
+    # ``sqrt(max(0, polaritaet*rho) * iou)``. Wegen ``max(0, x) <= abs(x)`` ist der
+    # ungerichtete Wert eine **Obergrenze** des gerichteten. Ein Lauf, der schon mit der
+    # Obergrenze durchfaellt, faellt auch gerichtet durch — die fehlende Richtungspruefung
+    # aendert an einem roten Abzeichen also nichts.
+    #
+    # Bei einem GRUENEN aendert sie alles: Dort verspricht das Abzeichen etwas, das nicht
+    # gemessen wurde.
+    #
+    # `tests/test_dritte_antwort_im_vertrag.py` hat diese Zeile beim ersten Entwurf
+    # gefangen — sie stand unter jedem Urteil. Der Satz dort trifft es: *«Wer jedem roten
+    # Abzeichen einen Erklaersatz beigibt, hat kein Tor mehr, sondern eine
+    # Ausredenmaschine.»*
+    if ((geometrie_urteil or {}).get("rho_maske") is None
+            and qa.get("geometry", {}).get("passed")):
+        teile.append("RICHTUNG NICHT GEPRUEFT (Maskenweg lief nicht, siehe hinweise)")
+
     for zeile in reversed(tuple(nicht_gerendert or ())):
         teile.insert(0, str(zeile))
         hinweise.append(str(zeile))

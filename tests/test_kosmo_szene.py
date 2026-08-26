@@ -606,3 +606,69 @@ def test_mit_gefahrenem_maskenweg_schweigt_der_hinweis():
     ergebnis = ks.als_ergebnis("vis-1-abcdef", ["a.png"], geometrie_urteil=urteil)
 
     assert not any("RICHTUNG NICHT GEPRUEFT" in h for h in ergebnis["hinweise"])
+
+
+def test_die_ungeprueffte_richtung_erreicht_auch_einen_strikten_leser():
+    """**`hinweise` ist kein Feld ihres Vertrags.**
+
+    `nur_vertragsfelder` streicht es weg — wer strikt gegen ihr Schema liest, sähe die
+    Warnung also nie. *Dieselbe Lücke wie beim Grund für einen nicht gerenderten Lauf, und
+    am selben Tag zum zweiten Mal:* Die Auskunft war da und nahm einen Weg, der bei der
+    anderen Seite nicht ankommt.
+    """
+    urteil = {"score": 0.8, "spearman": -0.7, "geom_iou": 0.9, "bestanden": True,
+              "rho_maske": None, "methode": geometrie_qa.METHODE}
+
+    ergebnis = ks.als_ergebnis("vis-1-abcdef", ["a.png"], geometrie_urteil=urteil)
+    strikt = ks.nur_vertragsfelder(ergebnis)
+
+    assert "hinweise" not in strikt, "sonst prüft dieser Test etwas anderes"
+    assert "RICHTUNG NICHT GEPRUEFT" in strikt["qa"]["verdict"]["reason"]
+
+
+def test_ohne_geometrieurteil_steht_die_zeile_nicht_da():
+    """Wo gar keine Geometrie gemessen wurde, ist die Richtung **nicht zuständig**.
+
+    Sonst stünde der Satz auch unter einem abbestellten Auftrag — und eine Zeile, die
+    überall steht, wird nicht gelesen.
+    """
+    ergebnis = ks.als_ergebnis("vis-1-abcdef", [])
+
+    assert "RICHTUNG NICHT GEPRUEFT" not in ergebnis["qa"]["verdict"]["reason"]
+
+
+def test_ein_durchgefallenes_bild_bekommt_den_richtungshinweis_nicht():
+    """**Keine Milde, sondern Arithmetik.**
+
+    Der ungerichtete Score ist ``sqrt(abs(rho) * iou)``, der gerichtete
+    ``sqrt(max(0, polaritaet*rho) * iou)``. Wegen ``max(0, x) <= abs(x)`` ist der
+    ungerichtete eine **Obergrenze** des gerichteten: Ein Lauf, der schon mit der
+    Obergrenze durchfällt, fällt auch gerichtet durch.
+
+    Die fehlende Richtungsprüfung ändert an einem roten Abzeichen also **nichts** — und
+    ein Erklärsatz unter jedem roten Abzeichen macht aus dem Tor eine Ausredenmaschine
+    (`tests/test_dritte_antwort_im_vertrag.py`, das diese Zeile beim ersten Entwurf
+    gefangen hat).
+    """
+    urteil = {"score": 0.2, "spearman": -0.2, "geom_iou": 0.3, "bestanden": False,
+              "rho_maske": None, "methode": geometrie_qa.METHODE}
+
+    ergebnis = ks.als_ergebnis("vis-1-abcdef", ["a.png"], geometrie_urteil=urteil)
+
+    assert "RICHTUNG NICHT GEPRUEFT" not in ergebnis["qa"]["verdict"]["reason"]
+    assert not any("RICHTUNG NICHT GEPRUEFT" in h for h in ergebnis["hinweise"])
+
+
+def test_die_obergrenzen_eigenschaft_gilt_wirklich():
+    """Die Rechnung hinter dem Test darüber — **gemessen, nicht behauptet.**
+
+    Ohne sie stünde die Begründung nur im Kommentar, und wer die Zeile später anfasst,
+    fände kein Argument, sondern eine Meinung.
+    """
+    import math
+
+    for rho in (-0.9, -0.4, 0.0, 0.4, 0.9):
+        for polaritaet in (-1.0, 1.0):
+            ungerichtet = math.sqrt(abs(rho) * 0.8)
+            gerichtet = math.sqrt(max(0.0, polaritaet * rho) * 0.8)
+            assert gerichtet <= ungerichtet + 1e-12, (rho, polaritaet)

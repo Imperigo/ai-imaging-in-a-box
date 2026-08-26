@@ -109,11 +109,42 @@ def test_ein_durchgefallenes_bild_bekommt_keine_ausrede():
     assert "Geometrie 0.2 gegen" in grund
 
 
-def test_ein_bestandenes_bild_ebenfalls_nicht():
-    urteil = {"score": 0.9, "bestanden": True, "nullanker": {"rauschen": 0.1}}
+def test_ein_bestandenes_bild_bekommt_ebenfalls_keine_ausrede():
+    """Dasselbe für das grüne Abzeichen — an einem **vollständigen** Lauf.
+
+    .. note::
+       **Am 26.08.2026 nachmittags ergänzt: ``rho_maske``.** Ohne dieses Feld beschreibt
+       das Urteil einen Lauf, bei dem der Maskenweg *nicht* lief — und seit demselben Tag
+       trägt ein solcher Lauf den Vermerk «RICHTUNG NICHT GEPRUEFT».
+
+       *Das ist keine Ausrede, sondern das Gegenteil:* Es qualifiziert ein grünes
+       Abzeichen, das sonst mehr verspräche, als gemessen wurde. Der Nachbartest dieser
+       Datei sagt es selbst — *«ein grünes Abzeichen ohne Messung»* ist die gefährliche
+       Richtung.
+
+       Die Zusicherung hier bleibt: Ein Lauf, bei dem **alles** gemessen wurde, bekommt
+       keinen Erklärsatz. Der neue Vermerk ist in `test_kosmo_szene.py` geprüft, samt der
+       Arithmetik, aus der folgt, dass er bei einem **roten** Abzeichen nichts zu suchen
+       hat.
+    """
+    urteil = {"score": 0.9, "bestanden": True, "nullanker": {"rauschen": 0.1},
+              "rho_maske": -0.85}
 
     assert _passed(urteil) is True
     assert "NICHT" not in _reason(urteil)
+
+
+def test_ein_bestandenes_bild_ohne_richtungspruefung_bekommt_den_vermerk():
+    """**Die Gegenprobe zur Ergänzung oben.**
+
+    Ohne sie stünde in dieser Datei nur noch, dass ein vollständiger Lauf schweigt — und
+    niemand sähe, dass ein unvollständiger es nicht tut.
+    """
+    urteil = {"score": 0.9, "bestanden": True, "nullanker": {"rauschen": 0.1},
+              "rho_maske": None}
+
+    assert _passed(urteil) is True
+    assert "RICHTUNG NICHT GEPRUEFT" in _reason(urteil)
 
 
 @pytest.mark.parametrize("urteil", [
