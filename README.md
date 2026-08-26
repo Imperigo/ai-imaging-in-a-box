@@ -38,7 +38,7 @@ Kette belegt, die Aussage *geometrietreu* aber noch nicht.
 | MCP-Anbindung an KosmoOrbit | Verdrahtbarkeit belegt, Registrierung nicht ausgeführt |
 | LoRA-Stiltraining | Naht gebaut, **nie ein Training ausgeführt** |
 
-Tests: **3813**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+Tests: **3858**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
 (`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
 
 ---
@@ -46,19 +46,27 @@ Tests: **3813**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
 ## Die vier Regeln
 
 Sie stehen vollständig in [`CLAUDE.md`](CLAUDE.md) und sind hier keine Absichtserklärung,
-sondern grösstenteils **ausführbar**:
+sondern **ausführbar** — seit dem 26.08.2026 hat jede der vier einen Wächter in der
+Testsammlung. *Was nur im Text steht, veraltet, sobald jemand eine Zeile schreibt, ohne
+den Text zu lesen; an einem einzigen Tag ist das achtmal passiert.*
 
 1. **Permissive Lizenzen, kein GPL/AGPL.** `backbone.waehle(kommerziell=True)` gibt
    FLUX-dev nie zurück. `lora.pruefe_auftrag` lehnt ein Training auf einer
    Non-Commercial-Grundlage ab, bevor die erste GPU-Sekunde läuft — ein LoRA erbt die
-   Lizenz seines Grundmodells.
+   Lizenz seines Grundmodells. Im [`NOTICE`](NOTICE) trägt jeder Copyleft-Eintrag eine
+   **erklärte** Auflösung (`AUFLOESUNG: Prozessgrenze | Lizenzausnahme | KEINE`), die ein
+   Test prüft.
 2. **Blender nur als externer Prozess.** Kein `import bpy`, kein bpy-Wheel, kein Add-on.
    Ein Test bewacht das Produkt-Environment.
 3. **Keine echten Projektdaten im Repo.** Testgeometrie wird erzeugt, nicht abgelegt.
    `auftrag.baue_ergebnis` weist eingebettete Bilddaten ab; `lora.pruefe_auftrag` weist
-   einen Trainingsdatensatz *innerhalb* des Repos ab.
+   einen Trainingsdatensatz *innerhalb* des Repos ab. Ein Wächter liest **jede**
+   versionierte Textdatei auf Benutzernamen in Pfaden — er las bis zum 26.08. nur acht
+   Dateiendungen und übersah darum drei.
 4. **Der Kern ist eine Bibliothek.** Jede Fähigkeit ist aus Python heraus nutzbar, ohne
-   dass eine Oberfläche läuft. Die MCP-Schicht ist ein optionaler Zusatz.
+   dass eine Oberfläche läuft. Die MCP-Schicht ist ein optionaler Zusatz. Geprüft in einem
+   **frischen Interpreter**: Ein Import von `aiimaging` lädt weder ein Oberflächen-Werkzeug
+   noch das MCP-SDK noch `torch`.
 
 ---
 

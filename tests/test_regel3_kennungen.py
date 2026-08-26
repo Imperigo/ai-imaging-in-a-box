@@ -34,7 +34,22 @@ WURZEL = Path(__file__).resolve().parents[1]
 #: es der Name **keines Menschen** ist. Eine Liste, die mitwächst, ist keine Prüfung mehr.
 ERLAUBT = {NUTZER_ERSATZ, "nutzer", "user", "vorname-nachname", "jemand", "USER", "HOME"}
 
-SUCHE = re.compile(r"/home/([^/\s\"'<>)\]]+)|/Users/([^/\s\"'<>)\]]+)")
+#: Wie ein Benutzername aussieht: mindestens zwei Zeichen aus Buchstaben, Ziffern, Punkt,
+#: Strich und Unterstrich.
+#:
+#: **Die Einschränkung ist am 26.08.2026 dazugekommen, und zwar durch einen Fehlalarm des
+#: Wächters an der Prosa über sich selbst.** Das Protokoll dieses Tages schreibt ``/home/``
+#: in Backticks; die alte Fassung nahm alles bis zum nächsten Leerzeichen und meldete das
+#: Backtick als Benutzernamen. Vier Fehlalarme in zwei Dokumenten.
+#:
+#: *Ein Fehlalarm ist bei einem Wächter dieser Art nicht harmlos:* Wer ihn zweimal sieht,
+#: nimmt den dritten Treffer nicht mehr ernst — und der dritte ist der echte.
+#:
+#: Der Preis ist benannt: Ein einbuchstabiger Benutzername (``/home/a/``) rutscht durch.
+#: Das ist gegen vier sichere Fehlalarme abgewogen und keine Nachlässigkeit.
+NAME = r"[A-Za-z0-9][A-Za-z0-9._-]+"
+
+SUCHE = re.compile(rf"/home/({NAME})|/Users/({NAME})")
 
 #: Die zweite Suche, und sie braucht kein intaktes ``/home/``.
 #:

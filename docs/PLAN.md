@@ -3428,6 +3428,20 @@ zweiten Stelle.
       Mindestzahl — die erste Fassung mit «mindestens 900 Tests» fällte die eigenen Tests
       des Werkzeugs, die winzige Suiten bauen.
 
+- [x] **Alle vier Regeln haben jetzt einen Wächter** (26.08.) — `tests/test_regel4_bibliothek.py`
+      schliesst die letzte Lücke. Regel 2 war gründlich bewacht (`test_prozessgrenze.py`),
+      Regel 4 nur zur Hälfte: das Verbot der Oberflächen-Importe stand nirgends.
+      Geprüft wird jetzt beides — kein Oberflächen-Werkzeug im Quelltext (AST, auch tief
+      in Funktionen), und in einem **frischen Interpreter**, dass ein Import von
+      `aiimaging` weder das MCP-SDK noch `torch` noch eine Oberfläche lädt. *Die Regel hielt
+      vorher aus Disziplin; an diesem Tag ist achtmal etwas schiefgegangen, das nur im
+      Text stand.* Vier Mutationen, alle fallen.
+      **Nebenbefund:** Der Regel-3-Wächter schlug an der Prosa über sich selbst an —
+      `` `/home/` `` in Backticks ergab ein Backtick als „Benutzernamen", vier Fehlalarme.
+      Er verlangt jetzt einen plausiblen Namen (zwei Zeichen aus `[A-Za-z0-9._-]`). *Wer
+      zwei Fehlalarme sieht, nimmt den dritten Treffer nicht mehr ernst — und der dritte
+      ist der echte.*
+
 ---
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
@@ -3437,7 +3451,7 @@ Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
 
 | | Beginn des Tages | nach dem Vormittag | Ende |
 |---|---:|---:|---:|
-| Tests | 3335 | 3528 | **3813** |
+| Tests | 3335 | 3528 | **3857** |
 | Vakuumprobe | 10 Treffer | 12 Treffer | 12 Treffer |
 | Tote Kanten, gar nicht erreichbar | — | 2 | **1** |
 | Tote Kanten **mit Urteil** | 0 | 0 | **80 von 80** |
