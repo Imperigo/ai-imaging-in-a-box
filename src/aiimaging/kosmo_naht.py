@@ -67,6 +67,10 @@ MCP_FELDER: dict[str, str] = {
 #: ihre zehnstellige besteht bei uns **nicht** — die Unverträglichkeit ist einseitig.
 FREMDES_JOB_ID_MUSTER = re.compile(r"^vis-\d+-[0-9a-f]{6}$")
 
+#: Die Schemakennung der Bestellung — dieselbe wie in `kosmo_szene`, hier ohne Import
+#: wiederholt, damit dieses Modul unabhängig von der Szenenauswertung bleibt.
+SCHEMA_RENDER_SCENE = "kosmovis.render-scene/v1"
+
 #: Umgebungsvariable, unter der das Ökosystem sein Auftragsverzeichnis führt.
 FREMDES_JOB_VERZEICHNIS_ENV = "KOSMOVIS_RENDER_JOBS_DIR"
 
@@ -278,6 +282,96 @@ def aus_kosmo_auftrag(fremd: dict) -> dict:
     return unser
 
 
+#: Was `als_render_scene` NICHT übersetzen kann — mit dem Grund, nicht bloss der
+#: Feststellung.
+#:
+#: `kosmovis.render-scene/v1` hat **kein Feld für die Hochachse**. Unser MCP-Eingang
+#: verlangt sie bei glb-Eingang als Pflicht (`mcp_schemas._GEOMETRIE_EINGANG`), weil eine
+#: Z-up-glb in Blender liegend ankommt und Tiefenkarte, Kamera und Geometrie-QA
+#: **gemeinsam** verdreht — an einem einzelnen Bild nicht erkennbar. Der Vertrag kann sie
+#: also nicht tragen, und sie darf trotzdem nicht verlorengehen.
+#:
+#: Darum reicht :func:`als_render_scene` sie **neben** der Szene heraus, statt sie in ein
+#: Feld zu schreiben, das drüben niemand liest.
+NICHT_IM_VERTRAG = ("up_axis", "bbox", "empfiehlt_neuzentrierung")
+
+
+def als_render_scene(satz: dict) -> dict:
+    """Unseren Auftragssatz in eine `kosmovis.render-scene/v1` übersetzen.
+
+    Das Gegenstück zu :func:`aus_kosmo_auftrag`, eine Ebene tiefer: Jene übersetzt den
+    **Laufzettel**, diese die **Bestellung**. Sie wird gebraucht, seit der Abholer auch
+    unsere eigene Auftragsablage bedient (:mod:`aiimaging.eigene_quelle`) — er liest
+    Szenen, und was über den MCP-Einlass hereinkommt, ist keine.
+
+    **Warum die Übersetzung und nicht ein zweiter Leseweg.** Der Abholer trägt acht
+    Riegel, die Kameraschleife, die Startwertauswahl und die Doppel-QA. Ihn ein zweites
+    Auftragsformat lesen zu lassen hiesse, dieselbe Fachlogik zweimal zu haben; ihm eine
+    übersetzte Szene zu geben kostet diese Funktion. Regel 4 sagt dasselbe: Die
+    MCP-Schicht ist Übersetzung, keine Logik.
+
+    Returns:
+        ``{szene, ausserhalb, hinweise}``.
+
+        ``szene`` ist die Bestellung im fremden Vertrag. ``ausserhalb`` trägt die Felder
+        aus :data:`NICHT_IM_VERTRAG`, für die es drüben **keinen Platz gibt** — sie
+        stehen daneben statt in einem Feld, das niemand liest. ``hinweise`` nennt jede
+        Stelle, an der etwas gedeutet wurde.
+
+    Raises:
+        NahtError: kein Auftragssatz, oder kein Geometriepfad darin.
+    """
+    if not isinstance(satz, dict) or "job_id" not in satz:
+        raise NahtError(
+            f"Kein Auftragssatz: {type(satz).__name__}. Erwartet wird die Rückgabe von "
+            f"`jobs.baue_job` oder `jobs.lies_job`."
+        )
+    params = dict(satz.get("params") or {})
+    pfad = params.get("glb_path")
+    if not pfad:
+        raise NahtError(
+            "Der Auftrag trägt keinen `glb_path`. Eine render-scene ohne "
+            "`geometry.path` ist keine Bestellung, sondern eine leere Hülle — und "
+            "`kosmo_szene.lies_szene` lehnt sie zu Recht ab."
+        )
+
+    hinweise: list[str] = []
+    render: dict = {}
+
+    # Die Auflösung: unsere Kantenlänge ist EINE Zahl, ihre `resolution` sind ZWEI.
+    # Ohne Angabe wird hier NICHTS gesetzt — dann gilt der Vorgabewert des Vertrags
+    # (1600x1000), und das ist die einzige Stelle, an der er stehen soll. Bis zum
+    # 26.08.2026 trug der MCP-Einlass eine eigene Vorgabe von 512; zwei Vorgaben für
+    # dieselbe Sache sind eine zu viel.
+    if params.get("aufloesung") is not None:
+        kante = params["aufloesung"]
+        render["resolution"] = [kante, kante]
+        hinweise.append(
+            f"`aufloesung` {kante} wird als quadratische {kante}x{kante} bestellt. "
+            f"Der MCP-Eingang kennt nur eine Kantenlänge; wer ein Seitenverhältnis "
+            f"braucht, bestellt über den Szenenvertrag."
+        )
+    if params.get("samples") is not None:
+        render["samples"] = params["samples"]
+
+    szene: dict = {
+        "schema": SCHEMA_RENDER_SCENE,
+        "geometry": {"path": str(pfad), "format": "glb"},
+    }
+    if params.get("out_dir"):
+        szene["out"] = str(params["out_dir"])
+    if render:
+        szene["render"] = render
+
+    ausserhalb = {f: params.get(f) for f in NICHT_IM_VERTRAG if params.get(f) is not None}
+    if "up_axis" not in ausserhalb:
+        hinweise.append(
+            "Der Auftrag nennt keine Hochachse. Gerendert wird unter der Annahme "
+            "Y-up (glTF-Vorschrift) — eine begründete Annahme, aber eine Annahme."
+        )
+    return {"szene": szene, "ausserhalb": ausserhalb, "hinweise": hinweise}
+
+
 def pruefe_kanten(unsere_felder, fremde_felder) -> dict:
     """Welche Kanten entstünden zwischen zwei Feldmengen — und welche nicht?
 
@@ -311,7 +405,9 @@ __all__ = [
     "FREMDES_JOB_ID_MUSTER", "FREMDES_JOB_VERZEICHNIS_ENV", "JOB_FELDER", "MCP_FELDER",
     "NahtError",
     "FREIGABE_VORAUSGESETZT",
-    "als_kosmo_auftrag", "aufloesung_zu_resolution", "aus_kosmo_auftrag",
+    "NICHT_IM_VERTRAG", "SCHEMA_RENDER_SCENE",
+    "als_kosmo_auftrag", "als_render_scene", "aufloesung_zu_resolution",
+    "aus_kosmo_auftrag",
     "satz_ist_freigegeben_laut_status",
     "pruefe_kanten", "resolution_zu_aufloesung",
 ]

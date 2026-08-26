@@ -215,6 +215,23 @@ def _freigabe(laufzettel: dict, fremde_freigabe_gilt: bool) -> tuple[bool, str]:
                   "des Betreibers als Freigabe.")
 
 
+#: Der Fehler, den der Abholer beim Lesen abfängt — unter dem Namen, den **jede** Quelle
+#: führt. Der Abholer bedient seit dem 26.08.2026 zwei Ablagen (siehe
+#: :mod:`aiimaging.eigene_quelle`); welcher Fehlertyp beim Lesen fliegt, entscheidet die
+#: Quelle und nicht er.
+QUELLEN_FEHLER = BrueckenError
+
+
+def laufzettel_pfad(verzeichnis) -> Path:
+    """Die Datei, an deren Änderungszeit ein Waisenlauf erkannt wird.
+
+    Hier ist es der Laufzettel. Der Abholer fragt danach, statt den Namen anzunehmen —
+    die zweite Quelle legt ihn anders ab, und ein angenommener Name hätte den Waisenfund
+    dort still ausgeschaltet.
+    """
+    return Path(verzeichnis) / DATEI_LAUFZETTEL
+
+
 def offene_auftraege(store, *, nur_status=(STATUS_QUEUED,)) -> list[Path]:
     """Alle Auftragsverzeichnisse eines Ablageorts, die auf Arbeit warten.
 

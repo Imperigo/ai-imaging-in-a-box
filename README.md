@@ -47,10 +47,11 @@ Kette belegt, die Aussage *geometrietreu* aber noch nicht.
 | Prüfungen **vor** dem Bildlauf | seit 26.08.: Rahmung, Kamerahöhe, Zwischenbilder, Doppelansicht — **Massstab meldet, bricht noch nicht ab**. Die Rahmung rechnet mit dem **gemessenen** Füllgrad des Laufs, nicht mit dem Sollwert |
 | Stil-Gate | gebaut, Schwelle ungeprüft |
 | Kette als Graph mit Zwischenspeicher | gebaut und **gemessen** (Prompt-Änderung rechnet die Geometriestufen nicht neu) — aber **nicht am Produktivweg**: der Abholer fährt die Stufen als gerade Abfolge |
-| MCP-Anbindung an KosmoOrbit | Verdrahtbarkeit belegt, Registrierung nicht ausgeführt |
+| MCP-Anbindung an KosmoOrbit | **registriert am 18.08.** (Odysseus, `id d99fcf67`, alle Werkzeuge antworteten) — seither kamen ein viertes Werkzeug und die Ausführung dazu, beides am Gerät noch unbestätigt |
+| Ein über KosmoOrbit bestellter Render | **seit 26.08. wird er auch ausgeführt.** Bis dahin legte der MCP-Einlass ihn in einem Verzeichnis ab, das niemand las: Er ging mit Freigabe auf `queued` und blieb dort. Beide Wege gehen jetzt durch denselben Abholer und damit durch dieselben Riegel |
 | LoRA-Stiltraining | Naht gebaut, **nie ein Training ausgeführt** |
 
-Tests: **3935**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+Tests: **3970**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
 (`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
 
 ---

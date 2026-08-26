@@ -105,8 +105,18 @@ def _eingang_enqueue() -> dict:
                                "/tmp gewählt. Muss unter $HOME oder /tmp liegen "
                                "(Pfad-Sandbox des Ökosystems).",
             },
-            "aufloesung": {"type": "integer", "description": "Kantenlänge in Pixeln, Vorgabe 512."},
-            "samples": {"type": "integer", "description": "Cycles-Samples, Vorgabe 16."},
+            "aufloesung": {
+                "type": "integer",
+                "description": "Kantenlänge in Pixeln, quadratisch. OHNE Angabe gilt der "
+                               "Vorgabewert des Szenenvertrags (1600x1000) — nicht ein "
+                               "eigener. Zwei Vorgaben für dieselbe Sache hiessen, dass "
+                               "derselbe Auftrag je nach Weg ein anderes Bild ergibt.",
+            },
+            "samples": {
+                "type": "integer",
+                "description": "Cycles-Samples. Ohne Angabe gilt der Vorgabewert des "
+                               "Szenenvertrags (128).",
+            },
             "approval_token": {
                 "type": "string",
                 "description": "Freigabe CONFIRMED_RENDER_*. OHNE Token bleibt der "

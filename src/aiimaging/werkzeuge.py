@@ -51,6 +51,17 @@ def job_verzeichnis() -> Path:
     return Path(os.environ.get(UMGEBUNG_JOBS, Path(tempfile.gettempdir()) / "aiimaging-jobs"))
 
 
+def auftrags_ordner(job_id: str) -> Path:
+    """Der **eigene Ordner** eines Auftrags — ``<store>/<job_id>/``.
+
+    Bis zum 26.08.2026 lagen die Auftragsdateien flach nebeneinander. Das genügte,
+    solange niemand sie ausführte; seit der Abholer diese Ablage bedient
+    (:mod:`aiimaging.eigene_quelle`), brauchen Vertragsergebnis, Befund und
+    Ausgabeordner einen Ort **neben** dem Auftrag — dieselbe Form wie bei der Brücke.
+    """
+    return job_verzeichnis() / job_id
+
+
 def _geometrie_aus_argumenten(args: dict) -> dict:
     """Die Geometriefelder aus einem MCP-Aufruf herausziehen.
 
@@ -139,13 +150,19 @@ def enqueue_render(args: dict) -> dict:
             "up_axis": g.get("up_axis"),
             "out_dir": out_dir,
             "bbox": bbox,
-            "aufloesung": args.get("aufloesung", 512),
-            "samples": args.get("samples", 16),
+            # OHNE VORGABEWERT. Bis zum 26.08.2026 stand hier 512 bzw. 16 — eine
+            # zweite Vorgabe fuer dieselbe Sache: Der Vertrag
+            # `kosmovis.render-scene/v1` setzt 1600x1000 und 128 Samples. Derselbe
+            # Auftrag ergab damit ueber den MCP-Einlass ein anderes Bild als ueber die
+            # Bruecke, ohne dass es irgendwo stand. Fehlt die Angabe, entscheidet der
+            # Vertrag — und nur er.
+            "aufloesung": args.get("aufloesung"),
+            "samples": args.get("samples"),
             "empfiehlt_neuzentrierung": urteil.get("empfiehlt_neuzentrierung", False),
         },
         approval_token=args.get("approval_token"),
     )
-    jobs.schreibe_job(satz, job_verzeichnis())
+    jobs.schreibe_job(satz, auftrags_ordner(satz["job_id"]))
 
     return {
         "job_id": satz["job_id"],
@@ -178,7 +195,7 @@ def query_render(args: dict) -> dict:
                 "error": f"'job_id' muss eine Zeichenkette sein, war "
                          f"{type(job_id).__name__}: {job_id!r}."}
     try:
-        satz = jobs.lies_job(job_id, job_verzeichnis())
+        satz = jobs.lies_job(job_id, auftrags_ordner(job_id))
     except (jobs.JobError, FileNotFoundError) as e:
         return {"job_id": job_id, "status": None, "geometry_ref": None, "depth_exr": None,
                 "images": [], "erstellt": None, "geaendert": None, "error": str(e)}

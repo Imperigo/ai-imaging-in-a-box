@@ -89,7 +89,7 @@ def _zeit(_uhr) -> float:
     return float((_uhr or time.time)())
 
 
-def waisen(store, *, frist_s: float = WAISENFRIST_S, _uhr=None) -> list[dict]:
+def waisen(store, *, frist_s: float = WAISENFRIST_S, quelle=bruecke, _uhr=None) -> list[dict]:
     """Aufträge, die auf ``running`` stehen und die niemand mehr bearbeitet.
 
     Sie werden **gemeldet und nicht neu eingereiht**. Ein zweiter Lauf desselben Auftrags
@@ -99,14 +99,19 @@ def waisen(store, *, frist_s: float = WAISENFRIST_S, _uhr=None) -> list[dict]:
     Erkannt an der Änderungszeit des **Laufzettels**, nicht an einem Feld darin. Ein Feld
     müsste jemand fortschreiben, und genau dieser Jemand ist im Waisenfall gestorben.
 
+    Args:
+        quelle: die Ablage, die gelesen wird — siehe :func:`hole_einen`. Welche Datei den
+            Zeitstempel trägt, sagt sie über ``laufzettel_pfad``; ein hier angenommener
+            Dateiname hätte den Waisenfund auf der zweiten Ablage still ausgeschaltet.
+
     Returns:
         Liste von ``{verzeichnis, job_id, still_seit_s, detail}``, nach Verzeichnis
         sortiert.
     """
     jetzt = _zeit(_uhr)
     gefunden: list[dict] = []
-    for ordner in bruecke.offene_auftraege(store, nur_status=(bruecke.STATUS_RUNNING,)):
-        zettel = ordner / bruecke.DATEI_LAUFZETTEL
+    for ordner in quelle.offene_auftraege(store, nur_status=(quelle.STATUS_RUNNING,)):
+        zettel = quelle.laufzettel_pfad(ordner)
         try:
             alter = jetzt - zettel.stat().st_mtime
         except OSError:
@@ -119,7 +124,7 @@ def waisen(store, *, frist_s: float = WAISENFRIST_S, _uhr=None) -> list[dict]:
             "still_seit_s": alter,
             "detail": (
                 f"Auftrag {ordner.name} steht seit {alter / 3600:.1f} h auf "
-                f"'{bruecke.STATUS_RUNNING}', ohne dass sich sein Laufzettel geändert "
+                f"'{quelle.STATUS_RUNNING}', ohne dass sich sein Laufzettel geändert "
                 f"hätte (Frist {frist_s / 3600:.1f} h). Der bearbeitende Lauf ist "
                 f"vermutlich gestorben. **Nicht** automatisch neu eingereiht: Ein "
                 f"zweiter Lauf kostet eine GPU-Stunde und kann ein zweites Bild unter "
@@ -131,7 +136,8 @@ def waisen(store, *, frist_s: float = WAISENFRIST_S, _uhr=None) -> list[dict]:
 
 def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
                darf_rechnen=None, wache_bauen=None,
-               beobachtungs_takt_s: float = fortschritt.BEOBACHTUNGS_TAKT_S) -> dict:
+               beobachtungs_takt_s: float = fortschritt.BEOBACHTUNGS_TAKT_S,
+               quelle=bruecke) -> dict:
     """Einen einzelnen Auftrag bearbeiten — mit allen Entscheidungen davor.
 
     Args:
@@ -153,6 +159,21 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
             weiss der Verarbeiter und nicht dieses Modul. ``None`` heisst **nicht** „lief
             durch", sondern **nicht beobachtet** — und genau so steht es im Bericht.
         beobachtungs_takt_s: Sekunden zwischen zwei Blicken der Wache.
+        quelle: **Woher der Auftrag kommt.** Vorgabe :mod:`aiimaging.bruecke` — die
+            fremde Warteschlange. Die zweite Ablage ist :mod:`aiimaging.eigene_quelle`,
+            unser eigenes Auftragsverzeichnis, in das der MCP-Einlass schreibt.
+
+            Eine Quelle ist kein Objekt und keine Klasse, sondern acht Namen:
+            ``QUELLEN_FEHLER``, ``STATUS_RUNNING``, ``STATUS_ERROR``,
+            ``offene_auftraege``, ``laufzettel_pfad``, ``lies_auftrag``, ``setze_status``,
+            ``schreibe_ergebnis``. Beide Module führen sie.
+
+            **Warum überhaupt zwei.** Bis zum 26.08.2026 gab es zwei Nähte, die dasselbe
+            versprachen, und nur eine hatte einen Ausführer: Ein über den MCP-Einlass
+            bestellter Render ging auf ``queued`` und blieb dort für immer liegen. Statt
+            einen zweiten Ausführer zu bauen — mit einem zweiten Satz Riegel, der
+            auseinanderläuft, sobald einer gepflegt wird — bekommt der eine Ausführer
+            eine zweite Quelle.
 
     Returns:
         ``{tat, job_id, verzeichnis, grund, ergebnis, wache, warnungen,
@@ -188,8 +209,8 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
                "warnungen": (), "vertragsvorgaben": ()}
 
     try:
-        auftrag = bruecke.lies_auftrag(ordner, fremde_freigabe_gilt=fremde_freigabe_gilt)
-    except bruecke.BrueckenError as fehler:
+        auftrag = quelle.lies_auftrag(ordner, fremde_freigabe_gilt=fremde_freigabe_gilt)
+    except quelle.QUELLEN_FEHLER as fehler:
         antwort["grund"] = f"Auftrag nicht lesbar: {fehler}"
         return antwort
 
@@ -211,17 +232,17 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
 
     # Ab hier wird gerechnet. Erst jetzt auf `running` — vorher hätte ein
     # liegengelassener Auftrag ausgesehen, als arbeite jemand an ihm.
-    bruecke.setze_status(ordner, bruecke.STATUS_RUNNING)
+    quelle.setze_status(ordner, quelle.STATUS_RUNNING)
     beobachter = _beobachter_bauen(auftrag, wache_bauen, beobachtungs_takt_s, antwort)
     if beobachter is not None:
         beobachter.start()
     try:
         ergebnis = verarbeite(auftrag)
     except Exception as fehler:            # noqa: BLE001 — jeder Fehler ist ein Ergebnis
-        bruecke.setze_status(ordner, bruecke.STATUS_ERROR, fehler=str(fehler))
+        quelle.setze_status(ordner, quelle.STATUS_ERROR, fehler=str(fehler))
         antwort.update(tat=TAT_FEHLER, grund=(
             f"Verarbeitung gescheitert: {type(fehler).__name__}: {fehler}. Der Auftrag "
-            f"ist auf '{bruecke.STATUS_ERROR}' gesetzt — ein Auftrag ohne Antwort ist "
+            f"ist auf '{quelle.STATUS_ERROR}' gesetzt — ein Auftrag ohne Antwort ist "
             f"für den Wartenden dasselbe wie ein hängender Rechner."))
         return antwort
     finally:
@@ -231,15 +252,15 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
             antwort["wache"] = beobachter.stop()
 
     if not isinstance(ergebnis, dict):
-        bruecke.setze_status(ordner, bruecke.STATUS_ERROR,
-                             fehler="verarbeite lieferte kein Wörterbuch")
+        quelle.setze_status(ordner, quelle.STATUS_ERROR,
+                            fehler="verarbeite lieferte kein Wörterbuch")
         antwort.update(tat=TAT_FEHLER, grund=(
             f"verarbeite lieferte {type(ergebnis).__name__} statt eines Wörterbuchs mit "
-            f"'bilder'. Der Auftrag ist auf '{bruecke.STATUS_ERROR}' gesetzt."))
+            f"'bilder'. Der Auftrag ist auf '{quelle.STATUS_ERROR}' gesetzt."))
         return antwort
 
     uebersprungen = bool(ergebnis.get("uebersprungen"))
-    geschrieben = bruecke.schreibe_ergebnis(
+    geschrieben = quelle.schreibe_ergebnis(
         ordner, ergebnis.get("bilder") or [],
         job_id=auftrag.get("job_id"),
         geometrie_urteil=ergebnis.get("geometrie_urteil"),
@@ -347,6 +368,10 @@ def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> Non
         # weil er sonst nirgends stuende — `komponiere` liegt nicht auf diesem Weg.
         "negativ_lage": negativ_lage(
             ((ergebnis.get("stil_urteil") or {}).get("stil")), szene.get("backbone")),
+        # Unter welcher Hochachse gerechnet wurde, und ob sie BESTELLT oder ANGENOMMEN
+        # war. Der Vertrag hat kein Feld dafuer; ohne diese Zeile stuende nirgends, unter
+        # welcher Voraussetzung die Geometriezahlen des Laufs ueberhaupt gelten.
+        "hochachse": ergebnis.get("hochachse"),
         "warnungen_auftrag": list(antwort.get("warnungen") or ()),
         "vertragsvorgaben": list(antwort.get("vertragsvorgaben") or ()),
         "wache": antwort.get("wache"),
@@ -537,6 +562,17 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
         if not sprache.get("vollstaendig", True):
             zeilen.append(f"  NICHT vollstaendig uebersetzt: "
                           f"{', '.join(sprache.get('unbekannt') or ())}")
+
+    # NUR wenn die Bestellung eine Hochachse nannte UND sie eine Drehung verlangt.
+    # Ohne diese zweite Bedingung stuende die Zeile unter JEDEM Auftrag der Bruecke —
+    # eine Dauerwarnung, und die verdeckt die echten. Sie ist damit selbstloeschend:
+    # Sobald Y-up bestellt wird, schweigt sie wieder.
+    achse = befund.get("hochachse") or {}
+    if achse.get("quelle") == "auftrag" and str(achse.get("wert", "")).upper().startswith("Z"):
+        zeilen.append(f"Geometrie um Z-up->Y-up GEDREHT, weil der Auftrag "
+                      f"up_axis={achse.get('wert')!r} nannte. Ohne diese Angabe waere "
+                      f"unter Y-up gerechnet worden — Tiefenkarte, Kamera und "
+                      f"Geometrie-QA gemeinsam verdreht und trotzdem plausibel.")
 
     bauteile = befund.get("prompt_bauteile") or ()
     if bauteile:
@@ -897,7 +933,7 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
               darf_rechnen=None, hoechstens: int | None = None,
               waisenfrist_s: float = WAISENFRIST_S, wache_bauen=None,
               beobachtungs_takt_s: float = fortschritt.BEOBACHTUNGS_TAKT_S,
-              _uhr=None) -> dict:
+              quelle=bruecke, _uhr=None) -> dict:
     """**Ein** Durchgang über den Ablageort. Kein Dauerlauf, keine Schleife, kein Schlaf.
 
     Warum kein Dauerlauf: Wer wie oft nachsieht, ist eine Betriebsfrage — Cron, Dienst,
@@ -905,7 +941,12 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
     eingebauter ``while True``-Schleife lässt sich nicht prüfen, nicht einbetten und nicht
     sauber beenden.
 
-    Aufträge werden in der Reihenfolge ihres Eingangs bearbeitet (``bruecke.offene_auftraege``
+    ``quelle`` sagt, **welche Ablage** durchgegangen wird — siehe :func:`hole_einen`. Ein
+    Durchgang bedient genau eine; wer beide bedienen will, macht zwei Durchgänge. Das ist
+    Absicht: Wieviel Arbeit ein Lauf annimmt, ist eine Betriebsfrage, und zwei Ablagen in
+    einem Durchgang zu vermischen machte ``hoechstens`` mehrdeutig.
+
+    Aufträge werden in der Reihenfolge ihres Eingangs bearbeitet (``offene_auftraege``
     sortiert nach dem Zeitstempel im Verzeichnisnamen). Wer zuerst kam, wird zuerst
     bedient; alles andere wäre für den Wartenden nicht nachvollziehbar.
 
@@ -922,7 +963,7 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
         ``gestanden`` zählt die Läufe, bei denen die Wache einen Stillstand sah.
         ``ergebnisse`` sind die Antworten von :func:`hole_einen` in Bearbeitungsreihenfolge.
     """
-    offen = bruecke.offene_auftraege(store)
+    offen = quelle.offene_auftraege(store)
     if hoechstens is not None:
         if isinstance(hoechstens, bool) or not isinstance(hoechstens, int):
             raise AbholerError(f"hoechstens muss eine ganze Zahl sein: {hoechstens!r}")
@@ -933,10 +974,11 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
     ergebnisse = [
         hole_einen(ordner, verarbeite=verarbeite,
                    fremde_freigabe_gilt=fremde_freigabe_gilt, darf_rechnen=darf_rechnen,
-                   wache_bauen=wache_bauen, beobachtungs_takt_s=beobachtungs_takt_s)
+                   wache_bauen=wache_bauen, beobachtungs_takt_s=beobachtungs_takt_s,
+                   quelle=quelle)
         for ordner in offen
     ]
-    verwaist = waisen(store, frist_s=waisenfrist_s, _uhr=_uhr)
+    verwaist = waisen(store, frist_s=waisenfrist_s, quelle=quelle, _uhr=_uhr)
 
     return {
         "gesehen": len(offen),
@@ -1091,6 +1133,20 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
     def verarbeite(auftrag: dict) -> dict:
         szene = auftrag["szene"]
         ordner = Path(auftrag["verzeichnis"])
+        # DIE HOCHACHSE DES AUFTRAGS SCHLAEGT DIE ANNAHME.
+        #
+        # `kosmovis.render-scene/v1` hat kein Feld dafuer, also gilt hier sonst
+        # ANGENOMMENE_HOCHACHSE. Unser MCP-Einlass verlangt sie bei glb-Eingang aber als
+        # PFLICHT — er weiss also, was der Vertrag nicht tragen kann, und bis zum
+        # 26.08.2026 waere dieses Wissen an der Naht verfallen. Eine Z-up-glb waere unter
+        # der Annahme Y-up gerendert worden: Tiefenkarte, Kamera und Geometrie-QA
+        # gemeinsam verdreht, am einzelnen Bild nicht erkennbar.
+        #
+        # `eigene_quelle.lies_auftrag` reicht sie als `hochachse` heraus. Fehlt sie —
+        # jeder Auftrag der Bruecke —, bleibt es bei der Annahme, und die steht als
+        # solche im Bericht.
+        hochachse = auftrag.get("hochachse") or up_axis
+        hochachse_quelle = "auftrag" if auftrag.get("hochachse") else "annahme"
         ziel = Path(out_wurzel) / ordner.name if out_wurzel else Path(auftrag["ausgabe"])
         ziel.mkdir(parents=True, exist_ok=True)
 
@@ -1145,7 +1201,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             beginn = time.monotonic()
 
             bericht = multipass(
-                str(auftrag["modell"]), aus, up_axis=up_axis,
+                str(auftrag["modell"]), aus, up_axis=hochachse,
                 aufloesung=szene.get("aufloesung", 512), hoehe=szene.get("hoehe"),
                 samples=szene.get("samples", 128),
                 kamera=aufgabe.get("richtung"),
@@ -1360,6 +1416,12 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # verzweigen.
             "uebersprungen": False,
             "grund": "",
+            # UNTER WELCHER HOCHACHSE gerendert wurde, und ob sie bestellt oder
+            # angenommen war. Eine Zahl gehoert an die Bedingung, unter der sie gemessen
+            # wurde — und dies ist die Bedingung, unter der die Geometrie-QA ueberhaupt
+            # etwas bedeutet: Unter falscher Annahme sind alle Werte des Laufs
+            # gemeinsam verdreht und trotzdem plausibel.
+            "hochachse": {"wert": hochachse, "quelle": hochachse_quelle},
         }
 
     return verarbeite
@@ -1393,7 +1455,7 @@ MULTIPASS_KEINE_EINSTELLUNG = ("glb_path", "out_dir", "_starte")
 
 #: Einstellungen des Multipass, die **ankommen** — mit der Stelle, an der sie herkommen.
 MULTIPASS_DURCHGEREICHT = {
-    "up_axis": "verarbeiter(up_axis=…), Vorgabe ANGENOMMENE_HOCHACHSE",
+    "up_axis": "verarbeiter(up_axis=…); ein Auftrag mit eigener `hochachse` schlaegt sie",
     # Seit dem 26.08.2026 nachmittags. Sie standen vorher NIRGENDS in diesen Tabellen,
     # weil `seams.glb_zu_multipass` sie gar nicht kannte — die Naht setzte sie nie, und
     # damit fehlten sie auch der Zaehlung. Aufgefallen beim Abgleich der 23
@@ -1562,6 +1624,98 @@ RENDER_STEHENGEBLIEBEN = {
 #: geht im Bildbearbeitungsmodus als ``image`` mit hinein. ``material_id_png`` traegt die
 #: Maske. Alle drei werden von einem Subprozess geschrieben, und alle drei werden erst
 #: Sekunden spaeter gelesen.
+# --------------------------------------------------------------------------------------
+# Welcher Riegel auf welchem Weg laeuft
+# --------------------------------------------------------------------------------------
+#
+# **Der Anlass.** Bis zum 26.08.2026 gab es zwei Nähte, die dasselbe versprachen — den
+# Szenenvertrag der Brücke und die Werkzeugnaht (MCP) — und **nur eine hatte einen
+# Ausführer**. Ein über KosmoOrbit bestellter Render ging auf ``queued`` und blieb dort.
+# Seit die zweite Ablage bedient wird (:mod:`aiimaging.eigene_quelle`), laufen beide Wege
+# durch **dasselbe** ``verarbeiter`` — und genau das soll nicht unbemerkt aufhören.
+#
+# Die Tabelle ist gegen die dritte Möglichkeit gebaut, wie ihre Nachbarn: Ein Riegel läuft
+# auf **beiden** Wegen, oder er läuft auf einem und **sagt warum**. «Steht nirgends» ist
+# die bequemste Auskunft und die einzige, die hier nicht vorgesehen ist.
+
+#: Beide Wege, unter den Namen ihrer Quellenmodule.
+WEGE = ("bruecke", "eigene_quelle")
+
+#: Jeder Riegel vor dem Bildlauf — mit dem Ort, an dem er gerufen wird, und den Wegen,
+#: auf denen er greift.
+#:
+#: ``ort`` ist die Funktion, aus der heraus er gerufen wird; ``wege`` sind die Quellen,
+#: für die er gilt. ``begruendung`` ist **Pflicht, sobald ``wege`` nicht beide nennt** —
+#: ein einseitiger Riegel ohne Grund ist eine Lücke mit gutem Gewissen.
+RIEGEL: dict[str, dict] = {
+    "_bilder_vollstaendig": {
+        "ort": "verarbeiter",
+        "wege": WEGE,
+        "was": "Sind die Zwischenbilder des Multipass ganz da? Ein halb geschriebenes "
+               "PNG fiele sonst erst in der Diffusion auf, mit einer Meldung aus der "
+               "Bildbibliothek, die keine Datei nennt.",
+    },
+    "_massstab_gemeldet": {
+        "ort": "verarbeiter",
+        "wege": WEGE,
+        "was": "Der Massstab der Geometrie. MELDET und bricht nicht ab — er ist eine "
+               "Eigenschaft der Geometrie und bei jeder Kamera dieselbe, also kann ihn "
+               "keine andere Blickrichtung heilen.",
+    },
+    "_rahmung_vor_dem_render": {
+        "ort": "verarbeiter",
+        "wege": WEGE,
+        "was": "Füllt das Bauwerk das Bild genug, damit die Geometriezahl etwas heisst?",
+    },
+    "_komposition_vor_dem_render": {
+        "ort": "verarbeiter",
+        "wege": WEGE,
+        "was": "Steht die Kamera an einem Ort, von dem aus das Bild etwas zeigt — "
+               "einschliesslich der Frage, ob sie über dem Dach schwebt "
+               "(`_kamera_ueber_dach`).",
+    },
+    "_kamera_ueber_dach": {
+        "ort": "_komposition_vor_dem_render",
+        "wege": WEGE,
+        "was": "Die Kamera über der Dachkante: ein Bild von oben auf ein Bauwerk, das "
+               "von der Strasse aus dokumentiert werden sollte.",
+    },
+    "_karte_frei": {
+        "ort": "hole_einen",
+        "wege": WEGE,
+        "was": "Leerlauftor: `idle_window_only` gegen die Auskunft über die Karte. Ohne "
+               "Auskunft wird NICHT gerechnet — ungeprüft ist nicht in Ordnung.",
+    },
+    "torwaechter.torwaechter": {
+        "ort": "werkzeuge.enqueue_render",
+        "wege": ("eigene_quelle",),
+        "was": "Der Riegel gegen Einheitenfehler, VOR der Auftragsanlage.",
+        "begruendung": (
+            "Einseitig, und zwar an der Stelle, die es nur auf diesem Weg gibt: Der "
+            "MCP-Einlass ENTSCHEIDET, ob ein Auftrag überhaupt entsteht, und kann ihn "
+            "darum ablehnen, bevor er existiert. Bei der Brücke liegt der Auftrag "
+            "bereits, wenn wir ihn sehen — dort ist der Massstab eine Meldung "
+            "(`_massstab_gemeldet`) und keine Ablehnung. Beide Wege prüfen ihn also; nur "
+            "die Folge ist eine andere, weil die Lage eine andere ist."
+        ),
+    },
+}
+
+#: Funktionen, die ein ``abbruch``-Feld anfassen und trotzdem **keine** Riegel sind.
+#:
+#: Sie stehen benannt da, weil der Wächter von der anderen Seite zählt: Er sucht jede
+#: Funktion, die ``abbruch`` führt, und verlangt sie in :data:`RIEGEL`. Eine Ausnahme ohne
+#: Begründung wäre ein Loch mit Namen.
+KEINE_RIEGEL = {
+    "verarbeiter": "die Schleife selbst — sie liest die Urteile der Riegel, sie fällt keines",
+    "befund_kurz": "Leser: macht aus abgelegten Urteilen Zeilen für einen Menschen",
+    "_nicht_gerendert_kurz": "Leser: gruppiert die Gründe nach Art für das Vertragsergebnis",
+    "_rahmung_abgeschaltet": "das Gegenteil eines Riegels — `rahmung_pruefen=False` "
+                             "abbilden, ohne dass ein abgeschalteter Lauf wie ein "
+                             "bestandener aussieht",
+}
+
+
 MULTIPASS_BILDER = ("depth_png", "beauty_png", "material_id_png")
 
 

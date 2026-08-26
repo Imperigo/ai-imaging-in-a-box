@@ -38,6 +38,16 @@ uebernommen und ausdruecklich **nicht gemessen** — sie steht als Schalter da, 
 sich aendern laesst, sobald jemand die laengste Pause zwischen zwei neuen Dateien
 wirklich gemessen hat.
 
+**Frage 4 — welche Ablage?** Seit dem 26.08. gibt es zwei. Die Bruecke (``--store``)
+traegt, was die Vis-Oberflaeche bestellt; unsere eigene Ablage (``--eigener-store``),
+was ueber den MCP-Einlass aus KosmoOrbit hereinkommt. Bis dahin las **niemand** die
+zweite: Ein Knoten im Cockpit konnte einen Render bestellen, der Auftrag ging auf
+``queued``, und dort blieb er.
+
+Beide werden nacheinander abgegangen, jede mit ihrer eigenen Quelle — und **welche gerade
+dran ist, steht in der Ausgabe**. Ein Auftrag, der auf dem einen Weg liegen bleibt, waere
+sonst von einem auf dem anderen nicht zu unterscheiden.
+
 REGEL 3: Der Bericht nennt Auftrags-IDs und Dateinamen, keine Benutzerpfade.
 """
 from __future__ import annotations
@@ -51,7 +61,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from aiimaging import abholer, fortschritt  # noqa: E402
+from aiimaging import abholer, bruecke, eigene_quelle, fortschritt  # noqa: E402
 
 #: Ab welcher Auslastung die Karte als belegt gilt. Nicht 0 %: `nvidia-smi` meldet auch
 #: im Leerlauf gelegentlich 1-2 %, und ein Abholer, der darauf wartet, laeuft nie.
@@ -110,7 +120,14 @@ def _gekuerzt(text: str, laenge: int = GEKUERZT_AUF) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--store", default="/tmp/kosmo-jobs",
-                    help="Ablageort der Auftraege (Vorgabe: /tmp/kosmo-jobs)")
+                    help="Ablageort der Auftraege der BRUECKE (Vorgabe: /tmp/kosmo-jobs)")
+    ap.add_argument("--eigener-store", dest="eigener_store", default=None,
+                    help="Zusaetzlich unsere EIGENE Ablage abgehen — dorthin schreibt "
+                         "der MCP-Einlass (werkzeuge.enqueue_render), also ein Knoten in "
+                         "KosmoOrbit. Vorgabe: AUS. Ohne Angabe bleibt ein so "
+                         "bestellter Render liegen, und bis zum 26.08.2026 war das der "
+                         "einzige Zustand, den es gab. Ueblich: "
+                         "/tmp/aiimaging-jobs (oder $AIIMAGING_JOB_DIR).")
     ap.add_argument("--fremde-freigabe", action="store_true",
                     help="Die Freigabe der fremden Bruecke gelten lassen. Betreiber-Entscheid.")
     ap.add_argument("--hoechstens", type=int, default=None,
@@ -155,17 +172,29 @@ def main() -> int:
     darf, warum = karte_auskunft()
     print(f"Karte: {'frei' if darf else 'NICHT frei'} — {warum}")
 
-    store = Path(a.store)
-    if not store.is_dir():
-        print(f"Ablageort fehlt: {a.store}")
-        return 2
+    # Die Ablagen dieses Laufs, in der Reihenfolge, in der sie abgegangen werden.
+    # Die Bruecke zuerst, weil sie den laengeren Betrieb hinter sich hat.
+    ablagen = [("Bruecke", Path(a.store), bruecke)]
+    if a.eigener_store:
+        ablagen.append(("eigene Ablage (MCP-Einlass)", Path(a.eigener_store), eigene_quelle))
+
+    fehlend = [name for name, pfad, _ in ablagen if not pfad.is_dir()]
+    if fehlend:
+        # NUR wenn ALLE fehlen ist es ein Abbruch. Eine von zweien fehlt regelmaessig —
+        # wer den MCP-Einlass nicht benutzt, hat den Ordner nie angelegt.
+        if len(fehlend) == len(ablagen):
+            print("Ablageort fehlt: " + ", ".join(str(p) for _, p, _ in ablagen))
+            return 2
+        for name in fehlend:
+            print(f"Ablage '{name}' fehlt — uebersprungen.")
+        ablagen = [e for e in ablagen if e[1].is_dir()]
 
     if a.probe:
-        from aiimaging import bruecke
-        offen = bruecke.offene_auftraege(store)
-        print(f"Offene Auftraege: {len(offen)}")
-        for o in offen:
-            print(f"  {Path(o).name}")
+        for name, pfad, quelle in ablagen:
+            offen = quelle.offene_auftraege(pfad)
+            print(f"Offene Auftraege [{name}]: {len(offen)}")
+            for o in offen:
+                print(f"  {Path(o).name}")
         print(f"Fremde Freigabe gilt: {'ja' if a.fremde_freigabe else 'NEIN — nichts wird gerechnet'}")
         return 0
 
@@ -189,11 +218,25 @@ def main() -> int:
             ziel, frist_s=a.stillstand_frist_s,
             name=f"Auftrag {auftrag.get('job_id') or ziel.parent.name}")
 
-    bericht = abholer.durchgang(store, verarbeite=verarbeite,
-                                fremde_freigabe_gilt=a.fremde_freigabe,
-                                darf_rechnen=karte_auskunft,
-                                hoechstens=a.hoechstens,
-                                wache_bauen=None if a.ohne_wache else wache_bauen)
+    for name, pfad, quelle in ablagen:
+        print(f"\n=== Ablage: {name} ===")
+        bericht = abholer.durchgang(pfad, verarbeite=verarbeite,
+                                    fremde_freigabe_gilt=a.fremde_freigabe,
+                                    darf_rechnen=karte_auskunft,
+                                    hoechstens=a.hoechstens,
+                                    wache_bauen=None if a.ohne_wache else wache_bauen,
+                                    quelle=quelle)
+        _berichte(bericht)
+    return 0
+
+
+def _berichte(bericht: dict) -> None:
+    """Einen Durchgang ausgeben — je Ablage einmal.
+
+    Herausgeloest, als es zwei Ablagen wurden. Zwei Ausgabewege fuer dieselbe Sache
+    liefen auseinander, sobald einer gepflegt wird; das ist derselbe Grund, aus dem der
+    Abholer eine zweite QUELLE bekam und keinen zweiten Ausfuehrer.
+    """
     schlank = {k: v for k, v in bericht.items() if k != "ergebnisse"}
     print(json.dumps(schlank, ensure_ascii=False, indent=1))
     for e in bericht.get("ergebnisse", []):
@@ -245,7 +288,6 @@ def main() -> int:
         print(f"\n  Vertragsvorgaben (betreffen JEDEN Auftrag gleich, {len(vorgaben)}):")
         for zeile in vorgaben:
             print(f"    · {_gekuerzt(str(zeile), GEKUERZT_AUF)}")
-    return 0
 
 
 if __name__ == "__main__":
