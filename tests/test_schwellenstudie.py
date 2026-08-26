@@ -53,6 +53,8 @@ from aiimaging.schwellenstudie import (
     BLEIBT,
     FAELLT,
     GLAETTUNG,
+    HERKUNFT_BERICHT,
+    HERKUNFT_KARTE,
     HINTERGRUND_M,
     MONOTON,
     RAUSCHEN,
@@ -61,11 +63,13 @@ from aiimaging.schwellenstudie import (
     STOERUNGEN,
     TIEFENUMKEHR,
     VERSCHIEBUNG,
+    VORBEHALT_NICHT_DIE_KETTE,
     VORGABE_STAERKEN,
     ZUSATZKOERPER,
     StudienError,
     baue_testszene,
     stoere,
+    studie_aus_bericht,
     studienlauf,
     trennschaerfe,
     trennschaerfe_kurve,
@@ -684,7 +688,8 @@ def test_studienlauf_traegt_die_zugesagten_schluessel():
     """Der Rückgabewert ist eine Zusage des Docstrings, kein Zufallsprodukt — er wandert
     unverändert in ``auftrag.baue_ergebnis(messwerte=…)``."""
     assert set(ERGEBNIS) == {"szene", "breite", "hoehe", "schwelle", "seed", "methode",
-                             "zeilen", "kontrollen", "warnungen"}
+                             "herkunft", "geometrieanteil", "n_geometrie", "n_punkte",
+                             "vorbehalte", "zeilen", "kontrollen", "warnungen"}
     assert ERGEBNIS["szene"] == "quader-mit-fluegel-32"
     assert (ERGEBNIS["breite"], ERGEBNIS["hoehe"]) == (BREITE, HOEHE)
     assert ERGEBNIS["schwelle"] == geometrie_qa.SCHWELLE_GEOMETRIE
@@ -1047,3 +1052,255 @@ def test_die_registry_ist_vollstaendig_und_widerspruchsfrei():
     assert {art for art, s in STOERUNGEN.items() if s.ist_kontrolle} == {MONOTON,
                                                                         TIEFENUMKEHR}
     assert 0.0 in VORGABE_STAERKEN, "ohne Nullprobe ist keine Zeile darunter zu deuten"
+
+
+# --------------------------------------------------------------------------------------
+# H · studie_aus_bericht — die Studie auf echter Geometrie
+# --------------------------------------------------------------------------------------
+#
+# Warum dieser Abschnitt eigene Dateien schreibt statt eine Attrappe zu setzen: Der
+# ganze Zweck des Läufers ist der Weg vom Blender-Bericht zur Karte. Eine gefälschte
+# `tiefen_aus_report` prüfte genau den Schritt nicht, für den es die Funktion gibt —
+# und die Hintergrundmarke `1e10`, um die es hier geht, käme dann aus dem Test statt
+# aus der Datei. Die EXR wird darum wirklich geschrieben, mit reiner Standardbibliothek
+# (Regel 3: synthetisch und hier erzeugt).
+
+#: Nicht quadratisch, und das ist Absicht: Nur an einer ungleichseitigen Karte fällt
+#: auf, wenn Breite und Höhe vertauscht durchgereicht werden.
+BERICHT_BREITE, BERICHT_HOEHE = 24, 16
+
+#: Bauwerk im Bericht: sieben Zeilen zu zehn Punkten — 70, also über
+#: ``geometrie_qa.MIN_GEMEINSAME_PUNKTE`` (32). Bewusst **nicht** die mittleren
+#: Zweidrittel wie in `baue_testszene`: Der Geometrieanteil ist die Grösse, an der
+#: `geom_iou` hängt, und ein Läufer, der die Karte des Berichts durch die synthetische
+#: ersetzt, muss daran auffallen (0.18 gegen 0.44).
+BERICHT_X = range(4, 14)
+BERICHT_Y = range(3, 10)
+
+
+def bericht_karte() -> list[float]:
+    """Die Soll-Karte, die in der EXR landen soll — bindungsfrei und mit Hintergrund."""
+    karte = [1.0e10] * (BERICHT_BREITE * BERICHT_HOEHE)
+    lauf = 0
+    for y in BERICHT_Y:
+        for x in BERICHT_X:
+            # Ungleiche Schrittweite: gleiche Werte machten die Rangkorrelation zu einer
+            # Rechnung über Bindungsgruppen, siehe `test_szene_ist_praktisch_bindungsfrei`.
+            karte[y * BERICHT_BREITE + x] = 20.0 + lauf * 0.37
+            lauf += 1
+    return karte
+
+
+@pytest.fixture
+def bericht(tmp_path):
+    """Ein Bericht, wie ``seams.glb_zu_multipass`` ihn zurückgibt — mit echter EXR."""
+    from test_bildlesen import schreibe_exr
+
+    werte = bericht_karte()
+    exr = schreibe_exr(tmp_path / "tiefe_0001.exr", BERICHT_BREITE, BERICHT_HOEHE,
+                       {"V": werte})
+    return {"status": "ok", "depth_exr": str(exr), "depth_png": None}
+
+
+@pytest.fixture
+def studie(bericht):
+    return studie_aus_bericht(bericht, szene="prüfkörper-24x16")
+
+
+def test_die_studie_steht_auf_der_karte_des_berichts(studie):
+    """Der Kern von A3: Masse und Geometrieanteil stammen aus der Datei, nicht aus einer
+    Vorgabe.
+
+    Der Geometrieanteil ist hier kein Beiwerk. ``geom_iou`` hängt an ihm — an der
+    synthetischen Szene liegt er bei rund 0.44, an unseren echten Szenen zwischen 0.08
+    und 0.17. Eine Schwelle, die bei 0.44 kalibriert und bei 0.08 angewandt wird, ist
+    nicht dieselbe Schwelle. Der Test rechnet den Anteil **aus der geschriebenen Karte**
+    nach statt die Zahl der Studie zu glauben.
+    """
+    erwartet = len(BERICHT_X) * len(BERICHT_Y)
+
+    assert (studie["breite"], studie["hoehe"]) == (BERICHT_BREITE, BERICHT_HOEHE)
+    assert studie["n_punkte"] == BERICHT_BREITE * BERICHT_HOEHE
+    assert studie["n_geometrie"] == erwartet
+    assert studie["geometrieanteil"] == pytest.approx(
+        erwartet / (BERICHT_BREITE * BERICHT_HOEHE))
+    assert studie["szene"] == "prüfkörper-24x16"
+
+
+def test_die_karte_der_synthetischen_szene_haette_einen_anderen_anteil(studie):
+    """Gegenprobe zum vorigen Test — sonst wäre er ohne Aussagekraft.
+
+    Er behauptet, der Anteil komme aus dem Bericht. Das ist nur dann eine Behauptung,
+    wenn die synthetische Karte einen **anderen** Anteil hätte. Sie hat einen: rund 0.44
+    gegen rund 0.17. Ein Läufer, der die Karte des Berichts stillschweigend durch
+    ``baue_testszene`` ersetzte, fiele hier auf.
+    """
+    synthetisch = studienlauf(SOLL, breite=BREITE, hoehe=HOEHE, arten=[RAUSCHEN],
+                              staerken=[0.0], szene="synthetisch")
+
+    assert synthetisch["geometrieanteil"] > 0.4
+    assert studie["geometrieanteil"] < 0.2
+
+
+def test_der_echte_hintergrundwert_geht_unveraendert_durch(bericht):
+    """Die Vorbedingung von A3, und sie stimmt ohne einen Handgriff.
+
+    ``HINTERGRUND_M`` der Studie ist genau der Wert, den Cycles in die EXR schreibt.
+    Wäre er es nicht, hielte die Studie den Himmel für Bauwerk, der Geometrieanteil
+    spränge auf 1.0 und jede Zeile darunter wäre wertlos — ein Fehler, der ohne diesen
+    Test als plausible Zahl durchginge.
+    """
+    from aiimaging import bildlesen
+
+    assert HINTERGRUND_M == 1.0e10
+    soll, _, _ = bildlesen.tiefen_aus_report(bericht)
+    assert max(soll) == pytest.approx(HINTERGRUND_M, rel=1e-6)
+
+    studie = studie_aus_bericht(bericht, szene="hintergrund", arten=[RAUSCHEN],
+                                staerken=[0.0])
+    assert studie["n_geometrie"] == len(BERICHT_X) * len(BERICHT_Y)
+    assert studie["n_geometrie"] < studie["n_punkte"], (
+        "ohne Hintergrund gäbe es keine Silhouette, und `geom_iou` misst nichts"
+    )
+
+
+def test_die_nullprobe_ergibt_auf_echter_geometrie_genau_eins(studie):
+    """Stärke 0.0 muss den Score 1.000 ergeben — auf jeder Szene.
+
+    Tut sie es nicht, misst der Läufer etwas anderes als gedacht, und alles Weitere ist
+    wertlos. Das ist die erste Prüfung jedes Studienlaufs und nicht verhandelbar.
+    """
+    nullen = [z for z in studie["zeilen"] if z["staerke"] == 0.0]
+
+    assert len(nullen) == len(STOERUNGEN)
+    for z in nullen:
+        assert z["score"] == pytest.approx(1.0, abs=1e-9), f"{z['art']} bei Stärke 0"
+
+
+def test_die_beiden_kontrollen_halten_auch_auf_echter_geometrie(studie):
+    """Rangerhaltung muss halten, Polaritätsblindheit muss bleiben.
+
+    Beide sind Eigenschaften der **Metrik**, nicht der Szene — sie dürfen sich beim
+    Wechsel von der synthetischen zur echten Karte nicht ändern. Fällt die erste, ist
+    nicht die Schwelle falsch, sondern das Verfahren.
+    """
+    kontrollen = studie["kontrollen"]
+
+    assert kontrollen["rangerhaltung"]["bestanden"] is True
+    assert kontrollen["polaritaet_unsichtbar"]["wie_erwartet_blind"] is True
+
+
+def test_der_vorbehalt_reist_in_jedem_ergebnis_mit(studie):
+    """Was die Studie **nicht** abdeckt, steht in den Zahlen und nicht nur im Dokument.
+
+    In der Studie tragen beide Karten eine Hintergrundmarke — der Fehler des monokularen
+    Schätzers aus ``docs/DECKELSTUDIE_2026-08-26.md`` kommt hier gar nicht vor. Das ist
+    richtig so; eine Schwelle lässt sich nur unabhängig vom Schätzerfehler kalibrieren.
+    Aber es muss dastehen, sonst liest die Studie später jemand, als decke sie die ganze
+    Kette ab.
+    """
+    synthetisch = studienlauf(SOLL, breite=BREITE, hoehe=HOEHE, arten=[RAUSCHEN],
+                              staerken=[0.0])
+
+    assert VORBEHALT_NICHT_DIE_KETTE in studie["vorbehalte"]
+    assert VORBEHALT_NICHT_DIE_KETTE in synthetisch["vorbehalte"]
+    assert "Metrik, nicht die Kette" in VORBEHALT_NICHT_DIE_KETTE
+
+
+def test_die_herkunft_unterscheidet_echte_von_synthetischer_grundlage(studie):
+    """Einem Zahlenblock sieht man nicht an, worauf er steht — hier steht es dabei."""
+    synthetisch = studienlauf(SOLL, breite=BREITE, hoehe=HOEHE, arten=[RAUSCHEN],
+                              staerken=[0.0])
+
+    assert studie["herkunft"] == HERKUNFT_BERICHT
+    assert synthetisch["herkunft"] == HERKUNFT_KARTE
+    assert HERKUNFT_BERICHT != HERKUNFT_KARTE
+
+
+def test_die_masse_des_berichts_werden_nicht_vertauscht(bericht):
+    """Mutationsprobe: Breite und Höhe getauscht — die Nachbarschaftsstörungen kippen.
+
+    Die Prüfung in ``stoere`` ist eine **Längen**prüfung, keine Massprüfung: 24×16 und 16×24
+    kommen beide durch, weil das Produkt stimmt. Was dann herauskommt, ist keine Störung,
+    sondern Unsinn — und er sieht wie eine Messung aus. Also wird hier belegt, dass der
+    Läufer die Masse so weitergibt, wie sie in der Datei stehen.
+    """
+    from aiimaging import bildlesen
+
+    soll, _, _ = bildlesen.tiefen_aus_report(bericht)
+    arten, staerken = [VERSCHIEBUNG, SILHOUETTE_WACHSEN], [1.0]
+    scores = lambda e: [z["score"] for z in e["zeilen"]]   # noqa: E731
+
+    echt = studie_aus_bericht(bericht, szene="masse", arten=arten, staerken=staerken)
+    richtig = studienlauf(soll, breite=BERICHT_BREITE, hoehe=BERICHT_HOEHE,
+                          arten=arten, staerken=staerken)
+    vertauscht = studienlauf(soll, breite=BERICHT_HOEHE, hoehe=BERICHT_BREITE,
+                             arten=arten, staerken=staerken)
+
+    assert scores(echt) == scores(richtig)
+    assert scores(echt) != scores(vertauscht), (
+        "wären beide gleich, prüfte dieser Test nichts — dann wäre die Szene zu "
+        "symmetrisch für die Aussage"
+    )
+
+
+def test_ohne_szenennamen_gibt_es_keine_studie(bericht):
+    """Eine Kurve gehört an die Szene, an der sie gemessen wurde.
+
+    Der Name liesse sich aus ``glb_path`` ableiten — das wäre ein absoluter Pfad und
+    nach Regel 3 nichts, was in ein Ergebnis gehört, das über das Repo reist. Also nennt
+    ihn, wer die Studie fährt.
+    """
+    for leer in ("", "   "):
+        with pytest.raises(StudienError, match="szene"):
+            studie_aus_bericht(bericht, szene=leer)
+
+
+def test_eine_karte_ganz_ohne_bauwerk_ist_keine_studie(tmp_path):
+    """Ein Lauf, der nur Himmel gerendert hat, wird gemeldet statt gerechnet."""
+    from test_bildlesen import schreibe_exr
+
+    exr = schreibe_exr(tmp_path / "leer.exr", 4, 4, {"V": [1.0e10] * 16})
+
+    with pytest.raises(StudienError, match="Geometriepunkt"):
+        studie_aus_bericht({"depth_exr": str(exr)}, szene="nur-himmel")
+
+
+def test_der_png_rueckfall_traegt_seinen_verlust_als_vorbehalt(tmp_path):
+    """Liegt nur das normalisierte PNG vor, misst ``geom_iou`` gegen eine bereits
+    beschädigte Silhouette — und die Studie sagt das, statt es zu verschweigen.
+
+    Das PNG kann den hintersten Geometriepunkt nicht vom Himmel trennen (beide landen
+    auf Grauwert 0). Eine Studie auf so einer Karte ist nicht falsch, aber sie steht auf
+    einer anderen Grundlage als eine aus der EXR — und der Unterschied gehört zu den
+    Zahlen, nicht in eine Fussnote.
+    """
+    from aiimaging import bildlesen
+    from test_bildlesen import schreibe_png
+
+    karte = bericht_karte()
+    geo = [w for w in karte if w < 1e7]
+    nah, fern = min(geo), max(geo)
+    grau = [round((1.0 - (w - nah) / (fern - nah)) * 65535) if w < 1e7 else 0
+            for w in karte]
+    png = schreibe_png(tmp_path / "tiefe_norm.png", BERICHT_BREITE, BERICHT_HOEHE, grau,
+                       filterarten=[0] * BERICHT_HOEHE)
+    bericht = {"depth_exr": None, "depth_png": str(png),
+               "depth_normalisierung": {"min_m": nah, "max_m": fern}}
+
+    with pytest.warns(bildlesen.SilhouettenVerlust):
+        studie = studie_aus_bericht(bericht, szene="nur-png", arten=[RAUSCHEN],
+                                    staerken=[0.0])
+
+    assert VORBEHALT_NICHT_DIE_KETTE in studie["vorbehalte"]
+    assert any("normalisierten PNG" in v for v in studie["vorbehalte"])
+    assert studie["n_geometrie"] < len(BERICHT_X) * len(BERICHT_Y), (
+        "genau der dokumentierte Verlust: der hinterste Punkt fällt in den Himmel"
+    )
+
+
+def test_die_kurve_haengt_am_ergebnis_und_ist_die_gewohnte(studie):
+    """``kurve`` ist kein zweiter Rechenweg, sondern dieselbe Auswertung wie bisher."""
+    assert studie["kurve"] == trennschaerfe_kurve(studie, grenzstaerke=0.2)
+    assert 0.0 <= studie["kurve"]["beste"]["schwelle"] <= 1.0
+    assert studie["kurve"]["grenzstaerke"] == 0.2

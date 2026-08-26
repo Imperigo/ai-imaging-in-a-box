@@ -59,13 +59,31 @@ import hashlib
 import math
 import random
 import struct
+import warnings
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from aiimaging import geometrie_qa
+from aiimaging import bildlesen, geometrie_qa
 
 #: Hintergrundmarke der erzeugten Karten. Derselbe Wert, den Cycles schreibt.
 HINTERGRUND_M = 1.0e10
+
+#: Woher die Soll-Karte einer Studie stammt. Steht in jedem Ergebnis, weil eine an einer
+#: synthetischen Karte gewonnene Kurve etwas anderes behauptet als eine an echter
+#: Geometrie gewonnene — und weil man das dem Zahlenblock sonst nicht ansieht.
+HERKUNFT_KARTE = "karte"
+HERKUNFT_BERICHT = "blender-bericht"
+
+#: Der Vorbehalt, der zu **jedem** Studienergebnis gehört, auch zu einem an echter
+#: Geometrie gemessenen. Er steht als Zeichenkette im Ergebnis und nicht nur in der
+#: Dokumentation, damit er mitreist, wenn die Zahlen es tun.
+VORBEHALT_NICHT_DIE_KETTE = (
+    "Diese Studie kalibriert die Metrik, nicht die Kette: Soll-Karte und gestörte Karte "
+    "tragen beide eine Hintergrundmarke. Der Fehler des monokularen Schätzers — er legt "
+    "den Himmel mitten in die Tiefenspanne des Bauwerks, siehe "
+    "docs/DECKELSTUDIE_2026-08-26.md — kommt hier gar nicht vor. Eine hier gewonnene "
+    "Schwelle gilt für die Metrik, nicht für den Weg dorthin."
+)
 
 # ── Störungsarten ────────────────────────────────────────────────────────────────────
 
@@ -432,7 +450,8 @@ def studienlauf(soll: Sequence[float], *, breite: int, hoehe: int,
     """Das Gitter aus Störungsart × Stärke messen.
 
     Returns:
-        ``{szene, breite, hoehe, schwelle, seed, methode, zeilen, kontrollen, warnungen}``
+        ``{szene, breite, hoehe, schwelle, seed, methode, herkunft, geometrieanteil,
+        n_geometrie, n_punkte, vorbehalte, zeilen, kontrollen, warnungen}``
 
         Jede Zeile trägt ``art``, ``staerke``, ``score``, ``spearman``, ``geom_iou``,
         ``bestanden`` und ``erwartung_erfuellt``. Alles Zahlen und Text — das Ergebnis
@@ -447,6 +466,8 @@ def studienlauf(soll: Sequence[float], *, breite: int, hoehe: int,
     unbekannt = [a for a in arten if a not in STOERUNGEN]
     if unbekannt:
         raise StudienError(f"Unbekannte Störungsarten: {sorted(unbekannt)}")
+
+    geo_idx = _geometrie_indizes(soll)
 
     zeilen: list[dict] = []
     warnungen: list[str] = []
@@ -478,6 +499,14 @@ def studienlauf(soll: Sequence[float], *, breite: int, hoehe: int,
         "szene": szene, "breite": breite, "hoehe": hoehe,
         "schwelle": schwelle, "seed": seed,
         "methode": geometrie_qa.METHODE,
+        # Woher die Karte kam und wie viel von ihr Bauwerk ist. Der Anteil steht hier,
+        # weil `geom_iou` an ihm hängt: Eine Schwelle, die an 44 % Geometrie kalibriert
+        # wurde und bei 8 % angewandt wird, ist nicht dieselbe Schwelle.
+        "herkunft": HERKUNFT_KARTE,
+        "geometrieanteil": len(geo_idx) / max(1, len(soll)),
+        "n_geometrie": len(geo_idx),
+        "n_punkte": len(soll),
+        "vorbehalte": [VORBEHALT_NICHT_DIE_KETTE],
         "zeilen": zeilen,
         "kontrollen": _kontrollen(zeilen),
         "warnungen": warnungen,
@@ -658,9 +687,111 @@ def trennschaerfe_kurve(ergebnis: dict, schwellen: Sequence[float] = tuple(
             "entdoppelt": verworfen, "n_roh": len(roh), "n_ausgewertet": len(zeilen)}
 
 
+# ── Die Studie an einer echten Szene ─────────────────────────────────────────────────
+
+def studie_aus_bericht(bericht: dict, *, szene: str,
+                       quelle: str = bildlesen.QUELLE_AUTO,
+                       arten: Sequence[str] | None = None,
+                       staerken: Sequence[float] = VORGABE_STAERKEN,
+                       schwelle: float = geometrie_qa.SCHWELLE_GEOMETRIE,
+                       seed: int = 0, grenzstaerke: float = 0.2,
+                       timeout: int = 300, _starte=None) -> dict:
+    """Einen Blender-Bericht zur Grundlage einer Studie machen — echte Geometrie statt Szene.
+
+    Der Docstring von :func:`baue_testszene` sagt seit dem 18.08.2026, was fehlt: *„Wer
+    gegen echte Geometrie kalibrieren will, gibt seine eigene Karte an — die Studie nimmt
+    jede."* Diese Funktion ist genau dieser Handgriff und **kein neuer Messcode**: Sie
+    liest die Soll-Karte mit ``bildlesen.tiefen_aus_report``, gibt sie an
+    :func:`studienlauf` und hängt :func:`trennschaerfe_kurve` daran. Wer den Weg von Hand
+    gehen will, kann das weiterhin; hier ist er nur einmal aufgeschrieben statt in jeder
+    Auswertung neu.
+
+    **Warum das nicht bloss „nochmal laufen lassen" ist.** Die synthetische Szene füllt
+    die mittleren Zweidrittel — Geometrieanteil rund 44 %. Unsere echten Szenen liegen
+    zwischen 8 % und 17 %. ``geom_iou`` hängt am Geometrieanteil (gemessen, siehe
+    ``docs/DECKELSTUDIE_2026-08-26.md``), und eine bei 44 % kalibrierte Schwelle ist bei
+    8 % nicht dieselbe Schwelle. Darum steht der Anteil im Ergebnis, neben jeder Zahl,
+    die von ihm abhängt.
+
+    Args:
+        bericht: Rückgabe von ``seams.glb_zu_multipass`` bzw. Inhalt eines
+            ``blender-report.json``.
+        szene: **Pflicht, und mit Absicht ohne Vorgabe.** Der Name liesse sich aus
+            ``glb_path`` ableiten — das wäre ein absoluter Pfad und damit nach Regel 3
+            nichts, was in ein Ergebnis gehört, das über das Repo reist. Also nennt ihn,
+            wer die Studie fährt. Eine Kurve ohne ihre Szene ist keine Aussage.
+        quelle, timeout, _starte: werden an ``bildlesen.tiefen_aus_report``
+            durchgereicht.
+        grenzstaerke: an :func:`trennschaerfe_kurve`. Eine Setzung, keine Messung.
+
+    Returns:
+        Was :func:`studienlauf` liefert, dazu ``herkunft`` (``HERKUNFT_BERICHT``) und
+        ``kurve``. ``geometrieanteil``, ``n_geometrie`` und ``n_punkte`` stammen aus dem
+        Studienlauf und gelten damit für die **wirklich gemessene** Karte. ``kurve`` ist
+        ``None``, wenn das Gitter keine auswertbare Zeile enthält — der Grund steht dann
+        in ``warnungen``.
+
+    Raises:
+        StudienError: leerer Szenenname, oder die Karte enthält keinen Geometriepunkt.
+        bildlesen.BildError: der Bericht nennt keine lesbare Tiefenkarte.
+
+    **Der Vorbehalt reist mit.** ``vorbehalte`` trägt :data:`VORBEHALT_NICHT_DIE_KETTE`,
+    und beim PNG-Rückfall zusätzlich den gemeldeten Silhouettenverlust: Das PNG kann den
+    hintersten Geometriepunkt nicht vom Himmel trennen, und dann misst ``geom_iou`` gegen
+    eine Silhouette, die vor der ersten Störung schon beschädigt war.
+    """
+    if not isinstance(szene, str) or not szene.strip():
+        raise StudienError(
+            "szene: ein nicht-leerer Name ist Pflicht. Eine Kurve gehört an die Szene, "
+            "an der sie gemessen wurde; ohne sie ist sie eine Zahl ohne Bedingung."
+        )
+
+    # Die Warnung wird gefangen, um sie in das Ergebnis zu schreiben — und danach
+    # weitergereicht, damit sie am Bildschirm nicht verschwindet. Eine Meldung, die eine
+    # Auswertung stillschweigend schluckt, ist schlimmer als keine.
+    with warnings.catch_warnings(record=True) as gefangen:
+        warnings.simplefilter("always")
+        soll, breite, hoehe = bildlesen.tiefen_aus_report(
+            bericht, quelle=quelle, timeout=timeout, _starte=_starte)
+    for w in gefangen:
+        warnings.warn(w.message, w.category, stacklevel=2)
+    verluste = [str(w.message) for w in gefangen
+                if issubclass(w.category, bildlesen.SilhouettenVerlust)]
+
+    if not _geometrie_indizes(soll):
+        raise StudienError(
+            f"Die Tiefenkarte aus diesem Bericht ({breite}×{hoehe}) enthält keinen "
+            f"einzigen Geometriepunkt — der Lauf hat nur Himmel gerendert. Ohne "
+            f"Silhouette misst `geom_iou` nichts."
+        )
+
+    ergebnis = studienlauf(soll, breite=breite, hoehe=hoehe, arten=arten,
+                           staerken=staerken, schwelle=schwelle, seed=seed, szene=szene)
+    ergebnis["herkunft"] = HERKUNFT_BERICHT
+    if verluste:
+        ergebnis["vorbehalte"] = list(ergebnis["vorbehalte"]) + [
+            "Die Soll-Karte stammt aus dem normalisierten PNG, nicht aus der EXR: "
+            + " ".join(verluste)
+        ]
+    # Die dritte Antwort, auch hier: Ein Gitter ohne auswertbare Zeile — nur Kontrollen,
+    # nur die Nullprobe, oder lauter punktgleiche Wiederholungen — ist kein Fehler des
+    # Läufers. Es ist eine Studie ohne Kurve, und das gehört gesagt statt geworfen. Wer
+    # die Kurve braucht, findet `None` und den Grund daneben; wer nur die Zeilen wollte,
+    # bekommt sie.
+    try:
+        ergebnis["kurve"] = trennschaerfe_kurve(ergebnis, grenzstaerke=grenzstaerke)
+    except StudienError as ohne:
+        ergebnis["kurve"] = None
+        ergebnis["warnungen"] = list(ergebnis["warnungen"]) + [
+            f"Keine Trennschärfekurve: {ohne}"]
+    return ergebnis
+
+
 __all__ = [
     "GLAETTUNG", "HINTERGRUND_M", "MONOTON", "RAUSCHEN", "SILHOUETTE_SCHRUMPFEN",
     "SILHOUETTE_WACHSEN", "STOERUNGEN", "TIEFENUMKEHR", "VERSCHIEBUNG", "VORGABE_STAERKEN",
     "ZUSATZKOERPER", "Stoerung", "StudienError",
-    "baue_testszene", "stoere", "studienlauf", "trennschaerfe", "trennschaerfe_kurve",
+    "HERKUNFT_BERICHT", "HERKUNFT_KARTE", "VORBEHALT_NICHT_DIE_KETTE",
+    "baue_testszene", "stoere", "studie_aus_bericht", "studienlauf", "trennschaerfe",
+    "trennschaerfe_kurve",
 ]
