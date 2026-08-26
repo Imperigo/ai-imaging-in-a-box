@@ -435,10 +435,11 @@ def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None):
         # nie grösser, und ein zu grosser Wert wählt höchstens den langsameren Weg.
         summe = int(eintrag.vram_gb * 2**30)
         erwartet = (summe, summe // 2)
-    geraet = _lege_auf_geraet(pipeline, wurzel, torch, erwartet=erwartet)
+    geraet, entflechtung = _lege_auf_geraet(pipeline, wurzel, torch, erwartet=erwartet)
 
     modell = _pipeline_adapter(pipeline, eintrag, torch, schrittzaehler=schrittzaehler)
     modell.geraet = geraet
+    modell.entflechtung = entflechtung
     if weg:
         modell.ladeweg = weg
     return modell
@@ -527,7 +528,98 @@ def _gewichte_byte(wurzel) -> tuple[int, int]:
         return 0, 0
 
 
-def _lege_auf_geraet(pipeline, wurzel, torch, *, erwartet=None) -> str:
+def _geteilte_parameter(a, b) -> set:
+    """Parameterobjekte, die **beiden** Modulen gehören — erkannt an ihrer Identität.
+
+    Nicht am Wert und nicht am Namen: Zwei Module können denselben Tensor tragen, ohne
+    dass die Namen es verraten, und zwei gleich aussehende Tensoren sind noch keine
+    geteilten. ``id()`` beantwortet genau die gestellte Frage.
+    """
+    ids_b = {id(t) for t in b.parameters()}
+    return {id(t) for t in a.parameters()} & ids_b
+
+
+def _entflechte_controlnet(pipeline) -> dict:
+    """Dem ControlNet **eigene** Kopien der Untermodule geben, die es mit dem Transformer teilt.
+
+    **Der Befund ist gemessen** (HomeStation, `auf-vis-20260825-14`, 25.08.2026):
+    ``ZImageControlNetPipeline`` teilt **67 Parameter** zwischen ControlNet und
+    Transformer — darunter den **ersten**. ``accelerate`` prüft beim Auslagern nur, wo der
+    erste Parameter eines Moduls liegt; sobald das ControlNet umgezogen ist, gilt der
+    Transformer damit als erledigt, und **454 von 521** seiner Parameter bleiben auf der
+    CPU. Der erste Diffusionsschritt stirbt dann an
+    ``Expected all tensors to be on the same device``.
+
+    **Es ist kein Rückfall im Code.** Beide Fassungen sind seit dem 18.08.2026
+    unberührt; ausgelöst hat es der **freie** Kartenspeicher. Voll auf der Karte läuft
+    derselbe Auftrag in 26 Sekunden durch.
+
+    .. important::
+       **Nur vor dem Auslagern rufen, nie auf dem vollen Weg.** Die Kopien kosten rund
+       1,35 GiB. Auf einer Karte, auf der 29,25 GiB verlangt und 28,89 frei waren, wäre
+       das genau die Sorte Zuschlag, die einen gesunden Lauf erst in den Auslagerungsweg
+       drängt — die Reparatur würde den Schaden anrichten, gegen den sie gebaut ist.
+
+    Kopiert werden die **direkten Kinder** des ControlNets, die geteilte Parameter
+    führen. Nicht das ganze ControlNet: Das wäre dieselbe Wirkung zum vielfachen Preis.
+
+    Returns:
+        ``{noetig, kopiert, vorher, nachher, grund}``. ``nachher > 0`` heisst, dass die
+        Entflechtung **nicht** durchgriff — dann steht es da, statt dass ein Lauf später
+        an einer Stelle stirbt, an der niemand mehr nach der Ursache sucht.
+    """
+    import copy
+
+    controlnet = getattr(pipeline, "controlnet", None)
+    transformer = getattr(pipeline, "transformer", None)
+    if controlnet is None or transformer is None:
+        return {"noetig": False, "kopiert": (), "vorher": None, "nachher": None,
+                "grund": ("Diese Pipeline führt kein ControlNet neben einem Transformer "
+                          "— die Verflechtung kann hier nicht auftreten.")}
+
+    try:
+        vorher = len(_geteilte_parameter(controlnet, transformer))
+    except Exception as fehler:                    # noqa: BLE001 — siehe unten
+        return {"noetig": None, "kopiert": (), "vorher": None, "nachher": None,
+                "grund": (f"Die geteilten Parameter liessen sich nicht zaehlen "
+                          f"({type(fehler).__name__}: {fehler}). UNBEKANNT — nicht "
+                          f"'keine'.")}
+
+    if not vorher:
+        return {"noetig": False, "kopiert": (), "vorher": 0, "nachher": 0,
+                "grund": "ControlNet und Transformer teilen keinen Parameter."}
+
+    kopiert = []
+    try:
+        for name, kind in list(controlnet.named_children()):
+            if _geteilte_parameter(kind, transformer):
+                setattr(controlnet, name, copy.deepcopy(kind))
+                kopiert.append(name)
+        nachher = len(_geteilte_parameter(controlnet, transformer))
+    except Exception as fehler:                    # noqa: BLE001
+        # Bewusst breit und bewusst ohne Abbruch: Ohne diese Reparatur stirbt der Lauf
+        # auf dem Auslagerungsweg ohnehin. Ein Fehlschlag HIER darf ihn nicht zusaetzlich
+        # um die Meldung bringen, an der die Ursache erkennbar ist.
+        return {"noetig": True, "kopiert": tuple(kopiert), "vorher": vorher,
+                "nachher": None,
+                "grund": (f"Die Entflechtung ist gescheitert ({type(fehler).__name__}: "
+                          f"{fehler}). Der Lauf geht weiter und wird auf dem "
+                          f"Auslagerungsweg voraussichtlich an einem Geraetekonflikt "
+                          f"sterben — die Ursache steht damit wenigstens hier.")}
+
+    if nachher:
+        grund = (f"NICHT DURCHGEGRIFFEN: {nachher} von {vorher} Parametern sind weiter "
+                 f"geteilt, obwohl {len(kopiert)} Untermodule kopiert wurden. Das "
+                 f"Auslagern wird voraussichtlich scheitern.")
+    else:
+        grund = (f"{vorher} geteilte Parameter aufgeloest, indem {len(kopiert)} "
+                 f"Untermodule kopiert wurden ({', '.join(kopiert)}). Kosten rund "
+                 f"1,35 GiB (gemessen, auf-vis-20260825-14).")
+    return {"noetig": True, "kopiert": tuple(kopiert), "vorher": vorher,
+            "nachher": nachher, "grund": grund}
+
+
+def _lege_auf_geraet(pipeline, wurzel, torch, *, erwartet=None) -> tuple[str, dict | None]:
     """Modell auf die Karte legen — ganz, komponentenweise, schichtweise, oder gar nicht.
 
     ``erwartet`` ist ``(summe_byte, groesster_byte)`` und **schlägt die Plattengrösse**.
@@ -559,32 +651,41 @@ def _lege_auf_geraet(pipeline, wurzel, torch, *, erwartet=None) -> str:
     Erst Stufe 3 trägt. Wer nur die Summe prüft, wählt Stufe 2 und scheitert erneut.
 
     Returns:
-        Welcher Weg genommen wurde.
+        ``(weg, entflechtung)``. ``entflechtung`` ist ``None`` auf den beiden Wegen, die
+        **nicht** auslagern — dort wird :func:`_entflechte_controlnet` bewusst nicht
+        gerufen, weil seine 1,35 GiB einen gesunden Lauf erst in die Auslagerung drängen
+        könnten. ``None`` heisst hier also *nicht nötig gewesen*, und der Grund steht in
+        dieser Zeile.
     """
     if not torch.cuda.is_available():
         pipeline.to("cpu")
-        return "cpu"
+        return "cpu", None
 
     frei, _gesamt = torch.cuda.mem_get_info()
     summe, groesster = _gewichte_byte(wurzel) if erwartet is None else erwartet
 
     if not summe:                                  # nichts messbar: wie bisher verfahren
         pipeline.to("cuda")
-        return "cuda"
+        return "cuda", None
 
     if frei >= summe * GERAETE_ZUSCHLAG:
         pipeline.to("cuda")
-        return "cuda"
+        return "cuda", None
+
+    # Ab hier wird ausgelagert — und erst ab hier ist die Verflechtung toedlich. Siehe
+    # `_entflechte_controlnet`: Sie kostet Speicher, und Speicher ist genau das, woran
+    # dieser Weg schon haengt.
+    entflechtung = _entflechte_controlnet(pipeline)
 
     if frei >= groesster * GERAETE_ZUSCHLAG:
         # diffusers holt jede Komponente einzeln auf die Karte und legt sie danach zurück.
         pipeline.enable_model_cpu_offload()
-        return "cuda+auslagerung"
+        return "cuda+auslagerung", entflechtung
 
     # Selbst die grösste Komponente passt nicht am Stück. Dann wandern die Untermodule
     # einzeln — deutlich langsamer, aber der Lauf kommt durch. Ein Abbruch kostet ihn ganz.
     pipeline.enable_sequential_cpu_offload()
-    return "cuda+schichtauslagerung"
+    return "cuda+schichtauslagerung", entflechtung
 
 
 #: Orte, an denen eine Einzeldatei-Ablage vermutet wird, wenn das diffusers-Verzeichnis
@@ -1212,16 +1313,20 @@ def _geraeteweg(modell) -> dict:
         Dreiteilung dieses Projekts: ``geraet=None`` heisst **unbekannt**, nie „CPU".
     """
     if modell is None:
-        return {"geraet": None, "ladeweg": None, "gemeldet": False,
+        return {"geraet": None, "ladeweg": None, "entflechtung": None, "gemeldet": False,
                 "grund": "Es wurde nichts geladen — der Auftrag kam nicht so weit."}
     geraet = getattr(modell, "geraet", None)
     if geraet is None:
         return {"geraet": None, "ladeweg": getattr(modell, "ladeweg", None),
+                "entflechtung": getattr(modell, "entflechtung", None),
                 "gemeldet": False,
                 "grund": ("Das Modell fuehrt keine Geraeteangabe. So sieht eine Attrappe "
                           "aus, und so saehe auch ein fremder Lader aus — UNBEKANNT ist "
                           "hier nicht dasselbe wie 'auf der CPU'.")}
     return {"geraet": str(geraet), "ladeweg": getattr(modell, "ladeweg", None),
+            # Ob dem ControlNet vor dem Auslagern eigene Kopien gegeben wurden. `None`
+            # auf den Wegen, die nicht auslagern — siehe `_lege_auf_geraet`.
+            "entflechtung": getattr(modell, "entflechtung", None),
             "gemeldet": True, "grund": ""}
 
 

@@ -3068,13 +3068,35 @@ zurückzugeben liesse die bestellende Seite hängen — sie könnte *übersprung
       verlangt einen zweiten Lauf, abbestellt verlangt gar nichts.
 - [x] `bruecke.schreibe_ergebnis(..., uebersprungen=…)` reicht es durch.
 
+### Posten 3 · Die ControlNet-Verflechtung
+
+`ZImageControlNetPipeline` teilt **67 Parameter** zwischen ControlNet und Transformer —
+darunter den **ersten**. `accelerate` prüft beim Auslagern nur, wo der erste Parameter
+eines Moduls liegt; sobald das ControlNet umgezogen ist, gilt der Transformer als
+erledigt, und **454 von 521** seiner Parameter bleiben auf der CPU. Der erste
+Diffusionsschritt stirbt an *«Expected all tensors to be on the same device»*.
+
+**Es ist kein Rückfall.** Beide Fassungen sind seit dem 18.08. unberührt; ausgelöst hat es
+der freie Kartenspeicher — 29,25 GiB verlangt, 28,89 bis 29,07 frei.
+
+- [x] `render._entflechte_controlnet(pipeline)` gibt dem ControlNet eigene Kopien der
+      **direkten Kinder**, die geteilte Parameter führen. Nicht des ganzen ControlNets:
+      dieselbe Wirkung zum vielfachen Preis.
+- [x] **Und nur vor dem Auslagern.** Die Kopien kosten 1,35 GiB. Auf den beiden Wegen, die
+      *nicht* auslagern, wird die Funktion gar nicht erst gerufen — sonst wäre sie genau
+      der Zuschlag, der einen gesunden Lauf erst in die Auslagerung drängt. *Zwei Zehntel
+      Gigabyte haben am 25.08. entschieden.* Beide Richtungen sind getestet.
+- [x] `nachher > 0` heisst **nicht durchgegriffen** und steht im Kurzbefund — vor dem
+      Lauf, der daran stirbt. Ein Fehlschlag der Reparatur selbst hält den Lauf **nicht**
+      auf: Ohne sie stirbt er ohnehin, und die Meldung wäre dann auch noch weg.
+- [x] Geprüft **ohne torch** (23 Fälle in `tests/test_geraeteweg.py`): Welche Untermodule
+      Parameterobjekte gemeinsam haben, ist Identität und keine Algebra. Eine Reparatur,
+      die sich nur auf einer 5090 prüfen lässt, wird nie geprüft.
+- [ ] **Am Gerät zu bestätigen** — dass sie die Kette wirklich durchbringt, kann diese
+      Seite nicht messen. Auftrag liegt (`auftraege/offen/`).
+
 ### Offen aus derselben Liste
 
-- [ ] **Posten 3 · Die ControlNet-Verflechtung.** `ZImageControlNetPipeline` teilt 67
-      Parameter zwischen ControlNet und Transformer; `accelerate` prüft beim Auslagern
-      nur den ersten, also bleiben 454 von 521 Transformer-Parametern auf der CPU. Der
-      Fix ist gemessen (`copy.deepcopy` der sechs geteilten Untermodule, Kosten ~1,35
-      GiB). *Kein Rückfall — ausgelöst hat es der freie Speicher.*
 - [ ] **Posten 5 · Drei Vertragslücken**, die der Abholer selbst meldet: Bildmasse
       1600×1000 → 1600×992, `denoise` und Schrittzahl werden nicht abgebildet, Sonnenstand
       wird nicht bedient. Überschneidet sich mit Block 3 des Tagesplans (die drei

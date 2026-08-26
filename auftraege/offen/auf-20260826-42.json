@@ -1,0 +1,29 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260826-42",
+  "art": "render",
+  "beschreibung": "Die ControlNet-Entflechtung am Geraet bestaetigen — der Fix aus auf-vis-20260825-14 ist eingebaut und auf dieser Seite NICHT messbar.",
+  "erstellt": "2026-08-26",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "anweisung": "=== WORUM ES GEHT ===\nIhr habt den Geraetefehler vom 25.08. aufgeklaert (auf-vis-20260825-14), und die Diagnose\nist vollstaendig: ZImageControlNetPipeline teilt 67 Parameter zwischen ControlNet und\nTransformer, darunter den ERSTEN. `accelerate` prueft beim Auslagern nur, wo der erste\nParameter eines Moduls liegt — also gilt der Transformer als erledigt, sobald das\nControlNet umgezogen ist, und 454 von 521 seiner Parameter bleiben auf der CPU.\n\nDer von euch gemessene Fix ist jetzt im Code: `render._entflechte_controlnet(pipeline)`.\nEr gibt dem ControlNet eigene Kopien der DIREKTEN KINDER, die geteilte Parameter fuehren\n— nicht des ganzen ControlNets, das waere dieselbe Wirkung zum vielfachen Preis.\n\nZWEI DINGE, DIE ANDERS SIND ALS IN EUREM VORSCHLAG, und beide mit Grund:\n\n1. Er wird NUR VOR DEM AUSLAGERN gerufen, nie auf dem vollen Weg. Die Kopien kosten\n   1.35 GiB. Auf einer Karte, auf der 29.25 GiB verlangt und 28.89 frei waren, waere das\n   genau der Zuschlag, der einen GESUNDEN Lauf erst in die Auslagerung draengt. Die\n   Reparatur richtete dann den Schaden an, gegen den sie gebaut ist.\n2. Ein Fehlschlag der Reparatur SELBST haelt den Lauf nicht auf. Ohne sie stirbt er auf\n   dem Auslagerungsweg ohnehin — und mit einem Abbruch hier waere auch noch die Meldung\n   weg, an der die Ursache erkennbar ist. Sie meldet und wirft nicht.\n\nDazu ist euer Posten 4 umgesetzt: Der Geraeteweg wird jetzt protokolliert\n(`ergebnis[\"geraeteweg\"]`, im Kameraurteil, und im Kurzbefund nur dann, wenn der Weg\nnicht `cuda` war). Und Posten 1 ebenso: Die Rahmung wird VOR dem Bildlauf geprueft, unter\n0.65 gefuellter Bildbreite wird gar nicht erst gerendert.\n\n=== WAS DIESE SEITE NICHT MESSEN KANN ===\nAlles hier ist ohne torch geprueft, mit Attrappen: 23 Faelle in tests/test_geraeteweg.py.\nOb die Entflechtung die Kette wirklich durchbringt, kann diese Seite nicht wissen. Das\nist der Kern dieses Auftrags.\n\n=== WAS ZU TUN IST, IN DIESER REIHENFOLGE ===\n\nG1 · GEGENPROBE ZUERST (ohne die ist alles Uebrige wertlos)\n    Lauf mit VOLLER Karte (nichts sonst darauf, so dass `frei >= summe * 1.25` gilt).\n    Erwartet: geraeteweg[\"geraet\"] == \"cuda\" UND geraeteweg[\"entflechtung\"] is None.\n    Meldet beide Werte woertlich.\n    Ist die Entflechtung hier NICHT None, ist die Bedingung falsch verdrahtet und alles\n    Weitere hinfaellig — dann bitte abbrechen und nur das melden.\n\nG2 · DER FALL, DER DEN ANLASS GAB\n    Lauf mit belegter Karte, so dass der Auslagerungsweg gewaehlt wird (dieselbe Lage wie\n    am 25.08. abends: rund 28.9 GiB frei bei 29.25 verlangt; notfalls Speicher mit einem\n    zweiten Prozess belegen und die belegte Menge dazuschreiben).\n    Meldet:\n      - geraeteweg[\"geraet\"]  (erwartet \"cuda+auslagerung\")\n      - entflechtung[\"vorher\"], [\"nachher\"], [\"kopiert\"]\n      - ob der Lauf bis zu einem Bild durchkommt, und wie lange er brauchte\n    \"vorher\" sollte 67 sein und \"nachher\" 0. Ist \"nachher\" > 0, greift die Reparatur\n    nicht durch — dann bitte die Namen aus `controlnet.named_children()` und die Zahl der\n    geteilten Parameter je Kind mitschicken, damit die Stelle findbar ist.\n\nG3 · DER PREIS\n    Wieviel Kartenspeicher kostet die Entflechtung wirklich? Gemessen, nicht geschaetzt:\n    `torch.cuda.memory_allocated()` unmittelbar vor und nach `_entflechte_controlnet`.\n    Wir tragen 1.35 GiB als eure Zahl. Weicht es stark ab, gehoert die Zahl berichtigt —\n    sie steht im Docstring von `_entflechte_controlnet` und in docs/LEXIKON.md.\n\nG4 · DIE DRITTE STUFE\n    Ihr habt gemeldet, die Schichtauslagerung (`enable_sequential_cpu_offload`) sterbe\n    fuer diese Pipeline schon beim Aufsetzen. Aendert die Entflechtung daran etwas?\n    Wenn nein, ist das ein Befund und kein Fehlschlag — dann gehoert er in den Code, damit\n    niemand den Weg fuer eine Rettung haelt, die er nicht ist.\n\n=== WAS NICHT ZU TUN IST ===\n- KEIN Absenken von GERAETE_ZUSCHLAG (1.25), um den Auslagerungsweg zu vermeiden. Die\n  Zahl ist aus auf-20260818-09 gemessen und deckt die Aktivierungen.\n- KEINE Aenderung an der Reihenfolge der drei Stufen in `_lege_auf_geraet`.\n- NICHT das ganze ControlNet kopieren, auch wenn es einfacher waere.\n- Keine Bilddaten, keine absoluten Pfade mit Benutzernamen in der Antwort (Regel 3).\n\n=== WAS ZURUECKKOMMEN SOLL ===\nJe Punkt G1 bis G4 die Zahlen und ein Satz, was sie bedeuten. Bei G2 zusaetzlich, ob ein\nBild entstanden ist — das ist die Frage, die seit sechs Demolaeufen offen war.\n",
+  "params": {
+    "backbone": "z-image-turbo",
+    "seeds": [
+      0
+    ]
+  },
+  "auflagen": [
+    "Regel 3: keine echten Projektdaten, keine Benutzernamen in Pfaden"
+  ],
+  "rueckgabe": [
+    "G1 Gegenprobe voller Weg",
+    "G2 Auslagerungsweg",
+    "G3 Preis in GiB",
+    "G4 dritte Stufe"
+  ]
+}

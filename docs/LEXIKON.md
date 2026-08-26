@@ -2670,6 +2670,20 @@ seit dem 19.08.2026 ermittelt und bis zum 26.08. nirgends aufgeschrieben — mit
 dass ein Fehlschlag wie ein neu eingebauter Fehler aussah, obwohl sich am Programm nichts
 geändert hatte. Entschieden hatten zwei Zehntel Gigabyte freier Speicher.*
 
+**Geteilte Parameter (Parameter Sharing)** — Zwei Teile eines Modells benutzen
+**dasselbe** Stück Zahlenwerk, statt jeder eine eigene Kopie zu halten. Das spart
+Speicher und ist gewollt.
+*Beim stückweisen Laden auf die Grafikkarte (siehe Auslagerung) wird es zur Falle: Die
+Verwaltungsschicht prüft nur, wo das **erste** Stück eines Teils liegt, und schliesst
+daraus auf den Rest. Teilen sich zwei Teile ausgerechnet dieses erste Stück, gilt der
+zweite als längst umgezogen, obwohl das meiste von ihm noch im Arbeitsspeicher liegt.
+In diesem Projekt gemessen: 67 gemeinsame Stücke, und danach blieben 454 von 521 Teilen
+des Bildmodells liegen — der Lauf starb im ersten Rechenschritt mit einer Meldung, die
+den wahren Grund nicht nennt.*
+*Die Abhilfe ist, dem einen Teil vor dem Auslagern eigene Kopien zu geben. Sie kostet
+Speicher — und darum darf sie nur dort greifen, wo wirklich ausgelagert wird. Eine
+Reparatur, die auch den gesunden Fall verteuert, kann ihn in den kranken kippen.*
+
 **Upscaling** — Nachträgliches Vergrössern eines Bildes unter Hinzuerfindung von Details.
 
 **Modellkarte (Model Card)** — Das Beiblatt eines veröffentlichten Modells: eine
@@ -3314,6 +3328,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-26 | Ergaenzt: **Geteilte Parameter (Parameter Sharing)**. Der technische Kern des Fehlschlags vom 25.08.: 67 gemeinsame Stuecke, und danach blieben 454 von 521 Teilen des Bildmodells liegen. Der Eintrag traegt mit, warum die Abhilfe NUR auf dem Auslagerungsweg greifen darf — eine Reparatur, die den gesunden Fall verteuert, kann ihn in den kranken kippen |
 | 2026-08-26 | Ergaenzt: **Auslagerung (Offloading) und der Geraeteweg**. Anlass sind drei verlorene Stunden am 25.08.: Der gewaehlte Weg wurde gemessen und nirgends geschrieben, und darum sah ein Fehlschlag wie ein Rueckfall im Code aus. Entschieden hatten zwei Zehntel Gigabyte freier Kartenspeicher |
 | 2026-08-26 | Ergaenzt: **Vorpruefung (Abbruch vor dem teuren Schritt)** und **Abbruchschwelle**. Anlass ist ein Owner-Einwand vom 25.08.: Die Geometriepruefung lief bis dahin NACH der Bilderzeugung, obwohl die entscheidende Angabe lange vorher vorliegt. Die Abbruchschwelle traegt ihre Zahl mit (`BILDBREITE_ABBRUCH = 0.65`) und damit auch den Waechter aus `tests/test_lexikon.py` — der zweite Eintrag dieser Woche, der bei der naechsten Aenderung im Code nicht mehr still veralten kann |
 | 2026-08-25 | **Zwei veraltete Zahlen im Text berichtigt, die nur im Aenderungsverzeichnis korrigiert waren.** *Stuerzende Linien* nannte weiterhin 9,46° Neigung, obwohl die Zahl zweimal nachgemessen und zuletzt auf -0,51 bis +5,98 Grad korrigiert worden ist. *Kreisschluss* fuehrte 0,2269 als unabhaengigen Boden, ohne dass er der Bildlage gehoert (Faktor 14). Eine Korrektur, die nur im Verzeichnis steht, erreicht niemanden, der den Begriff nachschlaegt — genau die Falle, gegen die dieses Verzeichnis gebaut ist |

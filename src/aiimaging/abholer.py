@@ -615,6 +615,20 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
                       f"entschieden hat der FREIE Kartenspeicher, nicht der Code "
                       f"(auf-vis-20260825-15, Posten 4)")
 
+    # Und wenn die Entflechtung nicht durchgriff, steht es hier — VOR dem Lauf, der
+    # daran stirbt. Bis zum 26.08.2026 hiess dieser Fall «Expected all tensors to be on
+    # the same device» und kostete drei Stunden Ursachensuche.
+    verflochten = [k.get("kamera") for k in kameras
+                   if ((k.get("geraeteweg") or {}).get("entflechtung") or {})
+                   .get("nachher") != 0
+                   and ((k.get("geraeteweg") or {}).get("entflechtung") or {})
+                   .get("noetig")]
+    if verflochten:
+        zeilen.append(f"ControlNet-Entflechtung NICHT durchgegriffen bei "
+                      f"{', '.join(str(k) for k in verflochten)} — das Auslagern teilt "
+                      f"Parameter zwischen ControlNet und Transformer, und der Lauf "
+                      f"stirbt dann am Geraetekonflikt (auf-vis-20260825-14)")
+
     neg = befund.get("negativ_lage")
     if neg and not neg.get("erreicht_render"):
         # Drei Zustaende, nicht zwei. `None` heisst UNBEKANNT (die Fuehrung ist nicht
