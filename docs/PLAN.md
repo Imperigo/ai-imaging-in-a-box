@@ -3570,8 +3570,10 @@ zweiten Stelle.
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
 
-Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
-(einunddreissig Entscheide, alle rückgängig zu machen) am Ende.
+Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`. Es hat **Abschnitt 0 · «Wenn Sie nur
+eine Seite lesen»** obenauf — mit den drei Dingen, die eine Owner-Antwort brauchen, und den
+fünf schwersten Befunden. Die vollständige **Entscheidliste** (vierundsiebzig Entscheide,
+alle rückgängig zu machen) steht am Ende.
 
 | | Beginn des Tages | nach dem Vormittag | Ende |
 |---|---:|---:|---:|
@@ -3579,6 +3581,9 @@ Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
 | Vakuumprobe | 10 Treffer | 12 Treffer | 12 Treffer |
 | Tote Kanten, gar nicht erreichbar | — | 2 | **1** |
 | Tote Kanten **mit Urteil** | 0 | 0 | **80 von 80** |
+| Hausregeln mit ausführbarem Wächter | 2 von 4 | 2 von 4 | **4 von 4** |
+| Dokumente mit ausführbarem Wächter | 1 | 1 | **5** |
+| Commits | — | 17 | **53** |
 
 *Die beiden neuen Vakuumtreffer sind erklärt: Zwei Zusicherungen über `warnungen` sind
 vakuumwahr **geworden**, weil die Liste jetzt leer sein darf — genau das war das Ziel der
@@ -3593,10 +3598,17 @@ bekommen, nicht in einer anderen Datei.*
 ungenutztes Modul ist grün wie jedes andere — das ist der Grund, warum diese Fehlerart
 sich hält.*
 
-**Offene Aufträge:** `auf-38` (negativer Prompt), `auf-39` (Konversionstreue), `auf-40`
-(Cloud-Worker), `auf-41` (Grundmessung nach dem Deckungsgrad-Wechsel), `auf-42`
-(Entflechtung am Gerät), `auf-43` (welche Zahl war 0.6909) und `auf-44`
-(Azimut-Konvention, **Cloud-Worker**).
+**Offene Aufträge, Stand Abend:** `auf-38` (negativer Prompt), `auf-40` (Cloud-Worker),
+`auf-41` (Grundmessung nach dem Deckungsgrad-Wechsel, **mit Nachtrag**), `auf-42`
+(Entflechtung am Gerät), `auf-43` (welche Zahl war 0.6909), `auf-44` (Azimut-Konvention,
+**Cloud-Worker**), `auf-45` (Torwächter-Fehlalarmrate, **M0 erledigt**), `auf-46`
+(Verdeckung, neu) und `auf-47` (Maskenweg-Gegenprobe, neu).
+
+**`auf-39` ist beantwortet** — und zwar hier, nicht auf der HomeStation: Alle vier Posten
+brauchten nur synthetische Geometrie und `.venv-ifc`. Dasselbe gilt für **M0 aus
+`auf-45`**. *Die Faustregel «misst es → HomeStation» war zu grob;* genauer ist: alles
+Geometrische hier, dorthin nur, was `torch` braucht oder was ohne ihre echten Dateien
+nicht zu haben ist.
 
 **Nicht angekommen:** Der Commit `4a93aa7` der HomeStation liegt nicht auf `origin/main`;
 `auftraege/von-homestation/auf-vis-20260826-16.md` fehlt hier. Gearbeitet wurde nach ihrer
