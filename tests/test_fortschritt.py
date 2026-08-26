@@ -180,12 +180,21 @@ def test_verzeichnis_marke_filtert_nach_endung(tmp_path):
     assert fortschritt.verzeichnis_marke(tmp_path, endung=".png") == (1, 1)
 
 
-def test_verzeichnis_marke_zaehlt_nicht_rekursiv(tmp_path):
+def test_verzeichnis_marke_zaehlt_eine_ebene_tief_und_nicht_weiter(tmp_path):
+    """**Geändert am 26.08.2026.** Bis dahin zählte die Marke ausdrücklich gar keine
+    Unterordner — und war damit auf `out/<kuerzel>/` blind, also genau dort, wo der
+    Runner schreibt (`auf-vis-20260824-12`). Eine Ebene, und die Grenze bleibt geprüft.
+    """
     (tmp_path / "a.png").write_bytes(b"1")
     tief = tmp_path / "unten"
     tief.mkdir()
     (tief / "b.png").write_bytes(b"2")
-    assert fortschritt.verzeichnis_marke(tmp_path, endung=".png") == (1, 1)
+    (tief / "noch_tiefer").mkdir()
+    (tief / "noch_tiefer" / "c.png").write_bytes(b"333")
+
+    assert fortschritt.verzeichnis_marke(tmp_path, endung=".png") == (2, 2)
+    assert fortschritt.verzeichnis_marke(tmp_path, endung=".png", tiefe=0) == (1, 1)
+    assert fortschritt.verzeichnis_marke(tmp_path, endung=".png", tiefe=2) == (3, 5)
 
 
 def test_verzeichnis_marke_auf_fehlendem_ordner_ist_none(tmp_path):
@@ -931,3 +940,92 @@ def test_ohne_jeden_stillstand_berichtet_die_wache_die_laengste_PAUSE(tmp_path):
     bericht = b.bericht()
     assert bericht["gestanden"] is False, "keine Frist gerissen — es gab keinen Stillstand"
     assert bericht["laengster_stillstand_s"] == pytest.approx(90.0)
+
+
+# ======================================================================================
+# Die blinde Wache — sie lief fuenf Laeufe lang auf dem falschen Ordner
+# ======================================================================================
+#
+# Befund der HomeStation (auf-vis-20260824-12, 24.08.2026): `wache_bauen` in
+# tools/abholen.py beobachtet `out/`, geschrieben wird nach `out/<kuerzel>/`. In fuenf
+# Laeufen meldete die Wache als laengsten Stillstand exakt die GESAMTDAUER — sie hat nie
+# etwas gesehen —, und ihr einziger Alarm bei 302.6 s war ein Fehlalarm.
+#
+# Eine Wache, die nie etwas sieht, ist von einer, die nie etwas zu sehen bekommt, nicht
+# zu unterscheiden. Genau darum steht hier die Gegenprobe mit `tiefe=0` daneben.
+
+def test_eine_datei_im_unterordner_veraendert_die_marke(tmp_path):
+    """**Der gemessene Fall.** Genau die Ebene, auf der der Runner schreibt."""
+    (tmp_path / "sSE").mkdir()
+    vorher = fortschritt.verzeichnis_marke(tmp_path)
+    (tmp_path / "sSE" / "tiefe_norm.png").write_bytes(b"x" * 40)
+
+    assert fortschritt.verzeichnis_marke(tmp_path) != vorher
+
+
+def test_mit_tiefe_null_bleibt_die_wache_blind(tmp_path):
+    """Die Gegenprobe, und sie ist der eigentliche Beleg: Ohne sie zeigte der Test oben
+    nur, dass die neue Vorgabe die neue Vorgabe ist."""
+    (tmp_path / "sSE").mkdir()
+    vorher = fortschritt.verzeichnis_marke(tmp_path, tiefe=0)
+    (tmp_path / "sSE" / "tiefe_norm.png").write_bytes(b"x" * 40)
+
+    assert fortschritt.verzeichnis_marke(tmp_path, tiefe=0) == vorher, (
+        "tiefe=0 ist der Stand bis zum 25.08.2026 — er muss nachstellbar bleiben")
+
+
+def test_zwei_ebenen_tiefer_zaehlt_nicht(tmp_path):
+    """Die Grenze ist gewollt. Eine Wache, die beliebig tief sucht, wird mit dem Ordner
+    langsamer, den sie beobachtet — und dann seltener befragt."""
+    (tmp_path / "a" / "b").mkdir(parents=True)
+    vorher = fortschritt.verzeichnis_marke(tmp_path)
+    (tmp_path / "a" / "b" / "tief.png").write_bytes(b"x" * 40)
+
+    assert fortschritt.verzeichnis_marke(tmp_path) == vorher
+
+
+def test_die_endung_gilt_auch_eine_ebene_tiefer(tmp_path):
+    """Sonst zaehlte im Unterordner plötzlich alles mit — und ein Zwischenprodukt sähe
+    aus wie ein fertiges Bild."""
+    (tmp_path / "sSE").mkdir()
+    (tmp_path / "sSE" / "log.txt").write_bytes(b"x" * 40)
+    assert fortschritt.verzeichnis_marke(tmp_path, endung=".png") == (0, 0)
+
+    (tmp_path / "sSE" / "bild.png").write_bytes(b"x" * 40)
+    assert fortschritt.verzeichnis_marke(tmp_path, endung=".png") == (1, 40)
+
+
+def test_die_wache_meldet_keinen_stillstand_mehr_wenn_nur_unten_geschrieben_wird(tmp_path):
+    """**Der gemessene Fall an der Naht**, nicht nur an der Funktion.
+
+    Ein Lauf, der ausschliesslich in Unterverzeichnisse schreibt, meldete bisher einen
+    Stillstand über die gesamte Laufzeit. Jetzt sieht die Wache ihn arbeiten.
+    """
+    (tmp_path / "sSE").mkdir()
+    uhr = Uhr()
+    wache = fortschritt.wache_fuer_verzeichnis(tmp_path, frist_s=10.0, _uhr=uhr)
+
+    wache.blick()
+    uhr.weiter(5.0)
+    (tmp_path / "sSE" / "beauty.png").write_bytes(b"x" * 100)
+    befund = wache.blick()
+
+    assert befund["befund"] is None, (
+        "die neue Datei ist ein BELEGTES Lebenszeichen — der Zaehler faengt neu an")
+    assert wache.still_seit_s == 0.0
+
+
+def test_und_ohne_jede_datei_meldet_sie_weiterhin_stillstand(tmp_path):
+    """Die Gegenprobe zur Gegenprobe: Eine Wache, die nach dem Umbau nie mehr Alarm
+    schlägt, wäre genauso wertlos wie die blinde."""
+    (tmp_path / "sSE").mkdir()
+    uhr = Uhr()
+    wache = fortschritt.wache_fuer_verzeichnis(tmp_path, frist_s=10.0, _uhr=uhr)
+
+    wache.blick()
+    uhr.weiter(30.0)
+    befund = wache.blick()
+
+    assert befund["befund"] == "stillstand"
+    assert befund["unterscheidbar"] is True
+    assert wache.still_seit_s >= 30.0

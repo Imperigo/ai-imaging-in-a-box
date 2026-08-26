@@ -279,15 +279,38 @@ def datei_marke(pfad) -> tuple[int, int] | None:
     return int(st.st_size), int(st.st_mtime)
 
 
-def verzeichnis_marke(pfad, *, endung: str | None = None) -> tuple[int, int] | None:
+#: Wie viele Ebenen unter dem beobachteten Ordner mitgezählt werden.
+#:
+#: **Der Anlass ist eine blinde Wache** (HomeStation, `auf-vis-20260824-12`, 24.08.2026):
+#: Sie lief auf ``out/``, geschrieben wird aber nach ``out/<kuerzel>/``. In fünf Läufen
+#: meldete sie als längsten Stillstand exakt die **Gesamtdauer** — sie hat nie etwas
+#: gesehen —, und ihr einziger Alarm (bei 302,6 s) war ein Fehlalarm.
+#:
+#: **Eine Ebene und nicht ``rglob``.** Der Docstring von :func:`verzeichnis_marke` führt
+#: seit jeher das richtige Argument: Ein rekursiver Lauf über einen Ordner, in den gerade
+#: geschrieben wird, kostet bei jedem Blick Zeit und kann selbst zur Bremse werden. Eine
+#: Ebene ist genau die, auf der der Runner schreibt — und sie ist eine feste, kleine Zahl
+#: von Verzeichnisaufrufen statt einer unbekannten.
+VORGABE_TIEFE = 1
+
+
+def verzeichnis_marke(pfad, *, endung: str | None = None,
+                      tiefe: int = VORGABE_TIEFE) -> tuple[int, int] | None:
     """``(Anzahl Dateien, Gesamtgrösse)`` eines Verzeichnisses, oder ``None``.
 
     Ebenfalls belegt: Eine neue Datei im Ausgabeordner ist Fortschritt, auch wenn das
     Backend nichts sagt. ``endung`` schränkt auf einen Dateityp ein (``".png"``).
 
-    Gezählt wird **nicht rekursiv**. Ein rekursiver Lauf über einen Ausgabeordner, in dem
-    gerade geschrieben wird, kostet bei jedem Blick Zeit und kann selbst zur Bremse
-    werden — die Wache soll billig sein, sonst wird sie seltener befragt.
+    Args:
+        tiefe: Wie viele Ebenen **unter** ``pfad`` noch mitzählen. ``0`` ist der Stand
+            bis zum 25.08.2026 — nur der Ordner selbst. Vorgabe ist
+            :data:`VORGABE_TIEFE`; dort steht auch, warum es eine Ebene ist und nicht
+            ``rglob``.
+
+    .. note::
+       Die Grenze ist **gewollt und geprüft**: Zwei Ebenen tiefer wird nicht gezählt. Eine
+       Wache, die beliebig tief sucht, wird mit dem Ordner langsamer, den sie beobachtet —
+       und dann seltener befragt, was genau der Fehler wäre, gegen den sie steht.
     """
     p = Path(pfad)
     if not p.is_dir():
@@ -295,9 +318,16 @@ def verzeichnis_marke(pfad, *, endung: str | None = None) -> tuple[int, int] | N
     anzahl = 0
     summe = 0
     for eintrag in p.iterdir():
-        if endung is not None and eintrag.suffix != endung:
-            continue
         try:
+            if eintrag.is_dir():
+                if tiefe > 0:
+                    tiefer = verzeichnis_marke(eintrag, endung=endung, tiefe=tiefe - 1)
+                    if tiefer is not None:
+                        anzahl += tiefer[0]
+                        summe += tiefer[1]
+                continue
+            if endung is not None and eintrag.suffix != endung:
+                continue
             if eintrag.is_file():
                 anzahl += 1
                 summe += eintrag.stat().st_size
@@ -319,11 +349,16 @@ def wache_fuer_datei(pfad, *, frist_s: float = FRIST_S, name: str | None = None,
 
 
 def wache_fuer_verzeichnis(pfad, *, endung: str | None = None, frist_s: float = FRIST_S,
-                           name: str | None = None, _uhr=None) -> Wache:
-    """Eine Wache auf einen Ausgabeordner, in dem Dateien auftauchen. :data:`BELEGT`."""
+                           name: str | None = None, tiefe: int = VORGABE_TIEFE,
+                           _uhr=None) -> Wache:
+    """Eine Wache auf einen Ausgabeordner, in dem Dateien auftauchen. :data:`BELEGT`.
+
+    ``tiefe`` wird durchgereicht — siehe :data:`VORGABE_TIEFE`. Der Aufrufer erbt die
+    Vorgabe und muss nichts tun; wer wirklich nur die oberste Ebene will, sagt ``0``.
+    """
     return Wache(frist_s=frist_s, art=BELEGT,
                  name=name or f"Ordner {Path(pfad).name}", _uhr=_uhr,
-                 _zeichen=lambda: verzeichnis_marke(pfad, endung=endung))
+                 _zeichen=lambda: verzeichnis_marke(pfad, endung=endung, tiefe=tiefe))
 
 
 def wache_fuer_status(*, frist_s: float = FRIST_S, name: str = "Lauf",

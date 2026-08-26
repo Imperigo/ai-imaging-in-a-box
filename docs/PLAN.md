@@ -3108,6 +3108,32 @@ der freie Kartenspeicher — 29,25 GiB verlangt, 28,89 bis 29,07 frei.
 
 ---
 
+## Die blinde Fortschrittswache (26.08.2026)
+
+**Befund der HomeStation** (`auf-vis-20260824-12`): `fortschritt.verzeichnis_marke`
+zählte `p.iterdir()` und ausdrücklich **nicht rekursiv**. Die Wache läuft auf `out/`,
+geschrieben wird nach `out/<kuerzel>/`. In fünf Läufen meldete sie als längsten Stillstand
+**exakt die Gesamtdauer** — sie hat nie etwas gesehen —, und ihr einziger Alarm (302,6 s)
+war ein Fehlalarm.
+
+- [x] `verzeichnis_marke(pfad, *, endung=None, tiefe=VORGABE_TIEFE)` — bei `tiefe=1`
+      zählen zusätzlich die Dateien **direkter** Unterverzeichnisse. Genau die Ebene, auf
+      der der Runner schreibt.
+- [x] **Eine Ebene und nicht `rglob`.** Das Argument stand seit jeher im Docstring: Ein
+      rekursiver Lauf über einen Ordner, in den gerade geschrieben wird, kostet bei jedem
+      Blick Zeit und kann selbst zur Bremse werden. Eine Ebene ist eine feste, kleine Zahl
+      von Verzeichnisaufrufen statt einer unbekannten.
+- [x] `wache_fuer_verzeichnis` reicht `tiefe` durch; `tools/abholen.py` erbt die Vorgabe
+      und bleibt unverändert.
+- [x] Der Altbestandstest hiess `…_zaehlt_nicht_rekursiv` und prüfte die Blindheit. Er
+      ist umgeschrieben statt gelöscht: Er misst jetzt beide Grenzen — eine Ebene zählt,
+      zwei nicht — und `tiefe=0` bleibt als **Gegenprobe** nachstellbar.
+- [x] Die Naht ist mitgeprüft: Ein Lauf, der nur in Unterordner schreibt, meldet keinen
+      Stillstand mehr; ein Lauf, der gar nichts schreibt, meldet weiterhin einen. *Eine
+      Wache, die nach dem Umbau nie mehr Alarm schlägt, wäre so wertlos wie die blinde.*
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).

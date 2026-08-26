@@ -1132,6 +1132,20 @@ Bericht den letzten Blick, löschte die Rettung in letzter Sekunde genau die Beo
 für die das Ganze gebaut ist. Er bricht nichts ab — abgebrochen wird eine Stufe höher, wo
 man weiss, was ein Abbruch kostet.*
 
+**Die blinde Wache** — Eine Überwachung, die an der falschen Stelle hinsieht. Sie läuft,
+sie meldet, sie kostet nichts — und sie kann nichts sehen.
+*Der Fall aus diesem Projekt: Die Fortschrittswache beobachtete den Ausgabeordner
+`out/`; geschrieben wird aber in einen Unterordner davon, einen je Kamerastandpunkt. In
+fünf Läufen meldete sie als längste Pause jeweils **exakt die Gesamtdauer** — sie hat nie
+ein einziges Lebenszeichen bemerkt —, und ihr einziger Alarm war ein Fehlalarm.*
+*Woran man sie erkennt: Ihre Meldung ist zu **glatt**. Eine Pause, die genau der Laufzeit
+entspricht, ist keine Messung, sondern das Fehlen einer. Dasselbe Erkennungszeichen wie
+bei einer Prüfung, die immer besteht.*
+*Die Abhilfe ist hier bewusst begrenzt: **eine** Ebene tiefer zählen, nicht beliebig
+tief. Eine Wache, die den ganzen Ordnerbaum durchsucht, wird mit jedem Blick teurer —
+gerade in einem Ordner, in den gerade geschrieben wird — und dann seltener befragt. Sie
+würde ihren eigenen Zweck untergraben.*
+
 **Monotonie (einer Metrik)** — Eine Metrik ist **monoton im Fehler**, wenn ein grösserer
 Fehler immer einen schlechteren Wert ergibt. Klingt selbstverständlich, ist es nicht.
 *Der Geometrie-Score dieses Projekts war es nicht: Gemessen am 20.08.2026 gab ein Versatz
@@ -3328,6 +3342,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-26 | Ergaenzt: **Die blinde Wache**. Anlass ist eine Fortschrittswache, die fuenf Laeufe lang auf `out/` sah, waehrend nach `out/<kuerzel>/` geschrieben wurde — und als laengste Pause jeweils exakt die Gesamtdauer meldete. Der Eintrag traegt das Erkennungszeichen mit: Eine zu GLATTE Meldung ist keine Messung, sondern das Fehlen einer |
 | 2026-08-26 | Ergaenzt: **Geteilte Parameter (Parameter Sharing)**. Der technische Kern des Fehlschlags vom 25.08.: 67 gemeinsame Stuecke, und danach blieben 454 von 521 Teilen des Bildmodells liegen. Der Eintrag traegt mit, warum die Abhilfe NUR auf dem Auslagerungsweg greifen darf — eine Reparatur, die den gesunden Fall verteuert, kann ihn in den kranken kippen |
 | 2026-08-26 | Ergaenzt: **Auslagerung (Offloading) und der Geraeteweg**. Anlass sind drei verlorene Stunden am 25.08.: Der gewaehlte Weg wurde gemessen und nirgends geschrieben, und darum sah ein Fehlschlag wie ein Rueckfall im Code aus. Entschieden hatten zwei Zehntel Gigabyte freier Kartenspeicher |
 | 2026-08-26 | Ergaenzt: **Vorpruefung (Abbruch vor dem teuren Schritt)** und **Abbruchschwelle**. Anlass ist ein Owner-Einwand vom 25.08.: Die Geometriepruefung lief bis dahin NACH der Bilderzeugung, obwohl die entscheidende Angabe lange vorher vorliegt. Die Abbruchschwelle traegt ihre Zahl mit (`BILDBREITE_ABBRUCH = 0.65`) und damit auch den Waechter aus `tests/test_lexikon.py` — der zweite Eintrag dieser Woche, der bei der naechsten Aenderung im Code nicht mehr still veralten kann |
