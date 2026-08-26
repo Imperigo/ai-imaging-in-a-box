@@ -91,8 +91,8 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     # 16 und 5 seit dem 26.08.2026: `timeout` ist von STEHENGEBLIEBEN nach DURCHGEREICHT
     # gewandert. Nicht, weil jemand die Tabelle aufgeraeumt haette, sondern weil die
     # BEGRUENDUNG der Luecke gemessen widerlegt wurde — siehe `abholer.ZEITDECKEL_S`.
-    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 16
-    assert len(abholer.MULTIPASS_STEHENGEBLIEBEN) == 5
+    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 17
+    assert len(abholer.MULTIPASS_STEHENGEBLIEBEN) == 4
     assert len(abholer.RENDER_DURCHGEREICHT) == 7
     assert len(abholer.RENDER_STEHENGEBLIEBEN) == 5
 
@@ -136,11 +136,13 @@ def test_es_sind_absichten_und_luecken_und_beides_kommt_vor():
     # jemand sie weggeschrieben haette, sondern weil ihre Begruendung («hohe Samples
     # sprengen den Deckel») GEMESSEN WIDERLEGT wurde und der Schalter jetzt durchgereicht
     # ist. Siehe `abholer.ZEITDECKEL_S`.
-    assert len(luecken) == 3, "kamera_huellbox, schritte, denoise"
+    # ZWEI seit dem 26.08.2026 abends: `kamera_huellbox` ist durchgereicht; offen
+    # bleibt nur noch die HERKUNFT der Box, und das ist keine Durchreichungsfrage.
+    assert len(luecken) == 2, "schritte, denoise"
     assert {n for n, e in
             {**abholer.MULTIPASS_STEHENGEBLIEBEN,
              **abholer.RENDER_STEHENGEBLIEBEN}.items() if not e["absicht"]} == {
-        "kamera_huellbox", "schritte", "denoise"}
+        "schritte", "denoise"}
 
 
 # ======================================================================================
@@ -227,7 +229,7 @@ def test_der_renderauftrag_traegt_die_stehengebliebenen_auf_ihrer_vorgabe(tmp_pa
 def test_die_beiden_bekannten_luecken_stehen_mit_ihrem_auftrag_da():
     """`kamera_huellbox` wartet auf `auf-41`, `schritte` und `denoise` auf `auf-44`. Ein
     offener Punkt ohne Adresse ist einer, den niemand schliesst."""
-    assert "auf-41" in abholer.MULTIPASS_STEHENGEBLIEBEN["kamera_huellbox"]["noetig"]
+    assert "auf-41" in abholer.MULTIPASS_DURCHGEREICHT["kamera_huellbox"]
     assert "auf-44" in abholer.RENDER_STEHENGEBLIEBEN["schritte"]["noetig"]
     assert "auf-44" in abholer.RENDER_STEHENGEBLIEBEN["denoise"]["noetig"]
     assert "auf-38" in abholer.RENDER_STEHENGEBLIEBEN["negativ_prompt"]["noetig"]
@@ -340,3 +342,45 @@ def test_die_widerlegte_begruendung_steht_noch_da_und_ist_als_widerlegt_benannt(
     quelle = inspect.getsource(abholer)
     for wort in ("FLACH innerhalb 1 %", "widerlegt"):
         assert wort in quelle, f"{wort!r} steht nicht mehr im Modul."
+
+
+# ======================================================================================
+# 6 · Die Bauwerksbox — der Schalter ist da, die Herkunft ist offen
+# ======================================================================================
+
+def test_die_bauwerksbox_kommt_am_multipass_an(tmp_path):
+    """Der Wert an der Naht, nicht das Schlüsselwort.
+
+    **Warum das zählt, in Zahlen** (26.08.2026, gegliederter Testbau mit Geländeplatte,
+    20 × 20 m Szene, 12 × 9,5 × 15 m Bauwerk, Kamera sSE, 400 px):
+
+        ohne kamera_huellbox   anteil_bauwerk 0,0788
+        mit  kamera_huellbox   anteil_bauwerk 0,1730      Faktor 2,2
+
+    Der Rahmungsriegel lehnt Läufe unter einer Schwelle ab. Ohne die Box lehnte er
+    genau die Szenen ab, für die er gebaut wurde — und reichte dem Runner nie die
+    Angabe, die sie geheilt hätte.
+    """
+    box = [[0.0, 0.0, -0.25], [12.0, 9.5, 15.0]]
+    protokoll = _lauf_mit(tmp_path, kamera_huellbox=box)
+    assert protokoll["multipass"][0].get("kamera_huellbox") == box
+
+
+def test_ohne_angabe_rahmt_die_kamera_weiterhin_nach_der_szene(tmp_path):
+    """`None` heisst NICHT ANGEFASST — jeder bisherige Lauf bleibt reproduzierbar."""
+    protokoll = _lauf(tmp_path)
+    assert protokoll["multipass"][0].get("kamera_huellbox") is None
+
+
+def test_die_offene_haelfte_steht_mit_ihren_drei_wegen_da():
+    """«Wird nicht unterstützt» ohne den nächsten Schritt ist eine Sackgasse.
+
+    Hier ist der nächste Schritt eine **Wahl zwischen dreien**, und jede hat einen
+    gemessenen oder geschätzten Preis. Ohne sie wäre der Eintrag ein Achselzucken.
+    """
+    text = abholer.MULTIPASS_DURCHGEREICHT["kamera_huellbox"]
+    assert "HERKUNFT" in text
+    assert "auf-41" in text
+    quelle = inspect.getsource(abholer)
+    for weg in ("ZWEITER Blender-Lauf", "LEICHTER Runner", "IFC-Report"):
+        assert weg in quelle, f"Der Weg {weg!r} steht nicht mehr da."

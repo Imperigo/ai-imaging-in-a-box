@@ -1140,6 +1140,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 bias_grad: float | None = None,
                 zwischenspeicher=None,
                 zeitdeckel_s: int | None = None,
+                kamera_huellbox=None,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
@@ -1277,6 +1278,38 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
 
             einstellungen = dict(
                 glb_path=str(auftrag["modell"]), up_axis=hochachse,
+                # DIE BOX, NACH DER DIE KAMERA RAHMT. `None` heisst: nach der SZENE, und
+                # das ist der Fall, fuer den der Rahmungsriegel gebaut wurde — er lehnt
+                # dann Laeufe ab, ohne je die Box zu reichen, die sie heilen wuerde.
+                #
+                # Gemessen am 26.08.2026 am gegliederten Testbau MIT Gelaendeplatte
+                # (20 x 20 m Szene, 12 x 9,5 x 15 m Bauwerk, Kamera sSE, 400 px):
+                #
+                #     ohne kamera_huellbox   anteil_bauwerk 0,0788
+                #     mit  kamera_huellbox   anteil_bauwerk 0,1730     Faktor 2,2
+                #
+                # WOHER DIE BOX KOMMT, ist die offene Haelfte. Drei Wege, jeder mit
+                # seinem Preis, und keiner davon ist umsonst:
+                #
+                #   (a) Ein ZWEITER Blender-Lauf je Kamera — der erste liefert
+                #       `bbox_bauwerk`, der zweite rahmt danach. Verdoppelt die
+                #       Blenderzeit: bei Vertragsvorgaben rund 80 s statt 40 s je Kamera.
+                #       Mit dem Zwischenspeicher zahlt man das nur beim ERSTEN Auftrag
+                #       einer Geometrie — bei einer Messreihe ueber Prompts also einmal.
+                #   (b) Ein eigener, LEICHTER Runner, der die glb nur laedt und die Box
+                #       nach der Namensregel rechnet. Gibt es nicht; geschaetzt 1-2 s,
+                #       gemessen nichts.
+                #   (c) Der IFC-Report. Er fuehrt `bbox_bauwerk` — und ist auf genau
+                #       diesem Fall FALSCH: Sein Typfilter ist `("IfcSite",)`, die
+                #       Gelaendeplatte ist ein `IfcSlab` namens `Gelaende`, und die Box
+                #       kam am 26.08.2026 gemessen gleich der SZENENBOX zurueck
+                #       (20 x 20 m statt 12 x 9,5 m). Die Blender-Seite trifft es
+                #       richtig, weil der Knotenname seit dem Morgen den IFC-Namen
+                #       traegt — die IFC-Seite nicht.
+                #
+                # Der Entscheid liegt bei `auf-41` (G3). Bis dahin: wer die Box hat,
+                # reicht sie; wer nicht, rahmt nach der Szene wie bisher.
+                kamera_huellbox=kamera_huellbox,
                 aufloesung=szene.get("aufloesung", 512), hoehe=szene.get("hoehe"),
                 samples=szene.get("samples", 128),
                 kamera=aufgabe.get("richtung"),
@@ -1578,6 +1611,12 @@ MULTIPASS_KEINE_EINSTELLUNG = ("glb_path", "out_dir", "_starte")
 #: Einstellungen des Multipass, die **ankommen** — mit der Stelle, an der sie herkommen.
 MULTIPASS_DURCHGEREICHT = {
     "up_axis": "verarbeiter(up_axis=…); ein Auftrag mit eigener `hochachse` schlaegt sie",
+    "kamera_huellbox": "verarbeiter(kamera_huellbox=…). Der SCHALTER ist seit dem "
+                       "26.08.2026 da; offen bleibt die HERKUNFT der Box — sie "
+                       "entsteht im Multipass und wird davor gebraucht. Die drei "
+                       "Wege und ihre gemessenen Preise stehen am Aufrufort, die "
+                       "Wirkung ebenfalls: anteil_bauwerk 0,0788 ohne, 0,1730 mit "
+                       "der Box. `auf-41` (G3)",
     "timeout": "verarbeiter(zeitdeckel_s=…), Vorgabe ZEITDECKEL_S. Die alte Begruendung "
                "fuer die Luecke — «hohe Samples sprengen den Deckel» — ist am "
                "26.08.2026 gemessen widerlegt; siehe ZEITDECKEL_S",
@@ -1643,21 +1682,6 @@ MULTIPASS_STEHENGEBLIEBEN = {
                  "andere sinnvolle Wert wäre `None`, und das hiesse: Wache aus.",
         "noetig": "NICHTS. Ein anderer Takt bräuchte eine Messung, die zeigt, dass die "
                   "heutige Wache zu grob oder zu teuer ist — beides ist widerlegt.",
-    },
-    "kamera_huellbox": {
-        "vorgabe": None,
-        "absicht": False,
-        "grund": "Die schärfste der zehn. Der Docstring von `glb_zu_multipass` sagt "
-                 "selbst, dass sie nötig ist, sobald Gelände in der Szene liegt "
-                 "(gemessen: 6,9 % statt 21,9 % Geometrieanteil). Genau diese Box — "
-                 "`bbox_bauwerk` — liegt seit dem 25.08. im Bericht und wird von "
-                 "`_rahmung_vor_dem_render` bereits gelesen. `verarbeiter` bricht also "
-                 "Läufe wegen zu weiter Rahmung ab und reicht dem Runner nie die Box, "
-                 "die die Rahmung heilen würde.",
-        "noetig": "Ein Entscheid: Die Box entsteht IM Multipass, gebraucht wird sie "
-                  "DAVOR. Auflösbar nur über einen zweiten Blender-Lauf oder über den "
-                  "IFC-Report, der `bbox_bauwerk` seit dem 24.08. ebenfalls führt. "
-                  "Wartet auf `auf-41` (G3).",
     },
 }
 
