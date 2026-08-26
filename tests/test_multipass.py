@@ -1191,3 +1191,105 @@ def test_auge_gleich_ziel_ist_NICHT_GEMESSEN_und_nicht_frei():
     """Es gibt dann keine Sichtlinie, auf der etwas stehen könnte — das ist kein Freispruch."""
     assert "NICHT GEMESSEN" in RUNNER_QUELLE
     assert "Auge und Blickziel fallen zusammen" in RUNNER_QUELLE
+
+
+# ======================================================================================
+# 4 · Sonne und Deckungsgrad — durch Blender, nicht nur an der Naht
+# ======================================================================================
+#
+# Nachgetragen am 26.08.2026. Beide Faehigkeiten sind an diesem Tag entstanden und waren
+# gruendlich geprueft — die Sonne mit 34 Tests reiner Arithmetik, der Deckungsgrad an der
+# Naht. **Durch Blender gelaufen war keine von beiden.** Genau das Muster, das dieser Tag
+# achtmal gefunden hat: gebaut, geprueft, und auf dem Weg, der Bilder erzeugt, ungetestet.
+
+@pytest.fixture(scope="module")
+def lauf_mit_sonne(tmp_path_factory):
+    """Ein echter Lauf mit **bestelltem** Sonnenstand: tief und von Westen."""
+    if blender_fehlt():
+        pytest.skip("Blender nicht vorhanden")
+    ordner = tmp_path_factory.mktemp("multipass_sonne")
+    glb = schreibe_test_glb(ordner / "zwei_quader.glb")
+    report = glb_zu_multipass(glb, ordner / "out", up_axis="Y", kamera="s",
+                              aufloesung=AUFLOESUNG, samples=SAMPLES, timeout=900,
+                              sonne={"elevation": 8.0, "azimuth": 75.0})
+    assert report["status"] == "ok", report.get("error")
+    return report
+
+
+@ohne_blender
+def test_der_bestellte_sonnenstand_erreicht_blender(lauf_mit_sonne):
+    """**Bis zum 26.08.2026 lief ein bestellter Sonnenstand ins Leere.**
+
+    Der Runner setzte eine feste Sonne, und ein Auftrag mit Abendstand wurde gerendert,
+    als wäre er nicht gestellt worden — mit einem sauberen, gut belichteten, **falschen**
+    Bild. Der gefährlichste der stehengebliebenen Felder, weil nichts daran nach einem
+    Fehler aussieht.
+    """
+    sonne = lauf_mit_sonne.get("sonne")
+    assert sonne, "Der Bericht trägt keinen Sonnenblock."
+    assert sonne["hoehe_grad"] == 8.0
+    assert sonne["azimut_grad"] == 75.0
+    assert set(sonne["bestellt"]) == {"hoehe", "azimut"}, (
+        "`bestellt` unterscheidet eine Bestellung von der Vorgabe. Ein Bild mit der "
+        "Vorgabe sieht genauso aus wie eines mit einer zufällig gleichen Bestellung.")
+
+
+@ohne_blender
+def test_ohne_bestellung_steht_die_vorgabe_da_und_sagt_es(lauf):
+    """Und die Gegenprobe am Lauf ohne Sonnenangabe."""
+    sonne = lauf.get("sonne")
+    assert sonne, "Auch ohne Bestellung gehört der Sonnenbefund in den Bericht."
+    assert sonne["bestellt"] == [] or tuple(sonne["bestellt"]) == (), (
+        f"Ohne Bestellung muss `bestellt` leer sein, war {sonne['bestellt']!r}.")
+    assert sonne["konvention"], "Unter welcher Annahme das Bild entstand, gehört dazu."
+    assert sonne["weltsystem"], "Und welche Achse wohin zeigt."
+
+
+@ohne_blender
+def test_der_bericht_nennt_den_benutzten_deckungsgrad(lauf):
+    """Die Bedingung der eigenen Messung — bis zum 26.08.2026 stand sie nirgends.
+
+    Der Rahmungsriegel diesseits der Grenze rechnete darum mit der Konstanten der
+    Bibliothek, gleichgültig womit dieser Lauf gestellt worden war.
+    """
+    assert lauf.get("deckungsgrad") == pytest.approx(0.70)
+
+
+@ohne_blender
+def test_ein_bestellter_deckungsgrad_steht_auch_so_im_bericht(tmp_path):
+    """**Nicht der Sollwert der Bibliothek, sondern der dieses Laufs.**
+
+    `auf-20260825-41` vergleicht Bildpaare bei 0,55 gegen 0,70 — ohne dieses Feld spräche
+    das Urteil über beide Arme gleich.
+    """
+    glb = schreibe_test_glb(tmp_path / "z.glb")
+    report = glb_zu_multipass(glb, tmp_path / "out", up_axis="Y", kamera="s",
+                              aufloesung=AUFLOESUNG, samples=SAMPLES, timeout=900,
+                              deckungsgrad=0.55)
+    assert report["status"] == "ok", report.get("error")
+    assert report["deckungsgrad"] == pytest.approx(0.55)
+
+
+@ohne_blender
+def test_der_bericht_sagt_was_den_kameraabstand_bestimmt_hat(lauf_mit_kamera):
+    """``massgebend`` — und warum diese Zahl den Rahmungsriegel trägt.
+
+    **Durch Blender gemessen (26.08.2026):** Der Deckungsgrad ist eine Vorgabe, kein
+    Ergebnis. Ab etwa 8 m Bauwerkskante hält die Kamerarechnung ihn exakt ein; darunter
+    übernimmt der Mindestabstand. Die beiden Quader dieses Laufs sind klein genug dafür —
+    hier steht ``untergrenze``, und der Füllgrad liegt weit unter dem Sollwert.
+
+    *Genau darum liest der Riegel den gemessenen Füllgrad und nicht den Sollwert.*
+
+    **Am abgeleiteten Lauf, nicht am Rückfall:** Ohne ``--kamera`` rechnet `kamerasatz`
+    gar nicht, und dann gibt es weder `massgebend` noch `fuellgrad`. Der erste Entwurf
+    dieses Tests hing am falschen Lauf und fiel prompt — *eine Zahl, die es auf diesem Weg
+    nicht gibt, ist nicht fehlend, sondern nicht zuständig.*
+    """
+    kamera = lauf_mit_kamera.get("kamera") or {}
+    assert kamera.get("massgebend"), "Ohne diese Angabe ist der Abstand eine Zahl ohne Grund."
+    assert isinstance(kamera.get("fuellgrad"), float)
+    if kamera["massgebend"] == "untergrenze":
+        assert kamera["fuellgrad"] < 0.70, (
+            "Wenn der Mindestabstand massgebend ist, kann der Sollwert nicht erreicht "
+            "sein — sonst hätte er gebunden.")

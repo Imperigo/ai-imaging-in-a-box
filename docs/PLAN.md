@@ -3491,6 +3491,23 @@ zweiten Stelle.
       es nicht.* Beide Signaturen werden jetzt gegeneinander gehalten, mit einer
       Gegenprobe über die erzeugten Kommandos.
 
+- [x] **Blender läuft in diesem Container — die Geometrieseite ist hier messbar** (26.08.).
+      *«Dieses Environment hat keine GPU» hiess in meinem Kopf «hier lässt sich nichts
+      messen». Das eine folgt aus dem anderen nicht.* Nur die Diffusion braucht die
+      HomeStation.
+- [x] **Der Rahmungsriegel rechnete mit einer Vorgabe statt mit dem Ergebnis** (26.08.).
+      Gemessen über Kantenlängen von 4 bis 100 m: Ab etwa **8 m** hält die Kamerarechnung
+      den Deckungsgrad exakt ein, darunter übernimmt der Mindestabstand — bei 4 m ist der
+      Füllgrad **0,553** statt 0,700, und das liegt unter dem Knie 0,5991.
+      Der Riegel liest jetzt den gemessenen Füllgrad und nennt seine Grundlage. Am echten
+      Blender-Bericht der Zweiquader-Testszene: **19,4 % statt angenommener 70 %.**
+      Gegenprobe vor dem Einchecken: Die Geometrie aus `tools/make_test_ifc.py`
+      (8 × 5 × 3,3 m) erreicht 0,700 und läuft durch — `auf-38` und `auf-42` sind nicht
+      betroffen.
+- [x] **Sonne und Deckungsgrad laufen jetzt durch Blender** (26.08.). Beide waren an
+      diesem Tag gebaut, gründlich geprüft — die Sonne mit 34 Tests reiner Arithmetik —
+      und **nie ausgeführt**. Fünf neue Tests jenseits der Prozessgrenze.
+
 ---
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
@@ -3500,7 +3517,7 @@ Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
 
 | | Beginn des Tages | nach dem Vormittag | Ende |
 |---|---:|---:|---:|
-| Tests | 3335 | 3528 | **3880** |
+| Tests | 3335 | 3528 | **3888** |
 | Vakuumprobe | 10 Treffer | 12 Treffer | 12 Treffer |
 | Tote Kanten, gar nicht erreichbar | — | 2 | **1** |
 | Tote Kanten **mit Urteil** | 0 | 0 | **80 von 80** |

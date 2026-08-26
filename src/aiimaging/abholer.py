@@ -1616,11 +1616,25 @@ def _rahmung_vor_dem_render(bericht: dict) -> dict:
                     and not isinstance(gemeldet, bool) else kameras.DECKUNGSGRAD)
     quelle = "bericht" if gemeldet is not None else "vorgabe"
 
+    # DER GEMESSENE FUELLGRAD SCHLAEGT DEN SOLLWERT.
+    #
+    # Am 26.08.2026 durch Blender gemessen: `kamerasatz` haelt den Deckungsgrad ab etwa
+    # 8 m Bauwerkskante exakt ein — darunter uebernimmt der Mindestabstand, und bei 4 m
+    # steht im Bericht `massgebend: "untergrenze"` mit einem Fuellgrad von 0.553 statt
+    # 0.700. Ein Riegel, der mit dem Sollwert rechnet, waere dort zu milde.
+    #
+    # Nur vom ABGELEITETEN Weg: Kam die Kamera als Zahlenpaar herein, hat `kamerasatz`
+    # nichts gerechnet, und `fuellgrad` steht gar nicht im Bericht.
+    kamera = bericht.get("kamera") or {}
+    gemessen = kamera.get("fuellgrad") if weg == "abgeleitet" else None
+
     lage = kameras.rahmungsverhaeltnis(bericht.get("bbox"),
                                        bericht.get("bbox_bauwerk"),
-                                       deckungsgrad=deckungsgrad)
+                                       deckungsgrad=deckungsgrad,
+                                       gemessener_fuellgrad=gemessen)
     lage = dict(lage, weg=weg, note=bericht.get("bbox_bauwerk_note") or "",
-                deckungsgrad=deckungsgrad, deckungsgrad_quelle=quelle)
+                deckungsgrad=deckungsgrad, deckungsgrad_quelle=quelle,
+                massgebend=kamera.get("massgebend"))
     if quelle == "vorgabe" and lage.get("abbruch"):
         lage["abbruch_grund"] += (
             f" ACHTUNG: Der Bericht nennt keinen Deckungsgrad; gerechnet wurde mit der "

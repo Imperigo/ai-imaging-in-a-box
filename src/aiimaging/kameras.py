@@ -1145,7 +1145,8 @@ BILDBREITE_ABBRUCH = 0.65
 
 
 def rahmungsverhaeltnis(szene_bbox, bauwerk_bbox, *,
-                        deckungsgrad: float = DECKUNGSGRAD) -> dict:
+                        deckungsgrad: float = DECKUNGSGRAD,
+                        gemessener_fuellgrad: float | None = None) -> dict:
     """Wieviel Bild füllt das **Bauwerk**, wenn die Kamera die **Szene** rahmt?
 
     **Die Frage, die vor dem Renderlauf beantwortet gehört** — und bis zum 25.08.2026 gar
@@ -1200,7 +1201,7 @@ def rahmungsverhaeltnis(szene_bbox, bauwerk_bbox, *,
     """
     antwort = {"breitenanteil": None, "wirksame_bildbreite": None, "traegt": None,
                "knie": BILDBREITE_KNIE, "abbruch": None, "abbruch_grund": "",
-               "grund": ""}
+               "grundlage": None, "basis": None, "grund": ""}
     if bauwerk_bbox is None or szene_bbox is None:
         antwort["grund"] = (
             "Eine der beiden Hüllboxen fehlt. Ohne die Box der gebauten Substanz ist der "
@@ -1221,8 +1222,30 @@ def rahmungsverhaeltnis(szene_bbox, bauwerk_bbox, *,
         return antwort
 
     anteil = bau_breit / szene_breit
-    wirksam = float(deckungsgrad) * anteil
+    # WAS DIE KAMERA WIRKLICH ERREICHT HAT, wenn es dasteht — sonst der Sollwert.
+    #
+    # **Gemessen am 26.08.2026 durch Blender, nicht angenommen:** Der Deckungsgrad ist
+    # eine Vorgabe, kein Ergebnis. `kamerasatz` hält ihn ab etwa 8 m Bauwerkskante exakt
+    # ein (Füllgrad 0.700 bei Soll 0.70, über alle Grössen bis 100 m). **Darunter
+    # übernimmt der Mindestabstand:** Bei einer Kante von 4 m steht dort
+    # ``massgebend = "untergrenze"`` und der Füllgrad ist **0.553** statt 0.700.
+    #
+    # Rechnete dieser Riegel weiter mit dem Sollwert, wäre er für kleine Bauwerke **zu
+    # milde** — er nähme 0.70 an, wo 0.553 gemessen ist, und 0.553 liegt unter dem Knie
+    # 0.5991. Ein Pavillon käme durch, dessen Rahmung nachweislich nicht trägt.
+    #
+    # *Eine gemessene Zahl schlägt eine gerechnete, wenn beide vorliegen.*
+    grundlage = "deckungsgrad"
+    basis = float(deckungsgrad)
+    if isinstance(gemessener_fuellgrad, (int, float)) and \
+            not isinstance(gemessener_fuellgrad, bool):
+        basis = float(gemessener_fuellgrad)
+        grundlage = "gemessener_fuellgrad"
+
+    wirksam = basis * anteil
     antwort["breitenanteil"] = anteil
+    antwort["grundlage"] = grundlage
+    antwort["basis"] = basis
     antwort["wirksame_bildbreite"] = wirksam
     antwort["traegt"] = wirksam >= BILDBREITE_KNIE
     # Die zweite, schaerfere Frage — und die einzige, die einen Renderlauf verhindert.

@@ -688,3 +688,63 @@ def test_ein_abgeschaltetes_ergebnis_ist_von_einem_bestandenen_unterscheidbar():
     assert abgeschaltet.get("abgeschaltet") is True, (
         "Beide haben `abbruch: False`. Nur `abgeschaltet` unterscheidet sie — ohne das "
         "Feld wären ein geprüfter und ein ungeprüfter Lauf im Ergebnis identisch.")
+
+
+# ======================================================================================
+# Der gemessene Füllgrad schlägt den Sollwert — durch Blender gemessen, 26.08.2026
+# ======================================================================================
+
+def test_der_gemessene_fuellgrad_wird_dem_sollwert_vorgezogen():
+    """**Gemessen und nicht angenommen.**
+
+    Durch Blender gefahren (26.08.2026, `kameras.kamerasatz` über Kantenlängen von 4 bis
+    100 m): Ab etwa **8 m** hält die Kamerarechnung den Deckungsgrad exakt ein —
+    Füllgrad 0,700 bei Soll 0,70. **Darunter übernimmt der Mindestabstand:** bei 4 m steht
+    ``massgebend = "untergrenze"`` und der Füllgrad ist **0,553**.
+
+    Ein Riegel, der weiter mit dem Sollwert rechnet, ist dort **zu milde** — 0,553 liegt
+    unter dem Knie 0,5991, und ein Pavillon käme durch, dessen Rahmung nachweislich nicht
+    trägt.
+    """
+    bericht = {"bbox": [[0, 0, 0], [10, 10, 10]],
+               "bbox_bauwerk": [[0, 0, 0], [10, 10, 10]],
+               "kamera": {"weg": "abgeleitet", "fuellgrad": 0.553,
+                          "massgebend": "untergrenze"},
+               "deckungsgrad": 0.70}
+    lage = abholer._rahmung_vor_dem_render(bericht)
+    assert lage["grundlage"] == "gemessener_fuellgrad"
+    assert lage["basis"] == pytest.approx(0.553)
+    assert lage["wirksame_bildbreite"] == pytest.approx(0.553)
+    assert lage["massgebend"] == "untergrenze"
+    assert lage["abbruch"] is True, (
+        "0,553 liegt unter der Abbruchschwelle 0,65 — mit dem Sollwert 0,70 wäre der Lauf "
+        "durchgegangen.")
+
+
+def test_mit_dem_sollwert_waere_derselbe_fall_durchgegangen():
+    """Die Gegenprobe. **Ohne sie zeigte der Test oben nur, dass irgendetwas abbricht.**"""
+    ohne_messung = {"bbox": [[0, 0, 0], [10, 10, 10]],
+                    "bbox_bauwerk": [[0, 0, 0], [10, 10, 10]],
+                    "kamera": {"weg": "abgeleitet"},
+                    "deckungsgrad": 0.70}
+    lage = abholer._rahmung_vor_dem_render(ohne_messung)
+    assert lage["grundlage"] == "deckungsgrad"
+    assert lage["abbruch"] is False, (
+        "Genau das ist der Unterschied: Ohne die gemessene Zahl hält der Riegel diesen "
+        "Lauf für in Ordnung.")
+
+
+def test_eine_vorgegebene_kamera_hat_keinen_fuellgrad_und_das_ist_richtig():
+    """Kam die Kamera als Zahlenpaar herein, hat `kamerasatz` nichts gerechnet.
+
+    Ein Füllgrad im Bericht wäre dann von woanders — und eine Zahl aus einem anderen
+    Zusammenhang ist schlimmer als keine.
+    """
+    bericht = {"bbox": [[0, 0, 0], [10, 10, 10]],
+               "bbox_bauwerk": [[0, 0, 0], [10, 10, 10]],
+               "kamera": {"weg": "vorgegeben", "fuellgrad": 0.1},
+               "deckungsgrad": 0.70}
+    lage = abholer._rahmung_vor_dem_render(bericht)
+    assert lage["grundlage"] == "deckungsgrad", (
+        "Auf dem vorgegebenen Weg darf ein mitgeliefertes `fuellgrad` nicht einfliessen.")
+    assert lage["abbruch"] is None, "und abgebrochen wird auf diesem Weg ohnehin nicht"
