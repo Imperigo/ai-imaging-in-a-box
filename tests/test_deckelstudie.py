@@ -134,6 +134,35 @@ def test_je_weiter_hinein_desto_schlechter(anteil):
 
 # ── Die Prüfgrösse ───────────────────────────────────────────────────────────────────
 
+def test_der_himmel_wird_ueber_den_MEDIAN_bestimmt_und_nicht_ueber_das_minimum():
+    """**Die Mutationsprobe hat diesen Test erzwungen.**
+
+    `hg[len(hg)//2]` durch `hg[0]` zu ersetzen liess alles grün — weil die Testszene
+    einen KONSTANTEN Hintergrund hat und Median, Minimum und Maximum dort zusammenfallen.
+
+    Ein echter Schätzer hat aber Streuung im Himmel, und dann sind die drei verschieden.
+    *`wo_liegt_der_himmel` ist das Messinstrument der Vorhersage dieser Studie* — misst es
+    das Minimum statt der Mitte, ist die Vorhersage systematisch zu niedrig und die
+    Widerlegung wertlos.
+    """
+    soll, karte = _szene()
+    lage = ds.teile_auf(soll)
+    werte = [karte[i] for i in lage["geometrie"]]
+    tief, hoch = min(werte), max(werte)
+
+    # Ein Hintergrund MIT STREUUNG: die Hälfte tief, die Hälfte hoch. Der Median liegt
+    # dann in der Mitte, das Minimum ganz unten — die beiden sind unterscheidbar.
+    gestreut = list(karte)
+    for n, i in enumerate(lage["hintergrund"]):
+        gestreut[i] = tief + (0.2 if n % 2 else 0.8) * (hoch - tief)
+
+    h = ds.wo_liegt_der_himmel(soll, gestreut)
+    assert 0.15 < h["lage"] < 0.85, (
+        f"lage {h['lage']:.3f} — bei einem gestreuten Hintergrund muss die Mitte "
+        f"herauskommen. Am Rand heisst: es wird Minimum oder Maximum gemessen."
+    )
+
+
 def test_wo_liegt_der_himmel_bei_einer_sauberen_karte():
     """0.0 heisst: am fernsten Bauwerkswert oder darunter — sauber getrennt."""
     soll, karte = _szene()
