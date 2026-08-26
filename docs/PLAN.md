@@ -3270,6 +3270,37 @@ zweiten Stelle.
 
 ---
 
+## Stand am Ende von Sitzung 13 (26.08.2026)
+
+Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste** (zwölf
+Entscheide, alle rückgängig zu machen) am Ende.
+
+| | Beginn des Tages | Ende |
+|---|---:|---:|
+| Tests | 3335 | 3434 |
+| Vakuumprobe | 10 Treffer | 12 Treffer |
+
+*Die beiden neuen Vakuumtreffer sind erklärt: Zwei Zusicherungen über `warnungen` sind
+vakuumwahr **geworden**, weil die Liste jetzt leer sein darf — genau das war das Ziel der
+Trennung nach `vertragsvorgaben`. Beide haben ihre Gegenprobe in derselben Zusicherung
+bekommen, nicht in einer anderen Datei.*
+
+**Sieben tote Kanten trägt diese Woche.** Die sechste und die siebte sind eigene:
+`bbox_bauwerk`/`rahmungsverhaeltnis` (am 25.08. gebaut, nie angeschlossen) und
+`geometrie_qa.erreichbarkeit` (seit dem 22.08. da, ausser Tests kein Aufrufer). *Ein
+ungenutztes Modul ist grün wie jedes andere — das ist der Grund, warum diese Fehlerart
+sich hält.*
+
+**Offene Aufträge:** `auf-38` (negativer Prompt), `auf-39` (Konversionstreue), `auf-40`
+(Cloud-Worker), `auf-41` (Grundmessung nach dem Deckungsgrad-Wechsel), `auf-42`
+(Entflechtung am Gerät), `auf-43` (welche Zahl war 0.6909).
+
+**Nicht angekommen:** Der Commit `4a93aa7` der HomeStation liegt nicht auf `origin/main`;
+`auftraege/von-homestation/auf-vis-20260826-16.md` fehlt hier. Gearbeitet wurde nach ihrer
+Nachricht — was sonst noch in der Datei steht, ist ungelesen.
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).
