@@ -3266,6 +3266,23 @@ nie an der Freigabe vorbei.*
 **Endzustand** — Ein Zustand, aus dem es keinen Weg hinaus gibt. *`done`, `error` und
 `cancelled`: Ein abgeschlossener Auftrag lässt sich nicht wieder starten.*
 
+**Reproduzierbarkeit — und warum sie zwei verschiedene Dinge heissen kann** — Dass
+dieselbe Rechnung dasselbe Ergebnis liefert. Das klingt nach einer Ja/Nein-Frage und ist
+keine, denn «dasselbe Ergebnis» kann zweierlei bedeuten:
+
+* **Bytegleich** — die erzeugte Datei ist Byte für Byte dieselbe.
+* **Inhaltsgleich** — was in der Datei *steht*, ist dasselbe; die Datei selbst
+  unterscheidet sich.
+
+*Der Unterschied ist in diesem Projekt gemessen worden* (26.08.2026): Zweimal dasselbe
+Bild gerendert ergibt **identische Bildpunkte** und **verschiedene Dateien** — Blender
+schreibt die Uhrzeit als Notiz mit hinein. Drei von 30 659 Bytes, und die drei sind das
+Datum.
+
+Warum das zählt: Wer prüfen will, ob zwei Rechnungen dasselbe ergeben haben, und dafür die
+**Dateien** vergleicht, bekommt bei Bildern aus Blender **immer** «verschieden» — und
+schliesst daraus das Falsche.
+
 **Content-Hashing** — Einen Zwischenspeicher nicht über Dateinamen oder Änderungsdatum
 adressieren, sondern über eine Prüfsumme des **Inhalts**. Identischer Inhalt ergibt
 denselben Schlüssel, auch unter anderem Namen — und geänderter Inhalt einen anderen, auch

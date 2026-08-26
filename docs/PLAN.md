@@ -4154,6 +4154,99 @@ Abzeichen ohne den Vorbehalt daneben.**
 
 ---
 
+## Ein Zwischenspeicher um den Multipass — und die Messung, die ihn beinahe widerlegt hätte (26.08.2026)
+
+**Der Anlass ist eine Zahl, die vorher niemand hatte.** In dieser Umgebung gemessen
+(Blender 4.2.1 LTS, CPU, der synthetische Testbau 8 × 5 × 3 m):
+
+| Auflösung | Samples | Multipass je Kamera |
+|---|---|---|
+| 256 px | 8 | 2,1 s |
+| 800 px | 32 | 7,5 s |
+| **1600 px** | **128** | **40,0 s** ← die Vorgaben des Vertrags |
+
+Drei Kameras sind damit **zwei Minuten Blender je Auftrag** — auf einem trivialen Quader.
+Und jeder Lauf, der nur den Prompt ändert, zahlt sie erneut: Der Abholer fährt die Stufen
+als gerade Abfolge, ohne Gedächtnis. *Für eine Messreihe über Prompts oder Stilstärken ist
+das der ganze Kostenblock.*
+
+**Ende zu Ende gemessen: 27,7 s → 0,00 s**, die Tiefenkarte in voller Auflösung
+zurückgeliefert.
+
+### Die Voraussetzung, und sie wäre beinahe falsch gewesen
+
+Ein Inhalts-Cache steht und fällt damit, dass dieselbe Rechnung dasselbe Ergebnis liefert.
+Zweimal dasselbe gerechnet und verglichen:
+
+* **`ifc_zu_glb` ist bytegleich reproduzierbar.** Damit ist der Schlüssel über den
+  glb-Inhalt stabil — die Bedingung, an der ein Inhalts-Cache sonst still scheitert.
+* **`glb_zu_multipass` ist pixelgleich, aber NICHT bytegleich.** Blender stempelt die
+  Uhrzeit in jede Ausgabe: `tEXt Date` im PNG, `Date`-Attribut im EXR. Gemessen: **drei
+  von 30 659 Bytes** im EXR, **33 von 64 235** im PNG — und die Bilddaten identisch.
+
+**Die zweite Messung ist die wichtigere, und sie gilt über diesen Cache hinaus:**
+
+> *Byte-Gleichheit ist bei Blender-Ausgaben kein Mass für Gleichheit.*
+
+Hätte ich sie nicht gemacht und einen Treffer dadurch geprüft, dass ich die Ausgaben neu
+hashe, hätte der Speicher **nie** einen Treffer gehabt — und niemand hätte gesehen warum.
+Er wäre einfach folgenlos gewesen. *Dass `graph.ArtefaktCache` die **Existenz** der
+zugesagten Dateien prüft und nicht ihren Inhalt, ist damit nicht Bequemlichkeit, sondern
+das einzig Richtige.*
+
+### Was gebaut wurde — fast nur Wiederverwendung
+
+- [x] `abholer.multipass_schluessel` über **`graph.inhalts_hash`**, nicht über eine eigene
+      Rechnung. `glb_path` steht in `param_dateien`: Der **Inhalt** der glb zählt, ihr Pfad
+      nicht — ein verschobener Projektordner verwirft den Speicher sonst.
+- [x] `MULTIPASS_NICHT_IM_SCHLUESSEL` — die fünf Einstellungen, die den Betrieb ändern und
+      nicht das Bild (`out_dir`, `timeout`, `stillstand_frist_s`, `herzschlag_takt_s`,
+      `_starte`), **jede mit ihrem Grund**. Die Umkehrung von `MULTIPASS_DURCHGEREICHT`:
+      dort, was ankommt; hier, was ankommt und folgenlos ist.
+- [x] **Die Blender-Fassung steht im Schlüssel.** 4.2 und 5.2 sind zwei Renderer; ein
+      Eintrag aus 4.2 unter 5.2 zu nehmen hiesse, ein Bild zu benutzen, das dieser Rechner
+      so nie erzeugt hätte. Kostet 0,22 s, **einmal je Auftrag**.
+- [x] **Gelesen wird mit `kette._cache_maengel`** — zwei Netze übereinander, und das
+      zweite hat in Sitzung 07 den teuersten Fehler dieses Projekts gefangen: einen Eintrag
+      mit `depth_png = None`, der als Treffer galt.
+- [x] **`--zwischenspeicher` mit Regel-3-Riegel:** Die Einträge tragen absolute Pfade, ein
+      Speicher im Repo landete im nächsten Commit. Der Riegel greift **auch bei `--probe`**.
+- [x] Voreingestellt **AUS**. *Ein Gedächtnis, das niemand bestellt hat, ist die
+      unangenehmste Art von Überraschung.*
+
+### Was die Mutationsproben fanden — acht Proben, zwei Überlebende
+
+**Probe E überlebte:** Ein Treffer, der sich als «gerechnet» ausgibt, blieb grün. Mein Test
+prüfte die Meldung an einem **von Hand gebauten** Befund statt an einem echten Lauf.
+*Dieselbe Form wie beim Hochachsen-Test am selben Tag: Der Wert wird dort geprüft, wo er
+entsteht, und nicht dort, wo er ankommt.* Der Ersatz fährt die volle Kette mit Attrappen.
+
+**Probe H überlebte:** Ein unbrauchbarer Bericht wurde abgelegt. Er hätte nie getroffen —
+aber der Speicher füllte sich mit toten Einträgen, und ein gescheiterter Lauf hinterliess
+einen, der aussah wie ein gelungener.
+
+**Und ein Fund an einer Attrappe:** Die geteilte Kettenattrappe in `test_abholer.py` sagte
+seit jeher eine `depth_exr` zu und **schrieb sie nie**. Aufgefallen ist es daran, dass
+`_cache_maengel` das Ablegen verweigerte — *die Prüfung hatte recht, die Attrappe nicht.*
+Dieselbe Entscheidung wie beim Minimal-PNG heute früh (Entscheid 16): Eine Attrappe, die
+eine Datei vortäuscht, die es so nie gibt, prüft die Kette gegen eine Welt, in der sie
+nicht läuft.
+
+**Ein Fehler im Vorgehen, zum dritten Mal am selben Tag:** `git checkout` während einer
+Mutationsprobe hat eine **uneingecheckte** Korrektur verworfen — und diesmal habe ich
+zwanzig Minuten lang den falschen Fehler gesucht, weil der Test danach aus einem ganz
+anderen Grund rot blieb. *Vor jeder Probenrunde wird eingecheckt, ausnahmslos.*
+
+### Was der Speicher NICHT tut
+
+* **Er wird nicht geteilt.** Ein Eintrag zeigt auf Dateien im Ausgabeordner eines
+  bestimmten Laufs; über zwei Rechner hinweg wäre er eine Zusage ins Leere.
+* **Er nimmt `kette.py` nicht an den Produktivweg.** Zwei Bausteine daraus werden benutzt
+  (`graph.inhalts_hash`, `ArtefaktCache`) und zwei geprüft (`BEDARF`, `_cache_maengel`) —
+  der Graph-Ablauf selbst bleibt draussen, mit derselben Begründung wie vorher.
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).
