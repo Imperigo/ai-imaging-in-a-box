@@ -1161,6 +1161,21 @@ def rahmungsverhaeltnis(szene_bbox, bauwerk_bbox, *,
     an der Form des Bauwerks und am Blickwinkel. Die Zahl hier sagt darum, ob die
     **Rahmung** trägt — nicht, welchen Wert die QA erreichen wird.
 
+    .. warning::
+       **Nicht zu verwechseln mit** ``kamera.fuellgrad`` **im Multipass-Bericht.** Die
+       beiden Zahlen sehen gleich aus und beantworten verschiedene Fragen:
+
+       * ``kamera.fuellgrad`` ist **gemessen** und sagt, wieviel Bild die Box füllt, die
+         :func:`kamerasatz` gerahmt hat. Auf dem heutigen Produktivweg ist das die Box der
+         **ganzen Szene** — der Runner reicht ``--kamera-huellbox`` nicht durch.
+       * ``wirksame_bildbreite`` hier ist **gerechnet** und sagt, wieviel davon auf das
+         **Bauwerk** entfällt.
+
+       Bei einem Bauwerk, das die Szene füllt, sind beide gleich; bei einem Bauwerk auf
+       einem Grundstück ist ``fuellgrad`` hoch und ``wirksame_bildbreite`` klein — und
+       genau diese Kombination ist der Fall, den der Riegel fangen soll. *Wer sich beim
+       Lesen eines Berichts in der Zahl irrt, hält eine gute Rahmung für belegt.*
+
     Returns:
         ``{breitenanteil, wirksame_bildbreite, traegt, knie, abbruch, abbruch_grund,
         grund}``. ``traegt`` ist ``None``, wenn eine der Boxen fehlt — **nicht** ``False``.
