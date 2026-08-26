@@ -447,3 +447,119 @@ def test_auch_die_huellbox_traegt_das_minus():
                                 samples=16, beauty=True, material_id=True,
                                 kamera_huellbox=((-3.0, -4.0, -0.5), (3.0, 4.0, 9.0)))
     assert "--kamera-huellbox=-3.0,-4.0,-0.5,3.0,4.0,9.0" in args
+
+
+# ======================================================================================
+# Der Trockenlauf muss dasselbe Kommando zeigen wie der echte Lauf
+# ======================================================================================
+#
+# Nachgetragen am 26.08.2026, nachdem genau das auseinandergelaufen war.
+
+def test_trockenlauf_und_echter_lauf_kennen_dieselben_einstellungen():
+    """Die beiden Signaturen dürfen sich nur in dem unterscheiden, was ein Lauf braucht.
+
+    **Der Anlass ist ein Auseinanderlaufen, das der gemeinsame Helfer verhindern sollte.**
+    `_multipass_argumente` ist genau dafür gebaut — sein Docstring sagt: *«Wären sie
+    zweimal geschrieben, könnten `glb_zu_multipass` und `baue_kommando_multipass`
+    auseinanderlaufen — und dann prüfte der Test ein Kommando, das so nie gestartet
+    wird.»*
+
+    Am 26.08.2026 war genau das eingetreten: **Der Helfer war geteilt, die Aufrufe waren
+    es nicht.** `baue_kommando_multipass` kannte `kamera_huellbox` gar nicht — der
+    Trockenlauf zeigte ein Kommando ohne die Hüllbox, der echte Lauf startete eines mit
+    ihr. *Ein gemeinsamer Helfer schützt nicht davor, ihn verschieden aufzurufen.*
+    """
+    import inspect
+    echt = set(inspect.signature(seams.glb_zu_multipass).parameters)
+    trocken = set(inspect.signature(seams.baue_kommando_multipass).parameters)
+
+    # Was nur der echte Lauf hat, und **jeder Eintrag mit Grund** — eine Ausnahmeliste
+    # ohne Begruendung ist eine Einladung, den naechsten Unterschied hineinzuschreiben:
+    #
+    #   timeout, starte, _starte  — betreffen das AUSFUEHREN. Ein Trockenlauf fuehrt
+    #                               nichts aus; `_starte` ist die Naht fuer Attrappen.
+    #   stillstand_frist_s        — wird von `glb_zu_multipass` IMMER abgewiesen und
+    #                               steht nur da, damit ein Aufrufer eine klare Fehler-
+    #                               meldung bekommt statt stillen Wirkungslosigkeit.
+    #                               Er erzeugt kein Argument und kann darum keines
+    #                               auseinanderlaufen lassen.
+    nur_lauf = {"timeout", "starte", "_starte", "stillstand_frist_s"}
+    fehlt_im_trockenlauf = echt - trocken - nur_lauf
+    assert not fehlt_im_trockenlauf, (
+        f"`baue_kommando_multipass` kennt diese Einstellungen nicht: "
+        f"{sorted(fehlt_im_trockenlauf)}. Der Trockenlauf zeigt dann ein Kommando, das "
+        f"der echte Lauf so nie startet — und ein Test darauf prüft eine Erfindung.")
+
+    zuviel = trocken - echt
+    assert not zuviel, (
+        f"`baue_kommando_multipass` nimmt {sorted(zuviel)} entgegen, der echte Lauf "
+        f"nicht. Dann lässt sich etwas trocken zeigen, was nie laufen kann.")
+
+
+def test_beide_erzeugen_bei_gleichen_angaben_dasselbe_kommando():
+    """Die Gegenprobe zur Signaturprüfung — gleiche Namen genügen nicht.
+
+    Zwei Funktionen können dieselben Parameter führen und trotzdem verschiedene Kommandos
+    bauen, wenn eine davon einen Wert nicht weiterreicht. *Genau das war der Fehler: Der
+    Parameter fehlte in der Signatur, aber sichtbar wurde es erst am Kommando.*
+    """
+    angaben = dict(up_axis="Y_UP", aufloesung=256, samples=4, kamera="sSE",
+                   brennweite=35.0, kamera_modus="shift", gelaende_z=-1.5,
+                   hoehe=192, kamera_huellbox=((0.0, 0.0, 0.0), (5.0, 5.0, 5.0)),
+                   sonne={"elevation": 25.0, "azimuth": -40.0},
+                   deckungsgrad=0.55, augenhoehe=1.7, bias_grad=35.0)
+
+    gesehen = {}
+
+    def _falscher_start(cmd, timeout):
+        gesehen["cmd"] = list(cmd)
+        raise seams.SeamError("nur das Kommando einsammeln")
+
+    try:
+        seams.glb_zu_multipass("x.glb", "/tmp/aus", _starte=_falscher_start, **angaben)
+    except seams.SeamError:
+        pass
+
+    trocken = seams.baue_kommando_multipass("x.glb", "/tmp/aus", **angaben)
+    assert gesehen.get("cmd"), "Der echte Lauf hat kein Kommando gebaut."
+
+    def _nur_argumente(cmd):
+        return [a for a in cmd if a.startswith("--")]
+
+    assert _nur_argumente(gesehen["cmd"]) == _nur_argumente(trocken), (
+        f"Die beiden Kommandos gehen auseinander.\n"
+        f"  echt:    {_nur_argumente(gesehen['cmd'])}\n"
+        f"  trocken: {_nur_argumente(trocken)}")
+
+
+def test_die_drei_kameraparameter_erreichen_den_runner():
+    """`--deckungsgrad`, `--augenhoehe` und `--bias` — bis zum 26.08.2026 nie gesetzt.
+
+    Der Runner kennt alle drei seit jeher; **diese Naht setzte keinen einzigen davon.**
+    Auf dem Produktivweg galten also immer seine Vorgaben, und wer etwas anderes wollte,
+    musste den Runner selbst aufrufen.
+
+    Das ist mehr als unbequem: `auf-20260825-41` vergleicht Bildpaare bei Deckungsgrad
+    **0,55 gegen 0,70** — und diese Messung war über diesen Weg gar nicht durchführbar.
+    Die Augenhöhe wiederum ist genau die Grösse, über die Frage 7 des Übergabeblatts mit
+    KosmoOrbit verhandelt wird. *Über einen Wert zu verhandeln, den man nicht einstellen
+    kann, ist müssig.*
+    """
+    cmd = seams.baue_kommando_multipass("x.glb", "/tmp/aus", up_axis="Y_UP",
+                                        deckungsgrad=0.55, augenhoehe=1.3,
+                                        bias_grad=20.0)
+    assert "--deckungsgrad=0.55" in cmd
+    assert "--augenhoehe=1.3" in cmd
+    assert "--bias=20.0" in cmd
+
+
+def test_ohne_angabe_wird_keiner_der_drei_gesetzt():
+    """**Nicht angefasst ist etwas anderes als null.**
+
+    Ein mitgeschickter Vorgabewert wäre im Bericht des Runners von einer Bestellung nicht
+    mehr zu unterscheiden — dieselbe Regel wie beim Sonnenstand.
+    """
+    cmd = seams.baue_kommando_multipass("x.glb", "/tmp/aus", up_axis="Y_UP")
+    for schalter in ("--deckungsgrad", "--augenhoehe", "--bias"):
+        assert not any(a.startswith(schalter) for a in cmd), (
+            f"{schalter} steht im Kommando, obwohl nichts bestellt war.")

@@ -471,7 +471,8 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
                          kamera_modus=None, shift_y=None,
                          gelaende_z=None, hoehe=None,
                          herzschlag_takt_s=None, kamera_huellbox=None,
-                         sonne=None) -> list[str]:
+                         sonne=None, deckungsgrad=None, augenhoehe=None,
+                         bias_grad=None) -> list[str]:
     """Die Argumente hinter dem `--`-Trenner — eine Stelle für Lauf und Trockenlauf.
 
     Wären sie zweimal geschrieben, könnten `glb_zu_multipass` und
@@ -539,6 +540,28 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
         argumente += [f"--shift-y={float(shift_y)}"]
     if gelaende_z is not None:
         argumente += [f"--gelaende-z={float(gelaende_z)}"]
+    # DIE DREI KAMERAPARAMETER, DIE DER RUNNER SEIT JEHER KENNT UND DIE HIER NIE ANKAMEN.
+    #
+    # Nachgezaehlt am 26.08.2026 (23 Schalter des Runners gegen den Text dieser Datei):
+    # `--deckungsgrad`, `--augenhoehe` und `--bias` wurden von hier NIE gesetzt. Auf dem
+    # Produktivweg galten also immer die Vorgaben des Runners, und niemand konnte etwas
+    # anderes bestellen, ohne den Runner selbst aufzurufen.
+    #
+    # Das ist mehr als eine Unbequemlichkeit: `auf-20260825-41` will Bildpaare bei
+    # DECKUNGSGRAD 0,55 gegen 0,70 vergleichen — und diese Messung war ueber diesen Weg
+    # gar nicht durchfuehrbar. Und die Augenhoehe ist genau die Groesse, ueber die Frage 7
+    # des Uebergabeblatts mit KosmoOrbit verhandelt wird (1,30 / 1,60 / 1,70 m, und ab wo
+    # gemessen). Ueber einen Wert zu verhandeln, den man nicht einstellen kann, ist
+    # muessig.
+    #
+    # `None` heisst wie ueberall hier NICHT ANGEFASST, nicht „null": Ein mitgeschickter
+    # Vorgabewert waere im Bericht von einer Bestellung nicht mehr zu unterscheiden.
+    if deckungsgrad is not None:
+        argumente += [f"--deckungsgrad={float(deckungsgrad)}"]
+    if augenhoehe is not None:
+        argumente += [f"--augenhoehe={float(augenhoehe)}"]
+    if bias_grad is not None:
+        argumente += [f"--bias={float(bias_grad)}"]
     if hoehe is not None:
         argumente += ["--hoehe", str(int(hoehe))]
     if herzschlag_takt_s is not None:
@@ -590,7 +613,9 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      gelaende_z=None, hoehe=None,
                      timeout: int = 900, stillstand_frist_s: float | None = None,
                      herzschlag_takt_s: float | None = HERZSCHLAG_TAKT_S,
-                     kamera_huellbox=None, sonne=None, _starte=None) -> dict:
+                     kamera_huellbox=None, sonne=None,
+                     deckungsgrad=None, augenhoehe=None, bias_grad=None,
+                     _starte=None) -> dict:
     """glb → Cycles-Multipass über `blender --background`.
 
     Vier Ausgaben, in zwei Renderdurchgängen: Beauty und Tiefe (EXR in Metern plus
@@ -728,7 +753,9 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                               brennweite=brennweite, kamera_modus=kamera_modus,
                               shift_y=shift_y, gelaende_z=gelaende_z,
                               hoehe=hoehe, herzschlag_takt_s=herzschlag_takt_s,
-                              kamera_huellbox=kamera_huellbox, sonne=sonne),
+                              kamera_huellbox=kamera_huellbox, sonne=sonne,
+                              deckungsgrad=deckungsgrad, augenhoehe=augenhoehe,
+                              bias_grad=bias_grad),
     ]
 
     ergebnis = starte(cmd, timeout)
@@ -830,7 +857,9 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                             kamera_modus=None, shift_y=None,
                             gelaende_z=None, hoehe=None,
                             herzschlag_takt_s: float | None = HERZSCHLAG_TAKT_S,
-                            sonne=None) -> list[str]:
+                            kamera_huellbox=None,
+                            sonne=None, deckungsgrad=None, augenhoehe=None,
+                            bias_grad=None) -> list[str]:
     """Nur das Blender-Kommando bauen, ohne es auszuführen.
 
     Für Tests und zur Fehlersuche: zeigt, ob die Prozessgrenze richtig konstruiert ist —
@@ -846,7 +875,15 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                               brennweite=brennweite, kamera_modus=kamera_modus,
                               shift_y=shift_y, gelaende_z=gelaende_z,
                               hoehe=hoehe,
-                              herzschlag_takt_s=herzschlag_takt_s, sonne=sonne),
+                              herzschlag_takt_s=herzschlag_takt_s, sonne=sonne,
+                              # `kamera_huellbox` fehlte hier bis zum 26.08.2026 —
+                              # der Trockenlauf zeigte ein Kommando, das der echte Lauf
+                              # so nie startete. Genau das Auseinanderlaufen, gegen das
+                              # `_multipass_argumente` als GEMEINSAME Stelle gebaut ist:
+                              # Der Helfer war geteilt, die Aufrufe waren es nicht.
+                              kamera_huellbox=kamera_huellbox,
+                              deckungsgrad=deckungsgrad, augenhoehe=augenhoehe,
+                              bias_grad=bias_grad),
     ]
 
 

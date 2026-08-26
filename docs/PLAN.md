@@ -3475,6 +3475,22 @@ zweiten Stelle.
       `tests/test_uebergabe.py` hält jetzt auch die **Zahl** der Fragen gegen den Satz im
       Kurzblatt («inzwischen 16 Stück») und prüft die lückenlose Nummerierung.
 
+- [x] **Drei Kameraparameter erreichen den Runner** (26.08. spätnachmittags).
+      `--deckungsgrad`, `--augenhoehe` und `--bias` kennt der Runner seit jeher;
+      `seams.glb_zu_multipass` setzte **keinen davon**. Gefunden beim Abgleich der 23
+      argparse-Schalter gegen den Text von `seams.py` — *eine Zählung von der anderen
+      Seite*, denn eine Durchreichungstabelle kann nichts vermissen, was es an der Naht
+      nicht gibt.
+      Folgen: `auf-20260825-41` G2 (Deckungsgrad 0,55 gegen 0,70) war über den
+      Produktivweg **gar nicht durchführbar**, und Frage 7 des Übergabeblatts verhandelt
+      eine Augenhöhe, die die eigene Naht nicht einstellen konnte. Aus 18 Einstellungen
+      wurden 21, aus 12 durchgereichten 15.
+- [x] **Trockenlauf und echter Lauf zeigen wieder dasselbe Kommando** (26.08.).
+      `baue_kommando_multipass` kannte `kamera_huellbox` nicht — der Trockenlauf zeigte ein
+      Kommando, das so nie startete. *Der gemeinsame Helfer war geteilt, die Aufrufe waren
+      es nicht.* Beide Signaturen werden jetzt gegeneinander gehalten, mit einer
+      Gegenprobe über die erzeugten Kommandos.
+
 ---
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
@@ -3484,7 +3500,7 @@ Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
 
 | | Beginn des Tages | nach dem Vormittag | Ende |
 |---|---:|---:|---:|
-| Tests | 3335 | 3528 | **3874** |
+| Tests | 3335 | 3528 | **3880** |
 | Vakuumprobe | 10 Treffer | 12 Treffer | 12 Treffer |
 | Tote Kanten, gar nicht erreichbar | — | 2 | **1** |
 | Tote Kanten **mit Urteil** | 0 | 0 | **80 von 80** |

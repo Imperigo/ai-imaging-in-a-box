@@ -954,6 +954,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 gelaende_z: float | None = None,
                 gelaende_erwartet: bool = True,
                 rahmung_pruefen: bool = True,
+                deckungsgrad: float | None = None,
+                augenhoehe: float | None = None,
+                bias_grad: float | None = None,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
@@ -1083,6 +1086,19 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 sonne=szene.get("sonne"),
                 auge=aufgabe.get("auge"), blick_auf=aufgabe.get("blick_auf"),
                 brennweite=aufgabe.get("brennweite_mm"),
+                # DREI KAMERAPARAMETER, die der Runner seit jeher kennt und die bis zum
+                # 26.08.2026 auf diesem Weg NIE ankamen — `seams` setzte keinen davon.
+                #
+                # `deckungsgrad` ist der wichtigste: `auf-20260825-41` vergleicht
+                # Bildpaare bei 0,55 gegen 0,70, und diese Messung war ueber den
+                # Produktivweg gar nicht durchfuehrbar. `augenhoehe` ist die Groesse, um
+                # die Frage 7 des Uebergabeblatts mit KosmoOrbit kreist.
+                #
+                # `None` heisst NICHT ANGEFASST: Dann gelten die Vorgaben des Runners, und
+                # jede bisher gemessene Aufnahme bleibt reproduzierbar.
+                deckungsgrad=deckungsgrad,
+                augenhoehe=augenhoehe,
+                bias_grad=bias_grad,
                 stillstand_frist_s=stillstand_frist_s,
             )
             tiefe = bericht.get("depth_png")
@@ -1307,6 +1323,13 @@ MULTIPASS_KEINE_EINSTELLUNG = ("glb_path", "out_dir", "_starte")
 #: Einstellungen des Multipass, die **ankommen** — mit der Stelle, an der sie herkommen.
 MULTIPASS_DURCHGEREICHT = {
     "up_axis": "verarbeiter(up_axis=…), Vorgabe ANGENOMMENE_HOCHACHSE",
+    # Seit dem 26.08.2026 nachmittags. Sie standen vorher NIRGENDS in diesen Tabellen,
+    # weil `seams.glb_zu_multipass` sie gar nicht kannte — die Naht setzte sie nie, und
+    # damit fehlten sie auch der Zaehlung. Aufgefallen beim Abgleich der 23
+    # argparse-Schalter des Runners gegen den Text von `seams.py`.
+    "deckungsgrad": "verarbeiter(deckungsgrad=…), None heisst Vorgabe des Runners",
+    "augenhoehe": "verarbeiter(augenhoehe=…), None heisst Vorgabe des Runners",
+    "bias_grad": "verarbeiter(bias_grad=…), None heisst Vorgabe des Runners",
     "aufloesung": "szene['aufloesung'] aus der Bestellung",
     "hoehe": "szene['hoehe'] aus der Bestellung",
     "samples": "szene['samples'] aus der Bestellung",

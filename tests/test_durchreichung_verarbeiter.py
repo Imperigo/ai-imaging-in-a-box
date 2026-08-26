@@ -78,9 +78,17 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     Code überein, ist eine davon eine Erinnerung und keine Messung.
 
     *Sechs, nicht fünf* — `shift_y` fehlte in der ersten Zählung und ist bei der
-    Gegenprüfung aufgefallen."""
-    assert len(_multipass_einstellungen()) == 18
-    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 12
+    Gegenprüfung aufgefallen.
+
+    **Und aus 18 wurden 21** (26.08. nachmittags): `deckungsgrad`, `augenhoehe` und
+    `bias_grad` fehlten in dieser Zählung, weil sie in `seams.glb_zu_multipass` gar nicht
+    vorkamen — der Runner kannte alle drei seit jeher, die Naht setzte keinen davon.
+    *Eine Tabelle über die Durchreichung kann eine Einstellung nicht vermissen, die es an
+    der Naht nicht gibt.* Aufgefallen ist es erst beim Abgleich der 23 argparse-Schalter
+    des Runners gegen den Text von `seams.py` — eine Zählung von der **anderen** Seite.
+    """
+    assert len(_multipass_einstellungen()) == 21
+    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 15
     assert len(abholer.MULTIPASS_STEHENGEBLIEBEN) == 6
     assert len(abholer.RENDER_DURCHGEREICHT) == 7
     assert len(abholer.RENDER_STEHENGEBLIEBEN) == 5
@@ -216,3 +224,65 @@ def test_die_beiden_bekannten_luecken_stehen_mit_ihrem_auftrag_da():
     assert "auf-44" in abholer.RENDER_STEHENGEBLIEBEN["schritte"]["noetig"]
     assert "auf-44" in abholer.RENDER_STEHENGEBLIEBEN["denoise"]["noetig"]
     assert "auf-38" in abholer.RENDER_STEHENGEBLIEBEN["negativ_prompt"]["noetig"]
+
+
+def _lauf_mit(tmp_path, **einstellungen):
+    """Wie :func:`_lauf`, aber mit ausdrücklichen Einstellungen an `verarbeiter`."""
+    protokoll = {"multipass": []}
+
+    def multipass(glb, aus, **kw):
+        protokoll["multipass"].append(kw)
+        tiefe = Path(aus) / "tiefe_norm.png"
+        tiefe.parent.mkdir(parents=True, exist_ok=True)
+        tiefe.write_bytes(MINI_PNG)
+        beauty = Path(aus) / "beauty.png"
+        beauty.write_bytes(MINI_PNG)
+        return {"depth_png": str(tiefe), "beauty_png": str(beauty),
+                "kamera": {"weg": "vorgegeben"}}
+
+    def rendere(auftrag, **kw):
+        bild = Path(tmp_path) / "b.png"
+        bild.write_bytes(MINI_PNG)
+        return {"status": "ok", "bild_png": str(bild), "hinweise": ()}
+
+    verarbeite = abholer.verarbeiter(
+        out_wurzel=tmp_path, nullprobe=False,
+        _multipass=multipass, _rendere=rendere,
+        _qa=lambda *a, **k: {"score": 0.9, "bestanden": True},
+        _soll=lambda *a, **k: ([[0.0]], 1, 1), **einstellungen)
+    verarbeite({"modell": tmp_path / "m.glb", "job_id": "vis-1-aaaaaa",
+                "verzeichnis": tmp_path,
+                "szene": {"kameras": [{"kuerzel": "s", "richtung": "s"}],
+                          "aufloesung": 64, "hoehe": 64, "samples": 1,
+                          "prompt": "a house"}})
+    return protokoll
+
+
+def test_die_drei_kameraparameter_kommen_mit_ihrem_wert_an(tmp_path):
+    """**Der Schlüssel allein genügt nicht — der Wert muss ankommen.**
+
+    Ein Parameter, der als ``None`` durchgereicht wird, erfüllt die Tabellenprüfung und
+    bewirkt trotzdem nichts. Genau diese Sorte Halbanschluss hat diese Woche achtmal
+    zugeschlagen.
+
+    Gemessen wird der Fall, der als Auftrag bereitliegt: `auf-20260825-41` vergleicht
+    Bildpaare bei Deckungsgrad **0,55** gegen 0,70.
+    """
+    protokoll = _lauf_mit(tmp_path, deckungsgrad=0.55, augenhoehe=1.30, bias_grad=20.0)
+    kw = protokoll["multipass"][0]
+    assert kw["deckungsgrad"] == 0.55
+    assert kw["augenhoehe"] == 1.30
+    assert kw["bias_grad"] == 20.0
+
+
+def test_ohne_angabe_bleiben_die_drei_None(tmp_path):
+    """**Nicht angefasst ist etwas anderes als null.**
+
+    Würde `verarbeiter` hier die Vorgabe der Bibliothek einsetzen, wäre im Bericht des
+    Runners eine Bestellung nicht mehr von einer Vorgabe zu unterscheiden — dieselbe Regel
+    wie beim Sonnenstand, und derselbe Grund.
+    """
+    kw = _lauf_mit(tmp_path)["multipass"][0]
+    assert kw["deckungsgrad"] is None
+    assert kw["augenhoehe"] is None
+    assert kw["bias_grad"] is None
