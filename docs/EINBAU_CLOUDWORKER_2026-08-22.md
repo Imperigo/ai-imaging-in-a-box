@@ -187,7 +187,9 @@ ist die Liste der Stellen, an denen **wir mehr wissen, als wir euch sagen könne
 die wollten wir nicht stillschweigend liegen lassen.
 
 Die ausführlichen Fragen mit Begründung stehen in `docs/UEBERGABE_VIS_2026-08-19.md`
-(inzwischen 14 Stück). Dieses Blatt ist die Kurzfassung für den Einbau.
+(inzwischen 16 Stück). Dieses Blatt ist die Kurzfassung für den Einbau.
+
+*Die Zahl steht unter einem Wächter* (`tests/test_uebergabe.py`) — sie kann nicht mehr still veralten, während die Liste wächst. Die beiden jüngsten sind Frage 15 (**Azimutkonvention der Sonne**) und Frage 16 (**was `render.faithful` steuern soll**); beide vom 26.08.2026.
 
 ---
 

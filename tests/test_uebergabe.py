@@ -155,3 +155,63 @@ def test_der_fremde_name_kommt_im_lesecode_wirklich_vor(name):
         f"{name!r} deklariert den fremden Namen {fremd!r}, aber `kosmo_szene` liest "
         f"nirgends ein Feld {stueck!r}. Entweder ist die Deklaration falsch, oder das "
         f"Feld wird gar nicht mehr gelesen.")
+
+
+# ======================================================================================
+# Die Fragenliste — und die Zahl, die ein zweites Dokument über sie behauptet
+# ======================================================================================
+
+BLATT_LANG = WURZEL / "docs" / "UEBERGABE_VIS_2026-08-19.md"
+
+#: Wo die nummerierte Fragenliste beginnt. Davor stehen drei gleich nummerierte Fragen
+#: («Was schicke ich euch?»), die die **Gliederung** des Dokuments sind und keine offenen
+#: Punkte — sie mitzuzählen ergäbe 17 statt 14 und hätte die Zahl schleichend aufgebläht.
+LISTE_BEGINNT = "## Was wir von euch brauchen, in einer Liste"
+
+
+def _fragen() -> list[str]:
+    text = BLATT_LANG.read_text(encoding="utf-8")
+    liste = text[text.index(LISTE_BEGINNT):]
+    return re.findall(r"^(\d+)\. \*\*", liste, re.M)
+
+
+def test_die_fragen_sind_lueckenlos_durchnummeriert():
+    """Eine übersprungene Nummer heisst: Eine Frage ist verschwunden und niemand weiss welche.
+
+    *Die Liste ist die Klammer zwischen zwei Seiten.* Wer auf «Frage 13» verweist, muss
+    dieselbe Frage meinen wie der, der sie beantwortet.
+    """
+    nummern = [int(n) for n in _fragen()]
+    assert nummern, f"Keine nummerierte Frage nach {LISTE_BEGINNT!r} gefunden."
+    assert nummern == list(range(1, len(nummern) + 1)), (
+        f"Die Nummerierung hat eine Lücke oder eine Dublette: {nummern}")
+
+
+def test_das_kurzblatt_nennt_die_richtige_zahl():
+    """Zwei Dokumente, eine Zahl — und das kürzere behauptet sie über das längere.
+
+    **Genau diese Stelle ist am 26.08.2026 falsch geworden:** Die Liste wuchs von 14 auf
+    16 (Azimutkonvention, `render.faithful`), und das Kurzblatt hätte weiter «14 Stück»
+    gesagt. Eine Zahl in einem Fliesstext veraltet lautlos — das ist derselbe Befund wie
+    bei der Testzahl im README, nur zwischen zwei Dokumenten.
+    """
+    n = len(_fragen())
+    text = _blatt()
+    assert f"(inzwischen {n} Stück)" in text, (
+        f"Die Fragenliste hat {n} Einträge; das Kurzblatt nennt eine andere Zahl. "
+        f"Wer eine Frage hinzufügt, zieht den Satz im Kurzblatt nach — er ist die "
+        f"einzige Stelle, an der jemand die Zahl im Vorbeilesen mitbekommt.")
+
+
+def test_die_juengsten_fragen_stehen_auch_im_langen_blatt():
+    """Eine Frage, die nur in einer Auftragsdatei steht, erreicht die andere Seite nicht.
+
+    `auf-20260826-44` trägt die beiden Vertragsfragen vom 26.08. — aber die andere Seite
+    liest das Übergabeblatt, nicht unser Auftragsverzeichnis. **Ein Auftrag ist die
+    Anweisung an einen Worker, kein Ersatz für die Übergabe.**
+    """
+    lang = BLATT_LANG.read_text(encoding="utf-8")
+    for stichwort in ("azimuth", "faithful"):
+        assert stichwort in lang, (
+            f"{stichwort!r} kommt im ausführlichen Übergabeblatt nicht vor, obwohl es "
+            f"eine offene Vertragsfrage ist.")

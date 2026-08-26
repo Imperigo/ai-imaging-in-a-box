@@ -578,3 +578,55 @@ hängt** — und arbeiten weiter an Verträgen, QA und Bildkette. Das trägt in 
     Eck das richtige Bild ist. Das hängt daran, ob die Stirnwand ein Motiv trägt — einen
     Kamin, eine Küchenzeile —, und das steht in keiner IFC-Datei. Wir rechnen beide und
     reichen beide weiter.
+
+15. **Ab welcher Richtung zählt `render.sun.azimuth`, und in welche Richtung positiv?**
+    *Nachgetragen 26.08.2026. Bis zu diesem Tag hat unsere Seite den Sonnenblock eures
+    Auftrags **überhaupt nicht bedient** — der Runner setzte eine feste Sonne, und ein
+    bestellter Abendstand kam als Mittagslicht zurück. Das war der gefährlichste unserer
+    stehengebliebenen Felder, weil nichts daran nach einem Fehler aussieht: Das Bild ist
+    sauber, gut belichtet und falsch.*
+
+    Seit dem 26.08. wird die Sonne gestellt. Nur: **Woher der Azimut zählt, sagt allein
+    euer Vertrag.** Zwei Konventionen sind üblich und unterscheiden sich um 180 Grad —
+    was Vormittag und Nachmittag vertauscht:
+
+    * **Von Süden**, positiv nach Westen. Die Konvention der Architektur und Bauphysik.
+    * **Von Norden**, positiv nach Osten. Die Konvention der Meteorologie und der
+      meisten Karten.
+
+    **Wir raten nicht.** Es gilt vorläufig *von Süden*, weil die alte feste Sonne so
+    gemeint war — und die benutzte Konvention **wandert in den Bericht**, damit ein
+    falscher Nullpunkt auffindbar ist statt unsichtbar. Gefragt sind vier Dinge:
+
+    1. Der **Nullpunkt** und die positive Richtung, mit Fundstelle in eurem Code.
+    2. Ob `elevation` der Winkel **über dem Horizont** ist (0 = Horizont, 90 = Zenit) oder
+       etwas anderes.
+    3. Wo in eurer Szene **Norden** liegt. Wir setzen `+Y = Norden, +X = Osten, +Z = oben`;
+       das ist eine **Setzung** und keine Messung, und sie steht ebenfalls im Bericht.
+    4. Ob der Sonnenblock weitere Felder führt, die wir nicht kennen.
+
+    **Ein Nebenbefund, der alte Läufe betrifft:** Der feste Sonnenstand stand bei uns als
+    `rotation_euler = (radians(50), 0, radians(35))` mit dem Kommentar *«50° Höhe und 35°
+    Azimut»*. **Beide Zahlen im Kommentar sind falsch.** Gerechnet stand die Sonne auf
+    **40°** über dem Horizont und **35° östlich** von Süden. Wer Bilder von vor dem
+    26.08. vergleicht, sollte das wissen.
+
+16. **Was soll `render.faithful` steuern?**
+    *Nachgetragen 26.08.2026.* Das Feld steht in eurem Vertrag, wir reichen es durch und
+    **lesen es nicht** — genau wie `engine` und `style` (Frage 8). Bei einem Feld mit
+    diesem Namen ist das unbefriedigend: *Geometrie-Treue ist der Gegenstand dieser
+    ganzen Arbeit*, und ein Schalter, der so heisst, sollte nicht ins Leere laufen.
+
+    Drei Lesarten sind denkbar, und sie führen zu verschiedenen Bildern:
+
+    1. **Stärke der Konditionierung** — wie eng sich das Bildmodell an die Tiefenkarte
+       hält. Bei uns ist das `controlnet_staerke`, und die reicht euer Vertrag bereits
+       getrennt durch.
+    2. **Anzahl der Diffusionsschritte / `denoise`** — wie weit das Modell die Vorlage
+       überschreiben darf. Beides ist bei uns einstellbar und wird heute **nicht** aus
+       eurem Auftrag gesetzt.
+    3. **Ein Torverhalten** — ob ein Bild, das die Geometrie-Schwelle verfehlt,
+       zurückgewiesen oder trotzdem geliefert wird.
+
+    Sagt uns, welche gemeint ist. Solange das offen ist, bleibt das Feld unbedient und
+    unser Ergebnis sagt das auch — es scheitert nicht still.

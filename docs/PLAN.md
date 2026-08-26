@@ -3467,6 +3467,14 @@ zweiten Stelle.
       `rahmung.abgeschaltet = True` — ein abgeschalteter Lauf bleibt von einem bestandenen
       unterscheidbar.
 
+- [x] **Das ausführliche Übergabeblatt führt wieder alle offenen Fragen** (26.08.).
+      Die beiden Vertragsfragen von heute — Azimutkonvention der Sonne und was
+      `render.faithful` steuern soll — standen in `auf-20260826-44` und **sonst nirgends**.
+      *Ein Auftrag ist die Anweisung an einen Worker, kein Ersatz für die Übergabe.*
+      Nachgetragen als Fragen 15 und 16, mit Inhalt statt Verweis.
+      `tests/test_uebergabe.py` hält jetzt auch die **Zahl** der Fragen gegen den Satz im
+      Kurzblatt («inzwischen 16 Stück») und prüft die lückenlose Nummerierung.
+
 ---
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
@@ -3476,7 +3484,7 @@ Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
 
 | | Beginn des Tages | nach dem Vormittag | Ende |
 |---|---:|---:|---:|
-| Tests | 3335 | 3528 | **3871** |
+| Tests | 3335 | 3528 | **3874** |
 | Vakuumprobe | 10 Treffer | 12 Treffer | 12 Treffer |
 | Tote Kanten, gar nicht erreichbar | — | 2 | **1** |
 | Tote Kanten **mit Urteil** | 0 | 0 | **80 von 80** |
