@@ -455,12 +455,20 @@ def test_mit_maske_schweigt_der_kurzbefund():
 
     Genau das ist an diesem Tag drei Dauerwarnungen passiert: Sie füllten alle drei Plätze
     und verdeckten jede echte.
+
+    *Der Befund trägt hier absichtlich eine Kameraspanne*, damit `befund_kurz` mit
+    Sicherheit **mindestens eine** Zeile liefert. Sonst wäre die Zusicherung
+    vakuum-wahr — sie hielte auch dann, wenn die Funktion gar nichts zurückgäbe, und
+    `tools/vakuumprobe.py` hat sie beim ersten Entwurf prompt gemeldet.
     """
     befund = {"kameras": [
         {"kamera": "s", "bild_png": "/x.png", "maskenbefund": {"maske": [True, False]}},
-    ]}
+    ], "geometrie_urteil": {"kameraspanne": {"n_gemessen": 1, "schlechtester": 0.9}}}
 
-    assert not any("MASKENWEG" in z for z in abholer.befund_kurz(befund))
+    zeilen = abholer.befund_kurz(befund)
+
+    assert zeilen, "Ohne eine einzige Zeile prüft die Zusicherung darunter nichts."
+    assert not any("MASKENWEG" in z for z in zeilen)
 
 
 def test_eine_uebersprungene_kamera_meldet_keinen_maskenausfall():
@@ -496,10 +504,17 @@ def test_der_kurzbefund_nennt_was_als_gelaende_eingestuft_wurde():
 
 
 def test_ohne_erkanntes_gelaende_steht_die_zeile_nicht_da():
-    """Die Gegenprobe — eine Zeile, die immer dasteht, wird nicht gelesen."""
+    """Die Gegenprobe — eine Zeile, die immer dasteht, wird nicht gelesen.
+
+    Auch hier trägt der Befund eine Kameraspanne, damit die Sammlung nachweislich gefüllt
+    ist: *Eine Zusicherung über alle Elemente einer leeren Sammlung hält immer.*
+    """
     befund = {"kameras": [
         {"kamera": "s", "bild_png": "/x.png",
          "maskenbefund": {"maske": [True], "gelaende_namen": []}},
-    ]}
+    ], "geometrie_urteil": {"kameraspanne": {"n_gemessen": 1, "schlechtester": 0.9}}}
 
-    assert not any("Als Gelaende eingestuft" in z for z in abholer.befund_kurz(befund))
+    zeilen = abholer.befund_kurz(befund)
+
+    assert zeilen, "Ohne eine einzige Zeile prüft die Zusicherung darunter nichts."
+    assert not any("Als Gelaende eingestuft" in z for z in zeilen)
