@@ -55,7 +55,7 @@ Kette belegt, die Aussage *geometrietreu* aber noch nicht.
 [`docs/EINBAU_STAND.md`](docs/EINBAU_STAND.md). Wie die Oberfläche aussehen soll, die
 darüber liegt: [`docs/OBERFLAECHE_KOSMOVIS.md`](docs/OBERFLAECHE_KOSMOVIS.md).
 
-Tests: **4132**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+Tests: **4142**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
 (`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
 
 ---

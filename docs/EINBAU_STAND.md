@@ -29,7 +29,8 @@ wird ohne Rückfrage nichts geändert.
 | A5 | `query_render` und `check_geometry` in `READ_ONLY_MCP_TOOLS` **beantragen** (`enqueue_render` ausdrücklich **nicht**) | 🟥 **offen** | — | `auftraege/offen/auf-20260826-48.json` |
 | A6 | Rezept «AI-Imaging» beantragen: Konfiguration → `check_geometry` (Gate) → `enqueue_render` → `query_render` | 🟥 **offen** | — | `auftraege/offen/auf-20260826-48.json` |
 | A7 | Feldnamen gegen den vorgesehenen Vorgänger prüfen | 🟩 **halb** | 2026-08-18 | `contracts.LANE_FIELDS` und `mcp_schemas.pruefe_verdrahtbarkeit` belegen die Verdrahtbarkeit **rechnerisch**; am laufenden Cockpit gemessen ist sie nicht (hängt an A4) |
-| A8 | Wo erscheinen Bild und QA-Wert? Im Cockpit gibt es keinen Ort dafür | 🟩 **entschieden, nicht gebaut** | 2026-08-26 | In der **KosmoVis-Fläche**, nicht als neuer Anzeigetyp im fremden Knotenrahmen — der innere Graph bekommt eine innere Oberfläche. Begründung in `docs/OBERFLAECHE_KOSMOVIS.md` |
+| A8 | Wo erscheinen Bild und QA-Wert? Im Cockpit gibt es keinen Ort dafür | 🟩 **entschieden, nicht gebaut** | 2026-08-26 | In der **KosmoVis-Fläche**, nicht als neuer Anzeigetyp im fremden Knotenrahmen — der innere Graph bekommt eine innere Oberfläche. Entwurf: `docs/OBERFLAECHE_KOSMOVIS.md`; gebaut wird er über `auftraege/offen/auf-20260826-52.json` |
+| A10 | Die Oberfläche selbst — Bedienelemente, Anzeige, die drei Zustände | 🟥 **offen** | — | Entwurf steht (`docs/OBERFLAECHE_KOSMOVIS.md`), Bau beauftragt in `auftraege/offen/auf-20260826-52.json`. Der Auftrag trägt den Entwurf **im Volltext** — die Hausregel verbietet ein «siehe Dokument XY» |
 | A9 | Die Registrierung nachweisen — sie liegt acht Tage und **ein Werkzeug** zurück | 🟥 **offen** | — | `auftraege/offen/auf-20260826-48.json` |
 
 *A9 stand 2026-08-19 nicht auf der Liste, weil die Registrierung damals als erledigt galt.

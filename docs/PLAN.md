@@ -4130,6 +4130,30 @@ lässt, macht sie rot. **Sie kann also nicht versehentlich passieren.**
 
 ---
 
+## Die Oberfläche ist beauftragt, mit dem Entwurf im Volltext (26.08.2026)
+
+`auf-52` an den Cloud-Worker. **Der Auftrag trägt das ganze Entwurfsblatt in sich** —
+beide Tabellen, alle vier Regeln, jede Begründung. Kein «siehe `docs/…`»: Die Hausregel
+vom 22.08. sagt, dass ein Auftrag, der auf etwas verweist, das der Worker erst suchen
+muss, ein halber Auftrag ist.
+
+Er stellt vier Fragen, die wir **nicht** für sie entscheiden:
+
+* **Wo lebt die Fläche** — Cockpit-Ausklapp, Designzentrale, beides? Hängt an Frage 4.
+* **Was fehlt ihnen von uns**, um die Regeln 2 bis 4 zu erfüllen? Wir kennen drei Lücken
+  (QA je Kamera, Varianten, `prompt_original` im Vertrag) und nennen sie als **unsere**
+  Bringschuld.
+* **Ist Regel 1 zumutbar?** Sie verbietet drei Bedienelemente, die ihre Vision vermutlich
+  vorsieht. *Wir halten das für richtig und wissen, dass es weh tut.* Wer sie trotzdem
+  zeigen will, darf — **markiert** als wirkungslos. Was nicht geht, ist sie stillschweigend
+  anzubieten.
+* **In welcher Reihenfolge** nützen ihnen unsere drei offenen Lieferungen?
+
+Und ein Punkt, bei dem der Auftrag ausdrücklich bittet statt zu verhandeln: **kein grünes
+Abzeichen ohne den Vorbehalt daneben.**
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).
