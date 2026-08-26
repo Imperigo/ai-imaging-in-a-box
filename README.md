@@ -38,7 +38,7 @@ Kette belegt, die Aussage *geometrietreu* aber noch nicht.
 | MCP-Anbindung an KosmoOrbit | Verdrahtbarkeit belegt, Registrierung nicht ausgeführt |
 | LoRA-Stiltraining | Naht gebaut, **nie ein Training ausgeführt** |
 
-Tests: **3595**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+Tests: **3783**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
 (`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
 
 ---
@@ -97,6 +97,7 @@ eine, die nach Vollständigkeit aussieht.
 | [`docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md`](docs/EINBINDUNG_KOSMOORBIT_2026-08-14.md) | der MCP-Vertrag und was er für die Bauform bedeutet |
 | **[`docs/EINBAU_CLOUDWORKER_2026-08-22.md`](docs/EINBAU_CLOUDWORKER_2026-08-22.md)** | **FÜR DEN CLOUD-WORKER:** was hier fertig ist und die KosmoOrbit-Seite **nicht erreicht** — mit dem, was dort dafür zu bauen wäre |
 | [`docs/UEBERGABE_VIS_2026-08-19.md`](docs/UEBERGABE_VIS_2026-08-19.md) | die ausführliche Fassung: 14 Fragen an die Vis-Oberfläche, mit Begründung |
+| [`docs/TOTE_KANTEN_TRIAGE_2026-08-26.md`](docs/TOTE_KANTEN_TRIAGE_2026-08-26.md) | 80 Funktionen ohne Aufrufer, jede mit einem Urteil — und drei, die eines brauchen |
 | [`docs/LEXIKON.md`](docs/LEXIKON.md) | Fachbegriffe für Leser:innen mit Architekturhintergrund |
 | [`docs/sitzungen/`](docs/sitzungen/) | Sitzungsprotokolle: Entscheidungen **mit Begründung** |
 | [`NOTICE`](NOTICE) | fremde Komponenten samt Lizenz und Prozessgrenze |

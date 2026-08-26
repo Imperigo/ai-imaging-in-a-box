@@ -114,7 +114,7 @@ def _pruefe_id(auftrag_id) -> str:
 
 
 def baue_auftrag(*, auftrag_id: str, art: str, beschreibung: str,
-                 worker: str = WORKER_LOCAL,
+                 worker: str = WORKER_LOCAL, anweisung: str | None = None,
                  synthetisch: bool = True, geometrie_pfad: str | None = None,
                  params: dict | None = None,
                  leistungsgrenze_w: int = LEISTUNGSGRENZE_W,
@@ -128,6 +128,23 @@ def baue_auftrag(*, auftrag_id: str, art: str, beschreibung: str,
             gehört ausdrücklich in jeden neuen Auftrag. Ein Messauftrag an den
             Cloud-Worker wäre unerfüllbar, ein Vertragsauftrag an die HomeStation liefe
             ins Leere.
+        anweisung: **Was zu tun ist, vollständig** — die Schritte, ihre Reihenfolge, was
+            zurückkommen soll und was ausdrücklich nicht getan werden soll. Steht sie hier,
+            bleibt ``beschreibung`` die Überschrift.
+
+            *Warum das ein eigenes Feld ist, seit dem 26.08.2026:* `CLAUDE.md` verlangt
+            seit dem 22.08.2026, dass der Auftrag seine Anweisung **in sich** trägt — kein
+            „siehe Dokument XY", denn ein Auftrag, der auf etwas verweist, das der Worker
+            erst suchen muss, ist ein halber Auftrag. Aus derselben Regel stammt das
+            Pflichtfeld ``worker``. **Das ist damals in den Code gelangt, die Anweisung
+            nicht:** Vier Tage lang trugen die Aufträge sie im Fliesstext von
+            ``beschreibung``, wo sich kein Leser auf sie verlassen kann, und diese
+            Funktion konnte das geltende Format gar nicht bauen. Nachgetragen am
+            26.08.2026 zusammen mit `tests/test_auftraege.py`, dem Wächter über den
+            wirklichen Dateien.
+
+            ``None`` lässt das Feld weg — für die Form vor dem 26.08., bei der die
+            Anweisung in ``beschreibung`` steht.
         synthetisch: ``True`` = die Testgeometrie wird vor Ort erzeugt, es reist nichts.
             ``False`` verlangt ``geometrie_pfad`` auf der HomeStation.
         geometrie_pfad: Pfad **auf der HomeStation**, nie eine Datei im Repo (Regel 3).
@@ -161,6 +178,9 @@ def baue_auftrag(*, auftrag_id: str, art: str, beschreibung: str,
         "auftrag_id": auftrag_id,
         "art": art,
         "beschreibung": beschreibung.strip(),
+        # Nur aufnehmen, wenn wirklich eine da ist: Ein leeres `anweisung` sähe aus wie
+        # ein gefuelltes Feld und waere schlimmer als gar keins.
+        **({"anweisung": anweisung.strip()} if anweisung and anweisung.strip() else {}),
         "erstellt": _jetzt(),
         "geometrie": {
             "synthetisch": bool(synthetisch),
