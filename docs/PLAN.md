@@ -3395,6 +3395,22 @@ zweiten Stelle.
       war. Ein Anschluss ist darum **kein Aufräumen, sondern eine Vertragsänderung** und
       liegt beim Owner.
 
+- [x] **Regel 1 hat einen Wächter** (26.08.) — `tests/test_notice.py`. Jeder
+      Copyleft-Eintrag im `NOTICE` trägt eine **erklärte** Auflösung (`AUFLOESUNG:
+      Prozessgrenze | Lizenzausnahme | KEINE`), die Zusage «null Laufzeitabhängigkeiten»
+      wird gegen `pyproject.toml` gehalten, und AGPL oder Non-Commercial darf nur als
+      **ausgeschlossener** Fund vorkommen.
+      Der erste Entwurf suchte nach Wörtern im Absatz und wurde von der Mutationsprobe
+      widerlegt: Der `libgomp`-Eintrag **erklärt im Konjunktiv**, was man ohne die
+      GCC-Ausnahme täte, und der Wortfilter hielt das für eine Zusage.
+- [ ] **LGPL-FUND, ausdrücklich gemeldet (Regel 1): `libquadmath` erreicht den
+      Produktprozess.** Das numpy-Wheel liefert es statisch mit (LGPL-2.1-or-later), und
+      `aiimaging.render` importiert numpy verzögert für die Umrechnung einer
+      16-Bit-Tiefenkarte — die **einzige** solche Stelle im Produktpfad. Der `NOTICE`-Eintrag
+      nannte bis zum 26.08. nur die Auflagen 2 und 3.
+      *Nach der LGPL selbst unproblematisch; die Hausregel in `CLAUDE.md` ist strenger.*
+      **Owner-Frage, nicht selbst entschieden** — siehe Entscheid 37 in Sitzung 13.
+
 ---
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
@@ -3404,7 +3420,7 @@ Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
 
 | | Beginn des Tages | nach dem Vormittag | Ende |
 |---|---:|---:|---:|
-| Tests | 3335 | 3528 | **3787** |
+| Tests | 3335 | 3528 | **3813** |
 | Vakuumprobe | 10 Treffer | 12 Treffer | 12 Treffer |
 | Tote Kanten, gar nicht erreichbar | — | 2 | **1** |
 | Tote Kanten **mit Urteil** | 0 | 0 | **80 von 80** |

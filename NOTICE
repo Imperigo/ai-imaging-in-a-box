@@ -14,10 +14,27 @@ den Apache-2.0-Code dieses Projekts.
 
 Jede dieser Komponenten ist austauschbar und wird unveraendert verwendet.
 
+Jeder Eintrag mit einer Copyleft-Lizenz (GPL, LGPL, AGPL) traegt seit dem
+26.08.2026 eine Zeile `AUFLOESUNG:` mit genau einem von drei Werten:
+
+  Prozessgrenze    Die Komponente laeuft als eigenes Programm. Es entsteht eine
+                   Aggregation und kein abgeleitetes Werk.
+  Lizenzausnahme   Der Lizenztext hebt die Copyleft-Wirkung selbst auf (etwa die
+                   GCC Runtime Library Exception).
+  KEINE            Weder noch - ein offener Punkt, der als solcher benannt ist.
+
+WARUM ALS FELD UND NICHT ALS FLIESSTEXT: `tests/test_notice.py` prueft diese
+Zeile. Ein Test, der stattdessen den Absatz durchsucht, laesst sich von einem
+KONJUNKTIV taeuschen - der libgomp-Eintrag erklaert, was man tun WUERDE, wenn
+die Ausnahme nicht griffe, und ein Wortfilter hielt das fuer eine Zusage.
+Nachgewiesen an genau diesem Eintrag, bevor die Marke eingefuehrt wurde.
+
 --------------------------------------------------------------------------------
 Blender                                            GPL-2.0-or-later
                                        (Binaer-Releases: GPL-3.0-or-later)
 https://www.blender.org/  ·  https://www.blender.org/about/license/
+
+AUFLOESUNG: Prozessgrenze
 
 Aufruf ausschliesslich als Subprozess:
     blender --background --python <runner>
@@ -28,6 +45,8 @@ Add-on-Verpackung. Das Blender-Binary wird nicht einverleibt.
 --------------------------------------------------------------------------------
 IfcOpenShell                                       LGPL-3.0-or-later
 https://github.com/IfcOpenShell/IfcOpenShell
+
+AUFLOESUNG: Prozessgrenze
 
 Aufruf ausschliesslich als Subprozess in einem separaten virtuellen Environment
 (.venv-ifc). Kein `import ifcopenshell` im Produkt-Environment.
@@ -40,6 +59,8 @@ Aufruf ausschliesslich als Subprozess in einem separaten virtuellen Environment
 --------------------------------------------------------------------------------
 CGAL — Computational Geometry Algorithms Library    dual: LGPL / GPL-3.0-or-later
 https://www.cgal.org/license.html
+
+AUFLOESUNG: Prozessgrenze
 
 Statisch in das IfcOpenShell-Wheel eingebunden. Die verwendeten Pakete
 Nef_polyhedron_3 und Polygon_mesh_processing gehoeren zur oberen Schicht und
@@ -58,6 +79,8 @@ Nur im .venv-ifc (Runner-Environment), nicht im Produkt-Environment.
 GEOS - Geometry Engine Open Source                 LGPL-2.1
 https://libgeos.org/
 
+AUFLOESUNG: Prozessgrenze
+
 Statisch mitgeliefert im shapely-Wheel (shapely.libs/libgeos-*.so.3.13.1 und
 libgeos_c-*.so.1.19.2). shapely deklariert selbst BSD-3-Clause; die LGPL-Angabe
 steht in einer zweiten Lizenzdatei des Wheels (dist-info/licenses/LICENSE_GEOS).
@@ -72,15 +95,45 @@ hiermit deklariert.
 libquadmath                                        LGPL-2.1-or-later
 Teil der GCC-Laufzeitbibliotheken, https://gcc.gnu.org/
 
+AUFLOESUNG: KEINE - offener Punkt, siehe unten
+
 Statisch mitgeliefert in numpy-Wheels. numpy deklariert BSD-3-Clause; die
 LGPL-Komponente wird von der Wheel-Angabe nicht genannt.
 
 Unveraendert verwendet, austauschbar (eine numpy-Fassung ohne libquadmath
-erfuellt denselben Zweck).
+erfuellt denselben Zweck). Das sind die Auflagen 2 und 3 der LGPL-Praezisierung
+aus CLAUDE.md.
+
+  ZUR AUFLAGE 1 - DIE PROZESSGRENZE: SIE IST HIER NICHT EINGEHALTEN.
+  Nachgezaehlt am 26.08.2026: numpy wird an genau EINER Stelle im Produktpfad
+  importiert - `aiimaging.render`, verzoegert und nur fuer die Umrechnung einer
+  16-Bit-Tiefenkarte. Damit erreicht libquadmath den Produktprozess und liegt
+  NICHT hinter einer Prozessgrenze, anders als GEOS (nur .venv-ifc).
+
+  Der Eintrag stand hier bis dahin so, als waeren alle drei Auflagen erfuellt.
+  Aufgefallen ist es beim Bau von tests/test_notice.py, der von jedem
+  Copyleft-Eintrag verlangt, dass er entweder eine Prozessgrenze oder eine
+  Lizenzausnahme benennt. Dieser Eintrag benannte keines von beidem.
+
+  WAS DAS BEDEUTET, und die beiden Saetze sind auseinanderzuhalten:
+  Nach der LGPL selbst ist die Lage unproblematisch - sie erlaubt das Linken aus
+  nicht-copyleft Code, solange die Bibliothek austauschbar bleibt, und das ist
+  sie. Die Hausregel in CLAUDE.md ist jedoch STRENGER als die Lizenz: Sie
+  verlangt fuer JEDE LGPL-Bibliothek die Prozessgrenze, ohne Ausnahme fuer
+  statisch in einem permissiven Wheel mitgelieferte Anteile.
+
+  ENTSCHIEDEN WIRD DAS NICHT HIER. Ob die Hausregel auch fuer eine LGPL-
+  Komponente gilt, die niemand direkt einbindet, sondern die in einem
+  BSD-3-Wheel mitreist, ist eine Owner-Frage; sie steht in der Entscheidliste
+  von Sitzung 13. Bis dahin bleibt der Zustand hier benannt statt begradigt -
+  ein stillschweigend entfernter Import waere eine Antwort auf eine Frage, die
+  niemand gestellt hat.
 
 --------------------------------------------------------------------------------
 libgomp, libgfortran            GPL-3.0-or-later WITH GCC-exception-3.1
 Teil der GCC-Laufzeitbibliotheken, https://gcc.gnu.org/
+
+AUFLOESUNG: Lizenzausnahme
 
 Statisch mitgeliefert in torch- und numpy-Wheels.
 
@@ -96,6 +149,8 @@ Statisch mitgeliefert in torch- und numpy-Wheels.
 
 --------------------------------------------------------------------------------
 Weitere statische Bestandteile des IfcOpenShell-Wheels
+
+AUFLOESUNG: Prozessgrenze
 
 Open CASCADE (LGPL-2.1 mit Ausnahme), GMP, MPFR, Boost, HDF5, libxml2,
 Eigen (MPL-2.0). Alle erreichen dieses Produkt ausschliesslich ueber die

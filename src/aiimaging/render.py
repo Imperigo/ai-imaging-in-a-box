@@ -968,7 +968,16 @@ def _tiefe_als_rgb(bild):
     # herein, die nur `convert` kann. Sie soll den Weg unten nehmen, nicht hier abstuerzen
     # — die Naht ist fuer Attrappen gebaut, und das gilt auch fuer diese Abzweigung.
     if getattr(bild, "mode", "") in ("I;16", "I;16B", "I;16L", "I", "I;32"):
-        import numpy as np                    # NumPy (BSD-3) — nur für diesen Fall
+        # NumPy — verzögert und nur für diesen Fall. **Die Lizenzangabe „BSD-3"
+        # stand hier bis zum 26.08.2026 allein, und das ist genau der Fehler, den
+        # die eigene Binärprüfung dieses Projekts benannt hat:** Das numpy-Wheel
+        # liefert `libquadmath` (LGPL-2.1-or-later) statisch mit, ohne es in seiner
+        # Kurzangabe zu nennen (`docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md`).
+        # Dies ist die **einzige** Stelle, an der numpy den Produktprozess erreicht
+        # — und damit die einzige, an der eine LGPL-Komponente diesseits der
+        # Prozessgrenze landet. Der Zustand ist im `NOTICE` benannt und liegt als
+        # Frage beim Owner; hier wird er nicht stillschweigend geändert.
+        import numpy as np
         werte = np.asarray(bild, dtype=np.float64)
         spanne = float(werte.max())
         # Skaliert wird auf den TATSÄCHLICHEN Höchstwert, nicht auf 65535: Die Karte ist
