@@ -3335,12 +3335,12 @@ zweiten Stelle.
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
 
-Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste** (achtzehn
+Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste** (zwanzig
 Entscheide, alle rückgängig zu machen) am Ende.
 
 | | Beginn des Tages | Ende |
 |---|---:|---:|
-| Tests | 3335 | 3496 |
+| Tests | 3335 | 3508 |
 | Vakuumprobe | 10 Treffer | 12 Treffer |
 
 *Die beiden neuen Vakuumtreffer sind erklärt: Zwei Zusicherungen über `warnungen` sind
@@ -3362,6 +3362,61 @@ sich hält.*
 **Nicht angekommen:** Der Commit `4a93aa7` der HomeStation liegt nicht auf `origin/main`;
 `auftraege/von-homestation/auf-vis-20260826-16.md` fehlt hier. Gearbeitet wurde nach ihrer
 Nachricht — was sonst noch in der Datei steht, ist ungelesen.
+
+---
+
+## Tote Kanten werden gesucht statt gefunden (26.08.2026)
+
+**Diese Woche hat das Projekt sieben tote Kanten gefunden — jede einzeln und jede durch
+Zufall.** Die letzten beiden waren eigene und sind von **aussen** gemeldet worden: Die
+HomeStation hat gemessen, was die Kette tut, und dabei bemerkt, was sie nicht tut.
+
+**Die Handzählung vom 25.08. hätte beide nicht gefunden.** Ihr Kriterium war *«null
+Produktrufe UND null Testrufe»* — und genau das übergeht die gefährliche Sorte: Eine
+Funktion **mit** gründlichen Tests und **ohne** Aufrufer sieht nicht verdächtig aus,
+sondern **fertig**. Grün, ausführlich dokumentiert, eine Frage beantwortend, die jemand
+gestellt hat — und sie beantwortet sie nie. *Die Testsuite ist dann das einzige Programm,
+das sie benutzt.*
+
+- [x] `tools/tote_kanten.py` — **Erreichbarkeit von einem Einstiegspunkt aus**, nicht
+      «wird der Name irgendwo genannt». Der Unterschied ist der ganze Nutzen: Ein Helfer,
+      den nur eine ebenfalls tote Funktion ruft, ist selbst tot; eine Funktion, die ihr
+      eigenes Modul von innen benutzt, kann sehr wohl auf dem Produktpfad liegen.
+      *Der erste Entwurf zählte «Name kommt in einer anderen Datei vor» und meldete 164
+      von 261 — unbrauchbar, und genau die Art Fehlalarm, an der ein Suchwerkzeug stirbt.*
+- [x] Es **meldet und prüft nicht.** Einstiegspunkte, MCP-Werkzeuge über eine Registry und
+      Studienläufe sind zu Recht ungerufen; ein Test darauf wären dutzende Fehlalarme —
+      dieselbe Regel wie bei der Vakuumprobe.
+- [x] Gruppiert nach Modul, mit der Marke **«← ganzes Modul?»** ab acht Treffern. *Genau
+      so sah `komposition.py` aus, bevor es am 23.08. auffiel: 1400 Zeilen, von nichts
+      gerufen.* Heute stehen dort `stilstudie` (13) und `komposition` (9).
+- [x] Die Grenze steht im Docstring **und** in der Ausgabe: Aufgelöst wird über den
+      blossen **Namen**, nicht über den Import. Das Werkzeug meldet eher **zu wenig** —
+      was es meldet, ist umso ernster zu nehmen.
+- [x] `tests/test_tote_kanten_werkzeug.py` (9 Fälle), darunter die Gegenprobe, dass die
+      Kette selbst als erreichbar gilt, und der Rückblick, dass beide Funde von heute
+      **nicht mehr** gemeldet werden.
+
+**Erste Erhebung: 261 öffentliche Funktionen, 81 nur über Tests erreichbar, 2 gar nicht
+genannt.** Die 81 sind grösstenteils Studien- und Analysemodule und damit erklärbar; die
+zwei nicht:
+
+- [x] `fortschritt.beobachte` — von keinem Einstiegspunkt erreichbar **und von keinem Test
+      genannt**. Ihr einziges Vorkommen ausserhalb der Definition stand in ihrem eigenen
+      Docstring. Nach der Regel des Projekts (*ungeprüft ist schlimmer als ungerufen*) hat
+      sie jetzt drei Prüfungen bekommen, statt gelöscht zu werden.
+- [x] `sonne.aus_bestellung` — **am selben Tag gebaut und am selben Tag als tot gemeldet.**
+      Sie ist jetzt angeschlossen: Das Kameraurteil trägt die Sonnenlage samt der
+      angenommenen Azimutkonvention, und damit steht die Annahme neben dem Bild und nicht
+      nur im Bericht des Runners.
+- [ ] `kosmo_naht.satz_ist_freigegeben_laut_status` — sie **hat** einen Aufrufer
+      (`kosmo_naht.py:258`), aber der ist selbst nur über Tests erreichbar. Die ganze
+      `kosmo_naht`-Übersetzung wartet auf `auf-40` (F5): anschliessen oder löschen.
+- [ ] **`komposition.py` ist noch immer zu neun Zehnteln unerreicht.** Angeschlossen ist
+      seit dem 23.08. nur `beurteile_bericht`. `beurteile_kamerasatz`, `ansichtenkatalog`,
+      `fehlende_ansichten`, `bildanteile`, `deckenanteil` und drei weitere sind weiterhin
+      nur über Tests erreichbar. *Das ist kein neuer Befund, aber zum ersten Mal einer mit
+      einer Zahl daneben.*
 
 ---
 

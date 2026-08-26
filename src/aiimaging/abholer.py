@@ -65,6 +65,7 @@ from . import kameras as _kameras_modul
 from . import komposition as _komposition
 from . import kosmo_szene as _kosmo_szene
 from . import prompts, render
+from . import sonne as _sonne
 from . import varianten
 
 #: Ein Auftrag auf ``running``, dessen Laufzettel so lange nicht angefasst wurde, gilt als
@@ -1142,6 +1143,12 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                           # gehoert an das Urteil. Ein Lauf knapp ueber der Schwelle
                           # sieht sonst aus wie einer mit Luft.
                           rahmung=rahmung,
+                          # Unter welcher Annahme die Sonne gestellt wurde. Der
+                          # Runner berichtet es auch, aber sein Bericht liegt neben
+                          # dem Bild und dieses Urteil im Befund — und die
+                          # Azimutkonvention ist eine SETZUNG, keine Messung
+                          # (auf-20260826-44 fragt danach).
+                          sonne=_sonne.aus_bestellung(szene.get("sonne")),
                           # Auf welchem Weg das Bildmodell lief. Seit dem 19.08.2026
                           # gemessen, bis zum 26.08. nirgends geschrieben — und darum
                           # sah ein Lauf, der am freien Kartenspeicher scheiterte, wie

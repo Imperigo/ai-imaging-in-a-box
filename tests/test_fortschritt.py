@@ -1029,3 +1029,58 @@ def test_und_ohne_jede_datei_meldet_sie_weiterhin_stillstand(tmp_path):
     assert befund["befund"] == "stillstand"
     assert befund["unterscheidbar"] is True
     assert wache.still_seit_s >= 30.0
+
+
+# ======================================================================================
+# `beobachte` — die Kurzform, die niemand rief und niemand prueft
+# ======================================================================================
+#
+# Gefunden am 26.08.2026 von `tools/tote_kanten.py`, beim ersten Lauf des Werkzeugs: Sie
+# ist von keinem Einstiegspunkt erreichbar UND von keinem Test genannt. Ihr einziges
+# Vorkommen ausserhalb ihrer Definition steht in ihrem eigenen Docstring.
+#
+# Die Regel dieses Projekts sagt, was dann zu tun ist: UNGEPRUEFT IST SCHLIMMER ALS
+# UNGERUFEN. Wer sie behaelt, gibt ihr wenigstens eine Pruefung — und die hier misst
+# genau das, was der Docstring verspricht.
+
+def test_beobachte_ist_die_kurzform_und_liefert_einen_beobachter(tmp_path):
+    """`with beobachte(wache) as b:` — der Docstring verspricht genau das."""
+    wache = fortschritt.wache_fuer_verzeichnis(tmp_path, frist_s=10.0, _uhr=Uhr())
+
+    beobachter = fortschritt.beobachte(wache)
+
+    assert isinstance(beobachter, fortschritt.Beobachter)
+    assert beobachter.wache is wache
+
+
+def test_beobachte_reicht_takt_und_rueckruf_durch(tmp_path):
+    """Zwei Parameter, die eine Kurzform verschlucken könnte — und dann wäre sie keine
+    Kurzform, sondern eine stille Einschränkung."""
+    def rueckruf(befund):
+        pass
+
+    wache = fortschritt.wache_fuer_verzeichnis(tmp_path, frist_s=10.0, _uhr=Uhr())
+
+    beobachter = fortschritt.beobachte(wache, takt_s=0.25, bei_stillstand=rueckruf)
+
+    assert beobachter.takt_s == 0.25
+    assert beobachter.bei_stillstand is rueckruf
+
+
+def test_beobachte_laeuft_als_kontext_und_raeumt_auf(tmp_path):
+    """Der eigentliche Zweck: Ein `with`-Block, der den Faden am Ende sicher stoppt.
+    Ein Beobachter, der nach dem Block weiterläuft, wäre ein Dämon ohne Besitzer."""
+    (tmp_path / "sSE").mkdir()
+    wache = fortschritt.wache_fuer_verzeichnis(tmp_path, frist_s=10.0)
+
+    with fortschritt.beobachte(wache, takt_s=0.01) as b:
+        (tmp_path / "sSE" / "bild.png").write_bytes(b"x" * 10)
+        for _ in range(200):                       # auf den ersten Blick warten
+            if b.blicke:
+                break
+            time.sleep(0.01)
+
+    assert b.bericht()["blicke"] >= 1, "im Block wurde wirklich hingesehen"
+    assert b._faden is None, (
+        "nach dem Block bleibt kein Faden zurueck — ein Beobachter, der weiterlaeuft, "
+        "waere ein Daemon ohne Besitzer")
