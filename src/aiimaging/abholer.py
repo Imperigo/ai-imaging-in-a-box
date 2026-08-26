@@ -238,15 +238,23 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
             f"'bilder'. Der Auftrag ist auf '{bruecke.STATUS_ERROR}' gesetzt."))
         return antwort
 
+    uebersprungen = bool(ergebnis.get("uebersprungen"))
     geschrieben = bruecke.schreibe_ergebnis(
         ordner, ergebnis.get("bilder") or [],
         job_id=auftrag.get("job_id"),
         geometrie_urteil=ergebnis.get("geometrie_urteil"),
         stil_urteil=ergebnis.get("stil_urteil"),
         zeiten=_zeiten_mit_stillstand(ergebnis.get("zeiten"), antwort["wache"]),
+        # Ohne diese Durchreichung stuende im Vertragsergebnis eines ABBESTELLTEN
+        # Auftrags «keine QA gelaufen» — ununterscheidbar von einem vergessenen Lauf.
+        # Gefunden am 26.08.2026 vom Kettenlauf-Test, nicht von den Bausteintests: Die
+        # vierte Lage war gebaut, gepruft und an der NAHT nicht angeschlossen.
+        uebersprungen=uebersprungen,
     )
-    antwort.update(tat=TAT_VERARBEITET, ergebnis=geschrieben,
-                   grund=f"{len(ergebnis.get('bilder') or [])} Bild(er) geschrieben.")
+    antwort.update(
+        tat=TAT_VERARBEITET, ergebnis=geschrieben,
+        grund=("Abbestellt (skip: true) — nichts gerechnet." if uebersprungen
+               else f"{len(ergebnis.get('bilder') or [])} Bild(er) geschrieben."))
     # NACH dem Vertragsergebnis und nach setze_status: Der Befund ist unsere eigene
     # Buchführung, nicht Teil der Abmachung — er darf die Reihenfolge nicht stören, an
     # der die fremde Oberfläche hängt.

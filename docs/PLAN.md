@@ -3335,12 +3335,12 @@ zweiten Stelle.
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
 
-Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste** (zweiundzwanzig
+Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste** (dreiundzwanzig
 Entscheide, alle rückgängig zu machen) am Ende.
 
 | | Beginn des Tages | Ende |
 |---|---:|---:|
-| Tests | 3335 | 3517 |
+| Tests | 3335 | 3528 |
 | Vakuumprobe | 10 Treffer | 12 Treffer |
 
 *Die beiden neuen Vakuumtreffer sind erklärt: Zwei Zusicherungen über `warnungen` sind
@@ -3512,6 +3512,39 @@ lässt sich vergleichen, statt wieder von vorn zu erschrecken.*
       Produktivweg durch unseren Jobstore laufen, oder wird `jobs.freigeben` als
       MCP-Weg deklariert und der Docstring berichtigt? *Selbst zu entscheiden wäre hier
       falsch — es geht um die Frage, wer eine GPU freigeben darf.*
+
+---
+
+## Ein Kettenlauf über alle Riegel des Tages (26.08.2026)
+
+An diesem Tag sind **acht Prüfungen** entstanden, jede für sich geprüft. *Acht Prüfungen,
+die einzeln greifen, sind noch keine Kette, die läuft:* Sie stehen im selben Durchgang und
+in einer festen Reihenfolge, sie schreiben in dasselbe Urteil, und mehrere von ihnen können
+einen Lauf abbrechen. Ob sie sich gegenseitig im Weg stehen, zeigt kein einziger von ihnen.
+
+`tests/test_kettenlauf_26august.py` (11 Fälle) fährt einen Auftrag durch
+`hole_einen` → `verarbeiter` → Befund → Vertragsergebnis, mit Attrappen für Blender und
+Diffusion.
+
+- [x] Der gesunde Lauf kommt durch **alle acht** Riegel und liefert drei Bilder.
+- [x] Jedes Feld dieses Tages einmal **an der Naht** nachgesehen: `rahmung`,
+      `komposition`, `sonne`, `geraeteweg`, `erreichbarkeit`, `doppelt_von`, `bild_png`,
+      `habs_ansichten`, `vertragsvorgaben`. *Ein Feld, das nur im Baustein existiert, ist
+      die tote Kante von morgen.*
+- [x] Jeder Riegel auch einzeln an der **ganzen** Kette: zu weite Rahmung, Kamera über
+      dem Dach, Abbestellung, drei gleiche Ansichten, halbes Zwischenbild.
+
+**Und er hat sofort etwas gefunden, das kein Bausteintest sah:** `hole_einen` reichte
+`uebersprungen` **nicht** an `bruecke.schreibe_ergebnis` durch. Im Vertragsergebnis eines
+abbestellten Auftrags stand damit «keine QA gelaufen» — ununterscheidbar von einem
+vergessenen Lauf. *Die vierte Lage war gebaut, geprüft und an der Naht nicht
+angeschlossen.* Behoben; die Antwort trägt jetzt auch im `grund` «Abbestellt (skip: true)
+— nichts gerechnet» statt «0 Bild(er) geschrieben».
+
+*Beim Schreiben fiel zudem eine Verwechslung auf, die im Test selbst steckte:
+`antwort["ergebnis"]` ist das **Vertrags**ergebnis (`images`, `qa`), nicht unser inneres
+(`bilder`, `kameras`). Das steht jetzt als Kommentar dort, wo jemand dieselbe Annahme
+machen würde.*
 
 ---
 
