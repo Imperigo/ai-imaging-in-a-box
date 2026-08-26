@@ -1,6 +1,6 @@
 # Was bei uns fertig ist und eure Seite nicht erreicht
 
-**Für den Cloud-Worker an KosmoOrbit · Stand 22.08.2026**
+**Für den Cloud-Worker an KosmoOrbit · Stand 22.08.2026 · [Nachtrag 26.08.2026](#nachtrag-26082026) am Ende**
 
 ---
 
@@ -188,3 +188,107 @@ die wollten wir nicht stillschweigend liegen lassen.
 
 Die ausführlichen Fragen mit Begründung stehen in `docs/UEBERGABE_VIS_2026-08-19.md`
 (inzwischen 14 Stück). Dieses Blatt ist die Kurzfassung für den Einbau.
+
+---
+
+## Nachtrag 26.08.2026
+
+**Zwischen dem 22. und dem 26.08. hat sich auf dieser Seite genug geändert, dass dieses
+Blatt sonst in die Irre führte.** Der Nachtrag steht hier und ersetzt nichts oben —
+was dort steht, gilt weiter, wenn es hier nicht widerrufen wird.
+
+### N1 · `images` kann jetzt KÜRZER sein als die bestellten Kameras
+
+**Das ist die einzige Änderung, die eure Oberfläche wirklich betrifft**, und sie ist neu:
+Bis zum 22.08. lieferte ein erfolgreicher Auftrag ein Bild je Kamera. Seit dem 26.08. gibt
+es **drei** Gründe, aus denen eine Kamera **kein** Bild erzeugt, und zwar bei
+`status: ok` — es ist kein Fehlschlag:
+
+| Grund | wann | was im Ergebnis steht |
+|---|---|---|
+| **Rahmung** | das Bauwerk füllt weniger als 65 % der Bildbreite | `verdict.reason` trägt «NICHT GERENDERT (Rahmung)» |
+| **Kamerahöhe** | die Kamera steht über dem Dach — die Aufnahme ist nach der HABS/NPS-Regel keine Architekturaufnahme | «NICHT GERENDERT (Aufnahme nicht beurteilbar)» |
+| **Doppelte Ansicht** | zwei bestellte Richtungen ergeben **dieselbe** Soll-Karte (bei einem Quader sind `sSE` und `nNW` byte-identisch) | «Nicht neu gerendert (identische Soll-Karte)» |
+
+Beim dritten Fall existiert das Bild sehr wohl — es ist dasselbe wie das seines Zwillings
+und steht darum **einmal** in `images`, nicht zweimal.
+
+**Was ihr tun müsst:** Nicht davon ausgehen, dass `images[i]` zur Kamera `i` gehört. Eine
+Oberfläche, die Bild und Kamera paarweise nebeneinanderstellt, zeigt ab dem ersten
+übersprungenen Lauf die falsche Beschriftung.
+
+**Warum wir das trotzdem so gebaut haben:** Jeder dieser drei Läufe hätte ~25 s Diffusion
+für ein Bild gekostet, das die Prüfung danach ohnehin verworfen hätte. Die Prüfung braucht
+kein Bild — sie stand bis zum 26.08. hinter der Bilderzeugung und hat dort eine fertige
+Datei kommentiert, statt sie zu verhindern.
+
+**Was das für euren Vertrag hiesse:** Ein Feld je Kamera — Kürzel, Bild oder `null`, und
+der Grund. Wir haben diese Angaben vollständig; sie haben bei euch kein Feld und stehen
+darum heute nur als Satz in `verdict.reason`. *Ob ihr das wollt, ist eure Entscheidung.*
+
+### N2 · Die Sonne wurde bis zum 26.08.2026 STILLSCHWEIGEND IGNORIERT
+
+Ein Auftrag mit `render.sun` wurde gerendert, **als wäre er nicht gestellt worden**: Der
+Runner setzte eine feste Sonne, immer dieselbe. Ein Abendstand kam als Mittagslicht zurück.
+
+*Das ist der gefährlichste der stehengebliebenen Felder gewesen, weil nichts daran nach
+einem Fehler aussieht* — das Bild ist sauber, gut belichtet und falsch.
+
+Seit dem 26.08. wird die Sonne bedient. Zwei Dinge dazu:
+
+* **Die Konvention ist offen und wir raten nicht.** Ob `azimuth` von Süden oder von Norden
+  zählt, unterscheidet Vormittag und Nachmittag. Wir rechnen mit **von Süden**, weil die
+  alte feste Sonne so gemeint war — und die benutzte Konvention **steht im Bericht**, damit
+  ein falscher Nullpunkt auffindbar ist statt unsichtbar. Die Frage liegt als
+  `auf-20260826-44` bei euch.
+* **Der alte Kommentar im Code war doppelt falsch.** Er nannte «50° Höhe und 35° Azimut»;
+  gerechnet stand die Sonne auf **40°** über dem Horizont und **35° östlich** von Süden.
+  Wer alte Läufe vergleicht, sollte das wissen.
+
+### N3 · `skip: true` bekommt jetzt eine Antwort
+
+Bis zum 26.08. bekam ein abbestellter Auftrag **gar nichts** zurück — eure Seite konnte
+*übersprungen* nicht von *abgestürzt* unterscheiden. Jetzt kommt ein reguläres
+`render-result/v2` mit leerem `images` und dem Grund «Abbestellt (skip: true) — nichts
+gerechnet.» in `verdict.reason`, und die QA sagt ausdrücklich **nicht gemessen** statt
+*durchgefallen*.
+
+### N4 · `verdict.reason` beginnt gegebenenfalls mit einer neuen Zahl
+
+Wenn die Szene eine gemessene Obergrenze hat, steht **zuerst** die **Erreichbarkeit**: der
+höchste Score, den diese Aufnahme überhaupt erreichen kann. Sie steht vorn, weil sie alle
+übrigen Zahlen einordnet — *ist die Schwelle für diese Aufnahme unerreichbar, misst jeder
+Score die Szene und nicht das Bild.*
+
+Sie fehlt bewusst, wenn die Obergrenze **keine** ist: Bei jeder Hintergrundstrategie ausser
+«keine» liegt das gemessene `geom_iou` gemessen darüber. Eine Erreichbarkeit aus einer
+Zahl zu rechnen, die keine Schranke ist, wäre eine Auskunft mit Dezimalpunkt und ohne
+Deckung.
+
+### N5 · Was weiterhin bestellt werden kann und nichts bewirkt
+
+Von den fünf stehengebliebenen Feldern des 22.08. sind zwei erledigt (`sun`, `skip`).
+**Drei bleiben**, und sie bleiben mit Begründung:
+
+| Feld | was passiert | was fehlt |
+|---|---|---|
+| `upscale` | dasselbe Bild wie ohne | ein Hochskalierer mit permissiver Lizenz — und ein Entscheid, ob die Geometrie-QA auf dem hochskalierten oder dem ursprünglichen Bild misst |
+| `style.mode` | die Stil-QA gegen ein Referenzset läuft nicht | ein Referenzset, das **uns** gehört. Fremde Bildschirmfotos dürfen es nicht sein |
+| `style.refs` | wird gelesen und danach nicht benutzt | dasselbe |
+
+*Die Namen sind die eures Vertrags, wie wir sie lesen* (`style` ist bei euch ein
+verschachtelter Block, `upscale` ein Feld obenauf). Ein Wächter auf dieser Seite
+(`tests/test_uebergabe.py`) hält diese Liste gegen die Tabelle im Code — **schliessen wir
+eines dieser Felder an, ohne dieses Blatt nachzuziehen, wird unsere Testsammlung rot.**
+Beim ersten Lauf hat er prompt zugeschlagen: Hier stand `style_mode` statt `style.mode`.
+
+Bei allen dreien meldet unser Ergebnis, dass sie nichts bewirkt haben. **Sie scheitern
+nicht still.**
+
+### N6 · Was sich NICHT geändert hat
+
+Der wichtigste Punkt oben (Abschnitt 1) steht unverändert: **Die guten QA-Zahlen kommen
+weiterhin nicht an.** `geom_iou` belohnt ein Bild ohne Bauwerk, der Score ist nicht monoton
+im Fehler, und was stattdessen trägt — Maske, Nullanker, Erreichbarkeit — hat bei euch kein
+Feld. Vier Tage Arbeit haben daran nichts geändert, weil die Lücke nicht auf dieser Seite
+liegt.

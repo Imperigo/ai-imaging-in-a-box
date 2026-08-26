@@ -565,6 +565,7 @@ DURCHGEREICHT = {
 #: unterstützt» ohne den nächsten Schritt ist eine Sackgasse; mit ihm ist es eine Aufgabe.
 STEHENGEBLIEBEN = {
     "hochskalieren": {
+        "fremd": "upscale",
         "neutral": False,
         "grund": "Es gibt keinen Hochskalierer in dieser Kette. Ein `upscale: true` "
                  "liefert dasselbe Bild wie `false`.",
@@ -573,6 +574,7 @@ STEHENGEBLIEBEN = {
                   "ursprünglichen gemessen wird. Beides ist offen.",
     },
     "stil_modus": {
+        "fremd": "style.mode",
         "neutral": "none",
         "grund": "Die Stil-QA läuft in dieser Kette nicht. Das ist ausdrücklich "
                  "entschieden und nicht vergessen: Sie bräuchte ein Referenzset, das uns "
@@ -582,6 +584,7 @@ STEHENGEBLIEBEN = {
                   "also im Ergebnis sichtbar, nur eben nicht in der Bestellung.",
     },
     "stil_referenzen": {
+        "fremd": "style.refs",
         "neutral": [],
         "grund": "Referenzbilder werden aus der Bestellung gelesen und danach von "
                  "niemandem. Anders als bei `stil_modus` schickt der Betreiber hier "

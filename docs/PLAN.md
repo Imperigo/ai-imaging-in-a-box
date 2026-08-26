@@ -3442,6 +3442,16 @@ zweiten Stelle.
       zwei Fehlalarme sieht, nimmt den dritten Treffer nicht mehr ernst — und der dritte
       ist der echte.*
 
+- [x] **Das Cloudworker-Blatt ist auf dem Stand — und bewacht** (26.08.).
+      `docs/EINBAU_CLOUDWORKER_2026-08-22.md` hätte `sun` und `skip` weiter als wirkungslos
+      geführt, obwohl beide seit heute bedient werden, und hätte verschwiegen, dass
+      **`images` jetzt kürzer sein kann als die bestellten Kameras** — drei Gründe, alle
+      bei `status: ok`. Nachtrag geschrieben, alter Text steht.
+      `tests/test_uebergabe.py` hält die Liste der wirkungslosen Felder **genau** gegen
+      `kosmo_szene.STEHENGEBLIEBEN`, in beide Richtungen. Der erste Entwurf bestand eine von
+      vier Mutationen: Er las Erwähnungen statt Tabellenzeilen, eine Zusicherung war
+      vakuumwahr, und er prüfte «mindestens» statt «genau».
+
 ---
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
@@ -3451,7 +3461,7 @@ Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
 
 | | Beginn des Tages | nach dem Vormittag | Ende |
 |---|---:|---:|---:|
-| Tests | 3335 | 3528 | **3858** |
+| Tests | 3335 | 3528 | **3865** |
 | Vakuumprobe | 10 Treffer | 12 Treffer | 12 Treffer |
 | Tote Kanten, gar nicht erreichbar | — | 2 | **1** |
 | Tote Kanten **mit Urteil** | 0 | 0 | **80 von 80** |

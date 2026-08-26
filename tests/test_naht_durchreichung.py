@@ -64,7 +64,12 @@ def test_jeder_stehengebliebene_eintrag_sagt_auch_was_fehlt(feld):
     jemand die Lücke je schliesst.
     """
     eintrag = STEHENGEBLIEBEN[feld]
-    assert set(eintrag) == {"neutral", "grund", "noetig"}
+    assert set(eintrag) == {"fremd", "neutral", "grund", "noetig"}, (
+        "Jeder Eintrag nennt seit dem 26.08.2026 auch seinen FREMDEN Namen. Der Grund "
+        "steht in `tests/test_uebergabe.py`: Das Blatt für den Cloud-Worker nennt die "
+        "Felder so, wie sie im fremden Vertrag heissen, und ein Wächter hält beide "
+        "Listen gegeneinander. Ohne den Namen im Code wäre die Zuordnung geraten.")
+    assert eintrag["fremd"], "der fremde Name gehört benannt, nicht leer gelassen"
     assert len(eintrag["grund"]) > 40, "ein Halbsatz erklärt nichts"
     assert len(eintrag["noetig"]) > 30, "was fehlt, gehört benannt"
 
