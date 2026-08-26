@@ -4247,6 +4247,56 @@ anderen Grund rot blieb. *Vor jeder Probenrunde wird eingecheckt, ausnahmslos.*
 
 ---
 
+## Ein dritter Worker: die Oberfläche hat ab jetzt einen eigenen Empfänger (26.08.2026)
+
+**Owner-Hinweis, mitten in der Arbeit:** Ein neuer **Kosmo-UI-Worker** ist eingerichtet und
+ab sofort für die **ganze Oberfläche** von KosmoOrbit zuständig. UI-Punkte, die bei der
+eigenen Arbeit auffallen, sollen als Auftrag an ihn gehen.
+
+**Gefunden:** Session «Kosmo UI», seit 15:48 desselben Tages, und — das ist der Punkt, der
+alles einfacher macht — sie führt **unser Repo als Quelle**. Ein Auftrag in
+`auftraege/offen/` erreicht sie also über git. *Direktes Anschreiben geht von hier aus
+nicht;* der Auftragsordner ist der Kanal, und das ist ohnehin die Hausregel.
+
+- [x] `auftrag.WORKER_UI` als dritter Worker, `CLAUDE.md` entsprechend fortgeschrieben.
+      **`ui` und `cloud` bleiben getrennt, obwohl beide «drüben» sind:** Vertrag und
+      Oberfläche sind zwei Gegenstände. *Welchen Feldnamen ein QA-Block je Kamera bekommt*,
+      ist eine Vertragsfrage; *ob neben der Zahl ihr Vorbehalt steht*, eine
+      Oberflächenfrage. Beide an dieselbe Stelle zu schicken hiesse, dass eine liegen
+      bleibt, weil sie nicht zum Auftrag des Lesers gehört.
+- [x] **`auf-52` umadressiert.** Der Oberflächen-Auftrag lag seit dem Abend beim
+      Cloud-Worker — *er wäre dort liegengeblieben, nicht aus Ablehnung, sondern weil er
+      nicht mehr zu ihrem Gegenstand gehört.* Geändert wurde nur das Feld `worker` und ein
+      Vorspann, der die Umadressierung erklärt; der Auftragstext bleibt, wie er war.
+      *(Das ist keine Ausnahme von Entscheid 36 — «laufende Aufträge nicht umschreiben»
+      meint die Frage, nicht den Empfänger.)*
+- [x] `docs/UI_BEFUNDE.md` — die Sammelstelle, mit `tests/test_ui_befunde.py` darüber.
+      Jeder Befund ist **weitergegeben** (mit einem Auftrag, den es gibt, an den
+      **ui**-Worker) oder ausdrücklich **noch nicht**. Die dritte Möglichkeit — «steht da
+      und ist nie irgendwo angekommen» — gibt es nicht.
+- [x] **Acht Befunde eingetragen**, sechs davon aus früherer Arbeit dieses Tages, zwei neu:
+      `auf-53` an den UI-Worker.
+
+### Die zwei neuen Befunde, und woher sie kamen
+
+**U7 — ein Bild aus dem Zwischenspeicher muss erkennbar sein.** Entstanden beim Anschluss
+des Zwischenspeichers, eine halbe Stunde vorher. Seit heute kann die Geometriestufe aus
+einem früheren Lauf stammen; ohne Hinweis zeigt die Oberfläche ein Bild als «gerade
+entstanden», das Stunden alt ist. *Für eine Messreihe über Prompts ist das genau die
+Auskunft, die zählt.*
+
+**U8 — die Geländefrage gehört vorgelegt, nicht abverlangt.** Entstanden beim Beantworten
+der HomeStation-Rückfrage, eine Stunde vorher. Ihr Satz war: *«Er verlangt, dass der
+Besteller VORHER weiss, dass kein Gelände in der Szene ist. Bei einer fremden glb weiss er
+das nicht.»* Der Mensch vor der Oberfläche beantwortet diese Frage in zwei Sekunden — wenn
+man sie ihm **zeigt**, mit den elf geprüften Baustoffnamen daneben.
+
+**Keiner der beiden hatte mit Oberfläche zu tun, bis er es hatte.** Genau darum gibt es
+das Blatt: Ein Befund über die Anzeige entsteht immer beim Bauen von etwas anderem, und
+ohne eine Zeile, in die er sofort hineingeht, denkt man ihn beim nächsten Mal wieder.
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).
