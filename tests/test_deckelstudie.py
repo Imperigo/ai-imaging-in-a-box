@@ -150,16 +150,17 @@ def test_der_himmel_wird_ueber_den_MEDIAN_bestimmt_und_nicht_ueber_das_minimum()
     werte = [karte[i] for i in lage["geometrie"]]
     tief, hoch = min(werte), max(werte)
 
-    # Ein Hintergrund MIT STREUUNG: die Hälfte tief, die Hälfte hoch. Der Median liegt
-    # dann in der Mitte, das Minimum ganz unten — die beiden sind unterscheidbar.
+    # Ein Hintergrund in DREI Dritteln: 0.10, 0.50, 0.90 der Bauwerksspanne. Median 0.50,
+    # Minimum 0.10, Maximum 0.90 — alle drei deutlich auseinander.
     gestreut = list(karte)
+    drittel = (0.10, 0.50, 0.90)
     for n, i in enumerate(lage["hintergrund"]):
-        gestreut[i] = tief + (0.2 if n % 2 else 0.8) * (hoch - tief)
+        gestreut[i] = tief + drittel[n % 3] * (hoch - tief)
 
     h = ds.wo_liegt_der_himmel(soll, gestreut)
-    assert 0.15 < h["lage"] < 0.85, (
-        f"lage {h['lage']:.3f} — bei einem gestreuten Hintergrund muss die Mitte "
-        f"herauskommen. Am Rand heisst: es wird Minimum oder Maximum gemessen."
+    assert h["lage"] == pytest.approx(0.50, abs=0.05), (
+        f"lage {h['lage']:.3f} statt 0.50. Bei 0.10 wird das Minimum gemessen, bei 0.90 "
+        f"das Maximum — beides macht die Vorhersage dieser Studie systematisch falsch."
     )
 
 

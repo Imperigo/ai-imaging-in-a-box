@@ -4465,6 +4465,88 @@ weniger.
 
 ---
 
+## Der Deckel liegt nicht in der Regel — er liegt im Schätzer (26.08.2026)
+
+**Die erste Aufgabe aus Strang A des neuen Plans, und sie kippt eine offene Frage.**
+
+In `PLAN.md` stand seit dem 18.08.: *«Den Rest des Deckels — trägt eine Kombination
+(`ohne_randberuehrung` plus `rand_10`)?»* Die Frage zielt auf die **Silhouettenregel**.
+Nachgemessen — ohne GPU, an im Repo erzeugter Geometrie: **die Regel ist es nicht.**
+
+- [x] `src/aiimaging/deckelstudie.py` + `tests/test_deckelstudie.py` +
+      `docs/DECKELSTUDIE_2026-08-26.md`.
+
+### Die Regel erreicht 0.9999
+
+Ein perfekter Schätzer lässt sich nachstellen: Blenders eigene Tiefe aus dem
+normalisierten PNG — richtige Werte, **keine Hintergrundmarke**, genau wie eine
+Schätzerkarte.
+
+| Szene | Geometrieanteil | `wie_soll` | `ohne_randberuehrung` |
+|---|---|---|---|
+| Quader | 0.1111 | **0.9999** | 0.9999 |
+| Hochbau (141 Teile) | 0.1730 | **0.9998** | 0.9999 |
+| Hochbau mit Gelände | 0.0822 | **0.9977** | 0.9989 |
+
+Die Produktion deckelt bei **0.406**.
+
+### Und woran im Schätzer — zwei Fehler, einzeln aufgebracht
+
+**A · Rauschen nur auf der Geometrie** (Hintergrund perfekt): Selbst bei |rho| **0.393**
+bleibt IoU bei **0.7653**. Die Regel ist gegen Ordnungsfehler *innerhalb* der Geometrie
+robust.
+
+**B · Der Hintergrund rückt in den Wertebereich des Bauwerks** (Geometrie unangetastet):
+|rho| bleibt bei **exakt 1.0000**, IoU fällt 0.9998 → 0.4983 → **0.0000**.
+
+### Die Erklärung, und sie passt auf die Zahl
+
+Gemessen wurde |spearman| **0.990** bei geom_iou **0.406**. Nach A gehörte zu 0.99 ein IoU
+von 0.99 — Ordnungsrauschen erklärt es *nicht*. Nach B gehört zu 0.406 ein Hintergrund bei
+rund **0.56** der Bauwerksspanne.
+
+> **Der Schätzer legt den Himmel mitten in die Tiefenspanne des Bauwerks.**
+
+Keine Ungenauigkeit, sondern eine Eigenschaft **relativer** Tiefenschätzer: Sie bilden auf
+einen beschränkten Bereich ab und haben für *unendlich weit* keinen Wert.
+
+### Was daraus folgt
+
+**Die offene Aufgabe ist beantwortet — mit nein.** Keine Silhouettenregel, die allein die
+Schätzerwerte liest, kann das beheben; `ohne_randberuehrung` hebt 0.256 auf 0.406, weil sie
+randberührende Flächen verwirft, und das erklärt genau die Grössenordnung des Gewinns.
+
+**Drei Wege stehen offen, und die Wahl gehört dem Owner** — sie berührt die
+Forschungsfrage. Jeder hat einen benannten Preis (Details im Studiendokument):
+
+1. Eine Hintergrundtrennung **ausserhalb** der Schätzerwerte — zweites Modell, Lizenzfrage.
+2. `geom_iou` gegen den je Szene erreichbaren Deckel **normalisieren** — dann bedeutet die
+   Schwelle je Szene etwas anderes.
+3. `geom_iou` **aus dem Score nehmen**, auf `rho_maske` stützen — *Fall B zeigt, dass sie
+   von diesem Fehler gar nicht betroffen ist.* Preis: `geom_iou` fängt heute den Fall, den
+   `rho_maske` nicht sieht — ein Bauwerk an der **falschen Stelle** mit richtiger
+   Tiefenordnung.
+
+### Die Studie ist widerlegbar, und das ist ihr Kern
+
+`deckelstudie.wo_liegt_der_himmel` gibt die eine Zahl, aus der alles folgt.
+**Vorhersage: bei einem echten Schätzerlauf liegt sie zwischen 0,55 und 0,60.**
+Beauftragt als `auf-55`. *Fällt sie deutlich anders aus, wird die Erklärung
+zurückgenommen und nicht nachjustiert.*
+
+### Was die Mutationsproben fanden
+
+Vier Proben, **eine überlebte zweimal**: Der Median in `wo_liegt_der_himmel` liess sich
+durch das Minimum ersetzen, ohne dass etwas rot wurde — weil meine Testszene einen
+**konstanten** Hintergrund hatte und Median, Minimum und Maximum dort zusammenfallen.
+
+*Das ist das Messinstrument der Vorhersage.* Hätte es das Minimum gemessen, wäre die
+Vorhersage systematisch zu niedrig und ihre Widerlegung wertlos gewesen. Der zweite Anlauf
+mit einem gestreuten Hintergrund fiel wieder durch — er war zu weit gefasst. Erst der
+dritte, mit drei getrennten Dritteln, fällt bei Minimum **und** Maximum.
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).
