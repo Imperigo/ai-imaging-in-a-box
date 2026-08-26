@@ -775,6 +775,15 @@ schlägt Alarm, wenn sie verletzt wird.
 **Unit-Test** — Prüft einen einzelnen, kleinen Baustein isoliert.
 
 **Integrationstest** — Prüft das Zusammenspiel mehrerer Bausteine.
+*Warum er nicht durch viele gute Einzeltests zu ersetzen ist — an einem Fall aus diesem
+Projekt (26.08.2026): Acht neue Prüfungen waren jede für sich geprüft und grün. Der erste
+Test, der einen Auftrag durch die **ganze** Kette fuhr, fand binnen Minuten, dass eine
+Angabe auf ihrem letzten Meter verlorenging — sie wurde ermittelt, geprüft und an der
+Übergabestelle nicht weitergereicht. Ein Auftrag, den jemand **abbestellt** hatte, kam
+draussen als „ungeprüft" an statt als „abbestellt": zwei sehr verschiedene Auskünfte, von
+denen nur eine einen zweiten Lauf verlangt.*
+*Der Einzeltest fragt: Tut dieses Stück, was es verspricht? Der Integrationstest fragt:
+**Kommt das Versprochene auch an?** Die zweite Frage stellt sich niemand von selbst.*
 
 **Regressionstest** — Ein Test, der einen bereits behobenen Fehler festhält, damit er
 nicht unbemerkt zurückkehrt. Das eigentliche Sicherheitsnetz eines wachsenden Projekts.
@@ -3387,6 +3396,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-26 | **Integrationstest** um den Grund erweitert, warum viele gute Einzeltests ihn nicht ersetzen — mit dem Fall vom selben Tag: Acht Pruefungen einzeln gruen, und eine Angabe ging auf ihrem letzten Meter verloren. Der Einzeltest fragt, ob ein Stueck haelt, was es verspricht; der Integrationstest fragt, ob das Versprochene ankommt |
 | 2026-08-26 | Ergaenzt: **Der Nullpunkt des Azimuts (Sued- gegen Nord-Konvention)**. Anlass ist das Anschliessen des Sonnenstands: Die beiden gebraeuchlichen Festlegungen liegen 180 Grad auseinander und vertauschen Vormittag und Nachmittag. Der Eintrag traegt mit, warum der Fehler an keinem einzelnen Bild erkennbar waere — und warum die gewaehlte Annahme darum in jeden Bericht gehoert |
 | 2026-08-26 | Ergaenzt: **Zweizaehlige Drehsymmetrie**. Anlass ist ein Renderlauf fuer nichts: Bei einem Quader sind die beiden vorgeschriebenen Ueber-Eck-Ansichten Byte fuer Byte identisch. Der Eintrag traegt mit, warum es sich an der Huellbox NICHT entscheiden laesst — und warum die eingesparte Ansicht hinterher nicht mitzaehlen darf |
 | 2026-08-26 | Ergaenzt: **Dauerwarnung**. Nachgemessen: Drei Warnungen feuerten bei jedem Auftrag und fuellten damit alle drei Plaetze der Anzeige — jede echte Warnung, die im Ablauf spaeter entsteht, war unsichtbar. Der Eintrag traegt die billige Probe mit (erscheint sie auch, wenn gar nichts vorliegt?) und den Grund, warum Loeschen keine Abhilfe ist, sondern Verschweigen |
