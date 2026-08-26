@@ -64,7 +64,7 @@ Diese 23 sind der Grund, warum das Werkzeug **meldet und nicht prüft** (Entsche
 | `herkunft.py` | 5 | Phase 4, „Connectors: ArchiCAD über IFC4, Rhino über glTF" |
 | `lora.py` | 4 | Phase 4, LoRA-Stiltraining — **nie ein Training ausgeführt**, im README so vermerkt |
 | `kette.py` | 2 | der Graph-Umbau; gebaut und gemessen, aber auf dem Stand vor sechs Tagen intensiver Entwicklung |
-| `konversionstreue.py` | 2 | `auf-20260824-39`, unbeantwortet — misst, ob die Konversion nicht nur *durchläuft* |
+| `konversionstreue.py` | 2 | ~~`auf-20260824-39`, unbeantwortet~~ — **am selben Tag beantwortet, siehe Nachtrag unten** |
 
 **Urteil: die Lücke ist an anderer Stelle bereits benannt.** Für jede dieser fünf steht
 im README, im `PLAN.md` oder in einem offenen Auftrag, dass sie nicht läuft. *Das ist der
@@ -220,3 +220,44 @@ Entscheidung. *Über Löschen entscheidet nicht, wer eine Funktion zufällig ung
 bei zehn — beides mit Absicht: *„Eine wachsende Liste dort ist ein Zeichen dafür, dass
 weggesehen statt geprüft wird."* Achtzig Urteile gehören in ein Dokument, das man liest,
 und nicht in eine Ausnahmeliste, die man vergisst.
+
+---
+
+## Nachtrag 26.08.2026 abends · Was sich noch am selben Tag geändert hat
+
+Zwei Einträge dieser Triage sind wenige Stunden nach ihr eingelöst worden — beide, weil
+sich herausstellte, dass **Blender und `.venv-ifc` in diesem Container liegen** und die
+ganze Geometrieseite hier messbar ist.
+
+### `konversionstreue` (Gruppe B) ist jetzt belegt
+
+`auf-20260824-39` fragte, ob die umgewandelte Geometrie **stimmt** oder bloss
+durchgelaufen ist. Alle vier Posten brauchten nur synthetische Geometrie und den
+IFC-Runner. Hier gerechnet, in zwei Sekunden:
+
+* **G1** — 8,0 × 5,0 × 3,25 m, exakt, keine Abweichung.
+* **G2** — derselbe Bau in **Millimetern** ergibt dieselben Meter. Der Runner liest den
+  `IfcSIUnit`-Vorsatz und rechnet selbst um.
+* **G3** — alle drei gefälschten Berichte gefangen, zwei mit benannter Diagnose.
+* **G4** — mit Räumen: Hüllbox unverändert, zwei `IfcSpace` übersprungen.
+
+`pruefe_konversion` und `spanne_aus_bbox` stehen weiterhin als *nur über Tests erreichbar*
+im Werkzeug — **und das ist jetzt richtig statt verdächtig**: Sie sind ein Messwerkzeug für
+einen Bericht, kein Schritt der Bildkette. Was sich geändert hat, ist nicht ihre
+Erreichbarkeit, sondern dass sie **belegt** sind.
+
+### Und ein neunter toter Kanten-Fall, den erst der echte Lauf zeigte
+
+Die Triage misst **Erreichbarkeit**. Sie kann nicht sehen, ob eine erreichbare Funktion mit
+*brauchbaren Werten* aufgerufen wird. Am selben Tag hat sich genau das als die nächste
+Fehlerart erwiesen:
+
+* `maske.ist_gelaende` war erreichbar, lief bei jedem Auftrag — und bekam nach dem
+  glb-Export nur `IfcSlab_<GlobalId>` zu lesen, weil der IFC-Name unterwegs verlorenging.
+  Sie konnte also **nie** anschlagen.
+* `kameras.rahmungsverhaeltnis` war seit dem Vormittag angeschlossen — und rechnete mit
+  dem Sollwert des Deckungsgrads statt mit dem gemessenen Füllgrad.
+
+**Beides sieht in einer Erreichbarkeitsanalyse gesund aus.** *Eine Funktion, die läuft und
+nichts zu lesen bekommt, ist schwerer zu finden als eine, die gar nicht läuft* — und dafür
+gibt es kein Werkzeug, sondern nur den Lauf mit echten Daten.
