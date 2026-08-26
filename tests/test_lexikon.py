@@ -127,6 +127,7 @@ def test_die_tragenden_begriffe_dieses_projekts_stehen_darin(begriff):
 KONSTANTEN_HERKUNFT = {
     "SCHWELLE_GEOMETRIE": "aiimaging.geometrie_qa",
     "SCHWELLE_STIL": "aiimaging.stil_qa",
+    "BILDBREITE_ABBRUCH": "aiimaging.kameras",
 }
 
 _ZITAT = re.compile(r"`([A-Z][A-Z0-9_]{3,})\s*=\s*([0-9]+[.,][0-9]+)`")

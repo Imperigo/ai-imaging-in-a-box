@@ -553,6 +553,19 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     # Die Rahmung. Diese Zeile steht bewusst weit oben: Sie sagt, ob der Lauf ueberhaupt
     # bestehen KONNTE — und wenn nicht, sind alle folgenden Zahlen Auskunft ueber die
     # Rahmung und nicht ueber das Bild.
+    # Ganz oben, weil es die einzige Zeile ist, die von einem NICHT gelaufenen Render
+    # berichtet. Wer sie uebersieht, sucht in den Zahlen darunter nach einem Bild, das es
+    # gar nicht gibt.
+    nicht_gerendert = [k.get("kamera") for k in kameras
+                       if (k.get("rahmung") or {}).get("abbruch") is True]
+    if nicht_gerendert:
+        zeilen.append(
+            f"NICHT GERENDERT (Rahmung): {', '.join(str(k) for k in nicht_gerendert)} — "
+            f"das Bauwerk fuellt zu wenig Bildbreite, als dass ein Urteil moeglich waere "
+            f"(gemessen noetig 65 %, auf-vis-20260825-15 Posten 1). Es wurde ABSICHTLICH "
+            f"kein Bild erzeugt: Bei 30 % Bildbreite ist das Ergebnis gemessen "
+            f"schlechter als bei 17,5 %. Abhilfe ist eine naehere Kamera")
+
     zu_klein = [k.get("kamera") for k in kameras
                 if (k.get("torchance") or {}).get("lage") == "zu_klein"]
     if zu_klein:
@@ -935,6 +948,17 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     f"{bericht.get('depth_png_fehler')}"
                 )
 
+            # DIE PRUEFUNG VOR DEM BILDLAUF. Sie steht hier und nicht weiter unten,
+            # weil alles darunter Geld kostet: Startwerte, Diffusion, Schaetzerlaeufe.
+            # Gemessen ist, dass ein Lauf bei 30 % Bildbreite SCHLECHTER ausgeht als bei
+            # 17,5 % — Rendern ist hier nicht "ein schwaecheres Ergebnis", sondern gar
+            # keines (auf-vis-20260825-15, Posten 1).
+            rahmung = _rahmung_vor_dem_render(bericht)
+            if rahmung.get("abbruch"):
+                urteile.append(_uebersprungenes_urteil(kuerzel, rahmung))
+                zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
+                continue
+
             # Die Soll-Karte kommt aus der EXR, nicht aus dem PNG: nur sie trägt die
             # Silhouette exakt. Das PNG war die Eingabe des Modells, die EXR ist der
             # Massstab.
@@ -977,6 +1001,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     maske=maskenbefund.get("maske"))
             urteil = dict(urteil, kamera=kuerzel, nullanker=anker,
                           seedauswahl=auswahl,
+                          # Auch wenn nicht abgebrochen wurde: Die gerechnete Lage
+                          # gehoert an das Urteil. Ein Lauf knapp ueber der Schwelle
+                          # sieht sonst aus wie einer mit Luft.
+                          rahmung=rahmung,
                           # Die Kompositionsprüfung — bis zum 23.08.2026 rief SIE
                           # niemand, obwohl `komposition.py` 1400 Zeilen gerechnetes
                           # Fachwissen trägt. Ein Regelwerk, das nur seine eigenen Tests
@@ -1028,6 +1056,66 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         }
 
     return verarbeite
+
+
+def _rahmung_vor_dem_render(bericht: dict) -> dict:
+    """Kann dieser Lauf bei DIESER Rahmung überhaupt etwas zeigen — **vor** dem Bildlauf?
+
+    **Der Anlass ist ein Owner-Einwand** (`auf-vis-20260825-15`, Posten 1, 25.08.2026),
+    nachdem die Kette zum ersten Mal ganz durchgelaufen war:
+
+      *«Das sollte natuerlich gar nicht so weit kommen — die Modelle muessen pruefen, ob
+      die Geometrie richtig ist und richtig darstellt, BEVOR AI Imaging startet.»*
+
+    Und der Einwand traf einen zweiten Befund derselben Nacht: :func:`kameras.rahmungsverhaeltnis`
+    und ``bbox_bauwerk`` waren **gebaut und ungenutzt** — ausser Tests kein einziger
+    Aufrufer. Die sechste tote Kante dieser Woche, und die einzige, die niemand von
+    aussen gemeldet hat, weil sie nach aussen wie eine gelöste Aufgabe aussah.
+
+    **Warum das hier steht und nicht im Runner.** Der Runner rahmt, was ihm gesagt wird;
+    er entscheidet nicht über Aufträge. Und die Rechnung ist reine Arithmetik — im Runner
+    wäre sie eine Fähigkeit, die ohne Blender niemand hätte (Regel 4).
+
+    Returns:
+        Das Ergebnis von :func:`kameras.rahmungsverhaeltnis`, ergänzt um ``weg`` (wie die
+        Kamera zustande kam) und ``note`` (warum die Bauwerksbox fehlt, falls sie fehlt).
+
+    .. important::
+       ``abbruch`` wird auf ``None`` gesetzt, wenn die Kamera **nicht** aus der Hüllbox
+       abgeleitet wurde. Die Rechnung geht von :data:`kameras.DECKUNGSGRAD` aus, und der
+       beschreibt nur den abgeleiteten Weg. Wer Standort und Blickziel als Zahlen
+       hereingibt, hat gerahmt — und einen solchen Auftrag mit einer Zahl abzubrechen,
+       die auf ihn nicht zutrifft, wäre schlimmer als gar keine Prüfung.
+    """
+    from . import kameras
+
+    weg = (bericht.get("kamera") or {}).get("weg")
+    lage = kameras.rahmungsverhaeltnis(bericht.get("bbox"),
+                                       bericht.get("bbox_bauwerk"))
+    lage = dict(lage, weg=weg, note=bericht.get("bbox_bauwerk_note") or "",
+                deckungsgrad=kameras.DECKUNGSGRAD)
+    if weg != "abgeleitet":
+        lage["abbruch"] = None
+        lage["abbruch_grund"] = (
+            f"Die Kamera kam auf dem Weg {weg!r} zustande, nicht aus der Huellbox. Der "
+            f"Deckungsgrad beschreibt diesen Lauf darum NICHT, und es wird nichts "
+            f"abgebrochen. Die gerechnete Bildbreite steht trotzdem da — als Auskunft, "
+            f"nicht als Urteil.")
+    return lage
+
+
+def _uebersprungenes_urteil(kuerzel, rahmung: dict) -> dict:
+    """Das Urteil einer Kamera, die **gar nicht erst gerendert** wurde.
+
+    Es trägt ``score: None`` und ``gemessen: False``, und das ist die ganze Absicht:
+    :func:`_schlechtestes` wertet ein Urteil ohne Wert als das schlechteste überhaupt,
+    :func:`_kameraspanne` zählt es **nicht** als gemessen. Ein übersprungener Lauf
+    verbessert also nichts und verschwindet nirgends — er ist *nicht gemessen*, und das
+    ist weder bestanden noch durchgefallen.
+    """
+    return {"kamera": kuerzel, "score": None, "bestanden": None, "gemessen": False,
+            "zustaendig": False, "bild_png": None, "rahmung": rahmung,
+            "grund": rahmung.get("abbruch_grund") or rahmung.get("grund", "")}
 
 
 def _nullprobe(ordner, soll, breite, hoehe, *, bildschreiben, messen, grenze,

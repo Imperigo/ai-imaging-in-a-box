@@ -2971,6 +2971,57 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
 
 ---
 
+## Die Prüfung läuft vor dem Bild — Owner-Einwand vom 25.08.2026
+
+Der Owner hat das erste Bild aus einem vollständigen Kettenlauf gesehen und den Kern
+getroffen (`auftraege/von-homestation/auf-vis-20260825-15.md`, Posten 1):
+
+> *«Das sollte natuerlich gar nicht so weit kommen — die Modelle muessen pruefen, ob die
+> Geometrie richtig ist und richtig darstellt, **bevor** AI Imaging startet.»*
+
+Und der Einwand traf auf einen zweiten Befund derselben Nacht: `bbox_bauwerk` und
+`kameras.rahmungsverhaeltnis` hatten **ausser Tests keinen einzigen Aufrufer**. Die
+**sechste tote Kante dieser Woche** — und die einzige, die von aussen wie eine gelöste
+Aufgabe aussah, weil das Werkzeug ja dalag.
+
+- [x] **`kameras.BILDBREITE_ABBRUCH = 0.65`** — die Schwelle, unter der nicht mehr
+      gerendert wird. Gemessen (HomeStation, `auf-20260824-36`/`-37`): 17,5 % Bildbreite
+      → 0.0002, **30 % → 0.0**, 50 % → 0.001, 65 % → 0.637, 70 % → 0.932.
+      *Der Verlauf ist nicht monoton* — 30 % ist gemessen schlechter als 17,5 %. Darum
+      wird zwischen den Stützstellen nicht interpoliert.
+- [x] **Der Widerspruch zu `BILDBREITE_KNIE` (0.5991) steht im Code und wird nicht
+      geglättet.** Die Kniemessung vom 24.08. sah die Schwelle zwischen 0,5991 und 0,6488
+      fallen, die Kettenmessung vom 25.08. sieht bei 50 % noch 0.001. Zwei Messungen, zwei
+      Bedingungen. Genommen wird die vorsichtigere, und `abbruch_grund` **sagt es**, wenn
+      ein Lauf genau in diesem Band liegt.
+- [x] **Der Blender-Runner berichtet die zweite Hüllbox** (`bbox_bauwerk`,
+      `bbox_bauwerk_note`). Entschieden wird über den Objektnamen mit
+      `maske.ist_gelaende` — nach dem GLB-Export gibt es keinen IFC-Typ mehr. **Kein
+      Rückfall auf die Szenenbox:** Findet sich keine gebaute Substanz, kommt `None` mit
+      Grund. Ein Rückfall deckte den Bruch genau dort zu, wo er gemessen werden soll.
+- [x] **`abholer.verarbeiter` prüft vor `_bester_seed`** und überspringt den Bildlauf
+      dieser Kamera, wenn die Rahmung ihn nicht trägt. Das Urteil trägt `score: None`
+      und `gemessen: False` — `_kameraspanne` zählt es **nicht** als gemessen, und
+      `_schlechtestes` nimmt es als das schwächste. Ein Abbruch, der die gemeldete Zahl
+      verbesserte, wäre schlimmer als keiner.
+- [x] **Zwei Wege brechen ausdrücklich nicht ab:** eine **vorgegebene** Kamera (der
+      Deckungsgrad beschreibt sie nicht) und eine **fehlende** Bauwerksbox (das sind alle
+      Aufnahmen vor dem 25.08.2026). *Nicht feststellbar* ist kein Abbruchgrund.
+- [x] Kurzbefundzeile **NICHT GERENDERT (Rahmung)**, ganz oben: die einzige Zeile, die von
+      einem nicht gelaufenen Render berichtet.
+- [x] `tests/test_rahmung_vor_render.py` (19 Fälle), Mutationsprobe beidseitig gefahren:
+      `abbruch` fest auf `True` lässt 2 Tests fallen, fest auf `False` deren 4.
+- [x] Lexikon: **Vorprüfung (Abbruch vor dem teuren Schritt)** und **Abbruchschwelle**;
+      `BILDBREITE_ABBRUCH` in `KONSTANTEN_HERKUNFT` eingetragen, damit die zitierte Zahl
+      nicht still veralten kann.
+
+**Was ausdrücklich NICHT geändert wurde:** die Rahmung selbst. Ob der Runner künftig nach
+der Bauwerksbox rahmt statt nach der Szenenbox, hängt an `auf-41` (G3) — Owner-Entscheid
+vom 26.08. Bis dahin *meldet* die Kette den Bruch und rendert nicht ins Leere; sie
+verstellt aber keine Kamera.
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).

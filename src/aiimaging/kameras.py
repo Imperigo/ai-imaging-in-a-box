@@ -1110,6 +1110,39 @@ def huellbox_taugt(bbox) -> dict:
 #: Zwischen ihr und 0,70 liegt der Bereich, in dem es auf den Startwert ankommt.
 BILDBREITE_KNIE = 0.5991
 
+#: Bildbreite, **unter der nicht mehr gerendert wird**.
+#:
+#: **Der Anlass ist ein Owner-Einwand** (`auf-vis-20260825-15`, Posten 1, 25.08.2026),
+#: nachdem die Kette zum ersten Mal ganz durchgelaufen war:
+#:
+#:   *«Das sollte natuerlich gar nicht so weit kommen — die Modelle muessen pruefen, ob
+#:   die Geometrie richtig ist und richtig darstellt, BEVOR AI Imaging startet.»*
+#:
+#: Bis dahin prüfte die Kette **danach**. Ein Auftrag, bei dem das Bauwerk 17,5 % der
+#: Bildbreite füllt, lief bis in die Diffusion — und das Bildmodell erfand eine
+#: Fassadendetail-Aufnahme, weil ihm die Vorlage fehlte.
+#:
+#: Gemessen (HomeStation, `auf-20260824-36`/`-37`), gefüllte Bildbreite → Deckungsmass::
+#:
+#:     17,5 %  0.0002      50 %  0.001      70 %  0.932
+#:     30 %    0.0         65 %  0.637
+#:
+#: **Der Verlauf ist nicht monoton**: 30 % ist gemessen *schlechter* als 17,5 %. Zwischen
+#: den Stützstellen wird darum nicht interpoliert, und die Schwelle steht dort, wo
+#: gemessen etwas besteht.
+#:
+#: .. danger::
+#:    **Diese Zahl und** :data:`BILDBREITE_KNIE` **widersprechen einander im Band
+#:    0,50–0,65, und der Widerspruch wird hier nicht aufgelöst.** Die Kniemessung vom
+#:    24.08. sah die Schwelle zwischen 0,5991 und 0,6488 fallen; die Kettenmessung vom
+#:    25.08. sieht bei 50 % noch 0.001. Zwei Messungen, zwei Bedingungen — und die
+#:    Regel dieses Projekts lautet, dass eine Zahl an die Bedingung gehört, unter der sie
+#:    entstanden ist. Genommen wird die **vorsichtigere**: In einem Band, in dem eine von
+#:    zwei Messungen 0.001 sagt, ist ein Renderlauf GPU-Zeit gegen ein Ergebnis, das
+#:    niemand verteidigen kann. Wer das Band öffnen will, misst es — und senkt nicht
+#:    diese Zahl.
+BILDBREITE_ABBRUCH = 0.65
+
 
 def rahmungsverhaeltnis(szene_bbox, bauwerk_bbox, *,
                         deckungsgrad: float = DECKUNGSGRAD) -> dict:
@@ -1129,14 +1162,30 @@ def rahmungsverhaeltnis(szene_bbox, bauwerk_bbox, *,
     **Rahmung** trägt — nicht, welchen Wert die QA erreichen wird.
 
     Returns:
-        ``{breitenanteil, wirksame_bildbreite, traegt, empfehlung_m, grund}``.
-        ``traegt`` ist ``None``, wenn eine der Boxen fehlt — **nicht** ``False``.
+        ``{breitenanteil, wirksame_bildbreite, traegt, knie, abbruch, abbruch_grund,
+        grund}``. ``traegt`` ist ``None``, wenn eine der Boxen fehlt — **nicht** ``False``.
+
+        ``traegt`` und ``abbruch`` beantworten **zwei verschiedene Fragen** und stehen
+        darum nebeneinander:
+
+        * ``traegt`` — steht die Rahmung der Messung im Weg? Massstab ist
+          :data:`BILDBREITE_KNIE` (0,5991), die untere Kante des gemessenen Knies.
+        * ``abbruch`` — soll dieser Lauf **gar nicht erst gerendert** werden? Massstab
+          ist :data:`BILDBREITE_ABBRUCH` (0,65), die Stützstelle, an der gemessen etwas
+          besteht. ``None`` heisst *nicht feststellbar* und führt **nie** zum Abbruch:
+          Wer keine Bauwerksbox hat — und das sind alle Aufnahmen vor dem 25.08.2026 —,
+          rendert wie bisher.
+
+        Im Band dazwischen ist ``traegt`` wahr und ``abbruch`` ebenfalls. Das ist kein
+        Widerspruch im Code, sondern einer zwischen zwei Messungen; er steht bei
+        :data:`BILDBREITE_ABBRUCH`.
 
     Raises:
         ValueError: Eine Box hat nicht die Form zweier Punkte mit je drei Zahlen.
     """
     antwort = {"breitenanteil": None, "wirksame_bildbreite": None, "traegt": None,
-               "knie": BILDBREITE_KNIE, "grund": ""}
+               "knie": BILDBREITE_KNIE, "abbruch": None, "abbruch_grund": "",
+               "grund": ""}
     if bauwerk_bbox is None or szene_bbox is None:
         antwort["grund"] = (
             "Eine der beiden Hüllboxen fehlt. Ohne die Box der gebauten Substanz ist der "
@@ -1161,6 +1210,21 @@ def rahmungsverhaeltnis(szene_bbox, bauwerk_bbox, *,
     antwort["breitenanteil"] = anteil
     antwort["wirksame_bildbreite"] = wirksam
     antwort["traegt"] = wirksam >= BILDBREITE_KNIE
+    # Die zweite, schaerfere Frage — und die einzige, die einen Renderlauf verhindert.
+    antwort["abbruch"] = wirksam < BILDBREITE_ABBRUCH
+    if antwort["abbruch"]:
+        antwort["abbruch_grund"] = (
+            f"NICHT RENDERN: Das Bauwerk fuellt {wirksam:.1%} der Bildbreite, gemessen "
+            f"noetig sind {BILDBREITE_ABBRUCH:.0%} (auf-vis-20260825-15, Posten 1: bei "
+            f"17,5 % entstand 0.0002, bei 30 % sogar 0.0, bei 65 % dagegen 0.637). "
+            f"Ein Lauf hier kostet GPU-Zeit fuer ein Bild, das die Vorlage nicht traegt "
+            f"— das Bildmodell erfindet dann, was es nicht sieht. Abhilfe ist eine "
+            f"naehere Kamera oder die Bauwerksbox als Rahmen.")
+        if antwort["traegt"]:
+            antwort["abbruch_grund"] += (
+                f" Achtung: Der Wert liegt UEBER dem Knie {BILDBREITE_KNIE:.4f} und "
+                f"trotzdem unter der Abbruchschwelle — die beiden Messungen sind sich in "
+                f"diesem Band uneinig, siehe BILDBREITE_ABBRUCH.")
 
     if antwort["traegt"]:
         antwort["grund"] = (

@@ -2248,6 +2248,31 @@ erkennen, dass es sich mit der falschen Grösse ändert.*
 auszurichten — und dafür muss überhaupt bekannt sein, wo das Gebäude ohne seine Umgebung
 steht. Genau diese Angabe fehlte: Es wurde nur **eine** Umgrenzung mitgeführt.*
 
+**Vorprüfung (Abbruch vor dem teuren Schritt)** — Eine Prüfung, die **vor** dem
+aufwendigen Arbeitsschritt läuft und ihn ganz ausfallen lässt, wenn er nichts bringen
+kann. Das Gegenstück zur Prüfung *danach*, die nur noch feststellt, dass etwas schiefging.
+*Der Anlass in diesem Projekt ist ein Satz des Auftraggebers vom 25.08.2026: «Das sollte
+gar nicht so weit kommen — die Modelle müssen prüfen, ob die Geometrie richtig ist, bevor
+das Bild entsteht.» Bis dahin lief ein Auftrag, bei dem das Gebäude 17,5 % der Bildbreite
+füllte, vollständig durch die Bilderzeugung — und das Bildmodell erfand dann eine
+Nahaufnahme einer Fassade, weil ihm die Vorlage fehlte.*
+*Damit eine Vorprüfung möglich ist, muss die entscheidende Angabe **früh genug** vorliegen.
+Hier ist es die Umgrenzung des Gebäudes ohne seine Umgebung (siehe Rahmungsbruch): Sie
+entsteht beim Aufbau der Szene, lange vor dem Bild — sie wurde nur bis dahin nirgends
+weitergereicht.*
+
+**Abbruchschwelle** — Der Wert, unterhalb dessen ein Arbeitsschritt gar nicht erst
+begonnen wird. Zu unterscheiden von der **Prüfschwelle**, die über *bestanden* und
+*durchgefallen* entscheidet: Die Abbruchschwelle entscheidet über *durchführen* und *sein
+lassen*, und sie darf strenger sein.
+*In diesem Projekt `BILDBREITE_ABBRUCH = 0.65`: Füllt das Gebäude weniger als 65 % der
+Bildbreite, wird kein Bild erzeugt. Der Grund ist gemessen und überrascht — bei 30 %
+Bildbreite fällt das Ergebnis **schlechter** aus als bei 17,5 %. Wo mehr Aufwand nicht
+mehr zu einem besseren Ergebnis führt, ist der Aufwand nicht „wenigstens ein Versuch",
+sondern verlorene Rechenzeit.*
+*Weil der Verlauf nicht gleichmässig steigt, wird zwischen den gemessenen Stützstellen
+**nicht** gerechnet: Ein Zwischenwert sähe aus wie eine Messung und wäre eine Erfindung.*
+
 **Füllgrad** — Welchen Anteil des Bildes das Bauwerk tatsächlich einnimmt. Zu
 unterscheiden vom **Deckungsgrad**, der sagt, welchen Anteil es einnehmen *soll*.
 *Gemessen wird er an der zugewandten Fassade, nicht in der Gebäudemitte — der Abstand
@@ -3274,6 +3299,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-26 | Ergaenzt: **Vorpruefung (Abbruch vor dem teuren Schritt)** und **Abbruchschwelle**. Anlass ist ein Owner-Einwand vom 25.08.: Die Geometriepruefung lief bis dahin NACH der Bilderzeugung, obwohl die entscheidende Angabe lange vorher vorliegt. Die Abbruchschwelle traegt ihre Zahl mit (`BILDBREITE_ABBRUCH = 0.65`) und damit auch den Waechter aus `tests/test_lexikon.py` — der zweite Eintrag dieser Woche, der bei der naechsten Aenderung im Code nicht mehr still veralten kann |
 | 2026-08-25 | **Zwei veraltete Zahlen im Text berichtigt, die nur im Aenderungsverzeichnis korrigiert waren.** *Stuerzende Linien* nannte weiterhin 9,46° Neigung, obwohl die Zahl zweimal nachgemessen und zuletzt auf -0,51 bis +5,98 Grad korrigiert worden ist. *Kreisschluss* fuehrte 0,2269 als unabhaengigen Boden, ohne dass er der Bildlage gehoert (Faktor 14). Eine Korrektur, die nur im Verzeichnis steht, erreicht niemanden, der den Begriff nachschlaegt — genau die Falle, gegen die dieses Verzeichnis gebaut ist |
 | 2026-08-25 | **Deckungsgrad** berichtigt (0.70 statt 0.55) und um den Grund erweitert — der Wechsel war eine gemessene Entscheidung und keine Geschmacksfrage. Dazu ergaenzt: **Rahmen gegen Messen (der Rahmungsbruch)**, der groesste Einzelbefund dieser Woche. Ein Eintrag, der eine Zahl nennt, veraltet mit ihr — das ist dieselbe Falle wie eine Zahl an zwei Stellen im Code, nur im Anhang |
 | 2026-08-24 | Ergaenzt: **Durchgelaufen gegen richtig**. Anlass ist eine Luecke, die beide IFC-Leser teilen: neun echte Dateien, null Fehler — und kein einziger Vergleich, ob die herausgekommene Geometrie der Vorlage entspricht. Der Eintrag traegt mit, warum sich das nur an selbst erzeugten Dateien pruefen laesst, und was so eine Pruefung ueber echte Dateien NICHT beweist |

@@ -352,6 +352,88 @@ def _bbox_aller_meshes():
     return lo, hi
 
 
+def _maske_modul():
+    """``aiimaging.maske`` von hier aus erreichbar machen — oder ``None``.
+
+    Dieselbe Bauart und dieselbe Begründung wie :func:`_kameras_modul`: Der Runner darf
+    aus dem Produkt lesen, nur der umgekehrte Weg ist verboten (Regel 2).
+
+    **Warum nicht einfach hier eine Wortliste hinschreiben.** Die Geländeregel steht in
+    :data:`aiimaging.maske.GELAENDE_MUSTER` und :data:`aiimaging.maske.GELAENDE_WOERTER`,
+    und sie ist diese Woche zweimal geschärft worden. Eine zweite Kopie an der
+    Aussenkante wäre bei der nächsten Schärfung still auseinandergelaufen — genau der
+    Fehler, gegen den :func:`_vorgabe` gebaut ist.
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from aiimaging import maske                        # noqa: PLC0415
+        return maske
+    except Exception:                                      # noqa: BLE001
+        return None
+
+
+def _bbox_bauwerk():
+    """Die Hüllbox der **gebauten Substanz** — Meshes, deren Name kein Gelände nennt.
+
+    **Der Anlass ist ein Owner-Einwand** (`auf-vis-20260825-15`, Posten 1): Die Prüfung,
+    ob die Geometrie überhaupt etwas hergibt, lief bisher **nach** der Diffusion. Sie
+    kann davor laufen — es fehlte nur diese eine Zahl im Bericht.
+
+    Der IFC-Runner führt seit dem 24.08. dieselbe Zahl (``bbox_bauwerk`` aus
+    ``IfcSite``-Filterung). Hier ist die Lage schlechter: Nach GLB-Export und Import
+    steht kein IFC-Typ mehr zur Verfügung, nur noch der **Objektname**. Entschieden wird
+    darum mit :func:`aiimaging.maske.ist_gelaende` — derselben Regel, mit der später die
+    Maske gebaut wird. Eine Szene, in der Gelände und Bauwerk in **einem** Objekt
+    stecken, ist damit nicht auflösbar; sie meldet das Bauwerk als das ganze Objekt und
+    ist an der Hüllboxgrösse zu erkennen.
+
+    Returns:
+        ``(lo, hi, note)`` — ``lo``/``hi`` sind ``None``, wenn nichts feststellbar war;
+        ``note`` sagt dann **warum**.
+
+    .. note::
+       **Kein Rückfall auf die Szenenbox.** Findet sich keine gebaute Substanz, kommt
+       ``None`` zurück und nicht die Box von allem. Die Szenenbox stillschweigend als
+       Bauwerksbox auszugeben hiesse, den Bruch zwischen Rahmung und Messung genau dort
+       zuzudecken, wo er gemessen werden soll — und der Bericht sähe dann gesund aus.
+    """
+    maske = _maske_modul()
+    if maske is None:
+        return None, None, ("'aiimaging.maske' ist von diesem Blender aus nicht "
+                            "erreichbar — die Gelaenderegel konnte NICHT angewendet "
+                            "werden. Das ist etwas anderes als 'es gibt kein Gelaende'.")
+
+    lo = [float("inf")] * 3
+    hi = [float("-inf")] * 3
+    n = 0
+    gelaende = []
+    for obj in bpy.data.objects:
+        if obj.type != "MESH":
+            continue
+        if maske.ist_gelaende(obj.name):
+            gelaende.append(obj.name)
+            continue
+        n += 1
+        for ecke in obj.bound_box:
+            welt = obj.matrix_world @ __import__("mathutils").Vector(ecke)
+            for i in range(3):
+                lo[i] = min(lo[i], welt[i])
+                hi[i] = max(hi[i], welt[i])
+
+    if n == 0:
+        return None, None, (
+            f"Kein einziges Mesh-Objekt blieb nach der Gelaenderegel uebrig "
+            f"({len(gelaende)} als Gelaende erkannt). Entweder besteht die Szene nur aus "
+            f"Gelaende — dann ist der Auftrag ohne Bauwerk —, oder die Namen tragen die "
+            f"Unterscheidung nicht. Es wird NICHT auf die Szenenbox zurueckgefallen.")
+    if not gelaende:
+        return lo, hi, ("Kein Objekt wurde als Gelaende erkannt; die Bauwerksbox ist "
+                        "hier gleich der Szenenbox. Das ist ein gueltiges Ergebnis und "
+                        "kein Rueckfall — aber ein Bruch zwischen Rahmung und Messung "
+                        "ist damit auch nicht feststellbar.")
+    return lo, hi, ""
+
+
 def _kamera_setzen(lo, hi, a=None):
     """Die Kamera stellen — auf drei Wegen, und der Bericht sagt, welcher gegriffen hat.
 
@@ -1012,6 +1094,10 @@ def main() -> int:
                 obj.matrix_world = dreh @ obj.matrix_world
 
     lo, hi = _bbox_aller_meshes()
+    # Und daneben die Box der gebauten Substanz. Sie ENTSCHEIDET hier nichts — der Runner
+    # rahmt weiterhin, was ihm gesagt wird. Sie wird berichtet, damit diesseits der
+    # Prozessgrenze VOR dem Bildlauf entscheidbar ist, ob die Rahmung ein Urteil zulaesst.
+    bau_lo, bau_hi, bau_note = _bbox_bauwerk()
     # Die Kamera darf sich auf eine ANDERE Hüllbox beziehen als der Bericht: Der Bericht
     # beschreibt, was dasteht; die Kamera rahmt, was gezeigt werden soll.
     kam_lo, kam_hi = (_huellbox_aus_text(a.kamera_huellbox)
@@ -1117,6 +1203,13 @@ def main() -> int:
         "kamera": kamera_herkunft,
         "bbox": [lo, hi],
         "bbox_size_m": [hi[i] - lo[i] for i in range(3)],
+        # Die zweite Huellbox — die der gebauten Substanz. Ohne sie ist der Bruch
+        # zwischen Rahmung und Messung nicht feststellbar, und die Pruefung der
+        # Geometrie kann nicht VOR dem Bildlauf stattfinden (Owner-Einwand,
+        # auf-vis-20260825-15 Posten 1). `None` heisst NICHT FESTSTELLBAR, nie
+        # "in Ordnung" — `bbox_bauwerk_note` sagt, woran es lag.
+        "bbox_bauwerk": ([bau_lo, bau_hi] if bau_lo is not None else None),
+        "bbox_bauwerk_note": bau_note,
         "n_meshes": sum(1 for o in bpy.data.objects if o.type == "MESH"),
         "aufloesung": a.aufloesung,
         "hoehe": a.hoehe or a.aufloesung,
