@@ -3199,6 +3199,21 @@ adressieren, sondern über eine Prüfsumme des **Inhalts**. Identischer Inhalt e
 denselben Schlüssel, auch unter anderem Namen — und geänderter Inhalt einen anderen, auch
 bei gleichem Namen.
 
+**Wächter** — Ein Test, dessen Zweck nicht das Prüfen einer Rechnung ist, sondern das
+**Festhalten einer Aussage**, die sonst still veralten würde. Er rechnet nichts aus; er
+vergleicht, was irgendwo behauptet wird, mit dem, was wirklich der Fall ist — und fällt,
+sobald die beiden auseinanderlaufen. *In diesem Projekt bewacht `tests/test_lexikon.py`
+das Lexikon und `tests/test_readme.py` das README: dessen Testzahl, die Existenz jeder
+verlinkten Datei und die Existenz der Funktionen, die es als Beleg der vier Regeln nennt.
+Anlass war ein README, das in Fettschrift behauptete, ein Bildlauf habe nie
+stattgefunden — acht Tage nachdem er stattgefunden hatte.*
+
+**Toleranzband** — Statt einer festen Zahl eine Spanne zuzulassen («zwischen 3500 und
+3700 Tests»). Bei Messwerten ist das richtig, weil dieselbe Messung selten zweimal exakt
+dasselbe ergibt. Bei einer **gezählten** Zahl ist es eine Einladung zum Driften: Das Band
+hält still, solange sich wenig ändert, und schweigt genau dann, wenn sich über Wochen viel
+geändert hat — also im einzigen Fall, der zählt.
+
 **Mutationsprobe** — Eine Gegenprüfung für Tests: Man baut absichtlich einen Fehler ein
 und schaut, ob die Tests ihn bemerken. Tun sie es nicht, bewachen sie nichts. *Ohne das
 kann eine grüne Testreihe blosse Beruhigung sein.*
@@ -3396,6 +3411,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-26 | Ergaenzt: **Waechter** und **Toleranzband**. Anlass ist der neue `tests/test_readme.py`: Das README nannte 1509 Tests bei 3595 wirklichen und behauptete in Fettschrift einen nie stattgefundenen Bildlauf, den es acht Tage zuvor gegeben hatte. Bewacht wird nur das maschinell Entscheidbare — eine Zahl, eine Datei, eine Funktion. **Kein Waechter auf Prosa:** eine Sondierung ueber veraltete Konstantenzitate in Docstrings ergab am selben Tag einen Treffer auf fuenf Fehlalarme |
 | 2026-08-26 | **Integrationstest** um den Grund erweitert, warum viele gute Einzeltests ihn nicht ersetzen — mit dem Fall vom selben Tag: Acht Pruefungen einzeln gruen, und eine Angabe ging auf ihrem letzten Meter verloren. Der Einzeltest fragt, ob ein Stueck haelt, was es verspricht; der Integrationstest fragt, ob das Versprochene ankommt |
 | 2026-08-26 | Ergaenzt: **Der Nullpunkt des Azimuts (Sued- gegen Nord-Konvention)**. Anlass ist das Anschliessen des Sonnenstands: Die beiden gebraeuchlichen Festlegungen liegen 180 Grad auseinander und vertauschen Vormittag und Nachmittag. Der Eintrag traegt mit, warum der Fehler an keinem einzelnen Bild erkennbar waere — und warum die gewaehlte Annahme darum in jeden Bericht gehoert |
 | 2026-08-26 | Ergaenzt: **Zweizaehlige Drehsymmetrie**. Anlass ist ein Renderlauf fuer nichts: Bei einem Quader sind die beiden vorgeschriebenen Ueber-Eck-Ansichten Byte fuer Byte identisch. Der Eintrag traegt mit, warum es sich an der Huellbox NICHT entscheiden laesst — und warum die eingesparte Ansicht hinterher nicht mitzaehlen darf |

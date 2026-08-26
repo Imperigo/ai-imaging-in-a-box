@@ -3335,24 +3335,53 @@ zweiten Stelle.
       *Ist sie für beide gleich, ist sie eine Aussage über die **Geometrie** und nicht
       über die Aufnahme — und steht dann an der falschen Stelle.*
 
+- [x] **Der Torwächter läuft am Produktivweg — als Melder** (26.08. nachmittags).
+      `grep -c torwaechter` über `abholer.py`, `bruecke.py` und `tools/abholen.py` ergab
+      **0, 0, 0**: Der Riegel gegen Massstabsfehler hing seit jeher nur am MCP-Einlass und
+      an `kette.py`, das keinen Aufrufer hat. **Achte tote Kante der Woche.**
+      `_massstab_gemeldet` steht jetzt **vor** der Kameraschleife — der Massstab ist eine
+      Eigenschaft der Geometrie und nicht der Kamera —, bevorzugt `bbox_bauwerk` und sagt,
+      welche Box es war.
+      **Er bricht ausdrücklich nichts ab.** Der erste Entwurf tat es bei benanntem
+      `verdacht_faktor`; selbst nachgemessen ergibt 0,003–1,0 m den Faktor 0,001 (**jeder
+      Bauteilrender**) und 3000–10⁶ m den Faktor 1000 (oft ein einzelnes verirrtes Mesh).
+      Ein Abbruch darauf hätte genau die Aufträge abgelehnt, für die das Projekt gebaut
+      ist. Die Fehlalarmrate am wirklichen Bestand fragt `auf-20260826-45`.
+- [x] **Vier Durchreichungstabellen für `verarbeiter`** (26.08.). `glb_zu_multipass` hat 18
+      echte Einstellungen und reicht 12 durch, `RenderAuftrag` hat 12 Felder und bekommt 7.
+      Für jedes der zehn übrigen steht jetzt da, ob es **Absicht** oder **Lücke** ist —
+      sechs zu fünf, nicht fünf zu fünf, beim ersten Zählen fehlte `shift_y`. Der Test hält
+      die Tabellen über `inspect.signature` gegen die wirkliche Signatur.
+- [x] **README und PLAN sagen, was ist — mit Datum und mit Wächter** (26.08.).
+      Sieben Stellen berichtigt, davon zwei **Untertreibungen in Fettschrift**: Das README
+      behauptete, ein echter Render habe nie stattgefunden (er fand am 18.08. statt), und
+      nannte 1509 Tests bei 3595 wirklichen. `tests/test_readme.py` bewacht ab jetzt die
+      Testzahl (exakt), die Existenz jeder verlinkten Datei und die Existenz der drei
+      Funktionen, die das README als Beleg der vier Regeln nennt. **Kein Wächter auf
+      Prosa** — die Sondierung vom selben Vormittag ergab einen Treffer auf fünf
+      Fehlalarme.
+
 ---
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
 
-Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste** (dreiundzwanzig
-Entscheide, alle rückgängig zu machen) am Ende.
+Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
+(einunddreissig Entscheide, alle rückgängig zu machen) am Ende.
 
-| | Beginn des Tages | Ende |
-|---|---:|---:|
-| Tests | 3335 | 3528 |
-| Vakuumprobe | 10 Treffer | 12 Treffer |
+| | Beginn des Tages | nach dem Vormittag | Ende |
+|---|---:|---:|---:|
+| Tests | 3335 | 3528 | **3595** |
+| Vakuumprobe | 10 Treffer | 12 Treffer | 12 Treffer |
+| Tote Kanten, gar nicht erreichbar | — | 2 | **1** |
 
 *Die beiden neuen Vakuumtreffer sind erklärt: Zwei Zusicherungen über `warnungen` sind
 vakuumwahr **geworden**, weil die Liste jetzt leer sein darf — genau das war das Ziel der
 Trennung nach `vertragsvorgaben`. Beide haben ihre Gegenprobe in derselben Zusicherung
 bekommen, nicht in einer anderen Datei.*
 
-**Sieben tote Kanten trägt diese Woche.** Die sechste und die siebte sind eigene:
+**Acht tote Kanten trägt diese Woche.** Die achte ist der `torwaechter` selbst — der Riegel gegen Massstabsfehler, gebaut, geprüft, ausführlich begründet und auf dem Weg, der Bilder erzeugt, nirgends aufgerufen. *Gerade weil er so gut begründet war, hielt ihn jeder für angeschlossen.*
+
+**Sieben davon standen schon am Vormittag fest.** Die sechste und die siebte sind eigene:
 `bbox_bauwerk`/`rahmungsverhaeltnis` (am 25.08. gebaut, nie angeschlossen) und
 `geometrie_qa.erreichbarkeit` (seit dem 22.08. da, ausser Tests kein Aufrufer). *Ein
 ungenutztes Modul ist grün wie jedes andere — das ist der Grund, warum diese Fehlerart
