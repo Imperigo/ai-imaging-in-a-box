@@ -1,7 +1,11 @@
 # Vorgehensplan
 
-**Angelegt:** 2026-08-14 · **Stand:** Phasen 0–2 erledigt (2026-08-14 / 08-18), Phase 3
-bis auf den ersten echten Render erledigt (beauftragt als `auf-20260818-06`)
+**Angelegt:** 2026-08-14 · **Stand 2026-08-26:** Phasen 0–3 erledigt. Der erste echte
+Render fand am **18.08.2026** statt (`auf-20260818-09`, Qwen-Image-Edit-2511, 147,9 s,
+Score 0,359 — durchgefallen, und das ist ein Messwert); acht Zeilen weiter unten stand er
+schon als erledigt, hier oben acht Tage lang weiter als ausstehend. *Eine Kopfzeile, die
+niemand mitführt, ist die langlebigste Fehlannahme eines Dokuments.* Offen ist seither
+nicht mehr der Render, sondern **ein Bild, das die Geometrie-Schwelle besteht**.
 
 Dieser Plan ist die verbindliche Reihenfolge. Er wird bei jeder Sitzung fortgeschrieben,
 nicht ersetzt. Was erledigt ist, bleibt mit Datum stehen.
@@ -3674,8 +3678,12 @@ Bekannt und ausdrücklich nicht erledigt:
   Fremdkomponenten benannt. Die Vermutung hat sich bestätigt, aber anders als erwartet:
   **Kein neuer GPL-Fund im Produktivpfad.** Dafür drei Dinge, die vorher niemand wusste:
   (1) `shapely` deklariert BSD-3 und bringt **GEOS unter LGPL-2.1** mit — in `.venv-ifc`,
-  also bereits hinter der Prozessgrenze, aber **nicht im `NOTICE`**; dasselbe gilt für
-  **libquadmath (LGPL-2.1+)** aus `numpy`. Das ist die einzige Bringschuld des Berichts.
+  also bereits hinter der Prozessgrenze, aber ~~nicht im `NOTICE`~~; dasselbe gilt für
+  **libquadmath (LGPL-2.1+)** aus `numpy`. Das war die einzige Bringschuld des Berichts.
+  **Abgetragen — nachgeprüft 2026-08-26:** Beide stehen im `NOTICE` (`NOTICE:58` GEOS,
+  `NOTICE:72` libquadmath), beide mit Fundstelle im Wheel und mit den drei Auflagen der
+  LGPL-Präzisierung. Der Satz stand hier acht Tage länger als die Schuld selbst; nach der
+  Hausregel dieses Plans bleibt er stehen und wird durchgestrichen, nicht gelöscht.
   (2) `torch` und `numpy` liefern **GNU-Laufzeitbibliotheken** mit (`libgomp`,
   `libgfortran`, GPL-3.0-or-later **mit** GCC-Ausnahme 3.1), ohne sie zu deklarieren —
   die Ausnahme greift, es bleibt zulässig. (3) `pip install torch` zieht auf Linux

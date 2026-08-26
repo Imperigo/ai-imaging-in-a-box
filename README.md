@@ -15,22 +15,31 @@ und eine erfundene Kubatur nachweislich durchfallen lässt.
 
 ## Stand
 
-Die Kette läuft von einer IFC-Datei bis zum bewerteten Bild — mit **einer** Lücke, und die
-ist ehrlich benannt: **Ein echter Render mit echten Modellgewichten hat nie stattgefunden.**
-Dieses Environment hat keine GPU. Alles davor und alles danach ist gebaut und geprüft.
+**Stand 2026-08-26.** Die Kette läuft von einer IFC-Datei bis zum bewerteten Bild, und sie
+ist am Gerät gelaufen: Der erste echte Render mit echten Modellgewichten fand am
+18.08.2026 statt (`auf-20260818-09`, Qwen-Image-Edit-2511, 147,9 s, Score 0,359 —
+durchgefallen, und das ist ein Messwert und kein Fehlschlag). *Dieses Environment* hat
+keine GPU; gerechnet wird auf einer Arbeitsstation, die Aufträge aus diesem Repo liest.
+
+Die Lücke, die bleibt, ist eine andere und schmalere: **Ein Bild, das die
+Geometrie-Schwelle besteht, gibt es noch nicht** — mit einem Prompt ohne Bauteile und
+einer Geometrie, die ein Gebäude ist statt einer offenen Schachtel. Bis dahin ist die
+Kette belegt, die Aussage *geometrietreu* aber noch nicht.
 
 | | Stand |
 |---|---|
-| IFC → glb, über die Prozessgrenze | läuft, gemessen |
+| IFC → glb, über die Prozessgrenze | läuft, an 40 echten Dateien gemessen |
 | glb → Blender-Multipass (Beauty, Material-ID, Tiefe) | läuft auf Blender 4.2 **und** 5.2 |
-| Bildmodell-Stufe (`diffusers`) | gebaut, **nie mit echten Gewichten ausgeführt** |
+| Bildmodell-Stufe (`diffusers`) | **am Gerät gelaufen** (18.08.); am 25.08. bis in die Diffusion, dort an einem Gerätekonflikt gescheitert — Ursache gefunden, Fix eingebaut, Bestätigung beauftragt |
 | Geometrie-Treue-Metrik | gebaut und kalibriert |
+| Prüfungen **vor** dem Bildlauf | seit 26.08.: Rahmung, Kamerahöhe, Zwischenbilder, Doppelansicht — **Massstab meldet, bricht noch nicht ab** |
 | Stil-Gate | gebaut, Schwelle ungeprüft |
-| Kette als Graph mit Zwischenspeicher | läuft |
+| Kette als Graph mit Zwischenspeicher | gebaut und **gemessen** (Prompt-Änderung rechnet die Geometriestufen nicht neu) — aber **nicht am Produktivweg**: der Abholer fährt die Stufen als gerade Abfolge |
 | MCP-Anbindung an KosmoOrbit | Verdrahtbarkeit belegt, Registrierung nicht ausgeführt |
 | LoRA-Stiltraining | Naht gebaut, **nie ein Training ausgeführt** |
 
-Tests: **1509**, alle grün, ohne GPU.
+Tests: **3595**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+(`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
 
 ---
 
