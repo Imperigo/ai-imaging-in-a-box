@@ -4410,6 +4410,61 @@ zur Hälfte, nicht ganz.
 
 ---
 
+## Die schärfste der Lücken bekommt eine Zahl (26.08.2026)
+
+`kamera_huellbox` stand seit dem 23.08. als **schärfste** der offenen Lücken da: *«Der
+Abholer bricht Läufe wegen zu weiter Rahmung ab und reicht dem Runner nie die Box, die
+die Rahmung heilen würde.»* Der Grund, warum sie liegen blieb, war ein Henne-Ei:
+**die Box entsteht IM Multipass und wird DAVOR gebraucht.**
+
+Mit dem gegliederten Testbau von vorhin lässt sich der Fall zum ersten Mal hier bauen —
+`--hochbau --gelaende` ergibt eine 20 × 20 m Szene um ein 12 × 9,5 × 15 m Bauwerk.
+
+**Gemessen** (Kamera `sSE`, 400 px, über `maske.bauwerksmaske_aus_lauf`):
+
+| | `anteil_bauwerk` |
+|---|---|
+| ohne `kamera_huellbox` | **0,0788** |
+| mit `kamera_huellbox` | **0,1730** |
+
+**Faktor 2,2.** Dieselbe Grössenordnung, die der Docstring von `glb_zu_multipass` seit
+jeher behauptet (6,9 % gegen 21,9 %) — jetzt an einer Szene, die im Repo entsteht.
+
+- [x] **Der Schalter ist durchgereicht:** `verarbeiter(kamera_huellbox=…)`. `None` heisst
+      nicht angefasst; jeder bisherige Lauf bleibt reproduzierbar. Die Lücken der
+      Durchreichungstabellen sind damit **zwei** statt vier — beide übrigen warten auf
+      `auf-44`.
+
+### Und ein Befund, der beim Messen abfiel
+
+Der Eintrag nannte den IFC-Report als möglichen Weg zur Box («führt `bbox_bauwerk` seit
+dem 24.08. ebenfalls»). **Nachgemessen ist er auf genau diesem Fall falsch:**
+
+    bbox         (Szene):   [[-6, -7.5, -0.3], [14, 12.5, 15]]
+    bbox_bauwerk (Bauwerk): [[-6, -7.5, -0.3], [14, 12.5, 15]]     ← identisch
+
+Sein Typfilter ist `("IfcSite",)`; die Geländeplatte ist ein `IfcSlab` namens `Gelaende`
+und fällt nicht darunter. *Die **Blender**-Seite trifft es richtig* — sie liest den
+Objektnamen, und der trägt seit heute früh den IFC-Namen:
+
+    bbox_bauwerk (Blender):  [[0, 0, -0.25], [12, 9.5, 15]]        ← das Bauwerk
+
+**Damit ist Weg (c) vom Tisch, ohne dass jemand ihn hätte ausprobieren müssen.** Die drei
+Wege stehen jetzt mit ihren Preisen am Aufrufort:
+
+* **(a) ein zweiter Blender-Lauf je Kamera** — verdoppelt die Blenderzeit, rund 80 s statt
+  40 s bei Vertragsvorgaben. *Mit dem Zwischenspeicher zahlt man das nur beim **ersten**
+  Auftrag einer Geometrie* — bei einer Messreihe über Prompts also genau einmal.
+* **(b) ein leichter Runner**, der die glb nur lädt und die Box nach der Namensregel
+  rechnet — gibt es nicht, geschätzt 1–2 s, gemessen nichts.
+* **(c) der IFC-Report** — auf diesem Fall gemessen falsch, siehe oben.
+
+Der Entscheid liegt bei `auf-41` (G3). *Was sich geändert hat, ist nicht die Frage,
+sondern ihre Grundlage:* Sie hat jetzt eine Wirkungszahl, drei Preise und einen Weg
+weniger.
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).
