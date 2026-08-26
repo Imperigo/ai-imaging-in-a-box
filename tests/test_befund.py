@@ -475,3 +475,31 @@ def test_eine_uebersprungene_kamera_meldet_keinen_maskenausfall():
     ]}
 
     assert not any("MASKENWEG" in z for z in abholer.befund_kurz(befund))
+
+
+def test_der_kurzbefund_nennt_was_als_gelaende_eingestuft_wurde():
+    """**Damit ein Fehlausschluss auffällt.**
+
+    Seit dem 26.08.2026 trägt der Knotenname den IFC-Namen, und die Geländeregel greift
+    auf viel mehr als vorher. Die Kehrseite ist gemessen: `IfcWall_Site-A` gilt als
+    Gelände. Wer nicht sieht, **was** ausgeschlossen wurde, kann das nicht bemerken.
+    """
+    befund = {"kameras": [
+        {"kamera": "s", "bild_png": "/x.png",
+         "maskenbefund": {"maske": [True], "gelaende_namen": ["IfcSlab_Gelaende_abc"]}},
+    ]}
+
+    zeilen = "\n".join(abholer.befund_kurz(befund))
+
+    assert "Als Gelaende eingestuft" in zeilen
+    assert "IfcSlab_Gelaende_abc" in zeilen, "Der Name gehört dazu, nicht nur die Zahl."
+
+
+def test_ohne_erkanntes_gelaende_steht_die_zeile_nicht_da():
+    """Die Gegenprobe — eine Zeile, die immer dasteht, wird nicht gelesen."""
+    befund = {"kameras": [
+        {"kamera": "s", "bild_png": "/x.png",
+         "maskenbefund": {"maske": [True], "gelaende_namen": []}},
+    ]}
+
+    assert not any("Als Gelaende eingestuft" in z for z in abholer.befund_kurz(befund))

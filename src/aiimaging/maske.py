@@ -152,6 +152,22 @@ GELAENDE_MUSTER: tuple[str, ...] = (
 #: Darum wird der Name in **Wörter zerlegt** (an ``_``, ``-``, Leerzeichen, Punkt) und
 #: jedes Wort einzeln verglichen. ``Gelaende_Hang`` trägt das Wort, ``Geländer_Balkon``
 #: nicht.
+#: .. warning::
+#:    **Die Kehrseite, gemessen am 26.08.2026.** Bis zu jenem Tag überlebte der IFC-Name
+#:    den glb-Export nicht — die Wortregel bekam nur ``IfcSlab_<GlobalId>`` zu sehen und
+#:    konnte auf einen *Namen* gar nicht anschlagen. Seit der Knotenname ihn mitträgt,
+#:    greift sie auf viel mehr, und das ist ihr Zweck. Aber:
+#:
+#:    ``IfcWall_Site-A`` gilt damit als **Gelände**, weil ``site`` eines dieser Wörter
+#:    ist. Eine so benannte Wand fällt aus der Bauwerksmaske.
+#:
+#:    *Die sichere Richtung ist trotzdem diese:* Gelände **in** der Maske ist der
+#:    schlimmere Fehler — auf einer Bodenszene erreichte weisses Rauschen dort den Score
+#:    0,72. Ein zu kleines Bauwerk misst weniger; ein zu grosses misst das Falsche.
+#:
+#:    Damit ein Fehlausschluss auffällt, nennt ``abholer.befund_kurz`` seit demselben Tag
+#:    **namentlich**, was als Gelände eingestuft wurde. Wer dort eine Wand liest, hat den
+#:    Fall vor sich.
 GELAENDE_WOERTER: tuple[str, ...] = ("gelaende", "gelände", "terrain", "site")
 
 #: Woran ein Name in Wörter zerfällt.

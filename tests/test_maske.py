@@ -663,3 +663,23 @@ def test_mit_benanntem_gelaende_bleibt_die_maske_auch_ohne_erklaerung(bild, tabe
     assert befund["gelaende_erkannt"] is True
     assert befund["maske"] is not None
     assert sum(befund["maske"]) == befund["n_bauwerk"]
+
+
+def test_die_kehrseite_der_mitgetragenen_namen_ist_benannt():
+    """**Was der Anschluss des IFC-Namens am 26.08.2026 zusätzlich einfängt.**
+
+    Die Wortregel greift seither auf den Namen — das ist ihr Zweck, und ohne ihn wurde die
+    Maske überall verworfen. Aber ``site`` ist eines der Wörter, und damit gilt eine Wand
+    namens ``Site-A`` als Gelände.
+
+    *Die sichere Richtung ist trotzdem diese:* Gelände **in** der Maske ist der schlimmere
+    Fehler — auf einer Bodenszene erreichte weisses Rauschen dort 0,72. Dieser Test hält
+    den Zustand fest, **damit er eine Entscheidung bleibt und keine Überraschung.**
+    """
+    assert m.ist_gelaende("IfcWall_Site-A_abc") is True
+    assert m.ist_gelaende("IfcSlab_Site_Boundary_abc") is True
+
+    # Und was die Wortgrenzen weiterhin NICHT fangen — die Gegenprobe:
+    for harmlos in ("IfcWall_Sitzbank_abc", "IfcSlab_Terrasse_abc",
+                    "IfcWall_Gelaendegleich_abc", "IfcWall_Nordfassade_abc"):
+        assert m.ist_gelaende(harmlos) is False, harmlos

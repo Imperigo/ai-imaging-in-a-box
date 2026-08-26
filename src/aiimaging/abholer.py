@@ -626,6 +626,28 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
             f"zurueck. In dem Modus besteht ein Bild mit vertauschter Tiefe das Tor. "
             f"Grund: {str(erster.get('grund') or 'ohne Angabe')[:200]}")
 
+    # WAS ALS GELAENDE EINGESTUFT WURDE — und damit aus der Bauwerksmaske fiel.
+    #
+    # Seit dem 26.08.2026 traegt der Knotenname den IFC-Namen mit, und die Wortregel
+    # greift damit auf viel mehr als vorher. Das ist der Zweck — aber es hat eine
+    # Kehrseite, und die ist gemessen: `IfcWall_Site-A` gilt als Gelaende, weil `site`
+    # eines der Woerter ist. Eine so benannte Wand faellt aus der Maske.
+    #
+    # Die sichere Richtung ist trotzdem die neue: Gelaende IN der Maske ist der
+    # schlimmere Fehler (auf einer Bodenszene erreichte weisses Rauschen 0.72). Aber wer
+    # nicht sieht, WAS ausgeschlossen wurde, kann einen Fehlausschluss nicht bemerken.
+    eingestuft = []
+    for eintrag in kameras:
+        for name in (eintrag.get("maskenbefund") or {}).get("gelaende_namen") or ():
+            if name not in eingestuft:
+                eingestuft.append(name)
+    if eingestuft:
+        zeilen.append(
+            f"Als Gelaende eingestuft und aus der Maske genommen: "
+            f"{', '.join(str(n) for n in eingestuft[:6])}"
+            + (f" (und {len(eingestuft) - 6} weitere)" if len(eingestuft) > 6 else "")
+            + " — steht hier, damit ein Fehlausschluss auffaellt")
+
     doppelt = [(k.get("kamera"), k.get("doppelt_von")) for k in kameras
                if k.get("doppelt_von")]
     if doppelt:
