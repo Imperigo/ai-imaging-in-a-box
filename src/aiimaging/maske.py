@@ -482,9 +482,16 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
                 "die Regel es verfehlt hat — im zweiten Fall steckte der ganze Boden als "
                 "Bauwerk in der Maske, und genau das macht die Geometrie-QA stumpf "
                 "(gemessen: Rauschen erreichte auf einer Bodenszene den Score 0.72). "
-                "Die Maske bleibt None: nicht gemessen, nicht in Ordnung. Wer weiss, "
-                "dass diese Szene ohne Gelände gerendert wurde, sagt es mit "
-                "gelaende_erwartet=False."
+                "Die Maske bleibt None: nicht gemessen, nicht in Ordnung. **Und mit "
+                "ihr fällt der ganze Maskenweg aus** — rho_maske, Kante und Paarurteil "
+                "bleiben None, und weil die gemessene Polarität nur dort angewandt wird, "
+                "fällt der Score auf abs(spearman) zurück. Wer weiss, dass diese Szene "
+                "ohne Gelände gerendert wurde, sagt es mit gelaende_erwartet=False — an "
+                "der Kommandozeile: tools/abholen.py --kein-gelaende. "
+                "HINWEIS ZUR VORGESCHICHTE: Bis zum 26.08.2026 schlug dieser Satz auch "
+                "bei Szenen MIT Gelände an, weil der IFC-Name den glb-Export nicht "
+                "überlebte und die Regel nichts zu lesen bekam. Seit der Knotenname ihn "
+                "mitträgt, ist ein Treffer hier wieder eine Auskunft."
             )
         else:
             warnungen.append(

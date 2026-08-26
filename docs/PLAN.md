@@ -3549,6 +3549,23 @@ zweiten Stelle.
       **1600 × 1000** (nicht 512) — der erste Lauf brauchte 6:20, jetzt 27 s. Und ein Test
       suchte im geteilten Temp-Verzeichnis und war allein grün, in der Sammlung rot.
 
+- [x] **Warum der Maskenweg nicht lief** (HomeStation-Nachtrag zu `auf-vis-20260826-16`,
+      hier nachgemessen). `_maske_bauen` **berechnet** die Maske (7233 Bauwerkspunkte) und
+      **verwirft** sie, weil die Geländeregel auf keinen Eintrag passte. Folge: kein
+      `rho_maske`, keine gerichtete Polarität, Score auf `abs(spearman)` — *und in dem
+      Modus besteht ein Bild mit vertauschter Tiefe das Tor.*
+      **Zur Hälfte durch den Fund von heute früh geschlossen:** Bis zur Namensbehebung
+      schlug die Warnung auch bei Szenen MIT Gelände an. Gemessen: mit Gelände kommt die
+      Maske jetzt zurück; für ein reines Gebäude-IFC bleibt `--kein-gelaende` der Weg, und
+      der Grund im Bericht nennt ihn in genau dieser Form.
+      Die irreführende Warnung «Polarität ungemessen» heisst jetzt «keine Polarität
+      übergeben» und nennt die richtige Frage.
+- [ ] **Offen: Soll eine berechnete Maske ohne erkanntes Gelände verworfen werden?**
+      Heute ja, und mit Grund — eine verfehlte Regel sieht aus wie ein Gebäude ohne
+      Gelände. Ob es ein besseres Unterscheidungsmerkmal gibt als die Erklärung des
+      Aufrufers, ist offen; `bbox_bauwerk == bbox` taugt **nicht**, weil es auf derselben
+      Namensregel beruht und damit keine unabhängige Auskunft ist.
+
 ---
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
@@ -3558,7 +3575,7 @@ Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
 
 | | Beginn des Tages | nach dem Vormittag | Ende |
 |---|---:|---:|---:|
-| Tests | 3335 | 3528 | **3906** |
+| Tests | 3335 | 3528 | **3910** |
 | Vakuumprobe | 10 Treffer | 12 Treffer | 12 Treffer |
 | Tote Kanten, gar nicht erreichbar | — | 2 | **1** |
 | Tote Kanten **mit Urteil** | 0 | 0 | **80 von 80** |

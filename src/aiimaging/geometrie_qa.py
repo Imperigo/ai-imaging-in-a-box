@@ -725,7 +725,14 @@ def geometrie_score(soll: Sequence[float], ist: Sequence[float],
 
     if polaritaet is None:
         warnungen.append(
-            "Polarität des Schätzers ungemessen — gewertet wird abs(spearman). In diesem "
+            "KEINE POLARITÄT ÜBERGEBEN — gewertet wird abs(spearman). *Das heisst NICHT, "
+            "dass sie ungemessen wäre:* Für die üblichen Schätzer steht sie in "
+            "GEMESSENE_POLARITAET (depth-anything-v2-small an 24 Läufen auf zwei Szenen, "
+            "auf-20260820-23). Angewandt wird sie aber nur im MASKENWEG — wer den nicht "
+            "fährt, sieht sie nie. Läuft dieser Satz in einem Bericht auf, ist die Frage "
+            "darum «warum lief der Maskenweg nicht», nicht «warum ist die Polarität "
+            "ungemessen». (Der Satz sagte bis zum 26.08.2026 das Zweite und schickte "
+            "damit in die falsche Richtung — gemeldet von der HomeStation.) In diesem "
             "Modus ist der Score NICHT MONOTON im geometrischen Fehler: abs() faltet die "
             "Skala in der Mitte, der schlechteste Wert liegt bei spearman = 0 und beide "
             "Enden sind gleich gut. Am 20.08.2026 gemessen (auf-20260820-23): 2 m Versatz "
@@ -1234,7 +1241,9 @@ def rho_ueber_maske(soll: Sequence[float], ist: Sequence[float],
 
     if polaritaet is None:
         warnungen.append(
-            "Polarität des Schätzers ungemessen — es gibt darum keinen gerichteten Wert. "
+            "KEINE POLARITÄT ÜBERGEBEN — es gibt darum keinen gerichteten Wert. *Nicht "
+            "zu verwechseln mit «ungemessen»:* Sie steht für die üblichen Schätzer in "
+            "GEMESSENE_POLARITAET und wird im Maskenweg angewandt. "
             "Ohne Richtung bliebe nur abs(rho), und in diesem Modus ist die Grösse NICHT "
             "MONOTON im geometrischen Fehler: abs() faltet die Skala in der Mitte, der "
             "schlechteste Wert liegt bei rho = 0 und beide Enden sind gleich gut. Am "

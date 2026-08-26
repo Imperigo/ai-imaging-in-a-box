@@ -584,3 +584,82 @@ def test_das_modul_kommt_ohne_blender_und_ohne_oberflaeche_aus():
     assert "import bpy" not in quelle
     for verboten in ("tkinter", "PyQt", "streamlit", "gradio"):
         assert f"import {verboten}" not in quelle
+
+
+# ======================================================================================
+# Warum der Maskenweg ausfiel — gemeldet von der HomeStation, 26.08.2026
+# ======================================================================================
+#
+# Ihr Befund: In allen vier Laeufen des Tages standen `rho_maske`, `kante` und
+# `paarurteil` auf None, obwohl `material_id.png` vorlag und der Maskenbefund einen
+# Bauwerksanteil meldete. Folge: Die in `GEMESSENE_POLARITAET` hinterlegte Polaritaet
+# wird nie angewandt (sie wird nur IM Maskenweg gelesen), und der Score faellt auf
+# `abs(spearman)` zurueck — in dem Modus besteht ein Bild mit VERTAUSCHTER Tiefe das Tor.
+#
+# Hier nachgemessen: Die Maske wird sehr wohl BERECHNET und dann verworfen.
+
+@pytest.fixture
+def tabelle_ohne_gelaende() -> list[dict]:
+    """Ein reines Gebaeude-IFC — der eine IfcSite darin traegt keine Geometrie."""
+    return [
+        eintrag(1, "IfcSlab_2eYuY4S8", SLAB),
+        eintrag(2, "IfcWall_0QOeb014", WAND_A),
+        eintrag(3, "IfcWall_1FMjVFy0", WAND_B),
+    ]
+
+
+def test_die_maske_wird_berechnet_und_dann_verworfen(bild, tabelle_ohne_gelaende):
+    """**Der Kern des Befundes.** Nicht «konnte nicht», sondern «wurde nicht behalten».
+
+    Ohne erkanntes Gelände und mit ``gelaende_erwartet=True`` gibt `bauwerksmaske` die
+    Maske als ``None`` zurück — und meldet im selben Atemzug die gezählten
+    Bauwerkspunkte. Das ist kein Widerspruch, sondern Absicht: Findet die Regel kein
+    Gelände, ist nicht entscheidbar, ob keines da ist oder ob sie es verfehlt hat. Im
+    zweiten Fall steckte der ganze Boden als Bauwerk in der Maske.
+
+    *Die Zusicherung hält fest, dass die Zahlen trotzdem dastehen* — sonst sähe ein
+    verworfener Lauf aus wie einer, der gar nichts messen konnte.
+    """
+    befund = m.bauwerksmaske(bild, tabelle_ohne_gelaende, gelaende_erwartet=True)
+
+    assert befund["maske"] is None
+    assert befund["n_bauwerk"] > 0, (
+        "Die Bauwerkspunkte müssen im Befund stehen, auch wenn die Maske verworfen wird.")
+    assert befund["gelaende_erkannt"] is False
+
+
+def test_der_grund_nennt_die_folge_und_die_abhilfe(bild, tabelle_ohne_gelaende):
+    """Ein Ausstieg, der nur sagt DASS, ist schwer zu finden.
+
+    Die HomeStation hat es wörtlich verlangt: *«eine Zeile im Bericht — Maskenweg
+    übersprungen, weil … — wäre schon die halbe Miete.»*
+    """
+    befund = m.bauwerksmaske(bild, tabelle_ohne_gelaende, gelaende_erwartet=True)
+    grund = " ".join(befund.get("warnungen") or ()) + str(befund.get("grund") or "")
+
+    assert "Maskenweg" in grund, "Die Folge gehört in denselben Satz wie die Ursache."
+    assert "--kein-gelaende" in grund, (
+        "Die Abhilfe gehört dazu — und zwar in der Form, die ein Betreiber wirklich tippt.")
+
+
+def test_mit_der_erklaerung_des_aufrufers_bleibt_die_maske(bild, tabelle_ohne_gelaende):
+    """Die Gegenprobe. Ohne sie prüfte der Test oben nur, dass irgendetwas None ist."""
+    befund = m.bauwerksmaske(bild, tabelle_ohne_gelaende, gelaende_erwartet=False)
+
+    assert befund["maske"] is not None
+    assert sum(befund["maske"]) == befund["n_bauwerk"]
+
+
+def test_mit_benanntem_gelaende_bleibt_die_maske_auch_ohne_erklaerung(bild, tabelle):
+    """**Und das ist seit dem 26.08.2026 wieder der Normalfall.**
+
+    Bis zu jenem Tag überlebte der IFC-Name den glb-Export nicht: Die Geländeplatte hiess
+    drüben ``IfcSlab_<GlobalId>``, die Regel bekam nichts zu lesen, und die Maske wurde
+    **auch bei Szenen mit Gelände** verworfen. Seit der Knotenname den Namen mitträgt,
+    trifft die Regel wieder — und ein Treffer dieses Tests ist der Beleg dafür.
+    """
+    befund = m.bauwerksmaske(bild, tabelle, gelaende_erwartet=True)
+
+    assert befund["gelaende_erkannt"] is True
+    assert befund["maske"] is not None
+    assert sum(befund["maske"]) == befund["n_bauwerk"]
