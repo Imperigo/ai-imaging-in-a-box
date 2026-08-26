@@ -61,10 +61,13 @@ from . import bruecke, fortschritt, maske as maske_modul
 # Nur fuer die Modus-Konstante. Der Name `kameras` ist in `verarbeite` lokal
 # belegt (die Kameraliste der Szene) — darum wird das Modul ausschliesslich in
 # der Vorgabe von `verarbeiter` benutzt, wo noch Modulgeltung herrscht.
+from . import graph as _graph
 from . import kameras as _kameras_modul
+from . import kette as _kette
 from . import komposition as _komposition
 from . import kosmo_szene as _kosmo_szene
 from . import prompts, render
+from . import seams as _seams
 from . import sonne as _sonne
 from . import varianten
 
@@ -567,6 +570,23 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     # Ohne diese zweite Bedingung stuende die Zeile unter JEDEM Auftrag der Bruecke —
     # eine Dauerwarnung, und die verdeckt die echten. Sie ist damit selbstloeschend:
     # Sobald Y-up bestellt wird, schweigt sie wieder.
+    # AUS DEM SPEICHER STATT GERECHNET. Die Zeile steht nur, wenn wirklich ein Treffer
+    # dabei war — der Zwischenspeicher ist voreingestellt AUS, und ohne Treffer schweigt
+    # sie. Sie ist trotzdem noetig: Ein Lauf aus dem Speicher ist schneller und sieht
+    # sonst genauso aus wie ein gerechneter. Wer eine Messreihe fuehrt, muss wissen,
+    # welche Bilder in DIESEM Lauf entstanden sind und welche aelter sind.
+    speicher = [k for k in (befund.get("kameras") or ())
+                if (k.get("zwischenspeicher") or {}).get("treffer")]
+    if speicher:
+        unter = sorted({str((k.get("zwischenspeicher") or {}).get("gerechnet_unter"))
+                        for k in speicher})
+        zeilen.append(
+            f"AUS DEM ZWISCHENSPEICHER, nicht gerechnet: "
+            f"{', '.join(str(k.get('kamera')) for k in speicher)} "
+            f"({len(speicher)} von {len(befund.get('kameras') or ())} Kameras, "
+            f"gerechnet unter Blender {', '.join(unter)}). Die Geometriestufen dieser "
+            f"Kameras stammen aus einem frueheren Lauf mit denselben Einstellungen.")
+
     achse = befund.get("hochachse") or {}
     if achse.get("quelle") == "auftrag" and str(achse.get("wert", "")).upper().startswith("Z"):
         zeilen.append(f"Geometrie um Z-up->Y-up GEDREHT, weil der Auftrag "
@@ -1089,6 +1109,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 deckungsgrad: float | None = None,
                 augenhoehe: float | None = None,
                 bias_grad: float | None = None,
+                zwischenspeicher=None,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
@@ -1205,6 +1226,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 "Richtung ist eingestellt. Es gibt nichts zu rendern."
             )
 
+        # DIE BLENDER-FASSUNG, EINMAL JE AUFTRAG. Sie gehoert in den Cache-Schluessel
+        # (4.2 und 5.2 sind zwei Renderer) und kostet 0,22 s — je Kamera abgefragt waere
+        # sie eine Verschwendung, je Auftrag ist sie unter der Messgrenze.
+        fassung = _blender_fassung() if zwischenspeicher is not None else ""
+
         bilder: list[str] = []
         urteile: list[dict] = []
         zeiten: dict[str, float] = {}
@@ -1219,8 +1245,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             aus.mkdir(parents=True, exist_ok=True)
             beginn = time.monotonic()
 
-            bericht = multipass(
-                str(auftrag["modell"]), aus, up_axis=hochachse,
+            einstellungen = dict(
+                glb_path=str(auftrag["modell"]), up_axis=hochachse,
                 aufloesung=szene.get("aufloesung", 512), hoehe=szene.get("hoehe"),
                 samples=szene.get("samples", 128),
                 kamera=aufgabe.get("richtung"),
@@ -1247,6 +1273,34 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 bias_grad=bias_grad,
                 stillstand_frist_s=stillstand_frist_s,
             )
+
+            # DER ZWISCHENSPEICHER. `None` heisst AUS, und das ist die Vorgabe: Ein
+            # Gedaechtnis, das niemand bestellt hat, ist die unangenehmste Art von
+            # Ueberraschung.
+            schluessel = (multipass_schluessel(einstellungen, blender=fassung)
+                          if zwischenspeicher is not None else None)
+            aus_speicher = _aus_dem_zwischenspeicher(zwischenspeicher, schluessel)
+            if aus_speicher is not None:
+                bericht = dict(aus_speicher)
+                # WOHER DAS BILD KOMMT, steht im Bericht. Ohne diese drei Zeilen saehe ein
+                # Lauf aus dem Speicher genauso aus wie ein gerechneter — nur schneller,
+                # und niemand wuesste warum. Genau die Sorte stiller Unterschied, gegen
+                # die dieses Projekt an fuenf Stellen dieses Tages angetreten ist.
+                bericht["zwischenspeicher"] = {"treffer": True, "schluessel": schluessel,
+                                               "gerechnet_unter": bericht.get("blender")}
+            else:
+                bericht = multipass(einstellungen.pop("glb_path"), aus, **einstellungen)
+                if zwischenspeicher is not None and bericht.get("status") == "ok":
+                    # ZUSAGEN sind die Dateien, auf die der Eintrag zeigt. Ohne sie weiss
+                    # er nicht, wovon er redet: Er speichert Pfade, nicht Bilder, und ein
+                    # Pfad allein ist eine Behauptung. `graph.ArtefaktCache.hole` prueft
+                    # sie bei jedem Zugriff — ein aufgeraeumtes /tmp genuegt sonst.
+                    zusagen = [bericht[f] for f in _kette.BEDARF["multipass"].dateien
+                               if isinstance(bericht.get(f), str) and bericht[f]]
+                    zwischenspeicher.lege_ab(schluessel, bericht, zusagen=zusagen)
+                bericht["zwischenspeicher"] = {"treffer": False, "schluessel": schluessel,
+                                               "gerechnet_unter": bericht.get("blender")}
+
             tiefe = bericht.get("depth_png")
             if not tiefe:
                 raise AbholerError(
@@ -1406,6 +1460,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                           belichtung=_belichtung_urteil(
                               ergebnis["bild_png"], stil, rahmen, belichtung_pruefen))
             urteil["doppelt_von"] = None
+            # OB DIE GEOMETRIESTUFE GERECHNET ODER GEHOLT WURDE. Sie steht am
+            # Kameraurteil und nicht nur im Multipassbericht, weil `befund_kurz` und
+            # jede spaetere Auswertung von hier lesen — und weil eine Messreihe wissen
+            # muss, welche Bilder in DIESEM Lauf entstanden sind.
+            urteil["zwischenspeicher"] = bericht.get("zwischenspeicher")
             urteile.append(urteil)
             if kennung:
                 gesehen[kennung] = {"kamera": kuerzel, "urteil": urteil}
@@ -1643,6 +1702,122 @@ RENDER_STEHENGEBLIEBEN = {
 #: geht im Bildbearbeitungsmodus als ``image`` mit hinein. ``material_id_png`` traegt die
 #: Maske. Alle drei werden von einem Subprozess geschrieben, und alle drei werden erst
 #: Sekunden spaeter gelesen.
+# --------------------------------------------------------------------------------------
+# Der Zwischenspeicher um den Multipass
+# --------------------------------------------------------------------------------------
+#
+# **Warum er sich lohnt, in Zahlen dieser Umgebung** (26.08.2026, Blender 4.2.1 LTS, CPU,
+# der synthetische Testbau 8 × 5 × 3 m):
+#
+#     256 px,   8 Samples:   2,1 s
+#     800 px,  32 Samples:   7,5 s
+#    1600 px, 128 Samples:  40,0 s      ← die Vorgaben des Vertrags
+#
+# Drei Kameras sind damit **zwei Minuten Blender je Auftrag** — auf einem trivialen
+# Quader. Und jeder Lauf, der nur den Prompt ändert, zahlt sie erneut: Der Abholer fährt
+# die Stufen als gerade Abfolge, ohne Gedächtnis. Für eine Messreihe über Prompts oder
+# Stilstärken ist das der ganze Kostenblock.
+#
+# **Die Voraussetzung ist gemessen und nicht angenommen.** Zweimal dasselbe gerechnet:
+#
+#   * `ifc_zu_glb` ist **byte-gleich** reproduzierbar. Der Schlüssel über den glb-INHALT
+#     ist damit stabil — das ist die Bedingung, an der ein Inhalts-Cache sonst still
+#     scheitert.
+#   * `glb_zu_multipass` ist **pixelgleich**, aber NICHT bytegleich: Blender stempelt die
+#     Uhrzeit in jede Ausgabe (`tEXt Date` im PNG, `Date`-Attribut im EXR). Gemessen: drei
+#     von 30 659 Bytes im EXR, 33 von 64 235 im PNG — und die Bilddaten selbst identisch.
+#
+# **Die zweite Messung ist die wichtigere**, und sie hat eine Folge über diesen Cache
+# hinaus: *Byte-Gleichheit ist bei Blender-Ausgaben kein Mass für Gleichheit.* Wer einen
+# Treffer dadurch prüfen wollte, dass er die Ausgaben neu hasht, bekäme **nie** einen.
+# `graph.ArtefaktCache` prüft darum die **Existenz** der zugesagten Dateien, und das ist
+# hier nicht Bequemlichkeit, sondern das einzig Richtige.
+
+#: Einstellungen des Multipass, die **nicht in den Schlüssel** gehören — mit dem Grund.
+#:
+#: Sie ändern nicht das Bild, sondern den Betrieb. Stünden sie im Schlüssel, verwürfe eine
+#: geänderte Wachfrist den ganzen Zwischenspeicher, obwohl sich am Ergebnis nichts ändert.
+#:
+#: Die Liste ist die **Umkehrung** von `MULTIPASS_DURCHGEREICHT`: Dort steht, was ankommt;
+#: hier, was ankommt und trotzdem folgenlos für das Bild ist. Beides gehört benannt — eine
+#: Auslassung ohne Begründung ist ein Loch mit Namen.
+MULTIPASS_NICHT_IM_SCHLUESSEL = {
+    "out_dir": "Wohin geschrieben wird. Genau darum geht es: Derselbe Schnitt in einem "
+               "anderen Ordner ist dasselbe Bild.",
+    "timeout": "Ein Abbruchdeckel. Er entscheidet, OB gerechnet wird, nicht WAS.",
+    "stillstand_frist_s": "Die Wachfrist. Sie beobachtet den Lauf und ändert ihn nicht.",
+    "herzschlag_takt_s": "Der Herzschlag des Runners — reine Betriebsanzeige.",
+    "_starte": "Die Testnaht.",
+}
+
+
+def _blender_fassung(_lauf=None) -> str:
+    """Welche Blender-Fassung hier rechnet — für den Schlüssel.
+
+    **Sie gehört hinein, und das ist gemessen begründbar:** Dieses Projekt fährt auf 4.2
+    *und* 5.2, und zwei Fassungen sind zwei Renderer. Ein Eintrag, den 4.2 erzeugt hat,
+    unter 5.2 als Treffer zu nehmen hiesse, ein Bild zu benutzen, das dieser Rechner so
+    nie erzeugt hätte — und der Unterschied fiele erst am fertigen Bild auf.
+
+    Kostet 0,22 s und wird **einmal je Lauf** abgefragt, nicht je Kamera.
+
+    Lässt sich die Fassung nicht feststellen, ist das **kein Abbruch** und auch kein
+    stiller Rückfall auf «egal»: Es kommt eine Marke in den Schlüssel, die zu keinem
+    ermittelten Wert passt. Der Lauf rechnet dann neu, statt einen fremden Eintrag zu
+    nehmen — *nicht feststellbar ist kein Abbruchgrund, aber auch keine Erlaubnis.*
+    """
+    import subprocess                                        # noqa: PLC0415
+
+    lauf = _lauf or (lambda: subprocess.run(
+        [_seams.finde_blender(), "--version"], capture_output=True, text=True, timeout=60))
+    try:
+        ausgabe = lauf().stdout or ""
+    except Exception as fehler:                              # noqa: BLE001
+        return f"unbekannt:{type(fehler).__name__}"
+    erste = next((z.strip() for z in ausgabe.splitlines() if z.strip()), "")
+    return erste or "unbekannt:leer"
+
+
+def multipass_schluessel(einstellungen: dict, *, blender: str) -> str:
+    """Der Cache-Schlüssel eines Multipass-Aufrufs.
+
+    Er beantwortet genau eine Frage — *würde dieselbe Rechnung dasselbe Bild liefern?* —
+    und benutzt dafür `graph.inhalts_hash`, nicht eine eigene Rechnung. Die Marke
+    `glb_path` steht in `param_dateien`: Der **Inhalt** der glb zählt, ihr Pfad nicht.
+    Ein verschobener Projektordner verwirft den Zwischenspeicher sonst, obwohl sich an
+    der Geometrie nichts geändert hat.
+
+    Args:
+        einstellungen: Was an `seams.glb_zu_multipass` geht, `glb_path` eingeschlossen.
+        blender: Die Fassung, die rechnet — siehe :func:`_blender_fassung`.
+    """
+    params = {k: v for k, v in einstellungen.items()
+              if k not in MULTIPASS_NICHT_IM_SCHLUESSEL}
+    params["_blender"] = blender
+    knoten = _graph.Knoten(id="multipass", art="multipass", params=params)
+    return _graph.inhalts_hash(knoten, [], param_dateien=("glb_path",))
+
+
+def _aus_dem_zwischenspeicher(cache, schluessel: str) -> dict | None:
+    """Ein brauchbarer Eintrag — oder ``None``, und dann wird gerechnet.
+
+    **Geprüft wird mit `kette._cache_maengel`, nicht mit einer eigenen Prüfung.** Sie
+    legt zwei Netze übereinander: eines errät Dateifelder an der Endung, das andere zählt
+    die Pflichtfelder aus `kette.BEDARF` auf. Das zweite kostet drei Zeilen und hat in
+    Sitzung 07 den bisher teuersten Fehler dieses Projekts gefangen — einen Eintrag mit
+    `depth_png = None`, der als Treffer galt, sodass die teure Stufe nie wieder lief und
+    die Kette für immer eine Stufe später scheiterte.
+    """
+    if cache is None:
+        return None
+    eintrag = cache.hole(schluessel)
+    if not isinstance(eintrag, dict):
+        return None
+    if _kette._cache_maengel("multipass", eintrag, _kette.BEDARF):
+        return None
+    return eintrag
+
+
 # --------------------------------------------------------------------------------------
 # Welcher Riegel auf welchem Weg laeuft
 # --------------------------------------------------------------------------------------

@@ -165,6 +165,16 @@ def main() -> int:
     ap.add_argument("--ohne-wache", action="store_true",
                     help=("Ohne Fortschrittsbeobachtung laufen. Der Bericht sagt dann "
                           "'nicht gemessen' und nicht 'lief durch'."))
+    ap.add_argument("--zwischenspeicher", dest="zwischenspeicher", default=None,
+                    help="Ordner fuer den Multipass-Zwischenspeicher. OHNE Angabe AUS — "
+                         "ein Gedaechtnis, das niemand bestellt hat, ist die "
+                         "unangenehmste Art von Ueberraschung. Mit Angabe wird die "
+                         "Geometriestufe je Kamera nur einmal gerechnet, solange glb, "
+                         "Kameraeinstellungen und Blender-Fassung gleich bleiben. "
+                         "Gemessen am 26.08.2026: 27,7 s -> 0,00 s bei Vertragsvorgaben. "
+                         "Der Bericht sagt bei JEDER Kamera, ob sie gerechnet oder "
+                         "geholt wurde. NICHT ins Repo legen — die Eintraege tragen "
+                         "absolute Pfade (Regel 3).")
     ap.add_argument("--probe", action="store_true",
                     help="Nur berichten, was anlaege: Karte pruefen, offene Auftraege zaehlen.")
     a = ap.parse_args()
@@ -189,6 +199,21 @@ def main() -> int:
             print(f"Ablage '{name}' fehlt — uebersprungen.")
         ablagen = [e for e in ablagen if e[1].is_dir()]
 
+    # REGEL 3: Die Eintraege tragen absolute Pfade. Ein Zwischenspeicher IM Repo landete
+    # damit im naechsten Commit — der Waechter `tests/test_regel3_kennungen.py` faende
+    # ihn, aber erst danach. Hier faellt es vorher auf.
+    speicher = None
+    if a.zwischenspeicher:
+        ziel = Path(a.zwischenspeicher).resolve()
+        repo = Path(__file__).resolve().parent.parent
+        if ziel == repo or repo in ziel.parents:
+            print(f"Der Zwischenspeicher darf nicht im Repo liegen: {ziel.name} — seine "
+                  f"Eintraege tragen absolute Pfade (Regel 3).")
+            return 2
+        from aiimaging import graph
+        speicher = graph.ArtefaktCache(ziel)
+        print(f"Zwischenspeicher: {ziel.name} ({len(list(ziel.glob('*.json')))} Eintraege)")
+
     if a.probe:
         for name, pfad, quelle in ablagen:
             offen = quelle.offene_auftraege(pfad)
@@ -199,9 +224,11 @@ def main() -> int:
         return 0
 
     seeds = tuple(int(x) for x in a.seeds.split(",") if x.strip())
+
     verarbeite = abholer.verarbeiter(stil=a.stil, nullprobe=not a.ohne_nullprobe,
                                      gelaende_z=a.gelaende_z,
                                      gelaende_erwartet=not a.kein_gelaende,
+                                     zwischenspeicher=speicher,
                                      seeds=seeds or abholer.VORGABE_SEEDS)
 
     def wache_bauen(auftrag):

@@ -331,3 +331,56 @@ def test_die_probe_zaehlt_beide_ablagen_getrennt(monkeypatch, tmp_path, capsys):
     ausgabe = capsys.readouterr().out
     assert "[Bruecke]" in ausgabe
     assert "MCP-Einlass" in ausgabe
+
+
+# ======================================================================================
+# Der Multipass-Zwischenspeicher
+# ======================================================================================
+
+def test_ohne_schalter_bleibt_der_speicher_aus(monkeypatch, tmp_path):
+    """Ein Gedächtnis, das niemand bestellt hat, ist die unangenehmste Art Überraschung."""
+    modul = _abholen()
+    gesehen: dict = {}
+    monkeypatch.setattr(modul.abholer, "verarbeiter",
+                        lambda **kw: (gesehen.update(kw), lambda a: {})[1])
+    monkeypatch.setattr(modul.abholer, "durchgang", lambda store, **kw: {
+        "gesehen": 0, "verarbeitet": 0, "fehler": 0, "liegengelassen": 0,
+        "gestanden": 0, "waisen": [], "ergebnisse": []})
+    monkeypatch.setattr(modul, "karte_auskunft", lambda: (True, "Attrappe"))
+    monkeypatch.setattr(sys, "argv", ["abholen.py", "--store", str(tmp_path)])
+    assert modul.main() == 0
+    assert gesehen["zwischenspeicher"] is None
+
+
+def test_mit_schalter_kommt_ein_speicher_beim_verarbeiter_an(monkeypatch, tmp_path):
+    """Der Schalter darf nicht bloss in der Hilfe stehen."""
+    from aiimaging import graph
+
+    modul = _abholen()
+    gesehen: dict = {}
+    monkeypatch.setattr(modul.abholer, "verarbeiter",
+                        lambda **kw: (gesehen.update(kw), lambda a: {})[1])
+    monkeypatch.setattr(modul.abholer, "durchgang", lambda store, **kw: {
+        "gesehen": 0, "verarbeitet": 0, "fehler": 0, "liegengelassen": 0,
+        "gestanden": 0, "waisen": [], "ergebnisse": []})
+    monkeypatch.setattr(modul, "karte_auskunft", lambda: (True, "Attrappe"))
+    monkeypatch.setattr(sys, "argv", ["abholen.py", "--store", str(tmp_path),
+                                      "--zwischenspeicher", str(tmp_path / "cache")])
+    assert modul.main() == 0
+    assert isinstance(gesehen["zwischenspeicher"], graph.ArtefaktCache)
+
+
+def test_ein_zwischenspeicher_im_repo_wird_abgewiesen(monkeypatch, tmp_path, capsys):
+    """**Regel 3.** Die Einträge tragen absolute Pfade — im Repo landeten sie im Commit.
+
+    Der Wächter `tests/test_regel3_kennungen.py` fände sie, aber erst danach. Hier fällt
+    es vorher auf, und zwar **auch bei `--probe`**: Wer nur nachsehen will, soll den
+    falschen Ort trotzdem genannt bekommen.
+    """
+    modul = _abholen()
+    monkeypatch.setattr(modul, "karte_auskunft", lambda: (True, "Attrappe"))
+    monkeypatch.setattr(sys, "argv", ["abholen.py", "--store", str(tmp_path),
+                                      "--zwischenspeicher", str(REPO / "build"),
+                                      "--probe"])
+    assert modul.main() == 2
+    assert "nicht im Repo" in capsys.readouterr().out
