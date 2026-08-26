@@ -1,0 +1,24 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260826-50",
+  "art": "qa",
+  "beschreibung": "Stammt euer Geometriewert 0.7177 aus einem erzeugten Bild? Davon haengt ab, ob der wichtigste Vorbehalt im README noch gilt.",
+  "anweisung": "=== EINE FRAGE, UND SIE BETRIFFT DIE WICHTIGSTE AUSSAGE DIESER ARBEIT ===\n\nIn eurem Ergebnis zu auf-47 steht eine Zahl, die wir nicht einordnen koennen, ohne zu\nraten — und raten waere hier besonders teuer.\n\n--- WORUM ES GEHT ---\n\nIhr meldet fuer das zweite Modell:\n\n    mit --kein-gelaende:  geometrie_score 0.7177   (spearman -0.7325, geom_iou 0.7031)\n    ohne:                 geometrie_score 0.6804   (spearman -0.6753, geom_iou 0.6855)\n\nBeide liegen UEBER der Schwelle 0.65. Und weiter unten steht: \"Geometriewert 0.6804 bei\nSchwelle 0.65, mit 10 von 10 Bauinvarianten.\"\n\nIm README dieses Repos steht seit Tagen der Satz, der den ehrlichen Rest unserer Arbeit\nbenennt:\n\n    \"Ein Bild, das die Geometrie-Schwelle besteht, gibt es noch nicht.\"\n\nWenn eure Zahl aus einem erzeugten Bild stammt, ist dieser Satz FALSCH geworden, und er\ngehoert sofort berichtigt — das waere der wichtigste Fortschritt seit dem ersten echten\nRender. Wenn sie aus etwas anderem stammt, bleibt er richtig, und wir haetten ihn um ein\nHaar aus einer Fehldeutung heraus gestrichen.\n\nWir schreiben ihn deshalb NICHT um, bevor ihr geantwortet habt.\n\n--- DIE FRAGE, IN DREI TEILEN ---\n\n  F1  Ist der Score auf einem vom BILDMODELL erzeugten Bild gemessen — also\n      Multipass -> ControlNet -> Diffusion -> Tiefenschaetzer -> Vergleich?\n      Oder gegen Blenders eigenen Beauty-Pass, gegen die Tiefen-EXR, oder gegen eine\n      andere Zwischenstufe?\n\n      Der Grund fuer die Frage ist gemessen und nicht misstrauisch: Am Beauty-Pass haben\n      wir |spearman| 0.990 gemessen, an einem Bild des Bildmodells 0.005. Eure 0.73 liegt\n      zwischen beidem, und genau dazwischen kann man sich irren.\n\n  F2  Falls ja: Welcher Prompt lief? Wortlaut genuegt. Nennt er BAUTEILE (Fenster,\n      Stuetzen, Fassade, Balkon …)?\n\n      Der Grund: Ein Prompt, der Bauteile nennt, laedt das Bildmodell dazu ein, sie zu\n      erfinden, wenn die Geometrie sie nicht hat. Ein bestandener Lauf MIT Bauteilprompt\n      ist ein anderer Befund als einer ohne — beide zaehlen, aber nicht dasselbe.\n\n  F3  Welches Bildmodell und welcher Startwert? Und lief der Vorsprungsriegel?\n\n      Ihr habt selbst geschrieben, dass er im selben Lauf Nein sagt: gewaehlt wurde\n      Startwert 2 mit 0.6286 gegen 0.5490, Abstand 0.0796 — innerhalb von 2 x Rauschboden.\n      Wir wollen wissen, ob das AUCH fuer den Geometriewert gilt: Ist 0.7177 ein Wert, den\n      dieselbe Szene bei einem anderen Startwert auch unterschritten haette?\n\n      Denn wenn ja, ist der Satz im README nicht falsch, sondern nur noch nicht wahr — und\n      der Unterschied ist genau der, um den es in dieser ganzen Arbeit geht.\n\n--- WAS WIR DARAUS MACHEN ---\n\n  * F1 = ja, F2 = ohne Bauteile, F3 = ueber mehrere Startwerte stabil:\n    Der Satz wird gestrichen und durch die Messung ersetzt, mit eurem Auftrag als Beleg.\n    Das ist der Meilenstein.\n\n  * F1 = ja, aber F2 oder F3 schwaechen ihn:\n    Der Satz wird PRAEZISIERT statt gestrichen — \"besteht die Schwelle, aber mit einem\n    Prompt, der Bauteile nennt\" oder \"bei einem von drei Startwerten\". Beides ist ein\n    Fortschritt und beides ist etwas anderes als der volle Beleg.\n\n  * F1 = nein:\n    Der Satz bleibt, und wir vermerken, an welcher Zwischenstufe die Zahl entstand.\n\n--- WAS NICHT GETAN WERDEN SOLL ---\n\n  * KEIN neuer Lauf noetig, wenn die Antwort schon in euren Protokollen steht. Diese\n    Frage ist eine Einordnung, keine Messbestellung. Nur falls F3 sich ohne Lauf gar\n    nicht beantworten laesst, waere ein zweites Startwert-Tripel auf derselben Szene\n    hilfreich — aber es hat Zeit.\n\n  * KEINE Bilder ins Repo (Regel 3). Zahlen, Prompt-Wortlaut und Modellname genuegen.\n\n  * Und bitte NICHT aufrunden zu unseren Gunsten. Wir haben heute an fuenf Stellen\n    Riegel gefunden, die gebaut waren und nicht liefen; ein Satz im README, der aus einer\n    guenstigen Lesart stammt, waere dieselbe Sorte Fehler an der sichtbarsten Stelle des\n    Projekts.",
+  "erstellt": "2026-08-26T16:16:56Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": [
+    "Regel 3: keine Bilder, keine Benutzerpfade, keine Rechnernamen",
+    "Kein neuer Lauf, wenn die Antwort in den Protokollen steht — das ist eine Einordnung"
+  ],
+  "rueckgabe": [
+    "F1 Auf welcher Stufe wurde gemessen — erzeugtes Bild oder Zwischenstufe?",
+    "F2 Prompt im Wortlaut; nennt er Bauteile?",
+    "F3 Bildmodell, Startwert, und ob der Wert ueber Startwerte stabil ist"
+  ]
+}

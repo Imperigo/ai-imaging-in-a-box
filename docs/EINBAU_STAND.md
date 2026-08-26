@@ -62,6 +62,15 @@ dort blieb.*
 
 ---
 
+## Ein Nachtrag vom selben Abend
+
+Die HomeStation meldet für ihr zweites Modell einen Geometriewert von **0.7177** bzw.
+**0.6804** — beide über der Schwelle 0.65. Ob das den stehenden Vorbehalt *«ein Bild, das
+die Schwelle besteht, gibt es noch nicht»* umwirft, hängt daran, **auf welcher Stufe**
+gemessen wurde; am Beauty-Pass liegt |spearman| bei 0.990, am Bild des Bildmodells bei
+0.005, und 0.73 liegt dazwischen. Gefragt in `auftraege/offen/auf-20260826-50.json`. Bis
+zur Antwort bleibt der Satz im README stehen.
+
 ## Was dieses Blatt nicht sagt
 
 * **Ob ein Posten gut gelöst ist.** Es sagt, ob er getan ist. Die Güte steht in den
