@@ -788,6 +788,18 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
                     "nicht durchgefallen, sondern ungeprueft — ein Lauf fehlt.")
         teile.insert(0, lage)
 
+    # Die Zahl, die sagt, worueber das Urteil ueberhaupt spricht. Steht VOR den uebrigen
+    # Teilen, weil sie alle anderen einordnet: Ist die Schwelle fuer diese Aufnahme
+    # unerreichbar, misst jeder Score die SZENE und nicht das Bild
+    # (auf-vis-20260826-16, 26.08.2026).
+    erreichbar = (geometrie_urteil or {}).get("erreichbarkeit") or {}
+    if erreichbar.get("erreichbar") is False:
+        teile.insert(0, (
+            f"SCHWELLE FUER DIESE AUFNAHME UNERREICHBAR: hoechstens "
+            f"{erreichbar.get('hoechster_score'):.4f} moeglich. Auch ein perfektes Bild "
+            f"kaeme nicht durch — 'passed: false' sagt hier etwas ueber die AUFNAHME und "
+            f"nichts ueber das Bildmodell."))
+
     if uebersprungen:
         # Vor allen anderen: Wer abbestellt hat, braucht keine Erklaerung darueber, was
         # nicht gemessen wurde. Er braucht die Bestaetigung, dass nichts LIEF.

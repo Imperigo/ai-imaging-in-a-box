@@ -495,3 +495,93 @@ def test_der_gemessene_fall_greift_an_der_funktion_selbst():
 
     assert urteil["abbruch"] is True
     assert "77.023" in urteil["grund"] and "21.300" in urteil["grund"]
+
+
+# ======================================================================================
+# Die Obergrenze — die Zahl, die sagt, WORUEBER ein Urteil spricht
+# ======================================================================================
+#
+# HomeStation, auf-vis-20260826-16, letzter Absatz: «Die geom_iou_obergrenze ist womoeglich
+# die aussagekraeftigere Zahl als der Score selbst, und sie steht heute nur im Befund,
+# nicht in der Meldung.»
+#
+# Der Fall dahinter: Dieselbe Geometrie — ein elfgeschossiges Wohnhaus ohne Fassade — wird
+# aus der Dreiviertelansicht zu einem PARKHAUS mit Autos auf jeder Ebene und frontal zu
+# einem ZWEIGESCHOSSIGEN HAUS mit Lamellenfenster. Score 0.4971 gegen Schwelle 0.65.
+
+def test_eine_unerreichbare_schwelle_wird_aus_der_gemessenen_obergrenze_erkannt():
+    """`geometrie_qa.erreichbarkeit` stand seit dem 22.08.2026 im Modul und hatte ausser
+    Tests **keinen Aufrufer** — die siebte tote Kante dieser Woche."""
+    urteil = {"geom_iou_obergrenze": 0.05, "geom_iou_obergrenze_gilt": True}
+
+    lage = abholer._erreichbarkeit_dieser_szene(urteil, schwelle=0.65)
+
+    assert lage["erreichbar"] is False
+    assert lage["hoechster_score"] < 0.65
+
+
+def test_eine_erreichbare_schwelle_ebenso():
+    """Die Gegenprobe. Sonst stünde die Warnung bei jeder Aufnahme."""
+    urteil = {"geom_iou_obergrenze": 0.6909, "geom_iou_obergrenze_gilt": True}
+
+    lage = abholer._erreichbarkeit_dieser_szene(urteil, schwelle=0.65)
+
+    assert lage["erreichbar"] is True
+
+
+def test_ohne_geltende_obergrenze_wird_nichts_gerechnet():
+    """**Gemessen, und es ist die wichtigste Grenze hier** (HomeStation, 24.08.2026):
+    *«geom_iou_obergrenze ist keine Obergrenze — das gemessene geom_iou liegt bei drei
+    Stufen darüber.»* Eine Erreichbarkeit aus einer Zahl zu rechnen, die keine Schranke
+    ist, wäre eine Auskunft mit Dezimalpunkt und ohne Deckung."""
+    assert abholer._erreichbarkeit_dieser_szene(
+        {"geom_iou_obergrenze": 0.05, "geom_iou_obergrenze_gilt": False},
+        schwelle=0.65) is None
+    assert abholer._erreichbarkeit_dieser_szene(
+        {"geom_iou_obergrenze": None, "geom_iou_obergrenze_gilt": True},
+        schwelle=0.65) is None
+
+
+def test_der_kurzbefund_nennt_die_unerreichbare_schwelle():
+    zeilen = abholer.befund_kurz({"kameras": [
+        {"kamera": "s", "erreichbarkeit": {"erreichbar": False,
+                                           "hoechster_score": 0.4971}}]})
+
+    treffer = [z for z in zeilen if "UNERREICHBAR" in z]
+    assert len(treffer) == 1
+    assert "0.4971" in treffer[0]
+
+
+def test_bei_erreichbarer_schwelle_steht_die_zeile_nicht_da():
+    zeilen = abholer.befund_kurz({"kameras": [
+        {"kamera": "s", "erreichbarkeit": {"erreichbar": True,
+                                           "hoechster_score": 0.83}}]})
+
+    assert not [z for z in zeilen if "UNERREICHBAR" in z]
+
+
+def test_das_vertragsergebnis_traegt_den_satz_ganz_vorn():
+    """`passed: false` ist im fremden Vertrag nicht von einem schlechten Bild zu
+    unterscheiden. Der Satz daneben ist die einzige Stelle, an der der Unterschied
+    überlebt — und er gehört vor die übrigen Zahlen, weil er sie alle einordnet."""
+    from aiimaging import kosmo_szene
+
+    ergebnis = kosmo_szene.als_ergebnis("vis-1-aaaaaa", ["a.png"], geometrie_urteil={
+        "score": 0.4971, "spearman": -0.9, "geom_iou": 0.3, "schwelle": 0.65,
+        "bestanden": False, "nullanker": {"rauschen": 0.1},
+        "erreichbarkeit": {"erreichbar": False, "hoechster_score": 0.4971}})
+
+    grund = ergebnis["qa"]["verdict"]["reason"]
+    assert grund.startswith("SCHWELLE FUER DIESE AUFNAHME UNERREICHBAR")
+    assert "nichts ueber das Bildmodell" in grund
+
+
+def test_ohne_befund_steht_der_satz_nicht_im_vertragsergebnis():
+    from aiimaging import kosmo_szene
+
+    ergebnis = kosmo_szene.als_ergebnis("vis-1-aaaaaa", ["a.png"], geometrie_urteil={
+        "score": 0.81, "spearman": -0.95, "geom_iou": 0.7, "schwelle": 0.65,
+        "bestanden": True, "nullanker": {"rauschen": 0.1},
+        "erreichbarkeit": {"erreichbar": True, "hoechster_score": 0.83}})
+
+    assert "UNERREICHBAR" not in ergebnis["qa"]["verdict"]["reason"]

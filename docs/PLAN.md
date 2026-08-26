@@ -3238,12 +3238,35 @@ zweiten Stelle.
       «nachmittagslicht», «fotografisch») — und rechnet trotzdem.
 - [ ] **`OSError: image file is truncated`** bei einem Mehrkamera-Auftrag, wo die erste
       Kamera durchlief. Reproduzierbar; eine Prüfung wert.
-- [ ] **Die aussagekräftigere Zahl steht nur im Befund.** Dieselbe Geometrie aus zwei
-      Kameras ergab zwei völlig verschiedene Gebäude — ein Wohnhaus ohne Fassade wird aus
-      der Dreiviertelansicht zum **Parkhaus**, frontal zum **zweigeschossigen Haus**.
-      Score 0.4971 gegen Schwelle 0.65, bei einer erreichbaren Obergrenze von **0.6909**.
-      *Auch ein perfektes Bild käme hier gerade eben durch* — die
-      `geom_iou_obergrenze` gehört damit in die Meldung und nicht nur in den Befund.
+- [x] **Die aussagekräftigere Zahl steht jetzt in der Meldung.**
+      `geometrie_qa.erreichbarkeit` stand seit dem 22.08. im Modul und hatte ausser Tests
+      **keinen Aufrufer** — die siebte tote Kante dieser Woche. Sie hängt jetzt am
+      Kameraurteil, im Kurzbefund und **ganz vorn** in `verdict.reason`, weil sie alle
+      übrigen Zahlen einordnet: Ist die Schwelle für diese Aufnahme unerreichbar, misst
+      jeder Score die Szene und nicht das Bild.
+- [x] **Nur wenn die Obergrenze auch eine ist.** Bei jeder Hintergrundstrategie ausser
+      `HG_KEINE` ist sie keine Schranke — von der HomeStation am 24.08. selbst gemessen
+      (*«das gemessene geom_iou liegt bei drei Stufen darüber»*). `_erreichbarkeit_dieser_szene`
+      gibt dann `None`. Eine Erreichbarkeit aus einer Zahl zu rechnen, die keine Schranke
+      ist, wäre eine Auskunft mit Dezimalpunkt und ohne Deckung.
+- [ ] **IHRE ZAHL GEHT NICHT AUF — nachgerechnet, nicht geglaubt** (`auf-20260826-43`).
+      Gemeldet ist «Score 0.4971 gegen Schwelle 0.65, erreichbare Obergrenze 0.6909» mit
+      dem Schluss *«auch ein perfektes Bild käme gerade eben durch»*. Mit unserer Formel
+      `score = sqrt(|spearman| · geom_iou)` ergibt ein geom_iou-Deckel von 0.6909 bei
+      |spearman| 0.998 einen höchsten Score von **0.8304** — deutlich über 0.65, nicht
+      «gerade eben». Damit der höchste Score 0.6909 wäre, müsste der Deckel bei 0.4784
+      liegen.
+      *Zwei Lesarten, und der Unterschied entscheidet alles:* (a) 0.6909 ist der
+      geom_iou-Deckel → Luft nach oben; (b) 0.6909 ist bereits der höchste Score → ihr
+      Satz stimmt und der Name im Code ist falsch. **Verdrahtet ist (a)**, weil
+      `geom_iou_obergrenze` im Code der Anteil der Soll-Geometrie am Bild ist.
+- [ ] **Der Parkhaus-Fall selbst ist der eindrücklichste Befund der Woche** und bleibt
+      offen: Dieselbe Geometrie — ein elfgeschossiges Wohnhaus ohne Fassade, 339 Bauteile,
+      Hüllbox 30 × 30 × 35 m — wird aus der Dreiviertelansicht zu einem **Parkhaus** mit
+      Autos auf jeder Ebene und frontal zu einem **zweigeschossigen Haus mit
+      Lamellenfenster**. Die Frage an `auf-43`: Unterscheidet die Obergrenze die beiden?
+      *Ist sie für beide gleich, ist sie eine Aussage über die **Geometrie** und nicht
+      über die Aufnahme — und steht dann an der falschen Stelle.*
 
 ---
 

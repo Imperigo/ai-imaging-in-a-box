@@ -605,6 +605,18 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
                       f"eine naehere Kamera, keine gesenkte Schwelle (auf-13: bei 70 % "
                       f"Bildbreite entstand Score 0.9599)")
 
+    # Die Zahl, die sagt, ob ein Score ueberhaupt etwas ueber das Bild aussagt.
+    unerreichbar = [(k.get("kamera"), (k.get("erreichbarkeit") or {}))
+                    for k in kameras
+                    if (k.get("erreichbarkeit") or {}).get("erreichbar") is False]
+    if unerreichbar:
+        zeilen.append(
+            "SCHWELLE FUER DIESE AUFNAHME UNERREICHBAR: "
+            + "; ".join(f"{k}: hoechstens {e.get('hoechster_score'):.4f}"
+                        for k, e in unerreichbar)
+            + " — auch ein perfektes Bild kaeme nicht durch. Das Urteil misst dann die "
+              "SZENE und nicht das Bild (auf-vis-20260826-16)")
+
     bs = urteil.get("bodenspanne") or {}
     if bs.get("einig") is False:
         zeilen.append(f"KAMERAWAHL UNEINIG: roh ist {bs.get('schlechteste_roh')!r} die "
@@ -1139,6 +1151,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                           bodenabstand=geometrie_qa.rho_gegen_gemessenen_boden(
                               ((urteil.get("rho_maske") or {}).get("gerichtet")),
                               maskenanker),
+                          # Was diese Aufnahme BESTENFALLS erreichen kann. Steht neben
+                          # dem Score, weil ein Score ohne seinen Deckel nicht sagt, ob
+                          # er etwas ueber das BILD oder ueber die SZENE aussagt.
+                          erreichbarkeit=_erreichbarkeit_dieser_szene(
+                              urteil, schwelle=grenze),
                           einordnung=geometrie_qa.einordnung(
                               urteil.get("score"), anker, schwelle=grenze),
                           belichtung=_belichtung_urteil(
@@ -1261,6 +1278,44 @@ def _rahmung_vor_dem_render(bericht: dict) -> dict:
             f"abgebrochen. Die gerechnete Bildbreite steht trotzdem da — als Auskunft, "
             f"nicht als Urteil.")
     return lage
+
+
+def _erreichbarkeit_dieser_szene(urteil: dict, *, schwelle: float) -> dict | None:
+    """Was diese Szene **bestenfalls** erreichen kann — mit der gemessenen Obergrenze.
+
+    **Der Anlass ist der letzte Absatz eines Berichts** (HomeStation, `auf-vis-20260826-16`,
+    26.08.2026): *«Die `geom_iou_obergrenze` ist womöglich die aussagekräftigere Zahl als
+    der Score selbst, und sie steht heute nur im Befund, nicht in der Meldung.»*
+
+    Der Fall dahinter ist eindrücklich: Dieselbe Geometrie — ein elfgeschossiges Wohnhaus
+    ohne Fassade — wird aus der Dreiviertelansicht zu einem **Parkhaus** mit Autos auf
+    jeder Ebene und frontal zu einem **zweigeschossigen Haus mit Lamellenfenster**. Der
+    Score liegt bei 0.4971 gegen die Schwelle 0.65.
+
+    :func:`aiimaging.geometrie_qa.erreichbarkeit` rechnet daraus den höchsten Score, den
+    die Szene überhaupt hergeben kann. Sie steht seit dem 22.08.2026 im Modul und hatte
+    **ausser Tests keinen Aufrufer** — die siebte tote Kante dieser Woche.
+
+    Returns:
+        ``None``, wenn die Obergrenze hier **keine** ist. Das ist der Normalfall bei jeder
+        Hintergrundstrategie ausser :data:`aiimaging.tiefenschaetzer.HG_KEINE`, und es ist
+        gemessen: *«geom_iou_obergrenze ist keine Obergrenze — das gemessene geom_iou
+        liegt bei drei Stufen darüber»* (HomeStation, 24.08.2026). Eine Erreichbarkeit aus
+        einer Zahl zu rechnen, die keine Schranke ist, wäre eine Auskunft mit
+        Dezimalpunkt und ohne Deckung.
+    """
+    from . import geometrie_qa
+
+    if not urteil.get("geom_iou_obergrenze_gilt"):
+        return None
+    deckel = urteil.get("geom_iou_obergrenze")
+    if not isinstance(deckel, (int, float)) or isinstance(deckel, bool):
+        return None
+    try:
+        return geometrie_qa.erreichbarkeit(iou_deckel=float(deckel), schwelle=schwelle,
+                                           name="diese Aufnahme")
+    except geometrie_qa.QaError:
+        return None
 
 
 def _kamera_ueber_dach(kamera: dict) -> dict:
