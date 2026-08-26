@@ -3447,6 +3447,33 @@ zwei nicht:
 
 ---
 
+## Die 79 ungerufenen Funktionen, eingeordnet (26.08.2026)
+
+`tools/tote_kanten.py` meldet **79 öffentliche Funktionen, die nur über Tests erreichbar
+sind**. Eine rohe Zahl ist keine Auskunft — hier steht, was dahintersteckt. *Nächstes Mal
+lässt sich vergleichen, statt wieder von vorn zu erschrecken.*
+
+| Modul | n | Warum ungerufen |
+|---|---:|---|
+| `stilstudie` | 13 | **Analysemodul.** Es misst, woran eine gesetzte Schwelle scheitert; kein Renderlauf erreicht es und soll es. |
+| `schwellenstudie` | 5 | dito |
+| `varianten` | 5 | dito |
+| `komposition` | 7 | **Der Innenraum-Zweig.** `bildanteile`, `deckenanteil`, `bodenanteil_erreichbar`, `hoehe_fuer_bild_gleichgewicht` beantworten Fragen an eine *Innen*aufnahme. Die Kette rendert Aussenansichten. *Nachgeprüft: `aufnahme` liefert `bodenanteil` und `horizont_am_baukoerper` bereits am Produktpfad — die Aussen-Grössen sind angeschlossen, die Innen-Grössen sind es zu Recht nicht.* |
+| `stil_qa` | 6 | Die Stil-QA läuft in dieser Kette **ausdrücklich nicht** (Owner-Entscheid 21.08.: fest formulierter Hausstil gegen Belichtungsrahmen statt Referenzvergleich). |
+| `kosmo_naht` | 5 | **Wartet auf `auf-40` (F5).** Anschliessen oder löschen — das entscheidet die Auskunft, ob noch jemand diese Feldnamen liest. |
+| `gate` | 2 | dito (`als_kosmovis_verdikt`, `gesamturteil`) |
+| `konversionstreue` | 2 | **Messinstrument, kein Produktweg.** `pruefe_konversion` braucht die *bekannte* Sollhüllbox; die gibt es nur bei selbst erzeugten Dateien. Bei einer echten IFC gibt es keine Wahrheit zum Vergleichen. **Wartet auf `auf-39` (G3).** |
+| `kette` | 2 | **Der Graph-Nachfolger**, gebaut und noch nicht übernommen. `werkzeuge.enqueue_render` verdrahtet die Stufen weiterhin als gerade Abfolge. *Kein Zufallsbefund, sondern ein offener Umbau.* |
+| `herkunft`, `lora`, `bildlesen`, `auftrag`, `prompts`, `jobs`, … | je 1–5 | Einzelfälle, ungeprüft im Sinn von «noch nicht nachgesehen». |
+
+- [x] **`werkzeuge.py` ist korrekt als erreichbar erkannt** — seine vier MCP-Werkzeuge
+      hängen an `RUFTABELLE`, und die steht auf Modulebene. Das Werkzeug findet sie über
+      die Tabelle; eine Registry ist kein blinder Fleck.
+- [ ] **Die Einzelfälle durchsehen** — je 1–5 in acht Modulen. Das ist die einzige Gruppe
+      ohne Begründung, und darum die einzige, die noch Arbeit ist.
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).
