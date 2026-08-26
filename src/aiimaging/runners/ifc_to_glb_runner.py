@@ -90,6 +90,49 @@ def ist_gebaute_substanz(typname: str) -> bool:
     return str(typname) not in NICHT_GEBAUTE_SUBSTANZ
 
 
+#: Wieviel vom IFC-Namen in den Knotennamen darf.
+#:
+#: **Blender kuerzt Objektnamen bei 63 Byte.** Steht der Name hinten, faellt er dort weg —
+#: und mit ihm die einzige Auskunft, die den glb-Export ueberlebt. Er steht darum VOR der
+#: GlobalId, und was ueberlaeuft, ist die GlobalId und nicht der Name.
+NAME_HOECHSTENS = 24
+
+
+def _knotenname(produkt) -> str:
+    """``IfcSlab_Gelaende_2eYuY4S8…`` — Typ, **Name**, GlobalId.
+
+    Warum der Name mit muss
+    -----------------------
+    **Gemessen am 26.08.2026.** Der Knotenname war bis dahin ``f"{typ}_{guid}"``, und
+    damit ging der IFC-Name beim Export verloren. Auf der Blender-Seite entscheidet aber
+    genau er darueber, was Gelaende ist: ``aiimaging.maske.ist_gelaende`` liest den
+    **Objektnamen**, weil nach dem glb-Export kein IFC-Typ mehr dasteht.
+
+    Die Folge war an der Testgeometrie mit Gelaende zu sehen: Die Gelaendeplatte ist ein
+    ``IfcSlab`` mit dem Namen ``Gelaende`` — der Typfilter dieses Runners
+    (``GELAENDE_TYPEN = ("IfcSite",)``) fasst sie nicht, weil die ``IfcSite`` selbst gar
+    keine Geometrie traegt, und die Namensregel drueben konnte sie nicht fassen, weil der
+    Name nicht mehr dastand. **Beide Filter waren blind, jeder aus einem anderen Grund.**
+
+    Ergebnis: ``bbox_bauwerk`` war gleich der Szenenbox (20 x 20 m statt 8 x 5 m), und der
+    Rahmungsriegel des Abholers sah einen Breitenanteil von 1.0, wo 0.4 richtig gewesen
+    waere. *Er war damit auf genau dem Fall wirkungslos, fuer den er gebaut wurde.*
+
+    Ein fehlender oder leerer Name ergibt dieselbe Form wie frueher — dann ist nichts zu
+    ueberliefern.
+    """
+    typ = produkt.is_a()
+    guid = getattr(produkt, "GlobalId", "") or ""
+    roh = (getattr(produkt, "Name", None) or "").strip()
+    if not roh:
+        return f"{typ}_{guid}"
+    # Leerzeichen zu Unterstrichen: `ist_gelaende` zerlegt ohnehin an beidem, aber ein
+    # Objektname mit Leerzeichen ist in Blender unhandlich. Sonst bleibt der Name, wie er
+    # ist — wer ihn beschneidet, entscheidet ueber eine Regel, die anderswo steht.
+    name = "_".join(roh.split())[:NAME_HOECHSTENS]
+    return f"{typ}_{name}_{guid}"
+
+
 def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
     """Konvertiert IFC (IFC4 oder IFC2X3) → glb (Y-up) und liefert einen Report.
 
@@ -130,7 +173,7 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
         if len(ecken) == 0 or len(flaechen) == 0:
             continue
         szene.add_geometry(trimesh.Trimesh(vertices=ecken, faces=flaechen, process=False),
-                           node_name=f"{produkt.is_a()}_{produkt.GlobalId}")
+                           node_name=_knotenname(produkt))
         n_elemente += 1
         n_dreiecke += len(flaechen)
         # Der groesste gemessene Fehler dieser Woche: Die Kamera rahmt die Huellbox der

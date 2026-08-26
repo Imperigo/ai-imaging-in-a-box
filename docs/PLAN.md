@@ -3508,6 +3508,27 @@ zweiten Stelle.
       diesem Tag gebaut, gründlich geprüft — die Sonne mit 34 Tests reiner Arithmetik —
       und **nie ausgeführt**. Fünf neue Tests jenseits der Prozessgrenze.
 
+- [x] **DER SCHWERSTE BEFUND DES TAGES: Der Rahmungsriegel war auf seinem eigenen
+      Anlassfall blind** (26.08.). Erste Fahrt der Kette über eine Geometrie **mit
+      Gelände**: Bauwerksbox **20 × 20 m statt 8 × 5 m**, Breitenanteil 1,00 statt 0,40,
+      wirksame Bildbreite **0,70 statt 0,28** — der Lauf wäre durchgewunken worden,
+      obwohl die HomeStation für 30 % Bildbreite einen Score von 0,0 gemessen hat.
+      **Zwei Filter, beide blind:** Die Geländeplatte ist ein `IfcSlab` namens `Gelaende`
+      — der Typfilter der IFC-Seite fasst nur `IfcSite` (die trägt keine Geometrie), und
+      die Namensregel der Blender-Seite bekam nichts zu lesen, weil der Knotenname
+      `IfcSlab_<GlobalId>` lautete. *Der Export warf die eine Auskunft weg, auf die die
+      nächste Stufe angewiesen ist.*
+      Behoben im IFC-Runner (`_knotenname`), gemessen von Ende zu Ende, zwei neue Tests
+      über die ganze Kette.
+      **Nebenwirkung, benannt statt verschwiegen:** Dieselbe Regel baut die Maske. Für
+      Szenen mit benanntem Gelände sind Geometrie-QA-Zahlen aus unserer IFC-Kette von
+      **vor** dem 26.08. mit späteren **nicht vergleichbar**.
+- [ ] **Die IFC-seitige `bbox_bauwerk` filtert weiterhin nur nach Typ** und meldet für die
+      Geländegeometrie unverändert 20 × 20 m. Absichtlich nicht mitrepariert: Dieselbe
+      Regel an einer dritten Stelle zu führen, ist der Anfang der nächsten Abweichung. Die
+      Kette benutzt die Blender-seitige Box; die IFC-seitige ist eine zweite Meinung, die
+      auseinanderlaufen kann.
+
 ---
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
@@ -3517,7 +3538,7 @@ Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
 
 | | Beginn des Tages | nach dem Vormittag | Ende |
 |---|---:|---:|---:|
-| Tests | 3335 | 3528 | **3888** |
+| Tests | 3335 | 3528 | **3896** |
 | Vakuumprobe | 10 Treffer | 12 Treffer | 12 Treffer |
 | Tote Kanten, gar nicht erreichbar | — | 2 | **1** |
 | Tote Kanten **mit Urteil** | 0 | 0 | **80 von 80** |
