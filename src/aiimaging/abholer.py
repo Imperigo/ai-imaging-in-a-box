@@ -1275,6 +1275,190 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
     return verarbeite
 
 
+# --------------------------------------------------------------------------------------
+# Was `verarbeiter` weiterreicht — und was nicht
+# --------------------------------------------------------------------------------------
+#
+# **Der Anlass ist derselbe wie an der Nachbarnaht** (`kosmo_szene.DURCHGEREICHT`): Am
+# 23.08.2026 hat dieses Projekt zweimal an einem Tag denselben Fehler gemacht, beide Male
+# an einer Naht. Die Brennweite war im Kern längst einstellbar und kam an der Aussenkante
+# trotzdem nicht durch; der Geländestand ebenso. Beide Male hiess es «einstellbar», und
+# beide Male stimmte das im Modul und nicht im Betrieb.
+#
+# **Einstellbar ist ein Versprechen, das man an der Naht prüft, nicht am Modul.** Gezählt
+# am 26.08.2026: `glb_zu_multipass` hat 18 echte Einstellungen, `verarbeiter` reicht 12
+# durch; `RenderAuftrag` hat 12 Felder, gesetzt werden 7. Nirgends stand, welche der zehn
+# Absicht sind und welche Lücken — und genau diese dritte Möglichkeit, «steht nirgends»,
+# ist die bequemste.
+#
+# Die Tabellen erfinden keine neue Arbeit. Sie **sammeln** vier bereits bekannte offene
+# Punkte an der Naht, an der sie wirken, statt sie über drei Dokumente zu verteilen.
+
+#: Parameter von :func:`aiimaging.seams.glb_zu_multipass`, die **keine Einstellung** sind.
+#:
+#: ``glb_path`` und ``out_dir`` sind positionell und beschreiben, woran gearbeitet wird;
+#: ``_starte`` ist die Testnaht. Sie stehen hier benannt und nicht als Zahl im Test —
+#: eine Ausnahme ohne Begründung ist ein Loch mit Namen.
+MULTIPASS_KEINE_EINSTELLUNG = ("glb_path", "out_dir", "_starte")
+
+#: Einstellungen des Multipass, die **ankommen** — mit der Stelle, an der sie herkommen.
+MULTIPASS_DURCHGEREICHT = {
+    "up_axis": "verarbeiter(up_axis=…), Vorgabe ANGENOMMENE_HOCHACHSE",
+    "aufloesung": "szene['aufloesung'] aus der Bestellung",
+    "hoehe": "szene['hoehe'] aus der Bestellung",
+    "samples": "szene['samples'] aus der Bestellung",
+    "kamera": "je Kameraaufgabe: aufgabe['richtung']",
+    "kamera_modus": "verarbeiter(kamera_modus=…), Vorgabe MODUS_SHIFT",
+    "gelaende_z": "verarbeiter(gelaende_z=…) bzw. tools/abholen.py --gelaende-z",
+    "sonne": "szene['sonne'] — seit 26.08.2026, siehe aiimaging.sonne",
+    "auge": "je Kameraaufgabe: aufgabe['auge'], wenn die Bestellung Zahlen mitschickt",
+    "blick_auf": "je Kameraaufgabe: aufgabe['blick_auf']",
+    "brennweite": "je Kameraaufgabe: aufgabe['brennweite_mm']",
+    "stillstand_frist_s": "verarbeiter(stillstand_frist_s=…)",
+}
+
+#: Einstellungen, die `verarbeiter` **nicht** setzt — mit dem Grund und dem, was fehlt.
+#:
+#: ``vorgabe`` ist der Wert, der stattdessen gilt. Der Test hält ihn **gegen die wirkliche
+#: Signatur**: Ändert jemand ``beauty`` auf ``False`` oder ``timeout`` auf 300, wird er
+#: rot. Eine Tabelle, die von Hand gepflegt werden muss, veraltet — an diesem einen Tag
+#: schon zweimal nachgewiesen.
+MULTIPASS_STEHENGEBLIEBEN = {
+    "beauty": {
+        "vorgabe": True,
+        "absicht": True,
+        "grund": "Der Vorgabewert ist der einzige, der auf diesem Weg trägt: "
+                 "`verarbeiter` liest `bericht['beauty_png']` als `RenderAuftrag."
+                 "beauty_png`. Mit `False` fiele die ganze Kette still von "
+                 "Bildbearbeitung auf reines Text-zu-Bild zurück.",
+        "noetig": "NICHTS. Wer den Beauty-Pass abschaltet, schaltet damit den "
+                  "Betriebsmodus der ganzen Kette um und muss das ausdrücklich tun.",
+    },
+    "material_id": {
+        "vorgabe": True,
+        "absicht": True,
+        "grund": "`_maske_bauen` baut die Bauwerksmaske aus `material_id_png`. Ohne sie "
+                 "gibt es weder rho über der Maske noch die Auswahl unter drei "
+                 "Startwerten — und `_bester_seed` fährt dann nur einen.",
+        "noetig": "NICHTS. Ohne Maske gäbe es kein zweites Bein des Paartests.",
+    },
+    "shift_y": {
+        "vorgabe": None,
+        "absicht": True,
+        "grund": "`None` heisst: der Runner rechnet ihn aus der abgeleiteten Kamera "
+                 "selbst. Ein Wert hier überschriebe genau die Rechnung, die "
+                 "`kamera_modus=MODUS_SHIFT` anstösst — und der WIRD durchgereicht.",
+        "noetig": "NICHTS. Wer den Versatz von Hand setzen will, setzt ohnehin `auge` "
+                  "und `blick_auf` und umgeht damit die Ableitung ganz.",
+    },
+    "herzschlag_takt_s": {
+        "vorgabe": 2.0,
+        "absicht": True,
+        "grund": "Der Vorgabewert IST die eingeschaltete Wache, gemessen am 20.08.2026 "
+                 "(`auf-20260820-19`: 88 Schläge, längste Lücke 2,10 s). Der einzige "
+                 "andere sinnvolle Wert wäre `None`, und das hiesse: Wache aus.",
+        "noetig": "NICHTS. Ein anderer Takt bräuchte eine Messung, die zeigt, dass die "
+                  "heutige Wache zu grob oder zu teuer ist — beides ist widerlegt.",
+    },
+    "timeout": {
+        "vorgabe": 900,
+        "absicht": False,
+        "grund": "Eine LÜCKE, und eine gekoppelte: `samples` kommt ungeprüft aus der "
+                 "Bestellung (`kosmo_szene`: `int(render.get('samples', 128))`, ohne "
+                 "Obergrenze), der Zeitdeckel ist fest. Eine Bestellung mit hohen "
+                 "Samples killt damit ihren eigenen Lauf nach 900 s mit einem "
+                 "`SeamError` — der eine Regler ist bestellbar, der andere nicht.",
+        "noetig": "Entweder eine Obergrenze für `samples` an der Naht, oder ein Deckel, "
+                  "der mit den Samples wächst. Beides braucht eine Messung, wie lange "
+                  "ein Multipass je Sample wirklich dauert — heute gemessen sind nur "
+                  "~97 s bei der Vorgabe.",
+    },
+    "kamera_huellbox": {
+        "vorgabe": None,
+        "absicht": False,
+        "grund": "Die schärfste der zehn. Der Docstring von `glb_zu_multipass` sagt "
+                 "selbst, dass sie nötig ist, sobald Gelände in der Szene liegt "
+                 "(gemessen: 6,9 % statt 21,9 % Geometrieanteil). Genau diese Box — "
+                 "`bbox_bauwerk` — liegt seit dem 25.08. im Bericht und wird von "
+                 "`_rahmung_vor_dem_render` bereits gelesen. `verarbeiter` bricht also "
+                 "Läufe wegen zu weiter Rahmung ab und reicht dem Runner nie die Box, "
+                 "die die Rahmung heilen würde.",
+        "noetig": "Ein Entscheid: Die Box entsteht IM Multipass, gebraucht wird sie "
+                  "DAVOR. Auflösbar nur über einen zweiten Blender-Lauf oder über den "
+                  "IFC-Report, der `bbox_bauwerk` seit dem 24.08. ebenfalls führt. "
+                  "Wartet auf `auf-41` (G3).",
+    },
+}
+
+#: Felder von :class:`aiimaging.render.RenderAuftrag`, die `verarbeiter` **setzt**.
+RENDER_DURCHGEREICHT = {
+    "depth_png": "der normalisierte Tiefenpass aus dem Multipass",
+    "prompt": "szene['prompt'] — bereits übersetzt (kosmo_szene.lies_szene)",
+    "backbone": "szene['backbone'], sonst render.VORGABE_BACKBONE",
+    "controlnet_staerke": "szene['controlnet_staerke'] aus 'faithful'",
+    "beauty_png": "bericht['beauty_png'] — schaltet den Bildbearbeitungsmodus ein",
+    "seed": "je Durchgang aus VORGABE_SEEDS, siehe _bester_seed",
+    "ausgabe_png": "Ablageort je Kamera und Startwert",
+}
+
+#: Felder, die `verarbeiter` **nicht** setzt — mit dem Grund und dem, was fehlt.
+RENDER_STEHENGEBLIEBEN = {
+    "negativ_prompt": {
+        "vorgabe": "",
+        "absicht": True,
+        "grund": "Anschliessen wäre hier der SCHLECHTERE Zustand, und das ist gemessen: "
+                 "`z-image-turbo` läuft mit `fuehrung = 0.0`, und unterhalb 1.0 ist die "
+                 "klassifikatorfreie Führung aus. Der negative Prompt stünde dann im "
+                 "Protokoll und änderte keinen Bildpunkt — eine Angabe, die aussieht, "
+                 "als hätte sie gewirkt. `negativ_lage` meldet die Lage bereits.",
+        "noetig": "Ein Backbone mit Führung über 1.0, oder der Entscheid, die sieben "
+                  "Negativ-Prompts der Stile zu löschen. Steht als Frage in `auf-38`.",
+    },
+    "fuehrung": {
+        "vorgabe": None,
+        "absicht": True,
+        "grund": "`None` heisst: die des Backbones. Ein Wert hier überstimmte eine "
+                 "gemessene Modelleigenschaft mit einer Setzung.",
+        "noetig": "NICHTS, solange die Führung am Backbone-Eintrag steht. Wer sie hier "
+                  "setzen wollte, müsste erst begründen, warum er es besser weiss.",
+    },
+    "modell_wurzel": {
+        "vorgabe": None,
+        "absicht": True,
+        "grund": "Auflösung über `$AIIMAGING_MODELLE` — die Umgebung entscheidet, wo "
+                 "Gewichte liegen, nicht die Bestellung. Seit dem 26.08. meldet "
+                 "`render.modellwurzel_lage`, wenn der Pfad nicht existiert.",
+        "noetig": "NICHTS. Ein Pfad aus der Bestellung wäre Regel 3 gefährlich nahe — "
+                  "er trüge einen Rechnernamen durch die Naht.",
+    },
+    "schritte": {
+        "vorgabe": 20,
+        "absicht": False,
+        "grund": "Eine LÜCKE gegen die eigene Registry: `backbone.py` sagt zu "
+                 "`z-image-turbo` wörtlich «destilliert, auf 8 Schritte OHNE "
+                 "klassifikatorfreie Führung trainiert». Der Vorgabewert ist 20, und es "
+                 "gibt am Backbone-Eintrag kein Feld, über das die 8 je greifen könnten. "
+                 "Das sind 2,5-fache Rechenzeit gegen eine dokumentierte Modellangabe — "
+                 "ungemessen, in beide Richtungen.",
+        "noetig": "Ein Feld `schritte` am Backbone-Eintrag, und eine Messung, ob 8 "
+                  "Schritte auf diesem Modell wirklich reichen. Der fremde Vertrag "
+                  "trägt dafür kein Feld — gefragt als F5 in `auf-44`.",
+    },
+    "denoise": {
+        "vorgabe": 0.6,
+        "absicht": False,
+        "grund": "Eine LÜCKE, und eine inhaltlich schwere: Der Bildbearbeitungsmodus ist "
+                 "auf diesem Weg IMMER an, weil `beauty_png` gesetzt wird. `denoise` "
+                 "bestimmt damit, wieviel vom Blender-Render überlebt — und zusätzlich "
+                 "die Zahl der wirklich gerechneten Schritte (`schritte × denoise`). Die "
+                 "Bestellung kann `faithful` auf `controlnet_staerke` abbilden; den "
+                 "zweiten, gleich starken Regler kann sie nicht.",
+        "noetig": "Dieselbe Auskunft wie bei `schritte`: was `faithful` steuern soll. "
+                  "`auf-44`, F5.",
+    },
+}
+
+
 #: Bilder aus dem Multipass, die VOR dem Renderlauf ganz da sein muessen.
 #:
 #: ``depth_png`` ist die Konditionierung — ohne sie gibt es keinen Lauf. ``beauty_png``

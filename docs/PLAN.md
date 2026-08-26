@@ -3612,6 +3612,46 @@ ja nie.
 Skalierung; sie vertauscht Kanten, ändert aber die **grösste** nicht — und genau die liest
 `pruefe_massstab`.
 
+## Die Durchreichungstabelle für `verarbeiter` (26.08.2026)
+
+**Derselbe Anlass wie an der Nachbarnaht**, nur an der Stelle, an der die GPU-Zeit
+anfällt: Am 23.08. kam die Brennweite an der Aussenkante nicht durch, obwohl sie im Kern
+längst einstellbar war; der Geländestand ebenso. *Einstellbar ist ein Versprechen, das man
+an der Naht prüft, nicht am Modul.* Für `kosmo_szene.lies_szene` gibt es die Tabelle seit
+dem 23.08. — für `verarbeiter` gab es sie nicht.
+
+Gezählt: `glb_zu_multipass` hat **18** echte Einstellungen, durchgereicht werden **12**;
+`RenderAuftrag` hat **12** Felder, gesetzt werden **7**.
+
+- [x] Vier Tabellen in `abholer.py`, unmittelbar bei der Funktion, die weitergibt — wie
+      `DURCHGEREICHT` bei `lies_szene` steht und nicht bei der empfangenden Seite. Sie
+      enthalten nur Zeichenketten und lösen keinen Import aus.
+- [x] **Sieben Absichten, vier Lücken** — und beides kommt vor. *Wäre alles «Absicht»,
+      hätte jemand die Frage weggeschrieben statt sie zu beantworten; wäre alles «Lücke»,
+      sagte die Spalte nichts.* Ein Test hält beide Zahlen.
+- [x] **Der Test prüft die Vorgabewerte gegen `inspect.signature`** und gegen
+      `dataclasses.fields` — den Schritt konnte die Nachbarnaht nicht haben. Ändert jemand
+      `beauty` auf `False` oder `timeout` auf 300, wird er rot.
+- [x] **Und gegen den Betrieb, nicht nur gegen sich selbst:** Ein Lauf mit Attrappen
+      schreibt mit, was wirklich übergeben wurde, und hält es gegen die Tabelle. *Eine
+      Tabelle, die nur sich selbst prüft, ist eine Behauptung mit Testabdeckung.*
+- [x] `tests/test_durchreichung_verarbeiter.py` (31 Fälle).
+
+### Die vier Lücken, und jede hat schon eine Adresse
+
+| Lücke | Warum sie eine ist | Wo sie hängt |
+|---|---|---|
+| **`kamera_huellbox`** | Der Docstring von `glb_zu_multipass` sagt selbst, dass sie nötig ist, sobald Gelände in der Szene liegt (6,9 % statt 21,9 % Geometrieanteil). *`verarbeiter` bricht Läufe wegen zu weiter Rahmung ab und reicht dem Runner nie die Box, die die Rahmung heilen würde.* | `auf-41` — die Box entsteht **im** Multipass, gebraucht wird sie **davor** |
+| **`schritte`** | `backbone.py` sagt zu `z-image-turbo` wörtlich «auf **8** Schritte trainiert». Der Vorgabewert ist **20**, und es gibt am Backbone-Eintrag kein Feld, über das die 8 je greifen könnten — 2,5-fache Rechenzeit gegen eine dokumentierte Modellangabe | `auf-44` (F5) |
+| **`denoise`** | Der Bildbearbeitungsmodus ist auf diesem Weg **immer** an; `denoise` bestimmt damit, wieviel vom Blender-Render überlebt, **und** die Zahl der wirklich gerechneten Schritte. Die Bestellung kann `faithful` abbilden, diesen zweiten, gleich starken Regler nicht | `auf-44` (F5) |
+| **`timeout`** | Gekoppelt: `samples` kommt **ungeprüft** aus der Bestellung, der Zeitdeckel ist fest bei 900 s. Eine Bestellung mit hohen Samples killt ihren eigenen Lauf — der eine Regler ist bestellbar, der andere nicht | offen; braucht eine Messung, wie lange ein Multipass **je Sample** dauert |
+
+**Eine Korrektur an der eigenen Zählung:** Zuerst hatte ich fünf nicht durchgereichte
+Multipass-Parameter gezählt. Es sind **sechs** — `shift_y` fehlte, und die Gegenprüfung hat
+es gefunden. *Die Zahl steht jetzt in einem Test und nicht in einer Erinnerung.*
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).
