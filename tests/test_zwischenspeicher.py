@@ -275,6 +275,30 @@ def test_ein_echter_treffer_wird_auch_als_treffer_gemeldet(tmp_path, glb):
     assert not any("AUS DEM ZWISCHENSPEICHER" in z for z in abholer.befund_kurz(erst))
 
 
+def test_ein_bericht_der_kein_treffer_waere_wird_gar_nicht_erst_abgelegt(tmp_path, glb):
+    """Abgelegt wird, was als Treffer taugen würde — dieselbe Prüfung, nicht eine zweite.
+
+    Sonst füllt sich der Speicher mit Einträgen, die nie treffen können, und ein
+    gescheiterter Lauf hinterlässt einen Eintrag, der so aussieht, als sei er gelungen.
+    """
+    cache = graph.ArtefaktCache(tmp_path / "cache")
+
+    def kaputt(glb_pfad, aus, **kw):
+        # Ein Lauf, der die Tiefenkarte nicht hinbekommen hat — genau der Fall, in dem
+        # ein Eintrag am teuersten wäre (Sitzung 07).
+        return {"status": "ok", "blender": "4.2.1 LTS", "depth_png": None}
+
+    verarbeite = abholer.verarbeiter(out_wurzel=tmp_path, auto_richtungen=("s",),
+                                     zwischenspeicher=cache, _multipass=kaputt)
+    with pytest.raises(Exception):
+        verarbeite(_auftrag(tmp_path, glb))
+    assert not list((tmp_path / "cache").glob("*.json")), (
+        "Ein Bericht, der als Treffer abgelehnt würde, ist abgelegt worden. Der Speicher "
+        "füllt sich dann mit Einträgen, die nie greifen — und ein gescheiterter Lauf "
+        "hinterlässt einen, der aussieht wie ein gelungener."
+    )
+
+
 def test_die_kurzform_sagt_dass_ein_bild_aus_dem_speicher_kam():
     """Sonst sähe ein Lauf aus dem Speicher genauso aus wie ein gerechneter, nur schneller."""
     zeilen = abholer.befund_kurz({"kameras": [
