@@ -19,11 +19,12 @@ from types import SimpleNamespace
 import pytest
 
 from aiimaging import abholer, render
+from conftest import MINI_PNG
 
 
 def _auftrag(tmp_path):
     tiefe = tmp_path / "t.png"
-    tiefe.write_bytes(b"\x89PNG\r\n\x1a\n")
+    tiefe.write_bytes(MINI_PNG)
     return render.RenderAuftrag(depth_png=str(tiefe), prompt="a house",
                                 ausgabe_png=str(tmp_path / "b.png"))
 
@@ -31,7 +32,7 @@ def _auftrag(tmp_path):
 def _modell(tmp_path, **felder):
     """Eine Modellattrappe, die ein Bild schreibt — und die Angaben führt, die zählen."""
     def modell(parameter):
-        Path(parameter["ausgabe_png"]).write_bytes(b"\x89PNG\r\n\x1a\n")
+        Path(parameter["ausgabe_png"]).write_bytes(MINI_PNG)
         return parameter["ausgabe_png"]
 
     for name, wert in felder.items():
@@ -94,11 +95,11 @@ def _lauf(tmp_path, geraet):
 
     def multipass(glb, aus, **kw):
         tiefe = Path(aus) / "tiefe_norm.png"
-        tiefe.write_bytes(b"\x89PNG\r\n\x1a\n")
+        tiefe.write_bytes(MINI_PNG)
         return {"depth_png": str(tiefe), "kamera": {"weg": "vorgegeben"}}
 
     def rendere(auftrag, **kw):
-        bild.write_bytes(b"\x89PNG\r\n\x1a\n")
+        bild.write_bytes(MINI_PNG)
         return {"status": "ok", "bild_png": str(bild), "hinweise": (),
                 "geraeteweg": {"geraet": geraet, "ladeweg": None, "gemeldet": True,
                                "grund": ""}}

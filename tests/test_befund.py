@@ -16,8 +16,9 @@ from pathlib import Path
 import pytest
 
 from aiimaging import abholer
+from conftest import MINI_PNG
 
-PNG = b"\x89PNG\r\n\x1a\n"
+PNG = MINI_PNG
 
 
 def _verschiedene_sollkarten():

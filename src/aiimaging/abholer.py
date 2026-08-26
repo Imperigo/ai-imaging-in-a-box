@@ -1048,6 +1048,19 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Gemessen ist, dass ein Lauf bei 30 % Bildbreite SCHLECHTER ausgeht als bei
             # 17,5 % — Rendern ist hier nicht "ein schwaecheres Ergebnis", sondern gar
             # keines (auf-vis-20260825-15, Posten 1).
+            # Sind die Zwischenbilder ueberhaupt ganz da? Ein halb geschriebenes PNG
+            # faellt sonst erst in der Diffusion auf — mit einer Meldung aus der
+            # Bildbibliothek, die keine Datei nennt (auf-vis-20260826-16).
+            bilderlage = _bilder_vollstaendig(bericht)
+            if not bilderlage["vollstaendig"]:
+                raise AbholerError(
+                    f"Kamera {kuerzel!r}: ein Zwischenbild des Multipass ist "
+                    f"unvollstaendig oder beschaedigt. {bilderlage['grund']}\n"
+                    f"Das ist ein Befund ueber eine DATEI und keiner ueber die "
+                    f"Geometrie. Gerendert wird darauf nicht — ein Lauf auf einer halben "
+                    f"Tiefenkarte ist genau die erfundene Kubatur, gegen die dieses "
+                    f"Projekt antritt.")
+
             rahmung = _rahmung_vor_dem_render(bericht)
             komposition = _komposition_vor_dem_render(bericht)
             for lage in (rahmung, komposition):
@@ -1193,6 +1206,49 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         }
 
     return verarbeite
+
+
+#: Bilder aus dem Multipass, die VOR dem Renderlauf ganz da sein muessen.
+#:
+#: ``depth_png`` ist die Konditionierung — ohne sie gibt es keinen Lauf. ``beauty_png``
+#: geht im Bildbearbeitungsmodus als ``image`` mit hinein. ``material_id_png`` traegt die
+#: Maske. Alle drei werden von einem Subprozess geschrieben, und alle drei werden erst
+#: Sekunden spaeter gelesen.
+MULTIPASS_BILDER = ("depth_png", "beauty_png", "material_id_png")
+
+
+def _bilder_vollstaendig(bericht: dict) -> dict:
+    """Sind die Zwischenbilder dieses Laufs **ganz da**? — vor dem teuren Schritt.
+
+    **Der Anlass ist ein Fehlschlag mitten in einem Mehrkamera-Auftrag** (HomeStation,
+    `auf-vis-20260826-16`, 26.08.2026): ``OSError: image file is truncated``, und die
+    **erste** Kamera war durchgelaufen. Die Meldung kommt aus der Bildbibliothek, nennt
+    keine Datei und fällt dort an, wo gerechnet wird — nicht dort, wo geschrieben wurde.
+
+    :func:`aiimaging.bildlesen.pruefe_png` beantwortet die Frage mit der **Prüfsumme jedes
+    Blocks**, ohne den Bildinhalt zu entpacken. Das kostet fast nichts, und es macht aus
+    einem Fehlschlag der Diffusion einen benannten Befund über eine Datei.
+
+    Returns:
+        ``{vollstaendig, geprueft, beschaedigt, grund}``. Dateien, die der Bericht gar
+        nicht nennt, werden **nicht** beanstandet: ``beauty_png`` fehlt bei
+        ``--ohne-beauty`` mit Absicht, und ein fehlendes Feld ist etwas anderes als eine
+        halbe Datei.
+    """
+    from . import bildlesen
+
+    geprueft, beschaedigt, gruende = [], [], []
+    for feld in MULTIPASS_BILDER:
+        pfad = bericht.get(feld)
+        if not pfad:
+            continue
+        lage = bildlesen.pruefe_png(pfad)
+        geprueft.append(feld)
+        if not lage["lesbar"]:
+            beschaedigt.append(feld)
+            gruende.append(f"{feld}: {lage['grund']}")
+    return {"vollstaendig": not beschaedigt, "geprueft": tuple(geprueft),
+            "beschaedigt": tuple(beschaedigt), "grund": " | ".join(gruende)}
 
 
 def _sollkennung(soll, breite, hoehe) -> str | None:

@@ -134,3 +134,39 @@ def ohne_gpu_stack(monkeypatch):
     """
     for name in GPU_STACK:
         monkeypatch.setitem(sys.modules, name, None)
+
+
+# ======================================================================================
+# Ein PNG, das die Pruefung besteht
+# ======================================================================================
+#
+# Seit dem 26.08.2026 prueft `abholer._bilder_vollstaendig` die Zwischenbilder des
+# Multipass VOR dem Renderlauf — Blockgrenzen und Pruefsummen (auf-vis-20260826-16:
+# «OSError: image file is truncated», und die erste Kamera war durchgelaufen).
+#
+# Attrappen, die nur die acht Signaturbyte schreiben, fallen daran auf. Zu Recht: Eine
+# Datei aus acht Byte ist genau das, was diese Pruefung fangen SOLL — der Test hat bis
+# dahin ein Zwischenprodukt vorgetaeuscht, das es so nie gibt.
+
+def _mini_png(breite: int = 1, hoehe: int = 1) -> bytes:
+    """Ein gueltiges Graustufen-PNG mit korrekten CRCs. Reine Standardbibliothek."""
+    import struct
+    import zlib
+
+    def block(typ: bytes, inhalt: bytes) -> bytes:
+        return (struct.pack(">I", len(inhalt)) + typ + inhalt
+                + struct.pack(">I", zlib.crc32(typ + inhalt) & 0xFFFFFFFF))
+
+    ihdr = struct.pack(">IIBBBBB", breite, hoehe, 8, 0, 0, 0, 0)
+    roh = b"".join(b"\x00" + b"\x00" * breite for _ in range(hoehe))
+    return (b"\x89PNG\r\n\x1a\n" + block(b"IHDR", ihdr)
+            + block(b"IDAT", zlib.compress(roh)) + block(b"IEND", b""))
+
+
+#: Ein vollstaendiges 1x1-PNG. Ersetzt in Attrappen die blosse Signatur.
+MINI_PNG = _mini_png()
+
+
+@pytest.fixture
+def mini_png() -> bytes:
+    return MINI_PNG

@@ -20,6 +20,7 @@ import statistics
 import pytest
 
 from aiimaging import abholer, geometrie_qa
+from conftest import MINI_PNG
 
 
 # ======================================================================================
@@ -153,11 +154,11 @@ def test_die_spanne_haengt_am_geometrie_urteil_des_auftrags(tmp_path):
     def multipass(glb, aus, **kw):
         from pathlib import Path
         tiefe = Path(aus) / "tiefe_norm.png"
-        tiefe.write_bytes(b"\x89PNG\r\n\x1a\n")
+        tiefe.write_bytes(MINI_PNG)
         return {"depth_png": str(tiefe), "kamera": {"weg": "rueckfall"}}
 
     def rendere(auftrag, **kw):
-        bild.write_bytes(b"\x89PNG\r\n\x1a\n")
+        bild.write_bytes(MINI_PNG)
         return {"status": "ok", "bild_png": str(bild), "hinweise": ()}
 
     verarbeite = abholer.verarbeiter(

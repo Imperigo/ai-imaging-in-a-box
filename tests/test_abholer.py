@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 
 from aiimaging import abholer, bruecke, fortschritt, varianten
+from conftest import MINI_PNG
 
 
 # ======================================================================================
@@ -354,6 +355,12 @@ def _kette(*, scores=(0.8,), fehlt_tiefe=False, render_status="ok"):
         mid = P(out) / "material_id.png"
         from aiimaging import bildschreiben as _bs
         _bs.schreibe_farb_png(mid, [(10, 20, 30), (40, 50, 60), (0, 0, 0), (0, 0, 0)], 2, 2)
+        # Die beiden PNG werden WIRKLICH geschrieben. Bis zum 26.08.2026 nannte diese
+        # Attrappe zwei Pfade, unter denen nie eine Datei lag — und niemandem fiel es
+        # auf, weil sie niemand las. Seit `abholer._bilder_vollstaendig` liest sie
+        # jemand, und zwar vor dem Renderlauf (auf-vis-20260826-16).
+        for name in ("tiefe.png", "beauty.png"):
+            (P(out) / name).write_bytes(MINI_PNG)
         return {"depth_png": str(P(out) / "tiefe.png"),
                 "beauty_png": str(P(out) / "beauty.png"),
                 "depth_exr": str(P(out) / "tiefe.exr"),

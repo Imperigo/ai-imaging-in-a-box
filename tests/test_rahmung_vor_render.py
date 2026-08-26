@@ -28,6 +28,7 @@ from types import SimpleNamespace
 import pytest
 
 from aiimaging import abholer, kameras
+from conftest import MINI_PNG
 
 
 # ======================================================================================
@@ -114,13 +115,13 @@ def _lauf(tmp_path, *, bbox, bbox_bauwerk, weg="abgeleitet"):
 
     def multipass(glb, aus, **kw):
         tiefe = Path(aus) / "tiefe_norm.png"
-        tiefe.write_bytes(b"\x89PNG\r\n\x1a\n")
+        tiefe.write_bytes(MINI_PNG)
         return {"depth_png": str(tiefe), "kamera": {"weg": weg},
                 "bbox": bbox, "bbox_bauwerk": bbox_bauwerk}
 
     def rendere(auftrag, **kw):
         zaehler["render"] += 1
-        bild.write_bytes(b"\x89PNG\r\n\x1a\n")
+        bild.write_bytes(MINI_PNG)
         return {"status": "ok", "bild_png": str(bild), "hinweise": ()}
 
     verarbeite = abholer.verarbeiter(
@@ -345,12 +346,12 @@ def _lauf_mit_kamerablock(tmp_path, kamerablock):
 
     def multipass(glb, aus, **kw):
         tiefe = Path(aus) / "tiefe_norm.png"
-        tiefe.write_bytes(b"\x89PNG\r\n\x1a\n")
+        tiefe.write_bytes(MINI_PNG)
         return {"depth_png": str(tiefe), "kamera": kamerablock}
 
     def rendere(auftrag, **kw):
         zaehler["render"] += 1
-        bild.write_bytes(b"\x89PNG\r\n\x1a\n")
+        bild.write_bytes(MINI_PNG)
         return {"status": "ok", "bild_png": str(bild), "hinweise": ()}
 
     verarbeite = abholer.verarbeiter(

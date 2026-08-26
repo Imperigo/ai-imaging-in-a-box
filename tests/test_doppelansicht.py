@@ -23,6 +23,7 @@ from pathlib import Path
 import pytest
 
 from aiimaging import abholer
+from conftest import MINI_PNG
 
 
 # ======================================================================================
@@ -82,13 +83,13 @@ def _lauf(tmp_path, karten):
 
     def multipass(glb, aus, **kw):
         tiefe = Path(aus) / "tiefe_norm.png"
-        tiefe.write_bytes(b"\x89PNG\r\n\x1a\n")
+        tiefe.write_bytes(MINI_PNG)
         return {"depth_png": str(tiefe), "kamera": {"weg": "vorgegeben"}}
 
     def rendere(auftrag, **kw):
         zaehler["render"] += 1
         bild = Path(tmp_path) / f"bild_{zaehler['render']}.png"
-        bild.write_bytes(b"\x89PNG\r\n\x1a\n")
+        bild.write_bytes(MINI_PNG)
         return {"status": "ok", "bild_png": str(bild), "hinweise": ()}
 
     verarbeite = abholer.verarbeiter(

@@ -3254,8 +3254,25 @@ zweiten Stelle.
       abgeschafft statt die Lücke geschlossen.
       *Warum das mehr ist als Kosmetik: Am Gerät ist gemessen, dass Deutsch das Bild
       verändert (8 von 8 gepaarten Startwerten, blauerer Himmel).*
-- [ ] **`OSError: image file is truncated`** bei einem Mehrkamera-Auftrag, wo die erste
-      Kamera durchlief. Reproduzierbar; eine Prüfung wert.
+- [x] **`OSError: image file is truncated`** bei einem Mehrkamera-Auftrag, wo die erste
+      Kamera durchlief. Die Meldung kommt aus der Bildbibliothek, nennt **keine Datei**
+      und fällt dort an, wo gerechnet wird — nicht dort, wo geschrieben wurde. Wer sie
+      liest, sucht den Fehler in der Diffusion.
+      `bildlesen.pruefe_png` hatte den Prüfstein seit jeher: `_png_bloecke` liest die
+      Blockgrenzen und prüft **jede Prüfsumme**, ohne den Bildinhalt zu entpacken.
+      `abholer._bilder_vollstaendig` prüft damit alle drei Multipass-Ausgaben **vor** dem
+      Renderlauf; ein halbes PNG bricht den Lauf mit einem Befund über eine **Datei** ab,
+      und die GPU wird nicht angefasst.
+      *Ein fehlendes Feld ist dabei keine halbe Datei* — `beauty_png` fehlt bei
+      `--ohne-beauty` mit Absicht.
+      **Nebenwirkung, und eine gute:** Die Attrappen dieses Projekts schrieben als „PNG"
+      die **acht Signaturbyte** — genau die Gestalt, die diese Prüfung fangen soll. Sie
+      schreiben jetzt ein gültiges Minimal-PNG (`tests/conftest.py`, `MINI_PNG`). Sieben
+      Testdateien haben damit ein Zwischenprodukt vorgetäuscht, das es so nie gibt.
+      *Der Grund, warum das nie auffiel: Bis heute las niemand diese Dateien.*
+      **Und die Attrappe in `test_abholer.py` nannte zwei Pfade, unter denen NIE
+      eine Datei lag** — `tiefe.png` und `beauty.png`. Die halbe Kette wurde gegen
+      eine Welt geprüft, in der ihre Eingaben nicht existieren.
 - [x] **Die aussagekräftigere Zahl steht jetzt in der Meldung.**
       `geometrie_qa.erreichbarkeit` stand seit dem 22.08. im Modul und hatte ausser Tests
       **keinen Aufrufer** — die siebte tote Kante dieser Woche. Sie hängt jetzt am
@@ -3290,12 +3307,12 @@ zweiten Stelle.
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
 
-Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste** (vierzehn
+Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste** (sechzehn
 Entscheide, alle rückgängig zu machen) am Ende.
 
 | | Beginn des Tages | Ende |
 |---|---:|---:|
-| Tests | 3335 | 3450 |
+| Tests | 3335 | 3461 |
 | Vakuumprobe | 10 Treffer | 12 Treffer |
 
 *Die beiden neuen Vakuumtreffer sind erklärt: Zwei Zusicherungen über `warnungen` sind

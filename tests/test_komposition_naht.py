@@ -16,6 +16,7 @@ sondern **dass es ankommt**.
 import pytest
 
 from aiimaging import kameras, komposition
+from conftest import MINI_PNG
 
 BBOX = [[0.0, 0.0, 0.0], [40.0, 26.0, 15.0]]
 
@@ -191,11 +192,11 @@ def test_der_abholer_haengt_die_beurteilung_an_jede_kamera(tmp_path, monkeypatch
     def multipass(glb, aus, **kw):
         from pathlib import Path
         tiefe = Path(aus) / "tiefe_norm.png"
-        tiefe.write_bytes(b"\x89PNG\r\n\x1a\n")
+        tiefe.write_bytes(MINI_PNG)
         return {"depth_png": str(tiefe), "kamera": _bericht()}
 
     def rendere(auftrag, **kw):
-        bild.write_bytes(b"\x89PNG\r\n\x1a\n")
+        bild.write_bytes(MINI_PNG)
         return {"status": "ok", "bild_png": str(bild), "hinweise": ()}
 
     verarbeite = abholer.verarbeiter(

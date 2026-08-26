@@ -20,6 +20,7 @@ import pytest
 
 from aiimaging import abholer, kosmo_szene
 from aiimaging.kosmo_szene import DURCHGEREICHT, STEHENGEBLIEBEN, SzenenError
+from conftest import MINI_PNG
 
 BESTELLUNG = {"geometry": {"path": "/irgendwo/bau.glb", "format": "glb"}}
 
@@ -186,13 +187,13 @@ def _abgestellte_kette(tmp_path, skip):
     def multipass(glb, aus, **kw):
         zaehler["multipass"] += 1
         tiefe = Path(aus) / "tiefe_norm.png"
-        tiefe.write_bytes(b"\x89PNG\r\n\x1a\n")
+        tiefe.write_bytes(MINI_PNG)
         return {"depth_png": str(tiefe), "kamera": {"weg": "vorgegeben"}}
 
     def rendere(auftrag, **kw):
         zaehler["render"] += 1
         bild = Path(tmp_path) / "b.png"
-        bild.write_bytes(b"\x89PNG\r\n\x1a\n")
+        bild.write_bytes(MINI_PNG)
         return {"status": "ok", "bild_png": str(bild), "hinweise": ()}
 
     verarbeite = abholer.verarbeiter(

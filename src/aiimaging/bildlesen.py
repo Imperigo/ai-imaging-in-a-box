@@ -218,6 +218,51 @@ def _png_bloecke(daten: bytes, pfad):
     raise BildError(f"{pfad}: kein IEND-Block — die Datei ist unvollständig.")
 
 
+def pruefe_png(pfad) -> dict:
+    """Ist diese PNG-Datei **vollständig und unbeschädigt**? — ohne sie zu dekodieren.
+
+    **Der Anlass ist ein Fehlschlag mitten in einem Mehrkamera-Auftrag** (HomeStation,
+    `auf-vis-20260826-16`, 26.08.2026): ``OSError: image file is truncated``, und die
+    erste Kamera war durchgelaufen. Die Meldung kommt von der Bildbibliothek, nennt keine
+    Datei und fällt dort an, wo gerechnet wird — nicht dort, wo geschrieben wurde.
+
+    Geprüft wird mit :func:`_png_bloecke`, also mit der **Prüfsumme jedes Blocks**. Das
+    kostet fast nichts und fängt genau den Fall, an dem sich dieses Projekt schon dreimal
+    die Finger verbrannt hat: eine Datei, die existiert und trotzdem nicht enthält, was
+    ihr Name behauptet. *Existenz ist kein Beleg für Inhalt.*
+
+    Der Bildinhalt wird **nicht** entpackt. Die Frage ist nicht, was drinsteht, sondern
+    ob es ganz da ist — und die ist mit den Blockgrenzen und den Prüfsummen beantwortet.
+
+    Returns:
+        ``{lesbar, groesse_byte, bloecke, grund}``. ``lesbar`` ist ``False`` **nur**, wenn
+        die Datei nachweislich unvollständig oder beschädigt ist; eine fehlende Datei
+        ergibt ebenfalls ``False``, mit dem entsprechenden Grund. Es wird **nicht**
+        geworfen — der Aufrufer entscheidet, was ein beschädigtes Zwischenprodukt für ihn
+        bedeutet.
+    """
+    ziel = Path(pfad)
+    try:
+        daten = ziel.read_bytes()
+    except OSError as fehler:
+        return {"lesbar": False, "groesse_byte": None, "bloecke": 0,
+                "grund": f"{ziel}: nicht lesbar ({type(fehler).__name__}: {fehler})."}
+
+    if len(daten) < 8 or daten[:8] != b"\x89PNG\r\n\x1a\n":
+        return {"lesbar": False, "groesse_byte": len(daten), "bloecke": 0,
+                "grund": (f"{ziel}: keine PNG-Signatur ({len(daten)} Byte). Entweder ist "
+                          f"es kein PNG, oder der Schreibvorgang kam nicht ueber die "
+                          f"ersten acht Byte hinaus.")}
+    n = 0
+    try:
+        for _typ, _inhalt in _png_bloecke(daten, ziel):
+            n += 1
+    except BildError as fehler:
+        return {"lesbar": False, "groesse_byte": len(daten), "bloecke": n,
+                "grund": f"{fehler}"}
+    return {"lesbar": True, "groesse_byte": len(daten), "bloecke": n, "grund": ""}
+
+
 def _entfiltern(roh: bytes, breite: int, hoehe: int, bpp: int, pfad) -> bytearray:
     """Die fünf PNG-Zeilenfilter rückgängig machen (Spezifikation, Kapitel 9).
 
