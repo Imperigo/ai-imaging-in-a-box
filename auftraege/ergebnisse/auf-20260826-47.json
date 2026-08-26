@@ -1,0 +1,53 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260826-47",
+ "status": "teilweise",
+ "beendet": "2026-08-26",
+ "gerechnet_von": "HomeStation",
+ "warum_hier": "M2 und M3 lassen sich ohne Karte beantworten und entscheiden bei euch, ob noch etwas zu tun ist. M1 braucht die GPU und folgt, sobald sie frei ist.",
+ "die_frage": "Traegt der Bericht nach dem Namensbefund jetzt rho_maske?",
+ "M3_welcher_konverter": {
+  "antwort": "WEDER NOCH — die glb kommt nicht aus ifc_to_glb_runner",
+  "womit": "eigenes Blender-Skript, bpy.ops.export_scene.gltf, export_yup=True",
+  "folge": "Euer Namensbefund vom 26.08. frueh betrifft diesen Fall NICHT. Der Knotenname ueberlebt hier, weil Blender ihn direkt aus dem Objektnamen nimmt.",
+  "beleg": "511 von 511 Knoten benannt, Beispiele: DECKE_01__t000, STUETZE_HOLZ_G05_P07, FASS_N_BRUEST_03"
+ },
+ "M2_reines_gebaeude_oder_gelaende": {
+  "antwort": "REINES GEBAEUDE — kein Gelaende in der Szene",
+  "beleg": "11 Baustoffe: Beton_Decke, Beton_Kern, Beton_Querwand, Beton_Erdbebenwand, Beton_Treppe, Holz_Stuetze, Trennwand_Leichtbau, Terrassenbelag, Metall_Fassade, Metall_Bruestung, Glas_Fassade. Kein einziger traegt Gelaende, Terrain, Boden.",
+  "folge": "Damit ist unser Fall genau die dritte Zeile eurer Tabelle: ohne Gelaende, gelaende_erwartet True → Maske None. --kein-gelaende ist der Weg, und M1 wird ohne ihn nicht besser.",
+  "was_ihr_daraus_schliessen_koennt": "Fuer diesen Fall ist bei euch nichts mehr zu tun. Die Maske wurde zu Recht verworfen; wir haben den Schalter nicht gesetzt."
+ },
+ "M1_lauf_mit_neuer_glb": {
+  "status": "steht aus",
+  "grund": "Die Karte ist von einem anderen Lauf belegt (23.4 GiB, 98 % Last).",
+  "was_wir_liefern_werden": [
+   "ob rho_maske gesetzt ist",
+   "gelaende_erkannt und gelaende_namen",
+   "welche methode im Score steht",
+   "bei None: der vollstaendige grund"
+  ],
+  "hinweis": "Die glb wird ohnehin neu erzeugt — unser Bauskript laeuft in 9 Sekunden. Wir fahren zwei Laeufe: einen mit --kein-gelaende und einen ohne, damit der Unterschied gemessen und nicht behauptet ist."
+ },
+ "unsere_vier_laeufe_erklaert": {
+  "eure_diagnose": "Die Maske wird berechnet und dann verworfen, nicht «konnte nicht».",
+  "unser_fall": "ohne Gelaende, gelaende_erwartet=True, --kein-gelaende NICHT gesetzt",
+  "warum_wir_es_nicht_sahen": "Der Maskenbefund meldete anteil_bauwerk 0.8068 — wir haben daraus geschlossen, die Maske sei gebaut UND behalten worden. Sie war gebaut und verworfen. Der Unterschied stand nicht im Bericht.",
+  "was_geholfen_haette": "Genau die Zeile, die ihr jetzt eingebaut habt: der Grund mit der Folge UND dem Schalter. Wir haben von aussen nicht unterscheiden koennen, ob maske None oder breite None war."
+ },
+ "zu_eurem_punkt_4": {
+  "gelesen": "Geometrie-QA-Zahlen aus eurer IFC-Kette von vor dem 26.08. sind nicht vergleichbar.",
+  "betrifft_uns_nicht": "Unsere Zahlen stammen nicht aus eurer IFC-Kette, sondern aus einem eigenen Blender-Bau. Sie sind untereinander vergleichbar, aber mit euren nicht gemeinsam auswertbar.",
+  "unser_stand": "26.08.2026, eigenes Bauskript, glb mit export_yup=True"
+ },
+ "angebot": {
+  "was": "Eine ZWEITE SZENE fuer eure Schwellenmessungen. In fast jeder eurer Ergebnisdateien steht der Vorbehalt «eine Szene, ein Backbone, ein Prompt».",
+  "womit": "Ein Wohnhaus aus einer Handskizze: 511 Bauteile, 11 Geschosse, Kern, 132 Stuetzen, gegliederte Vorhangfassade, Terrasse. Huellbox 30 x 30 x 35 m. Liegt als valides IFC4 vor (0 Fehler bei express_rules=True) und als glb.",
+  "warum_es_taugt": "Es ist KEIN glatter Quader. Es hat Auskragungen, ein Stuetzenraster, eine gegliederte Huelle und einen Kern — also genau die Merkmale, an denen sich eine Geometriepruefung bewaehren muss.",
+  "gemessen_daran": "Geometriewert 0.6804 bei Schwelle 0.65, mit 10 von 10 Bauinvarianten."
+ },
+ "was_offen_bleibt": [
+  "M1 — der Lauf mit --kein-gelaende, sobald die Karte frei ist",
+  "Ob rho_maske dann gesetzt ist, ist damit noch NICHT beantwortet, nur wahrscheinlich gemacht"
+ ]
+}
