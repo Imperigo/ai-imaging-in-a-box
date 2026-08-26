@@ -3529,6 +3529,15 @@ zweiten Stelle.
       Kette benutzt die Blender-seitige Box; die IFC-seitige ist eine zweite Meinung, die
       auseinanderlaufen kann.
 
+- [x] **`auf-20260824-39` ist beantwortet — hier, nicht auf der HomeStation** (26.08.).
+      Alle vier Posten brauchen nur synthetische Geometrie und den IFC-Runner. G1: 8,0 ×
+      5,0 × 3,25 m exakt. **G2: der Millimeterfall ergibt dieselben Meter** — der Runner
+      liest den `IfcSIUnit`-Vorsatz selbst. G3: alle drei Fälschungen gefangen, zwei mit
+      benannter Diagnose. G4: Hüllbox unverändert, zwei `IfcSpace` übersprungen.
+      Ergebnis in `auftraege/ergebnisse/auf-20260824-39.json`, mit dem Feld
+      `gerechnet_von`. **Offen bleibt die Kernfrage über ECHTE Dateien** — was vorliegt,
+      ist ein geprüftes Werkzeug, kein Ergebnis darüber.
+
 ---
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
@@ -3538,7 +3547,7 @@ Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
 
 | | Beginn des Tages | nach dem Vormittag | Ende |
 |---|---:|---:|---:|
-| Tests | 3335 | 3528 | **3897** |
+| Tests | 3335 | 3528 | **3901** |
 | Vakuumprobe | 10 Treffer | 12 Treffer | 12 Treffer |
 | Tote Kanten, gar nicht erreichbar | — | 2 | **1** |
 | Tote Kanten **mit Urteil** | 0 | 0 | **80 von 80** |

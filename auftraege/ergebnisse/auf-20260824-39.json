@@ -1,0 +1,72 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260824-39",
+  "status": "ok",
+  "beendet": "2026-08-26",
+  "gerechnet_von": "der Entwicklungscontainer, NICHT die HomeStation",
+  "warum_hier": "Alle vier Posten brauchen nur synthetische Geometrie und den IFC-Runner — keine GPU und keine echten Dateien. `.venv-ifc` liegt in diesem Container. Der Auftrag haette so nie gestellt werden duerfen; die Faustregel war zu grob (siehe Sitzung 13, 8r).",
+  "die_frage": "Stimmt die umgewandelte Geometrie — oder ist sie bloss durchgelaufen?",
+  "erwartung_gelesen_aus": "tools/make_test_ifc.py: LAENGE_X, BREITE_Y, HOEHE_Z, PLATTENDICKE",
+  "erwartete_huellbox_m": [
+    8.0,
+    5.0,
+    3.25
+  ],
+  "messwerte": {
+    "G1_gerader_fall": {
+      "spanne_m": [
+        8.0,
+        5.0,
+        3.25
+      ],
+      "stimmt": true,
+      "abweichungen": [],
+      "diagnose": null,
+      "n_elements": 5,
+      "n_triangles": 60
+    },
+    "G2_millimeter": {
+      "spanne_m": [
+        8.0,
+        5.000000000000001,
+        3.25
+      ],
+      "stimmt": true,
+      "diagnose": null,
+      "bedeutung": "Der Runner liest den IfcSIUnit-Vorsatz MILLI und rechnet selbst um — dieselbe Geometrie in Millimetern ergibt dieselben Meter."
+    },
+    "G3_gegenprobe_am_werkzeug": {
+      "a_alle_kanten_mal_1000": {
+        "stimmt": false,
+        "diagnose": "MASSSTAB: alle drei Achsen um denselben Faktor 1000 daneben — Millimeter als Meter gelesen (IfcSIUnit-Vorsatz MILLI übergangen).",
+        "n_abweichungen": 3
+      },
+      "b_y_und_z_vertauscht": {
+        "stimmt": false,
+        "diagnose": "ACHSEN VERTAUSCHT: Dieselben drei Kantenlängen, andere Reihenfolge — gemessen (8.0, 3.25, 5.0), erwartet (8.0, 5.0, 3.25). Das Bauwerk ist nicht falsch gross, sondern falsch gedreht; ein häufiger Fall ist eine übersehene Z-oben/Y-oben-Umrechnung.",
+        "n_abweichungen": 2
+      },
+      "c_n_elements_minus_eins": {
+        "stimmt": false,
+        "diagnose": null,
+        "n_abweichungen": 1
+      }
+    },
+    "G4_mit_raeumen": {
+      "spanne_m": [
+        8.0,
+        5.0,
+        3.25
+      ],
+      "stimmt": true,
+      "n_uebersprungen": 2,
+      "uebersprungen": {
+        "IfcSpace": 2
+      }
+    }
+  },
+  "die_antwort": "AN SYNTHETISCHER GEOMETRIE STIMMT DIE KONVERSION. Die Huellbox trifft auf unter einen Mikrometer (8.0 / 5.0 / 3.25 m), der Millimeterfall ergibt dieselben Meter, die Raeume aendern die Huellbox nicht und werden als IfcSpace uebersprungen (2 Stueck).\n\nUND DAS WERKZEUG SELBST SCHLAEGT AN: Alle drei gefaelschten Berichte werden gefangen, zwei davon mit benannter Diagnose (MASSSTAB Faktor 1000, ACHSEN VERTAUSCHT). Der dritte — ein Bauteil weniger — wird als Abweichung gemeldet, ohne Diagnose; dafuer gibt es keine.\n\nWAS DAMIT NICHT BEWIESEN IST, und das ist der Kern des Auftrags: Ueber ECHTE IFC ist nichts gezeigt, nur etwas ausgeschlossen. Laeuft das Werkzeug am bekannten Fall schief, laeuft es ueberall schief — es laeuft dort richtig.",
+  "was_offen_bleibt": "Die Kernfrage des Auftrags — 'kein Mass vergleicht die 27000 Dreiecke mit dem, was in der IFC steht' — betrifft ECHTE Dateien und bleibt bei der HomeStation. Was jetzt vorliegt, ist ein geprueftes Werkzeug dafuer, kein Ergebnis darueber.\n\nVorschlag: `pruefe_konversion` ueber euren Bestand fahren, mit der Huellbox aus der IFC selbst als Erwartung. Zurueck kommen Zaehlungen und Diagnosen — keine Pfade, keine Dateinamen (Regel 3).",
+  "grenzen_dieser_messung": "Eine synthetische Datei kennt keine Bogenkanten, keine Oeffnungen mit IfcOpeningElement, keine verschachtelten Aggregationen und keine krummen Einheiten. Sie kennt auch nur einen Erzeuger — unseren eigenen. Der haeufigste reale Fehlerfall, ein Exporter mit eigener Achskonvention, kommt darin gar nicht vor.",
+  "dauer_s": 2.0
+}

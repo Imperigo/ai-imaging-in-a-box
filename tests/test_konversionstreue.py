@@ -208,3 +208,132 @@ def test_das_modul_zieht_keinen_runner_mit():
         f"dieses Modul importiert {sorted(namen)} — davon gehoert nichts hierher")
     assert namen <= {"__future__", "collections.abc"}, (
         f"unerwartete Abhaengigkeit: {sorted(namen - {'__future__', 'collections.abc'})}")
+
+
+# ======================================================================================
+# Über die WIRKLICHE Kette — die vier Posten aus `auf-20260824-39`, hier gerechnet
+# ======================================================================================
+#
+# Der Auftrag ging am 24.08.2026 an die HomeStation. Am 26.08. fiel auf, dass er dort nie
+# hingehoert haette: Alle vier Posten brauchen nur synthetische Geometrie und den
+# IFC-Runner — keine GPU und keine echten Dateien. `.venv-ifc` liegt in diesem Container.
+#
+# Was oben in dieser Datei steht, prueft die Funktion an Woerterbuechern. Was hier steht,
+# faehrt sie ueber eine wirklich erzeugte IFC. *Eine Attrappe, die den Fehler nicht kennt,
+# kann ihn nicht finden* — der Satz hat an diesem Tag schon einmal Geld gekostet.
+
+import copy
+import importlib.util
+import subprocess
+import sys
+from pathlib import Path
+
+WURZEL = Path(__file__).resolve().parents[1]
+
+
+def _ifc_fehlt() -> bool:
+    from aiimaging import seams
+    try:
+        return not Path(seams.finde_ifc_python()).exists()
+    except Exception:                                  # noqa: BLE001
+        return True
+
+
+def _generator():
+    """Die Sollmasse **aus dem Generator gelesen**, nicht abgeschrieben.
+
+    Der Auftrag verlangt es wörtlich: *«von dort lesen, nicht abschreiben»*. Eine Zahl,
+    die an zwei Stellen steht, ist an einer davon bereits falsch.
+    """
+    spez = importlib.util.spec_from_file_location("mk", WURZEL / "tools" / "make_test_ifc.py")
+    modul = importlib.util.module_from_spec(spez)
+    spez.loader.exec_module(modul)
+    return modul
+
+
+def _konvertiere(tmp_path, name, *schalter):
+    from aiimaging.seams import ifc_zu_glb
+    ifc = tmp_path / name
+    subprocess.run([sys.executable, "tools/make_test_ifc.py", str(ifc), *schalter],
+                   check=True, capture_output=True, cwd=WURZEL)
+    bericht = ifc_zu_glb(ifc, ifc.with_suffix(".glb"))
+    assert bericht["status"] == "ok", bericht.get("error")
+    return bericht
+
+
+@pytest.mark.skipif(_ifc_fehlt(), reason=".venv-ifc fehlt")
+def test_g1_der_gerade_fall_stimmt(tmp_path):
+    """8,0 × 5,0 × 3,25 m — und zwar auf unter einen Mikrometer."""
+    mk = _generator()
+    soll = (mk.LAENGE_X, mk.BREITE_Y, mk.HOEHE_Z + mk.PLATTENDICKE)
+
+    bericht = _konvertiere(tmp_path, "t.ifc")
+    befund = kt.pruefe_konversion(bericht, huellbox_m=soll)
+
+    assert befund["stimmt"] is True, befund
+    assert befund["abweichungen"] == []
+    assert bericht["n_elements"] == 5
+
+
+@pytest.mark.skipif(_ifc_fehlt(), reason=".venv-ifc fehlt")
+def test_g2_millimeter_ergeben_dieselben_meter(tmp_path):
+    """**Der Test des Tests.** Dieselbe Geometrie in Millimetern, mit IfcSIUnit-Vorsatz.
+
+    Bestätigt eine Annahme, die dieses Projekt schon einmal teuer korrigiert hat:
+    *ArchiCAD über IFC4 braucht keine Einheitenumrechnung — IfcOpenShell rechnet selbst
+    um.* Wer hier von Hand mal 1000 nähme, träfe genau daneben.
+    """
+    mk = _generator()
+    soll = (mk.LAENGE_X, mk.BREITE_Y, mk.HOEHE_Z + mk.PLATTENDICKE)
+
+    bericht = _konvertiere(tmp_path, "t_mm.ifc", "IFC4", "MILLI")
+    befund = kt.pruefe_konversion(bericht, huellbox_m=soll)
+
+    assert befund["stimmt"] is True, (
+        f"Der Millimeterfall ergibt {befund['spanne']} statt {soll} — dann übergeht "
+        f"jemand den IfcSIUnit-Vorsatz.")
+
+
+@pytest.mark.skipif(_ifc_fehlt(), reason=".venv-ifc fehlt")
+def test_g3_das_werkzeug_faengt_die_drei_faelschungen(tmp_path):
+    """Die Gegenprobe am Werkzeug selbst. **Ein Prüfer, der nie anschlägt, prüft nichts.**"""
+    mk = _generator()
+    soll = (mk.LAENGE_X, mk.BREITE_Y, mk.HOEHE_Z + mk.PLATTENDICKE)
+    echt = _konvertiere(tmp_path, "t.ifc")
+
+    gross = copy.deepcopy(echt)
+    gross["bbox"] = [[v * 1000 for v in gross["bbox"][0]],
+                     [v * 1000 for v in gross["bbox"][1]]]
+    a = kt.pruefe_konversion(gross, huellbox_m=soll)
+    assert a["stimmt"] is False and "MASSSTAB" in (a["diagnose"] or "")
+    assert "1000" in (a["diagnose"] or ""), "der Faktor gehört benannt"
+
+    gedreht = copy.deepcopy(echt)
+    for ecke in gedreht["bbox"]:
+        ecke[1], ecke[2] = ecke[2], ecke[1]
+    b = kt.pruefe_konversion(gedreht, huellbox_m=soll)
+    assert b["stimmt"] is False and "ACHSEN" in (b["diagnose"] or "")
+
+    weniger = copy.deepcopy(echt)
+    weniger["n_elements"] -= 1
+    c = kt.pruefe_konversion(weniger, huellbox_m=soll,
+                                           n_bauteile=echt["n_elements"])
+    assert c["stimmt"] is False, "ein fehlendes Bauteil ist eine Abweichung"
+
+
+@pytest.mark.skipif(_ifc_fehlt(), reason=".venv-ifc fehlt")
+def test_g4_raeume_aendern_die_huellbox_nicht(tmp_path):
+    """Räume liegen **innerhalb** der Wände — und ein IfcSpace ist keine gebaute Substanz.
+
+    Ein `IfcSpace` als Mesh ist ein massiver Quader. Käme er mit, wäre das Bauwerk innen
+    voll und die Tiefenkarte falsch.
+    """
+    mk = _generator()
+    soll = (mk.LAENGE_X, mk.BREITE_Y, mk.HOEHE_Z + mk.PLATTENDICKE)
+
+    bericht = _konvertiere(tmp_path, "t_r.ifc", "--raeume")
+    befund = kt.pruefe_konversion(bericht, huellbox_m=soll)
+
+    assert befund["stimmt"] is True, befund
+    assert bericht["uebersprungen"].get("IfcSpace") == 2, (
+        f"Erwartet zwei übersprungene Räume, gemeldet {bericht.get('uebersprungen')}")
