@@ -3125,7 +3125,10 @@ der freie Kartenspeicher — 29,25 GiB verlangt, 28,89 bis 29,07 frei.
       Vertrag hat dafür **nur** `faithful`, und ein einzelner Regler von 0 bis 1 kann drei
       Grössen nicht ausdrücken — die Wirkung ist zudem nicht monoton (`auf-20260818-13`:
       0.80 schneidet besser ab als 1.00). *Hier zu raten hiesse, aus einer Zahl zwei zu
-      erfinden.* Gehört in dieselbe Runde wie `auf-44`.
+      erfinden.* Als **F5** in `auf-20260826-44` gefragt, mit drei benannten Lesarten:
+      meint `faithful` nur die ControlNet-Stärke, meint es «Treue insgesamt» (dann braucht
+      es eine Vorschrift, wie sie sich verteilt), oder gibt es in ihrer Oberfläche Regler,
+      die bloss nicht im Vertrag stehen?
 - [ ] **Posten 6 · `idle_window_only`** ist auf einem benutzten Rechner nie erfüllbar
       (Auslastung 21 % gegen Grenze 10 %). `_karte_frei` ist richtig gebaut — die Frage
       gehört an KosmoOrbit: Wer setzt die Voreinstellung, und was soll sie auf einem
