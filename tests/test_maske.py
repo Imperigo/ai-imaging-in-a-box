@@ -683,3 +683,30 @@ def test_die_kehrseite_der_mitgetragenen_namen_ist_benannt():
     for harmlos in ("IfcWall_Sitzbank_abc", "IfcSlab_Terrasse_abc",
                     "IfcWall_Gelaendegleich_abc", "IfcWall_Nordfassade_abc"):
         assert m.ist_gelaende(harmlos) is False, harmlos
+
+
+def test_die_namen_der_zweiten_szene_loesen_keinen_fehlalarm_aus():
+    """**Gegen echte Namen geprüft, nicht gegen ausgedachte.**
+
+    Die HomeStation hat am 26.08.2026 ihr Demohaus angeboten — 511 Bauteile, eigener
+    Blender-Export, alle Knoten benannt. Ihre Namen laufen durch **diese** Regel, sobald
+    die Szene unsere Kette benutzt.
+
+    Der heikle Fall steht mitten drin: der Baustoff **`Terrassenbelag`**. Er enthält
+    ``Terrass…`` und ist trotzdem kein Gelände — die Wortgrenzen halten. Ohne sie wäre die
+    ganze Terrasse eines elfgeschossigen Hauses aus der Bauwerksmaske gefallen.
+
+    *Diese Zusicherung ist der billigste Teil der Übernahme einer fremden Szene:* Sie
+    kostet nichts und beantwortet vorab die Frage, die sonst erst an einem schiefen Bild
+    auffiele.
+    """
+    namen = ("DECKE_01__t000", "STUETZE_HOLZ_G05_P07", "FASS_N_BRUEST_03",
+             "Beton_Decke", "Beton_Kern", "Beton_Querwand", "Beton_Erdbebenwand",
+             "Beton_Treppe", "Holz_Stuetze", "Trennwand_Leichtbau", "Terrassenbelag",
+             "Metall_Fassade", "Metall_Bruestung", "Glas_Fassade")
+
+    fehlalarme = [n for n in namen if m.ist_gelaende(n)]
+
+    assert not fehlalarme, (
+        f"Diese Bauteile der zweiten Szene gälten als Gelände und fielen aus der "
+        f"Bauwerksmaske: {fehlalarme}")
