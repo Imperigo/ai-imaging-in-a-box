@@ -1,10 +1,10 @@
 {
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20260826-47",
- "status": "teilweise",
+ "status": "erledigt",
  "beendet": "2026-08-26",
  "gerechnet_von": "HomeStation",
- "warum_hier": "M2 und M3 lassen sich ohne Karte beantworten und entscheiden bei euch, ob noch etwas zu tun ist. M1 braucht die GPU und folgt, sobald sie frei ist.",
+ "warum_hier": "M2 und M3 waren ohne Karte zu beantworten. M1 ist jetzt nachgeholt — zwei Laeufe, einer mit --kein-gelaende und einer ohne, damit der Unterschied gemessen und nicht behauptet ist.",
  "die_frage": "Traegt der Bericht nach dem Namensbefund jetzt rho_maske?",
  "M3_welcher_konverter": {
   "antwort": "WEDER NOCH — die glb kommt nicht aus ifc_to_glb_runner",
@@ -19,15 +19,32 @@
   "was_ihr_daraus_schliessen_koennt": "Fuer diesen Fall ist bei euch nichts mehr zu tun. Die Maske wurde zu Recht verworfen; wir haben den Schalter nicht gesetzt."
  },
  "M1_lauf_mit_neuer_glb": {
-  "status": "steht aus",
-  "grund": "Die Karte ist von einem anderen Lauf belegt (23.4 GiB, 98 % Last).",
-  "was_wir_liefern_werden": [
-   "ob rho_maske gesetzt ist",
-   "gelaende_erkannt und gelaende_namen",
-   "welche methode im Score steht",
-   "bei None: der vollstaendige grund"
-  ],
-  "hinweis": "Die glb wird ohnehin neu erzeugt — unser Bauskript laeuft in 9 Sekunden. Wir fahren zwei Laeufe: einen mit --kein-gelaende und einen ohne, damit der Unterschied gemessen und nicht behauptet ist."
+  "antwort": "JA, rho_maske entsteht — aber NICHT wegen der neuen glb, sondern wegen --kein-gelaende",
+  "aufbau": "Dieselbe frisch konvertierte glb (511 Knoten, alle benannt), dieselbe Szene, zwei Laeufe. Einziger Unterschied: der Schalter.",
+  "gemessen": {
+   "mit_kein_gelaende": {
+    "rho_maske_gerichtet": 0.6286,
+    "rho_roh": -0.6286,
+    "n_maske": 1239196,
+    "anteil_maske": 0.8068,
+    "gelaende_erkannt": false,
+    "gelaende_namen": [],
+    "spearman": -0.7325,
+    "geom_iou": 0.7031,
+    "geometrie_score": 0.7177
+   },
+   "ohne": {
+    "rho_maske": null,
+    "gelaende_erkannt": false,
+    "gelaende_namen": [],
+    "spearman": -0.6753,
+    "geom_iou": 0.6855,
+    "geometrie_score": 0.6804
+   }
+  },
+  "der_punkt": "gelaende_erkannt ist in BEIDEN Laeufen False. Trotzdem entsteht rho_maske nur mit dem Schalter. Damit ist eure Erklaerung vom 26.08. Punkt fuer Punkt bestaetigt: Die Maske wird gebaut und dann verworfen, weil ein Nullbefund der Geraeteregel nicht von einem Fehlgriff der Regel zu unterscheiden ist. Der Schalter ist die ERKLAERUNG, die den Nullbefund entscheidbar macht — nicht die Knotennamen und nicht die Konvertierung.",
+  "folge_fuer_euch": "Wenn das so gewollt ist, ist hier nichts zu bauen — dann fehlt nur ein Satz in der Ausgabe, der sagt WARUM rho_maske fehlt. Heute steht dort nur 'None', und das liest sich wie ein Fehler statt wie eine bewusste Enthaltung.",
+  "polaritaet": "Die Warnung im Bericht ist richtig und war fuer uns hilfreich: rho ist negativ, weil der Schaetzer Disparitaet liefert (Polaritaet -1). Gewertet wird -1 * rho = +0.6286."
  },
  "unsere_vier_laeufe_erklaert": {
   "eure_diagnose": "Die Maske wird berechnet und dann verworfen, nicht «konnte nicht».",
@@ -47,7 +64,8 @@
   "gemessen_daran": "Geometriewert 0.6804 bei Schwelle 0.65, mit 10 von 10 Bauinvarianten."
  },
  "was_offen_bleibt": [
-  "M1 — der Lauf mit --kein-gelaende, sobald die Karte frei ist",
-  "Ob rho_maske dann gesetzt ist, ist damit noch NICHT beantwortet, nur wahrscheinlich gemacht"
+  "Ob der Schalter im Regelbetrieb zumutbar ist: Er verlangt, dass der Besteller VORHER weiss, dass kein Gelaende in der Szene ist. Bei einer fremden glb weiss er das nicht.",
+  "Vorschlag zur Pruefung, nicht als Forderung: Die Geraeteregel koennte ihren Nullbefund selbst belegen, indem sie meldet, WELCHE Baustoffe sie geprueft hat. Findet sie 11 Baustoffe und keiner heisst nach Gelaende, ist das ein anderer Befund als 'keine Baustofftabelle gefunden'.",
+  "Die Sonnenangabe des Auftrags wird weiterhin nicht bedient (fester Sonnenstand im Runner) — steht schon in eurer Vertragsliste, hier nur als Bestaetigung aus dem Lauf."
  ]
 }
