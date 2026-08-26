@@ -323,3 +323,175 @@ def test_die_gelaenderegel_wird_nicht_zweimal_hingeschrieben(monkeypatch):
     for wort in maske.GELAENDE_WOERTER:
         assert f'"{wort}"' not in quelle, (
             f"{wort!r} steht im Runner — die Regel gehoert in aiimaging.maske")
+
+
+# ======================================================================================
+# Und dieselbe Frage fuer die Komposition — auf die Sekunde belegt
+# ======================================================================================
+#
+# Zeitstempel eines einzigen Auftrags (HomeStation, auf-vis-20260826-16, 26.08.2026):
+#
+#   08:47:12  Blender fertig, 40 Meshes, Tiefenkarte und Material-IDs liegen vor
+#   08:47:49  das fertige Diffusionsbild wird geschrieben
+#   08:47:58  Auftrag auf 'error': «kamerahoehe_m (77.023) liegt ueber
+#             gebaeudehoehe_m (21.3)»
+#
+# Der Riegel arbeitet richtig und zu spaet. Die beiden Zahlen, die er vergleicht, lagen
+# 37 Sekunden vor dem Bild vor — er verhindert die Rechnung nicht, er kommentiert sie.
+
+def _lauf_mit_kamerablock(tmp_path, kamerablock):
+    zaehler = {"render": 0}
+    bild = tmp_path / "b.png"
+
+    def multipass(glb, aus, **kw):
+        tiefe = Path(aus) / "tiefe_norm.png"
+        tiefe.write_bytes(b"\x89PNG\r\n\x1a\n")
+        return {"depth_png": str(tiefe), "kamera": kamerablock}
+
+    def rendere(auftrag, **kw):
+        zaehler["render"] += 1
+        bild.write_bytes(b"\x89PNG\r\n\x1a\n")
+        return {"status": "ok", "bild_png": str(bild), "hinweise": ()}
+
+    verarbeite = abholer.verarbeiter(
+        out_wurzel=tmp_path, nullprobe=False,
+        _multipass=multipass, _rendere=rendere,
+        _qa=lambda *a, **k: {"score": 0.9, "bestanden": True},
+        _soll=lambda *a, **k: ([[0.0]], 1, 1))
+
+    ergebnis = verarbeite({"modell": tmp_path / "m.glb", "job_id": "vis-1-aaaaaa",
+                           "verzeichnis": tmp_path,
+                           "szene": {"kameras": [{"kuerzel": "s", "richtung": "s"}],
+                                     "aufloesung": 64, "hoehe": 64, "samples": 1,
+                                     "prompt": "a house"}})
+    return ergebnis, zaehler["render"]
+
+
+def _kamerablock(*, augenhoehe, gebaeudehoehe):
+    """Ein vollstaendiger Kamerablock, wie ihn der Runner berichtet."""
+    return {"weg": "abgeleitet", "kuerzel": "s",
+            "auge": [0.0, -50.0, augenhoehe], "blick_auf": [0.0, 0.0, 5.0],
+            "abstand_m": 50.0, "brennweite_mm": 28.0, "seitenverhaeltnis": 1.0,
+            "shift_mm": 0.0, "neigung_grad": 0.0,
+            "gelaende_z": 0.0, "gelaende_bezug": "huellbox_unterkante",
+            "gebaeudehoehe_m": gebaeudehoehe}
+
+
+def test_eine_kamera_ueber_dem_dach_fuehrt_zu_keinem_bild(tmp_path):
+    """**Der gemessene Fall.** 77 m Kamerahöhe über einem 21,3 m hohen Bau: Die Kamera
+    schaut auf das Dach herab, und «Dach und Fuss im Bild» ist die falsche Frage. Das war
+    bekannt, bevor irgendetwas gerechnet wurde."""
+    ergebnis, n_render = _lauf_mit_kamerablock(
+        tmp_path, _kamerablock(augenhoehe=77.023, gebaeudehoehe=21.3))
+
+    assert n_render == 0, "die Diffusion darf hier gar nicht anlaufen"
+    assert ergebnis["bilder"] == [], "und es darf keine Bilddatei zurueckbleiben"
+    urteil = ergebnis["kameras"][0]
+    assert urteil["komposition"]["abbruch"] is True
+    assert "kamerahoehe_m" in urteil["komposition"]["grund"]
+    assert urteil["score"] is None and urteil["gemessen"] is False
+
+
+def test_eine_gewoehnliche_kamera_laeuft_durch(tmp_path):
+    """Die Gegenprobe. Ein Riegel, der jede Aufnahme aufhält, liefert nie ein Bild — und
+    sähe dabei genauso sorgfältig aus."""
+    ergebnis, n_render = _lauf_mit_kamerablock(
+        tmp_path, _kamerablock(augenhoehe=1.70, gebaeudehoehe=21.3))
+
+    assert n_render == 1
+    assert len(ergebnis["bilder"]) == 1
+    assert ergebnis["kameras"][0]["komposition"]["abbruch"] is False
+
+
+def test_blosse_warnungen_brechen_nichts_ab(tmp_path):
+    """**Die wichtigste Grenze dieses Umbaus.** Ein Regelwerk, das jede Beanstandung zum
+    Abbruch macht, liefert am Ende gar keine Bilder — Warnungen sind zum Lesen da, nicht
+    zum Verhindern."""
+    # Sehr nah dran: erzeugt Beanstandungen, aber keine sinnlose Frage.
+    ergebnis, n_render = _lauf_mit_kamerablock(
+        tmp_path, dict(_kamerablock(augenhoehe=1.70, gebaeudehoehe=45.0),
+                       abstand_m=6.0))
+
+    urteil = ergebnis["kameras"][0]
+    assert urteil["komposition"].get("warnungen"), "es gibt hier etwas zu beanstanden"
+    assert urteil["komposition"]["abbruch"] is False
+    assert n_render == 1
+
+
+def test_ein_unvollstaendiger_kamerablock_bricht_nichts_ab(tmp_path):
+    """«Nicht beurteilbar, weil die Zahlen fehlen» ist etwas anderes als «die Frage ist
+    sinnlos». Der Rückfallweg des Runners liefert keine Berichtsfelder — jeden solchen
+    Lauf abzubrechen wäre ein Rückschritt, getarnt als Sorgfalt."""
+    ergebnis, n_render = _lauf_mit_kamerablock(tmp_path, {"weg": "rueckfall"})
+
+    assert n_render == 1
+    urteil = ergebnis["kameras"][0]
+    assert urteil["komposition"]["beurteilt"] is False
+    assert urteil["komposition"]["abbruch"] is False
+
+
+def test_der_kurzbefund_nennt_die_nicht_beurteilbare_aufnahme():
+    zeilen = abholer.befund_kurz({"kameras": [
+        {"kamera": "s", "komposition": {"abbruch": True,
+                                        "grund": "kamerahoehe_m (77.0) liegt über …"}}]})
+
+    treffer = [z for z in zeilen if "nicht beurteilbar" in z]
+    assert len(treffer) == 1
+    assert "kamerahoehe_m" in treffer[0]
+
+
+def test_ohne_abbruch_steht_auch_diese_zeile_nicht_da():
+    zeilen = abholer.befund_kurz({"kameras": [
+        {"kamera": "s", "komposition": {"abbruch": False, "grund": ""}}]})
+
+    assert not [z for z in zeilen if "nicht beurteilbar" in z]
+
+
+def test_ein_eingabefehler_des_regelwerks_ist_kein_abbruchgrund(tmp_path):
+    """**Die Unterscheidung, die beim Bauen dieser Funktion aufgefallen ist.**
+
+    `KompositionError` trägt beides: «kamerahoehe_m liegt über gebaeudehoehe_m» — ein
+    Befund über die Aufnahme — und «Unbekannter bezugspunkt» — ein Eingabefehler. Jede
+    Ausnahme zum Abbruch zu machen hiesse, aus *wir konnten nicht prüfen* ein
+    *durchgefallen* zu machen.
+    """
+    kaputt = dict(_kamerablock(augenhoehe=1.70, gebaeudehoehe=21.3),
+                  gelaende_bezug="gibt-es-nicht")
+    ergebnis, n_render = _lauf_mit_kamerablock(tmp_path, kaputt)
+
+    assert n_render == 1, "nicht pruefbar ist nicht durchgefallen"
+    komposition = ergebnis["kameras"][0]["komposition"]
+    assert komposition["abbruch"] is False
+    assert komposition["beurteilt"] is False
+    assert "NICHT GEMESSEN" in komposition["grund"]
+
+
+def test_dieselbe_eingabe_bricht_sehr_wohl_ab_wenn_die_kamera_ueber_dem_dach_steht(tmp_path):
+    """Die Gegenprobe zum Test darüber: Der Eingabefehler entschärft die benannte
+    Bedingung **nicht**. Sie wird aus dem Bericht gerechnet und nicht aus dem Regelwerk
+    geholt — sonst hinge der Abbruch daran, dass alles andere in Ordnung ist."""
+    kaputt = dict(_kamerablock(augenhoehe=77.023, gebaeudehoehe=21.3),
+                  gelaende_bezug="gibt-es-nicht")
+    ergebnis, n_render = _lauf_mit_kamerablock(tmp_path, kaputt)
+
+    assert n_render == 0
+    assert ergebnis["kameras"][0]["komposition"]["abbruch"] is True
+
+
+@pytest.mark.parametrize("kamera", [
+    None, {}, {"auge": [0, 0, 5]}, {"auge": None, "gebaeudehoehe_m": 3.0},
+    {"auge": [0, 0, "hoch"], "gelaende_z": 0.0, "gebaeudehoehe_m": 3.0},
+    {"auge": [0, 0, 5.0], "gelaende_z": 0.0, "gebaeudehoehe_m": 0.0},
+])
+def test_eine_fehlende_zahl_ist_kein_abbruchgrund(kamera):
+    """Eine fehlende Zahl ist eine fehlende Zahl — nicht ein Bauwerk unter der Kamera."""
+    assert abholer._kamera_ueber_dach(kamera)["abbruch"] is False
+
+
+def test_der_gemessene_fall_greift_an_der_funktion_selbst():
+    """77,023 gegen 21,3 — die Zahlen aus dem Lauf vom 26.08.2026, 08:47."""
+    urteil = abholer._kamera_ueber_dach(
+        {"auge": [0.0, -50.0, 77.023], "gelaende_z": 0.0, "gebaeudehoehe_m": 21.3})
+
+    assert urteil["abbruch"] is True
+    assert "77.023" in urteil["grund"] and "21.300" in urteil["grund"]

@@ -109,7 +109,12 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
 
     Returns:
         ``{job_id, status, verzeichnis, szene, laufzettel, modell, ausgabe,
-        freigegeben, freigabe_grund, warnungen, maengel}``
+        freigegeben, freigabe_grund, warnungen, vertragsvorgaben, maengel}``
+
+        ``vertragsvorgaben`` steht **neben** ``warnungen`` und nicht darin: Es sind die
+        Hinweise, die **jeden** Auftrag gleich treffen (siehe
+        :func:`aiimaging.kosmo_szene.lies_szene`). Zusammengemischt haben sie die
+        auftragsspezifischen Warnungen verdrängt.
 
         ``szene`` ist die bereits übersetzte Fassung aus
         :func:`aiimaging.kosmo_szene.lies_szene`; ihre ``maengel`` und ``warnungen``
@@ -151,6 +156,9 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
     szene_pfad = ordner / DATEI_SZENE
     roh = _lies_json(szene_pfad, "Szene (render-scene.json)")
     szene = kosmo_szene.lies_szene(roh)
+    # Die Vertragsvorgaben wandern NICHT in `warnungen`. Sie treffen jeden Auftrag
+    # gleich; unter die Warnungen gemischt haben sie am 26.08.2026 nachweislich die
+    # auftragsspezifischen verdraengt (`kosmo_szene`, Feld `vertragsvorgaben`).
     warnungen.extend(szene["warnungen"])
     maengel.extend(szene["maengel"])
 
@@ -173,6 +181,7 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
         "freigegeben": freigegeben,
         "freigabe_grund": grund,
         "warnungen": tuple(warnungen),
+        "vertragsvorgaben": tuple(szene["vertragsvorgaben"]),
         "maengel": tuple(maengel),
     }
 

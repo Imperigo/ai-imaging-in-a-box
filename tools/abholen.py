@@ -219,8 +219,32 @@ def main() -> int:
         # dem Lauf und dem Menschen davor, und damit traegt sie.
         for zeile in abholer.befund_kurz(abholer.lies_befund(e.get("verzeichnis") or "")):
             print(f"    {zeile}")
-        for warnung in (e.get("warnungen") or ())[:3]:
-            print(f"    ! {str(warnung)[:150]}")
+        # KEIN Deckel mehr. Bis zum 26.08.2026 stand hier `[:3]`, und genau drei
+        # Hinweise aus `kosmo_szene.lies_szene` feuerten bei jedem gewoehnlichen Auftrag
+        # — sie fuellten alle drei Plaetze. Eine echte, auftragsspezifische Warnung, die
+        # im Code SPAETER steht, war damit unsichtbar. Der Deckel hat nicht die
+        # Geschwaetzigkeit begrenzt, sondern die Auskunft geloescht.
+        #
+        # Die drei stehen jetzt als `vertragsvorgaben` woanders (siehe unten), und was
+        # hier uebrig bleibt, betrifft wirklich DIESEN Auftrag. Gekuerzt wird die
+        # einzelne Zeile, nicht die Liste.
+        for warnung in (e.get("warnungen") or ()):
+            print(f"    ! {_gekuerzt(str(warnung), GEKUERZT_AUF)}")
+
+    # Was JEDEN Auftrag gleich trifft — einmal pro Lauf und nicht je Auftrag.
+    #
+    # Eine Zeile, die bei jedem Auftrag wiederkehrt, wird nach dem dritten Mal
+    # ueberflogen; dann uebersieht man auch die eine, die zaehlt. Sie verschwindet
+    # deshalb nicht — sie steht einmal da, und zwar am Ende, wo sie nichts verdeckt.
+    vorgaben = []
+    for e in bericht.get("ergebnisse", []):
+        for zeile in (e.get("vertragsvorgaben") or ()):
+            if zeile not in vorgaben:
+                vorgaben.append(zeile)
+    if vorgaben:
+        print(f"\n  Vertragsvorgaben (betreffen JEDEN Auftrag gleich, {len(vorgaben)}):")
+        for zeile in vorgaben:
+            print(f"    · {_gekuerzt(str(zeile), GEKUERZT_AUF)}")
     return 0
 
 

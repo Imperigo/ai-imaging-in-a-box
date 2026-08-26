@@ -139,6 +139,12 @@ def test_die_groessenordnung_die_den_anlass_gab():
 # Die Naht — ein Test am Baustein ersetzt keinen Test an der Naht
 # ======================================================================================
 
+def _verschiedene_sollkarten():
+    """Je Aufruf eine andere Soll-Karte — siehe `tests/test_doppelansicht.py`."""
+    zaehler = iter(range(1, 999))
+    return lambda *a, **k: ([[float(next(zaehler))]], 1, 1)
+
+
 def test_die_spanne_haengt_am_geometrie_urteil_des_auftrags(tmp_path):
     """Sonst wäre die ganze Rechnung eine tote Kante, und die Verschärfung bliebe still."""
     bild = tmp_path / "b.png"
@@ -158,7 +164,9 @@ def test_die_spanne_haengt_am_geometrie_urteil_des_auftrags(tmp_path):
         out_wurzel=tmp_path, nullprobe=False,
         _multipass=multipass, _rendere=rendere,
         _qa=lambda *a, **k: {"score": next(scores), "bestanden": True},
-        _soll=lambda *a, **k: ([[0.0]], 1, 1))
+        # Je Kamera eine ANDERE Soll-Karte — drei byte-identische waeren seit dem
+        # 26.08.2026 eine erkannte Doppelansicht, und `n_gemessen` waere dann 1.
+        _soll=_verschiedene_sollkarten())
 
     ergebnis = verarbeite({"modell": tmp_path / "m.glb", "job_id": "vis-1-aaaaaa",
                            "verzeichnis": tmp_path,

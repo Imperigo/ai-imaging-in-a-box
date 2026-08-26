@@ -45,6 +45,12 @@ def test_ein_prompt_ohne_bauteile_erzeugt_keine_warnung():
     gelesen = _gelesen("overcast sky, no people, soft light")
     assert gelesen["prompt_bauteile"] == ()
     assert not any("Bauteile" in w for w in gelesen["warnungen"])
+    # Die Gegenprobe IN DERSELBEN Zusicherung. Seit dem 26.08.2026 ist `warnungen` bei
+    # einem gewoehnlichen Auftrag leer (die drei Dauerwarnungen stehen unter
+    # `vertragsvorgaben`) — und eine Aussage ueber eine leere Sammlung haelt immer.
+    # Ohne die Zeile darunter pruefte dieser Test nichts mehr.
+    assert any("Bauteile" in w for w in _gelesen("with a flat roof")["warnungen"]), (
+        "derselbe Mechanismus muss sich im umgekehrten Fall fuellen")
 
 
 def test_der_hinweis_nennt_den_fall_aus_dem_er_stammt():

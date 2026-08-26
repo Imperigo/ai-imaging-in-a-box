@@ -2201,6 +2201,22 @@ ist sie der übersehene dritte Weg — ein 40 × 15 m breiter Bau (8:3) projizie
 betrachtet nicht mehr als 8:3. Die Perspektive erledigt die Formatanpassung, die weder der
 Rahmen noch ein gefüllter Vordergrund leisten kann.*
 
+**Zweizählige Drehsymmetrie** — Ein Körper sieht nach einer halben Drehung (180°) genau
+so aus wie vorher. Ein Quader hat sie, ein Zylinder auch, ein Haus mit Eingang auf einer
+Seite nicht.
+*Warum das hier steht: Bei einem solchen Körper fallen die **beiden** vorgeschriebenen
+Über-Eck-Ansichten zusammen — von Südost und von Nordwest sieht man dasselbe. Gemessen an
+einem Testquader: Die beiden Aufnahmen waren Byte für Byte identisch. Die zweite kostete
+24,5 Sekunden und lieferte nichts Neues.*
+*Woran es sich NICHT entscheiden lässt: an der Hüllbox. Die hat immer zweizählige
+Symmetrie, auch bei einem völlig unsymmetrischen Bau — sonst schlüge die Erkennung bei
+jedem echten Gebäude falschen Alarm. Entschieden wird an der **Soll-Tiefenkarte**, also
+an dem, was die Kamera wirklich sieht.*
+*Und die eingesparte Ansicht darf hinterher nicht mitzählen. Wird aus mehreren Ansichten
+die schlechteste gemeldet, sinkt dieser Wert allein dadurch, dass man öfter hinsieht —
+eine Wiederholung ist aber kein zweites Hinsehen. Sie mitzuzählen machte die Prüfung
+stillschweigend strenger.*
+
 **Rektilineare Projektion** — Die Abbildung, bei der jede Gerade der Welt auch im Bild eine
 Gerade bleibt. Sie ist der Normalfall gewöhnlicher Objektive und die Abbildung jeder
 gerenderten Lochkamera; das Gegenstück ist das Fischauge, das gerade Kanten krümmt. Ihr
@@ -3006,6 +3022,21 @@ denn die dritte, «steht nirgends», ist die bequemste.*
 *Gemeldet wird nur, was auch wirklich bestellt wurde. Eine Meldung bei jedem Auftrag wäre
 die nächste Dauerwarnung und damit wieder unsichtbar.*
 
+**Dauerwarnung** — Eine Warnung, die bei **jedem** Durchgang erscheint, weil sie an einer
+festen Eigenschaft hängt und nicht am einzelnen Vorgang. Nach dem dritten Mal wird sie
+überlesen; damit ist sie wirkungslos.
+*Und sie richtet mehr Schaden an als nur den eigenen: Zeigt die Ausgabe nur die ersten
+drei Warnungen — eine übliche und vernünftige Begrenzung —, dann füllen drei
+Dauerwarnungen alle drei Plätze. Jede echte Warnung, die im Programmablauf später
+entsteht, ist dann **unsichtbar**. Genau so gemessen in diesem Projekt am 26.08.2026: Die
+Begrenzung hat nicht die Geschwätzigkeit begrenzt, sondern die Auskunft gelöscht.*
+*Die Abhilfe ist nicht Löschen — das wäre Verschweigen — und nicht Wegbegrenzen. Sie ist
+**Trennen**: Was alle betrifft, steht einmal am Ende; was diesen einen Vorgang betrifft,
+steht bei ihm. Danach lässt sich die Begrenzung ganz aufheben, weil die verbleibende Liste
+kurz ist.*
+*Die Probe, ob eine Warnung eine Dauerwarnung ist, ist billig: Erscheint sie bei einem
+Vorgang, bei dem gar nichts Besonderes vorliegt? Dann hängt sie nicht an ihm.*
+
 **Node (Knoten)** — Ein einzelner Arbeitsschritt in einer Verarbeitungskette, mit
 Eingängen und Ausgängen.
 
@@ -3342,6 +3373,8 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-26 | Ergaenzt: **Zweizaehlige Drehsymmetrie**. Anlass ist ein Renderlauf fuer nichts: Bei einem Quader sind die beiden vorgeschriebenen Ueber-Eck-Ansichten Byte fuer Byte identisch. Der Eintrag traegt mit, warum es sich an der Huellbox NICHT entscheiden laesst — und warum die eingesparte Ansicht hinterher nicht mitzaehlen darf |
+| 2026-08-26 | Ergaenzt: **Dauerwarnung**. Nachgemessen: Drei Warnungen feuerten bei jedem Auftrag und fuellten damit alle drei Plaetze der Anzeige — jede echte Warnung, die im Ablauf spaeter entsteht, war unsichtbar. Der Eintrag traegt die billige Probe mit (erscheint sie auch, wenn gar nichts vorliegt?) und den Grund, warum Loeschen keine Abhilfe ist, sondern Verschweigen |
 | 2026-08-26 | Ergaenzt: **Die blinde Wache**. Anlass ist eine Fortschrittswache, die fuenf Laeufe lang auf `out/` sah, waehrend nach `out/<kuerzel>/` geschrieben wurde — und als laengste Pause jeweils exakt die Gesamtdauer meldete. Der Eintrag traegt das Erkennungszeichen mit: Eine zu GLATTE Meldung ist keine Messung, sondern das Fehlen einer |
 | 2026-08-26 | Ergaenzt: **Geteilte Parameter (Parameter Sharing)**. Der technische Kern des Fehlschlags vom 25.08.: 67 gemeinsame Stuecke, und danach blieben 454 von 521 Teilen des Bildmodells liegen. Der Eintrag traegt mit, warum die Abhilfe NUR auf dem Auslagerungsweg greifen darf — eine Reparatur, die den gesunden Fall verteuert, kann ihn in den kranken kippen |
 | 2026-08-26 | Ergaenzt: **Auslagerung (Offloading) und der Geraeteweg**. Anlass sind drei verlorene Stunden am 25.08.: Der gewaehlte Weg wurde gemessen und nirgends geschrieben, und darum sah ein Fehlschlag wie ein Rueckfall im Code aus. Entschieden hatten zwei Zehntel Gigabyte freier Kartenspeicher |

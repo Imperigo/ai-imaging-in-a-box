@@ -20,6 +20,22 @@ from aiimaging import abholer
 PNG = b"\x89PNG\r\n\x1a\n"
 
 
+def _verschiedene_sollkarten():
+    """Eine `_soll`-Attrappe, die je Aufruf eine ANDERE Karte liefert.
+
+    Seit dem 26.08.2026 erkennt `verarbeiter` byte-identische Soll-Karten als dieselbe
+    Ansicht und rendert sie nur einmal (`_sollkennung`). Eine Attrappe mit fester Karte
+    liesse drei bestellte Kameras zu einer werden — und jeder Test darueber pruefte
+    stillschweigend den Doppelungsfall statt den, der dasteht.
+    """
+    zaehler = iter(range(1, 999))
+
+    def soll(*a, **k):
+        return [[float(next(zaehler))]], 1, 1
+
+    return soll
+
+
 @pytest.fixture
 def lauf(tmp_path):
     """Ein Auftrag, der bis zum geschriebenen Befund durchläuft."""
@@ -57,7 +73,10 @@ def lauf(tmp_path):
             out_wurzel=tmp_path / "aus", nullprobe=False,
             _multipass=multipass, _rendere=rendere,
             _qa=lambda *a, **k: {"score": next(scores), "bestanden": True},
-            _soll=lambda *a, **k: ([[0.0]], 1, 1)))
+            # Je Kamera eine ANDERE Soll-Karte. Drei byte-identische waeren seit dem
+            # 26.08.2026 eine erkannte Doppelansicht — dann rendert die Kette einmal und
+            # dieser Test pruefte etwas anderes, als er behauptet.
+            _soll=_verschiedene_sollkarten()))
     return ordner, antwort
 
 

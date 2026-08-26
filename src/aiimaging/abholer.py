@@ -154,7 +154,8 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         beobachtungs_takt_s: Sekunden zwischen zwei Blicken der Wache.
 
     Returns:
-        ``{tat, job_id, verzeichnis, grund, ergebnis, wache, warnungen}``. ``tat`` ist
+        ``{tat, job_id, verzeichnis, grund, ergebnis, wache, warnungen,
+        vertragsvorgaben}``. ``tat`` ist
         eine der ``TAT_*``-Konstanten. ``wache`` ist der Bericht des Beobachters oder
         ``None``, wenn keine Wache gebaut wurde.
 
@@ -163,6 +164,12 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         bis zum 22.08.2026 in ``lies_auftrag`` und wurden hier **nicht weitergereicht**:
         eine tote Kante, wie sie dieses Projekt schon mehrfach gefunden hat. Eine
         Warnung, die niemanden erreicht, ist keine.
+
+        ``vertragsvorgaben`` steht **daneben** und nicht darin: die Hinweise, die jeden
+        Auftrag gleich treffen. Am 26.08.2026 nachgezählt — es sind genau drei, und
+        `tools/abholen.py` zeigte damals `warnungen[:3]`. Sie füllten also alle drei
+        Plätze und **verdeckten** jede echte, auftragsspezifische Warnung, die im Code
+        später steht.
 
     Die Wache **bricht nicht ab.** Sie schreibt mit. Ein Lauf, der 1800 s brauchte und
     davon 1500 s stand, ist damit von einem unterscheidbar, der 1800 s gerechnet hat —
@@ -177,7 +184,7 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
     ordner = Path(verzeichnis)
     antwort = {"tat": TAT_LIEGENGELASSEN, "job_id": ordner.name,
                "verzeichnis": ordner, "grund": "", "ergebnis": None, "wache": None,
-               "warnungen": ()}
+               "warnungen": (), "vertragsvorgaben": ()}
 
     try:
         auftrag = bruecke.lies_auftrag(ordner, fremde_freigabe_gilt=fremde_freigabe_gilt)
@@ -187,6 +194,7 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
 
     antwort["job_id"] = auftrag.get("job_id") or ordner.name
     antwort["warnungen"] = tuple(auftrag.get("warnungen") or ())
+    antwort["vertragsvorgaben"] = tuple(auftrag.get("vertragsvorgaben") or ())
 
     if auftrag["maengel"]:
         antwort["grund"] = (
@@ -320,6 +328,7 @@ def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> Non
         "negativ_lage": negativ_lage(
             ((ergebnis.get("stil_urteil") or {}).get("stil")), szene.get("backbone")),
         "warnungen_auftrag": list(antwort.get("warnungen") or ()),
+        "vertragsvorgaben": list(antwort.get("vertragsvorgaben") or ()),
         "wache": antwort.get("wache"),
     }
     try:
@@ -565,6 +574,27 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
             f"(gemessen noetig 65 %, auf-vis-20260825-15 Posten 1). Es wurde ABSICHTLICH "
             f"kein Bild erzeugt: Bei 30 % Bildbreite ist das Ergebnis gemessen "
             f"schlechter als bei 17,5 %. Abhilfe ist eine naehere Kamera")
+
+    doppelt = [(k.get("kamera"), k.get("doppelt_von")) for k in kameras
+               if k.get("doppelt_von")]
+    if doppelt:
+        zeilen.append(
+            "Nicht neu gerendert (identische Soll-Karte): "
+            + ", ".join(f"{a} ist mit {b} identisch" for a, b in doppelt)
+            + " — zweizaehlige Drehsymmetrie laesst die beiden Ueber-Eck-Ansichten "
+              "zusammenfallen. Das Bild wurde uebernommen, und die Ansicht zaehlt in "
+              "der Kameraspanne NICHT als zweite Ziehung")
+
+    # Und derselbe Fall aus dem Regelwerk: eine Aufnahme, die gar nicht beurteilbar ist.
+    # Bis zum 26.08.2026 stand dieser Riegel HINTER der Diffusion und kommentierte eine
+    # fertige Bilddatei, statt sie zu verhindern (auf-vis-20260826-16).
+    unbeurteilbar = [(k.get("kamera"), (k.get("komposition") or {}).get("grund"))
+                     for k in kameras if (k.get("komposition") or {}).get("abbruch")]
+    if unbeurteilbar:
+        zeilen.append(
+            "NICHT GERENDERT (Aufnahme nicht beurteilbar): "
+            + "; ".join(f"{k}: {g}" for k, g in unbeurteilbar)
+            + " — diese Pruefung braucht kein Bild und laeuft VOR der Diffusion")
 
     zu_klein = [k.get("kamera") for k in kameras
                 if (k.get("torchance") or {}).get("lage") == "zu_klein"]
@@ -970,6 +1000,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         bilder: list[str] = []
         urteile: list[dict] = []
         zeiten: dict[str, float] = {}
+        # Welche Soll-Karte schon gerendert wurde, und von welcher Kamera. Siehe
+        # `_sollkennung`: Bei einem Quader fallen `sSE` und `nNW` zusammen.
+        gesehen: dict[str, dict] = {}
         beginn_gesamt = time.monotonic()
 
         for aufgabe in aufgaben:
@@ -1004,8 +1037,15 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # 17,5 % — Rendern ist hier nicht "ein schwaecheres Ergebnis", sondern gar
             # keines (auf-vis-20260825-15, Posten 1).
             rahmung = _rahmung_vor_dem_render(bericht)
-            if rahmung.get("abbruch"):
-                urteile.append(_uebersprungenes_urteil(kuerzel, rahmung))
+            komposition = _komposition_vor_dem_render(bericht)
+            for lage in (rahmung, komposition):
+                if lage.get("abbruch"):
+                    break
+            else:
+                lage = None
+            if lage is not None:
+                urteile.append(dict(_uebersprungenes_urteil(kuerzel, lage),
+                                    rahmung=rahmung, komposition=komposition))
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
                 continue
 
@@ -1014,6 +1054,19 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Massstab.
             soll, breite, hoch = soll_lesen(bericht)
             maskenbefund = _maske_bauen(bericht, gelaende_erwartet=gelaende_erwartet)
+
+            # DIE DOPPELTE ANSICHT. Zweizaehlige Drehsymmetrie laesst die beiden
+            # Ueber-Eck-Ansichten der HABS/NPS-Regel zusammenfallen; bei einem Quader
+            # sind `sSE` und `nNW` byte-identisch. 24,5 s Diffusion fuer ein Bild, das
+            # schon dalag (auf-vis-20260824-12) — und gerade bei den einfachen
+            # Demofaellen.
+            kennung = _sollkennung(soll, breite, hoch)
+            zwilling = gesehen.get(kennung) if kennung else None
+            if zwilling is not None:
+                urteile.append(dict(zwilling["urteil"], kamera=kuerzel,
+                                    doppelt_von=zwilling["kamera"]))
+                zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
+                continue
 
             def _rendere_seed(seed, ziel_png):
                 erg = rendern(
@@ -1051,6 +1104,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     maske=maskenbefund.get("maske"))
             urteil = dict(urteil, kamera=kuerzel, nullanker=anker,
                           seedauswahl=auswahl,
+                          # Welches Bild zu diesem Urteil gehoert. Steht bis zum
+                          # 26.08.2026 nur in `bilder`, und dort ohne Zuordnung — bei
+                          # einer uebernommenen Ansicht waere sonst nicht mehr
+                          # feststellbar, welches Bild gemeint ist.
+                          bild_png=ergebnis["bild_png"],
                           # Auch wenn nicht abgebrochen wurde: Die gerechnete Lage
                           # gehoert an das Urteil. Ein Lauf knapp ueber der Schwelle
                           # sieht sonst aus wie einer mit Luft.
@@ -1065,8 +1123,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                           # Fachwissen trägt. Ein Regelwerk, das nur seine eigenen Tests
                           # beurteilt, beurteilt nichts. Hier bekommt es die Kamera zu
                           # sehen, mit der wirklich gerendert wurde.
-                          komposition=_komposition.beurteile_bericht(
-                              bericht.get("kamera")),
+                          komposition=komposition,
                           maskenbefund=maskenbefund, maskenanker=maskenanker,
                           # Der Boden DIESER Maskenlage — er wurde seit jeher gemessen
                           # und nie gelesen. Seit `auf-vis-20260824-10` ist er die
@@ -1086,7 +1143,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                               urteil.get("score"), anker, schwelle=grenze),
                           belichtung=_belichtung_urteil(
                               ergebnis["bild_png"], stil, rahmen, belichtung_pruefen))
+            urteil["doppelt_von"] = None
             urteile.append(urteil)
+            if kennung:
+                gesehen[kennung] = {"kamera": kuerzel, "urteil": urteil}
             zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
 
         zeiten["gesamt"] = round(time.monotonic() - beginn_gesamt, 1)
@@ -1116,6 +1176,45 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         }
 
     return verarbeite
+
+
+def _sollkennung(soll, breite, hoehe) -> str | None:
+    """Eine Kennzahl der **Soll-Tiefenkarte** — zwei gleiche Karten, zwei gleiche Kennungen.
+
+    **Der Anlass ist ein Renderlauf für nichts** (HomeStation, `auf-vis-20260824-12`): Bei
+    einem Quader sind die Ansichten ``sSE`` und ``nNW`` **byte-identisch**. Ein Quader hat
+    zweizählige Drehsymmetrie, und die beiden Über-Eck-Ansichten der HABS/NPS-Regel fallen
+    dann zusammen. 24,5 s Diffusion für ein Bild, das schon dalag — gerade bei den
+    einfachen Demofällen.
+
+    **Warum an der Soll-Karte und nicht an der Hüllbox.** Die Hüllbox hat *immer*
+    zweizählige Symmetrie; aus ihr allein liesse sich das nicht entscheiden, ohne bei
+    jedem realen Bauwerk falschen Alarm zu schlagen — ein Haus mit Eingang auf einer Seite
+    steckt in derselben Box wie eines ohne. Die Soll-Karte entscheidet es zuverlässig,
+    und sie liegt **vor** dem teuren Bildrender vor.
+
+    Gerundet wird auf sechs Nachkommastellen: Zwei Läufe derselben Geometrie sollen
+    dieselbe Kennung ergeben, auch wenn das letzte Bit einer Fliesskommazahl abweicht.
+    Zwei *verschiedene* Ansichten unterscheiden sich um Grössenordnungen mehr.
+
+    Returns:
+        Ein Hexstring, oder ``None``, wenn die Karte nicht lesbar ist. ``None`` heisst
+        **nicht vergleichbar** und führt nie zu einer Doppelung — im Zweifel wird
+        gerendert, denn ein fehlendes Bild ist teurer als ein doppeltes.
+    """
+    import hashlib
+
+    if soll is None or not breite or not hoehe:
+        return None
+    h = hashlib.sha256()
+    h.update(f"{int(breite)}x{int(hoehe)}|".encode())
+    try:
+        for zeile in soll:
+            for wert in zeile:
+                h.update(f"{float(wert):.6f};".encode())
+    except (TypeError, ValueError):
+        return None
+    return h.hexdigest()
 
 
 def _rahmung_vor_dem_render(bericht: dict) -> dict:
@@ -1162,6 +1261,96 @@ def _rahmung_vor_dem_render(bericht: dict) -> dict:
             f"abgebrochen. Die gerechnete Bildbreite steht trotzdem da — als Auskunft, "
             f"nicht als Urteil.")
     return lage
+
+
+def _kamera_ueber_dach(kamera: dict) -> dict:
+    """Steht die Kamera **höher als das Bauwerk**? — die eine ohne Bild prüfbare Bedingung.
+
+    Sie ist rein arithmetisch (Augenhöhe minus Geländestand gegen Bauwerkshöhe) und
+    braucht nichts als den Kamerablock des Multipass-Berichts. Genau darum steht sie
+    hier: Das Regelwerk in :mod:`aiimaging.komposition` wirft an dieser Stelle, und die
+    Ausnahme fiel bis zum 26.08.2026 **nach** der Diffusion an.
+
+    Returns:
+        ``{abbruch, grund}``. ``abbruch`` ist ``False``, wenn sich die Frage nicht stellen
+        lässt — eine fehlende Zahl ist **kein** Abbruchgrund, sondern eine fehlende Zahl.
+    """
+    if not isinstance(kamera, dict):
+        return {"abbruch": False, "grund": ""}
+    auge = kamera.get("auge")
+    hoehe = kamera.get("gebaeudehoehe_m")
+    boden = kamera.get("gelaende_z")
+    try:
+        kamerahoehe = float(auge[2]) - float(boden)
+        gebaeude = float(hoehe)
+    except (TypeError, ValueError, IndexError, KeyError):
+        return {"abbruch": False, "grund": ""}
+    if gebaeude <= 0.0 or kamerahoehe <= gebaeude:
+        return {"abbruch": False, "grund": ""}
+    return {"abbruch": True, "grund": (
+        f"kamerahoehe_m ({kamerahoehe:.3f}) liegt ueber gebaeudehoehe_m ({gebaeude:.3f}). "
+        f"Dann schaut die Kamera auf das Dach herab, und 'Dach und Fuss im Bild' ist die "
+        f"falsche Frage.")}
+
+
+def _komposition_vor_dem_render(bericht: dict) -> dict:
+    """Die Kompositionsprüfung — **vor** dem Bildlauf statt danach.
+
+    **Der Anlass sind Zeitstempel eines einzigen Auftrags** (HomeStation,
+    `auf-vis-20260826-16`, 26.08.2026), auf die Sekunde aus dem Dateisystem::
+
+        08:47:12  Blender fertig, 40 Meshes, Tiefenkarte und Material-IDs liegen vor
+        08:47:49  das fertige Diffusionsbild wird geschrieben
+        08:47:58  Auftrag auf 'error': «kamerahoehe_m (77.023) liegt ueber
+                  gebaeudehoehe_m (21.3)»
+
+    **Der Riegel arbeitet richtig und zu spät.** Er verhindert die Rechnung nicht, er
+    kommentiert sie — und hinterlässt ein plausibel aussehendes Bild im Ausgabeordner,
+    das er selbst gleich darauf für untauglich erklärt. Die beiden Zahlen, die er
+    vergleicht, lagen **37 Sekunden vor dem Bild** vor.
+
+    Die Trennung, nach der hier verschoben wird, ist die des Berichts:
+
+    * **Ohne das erzeugte Bild prüfbar** — Kamerahöhe gegen Bauwerkshöhe, Rahmung, leere
+      Szene. Gehört vor die Diffusion.
+    * **Erst danach prüfbar** — ``geometrie_score`` aus ``rho_maske`` und ``geom_iou``.
+      Bleibt hinten, denn dafür braucht es das Bild.
+
+    Returns:
+        Das Urteil von :func:`aiimaging.komposition.beurteile_bericht`, ergänzt um
+        ``abbruch`` und ``abbruch_grund``.
+
+    .. important::
+       **Abgebrochen wird nur bei einer benannten Bedingung** (:func:`_kamera_ueber_dach`),
+       nicht bei jeder Ausnahme des Regelwerks. Der Unterschied ist gemessen worden, und
+       zwar beim Bauen dieser Funktion: ``KompositionError`` trägt auch
+       *«Unbekannter bezugspunkt»* — ein **Eingabefehler**, kein Befund über die Aufnahme.
+       Jede Ausnahme zum Abbruch zu machen hiesse, aus «wir konnten nicht prüfen» ein
+       «durchgefallen» zu machen. Das ist die dritte Antwort dieses Projekts, und sie
+       gilt hier wie überall.
+
+       Blosse ``warnungen`` brechen ebenfalls **nichts** ab: Ein Regelwerk, das jede
+       Beanstandung zum Abbruch macht, liefert am Ende gar keine Bilder mehr — Warnungen
+       sind zum Lesen da, nicht zum Verhindern.
+    """
+    from . import komposition as _k
+
+    kamera = bericht.get("kamera")
+    ueber_dach = _kamera_ueber_dach(kamera)
+    try:
+        urteil = _k.beurteile_bericht(kamera)
+    except Exception as fehler:                # noqa: BLE001 — siehe Docstring
+        urteil = {"beurteilt": False,
+                  "grund": (f"Das Regelwerk konnte nicht urteilen: "
+                            f"{type(fehler).__name__}: {fehler}. NICHT GEMESSEN — das "
+                            f"ist etwas anderes als 'die Aufnahme taugt nicht'.")}
+
+    if not ueber_dach["abbruch"]:
+        return dict(urteil, abbruch=False, abbruch_grund="")
+    return dict(urteil, abbruch=True, grund=ueber_dach["grund"], abbruch_grund=(
+        f"NICHT RENDERN: {ueber_dach['grund']} Diese Pruefung braucht KEIN Bild; sie "
+        f"stand bis zum 26.08.2026 hinter der Diffusion und hat dort eine fertige "
+        f"Bilddatei kommentiert, statt sie zu verhindern (auf-vis-20260826-16)."))
 
 
 def _uebersprungenes_urteil(kuerzel, rahmung: dict) -> dict:
@@ -1577,18 +1766,31 @@ def _kameraspanne(urteile: list[dict]) -> dict:
     wie weit sie auseinanderlagen, und was das Minimum daran kostet.
 
     Returns:
-        ``{n, n_gemessen, bester, schlechtester, spanne, streuung, abschlag_streuungen,
-        hinweis}``. ``streuung`` ist ``None`` bei weniger als drei gemessenen Kameras —
-        aus zweien lässt sie sich ausrechnen und sagt nichts.
+        ``{n, n_gemessen, n_doppelt, bester, schlechtester, spanne, streuung,
+        abschlag_streuungen, hinweis}``. ``streuung`` ist ``None`` bei weniger als drei
+        gemessenen Kameras — aus zweien lässt sie sich ausrechnen und sagt nichts.
+
+        ``n`` zählt **alle** Ansichten, ``n_gemessen`` nur die eigenständigen mit Wert.
+        Eine Ansicht mit ``doppelt_von`` ist **keine zweite Ziehung**: Sie fällt aus
+        ``n_gemessen``, aus der Streuung und aus dem Abschlag heraus. Mitgezählt wäre sie
+        eine stille Verschärfung — dieselbe Fehlerart wie am 23.08.2026, als drei
+        Ansichten das Gate ungefragt strenger machten.
     """
     # Lokal importiert wie in `verarbeiter`: Der Modulkopf dieses Moduls bleibt leicht,
     # damit `import aiimaging` nicht die halbe Kette mitzieht.
     from . import geometrie_qa
 
-    werte = [u.get("score") for u in urteile or []]
+    # Eine DOPPELTE Ansicht ist keine zweite Ziehung. Sie zaehlt hier nicht mit, und
+    # zwar in beide Richtungen: Der Auswahleffekt eines Minimums haengt an der Zahl der
+    # UNABHAENGIGEN Ziehungen, und die gemeldete Streuung ebenso. Wer sie mitzaehlte,
+    # verschaerfte das Gate still — genau der Fehler vom 23.08.2026, als drei Ansichten
+    # ungefragt strenger wurden (auf-vis-20260824-12, Doppelansicht).
+    eigen = [u for u in urteile or [] if not u.get("doppelt_von")]
+    werte = [u.get("score") for u in eigen]
     messbar = [float(w) for w in werte if isinstance(w, (int, float))
                and not isinstance(w, bool)]
     n = len(urteile or [])
+    n_doppelt = len(urteile or []) - len(eigen)
     abschlag = geometrie_qa.minimum_abschlag(len(messbar))
 
     streuung = None
@@ -1612,9 +1814,19 @@ def _kameraspanne(urteile: list[dict]) -> dict:
             f"vergleicht, vergleicht zwei verschieden strenge Masse."
         )
 
+    if n_doppelt:
+        hinweis += (
+            f" {n_doppelt} der {n} Ansichten war mit einer anderen IDENTISCH und zaehlt "
+            f"hier NICHT mit — bei zweizaehliger Drehsymmetrie fallen die beiden "
+            f"Ueber-Eck-Ansichten zusammen. Mitgezaehlt waere es eine stille "
+            f"Verschaerfung: Das Minimum faellt mit der Zahl der Ziehungen, und eine "
+            f"Wiederholung ist keine Ziehung."
+        )
+
     return {
         "n": n,
         "n_gemessen": len(messbar),
+        "n_doppelt": n_doppelt,
         "bester": max(messbar) if messbar else None,
         "schlechtester": min(messbar) if messbar else None,
         "spanne": (max(messbar) - min(messbar)) if len(messbar) > 1 else None,

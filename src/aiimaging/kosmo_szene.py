@@ -344,6 +344,8 @@ def lies_szene(fremd: dict) -> dict:
         raise SzenenError(f"render-scene ist kein Wörterbuch: {type(fremd).__name__}")
 
     warnungen: list[str] = []
+    # Was JEDEN Auftrag gleich trifft — siehe `vertragsvorgaben` im Rueckgabewert.
+    vorgaben: list[str] = []
     maengel: list[str] = []
 
     kennung = fremd.get("schema", SCHEMA_SZENE)
@@ -370,16 +372,22 @@ def lies_szene(fremd: dict) -> dict:
         )
 
     render = fremd.get("render") or {}
+    # Ob die Bildmasse GEWAEHLT oder geerbt sind, entscheidet, wo der Rundungshinweis
+    # landet: Die Vorgabe des fremden Vertrags ist 1600x1000 und damit nie ein Vielfaches
+    # von 16 — dieser Hinweis trifft jeden Auftrag gleich. Wer selbst 999x777 bestellt,
+    # bekommt ihn dagegen als Warnung ueber SEINE Bestellung.
+    gewaehlt = render.get("resolution") is not None
     aufl = render.get("resolution") or [1600, 1000]
     if not (isinstance(aufl, (list, tuple)) and len(aufl) == 2):
         warnungen.append(f"'render.resolution' ist kein Paar: {aufl!r} — es gilt 1600x1000.")
         aufl = [1600, 1000]
+        gewaehlt = False
     aufl, hinweis = _auf_raster(aufl)
     if hinweis:
-        warnungen.append(hinweis)
+        (warnungen if gewaehlt else vorgaben).append(hinweis)
 
     treue = render.get("faithful", 0.8)
-    warnungen.append(
+    vorgaben.append(
         f"'faithful' ({treue}) wird auf 'controlnet_staerke' abgebildet — die einzige "
         f"ehrliche Zuordnung. Was dabei NICHT abgebildet wird: 'denoise' und die "
         f"Schrittzahl beeinflussen die Treue mit, und die Wirkung ist nicht monoton "
@@ -408,7 +416,7 @@ def lies_szene(fremd: dict) -> dict:
 
     sonne = render.get("sun")
     if sonne is None:
-        warnungen.append(
+        vorgaben.append(
             "Keine Sonnenangabe. Unser Runner setzt eine feste Sonne von schräg "
             "vorn-oben; der Sonnenstand des Auftrags wird damit NICHT bedient."
         )
@@ -477,6 +485,18 @@ def lies_szene(fremd: dict) -> dict:
         "ueberspringen": bool(vis.get("skip", False)),
         "hochskalieren": bool(vis.get("upscale", False)),
         "sonne": sonne,
+        # Was JEDEN Auftrag gleich trifft — getrennt von dem, was DIESEN betrifft.
+        #
+        # **Der Anlass ist eine Zaehlung** (26.08.2026): `tools/abholen.py` zeigte
+        # `warnungen[:3]`, und genau drei Warnungen aus dieser Funktion feuerten bei
+        # jedem gewoehnlichen Auftrag. Sie fuellten also alle drei Plaetze — eine echte,
+        # auftragsspezifische Warnung, die im Code SPAETER steht, war damit unsichtbar.
+        # Die immer feuernde Warnung verdraengt nicht nur sich selbst, sie VERDECKT die
+        # anderen.
+        #
+        # Dieselbe Trennung wie in `abholer._kompositionszeilen`: Was alle betrifft,
+        # steht einmal da. Und es verschwindet nicht — es steht nur woanders.
+        "vertragsvorgaben": tuple(vorgaben),
         "warnungen": tuple(warnungen),
         "maengel": tuple(maengel),
     }
@@ -513,6 +533,7 @@ DURCHGEREICHT = {
     "prompt_original": "befund.json",
     "prompt_sprache": "befund.json und befund_kurz",
     "prompt_bauteile": "befund.json und befund_kurz",
+    "vertragsvorgaben": "tools/abholen.py: einmal pro Lauf, nicht je Auftrag",
     "warnungen": "Antwort des Auftrags",
     "maengel": "halten den Lauf auf",
     # Seit 26.08.2026 — vorher stand es in STEHENGEBLIEBEN, und der Abholer meldete das

@@ -186,9 +186,14 @@ def test_faithful_wird_abgebildet_und_der_verlust_dabei_benannt():
     """
     gelesen = ks.lies_szene(szene())
     assert gelesen["controlnet_staerke"] == 0.8
-    text = " ".join(gelesen["warnungen"])
+    # Seit dem 26.08.2026 unter `vertragsvorgaben`: Der Hinweis feuert ohne jede
+    # Bedingung und trifft damit jeden Auftrag gleich. Unter den Warnungen hat er die
+    # auftragsspezifischen verdraengt — siehe tests/test_vertragsvorgaben.py.
+    text = " ".join(gelesen["vertragsvorgaben"])
     assert "nicht monoton" in text
     assert "denoise" in text
+    assert not any("faithful" in w for w in gelesen["warnungen"]), (
+        "er steht woanders und nicht zweimal")
 
 
 def test_ein_format_das_wir_nicht_koennen_ist_ein_mangel():
@@ -224,7 +229,11 @@ def test_ohne_geometrie_gibt_es_nichts_zu_rendern():
 
 def test_eine_fehlende_sonnenangabe_wird_nicht_verschwiegen():
     """Unser Runner setzt eine feste Sonne — der Sonnenstand des Auftrags wird ignoriert."""
-    assert any("Sonnenangabe" in w for w in ks.lies_szene(szene())["warnungen"])
+    # Unter `vertragsvorgaben`, seit dem 26.08.2026: Die Vorgabe des fremden Vertrags
+    # HAT keine Sonne, der Hinweis erschien also bei jedem Auftrag.
+    gelesen = ks.lies_szene(szene())
+    assert any("Sonnenangabe" in v for v in gelesen["vertragsvorgaben"])
+    assert not any("Sonnenangabe" in w for w in gelesen["warnungen"])
 
 
 # --------------------------------------------------------------------------------------
@@ -436,9 +445,19 @@ def test_die_vorgabe_des_fremden_vertrags_wird_gerastert_und_gemeldet():
     assert szene["aufloesung"] % ks.RASTER == 0
     assert szene["hoehe"] % ks.RASTER == 0
     assert (szene["aufloesung"], szene["hoehe"]) == (1600, 992)
-    assert any("Vielfache von 16" in w for w in szene["warnungen"]), (
+    assert any("Vielfache von 16" in v for v in szene["vertragsvorgaben"]), (
         "still runden waere der Fehler — die Kamera haengt am Seitenverhaeltnis"
     )
+    # Und WEIL es die Vorgabe ist und keine Wahl, steht es unter den Vertragsvorgaben.
+    assert not any("Vielfache von 16" in w for w in szene["warnungen"])
+    # Die Gegenprobe unmittelbar daneben: `warnungen` ist bei einem gewoehnlichen Auftrag
+    # leer, und eine Aussage ueber eine leere Sammlung haelt immer. Wer selbst eine
+    # unpassende Groesse bestellt, bekommt sehr wohl eine Warnung — dann ist der Beschnitt
+    # die Folge einer Entscheidung und keine Eigenschaft des Vertrags.
+    gewaehlt = ks.lies_szene({"schema": "kosmovis.render-scene/v1",
+                              "geometry": {"path": "/tmp/x.glb", "format": "glb"},
+                              "render": {"resolution": [999, 777]}})
+    assert any("Vielfache von 16" in w for w in gewaehlt["warnungen"])
 
 
 def test_passende_masse_werden_nicht_angefasst_und_nicht_kommentiert():

@@ -3134,6 +3134,119 @@ war ein Fehlalarm.
 
 ---
 
+## Drei Warnungen, die jeden Auftrag gleich trafen (26.08.2026)
+
+**Der Befund ist schärfer als gemeldet.** `tools/abholen.py` zeigte `warnungen[:3]`, und
+genau drei Warnungen aus `kosmo_szene.lies_szene` feuern bei einem gewöhnlichen Auftrag:
+die Bildmasse 1600×1000 → 1600×992 (die Vertragsvorgabe ist nie ein Vielfaches von 16),
+die `faithful`-Zuordnung (steht ohne jede Bedingung da) und die fehlende Sonnenangabe (die
+Vertragsvorgabe hat keine).
+
+Sie füllten **alle drei Plätze**. Eine echte, auftragsspezifische Warnung, die im Code
+später steht, war damit unsichtbar. *Der Deckel hat nicht die Geschwätzigkeit begrenzt,
+sondern die Auskunft gelöscht.*
+
+- [x] `lies_szene` gibt sie als eigenes Feld `vertragsvorgaben` zurück; `warnungen` trägt
+      nur noch, was **diesen** Auftrag betrifft. Nachgemessen: ein gewöhnlicher Auftrag
+      hat jetzt **null** eigene Warnungen.
+- [x] **Die Bildmasse hängt daran, ob jemand gewählt hat.** Geerbte 1600×1000 →
+      Vertragsvorgabe; selbst bestellte 999×777 → Warnung über *diesen* Auftrag. Der
+      Beschnitt ist dann eine Folge einer Entscheidung und keine Eigenschaft des Vertrags.
+- [x] `DURCHGEREICHT` um das Feld ergänzt — die Tabelle aus `test_naht_durchreichung.py`
+      erzwingt es ohnehin und ist hier der Wächter. `bruecke.lies_auftrag` und
+      `abholer.eines` reichen es **getrennt** weiter; keine Zeile steht in beiden Listen.
+- [x] `tools/abholen.py`: kein `[:3]` mehr, gekürzt wird die einzelne **Zeile** mit
+      `_gekuerzt`. Die Vorgaben stehen **einmal pro Lauf** am Ende, wo sie nichts
+      verdecken.
+- [x] `tests/test_vertragsvorgaben.py` (10 Fälle), darunter die Gegenprobe, dass eine
+      passende Bildmasse **gar keinen** Hinweis erzeugt — sonst wäre es wieder eine
+      Dauerzeile, nur an neuer Stelle.
+
+*Damit ist zugleich Posten 5.1 aus `auf-vis-20260825-15` beantwortet. Offen bleiben 5.2
+(`denoise` und Schrittzahl werden nicht abgebildet) und 5.3 (Sonnenstand wird nicht
+bedient) — beides sind Lücken in der Kette und keine Anzeigefragen.*
+
+---
+
+## Die doppelte Ansicht (26.08.2026)
+
+**Befund** (`auf-vis-20260824-12`): Bei einem Quader sind `sSE` und `nNW` **byte-identisch**
+— zweizählige Drehsymmetrie, die beiden Über-Eck-Ansichten der HABS/NPS-Regel fallen
+zusammen. Ein Renderlauf für nichts, 24,5 s, gerade bei den einfachen Demofällen.
+*Owner-Entscheid vom Morgen des 26.08.: erkennen und überspringen.*
+
+- [x] **An der Soll-Karte, nicht an der Hüllbox.** Die Hüllbox hat *immer* zweizählige
+      Symmetrie; aus ihr allein liesse sich das nicht entscheiden, ohne bei jedem realen
+      Bauwerk falschen Alarm zu schlagen — ein Haus mit Eingang auf einer Seite steckt in
+      derselben Box wie eines ohne. `_sollkennung(soll, breite, hoehe)` hasht die auf
+      sechs Stellen gerundeten Tiefen samt Bildmassen; die Karte liegt **vor** dem teuren
+      Bildrender vor.
+- [x] `None` heisst **nicht vergleichbar** und führt nie zu einer Doppelung: Im Zweifel
+      wird gerendert, denn ein fehlendes Bild ist teurer als ein doppeltes.
+- [x] Kameraurteil trägt `doppelt_von` und neu auch `bild_png` — ohne die Zuordnung wäre
+      bei einer übernommenen Ansicht nicht mehr feststellbar, welches Bild gemeint ist.
+- [x] **`_kameraspanne` zählt die Doppelung nicht als zweite Ziehung.** Sie fällt aus
+      `n_gemessen`, aus der Streuung und aus dem Abschlag; `n` zählt weiter alle Ansichten,
+      `n_doppelt` sagt wie viele es waren. *Mitgezählt wäre es eine stille Verschärfung —
+      genau der Fehler vom 23.08., als drei Ansichten das Gate ungefragt strenger machten.*
+- [x] Kurzbefundzeile «nNW ist mit sSE identisch».
+- [x] `tests/test_doppelansicht.py` (15 Fälle) plus **Mutationsprobe beidseitig**:
+      Erkennung fest auf *immer* lässt 5 Tests fallen, fest auf *nie* deren 2. Eine
+      Erkennung, die immer oder nie greift, ist keine.
+
+---
+
+## Das Bild entstand neun Sekunden vor der Prüfung (26.08.2026)
+
+**Zeitstempel eines einzigen Auftrags** (HomeStation, `auf-vis-20260826-16`), auf die
+Sekunde aus dem Dateisystem:
+
+```
+08:47:12  Blender fertig, 40 Meshes, Tiefenkarte und Material-IDs liegen vor
+08:47:49  das fertige Diffusionsbild wird geschrieben
+08:47:58  Auftrag auf 'error': «kamerahoehe_m (77.023) liegt ueber gebaeudehoehe_m (21.3)»
+```
+
+**Der Riegel arbeitet richtig und zu spät.** Er verhindert die Rechnung nicht, er
+kommentiert sie — und hinterlässt ein plausibel aussehendes Bild im Ausgabeordner, das er
+selbst gleich darauf für untauglich erklärt. Die beiden Zahlen, die er vergleicht, lagen
+**37 Sekunden vor dem Bild** vor. Es ist derselbe Owner-Einwand wie in Posten 1, an einer
+zweiten Stelle.
+
+- [x] `_kamera_ueber_dach(kamera)` — die eine **ohne Bild prüfbare** Bedingung, rein
+      arithmetisch aus dem Kamerablock. `abholer.verarbeiter` prüft sie vor
+      `_bester_seed` und rendert dann gar nicht.
+- [x] `_komposition_vor_dem_render` läuft ebenfalls **vor** dem Bildlauf; das spätere
+      `komposition=…` im Urteil ist derselbe, schon gerechnete Wert und kein zweiter Lauf.
+- [x] **Abgebrochen wird nur bei der benannten Bedingung, nicht bei jeder Ausnahme.**
+      Beim Bauen aufgefallen: `KompositionError` trägt auch *«Unbekannter bezugspunkt»* —
+      ein **Eingabefehler**, kein Befund über die Aufnahme. Jede Ausnahme zum Abbruch zu
+      machen hiesse, aus *wir konnten nicht prüfen* ein *durchgefallen* zu machen.
+- [x] Blosse `warnungen` brechen nichts ab. Ein Regelwerk, das jede Beanstandung zum
+      Abbruch macht, liefert am Ende gar keine Bilder — und sähe dabei sorgfältig aus.
+- [x] Kurzbefundzeile «NICHT GERENDERT (Aufnahme nicht beurteilbar)».
+- [x] 34 Fälle in `tests/test_rahmung_vor_render.py`, darunter der gemessene Fall mit
+      seinen Zahlen (77,023 gegen 21,3) und die Gegenprobe, dass ein Eingabefehler die
+      benannte Bedingung **nicht** entschärft.
+
+### Offen aus `auf-vis-20260826-16`
+
+- [ ] **`AIIMAGING_MODELLE` ungesetzt** → stiller Rückfall auf `/ai/`, dann «Gewichte für
+      'z-image-turbo' unvollständig». Ein Ersatzpfad, der nirgends existiert, gehört beim
+      Start gemeldet.
+- [ ] **Die Glossar-Übersetzung lässt 3 von 7 Begriffen deutsch** («aussenperspektive»,
+      «nachmittagslicht», «fotografisch») — und rechnet trotzdem.
+- [ ] **`OSError: image file is truncated`** bei einem Mehrkamera-Auftrag, wo die erste
+      Kamera durchlief. Reproduzierbar; eine Prüfung wert.
+- [ ] **Die aussagekräftigere Zahl steht nur im Befund.** Dieselbe Geometrie aus zwei
+      Kameras ergab zwei völlig verschiedene Gebäude — ein Wohnhaus ohne Fassade wird aus
+      der Dreiviertelansicht zum **Parkhaus**, frontal zum **zweigeschossigen Haus**.
+      Score 0.4971 gegen Schwelle 0.65, bei einer erreichbaren Obergrenze von **0.6909**.
+      *Auch ein perfektes Bild käme hier gerade eben durch* — die
+      `geom_iou_obergrenze` gehört damit in die Meldung und nicht nur in den Befund.
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).
