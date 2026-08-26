@@ -4076,6 +4076,60 @@ die Geometrie-Messung gebaut ist.
 
 ---
 
+## Die Geländeregel belegt ihren Nullbefund (26.08.2026, abends)
+
+**Der Anlass kommt von der HomeStation** (`auf-47`), und der Einwand sitzt:
+
+> *«Er verlangt, dass der Besteller VORHER weiss, dass kein Gelände in der Szene ist. Bei
+> einer fremden glb weiss er das nicht.»*
+
+Dazu ihr Vorschlag: *«Die Geräteregel könnte ihren Nullbefund selbst belegen, indem sie
+meldet, WELCHE Baustoffe sie geprüft hat.»*
+
+**Der Punkt trifft eine Verwechslung, die dieses Projekt sonst überall auseinanderhält.**
+`gelaende_erkannt: False` bedeutete zweierlei — elf lesbare Namen geprüft und keiner nach
+Gelände, oder gar nichts Lesbares vorgefunden. Beides ergab `None`, und `None` liest sich
+wie ein Fehler statt wie eine Enthaltung. *Das ist dieselbe Verwechslung wie «durchgefallen
+gegen nicht gemessen», eine Ebene tiefer.*
+
+- [x] `maske.gelaende_befund(gelaende_namen, bauwerk_namen)` — drei benannte Lagen:
+      `gelaende_gefunden`, `kein_gelaende_belegt`, `nicht_entscheidbar`. **Ohne Bild
+      befragbar**, weil die Frage vor dem Lauf gestellt gehört und nicht danach.
+- [x] `MINDESTENS_BENANNT = 2`, und die Zahl ist nicht gegriffen: Bei genau einem Eintrag
+      steht der Klumpenfall vor uns (eine 56-MB-Kontext-IFC kam als **ein** namenloses
+      Bauteil mit 502 002 Dreiecken). «Kein Gelände gefunden» wäre dort eine Aussage über
+      eine Tabelle, die gar nichts unterscheidet.
+- [x] Die **geprüften Namen wandern mit** (`gelaende_geprueft`). *Ein Nullbefund ohne
+      seine Liste ist eine Behauptung, mit ihr eine Auskunft* — genau das, worum die
+      HomeStation gebeten hat.
+- [x] `befund_kurz` nennt sie am Terminal, **selbstlöschend**: nur im Fall
+      `kein_gelaende_belegt`. Trifft die Regel oder war nichts zu lesen, schweigt die
+      Zeile wieder.
+
+### Und was ausdrücklich NICHT geändert wurde
+
+**Die Maske fällt weiterhin aus.** Das ist die unbequeme Hälfte der Antwort, und sie hat
+einen Grund, der jetzt aussprechbar ist:
+
+> Ein Nullbefund belegt, dass die **Regel** nicht angeschlagen hat — nicht, dass es kein
+> Gelände gibt. Beides fällt nur zusammen, wenn die Regel **vollständig** ist, und
+> Vollständigkeit ist an einem einzelnen Lauf nicht messbar.
+
+Ein Baustoff namens `Erdreich` oder `Humus` stünde in keiner der beiden Listen dieses
+Projekts und wäre trotzdem Gelände. Die Wortliste hat vier Einträge, und sie hat vier, weil
+jeder weitere mehrdeutig würde (`boden` machte jeden Geschossboden zu Gelände).
+
+*Was sich ändert, ist trotzdem das Entscheidende:* Der Betreiber bekommt jetzt die
+**Antwort statt der Frage**. Er liest elf Namen, findet keinen Boden darunter und setzt
+`--kein-gelaende` in Kenntnis der Lage — statt zu raten, ob die Regel versagt hat.
+
+**Für den Owner:** Ob der Nullbefund die Maske selbst tragen soll, ist eine
+Vertrauensentscheidung über die Wortliste und keine technische. Sie ist von drei Tests
+eingezäunt — eine Mutationsprobe, die die Maske im Fall `kein_gelaende_belegt` überleben
+lässt, macht sie rot. **Sie kann also nicht versehentlich passieren.**
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).

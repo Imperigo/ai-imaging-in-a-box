@@ -3212,6 +3212,19 @@ sondern dass es weiterhin **einen** Ausführer gibt: Alle Prüfungen vor dem Bil
 für beide Wege, weil beide durch dieselbe Stelle gehen. Zwei Ausführer hätten zwei Sätze
 von Prüfungen, und die laufen auseinander, sobald jemand nur einen davon pflegt.*
 
+**Nullbefund** — Ein Ergebnis, das lautet «nichts gefunden» — und das **etwas aussagt**,
+weil vorher etwas gesucht wurde. Der Gegensatz ist nicht «etwas gefunden», sondern
+«**gar nicht gesucht**», und die beiden werden dauernd verwechselt.
+
+Ein Beispiel aus diesem Projekt: Eine Regel sucht in der Baustoffliste einer Szene nach
+Namen, die auf Gelände hindeuten. Sie kann drei Dinge melden. *Gelände gefunden.* Oder:
+*elf Baustoffe gelesen, keiner heisst nach Gelände* — ein Nullbefund. Oder: *die Liste war
+leer oder namenlos* — dann wurde nichts gelesen, und «nichts gefunden» wäre eine Lüge.
+
+*Und ein Nullbefund ist trotzdem kein Beweis.* Er belegt, dass die **Regel** nicht
+angeschlagen hat. Dass es die gesuchte Sache nicht gibt, folgt daraus nur, wenn die Regel
+vollständig ist — und ob sie das ist, sieht man einem einzelnen Durchgang nicht an.
+
 **Riegel** — Eine Prüfung, die **vor** einem teuren Schritt steht und ihn im Ernstfall gar
 nicht erst beginnen lässt. Der Name ist wörtlich gemeint: kein Ratschlag, sondern ein
 geschlossenes Tor. *In diesem Projekt stehen die Riegel vor dem Bildlauf — sie kosten
