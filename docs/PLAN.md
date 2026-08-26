@@ -3469,8 +3469,49 @@ lässt sich vergleichen, statt wieder von vorn zu erschrecken.*
 - [x] **`werkzeuge.py` ist korrekt als erreichbar erkannt** — seine vier MCP-Werkzeuge
       hängen an `RUFTABELLE`, und die steht auf Modulebene. Das Werkzeug findet sie über
       die Tabelle; eine Registry ist kein blinder Fleck.
-- [ ] **Die Einzelfälle durchsehen** — je 1–5 in acht Modulen. Das ist die einzige Gruppe
-      ohne Begründung, und darum die einzige, die noch Arbeit ist.
+- [x] **Die 32 Einzelfälle durchgesehen** — nach *Grund* geordnet und nicht nach Modul,
+      weil die Gründe quer zu den Modulen liegen:
+
+      1. **Die andere Richtung** (wir → sie): `kosmo_szene.backbone_nach_fremd`,
+         `kamera_zu_spec`, `brennweite_zu_fov`, `contracts.load_render_scene`. Wir
+         **lesen** ihren Vertrag; wir schreiben ihn nicht. Die Rückrichtung ist gebaut,
+         damit sie prüfbar ist — nicht, weil jemand sie geht.
+      2. **Der Auftragsweg des Owners:** `auftrag.baue_auftrag`, `neue_auftrag_id`,
+         `schreibe_auftrag`. Von Hand und aus Sitzungsskripten gerufen, nicht von der
+         Kette. *Heute allein dreimal benutzt* — sie sind alles andere als tot, nur eben
+         nicht Teil eines Renderlaufs.
+      3. **Der LoRA-Zweig:** `lora.baue_kommando`, `finde_trainer_python`,
+         `finde_trainer_wurzel`, `trainiere`. Training, nicht Render.
+      4. **Zurückgezogen, und zwar ausdrücklich:** `geometrie_qa.anteil_naeher_am_rand`
+         trägt seit dem 24.08. ein `.. danger:: NICHT AM PRODUKTPFAD VERWENDEN`.
+         `erreichbarkeit_fuer` ist die Tabellenvariante; die **gemessene** Fassung
+         `erreichbarkeit` ist seit heute angeschlossen.
+      5. **Der Prompt-Kern, der die Oberfläche nie erreicht:** `prompts.komponiere`,
+         `baustein`, `uebersicht`. **Bekannter Befund seit dem 23.08.** — ein Auftrag der
+         Oberfläche bringt seinen Prompt **roh** mit, und darum lief der Bauteilwächter
+         auf keinem echten Auftrag. Er hängt seit dem 23.08. eigens in `lies_szene`; der
+         Rest von `komponiere` hängt weiterhin in der Luft.
+      6. **Lesewege, die die Kette nicht nimmt:** `bildlesen.tiefen_aus_png` (die Kette
+         liest die **EXR**, nicht das PNG — das PNG war die Eingabe des Modells, die EXR
+         ist der Massstab), `png_befund`, `exr_kopf`, `bildschreiben.schreibe_farb_png`,
+         `herkunft.deute`, `fordere_up_axis`, `lies_ifc_kopf`, `lies_gltf_kopf`,
+         `pruefe_einheit_gegen_masse`.
+      7. **Einzelne, ohne gemeinsamen Grund:** `kameras.ziehe_bis_frei`,
+         `fortschritt.wache_fuer_status` (die Wache auf ein blosses Statuswort — der
+         Abholer beobachtet einen **Ordner** und damit ein belegtes Zeichen),
+         `geometrie_qa.anker_fuer`, `polaritaet_aus_messungen`.
+
+- [ ] **ZWEI FREIGABEWEGE, UND NUR EINER WIRD BENUTZT.** `jobs.freigeben` nennt sich im
+      eigenen Docstring *«die einzige Tür zum Ausführungspfad»* — und **hat keinen
+      Aufrufer**. Der Produktivverkehr kommt durch die **fremde** Warteschlange, und dort
+      entscheidet `bruecke._freigabe` über einen fremden Token; unser eigener Jobstore
+      samt seiner Freigabe wird von der Kette nie berührt (`liste_jobs` ebenso).
+      *Das ist kein Fehler, aber es ist auch keine Kleinigkeit:* Ein Sicherheitsriegel,
+      der nirgends im Weg steht, schützt niemanden — und wer den Docstring liest, hält
+      ihn für den Riegel, der er nicht ist. **Owner-Entscheid nötig:** Soll der
+      Produktivweg durch unseren Jobstore laufen, oder wird `jobs.freigeben` als
+      MCP-Weg deklariert und der Docstring berichtigt? *Selbst zu entscheiden wäre hier
+      falsch — es geht um die Frage, wer eine GPU freigeben darf.*
 
 ---
 
