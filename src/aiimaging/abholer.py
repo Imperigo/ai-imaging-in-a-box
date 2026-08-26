@@ -1290,7 +1290,16 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                                                "gerechnet_unter": bericht.get("blender")}
             else:
                 bericht = multipass(einstellungen.pop("glb_path"), aus, **einstellungen)
-                if zwischenspeicher is not None and bericht.get("status") == "ok":
+                # ABGELEGT WIRD, WAS ALS TREFFER TAUGEN WUERDE — dieselbe Pruefung, nicht
+                # eine zweite. Der erste Anlauf fragte hier nach `status == "ok"`, und das
+                # war eine ANDERE Bedingung als die beim Lesen: Ein Bericht ohne
+                # `status`-Feld wurde nie abgelegt, ohne dass irgendwo stand warum.
+                #
+                # Zwei Bedingungen fuer dieselbe Frage laufen auseinander, sobald eine
+                # gepflegt wird — derselbe Grund, aus dem der Abholer eine zweite QUELLE
+                # bekam und keinen zweiten Ausfuehrer.
+                if (zwischenspeicher is not None
+                        and not _kette._cache_maengel("multipass", bericht, _kette.BEDARF)):
                     # ZUSAGEN sind die Dateien, auf die der Eintrag zeigt. Ohne sie weiss
                     # er nicht, wovon er redet: Er speichert Pfade, nicht Bilder, und ein
                     # Pfad allein ist eine Behauptung. `graph.ArtefaktCache.hole` prueft

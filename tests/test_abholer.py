@@ -361,6 +361,15 @@ def _kette(*, scores=(0.8,), fehlt_tiefe=False, render_status="ok"):
         # jemand, und zwar vor dem Renderlauf (auf-vis-20260826-16).
         for name in ("tiefe.png", "beauty.png"):
             (P(out) / name).write_bytes(MINI_PNG)
+        # Die EXR wird MITGESCHRIEBEN, auch wenn kein Test sie liest.
+        #
+        # Bis zum 26.08.2026 sagte diese Attrappe einen Pfad zu und legte die Datei nicht
+        # an. Aufgefallen ist es am Zwischenspeicher: `kette._cache_maengel` verweigerte
+        # das Ablegen mit «Zugesagte Datei fehlt: depth_exr» — die Pruefung hatte recht,
+        # die Attrappe nicht. Dieselbe Entscheidung wie beim Minimal-PNG am selben Tag:
+        # Eine Attrappe, die eine Datei vortaeuscht, die es so nie gibt, prueft die Kette
+        # gegen eine Welt, in der sie nicht laeuft.
+        (P(out) / "tiefe.exr").write_bytes(b"\x76\x2f\x31\x01EXR-Attrappe")
         return {"depth_png": str(P(out) / "tiefe.png"),
                 "beauty_png": str(P(out) / "beauty.png"),
                 "depth_exr": str(P(out) / "tiefe.exr"),

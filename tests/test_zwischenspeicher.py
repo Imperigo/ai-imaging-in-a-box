@@ -232,6 +232,49 @@ def test_mit_zwischenspeicher_wird_die_zweite_kamera_nicht_gerechnet(tmp_path, g
     )
 
 
+def test_ein_echter_treffer_wird_auch_als_treffer_gemeldet(tmp_path, glb):
+    """**Die Mutationsprobe hat diesen Test erzwungen.**
+
+    Der erste Anlauf prüfte die Meldung nur an einem von Hand gebauten Befund. Ein
+    Treffer, der sich als «gerechnet» ausgibt, blieb damit grün — und ein Lauf aus dem
+    Speicher sähe aus wie ein frisch gerechneter. *Dieselbe Form wie beim Hochachsen-Test
+    am selben Tag: Der Wert wird dort geprüft, wo er entsteht, und nicht dort, wo er
+    ankommt.*
+
+    Geprüft wird darum über die **volle Kette** mit Attrappen — dieselbe Bauform wie in
+    ``test_abholer.py``.
+    """
+    from test_abholer import _kette
+
+    protokoll, attrappen = _kette(scores=(0.8,))
+    cache = graph.ArtefaktCache(tmp_path / "cache")
+    szene = {"kameras": "auto", "aufloesung": 64, "hoehe": 64, "samples": 1,
+             "prompt": "a house"}
+
+    def lauf(nr):
+        verarbeite = abholer.verarbeiter(
+            out_wurzel=tmp_path / f"aus{nr}", auto_richtungen=("s",),
+            nullprobe=False, seeds=(0,), zwischenspeicher=cache, **attrappen)
+        return verarbeite({"modell": glb, "job_id": "vis-1-aaaaaa",
+                           "verzeichnis": tmp_path, "szene": dict(szene)})
+
+    erst = lauf(1)
+    zweit = lauf(2)
+
+    assert len(protokoll["multipass"]) == 1, (
+        f"Der Multipass lief {len(protokoll['multipass'])}-mal — der Speicher greift nicht.")
+    assert erst["kameras"][0]["zwischenspeicher"]["treffer"] is False, (
+        "Der erste Lauf hat gerechnet und muss das auch sagen.")
+    assert zweit["kameras"][0]["zwischenspeicher"]["treffer"] is True, (
+        "Der zweite Lauf kam aus dem Speicher und gibt sich als gerechnet aus. Dann "
+        "sieht ein Lauf aus dem Speicher aus wie ein frischer — nur schneller, und "
+        "niemand weiss warum.")
+
+    zeilen = abholer.befund_kurz(zweit)
+    assert any("AUS DEM ZWISCHENSPEICHER" in z for z in zeilen)
+    assert not any("AUS DEM ZWISCHENSPEICHER" in z for z in abholer.befund_kurz(erst))
+
+
 def test_die_kurzform_sagt_dass_ein_bild_aus_dem_speicher_kam():
     """Sonst sähe ein Lauf aus dem Speicher genauso aus wie ein gerechneter, nur schneller."""
     zeilen = abholer.befund_kurz({"kameras": [
