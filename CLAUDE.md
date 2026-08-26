@@ -91,16 +91,32 @@ löschen.
 
 ### Aufträge gehören in das Repo, nicht in den Chat
 
-**Es gibt zwei Worker, und sie können nicht dasselbe** (Owner-Hinweis 2026-08-22):
+**Es gibt drei Worker, und sie können nicht dasselbe** (Owner-Hinweis 2026-08-22,
+erweitert 2026-08-26):
 
 * **`local` — die HomeStation.** GPU, Blender, `.venv-ifc`, unser Repo. Misst, rendert,
   prüft. Liest `auftraege/offen/` und legt Ergebnisse daneben.
-* **`cloud` — der Worker an KosmoOrbit.** Hat unser Repo **nicht**; er baut an der
-  Vis-Oberfläche. Was er tun soll, betrifft **ihren** Vertrag und ihre Oberfläche, nie
-  unseren Code.
+* **`cloud` — der Worker an KosmoOrbit.** Hat unser Repo **nicht**; er hält **ihren
+  Vertrag** und ihre Warteschlange. Was er tun soll, betrifft nie unseren Code.
+* **`ui` — der Kosmo-UI-Worker.** Seit dem 26.08.2026 zuständig für die **ganze
+  Oberfläche** von KosmoOrbit. Er hat unser Repo **als Quelle** — ein Auftrag in
+  `auftraege/offen/` erreicht ihn also über git.
 
 Ein Messauftrag an den Cloud-Worker wäre unerfüllbar, ein Vertragsauftrag an die
-HomeStation liefe ins Leere. `auftrag.py` verlangt das Feld `worker` darum als Pflicht.
+HomeStation liefe ins Leere, und ein Oberflächenauftrag an einen von beiden landete bei
+jemandem, der die Oberfläche nicht mehr baut. `auftrag.py` verlangt das Feld `worker`
+darum als Pflicht.
+
+**Warum `ui` und `cloud` getrennt bleiben, obwohl beide „drüben" sind:** Vertrag und
+Oberfläche sind zwei Gegenstände. *Welchen Feldnamen ein QA-Block je Kamera bekommt*, ist
+eine Vertragsfrage; *ob neben der Zahl ihr Vorbehalt steht*, eine Oberflächenfrage. Beide
+an dieselbe Stelle zu schicken hiesse, dass eine liegen bleibt, weil sie nicht zum Auftrag
+des Lesers gehört.
+
+**Was beim UI-Worker landet:** jeder Punkt zur Oberfläche, der bei der eigenen Arbeit
+auffällt — ein Bedienelement ohne Wirkung, eine Zahl ohne ihren Vorbehalt, ein Zustand,
+den die Anzeige auf zwei rundet. Sie werden **gesammelt und als Auftrag weitergegeben**,
+nicht im Vorbeigehen erwähnt.
 
 **Der Auftrag trägt seine Anweisung vollständig in sich** (Owner-Wunsch 2026-08-22). Bis
 dahin galt: Auftragsdatei ins Repo, Prompt in den Chat. Das hiess für den Owner, jeden

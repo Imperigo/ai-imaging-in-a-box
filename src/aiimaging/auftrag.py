@@ -55,16 +55,28 @@ from pathlib import Path
 #:
 #: * :data:`WORKER_LOCAL` — die HomeStation. Hat GPU, Blender, `.venv-ifc`, unser Repo.
 #:   Misst, rendert, prüft. Liest ``auftraege/offen/`` und legt Ergebnisse daneben.
-#: * :data:`WORKER_CLOUD` — der Worker an KosmoOrbit. Hat **unser Repo nicht**; er baut
-#:   an der Vis-Oberfläche. Was er tun soll, betrifft **ihren** Vertrag und ihre
-#:   Oberfläche, nie unseren Code.
+#: * :data:`WORKER_CLOUD` — der Worker an KosmoOrbit. Hat **unser Repo nicht**; er hält
+#:   den Vertrag und die Warteschlange der Vis-Seite. Was er tun soll, betrifft **ihren**
+#:   Vertrag, nie unseren Code.
+#: * :data:`WORKER_UI` — der Kosmo-UI-Worker. **Seit dem 26.08.2026 zuständig für die
+#:   ganze Oberfläche von KosmoOrbit** (Owner-Hinweis). Er hat unser Repo **als Quelle**
+#:   — ein Auftrag in ``auftraege/offen/`` erreicht ihn also über git, ohne Umweg über
+#:   den Chat.
 #:
 #: Die Trennung ist nicht Ordnungsliebe: Ein Messauftrag an den Cloud-Worker wäre
-#: unerfüllbar (keine GPU, keine Geometrie), und ein Vertragsauftrag an die HomeStation
-#: liefe ins Leere (sie kann ihr Schema nicht ändern).
+#: unerfüllbar (keine GPU, keine Geometrie), ein Vertragsauftrag an die HomeStation liefe
+#: ins Leere (sie kann ihr Schema nicht ändern), und ein Oberflächenauftrag an einen von
+#: beiden landete bei jemandem, der die Oberfläche nicht mehr baut.
+#:
+#: **Warum `ui` und `cloud` getrennt bleiben, obwohl beide „drüben" sind:** Der Vertrag
+#: und die Oberfläche sind zwei Gegenstände. *Welchen Feldnamen ein QA-Block je Kamera
+#: bekommt*, ist eine Vertragsfrage; *ob neben der Zahl ihr Vorbehalt steht*, eine
+#: Oberflächenfrage. Sie an dieselbe Stelle zu schicken hiesse, dass eine von beiden
+#: liegen bleibt, weil sie nicht zum Auftrag des Lesers gehört.
 WORKER_LOCAL = "local"
 WORKER_CLOUD = "cloud"
-WORKER = (WORKER_LOCAL, WORKER_CLOUD)
+WORKER_UI = "ui"
+WORKER = (WORKER_LOCAL, WORKER_CLOUD, WORKER_UI)
 
 SCHEMA_AUFTRAG = "aiimaging.homeworker-auftrag/v1"
 SCHEMA_ERGEBNIS = "aiimaging.homeworker-ergebnis/v1"

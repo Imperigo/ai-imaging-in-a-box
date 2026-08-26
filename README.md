@@ -53,9 +53,11 @@ Kette belegt, die Aussage *geometrietreu* aber noch nicht.
 
 **Wie weit der Einbau in KosmoOrbit ist**, Posten für Posten mit Datum und Beleg:
 [`docs/EINBAU_STAND.md`](docs/EINBAU_STAND.md). Wie die Oberfläche aussehen soll, die
-darüber liegt: [`docs/OBERFLAECHE_KOSMOVIS.md`](docs/OBERFLAECHE_KOSMOVIS.md).
+darüber liegt: [`docs/OBERFLAECHE_KOSMOVIS.md`](docs/OBERFLAECHE_KOSMOVIS.md). Was uns
+bei der eigenen Arbeit an der Oberfläche auffällt und an den UI-Worker geht:
+[`docs/UI_BEFUNDE.md`](docs/UI_BEFUNDE.md).
 
-Tests: **4173**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+Tests: **4214**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
 (`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
 
 ---
