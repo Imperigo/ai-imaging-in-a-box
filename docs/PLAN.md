@@ -4354,6 +4354,62 @@ brauchen wir doch einen mitwachsenden Deckel — aus ihren Zahlen, nicht aus uns
 
 ---
 
+## Ein zweites Bauwerk — und die Messung von vorhin hält daran (26.08.2026)
+
+**Die Schwäche der Messung von einer Stunde vorher war ihre Szene.** «Samples kosten
+fast nichts» stand auf **einem Quader mit sechs Bauteilen**. Die HomeStation hatte
+denselben Punkt schon benannt, ohne ihn auf uns zu münzen — über ihr eigenes Modell:
+
+> *«Es ist KEIN glatter Quader. Es hat Auskragungen, ein Stuetzenraster, eine gegliederte
+> Huelle und einen Kern — also genau die Merkmale, an denen sich eine Geometriepruefung
+> bewaehren muss.»*
+
+**Ihr Modell dürfen wir nicht haben (Regel 3). Die Merkmale schon** — und Regel 3 verlangt
+Testdaten, die im Repo erzeugbar sind.
+
+- [x] `tools/make_test_ifc.py --hochbau`: **141 Bauteile** statt sechs, fünf Geschosse,
+      3 × 3 Stützenraster je Geschoss, ein Kern aus vier Wänden, 14 Fassadentafeln je
+      Geschoss **mit Fugen**, und eine Auskragung ab dem vierten Geschoss.
+      Hüllbox **12,0 × 9,5 × 15,0 m** — die 9,5 gegen 8,0 Grundrisstiefe ist die
+      Auskragung, und sie ist das Merkmal, das *Hülle* von *Grundriss* abkoppelt.
+- [x] **Reine Komposition aus `_quader`** — kein neuer Geometriecode. Ein zweiter
+      Geometriepfad wäre eine zweite Fehlerquelle; geprüft werden soll die Gliederung,
+      nicht die Extrusion.
+- [x] **Additiv.** Der Vorgabe-Quader bleibt Zeile für Zeile, wie er war — nur der
+      Dateiname im Kopf unterscheidet sich. Ein Test hält das fest, denn der Modulkopf
+      sagt es selbst: *«Eine stillschweigend geänderte Testgeometrie macht eine Messreihe
+      unbrauchbar, ohne dass es auffällt.»*
+- [x] **Vom echten Schemaprüfer beurteilt**, in IFC4 **und** IFC2X3: null Fehler. Genau
+      dieser Weg hat an der ersten Fixture dreizehn Fehler gefunden, die beim Zählen von
+      Attributen unsichtbar waren.
+- [x] **Kein Bauteilname trifft die Geländeregel** — unter einem Test. `IfcWall_Site-A`
+      gälte ihr als Gelände; eine so benannte Wand fiele aus der Bauwerksmaske.
+
+### Und die Gegenprobe zur eigenen Messung
+
+Dieselben Reihen auf dem gegliederten Bau (141 Teile) gegen den Quader (6 Teile):
+
+| | Quader | Hochbau |
+|---|---|---|
+| 400 px, 4 → 256 Samples | 4,40 → 4,36 s | 4,41 → 4,37 s |
+| 800 px, 4 → 256 Samples | 7,58 → 11,54 s (1,5×) | 7,57 → 13,44 s (1,8×) |
+| 32 Samples, 400 → 1600 px | 4,37 → 27,80 s (6,4×) | 4,37 → 30,25 s (6,9×) |
+
+**Der Befund hält — und er wird um eine Überraschung reicher:** *Auch die Zahl der
+Bauteile treibt die Kosten kaum.* 23-mal so viele Teile, 1692 statt 12 Dreiecke, und der
+Multipass kostet fast dasselbe. Bei diesen Grössen entscheidet die **Auflösung**, sonst
+nichts.
+
+*Ein Ausreisser bleibt ungeglättet stehen:* Der allererste Lauf der Reihe brauchte 6,38 s
+statt 4,4 — Blender-Anlauf. Genau das habe ich der HomeStation in `auf-54` untersagt
+(«Zahlen nicht glätten»), also steht er hier.
+
+**Was weiterhin ungemessen ist:** GPU, und eine Szene in der Grössenordnung ihres Modells
+(511 Teile, 11 Geschosse). Der Hochbau schliesst die Lücke zwischen Quader und Wirklichkeit
+zur Hälfte, nicht ganz.
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).
