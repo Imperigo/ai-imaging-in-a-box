@@ -287,6 +287,33 @@ Beim ersten Lauf hat er prompt zugeschlagen: Hier stand `style_mode` statt `styl
 Bei allen dreien meldet unser Ergebnis, dass sie nichts bewirkt haben. **Sie scheitern
 nicht still.**
 
+### N7 · `qa.geometry.method` sagt jetzt die Wahrheit — und ein neuer Hinweis
+
+**Bisher stand dort eine Konstante.** `method` nannte immer dieselbe Fassung unseres
+Verfahrens, gleichgültig welche wirklich lief. Wer daran ablesen wollte, *wie* gemessen
+wurde, las eine Zeichenkette ohne Deckung. Ab jetzt trägt das Feld das Verfahren des
+Laufs.
+
+**Und der Unterschied ist kein Etikett.** Es gibt zwei Fassungen:
+
+* **gerichtet** — die Tiefe muss *richtig herum* stehen. Steht sie verkehrt, ist der Wert
+  **0,0000**.
+* **ungerichtet** (`abs(spearman)`) — der Betrag. Ein Bild mit **vertauschter** Tiefe
+  erreicht damit denselben Wert wie eines mit richtiger.
+
+Welche läuft, hängt daran, ob unsere Bauwerksmaske gebaut werden konnte. Konnte sie es
+nicht, steht ab jetzt in `hinweise`:
+
+    RICHTUNG NICHT GEPRUEFT: Der Maskenweg lief nicht … 'passed: true' sagt hier
+    nichts darueber, ob die Tiefe richtig herum steht.
+
+**Was ihr damit tun könnt:** Wenn ihr in eurer Oberfläche ein Abzeichen «geometrietreu»
+setzt, ist dieser Hinweis die Bedingung dafür. Ein Häkchen aus einem ungerichteten Lauf
+verspricht mehr, als gemessen wurde. (Gefunden hat das die HomeStation an vier eigenen
+Läufen — nicht wir.)
+
+---
+
 ### N6 · Was sich NICHT geändert hat
 
 Der wichtigste Punkt oben (Abschnitt 1) steht unverändert: **Die guten QA-Zahlen kommen
