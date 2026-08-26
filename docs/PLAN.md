@@ -3548,6 +3548,70 @@ machen würde.*
 
 ---
 
+## Der Massstabs-Riegel meldet jetzt dort, wo Bilder entstehen (26.08.2026)
+
+**Der fünfte Fall desselben Owner-Einwands, und der einzige, an dem ein fertiger Riegel
+danebenstand.** `torwaechter.py` nennt den Anlass im eigenen Docstring:
+
+> *«Eine Konversion kann sauber `ok` melden und die Geometrie trotzdem um Faktor 1000
+> danebenliegen. Der Runner war zufrieden, das Modell 30 km gross, und der Fehler fiel
+> erst am fertigen Bild auf.»*
+
+Nachgezählt: `torwaechter` kommt in `abholer.py`, `bruecke.py` und `tools/abholen.py`
+**nullmal** vor. Er hing an `werkzeuge.enqueue_render` und an `kette.py` (ohne Aufrufer).
+
+### Der erste Entwurf war falsch, und eine Gegenprüfung hat es gezeigt
+
+Er brach ab, sobald `pruefe_massstab` einen `verdacht_faktor` nannte — mit der Begründung,
+das sei eine *benannte* Bedingung wie bei `_kamera_ueber_dach`. **Nachgerechnet an der
+Funktion selbst stimmt das nicht:**
+
+| grösste Kante | Faktor | was das hiesse |
+|---|---|---|
+| 0,003 m – 1,0 m | `0.001` | **jeder Bauteil-Render** — eine Tür, ein Fensterdetail, eine Demoszene |
+| 3000 m – 10⁶ m | `1000` | auch **ein einziges verirrtes Mesh** 4 km daneben, etwa ein mitexportierter Vermessungspunkt |
+
+*Ein `verdacht_faktor` ist kein Beleg für einen Einheitenfehler.* Er sagt nur, dass eine
+Division ein plausibles Ergebnis liefert. **Und die Zahl, die den Abbruch tragen müsste,
+hat niemand:** Wie oft der Torwächter am echten Bestand anschlägt, ist ungemessen — er lief
+ja nie.
+
+- [x] **`abholer._massstab_gemeldet` meldet und bricht nichts ab.** Der Abbruch wird erst
+      entschieden, wenn `auf-20260826-45` die Fehlalarmrate am echten Bestand geliefert hat.
+      *Ein Riegel, der scharfgestellt wird, bevor seine Fehlalarmrate bekannt ist, lehnt
+      Aufträge ab, und niemand weiss welche.*
+- [x] **Er steht ausdrücklich nicht in der Abbruchschleife.** Rahmung und Kamerahöhe sind
+      Eigenschaften der **Kamera** — eine andere Blickrichtung heilt sie, darum überspringt
+      die Schleife dort je Kamera. Der Massstab ist eine Eigenschaft der **Geometrie** und
+      bei jeder Kamera derselbe; ihn dort einzuhängen hiesse, dreimal denselben
+      Blender-Lauf zu bezahlen (~97 s je Kamera) für ein Urteil, das nach dem ersten
+      feststand. *Ein Test hält die Platzierung fest.*
+- [x] **Der Bericht wird gebaut, nicht durchgereicht** — `{"status": "ok", "bbox": …}`, wie
+      es `werkzeuge.py` und `kette.py` schon tun. `status` heisst im Multipass-Bericht «die
+      Ausgabedateien sind frisch», in einem `ifc_to_glb`-Report «die Konversion ist
+      gelungen»; und der Fehlerzweig ist hier ohnehin unerreichbar, weil `seams` bei einem
+      Fehlschlag wirft.
+- [x] **Bevorzugt `bbox_bauwerk`, Rückfall auf `bbox`, `quelle` sagt welche**, und `note`
+      wandert mit. Der Grund: An 40 echten Dateien fielen zwei Modelle mit 1002 m und
+      1127 m durch — Gelände samt Umgebung, Einheit in Ordnung. *Und die Bauwerksbox ist
+      keine sichere Bank:* Sie ist `None`, wenn `aiimaging.maske` aus Blender nicht
+      erreichbar war, und sie ist die ganze Szene, wenn Gelände und Bauwerk in **einem**
+      Objekt stecken.
+- [x] Eine Kurzbefundzeile **MASSSTAB UNPLAUSIBEL**, die den Faktor nennt **und im selben
+      Satz seine Fehlalarmbreite**. Eine Diagnose ohne sie schickt jemanden auf eine
+      Fehlersuche, die es vielleicht nicht gibt.
+- [x] `tests/test_massstab_vor_render.py` (28 Fälle), darunter die nachgerechneten Fenster
+      und die Schranke bei **exakt 1,0 m** — dort steht bereits ein Integrationstest, und
+      wer die Vergleichsrichtung anfasst, macht ihn rot.
+- [x] **Gegenprobe am Werkzeug:** `tools/tote_kanten.py` meldet `torwaechter` nicht mehr.
+- [ ] **Den Abbruch scharfschalten** — nach `auf-20260826-45`. Offen ist auch die Setzung
+      dahinter: *ab welcher Fehlalarmrate ist ein Abbruch vertretbar?* Meine Neigung wäre
+      «unter 1 von 40», aber das ist eine Setzung und gehört dem Owner.
+
+*Geprüft und für unschädlich befunden:* `--rotiere-z-up` ist eine reine Rotation ohne
+Skalierung; sie vertauscht Kanten, ändert aber die **grösste** nicht — und genau die liest
+`pruefe_massstab`.
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).

@@ -609,6 +609,28 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
               "zusammenfallen. Das Bild wurde uebernommen, und die Ansicht zaehlt in "
               "der Kameraspanne NICHT als zweite Ziehung")
 
+    # Der Massstab. Die Zeile steht neben der Rahmung, weil beide dasselbe sagen: Das
+    # Urteil darunter handelt von der SZENE und nicht vom Bild. Abgebrochen wird hier
+    # NICHTS — warum, steht in `_massstab_gemeldet`.
+    beanstandet = [(k.get("kamera"), k.get("massstab") or {}) for k in kameras
+                   if (k.get("massstab") or {}).get("beanstandet")]
+    for kamera, lage in beanstandet:
+        faktor = lage.get("verdacht_faktor")
+        zeile = (f"MASSSTAB UNPLAUSIBEL bei {kamera}: groesste Kante "
+                 f"{lage.get('groesste_kante_m'):.4g} m, gemessen an "
+                 f"{lage.get('quelle')}. Gerendert wurde TROTZDEM")
+        if faktor is not None:
+            zeile += (f" — es liesse sich ein Einheitenfehler um Faktor {faktor:g} "
+                      f"hineinlesen, aber derselbe Verdacht trifft jeden Bauteil-Render "
+                      f"unter 1 m und jedes verirrte Mesh in 4 km Entfernung. Ob "
+                      f"umgerechnet gehoert, entscheidet die QUELLE, nicht diese Kette")
+        else:
+            zeile += (" — ein Kontextmodell ist kein Einheitenfehler (gemessen an 40 "
+                      "echten Dateien: 1002 m und 1127 m, Einheit in Ordnung)")
+        if lage.get("note"):
+            zeile += f". Zur Huellbox: {lage['note'][:120]}"
+        zeilen.append(zeile)
+
     # Und derselbe Fall aus dem Regelwerk: eine Aufnahme, die gar nicht beurteilbar ist.
     # Bis zum 26.08.2026 stand dieser Riegel HINTER der Diffusion und kommentierte eine
     # fertige Bilddatei, statt sie zu verhindern (auf-vis-20260826-16).
@@ -1089,6 +1111,12 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     f"Tiefenkarte ist genau die erfundene Kubatur, gegen die dieses "
                     f"Projekt antritt.")
 
+            # Der Massstab wird GEMELDET und bricht nichts ab — siehe
+            # `_massstab_gemeldet`. Er steht darum ausdruecklich NICHT in der Schleife
+            # darunter: Rahmung und Kamerahoehe sind Eigenschaften der KAMERA, die eine
+            # andere Blickrichtung heilen kann. Der Massstab ist eine Eigenschaft der
+            # GEOMETRIE und bei jeder Kamera derselbe.
+            massstab = _massstab_gemeldet(bericht)
             rahmung = _rahmung_vor_dem_render(bericht)
             komposition = _komposition_vor_dem_render(bericht)
             for lage in (rahmung, komposition):
@@ -1098,7 +1126,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 lage = None
             if lage is not None:
                 urteile.append(dict(_uebersprungenes_urteil(kuerzel, lage),
-                                    rahmung=rahmung, komposition=komposition))
+                                    massstab=massstab, rahmung=rahmung,
+                                    komposition=komposition))
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
                 continue
 
@@ -1166,6 +1195,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                           # gehoert an das Urteil. Ein Lauf knapp ueber der Schwelle
                           # sieht sonst aus wie einer mit Luft.
                           rahmung=rahmung,
+                          # Ob die Geometrie ueberhaupt plausible Masse hat. Der Riegel
+                          # dafuer war seit langem gebaut und lief auf DIESEM Weg
+                          # nirgends — nachgezaehlt am 26.08.2026.
+                          massstab=massstab,
                           # Unter welcher Annahme die Sonne gestellt wurde. Der
                           # Runner berichtet es auch, aber sein Bericht liegt neben
                           # dem Bild und dieses Urteil im Befund — und die
@@ -1406,6 +1439,90 @@ def _erreichbarkeit_dieser_szene(urteil: dict, *, schwelle: float) -> dict | Non
                                            name="diese Aufnahme")
     except geometrie_qa.QaError:
         return None
+
+
+def _massstab_gemeldet(bericht: dict) -> dict:
+    """Hat die Geometrie plausible Masse? — **gemeldet, nicht abgebrochen.**
+
+    **Der Riegel dafür ist seit langem gebaut und lief auf diesem Weg nirgends.**
+    :mod:`aiimaging.torwaechter` nennt in seinem eigenen Docstring den Anlass: *«Eine
+    Konversion kann sauber `ok` melden und die Geometrie trotzdem um Faktor 1000
+    danebenliegen. Der Runner war zufrieden, das Modell 30 km gross, und der Fehler fiel
+    erst am fertigen Bild auf.»*
+
+    Nachgezählt am 26.08.2026: ``torwaechter`` kommt in ``abholer.py``, ``bruecke.py`` und
+    ``tools/abholen.py`` **nullmal** vor. Er hing an ``werkzeuge.enqueue_render`` und an
+    ``kette.py`` (ohne Aufrufer) — nicht an dem Weg, den ein Auftrag der Oberfläche nimmt.
+
+    Warum hier **nichts** abgebrochen wird
+    --------------------------------------
+    Der erste Entwurf brach ab, sobald ``pruefe_massstab`` einen ``verdacht_faktor``
+    nannte — mit der Begründung, das sei eine *benannte* Bedingung wie bei
+    :func:`_kamera_ueber_dach`. **Das war falsch, und eine Gegenprüfung hat es gezeigt.**
+    Nachgerechnet an der Funktion selbst:
+
+    =============  ==========  ===================================================
+    grösste Kante  Faktor      was das hiesse
+    =============  ==========  ===================================================
+    0,003–1,0 m    ``0.001``   **jeder Bauteil-Render** — eine Tür, ein Fensterdetail
+    3000–10⁶ m     ``1000``    auch **ein einziges verirrtes Mesh** 4 km daneben
+    =============  ==========  ===================================================
+
+    Ein ``verdacht_faktor`` ist **kein Beleg für einen Einheitenfehler**. Er sagt nur,
+    dass eine Division ein plausibles Ergebnis liefert. Ein Vermessungspunkt, den jemand
+    versehentlich mitexportiert hat, bläht die Szenenbox auf 4 km und bekäme die
+    Diagnose «Millimeter als Meter gelesen» — die wäre schlicht falsch.
+
+    **Und die Zahl, die diese Entscheidung tragen müsste, hat niemand:** Wie oft der
+    Torwächter auf dem echten Bestand ``ablehnen_massstab`` sagt, ist ungemessen — er lief
+    ja nie. Gefragt ist das in einem eigenen Auftrag. *Ein Riegel, der scharfgestellt wird,
+    bevor seine Fehlalarmrate bekannt ist, lehnt Aufträge ab und niemand weiss, welche.*
+
+    Warum der Bericht **gebaut** und nicht durchgereicht wird
+    ---------------------------------------------------------
+    ``status`` heisst im Multipass-Bericht etwas anderes als in einem
+    ``ifc_to_glb``-Report: dort «die Konversion ist gelungen», hier «die Ausgabedateien
+    wurden frisch geschrieben». Dazu ist der Fehlerzweig auf diesem Weg gar nicht
+    erreichbar — ``seams.glb_zu_multipass`` wirft bei einem Fehlschlag ``SeamError``, ein
+    Bericht mit ``status != "ok"`` kommt hier nie an. Es wird darum ``{"status": "ok",
+    "bbox": …}`` gebaut, genau wie in :mod:`aiimaging.werkzeuge` und :mod:`aiimaging.kette`.
+
+    Returns:
+        ``{geprueft, quelle, note, entscheidung, beanstandet, groesste_kante_m,
+        verdacht_faktor, grund}``. ``geprueft`` ist ``False``, wenn gar keine Hüllbox
+        vorlag — **nicht messen ist nicht bestehen**, und jeder Lauf von vor dem
+        25.08.2026 sieht so aus.
+
+    .. note::
+       **Bevorzugt wird ``bbox_bauwerk``, Rückfall auf ``bbox``, und ``quelle`` sagt
+       welche.** Der Grund steht im Torwächter selbst: An 40 echten Dateien fielen zwei
+       Modelle mit 1002 m und 1127 m durch — Gelände samt Umgebung, Einheit völlig in
+       Ordnung. ``note`` trägt mit, warum die Bauwerksbox fehlt, wenn sie fehlt: Sie ist
+       ``None``, sobald ``aiimaging.maske`` aus Blender nicht erreichbar war, und sie ist
+       die ganze Szene, wenn Gelände und Bauwerk in **einem** Objekt stecken. In beiden
+       Fällen misst man am Ende doch die Geländeplatte, und das darf nicht unsichtbar sein.
+    """
+    from . import torwaechter as _tw
+
+    bau = bericht.get("bbox_bauwerk")
+    bbox = bau if bau is not None else bericht.get("bbox")
+    quelle = ("bbox_bauwerk" if bau is not None
+              else ("bbox" if bbox is not None else None))
+
+    urteil = _tw.torwaechter({"status": "ok", "bbox": bbox})
+    massstab = urteil.get("massstab") or {}
+    entscheidung = urteil.get("entscheidung")
+    return {
+        "geprueft": quelle is not None
+        and entscheidung != _tw.ENTSCHEIDUNG_ABLEHNEN_KONVERSION,
+        "quelle": quelle,
+        "note": bericht.get("bbox_bauwerk_note") or "",
+        "entscheidung": entscheidung,
+        "beanstandet": entscheidung == _tw.ENTSCHEIDUNG_ABLEHNEN_MASSSTAB,
+        "groesste_kante_m": massstab.get("groesste_kante_m"),
+        "verdacht_faktor": massstab.get("verdacht_faktor"),
+        "grund": urteil.get("begruendung", ""),
+    }
 
 
 def _kamera_ueber_dach(kamera: dict) -> dict:
