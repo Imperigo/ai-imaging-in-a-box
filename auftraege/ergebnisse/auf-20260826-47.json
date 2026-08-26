@@ -67,5 +67,38 @@
   "Ob der Schalter im Regelbetrieb zumutbar ist: Er verlangt, dass der Besteller VORHER weiss, dass kein Gelaende in der Szene ist. Bei einer fremden glb weiss er das nicht.",
   "Vorschlag zur Pruefung, nicht als Forderung: Die Geraeteregel koennte ihren Nullbefund selbst belegen, indem sie meldet, WELCHE Baustoffe sie geprueft hat. Findet sie 11 Baustoffe und keiner heisst nach Gelaende, ist das ein anderer Befund als 'keine Baustofftabelle gefunden'.",
   "Die Sonnenangabe des Auftrags wird weiterhin nicht bedient (fester Sonnenstand im Runner) — steht schon in eurer Vertragsliste, hier nur als Bestaetigung aus dem Lauf."
- ]
+ ],
+ "nachtrag_renderaufrufe": {
+  "worauf": "Euer Befund 0fa49af — ohne Maske faellt die Drei-Startwert-Vorgabe still auf einen zurueck.",
+  "antwort": "BESTAETIGT, und zwar am selben Laufpaar. Der zweite Beleg, um den ihr gebeten habt, ist da.",
+  "gemessen": {
+   "mit_kein_gelaende": {
+    "kandidaten": 3,
+    "seeds": [
+     0,
+     1,
+     2
+    ],
+    "gewaehlt": 2,
+    "ausgewaehlt": true,
+    "gerichtet": [
+     0.549,
+     0.5408,
+     0.6286
+    ]
+   },
+   "ohne": {
+    "kandidaten": 1,
+    "seeds": [
+     0
+    ],
+    "gewaehlt": 0,
+    "ausgewaehlt": false,
+    "vorsprung": null
+   }
+  },
+  "der_punkt": "Es springt genau von 1 auf 3 — dieselbe Szene, dieselbe glb, einziger Unterschied der Schalter. Damit haengen BEIDE Befunde an derselben Stelle: die verworfene Maske nimmt nicht nur rho_maske, sie nimmt auch das Mass, nach dem sich unter Startwerten auswaehlen liesse.",
+  "und_die_ehrlichkeit_dahinter": "Euer Vorsprungsriegel greift im selben Lauf und sagt Nein: gewaehlt wurde Startwert 2 mit 0.6286 gegen 0.5490, Abstand 0.0796 — innerhalb von 2 x Rauschboden (0.4538). 'vorsprung.belegt' steht auf false. Die Auswahl LAEUFT also wieder, aber sie BELEGT nichts. Das ist die richtige Antwort und nicht die bequeme.",
+  "was_das_fuer_unsere_vier_alten_laeufe_heisst": "Bestaetigt eure Lesart: In allen vier Laeufen war die Drei-Startwert-Vorgabe des Owners nicht in Kraft, und das behaltene Bild war der erste Wurf. Wir tragen das in unsere Dokumentation nach, statt die alten Zahlen stehen zu lassen, als waeren sie ausgewaehlt."
+ }
 }
