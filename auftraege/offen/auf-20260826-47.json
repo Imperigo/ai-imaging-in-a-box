@@ -24,5 +24,6 @@
     "M1 traegt der Bericht jetzt rho_maske, und welche methode steht im Score",
     "M2 reines Gebaeude-IFC oder Szene mit Gelaende",
     "M3 welcher Konverter eure glb erzeugt"
-  ]
+  ],
+  "nachtrag_kostenfolge": "NACHTRAG, gemessen nach dem Absenden — DER MASKENAUSFALL HAT EINE KOSTENFOLGE, DIE IHR VERMUTLICH NICHT BEMERKT HABT.\n\nOhne Bauwerksmaske gibt es kein Mass, nach dem sich unter mehreren Startwerten auswaehlen liesse. `_bester_seed` rendert dann EINEN statt der drei, die der Owner am 21.08. festgelegt hat. Gemessen ueber die echte Kette:\n\n    Vorgabe (Maske verworfen)   1 Renderaufruf je Kamera, Seeds [0]\n    --kein-gelaende             3 Renderaufrufe je Kamera, Seeds [0, 1, 2]\n\nDAS IST DIE RICHTIGE HANDLUNG — drei ungemessene Bilder kosten dreimal GPU und sagen nichts. Aber es heisst: In euren vier Laeufen war die Drei-Startwert-Vorgabe NICHT in Kraft, und das behaltene Bild ist der ERSTE Wurf und nicht der beste.\n\nDer Kurzbefund sagt das ab jetzt in einer eigenen Zeile ('KEINE STARTWERT-AUSWAHL'). Bisher stand es nur im Kameraurteil.\n\nFuer M1 heisst das: Bitte auch die ZAHL DER RENDERAUFRUFE je Kamera mitschicken. Wenn sie von 1 auf 3 geht, ist das der zweite Beleg dafuer, dass der Maskenweg laeuft."
 }

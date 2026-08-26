@@ -518,3 +518,52 @@ def test_ohne_erkanntes_gelaende_steht_die_zeile_nicht_da():
 
     assert zeilen, "Ohne eine einzige Zeile prüft die Zusicherung darunter nichts."
     assert not any("Als Gelaende eingestuft" in z for z in zeilen)
+
+
+def test_eine_ausgefallene_startwertauswahl_steht_im_kurzbefund():
+    """**Die Vorgabe des Owners fällt still auf einen Startwert zurück.**
+
+    Gemessen am 26.08.2026 über die echte Kette: Ohne Bauwerksmaske rendert
+    `_bester_seed` **einen** Startwert statt der drei, die am 21.08. festgelegt wurden —
+    weil es ohne Maske kein Mass gibt, nach dem sich auswählen liesse.
+
+    *Das ist die richtige Handlung* (drei ungemessene Bilder kosten dreimal GPU und sagen
+    nichts). Aber die Folge gehört auf den Schirm: **Das behaltene Bild ist der erste
+    Wurf, nicht der beste.**
+    """
+    befund = {"kameras": [
+        {"kamera": "s", "bild_png": "/x.png",
+         "seedauswahl": {"ausgewaehlt": False, "gewaehlt": 0,
+                         "grund": "3 Seeds angefordert, aber es gibt KEINE Bauwerksmaske"}},
+    ], "geometrie_urteil": {"kameraspanne": {"n_gemessen": 1, "schlechtester": 0.9}}}
+
+    zeilen = abholer.befund_kurz(befund)
+
+    assert zeilen
+    text = "\n".join(zeilen)
+    assert "KEINE STARTWERT-AUSWAHL" in text
+    assert "ERSTE Wurf" in text, "Die Folge gehört in denselben Satz."
+    assert "Bauwerksmaske" in text, "Und der Grund, damit man weiss, was zu tun ist."
+
+
+def test_mit_ausgewaehltem_startwert_schweigt_der_kurzbefund():
+    """Die Gegenprobe. **Eine Zeile, die immer dasteht, wird nicht gelesen.**"""
+    befund = {"kameras": [
+        {"kamera": "s", "bild_png": "/x.png",
+         "seedauswahl": {"ausgewaehlt": True, "gewaehlt": 2, "grund": "Bester von 3"}},
+    ], "geometrie_urteil": {"kameraspanne": {"n_gemessen": 1, "schlechtester": 0.9}}}
+
+    zeilen = abholer.befund_kurz(befund)
+
+    assert zeilen
+    assert not any("KEINE STARTWERT-AUSWAHL" in z for z in zeilen)
+
+
+def test_eine_nicht_gerenderte_kamera_meldet_keine_ausgefallene_auswahl():
+    """Wo kein Bild entstand, war auch nichts auszuwählen — **nicht zuständig**."""
+    befund = {"kameras": [
+        {"kamera": "s", "bild_png": None, "rahmung": {"abbruch": True},
+         "seedauswahl": {"ausgewaehlt": False, "grund": "x"}},
+    ], "geometrie_urteil": {"kameraspanne": {"n_gemessen": 0}}}
+
+    assert not any("KEINE STARTWERT-AUSWAHL" in z for z in abholer.befund_kurz(befund))

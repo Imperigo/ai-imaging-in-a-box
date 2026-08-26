@@ -626,6 +626,28 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
             f"zurueck. In dem Modus besteht ein Bild mit vertauschter Tiefe das Tor. "
             f"Grund: {str(erster.get('grund') or 'ohne Angabe')[:200]}")
 
+    # DIE STARTWERT-VORGABE, DIE STILL AUF EINEN ZURUECKFAELLT.
+    #
+    # Gemessen am 26.08.2026: Ohne Bauwerksmaske gibt es kein Mass, nach dem sich unter
+    # mehreren Startwerten auswaehlen liesse — `_bester_seed` rendert dann **einen**
+    # statt der drei, die der Owner am 21.08. festgelegt hat. Das ist richtig so (drei
+    # ungemessene Bilder kosten dreimal GPU und sagen nichts), aber es stand nur im
+    # Kameraurteil.
+    #
+    # **Die Folge fuer den Betreiber:** Das behaltene Bild ist der ERSTE Wurf, nicht der
+    # beste. Wer die Vorgabe fuer wirksam haelt, haelt ein ungemessenes Bild fuer ein
+    # ausgewaehltes.
+    ohne_auswahl = [k.get("kamera") for k in kameras
+                    if (k.get("seedauswahl") or {}).get("ausgewaehlt") is False
+                    and k.get("bild_png")]
+    if ohne_auswahl:
+        erster = next(((k.get("seedauswahl") or {}) for k in kameras
+                       if (k.get("seedauswahl") or {}).get("ausgewaehlt") is False), {})
+        zeilen.append(
+            f"KEINE STARTWERT-AUSWAHL: {', '.join(str(k) for k in ohne_auswahl)} — das "
+            f"behaltene Bild ist der ERSTE Wurf und nicht der beste. "
+            f"{str(erster.get('grund') or 'ohne Angabe')[:180]}")
+
     # WAS ALS GELAENDE EINGESTUFT WURDE — und damit aus der Bauwerksmaske fiel.
     #
     # Seit dem 26.08.2026 traegt der Knotenname den IFC-Namen mit, und die Wortregel
