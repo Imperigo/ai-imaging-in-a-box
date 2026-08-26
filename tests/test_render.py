@@ -1290,3 +1290,87 @@ def test_eine_leere_karte_bricht_nicht_ab():
     leer = Image.fromarray(np.zeros((8, 8), dtype=np.uint16), mode="I;16")
     a = np.asarray(_tiefe_als_rgb(leer))[:, :, 0]
     assert a.max() == 0
+
+
+# ======================================================================================
+# Der stille Rueckfall auf einen Pfad, den es nicht gibt
+# ======================================================================================
+#
+# HomeStation, auf-vis-20260826-16 (26.08.2026): Ohne gesetztes AIIMAGING_MODELLE faellt
+# der Lauf auf /ai/ zurueck und bricht erst viel spaeter ab mit «Gewichte fuer
+# 'z-image-turbo' unvollstaendig». Die Meldung nennt das MODELL und verschweigt, dass der
+# Pfad, unter dem gesucht wurde, gar nicht existiert — und der Suchende prueft dann das
+# Modell statt die Umgebung.
+
+def test_ohne_umgebungsvariable_und_ohne_ersatzpfad_wird_es_gesagt(monkeypatch):
+    """Ein Ersatzpfad, der nirgends existiert, ist keine Vorgabe, sondern ein Ratefehler
+    mit Schrägstrich."""
+    monkeypatch.delenv(render.UMGEBUNG_MODELLE, raising=False)
+    monkeypatch.setattr(render, "VORGABE_MODELLWURZEL", "/gibt-es-hier-sicher-nicht")
+
+    lage = render.modellwurzel_lage("z-image-turbo")
+
+    assert lage["existiert"] is False
+    assert lage["aus_umgebung"] is False
+    assert render.UMGEBUNG_MODELLE in lage["grund"]
+    assert "ueber die Umgebung" in lage["grund"]
+
+
+def test_eine_gesetzte_variable_die_nicht_trifft_sagt_etwas_anderes(monkeypatch, tmp_path):
+    """Zwei verschiedene Lagen, zwei verschiedene Handgriffe: Variable setzen gegen
+    Variable berichtigen."""
+    monkeypatch.setenv(render.UMGEBUNG_MODELLE, str(tmp_path))
+
+    lage = render.modellwurzel_lage("z-image-turbo")
+
+    assert lage["existiert"] is False
+    assert lage["aus_umgebung"] is True
+    assert "gesetzt und trifft nicht" in lage["grund"]
+
+
+def test_ein_vorhandener_ordner_erzeugt_keinen_grund(monkeypatch, tmp_path):
+    """Die Gegenprobe. Sonst stünde die Meldung bei jedem gesunden Lauf."""
+    (tmp_path / "z-image-turbo").mkdir()
+    monkeypatch.setenv(render.UMGEBUNG_MODELLE, str(tmp_path))
+
+    lage = render.modellwurzel_lage("z-image-turbo")
+
+    assert lage["existiert"] is True
+    assert lage["grund"] == ""
+
+
+def test_der_auftrag_wird_abgelehnt_bevor_geladen_wird(monkeypatch, tmp_path):
+    """Abgelehnt und nicht 'fehler': Es wurde nichts geladen und nichts gerechnet — und
+    der Grund steht im Ergebnis, nicht erst im Stapelabbruch einer fremden Bibliothek."""
+    monkeypatch.delenv(render.UMGEBUNG_MODELLE, raising=False)
+    monkeypatch.setattr(render, "VORGABE_MODELLWURZEL", "/gibt-es-hier-sicher-nicht")
+    tiefe = tmp_path / "t.png"
+    tiefe.write_bytes(b"\x89PNG\r\n\x1a\n")
+
+    erg = render.rendere(render.RenderAuftrag(depth_png=str(tiefe), prompt="a house",
+                                              ausgabe_png=str(tmp_path / "b.png")))
+
+    assert erg["status"] == render.STATUS_ABGELEHNT
+    assert render.UMGEBUNG_MODELLE in erg["error"]
+
+
+def test_ein_uebergebenes_modell_wird_davon_nicht_aufgehalten(monkeypatch, tmp_path):
+    """**Die Gegenprobe, die den Ort der Prüfung begründet.** Wer ein fertiges Modell
+    übergibt, sucht nichts auf der Platte — eine Ablehnung wäre dort eine Aussage über
+    eine Ablage, die niemand benutzt. In `pruefe_auftrag` hätte diese Prüfung die halbe
+    Testsuite stillgelegt."""
+    monkeypatch.delenv(render.UMGEBUNG_MODELLE, raising=False)
+    monkeypatch.setattr(render, "VORGABE_MODELLWURZEL", "/gibt-es-hier-sicher-nicht")
+    tiefe = tmp_path / "t.png"
+    tiefe.write_bytes(b"\x89PNG\r\n\x1a\n")
+    ziel = tmp_path / "b.png"
+
+    def modell(parameter):
+        Path(parameter["ausgabe_png"]).write_bytes(b"\x89PNG\r\n\x1a\n")
+        return parameter["ausgabe_png"]
+
+    erg = render.rendere(
+        render.RenderAuftrag(depth_png=str(tiefe), prompt="a house",
+                             ausgabe_png=str(ziel)), modell=modell)
+
+    assert erg["status"] == render.STATUS_OK

@@ -175,6 +175,13 @@ GLOSSAR: dict[str, str] = {
     "abend": "evening",
     "abendlicht": "evening light",
     "morgenlicht": "morning light",
+    # Aus einem echten Lauf der Oberflaeche (HomeStation, auf-vis-20260826-16,
+    # 26.08.2026): Sie liess 3 von 7 Begriffen deutsch stehen, und zwei davon stehen
+    # hier. Das Glossar hat die Bausteine ("nachmittag", "licht") und nicht das Wort —
+    # eine zusammengesetzte Form faellt zwischen sie.
+    "nachmittagslicht": "afternoon light",
+    "vormittagslicht": "morning light",
+    "mittagslicht": "midday light",
     "dämmerung": "dusk",
     "blaue stunde": "blue hour",
     "goldene stunde": "golden hour",
@@ -337,6 +344,13 @@ GLOSSAR: dict[str, str] = {
     "innenaufnahme": "interior photograph",
     "aussenaufnahme": "exterior photograph",
     "außenaufnahme": "exterior photograph",
+    # Ebenfalls aus auf-vis-20260826-16: Die Oberflaeche schickt "Aussenperspektive",
+    # und "aussen" + "perspektive" stehen beide im Glossar — das zusammengesetzte Wort
+    # aber nicht.
+    "aussenperspektive": "exterior view",
+    "außenperspektive": "exterior view",
+    "innenperspektive": "interior view",
+    "perspektive": "view",
 
     # --- Stimmung ---------------------------------------------------------------------
     "stimmung": "mood",
@@ -360,6 +374,11 @@ GLOSSAR: dict[str, str] = {
     "dokumentarisch": "documentary",
     "realistisch": "realistic",
     "fotorealistisch": "photorealistic",
+    # Der dritte der drei aus auf-vis-20260826-16. "foto" stand da, die Adjektivform
+    # nicht — und ein Prompt sagt "fotografisch", nicht "foto".
+    "fotografisch": "photographic",
+    "photografisch": "photographic",
+    "photographisch": "photographic",
 
     # --- Gebäude und Bauteile ---------------------------------------------------------
     # Siehe die Begründung oben: übersetzt, damit der Bauteilwächter sie sieht.

@@ -546,3 +546,65 @@ def test_ein_zwei_zeichen_langer_schluessel_verschluckt_kein_wort():
     """
     assert sprache.grundform("Amen") is None
     assert sprache.grundform("Ines") is None
+
+
+# ======================================================================================
+# Zusammengesetzte Woerter — die Luecke, die ein echter Lauf gefunden hat
+# ======================================================================================
+#
+# HomeStation, auf-vis-20260826-16 (26.08.2026): Die Uebersetzung liess 3 von 7 Begriffen
+# deutsch — «aussenperspektive», «nachmittagslicht», «fotografisch» — und rechnete
+# trotzdem weiter.
+#
+# Das Glossar hatte in allen drei Faellen die BAUSTEINE und nicht das WORT: "aussen" und
+# "perspektive", "nachmittag" und "licht", "foto" und "realistisch". Eine zusammengesetzte
+# Form faellt zwischen sie — und im Deutschen ist die zusammengesetzte Form der Normalfall.
+#
+# Warum das mehr ist als Kosmetik: Am Geraet ist gemessen, dass Deutsch das Bild
+# veraendert (8 von 8 gepaarten Startwerten, deutlich blauerer Himmel). Ein halb deutscher
+# Prompt kommt also bis ins Bild.
+
+DER_PROMPT_AUS_DEM_LAUF = (
+    "Aussenperspektive eines Wohnhauses, Nachmittagslicht, fotografisch, "
+    "bedeckter Himmel")
+
+
+def test_der_prompt_aus_dem_lauf_kommt_jetzt_ganz_durch():
+    """Die drei Begriffe wörtlich aus dem gemeldeten Lauf."""
+    ergebnis = sprache.uebersetze(DER_PROMPT_AUS_DEM_LAUF)
+
+    assert ergebnis["unbekannt"] == ()
+    assert ergebnis["vollstaendig"] is True
+    for deutsch in ("Aussenperspektive", "Nachmittagslicht", "fotografisch"):
+        assert deutsch not in ergebnis["uebersetzt"], deutsch
+
+
+@pytest.mark.parametrize("deutsch, englisch", [
+    ("aussenperspektive", "exterior view"),
+    ("außenperspektive", "exterior view"),
+    ("innenperspektive", "interior view"),
+    ("nachmittagslicht", "afternoon light"),
+    ("vormittagslicht", "morning light"),
+    ("mittagslicht", "midday light"),
+    ("fotografisch", "photographic"),
+    ("photographisch", "photographic"),
+])
+def test_die_zusammengesetzten_formen_stehen_im_glossar(deutsch, englisch):
+    assert sprache.GLOSSAR[deutsch] == englisch
+
+
+def test_die_bausteine_bleiben_ebenfalls_stehen():
+    """Die Gegenprobe: Ein zusammengesetztes Wort ergänzt seine Teile, es ersetzt sie
+    nicht. Wer «aussen» allein schreibt, meint es auch."""
+    for baustein in ("aussen", "nachmittag", "licht", "foto"):
+        assert baustein in sprache.GLOSSAR, baustein
+
+
+def test_ein_wirklich_unbekanntes_wort_wird_weiterhin_gemeldet():
+    """**Die wichtigere Gegenprobe.** Ein Glossar, nach dem nie mehr etwas unbekannt ist,
+    hätte die Meldung abgeschafft statt die Lücke geschlossen — und der nächste fehlende
+    Begriff fiele nirgends mehr auf."""
+    ergebnis = sprache.uebersetze("ein Wohnhaus mit Wurstelprader und Zwetschgenkrampus")
+
+    assert ergebnis["unbekannt"], "die Meldung muss weiter greifen"
+    assert ergebnis["vollstaendig"] is False

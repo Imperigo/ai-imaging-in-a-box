@@ -201,6 +201,44 @@ def standard_modell_wurzel(backbone_name: str) -> Path:
     return Path(wurzel) / backbone_name
 
 
+def modellwurzel_lage(backbone_name: str) -> dict:
+    """Liegt dort, wo die Gewichte vermutet werden, überhaupt etwas? — **und woher der Pfad kommt**.
+
+    **Der Anlass ist ein stiller Rückfall** (HomeStation, `auf-vis-20260826-16`,
+    26.08.2026): Ohne gesetztes ``AIIMAGING_MODELLE`` fällt der Lauf auf
+    :data:`VORGABE_MODELLWURZEL` zurück und bricht erst viel später ab mit
+    *«Gewichte für 'z-image-turbo' unvollständig»*. Die Meldung nennt das Modell und
+    verschweigt, dass der Pfad, unter dem gesucht wurde, gar nicht existiert — und der
+    Suchende prüft dann das Modell statt die Umgebung.
+
+    *Ein Ersatzpfad, der nirgends existiert, ist keine Vorgabe, sondern ein Ratefehler mit
+    Schrägstrich.*
+
+    Returns:
+        ``{wurzel, aus_umgebung, existiert, umgebung, grund}``. ``grund`` ist ``""``,
+        wenn nichts zu sagen ist.
+
+    Reine Pfad- und Dateisystemauskunft: Es wird nichts geladen. Damit bleibt die Funktion
+    dort prüfbar, wo kein einziges Gewicht liegt — also hier.
+    """
+    aus_umgebung = bool(os.environ.get(UMGEBUNG_MODELLE))
+    wurzel = standard_modell_wurzel(backbone_name)
+    existiert = wurzel.is_dir()
+    if existiert:
+        grund = ""
+    elif aus_umgebung:
+        grund = (f"{UMGEBUNG_MODELLE} zeigt auf {str(wurzel.parent)!r}, und dort liegt "
+                 f"kein Ordner {backbone_name!r}. Der Pfad ist gesetzt und trifft nicht.")
+    else:
+        grund = (f"{UMGEBUNG_MODELLE} ist NICHT gesetzt; es gilt der Ersatzpfad "
+                 f"{VORGABE_MODELLWURZEL!r}, und dort liegt kein Ordner "
+                 f"{backbone_name!r}. Das ist keine Aussage ueber das Modell, sondern "
+                 f"ueber die Umgebung — wer hier das Modell prueft, sucht am falschen "
+                 f"Ort (auf-vis-20260826-16).")
+    return {"wurzel": str(wurzel), "aus_umgebung": aus_umgebung, "existiert": existiert,
+            "umgebung": UMGEBUNG_MODELLE, "grund": grund}
+
+
 # --------------------------------------------------------------------------------------
 # Prüfung — der ganze Entscheid, bevor irgendetwas Teures passiert
 # --------------------------------------------------------------------------------------
@@ -1463,6 +1501,17 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
     if a.ausgabe_png is not None:
         # Siehe Docstring, Punkt 2: abräumen statt hinterher prüfen.
         Path(a.ausgabe_png).unlink(missing_ok=True)
+
+    if modell is None and _lader is None and a.modell_wurzel is None:
+        # Erst hier, und nicht in `pruefe_auftrag`: Wer ein fertiges Modell oder einen
+        # eigenen Lader uebergibt, sucht nichts auf der Platte — eine Ablehnung waere
+        # dort eine Aussage ueber eine Ablage, die niemand benutzt.
+        lage = modellwurzel_lage(eintrag.name)
+        if not lage["existiert"]:
+            return _ergebnis(
+                STATUS_ABGELEHNT, parameter, lizenz=lizenz,
+                hinweise=tuple(hinweise) + (lage["grund"],),
+                error=lage["grund"], maengel=(lage["grund"],))
 
     beginn = time.perf_counter()
     try:

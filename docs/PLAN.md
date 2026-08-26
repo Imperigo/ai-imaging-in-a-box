@@ -3231,11 +3231,29 @@ zweiten Stelle.
 
 ### Offen aus `auf-vis-20260826-16`
 
-- [ ] **`AIIMAGING_MODELLE` ungesetzt** → stiller Rückfall auf `/ai/`, dann «Gewichte für
-      'z-image-turbo' unvollständig». Ein Ersatzpfad, der nirgends existiert, gehört beim
-      Start gemeldet.
-- [ ] **Die Glossar-Übersetzung lässt 3 von 7 Begriffen deutsch** («aussenperspektive»,
+- [x] **`AIIMAGING_MODELLE` ungesetzt** → stiller Rückfall auf `/ai/`, dann «Gewichte für
+      'z-image-turbo' unvollständig». Die Meldung nannte das **Modell** und verschwieg,
+      dass der Pfad gar nicht existiert — der Suchende prüft dann das Modell statt die
+      Umgebung. `render.modellwurzel_lage(name)` sagt es jetzt, und der Auftrag wird
+      **abgelehnt, bevor geladen wird**: nichts geladen, nichts gerechnet, Grund im
+      Ergebnis.
+      *Zwei Lagen, zwei Handgriffe — «Variable nicht gesetzt» und «Variable gesetzt und
+      trifft nicht» tragen verschiedene Sätze.* Geprüft wird erst unmittelbar vor dem
+      Laden und **nicht** in `pruefe_auftrag`: Wer ein fertiges Modell übergibt, sucht
+      nichts auf der Platte — dort hätte die Prüfung die halbe Testsuite stillgelegt.
+- [x] **Die Glossar-Übersetzung lässt 3 von 7 Begriffen deutsch** («aussenperspektive»,
       «nachmittagslicht», «fotografisch») — und rechnet trotzdem.
+      **Die Ursache ist in allen drei Fällen dieselbe:** Das Glossar hatte die
+      **Bausteine** und nicht das **Wort** — `aussen` + `perspektive`, `nachmittag` +
+      `licht`, `foto` + `realistisch`. Eine zusammengesetzte Form fällt zwischen sie, und
+      im Deutschen ist die zusammengesetzte Form der Normalfall.
+      Acht Einträge ergänzt (samt `ß`-Schreibungen und den Nachbarn `mittagslicht`,
+      `vormittagslicht`, `innenperspektive`); der Prompt aus dem Lauf kommt jetzt ganz
+      durch. **Gegenprobe im Test:** Ein wirklich unbekanntes Wort wird weiterhin
+      gemeldet — ein Glossar, nach dem nie mehr etwas unbekannt ist, hätte die Meldung
+      abgeschafft statt die Lücke geschlossen.
+      *Warum das mehr ist als Kosmetik: Am Gerät ist gemessen, dass Deutsch das Bild
+      verändert (8 von 8 gepaarten Startwerten, blauerer Himmel).*
 - [ ] **`OSError: image file is truncated`** bei einem Mehrkamera-Auftrag, wo die erste
       Kamera durchlief. Reproduzierbar; eine Prüfung wert.
 - [x] **Die aussagekräftigere Zahl steht jetzt in der Meldung.**
@@ -3272,12 +3290,12 @@ zweiten Stelle.
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
 
-Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste** (zwölf
+Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste** (vierzehn
 Entscheide, alle rückgängig zu machen) am Ende.
 
 | | Beginn des Tages | Ende |
 |---|---:|---:|
-| Tests | 3335 | 3434 |
+| Tests | 3335 | 3450 |
 | Vakuumprobe | 10 Treffer | 12 Treffer |
 
 *Die beiden neuen Vakuumtreffer sind erklärt: Zwei Zusicherungen über `warnungen` sind
