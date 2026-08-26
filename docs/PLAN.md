@@ -4033,6 +4033,31 @@ Kap. 26 den Server als registriert protokolliert (`id d99fcf67`).
       rot. Und umgekehrt zählt der Test von der anderen Seite — jedes wirkungslose Feld
       muss im Entwurf **vorkommen**, sonst verschweigt die Oberfläche, dass es fehlt.
 
+### Was die Vakuumprobe fand — und was sie an sich selbst fand
+
+Zwei neue Zusicherungen dieses Abends waren **vakuum-wahr**, und beide sind behoben:
+
+* `test_die_kurzform_meldet_eine_gedrehte_geometrie` prüfte, dass drei Fälle **schweigen**
+  — für den Fall `{}` war das eine Zusicherung über eine leere Sammlung. Die schweigenden
+  Fälle tragen jetzt einen Befundteil, der nachweislich eine Zeile erzeugt; erst dann ist
+  «und keine davon sagt GEDREHT» eine Aussage.
+* `test_jeder_beleg_zeigt_auf_etwas_das_es_gibt` prüft nichts für die **sechs** Zeilen, die
+  gar keinen Pfad nennen (sie berufen sich auf ein Symbol oder auf «niemand»). Jede Zeile
+  ist zwar von *irgendeiner* der drei Prüfungen erfasst — aber das stand nirgends. Ein
+  Test zählt jetzt je Zeile die prüfbaren Referenzen, zwei weitere sind die **Gegenprobe**
+  am selben Mechanismus.
+
+**Und ein Befund über das Werkzeug selbst.** Die Probe meldete beide neuen Tests als
+*«schon vor dem Umschreiben rot (NICHT gezählt)»*. Der Grund: `betrieb/` stand nicht in
+`MITKOPIEREN`, und `docs/EINBAU_STAND.md` beruft sich auf `betrieb/kosmo-abholer.service`.
+In der Arbeitskopie gab es die Datei nicht, der Wächter war dort rot — und ein vorher
+roter Test zählt nicht mehr als Treffer.
+
+*Die Probe war an dieser Stelle blind und hat es gesagt.* Das ist der Unterschied zu dem
+Fehler vom Vormittag, bei dem sie zwölf Treffer auf null meldete, ohne dass sich etwas
+geändert hatte. `betrieb` und `integrations` sind jetzt in der Liste, und ein Test hält
+fest, dass jeder Eintrag darin auch wirklich existiert. **Treffer wieder 12, unverändert.**
+
 ### Der Satz, an dem dieser Entwurf hängt
 
 Aus dem Demoplan vom 18.08.: *«Die Vision beschreibt ein Produkt, und ein Produkt zeigt

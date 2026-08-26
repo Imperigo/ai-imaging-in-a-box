@@ -145,7 +145,17 @@ def schreibe_um(datei: Path) -> int:
 #: scheiterte darum schon das **Einsammeln**, und das Werkzeug meldete nicht etwa einen
 #: Fehler, sondern **null Treffer** — von zwölf am Vormittag auf keinen, ohne dass sich an
 #: der Suite etwas geändert hätte. Siehe :func:`_rote`.
-MITKOPIEREN = ("tests", "src", "tools", "docs", "auftraege",
+#: Was in die Arbeitskopie mitmuss.
+#:
+#: **Die Liste ist gewachsen, und jedes Mal aus demselben Grund:** Ein Verzeichnis, das
+#: ein Test liest und das hier fehlt, macht diesen Test in der Kopie rot — **vor** jedem
+#: Umschreiben. Er zaehlt dann nicht mehr als Treffer, und die Probe ist an dieser Stelle
+#: blind, ohne es zu sagen.
+#:
+#: `betrieb` und `integrations` kamen am 26.08.2026 dazu: `docs/EINBAU_STAND.md` beruft
+#: sich auf `betrieb/kosmo-abholer.service`, und der Waechter darueber prueft, dass es die
+#: Datei gibt. In der Kopie gab es sie nicht.
+MITKOPIEREN = ("tests", "src", "tools", "docs", "auftraege", "betrieb", "integrations",
                "pyproject.toml", "README.md", "NOTICE", "CLAUDE.md", "LICENSE")
 
 

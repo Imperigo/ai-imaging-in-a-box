@@ -266,6 +266,15 @@ def test_der_bericht_sagt_ob_die_hochachse_bestellt_oder_angenommen_war(tmp_path
     assert ergebnisse[0]["hochachse"] == {"wert": "Z", "quelle": "auftrag"}
 
 
+#: Ein Befundteil, der IMMER eine Zeile erzeugt. Er steht in den schweigenden Fällen
+#: unten mit dabei, damit ``befund_kurz`` dort nachweislich **etwas** liefert.
+#:
+#: *Warum das nötig ist:* Ein ``not any(...)`` über eine leere Sammlung ist wahr, ohne
+#: etwas geprüft zu haben. Die Vakuumprobe hat genau diese Stelle gefunden — im ersten
+#: Anlauf dieser Datei war der Fall ``{}`` eine Zusicherung über nichts.
+IMMER_EINE_ZEILE = {"prompt_bauteile": ["Fenster"]}
+
+
 def test_die_kurzform_meldet_eine_gedrehte_geometrie(tmp_path):
     """Und schweigt, sobald nicht gedreht wird — sonst wäre es eine Dauerwarnung."""
     gedreht = abholer.befund_kurz({"hochachse": {"wert": "Z", "quelle": "auftrag"}})
@@ -274,7 +283,12 @@ def test_die_kurzform_meldet_eine_gedrehte_geometrie(tmp_path):
     for still in ({"hochachse": {"wert": "Y", "quelle": "auftrag"}},
                   {"hochachse": {"wert": "Y_UP", "quelle": "annahme"}},
                   {}):
-        assert not any("GEDREHT" in z for z in abholer.befund_kurz(still)), (
+        zeilen = abholer.befund_kurz({**IMMER_EINE_ZEILE, **still})
+        assert zeilen, (
+            f"befund_kurz sagt bei {still} gar nichts — dann prüft die Zusicherung "
+            f"darunter nichts."
+        )
+        assert not any("GEDREHT" in z for z in zeilen), (
             f"Die Zeile steht auch bei {still} — eine Warnung, die immer feuert, "
             f"verdeckt die echten."
         )

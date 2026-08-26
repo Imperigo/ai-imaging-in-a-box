@@ -172,3 +172,32 @@ def test_die_arbeitskopie_traegt_die_dokumente_mit(tmp_path):
     befund = vakuumprobe.probe(quelle, tmp_path / "ziel")
     assert befund["schon_vorher_rot"] == [], "das Dokument muss in der Kopie liegen"
     assert befund["treffer"] == []
+
+
+def test_jeder_eintrag_von_mitkopieren_liegt_wirklich_im_repo():
+    """Ein Eintrag, den es nicht gibt, ist harmlos — einer, der FEHLT, macht blind.
+
+    Der Umkehrfall ist der teure, und er ist am 26.08.2026 zum zweiten Mal eingetreten:
+    `docs/EINBAU_STAND.md` beruft sich auf `betrieb/kosmo-abholer.service`, der Wächter
+    darüber prüft, dass es die Datei gibt — und `betrieb` lag nicht in der Kopie. Der
+    Test war damit in der Arbeitskopie rot, **bevor** irgendetwas umgeschrieben war, und
+    zählte nicht mehr als Treffer.
+
+    Die Probe **sagt** das («Schon vor dem Umschreiben rot»), und genau dort ist es
+    aufgefallen. Dieser Test hält die Liste dagegen: Jedes genannte Verzeichnis muss es
+    geben, sonst schrumpft die Kopie still.
+    """
+    from pathlib import Path
+
+    wurzel = Path(__file__).resolve().parents[1]
+    fehlend = [t for t in vakuumprobe.MITKOPIEREN if not (wurzel / t).exists()]
+    assert not fehlend, (
+        f"MITKOPIEREN nennt {', '.join(fehlend)} — gibt es im Repo nicht. Entweder ist "
+        f"der Eintrag veraltet, oder etwas ist verschwunden."
+    )
+
+
+def test_die_arbeitskopie_traegt_die_betriebsdateien_mit():
+    """`tests/test_einbau_stand.py` und `tests/test_regel3_kennungen.py` lesen `betrieb/`."""
+    assert "betrieb" in vakuumprobe.MITKOPIEREN
+    assert "integrations" in vakuumprobe.MITKOPIEREN

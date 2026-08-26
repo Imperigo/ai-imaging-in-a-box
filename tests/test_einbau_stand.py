@@ -216,3 +216,58 @@ def test_das_blatt_wird_vom_readme_erwaehnt():
         "Das README verweist nicht auf den Einbau-Stand. Was der Owner erst "
         "zusammensuchen muss, existiert nicht."
     )
+
+
+# ── Dass die Prüfungen oben überhaupt etwas prüfen ──────────────────────────────────
+#
+# Die Vakuumprobe hat es gefunden: Sechs Zeilen nennen **keinen Pfad** (sie berufen sich
+# auf ein Symbol oder auf «niemand»), und für sie war `test_jeder_beleg_zeigt_auf_etwas`
+# eine Zusicherung über eine leere Liste. Jede Zeile ist zwar von *irgendeiner* der drei
+# Prüfungen erfasst — aber das stand nirgends, und es liess sich nicht nachlesen.
+#
+# Die beiden Tests hier schliessen das: Der erste zählt je Zeile die prüfbaren
+# Referenzen, der zweite ist die **Gegenprobe** — er zeigt am selben Mechanismus, dass
+# sich die Sammlung im umgekehrten Fall füllt.
+
+@pytest.mark.parametrize("kennung,spalten", ZEILEN, ids=[k for k, _ in ZEILEN])
+def test_jede_zeile_ist_ueberhaupt_pruefbar(kennung, spalten):
+    """Jede Zeile nennt einen Pfad, ein Symbol, eine Sitzung — oder ausdrücklich «niemand».
+
+    Ohne diesen Test kann eine Zeile alle drei Prüfungen bestehen, indem sie nichts sagt,
+    worauf sie sich beziehen liesse.
+    """
+    beleg = spalten[-1]
+    referenzen = len(_pfade(beleg)) + len(_symbole(beleg))
+    assert referenzen or "niemand" in beleg.lower() or "Sitzung" in beleg, (
+        f"{kennung} nennt weder Datei noch Symbol noch Sitzung noch «niemand». Die "
+        f"Zeile ist damit von keiner Prüfung erfasst — sie sagt etwas, das sich nicht "
+        f"nachsehen lässt."
+    )
+
+
+def test_die_pruefung_der_belege_faellt_bei_einem_falschen_pfad():
+    """Die Gegenprobe. Ein Wächter, der nicht fällt, bewacht nichts.
+
+    Sie läuft an einer erfundenen Zeile und nicht am Blatt — das Blatt zu verbiegen, um
+    zu sehen, ob der Test rot wird, hiesse, es dafür kaputtzumachen.
+    """
+    erfunden = "Beleg: `src/aiimaging/gibt_es_nicht.py`"
+    assert [p for p in _pfade(erfunden) if not p.exists()], (
+        "Ein Pfad auf eine nicht vorhandene Datei wird nicht als fehlend erkannt — "
+        "dann meldet der Wächter oben auch bei einem echten Fehler nichts."
+    )
+    echt = "Beleg: `src/aiimaging/abholer.py`"
+    assert not [p for p in _pfade(echt) if not p.exists()]
+
+
+def test_die_pruefung_der_symbole_faellt_bei_einem_falschen_namen():
+    """Dieselbe Gegenprobe für den schärferen Beleg."""
+    import importlib
+
+    modul = importlib.import_module("aiimaging.abholer")
+    assert not hasattr(modul, "gibt_es_nicht")
+    assert _symbole("`abholer.gibt_es_nicht`") == [("abholer", "gibt_es_nicht")], (
+        "Ein Symbolbeleg wird gar nicht erst erkannt — dann prüft der Wächter oben "
+        "nie eines."
+    )
+    assert hasattr(modul, "verarbeiter")
