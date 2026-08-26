@@ -2991,6 +2991,38 @@ jedem Render.*
 
 ## 8 · Systemarchitektur
 
+**KosmoVis** — **Der Name dieser Arbeit selbst.** KosmoVis ist die Komponente, die aus
+Gebäudegeometrie Bilder macht und sie prüft; sie lebt in der Software *KosmoOrbit*.
+
+Das Repo `ai-imaging-in-a-box` **ist** KosmoVis. Dass es ein eigenes Repo hat, ist eine
+Trennung für die Vertiefungsarbeit und keine zweite Software: Hier liegt nur, was
+öffentlich sein darf — Apache-2.0, keine Bürodaten, keine Kundenprojekte (Regel 3).
+
+*Warum das hier steht* (Owner-Klarstellung 26.08.2026): Etliche Docstrings dieses Repos
+sprechen vom **«Vorläufer KosmoVis»**. Gemeint ist der **ältere Stand derselben Sache** —
+der Code, aus dem dieser Neubau hervorgeht —, nicht ein fremdes Produkt. Wer das anders
+liest, hält die eigene Vorgeschichte für die Arbeit von jemand anderem und sucht Fehler an
+der falschen Stelle. Genau das ist an jenem Tag passiert.
+
+**KosmoOrbit** — Die Software, in der KosmoVis steckt. Sie ist **knotenbasiert**: Der
+Benutzer verdrahtet Bausteine zu einem Ablauf, und die Verbindung zwischen zwei Knoten
+entsteht über die **Gleichheit von Feldnamen**. Heisst die Eingabe des einen anders als
+die Ausgabe des anderen, entsteht die Kante **nicht** — und zwar ohne Fehlermeldung. Das
+ist der Befund, mit dem dieses Projekt in Phase 0 begonnen hat.
+
+Praktisch heisst KosmoOrbit für dieses Repo dreierlei: die **Oberfläche**, an der ein
+Mensch einen Auftrag auslöst; der **Vertrag**, dessen Feldnamen bindend sind
+(`render-scene/v1` hinein, `render-result/v2` hinaus); und die **Brücke** — Dateien in
+`/tmp/kosmo-jobs/`, die einzige Verbindung zwischen beiden Seiten. Gemeinsamen Code gibt es
+nicht.
+
+**KosmoDraw** — Ein weiterer Baustein desselben Ökosystems, der Geometrie liefert. Er
+kommt in diesem Repo fast nur als **Gegenbeispiel** vor: KosmoDraw und der ältere
+KosmoVis-Stand liefern beide ein Feld `glb_path`, aber mit **verschiedener Hochachse**
+(Z-oben gegen Y-oben). Eine verdrehte Hochachse dreht Tiefenkarte, Kamera und
+Geometrie-Prüfung gemeinsam — und fällt an einem einzelnen Bild nicht auf. Daher die Regel
+dieses Projekts, die Achse **anzugeben statt anzunehmen**.
+
 **Architektur (Software)** — Der Aufbau eines Systems: welche Teile es gibt, wer wovon
 abhängt, wo die Grenzen verlaufen. Der Begriff meint dasselbe wie im Bauwesen, nur ist
 das Material Code.
@@ -3426,6 +3458,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-26 | Ergaenzt: **KosmoVis**, **KosmoOrbit**, **KosmoDraw**. Die drei meistgenannten Namen des Repos — 399 Nennungen zusammen — hatten keinen Eintrag. Anlass ist eine Owner-Klarstellung: `ai-imaging-in-a-box` IST KosmoVis, das eigene Repo ist nur die Trennung fuer die Vertiefungsarbeit. Die Wendung «Vorlaeufer KosmoVis» in etlichen Docstrings meint den aelteren Stand DERSELBEN Sache und nicht ein fremdes Produkt — falsch gelesen sucht man Fehler an der falschen Stelle |
 | 2026-08-26 | Ergaenzt: **Verdeckung** und **Triage**. Anlass ist die Durchsicht der 80 Funktionen ohne Aufrufer: `kameras.ziehe_bis_frei` behandelt Verdeckung und laeuft nirgends, und an unserer synthetischen Testgeometrie verdeckt nichts — ein Anschluss haette gruene Tests ergeben, die ueber den Ernstfall nichts sagen |
 | 2026-08-26 | Ergaenzt: **Waechter** und **Toleranzband**. Anlass ist der neue `tests/test_readme.py`: Das README nannte 1509 Tests bei 3595 wirklichen und behauptete in Fettschrift einen nie stattgefundenen Bildlauf, den es acht Tage zuvor gegeben hatte. Bewacht wird nur das maschinell Entscheidbare — eine Zahl, eine Datei, eine Funktion. **Kein Waechter auf Prosa:** eine Sondierung ueber veraltete Konstantenzitate in Docstrings ergab am selben Tag einen Treffer auf fuenf Fehlalarme |
 | 2026-08-26 | **Integrationstest** um den Grund erweitert, warum viele gute Einzeltests ihn nicht ersetzen — mit dem Fall vom selben Tag: Acht Pruefungen einzeln gruen, und eine Angabe ging auf ihrem letzten Meter verloren. Der Einzeltest fragt, ob ein Stueck haelt, was es verspricht; der Integrationstest fragt, ob das Versprochene ankommt |
