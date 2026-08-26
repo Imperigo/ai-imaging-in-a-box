@@ -1045,6 +1045,28 @@ wie sich das Verhältnis der beiden Fehlerarten verschiebt, wenn man die Grenze 
 auf der Studienszene wird bis 0,85 kein einziger treuer Fall gesperrt, sie anzuheben
 kostete dort also nichts.*
 
+**Grenzstärke** — Die Stärke, bis zu der eine gestörte Vorlage in einer Kalibrierung noch
+als *treu* gilt. Sie ist eine **Setzung und keine Messung**: Jemand legt fest, dass eine um
+zwei Bildpunkte versetzte Geometrie noch in Ordnung sei und eine um vier nicht mehr. *In
+diesem Projekt steht sie darum in jedem Rückgabewert von `trennschaerfe_kurve`
+(`grenzstaerke`, voreingestellt 0,2) — nicht damit man sie ändert, sondern damit niemand
+sie für ein Naturgesetz hält. Ihre Wahl entscheidet mit über die «beste» Schwelle: Alle
+sieben Fälle, die am 26.08.2026 auf echter Geometrie bei Schwelle 0,85 zu Unrecht gesperrt
+wurden, liegen bei Stärke 0,2 — also genau auf der gesetzten Grenze.*
+
+**Rasterdublette** — Zwei Zeilen einer Studie, die verschiedene Störungsstärken tragen und
+trotzdem **punktgleich dasselbe** Bild erzeugen. Sie entstehen, wenn eine Störung in ganzen
+Bildpunkten rechnet: `round(0,2 · k)` und `round(0,3 · k)` ergeben oft dieselbe Zahl. Für
+sich harmlos — verheerend, sobald die *Grenzstärke* dazwischen liegt: Dann stehen zwei
+Zeilen mit **derselben Messung** auf verschiedenen Seiten der Grenze, und keine Schwelle
+der Welt kann sie trennen. Jede zählt zwangsläufig einen Fehler, und der sieht wie eine
+Aussage über das Messverfahren aus, wo eine über das Stärkeraster steht. *In diesem Projekt
+am 18.08.2026 gefunden, nachdem vier solche Paare bereits in eine veröffentlichte
+Auswertung eingegangen waren. `trennschaerfe_kurve` verwirft sie seither — und nennt im
+Feld `entdoppelt`, welche und wie viele: Eine stillschweigende Bereinigung wäre nur die
+zweite Art, dieselbe Zahl zu erfinden. Bei 400 × 400 Bildpunkten bleibt je Szene noch
+**eine** übrig; das Raster war eine Frage der Auflösung.*
+
 **Falsch frei / falsch gesperrt** — Die zwei Fehlerarten, die eine Schwelle machen kann:
 *falsch frei* heisst durchgelassen, obwohl hätte aufgehalten werden müssen; *falsch
 gesperrt* heisst aufgehalten, obwohl alles in Ordnung war. In der Statistik heissen sie
@@ -1547,6 +1569,18 @@ zum Hintergrund). *Der Teil der Geometrie-QA, der die Halluzination fängt.*
 Halluzination, die die Geometrie **ersetzt** — steht der erfundene Bau woanders, geht die
 Überdeckung gegen null. Ein Bau, der bloss **danebengesetzt** wird, kostet weit weniger:
 Ein Zusatzkörper von der Fläche des Baus selbst besteht mit 0,698 — er geht also durch.*
+
+**Geometrieanteil** — Wie viel eines Bildes überhaupt Bauwerk ist: die Zahl der
+Bildpunkte mit Geometrie, geteilt durch alle Bildpunkte. Ein Bau, der klein im Bild steht,
+hat einen kleinen Geometrieanteil; einer, der es füllt, einen grossen. Die Zahl hängt
+**nicht** an der Auflösung — dasselbe Bild doppelt so gross gerechnet hat denselben
+Anteil. *In diesem Projekt ist sie keine Beschreibung, sondern eine Bedingung: `geom_iou`
+hängt an ihr. Am 19.08.2026 gemessen: Bei 17 % Anteil deckelt `geom_iou` bei 0,256, bei
+60 % bei 0,967 — dieselbe Metrik, derselbe perfekte Render, ein anderes Ergebnis. Unsere
+Testszenen liegen bei 0,0822 (Hochbau mit Gelände), 0,1111 (Quader) und 0,1730 (Hochbau),
+die synthetische Studienszene bei 0,4489. Darum nennt jedes Studienergebnis den Anteil mit
+(`schwellenstudie`, Feld `geometrieanteil`): Eine Schwelle, die bei 44 % kalibriert wurde
+und bei 8 % angewandt wird, ist nicht dieselbe Schwelle.*
 
 **IoU (Intersection over Union)** — Überlappungsmass zweier Flächen: gemeinsame Fläche
 geteilt durch Gesamtfläche. 1 heisst deckungsgleich, 0 heisst keine Überlappung.
@@ -3515,6 +3549,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-26 | Ergaenzt: **Geometrieanteil**, **Grenzstaerke**, **Rasterdublette**. Anlass ist die zweite Schwellenstudie, die dieselbe Kalibrierung auf echte Geometrie stellt: Der Geometrieanteil faellt dabei von 0,4489 auf 0,0822 bis 0,1730 — und `geom_iou` haengt an ihm, die Schwelle ist also nicht dieselbe. Die beiden anderen Eintraege tragen mit, was an einer Kalibrierung **gesetzt** und nicht gemessen ist (Grenzstaerke) und wie ein Stärkeraster in ganzen Bildpunkten eine Auswertung verfaelschen kann, ohne dass eine Zahl falsch gerechnet waere (Rasterdublette) |
 | 2026-08-26 | Ergaenzt: **KosmoVis**, **KosmoOrbit**, **KosmoDraw**. Die drei meistgenannten Namen des Repos — 399 Nennungen zusammen — hatten keinen Eintrag. Anlass ist eine Owner-Klarstellung: `ai-imaging-in-a-box` IST KosmoVis, das eigene Repo ist nur die Trennung fuer die Vertiefungsarbeit. Die Wendung «Vorlaeufer KosmoVis» in etlichen Docstrings meint den aelteren Stand DERSELBEN Sache und nicht ein fremdes Produkt — falsch gelesen sucht man Fehler an der falschen Stelle |
 | 2026-08-26 | Ergaenzt: **Verdeckung** und **Triage**. Anlass ist die Durchsicht der 80 Funktionen ohne Aufrufer: `kameras.ziehe_bis_frei` behandelt Verdeckung und laeuft nirgends, und an unserer synthetischen Testgeometrie verdeckt nichts — ein Anschluss haette gruene Tests ergeben, die ueber den Ernstfall nichts sagen |
 | 2026-08-26 | Ergaenzt: **Waechter** und **Toleranzband**. Anlass ist der neue `tests/test_readme.py`: Das README nannte 1509 Tests bei 3595 wirklichen und behauptete in Fettschrift einen nie stattgefundenen Bildlauf, den es acht Tage zuvor gegeben hatte. Bewacht wird nur das maschinell Entscheidbare — eine Zahl, eine Datei, eine Funktion. **Kein Waechter auf Prosa:** eine Sondierung ueber veraltete Konstantenzitate in Docstrings ergab am selben Tag einen Treffer auf fuenf Fehlalarme |

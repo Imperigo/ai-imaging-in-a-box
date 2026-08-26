@@ -202,11 +202,17 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       `nur_spearman_in_soll` sah mit 0.997 am besten aus, hat aber den **kleinsten**
       Abstand zwischen treu und gestört — die Sorte Verbesserung, die alles nach oben
       schiebt statt zu trennen.
-- [ ] **Den Rest des Deckels** — auch der beste Kandidat erreicht am perfekten Bild nur
-      0.635 und bleibt knapp unter 0.65. Ungemessen: Trägt eine Kombination
-      (`ohne_randberuehrung` **plus** `rand_10`)? Und wie verhält sich die Regel an einer
-      Szene mit **echtem Gelände**, wo eine Bodenebene keine Halluzination ist, sondern
-      Geometrie?
+- [x] ~~**Den Rest des Deckels**~~ — **beantwortet 2026-08-26, mit nein**
+      (`docs/DECKELSTUDIE_2026-08-26.md`). Die Frage zielte auf die Silhouettenregel; die
+      erreicht am perfekten Bild **0.9999**, wo die Produktion bei 0.406 deckelt. Der
+      ganze Verlust liegt im Schätzer, der den Himmel mitten in die Tiefenspanne des
+      Bauwerks legt. Die zweite Hälfte der Frage — eine Szene mit **echtem Gelände** — ist
+      mitgemessen: 0.9977, ebenfalls kein Deckel. *Nach der Hausregel abgehakt statt
+      gelöscht.*
+- [x] ~~**Die Schwelle steht auf einer synthetischen Szene**~~ — **abgetragen 2026-08-26**
+      (`docs/SCHWELLENSTUDIE_ECHT_2026-08-26.md`). Dieselbe Studie auf drei echten Szenen
+      mit Geometrieanteilen von 0.08 bis 0.17 statt auf 0.44. Zwei Befunde bestätigt,
+      ein Zusatz gekippt, ein vierter gefunden.
 - [ ] **Schwellenstudie, dritte Hälfte** — dieselben Störungen an einer Kette, die
       überhaupt ein Signal trägt. Sinnlos, bevor Deckel und Backbone stimmen.
 - [ ] **(alt) Schwellenstudie, zweite Hälfte: die Kette** — dieselben Störungen, aber die
@@ -4544,6 +4550,111 @@ durch das Minimum ersetzen, ohne dass etwas rot wurde — weil meine Testszene e
 Vorhersage systematisch zu niedrig und ihre Widerlegung wertlos gewesen. Der zweite Anlauf
 mit einem gestreuten Hintergrund fiel wieder durch — er war zu weit gefasst. Erst der
 dritte, mit drei getrennten Dritteln, fällt bei Minimum **und** Maximum.
+
+---
+
+## Die Schwellenstudie steht auf echter Geometrie (26.08.2026)
+
+**Die zweite Aufgabe aus Strang A. Sie bestätigt zwei Befunde, kippt einen Zusatz und
+findet einen vierten, den die synthetische Szene nicht zeigen konnte.**
+
+Die Studie vom 18.08. stand auf einer synthetischen 64 × 64-Karte mit **44 %**
+Geometrieanteil. Unsere echten Szenen liegen bei **8 bis 17 %**, und `geom_iou` hängt am
+Geometrieanteil. Der Docstring der Testszene sagte selbst, was fehlte — *«die Studie nimmt
+jede Karte»* — und es war ein Austausch der Eingabe, kein Umbau: `HINTERGRUND_M` ist
+`1.0e10`, genau der Wert, den Cycles schreibt.
+
+- [x] `schwellenstudie.studie_aus_bericht` + `tests/test_schwellenstudie_echt.py` +
+      `docs/SCHWELLENSTUDIE_ECHT_2026-08-26.md`. Drei Szenen à 56 Zeilen, 400 × 400,
+      13 bis 17 Sekunden je Szene — die Auflösung musste **nicht** sinken.
+
+### Befund 1 · Rangbasiertheit — hält
+
+Exakt **1,000** auf allen drei echten Szenen. Am 18.08. schien diese Kontrolle zu
+scheitern, und schuld war die Szene (1837 Bindungen auf 1936 Punkte). Eine Blender-Karte
+hat das Problem nicht; die Kontrolle steht ohne Nachhilfe.
+
+### Befund 2 · «0,65 ist zu milde» — hält, aber sein Zusatz kippt
+
+| Szene | Anteil | Treffer bei 0,65 | beste Schwelle | bei 0,85 zu Unrecht gesperrt |
+|---|---|---|---|---|
+| synthetisch 64² | 0,4727 | 0,438 | 0,90 | **0** |
+| synthetisch 400² *(Kontrolle)* | 0,4489 | 0,400 | 0,90 | **0** |
+| Quader | 0,1111 | 0,529 | 0,90 | **2** |
+| Hochbau | 0,1730 | 0,514 | 0,85 | **1** |
+| Hochbau mit Gelände | 0,0822 | 0,686 | 0,80 | **4** |
+
+Am 18.08. stand: *«Bis einschliesslich 0,85 wird kein einziger treuer Fall gesperrt — die
+Schwelle anzuheben kostet auf dieser Szene nichts.»* Der Vorbehalt *«auf dieser Szene»*
+trägt: Auf echter Geometrie kostet derselbe Schritt einen bis vier treue Fälle, und alle
+sieben liegen bei Stärke 0,2, also genau an der gesetzten Grenze.
+
+**Die beste Schwelle ist keine Konstante mehr**, sie streut über 0,10. Ein Zusammenhang
+mit dem Geometrieanteil allein besteht **nicht** — der Quader hat den zweitkleinsten
+Anteil und die höchste beste Schwelle.
+
+**Die Kontrollzeile ist der Grund, warum das etwas heisst:** Dieselbe synthetische Szene
+bei 400 × 400 liefert unverändert 0,90 und null zu Unrecht gesperrte Fälle. Die
+Verschiebung liegt an der Szene, nicht am Bildmass. *(Und die 64²-Zeile stimmt Ziffer für
+Ziffer mit dem 18.08. überein — die erste Studie ist unabhängig reproduziert.)*
+
+### Befund 3 · «Verlorene Gliederung kostet vier Tausendstel» — bestätigt und umbenannt
+
+Am Hochbau mit Tafeln, Fugen, Stützenraster und Auskragung kostet vollständige Glättung
+**22 Millionstel** — die synthetische Szene verliert bei gleicher Auflösung 680.
+
+Der Grund ist nicht Grosszügigkeit der Metrik. Was sie verliert, richtet sich nach dem
+**grössten Tiefensprung** der Szene, und die Reihenfolge stimmt über alle vier:
+Quader (2,2 % der Spanne → 9 Millionstel), Hochbau (19,2 % → 22), synthetisch (28,3 % →
+680), Hochbau mit Gelände (31,2 % → 5391).
+
+> **Fassadengliederung ist kein Tiefensprung.** Eine 0,10-m-Fuge ist 1,1 % der Tiefenspanne
+> des Hochbaus. Eine Rangkorrelation über die ganze Silhouette bewegt das nicht.
+
+### Befund 4 · Neu: Die Metrik ist nicht monoton in der Verschiebung
+
+| Szene | Stärke | `spearman` | Score |
+|---|---|---|---|
+| Hochbau | 0,5 | +0,334 | 0,437 |
+| Hochbau | 0,7 | **−0,030** | **0,117** |
+| Hochbau | 1,0 | **−0,294** | **0,306** |
+
+Läuft die Rangkorrelation durch null, geht der Score gegen null — und **steigt danach
+wieder**, weil er `abs(spearman)` benutzt. Eine schlimmere Verschiebung wird milder
+bewertet als eine mittlere. Auf der synthetischen Szene kam die Verschiebung nie so weit.
+
+**Für die Schwelle folgt nichts** (alle betroffenen Werte liegen bei 0,04 bis 0,32, weit
+unter jeder erwogenen Schwelle). **Für die Deutung eines Scores folgt viel:** 0,32 heisst
+nicht mehr «etwas besser als 0,12» — dazwischen liegt ein Vorzeichenwechsel.
+
+- [ ] **Offen daraus:** Soll die Kette ein **negatives** `spearman` bei einem Bild, dessen
+      Polarität feststeht, als eigenen Befund melden statt als Score? Das Vorzeichen steht
+      in jedem `geometrie_gate`-Urteil und wird heute nur zum Betrag verrechnet.
+
+### Und Befund 4 trifft die beste Zahl, die dieses Projekt hat
+
+Der Bericht zu `auf-47` nennt `geometrie_score` **0.7177** bei `spearman` **−0.7325** und
+`geom_iou` 0.7031 — nachgerechnet `sqrt(0.7325 × 0.7031)`. **Die höchste je gemessene
+Geometriezahl entsteht aus dem Betrag einer negativen Rangkorrelation.** Wörtlich gelesen:
+Wo das Bauwerk nah ist, schätzt das Modell fern.
+
+Drei Lesarten sind von hier aus nicht zu trennen — eine Vorzeichenkonvention (Disparität
+gegen Meter), eine echte Umkehrung, oder ein Wert, der am Hintergrund hängt.
+
+- [ ] **`auf-56` (local)** — derselbe Lauf ein zweites Mal mit **vorzeichenverkehrter**
+      Ist-Karte. Kommt +0.73 heraus, ist es eine Konvention und gehört an eine Stelle
+      festgelegt; bleibt es negativ, ist 0.7177 ein Artefakt des `abs()`. *Davon hängt ab,
+      ob der Satz im README fällt: «Ein Bild, das die Geometrie-Schwelle besteht, gibt es
+      noch nicht.»*
+
+### Was `SCHWELLE_GEOMETRIE` betrifft
+
+**Sie bleibt bei 0,65** — aus demselben Grund wie am 18.08., der heute besser belegt ist:
+Die Deckelstudie hat gezeigt, dass der ganze Verlust im Schätzer liegt (Regel 0,9999,
+Produktion 0,406). Eine Schwelle von 0,85 würde im Betrieb jeden Render sperren, auch den
+treuen. Beigetragen hat diese Studie nicht eine neue Zahl, sondern die Form der
+Entscheidung: **Eine einzige globale Schwelle wird immer für einen Teil der Szenen falsch
+sein.**
 
 ---
 

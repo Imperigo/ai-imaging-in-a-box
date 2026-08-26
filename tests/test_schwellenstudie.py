@@ -1257,12 +1257,20 @@ def test_ohne_szenennamen_gibt_es_keine_studie(bericht):
 
 
 def test_eine_karte_ganz_ohne_bauwerk_ist_keine_studie(tmp_path):
-    """Ein Lauf, der nur Himmel gerendert hat, wird gemeldet statt gerechnet."""
+    """Ein Lauf, der nur Himmel gerendert hat, wird gemeldet statt gerechnet.
+
+    Der Test greift auf die **Masse** in der Meldung, und das ist kein Zierrat: ``stoere``
+    hat einen eigenen Wächter für denselben Fall, und der wirft dieselbe Ausnahme mit
+    demselben Wort „Geometriepunkt". Eine Probe darauf hätte auch dann gehalten, wenn der
+    Wächter hier ersatzlos entfiele — genau das war beim Prüfen der Fall (Mutationsprobe
+    P8, 26.08.2026). Die Masse nennt nur dieser Wächter; er ist der einzige, der zu
+    diesem Zeitpunkt schon weiss, wie gross die Karte war.
+    """
     from test_bildlesen import schreibe_exr
 
     exr = schreibe_exr(tmp_path / "leer.exr", 4, 4, {"V": [1.0e10] * 16})
 
-    with pytest.raises(StudienError, match="Geometriepunkt"):
+    with pytest.raises(StudienError, match=r"4×4.*nur Himmel"):
         studie_aus_bericht({"depth_exr": str(exr)}, szene="nur-himmel")
 
 
@@ -1296,6 +1304,24 @@ def test_der_png_rueckfall_traegt_seinen_verlust_als_vorbehalt(tmp_path):
     assert any("normalisierten PNG" in v for v in studie["vorbehalte"])
     assert studie["n_geometrie"] < len(BERICHT_X) * len(BERICHT_Y), (
         "genau der dokumentierte Verlust: der hinterste Punkt fällt in den Himmel"
+    )
+
+
+def test_ein_gitter_ohne_auswertbare_zeile_hat_keine_kurve_und_sagt_das(bericht):
+    """Die dritte Antwort, auch hier: keine Kurve ist kein Fehler des Läufers.
+
+    Ein Gitter nur aus Kontrollen hat nichts, woran sich eine Schwelle messen liesse —
+    Kontrollen prüfen die Metrik, nicht die Grenze. Das ist kein Grund abzubrechen: Wer
+    die Zeilen wollte, bekommt sie; wer die Kurve braucht, findet ``None`` und den Grund
+    daneben. Ein geworfener Fehler hätte hier eine Messung verhindert, die es gibt.
+    """
+    studie = studie_aus_bericht(bericht, szene="nur-kontrollen",
+                                arten=[MONOTON, TIEFENUMKEHR])
+
+    assert studie["kurve"] is None
+    assert any("Keine Trennschärfekurve" in w for w in studie["warnungen"])
+    assert len(studie["zeilen"]) == 2 * len(VORGABE_STAERKEN), (
+        "die Zeilen sind gemessen und da — nur auswerten lassen sie sich nicht"
     )
 
 
