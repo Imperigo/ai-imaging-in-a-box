@@ -1,6 +1,8 @@
 # Vorgehensplan
 
-**Angelegt:** 2026-08-14 · **Stand 2026-08-26:** Phasen 0–3 erledigt. Der erste echte
+**Angelegt:** 2026-08-14 · **Stand 2026-08-26 (abends):** Phasen 0–3 erledigt; seit heute
+abend wird ein über KosmoOrbit bestellter Render auch **ausgeführt** — vorher legte der
+MCP-Einlass ihn in einem Verzeichnis ab, das niemand las. Der erste echte
 Render fand am **18.08.2026** statt (`auf-20260818-09`, Qwen-Image-Edit-2511, 147,9 s,
 Score 0,359 — durchgefallen, und das ist ein Messwert); acht Zeilen weiter unten stand er
 schon als erledigt, hier oben acht Tage lang weiter als ausstehend. *Eine Kopfzeile, die
@@ -3900,6 +3902,152 @@ Gezählt: `glb_zu_multipass` hat **18** echte Einstellungen, durchgereicht werde
 **Eine Korrektur an der eigenen Zählung:** Zuerst hatte ich fünf nicht durchgereichte
 Multipass-Parameter gezählt. Es sind **sechs** — `shift_y` fehlte, und die Gegenprüfung hat
 es gefunden. *Die Zahl steht jetzt in einem Test und nicht in einer Erinnerung.*
+
+---
+
+## Die Werkzeugnaht endete im Nichts (26.08.2026)
+
+**Der Befund, gezählt und nicht vermutet.** `werkzeuge.enqueue_render` — der MCP-Einlass,
+also der Weg, den ein Knoten in KosmoOrbit nimmt — legte den Auftrag unter
+`job_verzeichnis()` ab. `grep -rn "job_verzeichnis\|lies_job"` über `src` und `tools`
+ergab **genau einen** Leser: `query_render`, die Statusabfrage. Der Abholer las die
+Brücke, `homeworker.py` das Repo.
+
+> Ein Knoten in KosmoOrbit konnte einen Render bestellen, und niemand führte ihn aus.
+> Mit Freigabe ging der Auftrag sogar auf `queued` — er sah aus, als sei er unterwegs.
+
+*Dieselbe Sorte Befund wie die neun toten Kanten dieser Woche, nur an der Naht, die uns
+überhaupt erst zu einem Teil von KosmoOrbit macht.* Und sie war die ganze Woche über
+sichtbar: Der Torwächter hing an genau diesem Einlass, und dass dort niemand weiterlas,
+ist keinem aufgefallen — auch mir nicht, als ich am selben Tag fünf andere Stellen
+derselben Art gefunden habe.
+
+- [x] **Eine zweite Quelle statt eines zweiten Ausführers** (`src/aiimaging/eigene_quelle.py`).
+      Der Abholer trägt die Riegel, die Kameraschleife, die Startwertauswahl und die
+      Doppel-QA. Ein zweiter Ausführer hätte einen zweiten Satz Zusagen, und der läuft
+      auseinander, sobald jemand nur einen davon pflegt. *Regel 4 sagt dasselbe: Die
+      MCP-Schicht ist Übersetzung, keine Logik.*
+- [x] **Der Quellenvertrag sind acht Namen** — `QUELLEN_FEHLER`, `STATUS_RUNNING`,
+      `STATUS_ERROR`, `offene_auftraege`, `laufzettel_pfad`, `lies_auftrag`,
+      `setze_status`, `schreibe_ergebnis`. `bruecke` und `eigene_quelle` führen beide alle
+      acht; ein Test hält es fest.
+- [x] `abholer.hole_einen/durchgang/waisen` nehmen `quelle=…`, **Vorgabe bleibt die
+      Brücke** — jeder bestehende Aufruf trägt unverändert. Auch das steht unter einem Test.
+- [x] `tools/abholen.py --eigener-store` und die Zeile in `betrieb/kosmo-abholer.service`.
+      *Ohne die Unit läuft der Anschluss nur von Hand — und eine Naht, die nur unter
+      Aufsicht trägt, trägt nicht.*
+- [x] `tests/test_eigene_quelle.py` fährt den ganzen Weg von `enqueue_render` bis zum
+      geschriebenen `render-result.json`; nur der Renderlauf ist eine Attrappe.
+
+### Drei Dinge, die dabei mit auffielen
+
+- [x] **Zwei Vorgaben für dieselbe Sache.** Der MCP-Einlass setzte 512 px und 16 Samples,
+      der Vertrag 1600 × 1000 und 128. *Derselbe Auftrag ergab je nach Weg ein anderes
+      Bild, und nirgends stand das.* Der Einlass setzt jetzt nichts mehr; es gibt eine
+      Stelle für eine Vorgabe, und das ist der Vertrag.
+- [x] **Die Hochachse verfiel an der Naht.** Unser Einlass verlangt `up_axis` bei
+      glb-Eingang als **Pflicht** — `kosmovis.render-scene/v1` hat kein Feld dafür. Eine
+      Z-up-glb wäre unter der Annahme Y-up gerechnet worden: Tiefenkarte, Kamera und
+      Geometrie-QA **gemeinsam** verdreht, am einzelnen Bild nicht erkennbar. Sie reist
+      jetzt **neben** der Szene (`kosmo_naht.NICHT_IM_VERTRAG`), schlägt die Annahme, und
+      der Bericht sagt, ob sie bestellt oder angenommen war.
+- [x] Aufträge lagen **flach** nebeneinander; Befund und Vertragsergebnis hätten keinen
+      Ort gehabt. Jeder Auftrag hat jetzt seinen Ordner, wie bei der Brücke.
+
+### Und was das Werkzeug NICHT finden konnte
+
+Nachgeprüft: `tools/tote_kanten.py` hat `enqueue_render` **nie** gemeldet — weder vorher
+noch nachher. Es war immer erreichbar, über die Werkzeugtabelle des MCP-Servers.
+
+*Der Sackgassenbefund lag einen Schritt weiter:* Die Funktion lief, und das, was sie
+schrieb, las niemand. **Das Werkzeug misst die Erreichbarkeit von Funktionen, nicht die
+von Wegen.** Ein Weg, dessen letzte Funktion sauber aufgerufen wird und dessen Ergebnis in
+einem Verzeichnis endet, das kein Leser hat, ist für dieses Werkzeug unsichtbar.
+
+Das ist kein Fehler des Werkzeugs, sondern seine Grenze — und sie gehört benannt, damit
+niemand aus einem leeren Bericht auf einen geschlossenen Weg schliesst. Gefunden wurde der
+Befund durch eine andere Frage: *Wer liest dieses Verzeichnis?* Ein `grep` nach dem
+**Datenort**, nicht nach dem Funktionsnamen.
+
+
+### Die Riegeltabelle
+
+- [x] `abholer.RIEGEL` — welcher Riegel auf welchem Weg läuft, mit **Pflicht zur
+      Begründung**, sobald einer nur einseitig greift. Genau einer ist es: der Torwächter
+      am MCP-Einlass, und zwar an der Stelle, die es nur dort gibt — er entscheidet, ob
+      ein Auftrag **überhaupt entsteht**. Bei der Brücke liegt der Auftrag schon, wenn wir
+      ihn sehen; dort ist der Massstab eine Meldung.
+- [x] **Von der anderen Seite gezählt:** Der Test sucht per `ast` jede Funktion in
+      `abholer`, die ein `abbruch`-Feld führt, und verlangt sie in `RIEGEL` **oder** in
+      `KEINE_RIEGEL` — mit Grund. «Steht nirgends» ist die bequemste Auskunft und die
+      einzige, die nicht vorgesehen ist.
+
+### Was die Mutationsproben gefunden haben
+
+Neun Proben, und **eine hat überlebt**: Die erste Fassung prüfte nur, dass
+`lies_auftrag` die Hochachse heraussagt — `verarbeiter` durfte sie danach wegwerfen, ohne
+dass ein Test rot wurde. *Genau die Form, gegen die dieses Projekt antritt: Der Wert kommt
+an der Naht an und fällt einen Schritt später heraus.* Die Probe hat den Test verbessert,
+nicht den Code.
+
+Und eine zweite, an der Aussenkante: Wird die Zeile, die die zweite Ablage in
+`tools/abholen.py` anhängt, wieder entfernt, blieb **alles grün**. Vier Tests in
+`tests/test_abholen_cli.py` decken das jetzt ab. *Der Anschluss liegt in der Bibliothek,
+gefahren wird er vom Einstieg — und nur dort ist er prüfbar.*
+
+**Eine Lehre über das Vorgehen:** `git checkout` stellt eine **unverfolgte** Datei nicht
+wieder her. Drei Proben am neuen Entwurfsblatt haben sich darum übereinandergelegt, und
+ich musste sie von Hand zurückdrehen. *Neue Dateien werden vor der ersten Mutationsprobe
+eingecheckt.* Derselbe Fehler wie beim README am Vormittag, in anderer Verkleidung.
+
+---
+
+## Der Einbau bekommt einen Stand, die Oberfläche einen Entwurf (26.08.2026)
+
+**Der Anlass ist eine Aufstellung, die stimmte, als sie geschrieben wurde.**
+`docs/COCKPIT_BESTAND_2026-08-19.md` §4 listet den Weg in KosmoOrbit vollständig auf —
+A1…A8 und B1…B7. Sieben Tage später waren **vier Posten still erledigt** (A1, A2, A3, B4)
+und mehrere still offen, und niemand konnte sagen, welche. Gleichzeitig trug `README.md`
+den entgegengesetzten Fehler: *«Registrierung nicht ausgeführt»*, während Sitzung 07
+Kap. 26 den Server als registriert protokolliert (`id d99fcf67`).
+
+- [x] `docs/EINBAU_STAND.md` — jeder Posten mit **Zustand, Datum, Beleg** und dem Auftrag,
+      der ihn treibt. Zwei Posten sind neu und standen am 19.08. auf keiner Liste: **A9**
+      (die Registrierung liegt acht Tage und ein Werkzeug zurück) und **B8** (der Weg, den
+      niemand las).
+- [x] `tests/test_einbau_stand.py` — ein erledigter Posten nennt einen Beleg, **den es
+      gibt**; ein offener nennt einen Auftrag, der **offen liegt**, oder ausdrücklich
+      «niemand». Belege dürfen auf Dateien **oder Symbole** zeigen; das Symbol ist der
+      schärfere Beleg, weil eine Datei bleiben kann, während die Funktion darin verschwindet.
+- [x] `docs/OBERFLAECHE_KOSMOVIS.md` — der Entwurf der Fläche, baubar ohne Rückfrage:
+      je Bedienelement das Vertragsfeld, der Bereich, die Vorgabe und was geschieht, wenn
+      es fehlt.
+- [x] **Posten A8 entschieden**, seit dem 19.08. als «Owner-Entscheid, keine technische
+      Frage» offen: Bild und QA-Wert erscheinen **in der KosmoVis-Fläche**, nicht als
+      neuer Anzeigetyp im fremden Knotenrahmen. Es ist keine neue Entscheidung, sondern
+      die Wiederholung einer getroffenen — von aussen sind wir **ein Knoten**, innen ein
+      Graph. *Der innere Graph bekommt eine innere Oberfläche.*
+- [x] `tests/test_oberflaeche_entwurf.py` hält den Entwurf gegen `DURCHGEREICHT` und
+      `STEHENGEBLIEBEN`. **Regel 1 des Entwurfs ist damit kein Vorsatz mehr:** Wer ein
+      Bedienelement für `vis.upscale`, `style.mode` oder `style.refs` entwirft, bekommt es
+      rot. Und umgekehrt zählt der Test von der anderen Seite — jedes wirkungslose Feld
+      muss im Entwurf **vorkommen**, sonst verschweigt die Oberfläche, dass es fehlt.
+
+### Der Satz, an dem dieser Entwurf hängt
+
+Aus dem Demoplan vom 18.08.: *«Die Vision beschreibt ein Produkt, und ein Produkt zeigt
+Bilder, keine Messwerte.»*
+
+**Der Forschungskern dieser Arbeit ist genau das, was eine Produktoberfläche wegräumen
+möchte.** Trägt die Fläche die Geometriezahl nicht, ist die Messung im Produkt unsichtbar;
+trägt sie sie als grünes Abzeichen, ist es schlimmer — die Schwelle ist nicht kalibriert,
+und `aiimaging_capabilities` sagt das selbst mit. Darum stehen die Vorbehalte im Entwurf
+**an der Zahl** und nicht in einer Fussnote, und darum kennt die Anzeige **drei** Zustände
+und nicht zwei.
+
+*Die Spannung, die der Entwurf offenlässt und nicht auflöst:* Zeigt die Fläche mehrere
+Varianten, wählt der Mensch nach Aussehen — und das ist genau die Entscheidung, gegen die
+die Geometrie-Messung gebaut ist.
 
 ---
 

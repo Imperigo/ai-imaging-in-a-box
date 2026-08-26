@@ -51,7 +51,11 @@ Kette belegt, die Aussage *geometrietreu* aber noch nicht.
 | Ein über KosmoOrbit bestellter Render | **seit 26.08. wird er auch ausgeführt.** Bis dahin legte der MCP-Einlass ihn in einem Verzeichnis ab, das niemand las: Er ging mit Freigabe auf `queued` und blieb dort. Beide Wege gehen jetzt durch denselben Abholer und damit durch dieselben Riegel |
 | LoRA-Stiltraining | Naht gebaut, **nie ein Training ausgeführt** |
 
-Tests: **3970**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+**Wie weit der Einbau in KosmoOrbit ist**, Posten für Posten mit Datum und Beleg:
+[`docs/EINBAU_STAND.md`](docs/EINBAU_STAND.md). Wie die Oberfläche aussehen soll, die
+darüber liegt: [`docs/OBERFLAECHE_KOSMOVIS.md`](docs/OBERFLAECHE_KOSMOVIS.md).
+
+Tests: **4091**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
 (`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
 
 ---

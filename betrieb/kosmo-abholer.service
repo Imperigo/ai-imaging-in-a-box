@@ -19,8 +19,13 @@ Environment=AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers
 # streicht den Schalter: dann bleibt jeder Auftrag liegen und der Bericht sagt warum.
 # --hoechstens 1: ein Auftrag je Durchgang, damit ein langer Lauf den naechsten Takt
 # nicht blockiert und die Karte zwischendurch frei wird.
+# --eigener-store: die ZWEITE Ablage, in die der MCP-Einlass schreibt — also der Weg,
+# den ein Knoten in KosmoOrbit nimmt. Ohne diesen Schalter bleibt ein so bestellter
+# Render liegen; bis zum 26.08.2026 war das der einzige Zustand, den es gab. Fehlt der
+# Ordner, wird er uebersprungen und der Bruecken-Durchgang laeuft weiter.
 ExecStart=/home/<nutzer>/ai-imaging-in-a-box/.venv-render/bin/python \
-    tools/abholen.py --fremde-freigabe --hoechstens 1
+    tools/abholen.py --fremde-freigabe --hoechstens 1 \
+    --eigener-store /tmp/aiimaging-jobs
 # Der Abholer prueft die Karte selbst (nvidia-smi, fail-closed) und laesst Auftraege mit
 # 'idle_window_only' liegen, solange jemand anders rechnet. Ein Zeitlimit hier ist die
 # zweite Sicherung: ein haengender Blender-Lauf darf den Takt nicht auf Dauer belegen.

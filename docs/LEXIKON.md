@@ -3195,6 +3195,33 @@ blockieren.
 
 **Scheduler** — Das Programm, das entscheidet, wann ein Auftrag ausgeführt wird.
 
+**Ablage (eines Auftrags)** — Der Ordner, in dem wartende Aufträge liegen. Nicht dasselbe
+wie die Warteschlange als Idee: Die Ablage ist der wirkliche Ort auf der Festplatte, an
+dem eine Datei liegt, bis jemand sie holt. *In diesem Projekt gibt es **zwei** — eine, in
+die die Bedienoberfläche schreibt, und eine, in die der Werkzeugzugang schreibt.*
+
+**Quelle (eines Abholers)** — Das Stück Programm, das **eine** Ablage lesen und
+fortschreiben kann. Es beantwortet immer dieselben Fragen: Was liegt an? Wie lese ich
+einen Auftrag? Wie schreibe ich seinen Zustand fort? Wohin kommt das Ergebnis?
+
+*Wozu die Unterscheidung.* Zwei Ablagen legen Aufträge in **verschiedener Form** ab — die
+eine als Bestellung nach einem vereinbarten Vertrag, die andere in unserer eigenen Form.
+Der Abholer soll beide bearbeiten, ohne beide Formen zu kennen. Er spricht darum nicht mit
+der Ablage, sondern mit ihrer Quelle, und die übersetzt. *Der Gewinn ist nicht Eleganz,
+sondern dass es weiterhin **einen** Ausführer gibt: Alle Prüfungen vor dem Bildlauf laufen
+für beide Wege, weil beide durch dieselbe Stelle gehen. Zwei Ausführer hätten zwei Sätze
+von Prüfungen, und die laufen auseinander, sobald jemand nur einen davon pflegt.*
+
+**Riegel** — Eine Prüfung, die **vor** einem teuren Schritt steht und ihn im Ernstfall gar
+nicht erst beginnen lässt. Der Name ist wörtlich gemeint: kein Ratschlag, sondern ein
+geschlossenes Tor. *In diesem Projekt stehen die Riegel vor dem Bildlauf — sie kosten
+Millisekunden, der Lauf dahinter kostet Minuten Grafikkartenzeit.*
+
+*Ein Riegel, der auf jede Beanstandung schliesst, hält am Ende alles auf; er schliesst
+darum auf eine **benannte** Bedingung. Und ein Riegel, der nur auf einem von zwei Wegen
+steht, ist keiner — deshalb führt dieses Projekt eine Tabelle darüber, welcher Riegel auf
+welchem Weg läuft, und verlangt für jede Einseitigkeit einen Grund.*
+
 **Freigabe-Token** — Eine Zeichenfolge, die eine Befugnis belegt: Erst mit ihr darf ein
 teurer Vorgang starten. *Hier `CONFIRMED_RENDER_*`. Es wird bewusst **nie** in die
 Auftragsdatei geschrieben — läge es darin, wäre die Befugnis mit der Datei weiterreichbar,

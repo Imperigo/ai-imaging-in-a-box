@@ -249,3 +249,85 @@ def test_ohne_angabe_bleibt_der_gelaendestand_offen(monkeypatch, tmp_path):
 
     assert modul.main() == 0
     assert gesehen["gelaende_z"] is None
+
+
+# ======================================================================================
+# Die zweite Ablage — der Weg, den ein Knoten in KosmoOrbit nimmt
+# ======================================================================================
+#
+# Bis zum 26.08.2026 las diesen Weg niemand: `werkzeuge.enqueue_render` legte den Auftrag
+# ab, er ging mit Freigabe auf `queued`, und dort blieb er. Der Anschluss liegt in
+# `abholer` und `eigene_quelle` — aber gefahren wird er von HIER, und diese Datei ist
+# die einzige Stelle, an der das geprüft werden kann.
+#
+# Die Mutationsprobe hat es belegt: Wird die Zeile, die die zweite Ablage anhängt, wieder
+# entfernt, blieb ohne diese Tests **alles grün**.
+
+def _alle_durchgaenge(monkeypatch, tmp_path, argv):
+    """Wie ``_lauf``, sammelt aber **jeden** Durchgang statt nur den letzten.
+
+    Mit zwei Ablagen ist «der letzte Aufruf» keine Auskunft mehr über den ersten.
+    """
+    modul = _abholen()
+    laeufe: list = []
+
+    def falscher_durchgang(store, **kw):
+        laeufe.append({"store": store, **kw})
+        return {"gesehen": 0, "verarbeitet": 0, "fehler": 0, "liegengelassen": 0,
+                "gestanden": 0, "waisen": [], "ergebnisse": []}
+
+    monkeypatch.setattr(modul.abholer, "durchgang", falscher_durchgang)
+    monkeypatch.setattr(modul.abholer, "verarbeiter", lambda **kw: (lambda a: {}))
+    monkeypatch.setattr(modul, "karte_auskunft", lambda: (True, "Attrappe"))
+    monkeypatch.setattr(sys, "argv", ["abholen.py", "--store", str(tmp_path), *argv])
+    assert modul.main() == 0
+    return modul, laeufe
+
+
+def test_ohne_schalter_bleibt_es_bei_der_bruecke(monkeypatch, tmp_path):
+    """Der ältere Weg ist die Vorgabe — jeder bestehende Betrieb muss unverändert laufen."""
+    modul, laeufe = _alle_durchgaenge(monkeypatch, tmp_path, [])
+    assert len(laeufe) == 1
+    assert laeufe[0]["quelle"] is modul.bruecke
+
+
+def test_mit_eigenem_store_werden_beide_ablagen_abgegangen(monkeypatch, tmp_path):
+    """Und jede mit **ihrer** Quelle — sonst läse der Abholer das falsche Format."""
+    eigen = tmp_path / "aiimaging-jobs"
+    eigen.mkdir()
+    modul, laeufe = _alle_durchgaenge(monkeypatch, tmp_path,
+                                      ["--eigener-store", str(eigen)])
+    assert len(laeufe) == 2, (
+        "Die zweite Ablage wird nicht abgegangen. Ein über KosmoOrbit bestellter Render "
+        "bliebe wieder liegen — genau der Zustand vom 26.08.2026."
+    )
+    zuordnung = {str(lauf["store"]): lauf["quelle"] for lauf in laeufe}
+    assert zuordnung[str(tmp_path)] is modul.bruecke
+    assert zuordnung[str(eigen)] is modul.eigene_quelle
+
+
+def test_eine_fehlende_zweite_ablage_haelt_die_erste_nicht_auf(monkeypatch, tmp_path):
+    """Wer den MCP-Einlass nie benutzt hat, hat den Ordner nie angelegt.
+
+    Ein Abbruch daran hiesse: Ein Schalter, der beide Wege bedienen soll, legt den
+    bewährten lahm.
+    """
+    modul, laeufe = _alle_durchgaenge(monkeypatch, tmp_path,
+                                      ["--eigener-store", str(tmp_path / "gibt-es-nicht")])
+    assert len(laeufe) == 1
+    assert laeufe[0]["quelle"] is modul.bruecke
+
+
+def test_die_probe_zaehlt_beide_ablagen_getrennt(monkeypatch, tmp_path, capsys):
+    """Ein Auftrag, der auf dem einen Weg liegt, ist sonst von einem auf dem anderen
+    nicht zu unterscheiden."""
+    eigen = tmp_path / "aiimaging-jobs"
+    eigen.mkdir()
+    modul = _abholen()
+    monkeypatch.setattr(modul, "karte_auskunft", lambda: (True, "Attrappe"))
+    monkeypatch.setattr(sys, "argv", ["abholen.py", "--store", str(tmp_path),
+                                      "--eigener-store", str(eigen), "--probe"])
+    assert modul.main() == 0
+    ausgabe = capsys.readouterr().out
+    assert "[Bruecke]" in ausgabe
+    assert "MCP-Einlass" in ausgabe

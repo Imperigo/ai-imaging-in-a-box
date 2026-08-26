@@ -195,3 +195,86 @@ def test_der_waisenfund_wirkt_auch_auf_dieser_ablage(store, glb):
     gefunden = abholer.waisen(store, frist_s=0.0, quelle=eigene_quelle,
                               _uhr=lambda: 10**12)
     assert [w["job_id"] for w in gefunden] == [antwort["job_id"]]
+
+
+# ── Und dass sie auch ANKOMMT, nicht nur mitgereicht wird ───────────────────────────
+#
+# Der erste Anlauf dieser Datei prüfte nur, dass `lies_auftrag` die Hochachse
+# heraussagt — und die Mutationsprobe überlebte: `verarbeiter` durfte sie wegwerfen,
+# ohne dass ein Test rot wurde. Genau die Form, gegen die dieses Projekt antritt: Der
+# Wert kommt an der Naht an und fällt einen Schritt später heraus.
+
+def _multipass_attrappe(gesehen: dict):
+    def multipass(glb, aus, **kw):
+        gesehen.update(kw)
+        raise RuntimeError("hier endet der Test — geprüft ist, was ankam")
+    return multipass
+
+
+def _auftrag(tmp_path, **zusatz) -> dict:
+    satz = {"modell": tmp_path / "m.glb", "job_id": "vis-1-aaaaaa",
+            "verzeichnis": tmp_path,
+            "szene": {"kameras": "auto", "aufloesung": 64, "hoehe": 64,
+                      "samples": 1, "prompt": "a house"}}
+    satz.update(zusatz)
+    return satz
+
+
+def test_die_hochachse_des_auftrags_erreicht_den_multipass(tmp_path):
+    """Geprüft wird der WERT an der Naht, nicht das Feld im Auftrag."""
+    gesehen: dict = {}
+    verarbeite = abholer.verarbeiter(out_wurzel=tmp_path,
+                                     _multipass=_multipass_attrappe(gesehen))
+    with pytest.raises(RuntimeError):
+        verarbeite(_auftrag(tmp_path, hochachse="Z"))
+    assert gesehen.get("up_axis") == "Z", (
+        "Die bestellte Hochachse kam am Multipass nicht an. Gerechnet würde unter der "
+        "Annahme Y-up — Tiefenkarte, Kamera und Geometrie-QA gemeinsam verdreht, und "
+        "am einzelnen Bild sieht man nichts."
+    )
+
+
+def test_ohne_hochachse_im_auftrag_gilt_die_annahme(tmp_path):
+    """Jeder Auftrag der Brücke. Die Annahme bleibt die Annahme — und bleibt eine."""
+    gesehen: dict = {}
+    verarbeite = abholer.verarbeiter(out_wurzel=tmp_path,
+                                     _multipass=_multipass_attrappe(gesehen))
+    with pytest.raises(RuntimeError):
+        verarbeite(_auftrag(tmp_path))
+    assert gesehen.get("up_axis") == abholer.ANGENOMMENE_HOCHACHSE
+
+
+def test_der_bericht_sagt_ob_die_hochachse_bestellt_oder_angenommen_war(tmp_path, store, glb):
+    """Eine Zahl gehört an die Bedingung, unter der sie gemessen wurde.
+
+    Und dies ist die Bedingung, unter der die Geometriezahlen des Laufs überhaupt
+    etwas heissen: Unter falscher Annahme sind sie alle gemeinsam verdreht und
+    trotzdem plausibel.
+    """
+    _bestelle(glb, up_axis="Z")
+    ergebnisse: list = []
+
+    def verarbeite(auftrag):
+        antwort = _attrappe([])(auftrag)
+        antwort["hochachse"] = {"wert": auftrag.get("hochachse") or "Y_UP",
+                                "quelle": "auftrag" if auftrag.get("hochachse") else "annahme"}
+        ergebnisse.append(antwort)
+        return antwort
+
+    abholer.durchgang(store, verarbeite=verarbeite, quelle=eigene_quelle,
+                      darf_rechnen=lambda: (True, "frei"))
+    assert ergebnisse[0]["hochachse"] == {"wert": "Z", "quelle": "auftrag"}
+
+
+def test_die_kurzform_meldet_eine_gedrehte_geometrie(tmp_path):
+    """Und schweigt, sobald nicht gedreht wird — sonst wäre es eine Dauerwarnung."""
+    gedreht = abholer.befund_kurz({"hochachse": {"wert": "Z", "quelle": "auftrag"}})
+    assert any("GEDREHT" in z for z in gedreht)
+
+    for still in ({"hochachse": {"wert": "Y", "quelle": "auftrag"}},
+                  {"hochachse": {"wert": "Y_UP", "quelle": "annahme"}},
+                  {}):
+        assert not any("GEDREHT" in z for z in abholer.befund_kurz(still)), (
+            f"Die Zeile steht auch bei {still} — eine Warnung, die immer feuert, "
+            f"verdeckt die echten."
+        )

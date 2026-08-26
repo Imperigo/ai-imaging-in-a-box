@@ -18,6 +18,22 @@ nichts: Der Abholer fragt vor jedem Lauf `nvidia-smi` und lässt Aufträge mit
 `idle_window_only` liegen, solange jemand anders rechnet — **fail-closed**, ein
 unbekannter Kartenzustand gilt als belegt.
 
+## Zwei Ablagen, ein Dienst
+
+Seit dem 26.08.2026 geht ein Durchgang **beide** Wege ab:
+
+* `--store /tmp/kosmo-jobs` — was die Vis-Oberflaeche bestellt (Vorgabe).
+* `--eigener-store /tmp/aiimaging-jobs` — was ueber den MCP-Einlass aus KosmoOrbit
+  hereinkommt.
+
+**Warum das hier steht und nicht nur im Code.** Bis dahin las die zweite Ablage
+niemand. Ein Knoten im Cockpit konnte einen Render bestellen, der Auftrag ging mit
+Freigabe auf `queued` — und blieb dort. Dieselbe Lage wie vor diesem Dienst, nur eine
+Naht weiter.
+
+Fehlt der zweite Ordner, wird er uebersprungen und der erste Durchgang laeuft weiter.
+Wer den MCP-Einlass nicht benutzt, merkt vom Schalter nichts.
+
 ## Die eine Entscheidung, die im Dienst steckt
 
 `--fremde-freigabe` macht die Freigabe der fremden Brücke **stehend**. Das ist ein
