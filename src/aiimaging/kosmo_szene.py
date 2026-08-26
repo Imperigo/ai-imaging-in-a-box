@@ -693,8 +693,32 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
             "geom_iou": geometrie_urteil.get("geom_iou"),
             "threshold": geometrie_urteil.get("schwelle", geometrie_qa.SCHWELLE_GEOMETRIE),
             "passed": bool(geometrie_urteil.get("bestanden")),
-            "method": geometrie_qa.METHODE,
+            # DAS VERFAHREN, DAS WIRKLICH LIEF — nicht die Konstante.
+            #
+            # Bis zum 26.08.2026 stand hier fest `geometrie_qa.METHODE`. Das ist die
+            # ungerichtete Fassung (v1, `abs(spearman)`), und sie ist NICHT die, die
+            # läuft, wenn der Maskenweg die gemessene Polarität anwenden konnte. Der
+            # Vertrag nannte also ein Verfahren, das er nicht kannte.
+            #
+            # **Der Unterschied ist kein Etikett** (HomeStation, 26.08.): Unter v1
+            # besteht ein Bild mit VERTAUSCHTER Tiefe das Tor — durchgerechnet gibt
+            # spearman = +0,675 dort 0,6802 statt 0,0000. Wer am `method`-Feld ablesen
+            # will, ob die Richtung geprüft wurde, muss das Feld auch lesen können.
+            "method": geometrie_urteil.get("methode") or geometrie_qa.METHODE,
         }
+        # UND OB DIE RICHTUNG UEBERHAUPT GEPRUEFT WURDE.
+        #
+        # `rho_maske is None` heisst: Der Maskenweg lief nicht, die gemessene Polarität
+        # wurde nicht angewandt, und der Score ist im geometrischen Fehler NICHT MONOTON.
+        # Das gehört zum Abzeichen, nicht in eine Datei auf unserer Seite.
+        if geometrie_urteil.get("rho_maske") is None:
+            hinweise.append(
+                "RICHTUNG NICHT GEPRUEFT: Der Maskenweg lief nicht (rho_maske fehlt), "
+                "darum wurde die gemessene Polaritaet des Tiefenschaetzers nicht "
+                "angewandt und der Score mit abs(spearman) gebildet. In diesem Modus ist "
+                "er im geometrischen Fehler NICHT MONOTON: Ein Bild mit vertauschter "
+                "Tiefe erreicht denselben Wert wie eines mit richtiger. 'passed: true' "
+                "sagt hier also nichts darueber, ob die Tiefe richtig herum steht.")
         # Wir werfen dem fremden Vertrag vor, seine Stil-Schwelle sei kein Gate. Es wäre
         # unredlich, dabei zu verschweigen, was wir über die EIGENE gemessen haben.
         if geometrie_urteil.get("nullanker") is None:

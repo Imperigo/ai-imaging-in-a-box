@@ -3575,7 +3575,7 @@ Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
 
 | | Beginn des Tages | nach dem Vormittag | Ende |
 |---|---:|---:|---:|
-| Tests | 3335 | 3528 | **3922** |
+| Tests | 3335 | 3528 | **3926** |
 | Vakuumprobe | 10 Treffer | 12 Treffer | 12 Treffer |
 | Tote Kanten, gar nicht erreichbar | — | 2 | **1** |
 | Tote Kanten **mit Urteil** | 0 | 0 | **80 von 80** |

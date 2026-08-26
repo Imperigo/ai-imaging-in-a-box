@@ -548,3 +548,61 @@ def test_der_alte_weg_ueber_einbettungen_bleibt_unveraendert():
     assert e["qa"]["style"]["style_score"] == 0.71
     assert e["qa"]["style"]["threshold"] == 0.60
     assert e["qa"]["style"]["method"] == "siglip2"
+
+
+# ======================================================================================
+# Das gemeldete Verfahren muss das gelaufene sein — nachgetragen 26.08.2026
+# ======================================================================================
+
+def test_das_gemeldete_verfahren_ist_das_gelaufene():
+    """**Der Vertrag nannte bis zum 26.08.2026 ein Verfahren, das er nicht kannte.**
+
+    ``qa.geometry.method`` stand fest auf `geometrie_qa.METHODE` — der **ungerichteten**
+    Fassung. Lief der Maskenweg und wurde die gemessene Polarität angewandt, war das
+    schlicht falsch.
+    """
+    urteil = {"score": 0.8, "spearman": -0.7, "geom_iou": 0.9, "bestanden": True,
+              "rho_maske": -0.8, "methode": geometrie_qa.METHODE_GERICHTET}
+
+    ergebnis = ks.als_ergebnis("vis-1-abcdef", ["a.png"], geometrie_urteil=urteil)
+
+    assert ergebnis["qa"]["geometry"]["method"] == geometrie_qa.METHODE_GERICHTET
+
+
+def test_ohne_angabe_bleibt_die_vorgabe():
+    """Ältere Urteile tragen kein `methode` — dann gilt die Konstante wie bisher."""
+    urteil = {"score": 0.8, "spearman": -0.7, "geom_iou": 0.9, "bestanden": True,
+              "rho_maske": -0.8}
+
+    ergebnis = ks.als_ergebnis("vis-1-abcdef", ["a.png"], geometrie_urteil=urteil)
+
+    assert ergebnis["qa"]["geometry"]["method"] == geometrie_qa.METHODE
+
+
+def test_eine_ungeprueffte_richtung_steht_in_den_hinweisen():
+    """**Was ein «bestanden» hier nicht bedeutet.**
+
+    Ohne Maskenweg wird die gemessene Polarität nicht angewandt, und der Score ist im
+    geometrischen Fehler nicht monoton — ein Bild mit vertauschter Tiefe erreicht denselben
+    Wert wie eines mit richtiger. Gemeldet von der HomeStation am 26.08.2026, an vier
+    Läufen: `rho_maske` war in jedem `None`.
+    """
+    urteil = {"score": 0.8, "spearman": -0.7, "geom_iou": 0.9, "bestanden": True,
+              "rho_maske": None, "methode": geometrie_qa.METHODE}
+
+    ergebnis = ks.als_ergebnis("vis-1-abcdef", ["a.png"], geometrie_urteil=urteil)
+
+    hinweise = " ".join(ergebnis["hinweise"])
+    assert "RICHTUNG NICHT GEPRUEFT" in hinweise
+    assert "vertauschter Tiefe" in hinweise, (
+        "Der Satz muss sagen, WAS dabei durchginge — sonst liest er sich wie eine Formalie.")
+
+
+def test_mit_gefahrenem_maskenweg_schweigt_der_hinweis():
+    """Die Gegenprobe. **Ein Hinweis, der immer dasteht, wird nicht gelesen.**"""
+    urteil = {"score": 0.8, "spearman": -0.7, "geom_iou": 0.9, "bestanden": True,
+              "rho_maske": -0.8, "methode": geometrie_qa.METHODE_GERICHTET}
+
+    ergebnis = ks.als_ergebnis("vis-1-abcdef", ["a.png"], geometrie_urteil=urteil)
+
+    assert not any("RICHTUNG NICHT GEPRUEFT" in h for h in ergebnis["hinweise"])
