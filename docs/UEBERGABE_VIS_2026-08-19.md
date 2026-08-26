@@ -504,7 +504,17 @@ Wenn ihr davon etwas braucht, sagt welches — dann bauen wir die Naht dorthin. 
    1.70 m **über Terrain**. Im Code stehen zwei verschiedene Bezugspunkte, siehe 4.3. Wer
    nachgibt, ist uns gleich — aber es sollte **eine** Zahl mit **einem** Bezugspunkt sein.
 8. **Sind `engine` und `style` im Laufzettel verbindlich?** Wir reichen sie durch und
-   lesen sie nicht.
+   lesen sie nicht. `engine: cycles` trifft ohnehin zu — unser Runner rendert **immer**
+   mit Cycles, aber weil es so gebaut ist und nicht, weil euer Laufzettel es sagt. Wäre
+   dort etwas anderes verlangt, bekämt ihr trotzdem Cycles.
+
+   *Präzisiert am 26.08.2026:* **Es gibt zwei Felder namens `style`, und nur das eine
+   bleibt ungelesen.** Der `style`-Block im **Szenenvertrag** (`{mode, refs}`) wird sehr
+   wohl gelesen — er steht in unserer Tabelle der bestellbaren Felder und ist dort als
+   *wirkungslos, weil uns ein eigenes Referenzset fehlt* ausgewiesen (Frage 2 und das
+   Kurzblatt, Abschnitt N5). Ungelesen bleibt allein `style: "lineart"` im **Laufzettel**
+   der Brücke. Zwei gleich benannte Felder mit verschiedenem Schicksal sind eine
+   Verwechslung, die wir lieber hier auflösen als in einem Ergebnis.
 9. **Nehmt ihr den Abholer?** Es läuft keiner, und wir haben einen. Wenn ja, sagt uns,
    ob `fremde_freigabe_gilt` gesetzt werden soll (Frage 3) — das ist die einzige
    Einstellung, die noch fehlt.
@@ -612,21 +622,27 @@ hängt** — und arbeiten weiter an Verträgen, QA und Bildkette. Das trägt in 
     26.08. vergleicht, sollte das wissen.
 
 16. **Was soll `render.faithful` steuern?**
-    *Nachgetragen 26.08.2026.* Das Feld steht in eurem Vertrag, wir reichen es durch und
-    **lesen es nicht** — genau wie `engine` und `style` (Frage 8). Bei einem Feld mit
-    diesem Namen ist das unbefriedigend: *Geometrie-Treue ist der Gegenstand dieser
-    ganzen Arbeit*, und ein Schalter, der so heisst, sollte nicht ins Leere laufen.
+    *Nachgetragen 26.08.2026.* **Das Feld wird gelesen** und auf unsere
+    `controlnet_staerke` abgebildet (Vorgabe 0.8) — das ist die einzige Zuordnung, die wir
+    ehrlich hinschreiben können. Unser Ergebnis sagt bei **jedem** Auftrag dazu, was dabei
+    *nicht* abgebildet wird; es scheitert also nicht still.
 
-    Drei Lesarten sind denkbar, und sie führen zu verschiedenen Bildern:
+    Die Frage ist trotzdem offen, weil eine Zahl drei Grössen nicht ausdrücken kann. Was
+    die Treue bei uns mitbestimmt:
 
-    1. **Stärke der Konditionierung** — wie eng sich das Bildmodell an die Tiefenkarte
-       hält. Bei uns ist das `controlnet_staerke`, und die reicht euer Vertrag bereits
-       getrennt durch.
-    2. **Anzahl der Diffusionsschritte / `denoise`** — wie weit das Modell die Vorlage
-       überschreiben darf. Beides ist bei uns einstellbar und wird heute **nicht** aus
-       eurem Auftrag gesetzt.
-    3. **Ein Torverhalten** — ob ein Bild, das die Geometrie-Schwelle verfehlt,
+    1. **`controlnet_staerke`** — wie eng sich das Bildmodell an die Tiefenkarte hält.
+       *Darauf bilden wir heute ab.*
+    2. **Schrittzahl und `denoise`** — wie weit das Modell die Vorlage überschreiben darf.
+       Beides ist bei uns einstellbar und wird aus eurem Auftrag **nicht** gesetzt.
+    3. **Das Torverhalten** — ob ein Bild, das die Geometrie-Schwelle verfehlt,
        zurückgewiesen oder trotzdem geliefert wird.
 
-    Sagt uns, welche gemeint ist. Solange das offen ist, bleibt das Feld unbedient und
-    unser Ergebnis sagt das auch — es scheitert nicht still.
+    **Und die Wirkung ist nachweislich nicht monoton:** gemessen (`auf-20260818-13`)
+    schneidet 0.80 besser ab als 1.00. Aus einer Zahl zwei zu erfinden wäre geraten und
+    nicht abgebildet — darum lassen wir 2. bewusst unbedient, statt eine Formel zu
+    erfinden.
+
+    Konkret gefragt: Meint `faithful` bei euch **nur** die ControlNet-Stärke? Dann ist
+    unsere Abbildung richtig und der Vorbehalt in unserem Ergebnis kann weg. Meint es die
+    Treue **insgesamt**, sagt uns bitte, welche Kurve ihr euch vorstellt — dann rechnen
+    wir sie, statt sie zu raten.
