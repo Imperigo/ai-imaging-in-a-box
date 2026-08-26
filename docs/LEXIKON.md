@@ -2251,6 +2251,20 @@ aus `docs/recherche/KOMPOSITION_INNEN.md` und steht in keiner Quelle.*
 gegen den Uhrzeigersinn ab der Ost-Achse zählt — wer die beiden verwechselt, dreht eine
 ganze Kameraanlage um 90°, und zwar unauffällig.*
 
+**Der Nullpunkt des Azimuts (Süd- gegen Nord-Konvention)** — *Ab welcher Richtung* der
+Winkel zählt, ist **nicht** einheitlich geregelt, und die beiden gebräuchlichen
+Festlegungen liegen 180 Grad auseinander:
+* **Von Norden**, positiv nach Osten — Meteorologie, Karten, Navigation (siehe *Azimut*).
+* **Von Süden**, positiv nach Westen — Architektur und Bauphysik; dort ist Süden die
+  interessante Richtung, und Mittag liegt bei 0°.
+*Der Unterschied ist keine Feinheit: Er vertauscht **Vormittag und Nachmittag**. Ein
+Gebäude, das morgens von Osten beschienen werden soll, steht dann im Nachmittagslicht —
+und das Bild sieht für sich genommen völlig richtig aus. Genau darin liegt die Gefahr:
+Der Fehler ist an keinem einzelnen Bild erkennbar, nur am Vergleich mit der Bestellung.*
+*In diesem Projekt gilt die **Süd**-Konvention, und zwar als **Setzung**: Die fremde
+Bestellung sagt nicht, welche sie meint. Die gewählte Annahme wandert darum in jeden
+Bericht mit — damit ein falsch gewählter Nullpunkt später auffindbar ist statt unsichtbar.*
+
 **Deckungsgrad** — Welcher Anteil der Bildbreite vom Gebäude gefüllt werden soll, als Zahl
 zwischen 0 und 1. Ein Wert unter 1 schiebt die Kamera weiter weg und lässt Luft um das
 Bauwerk. *Das ist die gestalterische „Zweidrittel-Komposition" als Zahl ausgedrückt.*
@@ -3373,6 +3387,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-26 | Ergaenzt: **Der Nullpunkt des Azimuts (Sued- gegen Nord-Konvention)**. Anlass ist das Anschliessen des Sonnenstands: Die beiden gebraeuchlichen Festlegungen liegen 180 Grad auseinander und vertauschen Vormittag und Nachmittag. Der Eintrag traegt mit, warum der Fehler an keinem einzelnen Bild erkennbar waere — und warum die gewaehlte Annahme darum in jeden Bericht gehoert |
 | 2026-08-26 | Ergaenzt: **Zweizaehlige Drehsymmetrie**. Anlass ist ein Renderlauf fuer nichts: Bei einem Quader sind die beiden vorgeschriebenen Ueber-Eck-Ansichten Byte fuer Byte identisch. Der Eintrag traegt mit, warum es sich an der Huellbox NICHT entscheiden laesst — und warum die eingesparte Ansicht hinterher nicht mitzaehlen darf |
 | 2026-08-26 | Ergaenzt: **Dauerwarnung**. Nachgemessen: Drei Warnungen feuerten bei jedem Auftrag und fuellten damit alle drei Plaetze der Anzeige — jede echte Warnung, die im Ablauf spaeter entsteht, war unsichtbar. Der Eintrag traegt die billige Probe mit (erscheint sie auch, wenn gar nichts vorliegt?) und den Grund, warum Loeschen keine Abhilfe ist, sondern Verschweigen |
 | 2026-08-26 | Ergaenzt: **Die blinde Wache**. Anlass ist eine Fortschrittswache, die fuenf Laeufe lang auf `out/` sah, waehrend nach `out/<kuerzel>/` geschrieben wurde — und als laengste Pause jeweils exakt die Gesamtdauer meldete. Der Eintrag traegt das Erkennungszeichen mit: Eine zu GLATTE Meldung ist keine Messung, sondern das Fehlen einer |

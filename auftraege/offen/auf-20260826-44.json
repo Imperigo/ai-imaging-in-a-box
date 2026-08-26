@@ -1,0 +1,26 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "cloud",
+  "auftrag_id": "auf-20260826-44",
+  "art": "qa",
+  "beschreibung": "Ab welcher Richtung zaehlt `render.sun.azimuth`? Die beiden ueblichen Konventionen liegen 180 Grad auseinander und vertauschen Vormittag und Nachmittag.",
+  "erstellt": "2026-08-26",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "keine Geometrie noetig — es ist eine Vertragsfrage"
+  },
+  "anweisung": "=== EINE EINZIGE FRAGE, UND SIE BETRIFFT EUREN VERTRAG ===\n\nWir bedienen seit dem 26.08.2026 `render.sun` — bis dahin lief das Feld ins Leere: Wer\neinen Abendstand bestellte, bekam ein sauberes, gut belichtetes, FALSCHES Bild, und\nnichts daran sah nach einem Fehler aus.\n\nEine Sache koennen wir nicht selbst entscheiden, und sie ist genau die, die euer Schema\noffenlaesst:\n\n  **AB WELCHER RICHTUNG ZAEHLT `render.sun.azimuth`, UND IN WELCHE RICHTUNG POSITIV?**\n\nZwei Festlegungen sind ueblich, und sie liegen 180 GRAD auseinander:\n\n  (a) VON NORDEN, positiv nach Osten — Meteorologie, Karten, Navigation.\n      0 = Norden, 90 = Osten, 180 = Sueden, 270 = Westen.\n  (b) VON SUEDEN, positiv nach Westen — Architektur und Bauphysik.\n      0 = Sueden (Mittag), +90 = Westen, -90 = Osten.\n\nDer Unterschied vertauscht VORMITTAG UND NACHMITTAG. Ein Gebaeude, das morgens von Osten\nbeschienen werden soll, steht dann im Nachmittagslicht. Das Bild sieht fuer sich genommen\nvoellig richtig aus — der Fehler ist an keinem einzelnen Bild erkennbar, nur am Vergleich\nmit der Bestellung.\n\n=== WAS WIR EINSTWEILEN ANGENOMMEN HABEN, UND WARUM ===\n\nWir rechnen mit (b), VON SUEDEN. Der Grund ist NICHT, dass wir sie fuer richtiger halten,\nsondern dass unsere bisherige feste Sonne so gemeint war: Sie stand 35 Grad oestlich von\nSueden. Mit (a) haetten wir jedes Bild dieses Projekts um 180 Grad gedreht und damit jede\nMessung der letzten Woche unvergleichbar gemacht.\n\nDie Annahme ist als solche kenntlich gemacht und wird NICHT verschwiegen:\n- Jeder Auftrag mit gesetzter Sonne traegt eine Warnung, die die angenommene Konvention\n  woertlich nennt.\n- Der Blender-Bericht traegt ein Feld `sonne` mit `konvention`, `weltsystem`,\n  `bestellt` und den gestellten Winkeln.\n\nDamit ist ein falscher Nullpunkt spaeter AUFFINDBAR statt unsichtbar. Er ist trotzdem\nfalsch, solange ihr die Frage nicht beantwortet habt.\n\n=== WAS WIR AUSSERDEM VORAUSSETZEN, UND WAS IHR BITTE BESTAETIGT ===\n\nF1 · DER NULLPUNKT\n     (a) oder (b)? Falls euer Schema es irgendwo festlegt, genuegt die Fundstelle.\n     Falls nicht: Was setzt eure Oberflaeche, wenn ein Nutzer einen Sonnenstand waehlt?\n     Die Antwort steckt sonst in eurem UI-Code und nicht in der Dokumentation.\n\nF2 · DIE HOEHE\n     Wir lesen `elevation` als Grad UEBER DEM HORIZONT (0 = Horizont, 90 = Zenit).\n     Negative Werte lassen wir zu — eine Sonne unter dem Horizont ist Nacht, und das ist\n     eine gueltige Bestellung. Wir heben sie NICHT stillschweigend auf null.\n     Stimmt das? Oder meint `elevation` bei euch den Winkel vom Zenit aus?\n\nF3 · DAS WELTSYSTEM\n     Wir setzen +Y = Norden, +X = Osten, +Z = oben. Das ist eine SETZUNG von uns: Eine\n     glb traegt keine Himmelsrichtung. Habt ihr eine Nordrichtung in der Szene, und wenn\n     ja, wo steht sie? Ohne sie ist jede Himmelsrichtung eine Verabredung und keine\n     Tatsache — und dann sollten wir das beide so nennen.\n\nF4 · WAS NOCH IM SONNENBLOCK STEHEN KANN\n     Wir lesen heute nur `elevation` und `azimuth`. Traegt euer `sun` weitere Felder\n     (Staerke, Farbtemperatur, Bewoelkung, Datum/Uhrzeit/Ort)? Datum und Ort waeren\n     interessant: Daraus liesse sich der Stand rechnen, und dann waere die Frage nach dem\n     Nullpunkt gegenstandslos.\n\n=== WAS NICHT GETAN WERDEN SOLL ===\n- Aendert nichts an eurem Schema, nur weil wir fragen. Wir wollen wissen, was IST.\n- Kein Ratenlassen: «vermutlich von Norden» hilft uns nicht. Wenn es nirgends festgelegt\n  ist, ist genau DAS die Antwort — und dann gehoert es in euren Vertrag, nicht in unsere\n  Annahme.\n\n=== WAS ZURUECKKOMMEN SOLL ===\nJe Punkt F1 bis F4 eine Antwort. Bei F1 zusaetzlich, WO es steht (Schema, Code, oder\nnirgends). Das ist der einzige Punkt, der uns heute blockiert.\n",
+  "params": {
+    "feld": "render.sun.azimuth"
+  },
+  "auflagen": [
+    "Nichts am fremden Schema aendern — wir wollen wissen, was IST"
+  ],
+  "rueckgabe": [
+    "F1 Nullpunkt und Fundstelle",
+    "F2 Bedeutung von elevation",
+    "F3 Nordrichtung in der Szene",
+    "F4 weitere Felder im Sonnenblock"
+  ]
+}

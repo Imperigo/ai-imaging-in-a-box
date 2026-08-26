@@ -57,6 +57,7 @@ import re
 from . import backbone as _backbone
 from . import geometrie_qa, prompts, sprache, stil_qa
 from . import kameras as _kameras
+from . import sonne as _sonne
 
 #: Die beiden Vertragskennungen, wörtlich aus den Schemadateien der Designzentrale.
 SCHEMA_SZENE = "kosmovis.render-scene/v1"
@@ -415,6 +416,18 @@ def lies_szene(fremd: dict) -> dict:
         )
 
     sonne = render.get("sun")
+    if sonne is not None:
+        # Bedient wird der Sonnenstand seit dem 26.08.2026 — aber unter EINER Annahme,
+        # und die stammt nicht aus dem fremden Vertrag. Die beiden ueblichen Konventionen
+        # unterscheiden sich um 180 Grad und vertauschen damit Vormittag und Nachmittag.
+        # Das ist eine Warnung ueber DIESEN Auftrag und keine Vertragsvorgabe: Sie
+        # erscheint nur, wenn wirklich eine Sonne bestellt wurde.
+        warnungen.append(
+            f"Sonnenstand {sonne!r} wird bedient, der Azimut aber unter der ANNAHME "
+            f"'{_sonne.VORGABE_KONVENTION}' (0 Grad im Sueden, positiv nach Westen). Ob "
+            f"der fremde Vertrag von Norden zaehlt, ist NICHT geklaert — der Unterschied "
+            f"betraegt 180 Grad und vertauscht Vormittag und Nachmittag. Die benutzte "
+            f"Konvention steht im Bericht des Runners (Feld 'sonne').")
     if sonne is None:
         vorgaben.append(
             "Keine Sonnenangabe. Unser Runner setzt eine feste Sonne von schräg "
@@ -541,6 +554,9 @@ DURCHGEREICHT = {
     # belegt (auf-vis-20260825-15, Posten 2): Wer abbestellt, bekommt geliefert — und
     # zahlt die GPU-Zeit.
     "ueberspringen": "abholer.verarbeiter: der Auftrag wird NICHT gerendert",
+    # Seit 26.08.2026 — vorher der GEFAEHRLICHSTE der stehengebliebenen Felder, weil das
+    # Bild danach richtig AUSSAH (auf-vis-20260825-15 Posten 5.3).
+    "sonne": "seams.glb_zu_multipass(sonne=…) → blender_depth_stage --sonne-hoehe/-azimut",
 }
 
 #: Felder, die der Betreiber setzen **kann** und die heute **nichts** bewirken.
@@ -548,15 +564,6 @@ DURCHGEREICHT = {
 #: Jeder Eintrag trägt, was fehlt — nicht bloss, dass etwas fehlt. Ein «wird nicht
 #: unterstützt» ohne den nächsten Schritt ist eine Sackgasse; mit ihm ist es eine Aufgabe.
 STEHENGEBLIEBEN = {
-    "sonne": {
-        "neutral": None,
-        "grund": "Die Sonne steht in `blender_depth_stage` FEST auf 50° Höhe und 35° "
-                 "Azimut. Eine Bestellung mit anderem Sonnenstand wird gerendert, als "
-                 "wäre sie nicht gestellt worden — und das Bild sieht danach richtig aus.",
-        "noetig": "Sonnenstand als Parameter durch `glb_zu_multipass` bis in den "
-                  "Blender-Runner, dazu die Frage, ob Azimut gegen Norden oder gegen die "
-                  "Y-Achse gemeint ist. Die beantwortet nur der fremde Vertrag.",
-    },
     "hochskalieren": {
         "neutral": False,
         "grund": "Es gibt keinen Hochskalierer in dieser Kette. Ein `upscale: true` "

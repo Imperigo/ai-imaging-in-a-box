@@ -108,6 +108,14 @@ def _argumente():
     # `--aufloesung` ist die BREITE. `--hoehe` fehlt heisst quadratisch — so war es bis
     # zum 19.08.2026 immer, und jede bisher gemessene Zahl hängt daran.
     ap.add_argument("--aufloesung", type=int, default=512)
+    # Sonnenstand. `None` heisst NICHT VORGEGEBEN — die Vorgabewerte stehen in
+    # `aiimaging.sonne` und nicht hier, siehe `_vorgabe`.
+    ap.add_argument("--sonne-hoehe", type=float, default=None,
+                    help="Grad ueber dem Horizont; ohne Angabe gilt aiimaging.sonne")
+    ap.add_argument("--sonne-azimut", type=float, default=None,
+                    help="Grad nach --sonne-konvention")
+    ap.add_argument("--sonne-konvention", default=None,
+                    help="von_sueden (Vorgabe) oder von_norden")
     ap.add_argument("--hoehe", type=int, default=None,
                     help="Bildhöhe in Punkten. Ohne Angabe quadratisch. Das "
                          "Seitenverhältnis geht in den Bildwinkel und damit in den "
@@ -368,6 +376,21 @@ def _maske_modul():
         sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
         from aiimaging import maske                        # noqa: PLC0415
         return maske
+    except Exception:                                      # noqa: BLE001
+        return None
+
+
+def _sonne_modul():
+    """``aiimaging.sonne`` von hier aus erreichbar machen — oder ``None``.
+
+    Dieselbe Bauart und Begründung wie :func:`_kameras_modul`: Der Runner darf aus dem
+    Produkt lesen, nur der umgekehrte Weg ist verboten (Regel 2). ``sonne`` ist reine
+    Trigonometrie und bringt nichts mit.
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from aiimaging import sonne                         # noqa: PLC0415
+        return sonne
     except Exception:                                      # noqa: BLE001
         return None
 
@@ -634,24 +657,72 @@ def _welt_setzen(farbe, staerke: float) -> None:
     bpy.context.scene.world = welt
 
 
-def _sonne_setzen(mitte, spanne: float):
-    """Eine einzelne Sonne von schräg vorn-oben.
+#: Die Drehung, die dieser Runner bis zum 26.08.2026 unbedingt setzte.
+#:
+#: Sie steht hier als **Rückfall** — und nur als der. Ist ``aiimaging.sonne`` von diesem
+#: Blender aus nicht erreichbar, wird sie gestellt, und der Bericht sagt es ausdrücklich.
+#: Die Zahlen dahinter (40° über dem Horizont, 35° östlich von Süden) stehen in
+#: ``aiimaging.sonne``; der alte Kommentar an dieser Stelle nannte **beide falsch**.
+RUECKFALL_SONNE_EULER = (math.radians(50.0), 0.0, math.radians(35.0))
+
+
+def _sonne_setzen(mitte, spanne: float, a=None):
+    """Eine einzelne Sonne — **nach der Bestellung**, wenn eine vorliegt.
 
     Eine Sonne (Richtungslicht) statt einer Punktlichtquelle, weil ihre Wirkung nicht vom
     Abstand abhängt: Dieselben Winkel liefern bei einem Reihenhaus dieselbe Helligkeit
     wie bei einem Hochhaus. Damit bleibt das Bild über verschiedene Bauten hinweg
     vergleichbar, ohne dass irgendetwas an der Geometrie nachgeführt werden müsste.
+
+    **Bis zum 26.08.2026 stand hier eine feste Drehung**, und der Sonnenstand einer
+    Bestellung lief ins Leere: Ein Auftrag mit Abendstand wurde gerendert, als wäre er
+    nicht gestellt worden — mit einem sauberen, gut belichteten, falschen Bild
+    (`kosmo_szene.STEHENGEBLIEBEN`, Feld ``sonne``).
+
+    Gerechnet wird in :mod:`aiimaging.sonne` und nicht hier (Regel 4). Ist das Modul von
+    diesem Blender aus nicht erreichbar, greift :data:`RUECKFALL_SONNE_EULER`, und der
+    Bericht sagt es — ein stiller Rückfall wäre genau der Fehler, gegen den dieser Runner
+    an drei anderen Stellen bereits abgesichert ist.
+
+    Returns:
+        ``(sonne, befund)``. ``befund`` ist das Wörterbuch aus
+        :func:`aiimaging.sonne.lage`, ergänzt um ``weg`` — oder ein Rückfallvermerk.
     """
     licht = bpy.data.lights.new("Sonne", type="SUN")
     licht.energy = 2.0
     licht.angle = math.radians(3.0)      # weiche Schattenkanten, nicht rasiermesserscharf
-    sonne = bpy.data.objects.new("Sonne", licht)
-    bpy.context.scene.collection.objects.link(sonne)
+    objekt = bpy.data.objects.new("Sonne", licht)
+    bpy.context.scene.collection.objects.link(objekt)
     # Position ist bei einer Sonne bedeutungslos, nur die Drehung zählt. Sie wird trotzdem
     # über der Szene abgelegt, damit ein späterer Blick in die .blend nicht verwirrt.
-    sonne.location = (mitte[0], mitte[1], mitte[2] + spanne * 2.0)
-    sonne.rotation_euler = (math.radians(50.0), 0.0, math.radians(35.0))
-    return sonne
+    objekt.location = (mitte[0], mitte[1], mitte[2] + spanne * 2.0)
+
+    modul = _sonne_modul()
+    if modul is None:
+        objekt.rotation_euler = RUECKFALL_SONNE_EULER
+        return objekt, {"weg": "rueckfall", "bestellt": (), "hoehe_grad": None,
+                        "azimut_grad": None, "konvention": None,
+                        "euler": list(RUECKFALL_SONNE_EULER),
+                        "grund": ("'aiimaging.sonne' ist von diesem Blender aus nicht "
+                                  "erreichbar. Es wurde die feste Drehung gestellt — ein "
+                                  "bestellter Sonnenstand ist damit NICHT bedient.")}
+    try:
+        befund = modul.lage(getattr(a, "sonne_hoehe", None),
+                            getattr(a, "sonne_azimut", None),
+                            konvention=(getattr(a, "sonne_konvention", None)
+                                        or modul.VORGABE_KONVENTION))
+    except modul.SonnenError as fehler:
+        # Ein unbrauchbarer Sonnenstand haelt den Lauf NICHT auf — aber er wird auch
+        # nicht stillschweigend durch die Vorgabe ersetzt. Der Bericht traegt den Grund.
+        objekt.rotation_euler = RUECKFALL_SONNE_EULER
+        return objekt, {"weg": "rueckfall", "bestellt": (), "hoehe_grad": None,
+                        "azimut_grad": None, "konvention": None,
+                        "euler": list(RUECKFALL_SONNE_EULER),
+                        "grund": f"Bestellter Sonnenstand unbrauchbar: {fehler}"}
+
+    objekt.rotation_euler = befund["euler"]
+    weg = "bestellt" if befund["bestellt"] else "vorgabe"
+    return objekt, dict(befund, weg=weg, euler=list(befund["euler"]), grund="")
 
 
 # --------------------------------------------------------------------------------------
@@ -1114,7 +1185,7 @@ def main() -> int:
     # lag das Bild im Mittel bei 0.83 von 1.0 — durchgehend ausgebrannt, die Fassaden
     # ohne Zeichnung. Die Schattenseite soll dunkel bleiben, ohne zuzulaufen.
     _welt_setzen((0.55, 0.60, 0.68), 0.25)               # kühles, gleichmässiges Umgebungslicht
-    _sonne_setzen(mitte, spanne)
+    _, sonne_befund = _sonne_setzen(mitte, spanne, a)
     szene.cycles.use_denoising = True                    # 8 Samples auf CPU rauschen sichtbar
     szene.render.image_settings.file_format = "PNG"
     szene.render.image_settings.color_mode = "RGBA"
@@ -1210,6 +1281,10 @@ def main() -> int:
         # "in Ordnung" — `bbox_bauwerk_note` sagt, woran es lag.
         "bbox_bauwerk": ([bau_lo, bau_hi] if bau_lo is not None else None),
         "bbox_bauwerk_note": bau_note,
+        # Welcher Sonnenstand gestellt wurde, unter welcher Azimutkonvention, und ob er
+        # BESTELLT war oder die Vorgabe ist. Bis zum 26.08.2026 lief der Sonnenstand
+        # einer Bestellung ins Leere, und das Bild sah trotzdem richtig aus.
+        "sonne": sonne_befund,
         "n_meshes": sum(1 for o in bpy.data.objects if o.type == "MESH"),
         "aufloesung": a.aufloesung,
         "hoehe": a.hoehe or a.aufloesung,

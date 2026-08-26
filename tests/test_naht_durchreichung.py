@@ -10,9 +10,9 @@ in genau einer der beiden Listen** — es kommt an, oder es bleibt stehen und de
 steht dabei. Ein neues Feld im fremden Vertrag kann damit nicht mehr stillschweigend ins
 Leere laufen.
 
-Die Prüfung ist bewusst **nicht** «alles kommt an». Vier Felder tun es heute nicht, und
+Die Prüfung ist bewusst **nicht** «alles kommt an». Drei Felder tun es heute nicht, und
 das ist ein Befund und kein Fehler dieser Datei — er gehört gemeldet, nicht wegdefiniert.
-*Es waren fünf; `ueberspringen` ist am 26.08.2026 angeschlossen worden.*
+*Es waren fünf; `ueberspringen` und `sonne` sind am 26.08.2026 angeschlossen worden.*
 """
 from __future__ import annotations
 
@@ -83,18 +83,31 @@ def test_eine_leere_bestellung_meldet_nichts():
     assert kosmo_szene.stehengebliebene_felder(_szene()) == ()
 
 
-def test_ein_gesetzter_sonnenstand_wird_gemeldet():
-    """Der gefährlichste der fünf: Das Bild sieht danach richtig aus.
+def test_ein_gesetzter_sonnenstand_wird_jetzt_bedient():
+    """**Erledigt am 26.08.2026** — und es war der gefährlichste der fünf.
 
-    Die Sonne steht im Blender-Runner fest auf 50°/35°. Wer einen Abendstand bestellt,
-    bekommt ein sauberes, gut belichtetes, **falsches** Bild — und nichts daran sieht nach
-    einem Fehler aus.
+    Die Sonne stand im Blender-Runner fest. Wer einen Abendstand bestellte, bekam ein
+    sauberes, gut belichtetes, **falsches** Bild — und nichts daran sah nach einem Fehler
+    aus. Jetzt reicht `seams.glb_zu_multipass(sonne=…)` ihn bis in den Runner durch.
+
+    **Die Warnung bleibt trotzdem stehen, und sie ist eine andere:** Ob der fremde
+    Vertrag den Azimut von Norden oder von Süden zählt, ist nicht geklärt. Der
+    Unterschied beträgt 180 Grad und vertauscht Vormittag und Nachmittag — bedient unter
+    einer Annahme ist etwas anderes als bedient.
     """
-    offen = kosmo_szene.stehengebliebene_felder(
-        _szene(render={"sun": {"elevation": 8, "azimuth": 250}}))
+    szene = _szene(render={"sun": {"elevation": 8, "azimuth": 250}})
 
-    assert [e["feld"] for e in offen] == ["sonne"]
-    assert offen[0]["wert"] == {"elevation": 8, "azimuth": 250}
+    assert kosmo_szene.stehengebliebene_felder(szene) == ()
+    assert "sonne" in DURCHGEREICHT and "sonne" not in STEHENGEBLIEBEN
+    assert szene["sonne"] == {"elevation": 8, "azimuth": 250}
+    assert any("ANNAHME" in w for w in szene["warnungen"]), (
+        "bedient unter einer ungeklaerten Konvention ist NICHT dasselbe wie bedient")
+
+
+def test_ohne_bestellte_sonne_steht_die_annahme_nicht_da():
+    """Die Gegenprobe: Sie erscheint nur, wenn wirklich eine Sonne bestellt wurde — sonst
+    wäre es die nächste Dauerwarnung."""
+    assert not [w for w in _szene()["warnungen"] if "ANNAHME" in w]
 
 
 def test_ein_abbestellter_auftrag_steht_nicht_mehr_auf_der_liste():
@@ -124,7 +137,9 @@ def test_mehrere_zugleich_kommen_alle_und_in_der_reihenfolge_der_tabelle():
     felder = [e["feld"] for e in offen]
 
     assert felder == [f for f in STEHENGEBLIEBEN if f in felder]
-    assert set(felder) == {"sonne", "hochskalieren", "stil_modus"}
+    assert set(felder) == {"hochskalieren", "stil_modus"}, (
+        "es sind noch DREI stehengebliebene Felder; `ueberspringen` und `sonne` sind am "
+        "26.08.2026 angeschlossen worden")
 
 
 def test_ein_stil_modus_none_ist_keine_bestellung():

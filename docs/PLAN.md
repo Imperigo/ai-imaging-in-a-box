@@ -3097,10 +3097,35 @@ der freie Kartenspeicher — 29,25 GiB verlangt, 28,89 bis 29,07 frei.
 
 ### Offen aus derselben Liste
 
-- [ ] **Posten 5 · Drei Vertragslücken**, die der Abholer selbst meldet: Bildmasse
-      1600×1000 → 1600×992, `denoise` und Schrittzahl werden nicht abgebildet, Sonnenstand
-      wird nicht bedient. Überschneidet sich mit Block 3 des Tagesplans (die drei
-      Dauerwarnungen).
+- [x] **Posten 5.1 · Bildmasse** 1600×1000 → 1600×992 — erledigt mit der Trennung nach
+      `vertragsvorgaben` (siehe dort).
+- [x] **Posten 5.3 · Der Sonnenstand wird bedient.** Er war der **gefährlichste** der
+      stehengebliebenen Felder, und genau darum, weil das Ergebnis richtig *aussah*: Der
+      Runner setzte eine feste Sonne, und ein Auftrag mit Abendstand wurde gerendert, als
+      wäre er nicht gestellt worden.
+      *Neues Modul `aiimaging/sonne.py`* — reine Trigonometrie diesseits der Prozessgrenze
+      (Regel 4); der Runner ruft sie auf und meldet einen Rückfall, wenn er das Modul
+      nicht erreicht. Durchgereicht über `seams.glb_zu_multipass(sonne=…)`, und **nur was
+      wirklich bestellt wurde**: Ein mitgeschickter Vorgabewert wäre im Bericht von einer
+      Bestellung nicht mehr zu unterscheiden.
+      **Der Fund, der dabei abfiel:** Die feste Drehung stand als
+      `(radians(50), 0, radians(35))` da, kommentiert mit *«50° Höhe und 35° Azimut»* —
+      **beide Zahlen im Kommentar sind falsch.** Es sind **40°** über dem Horizont
+      (`90° − rx`) und **−35°** (östlich von Süden). *Ein Kommentar ist keine Rechnung.*
+      Nachgerechnet und nicht geglaubt: `tests/test_sonne.py` misst die Strahlrichtung
+      aus den Eulerwinkeln **zurück**. Und die Vorgabe stellt bitgenau dieselbe Drehung
+      wie bisher — sonst wäre jedes Bild ab heute anders beleuchtet als alle Messungen
+      davor, und der Vergleich über die Wochen wäre still kaputt.
+      **Offen und nicht unsere Entscheidung:** ab welcher Richtung `azimuth` zählt. Die
+      beiden üblichen Konventionen liegen **180 Grad** auseinander und vertauschen
+      Vormittag und Nachmittag. Angenommen ist *von Süden* (weil die alte feste Sonne so
+      gemeint war); die Annahme steht als **Warnung an jedem Auftrag mit Sonne** und im
+      Bericht des Runners. Gefragt ist `auf-20260826-44` beim Cloud-Worker.
+- [ ] **Posten 5.2 · `denoise` und Schrittzahl** werden nicht abgebildet. Der fremde
+      Vertrag hat dafür **nur** `faithful`, und ein einzelner Regler von 0 bis 1 kann drei
+      Grössen nicht ausdrücken — die Wirkung ist zudem nicht monoton (`auf-20260818-13`:
+      0.80 schneidet besser ab als 1.00). *Hier zu raten hiesse, aus einer Zahl zwei zu
+      erfinden.* Gehört in dieselbe Runde wie `auf-44`.
 - [ ] **Posten 6 · `idle_window_only`** ist auf einem benutzten Rechner nie erfüllbar
       (Auslastung 21 % gegen Grenze 10 %). `_karte_frei` ist richtig gebaut — die Frage
       gehört an KosmoOrbit: Wer setzt die Voreinstellung, und was soll sie auf einem
@@ -3307,12 +3332,12 @@ zweiten Stelle.
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
 
-Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste** (sechzehn
+Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste** (achtzehn
 Entscheide, alle rückgängig zu machen) am Ende.
 
 | | Beginn des Tages | Ende |
 |---|---:|---:|
-| Tests | 3335 | 3461 |
+| Tests | 3335 | 3496 |
 | Vakuumprobe | 10 Treffer | 12 Treffer |
 
 *Die beiden neuen Vakuumtreffer sind erklärt: Zwei Zusicherungen über `warnungen` sind
@@ -3328,7 +3353,8 @@ sich hält.*
 
 **Offene Aufträge:** `auf-38` (negativer Prompt), `auf-39` (Konversionstreue), `auf-40`
 (Cloud-Worker), `auf-41` (Grundmessung nach dem Deckungsgrad-Wechsel), `auf-42`
-(Entflechtung am Gerät), `auf-43` (welche Zahl war 0.6909).
+(Entflechtung am Gerät), `auf-43` (welche Zahl war 0.6909) und `auf-44`
+(Azimut-Konvention, **Cloud-Worker**).
 
 **Nicht angekommen:** Der Commit `4a93aa7` der HomeStation liegt nicht auf `origin/main`;
 `auftraege/von-homestation/auf-vis-20260826-16.md` fehlt hier. Gearbeitet wurde nach ihrer

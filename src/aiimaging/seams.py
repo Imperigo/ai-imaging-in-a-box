@@ -470,7 +470,8 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
                          auge=None, blick_auf=None, brennweite=None,
                          kamera_modus=None, shift_y=None,
                          gelaende_z=None, hoehe=None,
-                         herzschlag_takt_s=None, kamera_huellbox=None) -> list[str]:
+                         herzschlag_takt_s=None, kamera_huellbox=None,
+                         sonne=None) -> list[str]:
     """Die Argumente hinter dem `--`-Trenner — eine Stelle für Lauf und Trockenlauf.
 
     Wären sie zweimal geschrieben, könnten `glb_zu_multipass` und
@@ -546,6 +547,16 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
         lo, hi = kamera_huellbox
         argumente += ["--kamera-huellbox="
                       + ",".join(str(float(v)) for v in (*lo, *hi))]
+    # Der Sonnenstand der Bestellung. Nur, was WIRKLICH bestellt wurde, wird
+    # weitergereicht: Ein mitgeschickter Vorgabewert waere im Bericht des Runners von
+    # einer Bestellung nicht mehr zu unterscheiden, und genau diesen Unterschied traegt
+    # dort das Feld `bestellt`.
+    for schalter, wert in (("--sonne-hoehe", (sonne or {}).get("elevation")),
+                           ("--sonne-azimut", (sonne or {}).get("azimuth"))):
+        if wert is not None:
+            argumente += [f"{schalter}={float(wert)}"]
+    if (sonne or {}).get("konvention"):
+        argumente += [f"--sonne-konvention={sonne['konvention']}"]
     if drehen:
         argumente.append("--rotiere-z-up")
     if not beauty:
@@ -579,7 +590,7 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      gelaende_z=None, hoehe=None,
                      timeout: int = 900, stillstand_frist_s: float | None = None,
                      herzschlag_takt_s: float | None = HERZSCHLAG_TAKT_S,
-                     kamera_huellbox=None, _starte=None) -> dict:
+                     kamera_huellbox=None, sonne=None, _starte=None) -> dict:
     """glb → Cycles-Multipass über `blender --background`.
 
     Vier Ausgaben, in zwei Renderdurchgängen: Beauty und Tiefe (EXR in Metern plus
@@ -598,6 +609,11 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             in der Luft. Spart Plattenplatz, keine Rechenzeit.
         material_id: `False` lässt den zweiten Durchgang ganz aus und spart damit
             tatsächlich Rechenzeit.
+        sonne: Der Sonnenblock der Bestellung, ``{elevation, azimuth}`` und wahlweise
+            ``konvention``. ``None`` heisst **nicht bestellt**; dann setzt der Runner die
+            Vorgabe aus :mod:`aiimaging.sonne` und sagt es in seinem Bericht. Bis zum
+            26.08.2026 lief dieses Feld ins Leere — ein Auftrag mit Abendstand wurde
+            gerendert, als wäre er nicht gestellt worden.
         kamera_huellbox: ``(lo, hi)`` — die Hüllbox, auf die sich die **Kamera** bezieht.
             Ohne Angabe alle Meshes. Nötig, sobald die Szene **Gelände** trägt: Eine
             Geländeplatte bläht die Hüllbox auf, die Kamera zieht sich zurück, und der
@@ -712,7 +728,7 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                               brennweite=brennweite, kamera_modus=kamera_modus,
                               shift_y=shift_y, gelaende_z=gelaende_z,
                               hoehe=hoehe, herzschlag_takt_s=herzschlag_takt_s,
-                              kamera_huellbox=kamera_huellbox),
+                              kamera_huellbox=kamera_huellbox, sonne=sonne),
     ]
 
     ergebnis = starte(cmd, timeout)
@@ -814,7 +830,7 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                             kamera_modus=None, shift_y=None,
                             gelaende_z=None, hoehe=None,
                             herzschlag_takt_s: float | None = HERZSCHLAG_TAKT_S,
-                            ) -> list[str]:
+                            sonne=None) -> list[str]:
     """Nur das Blender-Kommando bauen, ohne es auszuführen.
 
     Für Tests und zur Fehlersuche: zeigt, ob die Prozessgrenze richtig konstruiert ist —
@@ -830,7 +846,7 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                               brennweite=brennweite, kamera_modus=kamera_modus,
                               shift_y=shift_y, gelaende_z=gelaende_z,
                               hoehe=hoehe,
-                              herzschlag_takt_s=herzschlag_takt_s),
+                              herzschlag_takt_s=herzschlag_takt_s, sonne=sonne),
     ]
 
 

@@ -1030,6 +1030,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 kamera=aufgabe.get("richtung"),
                 kamera_modus=kamera_modus,
                 gelaende_z=gelaende_z,
+                # Der Sonnenstand der Bestellung. Bis zum 26.08.2026 lief er ins Leere:
+                # Ein Auftrag mit Abendstand wurde gerendert, als waere er nicht
+                # gestellt worden — mit einem sauberen, gut belichteten, falschen Bild.
+                sonne=szene.get("sonne"),
                 auge=aufgabe.get("auge"), blick_auf=aufgabe.get("blick_auf"),
                 brennweite=aufgabe.get("brennweite_mm"),
                 stillstand_frist_s=stillstand_frist_s,
