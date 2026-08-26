@@ -18,8 +18,20 @@ und eine erfundene Kubatur nachweislich durchfallen lässt.
 **Stand 2026-08-26.** Die Kette läuft von einer IFC-Datei bis zum bewerteten Bild, und sie
 ist am Gerät gelaufen: Der erste echte Render mit echten Modellgewichten fand am
 18.08.2026 statt (`auf-20260818-09`, Qwen-Image-Edit-2511, 147,9 s, Score 0,359 —
-durchgefallen, und das ist ein Messwert und kein Fehlschlag). *Dieses Environment* hat
-keine GPU; gerechnet wird auf einer Arbeitsstation, die Aufträge aus diesem Repo liest.
+durchgefallen, und das ist ein Messwert und kein Fehlschlag).
+
+**Was in diesem Environment messbar ist, und was nicht** — nachgesehen am 26.08.2026, weil
+die Kurzform *«hier gibt es keine GPU»* zu der falschen Folgerung verleitet, hier lasse
+sich gar nichts messen:
+
+| | |
+|---|---|
+| **Hier** | Blender (`/opt/blender/blender`) und `.venv-ifc`. Also die **ganze Geometrieseite**: IFC → glb, Multipass, Kamerastellung, Hüllboxen, Sonne, Rahmung |
+| **Nur auf der Arbeitsstation** | alles, was `torch` braucht: die **Diffusion** und der **Tiefenschätzer** — und damit die Geometrie-Treue-Zahl selbst |
+
+*Der Unterschied hat an einem einzigen Tag zwei Befunde freigelegt*, die vorher als
+„braucht die Arbeitsstation" galten: dass der Deckungsgrad unter 8 m Kantenlänge gar nicht
+bindet, und dass die Bauwerksbox das Gelände nicht abtrennte.
 
 Die Lücke, die bleibt, ist eine andere und schmalere: **Ein Bild, das die
 Geometrie-Schwelle besteht, gibt es noch nicht** — mit einem Prompt ohne Bauteile und
@@ -38,7 +50,7 @@ Kette belegt, die Aussage *geometrietreu* aber noch nicht.
 | MCP-Anbindung an KosmoOrbit | Verdrahtbarkeit belegt, Registrierung nicht ausgeführt |
 | LoRA-Stiltraining | Naht gebaut, **nie ein Training ausgeführt** |
 
-Tests: **3896**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+Tests: **3897**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
 (`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
 
 ---

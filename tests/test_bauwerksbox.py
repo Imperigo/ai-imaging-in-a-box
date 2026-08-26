@@ -302,3 +302,55 @@ def test_der_rahmungsriegel_greift_bei_einem_bauwerk_auf_einem_grundstueck(tmp_p
         f"wirksame Bildbreite {lage['wirksame_bildbreite']:.3f}, Abbruch "
         f"{lage['abbruch']}. Ein Bauwerk auf einem Grundstück ist der Fall, für den "
         f"dieser Riegel gebaut wurde.")
+
+
+@pytest.mark.skipif(_ifc_fehlt(), reason=".venv-ifc fehlt")
+def test_der_torwaechter_an_der_echten_huellbox_dieser_kette(tmp_path):
+    """**M0 aus `auf-20260826-45`, hier gerechnet statt beauftragt.**
+
+    Der Auftrag verlangt die Gegenprobe *«zuerst, an synthetischer Geometrie»*: dieselbe
+    Hüllbox einmal wie erzeugt, einmal mal 1000, einmal geteilt durch 1000. *«Schlägt das
+    nicht an, ist der Torwächter kaputt und alles Weitere wertlos.»*
+
+    Sie braucht keine GPU — nur `.venv-ifc`, und das liegt hier. Gemessen am 26.08.2026:
+
+    ===============  ==============  ====================  =================
+    Fall             grösste Kante   Entscheidung          ``verdacht_faktor``
+    ===============  ==============  ====================  =================
+    wie erzeugt      8,0 m           ``annehmen``          ``None``
+    mal 1000         8000,0 m        ``ablehnen_massstab`` 1000,0
+    geteilt 1000     0,008 m         ``ablehnen_massstab`` 0,001
+    ===============  ==============  ====================  =================
+
+    Was der HomeStation bleibt, ist M1 bis M4: **die Häufigkeit am echten Bestand.** Die
+    kann hier niemand messen — echte Dateien liegen nach Regel 3 nicht in diesem Repo.
+
+    *Der Unterschied ist der ganze Sinn der Zweiteilung:* Was ohne ihre Daten und ohne ihre
+    Karte geht, gehört hierher und nicht in einen Auftrag.
+    """
+    import subprocess
+    from aiimaging import torwaechter
+    from aiimaging.seams import ifc_zu_glb
+
+    ifc = tmp_path / "t.ifc"
+    subprocess.run([sys.executable, "tools/make_test_ifc.py", str(ifc)],
+                   check=True, capture_output=True,
+                   cwd=Path(__file__).resolve().parents[1])
+    bericht = ifc_zu_glb(ifc, tmp_path / "t.glb")
+    assert bericht["status"] == "ok", bericht.get("error")
+    bbox = bericht["bbox"]
+
+    def _skaliert(faktor):
+        return [[v * faktor for v in bbox[0]], [v * faktor for v in bbox[1]]]
+
+    wie_erzeugt = torwaechter.torwaechter({"status": "ok", "bbox": bbox})
+    assert wie_erzeugt["entscheidung"] == "annehmen", (
+        f"Die selbst erzeugte Geometrie wird abgelehnt: {wie_erzeugt}")
+
+    zu_gross = torwaechter.torwaechter({"status": "ok", "bbox": _skaliert(1000.0)})
+    assert zu_gross["entscheidung"] == "ablehnen_massstab"
+    assert zu_gross["massstab"]["verdacht_faktor"] == 1000.0
+
+    zu_klein = torwaechter.torwaechter({"status": "ok", "bbox": _skaliert(0.001)})
+    assert zu_klein["entscheidung"] == "ablehnen_massstab"
+    assert zu_klein["massstab"]["verdacht_faktor"] == 0.001
