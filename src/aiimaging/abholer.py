@@ -602,6 +602,30 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
             f"kein Bild erzeugt: Bei 30 % Bildbreite ist das Ergebnis gemessen "
             f"schlechter als bei 17,5 %. Abhilfe ist eine naehere Kamera")
 
+    # DER MASKENWEG — die Zeile, die seit dem 26.08.2026 hier fehlte.
+    #
+    # Gemeldet von der HomeStation: In allen vier Laeufen jenes Tages standen `rho_maske`,
+    # `kante` und `paarurteil` auf None, und niemandem fiel es auf. Der Grund stand im
+    # Maskenbefund je Kamera — also in einer Datei, die man aufschlagen muss, waehrend
+    # oben auf dem Schirm ein Score stand.
+    #
+    # **Die Folge ist keine Kleinigkeit:** Ohne Maskenweg wird die gemessene Polaritaet
+    # nie angewandt, und der Score faellt auf `abs(spearman)` zurueck. In dem Modus
+    # besteht ein Bild mit VERTAUSCHTER Tiefe das Tor (gerechnet: rho = +0,675 gibt 0,68
+    # statt 0,00).
+    ohne_maske = [k.get("kamera") for k in kameras
+                  if (k.get("maskenbefund") or {}).get("maske") is None
+                  and k.get("bild_png")]
+    if ohne_maske:
+        erster = next((k.get("maskenbefund") or {} for k in kameras
+                       if (k.get("maskenbefund") or {}).get("maske") is None), {})
+        zeilen.append(
+            f"MASKENWEG NICHT GEFAHREN: {', '.join(str(k) for k in ohne_maske)} — damit "
+            f"bleiben rho_maske, Kante und Paarurteil ungemessen, die gemessene "
+            f"Polaritaet wird NICHT angewandt, und der Score faellt auf abs(spearman) "
+            f"zurueck. In dem Modus besteht ein Bild mit vertauschter Tiefe das Tor. "
+            f"Grund: {str(erster.get('grund') or 'ohne Angabe')[:200]}")
+
     doppelt = [(k.get("kamera"), k.get("doppelt_von")) for k in kameras
                if k.get("doppelt_von")]
     if doppelt:

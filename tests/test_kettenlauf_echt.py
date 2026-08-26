@@ -125,6 +125,22 @@ def auf_grundstueck(tmp_path_factory):
     return _lauf(ordner_tmp, auftrag)
 
 
+@pytest.fixture(scope="module")
+def frei_ohne_gelaendeerwartung(tmp_path_factory):
+    """Derselbe freistehende Bau, aber mit der Erklärung ``--kein-gelaende``.
+
+    **Der Fall, den die HomeStation am 26.08.2026 gemeldet hat.** Ohne diese Erklärung
+    wird die fertig berechnete Bauwerksmaske verworfen, weil die Geländeregel auf keinen
+    Eintrag passte — und mit ihr fällt der ganze Maskenweg aus.
+    """
+    if _blender_fehlt() or _ifc_fehlt():
+        pytest.skip("Blender oder .venv-ifc fehlt")
+    ordner_tmp = tmp_path_factory.mktemp("kette_kein_gelaende")
+    glb = _echte_glb(ordner_tmp)
+    auftrag = _auftragsordner(ordner_tmp, glb)
+    return _lauf(ordner_tmp, auftrag, gelaende_erwartet=False)
+
+
 def _lauf(tmp_path, ordner, **kw):
     """Nur Diffusion und QA sind Attrappen. Blender läuft wirklich.
 
@@ -143,10 +159,18 @@ def _lauf(tmp_path, ordner, **kw):
         ziel.write_bytes(MINI_PNG)
         return {"status": "ok", "bild_png": str(ziel), "hinweise": ()}
 
+    def qa(*args, **kw_qa):
+        # **Was die QA WIRKLICH bekommt** — und nicht, was sie bekommen sollte.
+        # Ohne dieses Mitschreiben wäre der Maskenweg-Befund der HomeStation hier
+        # unsichtbar geblieben: Die Maske wird gebaut, verworfen und als `None`
+        # weitergereicht, und die Attrappe hätte trotzdem einen Score geliefert.
+        protokoll.setdefault("qa", []).append(kw_qa)
+        return {"score": 0.9, "bestanden": True}
+
     verarbeite = abholer.verarbeiter(
         out_wurzel=tmp_path / "aus", nullprobe=False,
         _rendere=rendere,
-        _qa=lambda *a, **k: {"score": 0.9, "bestanden": True},
+        _qa=qa,
         _tiefen_modell=object(),
         **kw)
     antwort = abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
@@ -240,3 +264,56 @@ def test_der_gesunde_lauf_traegt_keine_solche_zeile(frei):
 
     assert protokoll["render"], "Der gesunde Fall muss rendern."
     assert "NICHT GERENDERT" not in antwort["ergebnis"]["qa"]["verdict"]["reason"]
+
+
+# ======================================================================================
+# 3 · Bekommt die Geometrie-QA überhaupt eine Maske?
+# ======================================================================================
+#
+# Gemeldet von der HomeStation am 26.08.2026: In allen vier Laeufen des Tages stehen
+# `rho_maske`, `kante` und `paarurteil` auf None. Ohne Maskenweg wird die gemessene
+# Polaritaet nie angewandt, und der Score faellt auf `abs(spearman)` zurueck — in dem
+# Modus besteht ein Bild mit VERTAUSCHTER Tiefe das Tor.
+#
+# Hier steht die Zusicherung, die das gefunden haette: nicht «ist ein Score entstanden»,
+# sondern **«hat die QA eine Maske bekommen»**.
+
+@ohne_kette
+def test_ohne_erklaerung_bekommt_die_qa_keine_maske(frei):
+    """Der gemeldete Zustand — **festgehalten, damit er nicht unbemerkt wiederkehrt.**
+
+    Die Geometrie dieses Laufs ist ein reines Gebäude ohne Gelände. Die Geländeregel passt
+    auf keinen Eintrag, und weil `gelaende_erwartet` auf `True` steht, wird die fertig
+    berechnete Maske **verworfen**.
+
+    *Das ist heute die richtige Entscheidung* — «kein Gelände da» und «Regel verfehlt»
+    sehen von innen gleich aus, und im zweiten Fall steckte der ganze Boden als Bauwerk in
+    der Maske. Ob es dabei bleibt, ist eine offene Frage an den Owner.
+    """
+    _, protokoll, _ = frei
+
+    aufrufe = protokoll.get("qa") or []
+    assert aufrufe, "Die QA wurde gar nicht gerufen."
+    assert all(a.get("maske") is None for a in aufrufe), (
+        "Ohne Geländeerklärung darf hier keine Maske ankommen — sonst prüft der Test "
+        "darunter nichts mehr.")
+
+
+@ohne_kette
+def test_mit_der_erklaerung_bekommt_die_qa_eine_maske(frei_ohne_gelaendeerwartung):
+    """**Die Gegenprobe, und sie ist die eigentliche Auskunft.**
+
+    Mit `--kein-gelaende` kommt die Maske an — über die ganze Kette, von Blenders
+    Material-ID-Pass bis in den Aufruf der Geometrie-QA. Damit ist belegt, dass der
+    Maskenweg *fahrbar* ist und nur an dieser einen Erklärung hängt.
+    """
+    _, protokoll, _ = frei_ohne_gelaendeerwartung
+
+    aufrufe = protokoll.get("qa") or []
+    assert aufrufe, "Die QA wurde gar nicht gerufen."
+    masken = [a.get("maske") for a in aufrufe]
+    assert all(m is not None for m in masken), (
+        "Mit der Erklärung muss die Maske ankommen. Kommt sie nicht, hängt der "
+        "Maskenweg an mehr als nur an ihr.")
+    assert any(sum(1 for x in m if x) > 0 for m in masken), (
+        "Eine Maske ohne einen einzigen Bauwerkspunkt ist keine.")

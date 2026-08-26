@@ -419,3 +419,59 @@ def test_andere_dauerwarnungen_bekommen_keinen_falschen_handgriff():
     assert len(zeilen) == 1
     assert "Abstand" in zeilen[0]
     assert "gelaende" not in zeilen[0]
+
+
+# ======================================================================================
+# Der Maskenweg gehört auf die eine Bildschirmseite — nachgetragen 26.08.2026
+# ======================================================================================
+
+def test_ein_ausgefallener_maskenweg_steht_im_kurzbefund():
+    """**Die Zeile, die drei Tage lang gefehlt hat.**
+
+    Die HomeStation hat am 26.08.2026 gemeldet, dass in allen vier Läufen jenes Tages
+    `rho_maske`, `kante` und `paarurteil` auf `None` standen — *und niemandem fiel es
+    auf*. Der Grund stand im Maskenbefund je Kamera, also in einer Datei, die man
+    aufschlagen muss, während oben auf dem Schirm ein Score steht.
+
+    Die Folge ist keine Kleinigkeit: Ohne Maskenweg wird die gemessene Polarität nie
+    angewandt, der Score fällt auf `abs(spearman)` zurück — **und in dem Modus besteht ein
+    Bild mit vertauschter Tiefe das Tor.**
+    """
+    befund = {"kameras": [
+        {"kamera": "s", "bild_png": "/x.png",
+         "maskenbefund": {"maske": None, "grund": "Die Geländeregel passte auf nichts."}},
+    ]}
+
+    zeilen = "\n".join(abholer.befund_kurz(befund))
+
+    assert "MASKENWEG NICHT GEFAHREN" in zeilen
+    assert "abs(spearman)" in zeilen, "Die Folge gehört in denselben Satz."
+    assert "vertauschter Tiefe" in zeilen, (
+        "Und wozu sie führt — sonst liest sich die Zeile wie eine Formalie.")
+
+
+def test_mit_maske_schweigt_der_kurzbefund():
+    """Die Gegenprobe. **Eine Zeile, die immer dasteht, wird nicht gelesen.**
+
+    Genau das ist an diesem Tag drei Dauerwarnungen passiert: Sie füllten alle drei Plätze
+    und verdeckten jede echte.
+    """
+    befund = {"kameras": [
+        {"kamera": "s", "bild_png": "/x.png", "maskenbefund": {"maske": [True, False]}},
+    ]}
+
+    assert not any("MASKENWEG" in z for z in abholer.befund_kurz(befund))
+
+
+def test_eine_uebersprungene_kamera_meldet_keinen_maskenausfall():
+    """Wo gar nicht gerendert wurde, ist der Maskenweg **nicht zuständig**.
+
+    Sonst stünde bei jedem vom Rahmungsriegel abgelehnten Auftrag zusätzlich eine Zeile
+    über einen Weg, den niemand fahren wollte — und die echte Meldung ginge darin unter.
+    """
+    befund = {"kameras": [
+        {"kamera": "s", "bild_png": None, "rahmung": {"abbruch": True},
+         "maskenbefund": {"maske": None, "grund": "irgendwas"}},
+    ]}
+
+    assert not any("MASKENWEG" in z for z in abholer.befund_kurz(befund))
