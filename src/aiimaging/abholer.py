@@ -1096,6 +1096,35 @@ VORGABE_SEEDS = (0, 1, 2)
 #: verdreifachen die Renderzeit je Auftrag.
 AUTO_RICHTUNGEN = ("s", "sSE", "nNW")
 
+#: Nach wie vielen Sekunden ein Multipass-Lauf abgebrochen wird.
+#:
+#: **Uebernommen, nicht gemessen** — es ist der Vorgabewert der Naht, und ein Test haelt
+#: ihn dagegen, damit die beiden nicht auseinanderlaufen.
+#:
+#: **Was am 26.08.2026 dazu gemessen wurde, und was es widerlegt.** In den
+#: Durchreichungstabellen stand als Grund: «Eine Bestellung mit hohen Samples killt ihren
+#: eigenen Lauf nach 900 s.» Nachgemessen (Blender 4.2.1 LTS, CPU, synthetischer Testbau):
+#:
+#:     400 px:   1 Sample 4,37 s ... 256 Samples 4,36 s   — FLACH innerhalb 1 %
+#:     800 px:   4 Samples 7,58 s ... 256 Samples 11,54 s — 1,5x fuer 64x Samples
+#:      32 Sa.: 400 px 4,37 s ... 1600 px 27,80 s         — 6,4x fuer 16x Pixel
+#:
+#: Die Pixel aendern sich bei jeder Samplezahl — die Zeit nicht. Der Aufwand steckt im
+#: **festen Vorlauf**: Start, glb-Import, der zweite Durchgang fuer die Material-ID,
+#: Schreiben. Nicht in den Samples.
+#:
+#: **Die Sorge war also auf die falsche Groesse gerichtet.** Wer einen Lauf sprengt, tut
+#: es ueber die AUFLOESUNG oder ueber die Szene — und Szenenkomplexitaet drueckt kein
+#: Bestellfeld aus. Ein Deckel, der aus der Bestellung gerechnet wird, schuetzte darum
+#: gegen das Falsche.
+#:
+#: **Und was hier NICHT gemessen ist:** was davon auf einer GPU und an einem echten
+#: Bauwerk uebrig bleibt. Genau diesen Fehler hat dieses Projekt schon einmal gemacht —
+#: `seams.BLENDER_FRIST_MIN_S` haelt fest, dass eine CPU-Messung dort «ein Werkzeug zur
+#: Zerstoerung jedes Laufs ueber 98 Sekunden» gewesen waere. Die Wiederholung auf der
+#: HomeStation ist beauftragt (`auf-20260826-54`).
+ZEITDECKEL_S = 900
+
 
 def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 up_axis: str = ANGENOMMENE_HOCHACHSE, schwelle: float | None = None,
@@ -1110,6 +1139,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 augenhoehe: float | None = None,
                 bias_grad: float | None = None,
                 zwischenspeicher=None,
+                zeitdeckel_s: int | None = None,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
@@ -1272,6 +1302,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 augenhoehe=augenhoehe,
                 bias_grad=bias_grad,
                 stillstand_frist_s=stillstand_frist_s,
+                # DER ZEITDECKEL, seit dem 26.08.2026 bestellbar. Er wird IMMER gesetzt,
+                # auch auf seinen Vorgabewert — ein «durchgereicht, wenn bestellt» waere
+                # ein dritter Zustand neben den beiden Tabellen, und genau gegen die
+                # dritte Moeglichkeit sind sie gebaut.
+                timeout=ZEITDECKEL_S if zeitdeckel_s is None else zeitdeckel_s,
             )
 
             # DER ZWISCHENSPEICHER. `None` heisst AUS, und das ist die Vorgabe: Ein
@@ -1543,6 +1578,9 @@ MULTIPASS_KEINE_EINSTELLUNG = ("glb_path", "out_dir", "_starte")
 #: Einstellungen des Multipass, die **ankommen** — mit der Stelle, an der sie herkommen.
 MULTIPASS_DURCHGEREICHT = {
     "up_axis": "verarbeiter(up_axis=…); ein Auftrag mit eigener `hochachse` schlaegt sie",
+    "timeout": "verarbeiter(zeitdeckel_s=…), Vorgabe ZEITDECKEL_S. Die alte Begruendung "
+               "fuer die Luecke — «hohe Samples sprengen den Deckel» — ist am "
+               "26.08.2026 gemessen widerlegt; siehe ZEITDECKEL_S",
     # Seit dem 26.08.2026 nachmittags. Sie standen vorher NIRGENDS in diesen Tabellen,
     # weil `seams.glb_zu_multipass` sie gar nicht kannte — die Naht setzte sie nie, und
     # damit fehlten sie auch der Zaehlung. Aufgefallen beim Abgleich der 23
@@ -1605,19 +1643,6 @@ MULTIPASS_STEHENGEBLIEBEN = {
                  "andere sinnvolle Wert wäre `None`, und das hiesse: Wache aus.",
         "noetig": "NICHTS. Ein anderer Takt bräuchte eine Messung, die zeigt, dass die "
                   "heutige Wache zu grob oder zu teuer ist — beides ist widerlegt.",
-    },
-    "timeout": {
-        "vorgabe": 900,
-        "absicht": False,
-        "grund": "Eine LÜCKE, und eine gekoppelte: `samples` kommt ungeprüft aus der "
-                 "Bestellung (`kosmo_szene`: `int(render.get('samples', 128))`, ohne "
-                 "Obergrenze), der Zeitdeckel ist fest. Eine Bestellung mit hohen "
-                 "Samples killt damit ihren eigenen Lauf nach 900 s mit einem "
-                 "`SeamError` — der eine Regler ist bestellbar, der andere nicht.",
-        "noetig": "Entweder eine Obergrenze für `samples` an der Naht, oder ein Deckel, "
-                  "der mit den Samples wächst. Beides braucht eine Messung, wie lange "
-                  "ein Multipass je Sample wirklich dauert — heute gemessen sind nur "
-                  "~97 s bei der Vorgabe.",
     },
     "kamera_huellbox": {
         "vorgabe": None,
@@ -1753,7 +1778,8 @@ RENDER_STEHENGEBLIEBEN = {
 MULTIPASS_NICHT_IM_SCHLUESSEL = {
     "out_dir": "Wohin geschrieben wird. Genau darum geht es: Derselbe Schnitt in einem "
                "anderen Ordner ist dasselbe Bild.",
-    "timeout": "Ein Abbruchdeckel. Er entscheidet, OB gerechnet wird, nicht WAS.",
+    "timeout": "Ein Abbruchdeckel. Er entscheidet, OB ein Lauf abgebrochen wird, nicht "
+               "WAS er rechnet — dasselbe Bild unter einem anderen Deckel ist dasselbe Bild.",
     "stillstand_frist_s": "Die Wachfrist. Sie beobachtet den Lauf und ändert ihn nicht.",
     "herzschlag_takt_s": "Der Herzschlag des Runners — reine Betriebsanzeige.",
     "_starte": "Die Testnaht.",

@@ -384,3 +384,38 @@ def test_ein_zwischenspeicher_im_repo_wird_abgewiesen(monkeypatch, tmp_path, cap
                                       "--probe"])
     assert modul.main() == 2
     assert "nicht im Repo" in capsys.readouterr().out
+
+
+def test_der_zeitdeckel_des_betriebs_kommt_beim_verarbeiter_an(monkeypatch, tmp_path):
+    """Der Schalter darf nicht bloss in der Hilfe stehen.
+
+    Er ist am 26.08.2026 entstanden, weil die BEGRUENDUNG der Lücke widerlegt wurde und
+    nur der fehlende Schalter übrig blieb — siehe `abholer.ZEITDECKEL_S`.
+    """
+    modul = _abholen()
+    gesehen: dict = {}
+    monkeypatch.setattr(modul.abholer, "verarbeiter",
+                        lambda **kw: (gesehen.update(kw), lambda a: {})[1])
+    monkeypatch.setattr(modul.abholer, "durchgang", lambda store, **kw: {
+        "gesehen": 0, "verarbeitet": 0, "fehler": 0, "liegengelassen": 0,
+        "gestanden": 0, "waisen": [], "ergebnisse": []})
+    monkeypatch.setattr(modul, "karte_auskunft", lambda: (True, "Attrappe"))
+    monkeypatch.setattr(sys, "argv", ["abholen.py", "--store", str(tmp_path),
+                                      "--zeitdeckel-s", "2400"])
+    assert modul.main() == 0
+    assert gesehen["zeitdeckel_s"] == 2400
+
+
+def test_ohne_angabe_bleibt_der_zeitdeckel_offen(monkeypatch, tmp_path):
+    """`None` heisst NICHT ANGEFASST — dann gilt die Vorgabe der Naht."""
+    modul = _abholen()
+    gesehen: dict = {}
+    monkeypatch.setattr(modul.abholer, "verarbeiter",
+                        lambda **kw: (gesehen.update(kw), lambda a: {})[1])
+    monkeypatch.setattr(modul.abholer, "durchgang", lambda store, **kw: {
+        "gesehen": 0, "verarbeitet": 0, "fehler": 0, "liegengelassen": 0,
+        "gestanden": 0, "waisen": [], "ergebnisse": []})
+    monkeypatch.setattr(modul, "karte_auskunft", lambda: (True, "Attrappe"))
+    monkeypatch.setattr(sys, "argv", ["abholen.py", "--store", str(tmp_path)])
+    assert modul.main() == 0
+    assert gesehen["zeitdeckel_s"] is None

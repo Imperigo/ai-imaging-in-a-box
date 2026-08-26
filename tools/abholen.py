@@ -165,6 +165,14 @@ def main() -> int:
     ap.add_argument("--ohne-wache", action="store_true",
                     help=("Ohne Fortschrittsbeobachtung laufen. Der Bericht sagt dann "
                           "'nicht gemessen' und nicht 'lief durch'."))
+    ap.add_argument("--zeitdeckel-s", dest="zeitdeckel_s", type=int, default=None,
+                    help="Nach wie vielen Sekunden ein Blender-Lauf abgebrochen wird. "
+                         "Ohne Angabe 900 s wie bisher. Gemessen am 26.08.2026 (CPU, "
+                         "synthetischer Testbau): Samples kosten fast nichts — bei 400 px "
+                         "sind 1 bis 256 Samples flach innerhalb 1 %, waehrend sich die "
+                         "Pixel jedes Mal aendern. Die AUFLOESUNG dominiert (400->1600 px "
+                         "ist 4,37->27,80 s), und was daraus auf einer GPU wird, ist "
+                         "ungemessen (auf-20260826-54).")
     ap.add_argument("--zwischenspeicher", dest="zwischenspeicher", default=None,
                     help="Ordner fuer den Multipass-Zwischenspeicher. OHNE Angabe AUS — "
                          "ein Gedaechtnis, das niemand bestellt hat, ist die "
@@ -229,6 +237,7 @@ def main() -> int:
                                      gelaende_z=a.gelaende_z,
                                      gelaende_erwartet=not a.kein_gelaende,
                                      zwischenspeicher=speicher,
+                                     zeitdeckel_s=a.zeitdeckel_s,
                                      seeds=seeds or abholer.VORGABE_SEEDS)
 
     def wache_bauen(auftrag):

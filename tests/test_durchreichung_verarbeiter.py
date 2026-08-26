@@ -88,8 +88,11 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     des Runners gegen den Text von `seams.py` — eine Zählung von der **anderen** Seite.
     """
     assert len(_multipass_einstellungen()) == 21
-    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 15
-    assert len(abholer.MULTIPASS_STEHENGEBLIEBEN) == 6
+    # 16 und 5 seit dem 26.08.2026: `timeout` ist von STEHENGEBLIEBEN nach DURCHGEREICHT
+    # gewandert. Nicht, weil jemand die Tabelle aufgeraeumt haette, sondern weil die
+    # BEGRUENDUNG der Luecke gemessen widerlegt wurde — siehe `abholer.ZEITDECKEL_S`.
+    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 16
+    assert len(abholer.MULTIPASS_STEHENGEBLIEBEN) == 5
     assert len(abholer.RENDER_DURCHGEREICHT) == 7
     assert len(abholer.RENDER_STEHENGEBLIEBEN) == 5
 
@@ -129,11 +132,15 @@ def test_es_sind_absichten_und_luecken_und_beides_kommt_vor():
     luecken = [e for e in alle if not e["absicht"]]
 
     assert len(absichten) == 7
-    assert len(luecken) == 4, "timeout, kamera_huellbox, schritte, denoise"
+    # DREI statt vier seit dem 26.08.2026. `timeout` ist keine Luecke mehr — nicht weil
+    # jemand sie weggeschrieben haette, sondern weil ihre Begruendung («hohe Samples
+    # sprengen den Deckel») GEMESSEN WIDERLEGT wurde und der Schalter jetzt durchgereicht
+    # ist. Siehe `abholer.ZEITDECKEL_S`.
+    assert len(luecken) == 3, "kamera_huellbox, schritte, denoise"
     assert {n for n, e in
             {**abholer.MULTIPASS_STEHENGEBLIEBEN,
              **abholer.RENDER_STEHENGEBLIEBEN}.items() if not e["absicht"]} == {
-        "timeout", "kamera_huellbox", "schritte", "denoise"}
+        "kamera_huellbox", "schritte", "denoise"}
 
 
 # ======================================================================================
@@ -286,3 +293,50 @@ def test_ohne_angabe_bleiben_die_drei_None(tmp_path):
     assert kw["deckungsgrad"] is None
     assert kw["augenhoehe"] is None
     assert kw["bias_grad"] is None
+
+
+# ======================================================================================
+# 5 · Der Zeitdeckel — und die Messung, die seine Begründung widerlegt hat
+# ======================================================================================
+
+def test_der_zeitdeckel_stimmt_mit_der_vorgabe_der_naht():
+    """Zwei Zahlen für dieselbe Sache laufen auseinander, sobald eine gepflegt wird.
+
+    `abholer.ZEITDECKEL_S` ist **übernommen, nicht gemessen** — und genau deshalb muss er
+    an der Stelle hängen, von der er übernommen wurde.
+    """
+    import inspect
+
+    from aiimaging import seams
+
+    naht = inspect.signature(seams.glb_zu_multipass).parameters["timeout"].default
+    assert abholer.ZEITDECKEL_S == naht, (
+        f"Der Abholer deckelt bei {abholer.ZEITDECKEL_S} s, die Naht bei {naht} s. Wer "
+        f"eine der beiden ändert, ändert stillschweigend das Verhalten der anderen nicht."
+    )
+
+
+def test_der_zeitdeckel_kommt_am_multipass_an(tmp_path):
+    """Geprüft wird der WERT an der Naht, nicht das Schlüsselwort."""
+    protokoll = _lauf_mit(tmp_path, zeitdeckel_s=1234)
+    assert protokoll["multipass"][0].get("timeout") == 1234
+
+
+def test_ohne_angabe_gilt_die_vorgabe_und_wird_trotzdem_gesetzt(tmp_path):
+    """**Kein dritter Zustand.** «Durchgereicht, wenn bestellt» wäre einer neben den
+    beiden Tabellen — und genau gegen die dritte Möglichkeit sind sie gebaut."""
+    protokoll = _lauf(tmp_path)
+    assert protokoll["multipass"][0].get("timeout") == abholer.ZEITDECKEL_S
+
+
+def test_die_widerlegte_begruendung_steht_noch_da_und_ist_als_widerlegt_benannt():
+    """Abgehakt wird, nicht gelöscht — auch bei einer Begründung.
+
+    Wer den alten Satz «hohe Samples sprengen den Deckel» irgendwo wiederfindet, soll an
+    derselben Stelle lesen, dass er gemessen widerlegt ist. Sonst kommt die Fehlannahme
+    wieder; sie kommen immer wieder.
+    """
+    text = abholer.__doc__ or ""
+    quelle = inspect.getsource(abholer)
+    for wort in ("FLACH innerhalb 1 %", "widerlegt"):
+        assert wort in quelle, f"{wort!r} steht nicht mehr im Modul."
