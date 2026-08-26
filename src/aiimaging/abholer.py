@@ -662,6 +662,25 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
             f"zurueck. In dem Modus besteht ein Bild mit vertauschter Tiefe das Tor. "
             f"Grund: {str(erster.get('grund') or 'ohne Angabe')[:200]}")
 
+        # WELCHE BAUSTOFFE DIE REGEL GEPRUEFT HAT — auf Rueckfrage der HomeStation
+        # (auf-47, 26.08.2026): «Findet sie 11 Baustoffe und keiner heisst nach Gelaende,
+        # ist das ein anderer Befund als 'keine Baustofftabelle gefunden'.»
+        #
+        # Die Zeile steht NUR im ersten der beiden Faelle. Sie ist damit selbstloeschend:
+        # Sobald die Regel trifft oder gar nichts zu lesen war, schweigt sie wieder — und
+        # eine Zeile, die immer dasteht, verdeckt die echten.
+        #
+        # Sie sagt dem Betreiber die ANTWORT und nicht die Frage: Wer diese Namen liest
+        # und keinen Boden darunter findet, weiss, dass `--kein-gelaende` richtig ist.
+        if erster.get("gelaende_befund") == maske_modul.BEFUND_KEIN_GELAENDE_BELEGT:
+            geprueft = erster.get("gelaende_geprueft") or ()
+            zeilen.append(
+                f"  Geprueft wurden {len(geprueft)} benannte Baustoffe, keiner nach "
+                f"Gelaende: {', '.join(str(n) for n in geprueft)}. Das ist ein "
+                f"NULLBEFUND und keine Ratlosigkeit — er belegt aber nur, dass die REGEL "
+                f"nicht anschlug. Steht kein Boden in der Liste, ist --kein-gelaende die "
+                f"richtige Angabe.")
+
     # DIE STARTWERT-VORGABE, DIE STILL AUF EINEN ZURUECKFAELLT.
     #
     # Gemessen am 26.08.2026: Ohne Bauwerksmaske gibt es kein Mass, nach dem sich unter

@@ -173,6 +173,96 @@ GELAENDE_WOERTER: tuple[str, ...] = ("gelaende", "gelände", "terrain", "site")
 #: Woran ein Name in Wörter zerfällt.
 _WORTTRENNER = re.compile(r"[\s_\-.,;:/\\()\[\]]+")
 
+# ======================================================================================
+# Die dritte Antwort, angewandt auf die Geländeregel selbst
+# ======================================================================================
+#
+# **Der Anlass ist eine Rückfrage der HomeStation** (`auf-47`, 26.08.2026). Ihr Modell
+# trägt elf benannte Baustoffe — `Beton_Decke`, `Holz_Stuetze`, `Metall_Fassade`, … —,
+# keiner davon heisst nach Gelände. Die Regel meldete `gelaende_erkannt: False`, die Maske
+# fiel aus, und der Besteller musste `--kein-gelaende` von Hand setzen.
+#
+# Ihr Einwand, wörtlich: *«Er verlangt, dass der Besteller VORHER weiss, dass kein Gelände
+# in der Szene ist. Bei einer fremden glb weiss er das nicht.»* Und ihr Vorschlag: *«Die
+# Geräteregel könnte ihren Nullbefund selbst belegen, indem sie meldet, WELCHE Baustoffe
+# sie geprüft hat.»*
+#
+# **Der Punkt ist richtig und trifft eine Verwechslung, die dieses Projekt sonst überall
+# auseinanderhält:** `gelaende_erkannt: False` bedeutete bis heute zweierlei —
+#
+#   * elf lesbare Namen geprüft, keiner nach Gelände → das ist ein **Nullbefund**;
+#   * gar nichts Lesbares vorgefunden → das ist **nicht feststellbar**.
+#
+# Beides ergab `None`, und `None` liest sich wie ein Fehler statt wie eine Enthaltung.
+
+#: Die Regel hat mindestens einen Eintrag als Gelände eingeordnet.
+BEFUND_GELAENDE_GEFUNDEN = "gelaende_gefunden"
+
+#: Lesbare Namen geprüft, keiner nach Gelände. **Ein Befund, keine Ratlosigkeit** — aber
+#: kein Beweis: Er gilt nur so weit, wie die Regel vollständig ist, und *das* ist an einem
+#: einzelnen Lauf nicht messbar. Ein Baustoff namens ``Erdreich`` stünde in keiner
+#: Wortliste dieses Projekts und wäre trotzdem Gelände.
+BEFUND_KEIN_GELAENDE_BELEGT = "kein_gelaende_belegt"
+
+#: Es gab nichts zu lesen — leere Namen, oder eine Tabelle mit einem einzigen Eintrag
+#: (der Klumpenfall: dann ist innerhalb der Geometrie ohnehin nichts trennbar).
+BEFUND_NICHT_ENTSCHEIDBAR = "nicht_entscheidbar"
+
+#: Ab wie vielen benannten Einträgen ein Nullbefund überhaupt einer ist.
+#:
+#: **Zwei**, und die Zahl ist nicht gegriffen: Bei genau einem Eintrag steht der
+#: Klumpenfall vor uns — eine 56-MB-Kontext-IFC kam als ein einziges namenloses Bauteil
+#: mit 502 002 Dreiecken an (`BEFUND_2026-08-24_IFC-LESER.md`). Dort trennt die Maske noch
+#: den Himmel ab und sonst nichts; «kein Gelände gefunden» wäre dann eine Aussage über
+#: eine Tabelle, die gar nichts unterscheidet.
+MINDESTENS_BENANNT = 2
+
+
+def gelaende_befund(gelaende_namen, bauwerk_namen) -> dict:
+    """Welche der drei Lagen liegt vor — und woran man das sieht.
+
+    Herausgezogen aus :func:`bauwerksmaske`, damit ein Aufrufer sie **ohne Bild** befragen
+    kann: Wer eine glb vor sich hat und wissen will, ob ein Lauf ohne ``--kein-gelaende``
+    überhaupt Sinn ergibt, braucht dafür keinen Render.
+
+    Args:
+        gelaende_namen: Was die Regel als Gelände eingeordnet hat.
+        bauwerk_namen: Alles Übrige aus der Tabelle.
+
+    Returns:
+        ``{befund, geprueft, benannt, namenlos, begruendung}``. ``geprueft`` ist die
+        Namensliste, auf die sich der Befund stützt — **sie wandert mit**, weil ein
+        Nullbefund ohne die Liste eine Behauptung ist und mit ihr eine Auskunft.
+    """
+    gelaende = sorted(set(str(n) for n in gelaende_namen))
+    bauwerk = [str(n) for n in bauwerk_namen]
+    benannt = sorted({n for n in bauwerk if n.strip()})
+    namenlos = sum(1 for n in bauwerk if not n.strip())
+
+    if gelaende:
+        return {"befund": BEFUND_GELAENDE_GEFUNDEN, "geprueft": sorted(set(bauwerk)),
+                "benannt": benannt, "namenlos": namenlos,
+                "begruendung": f"Die Regel ordnete {gelaende} als Gelände ein."}
+
+    if len(benannt) >= MINDESTENS_BENANNT and namenlos == 0:
+        return {"befund": BEFUND_KEIN_GELAENDE_BELEGT, "geprueft": benannt,
+                "benannt": benannt, "namenlos": 0,
+                "begruendung": (
+                    f"{len(benannt)} benannte Einträge geprüft, keiner nach Gelände: "
+                    f"{benannt}. Das ist ein Nullbefund und keine Ratlosigkeit — "
+                    f"soweit die Regel vollständig ist, und das ist an einem einzelnen "
+                    f"Lauf nicht zu messen.")}
+
+    fehlt = ("kein einziger benannter Eintrag" if not benannt
+             else f"{namenlos} namenlose Einträge" if namenlos
+             else f"nur {len(benannt)} benannter Eintrag (nötig: {MINDESTENS_BENANNT})")
+    return {"befund": BEFUND_NICHT_ENTSCHEIDBAR, "geprueft": benannt,
+            "benannt": benannt, "namenlos": namenlos,
+            "begruendung": (
+                f"Über diese Tabelle lässt sich nichts sagen: {fehlt}. Eine Geländeregel "
+                f"über namenlose Flächen ist keine Regel.")}
+
+
 #: Kurzform des Rechenwegs, wandert in jedes Ergebnis. Dieselbe Bauart wie
 #: ``geometrie_qa.METHODE``: Wer später eine Zahl in der Arbeit wiederfindet, soll ihr
 #: ansehen, wie sie entstanden ist.
@@ -456,6 +546,7 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         (gelaende_namen if gelaende else bauwerk_namen).append(name)
 
     gelaende_erkannt = bool(gelaende_namen)
+    lage = gelaende_befund(gelaende_namen, bauwerk_namen)
 
     # ── Bildpunkte einsortieren ───────────────────────────────────────────────────────
     n_gelaende = n_hintergrund = n_unbekannt = 0
@@ -490,10 +581,35 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
 
     # ── Befunde ───────────────────────────────────────────────────────────────────────
     if not gelaende_erkannt:
-        if gelaende_erwartet:
+        if gelaende_erwartet and lage["befund"] == BEFUND_KEIN_GELAENDE_BELEGT:
+            # DER NULLBEFUND MIT SEINEM BELEG.
+            #
+            # Er sagt dem Aufrufer die ANTWORT statt der Frage — das ist der Unterschied
+            # zum Satz darunter. Die Maske fällt trotzdem aus, und der Grund dafür steht
+            # dabei: Ein Nullbefund belegt, dass die REGEL nicht angeschlagen hat, nicht,
+            # dass es kein Gelände gibt. Diese beiden Dinge fallen nur zusammen, wenn die
+            # Regel vollständig ist, und Vollständigkeit ist an einem Lauf nicht messbar.
+            warnungen.append(
+                f"KEIN GELAENDE BELEGT: {lage['begruendung']} "
+                f"Geprüft wurde gegen {list(gelaende_muster)} und die Wortliste "
+                f"{list(GELAENDE_WOERTER)}. "
+                "Die Maske fällt trotzdem aus — nicht weil der Befund schwach wäre, "
+                "sondern weil er etwas anderes belegt, als er zu belegen scheint: dass "
+                "die REGEL nicht angeschlagen hat. Ein Baustoff namens 'Erdreich' oder "
+                "'Humus' stünde in keiner der beiden Listen und wäre trotzdem Gelände. "
+                "**Und mit der Maske fällt der ganze Maskenweg aus** — rho_maske, Kante "
+                "und Paarurteil bleiben None, und weil die gemessene Polarität nur dort "
+                "angewandt wird, fällt der Score auf abs(spearman) zurück. "
+                "WER DIE NAMEN OBEN LIEST UND KEINEN BODEN DARUNTER FINDET, sagt es mit "
+                "gelaende_erwartet=False — an der Kommandozeile: "
+                "tools/abholen.py --kein-gelaende. Dann gilt die Maske unter dieser "
+                "Erklärung, und das steht auch so im Ergebnis."
+            )
+        elif gelaende_erwartet:
             warnungen.append(
                 "Die Geländeregel passte auf keinen einzigen Tabelleneintrag "
                 f"(Muster: {list(gelaende_muster)}; Namen: {sorted(bauwerk_namen)}). "
+                f"{lage['begruendung']} "
                 "Damit ist nicht entscheidbar, ob diese Szene kein Gelände hat oder ob "
                 "die Regel es verfehlt hat — im zweiten Fall steckte der ganze Boden als "
                 "Bauwerk in der Maske, und genau das macht die Geometrie-QA stumpf "
@@ -577,6 +693,12 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         "n_unbekannt": n_unbekannt,
         "anteil_bauwerk": n_bauwerk / n_bildpunkte,
         "gelaende_erkannt": gelaende_erkannt,
+        # WELCHE DER DREI LAGEN — und woran man das sieht. Bis zum 26.08.2026 bedeutete
+        # `gelaende_erkannt: False` zweierlei: geprüft und nichts gefunden, oder gar
+        # nichts zu prüfen gehabt. Auf Rückfrage der HomeStation (auf-47) getrennt.
+        "gelaende_befund": lage["befund"],
+        "gelaende_geprueft": lage["geprueft"],
+        "gelaende_begruendung": lage["begruendung"],
         "gelaende_namen": sorted(set(gelaende_namen)),
         "bauwerk_namen": sorted(set(bauwerk_namen)),
         "quelle": sorted({str(e["quelle"]) for e in tabelle
