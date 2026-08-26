@@ -3199,6 +3199,21 @@ adressieren, sondern über eine Prüfsumme des **Inhalts**. Identischer Inhalt e
 denselben Schlüssel, auch unter anderem Namen — und geänderter Inhalt einen anderen, auch
 bei gleichem Namen.
 
+**Verdeckung** — Etwas steht zwischen Kamera und Bauwerk: ein Nachbarhaus, ein Baum, eine
+Geländekante. Für ein Messverfahren ist das heimtückisch, weil das Bild dann teilweise
+etwas anderes zeigt als das, wogegen gemessen wird — die Geometrie-Treue fällt, und der
+Grund dafür steht nirgends. *In diesem Projekt heute unbehandelt: Die Funktion, die die
+Kamera aus einer verdeckten Stellung herauszieht, hat keinen Aufrufer, und an der
+synthetischen Testgeometrie — einem freistehenden Quader — verdeckt nichts. Gemessen wird
+es mit `auf-20260826-46`.*
+
+**Triage** — Aus der Notfallmedizin entlehnt: eine Menge von Meldungen so sortieren, dass
+sichtbar wird, welche sofort behandelt werden müssen und welche warten können. Wichtig ist
+dabei, dass **jede** Meldung ein Urteil bekommt — auch «kein Handlungsbedarf». Eine Liste,
+in der nur die dringenden Fälle markiert sind, sieht nach Übersicht aus, sagt aber über
+den Rest nichts. *In diesem Projekt: `docs/TOTE_KANTEN_TRIAGE_2026-08-26.md` urteilt über
+alle 80 gemeldeten Funktionen ohne Aufrufer.*
+
 **Wächter** — Ein Test, dessen Zweck nicht das Prüfen einer Rechnung ist, sondern das
 **Festhalten einer Aussage**, die sonst still veralten würde. Er rechnet nichts aus; er
 vergleicht, was irgendwo behauptet wird, mit dem, was wirklich der Fall ist — und fällt,
@@ -3411,6 +3426,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-26 | Ergaenzt: **Verdeckung** und **Triage**. Anlass ist die Durchsicht der 80 Funktionen ohne Aufrufer: `kameras.ziehe_bis_frei` behandelt Verdeckung und laeuft nirgends, und an unserer synthetischen Testgeometrie verdeckt nichts — ein Anschluss haette gruene Tests ergeben, die ueber den Ernstfall nichts sagen |
 | 2026-08-26 | Ergaenzt: **Waechter** und **Toleranzband**. Anlass ist der neue `tests/test_readme.py`: Das README nannte 1509 Tests bei 3595 wirklichen und behauptete in Fettschrift einen nie stattgefundenen Bildlauf, den es acht Tage zuvor gegeben hatte. Bewacht wird nur das maschinell Entscheidbare — eine Zahl, eine Datei, eine Funktion. **Kein Waechter auf Prosa:** eine Sondierung ueber veraltete Konstantenzitate in Docstrings ergab am selben Tag einen Treffer auf fuenf Fehlalarme |
 | 2026-08-26 | **Integrationstest** um den Grund erweitert, warum viele gute Einzeltests ihn nicht ersetzen — mit dem Fall vom selben Tag: Acht Pruefungen einzeln gruen, und eine Angabe ging auf ihrem letzten Meter verloren. Der Einzeltest fragt, ob ein Stueck haelt, was es verspricht; der Integrationstest fragt, ob das Versprochene ankommt |
 | 2026-08-26 | Ergaenzt: **Der Nullpunkt des Azimuts (Sued- gegen Nord-Konvention)**. Anlass ist das Anschliessen des Sonnenstands: Die beiden gebraeuchlichen Festlegungen liegen 180 Grad auseinander und vertauschen Vormittag und Nachmittag. Der Eintrag traegt mit, warum der Fehler an keinem einzelnen Bild erkennbar waere — und warum die gewaehlte Annahme darum in jeden Bericht gehoert |

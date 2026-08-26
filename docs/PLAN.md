@@ -3361,6 +3361,40 @@ zweiten Stelle.
       Prosa** — die Sondierung vom selben Vormittag ergab einen Treffer auf fünf
       Fehlalarme.
 
+- [x] **Die achtzig Meldungen des Tote-Kanten-Werkzeugs haben ein Urteil** (26.08.
+      nachmittags) → `docs/TOTE_KANTEN_TRIAGE_2026-08-26.md`. Geurteilt wurde über die
+      Frage, **was stattdessen läuft** — das ist die Frage, die trägt.
+      **23** sind Studien, deren Herleitung erhalten bleiben muss (sonst wird aus einer
+      abgeleiteten Schwelle wieder eine gesetzte). **19** warten auf eine Phase, die
+      anderswo bereits als offen benannt ist. **27** sind bewusst anders gelöst, und jeder
+      Unterschied ist eine dokumentierte Entscheidung — der Produktpfad **misst** den
+      Nullanker, statt ihn nachzuschlagen. **Vier** blieben offen.
+      **Keine wird gelöscht**, und keine kommt in die Ausnahmeliste des Werkzeugs: Achtzig
+      Urteile gehören in ein Dokument, das man liest, nicht in eine Liste, die man vergisst.
+- [x] **Die Auftragsdateien stehen unter einem Wächter** (26.08.) — `tests/test_auftraege.py`.
+      Die Regel vom 22.08. (*«Was der Worker wissen muss, steht in der Auftragsdatei»*) ist
+      damals zur **Hälfte** in den Code gelangt: Das Pflichtfeld `worker` steht in
+      `pruefe_auftrag`, die Anweisung nicht. Vier Aufträge sind seither ohne ein Feld
+      `anweisung` hinausgegangen, und am 26.08. hat sich das Format **zweimal still
+      geändert**, ohne dass die Bibliothek davon erfuhr.
+      Der Wächter prüft die **wirklichen Dateien**: Vertrag, Kennung gegen Dateinamen,
+      `rueckgabe`, und ab dem Regeltag eine Anweisung, die kein Stummel ist. Die Schranke
+      ist **gemessen** — seit dem Regeltag mindestens 2568 Zeichen, davor hinunter bis 207 —
+      und eine Gegenprobe hält fest, dass sie die beiden Gruppen wirklich trennt.
+      `auftrag.baue_auftrag` kann das geltende Format wieder bauen.
+- [ ] **Verdeckung wird auf dem Produktpfad nicht behandelt** (`auf-20260826-46`).
+      `kameras.ziehe_bis_frei` hat keinen Aufrufer, während die Gegenrichtung
+      (`schiebe_bis_im_bild`) läuft. **Anschliessen wäre hier der Fehler:** An unserer
+      synthetischen Testgeometrie — einem freistehenden Quader — verdeckt nichts, die
+      Tests wären grün und sagten über den Ernstfall nichts. Gefragt ist die
+      **Verteilung** am echten Bestand, samt der Frage, ob Heranziehen und der
+      Rahmungsriegel `BILDBREITE_ABBRUCH` sich ins Gehege kommen.
+- [ ] **Zwei Fassungen derselben zentralen Entscheidung** — `gate.gesamturteil` und das
+      UND in `kosmo_szene.als_ergebnis`. Nachgerechnet urteilen sie in jedem wirklich
+      vorkommenden Fall gleich; der Unterschied griffe nur, wenn **kein** Stil bestellt
+      war. Ein Anschluss ist darum **kein Aufräumen, sondern eine Vertragsänderung** und
+      liegt beim Owner.
+
 ---
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
@@ -3370,9 +3404,10 @@ Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
 
 | | Beginn des Tages | nach dem Vormittag | Ende |
 |---|---:|---:|---:|
-| Tests | 3335 | 3528 | **3595** |
+| Tests | 3335 | 3528 | **3787** |
 | Vakuumprobe | 10 Treffer | 12 Treffer | 12 Treffer |
 | Tote Kanten, gar nicht erreichbar | — | 2 | **1** |
+| Tote Kanten **mit Urteil** | 0 | 0 | **80 von 80** |
 
 *Die beiden neuen Vakuumtreffer sind erklärt: Zwei Zusicherungen über `warnungen` sind
 vakuumwahr **geworden**, weil die Liste jetzt leer sein darf — genau das war das Ziel der

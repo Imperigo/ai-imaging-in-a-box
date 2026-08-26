@@ -128,22 +128,42 @@ nebenbei gemacht.
 
 ---
 
-## D · Offen — 11 Namen, drei Fäden
+## D · Offen — vier Namen, zwei Fäden
 
-### D.1 · Der Kamerasatz wird nie als Satz beurteilt (`komposition.py`, 7)
+*Im ersten Entwurf waren es elf in drei Fäden. Der grösste der drei hat sich beim Nachprüfen aufgelöst — er steht als D.1 mit seiner Widerlegung da, weil ein widerlegter Verdacht mehr wert ist als ein gelöschter.*
 
-`beurteile_kamera` und `beurteile_bericht` laufen. **`beurteile_kamerasatz` — „den ganzen
-Kamerasatz gegen das Regelwissen halten" — nicht.** Die sechs übrigen
+### D.1 · ~~Der Kamerasatz wird nie als Satz beurteilt~~ — nachgeprüft, und es ist keine Lücke
+
+**So stand es im ersten Entwurf dieses Dokuments**, mit dem Zusatz *«der stärkste Kandidat
+auf die neunte tote Kante»*. Die Prüfung, die derselbe Absatz verlangte, widerlegt ihn.
+
+`beurteile_kamerasatz` nimmt **die Antwort von `kameras.kamerasatz`** entgegen — den Satz,
+wie ihn die Bibliothek rechnet. Auf dem Produktpfad rechnet ihn **Blender**, und zurück
+kommt der `kamera`-Block des Berichts. Genau dafür gibt es `beurteile_bericht`, und der
+Docstring sagt es selbst: *«Das ist die Fassung für den Produktivweg.»* Der Abholer ruft
+sie in `_komposition_vor_dem_render` auf. Die sechs Rechenteile
 (`bildanteile`, `deckenanteil`, `bodenanteil_erreichbar`, `hoehe_fuer_bild_gleichgewicht`,
-`horizont_verschiebung_pp`, `kleinbild_aequivalent`) sind seine Rechenteile und fallen mit
-ihm.
+`horizont_verschiebung_pp`, `kleinbild_aequivalent`) gehören zu jener Fassung.
 
-Das ist mehr als eine ungenutzte Funktion: **Am 26.08. wurde eine Satzfrage ad hoc gelöst**
-— die doppelte Ansicht, bei der `sSE` und `nNW` an einem Quader bytegleich sind. Die Lösung
-sitzt im `abholer` und nicht in `komposition`, wo das Regelwissen liegt.
+**Urteil: Gruppe C.** Es sind zwei Fassungen für zwei Wege, und der genommene Weg ist
+angeschlossen.
 
-*Zu prüfen wäre, ob `beurteile_kamerasatz` die Frage schon beantwortet, die im Abholer neu
-gebaut wurde.* Das ist der stärkste Kandidat auf die neunte tote Kante.
+Ein Rest bleibt und ist der Vollständigkeit halber benannt: `beurteile_kamerasatz` liefert
+`alle_waagrecht` — *«die eine Zahl, auf die es normativ ankommt: ob **jede** Kamera dieses
+Satzes die lotrechte Sensorebene einhält (HABS/NPS)»*. Diese **Satzfrage** stellt der
+Produktpfad nicht; er urteilt Kamera für Kamera.
+
+Nachgesehen, was das praktisch heisst: Eine gekippte Kamera entsteht nur auf dem
+**Rückfallweg des Runners** (*«Keine Kamera angegeben — diagonal von vorn-oben»*), und
+dieser Weg liefert die Felder nicht, die das Regelwerk zum Urteilen braucht.
+`beurteile_bericht` gibt dann `beurteilt: False` mit Grund, und der Kurzbefund trägt die
+Zeile *«Komposition NICHT beurteilbar: …»*. **Der Fall, in dem gekippt wird, ist also
+derselbe, in dem gemeldet wird, dass nicht geurteilt werden kann** — die dritte Antwort,
+an der Stelle, an der sie hingehört.
+
+*Diese Berichtigung steht hier und ersetzt den ersten Entwurf nicht stillschweigend: Der
+Verdacht war plausibel, und wer ihn morgen wieder fasst, soll die Widerlegung gleich
+danebenfinden.*
 
 ### D.2 · Die Bibliothek kann das Auftragsformat nicht mehr bauen (`auftrag.py`, 3)
 
@@ -179,13 +199,15 @@ zwei der 40 echten Dateien mit 1002 m und 1127 m Ausdehnung sind — sehr wohl.
 
 ## Was daraus folgt
 
-1. **D.2 wird sofort geschlossen** — ein Wächter über `auftraege/offen/`, der jede
-   Auftragsdatei ab dem 22.08.2026 auf ihre Pflichtfelder prüft. Billig, maschinell
-   entscheidbar, und er beisst beim nächsten von Hand geschriebenen Auftrag.
-2. **D.1 und D.3 werden gemessen, nicht geraten.** Ob `beurteile_kamerasatz` die Doppelansicht
-   schon beantwortet, steht in seinem Code; ob Verdeckung vorkommt, steht nur in echten
-   Modellen — und die hat die HomeStation.
-3. **Die Doppelung in `gate.py` wird dem Owner vorgelegt**, weil ihr Anschluss den Vertrag
+1. **D.1 ist geprüft und erledigt** — siehe oben. Der Aufwand dafür war eine halbe Stunde
+   Lesen, und er hat einen Umbau verhindert, der Fachlogik verdoppelt hätte.
+2. **D.2 ist geschlossen** — `tests/test_auftraege.py` prüft ab jetzt die wirklichen
+   Auftragsdateien: Vertrag, Kennung gegen Dateinamen, `rueckgabe`, und ab dem Regeltag
+   eine Anweisung, die kein Stummel ist. `auftrag.baue_auftrag` kann das geltende Format
+   wieder bauen.
+3. **D.3 wird gemessen, nicht geraten** (`auf-20260826-46`): Ob Verdeckung vorkommt, steht
+   nur in echten Modellen — und die hat die HomeStation.
+4. **Die Doppelung in `gate.py` wird dem Owner vorgelegt**, weil ihr Anschluss den Vertrag
    ändert.
 
 ## Was daraus ausdrücklich nicht folgt
