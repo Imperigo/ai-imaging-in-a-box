@@ -3022,6 +3022,70 @@ verstellt aber keine Kamera.
 
 ---
 
+## Zwei weitere Posten aus dem ersten vollständigen Lauf (26.08.2026)
+
+Aus `auftraege/von-homestation/auf-vis-20260825-15.md`, derselben Liste wie der
+Owner-Einwand oben.
+
+### Posten 4 · Der Geräteweg wird protokolliert
+
+*«Eine Zeile Protokoll hätte drei Stunden Untersuchung gespart»* — der billigste Posten
+der Liste. `lade_modell` setzte `modell.geraet` und `modell.ladeweg` seit dem 19.08.2026,
+und **kein Aufrufer schrieb sie irgendwohin**.
+
+- [x] `render._geraeteweg(modell)` → `{geraet, ladeweg, gemeldet, grund}`; das Feld
+      `geraeteweg` steht in **jedem** Ergebnissatz, auch bei einer Ablehnung und
+      besonders bei einem Fehlschlag — ein Fehlschlag ohne Geräteangabe ist von einem
+      Rückfall im Code nicht zu unterscheiden.
+- [x] `geraet=None` heisst **unbekannt**, nie „CPU". Eine Attrappe sieht so aus, und ein
+      fremder Lader ebenso.
+- [x] `abholer`: im Kameraurteil, und im Kurzbefund **nur**, wenn der Weg nicht `cuda`
+      war. Er erklärt Laufzeit, nicht Qualität — und genau diese Verwechslung hat die
+      drei Stunden gekostet.
+- [x] `tests/test_geraeteweg.py` (12 Fälle); die Liste der vier Wege wird gegen
+      `_lege_auf_geraet` geprüft und nicht gegen eine eigene Aufzählung.
+
+### Posten 2 · `skip: true` wird befolgt
+
+Im Lauf belegt: Der Abholer meldete wörtlich «BESTELLT UND NICHT AUSGEFUEHRT:
+ueberspringen = True» — und rechnete weiter. Wer abbestellt, bekam geliefert und zahlte
+die GPU-Zeit.
+
+**Entschieden (Claude, 26.08.2026, unter der Owner-Freigabe „entscheiden und um 20:00
+vorlegen"):** Überspringen heisst **kein Bild, aber sehr wohl eine Antwort**. Gar nichts
+zurückzugeben liesse die bestellende Seite hängen — sie könnte *übersprungen* nicht von
+*abgestürzt* unterscheiden. *Rückgängig zu machen mit dem Löschen eines `if`-Blocks in
+`verarbeiter`.*
+
+- [x] `abholer.verarbeiter` bricht vor dem ersten Blender-Lauf ab: `bilder: []`,
+      `uebersprungen: True`, `grund`. Kein Multipass, kein Render.
+- [x] `ueberspringen` wandert von `STEHENGEBLIEBEN` nach `DURCHGEREICHT`. Der Test dazu
+      bleibt stehen und misst jetzt das Gegenteil — ein erledigter Posten, der
+      stillschweigend aus einer Tabelle verschwindet, ist von einem vergessenen nicht zu
+      unterscheiden. **Damit sind es noch vier stehengebliebene Felder, nicht fünf.**
+- [x] `als_ergebnis(..., uebersprungen=True)` schreibt die **vierte** Lage in
+      `verdict.reason`: *ABBESTELLT* — weder durchgefallen noch ungeprüft. Ungeprüft
+      verlangt einen zweiten Lauf, abbestellt verlangt gar nichts.
+- [x] `bruecke.schreibe_ergebnis(..., uebersprungen=…)` reicht es durch.
+
+### Offen aus derselben Liste
+
+- [ ] **Posten 3 · Die ControlNet-Verflechtung.** `ZImageControlNetPipeline` teilt 67
+      Parameter zwischen ControlNet und Transformer; `accelerate` prüft beim Auslagern
+      nur den ersten, also bleiben 454 von 521 Transformer-Parametern auf der CPU. Der
+      Fix ist gemessen (`copy.deepcopy` der sechs geteilten Untermodule, Kosten ~1,35
+      GiB). *Kein Rückfall — ausgelöst hat es der freie Speicher.*
+- [ ] **Posten 5 · Drei Vertragslücken**, die der Abholer selbst meldet: Bildmasse
+      1600×1000 → 1600×992, `denoise` und Schrittzahl werden nicht abgebildet, Sonnenstand
+      wird nicht bedient. Überschneidet sich mit Block 3 des Tagesplans (die drei
+      Dauerwarnungen).
+- [ ] **Posten 6 · `idle_window_only`** ist auf einem benutzten Rechner nie erfüllbar
+      (Auslastung 21 % gegen Grenze 10 %). `_karte_frei` ist richtig gebaut — die Frage
+      gehört an KosmoOrbit: Wer setzt die Voreinstellung, und was soll sie auf einem
+      Rechner bedeuten, der auch benutzt wird? **Nicht unsere Entscheidung.**
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).

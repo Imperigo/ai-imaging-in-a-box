@@ -1192,9 +1192,42 @@ def _hinweise(a: RenderAuftrag, parameter: dict, lizenz: dict) -> tuple[str, ...
     return tuple(hinweise)
 
 
+def _geraeteweg(modell) -> dict:
+    """Auf welchem Weg das Modell wirklich gelaufen ist — für das Protokoll.
+
+    **Der Anlass sind drei verlorene Stunden** (HomeStation, `auf-vis-20260825-15`,
+    Posten 4): :func:`lade_modell` setzt ``modell.geraet`` und ``modell.ladeweg`` seit
+    dem 19.08.2026 — und **kein Aufrufer hat sie je irgendwohin geschrieben**. Darum sah
+    der Unterschied zwischen dem gelungenen Lauf vom 20.08. und dem Fehlschlag vom
+    25.08. wie ein Rückfall im Code aus, obwohl sich am Code nichts geändert hatte: Es
+    war der freie Kartenspeicher, der zwischen zwei Ladewegen entschied. Zwei bis vier
+    Zehntel Gigabyte.
+
+    Der billigste Posten der ganzen Liste, und der mit dem grössten Hebel: Eine Zahl, die
+    gemessen wird und nirgends landet, ist für jede spätere Untersuchung nicht vorhanden.
+
+    Returns:
+        ``{geraet, ladeweg, gemeldet, grund}``. ``gemeldet`` ist ``False``, wenn kein
+        Modell geladen wurde **oder** das übergebene Modell die Angaben nicht führt — die
+        Dreiteilung dieses Projekts: ``geraet=None`` heisst **unbekannt**, nie „CPU".
+    """
+    if modell is None:
+        return {"geraet": None, "ladeweg": None, "gemeldet": False,
+                "grund": "Es wurde nichts geladen — der Auftrag kam nicht so weit."}
+    geraet = getattr(modell, "geraet", None)
+    if geraet is None:
+        return {"geraet": None, "ladeweg": getattr(modell, "ladeweg", None),
+                "gemeldet": False,
+                "grund": ("Das Modell fuehrt keine Geraeteangabe. So sieht eine Attrappe "
+                          "aus, und so saehe auch ein fremder Lader aus — UNBEKANNT ist "
+                          "hier nicht dasselbe wie 'auf der CPU'.")}
+    return {"geraet": str(geraet), "ladeweg": getattr(modell, "ladeweg", None),
+            "gemeldet": True, "grund": ""}
+
+
 def _ergebnis(status: str, parameter: dict, *, bild_png=None, dauer_s: float = 0.0,
               error=None, maengel=(), lizenz=None, hinweise=(),
-              schritte_gerechnet=None) -> dict:
+              schritte_gerechnet=None, geraeteweg=None) -> dict:
     """Der Ergebnissatz — eine Form für alle drei Ausgänge.
 
     Ein einheitlicher Satz ist kein Selbstzweck: Wer ein Ergebnis auswertet, soll
@@ -1217,6 +1250,9 @@ def _ergebnis(status: str, parameter: dict, *, bild_png=None, dauer_s: float = 0
         # diesem Projekt. Eine Pipeline ohne `callback_on_step_end` lässt uns darüber im
         # Dunkeln, und das ist etwas anderes, als hätte sie keinen Schritt gerechnet.
         "schritte_gerechnet": schritte_gerechnet,
+        # Auf welchem Weg das Modell lief. Steht auch bei einer Ablehnung da — dann
+        # eben mit `gemeldet: False` und dem Grund. Siehe `_geraeteweg`.
+        "geraeteweg": geraeteweg if geraeteweg is not None else _geraeteweg(None),
     }
 
 
@@ -1244,7 +1280,12 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
 
     Returns:
         ``{status, bild_png, seed, backbone, parameter, dauer_s, error, maengel, lizenz,
-        hinweise, schritte_gerechnet}``.
+        hinweise, schritte_gerechnet, geraeteweg}``.
+
+        ``geraeteweg`` sagt, **auf welchem Weg** das Modell lief (``cuda``,
+        ``cuda+auslagerung``, ``cuda+schichtauslagerung``, ``cpu``) — siehe
+        :func:`_geraeteweg`. Die Angabe wurde seit dem 19.08.2026 gemessen und bis zum
+        26.08. nirgends geschrieben.
 
         ``schritte_gerechnet`` ist die Zahl der **wirklich gerechneten**
         Diffusionsschritte, gezählt am Rückruf der Pipeline. Sie kann von
@@ -1340,8 +1381,13 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         return _ergebnis(
             STATUS_FEHLER, parameter, dauer_s=time.perf_counter() - beginn,
             error=f"{type(fehler).__name__}: {fehler}", lizenz=lizenz, hinweise=hinweise,
+            # Gerade hier: Ein Fehlschlag SAGT erst etwas, wenn dabeisteht, auf welchem
+            # Weg er passiert ist. `modell` kann noch None sein, wenn schon das Laden
+            # scheiterte — dann steht das da, und nicht nichts.
+            geraeteweg=_geraeteweg(modell),
         )
     dauer = time.perf_counter() - beginn
+    geraeteweg = _geraeteweg(modell)
 
     if isinstance(antwort, dict):
         bild_png = antwort.get("bild_png")
@@ -1357,18 +1403,21 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
     if not isinstance(bild_png, str) or not bild_png.strip():
         return _ergebnis(
             STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
+            geraeteweg=geraeteweg,
             error=(f"Das Modell lieferte keinen Bildpfad, sondern {antwort!r}. Der "
                    f"Vertrag der Naht ist: ein Pfad, oder ein Wörterbuch mit 'bild_png'."),
         )
     if not Path(bild_png).is_file():
         return _ergebnis(
             STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
+            geraeteweg=geraeteweg,
             error=(f"Das Modell meldete {bild_png!r}, dort liegt aber keine Datei. Ein "
                    f"gemeldeter Pfad ist kein Bild — deshalb wird nachgesehen."),
         )
 
     return _ergebnis(STATUS_OK, parameter, bild_png=bild_png, dauer_s=dauer,
-                     lizenz=lizenz, hinweise=hinweise, schritte_gerechnet=gerechnet)
+                     lizenz=lizenz, hinweise=hinweise, schritte_gerechnet=gerechnet,
+                     geraeteweg=geraeteweg)
 
 
 __all__ = [

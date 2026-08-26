@@ -2655,6 +2655,21 @@ Hardware.
 **VRAM** — Der Speicher auf der Grafikkarte. Die harte Obergrenze dafür, welche Modelle
 überhaupt laufen.
 
+**Auslagerung (Offloading) und der Geräteweg** — Passt ein Modell nicht ganz in den
+Speicher der Grafikkarte, kann es **stückweise** laufen: Immer nur der gerade benötigte
+Teil liegt auf der Karte, der Rest wartet im Arbeitsspeicher des Rechners und wird
+herübergeholt, wenn er an der Reihe ist. Das funktioniert und ist **viel langsamer** —
+das Hin- und Herschieben kostet mehr Zeit als das Rechnen.
+*In diesem Projekt gibt es vier solcher Wege, absteigend nach Geschwindigkeit: alles auf
+der Karte; je eine Komponente auf der Karte; je ein einzelnes Untermodul auf der Karte;
+gar nichts auf der Karte. Welcher genommen wird, entscheidet nicht das Kartenmodell,
+sondern der im Augenblick **freie** Speicher — wer nebenher einen Browser offen hat, kann
+denselben Auftrag auf einem anderen Weg laufen lassen als eine Stunde später.*
+*Der **Geräteweg** ist die Angabe, welcher der vier es war. Sie wurde in diesem Projekt
+seit dem 19.08.2026 ermittelt und bis zum 26.08. nirgends aufgeschrieben — mit der Folge,
+dass ein Fehlschlag wie ein neu eingebauter Fehler aussah, obwohl sich am Programm nichts
+geändert hatte. Entschieden hatten zwei Zehntel Gigabyte freier Speicher.*
+
 **Upscaling** — Nachträgliches Vergrössern eines Bildes unter Hinzuerfindung von Details.
 
 **Modellkarte (Model Card)** — Das Beiblatt eines veröffentlichten Modells: eine
@@ -3299,6 +3314,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-26 | Ergaenzt: **Auslagerung (Offloading) und der Geraeteweg**. Anlass sind drei verlorene Stunden am 25.08.: Der gewaehlte Weg wurde gemessen und nirgends geschrieben, und darum sah ein Fehlschlag wie ein Rueckfall im Code aus. Entschieden hatten zwei Zehntel Gigabyte freier Kartenspeicher |
 | 2026-08-26 | Ergaenzt: **Vorpruefung (Abbruch vor dem teuren Schritt)** und **Abbruchschwelle**. Anlass ist ein Owner-Einwand vom 25.08.: Die Geometriepruefung lief bis dahin NACH der Bilderzeugung, obwohl die entscheidende Angabe lange vorher vorliegt. Die Abbruchschwelle traegt ihre Zahl mit (`BILDBREITE_ABBRUCH = 0.65`) und damit auch den Waechter aus `tests/test_lexikon.py` — der zweite Eintrag dieser Woche, der bei der naechsten Aenderung im Code nicht mehr still veralten kann |
 | 2026-08-25 | **Zwei veraltete Zahlen im Text berichtigt, die nur im Aenderungsverzeichnis korrigiert waren.** *Stuerzende Linien* nannte weiterhin 9,46° Neigung, obwohl die Zahl zweimal nachgemessen und zuletzt auf -0,51 bis +5,98 Grad korrigiert worden ist. *Kreisschluss* fuehrte 0,2269 als unabhaengigen Boden, ohne dass er der Bildlage gehoert (Faktor 14). Eine Korrektur, die nur im Verzeichnis steht, erreicht niemanden, der den Begriff nachschlaegt — genau die Falle, gegen die dieses Verzeichnis gebaut ist |
 | 2026-08-25 | **Deckungsgrad** berichtigt (0.70 statt 0.55) und um den Grund erweitert — der Wechsel war eine gemessene Entscheidung und keine Geschmacksfrage. Dazu ergaenzt: **Rahmen gegen Messen (der Rahmungsbruch)**, der groesste Einzelbefund dieser Woche. Ein Eintrag, der eine Zahl nennt, veraltet mit ihr — das ist dieselbe Falle wie eine Zahl an zwei Stellen im Code, nur im Anhang |

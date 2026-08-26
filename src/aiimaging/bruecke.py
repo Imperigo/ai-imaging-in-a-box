@@ -270,7 +270,7 @@ def setze_status(verzeichnis, status: str, *, fehler: str | None = None) -> dict
 
 def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
                       geometrie_urteil=None, stil_urteil=None, zeiten=None,
-                      status: str = STATUS_DONE) -> dict:
+                      status: str = STATUS_DONE, uebersprungen: bool = False) -> dict:
     """Das Ergebnis danebenlegen und den Laufzettel fortschreiben — in dieser Reihenfolge.
 
     **Die Reihenfolge ist die ganze Sorgfalt dieser Funktion.** Die fremde Oberfläche
@@ -284,6 +284,10 @@ def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
             kennt (``/jobs/{id}/artifacts/{name}``). Ein absoluter Pfad ginge dort ins
             Leere — und trüge nebenbei einen Rechnernamen nach draussen (Regel 3).
         job_id: Ohne Angabe aus dem Laufzettel gelesen.
+        uebersprungen: Der Auftrag trug ``skip: true``. Wird nach
+            :func:`aiimaging.kosmo_szene.als_ergebnis` durchgereicht, damit im Ergebnis
+            **abbestellt** steht und nicht **ungeprüft** — zwei verschiedene Lagen, und
+            nur eine davon verlangt einen zweiten Lauf.
 
     Returns:
         Das geschriebene Ergebnis, wie es in der Datei steht.
@@ -300,7 +304,7 @@ def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
     namen = [Path(b).name for b in (bilder or [])]
     ergebnis = kosmo_szene.als_ergebnis(
         kennung, namen, geometrie_urteil=geometrie_urteil,
-        stil_urteil=stil_urteil, zeiten=zeiten)
+        stil_urteil=stil_urteil, zeiten=zeiten, uebersprungen=uebersprungen)
 
     # ZUERST das Ergebnis, DANN der Laufzettel — siehe Docstring.
     _schreibe_atomar(ordner / DATEI_ERGEBNIS, kosmo_szene.nur_vertragsfelder(ergebnis))

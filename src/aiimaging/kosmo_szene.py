@@ -515,6 +515,11 @@ DURCHGEREICHT = {
     "prompt_bauteile": "befund.json und befund_kurz",
     "warnungen": "Antwort des Auftrags",
     "maengel": "halten den Lauf auf",
+    # Seit 26.08.2026 — vorher stand es in STEHENGEBLIEBEN, und der Abholer meldete das
+    # von sich aus: «BESTELLT UND NICHT AUSGEFUEHRT». Im Lauf vom 25.08. wurde es dann
+    # belegt (auf-vis-20260825-15, Posten 2): Wer abbestellt, bekommt geliefert — und
+    # zahlt die GPU-Zeit.
+    "ueberspringen": "abholer.verarbeiter: der Auftrag wird NICHT gerendert",
 }
 
 #: Felder, die der Betreiber setzen **kann** und die heute **nichts** bewirken.
@@ -538,15 +543,6 @@ STEHENGEBLIEBEN = {
         "noetig": "Ein Hochskalierer mit permissiver Lizenz (Regel 1) — und ein Entscheid "
                   "darüber, ob die Geometrie-QA auf dem hochskalierten Bild oder auf dem "
                   "ursprünglichen gemessen wird. Beides ist offen.",
-    },
-    "ueberspringen": {
-        "neutral": False,
-        "grund": "`skip: true` wird gelesen und dann nicht beachtet — der Auftrag läuft "
-                 "trotzdem. Das ist die unangenehmste der fünf: Wer etwas ABBESTELLT, "
-                 "bekommt es geliefert.",
-        "noetig": "Ein Entscheid, was Überspringen bedeuten soll — kein Bild, oder ein "
-                  "Ergebnis mit leerer Bildliste und einem Grund? Der fremde Vertrag "
-                  "sagt es nicht, und stillschweigend zu raten wäre schlechter als heute.",
     },
     "stil_modus": {
         "neutral": "none",
@@ -600,7 +596,7 @@ def stehengebliebene_felder(szene: dict) -> tuple[dict, ...]:
 # --------------------------------------------------------------------------------------
 
 def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None,
-                 zeiten=None) -> dict:
+                 zeiten=None, uebersprungen: bool = False) -> dict:
     """Unsere QA → ``kosmovis.render-result/v2``.
 
     **Hier liegt die Entscheidung dieses Moduls.** Der fremde Vertrag trägt für die
@@ -627,6 +623,12 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         geometrie_urteil: Antwort von ``geometrie_qa.geometrie_gate(...)`` oder ``None``.
         stil_urteil: Antwort von ``stil_qa.stil_gate(...)`` oder ``None``.
         zeiten: ``{name: sekunden}``, wandert unverändert in ``timings``.
+        uebersprungen: Der Auftrag trug ``skip: true`` und wurde **nicht gerechnet**.
+            Die **vierte** Lage neben *gemessen*, *nicht gemessen* und *nicht zuständig*
+            — und die einzige, die niemand beheben muss. Sie steht hier, weil
+            ``passed: false`` ohne diesen Satz aussieht wie ein durchgefallenes Bild;
+            in Wahrheit hat der Betreiber selbst abbestellt (Owner-Vertragslücke,
+            `auf-vis-20260825-15` Posten 2, angeschlossen am 26.08.2026).
 
     Returns:
         Ein Wörterbuch nach ``kosmovis.render-result/v2``, plus ein Feld ``hinweise``,
@@ -765,7 +767,13 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
                     "nicht durchgefallen, sondern ungeprueft — ein Lauf fehlt.")
         teile.insert(0, lage)
 
-    if not messbar:
+    if uebersprungen:
+        # Vor allen anderen: Wer abbestellt hat, braucht keine Erklaerung darueber, was
+        # nicht gemessen wurde. Er braucht die Bestaetigung, dass nichts LIEF.
+        grund = ("ABBESTELLT: Der Auftrag trug 'skip: true' und wurde nicht gerechnet. "
+                 "'passed: false' heisst hier weder durchgefallen noch ungeprueft — es "
+                 "war nichts bestellt. Es ist keine GPU-Zeit angefallen.")
+    elif not messbar:
         grund = ("Keine QA gelaufen — weder Geometrie noch Stil wurden gemessen. "
                  "'passed: false' heisst hier NICHT durchgefallen, sondern ungeprüft.")
     elif qa.get("geometry") and geometrie_urteil.get("nullanker") is None:

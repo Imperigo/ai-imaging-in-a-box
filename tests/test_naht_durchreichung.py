@@ -10,8 +10,9 @@ in genau einer der beiden Listen** — es kommt an, oder es bleibt stehen und de
 steht dabei. Ein neues Feld im fremden Vertrag kann damit nicht mehr stillschweigend ins
 Leere laufen.
 
-Die Prüfung ist bewusst **nicht** «alles kommt an». Fünf Felder tun es heute nicht, und
+Die Prüfung ist bewusst **nicht** «alles kommt an». Vier Felder tun es heute nicht, und
 das ist ein Befund und kein Fehler dieser Datei — er gehört gemeldet, nicht wegdefiniert.
+*Es waren fünf; `ueberspringen` ist am 26.08.2026 angeschlossen worden.*
 """
 from __future__ import annotations
 
@@ -95,16 +96,24 @@ def test_ein_gesetzter_sonnenstand_wird_gemeldet():
     assert offen[0]["wert"] == {"elevation": 8, "azimuth": 250}
 
 
-def test_ein_abbestellter_auftrag_laeuft_trotzdem_und_sagt_es_wenigstens():
-    """`skip: true` wird gelesen und nicht beachtet.
+def test_ein_abbestellter_auftrag_steht_nicht_mehr_auf_der_liste():
+    """**Erledigt am 26.08.2026** — und darum steht der Test hier umgedreht.
 
-    Das ist die unangenehmste der fünf: Wer etwas ABBESTELLT, bekommt es geliefert. Bis
-    entschieden ist, was Überspringen bedeuten soll, ist die Meldung das Mindeste — sie
-    ist ausdrücklich **kein Ersatz** für die Umsetzung.
+    `skip: true` wurde bis dahin gelesen und nicht beachtet: Wer etwas ABBESTELLTE,
+    bekam es geliefert und zahlte die GPU-Zeit (im Lauf belegt, `auf-vis-20260825-15`
+    Posten 2). Seit `abholer.verarbeiter` es befolgt, gehört das Feld nach
+    :data:`DURCHGEREICHT` — und nicht mehr auf die Liste der Bestellungen, die ins Leere
+    laufen.
+
+    Der Test bleibt stehen und misst jetzt das Gegenteil: Ein erledigter Posten, der
+    stillschweigend aus einer Tabelle verschwindet, ist von einem vergessenen nicht zu
+    unterscheiden.
     """
     offen = kosmo_szene.stehengebliebene_felder(_szene(vis={"skip": True}))
 
-    assert [e["feld"] for e in offen] == ["ueberspringen"]
+    assert [e["feld"] for e in offen] == []
+    assert "ueberspringen" in kosmo_szene.DURCHGEREICHT
+    assert "ueberspringen" not in STEHENGEBLIEBEN
 
 
 def test_mehrere_zugleich_kommen_alle_und_in_der_reihenfolge_der_tabelle():
@@ -114,7 +123,7 @@ def test_mehrere_zugleich_kommen_alle_und_in_der_reihenfolge_der_tabelle():
     felder = [e["feld"] for e in offen]
 
     assert felder == [f for f in STEHENGEBLIEBEN if f in felder]
-    assert set(felder) == {"sonne", "hochskalieren", "ueberspringen", "stil_modus"}
+    assert set(felder) == {"sonne", "hochskalieren", "stil_modus"}
 
 
 def test_ein_stil_modus_none_ist_keine_bestellung():
@@ -157,3 +166,106 @@ def test_der_kurzbefund_nennt_was_bestellt_und_nicht_ausgefuehrt_wurde():
 def test_gegenprobe_ohne_offene_bestellung_steht_die_zeile_nicht_da():
     assert not [z for z in abholer.befund_kurz({"kameras": []})
                 if "BESTELLT UND NICHT AUSGEFUEHRT" in z]
+
+
+# --------------------------------------------------------------------------------------
+# 4 · Abbestellt heisst abbestellt — seit 26.08.2026
+# --------------------------------------------------------------------------------------
+#
+# Belegt im ersten vollstaendigen Kettenlauf (auf-vis-20260825-15, Posten 2): Der Abholer
+# meldete woertlich «BESTELLT UND NICHT AUSGEFUEHRT: ueberspringen = True» — und rechnete
+# weiter. Eine Meldung ueber die eigene Nichtbeachtung ist ehrlicher als Schweigen und
+# trotzdem keine Erfuellung.
+
+def _abgestellte_kette(tmp_path, skip):
+    """Ein Lauf durch `verarbeiter` mit Attrappen; gibt (ergebnis, zahl der Render)."""
+    from pathlib import Path
+
+    zaehler = {"render": 0, "multipass": 0}
+
+    def multipass(glb, aus, **kw):
+        zaehler["multipass"] += 1
+        tiefe = Path(aus) / "tiefe_norm.png"
+        tiefe.write_bytes(b"\x89PNG\r\n\x1a\n")
+        return {"depth_png": str(tiefe), "kamera": {"weg": "vorgegeben"}}
+
+    def rendere(auftrag, **kw):
+        zaehler["render"] += 1
+        bild = Path(tmp_path) / "b.png"
+        bild.write_bytes(b"\x89PNG\r\n\x1a\n")
+        return {"status": "ok", "bild_png": str(bild), "hinweise": ()}
+
+    verarbeite = abholer.verarbeiter(
+        out_wurzel=tmp_path, nullprobe=False,
+        _multipass=multipass, _rendere=rendere,
+        _qa=lambda *a, **k: {"score": 0.9, "bestanden": True},
+        _soll=lambda *a, **k: ([[0.0]], 1, 1))
+
+    szene = _szene(vis={"skip": skip})
+    szene = dict(szene, kameras=[{"kuerzel": "sSE", "richtung": "sSE"}],
+                 aufloesung=64, hoehe=64, samples=1, prompt="a house")
+    ergebnis = verarbeite({"modell": Path(tmp_path) / "m.glb", "job_id": "vis-1-aaaaaa",
+                           "verzeichnis": tmp_path, "szene": szene})
+    return ergebnis, zaehler
+
+
+def test_ein_abbestellter_auftrag_wird_nicht_gerendert(tmp_path):
+    """Der Kern des Postens: keine Blender-Laufzeit, keine GPU-Zeit, kein Bild."""
+    ergebnis, zaehler = _abgestellte_kette(tmp_path, True)
+
+    assert zaehler == {"render": 0, "multipass": 0}
+    assert ergebnis["bilder"] == []
+    assert ergebnis["uebersprungen"] is True
+    assert "skip" in ergebnis["grund"]
+
+
+def test_ein_abbestellter_auftrag_bekommt_trotzdem_eine_antwort(tmp_path):
+    """**Der entschiedene Teil** (26.08.2026): Überspringen heisst kein Bild, aber sehr
+    wohl eine Antwort. Gar nichts zurückzugeben liesse die bestellende Seite hängen — sie
+    könnte übersprungen nicht von abgestürzt unterscheiden."""
+    ergebnis, _ = _abgestellte_kette(tmp_path, True)
+
+    assert set(ergebnis) >= {"bilder", "geometrie_urteil", "kameras", "zeiten",
+                             "uebersprungen", "grund"}
+    assert ergebnis["geometrie_urteil"] is None, (
+        "nichts gemessen — und ein erfundenes Urteil waere schlimmer als keines")
+
+
+def test_ohne_skip_laeuft_alles_wie_bisher(tmp_path):
+    """Die Gegenprobe, und sie ist die wichtigere: Eine Abkürzung, die immer greift,
+    hätte die ganze Kette stillgelegt."""
+    ergebnis, zaehler = _abgestellte_kette(tmp_path, False)
+
+    assert zaehler == {"render": 1, "multipass": 1}
+    assert len(ergebnis["bilder"]) == 1
+    assert ergebnis["uebersprungen"] is False
+
+
+def test_das_ergebnis_sagt_abbestellt_und_nicht_ungeprueft():
+    """**Die vierte Lage an der Vertragsgrenze.**
+
+    `passed` ist im fremden Vertrag ein Wahrheitswert und kann kein Drittes tragen — ein
+    übersprungener Auftrag kommt dort also als `false` an, genau wie ein durchgefallenes
+    Bild. Der Satz daneben ist die einzige Stelle, an der der Unterschied überlebt. Und
+    er ist ein anderer als «ungeprüft»: Ungeprüft verlangt einen zweiten Lauf, abbestellt
+    verlangt gar nichts.
+    """
+    ergebnis = kosmo_szene.als_ergebnis("vis-1-aaaaaa", [], uebersprungen=True)
+
+    grund = ergebnis["qa"]["verdict"]["reason"]
+    assert ergebnis["qa"]["verdict"]["passed"] is False
+    assert grund.startswith("ABBESTELLT")
+    assert "weder durchgefallen noch ungeprueft" in grund, (
+        "der Satz muss BEIDE Fehldeutungen ausschliessen — 'nicht durchgefallen' allein "
+        "liesse noch 'da fehlt ein Lauf' uebrig")
+    assert "keine GPU-Zeit" in grund
+
+
+def test_ohne_abbestellung_bleibt_der_satz_ungeprueft():
+    """Die Gegenprobe: Sonst trüge jedes ungemessene Ergebnis das falsche Etikett — und
+    ein vergessener Lauf sähe aus wie ein abbestellter."""
+    ergebnis = kosmo_szene.als_ergebnis("vis-1-aaaaaa", [])
+
+    grund = ergebnis["qa"]["verdict"]["reason"]
+    assert not grund.startswith("ABBESTELLT")
+    assert "ungeprüft" in grund

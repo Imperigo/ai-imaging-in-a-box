@@ -602,6 +602,19 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
                       f"{', '.join(str(k) for k in ohne_boden)} — rho steht dort gegen "
                       f"nichts. Die Konstante gilt fuer eine ANDERE Lage")
 
+    # Der Geraeteweg steht NUR da, wenn er nicht der schnelle war. Eine Zeile, die bei
+    # jedem gesunden Lauf erscheint, wird nach dem dritten Mal nicht mehr gelesen — und
+    # gerade diese zaehlt, wenn ein Lauf zwanzigmal so lange braucht wie der vorige.
+    langsam = sorted({(k.get("geraeteweg") or {}).get("geraet")
+                      for k in kameras
+                      if (k.get("geraeteweg") or {}).get("gemeldet")
+                      and (k.get("geraeteweg") or {}).get("geraet") != "cuda"})
+    if langsam:
+        zeilen.append(f"Bildmodell lief auf {', '.join(str(g) for g in langsam)} — nicht "
+                      f"ganz auf der Karte. Das erklaert Laufzeit, nicht Qualitaet; "
+                      f"entschieden hat der FREIE Kartenspeicher, nicht der Code "
+                      f"(auf-vis-20260825-15, Posten 4)")
+
     neg = befund.get("negativ_lage")
     if neg and not neg.get("erreicht_render"):
         # Drei Zustaende, nicht zwei. `None` heisst UNBEKANNT (die Fuehrung ist nicht
@@ -904,6 +917,29 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         ziel = Path(out_wurzel) / ordner.name if out_wurzel else Path(auftrag["ausgabe"])
         ziel.mkdir(parents=True, exist_ok=True)
 
+        # ABBESTELLT. Bis zum 26.08.2026 las die Kette `skip: true` und rechnete
+        # trotzdem — der Abholer meldete es sogar selbst («BESTELLT UND NICHT
+        # AUSGEFUEHRT»), und im Lauf vom 25.08. wurde es belegt (auf-vis-20260825-15,
+        # Posten 2). Wer etwas abbestellt, bekam es geliefert und zahlte die GPU-Zeit.
+        #
+        # ENTSCHIEDEN (Claude, 26.08.2026, Owner-Freigabe «entscheiden und um 20:00
+        # vorlegen»): ueberspringen heisst KEIN Bild, aber SEHR WOHL eine Antwort. Gar
+        # nichts zurueckzugeben liesse die bestellende Seite haengen — sie kann nicht
+        # unterscheiden, ob wir uebersprungen haben oder abgestuerzt sind. Ein Ergebnis
+        # mit leerer Bildliste und einem Grund kann sie lesen.
+        if szene.get("ueberspringen"):
+            return {
+                "bilder": [],
+                "geometrie_urteil": None,
+                "stil_urteil": None,
+                "kameras": [],
+                "zeiten": {"gesamt": 0.0},
+                "uebersprungen": True,
+                "grund": ("Der Auftrag traegt `skip: true` und wurde NICHT gerendert. "
+                          "Das ist keine Stoerung und kein Urteil ueber die Geometrie — "
+                          "es wurde nichts gemessen, weil nichts bestellt war."),
+            }
+
         kameras = szene.get("kameras")
         if kameras == "auto" or not isinstance(kameras, list):
             aufgaben = [{"kuerzel": r, "richtung": r, "brennweite_mm": brennweite_mm}
@@ -1005,6 +1041,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                           # gehoert an das Urteil. Ein Lauf knapp ueber der Schwelle
                           # sieht sonst aus wie einer mit Luft.
                           rahmung=rahmung,
+                          # Auf welchem Weg das Bildmodell lief. Seit dem 19.08.2026
+                          # gemessen, bis zum 26.08. nirgends geschrieben — und darum
+                          # sah ein Lauf, der am freien Kartenspeicher scheiterte, wie
+                          # ein Rueckfall im Code aus (auf-vis-20260825-15, Posten 4).
+                          geraeteweg=ergebnis.get("geraeteweg"),
                           # Die Kompositionsprüfung — bis zum 23.08.2026 rief SIE
                           # niemand, obwohl `komposition.py` 1400 Zeilen gerechnetes
                           # Fachwissen trägt. Ein Regelwerk, das nur seine eigenen Tests
@@ -1053,6 +1094,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             "stil_urteil": _stil_urteil_aus_belichtung(urteile, stil),
             "kameras": urteile,
             "zeiten": zeiten,
+            # Immer da, wie `status` in `render._ergebnis`: Ein Ergebnissatz mit
+            # wechselnden Schluesseln zwingt jeden Auswerter, vor dem Lesen zu
+            # verzweigen.
+            "uebersprungen": False,
+            "grund": "",
         }
 
     return verarbeite
