@@ -36,6 +36,23 @@ ERLAUBT = {NUTZER_ERSATZ, "nutzer", "user", "vorname-nachname", "jemand", "USER"
 
 SUCHE = re.compile(r"/home/([^/\s\"'<>)\]]+)|/Users/([^/\s\"'<>)\]]+)")
 
+#: Die zweite Suche, und sie braucht kein intaktes ``/home/``.
+#:
+#: **Warum es sie gibt — gefunden, nicht ausgedacht.** In zwei Ergebnisdateien stand
+#: ``e/andrin-baumann/ai-imaging-in-a-box/…``: der Anfang des Pfades war beim Einfangen
+#: eines Tracebacks abgeschnitten worden. :data:`SUCHE` verlangt ein vollständiges
+#: ``/home/`` und sah **nichts**, während der Name mitten im Repo stand.
+#:
+#: Diese Suche greift stattdessen am **Namen des Repos** an — der steht in jedem solchen
+#: Pfad, und was unmittelbar davor liegt, ist das Heimatverzeichnis. Ein Platzhalter ist
+#: erlaubt, ein Name nicht.
+SUCHE_VOR_DEM_REPO = re.compile(r"([^/\s\"'<>)\]]+)/ai-imaging-in-a-box/")
+
+#: Was **vor** dem Repo-Namen stehen darf: die Platzhalter aus :data:`ERLAUBT`, dazu die
+#: Auslassung ``…`` und ``home``/``Users`` selbst (für ``/home/ai-imaging-in-a-box`` und
+#: verwandte Formen ohne Zwischenverzeichnis).
+ERLAUBT_VOR_DEM_REPO = {"…", "...", "home", "Users", "user", "opt", "srv", "repo", "code"}
+
 
 # --------------------------------------------------------------------------------------
 # 1 · Das Ersetzen selbst
@@ -150,13 +167,40 @@ def test_ein_ergebnis_ebenfalls(tmp_path):
 AUSGENOMMEN = {"tests/test_regel3_kennungen.py"}
 
 
+#: Was **nicht** gelesen wird. Alles andere schon.
+#:
+#: **Die Liste war bis zum 26.08.2026 andersherum gebaut** — sie zählte die Endungen auf,
+#: die gelesen werden sollten: ``.md``, ``.json``, ``.py``, ``.txt``, ``.toml``, ``.yml``,
+#: ``.yaml``, ``.cfg``. Und genau daran ist sie gescheitert: In
+#: ``betrieb/kosmo-abholer.service`` standen **dreimal** ein wirklicher Benutzername in
+#: einem vollständigen ``/home/…``-Pfad, in einem öffentlichen Repo. Die Datei wurde nie
+#: gelesen, weil ``.service`` in keiner Liste stand.
+#:
+#: *Eine Erlaubnisliste vergisst das Nächste, was dazukommt; eine Verbotsliste vergisst
+#: nichts.* Sie nennt darum nur noch das, was maschinenlesbar ist und darum keinen Namen
+#: tragen kann — und im Zweifel wird gelesen und nicht übersprungen.
+NICHT_LESEN = {".png", ".jpg", ".jpeg", ".exr", ".glb", ".gltf", ".ifc", ".zip",
+               ".pdf", ".ico", ".woff", ".woff2", ".safetensors", ".bin", ".pyc"}
+
+
 def _versionierte_textdateien() -> list[Path]:
-    """Nur, was wirklich im Repo steht — nicht das Arbeitsverzeichnis mit Bauresten."""
-    roh = subprocess.run(["git", "ls-files"], cwd=WURZEL, capture_output=True,
-                         text=True, check=True).stdout.split("\n")
-    endungen = {".md", ".json", ".py", ".txt", ".toml", ".yml", ".yaml", ".cfg"}
-    return [WURZEL / n for n in roh
-            if n and (WURZEL / n).suffix in endungen and (WURZEL / n).is_file()]
+    """Nur, was wirklich im Repo steht — nicht das Arbeitsverzeichnis mit Bauresten.
+
+    Raises:
+        ``pytest.skip``, wenn hier gar kein Git-Repo liegt. **Das ist keine Nachlässigkeit,
+        sondern die dritte Antwort:** Ohne Git gibt es keine Liste des Versionierten, also
+        auch keine Aussage darüber — *nicht feststellbar ist weder bestanden noch
+        durchgefallen*. Der Fall tritt in der Arbeitskopie von `tools/vakuumprobe.py` auf,
+        die ohne `.git` kopiert wird; dort erzeugte der Abbruch bis zum 26.08.2026 einen
+        roten Test, der wie ein Regel-3-Fund aussah und keiner war.
+    """
+    lauf = subprocess.run(["git", "ls-files"], cwd=WURZEL, capture_output=True,
+                          text=True, check=False)
+    if lauf.returncode != 0:
+        pytest.skip(f"Kein Git-Repo unter {WURZEL} — die Liste des Versionierten ist "
+                    f"nicht feststellbar, und geraten wird nicht.")
+    return [WURZEL / n for n in lauf.stdout.split("\n")
+            if n and (WURZEL / n).suffix not in NICHT_LESEN and (WURZEL / n).is_file()]
 
 
 def test_im_ganzen_repo_steht_kein_benutzername_in_einem_pfad():
@@ -176,6 +220,12 @@ def test_im_ganzen_repo_steht_kein_benutzername_in_einem_pfad():
         for treffer in SUCHE.finditer(text):
             name = treffer.group(1) or treffer.group(2)
             if name not in ERLAUBT:
+                funde.append(f"{pfad.relative_to(WURZEL)}: {treffer.group(0)}")
+        # Zweiter Durchgang: der Name unmittelbar VOR dem Repo-Namen, auch wenn das
+        # `/home/` davor fehlt oder abgeschnitten ist. Siehe SUCHE_VOR_DEM_REPO.
+        for treffer in SUCHE_VOR_DEM_REPO.finditer(text):
+            name = treffer.group(1)
+            if name not in ERLAUBT and name not in ERLAUBT_VOR_DEM_REPO:
                 funde.append(f"{pfad.relative_to(WURZEL)}: {treffer.group(0)}")
 
     assert not funde, (

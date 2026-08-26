@@ -1,17 +1,25 @@
+# VOR DEM INSTALLIEREN: `<nutzer>` durch den eigenen Benutzernamen ersetzen.
+#
+# Hier stand bis zum 26.08.2026 ein wirklicher Benutzername, dreimal — in einem
+# oeffentlichen Repo, also ein Verstoss gegen Regel 3. Zwei Luecken haben ihn
+# durchgelassen: Der Waechter `tests/test_regel3_kennungen.py` liest nur Dateien
+# mit bestimmten Endungen, und `.service` gehoerte nicht dazu. Beide sind seither
+# geschlossen.
+
 [Unit]
 Description=KosmoVis-Abholer (holt Renderauftraege der Bruecke ab) — ein Durchgang
-Documentation=file:///home/andrin-baumann/ai-imaging-in-a-box/docs/ABHOLER_ERSTER_LAUF_2026-08-19.md
+Documentation=file:///home/<nutzer>/ai-imaging-in-a-box/docs/ABHOLER_ERSTER_LAUF_2026-08-19.md
 After=graphical-session.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/home/andrin-baumann/ai-imaging-in-a-box
+WorkingDirectory=/home/<nutzer>/ai-imaging-in-a-box
 Environment=AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers
 # --fremde-freigabe macht die Freigabe der fremden Bruecke STEHEND. Wer das nicht will,
 # streicht den Schalter: dann bleibt jeder Auftrag liegen und der Bericht sagt warum.
 # --hoechstens 1: ein Auftrag je Durchgang, damit ein langer Lauf den naechsten Takt
 # nicht blockiert und die Karte zwischendurch frei wird.
-ExecStart=/home/andrin-baumann/ai-imaging-in-a-box/.venv-render/bin/python \
+ExecStart=/home/<nutzer>/ai-imaging-in-a-box/.venv-render/bin/python \
     tools/abholen.py --fremde-freigabe --hoechstens 1
 # Der Abholer prueft die Karte selbst (nvidia-smi, fail-closed) und laesst Auftraege mit
 # 'idle_window_only' liegen, solange jemand anders rechnet. Ein Zeitlimit hier ist die

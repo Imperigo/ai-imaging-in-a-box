@@ -55,6 +55,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import re
 import shutil
 import subprocess
 import sys
@@ -137,7 +138,15 @@ def schreibe_um(datei: Path) -> int:
 #: ``docs`` steht hier, seit `tests/test_lexikon.py` das Lexikon liest. Ohne es scheitern
 #: dreizehn Tests aus einem Grund, der mit Vakuum nichts zu tun hat — und die erste
 #: Fassung dieses Werkzeugs meldete sie prompt als Treffer.
-MITKOPIEREN = ("tests", "src", "tools", "docs", "pyproject.toml")
+#:
+#: **Am 26.08.2026 ist dieselbe Lücke ein zweites Mal aufgegangen**, und diesmal in die
+#: gefährlichere Richtung: Drei neue Wächter lesen Dateien im Repo — ``README.md``,
+#: ``NOTICE`` und ``auftraege/offen/``. Keine davon stand hier. In der Arbeitskopie
+#: scheiterte darum schon das **Einsammeln**, und das Werkzeug meldete nicht etwa einen
+#: Fehler, sondern **null Treffer** — von zwölf am Vormittag auf keinen, ohne dass sich an
+#: der Suite etwas geändert hätte. Siehe :func:`_rote`.
+MITKOPIEREN = ("tests", "src", "tools", "docs", "auftraege",
+               "pyproject.toml", "README.md", "NOTICE", "CLAUDE.md", "LICENSE")
 
 
 def _kopiere(wurzel: Path, ziel: Path) -> None:
@@ -152,15 +161,59 @@ def _kopiere(wurzel: Path, ziel: Path) -> None:
             shutil.copy2(quelle, ziel / teil)
 
 
-def _rote(ziel: Path) -> tuple[set[str], str]:
-    """Die Suite laufen lassen und die Namen der roten Tests einsammeln."""
+class ProbeError(RuntimeError):
+    """Die Probe konnte nicht gemessen werden. **Nicht** dasselbe wie: nichts gefunden."""
+
+
+def _rote(ziel: Path) -> tuple[set[str], str, int]:
+    """Die Suite laufen lassen und die Namen der roten Tests einsammeln.
+
+    Returns:
+        ``(namen, ausgabe, gesammelt)`` — die roten Tests, das Protokoll, und wie viele
+        Tests überhaupt gelaufen sind.
+
+    Die dritte Zahl ist am 26.08.2026 dazugekommen, und der Anlass ist ein Fehler dieses
+    Werkzeugs an sich selbst: Drei neue Testdateien lasen Dateien, die nicht in
+    :data:`MITKOPIEREN` standen. In der Arbeitskopie scheiterte das **Einsammeln** — und
+    ein Sammelfehler erzeugt keine ``FAILED``-Zeile. Beide Läufe hatten also null rote
+    Tests, ihre Differenz war leer, und die Meldung lautete *«Treffer: keine — jede
+    geprüfte Sammlung war gefüllt.»*
+
+    **Von zwölf Treffern auf keinen, ohne dass sich an der Suite etwas geändert hätte, und
+    das Werkzeug gab Entwarnung.** Das ist genau der Fehler, gegen den es gebaut ist, nur
+    eine Ebene höher: aus *nicht gemessen* wurde *in Ordnung*. Gezählt wird darum jetzt
+    mit, wie viele Tests wirklich gelaufen sind — und :func:`probe` bricht ab, wenn es zu
+    wenige sind.
+    """
     lauf = subprocess.run(
         [sys.executable, "-m", "pytest", "-q", "-p", "no:randomly", "--no-header"],
         cwd=ziel, capture_output=True, text=True, check=False)
     ausgabe = lauf.stdout + lauf.stderr
     namen = {z.split(" ")[1] for z in ausgabe.splitlines()
              if z.startswith("FAILED ") and len(z.split(" ")) > 1}
-    return namen, ausgabe
+    return namen, ausgabe, _sammelfehler(ausgabe, lauf.returncode)
+
+
+def _sammelfehler(ausgabe: str, rueckgabe: int) -> str:
+    """Der Grund, warum dieser Lauf nichts aussagt — oder ``""``, wenn er etwas aussagt.
+
+    **Warum das Symptom und keine Mindestzahl.** Der erste Entwurf verlangte, dass in der
+    Arbeitskopie mindestens 900 Tests laufen. Das war eine gesetzte Zahl, und sie hat
+    prompt die **eigenen Tests dieses Werkzeugs** gefällt: Die bauen absichtlich winzige
+    Suiten aus zwei, drei Tests. Eine Schranke, die den Normalfall trifft, ist keine.
+
+    Gefragt ist stattdessen genau das, was wirklich passiert ist: Ein **Sammelfehler**.
+    Er ist an pytest exakt ablesbar — Rückgabewert 2 heisst abgebrochen, und
+    ``ERROR``-Zeilen nennen die Datei. Beides ist von einem gewöhnlichen roten Test
+    unterscheidbar, und beides ist unabhängig von der Grösse der Suite.
+    """
+    if any(z.startswith("ERROR ") for z in ausgabe.splitlines()):
+        return "pytest meldet ERROR-Zeilen (Sammelfehler, kein roter Test)"
+    if rueckgabe == 2:
+        return "pytest wurde abgebrochen (Rückgabewert 2)"
+    if not re.search(r"\d+ (?:passed|failed|skipped)", ausgabe):
+        return "kein einziger Test ist gelaufen"
+    return ''
 
 
 def probe(wurzel: Path, ziel: Path) -> dict:
@@ -177,12 +230,20 @@ def probe(wurzel: Path, ziel: Path) -> dict:
     wird.
     """
     _kopiere(wurzel, ziel / "vorher")
-    vorher, _ = _rote(ziel / "vorher")
+    vorher, protokoll_vorher, grund = _rote(ziel / "vorher")
+    if grund:
+        raise ProbeError(
+            f"Die Arbeitskopie liess sich nicht messen: {grund}. Das ist mit ziemlicher "
+            f"Sicherheit eine Datei, die ein Test liest und die nicht in MITKOPIEREN "
+            f"steht — dann gehoert sie dorthin. **Es ist ausdruecklich KEIN Ergebnis "
+            f"'null Treffer':** Eine Probe, die nicht laufen konnte, hat nichts "
+            f"geprueft.\n\nLetzte Zeilen des Protokolls:\n"
+            + "\n".join(protokoll_vorher.splitlines()[-25:]))
 
     _kopiere(wurzel, ziel / "nachher")
     umgeschrieben = sum(schreibe_um(d)
                         for d in sorted((ziel / "nachher" / "tests").glob("test_*.py")))
-    nachher, ausgabe = _rote(ziel / "nachher")
+    nachher, ausgabe, _ = _rote(ziel / "nachher")
 
     return {
         "umgeschrieben": umgeschrieben,
@@ -202,7 +263,17 @@ def main(argv=None) -> int:
     wurzel = Path(a.wurzel).resolve()
     ordner = Path(tempfile.mkdtemp(prefix="vakuumprobe-"))
     try:
-        befund = probe(wurzel, ordner)
+        try:
+            befund = probe(wurzel, ordner)
+        except ProbeError as fehler:
+            # Rueckgabewert 2 und nicht 1: Ein Treffer (1) ist ein BEFUND, eine
+            # nicht durchgefuehrte Probe (2) ist gar keiner. Wer beides gleich
+            # behandelt, hat wieder den Fall, der dieses Werkzeug ueberhaupt
+            # noetig gemacht hat.
+            print("PROBE NICHT DURCHGEFUEHRT — das ist weder bestanden noch "
+                  "durchgefallen.\n")
+            print(fehler)
+            return 2
         print(f"Umgeschriebene Stellen: {befund['umgeschrieben']}")
         if befund["schon_vorher_rot"]:
             print(f"Schon vor dem Umschreiben rot (NICHT gezählt): "

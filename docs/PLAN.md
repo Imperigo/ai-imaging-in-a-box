@@ -3411,6 +3411,23 @@ zweiten Stelle.
       *Nach der LGPL selbst unproblematisch; die Hausregel in `CLAUDE.md` ist strenger.*
       **Owner-Frage, nicht selbst entschieden** — siehe Entscheid 37 in Sitzung 13.
 
+- [x] **REGEL-3-FUND, behoben: ein wirklicher Benutzername stand an fünf Stellen im
+      öffentlichen Repo** (26.08.). Zwei abgeschnittene Pfadfragmente in Auftragsergebnissen
+      vom 18.08. und drei vollständige `/home/…`-Pfade in `betrieb/kosmo-abholer.service`
+      vom 19.08. Alle geschwärzt; die `.service`-Datei ist jetzt eine Vorlage mit Hinweis.
+      **Der Wächter hatte zwei Löcher:** Er verlangte ein intaktes `/home/` (das Fragment
+      begann mitten im Wort) und las nur acht Dateiendungen (`.service` gehörte nicht dazu).
+      Beide geschlossen — die Endungsliste ist jetzt eine **Verbotsliste**, und eine zweite
+      Suche greift am Repo-Namen an statt am `/home/`.
+- [x] **Die Vakuumprobe unterscheidet «nichts gefunden» von «nichts gelaufen»** (26.08.).
+      Sie meldete nach dem `NOTICE`-Wächter *«Treffer: keine»* — von zwölf auf null, weil
+      in der Arbeitskopie drei Dateien fehlten und schon das Einsammeln scheiterte. Ein
+      Sammelfehler erzeugt keine `FAILED`-Zeile, also war die Differenz leer.
+      *Aus nicht gemessen wurde bestanden, im Werkzeug gegen genau diesen Schluss.*
+      Erkannt wird jetzt am Symptom (`ERROR`-Zeilen, Rückgabewert 2) und nicht an einer
+      Mindestzahl — die erste Fassung mit «mindestens 900 Tests» fällte die eigenen Tests
+      des Werkzeugs, die winzige Suiten bauen.
+
 ---
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
