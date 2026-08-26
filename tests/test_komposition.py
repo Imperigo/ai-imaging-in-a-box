@@ -753,14 +753,60 @@ def test_die_heutige_projektvorgabe_deckt_drei_der_vier_habs_ansichten_nicht_ab(
     Das ist keine Forderung nach zwölf Kameras; wieviele Standpunkte ein Auftrag wert
     ist, ist eine Betriebsentscheidung. Es ist die Auskunft, was dabei wegfällt.
     """
-    assert komposition.fehlende_ansichten(("sSE",)) == ("umgebung", "frontal",
-                                                        "ueber_eck_hinten")
+    assert komposition.fehlende_ansichten(("sSE",))["fehlend"] == (
+        "umgebung", "frontal", "ueber_eck_hinten")
 
 
-def test_der_volle_habs_satz_laesst_nichts_fehlen():
-    """Gegenprobe: Wäre ``fehlende_ansichten`` schlicht „alles fehlt", sagte der
-    vorige Test nichts."""
-    assert komposition.fehlende_ansichten(("s", "sSE", "nNW")) == ()
+def test_drei_richtungen_lassen_nichts_FEHLEN_aber_etwas_offen():
+    """**Berichtigt am 26.08.2026.** Dieser Test hiess
+    ``test_der_volle_habs_satz_laesst_nichts_fehlen`` und prüfte ``== ()``, also
+    «nichts fehlt». Er hat damit eine Fehlaussage festgeschrieben.
+
+    *Umgebungs-* und *Frontalansicht* liegen **beide** auf ``s`` und unterscheiden sich
+    allein im **Ausschnitt**. Eine einzige Aufnahme aus ``s`` deckt genau eine von beiden
+    ab, und aus der Richtung ist nicht zu sagen, welche. Die dritte Antwort gilt auch
+    hier: *nicht feststellbar* ist weder abgedeckt noch fehlend.
+    """
+    urteil = komposition.fehlende_ansichten(("s", "sSE", "nNW"))
+
+    assert urteil["fehlend"] == ()
+    assert urteil["nicht_feststellbar"] == ("umgebung", "frontal")
+    assert urteil["abgedeckt"] == ("ueber_eck_vorn", "ueber_eck_hinten")
+    assert "NICHT FESTSTELLBAR" in urteil["grund"]
+
+
+def test_mit_bekanntem_ausschnitt_ist_es_sehr_wohl_feststellbar():
+    """**Die Gegenprobe**, und sie zeigt, wovon die Auskunft abhängt: Sobald bekannt ist,
+    wie weit gerahmt wurde, ist die Frage beantwortet — und dann fehlt die
+    Umgebungsansicht wirklich."""
+    urteil = komposition.fehlende_ansichten(("s", "sSE", "nNW"),
+                                            ausschnitte={"s": "normal"})
+
+    assert urteil["nicht_feststellbar"] == ()
+    assert urteil["fehlend"] == ("umgebung",)
+    assert "frontal" in urteil["abgedeckt"]
+
+
+def test_ein_weiter_ausschnitt_dreht_die_antwort_um():
+    """Und umgekehrt. Ohne diesen Fall prüfte der Test darüber nur, dass irgendetwas
+    fehlt — nicht, dass die **richtige** Ansicht fehlt."""
+    urteil = komposition.fehlende_ansichten(("s", "sSE", "nNW"),
+                                            ausschnitte={"s": "weit"})
+
+    assert urteil["fehlend"] == ("frontal",)
+    assert "umgebung" in urteil["abgedeckt"]
+
+
+def test_die_heutige_projektvorgabe_laesst_die_frage_offen():
+    """Der Fall, um dessentwillen es die Funktion gibt — mit der **echten** Vorgabe und
+    nicht mit einer abgeschriebenen. Der Docstring nannte bis zum 26.08.2026
+    ``("sSE",)``, und das war seit dem 23.08. falsch."""
+    from aiimaging import abholer
+
+    urteil = komposition.fehlende_ansichten(abholer.AUTO_RICHTUNGEN)
+
+    assert urteil["fehlend"] == ()
+    assert urteil["nicht_feststellbar"] == ("umgebung", "frontal")
 
 
 def test_ansichtenkatalog_weist_eine_diagonale_als_frontal_ab():

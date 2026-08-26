@@ -1281,9 +1281,11 @@ def ansichtenkatalog(*, frontal: str = "s", seite: int = -1,
     unterscheidet die beiden nicht über den Standort, sondern darüber, wieviel Umfeld im
     Bild ist. Eine Richtungstabelle kann das nicht beantworten.
 
-    **Zum Stand des Projekts:** ``abholer.AUTO_RICHTUNGEN`` steht auf ``("sSE",)`` — eine
-    einzige Richtung. Das deckt genau eine der vier HABS-Ansichten ab; welche fehlen,
-    sagt :func:`fehlende_ansichten`.
+    **Zum Stand des Projekts:** ``abholer.AUTO_RICHTUNGEN`` steht seit dem 23.08.2026 auf
+    ``("s", "sSE", "nNW")`` — drei Richtungen; bis dahin war es eine einzige (``sSE``).
+    Damit sind **beide** Über-Eck-Ansichten abgedeckt und eine der beiden Aufnahmen aus
+    ``s``. Welche der beiden, ist aus der Richtung **nicht** zu sagen — sie unterscheiden
+    sich im Ausschnitt. Das steht bei :func:`fehlende_ansichten`.
 
     Args:
         frontal: Kürzel einer der vier Frontalen (``"n"``, ``"e"``, ``"s"``, ``"w"``).
@@ -1333,24 +1335,72 @@ def ansichtenkatalog(*, frontal: str = "s", seite: int = -1,
     )
 
 
-def fehlende_ansichten(kuerzel, **kwargs) -> tuple:
+def fehlende_ansichten(kuerzel, *, ausschnitte=None, **kwargs) -> dict:
     """Welche HABS-Ansichten ein gegebener Richtungssatz **nicht** abdeckt.
-
-    Gedacht für genau eine Frage: Was liefert die heutige Projektvorgabe
-    ``abholer.AUTO_RICHTUNGEN = ("sSE",)`` nicht? Antwort: die Frontalansicht, die
-    Umgebungsansicht und die zweite Über-Eck-Ansicht — drei von vier.
 
     Das ist keine Forderung, zwölf Kameras zu rendern. Wieviele Standpunkte ein Auftrag
     wert ist, ist eine Betriebsentscheidung. Es ist die Auskunft, **was dabei wegfällt**.
 
+    Args:
+        kuerzel: Die Richtungskürzel, die wirklich gerendert werden.
+        ausschnitte: ``{kuerzel: "weit" | "normal"}``, soweit **bekannt**. Ohne diese
+            Angabe bleibt bei jeder Richtung, auf der **mehr als eine** HABS-Ansicht
+            liegt, offen, welche davon getroffen wurde.
+
     ``kwargs`` gehen an :func:`ansichtenkatalog` (``frontal``, ``seite``, ``bias_grad``).
 
     Returns:
-        Tuple der Namen in der Reihenfolge von :data:`HABS_ANSICHTEN`.
+        ``{fehlend, nicht_feststellbar, abgedeckt, grund}`` — Namen in der Reihenfolge
+        von :data:`HABS_ANSICHTEN`.
+
+    .. important::
+       **Bis zum 26.08.2026 gab diese Funktion eine blosse Namensliste zurück, und die
+       war zu optimistisch.** ``fehlende_ansichten(("s", "sSE", "nNW"))`` ergab ``()`` —
+       «nichts fehlt». Das stimmt nicht: *Umgebungsansicht* und *Frontalansicht* liegen
+       **beide** auf ``s`` und unterscheiden sich allein im **Ausschnitt**. Eine einzige
+       Aufnahme aus ``s`` deckt genau eine von beiden ab, und aus der Richtung ist nicht
+       zu sagen, welche.
+
+       Ein Test hiess sogar ``test_der_volle_habs_satz_laesst_nichts_fehlen`` und hat die
+       Fehlaussage festgeschrieben. Die dritte Antwort dieses Projekts gilt auch hier:
+       *nicht feststellbar* ist weder abgedeckt noch fehlend.
     """
+    katalog = ansichtenkatalog(**kwargs)
     vorhanden = set(kuerzel)
-    return tuple(a["name"] for a in ansichtenkatalog(**kwargs)
-                 if a["richtung"] not in vorhanden)
+    bekannt = dict(ausschnitte or {})
+
+    # Wie viele HABS-Ansichten liegen auf derselben Richtung? Nur dort ist der Ausschnitt
+    # ueberhaupt die unterscheidende Groesse.
+    je_richtung: dict[str, int] = {}
+    for a in katalog:
+        je_richtung[a["richtung"]] = je_richtung.get(a["richtung"], 0) + 1
+
+    fehlend, offen, abgedeckt = [], [], []
+    for a in katalog:
+        if a["richtung"] not in vorhanden:
+            fehlend.append(a["name"])
+            continue
+        gesehen = bekannt.get(a["richtung"])
+        if gesehen is not None:
+            (abgedeckt if gesehen == a["ausschnitt"] else fehlend).append(a["name"])
+        elif je_richtung[a["richtung"]] > 1:
+            offen.append(a["name"])
+        else:
+            abgedeckt.append(a["name"])
+
+    teile = []
+    if fehlend:
+        teile.append(f"FEHLT: {', '.join(fehlend)} — keine Kamera in dieser Richtung")
+    if offen:
+        teile.append(
+            f"NICHT FESTSTELLBAR: {', '.join(offen)} liegen auf derselben Richtung und "
+            f"unterscheiden sich nur im Ausschnitt. Ohne die Angabe, wie weit gerahmt "
+            f"wurde, ist nicht zu sagen, welche davon die Aufnahme zeigt — und 'beide' "
+            f"waere die falsche Antwort")
+    if not teile:
+        teile.append("Alle vier HABS-Ansichten sind abgedeckt.")
+    return {"fehlend": tuple(fehlend), "nicht_feststellbar": tuple(offen),
+            "abgedeckt": tuple(abgedeckt), "grund": " | ".join(teile)}
 
 
 # ======================================================================================

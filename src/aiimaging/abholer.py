@@ -324,6 +324,14 @@ def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> Non
         # Feld, und ein Bild sieht auch dann richtig aus, wenn die halbe Bestellung
         # unterwegs verlorenging.
         "stehengeblieben": [dict(e) for e in _kosmo_szene.stehengebliebene_felder(szene)],
+        # Was die gewaehlten Kameras von der Dokumentationsnorm abdecken — und was nicht.
+        # `komposition.fehlende_ansichten` stand seit dem 21.08.2026 ohne Aufrufer da
+        # (tools/tote_kanten.py, 26.08.). Es ist keine Forderung nach zwoelf Kameras: Wie
+        # viele Standpunkte ein Auftrag wert ist, ist eine Betriebsentscheidung. Es ist
+        # die Auskunft, WAS DABEI WEGFAELLT.
+        "habs_ansichten": _komposition.fehlende_ansichten(
+            [k.get("kamera") for k in (ergebnis.get("kameras") or ())
+             if k.get("kamera")]),
         # Der negative Prompt des Stils: keine Wirkung und kein Weg dorthin. Steht hier,
         # weil er sonst nirgends stuende — `komponiere` liegt nicht auf diesem Weg.
         "negativ_lage": negativ_lage(
@@ -566,6 +574,13 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     # Ganz oben, weil es die einzige Zeile ist, die von einem NICHT gelaufenen Render
     # berichtet. Wer sie uebersieht, sucht in den Zahlen darunter nach einem Bild, das es
     # gar nicht gibt.
+    # Was die Kamerawahl von der Dokumentationsnorm abdeckt. Eine Zeile, die nur dann
+    # erscheint, wenn wirklich etwas fehlt oder offen ist — bei vollstaendiger Abdeckung
+    # waere sie die naechste Dauerwarnung.
+    habs = befund.get("habs_ansichten") or {}
+    if habs.get("fehlend") or habs.get("nicht_feststellbar"):
+        zeilen.append(f"HABS-Ansichten: {habs.get('grund')}")
+
     nicht_gerendert = [k.get("kamera") for k in kameras
                        if (k.get("rahmung") or {}).get("abbruch") is True]
     if nicht_gerendert:

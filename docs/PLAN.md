@@ -3335,12 +3335,12 @@ zweiten Stelle.
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
 
-Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste** (zwanzig
+Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste** (zweiundzwanzig
 Entscheide, alle rückgängig zu machen) am Ende.
 
 | | Beginn des Tages | Ende |
 |---|---:|---:|
-| Tests | 3335 | 3508 |
+| Tests | 3335 | 3517 |
 | Vakuumprobe | 10 Treffer | 12 Treffer |
 
 *Die beiden neuen Vakuumtreffer sind erklärt: Zwei Zusicherungen über `warnungen` sind
@@ -3412,11 +3412,38 @@ zwei nicht:
 - [ ] `kosmo_naht.satz_ist_freigegeben_laut_status` — sie **hat** einen Aufrufer
       (`kosmo_naht.py:258`), aber der ist selbst nur über Tests erreichbar. Die ganze
       `kosmo_naht`-Übersetzung wartet auf `auf-40` (F5): anschliessen oder löschen.
-- [ ] **`komposition.py` ist noch immer zu neun Zehnteln unerreicht.** Angeschlossen ist
-      seit dem 23.08. nur `beurteile_bericht`. `beurteile_kamerasatz`, `ansichtenkatalog`,
-      `fehlende_ansichten`, `bildanteile`, `deckenanteil` und drei weitere sind weiterhin
-      nur über Tests erreichbar. *Das ist kein neuer Befund, aber zum ersten Mal einer mit
-      einer Zahl daneben.*
+- [x] **`fehlende_ansichten` angeschlossen — und sie hat gelogen, als sie gefunden wurde.**
+      Mit der heutigen Vorgabe `("s", "sSE", "nNW")` gab sie `()` zurück, «nichts fehlt».
+      Das stimmt nicht: *Umgebungs-* und *Frontalansicht* liegen **beide** auf `s` und
+      unterscheiden sich allein im **Ausschnitt**. Eine Aufnahme aus `s` deckt genau eine
+      von beiden ab, und aus der Richtung ist nicht zu sagen, welche.
+      *Ein Test hiess `test_der_volle_habs_satz_laesst_nichts_fehlen` und hat die
+      Fehlaussage festgeschrieben. **Ein ungerufenes Stück Code wird nicht nur nicht
+      benutzt — es wird auch nicht widerlegt.***
+      Sie gibt jetzt `{fehlend, nicht_feststellbar, abgedeckt, grund}` und nimmt
+      `ausschnitte` entgegen; die dritte Antwort gilt auch hier. Das Ergebnis steht im
+      Befund (`habs_ansichten`) und im Kurzbefund — aber nur, wenn wirklich etwas fehlt
+      oder offen ist.
+- [x] **Ein veralteter Wert in Prosa, gefunden mit einer Sondierung.** Der Docstring nannte
+      `abholer.AUTO_RICHTUNGEN = ("sSE",)`; seit dem 23.08.2026 sind es **drei**
+      Richtungen. Eine Sondierung über alle Docstrings (Konstantenzitate gegen den echten
+      Wert) fand **genau diesen einen** echten Fall unter sieben Verdachtsfällen — die
+      übrigen sechs waren Prosa-Treffer des Musters oder ausdrücklich als historisch
+      gekennzeichnet (`stilstudie` nennt 0,30 und sagt im Satz darauf, dass heute 0,666
+      gilt).
+      *Daraus ist bewusst **kein Werkzeug** geworden:* Fünf Fehlalarme auf einen Treffer
+      ist genau das Verhältnis, an dem ein Suchwerkzeug stirbt — dieselbe Regel wie bei
+      der Vakuumprobe. Der eine Fall ist von Hand berichtigt und hat einen Wächter
+      bekommen (`tests/test_habs_abdeckung.py`).
+- [ ] **`komposition.py` ist noch immer zu acht Zehnteln unerreicht.** Angeschlossen sind
+      `beurteile_bericht` (23.08.) und `fehlende_ansichten` samt `ansichtenkatalog`
+      (26.08.). `beurteile_kamerasatz`, `bildanteile`, `deckenanteil`,
+      `bodenanteil_erreichbar` und weitere sind nur über Tests erreichbar.
+- [ ] **Was «weit» heisst, ist nicht festgelegt** — und darum bleibt die Umgebungsansicht
+      *nicht feststellbar*. HABS unterscheidet sie von der Frontalen über den Ausschnitt
+      und nennt keine Zahl. `kameras.DECKUNGSGRAD` wäre das Mass dafür; **welcher Wert
+      «weit» ist, wäre eine Erfindung** und keine Ableitung. *Owner-Entscheid nötig — oder
+      eine Messung, die zeigt, ab wann ein Bild als Umgebungsansicht durchgeht.*
 
 ---
 
