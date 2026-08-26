@@ -245,6 +245,9 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         geometrie_urteil=ergebnis.get("geometrie_urteil"),
         stil_urteil=ergebnis.get("stil_urteil"),
         zeiten=_zeiten_mit_stillstand(ergebnis.get("zeiten"), antwort["wache"]),
+        # WARUM einzelne Kameras kein Bild bekamen. Ohne diese Durchreichung stuende im
+        # Vertragsergebnis nur, DASS nichts gemessen wurde — siehe `_nicht_gerendert_kurz`.
+        nicht_gerendert=_nicht_gerendert_kurz(ergebnis.get("kameras")),
         # Ohne diese Durchreichung stuende im Vertragsergebnis eines ABBESTELLTEN
         # Auftrags «keine QA gelaufen» — ununterscheidbar von einem vergessenen Lauf.
         # Gefunden am 26.08.2026 vom Kettenlauf-Test, nicht von den Bausteintests: Die
@@ -1649,6 +1652,68 @@ def _rahmung_vor_dem_render(bericht: dict) -> dict:
             f"abgebrochen. Die gerechnete Bildbreite steht trotzdem da — als Auskunft, "
             f"nicht als Urteil.")
     return lage
+
+
+def _nicht_gerendert_kurz(kameras) -> tuple[str, ...]:
+    """Warum einzelne Kameras **absichtlich** kein Bild bekamen — für den fremden Vertrag.
+
+    **Der Anlass ist am 26.08.2026 über die wirkliche Kette gemessen** worden, nicht an
+    Attrappen: Ein Auftrag auf einer Geometrie mit Gelände wurde von allen drei Kameras
+    abgelehnt (Bauwerk füllt 28 % der Bildbreite), und das Vertragsergebnis sagte nur
+    *«NICHT GEMESSEN … ein Lauf fehlt»*. Unsere eigene Befunddatei sagte es genau — die
+    andere Seite bekam davon nichts.
+
+    *Absichtlich verweigert und abgestürzt sahen im Vertrag gleich aus.*
+
+    Zusammengefasst wird **nach Grund und nicht je Kamera**: Drei Kameras mit demselben
+    Grund ergeben eine Zeile mit drei Kürzeln, nicht drei Zeilen. Ein Vertragsfeld, das
+    bei zwölf Kameras zwölfmal dasselbe sagt, wird überflogen.
+
+    Returns:
+        Kurze Sätze, höchstens einer je Grundart. Leer, wenn jede Kamera ein Bild bekam.
+    """
+    if not kameras:
+        return ()
+
+    # Gruppiert wird nach der ART, nicht nach dem fertigen Satz. Sonst trennt schon eine
+    # Nachkommastelle zwei Kameras in zwei Zeilen — gemessen: 27.9 % und 28.0 % ergaben
+    # zwei Zeilen fuer denselben Befund.
+    nach_art: dict[str, list] = {}
+    anteile: dict[str, list] = {}
+    for eintrag in kameras:
+        if not isinstance(eintrag, dict) or eintrag.get("bild_png"):
+            continue
+        if eintrag.get("doppelt_von"):
+            art = "doppelt"
+        elif (eintrag.get("rahmung") or {}).get("abbruch"):
+            art = "rahmung"
+            wert = (eintrag["rahmung"] or {}).get("wirksame_bildbreite")
+            if isinstance(wert, float):
+                anteile.setdefault(art, []).append(wert)
+        elif (eintrag.get("komposition") or {}).get("abbruch"):
+            art = "kamerahoehe"
+        else:
+            continue
+        nach_art.setdefault(art, []).append(str(eintrag.get("kamera")))
+
+    zeilen = []
+    for art, kuerzel in nach_art.items():
+        namen = ", ".join(kuerzel)
+        if art == "rahmung":
+            werte = anteile.get(art) or []
+            spanne = (f"{min(werte):.1%}" if len(set(round(w, 3) for w in werte)) <= 1
+                      else f"{min(werte):.1%}–{max(werte):.1%}") if werte else "zu wenig"
+            zeilen.append(
+                f"NICHT GERENDERT (Rahmung), {namen}: Das Bauwerk fuellt {spanne} der "
+                f"Bildbreite, gemessen noetig sind "
+                f"{_kameras_modul.BILDBREITE_ABBRUCH:.0%}")
+        elif art == "kamerahoehe":
+            zeilen.append(
+                f"NICHT GERENDERT (Aufnahme nicht beurteilbar), {namen}: Die Kamera steht "
+                f"ueber dem Dach — nach HABS/NPS keine Architekturaufnahme")
+        else:
+            zeilen.append(f"Nicht neu gerendert (identische Soll-Karte), {namen}")
+    return tuple(zeilen)
 
 
 def _rahmung_abgeschaltet(rahmung: dict) -> dict:

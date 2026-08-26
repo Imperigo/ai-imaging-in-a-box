@@ -3538,6 +3538,17 @@ zweiten Stelle.
       `gerechnet_von`. **Offen bleibt die Kernfrage über ECHTE Dateien** — was vorliegt,
       ist ein geprüftes Werkzeug, kein Ergebnis darüber.
 
+- [x] **Die Kette läuft mit echtem Blender durch einen Test** (26.08.) —
+      `tests/test_kettenlauf_echt.py`. Echtes IFC, echte Konversion, echter Multipass;
+      Attrappe ist nur, was `torch` braucht.
+      **Sofortiger Fund:** Bei einem Auftrag, den der Rahmungsriegel ablehnt, stand der
+      Grund in unserer Befunddatei — und **nicht im Vertragsergebnis**. Dort hiess es nur
+      «ein Lauf fehlt». *Absichtlich verweigert und abgestürzt sahen für die andere Seite
+      gleich aus.* Behoben; die Gründe werden nach Art zusammengefasst.
+      Nebenbei zwei Lehren zum Testbau: Die Vertragsvorgabe für die Auflösung ist
+      **1600 × 1000** (nicht 512) — der erste Lauf brauchte 6:20, jetzt 27 s. Und ein Test
+      suchte im geteilten Temp-Verzeichnis und war allein grün, in der Sammlung rot.
+
 ---
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
@@ -3547,7 +3558,7 @@ Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
 
 | | Beginn des Tages | nach dem Vormittag | Ende |
 |---|---:|---:|---:|
-| Tests | 3335 | 3528 | **3901** |
+| Tests | 3335 | 3528 | **3906** |
 | Vakuumprobe | 10 Treffer | 12 Treffer | 12 Treffer |
 | Tote Kanten, gar nicht erreichbar | — | 2 | **1** |
 | Tote Kanten **mit Urteil** | 0 | 0 | **80 von 80** |

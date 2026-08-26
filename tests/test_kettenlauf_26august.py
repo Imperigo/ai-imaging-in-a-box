@@ -11,8 +11,20 @@ mehrere von ihnen können einen Lauf abbrechen. Ob sie sich gegenseitig im Weg s
 zeigt kein einziger von ihnen.
 
 Geprüft wird an der **Naht** (`hole_einen` → `verarbeiter` → Befund), mit Attrappen für
-Blender und Diffusion. Ohne Attrappen liefe hier gar nichts — und ein Test, der nicht
-läuft, prüft nichts.
+Blender und Diffusion.
+
+.. warning::
+   **Der Satz, der hier bis zum 26.08.2026 stand — «Ohne Attrappen liefe hier gar nichts»
+   — war falsch.** Blender und `.venv-ifc` liegen in diesem Container; nur was ``torch``
+   braucht, läuft hier nicht. Und der Unterschied war teuer: Die Bauwerksbox war an
+   Attrappen geprüft, in denen die Objektnamen stimmten — über die wirkliche Kette war sie
+   **gleich der Szenenbox**.
+
+   *Eine Attrappe, die den Fehler nicht kennt, kann ihn nicht finden.*
+
+   Diese Datei bleibt, weil sie schnell ist und die Fälle stellt, die sich mit echter
+   Geometrie nur mühsam erzeugen lassen. Die Gegenstücke mit echtem Blender stehen in
+   `tests/test_kettenlauf_echt.py`.
 """
 from __future__ import annotations
 

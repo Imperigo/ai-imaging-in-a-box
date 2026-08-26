@@ -627,7 +627,8 @@ def stehengebliebene_felder(szene: dict) -> tuple[dict, ...]:
 # --------------------------------------------------------------------------------------
 
 def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None,
-                 zeiten=None, uebersprungen: bool = False) -> dict:
+                 zeiten=None, uebersprungen: bool = False,
+                 nicht_gerendert=()) -> dict:
     """Unsere QA → ``kosmovis.render-result/v2``.
 
     **Hier liegt die Entscheidung dieses Moduls.** Der fremde Vertrag trägt für die
@@ -655,6 +656,18 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         stil_urteil: Antwort von ``stil_qa.stil_gate(...)`` oder ``None``.
         zeiten: ``{name: sekunden}``, wandert unverändert in ``timings``.
         uebersprungen: Der Auftrag trug ``skip: true`` und wurde **nicht gerechnet**.
+        nicht_gerendert: Kurzgründe für Kameras, die **absichtlich** kein Bild bekamen —
+            Rahmung, Kamerahöhe, doppelte Ansicht.
+
+            **Warum das ein eigenes Feld braucht** (gemessen am 26.08.2026 über die
+            wirkliche Kette): Ein Auftrag, bei dem jede Kamera vom Rahmungsriegel
+            abgelehnt wurde, kam mit ``verdict.reason = "NICHT GEMESSEN … ein Lauf
+            fehlt"`` zurück. Unsere eigene Befunddatei sagte präzise *«NICHT GERENDERT
+            (Rahmung): s, sSE, nNW — das Bauwerk füllt 28 % der Bildbreite»*, und die
+            andere Seite bekam davon **nichts**.
+
+            *Absichtlich verweigert und abgestürzt sahen im Vertrag gleich aus.* Genau
+            dieselbe Lücke wie bei ``uebersprungen``, eine Ebene tiefer.
             Die **vierte** Lage neben *gemessen*, *nicht gemessen* und *nicht zuständig*
             — und die einzige, die niemand beheben muss. Sie steht hier, weil
             ``passed: false`` ohne diesen Satz aussieht wie ein durchgefallenes Bild;
@@ -810,12 +823,26 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
             f"kaeme nicht durch — 'passed: false' sagt hier etwas ueber die AUFNAHME und "
             f"nichts ueber das Bildmodell."))
 
+    # WARUM kein Bild entstand — vor allem anderen ausser der Abbestellung.
+    #
+    # Ohne diese Zeilen steht im Vertragsergebnis nur, DASS nichts gemessen wurde. Der
+    # Unterschied zwischen «wir haben es abgelehnt, und hier ist die Zahl» und «da ist
+    # etwas schiefgegangen» ist für die andere Seite der ganze Informationsgehalt.
+    for zeile in reversed(tuple(nicht_gerendert or ())):
+        teile.insert(0, str(zeile))
+        hinweise.append(str(zeile))
+
     if uebersprungen:
         # Vor allen anderen: Wer abbestellt hat, braucht keine Erklaerung darueber, was
         # nicht gemessen wurde. Er braucht die Bestaetigung, dass nichts LIEF.
         grund = ("ABBESTELLT: Der Auftrag trug 'skip: true' und wurde nicht gerechnet. "
                  "'passed: false' heisst hier weder durchgefallen noch ungeprueft — es "
                  "war nichts bestellt. Es ist keine GPU-Zeit angefallen.")
+    elif not messbar and nicht_gerendert:
+        # Es IST etwas gemessen worden — nur eben vor dem Bild, und mit dem Ergebnis,
+        # dass kein Bild entstehen soll. Der Satz «keine QA gelaufen» wäre hier eine
+        # Untertreibung, die wie ein Fehler aussieht.
+        grund = "; ".join(teile)
     elif not messbar:
         grund = ("Keine QA gelaufen — weder Geometrie noch Stil wurden gemessen. "
                  "'passed: false' heisst hier NICHT durchgefallen, sondern ungeprüft.")
