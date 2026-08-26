@@ -747,3 +747,119 @@ def test_beide_schemata_tragen_die_ownerhistory(tmp_path):
                           or z.strip().startswith(entitaet + "(")]:
                 nach_guid = zeile.split("',", 1)[1] if "'," in zeile else ""
                 assert not nach_guid.startswith("$,"), f"{schema}/{entitaet}: {zeile[:70]}"
+
+
+# ======================================================================================
+# E · Das zweite Bauwerk — der gegliederte Hochbau
+# ======================================================================================
+#
+# **Warum es ihn gibt.** Jede Messung dieser Umgebung stand bis zum 26.08.2026 auf EINEM
+# Quader mit sechs Bauteilen. Für Einheiten, Schemata und Hüllboxen ist das genau richtig;
+# für alles, was mit Gliederung zu tun hat, wertlos.
+#
+# Die Merkmale sind zitiert, nicht erfunden — die HomeStation über ihr eigenes Modell:
+# *«Es ist KEIN glatter Quader. Es hat Auskragungen, ein Stuetzenraster, eine gegliederte
+# Huelle und einen Kern — also genau die Merkmale, an denen sich eine Geometriepruefung
+# bewaehren muss.»* Ihr Modell dürfen wir nicht haben (Regel 3); die Merkmale schon.
+
+#: Die Wörter der Geländeregel. Hier wiederholt und nicht importiert, damit dieser Test
+#: auch dann greift, wenn jemand die Liste drüben ändert — er soll dann rot werden und
+#: nicht stillschweigend mitwandern.
+GELAENDE_WOERTER_KOPIE = ("gelaende", "gelände", "terrain", "site")
+
+
+def test_der_hochbau_hat_zwei_groessenordnungen_mehr_bauteile(tmp_path):
+    """Sechs gegen einhunderteinundvierzig. Das ist der ganze Zweck."""
+    ifc = FIXTURE.erzeuge_ifc(tmp_path / "hb.ifc", hochbau=True)
+    text = ifc.read_text(encoding="utf-8")
+    teile = (text.count("IFCSLAB(") + text.count("IFCCOLUMN(") + text.count("IFCWALL("))
+    assert teile == 141, (
+        f"{teile} Bauteile statt 141. Wer die Szene ändert, ändert jede Messung, die auf "
+        f"ihr steht — dann gehört die Zahl hier mitgeändert und die Messreihe neu."
+    )
+
+
+def test_die_auskragung_koppelt_die_huelle_vom_grundriss_ab(tmp_path):
+    """**Das Merkmal, das eine Prüfung entlarvt, die Grundriss und Hülle verwechselt.**
+
+    Der Grundriss ist 8,0 m tief, die Hülle 9,5 m — die oberen Geschosse ragen hinaus.
+    Ohne die Auskragung wäre die Hülle die schlichte Extrusion des Grundrisses, und jede
+    solche Verwechslung käme damit durch.
+    """
+    assert FIXTURE.HB_AUSKRAGUNG > 0
+    assert FIXTURE.HB_AUSKRAGUNG_AB_GESCHOSS < FIXTURE.HB_GESCHOSSE, (
+        "Die Auskragung setzt erst über dem obersten Geschoss ein — dann gibt es keine.")
+    ifc = FIXTURE.erzeuge_ifc(tmp_path / "hb.ifc", hochbau=True)
+    assert "auskragend" in ifc.read_text(encoding="utf-8")
+
+
+def test_kein_bauteilname_des_hochbaus_trifft_die_gelaenderegel(tmp_path):
+    """Sonst nähme die Bauwerksmaske Teile des Bauwerks für Gelände.
+
+    Der Fall ist nicht erfunden: `IfcWall_Site-A` gilt der Regel als Gelände, weil `site`
+    eines ihrer Wörter ist. Eine so benannte Wand fiele aus der Maske.
+    """
+    import re
+
+    ifc = FIXTURE.erzeuge_ifc(tmp_path / "hb.ifc", hochbau=True)
+    namen = re.findall(r"IFC(?:SLAB|COLUMN|WALL)\('[^']+',[^,]+,'([^']+)'", 
+                       ifc.read_text(encoding="utf-8"))
+    assert namen, "Keine Bauteilnamen gefunden — dann prüft dieser Test nichts."
+    treffer = [n for n in namen
+               if set(re.split(r"[\s_\-.,;:/\\()\[\]]+", n.lower()))
+               & set(GELAENDE_WOERTER_KOPIE)]
+    assert not treffer, (
+        f"Diese Bauteile des Hochbaus gelten der Geländeregel als Gelände und fielen aus "
+        f"der Bauwerksmaske: {sorted(set(treffer))}"
+    )
+
+
+def test_der_hochbau_aendert_die_vorgabe_nicht(tmp_path):
+    """**Die wichtigste Zusicherung dieser Erweiterung.**
+
+    Der Modulkopf sagt es selbst: *«Eine stillschweigend geänderte Testgeometrie macht
+    eine Messreihe unbrauchbar, ohne dass es auffällt.»* An der Hüllbox 8,0 × 5,0 × 3,25 m
+    und an sechs Bauteilen hängt alles, was vor dem 26.08.2026 gemessen wurde.
+    """
+    ohne = FIXTURE.erzeuge_ifc(tmp_path / "a.ifc").read_text(encoding="utf-8")
+    # Der Rumpf ohne die Kopfzeile mit dem Dateinamen.
+    rumpf = "\n".join(z for z in ohne.splitlines() if not z.startswith("FILE_NAME"))
+    assert rumpf.count("IFCWALL(") == 4
+    assert rumpf.count("IFCSLAB(") == 1
+    assert "IFCCOLUMN(" not in rumpf, "Der Quader hat keine Stützen."
+    assert "Stuetze_" not in rumpf and "Fassade_" not in rumpf and "Kern_" not in rumpf
+
+
+def test_hochbau_und_raeume_zugleich_werden_abgelehnt(tmp_path):
+    """Geraten wird nicht: Die beiden Räume liegen an der Wandflucht des Quaders."""
+    with pytest.raises(ValueError, match="Kern"):
+        FIXTURE.erzeuge_ifc(tmp_path / "x.ifc", hochbau=True, mit_raeumen=True)
+
+
+def test_der_hochbau_traegt_ein_gelaende_wenn_bestellt(tmp_path):
+    """Die übrigen Schalter wirken weiter — der Hochbau ersetzt das Bauwerk, nicht die Datei."""
+    ifc = FIXTURE.erzeuge_ifc(tmp_path / "hb.ifc", hochbau=True, mit_gelaende=True)
+    text = ifc.read_text(encoding="utf-8")
+    assert "'Gelaende'" in text
+    assert "Stuetze_" in text
+
+
+@pytest.mark.parametrize("schema", ["IFC4", "IFC2X3"])
+def test_der_hochbau_gibt_es_in_beiden_schemata(tmp_path, schema):
+    """ArchiCAD liefert IFC2X3 — eine Testszene, die es nur in IFC4 gibt, prüft die
+    Hälfte der Wirklichkeit nicht."""
+    ifc = FIXTURE.erzeuge_ifc(tmp_path / f"hb_{schema}.ifc", schema=schema, hochbau=True)
+    assert f"FILE_SCHEMA(('{schema}'))" in ifc.read_text(encoding="utf-8")
+
+
+@ohne_konverter
+@pytest.mark.parametrize("schema", ["IFC4", "IFC2X3"])
+def test_der_hochbau_besteht_den_schemapruefer(tmp_path, schema):
+    """Vom echten Prüfer beurteilt, nicht von uns.
+
+    Genau dieser Weg hat an der ersten Fixture dreizehn Fehler gefunden, die beim Zählen
+    von Attributen unsichtbar waren.
+    """
+    ifc = FIXTURE.erzeuge_ifc(tmp_path / f"hb_{schema}.ifc", schema=schema, hochbau=True)
+    fehler = schemafehler(ifc)
+    assert not fehler, f"{len(fehler)} Schemafehler, erste drei: {fehler[:3]}"

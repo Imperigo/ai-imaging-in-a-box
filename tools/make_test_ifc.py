@@ -59,6 +59,64 @@ GELAENDE_VIELFACHES = 2.5
 #: Hüllbox-Ausdehnung in Z und verschwindet in mancher Auswertung.
 GELAENDE_DICKE = 0.05
 
+# ======================================================================================
+# Das zweite Bauwerk — «Hochbau»
+# ======================================================================================
+#
+# **Warum es das gibt.** Jede Messung dieser Umgebung stand bis zum 26.08.2026 auf EINEM
+# Quader von 8 × 5 × 3 m mit sechs Bauteilen. Das ist für Einheiten, Schemata und
+# Hüllboxen genau richtig — und für alles, was mit **Gliederung** zu tun hat, wertlos:
+# Verdeckung, Kompositionsprüfung, die Frage, ob mehr Samples etwas kosten, und die
+# Geometrie-Treue selbst verhalten sich an einem glatten Kasten anders als an einem Bau.
+#
+# **Die Merkmale sind nicht erfunden, sondern zitiert.** Die HomeStation hat am
+# 26.08.2026 beschrieben, was ihr zweites Modell taugen lässt:
+#
+#     «Es ist KEIN glatter Quader. Es hat Auskragungen, ein Stuetzenraster, eine
+#      gegliederte Huelle und einen Kern — also genau die Merkmale, an denen sich eine
+#      Geometriepruefung bewaehren muss.»
+#
+# Ihr Modell dürfen wir nicht haben (Regel 3). Die **Merkmale** dürfen wir nachbauen, und
+# Regel 3 verlangt ausdrücklich Testdaten, die im Repo erzeugbar sind.
+#
+# **Additiv, unter einem eigenen Schalter.** Der Vorgabe-Quader bleibt Byte für Byte, wie
+# er war — an ihm hängt jede bestehende Messreihe, und der Modulkopf sagt selbst: *«Eine
+# stillschweigend geänderte Testgeometrie macht eine Messreihe unbrauchbar, ohne dass es
+# auffällt.»*
+
+#: Grundriss und Geschosse des Hochbaus.
+HB_LAENGE_X, HB_BREITE_Y = 12.0, 8.0
+HB_GESCHOSSE = 5
+HB_GESCHOSSHOEHE = 3.0
+HB_DECKENDICKE = 0.25
+
+#: Das Stützenraster: 3 × 3 je Geschoss, 0,30 m im Quadrat.
+#:
+#: Drei mal drei und nicht mehr: Die Zahl der Bauteile soll **zwei Grössenordnungen** über
+#: dem Quader liegen und trotzdem in einer Datei bleiben, die man von Hand lesen kann.
+HB_STUETZEN_X, HB_STUETZEN_Y = 3, 3
+HB_STUETZE = 0.30
+
+#: Der Kern — vier Wände um einen Schacht in der Mitte, durch alle Geschosse.
+HB_KERN_X, HB_KERN_Y = 3.0, 3.0
+HB_KERNWAND = 0.25
+
+#: Die gegliederte Hülle: Fassadentafeln je Geschoss und Seite, mit Fugen dazwischen.
+#:
+#: **Sie sind der Grund, warum diese Szene für die Maske etwas taugt:** Eine Hülle aus
+#: vielen benannten Tafeln lässt sich nach Material trennen, eine einzige Wand nicht.
+HB_TAFELN_LANG, HB_TAFELN_KURZ = 4, 3
+HB_TAFELDICKE = 0.20
+HB_FUGE = 0.10
+
+#: Die Auskragung: Wie weit die Decken der obersten Geschosse über den Grundriss ragen.
+#:
+#: **Sie ist das Merkmal, das die Hüllbox von der Grundfläche abkoppelt.** Ohne sie wäre
+#: die Hülle die schlichte Extrusion des Grundrisses, und jede Prüfung, die Grundriss und
+#: Hülle verwechselt, käme damit durch.
+HB_AUSKRAGUNG = 1.5
+HB_AUSKRAGUNG_AB_GESCHOSS = 3
+
 #: Die beiden Räume, die ``--raeume`` schreibt — **in Metern, in Geschosskoordinaten.**
 #:
 #: Warum zwei und warum ungleich: Ein Verfahren, das nur an einem Raum geprüft wird, kann
@@ -284,8 +342,96 @@ def _prisma_rechteck(s: _Step, kontext: str, breite: float, tiefe: float, hoehe:
     return shape, ort
 
 
+def _hochbau_bauteile(s: _Step, g, kontext: str, besitz: str, ort_gesch: str,
+                      schema: str, einheit_je_meter: float) -> list[str]:
+    """Die Bauteile des gegliederten Zweitbaus — eine reine Komposition aus ``_quader``.
+
+    **Kein neuer Geometriecode.** Jedes Teil ist ein extrudierter Quader; was diese Szene
+    von der ersten unterscheidet, ist ihre *Zusammensetzung*, nicht ihre Grundform. Das
+    ist Absicht: Ein zweiter Geometriepfad wäre eine zweite Fehlerquelle, und geprüft
+    werden soll die Gliederung, nicht die Extrusion.
+
+    Die Namen sind mit Bedacht gewählt: Keiner trifft die Geländeregel
+    (:data:`aiimaging.maske.GELAENDE_WOERTER`), und jeder sagt, was das Teil ist — die
+    Bauwerksmaske liest genau diese Namen.
+    """
+    teile: list[str] = []
+
+    def quader(name, art, bw, bt, bh, x, y, z, zusatz=""):
+        shape, ort = _quader(s, kontext, bw, bt, bh, x, y, z, ort_gesch,
+                             einheit_je_meter=einheit_je_meter)
+        teile.append(s.add(
+            f"IFC{art}('{_ifc_guid(next(g))}',{besitz},'{name}',$,$,{ort},{shape},${zusatz})"
+        ))
+
+    # ── Bodenplatte ──────────────────────────────────────────────────────────────────
+    quader("Bodenplatte", "SLAB", HB_LAENGE_X, HB_BREITE_Y, HB_DECKENDICKE,
+           0.0, 0.0, -HB_DECKENDICKE, ",.FLOOR.")
+
+    for geschoss in range(HB_GESCHOSSE):
+        z_unten = geschoss * HB_GESCHOSSHOEHE
+        z_decke = z_unten + HB_GESCHOSSHOEHE - HB_DECKENDICKE
+
+        # ── Die Decke, ab HB_AUSKRAGUNG_AB_GESCHOSS auskragend ───────────────────────
+        #
+        # Sie ragt NUR in +Y hinaus. Eine allseitige Auskragung waere wieder symmetrisch,
+        # und Symmetrie ist genau das, was diese Szene nicht sein soll — die Doppelansicht
+        # faellt an zweizaehliger Drehsymmetrie zusammen (Befund 26.08.2026).
+        kragt = geschoss >= HB_AUSKRAGUNG_AB_GESCHOSS
+        tiefe = HB_BREITE_Y + (HB_AUSKRAGUNG if kragt else 0.0)
+        quader(f"Decke_OG{geschoss:02d}" + ("_auskragend" if kragt else ""),
+               "SLAB", HB_LAENGE_X, tiefe, HB_DECKENDICKE, 0.0, 0.0, z_decke, ",.FLOOR.")
+
+        # ── Das Stuetzenraster ───────────────────────────────────────────────────────
+        for ix in range(HB_STUETZEN_X):
+            for iy in range(HB_STUETZEN_Y):
+                x = (ix + 1) * HB_LAENGE_X / (HB_STUETZEN_X + 1) - HB_STUETZE / 2
+                y = (iy + 1) * HB_BREITE_Y / (HB_STUETZEN_Y + 1) - HB_STUETZE / 2
+                quader(f"Stuetze_OG{geschoss:02d}_R{ix}{iy}", "COLUMN",
+                       HB_STUETZE, HB_STUETZE, HB_GESCHOSSHOEHE - HB_DECKENDICKE,
+                       x, y, z_unten, "" if schema == "IFC2X3" else ",$")
+
+        # ── Der Kern: vier Waende um einen Schacht in der Mitte ──────────────────────
+        kx = (HB_LAENGE_X - HB_KERN_X) / 2.0
+        ky = (HB_BREITE_Y - HB_KERN_Y) / 2.0
+        kh = HB_GESCHOSSHOEHE - HB_DECKENDICKE
+        for seite, (bw, bt, px, py) in {
+            "Sued": (HB_KERN_X, HB_KERNWAND, kx, ky),
+            "Nord": (HB_KERN_X, HB_KERNWAND, kx, ky + HB_KERN_Y - HB_KERNWAND),
+            "West": (HB_KERNWAND, HB_KERN_Y - 2 * HB_KERNWAND, kx, ky + HB_KERNWAND),
+            "Ost":  (HB_KERNWAND, HB_KERN_Y - 2 * HB_KERNWAND,
+                     kx + HB_KERN_X - HB_KERNWAND, ky + HB_KERNWAND),
+        }.items():
+            quader(f"Kern_OG{geschoss:02d}_{seite}", "WALL", bw, bt, kh, px, py, z_unten,
+                   "" if schema == "IFC2X3" else ",$")
+
+        # ── Die gegliederte Huelle: Tafeln mit Fugen ─────────────────────────────────
+        #
+        # Die Fugen sind der Punkt. Eine durchgehende Wand waere eine Flaeche; Tafeln mit
+        # Zwischenraum ergeben eine Silhouette mit Struktur — und genau daran zeigt sich,
+        # ob eine Tiefenkarte den Umriss traegt.
+        tafelhoehe = HB_GESCHOSSHOEHE - HB_DECKENDICKE
+        breit = (HB_LAENGE_X - (HB_TAFELN_LANG + 1) * HB_FUGE) / HB_TAFELN_LANG
+        for i in range(HB_TAFELN_LANG):
+            x = HB_FUGE + i * (breit + HB_FUGE)
+            for kante, y in (("Sued", 0.0), ("Nord", HB_BREITE_Y - HB_TAFELDICKE)):
+                quader(f"Fassade_OG{geschoss:02d}_{kante}_{i}", "WALL",
+                       breit, HB_TAFELDICKE, tafelhoehe, x, y, z_unten,
+                       "" if schema == "IFC2X3" else ",$")
+        tief = (HB_BREITE_Y - (HB_TAFELN_KURZ + 1) * HB_FUGE) / HB_TAFELN_KURZ
+        for i in range(HB_TAFELN_KURZ):
+            y = HB_FUGE + i * (tief + HB_FUGE)
+            for kante, x in (("West", 0.0), ("Ost", HB_LAENGE_X - HB_TAFELDICKE)):
+                quader(f"Fassade_OG{geschoss:02d}_{kante}_{i}", "WALL",
+                       HB_TAFELDICKE, tief, tafelhoehe, x, y, z_unten,
+                       "" if schema == "IFC2X3" else ",$")
+
+    return teile
+
+
 def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
-                mit_gelaende: bool = False, mit_raeumen: bool = False) -> Path:
+                mit_gelaende: bool = False, mit_raeumen: bool = False,
+                hochbau: bool = False) -> Path:
     """Schreibt die synthetische IFC nach `ziel` und gibt den Pfad zurück.
 
     Args:
@@ -300,6 +446,12 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
             wirkliche Grösse** behält — eine Datei, die Millimeter erklärt und
             Meterzahlen trägt, wäre ein kaputter Export und keine Testgeometrie.
         mit_gelaende: Zusätzlich eine Geländeplatte unter dem Bauwerk.
+        hochbau: **Das zweite Bauwerk statt des Quaders** — Stützenraster, Kern,
+            gegliederte Hülle, Auskragung. Siehe den Konstantenblock ``HB_*``.
+            *Es ersetzt das Bauwerk, nicht die Datei:* Einheiten, Schema, Kontext und
+            Geschoss bleiben dieselben, und ``--gelaende`` wirkt weiter. **Vorgabe aus**,
+            aus demselben Grund wie bei ``mit_raeumen``: An der Hüllbox 8,0 × 5,0 × 3,25 m
+            und an der Zahl der Bauteile hängt jede bestehende Messreihe.
         mit_raeumen: Zusätzlich zwei ``IfcSpace`` im Wandinneren — siehe :data:`RAEUME`.
             **Vorgabe aus**, aus demselben Grund wie bei ``mit_gelaende``: Jede bestehende
             Messung hängt an der Hüllbox 8,0 × 5,0 × 3,25 m und an der Zahl der Bauteile.
@@ -308,6 +460,13 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
             Dreiecke. Eine stillschweigend geänderte Testgeometrie macht eine Messreihe
             unbrauchbar, ohne dass es auffällt.
     """
+    if hochbau and mit_raeumen:
+        raise ValueError(
+            "hochbau und mit_raeumen zugleich: Die beiden Räume aus RAEUME sind an die "
+            "Wandflucht des Quaders gerechnet und lägen im Hochbau mitten im Kern. "
+            "Wer Räume im zweiten Bauwerk braucht, bekommt eigene — geraten wird hier "
+            "nicht."
+        )
     if schema not in ("IFC4", "IFC2X3"):
         raise ValueError(f"schema: 'IFC4' oder 'IFC2X3' erwartet, war {schema!r}.")
     if vorsatz not in (None, "MILLI"):
@@ -404,23 +563,32 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
             f".BASESLAB.)"
         ))
 
-    # Bodenplatte — bündig mit der Wandaussenflucht und ganz unter Null, damit die
-    # erwartete Gesamt-Bounding-Box eine glatte Prüfgrösse bleibt.
-    shape, ort = _quader(s, kontext, LAENGE_X, BREITE_Y, PLATTENDICKE,
-                         0.0, 0.0, -PLATTENDICKE, ort_gesch, einheit_je_meter=einheit_je_meter)
-    bauteile.append(s.add(
-        f"IFCSLAB('{_ifc_guid(next(g))}',{besitz},'Bodenplatte',$,$,{ort},{shape},$,.FLOOR.)"
-    ))
+    if hochbau:
+        # DAS ZWEITE BAUWERK. Es ersetzt den Quader und laesst alles andere stehen:
+        # Einheiten, Schema, Kontext, Geschoss — und ein bestelltes Gelaende darunter,
+        # das oben schon geschrieben wurde.
+        bauteile.extend(_hochbau_bauteile(s, g, kontext, besitz, ort_gesch, schema,
+                                          einheit_je_meter))
+    else:
+        # Bodenplatte — bündig mit der Wandaussenflucht und ganz unter Null, damit die
+        # erwartete Gesamt-Bounding-Box eine glatte Prüfgrösse bleibt.
+        shape, ort = _quader(s, kontext, LAENGE_X, BREITE_Y, PLATTENDICKE,
+                             0.0, 0.0, -PLATTENDICKE, ort_gesch,
+                             einheit_je_meter=einheit_je_meter)
+        bauteile.append(s.add(
+            f"IFCSLAB('{_ifc_guid(next(g))}',{besitz},'Bodenplatte',$,$,{ort},{shape},$,"
+            f".FLOOR.)"
+        ))
 
     # Vier Wände. Die Y-Wände sind um die Wanddicke verkuerzt, damit die Ecken nicht
     # doppelt Volumen tragen — sonst waeren spaetere Mengenauswertungen falsch.
     innen_y = BREITE_Y - 2 * WANDDICKE
-    for name, (bw, bt, px, py) in {
+    for name, (bw, bt, px, py) in ({} if hochbau else {
         "Wand-Sued":  (LAENGE_X, WANDDICKE, 0.0, 0.0),
         "Wand-Nord":  (LAENGE_X, WANDDICKE, 0.0, BREITE_Y - WANDDICKE),
         "Wand-West":  (WANDDICKE, innen_y, 0.0, WANDDICKE),
         "Wand-Ost":   (WANDDICKE, innen_y, LAENGE_X - WANDDICKE, WANDDICKE),
-    }.items():
+    }).items():
         shape, ort = _quader(s, kontext, bw, bt, HOEHE_Z, px, py, 0.0, ort_gesch, einheit_je_meter=einheit_je_meter)
         bauteile.append(s.add(
             # IFC4 kennt bei IfcWall ein neuntes Attribut (PredefinedType), IFC2X3
@@ -496,15 +664,19 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
 #: Die Schalter, die keine Stellungsargumente sind. Einmal aufgeschrieben, damit die
 #: Filterung unten nicht bei jedem neuen Schalter an zwei Stellen nachgezogen werden muss
 #: — ein vergessener Eintrag machte den Schalter stillschweigend zum Dateinamen.
-SCHALTER = ("--gelaende", "--raeume")
+SCHALTER = ("--gelaende", "--raeume", "--hochbau")
 
 GEBRAUCH = (
     "Gebrauch: make_test_ifc.py [ZIEL] [IFC4|IFC2X3] [MILLI] [--gelaende] [--raeume]\n"
+    "                              [--hochbau]\n"
     "  ZIEL       Pfad der zu schreibenden Datei (Vorgabe: build/testbau.ifc)\n"
     "  Schema     IFC4 (Vorgabe) oder IFC2X3\n"
     "  Vorsatz    MILLI fuer Millimeter, sonst Meter\n"
     "  --gelaende zusaetzlich eine Gelaendeplatte unter dem Bauwerk\n"
     "  --raeume   zusaetzlich zwei IfcSpace im Wandinneren\n"
+    "  --hochbau  STATT des Quaders ein gegliedertes Bauwerk: Stuetzenraster, Kern,\n"
+    "             Fassadentafeln, Auskragung. Fuer Messungen, an denen ein glatter\n"
+    "             Kasten nichts zeigt.\n"
 )
 
 
@@ -517,6 +689,7 @@ if __name__ == "__main__":
     argv = [a for a in sys.argv[1:] if a not in SCHALTER]
     mit_gelaende = "--gelaende" in sys.argv
     mit_raeumen = "--raeume" in sys.argv
+    hochbau = "--hochbau" in sys.argv
     # Ein unbekannter Schalter wurde bisher zum Dateinamen: `--help` schrieb eine IFC
     # namens `--help` ins Arbeitsverzeichnis. Ein Tippfehler darf keine Datei erzeugen.
     unbekannt = [a for a in argv if a.startswith("-")]
@@ -528,5 +701,6 @@ if __name__ == "__main__":
     schema = argv[1] if len(argv) > 1 else "IFC4"
     vorsatz = argv[2] if len(argv) > 2 else None
     p = erzeuge_ifc(ziel, schema=schema, vorsatz=(vorsatz or None),
-                    mit_gelaende=mit_gelaende, mit_raeumen=mit_raeumen)
+                    mit_gelaende=mit_gelaende, mit_raeumen=mit_raeumen,
+                    hochbau=hochbau)
     print(f"{p}  ({p.stat().st_size} Bytes, {len(p.read_text().splitlines())} Zeilen)")
