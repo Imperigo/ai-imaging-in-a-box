@@ -3452,6 +3452,21 @@ zweiten Stelle.
       vier Mutationen: Er las Erwähnungen statt Tabellenzeilen, eine Zusicherung war
       vakuumwahr, und er prüfte «mindestens» statt «genau».
 
+- [x] **Der Rahmungsriegel sprach über einen anderen Lauf** (26.08. spätnachmittags).
+      `_rahmung_vor_dem_render` rechnete immer mit `kameras.DECKUNGSGRAD` und schrieb die
+      Konstante auch so ins Urteil — der Multipass-Bericht trug den benutzten Deckungsgrad
+      **gar nicht**. Der Runner meldet ihn jetzt, der Riegel rechnet damit, und wo er fehlt
+      steht `deckungsgrad_quelle: "vorgabe"`.
+      Aufgefallen bei der Frage, ob einer der acht neuen Riegel eine Messung behindert, die
+      schon unterwegs ist: **`auf-20260825-41` vergleicht 0,55 gegen 0,70**, und der Riegel
+      hätte über beide Arme dasselbe gesagt.
+- [x] **Der Rahmungsriegel ist abbestellbar** (`verarbeiter(rahmung_pruefen=False)`).
+      `auf-41` G2 will Bildpaare bei 0,55 — das liegt unter `BILDBREITE_ABBRUCH = 0.65`,
+      der halbe Vergleich wäre ein Abbruch geworden. *Ein Riegel, der eine absichtliche
+      Vergleichsmessung verhindert, steht falsch.* Das Ergebnis trägt
+      `rahmung.abgeschaltet = True` — ein abgeschalteter Lauf bleibt von einem bestandenen
+      unterscheidbar.
+
 ---
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
@@ -3461,7 +3476,7 @@ Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`, mit der **Entscheidliste**
 
 | | Beginn des Tages | nach dem Vormittag | Ende |
 |---|---:|---:|---:|
-| Tests | 3335 | 3528 | **3865** |
+| Tests | 3335 | 3528 | **3871** |
 | Vakuumprobe | 10 Treffer | 12 Treffer | 12 Treffer |
 | Tote Kanten, gar nicht erreichbar | — | 2 | **1** |
 | Tote Kanten **mit Urteil** | 0 | 0 | **80 von 80** |

@@ -38,7 +38,7 @@ Kette belegt, die Aussage *geometrietreu* aber noch nicht.
 | MCP-Anbindung an KosmoOrbit | Verdrahtbarkeit belegt, Registrierung nicht ausgeführt |
 | LoRA-Stiltraining | Naht gebaut, **nie ein Training ausgeführt** |
 
-Tests: **3865**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+Tests: **3871**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
 (`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
 
 ---

@@ -586,3 +586,105 @@ def test_ohne_befund_steht_der_satz_nicht_im_vertragsergebnis():
         "erreichbarkeit": {"erreichbar": True, "hoechster_score": 0.83}})
 
     assert "UNERREICHBAR" not in ergebnis["qa"]["verdict"]["reason"]
+
+
+# ======================================================================================
+# Der Deckungsgrad DIESES Laufs — Nachtrag vom 26.08.2026 nachmittags
+# ======================================================================================
+
+def test_der_riegel_rechnet_mit_dem_gemeldeten_deckungsgrad():
+    """**Eine Zahl gehört an die Bedingung, unter der sie gemessen wurde.**
+
+    Bis zum Nachmittag des 26.08.2026 rechnete `_rahmung_vor_dem_render` immer mit
+    :data:`kameras.DECKUNGSGRAD` — der Konstanten der Bibliothek — und schrieb sie auch so
+    ins Urteil, gleichgültig womit der Lauf wirklich gestellt worden war.
+
+    Der Fall, an dem das teuer geworden wäre, lag als Auftrag bereit: `auf-20260825-41`
+    vergleicht **0,55 gegen 0,70** an Bildpaaren. Der Riegel hätte über beide Arme
+    dasselbe gesagt.
+    """
+    bericht = {"bbox": [[0, 0, 0], [10, 10, 10]],
+               "bbox_bauwerk": [[0, 0, 0], [10, 10, 10]],
+               "kamera": {"weg": "abgeleitet"},
+               "deckungsgrad": 0.55}
+    lage = abholer._rahmung_vor_dem_render(bericht)
+    assert lage["deckungsgrad"] == 0.55
+    assert lage["deckungsgrad_quelle"] == "bericht"
+    # Bauwerk = Szene, also ist die wirksame Bildbreite der Deckungsgrad selbst.
+    assert lage["wirksame_bildbreite"] == pytest.approx(0.55)
+    assert lage["abbruch"] is True, "0,55 liegt unter der Abbruchschwelle 0,65"
+
+
+def test_derselbe_bericht_mit_dem_hoeheren_deckungsgrad_laeuft_durch():
+    """Die Gegenprobe. Ohne sie prüfte die Zusicherung oben nur, dass irgendetwas abbricht."""
+    bericht = {"bbox": [[0, 0, 0], [10, 10, 10]],
+               "bbox_bauwerk": [[0, 0, 0], [10, 10, 10]],
+               "kamera": {"weg": "abgeleitet"},
+               "deckungsgrad": 0.70}
+    lage = abholer._rahmung_vor_dem_render(bericht)
+    assert lage["deckungsgrad"] == 0.70
+    assert lage["abbruch"] is False
+
+
+def test_ein_bericht_ohne_das_feld_sagt_dass_die_zahl_angenommen_ist():
+    """Ältere Berichte tragen es nicht — und das wird **benannt**, nicht überspielt.
+
+    *Nicht feststellbar wird nicht zu festgestellt, nur weil eine Konstante zur Hand ist.*
+    Abgebrochen wird trotzdem: Die Vorgabe ist der überwiegende Fall, und den Riegel für
+    jeden Altbestandslauf abzuschalten hiesse, ihn abzuschaffen.
+    """
+    bericht = {"bbox": [[0, 0, 0], [100, 100, 10]],
+               "bbox_bauwerk": [[0, 0, 0], [10, 10, 10]],
+               "kamera": {"weg": "abgeleitet"}}
+    lage = abholer._rahmung_vor_dem_render(bericht)
+    assert lage["deckungsgrad_quelle"] == "vorgabe"
+    assert lage["deckungsgrad"] == kameras.DECKUNGSGRAD
+    assert lage["abbruch"] is True
+    assert "keinen Deckungsgrad" in lage["abbruch_grund"], (
+        "Wenn die Zahl angenommen ist, gehört das in denselben Satz wie der Abbruch — "
+        "nicht in ein Feld, das niemand liest.")
+
+
+def test_ein_unsinniges_feld_faellt_auf_die_vorgabe_zurueck():
+    """``True`` ist in Python eine Zahl. Ein Bericht mit ``deckungsgrad: true`` darf nicht
+    zu einer Rahmung von 100 % führen."""
+    bericht = {"bbox": [[0, 0, 0], [10, 10, 10]],
+               "bbox_bauwerk": [[0, 0, 0], [10, 10, 10]],
+               "kamera": {"weg": "abgeleitet"},
+               "deckungsgrad": True}
+    lage = abholer._rahmung_vor_dem_render(bericht)
+    assert lage["deckungsgrad"] == kameras.DECKUNGSGRAD
+
+
+def test_der_abgeschaltete_riegel_bricht_nicht_ab_und_sagt_es():
+    """Abbestellbar, aber nicht unsichtbar."""
+    lage = {"abbruch": True, "abbruch_grund": "NICHT RENDERN: zu klein.",
+            "grund": "trägt nicht", "wirksame_bildbreite": 0.55}
+    aus = abholer._rahmung_abgeschaltet(lage)
+    assert aus["abbruch"] is False
+    assert aus["abgeschaltet"] is True
+    assert aus["abbruch_grund"] == ""
+    assert "ABGESCHALTET" in aus["grund"]
+    assert "zu klein" in aus["grund"], (
+        "Der ursprüngliche Grund muss erhalten bleiben — sonst ist hinterher nicht mehr "
+        "zu sehen, WAS abgeschaltet wurde.")
+    assert aus["wirksame_bildbreite"] == 0.55, "das Urteil bleibt vollständig"
+
+
+def test_ein_abgeschaltetes_ergebnis_ist_von_einem_bestandenen_unterscheidbar():
+    """**Die Zusicherung, auf die es bei einem Schalter ankommt.**
+
+    Ein abgeschalteter Riegel, dessen Ergebnis aussieht wie ein bestandener, ist schlimmer
+    als gar kein Riegel: Er erzeugt Vertrauen, das niemand geprüft hat.
+    """
+    bestanden = abholer._rahmung_vor_dem_render(
+        {"bbox": [[0, 0, 0], [10, 10, 10]], "bbox_bauwerk": [[0, 0, 0], [10, 10, 10]],
+         "kamera": {"weg": "abgeleitet"}, "deckungsgrad": 0.70})
+    abgeschaltet = abholer._rahmung_abgeschaltet(abholer._rahmung_vor_dem_render(
+        {"bbox": [[0, 0, 0], [10, 10, 10]], "bbox_bauwerk": [[0, 0, 0], [10, 10, 10]],
+         "kamera": {"weg": "abgeleitet"}, "deckungsgrad": 0.55}))
+    assert bestanden["abbruch"] is False and abgeschaltet["abbruch"] is False
+    assert not bestanden.get("abgeschaltet")
+    assert abgeschaltet.get("abgeschaltet") is True, (
+        "Beide haben `abbruch: False`. Nur `abgeschaltet` unterscheidet sie — ohne das "
+        "Feld wären ein geprüfter und ein ungeprüfter Lauf im Ergebnis identisch.")

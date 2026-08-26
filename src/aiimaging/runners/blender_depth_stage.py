@@ -1285,6 +1285,14 @@ def main() -> int:
         # BESTELLT war oder die Vorgabe ist. Bis zum 26.08.2026 lief der Sonnenstand
         # einer Bestellung ins Leere, und das Bild sah trotzdem richtig aus.
         "sonne": sonne_befund,
+        # Mit welchem Deckungsgrad die Kamera gestellt wurde. **Die Zahl gehoert an die
+        # Bedingung, unter der sie gemessen wurde** — und bis zum 26.08.2026 stand sie
+        # nirgends im Bericht. Der Rahmungsriegel diesseits der Grenze rechnete darum mit
+        # der Konstanten der Bibliothek und schrieb sie auch so ins Urteil, gleichgueltig
+        # womit dieser Lauf wirklich gestellt worden war. Ein Vergleichslauf bei 0.55
+        # gegen 0.70 (auf-20260825-41) haette ein Urteil bekommen, das ueber den anderen
+        # Lauf spricht.
+        "deckungsgrad": float(_vorgabe(a, "deckungsgrad", _kameras_modul().DECKUNGSGRAD)),
         "n_meshes": sum(1 for o in bpy.data.objects if o.type == "MESH"),
         "aufloesung": a.aufloesung,
         "hoehe": a.hoehe or a.aufloesung,

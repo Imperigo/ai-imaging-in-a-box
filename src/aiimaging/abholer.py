@@ -953,6 +953,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 brennweite_mm: float | None = None,
                 gelaende_z: float | None = None,
                 gelaende_erwartet: bool = True,
+                rahmung_pruefen: bool = True,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
@@ -1118,6 +1119,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # GEOMETRIE und bei jeder Kamera derselbe.
             massstab = _massstab_gemeldet(bericht)
             rahmung = _rahmung_vor_dem_render(bericht)
+            if not rahmung_pruefen and rahmung.get("abbruch"):
+                rahmung = _rahmung_abgeschaltet(rahmung)
             komposition = _komposition_vor_dem_render(bericht)
             for lage in (rahmung, komposition):
                 if lage.get("abbruch"):
@@ -1573,10 +1576,34 @@ def _rahmung_vor_dem_render(bericht: dict) -> dict:
     from . import kameras
 
     weg = (bericht.get("kamera") or {}).get("weg")
+
+    # DER DECKUNGSGRAD DIESES LAUFS, nicht der der Bibliothek.
+    #
+    # Bis zum Nachmittag des 26.08.2026 stand hier `kameras.DECKUNGSGRAD` — und zwar
+    # sowohl in der Rechnung als auch als Angabe im Urteil. Das war ein Verstoss gegen den
+    # Satz, unter dem dieser ganze Tag steht: **Eine Zahl gehoert an die Bedingung, unter
+    # der sie gemessen wurde.** Der Riegel sprach ueber einen Lauf mit 0.70, auch wenn der
+    # Lauf mit 0.55 gestellt worden war — und `auf-20260825-41` vergleicht genau diese
+    # beiden Werte miteinander.
+    #
+    # Aeltere Berichte tragen das Feld nicht. Dann gilt die Vorgabe, und `quelle` sagt es:
+    # NICHT FESTSTELLBAR wird nicht zu FESTGESTELLT, nur weil eine Konstante zur Hand ist.
+    gemeldet = bericht.get("deckungsgrad")
+    deckungsgrad = (float(gemeldet) if isinstance(gemeldet, (int, float))
+                    and not isinstance(gemeldet, bool) else kameras.DECKUNGSGRAD)
+    quelle = "bericht" if gemeldet is not None else "vorgabe"
+
     lage = kameras.rahmungsverhaeltnis(bericht.get("bbox"),
-                                       bericht.get("bbox_bauwerk"))
+                                       bericht.get("bbox_bauwerk"),
+                                       deckungsgrad=deckungsgrad)
     lage = dict(lage, weg=weg, note=bericht.get("bbox_bauwerk_note") or "",
-                deckungsgrad=kameras.DECKUNGSGRAD)
+                deckungsgrad=deckungsgrad, deckungsgrad_quelle=quelle)
+    if quelle == "vorgabe" and lage.get("abbruch"):
+        lage["abbruch_grund"] += (
+            f" ACHTUNG: Der Bericht nennt keinen Deckungsgrad; gerechnet wurde mit der "
+            f"Vorgabe {kameras.DECKUNGSGRAD}. Wurde dieser Lauf mit einem anderen "
+            f"gestellt, spricht diese Zahl ueber einen anderen Lauf. Runner ab dem "
+            f"26.08.2026 melden das Feld.")
     if weg != "abgeleitet":
         lage["abbruch"] = None
         lage["abbruch_grund"] = (
@@ -1585,6 +1612,31 @@ def _rahmung_vor_dem_render(bericht: dict) -> dict:
             f"abgebrochen. Die gerechnete Bildbreite steht trotzdem da — als Auskunft, "
             f"nicht als Urteil.")
     return lage
+
+
+def _rahmung_abgeschaltet(rahmung: dict) -> dict:
+    """Der Rahmungsriegel, den der Aufrufer ausdrücklich abbestellt hat.
+
+    **Warum es diesen Schalter gibt.** Der Riegel verhindert Läufe, deren Bild die Vorlage
+    nicht trägt — und genau solche Bilder braucht eine Messung, die wissen will, *wie
+    schlecht* eine Rahmung aussieht. `auf-20260825-41` vergleicht die Deckungsgrade 0,55
+    und 0,70 an Bildpaaren; der ältere Wert liegt unter :data:`kameras.BILDBREITE_ABBRUCH`,
+    und ohne diesen Schalter lieferte der halbe Vergleich statt eines Bildes einen Abbruch.
+
+    *Ein Riegel, der eine absichtliche Vergleichsmessung verhindert, steht an dieser Stelle
+    falsch.* Er wird darum abbestellbar — aber nicht unsichtbar.
+
+    **Der Vermerk steht im Urteil und nicht im Logbuch.** Ein Ergebnis ohne ihn wäre von
+    einem nicht zu unterscheiden, das den Riegel *bestanden* hat — und das ist genau die
+    Verwechslung, gegen die dieser ganze Tag gebaut ist.
+    """
+    vorher = rahmung.get("abbruch_grund") or rahmung.get("grund") or ""
+    return dict(rahmung, abbruch=False, abgeschaltet=True, abbruch_grund="",
+                grund=(f"RAHMUNGSRIEGEL ABGESCHALTET (rahmung_pruefen=False). Der Lauf "
+                       f"waere abgebrochen worden — der urspruengliche Grund lautete: "
+                       f"{vorher} Gerechnet wurde trotzdem, auf ausdrueckliche Anweisung "
+                       f"des Aufrufers. Gedacht ist das fuer Messungen, die eine schlechte "
+                       f"Rahmung SEHEN wollen."))
 
 
 def _erreichbarkeit_dieser_szene(urteil: dict, *, schwelle: float) -> dict | None:

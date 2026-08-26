@@ -75,5 +75,17 @@
     "verzeichnis": "auftraege/ergebnisse",
     "nur_zahlen": true,
     "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
+  },
+  "nachtrag": {
+    "datum": "2026-08-26",
+    "warum_das_hier_steht": "Die FRAGE dieses Auftrags ist unveraendert. Was sich geaendert hat, ist die Kette, durch die er laeuft — und ohne diesen Hinweis liefe G2 gegen einen Riegel, den es am 25.08. noch nicht gab. Der urspruengliche Text bleibt unangetastet.",
+    "was_neu_ist": [
+      "BILDBREITE_ABBRUCH = 0.65: Der Abholer RENDERT NICHT MEHR, wenn das Bauwerk weniger als 65 % der Bildbreite fuellt. Gemessen an auf-vis-20260825-15 Posten 1 (17,5 % -> Score 0.0002, 30 % -> 0.0, 65 % -> 0.637).",
+      "Sieben weitere Pruefungen laufen jetzt VOR dem Bildlauf: Kamerahoehe ueber Dach, Vollstaendigkeit der Zwischenbilder, doppelte Ansicht, Erreichbarkeit, Massstab (meldet nur), Abbestellung, Durchreichung.",
+      "Der Multipass-Bericht meldet seit heute das Feld `deckungsgrad`. Der Rahmungsriegel rechnet damit — vorher rechnete er immer mit der Bibliothekskonstante 0.70."
+    ],
+    "was_das_fuer_G2_heisst": "G2 vergleicht Bildpaare bei Deckungsgrad 0.55 und 0.70. Der ALTE Arm (0.55) liegt UNTER der neuen Abbruchschwelle 0.65 — bei einem Bauwerk, das die Szene fuellt, ist die wirksame Bildbreite gleich dem Deckungsgrad. Ohne Gegenmassnahme liefert der halbe Vergleich statt eines Bildes einen Abbruch.\n\nABHILFE, und sie ist gebaut: `abholer.verarbeiter(..., rahmung_pruefen=False)`. Der Riegel rechnet dann weiter und schreibt sein Urteil, bricht aber nicht ab. Das Ergebnis traegt `rahmung.abgeschaltet = True` — ein abgeschalteter Lauf ist von einem bestandenen unterscheidbar, und das ist Absicht.\n\nWer G2 ausserhalb des Abholers rechnet (direkt ueber seams + render), ist davon nicht betroffen. Dann bitte im Ergebnis vermerken, welchen Weg ihr genommen habt — die beiden sind seit heute nicht mehr gleich.",
+    "was_das_fuer_G1_heisst": "G1 misst bei 0.70 und ist NICHT betroffen: 0.70 liegt ueber der Schwelle. Falls ein Bauwerk aber nur einen Teil der Szenenbox einnimmt (Gelaende, Umgebung), sinkt die wirksame Bildbreite unter den Deckungsgrad, und der Riegel kann greifen. Das ist dann KEIN Fehler, sondern genau die Frage von G3 — bitte in dem Fall den Abbruchgrund mitschicken statt den Lauf zu wiederholen.",
+    "was_sich_NICHT_geaendert_hat": "Die vorab gerechneten Zahlen unter `vorab_gerechnet_nicht_nachrechnen` gelten weiter. Der Knick aus auf-13 (0.5991 / 0.6488) ebenfalls. Die offene Frage am Ende — Neumessung bei 0.70 oder die alte Zahl an ihren Deckungsgrad binden — ist unbeantwortet und weiterhin die wichtigste."
   }
 }
