@@ -4672,6 +4672,41 @@ sein.**
 
 ---
 
+## Der Maskenweg lief an zwei von drei Aufrufstellen nicht (26.08.2026)
+
+**Gezählt statt vermutet:** `tiefenschaetzer.qa_gegen_soll` wird an drei Stellen gerufen —
+`abholer.py`, `kette.py` und `tools/homeworker.py`. **Nur die erste reichte eine Maske
+herein.** Der Homeworker ist der Weg, auf dem die HomeStation ihre Render-Aufträge
+abarbeitet; die Lücke sass also dort, wo wirklich gemessen wird.
+
+Ohne Maske bleiben `rho_maske`, Kante und Paarurteil ungemessen — die Masse, die die
+**Abwesenheit** eines Bauwerks fangen. Der Score über das ganze Bild fängt sie nicht: Ein
+leeres Grundstück erreichte dort **0.9530** und bestand das Tor (`auf-20260821-26`).
+
+- [x] `maske.maske_aus_bericht` (aus `abholer._maske_bauen` herausgehoben), beide
+      Aufrufstellen verdrahtet, und `qa_gegen_soll` meldet den fehlenden Maskenweg jetzt
+      selbst — selbstlöschend, mit der Zahl. Drei neue Tests, einer je Aufrufstelle, plus
+      die Gegenprobe für den ehrlichen Fall ohne Material-ID-Pass.
+
+**Zwei Nebenbefunde, die eigenständig zählen:**
+
+* **Eine Attrappe täuschte eine Welt vor, in der die Kette nicht läuft.** Der Bericht in
+  `tests/test_homeworker.py` trug keinen Material-ID-Pass, obwohl der echte Lauf ihn
+  liefert. Die Lücke *konnte* dort nicht auffallen.
+* **Drei Warntexte sagten dieselbe überholte Folge**, nachdem die Polarität am Tor
+  ankam — und kein Test wurde davon rot. *Eine Behauptung in Prosa über das Verhalten an
+  einer anderen Stelle hat keinen Wächter*, und diesmal traf es ausgerechnet das, was der
+  Betreiber liest, wenn etwas nicht stimmt.
+
+- [ ] **Offen daraus:** Soll ein bestandenes Urteil **ohne** Maskenweg überhaupt als
+      bestanden gelten? Heute gilt es das — `gate.gesamturteil` liest allein
+      `geometrie["bestanden"]`, und der fehlende Maskenweg steht nur in den Warnungen. Das
+      ist eine Entscheidung über die Strenge des Tors und gehört dem Owner, nicht dem
+      Code: Fail-closed hiesse, dass ein Lauf ohne Material-ID-Pass gar kein Urteil mehr
+      bekommt.
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).
