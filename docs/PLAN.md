@@ -4790,6 +4790,47 @@ Blender-Lauf. Drei rote Läufe an einem Tag (zweimal `test_bauwerksbox`, einmal
 
 ---
 
+## Owner-Auftrag: Der Einbau ist das Ziel, nicht der Bau (26.08.2026)
+
+> *«Sorge dafür, dass andere Worker immer alles einbauen in die Software — das ist
+> Endziel. Du verteilst, wo was hin muss, und du bist verantwortlich, dass sie es einbauen
+> und mir dann bestätigst.»*
+
+**Damit ist gebauter Code kein Ergebnis mehr, sondern eine Zwischenstufe.** Die Regel steht
+in `CLAUDE.md`; hier steht, was daraus schon getan ist und was folgt.
+
+- [x] **Die Regel im Repo**, mit vier Pflichten: verteilen, nachhalten, einbauen
+      *beauftragen*, bestätigen. (`CLAUDE.md`, Abschnitt «Der Einbau ist das Ziel».)
+- [x] **Der Rückstand ist zählbar** — `aiimaging.einbau`, `tools/einbau.py`. Bis dahin
+      entstand die Zahl, indem jemand zwei Verzeichnisse von Hand verglich.
+- [x] **Jeder offene Posten hat einen Adressaten.** A4 war der letzte ohne (`auf-58`),
+      vier weitere Zeilen nannten ihren Auftrag nicht und tun es jetzt. «Niemand» ist
+      keine zulässige Angabe mehr, und `tools/einbau.py` scheitert darauf.
+- [x] **Weg C im Einbau-Stand** — der stillste der drei: Die HomeStation führt unseren
+      Code aus, ein `git pull` ändert dort das Verhalten, und kein Posten springt um.
+
+**Stand am 26.08.2026, gezählt:** 17 Aufträge ohne Antwort (12 `local`, 3 `cloud`,
+2 `ui`), 14 von 24 Posten noch nicht in der Software.
+
+**Zwei Befunde über das Instrument selbst**, beide wären unbemerkt geblieben:
+
+* **Der Wächter hatte ein festes Alphabet** (`[AB]\d+`). Als ein Weg C dazukam, waren
+  sechs Posten unbewacht und nichts wurde rot. *Ein Wächter mit fest eingebautem Alphabet
+  hört auf zu wachen, sobald ein neuer Buchstabe auftaucht.*
+* **Der Melder suchte nach dem Fehlen eines Wortes** und hat sich an der eigenen Erklärung
+  verschluckt: Kaum stand in einer Zeile «stand bis heute als niemand da», galt der Posten
+  wieder als unbesetzt. *Eine Prüfung auf die Abwesenheit eines Wortes prüft die Prosa,
+  nicht die Sache.* Ein Adressat wird jetzt positiv belegt.
+
+- [ ] **Was noch fehlt, und es ist der Kern des Auftrags:** Ein Messauftrag ist kein
+      Einbauauftrag. `auf-52` fragt den UI-Worker, was er zum Bauen braucht — das ist für
+      eine erste Runde richtig, baut aber noch nichts. Sobald seine Antwort da ist, muss
+      daraus ein Auftrag werden, dessen **Rückgabe den Einbau belegt**, nicht die Messung.
+- [ ] **Bestätigen kann ich noch nichts.** Seit `auf-47` hat kein Worker geantwortet.
+      Was hier steht, ist die Verteilung — nicht der Einbau.
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).
