@@ -2683,48 +2683,16 @@ def _auswahl_ablegen(aus, kuerzel, auswahl) -> None:
         pass
 
 
-def _maske_bauen(bericht: dict, *, gelaende_erwartet: bool = True) -> dict:
-    """Die Bauwerksmaske aus dem Material-ID-Pass — oder eine benannte Lücke.
-
-    **Warum ein Fehlschlag hier den Lauf nicht aufhält.** Die Maske ist die *zusätzliche*
-    Messung, nicht die einzige; der Score über das ganze Bild entsteht ohnehin. Ein
-    Auftrag, der an einer fehlenden Materialtabelle scheiterte, wäre ein Auftrag ohne
-    Bild — und das ist teurer als eine ungemessene Zusatzfrage.
-
-    **Warum er trotzdem nicht verschwindet.** Ohne diesen Befund sähe ein Lauf ohne Maske
-    hinterher aus wie einer mit Maske und ohne Auffälligkeit. Genau diese Verwechslung
-    ist der Grund, warum das ganze Modul die Dreiteilung durchhält.
-
-    **Und warum ``gelaende_erwartet`` hier durchgereicht wird.** Ein reines Gebäude-IFC
-    bringt **gar kein Gelände** mit — der eine ``IfcSite`` darin trägt keine Geometrie und
-    taucht in der Ausgabe nicht auf (HomeStation, `BEFUND_2026-08-24_IFC-LESER.md`, an
-    neun echten Dateien gemessen). Die Maske meldet dann «kein Gelände erkannt», und das
-    ist ein **Fehlalarm und kein Befund**: Es fehlt nichts, es war nie welches da.
-
-    Bis zum 24.08.2026 kam der Schalter hier nicht an — er stand in :mod:`aiimaging.maske`
-    und war von aussen nicht erreichbar. Dieselbe Naht-Sache wie bei Brennweite und
-    Geländestand: einstellbar im Modul, nicht im Betrieb.
-
-    Returns:
-        ``{maske, gemessen, grund, ...}``. ``maske`` ist ``None``, wenn sie sich nicht
-        bauen liess — dann bleibt der Maskenweg in der QA ungemessen.
-    """
-    png = bericht.get("material_id_png")
-    if not png:
-        return {"maske": None, "gemessen": False, "grund": (
-            "Kein Material-ID-Pass im Bericht. Ohne ihn gibt es keine Bauwerksmaske — und "
-            "damit keine Antwort auf die Frage, ob im Bild überhaupt ein Bauwerk steht. "
-            "Der Lauf geht weiter; die Frage bleibt UNGEMESSEN.")}
-    try:
-        gebaut = maske_modul.bauwerksmaske_aus_lauf(
-            png, bericht, gelaende_erwartet=gelaende_erwartet)
-    except Exception as fehler:        # noqa: BLE001 — siehe Docstring
-        return {"maske": None, "gemessen": False, "grund": (
-            f"Bauwerksmaske nicht baubar: {type(fehler).__name__}: {fehler}")}
-    if gebaut.get("maske") is None:
-        return dict(gebaut, gemessen=False, grund=" ".join(gebaut.get("warnungen") or [])
-                    or "Die Geländeregel hat nicht gegriffen.")
-    return dict(gebaut, gemessen=True, grund="")
+#: Die Maskenbeschaffung ist am 26.08.2026 nach :mod:`aiimaging.maske` gewandert.
+#:
+#: **Der Anlass war eine Zaehlung von der anderen Seite:** `qa_gegen_soll` hat drei
+#: Aufrufstellen — diesen Abholer, `kette.py` und `tools/homeworker.py`. Nur diese eine
+#: reichte eine Maske herein. Die beiden anderen massen den Maskenweg gar nicht, und
+#: niemand sagte es; die Zeile im Kurzbefund gibt es nur hier.
+#:
+#: Solange die Funktion privat im Abholer stand, konnte keine der beiden sie rufen, ohne
+#: sie zu verdoppeln. Jetzt steht sie an der Stelle, an der die Maske ohnehin gebaut wird.
+_maske_bauen = maske_modul.maske_aus_bericht
 
 
 def _stil_urteil_aus_belichtung(urteile: list[dict], stil: str | None) -> dict | None:

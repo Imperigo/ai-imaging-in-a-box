@@ -919,9 +919,11 @@ def test_nicht_bestandenes_gate_ist_ein_ergebnis_und_kein_fehlschlag(tmp_path, m
 def test_bestandenes_gate_bei_treuer_schaetzung(tmp_path, monkeypatch):
     """Die Gegenprobe: Eine perfekt treue (invertierte) Schätzung besteht.
 
-    Invertiert ist kein Geometriefehler, sondern die Konvention der Disparität — die
-    Metrik wertet ``abs(spearman)``. Hier läuft die Kette einmal ganz durch, ohne dass ein
-    einziges Gewicht existiert.
+    Invertiert ist kein Geometriefehler, sondern die Konvention der Disparität. *Bis zum
+    26.08.2026 rettete das der Betrag* (``abs(spearman)``); seither reicht
+    ``qa_gegen_soll`` die **gemessene** Polarität durch, und −1 · −1 = +1 kommt auf
+    dasselbe. Hier läuft die Kette einmal ganz durch, ohne dass ein einziges Gewicht
+    existiert.
     """
     from aiimaging import bildlesen
 
@@ -939,6 +941,85 @@ def test_bestandenes_gate_bei_treuer_schaetzung(tmp_path, monkeypatch):
     assert ausgaben["bestanden"] is True
     assert ausgaben["score"] == pytest.approx(1.0)
     assert ausgaben["hintergrund_strategie"] == "wie_soll"
+
+
+def _material_id_lauf(tmp_path, *, n_bauwerk: int, breite: int = 50, hoehe: int = 20):
+    """Ein Multipass-Bericht **mit** Material-ID-Pass — die Grundlage der Bauwerksmaske."""
+    from aiimaging import bildschreiben
+
+    hintergrund, wand, boden = (0, 0, 0), (165, 255, 38), (255, 38, 38)
+    # ZWEI benannte Einträge, nicht einer: Unter `maske.MINDESTENS_BENANNT` sagt die
+    # Geländeregel «nicht entscheidbar» und die Maske bleibt None — dann prüfte dieser
+    # Test die Verdrahtung gar nicht, sondern nur den Nullbefund daneben.
+    farben = [wand if i < n_bauwerk else hintergrund for i in range(breite * hoehe)]
+    for i in range(n_bauwerk, min(n_bauwerk + breite, breite * hoehe)):
+        farben[i] = boden
+    png = bildschreiben.schreibe_farb_png(tmp_path / "material_id.png", farben,
+                                          breite, hoehe)
+    return {"depth_exr": "t.exr", "material_id_png": str(png),
+            "material_id_tabelle": [
+                {"index": 0, "name": "IfcWall_0QOeb014",
+                 "farbe_srgb_8bit": list(wand), "quelle": "material"},
+                {"index": 1, "name": "Boden_Platte",
+                 "farbe_srgb_8bit": list(boden), "quelle": "material"}]}
+
+
+def test_die_kette_faehrt_den_maskenweg_mit(tmp_path, monkeypatch):
+    """**Die dritte Aufrufstelle, und sie fehlte bis zum 26.08.2026.**
+
+    ``qa_gegen_soll`` wird an drei Stellen gerufen: vom Abholer, von diesem Knoten und vom
+    Homeworker. Nur der Abholer reichte eine Maske herein. Ohne sie bleiben ``rho_maske``,
+    Kante und Paarurteil ungemessen — **genau die Masse, die die Abwesenheit eines
+    Bauwerks fangen.** Der Score über das ganze Bild fängt sie nicht: Ein leeres
+    Grundstück erreichte dort 0.9530 und bestand das Tor (`auf-20260821-26`).
+
+    Der Multipass liefert den Material-ID-Pass ohnehin; er lag in diesem Knoten in
+    ``eingaben[0]`` und wurde nicht angefasst.
+    """
+    from aiimaging import bildlesen
+
+    fern = 1e10
+    soll = [1.0 + i / 1000 if i < 600 else fern for i in range(1000)]
+    monkeypatch.setattr(bildlesen, "tiefen_aus_report", lambda report, **kw: (soll, 50, 20))
+    bild = tmp_path / "bild.png"
+    bild.write_text("attrappe", encoding="utf-8")
+    ausfuehrer = kette.qa_ausfuehrer(modell=lambda parameter: [-wert for wert in soll])
+
+    ausgaben = ausfuehrer(
+        knoten=qa_knoten(),
+        eingaben=[_material_id_lauf(tmp_path, n_bauwerk=600), {"bild_png": str(bild)}],
+        out_dir=tmp_path)
+
+    assert ausgaben["status"] == "ok", ausgaben.get("error")
+    assert ausgaben["paarurteil"] is not None
+    assert ausgaben["rho_maske"] is not None
+    assert not [w for w in ausgaben["warnungen"] if "OHNE MASKENWEG" in w]
+
+
+def test_ohne_material_id_pass_sagt_die_kette_dass_der_maskenweg_fehlt(tmp_path, monkeypatch):
+    """Die Gegenprobe — und zugleich der ehrliche Fall.
+
+    Ein Lauf mit ``--ohne-material-id`` hat keinen Material-ID-Pass, und dann gibt es
+    keine Maske. Der Knoten hält deswegen **nicht** an: Ein Lauf ohne Bild wäre teurer als
+    eine ungemessene Zusatzfrage. Aber er sagt es — sonst sähe er aus wie ein Lauf mit
+    Maske und ohne Auffälligkeit.
+    """
+    from aiimaging import bildlesen
+
+    fern = 1e10
+    soll = [1.0 + i / 1000 if i < 600 else fern for i in range(1000)]
+    monkeypatch.setattr(bildlesen, "tiefen_aus_report", lambda report, **kw: (soll, 50, 20))
+    bild = tmp_path / "bild.png"
+    bild.write_text("attrappe", encoding="utf-8")
+    ausfuehrer = kette.qa_ausfuehrer(modell=lambda parameter: [-wert for wert in soll])
+
+    ausgaben = ausfuehrer(knoten=qa_knoten(),
+                          eingaben=[{"depth_exr": "t.exr"}, {"bild_png": str(bild)}],
+                          out_dir=tmp_path)
+
+    assert ausgaben["status"] == "ok", "ohne Maske wird gemessen, nur eben weniger"
+    assert ausgaben["paarurteil"] is None
+    assert [w for w in ausgaben["warnungen"] if "OHNE MASKENWEG" in w]
 
 
 def test_nicht_kommerziell_lizenzierter_schaetzer_faellt_im_lauf_auf(tmp_path):

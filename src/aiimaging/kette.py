@@ -52,8 +52,8 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from aiimaging import (
-    bildlesen, contracts, geometrie_qa, raumkamera, render, seams, tiefenschaetzer,
-    torwaechter,
+    bildlesen, contracts, geometrie_qa, maske, raumkamera, render, seams,
+    tiefenschaetzer, torwaechter,
 )
 from aiimaging.graph import (
     ArtefaktCache, Bedarf, Graph, GraphError, Knoten, inhalts_hash, pruefe_bedarf,
@@ -623,6 +623,17 @@ def qa_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
         tiefenschaetzer.fordere_zulaessigen(p["schaetzer"])
 
         soll, breite, hoehe = bildlesen.tiefen_aus_report(multipass)
+        # DIE MASKE AUS DEMSELBEN MULTIPASS — bis zum 26.08.2026 reichte dieser Knoten
+        # keine herein, und damit blieben `rho_maske`, Kante und Paarurteil in jedem
+        # Kettenlauf ungemessen. Das sind die Masse, die die ABWESENHEIT eines Bauwerks
+        # fangen; der Score ueber das ganze Bild fangt sie nicht (ein leeres Grundstueck
+        # erreichte dort 0.9530 und bestand das Tor, `auf-20260821-26`).
+        #
+        # Ein Fehlschlag beim Maskenbau haelt den Knoten NICHT auf — `maske_aus_bericht`
+        # gibt dann eine benannte Luecke zurueck, und `qa_gegen_soll` meldet den fehlenden
+        # Maskenweg von sich aus. Ein Lauf ohne Bild waere teurer als eine ungemessene
+        # Zusatzfrage.
+        maskenbefund = maske.maske_aus_bericht(multipass)
         return tiefenschaetzer.qa_gegen_soll(
             bild_png, soll,
             schaetzer=p["schaetzer"], modell=modell, _lader=_lader,
@@ -630,6 +641,7 @@ def qa_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
             hintergrund_strategie=p["hintergrund_strategie"],
             hintergrund_anteil=p.get("hintergrund_anteil"),
             breite=breite, hoehe=hoehe,
+            maske=maskenbefund.get("maske"),
         )
 
     return fuehre_qa

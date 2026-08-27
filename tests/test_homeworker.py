@@ -339,6 +339,27 @@ BLOCK_ZEILEN = range(2, 14)
 BLOCK_SPALTEN = range(4, 12)
 
 
+#: Farben des Material-ID-Passes. Dieselbe Gestalt wie in ``tests/test_maske.py``:
+#: ein Geländeeintrag, der nach der Regel herausfällt, und ein Bauteil, das bleibt.
+MI_HINTERGRUND = (0, 0, 0)
+MI_BODEN = (255, 38, 38)
+MI_WAND = (165, 255, 38)
+
+
+def _material_id_bild() -> list[tuple[int, int, int]]:
+    """Der Material-ID-Pass zur Soll-Karte: derselbe Block, als Bauteil eingefärbt.
+
+    Die unterste Zeile des Blocks ist **Gelände** — sonst prüfte die Geländeregel hier
+    nichts, und die Maske wäre nur eine zweite Silhouette unter anderem Namen.
+    """
+    farben = [MI_HINTERGRUND] * (BREITE * HOEHE)
+    for zeile in BLOCK_ZEILEN:
+        for spalte in BLOCK_SPALTEN:
+            farben[zeile * BREITE + spalte] = (
+                MI_BODEN if zeile == BLOCK_ZEILEN.stop - 1 else MI_WAND)
+    return farben
+
+
 def _soll_meter() -> list[float]:
     """Die Soll-Tiefenkarte in Metern, zeilenweise von oben — Hintergrund als ``inf``.
 
@@ -406,6 +427,15 @@ def bericht(aus) -> dict:
     grau, normalisierung = bildschreiben.normalisiere_tiefe(_soll_meter())
     bildschreiben.schreibe_graustufen_png(aus / "tiefe_norm.png", grau, BREITE, HOEHE)
     (aus / "beauty.png").write_bytes(PNG_PLATZHALTER)
+    # DER MATERIAL-ID-PASS GEHOERT DAZU — bis zum 26.08.2026 fehlte er hier.
+    #
+    # Der echte Lauf liefert ihn (er steht in `homeworker._PFADFELDER`), diese Attrappe
+    # nicht. Damit lief jeder Test dieses Moduls in einer Welt, in der sich gar keine
+    # Bauwerksmaske bauen laesst — und die Luecke im Maskenweg konnte hier nicht auffallen.
+    # Dieselbe Sorte Fehler wie eine Attrappe, die eine Datei VORTAEUSCHT: Sie prueft die
+    # Kette gegen eine Welt, in der sie nicht laeuft.
+    bildschreiben.schreibe_farb_png(aus / "material_id.png", _material_id_bild(),
+                                    BREITE, HOEHE)
     return {
         "depth_exr": None,
         "depth_png": str(aus / "tiefe_norm.png"),
@@ -414,6 +444,13 @@ def bericht(aus) -> dict:
         "depth_exr_kanaele": ["tiefe_.V"],
         "depth_exr_format": "MULTILAYER",
         "beauty_png": str(aus / "beauty.png"),
+        "material_id_png": str(aus / "material_id.png"),
+        "material_id_tabelle": [
+            {"index": 0, "name": "Boden_Platte", "farbe_srgb_8bit": list(MI_BODEN),
+             "quelle": "material"},
+            {"index": 1, "name": "IfcWall_0QOeb014", "farbe_srgb_8bit": list(MI_WAND),
+             "quelle": "material"},
+        ],
         "bbox_size_m": [8.0, 5.0, 3.0],
         "n_meshes": 7,
     }
@@ -957,7 +994,11 @@ def test_multipass_meldet_nur_zahlen_und_dateinamen(blender_naht, ifc, aus, tmp_
     assert ergebnis["messwerte"]["n_elements"] == 7
     assert ergebnis["messwerte"]["n_triangles"] == 4242
     assert ergebnis["urteil"] == {"multipass": "ok"}
-    assert sorted(ergebnis["messwerte"]["dateien"]) == ["beauty.png", "tiefe_norm.png"]
+    assert sorted(ergebnis["messwerte"]["dateien"]) == [
+        "beauty.png", "material_id.png", "tiefe_norm.png"], (
+        "der Material-ID-Pass gehört dazu — er ist die Grundlage der Bauwerksmaske, und "
+        "die Attrappe liess ihn bis zum 26.08.2026 weg"
+    )
     assert all("/" not in name for name in ergebnis["messwerte"]["dateien"])
 
 
@@ -1006,6 +1047,35 @@ def test_fuehre_aus_reicht_beide_modelle_bis_in_den_render_pfad(blender_naht, if
     assert ergebnis["status"] == "ok"
     assert ergebnis["urteil"]["bestanden"] is True
     assert len(bildmodell.aufrufe) == 1 and len(schaetzer.aufrufe) == 1
+
+
+def test_der_maskenweg_wird_auf_der_homestation_wirklich_gefahren(
+        blender_naht, ifc, aus, tmp_path):
+    """**Die Lücke, die am 26.08.2026 hier sass — und zwar dort, wo gemessen wird.**
+
+    ``qa_gegen_soll`` hat drei Aufrufstellen. Bis zu diesem Tag reichte nur der Abholer
+    eine Maske herein; dieses Skript nicht, obwohl es der Weg ist, auf dem die HomeStation
+    ihre Render-Aufträge abarbeitet. Ohne Maske bleiben ``rho_maske``, Kante und
+    Paarurteil ungemessen — genau die Masse, die die **Abwesenheit** eines Bauwerks
+    fangen. Der Score über das ganze Bild fängt sie nicht: Ein leeres Grundstück erreichte
+    dort 0.9530 und bestand das Tor (`auf-20260821-26`).
+
+    Gefunden wurde die Lücke durch Zählen von der anderen Seite, nicht durch einen Test —
+    und darum steht hier jetzt einer.
+    """
+    ergebnis = hw.fuehre_aus(_multipass_satz("render", ifc, aus), tmp_path,
+                             _render_modell=Renderattrappe(),
+                             _tiefen_modell=Tiefenattrappe(treue_ist_karte(blender_naht)))
+    qa = ergebnis["messwerte"]["geometrie_qa"]
+
+    assert "maskenbefund" in ergebnis["messwerte"], (
+        "der Befund reist mit, auch wenn die Maske nicht baubar war — sonst sähe ein Lauf "
+        "ohne Maske hinterher aus wie einer mit Maske und ohne Auffälligkeit"
+    )
+    assert not [w for w in qa["warnungen"] if "OHNE MASKENWEG" in w], (
+        "die selbstlöschende Zeile aus `qa_gegen_soll` darf hier nicht mehr auflaufen"
+    )
+    assert qa["paarurteil"] is not None, "der Maskenweg ist gefahren, also gibt es ein Urteil"
 
 
 # ── Die Kommandozeile ────────────────────────────────────────────────────────────────

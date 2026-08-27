@@ -355,7 +355,7 @@ def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
     Regel 3: Zurück reisen nur Zahlen, Urteile und **Dateinamen**. Die Bilder bleiben auf
     der HomeStation.
     """
-    from aiimaging import bildlesen, render, tiefenschaetzer
+    from aiimaging import bildlesen, maske, render, tiefenschaetzer
 
     messwerte = {
         "bbox_size_m": blender_bericht.get("bbox_size_m"),
@@ -437,10 +437,30 @@ def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
             fehler=f"Soll-Tiefenkarte nicht lesbar: {type(e).__name__}: {e}",
             dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
 
+    # DIE MASKE GEHOERT HIER HEREIN, und bis zum 26.08.2026 kam sie nicht.
+    #
+    # Ohne sie bleiben `rho_maske`, Kante und Paarurteil ungemessen — genau die Masse,
+    # die die ABWESENHEIT eines Bauwerks fangen. Der Score ueber das ganze Bild fangt sie
+    # nicht: Ein leeres Grundstueck erreichte dort 0.9530 und bestand das Tor
+    # (auf-20260821-26). Dieses Skript ist der Weg, auf dem die HomeStation ihre
+    # Render-Auftraege abarbeitet — die Luecke sass also dort, wo wirklich gemessen wird.
+    #
+    # Gefunden wurde sie durch Zaehlen von der anderen Seite: `qa_gegen_soll` hat drei
+    # Aufrufstellen, und nur der Abholer reichte eine Maske herein.
+    maskenbefund = maske.maske_aus_bericht(blender_bericht)
+    # OHNE `_nur_dateinamen` reist hier der volle Pfad des Arbeitsverzeichnisses mit —
+    # `maske_aus_bericht` gibt `material_id_png` zurueck, damit sich eine Maske
+    # zurueckverfolgen laesst. Regel 3, und der Waechter in `test_homeworker` hat es beim
+    # ersten Versuch gefangen. Die Maske selbst (Tausende Wahrheitswerte) faellt ohnehin
+    # heraus: Ein Ergebnis traegt Zahlen und Text, keine Bilddaten.
+    messwerte["maskenbefund"] = _nur_dateinamen(
+        {k: v for k, v in maskenbefund.items() if k != "maske"})
+
     qa = tiefenschaetzer.qa_gegen_soll(
         r["bild_png"], soll, breite=breite, hoehe=hoehe, modell=_tiefen_modell,
         schaetzer=params.get("schaetzer", tiefenschaetzer.VORGABE_TIEFENSCHAETZER),
         schwelle=params.get("schwelle", None) or geometrie_schwelle(),
+        maske=maskenbefund.get("maske"),
     )
     messwerte["geometrie_qa"] = _nur_dateinamen(qa)
 
