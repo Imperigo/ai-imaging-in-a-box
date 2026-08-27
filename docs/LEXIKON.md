@@ -2891,6 +2891,26 @@ Objektivangabe, und nach dem dritten Fehlalarm wird auch die richtige Warnung
 weggeklickt. Derselbe Gedanke wie bei `raeume: None` („nicht gemessen") gegen
 `raeume: []` („gemessen, keine gefunden").*
 
+*Die Frage, die sich erst stellt, wenn **zwei** solche Urteile zusammenkommen: Wie
+verknüpft man sie? Bei zwei Toren, die beide bestehen müssen, lautet die Antwort — sie
+heisst nach ihrem Urheber **UND nach Kleene**:*
+
+| | *und* wahr | *und* falsch | *und* unbekannt |
+|---|---|---|---|
+| **wahr** | wahr | falsch | **unbekannt** |
+| **falsch** | falsch | falsch | **falsch** |
+| **unbekannt** | unbekannt | **falsch** | unbekannt |
+
+*In Worten: Ein gerissenes Tor entscheidet allein — es hilft nichts, dass die zweite
+Prüfung ausfiel. Ein bestandenes Tor entscheidet nicht allein: Zusammen mit einer
+fehlenden Prüfung bleibt das Ergebnis offen, denn ein Freispruch aus Mangel an Messung
+ist die teuerste Sorte Urteil.*
+
+*Und die Falle, die in jeder Programmiersprache lauert: Pythons eigenes `and` tut das
+**nicht**. Bei ihm ergibt `False and None` ein `False` (richtig), `None and False` aber
+ein `None` (falsch) — die **Reihenfolge der Argumente** entschiede über das Ergebnis.
+Darum steht die Verknüpfung in `gate.gesamturteil` ausgeschrieben da und nicht abgekürzt.*
+
 **Übermelden (einer Prüfung)** — Eine Prüfung so einstellen, dass sie im Zweifel zu viel
 meldet statt zu wenig.
 *Bewusst gewählte Richtung, kein Mangel: Der Rest eines übersetzten Prompts wird gegen
@@ -3562,6 +3582,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-26 | **Dreiwertiges Urteil** um die Frage erweitert, die sich erst stellt, wenn ZWEI solche Urteile zusammenkommen: Wie verknuepft man sie? Anlass ist ein Owner-Entscheid vom selben Tag (der Maskenweg ist ein zweites Tor). Die Antwort ist das UND nach Kleene — «falsch UND unbekannt» ist falsch, «wahr UND unbekannt» ist unbekannt — und der Eintrag traegt mit, warum Pythons eigenes `and` das NICHT tut: Bei ihm entscheidet die Reihenfolge der Argumente ueber das Ergebnis |
 | 2026-08-26 | **Polaritaet (einer Tiefenkarte)** erweitert. Der Eintrag sagte, ein unbekanntes Vorzeichen zwinge zum Betrag, und der bewerte eine vollstaendig invertierte Karte wie eine perfekte. Das war bis zum selben Tag der Zustand unserer eigenen Kette — gemessen wurde das Vorzeichen seit dem 20.08., angewandt nur im Maskenweg. Die Luecke hat jetzt eine Zahl (0,7071 bestand die Grenze 0,65) und einen Test. Dazu die Auflage, die zwei Verwendungen trennt: Fuer einen Diagnosewert darf die deklarierte Angabe einspringen, fuer ein Urteil nicht |
 | 2026-08-26 | Ergaenzt: **Geometrieanteil**, **Grenzstaerke**, **Rasterdublette**. Anlass ist die zweite Schwellenstudie, die dieselbe Kalibrierung auf echte Geometrie stellt: Der Geometrieanteil faellt dabei von 0,4489 auf 0,0822 bis 0,1730 — und `geom_iou` haengt an ihm, die Schwelle ist also nicht dieselbe. Die beiden anderen Eintraege tragen mit, was an einer Kalibrierung **gesetzt** und nicht gemessen ist (Grenzstaerke) und wie ein Stärkeraster in ganzen Bildpunkten eine Auswertung verfaelschen kann, ohne dass eine Zahl falsch gerechnet waere (Rasterdublette) |
 | 2026-08-26 | Ergaenzt: **KosmoVis**, **KosmoOrbit**, **KosmoDraw**. Die drei meistgenannten Namen des Repos — 399 Nennungen zusammen — hatten keinen Eintrag. Anlass ist eine Owner-Klarstellung: `ai-imaging-in-a-box` IST KosmoVis, das eigene Repo ist nur die Trennung fuer die Vertiefungsarbeit. Die Wendung «Vorlaeufer KosmoVis» in etlichen Docstrings meint den aelteren Stand DERSELBEN Sache und nicht ein fremdes Produkt — falsch gelesen sucht man Fehler an der falschen Stelle |

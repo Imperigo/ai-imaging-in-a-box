@@ -4698,12 +4698,32 @@ leeres Grundstück erreichte dort **0.9530** und bestand das Tor (`auf-20260821-
   einer anderen Stelle hat keinen Wächter*, und diesmal traf es ausgerechnet das, was der
   Betreiber liest, wenn etwas nicht stimmt.
 
-- [ ] **Offen daraus:** Soll ein bestandenes Urteil **ohne** Maskenweg überhaupt als
-      bestanden gelten? Heute gilt es das — `gate.gesamturteil` liest allein
-      `geometrie["bestanden"]`, und der fehlende Maskenweg steht nur in den Warnungen. Das
-      ist eine Entscheidung über die Strenge des Tors und gehört dem Owner, nicht dem
-      Code: Fail-closed hiesse, dass ein Lauf ohne Material-ID-Pass gar kein Urteil mehr
-      bekommt.
+### Owner-Entscheid 26.08.2026: **Der Maskenweg ist ein zweites Tor, keine Zusatzmessung**
+
+Gefragt, weil es die Strenge des Tors festlegt und darum nicht dem Code gehört. Gewählt
+ist die **dreiwertige** Fassung: Läuft der Maskenweg nicht, gibt es **kein Urteil** —
+`bestanden` ist `None` und nicht `True`. Der Score steht daneben und bleibt lesbar.
+
+- [x] `qa_gegen_soll` gibt `bestanden=None`, wenn keine Maske hereinkam.
+- [x] `gate.gesamturteil` rechnet ein **dreiwertiges UND nach Kleene**, ausgeschrieben
+      statt abgekürzt: `False UND unbekannt = False` (ein gerissenes Tor entscheidet
+      allein), `True UND unbekannt = unbekannt`. Python-`and` täte das nicht — `None and
+      False` ergibt `None`, und das wäre falsch.
+- [x] `{"bestanden": None}` stand bis dahin in der Liste der **kaputten** Urteile. Jetzt
+      ist es die dritte Antwort. *Der Unterschied ist der Handgriff, der folgt:* Ein
+      Mangel heisst «repariere die Naht», ein `None` heisst «hole die fehlende Messung
+      nach».
+- [x] Vierte Lage am Vertrag (`KEIN MASKENWEG`) — sonst liefe der Fall in das allgemeine
+      «ein Lauf fehlt», und wer danach handelte, liesse denselben Lauf noch einmal laufen.
+      Er käme wieder ohne Maskenweg zurück.
+- [x] `gelaende_erwartet` reicht jetzt durch Kette und Homeworker, wie `--kein-gelaende`
+      beim Abholer. Ein reines Gebäude-IFC bringt gar kein Gelände mit; ohne die Erklärung
+      fällt die Maske aus und mit ihr das zweite Tor. Der echte Kettenlauf über beide
+      Prozessgrenzen deckt damit jetzt auch die Maske ab.
+
+**Was das im Betrieb heisst, und es ist unbequem:** Jeder Lauf ohne Material-ID-Pass
+bekommt ab sofort gar kein Ja/Nein mehr. Das ist der bezahlte Preis der Entscheidung und
+kein Nebeneffekt.
 
 ---
 
