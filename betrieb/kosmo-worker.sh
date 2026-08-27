@@ -13,7 +13,7 @@
 # (fail-closed, `darf_starten`), der Deckel je Durchgang steht unten als Zahl, und ein
 # Auftrag, der nicht laufen darf, bekommt ein Ergebnis mit `abgelehnt` statt zu warten.
 #
-# VOR DEM INSTALLIEREN: `<nutzer>` in der .service-Datei ersetzen. Hier steht kein Pfad —
+# Hier steht kein Pfad — die .service-Datei loest das Heimatverzeichnis ueber `%h` auf.
 # das Arbeitsverzeichnis setzt systemd (Regel 3).
 set -euo pipefail
 

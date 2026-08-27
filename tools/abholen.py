@@ -169,7 +169,7 @@ def main() -> int:
                     help="Nach wie vielen Sekunden ein Blender-Lauf abgebrochen wird. "
                          "Ohne Angabe 900 s wie bisher. Gemessen am 26.08.2026 (CPU, "
                          "synthetischer Testbau): Samples kosten fast nichts — bei 400 px "
-                         "sind 1 bis 256 Samples flach innerhalb 1 %, waehrend sich die "
+                         "sind 1 bis 256 Samples flach innerhalb 1 %%, waehrend sich die "
                          "Pixel jedes Mal aendern. Die AUFLOESUNG dominiert (400->1600 px "
                          "ist 4,37->27,80 s), und was daraus auf einer GPU wird, ist "
                          "ungemessen (auf-20260826-54).")

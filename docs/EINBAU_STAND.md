@@ -59,7 +59,23 @@ nicht ausgeführt».*
 | B5 | QA **je Kamera** ausweisen und die Verzeichniskonvention bedienen | 🟩 **halb** | 2026-08-23 | Je Kamera gemessen und in `befund.json` abgelegt; der **Vertrag** trägt weiterhin **ein** QA je Lauf (das schlechteste). Ein QA-Block je Kamera ist ihre Vertragsänderung — `auftraege/offen/auf-20260826-49.json` |
 | B6 | Varianten: *n* Bilder je Lauf | 🟥 **offen** | — | Weder unsere Kette noch der fremde Vertrag kennen sie. `auftraege/offen/auf-20260826-49.json` |
 | B7 | Den Treue-Regler `render.faithful` durchreichen | 🟩 **erledigt** | 2026-08-19 | `kosmo_szene.lies_szene` bildet ihn auf `controlnet_staerke` ab und sagt es in der Warnung |
-| B8 | Ein über den **MCP-Einlass** bestellter Render wird auch ausgeführt | 🟩 **erledigt** | 2026-08-26 | `src/aiimaging/eigene_quelle.py`, `abholer.hole_einen(quelle=…)`, `tools/abholen.py --eigener-store` |
+| B8 | Ein über den **MCP-Einlass** bestellter Render wird auch ausgeführt | 🟩 **erledigt** | 2026-08-27 | `src/aiimaging/eigene_quelle.py`, `abholer.hole_einen(quelle=…)`, `tools/abholen.py --eigener-store`, `tests/test_betriebseinheiten.py` |
+
+*Das Datum von B8 ist am 2026-08-27 von 26.08. auf 27.08. **zurückgesetzt** worden, und
+zwar nach einer Messung am Gerät. Am 26.08. bekam `betrieb/kosmo-abholer.service` den
+Schalter `--eigener-store`, und der Posten wurde als erledigt verbucht. Die wirklich
+eingebaute Nutzereinheit stammte aber vom 20.08. und kannte ihn nicht — sechs Tage lang
+blieb jeder über den MCP-Einlass bestellte Render liegen, während hier stand, es sei
+behoben.*
+
+*Der Wächter über diesem Blatt konnte das nicht sehen: Er prüft, ob ein als erledigt
+geführter Posten einen **Beleg nennt, den es gibt**, und den gab es — die Datei lag im
+Repo und trug den Schalter.* **Eine Datei im Repo belegt, was jemand geschrieben hat,
+nicht was auf dem Gerät läuft.** *Ursache war der Platzhalter `<nutzer>`, der jede
+Installation zur Handkopie machte; seit dem 27.08. lösen die Einheiten das
+Heimatverzeichnis über systemds `%h` auf, und `tests/test_betriebseinheiten.py` hält
+eingebaut und eingecheckt gegeneinander. Belegt ist der Posten seither an einem Auftrag,
+der wirklich angekommen ist, nicht an einem Dienst, der antwortet.*
 
 *B8 stand 2026-08-19 nicht auf der Liste, und das ist der unangenehmste Eintrag dieses
 Blatts: Es fiel niemandem auf, dass die beiden Wege sich hier kreuzen. Weg A legte einen
