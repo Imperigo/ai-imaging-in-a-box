@@ -4838,8 +4838,8 @@ in `CLAUDE.md`; hier steht, was daraus schon getan ist und was folgt.
 **Stand am 26.08.2026, gezählt:** 17 Aufträge ohne Antwort (12 `local`, 3 `cloud`,
 2 `ui`), 14 von 24 Posten noch nicht in der Software.
 
-**Stand am 27.08.2026, gezählt:** 20 Aufträge ohne Antwort (15 `local`, 3 `cloud`,
-2 `ui`), 18 von 28 Posten noch nicht in der Software. *Die Zahl steigt, weil verteilt
+**Stand am 27.08.2026, gezählt:** 22 Aufträge ohne Antwort (16 `local`, 3 `cloud`,
+3 `ui`), 18 von 28 Posten noch nicht in der Software. *Die Zahl steigt, weil verteilt
 wird — nicht, weil etwas liegen bleibt. Sie fällt erst, wenn drüben jemand antwortet.*
 
 **Zwei Befunde über das Instrument selbst**, beide wären unbemerkt geblieben:
@@ -4884,11 +4884,17 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 - [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
       Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
       die Zeile in gewöhnlichen Läufen schweigt.
-- [x] **Sammlung 4403 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+- [x] **Sammlung 4431 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
       und ist nachgeführt.
 - [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
       `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.
 
+- [x] **Das Rechenwerkzeug für die Kalibrierung steht** — `aiimaging.paarschwellen`,
+      `tools/paarschwellen.py`. *Eine von Hand gerechnete Tabelle ist der Weg, auf dem
+      aus einer Kalibrierung wieder eine abgelesene Schwelle wird.* Es schweigt in den
+      drei Lagen, in denen die Tabelle nichts sagt: leere Gruppe (→ **nicht
+      beurteilbar**, nicht «sauber getrennt»), kein messbarer Fall, zu geringer Umfang.
+      26 Tests, fünf Mutationsproben an den Wächtern, alle rot beim Verbiegen.
 - [ ] **Die Kalibrierung selbst.** `PAAR_RHO_SCHWELLE = 0.80` steht auf sieben Fällen aus
       *einer* Szene, `PAAR_KANTENANTEIL_SCHWELLE = 0.20` beim Vierfachen des Zufalls.
       Gebraucht wird die Tabelle mit **beiden** Fehlerzahlen je Kandidatenschwelle — wie

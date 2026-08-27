@@ -1093,6 +1093,21 @@ den es nicht gibt, und kann so in eine Präsentation geraten; ein unnötig gespe
 einen weiteren Render. *In diesem Projekt stehen sie darum einzeln in jedem Punkt von
 `trennschaerfe_kurve` (`falsch_frei`, `falsch_gesperrt`) statt nur in einer Gesamtnote —
 wer eine Schwelle wählt, soll sehen, welchen der beiden Fehler er einkauft.*
+*Seit dem 27.08.2026 gibt es dieselben zwei Zahlen ein zweites Mal, für Fälle, die nicht
+aus einer Störungsreihe stammen, sondern **von Hand als gut oder schlecht benannt**
+wurden: `paarschwellen.trennkurve` (`falsch_bestanden`, `falsch_gesperrt`). Der andere
+Name für dieselbe Sache ist Absicht — dort entscheidet kein Stärkeschwellwert darüber,
+was «treu» heisst, sondern ein Mensch, und das soll man der Spalte ansehen.*
+
+**Trennkurve (über benannte Fälle)** — Dieselbe Rechnung wie die Trennschärfe-Kurve,
+aber über Fälle, deren Etikett *gut* oder *schlecht* jemand vergeben hat, statt es aus der
+Stärke einer künstlichen Störung abzuleiten. Sie beantwortet die einzige Frage, die eine
+Schwelle rechtfertigen kann: **Was kostet sie an beiden Fehlern?**
+*In diesem Projekt `src/aiimaging/paarschwellen.py` und `tools/paarschwellen.py`, gebaut
+am 27.08.2026 für die Kalibrierung der beiden Paarschwellen. Ihr wichtigster Teil ist
+nicht die Tabelle, sondern das Schweigen: Fehlt eine der beiden Gruppen, ist die Trennung*
+**nicht beurteilbar** *und nicht etwa sauber — ohne schlechte Fälle sperrt jede Schwelle
+nur richtig, und die Tabelle sähe perfekt aus.*
 
 **Trefferquote** — Der Anteil der richtig eingeordneten Fälle: richtig durchgelassene plus
 richtig gesperrte, geteilt durch alle. Die naheliegendste Kennzahl — und für sich genommen
@@ -3630,6 +3645,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-27 | Ergaenzt: **Trennkurve (ueber benannte Faelle)**, und **Falsch frei / falsch gesperrt** um ihr zweites Auftreten erweitert. Anlass: Die Kalibrierung der Paarschwellen braucht eine Tabelle mit BEIDEN Fehlerzahlen — von Hand gerechnet waere sie wieder eine abgelesene Schwelle. Der Eintrag traegt mit, warum eine leere Gruppe *nicht beurteilbar* ergibt und nicht *sauber getrennt* |
 | 2026-08-27 | Ergaenzt: **Abgelesene Schwelle** und **Selbstloeschende Meldung**. Beide fallen im selben Vorgang an: Gemessen wurde, dass ein VOLLSTAENDIG verschwundenes Bauwerk das Tor mit Score 0.951 besteht, waehrend das Paarurteil durchgefallen meldet (rho_maske -0.018). Sperren darf das Paarurteil noch nicht, weil seine beiden Schwellen abgelesen und nicht kalibriert sind (0.80 aus sieben Faellen einer Szene) — also wird der Widerspruch stattdessen sichtbar gemacht, und zwar mit einer Meldung, die nur in genau dieser Lage steht |
 | 2026-08-26 | Ergaenzt: **Katalogbeweis (gegen Nullbefund ueber Hausnamen)**. Anlass ist ein Owner-Entscheid vom selben Tag: Seit der Maskenweg ein zweites Tor ist, kostet eine verworfene Bauwerksmaske das ganze Urteil — und sie wurde auf zwei von drei Testszenen verworfen, obwohl dort gar kein Boden steht. Der Eintrag traegt die Unterscheidung, die den Entscheid moeglich machte: Ueber IFC-Klassennamen ist «kein IfcSite dabei» ein Beweis, ueber Materialnamen («Beton», «kalksandstein») ist es keiner |
 | 2026-08-26 | **Dreiwertiges Urteil** um die Frage erweitert, die sich erst stellt, wenn ZWEI solche Urteile zusammenkommen: Wie verknuepft man sie? Anlass ist ein Owner-Entscheid vom selben Tag (der Maskenweg ist ein zweites Tor). Die Antwort ist das UND nach Kleene — «falsch UND unbekannt» ist falsch, «wahr UND unbekannt» ist unbekannt — und der Eintrag traegt mit, warum Pythons eigenes `and` das NICHT tut: Bei ihm entscheidet die Reihenfolge der Argumente ueber das Ergebnis |
