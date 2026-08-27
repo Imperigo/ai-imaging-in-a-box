@@ -20,6 +20,7 @@ Aufbau
 ``kosmo_naht``   Übersetzung unserer Felder in die Protokollnamen des Ökosystems
 ``stilstudie``   der Boden des Einbetters — wovon die Stil-Schwelle abhängt
 ``schwellenstudie`` Kalibrierung der Geometrie-Schwelle: Störung, Kurve, Trennschärfe
+``paarschwellen`` aus benannten Fällen eine Schwelle ableiten — mit BEIDEN Fehlerzahlen
 ``seams``        die Prozessgrenzen zu IfcOpenShell und Blender — dort auch
                  ``ifc_raeume``: Räume aus einer IFC als schlichte Daten, die
                  Voraussetzung für alles Innere
@@ -48,7 +49,8 @@ from aiimaging import (  # noqa: F401
     auftrag, backbone, bildlesen, bildschreiben, contracts, einbau, einbetter, gate,
     geometrie_qa,
     graph, herkunft, jobs, kette, konversionstreue, kosmo_naht, lizenzquelle, lora,
-    mcp_schemas, render, schwellenstudie, seams, stil_qa, stilstudie, tiefenschaetzer,
+    mcp_schemas, paarschwellen, render, schwellenstudie, seams, stil_qa,
+    stilstudie, tiefenschaetzer,
     torwaechter, werkzeuge,
 )
 from aiimaging.contracts import (  # noqa: F401
