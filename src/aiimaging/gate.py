@@ -46,11 +46,21 @@ from __future__ import annotations
 FELD_BESTANDEN = "bestanden"
 
 
-def _lies_urteil(urteil, bezeichnung: str) -> tuple[bool, str | None]:
+def _lies_urteil(urteil, bezeichnung: str) -> tuple[bool | None, str | None]:
     """Ein Teilurteil → ``(bestanden, mangel)``. Bei einem Mangel ist ``bestanden`` False.
 
     Der Mangel ist ein Satz für Menschen: Wer in einem Protokoll ein ``False`` findet,
     soll nicht raten müssen, ob gemessen und verfehlt wurde oder ob die Messung fehlte.
+
+    **Drei Werte, nicht zwei — seit dem 26.08.2026.** ``bestanden`` darf ``None`` sein,
+    und das ist **kein Mangel**: Es heisst *nicht beurteilbar*. Ein Teilurteil kann das
+    ausdrücken, ohne dass die Messung gescheitert wäre — die Geometrie-QA tut es, wenn
+    der Maskenweg nicht lief (Owner-Entscheid: zweites Tor, nicht Zusatzmessung).
+
+    Der Unterschied zu einem Mangel ist der Handgriff, der folgt: Ein Mangel heisst
+    *repariere die Naht*, ein ``None`` heisst *hole die fehlende Messung nach*. Beides
+    unter ``False`` zusammenzufassen hiesse, den zweiten Fall wie einen Fehler aussehen
+    zu lassen — und genau das war er nicht.
     """
     if not isinstance(urteil, dict):
         return False, (
@@ -63,6 +73,8 @@ def _lies_urteil(urteil, bezeichnung: str) -> tuple[bool, str | None]:
             f"{sorted(urteil)}. Ohne Urteil wird nicht durchgelassen."
         )
     wert = urteil[FELD_BESTANDEN]
+    if wert is None:
+        return None, None                     # nicht beurteilbar — und kein Mangel
     if not isinstance(wert, bool):
         return False, (
             f"{bezeichnung}-Urteil trägt '{FELD_BESTANDEN}' als "
@@ -127,6 +139,11 @@ def als_kosmovis_verdikt(gesamt: dict) -> dict:
         schwelle = urteil.get("schwelle")
         if score is None:
             return STATUS_DEGENERIERT, None, schwelle, False
+        if urteil.get("bestanden") is None:
+            # Gemessen, aber nicht beurteilbar: Der Score steht da und bleibt lesbar, das
+            # Urteil fehlt. `degeneriert` ist drüben genau dafür da — und die Zahl reist
+            # mit, damit niemand sie fuer nicht vorhanden hält.
+            return STATUS_DEGENERIERT, score, schwelle, False
         return STATUS_OK, score, schwelle, bool(urteil.get("bestanden"))
 
     geo = gesamt.get("geometrie")
@@ -187,11 +204,35 @@ def gesamturteil(geometrie_urteil: dict, stil_urteil: dict) -> dict:
     stil_ok, mangel_stil = _lies_urteil(stil_urteil, "Stil")
     maengel = tuple(m for m in (mangel_geo, mangel_stil) if m)
 
-    bestanden = geometrie_ok and stil_ok
+    # DREIWERTIGES UND (Kleene), seit dem 26.08.2026.
+    #
+    #   False UND unbekannt  = False   — ein gerissenes Tor entscheidet allein.
+    #   True  UND unbekannt  = None    — ein Freispruch aus Mangel an Messung wäre die
+    #                                    teuerste Sorte Urteil.
+    #
+    # `and` allein täte das nicht: `None and True` ergibt `None`, `True and None` auch,
+    # aber `False and None` ergibt `False` — richtig — und `None and False` ergibt
+    # `None` — falsch. Darum ausgeschrieben statt abgekürzt.
+    if geometrie_ok is False or stil_ok is False:
+        bestanden: bool | None = False
+    elif geometrie_ok is None or stil_ok is None:
+        bestanden = None
+    else:
+        bestanden = True
 
     if maengel:
         begruendung = (
             "Nicht bestanden — ein Teilurteil war nicht lesbar. " + " ".join(maengel)
+        )
+    elif bestanden is None:
+        offen = [name for name, wert in (("Geometrie", geometrie_ok), ("Stil", stil_ok))
+                 if wert is None]
+        begruendung = (
+            f"NICHT BEURTEILBAR: {' und '.join(offen)} liegt kein Urteil vor — gemessen "
+            f"wurde, aber eine nötige Teilprüfung ist nicht gelaufen. Das ist weder "
+            f"bestanden noch durchgefallen. Was fehlt, steht im jeweiligen Teilurteil; "
+            f"bei der Geometrie ist es in aller Regel der Maskenweg, und der braucht "
+            f"einen Material-ID-Pass."
         )
     elif bestanden:
         begruendung = (

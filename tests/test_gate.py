@@ -101,7 +101,6 @@ def test_bestanden_ist_ein_echter_bool():
 @pytest.mark.parametrize("kaputt", [
     {},                                # gar kein Urteil
     {"score": 0.9},                    # gemessen, aber nicht geurteilt
-    {"bestanden": None},
     {"bestanden": "ja"},               # truthy — würde ein Wahrheitswert-Test durchlassen
     {"bestanden": 1},                  # dito
     None,
@@ -114,6 +113,39 @@ def test_unlesbares_geometrie_urteil_faellt_zu(kaputt):
     assert urteil["bestanden"] is False
     assert urteil["maengel"], "der Mangel muss benannt sein, nicht nur das False"
     assert "Geometrie" in urteil["maengel"][0]
+
+
+def test_ein_None_ist_kein_mangel_sondern_die_dritte_antwort():
+    """``{"bestanden": None}`` stand bis zum 26.08.2026 in der Liste der **kaputten**
+    Urteile — und das war es einmal.
+
+    Seit dem Owner-Entscheid vom selben Tag drückt ein Teilurteil damit aus, dass es
+    *nicht beurteilbar* ist: gemessen, aber eine nötige Teilprüfung ist nicht gelaufen.
+    Die Geometrie-QA tut das, wenn der Maskenweg fehlte.
+
+    **Der Unterschied ist der Handgriff, der folgt.** Ein Mangel heisst *repariere die
+    Naht*; ein ``None`` heisst *hole die fehlende Messung nach*. Beides unter ``False``
+    zusammenzufassen liesse den zweiten Fall wie einen Fehler aussehen.
+    """
+    urteil = gesamturteil({"bestanden": None, "score": 0.9}, stil(True))
+
+    assert urteil["bestanden"] is None
+    assert urteil["maengel"] == (), "kein Mangel — die Naht ist in Ordnung"
+    assert "NICHT BEURTEILBAR" in urteil["begruendung"]
+    assert "Geometrie" in urteil["begruendung"]
+
+
+def test_ein_gerissenes_tor_entscheidet_auch_gegen_ein_None():
+    """Dreiwertiges UND: ``False`` schlägt ``None``, ``True`` nicht.
+
+    Ein Bild, dessen Score die Schwelle reisst, ist durchgefallen — daran ändert eine
+    fehlende zweite Messung nichts. Umgekehrt darf ein bestandener Teil das fehlende
+    Urteil des anderen nicht zu einem Freispruch machen.
+    """
+    assert gesamturteil({"bestanden": None}, stil(False))["bestanden"] is False
+    assert gesamturteil(geometrie(False), {"bestanden": None})["bestanden"] is False
+    assert gesamturteil({"bestanden": None}, stil(True))["bestanden"] is None
+    assert gesamturteil(geometrie(True), {"bestanden": None})["bestanden"] is None
 
 
 @pytest.mark.parametrize("kaputt", [{}, {"bestanden": "ja"}, None])

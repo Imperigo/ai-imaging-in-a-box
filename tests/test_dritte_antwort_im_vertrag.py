@@ -81,6 +81,28 @@ def test_die_rahmung_sagt_dass_naeher_heranfahren_hilft():
     assert "gesenkte Schwelle nicht" in grund
 
 
+def test_der_fehlende_maskenweg_ist_eine_eigene_lage():
+    """**Die vierte Lage, seit dem Owner-Entscheid vom 26.08.2026.**
+
+    Der Score liegt vor und ist gut — aber die Abwesenheitsprüfung ist gar nicht gelaufen.
+    Das ist keine der drei anderen Lagen: gemessen wurde, zuständig wäre die Szene, und
+    die Rahmung stimmt auch. Es fehlt eine **zweite** Messung, und der Handgriff dazu ist
+    ein eigener: ein Material-ID-Pass, und bei einer Szene ohne Gelände die Angabe dazu.
+
+    Ohne diese Lage liefe der Fall in das allgemeine «NICHT GEMESSEN — ein Lauf fehlt»,
+    und wer danach handelte, liesse denselben Lauf noch einmal laufen. Er käme wieder
+    ohne Maskenweg zurück.
+    """
+    grund = _reason({"score": 0.9, "bestanden": None, "paarurteil": None})
+
+    assert "KEIN MASKENWEG" in grund
+    assert "Material-ID-Pass" in grund
+    assert "0.9530" in grund, "die Zahl sagt, wie gross die Lücke ist"
+    assert "NICHT GEMESSEN" not in grund, (
+        "sonst schickt der Satz zum falschen Handgriff — derselbe Lauf noch einmal"
+    )
+
+
 def test_die_rahmung_geht_der_zustaendigkeit_vor():
     """Beide zugleich: Konnte der Lauf schon aus Rahmungsgründen nicht bestehen, ist das
     die erste Auskunft — sie erklärt auch, warum das zweite Mass nichts fand.

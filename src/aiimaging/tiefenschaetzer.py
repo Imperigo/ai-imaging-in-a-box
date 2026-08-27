@@ -1386,9 +1386,29 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         "(geometrie_qa, Vorbehalt 6).",
     )
 
+    # DER MASKENWEG IST EIN ZWEITES TOR, NICHT EINE ZUSATZMESSUNG (Owner-Entscheid
+    # 26.08.2026). Lief er nicht, gibt es KEIN Urteil — `bestanden` ist dann `None`.
+    #
+    # `None` heisst hier wie ueberall in diesem Projekt *nicht beurteilbar* und nicht
+    # *durchgefallen*: Der Score steht daneben und bleibt lesbar. Der Grund fuer den
+    # Entscheid ist gemessen: Ohne Maskenweg fehlen rho_maske, Kante und Paarurteil, also
+    # die einzigen Masse, die die ABWESENHEIT eines Bauwerks fangen — ein leeres
+    # Grundstueck erreichte auf dem Score ueber das ganze Bild 0.9530 und bestand das Tor
+    # (auf-20260821-26).
+    #
+    # WARUM EIN DURCHGEFALLENER SCORE TROTZDEM `False` BLEIBT. Zwei Tore stehen im UND,
+    # und ein UND ueber drei Werten ist entschieden, sobald ein Teil `False` ist:
+    # False UND unbekannt ist False, True UND unbekannt ist unbekannt. Ein Bild, dessen
+    # Score die Schwelle reisst, ist durchgefallen — daran aendert eine fehlende zweite
+    # Messung nichts, und es als "nicht beurteilbar" zu melden verloere eine Auskunft,
+    # die wir haben.
+    bestanden = bool(urteil["bestanden"])
+    if maske is None and bestanden:
+        bestanden = None
+
     return {
         "status": STATUS_OK,
-        "bestanden": bool(urteil["bestanden"]),
+        "bestanden": bestanden,
         "score": urteil["score"],
         "spearman": urteil["spearman"],
         "geom_iou": urteil["geom_iou"],

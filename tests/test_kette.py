@@ -934,9 +934,13 @@ def test_bestandenes_gate_bei_treuer_schaetzung(tmp_path, monkeypatch):
     bild = tmp_path / "bild.png"
     bild.write_text("attrappe", encoding="utf-8")
     ausfuehrer = kette.qa_ausfuehrer(modell=lambda parameter: [-wert for wert in soll])
-    ausgaben = ausfuehrer(knoten=qa_knoten(),
-                          eingaben=[{"depth_exr": "t.exr"}, {"bild_png": str(bild)}],
-                          out_dir=tmp_path)
+    # MIT Material-ID-Pass, denn seit dem 26.08.2026 ist der Maskenweg ein zweites Tor:
+    # Ohne ihn gäbe es kein `bestanden`, sondern `None` — und dieser Test heisst
+    # „bestandenes Gate".
+    ausgaben = ausfuehrer(
+        knoten=qa_knoten(),
+        eingaben=[_material_id_lauf(tmp_path, n_bauwerk=600), {"bild_png": str(bild)}],
+        out_dir=tmp_path)
 
     assert ausgaben["bestanden"] is True
     assert ausgaben["score"] == pytest.approx(1.0)
@@ -1133,8 +1137,18 @@ def test_echter_lauf_ueber_beide_prozessgrenzen_und_dann_aus_dem_cache(tmp_path)
 
     def starte(prompt):
         return fuehre_aus(
+            # MIT Material-ID-Pass, seit dem 26.08.2026. Er kostet einen zweiten
+            # Blender-Durchgang — und er ist der Grund, warum dieser Lauf ueberhaupt ein
+            # `bestanden` bekommen kann: Der Maskenweg ist ein zweites Tor, und ohne ihn
+            # steht dort `None`. Damit deckt dieser Test jetzt auch die Maske ueber die
+            # echte Prozessgrenze ab und nicht nur Tiefe und Bild.
+            # `gelaende_erwartet=False`, weil diese Test-IFC ein reines Gebaeude ist —
+            # sie bringt gar kein Gelaende mit. Ohne die Erklaerung meldet die
+            # Gelaenderegel «nicht erkannt», die Maske faellt aus, und mit ihr das zweite
+            # Tor; `bestanden` staende dann auf None. Genau dafuer gibt es den Schalter,
+            # an der Kommandozeile heisst er `--kein-gelaende`.
             baue_kette(ifc_path=str(ifc), prompt=prompt, aufloesung=AUFLOESUNG,
-                       samples=SAMPLES, material_id=False),
+                       samples=SAMPLES, material_id=True, gelaende_erwartet=False),
             cache=cache, ausfuehrer=tabelle, out_dir=tmp_path / "out")
 
     erster = starte("Sichtbeton, Morgenlicht")

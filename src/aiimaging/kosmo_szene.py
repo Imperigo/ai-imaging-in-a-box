@@ -826,6 +826,15 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
                     "das Tor GEMESSEN nicht bestehen kann. 'passed: false' heisst hier "
                     "nicht durchgefallen — eine naehere Kamera behebt es, eine gesenkte "
                     "Schwelle nicht.")
+        elif geometrie_urteil.get("score") is not None and \
+                geometrie_urteil.get("paarurteil") is None:
+            lage = ("KEIN MASKENWEG: Der Score liegt vor, aber die Abwesenheitspruefung "
+                    "ist nicht gelaufen — rho_maske, Kante und Paarurteil fehlen. Der "
+                    "Score ueber das ganze Bild beantwortet nicht, ob ueberhaupt gebaut "
+                    "wurde (ein leeres Grundstueck erreichte dort 0.9530). 'passed: "
+                    "false' heisst hier nicht durchgefallen; es fehlt ein "
+                    "Material-ID-Pass, und ohne Gelaende in der Szene dazu die Angabe "
+                    "gelaende_erwartet=false.")
         elif (geometrie_urteil.get("paarurteil") or {}).get("zustaendig") is False:
             lage = ("NICHT ZUSTAENDIG: Hinter dem Umriss steht kein Himmel; das zweite "
                     "Mass misst in dieser Szene nichts. 'passed: false' heisst hier nicht "

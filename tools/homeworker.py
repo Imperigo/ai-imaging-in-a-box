@@ -447,7 +447,13 @@ def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
     #
     # Gefunden wurde sie durch Zaehlen von der anderen Seite: `qa_gegen_soll` hat drei
     # Aufrufstellen, und nur der Abholer reichte eine Maske herein.
-    maskenbefund = maske.maske_aus_bericht(blender_bericht)
+    # `gelaende_erwartet` kommt aus den Auftragsparametern — dieselbe Erklaerung wie
+    # `--kein-gelaende` beim Abholer, nur dass sie hier im Auftrag steht statt an der
+    # Kommandozeile. Vorgabe ist True: Wer nichts sagt, bekommt die strengere Lesart, und
+    # eine ausgefallene Maske ist dann ein Befund und keine stille Annahme.
+    maskenbefund = maske.maske_aus_bericht(
+        blender_bericht,
+        gelaende_erwartet=bool(params.get("gelaende_erwartet", True)))
     # OHNE `_nur_dateinamen` reist hier der volle Pfad des Arbeitsverzeichnisses mit —
     # `maske_aus_bericht` gibt `material_id_png` zurueck, damit sich eine Maske
     # zurueckverfolgen laesst. Regel 3, und der Waechter in `test_homeworker` hat es beim

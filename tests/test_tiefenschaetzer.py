@@ -483,15 +483,25 @@ def test_quantil_markiert_beim_schaetzen_mit(bild):
 # 4 · Der Bogen zum Schluss — die Metrik endlich angewandt
 # --------------------------------------------------------------------------------------
 
-def test_treuer_render_besteht_das_geometrie_gate(bild):
-    """Der Bogen: Bild → Schätzung → Hintergrundmarke → Urteil, in einem Aufruf."""
+def test_treuer_render_erreicht_den_score_aber_ohne_maske_kein_urteil(bild):
+    """Der Bogen: Bild → Schätzung → Hintergrundmarke → Urteil, in einem Aufruf.
+
+    **Der Ausgang hat sich am 26.08.2026 geändert, und zwar durch einen Owner-Entscheid:**
+    Der Maskenweg ist ein *zweites Tor*, keine Zusatzmessung. Lief er nicht, gibt es kein
+    Urteil — ``bestanden`` ist ``None`` und nicht ``True``. Der Score bleibt daneben
+    stehen und ist unverändert 1,0.
+
+    Der Grund ist gemessen: Ohne Maskenweg fehlen die einzigen Masse, die die
+    **Abwesenheit** eines Bauwerks fangen. Ein leeres Grundstück erreichte auf dem Score
+    über das ganze Bild 0.9530 und bestand das Tor (`auf-20260821-26`).
+    """
     soll = soll_karte()
     ist = disparitaets_karte(soll)
 
     urteil = ts.qa_gegen_soll(bild, soll, modell=attrappe(ist))
 
     assert urteil["status"] == ts.STATUS_OK
-    assert urteil["bestanden"] is True
+    assert urteil["bestanden"] is None, "nicht beurteilbar — und nicht durchgefallen"
     assert urteil["score"] == pytest.approx(1.0)
     assert urteil["geom_iou"] == pytest.approx(1.0)
 
@@ -514,7 +524,10 @@ def test_invertierte_schaetzung_gilt_trotzdem_als_treu(bild):
 
     assert urteil["spearman"] == pytest.approx(-1.0)
     assert urteil["score"] == pytest.approx(1.0)
-    assert urteil["bestanden"] is True
+    assert urteil["bestanden"] is None, (
+        "ohne Maskenweg gibt es kein Urteil — der volle Score sagt hier trotzdem, dass "
+        "die Umkehrung kein Geometriefehler ist"
+    )
     assert any("negativ" in w for w in urteil["warnungen"]), \
         "Das Vorzeichen bleibt sichtbar — es könnte auch ein echter Geometriebefund sein"
 
@@ -849,7 +862,11 @@ def test_die_schwelle_bleibt_verschiebbar(bild):
                               hintergrund_strategie=ts.HG_KEINE, schwelle=0.9)
     mild = ts.qa_gegen_soll(bild, soll, modell=attrappe(ist),
                             hintergrund_strategie=ts.HG_KEINE, schwelle=0.5)
-    assert streng["bestanden"] is False and mild["bestanden"] is True
+    # Ohne Maskenweg wird aus einem bestandenen Score ein `None`; ein durchgefallener
+    # bleibt `False` (False UND unbekannt ist False). Genau diese Asymmetrie ist hier
+    # sichtbar — und sie zeigt zugleich, dass die Schwelle weiter wirkt.
+    assert streng["bestanden"] is False and mild["bestanden"] is None
+    assert streng["score"] == mild["score"], "dieselbe Messung, nur eine andere Grenze"
 
 
 def test_leeres_soll_wird_abgewiesen(bild):
@@ -1241,6 +1258,24 @@ def test_mit_maske_schweigt_die_zeile_wieder(bild):
     assert not [w for w in urteil["warnungen"] if "OHNE MASKENWEG" in w]
     assert urteil["warnungen"], (
         "die Sammlung ist nicht leer — sonst prüfte die Zeile darüber gegen nichts"
+    )
+
+
+def test_erst_mit_maskenweg_gibt_es_ueberhaupt_ein_bestanden(bild):
+    """**Die Gegenprobe zum Owner-Entscheid, und ohne sie wäre er nicht geprüft.**
+
+    Dass ``bestanden`` ohne Maske ``None`` wird, ist nur dann eine Aussage, wenn es *mit*
+    Maske ``True`` werden kann. Sonst hätte man das Feld einfach abgeschaltet.
+    """
+    _soll, _ist, maske = _zweidimensionale_szene()
+
+    mit = _urteil_mit(maske, bild)
+    ohne = _urteil_mit(None, bild)
+
+    assert mit["bestanden"] is True
+    assert ohne["bestanden"] is None
+    assert mit["score"] == ohne["score"], (
+        "derselbe Score — der Unterschied liegt allein im zweiten Tor, nicht in der Messung"
     )
 
 

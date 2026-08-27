@@ -219,6 +219,7 @@ def baue_kette(
     material_id: bool = True,
     qa: bool = True,
     qa_schwelle: float = geometrie_qa.SCHWELLE_GEOMETRIE,
+    gelaende_erwartet: bool = True,
     hintergrund: float | None = None,
     schaetzer: str = tiefenschaetzer.VORGABE_TIEFENSCHAETZER,
     hintergrund_strategie: str = tiefenschaetzer.HG_WIE_SOLL,
@@ -336,6 +337,12 @@ def baue_kette(
                 "hintergrund": None if hintergrund is None else float(hintergrund),
                 "schaetzer": schaetzer,
                 "hintergrund_strategie": hintergrund_strategie,
+                # OB IN DIESER SZENE UEBERHAUPT GELAENDE STEHT — eine Erklaerung des
+                # Aufrufers, keine Annahme des Moduls. Ein reines Gebaeude-IFC bringt gar
+                # kein Gelaende mit; die Gelaenderegel meldet dann «nicht erkannt», die
+                # Maske faellt aus, und mit ihr das zweite Tor. Der Abholer hat dafuer
+                # `--kein-gelaende`; bis zum 26.08.2026 hatte die Kette nichts.
+                "gelaende_erwartet": bool(gelaende_erwartet),
                 "hintergrund_anteil": (None if hintergrund_anteil is None
                                        else float(hintergrund_anteil)),
             },
@@ -633,8 +640,15 @@ def qa_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
         # gibt dann eine benannte Luecke zurueck, und `qa_gegen_soll` meldet den fehlenden
         # Maskenweg von sich aus. Ein Lauf ohne Bild waere teurer als eine ungemessene
         # Zusatzfrage.
-        maskenbefund = maske.maske_aus_bericht(multipass)
-        return tiefenschaetzer.qa_gegen_soll(
+        maskenbefund = maske.maske_aus_bericht(
+            multipass, gelaende_erwartet=p.get("gelaende_erwartet", True))
+        # DER GRUND MUSS MIT — sonst ist «kein Maskenweg» eine Meldung ohne Antwort.
+        # Genau das hat die HomeStation am 26.08.2026 beanstandet: Der Grund stand im
+        # Maskenbefund je Kamera, also in einer Datei, die man aufschlagen muss, waehrend
+        # oben auf dem Schirm ein Score steht. Die Maske selbst bleibt draussen: Sie ist
+        # eine lange Folge von Wahrheitswerten und gehoert nicht in ein Knotenergebnis.
+        ohne_maske = {k: v for k, v in maskenbefund.items() if k != "maske"}
+        urteil = tiefenschaetzer.qa_gegen_soll(
             bild_png, soll,
             schaetzer=p["schaetzer"], modell=modell, _lader=_lader,
             schwelle=p["schwelle"], hintergrund=p.get("hintergrund"),
@@ -643,6 +657,7 @@ def qa_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
             breite=breite, hoehe=hoehe,
             maske=maskenbefund.get("maske"),
         )
+        return dict(urteil, maskenbefund=ohne_maske)
 
     return fuehre_qa
 
