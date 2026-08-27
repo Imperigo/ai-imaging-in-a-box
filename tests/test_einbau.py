@@ -32,7 +32,7 @@ from aiimaging import einbau
 BLATT = """
 | # | Posten | Zustand | Seit | Beleg |
 |---|---|---|---|---|
-| A1 | Etwas Fertiges | 🟩 **erledigt** | 2026-08-19 | `pyproject.toml` |
+| A1 | Etwas Fertiges | 🟩 **erledigt** | 2026-08-19 | **belegt im Repo:** `pyproject.toml` |
 | A2 | Etwas Offenes | 🟥 **offen** | — | `auftraege/offen/auf-20260826-99.json` |
 | B1 | Etwas Halbes | 🟩 **halb** | 2026-08-23 | `auf-20260826-98` und Prosa |
 | C1 | Etwas Gebautes | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `auf-20260826-97` |
@@ -187,3 +187,120 @@ def test_der_bericht_ist_erst_bereit_wenn_jeder_posten_einen_adressaten_hat(tmp_
     assert len(bericht["offene_posten"]) == 4, (
         "vier Posten fehlen weiterhin in der Software — bereit heisst NICHT eingebaut"
     )
+
+    # Und seit dem 27.08.2026 haengt `bereit` an einer ZWEITEN Bedingung: Nimmt man der
+    # erledigten Zeile die Angabe, worauf ihr Beleg ruht, ist der Bericht wieder nicht
+    # bereit — obwohl jeder offene Posten seinen Adressaten behalten hat.
+    blatt.write_text(BLATT.replace("**niemand** — bisher nicht verteilt",
+                                   "`auf-20260826-96`")
+                          .replace("**belegt im Repo:** `pyproject.toml`",
+                                   "`pyproject.toml`"), encoding="utf-8")
+    ohne = einbau.bericht(tmp_path, blatt)
+    assert ohne["bereit"] is False
+    assert ohne["ohne_adressat"] == []
+
+
+# ======================================================================================
+# Worauf ein Beleg ruht — der Wächter, der am 27.08.2026 gefehlt hat
+# ======================================================================================
+
+BLATT_KOPF = "| # | Posten | Zustand | Seit | Beleg |\n|---|---|---|---|---|\n"
+
+
+def _blatt(*zeilen: str) -> str:
+    return BLATT_KOPF + "".join(z + "\n" for z in zeilen)
+
+
+def test_erledigt_ohne_angabe_wird_gemeldet(tmp_path):
+    """**Der Fall B8.** Sechs Tage erledigt, während drüben eine ältere Fassung lief."""
+    blatt = _blatt("| B8 | Ein bestellter Render wird ausgefuehrt | 🟩 **erledigt** | "
+                   "2026-08-26 | `tools/abholen.py` |")
+    maengel = einbau.ohne_geraetebeweis(blatt, tmp_path)
+    assert [m["kennung"] for m in maengel] == ["B8"]
+    assert maengel[0]["mangel"] == "keine angabe"
+    assert "nicht was auf dem Gerät läuft" in maengel[0]["grund"]
+
+
+def test_belegt_im_repo_genuegt_fuer_eine_reine_repo_aussage(tmp_path):
+    blatt = _blatt("| A1 | `mcp<2` festschreiben | 🟩 **erledigt** | 2026-08-19 | "
+                   "**belegt im Repo:** `pyproject.toml` |")
+    assert einbau.ohne_geraetebeweis(blatt, tmp_path) == []
+
+
+def test_belegt_im_repo_genuegt_NICHT_wenn_ein_schalter_darin_steht(tmp_path):
+    """**Die B8-Falle wörtlich.** Der Schalter war im Repo und auf dem Gerät nicht."""
+    blatt = _blatt("| B8 | Ein bestellter Render wird ausgefuehrt | 🟩 **erledigt** | "
+                   "2026-08-26 | **belegt im Repo:** `tools/abholen.py --eigener-store` |")
+    maengel = einbau.ohne_geraetebeweis(blatt, tmp_path)
+    assert [m["mangel"] for m in maengel] == ["repo trotz gerätezeichen"]
+
+
+def test_belegt_im_repo_genuegt_NICHT_bei_einer_diensteinheit(tmp_path):
+    blatt = _blatt("| C1 | Der Abholer laeuft als Dienst | 🟩 **erledigt** | 2026-08-22 | "
+                   "**belegt im Repo:** `betrieb/kosmo-abholer.service` |")
+    assert [m["mangel"] for m in einbau.ohne_geraetebeweis(blatt, tmp_path)] == [
+        "repo trotz gerätezeichen"]
+
+
+def test_belegt_am_geraet_braucht_einen_BEANTWORTETEN_auftrag(tmp_path):
+    """Ein Auftrag, der noch offen liegt, ist keine Rückmeldung von dort."""
+    blatt = _blatt("| C1 | Der Abholer laeuft als Dienst | 🟩 **erledigt** | 2026-08-22 | "
+                   "**belegt am Gerät:** `auf-20260822-31` |")
+    maengel = einbau.ohne_geraetebeweis(blatt, tmp_path)
+    assert [m["mangel"] for m in maengel] == ["gerät ohne antwort"]
+
+    (tmp_path / "auftraege" / "ergebnisse").mkdir(parents=True)
+    (tmp_path / "auftraege" / "ergebnisse" / "auf-20260822-31.json").write_text("{}")
+    assert einbau.ohne_geraetebeweis(blatt, tmp_path) == []
+
+
+def test_belegt_am_geraet_geht_auch_mit_einer_uhrzeit(tmp_path):
+    """Die schwächere der beiden Arten — und die einzige, die eine Messung ohne
+    Ergebnisdatei überhaupt buchbar macht."""
+    blatt = _blatt("| B8 | Ein bestellter Render wird ausgefuehrt | 🟩 **erledigt** | "
+                   "2026-08-27 | **belegt am Gerät:** Messung 27.08.2026, 18:54:11 "
+                   "aufgegriffen |")
+    assert einbau.ohne_geraetebeweis(blatt, tmp_path) == []
+
+
+def test_eine_uhrzeit_allein_genuegt_nicht_ohne_die_angabe(tmp_path):
+    """Sonst würde jede Zeile mit einem Zeitstempel durchrutschen."""
+    blatt = _blatt("| B8 | Ein bestellter Render wird ausgefuehrt | 🟩 **erledigt** | "
+                   "2026-08-27 | Messung 18:54:11, `tools/abholen.py` |")
+    assert [m["mangel"] for m in einbau.ohne_geraetebeweis(blatt, tmp_path)] == [
+        "keine angabe"]
+
+
+def test_offene_posten_muessen_gar_nichts_belegen(tmp_path):
+    """Die Prüfung gilt nur für *erledigt*. Ein offener Posten behauptet nichts."""
+    blatt = _blatt("| C9 | Die Paarschwellen sind kalibriert | 🟥 **offen** | — | "
+                   "`auf-20260827-61.json`, `tools/abholen.py --eigener-store` |",
+                   "| C7 | Der Homeworker hat einen Takt | 🟩 **gebaut, am Gerät "
+                   "unbestätigt** | 2026-08-26 | `betrieb/kosmo-worker.service` |")
+    assert einbau.ohne_geraetebeweis(blatt, tmp_path) == []
+
+
+def test_beantwortete_auftraege_zaehlt_die_antwort_und_nicht_den_auftrag(tmp_path):
+    (tmp_path / "auftraege" / "offen").mkdir(parents=True)
+    (tmp_path / "auftraege" / "offen" / "auf-20260827-99.json").write_text("{}")
+    assert einbau.beantwortete_auftraege(tmp_path) == set()
+
+    (tmp_path / "auftraege" / "ergebnisse").mkdir(parents=True)
+    (tmp_path / "auftraege" / "ergebnisse" / "auf-20260827-99.json").write_text("{}")
+    assert einbau.beantwortete_auftraege(tmp_path) == {"auf-20260827-99"}
+
+
+def test_ohne_ergebnisordner_faellt_nichts_um(tmp_path):
+    assert einbau.beantwortete_auftraege(tmp_path) == set()
+
+
+def test_bereit_ist_falsch_sobald_ein_beleg_nicht_sagt_worauf_er_ruht(tmp_path):
+    """Der Rückgabewert des Werkzeugs hängt daran — er soll ein Skript scheitern lassen."""
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "EINBAU_STAND.md").write_text(_blatt(
+        "| B8 | Ein bestellter Render wird ausgefuehrt | 🟩 **erledigt** | 2026-08-26 | "
+        "`tools/abholen.py` |"), encoding="utf-8")
+    satz = einbau.bericht(tmp_path)
+    assert satz["bereit"] is False
+    assert satz["ohne_adressat"] == [], "der Mangel liegt NICHT beim Adressaten"
+    assert len(satz["ohne_geraetebeweis"]) == 1

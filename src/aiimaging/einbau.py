@@ -72,6 +72,48 @@ ZEILE = re.compile(r"^\|\s*([A-Z]+\d+)\s*\|(.+)\|\s*$")
 #: nicht in der Formulierung.
 AUFTRAGSKENNUNG = re.compile(r"auf-\d{8}-\d+")
 
+#: Wie ein **erledigter** Posten sagt, worauf sein Beleg ruht: ``belegt im Repo`` oder
+#: ``belegt am Gerät: …``.
+#:
+#: **Der Anlass ist der teuerste Buchführungsfehler dieses Projekts** (27.08.2026): ``B8``
+#: stand sechs Tage als *erledigt*, weil die eingecheckte Diensteinheit den nötigen
+#: Schalter trug. Die **installierte** stammte vom 20.08. und kannte ihn nicht — jeder über
+#: den MCP-Einlass bestellte Render blieb liegen, während hier stand, es sei behoben.
+#:
+#: Der Wächter konnte das nicht sehen: Er prüft, ob ein Beleg **existiert**, und der
+#: existierte. *Eine Datei im Repo belegt, was jemand geschrieben hat, nicht was auf dem
+#: Gerät läuft.*
+#:
+#: **Verifiziert wird hier nichts** — das kann dieses Modul nicht, und es soll auch nicht
+#: so tun. Es verlangt nur, dass die Zeile **sagt**, welcher Art ihr Beleg ist. Danach ist
+#: prüfbar, was vorher Auslegung war.
+BELEG_REPO = re.compile(r"belegt im Repo", re.IGNORECASE)
+BELEG_GERAET = re.compile(r"belegt am Ger[äa]t", re.IGNORECASE)
+
+#: Was in einem Beleg verrät, dass die Aussage **nicht** im Repo entschieden wird: ein
+#: Kommandozeilenschalter, eine systemd-Einheit, ein Pfad nach ``betrieb/``.
+#:
+#: Alle drei sagen etwas darüber, **wie etwas aufgerufen wird** — und das steht nicht in
+#: der Datei, sondern in der Installation. ``B8`` nannte ``tools/abholen.py
+#: --eigener-store``: Der Schalter war im Repo und auf dem Gerät nicht.
+GERAETEZEICHEN = (
+    re.compile(r"`[^`]*\s--[a-z][a-z0-9-]*"),      # ein Schalter im Beleg
+    re.compile(r"\.(service|timer)\b"),            # eine systemd-Einheit
+    re.compile(r"\bbetrieb/"),                      # der Ordner für Betriebsdateien
+)
+
+#: Eine Uhrzeit im Beleg — die zweite zulässige Art, ``belegt am Gerät`` einzulösen.
+#:
+#: **Warum eine Uhrzeit und nicht irgendein Satz.** Eine Messung, die drüben stattgefunden
+#: hat, trägt eine Uhr; eine Behauptung nicht. Das ist keine starke Prüfung — sie liesse
+#: sich hinschreiben —, aber sie kann eines nicht: durch das Zeigen auf eine Datei im Repo
+#: erfüllt werden. Genau das war der Fehler bei ``B8``.
+#:
+#: Die stärkere Art bleibt der beantwortete Auftrag. Diese hier gibt es, weil sonst eine
+#: **wirklich am Gerät gemachte** Messung ohne Ergebnisdatei nicht buchbar wäre — und was
+#: sich nicht buchen lässt, wird untertrieben statt eingetragen.
+MESSZEIT = re.compile(r"\b\d{1,2}:\d{2}(:\d{2})?\b")
+
 #: Das Wort, mit dem ein offener Posten bis zum 26.08.2026 sagen durfte, dass ihn niemand
 #: treibt. Es steht hier nur noch, damit die alte Angabe erkennbar bleibt.
 OHNE_ADRESSAT = "niemand"
@@ -169,6 +211,97 @@ def ohne_adressat(blatt) -> list[dict]:
             if p["offen"] and not AUFTRAGSKENNUNG.search(p["beleg"])]
 
 
+def beantwortete_auftraege(repo_wurzel) -> set[str]:
+    """Welche Aufträge eine Antwort haben — die Kennungen aus ``auftraege/ergebnisse``.
+
+    **Gezählt wird die Antwort, nicht der Auftrag.** Eine Auftragsdatei belegt, dass
+    jemand etwas verlangt hat; erst die Ergebnisdatei belegt, dass drüben jemand
+    hingesehen hat.
+    """
+    ordner = Path(repo_wurzel) / "auftraege" / "ergebnisse"
+    if not ordner.is_dir():
+        return set()
+    return {treffer.group(0) for datei in ordner.iterdir()
+            for treffer in [AUFTRAGSKENNUNG.search(datei.name)] if treffer}
+
+
+def ohne_geraetebeweis(blatt, repo_wurzel) -> list[dict]:
+    """Erledigte Posten, deren Beleg nicht sagt, **worüber** er etwas aussagt.
+
+    Drei Mängel, jeder mit eigener Begründung im Rückgabewert:
+
+    ``keine angabe``
+        Der Posten steht auf *erledigt* und sagt nicht, ob sein Beleg im Repo oder am
+        Gerät liegt. Bis zum 27.08.2026 war das die Regel — und genau so ist ``B8`` sechs
+        Tage lang als erledigt geführt worden, während auf dem Gerät die Fassung vom
+        20.08. lief.
+
+    ``repo trotz gerätezeichen``
+        Der Posten behauptet *belegt im Repo*, sein Beleg nennt aber einen
+        Kommandozeilenschalter, eine systemd-Einheit oder einen Pfad nach ``betrieb/``.
+        **Das ist die B8-Falle wörtlich:** Alle drei sagen etwas darüber, wie etwas
+        aufgerufen wird, und das steht nicht in der Datei, sondern in der Installation.
+
+    ``gerät ohne antwort``
+        Der Posten behauptet *belegt am Gerät* und löst das nicht ein. Zwei Arten sind
+        zugelassen: ein Auftrag, auf den drüben **geantwortet** wurde, oder die **Uhrzeit**
+        einer Messung dort. Ein Auftrag, der noch offen liegt, ist keine Rückmeldung.
+
+        *Die Uhrzeit ist die schwächere der beiden und steht trotzdem hier: Sonst wäre
+        eine wirklich am Gerät gemachte Messung ohne Ergebnisdatei nicht buchbar — und was
+        sich nicht buchen lässt, wird untertrieben statt eingetragen. Was sie nicht kann,
+        ist der Punkt: durch das Zeigen auf eine Datei im Repo erfüllt zu werden.*
+
+    **Was diese Prüfung NICHT tut:** Sie sieht auf keinem Gerät nach. Das kann sie nicht,
+    und sie soll auch nicht so tun. Sie verlangt, dass die Zeile ihre Art des Belegs
+    **nennt** — danach ist prüfbar, was vorher Auslegung war.
+
+    Returns:
+        Je Mangel ``{kennung, posten, mangel, grund}``. Leere Liste heisst: jede erledigte
+        Zeile sagt, worauf sie ruht.
+    """
+    beantwortet = beantwortete_auftraege(repo_wurzel)
+    aus: list[dict] = []
+    for eintrag in posten(blatt):
+        if eintrag["zustand"] != "erledigt":
+            continue
+        beleg = eintrag["beleg"]
+        am_geraet = bool(BELEG_GERAET.search(beleg))
+        im_repo = bool(BELEG_REPO.search(beleg))
+
+        if not am_geraet and not im_repo:
+            aus.append({**_kurz(eintrag), "mangel": "keine angabe", "grund": (
+                "Erledigt, ohne zu sagen, ob der Beleg im Repo oder am Gerät liegt. "
+                "Eine Datei im Repo belegt, was jemand geschrieben hat, nicht was auf "
+                "dem Gerät läuft (B8, 27.08.2026).")})
+            continue
+
+        if im_repo and not am_geraet:
+            getroffen = [z.pattern for z in GERAETEZEICHEN if z.search(beleg)]
+            if getroffen:
+                aus.append({**_kurz(eintrag), "mangel": "repo trotz gerätezeichen",
+                            "grund": (
+                    "Behauptet «belegt im Repo», nennt aber einen Schalter, eine "
+                    "Diensteinheit oder einen Pfad nach betrieb/. Alle drei sagen etwas "
+                    "darüber, WIE etwas aufgerufen wird — und das steht nicht in der "
+                    f"Datei, sondern in der Installation. Getroffen: {getroffen[0]}")})
+            continue
+
+        genannt = set(AUFTRAGSKENNUNG.findall(beleg))
+        if not (genannt & beantwortet) and not MESSZEIT.search(beleg):
+            offen = ", ".join(sorted(genannt)) or "gar keinen"
+            aus.append({**_kurz(eintrag), "mangel": "gerät ohne antwort", "grund": (
+                f"Behauptet «belegt am Gerät», nennt aber weder einen beantworteten "
+                f"Auftrag (genannt: {offen}) noch eine Uhrzeit einer Messung dort. Eine "
+                f"Behauptung über ein fremdes Gerät braucht eine Rückmeldung von dort "
+                f"oder eine Uhr.")})
+    return aus
+
+
+def _kurz(eintrag: dict) -> dict:
+    return {"kennung": eintrag["kennung"], "posten": eintrag["posten"][:70]}
+
+
 def _tage_her(zeitstempel: str, heute: date) -> int | None:
     """Alter in Tagen — ``None``, wenn der Zeitstempel nicht lesbar ist."""
     try:
@@ -223,28 +356,36 @@ def bericht(repo_wurzel, blatt=None, *, heute: date | None = None) -> dict:
     """Beides zusammen — die Vorlage für die Bestätigung an den Owner.
 
     Returns:
-        ``{rueckstand, ohne_adressat, offene_posten, n_posten, bereit}``.
+        ``{rueckstand, ohne_adressat, ohne_geraetebeweis, offene_posten, n_posten,
+        bereit}``.
 
-        ``bereit`` ist ``True``, wenn **kein** Posten ohne Adressaten dasteht. Es sagt
-        ausdrücklich **nicht**, dass alles eingebaut ist — nur, dass für alles, was noch
-        fehlt, jemand benannt ist. Das ist der Teil, für den ich hafte; der Einbau selbst
-        geschieht drüben.
+        ``bereit`` ist ``True``, wenn **kein** Posten ohne Adressaten dasteht **und** jede
+        erledigte Zeile sagt, worauf ihr Beleg ruht. Es sagt ausdrücklich **nicht**, dass
+        alles eingebaut ist — nur, dass für alles, was noch fehlt, jemand benannt ist, und
+        dass nichts als fertig geführt wird, ohne zu sagen wo. Das ist der Teil, für den
+        ich hafte; der Einbau selbst geschieht drüben.
+
+        *Die zweite Bedingung ist am 27.08.2026 dazugekommen, nachdem ``B8`` sechs Tage
+        als erledigt geführt worden war, während auf dem Gerät eine ältere Fassung lief.*
     """
     wurzel = Path(repo_wurzel)
     seite = blatt or wurzel / "docs" / "EINBAU_STAND.md"
     alle = posten(seite)
     verwaist = ohne_adressat(seite)
+    unbelegt = ohne_geraetebeweis(seite, wurzel)
     return {
         "rueckstand": rueckstand(wurzel, heute=heute),
         "ohne_adressat": verwaist,
+        "ohne_geraetebeweis": unbelegt,
         "offene_posten": [p for p in alle if p["offen"]],
         "n_posten": len(alle),
-        "bereit": not verwaist,
+        "bereit": not verwaist and not unbelegt,
     }
 
 
 __all__ = [
-    "AMPELN", "AUFTRAGSKENNUNG", "OFFENE_ZUSTAENDE", "OHNE_ADRESSAT", "ZEILE",
-    "ZUSTAENDE",
-    "EinbauError", "bericht", "ohne_adressat", "posten", "rueckstand",
+    "AMPELN", "AUFTRAGSKENNUNG", "BELEG_GERAET", "BELEG_REPO", "GERAETEZEICHEN",
+    "MESSZEIT", "OFFENE_ZUSTAENDE", "OHNE_ADRESSAT", "ZEILE", "ZUSTAENDE",
+    "EinbauError", "beantwortete_auftraege", "bericht", "ohne_adressat",
+    "ohne_geraetebeweis", "posten", "rueckstand",
 ]

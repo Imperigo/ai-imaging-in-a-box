@@ -27,9 +27,9 @@ wird ohne Rückfrage nichts geändert.
 
 | # | Posten | Zustand | Seit | Beleg / treibender Auftrag |
 |---|---|---|---|---|
-| A1 | `mcp<2` festschreiben — der Server ist gegen die 1.x-Dekoratorschnittstelle geschrieben | 🟩 **erledigt** | 2026-08-19 | `pyproject.toml` (`mcp = ["mcp>=1.27,<2"]`) |
-| A2 | Ausgabeschema-Bruch in `aiimaging_query_render` (`None`, wo ein String zugesagt war) | 🟩 **erledigt** | 2026-08-18 | `src/aiimaging/mcp_schemas.py` (`status` nullbar, mit dem Grund im Kommentar) |
-| A3 | Kein `additionalProperties: false` in unseren Eingabeschemata | 🟩 **erledigt** | 2026-08-18 | `mcp_schemas.pruefe_vertrag` prüft es für **jeden** Vertrag, nicht einmalig von Hand |
+| A1 | `mcp<2` festschreiben — der Server ist gegen die 1.x-Dekoratorschnittstelle geschrieben | 🟩 **erledigt** | 2026-08-19 | **belegt im Repo:** `pyproject.toml` (`mcp = ["mcp>=1.27,<2"]`) |
+| A2 | Ausgabeschema-Bruch in `aiimaging_query_render` (`None`, wo ein String zugesagt war) | 🟩 **erledigt** | 2026-08-18 | **belegt im Repo:** `src/aiimaging/mcp_schemas.py` (`status` nullbar, mit dem Grund im Kommentar) |
+| A3 | Kein `additionalProperties: false` in unseren Eingabeschemata | 🟩 **erledigt** | 2026-08-18 | **belegt im Repo:** `mcp_schemas.pruefe_vertrag` prüft es für **jeden** Vertrag, nicht einmalig von Hand |
 | A4 | Klären, warum `/api/mcp/tools` keine Schemata durchreicht | 🟥 **offen** | — | `auftraege/offen/auf-20260826-58.json` — braucht einen Blick ins Odysseus-Backend, den nur die HomeStation hat. *Stand bis zum 26.08.2026 als «niemand» da; unter dem Owner-Auftrag desselben Tages ist das keine zulässige Angabe mehr* |
 | A5 | `query_render` und `check_geometry` in `READ_ONLY_MCP_TOOLS` **beantragen** (`enqueue_render` ausdrücklich **nicht**) | 🟥 **offen** | — | `auftraege/offen/auf-20260826-48.json` |
 | A6 | Rezept «AI-Imaging» beantragen: Konfiguration → `check_geometry` (Gate) → `enqueue_render` → `query_render` | 🟥 **offen** | — | `auftraege/offen/auf-20260826-48.json` |
@@ -52,14 +52,14 @@ nicht ausgeführt».*
 
 | # | Posten | Zustand | Seit | Beleg / treibender Auftrag |
 |---|---|---|---|---|
-| B1 | Unseren Vertrag gegen `kosmovis.render-scene/v1` halten, an **einer** Stelle übersetzen | 🟩 **erledigt** | 2026-08-19 | `src/aiimaging/kosmo_szene.py` (`lies_szene`), `src/aiimaging/kosmo_naht.py` |
-| B2 | Kameravertrag angleichen (`name`/`position`/`target`/`fov` gegen `blick_auf` und Brennweite in mm) | 🟩 **erledigt** | 2026-08-19 | `kosmo_szene.kamera_zu_spec`, `spec_zu_kamera`, `brennweite_zu_fov` |
-| B3 | `kosmovis.render-result/v2` erzeugen, mit `spearman` und `geom_iou` einzeln | 🟩 **erledigt** | 2026-08-19 | `kosmo_szene.als_ergebnis` (`geometry_fidelity`, `spearman`, `geom_iou`, `threshold`) |
-| B4 | **Der Arbeiter fehlt auf beiden Seiten** — die Brücke legt Dateien ab und wartet | 🟩 **erledigt** | 2026-08-22 | `src/aiimaging/abholer.py`, `tools/abholen.py`, `betrieb/kosmo-abholer.{service,timer}` |
+| B1 | Unseren Vertrag gegen `kosmovis.render-scene/v1` halten, an **einer** Stelle übersetzen | 🟩 **erledigt** | 2026-08-19 | **belegt im Repo:** `src/aiimaging/kosmo_szene.py` (`lies_szene`), `src/aiimaging/kosmo_naht.py` |
+| B2 | Kameravertrag angleichen (`name`/`position`/`target`/`fov` gegen `blick_auf` und Brennweite in mm) | 🟩 **erledigt** | 2026-08-19 | **belegt im Repo:** `kosmo_szene.kamera_zu_spec`, `spec_zu_kamera`, `brennweite_zu_fov` |
+| B3 | `kosmovis.render-result/v2` erzeugen, mit `spearman` und `geom_iou` einzeln | 🟩 **erledigt** | 2026-08-19 | **belegt im Repo:** `kosmo_szene.als_ergebnis` (`geometry_fidelity`, `spearman`, `geom_iou`, `threshold`) |
+| B4 | **Der Arbeiter fehlt auf beiden Seiten** — die Brücke legt Dateien ab und wartet | 🟩 **erledigt** | 2026-08-22 | **belegt am Gerät:** `auf-20260822-31` (beantwortet) — Code dazu: `src/aiimaging/abholer.py`, `tools/abholen.py`, `betrieb/kosmo-abholer.{service,timer}` |
 | B5 | QA **je Kamera** ausweisen und die Verzeichniskonvention bedienen | 🟩 **halb** | 2026-08-23 | Je Kamera gemessen und in `befund.json` abgelegt; der **Vertrag** trägt weiterhin **ein** QA je Lauf (das schlechteste). Ein QA-Block je Kamera ist ihre Vertragsänderung — `auftraege/offen/auf-20260826-49.json` |
 | B6 | Varianten: *n* Bilder je Lauf | 🟥 **offen** | — | Weder unsere Kette noch der fremde Vertrag kennen sie. `auftraege/offen/auf-20260826-49.json` |
-| B7 | Den Treue-Regler `render.faithful` durchreichen | 🟩 **erledigt** | 2026-08-19 | `kosmo_szene.lies_szene` bildet ihn auf `controlnet_staerke` ab und sagt es in der Warnung |
-| B8 | Ein über den **MCP-Einlass** bestellter Render wird auch ausgeführt | 🟩 **erledigt** | 2026-08-27 | `src/aiimaging/eigene_quelle.py`, `abholer.hole_einen(quelle=…)`, `tools/abholen.py --eigener-store`, `tests/test_betriebseinheiten.py` |
+| B7 | Den Treue-Regler `render.faithful` durchreichen | 🟩 **erledigt** | 2026-08-19 | **belegt im Repo:** `kosmo_szene.lies_szene` bildet ihn auf `controlnet_staerke` ab und sagt es in der Warnung |
+| B8 | Ein über den **MCP-Einlass** bestellter Render wird auch ausgeführt | 🟩 **erledigt** | 2026-08-27 | **belegt am Gerät:** Messung 27.08.2026, 18:53:40 Ablage leer → 18:53:42 bestellt → 18:54:11 aufgegriffen, Blender lief. Code dazu: `src/aiimaging/eigene_quelle.py`, `abholer.hole_einen(quelle=…)`, `tools/abholen.py --eigener-store`, `tests/test_betriebseinheiten.py` |
 
 *Das Datum von B8 ist am 2026-08-27 von 26.08. auf 27.08. **zurückgesetzt** worden, und
 zwar nach einer Messung am Gerät. Am 26.08. bekam `betrieb/kosmo-abholer.service` den
@@ -110,9 +110,9 @@ Gerät ohne Installation überspringt er, statt grün zu behaupten.*
 
 | # | Posten | Zustand | Seit | Beleg / treibender Auftrag |
 |---|---|---|---|---|
-| C1 | Der Abholer läuft dort als Dienst | 🟩 **erledigt** | 2026-08-22 | `betrieb/kosmo-abholer.{service,timer}`, Ergebnisse ab `auf-20260822-31` |
+| C1 | Der Abholer läuft dort als Dienst | 🟩 **erledigt** | 2026-08-22 | **belegt am Gerät:** `auf-20260822-31` (beantwortet) und die Ergebnisse danach; Einheiten: `betrieb/kosmo-abholer.{service,timer}` |
 | C7 | **Der Homeworker hat einen Takt** — bis dahin stiess ihn nichts an | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `betrieb/kosmo-worker.{sh,service,timer}`, `tools/homeworker.py --hoechstens`; Installation: `auftraege/offen/auf-20260826-59.json` |
-| C2 | Die HomeStation hat den Stand vom Abend des 26.08. gezogen | 🟩 **erledigt** | 2026-08-27 | Belegt **nicht** an einer Meldung, sondern an einem Nebenprodukt: Die 85 Abstürze von `tools/abholen.py` (Sitzung 14, `docs/sitzungen/2026-08-27_sitzung-14.md`) beginnen um 17:55:39, also genau mit dem Holen der 41 Commits. *Was der Stand dort **tut**, ist damit nicht bestätigt — das fragt `auf-20260826-57.json` (V1–V5), und C3 bis C8 hängen weiter daran.* |
+| C2 | Die HomeStation hat den Stand vom Abend des 26.08. gezogen | 🟩 **erledigt** | 2026-08-27 | **belegt am Gerät:** nicht an einer Meldung, sondern an einem Nebenprodukt: Die 85 Abstürze von `tools/abholen.py` (Sitzung 14, `docs/sitzungen/2026-08-27_sitzung-14.md`) beginnen um 17:55:39, also genau mit dem Holen der 41 Commits. *Was der Stand dort **tut**, ist damit nicht bestätigt — das fragt `auf-20260826-57.json` (V1–V5), und C3 bis C8 hängen weiter daran.* |
 | C3 | `bestanden` ist dreiwertig — `null` heisst *nicht beurteilbar* | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tiefenschaetzer.qa_gegen_soll`, `gate.gesamturteil` — Bestätigung über `auftraege/offen/auf-20260826-57.json` |
 | C4 | Der Maskenweg wird im Homeworker gefahren | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tools/homeworker.py`, `maske.maske_aus_bericht` — bis dahin standen `rho_maske`, `kante`, `paarurteil` in **jedem** ihrer Läufe auf `None`. Bestätigung: `auftraege/offen/auf-20260826-57.json` (V2) |
 | C5 | Die gemessene Polarität kommt am Tor an | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tiefenschaetzer.gemessenes_zeichen` — an den 14 bekannten Läufen ändert sich kein Urteil, gerechnet. Bestätigung: `auftraege/offen/auf-20260826-57.json` (V3, V5) |

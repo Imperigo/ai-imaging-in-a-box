@@ -12,9 +12,18 @@ gezählt.
     python tools/einbau.py --json       # dasselbe für ein Werkzeug
     python tools/einbau.py --worker ui  # nur ein Adressat
 
-Rückgabewert **1**, wenn ein offener Posten keinen Adressaten hat — das ist der einzige
-Zustand, für den ich hafte, und er soll ein Skript scheitern lassen können. Ein blosser
-Rückstand ist **kein** Fehler: Ein Auftrag, der bei einem Worker liegt, ist verteilt.
+Rückgabewert **1** in zwei Fällen — beides Zustände, für die ich hafte, und beide sollen
+ein Skript scheitern lassen können:
+
+1. **Ein offener Posten hat keinen Adressaten.** Er wird nie eingebaut, und es fällt
+   niemandem auf.
+2. **Eine erledigte Zeile sagt nicht, worauf ihr Beleg ruht** — im Repo oder am Gerät.
+   Seit dem 27.08.2026, nachdem `B8` sechs Tage als erledigt geführt worden war, während
+   auf dem Gerät eine Fassung vom 20.08. lief. *Eine Datei im Repo belegt, was jemand
+   geschrieben hat, nicht was auf dem Gerät läuft.*
+
+Ein blosser Rückstand ist **kein** Fehler: Ein Auftrag, der bei einem Worker liegt, ist
+verteilt.
 """
 from __future__ import annotations
 
@@ -50,12 +59,21 @@ def _zeilen(bericht: dict, nur: str | None) -> list[str]:
     for p in offen:
         aus.append(f"  {p['kennung']:<4} {p['zustand']:<30} {p['posten'][:60]}")
     aus.append("")
-    if bericht["bereit"]:
-        aus.append("ADRESSATEN: vollstaendig — jeder offene Posten hat einen.")
-    else:
+    if bericht["ohne_adressat"]:
         aus.append("OHNE ADRESSATEN — diese Posten treibt niemand:")
         for p in bericht["ohne_adressat"]:
             aus.append(f"  {p['kennung']:<4} {p['posten'][:70]}")
+    else:
+        aus.append("ADRESSATEN: vollstaendig — jeder offene Posten hat einen.")
+
+    if bericht["ohne_geraetebeweis"]:
+        aus.append("")
+        aus.append("ERLEDIGT, ABER OHNE ANGABE, WORAUF DER BELEG RUHT:")
+        for p in bericht["ohne_geraetebeweis"]:
+            aus.append(f"  {p['kennung']:<4} {p['mangel']:<24} {p['posten'][:44]}")
+            aus.append(f"       {p['grund'][:100]}")
+    else:
+        aus.append("BELEGE: jede erledigte Zeile sagt, ob sie im Repo oder am Geraet ruht.")
     return aus
 
 
