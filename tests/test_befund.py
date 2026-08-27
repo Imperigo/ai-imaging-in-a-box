@@ -433,9 +433,15 @@ def test_ein_ausgefallener_maskenweg_steht_im_kurzbefund():
     auf*. Der Grund stand im Maskenbefund je Kamera, also in einer Datei, die man
     aufschlagen muss, während oben auf dem Schirm ein Score steht.
 
-    Die Folge ist keine Kleinigkeit: Ohne Maskenweg wird die gemessene Polarität nie
-    angewandt, der Score fällt auf `abs(spearman)` zurück — **und in dem Modus besteht ein
-    Bild mit vertauschter Tiefe das Tor.**
+    **Die Folge ist am Abend desselben Tages eine andere geworden, und sie wiegt
+    schwerer.** Zuerst stand hier: Ohne Maskenweg werde die gemessene Polarität nie
+    angewandt, der Score falle auf `abs(spearman)` zurück. Das stimmte — bis
+    `qa_gegen_soll` die Polarität durchreicht, unabhängig von der Maske.
+
+    Was bleibt, ist der grössere Teil: Ohne Maskenweg gibt es kein `rho_maske`, keine
+    Kante und kein Paarurteil — **genau die Masse, die die Abwesenheit eines Bauwerks
+    fangen.** Der Score über das ganze Bild fängt sie nicht: Ein leeres Grundstück
+    erreichte dort **0.9530** und bestand das Tor (`auf-20260821-26`).
     """
     befund = {"kameras": [
         {"kamera": "s", "bild_png": "/x.png",
@@ -445,9 +451,13 @@ def test_ein_ausgefallener_maskenweg_steht_im_kurzbefund():
     zeilen = "\n".join(abholer.befund_kurz(befund))
 
     assert "MASKENWEG NICHT GEFAHREN" in zeilen
-    assert "abs(spearman)" in zeilen, "Die Folge gehört in denselben Satz."
-    assert "vertauschter Tiefe" in zeilen, (
-        "Und wozu sie führt — sonst liest sich die Zeile wie eine Formalie.")
+    assert "ABWESENHEIT" in zeilen, "Die Folge gehört in denselben Satz."
+    assert "0.9530" in zeilen, (
+        "Und ihre Grösse — eine Folge ohne Zahl liest sich wie eine Formalie.")
+    assert "abs(spearman)" not in zeilen, (
+        "Die alte Folge stimmt seit dem Abend des 26.08.2026 nicht mehr: Die Polarität "
+        "wird jetzt auch ohne Maskenweg angewandt. Eine Warnung, die eine überholte "
+        "Folge nennt, schickt den Leser an die falsche Stelle")
 
 
 def test_mit_maske_schweigt_der_kurzbefund():

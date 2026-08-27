@@ -1360,6 +1360,26 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
 
     warnungen = tuple(ist_ergebnis["warnungen"]) + tuple(aufloesungs_warnungen) \
         + tuple(markierung["warnungen"]) + tuple(urteil["warnungen"])
+
+    # OHNE MASKE FEHLT DAS EINZIGE MASS, DAS DIE ABWESENHEIT FAENGT — und bis zum
+    # 26.08.2026 sagte das an dieser Stelle niemand.
+    #
+    # `_maskenweg` gibt dann lauter `None` zurueck, und der Docstring dort haelt fest,
+    # dass das "nicht gemessen" heisst und nicht "in Ordnung". Gesagt wurde es aber nur
+    # dort: Der Abholer hat eine eigene Zeile dafuer (`befund_kurz`), die Kette hat keine
+    # — und sie reicht gar keine Maske herein. Ein Urteil aus einem Kettenlauf sah damit
+    # aus wie jedes andere.
+    #
+    # Die Zeile ist SELBSTLOESCHEND: Mit Maske steht sie nicht da. Eine Warnung, die
+    # immer feuert, verdeckt die echten.
+    if maske is None:
+        warnungen = warnungen + (
+            "OHNE MASKENWEG gemessen: rho_maske, Kante und Paarurteil bleiben ungemessen "
+            "— und das sind die Masse, die die ABWESENHEIT eines Bauwerks fangen. Der "
+            "Score ueber das ganze Bild fangt sie nicht: Ein leeres Grundstueck erreichte "
+            "dort 0.9530 und bestand das Tor (auf-20260821-26). Ein bestandenes Urteil "
+            "ohne Maskenweg sagt darum nichts darueber, ob ueberhaupt gebaut wurde.",
+        )
     unsicherheit = tuple(markierung["unsicherheit"]) + (
         "Die Ist-Karte ist eine Schaetzung, keine Messung: Ein Fehler des Schaetzers ist "
         "von einer Halluzination des Bildmodells hier nicht unterscheidbar "

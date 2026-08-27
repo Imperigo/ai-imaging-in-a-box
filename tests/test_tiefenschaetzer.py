@@ -1209,6 +1209,41 @@ def test_ohne_maske_bleibt_der_maskenweg_ungemessen(bild):
     assert urteil["paarurteil"] is None
 
 
+def test_ohne_maske_sagt_das_urteil_es_auch(bild):
+    """`None` in drei Feldern ist keine Meldung — es sieht aus wie „nichts aufgefallen".
+
+    Der Docstring von ``_maskenweg`` hält seit je fest, dass die drei `None` *nicht
+    gemessen* heissen und nicht *in Ordnung*. **Gesagt wurde es aber nur dort.** Der
+    Abholer hat eine eigene Zeile dafür; die Kette hat keine und reicht gar keine Maske
+    herein — ein Urteil aus einem Kettenlauf sah damit aus wie jedes andere.
+
+    Seit dem 26.08.2026 sagt es das Urteil selbst, samt der Zahl, um die es geht.
+    """
+    urteil = _urteil_mit(None, bild)
+
+    treffer = [w for w in urteil["warnungen"] if "OHNE MASKENWEG" in w]
+    assert treffer, "die drei None müssen sich selbst melden"
+    assert "0.9530" in treffer[0], (
+        "mit der Zahl, sonst liest sich die Zeile wie eine Formalie"
+    )
+
+
+def test_mit_maske_schweigt_die_zeile_wieder(bild):
+    """Die Gegenprobe. **Eine Warnung, die immer feuert, verdeckt die echten.**
+
+    Ohne sie wäre der Test darüber nur der Nachweis, dass irgendwo eine Zeichenkette
+    steht — und nicht, dass sie an eine Bedingung geknüpft ist.
+    """
+    _soll, _ist, maske = _zweidimensionale_szene()
+
+    urteil = _urteil_mit(maske, bild)
+
+    assert not [w for w in urteil["warnungen"] if "OHNE MASKENWEG" in w]
+    assert urteil["warnungen"], (
+        "die Sammlung ist nicht leer — sonst prüfte die Zeile darüber gegen nichts"
+    )
+
+
 def test_mit_maske_entstehen_beide_masse_und_ein_paarurteil(bild):
     _soll, _ist, maske = _zweidimensionale_szene()
 

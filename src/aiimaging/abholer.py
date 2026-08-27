@@ -665,10 +665,19 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     # Maskenbefund je Kamera — also in einer Datei, die man aufschlagen muss, waehrend
     # oben auf dem Schirm ein Score stand.
     #
-    # **Die Folge ist keine Kleinigkeit:** Ohne Maskenweg wird die gemessene Polaritaet
-    # nie angewandt, und der Score faellt auf `abs(spearman)` zurueck. In dem Modus
-    # besteht ein Bild mit VERTAUSCHTER Tiefe das Tor (gerechnet: rho = +0,675 gibt 0,68
-    # statt 0,00).
+    # **Die Folge ist keine Kleinigkeit** — sie ist seit dem Abend des 26.08.2026 eine
+    # ANDERE als hier zuerst stand, und die neue wiegt schwerer.
+    #
+    # ZUERST STAND HIER: "Ohne Maskenweg wird die gemessene Polaritaet nie angewandt, und
+    # der Score faellt auf abs(spearman) zurueck." Das stimmte, als es geschrieben wurde,
+    # und stimmt seit demselben Abend nicht mehr: `qa_gegen_soll` reicht die gemessene
+    # Polaritaet jetzt IMMER durch, ob eine Maske da ist oder nicht.
+    #
+    # WAS BLEIBT, IST DER GROESSERE TEIL: Ohne Maskenweg gibt es kein `rho_maske`, keine
+    # Kante und kein Paarurteil — also genau die Masse, die die ABWESENHEIT eines
+    # Bauwerks fangen. Der Score ueber das ganze Bild fangt sie nicht: Ein leeres
+    # Grundstueck erreichte dort 0.9530 und bestand das Tor (auf-20260821-26,
+    # docs/GEOM_IOU_HALLUZINATION_2026-08-21.md). Das ist der Grund fuer diese Zeile.
     ohne_maske = [k.get("kamera") for k in kameras
                   if (k.get("maskenbefund") or {}).get("maske") is None
                   and k.get("bild_png")]
@@ -677,9 +686,11 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
                        if (k.get("maskenbefund") or {}).get("maske") is None), {})
         zeilen.append(
             f"MASKENWEG NICHT GEFAHREN: {', '.join(str(k) for k in ohne_maske)} — damit "
-            f"bleiben rho_maske, Kante und Paarurteil ungemessen, die gemessene "
-            f"Polaritaet wird NICHT angewandt, und der Score faellt auf abs(spearman) "
-            f"zurueck. In dem Modus besteht ein Bild mit vertauschter Tiefe das Tor. "
+            f"bleiben rho_maske, Kante und Paarurteil ungemessen. Das sind die Masse, die "
+            f"die ABWESENHEIT eines Bauwerks fangen; der Score ueber das ganze Bild fangt "
+            f"sie nicht (ein leeres Grundstueck erreichte dort 0.9530 und bestand das "
+            f"Tor, auf-20260821-26). Ein bestandenes Urteil ohne Maskenweg sagt darum "
+            f"nichts darueber, ob ueberhaupt gebaut wurde. "
             f"Grund: {str(erster.get('grund') or 'ohne Angabe')[:200]}")
 
         # WELCHE BAUSTOFFE DIE REGEL GEPRUEFT HAT — auf Rueckfrage der HomeStation
