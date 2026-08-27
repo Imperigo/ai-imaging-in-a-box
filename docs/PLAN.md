@@ -4644,13 +4644,22 @@ positives `rho` (H3 +0.127 bei Score 0.1842, Versatz 4 m +0.337 bei 0.2301), bei
 unter 0.65. **Kein bekanntes Urteil ändert sich.** `auf-56` ist darum zurückgezogen worden,
 bevor ihn jemand geholt hat (`auftraege/ergebnisse/auf-20260826-56.json`).
 
-- [ ] **Offen, und es ist unser Code, kein Auftrag:** Die gemessene Polarität wird in der
-      Produktion gar nicht angewandt — `tiefenschaetzer.qa_gegen_soll` ruft
-      `geometrie_gate` **ohne** `polaritaet`, das Vorzeichen benutzt nur der Maskenweg.
-      Jeder Produktionslauf rechnet darum im nicht-monotonen Modus, obwohl das Vorzeichen
-      seit dem 20.08. bekannt ist. Die gerichtete Rechnung kann einen Score nur **senken**
-      (`max(0, p·rho) ≤ |rho|`), ist also fail-closed; was sie an bekannten Läufen kostet,
-      ist gemessen: nichts. Durchreichen — oder begründen, warum nicht.
+- [x] ~~**Die gemessene Polarität kommt nicht am Tor an**~~ — **erledigt 2026-08-26.**
+      `tiefenschaetzer.qa_gegen_soll` rief `geometrie_gate` **ohne** `polaritaet`; das
+      Vorzeichen benutzte nur der Maskenweg. Jeder Produktionslauf rechnete darum im
+      nicht-monotonen Modus und trug die Dauerwarnung dazu, obwohl das Vorzeichen seit dem
+      20.08. gemessen war.
+
+      Der Wechsel ist **fail-closed** (`max(0, p·rho) ≤ |rho|`), und was zugeht, hat eine
+      Zahl: Eine Ist-Karte in metrischer Ordnung kam auf **0.7071** und **bestand** die
+      Schwelle 0.65 — jetzt fällt sie durch. `gemessenes_zeichen` fällt dabei
+      ausdrücklich **nicht** auf die deklarierte Polarität zurück wie der Maskenweg: Am
+      Tor würde aus einer Angabe in einer Modellkarte ein durchgefallenes Bild.
+
+      *Nebenbefund, und er wiegt:* Der Wechsel von einem Rechenweg zum anderen machte in
+      4279 Tests **eine** Zusicherung rot — die Beschriftung. Vier neue Tests halten die
+      Stelle jetzt, und `polaritaet_zeichen` steht neben `polaritaet` im Ergebnis, weil
+      das eine das gerechnete Vorzeichen ist und das andere das deklarierte Wort.
 
 ### Was `SCHWELLE_GEOMETRIE` betrifft
 

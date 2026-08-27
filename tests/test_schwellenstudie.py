@@ -698,6 +698,30 @@ def test_studienlauf_traegt_die_zugesagten_schluessel():
     )
 
 
+def test_ohne_gerechnete_zeile_steht_kein_rechenweg_da():
+    """Der Rechenweg wird vom Urteil **abgelesen**, nicht danebengeschrieben.
+
+    Bis zum 26.08.2026 stand hier fest ``geometrie_qa.METHODE``. Das war richtig, solange
+    die Studie ungerichtet rechnet — aber richtig aus Zufall, und dieselbe Stelle war am
+    selben Tag in ``kosmo_szene`` gefunden worden, wo sie falsch war.
+
+    **Dieser Test ist die Probe darauf, und er war zuerst nicht da:** Eine Mutationsprobe
+    (M5, 26.08.2026) hat die feste Angabe wieder eingesetzt, und nichts wurde rot — beide
+    Fassungen liefern dieselbe Zeichenkette, solange gerechnet wird. Nur der leere Lauf
+    trennt sie: Ohne eine einzige Zeile gibt es keinen Rechenweg, und eine Angabe darüber
+    wäre eine Auskunft über etwas, das niemand getan hat.
+    """
+    leer = studienlauf(SOLL, breite=BREITE, hoehe=HOEHE, arten=[], staerken=[])
+
+    assert leer["zeilen"] == []
+    assert leer["methode"] is None
+    assert studienlauf(SOLL, breite=BREITE, hoehe=HOEHE, arten=[RAUSCHEN],
+                       staerken=[0.0])["methode"] == geometrie_qa.METHODE, (
+        "die Gegenprobe: sobald gerechnet wird, steht der Weg da — und zwar der, den "
+        "`geometrie_gate` wirklich gegangen ist"
+    )
+
+
 def test_jede_zeile_traegt_die_zugesagten_schluessel():
     """Eine Zeile ohne ``erwartung_erfuellt`` wäre eine Tabelle ohne Vorhersage — und
     damit genau die Sorte Kurve, gegen die diese Studie gebaut ist."""

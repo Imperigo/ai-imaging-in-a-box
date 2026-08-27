@@ -373,13 +373,26 @@ Vorzeichen benutzt nur der Maskenweg (`rho_ueber_maske`, `kante_an_maskengrenze`
 Warntext im Modul sagt es selbst: *«Angewandt wird sie aber nur im MASKENWEG — wer den
 nicht fährt, sieht sie nie.»*
 
-Folge: Jeder Produktionslauf rechnet im nicht-monotonen Modus, obwohl das Vorzeichen seit
-dem 20.08. bekannt ist. Die gerichtete Rechnung kann einen Score nur **senken**
-(`max(0, p·rho) ≤ |rho|`), ist also fail-closed. Was sie kostet, ist gemessen: an allen
+Folge war: Jeder Produktionslauf rechnete im nicht-monotonen Modus, obwohl das Vorzeichen
+seit dem 20.08. bekannt ist. Die gerichtete Rechnung kann einen Score nur **senken**
+(`max(0, p·rho) ≤ |rho|`), ist also fail-closed, und was sie kostet, ist gemessen: an allen
 bekannten Läufen nichts.
 
-- [ ] Offen: die gemessene Polarität an `geometrie_gate` durchreichen, oder begründen,
-      warum nicht. Kein Auftrag nötig — es ist unser Code.
+- [x] **Erledigt am selben Abend.** `qa_gegen_soll` reicht die gemessene Polarität jetzt
+      durch. Was zugeht, hat eine Zahl: Eine Ist-Karte in **metrischer** Ordnung — vorne
+      und hinten vertauscht gegenüber dem, was unser Schätzer liefert — kam auf **0,7071**
+      und **bestand** die Schwelle 0,65. Jetzt fällt sie durch
+      (`tests/test_tiefenschaetzer.py::test_eine_verkehrte_tiefenordnung_faellt_jetzt_durch`,
+      und der Test schreibt die 0,7071 aus).
+
+      `gemessenes_zeichen` fällt dabei ausdrücklich **nicht** auf die *deklarierte*
+      Polarität zurück, anders als der Maskenweg: Am Tor würde aus einer falschen Angabe
+      in einer Modellkarte ein durchgefallenes Bild. Ohne Messung bleibt die mildere
+      Regel — dieselbe Haltung wie `MIN_POLARITAETSLAEUFE`.
+
+      *Wie dünn das Netz darunter war:* Der Wechsel von einem Rechenweg zum anderen machte
+      in der ganzen Sammlung **eine** Zusicherung rot, und die betraf nur die Beschriftung
+      (`methode`). Vier neue Tests halten die Stelle jetzt.
 
 ---
 

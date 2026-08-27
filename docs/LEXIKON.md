@@ -1558,6 +1558,19 @@ Disparität.*
 Metrik nicht-monoton macht und nebenbei eine vollständig invertierte Tiefenkarte wie eine
 perfekte bewertet.*
 
+*Und dieser Satz war bis zum **26.08.2026** kein Gedankenspiel, sondern der Zustand
+unserer eigenen Kette: Das gemessene Vorzeichen wurde nur im Maskenweg benutzt, das
+eigentliche Tor rechnete mit dem Betrag. Eine Tiefenkarte mit vertauschtem Vorne und
+Hinten kam damit auf **0,7071** und bestand die Grenze 0,65. Seit die Messung am Tor
+ankommt, fällt sie durch. Die Zahl steht in einem Test, nicht nur hier — sie ist das Mass
+dafür, wie gross die Lücke war.*
+
+*Eine Auflage ist dabei neu, und sie trennt zwei Verwendungen: Für einen **Diagnosewert**
+darf die deklarierte Angabe einspringen, wenn nichts gemessen ist — besser als keine. Für
+ein **Urteil** nicht: Dort schneidet ein Vorzeichenfehler den Wert auf null, und aus einer
+falschen Zeile in einer Modellkarte würde ein durchgefallenes Bild, ohne dass am Bild etwas
+falsch wäre.*
+
 **Hintergrundmarke** — Die Festlegung, welche Bildpunkte als „kein Gebäude" gelten. Bei
 gerenderten Tiefenkarten ist das eindeutig (der Himmel hat keine Tiefe); bei *geschätzten*
 nicht — dort bekommt auch der Himmel eine gewöhnliche Zahl. Ohne Marke zählt das ganze
@@ -3549,6 +3562,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-26 | **Polaritaet (einer Tiefenkarte)** erweitert. Der Eintrag sagte, ein unbekanntes Vorzeichen zwinge zum Betrag, und der bewerte eine vollstaendig invertierte Karte wie eine perfekte. Das war bis zum selben Tag der Zustand unserer eigenen Kette — gemessen wurde das Vorzeichen seit dem 20.08., angewandt nur im Maskenweg. Die Luecke hat jetzt eine Zahl (0,7071 bestand die Grenze 0,65) und einen Test. Dazu die Auflage, die zwei Verwendungen trennt: Fuer einen Diagnosewert darf die deklarierte Angabe einspringen, fuer ein Urteil nicht |
 | 2026-08-26 | Ergaenzt: **Geometrieanteil**, **Grenzstaerke**, **Rasterdublette**. Anlass ist die zweite Schwellenstudie, die dieselbe Kalibrierung auf echte Geometrie stellt: Der Geometrieanteil faellt dabei von 0,4489 auf 0,0822 bis 0,1730 — und `geom_iou` haengt an ihm, die Schwelle ist also nicht dieselbe. Die beiden anderen Eintraege tragen mit, was an einer Kalibrierung **gesetzt** und nicht gemessen ist (Grenzstaerke) und wie ein Stärkeraster in ganzen Bildpunkten eine Auswertung verfaelschen kann, ohne dass eine Zahl falsch gerechnet waere (Rasterdublette) |
 | 2026-08-26 | Ergaenzt: **KosmoVis**, **KosmoOrbit**, **KosmoDraw**. Die drei meistgenannten Namen des Repos — 399 Nennungen zusammen — hatten keinen Eintrag. Anlass ist eine Owner-Klarstellung: `ai-imaging-in-a-box` IST KosmoVis, das eigene Repo ist nur die Trennung fuer die Vertiefungsarbeit. Die Wendung «Vorlaeufer KosmoVis» in etlichen Docstrings meint den aelteren Stand DERSELBEN Sache und nicht ein fremdes Produkt — falsch gelesen sucht man Fehler an der falschen Stelle |
 | 2026-08-26 | Ergaenzt: **Verdeckung** und **Triage**. Anlass ist die Durchsicht der 80 Funktionen ohne Aufrufer: `kameras.ziehe_bis_frei` behandelt Verdeckung und laeuft nirgends, und an unserer synthetischen Testgeometrie verdeckt nichts — ein Anschluss haette gruene Tests ergeben, die ueber den Ernstfall nichts sagen |
