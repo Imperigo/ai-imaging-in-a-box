@@ -368,7 +368,7 @@ Lücke unten offen bleibt und nicht am Tor.
 ### Was offen bleibt, und es ist unsere Baustelle
 
 **Die gemessene Polarität wird in der Produktion gar nicht angewandt.**
-`tiefenschaetzer.bewerte_gegen_soll` ruft `geometrie_gate` **ohne** `polaritaet`; das
+`tiefenschaetzer.qa_gegen_soll` ruft `geometrie_gate` **ohne** `polaritaet`; das
 Vorzeichen benutzt nur der Maskenweg (`rho_ueber_maske`, `kante_an_maskengrenze`). Der
 Warntext im Modul sagt es selbst: *«Angewandt wird sie aber nur im MASKENWEG — wer den
 nicht fährt, sieht sie nie.»*

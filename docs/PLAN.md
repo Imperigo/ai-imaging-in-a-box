@@ -4645,7 +4645,7 @@ unter 0.65. **Kein bekanntes Urteil ändert sich.** `auf-56` ist darum zurückge
 bevor ihn jemand geholt hat (`auftraege/ergebnisse/auf-20260826-56.json`).
 
 - [ ] **Offen, und es ist unser Code, kein Auftrag:** Die gemessene Polarität wird in der
-      Produktion gar nicht angewandt — `tiefenschaetzer.bewerte_gegen_soll` ruft
+      Produktion gar nicht angewandt — `tiefenschaetzer.qa_gegen_soll` ruft
       `geometrie_gate` **ohne** `polaritaet`, das Vorzeichen benutzt nur der Maskenweg.
       Jeder Produktionslauf rechnet darum im nicht-monotonen Modus, obwohl das Vorzeichen
       seit dem 20.08. bekannt ist. Die gerichtete Rechnung kann einen Score nur **senken**
