@@ -96,11 +96,23 @@ unser Code in Betrieb geht, und er lief bisher ohne Buchführung: Die HomeStatio
 *Das ist dieselbe Lücke wie oben, nur schneller: Bei A und B weiss man wenigstens, dass
 etwas fehlt. Hier sieht ein veralteter Stand aus wie der aktuelle.*
 
+**Und der 27.08.2026 hat gezeigt, wie dieser Weg schiefgeht.** Sechs Tage lang stand
+`B8` als erledigt im Blatt, weil die eingecheckte Diensteinheit den nötigen Schalter trug —
+die **installierte** stammte vom 20.08. und kannte ihn nicht. Ursache war ein
+Literal-Platzhalter für das Heimatverzeichnis, der jede Installation zur Handkopie machte.
+
+> **Eine Datei im Repo belegt, was jemand geschrieben hat, nicht was auf dem Gerät läuft.**
+
+*Seit dem 27.08. lösen die Einheiten das Heimatverzeichnis über systemds eigenes `%h` auf —
+nichts mehr von Hand abzuschreiben, und trotzdem kein Name im Repo —, und
+`tests/test_betriebseinheiten.py` hält eingebaut und eingecheckt gegeneinander. Auf einem
+Gerät ohne Installation überspringt er, statt grün zu behaupten.*
+
 | # | Posten | Zustand | Seit | Beleg / treibender Auftrag |
 |---|---|---|---|---|
 | C1 | Der Abholer läuft dort als Dienst | 🟩 **erledigt** | 2026-08-22 | `betrieb/kosmo-abholer.{service,timer}`, Ergebnisse ab `auf-20260822-31` |
 | C7 | **Der Homeworker hat einen Takt** — bis dahin stiess ihn nichts an | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `betrieb/kosmo-worker.{sh,service,timer}`, `tools/homeworker.py --hoechstens`; Installation: `auftraege/offen/auf-20260826-59.json` |
-| C2 | Die HomeStation hat den Stand vom Abend des 26.08. gezogen | 🟥 **offen** | — | `auftraege/offen/auf-20260826-57.json` — **24 Commits seit ihrem letzten Bericht (`auf-47`)**, vier davon ändern ihren Ausführungspfad |
+| C2 | Die HomeStation hat den Stand vom Abend des 26.08. gezogen | 🟩 **erledigt** | 2026-08-27 | Belegt **nicht** an einer Meldung, sondern an einem Nebenprodukt: Die 85 Abstürze von `tools/abholen.py` (Sitzung 14, `docs/sitzungen/2026-08-27_sitzung-14.md`) beginnen um 17:55:39, also genau mit dem Holen der 41 Commits. *Was der Stand dort **tut**, ist damit nicht bestätigt — das fragt `auf-20260826-57.json` (V1–V5), und C3 bis C8 hängen weiter daran.* |
 | C3 | `bestanden` ist dreiwertig — `null` heisst *nicht beurteilbar* | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tiefenschaetzer.qa_gegen_soll`, `gate.gesamturteil` — Bestätigung über `auftraege/offen/auf-20260826-57.json` |
 | C4 | Der Maskenweg wird im Homeworker gefahren | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tools/homeworker.py`, `maske.maske_aus_bericht` — bis dahin standen `rho_maske`, `kante`, `paarurteil` in **jedem** ihrer Läufe auf `None`. Bestätigung: `auftraege/offen/auf-20260826-57.json` (V2) |
 | C5 | Die gemessene Polarität kommt am Tor an | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tiefenschaetzer.gemessenes_zeichen` — an den 14 bekannten Läufen ändert sich kein Urteil, gerechnet. Bestätigung: `auftraege/offen/auf-20260826-57.json` (V3, V5) |

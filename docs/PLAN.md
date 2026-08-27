@@ -4838,8 +4838,9 @@ in `CLAUDE.md`; hier steht, was daraus schon getan ist und was folgt.
 **Stand am 26.08.2026, gezählt:** 17 Aufträge ohne Antwort (12 `local`, 3 `cloud`,
 2 `ui`), 14 von 24 Posten noch nicht in der Software.
 
-**Stand am 27.08.2026, gezählt:** 22 Aufträge ohne Antwort (16 `local`, 3 `cloud`,
-3 `ui`), 18 von 28 Posten noch nicht in der Software. *Die Zahl steigt, weil verteilt
+**Stand am 27.08.2026, abends gezählt:** 23 Aufträge ohne Antwort (16 `local`, 4 `cloud`,
+3 `ui`), 17 von 28 Posten noch nicht in der Software. *C2 ist gefallen — die HomeStation
+hat 41 Commits geholt. Belegt ist das an einem Nebenprodukt, nicht an einer Meldung.* *Die Zahl steigt, weil verteilt
 wird — nicht, weil etwas liegen bleibt. Sie fällt erst, wenn drüben jemand antwortet.*
 
 **Zwei Befunde über das Instrument selbst**, beide wären unbemerkt geblieben:
