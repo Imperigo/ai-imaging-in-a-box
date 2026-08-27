@@ -77,11 +77,11 @@ etwas fehlt. Hier sieht ein veralteter Stand aus wie der aktuelle.*
 | # | Posten | Zustand | Seit | Beleg / treibender Auftrag |
 |---|---|---|---|---|
 | C1 | Der Abholer läuft dort als Dienst | 🟩 **erledigt** | 2026-08-22 | `betrieb/kosmo-abholer.{service,timer}`, Ergebnisse ab `auf-20260822-31` |
-| C2 | Die HomeStation hat den Stand vom Abend des 26.08. gezogen | 🟥 **unbestätigt** | — | `auftraege/offen/auf-20260826-57.json` — **24 Commits seit ihrem letzten Bericht (`auf-47`)**, vier davon ändern ihren Ausführungspfad |
-| C3 | `bestanden` ist dreiwertig — `null` heisst *nicht beurteilbar* | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tiefenschaetzer.qa_gegen_soll`, `gate.gesamturteil`; Bestätigung über `auf-20260826-57` |
-| C4 | Der Maskenweg wird im Homeworker gefahren | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tools/homeworker.py` reicht `maske.maske_aus_bericht(...)` durch; bis dahin standen `rho_maske`, `kante`, `paarurteil` in **jedem** ihrer Läufe auf `None` |
-| C5 | Die gemessene Polarität kommt am Tor an | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tiefenschaetzer.gemessenes_zeichen`; an den 14 bekannten Läufen ändert sich kein Urteil, gerechnet |
-| C6 | `gelaende_erwartet` ist aus dem Auftrag steuerbar | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `homeworker` liest `params.gelaende_erwartet`; über IFC-Klassennamen greift der Katalogbeweis ohnehin |
+| C2 | Die HomeStation hat den Stand vom Abend des 26.08. gezogen | 🟥 **offen** | — | `auftraege/offen/auf-20260826-57.json` — **24 Commits seit ihrem letzten Bericht (`auf-47`)**, vier davon ändern ihren Ausführungspfad |
+| C3 | `bestanden` ist dreiwertig — `null` heisst *nicht beurteilbar* | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tiefenschaetzer.qa_gegen_soll`, `gate.gesamturteil` — Bestätigung über `auftraege/offen/auf-20260826-57.json` |
+| C4 | Der Maskenweg wird im Homeworker gefahren | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tools/homeworker.py`, `maske.maske_aus_bericht` — bis dahin standen `rho_maske`, `kante`, `paarurteil` in **jedem** ihrer Läufe auf `None` |
+| C5 | Die gemessene Polarität kommt am Tor an | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tiefenschaetzer.gemessenes_zeichen` — an den 14 bekannten Läufen ändert sich kein Urteil, gerechnet |
+| C6 | `gelaende_erwartet` ist aus dem Auftrag steuerbar | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tools/homeworker.py` liest `params.gelaende_erwartet`; über IFC-Klassennamen greift `maske.ist_ifc_klassenkatalog` ohnehin |
 
 **Der unangenehme Eintrag ist C2.** Eine Verhaltensänderung, die über git ankommt, hat
 keine Ansage — und `bestanden: null` sieht auf der anderen Seite aus wie ein Fehler, wenn

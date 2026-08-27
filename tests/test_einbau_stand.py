@@ -30,11 +30,21 @@ from pathlib import Path
 
 import pytest
 
+from aiimaging import einbau
+
 REPO = Path(__file__).resolve().parents[1]
 BLATT = REPO / "docs" / "EINBAU_STAND.md"
 
 #: Eine Tabellenzeile: ``| A1 | Posten | Zustand | Seit | Beleg |``
-ZEILE = re.compile(r"^\|\s*([AB]\d+)\s*\|(.+)\|\s*$")
+#:
+#: **Aus ``aiimaging.einbau`` geholt, nicht hier nachgebaut** — und der Anlass ist ein
+#: Befund über diesen Wächter selbst (26.08.2026): Der Ausdruck stand hier als
+#: ``[AB]\d+``, und als ein **Weg C** dazukam, hat er dessen sechs Zeilen stillschweigend
+#: übersprungen. Sechs Posten waren unbewacht, und nichts wurde rot.
+#:
+#: *Ein Wächter mit fest eingebautem Alphabet hört auf zu wachen, sobald ein neuer
+#: Buchstabe auftaucht.* ``test_der_waechter_sieht_jede_zeile_der_tabelle`` hält dagegen.
+ZEILE = einbau.ZEILE
 
 #: Was in Rückwärtsstrichen steht.
 PFAD = re.compile(r"`([^`]+)`")
@@ -47,9 +57,10 @@ KLAMMER = re.compile(r"^(.*)\{([^}]+)\}(.*)$")
 #: darin verschwindet.
 SYMBOL = re.compile(r"^([a-z_][a-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)$")
 
-#: Die Wörter, mit denen ein Zustand anfängt. Genau diese — ein weiterer wäre eine neue
-#: Kategorie und gehört nicht still eingeführt.
-ZUSTAENDE = ("erledigt", "halb", "entschieden, nicht gebaut", "offen")
+#: Die Wörter, mit denen ein Zustand anfängt — **aus ``aiimaging.einbau``**, nicht hier
+#: nachgebaut. Zwei Listen derselben Kategorien an zwei Stellen driften auseinander, und
+#: die Stelle, die zuerst veraltet, ist immer die im Test.
+ZUSTAENDE = einbau.ZUSTAENDE
 
 OFFEN = REPO / "auftraege" / "offen"
 
@@ -242,6 +253,31 @@ def test_jede_zeile_ist_ueberhaupt_pruefbar(kennung, spalten):
         f"{kennung} nennt weder Datei noch Symbol noch Sitzung noch «niemand». Die "
         f"Zeile ist damit von keiner Prüfung erfasst — sie sagt etwas, das sich nicht "
         f"nachsehen lässt."
+    )
+
+
+def test_der_waechter_sieht_jede_zeile_der_tabelle():
+    """**Von der anderen Seite gezählt — und der Anlass ist dieser Wächter selbst.**
+
+    Sein Zeilenausdruck stand bis zum 26.08.2026 als ``[AB]\\d+`` hier. Als an jenem Abend
+    ein **Weg C** dazukam, hat er dessen sechs Zeilen stillschweigend übersprungen: Sechs
+    Posten waren unbewacht, alle Tests grün.
+
+    *Ein Wächter mit fest eingebautem Alphabet hört auf zu wachen, sobald ein neuer
+    Buchstabe auftaucht* — und er sagt es nicht, denn eine Zeile, die er nicht sieht, kann
+    er auch nicht bemängeln.
+
+    Dieser Test zählt die Zeilen darum **unabhängig** vom Ausdruck des Wächters: alles,
+    was wie ``| X<Ziffer> |`` aussieht, muss auch bei ihm ankommen.
+    """
+    roh = re.findall(r"^\|\s*([A-Za-z]+\d+)\s*\|", BLATT.read_text(encoding="utf-8"),
+                     re.MULTILINE)
+    gesehen = [k for k, _ in _zeilen()]
+
+    assert roh, "keine einzige Tabellenzeile gefunden — dann prüft dieser Test nichts"
+    assert sorted(roh) == sorted(gesehen), (
+        f"Der Wächter übersieht {sorted(set(roh) - set(gesehen))}. Eine Zeile, die er "
+        f"nicht sieht, kann er auch nicht bemängeln."
     )
 
 
