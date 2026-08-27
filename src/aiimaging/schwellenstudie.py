@@ -469,6 +469,7 @@ def studienlauf(soll: Sequence[float], *, breite: int, hoehe: int,
 
     geo_idx = _geometrie_indizes(soll)
 
+    gerechnet: set[str] = set()
     zeilen: list[dict] = []
     warnungen: list[str] = []
     for art in arten:
@@ -489,6 +490,11 @@ def studienlauf(soll: Sequence[float], *, breite: int, hoehe: int,
                 "ist_kontrolle": STOERUNGEN[art].ist_kontrolle,
             }
             zeilen.append(zeile)
+            # Den Rechenweg vom Urteil ABLESEN statt ihn danebenzuschreiben. Bis zum
+            # 26.08.2026 stand hier fest `geometrie_qa.METHODE` — richtig, solange die
+            # Studie ungerichtet rechnet, aber richtig aus Zufall. Genau dieselbe Stelle
+            # ist am selben Tag in `kosmo_szene` gefunden worden, und dort war sie falsch.
+            gerechnet.add(urteil["methode"])
             if urteil["score"] is None:
                 warnungen.append(
                     f"{art} bei Stärke {staerke}: nicht messbar — {urteil.get('begruendung')}")
@@ -498,7 +504,11 @@ def studienlauf(soll: Sequence[float], *, breite: int, hoehe: int,
     return {
         "szene": szene, "breite": breite, "hoehe": hoehe,
         "schwelle": schwelle, "seed": seed,
-        "methode": geometrie_qa.METHODE,
+        # `None` heisst: es wurde nichts gerechnet (leere Artenliste, leere Stärkeliste).
+        # Hier `geometrie_qa.METHODE` hinzuschreiben wäre eine Angabe über einen
+        # Rechenweg, den niemand gegangen ist — dieselbe Sorte Zahl ohne Messung, gegen
+        # die der Rest dieses Moduls gebaut ist.
+        "methode": " / ".join(sorted(gerechnet)) or None,
         # Woher die Karte kam und wie viel von ihr Bauwerk ist. Der Anteil steht hier,
         # weil `geom_iou` an ihm hängt: Eine Schwelle, die an 44 % Geometrie kalibriert
         # wurde und bei 8 % angewandt wird, ist nicht dieselbe Schwelle.
