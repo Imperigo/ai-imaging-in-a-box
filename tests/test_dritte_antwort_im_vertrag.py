@@ -213,3 +213,31 @@ def test_die_zahlen_stehen_dabei_auf_null_und_nicht_auf_einer_erfundenen_zahl():
     geo = ergebnis["qa"]["geometry"]
     assert geo["geometry_fidelity"] is None
     assert geo["spearman"] is None
+
+
+
+def test_der_vertrag_nennt_den_widerspruch_zwischen_score_und_maskenweg():
+    """**Sichtbar im Vertrag, nicht nur am Terminal.**
+
+    Der Kurzbefund erreicht den Betreiber an der Kommandozeile. Die Oberfläche liest den
+    Vertrag — und ohne diesen Satz ist ein Lauf, bei dem der Maskenweg widerspricht, von
+    einem sauberen nicht zu unterscheiden.
+
+    Der Satz sagt ausdrücklich, dass ``passed: true`` hier **weniger** heisst als sonst:
+    der Score besteht, nicht dass überhaupt gebaut wurde.
+    """
+    grund = _reason({"score": 0.951, "bestanden": True, "geom_iou": 1.0,
+                     "paarurteil": {"bestanden": False, "traeger": "rho"}})
+
+    assert "SCORE BESTEHT, MASKENWEG WIDERSPRICHT" in grund
+    assert "nicht, dass ueberhaupt gebaut wurde" in grund
+    assert "0.951" in grund
+
+
+def test_ohne_widerspruch_steht_der_satz_nicht_im_vertrag():
+    """Gegenprobe — sonst trüge jeder Vertrag den Satz, und keiner läse ihn."""
+    for urteil in ({"score": 0.9, "bestanden": True, "paarurteil": {"bestanden": True}},
+                   {"score": 0.9, "bestanden": True, "paarurteil": None},
+                   {"score": 0.1, "bestanden": False,
+                    "paarurteil": {"bestanden": False}}):
+        assert "MASKENWEG WIDERSPRICHT" not in _reason(urteil), urteil

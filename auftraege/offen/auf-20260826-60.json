@@ -1,0 +1,31 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260826-60",
+  "art": "render",
+  "beschreibung": "Ein verschwundenes Bauwerk besteht das Tor mit 0.951, waehrend der Maskenweg 'durchgefallen' sagt. Nachgebaut ohne GPU — wir brauchen dieselben vier Faelle mit eurem wirklichen Schaetzer.",
+  "anweisung": "=== EIN VERSCHWUNDENES BAUWERK BESTEHT DAS TOR MIT 0.951 ===\n\nNachgemessen heute abend, ohne GPU, an im Repo erzeugter Geometrie — und dann durch die\nECHTE Kette bestaetigt. Wir brauchen dieselbe Messung mit eurem wirklichen Schaetzer,\nbevor wir daraus etwas ableiten.\n\n--- 1 · WAS WIR GEMESSEN HABEN ---\n\nSzene: Quader auf vierfacher Gelaendeplatte, 400 px, Kamera sSE, Bodenanteil 0.790.\nVier Halluzinationsfaelle, nachgebaut nach eurem auf-20260821-26.\n\n    Fall                    Score   geom_iou   rho_maske   Paarurteil\n    treu (perfekt)          1.000     1.000      +1.000    bestanden\n    H1 Bauwerk ganz weg     0.951     1.000      -0.018    DURCHGEFALLEN\n    H2 20 px versetzt       0.982     0.984      +0.451    DURCHGEFALLEN\n    Versatz 4 px            0.997     0.997      +0.911    bestanden\n    H4 90 Grad gedreht      0.920     0.941      -0.195    DURCHGEFALLEN\n    weisses Rauschen        0.026     0.530      +0.001    durchgefallen\n\nUnd dann dasselbe durch `tiefenschaetzer.qa_gegen_soll`, MIT Maske:\n\n    bestanden=True   score=0.9507   geom_iou=1.0000\n    paarurteil: bestanden=False, Traeger rho\n    Begruendung: \"Score 0.951 >= Schwelle 0.65\"\n\nDAS BAUWERK IST VOLLSTAENDIG VERSCHWUNDEN. Der Maskenweg sagt durchgefallen. Das Tor\nsagt bestanden.\n\n--- 2 · WARUM DAS KEIN NEUER BEFUND IST UND TROTZDEM EINER ---\n\nEuer auf-20260821-26 hat es gemessen: geom_iou steigt nicht TROTZ, sondern WEGEN der\nAbwesenheit — der Boden bleibt liegen, und das Bauwerk war die einzige Stelle, an der\nSoll und Ist sich unterscheiden konnten.\n\nNeu ist der direkte Vergleich AN DERSELBEN SZENE: Die beiden Masse urteilen\nentgegengesetzt, und das Tor liest nur eines davon.\n\n--- 3 · WARUM WIR EUCH BRAUCHEN ---\n\nUnsere Ist-Karten sind NACHGEBAUT, nicht geschaetzt. \"Das Bauwerk ist weg\" heisst bei\nuns: der Boden laeuft durch, mit dem Zeilenmittel des echten Gelaendes. Was euer\nSchaetzer bei einem wirklich fehlenden Bauwerk ausgibt, wissen wir nicht — und genau\ndavon haengt ab, ob rho_maske dort auch faellt.\n\nEin Schaetzer koennte in die Luecke etwas legen, das mit dem Soll korreliert. Dann\nfaengt der Maskenweg den Fall NICHT, und unsere ganze Folgerung faellt.\n\n--- 4 · WAS ZU TUN IST ---\n\nSCHRITT 1 · Die Szene bauen.\n  python3 tools/make_test_ifc.py build/gel.ifc IFC4 --gelaende --gelaende-vielfaches=4\n  Der Schalter ist neu (seit heute abend). Dann glb, dann Multipass mit material_id,\n  400 px, Kamera sSE, und kamera_huellbox auf die BAUWERKSBOX aus dem Bericht\n  (`bbox_bauwerk`) — sonst schrumpft der Bau zum Fleck und der Boden wird ein\n  Horizontstreifen. Das haben wir dreimal falsch gemacht, bevor es stimmte.\n\nSCHRITT 2 · Vier Bilder erzeugen ODER vier Ist-Karten schaetzen.\n  Uns geht es um die SCHAETZUNG, nicht um das Bildmodell. Am billigsten:\n    (a) treu       — der Beauty-Pass der Szene\n    (b) H1         — dieselbe Szene OHNE das Bauwerk gerendert (nur die Platte)\n    (c) H2         — Bauwerk um rund 20 px versetzt\n    (d) Rauschen   — ein Rauschbild\n  Wenn (c) zu teuer ist, lasst es weg. (b) ist der Fall, um den es geht.\n\nSCHRITT 3 · Durch `qa_gegen_soll` schicken, MIT Maske.\n  Die Maske kommt aus dem Material-ID-Pass der TREUEN Szene — auch fuer H1. Das ist der\n  Punkt: Wir fragen, was an der Stelle steht, wo laut Modell das Bauwerk sein muesste.\n\nSCHRITT 4 · Melden.\n\n--- 5 · WAS AUSDRUECKLICH NICHT ZU TUN IST ---\n\n  * NICHTS an den Schwellen aendern. Weder 0.65 noch PAAR_RHO_SCHWELLE.\n  * NICHT `bestanden` reparieren. Der Entscheid gehoert dem Owner, und er haengt an\n    eurer Zahl.\n  * KEINE Bilddaten zurueck. Regel 3: Zahlen und Text.\n  * NICHT mitteln. Vier Faelle, vier Zeilen.\n\n--- 6 · WAS WIR MIT DER ANTWORT MACHEN ---\n\n  * rho_maske faellt bei H1 auch mit eurem Schaetzer: Dann steht der Befund, und der\n    Owner entscheidet, ob das Paarurteil das Tor sperren darf.\n  * rho_maske faellt NICHT: Dann faengt der Maskenweg den wichtigsten Fall nicht, und\n    unsere Folgerung von heute abend wird zurueckgenommen — nicht nachjustiert.\n  * Ihr bekommt H1 gar nicht gerendert: Sagt es. Eine Szene ohne Bauwerk ist ein\n    Sonderfall, und es waere nicht das erste Mal, dass die Kette daran haengt.",
+  "erstellt": "2026-08-27T16:01:50Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {
+    "gelaende_vielfaches": 4,
+    "aufloesung": 400,
+    "kamera": "sSE"
+  },
+  "auflagen": [
+    "Keine Schwelle aendern — weder 0.65 noch PAAR_RHO_SCHWELLE",
+    "bestanden nicht reparieren, der Entscheid gehoert dem Owner",
+    "Regel 3: nur Zahlen und Text",
+    "Nicht mitteln — vier Faelle, vier Zeilen"
+  ],
+  "rueckgabe": [
+    "V1 je Fall: score, geom_iou, spearman, rho_maske, paarurteil.bestanden",
+    "V2 faellt rho_maske bei H1 (Bauwerk weg) auch mit eurem Schaetzer?",
+    "V3 was gibt der Schaetzer dort aus, wo das Bauwerk fehlt — Boden, Himmel, oder etwas anderes?",
+    "V4 falls H1 nicht renderbar: woran es scheitert"
+  ]
+}

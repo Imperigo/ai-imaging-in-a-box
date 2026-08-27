@@ -545,6 +545,8 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     * wie viele Kameras die Kompositionsprüfung beanstandet,
     * ob der Vorsprung des gewählten Startwerts belegt ist,
     * bei welchen Kameras das zweite Bein des Paartests **gar nichts messen kann**,
+    * wo der **Score besteht und der Maskenweg widerspricht** — das Loch, das seit dem
+      26.08.2026 offen bleibt und darum wenigstens sichtbar sein muss,
     * was der Betreiber bestellt hat und **nicht bekommt**,
     * dass der negative Prompt des Stils den Render nicht erreicht,
     * ob die Schwelle an **dieser** Maskenlage überhaupt noch etwas trennt,
@@ -631,6 +633,34 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
                       f"auf-vis-20260823-07): {', '.join(str(k) for k in unzustaendig)}"
                       f"  — nicht messbar heisst weder bestanden noch durchgefallen; "
                       f"eine Kamera mit freierem Hintergrund misst wieder")
+
+    # DER SCORE BESTEHT, DER MASKENWEG SAGT NEIN — und das Tor liest nur den Score.
+    #
+    # Owner-Entscheid 26.08.2026: Das Loch bleibt vorerst offen, weil ein zweites Tor auf
+    # einer PROVISORISCHEN Schwelle gute Bilder sperren wuerde und niemand weiss, wie
+    # viele (PAAR_KANTENANTEIL_SCHWELLE traegt selbst den Satz, sie liege "sehr viel
+    # naeher am Zufall als am Richtigen"). Aber es wird SICHTBAR — genau darum steht
+    # diese Zeile hier.
+    #
+    # Der Anlass ist gemessen und durch die Kette bestaetigt: Ein VOLLSTAENDIG
+    # verschwundenes Bauwerk gab `bestanden=True` bei Score 0.951 und geom_iou 1.000,
+    # waehrend `paarurteil` durchgefallen meldete (rho_maske -0.018). geom_iou steigt
+    # dort WEGEN der Abwesenheit — der Boden bleibt liegen, und das Bauwerk war die
+    # einzige Stelle, an der sich Soll und Ist unterscheiden konnten
+    # (docs/BRAUCHT_ES_GEOM_IOU_2026-08-26.md).
+    #
+    # SELBSTLOESCHEND: Sie steht nur, wenn beide Bedingungen zugleich zutreffen. Ein
+    # durchgefallener Score braucht sie nicht — dort sperrt das Tor ohnehin.
+    widerspruch = [k.get("kamera") for k in kameras
+                   if k.get("bestanden") is True
+                   and (k.get("paarurteil") or {}).get("bestanden") is False]
+    if widerspruch:
+        zeilen.append(
+            f"SCORE BESTEHT, MASKENWEG SAGT NEIN: {', '.join(str(k) for k in widerspruch)}"
+            f"  — das Tor liest nur den Score, und der kann bei viel Boden hoch bleiben, "
+            f"obwohl das Bauwerk fehlt (gemessen: verschwundenes Bauwerk, Score 0.951, "
+            f"geom_iou 1.000, rho_maske -0.018). Das Paarurteil sperrt hier NICHT — es "
+            f"steht nur da. Wer diesem Lauf traut, traut dem Score allein")
 
     # Zuletzt und ganz oben im Rang, wenn es denn vorkommt: eine Bestellung, die nicht
     # ausgefuehrt wurde. Alles Uebrige auf dieser Liste sind Befunde ueber das ERGEBNIS —

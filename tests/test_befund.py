@@ -577,3 +577,52 @@ def test_eine_nicht_gerenderte_kamera_meldet_keine_ausgefallene_auswahl():
     ], "geometrie_urteil": {"kameraspanne": {"n_gemessen": 0}}}
 
     assert not any("KEINE STARTWERT-AUSWAHL" in z for z in abholer.befund_kurz(befund))
+
+
+
+# ======================================================================================
+# Das Loch, das offen bleibt — und darum sichtbar sein muss
+# ======================================================================================
+
+def test_ein_bestandener_score_mit_widersprechendem_maskenweg_steht_da():
+    """**Owner-Entscheid 26.08.2026, und er ist unbequem.**
+
+    Ein durchgefallenes Paarurteil sperrt das Tor **nicht** — die Paarschwellen sind
+    provisorisch, und ein zweites Tor auf einer Zahl, die selbst den Satz trägt, sie liege
+    *«sehr viel näher am Zufall als am Richtigen»*, würde gute Bilder sperren. Wie viele,
+    ist ungemessen.
+
+    **Also bleibt das Loch offen und wird sichtbar gemacht.** Der Anlass ist durch die
+    Kette bestätigt: Ein vollständig verschwundenes Bauwerk gab ``bestanden=True`` bei
+    Score 0.951 und ``geom_iou`` 1.000, während ``paarurteil`` durchgefallen meldete
+    (``rho_maske`` −0.018). ``geom_iou`` steigt dort **wegen** der Abwesenheit.
+
+    *Wer diesem Lauf traut, traut dem Score allein — und die Zeile sagt es ihm.*
+    """
+    befund = {"kameras": [
+        {"kamera": "s", "bestanden": True,
+         "paarurteil": {"bestanden": False, "traeger": "rho"}},
+    ]}
+
+    zeilen = "\n".join(abholer.befund_kurz(befund))
+
+    assert "SCORE BESTEHT, MASKENWEG SAGT NEIN" in zeilen
+    assert "0.951" in zeilen, "die Zahl sagt, wie gross das Loch ist"
+    assert "sperrt hier NICHT" in zeilen, (
+        "und dass es eben NICHT gesperrt wird — sonst liest sich die Zeile wie ein Riegel"
+    )
+
+
+def test_ohne_widerspruch_schweigt_die_zeile():
+    """Die Gegenprobe. **Eine Zeile, die immer dasteht, wird nicht gelesen.**
+
+    Drei Fälle, in denen sie schweigen muss: Paarurteil bestanden, Paarurteil gar nicht
+    gemessen, und ein Score, der ohnehin durchfällt — dort sperrt das Tor schon.
+    """
+    for kamera in (
+            {"kamera": "s", "bestanden": True, "paarurteil": {"bestanden": True}},
+            {"kamera": "s", "bestanden": True, "paarurteil": None},
+            {"kamera": "s", "bestanden": False, "paarurteil": {"bestanden": False}},
+    ):
+        zeilen = "\n".join(abholer.befund_kurz({"kameras": [kamera]}))
+        assert "MASKENWEG SAGT NEIN" not in zeilen, kamera

@@ -844,6 +844,29 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
                     "nicht durchgefallen, sondern ungeprueft — ein Lauf fehlt.")
         teile.insert(0, lage)
 
+    # DAS LOCH, DAS OFFEN BLEIBT — und darum im Vertragsgrund steht.
+    #
+    # Owner-Entscheid 26.08.2026: Ein durchgefallenes Paarurteil sperrt das Tor (noch)
+    # nicht, weil die Paarschwellen provisorisch sind. Sichtbar wird es trotzdem, und
+    # zwar HIER — im Vertrag, den die Oberflaeche liest, nicht nur im Kurzbefund am
+    # Terminal.
+    #
+    # Der Satz sagt ausdruecklich, dass 'passed: true' hier WENIGER heisst als sonst.
+    # Ohne ihn ist ein solcher Lauf von einem sauberen nicht zu unterscheiden — und
+    # gemessen ist der Unterschied gross: Ein verschwundenes Bauwerk kam auf Score 0.951
+    # bei rho_maske -0.018.
+    #
+    # SELBSTLOESCHEND: nur wenn der Score besteht UND das Paarurteil widerspricht.
+    _geo = geometrie_urteil or {}
+    if (_geo.get("bestanden") is True
+            and (_geo.get("paarurteil") or {}).get("bestanden") is False):
+        teile.insert(0, (
+            "SCORE BESTEHT, MASKENWEG WIDERSPRICHT: Das Tor liest den Score, und der "
+            "kann bei viel Boden hoch bleiben, obwohl das Bauwerk fehlt (gemessen: "
+            "Score 0.951, geom_iou 1.000, rho_maske -0.018 bei VOLLSTAENDIG "
+            "verschwundenem Bauwerk). 'passed: true' heisst hier: der Score besteht — "
+            "nicht, dass ueberhaupt gebaut wurde."))
+
     # Die Zahl, die sagt, worueber das Urteil ueberhaupt spricht. Steht VOR den uebrigen
     # Teilen, weil sie alle anderen einordnet: Ist die Schwelle fuer diese Aufnahme
     # unerreichbar, misst jeder Score die SZENE und nicht das Bild
