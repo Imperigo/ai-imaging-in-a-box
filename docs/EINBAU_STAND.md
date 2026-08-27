@@ -21,6 +21,20 @@ das nach und **scheitert mit Rückgabewert 1**, sobald ein offener Posten nieman
 **Legende:** 🟩 = liegt in **unserem** Repo · 🟥 = liegt in einem **fremden** Repo, dort
 wird ohne Rückfrage nichts geändert.
 
+**Und seit dem 27.08.2026 sagt jede erledigte Zeile, WORAUF ihr Beleg ruht** — eine von
+zwei Angaben, sonst scheitert `tools/einbau.py`:
+
+* **belegt im Repo:** Die Aussage ist im Repo entschieden. *Nicht zulässig, wenn der Beleg
+  einen Kommandozeilenschalter, eine `.service`/`.timer`-Einheit oder einen Pfad nach
+  `betrieb/` nennt — alle drei sagen etwas darüber, **wie** etwas aufgerufen wird, und das
+  steht in der Installation und nicht in der Datei.*
+* **belegt am Gerät:** Ein Auftrag, auf den drüben **geantwortet** wurde, oder die
+  **Uhrzeit** einer Messung dort.
+
+*Der Anlass ist `B8`. Es stand sechs Tage als erledigt, weil die eingecheckte
+Diensteinheit den nötigen Schalter trug — die installierte stammte vom 20.08. und kannte
+ihn nicht. Der alte Wächter prüfte, ob ein Beleg **existiert**, und der existierte.*
+
 ---
 
 ## Weg A — über das Cockpit (MCP-Knoten)

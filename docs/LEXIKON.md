@@ -964,6 +964,21 @@ Anzeige da, bis `auftraege/offen/auf-20260827-61.json` sie kalibriert.*
 erkennen gibt, ist ehrlicher als gar keine Zahl — sie sagt, wo man heute steht. Unehrlich
 wird sie erst, wenn sie anfängt zu entscheiden.*
 
+**Beleg im Repo vs. Beleg am Gerät** — Zwei Arten, eine Behauptung zu stützen, und sie
+sind **nicht austauschbar**. Eine Datei im Repo belegt, was jemand *geschrieben* hat. Ob
+das auf einem anderen Rechner auch **läuft**, sagt sie nicht — dort entscheidet die
+Installation, und die kann älter sein, anders heissen oder gar nicht existieren.
+*In diesem Projekt am 27.08.2026 teuer gelernt: Ein Posten stand **sechs Tage** als
+erledigt, weil die eingecheckte Diensteinheit den nötigen Schalter trug. Die installierte
+stammte vom 20.08. und kannte ihn nicht; in der Zwischenzeit blieb jede über diesen Weg
+bestellte Arbeit liegen.*
+*Der Wächter darüber konnte es nicht sehen — er prüfte, ob ein Beleg **existiert**, und
+der existierte. Seither muss jede erledigte Zeile sagen, welcher Art ihr Beleg ist, und
+«im Repo» ist gesperrt, sobald der Beleg einen Kommandozeilenschalter, eine Diensteinheit
+oder einen Betriebspfad nennt. Nachgesehen wird auf dem fremden Gerät weiterhin nicht —
+das kann von hier niemand. Was sich erzwingen lässt, ist die **Angabe**, und danach ist
+prüfbar, was vorher Auslegung war.*
+
 **Obergrenze (eines Befundes)** — Ein Messaufbau, der einer Sache absichtlich die
 **besten denkbaren** Bedingungen gibt, um zu klären, ob sie unter *irgendwelchen*
 Bedingungen taugt. Das Ergebnis ist einseitig belastbar: Was hier scheitert, ist erledigt;
@@ -3672,6 +3687,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-27 | Ergaenzt: **Beleg im Repo vs. Beleg am Geraet**. Anlass ist der teuerste Buchfuehrungsfehler des Projekts: Ein Posten stand sechs Tage als erledigt, waehrend auf dem Geraet eine sechs Tage aeltere Fassung lief — der Waechter prueft, ob ein Beleg EXISTIERT, und der existierte. Der Eintrag traegt mit, was ein Waechter hier ueberhaupt erzwingen kann: nicht die Wahrheit ueber ein fremdes Geraet, sondern die Angabe, welcher Art der Beleg ist |
 | 2026-08-27 | Ergaenzt: **Obergrenze (eines Befundes)**. **Rasterdublette** um die Kameraachse erweitert (23 von 33 Fallarten auf vier Stellen identisch — eine Dublette braucht kein Staerkeraster, nur zwei Wege zur selben Zahl). **Paarurteil** um seinen staerksten Beleg: Die beiden Masse versagen in ENTGEGENGESETZTE Richtungen — ordentliches rho bei 2.8 % Umriss auf der einen Seite, Kantenanteil 1.0000 bei rho -1.0000 auf der anderen |
 | 2026-08-27 | Ergaenzt: **Trennkurve (ueber benannte Faelle)**, und **Falsch frei / falsch gesperrt** um ihr zweites Auftreten erweitert. Anlass: Die Kalibrierung der Paarschwellen braucht eine Tabelle mit BEIDEN Fehlerzahlen — von Hand gerechnet waere sie wieder eine abgelesene Schwelle. Der Eintrag traegt mit, warum eine leere Gruppe *nicht beurteilbar* ergibt und nicht *sauber getrennt* |
 | 2026-08-27 | Ergaenzt: **Abgelesene Schwelle** und **Selbstloeschende Meldung**. Beide fallen im selben Vorgang an: Gemessen wurde, dass ein VOLLSTAENDIG verschwundenes Bauwerk das Tor mit Score 0.951 besteht, waehrend das Paarurteil durchgefallen meldet (rho_maske -0.018). Sperren darf das Paarurteil noch nicht, weil seine beiden Schwellen abgelesen und nicht kalibriert sind (0.80 aus sieben Faellen einer Szene) — also wird der Widerspruch stattdessen sichtbar gemacht, und zwar mit einer Meldung, die nur in genau dieser Lage steht |

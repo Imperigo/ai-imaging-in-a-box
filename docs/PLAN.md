@@ -4853,6 +4853,15 @@ wird — nicht, weil etwas liegen bleibt. Sie fällt erst, wenn drüben jemand a
   wieder als unbesetzt. *Eine Prüfung auf die Abwesenheit eines Wortes prüft die Prosa,
   nicht die Sache.* Ein Adressat wird jetzt positiv belegt.
 
+- [x] **Der Wächter fragt jetzt, worüber ein Beleg etwas aussagt** (27.08.2026).
+      `einbau.ohne_geraetebeweis`, `tools/einbau.py` scheitert darauf. Jede erledigte
+      Zeile nennt **belegt im Repo** oder **belegt am Gerät**; «im Repo» ist gesperrt,
+      sobald der Beleg einen Schalter, eine Diensteinheit oder einen `betrieb/`-Pfad
+      nennt, und «am Gerät» verlangt einen **beantworteten** Auftrag oder die Uhrzeit
+      einer Messung dort. *Anlass: `B8` stand sechs Tage als erledigt, während auf dem
+      Gerät die Fassung vom 20.08. lief. Der alte Wächter prüfte, ob ein Beleg
+      **existiert** — und der existierte.* Vier Mutationsproben, alle vom richtigen Test
+      gefangen.
 - [ ] **Was noch fehlt, und es ist der Kern des Auftrags:** Ein Messauftrag ist kein
       Einbauauftrag. `auf-52` fragt den UI-Worker, was er zum Bauen braucht — das ist für
       eine erste Runde richtig, baut aber noch nichts. Sobald seine Antwort da ist, muss
@@ -4885,7 +4894,7 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 - [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
       Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
       die Zeile in gewöhnlichen Läufen schweigt.
-- [x] **Sammlung 4438 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+- [x] **Sammlung 4470 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
       und ist nachgeführt.
 - [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
       `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.
