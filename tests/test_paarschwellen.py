@@ -217,3 +217,66 @@ def test_der_bericht_sagt_nicht_beurteilbar_statt_sauber():
     text = paarschwellen.bericht(paarschwellen.trennkurve([]))
     assert "NICHT BEURTEILBAR" in text
     assert "SAUBER" not in text
+
+
+# ======================================================================================
+# Der Einstieg — damit die Fähigkeit nicht nur über Tests erreichbar ist
+# ======================================================================================
+
+def _werkzeug():
+    """`tools/paarschwellen.py` als Modul — es liegt nicht im Paket."""
+    import importlib.util
+    from pathlib import Path
+    pfad = Path(__file__).resolve().parents[1] / "tools" / "paarschwellen.py"
+    spec = importlib.util.spec_from_file_location("werkzeug_paarschwellen", pfad)
+    modul = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modul)
+    return modul
+
+
+def _schreibe(tmp_path, faelle):
+    import json
+    p = tmp_path / "faelle.json"
+    p.write_text(json.dumps(faelle), encoding="utf-8")
+    return p
+
+
+def test_das_werkzeug_scheitert_wenn_die_kurve_keine_kalibrierung_ist(tmp_path, capsys):
+    """Rückgabewert 1 — und die Tabelle wird trotzdem gedruckt."""
+    w = _werkzeug()
+    pfad = _schreibe(tmp_path, [_fall("g0", True, 0.9), _fall("b0", False, 0.3)])
+    assert w.main([str(pfad)]) == 1
+    assert "UMFANG UNTER DEM MINDESTMASS" in capsys.readouterr().out
+
+
+def test_das_werkzeug_gibt_null_zurueck_wenn_die_kurve_traegt(tmp_path):
+    w = _werkzeug()
+    pfad = _schreibe(tmp_path, _volle_menge([0.9] * 20, [0.3] * 20))
+    assert w.main([str(pfad)]) == 0
+
+
+def test_das_werkzeug_nimmt_auch_einen_satz_mit_schluessel_faelle(tmp_path):
+    import json
+    w = _werkzeug()
+    p = tmp_path / "f.json"
+    p.write_text(json.dumps({"faelle": _volle_menge([0.9] * 20, [0.3] * 20)}),
+                 encoding="utf-8")
+    assert w.main([str(p)]) == 0
+
+
+def test_das_werkzeug_waehlt_die_reihe_nach_der_groesse(tmp_path, capsys):
+    """Die beiden Reihen sind verschieden lang — sonst wären die Tabellen verwechselbar."""
+    w = _werkzeug()
+    pfad = _schreibe(tmp_path, _volle_menge([0.9] * 20, [0.3] * 20))
+    w.main([str(pfad), "--groesse", "kantenanteil"])
+    text = capsys.readouterr().out
+    assert "kantenanteil" in text
+    assert "0.95" not in text, "die Kantenanteil-Reihe endet bei 0.90"
+
+
+def test_das_werkzeug_meldet_einen_fall_ohne_etikett_statt_ihn_zu_ueberspringen(tmp_path):
+    w = _werkzeug()
+    import json
+    p = tmp_path / "f.json"
+    p.write_text(json.dumps([{"fall_id": "x", "wert": 0.5}]), encoding="utf-8")
+    assert w.main([str(p)]) == 2
