@@ -82,13 +82,20 @@ etwas fehlt. Hier sieht ein veralteter Stand aus wie der aktuelle.*
 | # | Posten | Zustand | Seit | Beleg / treibender Auftrag |
 |---|---|---|---|---|
 | C1 | Der Abholer läuft dort als Dienst | 🟩 **erledigt** | 2026-08-22 | `betrieb/kosmo-abholer.{service,timer}`, Ergebnisse ab `auf-20260822-31` |
+| C7 | **Der Homeworker hat einen Takt** — bis dahin stiess ihn nichts an | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `betrieb/kosmo-worker.{sh,service,timer}`, `tools/homeworker.py --hoechstens`; Installation: `auftraege/offen/auf-20260826-59.json` |
 | C2 | Die HomeStation hat den Stand vom Abend des 26.08. gezogen | 🟥 **offen** | — | `auftraege/offen/auf-20260826-57.json` — **24 Commits seit ihrem letzten Bericht (`auf-47`)**, vier davon ändern ihren Ausführungspfad |
 | C3 | `bestanden` ist dreiwertig — `null` heisst *nicht beurteilbar* | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tiefenschaetzer.qa_gegen_soll`, `gate.gesamturteil` — Bestätigung über `auftraege/offen/auf-20260826-57.json` |
 | C4 | Der Maskenweg wird im Homeworker gefahren | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tools/homeworker.py`, `maske.maske_aus_bericht` — bis dahin standen `rho_maske`, `kante`, `paarurteil` in **jedem** ihrer Läufe auf `None`. Bestätigung: `auftraege/offen/auf-20260826-57.json` (V2) |
 | C5 | Die gemessene Polarität kommt am Tor an | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tiefenschaetzer.gemessenes_zeichen` — an den 14 bekannten Läufen ändert sich kein Urteil, gerechnet. Bestätigung: `auftraege/offen/auf-20260826-57.json` (V3, V5) |
 | C6 | `gelaende_erwartet` ist aus dem Auftrag steuerbar | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tools/homeworker.py` liest `params.gelaende_erwartet`; über IFC-Klassennamen greift `maske.ist_ifc_klassenkatalog` ohnehin. Bestätigung: `auftraege/offen/auf-20260826-57.json` (V1) |
 
-**Der unangenehme Eintrag ist C2.** Eine Verhaltensänderung, die über git ankommt, hat
+**Der unangenehmste Eintrag ist C7, und er lag auf unserer Seite.** Der Abholer hat seit
+dem 22.08. einen Takt; der Homeworker hatte keinen. Sein Ritus war von Hand — `git pull`,
+laufen lassen, `git add && commit && push` —, und solange niemand tippte, lagen Aufträge
+beliebig lange. Am 26.08. waren es **siebzehn, der älteste drei Tage**. *Das ist der
+Unterschied zwischen «beauftragt» und «wird auch gemacht».*
+
+**Und C2.** Eine Verhaltensänderung, die über git ankommt, hat
 keine Ansage — und `bestanden: null` sieht auf der anderen Seite aus wie ein Fehler, wenn
 niemand gesagt hat, dass es einer sein soll. `auf-57` sagt es, bevor gezogen wird, und
 bittet um **einen** Lauf zur Bestätigung.

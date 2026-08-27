@@ -519,6 +519,8 @@ def main(argv=None) -> int:
     ap.add_argument("--alle", action="store_true", help="alles Unerledigte abarbeiten")
     ap.add_argument("--auftrag", default=None, help="einen bestimmten Auftrag")
     ap.add_argument("--gpu", action="store_true", help="nur den GPU-Zustand zeigen")
+    ap.add_argument("--hoechstens", type=int, default=None, metavar="N",
+                    help="hoechstens N Auftraege je Durchgang (fuer den Takt eines Dienstes)")
     a = ap.parse_args(argv)
     repo = Path(a.repo).resolve()
 
@@ -541,6 +543,23 @@ def main(argv=None) -> int:
         for s in offen:
             print(f"  {s['auftrag_id']}  [{s['art']}]  {s['beschreibung'][:70]}")
         return 0
+
+    # EIN DECKEL JE DURCHGANG — fuer den Betrieb als Dienst.
+    #
+    # `--alle` kann zwoelf Auftraege bedeuten, und ein Renderlauf dauert Minuten. Ein
+    # Takt, der erst nach Stunden zurueckkommt, ist keiner: Die Karte bleibt belegt, ein
+    # dringender Auftrag wartet hinter elf alten, und ein haengender Lauf haelt die ganze
+    # Reihe auf. Der Abholer loest dasselbe mit `--hoechstens 1`; hier stand es bis zum
+    # 26.08.2026 nicht zur Verfuegung, und darum lief der Homeworker nur von Hand.
+    #
+    # Die Reihenfolge bleibt die der Ablage — wer den aeltesten zuerst will, sagt es mit
+    # `--auftrag`. Eine eigene Sortierung hier waere eine Betriebsentscheidung an der
+    # falschen Stelle.
+    if a.hoechstens is not None:
+        if a.hoechstens < 1:
+            print(f"--hoechstens {a.hoechstens}: mindestens 1, sonst laeuft nichts.")
+            return 1
+        offen = offen[:a.hoechstens]
 
     zustand = gpu_zustand()
     for satz in offen:

@@ -1,0 +1,29 @@
+# VOR DEM INSTALLIEREN: `<nutzer>` durch den eigenen Benutzernamen ersetzen.
+#
+# Regel 3: In diesem Repo steht kein wirklicher Benutzername. Am 26.08.2026 ist genau
+# das in `kosmo-abholer.service` dreimal gefunden worden — der Waechter las damals keine
+# `.service`-Dateien.
+
+[Unit]
+Description=KosmoVis-Homeworker (arbeitet Auftraege aus auftraege/offen ab) — ein Durchgang
+Documentation=file:///home/<nutzer>/ai-imaging-in-a-box/docs/EINBAU_STAND.md
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/<nutzer>/ai-imaging-in-a-box
+Environment=AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers
+# Ein Auftrag je Durchgang. Warum nicht alle: Ein Renderlauf dauert Minuten, und ein
+# Takt, der erst nach Stunden zurueckkommt, ist keiner — die Karte bliebe belegt, ein
+# dringender Auftrag wartete hinter elf alten, und ein haengender Lauf hielte die Reihe
+# auf. Dieselbe Ueberlegung wie `--hoechstens 1` beim Abholer.
+ExecStart=/usr/bin/env bash betrieb/kosmo-worker.sh 1
+# Zweite Sicherung neben der GPU-Schranke im Programm: Ein haengender Blender-Lauf darf
+# den Takt nicht auf Dauer belegen.
+TimeoutStartSec=3600
+# Freundlicher als der Abholer: Dieser Dienst rechnet lange Laeufe, und die interaktive
+# Arbeit auf der Maschine soll Vorrang behalten.
+Nice=10
+
+[Install]
+WantedBy=default.target

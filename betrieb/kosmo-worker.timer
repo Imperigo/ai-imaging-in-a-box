@@ -1,0 +1,17 @@
+[Unit]
+Description=Taktgeber fuer den KosmoVis-Homeworker
+
+[Timer]
+# Deutlich langsamer als der Abholer (30 s): Dort geht es um Renderauftraege der Bruecke,
+# die ein Mensch erwartet. Hier geht es um Messauftraege zwischen zwei Sitzungen — fuenf
+# Minuten sind schnell genug, und ein seltenerer Takt laesst die Karte oefter frei.
+#
+# Der Wert steht hier und nicht im Programm: Wer wie oft nachsieht, ist eine
+# Betriebsfrage, und sie gehoert nicht in eine Bibliothek.
+OnBootSec=5min
+OnUnitInactiveSec=5min
+AccuracySec=30s
+Unit=kosmo-worker.service
+
+[Install]
+WantedBy=timers.target

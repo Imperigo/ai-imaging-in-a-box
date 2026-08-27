@@ -1088,6 +1088,58 @@ def test_liste_zeigt_unerledigtes_ohne_etwas_zu_starten(tmp_path, capsys):
     assert "auf-20260818-99" in capsys.readouterr().out
 
 
+def test_hoechstens_deckelt_den_durchgang(tmp_path, monkeypatch, capsys):
+    """**Der Schalter, ohne den es keinen Takt geben konnte.**
+
+    ``--alle`` kann zwölf Aufträge bedeuten, und ein Renderlauf dauert Minuten. Ein Takt,
+    der erst nach Stunden zurückkommt, ist keiner: Die Karte bliebe belegt, ein dringender
+    Auftrag wartete hinter elf alten, und ein hängender Lauf hielte die Reihe auf.
+
+    Der Abholer löst dasselbe seit dem 22.08.2026 mit ``--hoechstens 1``. Der Homeworker
+    hatte es nicht — und lief darum **nur von Hand**. Genau das ist der Unterschied
+    zwischen «beauftragt» und «wird auch gemacht».
+    """
+    for nummer in (97, 98, 99):
+        _lege_auftrag_ab(tmp_path, f"auf-20260818-{nummer}")
+    gelaufen: list[str] = []
+    monkeypatch.setattr(hw, "fuehre_aus", lambda satz, repo, **kw: (
+        gelaufen.append(satz["auftrag_id"]) or hw.auf.baue_ergebnis(
+            auftrag_id=satz["auftrag_id"], status="ok")))
+
+    assert hw.main(["--repo", str(tmp_path), "--alle", "--hoechstens", "2"]) == 0
+
+    assert len(gelaufen) == 2, "der Deckel gilt, auch wenn mehr offen liegt"
+    assert len(hw.auf.unerledigt(tmp_path)) == 1, "der dritte bleibt für den nächsten Takt"
+
+
+def test_ohne_hoechstens_laeuft_weiterhin_alles(tmp_path, monkeypatch):
+    """Die Gegenprobe. Ohne sie prüfte der Test darüber nur, dass irgendwann Schluss ist.
+
+    Der Deckel ist eine **Betriebsangabe**, keine neue Voreinstellung: Wer ``--alle`` ohne
+    Zahl sagt, meint alles, und das bleibt so.
+    """
+    for nummer in (97, 98, 99):
+        _lege_auftrag_ab(tmp_path, f"auf-20260818-{nummer}")
+    monkeypatch.setattr(hw, "fuehre_aus", lambda satz, repo, **kw: hw.auf.baue_ergebnis(
+        auftrag_id=satz["auftrag_id"], status="ok"))
+
+    assert hw.main(["--repo", str(tmp_path), "--alle"]) == 0
+    assert hw.auf.unerledigt(tmp_path) == []
+
+
+def test_ein_deckel_unter_eins_wird_abgewiesen_statt_still_nichts_zu_tun(tmp_path, capsys):
+    """``--hoechstens 0`` sähe aus wie ein ruhiger Durchgang und wäre ein stummer.
+
+    Ein Dienst, der jede fünf Minuten fehlerfrei nichts tut, ist die geduldigste Art,
+    einen Rückstand zu verstecken.
+    """
+    _lege_auftrag_ab(tmp_path, "auf-20260818-99")
+
+    assert hw.main(["--repo", str(tmp_path), "--alle", "--hoechstens", "0"]) == 1
+    assert "mindestens 1" in capsys.readouterr().out
+    assert len(hw.auf.unerledigt(tmp_path)) == 1
+
+
 def test_gpu_schalter_meldet_den_zustand_als_json(smi, capsys):
     """``--gpu`` beantwortet die Frage „ist die Karte frei?" ohne Auftrag."""
     smi()

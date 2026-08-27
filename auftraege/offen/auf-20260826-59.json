@@ -1,0 +1,28 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260826-59",
+  "art": "multipass",
+  "beschreibung": "Ein Takt fuer den Homeworker. Bis heute stoesst ihn nichts an, und darum lagen 17 Auftraege unbeantwortet. Drei Dateien in betrieb/ liegen bereit — installieren, einmal laufen lassen, melden.",
+  "anweisung": "=== EINEN TAKT FUER DEN HOMEWORKER — DAMIT AUFTRAEGE NICHT AUF JEMANDEN WARTEN ===\n\nDer Owner hat am 26.08.2026 das Ziel geradegerueckt: Der EINBAU ist das Endziel, nicht\nder Bau. Beim Nachsehen, was dem im Weg steht, kam eine unangenehme Antwort heraus —\nund sie betrifft nicht euch, sondern eine Luecke bei uns.\n\n--- 1 · DER BEFUND ---\n\nNichts stoesst den Homeworker an. Der Abholer hat seit dem 22.08. seinen Takt\n(`betrieb/kosmo-abholer.timer`, alle 30 s). Der Homeworker hat keinen. Sein eigener\nDocstring beschreibt den Ritus von Hand:\n\n    git pull\n    python3 tools/homeworker.py --alle\n    git add auftraege/ergebnisse && git commit && git push\n\nDrei Schritte, die jemand tippen muss. Solange niemand tippt, liegen Auftraege beliebig\nlange. Gezaehlt am 26.08.2026: SIEBZEHN unbeantwortet, der aelteste drei Tage.\n\nDas ist der Unterschied zwischen \"beauftragt\" und \"wird auch gemacht\", und er lag die\nganze Zeit auf unserer Seite.\n\n--- 2 · WAS WIR GEBAUT HABEN ---\n\nDrei Dateien in `betrieb/`, gebaut nach dem Muster, das bei euch schon laeuft:\n\n    kosmo-worker.sh       ein Durchgang: pull --ff-only, rechnen, Ergebnisse pushen\n    kosmo-worker.service  oneshot, WorkingDirectory, TimeoutStartSec=3600, Nice=10\n    kosmo-worker.timer    alle 5 Minuten\n\nDazu ein neuer Schalter im Homeworker: `--hoechstens N`. Der Dienst nimmt EINEN Auftrag\nje Durchgang — dieselbe Ueberlegung wie euer `--hoechstens 1` beim Abholer: Ein\nRenderlauf dauert Minuten, und ein Takt, der erst nach Stunden zurueckkommt, ist keiner.\n\nWAS DAS SKRIPT NICHT TUT: Es entscheidet nichts. Die GPU-Schranke sitzt weiter im\nHomeworker (`darf_starten`, fail-closed), ein Auftrag, der nicht laufen darf, bekommt\n`abgelehnt` statt zu warten, und `git pull --ff-only` bricht lieber ab, als einen Merge\nzu machen, den niemand beaufsichtigt.\n\n--- 3 · WAS ZU TUN IST ---\n\nSCHRITT 1 · Ziehen und ansehen.\n  `git pull`, dann die drei Dateien in `betrieb/` lesen. Sie sind kurz. Wenn euch etwas\n  daran nicht passt, sagt es BEVOR ihr es installiert — ihr kennt die Maschine.\n\nSCHRITT 2 · `<nutzer>` ersetzen.\n  In `kosmo-worker.service` steht der Platzhalter zweimal (WorkingDirectory und\n  Documentation). Regel 3: In unserem Repo steht kein wirklicher Benutzername, und er\n  soll auch nicht hineinkommen.\n\nSCHRITT 3 · Einmal von Hand laufen lassen, BEVOR ein Timer daran haengt.\n  `bash betrieb/kosmo-worker.sh 1`\n  Wir wollen wissen, ob der Push aus einem nicht-interaktiven Kontext ueberhaupt geht.\n  Falls dort Zugangsdaten fehlen: sagt es, statt sie in eine Datei zu legen.\n\nSCHRITT 4 · Installieren und starten.\n  Dieselben Handgriffe wie beim Abholer. Danach `systemctl --user list-timers` — wir\n  wollen sehen, dass er wirklich in der Liste steht.\n\nSCHRITT 5 · Einen Takt abwarten und melden, was passiert ist.\n  Es liegen 13 Auftraege fuer euch. Der erste Durchgang nimmt einen davon. Meldet, ob\n  ein Ergebnis entstanden ist und ob es gepusht wurde.\n\n--- 4 · WAS AUSDRUECKLICH NICHT ZU TUN IST ---\n\n  * KEINE Zugangsdaten in eine Datei im Repo. Wenn der Push ohne Mensch nicht geht, ist\n    das ein Befund und keine Aufgabe fuer eine Textdatei.\n  * NICHT den Takt auf Sekunden stellen. Fuenf Minuten sind schnell genug; ein\n    schnellerer Takt belegt die Karte ohne Gewinn.\n  * NICHT `--alle` ohne Deckel in den Dienst schreiben. Zwoelf Renderlaeufe hintereinander\n    sind kein Durchgang, sondern eine Nacht.\n  * NICHT den Abholer-Takt anfassen. Der laeuft und hat einen anderen Zweck.\n\n--- 5 · WAS WIR MIT DER ANTWORT MACHEN ---\n\n  * Laeuft er: Der Rueckstand bei `local` loest sich von selbst auf, und wir tragen es im\n    Einbau-Stand als Weg C ein. Ab dann ist \"beauftragt\" bei euch gleichbedeutend mit\n    \"wird gemacht\".\n  * Push geht nicht ohne Mensch: Dann bleibt der letzte Schritt von Hand, und wir sagen\n    es dem Owner so — statt ihn glauben zu lassen, es liefe.\n  * Ihr wollt es anders: Sagt wie. Ihr kennt die Maschine, wir kennen sie nicht.\n\n--- 6 · UND DER GRUND, WARUM DAS EIN EIGENER AUFTRAG IST ---\n\nEr baut nichts an der Bildkette. Er sorgt dafuer, dass die anderen zwoelf ueberhaupt\ndrankommen. Nach der neuen Regel des Owners ist genau das die Arbeit: verteilen und\ndafuer sorgen, dass eingebaut wird — nicht nur bauen.",
+  "erstellt": "2026-08-27T15:33:48Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": [
+    "Keine Zugangsdaten in eine Datei im Repo",
+    "Regel 3: <nutzer> ersetzen, keinen echten Namen zurueckschicken",
+    "Erst von Hand laufen lassen, dann den Timer haengen",
+    "Den Abholer-Takt nicht anfassen"
+  ],
+  "rueckgabe": [
+    "V1 Laeuft `bash betrieb/kosmo-worker.sh 1` von Hand durch?",
+    "V2 Geht der Push aus einem nicht-interaktiven Kontext?",
+    "V3 Steht der Timer in `systemctl --user list-timers`?",
+    "V4 Ist nach einem Takt ein Ergebnis entstanden und gepusht?",
+    "V5 Was wuerdet ihr an den drei Dateien anders machen?"
+  ]
+}
