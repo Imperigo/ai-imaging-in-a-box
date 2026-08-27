@@ -4727,6 +4727,69 @@ kein Nebeneffekt.
 
 ---
 
+## Owner-Entscheid: Ein belegter Nullbefund trägt die Maske — über einem Katalog (26.08.2026)
+
+**Die Frage entstand aus dem Entscheid davor.** Seit der Maskenweg ein zweites Tor ist,
+kostet eine verworfene Maske das **ganze Urteil**. Und die Geländeregel verwarf sie auf
+**zwei von drei Testszenen**, obwohl dort gar kein Boden steht.
+
+### Was vor der Frage gemessen wurde
+
+| Richtung | Preis |
+|---|---|
+| Maske **behalten**, obwohl der Boden darin steckt | Bei 4,2 % Bodenanteil sinkt die Trennschärfe um **0.042** (0.915 → 0.873). Bei 59,8 % erreichte ein wertloses Bild \|ρ\| **0.92** (21.08.). **Dazwischen ungemessen.** |
+| Maske **verwerfen**, obwohl kein Boden da ist | Das ganze Urteil — auf zwei von drei Testszenen |
+
+*Die Zahl 0.042 stammt aus unserer Geländeszene, und deren Gelände ist mit 553 von 13 155
+Punkten winzig. Sie sagt darum wenig über den gefährlichen Fall; die 21.08.-Zahl sagt
+darüber viel. Die Strecke dazwischen ist offen und die Ausnahme darum eng.*
+
+### Der Entscheid: **nur bei IFC-Klassennamen**
+
+`IfcSite` ist die genormte IFC-Klasse für das Grundstück und steht in `GELAENDE_MUSTER`.
+Trägt **jeder** geprüfte Eintrag eine IFC-Klasse und ist keiner davon `IfcSite`, dann ist
+«kein Gelände» ein **Beweis über den Katalog** und keine Vermutung über Hausnamen. Über
+**Materialnamen** gilt das nicht: Echte Projektgeometrie meldet «Beton» und
+«kalksandstein» (`docs/MASKE_2026-08-21.md`), und ein Boden hiesse dort «Erdreich» oder
+«Kies».
+
+- [x] `maske.ist_ifc_klassenkatalog`, `gelaende_befund` trägt `ifc_katalog`,
+      `bauwerksmaske` behält die Maske im belegten Nullbefund über einem Katalog.
+      **Alle, nicht die meisten:** Ein einziger Eintrag ohne IFC-Klasse kippt den Beweis —
+      er könnte der Boden sein.
+- [ ] **Offen und benannt:** Die Strecke zwischen 4,2 % und 59,8 % Bodenanteil ist
+      ungemessen. Sie zu schliessen braucht drei bis vier Blender-Läufe mit
+      unterschiedlich gerahmtem Gelände und geht hier ohne GPU.
+
+---
+
+## Eine Messung über diese Umgebung, nicht über den Code (26.08.2026)
+
+Der echte Kettenlauf über beide Prozessgrenzen fiel heute dreimal aus — und jedes Mal,
+während **nebenher eine zweite Sammlung lief**. Allein: **fünf von fünf grün.**
+
+Nachgemessen statt vermutet, ob der Material-ID-Durchgang die Herzschlagwache aushungert:
+
+| | grösste Lücke | Frist |
+|---|---|---|
+| `material_id=False` | 2,0 s / 2,0 s | 10 s |
+| `material_id=True` | 1,9 s / 1,8 s | 10 s |
+
+**Der Runner ist nicht schuld.** Der erste Herzschlag steht nach 0,5–0,9 s. Unter Last
+hungert der schreibende Faden länger als die Frist, und die Wache tötet einen gesunden
+Lauf mit dem Satz «Stillstand heisst hier wirklich Stillstand».
+
+**Daraus folgt ausdrücklich KEINE Änderung an der Wache.** Auf der Maschine, die wirklich
+rechnet, sind 88 Schläge mit einer grössten Lücke von **2,10 s** gemessen
+(`auf-20260820-19`). Eine Frist zu lockern, weil ein geteilter Container hungert, hiesse
+eine belegte Messung durch ein Artefakt zu ersetzen.
+
+**Arbeitsregel daraus:** Die Sammlung läuft hier **allein**, nie neben einem zweiten
+Blender-Lauf. Drei rote Läufe an einem Tag (zweimal `test_bauwerksbox`, einmal
+`test_kette`) hatten alle dieselbe Ursache und keinen Befund im Code.
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).

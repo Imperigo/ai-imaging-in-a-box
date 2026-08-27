@@ -129,9 +129,15 @@ def auf_grundstueck(tmp_path_factory):
 def frei_ohne_gelaendeerwartung(tmp_path_factory):
     """Derselbe freistehende Bau, aber mit der Erklärung ``--kein-gelaende``.
 
-    **Der Fall, den die HomeStation am 26.08.2026 gemeldet hat.** Ohne diese Erklärung
-    wird die fertig berechnete Bauwerksmaske verworfen, weil die Geländeregel auf keinen
-    Eintrag passte — und mit ihr fällt der ganze Maskenweg aus.
+    **Der Fall, den die HomeStation am 26.08.2026 gemeldet hat** — und seit dem Abend
+    desselben Tages trägt der Nachbar-Fixture ``frei`` die Maske ohnehin, weil die
+    Einträge IFC-Klassen sind und der Nullbefund darüber ein Beweis ist.
+
+    Der Schalter bleibt trotzdem geprüft, denn er wirkt an einer anderen Stelle: über
+    **Materialnamen** («Beton», «kalksandstein») gibt es keinen Katalogbeweis, und dort
+    ist er die einzige Art, die Maske zu behalten. Diesen Fall kann diese Kette nicht
+    erzeugen — unser Exportweg schreibt IFC-Klassen —, er steht darum in
+    ``tests/test_maske.py``.
     """
     if _blender_fehlt() or _ifc_fehlt():
         pytest.skip("Blender oder .venv-ifc fehlt")
@@ -271,41 +277,48 @@ def test_der_gesunde_lauf_traegt_keine_solche_zeile(frei):
 # ======================================================================================
 #
 # Gemeldet von der HomeStation am 26.08.2026: In allen vier Laeufen des Tages stehen
-# `rho_maske`, `kante` und `paarurteil` auf None. Ohne Maskenweg wird die gemessene
-# Polaritaet nie angewandt, und der Score faellt auf `abs(spearman)` zurueck — in dem
-# Modus besteht ein Bild mit VERTAUSCHTER Tiefe das Tor.
+# `rho_maske`, `kante` und `paarurteil` auf None. Ohne Maskenweg fehlen genau die Masse,
+# die die ABWESENHEIT eines Bauwerks fangen — ein leeres Grundstueck erreichte auf dem
+# Score ueber das ganze Bild 0.9530 und bestand das Tor.
 #
 # Hier steht die Zusicherung, die das gefunden haette: nicht «ist ein Score entstanden»,
 # sondern **«hat die QA eine Maske bekommen»**.
 
 @ohne_kette
-def test_ohne_erklaerung_bekommt_die_qa_keine_maske(frei):
-    """Der gemeldete Zustand — **festgehalten, damit er nicht unbemerkt wiederkehrt.**
+def test_ohne_erklaerung_bekommt_die_qa_jetzt_doch_eine_maske(frei):
+    """**Der gemeldete Zustand ist behoben — durch einen Owner-Entscheid, nicht durch
+    einen Handgriff am Code.**
 
-    Die Geometrie dieses Laufs ist ein reines Gebäude ohne Gelände. Die Geländeregel passt
-    auf keinen Eintrag, und weil `gelaende_erwartet` auf `True` steht, wird die fertig
-    berechnete Maske **verworfen**.
+    Bis zum Abend des 26.08.2026 stand hier das Gegenteil: Die Geometrie dieses Laufs ist
+    ein reines Gebäude ohne Gelände, die Geländeregel passt auf keinen Eintrag, und die
+    fertig berechnete Maske wurde **verworfen**. Der Docstring endete mit *«Ob es dabei
+    bleibt, ist eine offene Frage an den Owner.»*
 
-    *Das ist heute die richtige Entscheidung* — «kein Gelände da» und «Regel verfehlt»
-    sehen von innen gleich aus, und im zweiten Fall steckte der ganze Boden als Bauwerk in
-    der Maske. Ob es dabei bleibt, ist eine offene Frage an den Owner.
+    Die Frage ist gestellt und beantwortet: Ein **belegter** Nullbefund trägt die Maske —
+    aber nur über einem **IFC-Klassenkatalog**. Genau das liegt hier vor; die Einträge
+    heissen `IfcWall_…`, `IfcSlab_…`, `IfcColumn_…`, und `IfcSite` ist nicht darunter.
+
+    Geprüft wird der **Beleg** und nicht nur das Ergebnis: Käme die Maske aus einem anderen
+    Grund an, wäre das ein Fehler und kein Fortschritt.
     """
     _, protokoll, _ = frei
 
     aufrufe = protokoll.get("qa") or []
     assert aufrufe, "Die QA wurde gar nicht gerufen."
-    assert all(a.get("maske") is None for a in aufrufe), (
-        "Ohne Geländeerklärung darf hier keine Maske ankommen — sonst prüft der Test "
-        "darunter nichts mehr.")
+    assert all(a.get("maske") is not None for a in aufrufe), (
+        "über einem IFC-Katalog ist der Nullbefund ein Beweis — die Maske gilt")
 
 
 @ohne_kette
 def test_mit_der_erklaerung_bekommt_die_qa_eine_maske(frei_ohne_gelaendeerwartung):
-    """**Die Gegenprobe, und sie ist die eigentliche Auskunft.**
+    """Die Maske kommt an — über die ganze Kette, von Blenders Material-ID-Pass bis in den
+    Aufruf der Geometrie-QA. Damit ist belegt, dass der Maskenweg **fahrbar** ist.
 
-    Mit `--kein-gelaende` kommt die Maske an — über die ganze Kette, von Blenders
-    Material-ID-Pass bis in den Aufruf der Geometrie-QA. Damit ist belegt, dass der
-    Maskenweg *fahrbar* ist und nur an dieser einen Erklärung hängt.
+    *Bis zum Abend des 26.08.2026 war das die Gegenprobe zum Test darüber:* dort keine
+    Maske, hier eine. Seit dem Owner-Entscheid trägt sie der Katalogbeweis auch ohne
+    Erklärung, und beide Wege enden hier gleich. Der Test bleibt, weil er den **zweiten**
+    Weg zur Maske offen hält — und weil ein Schalter, der stillschweigend wirkungslos
+    wird, die schlimmste Sorte Schalter ist.
     """
     _, protokoll, _ = frei_ohne_gelaendeerwartung
 

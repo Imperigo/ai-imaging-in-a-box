@@ -218,6 +218,46 @@ BEFUND_NICHT_ENTSCHEIDBAR = "nicht_entscheidbar"
 MINDESTENS_BENANNT = 2
 
 
+#: Vorsilbe der IFC-Klassennamen. Kleingeschrieben verglichen; der Exportweg dieses
+#: Projekts hängt eine GUID an (``IfcWall_Wand-Nord_1FMjVFy0…``).
+IFC_KLASSENPRAEFIX = "ifc"
+
+
+def ist_ifc_klassenkatalog(namen) -> bool:
+    """Besteht diese Namensliste **durchweg** aus IFC-Klassennamen?
+
+    **Warum das eine eigene Frage ist** (Owner-Entscheid 26.08.2026): Ein Nullbefund der
+    Geländeregel belegt nur, dass die *Regel* nicht angeschlagen hat — nicht, dass es kein
+    Gelände gibt. Beides fällt nur zusammen, wenn die Regel über einen **vollständigen
+    Katalog** gelaufen ist.
+
+    Genau das ist bei IFC-Klassennamen der Fall: ``IfcSite`` ist die genormte Klasse für
+    das Grundstück und steht in :data:`GELAENDE_MUSTER`. Trägt jeder Eintrag eine
+    IFC-Klasse und ist keiner davon ``IfcSite``, dann ist «kein Gelände» ein **Beweis über
+    den Katalog** und keine Vermutung über Hausnamen.
+
+    Bei **Materialnamen** gilt das nicht. Echte Projektgeometrie meldet dort «Beton» und
+    «kalksandstein» (gemessen, ``docs/MASKE_2026-08-21.md``) — ein Boden hiesse dann
+    «Erdreich» oder «Kies» und stünde in keiner Liste. Ein Nullbefund über solchen Namen
+    sagt nichts.
+
+    **Alle, nicht die meisten.** Ein einziger Eintrag ohne IFC-Klasse unter hundert mit
+    ist genau der, um den es geht: Er könnte der Boden sein. Die Frage ist ein Beweis oder
+    sie ist nichts.
+
+    Args:
+        namen: Die benannten Einträge der Materialtabelle.
+
+    Returns:
+        ``True`` nur, wenn mindestens :data:`MINDESTENS_BENANNT` Namen vorliegen und
+        **jeder** mit ``Ifc`` beginnt.
+    """
+    sauber = [str(n).strip() for n in namen if str(n).strip()]
+    if len(sauber) < MINDESTENS_BENANNT:
+        return False
+    return all(n.lower().startswith(IFC_KLASSENPRAEFIX) for n in sauber)
+
+
 def gelaende_befund(gelaende_namen, bauwerk_namen) -> dict:
     """Welche der drei Lagen liegt vor — und woran man das sieht.
 
@@ -239,25 +279,32 @@ def gelaende_befund(gelaende_namen, bauwerk_namen) -> dict:
     benannt = sorted({n for n in bauwerk if n.strip()})
     namenlos = sum(1 for n in bauwerk if not n.strip())
 
+    katalog = ist_ifc_klassenkatalog(benannt)
+
     if gelaende:
         return {"befund": BEFUND_GELAENDE_GEFUNDEN, "geprueft": sorted(set(bauwerk)),
-                "benannt": benannt, "namenlos": namenlos,
+                "benannt": benannt, "namenlos": namenlos, "ifc_katalog": katalog,
                 "begruendung": f"Die Regel ordnete {gelaende} als Gelände ein."}
 
     if len(benannt) >= MINDESTENS_BENANNT and namenlos == 0:
         return {"befund": BEFUND_KEIN_GELAENDE_BELEGT, "geprueft": benannt,
-                "benannt": benannt, "namenlos": 0,
+                "benannt": benannt, "namenlos": 0, "ifc_katalog": katalog,
                 "begruendung": (
                     f"{len(benannt)} benannte Einträge geprüft, keiner nach Gelände: "
-                    f"{benannt}. Das ist ein Nullbefund und keine Ratlosigkeit — "
-                    f"soweit die Regel vollständig ist, und das ist an einem einzelnen "
-                    f"Lauf nicht zu messen.")}
+                    f"{benannt}. "
+                    + ("Jeder davon trägt eine IFC-Klasse, und IfcSite ist die genormte "
+                       "Klasse für das Grundstück — der Nullbefund ist damit ein BEWEIS "
+                       "über den Katalog und keine Vermutung über Hausnamen."
+                       if katalog else
+                       "Die Namen sind keine IFC-Klassen; über sie ist der Nullbefund "
+                       "eine Aussage über die REGEL und nicht über die Szene — ein Boden "
+                       "namens 'Erdreich' stünde in keiner Liste."))}
 
     fehlt = ("kein einziger benannter Eintrag" if not benannt
              else f"{namenlos} namenlose Einträge" if namenlos
              else f"nur {len(benannt)} benannter Eintrag (nötig: {MINDESTENS_BENANNT})")
     return {"befund": BEFUND_NICHT_ENTSCHEIDBAR, "geprueft": benannt,
-            "benannt": benannt, "namenlos": namenlos,
+            "benannt": benannt, "namenlos": namenlos, "ifc_katalog": katalog,
             "begruendung": (
                 f"Über diese Tabelle lässt sich nichts sagen: {fehlt}. Eine Geländeregel "
                 f"über namenlose Flächen ist keine Regel.")}
@@ -593,10 +640,17 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
                 f"KEIN GELAENDE BELEGT: {lage['begruendung']} "
                 f"Geprüft wurde gegen {list(gelaende_muster)} und die Wortliste "
                 f"{list(GELAENDE_WOERTER)}. "
-                "Die Maske fällt trotzdem aus — nicht weil der Befund schwach wäre, "
-                "sondern weil er etwas anderes belegt, als er zu belegen scheint: dass "
-                "die REGEL nicht angeschlagen hat. Ein Baustoff namens 'Erdreich' oder "
-                "'Humus' stünde in keiner der beiden Listen und wäre trotzdem Gelände. "
+                + ("Die Maske GILT: Jeder geprüfte Eintrag trägt eine IFC-Klasse, und "
+                   "IfcSite ist die genormte Klasse für das Grundstück — über einem "
+                   "vollständigen Katalog ist ein Nullbefund ein Beweis. Das Urteil ruht "
+                   "damit auf einer Regel, die hier nichts zu finden hatte, und nicht auf "
+                   "einer Regel, die versagt haben könnte. "
+                   if lage["ifc_katalog"] else
+                   "Die Maske fällt trotzdem aus — nicht weil der Befund schwach wäre, "
+                   "sondern weil er etwas anderes belegt, als er zu belegen scheint: dass "
+                   "die REGEL nicht angeschlagen hat. Die Namen sind keine IFC-Klassen; "
+                   "ein Baustoff namens 'Erdreich' oder 'Humus' stünde in keiner der "
+                   "beiden Listen und wäre trotzdem Gelände. ") +
                 "**Und mit der Maske fällt der ganze Maskenweg aus** — rho_maske, Kante "
                 "und Paarurteil bleiben None, und das sind die Masse, die die ABWESENHEIT "
                 "eines Bauwerks fangen; der Score über das ganze Bild fängt sie nicht "
@@ -685,8 +739,29 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
             f"nicht aus dem eingestellten Multipass."
         )
 
+    # DER BELEGTE NULLBEFUND TRAEGT DIE MASKE — aber nur ueber einem IFC-Klassenkatalog.
+    #
+    # Owner-Entscheid vom 26.08.2026, und er hat einen gemessenen Anlass: Seit der
+    # Maskenweg ein zweites Tor ist, kostet eine verworfene Maske das GANZE Urteil. Auf
+    # zwei von drei Testszenen verwarf die Regel sie, obwohl dort gar kein Boden steht
+    # (141 bzw. 5 benannte Eintraege geprueft, kein IfcSite darunter).
+    #
+    # Warum die Einschraenkung auf den Katalog: `IfcSite` ist die genormte Klasse fuer das
+    # Grundstueck. Traegt jeder Eintrag eine IFC-Klasse und ist keiner davon IfcSite, ist
+    # "kein Gelaende" ein Beweis. Ueber MATERIALNAMEN gilt das nicht — echte
+    # Projektgeometrie meldet dort "Beton" und "kalksandstein" (docs/MASKE_2026-08-21.md),
+    # und ein Boden hiesse "Erdreich" oder "Kies".
+    #
+    # Der Preis der falschen Entscheidung ist in beide Richtungen gemessen: Steckt der
+    # Boden faelschlich in der Maske, sank die Trennschaerfe bei 4,2 % Bodenanteil um
+    # 0.042 (0.915 -> 0.873); bei 59,8 % erreichte ein wertloses Bild |rho| 0.92
+    # (21.08.2026). Was dazwischen geschieht, ist UNGEMESSEN — und diese Luecke ist der
+    # Grund, warum die Ausnahme so eng ist wie sie ist.
+    nullbefund_traegt = (lage["befund"] == BEFUND_KEIN_GELAENDE_BELEGT
+                         and lage["ifc_katalog"])
+
     maske: list[bool] | None = roh_maske
-    if not gelaende_erkannt and gelaende_erwartet:
+    if not gelaende_erkannt and gelaende_erwartet and not nullbefund_traegt:
         maske = None
 
     return {
@@ -702,6 +777,9 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         # `gelaende_erkannt: False` zweierlei: geprüft und nichts gefunden, oder gar
         # nichts zu prüfen gehabt. Auf Rückfrage der HomeStation (auf-47) getrennt.
         "gelaende_befund": lage["befund"],
+        # Der Beleg, auf dem die Ausnahme ruht — er wandert mit, weil ein "die Maske
+        # gilt" ohne ihn eine Behauptung ist und mit ihm eine Auskunft.
+        "ifc_katalog": lage["ifc_katalog"],
         "gelaende_geprueft": lage["geprueft"],
         "gelaende_begruendung": lage["begruendung"],
         "gelaende_namen": sorted(set(gelaende_namen)),

@@ -2911,6 +2911,25 @@ ist die teuerste Sorte Urteil.*
 ein `None` (falsch) — die **Reihenfolge der Argumente** entschiede über das Ergebnis.
 Darum steht die Verknüpfung in `gate.gesamturteil` ausgeschrieben da und nicht abgekürzt.*
 
+**Katalogbeweis (gegen Nullbefund über Hausnamen)** — Ein „nichts gefunden" wiegt völlig
+verschieden, je nachdem, worüber gesucht wurde. Läuft die Suche über eine **geschlossene,
+genormte Liste**, dann heisst „nicht dabei" wirklich *nicht vorhanden*. Läuft sie über
+frei vergebene Namen, heisst es nur *unter diesen Namen nicht gefunden* — und beides sieht
+im Ergebnis gleich aus.
+
+*In diesem Projekt entscheidet der Unterschied darüber, ob eine Messung stattfindet. Die
+Bauwerksmaske muss das Gelände aussortieren und erkennt es am Namen. Findet sie keines,
+sind zwei Fälle möglich: Es gibt keines — oder die Regel hat es verfehlt. Über
+**IFC-Klassennamen** fallen die beiden zusammen, denn `IfcSite` ist die genormte Klasse
+für das Grundstück: Trägt jeder Eintrag eine IFC-Klasse und ist keiner davon `IfcSite`,
+gibt es kein Grundstück. Über **Materialnamen** fallen sie auseinander — echte
+Projektgeometrie meldet «Beton» und «kalksandstein», und ein Boden hiesse dort «Erdreich»
+oder «Kies» und stünde in keiner Liste.*
+
+*Die Auflage dazu heisst **alle, nicht die meisten**: Ein einziger Eintrag ohne
+IFC-Klasse unter hundert mit ist genau der, um den es geht — er könnte der Boden sein. Ein
+Beweis, der einen Ausreisser verträgt, ist keiner.*
+
 **Übermelden (einer Prüfung)** — Eine Prüfung so einstellen, dass sie im Zweifel zu viel
 meldet statt zu wenig.
 *Bewusst gewählte Richtung, kein Mangel: Der Rest eines übersetzten Prompts wird gegen
@@ -3582,6 +3601,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-26 | Ergaenzt: **Katalogbeweis (gegen Nullbefund ueber Hausnamen)**. Anlass ist ein Owner-Entscheid vom selben Tag: Seit der Maskenweg ein zweites Tor ist, kostet eine verworfene Bauwerksmaske das ganze Urteil — und sie wurde auf zwei von drei Testszenen verworfen, obwohl dort gar kein Boden steht. Der Eintrag traegt die Unterscheidung, die den Entscheid moeglich machte: Ueber IFC-Klassennamen ist «kein IfcSite dabei» ein Beweis, ueber Materialnamen («Beton», «kalksandstein») ist es keiner |
 | 2026-08-26 | **Dreiwertiges Urteil** um die Frage erweitert, die sich erst stellt, wenn ZWEI solche Urteile zusammenkommen: Wie verknuepft man sie? Anlass ist ein Owner-Entscheid vom selben Tag (der Maskenweg ist ein zweites Tor). Die Antwort ist das UND nach Kleene — «falsch UND unbekannt» ist falsch, «wahr UND unbekannt» ist unbekannt — und der Eintrag traegt mit, warum Pythons eigenes `and` das NICHT tut: Bei ihm entscheidet die Reihenfolge der Argumente ueber das Ergebnis |
 | 2026-08-26 | **Polaritaet (einer Tiefenkarte)** erweitert. Der Eintrag sagte, ein unbekanntes Vorzeichen zwinge zum Betrag, und der bewerte eine vollstaendig invertierte Karte wie eine perfekte. Das war bis zum selben Tag der Zustand unserer eigenen Kette — gemessen wurde das Vorzeichen seit dem 20.08., angewandt nur im Maskenweg. Die Luecke hat jetzt eine Zahl (0,7071 bestand die Grenze 0,65) und einen Test. Dazu die Auflage, die zwei Verwendungen trennt: Fuer einen Diagnosewert darf die deklarierte Angabe einspringen, fuer ein Urteil nicht |
 | 2026-08-26 | Ergaenzt: **Geometrieanteil**, **Grenzstaerke**, **Rasterdublette**. Anlass ist die zweite Schwellenstudie, die dieselbe Kalibrierung auf echte Geometrie stellt: Der Geometrieanteil faellt dabei von 0,4489 auf 0,0822 bis 0,1730 — und `geom_iou` haengt an ihm, die Schwelle ist also nicht dieselbe. Die beiden anderen Eintraege tragen mit, was an einer Kalibrierung **gesetzt** und nicht gemessen ist (Grenzstaerke) und wie ein Stärkeraster in ganzen Bildpunkten eine Auswertung verfaelschen kann, ohne dass eine Zahl falsch gerechnet waere (Rasterdublette) |

@@ -608,24 +608,80 @@ def tabelle_ohne_gelaende() -> list[dict]:
     ]
 
 
-def test_die_maske_wird_berechnet_und_dann_verworfen(bild, tabelle_ohne_gelaende):
-    """**Der Kern des Befundes.** Nicht «konnte nicht», sondern «wurde nicht behalten».
+@pytest.fixture
+def tabelle_mit_baustoffnamen() -> list[dict]:
+    """Dieselbe Lage, aber mit **Materialnamen** statt IFC-Klassen.
 
-    Ohne erkanntes Gelände und mit ``gelaende_erwartet=True`` gibt `bauwerksmaske` die
-    Maske als ``None`` zurück — und meldet im selben Atemzug die gezählten
-    Bauwerkspunkte. Das ist kein Widerspruch, sondern Absicht: Findet die Regel kein
-    Gelände, ist nicht entscheidbar, ob keines da ist oder ob sie es verfehlt hat. Im
-    zweiten Fall steckte der ganze Boden als Bauwerk in der Maske.
+    So meldet echte Projektgeometrie: «Beton» und «kalksandstein» sind gemessen
+    (`docs/MASKE_2026-08-21.md`). Ein Boden hiesse dort «Erdreich» oder «Kies» — und
+    stünde in keiner Liste.
+    """
+    return [
+        eintrag(1, "Beton", SLAB, quelle="material"),
+        eintrag(2, "kalksandstein", WAND_A, quelle="material"),
+        eintrag(3, "Sichtbeton", WAND_B, quelle="material"),
+    ]
 
-    *Die Zusicherung hält fest, dass die Zahlen trotzdem dastehen* — sonst sähe ein
-    verworfener Lauf aus wie einer, der gar nichts messen konnte.
+
+def test_ueber_einem_ifc_katalog_traegt_der_nullbefund_die_maske(bild, tabelle_ohne_gelaende):
+    """**Owner-Entscheid 26.08.2026 — und er kehrt das bisherige Verhalten um.**
+
+    Bis dahin galt: Findet die Regel kein Gelände, wird die Maske verworfen, denn ein
+    Nullbefund belegt, dass die *Regel* nicht angeschlagen hat, nicht dass kein Gelände da
+    ist. Das stimmt — **ausser über einem vollständigen Katalog.**
+
+    ``IfcSite`` ist die genormte IFC-Klasse für das Grundstück. Trägt jeder geprüfte
+    Eintrag eine IFC-Klasse und ist keiner davon ``IfcSite``, dann fallen die beiden Sätze
+    zusammen: Die Regel hat nichts gefunden, **weil** nichts da ist.
+
+    Der Anlass ist gemessen: Seit der Maskenweg ein zweites Tor ist, kostet eine
+    verworfene Maske das ganze Urteil — und auf zwei von drei Testszenen wurde sie
+    verworfen, obwohl dort gar kein Boden steht.
     """
     befund = m.bauwerksmaske(bild, tabelle_ohne_gelaende, gelaende_erwartet=True)
 
+    assert befund["gelaende_befund"] == m.BEFUND_KEIN_GELAENDE_BELEGT
+    assert befund["ifc_katalog"] is True
+    assert befund["maske"] is not None, "über einem Katalog ist der Nullbefund ein Beweis"
+    assert befund["gelaende_erkannt"] is False, (
+        "erkannt wurde nach wie vor nichts — es war nur nichts zu erkennen"
+    )
+
+
+def test_ueber_baustoffnamen_wird_die_maske_weiter_verworfen(bild, tabelle_mit_baustoffnamen):
+    """**Die Gegenprobe, und sie ist der eigentliche Inhalt des Entscheids.**
+
+    Dieselbe Lage, dieselbe Regel, derselbe Nullbefund — nur heissen die Einträge nach
+    Baustoffen statt nach IFC-Klassen. Dann ist über sie **nichts** bewiesen: Ein Boden
+    namens «Erdreich» stünde in keiner der beiden Listen.
+
+    *Die Zusicherung hält zugleich fest, dass die Zahlen trotzdem dastehen* — sonst sähe
+    ein verworfener Lauf aus wie einer, der gar nichts messen konnte.
+    """
+    befund = m.bauwerksmaske(bild, tabelle_mit_baustoffnamen, gelaende_erwartet=True)
+
+    assert befund["gelaende_befund"] == m.BEFUND_KEIN_GELAENDE_BELEGT
+    assert befund["ifc_katalog"] is False
     assert befund["maske"] is None
     assert befund["n_bauwerk"] > 0, (
         "Die Bauwerkspunkte müssen im Befund stehen, auch wenn die Maske verworfen wird.")
     assert befund["gelaende_erkannt"] is False
+
+
+def test_ein_einziger_eintrag_ohne_ifc_klasse_kippt_den_katalogbeweis():
+    """**Alle, nicht die meisten.**
+
+    Ein Eintrag ohne IFC-Klasse unter hundert mit ist genau der, um den es geht: Er könnte
+    der Boden sein. Ein Beweis, der einen Ausreisser verträgt, ist keiner.
+    """
+    ifc = ["IfcWall_A", "IfcSlab_B", "IfcColumn_C"]
+
+    assert m.ist_ifc_klassenkatalog(ifc) is True
+    assert m.ist_ifc_klassenkatalog([*ifc, "Erdreich"]) is False
+    assert m.ist_ifc_klassenkatalog(["IfcWall_A"]) is False, (
+        f"ein einziger Name ist kein Katalog (nötig: {m.MINDESTENS_BENANNT})"
+    )
+    assert m.ist_ifc_klassenkatalog([]) is False
 
 
 def test_der_grund_nennt_die_folge_und_die_abhilfe(bild, tabelle_ohne_gelaende):
