@@ -4838,8 +4838,8 @@ in `CLAUDE.md`; hier steht, was daraus schon getan ist und was folgt.
 **Stand am 26.08.2026, gezählt:** 17 Aufträge ohne Antwort (12 `local`, 3 `cloud`,
 2 `ui`), 14 von 24 Posten noch nicht in der Software.
 
-**Stand am 27.08.2026, abends gezählt:** 23 Aufträge ohne Antwort (16 `local`, 4 `cloud`,
-3 `ui`), 17 von 28 Posten noch nicht in der Software. *C2 ist gefallen — die HomeStation
+**Stand am 27.08.2026, spät gezählt:** 24 Aufträge ohne Antwort (16 `local`, 4 `cloud`,
+4 `ui`), 17 von 28 Posten noch nicht in der Software. *C2 ist gefallen — die HomeStation
 hat 41 Commits geholt. Belegt ist das an einem Nebenprodukt, nicht an einer Meldung.* *Die Zahl steigt, weil verteilt
 wird — nicht, weil etwas liegen bleibt. Sie fällt erst, wenn drüben jemand antwortet.*
 
@@ -4862,6 +4862,18 @@ wird — nicht, weil etwas liegen bleibt. Sie fällt erst, wenn drüben jemand a
       Gerät die Fassung vom 20.08. lief. Der alte Wächter prüfte, ob ein Beleg
       **existiert** — und der existierte.* Vier Mutationsproben, alle vom richtigen Test
       gefangen.
+- [x] **Der Cloud- und der UI-Worker haben jetzt überhaupt einen Zustellweg**
+      (27.08.2026, Owner-Entscheid vom selben Tag). `aiimaging.auftragspost`,
+      `tools/auftragspost.py`: der ganze Auftrag als **ein selbsttragender Block** —
+      Anweisung im Volltext, Auflagen, Rückgabe, Rückweg, kein Verweis auf ein Dokument,
+      das erst gesucht werden muss. Acht offene Aufträge sind in das KosmoOrbit-Repo
+      abgelegt worden. *Vorher lagen sie an einem Ort, den ihr Adressat nicht öffnen kann
+      — gezählt wurden sie korrekt und sahen trotzdem nach Wartezeit bei ihm aus.*
+- [x] **`auf-40` war falsch adressiert** — vier Oberflächenfragen an den Cloud-Worker,
+      geschrieben zwei Tage bevor es den UI-Worker gab. Adressat berichtigt, die eine
+      Vertragsfrage darin als `auf-20260827-64` herausgelöst. *Ein Punkt, der nicht zum
+      Auftrag des Lesers gehört, bleibt liegen, und es fällt niemandem auf — genau davor
+      warnt `CLAUDE.md`, seit es den dritten Worker gibt.*
 - [ ] **Was noch fehlt, und es ist der Kern des Auftrags:** Ein Messauftrag ist kein
       Einbauauftrag. `auf-52` fragt den UI-Worker, was er zum Bauen braucht — das ist für
       eine erste Runde richtig, baut aber noch nichts. Sobald seine Antwort da ist, muss
@@ -4894,7 +4906,7 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 - [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
       Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
       die Zeile in gewöhnlichen Läufen schweigt.
-- [x] **Sammlung 4470 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+- [x] **Sammlung 4490 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
       und ist nachgeführt.
 - [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
       `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.

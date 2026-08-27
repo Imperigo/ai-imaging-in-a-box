@@ -1,0 +1,25 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "cloud",
+  "auftrag_id": "auf-20260827-64",
+  "art": "qa",
+  "beschreibung": "Liest `kosmovis_query_qa_verdict` noch die flachen Feldnamen oder render-result/v2? Herausgeloest aus auf-40, weil das eine Vertragsfrage ist und der Rest dort Oberflaeche.",
+  "anweisung": "=== LIEST NOCH JEMAND DIESE NEUN FELDNAMEN? ===\n\nHerausgeloest aus `auf-20260824-40` am 27.08.2026. Dort stand sie als F5 zwischen vier\nOberflaechenfragen — und seit dem 26.08. baut die Oberflaeche ein anderer Worker. Ein\nPunkt, der nicht zum Auftrag des Lesers gehoert, bleibt liegen, und es faellt niemandem\nauf.\n\n--- 1 · WORUM ES GEHT ---\n\nBei uns gibt es eine Funktion `kosmovis_query_qa_verdict`. Sie schreibt ein QA-Urteil in\nFLACHEN Feldnamen — neun Stueck, aus der Zeit vor `kosmovis.render-result/v2`.\n\nWir wissen nicht, ob sie jemand liest.\n\n--- 2 · DIE FRAGE, UND SIE IST SCHLICHT ---\n\nLiest `kosmovis_query_qa_verdict` bei euch noch die flachen Namen, oder liest es\ninzwischen `render-result/v2`?\n\nDrei moegliche Antworten, und jede hat bei uns eine andere Folge:\n\n  * WENN FLACH: Dann haben wir eine TOTE KANTE AUF DEM LIEFERWEG — ihr lest Felder, die\n    wir nie schreiben, und es gibt keine Fehlermeldung. Das ist der teuerste der drei\n    Faelle. Wir schliessen sie sofort an.\n\n  * WENN v2: Dann gehoert die Funktion bei uns geloescht, und wir loeschen sie.\n\n  * WENN BEIDES irgendwo: Sagt uns wo. Dann bedienen wir beide BEWUSST statt zufaellig.\n\n--- 3 · WARUM WIR NICHT EINFACH RATEN ---\n\nBeides ohne die Auskunft waere geraten: Anschliessen, was niemand liest, kostet Pflege\nohne Nutzen; loeschen, was jemand liest, bricht euch etwas ab, ohne dass eine Meldung\nkommt. Geprueft haben wir die Funktion inzwischen — ungetestet ist schlimmer als\nungerufen. Angeschlossen oder geloescht wird sie erst nach eurer Antwort.\n\n--- 4 · WAS AUSDRUECKLICH NICHT ZU TUN IST ---\n\n  * NICHTS bei euch aendern. Das ist eine Auskunftsfrage, keine Aenderungsbitte.\n  * NICHT vermuten. «Vermutlich v2» hilft uns nicht — dann ist es weiter unbekannt, nur\n    mit einem beruhigenden Wort davor.\n  * Keine Pfade mit Benutzernamen zurueck. Unser Repo ist oeffentlich.\n",
+  "erstellt": "2026-08-27T21:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": [
+    "Nichts bei euch aendern — das ist eine Auskunftsfrage",
+    "Nicht vermuten: «vermutlich v2» laesst es unbekannt, nur mit einem beruhigenden Wort davor",
+    "Regel 3: keine Pfade mit Benutzernamen, unser Repo ist oeffentlich"
+  ],
+  "rueckgabe": [
+    "V1 flach, v2, oder beides?",
+    "V2 falls beides: an welchen Stellen jeweils?",
+    "V3 falls flach: welche der neun Feldnamen werden wirklich gelesen?"
+  ]
+}

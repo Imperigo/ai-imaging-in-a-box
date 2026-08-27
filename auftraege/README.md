@@ -26,6 +26,33 @@ Reihenfolge, und sie ist nicht beliebig: **erst committen und pushen, dann den P
 herausgeben.** Ein Prompt, der auf einen Auftrag zeigt, den `git pull` noch nicht holt,
 schickt den Empfänger ins Leere.
 
+Seit dem 27.08.2026 schreibt den Block ein Werkzeug statt einer Hand:
+
+```bash
+python tools/auftragspost.py cloud            # alle offenen an einen Adressaten
+python tools/auftragspost.py --auftrag auf-20260827-63
+python tools/auftragspost.py ui --nach <verzeichnis>   # als <kennung>.md ablegen
+```
+
+## Zwei der drei Worker lesen dieses Repo. Einer nicht.
+
+| Worker | Weg |
+|---|---|
+| `local` | dieses Repo, `git pull` |
+| `ui` | dieses Repo, seit 26.08.2026 |
+| `cloud` | **keiner** — er hält den Vertrag von KosmoOrbit und hat unser Repo nicht |
+
+Für `cloud` gab es damit bis zum 27.08.2026 gar keinen Zustellweg: Die Aufträge lagen an
+einem Ort, den ihr Adressat nicht lesen kann, und der einzige Bote war der Owner.
+
+*Ein Auftrag, den sein Adressat nicht erreichen kann, ist kein Rückstand bei ihm — er ist
+einer bei uns.*
+
+**Seit dem 27.08.2026 werden die Blöcke zusätzlich in das KosmoOrbit-Repo abgelegt**
+(privat, Owner-Entscheid vom selben Tag). Der Zielpfad steht **nicht** hier: Er zeigt in
+ein fremdes Repo, und dessen Aufbau gehört nicht in ein öffentliches. `--nach` bekommt ihn
+als Argument.
+
 ## Was hier NICHT hineingehört
 
 **Regel 3 gilt auch für diesen Ordner.** Aufträge und Ergebnisse tragen:

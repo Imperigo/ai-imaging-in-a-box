@@ -30,6 +30,7 @@ Aufbau
 ``jobs``         Auftragsverwaltung mit Freigabe (Freeze-Schutz)
 ``werkzeuge``    was die MCP-Naht anbietet — gewöhnliche Bibliotheksaufrufe
 ``auftrag``      Aufträge an die HomeStation, über das Repo als Übergabeort
+``auftragspost`` ein Auftrag als EIN Block — für Adressaten ohne unser Repo
 ``geometrie_qa`` die Geometrie-Treue-Metrik — der wissenschaftliche Kern
 ``stil_qa``      das zweite Gate: Stil-Ähnlichkeit
 ``einbau``       Was gebaut ist, was davon in der Software steht, und wer es einbaut
@@ -46,8 +47,8 @@ Aufbau
 __version__ = "0.0.2"
 
 from aiimaging import (  # noqa: F401
-    auftrag, backbone, bildlesen, bildschreiben, contracts, einbau, einbetter, gate,
-    geometrie_qa,
+    auftrag, auftragspost, backbone, bildlesen, bildschreiben, contracts,
+    einbau, einbetter, gate, geometrie_qa,
     graph, herkunft, jobs, kette, konversionstreue, kosmo_naht, lizenzquelle, lora,
     mcp_schemas, paarschwellen, render, schwellenstudie, seams, stil_qa,
     stilstudie, tiefenschaetzer,
