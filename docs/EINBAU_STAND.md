@@ -9,7 +9,12 @@ niemand konnte sagen, welche.
 Das ist dieselbe Sorte Lücke, die dieses Projekt im Code jagt — eine Aufstellung, die
 stimmte, als sie geschrieben wurde. Sie steht hier darum mit **Datum und Beleg**, und
 `tests/test_einbau_stand.py` hält sie: Jeder erledigte Posten nennt einen Beleg, den es
-gibt; jeder offene nennt einen Auftrag oder ausdrücklich «niemand».
+gibt; jeder offene nennt einen Auftrag.
+
+**Seit dem 26.08.2026 gilt zusätzlich:** «Niemand» ist keine zulässige Angabe mehr. Der
+Owner-Auftrag desselben Tages macht den *Einbau* zum Ziel — und ein Posten ohne
+Adressaten wird nie eingebaut, ohne dass es jemandem auffällt. `tools/einbau.py` zählt
+das nach und **scheitert mit Rückgabewert 1**, sobald ein offener Posten niemanden nennt.
 
 **Erledigtes wird abgehakt, nicht gelöscht** (Hausregel).
 
@@ -25,10 +30,10 @@ wird ohne Rückfrage nichts geändert.
 | A1 | `mcp<2` festschreiben — der Server ist gegen die 1.x-Dekoratorschnittstelle geschrieben | 🟩 **erledigt** | 2026-08-19 | `pyproject.toml` (`mcp = ["mcp>=1.27,<2"]`) |
 | A2 | Ausgabeschema-Bruch in `aiimaging_query_render` (`None`, wo ein String zugesagt war) | 🟩 **erledigt** | 2026-08-18 | `src/aiimaging/mcp_schemas.py` (`status` nullbar, mit dem Grund im Kommentar) |
 | A3 | Kein `additionalProperties: false` in unseren Eingabeschemata | 🟩 **erledigt** | 2026-08-18 | `mcp_schemas.pruefe_vertrag` prüft es für **jeden** Vertrag, nicht einmalig von Hand |
-| A4 | Klären, warum `/api/mcp/tools` keine Schemata durchreicht | 🟥 **offen** | — | **niemand** — braucht einen Blick ins Odysseus-Backend, den nur die HomeStation hat |
+| A4 | Klären, warum `/api/mcp/tools` keine Schemata durchreicht | 🟥 **offen** | — | `auftraege/offen/auf-20260826-58.json` — braucht einen Blick ins Odysseus-Backend, den nur die HomeStation hat. *Stand bis zum 26.08.2026 als «niemand» da; unter dem Owner-Auftrag desselben Tages ist das keine zulässige Angabe mehr* |
 | A5 | `query_render` und `check_geometry` in `READ_ONLY_MCP_TOOLS` **beantragen** (`enqueue_render` ausdrücklich **nicht**) | 🟥 **offen** | — | `auftraege/offen/auf-20260826-48.json` |
 | A6 | Rezept «AI-Imaging» beantragen: Konfiguration → `check_geometry` (Gate) → `enqueue_render` → `query_render` | 🟥 **offen** | — | `auftraege/offen/auf-20260826-48.json` |
-| A7 | Feldnamen gegen den vorgesehenen Vorgänger prüfen | 🟩 **halb** | 2026-08-18 | `contracts.LANE_FIELDS` und `mcp_schemas.pruefe_verdrahtbarkeit` belegen die Verdrahtbarkeit **rechnerisch**; am laufenden Cockpit gemessen ist sie nicht (hängt an A4) |
+| A7 | Feldnamen gegen den vorgesehenen Vorgänger prüfen | 🟩 **halb** | 2026-08-18 | `contracts.LANE_FIELDS` und `mcp_schemas.pruefe_verdrahtbarkeit` belegen die Verdrahtbarkeit **rechnerisch**; am laufenden Cockpit gemessen ist sie nicht. Hängt an A4 und wird mit ihm getrieben: `auftraege/offen/auf-20260826-58.json` (Schritt 4) |
 | A8 | Wo erscheinen Bild und QA-Wert? Im Cockpit gibt es keinen Ort dafür | 🟩 **entschieden, nicht gebaut** | 2026-08-26 | In der **KosmoVis-Fläche**, nicht als neuer Anzeigetyp im fremden Knotenrahmen — der innere Graph bekommt eine innere Oberfläche. Entwurf: `docs/OBERFLAECHE_KOSMOVIS.md`; gebaut wird er über `auftraege/offen/auf-20260826-52.json` |
 | A10 | Die Oberfläche selbst — Bedienelemente, Anzeige, die drei Zustände | 🟥 **offen** | — | Entwurf steht (`docs/OBERFLAECHE_KOSMOVIS.md`), Bau beauftragt in `auftraege/offen/auf-20260826-52.json`. Der Auftrag trägt den Entwurf **im Volltext** — die Hausregel verbietet ein «siehe Dokument XY» |
 | A9 | Die Registrierung nachweisen — sie liegt acht Tage und **ein Werkzeug** zurück | 🟥 **offen** | — | `auftraege/offen/auf-20260826-48.json` |
@@ -79,9 +84,9 @@ etwas fehlt. Hier sieht ein veralteter Stand aus wie der aktuelle.*
 | C1 | Der Abholer läuft dort als Dienst | 🟩 **erledigt** | 2026-08-22 | `betrieb/kosmo-abholer.{service,timer}`, Ergebnisse ab `auf-20260822-31` |
 | C2 | Die HomeStation hat den Stand vom Abend des 26.08. gezogen | 🟥 **offen** | — | `auftraege/offen/auf-20260826-57.json` — **24 Commits seit ihrem letzten Bericht (`auf-47`)**, vier davon ändern ihren Ausführungspfad |
 | C3 | `bestanden` ist dreiwertig — `null` heisst *nicht beurteilbar* | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tiefenschaetzer.qa_gegen_soll`, `gate.gesamturteil` — Bestätigung über `auftraege/offen/auf-20260826-57.json` |
-| C4 | Der Maskenweg wird im Homeworker gefahren | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tools/homeworker.py`, `maske.maske_aus_bericht` — bis dahin standen `rho_maske`, `kante`, `paarurteil` in **jedem** ihrer Läufe auf `None` |
-| C5 | Die gemessene Polarität kommt am Tor an | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tiefenschaetzer.gemessenes_zeichen` — an den 14 bekannten Läufen ändert sich kein Urteil, gerechnet |
-| C6 | `gelaende_erwartet` ist aus dem Auftrag steuerbar | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tools/homeworker.py` liest `params.gelaende_erwartet`; über IFC-Klassennamen greift `maske.ist_ifc_klassenkatalog` ohnehin |
+| C4 | Der Maskenweg wird im Homeworker gefahren | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tools/homeworker.py`, `maske.maske_aus_bericht` — bis dahin standen `rho_maske`, `kante`, `paarurteil` in **jedem** ihrer Läufe auf `None`. Bestätigung: `auftraege/offen/auf-20260826-57.json` (V2) |
+| C5 | Die gemessene Polarität kommt am Tor an | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tiefenschaetzer.gemessenes_zeichen` — an den 14 bekannten Läufen ändert sich kein Urteil, gerechnet. Bestätigung: `auftraege/offen/auf-20260826-57.json` (V3, V5) |
+| C6 | `gelaende_erwartet` ist aus dem Auftrag steuerbar | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | `tools/homeworker.py` liest `params.gelaende_erwartet`; über IFC-Klassennamen greift `maske.ist_ifc_klassenkatalog` ohnehin. Bestätigung: `auftraege/offen/auf-20260826-57.json` (V1) |
 
 **Der unangenehme Eintrag ist C2.** Eine Verhaltensänderung, die über git ankommt, hat
 keine Ansage — und `bestanden: null` sieht auf der anderen Seite aus wie ein Fehler, wenn

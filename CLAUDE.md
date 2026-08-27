@@ -131,6 +131,43 @@ Worker erst suchen muss, ist ein halber Auftrag.
 Im Chat steht danach höchstens **ein Satz**: dass der Auftrag liegt und was er fragt.
 
 Faustregel wie bei der Oberfläche: Was der Owner erst zusammensuchen muss, existiert nicht.
+
+### Der Einbau ist das Ziel, nicht der Bau
+
+**Owner-Auftrag 26.08.2026**, und er verschiebt den Massstab dieser Arbeit:
+
+> *«Sorge dafür, dass andere Worker immer alles einbauen in die Software — das ist
+> Endziel. Du verteilst, wo was hin muss, und du bist verantwortlich, dass sie es einbauen
+> und mir dann bestätigst.»*
+
+Damit ist gebauter Code **kein Ergebnis mehr, sondern eine Zwischenstufe.** Das Ergebnis
+ist Code, der in KosmoOrbit läuft. Dazwischen liegen drei fremde Wartende, und keiner von
+ihnen liest Gedanken.
+
+Vier Pflichten folgen daraus:
+
+1. **Verteilen.** Jeder offene Posten hat einen **Adressaten** — `local`, `cloud` oder
+   `ui`. «Niemand» war bis zum 26.08.2026 eine zulässige Angabe im Einbau-Stand; sie ist
+   es nicht mehr. Ein Posten ohne Adressaten wird nie eingebaut, und es fällt keinem auf.
+2. **Nachhalten.** Der Rückstand wird **gezählt, nicht geschätzt**: `aiimaging.einbau`
+   und `tools/einbau.py` sagen, welcher Auftrag wie lange bei wem liegt. Was von Hand
+   gezählt wird, wird irgendwann nicht mehr gezählt.
+3. **Einbauen lassen heisst einbauen beauftragen.** Ein Messauftrag ist kein
+   Einbauauftrag. Wer eine Zahl liefert, hat nichts eingebaut — der Auftrag muss sagen,
+   *was in die Software kommt*, und die Rückgabe muss den Einbau belegen, nicht die
+   Messung.
+4. **Bestätigen.** Was eingebaut ist, wird dem Owner gemeldet — mit Beleg und Datum, im
+   Einbau-Stand abgehakt. **Nicht** gemeldet wird, was gebaut ist: Das ist der Unterschied,
+   um den es in diesem Auftrag geht.
+
+**Der Zustand dazwischen hat einen eigenen Namen.** Was bei uns fertig ist und drüben
+ungeprüft, heisst im Einbau-Stand `gebaut, am Gerät unbestätigt` — weder erledigt noch
+offen. Die dritte Antwort dieses Projekts, angewandt auf den Einbau.
+
+**Und der stillste Weg ist der dritte.** Die HomeStation führt `tools/homeworker.py` und
+`tools/abholen.py` **aus diesem Repo** aus: Ein `git pull` dort ändert, was gerechnet
+wird, ohne dass irgendwo ein Posten umspringt. Eine Verhaltensänderung auf diesem Weg
+**wird angesagt, bevor sie ankommt** — sonst sieht sie drüben aus wie ein Fehler.
 ### Git
 
 Innerhalb dieses Repos entscheidet Claude eigenständig über Zweige und Zusammenführungen

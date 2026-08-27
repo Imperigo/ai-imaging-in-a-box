@@ -31,6 +31,7 @@ Aufbau
 ``auftrag``      Aufträge an die HomeStation, über das Repo als Übergabeort
 ``geometrie_qa`` die Geometrie-Treue-Metrik — der wissenschaftliche Kern
 ``stil_qa``      das zweite Gate: Stil-Ähnlichkeit
+``einbau``       Was gebaut ist, was davon in der Software steht, und wer es einbaut
 ``einbetter``    Registry der Einbettungsmodelle samt Lizenz (DINOv3 ausgeschlossen)
 ``gate``         das Doppel-Gate — bestanden nur, wenn beide bestehen
 ``backbone``     Registry der Bildmodelle samt Lizenz (Regel 1 in ausführbarer Form)
@@ -44,7 +45,8 @@ Aufbau
 __version__ = "0.0.2"
 
 from aiimaging import (  # noqa: F401
-    auftrag, backbone, bildlesen, bildschreiben, contracts, einbetter, gate, geometrie_qa,
+    auftrag, backbone, bildlesen, bildschreiben, contracts, einbau, einbetter, gate,
+    geometrie_qa,
     graph, herkunft, jobs, kette, konversionstreue, kosmo_naht, lizenzquelle, lora,
     mcp_schemas, render, schwellenstudie, seams, stil_qa, stilstudie, tiefenschaetzer,
     torwaechter, werkzeuge,

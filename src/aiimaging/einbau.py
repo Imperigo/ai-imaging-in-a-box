@@ -59,7 +59,21 @@ from aiimaging import auftrag as _auftrag
 #: Alphabet hört auf zu wachen, sobald ein neuer Buchstabe auftaucht, und sagt nichts.
 ZEILE = re.compile(r"^\|\s*([A-Z]+\d+)\s*\|(.+)\|\s*$")
 
-#: Das Wort, mit dem ein offener Posten bisher sagen durfte, dass ihn niemand treibt.
+#: Wie eine Auftragskennung im Beleg aussieht: ``auf-20260826-58``.
+#:
+#: **Gesucht wird der Adressat, nicht sein Fehlen** — und das ist eine Berichtigung vom
+#: 26.08.2026. Die erste Fassung suchte nach dem Wort «niemand» im Beleg. Sie hat sich am
+#: selben Abend selbst gefangen: Kaum stand in einer Zeile der Satz *«stand bis heute als
+#: «niemand» da»*, meldete sie den Posten weiter als unbesetzt, obwohl er längst einen
+#: Auftrag trug.
+#:
+#: *Eine Prüfung auf die Abwesenheit eines Wortes prüft die Prosa, nicht die Sache.* Ein
+#: Adressat ist da, wenn ein Auftrag genannt ist — das ist positiv belegbar und steht
+#: nicht in der Formulierung.
+AUFTRAGSKENNUNG = re.compile(r"auf-\d{8}-\d+")
+
+#: Das Wort, mit dem ein offener Posten bis zum 26.08.2026 sagen durfte, dass ihn niemand
+#: treibt. Es steht hier nur noch, damit die alte Angabe erkennbar bleibt.
 OHNE_ADRESSAT = "niemand"
 
 #: Ampeln der Legende — sie sagen, WO ein Posten liegt, nicht wie er steht.
@@ -145,9 +159,14 @@ def ohne_adressat(blatt) -> list[dict]:
     unbesetzt als stillschweigend. Seit dem Owner-Auftrag desselben Abends ist der Einbau
     das Ziel, und damit ist ein Posten ohne Adressaten kein ehrlicher Zustand mehr,
     sondern ein Rückstand — er wird nie eingebaut, und niemandem fällt es auf.
+
+    **Gesucht wird der Adressat, nicht sein Fehlen:** Ein Posten gilt als besetzt, wenn
+    sein Beleg eine Auftragskennung nennt. Siehe :data:`AUFTRAGSKENNUNG` — die erste
+    Fassung suchte nach dem Wort «niemand» und hat sich damit an der eigenen Erklärung
+    verschluckt.
     """
     return [p for p in posten(blatt)
-            if p["offen"] and OHNE_ADRESSAT in p["beleg"].lower()]
+            if p["offen"] and not AUFTRAGSKENNUNG.search(p["beleg"])]
 
 
 def _tage_her(zeitstempel: str, heute: date) -> int | None:
@@ -225,6 +244,7 @@ def bericht(repo_wurzel, blatt=None, *, heute: date | None = None) -> dict:
 
 
 __all__ = [
-    "AMPELN", "OFFENE_ZUSTAENDE", "OHNE_ADRESSAT", "ZEILE", "ZUSTAENDE",
+    "AMPELN", "AUFTRAGSKENNUNG", "OFFENE_ZUSTAENDE", "OHNE_ADRESSAT", "ZEILE",
+    "ZUSTAENDE",
     "EinbauError", "bericht", "ohne_adressat", "posten", "rueckstand",
 ]

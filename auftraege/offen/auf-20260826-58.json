@@ -1,0 +1,27 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260826-58",
+  "art": "qa",
+  "beschreibung": "A4 hatte als einziger Einbau-Posten keinen Adressaten. Warum reicht /api/mcp/tools keine Schemata durch — verliert sie das Backend, oder kommen sie schon am Server nicht an? An A4 haengt A7.",
+  "anweisung": "=== DER EINZIGE POSTEN OHNE ADRESSATEN — UND JETZT SEID IHR ES ===\n\nDer Owner hat am 26.08.2026 das Ziel geradegerueckt: Gebauter Code ist kein Ergebnis\nmehr, sondern eine Zwischenstufe. Das Ergebnis ist Code, der in KosmoOrbit laeuft.\n\nDaraus folgt eine Regel, die bis heute nicht galt: JEDER offene Posten des Einbaus hat\neinen Adressaten. \"Niemand\" war zulaessig, solange Bauen das Ziel war. Ein Posten ohne\nAdressaten wird nie eingebaut, und es faellt keinem auf.\n\nGenau ein Posten stand noch so da, und das ist A4.\n\n--- 1 · WAS A4 SAGT ---\n\nAus docs/EINBAU_STAND.md, seit dem 19.08.2026 unveraendert:\n\n    A4 | Klaeren, warum /api/mcp/tools keine Schemata durchreicht\n       | offen | — | NIEMAND — braucht einen Blick ins Odysseus-Backend, den nur die\n       | HomeStation hat\n\nDer letzte Halbsatz ist der Grund, warum ihr es seid: Wir haben diesen Blick nicht.\nDiese Umgebung erreicht euer Backend nicht.\n\n--- 2 · WARUM DER POSTEN MEHR HAENGT, ALS ER AUSSIEHT ---\n\nAn A4 haengt A7 (\"Feldnamen gegen den vorgesehenen Vorgaenger pruefen\"), und der steht\nseit dem 18.08. auf HALB. Wir koennen die Verdrahtbarkeit RECHNERISCH belegen —\ncontracts.LANE_FIELDS und mcp_schemas.pruefe_verdrahtbarkeit tun das — aber am\nlaufenden Cockpit gemessen ist sie nicht. Solange /api/mcp/tools keine Schemata\nliefert, kann sie auch niemand messen.\n\nKosmoOrbit verdrahtet ueber FELDNAMEN-GLEICHHEIT, ohne Fehlermeldung. Wenn die\nSchemata nicht ankommen, entstehen dort tote Kanten, die niemand meldet — das ist der\nBefund, um den dieses ganze Blatt gebaut ist.\n\n--- 3 · WAS ZU TUN IST ---\n\nKein Umbau, eine Diagnose. Vier Schritte, alle am laufenden Backend.\n\nSCHRITT 1 · Was liefert /api/mcp/tools ueberhaupt?\n  Ruft den Endpunkt auf und schaut in die Antwort. Fuer jedes Werkzeug: Steht dort ein\n  `inputSchema`? Ein `outputSchema`? Oder nur Name und Beschreibung?\n\nSCHRITT 2 · Liegt es an uns oder an ihnen?\n  Unsere vier Werkzeuge melden ihre Schemata (src/aiimaging/mcp_schemas.py). Fragt den\n  MCP-Server DIREKT — nicht ueber /api/mcp/tools — und vergleicht:\n    * Kommen die Schemata beim Server an?  -> dann verliert sie das Backend\n    * Kommen sie schon dort nicht an?      -> dann ist es unsere Registrierung\n  Diese eine Unterscheidung ist der ganze Auftrag. Alles Weitere haengt daran.\n\nSCHRITT 3 · Falls es das Backend verliert: an welcher Stelle?\n  Ein Blick in den Code, der /api/mcp/tools bedient. Wir brauchen KEINEN Patch von\n  euch und keinen Zugriff — nur den Satz, wo die Angabe verlorengeht.\n\nSCHRITT 4 · Was das fuer A7 heisst.\n  Falls die Schemata ankommen: Dann laesst sich die Feldnamen-Verdrahtung am laufenden\n  Cockpit messen, und A7 kann von HALB auf ERLEDIGT. Sagt uns, ob ihr das messen\n  koennt, oder ob es dafuer noch etwas braucht.\n\n--- 4 · WAS AUSDRUECKLICH NICHT ZU TUN IST ---\n\n  * NICHTS am Odysseus-Backend aendern. Das ist ein fremdes Repo; dort wird ohne\n    Rueckfrage nichts angefasst — auch nicht von euch, auch nicht \"schnell\".\n  * KEINE Registrierung wiederholen, solange auf-20260826-48 nicht beantwortet ist.\n    Sonst wissen wir hinterher nicht, welcher Lauf welche Antwort erzeugt hat.\n  * KEINE Zugangsdaten, Hostnamen oder Pfade mit Benutzernamen zurueckschicken.\n    Regel 3. Ein Endpunktpfad wie /api/mcp/tools ist in Ordnung, eine URL mit Host nicht.\n\n--- 5 · WAS WIR MIT DER ANTWORT MACHEN ---\n\n  * Schemata kommen an: A4 wird abgehakt, A7 bekommt einen Messauftrag.\n  * Backend verliert sie: A4 wird abgehakt mit dem Befund, und daraus entsteht eine\n    Vertragsfrage an den Cloud-Worker — nicht ein Patch von uns.\n  * Sie kommen schon am Server nicht an: Dann ist es unser Fehler, und er ist hier zu\n    beheben. Das waere die beste der drei Antworten, denn sie liegt in unserer Hand.\n\nIn jedem Fall verliert A4 seinen Eintrag \"niemand\". Das ist der Zweck dieses Auftrags.",
+  "erstellt": "2026-08-27T14:39:18Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": [
+    "Nichts am Odysseus-Backend aendern — fremdes Repo",
+    "Keine Registrierung wiederholen, solange auf-20260826-48 offen ist",
+    "Regel 3: keine Zugangsdaten, Hostnamen oder Pfade mit Benutzernamen",
+    "Diagnose, kein Umbau"
+  ],
+  "rueckgabe": [
+    "V1 Liefert /api/mcp/tools inputSchema und outputSchema je Werkzeug, oder nur Name?",
+    "V2 Kommen die Schemata beim MCP-Server selbst an (direkt gefragt, nicht ueber /api)?",
+    "V3 Falls das Backend sie verliert: an welcher Stelle",
+    "V4 Laesst sich die Feldnamen-Verdrahtung am laufenden Cockpit messen (A7)?"
+  ]
+}
