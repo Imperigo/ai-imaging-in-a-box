@@ -1,17 +1,25 @@
-# VOR DEM INSTALLIEREN: `<nutzer>` durch den eigenen Benutzernamen ersetzen.
+# Diese Einheit ist ohne Nacharbeit installierbar: `systemctl --user enable --now`.
 #
 # Regel 3: In diesem Repo steht kein wirklicher Benutzername. Am 26.08.2026 ist genau
 # das in `kosmo-abholer.service` dreimal gefunden worden — der Waechter las damals keine
 # `.service`-Dateien.
+#
+# Der Ersatz war bis zum 27.08.2026 ein Platzhalter, der vor dem Installieren von Hand
+# zu ersetzen war. Das hat die Regel gerettet und dafuer eine zweite Fehlerart gebaut:
+# Eine von Hand abgeschriebene Einheit holt sich keine Aenderung mehr ab. Beim Abholer
+# ist sie deswegen sechs Tage lang mit der falschen Fassung gelaufen, waehrend die
+# Buchfuehrung den Posten als erledigt fuehrte. `%h` ist systemds eigener Platzhalter
+# fuer das Heimatverzeichnis; er loest sich beim Laden auf und laesst nichts zum
+# Abschreiben uebrig. Bewacht von `tests/test_betriebseinheiten.py`.
 
 [Unit]
 Description=KosmoVis-Homeworker (arbeitet Auftraege aus auftraege/offen ab) — ein Durchgang
-Documentation=file:///home/<nutzer>/ai-imaging-in-a-box/docs/EINBAU_STAND.md
+Documentation=file:%h/ai-imaging-in-a-box/docs/EINBAU_STAND.md
 After=graphical-session.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/home/<nutzer>/ai-imaging-in-a-box
+WorkingDirectory=%h/ai-imaging-in-a-box
 Environment=AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers
 # Ein Auftrag je Durchgang. Warum nicht alle: Ein Renderlauf dauert Minuten, und ein
 # Takt, der erst nach Stunden zurueckkommt, ist keiner — die Karte bliebe belegt, ein

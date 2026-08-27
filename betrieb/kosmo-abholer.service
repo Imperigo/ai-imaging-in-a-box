@@ -1,19 +1,34 @@
-# VOR DEM INSTALLIEREN: `<nutzer>` durch den eigenen Benutzernamen ersetzen.
+# Diese Einheit ist ohne Nacharbeit installierbar: `systemctl --user enable --now`.
 #
 # Hier stand bis zum 26.08.2026 ein wirklicher Benutzername, dreimal — in einem
 # oeffentlichen Repo, also ein Verstoss gegen Regel 3. Zwei Luecken haben ihn
 # durchgelassen: Der Waechter `tests/test_regel3_kennungen.py` liest nur Dateien
 # mit bestimmten Endungen, und `.service` gehoerte nicht dazu. Beide sind seither
 # geschlossen.
+#
+# Der Ersatz war bis zum 27.08.2026 der Platzhalter `<nutzer>`, dreimal, mit der
+# Anweisung, ihn vor dem Installieren von Hand zu ersetzen. Das hat die Regel
+# gerettet und dafuer eine zweite Fehlerart eingebaut: Eine Einheit, die man von
+# Hand abschreibt, ist ab dem Abschreiben eine ANDERE Einheit. Am 27.08.2026
+# gemessen — die installierte Fassung stammte vom 20.08. und kannte
+# `--eigener-store` nicht, waehrend die Buchfuehrung den Posten als erledigt
+# fuehrte. Der Platzhalter war die Ursache: Wer von Hand ersetzt, holt sich die
+# naechste Aenderung nicht ab.
+#
+# `%h` ist systemds eigener Platzhalter fuer das Heimatverzeichnis und wird beim
+# Laden aufgeloest. Damit steht kein Name im Repo UND es gibt nichts zu ersetzen,
+# also auch nichts, was auseinanderlaufen koennte. Geprueft wird das von
+# `tests/test_betriebseinheiten.py` — sowohl die Abwesenheit von Platzhaltern als
+# auch die Deckung zwischen dieser Datei und der installierten Einheit.
 
 [Unit]
 Description=KosmoVis-Abholer (holt Renderauftraege der Bruecke ab) — ein Durchgang
-Documentation=file:///home/<nutzer>/ai-imaging-in-a-box/docs/ABHOLER_ERSTER_LAUF_2026-08-19.md
+Documentation=file:%h/ai-imaging-in-a-box/docs/ABHOLER_ERSTER_LAUF_2026-08-19.md
 After=graphical-session.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/home/<nutzer>/ai-imaging-in-a-box
+WorkingDirectory=%h/ai-imaging-in-a-box
 Environment=AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers
 # --fremde-freigabe macht die Freigabe der fremden Bruecke STEHEND. Wer das nicht will,
 # streicht den Schalter: dann bleibt jeder Auftrag liegen und der Bericht sagt warum.
@@ -22,8 +37,10 @@ Environment=AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers
 # --eigener-store: die ZWEITE Ablage, in die der MCP-Einlass schreibt — also der Weg,
 # den ein Knoten in KosmoOrbit nimmt. Ohne diesen Schalter bleibt ein so bestellter
 # Render liegen; bis zum 26.08.2026 war das der einzige Zustand, den es gab. Fehlt der
-# Ordner, wird er uebersprungen und der Bruecken-Durchgang laeuft weiter.
-ExecStart=/home/<nutzer>/ai-imaging-in-a-box/.venv-render/bin/python \
+# Ordner, wird er uebersprungen und der Bruecken-Durchgang laeuft weiter. Der Pfad ist
+# die Vorgabe aus `werkzeuge.job_verzeichnis()`; wer dort $AIIMAGING_JOB_DIR setzt,
+# setzt ihn hier mit.
+ExecStart=%h/ai-imaging-in-a-box/.venv-render/bin/python \
     tools/abholen.py --fremde-freigabe --hoechstens 1 \
     --eigener-store /tmp/aiimaging-jobs
 # Der Abholer prueft die Karte selbst (nvidia-smi, fail-closed) und laesst Auftraege mit

@@ -54,7 +54,7 @@ SUCHE = re.compile(rf"/home/({NAME})|/Users/({NAME})")
 #: Die zweite Suche, und sie braucht kein intaktes ``/home/``.
 #:
 #: **Warum es sie gibt — gefunden, nicht ausgedacht.** In zwei Ergebnisdateien stand
-#: ``e/andrin-baumann/ai-imaging-in-a-box/…``: der Anfang des Pfades war beim Einfangen
+#: ``e/<name>/ai-imaging-in-a-box/…``: der Anfang des Pfades war beim Einfangen
 #: eines Tracebacks abgeschnitten worden. :data:`SUCHE` verlangt ein vollständiges
 #: ``/home/`` und sah **nichts**, während der Name mitten im Repo stand.
 #:
@@ -66,7 +66,30 @@ SUCHE_VOR_DEM_REPO = re.compile(r"([^/\s\"'<>)\]]+)/ai-imaging-in-a-box/")
 #: Was **vor** dem Repo-Namen stehen darf: die Platzhalter aus :data:`ERLAUBT`, dazu die
 #: Auslassung ``…`` und ``home``/``Users`` selbst (für ``/home/ai-imaging-in-a-box`` und
 #: verwandte Formen ohne Zwischenverzeichnis).
-ERLAUBT_VOR_DEM_REPO = {"…", "...", "home", "Users", "user", "opt", "srv", "repo", "code"}
+#:
+#: ``%h`` ist am 27.08.2026 dazugekommen, und zwar als **Fehlalarm dieses Wächters an der
+#: Lösung, die ihn zufriedenstellen sollte**: ``betrieb/*.service`` lösen das
+#: Heimatverzeichnis seither über systemds eigenen Platzhalter auf. Genau darum geht es
+#: dieser Liste — ein Platzhalter ist erlaubt, ein Name nicht — und ``%h`` ist der
+#: einzige, den ein Mensch hier gar nicht erst von Hand ersetzen kann.
+ERLAUBT_VOR_DEM_REPO = {"…", "...", "home", "Users", "user", "opt", "srv", "repo", "code",
+                        "%h"}
+
+
+def _vor_dem_repo(roh: str) -> str:
+    """Aus dem Treffer das herausschaelen, was wirklich das Heimatverzeichnis benennt.
+
+    :data:`SUCHE_VOR_DEM_REPO` kann keinen Schraegstrich ueberspringen — steht davor
+    keiner, faengt sie die halbe Zeile mit. ``ExecStart=%h`` und ``Documentation=file:%h``
+    sind so entstanden, und beide meinen ``%h``.
+
+    Ein echter Name bleibt davon unberuehrt: In ``file:///home/<name>/`` stehen
+    Schraegstriche, also faengt die Suche ohnehin nur das letzte Glied — und das ist der
+    Name. Diese Funktion macht den Waechter also lesbarer, nicht nachsichtiger.
+    """
+    for trenner in ("=", ":"):
+        roh = roh.rsplit(trenner, 1)[-1]
+    return roh
 
 
 # --------------------------------------------------------------------------------------
@@ -239,7 +262,7 @@ def test_im_ganzen_repo_steht_kein_benutzername_in_einem_pfad():
         # Zweiter Durchgang: der Name unmittelbar VOR dem Repo-Namen, auch wenn das
         # `/home/` davor fehlt oder abgeschnitten ist. Siehe SUCHE_VOR_DEM_REPO.
         for treffer in SUCHE_VOR_DEM_REPO.finditer(text):
-            name = treffer.group(1)
+            name = _vor_dem_repo(treffer.group(1))
             if name not in ERLAUBT and name not in ERLAUBT_VOR_DEM_REPO:
                 funde.append(f"{pfad.relative_to(WURZEL)}: {treffer.group(0)}")
 
