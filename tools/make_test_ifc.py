@@ -431,7 +431,8 @@ def _hochbau_bauteile(s: _Step, g, kontext: str, besitz: str, ort_gesch: str,
 
 def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
                 mit_gelaende: bool = False, mit_raeumen: bool = False,
-                hochbau: bool = False) -> Path:
+                hochbau: bool = False,
+                gelaende_vielfaches: float = GELAENDE_VIELFACHES) -> Path:
     """Schreibt die synthetische IFC nach `ziel` und gibt den Pfad zurück.
 
     Args:
@@ -552,7 +553,28 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
     # 8,0 × 5,0 × 3,25 m, und eine stillschweigend geänderte Testgeometrie wäre genau die
     # Sorte Änderung, die eine Messreihe unbrauchbar macht, ohne dass es auffällt.
     if mit_gelaende:
-        kante = GELAENDE_VIELFACHES * max(LAENGE_X, BREITE_Y)
+        # DIE PLATTENGROESSE IST SEIT DEM 26.08.2026 EIN KNOPF, und der Anlass ist eine
+        # Messluecke: Der Entscheid zum Katalogbeweis ruht auf zwei Punkten — 4,2 %
+        # Bodenanteil (Verlust 0.042) und 59,8 % (ein wertloses Bild erreicht |rho| 0.92).
+        # Dazwischen war nichts gemessen, und darum ist die Ausnahme so eng geraten.
+        #
+        # Der erste Versuch, die Strecke zu schliessen, ging ueber die KAMERA
+        # (`deckungsgrad`) und trug nicht: Ueber fuenf Laeufe blieb der Bodenanteil
+        # zwischen 0.000 und 0.042, weil die Platte mit 2,5-facher Gebaeudespanne
+        # schlicht nicht groesser wird, wenn man weiter weg geht. Der wirkliche Hebel ist
+        # die Platte selbst.
+        #
+        # Die Vorgabe bleibt 2,5 — jede bestehende Messreihe haengt daran, und eine
+        # stillschweigend geaenderte Testgeometrie ist genau die Sorte Aenderung, die eine
+        # Reihe unbrauchbar macht, ohne dass es auffaellt.
+        if not isinstance(gelaende_vielfaches, (int, float)) or gelaende_vielfaches <= 0:
+            raise ValueError(
+                f"gelaende_vielfaches: positive Zahl erwartet, war "
+                f"{gelaende_vielfaches!r}. Eine Platte der Kantenlaenge null ist kein "
+                f"Gelaende, sondern ein unsichtbarer Eintrag in der Materialtabelle — "
+                f"die Gelaenderegel schlueg an, und die Maske traege nichts aus."
+            )
+        kante = float(gelaende_vielfaches) * max(LAENGE_X, BREITE_Y)
         shape, ort = _quader(
             s, kontext, kante, kante, GELAENDE_DICKE,
             (LAENGE_X - kante) / 2.0, (BREITE_Y - kante) / 2.0,
@@ -666,6 +688,13 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
 #: — ein vergessener Eintrag machte den Schalter stillschweigend zum Dateinamen.
 SCHALTER = ("--gelaende", "--raeume", "--hochbau")
 
+#: Schalter MIT Wert, als Vorsilbe. Sie brauchen einen eigenen Eintrag: Die Filterung
+#: unten vergleicht auf Gleichheit, und `--gelaende-vielfaches=8.0` ist mit keinem
+#: Eintrag aus :data:`SCHALTER` gleich — er wuerde zum Dateinamen. Genau dieser Fehler
+#: ist am 26.08.2026 beim ersten Versuch aufgetreten und vom Waechter gegen unbekannte
+#: Schalter gefangen worden, der aus demselben Anlass gebaut worden war.
+WERTSCHALTER = ("--gelaende-vielfaches=",)
+
 GEBRAUCH = (
     "Gebrauch: make_test_ifc.py [ZIEL] [IFC4|IFC2X3] [MILLI] [--gelaende] [--raeume]\n"
     "                              [--hochbau]\n"
@@ -673,6 +702,8 @@ GEBRAUCH = (
     "  Schema     IFC4 (Vorgabe) oder IFC2X3\n"
     "  Vorsatz    MILLI fuer Millimeter, sonst Meter\n"
     "  --gelaende zusaetzlich eine Gelaendeplatte unter dem Bauwerk\n"
+    "  --gelaende-vielfaches=N Kantenlaenge der Platte als Vielfaches der\n"
+    "             Gebaeudespanne (Vorgabe 2.5) — nur mit --gelaende\n"
     "  --raeume   zusaetzlich zwei IfcSpace im Wandinneren\n"
     "  --hochbau  STATT des Quaders ein gegliedertes Bauwerk: Stuetzenraster, Kern,\n"
     "             Fassadentafeln, Auskragung. Fuer Messungen, an denen ein glatter\n"
@@ -686,8 +717,18 @@ if __name__ == "__main__":
     if "--help" in sys.argv[1:] or "-h" in sys.argv[1:]:
         print(GEBRAUCH, end="")
         raise SystemExit(0)
-    argv = [a for a in sys.argv[1:] if a not in SCHALTER]
+    argv = [a for a in sys.argv[1:]
+            if a not in SCHALTER and not a.startswith(WERTSCHALTER)]
     mit_gelaende = "--gelaende" in sys.argv
+    vielfaches = GELAENDE_VIELFACHES
+    for a in sys.argv[1:]:
+        if a.startswith("--gelaende-vielfaches="):
+            try:
+                vielfaches = float(a.split("=", 1)[1])
+            except ValueError:
+                print(f"{a}: nach dem Gleichheitszeichen gehoert eine Zahl.\n\n{GEBRAUCH}",
+                      end="", file=sys.stderr)
+                raise SystemExit(2) from None
     mit_raeumen = "--raeume" in sys.argv
     hochbau = "--hochbau" in sys.argv
     # Ein unbekannter Schalter wurde bisher zum Dateinamen: `--help` schrieb eine IFC
@@ -702,5 +743,5 @@ if __name__ == "__main__":
     vorsatz = argv[2] if len(argv) > 2 else None
     p = erzeuge_ifc(ziel, schema=schema, vorsatz=(vorsatz or None),
                     mit_gelaende=mit_gelaende, mit_raeumen=mit_raeumen,
-                    hochbau=hochbau)
+                    hochbau=hochbau, gelaende_vielfaches=vielfaches)
     print(f"{p}  ({p.stat().st_size} Bytes, {len(p.read_text().splitlines())} Zeilen)")

@@ -4757,9 +4757,35 @@ Trägt **jeder** geprüfte Eintrag eine IFC-Klasse und ist keiner davon `IfcSite
       `bauwerksmaske` behält die Maske im belegten Nullbefund über einem Katalog.
       **Alle, nicht die meisten:** Ein einziger Eintrag ohne IFC-Klasse kippt den Beweis —
       er könnte der Boden sein.
-- [ ] **Offen und benannt:** Die Strecke zwischen 4,2 % und 59,8 % Bodenanteil ist
-      ungemessen. Sie zu schliessen braucht drei bis vier Blender-Läufe mit
-      unterschiedlich gerahmtem Gelände und geht hier ohne GPU.
+- [x] ~~**Die Strecke zwischen 4,2 % und 59,8 % Bodenanteil**~~ — **nachgemessen
+      2026-08-26**, `docs/BODENANTEIL_2026-08-26.md`. Sie hat **vier** Anläufe gebraucht,
+      und die ersten drei stehen mit im Blatt, weil jeder etwas über die Testgeometrie
+      sagt: `deckungsgrad` ist kein Hebel (die Platte wächst nicht, wenn man weiter weg
+      geht); die Plattengrösse allein macht den Boden zum **Horizontstreifen** von ein bis
+      sieben Bildzeilen und das Bauwerk zum Fleck; `augenhoehe` schiesst über (30 m geben
+      95 % Boden).
+
+      **Der Hebel ist das Paar:** grosse Platte *und* `kamera_huellbox` auf die
+      Bauwerksbox. Dann füllt der Boden die untere Bildhälfte und das Bauwerk steht
+      richtig im Bild.
+
+      **Der Befund stützt den Entscheid, statt ihn zu weiten.** Bei 0,68 bis 0,80
+      Bodenanteil erreicht eine Rampe — was ein Schätzer in eine strukturlose Fläche legt
+      — mit dem Boden in der Maske **ρ 0,92 bis 0,98**, ohne ihn **exakt null**. Die
+      Rauschkontrolle bleibt durchgehend bei null: Es ist nicht die Maske, die alles
+      hochzieht, sondern speziell die rampenförmige Struktur.
+
+      *Ein Ausgang, den ich vorher nicht kannte — es hätte auch herauskommen können, dass
+      die Ausnahme weiter sein darf.*
+
+      Dafür entstanden: `tools/make_test_ifc.py --gelaende-vielfaches=N` (Vorgabe
+      unverändert 2,5) und drei Tests dazu.
+- [ ] **Was davon offen bleibt:** Zwischen 5 % und 65 % gibt es in dieser Geometrie
+      **keinen Zustand** — der Boden springt vom Horizontstreifen in die Vordergrundfläche,
+      sobald die Kamera-Hüllbox wechselt. Für den Entscheid folgenlos (beide Enden zeigen
+      in dieselbe Richtung, das gefährliche ist gemessen), für eine Kurve zu wenig. Und die
+      **Rampe ist ein Ersatzstück, kein Schätzer** — ein Lauf mit dem echten Schätzer über
+      dieselbe Reihe braucht GPU und läuft über `auftraege/`.
 
 ---
 

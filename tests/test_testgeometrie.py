@@ -863,3 +863,72 @@ def test_der_hochbau_besteht_den_schemapruefer(tmp_path, schema):
     ifc = FIXTURE.erzeuge_ifc(tmp_path / f"hb_{schema}.ifc", schema=schema, hochbau=True)
     fehler = schemafehler(ifc)
     assert not fehler, f"{len(fehler)} Schemafehler, erste drei: {fehler[:3]}"
+
+
+
+# ======================================================================================
+# Die Geländeplatte als Knopf — und warum sie einer werden musste
+# ======================================================================================
+
+def _ohne_dateinamen(pfad) -> str:
+    """Der Inhalt ohne die ``FILE_NAME``-Zeile.
+
+    Sie trägt den Namen der Zieldatei, und zwei Läufe mit verschiedenen Zielen
+    unterscheiden sich darum immer — an genau einer Stelle, die nichts über die Geometrie
+    sagt. Ohne diesen Griff prüfte ein Vergleich den Dateinamen mit.
+    """
+    return "\n".join(z for z in Path(pfad).read_text().splitlines()
+                      if not z.startswith("FILE_NAME"))
+
+
+def test_die_plattengroesse_ist_einstellbar_und_die_vorgabe_bleibt(tmp_path):
+    """**Anlass ist eine Messlücke, kein Wunsch nach Einstellbarkeit.**
+
+    Der Entscheid zum Katalogbeweis (26.08.2026) ruhte auf zwei Punkten — 4,2 %
+    Bodenanteil und 59,8 % — und dazwischen war nichts gemessen. Drei Versuche, die
+    Strecke zu schliessen, gingen daneben, und alle drei am selben Grund: Die Platte hat
+    eine feste Kantenlänge von 2,5 Gebäudespannen, und keine Kameraeinstellung macht sie
+    grösser.
+
+    **Die Vorgabe bleibt 2,5.** Jede bestehende Messreihe hängt daran, und eine
+    stillschweigend geänderte Testgeometrie ist genau die Sorte Änderung, die eine Reihe
+    unbrauchbar macht, ohne dass es auffällt.
+    """
+    klein = FIXTURE.erzeuge_ifc(tmp_path / "klein.ifc", mit_gelaende=True)
+    gross = FIXTURE.erzeuge_ifc(tmp_path / "gross.ifc", mit_gelaende=True,
+                                gelaende_vielfaches=8.0)
+    vorgabe = FIXTURE.erzeuge_ifc(tmp_path / "vorgabe.ifc", mit_gelaende=True,
+                                  gelaende_vielfaches=FIXTURE.GELAENDE_VIELFACHES)
+
+    def groesste_zahl(pfad):
+        import re
+        return max(abs(float(x)) for x in re.findall(r"-?\d+\.\d+",
+                                                     Path(pfad).read_text()))
+
+    assert groesste_zahl(gross) > 2 * groesste_zahl(klein), "die Platte muss wirklich wachsen"
+    assert _ohne_dateinamen(klein) == _ohne_dateinamen(vorgabe), (
+        "die Vorgabe ist unverändert 2,5 — sonst wären alle bestehenden Messreihen hin"
+    )
+
+
+def test_eine_platte_der_kantenlaenge_null_wird_abgewiesen(tmp_path):
+    """Sie wäre kein Gelände, sondern ein unsichtbarer Eintrag in der Materialtabelle.
+
+    Die Geländeregel schlüge an, die Maske trüge nichts aus — und der Lauf sähe aus wie
+    einer mit erkanntem Gelände. Die geduldigste Art, eine Messung zu verderben.
+    """
+    for schlecht in (0, -1.0, "gross", None):
+        with pytest.raises((ValueError, TypeError)):
+            FIXTURE.erzeuge_ifc(tmp_path / "x.ifc", mit_gelaende=True,
+                                gelaende_vielfaches=schlecht)
+
+
+def test_ohne_gelaende_ist_die_plattengroesse_gegenstandslos(tmp_path):
+    """Die Gegenprobe: Der Knopf wirkt **nur** mit ``--gelaende``.
+
+    Ohne sie prüfte der Test darüber nur, dass irgendeine Zahl irgendwo ankommt.
+    """
+    ohne = FIXTURE.erzeuge_ifc(tmp_path / "a.ifc", gelaende_vielfaches=99.0)
+    schlicht = FIXTURE.erzeuge_ifc(tmp_path / "b.ifc")
+
+    assert _ohne_dateinamen(ohne) == _ohne_dateinamen(schlicht)
