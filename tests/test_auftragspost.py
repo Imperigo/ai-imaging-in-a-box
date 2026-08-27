@@ -93,10 +93,16 @@ def test_ein_alter_auftrag_ohne_anweisungsfeld_ist_trotzdem_zustellbar():
 
 def test_ein_pfad_aus_dieser_umgebung_wird_ersetzt_und_der_block_sagt_es():
     """Ersetzen statt Ablehnen — wie in `auftrag.ohne_kennungen`, aber **nicht still**."""
+    # `jemand` steht in `test_regel3_kennungen.ERLAUBT` und ist ausdruecklich der Name
+    # KEINES Menschen. Ein erfundener, namensfoermiger Platzhalter waere hier selbst ein
+    # Regel-3-Verstoss — der Waechter ueber das ganze Repo hat genau das gefangen, und er
+    # hatte recht: Eine Datei mit einem namensfoermigen Pfad ist eine Datei mit einem
+    # namensfoermigen Pfad, auch wenn sie ihn nur pruefen will.
     text = auftragspost.block(_satz(
-        anweisung="Der Lauf lag unter /home/jemand-mit-namen/projekt/lauf.json"))
-    assert "jemand-mit-namen" not in text
-    assert auftrag.NUTZER_ERSATZ in text
+        anweisung="Der Lauf lag unter /home/jemand/projekt/lauf.json"))
+    assert "/home/jemand/" not in text
+    assert f"/home/{auftrag.NUTZER_ERSATZ}/projekt/lauf.json" in text, (
+        "der Rest des Pfades bleibt — er ist die Auskunft")
     assert "Regel 3" in text
     assert "ungewoehnlich" in text, "eine Ersetzung ist hier selbst ein Befund"
 
@@ -169,3 +175,21 @@ def test_ein_beantworteter_auftrag_wird_nicht_mehr_ausgegeben(tmp_path):
 
     (tmp_path / "auftraege" / "ergebnisse" / "auf-20260827-77.json").write_text("{}")
     assert auftragspost.offene_blocks(tmp_path) == []
+
+
+def test_lege_ab_schreibt_je_auftrag_eine_datei(tmp_path):
+    """Der Zielpfad ist ein Argument und keine Konstante — er zeigt in ein fremdes Repo."""
+    blocks = [("auf-20260827-77", "erster Block"), ("auf-20260827-78", "zweiter Block")]
+    ziel = tmp_path / "tief" / "drin"
+    pfade = auftragspost.lege_ab(blocks, ziel)
+
+    assert [p.name for p in pfade] == ["auf-20260827-77.md", "auf-20260827-78.md"]
+    assert pfade[0].read_text(encoding="utf-8") == "erster Block\n"
+    assert ziel.is_dir(), "das Verzeichnis wird angelegt, nicht vorausgesetzt"
+
+
+def test_lege_ab_ueberschreibt_beim_naechsten_lauf(tmp_path):
+    """Deshalb steht in der Erklärung daneben, dass man in diesen Dateien nicht antwortet."""
+    auftragspost.lege_ab([("auf-20260827-77", "alt")], tmp_path)
+    auftragspost.lege_ab([("auf-20260827-77", "neu")], tmp_path)
+    assert (tmp_path / "auf-20260827-77.md").read_text(encoding="utf-8") == "neu\n"

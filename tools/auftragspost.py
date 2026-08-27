@@ -67,11 +67,8 @@ def main(argv: list[str] | None = None) -> int:
         blocks = blocks[-1:]
 
     if a.nach:
-        a.nach.mkdir(parents=True, exist_ok=True)
-        for kennung, text in blocks:
-            ziel = a.nach / f"{kennung}.md"
-            ziel.write_text(text + "\n", encoding="utf-8")
-            print(f"geschrieben: {ziel.name}  ({len(text.splitlines())} Zeilen)")
+        for ziel in auftragspost.lege_ab(blocks, a.nach):
+            print(f"geschrieben: {ziel.name}")
         return 0
 
     for i, (kennung, text) in enumerate(blocks):

@@ -33,7 +33,7 @@ Repo verlässt** und die Datei nicht.
 
 from __future__ import annotations
 
-import json
+from collections.abc import Sequence
 from pathlib import Path
 
 from aiimaging import auftrag as _auftrag
@@ -218,12 +218,27 @@ def offene_blocks(repo_wurzel, *, worker: str | None = None) -> list[tuple[str, 
     return aus
 
 
-def als_datei(satz: dict, ziel) -> Path:
-    """Den Block neben den Auftrag legen, damit er nicht jedes Mal neu entsteht."""
-    pfad = Path(ziel)
-    pfad.parent.mkdir(parents=True, exist_ok=True)
-    pfad.write_text(block(satz) + "\n", encoding="utf-8")
-    return pfad
+def lege_ab(blocks: Sequence[tuple[str, str]], verzeichnis) -> list[Path]:
+    """Die Blöcke als ``<kennung>.md`` ablegen — dort, wo der Adressat hinsieht.
+
+    Args:
+        verzeichnis: Zielordner. **Der Pfad wird nirgends im Repo festgeschrieben** — er
+            zeigt in ein fremdes Repo, und dessen Aufbau gehört nicht in ein öffentliches.
+
+    Returns:
+        Die geschriebenen Pfade, in derselben Reihenfolge.
+
+    *Die Dateien werden bei jedem Lauf überschrieben. Wer in ihnen antwortet, verliert die
+    Antwort — deshalb steht das in der Erklärung, die neben ihnen liegt.*
+    """
+    ordner = Path(verzeichnis)
+    ordner.mkdir(parents=True, exist_ok=True)
+    aus = []
+    for kennung, text in blocks:
+        ziel = ordner / f"{kennung}.md"
+        ziel.write_text(text + "\n", encoding="utf-8")
+        aus.append(ziel)
+    return aus
 
 
-__all__ = ["BREITE", "RUECKWEG", "PostError", "als_datei", "block", "offene_blocks"]
+__all__ = ["BREITE", "RUECKWEG", "PostError", "block", "lege_ab", "offene_blocks"]
