@@ -4611,7 +4611,10 @@ Quader (2,2 % der Spanne → 9 Millionstel), Hochbau (19,2 % → 22), synthetisc
 > **Fassadengliederung ist kein Tiefensprung.** Eine 0,10-m-Fuge ist 1,1 % der Tiefenspanne
 > des Hochbaus. Eine Rangkorrelation über die ganze Silhouette bewegt das nicht.
 
-### Befund 4 · Neu: Die Metrik ist nicht monoton in der Verschiebung
+### Der vierte Punkt · nicht monoton — und die Berichtigung dazu
+
+Die Kurve von `verschiebung` ist **nicht monoton**: Läuft `spearman` durch null, geht der
+Score gegen null und **steigt danach wieder**, weil er den Betrag nimmt.
 
 | Szene | Stärke | `spearman` | Score |
 |---|---|---|---|
@@ -4619,33 +4622,35 @@ Quader (2,2 % der Spanne → 9 Millionstel), Hochbau (19,2 % → 22), synthetisc
 | Hochbau | 0,7 | **−0,030** | **0,117** |
 | Hochbau | 1,0 | **−0,294** | **0,306** |
 
-Läuft die Rangkorrelation durch null, geht der Score gegen null — und **steigt danach
-wieder**, weil er `abs(spearman)` benutzt. Eine schlimmere Verschiebung wird milder
-bewertet als eine mittlere. Auf der synthetischen Szene kam die Verschiebung nie so weit.
+**Das ist NICHT neu, und die erste Fassung dieses Eintrags hat es dafür ausgegeben.**
+`geometrie_qa.geometrie_gate` hält es seit dem **20.08.2026** mit eigener Messung fest
+(`auf-20260820-23`: 2 m Versatz 0.1191, 4 m Versatz 0.2301). Neu ist allein, dass die
+Studie selbst hineinläuft — auf der synthetischen Szene bleibt `spearman` bis Stärke 1,0
+positiv (+0,780), bei **beiden** Auflösungen. *Eine Studie, die den Fehler ihrer eigenen
+Metrik nicht erreicht, meldet ihn nicht.*
 
-**Für die Schwelle folgt nichts** (alle betroffenen Werte liegen bei 0,04 bis 0,32, weit
-unter jeder erwogenen Schwelle). **Für die Deutung eines Scores folgt viel:** 0,32 heisst
-nicht mehr «etwas besser als 0,12» — dazwischen liegt ein Vorzeichenwechsel.
+**Die zweite Berichtigung wiegt schwerer.** Ich hatte geschrieben, `auf-47`s 0.7177 könne
+ein `abs()`-Artefakt sein, weil `spearman` dort −0.7325 ist. Nachgesehen statt vermutet:
 
-- [ ] **Offen daraus:** Soll die Kette ein **negatives** `spearman` bei einem Bild, dessen
-      Polarität feststeht, als eigenen Befund melden statt als Score? Das Vorzeichen steht
-      in jedem `geometrie_gate`-Urteil und wird heute nur zum Betrag verrechnet.
+* `GEMESSENE_POLARITAET` hält fest, dass `depth-anything-v2-small` gegen unsere Soll-Karte
+  **Disparität** liefert (−1) — an **24 Läufen auf zwei Szenen** gemessen. Ein negatives
+  `spearman` ist damit der **erwartete** Fall.
+* Die gerichtete Rechnung ergibt Ziffer für Ziffer dieselbe Zahl: **0.7176** gegen 0.7176,
+  und 0.6804 gegen 0.6804. **Kein Artefakt.**
 
-### Und Befund 4 trifft die beste Zahl, die dieses Projekt hat
+**Nullbefund dazu:** Die beiden Rechnungen unterscheiden sich nur bei **positivem** `rho`.
+`docs/GEOM_IOU_HALLUZINATION_2026-08-21.md` führt 14 Läufe mit Vorzeichen; zwei haben
+positives `rho` (H3 +0.127 bei Score 0.1842, Versatz 4 m +0.337 bei 0.2301), beide weit
+unter 0.65. **Kein bekanntes Urteil ändert sich.** `auf-56` ist darum zurückgezogen worden,
+bevor ihn jemand geholt hat (`auftraege/ergebnisse/auf-20260826-56.json`).
 
-Der Bericht zu `auf-47` nennt `geometrie_score` **0.7177** bei `spearman` **−0.7325** und
-`geom_iou` 0.7031 — nachgerechnet `sqrt(0.7325 × 0.7031)`. **Die höchste je gemessene
-Geometriezahl entsteht aus dem Betrag einer negativen Rangkorrelation.** Wörtlich gelesen:
-Wo das Bauwerk nah ist, schätzt das Modell fern.
-
-Drei Lesarten sind von hier aus nicht zu trennen — eine Vorzeichenkonvention (Disparität
-gegen Meter), eine echte Umkehrung, oder ein Wert, der am Hintergrund hängt.
-
-- [ ] **`auf-56` (local)** — derselbe Lauf ein zweites Mal mit **vorzeichenverkehrter**
-      Ist-Karte. Kommt +0.73 heraus, ist es eine Konvention und gehört an eine Stelle
-      festgelegt; bleibt es negativ, ist 0.7177 ein Artefakt des `abs()`. *Davon hängt ab,
-      ob der Satz im README fällt: «Ein Bild, das die Geometrie-Schwelle besteht, gibt es
-      noch nicht.»*
+- [ ] **Offen, und es ist unser Code, kein Auftrag:** Die gemessene Polarität wird in der
+      Produktion gar nicht angewandt — `tiefenschaetzer.bewerte_gegen_soll` ruft
+      `geometrie_gate` **ohne** `polaritaet`, das Vorzeichen benutzt nur der Maskenweg.
+      Jeder Produktionslauf rechnet darum im nicht-monotonen Modus, obwohl das Vorzeichen
+      seit dem 20.08. bekannt ist. Die gerichtete Rechnung kann einen Score nur **senken**
+      (`max(0, p·rho) ≤ |rho|`), ist also fail-closed; was sie an bekannten Läufen kostet,
+      ist gemessen: nichts. Durchreichen — oder begründen, warum nicht.
 
 ### Was `SCHWELLE_GEOMETRIE` betrifft
 

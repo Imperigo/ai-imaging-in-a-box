@@ -1,0 +1,33 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260826-56",
+  "status": "abgelehnt",
+  "beendet": "2026-08-27T05:25:45Z",
+  "dauer_s": null,
+  "messwerte": {
+    "gemessene_polaritaet_depth_anything_v2_small": -1,
+    "auf47_kein_gelaende_spearman": -0.7325,
+    "auf47_kein_gelaende_geom_iou": 0.7031,
+    "auf47_kein_gelaende_score_mit_betrag": 0.7176,
+    "auf47_kein_gelaende_score_gerichtet": 0.7176,
+    "auf47_ohne_spearman": -0.6753,
+    "auf47_ohne_score_mit_betrag": 0.6804,
+    "auf47_ohne_score_gerichtet": 0.6804,
+    "laeufe_mit_bekanntem_vorzeichen_geprueft": 14,
+    "davon_negatives_rho": 12,
+    "davon_positives_rho": 2,
+    "hoechster_score_mit_positivem_rho": 0.2301,
+    "urteile_die_sich_mit_gerichteter_rechnung_aendern": 0
+  },
+  "urteil": {
+    "zurueckgezogen": true,
+    "grund": "Die Praemisse war falsch. Die Polaritaet unseres Schaetzers ist GEMESSEN (geometrie_qa.GEMESSENE_POLARITAET, depth-anything-v2-small = Disparitaet, 24 Laeufe auf zwei Szenen, auf-20260820-23). Ein NEGATIVES spearman ist damit der ERWARTETE Fall und kein Verdacht. Nachgerechnet: Mit der gerichteten Rechnung sqrt(max(0, polaritaet*rho)*geom_iou) kommt Ziffer fuer Ziffer dieselbe Zahl heraus wie mit abs() — 0.7176. 0.7177 ist also KEIN abs()-Artefakt.",
+    "nullbefund": "Gesucht wurde ein Lauf, bei dem die gerichtete Rechnung ein anderes Urteil ergaebe. Die beiden Rechnungen unterscheiden sich NUR bei positivem rho. In docs/GEOM_IOU_HALLUZINATION_2026-08-21.md stehen 14 Laeufe mit Vorzeichen; zwei haben positives rho (H3 andere Kubatur +0.127 bei Score 0.1842, Versatz 4 m +0.337 bei Score 0.2301). Beide liegen weit unter 0.65 und wuerden gesperrt so oder so. KEIN bekanntes Urteil aendert sich.",
+    "was_offen_bleibt": "Die gemessene Polaritaet wird in der Produktion gar nicht angewandt: tiefenschaetzer.bewerte_gegen_soll ruft geometrie_gate OHNE polaritaet, das Vorzeichen wird nur im Maskenweg benutzt. Jeder Produktionslauf rechnet darum im nicht-monotonen Modus, obwohl das Vorzeichen bekannt ist. Das ist unsere Baustelle, nicht eure — es braucht keinen Auftrag.",
+    "was_die_homestation_NICHT_tun_muss": "Nichts. Der Auftrag ist zurueckgezogen, bevor er geholt wurde. Falls er schon geholt wurde: bitte abbrechen, es waeren verlorene Minuten."
+  },
+  "umgebung": {
+    "gerechnet": "Denkstation, ohne GPU, aus Repo-Daten"
+  },
+  "fehler": null
+}

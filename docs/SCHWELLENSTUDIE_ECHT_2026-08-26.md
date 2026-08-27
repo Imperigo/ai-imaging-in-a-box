@@ -31,11 +31,13 @@ der Studie ist `1.0e10` — genau der Wert, den Cycles in die EXR schreibt.
    kostet vollständige Glättung **zweiundzwanzig Millionstel** Score. Der Grund ist nicht,
    dass die Metrik Gliederung verzeiht, sondern dass **Fassadengliederung kein
    Tiefensprung ist** — und die Metrik sieht nur Tiefensprünge.
-4. **Ein vierter Befund kam dazu, den die synthetische Szene nicht zeigen konnte:** Die
-   Kurve von `verschiebung` ist **nicht monoton**. Ab einer gewissen Verschiebung steigt
-   der Score wieder, weil er `abs(spearman)` benutzt und die Rangkorrelation durch null
-   ins Negative läuft. Eine schlimmere Verschiebung kann besser bewertet werden als eine
-   mildere.
+4. **Ein vierter Punkt tauchte auf — und er war nicht neu, sondern seit dem 20.08.
+   bekannt.** Die Kurve von `verschiebung` ist **nicht monoton**: Ab einer gewissen
+   Verschiebung steigt der Score wieder, weil er `abs(spearman)` benutzt und die
+   Rangkorrelation durch null ins Negative läuft. Der Docstring von
+   `geometrie_qa.geometrie_gate` sagt das seit dem 20.08.2026 mit eigener Messung. Neu ist
+   allein, dass die Studie selbst hineinläuft — auf der synthetischen Szene kam sie nie
+   weit genug. Siehe Kapitel 7, dort steht auch die Berichtigung.
 
 ---
 
@@ -297,10 +299,20 @@ aussagekräftig hält.
 
 ---
 
-## 7 · Der vierte Befund · Die Metrik ist nicht monoton in der Verschiebung
+## 7 · Die Nicht-Monotonie — nachgemessen, nicht gefunden
 
-Die synthetische Szene konnte ihn nicht zeigen, weil ihre Verschiebung nie weit genug
-ging. Auf echter Geometrie geht sie weit genug:
+**Diese Fassung ist eine Berichtigung.** Die erste nannte das hier «den vierten Befund,
+neu». Das war falsch, und der Irrtum ist genau die Sorte, gegen die dieses Projekt gebaut
+ist: Ich habe eine Eigenschaft der Metrik gemessen, ohne nachzusehen, ob sie schon
+gemessen war. Sie war es — seit dem **20.08.2026**, im Docstring von
+`geometrie_qa.geometrie_gate`, mit eigener Zahl:
+
+> *«In diesem Modus ist der Score NICHT MONOTON im geometrischen Fehler: `abs()` faltet
+> die Skala in der Mitte […] Am 20.08.2026 gemessen (`auf-20260820-23`): 2 m Versatz gaben
+> 0.1191, 4 m Versatz 0.2301 — mehr Fehler, besserer Score.»*
+
+Was diese Studie beiträgt, ist damit nicht die Entdeckung, sondern **die Kurve dazu auf
+echter Geometrie** — und der Umstand, dass die Studie selbst hineinläuft:
 
 | Szene | Stärke | `spearman` | `geom_iou` | Score |
 |---|---|---|---|---|
@@ -311,43 +323,63 @@ ging. Auf echter Geometrie geht sie weit genug:
 | Hochbau + Gelände | 0,5 | **−0,005** | 0,429 | **0,044** |
 | Hochbau + Gelände | 1,0 | **−0,567** | 0,176 | **0,316** |
 
-Der Score ist `sqrt(|spearman| × geom_iou)`. Läuft die Rangkorrelation durch null, geht
-der Score gegen null — und steigt danach wieder, obwohl die Verschiebung grösser wird.
-**Eine schlimmere Verschiebung wird milder bewertet als eine mittlere.**
+Auf der synthetischen Szene bleibt `spearman` über die ganze Stärkeskala positiv — bei
+Stärke 1,0 noch **+0,780** (64²) bzw. **+0,766** (400²). Die Verschiebung kommt dort nie
+weit genug, um das Vorzeichen zu drehen, und zwar bei **beiden** Auflösungen: Es liegt an
+der Szene, die zwei Drittel des Bildes füllt, nicht am Bildmass. *Eine Studie, die den Fehler ihrer eigenen Metrik nicht erreicht, meldet ihn nicht.
+Das ist derselbe Befund wie bei `glaettung` am 18.08., nur an der anderen Störung.*
 
-Das ist dasselbe `abs()`, das die Metrik für die Polarität blind macht. Dort war die
-Blindheit gewollt und dokumentiert. Hier ist sie eine **Folge, die niemand gewollt hat**
-und die im Betrieb nicht auffallen würde: Sie erzeugt keinen Fehler, keine Warnung und
-keine unmögliche Zahl — nur eine Bewertung, die in die falsche Richtung zeigt.
+### Die zweite Berichtigung, und sie ist die wichtigere
 
-**Wie schlimm ist es praktisch?** Für die Schwelle: gar nicht. Alle betroffenen Werte
-liegen bei 0,04 bis 0,32, weit unter jeder erwogenen Schwelle — die Fälle werden so oder
-so gesperrt. Für die *Deutung eines Scores*: erheblich. Ein Score von 0,32 heisst nicht
-mehr «ein bisschen besser als 0,12». Zwischen beiden liegt ein Vorzeichenwechsel.
+Die erste Fassung schloss daran an: Der Bericht zu `auf-47` nennt `geometrie_score`
+**0,7177** bei `spearman` **−0,7325** — und ich habe daraus gemacht, die höchste je
+gemessene Geometriezahl könne ein `abs()`-Artefakt sein.
 
-**Und es betrifft die beste Zahl, die dieses Projekt hat.** Der Bericht der HomeStation
-zu `auf-47` nennt:
+**Sie ist keines.** Nachgesehen statt vermutet:
 
-    mit --kein-gelaende:  geometrie_score 0,7177   (spearman −0,7325, geom_iou 0,7031)
-    ohne:                 geometrie_score 0,6804   (spearman −0,6753, geom_iou 0,6855)
+* `geometrie_qa.GEMESSENE_POLARITAET` hält fest, dass `depth-anything-v2-small` gegen
+  unsere Soll-Karte **Disparität** liefert (Polarität −1) — gemessen an **24 Läufen auf
+  zwei Szenen** (`auf-20260820-23`). Ein **negatives** `spearman` ist damit der
+  **erwartete** Fall und kein Verdacht.
+* Die gerichtete Rechnung `sqrt(max(0, polaritaet · rho) · geom_iou)` ergibt bei
+  −1 · (−0,7325) = +0,7325 Ziffer für Ziffer **dieselbe Zahl**: 0,7176. Für den zweiten
+  Wert ebenso: 0,6804 gegen 0,6804.
 
-`sqrt(0,7325 × 0,7031) = 0,7177`. **Die höchste je gemessene Geometriezahl entsteht aus
-dem Betrag einer negativen Rangkorrelation** — wörtlich gelesen: Wo das Bauwerk nah ist,
-schätzt das Modell fern. Drei Lesarten sind von hier aus nicht zu trennen: eine
-Vorzeichenkonvention (Disparität gegen Meter, irgendwo nicht umgerechnet), eine echte
-Umkehrung im geschätzten Bild, oder ein Wert, der am Hintergrund hängt statt am Bauwerk.
+Die beiden Rechnungen unterscheiden sich **nur bei positivem `rho`** — dort gibt `abs()`
+bis zu 0,79, die gerichtete Rechnung 0.
 
-`auf-56` fragt sie ab und nennt die entscheidende Messung: **derselbe Lauf ein zweites Mal
-mit vorzeichenverkehrter Ist-Karte.** Der Auftrag sagt vorher, was aus jeder der drei
-Antworten folgt — auch, dass der Satz im README (*«Ein Bild, das die Geometrie-Schwelle
-besteht, gibt es noch nicht»*) bei einer echten Umkehrung stehenbleibt und sogar schärfer
-wird.
+### Der Nullbefund dazu, und wonach gesucht wurde
 
-**Was daraus folgt, gehört nicht in diese Studie, sondern auf den Plan:** Das Vorzeichen
-von `spearman` steht in jedem Urteil (`geometrie_gate` gibt es zurück). Ein negatives
-Vorzeichen bei einem Bild, dessen Polarität feststeht, ist ein eigener Befund und kein
-Score. Ob die Kette ihn als solchen melden soll, ist eine Entscheidung — und die trifft
-nicht die Metrik.
+Die Frage lautete: Gäbe es einen bekannten Lauf, bei dem die gerichtete Rechnung ein
+**anderes Urteil** ergäbe? `docs/GEOM_IOU_HALLUZINATION_2026-08-21.md` führt 14 Läufe über
+zwei Szenen mit Vorzeichen. **Zwölf haben negatives `rho`** — die erwartete Konvention.
+**Zwei haben positives:** `H3 · andere Kubatur` (+0,127 bei Score 0,1842) und
+`Versatz 4 m` (+0,337 bei Score 0,2301).
+
+Beide liegen weit unter 0,65 und werden so oder so gesperrt. **Kein bekanntes Urteil
+ändert sich.** Der Auftrag `auf-56`, der genau danach gefragt hätte, ist darum
+zurückgezogen worden, bevor ihn jemand geholt hat
+(`auftraege/ergebnisse/auf-20260826-56.json`).
+
+*Ein Nullbefund, nicht ein Nichtssuchen:* Gesucht wurde in einer Tabelle, die das
+Vorzeichen einzeln führt, über 14 Läufe. Dass keiner kippt, sagt etwas — nämlich dass die
+Lücke unten offen bleibt und nicht am Tor.
+
+### Was offen bleibt, und es ist unsere Baustelle
+
+**Die gemessene Polarität wird in der Produktion gar nicht angewandt.**
+`tiefenschaetzer.bewerte_gegen_soll` ruft `geometrie_gate` **ohne** `polaritaet`; das
+Vorzeichen benutzt nur der Maskenweg (`rho_ueber_maske`, `kante_an_maskengrenze`). Der
+Warntext im Modul sagt es selbst: *«Angewandt wird sie aber nur im MASKENWEG — wer den
+nicht fährt, sieht sie nie.»*
+
+Folge: Jeder Produktionslauf rechnet im nicht-monotonen Modus, obwohl das Vorzeichen seit
+dem 20.08. bekannt ist. Die gerichtete Rechnung kann einen Score nur **senken**
+(`max(0, p·rho) ≤ |rho|`), ist also fail-closed. Was sie kostet, ist gemessen: an allen
+bekannten Läufen nichts.
+
+- [ ] Offen: die gemessene Polarität an `geometrie_gate` durchreichen, oder begründen,
+      warum nicht. Kein Auftrag nötig — es ist unser Code.
 
 ---
 
