@@ -1991,3 +1991,64 @@ def test_die_schwelle_liegt_naeher_am_zufall_als_am_richtigen_und_sagt_das():
     assert schwelle > 3 * geometrie_qa.KANTENANTEIL_STAERKSTE
     assert schwelle < perfekt / 3
     assert "keine Kalibrierung" in geometrie_qa.__doc__ or True  # siehe Konstanten-Doku
+
+
+
+# ======================================================================================
+# Die Kante und die falsche Karte — gefunden beim Nachbauen der Halluzinationsfälle
+# ======================================================================================
+
+def test_eine_karte_mit_hintergrundmarke_saettigt_die_kante_und_sagt_es():
+    """**Ein Mass, das gut aussieht und den falschen Abstand misst.**
+
+    ``roh`` teilt den Mediansprung durch die Spanne der **ganzen** Karte. Trägt sie eine
+    Hintergrundmarke, ist die Spanne die Marke selbst — und der Sprung zwischen innen und
+    aussen ist dann ebenfalls die Marke. Das Mass sättigt bei genau ±1,0 und meldet eine
+    perfekte Kante, wo es in Wahrheit den Abstand zwischen Bauwerk und Himmelsmarke misst.
+
+    Am 26.08.2026 an derselben Szene gemessen: mit Marke ``roh`` −1,0000 bei Spanne 1e10,
+    ohne Marke −0,7700 bei Spanne 11,66. *Die erste Zahl sieht besser aus als die zweite
+    und ist wertlos.*
+
+    Der Aufrufer in ``tiefenschaetzer._maskenweg`` gibt darum die **rohe** Schätzkarte.
+    Das stand bisher nur dort — wer die Funktion sonst rief, konnte es nicht wissen.
+    """
+    breite = 24
+    maske = [(6 <= i % breite < 18 and 4 <= i // breite < 14) for i in range(breite * 24)]
+    # Innen nah, aussen etwas ferner — ein echter, massvoller Sprung.
+    ohne_marke = [10.0 if m else 22.0 for m in maske]
+    mit_marke = [10.0 if m else HINTERGRUND_SCHWELLE_M * 10 for m in maske]
+
+    sauber = geometrie_qa.kante_an_maskengrenze(ohne_marke, maske, breite=breite,
+                                                polaritaet=geometrie_qa.POLARITAET_TIEFE)
+    verdorben = geometrie_qa.kante_an_maskengrenze(mit_marke, maske, breite=breite,
+                                                   polaritaet=geometrie_qa.POLARITAET_TIEFE)
+
+    assert sauber["roh"] == pytest.approx(-1.0), "hier ist ±1 der richtige Wert"
+    assert not [w for w in sauber["warnungen"] if "HINTERGRUNDMARKE" in w]
+
+    assert verdorben["roh"] == pytest.approx(-1.0), (
+        "die Sättigung ist der Punkt — die Zahl sieht genauso aus wie die richtige"
+    )
+    assert [w for w in verdorben["warnungen"] if "HINTERGRUNDMARKE" in w], (
+        "und genau darum muss sie sich melden: Am Wert allein ist sie nicht zu erkennen"
+    )
+    assert verdorben["spanne"] > HINTERGRUND_SCHWELLE_M and sauber["spanne"] < 100, (
+        "der Unterschied steht in der Spanne, nicht im Ergebnis"
+    )
+
+
+def test_die_warnung_verwirft_den_wert_nicht():
+    """Eine Zahl zu erklären ist besser, als sie zu verschweigen.
+
+    Wer den Wert trotzdem braucht — etwa um zwei Läufe zu vergleichen, die beide dieselbe
+    Marke tragen —, bekommt ihn. Was er nicht bekommt, ist der Eindruck, er sei brauchbar.
+    """
+    breite = 24
+    maske = [(6 <= i % breite < 18 and 4 <= i // breite < 14) for i in range(breite * 24)]
+    mit_marke = [10.0 if m else HINTERGRUND_SCHWELLE_M * 10 for m in maske]
+
+    e = geometrie_qa.kante_an_maskengrenze(mit_marke, maske, breite=breite,
+                                           polaritaet=geometrie_qa.POLARITAET_TIEFE)
+
+    assert e["roh"] is not None and e["gerichtet"] is not None

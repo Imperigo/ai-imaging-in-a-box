@@ -1493,6 +1493,33 @@ def kante_an_maskengrenze(ist: Sequence[float], maske: Sequence[bool], *,
 
     spanne = max(werte) - min(werte)
     antwort["spanne"] = spanne
+
+    # EINE KARTE MIT HINTERGRUNDMARKE IST HIER DIE FALSCHE KARTE — und das Ergebnis sieht
+    # trotzdem gut aus. Am 26.08.2026 nachgemessen, an derselben Szene:
+    #
+    #   Soll-Karte, Hintergrund als 1e10 :  roh = -1.0000, Spanne 1e10
+    #   dieselbe Karte ohne Marke        :  roh = -0.7700, Spanne 11.66
+    #
+    # Der Grund: `roh` teilt den Mediansprung durch die Spanne der GANZEN Karte. Traegt
+    # sie eine Marke, ist die Spanne die Marke, und der Sprung zwischen innen und aussen
+    # ist selbst die Marke — das Mass saettigt bei genau ±1.0. Es meldet also eine
+    # perfekte Kante und misst in Wahrheit den Abstand zwischen Bauwerk und Himmelsmarke.
+    #
+    # Der Aufrufer in `tiefenschaetzer._maskenweg` gibt darum ausdruecklich die ROHE
+    # Schaetzkarte. Das stand bisher nur dort, und wer die Funktion sonst rief, konnte es
+    # nicht wissen — gefunden beim Nachbauen der Halluzinationsfaelle, wo ich ihr selbst
+    # die markierte Karte gegeben habe.
+    if max(werte) >= HINTERGRUND_SCHWELLE_M:
+        antwort["warnungen"].append(
+            f"Diese Karte traegt eine HINTERGRUNDMARKE (groesster Wert "
+            f"{max(werte):.3g} ≥ {HINTERGRUND_SCHWELLE_M:.3g}). Erwartet wird die ROHE "
+            f"Schaetzkarte: Ein Schaetzer schreibt dort keinen Marker, sondern eine "
+            f"gewoehnliche Zahl. Mit Marke ist die Spanne der Karte die Marke selbst, und "
+            f"das Mass saettigt bei ±1.0 — es meldet dann eine perfekte Kante und misst "
+            f"in Wahrheit den Abstand zwischen Bauwerk und Himmelsmarke. Der Wert steht "
+            f"trotzdem da, weil das Verwerfen einer Zahl schlimmer waere als ihre "
+            f"Erklaerung; brauchbar ist er nicht.")
+
     if spanne <= 0.0:
         antwort["warnungen"].append(
             "Die Schätzkarte hat keine Spanne — alle Punkte tragen denselben Wert. Ein "

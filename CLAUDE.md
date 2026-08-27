@@ -168,6 +168,13 @@ offen. Die dritte Antwort dieses Projekts, angewandt auf den Einbau.
 `tools/abholen.py` **aus diesem Repo** aus: Ein `git pull` dort ändert, was gerechnet
 wird, ohne dass irgendwo ein Posten umspringt. Eine Verhaltensänderung auf diesem Weg
 **wird angesagt, bevor sie ankommt** — sonst sieht sie drüben aus wie ein Fehler.
+
+**Ein Messauftrag an die HomeStation braucht keine Rückfrage** (Owner-Freigabe
+2026-08-26): *«Schicke Aufträge an den Local Worker immer, wenn du HomePC-Tests
+benötigst.»* Was GPU, echte Gewichte oder einen Blick auf das fremde Backend braucht,
+wird als Auftrag abgelegt — nicht als Frage an den Owner und nicht als Vorbehalt in einem
+Dokument. **Eine Messung, die hier nicht geht, ist keine offene Frage, sondern ein
+unverschickter Auftrag.**
 ### Git
 
 Innerhalb dieses Repos entscheidet Claude eigenständig über Zweige und Zusammenführungen
