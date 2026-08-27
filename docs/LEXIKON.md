@@ -964,6 +964,19 @@ Anzeige da, bis `auftraege/offen/auf-20260827-61.json` sie kalibriert.*
 erkennen gibt, ist ehrlicher als gar keine Zahl — sie sagt, wo man heute steht. Unehrlich
 wird sie erst, wenn sie anfängt zu entscheiden.*
 
+**Obergrenze (eines Befundes)** — Ein Messaufbau, der einer Sache absichtlich die
+**besten denkbaren** Bedingungen gibt, um zu klären, ob sie unter *irgendwelchen*
+Bedingungen taugt. Das Ergebnis ist einseitig belastbar: Was hier scheitert, ist erledigt;
+was hier gelingt, ist noch nicht bestätigt.
+*In diesem Projekt am 27.08.2026 vor einem teuren Auftrag: Bevor die HomeStation GPU-Zeit
+auf die Kalibrierung der Paarschwellen ausgibt, wurde hier gefragt, ob die beiden Masse
+mit **perfekten** Tiefenkarten überhaupt trennen — 36 Sekunden statt eines Abends. Die
+Antwort war für das eine Mass ja und für das andere nein, und das hat den Auftrag
+verändert, bevor er ausgeführt wurde.*
+*Der Nutzen liegt in der Reihenfolge: Eine Obergrenze kostet fast nichts und kann eine
+teure Messung ganz ersparen. Ihre Gefahr liegt darin, sie für das Ergebnis zu halten —
+darum trägt sie ihren Vorbehalt im Namen.*
+
 **Validierung (eines Verfahrens)** — Die Gegenprobe zur Kalibrierung: prüfen, ob das
 ausgerichtete Verfahren auch dort taugt, wo es angewandt werden soll — an Fällen, die beim
 Ausrichten nicht dabei waren. Wer beides an denselben Fällen tut, hat nur geprüft, ob er
@@ -1082,6 +1095,14 @@ Auswertung eingegangen waren. `trennschaerfe_kurve` verwirft sie seither — und
 Feld `entdoppelt`, welche und wie viele: Eine stillschweigende Bereinigung wäre nur die
 zweite Art, dieselbe Zahl zu erfinden. Bei 400 × 400 Bildpunkten bleibt je Szene noch
 **eine** übrig; das Raster war eine Frage der Auflösung.*
+*Am 27.08.2026 dieselbe Falle an einer **anderen Achse** gefunden: In der
+Obergrenzen-Studie der Paarmasse waren **23 von 33 Fallarten auf vier
+Nachkommastellen identisch** zwischen zwei Kameras. Zwei Ursachen — Fälle, deren
+Wert durch die Konstruktion festliegt (1,0000, −1,0000, «nicht messbar»), und
+rotationssymmetrische Geometrie, die von zwei Seiten gleich aussieht. Die Zeile
+«3 Szenen · 2 Kameras» sah nach Streuung aus und war zu zwei Dritteln keine.
+**Eine Dublette braucht kein Stärkeraster; sie braucht nur zwei Wege zur selben
+Zahl.***
 
 **Falsch frei / falsch gesperrt** — Die zwei Fehlerarten, die eine Schwelle machen kann:
 *falsch frei* heisst durchgelassen, obwohl hätte aufgehalten werden müssen; *falsch
@@ -1816,6 +1837,12 @@ sogar die Abwesenheit. Zwei Fragen brauchen zwei Antworten; eine Zahl, die beide
 behauptet, beantwortet keine.*
 *Und ein Urteil aus nur einer der beiden Zahlen gilt als **nicht gemessen** — nicht als
 «bestanden aufgrund der anderen». Für eine fehlende Antwort gibt es keinen Ersatz.*
+*Am 27.08.2026 hat die Bauform ihren stärksten Beleg bekommen: Die beiden Masse
+versagen in **entgegengesetzte Richtungen**. Ein Bild kann ein ordentliches ρ
+erreichen und den Umriss an 2,8 % der Grenze zeichnen (gemessen, `auf-20260822-30`);
+und ein Bauwerk, dessen Tiefen **innen gespiegelt** sind, zeichnet seinen Umriss
+**vollkommen** — Kantenanteil 1,0000 — bei ρ = **−1,0000**. Ein Mittelwert aus beiden
+wäre null, und null hiesse hier weder das eine noch das andere.*
 
 **Geländeregel** — Die ausdrückliche Vorschrift, woran das Gelände in einem Modell zu
 erkennen ist — im einfachsten Fall eine Liste von Namen («Boden_Platte», «IfcSite…»).
@@ -3645,6 +3672,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-27 | Ergaenzt: **Obergrenze (eines Befundes)**. **Rasterdublette** um die Kameraachse erweitert (23 von 33 Fallarten auf vier Stellen identisch — eine Dublette braucht kein Staerkeraster, nur zwei Wege zur selben Zahl). **Paarurteil** um seinen staerksten Beleg: Die beiden Masse versagen in ENTGEGENGESETZTE Richtungen — ordentliches rho bei 2.8 % Umriss auf der einen Seite, Kantenanteil 1.0000 bei rho -1.0000 auf der anderen |
 | 2026-08-27 | Ergaenzt: **Trennkurve (ueber benannte Faelle)**, und **Falsch frei / falsch gesperrt** um ihr zweites Auftreten erweitert. Anlass: Die Kalibrierung der Paarschwellen braucht eine Tabelle mit BEIDEN Fehlerzahlen — von Hand gerechnet waere sie wieder eine abgelesene Schwelle. Der Eintrag traegt mit, warum eine leere Gruppe *nicht beurteilbar* ergibt und nicht *sauber getrennt* |
 | 2026-08-27 | Ergaenzt: **Abgelesene Schwelle** und **Selbstloeschende Meldung**. Beide fallen im selben Vorgang an: Gemessen wurde, dass ein VOLLSTAENDIG verschwundenes Bauwerk das Tor mit Score 0.951 besteht, waehrend das Paarurteil durchgefallen meldet (rho_maske -0.018). Sperren darf das Paarurteil noch nicht, weil seine beiden Schwellen abgelesen und nicht kalibriert sind (0.80 aus sieben Faellen einer Szene) — also wird der Widerspruch stattdessen sichtbar gemacht, und zwar mit einer Meldung, die nur in genau dieser Lage steht |
 | 2026-08-26 | Ergaenzt: **Katalogbeweis (gegen Nullbefund ueber Hausnamen)**. Anlass ist ein Owner-Entscheid vom selben Tag: Seit der Maskenweg ein zweites Tor ist, kostet eine verworfene Bauwerksmaske das ganze Urteil — und sie wurde auf zwei von drei Testszenen verworfen, obwohl dort gar kein Boden steht. Der Eintrag traegt die Unterscheidung, die den Entscheid moeglich machte: Ueber IFC-Klassennamen ist «kein IfcSite dabei» ein Beweis, ueber Materialnamen («Beton», «kalksandstein») ist es keiner |

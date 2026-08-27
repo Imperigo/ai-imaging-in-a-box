@@ -4884,7 +4884,7 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 - [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
       Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
       die Zeile in gewöhnlichen Läufen schweigt.
-- [x] **Sammlung 4431 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+- [x] **Sammlung 4438 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
       und ist nachgeführt.
 - [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
       `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.
@@ -4895,6 +4895,15 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
       drei Lagen, in denen die Tabelle nichts sagt: leere Gruppe (→ **nicht
       beurteilbar**, nicht «sauber getrennt»), kein messbarer Fall, zu geringer Umfang.
       26 Tests, fünf Mutationsproben an den Wächtern, alle rot beim Verbiegen.
+- [x] **Die Obergrenze ist gemessen** — *können die Masse überhaupt trennen, mit
+      perfekten Karten?* 66 Fälle, drei Szenen, 36 Sekunden ohne GPU
+      (`docs/PAARSCHWELLEN_OBERGRENZE_2026-08-27.md`, `tools/studie_paarmasse.py`).
+      **ρ trennt sauber zwischen 0,6169 und 0,9282** — die abgelesene 0,80 liegt fast
+      in der Mitte dieser Lücke. **Der Kantenanteil trennt gar nicht:** Sechs schlechte
+      Fälle bestehen bei *jeder* Schwelle bis 0,90, und ab 0,60 sperrt er perfekte
+      Renders. *Beide Masse versagen in entgegengesetzte Richtungen — das ist das
+      stärkste Argument, das dieses Projekt bisher dafür hat, sie zu führen und nicht
+      zu verrechnen.*
 - [ ] **Die Kalibrierung selbst.** `PAAR_RHO_SCHWELLE = 0.80` steht auf sieben Fällen aus
       *einer* Szene, `PAAR_KANTENANTEIL_SCHWELLE = 0.20` beim Vierfachen des Zufalls.
       Gebraucht wird die Tabelle mit **beiden** Fehlerzahlen je Kandidatenschwelle — wie
