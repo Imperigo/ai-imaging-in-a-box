@@ -497,12 +497,17 @@ def test_treuer_render_besteht_das_geometrie_gate(bild):
 
 
 def test_invertierte_schaetzung_gilt_trotzdem_als_treu(bild):
-    """**Der Sinn der Vorzeichen-Invarianz.**
+    """**Ein negatives Vorzeichen ist hier der erwartete Fall, kein Befund.**
 
     Die Schätzung ist eine Disparität: nah = grosser Wert, also gegenüber den Metern des
-    Solls exakt umgekehrt sortiert. Die Rangkorrelation ist deshalb −1. Gewertet wird ihr
-    **Betrag** — sonst fiele jede korrekte Depth-Anything-Schätzung durch, und zwar aus
-    einem reinen Konventionsgrund.
+    Solls exakt umgekehrt sortiert. Die Rangkorrelation ist deshalb −1, und die Schätzung
+    ist trotzdem perfekt.
+
+    *Bis zum 26.08.2026 rettete das der Betrag* — ``abs(spearman)``, mit dem Preis, dass
+    eine wirklich verkehrte Tiefenordnung genauso gut aussah. Jetzt rettet es die
+    **gemessene Polarität**: ``-1 * -1 = +1``. Das Ergebnis ist dasselbe, die Begründung
+    eine andere — und der Unterschied ist genau der Fall in
+    ``test_eine_verkehrte_tiefenordnung_faellt_jetzt_durch``.
     """
     soll = soll_karte()
     urteil = ts.qa_gegen_soll(bild, soll, modell=attrappe(disparitaets_karte(soll)))
@@ -514,8 +519,18 @@ def test_invertierte_schaetzung_gilt_trotzdem_als_treu(bild):
         "Das Vorzeichen bleibt sichtbar — es könnte auch ein echter Geometriebefund sein"
 
 
-def test_gegenprobe_dieselbe_karte_nicht_invertiert_besteht_ebenso(bild):
-    """Ohne diese Gegenprobe wäre nicht gezeigt, dass der Betrag beide Richtungen gleich wertet."""
+def test_gegenprobe_dieselbe_karte_in_anderem_wertebereich_besteht_ebenso(bild):
+    """Gegenprobe zur **Rangbasiertheit**, nicht zur Richtung.
+
+    ``100 - t`` ist gleichsinnig zur Disparität, also **dieselbe** Polarität — nur ein
+    ganz anderer Wertebereich. Dass beide auf 1,0 kommen, zeigt, dass der Score an der
+    Ordnung hängt und nicht am Zahlenwert.
+
+    *Der Name sagte bis zum 26.08.2026 «nicht invertiert» und die Beschreibung «beide
+    Richtungen gleich gewertet».* Beides war irreführend: Hier steht nur eine Richtung,
+    und seit die Polarität durchgereicht wird, werden die beiden Richtungen gerade
+    **nicht** mehr gleich gewertet.
+    """
     soll = soll_karte()
     nicht_invertiert = [0.001 if math.isinf(t) else 100.0 - t for t in soll]
     # 100 - t ist gleichsinnig zur Disparität (nah = gross), also dieselbe Polarität.
@@ -523,6 +538,148 @@ def test_gegenprobe_dieselbe_karte_nicht_invertiert_besteht_ebenso(bild):
 
     assert urteil["score"] == pytest.approx(1.0)
     assert urteil["spearman"] == pytest.approx(-1.0)
+
+
+def test_eine_verkehrte_tiefenordnung_faellt_jetzt_durch(bild):
+    """**Das Loch, das am 26.08.2026 zugegangen ist — mit seiner Zahl.**
+
+    Eine Ist-Karte in metrischer Ordnung (nah = kleiner Wert) ist gegenüber dem, was
+    unser Schätzer nachweislich liefert, **verkehrt herum**. Vorne und hinten sind
+    vertauscht; das ist kein Konventionsbefund, sondern ein Geometriebefund.
+
+    Bis zum 26.08. lief das Tor mit ``abs(spearman)`` und sah davon nichts: Dieselbe
+    Karte kam auf **0,7071** und bestand die Schwelle 0,65. Mit der gemessenen Polarität
+    ist ``-1 * (+1) = -1``, der Score auf 0 abgeschnitten, und das Bild fällt durch.
+
+    Die Zahl 0,7071 steht hier ausgeschrieben und wird mitgeprüft: Sie ist die Grösse des
+    Lochs, und ohne sie wäre dieser Test nur die Behauptung, dass irgendetwas besser
+    geworden ist.
+    """
+    soll = soll_karte()
+    # Metrische Ordnung statt Disparität, Himmel weit hinten. Unter HG_KEINE bleibt die
+    # ganze Karte Silhouette — die gemeinsame Silhouette ist damit genau das Soll-Bauwerk,
+    # und die Rangkorrelation darüber ist +1.
+    verkehrt = [t if math.isfinite(t) else 1000.0 for t in soll]
+
+    urteil = ts.qa_gegen_soll(bild, soll, modell=attrappe(verkehrt),
+                              hintergrund_strategie=ts.HG_KEINE)
+
+    assert urteil["spearman"] == pytest.approx(1.0)
+    assert urteil["geom_iou"] == pytest.approx(0.5)
+    assert urteil["score"] == pytest.approx(0.0)
+    assert urteil["bestanden"] is False
+    assert any("falsche Richtung" in w for w in urteil["warnungen"])
+
+    # Die Gegenprobe zur Zahl: So gross war das Loch. Ohne die gemessene Polarität
+    # bestünde dieselbe Karte die Schwelle.
+    ohne_polaritaet = geometrie_qa.geometrie_gate(
+        soll, [t if math.isfinite(t) else 1000.0 for t in soll])
+    assert ohne_polaritaet["score"] == pytest.approx(0.7071, abs=1e-4)
+    assert ohne_polaritaet["score"] > geometrie_qa.SCHWELLE_GEOMETRIE
+
+
+def test_das_urteil_nennt_die_polaritaet_mit_der_es_gerechnet_wurde(bild):
+    """Eine Zahl gehört an die Bedingung, unter der sie entstand — hier an das Vorzeichen.
+
+    Die beiden Rechnungen liefern **verschiedene Zahlen** zum selben Bild. Stünde im
+    Ergebnis nicht, welche gelaufen ist, wäre ein Score aus einem alten Bericht später
+    nicht mehr einzuordnen.
+    """
+    soll = soll_karte()
+    urteil = ts.qa_gegen_soll(bild, soll, modell=attrappe(disparitaets_karte(soll)))
+
+    assert urteil["polaritaet_zeichen"] == geometrie_qa.POLARITAET_DISPARITAET
+    assert urteil["polaritaet"] == ts.POLARITAET_DISPARITAET, (
+        "daneben steht weiter das DEKLARIERTE Wort — zwei verschiedene Dinge, und der "
+        "Unterschied ist erst folgenreich, seit das Zeichen ueber den Score entscheidet"
+    )
+    assert urteil["methode"] == geometrie_qa.METHODE_GERICHTET
+    assert not [w for w in urteil["warnungen"] if "KEINE POLARITÄT" in w], (
+        "der Dauervorbehalt lief bis zum 26.08.2026 in JEDEM Produktionslauf mit — eine "
+        "Warnung, die immer feuert, verdeckt die echten"
+    )
+    assert any("ERWARTETE Fall" in w for w in urteil["warnungen"]), (
+        "das negative Vorzeichen bleibt sichtbar, es wird nur nicht mehr als Verdacht "
+        "gemeldet"
+    )
+
+
+def test_ohne_gemessene_polaritaet_bleibt_die_mildere_regel(bild, monkeypatch):
+    """**Der ungemessene Fall behält den Betrag, und das ist Absicht.**
+
+    ``gemessenes_zeichen`` fällt ausdrücklich **nicht** auf die deklarierte Polarität
+    zurück — anders als der Maskenweg. Am Tor würde aus einer falschen Angabe in einer
+    Modellkarte ein durchgefallenes Bild, ohne dass am Bild etwas falsch wäre.
+
+    Geprüft wird an der Messtabelle, nicht am Code: Ist der Schätzer dort nicht
+    verzeichnet, läuft wieder v1 — samt dem Vorbehalt, den ``geometrie_gate`` dann selbst
+    meldet.
+    """
+    monkeypatch.setattr(geometrie_qa, "GEMESSENE_POLARITAET", {})
+    soll = soll_karte()
+
+    urteil = ts.qa_gegen_soll(bild, soll, modell=attrappe(disparitaets_karte(soll)))
+
+    assert ts.gemessenes_zeichen("depth-anything-v2-small") is None
+    assert urteil["polaritaet_zeichen"] is None
+    assert urteil["methode"] == geometrie_qa.METHODE
+    assert any("KEINE POLARITÄT" in w for w in urteil["warnungen"])
+
+
+def test_die_deklarierte_polaritaet_reicht_dem_tor_nicht(bild):
+    """Die Unterscheidung, die ``gemessenes_zeichen`` von der Auflösung im Maskenweg trennt.
+
+    Der Maskenweg nimmt die deklarierte Angabe, wenn nichts gemessen ist — dort sind es
+    Diagnosewerte. Das Tor nimmt sie nicht. Ohne diesen Test wäre die Unterscheidung nur
+    ein Absatz im Docstring, und beide Stellen könnten auseinanderlaufen, ohne dass etwas
+    rot wird.
+    """
+    eintrag = ts.TIEFENSCHAETZER["depth-anything-v2-small"]
+
+    # Deklariert ist die Polarität bei allen vier Einträgen — gemessen nur bei einem.
+    assert eintrag.polaritaet == ts.POLARITAET_DISPARITAET
+    assert ts.POLARITAETSZEICHEN[eintrag.polaritaet] == geometrie_qa.POLARITAET_DISPARITAET
+    deklariert_ohne_messung = [
+        name for name, e in ts.TIEFENSCHAETZER.items()
+        if e.polaritaet != ts.POLARITAET_UNBEKANNT
+        and name not in geometrie_qa.GEMESSENE_POLARITAET
+    ]
+    assert deklariert_ohne_messung, (
+        "ohne solche Einträge prüfte dieser Test nichts — dann wäre die Unterscheidung "
+        "zwischen gemessen und deklariert gegenstandslos"
+    )
+    for name in deklariert_ohne_messung:
+        assert ts.gemessenes_zeichen(name) is None
+        assert ts.POLARITAETSZEICHEN[ts.TIEFENSCHAETZER[name].polaritaet] is not None
+
+
+def test_beide_wege_liefern_dieselben_felder(bild, tmp_path):
+    """Von der anderen Seite gezählt: die Zusage von ``_qa_ohne_messung``, geprüft.
+
+    Der Docstring dort verspricht *«gleiche Felder, damit der Aufrufer nicht verzweigen
+    muss»*. Bis zum 26.08.2026 stand das nur da. Beim Nachreichen von
+    ``polaritaet_zeichen`` fiel auf, dass niemand es prüft — und ein Feld, das nur der
+    eine Weg trägt, bricht beim Aufrufer genau dann, wenn ohnehin schon etwas schiefging.
+
+    **Der Maskenweg ist ausgenommen, und mit Grund:** Seine Felder entstehen nur, wenn
+    eine Maske hereingereicht wurde. Sie fehlen auf dem Fehlerweg *und* auf dem
+    Erfolgsweg ohne Maske — sie hängen also an der Maske, nicht am Ausgang.
+    """
+    gemessen = ts.qa_gegen_soll(bild, soll_karte(),
+                                modell=attrappe(disparitaets_karte(soll_karte())))
+    ohne = ts.qa_gegen_soll(tmp_path / "gibtsnicht.png", soll_karte(),
+                            modell=attrappe([1.0]))
+
+    assert gemessen["status"] == ts.STATUS_OK
+    assert ohne["status"] != ts.STATUS_OK
+    maskenfelder = {"rho_maske", "kante", "kantenanteil", "himmel", "paarurteil"}
+
+    assert set(gemessen) - maskenfelder == set(ohne), (
+        "ein Feld, das nur einer der beiden Wege trägt, zwingt jeden Aufrufer zu einer "
+        "Verzweigung — und zwar an der Stelle, an der schon etwas schiefgegangen ist"
+    )
+    assert maskenfelder <= set(gemessen)
+    assert "polaritaet_zeichen" in ohne
 
 
 def test_halluzinierte_kubatur_faellt_durch(bild):
@@ -676,7 +833,11 @@ def test_das_ergebnis_traegt_lizenz_und_modell(bild):
 
     assert urteil["lizenz"] == "Apache-2.0"
     assert urteil["modell_id"] == "depth-anything/Depth-Anything-V2-Small-hf"
-    assert urteil["methode"] == geometrie_qa.METHODE
+    assert urteil["methode"] == geometrie_qa.METHODE_GERICHTET, (
+        "seit dem 26.08.2026 reicht `qa_gegen_soll` die GEMESSENE Polaritaet durch — "
+        "und die beiden Fassungen liefern verschiedene Zahlen, darum tragen sie "
+        "verschiedene Namen"
+    )
     assert urteil["methode_ist"] == ts.METHODE_IST
 
 

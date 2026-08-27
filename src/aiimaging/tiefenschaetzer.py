@@ -1091,6 +1091,32 @@ POLARITAETSZEICHEN = {
 }
 
 
+def gemessenes_zeichen(schaetzer_name: str) -> int | None:
+    """Das **gemessene** Vorzeichen für dieses Schätzer/Soll-Paar — oder ``None``.
+
+    **Warum das eine eigene Funktion ist und nicht dieselbe Auflösung wie im Maskenweg.**
+    :func:`_maskenweg` fällt auf die **deklarierte** Polarität zurück
+    (``POLARITAETSZEICHEN``), wenn nichts gemessen ist. Das ist dort richtig: Die
+    Maskenmasse sind Diagnosewerte, und ein Wert aus einer Modellkarte ist besser als
+    keiner.
+
+    **Am Tor ist es das nicht.** ``geometrie_gate`` schneidet den Score bei einem
+    Vorzeichenfehler auf **null** ab — aus einer falsch deklarierten Polarität würde damit
+    ein durchgefallenes Bild, ohne dass irgendetwas am Bild falsch wäre. Eine Zeichenkette
+    aus einer Modellkarte gilt für den Schätzer; das Vorzeichen, das hier zählt, gehört
+    dem **Paar** aus Schätzer und unserer Soll-Konvention, und das ist eine Messung.
+
+    Ist nichts gemessen, kommt ``None`` zurück, und das Tor rechnet weiter mit
+    ``abs(spearman)`` — samt dem Vorbehalt, den ``geometrie_gate`` dann selbst meldet.
+    **Das ist kein Versehen, sondern die mildere Regel für den ungemessenen Fall:** Lieber
+    ein Score, der die Richtung nicht kennt, als ein Freispruch oder ein Urteil aus einer
+    Modellkarte. Dieselbe Haltung wie ``MIN_POLARITAETSLAEUFE`` in ``geometrie_qa`` — wer
+    die Polarität aus zu wenig Läufen bestimmt, bestimmt sie womöglich aus genau dem
+    Fehler, den er später fangen will.
+    """
+    return geometrie_qa.GEMESSENE_POLARITAET.get(schaetzer_name)
+
+
 def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
                schaetzer_name: str, polaritaet_wort: str) -> dict:
     """Die beiden Maskenmasse und ihr Paarurteil — oder lauter ehrliche ``None``.
@@ -1310,8 +1336,21 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
             anteil=hintergrund_anteil, n_geometrie=n_soll_geometrie,
             breite=ist_ergebnis["breite"], hoehe=ist_ergebnis["hoehe"],
         )
+        # Die gemessene Polarität gehört an das Tor, und bis zum 26.08.2026 kam sie hier
+        # nicht an: `geometrie_gate` lief ohne sie, das Vorzeichen benutzte allein der
+        # Maskenweg. Folge war ein Dauervorbehalt in JEDEM Produktionslauf («KEINE
+        # POLARITÄT ÜBERGEBEN») und eine Rechnung, die im geometrischen Fehler nicht
+        # monoton ist — beides, obwohl das Vorzeichen seit dem 20.08.2026 gemessen war.
+        #
+        # Was der Wechsel kostet, ist gemessen und nicht geschätzt: Die gerichtete
+        # Rechnung kann einen Score nur SENKEN (max(0, p*rho) <= abs(rho)), sie ist also
+        # fail-closed. Und sie unterscheidet sich von der alten nur bei POSITIVEM rho. In
+        # den 14 Läufen mit Vorzeichen aus `docs/GEOM_IOU_HALLUZINATION_2026-08-21.md`
+        # haben zwei ein positives (+0.127 bei Score 0.1842, +0.337 bei 0.2301), beide
+        # weit unter der Schwelle — kein bekanntes Urteil ändert sich.
         urteil = geometrie_qa.geometrie_gate(
             soll, markierung["tiefen"], schwelle=schwelle, hintergrund=hintergrund,
+            polaritaet=gemessenes_zeichen(eintrag.name),
         )
     except (TiefenschaetzerError, geometrie_qa.QaError) as fehler:
         return _qa_ohne_messung(
@@ -1337,6 +1376,23 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         "n_soll": urteil["n_soll"],
         "n_ist": urteil["n_ist"],
         "methode": urteil["methode"],
+        # ACHTUNG, zwei verschiedene Dinge mit fast demselben Namen — und seit dem
+        # 26.08.2026 haengt eine Zahl daran:
+        #
+        #   `polaritaet`         das DEKLARIERTE Wort des Schaetzereintrags
+        #                        ("disparitaet"), aus der Modellkarte. Steht weiter unten
+        #                        ueber **grund im Ergebnis und bleibt, weil aeltere
+        #                        Berichte darauf zeigen.
+        #   `polaritaet_zeichen` das VORZEICHEN, mit dem wirklich gerechnet wurde
+        #                        (-1, +1 oder None). `None` heisst ungemessen, dann lief
+        #                        `abs(spearman)`.
+        #
+        # Solange das Tor die Polaritaet gar nicht bekam, war der Unterschied folgenlos.
+        # Jetzt entscheidet das Zeichen ueber den Score, und wer einen alten Wert deutet,
+        # muss ihm ansehen, welche Rechnung dahinterstand. `methode` sagt dasselbe in
+        # Worten; die Zahl steht daneben, weil sich eine Zeichenkette schlecht vergleichen
+        # laesst.
+        "polaritaet_zeichen": urteil["polaritaet"],
         "begruendung": urteil["begruendung"],
         "n_punkte": len(roh),
         "hintergrund_strategie": markierung["strategie"],
@@ -1374,6 +1430,10 @@ def _qa_ohne_messung(status: str, grund: dict, *, error, dauer_s: float,
         "n_soll": None,
         "n_ist": None,
         "methode": geometrie_qa.METHODE,
+        # Kein Zeichen, weil nichts gerechnet wurde — `None` heisst hier wie ueberall
+        # „kein Wert" und nicht „ungerichtet gerechnet". Das Feld steht trotzdem da: Der
+        # Aufrufer soll nicht danach verzweigen muessen, ob eine Messung stattfand.
+        "polaritaet_zeichen": None,
         "begruendung": (
             f"Nicht gemessen ({status}), damit nicht bestanden — was nicht geprueft "
             f"wurde, wird nicht durchgelassen. {error}"
