@@ -4838,6 +4838,10 @@ in `CLAUDE.md`; hier steht, was daraus schon getan ist und was folgt.
 **Stand am 26.08.2026, gezählt:** 17 Aufträge ohne Antwort (12 `local`, 3 `cloud`,
 2 `ui`), 14 von 24 Posten noch nicht in der Software.
 
+**Stand am 27.08.2026, gezählt:** 20 Aufträge ohne Antwort (15 `local`, 3 `cloud`,
+2 `ui`), 18 von 28 Posten noch nicht in der Software. *Die Zahl steigt, weil verteilt
+wird — nicht, weil etwas liegen bleibt. Sie fällt erst, wenn drüben jemand antwortet.*
+
 **Zwei Befunde über das Instrument selbst**, beide wären unbemerkt geblieben:
 
 * **Der Wächter hatte ein festes Alphabet** (`[AB]\d+`). Als ein Weg C dazukam, waren
@@ -4854,6 +4858,46 @@ in `CLAUDE.md`; hier steht, was daraus schon getan ist und was folgt.
       daraus ein Auftrag werden, dessen **Rückgabe den Einbau belegt**, nicht die Messung.
 - [ ] **Bestätigen kann ich noch nichts.** Seit `auf-47` hat kein Worker geantwortet.
       Was hier steht, ist die Verteilung — nicht der Einbau.
+
+---
+
+## Der Widerspruch zwischen Score und Maskenweg wird sichtbar (27.08.2026)
+
+**Owner-Entscheid 26.08.2026, aus drei Wegen gewählt:** *«Erst die Paarschwellen
+kalibrieren.»* Das Tor bleibt bis dahin offen — aber der Fall bekommt eine eigene,
+benannte Zeile.
+
+**Der Anlass, gemessen und durch die echte Kette bestätigt:** Ein vollständig
+verschwundenes Bauwerk kommt auf `bestanden = true`, Score 0.951, `geom_iou` 1.000,
+während das Paarurteil durchgefallen meldet (`rho_maske` −0.018). `geom_iou` steigt nicht
+*trotz*, sondern *wegen* der Abwesenheit: Der Boden bleibt liegen, und das Bauwerk war die
+einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
+
+- [x] **Der Kurzbefund nennt ihn** — `abholer.befund_kurz`, mit den betroffenen Kameras
+      und dem Satz «Das Paarurteil sperrt hier NICHT — es steht nur da».
+- [x] **Der Vertragsgrund nennt ihn zuerst** — `kosmo_szene`, an Position 0:
+      *«'passed: true' heisst hier: der Score besteht — nicht, dass überhaupt gebaut
+      wurde.»*
+- [x] **Beide sind selbstlöschend** — Bedingung ist `bestanden is True` **und**
+      `paarurteil.bestanden is False`. Ein sauberer Lauf sieht sie nie. *Ein stehender
+      Hinweis wäre eine Dauerwarnung und damit nach dem dritten Mal wirkungslos.*
+- [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
+      Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
+      die Zeile in gewöhnlichen Läufen schweigt.
+- [x] **Sammlung 4403 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+      und ist nachgeführt.
+- [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
+      `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.
+
+- [ ] **Die Kalibrierung selbst.** `PAAR_RHO_SCHWELLE = 0.80` steht auf sieben Fällen aus
+      *einer* Szene, `PAAR_KANTENANTEIL_SCHWELLE = 0.20` beim Vierfachen des Zufalls.
+      Gebraucht wird die Tabelle mit **beiden** Fehlerzahlen je Kandidatenschwelle — wie
+      viele schlechte Fälle gehen durch, wie viele gute werden gesperrt. Erst darauf kann
+      der Owner entscheiden, ob das Paarurteil sperren darf.
+- [ ] **Das zweite Tor bauen** — dreiwertig, wie am 26.08. schon entschieden. Es wartet
+      ausschliesslich auf `auf-61`.
+- [ ] **Die Oberfläche muss den Vorbehalt tragen.** Solange sie ihn nicht trägt, sieht
+      dort ein Bild ohne Bauwerk aus wie ein geprüftes (`auf-62`, Posten A11).
 
 ---
 

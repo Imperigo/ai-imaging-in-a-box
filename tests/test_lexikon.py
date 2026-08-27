@@ -128,6 +128,8 @@ KONSTANTEN_HERKUNFT = {
     "SCHWELLE_GEOMETRIE": "aiimaging.geometrie_qa",
     "SCHWELLE_STIL": "aiimaging.stil_qa",
     "BILDBREITE_ABBRUCH": "aiimaging.kameras",
+    "PAAR_RHO_SCHWELLE": "aiimaging.geometrie_qa",
+    "PAAR_KANTENANTEIL_SCHWELLE": "aiimaging.geometrie_qa",
 }
 
 _ZITAT = re.compile(r"`([A-Z][A-Z0-9_]{3,})\s*=\s*([0-9]+[.,][0-9]+)`")

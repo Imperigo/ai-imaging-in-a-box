@@ -1,0 +1,30 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "ui",
+  "auftrag_id": "auf-20260827-62",
+  "art": "qa",
+  "beschreibung": "Ein bestandener Score kann ein Bild ohne Bauwerk sein. Der Vertrag sagt es ab heute; die Oberflaeche muss es mittragen, ohne daraus eine Dauerwarnung zu machen.",
+  "anweisung": "=== EIN BESTANDENES BILD, IN DEM NICHTS GEBAUT WURDE — UND DIE OBERFLAECHE ZEIGT EIN HAEKCHEN ===\n\nEin Befund aus der eigenen Arbeit vom 26./27.08.2026, und er trifft genau die Stelle, um\ndie es bei euch geht: eine Zahl ohne ihren Vorbehalt.\n\n--- 1 · DER BEFUND, GEMESSEN ---\n\nWir haben ein VOLLSTAENDIG verschwundenes Bauwerk durch die echte Kette geschickt —\ndieselbe Szene, aber im Bild steht nur noch die Gelaendeplatte, kein Gebaeude.\n\n    bestanden  = true\n    score      = 0.9507      (Schwelle 0.65)\n    geom_iou   = 1.0000\n    paarurteil = DURCHGEFALLEN, Traeger rho\n    rho_maske  = -0.018\n\nDas Tor liest den Score, und der Score bleibt hoch, weil der Boden liegen bleibt: Das\nBauwerk war die einzige Stelle, an der Soll und Ist sich unterscheiden konnten. geom_iou\nsteigt nicht TROTZ, sondern WEGEN der Abwesenheit.\n\n`passed: true` heisst an dieser Stelle also: *der Score besteht* — nicht: *es wurde\ngebaut*.\n\n--- 2 · WAS WIR DESHALB IM VERTRAG GEAENDERT HABEN (ab heute im Repo) ---\n\nDer Szenenvertrag traegt bei genau dieser Lage einen neuen Grundsatz, an POSITION 0 des\nVertragsgrunds — also vor allem anderen:\n\n    \"SCORE BESTEHT, MASKENWEG WIDERSPRICHT: Das Tor liest den Score, und der kann bei\n     viel Boden hoch bleiben, obwohl das Bauwerk fehlt (gemessen: Score 0.951,\n     geom_iou 1.000, rho_maske -0.018 bei VOLLSTAENDIG verschwundenem Bauwerk).\n     'passed: true' heisst hier: der Score besteht — nicht, dass ueberhaupt gebaut\n     wurde.\"\n\nEr ist SELBSTLOESCHEND: Er steht nur, wenn `bestanden` wahr ist UND `paarurteil.bestanden`\nfalsch. In jedem anderen Lauf ist er nicht da. Eine Dauerwarnung waere hier das\nSchlimmste — sie wuerde den einen Fall verstecken, um den es geht.\n\nDasselbe steht im Kurzbefund des Abholers, dort als eigene Zeile mit den betroffenen\nKameras:\n\n    \"SCORE BESTEHT, MASKENWEG SAGT NEIN: <kameras> — ... Das Paarurteil sperrt hier\n     NICHT — es steht nur da. Wer diesem Lauf traut, traut dem Score allein\"\n\n--- 3 · WAS WIR VON DER OBERFLAECHE BRAUCHEN ---\n\nU9 · EIN GRUENES HAEKCHEN DARF DIESEN LAUF NICHT WIE JEDEN ANDEREN ZEIGEN.\n\n  Wenn der Vertragsgrund diesen Satz traegt, ist `passed: true` eine EINGESCHRAENKTE\n  Aussage. Die Anzeige muss das mittragen. Wie — Farbe, Zeichen, eingeblendeter Text —\n  entscheidet ihr; wir machen keine Gestaltungsvorgaben. Was wir brauchen, ist, dass die\n  Einschraenkung den Benutzer erreicht, ohne dass er den Vertragsgrund aufklappen muss.\n\n  Der Grund, warum wir darauf bestehen: Dieser Fall ist nicht selten und nicht exotisch.\n  Er tritt immer dann auf, wenn viel Boden im Bild ist — und das ist bei\n  Architekturvisualisierung der Normalfall, nicht die Ausnahme.\n\nU10 · DER SATZ IST DA ODER NICHT DA — NICHT IMMER.\n\n  Bitte KEINE Dauerwarnung daraus machen (\"Achtung, der Score kann taeuschen\") und keinen\n  festen Hinweistext. Der Wert dieses Satzes liegt darin, dass er schweigt, wenn nichts\n  ist. Wer ihn zu einem stehenden Fusstext macht, hat ihn abgeschafft.\n\nU11 · DER VORBEHALT GEHOERT ZUR ZAHL, NICHT AUF EINE ANDERE SEITE.\n\n  score, geom_iou und paarurteil kommen zusammen zurueck. Wenn die Oberflaeche den Score\n  gross und das Paarurteil klein oder gar nicht zeigt, baut sie den Fehler nach, den wir\n  gerade sichtbar gemacht haben.\n\n--- 4 · WAS AUSDRUECKLICH NICHT ZU TUN IST ---\n\n  * NICHT das Tor in der Oberflaeche nachbauen. Ihr sperrt nichts. `bestanden` kommt aus\n    der Kette, und ob das Paarurteil sperren darf, entscheidet der Owner nach der\n    Kalibrierung (auf-20260827-61).\n  * NICHT den Satz umformulieren oder kuerzen, wenn ihr ihn anzeigt. Er traegt gemessene\n    Zahlen; ein gekuerzter Satz traegt sie nicht mehr.\n  * KEINE eigene Schwelle einfuehren, ab der ihr das Haekchen zurueckhaltet. Die Bedingung\n    ist gegeben: bestanden true UND paarurteil.bestanden false. Mehr nicht.\n  * KEINE Bilddaten und keine Pfade mit Benutzernamen in der Rueckmeldung. Regel 3.\n\n--- 5 · WAS WIR MIT DER ANTWORT MACHEN ---\n\nSie geht in den Einbau-Stand als Posten A10 beziehungsweise als neuer Posten. Solange die\nOberflaeche diesen Fall nicht traegt, ist der Einbau bei uns *gebaut, am Geraet\nunbestaetigt* — und das ist bei diesem Punkt kein Buchhaltungsdetail: Es entscheidet, ob\nein Benutzer ein Bild ohne Bauwerk fuer geprueft haelt.\n",
+  "erstellt": "2026-08-27T00:10:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc --gelaende"
+  },
+  "params": {},
+  "auflagen": [
+    "Das Tor nicht in der Oberflaeche nachbauen — ihr sperrt nichts",
+    "Keine Dauerwarnung: der Satz steht nur bei bestanden=true UND paarurteil=false",
+    "Den Satz nicht kuerzen — er traegt gemessene Zahlen",
+    "Keine eigene Schwelle einfuehren",
+    "Regel 3: keine Bilddaten, keine Pfade mit Benutzernamen",
+    "Keine Gestaltungsvorgaben von uns — wie es aussieht, entscheidet ihr"
+  ],
+  "rueckgabe": [
+    "U9a Wie zeigt die Oberflaeche einen bestandenen Lauf, dessen Vertragsgrund diesen Satz traegt?",
+    "U9b Erreicht die Einschraenkung den Benutzer, ohne dass er den Vertragsgrund aufklappt?",
+    "U10a Ist sichergestellt, dass der Hinweis verschwindet, wenn der Satz fehlt?",
+    "U11a Stehen score, geom_iou und paarurteil zusammen, oder auf getrennten Seiten?",
+    "U12 Falls ihr den Vertragsgrund heute gar nicht anzeigt: sagt es — dann ist der Satz bei euch nicht angekommen"
+  ]
+}

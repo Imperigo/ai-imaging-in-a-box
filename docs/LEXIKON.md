@@ -948,6 +948,22 @@ zu machen: Bei welcher Art und Stärke von Abweichung reagiert die Metrik, und w
 in bekannter Art und bekannter Stärke verfälscht, und gemessen wird, wie der Score darauf
 antwortet. Das Ergebnis steht in `docs/SCHWELLENSTUDIE_2026-08-18.md`.*
 
+**Abgelesene Schwelle** — Eine Grenzzahl, die jemand aus einer Handvoll gemessener Fälle
+*abgelesen* hat: «die guten lagen über 0,8, die schlechten darunter, also nehmen wir 0,8».
+Sie sieht aus wie eine kalibrierte Schwelle und ist keine. Der Unterschied liegt nicht in
+der Zahl, sondern darin, was man über sie sagen kann: Bei einer kalibrierten Schwelle weiss
+man, **wie viele gute Fälle sie fälschlich sperrt und wie viele schlechte sie durchlässt**;
+bei einer abgelesenen weiss man nur, dass sie die paar Fälle trennte, an denen man sie
+abgelesen hat.
+*In diesem Projekt tragen zwei Zahlen diesen Vorbehalt ausdrücklich im Quelltext:
+`PAAR_RHO_SCHWELLE = 0.80` — abgelesen an **sieben** Fällen aus **einer** Szene — und
+`PAAR_KANTENANTEIL_SCHWELLE = 0.20`, die beim Vierfachen des Zufalls und bei einem knappen
+Viertel des perfekten Bildes liegt. Beide dürfen deshalb nichts sperren; sie stehen als
+Anzeige da, bis `auftraege/offen/auf-20260827-61.json` sie kalibriert.*
+*Warum das Ablesen trotzdem richtig war: Eine abgelesene Schwelle, die sich als solche zu
+erkennen gibt, ist ehrlicher als gar keine Zahl — sie sagt, wo man heute steht. Unehrlich
+wird sie erst, wenn sie anfängt zu entscheiden.*
+
 **Validierung (eines Verfahrens)** — Die Gegenprobe zur Kalibrierung: prüfen, ob das
 ausgerichtete Verfahren auch dort taugt, wo es angewandt werden soll — an Fällen, die beim
 Ausrichten nicht dabei waren. Wer beides an denselben Fällen tut, hat nur geprüft, ob er
@@ -3178,6 +3194,19 @@ kurz ist.*
 *Die Probe, ob eine Warnung eine Dauerwarnung ist, ist billig: Erscheint sie bei einem
 Vorgang, bei dem gar nichts Besonderes vorliegt? Dann hängt sie nicht an ihm.*
 
+**Selbstlöschende Meldung** — Das Gegenstück zur Dauerwarnung: eine Meldung, die an einer
+Bedingung des **einzelnen** Vorgangs hängt und deshalb von allein verschwindet, sobald die
+Lage nicht mehr vorliegt. Niemand muss sie später wegräumen, und niemand gewöhnt sich an
+sie.
+*In diesem Projekt tragen mehrere Zeilen diesen Bauplan, jede mit einem Kommentar
+«SELBSTLOESCHEND» darüber. Die jüngste (27.08.2026, `abholer.befund_kurz` und
+`kosmo_szene`) steht nur, wenn der Score besteht **und** das Paarurteil zugleich
+durchgefallen ist — die Lage, in der ein Bild ohne Bauwerk als geprüft durchgeht. In jedem
+gewöhnlichen Lauf ist sie nicht da.*
+*Die Probe ist dieselbe wie bei der Dauerwarnung, nur andersherum gelesen: Erscheint die
+Meldung auch bei einem Vorgang, bei dem nichts vorliegt? Dann ist sie keine
+selbstlöschende, sondern eine Dauerwarnung mit gutem Vorsatz.*
+
 **Node (Knoten)** — Ein einzelner Arbeitsschritt in einer Verarbeitungskette, mit
 Eingängen und Ausgängen.
 
@@ -3601,6 +3630,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-27 | Ergaenzt: **Abgelesene Schwelle** und **Selbstloeschende Meldung**. Beide fallen im selben Vorgang an: Gemessen wurde, dass ein VOLLSTAENDIG verschwundenes Bauwerk das Tor mit Score 0.951 besteht, waehrend das Paarurteil durchgefallen meldet (rho_maske -0.018). Sperren darf das Paarurteil noch nicht, weil seine beiden Schwellen abgelesen und nicht kalibriert sind (0.80 aus sieben Faellen einer Szene) — also wird der Widerspruch stattdessen sichtbar gemacht, und zwar mit einer Meldung, die nur in genau dieser Lage steht |
 | 2026-08-26 | Ergaenzt: **Katalogbeweis (gegen Nullbefund ueber Hausnamen)**. Anlass ist ein Owner-Entscheid vom selben Tag: Seit der Maskenweg ein zweites Tor ist, kostet eine verworfene Bauwerksmaske das ganze Urteil — und sie wurde auf zwei von drei Testszenen verworfen, obwohl dort gar kein Boden steht. Der Eintrag traegt die Unterscheidung, die den Entscheid moeglich machte: Ueber IFC-Klassennamen ist «kein IfcSite dabei» ein Beweis, ueber Materialnamen («Beton», «kalksandstein») ist es keiner |
 | 2026-08-26 | **Dreiwertiges Urteil** um die Frage erweitert, die sich erst stellt, wenn ZWEI solche Urteile zusammenkommen: Wie verknuepft man sie? Anlass ist ein Owner-Entscheid vom selben Tag (der Maskenweg ist ein zweites Tor). Die Antwort ist das UND nach Kleene — «falsch UND unbekannt» ist falsch, «wahr UND unbekannt» ist unbekannt — und der Eintrag traegt mit, warum Pythons eigenes `and` das NICHT tut: Bei ihm entscheidet die Reihenfolge der Argumente ueber das Ergebnis |
 | 2026-08-26 | **Polaritaet (einer Tiefenkarte)** erweitert. Der Eintrag sagte, ein unbekanntes Vorzeichen zwinge zum Betrag, und der bewerte eine vollstaendig invertierte Karte wie eine perfekte. Das war bis zum selben Tag der Zustand unserer eigenen Kette — gemessen wurde das Vorzeichen seit dem 20.08., angewandt nur im Maskenweg. Die Luecke hat jetzt eine Zahl (0,7071 bestand die Grenze 0,65) und einen Test. Dazu die Auflage, die zwei Verwendungen trennt: Fuer einen Diagnosewert darf die deklarierte Angabe einspringen, fuer ein Urteil nicht |
