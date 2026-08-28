@@ -529,7 +529,24 @@ def _kamera_setzen(lo, hi, a=None):
                 # damit zu einer TOTEN KANTE machte: geschrieben, nie gelesen. Genau die
                 # Fehlerart, gegen die dieses Projekt seit Phase 0 antritt.
                 seitenverhaeltnis=a.aufloesung / (a.hoehe or a.aufloesung),
-                modus=(getattr(a, "kamera_modus", None) or kameras.MODUS_GEKIPPT),
+                # KEINE EIGENE VORGABE HIER — und das ist eine Berichtigung vom
+                # 28.08.2026, die fuenf Tage zu spaet kommt.
+                #
+                # Bis heute stand hier `or kameras.MODUS_GEKIPPT`. Die Zeile ist am
+                # 21.08. entstanden und war da richtig. Am 23.08. hat der Owner
+                # entschieden, dass MODUS_SHIFT die Vorgabe ist — `auf-33` hatte das
+                # Verhalten am Geraet in fuenf Faellen bestaetigt —, und `kameras.py`
+                # wurde entsprechend geaendert. Der Runner nicht.
+                #
+                # Ergebnis: JEDER Lauf seither stand `gekippt`, mit shift_y 0.0, obwohl
+                # die Bibliothek `shift` sagte. Gemessen am 28.08. an zwei Berichten.
+                #
+                # DARUM WIRD DER SCHLUESSEL JETZT WEGGELASSEN, wenn niemand ihn setzt:
+                # Eine Vorgabe, die an zwei Stellen steht, geht beim naechsten Entscheid
+                # wieder auseinander — und es faellt niemandem auf, weil beide Stellen
+                # fuer sich schluessig aussehen.
+                **({"modus": a.kamera_modus}
+                   if getattr(a, "kamera_modus", None) else {}),
             )
             k = satz["kameras"][0]
             auge = mathutils.Vector(k["auge"])
