@@ -4906,7 +4906,7 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 - [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
       Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
       die Zeile in gewöhnlichen Läufen schweigt.
-- [x] **Sammlung 4561 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+- [x] **Sammlung 4572 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
       und ist nachgeführt.
 - [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
       `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.
@@ -5082,6 +5082,36 @@ war der letzte Eintrag — und der Befund war ein anderer, als er aussah: **Die 
 wird gerufen** (in der Leserichtung), aber der Zweig, den sie steuert, wurde von keinem
 Test gefahren. Ausgerechnet der Zweig gegen *«der Auftrag bliebe bei uns liegen, ohne dass
 jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
+
+---
+
+## Der Homeworker las nicht, für wen ein Auftrag ist (28.08.2026)
+
+**Der Befund kommt vom Gerät** (`auf-20260828-64`, V1): *«homeworker liest das
+worker-Feld nirgends»*.
+
+- [x] **Gemessen am eigenen Bestand: neun offene Aufträge** an `cloud` und `ui` wären
+      beim nächsten `--alle` durchgelaufen — alle im Multipass-Zweig, alle mit
+      `status: ok, urteil: {"multipass": "ok"}`. **Grün und leer.**
+- [x] **Und das Ergebnis wäre nicht folgenlos:** Ein geschriebenes Ergebnis heisst in
+      diesem Projekt *beantwortet*. Die HomeStation hätte Vertragsfragen an einen fremden
+      Worker geschlossen, ohne dass jemand sie je gelesen hätte. *`auftrag.py` verlangt
+      das Feld seit dem 22.08. als Pflicht — es wurde nur nie gelesen. **Eine
+      Pflichtangabe, die niemand liest, ist eine Zeile Text.***
+- [x] **Fremde Aufträge werden nicht angefasst und ausdrücklich auch nicht abgelehnt** —
+      eine Ablehnung zählte als Antwort und wäre schlimmer als Schweigen. Sie werden
+      gezählt und genannt.
+- [x] **Ein fehlendes `worker`-Feld gilt als fremd**, nicht als eigenes: Ein fehlendes
+      Feld ist keine Zusage, und der teure Fehler liegt auf der Seite «doch ausgeführt».
+- [x] Drei Mutationsproben, jede vom richtigen Test gefangen.
+
+**Die Reihenfolge ist die Sache, nicht die Abhilfe:** Der Takt aus `auf-20260826-59`
+darf **erst nach diesem Filter** installiert werden. Ein Takt ohne ihn schlösse beim
+ersten Durchgang neun fremde Aufträge — und niemand hätte gesehen, dass es geschah.
+
+*Selbst ausgelöst, eine Stunde vorher: Beim Prüfen der Kamera lief mein eigener
+`--alle`-Aufruf in genau diese Falle und schrieb ein Ergebnis für `auf-20260823-38`. Ich
+habe es zurückgenommen — aber es war der Beweis, bevor die Meldung kam.*
 
 ---
 
