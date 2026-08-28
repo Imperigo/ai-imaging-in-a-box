@@ -1,0 +1,245 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260828-65",
+  "status": "ok",
+  "beendet": "2026-08-28T11:19:01Z",
+  "dauer_s": null,
+  "messwerte": {
+    "V0_augenhoehe_naechster_demolauf": {
+      "geometrie": "synthetischer Hochbau (--hochbau), 192 px, samples 6, Kamera sSE, Modus nicht gesetzt",
+      "kamera_weg": "abgeleitet",
+      "kamera_kuerzel": "sSE",
+      "kamera_modus": "shift",
+      "kamera_brennweite_mm": 35.0,
+      "kamera_neigung_grad": 0.0,
+      "kamera_shift_y": 0.081242,
+      "kamera_auge": [
+        26.935,
+        -25.1483,
+        1.45
+      ],
+      "kamera_blick_auf": [
+        6.0,
+        4.75,
+        1.45
+      ],
+      "bbox_0_2": -0.25000110268592834,
+      "augenhoehe_ueber_huellbox_unterkante_m": 1.7,
+      "antwort": "ja"
+    },
+    "V1_echter_lauf_mit_untergeschoss": {
+      "hinweis_regel3": "Modell ist georeferenziert; absolute Hoehen wuerden den Ort verraten. Alle z-Werte darum RELATIV zu bbox[0][2] := 0.000 m.",
+      "geometrie": "echtes Bestandsmodell, 7 Geschosse davon 1 UG, 4771 Bauteile, 2462228 Dreiecke, IFC4, Einheit Meter",
+      "lauf": "192 px, samples 6, Kamera sSE, Modus nicht gesetzt, kein gelaende_z",
+      "bbox_0_2_rel_m": 0.0,
+      "kamera_auge_2_rel_m": 1.7,
+      "kamera_gelaende_bezug": "huellbox_unterkante",
+      "kamera_modus": "shift",
+      "kamera_neigung_grad": 0.0,
+      "kamera_abstand_m": 358.0234520486992,
+      "bbox_size_m": [
+        135.75,
+        136.5,
+        25.599517822265625
+      ],
+      "dauer_s": 12.0
+    },
+    "V2_wo_liegt_der_boden_rel_zu_bbox_unterkante_m": {
+      "gelaendeoberkante_rasen": 4.938,
+      "gelaendeoberkante_umgebung_belag": 3.861,
+      "erdgeschossfussboden": 4.938,
+      "untergeschossfussboden": 1.688,
+      "kamera_steht_auf": 1.7,
+      "quelle": "Erdgeschoss- und Untergeschossfussboden: IfcBuildingStorey ueber die Platzierungskette (PlacementRelTo), Einheit aus IfcUnitAssignment als METRE bestaetigt — das sind Fussbodenkoten und keine Schaetzung. Gelaende: PLATZIERUNGSHOEHE der beiden IfcSite-Bodenelemente, nicht eine gemessene Oberflaeche. Die Rasenflaeche ist damit auf 0.001 m genau auf der EG-Kote platziert; ob ihre Oberkante dort liegt, haben wir NICHT nachgemessen.",
+      "antwort": "Erdgeschossfussboden 4.938 m ueber der Huellbox-Unterkante — das ist die belastbare Zahl. Die Gelaendeplatzierung faellt mit ihr zusammen; die GelaendeOBERKANTE selbst ist ungemessen.",
+      "unsicher": "gelaendeoberkante_rasen und gelaendeoberkante_umgebung_belag sind Platzierungshoehen, keine gemessenen Oberkanten."
+    },
+    "V3_modell_mit_untergeschoss": {
+      "antwort": "ja",
+      "anzahl_untergeschosse": 1,
+      "geschosse_gesamt": 7,
+      "ug_fussboden_unter_eg_fussboden_m": 3.25,
+      "huellbox_unterkante_unter_ug_fussboden_m": 1.688,
+      "kamera_unter_erdgeschossfussboden_m": 3.238,
+      "kamera_ueber_untergeschossfussboden_m": 0.012,
+      "befund": "Der Rueckfall ist bei uns NICHT gutartig. Die Kamera steht 3.238 m unter dem Erdgeschossfussboden und 12 mm ueber dem Untergeschossfussboden — sie steht buchstaeblich im Keller, genau wie euer Quelltext warnt."
+    },
+    "V4_bilder_nach_dem_wechsel": {
+      "urteil": "besser",
+      "methode": "zwei fertige A/B-Paare aus auf-33 am Geraet: gleiche Szene, gleiche Augenposition, gleiche Aufloesung 512 px, nur kamera.modus getauscht. Kein neuer gekippt-Lauf noetig. Gemessen wurde die Neigung der senkrechten Silhouettenkanten am Koerperband der Material-ID, nicht nach Augenschein.",
+      "turm_bauhoehe_m": 15.3,
+      "turm_gekippt_neigung_grad": 4.207,
+      "turm_gekippt_kante_links_grad": -0.43,
+      "turm_gekippt_kante_rechts_grad": 0.499,
+      "turm_gekippt_koerperbreite_oben_px": 110,
+      "turm_gekippt_koerperbreite_unten_px": 112,
+      "turm_shift_kante_links_grad": 0.0,
+      "turm_shift_kante_rechts_grad": 0.0,
+      "turm_shift_koerperbreite_oben_px": 112,
+      "turm_shift_koerperbreite_unten_px": 112,
+      "flachbau_bauhoehe_m": 3.3,
+      "flachbau_gekippt_neigung_grad": -0.205,
+      "flachbau_gekippt_kanten_grad": [
+        0.0,
+        0.0
+      ],
+      "flachbau_shift_kanten_grad": [
+        0.0,
+        0.0
+      ],
+      "begruendung": "Beim 15.30-m-Bau laufen die Senkrechten unter gekippt messbar zusammen (0.43 und 0.50 Grad, Koerperbreite 110 auf 112 px); unter shift stehen sie exakt senkrecht und die Breite bleibt konstant. Das bestaetigt euren auf-33-Befund (0.47 bis 0.98 Grad) auf unserem Geraet nach. Beim 3.30-m-Bau war die Neigung schon vorher nur 0.205 Grad und der Unterschied ist nicht messbar."
+    },
+    "V5_falls_schlechter": {
+      "antwort": "nicht schlechter, an keiner der geprueften Kameras",
+      "einschraenkung": "Beurteilt wurden Cycles-Beautybild und Material-ID. Ein Endbild aus dem Bildmodell wurde NICHT gerendert — stehende Hausregel gegen grosse Modelle in aktiver Sitzung, und torch.cuda.mem_get_info meldete 29.72 GiB frei, genau die Zahl, bei der hier schon einmal ein Lauf trotzdem nicht durchkam.",
+      "zwei_andere_befunde_am_echten_modell_nicht_vom_moduswechsel": {
+        "kamera_abstand_m": 358.0,
+        "grund": "Die Huellbox misst 135.75 x 136.5 m, weil das Gelaende mitzaehlt. Die Kamera zieht sich darauf zurueck und das Bauwerk steht winzig im Bild. Das ist der Fall, vor dem euer kamera_huellbox-Docstring warnt — an einem echten Modell mit Gelaende tritt er sofort auf.",
+        "zweiter": "Die Kamera steht zugleich im Untergeschoss (siehe V3). Beide Fehler treffen dasselbe Bild."
+      }
+    },
+    "V6_verschiedene_tiefenwerte_je_richtung": {
+      "geometrie": "zweites echtes Gebaeude (Projektmodell, 82 Bauteile, 61.0 x 29.5 x 15.2 m, Huellbox-Unterkante 0.0)",
+      "lauf": "8 Richtungen, je 192 px, samples 6, Methode identisch zu tools/studie_richtungen.py, Saat 20260828 je Richtung zurueckgesetzt",
+      "frontal": {
+        "n": 107,
+        "e": 98,
+        "s": 91,
+        "w": 145,
+        "mittel": 110.2
+      },
+      "diagonal": {
+        "nNE": 93,
+        "eES": 97,
+        "sSE": 109,
+        "wWN": 109,
+        "mittel": 102.0
+      },
+      "n_maske": {
+        "n": 523,
+        "e": 1008,
+        "s": 626,
+        "w": 1236,
+        "nNE": 355,
+        "eES": 369,
+        "sSE": 389,
+        "wWN": 428
+      },
+      "spanne_m": {
+        "n": 30.11,
+        "e": 57.38,
+        "s": 30.58,
+        "w": 48.65,
+        "nNE": 54.64,
+        "eES": 42.04,
+        "sSE": 21.57,
+        "wWN": 35.46
+      },
+      "befund": "Eure 18-gegen-341 reproduziert am echten Gebaeude NICHT — und sie zeigt nicht einmal in dieselbe Richtung: frontal 110.2 gegen diagonal 102.0 verschiedene Tiefenwerte im Mittel. Der Befund ist damit ein Befund ueber zwei rechtwinklige Quader, nicht ueber frontale Ansichten echter Gebaeude: ein echtes Gebaeude hat auch frontal Rueckspruenge, Vor- und Anbauten, und damit Tiefe. WAS WIR NICHT BELEGEN: dass frontal BESSER ist. Frontal streut 91 bis 145, diagonal 93 bis 109, je vier Richtungen — die Spannen ueberlappen, der Mittelwertunterschied traegt nicht. Belastbar ist allein, dass euer Grund fuer den Vorbehalt hier nicht gilt.",
+      "spannen_statt_mittel": {
+        "frontal_von_bis": [
+          91,
+          145
+        ],
+        "diagonal_von_bis": [
+          93,
+          109
+        ],
+        "n_je_gruppe": 4,
+        "hinweis": "Die beiden Spannen ueberlappen fast vollstaendig, bei vier Richtungen je Gruppe. Der Mittelwertunterschied 110.2 gegen 102.0 ist damit KEIN Beleg, dass frontal grundsaetzlich mehr Tiefe traegt — die einzelne Richtung streut staerker als der Gruppenunterschied. Belastbar ist nur die Verneinung."
+      }
+    },
+    "V7_rho_frontal_gegen_diagonal": {
+      "schwelle": 0.8,
+      "gute_faelle_unter_schwelle_frontal": 5,
+      "gute_faelle_gesamt_frontal": 20,
+      "gute_faelle_unter_schwelle_diagonal": 4,
+      "gute_faelle_gesamt_diagonal": 20,
+      "kleinste_luecke_frontal": -0.0568,
+      "groesste_luecke_frontal": 0.5714,
+      "kleinste_luecke_diagonal": 0.2403,
+      "groesste_luecke_diagonal": 0.6415,
+      "luecke_je_richtung": {
+        "n": 0.56,
+        "e": 0.544,
+        "s": -0.057,
+        "w": 0.571,
+        "nNE": 0.641,
+        "eES": 0.274,
+        "sSE": 0.24,
+        "wWN": 0.296
+      },
+      "befund": "Eure Auszaehlung reproduziert am echten Gebaeude NICHT: 5 von 20 frontal gegen 4 von 20 diagonal, nicht 5 gegen 0. Der Unterschied liegt nicht in der Zahl, sondern in der TRENNUNG: Bei der frontalen Richtung s ist die Luecke NEGATIV (-0.057), ein schlechter Fall liegt also ueber einem guten und die Ordnung bricht. Diagonal liegt die kleinste Luecke bei +0.240. Und s ist zugleich die Richtung mit den WENIGSTEN verschiedenen Tiefenwerten (91 von 8). Wenig Tiefe im Bild und gebrochene Ordnung fallen zusammen — das stuetzt einen Vorbehalt bei frontalen Richtungen, aber mit einer anderen Begruendung als der vermuteten."
+    },
+    "Z_befunde_zum_auftrag_selbst": {
+      "B1_erzeugen_mit_wird_nicht_gelesen": {
+        "auftrag_verlangt": "make_test_ifc.py build/testbau.ifc --hochbau",
+        "runner_baut": "make_test_ifc.py build/testbau.ifc  (ohne Fahne)",
+        "stelle": "tools/homeworker.py, _geometrie_bereitstellen",
+        "bestellt_bbox_m": [
+          12.0,
+          9.5,
+          15.0
+        ],
+        "bestellt_n_elements": 141,
+        "gebaut_bbox_m": [
+          8.0,
+          5.0,
+          3.0
+        ],
+        "gebaut_n_elements": 5,
+        "folge": "Ueber den Homeworker misst dieser Auftrag ein 3-m-Gebaeude statt des bestellten 15-m-Gebaeudes. Bei 15 m betraegt die Kameraneigung im alten Modus 4.207 Grad, bei 3 m nur 0.205 — der Auftrag haette also ausgerechnet den Fall gemessen, in dem der Unterschied verschwindet.",
+        "unser_weg_stattdessen": "seams.ifc_zu_glb + seams.glb_zu_multipass direkt aufgerufen, mit der wirklich bestellten --hochbau-Geometrie und denselben params (192 px, sSE)."
+      },
+      "B2_multipass_gibt_den_kamerablock_nicht_zurueck": {
+        "stelle": "tools/homeworker.py, messwerte im multipass-Zweig",
+        "enthalten": [
+          "n_elements",
+          "n_triangles",
+          "bbox_size_m",
+          "n_meshes",
+          "depth_exr_kanaele",
+          "depth_exr_format",
+          "depth_normalisierung",
+          "depth_png_fehler",
+          "dateien"
+        ],
+        "fehlt": [
+          "bbox",
+          "kamera.weg",
+          "kamera.auge",
+          "kamera.gelaende_bezug"
+        ],
+        "folge": "V0 und V1 verlangen genau diese Felder und sind ueber den vorgesehenen Rueckgabeweg nicht beantwortbar. Ein Homeworker-Lauf haette 'status: ok, urteil: {multipass: ok}' geliefert und keine der vier Zahlen.",
+        "woher_wir_die_zahlen_haben": "aus <out>/blender-report.json am Geraet, direkt gelesen."
+      }
+    },
+    "umgebung_messung": {
+      "vram_frei_gib_vor_jedem_lauf": 29.72,
+      "vram_gesamt_gib": 31.36,
+      "instrument": "torch.cuda.mem_get_info()",
+      "leistungsgrenze_w": 400,
+      "grosse_modelle_geladen": 0
+    }
+  },
+  "urteil": {
+    "V0": "ja — die Kamera steht beim naechsten Demolauf auf Augenhoehe. Am synthetischen Hochbau exakt 1.700 m ueber der Huellbox-Unterkante, weg 'abgeleitet' statt 'rueckfall', modus 'shift', neigung 0.0 Grad. Eure Zahlen reproduzieren bei uns Ziffer fuer Ziffer.",
+    "V1": "gemessen an einem echten Modell mit Untergeschoss: bbox[0][2] als Bezug 0.000, auge[2] +1.700, gelaende_bezug 'huellbox_unterkante'.",
+    "V2": "Der Erdgeschossfussboden liegt 4.938 m ueber der Huellbox-Unterkante — das ist die belastbare Zahl, sie kommt aus der Geschosskote. Die beiden Gelaendeelemente sind auf 4.938 m bzw. 3.861 m platziert; ihre tatsaechliche Oberkante haben wir nicht nachgemessen und geben sie darum nicht als Gelaendehoehe aus.",
+    "V3": "ja, wir haben eines — und bei ihm ist der Rueckfall boesartig: die Kamera steht 3.238 m unter dem Erdgeschossfussboden und 12 mm ueber dem Kellerboden. gelaende_z muss gefuellt werden.",
+    "V4": "besser. Am 15.30-m-Bau stehen die Senkrechten unter shift exakt senkrecht (0.000 Grad) statt zusammenzulaufen (0.43 und 0.50 Grad). Am 3.30-m-Bau ist kein Unterschied messbar — die Verbesserung waechst mit der Bauhoehe.",
+    "V5": "nichts schlechter. Zwei andere Fehler treffen dasselbe Bild, aber sie kommen nicht vom Moduswechsel: die Kamera steht 358 m weit weg, weil das Gelaende die Huellbox aufblaeht, und sie steht im Untergeschoss.",
+    "V6": "eure 18-gegen-341 reproduziert nicht und zeigt sogar in die Gegenrichtung (frontal 110.2, diagonal 102.0). Dass frontal BESSER waere, belegen wir aber nicht: die Spannen 91-145 und 93-109 ueberlappen bei je vier Richtungen. Belastbar ist die Verneinung, nicht die Umkehrung.",
+    "V7": "eure Auszaehlung reproduziert nicht (5 gegen 4 statt 5 gegen 0). Der frontale Nachteil steckt in der Trennung, nicht in der Zahl: die frontale Richtung s hat als einzige eine negative Luecke und zugleich die wenigsten verschiedenen Tiefenwerte.",
+    "empfehlung": "gelaende_z fuellen und die Kamera-Huellbox auf das Bauwerk begrenzen. Beides ist bei uns belegt und beides trifft dasselbe Bild. Fuer gelaende_z ist die Geschosskote des Erdgeschosses die belastbarste Quelle: sie steht als IfcBuildingStorey samt Platzierungskette in jeder IFC und musste hier nicht geschaetzt werden. Euer bbox_bauwerk gibt es schon — es half hier nicht, weil das Gelaende in der Breite stoert, nicht in der Tiefe.",
+    "was_wir_nicht_gemessen_haben": "Kein Endbild aus dem Bildmodell (V5). Grund: stehende Hausregel gegen grosse Modelle in aktiver Sitzung; das Urteil zu V4 stuetzt sich darum auf Cycles-Beautybild und Material-ID, nicht auf ein Diffusionsbild."
+  },
+  "umgebung": {
+    "geraet": "HomeStation, RTX 5090, Leistungsgrenze 400 W gesetzt",
+    "blender": "5.2.1 LTS",
+    "ifcopenshell": "0.8.5",
+    "python": "3.14.4",
+    "auftragsprobe": "tests/test_auftraege.py 244 bestanden, 28 uebersprungen"
+  },
+  "fehler": null
+}
