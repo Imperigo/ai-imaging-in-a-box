@@ -1435,3 +1435,58 @@ def test_eine_unbekannte_art_laeuft_nicht_still_als_multipass(blender_naht, ifc,
 def test_die_bekannten_arten_laufen_weiter(blender_naht, ifc, aus, tmp_path, art):
     """Die Gegenprobe — sonst hätte die Prüfung alles gesperrt."""
     assert hw.fuehre_aus(_multipass_satz(art, ifc, aus), tmp_path)["status"] == "ok"
+
+
+def test_die_schalter_erreichen_den_wirklichen_aufruf(monkeypatch, tmp_path):
+    """**Die Aufrufstelle, nicht nur die Funktion.**
+
+    Der erste Anlauf dieser Prüfung hat `_schalter_aus` isoliert getestet — und eine
+    Mutationsprobe, die den Aufruf im Prozessstart wieder entfernte, **überlebte.** Eine
+    Funktion, die richtig rechnet und nirgends gerufen wird, ist genau der Fehler, gegen
+    den dieser ganze Abschnitt gebaut ist. *Ich hätte ihn beinahe beim Beheben wiederholt.*
+    """
+    gesehen: list[list[str]] = []
+
+    class Antwort:
+        returncode = 0
+        stdout = stderr = ""
+
+    def merken(argv, **kw):
+        gesehen.append([str(x) for x in argv])
+        (tmp_path / "build").mkdir(parents=True, exist_ok=True)
+        (tmp_path / "build" / "testbau.ifc").write_text("ISO-10303-21;\n")
+        return Antwort()
+
+    monkeypatch.setattr(hw.subprocess, "run", merken)
+    satz = {"auftrag_id": "auf-20260828-96", "art": "multipass",
+            "geometrie": {"synthetisch": True, "pfad": None,
+                          "erzeugen_mit": "python3 tools/make_test_ifc.py b.ifc --hochbau"}}
+
+    hw._geometrie_bereitstellen(satz, tmp_path)
+
+    assert gesehen, "es wurde gar kein Prozess gestartet"
+    assert "--hochbau" in gesehen[0], (
+        f"der Schalter erreicht den Aufruf nicht: {gesehen[0]}")
+
+
+def test_ohne_schalter_bleibt_der_aufruf_schlicht(monkeypatch, tmp_path):
+    """Die Gegenprobe: Ein Auftrag ohne Schalter bekommt auch keinen."""
+    gesehen: list[list[str]] = []
+
+    class Antwort:
+        returncode = 0
+        stdout = stderr = ""
+
+    def merken(argv, **kw):
+        gesehen.append([str(x) for x in argv])
+        (tmp_path / "build").mkdir(parents=True, exist_ok=True)
+        (tmp_path / "build" / "testbau.ifc").write_text("ISO-10303-21;\n")
+        return Antwort()
+
+    monkeypatch.setattr(hw.subprocess, "run", merken)
+    satz = {"auftrag_id": "auf-20260828-97", "art": "multipass",
+            "geometrie": {"synthetisch": True, "pfad": None,
+                          "erzeugen_mit": "python3 tools/make_test_ifc.py b.ifc"}}
+
+    hw._geometrie_bereitstellen(satz, tmp_path)
+    assert not [w for w in gesehen[0] if w.startswith("--")]

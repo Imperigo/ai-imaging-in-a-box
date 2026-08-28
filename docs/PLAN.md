@@ -4906,7 +4906,7 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 - [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
       Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
       die Zeile in gewöhnlichen Läufen schweigt.
-- [x] **Sammlung 4592 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+- [x] **Sammlung 4608 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
       und ist nachgeführt.
 - [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
       `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.
@@ -5182,6 +5182,41 @@ Aufgeräumt wurde nichts, es kamen 13 dazu.*
 - [ ] **V2 (Ordner umbenennen) und V5 (die vier Waisen) sind nicht gemacht** — V2 hat der
       Owner gegen den Koordinationspreis über drei Worker abgewogen, V5 gehört zur
       Aufräumrunde, die die HomeStation selbst führt.
+
+---
+
+## Drei Angaben, die gelesen und nie verwendet wurden (28.08.2026)
+
+**Alle drei vom Gerät gemeldet** (`auf-20260828-66`), alle von derselben Bauart wie der
+Notkamera-Fehler: *nicht falsch gerechnet, sondern eine Angabe nie gelesen.*
+
+- [x] **`geometrie.erzeugen_mit` wurde ignoriert.** Der Aufruf ging **ohne Argument**
+      hinaus; was im Auftrag stand, landete in keiner Variablen. `--hochbau` tauscht den
+      Quader gegen Stützenraster und Kern — **`auf-65` hätte ein anderes Gebäude gemessen
+      als das bestellte.** *Das ist die teure Variante: Der Lauf bricht nicht ab. Er
+      antwortet, nur auf eine andere Frage.*
+      Übernommen wird jetzt eine **Positivliste** von Schaltern, nie der Zielpfad: Ein
+      Auftragstext ungeprüft an eine Kommandozeile zu geben hiesse, jedem Schreiber dieses
+      Ordners einen Prozessaufruf zu schenken.
+- [x] **Der Kamerablock fehlte in `messwerte`.** `bbox_size_m` ist die *Kantenlänge* — sie
+      sagt, wie gross die Hüllbox ist, nicht wo sie liegt. Genau das Wo ist V0 von
+      `auf-65`, und es war aus dem Ergebnis **nicht beantwortbar**. Jetzt stehen `bbox`,
+      `bbox_bauwerk` und `kamera` darin.
+- [x] **`ARTEN` wurde nirgends geprüft** — `grep -c ARTEN` traf **null**. `pruefe_auftrag`
+      kennt die Menge, läuft aber nur beim *Schreiben*, und keine Auftragsdatei dieses
+      Repos ist je über `baue_auftrag` hereingekommen. Ihr eigenes `auf-63` trug
+      `art: "vertrag"` und wäre still als Multipass gelaufen.
+
+### Und ein Fehler, den ich beim Beheben beinahe wiederholt hätte
+
+Die erste Fassung prüfte `_schalter_aus` **isoliert** — und die Mutationsprobe, die den
+Aufruf im Prozessstart wieder entfernte, **überlebte**.
+
+> Eine Funktion, die richtig rechnet und nirgends gerufen wird, ist genau der Fehler,
+> gegen den dieser ganze Abschnitt gebaut ist.
+
+Der Test prüft jetzt die **Aufrufstelle**: Er fängt den Prozessstart ab und sieht in der
+Argumentliste nach. Danach fällt die Mutation.
 
 ---
 
