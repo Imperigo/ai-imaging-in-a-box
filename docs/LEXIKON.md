@@ -992,6 +992,19 @@ Rückstand bei ihm — er ist einer beim Absender.** *Die Abhilfe ist der Block
 (`aiimaging.auftragspost`): der ganze Auftrag als ein selbsttragender Text, der ohne das
 Repo gelesen werden kann.*
 
+**Boden einer Kennzahl** — Der Wert, den eine Kennzahl schon **ohne jede Leistung**
+erreicht. Er entsteht nicht durch Messen, sondern durch die Bauart der Zahl, und er hängt
+oft an etwas, das mit der gemessenen Sache nichts zu tun hat.
+*In diesem Projekt exakt bestimmt (27.08.2026): Ein völlig gleichförmiges Bild — das
+wertloseste denkbare Ergebnis — bekommt bei* `geom_iou` *genau den Anteil der Bildfläche,
+den die Szene mit Geometrie füllt. Auf drei Szenen gemessen: 0,1104 · 0,1729 · 0,5297,
+jedes Mal auf volle Rechengenauigkeit gleich. Kein Messwert, sondern Arithmetik: Ein
+gleichförmiges Bild trägt nirgends die Marke «hier ist nichts», also gilt das ganze Bild
+als Geometrie, und der Anteil der Übereinstimmung ist genau der Anteil der Szene.*
+*Warum das gefährlich ist:* **0,53 liest sich wie «zur Hälfte richtig» und heisst «die
+Szene ist gross».** *Wer eine Schwelle über einer Kennzahl setzt, ohne ihren Boden zu
+kennen, setzt sie über einer Zahl, deren untere Hälfte niemandem gehört.*
+
 **Obergrenze (eines Befundes)** — Ein Messaufbau, der einer Sache absichtlich die
 **besten denkbaren** Bedingungen gibt, um zu klären, ob sie unter *irgendwelchen*
 Bedingungen taugt. Das Ergebnis ist einseitig belastbar: Was hier scheitert, ist erledigt;
@@ -3700,6 +3713,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-27 | Ergaenzt: **Boden einer Kennzahl**. Exakt bestimmt: Ein gleichfoermiges Bild bekommt bei geom_iou genau den Vordergrundanteil der Szene — auf drei Szenen auf volle Rechengenauigkeit gleich, also Arithmetik und kein Messwert. Der Eintrag traegt mit, warum das gefaehrlicher ist als eine ungenaue Zahl: 0,53 liest sich wie «zur Haelfte richtig» und heisst «die Szene ist gross» |
 | 2026-08-27 | Ergaenzt: **Zustellweg (eines Auftrags)**. Anlass: Der Cloud-Worker hat unser Repo nicht, und vier Auftraege lagen deshalb an einem Ort, den ihr Adressat nicht oeffnen kann — gezaehlt wurden sie die ganze Zeit korrekt und sahen trotzdem nach Wartezeit bei ihm aus. Der Eintrag traegt die Regel mit, die daraus folgt: Ein Auftrag, den sein Adressat nicht erreichen kann, ist ein Rueckstand beim Absender |
 | 2026-08-27 | Ergaenzt: **Beleg im Repo vs. Beleg am Geraet**. Anlass ist der teuerste Buchfuehrungsfehler des Projekts: Ein Posten stand sechs Tage als erledigt, waehrend auf dem Geraet eine sechs Tage aeltere Fassung lief — der Waechter prueft, ob ein Beleg EXISTIERT, und der existierte. Der Eintrag traegt mit, was ein Waechter hier ueberhaupt erzwingen kann: nicht die Wahrheit ueber ein fremdes Geraet, sondern die Angabe, welcher Art der Beleg ist |
 | 2026-08-27 | Ergaenzt: **Obergrenze (eines Befundes)**. **Rasterdublette** um die Kameraachse erweitert (23 von 33 Fallarten auf vier Stellen identisch — eine Dublette braucht kein Staerkeraster, nur zwei Wege zur selben Zahl). **Paarurteil** um seinen staerksten Beleg: Die beiden Masse versagen in ENTGEGENGESETZTE Richtungen — ordentliches rho bei 2.8 % Umriss auf der einen Seite, Kantenanteil 1.0000 bei rho -1.0000 auf der anderen |

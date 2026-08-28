@@ -103,10 +103,41 @@ verschwundenem Bauwerk (0,9211) und beide mit 20 px Versatz (0,9384). Erst bei 0
 |---|---|---|
 | **ρ über der Maske** | **sauber** | 0,6169 … 0,9282 |
 | Ganzbild-Score | überlappend | −0,0003 |
+| Ganzbild-Spearman (Score ohne `geom_iou`) | überlappend | −0,0698 |
 | `geom_iou` | überlappend | −0,0519 |
 | Kantenanteil | überlappend | −0,4497 |
 
 **Genau ein Mass von vieren trennt, und es ist nicht das, auf dem das Tor heute steht.**
+
+---
+
+## Befund 5 · `geom_iou` wegzunehmen macht es **schlechter** — und das war die Vermutung wert
+
+Weg 3 des Entscheids lautet: *`geom_iou` aus dem Score nehmen.* Dann bliebe
+`abs(spearman)` über das ganze Bild. An denselben 66 Fällen gemessen:
+
+    Trennung: ÜBERLAPPEND.
+    Schlechtester GUTER Fall  0,9282
+    Bester SCHLECHTER Fall    0,9980
+    → die Lücke wächst von −0,0003 auf −0,0698, also um das Zweihundertfache.
+
+**Und der beste schlechte Fall ist ausgerechnet der, um den alles geht:**
+
+| Fall | `spearman` (ganzes Bild) | `geom_iou` | Score heute |
+|---|---:|---:|---:|
+| **Gelände, Bauwerk verschwunden** | **0,9980** | 0,8501 | 0,9211 |
+| Gelände, 20 px versetzt | 0,9933 | 0,8865 | 0,9384 |
+
+Der Grund ist derselbe wie überall in dieser Messung: **Der Boden bleibt liegen.** Nimmt
+man das Bauwerk weg und füllt die Lücke mit dem, was daneben steht, ist die
+Tiefenstaffelung über das *ganze* Bild fast unverändert — 0,998. `geom_iou` zieht diesen
+Fall auf 0,921 herunter, und das ist mehr, als der Spearman allein täte.
+
+**`geom_iou` ist also nicht der Fehler — es ist die einzige Bremse, die der heutige Score
+hat.** Sie reicht nicht (0,921 besteht die Schwelle 0,65 mühelos), aber sie wegzunehmen
+verschlimmert genau den Fall, für den sie einmal eingebaut wurde.
+
+*Weg 3 ist damit gemessen und nicht mehr offen: Er kostet, statt zu nützen.*
 
 ---
 
@@ -134,6 +165,7 @@ Drei Punkte einer Kurve sind eine Form, keine Funktion.
     python tools/studie_paarmasse.py build/studie
     python tools/paarschwellen.py build/studie/f_score.json --groesse score
     python tools/paarschwellen.py build/studie/f_iou.json   --groesse geom_iou
+    python tools/paarschwellen.py build/studie/f_spearman.json --groesse spearman
 
 Die beiden Rechenidentitäten stehen als Tests in `tests/test_geometrie_qa.py` — sie
 brauchen weder Blender noch die Studie.

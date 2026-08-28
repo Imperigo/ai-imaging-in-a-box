@@ -106,6 +106,25 @@ sich geändert hat, ist die **Grundlage**:
 | Weg 2 · gegen den Deckel normalisieren | Schwelle bedeutet je Szene etwas anderes | unverändert |
 | **Weg 3 · `geom_iou` aus dem Score** | *Preis: fängt den Fall, den `rho_maske` nicht sieht* | **Der Preis ist an dieser Szene nicht nachweisbar — und `geom_iou` gibt einem verschwundenen Bauwerk 1,000** |
 
+### Nachtrag 27.08.2026 — drei der vier Wege haben jetzt eine gemessene Zahl
+
+Dieselbe Frage, an **66** Fällen über drei Szenen mit Bodenanteilen von 0,00 bis 0,42
+(`docs/GEOM_IOU_BODEN_UND_DECKE_2026-08-27.md`), mit perfekten Karten:
+
+| Weg | Stand 26.08. | gemessen am 27.08. |
+|---|---|---|
+| 1 · Hintergrundtrennung ausserhalb | zweites Modell, Lizenzfrage | **unverändert** — hier nicht messbar |
+| 2 · gegen den Deckel normalisieren | Schwelle bedeutet je Szene etwas anderes | **beziffert:** Der *Boden* von `geom_iou` ist **exakt** der Vordergrundanteil der Szene — eine Rechenidentität, keine Schätzung. Was zu normalisieren wäre, ist damit bekannt |
+| **3 · `geom_iou` aus dem Score** | Preis an dieser Szene nicht nachweisbar | **Er kostet, statt zu nützen.** Ohne `geom_iou` bekommt das verschwundene Bauwerk `spearman` **0,9980** statt Score 0,9211; die Überlappung wächst um das Zweihundertfache |
+| **4 · bleibt, entscheidet nicht allein** | halb gebaut | **Der Preis ist geschrumpft:** ρ über der Maske ist das **einzige** von vier Massen, das sauber trennt (Lücke 0,6169 … 0,9282), und `PAAR_RHO_SCHWELLE = 0.80` liegt fast in ihrer Mitte |
+
+**Weg 3 ist damit vom Tisch — gemessen, nicht abgewogen.** `geom_iou` ist nicht der
+Fehler, sondern die einzige Bremse, die der heutige Score hat; sie reicht nur nicht.
+
+**Und die unbequemste Zahl des Tages steht daneben:** Der Ganzbild-Score selbst trennt
+gut und schlecht **gar nicht** — schlechtester guter Fall 0,9381, bester schlechter
+0,9384. *Drei Zehntausendstel, und sie liegen falsch herum.*
+
 **Ein vierter Weg ist damit sichtbar geworden**, und er ist der billigste: `geom_iou`
 bleibt stehen, **aber es entscheidet nicht mehr allein**. Genau das ist seit heute abend
 schon halb gebaut — der Maskenweg ist ein zweites Tor, und ein Lauf ohne ihn bekommt gar

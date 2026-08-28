@@ -4906,7 +4906,7 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 - [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
       Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
       die Zeile in gewöhnlichen Läufen schweigt.
-- [x] **Sammlung 4492 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+- [x] **Sammlung 4494 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
       und ist nachgeführt.
 - [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
       `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.
@@ -4935,6 +4935,41 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
       ausschliesslich auf `auf-61`.
 - [ ] **Die Oberfläche muss den Vorbehalt tragen.** Solange sie ihn nicht trägt, sieht
       dort ein Bild ohne Bauwerk aus wie ein geprüftes (`auf-62`, Posten A11).
+
+---
+
+## `geom_iou` hat einen Boden, und er gehört der Szene (27.08.2026)
+
+**Dieselbe 36-Sekunden-Methode wie bei den Paarschwellen, auf die Frage angewandt, die
+den offenen Entscheid trägt.** 66 Fälle, drei Szenen, Bodenanteile 0,00 bis 0,42, perfekte
+Karten (`docs/GEOM_IOU_BODEN_UND_DECKE_2026-08-27.md`).
+
+- [x] **Der Boden ist eine Rechenidentität.** Ein konstantes Bild bekommt **exakt** den
+      Vordergrundanteil der Szene — 0,1104 · 0,1729 · 0,5297, auf volle
+      Gleitkommagenauigkeit. *0,53 liest sich wie «zur Hälfte richtig» und heisst «die
+      Szene ist gross».*
+- [x] **Die Decke sieht nicht hinein.** Ein Bauwerk mit vollständig verkehrter
+      Tiefenordnung bekommt `geom_iou = 1,0000`, auf allen drei Szenen. Beides steht seit
+      heute unter je einem Test, mit Mutationsprobe.
+- [x] **Die fehlende Kurve zum Befund vom 26.08.** `geom_iou` beim verschwundenen Bauwerk:
+      0,0000 bei Bodenanteil 0,00 · 0,8501 bei 0,42 · 1,0000 bei 0,79. *Der Fehler wächst
+      in die Richtung, in der jede wirkliche Szene liegt.*
+- [x] **Weg 3 ist vom Tisch — gemessen.** Ohne `geom_iou` bekäme das verschwundene Bauwerk
+      `spearman` **0,9980** statt Score 0,9211; die Überlappung wächst um das
+      Zweihundertfache. *`geom_iou` ist nicht der Fehler, sondern die einzige Bremse, die
+      der Score hat — sie reicht nur nicht.*
+- [x] **Und die unbequemste Zahl:** Der Ganzbild-Score trennt gut und schlecht **gar
+      nicht** — 0,9381 gegen 0,9384, drei Zehntausendstel, falsch herum. Von vier Massen
+      trennt genau **eines** sauber, und es ist nicht das, auf dem das Tor heute steht.
+
+- [ ] **Was das für den Entscheid heisst, gehört dem Owner** — aber die Vorlage ist jetzt
+      vollständig: `docs/BRAUCHT_ES_GEOM_IOU_2026-08-26.md`, Nachtrag vom 27.08. Drei der
+      vier Wege tragen eine gemessene Zahl; nur Weg 1 (Hintergrundtrennung ausserhalb) ist
+      hier nicht messbar.
+- [ ] **Gegenprobe mit dem wirklichen Schätzer** — `auf-20260826-60` und
+      `auf-20260827-61`. Alles hier ist eine **Obergrenze**: Was mit perfekten Karten
+      scheitert, scheitert mit einem Schätzer erst recht; was gelingt, ist noch nicht
+      bestätigt.
 
 ---
 
