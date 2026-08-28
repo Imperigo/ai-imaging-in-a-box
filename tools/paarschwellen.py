@@ -37,9 +37,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from aiimaging import paarschwellen  # noqa: E402
 
+#: Welche Kandidatenreihe zu welcher Messgroesse — und wie sie im Kopf der Tabelle heisst.
+#:
+#: **Der Name ist kein Schmuck.** Vier Groessen laufen durch dieselbe Rechnung und ergeben
+#: vier verschiedene Tabellen; ohne die Beschriftung sind sie hinterher nicht mehr
+#: auseinanderzuhalten. Genau diese Verwechslung war am 27.08.2026 der Grund, warum
+#: `trennkurve` das Feld `groesse` ueberhaupt fuehrt.
 REIHEN = {
     "rho": (paarschwellen.KANDIDATEN_RHO, "rho_maske_gerichtet"),
     "kantenanteil": (paarschwellen.KANDIDATEN_KANTENANTEIL, "kantenanteil"),
+    "score": (paarschwellen.KANDIDATEN_RHO, "score (Ganzbild, was das Tor liest)"),
+    "geom_iou": (paarschwellen.KANDIDATEN_RHO, "geom_iou"),
 }
 
 

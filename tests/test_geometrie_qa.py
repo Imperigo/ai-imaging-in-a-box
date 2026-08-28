@@ -2052,3 +2052,74 @@ def test_die_warnung_verwirft_den_wert_nicht():
                                            polaritaet=geometrie_qa.POLARITAET_TIEFE)
 
     assert e["roh"] is not None and e["gerichtet"] is not None
+
+
+# ======================================================================================
+# Der Boden von geom_iou — eine Rechenidentität, keine Beobachtung
+# ======================================================================================
+
+def test_ein_konstantes_bild_bekommt_genau_den_vordergrundanteil_der_sollkarte():
+    """**Der Boden von `geom_iou` gehört der SZENE, nicht dem Bild.**
+
+    Ein konstantes Bild trägt nirgends die Hintergrundmarke. Seine Silhouette ist damit
+    das **ganze** Bild, und die Schnittmenge mit der Soll-Silhouette ist die Soll-
+    Silhouette selbst:
+
+        geom_iou = |soll ∩ ist| / |soll ∪ ist| = |soll| / |Bild| = Vordergrundanteil
+
+    Das ist Arithmetik und kein Messwert — und es heisst: **Eine Szene, deren Geometrie
+    die halbe Bildfläche füllt, gibt jedem wertlosen Bild 0,5.** Gemessen am 27.08.2026
+    über drei Szenen: 0,1104 · 0,1729 · 0,5297, jedes Mal auf volle Gleitkommagenauigkeit
+    gleich dem Vordergrundanteil.
+
+    *Der Wächter steht hier, weil die Zahl sonst wie ein Ergebnis aussieht. 0,53 für ein
+    konstantes Bild liest sich wie «zur Hälfte richtig» und heisst «die Szene ist gross».*
+    """
+    breite = hoehe = 20
+    for links, oben, rechts, unten in ((6, 6, 14, 14), (2, 2, 18, 10), (0, 0, 20, 20)):
+        soll = []
+        for y in range(hoehe):
+            for x in range(breite):
+                innen = links <= x < rechts and oben <= y < unten
+                soll.append(10.0 + 0.1 * (x + y) if innen else HINTERGRUND_SCHWELLE_M * 10)
+        vordergrund = sum(1 for w in soll if w < HINTERGRUND_SCHWELLE_M)
+        anteil = vordergrund / len(soll)
+
+        ergebnis = geometrie_qa.geometrie_score(
+            soll, [1.0] * len(soll), HINTERGRUND_SCHWELLE_M * 10,
+            polaritaet=geometrie_qa.POLARITAET_TIEFE)
+
+        assert ergebnis["geom_iou"] == pytest.approx(anteil, abs=1e-12), (
+            f"Kasten {(links, oben, rechts, unten)}: geom_iou {ergebnis['geom_iou']} "
+            f"soll gleich dem Vordergrundanteil {anteil} sein")
+
+
+def test_ein_bauwerk_mit_umgekehrten_tiefen_bekommt_geom_iou_1_0():
+    """**`geom_iou` sieht die Silhouette und nichts darin.**
+
+    Spiegelt man die Tiefen **innerhalb** des Bauwerks, bleibt der Umriss vollkommen —
+    und `geom_iou` steht auf 1,0000, während die Rangordnung vollständig verkehrt ist.
+    Gemessen am 27.08.2026 auf allen drei Szenen, unabhängig vom Bodenanteil.
+
+    *Zusammen mit dem Test darüber: Der Boden gehört der Szene, die Decke sieht nicht
+    hinein. Was `geom_iou` dazwischen misst, ist der Umriss — mehr behauptet es nicht,
+    und mehr darf man ihm nicht entnehmen.*
+    """
+    breite = hoehe = 20
+    soll, maske = [], []
+    for y in range(hoehe):
+        for x in range(breite):
+            innen = 6 <= x < 14 and 6 <= y < 14
+            maske.append(innen)
+            soll.append(10.0 + 0.1 * (x + y) if innen else HINTERGRUND_SCHWELLE_M * 10)
+
+    endlich = [w for w in soll if w < HINTERGRUND_SCHWELLE_M]
+    mitte = sum(endlich) / len(endlich)
+    gespiegelt = [(2 * mitte - w) if m else w for w, m in zip(soll, maske)]
+
+    ergebnis = geometrie_qa.geometrie_score(
+        soll, gespiegelt, HINTERGRUND_SCHWELLE_M * 10,
+        polaritaet=geometrie_qa.POLARITAET_TIEFE)
+
+    assert ergebnis["geom_iou"] == pytest.approx(1.0), "der Umriss ist unberührt"
+    assert ergebnis["spearman"] == pytest.approx(-1.0), "und die Ordnung vollständig verkehrt"

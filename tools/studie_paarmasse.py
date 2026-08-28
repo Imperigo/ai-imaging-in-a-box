@@ -204,22 +204,33 @@ def main(argv: list[str] | None = None) -> int:
                 rho = geometrie_qa.rho_ueber_maske(
                     soll, ist, maske, polaritaet=geometrie_qa.POLARITAET_TIEFE)
                 anteil = geometrie_qa.anteil_grenze_mit_kante(ist, maske, breite=breite)
+                # Der GANZBILD-Weg daneben, an derselben Zeile: `score` ist das, was das
+                # Tor heute liest, und `geom_iou` sein zweiter Faktor. Sie stehen hier,
+                # damit die Frage «braucht es geom_iou?» an DERSELBEN Messung haengt wie
+                # die Frage nach den Paarschwellen — sonst vergleicht man zwei Studien.
+                ganz = geometrie_qa.geometrie_score(
+                    soll, ist, HINTERGRUND_M,
+                    polaritaet=geometrie_qa.POLARITAET_TIEFE)
                 zeilen.append({
                     "fall_id": f"{name}-{kamera}-{art}", "gut": gut,
                     "szene": name, "kamera": kamera, "art": art,
                     "rho": rho.get("gerichtet"),
                     "kantenanteil": anteil.get("anteil"),
+                    "score": ganz.get("score"),
+                    "geom_iou": ganz.get("geom_iou"),
+                    "spearman": ganz.get("spearman"),
                     "bodenanteil": round(n_boden / len(maske), 4),
                     "geometrieanteil": round(n_maske / len(maske), 4),
                 })
 
     (wurzel / "roh.json").write_text(json.dumps(zeilen, indent=1), encoding="utf-8")
-    for kurz, schluessel in (("rho", "rho"), ("kante", "kantenanteil")):
+    for kurz, schluessel in (("rho", "rho"), ("kante", "kantenanteil"),
+                             ("score", "score"), ("iou", "geom_iou")):
         satz = [{"fall_id": z["fall_id"], "gut": z["gut"], "wert": z[schluessel],
                  "szene": z["szene"], "kamera": z["kamera"]} for z in zeilen]
         (wurzel / f"f_{kurz}.json").write_text(json.dumps(satz, indent=1),
                                                encoding="utf-8")
-    print(f"\n{len(zeilen)} Zeilen -> {wurzel}/roh.json, f_rho.json, f_kante.json")
+    print(f"\n{len(zeilen)} Zeilen -> {wurzel}: roh.json und f_*.json")
     return 0
 
 
