@@ -4906,7 +4906,7 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 - [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
       Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
       die Zeile in gewöhnlichen Läufen schweigt.
-- [x] **Sammlung 4616 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+- [x] **Sammlung 4620 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
       und ist nachgeführt.
 - [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
       `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.
