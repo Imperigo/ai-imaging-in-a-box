@@ -1027,6 +1027,23 @@ Stelle die Vorgabe trägt, kann nichts auseinanderlaufen. Der Wächter dazu prü
 Quelltext auf einen zweiten Rückfall — nicht das Verhalten, denn das Skript läuft nur
 innerhalb von Blender.*
 
+**Abgeleiteter Zustand** — Ein Zustand, den niemand einträgt, weil er sich aus etwas
+anderem **ergibt**. Sein Gegenteil ist das gepflegte Feld: eine Angabe, die jemand von
+Hand richtig halten muss. *Ein gepflegtes Feld verfällt; ein abgeleiteter Zustand kann es
+nicht.*
+*In diesem Projekt am 28.08.2026 nach einer Messung der HomeStation eingeführt: Im
+Auftragsordner lagen **63** Aufträge und daneben **44** Ergebnisse — **40 Paare**. Vierzig
+Aufträge galten als offen, obwohl ihre Antwort danebenlag, und **keiner der 63** trug ein
+Zustandsfeld. Aufgeräumt hatte nie jemand.*
+*Der Zustand wird seither aus dem Ergebnis gelesen, mit fünf Werten:* kein Ergebnis =
+**offen**, `ok` = **beantwortet**, Fehler oder Ablehnung = **gerechnet, nicht
+beantwortet**, ein Weiterleitungsvermerk = **weitergereicht**, eine Rücknahme =
+**zurückgezogen**.
+*Die Unterscheidung ist nicht Pedanterie:* **Ein Ergebnis zu haben heisst nicht,
+beantwortet zu sein.** *Gemessen: Von zwei Aufträgen an den Vertrags-Worker, die ein
+Ergebnis trugen, waren zwei von zwei blosse Weiterleitungsvermerke. Nach der alten
+Zählung galten acht Aufträge als erledigt, die niemand beantwortet hat.*
+
 **Obergrenze (eines Befundes)** — Ein Messaufbau, der einer Sache absichtlich die
 **besten denkbaren** Bedingungen gibt, um zu klären, ob sie unter *irgendwelchen*
 Bedingungen taugt. Das Ergebnis ist einseitig belastbar: Was hier scheitert, ist erledigt;
@@ -3735,6 +3752,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-28 | Ergaenzt: **Abgeleiteter Zustand**. Anlass ist eine Messung der HomeStation: 63 Auftraege, 44 Ergebnisse, 40 Paare, und kein einziger Auftrag mit Zustandsfeld — der Ordner sicherte einen Zustand zu, den er nicht fuehrte. Der Eintrag traegt die fuenf abgeleiteten Werte und den Satz, um den es geht: Ein Ergebnis zu haben heisst nicht, beantwortet zu sein |
 | 2026-08-28 | Ergaenzt: **Doppelte Vorgabe**. Anlass: Ein Owner-Entscheid vom 23.08. (Kamera waagrecht statt gekippt) wurde in der Bibliothek umgesetzt, im ausfuehrenden Skript nicht — fuenf Tage lang kippte jeder Lauf. Kein Test schlug an, weil beide Stellen fuer sich schluessig aussahen; aufgefallen ist es dem Owner am fertigen Bild. Der Eintrag traegt die Abhilfe mit: nicht angleichen, sondern die zweite Stelle streichen |
 | 2026-08-27 | Ergaenzt: **Boden einer Kennzahl**. Exakt bestimmt: Ein gleichfoermiges Bild bekommt bei geom_iou genau den Vordergrundanteil der Szene — auf drei Szenen auf volle Rechengenauigkeit gleich, also Arithmetik und kein Messwert. Der Eintrag traegt mit, warum das gefaehrlicher ist als eine ungenaue Zahl: 0,53 liest sich wie «zur Haelfte richtig» und heisst «die Szene ist gross» |
 | 2026-08-27 | Ergaenzt: **Zustellweg (eines Auftrags)**. Anlass: Der Cloud-Worker hat unser Repo nicht, und vier Auftraege lagen deshalb an einem Ort, den ihr Adressat nicht oeffnen kann — gezaehlt wurden sie die ganze Zeit korrekt und sahen trotzdem nach Wartezeit bei ihm aus. Der Eintrag traegt die Regel mit, die daraus folgt: Ein Auftrag, den sein Adressat nicht erreichen kann, ist ein Rueckstand beim Absender |

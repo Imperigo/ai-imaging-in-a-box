@@ -136,8 +136,16 @@ def test_der_ui_worker_ist_ueberhaupt_ein_bekannter_worker():
     assert auftrag.WORKER_UI in auftrag.WORKER
 
 
-def test_die_drei_worker_sind_verschieden():
-    assert len(set(auftrag.WORKER)) == 3
+def test_jeder_worker_hat_einen_eigenen_namen():
+    """**Seit dem 28.08.2026 sind es vier**, und der vierte ist kein Empfänger im selben
+    Sinn: `kern` ist diese Entwicklungssitzung selbst.
+
+    Der Anlass war eine Fehladressierung — die HomeStation wollte etwas von *uns* und
+    musste den Auftrag an `cloud` schicken, weil es für uns keine Adresse gab. *Drei
+    Empfänger und kein Absender: Die Vokabel kannte nur eine Richtung.*
+    """
+    assert len(set(auftrag.WORKER)) == len(auftrag.WORKER) == 4
+    assert auftrag.WORKER_KERN == "kern"
 
 
 def test_das_blatt_wird_vom_readme_erwaehnt():

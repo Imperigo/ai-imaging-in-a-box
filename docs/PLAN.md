@@ -4906,7 +4906,7 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 - [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
       Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
       die Zeile in gewöhnlichen Läufen schweigt.
-- [x] **Sammlung 4572 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+- [x] **Sammlung 4590 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
       und ist nachgeführt.
 - [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
       `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.
@@ -5112,6 +5112,60 @@ ersten Durchgang neun fremde Aufträge — und niemand hätte gesehen, dass es g
 *Selbst ausgelöst, eine Stunde vorher: Beim Prüfen der Kamera lief mein eigener
 `--alle`-Aufruf in genau diese Falle und schrieb ein Ergebnis für `auf-20260823-38`. Ich
 habe es zurückgenommen — aber es war der Beweis, bevor die Meldung kam.*
+
+---
+
+## Der Auftragsordner zählte nicht, was er behauptete (28.08.2026)
+
+**Gemessen von der HomeStation** (`auf-20260828-64`): 63 Aufträge in `offen/`, 44
+Ergebnisse, **40 Paare**, und **0 von 63** mit einem Zustandsfeld. *Der Anteil war
+gesunken, die Zahl nicht: gestern 40 von 50, heute 40 von 63 — exakt dieselbe 40.
+Aufgeräumt wurde nichts, es kamen 13 dazu.*
+
+**Owner-Entscheid 28.08.2026: der Zustand wird abgeleitet, mit fünf Werten.**
+
+- [x] **`auftrag.zustand()`** — kein Ergebnis = *offen*, `ok` = *beantwortet*,
+      Fehler/Ablehnung = *gerechnet, nicht beantwortet*, Weiterleitungsvermerk =
+      *weitergereicht*, Rücknahme = *zurückgezogen*. **`art` wird vor `status` gelesen:**
+      Ein Weiterleitungsvermerk trägt `status: ok` und ist trotzdem keine Antwort.
+- [x] **Die Zählung sagt jetzt die Wahrheit: 34 unbeantwortet statt 26.** Acht Aufträge
+      galten als erledigt und waren es nicht. *Ein Ergebnis zu haben heisst nicht,
+      beantwortet zu sein.*
+- [x] **Ein Test, der die alte Regel festhielt, ist umgeschrieben** — er schrieb
+      `status: fehler` und erwartete, dass der Rückstand auf null fällt. Sein Docstring
+      trug die falsche Regel wörtlich.
+
+**Owner-Entscheid 28.08.2026: eine vierte Adresse.**
+
+- [x] **`WORKER_KERN = "kern"`** — diese Entwicklungssitzung selbst. Anlass: Die
+      HomeStation wollte etwas von *uns* und musste den Auftrag an `cloud` schicken, weil
+      es für uns keine Adresse gab; `auftragspost` hätte ihn folgerichtig in das fremde
+      Repo gelegt. *Drei Empfänger und kein Absender: Die Vokabel kannte nur eine
+      Richtung.* `auf-64` ist umadressiert.
+
+**Und was daran mein eigener Anteil war**
+
+- [x] **Acht meiner Aufträge waren gar nicht ausführbar** — ich hatte `params` als
+      Notizfeld missbraucht (`befund`, `anlass`, `kernfragen`, `nicht_messen`). Der Runner
+      hätte sofort `status: fehler` zurückgegeben, ohne eine einzige bestellte Zahl. *Die
+      Angaben sind nicht gelöscht, sondern in die Anweisung verschoben — dorthin, wo sie
+      immer hingehörten.*
+      *Beim ersten Anlauf habe ich 36 Dateien angefasst statt 8, darunter längst
+      beantwortete. Zurückgenommen: Ein grosser Diff über erledigte Aufträge ist kein
+      Aufräumen, sondern Rauschen.*
+- [x] **`auf-54` trug einen Platzhaltertext als Geometriepfad** und wäre nie gelaufen. Er
+      steht jetzt auf synthetischer Geometrie, mit der Bitte, das eigene Modell zu nehmen,
+      wenn es da ist. *Ein Pfad, den nur sie kennen, kann in einem öffentlichen Repo nicht
+      stehen — ein Platzhalter dafür ist keine Lösung, sondern ein Auftrag, der nie läuft.*
+- [x] **Kein einziger unausführbarer Auftrag mehr.**
+- [x] **Die Vertragsprüfung läuft jetzt auch auf dem Leseweg** (ihr V4) — gemeldet als
+      `maengel`, nicht geworfen. *Eine Prüfung, die den ganzen Ordner unlesbar macht, wird
+      abgeschaltet.* Ihr `auf-63` wäre so am Abend seiner Entstehung aufgefallen statt
+      nach zwei Tagen.
+
+- [ ] **V2 (Ordner umbenennen) und V5 (die vier Waisen) sind nicht gemacht** — V2 hat der
+      Owner gegen den Koordinationspreis über drei Worker abgewogen, V5 gehört zur
+      Aufräumrunde, die die HomeStation selbst führt.
 
 ---
 
