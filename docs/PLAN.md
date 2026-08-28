@@ -4906,7 +4906,7 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 - [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
       Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
       die Zeile in gewöhnlichen Läufen schweigt.
-- [x] **Sammlung 4590 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+- [x] **Sammlung 4592 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
       und ist nachgeführt.
 - [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
       `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.
@@ -5162,6 +5162,22 @@ Aufgeräumt wurde nichts, es kamen 13 dazu.*
       `maengel`, nicht geworfen. *Eine Prüfung, die den ganzen Ordner unlesbar macht, wird
       abgeschaltet.* Ihr `auf-63` wäre so am Abend seiner Entstehung aufgefallen statt
       nach zwei Tagen.
+
+### Und derselbe Fehler eine Ebene tiefer
+
+- [x] **`einbau.beantwortete_auftraege` zählte die DATEI und nicht ihren Inhalt** — genau
+      der Fehler, gegen den sie gebaut wurde. Aufgefallen erst durch den abgeleiteten
+      Zustand: `auf-20260822-31` trägt `status: ok` und
+      `art: weitergereicht_und_teilbeantwortet`.
+- [x] **Zwei erledigte Posten beriefen sich darauf** — B4 und C1, beide «belegt am Gerät».
+      *Eine Datei im Ergebnisordner belegt, dass jemand geantwortet HAT — nicht, dass er
+      die Frage beantwortet hat.*
+- [x] **Der Beleg existierte, er war nur falsch zitiert:** Die HomeStation hat den Weg am
+      27.08. mit der Uhr belegt — 18:53:40 Ablage leer → 18:53:42 `queued` → 18:54:11
+      `gesehen: 1`. Beide Posten nennen jetzt diese Messung. **Keiner musste
+      zurückgestuft werden.**
+- [x] **Zwei Aufträge sind dadurch wieder offen** (`auf-31`, `auf-37`) und seit heute beim
+      Adressaten — sie galten drei bzw. fünf Tage als beantwortet und waren es nie.
 
 - [ ] **V2 (Ordner umbenennen) und V5 (die vier Waisen) sind nicht gemacht** — V2 hat der
       Owner gegen den Koordinationspreis über drei Worker abgewogen, V5 gehört zur

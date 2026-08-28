@@ -212,17 +212,25 @@ def ohne_adressat(blatt) -> list[dict]:
 
 
 def beantwortete_auftraege(repo_wurzel) -> set[str]:
-    """Welche Aufträge eine Antwort haben — die Kennungen aus ``auftraege/ergebnisse``.
+    """Welche Aufträge **wirklich beantwortet** sind — nach dem abgeleiteten Zustand.
 
     **Gezählt wird die Antwort, nicht der Auftrag.** Eine Auftragsdatei belegt, dass
     jemand etwas verlangt hat; erst die Ergebnisdatei belegt, dass drüben jemand
     hingesehen hat.
+
+    **Und bis zum 28.08.2026 zählte diese Funktion die DATEI und nicht ihren Inhalt** —
+    derselbe Fehler eine Ebene tiefer als der, gegen den sie gebaut wurde. Aufgefallen ist
+    er, als der abgeleitete Zustand dazukam: ``auf-20260822-31`` trägt ``status: ok`` und
+    ``art: weitergereicht_und_teilbeantwortet``. Es galt als Antwort und war ein
+    Weiterleitungsvermerk — und **zwei erledigte Posten des Einbau-Stands beriefen sich
+    darauf**.
+
+    *Eine Datei im Ergebnisordner belegt, dass jemand geantwortet HAT — nicht, dass er die
+    Frage beantwortet hat.*
     """
-    ordner = Path(repo_wurzel) / "auftraege" / "ergebnisse"
-    if not ordner.is_dir():
-        return set()
-    return {treffer.group(0) for datei in ordner.iterdir()
-            for treffer in [AUFTRAGSKENNUNG.search(datei.name)] if treffer}
+    return {kennung for kennung, zustand
+            in _auftrag.zustaende(Path(repo_wurzel)).items()
+            if zustand == _auftrag.ZUSTAND_BEANTWORTET}
 
 
 def ohne_geraetebeweis(blatt, repo_wurzel) -> list[dict]:

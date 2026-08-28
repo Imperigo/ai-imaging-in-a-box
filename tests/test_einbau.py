@@ -265,8 +265,9 @@ def test_belegt_am_geraet_braucht_einen_BEANTWORTETEN_auftrag(tmp_path):
     maengel = einbau.ohne_geraetebeweis(blatt, tmp_path)
     assert [m["mangel"] for m in maengel] == ["gerät ohne antwort"]
 
-    (tmp_path / "auftraege" / "ergebnisse").mkdir(parents=True)
-    (tmp_path / "auftraege" / "ergebnisse" / "auf-20260822-31.json").write_text("{}")
+    _lege_ab(tmp_path, "auf-20260822-31", auf.WORKER_LOCAL, "2026-08-22T10:00:00Z")
+    auf.schreibe_ergebnis(
+        auf.baue_ergebnis(auftrag_id="auf-20260822-31", status="ok"), tmp_path)
     assert einbau.ohne_geraetebeweis(blatt, tmp_path) == []
 
 
@@ -297,12 +298,11 @@ def test_offene_posten_muessen_gar_nichts_belegen(tmp_path):
 
 
 def test_beantwortete_auftraege_zaehlt_die_antwort_und_nicht_den_auftrag(tmp_path):
-    (tmp_path / "auftraege" / "offen").mkdir(parents=True)
-    (tmp_path / "auftraege" / "offen" / "auf-20260827-99.json").write_text("{}")
+    _lege_ab(tmp_path, "auf-20260827-99", auf.WORKER_LOCAL, "2026-08-27T10:00:00Z")
     assert einbau.beantwortete_auftraege(tmp_path) == set()
 
-    (tmp_path / "auftraege" / "ergebnisse").mkdir(parents=True)
-    (tmp_path / "auftraege" / "ergebnisse" / "auf-20260827-99.json").write_text("{}")
+    auf.schreibe_ergebnis(
+        auf.baue_ergebnis(auftrag_id="auf-20260827-99", status="ok"), tmp_path)
     assert einbau.beantwortete_auftraege(tmp_path) == {"auf-20260827-99"}
 
 
@@ -320,3 +320,36 @@ def test_bereit_ist_falsch_sobald_ein_beleg_nicht_sagt_worauf_er_ruht(tmp_path):
     assert satz["bereit"] is False
     assert satz["ohne_adressat"] == [], "der Mangel liegt NICHT beim Adressaten"
     assert len(satz["ohne_geraetebeweis"]) == 1
+
+
+def test_ein_weiterleitungsvermerk_gilt_nicht_als_beantwortet(tmp_path):
+    """**Derselbe Fehler eine Ebene tiefer** (28.08.2026).
+
+    `beantwortete_auftraege` zählte die **Datei** und nicht ihren Inhalt — genau der
+    Fehler, gegen den sie gebaut wurde. Aufgefallen ist er, als der abgeleitete Zustand
+    dazukam: `auf-20260822-31` trägt `status: ok` und
+    `art: weitergereicht_und_teilbeantwortet`, galt als Antwort und war ein
+    Weiterleitungsvermerk — **und zwei erledigte Posten des Einbau-Stands beriefen sich
+    darauf.**
+
+    *Eine Datei im Ergebnisordner belegt, dass jemand geantwortet hat — nicht, dass er die
+    Frage beantwortet hat.*
+    """
+    _lege_ab(tmp_path, "auf-20260826-07", auf.WORKER_LOCAL, "2026-08-26T10:00:00Z")
+
+    satz = auf.baue_ergebnis(auftrag_id="auf-20260826-07", status="ok")
+    satz["art"] = "weitergereicht_und_teilbeantwortet"
+    auf.schreibe_ergebnis(satz, tmp_path)
+    assert einbau.beantwortete_auftraege(tmp_path) == set(), (
+        "eine Ergebnisdatei allein ist keine Antwort")
+
+    auf.schreibe_ergebnis(
+        auf.baue_ergebnis(auftrag_id="auf-20260826-07", status="ok"), tmp_path)
+    assert einbau.beantwortete_auftraege(tmp_path) == {"auf-20260826-07"}
+
+
+def test_ein_gerechneter_aber_unbeantworteter_auftrag_belegt_nichts(tmp_path):
+    _lege_ab(tmp_path, "auf-20260826-08", auf.WORKER_LOCAL, "2026-08-26T10:00:00Z")
+    auf.schreibe_ergebnis(
+        auf.baue_ergebnis(auftrag_id="auf-20260826-08", status="fehler"), tmp_path)
+    assert einbau.beantwortete_auftraege(tmp_path) == set()
