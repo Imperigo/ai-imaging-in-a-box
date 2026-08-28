@@ -627,3 +627,62 @@ def test_kosmo_naht_haengt_nur_an_jobs_und_stdlib():
     for verboten in ("import bpy", "import ifcopenshell", "import requests",
                      "import torch", "urllib.request"):
         assert verboten not in text, f"{verboten} an der Naht gefunden"
+
+
+# ======================================================================================
+# Der Wächter gegen die verlorene Freigabe — er war selbst unbewacht
+# ======================================================================================
+
+def test_ein_status_der_freigabe_voraussetzt_ohne_token_wird_gemeldet():
+    """**Die Lage, für die `satz_ist_freigegeben_laut_status` gebaut wurde.**
+
+    `tools/tote_kanten.py` hat die Funktion am 28.08.2026 als *von keinem Einstiegspunkt
+    erreichbar und ungetestet* gemeldet. Der erste Teil stimmt und ist eine Eigenschaft
+    der ganzen Leserichtung; der zweite war der eigentliche Befund: **Der Zweig wird
+    gerufen, aber kein Test fuhr ihn.**
+
+    Und es ist ausgerechnet der Zweig gegen den Fehler, gegen den das Modul gebaut wurde:
+    *«Der Auftrag bliebe bei uns liegen, ohne dass jemand einen Fehler sieht.»*
+    """
+    unser = aus_kosmo_auftrag(_ihr_satz(job_id=KENNUNG, status="queued"))
+
+    assert unser["freigegeben"] is False, (
+        "aus einem Statuswort wird KEINE Befugnis erfunden")
+    assert any("setzt eine Freigabe voraus" in h for h in unser["hinweise"]), (
+        f"repariert wird durch Sagen, nicht durch Setzen: {unser['hinweise']}")
+
+
+@pytest.mark.parametrize("status", ["queued", "running", "done", "error"])
+def test_jeder_status_der_freigabe_voraussetzt_meldet_sich(status):
+    """Von der anderen Seite gezählt: **jeder** Eintrag aus `FREIGABE_VORAUSGESETZT`.
+
+    Eine Prüfung, die nur `queued` kennt, übersieht drei Vierteln der Liste — und sie
+    wüchse mit, ohne dass es auffiele.
+    """
+    unser = aus_kosmo_auftrag(_ihr_satz(job_id=KENNUNG, status=status))
+    assert any("setzt eine Freigabe voraus" in h for h in unser["hinweise"]), status
+
+
+def test_die_liste_der_status_ist_vollstaendig_abgedeckt():
+    """Von der anderen Seite: Die geprüften Namen sind **genau** die der Konstante.
+
+    Kommt ein Statuswert dazu, wird dieser Test rot, bevor der Zweig ihn stillschweigend
+    mitnimmt oder übergeht.
+    """
+    assert set(kosmo_naht.FREIGABE_VORAUSGESETZT) == {"queued", "running", "done", "error"}
+
+
+def test_ein_status_ohne_freigabe_erzeugt_keinen_laerm():
+    """Die Gegenprobe. `awaiting_approval` und `cancelled` setzen keine Freigabe voraus —
+    dort wäre die Meldung eine Dauerwarnung."""
+    for status in ("awaiting_approval", "cancelled"):
+        unser = aus_kosmo_auftrag(_ihr_satz(job_id=KENNUNG, status=status))
+        assert not any("setzt eine Freigabe voraus" in h for h in unser["hinweise"]), status
+
+
+def test_mit_gueltigem_token_schweigt_die_meldung_trotz_queued():
+    """Der Normalfall: Status **und** Token stimmen überein — dann ist nichts zu sagen."""
+    unser = aus_kosmo_auftrag(_ihr_satz(job_id=KENNUNG, status="queued",
+                                        approval_token=GUELTIG))
+    assert unser["freigegeben"] is True
+    assert not any("setzt eine Freigabe voraus" in h for h in unser["hinweise"])
