@@ -1004,6 +1004,12 @@ als Geometrie, und der Anteil der Übereinstimmung ist genau der Anteil der Szen
 *Warum das gefährlich ist:* **0,53 liest sich wie «zur Hälfte richtig» und heisst «die
 Szene ist gross».** *Wer eine Schwelle über einer Kennzahl setzt, ohne ihren Boden zu
 kennen, setzt sie über einer Zahl, deren untere Hälfte niemandem gehört.*
+*Die Abhilfe seit dem 28.08.2026 (Owner-Entscheid) ist nicht, die Zahl zu ändern, sondern
+sie zu **begleiten**:* `geom_iou_norm = (geom_iou − Vordergrundanteil) / (1 − Vordergrundanteil)`
+*steht daneben — 0 heisst «so gut wie ein gleichförmiges Bild», 1 heisst «deckungsgleich».
+Der Score selbst bleibt unangetastet, damit die Schwelle 0,65 und die Kalibrierung vom
+18.08. gültig bleiben. Negative Werte werden nicht abgeschnitten: «schlechter als nichts»
+und «so gut wie nichts» sind zwei verschiedene Aussagen.*
 
 **Obergrenze (eines Befundes)** — Ein Messaufbau, der einer Sache absichtlich die
 **besten denkbaren** Bedingungen gibt, um zu klären, ob sie unter *irgendwelchen*

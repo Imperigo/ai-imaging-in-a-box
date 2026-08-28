@@ -4906,7 +4906,7 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 - [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
       Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
       die Zeile in gewöhnlichen Läufen schweigt.
-- [x] **Sammlung 4494 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+- [x] **Sammlung 4510 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
       und ist nachgeführt.
 - [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
       `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.
@@ -4962,10 +4962,16 @@ Karten (`docs/GEOM_IOU_BODEN_UND_DECKE_2026-08-27.md`).
       nicht** — 0,9381 gegen 0,9384, drei Zehntausendstel, falsch herum. Von vier Massen
       trennt genau **eines** sauber, und es ist nicht das, auf dem das Tor heute steht.
 
-- [ ] **Was das für den Entscheid heisst, gehört dem Owner** — aber die Vorlage ist jetzt
-      vollständig: `docs/BRAUCHT_ES_GEOM_IOU_2026-08-26.md`, Nachtrag vom 27.08. Drei der
-      vier Wege tragen eine gemessene Zahl; nur Weg 1 (Hintergrundtrennung ausserhalb) ist
-      hier nicht messbar.
+- [x] **Owner-Entscheid 28.08.2026: der normierte Wert wird zusätzlich ausgewiesen.**
+      `geom_iou_norm = (geom_iou − Vordergrundanteil) / (1 − Vordergrundanteil)`, in
+      `geometrie_qa`, `tiefenschaetzer.qa_gegen_soll` und im Kurzbefund. **Der Score bleibt
+      unangetastet** — 0,65 behält seine Bedeutung, die Schwellenstudie vom 18.08. ihre
+      Gültigkeit. *Die Absicherung des Tors trägt weiterhin Weg 4, nicht diese Zahl.*
+      Vier Mutationsproben, jede vom richtigen Test gefangen.
+- [ ] **Weg 1 und Weg 2 bleiben offen** und sind es bewusst: Weg 1
+      (Hintergrundtrennung ausserhalb) ist hier nicht messbar, Weg 2 (im Score normieren)
+      wurde gegen den Preis abgewogen, dass 0,65 danach nicht mehr dasselbe bedeutet —
+      mitten in der Vertiefungsarbeit. Vorlage: `docs/BRAUCHT_ES_GEOM_IOU_2026-08-26.md`.
 - [ ] **Gegenprobe mit dem wirklichen Schätzer** — `auf-20260826-60` und
       `auf-20260827-61`. Alles hier ist eine **Obergrenze**: Was mit perfekten Karten
       scheitert, scheitert mit einem Schätzer erst recht; was gelingt, ist noch nicht
