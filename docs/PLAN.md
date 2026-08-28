@@ -4906,7 +4906,7 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 - [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
       Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
       die Zeile in gewöhnlichen Läufen schweigt.
-- [x] **Sammlung 4533 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+- [x] **Sammlung 4550 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
       und ist nachgeführt.
 - [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
       `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.
@@ -5003,6 +5003,32 @@ demolauf macht ist die kamera vom endbild … nicht auf augenhöhe mensch … wi
       steht, geht beim nächsten Entscheid wieder auseinander.*
 - [x] **Angesagt, bevor sie ankommt** — `auf-20260828-65`. Hausregel für Weg C.
 
+### Die grössere Ursache lag daneben — und der Owner hat sie benannt
+
+*«endprodukt und ziel ist das der demolauf beim local worker einfach ca. 1.70m augenhöhe
+bild macht vom gebäude»* (28.08.2026).
+
+- [x] **Der Homeworker forderte gar keine Kamera an.** `glb_zu_tiefenkarte` wurde nur mit
+      Auflösung und Samples gerufen — und **ohne angeforderte Richtung stellt der Runner
+      seine Notkamera**: Blenders eigene 50-mm-Optik an einem beliebigen Ort. Der Bericht
+      sagte es sogar (`kamera.weg: "rueckfall"`); gelesen hat es niemand. *Ein Rückfall,
+      der sich meldet, ist besser als einer, der schweigt — aber gemeldet zu werden
+      ersetzt nicht, richtig zu sein.*
+- [x] **Gemessen an einem echten Homeworker-Lauf**, nach der Änderung: `weg: abgeleitet`,
+      `sSE`, 35 mm, Auge auf 1,45 m bei Gelände −0,25 m — also **1,70 m über Grund** —,
+      und Auge und Blickziel auf **derselben Höhe**.
+- [x] **Die Vorgabe `sSE` ist gemessen, nicht gewählt:** Über acht Richtungen derselben
+      Szene fallen auf den vier frontalen Richtungen **5 von 20** guten Fällen unter
+      `PAAR_RHO_SCHWELLE`, auf den vier diagonalen **keiner**.
+- [x] **Kameraangaben sind aus dem Auftrag steuerbar** — `kamera`, `augenhoehe`,
+      `gelaende_z`, `kamera_modus`, `kamera_huellbox`, `brennweite`, `deckungsgrad`,
+      `bias_grad`, `shift_y`. Was nicht dasteht, wird **nicht** übergeben: ein
+      durchgereichtes `None` überschriebe die gerechnete Vorgabe mit nichts.
+- [x] **`gelaende_erwartet` stand nicht in `_GENUTZTE_PARAMS`**, obwohl der Pfad es
+      verbraucht — beim Durchsehen aufgefallen und nachgetragen. *Ein Auftrag, der es
+      setzt, hätte die Meldung «unverstandener Parameter» bekommen, und sie wäre falsch
+      gewesen.*
+
 ### Und ein Befund, den die Umstellung sofort erzeugt hat
 
 Ein eigener Test wurde rot, **und er hatte recht.** Dieselbe Szene, dieselbe Kamera `n`
@@ -5026,10 +5052,22 @@ der Verdachtsfall.
       Sie prüft jetzt, was sie immer prüfen sollte: ob mehr als **eine** Tiefenebene im
       Bild steht. *Nicht gesenkt, um grün zu werden — umgeschrieben, mit beiden Zahlen im
       Docstring.*
-- [ ] **Ob frontale Richtungen systematisch schlechter messbar sind, ist offen** und geht
-      an die HomeStation (`auf-20260828-65`, V6/V7). *Falls ja, ist das kein Grund zur
-      gekippten Kamera zurückzugehen — die Norm bleibt die Norm. Es wäre ein Grund, das
-      Urteil bei frontalen Richtungen mit einem Vorbehalt zu versehen.*
+- [x] **Der frontale Verdacht ist gemessen — und meine Hypothese ist widerlegt.** Acht
+      Richtungen einer Szene, dieselben elf Fälle: **ρ trennt auf jeder**, mit Lücken von
+      0,515 bis 0,822. Es gibt keinen frontalen Zusammenbruch.
+      *Die Richtung `s` sieht die Fassade mit einer Tiefenspanne von **0,42 m** — und
+      liefert trotzdem die besten guten Werte der frontalen Gruppe (0,880 bis 0,999). Das
+      ist der Beleg dafür, dass rangbasiert die richtige Wahl war: Eine Spanne von 0,42 m
+      trägt so viel Rangordnung wie eine von 11 m.*
+      *Die Zahl «verschiedene Tiefenwerte» aus dem Test ist damit ein Artefakt der
+      16-Bit-Normalisierung und sagt über die Messbarkeit nichts: `s` hat 241 davon über
+      0,42 m.*
+- [ ] **Was stattdessen dasteht, ist schärfer und geht in die Kalibrierung:** Die **guten**
+      Fälle liegen auf frontalen Richtungen systematisch tiefer (0,66–0,92) als auf
+      diagonalen (0,93–0,99). Bei `PAAR_RHO_SCHWELLE = 0.80` fallen **5 von 20** guten
+      frontalen Fällen durch und **0 von 20** diagonalen. *Die Schwelle ist
+      richtungsabhängig — und `auf-20260827-61` muss die Richtung darum je Fall
+      mitführen.*
 
 ### Nebenbei: die letzte tote Kante ist zu
 
