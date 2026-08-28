@@ -1362,3 +1362,76 @@ def test_der_eigene_worker_heisst_local():
     """Er steht in `auftrag.WORKER` — sonst liefe der Filter gegen einen erfundenen Namen
     und liesse alles liegen."""
     assert hw.EIGENER_WORKER in hw.auf.WORKER
+
+
+# ======================================================================================
+# Zwei Angaben, die gelesen und nie verwendet wurden (auf-20260828-66, 28.08.2026)
+# ======================================================================================
+
+@pytest.mark.parametrize("befehl,erwartet", [
+    ("python3 tools/make_test_ifc.py build/testbau.ifc --hochbau", ["--hochbau"]),
+    ("python3 tools/make_test_ifc.py build/g.ifc --gelaende --gelaende-vielfaches=4",
+     ["--gelaende", "--gelaende-vielfaches=4"]),
+    ("python3 tools/make_test_ifc.py build/t.ifc", []),
+    (None, []),
+])
+def test_die_schalter_aus_erzeugen_mit_werden_gelesen(befehl, erwartet):
+    """**F1 vom Gerät:** Der Aufruf ging bis zum 28.08.2026 **ohne Argument** hinaus.
+
+    `--hochbau` ist kein Schönheitsflag — es tauscht den Quader gegen Stützenraster und
+    Kern. Wer `auf-20260828-65` durch den Homeworker fuhr, **mass ein anderes Gebäude als
+    das bestellte.**
+
+    *Das ist die teure Variante: Der Lauf bricht nicht ab. Er antwortet, nur auf eine
+    andere Frage.*
+    """
+    assert hw._schalter_aus(befehl) == erwartet
+
+
+def test_ein_unbekannter_schalter_wird_weggelassen():
+    """**Eine Positivliste und keine Durchreiche.** Der Auftrag ist ein Text aus einem
+    Repo; ihn ungeprüft an eine Kommandozeile zu geben hiesse, jedem Schreiber dieses
+    Ordners einen Prozessaufruf zu schenken."""
+    assert hw._schalter_aus("make_test_ifc.py x.ifc --rm --hochbau") == ["--hochbau"]
+    assert hw._schalter_aus("make_test_ifc.py x.ifc --erfunden") == []
+
+
+def test_der_zielpfad_wird_nie_uebernommen():
+    """Wohin gebaut wird, entscheidet der Homeworker. Ein Auftrag, der den Zielpfad setzt,
+    schriebe in ein fremdes Verzeichnis."""
+    assert hw._schalter_aus("make_test_ifc.py /woanders/hin.ifc --hochbau") == ["--hochbau"]
+
+
+def test_der_multipass_bericht_traegt_wo_die_kamera_steht(blender_naht, ifc, aus,
+                                                          tmp_path):
+    """**F2 vom Gerät:** `bbox`, `bbox_bauwerk` und `kamera` fehlten in `messwerte`.
+
+    `bbox_size_m` ist die **Kantenlänge** — sie sagt, wie gross die Hüllbox ist, nicht wo
+    sie liegt. Genau das Wo ist die Frage aus `auf-20260828-65` (V0), und sie war aus dem
+    Ergebnis nicht zu beantworten.
+    """
+    ergebnis = hw.fuehre_aus(_multipass_satz("multipass", ifc, aus), tmp_path)
+    for feld in ("bbox", "bbox_bauwerk", "kamera"):
+        assert feld in ergebnis["messwerte"], feld
+
+
+def test_eine_unbekannte_art_laeuft_nicht_still_als_multipass(blender_naht, ifc, aus,
+                                                              tmp_path):
+    """**Die zweite Hälfte von V1** (`auf-20260828-64`): `grep -c ARTEN` traf **null**.
+
+    `pruefe_auftrag` kennt die Menge, läuft aber nur beim **Schreiben** — und keine
+    Auftragsdatei dieses Repos ist je über `baue_auftrag` hereingekommen. Die Prüfung
+    existierte und stand nicht im Weg. Ihr eigenes `auf-63` trug `art: "vertrag"`.
+    """
+    satz = _multipass_satz("vertrag", ifc, aus)
+    ergebnis = hw.fuehre_aus(satz, tmp_path)
+
+    assert ergebnis["status"] == "fehler"
+    assert ergebnis["urteil"] == {"auftrag": "unbekannte art"}
+    assert "vertrag" in ergebnis["fehler"]
+
+
+@pytest.mark.parametrize("art", ["multipass", "qa"])
+def test_die_bekannten_arten_laufen_weiter(blender_naht, ifc, aus, tmp_path, art):
+    """Die Gegenprobe — sonst hätte die Prüfung alles gesperrt."""
+    assert hw.fuehre_aus(_multipass_satz(art, ifc, aus), tmp_path)["status"] == "ok"

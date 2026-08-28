@@ -141,6 +141,37 @@ def darf_starten(zustand: dict, auflagen: dict) -> tuple[bool, str]:
 
 # ── Ausführung ───────────────────────────────────────────────────────────────────────
 
+#: Welche Schalter aus ``geometrie.erzeugen_mit`` uebernommen werden.
+#:
+#: **Eine Positivliste und keine Durchreiche.** Der Auftrag ist ein Text aus einem Repo;
+#: ihn ungeprueft an eine Kommandozeile zu geben hiesse, jedem Schreiber dieses Ordners
+#: einen Prozessaufruf zu schenken. Was hier nicht steht, wird weggelassen **und
+#: gemeldet** — stillschweigend zu ignorieren waere genau der Fehler, der F1 verursacht
+#: hat.
+ERLAUBTE_GEOMETRIESCHALTER = ("--gelaende", "--raeume", "--hochbau",
+                              "--gelaende-vielfaches=")
+
+
+def _schalter_aus(erzeugen_mit) -> list[str]:
+    """Die Schalter aus ``erzeugen_mit`` — nur die bekannten, und das Ziel nie.
+
+    ``python3 tools/make_test_ifc.py build/testbau.ifc --hochbau`` → ``["--hochbau"]``
+
+    **Der Dateiname wird ausdruecklich NICHT uebernommen:** Wohin gebaut wird, entscheidet
+    der Homeworker, nicht der Auftrag. Ein Auftrag, der den Zielpfad setzt, schriebe in ein
+    fremdes Verzeichnis.
+    """
+    aus: list[str] = []
+    for wort in str(erzeugen_mit or "").split():
+        if not wort.startswith("--"):
+            continue
+        if wort in ERLAUBTE_GEOMETRIESCHALTER:
+            aus.append(wort)
+        elif any(wort.startswith(v) for v in ERLAUBTE_GEOMETRIESCHALTER if v.endswith("=")):
+            aus.append(wort)
+    return aus
+
+
 def _geometrie_bereitstellen(satz: dict, repo: Path) -> str:
     """Die Geometrie besorgen — erzeugen oder auf den Pfad verweisen.
 
@@ -149,7 +180,19 @@ def _geometrie_bereitstellen(satz: dict, repo: Path) -> str:
     geom = satz["geometrie"]
     if geom.get("synthetisch"):
         ziel = repo / "build" / "testbau.ifc"
-        subprocess.run([sys.executable, str(repo / "tools" / "make_test_ifc.py"), str(ziel)],
+        # DIE SCHALTER AUS `erzeugen_mit` WERDEN JETZT GESTELLT — Befund vom Geraet
+        # (`auf-20260828-66`, F1, 28.08.2026): Der Aufruf ging bis heute OHNE Argument
+        # hinaus. `erzeugen_mit` wurde gelesen und landete in keiner Variablen.
+        #
+        # `--hochbau` ist kein Schoenheitsflag: Es tauscht den Quader gegen Stuetzenraster
+        # und Kern. Wer `auf-20260828-65` durch den Homeworker faehrt, MASS EIN ANDERES
+        # GEBAEUDE ALS DAS BESTELLTE — gruen und am Thema vorbei. Dasselbe fuer
+        # `--gelaende` und `--raeume`.
+        #
+        # *Das ist die teure Variante: Der Lauf bricht nicht ab. Er antwortet, nur auf
+        # eine andere Frage.*
+        subprocess.run([sys.executable, str(repo / "tools" / "make_test_ifc.py"),
+                        str(ziel), *_schalter_aus(geom.get("erzeugen_mit"))],
                        check=True, capture_output=True, text=True)
         return str(ziel)
     pfad = geom.get("pfad")
@@ -258,6 +301,25 @@ def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=No
     art = satz["art"]
     params = satz.get("params") or {}
 
+    # EINE ART, DIE ES NICHT GIBT, WIRD NICHT STILL ALS MULTIPASS GEFAHREN.
+    #
+    # Befund vom Geraet (`auf-20260828-64`, V1, zweite Haelfte; `auf-20260828-66`,
+    # Abschnitt 2): `grep -c ARTEN tools/homeworker.py -> 0`. `pruefe_auftrag` kennt die
+    # Menge, laeuft aber nur beim SCHREIBEN — und keine Auftragsdatei dieses Repos ist je
+    # ueber `baue_auftrag` hereingekommen. Die Pruefung existierte und stand nicht im Weg.
+    #
+    # Ihr eigenes `auf-63` trug `art: "vertrag"` und waere hier still als Multipass
+    # gelaufen: gruen, leer, und die Vertragsfrage geschlossen.
+    if art not in auf.ARTEN:
+        return auf.baue_ergebnis(
+            auftrag_id=satz["auftrag_id"], status="fehler",
+            urteil={"auftrag": "unbekannte art"},
+            fehler=(f"art={art!r} steht nicht in ARTEN ({', '.join(sorted(auf.ARTEN))}). "
+                    f"Ohne diese Pruefung liefe der Auftrag still im Multipass-Zweig und "
+                    f"kaeme als 'status: ok, urteil: {{multipass: ok}}' zurueck — gruen, "
+                    f"leer, und die Frage waere geschlossen."),
+            dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
+
     unverstanden = _unverstandene_params(art, params)
     if unverstanden:
         return auf.baue_ergebnis(
@@ -309,6 +371,13 @@ def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=No
         "depth_exr_format": blender_bericht.get("depth_exr_format"),
         "depth_normalisierung": blender_bericht.get("depth_normalisierung"),
         "depth_png_fehler": blender_bericht.get("depth_png_fehler"),
+        # WO DIE KAMERA STEHT UND WO DIE HUELLBOX LIEGT — Befund vom Geraet
+        # (`auf-20260828-66`, F2): Beides fehlte. `bbox_size_m` ist die KANTENLAENGE; sie
+        # sagt, wie gross die Huellbox ist, nicht wo sie liegt. Genau das Wo ist die Frage
+        # aus `auf-20260828-65` (V0), und sie war aus dem Ergebnis nicht zu beantworten.
+        "bbox": blender_bericht.get("bbox"),
+        "bbox_bauwerk": blender_bericht.get("bbox_bauwerk"),
+        "kamera": _nur_dateinamen(blender_bericht.get("kamera")),
         "dateien": [Path(p).name for p in aus.glob("*") if p.is_file()],
     }
 
