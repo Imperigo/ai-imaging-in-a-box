@@ -1011,6 +1011,22 @@ Der Score selbst bleibt unangetastet, damit die Schwelle 0,65 und die Kalibrieru
 18.08. gültig bleiben. Negative Werte werden nicht abgeschnitten: «schlechter als nichts»
 und «so gut wie nichts» sind zwei verschiedene Aussagen.*
 
+**Doppelte Vorgabe** — Derselbe Voreinstellungswert, an zwei Stellen geschrieben. Solange
+beide gleich sind, fällt es nicht auf; ändert jemand die eine, sieht die andere weiterhin
+schlüssig aus und ist trotzdem falsch. **Kein Test schlägt an, weil beide Stellen für sich
+in Ordnung sind.**
+*In diesem Projekt am 28.08.2026 fünf Tage lang wirksam: Der Owner hatte am 23.08.
+entschieden, dass die Kamera waagrecht steht statt gekippt — die Bibliothek wurde
+umgestellt, das ausführende Skript nicht. Dort stand seit dem 21.08. ein Rückfall auf den
+alten Wert, der an jenem Tag richtig war und durch einen Entscheid an anderer Stelle falsch
+wurde. Jeder Renderlauf seither kippte die Kamera, obwohl entschieden war, dass er es nicht
+tut.*
+*Aufgefallen ist es nicht einem Test, sondern dem Owner am fertigen Bild.* **Die Abhilfe
+ist nicht, beide Stellen gleichzusetzen, sondern die zweite zu streichen:** *Wo nur eine
+Stelle die Vorgabe trägt, kann nichts auseinanderlaufen. Der Wächter dazu prüft den
+Quelltext auf einen zweiten Rückfall — nicht das Verhalten, denn das Skript läuft nur
+innerhalb von Blender.*
+
 **Obergrenze (eines Befundes)** — Ein Messaufbau, der einer Sache absichtlich die
 **besten denkbaren** Bedingungen gibt, um zu klären, ob sie unter *irgendwelchen*
 Bedingungen taugt. Das Ergebnis ist einseitig belastbar: Was hier scheitert, ist erledigt;
@@ -3719,6 +3735,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-08-28 | Ergaenzt: **Doppelte Vorgabe**. Anlass: Ein Owner-Entscheid vom 23.08. (Kamera waagrecht statt gekippt) wurde in der Bibliothek umgesetzt, im ausfuehrenden Skript nicht — fuenf Tage lang kippte jeder Lauf. Kein Test schlug an, weil beide Stellen fuer sich schluessig aussahen; aufgefallen ist es dem Owner am fertigen Bild. Der Eintrag traegt die Abhilfe mit: nicht angleichen, sondern die zweite Stelle streichen |
 | 2026-08-27 | Ergaenzt: **Boden einer Kennzahl**. Exakt bestimmt: Ein gleichfoermiges Bild bekommt bei geom_iou genau den Vordergrundanteil der Szene — auf drei Szenen auf volle Rechengenauigkeit gleich, also Arithmetik und kein Messwert. Der Eintrag traegt mit, warum das gefaehrlicher ist als eine ungenaue Zahl: 0,53 liest sich wie «zur Haelfte richtig» und heisst «die Szene ist gross» |
 | 2026-08-27 | Ergaenzt: **Zustellweg (eines Auftrags)**. Anlass: Der Cloud-Worker hat unser Repo nicht, und vier Auftraege lagen deshalb an einem Ort, den ihr Adressat nicht oeffnen kann — gezaehlt wurden sie die ganze Zeit korrekt und sahen trotzdem nach Wartezeit bei ihm aus. Der Eintrag traegt die Regel mit, die daraus folgt: Ein Auftrag, den sein Adressat nicht erreichen kann, ist ein Rueckstand beim Absender |
 | 2026-08-27 | Ergaenzt: **Beleg im Repo vs. Beleg am Geraet**. Anlass ist der teuerste Buchfuehrungsfehler des Projekts: Ein Posten stand sechs Tage als erledigt, waehrend auf dem Geraet eine sechs Tage aeltere Fassung lief — der Waechter prueft, ob ein Beleg EXISTIERT, und der existierte. Der Eintrag traegt mit, was ein Waechter hier ueberhaupt erzwingen kann: nicht die Wahrheit ueber ein fremdes Geraet, sondern die Angabe, welcher Art der Beleg ist |

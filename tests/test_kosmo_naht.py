@@ -633,6 +633,21 @@ def test_kosmo_naht_haengt_nur_an_jobs_und_stdlib():
 # Der Wächter gegen die verlorene Freigabe — er war selbst unbewacht
 # ======================================================================================
 
+def test_satz_ist_freigegeben_laut_status_beantwortet_genau_die_liste():
+    """Die Funktion **beim Namen genannt** — und das ist kein Formalismus.
+
+    `tools/tote_kanten.py` loest ueber den blossen Namen auf und meldete sie als
+    *ungetestet*, obwohl die Tests darunter sie ueber `aus_kosmo_auftrag` sehr wohl
+    fahren. Die Meldung war trotzdem richtig: **Eine Funktion mit eigener Zusage verdient
+    eine eigene Pruefung**, sonst haengt ihr Vertrag daran, dass ein Aufrufer ihn zufaellig
+    mitprueft.
+    """
+    for status in kosmo_naht.FREIGABE_VORAUSGESETZT:
+        assert kosmo_naht.satz_ist_freigegeben_laut_status(status) is True, status
+    for status in ("awaiting_approval", "cancelled", None, "", "erfunden"):
+        assert kosmo_naht.satz_ist_freigegeben_laut_status(status) is False, status
+
+
 def test_ein_status_der_freigabe_voraussetzt_ohne_token_wird_gemeldet():
     """**Die Lage, für die `satz_ist_freigegeben_laut_status` gebaut wurde.**
 

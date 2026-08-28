@@ -824,12 +824,41 @@ def test_die_kamera_sieht_das_bauwerk_wirklich(lauf_mit_kamera):
     **Das ist keine Fehlfunktion, sondern die untere Grenze eines Verfahrens, das auf
     Gebäudemasse ausgelegt ist** — und `kamerasatz` sagt es als Warnung, statt es
     stillschweigend zu liefern (siehe der Test darunter).
+
+    **Die zweite Schranke stand bis zum 28.08.2026 auf 20 und war abgeschrieben.** Sie
+    stammte aus der Zeit der gekippten Kamera. Gemessen an derselben Szene, derselben
+    Kamera `n`, nur der Modus getauscht:
+
+    ==========  =====================  ==========  ==========
+    Modus       verschiedene Tiefen    Blickziel   shift_y
+    ==========  =====================  ==========  ==========
+    gekippt     **341**                1,00 m      0,0000
+    shift       **18**                 1,70 m      −0,0486
+    ==========  =====================  ==========  ==========
+
+    **Der Unterschied ist Physik und kein Fehler.** Die gekippte Kamera schaut nach unten
+    und sieht die *Oberseiten* der Körper, die in die Tiefe fliehen; die waagrechte sieht
+    zwei Frontflächen, und eine Frontfläche im rechten Winkel hat eine Tiefe. Der Owner
+    hat am 23.08.2026 die Norm gewählt, nicht die grössere Zahl — und
+    ``docs/recherche/KOMPOSITION_AUSSEN.md`` sagt dazu, dass der Shift der Bildqualität
+    nach heutigem Stand *nichts* bringt.
+
+    **Was der Test seither prüft, ist darum das, was er immer prüfen sollte:** ob
+    überhaupt mehr als eine Tiefenebene im Bild steht. Eine Kamera, die durch eine Wand
+    nach draussen schaut, liefert **eine**. Die alte 20 hätte hier eine Eigenschaft der
+    Kamerahaltung geprüft und sie für eine Eigenschaft der Szene gehalten.
+
+    *Dass die frontale Ansicht mit waagrechter Kamera wenig Tiefensignal trägt, ist
+    trotzdem ein Befund und keine Fussnote — er steht in ``auf-20260828-65`` und geht an
+    die HomeStation, weil unsere ganze Geometrie-Metrik auf Tiefenrängen ruht.*
     """
     bild = Png(Path(lauf_mit_kamera["depth_png"]))
     geometrie = [w for w in bild.werte if w > 0]
     anteil = len(geometrie) / len(bild.werte)
     assert anteil > 0.01, f"nur {anteil:.1%} des Bildes tragen Tiefe"
-    assert len(set(geometrie)) > 20, "die Tiefe ist flach — sieht die Kamera eine Wand?"
+    assert len(set(geometrie)) > 2, (
+        "die Tiefe ist flach — sieht die Kamera eine Wand? Eine einzige Tiefenebene "
+        "heisst: die Kamera steht davor und sieht nichts dahinter.")
 
 
 @ohne_blender

@@ -4906,7 +4906,7 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 - [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
       Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
       die Zeile in gewöhnlichen Läufen schweigt.
-- [x] **Sammlung 4510 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+- [x] **Sammlung 4533 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
       und ist nachgeführt.
 - [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
       `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.
@@ -4976,6 +4976,69 @@ Karten (`docs/GEOM_IOU_BODEN_UND_DECKE_2026-08-27.md`).
       `auf-20260827-61`. Alles hier ist eine **Obergrenze**: Was mit perfekten Karten
       scheitert, scheitert mit einem Schätzer erst recht; was gelingt, ist noch nicht
       bestätigt.
+
+---
+
+## Die Kamera stand fünf Tage lang gekippt (28.08.2026)
+
+**Der Befund kommt vom Owner, am fertigen Bild:** *«wenn der local worker nun einen
+demolauf macht ist die kamera vom endbild … nicht auf augenhöhe mensch … wieso?»*
+
+- [x] **Ursache gefunden und gemessen.** Der Owner hatte am **23.08.** entschieden, dass
+      `MODUS_SHIFT` die Vorgabe ist — `auf-33` hatte es am Gerät in fünf Fällen bestätigt.
+      `kameras.kamerasatz` wurde umgestellt, **der Runner nicht.** Dort stand seit dem
+      21.08. ein `or kameras.MODUS_GEKIPPT`, das an jenem Tag richtig war und durch den
+      Entscheid an anderer Stelle falsch wurde.
+- [x] **Der Standort war richtig, die Blickrichtung nicht.** Gemessen am Hochbau: Auge auf
+      1,45 m, Blickziel auf **4,50 m** — die Kamera schaute steil nach oben, die
+      senkrechten Kanten liefen zusammen. Jetzt liegt das Blickziel auf Augenhöhe, und
+      `shift_y` übernimmt (0,0812 statt 0,0).
+- [x] **Eine Zwischenannahme berichtigt, bevor sie in einen Auftrag wanderte:** Die
+      Augenhöhe von 1,45 m sah zu tief aus. Nachgerechnet an `PLATTENDICKE = 0.25` — die
+      Bodenplatte reicht von −0,25 bis 0,0, das Gelände liegt bei −0,25, die Kamera steht
+      also **exakt** 1,70 m über dem Boden. *Es gab eine Ursache, nicht zwei.*
+- [x] **Der Wächter dagegen steht** (`tests/test_kameramodus_vorgabe.py`): Er prüft den
+      **Quelltext** des Runners auf einen eigenen Rückfall — das Skript läuft nur in
+      Blender, aber die Fehlerart ist im Text sichtbar. *Eine Vorgabe, die an zwei Stellen
+      steht, geht beim nächsten Entscheid wieder auseinander.*
+- [x] **Angesagt, bevor sie ankommt** — `auf-20260828-65`. Hausregel für Weg C.
+
+### Und ein Befund, den die Umstellung sofort erzeugt hat
+
+Ein eigener Test wurde rot, **und er hatte recht.** Dieselbe Szene, dieselbe Kamera `n`
+(frontal), nur der Modus getauscht:
+
+| Modus | verschiedene Tiefenwerte |
+|---|---:|
+| gekippt | **341** |
+| shift | **18** |
+
+Der Unterschied ist Physik: Die gekippte Kamera sieht die *Oberseiten*, die in die Tiefe
+fliehen; die waagrechte sieht zwei Frontflächen, und eine Frontfläche im rechten Winkel
+hat eine Tiefe.
+
+**Warum das mehr ist als eine Testschwelle:** Unsere ganze Geometrie-Metrik ruht auf
+**Tiefenrängen**. Wo wenig Tiefe im Bild steht, hat die Rangkorrelation wenig zu ordnen.
+Die zwölf Standardrichtungen sind überwiegend diagonal; die **frontalen** (n/e/s/w) sind
+der Verdachtsfall.
+
+- [x] Die Schranke im Test war **abgeschrieben** — 20, aus der Zeit der gekippten Kamera.
+      Sie prüft jetzt, was sie immer prüfen sollte: ob mehr als **eine** Tiefenebene im
+      Bild steht. *Nicht gesenkt, um grün zu werden — umgeschrieben, mit beiden Zahlen im
+      Docstring.*
+- [ ] **Ob frontale Richtungen systematisch schlechter messbar sind, ist offen** und geht
+      an die HomeStation (`auf-20260828-65`, V6/V7). *Falls ja, ist das kein Grund zur
+      gekippten Kamera zurückzugehen — die Norm bleibt die Norm. Es wäre ein Grund, das
+      Urteil bei frontalen Richtungen mit einem Vorbehalt zu versehen.*
+
+### Nebenbei: die letzte tote Kante ist zu
+
+`tools/tote_kanten.py` meldet zum ersten Mal **null** Stellen in der Kategorie *von keinem
+Einstiegspunkt erreichbar und ungetestet*. `kosmo_naht.satz_ist_freigegeben_laut_status`
+war der letzte Eintrag — und der Befund war ein anderer, als er aussah: **Die Funktion
+wird gerufen** (in der Leserichtung), aber der Zweig, den sie steuert, wurde von keinem
+Test gefahren. Ausgerechnet der Zweig gegen *«der Auftrag bliebe bei uns liegen, ohne dass
+jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
 
 ---
 
