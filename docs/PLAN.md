@@ -5242,6 +5242,20 @@ Argumentliste nach. Danach fällt die Mutation.
 
 ---
 
+## Ab Dienstag, 1. September 2026 gilt ein eigener Plan
+
+**→ [`docs/PLAN_AB_2026-09-01.md`](PLAN_AB_2026-09-01.md)** (beschlossen 28.08.2026)
+
+Zwei Wochen **Rückstand zuerst**: nichts Neues bauen, die 34 unbeantworteten Aufträge
+ehrlich machen, die Dokumente auf lesbare Grösse bringen. Owner-Entscheid: Tempo bleibt,
+Ziel ist beides — aber in dieser Reihenfolge.
+
+*Gemessen, warum:* 68 Aufträge gestellt gegen 37 beantwortet, und die Schere geht auf
+(26.08.: 14 zu 2; 27.08.: 8 zu 0). **Mehr Tempo verschlimmert das; der Engpass ist nicht
+das Bauen.** Dieses Blatt hier steht bei 5315 Zeilen und ist selbst ein Beleg dafür.
+
+---
+
 ## Stehende Regeln für jede Sitzung
 
 1. **Lexikon nachführen** — jeder neue Fachbegriff, in derselben Sitzung (`CLAUDE.md`).

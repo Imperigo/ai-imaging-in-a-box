@@ -117,6 +117,7 @@ eine, die nach Vollständigkeit aussieht.
 | | |
 |---|---|
 | [`docs/PLAN.md`](docs/PLAN.md) | Vorgehensplan, Phasen 0–4, **offene Wissensschulden** |
+| [`docs/PLAN_AB_2026-09-01.md`](docs/PLAN_AB_2026-09-01.md) | **Der Plan ab 1.9.2026: Rückstand zuerst** — zwei Wochen nichts Neues bauen |
 | [`docs/LAGEBEURTEILUNG_2026-08-14.md`](docs/LAGEBEURTEILUNG_2026-08-14.md) | Bestandsaufnahme der Bausteine mit Lizenzprüfung |
 | [`docs/LIZENZPRUEFUNG_2026-08-18.md`](docs/LIZENZPRUEFUNG_2026-08-18.md) | 38 Positionen gegen die Primärquelle |
 | [`docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md`](docs/LIZENZPRUEFUNG_BINAER_2026-08-18.md) | was Binärpakete mitbringen und ihre Wheel-Angabe verschweigt |
