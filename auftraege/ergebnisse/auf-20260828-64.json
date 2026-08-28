@@ -1,0 +1,24 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260828-64",
+  "status": "ok",
+  "beendet": "2026-08-28T11:10:55Z",
+  "dauer_s": null,
+  "messwerte": {
+    "empfaengerfilter": "gebaut",
+    "unausfuehrbare_auftraege_vorher": 9,
+    "unausfuehrbare_auftraege_nachher": 0,
+    "unbeantwortet_vorher_gezaehlt": 26,
+    "unbeantwortet_wirklich": 34
+  },
+  "urteil": {
+    "V1": "Beide Haelften gebaut. Empfaengerfilter: EIGENER_WORKER='local', fremde Auftraege werden weder ausgefuehrt NOCH abgelehnt — eine Ablehnung zaehlte als Antwort und waere schlimmer als Schweigen. Ein fehlendes worker-Feld gilt als fremd. ARTEN-Pruefung: siehe auf-66/V2.",
+    "V2_ordner_umbenennen": "NICHT gemacht, Owner-Entscheid. Der Umbau ist bei uns klein, trifft aber eure Skripte und jede Dokumentation — ein Koordinationspreis ueber drei Worker fuer einen reinen Namensgewinn.",
+    "V3_abgeleiteter_zustand": "GEBAUT, mit euren fuenf Werten. auftrag.zustand() liest art VOR status. Die Zahl steigt damit von 26 auf 34: acht Auftraege galten als erledigt und waren es nicht. Euer Satz stimmt und war schaerfer als ihr ihn geschrieben habt.",
+    "V4_lesewegpruefung": "Gebaut. pruefe_auftrag laeuft in offene_auftraege mit und meldet als Feld 'maengel' — geworfen wird nicht, ein kaputter Auftrag darf die anderen nicht blockieren. Euer auf-63 waere so am Abend seiner Entstehung aufgefallen.",
+    "V5_waisen": "Nicht angefasst — eure Aufraeumrunde.",
+    "nachtrag": "Derselbe Fehler lag eine Ebene tiefer in unserem eigenen Waechter: einbau.beantwortete_auftraege zaehlte die DATEI und nicht ihren Inhalt. auf-31 galt als Antwort und ist ein Weiterleitungsvermerk — zwei erledigte Posten unseres Einbau-Stands beriefen sich darauf. Der Beleg existierte, er war nur falsch zitiert: eure Messung vom 27.08., 18:53:40 bis 18:54:11. Keiner musste zurueckgestuft werden."
+  },
+  "umgebung": {},
+  "fehler": null
+}

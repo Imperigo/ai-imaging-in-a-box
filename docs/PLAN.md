@@ -4906,7 +4906,7 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 - [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
       Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
       die Zeile in gewöhnlichen Läufen schweigt.
-- [x] **Sammlung 4608 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+- [x] **Sammlung 4616 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
       und ist nachgeführt.
 - [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
       `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.
@@ -5206,6 +5206,28 @@ Notkamera-Fehler: *nicht falsch gerechnet, sondern eine Angabe nie gelesen.*
       kennt die Menge, läuft aber nur beim *Schreiben*, und keine Auftragsdatei dieses
       Repos ist je über `baue_auftrag` hereingekommen. Ihr eigenes `auf-63` trug
       `art: "vertrag"` und wäre still als Multipass gelaufen.
+
+### Die blockierende Rückfrage — und sie war es zu Recht
+
+**Die HomeStation hat `auf-59` nicht installiert**, weil mein `qa`-Zweig sechs ihrer
+Aufträge grün-leer geschlossen hätte. *«Vorher schlüsse der erste Takt sechs eurer eigenen
+Fragen grün und leer.»*
+
+- [x] **`art: qa` antwortet nicht mehr grün.** `auftraege/README.md` sagt seit dem 18.08.
+      ehrlich, dass die Art nichts misst — **Ehrlichkeit in einem Dokument hält aber kein
+      grünes Ergebnis auf**, und ein grünes Ergebnis heisst hier: beantwortet. Der Zweig
+      gibt jetzt `status: fehler` mit Begründung; unter dem abgeleiteten Zustand wird
+      daraus *gerechnet, nicht beantwortet*, und der Auftrag bleibt offen.
+      *Der Weg nach vorn ist nicht, `qa` messend zu machen — das ist der `render`-Pfad,
+      und den gibt es.*
+- [x] **Damit ist `auf-20260826-59` frei.** Der Takt kann installiert werden.
+- [x] **Und ihre Rückfrage V3 hat einen zweiten Fehler von mir aufgedeckt:** Meine erste
+      Fassung verschluckte unbekannte Flaggen **still**. Eine unbekannte Flagge lässt den
+      Lauf jetzt gar nicht erst starten. *Eine unbekannte Flagge wegzulassen ist richtig;
+      sie wegzulassen und zu schweigen ist derselbe Fehler noch einmal.*
+- [x] **Beide Aufträge sind beantwortet** — `auf-64` und `auf-66` haben Ergebnisdateien,
+      je Rückfrage eine Antwort. *Zum ersten Mal in dieser Sitzung geht etwas den Weg
+      zurück, statt nur hinaus.*
 
 ### Und ein Fehler, den ich beim Beheben beinahe wiederholt hätte
 

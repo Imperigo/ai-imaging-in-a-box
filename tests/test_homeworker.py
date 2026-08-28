@@ -1385,21 +1385,24 @@ def test_die_schalter_aus_erzeugen_mit_werden_gelesen(befehl, erwartet):
     *Das ist die teure Variante: Der Lauf bricht nicht ab. Er antwortet, nur auf eine
     andere Frage.*
     """
-    assert hw._schalter_aus(befehl) == erwartet
+    assert hw._schalter_aus(befehl)[0] == erwartet
 
 
 def test_ein_unbekannter_schalter_wird_weggelassen():
     """**Eine Positivliste und keine Durchreiche.** Der Auftrag ist ein Text aus einem
     Repo; ihn ungeprüft an eine Kommandozeile zu geben hiesse, jedem Schreiber dieses
     Ordners einen Prozessaufruf zu schenken."""
-    assert hw._schalter_aus("make_test_ifc.py x.ifc --rm --hochbau") == ["--hochbau"]
-    assert hw._schalter_aus("make_test_ifc.py x.ifc --erfunden") == []
+    genommen, verworfen = hw._schalter_aus("make_test_ifc.py x.ifc --rm --hochbau")
+    assert genommen == ["--hochbau"]
+    assert verworfen == ["--rm"], (
+        "eine unbekannte Flagge wegzulassen ist richtig; sie wegzulassen UND zu "
+        "schweigen ist derselbe Fehler noch einmal (Rueckfrage V3)")
 
 
 def test_der_zielpfad_wird_nie_uebernommen():
     """Wohin gebaut wird, entscheidet der Homeworker. Ein Auftrag, der den Zielpfad setzt,
     schriebe in ein fremdes Verzeichnis."""
-    assert hw._schalter_aus("make_test_ifc.py /woanders/hin.ifc --hochbau") == ["--hochbau"]
+    assert hw._schalter_aus("make_test_ifc.py /woanders/hin.ifc --hochbau")[0] == ["--hochbau"]
 
 
 def test_der_multipass_bericht_traegt_wo_die_kamera_steht(blender_naht, ifc, aus,
@@ -1431,10 +1434,44 @@ def test_eine_unbekannte_art_laeuft_nicht_still_als_multipass(blender_naht, ifc,
     assert "vertrag" in ergebnis["fehler"]
 
 
-@pytest.mark.parametrize("art", ["multipass", "qa"])
-def test_die_bekannten_arten_laufen_weiter(blender_naht, ifc, aus, tmp_path, art):
+def test_multipass_laeuft_weiter(blender_naht, ifc, aus, tmp_path):
     """Die Gegenprobe — sonst hätte die Prüfung alles gesperrt."""
-    assert hw.fuehre_aus(_multipass_satz(art, ifc, aus), tmp_path)["status"] == "ok"
+    assert hw.fuehre_aus(_multipass_satz("multipass", ifc, aus), tmp_path)["status"] == "ok"
+
+
+def test_ein_qa_auftrag_antwortet_nicht_mehr_gruen(blender_naht, ifc, aus, tmp_path):
+    """**Die blockierende Rückfrage V1** aus `auf-20260828-66`.
+
+    Die HomeStation hat den Takt aus `auf-20260826-59` deshalb **nicht installiert**:
+    *«Vorher schlüsse der erste Takt sechs eurer eigenen Fragen grün und leer.»*
+
+    `auftraege/README.md` sagt seit dem 18.08.2026 ehrlich, dass `qa` nichts misst.
+    **Ehrlichkeit in einem Dokument hält aber kein grünes Ergebnis auf**, und ein grünes
+    Ergebnis heisst in diesem Projekt: beantwortet.
+    """
+    ergebnis = hw.fuehre_aus(_multipass_satz("qa", ifc, aus), tmp_path)
+
+    assert ergebnis["status"] == "fehler"
+    assert ergebnis["urteil"] == {"auftrag": "art misst nichts"}
+    assert "render" in ergebnis["fehler"], "der Weg nach vorn wird genannt"
+
+
+def test_ein_qa_auftrag_bleibt_dadurch_offen(tmp_path, ifc, aus, blender_naht):
+    """Unter dem abgeleiteten Zustand wird daraus *gerechnet, nicht beantwortet*.
+
+    Das ist der ganze Zweck: Der Auftrag bleibt in der Zählung, statt still zu
+    verschwinden."""
+    satz = _multipass_satz("qa", ifc, aus)
+    satz.update({"schema": hw.auf.SCHEMA_AUFTRAG, "worker": hw.EIGENER_WORKER,
+                 "beschreibung": "Eine Messfrage.", "anweisung": "Miss etwas.",
+                 "erstellt": "2026-08-28T00:00:00Z", "auflagen": ["keine"],
+                 "rueckgabe": ["V1 die Zahl"]})
+    satz["geometrie"] = {"synthetisch": True, "pfad": None, "erzeugen_mit": "x"}
+    hw.auf.schreibe_auftrag(satz, tmp_path)
+    hw.auf.schreibe_ergebnis(hw.fuehre_aus(satz, tmp_path), tmp_path)
+
+    assert hw.auf.zustand(satz["auftrag_id"], tmp_path) == hw.auf.ZUSTAND_GERECHNET
+    assert [a["auftrag_id"] for a in hw.auf.unerledigt(tmp_path)] == [satz["auftrag_id"]]
 
 
 def test_die_schalter_erreichen_den_wirklichen_aufruf(monkeypatch, tmp_path):
@@ -1490,3 +1527,16 @@ def test_ohne_schalter_bleibt_der_aufruf_schlicht(monkeypatch, tmp_path):
 
     hw._geometrie_bereitstellen(satz, tmp_path)
     assert not [w for w in gesehen[0] if w.startswith("--")]
+
+
+def test_eine_unbekannte_flagge_laesst_den_lauf_gar_nicht_erst_starten(tmp_path):
+    """**Lieber gar nicht laufen als am Thema vorbei antworten.**
+
+    Ein Auftrag, der eine unbekannte Flagge verlangt, bekäme sonst ein anderes Gebäude —
+    und der Lauf käme grün zurück.
+    """
+    satz = {"auftrag_id": "auf-20260828-98", "art": "multipass",
+            "geometrie": {"synthetisch": True, "pfad": None,
+                          "erzeugen_mit": "make_test_ifc.py b.ifc --erfunden"}}
+    with pytest.raises(hw.GeometrieError, match="--erfunden"):
+        hw._geometrie_bereitstellen(satz, tmp_path)

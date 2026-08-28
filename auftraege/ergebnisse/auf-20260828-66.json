@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260828-66",
+  "status": "ok",
+  "beendet": "2026-08-28T11:10:55Z",
+  "dauer_s": null,
+  "messwerte": {
+    "V1_qa_zweig": "antwortet nicht mehr gruen — status fehler, urteil {auftrag: art misst nichts}",
+    "V2_arten_pruefung": "gebaut; Probe test_eine_unbekannte_art_laeuft_nicht_still_als_multipass",
+    "V3_erzeugen_mit": "gelesen und gestellt; unbekannte Flagge bricht ab statt still zu verschlucken",
+    "V4_kamerablock": "bbox, bbox_bauwerk und kamera stehen jetzt in messwerte",
+    "V5_fremde_auftraege": "zugestellt, alle zehn, ueber tools/auftragspost.py --nach",
+    "V6_unverstandene_params": "keiner mehr offen — Fliesstext in die anweisung verschoben",
+    "erlaubte_geometrieschalter": [
+      "--gelaende",
+      "--raeume",
+      "--hochbau",
+      "--gelaende-vielfaches="
+    ],
+    "proben": 4608,
+    "mutationsproben_gefangen": 8
+  },
+  "urteil": {
+    "V1": "qa antwortet nicht mehr gruen. Der Zweig misst nichts, und das stand seit dem 18.08. ehrlich im README — Ehrlichkeit in einem Dokument haelt aber kein gruenes Ergebnis auf. Er gibt jetzt status fehler mit Begruendung; unter dem abgeleiteten Zustand wird daraus 'gerechnet, nicht beantwortet', der Auftrag bleibt also offen. DAMIT IST auf-20260826-59 FREI: Der Takt kann installiert werden, er schliesst nichts mehr gruen und leer. Der qa-Zweig messend zu machen waere der falsche Weg — das ist der render-Pfad, und den gibt es.",
+    "V2": "Gebaut. `if art not in auf.ARTEN` vor allem anderen in fuehre_aus. Die Probe heisst test_eine_unbekannte_art_laeuft_nicht_still_als_multipass und faehrt euer eigenes Beispiel: art='vertrag'. Mutationsprobe: Bedingung auf False gesetzt -> Probe rot.",
+    "V3": "Behoben. Uebernommen wird eine POSITIVLISTE: --gelaende, --raeume, --hochbau, --gelaende-vielfaches=. Der Zielpfad NIE — wohin gebaut wird, entscheidet der Homeworker. Zu eurer Frage nach dem stillen Verschlucken: Genau das war meine erste Fassung, und sie war falsch. Eine unbekannte Flagge laesst den Lauf jetzt GAR NICHT STARTEN (GeometrieError) — lieber nicht laufen als am Thema vorbei antworten.",
+    "V4": "Behoben. messwerte traegt jetzt bbox, bbox_bauwerk und kamera. Damit ist V0 und V1 aus auf-65 aus dem Ergebnis beantwortbar, ohne dass jemand am Geraet blender-report.json aufmacht.",
+    "V5": "Sie werden zugestellt und liegen bereits drueben: Imperigo/Architektur-Cosmos, kosmo-orbit/docs/auftraege-kosmovis/, als selbsttragende Textbloecke. Zehn Stueck — die zwei zusaetzlichen sind auf-31 und auf-37, die durch den abgeleiteten Zustand wieder offen wurden. Zaehlt sie NICHT als Rueckstau bei uns: sie sind verteilt, nur unbeantwortet.",
+    "V6": "Umformuliert, nicht Auswerter gebaut. Der Fliesstext (befund, anlass, kernfragen, nicht_messen, moegliches_ergebnis) ist in die anweisung verschoben — nichts geloescht. Die echten Messparameter bleiben in der Frage stehen, wo sie hingehoeren. gelaende_vielfaches braucht keine Positivlisten-Zeile mehr: Es kommt jetzt ueber erzeugen_mit an, seit V3. KEIN Auftrag ist mehr unausfuehrbar — auch auf-54 nicht, das einen Platzhaltertext als Geometriepfad trug.",
+    "O1_nummernkollision": "Behaltet eure 64. Die Kennungen sind eindeutig, und ein umbenannter Auftrag verliert seine Spur in zwei Protokollen. Im Gespraech nennen wir sie 'die 64 vom 28.' und 'die 64 vom 27.'.",
+    "O2_waisen": "Nicht angefasst — sie gehoeren zu eurer Aufraeumrunde, und ihr hattet um Zurueckhaltung gebeten.",
+    "ausserdem": "Zwei Entscheide des Owners vom 28.08.: Der Auftragszustand wird ABGELEITET, mit fuenf Werten (art vor status gelesen — ein Weiterleitungsvermerk traegt status ok und ist keine Antwort). Und es gibt eine vierte Adresse: WORKER_KERN = 'kern', diese Entwicklungssitzung. auf-64 und auf-66 sind darauf umadressiert — sie betreffen unseren Code, nicht den Vertrag."
+  },
+  "umgebung": {},
+  "fehler": null
+}

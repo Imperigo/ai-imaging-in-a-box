@@ -141,6 +141,10 @@ def darf_starten(zustand: dict, auflagen: dict) -> tuple[bool, str]:
 
 # ── Ausführung ───────────────────────────────────────────────────────────────────────
 
+class GeometrieError(ValueError):
+    """Die bestellte Geometrie laesst sich so nicht bauen."""
+
+
 #: Welche Schalter aus ``geometrie.erzeugen_mit`` uebernommen werden.
 #:
 #: **Eine Positivliste und keine Durchreiche.** Der Auftrag ist ein Text aus einem Repo;
@@ -152,24 +156,36 @@ ERLAUBTE_GEOMETRIESCHALTER = ("--gelaende", "--raeume", "--hochbau",
                               "--gelaende-vielfaches=")
 
 
-def _schalter_aus(erzeugen_mit) -> list[str]:
+def _schalter_aus(erzeugen_mit) -> tuple[list[str], list[str]]:
     """Die Schalter aus ``erzeugen_mit`` — nur die bekannten, und das Ziel nie.
 
-    ``python3 tools/make_test_ifc.py build/testbau.ifc --hochbau`` → ``["--hochbau"]``
+    ``python3 tools/make_test_ifc.py build/testbau.ifc --hochbau`` → ``(["--hochbau"], [])``
 
     **Der Dateiname wird ausdruecklich NICHT uebernommen:** Wohin gebaut wird, entscheidet
     der Homeworker, nicht der Auftrag. Ein Auftrag, der den Zielpfad setzt, schriebe in ein
     fremdes Verzeichnis.
+
+    Returns:
+        ``(genommen, verworfen)``. **Die zweite Liste ist der Punkt** — sie beantwortet
+        die Rückfrage V3 aus `auf-20260828-66`: *«wie verhindert ihr, dass eine unbekannte
+        Flagge still verschluckt wird?»*
+
+        Die erste Fassung dieser Funktion verschluckte sie still, und das ist genau die
+        Fehlerart, gegen die sie gebaut wurde: Ein Auftrag verlangte `--hochbau`, bekam
+        den flachen Standardbau und meldete grün. *Eine unbekannte Flagge wegzulassen ist
+        richtig; sie wegzulassen und zu schweigen ist derselbe Fehler noch einmal.*
     """
-    aus: list[str] = []
+    genommen: list[str] = []
+    verworfen: list[str] = []
+    wertschalter = tuple(v for v in ERLAUBTE_GEOMETRIESCHALTER if v.endswith("="))
     for wort in str(erzeugen_mit or "").split():
         if not wort.startswith("--"):
             continue
-        if wort in ERLAUBTE_GEOMETRIESCHALTER:
-            aus.append(wort)
-        elif any(wort.startswith(v) for v in ERLAUBTE_GEOMETRIESCHALTER if v.endswith("=")):
-            aus.append(wort)
-    return aus
+        if wort in ERLAUBTE_GEOMETRIESCHALTER or wort.startswith(wertschalter):
+            genommen.append(wort)
+        else:
+            verworfen.append(wort)
+    return genommen, verworfen
 
 
 def _geometrie_bereitstellen(satz: dict, repo: Path) -> str:
@@ -191,8 +207,18 @@ def _geometrie_bereitstellen(satz: dict, repo: Path) -> str:
         #
         # *Das ist die teure Variante: Der Lauf bricht nicht ab. Er antwortet, nur auf
         # eine andere Frage.*
+        genommen, verworfen = _schalter_aus(geom.get("erzeugen_mit"))
+        if verworfen:
+            # NICHT STILL VERSCHLUCKT. Ein Auftrag, der eine Flagge verlangt, die dieser
+            # Runner nicht kennt, bekommt ein anderes Gebaeude — und der Lauf kaeme gruen
+            # zurueck. Lieber gar nicht laufen als am Thema vorbei antworten.
+            raise GeometrieError(
+                f"`erzeugen_mit` verlangt {', '.join(verworfen)} — diese Flagge(n) kennt "
+                f"der Runner nicht und laesst sie weg. Gebaut wuerde dann ein ANDERES "
+                f"Gebaeude als bestellt, und der Lauf kaeme gruen zurueck. Bekannt sind: "
+                f"{', '.join(ERLAUBTE_GEOMETRIESCHALTER)}.")
         subprocess.run([sys.executable, str(repo / "tools" / "make_test_ifc.py"),
-                        str(ziel), *_schalter_aus(geom.get("erzeugen_mit"))],
+                        str(ziel), *genommen],
                        check=True, capture_output=True, text=True)
         return str(ziel)
     pfad = geom.get("pfad")
@@ -318,6 +344,34 @@ def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=No
                     f"Ohne diese Pruefung liefe der Auftrag still im Multipass-Zweig und "
                     f"kaeme als 'status: ok, urteil: {{multipass: ok}}' zurueck — gruen, "
                     f"leer, und die Frage waere geschlossen."),
+            dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
+
+    # DER qa-ZWEIG MISST NICHTS — also antwortet er auch nicht gruen.
+    #
+    # Rueckfrage V1 aus `auf-20260828-66`, und sie war BLOCKIEREND: Die HomeStation hat
+    # den Takt aus `auf-20260826-59` deshalb nicht installiert. *«Vorher schluesse der
+    # erste Takt sechs eurer eigenen Fragen gruen und leer.»*
+    #
+    # `auftraege/README.md` sagt es seit dem 18.08.2026 ehrlich: «Die Art ist angelegt,
+    # aber `fuehre_aus` behandelt alles ausser `render` gleich — ein `qa`-Auftrag misst
+    # heute NICHTS und meldet `urteil: {"multipass": "ok"}`.» **Ehrlichkeit in einem
+    # Dokument haelt aber kein gruenes Ergebnis auf**, und ein gruenes Ergebnis heisst in
+    # diesem Projekt: beantwortet.
+    #
+    # Der Weg nach vorn ist nicht, `qa` messend zu machen — das ist der `render`-Pfad, und
+    # er existiert. Der Weg ist, die Art nicht laenger so zu tun, als koenne sie etwas.
+    # Unter dem abgeleiteten Zustand wird daraus «gerechnet, nicht beantwortet»: Der
+    # Auftrag bleibt offen, und niemand haelt ihn fuer erledigt.
+    if art == "qa":
+        return auf.baue_ergebnis(
+            auftrag_id=satz["auftrag_id"], status="fehler",
+            urteil={"auftrag": "art misst nichts"},
+            fehler=("art='qa' misst in diesem Runner NICHTS — der Zweig faehrt den "
+                    "Blender-Multipass und meldete bis zum 28.08.2026 dafuer "
+                    "'urteil: {multipass: ok}'. Gruen und leer, und damit galt die Frage "
+                    "als beantwortet. Wer messen will, nimmt art='render'; wer nur den "
+                    "Multipass braucht, art='multipass'. Diese Antwort ist Absicht und "
+                    "kein Ausfall: Der Auftrag bleibt offen."),
             dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
 
     unverstanden = _unverstandene_params(art, params)
