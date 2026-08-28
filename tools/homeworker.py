@@ -158,15 +158,37 @@ def _geometrie_bereitstellen(satz: dict, repo: Path) -> str:
     return pfad
 
 
+#: Aus welcher Richtung ein Auftrag ohne Angabe aufgenommen wird.
+#:
+#: **Bis zum 28.08.2026 gab der Homeworker GAR KEINE Kamera weiter** — er rief
+#: ``glb_zu_tiefenkarte`` nur mit Auflösung und Samples. Der Runner stellte dann seine
+#: **Notkamera**: Blenders eigene 50-mm-Optik an einem Ort, der mit Augenhöhe nichts zu
+#: tun hat. Der Bericht sagte es auch (``weg: rueckfall``), aber niemand las es.
+#:
+#: Der Owner hat es am fertigen Bild gesehen: *«die kamera vom endbild ist nicht auf
+#: augenhoehe mensch»*. Mit einer angeforderten Richtung rechnet ``kameras.kamerasatz``
+#: den Standort — **1,70 m über dem Gelände**, waagrecht, mit Versatz statt Neigung.
+#:
+#: **Warum ausgerechnet eine diagonale Richtung.** Gemessen am 28.08.2026 über acht
+#: Richtungen derselben Szene: Auf den vier frontalen Richtungen fallen **5 von 20** guten
+#: Fällen unter ``PAAR_RHO_SCHWELLE``, auf den vier diagonalen **keiner**. Frontale
+#: Ansichten sind nicht unmessbar — aber sie sind die schlechtere Vorgabe.
+VORGABE_KAMERA = "sSE"
+
+#: Kameraangaben, die ein Auftrag setzen darf. Sie werden **nur weitergereicht, wenn sie
+#: dastehen** — ein ``None`` würde die gerechnete Vorgabe überschreiben.
+_KAMERA_PARAMS = ("augenhoehe", "gelaende_z", "kamera_modus", "kamera_huellbox",
+                  "brennweite", "deckungsgrad", "bias_grad", "shift_y")
+
 #: Was die einzelnen Pfade an `params` tatsächlich verbrauchen. Wird ein Auftrag mit
 #: Angaben gestellt, die hier nicht stehen, ist er hier nicht ausführbar — und das muss
 #: er sagen, statt etwas anderes zu messen.
 _GENUTZTE_PARAMS = {
-    "out_dir", "aufloesung", "samples",
+    "out_dir", "aufloesung", "samples", "kamera",
     "prompt", "negativ_prompt", "backbone", "seed", "schritte",
     "controlnet_staerke", "denoise", "mit_beauty", "modell_wurzel",
-    "schaetzer", "schwelle",
-}
+    "schaetzer", "schwelle", "gelaende_erwartet",
+} | set(_KAMERA_PARAMS)
 
 
 def _unverstandene_params(_art: str, params: dict) -> list[str]:
@@ -244,9 +266,14 @@ def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=No
             fehler=f"IFC→glb: {glb_bericht.get('error')}",
             dauer_s=round(time.monotonic() - beginn, 1))
 
+    # DIE KAMERA WIRD ANGEFORDERT — bis zum 28.08.2026 stand hier keine, und der Runner
+    # stellte darum seine Notkamera. Ein Demolauf zeigte dann Blenders 50-mm-Optik von
+    # irgendwoher statt eines Bildes auf Augenhoehe.
+    kamera_gaben = {n: params[n] for n in _KAMERA_PARAMS if params.get(n) is not None}
     blender_bericht = seams.glb_zu_tiefenkarte(
         glb_bericht["glb_path"], aus, up_axis=glb_bericht["up_axis"],
-        aufloesung=params.get("aufloesung", 512), samples=params.get("samples", 32))
+        aufloesung=params.get("aufloesung", 512), samples=params.get("samples", 32),
+        kamera=params.get("kamera") or VORGABE_KAMERA, **kamera_gaben)
 
     if art == "render":
         return _render_und_qa(satz, blender_bericht, glb_bericht, aus, params, beginn,

@@ -1182,3 +1182,89 @@ def test_unbekannter_auftrag_meldet_sich_statt_still_nichts_zu_tun(tmp_path, cap
     """Ein Tippfehler in der Kennung darf nicht wie „nichts zu tun" aussehen."""
     assert hw.main(["--repo", str(tmp_path), "--auftrag", "auf-gibt-es-nicht"]) == 1
     assert "auf-gibt-es-nicht" in capsys.readouterr().out
+
+
+# ======================================================================================
+# Der Demolauf soll ein Bild auf Augenhöhe zeigen (Owner-Auftrag 28.08.2026)
+# ======================================================================================
+
+@pytest.fixture
+def mitgeschrieben(monkeypatch, bericht):
+    """Wie ``blender_naht``, aber sie **merkt sich die Argumente**."""
+    gesehen: dict = {}
+
+    def merken(glb, aus, **kw):
+        gesehen.clear()
+        gesehen.update(kw)
+        return bericht
+
+    monkeypatch.setattr(seams, "ifc_zu_glb", lambda ifc, glb, **kw: dict(GLB_BERICHT))
+    monkeypatch.setattr(seams, "glb_zu_tiefenkarte", merken)
+    return gesehen
+
+
+def test_der_homeworker_fordert_eine_kamera_an(mitgeschrieben, ifc, aus, tmp_path):
+    """**Der Befund des Owners, als Test** (28.08.2026):
+
+    *«wenn der local worker nun einen demolauf macht ist die kamera vom endbild … nicht
+    auf augenhöhe mensch … wieso?»*
+
+    Weil hier bis dahin **gar keine** Kamera stand. `glb_zu_tiefenkarte` wurde nur mit
+    Auflösung und Samples gerufen, und der Runner stellte dann seine **Notkamera** —
+    Blenders eigene 50-mm-Optik an einem Ort, der mit Augenhöhe nichts zu tun hat. Der
+    Bericht sagte es sogar (`weg: rueckfall`); niemand las es.
+
+    *Ein Rückfall, der sich meldet, ist besser als einer, der schweigt — aber er bleibt
+    ein Rückfall. Gemeldet zu werden ersetzt nicht, richtig zu sein.*
+    """
+    hw.fuehre_aus(_multipass_satz("multipass", ifc, aus), tmp_path)
+    assert mitgeschrieben.get("kamera") == hw.VORGABE_KAMERA
+
+
+def test_ein_auftrag_darf_die_richtung_selbst_waehlen(mitgeschrieben, ifc, aus, tmp_path):
+    satz = _multipass_satz("multipass", ifc, aus)
+    satz["params"]["kamera"] = "nNW"
+    hw.fuehre_aus(satz, tmp_path)
+    assert mitgeschrieben.get("kamera") == "nNW"
+
+
+def test_die_vorgabe_ist_eine_diagonale_richtung():
+    """**Gemessen, nicht gewählt** (28.08.2026, acht Richtungen einer Szene):
+
+    Auf den vier frontalen Richtungen fallen **5 von 20** guten Fällen unter
+    `PAAR_RHO_SCHWELLE`, auf den vier diagonalen **keiner**. Frontale Ansichten sind nicht
+    unmessbar — sie sind die schlechtere Vorgabe.
+    """
+    from aiimaging import kameras
+    assert hw.VORGABE_KAMERA in kameras.RICHTUNGSFOLGE
+    assert hw.VORGABE_KAMERA not in ("n", "e", "s", "w"), (
+        "eine frontale Richtung als Vorgabe kostet gute Faelle")
+
+
+@pytest.mark.parametrize("name,wert", [
+    ("augenhoehe", 1.55), ("gelaende_z", 412.5), ("kamera_modus", "gekippt"),
+    ("brennweite", 28.0), ("deckungsgrad", 0.6), ("bias_grad", 20.0),
+])
+def test_kameraangaben_aus_dem_auftrag_werden_durchgereicht(mitgeschrieben, ifc, aus,
+                                                            tmp_path, name, wert):
+    """`gelaende_z` ist die wichtigste davon: Ohne sie ist der Bezugspunkt die
+    **Hüllbox-Unterkante**, und die liegt bei einem Untergeschoss im Erdreich."""
+    satz = _multipass_satz("multipass", ifc, aus)
+    satz["params"][name] = wert
+    hw.fuehre_aus(satz, tmp_path)
+    assert mitgeschrieben.get(name) == wert
+
+
+def test_eine_nicht_gesetzte_kameraangabe_wird_NICHT_durchgereicht(mitgeschrieben, ifc,
+                                                                   aus, tmp_path):
+    """Ein durchgereichtes ``None`` überschriebe die gerechnete Vorgabe mit nichts."""
+    hw.fuehre_aus(_multipass_satz("multipass", ifc, aus), tmp_path)
+    for name in hw._KAMERA_PARAMS:
+        assert name not in mitgeschrieben, name
+
+
+def test_kameraangaben_gelten_als_verbraucht_und_werden_nicht_bemaengelt(ifc, aus):
+    """Sonst meldete der Auftrag sie als unverstanden — und das wäre eine Falschmeldung."""
+    params = {n: 1.0 for n in hw._KAMERA_PARAMS}
+    params["kamera"] = "sSE"
+    assert hw._unverstandene_params("multipass", params) == []
