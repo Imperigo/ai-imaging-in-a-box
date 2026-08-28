@@ -1412,6 +1412,10 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         "score": urteil["score"],
         "spearman": urteil["spearman"],
         "geom_iou": urteil["geom_iou"],
+        # Derselbe Wert ohne den Anteil, den die Szene ohnehin schenkt (Owner-Entscheid
+        # 28.08.2026). NICHT im Score — 0.65 behaelt seine Bedeutung. 0 heisst hier: so
+        # gut wie ein konstantes Bild; negativ heisst: schlechter als das.
+        "geom_iou_norm": urteil.get("geom_iou_norm"),
         "n_gemeinsam": urteil["n_gemeinsam"],
         "n_soll": urteil["n_soll"],
         "n_ist": urteil["n_ist"],
@@ -1466,6 +1470,7 @@ def _qa_ohne_messung(status: str, grund: dict, *, error, dauer_s: float,
         "score": None,
         "spearman": None,
         "geom_iou": None,
+        "geom_iou_norm": None,
         "n_gemeinsam": None,
         "n_soll": None,
         "n_ist": None,

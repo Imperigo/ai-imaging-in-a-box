@@ -601,7 +601,7 @@ def test_gate_traegt_alle_felder_des_scores_weiter():
     urteil = geometrie_gate(SOLL, IST_TREU)
     assert set(urteil) == {
         "bestanden", "schwelle", "begruendung",
-        "score", "spearman", "geom_iou",
+        "score", "spearman", "geom_iou", "geom_iou_norm",
         "n_gemeinsam", "n_soll", "n_ist", "anteil_soll", "methode", "polaritaet",
             "warnungen",
     }
@@ -2123,3 +2123,77 @@ def test_ein_bauwerk_mit_umgekehrten_tiefen_bekommt_geom_iou_1_0():
 
     assert ergebnis["geom_iou"] == pytest.approx(1.0), "der Umriss ist unberührt"
     assert ergebnis["spearman"] == pytest.approx(-1.0), "und die Ordnung vollständig verkehrt"
+
+
+# ======================================================================================
+# geom_iou ohne den Boden, den die Szene schenkt (Owner-Entscheid 28.08.2026)
+# ======================================================================================
+
+def test_ein_konstantes_bild_bekommt_normiert_genau_null():
+    """Der Boden ist herausgerechnet: **0 heisst «so gut wie ein konstantes Bild».**
+
+    Die Gegenprobe zum Test weiter oben — dort steht, dass der rohe Wert exakt der
+    Vordergrundanteil ist; hier, dass genau dieser Anteil abgezogen wird.
+    """
+    breite = hoehe = 20
+    soll = []
+    for y in range(hoehe):
+        for x in range(breite):
+            innen = 4 <= x < 16 and 4 <= y < 16
+            soll.append(10.0 + 0.1 * (x + y) if innen else HINTERGRUND_SCHWELLE_M * 10)
+
+    ergebnis = geometrie_qa.geometrie_score(
+        soll, [1.0] * len(soll), HINTERGRUND_SCHWELLE_M * 10,
+        polaritaet=geometrie_qa.POLARITAET_TIEFE)
+
+    assert ergebnis["geom_iou"] == pytest.approx(ergebnis["anteil_soll"], abs=1e-12)
+    assert ergebnis["geom_iou_norm"] == pytest.approx(0.0, abs=1e-12)
+
+
+def test_ein_deckungsgleiches_bild_bekommt_normiert_genau_eins():
+    ergebnis = geometrie_qa.geometrie_score(SOLL, IST_TREU,
+                                            polaritaet=geometrie_qa.POLARITAET_TIEFE)
+    assert ergebnis["geom_iou"] == pytest.approx(1.0)
+    assert ergebnis["geom_iou_norm"] == pytest.approx(1.0)
+
+
+def test_schlechter_als_ein_konstantes_bild_wird_negativ_und_nicht_abgeschnitten():
+    """**Ein Befund, kein Fehler.** «Schlechter als nichts» und «so gut wie nichts» sind
+    zwei verschiedene Aussagen; bei 0 abzuschneiden machte eine daraus.
+
+    Gemessen am 27.08.2026: eine um 90° gedrehte Karte kam auf −0,3068.
+    """
+    breite = hoehe = 20
+    soll, versetzt = [], []
+    for y in range(hoehe):
+        for x in range(breite):
+            hg = HINTERGRUND_SCHWELLE_M * 10
+            soll.append(10.0 if (2 <= x < 8 and 2 <= y < 18) else hg)
+            versetzt.append(10.0 if (12 <= x < 18 and 2 <= y < 18) else hg)
+
+    ergebnis = geometrie_qa.geometrie_score(soll, versetzt, HINTERGRUND_SCHWELLE_M * 10,
+                                            polaritaet=geometrie_qa.POLARITAET_TIEFE)
+    assert ergebnis["geom_iou"] == pytest.approx(0.0), "die Silhouetten treffen sich nicht"
+    assert ergebnis["geom_iou_norm"] < 0.0, "und das ist schlechter als ein flaches Bild"
+
+
+def test_eine_szene_ohne_hintergrund_hat_keinen_boden_und_bekommt_None():
+    """Der Nenner wäre null. **Nicht beurteilbar — und ausdrücklich nicht 1.**"""
+    voll = [10.0 + 0.01 * i for i in range(400)]
+    ergebnis = geometrie_qa.geometrie_score(voll, voll, HINTERGRUND_SCHWELLE_M * 10,
+                                            polaritaet=geometrie_qa.POLARITAET_TIEFE)
+    assert ergebnis["anteil_soll"] == pytest.approx(1.0)
+    assert ergebnis["geom_iou"] == pytest.approx(1.0)
+    assert ergebnis["geom_iou_norm"] is None
+
+
+def test_der_score_hat_sich_durch_die_normierung_NICHT_geaendert():
+    """**Der Owner-Entscheid in einem Test.** 0,65 behält seine Bedeutung, und die
+    Schwellenstudie vom 18.08. bleibt gültig — der normierte Wert steht daneben, nicht
+    darin."""
+    ergebnis = geometrie_qa.geometrie_score(SOLL, IST_TREU,
+                                            polaritaet=geometrie_qa.POLARITAET_TIEFE)
+    from math import sqrt
+    erwartet = sqrt(max(0.0, ergebnis["spearman"]) * ergebnis["geom_iou"])
+    assert ergebnis["score"] == pytest.approx(erwartet), (
+        "der Score ruht weiter auf dem ROHEN geom_iou")

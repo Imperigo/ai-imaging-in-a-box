@@ -48,6 +48,8 @@ REIHEN = {
     "kantenanteil": (paarschwellen.KANDIDATEN_KANTENANTEIL, "kantenanteil"),
     "score": (paarschwellen.KANDIDATEN_RHO, "score (Ganzbild, was das Tor liest)"),
     "geom_iou": (paarschwellen.KANDIDATEN_RHO, "geom_iou"),
+    "geom_iou_norm": (paarschwellen.KANDIDATEN_RHO,
+                      "geom_iou, gegen den Boden der Szene normiert"),
     "spearman": (paarschwellen.KANDIDATEN_RHO,
                  "spearman (Ganzbild, der Score OHNE geom_iou)"),
 }

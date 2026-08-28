@@ -531,6 +531,19 @@ def _kompositionszeilen(kameras: list) -> list:
     return zeilen
 
 
+#: Ab welchem **Vordergrundanteil der Szene** der Kurzbefund den Unterschied zwischen
+#: rohem und normiertem ``geom_iou`` ueberhaupt erwaehnt.
+#:
+#: **Eine Setzung, keine Messung** — und sie ist bewusst nicht klein. Der geschenkte
+#: Anteil ist der Vordergrundanteil der Szene; bei einem Bauwerk ohne Gelaende liegt er
+#: bei 0.11. Eine Zeile darueber waere eine Dauerwarnung ueber eine Nachkommastelle und
+#: wuerde die Plaetze fuellen, auf denen die echten Meldungen stehen.
+#:
+#: 0.25 trennt die beiden gemessenen Lagen: Quader 0.1104 und Hochbau 0.1729 schweigen,
+#: die Gelaendeszene mit 0.5297 meldet sich (27.08.2026).
+GESCHENKTER_ANTEIL_SCHWELLE = 0.25
+
+
 def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     """Der Befund in wenigen Zeilen — für einen Menschen an einem Terminal.
 
@@ -661,6 +674,41 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
             f"obwohl das Bauwerk fehlt (gemessen: verschwundenes Bauwerk, Score 0.951, "
             f"geom_iou 1.000, rho_maske -0.018). Das Paarurteil sperrt hier NICHT — es "
             f"steht nur da. Wer diesem Lauf traut, traut dem Score allein")
+
+    # WIE VIEL VON DEM geom_iou GEHOERT DEM BILD UND WIE VIEL DER SZENE?
+    #
+    # Owner-Entscheid 28.08.2026: Der Score bleibt unangetastet — 0.65 behaelt seine
+    # Bedeutung —, aber der normierte Wert wird ausgewiesen. Grund ist eine
+    # Rechenidentitaet vom Vortag: Ein KONSTANTES Bild bekommt bei `geom_iou` exakt den
+    # Vordergrundanteil der Szene (auf drei Szenen auf volle Gleitkommagenauigkeit
+    # belegt: 0.1104, 0.1729, 0.5297). Eine Szene, deren Geometrie die halbe Bildflaeche
+    # fuellt, gibt jedem wertlosen Bild 0.53 — und 0.53 liest sich wie "zur Haelfte
+    # richtig" (docs/GEOM_IOU_BODEN_UND_DECKE_2026-08-27.md).
+    #
+    # SELBSTLOESCHEND, und die Bedingung ist bewusst eng: Sie steht nur, wenn der Boden
+    # WIRKLICH gross ist. Bei einem Bauwerk ohne Gelaende liegt er bei 0.11, und dort
+    # waere die Zeile eine Dauerwarnung ueber eine Nachkommastelle.
+    # DIE RICHTIGE ZAHL IST DER ANTEIL DER SZENE, NICHT DIE DIFFERENZ. Beim ersten
+    # Versuch stand hier `roh - norm`, und das ist falsch: Bei einem PERFEKTEN Bild wird
+    # die Differenz null (roh = norm = 1), waehrend der Boden der Szene unveraendert 0.53
+    # betraegt. Ein Kriterium, das genau beim besten Bild schweigt, meldet die Sache nicht,
+    # sondern ihr Gegenteil.
+    schenkung = []
+    for k in kameras:
+        roh, norm = k.get("geom_iou"), k.get("geom_iou_norm")
+        anteil = k.get("geom_iou_obergrenze")
+        if roh is None or norm is None or anteil is None:
+            continue
+        if anteil < GESCHENKTER_ANTEIL_SCHWELLE:
+            continue
+        schenkung.append(f"{k.get('kamera')}: {roh:.3f} roh, {norm:.3f} ohne den Boden "
+                         f"(die Szene schenkt {anteil:.3f})")
+    if schenkung:
+        zeilen.append(
+            "VON DIESEM geom_iou GEHOERT EIN TEIL DER SZENE: " + " · ".join(schenkung)
+            + "  — ein KONSTANTES Bild bekaeme hier schon den Vordergrundanteil. Der "
+              "Score rechnet weiter mit dem rohen Wert; die zweite Zahl sagt, was davon "
+              "das Bild verdient hat")
 
     # Zuletzt und ganz oben im Rang, wenn es denn vorkommt: eine Bestellung, die nicht
     # ausgefuehrt wurde. Alles Uebrige auf dieser Liste sind Befunde ueber das ERGEBNIS —

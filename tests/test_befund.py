@@ -626,3 +626,58 @@ def test_ohne_widerspruch_schweigt_die_zeile():
     ):
         zeilen = "\n".join(abholer.befund_kurz({"kameras": [kamera]}))
         assert "MASKENWEG SAGT NEIN" not in zeilen, kamera
+
+
+# ======================================================================================
+# Wie viel von einem geom_iou gehört der Szene? (Owner-Entscheid 28.08.2026)
+# ======================================================================================
+
+def _kam(name, roh, norm, anteil):
+    return {"kamera": name, "geom_iou": roh, "geom_iou_norm": norm,
+            "geom_iou_obergrenze": anteil}
+
+
+def _zeile(befund):
+    treffer = [z for z in abholer.befund_kurz(befund)
+               if z.startswith("VON DIESEM geom_iou")]
+    return treffer[0] if treffer else None
+
+
+def test_bei_viel_boden_steht_der_rohe_und_der_normierte_wert_nebeneinander():
+    zeile = _zeile({"kameras": [_kam("sSE", 0.850, 0.681, 0.530)]})
+    assert zeile is not None
+    assert "0.850 roh" in zeile and "0.681 ohne den Boden" in zeile
+    assert "schenkt 0.530" in zeile
+    assert "Der Score rechnet weiter mit dem rohen Wert" in zeile, (
+        "der Entscheid war ausdruecklich: der Score bleibt unangetastet")
+
+
+def test_bei_wenig_boden_schweigt_die_zeile():
+    """**Selbstlöschend.** Ohne Gelände liegt der Anteil bei 0,11 — eine Zeile darüber
+    wäre eine Dauerwarnung über eine Nachkommastelle."""
+    assert _zeile({"kameras": [_kam("sSE", 0.900, 0.887, 0.110)]}) is None
+
+
+def test_sie_meldet_sich_auch_bei_einem_PERFEKTEN_bild():
+    """**Der Fehler des ersten Versuchs, als Test.**
+
+    Zuerst stand als Kriterium `roh − norm`. Bei einem perfekten Bild wird die Differenz
+    null (1,000 − 1,000), während der Boden der Szene unverändert 0,53 beträgt — das
+    Kriterium hätte genau beim besten Bild geschwiegen und damit die Sache nicht gemeldet,
+    sondern ihr Gegenteil.
+    """
+    zeile = _zeile({"kameras": [_kam("sSE", 1.000, 1.000, 0.530)]})
+    assert zeile is not None
+    assert "schenkt 0.530" in zeile
+
+
+def test_ohne_die_normierte_zahl_steht_nichts_da():
+    """Ein alter Bericht trägt das Feld nicht — dann wird nichts behauptet."""
+    assert _zeile({"kameras": [_kam("sSE", 0.850, None, 0.530)]}) is None
+    assert _zeile({"kameras": [_kam("sSE", 0.850, 0.681, None)]}) is None
+
+
+def test_nur_die_kameras_mit_viel_boden_werden_genannt():
+    zeile = _zeile({"kameras": [_kam("sSE", 0.850, 0.681, 0.530),
+                                _kam("oW", 0.900, 0.887, 0.110)]})
+    assert "sSE" in zeile and "oW" not in zeile

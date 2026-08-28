@@ -588,6 +588,31 @@ def iou(a: Sequence[bool], b: Sequence[bool]) -> float:
 # Der Score
 # --------------------------------------------------------------------------------------
 
+def _iou_ohne_boden(geom_iou: float | None, anteil_soll: float | None) -> float | None:
+    """``geom_iou`` ohne den Anteil, den die Szene ohnehin schenkt.
+
+        (geom_iou − anteil_soll) / (1 − anteil_soll)
+
+    **0 heisst hier: so gut wie ein konstantes Bild. 1 heisst: deckungsgleich.** Damit
+    bedeutet die Zahl über verschiedene Szenen dasselbe — was der rohe ``geom_iou`` nicht
+    tut, weil sein Boden mit der Szene wandert.
+
+    **Negative Werte werden nicht abgeschnitten.** Ein Bild, das schlechter trifft als ein
+    konstantes, ist ein Befund und kein Fehler — gemessen: eine um 90° gedrehte Karte kam
+    auf −0,3068. Bei 0 abzuschneiden hiesse, «schlechter als nichts» und «so gut wie
+    nichts» zu einer Zahl zu machen; dieselbe Begründung wie beim gerichteten ρ.
+
+    Returns:
+        ``None``, wenn ``geom_iou`` fehlt **oder** die Soll-Silhouette das ganze Bild
+        füllt. Im zweiten Fall ist der Nenner null: Eine Szene ohne Hintergrund hat keinen
+        Boden, gegen den sich normieren liesse — *nicht beurteilbar*, und ausdrücklich
+        nicht 1.
+    """
+    if geom_iou is None or anteil_soll is None or anteil_soll >= 1.0:
+        return None
+    return (geom_iou - anteil_soll) / (1.0 - anteil_soll)
+
+
 def geometrie_score(soll: Sequence[float], ist: Sequence[float],
                     hintergrund: float | None = None, *,
                     polaritaet: int | None = None) -> dict:
@@ -828,10 +853,27 @@ def geometrie_score(soll: Sequence[float], ist: Sequence[float],
             f"geometrische Mittel tut es nicht."
         )
 
+    # DER BODEN VON `geom_iou` GEHOERT DER SZENE, NICHT DEM BILD — und seit dem
+    # 27.08.2026 ist das keine Beobachtung mehr, sondern eine Rechenidentitaet:
+    #
+    #     Ein KONSTANTES Bild traegt nirgends die Hintergrundmarke.
+    #     -> seine Silhouette ist das GANZE Bild
+    #     -> geom_iou = |soll ∩ ist| / |soll ∪ ist| = |soll| / |Bild| = anteil_soll
+    #
+    # Auf drei Szenen auf volle Gleitkommagenauigkeit belegt: 0.1104, 0.1729, 0.5297.
+    # Eine Szene, deren Geometrie die halbe Bildflaeche fuellt, gibt JEDEM wertlosen Bild
+    # 0.53 — und 0.53 liest sich wie «zur Haelfte richtig».
+    #
+    # OWNER-ENTSCHEID 28.08.2026: Der Score bleibt unangetastet — 0.65 behaelt seine
+    # Bedeutung und die Schwellenstudie vom 18.08. ihre Gueltigkeit. Der normierte Wert
+    # steht DANEBEN.
+    geom_iou_norm = _iou_ohne_boden(geom_iou, anteil_soll)
     return {
         "score": score,
         "spearman": rho,
         "geom_iou": geom_iou,
+        # Derselbe Wert ohne den Anteil, den die Szene ohnehin schenkt. NICHT im Score.
+        "geom_iou_norm": geom_iou_norm,
         "n_gemeinsam": n_gemeinsam,
         "n_soll": n_soll,
         "n_ist": n_ist,
