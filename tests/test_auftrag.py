@@ -179,3 +179,149 @@ def test_der_abgelegte_auftrag_erfuellt_den_vertrag():
 
     for satz in auf.offene_auftraege(wurzel):
         assert auf.pruefe_auftrag(satz) == [], satz["auftrag_id"]
+
+
+# ======================================================================================
+# Der abgeleitete Zustand — der Ordner zählte nicht, was er behauptete
+# ======================================================================================
+
+def _hinlegen(tmp_path, kennung="auf-20260828-01", worker=None):
+    from aiimaging import auftrag as auf
+    satz = {
+        "schema": auf.SCHEMA_AUFTRAG, "worker": worker or auf.WORKER_LOCAL,
+        "auftrag_id": kennung, "art": "qa", "beschreibung": "Eine Frage.",
+        "anweisung": "Was zu tun ist.", "erstellt": "2026-08-28T00:00:00Z",
+        "geometrie": {"synthetisch": True, "pfad": None,
+                      "erzeugen_mit": "python3 tools/make_test_ifc.py build/t.ifc"},
+        "params": {}, "auflagen": ["keine"], "rueckgabe": ["V1 nichts"],
+    }
+    auf.schreibe_auftrag(satz, tmp_path)
+    return kennung
+
+
+def test_ohne_ergebnis_ist_ein_auftrag_offen(tmp_path):
+    from aiimaging import auftrag as auf
+    k = _hinlegen(tmp_path)
+    assert auf.zustand(k, tmp_path) == auf.ZUSTAND_OFFEN
+
+
+def test_status_ok_beantwortet_ihn(tmp_path):
+    from aiimaging import auftrag as auf
+    k = _hinlegen(tmp_path)
+    auf.schreibe_ergebnis(auf.baue_ergebnis(auftrag_id=k, status="ok"), tmp_path)
+    assert auf.zustand(k, tmp_path) == auf.ZUSTAND_BEANTWORTET
+    assert auf.unerledigt(tmp_path) == []
+
+
+@pytest.mark.parametrize("status", ["fehler", "abgelehnt", "uebersprungen"])
+def test_gerechnet_ist_nicht_beantwortet(tmp_path, status):
+    """**Der Kern des Entscheids vom 28.08.2026.**
+
+    Ein Auftrag, dessen Ergebnis `fehler` sagt, ist gerechnet worden — beantwortet ist er
+    nicht. Bis dahin galt er als erledigt, und acht Aufträge verschwanden so aus der
+    Zählung, ohne dass jemand sie beantwortet hätte.
+    """
+    from aiimaging import auftrag as auf
+    k = _hinlegen(tmp_path)
+    auf.schreibe_ergebnis(auf.baue_ergebnis(auftrag_id=k, status=status), tmp_path)
+    assert auf.zustand(k, tmp_path) == auf.ZUSTAND_GERECHNET
+    assert [a["auftrag_id"] for a in auf.unerledigt(tmp_path)] == [k]
+
+
+def test_ein_weiterleitungsvermerk_ist_keine_antwort(tmp_path):
+    """**Gemessen, nicht ausgedacht:** Von zwei `cloud`-Aufträgen mit Ergebnis waren
+    zwei von zwei Weiterleitungsvermerke (`auf-20260828-64`).
+
+    Sie tragen `status: ok` — und sind trotzdem keine Antwort. Darum wird `art` **vor**
+    `status` gelesen.
+    """
+    from aiimaging import auftrag as auf
+    k = _hinlegen(tmp_path)
+    satz = auf.baue_ergebnis(auftrag_id=k, status="ok")
+    satz["art"] = "weitergereicht_und_teilbeantwortet"
+    auf.schreibe_ergebnis(satz, tmp_path)
+
+    assert auf.zustand(k, tmp_path) == auf.ZUSTAND_WEITERGEREICHT
+    assert [a["auftrag_id"] for a in auf.unerledigt(tmp_path)] == [k], (
+        "weitergereicht heisst: liegt bei jemand anderem — die Frage ist offen")
+
+
+def test_ein_zurueckgezogener_auftrag_ist_gegenstandslos(tmp_path):
+    """Und **nicht** unbeantwortet. Das sind zwei verschiedene Aussagen."""
+    from aiimaging import auftrag as auf
+    k = _hinlegen(tmp_path)
+    satz = auf.baue_ergebnis(auftrag_id=k, status="ok")
+    satz["art"] = "zurueckgezogen"
+    auf.schreibe_ergebnis(satz, tmp_path)
+
+    assert auf.zustand(k, tmp_path) == auf.ZUSTAND_ZURUECKGEZOGEN
+    assert auf.unerledigt(tmp_path) == []
+
+
+def test_die_fuenf_zustaende_sind_genau_diese():
+    """Von der anderen Seite gezählt. Ein sechster wäre eine neue Kategorie und gehört
+    nicht still eingeführt."""
+    from aiimaging import auftrag as auf
+    assert set(auf.ZUSTAENDE) == {
+        "offen", "beantwortet", "gerechnet, nicht beantwortet",
+        "weitergereicht", "zurueckgezogen"}
+    assert set(auf.UNBEANTWORTET) == {
+        "offen", "gerechnet, nicht beantwortet", "weitergereicht"}
+    assert auf.ZUSTAND_BEANTWORTET not in auf.UNBEANTWORTET
+    assert auf.ZUSTAND_ZURUECKGEZOGEN not in auf.UNBEANTWORTET, (
+        "gegenstandslos ist etwas anderes als unbeantwortet")
+
+
+def test_es_gibt_eine_adresse_fuer_diese_sitzung():
+    """Drei Empfänger und kein Absender: Die Vokabel kannte nur eine Richtung."""
+    from aiimaging import auftrag as auf
+    assert auf.WORKER_KERN in auf.WORKER
+    assert len(set(auf.WORKER)) == 4
+
+
+def test_zustaende_zaehlt_jeden_auftrag(tmp_path):
+    from aiimaging import auftrag as auf
+    a = _hinlegen(tmp_path, "auf-20260828-01")
+    b = _hinlegen(tmp_path, "auf-20260828-02")
+    auf.schreibe_ergebnis(auf.baue_ergebnis(auftrag_id=b, status="ok"), tmp_path)
+
+    alle = auf.zustaende(tmp_path)
+    assert alle == {a: auf.ZUSTAND_OFFEN, b: auf.ZUSTAND_BEANTWORTET}
+
+
+def test_ein_kaputter_auftrag_wird_beim_lesen_gemeldet_und_blockiert_die_anderen_nicht(
+        tmp_path):
+    """**Der Vorschlag der HomeStation** (`auf-20260828-64`, V4) — und ihr eigener Anlass.
+
+    Ihr `auf-63` trug eine Art, die es nicht gibt, und kein `rueckgabe`-Feld. Die Datei
+    kam an `schreibe_auftrag` **vorbei** in den Ordner und hat eine ganze Testsammlung rot
+    gemacht — zwei Tage lang, und niemand sah warum. `pruefe_auftrag` lief bis dahin nur
+    beim **Schreiben**.
+
+    *Gemeldet und nicht geworfen: Eine Prüfung, die den ganzen Ordner unlesbar macht, wird
+    abgeschaltet.*
+    """
+    import json as _json
+    from aiimaging import auftrag as auf
+
+    gut = _hinlegen(tmp_path, "auf-20260828-01")
+    ordner = tmp_path / auf.VERZ_OFFEN
+    (ordner / "auf-20260828-02.json").write_text(_json.dumps({
+        "schema": auf.SCHEMA_AUFTRAG, "worker": auf.WORKER_LOCAL,
+        "auftrag_id": "auf-20260828-02", "art": "vertrag",
+        "beschreibung": "Eine Art, die es nicht gibt.",
+        "geometrie": {"synthetisch": True, "pfad": None, "erzeugen_mit": "x"},
+        "auflagen": ["keine"],
+    }), encoding="utf-8")
+
+    saetze = {a["auftrag_id"]: a for a in auf.offene_auftraege(tmp_path)}
+    assert set(saetze) == {gut, "auf-20260828-02"}, "der kaputte blockiert den guten nicht"
+    assert not saetze[gut].get("maengel")
+    assert any("vertrag" in m for m in saetze["auf-20260828-02"]["maengel"])
+
+
+def test_ein_fehlerfreier_auftrag_traegt_kein_maengelfeld(tmp_path):
+    """Die Gegenprobe — sonst müsste jeder Leser auf eine leere Liste prüfen."""
+    from aiimaging import auftrag as auf
+    _hinlegen(tmp_path)
+    assert "maengel" not in auf.offene_auftraege(tmp_path)[0]

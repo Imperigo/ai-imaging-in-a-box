@@ -73,10 +73,19 @@ from pathlib import Path
 #: bekommt*, ist eine Vertragsfrage; *ob neben der Zahl ihr Vorbehalt steht*, eine
 #: Oberflächenfrage. Sie an dieselbe Stelle zu schicken hiesse, dass eine von beiden
 #: liegen bleibt, weil sie nicht zum Auftrag des Lesers gehört.
+#: * :data:`WORKER_KERN` — **diese Entwicklungssitzung selbst.** Seit dem 28.08.2026
+#:   (Owner-Entscheid), und der Anlass ist eine Fehladressierung: Die HomeStation wollte
+#:   etwas von *uns* — eine Änderung an ``homeworker.py`` — und musste den Auftrag an
+#:   ``cloud`` schicken, weil es für uns keine Adresse gab. Dort hätte ``auftragspost``
+#:   ihn folgerichtig in das fremde Repo gelegt.
+#:
+#:   *Drei Empfänger und kein Absender: Die Vokabel kannte nur eine Richtung. Ein Auftrag
+#:   ohne Adresse wird erfunden, und eine erfundene Adresse führt irgendwohin.*
 WORKER_LOCAL = "local"
 WORKER_CLOUD = "cloud"
 WORKER_UI = "ui"
-WORKER = (WORKER_LOCAL, WORKER_CLOUD, WORKER_UI)
+WORKER_KERN = "kern"
+WORKER = (WORKER_LOCAL, WORKER_CLOUD, WORKER_UI, WORKER_KERN)
 
 SCHEMA_AUFTRAG = "aiimaging.homeworker-auftrag/v1"
 SCHEMA_ERGEBNIS = "aiimaging.homeworker-ergebnis/v1"
@@ -290,9 +299,24 @@ def offene_auftraege(repo_wurzel) -> list[dict]:
     saetze = []
     for pfad in sorted(verz.glob("*.json")):
         try:
-            saetze.append(json.loads(pfad.read_text(encoding="utf-8")))
+            satz = json.loads(pfad.read_text(encoding="utf-8"))
         except json.JSONDecodeError as e:
             raise AuftragError(f"Auftrag {pfad.name} ist unlesbar: {e}") from e
+
+        # DIE VERTRAGSPRUEFUNG AUCH AUF DEM LESEWEG — Vorschlag der HomeStation
+        # (auf-20260828-64, V4), und der Anlass ist ihr eigener Fehler: Ihr `auf-63` trug
+        # eine Art, die es nicht gibt, und kein `rueckgabe`-Feld. Die Datei kam an
+        # `schreibe_auftrag` VORBEI in den Ordner und hat eine ganze Testsammlung rot
+        # gemacht — zwei Tage lang, und niemand sah warum.
+        #
+        # GEMELDET UND NICHT GEWORFEN: Ein kaputter Auftrag darf die anderen
+        # zweiundsechzig nicht blockieren. Wer liest, bekommt die Liste; was daran fehlt,
+        # steht in `maengel` daneben. *Eine Pruefung, die den ganzen Ordner unlesbar
+        # macht, wird abgeschaltet.*
+        maengel = pruefe_auftrag(satz)
+        if maengel:
+            satz["maengel"] = maengel
+        saetze.append(satz)
     return sorted(saetze, key=lambda s: s.get("erstellt", ""))
 
 
@@ -480,7 +504,90 @@ def lies_ergebnis(auftrag_id: str, repo_wurzel) -> dict | None:
     return json.loads(pfad.read_text(encoding="utf-8"))
 
 
+#: Die fünf Zustände eines Auftrags. **Sie werden ABGELEITET, nie gesetzt.**
+#:
+#: **Der Befund kommt vom Gerät** (`auf-20260828-64`, 28.08.2026): 63 Aufträge in
+#: ``offen/``, 44 Ergebnisse, **40 Paare** — vierzig Aufträge lagen dort mit einem
+#: Ergebnis daneben. Und ``0 von 63`` trugen ein ``status``-Feld.
+#:
+#: *Ein Ordner, der von Hand gepflegt werden muss, verfällt. Ein Zustand, der sich aus
+#: dem Vorhandensein eines Ergebnisses ableitet, verfällt nicht.*
+#:
+#: **Warum fünf und nicht zwei** (Owner-Entscheid 28.08.2026): «Ergebnis da» und
+#: «beantwortet» sind nicht dasselbe. Gemessen: Von zwei ``cloud``-Aufträgen mit Ergebnis
+#: waren **zwei von zwei** Weiterleitungsvermerke und keine Antworten. Ein Auftrag, dessen
+#: Ergebnis ``fehler`` sagt, ist gerechnet worden — beantwortet ist er nicht.
+ZUSTAND_OFFEN = "offen"
+ZUSTAND_BEANTWORTET = "beantwortet"
+ZUSTAND_GERECHNET = "gerechnet, nicht beantwortet"
+ZUSTAND_WEITERGEREICHT = "weitergereicht"
+ZUSTAND_ZURUECKGEZOGEN = "zurueckgezogen"
+
+ZUSTAENDE = (ZUSTAND_OFFEN, ZUSTAND_BEANTWORTET, ZUSTAND_GERECHNET,
+             ZUSTAND_WEITERGEREICHT, ZUSTAND_ZURUECKGEZOGEN)
+
+#: Welche Zustände als **noch nicht beantwortet** gelten.
+#:
+#: ``weitergereicht`` gehört dazu: Der Auftrag liegt dann bei jemand anderem, aber die
+#: Frage ist offen. ``zurueckgezogen`` gehört **nicht** dazu — sie ist gegenstandslos, und
+#: das ist etwas anderes als unbeantwortet.
+UNBEANTWORTET = (ZUSTAND_OFFEN, ZUSTAND_GERECHNET, ZUSTAND_WEITERGEREICHT)
+
+#: Ergebnis-Status, die einen Auftrag NICHT beantworten. ``ok`` fehlt hier — nur er tut es.
+_NICHT_BEANTWORTET = {"fehler", "abgelehnt", "uebersprungen"}
+
+
+def zustand(auftrag_id: str, repo_wurzel) -> str:
+    """Der abgeleitete Zustand eines Auftrags — aus seinem Ergebnis, nicht aus einem Feld.
+
+    ======================================  ==================================
+    Ergebnis                                Zustand
+    ======================================  ==================================
+    keines                                  ``offen``
+    ``status: ok``                          ``beantwortet``
+    ``fehler`` / ``abgelehnt`` /            ``gerechnet, nicht beantwortet``
+    ``uebersprungen``
+    ``art: weitergereicht…``                ``weitergereicht``
+    ``art: zurueckgezogen``                 ``zurueckgezogen``
+    ======================================  ==================================
+
+    **Die beiden letzten sind nicht erfunden, beide Fälle liegen belegt vor** — ein
+    zurückgezogener Auftrag (`auf-56`) und zwei Weiterleitungsvermerke, die als Antwort
+    gezählt wurden und keine waren.
+
+    *Die Reihenfolge ist wichtig: `art` wird VOR `status` gelesen. Ein Weiterleitungs-
+    vermerk trägt ``status: ok`` — er ist trotzdem keine Antwort, und genau diese
+    Verwechslung hat die Zählung verfälscht.*
+    """
+    ergebnis = lies_ergebnis(auftrag_id, repo_wurzel)
+    if ergebnis is None:
+        return ZUSTAND_OFFEN
+
+    art = str(ergebnis.get("art") or "")
+    if art.startswith("weitergereicht"):
+        return ZUSTAND_WEITERGEREICHT
+    if art.startswith("zurueckgezogen") or art.startswith("abgelehnt"):
+        return ZUSTAND_ZURUECKGEZOGEN
+    if str(ergebnis.get("status")) in _NICHT_BEANTWORTET:
+        return ZUSTAND_GERECHNET
+    return ZUSTAND_BEANTWORTET
+
+
+def zustaende(repo_wurzel) -> dict[str, str]:
+    """Der Zustand **jedes** Auftrags — die Zählung, die der Ordner nicht führt."""
+    return {a["auftrag_id"]: zustand(a["auftrag_id"], repo_wurzel)
+            for a in offene_auftraege(repo_wurzel)}
+
+
 def unerledigt(repo_wurzel) -> list[dict]:
-    """Aufträge, zu denen noch kein Ergebnis vorliegt."""
+    """Aufträge, die **nicht beantwortet** sind — nicht bloss: ohne Ergebnisdatei.
+
+    **Bis zum 28.08.2026 hiess das «ohne Ergebnis», und das war zu grob.** Gemessen
+    (`auf-20260828-64`): Von zwei ``cloud``-Aufträgen mit Ergebnis waren zwei von zwei
+    Weiterleitungsvermerke; ein weiteres trug ``status: erledigt`` mit leeren Messwerten.
+    Sie galten als erledigt und waren es nicht.
+
+    *Ein Ergebnis zu haben heisst nicht, beantwortet zu sein.*
+    """
     return [a for a in offene_auftraege(repo_wurzel)
-            if lies_ergebnis(a["auftrag_id"], repo_wurzel) is None]
+            if zustand(a["auftrag_id"], repo_wurzel) in UNBEANTWORTET]

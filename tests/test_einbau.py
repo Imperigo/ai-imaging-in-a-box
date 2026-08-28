@@ -134,7 +134,8 @@ def test_der_rueckstand_trennt_nach_worker(tmp_path):
     stand = einbau.rueckstand(tmp_path, heute=date(2026, 8, 26))
 
     assert stand["n"] == 3
-    assert stand["je_worker"] == {"local": 1, "cloud": 1, "ui": 1}
+    assert stand["je_worker"] == {"local": 1, "cloud": 1, "ui": 1, "kern": 0}, (
+        "seit dem 28.08.2026 gibt es einen vierten Empfaenger — diese Sitzung selbst")
     assert stand["aelteste_tage"] == 6
     assert [e["auftrag_id"] for e in stand["eintraege"]][0] == "auf-20260820-01", (
         "der älteste zuerst — er ist der, der am ehesten vergessen wurde"
@@ -144,17 +145,32 @@ def test_der_rueckstand_trennt_nach_worker(tmp_path):
 def test_ein_beantworteter_auftrag_zaehlt_nicht_mehr(tmp_path):
     """Die Gegenprobe zum Rückstand. Sonst zählte er Aufträge und nicht Rückstand.
 
-    **Beantwortet heisst beantwortet, nicht gut beantwortet.** Ein Ergebnis mit
-    ``status: fehler`` ist eine Antwort — die Frage ist gestellt und beschieden. Ob sie
-    taugt, steht in den Befunden und nicht in dieser Zählung.
+    **Bis zum 28.08.2026 stand hier das Gegenteil**, und dieser Docstring sagte:
+    *«Beantwortet heisst beantwortet, nicht gut beantwortet. Ein Ergebnis mit
+    ``status: fehler`` ist eine Antwort.»* Der Test schrieb ``fehler`` und erwartete, dass
+    der Rückstand auf null fällt.
+
+    **Die Messung vom Gerät hat das widerlegt** (`auf-20260828-64`): Von zwei
+    ``cloud``-Aufträgen mit Ergebnis waren **zwei von zwei** Weiterleitungsvermerke, ein
+    weiteres trug ``status: erledigt`` mit leeren Messwerten. Nach der alten Regel galten
+    acht Aufträge als erledigt, die niemand beantwortet hat.
+
+    *Ein Ergebnis zu haben heisst nicht, beantwortet zu sein.* Owner-Entscheid vom
+    28.08.2026: Der Zustand wird abgeleitet, mit fünf Werten — und nur ``ok`` beantwortet.
     """
     _lege_ab(tmp_path, "auf-20260826-04", auf.WORKER_LOCAL, "2026-08-26T10:00:00Z")
     assert einbau.rueckstand(tmp_path, heute=date(2026, 8, 26))["n"] == 1
 
     auf.schreibe_ergebnis(
         auf.baue_ergebnis(auftrag_id="auf-20260826-04", status="fehler"), tmp_path)
+    assert einbau.rueckstand(tmp_path, heute=date(2026, 8, 26))["n"] == 1, (
+        "gerechnet und nicht beantwortet ist kein erledigter Posten")
+    assert auf.zustand("auf-20260826-04", tmp_path) == auf.ZUSTAND_GERECHNET
 
+    auf.schreibe_ergebnis(
+        auf.baue_ergebnis(auftrag_id="auf-20260826-04", status="ok"), tmp_path)
     assert einbau.rueckstand(tmp_path, heute=date(2026, 8, 26))["n"] == 0
+    assert auf.zustand("auf-20260826-04", tmp_path) == auf.ZUSTAND_BEANTWORTET
 
 
 def test_der_rueckstand_traegt_keine_pfade(tmp_path):
