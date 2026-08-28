@@ -158,6 +158,25 @@ def _geometrie_bereitstellen(satz: dict, repo: Path) -> str:
     return pfad
 
 
+#: Für wen dieses Werkzeug arbeitet. Alles andere lässt es liegen.
+#:
+#: **Der Befund kommt vom Gerät** (`auf-20260828-64`, 28.08.2026): *«homeworker liest das
+#: worker-Feld nirgends»*. Von 23 offenen Aufträgen wären **fünf beim falschen Empfänger**
+#: durchgelaufen — alle mit ``art: qa``, alle im Multipass-Zweig, alle mit
+#: ``status: ok, urteil: {"multipass": "ok"}``. **Grün und leer.**
+#:
+#: Und das Ergebnis wäre nicht folgenlos: Ein geschriebenes Ergebnis heisst in diesem
+#: Projekt *beantwortet*. Die HomeStation hätte damit vier Vertragsfragen an einen fremden
+#: Worker geschlossen, ohne dass jemand sie je gelesen hätte.
+#:
+#: `auftrag.py` verlangt das Feld seit dem 22.08.2026 als **Pflicht** — es wurde nur nie
+#: gelesen. *Eine Pflichtangabe, die niemand liest, ist eine Zeile Text.*
+#:
+#: **Zuerst dieser Filter, dann der Takt** (`auf-20260826-59`): Ein Takt ohne ihn schlösse
+#: beim ersten Durchgang fünf fremde Aufträge. Genau in dieser Reihenfolge verlangt es
+#: `auf-20260828-64`, V1.
+EIGENER_WORKER = "local"
+
 #: Aus welcher Richtung ein Auftrag ohne Angabe aufgenommen wird.
 #:
 #: **Bis zum 28.08.2026 gab der Homeworker GAR KEINE Kamera weiter** — er rief
@@ -555,18 +574,39 @@ def main(argv=None) -> int:
         print(json.dumps(gpu_zustand(), indent=2, ensure_ascii=False))
         return 0
 
-    offen = auf.unerledigt(repo)
+    alle_offenen = auf.unerledigt(repo)
+
+    # FREMDE AUFTRAEGE WERDEN NICHT ANGEFASST — und ausdruecklich auch nicht mit einem
+    # Ergebnis geschlossen. Ein geschriebenes Ergebnis heisst hier "beantwortet"; eine
+    # Ablehnung waere also schlimmer als Schweigen. Sie werden GEZAEHLT und genannt,
+    # damit niemand sie fuer erledigt haelt.
+    fremd = [s for s in alle_offenen if s.get("worker") != EIGENER_WORKER]
+    offen = [s for s in alle_offenen if s.get("worker") == EIGENER_WORKER]
+    if fremd:
+        print(f"{len(fremd)} Auftraege sind nicht fuer {EIGENER_WORKER!r} und bleiben "
+              f"liegen (kein Ergebnis geschrieben):")
+        for s in fremd:
+            print(f"  {s['auftrag_id']}  -> {s.get('worker')!r}")
+        print()
+
     if a.auftrag:
-        offen = [s for s in offen if s["auftrag_id"] == a.auftrag]
-        if not offen:
+        gewaehlt = [s for s in alle_offenen if s["auftrag_id"] == a.auftrag]
+        if not gewaehlt:
             print(f"Kein unerledigter Auftrag {a.auftrag!r}.")
             return 1
+        if gewaehlt[0].get("worker") != EIGENER_WORKER:
+            print(f"{a.auftrag} ist fuer {gewaehlt[0].get('worker')!r}, nicht fuer "
+                  f"{EIGENER_WORKER!r}. Es wird nichts ausgefuehrt und nichts "
+                  f"geschrieben — ein Ergebnis von hier waere eine Antwort, die niemand "
+                  f"gegeben hat.")
+            return 1
+        offen = gewaehlt
 
     if a.liste or not (a.alle or a.auftrag):
         if not offen:
             print("Nichts unerledigt.")
             return 0
-        print(f"{len(offen)} unerledigt:")
+        print(f"{len(offen)} unerledigt fuer {EIGENER_WORKER!r}:")
         for s in offen:
             print(f"  {s['auftrag_id']}  [{s['art']}]  {s['beschreibung'][:70]}")
         return 0

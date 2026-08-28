@@ -27,6 +27,7 @@ auf dieser Naht trägt. Das kann nur die HomeStation (``docs/PLAN.md``, Phase 4)
 """
 from __future__ import annotations
 
+import json
 import importlib.util
 import math
 import subprocess
@@ -1268,3 +1269,96 @@ def test_kameraangaben_gelten_als_verbraucht_und_werden_nicht_bemaengelt(ifc, au
     params = {n: 1.0 for n in hw._KAMERA_PARAMS}
     params["kamera"] = "sSE"
     assert hw._unverstandene_params("multipass", params) == []
+
+
+# ======================================================================================
+# Der Empfängerfilter — der Befund kam vom Gerät (auf-20260828-64, 28.08.2026)
+# ======================================================================================
+
+def _fremder_satz(kennung: str, worker: str) -> dict:
+    return {"schema": hw.auf.SCHEMA_AUFTRAG, "worker": worker, "auftrag_id": kennung,
+            "art": "qa", "beschreibung": "Eine Frage an eine andere Lane.",
+            "anweisung": "Nicht fuer die HomeStation.",
+            "erstellt": "2026-08-28T00:00:00Z",
+            "geometrie": {"synthetisch": True, "pfad": None,
+                          "erzeugen_mit": "python3 tools/make_test_ifc.py build/t.ifc"},
+            "params": {}, "auflagen": ["keine"], "rueckgabe": ["V1 nichts"]}
+
+
+def _ablage(tmp_path, *saetze):
+    ordner = tmp_path / "auftraege" / "offen"
+    ordner.mkdir(parents=True, exist_ok=True)
+    (tmp_path / "auftraege" / "ergebnisse").mkdir(parents=True, exist_ok=True)
+    for satz in saetze:
+        (ordner / f"{satz['auftrag_id']}.json").write_text(
+            json.dumps(satz), encoding="utf-8")
+    return tmp_path
+
+
+def test_ein_fremder_auftrag_wird_nicht_ausgefuehrt_und_nicht_geschlossen(tmp_path,
+                                                                          capsys):
+    """**Der blockierende Fund vom Gerät.**
+
+    `homeworker` las das `worker`-Feld nirgends. Von 23 offenen Aufträgen wären **fünf
+    beim falschen Empfänger** durchgelaufen — alle `art: qa`, alle im Multipass-Zweig,
+    alle mit `status: ok, urteil: {"multipass": "ok"}`. Grün und leer.
+
+    **Und das Ergebnis wäre nicht folgenlos:** Ein geschriebenes Ergebnis heisst in diesem
+    Projekt *beantwortet*. Die HomeStation hätte Vertragsfragen an einen fremden Worker
+    geschlossen, ohne dass jemand sie je gelesen hätte.
+
+    *`auftrag.py` verlangt das Feld seit dem 22.08.2026 als Pflicht — es wurde nur nie
+    gelesen. Eine Pflichtangabe, die niemand liest, ist eine Zeile Text.*
+    """
+    repo = _ablage(tmp_path, _fremder_satz("auf-20260828-90", "cloud"))
+    assert hw.main(["--repo", str(repo), "--alle"]) == 0
+
+    ausgabe = capsys.readouterr().out
+    assert "auf-20260828-90" in ausgabe and "'cloud'" in ausgabe
+    assert not list((repo / "auftraege" / "ergebnisse").iterdir()), (
+        "eine Ablehnung waere hier schlimmer als Schweigen — sie zaehlte als Antwort")
+
+
+@pytest.mark.parametrize("worker", ["cloud", "ui"])
+def test_kein_fremder_worker_wird_ausgefuehrt(tmp_path, worker):
+    repo = _ablage(tmp_path, _fremder_satz("auf-20260828-91", worker))
+    hw.main(["--repo", str(repo), "--alle"])
+    assert not list((repo / "auftraege" / "ergebnisse").iterdir())
+
+
+def test_ein_fremder_auftrag_wird_auch_bei_ausdruecklicher_nennung_abgelehnt(tmp_path,
+                                                                             capsys):
+    """`--auftrag` ist kein Freibrief. Wer ihn nennt, weiss oft nicht, wem er gehört."""
+    repo = _ablage(tmp_path, _fremder_satz("auf-20260828-92", "ui"))
+    assert hw.main(["--repo", str(repo), "--auftrag", "auf-20260828-92"]) == 1
+    assert "nicht fuer 'local'" in capsys.readouterr().out
+    assert not list((repo / "auftraege" / "ergebnisse").iterdir())
+
+
+def test_die_liste_zeigt_beide_seiten(tmp_path, capsys):
+    """Fremde Aufträge werden **gezählt und genannt** — sonst hielte sie jemand für
+    erledigt, weil sie nirgends mehr auftauchen."""
+    eigener = _fremder_satz("auf-20260828-93", "local")
+    repo = _ablage(tmp_path, eigener, _fremder_satz("auf-20260828-94", "cloud"))
+    hw.main(["--repo", str(repo), "--liste"])
+
+    ausgabe = capsys.readouterr().out
+    assert "1 Auftraege sind nicht fuer 'local'" in ausgabe
+    assert "1 unerledigt fuer 'local'" in ausgabe
+    assert "auf-20260828-93" in ausgabe and "auf-20260828-94" in ausgabe
+
+
+def test_ein_auftrag_ohne_worker_feld_gilt_als_fremd(tmp_path):
+    """**Nicht als eigener.** Ein fehlendes Feld ist keine Zusage, und der teure Fehler
+    liegt auf der Seite «doch ausgeführt»."""
+    satz = _fremder_satz("auf-20260828-95", "local")
+    del satz["worker"]
+    repo = _ablage(tmp_path, satz)
+    hw.main(["--repo", str(repo), "--alle"])
+    assert not list((repo / "auftraege" / "ergebnisse").iterdir())
+
+
+def test_der_eigene_worker_heisst_local():
+    """Er steht in `auftrag.WORKER` — sonst liefe der Filter gegen einen erfundenen Namen
+    und liesse alles liegen."""
+    assert hw.EIGENER_WORKER in hw.auf.WORKER
