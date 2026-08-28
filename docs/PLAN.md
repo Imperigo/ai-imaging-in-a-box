@@ -4906,7 +4906,7 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 - [x] **Vier Mutationsproben, vier Rote** — jede Bedingung in beide Richtungen verbogen.
       Bei «immer wahr» werden im Abholer **13** Tests rot: Das ist der Beleg dafür, dass
       die Zeile in gewöhnlichen Läufen schweigt.
-- [x] **Sammlung 4550 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
+- [x] **Sammlung 4561 grün**, allein gefahren. Die Testzahl im README war um zehn zurück
       und ist nachgeführt.
 - [x] **Verteilt** — `auf-20260827-61` an `local` (Kalibrierung), `auf-20260827-62` an
       `ui` (der Vorbehalt gehört zur Zahl). Einbau-Stand: C8, C9, A11.
@@ -5062,6 +5062,11 @@ der Verdachtsfall.
       *Die Zahl «verschiedene Tiefenwerte» aus dem Test ist damit ein Artefakt der
       16-Bit-Normalisierung und sagt über die Messbarkeit nichts: `s` hat 241 davon über
       0,42 m.*
+- [x] **Die Messung ist nachbaubar** — `tools/studie_richtungen.py`, zehn Tests,
+      Auswertung in `docs/RICHTUNGEN_2026-08-28.md`. *Sie lief zuerst aus einem Skript
+      unter `build/`, also ausserhalb des Repos, und wurde gelöscht — ihre Zahlen standen
+      da bereits in zwei Aufträgen, die andere ausführen sollen.* **Eine Zahl, die in
+      einem Auftrag steht und nicht nachgebaut werden kann, ist eine Behauptung.**
 - [ ] **Was stattdessen dasteht, ist schärfer und geht in die Kalibrierung:** Die **guten**
       Fälle liegen auf frontalen Richtungen systematisch tiefer (0,66–0,92) als auf
       diagonalen (0,93–0,99). Bei `PAAR_RHO_SCHWELLE = 0.80` fallen **5 von 20** guten
