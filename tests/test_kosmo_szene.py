@@ -211,7 +211,8 @@ def test_gespeicherte_kameras_sind_ein_mangel_und_kein_stiller_ersatz():
 
 def test_eine_kameraliste_wird_uebersetzt():
     gelesen = ks.lies_szene(szene(cameras=[
-        {"name": "n", "position": [0, -50, 1.7], "target": [0, 0, 5], "fov": 65.47}]))
+        {"name": "n", "position": [0, -50, 1.7], "target": [0, 0, 5], "fov": 65.47,
+         "up_axis": "z"}]))
     assert gelesen["kameras"][0]["kuerzel"] == "n"
     assert gelesen["kameras"][0]["brennweite_mm"] == pytest.approx(28.0, abs=0.01)
 
@@ -441,7 +442,8 @@ def test_die_vorgabe_des_fremden_vertrags_wird_gerastert_und_gemeldet():
                            "geometry": {"path": "/tmp/x.glb", "format": "glb"},
                            "out": "/tmp/aus",
                            "cameras": [{"name": "a", "position": [1, 2, 3],
-                                        "target": [0, 0, 0], "fov": 45}]})
+                                        "target": [0, 0, 0], "fov": 45,
+                                        "up_axis": "z"}]})
     assert szene["aufloesung"] % ks.RASTER == 0
     assert szene["hoehe"] % ks.RASTER == 0
     assert (szene["aufloesung"], szene["hoehe"]) == (1600, 992)

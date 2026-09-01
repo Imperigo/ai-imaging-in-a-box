@@ -198,6 +198,21 @@ def setze_status(verzeichnis, status: str, *, fehler: str | None = None) -> dict
     return jobs.setze_status(ordner.name, status, ordner, fehler=fehler)
 
 
+def vermerke_grund(verzeichnis, grund: str) -> dict:
+    """Warum dieser Auftrag liegen bleibt — an den Auftragssatz, ohne Statuswechsel.
+
+    Dieselbe Naht wie :func:`aiimaging.bruecke.vermerke_grund`, damit ein liegen
+    gebliebener Auftrag auf **beiden** Wegen dieselbe Auskunft trägt. Ein Auftrag aus
+    dem Cockpit und einer aus der Oberfläche sollen sich darin nicht unterscheiden —
+    sonst hinge die Antwort daran, welchen Weg die Bestellung genommen hat.
+
+    Geht über :func:`aiimaging.jobs.vermerke_meldung` und damit **nicht** am Automaten
+    vorbei: Der Status wird nicht angefasst, nur der Klartext.
+    """
+    ordner = Path(verzeichnis)
+    return jobs.vermerke_meldung(ordner.name, ordner, grund)
+
+
 def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
                       geometrie_urteil=None, stil_urteil=None, zeiten=None,
                       nicht_gerendert=(),

@@ -209,7 +209,11 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
     ordner = Path(verzeichnis)
     antwort = {"tat": TAT_LIEGENGELASSEN, "job_id": ordner.name,
                "verzeichnis": ordner, "grund": "", "ergebnis": None, "wache": None,
-               "warnungen": (), "vertragsvorgaben": ()}
+               "warnungen": (), "vertragsvorgaben": (),
+               # Immer da, auch wenn nie etwas zu vermerken war — ein Ergebnissatz mit
+               # wechselnden Schluesseln zwingt jeden Auswerter, vor dem Lesen zu
+               # verzweigen. `None` heisst: es lag kein Grund an.
+               "grund_vermerkt": None}
 
     try:
         auftrag = quelle.lies_auftrag(ordner, fremde_freigabe_gilt=fremde_freigabe_gilt)
@@ -226,12 +230,19 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
             "Der Auftrag hat Mängel, die einen Lauf verbieten:\n- "
             + "\n- ".join(auftrag["maengel"])
         )
+        _grund_vermerken(quelle, ordner, antwort)
         return antwort
 
     darf, warum = _karte_frei(auftrag["laufzettel"], darf_rechnen)
     if not darf:
         antwort["grund"] = warum
+        _grund_vermerken(quelle, ordner, antwort)
         return antwort
+
+    # Ein Auftrag, der jetzt LÄUFT, darf die Begründung von vorhin nicht mehr tragen.
+    # Ohne diese Zeile bliebe „die Karte war nicht frei" an einem Auftrag stehen, der
+    # gerade rechnet — und wäre von einem, der noch wartet, nicht zu unterscheiden.
+    _grund_vermerken(quelle, ordner, {"grund": ""})
 
     # Ab hier wird gerechnet. Erst jetzt auf `running` — vorher hätte ein
     # liegengelassener Auftrag ausgesehen, als arbeite jemand an ihm.
@@ -289,8 +300,88 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
     return antwort
 
 
+def _grund_vermerken(quelle, ordner, antwort: dict) -> None:
+    """Den Grund, warum nichts geschah, an den Auftrag heften — nicht nur ins Journal.
+
+    **Der Anlass ist Demolauf 12** (01.09.2026). 24 Durchgänge lang stand im Journal
+    wörtlich *«Karte: NICHT frei — Auslastung 12 % (Grenze 10 %)»* und daneben
+    *«Der Auftrag trägt 'idle_window_only' und die Karte ist nicht frei»*. Und
+    gleichzeitig an der Oberfläche: *«WARTET — NICHT ABGEHOLT (GRUND UNBEKANNT) …
+    Läuft auf der HomeStation ein Render-Abholer?»*
+
+    Er lief und nannte den Grund alle 30 Sekunden. Nur stand der Grund im **Journal**,
+    und der Auftrag trug ihn nicht. Das ist keine unglückliche Doppelmeldung, das ist
+    eine fehlende Leitung: Wer den Auftrag liest — und die Oberfläche liest nichts
+    anderes —, sieht ``status: "queued"`` und sonst nichts.
+
+    Was NICHT geschieht: der Status wird nicht angefasst. ``queued`` ist richtig; der
+    Auftrag wartet wirklich. Nur das WARUM kommt dazu, in das Feld, das ihr eigener
+    Vertrag dafür führt (:data:`aiimaging.bruecke.FELD_MELDUNG`).
+
+    ``antwort`` wird um ``grund_vermerkt`` ergänzt: ``True``, ``False`` mit
+    Begründung — *ungeprüft ist nicht dasselbe wie in Ordnung*, und eine Buchführung,
+    von der niemand weiss, ob sie stattfand, ist keine.
+    """
+    vermerke = getattr(quelle, "vermerke_grund", None)
+    if not callable(vermerke):
+        antwort["grund_vermerkt"] = (
+            f"NEIN: {getattr(quelle, '__name__', quelle)!r} kennt kein "
+            f"'vermerke_grund'. Der Grund steht nur im Journal — genau der Zustand, "
+            f"gegen den diese Funktion gebaut ist.")
+        return
+    try:
+        vermerke(ordner, antwort.get("grund") or "")
+    except Exception as fehler:                # noqa: BLE001 — Buchführung, kein Lauf
+        antwort["grund_vermerkt"] = f"NEIN: {type(fehler).__name__}: {fehler}"
+        return
+    antwort["grund_vermerkt"] = True
+
+
 #: Dateiname des vollständigen Befunds, neben dem Vertragsergebnis.
 DATEI_BEFUND = "befund.json"
+
+#: Dateiname des Urteils EINER Kamera, in deren eigenem Ausgabeordner.
+DATEI_URTEIL = "urteil.json"
+
+
+def _urteil_ablegen(ordner, urteil: dict) -> None:
+    """Das Urteil **einer** Kamera ablegen, sobald sie fertig ist.
+
+    **Der Anlass ist Demolauf 12** (01.09.2026). Der Auftrag brach an der **zweiten**
+    Kamera ab (``Expected all tensors to be on the same device``) — und das fertige,
+    gemessene Urteil der **ersten** war damit weg. In keinem Ausgabeordner lag
+    ``rho_maske``, ``geom_iou`` oder ``paarurteil``. Der Maskenweg sagte damit zum
+    dritten Lauf in Folge nichts, jedes Mal aus einem anderen Grund: Lauf 10 fehlender
+    Geländebeleg, Lauf 11 kein Diffusionsbild, Lauf 12 dieser Absturz.
+
+    **Warum das nicht der Befund erledigt.** :func:`_befund_ablegen` schreibt alles —
+    aber erst, wenn ``verarbeite`` **zurückgekehrt** ist. Eine Ausnahme in Kamera 2
+    verlässt die Schleife, ``hole_einen`` fängt sie, setzt den Auftrag auf ``error``
+    und kehrt zurück, ohne dass je ein Befund entstand. Alles, was Kamera 1 gekostet
+    hat — Blender-Lauf, Diffusion, zwei Schätzerläufe —, ist dann nur noch Rechenzeit.
+
+    *Ein gemessenes Urteil darf nicht an einem späteren Fehler sterben.* Darum steht
+    diese Datei im Ordner **der Kamera**, nicht des Auftrags: Sie ist fertig, wenn die
+    Kamera fertig ist, und was danach geschieht, geht sie nichts mehr an.
+
+    Ein fehlgeschlagenes Ablegen darf den Lauf nicht kosten — dieselbe Entscheidung wie
+    bei :func:`_befund_ablegen` und :func:`_auswahl_ablegen`. REGEL 3: Absolute Pfade
+    werden auf Dateinamen gekürzt, die Datei liegt im Auftragsverzeichnis der fremden
+    Oberfläche.
+    """
+    import json as _json
+
+    try:
+        ziel = Path(ordner)
+        ziel.mkdir(parents=True, exist_ok=True)
+        (ziel / DATEI_URTEIL).write_text(
+            _json.dumps({"schema": "aiimaging.kameraurteil/v1",
+                         "kamera": urteil.get("kamera"),
+                         "urteil": _ohne_pfade(urteil)},
+                        ensure_ascii=False, indent=1, default=str),
+            encoding="utf-8")
+    except Exception:                          # noqa: BLE001 — Buchführung, kein Lauf
+        pass
 
 
 def _ohne_pfade(wert):
@@ -1587,13 +1678,40 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 bericht["zwischenspeicher"] = {"treffer": False, "schluessel": schluessel,
                                                "gerechnet_unter": bericht.get("blender")}
 
+            # ZUERST DIE BLICKRICHTUNG, DANN DIE TIEFENKARTE — die Reihenfolge ist der
+            # Punkt. Eine Kamera, die an der Szene vorbeischaut, erzeugt ein LEERES
+            # Tiefenbild, und die Meldung darueber kommt aus der Normalisierung
+            # («Tiefenbild enthaelt keinen einzigen Geometriepixel … Pruefe Kamera und
+            # Szene, nicht die Schranke»). Sie ist richtig und nennt die Ursache nicht.
+            # Stuende dieser Riegel darunter, bekaeme man in genau dem Fall, fuer den er
+            # gebaut ist, weiterhin die andere Meldung.
+            blickfeld = _blick_trifft_szene(bericht)
+            if blickfeld["abbruch"]:
+                # `rahmung` wird AUSDRUECKLICH auf None gesetzt und nicht mit dem
+                # Blickfeldbefund gefuellt. `_uebersprungenes_urteil` legt seinen
+                # Riegel unter diesem Namen ab, und `_nicht_gerendert_kurz` liest ihn
+                # dort: Ein Blickfeldbefund unter `rahmung` haette die fremde Seite
+                # «Das Bauwerk fuellt zu wenig der Bildbreite» lesen lassen — fuer eine
+                # Kamera, die das Bauwerk ueberhaupt nicht anschaut. Ein falscher Grund
+                # ist schlimmer als keiner.
+                urteile.append(dict(_uebersprungenes_urteil(kuerzel, blickfeld),
+                                    massstab=_massstab_gemeldet(bericht),
+                                    rahmung=None, komposition=None,
+                                    blickfeld=blickfeld))
+                _urteil_ablegen(aus, urteile[-1])
+                zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
+                continue
+
             tiefe = bericht.get("depth_png")
             if not tiefe:
                 raise AbholerError(
                     f"Kamera {kuerzel!r}: keine Tiefenkarte. Ohne sie gibt es keine "
                     f"Konditionierung, und ein Render ohne sie wäre genau die erfundene "
                     f"Kubatur, gegen die dieses Projekt antritt. Grund: "
-                    f"{bericht.get('depth_png_fehler')}"
+                    f"{bericht.get('depth_png_fehler')}\n"
+                    f"Blickrichtung: {blickfeld['grund'] or ('geprueft, der Sehstrahl '
+                    'trifft die Szene' if blickfeld['geprueft'] else 'NICHT GEPRUEFT — '
+                    'der Bericht traegt keine brauchbare Huellbox oder Kamera')}"
                 )
 
             # DIE PRUEFUNG VOR DEM BILDLAUF. Sie steht hier und nicht weiter unten,
@@ -1632,7 +1750,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             if lage is not None:
                 urteile.append(dict(_uebersprungenes_urteil(kuerzel, lage),
                                     massstab=massstab, rahmung=rahmung,
-                                    komposition=komposition))
+                                    komposition=komposition, blickfeld=blickfeld))
+                _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
                 continue
 
@@ -1652,6 +1771,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             if zwilling is not None:
                 urteile.append(dict(zwilling["urteil"], kamera=kuerzel,
                                     doppelt_von=zwilling["kamera"]))
+                _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
                 continue
 
@@ -1751,7 +1871,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # jede spaetere Auswertung von hier lesen — und weil eine Messreihe wissen
             # muss, welche Bilder in DIESEM Lauf entstanden sind.
             urteil["zwischenspeicher"] = bericht.get("zwischenspeicher")
+            urteil["blickfeld"] = blickfeld
             urteile.append(urteil)
+            # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
+            # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.
+            _urteil_ablegen(aus, urteil)
             if kennung:
                 gesehen[kennung] = {"kamera": kuerzel, "urteil": urteil}
             zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
@@ -2112,6 +2236,18 @@ WEGE = ("bruecke", "eigene_quelle")
 #: für die er gilt. ``begruendung`` ist **Pflicht, sobald ``wege`` nicht beide nennt** —
 #: ein einseitiger Riegel ohne Grund ist eine Lücke mit gutem Gewissen.
 RIEGEL: dict[str, dict] = {
+    "_blick_trifft_szene": {
+        "ort": "verarbeiter",
+        "wege": WEGE,
+        "was": "Trifft der Sehstrahl von `auge` nach `blick_auf` die Huellbox der Szene "
+               "ueberhaupt? Ohne Schwellenwert — eine Kamera, die an der Szene "
+               "vorbeischaut, erzeugt ein leeres Tiefenbild, und die Meldung darueber "
+               "kaeme sonst aus der Normalisierung und spraeche von der Schranke statt "
+               "von der Kamera (Demolauf 12, 01.09.2026). Er steht ausdruecklich VOR "
+               "der Tiefenpruefung und gilt auf BEIDEN Kamerawegen — anders als "
+               "`_rahmung_vor_dem_render`, das auf dem vorgegebenen Weg zu Recht "
+               "schweigt und ihn damit ganz ungeprueft liess.",
+    },
     "_bilder_vollstaendig": {
         "ort": "verarbeiter",
         "wege": WEGE,
@@ -2371,6 +2507,12 @@ def _nicht_gerendert_kurz(kameras) -> tuple[str, ...]:
             continue
         if eintrag.get("doppelt_von"):
             art = "doppelt"
+        elif (eintrag.get("blickfeld") or {}).get("abbruch"):
+            # ZUERST GEFRAGT. Eine Kamera, die an der Szene vorbeischaut, ist kein
+            # Rahmungsfall — bei ihr gibt es gar nichts zu rahmen. Stuende die Frage
+            # weiter unten, faenge der Rahmungszweig sie ab, sobald er je ein `abbruch`
+            # traegt, und die fremde Seite laese eine Bildbreite, die nie gemessen wurde.
+            art = "blickfeld"
         elif (eintrag.get("rahmung") or {}).get("abbruch"):
             art = "rahmung"
             wert = (eintrag["rahmung"] or {}).get("wirksame_bildbreite")
@@ -2393,6 +2535,12 @@ def _nicht_gerendert_kurz(kameras) -> tuple[str, ...]:
                 f"NICHT GERENDERT (Rahmung), {namen}: Das Bauwerk fuellt {spanne} der "
                 f"Bildbreite, gemessen noetig sind "
                 f"{_kameras_modul.BILDBREITE_ABBRUCH:.0%}")
+        elif art == "blickfeld":
+            zeilen.append(
+                f"NICHT GERENDERT (Kamera schaut an der Szene vorbei), {namen}: Der "
+                f"Sehstrahl von Standort zu Blickziel trifft die Huellbox der Geometrie "
+                f"nicht. Haeufigste Ursache: eine Kameraliste in Dateikoordinaten — "
+                f"`up_axis` der CameraSpec pruefen")
         elif art == "kamerahoehe":
             zeilen.append(
                 f"NICHT GERENDERT (Aufnahme nicht beurteilbar), {namen}: Die Kamera steht "
@@ -2577,6 +2725,90 @@ def _kamera_ueber_dach(kamera: dict) -> dict:
         f"kamerahoehe_m ({kamerahoehe:.3f}) liegt ueber gebaeudehoehe_m ({gebaeude:.3f}). "
         f"Dann schaut die Kamera auf das Dach herab, und 'Dach und Fuss im Bild' ist die "
         f"falsche Frage.")}
+
+
+def _blick_trifft_szene(bericht: dict) -> dict:
+    """Schaut diese Kamera die Szene überhaupt AN? — ohne Bild und ohne Schwellenwert.
+
+    **Der Anlass ist Demolauf 12** (01.09.2026). Eine mitgelieferte Kameraliste kam in
+    glTF-Koordinaten herein (``up_axis: "y"``), die Geometrie wurde beim Import nach
+    Z-up gedreht, die Kamera nicht. Der Blender-Lauf meldete sich als **gelungen** —
+    er hat getan, was dastand — und hinterliess ein Tiefenbild ohne einen einzigen
+    Geometriepixel und eine ``material_id`` mit genau einer Farbe. Erst die
+    Normalisierung fiel darüber, mit einer Meldung über die **Schranke** statt über
+    die Kamera.
+
+    Die Frage ist ohne freien Parameter zu beantworten: Trifft der Sehstrahl von
+    ``auge`` nach ``blick_auf`` die Hüllbox der Szene? Das ist die
+    Slab-Schnittprüfung eines Strahls gegen einen achsparallelen Quader — kein
+    Schwellenwert, keine Deckungsgrad-Annahme, keine Frage des Geschmacks. Ein
+    Sehstrahl, der die Box verfehlt, kann kein Bauwerk abbilden.
+
+    An den Zahlen des Vorfalls gemessen (Box ``x 68.513…173.963 · y 60.482…119.692 ·
+    z −0.985…29.314``)::
+
+        gestellt  auge (121.238,  0.615, 23.878)  blick_auf (121.238, 11.135, −90.087)  VERFEHLT
+        gedreht   auge (121.238, −23.878, 0.615)  blick_auf (121.238, 90.087,  11.135)  trifft
+
+    **Warum hier und nicht im Runner.** Der Runner rahmt, was ihm gesagt wird; die
+    Rechnung ist reine Arithmetik und gehört diesseits der Prozessgrenze (Regel 4).
+    Und warum nicht in :func:`_rahmung_vor_dem_render`: Der Rahmungsriegel setzt
+    ``abbruch`` ausdrücklich auf ``None``, wenn die Kamera **nicht** abgeleitet wurde —
+    aus gutem Grund, denn sein Deckungsgrad beschreibt nur den abgeleiteten Weg. Damit
+    war der vorgegebene Weg, auf dem die Oberfläche ihre Kameras schickt, **gar nicht
+    geprüft**. Diese Frage hier gilt auf beiden Wegen gleich, weil sie keine Rahmung
+    beurteilt, sondern die Blickrichtung.
+
+    Returns:
+        ``{abbruch, grund, geprueft}``. ``abbruch`` ist ``False``, wenn sich die Frage
+        nicht stellen lässt — eine fehlende Hüllbox ist **keine** verfehlte Kamera,
+        sondern eine fehlende Hüllbox, und ``geprueft`` sagt welches von beidem.
+    """
+    kamera = bericht.get("kamera") if isinstance(bericht, dict) else None
+    box = bericht.get("bbox") if isinstance(bericht, dict) else None
+    if not isinstance(kamera, dict) or not isinstance(box, (list, tuple)) or len(box) != 2:
+        return {"abbruch": False, "grund": "", "geprueft": False}
+    try:
+        auge = [float(v) for v in kamera["auge"]]
+        ziel = [float(v) for v in kamera["blick_auf"]]
+        lo = [float(v) for v in box[0]]
+        hi = [float(v) for v in box[1]]
+    except (TypeError, ValueError, KeyError, IndexError):
+        return {"abbruch": False, "grund": "", "geprueft": False}
+    if len(auge) != 3 or len(ziel) != 3 or len(lo) != 3 or len(hi) != 3:
+        return {"abbruch": False, "grund": "", "geprueft": False}
+
+    richtung = [ziel[i] - auge[i] for i in range(3)]
+    if not any(abs(r) > 0.0 for r in richtung):
+        # Auge und Blickziel fallen zusammen. Das ist keine verfehlte Kamera, das ist
+        # gar keine — und der Runner haette daran schon zerbrochen.
+        return {"abbruch": False, "grund": "", "geprueft": False}
+
+    nah, fern = 0.0, float("inf")
+    for i in range(3):
+        if abs(richtung[i]) == 0.0:
+            if not (min(lo[i], hi[i]) <= auge[i] <= max(lo[i], hi[i])):
+                nah, fern = 1.0, 0.0
+                break
+            continue
+        t1 = (min(lo[i], hi[i]) - auge[i]) / richtung[i]
+        t2 = (max(lo[i], hi[i]) - auge[i]) / richtung[i]
+        nah = max(nah, min(t1, t2))
+        fern = min(fern, max(t1, t2))
+    if nah <= fern:
+        return {"abbruch": False, "grund": "", "geprueft": True}
+
+    return {"abbruch": True, "geprueft": True, "grund": (
+        f"Der Sehstrahl verfehlt die Szene. auge={[round(v, 3) for v in auge]}, "
+        f"blick_auf={[round(v, 3) for v in ziel]}, Huellbox "
+        f"{[round(v, 3) for v in lo]}…{[round(v, 3) for v in hi]} — kein Punkt des "
+        f"Strahls liegt im Quader. Ein Bild davon zeigt kein Bauwerk, und die "
+        f"Geometriezahl darauf waere eine Zahl ueber nichts.\n"
+        f"HAEUFIGSTE URSACHE: eine Kameraliste in DATEIKOORDINATEN. Blenders "
+        f"glTF-Import dreht Y-up nach Z-up (R_x(+90)); eine mitgelieferte Kamera muss "
+        f"dieselbe Drehung erfahren. `kosmo_szene.spec_zu_kamera` liest dafuer das "
+        f"Pflichtfeld `up_axis` der CameraSpec — wer den Runner direkt aufruft, dreht "
+        f"selbst (`kosmo_szene.kamera_nach_blender`).")}
 
 
 def _komposition_vor_dem_render(bericht: dict) -> dict:

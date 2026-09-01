@@ -512,6 +512,32 @@ def setze_status(job_id: str, neuer_status: str, verzeichnis, *,
     return satz
 
 
+def vermerke_meldung(job_id: str, verzeichnis, meldung: str) -> dict:
+    """Klartext an einen Auftrag heften, **ohne** den Status zu wechseln.
+
+    Der Automat ist absichtlich eng: :func:`setze_status` lässt ``queued`` gar nicht
+    erst setzen, weil das die Tür zur GPU wäre. Ein WARTEGRUND ist aber kein
+    Statuswechsel — der Auftrag steht zu Recht auf ``queued``, und was fehlt, ist die
+    Auskunft, warum er dort steht. Die durch den Automaten zu schleusen hiesse, für
+    einen Kommentar ein Gate zu öffnen.
+
+    Geschrieben wird ``meldung``; leerer Text löscht sie. Der ``verlauf`` bleibt
+    unangetastet — er zählt Zustände, keine Erklärungen.
+
+    Raises:
+        JobError: Kennung untauglich oder Auftrag nicht vorhanden.
+    """
+    satz = lies_job(job_id, verzeichnis)
+    text = str(meldung or "").strip()
+    if text:
+        satz["meldung"] = text
+    else:
+        satz.pop("meldung", None)
+    satz["geaendert"] = _jetzt()
+    schreibe_job(satz, verzeichnis)
+    return satz
+
+
 def freigeben(job_id: str, token: str, verzeichnis) -> dict:
     """``awaiting_approval`` → ``queued``, ausschliesslich mit gültigem Token.
 

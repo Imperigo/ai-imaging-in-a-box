@@ -55,6 +55,7 @@ import math
 import re
 
 from . import backbone as _backbone
+from . import contracts as _contracts
 from . import geometrie_qa, prompts, sprache, stil_qa
 from . import kameras as _kameras
 from . import sonne as _sonne
@@ -200,28 +201,128 @@ def kamera_zu_spec(kamera: dict) -> dict:
         "position": [float(v) for v in kamera["auge"]],
         "target": [float(v) for v in kamera["blick_auf"]],
         "fov": fov,
+        # PFLICHTFELD IHRES VERTRAGS, und es fehlte hier. `CameraSpec.up_axis` ist
+        # `z.enum(['y','z'])` OHNE Default (P-ACHSENRIEGEL, 26.08.2026) — eine Spec
+        # ohne dieses Feld wird von ihrem eigenen Schema ABGEWIESEN. Wir haben also
+        # bis zum 01.09.2026 CameraSpecs gebaut, die drueben gar nicht durchkommen.
+        #
+        # `"z"` ist die richtige Angabe und keine Wahl: `kameras.kamerasatz` rechnet
+        # aus der Huellbox, die der Blender-Bericht meldet, und die steht in Blenders
+        # Weltsystem — Z oben. Unsere Zahlen sind Z-up, also sagen wir Z-up.
+        "up_axis": HOCHACHSE_BLENDER,
     }
 
 
-def spec_zu_kamera(spec: dict) -> dict:
-    """Fremde ``CameraSpec`` → unsere Kamerafelder. Die Gegenrichtung.
+#: Die Hochachse, in der unsere Kette rechnet: Blenders Weltsystem, Z oben.
+#:
+#: Nach dem glTF-Import steht die Szene IMMER Z-up da — bei einer Y-up-Datei durch
+#: Blenders eigene Umrechnung ``R_x(+90)``, bei einer Z-up-Datei, weil der Runner sie
+#: mit ``--rotiere-z-up`` wieder zurückdreht. Ein Standort in dieser Achse braucht
+#: darum keine Drehung mehr, ein Y-up-Standort genau eine.
+HOCHACHSE_BLENDER = "z"
+
+#: Die Hochachse der glTF-Konvention. `CameraSpec.up_axis` erlaubt genau diese beiden.
+HOCHACHSE_GLTF = "y"
+
+
+def kamera_nach_blender(punkt, up_axis):
+    """Ein Kamerapunkt aus einer ``CameraSpec`` → Blenders Weltsystem.
+
+    **Der Anlass ist Demolauf 12** (01.09.2026). Der Auto-Kamera-Knoten schickte eine
+    fertige Kameraliste mit ``up_axis: "y"``; die Geometrie wurde beim Import gedreht,
+    die Kamera nicht. Gemessen an der glb dieses Auftrags::
+
+        Szenenbox in Blender   x  68.513 … 173.963   y 60.482 … 119.692   z −0.985 … 29.314
+        Auge, wie gestellt     (121.238,   0.615, 23.878)   → y liegt 59,9 m NEBEN dem Bau
+        Blickziel, wie gestellt (121.238, 11.135, −90.087)  → z liegt 89,1 m UNTER dem Bau
+        Blickziel, gedreht     (121.238, 90.087,  11.135)   → x und y exakt die Boxmitte
+
+    Dass das gedrehte Blickziel beider Kameras **genau** auf der Mitte der Szenenbox
+    landet, ist der Beleg: Die Liste war in Dateikoordinaten gerechnet, und es fehlte
+    genau diese eine Drehung.
+
+    ``up_axis`` ist in ihrem Vertrag **Pflichtfeld ohne Vorgabewert** — ausdrücklich
+    wegen eines früheren Vorfalls (P-ACHSENRIEGEL). Es wurde gesendet, für die
+    Geometrie angewandt und für die Kamera **verworfen**: :func:`spec_zu_kamera` las
+    ``position``, ``target``, ``name`` und ``fov``, und sonst nichts.
+
+    Args:
+        punkt: drei Zahlen in der Achse ``up_axis``.
+        up_axis: ``"y"`` (glTF) oder ``"z"`` (CAD/Blender). Gross-/Kleinschreibung egal.
+
+    Returns:
+        Der Punkt in Blenders Weltsystem — bei ``"z"`` unverändert, bei ``"y"`` um
+        ``R_x(+90)`` gedreht, also mit **derselben** Rechnung, die
+        :func:`aiimaging.contracts.blender_gltf_import_dreht` für die Geometrie
+        ausschreibt. Eine zweite Fassung dieser Formel wäre die Falle noch einmal.
 
     Raises:
-        SzenenError: ``position`` oder ``target`` fehlen oder sind keine drei Zahlen.
+        SzenenError: ``up_axis`` fehlt oder ist weder ``y`` noch ``z``. **Es wird nicht
+            geraten** — genau dafür steht das Pflichtfeld im fremden Vertrag, und ein
+            Vorgabewert hier wäre die stille Verdrehung, gegen die er gebaut wurde.
+    """
+    achse = _hochachse(up_axis)
+    if achse == HOCHACHSE_BLENDER:
+        return tuple(float(v) for v in punkt)
+    return tuple(_contracts.blender_gltf_import_dreht([float(v) for v in punkt]))
+
+
+def _hochachse(wert) -> str:
+    """``up_axis`` einer ``CameraSpec`` prüfen — ohne Vorgabewert."""
+    if wert is None:
+        raise SzenenError(
+            "CameraSpec ohne 'up_axis'. Das Feld ist in `kosmovis.render-scene/v1` "
+            "PFLICHT und hat KEINEN Vorgabewert (P-ACHSENRIEGEL, 26.08.2026) — "
+            "`position` und `target` sind ohne es mehrdeutig, und beide Deutungen "
+            "sehen wie brauchbare Zahlen aus. Wer hier eine Achse annimmt, wiederholt "
+            "Demolauf 12: Geometrie gedreht, Kamera nicht, Tiefenbild ohne einen "
+            "einzigen Geometriepixel."
+        )
+    achse = str(wert).strip().lower()
+    if achse in (HOCHACHSE_BLENDER, HOCHACHSE_GLTF):
+        return achse
+    raise SzenenError(
+        f"CameraSpec 'up_axis' ist {wert!r}. Ihr Vertrag lässt genau {HOCHACHSE_GLTF!r} "
+        f"und {HOCHACHSE_BLENDER!r} zu; auf einen der beiden zu raten hiesse, eine "
+        f"90-Grad-Drehung zu würfeln."
+    )
+
+
+def spec_zu_kamera(spec: dict) -> dict:
+    """Fremde ``CameraSpec`` → unsere Kamerafelder, **in Blenders Weltsystem**.
+
+    Die Gegenrichtung zu :func:`kamera_zu_spec`. Seit dem 01.09.2026 wird dabei
+    ``up_axis`` gelesen und angewandt — siehe :func:`kamera_nach_blender` für den
+    Vorfall, der das erzwingt.
+
+    Returns:
+        ``{kuerzel, auge, blick_auf, brennweite_mm, up_axis, auge_bestellt,
+        blick_auf_bestellt}``. Die beiden ``…_bestellt``-Felder tragen die Zahlen, wie
+        sie hereinkamen: Ohne sie wäre eine gedrehte Kamera von einer ungedrehten im
+        Bericht nicht mehr zu unterscheiden, und genau diese Unterscheidung hat vier
+        Tage gekostet.
+
+    Raises:
+        SzenenError: ``position`` oder ``target`` fehlen oder sind keine drei Zahlen —
+            oder ``up_axis`` fehlt (Pflichtfeld ohne Vorgabewert).
     """
     if not isinstance(spec, dict):
         raise SzenenError(f"CameraSpec ist kein Wörterbuch: {spec!r}")
+    achse = _hochachse(spec.get("up_axis"))
     werte = {}
     for fremd, unser in (("position", "auge"), ("target", "blick_auf")):
         w = spec.get(fremd)
         if not isinstance(w, (list, tuple)) or len(w) != 3:
             raise SzenenError(f"CameraSpec ohne brauchbares '{fremd}': {w!r}")
         try:
-            werte[unser] = tuple(float(v) for v in w)
+            bestellt = tuple(float(v) for v in w)
         except (TypeError, ValueError) as e:
             raise SzenenError(f"CameraSpec '{fremd}' enthält keine Zahlen: {w!r}") from e
+        werte[unser] = kamera_nach_blender(bestellt, achse)
+        werte[f"{unser}_bestellt"] = bestellt
     werte["kuerzel"] = spec.get("name")
     werte["brennweite_mm"] = fov_zu_brennweite(spec.get("fov", 50.0))
+    werte["up_axis"] = achse
     return werte
 
 

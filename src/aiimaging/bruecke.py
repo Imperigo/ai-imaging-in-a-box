@@ -77,6 +77,22 @@ VERZEICHNIS_MUSTER = re.compile(r"^vis-\d+-[0-9a-f]{6}$")
 #: Vorsatz des Freigabe-Tokens — bei ihnen wie bei uns.
 TOKEN_VORSATZ = "CONFIRMED_RENDER_"
 
+#: Das Feld ihres Laufzettels für einen Wartegrund im Klartext.
+#:
+#: **Es steht in IHREM Vertrag, wörtlich** (``kosmo-contracts/src/render-result.ts``,
+#: ``RenderJob``)::
+#:
+#:     /** Menschlicher Zusatztext (z. B. Abbruch-/Wartegrund), UI-lesbar. */
+#:     message: z.string().optional(),
+#:
+#: Es ist also nicht erfunden und nicht ausgehandelt — es lag bereit und wurde von uns
+#: nie beschrieben. Am 01.09.2026 stand darum 24 Durchgänge lang im Journal
+#: *«Karte: NICHT frei — Auslastung 12 % (Grenze 10 %)»*, während die Oberfläche
+#: *«WARTET — NICHT ABGEHOLT (GRUND UNBEKANNT)»* zeigte. Der Abholer lief und nannte
+#: den Grund alle 30 Sekunden; nur stand er im Journal, und der Auftrag hatte kein
+#: Feld dafür. Er hatte eines.
+FELD_MELDUNG = "message"
+
 
 class BrueckenError(ValueError):
     """Ein Auftragsverzeichnis ist unbrauchbar, oder eine Antwort passte nicht hinein."""
@@ -290,6 +306,47 @@ def setze_status(verzeichnis, status: str, *, fehler: str | None = None) -> dict
     laufzettel["updated_at"] = _jetzt()
     if fehler is not None:
         laufzettel["error"] = fehler
+    _schreibe_atomar(ziel, laufzettel)
+    return laufzettel
+
+
+def vermerke_grund(verzeichnis, grund: str) -> dict:
+    """Warum dieser Auftrag **liegen bleibt** — in den Laufzettel, ohne den Status anzufassen.
+
+    Der Gegenstück zu ``setze_status(..., fehler=...)`` für den Fall, der **kein Fehler
+    ist**: Der Auftrag wartet zu Recht, weil die Karte belegt ist oder weil die fremde
+    Freigabe nicht gilt. ``status`` bleibt darum ``queued`` — er beschreibt richtig, was
+    los ist. Was fehlte, war das WARUM.
+
+    Geschrieben wird :data:`FELD_MELDUNG`, das Feld ihres eigenen Vertrags (siehe dort).
+    **Kein neues Feld, keine Vertragsänderung** — nur eine Leitung, die auf beiden Seiten
+    gebaut war und in der Mitte nicht angeschlossen.
+
+    *Ob die Oberfläche es HEUTE anzeigt, ist eine andere Frage und liegt drüben*:
+    ``NodeCanvas.tsx`` liest ``j.message`` bislang nur im Zweig ``kein-render-worker``
+    und beschriftet ``queued`` fest mit ``WARTET_ABHOLER_LABEL``. Das ist ihr Repo und
+    ihr Handgriff; unserer ist, den Grund überhaupt erst hinzuschreiben. Eine Leitung,
+    die auf unserer Seite endet, ist auf unserer Seite zu Ende gebaut.
+
+    Args:
+        grund: Klartext. Leerer Text löscht den Vermerk — ein Auftrag, der wieder läuft,
+            soll nicht die Begründung von gestern tragen.
+
+    Returns:
+        Den fortgeschriebenen Laufzettel.
+
+    Raises:
+        BrueckenError: der Laufzettel fehlt oder ist unlesbar.
+    """
+    ordner = Path(verzeichnis)
+    ziel = ordner / DATEI_LAUFZETTEL
+    laufzettel = _lies_json(ziel, "Laufzettel (job.json)")
+    text = str(grund or "").strip()
+    if text:
+        laufzettel[FELD_MELDUNG] = text
+    else:
+        laufzettel.pop(FELD_MELDUNG, None)
+    laufzettel["updated_at"] = _jetzt()
     _schreibe_atomar(ziel, laufzettel)
     return laufzettel
 

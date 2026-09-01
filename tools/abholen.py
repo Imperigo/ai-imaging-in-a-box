@@ -302,7 +302,15 @@ def _berichte(bericht: dict) -> None:
     print(json.dumps(schlank, ensure_ascii=False, indent=1))
     for e in bericht.get("ergebnisse", []):
         kennung = e.get("job_id") or e.get("auftrag") or "?"
-        print(f"  {kennung}: {e.get('status', '?')} — {str(e.get('grund') or e.get('begruendung') or '')[:160]}")
+        # `tat` UND NICHT `status`. Hier stand `e.get("status", "?")`, und
+        # `hole_einen` liefert diesen Schluessel nicht — es liefert `tat`. Jede Zeile
+        # dieses Berichts trug darum ein Fragezeichen, seit es ihn gibt; im Journal von
+        # Demolauf 12 steht 24 Mal «vis-…: ? — Der Auftrag traegt 'idle_window_only'».
+        # Der Grund stand da, der Zustand nicht, und der Vorgabewert des `get` hat den
+        # fehlenden Schluessel als Auskunft verkleidet.
+        print(f"  {kennung}: {e.get('tat', '?')} — {str(e.get('grund') or e.get('begruendung') or '')[:160]}")
+        if e.get("grund_vermerkt") not in (True, None):
+            print(f"    Grund NICHT am Auftrag vermerkt: {e['grund_vermerkt']}")
         w = e.get("wache")
         if w is None:
             print("    Wache: nicht beobachtet")

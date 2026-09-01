@@ -29,6 +29,7 @@ angezeigt werden **muss** oder **nicht angeboten werden darf**, und immer mit de
 | U6 | **`awaiting_approval` ist kein Ladezustand**, sondern ein Halt mit Grund. Ein Kreisel wäre dort eine Lüge; es gehört ein Knopf hin | `jobs.baue_job`, der Freeze-Schutz | weitergegeben `auf-20260826-52` |
 | U7 | **Ein Bild aus dem Zwischenspeicher muss als solches erkennbar sein.** Seit 26.08. kann die Geometriestufe aus einem früheren Lauf stammen; die Oberfläche zeigt sonst ein Bild als «gerade entstanden», das Stunden alt ist | Zwischenspeicher, 26.08. abends | weitergegeben `auf-20260826-53` |
 | U8 | **Die Geländefrage gehört dem Benutzer vorgelegt, nicht abverlangt.** Die Regel kennt die geprüften Baustoffnamen — die Oberfläche kann sie zeigen und entscheiden lassen, statt eine Vorab-Kenntnis zu verlangen, die bei einer fremden glb niemand hat | `maske.gelaende_befund`, 26.08. abends | weitergegeben `auf-20260826-53` |
+| U9 | **Ein wartender Auftrag hat einen Grund, und er steht jetzt drin.** Wir füllen seit dem 01.09.2026 `message` (ihr Feld, ihr Vertrag) bei `queued`. `NodeCanvas.tsx` liest es nur im Zweig `kein-render-worker` und zeigt sonst fest «Grund unbekannt» — in Demolauf 12 24 Durchgänge lang, während der Abholer den Grund alle 30 s nannte. Ohne `message` bleibt die heutige Beschriftung richtig | `abholer._karte_frei`, `bruecke.FELD_MELDUNG`, Demolauf 12 (01.09.) | weitergegeben `auf-20260901-70` |
 
 ---
 

@@ -1,0 +1,26 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "ui",
+ "auftrag_id": "auf-20260901-70",
+ "art": "frage",
+ "beschreibung": "Ein wartender Auftrag traegt seit 01.09.2026 seinen Grund im Feld `message` eures Vertrags. Die Oberflaeche liest es bei `queued` noch nicht und zeigt stattdessen fest «Grund unbekannt».",
+ "anweisung": "=== EIN BEFUND UEBER DIE ANZEIGE EINES WARTENDEN AUFTRAGS ===\n\nEr stammt aus dem Demolauf vom 01.09.2026 und ist zur Haelfte schon bei uns behoben.\nDiese Haelfte ist eure.\n\n--- WAS PASSIERT IST ---\n\n24 Durchgaenge lang stand im Journal des Abholers auf der HomeStation woertlich:\n\n    Karte: NICHT frei - Auslastung 12 % (Grenze 10 %)\n    vis-1788277501-b799e4: liegengelassen - Der Auftrag traegt 'idle_window_only'\n                           und die Karte ist nicht frei\n\nUnd gleichzeitig zeigte die Oberflaeche am Knoten:\n\n    WARTET - NICHT ABGEHOLT (GRUND UNBEKANNT)\n    Laeuft auf der HomeStation ein Render-Abholer?\n\nEr lief. Er nannte den Grund alle 30 Sekunden. Nur stand der Grund im JOURNAL, und der\nAuftrag trug ihn nicht - also konnte die Oberflaeche ihn nicht kennen. Der Satz «Laeuft\nauf der HomeStation ein Render-Abholer?» war die einzige Vermutung, die ihr anbieten\nkonntet, und sie war falsch.\n\n--- UNSERE HAELFTE, SEIT 01.09.2026 ERLEDIGT ---\n\nWir schreiben den Grund ab sofort in den Laufzettel. NICHT in ein neues Feld: in\n`message`, das euer eigener Vertrag dafuer fuehrt (`kosmo-contracts/src/render-result.ts`,\n`RenderJob`):\n\n    /** Menschlicher Zusatztext (z. B. Abbruch-/Wartegrund), UI-lesbar. */\n    message: z.string().optional(),\n\nEin wartender Auftrag sieht damit so aus:\n\n    {\n      \"job_id\": \"vis-1788277501-b799e4\",\n      \"status\": \"queued\",\n      \"message\": \"Der Auftrag traegt 'idle_window_only' und die Karte ist nicht frei:\n                  Auslastung 12 % (Grenze 10 %).\",\n      \"updated_at\": \"...\"\n    }\n\nZwei Zusagen dazu:\n\n  * `status` bleibt `queued`. Er ist richtig - der Auftrag WARTET wirklich. Es fehlte\n    nur das Warum. Wir machen aus einem Wartezustand keinen Fehler.\n  * `message` wird GELOESCHT, sobald der Auftrag laeuft. Ein rechnender Auftrag traegt\n    nie die Begruendung von vorhin. Ohne das waere ein laufender von einem wartenden\n    nicht zu unterscheiden.\n\nGeschrieben wird der Grund in beiden Faellen, in denen ein Auftrag liegen bleibt:\nKarte belegt (`idle_window_only`) und Freigabe gilt nicht.\n\n--- EURE HAELFTE ---\n\n`apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx` liest `j.message` heute nur im Zweig\n`kein-render-worker`; fuer `queued` faellt der Poll in `mappeJobStatus(j)` und der Node\nzeigt `WARTET_ABHOLER_LABEL` aus `vis-runtime.ts`:\n\n    export const WARTET_ABHOLER_LABEL = 'wartet - nicht abgeholt (Grund unbekannt)';\n\nDer Kommentar darueber sagt ausdruecklich, was diese Beschriftung NIE tun soll: «einen\nGrund nennen, den der Client nicht kennt». Das war richtig, solange er ihn nicht kannte.\nAb jetzt kennt er ihn, wenn `message` da ist.\n\nWAS WIR VORSCHLAGEN (die Gestaltung ist eure Sache, s. Auflagen):\n\n  * Ist `message` bei `queued` gesetzt, zeigt sie statt «(Grund unbekannt)».\n  * Ist sie NICHT gesetzt, bleibt es genau bei der heutigen Beschriftung. Ein\n    fehlender Grund darf nicht zu einem erfundenen werden - dieselbe Regel wie bei uns.\n  * Der Satz «Laeuft auf der HomeStation ein Render-Abholer?» bleibt fuer den Fall ohne\n    `message` richtig und sollte dort stehen bleiben. Mit `message` ist er falsch: Der\n    Abholer laeuft dann nachweislich, denn nur er schreibt dieses Feld.\n\nDas ist zugleich eine Unterscheidung, die es heute gar nicht gibt: «niemand holt ab»\ngegen «es wurde abgeholt und bewusst nicht gerechnet». Zwei sehr verschiedene Lagen,\nund die zweite ist die haeufigere.\n\n--- WAS WIR NICHT TUN ---\n\nWir aendern euren Vertrag nicht. `message` steht dort schon, wir fuellen es nur. Wir\nschlagen auch keinen neuen Status vor: `queued` mit Grund ist genau richtig, und ein\neigener Status «wartet-auf-karte» waere ein Zustand mehr, den jede Seite kennen muesste.\n\n--- ZUM NACHVOLLZIEHEN ---\n\nUnsere Seite haengt an Proben in `tests/test_demolauf12_befunde.py` (Posten 3). Der\nWortlaut, den ihr zu sehen bekommt, ist der aus `abholer._karte_frei` - er beginnt mit\n«Der Auftrag traegt 'idle_window_only'» und endet mit der Auskunft von `nvidia-smi`.",
+ "erstellt": "2026-09-01T16:49:05Z",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+ },
+ "params": {},
+ "auflagen": [
+  "Keine Gestaltungsvorgaben von uns - wie und wo es erscheint, entscheidet ihr",
+  "Ohne `message` bleibt die heutige Beschriftung unveraendert. Ein fehlender Grund darf nicht zu einem erfundenen werden",
+  "Kein neuer Status. `queued` mit Grund ist der richtige Zustand",
+  "Regel 3: keine Benutzerpfade, keine echten Projektdaten"
+ ],
+ "rueckgabe": [
+  "U9a Reicht `message` als Klartext, oder braucht ihr eine maschinenlesbare Ursache daneben (etwa `karte_belegt` / `freigabe_fehlt`)?",
+  "U9b Soll `message` auch bei `running` und `done` gefuellt werden, oder stoert es dort?",
+  "U9c Gibt es eine Laengengrenze, ab der die Zeile bei euch bricht?"
+ ]
+}

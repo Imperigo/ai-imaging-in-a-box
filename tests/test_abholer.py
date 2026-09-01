@@ -419,13 +419,17 @@ def test_drei_kameras_ergeben_drei_bilder_und_drei_urteile(tmp_path):
     szene = {
         "schema": bruecke.kosmo_szene.SCHEMA_SZENE,
         "geometry": {"path": "model.glb", "format": "glb"},
+        # `up_axis` ist in `CameraSpec` PFLICHT ohne Vorgabewert (P-ACHSENRIEGEL).
+        # Diese Zahlen sind Z-up — die Hoehe steht an dritter Stelle —, also steht das
+        # auch da. Bis zum 01.09.2026 fehlte das Feld hier, und die Naht verwarf es
+        # ohnehin: genau der Zustand, aus dem Demolauf 12 entstand.
         "cameras": [
             {"name": "Eingang", "position": [0, -20, 1.3], "target": [0, 0, 1.3],
-             "fov": 60},
+             "fov": 60, "up_axis": "z"},
             {"name": "Uebersicht", "position": [0, -60, 38], "target": [0, 0, 5],
-             "fov": 50},
+             "fov": 50, "up_axis": "z"},
             {"name": "Innenraum", "position": [1, 1, 1.6], "target": [4, 4, 1.6],
-             "fov": 80},
+             "fov": 80, "up_axis": "z"},
         ],
         "render": {"resolution": [512, 512], "samples": 64, "faithful": 0.8},
         "style": {"prompt": "ein Haus"},
@@ -452,8 +456,10 @@ def test_je_kamera_eine_eigene_tiefenkarte(tmp_path):
     szene = {
         "geometry": {"path": "model.glb", "format": "glb"},
         "cameras": [
-            {"name": "a", "position": [0, -20, 2], "target": [0, 0, 2], "fov": 60},
-            {"name": "b", "position": [20, 0, 2], "target": [0, 0, 2], "fov": 60},
+            {"name": "a", "position": [0, -20, 2], "target": [0, 0, 2], "fov": 60,
+             "up_axis": "z"},
+            {"name": "b", "position": [20, 0, 2], "target": [0, 0, 2], "fov": 60,
+             "up_axis": "z"},
         ],
         "render": {"resolution": [512, 512]},
         "style": {"prompt": "x"},
@@ -474,7 +480,7 @@ def test_das_schlechteste_urteil_zaehlt_und_nicht_der_mittelwert(tmp_path):
     szene = {
         "geometry": {"path": "model.glb", "format": "glb"},
         "cameras": [{"name": f"k{i}", "position": [0, -20, 2], "target": [0, 0, 2],
-                     "fov": 60} for i in range(3)],
+                     "fov": 60, "up_axis": "z"} for i in range(3)],
         "render": {"resolution": [512, 512]}, "style": {"prompt": "x"},
         "vis": {"backbone": "qwen"},
     }
@@ -723,8 +729,10 @@ def test_das_belichtungsurteil_haengt_am_kameraurteil(tmp_path):
     """Damit sichtbar bleibt, WELCHE Kamera zu hell war — nicht nur, dass eine es war."""
     szene = {
         "geometry": {"path": "model.glb", "format": "glb"},
-        "cameras": [{"name": "a", "position": [0, -20, 2], "target": [0, 0, 2], "fov": 60},
-                    {"name": "b", "position": [20, 0, 2], "target": [0, 0, 2], "fov": 60}],
+        "cameras": [{"name": "a", "position": [0, -20, 2], "target": [0, 0, 2],
+                     "fov": 60, "up_axis": "z"},
+                    {"name": "b", "position": [20, 0, 2], "target": [0, 0, 2],
+                     "fov": 60, "up_axis": "z"}],
         "render": {"resolution": [512, 512]}, "style": {"prompt": "x"},
         "vis": {"backbone": "qwen"},
     }
