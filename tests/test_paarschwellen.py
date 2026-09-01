@@ -280,3 +280,67 @@ def test_das_werkzeug_meldet_einen_fall_ohne_etikett_statt_ihn_zu_ueberspringen(
     p = tmp_path / "f.json"
     p.write_text(json.dumps([{"fall_id": "x", "wert": 0.5}]), encoding="utf-8")
     assert w.main([str(p)]) == 2
+
+
+# ======================================================================================
+# Mitgebrachte Vorbehalte — was den Zahlen selbst nicht anzusehen ist
+# ======================================================================================
+#
+# Der Anlass ist die Ersatzkalibrierung vom 01.09.2026: vier Szenen, vier Richtungen,
+# genug Fälle in jeder Gruppe — jeder Wächter dieses Moduls schweigt, und trotzdem ist
+# das Ergebnis keine Kalibrierung, weil die Ist-Karten gebaut und nicht geschätzt sind.
+# Das steht in keiner Zahl. Ohne diesen Weg hätte die Studie sich selbst
+# `genuegt_als_kalibrierung` genannt — und genau das war zu verhindern.
+
+def test_ein_mitgebrachter_vorbehalt_steht_im_ergebnis():
+    kurve = paarschwellen.trennkurve(
+        _volle_menge([0.9] * 20, [0.3] * 20),
+        zusatz_vorbehalte=("PERFEKTE KARTEN: gebaut, nicht geschätzt.",))
+    assert "PERFEKTE KARTEN: gebaut, nicht geschätzt." in kurve["vorbehalte"]
+
+
+def test_ein_mitgebrachter_vorbehalt_verhindert_die_kalibrierung():
+    """Die schärfste Zusicherung: sauber getrennt, voller Umfang — und trotzdem nicht.
+
+    Ohne den Vorbehalt wäre `genuegt_als_kalibrierung` hier `True`; der Vergleich steht
+    daneben, damit der Test nicht aus einem anderen Grund grün ist.
+    """
+    faelle = _volle_menge([0.9] * 20, [0.3] * 20)
+    assert paarschwellen.trennkurve(faelle)["genuegt_als_kalibrierung"] is True
+    kurve = paarschwellen.trennkurve(faelle, zusatz_vorbehalte=("Obergrenze.",))
+    assert kurve["genuegt_als_kalibrierung"] is False
+    assert kurve["trennt_sauber"] is True, (
+        "Der Vorbehalt betrifft die Herkunft der Zahlen, nicht die Trennung selbst — "
+        "die Kurve wird nicht entwertet, nur ihre Verwendung als Kalibrierung.")
+
+
+def test_der_mitgebrachte_vorbehalt_steht_vor_den_gerechneten():
+    """Herkunft vor Umfang. Wer nur die erste Zeile liest, muss die Obergrenze lesen."""
+    kurve = paarschwellen.trennkurve(
+        [_fall("g0", True, 0.9), _fall("b0", False, 0.3)],   # viel zu wenige Fälle
+        zusatz_vorbehalte=("HERKUNFT.",))
+    assert kurve["vorbehalte"][0] == "HERKUNFT."
+    assert any("UMFANG" in v for v in kurve["vorbehalte"]), (
+        "die gerechneten Vorbehalte dürfen durch den mitgebrachten nicht verdrängt werden")
+
+
+def test_der_bericht_zeigt_den_mitgebrachten_vorbehalt_ueber_der_tabelle():
+    text = paarschwellen.bericht(paarschwellen.trennkurve(
+        _volle_menge([0.9] * 20, [0.3] * 20),
+        zusatz_vorbehalte=("KEINE KALIBRIERUNG.",)))
+    assert "KEINE KALIBRIERUNG." in text
+    assert text.index("KEINE KALIBRIERUNG.") < text.index("Trennung:"), (
+        "Eine Einschränkung nach den Zahlen wird ohne sie gelesen.")
+
+
+def test_ohne_mitgebrachte_vorbehalte_aendert_sich_nichts():
+    """Die Voreinstellung ist leer — der neue Weg darf keine bestehende Kurve umdeuten."""
+    faelle = _volle_menge([0.9] * 20, [0.3] * 20)
+    assert (paarschwellen.trennkurve(faelle)
+            == paarschwellen.trennkurve(faelle, zusatz_vorbehalte=()))
+
+
+def test_mehrere_mitgebrachte_vorbehalte_stehen_in_ihrer_reihenfolge():
+    kurve = paarschwellen.trennkurve(_volle_menge([0.9] * 20, [0.3] * 20),
+                                     zusatz_vorbehalte=("ERSTENS.", "ZWEITENS."))
+    assert kurve["vorbehalte"][:2] == ["ERSTENS.", "ZWEITENS."]

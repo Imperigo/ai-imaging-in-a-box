@@ -105,7 +105,8 @@ def _pruefe_faelle(faelle: Sequence[dict]) -> None:
 
 
 def trennkurve(faelle: Sequence[dict], kandidaten: Sequence[float] = KANDIDATEN_RHO, *,
-               groesse: str = "rho_maske_gerichtet") -> dict:
+               groesse: str = "rho_maske_gerichtet",
+               zusatz_vorbehalte: Sequence[str] = ()) -> dict:
     """Für jede Kandidatenschwelle beide Fehlerzahlen — die Vorlage für den Entscheid.
 
     Args:
@@ -115,6 +116,12 @@ def trennkurve(faelle: Sequence[dict], kandidaten: Sequence[float] = KANDIDATEN_
         kandidaten: Die zu prüfenden Schwellen.
         groesse: Der Name der Messgrösse — er steht im Ergebnis, weil dieselbe Rechnung
             für ρ und für den Kantenanteil gilt und die Tabellen sonst verwechselbar sind.
+        zusatz_vorbehalte: Einschränkungen, die **den Fällen selbst nicht anzusehen**
+            sind. Die Wächter unten prüfen den Umfang; dass eine Ist-Karte gebaut und
+            nicht geschätzt ist, steht in keiner Zahl. Diese Vorbehalte stehen **vor**
+            den gerechneten und setzen ``genuegt_als_kalibrierung`` genauso auf falsch.
+            Sie können eine Kurve nur strenger machen, nie milder — ein Weg, eine
+            Einschränkung *abzuschalten*, ist mit Absicht nicht vorgesehen.
 
     Returns:
         Ein Satz mit ``punkte`` (je Kandidat die vier Zahlen), ``trennt_sauber``
@@ -150,7 +157,11 @@ def trennkurve(faelle: Sequence[dict], kandidaten: Sequence[float] = KANDIDATEN_
     # nichtleere Sammlung, und genau darum steht die Leerprüfung VOR ihnen und nicht als
     # Ausnahmebehandlung dahinter: Eine leere Gruppe ist kein Sonderfall der Rechnung,
     # sondern das Ende der Auskunft.
-    vorbehalte: list[str] = []
+    # DIE MITGEBRACHTEN VORBEHALTE STEHEN ZUERST, und das ist kein Schönheitsgrund:
+    # Sie betreffen die Herkunft der Zahlen und damit alles, was danach kommt. Ein
+    # Umfangsvorbehalt sagt «zu wenige Fälle»; ein Herkunftsvorbehalt sagt «auch mit
+    # genügend Fällen wäre es keine Kalibrierung». Der zweite gehört über den ersten.
+    vorbehalte: list[str] = [str(v) for v in zusatz_vorbehalte]
     if not gut_werte:
         vorbehalte.append(
             "KEIN EINZIGER MESSBARER GUTER FALL. Ohne sie sperrt jede Schwelle nur "

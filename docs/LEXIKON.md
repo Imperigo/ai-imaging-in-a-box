@@ -1044,6 +1044,29 @@ beantwortet zu sein.** *Gemessen: Von zwei Aufträgen an den Vertrags-Worker, di
 Ergebnis trugen, waren zwei von zwei blosse Weiterleitungsvermerke. Nach der alten
 Zählung galten acht Aufträge als erledigt, die niemand beantwortet hat.*
 
+**Auftragsart (`multipass`, `render`, `qa`, `frage`)** — Woran der Empfänger eines
+Auftrags erkennt, **ob eine Maschine oder ein Mensch ihn beantwortet**. Die ersten drei
+sind Läufe: Sie starten eine Rechnung und liefern Messwerte. `frage` ist keiner — sie
+verlangt eine Auskunft, und ein Runner kann sie nicht geben.
+*Wozu die vierte Art am 01.09.2026 dazukam:* Neun der Aufträge an die HomeStation trugen
+`qa` und meinten eine Frage — *«Warum reicht `/api/mcp/tools` keine Schemata durch?»* ist
+nichts, was ein Renderer ausführen kann. Ein Sammellauf über alle offenen Aufträge hätte
+sie angefasst und für jede einen Fehlschlag geschrieben. Seit der Trennung zählt und nennt
+der Homeworker sie, **fasst sie aber nicht an** — dieselbe Behandlung wie ein Auftrag, der
+einem anderen Worker gehört.
+*Und was sie ausdrücklich nicht tut:* Eine Frage umzutypisieren beantwortet sie nicht. Der
+Rückstand sank dadurch um **null**.
+
+**Rückstandsdeckel** — Eine Obergrenze für die Zahl **offener Aufträge je Adressat**, die
+das Werkzeug durchsetzt und nicht der Vorsatz. Wer den elften Auftrag an jemanden
+schreiben will, der schon acht offene hat, bekommt keinen — sondern die Liste der drei
+ältesten, die zuerst zu schliessen wären.
+*Warum es ihn gibt:* Ein Rückstand wächst nicht durch eine Entscheidung, sondern durch
+vierzig kleine, von denen jede für sich vernünftig war. *Was von Hand eingehalten wird,
+wird irgendwann nicht mehr eingehalten.*
+*Die Zahl ist eine Setzung und keine Messung* (acht, beschlossen am 28.08.2026) — sie
+steht deshalb als benannte Konstante und nicht als Zahl im Code.
+
 **Obergrenze (eines Befundes)** — Ein Messaufbau, der einer Sache absichtlich die
 **besten denkbaren** Bedingungen gibt, um zu klären, ob sie unter *irgendwelchen*
 Bedingungen taugt. Das Ergebnis ist einseitig belastbar: Was hier scheitert, ist erledigt;
@@ -1056,6 +1079,28 @@ verändert, bevor er ausgeführt wurde.*
 *Der Nutzen liegt in der Reihenfolge: Eine Obergrenze kostet fast nichts und kann eine
 teure Messung ganz ersparen. Ihre Gefahr liegt darin, sie für das Ergebnis zu halten —
 darum trägt sie ihren Vorbehalt im Namen.*
+
+**Ersatzmessung / Ersatzkalibrierung** — Eine Messung, die an die Stelle einer noch
+ausstehenden tritt, **ohne sie zu ersetzen**. Sie beantwortet dieselbe Frage unter
+leichteren Bedingungen und trägt ihren Abstand zur echten Messung ausdrücklich mit.
+*Im Projekt am 01.09.2026:* Die Kalibrierung der Paarschwellen liegt als Auftrag bei der
+HomeStation und braucht dort einen echten Tiefenschätzer. Bis sie zurückkommt, wurde
+dieselbe Tabelle hier mit **gebauten** Karten gerechnet — als Obergrenze, in acht Kurven,
+und der Auftrag blieb offen.
+*Die Gefahr ist immer dieselbe:* Eine Ersatzmessung, die niemand mehr als solche liest,
+wird zur Antwort. Darum ist sie hier nicht nur im Text als Vorbehalt geführt, sondern im
+Ergebnis der Rechnung — siehe **Mitgebrachter Vorbehalt**.
+
+**Mitgebrachter Vorbehalt** — Eine Einschränkung, die man einer Messung **von aussen
+mitgibt**, weil sie in den Zahlen selbst nicht steht. Die Wächter einer Auswertung prüfen,
+was sie prüfen können — Fallzahl, Streuung, nicht messbare Zeilen. Dass die Eingangsdaten
+aus einer Werkstatt und nicht aus dem Betrieb stammen, sieht ihnen keiner an.
+*Im Projekt:* `paarschwellen.trennkurve` nimmt `zusatz_vorbehalte` entgegen, stellt sie
+**vor** die selbst gerechneten und setzt damit `genuegt_als_kalibrierung` auf falsch. Der
+Weg kann eine Auswertung nur strenger machen, nie milder; einen Schalter, der eine
+Einschränkung abstellt, gibt es mit Absicht nicht.
+*Der Satz dahinter:* **Eine Messung, die ihren eigenen Vorbehalt aufweichen kann, ist
+keine.**
 
 **Validierung (eines Verfahrens)** — Die Gegenprobe zur Kalibrierung: prüfen, ob das
 ausgerichtete Verfahren auch dort taugt, wo es angewandt werden soll — an Fällen, die beim
@@ -1256,6 +1301,18 @@ kurzen Kennzahl, die aus deren Zahlen berechnet wird und für gleiche Karten gle
 also einem Hash im Sinn von Abschnitt 8 —, verwirft sie und führt jede einzeln im Feld
 `entdoppelt` auf; `n_roh` und `n_ausgewertet` nennen beide Anzahlen nebeneinander. Aus 36
 rohen wurden so 32 ausgewertete Zeilen.*
+
+**Fixpunkt eines Masses** — Ein Eingabefall, dessen Messwert **von der Definition des
+Masses** feststeht und nicht davon, woran gemessen wurde. Er sieht in einer Tabelle aus wie
+ein Beleg, ist aber keiner: Man kann ihn hinschreiben, ohne je gemessen zu haben.
+*Beispiele aus der Rangkorrelation ρ:* Ein unverändertes Bild ergibt immer 1,0000; eine
+streng monotone Umrechnung ebenfalls (ρ ist rangbasiert und damit massstabsfrei); eine
+exakt umgekehrte Rangfolge immer −1,0000; ein konstantes Bild hat keine Rangfolge und ist
+**nicht messbar**.
+*Warum das eine Falle ist:* Am 01.09.2026 trugen 40 gute Zeilen einer Messreihe nur 18
+verschiedene ρ-Werte, weil vier der elf Fallarten Fixpunkte sind — und über acht Zeilen je
+Gruppe denselben Wert lieferten. Zuvor war derselbe Befund als *«symmetrische
+Kamerapaare»* gedeutet worden: die falsche Erklärung für die richtige Beobachtung.
 
 **Idempotenz** — Eigenschaft eines Vorgangs, der mehrfach ausgeführt dasselbe Ergebnis
 liefert wie einmal ausgeführt. Macht Wiederholung nach Abbruch gefahrlos.
@@ -3752,6 +3809,8 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-01 | Ergaenzt: **Auftragsart (multipass, render, qa, frage)** und **Rueckstandsdeckel**. Anlass sind neun Auftraege an die HomeStation, die `qa` trugen und eine Frage meinten — ein Sammellauf haette fuer jede einen Fehlschlag geschrieben. Der Deckel-Eintrag traegt den Satz mit, der ihn noetig machte: Ein Rueckstand waechst nicht durch eine Entscheidung, sondern durch vierzig kleine |
+| 2026-09-01 | Ergaenzt: **Ersatzmessung / Ersatzkalibrierung**, **Mitgebrachter Vorbehalt**, **Fixpunkt eines Masses**. Anlass ist die Ersatzkalibrierung der Paarschwellen: 176 Zeilen, davon 88 Dubletten — 44, weil die vierte Szene (`raeume`) in allen Zeilen exakt die Zahlen der ersten lieferte, und 44, weil vier der elf Fallarten Fixpunkte von rho sind. **Berichtigt:** Der Befund vom 27.08. war als «symmetrische Kamerapaare» gedeutet — die Punktgleichheit tritt auch beim asymmetrischen `hochbau` auf und haengt am Mass, nicht am Bauwerk |
 | 2026-08-28 | Ergaenzt: **Abgeleiteter Zustand**. Anlass ist eine Messung der HomeStation: 63 Auftraege, 44 Ergebnisse, 40 Paare, und kein einziger Auftrag mit Zustandsfeld — der Ordner sicherte einen Zustand zu, den er nicht fuehrte. Der Eintrag traegt die fuenf abgeleiteten Werte und den Satz, um den es geht: Ein Ergebnis zu haben heisst nicht, beantwortet zu sein |
 | 2026-08-28 | Ergaenzt: **Doppelte Vorgabe**. Anlass: Ein Owner-Entscheid vom 23.08. (Kamera waagrecht statt gekippt) wurde in der Bibliothek umgesetzt, im ausfuehrenden Skript nicht — fuenf Tage lang kippte jeder Lauf. Kein Test schlug an, weil beide Stellen fuer sich schluessig aussahen; aufgefallen ist es dem Owner am fertigen Bild. Der Eintrag traegt die Abhilfe mit: nicht angleichen, sondern die zweite Stelle streichen |
 | 2026-08-27 | Ergaenzt: **Boden einer Kennzahl**. Exakt bestimmt: Ein gleichfoermiges Bild bekommt bei geom_iou genau den Vordergrundanteil der Szene — auf drei Szenen auf volle Rechengenauigkeit gleich, also Arithmetik und kein Messwert. Der Eintrag traegt mit, warum das gefaehrlicher ist als eine ungenaue Zahl: 0,53 liest sich wie «zur Haelfte richtig» und heisst «die Szene ist gross» |
