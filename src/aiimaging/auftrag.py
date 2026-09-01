@@ -99,7 +99,33 @@ LEISTUNGSGRENZE_W = 400
 GPU_LEERLAUF_W = 120
 GPU_LEERLAUF_MEM_GB = 8
 
-ARTEN = frozenset({"multipass", "render", "qa"})
+#: Wer einen Auftrag ausfuehrt und was dabei geschieht.
+#:
+#: ``multipass`` · ``render`` · ``qa`` sind **Laeufe**: Ein Skript rechnet, und am Ende
+#: stehen Zahlen. ``frage`` ist keiner.
+#:
+#: **Warum es ``frage`` seit dem 01.09.2026 gibt.** Gezaehlt am selben Tag: Neun der
+#: siebzehn offenen ``local``-Auftraege trugen ``art: qa`` und waren gar keine Laeufe —
+#: *«Welche Zahl war 0.6909?»*, *«Warum reicht `/api/mcp/tools` keine Schemata durch?»*,
+#: *«Wie oft schlaegt der Torwaechter am echten Bestand an?»*. Das rechnet kein Runner
+#: aus; das beantwortet ein Mensch, der nachsieht.
+#:
+#: Sie standen auf ``qa``, weil es **keinen anderen Wert gab**. Und weil der ``qa``-Zweig
+#: bis zum 28.08. still den Multipass fuhr, waeren sie alle mit
+#: ``urteil: {"multipass": "ok"}`` zurueckgekommen: gruen, leer, und die Frage geschlossen.
+#:
+#: *Die Vokabel kannte drei Sorten Lauf und keine Sorte Frage. `qa` war die Ablage dafuer,
+#: und eine Ablage, die es nicht geben duerfte, fuellt sich von selbst.*
+#:
+#: Ein ``frage``-Auftrag wird vom Homeworker **nicht angefasst** — gezaehlt, genannt, kein
+#: Ergebnis geschrieben. Dieselbe Behandlung wie ein Auftrag an einen fremden Worker, und
+#: aus demselben Grund: Ein geschriebenes Ergebnis heisst in diesem Projekt *beantwortet*.
+ART_FRAGE = "frage"
+
+#: Die Arten, die ein Runner ausfuehren kann. ``frage`` steht ausdruecklich NICHT darin.
+ARTEN_LAUF = frozenset({"multipass", "render", "qa"})
+
+ARTEN = ARTEN_LAUF | {ART_FRAGE}
 
 _ID_MUSTER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 

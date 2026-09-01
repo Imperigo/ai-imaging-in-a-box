@@ -325,3 +325,49 @@ def test_ein_fehlerfreier_auftrag_traegt_kein_maengelfeld(tmp_path):
     from aiimaging import auftrag as auf
     _hinlegen(tmp_path)
     assert "maengel" not in auf.offene_auftraege(tmp_path)[0]
+
+
+# ======================================================================================
+# `art: frage` — die Vokabel kannte drei Sorten Lauf und keine Sorte Frage
+# ======================================================================================
+
+def test_frage_ist_eine_art_aber_kein_lauf():
+    """**Der Befund vom 01.09.2026, gezählt am eigenen Bestand.**
+
+    Neun der siebzehn offenen `local`-Aufträge trugen `art: qa` und waren gar keine
+    Läufe — *«Welche Zahl war 0.6909?»*, *«Warum reicht `/api/mcp/tools` keine Schemata
+    durch?»*. **Nicht einer** von den neun war ein Lauf.
+
+    Sie standen auf `qa`, weil es keinen anderen Wert gab. *Eine Ablage, die es nicht
+    geben dürfte, füllt sich von selbst.*
+    """
+    from aiimaging import auftrag as auf
+    assert auf.ART_FRAGE in auf.ARTEN
+    assert auf.ART_FRAGE not in auf.ARTEN_LAUF
+    assert auf.ARTEN_LAUF < auf.ARTEN, "die Läufe sind eine echte Teilmenge"
+
+
+def test_die_arten_sind_genau_diese_vier():
+    """Von der anderen Seite gezählt — eine fünfte wäre eine neue Kategorie und gehört
+    nicht still eingeführt."""
+    from aiimaging import auftrag as auf
+    assert set(auf.ARTEN) == {"multipass", "render", "qa", "frage"}
+    assert set(auf.ARTEN_LAUF) == {"multipass", "render", "qa"}
+
+
+def test_ein_frage_auftrag_ist_ein_gueltiger_auftrag(tmp_path):
+    """Er wird geschrieben und gelesen wie jeder andere — nur nicht ausgeführt."""
+    from aiimaging import auftrag as auf
+    k = _hinlegen(tmp_path, "auf-20260901-01")
+    satz = auf.offene_auftraege(tmp_path)[0]
+    satz["art"] = auf.ART_FRAGE
+    assert auf.pruefe_auftrag(satz) == []
+
+
+def test_eine_frage_ohne_ergebnis_bleibt_offen(tmp_path):
+    """Sie zählt weiter zum Rückstand. **Umtypisieren beantwortet nichts** — es sagt nur,
+    wer antworten kann."""
+    from aiimaging import auftrag as auf
+    k = _hinlegen(tmp_path, "auf-20260901-02")
+    assert auf.zustand(k, tmp_path) == auf.ZUSTAND_OFFEN
+    assert [a["auftrag_id"] for a in auf.unerledigt(tmp_path)] == [k]

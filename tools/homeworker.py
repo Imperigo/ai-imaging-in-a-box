@@ -704,12 +704,31 @@ def main(argv=None) -> int:
     # Ablehnung waere also schlimmer als Schweigen. Sie werden GEZAEHLT und genannt,
     # damit niemand sie fuer erledigt haelt.
     fremd = [s for s in alle_offenen if s.get("worker") != EIGENER_WORKER]
-    offen = [s for s in alle_offenen if s.get("worker") == EIGENER_WORKER]
+    eigene = [s for s in alle_offenen if s.get("worker") == EIGENER_WORKER]
+
+    # EINE FRAGE IST KEIN LAUF — und wird darum nicht angefasst.
+    #
+    # Seit dem 01.09.2026. Neun der siebzehn offenen eigenen Auftraege trugen `art: qa`
+    # und waren gar keine Laeufe: «Welche Zahl war 0.6909?», «Warum reicht
+    # /api/mcp/tools keine Schemata durch?». Das rechnet kein Runner aus.
+    #
+    # Behandelt wie ein fremder Auftrag, und aus demselben Grund: Ein geschriebenes
+    # Ergebnis heisst in diesem Projekt BEANTWORTET. Eine Ablehnung waere hier also
+    # schlimmer als Schweigen.
+    fragen = [s for s in eigene if s.get("art") == auf.ART_FRAGE]
+    offen = [s for s in eigene if s.get("art") != auf.ART_FRAGE]
+
     if fremd:
         print(f"{len(fremd)} Auftraege sind nicht fuer {EIGENER_WORKER!r} und bleiben "
               f"liegen (kein Ergebnis geschrieben):")
         for s in fremd:
             print(f"  {s['auftrag_id']}  -> {s.get('worker')!r}")
+        print()
+    if fragen:
+        print(f"{len(fragen)} Auftraege sind Fragen und kein Lauf — sie bleiben liegen "
+              f"(kein Ergebnis geschrieben):")
+        for s in fragen:
+            print(f"  {s['auftrag_id']}  {str(s.get('beschreibung'))[:64]}")
         print()
 
     if a.auftrag:
@@ -722,6 +741,11 @@ def main(argv=None) -> int:
                   f"{EIGENER_WORKER!r}. Es wird nichts ausgefuehrt und nichts "
                   f"geschrieben — ein Ergebnis von hier waere eine Antwort, die niemand "
                   f"gegeben hat.")
+            return 1
+        if gewaehlt[0].get("art") == auf.ART_FRAGE:
+            print(f"{a.auftrag} ist eine FRAGE und kein Lauf. Es wird nichts ausgefuehrt "
+                  f"und nichts geschrieben — sie will gelesen und beantwortet werden, "
+                  f"nicht gerechnet.")
             return 1
         offen = gewaehlt
 

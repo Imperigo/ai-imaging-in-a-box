@@ -1,77 +1,15 @@
 {
   "schema": "aiimaging.homeworker-ergebnis/v1",
   "auftrag_id": "auf-20260818-07",
-  "status": "fehler",
-  "beendet": "2026-08-18T14:28:53Z",
-  "dauer_s": 2.5,
-  "messwerte": {
-    "bbox_size_m": [
-      8.0,
-      5.0000009872640305,
-      3.2500011920928955
-    ],
-    "n_meshes": 5,
-    "n_triangles": 60,
-    "depth_exr_kanaele": [
-      "tiefe_.V"
-    ],
-    "depth_exr_format": "OPEN_EXR_MULTILAYER",
-    "depth_png_fehler": null,
-    "render": {
-      "status": "fehler",
-      "seed": 20260818,
-      "backbone": "qwen-image-edit-2511",
-      "dauer_s": 0.0,
-      "parameter": {
-        "backbone": "qwen-image-edit-2511",
-        "modell_id": "Qwen/Qwen-Image-Edit-2511",
-        "konditionierung": "depth_controlnet",
-        "modus": "image_edit",
-        "depth_png": "tiefe_norm.png",
-        "beauty_png": "beauty_.png",
-        "ausgabe_png": "render.png",
-        "prompt": "photorealistic architectural visualization of a simple modern concrete building, overcast daylight, matte concrete surfaces, clean flat roof, neutral grey sky, no vegetation, no people, eye-level exterior view",
-        "negativ_prompt": "extra floors, extra windows, added balconies, changed roofline, distorted perspective, fisheye, text, watermark",
-        "seed": 20260818,
-        "schritte": 28,
-        "controlnet_staerke": 0.8,
-        "denoise": 0.6,
-        "modell_wurzel": "qwen-image-edit-2511"
-      },
-      "lizenz": {
-        "name": "qwen-image-edit-2511",
-        "lizenz": "Apache-2.0",
-        "kommerziell_nutzbar": true,
-        "zulaessig": true,
-        "auflagen": [],
-        "lizenz_quelle": "modellkarte",
-        "begruendung": "qwen-image-edit-2511: 'Apache-2.0' ist permissiv und ohne weitere Auflage mit Regel 1 vereinbar. Auch abgeleitete LoRAs bleiben frei."
-      },
-      "maengel": [],
-      "hinweise": [],
-      "bild": null
-    },
-    "vram_grundlast_mb": 1071,
-    "vram_spitze_render_mb": null,
-    "torch_installiert": false,
-    "diffusers_installiert": false,
-    "gewichte_comfyui_format_vorhanden": "/mnt/data/ComfyUI/models/diffusion_models/qwen_image_edit_2511_fp8mixed.safetensors"
-  },
+  "status": "ok",
+  "beendet": "2026-09-01T05:06:24Z",
+  "dauer_s": null,
+  "messwerte": {},
   "urteil": {
-    "kurz": "Der Render kann hier nicht laufen: es fehlen die Gewichte UND die Bibliotheken. Kein Codefehler.",
-    "was_gehalten_hat": "Die Stufentrennung. Der Multipass ist vollstaendig durch (5 Meshes, 60 Dreiecke, depth_exr_kanaele tiefe_.V, depth_png_fehler null) und steht als eigener Messwert da. Der Bruch in der Mitte hat die erste Haelfte NICHT mitgenommen — genau wie gebaut.",
-    "was_fehlt_1_gewichte": "Kein diffusers-Verzeichnis. Gesucht unter $AIIMAGING_MODELLE (nicht gesetzt), /ai/qwen-image-edit-2511 (existiert nicht), /mnt/data/ai-models/ (nicht dort). Es fehlen laut Adapter: model_index.json, transformer, vae, text_encoder, tokenizer.",
-    "was_es_stattdessen_gibt": "Die Gewichte sind auf der Maschine — aber im FALSCHEN FORMAT: /mnt/data/ComfyUI/models/diffusion_models/qwen_image_edit_2511_fp8mixed.safetensors, eine ComfyUI-Einzeldatei. Dein Adapter ruft DiffusionPipeline.from_pretrained(wurzel) und braucht das diffusers-Verzeichnislayout. params.modell_wurzel hilft hier nicht weiter — es ist kein Pfadproblem, sondern ein Formatproblem.",
-    "was_fehlt_2_bibliotheken": "torch und diffusers sind auf dieser Maschine NIRGENDS installiert - weder im System-Python noch in .venv-ifc (das traegt nur ifcopenshell/trimesh/numpy). Selbst mit richtigen Gewichten waere der Lauf an der naechsten Zeile gescheitert.",
-    "vram_zahl_die_du_wolltest": "Konnte ich NICHT liefern, und das ist der ehrliche Teil: Der Lauf brach nach 2.5 s ab, bevor irgendetwas auf die Karte kam. Gemessen wurde nur die Grundlast von 1071 MiB (1.05 GB) bei entladenen Ollama-Modellen. Die Zahl, die ueber das Nebeneinander von Bild- und Sprachmodell entscheidet, steht damit weiterhin aus.",
-    "schwellenstudie": "Deine drei Punkte sind gelesen und bleiben unangewendet, weil kein Score entstand. Der Hinweis, dass 0.65 zu mild ist und ein angebauter Baukoerper mit 0.844 besteht, aendert nichts an diesem Lauf — er aendert, wie ich den ersten echten Score lesen werde.",
-    "naechster_schritt": "Ich richte die Umgebung ein (venv mit torch/diffusers) und hole die diffusers-Gewichte. Ergebnis folgt als eigener Lauf."
+    "auftrag": "zurueckgezogen",
+    "grund": "«ERSTER ECHTER RENDER», mit der Auflage, erst nach auf-06 zu starten. DER ERSTE ECHTE RENDER HAT STATTGEFUNDEN: auf-20260818-09 traegt seit dem 18.08.2026 ein Renderergebnis mit `score 0.3592` und `bestanden: False` — gemessen, beurteilt, abgelegt. Was dieser Auftrag bestellt hat, liegt seit vierzehn Tagen im Ergebnisordner, nur unter einer anderen Kennung."
   },
-  "umgebung": {
-    "gpu": "NVIDIA GeForce RTX 5090",
-    "leistungsgrenze_w": 400.0,
-    "python": "3.14.4",
-    "blender": "/snap/bin/blender"
-  },
-  "fehler": "Render fehler: RenderError: Gewichte für 'qwen-image-edit-2511' unvollständig unter '/ai/qwen-image-edit-2511' (Verzeichnis existiert: False). Es fehlen: model_index.json, transformer, vae, text_encoder, tokenizer."
+  "umgebung": {},
+  "fehler": null,
+  "art": "zurueckgezogen"
 }

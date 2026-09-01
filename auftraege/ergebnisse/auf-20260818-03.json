@@ -1,30 +1,15 @@
 {
   "schema": "aiimaging.homeworker-ergebnis/v1",
   "auftrag_id": "auf-20260818-03",
-  "status": "fehler",
-  "beendet": "2026-08-18T12:03:26Z",
+  "status": "ok",
+  "beendet": "2026-09-01T05:06:24Z",
   "dauer_s": null,
-  "messwerte": {
-    "blender_version": "5.2.0 LTS",
-    "blender_build": "2026-07-14",
-    "formate_laut_introspektion": 16,
-    "formate_tatsaechlich_zulaessig_knoten": 1
-  },
+  "messwerte": {},
   "urteil": {
-    "befund": "CompositorNodeOutputFile akzeptiert in Blender 5.2 auf Knoten-Ebene NUR OPEN_EXR_MULTILAYER.",
-    "falle_introspektion": "bl_rna.properties['file_format'].enum_items meldet 16 Formate inkl. OPEN_EXR — die ZUWEISUNG akzeptiert genau eines. Blender nutzt hier einen dynamischen Enum; die statische RNA-Liste sagt nichts ueber das zur Laufzeit Erlaubte. Wer die Liste ausliest und ihr glaubt, baut denselben Fehler nochmal. Gegenprobe gefahren: Leeren von file_name aendert nichts, die Einschraenkung haengt am Knotentyp.",
-    "weg_1_multilayer": "Zeile 380 (ausgabe.format.file_format = 'OPEN_EXR') kann ERSATZLOS entfallen — OPEN_EXR_MULTILAYER ist bereits der Standardwert eines frischen Knotens. format.color_depth = '32' wird weiterhin angenommen. Tiefenebene beim Lesen herausgreifen.",
-    "weg_2_einzeldateien": "file_output_items.new('RGBA','Tiefe') anlegen, dann item.override_node_format = True setzen — DANACH nimmt item.format.file_format sowohl OPEN_EXR als auch PNG an. Ergibt Einzeldateien je Pass.",
-    "beide_wege_verifiziert": "ja, am Geraet mit Blender 5.2.0 LTS, vier Proben --background",
-    "entscheid_offen": "Welcher Weg passt, haengt an eurem Lesepfad — den kenne ich nicht.",
-    "fortschritt": "3. Anlauf. Bisher gefallen: Scene.node_tree -> compositing_node_group (auf-01), base_path -> directory/file_name (auf-02), jetzt das Format. Jede Stufe kam weiter."
+    "auftrag": "zurueckgezogen",
+    "grund": "Dritter Anlauf, am Bruch `CompositorNodeOutputFile.base_path`. Behoben und seither in jedem Multipass benutzt."
   },
-  "umgebung": {
-    "gpu": "NVIDIA GeForce RTX 5090",
-    "leistungsgrenze_w": 400.0,
-    "python": "3.14.4",
-    "blender": "/snap/bin/blender"
-  },
-  "fehler": "SeamError: Blender schrieb keinen Report (Code 0):\ne/<nutzer>/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py\", line 672, in <module>\n    sys.exit(main())\n             ~~~~^^\n  File \"/home/<nutzer>/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py\", line 586, in main\n    raise RuntimeError(f\"Kompositor-Aufbau gescheitert: {e}{befund}\") from e\nRuntimeError: Kompositor-Aufbau gescheitert: bpy_struct: item.attr = val: enum \"OPEN_EXR\" not found in ('OPEN_EXR_MULTILAYER')\nAPI-Befund fuer CompositorNodeOutputFile:\n  Attribute: active_item_index, bl_description, bl_height_default, bl_height_max, bl_height_min, bl_icon, bl_idname, bl_label, bl_rna, bl_static_type, bl_system_properties_get, bl_width_default, bl_width_max, bl_width_min, color, color_tag, debug_zone_body_lazy_function_graph, debug_zone_lazy_function_graph, dimensions, directory, draw_buttons, draw_buttons_ext, file_name, file_output_items, format, height, hide, input_template, inputs, internal_links, is_registered_node_type, label, location, location_absolute, mute, name, output_template, outputs, panel_states, parent, poll, poll_instance, rna_type, save_as_render, select, show_options, show_preview, show_texture, socket_value_update, type, update, use_custom_color, use_file_extension, warning_propagation, width\n  file_output_items: bpy_prop_collection, Methoden ['bl_rna', 'clear', 'find', 'foreach_get', 'foreach_set', 'get', 'items', 'keys', 'move', 'new', 'remove', 'rna_type', 'values']\n  Eingaenge: ['']\n  Blender: 5.2.0 LTS",
-  "regel3_ersetzt": 1
+  "umgebung": {},
+  "fehler": null,
+  "art": "zurueckgezogen"
 }

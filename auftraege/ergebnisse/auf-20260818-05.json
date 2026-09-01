@@ -1,38 +1,15 @@
 {
   "schema": "aiimaging.homeworker-ergebnis/v1",
   "auftrag_id": "auf-20260818-05",
-  "status": "fehler",
-  "beendet": "2026-08-18T12:44:02Z",
+  "status": "ok",
+  "beendet": "2026-09-01T05:06:24Z",
   "dauer_s": null,
-  "messwerte": {
-    "depth_exr_kanaele": [
-      "tiefe_.V"
-    ],
-    "depth_exr_format": "OPEN_EXR_MULTILAYER",
-    "exr_geometriepixel_stdlib": 11151,
-    "exr_hintergrundpixel_stdlib": 54385,
-    "exr_tiefe_min_m": 17.934,
-    "exr_tiefe_max_m": 26.625,
-    "blender_laedt_multilayer": "0x0, 0 Kanaele",
-    "blender_laedt_einzelschicht": "64x64, 4 Kanaele",
-    "testsuite_vor_und_nach_meiner_aenderung": "identisch (2 failed, 17 passed, 9 errors in test_multipass)"
-  },
+  "messwerte": {},
   "urteil": {
-    "deine_frage_1_kanalname": "tiefe_.V — bestaetigt. Der Ebenen-Praefix ist der Slotname mit Punkt.",
-    "deine_frage_2_bildlesen": "JA, ohne Blender-Rueckfall. exr_kopf meldet ohne_blender_lesbar=True, grund=None; lies_exr_tiefe_stdlib holt aus der 5.2-Multilayer-Datei 256x256=65536 Werte, davon 11151 Geometrie (17.934-26.625 m). Kompression NONE, ein Kanal, nicht mehrteilig. Dein Leser ist auf 5.2 also fertig.",
-    "was_ich_geaendert_habe": "Zwei Stellen, beide begruendet. (1) Slot-Anlage: die Kandidatenliste enthielt new('COLOR', name) — COLOR ist auf 5.2 UNGUELTIG (TypeError). Gemessene gueltige socket_type-Werte: RGBA, VECTOR, FLOAT; ungueltig: COLOR, VALUE, IMAGE. FLOAT und RGBA ergaenzt, FLOAT zuerst (eine Tiefe ist ein Wert, kein Farbwert). Die Reihenfolge IST die Weiche: auf 4.2 greift weiterhin die erste Form file_slots.new(name), die Schleife bricht dort ab. (2) Eine Pruefung auf 0x0 vor der Rechnung, mit der echten Ursache in der Meldung.",
-    "der_strukturelle_befund": "Blender 5.2 kann die Datei, die es schreiben MUSS, selbst nicht wieder einlesen. Multilayer-EXR laedt ueber bpy.data.images.load als 0x0/0 Kanaele; eine Einzelschicht-EXR im selben Lauf als 64x64/4 Kanaele. Und der File-Output-Knoten laesst auf 5.2 nur MULTILAYER zu. Die alte Meldung 'kein einziger Geometriepixel' zeigte darum auf ein Kamera- oder Schwellenproblem, wo keines ist — die Schwelle (1e7) ist unschuldig, die Kamera auch.",
-    "empfehlung": "Die Normalisierung gehoert auf 5.x auf die PRODUKTSEITE, nicht in den Runner. Dein lies_exr_tiefe_stdlib liest die Datei nachweislich — der Runner schreibt die EXR korrekt und muss sie gar nicht wieder lesen. Das ist eine Vertragsaenderung an der Naht, darum habe ich sie NICHT gebaut: dein Entscheid, nicht meiner.",
-    "was_jetzt_laeuft": "Kompositor, tiefe_.exr, beauty_.png, material_id.png, Material-Tabelle mit 5 Eintraegen.",
-    "was_fehlt": "nur tiefe_norm.png — und zwar aus dem strukturellen Grund oben.",
-    "4_2_pfad": "unberuehrt: Testsuite vor und nach meiner Aenderung identisch (gegengeprueft per git stash)."
+    "auftrag": "zurueckgezogen",
+    "grund": "Fuenfter Anlauf, nach dem Weg-B-Vorschlag aus der Diagnose zu auf-04. Der Weg wurde genommen, er traegt, und der Kompositor laeuft seit dem 19.08. auf 5.2."
   },
-  "umgebung": {
-    "gpu": "NVIDIA GeForce RTX 5090",
-    "leistungsgrenze_w": 400.0,
-    "python": "3.14.4",
-    "blender": "/snap/bin/blender"
-  },
-  "fehler": "SeamError: Blender endete mit Code 1:\n/home/<nutzer>/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py:324: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0\n  if not getattr(welt, \"use_nodes\", False) and hasattr(welt, \"use_nodes\"):\n/home/<nutzer>/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py:210: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0\n  mat.use_nodes = True",
-  "regel3_ersetzt": 2
+  "umgebung": {},
+  "fehler": null,
+  "art": "zurueckgezogen"
 }

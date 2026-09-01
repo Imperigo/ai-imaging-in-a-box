@@ -1,17 +1,15 @@
 {
   "schema": "aiimaging.homeworker-ergebnis/v1",
   "auftrag_id": "auf-20260818-01",
-  "status": "fehler",
-  "beendet": "2026-08-18T10:38:04Z",
+  "status": "ok",
+  "beendet": "2026-09-01T05:06:24Z",
   "dauer_s": null,
   "messwerte": {},
-  "urteil": {},
-  "umgebung": {
-    "gpu": "NVIDIA GeForce RTX 5090",
-    "leistungsgrenze_w": 400.0,
-    "python": "3.14.4",
-    "blender": "/snap/bin/blender"
+  "urteil": {
+    "auftrag": "zurueckgezogen",
+    "grund": "Zweck war: belegen, dass die Kette IFC -> glb -> Blender-Multipass auf echter Hardware laeuft. DAS IST SEIT DEM 19.08.2026 BELEGT, und zwar nicht einmal, sondern in jedem Lauf seither — zuletzt in auf-20260828-65 am 28.08., wo derselbe Weg bis zur Kamera auf 1.700 m durchlief. Ein Auftrag, dessen Zweck vierzig Mal nebenbei erfuellt wurde, braucht keine eigene Antwort mehr."
   },
-  "fehler": "SeamError: Blender schrieb keinen Report (Code 0):\n/home/<nutzer>/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py:157: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0\n  welt.use_nodes = True\n/home/<nutzer>/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py:302: DeprecationWarning: 'Scene.use_nodes' is expected to be removed in Blender 6.0\n  szene.use_nodes = True\nTraceback (most recent call last):\n  File \"/home/<nutzer>/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py\", line 545, in <module>\n    sys.exit(main())\n             ~~~~^^\n  File \"/home/<nutzer>/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py\", line 459, in main\n    _compositor_auf_tiefe(out_dir)\n    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"/home/<nutzer>/ai-imaging-in-a-box/src/aiimaging/runners/blender_depth_stage.py\", line 303, in _compositor_auf_tiefe\n    baum = szene.node_tree\n           ^^^^^^^^^^^^^^^\nAttributeError: 'Scene' object has no attribute 'node_tree'",
-  "regel3_ersetzt": 5
+  "umgebung": {},
+  "fehler": null,
+  "art": "zurueckgezogen"
 }

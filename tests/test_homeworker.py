@@ -1540,3 +1540,59 @@ def test_eine_unbekannte_flagge_laesst_den_lauf_gar_nicht_erst_starten(tmp_path)
                           "erzeugen_mit": "make_test_ifc.py b.ifc --erfunden"}}
     with pytest.raises(hw.GeometrieError, match="--erfunden"):
         hw._geometrie_bereitstellen(satz, tmp_path)
+
+
+# ======================================================================================
+# Eine Frage ist kein Lauf (01.09.2026)
+# ======================================================================================
+
+def _frage_satz(kennung: str = "auf-20260901-10") -> dict:
+    satz = _fremder_satz(kennung, hw.EIGENER_WORKER)
+    satz["art"] = hw.auf.ART_FRAGE
+    satz["beschreibung"] = "Warum reicht /api/mcp/tools keine Schemata durch?"
+    return satz
+
+
+def test_eine_frage_wird_nicht_ausgefuehrt_und_nicht_geschlossen(tmp_path, capsys):
+    """**Dieselbe Behandlung wie ein fremder Auftrag, und aus demselben Grund.**
+
+    Ein geschriebenes Ergebnis heisst in diesem Projekt *beantwortet*. Bis zum 28.08.
+    wären diese neun im Multipass-Zweig gelandet und mit `urteil: {"multipass": "ok"}`
+    zurückgekommen — grün, leer, und die Frage geschlossen.
+    """
+    repo = _ablage(tmp_path, _frage_satz())
+    assert hw.main(["--repo", str(repo), "--alle"]) == 0
+
+    ausgabe = capsys.readouterr().out
+    assert "Fragen und kein Lauf" in ausgabe
+    assert "auf-20260901-10" in ausgabe
+    assert not list((repo / "auftraege" / "ergebnisse").iterdir()), (
+        "eine Ablehnung waere hier schlimmer als Schweigen — sie zaehlte als Antwort")
+
+
+def test_eine_frage_wird_auch_bei_ausdruecklicher_nennung_nicht_gefahren(tmp_path,
+                                                                         capsys):
+    repo = _ablage(tmp_path, _frage_satz("auf-20260901-11"))
+    assert hw.main(["--repo", str(repo), "--auftrag", "auf-20260901-11"]) == 1
+    assert "FRAGE und kein Lauf" in capsys.readouterr().out
+    assert not list((repo / "auftraege" / "ergebnisse").iterdir())
+
+
+def test_ein_lauf_derselben_lane_wird_weiter_gefahren(tmp_path, capsys):
+    """Die Gegenprobe — sonst hätte die Prüfung alle eigenen Aufträge gesperrt."""
+    lauf = _fremder_satz("auf-20260901-12", hw.EIGENER_WORKER)
+    lauf["art"] = "multipass"
+    repo = _ablage(tmp_path, lauf, _frage_satz("auf-20260901-13"))
+    hw.main(["--repo", str(repo), "--liste"])
+
+    ausgabe = capsys.readouterr().out
+    assert "1 Auftraege sind Fragen und kein Lauf" in ausgabe
+    assert "1 unerledigt fuer 'local'" in ausgabe
+
+
+def test_eine_frage_zaehlt_weiter_zum_rueckstand(tmp_path):
+    """**Umtypisieren beantwortet nichts.** Es sagt nur, wer antworten kann — der
+    Rückstand sinkt dadurch um null."""
+    from aiimaging import einbau
+    repo = _ablage(tmp_path, _frage_satz("auf-20260901-14"))
+    assert einbau.rueckstand(repo)["n"] == 1
