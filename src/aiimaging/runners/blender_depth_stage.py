@@ -1175,8 +1175,26 @@ def main() -> int:
     if getattr(a, "rotiere_z_up", False):
         # Quelle war Z-up (glTF verlangt Y-up). Ohne diese Drehung läge der Bau auf der
         # Seite — und Tiefenkarte, Kamera und Geometrie-QA wären still verdreht.
+        #
+        # DAS VORZEICHEN IST −90° UND NICHT +90°, und das ist seit dem 01.09.2026
+        # GEMESSEN statt hergeleitet (Sitzung 16 führte diesen Fall ausdrücklich als
+        # NICHT GEMESSEN). Blenders glTF-Import rechnet selbst schon Y-up → Z-up, das
+        # ist R_x(+90): Datei (fx,fy,fz) → Blender (fx,−fz,fy). Steht in der Datei
+        # bereits Z-up, muss diese Drehung RÜCKGÄNGIG gemacht werden, nicht wiederholt.
+        #
+        # An einer echten Z-up-glb (103,84 × 57,15 × 27,10 m, Fuss bei z = −0,437 m)
+        # dreimal im selben Blender-Lauf gemessen:
+        #
+        #   ohne Drehung   z 61,512 … 118,662   Masse 103,84 × 27,10 × 57,15   liegt auf der Seite
+        #   mit +90°       z −26,664 …   0,437  Masse 103,84 × 57,15 × 27,10   STEHT AUF DEM KOPF
+        #   mit −90°       z  −0,437 …  26,664  Masse 103,84 × 57,15 × 27,10   richtig
+        #
+        # Die Masse allein entlarven +90° nicht: R_x(180) lässt jede Kantenlänge gleich
+        # und kippt nur die Vorzeichen. Nur die Lage der Box verrät es — das Dach lag
+        # 26,7 m UNTER dem Nullpunkt. Ein Bericht, der bloss `bbox_size_m` zeigt, hätte
+        # den Fehler nie gemeldet.
         import mathutils
-        dreh = mathutils.Matrix.Rotation(math.radians(90.0), 4, "X")
+        dreh = mathutils.Matrix.Rotation(math.radians(-90.0), 4, "X")
         for obj in bpy.data.objects:
             if obj.parent is None:
                 obj.matrix_world = dreh @ obj.matrix_world
