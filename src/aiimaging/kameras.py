@@ -687,6 +687,67 @@ def sichtbare_tiefe(masse, azimut_grad: float) -> float:
 # Der analytische Abstand
 # --------------------------------------------------------------------------------------
 
+def _grundrissecken(masse, azimut_grad: float):
+    """Die vier Grundrissecken als ``(quer, tiefe)`` im Kamerasystem, Mitte = Ursprung.
+
+    ``quer`` ist der seitliche Abstand von der Blickachse, ``tiefe`` der Versatz LÄNGS ihr:
+    positiv heisst näher an der Kamera. Die beiden Achsen sind dieselben, auf denen
+    :func:`sichtbare_breite` und :func:`sichtbare_tiefe` stehen.
+    """
+    a = math.radians(azimut_grad)
+    hx, hy = float(masse[0]) / 2.0, float(masse[1]) / 2.0
+    return [(sx * hx * math.cos(a) - sy * hy * math.sin(a),
+             sx * hx * math.sin(a) + sy * hy * math.cos(a))
+            for sx in (-1.0, 1.0) for sy in (-1.0, 1.0)]
+
+
+def silhouettenbreite(ecken, abstand_m: float) -> float:
+    """Wie breit die Silhouette im Bild steht, in Brennweiten — oder ``inf``.
+
+    Jede Ecke wird EINZELN projiziert (``quer / Abstand zur Kamera``), und zwar an ihrer
+    eigenen Tiefe. Der Bildrand ist die Spanne zwischen dem linkesten und dem rechtesten
+    dieser Punkte. Steht eine Ecke in oder hinter der Kameraebene, ist die Frage
+    unbeantwortbar und die Antwort ``inf`` — nicht eine grosse Zahl.
+    """
+    xs = []
+    for quer, tiefe in ecken:
+        d = abstand_m - tiefe
+        if d <= 1e-9:
+            return math.inf
+        xs.append(quer / d)
+    return max(xs) - min(xs)
+
+
+def _abstand_fuer_silhouettenbreite(ecken, ziel: float, untergrenze: float) -> float:
+    """Der Abstand, bei dem die Silhouette genau ``ziel`` Brennweiten breit steht.
+
+    ``silhouettenbreite`` fällt streng monoton mit dem Abstand — darum ist die Nullstelle
+    eindeutig und eine Intervallhalbierung exakt bis auf die Rechengenauigkeit. Eine
+    geschlossene Formel gäbe es auch, aber nur je Fall: welche der vier Ecken den Rand
+    setzt, wechselt mit dem Blickwinkel. Die Halbierung braucht diese Fallunterscheidung
+    nicht und kann sie darum auch nicht falsch treffen.
+    """
+    if not (ziel > 0.0) or not math.isfinite(ziel):
+        return untergrenze
+    lo = untergrenze + 1e-9              # näher stünde die Kamera IM Bauwerk
+    hi = max(lo * 2.0, 1.0)
+    for _ in range(200):                 # Obergrenze suchen, bis die Silhouette klein genug ist
+        if silhouettenbreite(ecken, hi) <= ziel:
+            break
+        hi *= 2.0
+    else:
+        return hi
+    for _ in range(200):                 # 200 Halbierungen — weit unter die Rechengenauigkeit
+        mitte = (lo + hi) / 2.0
+        if mitte <= lo or mitte >= hi:
+            break
+        if silhouettenbreite(ecken, mitte) > ziel:
+            lo = mitte
+        else:
+            hi = mitte
+    return hi
+
+
 def abstand_aus_bildwinkel(masse, azimut_grad: float, *,
                            hoehe_ueber_grund: float,
                            brennweite_mm: float = BRENNWEITE_MM,
@@ -740,9 +801,38 @@ def abstand_aus_bildwinkel(masse, azimut_grad: float, *,
     d_breite = (breite / 2.0) / math.tan(hfov / 2.0) / deckung
     d_hoehe = halbe_hoehe / math.tan(vfov / 2.0) / deckung
 
+    # Wie tief liegen die Punkte, die die Silhouette seitlich begrenzen?
+    #
+    # Für die HÖHE ist die Antwort die halbe Tiefe: oben und unten begrenzt dieselbe, dem
+    # Betrachter zugewandte Gebäudekante das Bild, und die steht um `tiefe/2` näher als die
+    # Mitte. `d_hoehe + tiefe/2` ist damit genau richtig, und daran ändert sich nichts.
+    #
+    # Für die BREITE ist es nicht die Vorderkante, und das hat bis zum 01.09.2026 zu viel
+    # Abstand gekostet — an einem schräg gesehenen Baukörper 206,66 m statt 152,23 m, und das
+    # Bauwerk füllte 50,9 % der Bildbreite statt der angeforderten 70 %. Seitlich begrenzen
+    # zwei einander diagonal gegenüberliegende Grundrissecken das Bild, eine näher und eine
+    # ferner als die Mitte — nicht die Vorderkante.
+    #
+    # **Eine Formel für den Tiefenversatz dieser Ecken reicht nicht**, und der Irrtum gehört
+    # hierher: Bei der FRONTALEN fällt der seitliche Rand nicht auf eine Ecke, sondern auf
+    # eine senkrechte KANTE, die von vorn nach hinten läuft. Im Bild zählt dann ihr vorderes
+    # Ende. Wer stattdessen mit dem Tiefenversatz der Ecke rechnet, setzt die Kamera bei der
+    # Frontalen zu nah — gemessen an einem 8 × 5 m Bau: 64,7 % statt der richtigen 77,6 %.
+    #
+    # Darum wird nicht der Versatz gerechnet, sondern die Silhouette selbst: jede der vier
+    # Grundrissecken einzeln projiziert, an ihrer eigenen Tiefe, und der Abstand gesucht, bei
+    # dem der Abstand zwischen linkestem und rechtestem Bildpunkt genau `deckung` der
+    # Bildbreite misst. Welche Ecke dabei gewinnt, entscheidet die Projektion, nicht eine
+    # Fallunterscheidung im Kopf.
+    _ecken = _grundrissecken(masse, azimut_grad)
+    d_breite_exakt = _abstand_fuer_silhouettenbreite(
+        _ecken, 2.0 * deckung * math.tan(hfov / 2.0), tiefe / 2.0)
+    # Der Tiefenversatz der beiden BREITENECKEN — als Auskunft, nicht als Rechenweg.
+    seit = min(abs(t) for q, t in _ecken if abs(abs(q) - breite / 2.0) < 1e-9)
+
     # Die halbe Tiefe kommt dazu, weil bis hier zur Gebäudemitte gerechnet wurde.
     untergrenze = tiefe / 2.0 + WANDABSTAND_M
-    kandidaten = {"breite": d_breite + tiefe / 2.0,
+    kandidaten = {"breite": d_breite_exakt,
                   "hoehe": d_hoehe + tiefe / 2.0,
                   "untergrenze": untergrenze}
     massgebend = max(kandidaten, key=kandidaten.__getitem__)
@@ -753,6 +843,7 @@ def abstand_aus_bildwinkel(masse, azimut_grad: float, *,
         "breite_m": breite,
         "tiefe_m": tiefe,
         "halbe_hoehe_m": halbe_hoehe,
+        "seitenecken_tiefe_m": seit,
         "abstand_breite_m": kandidaten["breite"],
         "abstand_hoehe_m": kandidaten["hoehe"],
         "untergrenze_m": untergrenze,
@@ -1631,10 +1722,20 @@ def kamerasatz(bbox, *,
         # Fehlalarm. Die Probe darauf, dass dies das richtige Mass ist: An der nahen
         # Fassade kommt genau der angeforderte Deckungsgrad heraus.
         nah = max(endgueltig - rechnung["tiefe_m"] / 2.0, 1e-6)
-        bildbreite = 2.0 * math.tan(hfov / 2.0) * nah
         bildhoehe = 2.0 * math.tan(vfov / 2.0) * nah
-        f_breite = (rechnung["breite_m"] / bildbreite) if bildbreite > 0.0 else 0.0
+        # HÖHE an der nahen Fassade: oben und unten begrenzt dieselbe zugewandte Kante das
+        # Bild, die um die halbe Bautiefe näher steht. Das Mass ist hier richtig.
         f_hoehe = (2.0 * rechnung["halbe_hoehe_m"] / bildhoehe) if bildhoehe > 0.0 else 0.0
+        # BREITE nicht. Die seitlichen Silhouettenkanten sind zwei diagonal gegenüberliegende
+        # Ecken, eine näher und eine ferner als die Mitte (`seitenecken_tiefe_m`) — nicht die
+        # Vorderkante. An der nahen Fassade gemessen kam **immer genau der angeforderte
+        # Deckungsgrad heraus, auch wenn das Bauwerk nur halb so gross im Bild stand**: Der
+        # Abstand wurde bis zum 01.09.2026 mit demselben falschen Versatz gerechnet, mit dem
+        # hier gemessen wurde. Zwei Fehler, die einander aufhoben — und eine Probe, die gar
+        # nicht widersprechen konnte. Gemessen wird jetzt die wirklich projizierte Breite.
+        _ecken = _grundrissecken(masse, azimut)
+        _sil = silhouettenbreite(_ecken, endgueltig)
+        f_breite = (_sil / (2.0 * math.tan(hfov / 2.0))) if math.isfinite(_sil) else 0.0
         fuellgrad = max(f_breite, f_hoehe)
 
         flaeche = flaechenanteil(geschoben["auge"], blick, bbox,

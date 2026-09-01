@@ -42,7 +42,7 @@ from pathlib import Path
 
 import pytest
 
-from aiimaging import abholer, bruecke
+from aiimaging import abholer, bruecke, kameras
 from conftest import MINI_PNG
 
 WURZEL = Path(__file__).resolve().parents[1]
@@ -269,7 +269,23 @@ def test_der_gesunde_lauf_traegt_keine_solche_zeile(frei):
     antwort, protokoll, _ = frei
 
     assert protokoll["render"], "Der gesunde Fall muss rendern."
-    assert "NICHT GERENDERT" not in antwort["ergebnis"]["qa"]["verdict"]["reason"]
+    # **Was die Gegenprobe seit dem 01.09.2026 unterscheidet — und was nicht mehr.**
+    #
+    # Bis dahin trug der gesunde Lauf das Wort «NICHT GERENDERT» überhaupt nicht, und die
+    # Abwesenheit des Wortes war die Probe. Seither steht es auch hier, und es steht zu
+    # Recht: Der Testbau ist 8 × 5 × 3 m; bei zwei der zwölf Diagonalen setzt der
+    # Mindestabstand von 10 m den Standort, nicht der Bildwinkel, und dort füllt das
+    # Bauwerk 63,9 % der Bildbreite statt der geforderten 65 %. Diese beiden Richtungen
+    # lagen IMMER knapp unter dem Riegel — der Füllgrad wurde nur bis dahin an der nahen
+    # Fassade gemessen und meldete dafür zu viel.
+    #
+    # Die Unterscheidung liegt darum nicht mehr am Wort, sondern am Ausgang: Der gesunde
+    # Lauf rendert seine drei gewählten Standpunkte und liefert Bilder, der Lauf auf dem
+    # Grundstück rendert KEINE einzige Richtung. Ein Vertragsgrund, der beides gleich
+    # benennt, sagt nichts — ein Lauf mit drei Bildern und einer mit null sind aber zu
+    # unterscheiden.
+    assert antwort["ergebnis"]["images"], "Ein gesunder Lauf liefert Bilder."
+    assert len(protokoll["render"]) == kameras.STANDPUNKTE_ANZAHL, len(protokoll["render"])
 
 
 # ======================================================================================
