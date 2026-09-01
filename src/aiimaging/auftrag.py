@@ -130,6 +130,25 @@ ARTEN = ARTEN_LAUF | {ART_FRAGE}
 _ID_MUSTER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 
 
+#: Wie viele unbeantwortete Auftraege ein Adressat hoechstens tragen soll.
+#:
+#: **Owner-Entscheid 28.08.2026**, nach einer Zaehlung: 68 Auftraege gestellt gegen 37
+#: beantwortet, und die Schere ging auf — am 26.08. vierzehn zu zwei, am 27.08. acht zu
+#: null. *Mehr Tempo verschlimmert das; der Engpass ist nicht das Bauen.*
+#:
+#: **Acht ist eine Setzung und keine Messung.** Sie steht hier, damit sie eine Stelle hat
+#: und nicht in einem Kopf: Was von Hand eingehalten wird, wird irgendwann nicht mehr
+#: eingehalten — dieselbe Begruendung wie beim Zaehlen des Rueckstands selbst.
+#:
+#: Der Deckel sperrt das SCHREIBEN, nicht das Denken. Wer trotzdem einen stellen muss,
+#: schliesst zuerst einen anderen — und genau das ist der Zweck.
+DECKEL_JE_WORKER = 8
+
+
+class DeckelError(ValueError):
+    """Der Adressat traegt schon genug. Erst schliessen, dann stellen."""
+
+
 class AuftragError(ValueError):
     """Ein Auftrag oder Ergebnis verletzt den Vertrag."""
 
@@ -282,6 +301,37 @@ def pruefe_auftrag(satz: dict) -> list[str]:
     return maengel
 
 
+def _pruefe_deckel(satz: dict, repo_wurzel) -> None:
+    """Trägt dieser Adressat schon genug? — :data:`DECKEL_JE_WORKER`.
+
+    **Ein bereits abgelegter Auftrag zählt nicht doppelt:** Wer einen bestehenden
+    überschreibt, ändert ihn, und das ist kein neuer Rückstand.
+
+    Raises:
+        DeckelError: mit der Liste dessen, was zuerst zu schliessen wäre — **die
+            ältesten drei**. Eine Fehlermeldung, die nur «zu viele» sagt, verschiebt die
+            Arbeit des Nachsehens auf den nächsten.
+    """
+    worker = satz.get("worker")
+    ziel = Path(repo_wurzel) / VERZ_OFFEN / f"{satz.get('auftrag_id')}.json"
+    if ziel.exists():
+        return
+
+    offen = [a for a in unerledigt(repo_wurzel) if a.get("worker") == worker]
+    if len(offen) < DECKEL_JE_WORKER:
+        return
+
+    aeltest = sorted(offen, key=lambda a: str(a.get("erstellt", "")))[:3]
+    liste = "; ".join(f"{a['auftrag_id']} ({str(a.get('beschreibung'))[:40]}…)"
+                      for a in aeltest)
+    raise DeckelError(
+        f"{worker!r} traegt bereits {len(offen)} unbeantwortete Auftraege — der Deckel "
+        f"liegt bei {DECKEL_JE_WORKER}. Erst schliessen, dann stellen.\n"
+        f"Die aeltesten drei: {liste}\n"
+        f"Ein Auftrag mehr macht keine Antwort schneller; er macht nur die Reihe laenger, "
+        f"in der die wichtige Frage steht.")
+
+
 def schreibe_auftrag(satz: dict, repo_wurzel) -> Path:
     """Auftrag ins Repo legen — atomar, damit kein halber Auftrag eingecheckt wird.
 
@@ -293,6 +343,7 @@ def schreibe_auftrag(satz: dict, repo_wurzel) -> Path:
     maengel = pruefe_auftrag(satz)
     if maengel:
         raise AuftragError("Auftrag unvollständig: " + "; ".join(maengel))
+    _pruefe_deckel(satz, repo_wurzel)
     satz, _ = regel3_saeubern(satz)
 
     ziel_verz = Path(repo_wurzel) / VERZ_OFFEN

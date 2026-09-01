@@ -371,3 +371,83 @@ def test_eine_frage_ohne_ergebnis_bleibt_offen(tmp_path):
     k = _hinlegen(tmp_path, "auf-20260901-02")
     assert auf.zustand(k, tmp_path) == auf.ZUSTAND_OFFEN
     assert [a["auftrag_id"] for a in auf.unerledigt(tmp_path)] == [k]
+
+
+# ======================================================================================
+# Der Deckel — was von Hand eingehalten wird, wird irgendwann nicht mehr eingehalten
+# ======================================================================================
+
+def _viele(tmp_path, worker, n, ab=1):
+    from aiimaging import auftrag as auf
+    for i in range(ab, ab + n):
+        satz = {
+            "schema": auf.SCHEMA_AUFTRAG, "worker": worker,
+            "auftrag_id": f"auf-20260901-{i:02d}", "art": "qa",
+            "beschreibung": f"Frage Nummer {i}.", "anweisung": "Was zu tun ist.",
+            "erstellt": f"2026-09-01T{i:02d}:00:00Z",
+            "geometrie": {"synthetisch": True, "pfad": None, "erzeugen_mit": "x"},
+            "params": {}, "auflagen": ["keine"], "rueckgabe": ["V1 nichts"],
+        }
+        auf.schreibe_auftrag(satz, tmp_path)
+
+
+def test_unter_dem_deckel_geht_es_durch(tmp_path):
+    from aiimaging import auftrag as auf
+    _viele(tmp_path, auf.WORKER_LOCAL, auf.DECKEL_JE_WORKER - 1)
+    assert len(auf.unerledigt(tmp_path)) == auf.DECKEL_JE_WORKER - 1
+
+
+def test_am_deckel_wird_abgewiesen_und_die_aeltesten_werden_genannt(tmp_path):
+    """**Eine Fehlermeldung, die nur «zu viele» sagt, verschiebt die Arbeit des
+    Nachsehens auf den nächsten.**"""
+    from aiimaging import auftrag as auf
+    _viele(tmp_path, auf.WORKER_LOCAL, auf.DECKEL_JE_WORKER)
+
+    with pytest.raises(auf.DeckelError) as fehler:
+        _viele(tmp_path, auf.WORKER_LOCAL, 1, ab=90)
+
+    text = str(fehler.value)
+    assert "auf-20260901-01" in text, "der aelteste wird beim Namen genannt"
+    assert str(auf.DECKEL_JE_WORKER) in text
+    assert "Erst schliessen, dann stellen" in text
+
+
+def test_der_deckel_gilt_je_adressat_und_nicht_insgesamt(tmp_path):
+    """Ein voller `local` sperrt `cloud` nicht — die drei können nicht dasselbe."""
+    from aiimaging import auftrag as auf
+    _viele(tmp_path, auf.WORKER_LOCAL, auf.DECKEL_JE_WORKER)
+    _viele(tmp_path, auf.WORKER_CLOUD, 1, ab=50)
+    assert len([a for a in auf.unerledigt(tmp_path)
+                if a.get("worker") == auf.WORKER_CLOUD]) == 1
+
+
+def test_ein_beantworteter_auftrag_macht_wieder_platz(tmp_path):
+    """**Der ganze Zweck.** Der Deckel sperrt nicht das Denken, sondern das Anhäufen."""
+    from aiimaging import auftrag as auf
+    _viele(tmp_path, auf.WORKER_LOCAL, auf.DECKEL_JE_WORKER)
+    with pytest.raises(auf.DeckelError):
+        _viele(tmp_path, auf.WORKER_LOCAL, 1, ab=90)
+
+    auf.schreibe_ergebnis(
+        auf.baue_ergebnis(auftrag_id="auf-20260901-01", status="ok"), tmp_path)
+    _viele(tmp_path, auf.WORKER_LOCAL, 1, ab=90)          # jetzt geht es
+
+
+def test_ein_zurueckgezogener_auftrag_macht_ebenfalls_platz(tmp_path):
+    """Auch das ist ein Schliessen — nur eines, das zugibt, dass die Frage weg ist."""
+    from aiimaging import auftrag as auf
+    _viele(tmp_path, auf.WORKER_LOCAL, auf.DECKEL_JE_WORKER)
+    e = auf.baue_ergebnis(auftrag_id="auf-20260901-02", status="ok")
+    e["art"] = "zurueckgezogen"
+    auf.schreibe_ergebnis(e, tmp_path)
+    _viele(tmp_path, auf.WORKER_LOCAL, 1, ab=91)
+
+
+def test_einen_bestehenden_auftrag_zu_aendern_faellt_nicht_unter_den_deckel(tmp_path):
+    """Sonst liesse sich am Deckel kein Auftrag mehr **berichtigen** — und genau das war
+    heute nötig, neun Mal."""
+    from aiimaging import auftrag as auf
+    _viele(tmp_path, auf.WORKER_LOCAL, auf.DECKEL_JE_WORKER)
+    satz = auf.offene_auftraege(tmp_path)[0]
+    satz["art"] = auf.ART_FRAGE
+    auf.schreibe_auftrag(satz, tmp_path)                  # dieselbe Kennung: erlaubt
