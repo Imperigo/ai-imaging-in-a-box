@@ -48,14 +48,21 @@
       "F6": "Wie gelangen Referenzbilder zu uns, ohne durch ein oeffentliches Repo zu reisen?"
     }
   },
-  "auflagen": {
-    "leistungsgrenze_w": 400,
-    "nur_bei_leerlauf": true,
-    "leerlauf_schwelle_w": 120,
-    "leerlauf_schwelle_mem_gb": 8,
-    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
-  },
-  "rueckgabe": {
+  "auflagen": [
+    "An unserem Code ist nichts zu aendern — das hier betrifft euren Vertrag",
+    "Nicht vermuten: «vermutlich» laesst die Frage unbeantwortet, nur mit einem beruhigenden Wort davor. «Wissen wir nicht» ist eine verwertbare Antwort",
+    "Regel 3: keine Pfade mit Benutzernamen, keine Projekt- oder Kundendaten, keine Bilddaten — unser Repo ist oeffentlich"
+  ],
+  "rueckgabe": [
+    "F1 null im QA-Schema — nehmt ihr null an, und ab wann? (haelt gerade zwei fertige Bilder von einem Nutzer fern; das Dringendste)",
+    "F1b Wie zeigt ihr die drei Zustaende an: gemessen / nicht gemessen / nicht zustaendig?",
+    "F2 render.sun — ab welcher Richtung zaehlt der Azimut, und was steuert elevation?",
+    "F3 vis.skip — was soll es bei uns bewirken, oder faellt es weg?",
+    "F4 vis.upscale — es gibt keinen Hochskalierer bei uns; streichen oder anders belegen?",
+    "F5 style.mode — die Stil-QA laeuft bei uns nicht; was soll das Feld tun?",
+    "F6 style.refs — dasselbe: welcher Weg, der weder durch unser Repo fuehrt noch einen Pfad voraussetzt, den nur ihr seht?"
+  ],
+  "ablage": {
     "verzeichnis": "auftraege/ergebnisse",
     "nur_zahlen": true,
     "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."

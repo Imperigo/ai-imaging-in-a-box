@@ -12,10 +12,17 @@
     "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
   },
   "params": {},
-  "auflagen": [
-    "Regel 3: keine Bilder, keine Benutzerpfade, keine Rechnernamen",
-    "Kein neuer Lauf, wenn die Antwort in den Protokollen steht — das ist eine Einordnung"
-  ],
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Regel 3: keine Bilder, keine Benutzerpfade, keine Rechnernamen",
+      "Kein neuer Lauf, wenn die Antwort in den Protokollen steht — das ist eine Einordnung",
+      "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+    ]
+  },
   "rueckgabe": [
     "F1 Auf welcher Stufe wurde gemessen — erzeugtes Bild oder Zwischenstufe?",
     "F2 Prompt im Wortlaut; nennt er Bauteile?",

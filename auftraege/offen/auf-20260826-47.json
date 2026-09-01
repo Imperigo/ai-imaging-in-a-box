@@ -15,11 +15,18 @@
     "betrifft": "auf-vis-20260826-16 Nachtrag",
     "schalter": "--kein-gelaende"
   },
-  "auflagen": [
-    "Regel 3: keine Pfade, keine Dateinamen, keine Projektnamen in der Antwort",
-    "Die glb NEU konvertieren — die alte traegt die Knotennamen noch nicht",
-    "Den Maskenweg nicht selbst umbauen"
-  ],
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Regel 3: keine Pfade, keine Dateinamen, keine Projektnamen in der Antwort",
+      "Die glb NEU konvertieren — die alte traegt die Knotennamen noch nicht",
+      "Den Maskenweg nicht selbst umbauen",
+      "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+    ]
+  },
   "rueckgabe": [
     "M1 traegt der Bericht jetzt rho_maske, und welche methode steht im Score",
     "M2 reines Gebaeude-IFC oder Szene mit Gelaende",

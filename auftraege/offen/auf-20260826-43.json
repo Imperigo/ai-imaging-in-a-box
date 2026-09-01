@@ -14,10 +14,17 @@
   "params": {
     "schwelle": 0.65
   },
-  "auflagen": [
-    "Regel 3: keine echten Projektdaten, keine Benutzernamen in Pfaden",
-    "Die Schwelle 0.65 wird nicht angefasst"
-  ],
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Regel 3: keine echten Projektdaten, keine Benutzernamen in Pfaden",
+      "Die Schwelle 0.65 wird nicht angefasst",
+      "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+    ]
+  },
   "rueckgabe": [
     "H1 welche Zahl",
     "H2 Streuung ueber Laeufe",

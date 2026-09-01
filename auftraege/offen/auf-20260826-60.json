@@ -15,12 +15,19 @@
     "aufloesung": 400,
     "kamera": "sSE"
   },
-  "auflagen": [
-    "Keine Schwelle aendern — weder 0.65 noch PAAR_RHO_SCHWELLE",
-    "bestanden nicht reparieren, der Entscheid gehoert dem Owner",
-    "Regel 3: nur Zahlen und Text",
-    "Nicht mitteln — vier Faelle, vier Zeilen"
-  ],
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Keine Schwelle aendern — weder 0.65 noch PAAR_RHO_SCHWELLE",
+      "bestanden nicht reparieren, der Entscheid gehoert dem Owner",
+      "Regel 3: nur Zahlen und Text",
+      "Nicht mitteln — vier Faelle, vier Zeilen",
+      "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+    ]
+  },
   "rueckgabe": [
     "V1 je Fall: score, geom_iou, spearman, rho_maske, paarurteil.bestanden",
     "V2 faellt rho_maske bei H1 (Bauwerk weg) auch mit eurem Schaetzer?",

@@ -12,12 +12,19 @@
     "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
   },
   "params": {},
-  "auflagen": [
-    "Nichts am Odysseus-Backend aendern — fremdes Repo",
-    "Keine Registrierung wiederholen, solange auf-20260826-48 offen ist",
-    "Regel 3: keine Zugangsdaten, Hostnamen oder Pfade mit Benutzernamen",
-    "Diagnose, kein Umbau"
-  ],
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Nichts am Odysseus-Backend aendern — fremdes Repo",
+      "Keine Registrierung wiederholen, solange auf-20260826-48 offen ist",
+      "Regel 3: keine Zugangsdaten, Hostnamen oder Pfade mit Benutzernamen",
+      "Diagnose, kein Umbau",
+      "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+    ]
+  },
   "rueckgabe": [
     "V1 Liefert /api/mcp/tools inputSchema und outputSchema je Werkzeug, oder nur Name?",
     "V2 Kommen die Schemata beim MCP-Server selbst an (direkt gefragt, nicht ueber /api)?",

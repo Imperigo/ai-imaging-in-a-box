@@ -12,13 +12,20 @@
     "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc --hochbau"
   },
   "params": {},
-  "auflagen": [
-    "Keine Schwelle im Quelltext aendern — weder 0.80 noch 0.20 noch 0.65",
-    "Das Paarurteil nicht ans Tor haengen, solange die Schwellen abgelesen sind",
-    "Nicht mitteln — eine Zeile je Fall",
-    "Regel 3: nur Zahlen und Text, keine Pfade mit Nutzernamen",
-    "Kein Fall wird stillschweigend weggelassen — ein Ausfall ist eine Zeile mit Grund"
-  ],
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Keine Schwelle im Quelltext aendern — weder 0.80 noch 0.20 noch 0.65",
+      "Das Paarurteil nicht ans Tor haengen, solange die Schwellen abgelesen sind",
+      "Nicht mitteln — eine Zeile je Fall",
+      "Regel 3: nur Zahlen und Text, keine Pfade mit Nutzernamen",
+      "Kein Fall wird stillschweigend weggelassen — ein Ausfall ist eine Zeile mit Grund",
+      "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+    ]
+  },
   "rueckgabe": [
     "V1 die Falltabelle als JSON-Eingabedatei (fall_id, gut, wert, szene, kamera) — je einmal fuer rho und fuer kantenanteil",
     "V2 die Ausgabe von tools/paarschwellen.py --json fuer beide Groessen",

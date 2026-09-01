@@ -15,12 +15,19 @@
     "aufloesung": 192,
     "kamera": "sSE"
   },
-  "auflagen": [
-    "augenhoehe nicht verstellen — falsch ist der Bezugspunkt, nicht die 1.70",
-    "kamera-modus nicht auf gekippt zurueckstellen; schlechtere Bilder sind ein Befund",
-    "Regel 3: keine Pfade mit Benutzernamen, keine Projektdaten, keine Bilder",
-    "Kein Modell nennen, aus dem sich ein Projekt erkennen laesst — nur die Zahlen"
-  ],
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "augenhoehe nicht verstellen — falsch ist der Bezugspunkt, nicht die 1.70",
+      "kamera-modus nicht auf gekippt zurueckstellen; schlechtere Bilder sind ein Befund",
+      "Regel 3: keine Pfade mit Benutzernamen, keine Projektdaten, keine Bilder",
+      "Kein Modell nennen, aus dem sich ein Projekt erkennen laesst — nur die Zahlen",
+      "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+    ]
+  },
   "rueckgabe": [
     "V0 steht die Kamera bei eurem naechsten Demolauf auf Augenhoehe? kamera.weg, kamera.auge[2], bbox[0][2]",
     "V1 bbox[0][2], kamera.auge[2] und kamera.gelaende_bezug aus einem echten Lauf",

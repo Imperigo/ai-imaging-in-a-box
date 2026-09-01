@@ -21,12 +21,22 @@
     "aendert_unseren_code": false,
     "blockierend": "nur Punkt Null (laeuft ein Abholer?)"
   },
-  "auflagen": {
-    "leistungsgrenze_w": 0,
-    "nur_bei_leerlauf": false,
-    "hinweis": "Keine Rechenlast. Vertragsfragen, keine Messung."
-  },
-  "rueckgabe": {
+  "auflagen": [
+    "An unserem Code ist nichts zu aendern — das hier betrifft euren Vertrag",
+    "Nicht vermuten: «vermutlich» laesst die Frage unbeantwortet, nur mit einem beruhigenden Wort davor. «Wissen wir nicht» ist eine verwertbare Antwort",
+    "Regel 3: keine Pfade mit Benutzernamen, keine Projekt- oder Kundendaten, keine Bilddaten — unser Repo ist oeffentlich"
+  ],
+  "rueckgabe": [
+    "R0 Laeuft bei euch ein Abholer? (Abschnitt NULL — der einzige Punkt, der den Betrieb wirklich blockiert; solange keiner laeuft, ist alles Weitere gegenstandslos)",
+    "R0b Bestaetigt ein Mensch bei euch VOR dem approval_token die Kosten? Falls ja, ist das bei uns eine Zeile",
+    "R1 Zu EINS (die QA-Zahlen sind widerlegt): macht ihr / macht ihr nicht / braucht ihr es anders — und wie?",
+    "R2 Zu ZWEI (style_score muss null sein duerfen): dasselbe, je Punkt eine Antwort",
+    "R3 Zu DREI (Innenansichten sind fertig und bei euch unbestellbar): dasselbe",
+    "R4 Zu FUENF (was neben den Bildern liegt, weil es kein Feld gibt): welche der Felder wollt ihr, unter welchem Namen?",
+    "R5 Zu SECHS (Backbone): eure Antwort",
+    "R6 Was ihr NICHT wollt — ausdruecklich. Ein «machen wir nicht» ist eine verwertbare Antwort, Schweigen nicht"
+  ],
+  "ablage": {
     "verzeichnis": "auftraege/ergebnisse",
     "nur_zahlen": false,
     "hinweis": "Je Punkt eine Antwort: machen wir / machen wir nicht / brauchen es anders (dann wie). Punkt Null zuerst."

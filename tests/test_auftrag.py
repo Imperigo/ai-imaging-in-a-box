@@ -193,7 +193,15 @@ def _hinlegen(tmp_path, kennung="auf-20260828-01", worker=None):
         "anweisung": "Was zu tun ist.", "erstellt": "2026-08-28T00:00:00Z",
         "geometrie": {"synthetisch": True, "pfad": None,
                       "erzeugen_mit": "python3 tools/make_test_ifc.py build/t.ifc"},
-        "params": {}, "auflagen": ["keine"], "rueckgabe": ["V1 nichts"],
+        "params": {},
+        # DIE HARDWARE-AUFLAGEN GEHOEREN HIER HIN, seit dem 01.09.2026 auch geprueft.
+        # Vorher stand hier `["keine"]` — also genau die Prosaform, die `darf_starten`
+        # zum Absturz brachte. *Die Attrappe baute die kaputte Gestalt nach, und darum
+        # konnte keine Probe den Fehler sehen.*
+        "auflagen": {"leistungsgrenze_w": auf.LEISTUNGSGRENZE_W,
+                     "nur_bei_leerlauf": True,
+                     "hinweise": ["keine"]},
+        "rueckgabe": ["V1 nichts"],
     }
     auf.schreibe_auftrag(satz, tmp_path)
     return kennung
@@ -386,7 +394,10 @@ def _viele(tmp_path, worker, n, ab=1):
             "beschreibung": f"Frage Nummer {i}.", "anweisung": "Was zu tun ist.",
             "erstellt": f"2026-09-01T{i:02d}:00:00Z",
             "geometrie": {"synthetisch": True, "pfad": None, "erzeugen_mit": "x"},
-            "params": {}, "auflagen": ["keine"], "rueckgabe": ["V1 nichts"],
+            "params": {},
+            "auflagen": {"leistungsgrenze_w": auf.LEISTUNGSGRENZE_W,
+                         "nur_bei_leerlauf": True},
+            "rueckgabe": ["V1 nichts"],
         }
         auf.schreibe_auftrag(satz, tmp_path)
 
@@ -585,3 +596,87 @@ def test_bei_gleichem_rang_entscheidet_die_kennung():
     geordnet = auf.nach_rang([{"auftrag_id": "b", "rang": 1},
                               {"auftrag_id": "a", "rang": 1}])
     assert [x["auftrag_id"] for x in geordnet] == ["a", "b"]
+
+
+# ======================================================================================
+# Ein Feldname, zwei Bedeutungen
+# ======================================================================================
+#
+# `auflagen` ist in den älteren Aufträgen das Wörterbuch, das der Runner liest, und in den
+# neueren eine Liste von Sätzen für einen Menschen. `rueckgabe` ist einmal die
+# Transportangabe und einmal die Liste der Fragen. Bis zum 01.09.2026 prüfte nichts, welche
+# Form vorliegt — mit zwei Folgen, die beide teuer waren.
+
+def test_die_maschinenauflagen_kommen_aus_dem_woerterbuch():
+    satz = auf.baue_auftrag(auftrag_id="auf-a", art="multipass", beschreibung="x")
+    assert auf.auflagen_maschine(satz)["leistungsgrenze_w"] == auf.LEISTUNGSGRENZE_W
+
+
+def test_eine_prosaliste_ergibt_leere_maschinenauflagen_statt_eines_absturzes():
+    """**Der Fehler, gegen den es die Funktion gibt.** `darf_starten` ruft `.get`; an einer
+    Liste gab das `AttributeError`, und zwar ausserhalb der Absicherung der Schleife."""
+    satz = auf.baue_auftrag(auftrag_id="auf-a", art="multipass", beschreibung="x")
+    satz["auflagen"] = ["Nichts am Vertrag aendern", "Regel 3"]
+    assert auf.auflagen_maschine(satz) == {}
+
+
+def test_die_prosaauflagen_verlieren_die_werte_des_woerterbuchs_nicht():
+    """Über das Wörterbuch gezählt kamen die SCHLÜSSELNAMEN heraus — die Werte
+    verschwanden lautlos in jedem Block, der hinausging."""
+    satz = auf.baue_auftrag(auftrag_id="auf-a", art="multipass", beschreibung="x")
+    text = " ".join(auf.auflagen_text(satz))
+    assert "400" in text, "die Zahl, an der der Rechner haengt, fehlte im Block"
+    assert "Netzteil" in text, "der Hinweis stand nur als Schluesselname da"
+
+
+def test_hinweise_stehen_vor_den_schluesselwerten():
+    satz = auf.baue_auftrag(auftrag_id="auf-a", art="multipass", beschreibung="x")
+    satz["auflagen"]["hinweise"] = ["ZUERST DIES"]
+    assert auf.auflagen_text(satz)[0] == "ZUERST DIES"
+
+
+def test_die_transportangabe_ist_kein_rueckgabepunkt():
+    """*Der Wächter, den eine Form zufriedenstellte.* Ein Wörterbuch mit `verzeichnis`,
+    `nur_zahlen` und `hinweis` ist wahr — und nennt keinen einzigen Rückgabepunkt."""
+    satz = auf.baue_auftrag(auftrag_id="auf-a", art="multipass", beschreibung="x")
+    assert satz["rueckgabe"], "die Transportangabe ist vorhanden"
+    assert auf.rueckgabepunkte(satz) == [], "und trotzdem sagt sie nicht, was zurueckkommt"
+
+
+def test_eine_liste_von_fragen_sind_rueckgabepunkte():
+    satz = auf.baue_auftrag(auftrag_id="auf-a", art="multipass", beschreibung="x")
+    satz["rueckgabe"] = ["V1 welcher Weg?", "V2 und warum?"]
+    assert auf.rueckgabepunkte(satz) == ["V1 welcher Weg?", "V2 und warum?"]
+
+
+# ── Die Hardware-Auflagen als ausführbarer Vertrag ───────────────────────────────────
+
+def test_ein_local_auftrag_ohne_leistungsgrenze_ist_ungueltig():
+    """Die 400-W-Auflage steht seit dem ersten Tag in `CLAUDE.md` und war nie ausführbar —
+    darum ist sie ab dem 26.08.2026 unbemerkt aus 15 von 17 offenen Aufträgen
+    verschwunden, als `auflagen` zur Prosaliste wurde."""
+    satz = auf.baue_auftrag(auftrag_id="auf-a", art="multipass", beschreibung="x")
+    satz["auflagen"] = ["Nur Prosa"]
+    assert any("leistungsgrenze_w" in m for m in auf.pruefe_auftrag(satz))
+
+
+def test_ein_local_auftrag_ohne_leerlauf_gate_ist_ungueltig():
+    satz = auf.baue_auftrag(auftrag_id="auf-a", art="multipass", beschreibung="x")
+    del satz["auflagen"]["nur_bei_leerlauf"]
+    assert any("nur_bei_leerlauf" in m for m in auf.pruefe_auftrag(satz))
+
+
+@pytest.mark.parametrize("worker", [auf.WORKER_CLOUD, auf.WORKER_UI, auf.WORKER_KERN])
+def test_von_den_anderen_wird_keine_leistungsgrenze_verlangt(worker):
+    """**Die Gegenprobe, und sie ist keine Formsache.** Sie haben keine Karte. Eine
+    Auflage, die den Leser nicht betrifft, wird überblättert — und mit ihr die nächste."""
+    satz = auf.baue_auftrag(auftrag_id="auf-a", art="qa", beschreibung="x", worker=worker)
+    satz["auflagen"] = ["An unserem Code ist nichts zu aendern"]
+    assert auf.pruefe_auftrag(satz) == []
+
+
+def test_ein_neuer_local_auftrag_ohne_auflagen_wird_gar_nicht_erst_geschrieben(tmp_path):
+    satz = auf.baue_auftrag(auftrag_id="auf-a", art="multipass", beschreibung="x")
+    satz["auflagen"] = ["Nur Prosa"]
+    with pytest.raises(auf.AuftragError, match="leistungsgrenze_w"):
+        auf.schreibe_auftrag(satz, tmp_path)

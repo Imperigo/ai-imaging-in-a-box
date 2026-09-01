@@ -12,12 +12,19 @@
     "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
   },
   "params": {},
-  "auflagen": [
-    "Regel 3: nur Zahlen und Text zurueck, keine Bilddaten",
-    "Die Schwelle bleibt bei 0.65",
-    "bestanden: null NICHT zu false machen — der Unterschied ist der Zweck",
-    "Ein Lauf, ganz gemeldet — nicht mehrere gemittelt"
-  ],
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Regel 3: nur Zahlen und Text zurueck, keine Bilddaten",
+      "Die Schwelle bleibt bei 0.65",
+      "bestanden: null NICHT zu false machen — der Unterschied ist der Zweck",
+      "Ein Lauf, ganz gemeldet — nicht mehrere gemittelt",
+      "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+    ]
+  },
   "rueckgabe": [
     "V1 bestanden: true oder null? Bei null: maskenbefund.grund",
     "V2 rho_maske, kante, kantenanteil, paarurteil — Zahlen oder None?",

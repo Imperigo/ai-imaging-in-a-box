@@ -201,11 +201,31 @@ def block(satz: dict, *, zustellbeleg: int = 0) -> str:
         "-" * BREITE,
         "AUFLAGEN",
     ]
-    for auflage in satz.get("auflagen") or []:
+    # UEBER `auflagen` UND `rueckgabe` WIRD NICHT MEHR ROH GEZAEHLT.
+    #
+    # Beide Felder tragen zwei Formen: ein Woerterbuch in den aelteren Auftraegen, eine
+    # Liste von Saetzen in den neueren. Ueber ein Woerterbuch zu zaehlen ergibt die
+    # SCHLUESSELNAMEN — `leistungsgrenze_w`, `verzeichnis`, `nur_zahlen` —, und die Werte
+    # verschwanden lautlos. Fuenf offene Auftraege gingen so hinaus, drei davon an die
+    # beiden Adressaten, die noch nie geantwortet haben.
+    for auflage in _auftrag.auflagen_text(satz):
         teile.append(_punkt(str(auflage)))
     teile += ["", "WAS ZURUECKKOMMEN SOLL"]
-    for frage in satz.get("rueckgabe") or []:
+    punkte = _auftrag.rueckgabepunkte(satz)
+    for frage in punkte:
         teile.append(_punkt(str(frage)))
+    if not punkte:
+        # DIE FORM WAR DA, DER INHALT NICHT — und der Wachter oben hat sie durchgelassen,
+        # weil ein Woerterbuch mit drei Transportschluesseln wahr ist.
+        #
+        # Nicht abweisen: Buchstabentreue, die den aeltesten Posten des Rueckstands
+        # unzustellbar macht, ist derselbe Fehler wie eine fehlende Anweisung stumm
+        # durchzulassen. Aber sichtbar sagen, was fehlt.
+        teile.append(_punkt(
+            "Dieser Auftrag nennt keine EINZELNEN Rueckgabepunkte — er traegt nur die "
+            "Transportangabe (wohin, nur Zahlen). Was zurueckkommen soll, steht in der "
+            "Anweisung oben. Wenn etwas unklar bleibt, fragt lieber nach, statt zu "
+            "raten: Das ist ein Mangel bei uns und keiner bei euch."))
 
     rueckweg = RUECKWEG.get(worker)
     if rueckweg:

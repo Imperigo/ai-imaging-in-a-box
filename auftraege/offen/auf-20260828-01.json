@@ -12,13 +12,20 @@
     "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
   },
   "params": {},
-  "auflagen": [
-    "Nur messen, nichts an KosmoPublish-Code aendern",
-    "cairosvg NICHT ins Produkt-venv (LGPL-3, gehoert ins .venv-mess)",
-    "inkscape installieren nur mit Owner-Go von Andrin (Maschinen-Aenderung)",
-    "Keine echten Projektdaten, auch keine Dateinamen daraus",
-    "Regel 3: keine absoluten Pfade mit Benutzernamen in der Rueckgabe"
-  ],
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Nur messen, nichts an KosmoPublish-Code aendern",
+      "cairosvg NICHT ins Produkt-venv (LGPL-3, gehoert ins .venv-mess)",
+      "inkscape installieren nur mit Owner-Go von Andrin (Maschinen-Aenderung)",
+      "Keine echten Projektdaten, auch keine Dateinamen daraus",
+      "Regel 3: keine absoluten Pfade mit Benutzernamen in der Rueckgabe",
+      "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+    ]
+  },
   "rueckgabe": [
     "V1 Ausgabe von tools/schraffur_renderer_probe.py, Tabelle unveraendert",
     "V2 Urteil fuer inkscape bei 1:50 und 1:200 — oder 'nicht installiert'"

@@ -319,6 +319,29 @@ def pruefe_auftrag(satz: dict) -> list[str]:
     elif satz["worker"] not in WORKER:
         maengel.append(
             f"Unbekannter worker {satz['worker']!r}; bekannt: {', '.join(WORKER)}")
+    # DIE HARDWARE-AUFLAGEN SIND PFLICHT — aber nur fuer `local`.
+    #
+    # `CLAUDE.md` und das Lexikon fuehren seit dem ersten Tag, dass jeder Auftrag die
+    # 400-W-Grenze und das Leerlauf-Gate mitfuehrt: Die RTX 5090 loest ohne Grenze unter
+    # Volllast die Schutzschaltung des Netzteils aus. Die Regel stand nur im Text — und
+    # ist darum ab dem 26.08.2026 unbemerkt aus 15 von 17 offenen local-Auftraegen
+    # verschwunden, als `auflagen` zur Prosaliste wurde.
+    #
+    # Fuer `cloud`, `ui` und `kern` ausdruecklich NICHT: Sie haben keine Karte, und eine
+    # Leistungsgrenze im Auftrag an den Vertrags-Worker waere eine Auflage, die niemanden
+    # betrifft — die ueberblaettert man, und mit ihr die naechste.
+    if satz.get("worker") == WORKER_LOCAL:
+        maschine = auflagen_maschine(satz)
+        if "leistungsgrenze_w" not in maschine:
+            maengel.append(
+                f"Auflage 'leistungsgrenze_w' fehlt. Ein Lauf auf der HomeStation ohne "
+                f"erklaerte Leistungsgrenze ist der Fall, an dem der Rechner haengt "
+                f"(Vorgabe {LEISTUNGSGRENZE_W} W). Prosa-Auflagen gehoeren unter "
+                f"auflagen['hinweise'].")
+        if not isinstance(maschine.get("nur_bei_leerlauf"), bool):
+            maengel.append(
+                "Auflage 'nur_bei_leerlauf' fehlt oder ist kein Wahrheitswert. Ohne sie "
+                "steht nicht im Auftrag, ob er die Karte teilen darf.")
     geom = satz.get("geometrie") or {}
     if isinstance(geom, dict) and not geom.get("synthetisch") and not geom.get("pfad"):
         maengel.append("Geometriequelle fehlt: weder synthetisch noch Pfad")
@@ -738,6 +761,82 @@ def nie_geantwortet(repo_wurzel) -> list[str]:
     offen = [a.get("worker") for a in unerledigt(repo_wurzel)]
     return [w for w in WORKER
             if verhalten[w]["n_antworten"] == 0 and w in offen]
+
+
+#: Die Auflagen, die eine MASCHINE liest — `tools/homeworker.py::darf_starten` prüft sie
+#: vor jedem Lauf gegen den wirklichen Zustand der Karte.
+AUFLAGEN_MASCHINE = ("leistungsgrenze_w", "nur_bei_leerlauf",
+                     "leerlauf_schwelle_w", "leerlauf_schwelle_mem_gb")
+
+
+def auflagen_maschine(satz: dict) -> dict:
+    """Die maschinenlesbaren Auflagen eines Auftrags — **immer ein Wörterbuch**.
+
+    **Der Fehler, gegen den es diese Funktion gibt** (gefunden 01.09.2026): ``auflagen``
+    trägt seit dem 26.08. zwei Bedeutungen. In den älteren Aufträgen ist es das
+    Wörterbuch mit Leistungsgrenze und Leerlauf-Gate, das der Runner liest; in den
+    neueren eine Liste von Sätzen für einen Menschen. ``darf_starten`` ruft ``.get`` —
+    und stürzte an der Liste mit ``AttributeError`` ab, **ausserhalb** der Absicherung
+    der Schleife. Sechs der acht laufbaren Aufträge trugen die Liste, darunter der, der
+    den Takt selbst bestellt.
+
+    *Ein Feldname mit zwei Bedeutungen, und nichts prüfte, welche vorliegt.*
+
+    Bei der Listenform kommt ein **leeres** Wörterbuch zurück. Das ist sicher, weil die
+    Vorgaben in ``darf_starten`` die strengen sind: 400 W und Leerlauf-Gate an. *Eine
+    fehlende Angabe führt zur strengsten Auslegung, nie zur mildesten* — dieselbe
+    Haltung wie bei ``fail-closed``. Dass sie überhaupt fehlt, ist trotzdem ein Mangel
+    und wird von :func:`pruefe_auftrag` gemeldet.
+    """
+    auflagen = satz.get("auflagen")
+    if isinstance(auflagen, dict):
+        return {k: v for k, v in auflagen.items() if k in AUFLAGEN_MASCHINE}
+    return {}
+
+
+def auflagen_text(satz: dict) -> list[str]:
+    """Die Auflagen, die ein **Mensch** liest — immer eine Liste von Sätzen.
+
+    Die Gegenrichtung zu :func:`auflagen_maschine`, und aus demselben Anlass: Der
+    Auftragsblock zählte bis zum 01.09.2026 über ``auflagen`` und bekam bei der
+    Wörterbuchform die **Schlüsselnamen** — ``leistungsgrenze_w``, ``nur_bei_leerlauf``,
+    ``hinweis``. Die Werte verschwanden lautlos.
+    """
+    auflagen = satz.get("auflagen")
+    if isinstance(auflagen, dict):
+        aus = [str(h) for h in (auflagen.get("hinweise") or [])]
+        for schluessel, wert in auflagen.items():
+            if schluessel in ("hinweise",):
+                continue
+            aus.append(f"{schluessel}: {wert}" if schluessel != "hinweis" else str(wert))
+        return aus
+    return [str(a) for a in (auflagen or [])]
+
+
+#: Die Schlüssel der reinen **Transportangabe** in ``rueckgabe``: wohin die Antwort
+#: gehört und dass sie keine Bilder tragen darf. Sie sagen nichts darüber, **was**
+#: zurückkommen soll — genau das ist der Unterschied, den :func:`rueckgabepunkte` macht.
+RUECKGABE_TRANSPORT = ("verzeichnis", "nur_zahlen", "hinweis")
+
+
+def rueckgabepunkte(satz: dict) -> list[str]:
+    """Was der Auftrag **einzeln** zurückverlangt — leer, wenn er nichts einzeln nennt.
+
+    **Der Wächter, den eine Form zufriedenstellte.** ``auftragspost.block`` weist einen
+    Auftrag ohne ``rueckgabe`` zurück, und ``tests/test_auftraege.py`` verlangt das Feld
+    seit dem 26.08. Beide prüfen auf *Vorhandensein*. Die ältere Wörterbuchform ist aber
+    eine **Transportangabe** — Zielverzeichnis, «nur Zahlen», ein allgemeiner Hinweis —
+    und nennt keinen einzigen Rückgabepunkt. Fünf offene Aufträge schickten darum den
+    Abschnitt *«WAS ZURUECKKOMMEN SOLL»* als ``verzeichnis / nur_zahlen / hinweis``
+    hinaus; drei davon lagen bei den beiden Adressaten, die noch nie geantwortet haben.
+
+    *Eine Form zu prüfen ist nicht dasselbe, wie ihren Inhalt zu prüfen.*
+    """
+    rueckgabe = satz.get("rueckgabe")
+    if isinstance(rueckgabe, dict):
+        return [f"{k}: {v}" for k, v in rueckgabe.items()
+                if k not in RUECKGABE_TRANSPORT]
+    return [str(r) for r in (rueckgabe or [])]
 
 
 def nach_rang(saetze: list[dict]) -> list[dict]:

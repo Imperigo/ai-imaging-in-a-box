@@ -64,14 +64,19 @@
       "folge_wenn_flach": "tote Kante AUF DEM LIEFERWEG — ihr lest, was wir nie schreiben"
     }
   },
-  "auflagen": {
-    "leistungsgrenze_w": 400,
-    "nur_bei_leerlauf": true,
-    "leerlauf_schwelle_w": 120,
-    "leerlauf_schwelle_mem_gb": 8,
-    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
-  },
-  "rueckgabe": {
+  "auflagen": [
+    "An unserem Code ist nichts zu aendern — das hier betrifft die Oberflaeche",
+    "Nicht vermuten: «vermutlich» laesst die Frage unbeantwortet, nur mit einem beruhigenden Wort davor. «Wissen wir nicht» ist eine verwertbare Antwort",
+    "Regel 3: keine Pfade mit Benutzernamen, keine Projekt- oder Kundendaten, keine Bilddaten — unser Repo ist oeffentlich"
+  ],
+  "rueckgabe": [
+    "F1 Die Oberflaeche wird stumm — ohne Meldung und ohne Rueckweg. Woran liegt es, und was zeigt ihr stattdessen?",
+    "F2 Das Beispielprojekt kommt in der Vis-Station nicht an. Ursache?",
+    "F3 Die zweite Kante in Folge geht verloren — dritter Lauf in Folge. Ursache?",
+    "F4 Die drei kleineren, die zusammen die Demo zaehfluessig machen: was davon aendert ihr?",
+    "F5 ist herausgeloest und liegt als auf-20260827-64 beim Cloud-Worker — hier nicht zu beantworten"
+  ],
+  "ablage": {
     "verzeichnis": "auftraege/ergebnisse",
     "nur_zahlen": true,
     "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."

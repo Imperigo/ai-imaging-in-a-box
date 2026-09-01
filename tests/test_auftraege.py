@@ -59,6 +59,14 @@ def _auftragsdateien() -> list[Path]:
     return sorted(OFFEN.glob("*.json"))
 
 
+def _unbeantwortet() -> set[str]:
+    """Die Kennungen, auf die noch jemand antworten soll — gegen den abgeleiteten Zustand.
+
+    *Nicht gegen den Ordner:* `auftraege/offen/` führt auch die längst beantworteten.
+    """
+    return {a["auftrag_id"] for a in auftrag_modul.unerledigt(WURZEL)}
+
+
 def _lies(pfad: Path) -> dict:
     return json.loads(pfad.read_text(encoding="utf-8"))
 
@@ -123,9 +131,33 @@ def test_jeder_auftrag_sagt_was_zurueckkommen_soll(pfad):
     naheliegend hält — und die Frage bleibt offen, obwohl gerechnet wurde. Zugelassen sind
     beide Formen: das Wörterbuch der älteren Aufträge und die Liste seit dem 26.08.2026.
     """
-    rueckgabe = _lies(pfad).get("rueckgabe")
+    satz = _lies(pfad)
+    rueckgabe = satz.get("rueckgabe")
     assert isinstance(rueckgabe, (dict, list)) and rueckgabe, (
         f"{pfad.name}: 'rueckgabe' fehlt oder ist leer ({rueckgabe!r}).")
+
+    # UND SEIT DEM 01.09.2026 REICHT DIE FORM NICHT MEHR.
+    #
+    # Der Satz oben — «Zugelassen sind beide Formen» — hat den Test fuer 42 Dateien
+    # wirkungslos gemacht. Die Woerterbuchform ist naemlich die TRANSPORTANGABE (wohin,
+    # nur Zahlen, ein allgemeiner Hinweis) und nennt keinen einzigen Rueckgabepunkt. Fuenf
+    # offene Auftraege gingen so hinaus; ihr Abschnitt «WAS ZURUECKKOMMEN SOLL» lautete
+    # `verzeichnis / nur_zahlen / hinweis`. Drei davon lagen bei den beiden Adressaten,
+    # die noch nie geantwortet haben.
+    #
+    # *Eine Form zu pruefen ist nicht dasselbe, wie ihren Inhalt zu pruefen.*
+    #
+    # Die Schaerfe gilt nur fuer UNBEANTWORTETE Auftraege: Ein beantworteter wird nicht
+    # mehr gelesen, und seine Form nachtraeglich zu aendern hiesse, an einer Frage zu
+    # arbeiten, die niemand mehr stellt.
+    if satz.get("auftrag_id") not in _unbeantwortet():
+        return
+    punkte = auftrag_modul.rueckgabepunkte(satz)
+    assert punkte, (
+        f"{pfad.name} ist unbeantwortet und nennt keinen einzelnen Rueckgabepunkt — "
+        f"nur die Transportangabe {sorted(rueckgabe)!r}. Der Empfaenger liest damit "
+        f"unter «WAS ZURUECKKOMMEN SOLL» die Schluesselnamen und erfaehrt nicht, woran "
+        f"er erkennt, dass er fertig ist.")
 
 
 @pytest.mark.parametrize("pfad", _auftragsdateien(), ids=lambda p: p.stem)

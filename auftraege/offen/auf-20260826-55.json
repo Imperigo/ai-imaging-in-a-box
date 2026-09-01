@@ -12,12 +12,19 @@
     "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
   },
   "params": {},
-  "auflagen": [
-    "Regel 3: nur Zahlen zurueck",
-    "Kein neuer Renderlauf noetig, wenn alte Karten noch da sind",
-    "Nicht an der Regel weiterbasteln, bevor V1 da ist",
-    "Die Zahl nicht runden oder mitteln — der Median ist richtig"
-  ],
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Regel 3: nur Zahlen zurueck",
+      "Kein neuer Renderlauf noetig, wenn alte Karten noch da sind",
+      "Nicht an der Regel weiterbasteln, bevor V1 da ist",
+      "Die Zahl nicht runden oder mitteln — der Median ist richtig",
+      "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+    ]
+  },
   "rueckgabe": [
     "V1 wo_liegt_der_himmel(...)['lage'] an einem echten Schaetzerlauf",
     "V2 das geom_iou desselben Laufs — passen die beiden zueinander?",

@@ -1464,7 +1464,9 @@ def test_ein_qa_auftrag_bleibt_dadurch_offen(tmp_path, ifc, aus, blender_naht):
     satz = _multipass_satz("qa", ifc, aus)
     satz.update({"schema": hw.auf.SCHEMA_AUFTRAG, "worker": hw.EIGENER_WORKER,
                  "beschreibung": "Eine Messfrage.", "anweisung": "Miss etwas.",
-                 "erstellt": "2026-08-28T00:00:00Z", "auflagen": ["keine"],
+                 "erstellt": "2026-08-28T00:00:00Z",
+                 "auflagen": {"leistungsgrenze_w": hw.auf.LEISTUNGSGRENZE_W,
+                              "nur_bei_leerlauf": True},
                  "rueckgabe": ["V1 die Zahl"]})
     satz["geometrie"] = {"synthetisch": True, "pfad": None, "erzeugen_mit": "x"}
     hw.auf.schreibe_auftrag(satz, tmp_path)
@@ -1649,3 +1651,89 @@ def test_der_deckel_je_durchgang_nimmt_den_ranghoechsten(tmp_path, monkeypatch, 
 
     assert hw.main(["--repo", str(tmp_path), "--alle", "--hoechstens", "1"]) == 0
     assert gelaufen == ["auf-20260818-99"]
+
+
+# ── Ein Auftrag darf sich selbst beenden, nicht den Durchgang ────────────────────────
+#
+# Gefunden am 01.09.2026, Stunden nachdem `auf-59` — der Auftrag, der den Takt bestellt —
+# für entsperrt erklärt und auf Rang 1 gesetzt worden war. `darf_starten` stand VOR dem
+# try/except, `auflagen` trug bei sechs der acht laufbaren Aufträge die Prosaform, und
+# `.get` auf einer Liste ist ein `AttributeError`. Mit `--hoechstens 1` und Rangfolge wäre
+# das jeder Takt gewesen, immer am selben Auftrag.
+
+def test_ein_auftrag_mit_prosa_auflagen_bringt_den_lauf_nicht_zum_absturz(
+        tmp_path, monkeypatch, capsys):
+    """*Der Absturz selbst, und zwar am WIRKLICHEN Aufrufweg.*
+
+    **Die erste Fassung dieses Tests hat ihre Mutationsprobe überlebt:** Sie rief
+    `darf_starten(zustand, auflagen_maschine(satz))` von Hand — also genau die Zeile, die
+    zu prüfen war, schon richtig zusammengesetzt. Wer den Aufruf in `main()` wieder auf
+    das rohe Feld zurückdrehte, machte sie nicht rot. *Ein Wächter, der den Aufruf selbst
+    nachbaut, bewacht seine eigene Nachbildung.*
+
+    Die Datei wird hier **an `schreibe_auftrag` vorbei** abgelegt: Seit dem 01.09.2026
+    weist der Vertrag genau diese Gestalt ab — und genau so sind die fünfzehn echten
+    Dateien entstanden, als es die Prüfung noch nicht gab.
+    """
+    satz = hw.auf.baue_auftrag(auftrag_id="auf-20260818-99", art="multipass",
+                               beschreibung="x")
+    satz["auflagen"] = ["Nichts am Vertrag aendern", "Regel 3"]
+    ordner = tmp_path / hw.auf.VERZ_OFFEN
+    ordner.mkdir(parents=True)
+    (ordner / "auf-20260818-99.json").write_text(json.dumps(satz), encoding="utf-8")
+    monkeypatch.setattr(hw, "gpu_zustand",
+                        lambda: {"verfuegbar": True, "leistungsgrenze_w": 400,
+                                 "leistung_w": 10, "speicher_belegt_gb": 0.5})
+    monkeypatch.setattr(hw, "fuehre_aus",
+                        lambda s, r: hw.auf.baue_ergebnis(auftrag_id=s["auftrag_id"],
+                                                          status="ok"))
+
+    assert hw.main(["--repo", str(tmp_path), "--alle"]) == 0
+
+    ergebnis = hw.auf.lies_ergebnis("auf-20260818-99", tmp_path)
+    assert ergebnis is not None and ergebnis["status"] == "ok", (
+        "Der Lauf ist am Tor abgestuerzt, statt den Auftrag zu rechnen.")
+
+
+def test_ein_kaputter_auftrag_beendet_den_durchgang_nicht(tmp_path, monkeypatch, capsys):
+    """**Der eigentliche Befund.** Dass die Form verwechselt wurde, war ein Fehler; dass
+    sie den ganzen Takt anhält statt eines Auftrags, ist einer an der Bauart.
+
+    Ein Dienst, der alle fünf Minuten an derselben Stelle stirbt, sieht drüben aus wie
+    ein kaputter Takt und nicht wie ein kaputter Auftrag.
+    """
+    for kennung in ("auf-20260818-01", "auf-20260818-99"):
+        hw.auf.schreibe_auftrag(
+            hw.auf.baue_auftrag(auftrag_id=kennung, art="multipass", beschreibung="x"),
+            tmp_path)
+    monkeypatch.setattr(hw, "gpu_zustand", lambda: {"verfuegbar": True})
+
+    def _tor(zustand, auflagen):
+        raise RuntimeError("etwas ganz Unerwartetes")
+    monkeypatch.setattr(hw, "darf_starten", _tor)
+
+    assert hw.main(["--repo", str(tmp_path), "--alle"]) == 0
+    for kennung in ("auf-20260818-01", "auf-20260818-99"):
+        ergebnis = hw.auf.lies_ergebnis(kennung, tmp_path)
+        assert ergebnis is not None, f"{kennung} hat gar kein Ergebnis bekommen"
+        assert ergebnis["status"] == "fehler"
+        assert "RuntimeError" in str(ergebnis.get("fehler"))
+
+
+def test_kein_offener_local_auftrag_bringt_das_tor_zum_absturz():
+    """**Die Probe an den WIRKLICHEN Dateien**, und sie ist der Kern der Sache.
+
+    Die Sammlung prüfte das Skript mit erfundenen Aufträgen und die Aufträge ohne das
+    Skript. Genau dazwischen lag der Fehler: Die Attrappen trugen immer die
+    Wörterbuchform, die echten Dateien seit dem 26.08. die Liste.
+    """
+    from pathlib import Path
+    wurzel = Path(__file__).resolve().parents[1]
+    zustand = {"verfuegbar": True, "leistungsgrenze_w": 400, "leistung_w": 10,
+               "speicher_belegt_gb": 0.5}
+    offen = [a for a in hw.auf.unerledigt(wurzel)
+             if a.get("worker") == hw.EIGENER_WORKER]
+    assert offen, "ohne offene Auftraege sagt dieser Test nichts"
+    for satz in offen:
+        frei, grund = hw.darf_starten(zustand, hw.auf.auflagen_maschine(satz))
+        assert isinstance(frei, bool) and grund, satz["auftrag_id"]

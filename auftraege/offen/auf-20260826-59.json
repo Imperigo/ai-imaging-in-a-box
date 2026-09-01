@@ -12,12 +12,19 @@
     "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
   },
   "params": {},
-  "auflagen": [
-    "Keine Zugangsdaten in eine Datei im Repo",
-    "Regel 3: <nutzer> ersetzen, keinen echten Namen zurueckschicken",
-    "Erst von Hand laufen lassen, dann den Timer haengen",
-    "Den Abholer-Takt nicht anfassen"
-  ],
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Keine Zugangsdaten in eine Datei im Repo",
+      "Regel 3: <nutzer> ersetzen, keinen echten Namen zurueckschicken",
+      "Erst von Hand laufen lassen, dann den Timer haengen",
+      "Den Abholer-Takt nicht anfassen",
+      "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+    ]
+  },
   "rueckgabe": [
     "V1 Laeuft `bash betrieb/kosmo-worker.sh 1` von Hand durch?",
     "V2 Geht der Push aus einem nicht-interaktiven Kontext?",

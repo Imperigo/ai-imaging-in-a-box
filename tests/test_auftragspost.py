@@ -28,6 +28,13 @@ def _satz(**abweichend):
         "rueckgabe": ["V1 welcher Weg?"],
     }
     satz.update(abweichend)
+    # EIN local-AUFTRAG BRAUCHT SEIT DEM 01.09.2026 SEINE HARDWARE-AUFLAGEN. Die
+    # Attrappe trug bis dahin nur Prosa — also genau die Gestalt, an der `darf_starten`
+    # abstuerzte, und deshalb sah keine Probe den Fehler.
+    if satz.get("worker") == auftrag.WORKER_LOCAL and isinstance(satz["auflagen"], list):
+        satz["auflagen"] = {"leistungsgrenze_w": auftrag.LEISTUNGSGRENZE_W,
+                            "nur_bei_leerlauf": True,
+                            "hinweise": list(satz["auflagen"])}
     return satz
 
 
@@ -293,3 +300,34 @@ def test_der_zustellbeleg_sagt_dass_der_fehler_bei_uns_liegen_koennte():
     Vorwurf."""
     assert "Fehler bei UNS" in auftragspost.ZUSTELLBELEG
     assert "ZUSTELLBELEG" in auftragspost.block(_satz(), zustellbeleg=1)
+
+
+def test_der_block_zeigt_die_WERTE_der_woerterbuchauflagen_und_nicht_ihre_namen():
+    """**Die zweite Probe, die ihre Mutation zuerst überlebt hat.** Sie prüfte
+    `auflagen_text` von Hand — also die Hilfsfunktion, nicht den Block, der sie benutzt.
+
+    Über ein Wörterbuch gezählt ergab `AUFLAGEN` die Schlüsselnamen:
+    `leistungsgrenze_w`, `nur_bei_leerlauf`, `hinweis`. Die Zahl, an der der Rechner
+    hängt, stand in keinem einzigen Block, der je hinausging.
+    """
+    satz = _satz(worker="local", auflagen={
+        "leistungsgrenze_w": 400, "nur_bei_leerlauf": True,
+        "hinweis": "RTX 5090 loest ohne Grenze die Netzteil-Schutzschaltung aus."})
+    text = auftragspost.block(satz)
+    assert "400" in text, "die Zahl fehlte, nur ihr Schluesselname stand da"
+    assert "Netzteil" in text, "der Hinweis stand nur als Schluesselname da"
+
+
+def test_der_block_sagt_es_wenn_ein_auftrag_keine_rueckgabepunkte_nennt():
+    """Nicht abweisen — sichtbar machen. *Buchstabentreue, die den ältesten Posten des
+    Rückstands unzustellbar macht, ist derselbe Fehler in die andere Richtung.*"""
+    text = auftragspost.block(_satz(rueckgabe={
+        "verzeichnis": "auftraege/ergebnisse", "nur_zahlen": True, "hinweis": "Nur Zahlen"}))
+    assert "keine EINZELNEN Rueckgabepunkte" in text
+    assert "Mangel bei uns" in text, (
+        "Der Empfaenger darf nicht denken, er habe etwas uebersehen.")
+
+
+def test_echte_rueckgabepunkte_verdraengen_den_hinweis():
+    """Die Gegenprobe: Sonst stünde der Satz unter jedem Block — eine Dauerwarnung."""
+    assert "keine EINZELNEN Rueckgabepunkte" not in auftragspost.block(_satz())

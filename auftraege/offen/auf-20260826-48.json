@@ -12,10 +12,17 @@
     "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
   },
   "params": {},
-  "auflagen": [
-    "Regel 3: keine echten Projektdaten, keine Benutzerpfade, keine Rechnernamen, keine Bilder",
-    "Ausserhalb dieses Repos wird ohne Ruecksprache nichts geaendert"
-  ],
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Regel 3: keine echten Projektdaten, keine Benutzerpfade, keine Rechnernamen, keine Bilder",
+      "Ausserhalb dieses Repos wird ohne Ruecksprache nichts geaendert",
+      "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+    ]
+  },
   "rueckgabe": [
     "R1 Server-Kennung und `tool_count` nach dem Neustart",
     "R2 je Werkzeug: Rueckgabe (gekuerzt) und ob sie ihr outputSchema erfuellt",

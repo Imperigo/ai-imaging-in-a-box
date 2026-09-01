@@ -786,18 +786,34 @@ def main(argv=None) -> int:
 
     zustand = gpu_zustand()
     for satz in offen:
-        frei, grund = darf_starten(zustand, satz.get("auflagen") or {})
-        print(f"\n=== {satz['auftrag_id']} [{satz['art']}] — {grund}")
-        if not frei and satz["art"] == "render":
-            ergebnis = auf.baue_ergebnis(auftrag_id=satz["auftrag_id"], status="abgelehnt",
-                                         fehler=grund, umgebung=_umgebung())
-        else:
-            try:
-                ergebnis = fuehre_aus(satz, repo)
-            except Exception as e:                       # noqa: BLE001
-                ergebnis = auf.baue_ergebnis(auftrag_id=satz["auftrag_id"], status="fehler",
-                                             fehler=f"{type(e).__name__}: {e}",
+        # DER GANZE RUMPF IST ABGESICHERT, nicht nur `fuehre_aus`.
+        #
+        # Bis zum 01.09.2026 stand `darf_starten` VOR dem try/except, und das war kein
+        # Schoenheitsfehler: `auflagen` traegt seit dem 26.08. zwei Formen, `darf_starten`
+        # ruft `.get`, und an der Listenform gab es einen AttributeError — also keinen
+        # Fehlschlag EINES Auftrags, sondern einen Abbruch des Prozesses. Sechs der acht
+        # laufbaren Auftraege trugen die Liste.
+        #
+        # Mit `--hoechstens 1` und der Rangfolge waere das jeder Takt gewesen, immer am
+        # selben Auftrag. Ein Dienst, der alle fuenf Minuten an derselben Stelle stirbt,
+        # sieht drueben aus wie ein kaputter Takt und nicht wie ein kaputter Auftrag.
+        #
+        # *Ein Auftrag darf sich selbst beenden, nicht den Durchgang.*
+        try:
+            frei, grund = darf_starten(zustand, auf.auflagen_maschine(satz))
+            print(f"\n=== {satz['auftrag_id']} [{satz['art']}] — {grund}")
+            if not frei and satz["art"] == "render":
+                ergebnis = auf.baue_ergebnis(auftrag_id=satz["auftrag_id"],
+                                             status="abgelehnt", fehler=grund,
                                              umgebung=_umgebung())
+            else:
+                ergebnis = fuehre_aus(satz, repo)
+        except Exception as e:                           # noqa: BLE001
+            print(f"\n=== {satz['auftrag_id']} [{satz.get('art')}] — FEHLER "
+                  f"{type(e).__name__}")
+            ergebnis = auf.baue_ergebnis(auftrag_id=satz["auftrag_id"], status="fehler",
+                                         fehler=f"{type(e).__name__}: {e}",
+                                         umgebung=_umgebung())
         pfad = auf.schreibe_ergebnis(ergebnis, repo)
         print(f"    → {ergebnis['status']}  ({pfad.relative_to(repo)})")
 

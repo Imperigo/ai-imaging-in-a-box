@@ -14,9 +14,16 @@
   "params": {
     "backbone": "z-image-turbo"
   },
-  "auflagen": [
-    "Regel 3: keine echten Projektdaten, keine Benutzernamen in Pfaden"
-  ],
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Regel 3: keine echten Projektdaten, keine Benutzernamen in Pfaden",
+      "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+    ]
+  },
   "rueckgabe": [
     "G1 Gegenprobe voller Weg",
     "G2 Auslagerungsweg",

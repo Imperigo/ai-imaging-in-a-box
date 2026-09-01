@@ -12,11 +12,18 @@
     "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
   },
   "params": {},
-  "auflagen": [
-    "Regel 3: Namen und Zahlen, keine Bilder, keine Pfade",
-    "Kein Extralauf fuer V1 — die naechste Gelegenheit genuegt",
-    "V2 nicht raten: ein erfundener Name in der Wortliste nimmt still ein Bauteil aus der Maske"
-  ],
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Regel 3: Namen und Zahlen, keine Bilder, keine Pfade",
+      "Kein Extralauf fuer V1 — die naechste Gelegenheit genuegt",
+      "V2 nicht raten: ein erfundener Name in der Wortliste nimmt still ein Bauteil aus der Maske",
+      "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+    ]
+  },
   "rueckgabe": [
     "V1 Sagt die neue Zeile beim naechsten Lauf das Richtige?",
     "V2 Gelaende-Baustoffnamen aus eurem Bestand, die nicht auf unsere vier Woerter passen",
