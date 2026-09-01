@@ -681,3 +681,141 @@ def test_nur_die_kameras_mit_viel_boden_werden_genannt():
     zeile = _zeile({"kameras": [_kam("sSE", 0.850, 0.681, 0.530),
                                 _kam("oW", 0.900, 0.887, 0.110)]})
     assert "sSE" in zeile and "oW" not in zeile
+
+
+# ======================================================================================
+# Der stille Übersprung — nachgetragen 01.09.2026
+# ======================================================================================
+#
+# Gemessen an zwei Läufen derselben Kette, und der Vergleich ist der ganze Anlass:
+#
+# * **Lauf 10 (28.08.):** Drei Diffusionsbilder lagen vor, die Maske fiel am fehlenden
+#   Geländebeleg aus — und der Kurzbefund sagte das laut: «MASKENWEG NICHT GEFAHREN: s,
+#   sSE, nNW — damit bleiben rho_maske, Kante und Paarurteil ungemessen.»
+# * **Lauf 11 (01.09.):** Es gab **kein** Bild. Der Maskenweg fiel ebenfalls aus — und
+#   kein Satz sagte es.
+#
+# **Ein stiller Übersprung ist schlimmer als ein lauter Ausfall.** Beim lauten weiss der
+# Leser, was ihm fehlt; beim stillen liest er ein Ergebnis ohne Urteil und hält es für
+# eines mit Urteil.
+#
+# **Was hier ausdrücklich NICHT verlangt wird**, und das ist der Unterschied zwischen
+# einer Meldung und einer Dauerwarnung: Wo bereits eine Zeile sagt, warum kein Bild
+# entstand — Rahmung, Kamerahöhe, übernommene Ansicht —, bleibt der Maskenweg still.
+# `test_eine_uebersprungene_kamera_meldet_keinen_maskenausfall` bewacht genau das und
+# bleibt gültig. Die Lücke ist die Kamera **ohne Bild und ohne genannten Grund**: Für sie
+# schweigen beide Wege.
+
+
+def _stumme_kamera(**mehr) -> dict:
+    """Eine Kamera ohne Bild, ohne Maske und **ohne genannten Grund**.
+
+    Genau die Form, die in beiden Meldewegen durchfällt: `ohne_maske` verlangt ein Bild,
+    `_kompositionszeilen` verlangt einen Abbruchgrund.
+    """
+    return dict({"kamera": "s", "bild_png": None, "bestanden": None, "gemessen": False},
+                **mehr)
+
+
+#: Damit die Zusicherungen nicht vakuum-wahr werden: `befund_kurz` liefert mit dieser
+#: Spanne mit Sicherheit mindestens eine Zeile. Ohne sie hielte «kein MASKENWEG in den
+#: Zeilen» auch dann, wenn die Funktion gar nichts zurückgäbe.
+_SPANNE = {"kameraspanne": {"n_gemessen": 1, "schlechtester": 0.9}}
+
+
+def test_ohne_bild_und_ohne_grund_bleibt_der_maskenausfall_nicht_stumm():
+    """**Der stille Fall wird laut.**
+
+    Vor dem 01.09.2026 stand in `befund_kurz` die Bedingung ``and k.get("bild_png")``:
+    Ohne Bild wurde der Maskenweg weder gefahren noch gemeldet. Für eine Kamera, deren
+    Ausfall anderswo erklärt ist, ist das richtig. Für eine ohne jede Erklärung war es
+    ein Ergebnis ohne Urteil, das sich wie eines mit Urteil liest.
+    """
+    befund = {"kameras": [_stumme_kamera()], "geometrie_urteil": _SPANNE}
+
+    zeilen = abholer.befund_kurz(befund)
+
+    assert zeilen, "Ohne eine einzige Zeile prüfte die Zusicherung darunter nichts."
+    treffer = [z for z in zeilen if "MASKENWEG NICHT GEFAHREN" in z]
+    assert treffer, (
+        "Eine Kamera ohne Bild und ohne genannten Grund meldet gar nichts — weder den "
+        "fehlenden Maskenweg noch das fehlende Bild. Genau das war Lauf 11.")
+    assert "s" in treffer[0]
+
+
+def test_der_neue_grund_steht_im_wortlaut_und_ist_der_andere():
+    """Derselbe Satz über die **Folge**, ein anderer über den **Grund**.
+
+    Die Folge ist in beiden Fällen dieselbe und steht darum wörtlich gleich da — sonst
+    laufen zwei Fassungen desselben Satzes auseinander, sobald eine gepflegt wird. Der
+    Grund ist ein anderer: dort fehlte der Geländebeleg, hier fehlt das Bild selbst.
+    """
+    zeile = [z for z in abholer.befund_kurz(
+        {"kameras": [_stumme_kamera()], "geometrie_urteil": _SPANNE})
+        if "MASKENWEG NICHT GEFAHREN" in z][0]
+
+    assert "KEIN BILD" in zeile, "Der Grund gehört in dieselbe Zeile wie die Meldung."
+    # Die Folge — wörtlich dieselbe wie beim lauten Fall.
+    assert "ABWESENHEIT" in zeile
+    assert "0.9530" in zeile, "Eine Folge ohne Zahl liest sich wie eine Formalie."
+
+
+def test_ohne_bild_heisst_weder_bestanden_noch_durchgefallen():
+    """``bestanden`` ist ``None`` — und die Zeile sagt es auch.
+
+    Owner-Entscheid vom 26.08.2026 (`tiefenschaetzer`): Wo nicht gemessen werden konnte,
+    steht ``None`` und nicht ``False``. `_uebersprungenes_urteil` hält sich daran; die
+    Meldung darüber muss dasselbe sagen, sonst liest sich «kein Urteil» wie «schlechtes
+    Urteil».
+    """
+    uebersprungen = abholer._uebersprungenes_urteil("s", {"abbruch": True, "grund": "x"})
+    assert uebersprungen["bestanden"] is None, (
+        "Ein Lauf, der nichts geprüft hat, darf nicht durchgefallen heissen.")
+    assert uebersprungen["gemessen"] is False
+
+    zeile = [z for z in abholer.befund_kurz(
+        {"kameras": [_stumme_kamera()], "geometrie_urteil": _SPANNE})
+        if "MASKENWEG NICHT GEFAHREN" in z][0]
+    assert "weder bestanden noch durchgefallen" in zeile
+
+
+def test_ein_bestanden_ohne_messung_wird_ausdruecklich_angeschlagen():
+    """Die Gegenprobe zum Satz darüber — und sie ist keine Formalie.
+
+    Sagt die Zeile «weder bestanden noch durchgefallen», während im Befund ``bestanden:
+    False`` steht, dann **lügt sie**. Steht dort ein Wert, gehört er genannt: Ein Urteil
+    über einen Lauf, der nichts gemessen hat, ist ein Fehler und keine Auskunft.
+    """
+    zeilen = abholer.befund_kurz(
+        {"kameras": [_stumme_kamera(bestanden=False)], "geometrie_urteil": _SPANNE})
+    zeile = [z for z in zeilen if "MASKENWEG NICHT GEFAHREN" in z][0]
+
+    assert "weder bestanden noch durchgefallen" not in zeile, (
+        "Der Befund sagt etwas anderes — dann darf die Zeile das nicht behaupten.")
+    assert "bestanden=False" in zeile
+
+
+def test_die_neue_zeile_ist_selbstloeschend():
+    """Sie steht **nur** dort, wo sonst nichts stünde.
+
+    Drei Gegenproben in einer: Ein Bild vorhanden (dann greift der alte Weg), ein
+    Rahmungsabbruch, ein Kompositionsabbruch, eine übernommene Ansicht. In allen vier
+    Fällen sagt bereits eine andere Zeile, warum kein Bild vorliegt — eine zweite wäre
+    eine Dauerwarnung, und die verdeckt die echten.
+    """
+    fuer_die_es_schon_steht = (
+        {"rahmung": {"abbruch": True}},
+        {"komposition": {"abbruch": True}},
+        {"doppelt_von": "sSE"},
+    )
+    for mehr in fuer_die_es_schon_steht:
+        zeilen = abholer.befund_kurz(
+            {"kameras": [_stumme_kamera(**mehr)], "geometrie_urteil": _SPANNE})
+        assert not any("KEIN BILD" in z for z in zeilen), mehr
+
+    # Und der Normalfall: Bild da, Maske da — gar keine Maskenzeile.
+    zeilen = abholer.befund_kurz(
+        {"kameras": [{"kamera": "s", "bild_png": "/x.png",
+                      "maskenbefund": {"maske": [True, False]}}],
+         "geometrie_urteil": _SPANNE})
+    assert not any("MASKENWEG" in z for z in zeilen)
