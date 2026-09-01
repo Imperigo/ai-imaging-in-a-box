@@ -40,9 +40,43 @@ Environment=AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers
 # Ordner, wird er uebersprungen und der Bruecken-Durchgang laeuft weiter. Der Pfad ist
 # die Vorgabe aus `werkzeuge.job_verzeichnis()`; wer dort $AIIMAGING_JOB_DIR setzt,
 # setzt ihn hier mit.
+#
+# --kein-gelaende: EINE ERKLAERUNG, KEIN MESSWERT — und sie steht hier an der falschen
+# Stelle, absichtlich und vorlaeufig.
+#
+# Ohne sie faellt die Maske aus (maske.py: `not gelaende_erkannt and gelaende_erwartet and
+# not nullbefund_traegt`), und ohne Maske bleiben rho_maske, Kante und Paarurteil
+# ungemessen. Der Abholer sagt das im Lauf vom 28.08. selbst: «Ein bestandenes Urteil ohne
+# Maskenweg sagt nichts darueber, ob ueberhaupt gebaut wurde.» Es gab drei Bilder und kein
+# Urteil, ob ein Bauwerk darauf steht.
+#
+# Warum die Maske ausfiel: die Szene meldet MATERIALNAMEN («Beton», «kalksandstein»), keine
+# IFC-Klassen. Der Nullbefund traegt nur ueber den Klassenkatalog — maske.py nennt genau
+# dieses Beispiel. Von den drei Bedingungen kann der Betreiber allein diese eine drehen.
+#
+# WAS DARAN FALSCH IST: der Schalter gilt PROZESSWEIT, die Aussage aber je Szene. Hier steht
+# damit eine Wahrheit ueber EIN Gebaeude als Dauereinstellung fuer ALLE. Eine Szene mit
+# Gelaende bekaeme eine falsche Erklaerung — sie faellt laut auf (maske.py meldet «Eine der
+# beiden Angaben stimmt nicht»), aber sie faellt eben erst dann auf.
+#
+# Die richtige Loesung ist ein Feld je Auftrag, und das fehlt im Vertrag: `RenderScene` in
+# kosmo-contracts kennt weder gelaende noch terrain noch ground. Beauftragt.
+#
+# NICHT gesetzt ist --gelaende-z. Das ist ein anderer Schalter fuer ein anderes Problem (der
+# Bezugspunkt der Kamera), er braucht eine ZAHL, und die kann nur liefern wer sie kennt —
+# «Aus einer glb ist der Stand nicht zu erfahren». Die Bezugspunkt-Warnung bleibt darum
+# stehen, und das ist ehrlicher als ein geratener Wert.
+#
+# --out-wurzel: WOHIN DIE BILDER GEHEN. Am 28.08.2026 lief die Kette zum ersten Mal ganz
+# durch und schrieb drei Bilder — nach /tmp/kosmo-jobs, weil die Bruecke auf Port 8600
+# bewusst dort ablegt (ihr Befund H-31). Der naechste Neustart nahm sie mit. Neun Laeufe
+# ohne Bild, der zehnte mit, und es ueberlebte den Tag nicht. Die Auftragsablage darf
+# fluechtig bleiben — ein Auftrag ist nach dem Rechnen erledigt. Das ERGEBNIS darf es nicht.
 ExecStart=%h/ai-imaging-in-a-box/.venv-render/bin/python \
     tools/abholen.py --fremde-freigabe --hoechstens 1 \
-    --eigener-store /tmp/aiimaging-jobs
+    --eigener-store /tmp/aiimaging-jobs \
+    --out-wurzel %h/kosmovis-bilder \
+    --kein-gelaende
 # Der Abholer prueft die Karte selbst (nvidia-smi, fail-closed) und laesst Auftraege mit
 # 'idle_window_only' liegen, solange jemand anders rechnet. Ein Zeitlimit hier ist die
 # zweite Sicherung: ein haengender Blender-Lauf darf den Takt nicht auf Dauer belegen.

@@ -121,6 +121,15 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--store", default="/tmp/kosmo-jobs",
                     help="Ablageort der Auftraege der BRUECKE (Vorgabe: /tmp/kosmo-jobs)")
+    ap.add_argument("--out-wurzel", dest="out_wurzel", default=None,
+                    help="Wohin die BILDER geschrieben werden — ein Ordner je Auftrag darunter, "
+                         "benannt wie der Auftrag. Ohne Angabe schreibt der Lauf dorthin, wo der "
+                         "Auftrag liegt. ANLASS (01.09.2026): am 28.08. lief die Kette zum ersten "
+                         "Mal ganz durch und schrieb drei Bilder — nach /tmp/kosmo-jobs, weil die "
+                         "Bruecke auf Port 8600 bewusst dort ablegt. Der naechste Neustart nahm sie "
+                         "mit. Zehn Laeufe bis zum ersten Bild, und es ueberlebte den Tag nicht. "
+                         "Der Weg dahinter war schon gebaut und getestet (abholer.verarbeiter), "
+                         "nur nicht bedienbar.")
     ap.add_argument("--eigener-store", dest="eigener_store", default=None,
                     help="Zusaetzlich unsere EIGENE Ablage abgehen — dorthin schreibt "
                          "der MCP-Einlass (werkzeuge.enqueue_render), also ein Knoten in "
@@ -233,7 +242,8 @@ def main() -> int:
 
     seeds = tuple(int(x) for x in a.seeds.split(",") if x.strip())
 
-    verarbeite = abholer.verarbeiter(stil=a.stil, nullprobe=not a.ohne_nullprobe,
+    verarbeite = abholer.verarbeiter(out_wurzel=a.out_wurzel,
+                                     stil=a.stil, nullprobe=not a.ohne_nullprobe,
                                      gelaende_z=a.gelaende_z,
                                      gelaende_erwartet=not a.kein_gelaende,
                                      zwischenspeicher=speicher,
@@ -248,7 +258,11 @@ def main() -> int:
         wird gleich angelegt — sonst faende der erste Blick nichts vor und die Uhr liefe
         ab Beginn statt ab dem ersten Zeichen.
         """
-        ziel = Path(auftrag["ausgabe"])
+        # DIESELBE Rechnung wie der Schreiber — `abholer.ausgabeort` ist die eine Stelle,
+        # die sie kennt. Stuende sie hier ein zweites Mal, bewachte die Wache bei gesetztem
+        # `--out-wurzel` einen anderen, leeren Ordner als den beschriebenen und meldete
+        # Stillstand, waehrend die Bilder daneben entstehen.
+        ziel = abholer.ausgabeort(auftrag, a.out_wurzel)
         ziel.mkdir(parents=True, exist_ok=True)
         return fortschritt.wache_fuer_verzeichnis(
             ziel, frist_s=a.stillstand_frist_s,
