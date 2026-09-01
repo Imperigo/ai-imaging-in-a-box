@@ -12,14 +12,21 @@
     "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
   },
   "params": {},
-  "auflagen": [
-    "Nur messen — kein Code in KosmoPrepare oder KosmoPublish aendern",
-    "ifcopenshell NICHT aus libs/ oder requirements.txt entfernen (erst der Lese-Auftrag)",
-    "ifcopenshell NICHT ins Produkt-venv installieren",
-    "Keine Installation ohne Owner-Go von Andrin (Maschinen-Aenderung)",
-    "Keine echten Projektdaten, auch keine Dateinamen daraus",
-    "Regel 3: keine absoluten Pfade mit Benutzernamen in der Rueckgabe"
-  ],
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Nur messen — kein Code in KosmoPrepare oder KosmoPublish aendern",
+      "ifcopenshell NICHT aus libs/ oder requirements.txt entfernen (erst der Lese-Auftrag)",
+      "ifcopenshell NICHT ins Produkt-venv installieren",
+      "Keine Installation ohne Owner-Go von Andrin (Maschinen-Aenderung)",
+      "Keine echten Projektdaten, auch keine Dateinamen daraus",
+      "Regel 3: keine absoluten Pfade mit Benutzernamen in der Rueckgabe"
+    ]
+  },
   "rueckgabe": [
     "M1 Ausgabe von ./run_tests.sh (letzte fuenf Zeilen) nach git pull + setup_grenze.py",
     "M2 Ausgabe der sieben Proben (test_archicad_native_export + test_publish_ifc_export), gruen oder rot; bei rot die Fehlermeldung im Wortlaut",
