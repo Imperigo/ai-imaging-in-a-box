@@ -168,7 +168,38 @@ GELAENDE_MUSTER: tuple[str, ...] = (
 #:    Damit ein Fehlausschluss auffällt, nennt ``abholer.befund_kurz`` seit demselben Tag
 #:    **namentlich**, was als Gelände eingestuft wurde. Wer dort eine Wand liest, hat den
 #:    Fall vor sich.
-GELAENDE_WOERTER: tuple[str, ...] = ("gelaende", "gelände", "terrain", "site")
+GELAENDE_WOERTER: tuple[str, ...] = ("gelaende", "gelände", "terrain", "site",
+                                    "toposolid")
+
+# **``toposolid`` ist am 01.09.2026 dazugekommen, und als EINZIGES.** Die HomeStation hat
+# an einem echten Bestand gemessen: Das Gelände heisst dort ``IfcCovering_Toposolid_1``,
+# daneben ``Sub-Division`` und ``Umgebung - Gras``. **Keines der vier bisherigen Wörter
+# passt**, und die Bauwerksbox schrumpfte darum um 2,1 % statt um 34,5 %.
+#
+# Aufgenommen wurde nur ``toposolid``: Es ist der Fachbegriff für den Geländekörper in
+# Archicad und Revit, und ein *Bauteil* dieses Namens gibt es nicht. ``umgebung`` und
+# ``gras`` sind **ausdrücklich nicht** aufgenommen — sie sind allgemein genug, um ein
+# echtes Bauteil still zu Gelände zu machen, und der Gewinn wäre gering.
+#
+# *Und das Wort löst das Problem nicht, es verkleinert es nur:* Das nächste Büro schreibt
+# wieder etwas anderes. Was für jeden Bestand gilt, ist die laute Meldung, wenn die Regel
+# fast nichts trennt — nicht ein weiteres Wort. Die eigentliche Lösung ist ein Feld je
+# Szene und liegt als ``auf-20260901-67`` beim Vertrags-Worker.
+
+#: **Umfeld: weder Bauwerk noch Gelände.** IFC-Klassen für Dinge, die in der Szene stehen
+#: und nicht dazugehören — Bäume, Nachbargebäude, Strassenmöbel.
+#:
+#: *Warum sie nicht in die Geländeliste gehören:* Ein Baum ist kein Boden. Die
+#: Bauwerksmaske fragt nicht «ist das Gelände?», sondern «ist das unser Bauwerk?», und für
+#: diese Frage sind Gelände und Umfeld zwei verschiedene Nein.
+#:
+#: Gemessen am selben Bestand (01.09.2026): Bäume als ``IfcGeographicElement``, ein
+#: Nachbargebäude als ``IfcCivilElement``. Beide wurden bis dahin als **Bauwerk** gezählt.
+#:
+#: Verglichen wird gegen den **Klassenanfang** und nicht gegen ein Wort im Namen: Die
+#: Klasse steht in diesen Exporten vorn (``IfcCivilElement_Nachbar_1``), und ein Wort
+#: mitten im Namen wäre eine viel weichere Regel als eine genormte Klasse.
+UMFELD_KLASSEN: tuple[str, ...] = ("ifcgeographicelement", "ifccivilelement")
 
 #: Woran ein Name in Wörter zerfällt.
 _WORTTRENNER = re.compile(r"[\s_\-.,;:/\\()\[\]]+")
@@ -333,6 +364,24 @@ class MaskeError(ValueError):
 # ======================================================================================
 # Die Regel
 # ======================================================================================
+
+def ist_umfeld(name: str, klassen: Sequence[str] = UMFELD_KLASSEN) -> bool:
+    """Gehört ``name`` zum **Umfeld** — also weder zum Bauwerk noch zum Gelände?
+
+    Bäume, Nachbargebäude, Strassenmöbel. Sie stehen in der Szene und gehören nicht dazu.
+
+    **Der Unterschied zu :func:`ist_gelaende` ist keine Wortklauberei.** Die Maske fragt
+    *«ist das unser Bauwerk?»*, und darauf gibt es zwei verschiedene Nein: Der Boden
+    trägt es, das Umfeld steht daneben. Ein Nachbargebäude als Gelände zu führen wäre
+    zudem eine falsche Aussage über die Szene — und die Szene ist genau das, was hier
+    beschrieben wird.
+
+    Geprüft wird der **Klassenanfang**, kleingeschrieben und ohne führende Leerzeichen.
+    Ein ``IfcCivilElement_Nachbar_1`` gilt, ein ``Wand_IfcCivilElement_Attrappe`` nicht.
+    """
+    sauber = str(name or "").strip().lower()
+    return any(sauber.startswith(k) for k in klassen)
+
 
 def ist_gelaende(name: str, muster: Sequence[str] = GELAENDE_MUSTER) -> bool:
     """Gilt ``name`` nach der Geländeregel als Gelände?
@@ -558,12 +607,17 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
     nach_farbe: dict[tuple[int, int, int], dict] = {}
     gelaende_namen: list[str] = []
     bauwerk_namen: list[str] = []
+    umfeld_namen: list[str] = []
     warnungen: list[str] = []
 
     for stelle, eintrag in enumerate(tabelle):
         farbe = _farbe_aus_eintrag(eintrag, stelle)
         name = str(eintrag.get("name", ""))
-        gelaende = ist_gelaende(name, gelaende_muster)
+        # DAS UMFELD ZAEHLT WIE GELAENDE: nicht Bauwerk. Es steht trotzdem in einer
+        # eigenen Liste, weil es etwas anderes IST — ein Baum ist kein Boden, und die
+        # Namen im Befund sollen sagen, was ausgeschlossen wurde und warum.
+        umfeld = ist_umfeld(name)
+        gelaende = umfeld or ist_gelaende(name, gelaende_muster)
         if farbe == HINTERGRUND_FARBE:
             raise MaskeError(
                 f"material_id_tabelle[{stelle}] ('{name}') trägt die Hintergrundfarbe "
@@ -590,10 +644,39 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
             )
         else:
             nach_farbe[farbe] = {"name": name, "gelaende": gelaende}
-        (gelaende_namen if gelaende else bauwerk_namen).append(name)
+        if umfeld:
+            umfeld_namen.append(name)
+        elif gelaende:
+            gelaende_namen.append(name)
+        else:
+            bauwerk_namen.append(name)
 
     gelaende_erkannt = bool(gelaende_namen)
     lage = gelaende_befund(gelaende_namen, bauwerk_namen)
+
+    if umfeld_namen:
+        # NICHT STILL AUSSCHLIESSEN. Der einzige ernsthafte Einwand gegen das
+        # Ausschliessen ist ein Bauteil unseres Baus, das faelschlich als
+        # `IfcCivilElement` exportiert waere. Es steht dann hier beim Namen — und ein
+        # benannter Ausschluss ist widerlegbar, ein stiller nicht.
+        warnungen.append(
+            f"UMFELD AUSGESCHLOSSEN: {len(set(umfeld_namen))} Eintrag/Einträge zählen "
+            f"weder als Bauwerk noch als Gelände — {sorted(set(umfeld_namen))[:5]}. "
+            f"Geprüft wurde gegen den Klassenanfang {list(UMFELD_KLASSEN)}. Steht "
+            f"darunter etwas, das zu unserem Bauwerk gehört, ist es hier zu Unrecht "
+            f"draussen; dann stimmt der Export und nicht die Regel.")
+        if any(str(n).strip().lower().startswith("ifccivilelement") for n in umfeld_namen):
+            # DER VORBEHALT ZUM UMRISSMASS, und er ist gemessen (auf-20260823-37):
+            # Steht hinter dem Bauwerk ein Nachbargebaeude statt Himmel, trennt der
+            # Kantenanteil ein PERFEKTES Bild nicht mehr von weissem Rauschen
+            # (+0.0016 gegen -0.0024). Ein Vorbehalt, den der Leser erbt statt ihn zu
+            # sehen, ist keiner.
+            warnungen.append(
+                "NACHBARGEBAEUDE IN DER SZENE: Der Kantenanteil an der Maskengrenze ist "
+                "hier nur eingeschränkt aussagekräftig. Gemessen (auf-20260823-37): "
+                "Steht hinter dem Bauwerk ein Nachbargebäude statt Himmel, trennt das "
+                "Umrissmass ein perfektes Bild nicht mehr von weissem Rauschen "
+                "(+0.0016 gegen −0.0024). Das Paarurteil ruht dann allein auf ρ.")
 
     # ── Bildpunkte einsortieren ───────────────────────────────────────────────────────
     n_gelaende = n_hintergrund = n_unbekannt = 0
@@ -784,6 +867,9 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         "gelaende_begruendung": lage["begruendung"],
         "gelaende_namen": sorted(set(gelaende_namen)),
         "bauwerk_namen": sorted(set(bauwerk_namen)),
+        # WAS ALS UMFELD AUSGESCHLOSSEN WURDE, mit Namen. Ein faelschlich
+        # ausgeschlossenes Bauteil verschwindet damit nicht still — es steht hier.
+        "umfeld_namen": sorted(set(umfeld_namen)),
         "quelle": sorted({str(e["quelle"]) for e in tabelle
                           if e.get("quelle") is not None}),
         "muster": list(gelaende_muster),

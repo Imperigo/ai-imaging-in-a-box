@@ -395,6 +395,21 @@ def _sonne_modul():
         return None
 
 
+def _achsen_modul():
+    """``aiimaging.contracts`` von hier aus erreichbar machen — oder ``None``.
+
+    Dieselbe Bauart wie :func:`_sonne_modul`: Der Runner darf aus dem Produkt lesen, nur
+    der umgekehrte Weg ist verboten (Regel 2). ``contracts`` ist reine Vertragsarithmetik
+    und bringt nichts mit.
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from aiimaging import contracts                     # noqa: PLC0415
+        return contracts
+    except Exception:                                      # noqa: BLE001
+        return None
+
+
 def _bbox_bauwerk():
     """Die Hüllbox der **gebauten Substanz** — Meshes, deren Name kein Gelände nennt.
 
@@ -1193,8 +1208,28 @@ def main() -> int:
         # und kippt nur die Vorzeichen. Nur die Lage der Box verrät es — das Dach lag
         # 26,7 m UNTER dem Nullpunkt. Ein Bericht, der bloss `bbox_size_m` zeigt, hätte
         # den Fehler nie gemeldet.
+        # DIE ZAHL KOMMT AUS DEM PRODUKT, nicht aus diesem Skript. Sie stand hier als
+        # Literal und trug fuenf Tage lang das falsche Vorzeichen — hinter der
+        # Prozessgrenze, wo keine Probe hinreicht. In `aiimaging.contracts` haengt sie an
+        # zwei Waechtern: dem Rundlauf `z_up_korrektur(import(p)) == p` und der
+        # Gegenprobe, die zeigt, dass eine Massprobe den Fehler NICHT sehen kann.
+        #
+        # OHNE DAS MODUL WIRD ABGEBROCHEN, nicht geraten — anders als bei der Sonne, wo
+        # ein Rueckfall auf die Vorgabe harmlos ist. Hier hiesse Raten entweder «Bau
+        # liegt auf der Seite» oder «Bau steht auf dem Kopf», und der zweite Fall ist
+        # gerade der, den keine Massprobe verraet. Ein zweiter Vorgabewert an dieser
+        # Stelle waere die doppelte Vorgabe, die am 23.08. fuenf Tage lang die Kamera
+        # kippen liess.
+        _achsen = _achsen_modul()
+        if _achsen is None:
+            raise RuntimeError(
+                "aiimaging.contracts ist von hier nicht lesbar, und --rotiere-z-up "
+                "braucht von dort das Vorzeichen der Drehung. Ein geratener Wert waere "
+                "hier teurer als ein Abbruch: Mit dem falschen steht das Bauwerk auf dem "
+                "Kopf, und KEINE Massprobe zeigt es an.")
         import mathutils
-        dreh = mathutils.Matrix.Rotation(math.radians(-90.0), 4, "X")
+        dreh = mathutils.Matrix.Rotation(
+            math.radians(_achsen.DREHUNG_Z_UP_GRAD), 4, "X")
         for obj in bpy.data.objects:
             if obj.parent is None:
                 obj.matrix_world = dreh @ obj.matrix_world

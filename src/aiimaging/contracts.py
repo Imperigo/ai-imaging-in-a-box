@@ -19,6 +19,8 @@ wo weder Blender noch ifcopenshell existieren.
 """
 from __future__ import annotations
 
+import math
+
 import copy
 import json
 import os
@@ -70,6 +72,75 @@ def needs_rotation(up_axis) -> bool:
     glTF-konformem Y-up.
     """
     return normalize_up_axis(up_axis) == "Z"
+
+
+#: Um wieviel Grad um die X-Achse gedreht werden muss, wenn die Quelle **schon Z-up** ist.
+#:
+#: **Minus neunzig, und das ist gemessen und nicht hergeleitet** (HomeStation, 01.09.2026,
+#: dreimal im selben Blender-Lauf an einer echten Z-up-glb). Blenders glTF-Import rechnet
+#: die Y-up-Konvention von glTF selbst nach Z-up um — das ist R_x(+90). Steht in der Datei
+#: bereits Z-up, muss diese Drehung **rückgängig** gemacht werden, nicht wiederholt.
+#:
+#: **Warum die Zahl hier steht und nicht im Blender-Skript.** Sie stand dort, als Literal
+#: hinter der Prozessgrenze, und trug fünf Tage lang das falsche Vorzeichen: `+90°` ergibt
+#: zusammen mit dem Import R_x(180), und dann steht der Bau auf dem Kopf — das Dach lag
+#: 26,7 m unter dem Nullpunkt. Dieselbe Wanderung hat `aiimaging.sonne` schon hinter sich,
+#: und aus demselben Grund: Was hinter der Prozessgrenze steht, erreicht keine Probe.
+DREHUNG_Z_UP_GRAD = -90.0
+
+
+def _dreh_x(punkt, grad: float):
+    """Drehung um die X-Achse, in Grad. Die eine Stelle, an der gedreht wird."""
+    bogen = math.radians(grad)
+    c, si = math.cos(bogen), math.sin(bogen)
+    x, y, z = punkt
+    return (x, y * c - z * si, y * si + z * c)
+
+
+def blender_gltf_import_dreht(punkt):
+    """Was Blenders glTF-Import mit einem Punkt der Datei macht: R_x(+90).
+
+    ``(x, y, z) → (x, −z, y)``. Der Import nimmt an, die Datei sei Y-up (so verlangt es
+    glTF 2.0) und stellt sie auf Blenders Z-up.
+
+    *Nachgebaut, nicht aufgerufen* — der Import selbst liegt hinter der Prozessgrenze.
+    Diese Funktion ist die **Annahme über ihn**, ausgeschrieben, damit sie prüfbar ist
+    statt geglaubt.
+    """
+    # +90 STEHT HIER ALS ZAHL UND NICHT ALS `-DREHUNG_Z_UP_GRAD`, und die Richtung der
+    # Abhaengigkeit ist der ganze Punkt: Dies ist eine Aussage ueber ein FREMDES Programm
+    # — was Blenders Importer tut —, keine Entscheidung von uns. Waeren beide Seiten aus
+    # derselben Konstanten abgeleitet, waere der Rundlauf darunter eine Identitaet von
+    # selbst und wuerde jedes Vorzeichen durchlassen. (Zuerst genau so gebaut; die
+    # Mutationsprobe liess den Rundlauf gruen.)
+    return _rund(_dreh_x(punkt, 90.0))
+
+
+def z_up_korrektur(punkt):
+    """Die Gegendrehung für eine Quelle, die schon Z-up ist — um
+    :data:`DREHUNG_Z_UP_GRAD`.
+
+    **Die Zahl wird hier benutzt und nicht abgeschrieben, und das war beim ersten Entwurf
+    anders.** Da stand ``(x, y, z) → (x, z, −y)`` als fertiges Ergebnis da, unabhängig von
+    der Konstanten — eine doppelte Vorgabe: Wer ``DREHUNG_Z_UP_GRAD`` auf ``+90``
+    drehte, bekam einen roten Test (den über die Konstante) und einen grünen Rundlauf,
+    obwohl der Runner ab da falsch gedreht hätte.
+
+    *Gefunden hat es die Mutationsprobe: Sie liess den Rundlauf am Leben.* Jetzt hängt er
+    an derselben Zahl wie der Runner — und nur diese eine Seite tut das. Die andere,
+    :func:`blender_gltf_import_dreht`, trägt ihre ``+90`` als Zahl, weil sie eine Aussage
+    über ein fremdes Programm ist. **Erst diese Einbahnstrasse macht den Rundlauf zu einem
+    Wächter**; aus derselben Konstanten abgeleitet wäre er eine Identität und liesse jedes
+    Vorzeichen durch.
+    """
+    return _rund(_dreh_x(punkt, DREHUNG_Z_UP_GRAD))
+
+
+def _rund(punkt, stellen: int = 12):
+    """Kosinus von 90° ist ``6.1e-17`` und nicht null. Ohne diese Rundung verglichen zwei
+    Punkte, die dieselben sind, sich nicht — dieselbe Falle wie in
+    :mod:`aiimaging.kameras` bei der frontalen Kamera."""
+    return tuple(round(w, stellen) + 0.0 for w in punkt)
 
 
 def validate_render_scene(scene: dict) -> dict:

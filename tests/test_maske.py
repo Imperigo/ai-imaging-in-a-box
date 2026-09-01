@@ -766,3 +766,102 @@ def test_die_namen_der_zweiten_szene_loesen_keinen_fehlalarm_aus():
     assert not fehlalarme, (
         f"Diese Bauteile der zweiten Szene gälten als Gelände und fielen aus der "
         f"Bauwerksmaske: {fehlalarme}")
+
+
+# ======================================================================================
+# Umfeld — weder Bauwerk noch Gelände
+# ======================================================================================
+#
+# Am 01.09.2026 hat die HomeStation an einem echten Bestand gemessen: Bäume stehen dort
+# als `IfcGeographicElement`, ein Nachbargebäude als `IfcCivilElement`. Beide zählten bis
+# dahin als **Bauwerk** — gemessen wurde also unser Bau plus die Nachbarschaft.
+
+def test_baum_und_nachbargebaeude_gelten_als_umfeld():
+    assert m.ist_umfeld("IfcGeographicElement_Baum_01") is True
+    assert m.ist_umfeld("IfcCivilElement_Nachbar_1") is True
+
+
+def test_ein_bauteil_ist_kein_umfeld():
+    """Die Gegenprobe. Ohne sie wäre die Regel auch dann grün, wenn sie alles fängt."""
+    assert m.ist_umfeld("IfcWall_0QOeb014") is False
+    assert m.ist_umfeld("Boden_Platte") is False
+
+
+def test_die_klasse_zaehlt_nur_am_anfang_des_namens():
+    """Ein Wort mitten im Namen wäre eine viel weichere Regel als eine genormte Klasse —
+    und `Wand_IfcCivilElement_Attrappe` ist eine Wand."""
+    assert m.ist_umfeld("Wand_IfcCivilElement_Attrappe") is False
+
+
+def test_umfeld_zaehlt_nicht_zum_bauwerk_und_auch_nicht_zum_gelaende(bild, tabelle):
+    """**Zwei verschiedene Nein.** Der Boden trägt das Bauwerk, das Umfeld steht daneben —
+    ein Nachbargebäude als Gelände zu führen wäre eine falsche Aussage über die Szene."""
+    baum = (7, 200, 7)
+    erweitert = list(tabelle) + [eintrag(4, "IfcGeographicElement_Baum_01", baum)]
+    mit_baum = list(bild)
+    mit_baum[3] = baum                      # war Wand A
+
+    ergebnis = m.bauwerksmaske(mit_baum, erweitert)
+
+    assert ergebnis["maske"][3] is False, "der Baum darf nicht in der Bauwerksmaske stehen"
+    assert "IfcGeographicElement_Baum_01" in ergebnis["umfeld_namen"]
+    assert "IfcGeographicElement_Baum_01" not in ergebnis["gelaende_namen"]
+    assert "IfcGeographicElement_Baum_01" not in ergebnis["bauwerk_namen"]
+
+
+def test_ein_ausgeschlossenes_umfeld_wird_benannt_und_nicht_still_entfernt(bild, tabelle):
+    """*Ein benannter Ausschluss ist widerlegbar, ein stiller nicht.*
+
+    Der einzige ernsthafte Einwand gegen das Ausschliessen ist ein Bauteil unseres Baus,
+    das fälschlich als `IfcCivilElement` exportiert wäre. Es steht dann in dieser Warnung.
+    """
+    nachbar = (9, 9, 210)
+    erweitert = list(tabelle) + [eintrag(4, "IfcCivilElement_Nachbar_1", nachbar)]
+    mit_nachbar = list(bild)
+    mit_nachbar[3] = nachbar
+
+    warnungen = " ".join(m.bauwerksmaske(mit_nachbar, erweitert)["warnungen"])
+
+    assert "UMFELD AUSGESCHLOSSEN" in warnungen
+    assert "IfcCivilElement_Nachbar_1" in warnungen
+
+
+def test_ein_nachbargebaeude_bringt_den_vorbehalt_zum_umrissmass_mit(bild, tabelle):
+    """Gemessen (`auf-20260823-37`): Steht hinter dem Bauwerk ein Nachbargebäude statt
+    Himmel, trennt der Kantenanteil ein perfektes Bild nicht mehr von weissem Rauschen.
+    *Ein Vorbehalt, den der Leser erbt statt ihn zu sehen, ist keiner.*"""
+    nachbar = (9, 9, 210)
+    erweitert = list(tabelle) + [eintrag(4, "IfcCivilElement_Nachbar_1", nachbar)]
+    mit_nachbar = list(bild)
+    mit_nachbar[3] = nachbar
+
+    warnungen = " ".join(m.bauwerksmaske(mit_nachbar, erweitert)["warnungen"])
+
+    assert "NACHBARGEBAEUDE" in warnungen
+    assert "Kantenanteil" in warnungen
+
+
+def test_ein_baum_allein_bringt_den_nachbarvorbehalt_NICHT(bild, tabelle):
+    """Die Gegenprobe — sonst stünde der Satz bei jedem Baum und wäre eine Dauerwarnung."""
+    baum = (7, 200, 7)
+    erweitert = list(tabelle) + [eintrag(4, "IfcGeographicElement_Baum_01", baum)]
+    mit_baum = list(bild)
+    mit_baum[3] = baum
+
+    warnungen = " ".join(m.bauwerksmaske(mit_baum, erweitert)["warnungen"])
+
+    assert "UMFELD AUSGESCHLOSSEN" in warnungen
+    assert "NACHBARGEBAEUDE" not in warnungen
+
+
+def test_toposolid_gilt_als_gelaende_umgebung_und_gras_ausdruecklich_nicht():
+    """**Das eine neue Wort, und die beiden, die es nicht wurden.**
+
+    `toposolid` ist der Fachbegriff für den Geländekörper in Archicad und Revit; ein
+    Bauteil dieses Namens gibt es nicht. `umgebung` und `gras` sind allgemein genug, um
+    ein echtes Bauteil still zu Gelände zu machen — sie stehen darum **nicht** in der
+    Liste, und dieser Test hält diese Entscheidung fest statt sie zu vergessen.
+    """
+    assert m.ist_gelaende("IfcCovering_Toposolid_1") is True
+    assert m.ist_gelaende("IfcCovering_Umgebung-Gras_1") is False
+    assert m.ist_gelaende("Sub-Division") is False

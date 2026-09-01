@@ -1067,6 +1067,40 @@ wird irgendwann nicht mehr eingehalten.*
 *Die Zahl ist eine Setzung und keine Messung* (acht, beschlossen am 28.08.2026) — sie
 steht deshalb als benannte Konstante und nicht als Zahl im Code.
 
+**Vorzeichenfehler** — Ein Fehler, der die **Lage** einer Sache verkehrt und ihre
+**Masse** unverändert lässt. Er überlebt jede Prüfung, die Längen, Grössen oder Anteile
+vergleicht — und das sind die meisten.
+*Im Projekt am 01.09.2026:* Eine Drehung um +90° statt −90° ergab zusammen mit Blenders
+eigener Drehung eine halbe Umdrehung. Das Gebäude stand auf dem Kopf, das Dach lag 26,7 m
+unter dem Nullpunkt — und **jede Kantenlänge blieb dieselbe**. Aufgefallen ist es erst,
+als zum ersten Mal ein unsymmetrisches Modell von Augenhöhe fotografiert wurde; an einem
+symmetrischen Quader sieht kopfüber aus wie richtig herum.
+*Was hilft:* eine Probe, die **Vorzeichen** vergleicht statt Beträge — hier der Rundlauf
+«fremde Drehung, dann eigene Gegendrehung, ergibt den Ausgangspunkt» an einem Punkt mit
+drei **verschiedenen** Koordinaten. Mit `(1,1,1)` wäre auch sie blind.
+
+**Einbahnstrasse (zwischen Annahme und Entscheidung)** — Wenn ein Wächter zwei Grössen
+vergleicht, darf **höchstens eine** von der Zahl abhängen, die er bewachen soll. Hängen
+beide daran, prüft er eine Identität und lässt jeden Wert durch.
+*Im Projekt, am selben Tag und im eigenen neuen Code:* Der Rundlauf oben verglich
+«Blenders Drehung» mit «unserer Gegendrehung». Im ersten Entwurf leiteten *beide* ihren
+Winkel aus derselben Konstanten ab — zwei entgegengesetzte Drehungen heben sich auf, egal
+um welchen Winkel. Die Mutationsprobe liess ihn grün. Richtig ist: Die **Annahme über ein
+fremdes Programm** trägt ihre eigene Zahl, die **eigene Entscheidung** hängt an der
+Konstanten.
+*Die Faustregel:* Was du bewachst, darf nur auf einer Seite der Gleichung stehen.
+
+**Umfeld (gegen Bauwerk und Gelände)** — Was in einer Szene steht und **nicht dazugehört**:
+Bäume, Nachbargebäude, Strassenmöbel.
+*Warum es einen eigenen Namen braucht:* Die Bauwerksmaske fragt nicht «ist das Gelände?»,
+sondern «ist das unser Bauwerk?» — und darauf gibt es **zwei verschiedene Nein**. Der Boden
+trägt das Bauwerk, das Umfeld steht daneben. Ein Nachbargebäude als Gelände zu führen wäre
+eine falsche Aussage über die Szene.
+*Gemessen am 01.09.2026:* An echtem Bestand standen Bäume als `IfcGeographicElement` und
+ein Nachbargebäude als `IfcCivilElement` — bis dahin zählte beides als **Bauwerk**,
+gemessen wurde also der Bau plus die Nachbarschaft. Ausgeschlossen wird es seither **und
+benannt**: *Ein benannter Ausschluss ist widerlegbar, ein stiller nicht.*
+
 **Ein Feldname, zwei Bedeutungen** — Wenn dasselbe Feld je nach Alter oder Herkunft
 zweierlei enthält und **nichts prüft, welches von beiden vorliegt**. Der Code liest dann
 die eine Bedeutung und bekommt manchmal die andere.
@@ -3892,6 +3926,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-01 | Ergaenzt: **Vorzeichenfehler**, **Einbahnstrasse (zwischen Annahme und Entscheidung)**, **Umfeld (gegen Bauwerk und Gelaende)**. Anlass sind zwei Messungen der HomeStation an einem echten Modell: Das Gebaeude stand auf dem Kopf, und keine Massprobe konnte es sehen (R_x(180) laesst jede Kantenlaenge gleich); und die Gelaenderegel fand auf echtem Bestand nichts — das Gelaende hiess `IfcCovering_Toposolid_1`, die Bauwerksbox schrumpfte um 2,1 % statt um 34,5 %. Der zweite Eintrag stammt aus einem Fehler im eigenen neuen Waechter desselben Tages |
 | 2026-09-01 | Ergaenzt: **Ein Feldname, zwei Bedeutungen**, **Formpruefung statt Inhaltspruefung**, **Die Attrappe baut die kaputte Gestalt nach**. Anlass ist ein Absturz, der den Takt auf seinem ersten Schlag beendet haette: `auflagen` traegt zwei Formen, `darf_starten` ruft `.get`, sechs der acht laufbaren Auftraege trugen die Liste — und der Aufruf stand ausserhalb der Absicherung. Gefunden Stunden nachdem derselbe Auftrag fuer entsperrt erklaert und auf Rang 1 gesetzt worden war |
 | 2026-09-01 | Ergaenzt: **Zustellbeleg**, **Antwortverhalten (eines Adressaten)**, **Rang (eines Auftrags)**. Anlass ist eine Zaehlung: Elf der 28 offenen Auftraege lagen bei zwei Adressaten, von denen noch NIE eine Antwort kam — sichtbar wurde das erst, als nicht mehr Ergebnisdateien gezaehlt wurden, sondern abgeleitete Zustaende. Der Rang-Eintrag traegt mit, warum eine Reihenfolge erst mit einem Zeitgeber zur Entscheidung wird |
 | 2026-09-01 | Ergaenzt: **Auftragsart (multipass, render, qa, frage)** und **Rueckstandsdeckel**. Anlass sind neun Auftraege an die HomeStation, die `qa` trugen und eine Frage meinten — ein Sammellauf haette fuer jede einen Fehlschlag geschrieben. Der Deckel-Eintrag traegt den Satz mit, der ihn noetig machte: Ein Rueckstand waechst nicht durch eine Entscheidung, sondern durch vierzig kleine |

@@ -199,6 +199,38 @@ def test_eine_wirkungslose_regel_wird_als_solche_gemeldet(tmp_path):
         # Ein winziges Gelaendestueck, das die Rahmung nicht aendert …
         ("IfcSite_Randstein_0aBcDeFgHiJkLmNoPqR", (0.0, 0.0, 0.0), (0.5, 0.2, 0.5)),
         # … und ein grosses Stueck Gelaende, das die Regel NICHT kennt.
+        #
+        # BIS ZUM 01.09.2026 STAND HIER `Toposolid`. Seit `toposolid` in der Wortliste
+        # steht, ist genau dieser Fall behoben — und der Test wäre grün geworden, ohne
+        # noch etwas zu bewachen. Er fährt darum jetzt `Umgebung - Gras`: einen Namen aus
+        # demselben gemessenen Bestand, den die Regel **absichtlich** nicht kennt.
+        # *Ein Wort mehr verkleinert das Problem; es löst es nicht, und dieser Test ist
+        # der Beleg dafür.*
+        ("IfcCovering_Umgebung-Gras_1aBcDeFgHiJ", (-30.0, -0.5, -30.0), (30.0, 0.0, 30.0)),
+        ("IfcWall_Aussenwand_2aBcDeFgHiJkLmNoPqR", (0.0, 0.0, 0.0), (12.0, 15.0, 9.0)),
+    )
+    pfad = tmp_path / "umgebung.glb"
+    pfad.write_bytes(_erzeuger().baue_glb(szene))
+
+    aus = glbbox.bauwerksbox(pfad)
+    assert aus["n_gelaende"] == 1, "der IfcSite-Knoten muss gefunden werden"
+    assert aus["schrumpfung"] < glbbox.GERINGE_SCHRUMPFUNG, aus["schrumpfung"]
+    assert "wirkt" in aus["note"], aus["note"]
+    # UND DER GROESSTE VERDAECHTIGE STEHT BEIM NAMEN DA — das ist der Teil, der auch
+    # fuer den naechsten Bestand gilt. Eine feste Anekdote aus einer fremden Datei sagt
+    # dem Betreiber nicht, wo ER nachsehen muss.
+    assert "Umgebung-Gras" in aus["note"], aus["note"]
+    assert aus["groesster_bauwerksknoten"]["name"].startswith("IfcCovering_Umgebung")
+    assert aus["groesster_bauwerksknoten"]["anteil_szene"] > 0.9
+
+
+def test_toposolid_gilt_seit_dem_01_09_als_gelaende(tmp_path):
+    """Die Gegenprobe zum Test darüber: Das eine neue Wort wirkt wirklich.
+
+    Gemessen am Bestand: Das Gelände heisst ``IfcCovering_Toposolid_1``. Ohne das Wort
+    schrumpfte die Box um 2,1 %, mit ihm um ein Vielfaches.
+    """
+    szene = (
         ("IfcCovering_Toposolid_1aBcDeFgHiJkLmNo", (-30.0, -0.5, -30.0), (30.0, 0.0, 30.0)),
         ("IfcWall_Aussenwand_2aBcDeFgHiJkLmNoPqR", (0.0, 0.0, 0.0), (12.0, 15.0, 9.0)),
     )
@@ -206,9 +238,8 @@ def test_eine_wirkungslose_regel_wird_als_solche_gemeldet(tmp_path):
     pfad.write_bytes(_erzeuger().baue_glb(szene))
 
     aus = glbbox.bauwerksbox(pfad)
-    assert aus["n_gelaende"] == 1, "der IfcSite-Knoten muss gefunden werden"
-    assert aus["schrumpfung"] < glbbox.GERINGE_SCHRUMPFUNG, aus["schrumpfung"]
-    assert "wirkt" in aus["note"] and "Toposolid" in aus["note"], aus["note"]
+    assert aus["n_gelaende"] == 1, "das Toposolid muss jetzt gefunden werden"
+    assert aus["schrumpfung"] > glbbox.GERINGE_SCHRUMPFUNG, aus["schrumpfung"]
 
 
 def test_ohne_gelaende_wird_nicht_stillschweigend_die_szenenbox_gemeldet(tmp_path):

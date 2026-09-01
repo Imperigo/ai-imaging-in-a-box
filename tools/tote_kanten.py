@@ -74,6 +74,19 @@ WERKZEUGE = WURZEL / "tools"
 ABSICHTLICH: dict[str, str] = {
     "main": "Einstiegspunkt eines Werkzeugskripts",
     "haupt": "Einstiegspunkt eines Werkzeugskripts",
+    # Diese beiden sind die AUSGESCHRIEBENE ANNAHME ueber eine Drehung, die jenseits der
+    # Prozessgrenze geschieht — im Blender-Import und im Runner. Ein Aufrufer im Produkt
+    # waere ein Nachbau dessen, was Blender ohnehin tut. Der Runner verbraucht die
+    # Konstante `DREHUNG_Z_UP_GRAD`, und die haengt ueber den Rundlauf an genau diesen
+    # beiden Funktionen: Wer sie aendert, macht den Waechter rot.
+    #
+    # *Ohne sie stand das Vorzeichen als Literal im Blender-Skript und trug fuenf Tage
+    # lang den falschen Wert — das Gebaeude stand auf dem Kopf, und keine Massprobe
+    # konnte es sehen (01.09.2026).*
+    "blender_gltf_import_dreht": "Vertragsaussage ueber Blenders Importer, jenseits der "
+                                 "Prozessgrenze — der Waechter ueber DREHUNG_Z_UP_GRAD",
+    "z_up_korrektur": "Gegenstueck dazu; der Runner verbraucht die Konstante, nicht die "
+                      "Funktion (mathutils.Matrix statt Punktrechnung)",
 }
 
 #: Dateien, die kein Produktpfad sind: Runner laufen jenseits der Prozessgrenze, und

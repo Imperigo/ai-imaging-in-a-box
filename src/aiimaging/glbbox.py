@@ -397,6 +397,7 @@ def bauwerksbox(pfad, *, up_axis: str = "Y", regel=ist_gelaende) -> dict:
     alle = gelesen["knoten"]
     ergebnis = {"bbox_szene": None, "bbox_bauwerk": None, "note": "",
                 "schrumpfung": None, "n_bauwerk": 0, "n_gelaende": 0,
+                "groesster_bauwerksknoten": None,
                 "gelaende_namen": (), "n_knoten": len(alle),
                 "dauer_s": 0.0, "up_axis": str(up_axis).strip().upper()}
 
@@ -452,15 +453,31 @@ def bauwerksbox(pfad, *, up_axis: str = "Y", regel=ist_gelaende) -> dict:
             "Szenenbox. Das ist ein gueltiges Ergebnis und kein Rueckfall — aber ein "
             "Bruch zwischen Rahmung und Messung ist damit auch nicht feststellbar.")
     elif ergebnis["schrumpfung"] < GERINGE_SCHRUMPFUNG:
+        # UND ER NENNT DEN GROESSTEN VERDAECHTIGEN BEIM NAMEN.
+        #
+        # Bis zum 01.09.2026 nannte diese Meldung das Beispiel VOM 01.09. — 'Toposolid',
+        # 'Sub-Division', 'Umgebung - Gras'. Fuer genau diesen Bestand war das die
+        # Auskunft; fuer den naechsten ist es eine fremde Anekdote. Was der Betreiber
+        # braucht, ist der groesste Knoten, den die Regel in DIESER Datei als Bauwerk
+        # gezaehlt hat: Wenn ein einziges Objekt die halbe Szene aufspannt, ist es das
+        # Gelaende, und sein Name sagt, welches Wort der Regel fehlt.
+        groesster = max(bauwerk, key=lambda k: breite(nach_welt(k[1], k[2],
+                                                               up_axis=up_axis)))
+        b_gross = breite(nach_welt(groesster[1], groesster[2], up_axis=up_axis))
+        ergebnis["groesster_bauwerksknoten"] = {
+            "name": groesster[0], "breite_m": round(b_gross, 3),
+            "anteil_szene": round(b_gross / b_szene, 4) if b_szene > 0.0 else None}
         ergebnis["note"] = (
             f"Die Gelaenderegel hat {len(gelaende)} Knoten aussortiert, die Rahmung wird "
             f"davon aber nur um {ergebnis['schrumpfung']:.1%} enger — unter "
             f"{GERINGE_SCHRUMPFUNG:.0%}. Das SIEHT nach einer Bauwerksbox aus und wirkt "
-            f"wie keine. Am 01.09.2026 gemessen: Eine Bestandsdatei trug ihr Gelaende als "
-            f"'Toposolid', 'Sub-Division' und 'Umgebung - Gras' — kein einziger dieser "
-            f"Namen enthaelt eines der vier Woerter aus maske.GELAENDE_WOERTER, und der "
-            f"Abstand sank um 2,1 % statt um 34,5 %. Wer hier eine wirksame Box braucht, "
-            f"ergaenzt die REGEL an ihrer einen Stelle — nicht diesen Aufruf.")
+            f"wie keine. DER GROESSTE KNOTEN, DEN DIE REGEL HIER ALS BAUWERK ZAEHLT, "
+            f"heisst '{groesster[0]}' und spannt {b_gross:.2f} m auf, also "
+            f"{b_gross / b_szene:.0%} der Szene — wenn das kein Bauteil ist, fehlt der "
+            f"Regel genau sein Wort. Wer eine wirksame Box braucht, ergaenzt die REGEL an "
+            f"ihrer einen Stelle (maske.GELAENDE_WOERTER) — nicht diesen Aufruf. "
+            f"Gemessen am 01.09.2026 an einem Bestand, dessen Gelaende "
+            f"'IfcCovering_Toposolid_1' hiess: Abstand sank um 2,1 % statt um 34,5 %.")
 
     ergebnis["dauer_s"] = time.monotonic() - beginn
     return ergebnis
