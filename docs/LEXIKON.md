@@ -1067,6 +1067,38 @@ wird irgendwann nicht mehr eingehalten.*
 *Die Zahl ist eine Setzung und keine Messung* (acht, beschlossen am 28.08.2026) — sie
 steht deshalb als benannte Konstante und nicht als Zahl im Code.
 
+**Ein Feldname, zwei Bedeutungen** — Wenn dasselbe Feld je nach Alter oder Herkunft
+zweierlei enthält und **nichts prüft, welches von beiden vorliegt**. Der Code liest dann
+die eine Bedeutung und bekommt manchmal die andere.
+*Im Projekt am 01.09.2026, zweimal am selben Tag:* `auflagen` war in den älteren
+Aufträgen das Wörterbuch, das der ausführende Runner liest (Leistungsgrenze,
+Leerlauf-Gate), und in den neueren eine Liste von Sätzen für einen Menschen. Der Runner
+rief `.get` — an einer Liste ein Absturz. `rueckgabe` war einmal die Transportangabe
+(wohin, nur Zahlen) und einmal die Liste der Fragen; über die Transportform gezählt kam
+in jedem verschickten Auftrag die Zeile *«verzeichnis / nur_zahlen / hinweis»* heraus.
+*Was hilft:* an einer Stelle in die gemeinte Form übersetzen (bei uns
+`auflagen_maschine`, `auflagen_text`, `rueckgabepunkte`) und dort prüfen — nicht an
+jedem Leser einzeln, denn einer vergisst es.
+
+**Formprüfung statt Inhaltsprüfung** — Ein Wächter, der prüft, ob ein Feld *da* ist, und
+damit zusichern soll, dass etwas *drinsteht*. Er ist grün, solange die Hülle stimmt.
+*Im Projekt:* Der Test *«jeder Auftrag sagt, was zurückkommen soll»* liess
+ausdrücklich beide Formen zu und war damit für 42 Dateien wirkungslos — die
+Transportform ist wahr und nennt keinen einzigen Rückgabepunkt. Drei der betroffenen
+Aufträge lagen bei Adressaten, die noch nie geantwortet hatten; ihr Abschnitt *«WAS
+ZURUECKKOMMEN SOLL»* bestand aus drei Schlüsselnamen.
+*Verwandt mit dem **vakuösen Test**, aber nicht dasselbe:* Der vakuöse Test prüft eine
+leere Menge; dieser prüft eine volle Menge auf das falsche Merkmal.
+
+**Die Attrappe baut die kaputte Gestalt nach** — Der Grund, warum eine ganze Testsammlung
+einen Fehler nicht sehen kann: Die erfundenen Daten der Tests sehen anders aus als die
+wirklichen Daten, und zwar genau an der Stelle, an der es darauf ankommt.
+*Im Projekt:* 118 Proben prüften den Homeworker — mit Aufträgen, die alle die
+Wörterbuchform trugen. Die echten Dateien trugen seit fünf Tagen die Liste. *Die Sammlung
+prüfte das Skript mit erfundenen Aufträgen und die Aufträge ohne das Skript; dazwischen
+lag der Fehler.* Die Abhilfe ist eine Probe, die die **wirklichen** Dateien durch den
+**wirklichen** Aufruf schickt.
+
 **Zustellbeleg** — Die Bitte an einen Adressaten, **den Empfang zu bestätigen**, ohne
 inhaltlich zu antworten: ein Satz, mit Datum, mehr nicht.
 *Wozu, wenn doch eine Antwort gewünscht ist:* Weil Schweigen zwei ganz verschiedene Dinge
@@ -3860,6 +3892,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-01 | Ergaenzt: **Ein Feldname, zwei Bedeutungen**, **Formpruefung statt Inhaltspruefung**, **Die Attrappe baut die kaputte Gestalt nach**. Anlass ist ein Absturz, der den Takt auf seinem ersten Schlag beendet haette: `auflagen` traegt zwei Formen, `darf_starten` ruft `.get`, sechs der acht laufbaren Auftraege trugen die Liste — und der Aufruf stand ausserhalb der Absicherung. Gefunden Stunden nachdem derselbe Auftrag fuer entsperrt erklaert und auf Rang 1 gesetzt worden war |
 | 2026-09-01 | Ergaenzt: **Zustellbeleg**, **Antwortverhalten (eines Adressaten)**, **Rang (eines Auftrags)**. Anlass ist eine Zaehlung: Elf der 28 offenen Auftraege lagen bei zwei Adressaten, von denen noch NIE eine Antwort kam — sichtbar wurde das erst, als nicht mehr Ergebnisdateien gezaehlt wurden, sondern abgeleitete Zustaende. Der Rang-Eintrag traegt mit, warum eine Reihenfolge erst mit einem Zeitgeber zur Entscheidung wird |
 | 2026-09-01 | Ergaenzt: **Auftragsart (multipass, render, qa, frage)** und **Rueckstandsdeckel**. Anlass sind neun Auftraege an die HomeStation, die `qa` trugen und eine Frage meinten — ein Sammellauf haette fuer jede einen Fehlschlag geschrieben. Der Deckel-Eintrag traegt den Satz mit, der ihn noetig machte: Ein Rueckstand waechst nicht durch eine Entscheidung, sondern durch vierzig kleine |
 | 2026-09-01 | Ergaenzt: **Ersatzmessung / Ersatzkalibrierung**, **Mitgebrachter Vorbehalt**, **Fixpunkt eines Masses**. Anlass ist die Ersatzkalibrierung der Paarschwellen: 176 Zeilen, davon 88 Dubletten — 44, weil die vierte Szene (`raeume`) in allen Zeilen exakt die Zahlen der ersten lieferte, und 44, weil vier der elf Fallarten Fixpunkte von rho sind. **Berichtigt:** Der Befund vom 27.08. war als «symmetrische Kamerapaare» gedeutet — die Punktgleichheit tritt auch beim asymmetrischen `hochbau` auf und haengt am Mass, nicht am Bauwerk |
