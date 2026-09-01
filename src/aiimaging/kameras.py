@@ -45,6 +45,48 @@ andere Annahme über den Menschen im Bild. Hier gilt:
   die einzige Bodenreferenz, die in den Daten steckt, und im Zweifel um eine
   Geschosshöhe daneben statt um vierhundert Meter.
 
+Und ein vierter Vertrag, diesmal in einer anderen Sprache
+---------------------------------------------------------
+Seit dem 01.09.2026 ist bekannt, dass die Rechnung ein zweites Mal existiert: in
+KosmoOrbit, als ``packages/kosmo-kernel/src/derive/kamera.ts``. Die beiden widersprechen
+einander in zwei Punkten:
+
+===============  ===============================  ===========================
+Frage            ``kamera.ts``                    dieses Modul
+===============  ===============================  ===========================
+Augenhöhe        **1600 mm** über ``b.minZ``      **1700 mm** über *Gelände*
+Standpunkte      2–3, im Quelltext benannt        12 gerechnet, 3 gewählt
+Rahmung          fester Rückzug, ``fov`` 45–65    Bildwinkel + Eckentest
+===============  ===============================  ===========================
+
+**Dieses Modul führt.** Die Begründung ist nicht „hier steht mehr Code", sondern ein
+Unterschied in der Sache:
+
+1. **Der Streit um die Augenhöhe ist nicht der Streit, der zählt.** 1,70 gegen 1,60 m
+   sind zehn Zentimeter. Der **Bezugspunkt** dagegen ist auf beiden Seiten ein anderer,
+   und er ist unbegrenzt: ``kamera.ts`` misst von ``b.minZ``, dem tiefsten Punkt
+   *irgendeiner* Geometrie — das ist ``huellbox_unterkante``, und
+   :data:`aiimaging.komposition.BEZUGSPUNKTE` führt genau diesen Bezug mit
+   ``verlaesslich: False``. Die Seite dort hat es selbst gemessen (P-AUGENHOEHE,
+   26.08.2026): Bei einer 300 mm dicken Bodenplatte standen 1,30 m statt der
+   versprochenen 1,60 m. Beim kommenden Projekt mit **zwei Untergeschossen** sind es
+   mehrere Meter. Hier ist derselbe Bezug nur die *Rückfallebene*, und ``gelaende_z``
+   ist ein Parameter — der Unterschied zwischen einer Annahme und einer Angabe.
+2. **``blick_auf`` ist die verlustfreie Form** (siehe oben). ``kamera.ts`` führt
+   ``position``/``target`` ebenso — hier gibt es also keinen Streit, und das ist der
+   Grund, warum eine Übernahme in die andere Richtung überhaupt möglich ist.
+3. **Der Eckentest fehlt drüben ganz.** Ein fester Rückzug (``max(spanne · 0,8; 4 m)``)
+   beantwortet nicht, ob das Bauwerk im Bild steht; er nimmt es an. Dieses Modul rechnet
+   es nach und meldet, wenn es nicht aufgeht (``unvollstaendig``).
+
+**Was das für die andere Seite heisst** — und es ist ausdrücklich *keine* Aufforderung,
+diesen Code dort nachzubauen: ``kamera.ts`` gehört zum Vertrag von KosmoOrbit und damit
+in die Hand des ``cloud``-Workers. Nötig ist dort nur, was hier nicht entschieden werden
+kann: dass die Augenhöhe einen **benannten Bezugspunkt** bekommt statt ``b.minZ``
+stillschweigend, und dass der Vorschlag ihn mitliefert. Der Auftrag dazu liegt in
+``auftraege/offen/``. Solange er offen ist, gilt: *Wo die beiden sich widersprechen,
+gilt diese Datei — und der Widerspruch bleibt hier sichtbar stehen statt weggeräumt.*
+
 Was dieses Modul bewusst *nicht* tut
 ------------------------------------
 Es setzt keine Kamera. Es rechnet Positionen und gibt sie mit ihrer Begründung zurück.
@@ -55,6 +97,7 @@ heraus ohne jede Oberfläche aufrufbar (Regel 4).
 """
 from __future__ import annotations
 
+import itertools
 import math
 
 from .torwaechter import _lies_bbox
@@ -95,6 +138,23 @@ BRENNWEITE_MM = 35.0
 #: Augenhöhe in Metern, gemessen **über dem Geländestand** — siehe Modulkopf.
 #: Ohne bekannten Geländestand über der Unterkante der Hüllbox.
 AUGENHOEHE_M = 1.70
+
+#: Der Wortlaut der Warnung, wenn ``gelaende_z`` fehlt — siehe die lange Begründung am
+#: Ende von :func:`kamerasatz`.
+#:
+#: Als Konstante und nicht als f-String an der Fundstelle, weil ein Test sie wiedererkennen
+#: können muss, ohne den Satz abzuschreiben. *Eine Warnung, deren Wortlaut in zwei Dateien
+#: steht, ist an einer davon bereits eine andere Warnung.*
+GELAENDE_UNBEKANNT = (
+    "GELAENDESTAND NICHT FESTSTELLBAR: 'gelaende_z' wurde nicht angegeben; als Boden gilt "
+    "darum die Huellbox-Unterkante bei z = {fuss:.3f} m, die Kamera steht auf "
+    "{auge_z:.3f} m ({augenhoehe:.2f} m darueber). Bei einem Bauwerk MIT Untergeschoss "
+    "liegt diese Kante im Erdreich, und die Kamera steht dann im Keller — je Untergeschoss "
+    "rund eine Geschosshoehe zu tief. Am 28.08.2026 gemessen: 3,238 m unter dem "
+    "Erdgeschossfussboden und 12 mm ueber dem Kellerboden, gemeldet wurde nichts. Aus der "
+    "Huellbox allein ist der Fall NICHT unterscheidbar — wer den Gelaendestand kennt, gibt "
+    "ihn an (kamerasatz(gelaende_z=...), --gelaende-z am Runner)."
+)
 
 #: Anteil der Bildbreite, den das Gebäude füllen soll. Ein Wert unter 1 schiebt die Kamera
 #: weiter weg und lässt Luft — das ist die „2/3-Komposition" als Zahl.
@@ -555,9 +615,60 @@ def sichtbare_breite(masse, azimut_grad: float) -> float:
     zwei Drittel des vorgesehenen Anteils. Richtungsabhängig gerechnet verschwindet der
     Fehler ganz.
     """
+    return sum(sichtbare_fassaden(masse, azimut_grad))
+
+
+def sichtbare_fassaden(masse, azimut_grad: float) -> tuple[float, float]:
+    """Die **zwei Summanden** von :func:`sichtbare_breite`, absteigend sortiert.
+
+    ``sichtbare_breite`` addiert ``|dx·cos a|`` und ``|dy·sin a|``, und diese beiden Zahlen
+    sind keine Rechenzwischenschritte: Es sind die **Bildbreiten der beiden sichtbaren
+    Fassaden**. Bei einer Frontalen ist eine davon null — man sieht eine Fassade und
+    keinen Körper. Bei 45° auf einem quadratischen Grundriss sind sie gleich.
+
+    Herausgezogen, weil :func:`zweite_fassade` und damit die Standpunktwahl genau auf
+    dieser Zerlegung steht — und weil eine Grösse, auf der eine Auswahl beruht, einzeln
+    prüfbar sein muss.
+    """
     dx, dy, _ = masse
     a = math.radians(azimut_grad)
-    return abs(dx * math.cos(a)) + abs(dy * math.sin(a))
+    w1 = abs(float(dx) * math.cos(a))
+    w2 = abs(float(dy) * math.sin(a))
+    return (w1, w2) if w1 >= w2 else (w2, w1)
+
+
+def zweite_fassade(masse, azimut_grad: float) -> float:
+    """Wie stark die **schwächere** der beiden sichtbaren Fassaden mitträgt, 0…1.
+
+    ``0`` heisst: nur eine Fassade im Bild — eine Aufrissaufnahme, kein Körper. ``1``
+    heisst: beide gleich breit, der echte Eckblick.
+
+    **Warum das überhaupt ein Mass braucht.** ``kamerasatz`` selbst nennt eine exakt
+    mittige Frontale „symmetrisch und damit bildlich tot" und schiebt sie deshalb um
+    :data:`FRONTAL_VERSATZ` zur Seite; :func:`richtungen` begründet den Bias damit, dass
+    er „das Verhältnis der beiden sichtbaren Fassaden" regelt. Die Grösse stand also
+    schon zweimal im Code — beide Male als Begründung, nie als Zahl. Hier ist sie die
+    Zahl, mit der sich eine Auswahl treffen lässt.
+
+    Ohne Grundrissausdehnung ist die Frage sinnlos; dann kommt ``0.0`` zurück, weil ein
+    Körper ohne Grundfläche auch keine zweite Fassade hat.
+    """
+    breit, schmal = sichtbare_fassaden(masse, azimut_grad)
+    if breit <= 0.0:
+        return 0.0
+    anteil = schmal / breit
+    # RUNDUNGSRAUSCHEN AUF NULL ZIEHEN, und das ist hier kein Schoenheitsfehler.
+    #
+    # `math.cos(math.radians(90.0))` ist 6.1e-17 und nicht 0. Bei der Frontalen nach
+    # Osten kommt darum ein Anteil von rund 1e-18 heraus statt der glatten Null — und
+    # eine Auswahl, die „zweite Fassade vorhanden?" mit `> 0` fragt, laesst sie durch.
+    # Gemessen: Von den vier Frontalen fiel so nur `n` heraus (dort ist `sin(0)` exakt
+    # null), waehrend `e`, `s` und `w` als Kandidaten weiterliefen. Der Filter sah
+    # richtig aus und war zu drei Vierteln unwirksam.
+    #
+    # Dieselbe Schwelle wie `DEGENERIERT_ANTEIL` und aus demselben Grund: Unterhalb davon
+    # ist eine Flaeche keine Flaeche mehr, sondern Rest einer Division.
+    return anteil if anteil > DEGENERIERT_ANTEIL else 0.0
 
 
 def sichtbare_tiefe(masse, azimut_grad: float) -> float:
@@ -1587,6 +1698,55 @@ def kamerasatz(bbox, *,
     if not tauglich["taugt"]:
         alle_warnungen.insert(0, tauglich["grund"])
 
+    # UND: Steht die Kamera ueberhaupt auf dem Boden? Diese Warnung ist am 01.09.2026
+    # dazugekommen, und der Anlass ist ein Lauf, der GESUND AUSSAH.
+    #
+    # Den Vorbehalt gab es vorher schon: `komposition.BEZUGSPUNKTE` fuehrt
+    # `huellbox_unterkante` mit `verlaesslich: False` und dem Satz „Bei einem
+    # Untergeschoss liegt sie im Erdreich — die Kamera steht im Keller".
+    #
+    # **Die erste Vermutung war, dass diese Warnung nirgends ankommt. Sie war falsch, und
+    # der Irrtum gehoert hierher.** Nachgemessen am Bericht des Laufs vom 28.08.2026:
+    #
+    #   kamerasatz(...)["warnungen"]                        ()        <- LEER
+    #   Blender-Bericht, kamera.warnungen                   []        <- LEER
+    #   komposition.beurteile_kamerasatz(...)               1 Eintrag <- ohne Aufrufer
+    #   komposition.beurteile_bericht(bericht["kamera"])    1 Eintrag <- KOMMT AN
+    #
+    # Die letzte Zeile ruft der Abholer wirklich auf. Die Warnung war also da, sie war
+    # richtig, und sie stand im Urteil — und die Kamera stand trotzdem 3,238 m unter dem
+    # Erdgeschossfussboden und 12 mm ueber dem Kellerboden.
+    #
+    # Was fehlt, ist damit nicht die Warnung, sondern ihr ORT. Sie steht in einem Urteil
+    # ueber das fertige Bild, eine Modulgrenze von der Zahl entfernt, die sie betrifft;
+    # wer den Kamerasatz liest, den Blender-Bericht oeffnet oder das Bild ansieht,
+    # bekommt sie nicht zu sehen. Sie steht deshalb jetzt ZUSAETZLICH an der Quelle und
+    # reist mit dem Kamerasatz mit — dasselbe Argument, mit dem `neigung_grad` auch im
+    # Shift-Modus mitgefuehrt wird: Die Tatsache gehoert an jedes einzelne Bild statt in
+    # ein Dokument, das niemand neben dem Bild liest.
+    #
+    # Und sie sagt hier mehr als dort: WELCHE Kante genommen wurde, WO die Kamera dadurch
+    # steht, und was der Fehler je Untergeschoss kostet. „Kann schiefgehen" laesst sich
+    # ueberlesen; drei Zahlen schwerer.
+    #
+    # WARUM SIE IMMER KOMMT, wenn `gelaende_z` fehlt, und nicht nur „im Verdachtsfall":
+    # Aus einer Huellbox laesst sich nicht ablesen, ob ein Untergeschoss darin steckt —
+    # eine Box mit Fuss auf 394,83 m sieht mit und ohne Keller identisch aus. Die Warnung
+    # sagt darum NICHT „die Kamera steht im Keller", sondern „es ist nicht feststellbar".
+    # Das ist die dritte Antwort dieses Projekts, und sie verschwindet nicht dadurch, dass
+    # sie oft vorkommt.
+    #
+    # ANS ENDE und nicht nach vorn, und das ist gemessen entschieden: Vorn stehen die
+    # Befunde ueber DIESEN Satz — „die Huellbox hat keine Hoehe", „das Bauwerk fuellt nur
+    # 17 % des Bildes". Der Gelaendestand ist etwas anderes: ein stehender Vorbehalt, der
+    # bei JEDEM Satz ohne `gelaende_z` gilt. Vorn haette er zwei Tests gebrochen, die
+    # genau darauf bestehen, dass die dringende Meldung zuerst kommt
+    # (`test_leere_szene`, `test_multipass`) — und sie haben recht: Ein Vorbehalt, der
+    # immer gilt, verdraengt sonst den Befund, der nur heute gilt.
+    if gelaende_z is None:
+        alle_warnungen.append(GELAENDE_UNBEKANNT.format(fuss=fuss, augenhoehe=augenhoehe_m,
+                                                        auge_z=auge_z))
+
     return {
         "kameras": kameras,
         "huellbox_taugt": tauglich["taugt"],
@@ -1600,3 +1760,281 @@ def kamerasatz(bbox, *,
         "unvollstaendig": unvollstaendig,
         "warnungen": tuple(alle_warnungen),
     }
+
+
+# --------------------------------------------------------------------------------------
+# Die Wahl — welche drei der zwölf
+# --------------------------------------------------------------------------------------
+
+#: Wie viele Standpunkte :func:`standpunkte` vorschlägt, wenn niemand etwas anderes sagt.
+#:
+#: **Drei ist eine Setzung des Owners** (01.09.2026: „drei Standpunkte auf Augenhöhe"),
+#: keine Ableitung — und sie passt zu dem, was die Nachbarseite tut: ``kamera.ts`` in
+#: KosmoOrbit schlägt 2–3 benannte Standpunkte vor. Zwölf Richtungen zu rechnen und drei
+#: zu zeigen ist kein Widerspruch: :func:`kamerasatz` rechnet den Vorrat, hier wird
+#: gewählt.
+STANDPUNKTE_ANZAHL = 3
+
+#: Wie stark die schwächere Fassade mindestens mittragen muss, damit ein Standpunkt
+#: überhaupt in die Wahl kommt.
+#:
+#: **0.0 heisst „echt grösser als null", und das ist kein willkürlicher Schwellenwert,
+#: sondern genau der Ausschluss der Frontalen.** :func:`zweite_fassade` ist bei den vier
+#: frontalen Richtungen exakt 0 und bei allen acht diagonalen echt positiv — gemessen
+#: über drei Bauformen (Bestandsriegel 94,5 × 82,75 m, Riegel 60 × 12 m, Kubus 20 × 20 m).
+#: Die Schwelle trennt also nicht nach Geschmack, sondern nach der Frage, ob überhaupt
+#: ein Körper im Bild steht oder nur ein Aufriss.
+#:
+#: **Warum die Frontale nicht einfach mitspielen darf, obwohl sie besser abschneidet:**
+#: Gemessen füllt sie mehr Bild als jede Diagonale — beim Bestandsriegel 0,2672 gegen
+#: 0,1170 Flächenanteil, mehr als das Doppelte. Der Grund ist rechnerisch und harmlos:
+#: Ihre Silhouette ist schmaler, also stellt der Deckungsgrad sie näher heran. Wer nach
+#: „viel Bauwerk im Bild" auswählt, bekommt darum **vier Aufrissaufnahmen** — und genau
+#: dieses Bild nennt :func:`kamerasatz` selbst „bildlich tot". Die beiden messbaren
+#: Kriterien ziehen hier gegeneinander, und das ist die Stelle, an der es entschieden
+#: wird statt zufällig auszugehen.
+MIN_ZWEITE_FASSADE = 0.0
+
+def _idealer_abstand(anzahl: int) -> float:
+    """Der ideale Winkelabstand von ``anzahl`` Standpunkten, in Grad — ``360 / anzahl``.
+
+    Als Rechnung und nicht als feste Zahl, weil ``anzahl`` einstellbar ist: Bei zwei
+    Standpunkten sind 180° ideal, bei dreien 120°, bei vieren 90°.
+    """
+    return 360.0 / max(int(anzahl), 1)
+
+
+def _winkelabstand(a: float, b: float) -> float:
+    """Der kürzere der beiden Wege zwischen zwei Azimuten, in Grad (0…180)."""
+    d = abs(float(a) - float(b)) % 360.0
+    return min(d, 360.0 - d)
+
+
+def guete_standpunkt(kamera, masse, *, bester_flaechenanteil: float) -> dict:
+    """Wie gut ein einzelner Standpunkt ist — als Zahl, mit ihren beiden Hälften.
+
+    **Die eigentliche Frage dieses Moduls, und sie ist messbar zu beantworten.** Gefragt
+    ist nicht, welcher Blick gefällt, sondern welche zwei Grössen einen brauchbaren
+    Standpunkt von einem unbrauchbaren trennen — und ob sie das überhaupt tun.
+
+    Was **nicht** taugt, und das ist gemessen: ``fuellgrad``. Über alle zwölf Richtungen
+    und drei Bauformen liegt er zwischen 0,697 und 0,700. Er ist die *Vorgabe*, die
+    :func:`kamerasatz` einhält, und eine eingehaltene Vorgabe kann nichts unterscheiden.
+    Wer nach ihm auswählt, wählt in Wahrheit die Reihenfolge der Liste.
+
+    Was taugt, sind zwei Zahlen, die verschiedene Fragen beantworten:
+
+    * ``flaechenanteil`` — **wie viel Bild das Bauwerk wirklich trägt.** Die konvexe Hülle
+      der acht Ecken, in Bildfläche. Sie schwankt über die zwölf Richtungen um den
+      Faktor 2,3 (Bestandsriegel) bis 1,9 (Riegel) — sie *kann* also unterscheiden.
+      Normiert auf den besten Wert dieses Satzes, weil nur der Rang innerhalb einer Szene
+      interessiert; der Absolutwert hängt an Bauform und Brennweite.
+    * ``zweite_fassade`` — **ob ein Körper im Bild steht oder ein Aufriss.** Siehe
+      :data:`MIN_ZWEITE_FASSADE`: allein nach Fläche gewählt gewinnen die vier Frontalen,
+      und das ist die falsche Antwort auf die richtige Rechnung.
+
+    Verrechnet werden sie als **Produkt** und nicht als Summe. Der Unterschied ist nicht
+    kosmetisch: Eine Summe liesse sich mit einem sehr guten Wert erkaufen, während der
+    andere bei null steht — eine Frontale mit doppeltem Flächenanteil käme durch. Beim
+    Produkt ist eine Null eine Null, und das ist genau die gewünschte Aussage: *Ein
+    Standpunkt ohne zweite Fassade ist kein guter Standpunkt, so viel Bild er auch füllt.*
+
+    Args:
+        kamera: Ein Eintrag aus ``kamerasatz(...)["kameras"]``.
+        masse: Die Kantenlängen ``(dx, dy, dz)`` desselben Satzes.
+        bester_flaechenanteil: Der grösste ``flaechenanteil`` im Satz, als Bezug.
+
+    Returns:
+        dict mit ``guete`` (0…1), ``flaechenanteil``, ``flaeche_norm``,
+        ``zweite_fassade``, ``taugt`` und ``grund``.
+    """
+    flaeche = float(kamera.get("flaechenanteil") or 0.0)
+    bezug = float(bester_flaechenanteil)
+    norm = (flaeche / bezug) if bezug > 0.0 else 0.0
+    zweite = zweite_fassade(masse, float(kamera["azimut_grad"]))
+
+    gruende = []
+    if not kamera.get("vollstaendig", True):
+        # Ausschluss und kein Abzug: Ein Standpunkt, an dem der Eckentest nicht aufgeht,
+        # zeigt das Bauwerk angeschnitten. Das ist kein schlechteres Bild derselben Art,
+        # sondern ein anderes.
+        gruende.append("Der Eckentest geht nicht auf — das Bauwerk ist angeschnitten.")
+    if kamera.get("shift_ueber_grenze"):
+        gruende.append(
+            f"Der Shift von {float(kamera.get('shift_mm') or 0.0):.1f} mm liegt über "
+            f"{MAX_SHIFT_MM:.0f} mm; ein wirkliches Shift-Objektiv kann das nicht.")
+    if zweite <= MIN_ZWEITE_FASSADE:
+        gruende.append(
+            "Nur eine Fassade im Bild — eine Aufrissaufnahme, kein Körper. Sie füllt "
+            "gemessen MEHR Bild als jede Diagonale und ist trotzdem der andere "
+            "Bildtyp (siehe MIN_ZWEITE_FASSADE).")
+
+    taugt = not gruende
+    return {
+        "kuerzel": kamera.get("kuerzel"),
+        "guete": (norm * zweite) if taugt else 0.0,
+        "flaechenanteil": flaeche,
+        "flaeche_norm": norm,
+        "zweite_fassade": zweite,
+        "taugt": taugt,
+        "grund": " ".join(gruende),
+    }
+
+
+def standpunkte(bbox, *, anzahl: int = STANDPUNKTE_ANZAHL,
+                bauwerk_bbox=None, **kamerasatz_argumente) -> dict:
+    """Aus den zwölf gerechneten Richtungen die ``anzahl`` besten **auswählen**.
+
+    **Die Lücke, die dieses Projekt auf beiden Seiten hatte.** ``kamerasatz`` kann zwölf
+    Richtungen und lässt über ``kuerzel`` eine Auswahl zu — es fehlte die *Wahl*. Wer
+    ``kuerzel`` nicht setzt, bekommt zwölf; wer es setzt, hat selbst entschieden. Auf der
+    Nachbarseite (``kamera.ts``) stehen zwei bis drei Standpunkte fest im Quelltext, ohne
+    dass eine Zahl sie begründet.
+
+    Woran die Auswahl einen guten Standpunkt erkennt, steht bei :func:`guete_standpunkt`
+    — kurz: **so viel Bauwerk wie möglich, aber nur wo zwei Fassaden stehen.** Was hier
+    dazukommt, ist die Frage, die sich erst bei mehreren stellt:
+
+    **Drei gute Standpunkte sind nicht dasselbe wie ein guter Standpunkt, dreimal.**
+    Die vier besten Einzelwerte des Bestandsriegels liegen auf ``nNE``, ``sSE``, ``sSW``,
+    ``nNW`` und sind bis auf vier Nachkommastellen gleich; wer schlicht die drei besten
+    nimmt, bekommt drei Blicke, von denen zwei 70° auseinanderliegen und einer die
+    Rückseite gar nicht zeigt. Darum wird nicht nach Einzelwerten sortiert, sondern über
+    **alle Kombinationen** gerechnet: Bei zwölf Kandidaten und drei Plätzen sind das 220
+    Fälle — vollständig aufzählbar, also wird nichts geschätzt.
+
+    Bewertet wird eine Kombination als ``mittel(güte) · streuung``:
+
+    * ``mittel`` ist das **geometrische** Mittel. Es bestraft einen schwachen Standpunkt
+      stärker als das arithmetische — zwei sehr gute und ein untauglicher sollen nicht
+      dasselbe ergeben wie drei ordentliche.
+    * ``streuung`` ist der **kleinste** paarweise Winkelabstand, geteilt durch den idealen
+      (``360/anzahl``, bei drei Standpunkten 120°). Der kleinste und nicht der mittlere:
+      Zwei Kameras, die nebeneinanderstehen, sind ein Standpunkt — und ein Mittelwert
+      würde das mit einem weit entfernten dritten verrechnen.
+
+    **Das Verhältnis der beiden Faktoren ist eine Setzung** (gleiches Gewicht, als
+    Produkt) und keine Messung. Es steht hier, damit man es ändern kann, ohne es zu
+    suchen. Gemessen ist die *Wirkung*: Am Bestandsriegel wählt die Rechnung ohne den
+    Streuungsfaktor drei Richtungen mit 70° kleinstem Abstand, mit ihm 90°.
+
+    Args:
+        bbox: Wie bei :func:`kamerasatz` — **die Box, nach der gerahmt wird.** Für die
+            Bauwerksbox statt der Szenenbox siehe :mod:`aiimaging.glbbox`.
+        anzahl: Wie viele Standpunkte. Vorgabe :data:`STANDPUNKTE_ANZAHL`.
+        bauwerk_bbox: Die Box der gebauten Substanz, falls ``bbox`` die Szene ist. Nur
+            zum **Prüfen**: :func:`rahmungsverhaeltnis` sagt dann, ob die Rahmung
+            überhaupt ein Bild zulässt, und das Urteil steht im Ergebnis. Es wird nicht
+            heimlich umgerahmt — wer die Bauwerksbox rahmen will, übergibt sie als ``bbox``.
+        **kamerasatz_argumente: Alles Weitere geht unverändert an :func:`kamerasatz`
+            (``brennweite_mm``, ``deckungsgrad``, ``gelaende_z`` …). ``kuerzel`` ist hier
+            nicht zulässig — es wäre die Auswahl, die diese Funktion treffen soll.
+
+    Returns:
+        dict mit ``standpunkte`` (die gewählten Kameras, jede mit ihrem ``guete``-Block
+        und einer ``wahl_begruendung``), ``kandidaten`` (alle bewerteten, auch die
+        ausgeschiedenen), ``verworfen``, ``streuung_grad``, ``rahmung``, ``satz`` (der
+        ganze Kamerasatz, damit nichts zweimal gerechnet werden muss) und ``warnungen``.
+
+        ``standpunkte`` kann **kürzer als ``anzahl``** sein. Das ist ein Befund und kein
+        Fehler: Es heisst, dass nicht genug Richtungen die Prüfungen bestehen — und drei
+        Plätze mit untauglichen Blicken zu füllen wäre die schlechtere Antwort.
+
+    Raises:
+        ValueError: ``anzahl`` ist kleiner als 1, oder ``kuerzel`` wurde übergeben.
+    """
+    if "kuerzel" in kamerasatz_argumente:
+        raise ValueError(
+            "standpunkte() nimmt kein 'kuerzel'. Die Auswahl ist der Zweck dieser "
+            "Funktion — wer sie mitgibt, will kamerasatz(kuerzel=...) und nicht diese hier.")
+    if isinstance(anzahl, bool) or not isinstance(anzahl, int) or anzahl < 1:
+        raise ValueError(f"anzahl muss eine ganze Zahl ab 1 sein, war: {anzahl!r}")
+
+    satz = kamerasatz(bbox, **kamerasatz_argumente)
+    masse = satz["masse_m"]
+    alle = satz["kameras"]
+    warnungen = list(satz["warnungen"])
+
+    # Die Rahmungsfrage VOR der Auswahl, nicht danach: Wenn das Bauwerk in dieser Rahmung
+    # ohnehin zu klein im Bild steht, ist die beste der zwölf Richtungen immer noch zu
+    # weit weg. Die Auswahl wird trotzdem getroffen — sie ist dann die beste von zwölf
+    # schlechten, und das Urteil steht daneben statt an ihrer Stelle.
+    rahmung = rahmungsverhaeltnis(
+        bbox, bauwerk_bbox,
+        deckungsgrad=kamerasatz_argumente.get("deckungsgrad", DECKUNGSGRAD),
+        gemessener_fuellgrad=(max((float(k["fuellgrad"]) for k in alle), default=None)))
+    if rahmung["abbruch"]:
+        warnungen.insert(0, rahmung["abbruch_grund"])
+    elif rahmung["traegt"] is None:
+        warnungen.append(
+            "Ohne 'bauwerk_bbox' ist NICHT FESTSTELLBAR, ob die Rahmung das Bauwerk "
+            "gross genug zeigt — nur, dass sie die uebergebene Box gross genug zeigt. "
+            "Auf einer Gelaendeplatte sind das zwei verschiedene Aussagen "
+            "(aiimaging.glbbox liefert die Bauwerksbox in rund 0,1 s).")
+
+    bester = max((float(k.get("flaechenanteil") or 0.0) for k in alle), default=0.0)
+    bewertet = [guete_standpunkt(k, masse, bester_flaechenanteil=bester) for k in alle]
+    nach_kuerzel = {b["kuerzel"]: b for b in bewertet}
+    tauglich = [k for k in alle if nach_kuerzel[k["kuerzel"]]["taugt"]]
+    verworfen = tuple((b["kuerzel"], b["grund"]) for b in bewertet if not b["taugt"])
+
+    ergebnis = {"standpunkte": [], "kandidaten": tuple(bewertet), "verworfen": verworfen,
+                "streuung_grad": None, "wert": None, "rahmung": rahmung, "satz": satz,
+                "anzahl_gewuenscht": int(anzahl), "warnungen": ()}
+
+    if not tauglich:
+        warnungen.append(
+            f"Keine der {len(alle)} gerechneten Richtungen besteht die Pruefungen; es "
+            f"wird KEIN Standpunkt vorgeschlagen. Die Gruende stehen je Richtung in "
+            f"'verworfen'. Ein Vorschlag aus lauter untauglichen Blicken waere schlechter "
+            f"als keiner.")
+        ergebnis["warnungen"] = tuple(warnungen)
+        return ergebnis
+
+    if len(tauglich) < anzahl:
+        warnungen.append(
+            f"Nur {len(tauglich)} von {len(alle)} Richtungen bestehen die Pruefungen, "
+            f"gefragt waren {anzahl}. Es kommen alle tauglichen zurueck — die Liste ist "
+            f"kuerzer, weil die Auswahl kleiner ist, nicht weil etwas fehlt.")
+
+    ziel = min(int(anzahl), len(tauglich))
+    ideal = _idealer_abstand(ziel)
+
+    def bewerte(gruppe):
+        guete = [nach_kuerzel[k["kuerzel"]]["guete"] for k in gruppe]
+        mittel = math.prod(guete) ** (1.0 / len(guete))
+        if len(gruppe) < 2:
+            return mittel, None
+        eng = min(_winkelabstand(a["azimut_grad"], b["azimut_grad"])
+                  for a, b in itertools.combinations(gruppe, 2))
+        return mittel * min(eng / ideal, 1.0), eng
+
+    # Vollstaendige Aufzaehlung. Bei zwoelf Richtungen und drei Plaetzen sind es 220
+    # Kombinationen; selbst bei sechs Plaetzen waeren es 924. Ein gieriges Verfahren
+    # waere schneller und koennte danebenliegen — hier ist Genauigkeit gratis.
+    # Reihenfolge von `itertools.combinations` folgt RICHTUNGSFOLGE, damit ein
+    # Gleichstand IMMER gleich aufgeloest wird und nicht nach Laune der Sortierung.
+    beste, bester_wert, beste_streuung = None, -1.0, None
+    for gruppe in itertools.combinations(tauglich, ziel):
+        wert, eng = bewerte(gruppe)
+        if wert > bester_wert:
+            beste, bester_wert, beste_streuung = gruppe, wert, eng
+
+    gewaehlt = []
+    for k in beste:
+        eintrag = dict(k)
+        g = nach_kuerzel[k["kuerzel"]]
+        eintrag["guete"] = g
+        eintrag["wahl_begruendung"] = (
+            f"{g['flaeche_norm']:.0%} des besten Flaechenanteils dieses Satzes "
+            f"({g['flaechenanteil']:.4f}), zweite Fassade {g['zweite_fassade']:.0%} der "
+            f"ersten — Guete {g['guete']:.4f}."
+            + (f" Kleinster Winkelabstand im Satz: {beste_streuung:.0f}° "
+               f"(ideal {ideal:.0f}°)." if beste_streuung is not None else ""))
+        gewaehlt.append(eintrag)
+
+    ergebnis["standpunkte"] = gewaehlt
+    ergebnis["streuung_grad"] = beste_streuung
+    ergebnis["wert"] = bester_wert
+    ergebnis["warnungen"] = tuple(warnungen)
+    return ergebnis
