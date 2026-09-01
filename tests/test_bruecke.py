@@ -284,3 +284,108 @@ def test_die_qa_wandert_mit_ihren_feldnamen_hinein(tmp_path):
     assert qa["geometry"]["geom_iou"] == 0.7
     assert qa["style"]["threshold"] == stil_qa.SCHWELLE_STIL     # NICHT ihre 0.3
     assert qa["verdict"]["passed"] is True
+
+
+# ---------------------------------------------------------------------------
+# Zustellung: die Bilder liegen dort, wo ihr Name sie verspricht (Demolauf 13)
+# ---------------------------------------------------------------------------
+
+def _auftrag_mit_laufzettel(tmp_path):
+    ordner = tmp_path / "vis-1-abc"
+    ordner.mkdir()
+    (ordner / bruecke.DATEI_LAUFZETTEL).write_text(
+        json.dumps({"job_id": "vis-1-abc", "status": "running"}), encoding="utf-8")
+    return ordner
+
+
+def test_die_bilder_liegen_danach_im_auftragsordner(tmp_path):
+    """**Der Befund von Demolauf 13.**
+
+    Drei Bilder auf der Platte, Auftrag auf `done`, und der Render-Knoten sagte
+    woertlich «Bild nicht ladbar». Das Ergebnis nennt blosse Namen, weil der Endpunkt
+    der Gegenseite nur Namen kennt — geschrieben wurde aber je Kamera einen Ordner
+    tiefer und unter einer anderen Wurzel.
+    """
+    ordner = _auftrag_mit_laufzettel(tmp_path)
+    ablage = tmp_path / "ablage" / "vis-1-abc"
+    (ablage / "s").mkdir(parents=True)
+    (ablage / "sSE").mkdir(parents=True)
+    (ablage / "s" / "s.png").write_bytes(b"\x89PNG-eins")
+    (ablage / "sSE" / "sSE.png").write_bytes(b"\x89PNG-zwei")
+
+    ergebnis = bruecke.schreibe_ergebnis(
+        ordner, [str(ablage / "s" / "s.png"), str(ablage / "sSE" / "sSE.png")])
+
+    assert ergebnis["images"] == ["s.png", "sSE.png"]
+    # Genau dort holt die Gegenseite sie: <auftragsordner>/<name>, ohne Schraegstrich.
+    assert (ordner / "s.png").read_bytes() == b"\x89PNG-eins"
+    assert (ordner / "sSE.png").read_bytes() == b"\x89PNG-zwei"
+    # Die Ablage bleibt unangetastet — sie ist das Archiv, nicht die Zustellung.
+    assert (ablage / "s" / "s.png").is_file()
+
+
+def test_kein_halbes_bild_bleibt_liegen(tmp_path):
+    """Kopiert wird daneben und dann umbenannt — kein `.teil` ueberlebt."""
+    ordner = _auftrag_mit_laufzettel(tmp_path)
+    quelle = tmp_path / "weit" / "weg" / "s.png"
+    quelle.parent.mkdir(parents=True)
+    quelle.write_bytes(b"\x89PNG")
+    bruecke.schreibe_ergebnis(ordner, [str(quelle)])
+    assert list(ordner.glob("*.teil")) == []
+
+
+def test_zwei_bilder_mit_demselben_namen_brechen_ab(tmp_path):
+    """Eine stillschweigende Ueberschreibung liesse den Empfaenger ein Bild fuer ein
+    anderes halten — das ist schlimmer als ein Abbruch."""
+    ordner = _auftrag_mit_laufzettel(tmp_path)
+    for teil in ("a", "b"):
+        (tmp_path / teil).mkdir()
+        (tmp_path / teil / "s.png").write_bytes(teil.encode())
+    with pytest.raises(bruecke.BrueckenError) as fehler:
+        bruecke.schreibe_ergebnis(
+            ordner, [str(tmp_path / "a" / "s.png"), str(tmp_path / "b" / "s.png")])
+    assert "unterscheiden" in str(fehler.value)
+
+
+def test_ein_bild_das_verschwunden_ist_bricht_nichts_ab(tmp_path):
+    """Der Name bleibt im Ergebnis; die Gegenseite bekommt ein ehrliches 404.
+
+    `render.rendere` hat die Datei vorher nachgewiesen — faellt sie danach weg, ist das
+    ein Befund ueber die Platte und keiner ueber den Auftrag.
+    """
+    ordner = _auftrag_mit_laufzettel(tmp_path)
+    ergebnis = bruecke.schreibe_ergebnis(ordner, [str(tmp_path / "nie" / "da" / "s.png")])
+    assert ergebnis["images"] == ["s.png"]
+    assert not (ordner / "s.png").exists()
+
+
+def test_ein_bild_das_schon_im_auftragsordner_liegt_wird_nicht_angefasst(tmp_path):
+    """Der Weg ohne Ausgabewurzel — dort schreibt der Lauf schon an den richtigen Ort."""
+    ordner = _auftrag_mit_laufzettel(tmp_path)
+    (ordner / "s.png").write_bytes(b"\x89PNG-original")
+    bruecke.schreibe_ergebnis(ordner, [str(ordner / "s.png")])
+    assert (ordner / "s.png").read_bytes() == b"\x89PNG-original"
+
+
+def test_der_status_steht_erst_nach_den_bildern(tmp_path, monkeypatch):
+    """Die Reihenfolge ist die ganze Sorgfalt: Bilder, Ergebnis, Status.
+
+    Wer den Status zuerst setzt, oeffnet ein Fenster, in dem die Gegenseite ein Bild
+    sucht, das noch nicht da ist — und einen Fehler meldet, den niemand nachstellen kann.
+    """
+    ordner = _auftrag_mit_laufzettel(tmp_path)
+    quelle = tmp_path / "ablage" / "s.png"
+    quelle.parent.mkdir()
+    quelle.write_bytes(b"\x89PNG")
+    gesehen = {}
+
+    echt = bruecke.setze_status
+
+    def beobachte(o, status):
+        gesehen["bild_da"] = (Path(o) / "s.png").is_file()
+        gesehen["ergebnis_da"] = (Path(o) / bruecke.DATEI_ERGEBNIS).is_file()
+        return echt(o, status)
+
+    monkeypatch.setattr(bruecke, "setze_status", beobachte)
+    bruecke.schreibe_ergebnis(ordner, [str(quelle)])
+    assert gesehen == {"bild_da": True, "ergebnis_da": True}

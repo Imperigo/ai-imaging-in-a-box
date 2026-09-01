@@ -61,10 +61,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from aiimaging import abholer, bruecke, eigene_quelle, fortschritt  # noqa: E402
+from aiimaging import (abholer, bruecke, eigene_quelle, fortschritt,  # noqa: E402
+                        render, tiefenschaetzer)
 
-#: Ab welcher Auslastung die Karte als belegt gilt. Nicht 0 %: `nvidia-smi` meldet auch
-#: im Leerlauf gelegentlich 1-2 %, und ein Abholer, der darauf wartet, laeuft nie.
+#: Ab welcher Auslastung die Karte als BESCHAEFTIGT gilt. Nicht 0 %: `nvidia-smi` meldet
+#: auch im Leerlauf gelegentlich 1-2 %, und ein Abholer, der darauf wartet, laeuft nie.
+#:
+#: **Diese Zahl entscheidet seit dem 01.09.2026 nichts mehr allein** — sie steht in der
+#: Begruendung und nicht mehr im Riegel. Warum, steht in `karte_auskunft`.
 LAST_GRENZE_PROZENT = 10
 #: Ab wie viel belegtem Speicher wir jemanden anderen am Werk vermuten. Der Desktop
 #: allein braucht rund 1 GiB; ein geladenes Sprachmodell mehr als 15.
@@ -72,7 +76,46 @@ SPEICHER_GRENZE_MIB = 4096
 
 
 def karte_auskunft() -> tuple[bool, str]:
-    """(darf_rechnen, Begruendung) aus ``nvidia-smi`` — fail-closed."""
+    """(darf_rechnen, Begruendung) aus ``nvidia-smi`` — fail-closed.
+
+    **Was am 01.09.2026 gemessen wurde, und warum die Auslastung ihren Riegel verlor.**
+
+    Demolauf 12 blieb 24 Durchgaenge lang an dieser Funktion stehen, woertlich
+    *«Karte: NICHT frei — Auslastung 12 % (Grenze 10 %)»*. Die Last kam von der
+    Oberflaeche, die den Auftrag gestellt hatte. Danach nachgemessen, alles auf dieser
+    Maschine, `nvidia-smi` als Instrument:
+
+    ======================================================  ==========  ==============
+    Zustand                                                 Auslastung  belegt
+    ======================================================  ==========  ==============
+    Schreibtisch, kein Browser (20 Proben)                  0-4 %       1077 MiB
+    Messbrowser auf der Startseite (16 Proben)              1 %         +9 MiB
+    Messbrowser, 3D-Ansicht mit 11515 Meshen (40 Proben)    3-4 %       +10..20 MiB
+    dieselbe Ansicht, waehrend sie gedreht wird             9-16 %      +10..20 MiB
+    ein laufender Render (Demolauf 10, gemessen)            bis 100 %   29676 MiB
+    ======================================================  ==========  ==============
+
+    **Die Auslastung trennt nicht, was getrennt werden muss.** Ein Fenster, das gemalt
+    wird, und ein Modell, das rechnet, stehen bei ihr im selben Band — 12 % kann beides
+    sein. Der Speicher trennt sauber: Malen kostet **zehn bis zwanzig MiB**, Rechnen
+    **Gigabyte**. Und der Speicher ist auch das, worum der Render wirklich konkurriert;
+    er braucht 23,4 GiB am Stueck (`render.GERAETE_ZUSCHLAG`, Registry-Zahl), Rechenzeit
+    teilt er sich klaglos.
+
+    Der Beleg aus derselben Reihe, an dem sich das entscheidet: Lauf 11 kam durch dieses
+    Tor (5 % Auslastung) und starb danach am **Speicher**; Lauf 12 wurde von diesem Tor
+    gestoppt, obwohl der Speicher reichte (+102 MiB Kopf). Das Tor lag zweimal falsch,
+    und zwar in beide Richtungen.
+
+    Darum entscheidet hier der **Speicher**, und die Auslastung wird gemessen, genannt
+    und nicht mehr zum Riegel gemacht.
+
+    **Was diese Fassung ausdruecklich NICHT faengt** — damit es niemand fuer gefangen
+    haelt: eine fremde Arbeit, die die Karte auslastet und dabei **wenig** Speicher
+    haelt (ein Videoencoder etwa). Sie wuerde hier durchgelassen. Gemessen wurde ein
+    solcher Fall auf dieser Maschine nicht; er steht hier als bekannte Luecke und nicht
+    als Vermutung, dass es sie nicht gibt.
+    """
     werkzeug = shutil.which("nvidia-smi")
     if not werkzeug:
         return False, "nvidia-smi ist nicht vorhanden — der Zustand der Karte ist unbekannt."
@@ -90,12 +133,92 @@ def karte_auskunft() -> tuple[bool, str]:
         last, speicher = int(teile[0]), int(teile[1])
     except ValueError:
         return False, f"nvidia-smi lieferte keine Zahlen ({zeile!r}) — Zustand unbekannt."
-    if last >= LAST_GRENZE_PROZENT:
-        return False, f"Auslastung {last} % (Grenze {LAST_GRENZE_PROZENT} %)."
     if speicher >= SPEICHER_GRENZE_MIB:
         return False, (f"{speicher} MiB belegt (Grenze {SPEICHER_GRENZE_MIB}) — es haelt "
-                       f"jemand Gewichte auf der Karte.")
+                       f"jemand Gewichte auf der Karte. Auslastung dabei {last} %.")
+    if last >= LAST_GRENZE_PROZENT:
+        # Kein Riegel mehr, aber auch nicht verschwiegen: Wer das Journal liest, soll
+        # sehen, dass die Karte beschaeftigt war UND warum das hier nichts aendert.
+        return True, (f"Auslastung {last} % (ueber {LAST_GRENZE_PROZENT} %), aber nur "
+                      f"{speicher} MiB belegt (Grenze {SPEICHER_GRENZE_MIB}) — "
+                      f"beschaeftigt, nicht belegt. Es wird gerechnet.")
     return True, f"Auslastung {last} %, {speicher} MiB belegt."
+
+
+class EinmalGeladen:
+    """Ein Modell je Name — beim ersten Gebrauch geladen, danach **behalten**.
+
+    **Der Befund, aus dem das entstand (01.09.2026, an dieser Maschine gemessen).**
+    :func:`aiimaging.render.rendere` laedt sein Modell, wenn ihm keines uebergeben wird —
+    und der Betrieb hat ihm nie eines uebergeben. Also lud es **je Aufruf** neu, und ein
+    Auftrag ist viele Aufrufe: je Kamera einer, je Seed einer. Was dabei herauskommt,
+    steht in zwei Zeilen einer Messung mit ``torch.cuda.mem_get_info()``::
+
+        Runde 1: weg=cuda                     frei vorher  30476 -> nachher   7464 MiB
+        Runde 2: weg=cuda+schichtauslagerung  frei vorher   7464 -> nachher   7465 MiB
+
+    Der zweite Ladevorgang findet eine Karte vor, die der **erste** noch haelt. Er
+    entscheidet sich darum gegen den vollen Weg und fuer die Auslagerung — und die
+    Auslagerung ist der Weg, auf dem seit dem 25.08.2026 *«Expected all tensors to be on
+    the same device»* steht. Genau dieser Fehler beendete Demolauf 11 (Kamera ``s``) und
+    den Nachlauf von Demolauf 12 (Kamera ``sSE``, nachdem Kamera ``s`` ihr Bild
+    geschrieben hatte).
+
+    **Der Renderer konkurrierte also mit sich selbst.** Nicht mit dem Messbrowser (der
+    haelt gemessene 10 bis 20 MiB), nicht mit dem Schreibtisch (rund 1 GiB) — mit der
+    Kamera davor. Ein VRAM-Kopf von +1436 MiB (Lauf 10), -266 MiB (Lauf 11) oder
+    +102 MiB (Lauf 12) entscheidet nur, ob schon der **erste** Ladevorgang faellt; der
+    zweite faellt so oder so.
+
+    **Warum hier und nicht in der Bibliothek.** Wie lange ein Prozess 23 GiB Gewichte
+    festhaelt, ist eine Betriebsfrage — dieselbe Art Frage wie *«gilt die fremde
+    Freigabe»* und *«ist die Karte frei»*. Eine Bibliothek, die von sich aus ein Modell
+    in einer Modulvariablen behaelt, nimmt jedem Aufrufer diese Entscheidung ab, ohne
+    ihn zu fragen. Die Naht dafuer gibt es laengst (``_render_modell``,
+    ``_tiefen_modell`` in :func:`aiimaging.abholer.verarbeiter`) — sie war nur nie
+    bedient.
+
+    Args:
+        lader: ``(name, wurzel) -> modell``, also :func:`aiimaging.render.lade_modell`
+            oder :func:`aiimaging.tiefenschaetzer.lade_modell`.
+        name_schluessel: unter welchem Schluessel der Modellname im Parametersatz steht
+            (``backbone`` beim Bildmodell, ``schaetzer`` beim Tiefenschaetzer).
+        wurzel_schluessel: wo die Gewichte liegen, falls der Parametersatz es sagt.
+            ``None`` heisst: immer die Vorgabe des Laders.
+
+    Die Angaben ueber den Geraeteweg (``geraet``, ``ladeweg``, ``entflechtung``) werden
+    vom zuletzt benutzten Modell **uebernommen**, weil :func:`render._geraeteweg` sie am
+    uebergebenen Objekt abliest. Ohne das stuende im Protokoll *«fuehrt keine
+    Geraeteangabe»* — und das hiesse UNBEKANNT, wo etwas Bekanntes dasteht.
+    """
+
+    def __init__(self, lader, name_schluessel: str, wurzel_schluessel: str | None = None):
+        self._lader = lader
+        self._name_schluessel = name_schluessel
+        self._wurzel_schluessel = wurzel_schluessel
+        self._modelle: dict = {}
+        #: Wie oft wirklich geladen wurde. Steht im Bericht — eine Zahl groesser als die
+        #: Zahl der Backbones waere der Rueckfall in genau den Fehler oben.
+        self.ladungen = 0
+        self.geraet = None
+        self.ladeweg = None
+        self.entflechtung = None
+
+    def __call__(self, parameter: dict):
+        name = parameter.get(self._name_schluessel)
+        wurzel = parameter.get(self._wurzel_schluessel) if self._wurzel_schluessel else None
+        schluessel = (name, str(wurzel) if wurzel else None)
+        modell = self._modelle.get(schluessel)
+        if modell is None:
+            modell = self._lader(name, wurzel)
+            self._modelle[schluessel] = modell
+            self.ladungen += 1
+        # Vom zuletzt benutzten Modell uebernehmen, nicht vom ersten: Bei zwei Backbones
+        # in einem Lauf gehoerte sonst der Weg des einen zum Bild des anderen.
+        self.geraet = getattr(modell, "geraet", None)
+        self.ladeweg = getattr(modell, "ladeweg", None)
+        self.entflechtung = getattr(modell, "entflechtung", None)
+        return modell(parameter)
 
 
 #: Wieviel Text eine Zeile traegt, bevor gekuerzt wird.
@@ -253,13 +376,22 @@ def main(argv=None) -> int:
 
     seeds = tuple(int(x) for x in a.seeds.split(",") if x.strip())
 
+    # EIN Modell je Prozess statt eines je Bild — siehe `EinmalGeladen`. Beide Nähte
+    # werden bedient, weil beide dieselbe Bauform und denselben Fehler haben: Der
+    # Tiefenschaetzer wird je Kamera vier- bis fuenfmal gerufen (Bild, drei Nullanker),
+    # das Bildmodell je Kamera und Seed.
+    render_modell = EinmalGeladen(render.lade_modell, "backbone", "modell_wurzel")
+    tiefen_modell = EinmalGeladen(tiefenschaetzer.lade_modell, "schaetzer")
+
     verarbeite = abholer.verarbeiter(out_wurzel=a.out_wurzel,
                                      stil=a.stil, nullprobe=not a.ohne_nullprobe,
                                      gelaende_z=a.gelaende_z,
                                      gelaende_erwartet=not a.kein_gelaende,
                                      zwischenspeicher=speicher,
                                      zeitdeckel_s=a.zeitdeckel_s,
-                                     seeds=seeds or abholer.VORGABE_SEEDS)
+                                     seeds=seeds or abholer.VORGABE_SEEDS,
+                                     _render_modell=render_modell,
+                                     _tiefen_modell=tiefen_modell)
 
     def wache_bauen(auftrag):
         """Eine Wache auf den Ausgabeordner DIESES Auftrags.
@@ -288,6 +420,16 @@ def main(argv=None) -> int:
                                     wache_bauen=None if a.ohne_wache else wache_bauen,
                                     quelle=quelle)
         _berichte(bericht)
+
+    # Eine Zahl, die es vorher nicht gab: Wie oft in diesem Durchgang wirklich geladen
+    # wurde. Ein Auftrag mit drei Kameras und einem Backbone muss hier 1 stehen haben.
+    print(f"\nGeladen: Bildmodell {render_modell.ladungen}x, "
+          f"Tiefenschaetzer {tiefen_modell.ladungen}x "
+          f"(je Backbone einmal — mehr waere der Rueckfall, s. EinmalGeladen).")
+    if render_modell.geraet is not None:
+        print(f"Geraeteweg: {render_modell.geraet}"
+              + (f", Ladeweg {render_modell.ladeweg}" if render_modell.ladeweg else "")
+              + (", Entflechtung noetig" if render_modell.entflechtung else ""))
     return 0
 
 

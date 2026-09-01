@@ -419,3 +419,163 @@ def test_ohne_angabe_bleibt_der_zeitdeckel_offen(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "argv", ["abholen.py", "--store", str(tmp_path)])
     assert modul.main() == 0
     assert gesehen["zeitdeckel_s"] is None
+
+
+# ---------------------------------------------------------------------------
+# Das Leerlauftor — was es misst und was es nicht mehr misst (01.09.2026)
+# ---------------------------------------------------------------------------
+
+def _mit_nvidia_smi(monkeypatch, modul, last: int, speicher: int):
+    """``nvidia-smi`` durch eine Attrappe ersetzen, die genau eine Zeile liefert."""
+    class Antwort:
+        stdout = f"{last}, {speicher}\n"
+
+    monkeypatch.setattr(modul.shutil, "which", lambda name: "/usr/bin/" + name)
+    monkeypatch.setattr(modul.subprocess, "run", lambda *a, **kw: Antwort())
+
+
+def test_beschaeftigt_ohne_belegt_laesst_rechnen(monkeypatch):
+    """**Der Befund von Demolauf 12.**
+
+    24 Durchgaenge lang stand woertlich «Karte: NICHT frei — Auslastung 12 %
+    (Grenze 10 %)», und die Last kam von der Oberflaeche, die den Auftrag gestellt hatte.
+    Gemessen (01.09.2026): dieselbe Oberflaeche haelt dabei zehn bis zwanzig MiB. Was
+    rechnet, haelt Gigabyte.
+    """
+    modul = _abholen()
+    _mit_nvidia_smi(monkeypatch, modul, last=12, speicher=1550)
+    darf, warum = modul.karte_auskunft()
+    assert darf is True
+    assert "beschaeftigt, nicht belegt" in warum
+    # Die Zahl wird NICHT verschwiegen, nur nicht mehr zum Riegel gemacht.
+    assert "12 %" in warum
+
+
+def test_belegter_speicher_riegelt_weiterhin(monkeypatch):
+    """Wer Gewichte haelt, rechnet — und dann bleibt der Auftrag liegen."""
+    modul = _abholen()
+    _mit_nvidia_smi(monkeypatch, modul, last=3, speicher=modul.SPEICHER_GRENZE_MIB)
+    darf, warum = modul.karte_auskunft()
+    assert darf is False
+    assert "Gewichte auf der Karte" in warum
+    # Auch hier steht die Auslastung dabei — sonst fehlte dem Journal die Haelfte.
+    assert "3 %" in warum
+
+
+def test_stille_karte_bleibt_frei(monkeypatch):
+    modul = _abholen()
+    _mit_nvidia_smi(monkeypatch, modul, last=4, speicher=1077)
+    darf, warum = modul.karte_auskunft()
+    assert darf is True
+    assert "4 %" in warum and "1077" in warum
+
+
+def test_ohne_nvidia_smi_wird_nicht_gerechnet(monkeypatch):
+    """Unveraendert fail-closed: ungeprueft ist nicht dasselbe wie in Ordnung."""
+    modul = _abholen()
+    monkeypatch.setattr(modul.shutil, "which", lambda name: None)
+    darf, warum = modul.karte_auskunft()
+    assert darf is False
+    assert "unbekannt" in warum
+
+
+# ---------------------------------------------------------------------------
+# EinmalGeladen — der Renderer konkurrierte mit sich selbst
+# ---------------------------------------------------------------------------
+
+def test_dasselbe_backbone_wird_nur_einmal_geladen():
+    """**Die Naht, an der Lauf 11 und der Nachlauf von Lauf 12 starben.**
+
+    ``render.rendere`` laedt je Aufruf, und ein Auftrag ist viele Aufrufe. Der zweite
+    Ladevorgang fand eine Karte vor, die der erste noch hielt (gemessen: 30476 ->
+    7464 MiB frei), waehlte darum die Auslagerung und starb an ihr.
+    """
+    modul = _abholen()
+    geladen = []
+
+    def lader(name, wurzel):
+        geladen.append((name, wurzel))
+        modell = lambda p: f"/bild-{len(geladen)}.png"        # noqa: E731
+        modell.geraet = "cuda"
+        return modell
+
+    einmal = modul.EinmalGeladen(lader, "backbone", "modell_wurzel")
+    for _ in range(5):
+        einmal({"backbone": "z-image-turbo", "modell_wurzel": None})
+
+    assert geladen == [("z-image-turbo", None)]
+    assert einmal.ladungen == 1
+
+
+def test_zwei_backbones_bekommen_zwei_modelle():
+    """Ein Gedaechtnis je Name — nicht ein Modell fuer alle."""
+    modul = _abholen()
+    geladen = []
+    einmal = modul.EinmalGeladen(
+        lambda name, wurzel: (geladen.append(name), lambda p: "/x.png")[1], "backbone")
+    einmal({"backbone": "a"})
+    einmal({"backbone": "b"})
+    einmal({"backbone": "a"})
+    assert geladen == ["a", "b"]
+    assert einmal.ladungen == 2
+
+
+def test_der_geraeteweg_wird_vom_benutzten_modell_uebernommen():
+    """Sonst stuende im Protokoll «fuehrt keine Geraeteangabe» — also UNBEKANNT.
+
+    ``render._geraeteweg`` liest die Angaben am uebergebenen Objekt ab. Ohne diese
+    Uebernahme waere der Geraeteweg zum vierten Lauf in Folge ungemessen.
+    """
+    modul = _abholen()
+
+    def lader(name, wurzel):
+        modell = lambda p: "/x.png"                            # noqa: E731
+        modell.geraet = "cuda" if name == "a" else "cuda+auslagerung"
+        modell.ladeweg = f"weg-{name}"
+        modell.entflechtung = None if name == "a" else {"kopien": 67}
+        return modell
+
+    einmal = modul.EinmalGeladen(lader, "backbone")
+    einmal({"backbone": "a"})
+    assert (einmal.geraet, einmal.ladeweg, einmal.entflechtung) == ("cuda", "weg-a", None)
+    einmal({"backbone": "b"})
+    assert einmal.geraet == "cuda+auslagerung"
+    assert einmal.entflechtung == {"kopien": 67}
+
+
+def test_der_einstieg_reicht_beide_modelle_an_den_verarbeiter(monkeypatch, tmp_path):
+    """Ein Modell, das gebaut und nicht durchgereicht wird, aendert nichts.
+
+    Genau diese Fehlerart hat diese Datei angelegt: ein Schalter, den ``argparse`` kennt
+    und den niemand weitergibt.
+    """
+    modul = _abholen()
+    gesehen: dict = {}
+    monkeypatch.setattr(modul.abholer, "verarbeiter",
+                        lambda **kw: (gesehen.update(kw), lambda a: {})[1])
+    monkeypatch.setattr(modul.abholer, "durchgang", lambda store, **kw: {
+        "gesehen": 0, "verarbeitet": 0, "fehler": 0, "liegengelassen": 0,
+        "gestanden": 0, "waisen": [], "ergebnisse": []})
+    monkeypatch.setattr(modul, "karte_auskunft", lambda: (True, "Attrappe"))
+    monkeypatch.setattr(sys, "argv", ["abholen.py", "--store", str(tmp_path)])
+
+    assert modul.main() == 0
+    assert isinstance(gesehen["_render_modell"], modul.EinmalGeladen)
+    assert isinstance(gesehen["_tiefen_modell"], modul.EinmalGeladen)
+
+
+def test_der_bericht_nennt_die_zahl_der_ladevorgaenge(monkeypatch, tmp_path, capsys):
+    """Eine Zahl, die gemessen wird und nirgends landet, gibt es fuer die Untersuchung nicht.
+
+    Steht hier eine groessere Zahl als die der Backbones, ist der Rueckfall passiert.
+    """
+    modul = _abholen()
+    monkeypatch.setattr(modul.abholer, "verarbeiter", lambda **kw: (lambda a: {}))
+    monkeypatch.setattr(modul.abholer, "durchgang", lambda store, **kw: {
+        "gesehen": 0, "verarbeitet": 0, "fehler": 0, "liegengelassen": 0,
+        "gestanden": 0, "waisen": [], "ergebnisse": []})
+    monkeypatch.setattr(modul, "karte_auskunft", lambda: (True, "Attrappe"))
+    monkeypatch.setattr(sys, "argv", ["abholen.py", "--store", str(tmp_path)])
+
+    assert modul.main() == 0
+    assert "Geladen: Bildmodell 0x" in capsys.readouterr().out

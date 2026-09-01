@@ -50,6 +50,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -385,7 +386,10 @@ def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
             "Kennung lässt sich keinem Auftrag zuordnen."
         )
 
-    namen = [Path(b).name for b in (bilder or [])]
+    # ZUERST die Bilder dorthin legen, wo der Empfaenger sie holt — siehe
+    # `_bereitgestellte_namen`. Danach erst das Ergebnis, das ihre Namen nennt, und ganz
+    # zuletzt der Status. Jede andere Reihenfolge nennt Namen, die noch ins Leere zeigen.
+    namen = _bereitgestellte_namen(ordner, bilder)
     ergebnis = kosmo_szene.als_ergebnis(
         kennung, namen, geometrie_urteil=geometrie_urteil,
         stil_urteil=stil_urteil, zeiten=zeiten, uebersprungen=uebersprungen,
@@ -395,6 +399,87 @@ def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
     _schreibe_atomar(ordner / DATEI_ERGEBNIS, kosmo_szene.nur_vertragsfelder(ergebnis))
     setze_status(ordner, status)
     return ergebnis
+
+
+def _bereitgestellte_namen(ordner: Path, bilder) -> list[str]:
+    """Die Bilder unter ihrem **blossen Namen** in den Auftragsordner legen.
+
+    **Der Befund, aus dem das entstand (Demolauf 13, 01.09.2026).** Die Kette lief zum
+    ersten Mal von der Analyse bis zum Bild durch — drei Bilder auf der Platte, Auftrag
+    auf ``done`` — und der Render-Knoten der fremden Oberflaeche zeigte woertlich
+    *«Bild nicht ladbar»*.
+
+    Der Grund ist eine Naht, kein Fehler in einem Glied. Beide Seiten hatten recht:
+
+    * :func:`schreibe_ergebnis` kuerzt die Bildpfade auf **blosse Namen**, weil der
+      Endpunkt der Gegenseite nur Namen kennt (``GET /jobs/{id}/artifacts/{name}``).
+      Das steht seit jeher genau so in ihrem Docstring.
+    * Die Gegenseite loest diesen Namen unter **ihrem** Auftragsordner auf und weist
+      jeden Namen mit ``/`` darin ausdruecklich ab (Pfadwaechter gegen Schreibziel-
+      Injektion).
+    * Geschrieben werden die Bilder aber **je Kamera in einem Unterordner** und seit dem
+      01.09. ausserdem unter einer dauerhaften Ausgabewurzel, weil der Auftragsordner auf
+      dieser Maschine im fluechtigen Speicher liegt.
+
+    Es fehlte also nicht die Datei und nicht der Endpunkt, sondern der **Schritt
+    dazwischen**. Er hat nie existiert: Auch vor der dauerhaften Ausgabewurzel lagen die
+    Bilder eine Ebene tiefer, als der Name behauptete. Aufgefallen ist es erst, als ein
+    Lauf weit genug kam, um danach zu fragen.
+
+    **Kopiert, nicht verknuepft.** Ein Symlink zeigte aus dem Auftragsordner hinaus, und
+    der Pfadwaechter der Gegenseite loest auf und vergleicht — ein Bild ausserhalb ihres
+    Ablageortes bekaeme sie zu Recht nicht heraus. Ein harter Link ginge ueber
+    Dateisystemgrenzen ohnehin nicht.
+
+    Die Ausgabewurzel bleibt die **Ablage**; der Auftragsordner ist die **Zustellung**.
+    Zwei Aufgaben, zwei Orte, und diese Funktion ist die Bruecke.
+
+    Returns:
+        Die Namen in der Reihenfolge der Eingabe — das, was ins Ergebnis geschrieben wird.
+
+    Raises:
+        BrueckenError: wenn zwei verschiedene Bilder auf denselben Namen fielen. Dann
+            koennte der Empfaenger sie nicht auseinanderhalten, und eine stillschweigende
+            Ueberschreibung liesse ihn ein Bild fuer ein anderes halten.
+    """
+    ordner = Path(ordner)
+    namen: list[str] = []
+    quelle_je_name: dict[str, Path] = {}
+    for eintrag in (bilder or []):
+        quelle = Path(eintrag)
+        name = quelle.name
+        frueher = quelle_je_name.get(name)
+        if frueher is not None and frueher != quelle:
+            raise BrueckenError(
+                f"Zwei verschiedene Bilder tragen den Namen {name!r}. Der Empfaenger holt "
+                f"sie ueber den blossen Namen und koennte sie nicht unterscheiden — "
+                f"darum wird hier abgebrochen statt eines mit dem anderen zu ueberschreiben."
+            )
+        quelle_je_name[name] = quelle
+        namen.append(name)
+
+        ziel = ordner / name
+        if not quelle.is_file():
+            # Kein Abbruch: `render.rendere` hat die Datei bereits nachgewiesen; faellt sie
+            # zwischen dort und hier weg, ist das ein Befund ueber die Platte. Der Name
+            # bleibt im Ergebnis, und der Empfaenger bekommt von seinem Endpunkt ein
+            # ehrliches 404 statt einer Datei, die etwas anderes zeigt.
+            continue
+        if quelle.resolve() == ziel.resolve():
+            continue
+        _kopiere_atomar(quelle, ziel)
+    return namen
+
+
+def _kopiere_atomar(quelle: Path, ziel: Path) -> None:
+    """Erst daneben, dann umbenennen — wie :func:`_schreibe_atomar`, nur fuer Bytes.
+
+    Die fremde Oberflaeche fragt im Sekundentakt; ein halb kopiertes PNG waere fuer sie
+    ein kaputtes Bild und nicht ein fehlendes.
+    """
+    daneben = ziel.with_suffix(ziel.suffix + ".teil")
+    shutil.copyfile(quelle, daneben)
+    daneben.replace(ziel)
 
 
 def _schreibe_atomar(ziel: Path, inhalt: dict) -> None:
