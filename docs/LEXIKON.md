@@ -1067,6 +1067,29 @@ wird irgendwann nicht mehr eingehalten.*
 *Die Zahl ist eine Setzung und keine Messung* (acht, beschlossen am 28.08.2026) — sie
 steht deshalb als benannte Konstante und nicht als Zahl im Code.
 
+**Gleichstand (in einer Auswahl)** — Wenn mehrere Möglichkeiten denselben Bestwert
+erreichen und die Auswahl trotzdem **eine** davon zurückgibt, als wäre sie *die* Antwort.
+Die Wahl fällt dann in Wahrheit an die Reihenfolge der Liste.
+*Im Projekt gemessen (01.09.2026):* Bei der Wahl von drei Kamerastandpunkten aus zwölf
+Richtungen erreichen auf einem würfelförmigen Bau **16 von 56** Kombinationen denselben
+Wert, auf anderen Formen 4 bis 8. Das ist **kein Fehler** — eine Hüllbox ist symmetrisch,
+spiegelbildliche Standpunkte sind gleich gut. Der Fehler wäre, es nicht zu sagen.
+*Zwei Dinge gehören dazu:* Der Gleichstand wird **deterministisch** aufgelöst (sonst wäre
+jeder Lauf ein anderer Auftrag), und er wird **gemeldet** — *gemeldet heisst nicht
+gewürfelt.*
+
+**Eine Zahl, die an einer falschen Messung geeicht wurde** — Eine Kennzahl kann richtig
+gerechnet und trotzdem wertlos sein, wenn die Messreihe, aus der ihre Rechtfertigung
+stammt, einen Fehler enthielt.
+*Im Projekt:* Die Begründung für das Mass `flaechenanteil` lautete «schwankt um den
+Faktor 2,3 bis 1,9 — es *kann* also unterscheiden». Beide Zahlen waren mit einem um 24
+bis 25 % zu grossen Kameraabstand gemessen; ein grosser Teil der Spanne **war der
+Abstandsfehler**. Nachgerechnet bleibt 1,07 bis 2,25 — auf würfeligen Grundrissen
+unterscheidet das Mass praktisch nichts.
+*Die Lehre ist nicht «neu rechnen», sondern:* Wenn eine Messung berichtigt wird, sind die
+**Begründungen** mit zu prüfen, die auf ihr ruhen — sie stehen in Docstrings und
+Dokumenten und ändern sich nicht von selbst.
+
 **Vorzeichenfehler** — Ein Fehler, der die **Lage** einer Sache verkehrt und ihre
 **Masse** unverändert lässt. Er überlebt jede Prüfung, die Längen, Grössen oder Anteile
 vergleicht — und das sind die meisten.
@@ -3926,6 +3949,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-01 | Ergaenzt: **Gleichstand (in einer Auswahl)** und **Eine Zahl, die an einer falschen Messung geeicht wurde**. Anlass ist ein Folgeposten ohne Adressaten aus der Abstandsberichtigung der HomeStation: Nachgemessen kennt die Standpunktguete ueber acht taugliche Standpunkte hoechstens ZWEI Werte, auf einem Wuerfel einen — und 16 von 56 Kombinationen erreichen den Bestwert. Der Flaechenanteil entscheidet den besten Standpunkt in einer von sechs Formen |
 | 2026-09-01 | Ergaenzt: **Vorzeichenfehler**, **Einbahnstrasse (zwischen Annahme und Entscheidung)**, **Umfeld (gegen Bauwerk und Gelaende)**. Anlass sind zwei Messungen der HomeStation an einem echten Modell: Das Gebaeude stand auf dem Kopf, und keine Massprobe konnte es sehen (R_x(180) laesst jede Kantenlaenge gleich); und die Gelaenderegel fand auf echtem Bestand nichts — das Gelaende hiess `IfcCovering_Toposolid_1`, die Bauwerksbox schrumpfte um 2,1 % statt um 34,5 %. Der zweite Eintrag stammt aus einem Fehler im eigenen neuen Waechter desselben Tages |
 | 2026-09-01 | Ergaenzt: **Ein Feldname, zwei Bedeutungen**, **Formpruefung statt Inhaltspruefung**, **Die Attrappe baut die kaputte Gestalt nach**. Anlass ist ein Absturz, der den Takt auf seinem ersten Schlag beendet haette: `auflagen` traegt zwei Formen, `darf_starten` ruft `.get`, sechs der acht laufbaren Auftraege trugen die Liste — und der Aufruf stand ausserhalb der Absicherung. Gefunden Stunden nachdem derselbe Auftrag fuer entsperrt erklaert und auf Rang 1 gesetzt worden war |
 | 2026-09-01 | Ergaenzt: **Zustellbeleg**, **Antwortverhalten (eines Adressaten)**, **Rang (eines Auftrags)**. Anlass ist eine Zaehlung: Elf der 28 offenen Auftraege lagen bei zwei Adressaten, von denen noch NIE eine Antwort kam — sichtbar wurde das erst, als nicht mehr Ergebnisdateien gezaehlt wurden, sondern abgeleitete Zustaende. Der Rang-Eintrag traegt mit, warum eine Reihenfolge erst mit einem Zeitgeber zur Entscheidung wird |

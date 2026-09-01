@@ -245,3 +245,67 @@ def test_dieselbe_eingabe_liefert_dieselbe_wahl(name):
     for _ in range(3):
         assert [s["kuerzel"] for s in
                 kameras.standpunkte(BAUFORMEN[name], gelaende_z=0.0)["standpunkte"]] == erste
+
+
+# ======================================================================================
+# Der Gleichstand — die Auswahl ist eine von vielen, und sie sagt es jetzt
+# ======================================================================================
+#
+# Gemessen am 01.09.2026, nachdem die HomeStation den Kameraabstand berichtigt hatte: Auf
+# einem Würfel erreichen **16 von 56** Kombinationen den Höchstwert, auf den übrigen
+# Formen 4 bis 8. Das ist kein Fehler — eine Hüllbox ist symmetrisch —, aber die
+# Begründung las sich wie DIE Antwort.
+#
+# *Genau diesen Vorwurf macht `guete_standpunkt` dem Füllgrad: «Wer nach ihm auswählt,
+# wählt in Wahrheit die Reihenfolge der Liste.» Eine Ebene höher galt er für die Auswahl
+# selbst, und niemand sagte es.*
+
+def test_ein_wuerfel_meldet_seinen_gleichstand():
+    aus = kameras.standpunkte([[0.0, 0.0, 0.0], [20.0, 20.0, 20.0]])
+    assert aus["n_gleichstand"] == 16, aus["n_gleichstand"]
+    assert aus["n_kombinationen"] == 56
+    assert any("GLEICHSTAND" in w for w in aus["warnungen"])
+
+
+def test_die_meldung_sagt_dass_die_gewaehlte_eine_von_vielen_ist():
+    """Eine Zahl allein liest sich wie eine Genauigkeit. Der Satz daneben ist die Auskunft."""
+    aus = kameras.standpunkte([[0.0, 0.0, 0.0], [20.0, 20.0, 20.0]])
+    text = " ".join(aus["warnungen"])
+    assert "EINE davon" in text
+    assert "Symmetrie" in text, "ohne den Grund liest es sich wie ein Mangel"
+
+
+def test_die_wahl_bleibt_bei_gleichstand_dieselbe():
+    """**Gemeldet heisst nicht gewürfelt.** Der Gleichstand wird nach RICHTUNGSFOLGE
+    aufgelöst, und zwar immer gleich — sonst wäre jeder Lauf ein anderer Auftrag."""
+    kasten = [[0.0, 0.0, 0.0], [20.0, 20.0, 20.0]]
+    erste = [k["kuerzel"] for k in kameras.standpunkte(kasten)["standpunkte"]]
+    zweite = [k["kuerzel"] for k in kameras.standpunkte(kasten)["standpunkte"]]
+    assert erste == zweite
+
+
+def test_die_guete_kennt_hoechstens_zwei_werte_ueber_acht_standpunkte():
+    """**Die härtere Zahl.** Sie ordnet nicht acht Dinge, sie teilt sie in zwei Haufen —
+    und auf dem Würfel in einen."""
+    for masse in ((20.0, 20.0, 20.0), (60.0, 12.0, 15.0), (103.84, 57.15, 27.10)):
+        dx, dy, dz = masse
+        satz = kameras.kamerasatz([[0.0, 0.0, 0.0], [dx, dy, dz]])
+        bester = max(k.get("flaechenanteil") or 0.0 for k in satz["kameras"])
+        werte = {round(kameras.guete_standpunkt(
+                     k, masse, bester_flaechenanteil=bester)["guete"],
+                     kameras.GLEICHSTAND_STELLEN)
+                 for k in satz["kameras"]
+                 if kameras.guete_standpunkt(
+                     k, masse, bester_flaechenanteil=bester)["taugt"]}
+        assert len(werte) <= 2, (masse, sorted(werte))
+
+
+def test_ein_unsymmetrischer_satz_haette_weniger_gleichstand():
+    """Die Gegenprobe: Der Gleichstand kommt von der Symmetrie und nicht von der Rechnung.
+
+    Ein Riegel ist in einer Achse deutlich länger als in der anderen — er hat halb so
+    viele gleichwertige Kombinationen wie der Würfel.
+    """
+    wuerfel = kameras.standpunkte([[0.0, 0.0, 0.0], [20.0, 20.0, 20.0]])
+    riegel = kameras.standpunkte([[0.0, 0.0, 0.0], [60.0, 12.0, 15.0]])
+    assert riegel["n_gleichstand"] < wuerfel["n_gleichstand"]

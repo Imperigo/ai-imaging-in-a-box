@@ -1911,6 +1911,12 @@ def _winkelabstand(a: float, b: float) -> float:
     return min(d, 360.0 - d)
 
 
+#: Auf so viele Stellen wird verglichen, wenn zwei Standpunktsaetze auf Gleichstand
+#: geprüft werden. *Zwei Werte, die sich erst in der dreizehnten Stelle unterscheiden,
+#: sind kein Vorsprung, sondern Rundung.*
+GLEICHSTAND_STELLEN = 12
+
+
 def guete_standpunkt(kamera, masse, *, bester_flaechenanteil: float) -> dict:
     """Wie gut ein einzelner Standpunkt ist — als Zahl, mit ihren beiden Hälften.
 
@@ -1926,10 +1932,37 @@ def guete_standpunkt(kamera, masse, *, bester_flaechenanteil: float) -> dict:
     Was taugt, sind zwei Zahlen, die verschiedene Fragen beantworten:
 
     * ``flaechenanteil`` — **wie viel Bild das Bauwerk wirklich trägt.** Die konvexe Hülle
-      der acht Ecken, in Bildfläche. Sie schwankt über die zwölf Richtungen um den
-      Faktor 2,3 (Bestandsriegel) bis 1,9 (Riegel) — sie *kann* also unterscheiden.
-      Normiert auf den besten Wert dieses Satzes, weil nur der Rang innerhalb einer Szene
-      interessiert; der Absolutwert hängt an Bauform und Brennweite.
+      der acht Ecken, in Bildfläche. Normiert auf den besten Wert dieses Satzes, weil nur
+      der Rang innerhalb einer Szene interessiert; der Absolutwert hängt an Bauform und
+      Brennweite.
+
+      **Die Zahlen dazu sind am 01.09.2026 berichtigt worden, und das Urteil mit ihnen.**
+      Hier stand «Faktor 2,3 bis 1,9 — sie *kann* also unterscheiden». Beide Werte waren
+      mit einem um 24 bis 25 % zu grossen Kameraabstand gemessen; ein grosser Teil der
+      Spanne **war der Abstandsfehler**. Nachgemessen (`tools/studie_standpunkte.py`,
+      sechs Formen):
+
+      ===============  ========  ==========
+      Form             Spanne    Güteklassen
+      ===============  ========  ==========
+      Würfel           1,07 ×    **1**
+      Langriegel       1,17 ×    2
+      gedrungen        1,20 ×    2
+      Turm / Flachbau  1,33 ×    2
+      Riegel           2,25 ×    2
+      ===============  ========  ==========
+
+      *Sie kann unterscheiden — aber fast nur bei langgestreckten Grundrissen, und selbst
+      dort entscheidet sie den besten Standpunkt in **einer von sechs** Formen. Beim
+      Riegel zeigt sie sogar in die andere Richtung: Der Sieger hat 92 % Flächenanteil,
+      die Unterlegenen 100 %, und `zweite_fassade` überstimmt sie.*
+
+    **Und die härtere Zahl daneben:** Über acht taugliche Standpunkte kennt diese Güte
+    **höchstens zwei verschiedene Werte** — auf einem Würfel nur einen. Eine Hüllbox ist
+    symmetrisch; spiegelbildliche Standpunkte sind gleich gut, und davon hat eine Box
+    viele. Die Funktion ordnet also nicht acht Dinge, sie teilt sie in zwei Haufen. Wer
+    aus ihrer Rangfolge mehr liest, liest etwas, das nicht gemessen ist —
+    :func:`standpunkte` meldet den Gleichstand darum ausdrücklich.
     * ``zweite_fassade`` — **ob ein Körper im Bild steht oder ein Aufriss.** Siehe
       :data:`MIN_ZWEITE_FASSADE`: allein nach Fläche gewählt gewinnen die vier Frontalen,
       und das ist die falsche Antwort auf die richtige Rechnung.
@@ -2115,11 +2148,28 @@ def standpunkte(bbox, *, anzahl: int = STANDPUNKTE_ANZAHL,
     # waere schneller und koennte danebenliegen — hier ist Genauigkeit gratis.
     # Reihenfolge von `itertools.combinations` folgt RICHTUNGSFOLGE, damit ein
     # Gleichstand IMMER gleich aufgeloest wird und nicht nach Laune der Sortierung.
+    # UND ES WIRD GEZAEHLT, WIE VIELE DENSELBEN WERT ERREICHEN.
+    #
+    # Gemessen am 01.09.2026: Auf einem Wuerfel erreichen **16 von 56** Kombinationen den
+    # Hoechstwert, auf den uebrigen Formen 4 bis 8. Das ist kein Fehler — eine Huellbox
+    # ist symmetrisch, und spiegelbildliche Standpunkte SIND gleich gut. Aber die
+    # Begruendung unten liest sich wie DIE Antwort, und sie ist eine von vielen.
+    #
+    # *Genau diesen Vorwurf macht `guete_standpunkt` dem Fuellgrad — «wer nach ihm
+    # auswaehlt, waehlt in Wahrheit die Reihenfolge der Liste». Eine Ebene hoeher galt er
+    # fuer die Auswahl selbst, und niemand sagte es.*
+    #
+    # Gezaehlt wird auf `GLEICHSTAND_STELLEN` Stellen: Zwei Werte, die sich erst in der
+    # dreizehnten unterscheiden, sind kein Vorsprung, sondern Rundung.
     beste, bester_wert, beste_streuung = None, -1.0, None
+    werte: list[float] = []
     for gruppe in itertools.combinations(tauglich, ziel):
         wert, eng = bewerte(gruppe)
+        werte.append(round(wert, GLEICHSTAND_STELLEN))
         if wert > bester_wert:
             beste, bester_wert, beste_streuung = gruppe, wert, eng
+
+    n_gleichstand = werte.count(round(bester_wert, GLEICHSTAND_STELLEN)) if werte else 0
 
     gewaehlt = []
     for k in beste:
@@ -2134,8 +2184,19 @@ def standpunkte(bbox, *, anzahl: int = STANDPUNKTE_ANZAHL,
                f"(ideal {ideal:.0f}°)." if beste_streuung is not None else ""))
         gewaehlt.append(eintrag)
 
+    if n_gleichstand > 1:
+        warnungen.append(
+            f"GLEICHSTAND: {n_gleichstand} von {len(werte)} Kombinationen erreichen "
+            f"denselben Wert {bester_wert:.4f}. Die gewaehlte ist EINE davon, "
+            f"aufgeloest nach RICHTUNGSFOLGE — nicht die beste. Der Grund ist die "
+            f"Symmetrie der Huellbox: Spiegelbildliche Standpunkte sind gleich gut, und "
+            f"eine Box hat davon viele. Wer hier eine Rangfolge liest, liest eine, die "
+            f"nicht gemessen ist.")
+
     ergebnis["standpunkte"] = gewaehlt
     ergebnis["streuung_grad"] = beste_streuung
     ergebnis["wert"] = bester_wert
+    ergebnis["n_gleichstand"] = n_gleichstand
+    ergebnis["n_kombinationen"] = len(werte)
     ergebnis["warnungen"] = tuple(warnungen)
     return ergebnis
