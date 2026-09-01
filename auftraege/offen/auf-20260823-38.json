@@ -26,7 +26,7 @@
     "G5 Euer Urteil: sind die sieben Negativ-Prompts anzuschliessen oder zu loeschen? (zum Vergleich: groesster Parametereffekt bisher 0.14, Seed-Streuung 0.2269)"
   ],
   "anweisung": "\n--- ANGABEN, DIE BIS ZUM 28.08.2026 IN `params` STANDEN ---\n\nSie gehoerten dort nicht hin: `params` ist die Positivliste dessen, was der\nRunner verbraucht, und ein unbekannter Schluessel laesst den Auftrag sofort\nmit `status: fehler` zurueckkommen — ohne eine einzige bestellte Zahl.\nGemessen und gemeldet von der HomeStation (auf-20260828-64).\n\n  befund: {\"stile_mit_negativ\": 7, \"stile_gesamt\": 7, \"erreicht_render\": false, \"vorgabe_backbone\": \"z-image-turbo\", \"fuehrung_vorgabe\": 0.0, \"wirkungsgrenze\": 1.0}\n  faelle: {\"A\": \"ohne negativ, Fuehrung nach Vorgabe\", \"B\": \"mit negativ (kosmo_standard), gleiche Fuehrung\", \"C\": \"ohne negativ, Fuehrung ausdruecklich wie B — trennt Fuehrung von Prompt\", \"D\": \"mit negativ, Fuehrung 1.0 — Gegenprobe zur Wirkungsgrenze\"}\n  groesster_parametereffekt_bisher: 0.14\n  moegliches_ergebnis: \"Zeigt A gegen B nichts, gehoeren die sieben Negativ-Prompts geloescht statt angeschlossen\"\n  nicht_messen: {\"z-image-turbo\": \"Antwort bekannt: nein (fuehrung 0.0)\", \"flux1-dev/flux2-dev\": \"NonCommercial, Regel 1\"}\n  seed_streuung_zum_vergleich: 0.2269\n  seeds_mindestens: 3\n",
-  "rang": 14,
+  "rang": 15,
   "ablage": {
     "verzeichnis": "auftraege/ergebnisse",
     "nur_zahlen": true,

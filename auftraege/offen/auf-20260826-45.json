@@ -36,5 +36,5 @@
     "M0_ist_erledigt": "M0 IST HIER GERECHNET UND BRAUCHT EUCH NICHT. Blender und .venv-ifc liegen in unserem Container; nur was torch braucht (Diffusion, Tiefenschaetzer) laeuft bei euch.\n\nGemessen an der Huellbox aus tools/make_test_ifc.py (8.0 x 5.0 x 3.25 m), ueber die echte Kette IFC -> glb:\n    wie erzeugt    8.000 m     annehmen             verdacht_faktor None\n    mal 1000       8000.000 m  ablehnen_massstab    verdacht_faktor 1000.0\n    geteilt 1000   0.008 m     ablehnen_massstab    verdacht_faktor 0.001\n\nDer Torwaechter ist also nicht kaputt, und alles Weitere ist nicht wertlos.\n\nES BLEIBT M1 BIS M4 — die Haeufigkeit am ECHTEN Bestand. Genau die kann hier niemand messen: Echte Dateien liegen nach Regel 3 nicht in diesem Repo. Das ist der ganze Sinn der Zweiteilung, und wir haetten M0 gar nicht erst beauftragen sollen.",
     "was_sich_sonst_geaendert_hat": "Die Bauwerksbox trennt seit dem 26.08. das Gelaende wirklich ab — vorher ging der IFC-Name beim glb-Export verloren, und `bbox_bauwerk` war gleich der Szenenbox. Falls ihr M1 ueber `bbox_bauwerk` statt `bbox` fahren wolltet: Die Zahl ist jetzt eine andere. Siehe Nachtrag zu auf-20260825-41."
   },
-  "rang": 13
+  "rang": 14
 }
