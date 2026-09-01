@@ -157,12 +157,23 @@ def test_abstand_folgt_dem_tangens_von_hand_nachgerechnet():
     """
     masse = (30.0, 1.0, 3.0)
     hfov, _ = kameras.bildwinkel(28.0, seitenverhaeltnis=16 / 9)
-    erwartet = 15.0 / math.tan(hfov / 2.0) + 0.5
 
     ergebnis = kameras.abstand_aus_bildwinkel(
         masse, 0.0, hoehe_ueber_grund=1.7, brennweite_mm=28.0, deckungsgrad=1.0)
     assert ergebnis["massgebend"] == "breite"
-    assert ergebnis["abstand_m"] == pytest.approx(erwartet)
+
+    # Bei der FRONTALEN ist die Handrechnung unverändert richtig, und die neue Rechnung muss
+    # sie auf die letzte Stelle reproduzieren: Der seitliche Bildrand liegt hier auf einer
+    # senkrechten Kante, die von vorn nach hinten läuft, und im Bild zählt ihr vorderes Ende —
+    # also genau die halbe Tiefe. Die Umstellung vom 01.09.2026 wirkt auf die schrägen Blicke;
+    # dass sie die frontalen NICHT verschiebt, ist die Hälfte ihrer Richtigkeit.
+    assert ergebnis["abstand_m"] == pytest.approx(15.0 / math.tan(hfov / 2.0) + 0.5)
+
+    # Und die Bedingung dahinter, unabhängig von jeder Formel: Bei diesem Abstand füllt die
+    # projizierte Silhouette genau die ganze Bildbreite (Deckungsgrad 1.0).
+    ecken = kameras._grundrissecken(masse, 0.0)
+    anteil = kameras.silhouettenbreite(ecken, ergebnis["abstand_m"]) / (2.0 * math.tan(hfov / 2.0))
+    assert anteil == pytest.approx(1.0, abs=1e-9), anteil
 
 
 def test_kleinerer_deckungsgrad_schiebt_die_kamera_weiter_weg():
@@ -823,11 +834,50 @@ def test_der_fuellgrad_ist_ueber_alle_zwoelf_praktisch_konstant():
 
 
 def test_der_flaechenanteil_unterscheidet_sie_deutlich():
-    """Die andere Hälfte: Dieselben zwölf Kameras, Faktor zwei bis drei Unterschied."""
+    """Die andere Hälfte: Dieselben zwölf Kameras, Faktor zwei bis drei Unterschied.
+
+    Gerechnet am MESSSTANDORT — siehe `_flaechenanteil_am_messstandort`. Die zwölf Zahlen,
+    gegen die hier geprüft wird, stammen von der Kamera vor dem 01.09.2026.
+    """
     satz = kameras.kamerasatz(GEMESSENES_HAUS, seitenverhaeltnis=1.0,
                               deckungsgrad=GEMESSEN_BEI_DECKUNGSGRAD)
-    werte = [k["flaechenanteil"] for k in satz["kameras"]]
+    werte = [_flaechenanteil_am_messstandort(k) for k in satz["kameras"]]
     assert max(werte) / min(werte) > 2.0, werte
+
+
+#: Der Faktor, um den die Kamera am 01.09.2026 NÄHER gerückt ist.
+#:
+#: Bis dahin setzte `abstand_aus_bildwinkel` die seitlichen Silhouettenkanten auf die
+#: Vorderkante (`+ tiefe/2`); wirklich liegen sie bei `seitenecken_tiefe_m`. Die zwölf
+#: Messungen unten stammen aus Blender-Läufen VOR dieser Korrektur. An der heutigen, näheren
+#: Kamera gerechnet wäre das Bauwerk grösser im Bild — ohne dass sich am Bauwerk etwas
+#: geändert hätte. Wer sie so vergliche, prüfte den Formelwechsel und nicht mehr den
+#: Baukörper. Der Vergleich gehört an den Standort, an dem gemessen wurde.
+#:
+#: Zurückgeschoben wird auf der Blickachse, Blickziel und Bildversatz bleiben, wie sie sind —
+#: nur der Abstand ist es, der sich geändert hat.
+def _flaechenanteil_am_messstandort(kamera):
+    """`flaechenanteil` derselben Kamera, aber am historischen (weiteren) Abstand."""
+    masse = tuple(abs(GEMESSENES_HAUS[1][i] - GEMESSENES_HAUS[0][i]) for i in range(3))
+    azimut = kamera["azimut_grad"]
+    hfov, vfov = kameras.bildwinkel(kamera["brennweite_mm"], seitenverhaeltnis=1.0)
+    breite = kameras.sichtbare_breite(masse, azimut)
+    tiefe = kameras.sichtbare_tiefe(masse, azimut)
+    ziel_ueber_fuss = kamera["blick_auf"][2] - min(GEMESSENES_HAUS[0][2], GEMESSENES_HAUS[1][2])
+    halbe = max(max(0.0, masse[2] - ziel_ueber_fuss), max(0.0, ziel_ueber_fuss))
+    d = GEMESSEN_BEI_DECKUNGSGRAD
+    alt = max((breite / 2.0) / math.tan(hfov / 2.0) / d + tiefe / 2.0,
+              halbe / math.tan(vfov / 2.0) / d + tiefe / 2.0,
+              tiefe / 2.0 + kameras.WANDABSTAND_M)
+    auge, blick = kamera["auge"], kamera["blick_auf"]
+    jetzt = math.hypot(auge[0] - blick[0], auge[1] - blick[1])
+    f = alt / jetzt
+    zurueck = (blick[0] + (auge[0] - blick[0]) * f,
+               blick[1] + (auge[1] - blick[1]) * f,
+               auge[2])
+    return kameras.flaechenanteil(zurueck, blick, GEMESSENES_HAUS,
+                                  brennweite_mm=kamera["brennweite_mm"],
+                                  seitenverhaeltnis=1.0, shift_mm=kamera["shift_mm"])
 
 
 @pytest.mark.parametrize("kuerzel,gemessen", sorted(GEMESSENE_FLAECHE.items()))
@@ -843,7 +893,7 @@ def test_die_rechnung_ist_eine_obergrenze_der_messung(kuerzel, gemessen):
     kamera = kameras.kamerasatz(GEMESSENES_HAUS, kuerzel=[kuerzel],
                                 seitenverhaeltnis=1.0,
                                 deckungsgrad=GEMESSEN_BEI_DECKUNGSGRAD)["kameras"][0]
-    gerechnet = kamera["flaechenanteil"]
+    gerechnet = _flaechenanteil_am_messstandort(kamera)
     assert gerechnet >= gemessen, f"unter dem Gemessenen — die Rechnung ist falsch"
     assert gerechnet <= gemessen * 2.5, f"{gerechnet:.3f} gegen {gemessen:.3f} — zu grob"
 
@@ -855,7 +905,7 @@ def test_die_rangfolge_stimmt_mit_der_messung_ueberein():
     """
     satz = kameras.kamerasatz(GEMESSENES_HAUS, seitenverhaeltnis=1.0,
                               deckungsgrad=GEMESSEN_BEI_DECKUNGSGRAD)
-    gerechnet = {k["kuerzel"]: k["flaechenanteil"] for k in satz["kameras"]}
+    gerechnet = {k["kuerzel"]: _flaechenanteil_am_messstandort(k) for k in satz["kameras"]}
     frontal = [gerechnet[k] for k in ("n", "e", "s", "w")]
     diagonal = [gerechnet[k] for k in ("nNE", "eES", "sSW", "wWN")]
     assert min(frontal) > max(diagonal)
@@ -891,3 +941,74 @@ def test_die_huellenflaeche_rechnet_bekannte_figuren_richtig():
     assert kameras._huellen_flaeche(quadrat + [(0.5, 0.5)]) == pytest.approx(1.0)
     assert kameras._huellen_flaeche([(0.0, 0.0), (1.0, 0.0), (0.0, 1.0)]) == pytest.approx(0.5)
     assert kameras._huellen_flaeche([(0.0, 0.0), (1.0, 1.0)]) == 0.0      # eine Linie
+
+
+# ══════════════════════════════════════════════════════════════════════════════════════
+# Der Breitenabstand — 01.09.2026
+# ══════════════════════════════════════════════════════════════════════════════════════
+
+@pytest.mark.parametrize("azimut", [0.0, 20.0, 35.0, 55.0, 70.0, 90.0, 125.0, 215.0, 305.0])
+def test_die_breitenecken_liegen_nicht_auf_der_vorderkante(azimut):
+    """Gegen die GEOMETRIE geprüft, nicht gegen die Formel.
+
+    Die seitlichen Silhouettenkanten eines achsparallelen Grundrisses sind zwei einander
+    diagonal gegenüberliegende Ecken. Hier werden sie aus den vier Grundrissecken
+    ausgerechnet und ihr Tiefenversatz mit `seitenecken_tiefe_m` verglichen. Die Probe kann
+    widersprechen: Läge der Versatz wirklich bei `tiefe/2`, fiele sie um.
+    """
+    dx, dy, dz = 103.84, 57.15, 27.10
+    r = kameras.abstand_aus_bildwinkel((dx, dy, dz), azimut, hoehe_ueber_grund=1.7)
+    a = math.radians(azimut)
+    blick = (math.sin(a), math.cos(a))            # Blickrichtung, s. `sichtbare_tiefe`
+    quer = (math.cos(a), -math.sin(a))            # dazu senkrecht, s. `sichtbare_breite`
+    ecken = [(sx * dx / 2.0, sy * dy / 2.0) for sx in (-1, 1) for sy in (-1, 1)]
+    seitlich = [(p[0] * quer[0] + p[1] * quer[1], p[0] * blick[0] + p[1] * blick[1]) for p in ecken]
+    aussen = max(seitlich)                         # die Ecke mit dem grössten Querabstand
+    assert aussen[0] == pytest.approx(r["breite_m"] / 2.0, abs=1e-9)
+    assert abs(aussen[1]) == pytest.approx(r["seitenecken_tiefe_m"], abs=1e-9)
+
+
+@pytest.mark.parametrize("azimut", [0.0, 35.0, 55.0, 90.0, 125.0])
+@pytest.mark.parametrize("deckung", [0.5, 0.7, 0.9])
+def test_der_breitenabstand_fuellt_wirklich_den_deckungsgrad(azimut, deckung):
+    """Ein flacher, breiter Bau: die Breite ist massgebend, und sie muss stimmen.
+
+    Bei `abstand_breite_m` muss die projizierte Silhouettenbreite genau `deckung` der
+    Bildbreite einnehmen — projiziert wird über beide Breitenecken einzeln, jede an ihrer
+    eigenen Tiefe. Die alte Formel füllte hier nur rund die Hälfte.
+    """
+    masse = (80.0, 44.0, 6.0)
+    hfov, _ = kameras.bildwinkel(kameras.BRENNWEITE_MM, seitenverhaeltnis=16 / 9)
+    r = kameras.abstand_aus_bildwinkel(masse, azimut, hoehe_ueber_grund=1.7, deckungsgrad=deckung)
+    R, breite = r["abstand_breite_m"], r["breite_m"]
+    ecken = kameras._grundrissecken(masse, azimut)
+    bildbreite = 2.0 * math.tan(hfov / 2.0)
+    assert kameras.silhouettenbreite(ecken, R) / bildbreite == pytest.approx(deckung, abs=1e-9)
+
+    # Und die alte Formel füllte NIE mehr, meist weniger — das ist der Befund, nicht eine
+    # Geschmacksfrage. Bei der Frontalen sind beide gleich, dort war sie schon richtig.
+    alt = (breite / 2.0) / math.tan(hfov / 2.0) / deckung + r["tiefe_m"] / 2.0
+    assert alt >= R - 1e-9
+    assert kameras.silhouettenbreite(ecken, alt) / bildbreite <= deckung + 1e-12
+    frontal = min(azimut % 90.0, 90.0 - azimut % 90.0) < 1e-9
+    assert (alt == pytest.approx(R)) if frontal else (alt > R + 1.0)
+
+
+def test_die_hoehe_bleibt_an_der_vorderkante_gerahmt():
+    """Die Gegenrichtung: An der HÖHE ändert sich nichts, und das ist richtig so.
+
+    Oben und unten begrenzt dieselbe zugewandte Kante das Bild. Ihr Versatz IST die halbe
+    Tiefe. Bei einem hohen, schmalen Bau muss die Höhe massgebend bleiben und der
+    Höhenfüllgrad genau den Deckungsgrad treffen.
+    """
+    masse = (18.0, 16.0, 60.0)
+    _, vfov = kameras.bildwinkel(kameras.BRENNWEITE_MM, seitenverhaeltnis=16 / 9)
+    for azimut in (0.0, 35.0, 55.0, 90.0):
+        r = kameras.abstand_aus_bildwinkel(masse, azimut, hoehe_ueber_grund=1.7, deckungsgrad=0.7)
+        assert r["massgebend"] == "hoehe"
+        nah = r["abstand_hoehe_m"] - r["tiefe_m"] / 2.0
+        anteil = (2.0 * r["halbe_hoehe_m"]) / (2.0 * math.tan(vfov / 2.0) * nah)
+        assert anteil == pytest.approx(0.7, abs=1e-9)
+        # unverändert gegenüber der Fassung vor dem 01.09.2026
+        assert r["abstand_hoehe_m"] == pytest.approx(
+            r["halbe_hoehe_m"] / math.tan(vfov / 2.0) / 0.7 + r["tiefe_m"] / 2.0)

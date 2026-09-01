@@ -53,13 +53,23 @@ def test_der_fuellgrad_kann_die_zwoelf_richtungen_nicht_unterscheiden(name):
 def test_der_flaechenanteil_unterscheidet_sehr_wohl(name):
     """Die Gegenprobe. Ohne sie wäre oben nur belegt, dass irgendetwas gleich ist.
 
-    Am gedrungenen Bau schwankt der Flächenanteil über die zwölf Richtungen um den
-    Faktor 2,3, am Riegel um 1,9 — er *kann* also unterscheiden, und darum steht er in
-    ``guete_standpunkt``.
+    **Neu gemessen am 01.09.2026, und der Befund ist unangenehm.** Vorher schwankte der
+    Flächenanteil am gedrungenen Bau um den Faktor 2,3 und am Riegel um 1,9. Seit
+    `abstand_aus_bildwinkel` die seitliche Silhouette richtig projiziert, sind es **1,17
+    beziehungsweise 2,25**: Ein grosser Teil der alten Spanne war kein Unterschied zwischen
+    den Ansichten, sondern der Abstandsfehler — die schrägen Blicke standen zu weit weg und
+    zeigten darum weniger.
+
+    Was das heisst: Am LANGEN Bau unterscheidet der Flächenanteil weiterhin deutlich, und
+    dort trägt er die Standpunktwahl. Am gedrungenen Bau tut er es kaum noch. Die Schranke
+    steht darum je Bauform an ihrer eigenen Messung und nicht mehr an einer gemeinsamen —
+    eine gemeinsame würde entweder den Riegel nicht prüfen oder den gedrungenen Bau
+    fälschlich durchfallen lassen.
     """
+    mindestens = {"gedrungen": 1.15, "riegel": 1.9}[name]
     satz = kameras.kamerasatz(BAUFORMEN[name], gelaende_z=0.0)
     werte = [k["flaechenanteil"] for k in satz["kameras"]]
-    assert max(werte) / min(werte) > 1.5, werte
+    assert max(werte) / min(werte) > mindestens, werte
 
 
 # --------------------------------------------------------------------------------------
