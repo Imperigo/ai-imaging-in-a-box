@@ -34,7 +34,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from aiimaging import einbau  # noqa: E402
+from aiimaging import auftrag, einbau  # noqa: E402
 
 
 def _zeilen(bericht: dict, nur: str | None) -> list[str]:
@@ -94,7 +94,14 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--repo", default=".", help="Wurzel des Repos (Vorgabe: hier)")
     ap.add_argument("--json", action="store_true", help="maschinenlesbar ausgeben")
-    ap.add_argument("--worker", choices=("local", "cloud", "ui"),
+    # DIE LISTE KOMMT AUS DEM VERTRAG UND STEHT NICHT NOCH EINMAL HIER.
+    #
+    # Sie stand hier: `("local", "cloud", "ui")`. Seit dem 28.08.2026 gibt es einen
+    # vierten Adressaten (`kern`), und `--worker kern` wurde seither mit «invalid choice»
+    # abgewiesen — eine doppelte Vorgabe, die an einer Stelle nachgezogen wurde und an
+    # der anderen nicht. Gefunden am 01.09.2026 von `tools/schalterprobe.py`: Der
+    # Schalter kam in keiner einzigen Probe vor.
+    ap.add_argument("--worker", choices=sorted(auftrag.WORKER),
                     help="nur den Rueckstand eines Adressaten zeigen")
     a = ap.parse_args(argv)
 

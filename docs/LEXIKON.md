@@ -1067,6 +1067,19 @@ wird irgendwann nicht mehr eingehalten.*
 *Die Zahl ist eine Setzung und keine Messung* (acht, beschlossen am 28.08.2026) — sie
 steht deshalb als benannte Konstante und nicht als Zahl im Code.
 
+**Ungedrückter Schalter** — Ein Bedienelement, das keine Probe je benutzt hat. Es kann
+still nichts tun: Kein Test wird rot, kein Benutzer bekommt eine Fehlermeldung, und wer
+es setzt, hält das Ausbleiben der Wirkung für seine eigene Schuld.
+*Gemessen am 01.09.2026:* **9 von 33** Kommandozeilenschaltern kamen in keiner einzigen
+Probe vor. Zwei waren kaputt — einer legte keine Datei ab, obwohl er es versprach; einer
+wies einen gültigen Adressaten mit «invalid choice» ab, weil seine Liste ein zweites Mal
+im Skript stand. Drei weitere **konnten** gar nicht geprüft werden: Ihr Einstieg nahm
+kein ``argv`` entgegen und las die Kommandozeile des Testlaufs.
+*Der Satz dahinter, und wir geben ihn sonst an die Oberfläche weiter:* **Ein
+Bedienelement ohne Wirkung ist schlimmer als keines — es sagt, etwas sei geschehen.**
+*Gezählt wird von `tools/schalterprobe.py`, und die Zahl steht auf null statt auf einer
+Obergrenze: Eine Obergrenze wäre ein Vorrat, den man aufbraucht.*
+
 **Gleichstand (in einer Auswahl)** — Wenn mehrere Möglichkeiten denselben Bestwert
 erreichen und die Auswahl trotzdem **eine** davon zurückgibt, als wäre sie *die* Antwort.
 Die Wahl fällt dann in Wahrheit an die Reihenfolge der Liste.
@@ -3949,6 +3962,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-01 | Ergaenzt: **Ungedrueckter Schalter**. Anlass sind drei Fehler desselben Tages, alle an Schaltern, die nie eine Probe gedrueckt hatte. Gemessen: 9 von 33; zwei waren kaputt, drei weitere nicht einmal pruefbar, weil `abholen.main()` kein argv entgegennahm — ein Einstieg, den keine Probe aufrufen kann, hat keine ungeprueften Schalter, er ist selbst einer. Nach dem Bau: 0 |
 | 2026-09-01 | Ergaenzt: **Gleichstand (in einer Auswahl)** und **Eine Zahl, die an einer falschen Messung geeicht wurde**. Anlass ist ein Folgeposten ohne Adressaten aus der Abstandsberichtigung der HomeStation: Nachgemessen kennt die Standpunktguete ueber acht taugliche Standpunkte hoechstens ZWEI Werte, auf einem Wuerfel einen — und 16 von 56 Kombinationen erreichen den Bestwert. Der Flaechenanteil entscheidet den besten Standpunkt in einer von sechs Formen |
 | 2026-09-01 | Ergaenzt: **Vorzeichenfehler**, **Einbahnstrasse (zwischen Annahme und Entscheidung)**, **Umfeld (gegen Bauwerk und Gelaende)**. Anlass sind zwei Messungen der HomeStation an einem echten Modell: Das Gebaeude stand auf dem Kopf, und keine Massprobe konnte es sehen (R_x(180) laesst jede Kantenlaenge gleich); und die Gelaenderegel fand auf echtem Bestand nichts — das Gelaende hiess `IfcCovering_Toposolid_1`, die Bauwerksbox schrumpfte um 2,1 % statt um 34,5 %. Der zweite Eintrag stammt aus einem Fehler im eigenen neuen Waechter desselben Tages |
 | 2026-09-01 | Ergaenzt: **Ein Feldname, zwei Bedeutungen**, **Formpruefung statt Inhaltspruefung**, **Die Attrappe baut die kaputte Gestalt nach**. Anlass ist ein Absturz, der den Takt auf seinem ersten Schlag beendet haette: `auflagen` traegt zwei Formen, `darf_starten` ruft `.get`, sechs der acht laufbaren Auftraege trugen die Liste — und der Aufruf stand ausserhalb der Absicherung. Gefunden Stunden nachdem derselbe Auftrag fuer entsperrt erklaert und auf Rang 1 gesetzt worden war |

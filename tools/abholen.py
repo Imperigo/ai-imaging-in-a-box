@@ -117,7 +117,18 @@ def _gekuerzt(text: str, laenge: int = GEKUERZT_AUF) -> str:
     return f"{schnitt} … (+{len(text) - len(schnitt)} Zeichen)"
 
 
-def main() -> int:
+def main(argv=None) -> int:
+    """Der Einstieg — und ``argv`` ist seit dem 01.09.2026 ein Parameter.
+
+    **Es war keiner, und das ist der Grund, warum drei Schalter nie geprüft wurden.**
+    ``--stil``, ``--seeds`` und ``--ohne-nullprobe`` kamen in keiner einzigen Probe vor
+    (`tools/schalterprobe.py`), und sie konnten es nicht: Ohne ``argv`` liest
+    ``parse_args()`` die Kommandozeile des Testlaufs, und die trägt die Schalter von
+    pytest. Jedes andere Werkzeug hier nimmt ``argv`` entgegen.
+
+    *Ein Einstieg, den keine Probe aufrufen kann, hat keine ungeprüften Schalter — er ist
+    selbst einer.* Die Vorgabe ``None`` ändert am Dienstbetrieb nichts.
+    """
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--store", default="/tmp/kosmo-jobs",
                     help="Ablageort der Auftraege der BRUECKE (Vorgabe: /tmp/kosmo-jobs)")
@@ -194,7 +205,7 @@ def main() -> int:
                          "absolute Pfade (Regel 3).")
     ap.add_argument("--probe", action="store_true",
                     help="Nur berichten, was anlaege: Karte pruefen, offene Auftraege zaehlen.")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     darf, warum = karte_auskunft()
     print(f"Karte: {'frei' if darf else 'NICHT frei'} — {warum}")
