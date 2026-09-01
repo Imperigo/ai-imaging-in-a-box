@@ -543,6 +543,23 @@ def _kompositionszeilen(kameras: list) -> list:
 #: die Gelaendeszene mit 0.5297 meldet sich (27.08.2026).
 GESCHENKTER_ANTEIL_SCHWELLE = 0.25
 
+#: Was ein **nicht gefahrener Maskenweg** bedeutet — der Satz, der in *beiden* Fällen
+#: derselbe ist.
+#:
+#: Er steht genau einmal, weil zwei Fassungen desselben Satzes auseinanderlaufen, sobald
+#: eine gepflegt wird. Genau das ist diesem Satz schon einmal passiert: Bis zum Abend des
+#: 26.08.2026 nannte er als Folge, der Score falle auf ``abs(spearman)`` zurück — das
+#: stimmte, bis :func:`qa_gegen_soll` die Polarität immer durchreichte. Die überholte
+#: Fassung hätte den Leser an die falsche Stelle geschickt.
+#:
+#: Die **Gründe** unterscheiden sich und stehen darum je an ihrer Zeile; die **Folge**
+#: ist dieselbe: ohne Maskenweg kein ``rho_maske``, keine Kante, kein Paarurteil.
+MASKENWEG_FOLGE = (
+    "damit bleiben rho_maske, Kante und Paarurteil ungemessen. Das sind die Masse, die "
+    "die ABWESENHEIT eines Bauwerks fangen; der Score ueber das ganze Bild fangt sie "
+    "nicht (ein leeres Grundstueck erreichte dort 0.9530 und bestand das Tor, "
+    "auf-20260821-26).")
+
 
 def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     """Der Befund in wenigen Zeilen — für einen Menschen an einem Terminal.
@@ -763,11 +780,8 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
         erster = next((k.get("maskenbefund") or {} for k in kameras
                        if (k.get("maskenbefund") or {}).get("maske") is None), {})
         zeilen.append(
-            f"MASKENWEG NICHT GEFAHREN: {', '.join(str(k) for k in ohne_maske)} — damit "
-            f"bleiben rho_maske, Kante und Paarurteil ungemessen. Das sind die Masse, die "
-            f"die ABWESENHEIT eines Bauwerks fangen; der Score ueber das ganze Bild fangt "
-            f"sie nicht (ein leeres Grundstueck erreichte dort 0.9530 und bestand das "
-            f"Tor, auf-20260821-26). Ein bestandenes Urteil ohne Maskenweg sagt darum "
+            f"MASKENWEG NICHT GEFAHREN: {', '.join(str(k) for k in ohne_maske)} — "
+            f"{MASKENWEG_FOLGE} Ein bestandenes Urteil ohne Maskenweg sagt darum "
             f"nichts darueber, ob ueberhaupt gebaut wurde. "
             f"Grund: {str(erster.get('grund') or 'ohne Angabe')[:200]}")
 
@@ -789,6 +803,71 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
                 f"NULLBEFUND und keine Ratlosigkeit — er belegt aber nur, dass die REGEL "
                 f"nicht anschlug. Steht kein Boden in der Liste, ist --kein-gelaende die "
                 f"richtige Angabe.")
+
+    # DERSELBE AUSFALL, DER ANDERE GRUND — UND ER WAR STUMM (nachgetragen 01.09.2026).
+    #
+    # Gemessen an zwei Laeufen derselben Kette:
+    #
+    # * Lauf 10 (28.08.): drei Diffusionsbilder, die Maske fiel am fehlenden
+    #   Gelaendebeleg aus — und die Zeile darueber sagte es laut.
+    # * Lauf 11 (01.09.): KEIN Bild, der Maskenweg fiel ebenfalls aus — und kein Satz
+    #   sagte es. Der Kurzbefund druckte «Geometrie: 0.9000» und sonst nichts.
+    #
+    # **Ein stiller Uebersprung ist schlimmer als ein lauter Ausfall.** Beim lauten
+    # weiss der Leser, was ihm fehlt; beim stillen liest er ein Ergebnis ohne Urteil und
+    # haelt es fuer eines mit Urteil. In Lauf 11 wog das besonders: Das gerettete
+    # Cycles-Bild zeigte waagrechte Platten und leeres Grau — kein Bauwerk. Die Maske ist
+    # genau das Mass, das so etwas faengt.
+    #
+    # WARUM DIE ZEILE DARUEBER EIN BILD VERLANGT, UND DAS RICHTIG BLEIBT. Wo bereits
+    # eine Zeile sagt, warum kein Bild entstand — Rahmung, Kamerahoehe, uebernommene
+    # Ansicht —, waere eine zweite ueber einen Weg, den niemand fahren wollte, eine
+    # Dauerwarnung. Und eine Zeile, die immer dasteht, verdeckt die echten.
+    #
+    # DIE LUECKE IST DIE KAMERA OHNE BILD **UND OHNE GENANNTEN GRUND**: Fuer sie
+    # schweigen beide Wege — `ohne_maske` verlangt ein Bild, `_kompositionszeilen`
+    # verlangt einen Abbruchgrund. Genau diese Form entsteht, wenn ein Lauf zwischen
+    # Rahmungspruefung und Diffusion abbricht.
+    #
+    # Damit ist die Zeile selbstloeschend: Sobald irgendetwas den fehlenden Bildlauf
+    # erklaert, schweigt sie wieder.
+    # `"bild_png" in k` UND NICHT BLOSS `not k.get("bild_png")` — der Unterschied ist
+    # gemessen und hat beim ersten Entwurf neun Tests umgeworfen. Ein Eintrag OHNE das
+    # Feld sagt nicht, dass kein Bild entstand; er sagt, dass er die Frage nicht
+    # beantwortet. Das Feld gibt es erst seit dem 26.08.2026 (siehe `bild_png` am
+    # Kameraurteil), und aeltere Befunde tragen es nicht. Eine Zeile «es gibt kein Bild»
+    # ueber einem Befund, der darueber schweigt, waere eine Behauptung ohne Messung —
+    # und genau davon handelt dieser ganze Abschnitt.
+    stumm = [k for k in kameras
+             if isinstance(k, dict)
+             and "bild_png" in k and k["bild_png"] is None
+             and (k.get("maskenbefund") or {}).get("maske") is None
+             and not k.get("doppelt_von")
+             and not (k.get("rahmung") or {}).get("abbruch")
+             and not (k.get("komposition") or {}).get("abbruch")]
+    if stumm:
+        # OB `bestanden` HIER RICHTIG STEHT — gemessen und nicht behauptet.
+        #
+        # Owner-Entscheid vom 26.08.2026 (`tiefenschaetzer`): Wo nicht gemessen werden
+        # konnte, steht `None` und nicht `False`. `_uebersprungenes_urteil` haelt sich
+        # daran. Steht dort trotzdem ein Wert, ist das ein Urteil ueber einen Lauf, der
+        # nichts geprueft hat — und dann darf diese Zeile nicht das Gegenteil behaupten.
+        geurteilt = [k for k in stumm if k.get("bestanden") is not None]
+        if geurteilt:
+            lage = ("ACHTUNG: im Befund steht trotzdem "
+                    + ", ".join(f"bestanden={k.get('bestanden')!r} bei {k.get('kamera')}"
+                                for k in geurteilt)
+                    + " — ein Urteil ueber einen Lauf, der nichts gemessen hat.")
+        else:
+            lage = ("NICHT GEMESSEN heisst hier weder bestanden noch durchgefallen; "
+                    "im Befund steht bestanden=None, und das ist richtig so.")
+        zeilen.append(
+            f"MASKENWEG NICHT GEFAHREN, WEIL ES KEIN BILD GIBT: "
+            f"{', '.join(str(k.get('kamera')) for k in stumm)} — {MASKENWEG_FOLGE} "
+            f"Der Unterschied zum Fall darueber: Dort lag ein Bild vor und die Maske "
+            f"liess sich nicht bauen; hier fehlt das Bild selbst — und der Befund sagt "
+            f"auch nicht, warum: weder Rahmung noch Kamerahoehe noch eine uebernommene "
+            f"Ansicht. {lage}")
 
     # DIE STARTWERT-VORGABE, DIE STILL AUF EINEN ZURUECKFAELLT.
     #
