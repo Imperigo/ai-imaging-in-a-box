@@ -193,3 +193,56 @@ def test_lege_ab_ueberschreibt_beim_naechsten_lauf(tmp_path):
     auftragspost.lege_ab([("auf-20260827-77", "alt")], tmp_path)
     auftragspost.lege_ab([("auf-20260827-77", "neu")], tmp_path)
     assert (tmp_path / "auf-20260827-77.md").read_text(encoding="utf-8") == "neu\n"
+
+
+# ======================================================================================
+# Der Einstieg — und ein Schalter, der nichts tat
+# ======================================================================================
+
+def _cli():
+    import importlib.util
+    from pathlib import Path
+    pfad = Path(__file__).resolve().parents[1] / "tools" / "auftragspost.py"
+    spec = importlib.util.spec_from_file_location("werkzeug_auftragspost", pfad)
+    modul = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modul)
+    return modul
+
+
+def _repo_mit_auftrag(tmp_path, satz):
+    ordner = tmp_path / "auftraege" / "offen"
+    ordner.mkdir(parents=True)
+    (ordner / f"{satz['auftrag_id']}.json").write_text(
+        json.dumps(satz, ensure_ascii=False), encoding="utf-8")
+    return tmp_path
+
+
+def test_nach_wirkt_auch_zusammen_mit_auftrag(tmp_path):
+    """*Der Fehler, den der erste Gebrauch gefunden hat.* `--auftrag` kehrte vor der
+    Ablage um und **druckte** den Block, obwohl ein Zielverzeichnis dastand. Die Datei,
+    die der Adressat lesen sollte, entstand nie — und es gab keine Fehlermeldung.
+
+    **Ein Bedienelement ohne Wirkung ist schlimmer als keines:** Es sagt, etwas sei
+    geschehen. Genau der Befund, den wir sonst an die Oberfläche weitergeben.
+    """
+    satz = _satz()
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    ziel = tmp_path / "hinaus"
+    assert _cli().main(["--repo", str(repo), "--auftrag", satz["auftrag_id"],
+                        "--nach", str(ziel)]) == 0
+    datei = ziel / f"{satz['auftrag_id']}.md"
+    assert datei.exists(), "--nach wurde übergangen, der Block ging nur auf den Bildschirm"
+    assert satz["auftrag_id"] in datei.read_text(encoding="utf-8")
+
+
+def test_ohne_nach_druckt_auftrag_weiterhin(tmp_path, capsys):
+    """Die Gegenprobe: Der alte Weg bleibt. Ohne Ziel wird gedruckt."""
+    satz = _satz()
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    assert _cli().main(["--repo", str(repo), "--auftrag", satz["auftrag_id"]]) == 0
+    assert satz["auftrag_id"] in capsys.readouterr().out
+
+
+def test_eine_unbekannte_kennung_wird_gemeldet_und_nicht_still_uebergangen(tmp_path):
+    repo = _repo_mit_auftrag(tmp_path, _satz())
+    assert _cli().main(["--repo", str(repo), "--auftrag", "auf-gibt-es-nicht"]) == 2

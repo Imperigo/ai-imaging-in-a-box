@@ -56,7 +56,17 @@ def main(argv: list[str] | None = None) -> int:
             print(f"FEHLER: {a.auftrag} liegt weder unter auftraege/offen noch unter "
                   f"auftraege/ergebnisse.", file=sys.stderr)
             return 2
-        print(auftragspost.block(json.loads(datei.read_text(encoding="utf-8"))))
+        # `--nach` GILT AUCH HIER, und das war es zuerst nicht: Dieser Zweig kehrte
+        # vor der Ablage um und druckte den Block, obwohl ein Zielverzeichnis dastand.
+        # Ein Schalter ohne Wirkung ist schlimmer als keiner — er sagt, etwas sei
+        # geschehen. Gefunden am 01.09.2026 beim ersten Gebrauch mit --auftrag.
+        block = [(a.auftrag, auftragspost.block(
+            json.loads(datei.read_text(encoding="utf-8"))))]
+        if a.nach:
+            for ziel in auftragspost.lege_ab(block, a.nach):
+                print(f"geschrieben: {ziel.name}")
+            return 0
+        print(block[0][1])
         return 0
 
     blocks = auftragspost.offene_blocks(a.repo, worker=a.worker)

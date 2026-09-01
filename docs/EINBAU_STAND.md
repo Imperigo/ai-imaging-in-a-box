@@ -51,7 +51,7 @@ ihn nicht. Der alte Wächter prüfte, ob ein Beleg **existiert**, und der existi
 | A8 | Wo erscheinen Bild und QA-Wert? Im Cockpit gibt es keinen Ort dafür | 🟩 **entschieden, nicht gebaut** | 2026-08-26 | In der **KosmoVis-Fläche**, nicht als neuer Anzeigetyp im fremden Knotenrahmen — der innere Graph bekommt eine innere Oberfläche. Entwurf: `docs/OBERFLAECHE_KOSMOVIS.md`; gebaut wird er über `auftraege/offen/auf-20260826-52.json` |
 | A10 | Die Oberfläche selbst — Bedienelemente, Anzeige, die drei Zustände | 🟥 **offen** | — | Entwurf steht (`docs/OBERFLAECHE_KOSMOVIS.md`), Bau beauftragt in `auftraege/offen/auf-20260826-52.json`. Der Auftrag trägt den Entwurf **im Volltext** — die Hausregel verbietet ein «siehe Dokument XY» |
 | A11 | **Ein bestandener Lauf ohne Bauwerk wird nicht wie jeder andere gezeigt** | 🟥 **offen** | — | `auftraege/offen/auf-20260827-62.json` — der Vertragsgrund trägt den Satz seit 27.08. (`kosmo_szene`). Solange die Oberfläche ihn nicht mitträgt, sieht ein Bild ohne Bauwerk dort aus wie ein geprüftes |
-| A9 | Die Registrierung nachweisen — sie liegt acht Tage und **ein Werkzeug** zurück | 🟥 **offen** | — | `auftraege/offen/auf-20260826-48.json` |
+| A9 | Die Registrierung nachweisen — sie liegt acht Tage und **ein Werkzeug** zurück | 🟩 **erledigt** | 2026-09-01 | **belegt am Gerät:** Seam-Health der HomeStation am **01.09.2026 um 06:49:35** — Server `aiimaging`, Kennung `d99fcf67`, **10 Werkzeuge**, `aiimaging_capabilities ok`. Geprüft **per echtem Tool-Call** und nicht am `connected`-Flag: Das ist dort nachweislich unzuverlässig (ein toter Server meldete `exit_code: 1` bei leerem stderr). Quelle: `auftraege/von-homestation/geraetebefunde-20260901.md`. *`auf-20260826-48` bleibt offen — R1, R2 und A6 messen anderes und sind damit nicht beantwortet.* |
 
 *A9 stand 2026-08-19 nicht auf der Liste, weil die Registrierung damals als erledigt galt.
 Sie war es auch: `id d99fcf67`, alle **drei** Werkzeuge antworteten (Sitzung 07, Kap. 26).
@@ -59,6 +59,11 @@ Seither ist `aiimaging_capabilities` dazugekommen und der Ausführungspfad — b
 Gerät unbestätigt. **Eine Behauptung, die stimmte, als sie geschrieben wurde.**
 `README.md` trug bis zum 26.08. den entgegengesetzten Fehler und sagte «Registrierung
 nicht ausgeführt».*
+
+*Erledigt am 01.09.2026, und der Weg dahin ist der Punkt: Nicht eine Datei im Repo hat
+es belegt, sondern eine Messung am Gerät, die von dort gemeldet wurde. **Vierzehn Tage lang
+war die Frage «ist es registriert?» hier nicht zu beantworten** — nicht, weil niemand nachsah,
+sondern weil sie hier nicht nachsehbar ist.*
 
 ---
 

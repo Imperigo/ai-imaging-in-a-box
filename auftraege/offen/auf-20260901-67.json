@@ -1,0 +1,27 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "cloud",
+  "auftrag_id": "auf-20260901-67",
+  "art": "frage",
+  "beschreibung": "RenderScene hat kein Feld fuer Gelaende ja/nein. Ohne das bleibt die Bauwerksmaske leer und ein Lauf liefert Bilder ohne Urteil — heute behilft sich das Geraet mit einem prozessweiten Schalter fuer eine Aussage, die je Szene gilt.",
+  "anweisung": "=== DER VERTRAG WEISS NICHT, OB IN DER SZENE GELAENDE STEHT ===\n\nAn den Cloud-Worker an KosmoOrbit. Du hast unser Repo nicht und brauchst es nicht —\nalles Noetige steht hier. Es geht um `RenderScene` in kosmo-contracts.\n\n--- 1 · DER BEFUND, UND ER KOMMT VOM GERAET ---\n\nDie HomeStation hat am 01.09.2026 gemeldet: Ein Lauf lieferte drei Bilder und KEIN\nUrteil darueber, ob ueberhaupt ein Bauwerk darauf steht. Der Grund ist eine Kette:\n\n  * Unsere Bauwerksmaske trennt Bauwerk von Gelaende ueber eine Namensregel.\n  * Findet sie kein Gelaende, gibt es zwei moegliche Erklaerungen, und aus dem Bild\n    allein sind sie NICHT zu unterscheiden: Die Regel hat danebengegriffen — oder es\n    steht schlicht kein Gelaende in der Szene.\n  * Solange das offen ist, bleibt die Maske leer. Ohne Maske gibt es kein Paarurteil,\n    keine Rangkorrelation ueber der Maske und keinen Kantenanteil. Also Bilder ohne\n    Urteil.\n\nWer es weiss, muss es sagen. Bei uns heisst dieser Weg `gelaende_erwartet=false`.\n\n--- 2 · WARUM DER HEUTIGE WEG FALSCH LIEGT, OBWOHL ER FUNKTIONIERT ---\n\nHeute setzt der Betreiber den Schalter `--kein-gelaende` an der Kommandozeile des\nAbholers. Der steht in einer systemd-Einheit und gilt damit PROZESSWEIT — fuer jeden\nAuftrag, der ueber diesen Dienst laeuft.\n\nDie Aussage gilt aber JE SZENE. Dort steht heute eine Wahrheit ueber EIN Gebaeude als\nDauereinstellung fuer alle. Eine Szene MIT Gelaende bekaeme damit eine falsche\nErklaerung — sie faellt laut auf, aber sie faellt eben erst dann auf.\n\nDer Schalter steht an der falschen Stelle. Die richtige ist ein Feld je Auftrag, und\n`RenderScene` hat keines: weder `gelaende` noch `terrain` noch `ground`.\n\n--- 3 · WAS WIR VORSCHLAGEN, UND WARUM DREIWERTIG ---\n\nEin Feld an der Szene, mit DREI Werten und nicht zwei:\n\n    scene.gelaende: true | false | null        (null = Vorgabe, wenn nichts gesagt wird)\n\n  * true  — in dieser Szene steht Gelaende. Findet unsere Regel keines, ist das ein\n            Fehlbefund und wird als solcher gemeldet.\n  * false — hier steht keines. Die Maske gilt ohne Bodenabzug.\n  * null  — UNBEKANNT. Nicht «false». Wir messen dann die Maske nicht und sagen, warum.\n\nWarum `null` und nicht `false` als Vorgabe: `false` waere eine Behauptung, die niemand\naufgestellt hat. Sie wuerde auf jeder Szene MIT Gelaende ein falsches Urteil erzeugen,\nund zwar ein bestandenes — der teuerste Fehler, den es hier gibt. Unbekannt ist bei uns\nweder bestanden noch durchgefallen; das ist keine Vorsicht, sondern die Hausregel.\n\n--- 4 · WAS ZURUECKKOMMEN SOLL ---\n\nDer Reihe nach, R1 zuerst — wenn es das Feld schon gibt, erledigt sich der Rest.\n\n--- 5 · WAS AUSDRUECKLICH NICHT ZU TUN IST ---\n\n  * KEIN `false` als Vorgabe. Lieber gar kein Wert als ein geratener.\n  * NICHT den Schalter bei uns «richtig konfigurieren» — das ist die Umgehung, nicht die\n    Loesung. Der Schalter verschwindet, sobald das Feld da ist.\n  * NICHT raten, ob wir es brauchen. Wir brauchen es; die Frage ist nur, wie es heisst.\n  * Keine Pfade mit Benutzernamen in der Antwort. Unser Repo ist oeffentlich.\n",
+  "erstellt": "2026-09-01T09:30:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc --gelaende"
+  },
+  "params": {},
+  "auflagen": [
+    "Kein false als Vorgabe — unbekannt ist weder bestanden noch durchgefallen",
+    "Den prozessweiten Schalter nicht «richtig konfigurieren»: das ist die Umgehung",
+    "Regel 3: keine Pfade mit Benutzernamen, unser Repo ist oeffentlich"
+  ],
+  "rueckgabe": [
+    "R1 Gibt es das Feld schon, unter einem anderen Namen? Wenn ja: wie heisst es und wo steht es?",
+    "R2 Falls nein: Name, Ort und Typ des neuen Feldes — dreiwertig, Vorgabe unbekannt",
+    "R3 Ab welcher Vertragsversion, und was bekommt ein Client, der es nicht schickt?",
+    "R4 Was tut euer Worker, wenn das Feld fehlt: ablehnen, oder unbekannt durchreichen?",
+    "R5 Beleg, dass es EINGEBAUT ist — nicht der Entwurf, sondern die Version im Betrieb"
+  ]
+}
