@@ -60,8 +60,12 @@ def main(argv: list[str] | None = None) -> int:
         # vor der Ablage um und druckte den Block, obwohl ein Zielverzeichnis dastand.
         # Ein Schalter ohne Wirkung ist schlimmer als keiner — er sagt, etwas sei
         # geschehen. Gefunden am 01.09.2026 beim ersten Gebrauch mit --auftrag.
+        satz = json.loads(datei.read_text(encoding="utf-8"))
+        # DERSELBE ZUSTELLBELEG WIE AUF DEM ANDEREN WEG. Er fehlte hier zuerst, und der
+        # erste so verschickte Auftrag kam ohne ihn bei einem Adressaten an, der noch nie
+        # geantwortet hat — die Entscheidung lag mitten in `offene_blocks`.
         block = [(a.auftrag, auftragspost.block(
-            json.loads(datei.read_text(encoding="utf-8"))))]
+            satz, zustellbeleg=auftragspost.zustellbeleg_fuer(satz, Path(a.repo))))]
         if a.nach:
             for ziel in auftragspost.lege_ab(block, a.nach):
                 print(f"geschrieben: {ziel.name}")

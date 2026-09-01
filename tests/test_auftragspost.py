@@ -331,3 +331,34 @@ def test_der_block_sagt_es_wenn_ein_auftrag_keine_rueckgabepunkte_nennt():
 def test_echte_rueckgabepunkte_verdraengen_den_hinweis():
     """Die Gegenprobe: Sonst stünde der Satz unter jedem Block — eine Dauerwarnung."""
     assert "keine EINZELNEN Rueckgabepunkte" not in auftragspost.block(_satz())
+
+
+def test_auch_der_einzelweg_haengt_den_zustellbeleg_an(tmp_path):
+    """**Die Entscheidung lag auf einem Weg, und der andere liess sie still weg.**
+
+    Am Abend des 01.09.2026 verschickte `--auftrag` einen Auftrag an einen Adressaten,
+    der noch nie geantwortet hatte — ohne Beleg. Die Regel stand mitten in
+    `offene_blocks`; der Einzelweg ging daran vorbei.
+    """
+    satz = _satz(worker="ui")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    ziel = tmp_path / "hinaus"
+    assert _cli().main(["--repo", str(repo), "--auftrag", satz["auftrag_id"],
+                        "--nach", str(ziel)]) == 0
+    text = (ziel / f"{satz['auftrag_id']}.md").read_text(encoding="utf-8")
+    assert "ZUSTELLBELEG" in text
+
+
+def test_der_einzelweg_haengt_ihn_NICHT_an_wenn_der_adressat_geantwortet_hat(tmp_path):
+    """Die Gegenprobe — sonst wäre der Beleg eine Dauerwarnung."""
+    satz = _satz(worker="ui")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    frueher = _satz(worker="ui", auftrag_id="auf-20260827-70")
+    auftrag.schreibe_auftrag(frueher, repo)
+    auftrag.schreibe_ergebnis(
+        auftrag.baue_ergebnis(auftrag_id="auf-20260827-70", status="ok"), repo)
+    ziel = tmp_path / "hinaus"
+    assert _cli().main(["--repo", str(repo), "--auftrag", satz["auftrag_id"],
+                        "--nach", str(ziel)]) == 0
+    assert "ZUSTELLBELEG" not in (ziel / f"{satz['auftrag_id']}.md").read_text(
+        encoding="utf-8")

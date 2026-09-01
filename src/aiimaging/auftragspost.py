@@ -253,6 +253,27 @@ def block(satz: dict, *, zustellbeleg: int = 0) -> str:
     return text
 
 
+def zustellbeleg_fuer(satz: dict, repo_wurzel) -> int:
+    """Braucht dieser Auftrag einen Zustellbeleg? — die Zahl der offenen bei seinem
+    Adressaten, oder ``0``.
+
+    **Warum die Entscheidung hier steht und nicht beim Aufrufer.** Sie hängt an einer
+    Tatsache über den Adressaten — *hat er je geantwortet?* —, und die kennt kein Aufrufer
+    besser als diese Funktion. Sie stand am 01.09.2026 zuerst mitten in
+    :func:`offene_blocks`, und der zweite Weg — ``tools/auftragspost.py --auftrag`` —
+    ging daran vorbei: Der erste so verschickte Auftrag desselben Abends kam **ohne**
+    Beleg bei einem Adressaten an, der noch nie geantwortet hatte.
+
+    *Dieselbe Sorte Fehler, die dieser Tag schon zweimal gefunden hat: Die Entscheidung
+    lag auf einem Weg, und der andere liess sie stillschweigend weg.*
+    """
+    wurzel = Path(repo_wurzel)
+    if satz.get("worker") not in set(_auftrag.nie_geantwortet(wurzel)):
+        return 0
+    return sum(1 for a in _auftrag.unerledigt(wurzel)
+               if a.get("worker") == satz.get("worker"))
+
+
 def offene_blocks(repo_wurzel, *, worker: str | None = None) -> list[tuple[str, str]]:
     """Alle unbeantworteten Aufträge als Blöcke, älteste zuerst.
 
@@ -271,19 +292,15 @@ def offene_blocks(repo_wurzel, *, worker: str | None = None) -> list[tuple[str, 
     """
     wurzel = Path(repo_wurzel)
     offene = _auftrag.unerledigt(wurzel)
-    stumm = set(_auftrag.nie_geantwortet(wurzel))
-    je_worker: dict[str, int] = {}
-    for satz in offene:
-        je_worker[satz.get("worker")] = je_worker.get(satz.get("worker"), 0) + 1
 
     aus = []
     for satz in offene:
         if worker and satz.get("worker") != worker:
             continue
         kennung = satz.get("auftrag_id") or "(ohne Kennung)"
-        beleg = je_worker.get(satz.get("worker"), 0) if satz.get("worker") in stumm else 0
         try:
-            aus.append((kennung, block(satz, zustellbeleg=beleg)))
+            aus.append((kennung, block(satz,
+                                       zustellbeleg=zustellbeleg_fuer(satz, wurzel))))
         except PostError as fehler:
             # EIN UNZUSTELLBARER AUFTRAG DARF DIE UEBRIGEN NICHT VERDECKEN. Er wird als
             # eigener Block gemeldet, nicht uebersprungen: Ein still weggelassener
