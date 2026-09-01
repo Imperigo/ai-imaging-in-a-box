@@ -43,10 +43,23 @@ def _zeilen(bericht: dict, nur: str | None) -> list[str]:
     aus.append(f"RUECKSTAND: {r['n']} Auftraege ohne Antwort"
                + (f", aeltester {r['aelteste_tage']} Tage" if r["aelteste_tage"] is not None
                   else ""))
+    verhalten = bericht.get("antwortverhalten") or {}
     for worker, anzahl in r["je_worker"].items():
         if nur and worker != nur:
             continue
-        aus.append(f"  {worker:<6} {anzahl}")
+        # DIE ANTWORTZEILE STEHT BEI DER ZAHL UND NICHT IN EINER ZWEITEN TABELLE. «Sieben
+        # offen» und «sieben offen, noch nie geantwortet» sind zwei verschiedene Lagen,
+        # und die zweite verlangt keine Geduld, sondern einen anderen Zustellweg.
+        v = verhalten.get(worker) or {}
+        if anzahl and v.get("n_antworten") == 0:
+            zusatz = "  NIE GEANTWORTET"
+            if v.get("n_weitergereicht"):
+                zusatz += f" ({v['n_weitergereicht']} weitergereicht)"
+        elif v.get("letzte_antwort"):
+            zusatz = f"  letzte Antwort {v['letzte_antwort'][:10]}"
+        else:
+            zusatz = ""
+        aus.append(f"  {worker:<6} {anzahl}{zusatz}")
         for e in r["eintraege"]:
             if e["worker"] != worker:
                 continue

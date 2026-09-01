@@ -1067,6 +1067,37 @@ wird irgendwann nicht mehr eingehalten.*
 *Die Zahl ist eine Setzung und keine Messung* (acht, beschlossen am 28.08.2026) — sie
 steht deshalb als benannte Konstante und nicht als Zahl im Code.
 
+**Zustellbeleg** — Die Bitte an einen Adressaten, **den Empfang zu bestätigen**, ohne
+inhaltlich zu antworten: ein Satz, mit Datum, mehr nicht.
+*Wozu, wenn doch eine Antwort gewünscht ist:* Weil Schweigen zwei ganz verschiedene Dinge
+heissen kann. Entweder liegt die Frage quer und braucht Zeit — dann ist Warten richtig.
+Oder niemand sieht an die Stelle, an der sie liegt — dann ist es **kein Rückstand beim
+Empfänger, sondern einer beim Absender**, und jede weitere Sendung dorthin ist verlorene
+Arbeit. Von aussen sehen beide gleich aus.
+*Im Projekt am 01.09.2026:* Zwei Adressaten trugen elf Aufträge und hatten **nie**
+geantwortet. Der Beleg steht seither im Erzeuger der Auftragsblöcke und nicht in den elf
+Dateien — *elf Dateien sind elf Gelegenheiten, ihn bei einer zu vergessen*. Er verschwindet
+von selbst, sobald einmal geantwortet wurde: Ein Hinweis, der immer dasteht, wird nicht
+mehr gelesen (siehe **Dauerwarnung**).
+
+**Antwortverhalten (eines Adressaten)** — Wie oft jemand auf gestellte Aufträge **selbst
+geantwortet** hat, und wann zuletzt. Die Zahl steht neben dem Rückstand, weil dieser eine
+andere Frage beantwortet: *Wie viel liegt bei jemandem?* — aber nicht: *Ist dort überhaupt
+jemand?*
+*Gezählt wird gegen den abgeleiteten Zustand und nicht gegen Ergebnisdateien:* Ein
+Weiterleitungsvermerk trägt `status: ok`. Über die Dateien gezählt hätte der Vertrags-Worker
+wie ein antwortender Adressat ausgesehen, obwohl beide Vermerke von einem Dritten stammten.
+
+**Rang (eines Auftrags)** — Eine freiwillige ganze Zahl im Auftrag, kleinere zuerst, die
+sagt, **was vor was gerechnet wird**. Ohne Rang läuft ein Auftrag nach allen anderen.
+*Warum er nötig wurde:* Solange ein Mensch jeden Lauf von Hand startete, entschied er die
+Reihenfolge. Sobald ein Zeitgeber je Durchgang **einen** Auftrag nimmt, entscheidet sie die
+Sortierung — und die kannte nur den Dateinamen. Damit hätte der Zufall der Benennung
+bestimmt, was zuerst gemessen wird.
+*Und warum er im Auftrag steht und nicht im ausführenden Skript:* Wer weiss, was zuerst
+zählt, ist der, der den Auftrag stellt. Eine Sortierregel im Skript wäre eine
+Betriebsentscheidung an der falschen Stelle.
+
 **Obergrenze (eines Befundes)** — Ein Messaufbau, der einer Sache absichtlich die
 **besten denkbaren** Bedingungen gibt, um zu klären, ob sie unter *irgendwelchen*
 Bedingungen taugt. Das Ergebnis ist einseitig belastbar: Was hier scheitert, ist erledigt;
@@ -3809,6 +3840,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-01 | Ergaenzt: **Zustellbeleg**, **Antwortverhalten (eines Adressaten)**, **Rang (eines Auftrags)**. Anlass ist eine Zaehlung: Elf der 28 offenen Auftraege lagen bei zwei Adressaten, von denen noch NIE eine Antwort kam — sichtbar wurde das erst, als nicht mehr Ergebnisdateien gezaehlt wurden, sondern abgeleitete Zustaende. Der Rang-Eintrag traegt mit, warum eine Reihenfolge erst mit einem Zeitgeber zur Entscheidung wird |
 | 2026-09-01 | Ergaenzt: **Auftragsart (multipass, render, qa, frage)** und **Rueckstandsdeckel**. Anlass sind neun Auftraege an die HomeStation, die `qa` trugen und eine Frage meinten — ein Sammellauf haette fuer jede einen Fehlschlag geschrieben. Der Deckel-Eintrag traegt den Satz mit, der ihn noetig machte: Ein Rueckstand waechst nicht durch eine Entscheidung, sondern durch vierzig kleine |
 | 2026-09-01 | Ergaenzt: **Ersatzmessung / Ersatzkalibrierung**, **Mitgebrachter Vorbehalt**, **Fixpunkt eines Masses**. Anlass ist die Ersatzkalibrierung der Paarschwellen: 176 Zeilen, davon 88 Dubletten — 44, weil die vierte Szene (`raeume`) in allen Zeilen exakt die Zahlen der ersten lieferte, und 44, weil vier der elf Fallarten Fixpunkte von rho sind. **Berichtigt:** Der Befund vom 27.08. war als «symmetrische Kamerapaare» gedeutet — die Punktgleichheit tritt auch beim asymmetrischen `hochbau` auf und haengt am Mass, nicht am Bauwerk |
 | 2026-08-28 | Ergaenzt: **Abgeleiteter Zustand**. Anlass ist eine Messung der HomeStation: 63 Auftraege, 44 Ergebnisse, 40 Paare, und kein einziger Auftrag mit Zustandsfeld — der Ordner sicherte einen Zustand zu, den er nicht fuehrte. Der Eintrag traegt die fuenf abgeleiteten Werte und den Satz, um den es geht: Ein Ergebnis zu haben heisst nicht, beantwortet zu sein |

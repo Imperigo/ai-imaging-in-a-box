@@ -23,5 +23,6 @@
     "V2 Kommen die Schemata beim MCP-Server selbst an (direkt gefragt, nicht ueber /api)?",
     "V3 Falls das Backend sie verliert: an welcher Stelle",
     "V4 Laesst sich die Feldnamen-Verdrahtung am laufenden Cockpit messen (A7)?"
-  ]
+  ],
+  "rang": 16
 }

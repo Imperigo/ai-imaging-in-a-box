@@ -20,5 +20,6 @@
     "F1 Auf welcher Stufe wurde gemessen — erzeugtes Bild oder Zwischenstufe?",
     "F2 Prompt im Wortlaut; nennt er Bauteile?",
     "F3 Bildmodell, Startwert, und ob der Wert ueber Startwerte stabil ist"
-  ]
+  ],
+  "rang": 6
 }

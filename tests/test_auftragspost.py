@@ -246,3 +246,50 @@ def test_ohne_nach_druckt_auftrag_weiterhin(tmp_path, capsys):
 def test_eine_unbekannte_kennung_wird_gemeldet_und_nicht_still_uebergangen(tmp_path):
     repo = _repo_mit_auftrag(tmp_path, _satz())
     assert _cli().main(["--repo", str(repo), "--auftrag", "auf-gibt-es-nicht"]) == 2
+
+
+# ======================================================================================
+# Der Zustellbeleg — für Adressaten, von denen noch nie eine Antwort kam
+# ======================================================================================
+#
+# Gemessen am 01.09.2026: `ui` hatte vier Aufträge in sieben Tagen und **nie** geantwortet,
+# `cloud` sieben in zehn Tagen ebenfalls nie. Aus dem Schweigen allein ist nicht zu
+# unterscheiden, ob die Frage querliegt oder ob niemand in das Verzeichnis sieht — und die
+# beiden verlangen das Gegenteil voneinander.
+
+def test_ein_block_ohne_zustellbeleg_traegt_ihn_nicht():
+    """Die Vorgabe ist null. Ein Beleg in jedem Block wäre eine Dauerwarnung."""
+    assert "ZUSTELLBELEG" not in auftragspost.block(_satz())
+
+
+def test_der_zustellbeleg_nennt_die_zahl_der_offenen():
+    text = auftragspost.block(_satz(), zustellbeleg=7)
+    assert "ZUSTELLBELEG" in text
+    assert "7 Auftraege" in text, (
+        "Ohne die Zahl ist es eine Höflichkeitsfloskel — mit ihr eine Tatsache.")
+
+
+def test_der_zustellbeleg_verlangt_ausdruecklich_keine_inhaltliche_antwort():
+    """*Wer die Frage nicht beantworten kann, kann trotzdem bestätigen, dass er sie
+    gelesen hat.* Ein Beleg, der wie eine Mahnung klingt, wird wie eine behandelt."""
+    # Auf die WORTE wird an der Konstante geprüft und nicht am Block: Der Block ist
+    # umbrochen, und ein Umbruch mitten in «kein Termin» hätte diesen Test rot gemacht,
+    # ohne dass am Beleg etwas fehlte. *Ein Test, der an der Zeilenbreite hängt, prüft
+    # die Zeilenbreite.*
+    assert "keine Messung" in auftragspost.ZUSTELLBELEG
+    assert "kein Termin" in auftragspost.ZUSTELLBELEG
+    assert "VOR DER INHALTLICHEN ANTWORT" in auftragspost.block(_satz(), zustellbeleg=3)
+
+
+def test_der_zustellbeleg_steht_nach_dem_rueckweg():
+    """Er ist die Vorstufe, nicht der Ersatz. Wer nur den Anfang liest, liest den Auftrag."""
+    text = auftragspost.block(_satz(), zustellbeleg=2)
+    assert text.index("RUECKWEG") < text.index("ZUSTELLBELEG")
+
+
+def test_der_zustellbeleg_sagt_dass_der_fehler_bei_uns_liegen_koennte():
+    """*Ein Auftrag, den sein Adressat nicht erreichen kann, ist kein Rückstand bei ihm —
+    er ist einer beim Absender.* Der Satz gehört in den Beleg, sonst liest er sich als
+    Vorwurf."""
+    assert "Fehler bei UNS" in auftragspost.ZUSTELLBELEG
+    assert "ZUSTELLBELEG" in auftragspost.block(_satz(), zustellbeleg=1)

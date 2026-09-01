@@ -26,5 +26,6 @@
     "V2 faellt rho_maske bei H1 (Bauwerk weg) auch mit eurem Schaetzer?",
     "V3 was gibt der Schaetzer dort aus, wo das Bauwerk fehlt — Boden, Himmel, oder etwas anderes?",
     "V4 falls H1 nicht renderbar: woran es scheitert"
-  ]
+  ],
+  "rang": 4
 }

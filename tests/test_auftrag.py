@@ -451,3 +451,137 @@ def test_einen_bestehenden_auftrag_zu_aendern_faellt_nicht_unter_den_deckel(tmp_
     satz = auf.offene_auftraege(tmp_path)[0]
     satz["art"] = auf.ART_FRAGE
     auf.schreibe_auftrag(satz, tmp_path)                  # dieselbe Kennung: erlaubt
+
+
+# ======================================================================================
+# Hat dieser Adressat je geantwortet?
+# ======================================================================================
+#
+# Der Anlass ist eine Messung vom 01.09.2026: `ui` trug vier Aufträge und hatte NIE
+# geantwortet, `cloud` sieben und ebenfalls nie — die zwei Ergebnisse dort waren
+# Weiterleitungsvermerke der HomeStation. In einer Rückstandsliste sieht das aus wie jeder
+# andere Rückstand, und es verlangt das Gegenteil: nicht Geduld, sondern einen anderen
+# Zustellweg.
+
+def _mit_ergebnis(tmp_path, kennung, worker, *, art=None, **ergebnis):
+    """Auftrag ablegen, wahlweise mit Ergebnis.
+
+    ``art`` wird NACH `baue_ergebnis` gesetzt, weil die Funktion kein solches Feld kennt:
+    Die beiden Weiterleitungsvermerke, um die es hier geht, sind von Hand geschrieben
+    worden. *Genau darum hat sie niemand als Sonderfall bemerkt.*
+    """
+    auf.schreibe_auftrag(auf.baue_auftrag(auftrag_id=kennung, art="qa",
+                                          beschreibung="x", worker=worker), tmp_path)
+    if ergebnis:
+        satz = auf.baue_ergebnis(auftrag_id=kennung, **ergebnis)
+        if art:
+            satz["art"] = art
+        auf.schreibe_ergebnis(satz, tmp_path)
+
+
+def test_ein_adressat_ohne_ergebnis_hat_nie_geantwortet(tmp_path):
+    _mit_ergebnis(tmp_path, "auf-a", auf.WORKER_UI)
+    verhalten = auf.antwortverhalten(tmp_path)
+    assert verhalten[auf.WORKER_UI]["n_antworten"] == 0
+    assert verhalten[auf.WORKER_UI]["letzte_antwort"] is None
+
+
+def test_ein_weiterleitungsvermerk_ist_keine_antwort(tmp_path):
+    """**Der Fehler, den diese Funktion messen soll.** Ein Vermerk trägt `status: ok` —
+    über die Ergebnisdatei gezählt hätte `cloud` wie ein antwortender Adressat ausgesehen.
+    Er steht als eigene Zahl daneben, nicht in der ersten."""
+    _mit_ergebnis(tmp_path, "auf-a", auf.WORKER_CLOUD, status="ok",
+                  art="weitergereicht — Vertragsfragen, keine Messung")
+    verhalten = auf.antwortverhalten(tmp_path)
+    assert verhalten[auf.WORKER_CLOUD]["n_antworten"] == 0
+    assert verhalten[auf.WORKER_CLOUD]["n_weitergereicht"] == 1
+    assert verhalten[auf.WORKER_CLOUD]["letzte_antwort"] is None
+
+
+def test_ein_fehlschlag_ist_keine_antwort_aber_auch_keine_weiterleitung(tmp_path):
+    _mit_ergebnis(tmp_path, "auf-a", auf.WORKER_LOCAL, status="fehler")
+    verhalten = auf.antwortverhalten(tmp_path)
+    assert verhalten[auf.WORKER_LOCAL]["n_antworten"] == 0
+    assert verhalten[auf.WORKER_LOCAL]["n_gerechnet"] == 1
+
+
+def test_eine_echte_antwort_wird_gezaehlt_und_datiert(tmp_path):
+    _mit_ergebnis(tmp_path, "auf-a", auf.WORKER_LOCAL, status="ok")
+    verhalten = auf.antwortverhalten(tmp_path)
+    assert verhalten[auf.WORKER_LOCAL]["n_antworten"] == 1
+    assert verhalten[auf.WORKER_LOCAL]["letzte_antwort"], "ohne Datum ist es keine Auskunft"
+
+
+def test_die_juengste_antwort_gewinnt(tmp_path):
+    _mit_ergebnis(tmp_path, "auf-a", auf.WORKER_LOCAL)
+    _mit_ergebnis(tmp_path, "auf-b", auf.WORKER_LOCAL)
+    auf.schreibe_ergebnis({**auf.baue_ergebnis(auftrag_id="auf-a", status="ok"),
+                           "beendet": "2026-08-01T10:00:00Z"}, tmp_path)
+    auf.schreibe_ergebnis({**auf.baue_ergebnis(auftrag_id="auf-b", status="ok"),
+                           "beendet": "2026-08-28T11:19:01Z"}, tmp_path)
+    assert (auf.antwortverhalten(tmp_path)[auf.WORKER_LOCAL]["letzte_antwort"]
+            == "2026-08-28T11:19:01Z")
+
+
+def test_nie_geantwortet_nennt_nur_adressaten_bei_denen_etwas_liegt(tmp_path):
+    """*Ein Adressat ohne offene Aufträge schweigt zu Recht.* Gefragt ist nicht «wer war
+    still?», sondern «wo warten wir auf jemanden, der sich noch nie gemeldet hat?»."""
+    _mit_ergebnis(tmp_path, "auf-a", auf.WORKER_UI)                      # offen, stumm
+    _mit_ergebnis(tmp_path, "auf-b", auf.WORKER_LOCAL, status="ok")      # hat geantwortet
+    assert auf.nie_geantwortet(tmp_path) == [auf.WORKER_UI]
+
+
+def test_wer_einmal_geantwortet_hat_gilt_nicht_mehr_als_stumm(tmp_path):
+    """Die Gegenprobe: Ein einziger Beleg reicht, und die Rückfrage hört auf. Sonst wäre
+    sie eine Dauerwarnung — und die verdeckt die echten."""
+    _mit_ergebnis(tmp_path, "auf-a", auf.WORKER_UI, status="ok")
+    _mit_ergebnis(tmp_path, "auf-b", auf.WORKER_UI)
+    assert auf.nie_geantwortet(tmp_path) == []
+
+
+# ======================================================================================
+# Der Rang — welcher Auftrag zuerst gerechnet wird
+# ======================================================================================
+
+def test_ein_rang_der_keine_zahl_ist_wird_gemeldet():
+    """*Er sortierte still ans Ende und saehe im Auftrag trotzdem gesetzt aus.*"""
+    satz = auf.baue_auftrag(auftrag_id="auf-a", art="qa", beschreibung="x")
+    satz["rang"] = "zwei"
+    assert any("rang" in m for m in auf.pruefe_auftrag(satz))
+
+
+@pytest.mark.parametrize("boese", [0, -1, 1.5, True])
+def test_null_negativ_gebrochen_und_wahr_sind_keine_raenge(boese):
+    """`True` steht ausdruecklich dabei: In Python ist es eine ganze Zahl mit dem Wert 1
+    und waere sonst der Rang der Spitze."""
+    satz = auf.baue_auftrag(auftrag_id="auf-a", art="qa", beschreibung="x")
+    satz["rang"] = boese
+    assert any("rang" in m for m in auf.pruefe_auftrag(satz))
+
+
+def test_ein_auftrag_ohne_rang_bleibt_gueltig():
+    """Rund sechzig bestehende haben keinen. Ein Pflichtfeld haette sie alle angefasst,
+    um eine Zahl zu erfinden."""
+    assert auf.pruefe_auftrag(
+        auf.baue_auftrag(auftrag_id="auf-a", art="qa", beschreibung="x")) == []
+
+
+def test_kleinerer_rang_kommt_zuerst():
+    geordnet = auf.nach_rang([{"auftrag_id": "b", "rang": 9},
+                              {"auftrag_id": "a", "rang": 2}])
+    assert [x["auftrag_id"] for x in geordnet] == ["a", "b"]
+
+
+def test_ohne_rang_kommt_nach_allen_mit_rang():
+    geordnet = auf.nach_rang([{"auftrag_id": "a"},
+                              {"auftrag_id": "z", "rang": 4}])
+    assert [x["auftrag_id"] for x in geordnet] == ["z", "a"], (
+        "Ein Auftrag ohne Rang darf einen gesetzten nicht ueberholen, nur weil sein "
+        "Dateiname frueher kommt.")
+
+
+def test_bei_gleichem_rang_entscheidet_die_kennung():
+    """Sonst haenge die Reihenfolge an der Reihenfolge des Einlesens — und die ist keine."""
+    geordnet = auf.nach_rang([{"auftrag_id": "b", "rang": 1},
+                              {"auftrag_id": "a", "rang": 1}])
+    assert [x["auftrag_id"] for x in geordnet] == ["a", "b"]

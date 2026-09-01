@@ -54,6 +54,40 @@ RUECKWEG = {
               "`auftraege/ergebnisse/{kennung}.json` abgelegt."),
 }
 
+#: Der **Zustellbeleg** — nur für Adressaten, von denen noch nie eine Antwort kam.
+#:
+#: Gemessen am 01.09.2026: `ui` hat auf vier Aufträge in sieben Tagen **nie** geantwortet,
+#: `cloud` auf sieben in zehn Tagen ebenfalls nie — die beiden Ergebnisse dort sind
+#: Weiterleitungsvermerke der HomeStation und keine Antworten des Adressaten.
+#:
+#: **Damit ist zweierlei möglich, und die beiden verlangen Gegenteiliges:** Entweder liegt
+#: die Frage quer und braucht Zeit — dann warten wir. Oder niemand sieht in das
+#: Verzeichnis, und dann ist es *kein Rückstand bei ihnen, sondern einer beim Absender*,
+#: und weitere Aufträge dorthin sind verlorene Arbeit. Aus dem Schweigen allein ist das
+#: nicht zu unterscheiden; beides sieht gleich aus.
+#:
+#: Der Beleg trennt sie. Er verlangt **keine inhaltliche Antwort** — nur einen Satz mit
+#: Datum. Wer die Frage nicht beantworten kann, kann trotzdem bestätigen, dass er sie
+#: gelesen hat, und dann wissen wir, worauf wir warten.
+#:
+#: *Er steht hier und nicht in den elf Dateien: Elf Dateien sind elf Gelegenheiten, ihn
+#: bei einer zu vergessen — und die zwölfte hätte ihn gar nicht.*
+ZUSTELLBELEG = (
+    "**ZUERST, UND VOR DER INHALTLICHEN ANTWORT:** Bitte ein Satz zurück, dass diese "
+    "Datei bei euch angekommen ist, mit Datum. Mehr nicht — keine Messung, keine "
+    "Zusage, kein Termin. Grund: Auf {n_offen} Auftraege an euch ist bis heute "
+    "({stand}) keine Antwort gekommen, und wir koennen von hier aus nicht "
+    "unterscheiden, ob die Fragen bei euch querliegen oder ob niemand in dieses "
+    "Verzeichnis sieht. Das Erste waere Warten, das Zweite waere ein Fehler bei UNS — "
+    "und wir wuerden weiter Auftraege an eine Stelle legen, die keiner liest. "
+    "Ein Satz von euch entscheidet das."
+)
+
+#: Stichtag und Zahlen für :data:`ZUSTELLBELEG`. **Sie stehen hier als Vorgabe und nicht
+#: im Text**, weil sie veralten: Sobald ein Adressat antwortet, gehört der Beleg weg und
+#: nicht eine falsche Zahl hinein.
+ZUSTELLBELEG_STAND = "01.09.2026"
+
 
 class PostError(ValueError):
     """Der Auftrag lässt sich nicht als Block ausgeben."""
@@ -102,11 +136,15 @@ def _punkt(text: str, zeichen: str = "  * ") -> str:
     return "\n".join((zeichen if i == 0 else einzug) + z for i, z in enumerate(zeilen))
 
 
-def block(satz: dict) -> str:
+def block(satz: dict, *, zustellbeleg: int = 0) -> str:
     """Der Auftrag als ein Text, den der Owner ohne Nachdenken weiterreichen kann.
 
     Args:
         satz: Ein Auftrag, wie ihn :func:`aiimaging.auftrag.schreibe_auftrag` ablegt.
+        zustellbeleg: Zahl der offenen Aufträge bei diesem Adressaten. **Ab 1 wird
+            :data:`ZUSTELLBELEG` angehängt**, sonst nicht. Null heisst: Dieser Adressat
+            hat schon einmal geantwortet, wir wissen also, dass er liest — dann wäre die
+            Bitte eine Dauerwarnung, und die verdeckt die echten.
 
     Raises:
         PostError: Der Auftrag ist unvollständig, oder er trägt einen Pfad aus dieser
@@ -172,6 +210,10 @@ def block(satz: dict) -> str:
     rueckweg = RUECKWEG.get(worker)
     if rueckweg:
         teile += ["", "RUECKWEG", _punkt(rueckweg.format(kennung=kennung), "  ")]
+    if zustellbeleg:
+        teile += ["", "ZUSTELLBELEG",
+                  _punkt(ZUSTELLBELEG.format(n_offen=zustellbeleg,
+                                             stand=ZUSTELLBELEG_STAND), "  ")]
     teile += ["", "=" * BREITE]
 
     text, ersetzt = _auftrag.ohne_kennungen("\n".join(teile))
@@ -200,14 +242,28 @@ def offene_blocks(repo_wurzel, *, worker: str | None = None) -> list[tuple[str, 
 
     Returns:
         Je Auftrag ``(kennung, block)``.
+
+    **Der Zustellbeleg wird hier entschieden und nicht vom Aufrufer.** Er hängt an einer
+    Tatsache über den Adressaten — *hat er je geantwortet?* —, und die kennt der Aufrufer
+    nicht besser als diese Funktion. Ein Aufrufer, der ihn setzen müsste, würde ihn
+    irgendwann vergessen; der schweigende Adressat bekäme dann wieder eine Datei ohne
+    Rückfrage, und wir stünden vor demselben ununterscheidbaren Schweigen wie vorher.
     """
+    wurzel = Path(repo_wurzel)
+    offene = _auftrag.unerledigt(wurzel)
+    stumm = set(_auftrag.nie_geantwortet(wurzel))
+    je_worker: dict[str, int] = {}
+    for satz in offene:
+        je_worker[satz.get("worker")] = je_worker.get(satz.get("worker"), 0) + 1
+
     aus = []
-    for satz in _auftrag.unerledigt(Path(repo_wurzel)):
+    for satz in offene:
         if worker and satz.get("worker") != worker:
             continue
         kennung = satz.get("auftrag_id") or "(ohne Kennung)"
+        beleg = je_worker.get(satz.get("worker"), 0) if satz.get("worker") in stumm else 0
         try:
-            aus.append((kennung, block(satz)))
+            aus.append((kennung, block(satz, zustellbeleg=beleg)))
         except PostError as fehler:
             # EIN UNZUSTELLBARER AUFTRAG DARF DIE UEBRIGEN NICHT VERDECKEN. Er wird als
             # eigener Block gemeldet, nicht uebersprungen: Ein still weggelassener

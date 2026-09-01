@@ -23,6 +23,7 @@ selbst handeln und beide unbemerkt geblieben wären:
 from __future__ import annotations
 
 from datetime import date
+from pathlib import Path
 
 import pytest
 
@@ -353,3 +354,59 @@ def test_ein_gerechneter_aber_unbeantworteter_auftrag_belegt_nichts(tmp_path):
     auf.schreibe_ergebnis(
         auf.baue_ergebnis(auftrag_id="auf-20260826-08", status="fehler"), tmp_path)
     assert einbau.beantwortete_auftraege(tmp_path) == set()
+
+
+# ======================================================================================
+# Die Zeile, die neben dem Rückstand fehlte
+# ======================================================================================
+
+def test_der_bericht_traegt_das_antwortverhalten_je_adressat(tmp_path):
+    """*Ein Rückstand sagt, wie viel bei jemandem liegt. Er sagt nicht, ob dort überhaupt
+    jemand ist.* Beide Lagen sahen bis zum 01.09.2026 gleich aus."""
+    auf.schreibe_auftrag(
+        auf.baue_auftrag(auftrag_id="auf-a", art="qa", beschreibung="x",
+                              worker=auf.WORKER_UI), tmp_path)
+    satz = einbau.bericht(tmp_path, BLATT)
+    assert satz["antwortverhalten"][auf.WORKER_UI]["n_antworten"] == 0
+
+
+def test_die_ausgabe_nennt_einen_stummen_adressaten_beim_namen(tmp_path, capsys):
+    """Die Zahl allein liest sich wie jeder andere Rückstand. Der Zusatz ist der Befund."""
+    auf.schreibe_auftrag(
+        auf.baue_auftrag(auftrag_id="auf-a", art="qa", beschreibung="x",
+                              worker=auf.WORKER_UI), tmp_path)
+    _mit_blatt(tmp_path)
+    _einbau_cli().main(["--repo", str(tmp_path)])
+    ausgabe = capsys.readouterr().out
+    assert "NIE GEANTWORTET" in ausgabe
+
+
+def test_ein_adressat_mit_antwort_wird_nicht_als_stumm_gemeldet(tmp_path, capsys):
+    """Die Gegenprobe. Ohne sie stünde der Satz bei jedem — eine Dauerwarnung."""
+    auf.schreibe_auftrag(
+        auf.baue_auftrag(auftrag_id="auf-a", art="qa", beschreibung="x",
+                              worker=auf.WORKER_LOCAL), tmp_path)
+    auf.schreibe_auftrag(
+        auf.baue_auftrag(auftrag_id="auf-b", art="qa", beschreibung="x",
+                              worker=auf.WORKER_LOCAL), tmp_path)
+    auf.schreibe_ergebnis(
+        auf.baue_ergebnis(auftrag_id="auf-b", status="ok"), tmp_path)
+    _mit_blatt(tmp_path)
+    _einbau_cli().main(["--repo", str(tmp_path)])
+    assert "NIE GEANTWORTET" not in capsys.readouterr().out
+
+
+def _einbau_cli():
+    import importlib.util
+    pfad = Path(__file__).resolve().parents[1] / "tools" / "einbau.py"
+    spec = importlib.util.spec_from_file_location("werkzeug_einbau", pfad)
+    modul = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modul)
+    return modul
+
+
+def _mit_blatt(wurzel):
+    """Der Einstieg liest `docs/EINBAU_STAND.md` — ohne Blatt gibt es keinen Bericht."""
+    ordner = Path(wurzel) / "docs"
+    ordner.mkdir(parents=True, exist_ok=True)
+    (ordner / "EINBAU_STAND.md").write_text(BLATT, encoding="utf-8")

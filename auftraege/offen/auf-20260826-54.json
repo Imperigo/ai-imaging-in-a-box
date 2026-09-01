@@ -22,5 +22,6 @@
     "M1 Laufzeit bei 800 px fuer 4, 16, 64, 256 Samples",
     "M2 Laufzeit bei 32 Samples fuer 400, 800, 1600 px",
     "M3 Laufzeit bei 400 px und 1 Sample — der feste Vorlauf"
-  ]
+  ],
+  "rang": 10
 }

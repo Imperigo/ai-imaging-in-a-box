@@ -144,6 +144,22 @@ _ID_MUSTER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 #: schliesst zuerst einen anderen — und genau das ist der Zweck.
 DECKEL_JE_WORKER = 8
 
+#: **Der Rang eines Auftrags** — freiwillig, ganze Zahl ab 1, kleinere Zahl zuerst.
+#:
+#: *Wozu, wenn die Ablagereihenfolge doch eine ist:* Sie ist der Zufall des Dateinamens.
+#: Solange der Homeworker von Hand mit ``--auftrag`` gestartet wurde, entschied ein
+#: Mensch, was zuerst laeuft. Mit dem Takt aus ``auf-20260826-59`` und ``--hoechstens 1``
+#: entscheidet es die Sortierung — und die kannte bis zum 01.09.2026 nur den Dateinamen.
+#:
+#: **Der Rang steht im AUFTRAG und nicht im Skript.** Das ist der Unterschied zu einer
+#: Betriebsentscheidung an der falschen Stelle: Wer weiss, was zuerst zaehlt, ist der,
+#: der den Auftrag stellt — nicht der, der ihn ausfuehrt.
+#:
+#: **Freiwillig, und das bleibt so.** Rund sechzig bestehende Auftraege haben keinen; sie
+#: nachtraeglich zu erzwingen hiesse, sie alle anzufassen, um eine Zahl zu erfinden. Ohne
+#: Rang laeuft ein Auftrag nach allen mit Rang — in der Ablagereihenfolge wie bisher.
+RANG_OHNE = 10 ** 6
+
 
 class DeckelError(ValueError):
     """Der Adressat traegt schon genug. Erst schliessen, dann stellen."""
@@ -285,6 +301,14 @@ def pruefe_auftrag(satz: dict) -> list[str]:
             maengel.append(f"Pflichtfeld {feld!r} fehlt")
     if satz.get("art") and satz["art"] not in ARTEN:
         maengel.append(f"Unbekannte Art {satz['art']!r}")
+    # DER RANG IST FREIWILLIG — aber wenn er dasteht, muss er eine Zahl sein. Ein
+    # `rang: "zwei"` sortierte still ans Ende und saehe im Auftrag aus wie gesetzt.
+    if "rang" in satz:
+        rang = satz["rang"]
+        if isinstance(rang, bool) or not isinstance(rang, int) or rang < 1:
+            maengel.append(
+                f"Ungueltiger 'rang' {rang!r}: ganze Zahl ab 1 erwartet. Ein Rang, der "
+                f"keine Zahl ist, sortiert still ans Ende und sieht trotzdem gesetzt aus.")
     # `worker` ist seit dem 22.08.2026 Pflicht. Ohne die Angabe weiss niemand, wer den
     # Auftrag ausführen soll — und die beiden können nicht dasselbe.
     if "worker" not in satz:
@@ -654,6 +678,78 @@ def zustaende(repo_wurzel) -> dict[str, str]:
     """Der Zustand **jedes** Auftrags — die Zählung, die der Ordner nicht führt."""
     return {a["auftrag_id"]: zustand(a["auftrag_id"], repo_wurzel)
             for a in offene_auftraege(repo_wurzel)}
+
+
+def antwortverhalten(repo_wurzel) -> dict[str, dict]:
+    """Wie oft ein Adressat **je selbst geantwortet** hat — und wann zuletzt.
+
+    **Wozu das gezählt wird, obwohl `rueckstand` schon zählt.** Der Rückstand sagt, wie
+    viel bei jemandem liegt. Er sagt nicht, ob dort überhaupt jemand ist. Gemessen am
+    01.09.2026: ``ui`` hatte vier Aufträge und **nie** geantwortet, ``cloud`` sieben und
+    ebenfalls nie — die zwei Ergebnisse dort waren Weiterleitungsvermerke der HomeStation.
+
+    *Beides sieht in einer Rückstandsliste gleich aus, und beides verlangt das Gegenteil:*
+    Eine querliegende Frage will Geduld; ein Adressat, der das Verzeichnis nicht liest,
+    will einen anderen Zustellweg — und jeder weitere Auftrag dorthin ist verlorene Arbeit.
+
+    **Gezählt wird gegen :func:`zustand` und nicht gegen Dateinamen.** Ein
+    Weiterleitungsvermerk trägt ``status: ok``; über die Ergebnisdatei gezählt hätte
+    ``cloud`` wie ein antwortender Adressat ausgesehen. Er steht darum als eigene Zahl
+    daneben statt in der ersten.
+
+    Returns:
+        Je Adressat aus :data:`WORKER` ein Satz mit ``n_antworten`` (Zustand
+        ``beantwortet``), ``n_weitergereicht``, ``n_gerechnet`` (gelaufen, aber nicht
+        beantwortet) und ``letzte_antwort`` — der ``beendet``-Zeitstempel der jüngsten
+        echten Antwort, oder ``None``. **``None`` heisst: noch nie.**
+    """
+    aus = {w: {"n_antworten": 0, "n_weitergereicht": 0, "n_gerechnet": 0,
+               "letzte_antwort": None} for w in WORKER}
+    for satz in offene_auftraege(repo_wurzel):
+        eintrag = aus.get(satz.get("worker"))
+        if eintrag is None:
+            continue
+        z = zustand(satz["auftrag_id"], repo_wurzel)
+        if z == ZUSTAND_WEITERGEREICHT:
+            eintrag["n_weitergereicht"] += 1
+            continue
+        if z == ZUSTAND_GERECHNET:
+            eintrag["n_gerechnet"] += 1
+            continue
+        if z != ZUSTAND_BEANTWORTET:
+            continue
+        eintrag["n_antworten"] += 1
+        ergebnis = lies_ergebnis(satz["auftrag_id"], repo_wurzel) or {}
+        wann = str(ergebnis.get("beendet") or "")
+        if wann and (eintrag["letzte_antwort"] is None
+                     or wann > eintrag["letzte_antwort"]):
+            eintrag["letzte_antwort"] = wann
+    return aus
+
+
+def nie_geantwortet(repo_wurzel) -> list[str]:
+    """Die Adressaten, von denen **noch nie** eine Antwort kam und bei denen etwas liegt.
+
+    *Ein Adressat ohne offene Aufträge schweigt zu Recht* — er steht darum nicht in der
+    Liste. Gefragt ist nicht «wer war still?», sondern «wo warten wir auf jemanden, der
+    sich noch nie gemeldet hat?».
+    """
+    verhalten = antwortverhalten(repo_wurzel)
+    offen = [a.get("worker") for a in unerledigt(repo_wurzel)]
+    return [w for w in WORKER
+            if verhalten[w]["n_antworten"] == 0 and w in offen]
+
+
+def nach_rang(saetze: list[dict]) -> list[dict]:
+    """Aufträge in der Reihenfolge, in der sie gemeint sind — :data:`RANG_OHNE`.
+
+    Sortiert nach ``(rang, auftrag_id)``. Ohne ``rang`` ans Ende, dort wie bisher nach
+    Kennung. **Die Funktion steht hier und nicht im Runner**: Der Rang ist eine Aussage
+    über den Auftrag, und wer sie liest — Homeworker, Auftragspost, ein Bericht — soll
+    dieselbe Reihenfolge sehen.
+    """
+    return sorted(saetze, key=lambda a: (int(a.get("rang") or RANG_OHNE),
+                                         str(a.get("auftrag_id") or "")))
 
 
 def unerledigt(repo_wurzel) -> list[dict]:

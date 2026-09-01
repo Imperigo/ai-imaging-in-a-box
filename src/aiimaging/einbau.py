@@ -383,6 +383,11 @@ def bericht(repo_wurzel, blatt=None, *, heute: date | None = None) -> dict:
     unbelegt = ohne_geraetebeweis(seite, wurzel)
     return {
         "rueckstand": rueckstand(wurzel, heute=heute),
+        # WIE OFT DIESER ADRESSAT JE GEANTWORTET HAT — die Zahl, die neben dem Rückstand
+        # fehlte. Ein Rückstand sagt, wie viel bei jemandem liegt; er sagt nicht, ob dort
+        # überhaupt jemand ist. Am 01.09.2026 lagen elf der 28 offenen Aufträge bei zwei
+        # Adressaten, von denen noch NIE eine Antwort gekommen war.
+        "antwortverhalten": _auftrag.antwortverhalten(wurzel),
         "ohne_adressat": verwaist,
         "ohne_geraetebeweis": unbelegt,
         "offene_posten": [p for p in alle if p["offen"]],

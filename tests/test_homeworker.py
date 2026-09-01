@@ -1596,3 +1596,56 @@ def test_eine_frage_zaehlt_weiter_zum_rueckstand(tmp_path):
     from aiimaging import einbau
     repo = _ablage(tmp_path, _frage_satz("auf-20260901-14"))
     assert einbau.rueckstand(repo)["n"] == 1
+
+
+# ── Die Reihenfolge, in der gerechnet wird ───────────────────────────────────────────
+#
+# Bis zum 01.09.2026 war es die der Ablage, also der Zufall des Dateinamens. Das ging,
+# solange ein Mensch mit `--auftrag` startete. Mit dem Takt aus `auf-20260826-59` und
+# `--hoechstens 1` entscheidet die Sortierung, was ueberhaupt gerechnet wird.
+
+def _mit_rang(repo, auftrag_id, rang=None, art="multipass"):
+    auftrag = hw.auf.baue_auftrag(auftrag_id=auftrag_id, art=art,
+                                  beschreibung="Synthetischer Testauftrag.")
+    if rang is not None:
+        auftrag["rang"] = rang
+    hw.auf.schreibe_auftrag(auftrag, repo)
+    return auftrag
+
+
+def test_die_liste_folgt_dem_rang_und_nicht_dem_dateinamen(tmp_path, capsys):
+    """Der Auftrag mit dem *spaeteren* Namen traegt den kleineren Rang und steht vorn."""
+    _mit_rang(tmp_path, "auf-20260818-01", rang=9)
+    _mit_rang(tmp_path, "auf-20260818-99", rang=1)
+
+    assert hw.main(["--repo", str(tmp_path), "--liste"]) == 0
+    ausgabe = capsys.readouterr().out
+    assert ausgabe.index("auf-20260818-99") < ausgabe.index("auf-20260818-01"), (
+        "Der Rang steht im Auftrag; wird er ignoriert, entscheidet wieder der Dateiname.")
+
+
+def test_ein_auftrag_ohne_rang_laeuft_nach_den_gesetzten(tmp_path, capsys):
+    _mit_rang(tmp_path, "auf-20260818-01")              # ohne Rang, Name kommt zuerst
+    _mit_rang(tmp_path, "auf-20260818-99", rang=2)
+
+    assert hw.main(["--repo", str(tmp_path), "--liste"]) == 0
+    ausgabe = capsys.readouterr().out
+    assert ausgabe.index("auf-20260818-99") < ausgabe.index("auf-20260818-01")
+
+
+def test_der_deckel_je_durchgang_nimmt_den_ranghoechsten(tmp_path, monkeypatch, capsys):
+    """**Hier wirkt der Rang wirklich.** Bei `--hoechstens 1` ist die Reihenfolge nicht
+    Anzeige, sondern Auswahl: Was hinten steht, wird in diesem Durchgang nicht gerechnet.
+    """
+    _mit_rang(tmp_path, "auf-20260818-01", rang=9)
+    _mit_rang(tmp_path, "auf-20260818-99", rang=1)
+    gelaufen = []
+    monkeypatch.setattr(hw, "gpu_zustand", lambda: {"frei": True, "watt": 10,
+                                                    "belegt_gb": 0.0, "quelle": "test"})
+    monkeypatch.setattr(hw, "darf_starten", lambda *a, **k: (True, "frei"))
+    monkeypatch.setattr(hw, "fuehre_aus",
+                        lambda satz, repo: gelaufen.append(satz["auftrag_id"])
+                        or hw.auf.baue_ergebnis(auftrag_id=satz["auftrag_id"], status="ok"))
+
+    assert hw.main(["--repo", str(tmp_path), "--alle", "--hoechstens", "1"]) == 0
+    assert gelaufen == ["auf-20260818-99"]

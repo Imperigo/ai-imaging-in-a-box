@@ -715,8 +715,20 @@ def main(argv=None) -> int:
     # Behandelt wie ein fremder Auftrag, und aus demselben Grund: Ein geschriebenes
     # Ergebnis heisst in diesem Projekt BEANTWORTET. Eine Ablehnung waere hier also
     # schlimmer als Schweigen.
-    fragen = [s for s in eigene if s.get("art") == auf.ART_FRAGE]
-    offen = [s for s in eigene if s.get("art") != auf.ART_FRAGE]
+    fragen = auf.nach_rang([s for s in eigene if s.get("art") == auf.ART_FRAGE])
+    offen = auf.nach_rang([s for s in eigene if s.get("art") != auf.ART_FRAGE])
+
+    # DIE REIHENFOLGE IST SEIT DEM 01.09.2026 DIE DES RANGS und nicht mehr die der
+    # Ablage. Hier stand bis dahin das Gegenteil — «eine eigene Sortierung waere eine
+    # Betriebsentscheidung an der falschen Stelle» —, und der Satz war richtig, solange
+    # ein Mensch mit `--auftrag` startete.
+    #
+    # Mit dem Takt aus `auf-20260826-59` und `--hoechstens 1` entscheidet die Sortierung,
+    # was ueberhaupt gerechnet wird, und der Dateiname ist dafuer kein Massstab. Der
+    # Einwand von damals bleibt beantwortet: `rang` steht IM AUFTRAG, nicht in diesem
+    # Skript — die Entscheidung faellt weiterhin dort, wo der Auftrag gestellt wird.
+    #
+    # Auftraege ohne Rang laufen danach, in der Ablagereihenfolge wie bisher.
 
     if fremd:
         print(f"{len(fremd)} Auftraege sind nicht fuer {EIGENER_WORKER!r} und bleiben "
@@ -766,9 +778,6 @@ def main(argv=None) -> int:
     # Reihe auf. Der Abholer loest dasselbe mit `--hoechstens 1`; hier stand es bis zum
     # 26.08.2026 nicht zur Verfuegung, und darum lief der Homeworker nur von Hand.
     #
-    # Die Reihenfolge bleibt die der Ablage — wer den aeltesten zuerst will, sagt es mit
-    # `--auftrag`. Eine eigene Sortierung hier waere eine Betriebsentscheidung an der
-    # falschen Stelle.
     if a.hoechstens is not None:
         if a.hoechstens < 1:
             print(f"--hoechstens {a.hoechstens}: mindestens 1, sonst laeuft nichts.")
