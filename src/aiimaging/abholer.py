@@ -1492,9 +1492,22 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 #       Blenderzeit: bei Vertragsvorgaben rund 80 s statt 40 s je Kamera.
                 #       Mit dem Zwischenspeicher zahlt man das nur beim ERSTEN Auftrag
                 #       einer Geometrie — bei einer Messreihe ueber Prompts also einmal.
-                #   (b) Ein eigener, LEICHTER Runner, der die glb nur laedt und die Box
-                #       nach der Namensregel rechnet. Gibt es nicht; geschaetzt 1-2 s,
-                #       gemessen nichts.
+                #   (b) Ein eigener, LEICHTER Laeufer, der die glb nur liest und die
+                #       Box nach der Namensregel rechnet. **Gibt es seit dem 01.09.2026:
+                #       `aiimaging.glbbox`.** Die Schaetzung von 1-2 s war um mehr als
+                #       eine Zehnerpotenz zu pessimistisch — gemessen 0,08 s an 4771
+                #       Meshes und 25 MB, weil glTF die Huellbox je Mesh im JSON-Kopf
+                #       fuehrt und die Dreiecke nie gelesen werden muessen. Kein
+                #       Unterprozess, keine Abhaengigkeit, keine Prozessgrenze.
+                #
+                #       ABER: Auf der Bestandsdatei vom 28.08.2026 bringt er nur
+                #       2,3 % engere Rahmung (358,02 -> 350,33 m), weil deren Gelaende
+                #       `Toposolid`, `Sub-Division` und `Umgebung - Gras` heisst und
+                #       keines dieser Woerter in `maske.GELAENDE_WOERTER` steht. Der
+                #       Weg traegt; die REGEL, die er befragt, sieht dieses Gelaende
+                #       nicht. `glbbox` meldet das als `schrumpfung`, damit eine
+                #       wirkungslose Box nicht wie eine wirksame aussieht. Richtig
+                #       erkannt waeren es 234,43 m gewesen, also -34,5 %.
                 #   (c) Der IFC-Report. Er fuehrt `bbox_bauwerk` — und ist auf genau
                 #       diesem Fall FALSCH: Sein Typfilter ist `("IfcSite",)`, die
                 #       Gelaendeplatte ist ein `IfcSlab` namens `Gelaende`, und die Box
@@ -1808,11 +1821,13 @@ MULTIPASS_KEINE_EINSTELLUNG = ("glb_path", "out_dir", "_starte")
 MULTIPASS_DURCHGEREICHT = {
     "up_axis": "verarbeiter(up_axis=…); ein Auftrag mit eigener `hochachse` schlaegt sie",
     "kamera_huellbox": "verarbeiter(kamera_huellbox=…). Der SCHALTER ist seit dem "
-                       "26.08.2026 da; offen bleibt die HERKUNFT der Box — sie "
-                       "entsteht im Multipass und wird davor gebraucht. Die drei "
-                       "Wege und ihre gemessenen Preise stehen am Aufrufort, die "
-                       "Wirkung ebenfalls: anteil_bauwerk 0,0788 ohne, 0,1730 mit "
-                       "der Box. `auf-41` (G3)",
+                       "26.08.2026 da, die HERKUNFT seit dem 01.09.2026: "
+                       "`aiimaging.glbbox.bauwerksbox(glb)` liefert sie in 0,08 s "
+                       "ohne Blender (Weg b). Offen ist damit nicht mehr der Weg, "
+                       "sondern die REGEL: Auf der Bestandsdatei vom 28.08.2026 "
+                       "greift die Namensregel kaum (-2,3 % statt -34,5 %), weil "
+                       "deren Gelaende `Toposolid` heisst. Wirkung mit tauglicher "
+                       "Box: anteil_bauwerk 0,0788 ohne, 0,1730 mit. `auf-41` (G3)",
     "timeout": "verarbeiter(zeitdeckel_s=…), Vorgabe ZEITDECKEL_S. Die alte Begruendung "
                "fuer die Luecke — «hohe Samples sprengen den Deckel» — ist am "
                "26.08.2026 gemessen widerlegt; siehe ZEITDECKEL_S",

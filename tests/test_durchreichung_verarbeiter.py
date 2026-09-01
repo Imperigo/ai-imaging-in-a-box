@@ -377,10 +377,19 @@ def test_die_offene_haelfte_steht_mit_ihren_drei_wegen_da():
 
     Hier ist der nächste Schritt eine **Wahl zwischen dreien**, und jede hat einen
     gemessenen oder geschätzten Preis. Ohne sie wäre der Eintrag ein Achselzucken.
+
+    **Seit dem 01.09.2026 ist einer der drei gebaut** — Weg (b) heisst
+    ``aiimaging.glbbox``. Die Aufzählung bleibt trotzdem stehen, und zwar vollständig:
+    Wer später einen Abstand für falsch hält, soll die verworfenen Wege samt ihrem Preis
+    danebenstehen sehen. *Eine Begründung, aus der nach der Entscheidung die Alternativen
+    entfernt werden, ist keine Begründung mehr, sondern eine Bekanntmachung.*
     """
     text = abholer.MULTIPASS_DURCHGEREICHT["kamera_huellbox"]
     assert "HERKUNFT" in text
     assert "auf-41" in text
     quelle = inspect.getsource(abholer)
-    for weg in ("ZWEITER Blender-Lauf", "LEICHTER Runner", "IFC-Report"):
+    for weg in ("ZWEITER Blender-Lauf", "LEICHTER Laeufer", "IFC-Report"):
         assert weg in quelle, f"Der Weg {weg!r} steht nicht mehr da."
+    # Und der gebaute Weg nennt, WOMIT er gebaut ist — sonst muesste man ihn suchen.
+    assert "glbbox" in quelle
+    assert "glbbox" in text

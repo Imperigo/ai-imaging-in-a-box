@@ -1509,6 +1509,26 @@ scheitern. Und dieselbe Vorsicht: Die Fassungsnummer im Kopf wird gelesen und ni
 angenommen. Eine glb-Datei der Fassung 1 hat einen anderen Aufbau; sie wird mit einer
 Begründung abgewiesen, statt versuchsweise falsch gedeutet zu werden.*
 
+**Accessor (Zugriffsbeschreibung)** — In einer glb-Datei die kleine Tabelle, die
+beschreibt, *wie* eine Zahlenreihe im Geometrieblock zu lesen ist: wie viele Werte, von
+welchem Typ, ab welcher Stelle. Für Eckpunkte verlangt die Norm zusätzlich, dass jeder
+solche Eintrag **den kleinsten und den grössten vorkommenden Wert mitführt**.
+
+*Diese Pflicht ist der Grund, warum die Hüllbox jedes Bauteils schon im beschreibenden
+Teil der Datei steht und die Dreiecke selbst nie gelesen werden müssen. Eine Bestandsdatei
+von 25 Megabyte wird so in acht Hundertstelsekunden ausgemessen, statt in vierzig Sekunden
+Blender-Zeit (`src/aiimaging/glbbox.py`). An derselben Datei nachgezählt: alle 4771
+Einträge halten die Pflicht — und wenn einer sie nicht hielte, wird die Auskunft
+verweigert statt eine zu kleine Box gemeldet.*
+
+**Quaternion** — Eine Schreibweise für eine Drehung im Raum, aus vier Zahlen statt aus
+drei Winkeln. Der Vorteil gegenüber Winkeln: Es gibt keine Stellungen, in denen zwei
+Drehachsen zusammenfallen und eine Bewegungsrichtung verlorengeht.
+*Kommt hier nur an einer Stelle vor: Ein Knoten in einer glb-Datei kann seine Lage
+entweder als fertige Zahlentafel angeben oder zerlegt in Verschiebung, Drehung und
+Grössenänderung — und die Drehung steht dann als Quaternion da
+(`_knotenmatrix` in `src/aiimaging/glbbox.py`).*
+
 **Bounding Box (Hüllbox)** — Der kleinste achsparallele Quader, der ein Objekt
 umschliesst. Nützlich für schnelle Grössen- und Lageabschätzungen, etwa zur automatischen
 Kamerasetzung.

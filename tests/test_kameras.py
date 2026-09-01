@@ -719,8 +719,17 @@ def test_der_eckentest_allein_bemerkt_ein_winziges_bauwerk_nicht():
     [[-10.0, -10.0, 0.0], [10.0, 10.0, 100.0]],      # Turm
 ])
 def test_bei_gebaeudemassen_wird_der_deckungsgrad_annaehernd_erreicht(bbox):
-    """Die Probe darauf, dass die Rechnung tut, was sie verspricht."""
-    satz = kameras.kamerasatz(bbox)
+    """Die Probe darauf, dass die Rechnung tut, was sie verspricht.
+
+    ``gelaende_z=0.0`` steht hier seit dem 01.09.2026, und es ist keine Beruhigung der
+    Zusicherung, sondern eine Verschaerfung: Alle drei Boxen haben ihren Fuss auf z = 0,
+    die Angabe ist also die *wahre* Gelaendehoehe und keine Ausrede. Seit `kamerasatz`
+    den unbekannten Gelaendestand meldet, prueft die leere Warnungsliste damit **zwei**
+    Dinge auf einmal — dass die Rahmung sitzt, und dass die neue Warnung wieder
+    verschwindet, sobald der Bezugspunkt bekannt ist. Ohne die Angabe waere sie hier ein
+    stehender Vorbehalt und nichts ueber den Deckungsgrad.
+    """
+    satz = kameras.kamerasatz(bbox, gelaende_z=0.0)
     assert satz["warnungen"] == (), satz["warnungen"]
     for kamera in satz["kameras"]:
         assert kamera["fuellgrad"] > kameras.DECKUNGSGRAD * kameras.FUELLGRAD_WARNSCHWELLE

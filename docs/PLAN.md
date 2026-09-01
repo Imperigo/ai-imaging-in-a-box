@@ -3032,6 +3032,45 @@ der Bauwerksbox rahmt statt nach der Szenenbox, hängt an `auf-41` (G3) — Owne
 vom 26.08. Bis dahin *meldet* die Kette den Bruch und rendert nicht ins Leere; sie
 verstellt aber keine Kamera.
 
+### Nachtrag 01.09.2026 · Weg (b) ist gebaut, und die Rahmung bleibt trotzdem unverstellt
+
+Die offene Hälfte war nie der Schalter, sondern die **Herkunft** der Box. `abholer.py`
+führte dafür drei Wege; **(b) — ein leichter Läufer ohne Blender — gibt es jetzt:**
+`src/aiimaging/glbbox.py`.
+
+- [x] **Weg (b), gemessen statt geschätzt.** Die Schätzung im Abholer lautete 1–2 s;
+      gemessen sind **0,08 s** an einer Bestandsdatei mit 4771 Meshes und 25 MB (n = 5,
+      Median 0,076 s). Gegen Weg (a) mit +40 s je Kamera ist das der Faktor 500. Der Grund
+      ist kein schneller Code: glTF verlangt `min`/`max` an jedem POSITION-Accessor, also
+      steht die Hüllbox je Bauteil im JSON-Kopf und die Dreiecke werden nie gelesen (2,8
+      von 25 MB). **Ohne jede Abhängigkeit** — `trimesh` hätte eine Prozessgrenze
+      erzwungen, die es hier nicht braucht.
+- [x] **Der Blindtest dazu.** Eine Datei mit byteweise zerstörtem Geometrieblock liefert
+      dieselbe Box (`test_der_binaerblock_wird_nicht_angefasst`). *Ein Zeitmass misst den
+      Rechner, ein Strukturmass die Behauptung.*
+
+**Der wichtigere Befund ist der unangenehme, und er ändert die Reihenfolge dieses Postens:
+Die Namensregel sieht das Gelände der Bestandsdatei nicht.** Dort heisst es nicht
+„Gelände", sondern `IfcCovering_Toposolid_1` (135,50 × 130,12 m — das grösste Einzelobjekt
+der Szene), dazu `Sub-Division`, `Umgebung 15 - Gras`, `Aussen - Gras`, Bäume als
+`IfcGeographicElement`, ein Nachbargebäude als `IfcCivilElement`. Keines dieser Wörter
+steht in `maske.GELAENDE_WOERTER`. Gerechnet für die Kamera `sSE` des Laufs vom 28.08.:
+
+| Rahmen | Masse | Abstand |
+|---|---|---|
+| Szenenbox | 135,75 × 136,50 × 25,60 m | **358,02 m** |
+| Bauwerksbox nach heutiger Regel | 135,75 × 130,12 × 25,60 m | 350,33 m (−2,1 %) |
+| nur der Hochbau | 94,50 × 82,75 × 25,60 m | **234,43 m (−34,5 %)** |
+
+Der Weg trägt also; die **Regel**, die er befragt, trägt auf dieser Datei nicht. Deshalb
+meldet `bauwerksbox` das Feld `schrumpfung` — ohne das sähe eine wirkungslose Box im
+Bericht genauso aus wie eine wirksame.
+
+**Was daraus NICHT folgt:** die Rahmung umzustellen. Eine automatisch eingesetzte Box, die
+2 % bringt, wäre schlimmer als keine — sie sähe aus wie die Lösung. Der nächste Schritt ist
+die Regel an ihrer **einen** Stelle, nicht ein zweiter Filter im Läufer. `auf-41` (G3)
+bleibt damit offen, jetzt aber aus einem anderen Grund als gestern.
+
 ---
 
 ## Zwei weitere Posten aus dem ersten vollständigen Lauf (26.08.2026)

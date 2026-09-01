@@ -1,0 +1,27 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "cloud",
+  "auftrag_id": "auf-20260901-68",
+  "art": "frage",
+  "beschreibung": "kamera.ts misst die Augenhoehe von b.minZ, dem tiefsten Punkt irgendeiner Geometrie. Das ist der Bezug, den unsere Kompositionstabelle als 'nicht verlaesslich' fuehrt. Bei einer 300 mm dicken Bodenplatte kostet das 30 cm, beim kommenden Projekt mit zwei Untergeschossen mehrere Meter — und der Vorschlag sagt nicht, wovon er misst.",
+  "anweisung": "=== ZWEI KAMERARECHNER, ZWEI AUGENHOEHEN — UND DER STREIT IST NICHT DER, DER AUFFAELLT ===\n\nAn den Cloud-Worker an KosmoOrbit. Du hast unser Repo nicht und brauchst es nicht — alles\nNoetige steht hier. Es geht um `packages/kosmo-kernel/src/derive/kamera.ts` bei euch.\n\n--- 1 · DER BEFUND ---\n\nDie Kamerarechnung existiert zweimal: bei euch in `kamera.ts`, bei uns in\n`aiimaging/kameras.py`. Sie widersprechen einander:\n\n                  kamera.ts (ihr)                unser Modul\n  Augenhoehe      1600 mm ueber `b.minZ`         1700 mm ueber GELAENDE\n  Standpunkte     2-3, im Quelltext benannt      12 gerechnet, 3 gewaehlt\n  Rahmung         fester Rueckzug + fov          Bildwinkel + Eckentest\n\n--- 2 · WELCHER UNTERSCHIED ZAEHLT, UND ES IST NICHT DER SICHTBARE ---\n\n1700 gegen 1600 mm sind zehn Zentimeter. Die sind uns egal — behaltet eure 1600, wenn ihr\nsie begruendet haltet. Der BEZUGSPUNKT ist der Streit, und er ist unbegrenzt:\n\n`b.minZ` ist der tiefste Punkt IRGENDEINER Geometrie. Das ist, was unser Modul\n`huellbox_unterkante` nennt, und `komposition.BEZUGSPUNKTE` fuehrt genau diesen Bezug mit\n`verlaesslich: false`. Ihr habt es selbst gemessen (P-AUGENHOEHE, 26.08.2026): Bei einer\n300 mm dicken Bodenplatte standen 1,30 m statt der versprochenen 1,60 m. Euer eigener\nKommentar sagt, repariert sei „NUR die Behauptung, nicht die Geometrie\".\n\nBei uns ist dieselbe Kante nur die RUECKFALLEBENE, und `gelaende_z` ist ein Parameter.\n\n--- 3 · WARUM DAS JETZT DRINGEND WIRD ---\n\nDas kommende Projekt hat ZWEI UNTERGESCHOSSE. Aus 30 cm werden dann mehrere Meter.\n\nWir haben es an unserer Seite am 28.08.2026 gemessen, ohne `gelaende_z`: Die Kamera stand\n3,238 m unter dem Erdgeschossfussboden und 12 mm ueber dem Kellerboden. Der Kamerablock\ndes Berichts meldete `warnungen: []`. Wir haben das bei uns am 01.09.2026 geschlossen —\n`kamerasatz` meldet den unbekannten Gelaendestand jetzt mit Zahlen. Eure Seite meldet\nweiterhin nichts.\n\n--- 4 · WAS WIR VORSCHLAGEN ---\n\nNICHT, unseren Code nachzubauen. `kamera.ts` gehoert zu eurem Vertrag, nicht zu unserem.\nNoetig ist nur, was auf unserer Seite nicht entschieden werden kann:\n\n  V1  Die Augenhoehe bekommt einen BENANNTEN Bezugspunkt statt `b.minZ` stillschweigend.\n      Unsere Namen, falls ihr sie uebernehmen wollt: `terrain_an_kamera` (verlaesslich),\n      `okff` (verlaesslich), `huellbox_unterkante` (nicht verlaesslich), `weltnull`\n      (nicht verlaesslich).\n  V2  Der Vorschlag liefert den Bezugspunkt MIT — ein Feld neben `position`/`target`.\n      Eine Hoehe ohne ihren Nullpunkt ist keine Hoehe.\n  V3  Wo ein Geschoss bekannt ist, wird es benutzt. Ihr tut das bei „Innenraum\" bereits\n      (`storeyElevation`); bei „Eingang\" steht `b.minZ`. Derselbe Vorschlagssatz misst\n      damit von zwei verschiedenen Nullpunkten.\n\nKein Streit besteht bei `position`/`target`: Beide Seiten fuehren die verlustfreie Form.\nGenau deshalb ist eine Uebernahme in beide Richtungen ueberhaupt moeglich.\n\n--- 5 · WAS AUSDRUECKLICH NICHT ZU TUN IST ---\n\n  * NICHT einfach 1600 auf 1700 aendern. Das waere die sichtbare Haelfte des Problems und\n    die unwichtige.\n  * NICHT `b.minZ` heimlich durch etwas anderes ersetzen. Ein stillschweigend geaenderter\n    Bezugspunkt ist genau der Fehler noch einmal, nur andersherum.\n  * NICHT unsere zwoelf Richtungen uebernehmen. Wir rechnen einen Vorrat und waehlen\n    daraus; ihr schlagt benannte Standpunkte vor. Das sind zwei legitime Aufgaben.\n  * Keine Pfade mit Benutzernamen in der Antwort. Unser Repo ist oeffentlich.\n",
+  "erstellt": "2026-09-01T14:20:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_glb.py build/testszene.glb"
+  },
+  "params": {},
+  "auflagen": [
+    "Der Bezugspunkt ist der Streit, nicht die 10 cm Augenhoehe",
+    "Kein stillschweigender Wechsel des Nullpunkts — benannt oder gar nicht",
+    "Regel 3: keine Pfade mit Benutzernamen, unser Repo ist oeffentlich"
+  ],
+  "rueckgabe": [
+    "R1 Gibt es den Bezugspunkt schon irgendwo im Vertrag? Wenn ja: wie heisst er?",
+    "R2 Falls nein: Name, Ort und Wertebereich des Feldes neben position/target",
+    "R3 Was liefert deriveAutoKameras, wenn kein Gelaendestand bekannt ist — b.minZ mit Vermerk, oder gar keinen Vorschlag?",
+    "R4 Wird 'Eingang' auf storeyElevation umgestellt wie 'Innenraum', oder bleiben zwei Nullpunkte in einem Vorschlagssatz?",
+    "R5 Beleg, dass es EINGEBAUT ist — nicht der Entwurf, sondern die Version im Betrieb"
+  ]
+}
