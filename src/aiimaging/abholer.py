@@ -1215,6 +1215,34 @@ AUTO_RICHTUNGEN = ("s", "sSE", "nNW")
 ZEITDECKEL_S = 900
 
 
+def ausgabeort(auftrag: dict, out_wurzel=None) -> Path:
+    """Wohin die Bilder DIESES Auftrags geschrieben werden — die eine Stelle, die es entscheidet.
+
+    WARUM DAS EINE FUNKTION IST (01.09.2026): die Rechnung stand an zwei Orten — hier und in
+    der Fortschrittswache von `tools/abholen.py`. Beide lasen `auftrag["ausgabe"]`, solange
+    `out_wurzel` nicht gesetzt war, und fielen darum nicht auf. Mit gesetztem `out_wurzel`
+    haette die Wache einen ANDEREN, leeren Ordner bewacht als den, in den geschrieben wird —
+    und Stillstand gemeldet, waehrend die Bilder daneben entstanden. Ein Waechter, der am
+    falschen Ort wacht, meldet Falsches; das ist teurer als keiner.
+
+    WARUM ES DIESEN UMWEG UEBERHAUPT BRAUCHT: auf dem Brueckenweg ist der Ausgabeort von
+    beiden Seiten zugenagelt. Die Bruecke erzwingt `scene["out"] = <job-dir>/out` serverseitig
+    (Befund R4, gegen Schreibziel-Injektion), und `bruecke.py` rechnet ihn hier nochmals aus
+    dem Auftragsordner. Beides ist richtig so. Nur liegt der Auftragsordner bei Port 8600
+    bewusst unter `/tmp/kosmo-jobs` — und am 28.08.2026 lief die Kette zum ersten Mal ganz
+    durch, schrieb drei Bilder, und der naechste Neustart nahm sie mit. Zehn Laeufe bis zum
+    ersten Bild, und es ueberlebte den Tag nicht.
+
+    `out_wurzel` biegt darum die AUSGABE um, nicht die Ablage der Auftraege. Der Ordnername
+    bleibt der des Auftrags, damit die Zuordnung erhalten bleibt.
+    """
+    if out_wurzel:
+        # Derselbe Ordnername wie der Auftrag — `verzeichnis` ist das Feld, das beide
+        # Quellen setzen (`bruecke.lies_auftrag`, `eigene_quelle.lies_auftrag`).
+        return Path(out_wurzel) / Path(auftrag["verzeichnis"]).name
+    return Path(auftrag["ausgabe"])
+
+
 def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 up_axis: str = ANGENOMMENE_HOCHACHSE, schwelle: float | None = None,
                 stillstand_frist_s: float | None = None, stil: str | None = None,
@@ -1307,7 +1335,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # solche im Bericht.
         hochachse = auftrag.get("hochachse") or up_axis
         hochachse_quelle = "auftrag" if auftrag.get("hochachse") else "annahme"
-        ziel = Path(out_wurzel) / ordner.name if out_wurzel else Path(auftrag["ausgabe"])
+        ziel = ausgabeort(auftrag, out_wurzel)
         ziel.mkdir(parents=True, exist_ok=True)
 
         # ABBESTELLT. Bis zum 26.08.2026 las die Kette `skip: true` und rechnete
