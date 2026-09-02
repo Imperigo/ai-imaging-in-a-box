@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260902-71",
+  "art": "frage",
+  "worker": "local",
+  "rang": 3,
+  "erstellt": "2026-09-02T11:45:56Z",
+  "beschreibung": "Bildtest-Vergleichsbild neu setzen, nachdem der Kundenname aus KosmoPublish entfernt wurde — plus die vier Plakat-Schnappschuesse, die nur an eurer Maschine laufen.",
+  "anweisung": "=== DAS VERGLEICHSBILD DES BILDTESTS NEU SETZEN ===\n\nEs geht um KosmoPublish. Ihr aendert dort NICHTS am Code — ihr lasst EIN\nWerkzeug laufen und schickt das Ergebnis samt drei Zahlen zurueck.\n\n--- 0 · WARUM DAS JETZT NOETIG IST ---\n\nAm 02.09.2026 ist auf Owner-Auftrag der Name eines realen Wettbewerbsprojekts\naus KosmoPublish entfernt worden (138 Dateien, 516 Zeilen; «Weg C» der\nEntscheidvorlage `docs/ENTSCHEID-KUNDENNAME-2026-09-02.md`). Der Vorgabewert\nin `config/poster_content.py` heisst jetzt MUSTERBAU statt des Kundennamens.\n\nDas hat eine Nebenwirkung, die nur bei euch sichtbar wird:\n\n  `output/visual_tests/golden/generativ-poster.png` — eine von genau DREI\n  verfolgten Dateien unter `output/` — wird laut\n  `tools/visual_test_runner.py:241-251` aus `content.load_default()`\n  gerendert. Das Bild zeigt also den ALTEN Titelblock, die alte\n  Verfasserkennzahl und den alten Ortsnamen als PIXEL.\n\nZwei Folgen, und beide sind schlecht:\n\n  1. Der Kundenname steht weiterhin im Repo — als Bild, wo keine Textsuche\n     und keine Sperrklinke ihn findet.\n  2. Das Bild ist als Vergleichsbasis WERTLOS geworden: das Blatt, das es\n     zeigt, erzeugt der Code nicht mehr. Der Tier-1-Pixelvergleich wird ab\n     jetzt eine «Regression» melden, die keine ist — genau der Fall, fuer den\n     `docs/BILDTEST-VERGLEICHSBASIS-2026-08-27.md` angelegt wurde.\n\nIch kann es hier NICHT neu setzen: `output/planraw/*.svg` ist git-ignoriert\nund liegt in der Wolke nicht; ohne diese SVGs bricht `_render_poster` ab.\n\n--- 1 · WAS ZU TUN IST ---\n\n    cd <KosmoPublish>\n    git pull\n    .venv/bin/python tools/visual_test_runner.py --tier1-only\n\nDas rendert die Szenarien neu und vergleicht gegen die Goldens. Erwartet:\n`generativ-poster` meldet einen Unterschied. **Das ist kein Fehler, sondern\nder Beweis, dass der Umbau angekommen ist.**\n\nDann das Vergleichsbild neu setzen — auf dem Weg, den euer Werkzeug dafuer\nvorsieht (`--update-golden` oder das Kopieren des frisch gerenderten Bildes\nnach `output/visual_tests/golden/generativ-poster.png`; welcher es ist, sagt\neuch `--help`, ich will hier keinen Weg raten, den es nicht gibt).\n\n**VORHER ANSEHEN, NICHT BLIND UEBERNEHMEN.** Der Owner hat am 02.09.2026\nausdruecklich gesagt, er will die Goldens sehen, bevor sie neu gesetzt werden.\nOeffnet das neu gerenderte Bild und prueft mit blossem Auge:\n\n  * Steht oben links MUSTERBAU und oben rechts MB-2026?\n  * Steht in der zweiten Zeile «Bibliothek Musterberg»?\n  * Taucht der alte Kundenname NIRGENDS mehr auf — auch nicht im Konzepttext\n    unten rechts und nicht in der Beschriftung des schwarzen Baukoerpers im\n    Lageplan?\n  * Sieht das Blatt sonst aus wie vorher (Lageplan links, Raumprogramm-Tabelle\n    oben rechts, Fassade unten, Materialleiste unten rechts)?\n\nIst eine dieser vier Antworten NEIN, setzt das Bild NICHT neu, sondern\nschickt, was ihr seht. Ein falsches Vergleichsbild ist schlimmer als ein\nveraltetes: es macht kuenftige echte Regressionen unsichtbar.\n\n--- 2 · DIE ZWEI ANDEREN GOLDENS ---\n\n`bridge-grundriss.png` und `massing-demo.png` haengen NICHT an\n`load_default()` und sollten unveraendert bleiben. Sagt trotzdem, ob der Lauf\nsie als gleich meldet — wenn nicht, hat der Umbau weiter gereicht als\ngedacht, und das will ich wissen.\n\n--- 3 · UND DIE VIER PLAKAT-SCHNAPPSCHUESSE ---\n\n`tests_slow/test_plakat_snapshots.py` UEBERSPRINGT in der Wolke vollstaendig,\nweil `output/planraw/AX_SW_FINAL.svg` fehlt. Bei euch laeuft es.\n\n    cd <KosmoPublish>\n    .venv/bin/python -m unittest discover tests_slow -p \"test_*.py\" 2>&1 | tail -20\n\n**Das ist die Messung, die hier prinzipiell nicht geht.** Der Umbau ist in\nder Wolke gruen (2341 Tests, OK) — aber vier Vergleichsstaende laufen nur bei\neuch, und sie vergleichen Elementzaehler mit +/-15-20 % Toleranz. Ich habe\nnachgemessen, dass Titellaenge die Zaehler bei `auto_toc_cover` NICHT\nveraendert (vier Laengen von 2 bis 58 Zeichen: text=23, rect=3, line=8\nunveraendert) — aber das gilt fuer diesen einen Erzeuger, NICHT fuer den\nV18-Plakat-Composer. Dort ist es ungemessen.\n\nSind sie rot, schickt die Ausgabe. Sind sie gruen, sagt das ausdruecklich —\n«keine Meldung» ist keine Antwort.\n\n--- 4 · WAS AUSDRUECKLICH NICHT ZU TUN IST ---\n\n  * NICHT `UPDATE_SNAPSHOTS=1` setzen. `compare_with_snapshot` schreibt die\n    Vergleichsstaende dann STILL neu, und damit waere jede Aussage aus Teil 3\n    wertlos, bevor sie entsteht.\n  * NICHT Code in KosmoPublish oder KosmoPrepare aendern. Dort schreibt ein\n    Worker, und das ist nicht ihr.\n  * NICHT die zwei anderen Goldens neu setzen, auch wenn sie abweichen —\n    erst melden.\n  * NICHTS installieren ohne Owner-Go von Andrin.\n  * KEINE echten Projektdaten in die Rueckgabe. Das ist bei DIESEM Auftrag\n    besonders heikel: er handelt von einem Kundennamen. Schreibt ihn nicht in\n    die Antwort, auch nicht um zu sagen, dass er weg ist — «der alte Name\n    kommt nicht mehr vor» genuegt.\n  * KEINE absoluten Pfade mit Benutzernamen (Regel 3).\n\n--- 5 · WARUM DAS EIN EIGENER AUFTRAG IST ---\n\nDer Owner hat sich das Ansehen der Goldens ausdruecklich vorbehalten, und der\neinzige Ort, an dem sie entstehen koennen, ist eure Maschine. Ein\nVergleichsbild, das ein Modell ungesehen neu setzt, ist keine Pruefung mehr,\nsondern eine Selbstbestaetigung.",
+  "params": {},
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Dieser Auftrag braucht GAR KEINE Geometrie — er laesst ein Werkzeug laufen und stellt vier Sichtfragen. `synthetisch` steht auf true, weil `pruefe_auftrag` eine Geometriequelle verlangt; `erzeugen_mit` ist bewusst null, statt eine Erzeugung zu behaupten, die nicht stattfindet."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Nur messen und EIN Vergleichsbild setzen — kein Code in KosmoPublish oder KosmoPrepare.",
+      "UPDATE_SNAPSHOTS bleibt ungesetzt, sonst werden die Vergleichsstaende still ueberschrieben.",
+      "Das neue Bild vor dem Setzen mit blossem Auge pruefen — der Owner hat sich das Ansehen der Goldens vorbehalten.",
+      "Der alte Kundenname gehoert NICHT in die Rueckgabe, auch nicht um seine Abwesenheit zu belegen."
+    ]
+  },
+  "rueckgabe": [
+    "M1 Ausgabe von `visual_test_runner.py --tier1-only` vor dem Neusetzen: welches Szenario meldet einen Unterschied, welche nicht.",
+    "M2 Die vier Sichtpruefungen aus Teil 1, je ja/nein. Bei einem Nein: was stattdessen zu sehen war.",
+    "M3 Ob das Vergleichsbild neu gesetzt wurde — und wenn nein, warum.",
+    "M4 Ob `bridge-grundriss` und `massing-demo` unveraendert gemeldet wurden.",
+    "M5 Ausgabe von `unittest discover tests_slow` (letzte 20 Zeilen), besonders die vier Plakat-Schnappschuesse: gruen oder rot."
+  ]
+}
