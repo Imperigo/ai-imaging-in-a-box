@@ -13,9 +13,21 @@ ein GPL-behaftetes Environment für eine Datei aus vier Quadern. Dieses Skript k
 
 Was es bewusst NICHT tut
 ------------------------
-Es erzeugt keine Materialien, keine Normalen, keine Texturen und keine Hierarchie. Die
-einzige Frage, für die es gebaut ist, lautet: *Welche Knoten heissen wie, und wo liegen
-sie?* Alles andere wäre Ballast, den eine Prüfung mitschleppen müsste.
+Es erzeugt keine Normalen, keine Texturen und keine Hierarchie. Die Frage, für die es
+gebaut ist, lautet: *Welche Knoten heissen wie, und wo liegen sie?* Alles andere wäre
+Ballast, den eine Prüfung mitschleppen müsste.
+
+**Zwei Ausnahmen, seit dem 02.09.2026** — beide für :mod:`aiimaging.modellstand`, beide
+abschaltbar und aus, solange niemand sie bestellt:
+
+* ``materialien`` — ein ``materials``-Block und ein Verweis darauf je Primitiv. Ohne ihn
+  gäbe es keine Gegenprobe zu «eine glb ohne Materialblock liegt zurück»: Eine Regel, die
+  nur den Mangelfall kennt, beanstandet alles.
+* ``vermerk`` — der Herkunftsvermerk in ``asset.extras.kosmo_modellstand``, mit dem
+  KosmoDraw seit demselben Tag sagt, was es geschrieben hat. Er wird hier **frei
+  übergeben** und nicht nachgebaut: Der Prüfling ist der Leser, nicht der Schreiber, und
+  ein Erzeuger, der immer einen gültigen Vermerk baute, könnte den ungültigen Fall gar
+  nicht stellen.
 
 Die Koordinaten sind **glTF-Koordinaten** (Y oben), nicht Weltkoordinaten. Das ist
 Absicht: Die Umrechnung zwischen beiden ist der Gegenstand, den
@@ -47,12 +59,18 @@ def _ecken(lo, hi):
              lo[2] if not (i & 4) else hi[2]) for i in range(8)]
 
 
-def baue_glb(koerper) -> bytes:
+def baue_glb(koerper, *, materialien=None, vermerk=None, erzeuger=None) -> bytes:
     """Benannte Quader → glb-Bytes.
 
     Args:
         koerper: Folge von ``(name, lo, hi)`` — ``lo``/``hi`` in **glTF-Koordinaten**
             (Y oben), je drei Zahlen.
+        materialien: Materialnamen. ``None`` (Vorgabe) heisst **kein materials-Block** —
+            genau der Zustand, den ``aiimaging.modellstand`` beanstandet. Mit Namen
+            bekommt jedes Primitiv reihum eines davon.
+        vermerk: Inhalt für ``asset.extras.kosmo_modellstand``. Wird **unverändert**
+            eingesetzt, auch wenn er unsinnig ist — der ungültige Fall muss stellbar sein.
+        erzeuger: ``asset.generator``. Vorgabe bleibt ``make_test_glb.py``.
 
     Returns:
         Die vollständige glb-Datei als ``bytes``.
@@ -87,13 +105,18 @@ def baue_glb(koerper) -> bytes:
         accessors.append({"bufferView": len(views) - 1, "componentType": 5123,
                           "count": len(_FLAECHEN) * 3, "type": "SCALAR"})
 
-        meshes.append({"primitives": [{"attributes": {"POSITION": pos},
-                                       "indices": len(accessors) - 1}]})
+        prim = {"attributes": {"POSITION": pos}, "indices": len(accessors) - 1}
+        if materialien:
+            prim["material"] = len(meshes) % len(materialien)
+        meshes.append({"primitives": [prim]})
         nodes.append({"name": str(name), "mesh": len(meshes) - 1})
 
     roh_bin = b"".join(bin_teile)
+    asset = {"version": "2.0", "generator": erzeuger or "make_test_glb.py"}
+    if vermerk is not None:
+        asset["extras"] = {"kosmo_modellstand": vermerk}
     js = {
-        "asset": {"version": "2.0", "generator": "make_test_glb.py"},
+        "asset": asset,
         "scene": 0,
         "scenes": [{"nodes": list(range(len(nodes)))}],
         "nodes": nodes,
@@ -102,6 +125,8 @@ def baue_glb(koerper) -> bytes:
         "bufferViews": views,
         "buffers": [{"byteLength": len(roh_bin)}],
     }
+    if materialien:
+        js["materials"] = [{"name": str(n)} for n in materialien]
     roh_js = json.dumps(js, separators=(",", ":")).encode("utf-8")
     roh_js += b" " * (-len(roh_js) % 4)                   # JSON mit Leerzeichen auffüllen
     roh_bin += b"\x00" * (-len(roh_bin) % 4)              # BIN mit Nullen

@@ -1564,6 +1564,15 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         ziel = ausgabeort(auftrag, out_wurzel)
         ziel.mkdir(parents=True, exist_ok=True)
 
+        # DER MODELLSTAND, EINMAL JE AUFTRAG UND VOR ALLEM ANDEREN. Er ist eine Eigenschaft
+        # der DATEI, nicht der Kamera, er kostet einen glb-Kopf und keine GPU-Sekunde — und
+        # er ist der Befund, der drei Laeufen am 01./02.09.2026 gefehlt hat.
+        #
+        # Er steht VOR dem `ueberspringen`-Zweig, damit `modellstand` in JEDEM Ergebnissatz
+        # dieselbe Bedeutung hat. Ein Feld, das mal da ist und mal nicht, zwingt jeden
+        # Auswerter zum Verzweigen — dieselbe Regel wie bei `status` und `grund`.
+        modellstand = _modellstand_gemeldet(auftrag["modell"])
+
         # ABBESTELLT. Bis zum 26.08.2026 las die Kette `skip: true` und rechnete
         # trotzdem — der Abholer meldete es sogar selbst («BESTELLT UND NICHT
         # AUSGEFUEHRT»), und im Lauf vom 25.08. wurde es belegt (auf-vis-20260825-15,
@@ -1585,6 +1594,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 "grund": ("Der Auftrag traegt `skip: true` und wurde NICHT gerendert. "
                           "Das ist keine Stoerung und kein Urteil ueber die Geometrie — "
                           "es wurde nichts gemessen, weil nichts bestellt war."),
+                "modellstand": modellstand,
             }
 
         kameras = szene.get("kameras")
@@ -1753,7 +1763,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 urteile.append(dict(_uebersprungenes_urteil(kuerzel, blickfeld),
                                     massstab=_massstab_gemeldet(bericht),
                                     rahmung=None, komposition=None,
-                                    blickfeld=blickfeld))
+                                    blickfeld=blickfeld, modellstand=modellstand))
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
                 continue
@@ -1806,7 +1816,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             if lage is not None:
                 urteile.append(dict(_uebersprungenes_urteil(kuerzel, lage),
                                     massstab=massstab, rahmung=rahmung,
-                                    komposition=komposition, blickfeld=blickfeld))
+                                    komposition=komposition, blickfeld=blickfeld,
+                                    modellstand=modellstand))
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
                 continue
@@ -1928,6 +1939,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # muss, welche Bilder in DIESEM Lauf entstanden sind.
             urteil["zwischenspeicher"] = bericht.get("zwischenspeicher")
             urteil["blickfeld"] = blickfeld
+            # Der Modellstand steht auch am KAMERAURTEIL und nicht nur im Ergebnissatz:
+            # `_urteil_ablegen` schreibt es sofort auf die Platte, und ab dort ueberlebt
+            # der Befund jeden Fehler einer spaeteren Kamera. Dieselbe Ueberlegung wie
+            # bei `blickfeld` und `zwischenspeicher` eine Zeile darueber.
+            urteil["modellstand"] = modellstand
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
             # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.
@@ -1966,6 +1982,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # etwas bedeutet: Unter falscher Annahme sind alle Werte des Laufs
             # gemeinsam verdreht und trotzdem plausibel.
             "hochachse": {"wert": hochachse, "quelle": hochachse_quelle},
+            # OB DIESES MODELL TRAEGT, WAS GEBAUT WURDE. Immer da, auch bei
+            # `uebersprungen` — ein Ergebnissatz mit wechselnden Schluesseln zwingt jeden
+            # Auswerter, vor dem Lesen zu verzweigen (dieselbe Regel wie bei `status`).
+            "modellstand": modellstand,
         }
 
     return verarbeite
@@ -2317,6 +2337,16 @@ RIEGEL: dict[str, dict] = {
         "was": "Der Massstab der Geometrie. MELDET und bricht nicht ab — er ist eine "
                "Eigenschaft der Geometrie und bei jeder Kamera dieselbe, also kann ihn "
                "keine andere Blickrichtung heilen.",
+    },
+    "_modellstand_gemeldet": {
+        "ort": "verarbeiter",
+        "wege": WEGE,
+        "was": "Trägt das Modell, was sein Erzeuger schreiben kann? MELDET und bricht "
+               "nicht ab — aus demselben Grund wie `_massstab_gemeldet`: Wie oft der "
+               "Bestand hier `zurueck` sagt, ist ungemessen, weil es die Prüfung bis zum "
+               "02.09.2026 nicht gab. Er kennt DREI Zustände, und `ungeprueft` ist "
+               "ausdrücklich KEIN Bestehen — sonst wäre er die Prüfung, die alles "
+               "durchwinkt, was sie nicht kennt.",
     },
     "_rahmung_vor_dem_render": {
         "ort": "verarbeiter",
@@ -2751,6 +2781,60 @@ def _massstab_gemeldet(bericht: dict) -> dict:
         "verdacht_faktor": massstab.get("verdacht_faktor"),
         "grund": urteil.get("begruendung", ""),
     }
+
+
+def _modellstand_gemeldet(pfad) -> dict:
+    """Liegt das Modell hinter seinem Erzeuger zurück? — **einmal je Auftrag, gemeldet.**
+
+    **Der Anlass.** Am 01. und 02.09.2026 sind drei Läufe hintereinander mit
+    ``lauf16.glb`` gefahren: 4 Netze, 4 Primitive, **0 Materialien** — obwohl der Export
+    seit dem 01.09.2026 welche schreibt — und aus einem IFC mit **0 IfcDoor**, obwohl der
+    Erzeuger am Regelgeschossblatt 151 Türen misst. Alle drei Läufe waren grün. Nichts in
+    dieser Kette hat gefragt, ob das Modell trägt, was gebaut wurde.
+
+    Warum **je Auftrag** und nicht je Kamera: Der Modellstand ist eine Eigenschaft der
+    DATEI, wie der Massstab eine der Geometrie ist (:func:`_massstab_gemeldet`). Der
+    Unterschied: Der Massstab steht in der Hüllbox und ist erst nach dem Multipass
+    bekannt, hier genügt der glb-Kopf. Der Befund liegt deshalb **vor** dem ersten
+    Blender-Start und kostet nichts.
+
+    Warum **gemeldet und nicht abgebrochen**: dieselbe Linie wie beim Massstab, und aus
+    demselben Grund. Wie oft der Bestand hier ``zurueck`` sagt, ist ungemessen — es gab
+    die Prüfung ja nicht. Ein Riegel, der scharfgestellt wird, bevor seine Fehlalarmrate
+    bekannt ist, lehnt Aufträge ab, und niemand weiss welche. Der Befund steht im Urteil
+    und im Ergebnissatz; wer ihn zum Abbruch machen will, hat dann Zahlen dafür.
+
+    Returns:
+        ``{geprueft, urteil, maengel, warnungen, quelle, grund}``. ``geprueft`` ist nur
+        bei :data:`aiimaging.modellstand.TRAEGT` ``True`` — **ungeprüft ist nicht
+        bestanden**, und ein Befund, der die Datei gar nicht lesen konnte, erst recht
+        nicht. ``quelle`` nennt die Datei, aus der das Modell entstand (Name, Bytes,
+        SHA-256), sofern sie es selbst mitteilt: die Antwort auf «welches Modell fährt
+        hier eigentlich», die bisher nirgends stand.
+    """
+    from . import glbbox as _glbbox
+    from . import modellstand as _ms
+
+    try:
+        befund = _ms.pruefe(pfad)
+    except (_glbbox.GlbError, OSError) as e:
+        # Ein Lesefehler ist ein Befund über die DATEI und keiner über den Modellstand.
+        # Er darf trotzdem nicht als bestanden durchgehen — sonst wäre «unlesbar» der
+        # bequemste Weg an der Prüfung vorbei.
+        #
+        # REGEL 3: Die Meldung der glb-Leser nennt den vollen Pfad, und dieser Befund
+        # landet im Auftragsverzeichnis der fremden Oberfläche. `_ohne_pfade` greift
+        # hier NICHT — es kürzt nur Zeichenketten, die MIT einem Schrägstrich beginnen,
+        # und ein Pfad mitten im Satz bleibt stehen. Er wird darum an der Quelle
+        # ersetzt, nicht beim Ablegen.
+        name = Path(pfad).name
+        return {"geprueft": False, "urteil": _ms.UNGEPRUEFT, "maengel": [],
+                "warnungen": [], "quelle": None,
+                "grund": (f"Modellstand nicht lesbar: {type(e).__name__}: "
+                          f"{str(e).replace(str(pfad), name)}")}
+    return {"geprueft": _ms.bestanden(befund), "urteil": befund["urteil"],
+            "maengel": befund["maengel"], "warnungen": befund["warnungen"],
+            "quelle": befund["quelle"], "grund": befund["begruendung"]}
 
 
 def _kamera_ueber_dach(kamera: dict) -> dict:
