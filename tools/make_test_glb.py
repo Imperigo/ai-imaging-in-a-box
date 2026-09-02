@@ -59,6 +59,19 @@ def _ecken(lo, hi):
              lo[2] if not (i & 4) else hi[2]) for i in range(8)]
 
 
+def _material(eintrag) -> dict:
+    """Ein Materialeintrag → glTF-``materials``-Objekt.
+
+    ``"Glas"`` ergibt ein deckendes Material, ``("Glas", "BLEND")`` eines mit
+    ``alphaMode``. Der Name allein bleibt die Vorgabe, damit die älteren Proben
+    unverändert gelten.
+    """
+    if isinstance(eintrag, (tuple, list)):
+        name, alpha_mode = eintrag
+        return {"name": str(name), "alphaMode": str(alpha_mode)}
+    return {"name": str(eintrag)}
+
+
 def baue_glb(koerper, *, materialien=None, vermerk=None, erzeuger=None) -> bytes:
     """Benannte Quader → glb-Bytes.
 
@@ -68,6 +81,13 @@ def baue_glb(koerper, *, materialien=None, vermerk=None, erzeuger=None) -> bytes
         materialien: Materialnamen. ``None`` (Vorgabe) heisst **kein materials-Block** —
             genau der Zustand, den ``aiimaging.modellstand`` beanstandet. Mit Namen
             bekommt jedes Primitiv reihum eines davon.
+
+            Ein Eintrag ist entweder ein Name (deckend) oder ein Paar
+            ``(name, alpha_mode)`` — nötig seit dem Merkmal ``transparenz``
+            (02.09.2026): Ohne stellbaren ``alphaMode`` liesse sich die Frage
+            «trägt diese Datei eine durchsichtige Scheibe?» hier gar nicht
+            stellen, und die Regel dazu wäre nur an ihrem eigenen Mangelfall
+            geprüft. Beide Richtungen brauchen beide Formen.
         vermerk: Inhalt für ``asset.extras.kosmo_modellstand``. Wird **unverändert**
             eingesetzt, auch wenn er unsinnig ist — der ungültige Fall muss stellbar sein.
         erzeuger: ``asset.generator``. Vorgabe bleibt ``make_test_glb.py``.
@@ -126,7 +146,7 @@ def baue_glb(koerper, *, materialien=None, vermerk=None, erzeuger=None) -> bytes
         "buffers": [{"byteLength": len(roh_bin)}],
     }
     if materialien:
-        js["materials"] = [{"name": str(n)} for n in materialien]
+        js["materials"] = [_material(m) for m in materialien]
     roh_js = json.dumps(js, separators=(",", ":")).encode("utf-8")
     roh_js += b" " * (-len(roh_js) % 4)                   # JSON mit Leerzeichen auffüllen
     roh_bin += b"\x00" * (-len(roh_bin) % 4)              # BIN mit Nullen

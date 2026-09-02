@@ -346,3 +346,118 @@ def test_die_glb_leser_ausnahme_bleibt_eine_ausnahme(tmp_path):
 
     with pytest.raises(glbbox.GlbError):
         modellstand.pruefe(kaputt)
+
+
+# ======================================================================================
+# 5 · Das Merkmal `transparenz` — «BLEND, wo Fenster sind»
+# ======================================================================================
+#
+# DER GEMESSENE ANLASS (02.09.2026). Die ausgeführte glb eines Demolaufs trug 700
+# IfcWindow in der Quelle, **3 Materialien** und **kein einziges** mit `alphaMode: BLEND`.
+# Der Prüfer sagte damals `ungeprueft` — die Datei trug keinen Vermerk. Die naheliegende
+# Reparatur («dann stempeln wir eben») wurde nachgestellt: dieselbe glasfreie Datei, nur
+# gestempelt, kam als `traegt`/bestanden zurück, weil `materialien` nur «n_materialien > 0»
+# verlangt und drei Materialien da waren.
+#
+# Diese Abschnitte prüfen darum BEIDE Richtungen und die Grenze dazwischen: rot am Fehler,
+# grün am gesunden Fall, still bei einer Quelle ohne Fenster. Ohne die dritte Probe mässe
+# die Regel «hat BLEND» statt «hat BLEND, wo Fenster sind», und jeder Rohbau fiele durch.
+
+
+def _mit_transparenz(**klassen):
+    """Ein Vermerk, der `transparenz` FÜHRT — mit den Bauteilzahlen der Quelle."""
+    v = _mit_klassen(**klassen)
+    v["merkmale"] = dict(VERMERK["merkmale"], transparenz="2026-09-02")
+    return v
+
+
+def test_quelle_mit_fenstern_ohne_blend_liegt_zurueck(tmp_path):
+    """Der Fall, um den es geht: Fenster in der Quelle, keine Scheibe in der Datei."""
+    befund = modellstand.pruefe(
+        _glb(tmp_path, "deckend.glb",
+             materialien=("Aussenputz", "Beton"),
+             vermerk=_mit_transparenz(IfcWindow=700, IfcDoor=1016)))
+
+    assert befund["urteil"] == modellstand.ZURUECK, befund
+    assert not modellstand.bestanden(befund)
+    assert befund["gemessen"]["n_materialien_blend"] == 0
+    assert any("BLEND" in m for m in befund["maengel"]), befund["maengel"]
+    # Der Mangel nennt die Zahl, an der er hängt — sonst ist er nicht nachprüfbar.
+    assert any("IfcWindow` = 700" in m for m in befund["maengel"]), befund["maengel"]
+
+
+def test_dieselbe_szene_mit_einer_scheibe_wird_nicht_beanstandet(tmp_path):
+    """Die Gegenprobe zum Mangel: eine Regel, die nur den Fehlerfall kennt, ist blind."""
+    befund = modellstand.pruefe(
+        _glb(tmp_path, "mit_scheibe.glb",
+             materialien=("Aussenputz", ("Glas", "BLEND")),
+             vermerk=_mit_transparenz(IfcWindow=700, IfcDoor=1016)))
+
+    assert befund["urteil"] == modellstand.TRAEGT, befund
+    assert modellstand.bestanden(befund)
+    assert befund["gemessen"]["n_materialien_blend"] == 1
+
+
+def test_eine_quelle_ohne_fenster_braucht_kein_glas(tmp_path):
+    """`IfcWindow` = 0 ist eine MESSUNG, kein Mangel — ein Rohbau ist ein Zwischenstand.
+
+    Ohne diese Probe mässe die Regel «hat BLEND» statt «hat BLEND, wo Fenster sind».
+    """
+    befund = modellstand.pruefe(
+        _glb(tmp_path, "rohbau.glb",
+             materialien=("Aussenputz", "Beton"),
+             vermerk=_mit_transparenz(IfcWindow=0, IfcDoor=1016)))
+
+    assert befund["urteil"] == modellstand.TRAEGT, befund
+    assert befund["maengel"] == []
+    assert befund["gemessen"]["n_materialien_blend"] == 0
+
+
+def test_zaehlt_die_quelle_die_fenster_nicht_bleibt_es_ungeprueft(tmp_path):
+    """Ein fehlender Schlüssel und eine Null sind zweierlei — dieselbe Regel wie bei Türen.
+
+    Ob dieses Modell keine Fenster hat oder der Erzeuger sie nur nicht zählt, steht nicht
+    in der Datei. Das ist nicht entscheidbar, und nicht entscheidbar ist kein Bestehen.
+    """
+    ohne_fensterzahl = _mit_transparenz(IfcWall=4905, IfcDoor=1016)
+    befund = modellstand.pruefe(
+        _glb(tmp_path, "ungezaehlt.glb",
+             materialien=("Aussenputz", "Beton"), vermerk=ohne_fensterzahl))
+
+    assert befund["urteil"] == modellstand.UNGEPRUEFT, befund
+    assert not modellstand.bestanden(befund)
+    assert befund["maengel"] == []
+    assert any("IfcWindow" in o for o in befund["offen"]), befund["offen"]
+
+
+def test_wer_transparenz_nicht_fuehrt_wird_nicht_daran_gemessen(tmp_path):
+    """Die Regel gilt nur für Erzeuger, die das Merkmal BEHAUPTEN.
+
+    `VERMERK` (KosmoDraws Fassung) führt `materialien` und `disziplin_layer`, nicht
+    `transparenz`. Eine seiner Dateien ohne Scheibe darf davon nicht rot werden —
+    sonst würde ein Erzeuger an einer Zusage gemessen, die er nie gegeben hat. Das ist
+    dieselbe Linie wie «ein Merkmal ohne Messvorschrift zählt nicht als bestanden»,
+    nur von der anderen Seite.
+    """
+    befund = modellstand.pruefe(
+        _glb(tmp_path, "fremder_erzeuger.glb",
+             materialien=("Aussenputz", "Beton"),
+             vermerk=_mit_klassen(IfcWindow=700, IfcDoor=1016)))
+
+    assert befund["urteil"] == modellstand.TRAEGT, befund
+    assert befund["maengel"] == []
+
+
+def test_die_blend_zahl_wird_an_der_datei_gemessen_nicht_im_vermerk_gelesen(tmp_path):
+    """Eine Prüfung, die die Behauptung gegen sich selbst hält, ist keine.
+
+    Der Vermerk darf `n_materialien_blend` nennen — gezählt wird trotzdem der
+    `materials`-Block. Hier behauptet er eine Scheibe, die Datei hat keine.
+    """
+    luegt = _mit_transparenz(IfcWindow=700, IfcDoor=1016)
+    luegt["traegt"] = dict(luegt["traegt"], n_materialien_blend=1)
+    befund = modellstand.pruefe(
+        _glb(tmp_path, "behauptet.glb", materialien=("Aussenputz", "Beton"), vermerk=luegt))
+
+    assert befund["urteil"] == modellstand.ZURUECK, befund
+    assert befund["gemessen"]["n_materialien_blend"] == 0

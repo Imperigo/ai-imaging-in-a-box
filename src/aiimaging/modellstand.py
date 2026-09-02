@@ -59,6 +59,8 @@ Abhängigkeiten: stdlib und :mod:`aiimaging.glbbox` (der glb-Kopfleser). Kein ``
 """
 from __future__ import annotations
 
+from typing import NamedTuple
+
 from . import glbbox
 
 #: Gemessen: Die Datei trägt, was ihr Erzeuger schreibt.
@@ -88,19 +90,53 @@ VERMERK_SCHLUESSEL = "kosmo_modellstand"
 #: Messung an der Ausgabe. Ein Merkmal ohne Messvorschrift wäre eine Behauptung, die sich
 #: selbst bestätigt — und genau davon hatte dieses Projekt schon genug.
 #:
-#: Jeder Eintrag: ``(Feld im Vermerk unter "traegt", Klartext)``. Der Mangel entsteht,
-#: wenn das Merkmal geführt wird und die gemessene Zahl 0 ist.
-MERKMAL_MESSUNG: dict[str, tuple[str, str]] = {
-    "materialien": ("n_materialien",
-                    "Der Erzeuger schreibt Materialien, die Datei trägt keinen einzigen "
-                    "Materialblock. Im Bild wird dann alles gleich grau, und eine "
-                    "durchsichtige Scheibe ist unmöglich."),
+#: Jeder Eintrag ist eine :class:`Messvorschrift`. Der Mangel entsteht, wenn das Merkmal
+#: geführt wird und die gemessene Zahl 0 ist — bei ``nur_wenn_klasse`` zusätzlich nur
+#: dann, wenn die Quelle diese Bauteilklasse überhaupt mitbringt.
+#:
+#: **Warum es die Bedingung gibt (gemessen, 02.09.2026).** ``materialien`` allein war an
+#: dem Fehler blind, um den es an jenem Tag ging: Die ausgeführte glb eines Demolaufs trug
+#: 700 Fenster in der Quelle, **3 Materialien** und **kein einziges** mit ``BLEND`` — und
+#: erfüllte «n_materialien > 0» mühelos. Nachgestellt: dieselbe glasfreie Datei, nur
+#: gestempelt, kam als ``traegt``/bestanden zurück. Eine Probe, die am vorliegenden Defekt
+#: nicht rot werden kann, ist keine Probe.
+#:
+#: Ohne die Bedingung wäre die Regel aber genauso falsch, nur andersherum: Sie mässe dann
+#: «hat BLEND» statt «hat BLEND, wo Fenster sind», und jeder Rohbau ohne Fenster fiele
+#: durch.
+class Messvorschrift(NamedTuple):
+    """Was der Erzeuger behauptet, gegen das, was an der Datei messbar ist."""
+
+    #: Schlüssel aus :func:`_messe_glb` — die Messung AN DER DATEI, nie aus dem Vermerk.
+    feld: str
+    #: Klartext des Mangels, für Menschen.
+    klartext: str
+    #: Optional: IFC-Klasse, die die Quelle tragen muss, damit die Null ein Mangel ist.
+    #: Fehlt die Klasse im Vermerk ganz, ist der Fall NICHT entscheidbar (``offen``) —
+    #: dieselbe Regel wie bei :data:`VERDAECHTIG_LEER`: ein fehlender Schlüssel und eine
+    #: Null sind zweierlei.
+    nur_wenn_klasse: str | None = None
+
+
+MERKMAL_MESSUNG: dict[str, Messvorschrift] = {
+    "materialien": Messvorschrift(
+        "n_materialien",
+        "Der Erzeuger schreibt Materialien, die Datei trägt keinen einzigen "
+        "Materialblock. Im Bild wird dann alles gleich grau, und eine "
+        "durchsichtige Scheibe ist unmöglich."),
     # Nachgemessen wird die Zahl der glTF-Nodes. Das ist bei einem beliebigen glTF NICHT
     # dasselbe wie «Disziplin-Layer» — hier aber schon, weil nur ein Erzeuger geprüft wird,
     # der dieses Merkmal führt, und der schreibt genau einen Node je Layer und sonst keinen.
-    "disziplin_layer": ("n_disziplin_layer",
-                        "Der Erzeuger schreibt einen Node je Disziplin, die Datei trägt "
-                        "keinen. Der Viewer kann dann nichts ein- und ausblenden."),
+    "disziplin_layer": Messvorschrift(
+        "n_disziplin_layer",
+        "Der Erzeuger schreibt einen Node je Disziplin, die Datei trägt "
+        "keinen. Der Viewer kann dann nichts ein- und ausblenden."),
+    "transparenz": Messvorschrift(
+        "n_materialien_blend",
+        "Die Quelle trägt Fenster, die Datei führt kein einziges Material mit "
+        "`alphaMode: BLEND`. Jede Scheibe wird dann deckend gerendert — der Befund, "
+        "der drei Demoläufen am 01./02.09.2026 unbemerkt geblieben ist.",
+        nur_wenn_klasse="IfcWindow"),
 }
 
 #: Bauteilklassen, deren Fehlen ein **Verdacht** ist — nicht mehr.
@@ -128,6 +164,17 @@ def _messe_glb(pfad) -> dict:
         "n_primitive": len(primitive),
         "n_primitive_mit_material": sum(1 for p in primitive if p.get("material") is not None),
         "n_materialien": len(js.get("materials") or []),
+        # Seit dem Merkmal `transparenz` (02.09.2026): Ein Material mit
+        # `alphaMode: "BLEND"` ist die einzige Art, wie eine glb eine
+        # durchsichtige Fläche AUSDRÜCKEN kann. Ohne ihn ignoriert jeder
+        # konforme Betrachter das Alpha im `baseColorFactor` — ein Material,
+        # das «Glas» heisst und OPAQUE ist, wird deckend gerendert.
+        #
+        # Gezählt wird HIER, an der Datei. Der Vermerk mancher Erzeuger nennt
+        # dieselbe Zahl selbst; sie wird bewusst NICHT gelesen. Eine Prüfung,
+        # die die Behauptung gegen sich selbst hält, ist keine.
+        "n_materialien_blend": sum(
+            1 for m in (js.get("materials") or []) if m.get("alphaMode") == "BLEND"),
         "n_disziplin_layer": len(js.get("nodes") or []),
         "generator": asset.get("generator"),
         "extras": asset.get("extras") or {},
@@ -219,6 +266,12 @@ def pruefe(pfad) -> dict:
             offen.append("Der Vermerk führt `merkmale`/`traegt` nicht als Wörterbuch — "
                          "gelesen wird er nicht, geraten erst recht nicht.")
         else:
+            # Was die QUELLE trug — nur aus dem Vermerk, eine glb weiss es nicht selbst.
+            # Steht VOR der Merkmalsschleife, seit `transparenz` (02.09.2026) eine
+            # Bedingung an diese Klassen knüpft: «kein Glas» ist nur dort ein Mangel, wo
+            # die Quelle Fenster hatte.
+            klassen = traegt.get("ifc_klassen")
+
             # Behauptung gegen Messung, Merkmal für Merkmal.
             for name, seit in sorted(merkmale.items()):
                 messung = MERKMAL_MESSUNG.get(name)
@@ -230,16 +283,36 @@ def pruefe(pfad) -> dict:
                         f"Merkmal {name!r} (seit {seit}) wird vom Erzeuger geführt, hat "
                         f"hier aber keine Messvorschrift — es bleibt ungeprüft.")
                     continue
-                feld, klartext = messung
-                if feld in schon_gemeldet:
+                if messung.feld in schon_gemeldet:
                     continue                      # dieselbe Tatsache, schon benannt
-                if gemessen.get(feld) == 0:
-                    schon_gemeldet.add(feld)
-                    maengel.append(f"{klartext} (Merkmal {name!r} seit {seit}, "
-                                   f"gemessen {feld} = 0)")
 
-            # Was die QUELLE trug — nur aus dem Vermerk, eine glb weiss es nicht selbst.
-            klassen = traegt.get("ifc_klassen")
+                bedingung = messung.nur_wenn_klasse
+                if bedingung is not None:
+                    anzahl = klassen.get(bedingung) if isinstance(klassen, dict) else None
+                    if anzahl is None:
+                        # Nicht entscheidbar — und das ist KEIN Bestehen. Ob dieses
+                        # Modell keine Fenster hat oder der Erzeuger sie nur nicht
+                        # zählt, steht nicht in der Datei.
+                        offen.append(
+                            f"Merkmal {name!r} (seit {seit}) gilt nur, wenn die Quelle "
+                            f"`{bedingung}` mitbringt — der Vermerk zählt diese Klasse "
+                            f"nicht mit. Ob sie fehlt oder nur ungezählt ist, ist an "
+                            f"einer glb nicht feststellbar.")
+                        continue
+                    if int(anzahl or 0) == 0:
+                        # Eine gemessene Null: die Quelle hatte wirklich keine. Ein
+                        # Rohbau ohne Fenster braucht kein Glas, und ihn dafür zu
+                        # beanstanden hiesse, «hat BLEND» statt «hat BLEND, wo Fenster
+                        # sind» zu messen.
+                        continue
+
+                if gemessen.get(messung.feld) == 0:
+                    schon_gemeldet.add(messung.feld)
+                    zusatz = (f", Quelle `{bedingung}` = {klassen.get(bedingung)}"
+                              if bedingung is not None else "")
+                    maengel.append(f"{messung.klartext} (Merkmal {name!r} seit {seit}, "
+                                   f"gemessen {messung.feld} = 0{zusatz})")
+
             if not isinstance(klassen, dict):
                 offen.append("Der Vermerk nennt keine Bauteilklassen der Quelle. Ob "
                              "Türen fehlen, ist an einer glb sonst nicht feststellbar.")
