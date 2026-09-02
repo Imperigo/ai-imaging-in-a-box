@@ -968,6 +968,31 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
             "verschwundenem Bauwerk). 'passed: true' heisst hier: der Score besteht — "
             "nicht, dass ueberhaupt gebaut wurde."))
 
+    # DER UMGEKEHRTE FALL: KEIN SCORE, ABER EIN MASKENWEG — Demolauf 14, 01.09.2026.
+    #
+    # Ohne gemeinsame Silhouette (`n_gemeinsam` 0) gibt es keinen Score und kein
+    # spearman; `qa.geometry` meldet dann `geometry_fidelity: null`, `spearman: null`,
+    # `geom_iou: 0.0`, `passed: false`. Die Gegenseite kann daraus NICHT unterscheiden,
+    # ob nichts lief oder ob das zweite Tor gemessen und gesperrt hat — und in Lauf 14
+    # war es das zweite: drei Kameras, drei gemessene, durchgefallene Paarurteile.
+    #
+    # Der Satz gehoert in `verdict.reason` und nicht nur in `hinweise`:
+    # `nur_vertragsfelder` streicht `hinweise` weg, wer strikt gegen ihr Schema liest,
+    # saehe die Auskunft also nie. Dieselbe Luecke wie beim Grund fuer einen nicht
+    # gerenderten Lauf.
+    #
+    # SELBSTLOESCHEND: nur wenn der Score fehlt UND das Paarurteil gemessen hat. Steht
+    # ein Score da, traegt er das Urteil und diese Zeile schweigt.
+    _paar = (_geo.get("paarurteil") or {})
+    if _geo.get("score") is None and _paar.get("gemessen") is True:
+        teile.insert(0, (
+            f"KEIN SCORE, ABER MASKENWEG: Ohne gemeinsame Silhouette gibt es keine "
+            f"Tiefenordnung zu vergleichen — 'geom_iou: 0.0' und 'spearman: null' sind "
+            f"hier eine FEHLENDE MESSUNG und kein Nullwert. Gemessen hat der Maskenweg: "
+            f"rho {_paar.get('rho')}, Anteil {_paar.get('anteil')}, Paarurteil "
+            f"{'BESTANDEN' if _paar.get('bestanden') else 'DURCHGEFALLEN'}. "
+            f"'passed: false' heisst hier durchgefallen und nicht ungeprueft."))
+
     # Die Zahl, die sagt, worueber das Urteil ueberhaupt spricht. Steht VOR den uebrigen
     # Teilen, weil sie alle anderen einordnet: Ist die Schwelle fuer diese Aufnahme
     # unerreichbar, misst jeder Score die SZENE und nicht das Bild

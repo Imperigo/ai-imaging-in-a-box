@@ -652,6 +652,26 @@ MASKENWEG_FOLGE = (
     "auf-20260821-26).")
 
 
+def _paarzeile(kamera: dict) -> str:
+    """Ein gemessenes Paarurteil in einem Atemzug: ``s rho +0.7713/Anteil +0.2132``.
+
+    Beide Beine stehen da und nicht nur das entscheidende. Wer nur den Traeger liest,
+    haelt eine Kamera mit rho +0.98 und Anteil 0.06 fuer denselben Fall wie eine mit
+    rho +0.72 und Anteil 0.008 — es sind aber zwei verschiedene Befunde.
+
+    ``None`` bleibt ``None`` und wird nicht zu einer Null gerundet: Ein Bein, das nicht
+    gemessen werden konnte, ist kein Bein mit dem Wert null.
+    """
+    paar = kamera.get("paarurteil") or {}
+
+    def zahl(wert):
+        return f"{wert:+.4f}" if isinstance(wert, (int, float)) \
+            and not isinstance(wert, bool) else "UNGEMESSEN"
+
+    return (f"{kamera.get('kamera')} rho {zahl(paar.get('rho'))}"
+            f"/Anteil {zahl(paar.get('anteil'))}")
+
+
 def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     """Der Befund in wenigen Zeilen — für einen Menschen an einem Terminal.
 
@@ -722,6 +742,8 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
         zeilen.append(f"Prompt nennt Bauteile: {', '.join(str(b) for b in bauteile)} — "
                       f"hat die Geometrie sie? Wenn nicht, erfindet sie das Bildmodell.")
 
+    kameras = befund.get("kameras") or []
+
     urteil = befund.get("geometrie_urteil") or {}
     spanne = urteil.get("kameraspanne") or {}
     if spanne.get("n_gemessen"):
@@ -731,9 +753,43 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
             teil += f", beste {spanne['bester']:.4f}"
         zeilen.append(teil + ")")
     elif spanne:
-        zeilen.append("Geometrie: UNGEMESSEN — keine Kamera lieferte einen Wert.")
+        # «SCORE», nicht «Geometrie». Der alte Satz sprach ueber den ganzen Lauf und
+        # meinte nur den Score ueber das ganze Bild — siehe die Zeile darunter.
+        zeilen.append("Geometrie-SCORE: UNGEMESSEN, keine Kamera lieferte einen Wert "
+                      "(ohne gemeinsame Silhouette gibt es keine Tiefenordnung zu "
+                      "vergleichen).")
 
-    kameras = befund.get("kameras") or []
+    # DER MASKENWEG SPRICHT AUCH DANN, WENN DER SCORE SCHWEIGT — Demolauf 14, 01.09.2026.
+    #
+    # Bis dahin las diese Funktion nur die Sprache des Scores. Faellt der aus, stand hier
+    # genau eine Zeile: «Geometrie: UNGEMESSEN — keine Kamera lieferte einen Wert.» Die
+    # beiden vorhandenen Maskenweg-Zeilen sind selbstloeschend und schweigen ausgerechnet
+    # in diesem Fall: Die eine feuert nur bei `bestanden is True`, die andere nur bei
+    # `zustaendig is False`.
+    #
+    # In Lauf 14 hiess das: Drei Kameras trugen ein GEMESSENES Paarurteil, alle drei
+    # durchgefallen — und der Bericht nannte den Lauf ungemessen. Von zwei moeglichen
+    # Fehlern ist das der weichere und darum der gefaehrlichere: Er laesst einen Lauf
+    # harmlos aussehen, in dem ausgerechnet das Tor gesperrt hat, das die ABWESENHEIT
+    # eines Bauwerks faengt (MASKENWEG_FOLGE).
+    #
+    # SELBSTLOESCHEND: nur wenn der Score fehlt UND der Maskenweg gemessen hat. Liegt ein
+    # Score vor, traegt die Spannenzeile darueber das Urteil.
+    if spanne and not spanne.get("n_gemessen"):
+        gemessen = [k for k in kameras
+                    if (k.get("paarurteil") or {}).get("gemessen") is True]
+        if gemessen:
+            gefallen = [k for k in gemessen
+                        if (k.get("paarurteil") or {}).get("bestanden") is False]
+            schwellen = (gemessen[0].get("paarurteil") or {}).get("schwellen") or {}
+            zeilen.append(
+                f"MASKENWEG GEMESSEN, {len(gefallen)} von {len(gemessen)} Kameras "
+                f"DURCHGEFALLEN: {' · '.join(_paarzeile(k) for k in gemessen)} "
+                f"(Schwellen rho {schwellen.get('rho')}, Anteil "
+                f"{schwellen.get('anteil')}). Der Lauf ist damit GEPRUEFT und "
+                f"durchgefallen, NICHT ungeprueft — und zwar an dem Mass, das die "
+                f"ABWESENHEIT eines Bauwerks faengt.")
+
     zeilen.extend(_kompositionszeilen(kameras))
 
     ungesichert = [k.get("kamera") for k in kameras
@@ -3252,9 +3308,14 @@ def _kameraspanne(urteile: list[dict]) -> dict:
     wie weit sie auseinanderlagen, und was das Minimum daran kostet.
 
     Returns:
-        ``{n, n_gemessen, n_doppelt, bester, schlechtester, spanne, streuung,
-        abschlag_streuungen, hinweis}``. ``streuung`` ist ``None`` bei weniger als drei
-        gemessenen Kameras — aus zweien lässt sie sich ausrechnen und sagt nichts.
+        ``{n, n_gemessen, n_paar_gemessen, n_paar_durchgefallen, n_doppelt, bester,
+        schlechtester, spanne, streuung, abschlag_streuungen, hinweis}``. ``streuung``
+        ist ``None`` bei weniger als drei gemessenen Kameras — aus zweien lässt sie sich
+        ausrechnen und sagt nichts.
+
+        ``n_gemessen`` zählt **Scores**, ``n_paar_gemessen`` die gemessenen
+        **Paarurteile**. Die beiden laufen auseinander, und genau daran hing Demolauf 14:
+        Ohne gemeinsame Silhouette gibt es keinen Score, den Maskenweg aber sehr wohl.
 
         ``n`` zählt **alle** Ansichten, ``n_gemessen`` nur die eigenständigen mit Wert.
         Eine Ansicht mit ``doppelt_von`` ist **keine zweite Ziehung**: Sie fällt aus
@@ -3285,8 +3346,27 @@ def _kameraspanne(urteile: list[dict]) -> dict:
         streuung = (sum((w - mittel) ** 2 for w in messbar) / len(messbar)) ** 0.5
 
     if not messbar:
-        hinweis = (f"Keine der {n} Kameras ist gemessen. Das gemeldete Urteil ist "
-                   f"UNGEPRUEFT, nicht durchgefallen.")
+        # «UNGEPRUEFT» GILT NUR, WENN AUCH DAS ZWEITE TOR SCHWIEG — Demolauf 14.
+        #
+        # `n_gemessen` zaehlt Scores, der Satz sprach aber ueber den ganzen Lauf. In
+        # Lauf 14 hatte keine Kamera einen Score (`n_gemeinsam` 0) und JEDE ein
+        # gemessenes, durchgefallenes Paarurteil — gemeldet wurde trotzdem
+        # «UNGEPRUEFT, nicht durchgefallen». Genau verkehrt herum: Der Lauf ist an dem
+        # Tor gescheitert, das die ABWESENHEIT eines Bauwerks faengt, und sah im
+        # Bericht harmlos aus.
+        paare = [(u.get("paarurteil") or {}) for u in eigen]
+        gemessene_paare = [p for p in paare if p.get("gemessen") is True]
+        gefallene_paare = [p for p in gemessene_paare if p.get("bestanden") is False]
+        if gemessene_paare:
+            hinweis = (
+                f"Keine der {n} Kameras hat einen SCORE. Der Maskenweg hat aber an "
+                f"{len(gemessene_paare)} von {len(eigen)} gemessen, davon "
+                f"{len(gefallene_paare)} DURCHGEFALLEN — das gemeldete Urteil ist damit "
+                f"geprueft und nicht ungeprueft.")
+        else:
+            hinweis = (f"Keine der {n} Kameras ist gemessen — weder Score noch "
+                       f"Maskenweg. Das gemeldete Urteil ist UNGEPRUEFT, nicht "
+                       f"durchgefallen.")
     elif len(messbar) == 1:
         hinweis = ("Eine gemessene Kamera — das gemeldete Urteil IST ihr Urteil, ohne "
                    "Auswahleffekt.")
@@ -3309,9 +3389,17 @@ def _kameraspanne(urteile: list[dict]) -> dict:
             f"Wiederholung ist keine Ziehung."
         )
 
+    # Als ZAHL und nicht nur im Fliesstext. Ein Hinweis, den nur ein Mensch lesen kann,
+    # ist derselbe Fehler eine Etage hoeher: Die Auskunft war da und kam nicht an.
+    paare_alle = [(u.get("paarurteil") or {}) for u in eigen]
+    paar_gemessen = [p for p in paare_alle if p.get("gemessen") is True]
+
     return {
         "n": n,
         "n_gemessen": len(messbar),
+        "n_paar_gemessen": len(paar_gemessen),
+        "n_paar_durchgefallen": sum(1 for p in paar_gemessen
+                                    if p.get("bestanden") is False),
         "n_doppelt": n_doppelt,
         "bester": max(messbar) if messbar else None,
         "schlechtester": min(messbar) if messbar else None,
