@@ -395,6 +395,27 @@ def _sonne_modul():
         return None
 
 
+def _glbbox_modul():
+    """``aiimaging.glbbox`` von hier aus erreichbar machen — oder ``None``.
+
+    Dieselbe Bauart und dieselbe Begründung wie :func:`_maske_modul`. Geholt wird genau
+    **eine** Zahl: :data:`aiimaging.glbbox.GERINGE_SCHRUMPFUNG`, die Schwelle, ab der
+    eine Bauwerksbox als „hat nicht gegriffen" gilt.
+
+    **Warum sie nicht hier hingeschrieben wird.** Sie steht drüben unter einer
+    Herleitung — 2,1 % an einer Bestandsdatei gegen 40 % am Testbau — und bewegt sich
+    mit der nächsten Messung. Eine Kopie an der Aussenkante liefe dabei still
+    auseinander; genau diese Falle hat dieses Projekt bei der Geländeregel selbst schon
+    einmal bezahlt.
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from aiimaging import glbbox                        # noqa: PLC0415
+        return glbbox
+    except Exception:                                      # noqa: BLE001
+        return None
+
+
 def _achsen_modul():
     """``aiimaging.contracts`` von hier aus erreichbar machen — oder ``None``.
 
@@ -426,50 +447,110 @@ def _bbox_bauwerk():
     ist an der Hüllboxgrösse zu erkennen.
 
     Returns:
-        ``(lo, hi, note)`` — ``lo``/``hi`` sind ``None``, wenn nichts feststellbar war;
-        ``note`` sagt dann **warum**.
+        ``(lo, hi, note, schrumpfung)`` — ``lo``/``hi`` sind ``None``, wenn nichts
+        feststellbar war; ``note`` sagt dann **warum**. ``schrumpfung`` ist der Anteil
+        Grundriss-Diagonale, den die Bauwerksbox gegenüber der Szenenbox verloren hat,
+        oder ``None``, wenn es keine Bauwerksbox gibt.
 
     .. note::
        **Kein Rückfall auf die Szenenbox.** Findet sich keine gebaute Substanz, kommt
        ``None`` zurück und nicht die Box von allem. Die Szenenbox stillschweigend als
        Bauwerksbox auszugeben hiesse, den Bruch zwischen Rahmung und Messung genau dort
        zuzudecken, wo er gemessen werden soll — und der Bericht sähe dann gesund aus.
+
+    .. warning::
+       **Und der stillste Fall ist nicht der leere Befund, sondern der wirkungslose**
+       (gemessen am 02.09.2026). Bis dahin gab diese Funktion eine **leere** Notiz
+       zurück, sobald die Regel auch nur *einen* Knoten als Gelände zählte — gleich, ob
+       die Box danach um 80 % kleiner war oder um 2 %.
+
+       An zwei echten Dateien gemessen, mit :func:`aiimaging.glbbox.bauwerksbox` auf
+       derselben Regel: Auf einer Bestandsdatei sortierte die Regel 10 von 4771 Knoten
+       aus und die Rahmung wurde um **2,3 %** enger; auf einem Geländemodell 1 von 112
+       und **1,7 %**. Beide Male hätte hier nichts gestanden — und `rahmung.note` wie
+       `massstab.note` im Abholer hätten eine Bauwerksbox gemeldet, die keine ist.
+
+       ``glbbox`` sagt diesen Fall seit dem 01.09.2026; dieser Weg schwieg. *Zwei Wege
+       zur selben Zahl sollen bei derselben Lage dieselbe Auskunft geben* — deshalb
+       steht die Meldung jetzt auf beiden.
     """
     maske = _maske_modul()
     if maske is None:
         return None, None, ("'aiimaging.maske' ist von diesem Blender aus nicht "
                             "erreichbar — die Gelaenderegel konnte NICHT angewendet "
-                            "werden. Das ist etwas anderes als 'es gibt kein Gelaende'.")
+                            "werden. Das ist etwas anderes als 'es gibt kein Gelaende'."), None
 
     lo = [float("inf")] * 3
     hi = [float("-inf")] * 3
+    szene_lo = [float("inf")] * 3
+    szene_hi = [float("-inf")] * 3
     n = 0
     gelaende = []
+    # Der grösste Knoten, den die Regel als BAUWERK gezählt hat — an ihm hängt die
+    # Auskunft, welches Wort der Regel fehlt, wenn die Box nichts verliert.
+    groesster = ("", 0.0)
     for obj in bpy.data.objects:
         if obj.type != "MESH":
             continue
+        ecken = [obj.matrix_world @ __import__("mathutils").Vector(e)
+                 for e in obj.bound_box]
+        for welt in ecken:
+            for i in range(3):
+                szene_lo[i] = min(szene_lo[i], welt[i])
+                szene_hi[i] = max(szene_hi[i], welt[i])
         if maske.ist_gelaende(obj.name):
             gelaende.append(obj.name)
             continue
         n += 1
-        for ecke in obj.bound_box:
-            welt = obj.matrix_world @ __import__("mathutils").Vector(ecke)
-            for i in range(3):
-                lo[i] = min(lo[i], welt[i])
-                hi[i] = max(hi[i], welt[i])
+        o_lo = [min(w[i] for w in ecken) for i in range(3)]
+        o_hi = [max(w[i] for w in ecken) for i in range(3)]
+        b = math.hypot(o_hi[0] - o_lo[0], o_hi[1] - o_lo[1])
+        if b > groesster[1]:
+            groesster = (obj.name, b)
+        for i in range(3):
+            lo[i] = min(lo[i], o_lo[i])
+            hi[i] = max(hi[i], o_hi[i])
 
     if n == 0:
         return None, None, (
             f"Kein einziges Mesh-Objekt blieb nach der Gelaenderegel uebrig "
             f"({len(gelaende)} als Gelaende erkannt). Entweder besteht die Szene nur aus "
             f"Gelaende — dann ist der Auftrag ohne Bauwerk —, oder die Namen tragen die "
-            f"Unterscheidung nicht. Es wird NICHT auf die Szenenbox zurueckgefallen.")
+            f"Unterscheidung nicht. Es wird NICHT auf die Szenenbox zurueckgefallen."), None
+
+    # Gemessen an der Grundriss-Diagonale, und die Wahl ist geliehen und nicht neu
+    # getroffen: `glbbox.bauwerksbox` rechnet genauso, mit der Herleitung an Ort und
+    # Stelle (die weiteste Kamera hängt an sqrt(dx² + dy²), nicht an max(dx, dy)).
+    b_szene = math.hypot(szene_hi[0] - szene_lo[0], szene_hi[1] - szene_lo[1])
+    b_bau = math.hypot(hi[0] - lo[0], hi[1] - lo[1])
+    schrumpfung = (1.0 - b_bau / b_szene) if b_szene > 0.0 else 0.0
+
     if not gelaende:
         return lo, hi, ("Kein Objekt wurde als Gelaende erkannt; die Bauwerksbox ist "
                         "hier gleich der Szenenbox. Das ist ein gueltiges Ergebnis und "
                         "kein Rueckfall — aber ein Bruch zwischen Rahmung und Messung "
-                        "ist damit auch nicht feststellbar.")
-    return lo, hi, ""
+                        "ist damit auch nicht feststellbar."), schrumpfung
+
+    glbbox = _glbbox_modul()
+    if glbbox is None:
+        return lo, hi, (
+            f"Die Gelaenderegel hat {len(gelaende)} Objekt(e) aussortiert und die Rahmung "
+            f"damit um {schrumpfung:.1%} enger gemacht. Ob das viel oder wenig ist, steht "
+            f"hier NICHT: 'aiimaging.glbbox' ist von diesem Blender aus nicht erreichbar, "
+            f"und die Schwelle dafuer (GERINGE_SCHRUMPFUNG) wird nicht geraten."), schrumpfung
+
+    if schrumpfung < glbbox.GERINGE_SCHRUMPFUNG:
+        return lo, hi, (
+            f"Die Gelaenderegel hat {len(gelaende)} Objekt(e) aussortiert, die Rahmung "
+            f"wird davon aber nur um {schrumpfung:.1%} enger — unter "
+            f"{glbbox.GERINGE_SCHRUMPFUNG:.0%}. Das SIEHT nach einer Bauwerksbox aus und "
+            f"wirkt wie keine. DER GROESSTE KNOTEN, DEN DIE REGEL HIER ALS BAUWERK "
+            f"ZAEHLT, heisst '{groesster[0]}' und spannt {groesster[1]:.2f} m auf, also "
+            f"{(groesster[1] / b_szene if b_szene > 0.0 else 0.0):.0%} der Szene — wenn "
+            f"das kein Bauteil ist, fehlt der Regel genau sein Wort. Wer eine wirksame "
+            f"Box braucht, ergaenzt die REGEL an ihrer einen Stelle "
+            f"(maske.GELAENDE_WOERTER) — nicht diesen Aufruf."), schrumpfung
+    return lo, hi, "", schrumpfung
 
 
 def _kamera_setzen(lo, hi, a=None):
@@ -1238,7 +1319,7 @@ def main() -> int:
     # Und daneben die Box der gebauten Substanz. Sie ENTSCHEIDET hier nichts — der Runner
     # rahmt weiterhin, was ihm gesagt wird. Sie wird berichtet, damit diesseits der
     # Prozessgrenze VOR dem Bildlauf entscheidbar ist, ob die Rahmung ein Urteil zulaesst.
-    bau_lo, bau_hi, bau_note = _bbox_bauwerk()
+    bau_lo, bau_hi, bau_note, bau_schrumpfung = _bbox_bauwerk()
     # Die Kamera darf sich auf eine ANDERE Hüllbox beziehen als der Bericht: Der Bericht
     # beschreibt, was dasteht; die Kamera rahmt, was gezeigt werden soll.
     kam_lo, kam_hi = (_huellbox_aus_text(a.kamera_huellbox)
@@ -1351,6 +1432,11 @@ def main() -> int:
         # "in Ordnung" — `bbox_bauwerk_note` sagt, woran es lag.
         "bbox_bauwerk": ([bau_lo, bau_hi] if bau_lo is not None else None),
         "bbox_bauwerk_note": bau_note,
+        # Wieviel Grundriss-Diagonale die Regel der Rahmung ueberhaupt genommen
+        # hat. DIE ZAHL, AN DER EINE WIRKUNGSLOSE BAUWERKSBOX ZU ERKENNEN IST:
+        # Ohne sie sieht eine Box, die 2 % bringt, im Bericht genauso aus wie
+        # eine, die 35 % bringt. `None` heisst: es gibt keine Bauwerksbox.
+        "bbox_bauwerk_schrumpfung": bau_schrumpfung,
         # Welcher Sonnenstand gestellt wurde, unter welcher Azimutkonvention, und ob er
         # BESTELLT war oder die Vorgabe ist. Bis zum 26.08.2026 lief der Sonnenstand
         # einer Bestellung ins Leere, und das Bild sah trotzdem richtig aus.

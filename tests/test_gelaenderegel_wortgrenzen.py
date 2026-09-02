@@ -93,6 +93,46 @@ def test_die_wortliste_enthaelt_nichts_mehrdeutiges():
         "eine wachsende Wortliste ist der Anfang des Teilstring-Vergleichs")
 
 
+def test_decke_bleibt_draussen_obwohl_ein_echtes_gelaende_so_heisst():
+    """**Die unbequemste der drei Sperren, und die einzige mit einer Messung dahinter.**
+
+    Am 02.09.2026 an einem Geländemodell aus einer echten Bestandsdatei nachgezählt: Es
+    trägt **112 Mesh-Knoten**, und die heutige Regel fasst davon genau **einen** (die
+    ``IfcSite``). Die übrigen **111** sind ``IfcSlab``-Knoten mit Namen der Form
+    ``Decke-025`` … ``Decke-046`` und tragen zusammen den grösseren Teil der Fläche.
+
+    *Und genau darum darf ``decke`` nicht in die Liste.* Dieselbe Vokabel benennt in den
+    Gebäudemodellen desselben Projekts die Geschossdecken — in einer Datei mit 2742
+    Knoten heissen 418 davon ``Decke``. Ein Wort, das in einer Datei das Gelände und in
+    der Datei daneben jede Geschossdecke benennt, trennt nicht; es verschiebt den Fehler
+    nur auf die teurere Seite (Gelände IN der Maske: dort erreichte weisses Rauschen auf
+    einer Bodenszene den Score 0,72).
+
+    **Der Befund ist damit nicht, welches Wort noch fehlt, sondern dass es keines gibt.**
+    Wo die Namen die Unterscheidung nicht tragen, muss sie von aussen kommen — ein Feld
+    je Szene (`auf-20260901-67`), nicht ein weiteres Wort hier.
+    """
+    assert "decke" in maske.WOERTER_AUSDRUECKLICH_NICHT, (
+        "die Ablehnung gehoert in eine Liste, die jemand ANFASST — nicht in einen Absatz")
+    assert maske.ist_gelaende("IfcSlab_Decke-028_0000000000000000000000") is False
+    assert maske.ist_gelaende("IfcSlab_L2-Boden-13_0000000000000000000001") is False
+
+
+def test_kein_abgelehntes_wort_steht_in_der_regel():
+    """**Der Riegel, der die beiden Listen zusammenhaelt.**
+
+    Ein abgelehntes Wort und die Regel duerfen sich nicht ueberschneiden. Ohne diese
+    Probe waere :data:`maske.WOERTER_AUSDRUECKLICH_NICHT` eine Notiz, und eine Notiz
+    haelt niemanden auf — sie stand vor dem 02.09.2026 als Fliesstext da und hat genau
+    das nicht getan.
+    """
+    ueberschneidung = set(GELAENDE_WOERTER) & set(maske.WOERTER_AUSDRUECKLICH_NICHT)
+    assert not ueberschneidung, (
+        f"{sorted(ueberschneidung)} steht in beiden Listen — eine der beiden Entscheidungen "
+        f"ist damit still zurueckgenommen worden. Wer ein Wort aufnehmen will, streicht es "
+        f"ZUERST aus WOERTER_AUSDRUECKLICH_NICHT und schreibt die Messung dazu.")
+
+
 # --------------------------------------------------------------------------------------
 # 4 · Und die Folge, um die es eigentlich ging
 # --------------------------------------------------------------------------------------

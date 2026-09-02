@@ -725,10 +725,21 @@ def geometrie_score(soll: Sequence[float], ist: Sequence[float],
     if n_gemeinsam == 0:
         warnungen.append(
             "Keine gemeinsame Silhouette: Es gibt keinen einzigen Bildpunkt, an dem "
-            "beide Karten Geometrie sehen. Das ist der Extremfall einer erfundenen "
-            "Kubatur — messbar ist er trotzdem nicht, denn ohne gemeinsame Punkte gibt "
-            "es keine Tiefenordnung zu vergleichen. Score bleibt None; das ist eine "
-            "fehlende Messung, kein Nullwert."
+            "beide Karten Geometrie sehen. Ohne gemeinsame Punkte gibt es keine "
+            "Tiefenordnung zu vergleichen; Score bleibt None, und das ist eine fehlende "
+            "Messung und kein Nullwert. "
+            "ZWEI LESARTEN, UND DIESE ZAHL TRENNT SIE NICHT: eine erfundene Kubatur im "
+            "Bild — oder eine SOLL-KARTE, DER DIE FLAECHE FEHLT, die das Bild zeigt "
+            "(Szene ohne Gelaende: der Schaetzer legt in den leeren Vordergrund eine "
+            "Bodenebene, und die trifft auf nichts). "
+            "Bis zum 02.09.2026 stand hier nur die erste Lesart, als 'Extremfall einer "
+            "erfundenen Kubatur'. Gemessen wurde an dem Tag das Gegenteil: An drei "
+            "Kameras einer gelaendelosen Szene ergaben das erzeugte Bild UND drei "
+            "wertlose Nullproben (Grau, Rauschen, Verlauf) denselben geom_iou 0.0 und "
+            "denselben geom_iou_norm auf die Stelle genau. Eine Zahl, die fuer weisses "
+            "Rauschen dasselbe sagt wie fuer das Bild, sagt ueber das Bild nichts. "
+            "Wer wissen will, welche Lesart zutrifft, sieht im Maskenbefund nach, ob "
+            "die Szene ueberhaupt Gelaende traegt."
         )
     elif n_gemeinsam < MIN_GEMEINSAME_PUNKTE:
         warnungen.append(

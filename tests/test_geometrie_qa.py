@@ -473,6 +473,41 @@ def test_ohne_gemeinsame_silhouette_gibt_es_keinen_score():
     assert geometrie_gate(SOLL, woanders)["bestanden"] is False
 
 
+def test_die_disjunkte_warnung_nennt_beide_lesarten_und_nicht_eine():
+    """Dieselbe Lehre wie bei ``test_das_muster_wird_benannt_und_nicht_gedeutet``, eine
+    Stufe extremer — und sie ist am 02.09.2026 an einem echten Lauf fällig geworden.
+
+    Bis dahin hiess dieser Fall hier *«der Extremfall einer erfundenen Kubatur»*. Das ist
+    eine Aussage über das BILD, und sie war an dem gemessenen Fall falsch: Die Szene trug
+    schlicht **kein Gelände** — die Soll-Karte deckte 15,7 % des Bildes, der Rest war
+    Hintergrund —, und der monokulare Schätzer legte in den leeren Vordergrund eine
+    Bodenebene. Zeilenschwerpunkt der Soll-Silhouette 0,434, der Ist-Silhouette 0,922.
+    Disjunkt, und das Bild hatte damit nichts zu tun.
+
+    **Der Beleg, dass die Zahl hier nichts über das Bild sagt, steckt in diesem Test
+    selbst:** Zwei Ist-Karten, die einander nicht im Geringsten ähneln, bekommen
+    denselben ``geom_iou``. An dem gemessenen Lauf ging es genauso aus — das erzeugte
+    Bild und drei wertlose Nullproben (Grau, Rauschen, Verlauf) lieferten an drei Kameras
+    denselben Wert 0.0 und denselben ``geom_iou_norm`` auf die Stelle genau.
+    """
+    rechts = tiefenkarte(36, 60, 14, 38, grund=16.0)
+    #: Nichts an dieser Karte gleicht der ersten: andere Stelle, andere Grösse, andere
+    #: Tiefenlage, andere Neigung. Nur eines teilen sie — sie treffen den Soll nicht.
+    unten = tiefenkarte(34, 62, 40, 46, grund=41.0, dx=-0.03, dy=0.11)
+
+    a = geometrie_score(SOLL, rechts)
+    b = geometrie_score(SOLL, unten)
+    assert a["n_gemeinsam"] == b["n_gemeinsam"] == 0
+    assert a["geom_iou"] == b["geom_iou"] == 0.0, (
+        "zwei voellig verschiedene Ist-Karten, eine Zahl — sie misst hier nicht das Bild")
+
+    text = " ".join(a["warnungen"])
+    assert "erfundene" in text and "Kubatur" in text          # Lesart (a), weiterhin
+    assert "SOLL-KARTE" in text                               # Lesart (b), neu
+    assert "Gelaende" in text or "Gelände" in text            # und woran sie liegt
+    assert "trennt sie nicht" in text.lower() or "TRENNT SIE NICHT" in text
+
+
 def test_zu_kleine_gemeinsame_silhouette_gibt_keinen_score():
     """22 gemeinsame Punkte liegen unter der Mindestzahl — der Score bliebe Rauschen."""
     knapp_daneben = tiefenkarte(31, 55, 14, 38, grund=16.0)

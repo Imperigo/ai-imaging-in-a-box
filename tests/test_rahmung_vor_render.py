@@ -21,6 +21,7 @@ wird (vorgegebene Kamera, fehlende Bauwerksbox, ausreichende Rahmung): Ohne sie 
 Umbau eine stille Abschaltung der Kette.
 """
 import importlib.util
+import math
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -273,7 +274,7 @@ def test_die_bauwerksbox_laesst_das_gelaende_weg(monkeypatch):
         _mesh("Wand_Nord", (0, 0, 0), (8, 5, 7)),
     ])
 
-    lo, hi, note = modul._bbox_bauwerk()
+    lo, hi, note, _ = modul._bbox_bauwerk()
 
     assert lo == [0, 0, 0] and hi == [8, 5, 7]
     assert note == ""
@@ -287,7 +288,7 @@ def test_ohne_gebaute_substanz_gibt_es_keine_bauwerksbox_und_keinen_rueckfall(mo
         _mesh("Gelaende_Hang", (-20, -20, -0.2), (20, 20, 0.0)),
     ])
 
-    lo, hi, note = modul._bbox_bauwerk()
+    lo, hi, note, _ = modul._bbox_bauwerk()
 
     assert lo is None and hi is None
     assert "NICHT auf die Szenenbox" in note
@@ -299,7 +300,7 @@ def test_ein_unerreichbares_maske_modul_ist_kein_fehlendes_gelaende(monkeypatch)
     modul = _runner_mit_objekten(monkeypatch, [_mesh("Wand", (0, 0, 0), (8, 5, 7))])
     monkeypatch.setattr(modul, "_maske_modul", lambda: None)
 
-    lo, hi, note = modul._bbox_bauwerk()
+    lo, hi, note, _ = modul._bbox_bauwerk()
 
     assert lo is None and hi is None
     assert "nicht erreichbar" in note
@@ -324,6 +325,98 @@ def test_die_gelaenderegel_wird_nicht_zweimal_hingeschrieben(monkeypatch):
     for wort in maske.GELAENDE_WOERTER:
         assert f'"{wort}"' not in quelle, (
             f"{wort!r} steht im Runner — die Regel gehoert in aiimaging.maske")
+
+
+# ======================================================================================
+# Die wirkungslose Bauwerksbox — der stillste Fall
+# ======================================================================================
+#
+# Nicht der leere Befund ist die Falle, sondern der wirkungslose. Gemessen am 02.09.2026
+# mit `glbbox.bauwerksbox` auf DERSELBEN Regel, an zwei echten Dateien:
+#
+#     Bestandsdatei    10 von 4771 Knoten als Gelaende   ->  Rahmung  2,3 % enger
+#     Gelaendemodell    1 von  112 Knoten als Gelaende   ->  Rahmung  1,7 % enger
+#
+# Beide Male galt die Regel als „hat gegriffen", und beide Male stand auf DIESEM Weg eine
+# LEERE Notiz. `glbbox` sagt den Fall seit dem 01.09.2026; der Blender-Weg schwieg.
+
+
+def test_eine_bauwerksbox_die_fast_nichts_wegnimmt_sagt_es(monkeypatch):
+    """**Der wichtigste Test dieser Gruppe.** Eine Box, die 2 % bringt, sah im Bericht
+    aus wie eine, die 35 % bringt — und nur eine von beiden traegt."""
+    modul = _runner_mit_objekten(monkeypatch, [
+        # Ein schmaler Streifen heisst nach Gelaende. Die Regel greift also, aber sie
+        # nimmt der Rahmung so gut wie nichts.
+        _mesh("Gelaende_Randstein", (-40.5, -40, 0.0), (-40, 40, 0.2)),
+        _mesh("IfcSlab_Umgebung_13_Gras", (-40, -40, -0.2), (40, 40, 0.0)),
+        _mesh("Wand_Nord", (0, 0, 0), (8, 5, 7)),
+    ])
+
+    lo, hi, note, schrumpfung = modul._bbox_bauwerk()
+
+    assert lo is not None and schrumpfung is not None
+    assert 0.0 < schrumpfung < 0.05, schrumpfung
+    assert f"{schrumpfung:.1%}" in note
+    # Und die Notiz nennt den groessten Knoten, den die Regel hier als Bauwerk gezaehlt
+    # hat: an ihm haengt die Auskunft, welches Wort der Regel fehlt.
+    assert "IfcSlab_Umgebung_13_Gras" in note
+    assert "GELAENDE_WOERTER" in note
+
+
+def test_die_schrumpfung_wird_an_der_diagonale_gemessen(monkeypatch):
+    """Die Wahl ist von ``glbbox`` geliehen und nicht neu getroffen — sonst laufen zwei
+    Wege zur selben Zahl auseinander.
+
+    Schrumpft nur eine Achse, ist ``max(dx, dy)`` blind: An der Bestandsdatei vom
+    28.08.2026 blieb dx und dy fiel; ueber ``max`` gemessen waeren das 0,5 %, ueber die
+    Diagonale 2,3 % — und nur die zweite Zahl passt zur gemessenen Abstandsaenderung.
+    """
+    modul = _runner_mit_objekten(monkeypatch, [
+        _mesh("Gelaende_Streifen", (-50, 40, 0.0), (50, 60, 0.2)),
+        _mesh("Wand", (-50, -40, 0), (50, 40, 7)),
+    ])
+
+    _, _, _, schrumpfung = modul._bbox_bauwerk()
+
+    # dx bleibt 100, dy faellt von 100 auf 80.
+    assert schrumpfung == pytest.approx(1.0 - math.hypot(100, 80) / math.hypot(100, 100))
+    assert schrumpfung > 0.0, "ueber max(dx, dy) gemessen waere hier NICHTS passiert"
+
+
+def test_ohne_glbbox_wird_die_schwelle_nicht_geraten(monkeypatch):
+    """Die dritte Antwort, eine Ebene tiefer: Die ZAHL steht auch dann da, das URTEIL
+    ueber sie nicht. Eine geratene Schwelle waere eine zweite Kopie an der Aussenkante."""
+    modul = _runner_mit_objekten(monkeypatch, [
+        _mesh("Gelaende_Randstein", (-40.5, -40, 0.0), (-40, 40, 0.2)),
+        _mesh("IfcSlab_Umgebung_13_Gras", (-40, -40, -0.2), (40, 40, 0.0)),
+    ])
+    monkeypatch.setattr(modul, "_glbbox_modul", lambda: None)
+
+    _, _, note, schrumpfung = modul._bbox_bauwerk()
+
+    assert schrumpfung is not None and f"{schrumpfung:.1%}" in note
+    assert "nicht erreichbar" in note and "nicht geraten" in note
+
+
+def test_die_schwelle_steht_nicht_zweimal_da():
+    """Dieselbe Begruendung wie bei der Wortliste: Eine Kopie der Schwelle an der
+    Aussenkante liefe bei der naechsten Messung still auseinander."""
+    from aiimaging import glbbox
+
+    quelle = RUNNER.read_text(encoding="utf-8")
+    assert "glbbox.GERINGE_SCHRUMPFUNG" in quelle, "der Runner muss die Schwelle BEFRAGEN"
+    assert "GERINGE_SCHRUMPFUNG =" not in quelle, (
+        "der Runner setzt die Schwelle selbst — sie gehoert allein in glbbox")
+    assert glbbox.GERINGE_SCHRUMPFUNG > 0.0
+
+
+def test_der_bericht_traegt_die_schrumpfung():
+    """Ohne diese Zahl im Bericht bleibt der wirkungslose Filter diesseits der
+    Prozessgrenze eine Textstelle — und Text laesst sich nicht schwellen."""
+    quelle = RUNNER.read_text(encoding="utf-8")
+    kopf = quelle.split("report = {", 1)[1].split("\n    }", 1)[0]
+
+    assert '"bbox_bauwerk_schrumpfung"' in kopf
 
 
 # ======================================================================================

@@ -186,6 +186,36 @@ GELAENDE_WOERTER: tuple[str, ...] = ("gelaende", "gelände", "terrain", "site",
 # fast nichts trennt — nicht ein weiteres Wort. Die eigentliche Lösung ist ein Feld je
 # Szene und liegt als ``auf-20260901-67`` beim Vertrags-Worker.
 
+#: **Wörter, die geprüft und abgelehnt sind — mit dem Grund daneben.**
+#:
+#: Bis zum 02.09.2026 stand diese Entscheidung nur in Fliesstext über
+#: :data:`GELAENDE_WOERTER` (*«``umgebung`` und ``gras`` sind ausdrücklich nicht
+#: aufgenommen»*). Fliesstext hält niemanden auf: Wer das nächste Mal vor einer Datei
+#: sitzt, deren Gelände ``Umgebung 15 - Gras`` heisst, trägt das Wort ein, und der Grund
+#: dagegen steht zwanzig Zeilen weiter oben in einem Absatz, den er nicht liest.
+#:
+#: **Jeder Eintrag ist eine Messung und keine Meinung**, und der teuerste steht zuletzt:
+#:
+#: * ``boden``, ``platte`` — ein Geschossboden ist kein Gelände; das ist der Grund, aus
+#:   dem :func:`ist_gelaende` überhaupt auf Wortgrenzen und nicht auf Teilstrings prüft.
+#: * ``umgebung``, ``gras`` — kommen in einer Bestandsdatei als Geländenamen vor
+#:   (``Umgebung 15 - Gras``, ``Aussen - Gras``), sind aber allgemein genug, um ein
+#:   echtes Bauteil still zu Gelände zu machen. Gewinn gering, Preis unbegrenzt.
+#: * ``decke`` — **die unbequemste, weil ein echtes Gelände wirklich so heisst.** Am
+#:   02.09.2026 an einem Geländemodell aus einer Bestandsdatei nachgezählt: 112
+#:   Mesh-Knoten, davon fasst die Regel genau einen (die ``IfcSite``); die übrigen 111
+#:   sind ``IfcSlab``-Knoten namens ``Decke-025`` … ``Decke-046``. Dieselbe Vokabel
+#:   benennt in den Gebäudemodellen desselben Projekts die Geschossdecken — in einer
+#:   Datei mit 2742 Knoten heissen 418 davon ``Decke``.
+#:
+#: *Damit ist der Befund nicht, welches Wort noch fehlt, sondern dass es keines gibt.* Wo
+#: die Namen die Unterscheidung nicht tragen, muss sie von aussen kommen. Und die
+#: Richtung des Fehlers ist entschieden: Gelände IN der Maske ist teurer als Gelände
+#: daneben — auf einer Bodenszene erreichte weisses Rauschen dort den Score 0,72.
+WOERTER_AUSDRUECKLICH_NICHT: tuple[str, ...] = (
+    "boden", "platte", "umgebung", "gras", "decke",
+)
+
 #: **Umfeld: weder Bauwerk noch Gelände.** IFC-Klassen für Dinge, die in der Szene stehen
 #: und nicht dazugehören — Bäume, Nachbargebäude, Strassenmöbel.
 #:
