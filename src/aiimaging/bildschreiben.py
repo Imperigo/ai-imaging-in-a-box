@@ -48,6 +48,7 @@ Abhängigkeit samt Binäranteil und ungeprüfter Lizenzlage aufzunehmen.
 """
 from __future__ import annotations
 
+import math
 import struct
 import zlib
 from collections.abc import Sequence
@@ -415,6 +416,8 @@ __all__ = [
     "SchreibError",
     "normalisiere_tiefe", "schreibe_farb_png", "schreibe_graustufen_png",
     "tiefe_exr_zu_png",
+    "BLATT_DECKEL_BASE64_ZEICHEN", "BLATT_DECKEL_BYTE", "BLATT_MIN_KANTE",
+    "base64_zeichen", "blattfassung", "passt_aufs_blatt",
 ]
 
 
@@ -442,6 +445,195 @@ KONTROLLARTEN = ("rauschen", "grau", "verlauf")
 #: liesse sich nicht zweimal gleich einordnen.
 KONTROLL_SEED = 20260820
 
+
+
+# ── Das Blatt ─────────────────────────────────────────────────────────────────────────
+#
+# GEMESSEN AM 03.09.2026, weil Demolauf 15 und 17 an derselben Naht stehenblieben: Der
+# Knopf «Aufs Blatt» in KosmoOrbit wies das Regelergebnis der eigenen Kette ab.
+#
+# Der Deckel steht drueben (`kosmo-orbit/.../vis-jobs.ts`, `BILD_DECKEL_BASE64_ZEICHEN`)
+# und vergleicht BASE64-ZEICHEN, nicht Bytes. Das ist der Grund, warum die Meldung in die
+# Irre fuehrt: Sie nennt «bis 1.0 MB», rechnet die gemessene Groesse aber in Rohbytes um
+# und die Grenze nicht. Base64 macht aus drei Bytes vier Zeichen — 1 048 576 Zeichen sind
+# darum 786 432 Rohbytes, also 0.75 MiB. Wer der Meldung folgt und auf 1.0 MB
+# verkleinert, wird ein zweites Mal abgewiesen.
+#
+# WARUM DIESE ZAHLEN HIER STEHEN UND NICHT DER DECKEL GEAENDERT WIRD. Der Deckel gehoert
+# einer anderen Lane und ist ein Owner-Entscheid (02.09.2026: «die Meldung verbessern, den
+# Deckel nicht anfassen»). Was hier fehlte, war die andere Haelfte: Die Kette wusste
+# nichts von einer Grenze, gegen die 60 von 66 ihrer Nutzbilder verstiessen (Median
+# 1 277 231 Byte gegen 786 432). Eine Kette, deren Normalausgabe die eigene naechste Stufe
+# nicht annimmt, ist an dieser Naht nicht anschlussfaehig — und zwar unabhaengig davon,
+# wer den Deckel gesetzt hat.
+#
+# WARUM EINE FASSUNG UND KEINE VERKLEINERUNG DES RENDERS. Das Render ist das Produkt und
+# bleibt, wie es ist. Fuer das Blatt entsteht eine BENANNTE, kleinere Kopie. Das ist die
+# dritte der drei Moeglichkeiten («beides trennen»), und sie ist die einzige, die weder
+# fremde Entscheide umstoesst noch Aufloesung verschenkt, wo sie gebraucht wird.
+
+#: Der Deckel der Gegenstelle, in Base64-Zeichen. Abgelesen am 03.09.2026.
+BLATT_DECKEL_BASE64_ZEICHEN = 1_048_576
+
+#: Derselbe Deckel in Rohbytes — die Zahl, die fuer eine Bilddatei zaehlt.
+#:
+#: **Nicht 1 000 000 und nicht 1 048 576.** 1 048 576 Zeichen / 4 * 3 = 786 432 Byte.
+#: Die Meldung der Gegenstelle nennt an dieser Stelle «1.0 MB»; das ist um den Faktor 4/3
+#: zu hoch und der Grund, warum ein Verkleinern auf «knapp unter 1 MB» wieder scheitert.
+BLATT_DECKEL_BYTE = BLATT_DECKEL_BASE64_ZEICHEN // 4 * 3
+
+#: Unter diese Kantenlaenge wird nicht verkleinert.
+#:
+#: Ab hier ist das Bild als Ansicht eines Bauwerks nicht mehr zu gebrauchen, und ein
+#: Ergebnis, das nur noch den Deckel einhaelt, beantwortet die Frage nicht mehr, fuer die
+#: es erzeugt wurde. Wird die Grenze erreicht, meldet :func:`blattfassung`
+#: ``passt=False`` — sie schummelt sich nicht darunter.
+BLATT_MIN_KANTE = 400
+
+
+def base64_zeichen(n_byte: int) -> int:
+    """Wieviele Base64-Zeichen ``n_byte`` Rohbytes ergeben. Drei Bytes → vier Zeichen."""
+    if n_byte < 0:
+        raise SchreibError(f"n_byte: nicht negativ erwartet, war {n_byte}.")
+    return 4 * ((n_byte + 2) // 3)
+
+
+def passt_aufs_blatt(png, *, deckel_zeichen: int = BLATT_DECKEL_BASE64_ZEICHEN) -> dict:
+    """Nimmt das Blatt diese Datei an? Rechnet in **Zeichen**, wie die Gegenstelle.
+
+    Die Pruefung ist absichtlich hier und nicht erst am Knopf: Eine Kette soll wissen, ob
+    ihr Ergebnis anschlussfaehig ist, bevor jemand klickt.
+
+    Returns:
+        ``{passt, bytes, zeichen, deckel_zeichen, deckel_byte, grund}``.
+    """
+    pfad = Path(png)
+    if not pfad.is_file():
+        raise SchreibError(f"Es gibt keine Datei {str(pfad)!r}.")
+    n = pfad.stat().st_size
+    zeichen = base64_zeichen(n)
+    deckel_byte = deckel_zeichen // 4 * 3
+    passt = zeichen <= deckel_zeichen
+    if passt:
+        grund = (f"{n} Byte ergeben {zeichen} Base64-Zeichen und liegen unter dem Deckel "
+                 f"von {deckel_zeichen} Zeichen ({deckel_byte} Byte).")
+    else:
+        grund = (f"{n} Byte ergeben {zeichen} Base64-Zeichen — der Deckel liegt bei "
+                 f"{deckel_zeichen} Zeichen, also bei {deckel_byte} Rohbytes (0.75 MiB). "
+                 f"ACHTUNG: Die Meldung der Gegenstelle nennt hier «1.0 MB». Das ist die "
+                 f"Zeichenzahl durch 1 048 576 und nicht die Byte-Grenze; wer auf 1.0 MB "
+                 f"verkleinert, wird erneut abgewiesen.")
+    return {"passt": passt, "bytes": n, "zeichen": zeichen,
+            "deckel_zeichen": deckel_zeichen, "deckel_byte": deckel_byte, "grund": grund}
+
+
+def _kastenmittel(farben, breite: int, hoehe: int, neu_breite: int, neu_hoehe: int):
+    """Kastenmittel — jeder Zielpunkt ist der Mittelwert seines Quellrechtecks.
+
+    **Nicht der naechste Nachbar.** Ein Render traegt duenne Linien (Fenstersprossen,
+    Gelaenderstaebe); der naechste Nachbar laesst sie je nach Raster verschwinden oder
+    springen, das Kastenmittel graut sie ab. Fuer eine Ansicht ist das Zweite richtig.
+    """
+    zeilen = [(y * hoehe // neu_hoehe, max(y * hoehe // neu_hoehe + 1,
+                                           (y + 1) * hoehe // neu_hoehe))
+              for y in range(neu_hoehe)]
+    spalten = [(x * breite // neu_breite, max(x * breite // neu_breite + 1,
+                                              (x + 1) * breite // neu_breite))
+               for x in range(neu_breite)]
+    raus = []
+    for y0, y1 in zeilen:
+        versatz = [zy * breite for zy in range(y0, y1)]
+        for x0, x1 in spalten:
+            r = g = b = n = 0
+            for v in versatz:
+                for i in range(v + x0, v + x1):
+                    p = farben[i]
+                    r += p[0]; g += p[1]; b += p[2]; n += 1
+            raus.append((r // n, g // n, b // n))
+    return raus
+
+
+def blattfassung(quelle_png, ziel_png, *,
+                 deckel_zeichen: int = BLATT_DECKEL_BASE64_ZEICHEN,
+                 min_kante: int = BLATT_MIN_KANTE, max_versuche: int = 8) -> dict:
+    """Eine verkleinerte Kopie fuer das Blatt. **Das Render bleibt unangetastet.**
+
+    Passt die Quelle schon, wird sie unveraendert kopiert und ``verkleinert=False``
+    gemeldet — eine Fassung, die nichts tut, ist besser als eine, die vorsichtshalber
+    Aufloesung wegwirft.
+
+    Sonst wird verkleinert, bis es passt. Der erste Faktor ist gerechnet und nicht
+    geraten: Die Dateigroesse waechst naeherungsweise mit der Punktzahl, also mit dem
+    Quadrat der Kantenlaenge — ``sqrt(Deckel / Ist)``, mit etwas Sicherheitsabstand, weil
+    ein verkleinertes Bild pro Punkt schlechter komprimiert (weniger gleichfoermige
+    Flaechen). Trifft es nicht, geht es in Schritten weiter.
+
+    **Was diese Funktion NICHT tut: sich unter den Deckel schummeln.** Erreicht sie
+    ``min_kante``, ohne unter den Deckel zu kommen, meldet sie ``passt=False``. Ein Bild
+    ueber der Grenze bleibt ein Bild ueber der Grenze; ein Ergebnis, das nur noch den
+    Deckel einhaelt und nichts mehr zeigt, waere eine Antwort auf die falsche Frage.
+
+    Returns:
+        ``{passt, verkleinert, bytes, zeichen, breite, hoehe, faktor, versuche,
+        quelle_bytes, warnungen}``.
+    """
+    from aiimaging import bildlesen        # lokal wie in `tiefe_exr_zu_png`, siehe dort
+
+    quelle, ziel = Path(quelle_png), Path(ziel_png)
+    vorher = passt_aufs_blatt(quelle, deckel_zeichen=deckel_zeichen)
+    if vorher["passt"]:
+        if ziel != quelle:
+            ziel.write_bytes(quelle.read_bytes())
+        farben, breite, hoehe = bildlesen.lies_png_farben(quelle)
+        return {"passt": True, "verkleinert": False, "bytes": vorher["bytes"],
+                "zeichen": vorher["zeichen"], "breite": breite, "hoehe": hoehe,
+                "faktor": 1.0, "versuche": 0, "quelle_bytes": vorher["bytes"],
+                "warnungen": []}
+
+    farben, breite, hoehe = bildlesen.lies_png_farben(quelle)
+    deckel_byte = deckel_zeichen // 4 * 3
+    faktor = math.sqrt(deckel_byte / vorher["bytes"]) * 0.95
+    warnungen, versuche = [], 0
+    letzte = None
+
+    for _ in range(max_versuche):
+        neu_b = max(1, int(round(breite * faktor)))
+        neu_h = max(1, int(round(hoehe * faktor)))
+        if min(neu_b, neu_h) < min_kante:
+            warnungen.append(
+                f"Unter {min_kante} px Kantenlaenge wird nicht verkleinert: Ein Bild, das "
+                f"nur noch den Deckel einhaelt, zeigt das Bauwerk nicht mehr. Der Deckel "
+                f"von {deckel_zeichen} Zeichen ({deckel_byte} Byte) ist mit dieser Quelle "
+                f"({vorher['bytes']} Byte) nicht erreichbar.")
+            break
+        versuche += 1
+        schreibe_farb_png(ziel, _kastenmittel(farben, breite, hoehe, neu_b, neu_h),
+                          neu_b, neu_h)
+        letzte = (neu_b, neu_h, faktor)
+        jetzt = passt_aufs_blatt(ziel, deckel_zeichen=deckel_zeichen)
+        if jetzt["passt"]:
+            return {"passt": True, "verkleinert": True, "bytes": jetzt["bytes"],
+                    "zeichen": jetzt["zeichen"], "breite": neu_b, "hoehe": neu_h,
+                    "faktor": faktor, "versuche": versuche,
+                    "quelle_bytes": vorher["bytes"], "warnungen": warnungen}
+        faktor *= 0.85
+
+    if letzte is None:
+        b_end = h_end = 0
+        f_end = faktor
+        n_end = vorher["bytes"]
+    else:
+        b_end, h_end, f_end = letzte
+        n_end = ziel.stat().st_size
+    if not warnungen:
+        warnungen.append(
+            f"Nach {versuche} Versuchen bleibt die Fassung ueber dem Deckel. Das ist ein "
+            f"Befund und kein Fehlschlag der Kette — gemeldet wird die Groesse, die "
+            f"erreicht wurde, nicht eine, die passt.")
+    return {"passt": False, "verkleinert": versuche > 0, "bytes": n_end,
+            "zeichen": base64_zeichen(n_end), "breite": b_end, "hoehe": h_end,
+            "faktor": f_end, "versuche": versuche, "quelle_bytes": vorher["bytes"],
+            "warnungen": warnungen}
 
 def kontrollwerte(art: str, breite: int, hoehe: int, *, seed: int = KONTROLL_SEED):
     """Die Grauwerte eines Kontrollbildes — ohne Datei, damit es prüfbar bleibt.

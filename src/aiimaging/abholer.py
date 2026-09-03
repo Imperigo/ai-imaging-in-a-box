@@ -3241,6 +3241,7 @@ def _bester_seed(seeds, aus, kuerzel, rendere_seed, messe, *, maske_da: bool):
         ausgewaehlt = True
 
     shutil.copyfile(sieger["bild"], ziel_png)
+    _blatt_ablegen(aus, kuerzel, ziel_png)
     erg = dict(sieger["_erg"], bild_png=ziel_png)
     auswahl = {"gewaehlt": sieger["seed"], "ausgewaehlt": ausgewaehlt, "grund": grund,
                "vorsprung": vorsprung,
@@ -3248,6 +3249,45 @@ def _bester_seed(seeds, aus, kuerzel, rendere_seed, messe, *, maske_da: bool):
                                "paarurteil": k.get("paarurteil")} for k in kandidaten]}
     _auswahl_ablegen(aus, kuerzel, auswahl)
     return erg, sieger["_urteil"], auswahl
+
+
+def _blatt_ablegen(aus, kuerzel, bild_png) -> None:
+    """Die **Blattfassung** neben das Bild legen — und, wenn sie nicht noetig ist, sagen,
+    dass sie nicht noetig war.
+
+    **Der Anlass.** Demolauf 15 und 17 blieben an derselben Naht stehen: Der Knopf «Aufs
+    Blatt» in KosmoOrbit wies das Regelergebnis dieser Kette ab. Gemessen am 03.09.2026
+    liegen **60 von 66** Nutzbildern dieser Kette ueber dem Deckel der Gegenstelle (Median
+    1 277 231 Byte gegen 786 432). Die Ablehnung war der Normalfall, nicht der Ausreisser.
+
+    **Warum eine Fassung und nicht ein kleineres Render.** Das Bild ist das Produkt und
+    bleibt, wie es ist; fuer das Blatt entsteht daneben eine benannte, kleinere Kopie.
+    Der Deckel selbst wird nicht angefasst — er gehoert einer anderen Lane und ist ein
+    Owner-Entscheid vom 02.09.2026.
+
+    **Warum keine Kopie, wenn es schon passt.** Eine zweite Datei mit demselben Inhalt
+    verbraucht Platz und stiftet Zweifel, welche der beiden gilt. Der Befund sagt dann,
+    dass das Bild selbst aufs Blatt kann.
+
+    Wie ``_auswahl_ablegen``: Ein Fehlschlag hier darf den Lauf nicht kosten. Das Bild ist
+    da; die Blattfassung ist eine Auskunft ueber die naechste Stufe, keine Stufe.
+    """
+    import json as _json
+
+    from . import bildschreiben        # lokal wie in `_verarbeite`, siehe dort
+
+    try:
+        befund = bildschreiben.passt_aufs_blatt(bild_png)
+        if befund["passt"]:
+            bericht = dict(befund, verkleinert=False, blatt_png=None)
+        else:
+            ziel = Path(aus) / f"{kuerzel}_blatt.png"
+            bericht = dict(bildschreiben.blattfassung(bild_png, ziel),
+                           blatt_png=str(ziel), grund=befund["grund"])
+        (Path(aus) / f"{kuerzel}_blatt.json").write_text(
+            _json.dumps(bericht, ensure_ascii=False, indent=1), encoding="utf-8")
+    except (OSError, ValueError):
+        pass
 
 
 def _auswahl_ablegen(aus, kuerzel, auswahl) -> None:
