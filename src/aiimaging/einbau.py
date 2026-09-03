@@ -50,6 +50,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 from aiimaging import auftrag as _auftrag
+from aiimaging import auftragspost as _post
 
 #: Eine Zeile der Einbau-Tabelle: ``| A1 | Posten | Zustand | Seit | Beleg |``
 #:
@@ -392,6 +393,11 @@ def bericht(repo_wurzel, blatt=None, *, heute: date | None = None) -> dict:
         # 02.09.2026 als offen — und stehen hier, weil «offen» allein nicht sagt, dass
         # jemand etwas mitteilen WOLLTE und dafuer ein eigenes Wort erfunden hat.
         "unbekannter_status": _auftrag.ergebnisse_mit_unbekanntem_status(wurzel),
+        # ABGELEGT IST NICHT AUSGELIEFERT. Am 03.09.2026 lagen zwei Auftraege an `ui`
+        # seit zwei bzw. einem Tag im Repo und waren nie hinausgegangen — sie zaehlten
+        # als Rueckstand beim Adressaten und waren einer beim Absender. Beide Zustaende
+        # sahen in dieser Liste vorher gleich aus.
+        "unzugestellt": _post.unzugestellt(wurzel),
         "ohne_adressat": verwaist,
         "ohne_geraetebeweis": unbelegt,
         "offene_posten": [p for p in alle if p["offen"]],

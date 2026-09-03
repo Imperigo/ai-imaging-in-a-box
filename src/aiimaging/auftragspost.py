@@ -33,7 +33,9 @@ Repo verlässt** und die Datei nicht.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Sequence
+from datetime import datetime, timezone
 from pathlib import Path
 
 from aiimaging import auftrag as _auftrag
@@ -83,10 +85,16 @@ ZUSTELLBELEG = (
     "Ein Satz von euch entscheidet das."
 )
 
-#: Stichtag und Zahlen für :data:`ZUSTELLBELEG`. **Sie stehen hier als Vorgabe und nicht
-#: im Text**, weil sie veralten: Sobald ein Adressat antwortet, gehört der Beleg weg und
-#: nicht eine falsche Zahl hinein.
-ZUSTELLBELEG_STAND = "01.09.2026"
+#: Stichtag für :data:`ZUSTELLBELEG`. **Er steht hier als Vorgabe und nicht im Text**,
+#: weil er veraltet: Sobald ein Adressat antwortet, gehört der Beleg weg und nicht eine
+#: falsche Zahl hinein.
+#:
+#: **Er wird von Hand nachgezogen, die Zahl daneben nicht** — ``n_offen`` reicht der
+#: Aufrufer aus einer frischen Zählung herein. Eine frisch gezählte Zahl neben einem
+#: zwei Tage alten Datum liest sich wie ein aktueller Stand und ist keiner; wer die
+#: Post neu erzeugt, zieht darum dieses Datum mit. *Nachgezogen am 03.09.2026, nachdem
+#: der Beleg zwei Tage lang mit dem Datum seiner Einführung hinausging.*
+ZUSTELLBELEG_STAND = "03.09.2026"
 
 
 class PostError(ValueError):
@@ -334,4 +342,73 @@ def lege_ab(blocks: Sequence[tuple[str, str]], verzeichnis) -> list[Path]:
     return aus
 
 
-__all__ = ["BREITE", "RUECKWEG", "PostError", "block", "lege_ab", "offene_blocks"]
+#: Die Adressaten, die einen Auftrag **nicht über unser Repo** bekommen, sondern nur
+#: über die abgelegten Blöcke. Für sie ist «im Repo abgelegt» und «beim Adressaten
+#: angekommen» zweierlei — und nur das Zweite zählt.
+ZUSTELLUNG_NOETIG = (_auftrag.WORKER_CLOUD, _auftrag.WORKER_UI)
+
+#: Wo vermerkt wird, welche Kennungen schon als Block hinausgegangen sind. **Im Vermerk
+#: steht kein Pfad** — nur Kennung und Zeitpunkt. Das Zielverzeichnis zeigt in ein
+#: fremdes Repo, und dessen Aufbau gehört nicht in ein öffentliches (Regel 3).
+ZUSTELLUNG_DATEI = "auftraege/zustellung.json"
+
+
+def _zustellvermerk(repo_wurzel) -> dict:
+    pfad = Path(repo_wurzel) / ZUSTELLUNG_DATEI
+    if not pfad.is_file():
+        return {}
+    try:
+        gelesen = json.loads(pfad.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        # EIN KAPUTTER VERMERK HEISST «NICHTS ZUGESTELLT», nicht «alles zugestellt».
+        # Die strengere Auslegung ist hier die sichere: Sie führt zu einer Auslieferung
+        # zu viel, die andere zu einem Auftrag, der nie ankommt.
+        return {}
+    return gelesen if isinstance(gelesen, dict) else {}
+
+
+def vermerke_zustellung(kennungen, repo_wurzel, *, wann: str | None = None) -> Path:
+    """Festhalten, dass diese Kennungen als Block hinausgegangen sind.
+
+    **Wozu, und der Fehler, der es ausgelöst hat.** Am 03.09.2026 lagen ``auf-70`` und
+    ``auf-72`` seit zwei bzw. einem Tag in ``auftraege/offen/`` — und **nirgends sonst**.
+    Der letzte Postlauf war vom 01.09.; seither war zwar abgelegt, aber nichts
+    ausgeliefert worden. In jeder Zählung standen sie als Rückstand beim Adressaten,
+    und nach unserem eigenen Satz war es einer beim Absender:
+
+        *Ein Auftrag, den sein Adressat nicht erreichen kann, ist kein Rückstand bei
+        ihm — er ist einer beim Absender.*
+
+    Gemerkt hat es niemand, weil es nichts zu merken gab: Abgelegt und ausgeliefert
+    sahen in jeder Liste gleich aus. Seither sind es zwei Zustände.
+    """
+    vermerk = _zustellvermerk(repo_wurzel)
+    zeit = wann or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    for kennung in kennungen:
+        vermerk[str(kennung)] = zeit
+    pfad = Path(repo_wurzel) / ZUSTELLUNG_DATEI
+    pfad.parent.mkdir(parents=True, exist_ok=True)
+    pfad.write_text(json.dumps(vermerk, indent=2, ensure_ascii=False,
+                               sort_keys=True) + "\n", encoding="utf-8")
+    return pfad
+
+
+def unzugestellt(repo_wurzel) -> list[dict]:
+    """Offene Aufträge an :data:`ZUSTELLUNG_NOETIG`, die noch nie ausgeliefert wurden.
+
+    Returns:
+        Je Auftrag ``{auftrag_id, worker, erstellt}``, älteste zuerst. **Leer heisst:
+        alles, was offen ist, ist auch draussen** — nicht, dass es gelesen wurde. Ob es
+        gelesen wird, sagt allein der :data:`ZUSTELLBELEG`.
+    """
+    vermerk = _zustellvermerk(repo_wurzel)
+    offen = [a for a in _auftrag.unerledigt(repo_wurzel)
+             if a.get("worker") in ZUSTELLUNG_NOETIG
+             and a.get("auftrag_id") not in vermerk]
+    offen.sort(key=lambda a: str(a.get("erstellt", "")))
+    return [{"auftrag_id": a.get("auftrag_id"), "worker": a.get("worker"),
+             "erstellt": a.get("erstellt")} for a in offen]
+
+
+__all__ = ["BREITE", "RUECKWEG", "ZUSTELLUNG_DATEI", "ZUSTELLUNG_NOETIG", "PostError",
+           "block", "lege_ab", "offene_blocks", "unzugestellt", "vermerke_zustellung"]

@@ -1231,6 +1231,34 @@ prüfte das Skript mit erfundenen Aufträgen und die Aufträge ohne das Skript; 
 lag der Fehler.* Die Abhilfe ist eine Probe, die die **wirklichen** Dateien durch den
 **wirklichen** Aufruf schickt.
 
+**Abgelegt gegen ausgeliefert** — Zwei Zustände eines Auftrags, die in jeder Liste
+gleich aussahen. **Abgelegt** heisst: Die Datei liegt in unserem Repo. **Ausgeliefert**
+heisst: Ein Block daraus ist an den Ort gegangen, an den der Adressat sieht.
+*Wozu die Unterscheidung:* Zwei unserer drei Adressaten haben unser Repo nicht. Für sie
+ist eine abgelegte Datei so unerreichbar wie eine ungeschriebene — und trotzdem steht sie
+in jeder Zählung als Rückstand **bei ihnen**. Nach unserem eigenen Satz ist sie dann einer
+**bei uns**: *Ein Auftrag, den sein Adressat nicht erreichen kann, ist kein Rückstand bei
+ihm — er ist einer beim Absender.*
+*Im Projekt am 03.09.2026:* Zwei Aufträge an die Oberfläche lagen zwei bzw. einen Tag im
+Repo und waren nirgends sonst; der letzte Postlauf war vom 01.09. Gemerkt hat es niemand,
+weil es nichts zu merken gab. Seither führt `auftraege/zustellung.json` mit, welche
+Kennung wirklich hinausgegangen ist, und der Einbau-Bericht meldet den Unterschied als
+erste Zeile — vor allen anderen Zahlen, weil er der einzige Rückstand ist, den wir selbst
+sofort beheben können. Nicht zu verwechseln mit dem **Zustellbeleg**: Der sagt, ob
+*gelesen* wurde; dieser nur, ob *hinausgegangen* wurde.
+
+**Stale Bytecode nach einer Mutationsprobe** — Eine Falle des Verfahrens selbst, gefunden
+am 03.09.2026. Eine Mutationsprobe ändert eine Datei, lässt die Proben laufen und stellt
+sie zurück. Ist die Änderung **gleich lang** wie das Original und geschieht die
+Rückstellung **in derselben Sekunde**, hält Python den zwischengespeicherten Bytecode für
+gültig — er wird an Zeitstempel und Länge erkannt, nicht am Inhalt — und führt weiter die
+**mutierte** Fassung aus.
+*Was man dann sieht:* eine rote Probe, die im Quelltext nicht mehr rot sein kann, und
+Ausgabezeilen aus einer Reihenfolge, die dort nicht mehr steht. *Der Fehler steckt nicht
+im Wächter und nicht im Bau, sondern im Werkzeug, mit dem geprüft wird* — die
+unangenehmste Sorte, weil beide Seiten korrekt aussehen. Abhilfe: `__pycache__` nach
+jeder Mutationsprobe löschen — und die Probe erst glauben, wenn sie das auch überlebt.
+
 **Zustellbeleg** — Die Bitte an einen Adressaten, **den Empfang zu bestätigen**, ohne
 inhaltlich zu antworten: ein Satz, mit Datum, mehr nicht.
 *Wozu, wenn doch eine Antwort gewünscht ist:* Weil Schweigen zwei ganz verschiedene Dinge
@@ -4024,6 +4052,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-03 | Ergaenzt: **Abgelegt gegen ausgeliefert** und **Stale Bytecode nach einer Mutationsprobe**. Anlass ist ein Rueckstand, der keiner beim Adressaten war: Zwei `ui`-Auftraege lagen zwei bzw. einen Tag im Repo und waren nie hinausgegangen — abgelegt und ausgeliefert sahen in jeder Zaehlung gleich aus. Der zweite Eintrag stammt aus der Pruefung dieses Baus: Eine gleich lange Mutation, in derselben Sekunde zurueckgestellt, lief aus dem Zwischenspeicher weiter und meldete eine rote Probe, die es im Quelltext nicht mehr gab |
 | 2026-09-02 | Ergaenzt: **Geerbter Vorbehalt** und **Die Bedingung nicht hergestellt**. Anlass ist die Nachrechnung eines fremden Befundes: Der Nachbargebaeude-Vorbehalt reproduziert hier nicht — er gilt fuer den Schaetzer und nicht fuer die Szene. Zwei von drei Anlaeufen der Messung stellten die Bedingung gar nicht her (9,8 % und 14,1 % Hintergrunddeckung statt 51,7 %) |
 | 2026-09-02 | Ergaenzt: **Fassungsabstand (zwischen zwei Maschinen)**, **Erfundener Status**, **Selbstbindung (gegen Hausregel)**. Anlass: Das Repo liess sich hier nicht mehr einlesen (Python 3.14 drueben, 3.11 hier, 25 Sammelabbrueche gegen «alles gruen» auf der anderen Seite); drei Ergebnisse mit einem Status, den der Vertrag nicht kennt, galten als beantwortet; und der Deckel bindet nur den, der ihn eingefuehrt hat |
 | 2026-09-01 | Ergaenzt: **Ungedrueckter Schalter**. Anlass sind drei Fehler desselben Tages, alle an Schaltern, die nie eine Probe gedrueckt hatte. Gemessen: 9 von 33; zwei waren kaputt, drei weitere nicht einmal pruefbar, weil `abholen.main()` kein argv entgegennahm — ein Einstieg, den keine Probe aufrufen kann, hat keine ungeprueften Schalter, er ist selbst einer. Nach dem Bau: 0 |

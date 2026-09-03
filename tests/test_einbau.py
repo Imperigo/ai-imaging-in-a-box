@@ -396,6 +396,40 @@ def test_ein_adressat_mit_antwort_wird_nicht_als_stumm_gemeldet(tmp_path, capsys
     assert "NIE GEANTWORTET" not in capsys.readouterr().out
 
 
+# ---------------------------------------------------------------------------------
+# NICHT AUSGELIEFERT — ein Rueckstand beim ABSENDER (03.09.2026)
+# ---------------------------------------------------------------------------------
+
+
+def test_der_bericht_meldet_auftraege_die_nie_hinausgegangen_sind(tmp_path, capsys):
+    """**Der Befund vom 03.09.2026.** Zwei `ui`-Auftraege lagen zwei bzw. einen Tag im
+    Repo und waren nirgends sonst. In dieser Liste sahen sie aus wie jeder andere
+    Rueckstand — und waren keiner beim Adressaten, sondern einer bei uns."""
+    auf.schreibe_auftrag(
+        auf.baue_auftrag(auftrag_id="auf-c", art="frage", beschreibung="x",
+                         worker=auf.WORKER_UI), tmp_path)
+    _mit_blatt(tmp_path)
+    _einbau_cli().main(["--repo", str(tmp_path)])
+    ausgabe = capsys.readouterr().out
+    assert "NICHT AUSGELIEFERT" in ausgabe
+    assert "auf-c" in ausgabe
+    assert "auftragspost.py" in ausgabe, (
+        "Eine Meldung ohne Abhilfe verschiebt das Nachsehen auf den naechsten.")
+
+
+def test_ein_ausgelieferter_auftrag_steht_nicht_in_dieser_meldung(tmp_path, capsys):
+    """Die Gegenprobe — sonst stuende die Zeile immer da und waere nach drei Tagen
+    unsichtbar, wie jede Dauerwarnung."""
+    from aiimaging import auftragspost
+    auf.schreibe_auftrag(
+        auf.baue_auftrag(auftrag_id="auf-c", art="frage", beschreibung="x",
+                         worker=auf.WORKER_UI), tmp_path)
+    auftragspost.vermerke_zustellung(["auf-c"], tmp_path)
+    _mit_blatt(tmp_path)
+    _einbau_cli().main(["--repo", str(tmp_path)])
+    assert "NICHT AUSGELIEFERT" not in capsys.readouterr().out
+
+
 def _einbau_cli():
     import importlib.util
     pfad = Path(__file__).resolve().parents[1] / "tools" / "einbau.py"

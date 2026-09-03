@@ -69,6 +69,7 @@ def main(argv: list[str] | None = None) -> int:
         if a.nach:
             for ziel in auftragspost.lege_ab(block, a.nach):
                 print(f"geschrieben: {ziel.name}")
+            _vermerke(block, a.repo)
             return 0
         print(block[0][1])
         return 0
@@ -83,6 +84,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.nach:
         for ziel in auftragspost.lege_ab(blocks, a.nach):
             print(f"geschrieben: {ziel.name}")
+        _vermerke(blocks, a.repo)
         return 0
 
     for i, (kennung, text) in enumerate(blocks):
@@ -90,6 +92,37 @@ def main(argv: list[str] | None = None) -> int:
             print("\n")
         print(text)
     return 0
+
+
+def _vermerke(blocks, repo) -> None:
+    """Den Zustellvermerk nachziehen — **nur nach dem Schreiben, nie davor**.
+
+    Die Reihenfolge ist der ganze Punkt: Ein Vermerk vor dem Schreiben behauptet eine
+    Auslieferung, die ein Fehler beim Schreiben gerade verhindert hat. Dann stünde ein
+    Auftrag als zugestellt da, der nie hinausging — genau der Zustand, gegen den es
+    diesen Vermerk gibt, nur mit einer Zeile mehr Beweis dafür, dass alles stimmt.
+
+    Nur Adressaten aus :data:`aiimaging.auftragspost.ZUSTELLUNG_NOETIG` werden
+    vermerkt; `local` liest das Repo selbst und braucht keine Post.
+    """
+    kennungen = []
+    for kennung, _text in blocks:
+        satz = _lies(Path(repo), kennung)
+        if satz and satz.get("worker") in auftragspost.ZUSTELLUNG_NOETIG:
+            kennungen.append(kennung)
+    if kennungen:
+        auftragspost.vermerke_zustellung(kennungen, repo)
+        print(f"zustellvermerk: {len(kennungen)} Kennung(en) nachgezogen")
+
+
+def _lies(wurzel: Path, kennung: str) -> dict | None:
+    pfad = _finde(wurzel, kennung)
+    if pfad is None:
+        return None
+    try:
+        return json.loads(pfad.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
 
 
 def _finde(wurzel: Path, kennung: str) -> Path | None:

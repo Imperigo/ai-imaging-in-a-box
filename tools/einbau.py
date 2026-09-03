@@ -39,6 +39,22 @@ from aiimaging import auftrag, einbau  # noqa: E402
 
 def _zeilen(bericht: dict, nur: str | None) -> list[str]:
     aus: list[str] = []
+    # NICHT AUSGELIEFERT STEHT GANZ OBEN, und das ist kein Geschmack: Es ist der einzige
+    # Rueckstand, den wir SELBST sofort beheben koennen. Alle Zahlen darunter messen, wie
+    # lange jemand anders braucht; diese misst, was bei uns liegen geblieben ist.
+    #
+    # Am 03.09.2026 lagen zwei Auftraege an `ui` zwei bzw. einen Tag im Repo und waren nie
+    # hinausgegangen. Sie zaehlten als Rueckstand beim Adressaten und waren einer beim
+    # Absender — und sahen in dieser Liste aus wie jeder andere.
+    nicht_raus = bericht.get("unzugestellt") or []
+    if nicht_raus:
+        aus.append(f"NICHT AUSGELIEFERT: {len(nicht_raus)} Auftrag/Auftraege liegen nur "
+                   f"bei UNS — kein Block ist je hinausgegangen.")
+        aus.append("      Abhilfe: tools/auftragspost.py <worker> --nach <verzeichnis>")
+        for e in nicht_raus:
+            aus.append(f"      {e['auftrag_id']:<22} an {e['worker']:<6} "
+                       f"seit {str(e['erstellt'])[:10]}")
+        aus.append("")
     r = bericht["rueckstand"]
     aus.append(f"RUECKSTAND: {r['n']} Auftraege ohne Antwort"
                + (f", aeltester {r['aelteste_tage']} Tage" if r["aelteste_tage"] is not None

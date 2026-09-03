@@ -376,3 +376,122 @@ def test_der_einzelweg_haengt_ihn_NICHT_an_wenn_der_adressat_geantwortet_hat(tmp
                         "--nach", str(ziel)]) == 0
     assert "ZUSTELLBELEG" not in (ziel / f"{satz['auftrag_id']}.md").read_text(
         encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------------
+# ABGELEGT IST NICHT AUSGELIEFERT — der Befund vom 03.09.2026
+#
+# `auf-20260901-70` und `auf-20260902-72` lagen zwei bzw. einen Tag in
+# `auftraege/offen/` und waren nirgends sonst: Der letzte Postlauf war vom 01.09., und
+# seither war zwar abgelegt, aber nichts hinausgegeben worden. In jeder Zaehlung standen
+# sie als Rueckstand BEIM ADRESSATEN — und nach unserem eigenen Satz war es einer beim
+# Absender. Gemerkt hat es niemand, weil abgelegt und ausgeliefert gleich aussahen.
+# ---------------------------------------------------------------------------------
+
+
+def test_ein_abgelegter_auftrag_gilt_nicht_schon_als_ausgeliefert(tmp_path):
+    """**Der Befund selbst.** Ohne Postlauf ist der Auftrag nur bei uns."""
+    satz = _satz(worker="ui")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    offen = auftragspost.unzugestellt(repo)
+    assert [e["auftrag_id"] for e in offen] == [satz["auftrag_id"]]
+    assert offen[0]["worker"] == "ui"
+
+
+def test_der_postlauf_traegt_die_zustellung_ein_und_die_liste_wird_leer(tmp_path):
+    """Die Gegenprobe — **über die Befehlszeile, nicht über die Hilfsfunktion**.
+
+    *Ein Wächter, der den Aufruf selbst nachbaut, bewacht seine eigene Nachbildung.*
+    Hier hängt der Vermerk am Postlauf; wer ihn dort herausnimmt, muss rot werden.
+    """
+    satz = _satz(worker="ui")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    assert _cli().main(["ui", "--repo", str(repo), "--nach", str(tmp_path / "hinaus")]) == 0
+    assert auftragspost.unzugestellt(repo) == []
+
+
+def test_auch_der_einzelweg_vermerkt_die_zustellung(tmp_path):
+    """Derselbe Fehler wie beim Zustellbeleg wäre hier wieder möglich: zwei Wege, und
+    einer geht an der Regel vorbei. Am 01.09. war das genau so passiert."""
+    satz = _satz(worker="cloud")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    assert _cli().main(["--repo", str(repo), "--auftrag", satz["auftrag_id"],
+                        "--nach", str(tmp_path / "hinaus")]) == 0
+    assert auftragspost.unzugestellt(repo) == []
+
+
+def test_ein_gedruckter_block_gilt_NICHT_als_ausgeliefert(tmp_path):
+    """**Drucken ist keine Zustellung.** Ohne `--nach` entsteht keine Datei, die
+    jemand lesen könnte — ein Vermerk hier wäre eine Auslieferung, die nur behauptet
+    ist. *Der Vermerk soll den Fall finden, nicht ihn zudecken.*"""
+    satz = _satz(worker="cloud")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    assert _cli().main(["cloud", "--repo", str(repo)]) == 0
+    assert [e["auftrag_id"] for e in auftragspost.unzugestellt(repo)] == [
+        satz["auftrag_id"]]
+
+
+def test_local_wird_nicht_vermerkt_denn_local_liest_das_repo_selbst(tmp_path):
+    """*Die HomeStation bekommt ihre Aufträge über `git pull`.* Ein Zustellvermerk für
+    sie wäre eine Zahl, die nie fällt und darum nichts bedeutet."""
+    satz = _satz(worker="local")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    assert _cli().main(["local", "--repo", str(repo),
+                        "--nach", str(tmp_path / "hinaus")]) == 0
+    assert not (repo / auftragspost.ZUSTELLUNG_DATEI).exists(), (
+        "Fuer `local` darf gar kein Vermerk entstehen.")
+    assert auftragspost.unzugestellt(repo) == []
+
+
+def test_ein_beantworteter_auftrag_steht_nicht_mehr_als_unzugestellt(tmp_path):
+    """Wer geantwortet hat, hat offensichtlich empfangen. Sonst bliebe eine Zeile
+    stehen, die einem beantworteten Auftrag nachträgt, nie zugestellt worden zu sein."""
+    satz = _satz(worker="cloud")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    auftrag.schreibe_ergebnis(
+        auftrag.baue_ergebnis(auftrag_id=satz["auftrag_id"], status="ok"), repo)
+    assert auftragspost.unzugestellt(repo) == []
+
+
+def test_ein_kaputter_vermerk_heisst_nichts_zugestellt(tmp_path):
+    """**Fail-closed, wie beim Leerlauftor.** Die strengere Auslegung führt hier zu einer
+    Auslieferung zu viel; die mildere zu einem Auftrag, der nie ankommt und den niemand
+    vermisst."""
+    satz = _satz(worker="ui")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    ziel = repo / auftragspost.ZUSTELLUNG_DATEI
+    ziel.parent.mkdir(parents=True, exist_ok=True)
+    ziel.write_text("{kein json", encoding="utf-8")
+    assert [e["auftrag_id"] for e in auftragspost.unzugestellt(repo)] == [
+        satz["auftrag_id"]]
+
+
+def test_der_vermerk_traegt_keinen_pfad_des_fremden_repos(tmp_path):
+    """**Regel 3 auch hier.** Das Zielverzeichnis zeigt in ein fremdes Repo; unseres ist
+    öffentlich. Vermerkt werden Kennung und Zeitpunkt — sonst nichts."""
+    satz = _satz(worker="ui")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    hinaus = tmp_path / "ein_fremder_ordner"
+    assert _cli().main(["ui", "--repo", str(repo), "--nach", str(hinaus)]) == 0
+    text = (repo / auftragspost.ZUSTELLUNG_DATEI).read_text(encoding="utf-8")
+    assert "ein_fremder_ordner" not in text
+    assert str(hinaus) not in text
+
+
+def test_der_vermerk_entsteht_erst_NACH_dem_schreiben(tmp_path):
+    """**Die Reihenfolge ist der ganze Punkt, und ohne diese Probe stünde sie nur im
+    Kommentar.** Ein Vermerk vor dem Schreiben behauptet eine Auslieferung, die ein
+    Fehler beim Schreiben gerade verhindert hat — und dann steht der Auftrag als
+    zugestellt da, mit einer Zeile mehr Beweis dafür, dass alles stimmt.
+
+    Erzwungen wird der Fehler, indem das Zielverzeichnis schon als **Datei** existiert.
+    """
+    satz = _satz(worker="ui")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    versperrt = tmp_path / "kein_ordner"
+    versperrt.write_text("ich bin eine Datei", encoding="utf-8")
+    with pytest.raises((NotADirectoryError, FileExistsError, OSError)):
+        _cli().main(["ui", "--repo", str(repo), "--nach", str(versperrt)])
+    assert [e["auftrag_id"] for e in auftragspost.unzugestellt(repo)] == [
+        satz["auftrag_id"]], (
+        "Nichts ist hinausgegangen — dann darf auch nichts vermerkt sein.")
