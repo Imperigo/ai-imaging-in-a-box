@@ -1,0 +1,29 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "ui",
+  "auftrag_id": "auf-20260903-76",
+  "art": "frage",
+  "beschreibung": "«Aufs Blatt» nennt eine Grenze von 1.0 MB, die in Wahrheit 0.75 MB ist — die Meldung rechnet die gemessene Groesse in Bytes um und die Grenze in Base64-Zeichen. Wer ihr folgt, wird ein zweites Mal abgewiesen.",
+  "anweisung": "=== DIE MELDUNG NENNT EINE GRENZE, DIE ES NICHT GIBT ===\n\nEs geht um EINEN Satz in `apps/kosmo-orbit/src/modules/vis/vis-jobs.ts`.\nDer Deckel selbst bleibt, wie er ist — der Owner hat das am 02.09.2026\nentschieden («die Meldung verbessern, den Deckel nicht anfassen»). Genau\ndiese Verbesserung ist hier faellig, und sie ist groesser als gedacht.\n\n--- 0 · WAS GEMESSEN WURDE (03.09.2026, Demolauf 17) ---\n\n«Aufs Blatt» wies zum zweiten Mal (nach Lauf 15) das Regelergebnis der\nBildkette ab. Wortlaut der Meldung:\n\n  «Das Bild ist mit 1.2 MB zu gross fuer das Blatt — hier passen bis 1.0 MB.\n   Verkleinere es und lege es erneut ab: die halbe Kantenlaenge ergibt etwa\n   ein Viertel der Datenmenge.»\n\nAbgelehnt wurde eine Datei von 1 241 264 Byte.\n\nDER FEHLER: Die Meldung nennt ZWEI ZAHLEN IN ZWEI VERSCHIEDENEN EINHEITEN.\n\n  * Die gemessene Groesse geht durch `base64Bytes()` und ist eine ROHBYTE-Zahl\n    -> «1.2 MB» (1 241 264 / 1 048 576 = 1.18).\n  * Die Grenze ist `mb(BILD_DECKEL_BASE64_ZEICHEN)`, also die ZEICHEN-Zahl\n    durch 1 048 576 -> «1.0 MB».\n\nBase64 macht aus drei Bytes vier Zeichen. Der Deckel von 1 048 576 ZEICHEN\nentspricht darum 786 432 ROHBYTES, also 0.75 MiB — nicht 1.0 MB.\n\nDIE FOLGE IST NICHT KOSMETISCH. Wer der Meldung folgt und auf «knapp unter\n1.0 MB» verkleinert, wird ein ZWEITES MAL abgewiesen: 1 000 000 Byte ergeben\n1 333 336 Zeichen und reissen den Deckel um 27 %. Die Meldung schickt den\nNutzer also in einen zweiten vergeblichen Versuch, und sie tut das mit einer\nZahl, die sie selbst ausrechnet.\n\nDer Codekommentar sagt die Ursache bereits: «Nur fuer die ANZEIGE gedacht —\nder Deckel selbst vergleicht weiterhin Zeichen gegen Zeichen.» Die Anzeige\nrechnet die eine Seite um und die andere nicht.\n\n--- 1 · WAS ZU TUN IST ---\n\nBeide Zahlen in DERSELBEN Einheit ausgeben. Die Rohbyte-Seite ist die\nrichtige, weil der Nutzer eine DATEI in der Hand hat und keinen Base64-String:\n\n  * gemessene Groesse: wie bisher ueber `base64Bytes()`.\n  * Grenze: `mb(BILD_DECKEL_BASE64_ZEICHEN / 4 * 3)` — also 0.75 MB.\n\nDer zweite Satz («die halbe Kantenlaenge ergibt etwa ein Viertel der\nDatenmenge») ist richtig und kann bleiben.\n\nDer Test `test/p-bilddeckel-meldung.test.ts:25-28` haelt den Fehler derzeit\nFEST: Er erwartet bei 2 x 1 048 576 Zeichen die Meldung «1.5 MB» gegen eine\nGrenze «1.0 MB» — 1.5 MiB Rohdaten gegen eine Grenze, die in Wahrheit\n0.75 MiB ist. Der Test muss also mit.\n\n--- 2 · WAS AUSDRUECKLICH NICHT ZU TUN IST ---\n\n  * NICHT den Deckel anheben oder senken. Owner-Entscheid vom 02.09.2026.\n  * NICHT den Vergleich von Zeichen auf Bytes umstellen. Der Vergleich ist\n    richtig — base64-kodiert wird nun einmal, was im Dokument landet. Falsch\n    ist nur, was DARUEBER gesagt wird.\n  * NICHT im Repo `ai-imaging-in-a-box` etwas aendern. Die Bildseite hat ihre\n    Haelfte am 03.09.2026 selbst gebaut (`bildschreiben.passt_aufs_blatt` und\n    `blattfassung`, der Abholer legt neben jedes Bild eine Blattfassung).\n\n--- 3 · ZUR EINORDNUNG, NICHT ALS AUFTRAG ---\n\nVon 66 Nutzbildern, die die Bildkette bis heute erzeugt hat, liegen 60 ueber\ndem Deckel (90.9 %), Median 1 277 231 Byte. Die Ablehnung ist dort der\nNormalfall, nicht der Ausreisser. Das ist KEIN Argument, den Deckel zu\naendern — die Bildseite liefert ab sofort eine passende Fassung mit. Es ist\nder Grund, warum die Meldung so oft gelesen wird, und darum stimmen muss.\n\nGesucht wurde nach einer technischen Begruendung fuer die Hoehe des Deckels:\nUrsprungscommit `760d1a77`, `git log -S`, ROADMAP 514 und 1277,\n`docs/V088-SPEZ.md`, Codeumfeld. Gefunden wurde nur «Owner-Deckel». Das ist\neine gueltige Begruendung — sie steht hier nur, damit niemand ein zweites Mal\ndanach sucht.",
+  "erstellt": "2026-09-03T17:41:40Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": [
+    "M1 Der neue Wortlaut der Meldung, woertlich — mit beiden Zahlen in DERSELBEN Einheit.",
+    "M2 Der Wert, der als Grenze angezeigt wird (erwartet: 0.75 MB), und die Zeile, die ihn rechnet.",
+    "M3 Ob `test/p-bilddeckel-meldung.test.ts` mit angepasst wurde und wie er jetzt lautet.",
+    "M4 Bestaetigung, dass `BILD_DECKEL_BASE64_ZEICHEN` unveraendert bei 1 048 576 steht und der Vergleich weiterhin Zeichen gegen Zeichen laeuft.",
+    "M5 Falls ihr die Meldung anders lost als vorgeschlagen: warum — der Weg ist eure Entscheidung, die Einheitengleichheit nicht."
+  ]
+}

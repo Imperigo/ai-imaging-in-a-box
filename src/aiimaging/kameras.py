@@ -307,6 +307,110 @@ MAX_SHIFT_MM = 12.0
 DEGENERIERT_ANTEIL = 1e-9
 
 
+
+#: Das Band, in dem eine Perspektive **augenhoch** heisst — in Metern über Geländestand.
+#:
+#: **Gemessen wird gegen ein Band und nicht gegen einen Punkt.** :data:`AUGENHOEHE_M` ist
+#: die Höhe, in der dieses Projekt seine eigenen Kameras SETZT. Sie taugt nicht als
+#: Prüfung fremder Standpunkte: Eine Kamera bei 1.62 m ist augenhoch, ohne 1.70 zu sein,
+#: und eine Prüfung auf Gleichheit würde sie verwerfen. Die Untergrenze steht bei 1.60 m,
+#: die Obergrenze bei der eigenen Setzhöhe.
+#:
+#: **Warum diese Prüfung nichts abbricht.** Eine Vogelperspektive ist mit Absicht nicht
+#: augenhoch, und für sie gibt es bereits eine eigene Regel (die Kamera über dem Dach).
+#: Was hier fehlte, war die andere Richtung: Bis zum 03.09.2026 konnte niemand sagen,
+#: **wieviele** der bestellten augenhohen Perspektiven auch welche waren. Bestellt waren
+#: drei; Demolauf 16 und 17 lieferten zwei Standpunkte, von denen genau einer auf
+#: Augenhöhe stand — und keine Zahl im Lauf sagte das.
+AUGENHOEHE_BAND_M = (1.60, AUGENHOEHE_M)
+
+
+def augenhoehe_befund(kamera: dict, *, band_m: tuple = AUGENHOEHE_BAND_M) -> dict:
+    """Steht dieser Standpunkt wirklich auf Augenhöhe? Eine Auskunft, kein Abbruch.
+
+    Gerechnet wird ``auge[2] − gelaende_z``, also **über dem Geländestand** und nicht über
+    der Nulllinie — dieselbe Rechnung wie in ``kamerasatz`` und im Dachriegel des
+    Abholers. Ein Standpunkt im Kellergeschoss stünde sonst bei −1.6 m und wäre
+    formal «zu tief», obwohl er im Raum auf Augenhöhe steht.
+
+    Args:
+        kamera: der Kamerablock des Blender-Berichts (``auge``, ``gelaende_z``).
+        band_m: ``(unten, oben)`` in Metern. Vorgabe :data:`AUGENHOEHE_BAND_M`.
+
+    Returns:
+        ``{gemessen, kamerahoehe_m, augenhoch, band_m, grund}``.
+
+        ``augenhoch`` ist ``None``, wenn die Zahlen fehlen — **nicht** ``False``. Eine
+        fehlende Zahl heisst in diesem Projekt *nicht gemessen* und nicht *durchgefallen*;
+        ein ``False`` hier wäre ein Urteil über etwas, das niemand angesehen hat.
+    """
+    unten, oben = float(band_m[0]), float(band_m[1])
+    try:
+        hoehe = float(kamera["auge"][2]) - float(kamera["gelaende_z"])
+    except (TypeError, ValueError, IndexError, KeyError):
+        return {"gemessen": False, "kamerahoehe_m": None, "augenhoch": None,
+                "band_m": (unten, oben),
+                "grund": ("Ohne `auge` und `gelaende_z` ist die Augenhöhe NICHT GEMESSEN. "
+                          "Das ist etwas anderes als 'steht nicht auf Augenhöhe'.")}
+    augenhoch = unten <= hoehe <= oben
+    if augenhoch:
+        grund = f"Standpunkt {hoehe:.2f} m ueber Gelaende — augenhoch ({unten:.2f}–{oben:.2f} m)."
+    else:
+        wohin = "zu tief" if hoehe < unten else "zu hoch"
+        grund = (f"Standpunkt {hoehe:.2f} m ueber Gelaende — KEINE Augenhoehe, {wohin} "
+                 f"(Band {unten:.2f}–{oben:.2f} m). Das ist kein Abbruch: Eine "
+                 f"Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser "
+                 f"Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt.")
+    return {"gemessen": True, "kamerahoehe_m": hoehe, "augenhoch": augenhoch,
+            "band_m": (unten, oben), "grund": grund}
+
+
+def augenhohe_standpunkte(kameras, *, bestellt: int | None = None,
+                          band_m: tuple = AUGENHOEHE_BAND_M) -> dict:
+    """Wieviele der gelieferten Standpunkte stehen auf Augenhöhe — und wieviele fehlen?
+
+    **Der Anlass.** Bestellt waren drei augenhohe Perspektiven. Demolauf 16 und 17
+    lieferten zwei Standpunkte, von denen einer augenhoch war und einer bei 54.35 m stand.
+    Beide Läufe meldeten das nicht als Fehlbetrag, sondern gar nicht: Der eine Standpunkt
+    wurde vor der Diffusion abgelehnt (richtig, 54 m sind keine Augenhöhe), der andere
+    gerendert — und die Frage «waren es drei?» stellte niemand.
+
+    ``bestellt`` ist ausdrücklich ein **Parameter und keine Konstante**: Wieviele
+    Perspektiven bestellt sind, gehört zum Auftrag und nicht zur Bibliothek. Ohne Angabe
+    wird nur gezählt, nicht verglichen.
+
+    Returns:
+        ``{n_gelieferte, n_augenhoch, n_ungemessen, bestellt, fehlbetrag, je_kamera,
+        warnungen}``. ``fehlbetrag`` ist ``None``, solange niemand sagt, wieviele bestellt
+        waren — eine Lücke gegen eine ungenannte Zahl wäre keine.
+    """
+    liste = list(kameras or [])
+    je = [dict(augenhoehe_befund(k, band_m=band_m),
+               kamera=(k.get("name") if isinstance(k, dict) else None))
+          for k in liste]
+    n_augenhoch = sum(1 for b in je if b["augenhoch"] is True)
+    n_ungemessen = sum(1 for b in je if not b["gemessen"])
+
+    fehlbetrag = None
+    warnungen = []
+    if bestellt is not None:
+        fehlbetrag = max(0, int(bestellt) - n_augenhoch)
+        if fehlbetrag:
+            warnungen.append(
+                f"Bestellt waren {int(bestellt)} augenhohe Perspektiven, geliefert sind "
+                f"{n_augenhoch} — es fehlen {fehlbetrag}. Von {len(liste)} Standpuenkten "
+                f"stehen {len(liste) - n_augenhoch - n_ungemessen} ausserhalb des Bandes "
+                f"{band_m[0]:.2f}–{band_m[1]:.2f} m und {n_ungemessen} sind ungemessen. "
+                f"Ein abgelehnter Standpunkt ist KEIN gelieferter: Wer nur die Bilder "
+                f"zaehlt, zaehlt die Ablehnung als Erfolg mit.")
+    if n_ungemessen:
+        warnungen.append(
+            f"{n_ungemessen} Standpunkt(e) ohne `auge`/`gelaende_z`: NICHT GEMESSEN. Sie "
+            f"zaehlen weder als augenhoch noch als daneben.")
+    return {"n_gelieferte": len(liste), "n_augenhoch": n_augenhoch,
+            "n_ungemessen": n_ungemessen, "bestellt": bestellt,
+            "fehlbetrag": fehlbetrag, "je_kamera": je, "warnungen": warnungen}
+
 def shift_aus_ziel(auge, blick_auf, *, brennweite_mm: float = BRENNWEITE_MM) -> dict:
     """Wieviel Shift ersetzt genau diese Kippung?
 

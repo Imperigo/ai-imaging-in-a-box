@@ -765,6 +765,18 @@ daneben läuft. Die übliche Form, ein Python-Programm in eine Desktop-Anwendung
 einzubinden, ohne es in sie hineinzubauen.
 
 
+**Base64** — Ein Verfahren, beliebige Daten als reinen Text zu schreiben, damit sie dort
+durchkommen, wo nur Text erlaubt ist (in einem JSON-Dokument, in einer Web-Adresse). Aus
+**drei Bytes werden vier Zeichen** — der Text ist also rund ein Drittel länger als die
+Daten, die er trägt.
+
+*Dieser Faktor 4/3 ist am 03.09.2026 zu einem Befund geworden: Ein Deckel für Bilder
+verglich* Zeichen*, eine Fehlermeldung nannte die gemessene Grösse aber in* Bytes *und
+die Grenze in* Zeichen — *beides mit der Einheit «MB» beschriftet. Die genannte Grenze
+war dadurch um ein Drittel zu hoch, und wer ihr folgte, wurde ein zweites Mal abgewiesen.
+Wenn zwei Zahlen in einem Satz stehen, müssen sie dieselbe Einheit haben — sonst ist die
+Meldung eine Falle und keine Hilfe.*
+
 ---
 
 ## 4 · Qualität und Absicherung
@@ -3025,6 +3037,48 @@ standen. Hiesse eine Exportbibliothek einmal „Rhino…", ergäbe Feld 5 eine *
 Herkunft — und eine falsche Herkunft ist schlimmer als keine, weil sie eine Up-Achse zur
 Bestätigung vorschlägt. Erkannt wird darum aus Feld 6 zuerst.*
 
+**Tiefenpass (Z-Pass) und Material-ID-Pass** — Zwei Nebenbilder, die derselbe Render
+neben dem sichtbaren Bild ausgibt. Der **Tiefenpass** hält je Bildpunkt fest, wie weit das
+Getroffene entfernt ist; der **Material-ID-Pass** hält fest, *welches* Material getroffen
+wurde, als Kennfarbe. Beide beschreiben dieselbe Szene aus derselben Kamera und müssen
+darum übereinstimmen: Wo der eine ein Bauteil meldet, kann der andere nicht Himmel melden.
+
+*Am 03.09.2026 taten sie es doch. Der Material-ID-Pass läuft in diesem Projekt seit jeher
+mit abgeschalteter Transparenz, der Tiefenpass nicht — sobald Glas im Modell ankam,
+schrieb der Tiefenpass hinter jeder Scheibe, was dahinter liegt. Der Riegel dagegen ist*
+`geometrie_qa.durchsichtiges_soll`.
+
+**Transparenz-Bounce (`transparent_max_bounces`)** — Eine Einstellung des Renderers: Wie
+oft darf ein Sehstrahl durch eine durchsichtige Fläche *hindurch*gehen, statt an ihr
+stehenzubleiben? Bei `0` bleibt er an der ersten Fläche stehen — Glas verhält sich dann
+wie eine Wand. Für das **sichtbare** Bild ist das falsch (eine Scheibe soll durchsichtig
+aussehen), für **Kennbilder** ist es richtig: Eine Kennung oder eine Entfernung soll die
+Scheibe beschreiben und nicht das, was dahinter steht.
+
+*Genau darin lag der Rückschritt von Demolauf 17: dieselbe Einstellung, in zwei
+Durchgängen desselben Renders verschieden gesetzt — und niemand hatte je gefragt, ob sie
+zusammenpassen, weil es bis dahin gar kein Glas gab.*
+
+**Alphakanal, `alphaMode: BLEND`** — Der vierte Wert neben Rot, Grün und Blau: wie
+*deckend* eine Farbe ist. `1.0` heisst undurchsichtig, `0.25` heisst, dass ein Viertel der
+eigenen Farbe und drei Viertel des Dahinterliegenden zu sehen sind. In einer glb-Datei
+sagt das Feld `alphaMode` je Material, wie der Wert zu behandeln ist; `BLEND` heisst
+«mischen», `OPAQUE` heisst «ignorieren, das Material ist dicht».
+
+*In diesem Projekt das Merkmal, an dem geprüft wird, ob eine ausgeführte glb überhaupt
+Fenster trägt: 700 IfcWindow in der Quelle und kein einziges Material mit `BLEND` heisst,
+dass die Scheiben unterwegs verlorengegangen sind.*
+
+**Kastenmittel (Box-Filter)** — Ein Bild verkleinern, indem jeder neue Bildpunkt der
+**Mittelwert** des Rechtecks alter Bildpunkte wird, das er ersetzt. Die einfachere
+Alternative, der **nächste Nachbar**, greift stattdessen einen einzelnen alten Punkt
+heraus und wirft die übrigen weg.
+
+*Bei einer Gebäudeansicht ist der Unterschied sichtbar: Fenstersprossen und
+Geländerstäbe sind oft nur einen Bildpunkt breit. Der nächste Nachbar lässt sie je nach
+Raster ganz verschwinden oder springen; das Kastenmittel graut sie ab, und die Ansicht
+behält ihre Struktur.*
+
 ---
 
 ## 6 · KI-Bildmodelle
@@ -4052,6 +4106,8 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-03 | Ergaenzt: **Tiefenpass (Z-Pass) und Material-ID-Pass**, **Transparenz-Bounce**, **Alphakanal / alphaMode: BLEND**. Anlass ist der Rueckschritt von Demolauf 17: Bildwert 0.2015 -> 0.000 bei einem Modell, das BESSER geworden war. Gemessen: Die Kette war unveraendert (beide Laeufe rechnen auf vier Stellen nach), die REFERENZ war es nicht — der Tiefenpass sah durch 750 Glas-Primitive hindurch, im Median 4.49 m tiefer als der eigene Rand, an 2106 Punkten bis in den Hintergrund. Glas im Soll dicht gemacht: Score zurueck auf 0.2001. Drei Scheinproben trennen den Befund vom Eingriff |
+| 2026-09-03 | Ergaenzt: **Base64** und **Kastenmittel (Box-Filter)**. Anlass ist die Naht «Aufs Blatt», die zum zweiten Mal das Regelergebnis der eigenen Kette abwies: Der Deckel vergleicht Base64-ZEICHEN, die Meldung nennt die Grenze aber als waere sie eine Byte-Zahl — 1 048 576 Zeichen sind 786 432 Byte, nicht 1.0 MB. 60 von 66 Nutzbildern lagen darueber. Das Kastenmittel ist die Art, wie die neue Blattfassung verkleinert, und der Eintrag traegt mit, warum nicht der naechste Nachbar |
 | 2026-09-03 | Ergaenzt: **Abgelegt gegen ausgeliefert** und **Stale Bytecode nach einer Mutationsprobe**. Anlass ist ein Rueckstand, der keiner beim Adressaten war: Zwei `ui`-Auftraege lagen zwei bzw. einen Tag im Repo und waren nie hinausgegangen — abgelegt und ausgeliefert sahen in jeder Zaehlung gleich aus. Der zweite Eintrag stammt aus der Pruefung dieses Baus: Eine gleich lange Mutation, in derselben Sekunde zurueckgestellt, lief aus dem Zwischenspeicher weiter und meldete eine rote Probe, die es im Quelltext nicht mehr gab |
 | 2026-09-02 | Ergaenzt: **Geerbter Vorbehalt** und **Die Bedingung nicht hergestellt**. Anlass ist die Nachrechnung eines fremden Befundes: Der Nachbargebaeude-Vorbehalt reproduziert hier nicht — er gilt fuer den Schaetzer und nicht fuer die Szene. Zwei von drei Anlaeufen der Messung stellten die Bedingung gar nicht her (9,8 % und 14,1 % Hintergrunddeckung statt 51,7 %) |
 | 2026-09-02 | Ergaenzt: **Fassungsabstand (zwischen zwei Maschinen)**, **Erfundener Status**, **Selbstbindung (gegen Hausregel)**. Anlass: Das Repo liess sich hier nicht mehr einlesen (Python 3.14 drueben, 3.11 hier, 25 Sammelabbrueche gegen «alles gruen» auf der anderen Seite); drei Ergebnisse mit einem Status, den der Vertrag nicht kennt, galten als beantwortet; und der Deckel bindet nur den, der ihn eingefuehrt hat |

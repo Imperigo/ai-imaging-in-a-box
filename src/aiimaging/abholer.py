@@ -3009,8 +3009,15 @@ def _komposition_vor_dem_render(bericht: dict) -> dict:
     """
     from . import komposition as _k
 
+    from . import kameras as _kam
+
     kamera = bericht.get("kamera")
     ueber_dach = _kamera_ueber_dach(kamera)
+    # DIE ANDERE RICHTUNG DERSELBEN FRAGE. Der Dachriegel faengt die Kamera, die zu hoch
+    # steht, um «Dach und Fuss im Bild» zu fragen. Er sagt aber nichts darueber, ob ein
+    # Standpunkt, der KEIN Abbruch ist, die BESTELLUNG erfuellt: Bestellt waren drei
+    # augenhohe Perspektiven. Bis zum 03.09.2026 stand in keinem Lauf eine Zahl dazu.
+    auge = _kam.augenhoehe_befund(kamera) if isinstance(kamera, dict) else None
     try:
         urteil = _k.beurteile_bericht(kamera)
     except Exception as fehler:                # noqa: BLE001 — siehe Docstring
@@ -3020,8 +3027,8 @@ def _komposition_vor_dem_render(bericht: dict) -> dict:
                             f"ist etwas anderes als 'die Aufnahme taugt nicht'.")}
 
     if not ueber_dach["abbruch"]:
-        return dict(urteil, abbruch=False, abbruch_grund="")
-    return dict(urteil, abbruch=True, grund=ueber_dach["grund"], abbruch_grund=(
+        return dict(urteil, augenhoehe=auge, abbruch=False, abbruch_grund="")
+    return dict(urteil, augenhoehe=auge, abbruch=True, grund=ueber_dach["grund"], abbruch_grund=(
         f"NICHT RENDERN: {ueber_dach['grund']} Diese Pruefung braucht KEIN Bild; sie "
         f"stand bis zum 26.08.2026 hinter der Diffusion und hat dort eine fertige "
         f"Bilddatei kommentiert, statt sie zu verhindern (auf-vis-20260826-16)."))
