@@ -2193,6 +2193,128 @@ def himmel_hinter_umriss(soll, maske, *, breite: int,
     }
 
 
+#: Ab welchem Anteil durchsichtiger Maskenpunkte die Soll-Karte als **durchsichtig** gilt.
+#:
+#: **ABGELESEN AN ZWEI LÄUFEN, NICHT KALIBRIERT** — und das ist hier keine Verlegenheit,
+#: sondern die ganze Datenlage. Demolauf 16 (dieselbe Kette, dieselbe Kamera, ein Modell
+#: ohne Scheibe) hat **0 von 714818** Maskenpunkten ohne endliche Soll-Tiefe; Demolauf 17
+#: (dasselbe, nur mit 750 Glas-Primitiven) hat **2106 von 729938**, also 0.29 %. Zwischen
+#: «gar keiner» und «einer von 350» liegt keine Grauzone, die zu teilen wäre.
+#:
+#: Ein Promille steht darum nicht als gemessene Trennlinie da, sondern als **Nachsicht
+#: gegenüber dem Bildrand**: Material-ID und Tiefe entstehen in zwei getrennten
+#: Render-Durchgängen mit verschiedenem Rekonstruktionsfilter, und ein einzelnes Pixel
+#: Versatz an einer Silhouettenkante wäre kein Befund. Dass Lauf 16 exakt null erreicht,
+#: sagt: im gesunden Fall wird diese Nachsicht gar nicht gebraucht.
+MAX_DURCHSICHT_ANTEIL = 0.001
+
+
+def durchsichtiges_soll(soll, maske, *,
+                        grenze_m: float = HINTERGRUND_SCHWELLE_M) -> dict:
+    """Sieht die **Soll**-Karte durch das eigene Bauwerk hindurch? Ein Riegel, kein Mass.
+
+    Die Maske kommt aus dem Material-ID-Pass, die Tiefe aus dem Z-Pass — **zwei
+    Durchgänge desselben Renders derselben Szene**. Wo die Maske sagt «hier steht ein
+    Bauteil» und die Tiefe sagt «hier ist Himmel», widersprechen sich die beiden. Das ist
+    kein schlechter Messwert, sondern ein **Widerspruch in der Referenz**, gegen die
+    danach alles andere gemessen wird.
+
+    **Warum das eine eigene Prüfung braucht und nicht am Score abzulesen ist.** Am
+    03.09.2026 kam in Demolauf 17 erstmals Glas im Modell an — 750 Primitive mit
+    ``alphaMode: BLEND``. Der Z-Pass lief mit den Cycles-Vorgaben, also mit
+    Transparenz-Bounces, und schrieb hinter jeder Scheibe *das, was dahinter liegt*: im
+    Median 4.49 m tiefer als der eigene undurchsichtige Rand, im 95. Perzentil 26.6 m,
+    und an 2106 Punkten den Hintergrundwert — dort verliess der Strahl das Gebäude auf
+    der anderen Seite wieder. Der Material-ID-Pass war nicht betroffen; er läuft seit
+    jeher mit ``transparent_max_bounces = 0``.
+
+    Die Folge war ein Rückschritt, der wie ein schlechteres Bild aussah und keiner war.
+    Nachgerechnet mit derselben Ist-Schätzung, nur mit im Soll undurchsichtig gemachtem
+    Glas (Zeilenfüllung aus den undurchsichtigen Rändern):
+
+    ==========================  =========  ===========  =========
+    Demolauf 17 «Eingang»        wie gef.   Glas dicht   Lauf 16
+    ==========================  =========  ===========  =========
+    ``score``                      0.0000       0.2001     0.2015
+    ``rho_maske`` (gerichtet)     +0.6480      +0.8057    +0.7995
+    ``spearman``                  +0.2501      −0.2377    −0.2393
+    ==========================  =========  ===========  =========
+
+    Der Score war auf null abgeschnitten, weil das **Vorzeichen** der Rangkorrelation
+    kippte — vorne und hinten vertauscht, von der Kette als Geometriebefund gemeldet.
+    Vertauscht hatte sie nicht das Bild, sondern die Soll-Karte. **Ein Mass, das ein
+    besseres Modell schlechter bewertet, misst nicht das, was gemeint war**, und die Kette
+    konnte das von sich aus nicht sagen.
+
+    **Was diese Prüfung sieht und was nicht.** Sie zählt nur die Punkte, an denen die
+    Durchsicht bis zum Hintergrund durchschlägt — 2106 von 85069 Glaspunkten, also die
+    Spitze. Der Schaden am Score entsteht an den **übrigen** Glaspunkten, deren Tiefe
+    bloss ein paar Meter zu weit hinten liegt und darum endlich bleibt. Die Zahl hier ist
+    ein **Anzeiger, kein Schadensmass**: Sie sagt zuverlässig, *dass* die Soll-Karte
+    durchsichtig ist, und nichts darüber, *wieviel* das den Score gekostet hat. Wer sie
+    als Schadensmass liest, liest sie falsch.
+
+    **Warum ein Widerspruch hier immer ein Defekt ist.** Die Maske enthält nur Punkte, an
+    denen der Material-ID-Pass eine Fläche getroffen hat. Wo etwas getroffen wurde, hat es
+    eine endliche Entfernung. Ein Durchblick durch ein Tor oder unter einem Vordach fällt
+    nicht darunter: Dort trifft schon die Material-ID nichts, und der Punkt liegt gar
+    nicht erst in der Maske. Es gibt darum keinen gesunden Fall, in dem diese Zahl gross
+    wird.
+
+    Args:
+        soll: die Soll-Tiefenkarte in Metern, zeilenweise von oben.
+        maske: die Bauwerksmaske aus dem Material-ID-Pass, gleich lang.
+        grenze_m: ab hier gilt ein Wert als Hintergrund. Vorgabe
+            :data:`HINTERGRUND_SCHWELLE_M`.
+
+    Returns:
+        ``{n_maske, n_durchsicht, anteil, durchsichtig, methode, warnungen}``.
+        ``durchsichtig`` ist ``True``, sobald der Anteil
+        :data:`MAX_DURCHSICHT_ANTEIL` überschreitet.
+
+    Raises:
+        QaError: ``soll`` und ``maske`` sind verschieden lang. Zwei Karten verschiedener
+            Grösse gegeneinanderzuhalten ergäbe eine Zahl ohne Sinn — dieselbe Regel wie
+            in :func:`himmel_hinter_umriss`.
+    """
+    werte = _als_zahlen(soll, "soll")
+    m = _als_wahrheitswerte(maske, "maske")
+    if len(werte) != len(m):
+        raise QaError(
+            f"soll und maske sind verschieden lang ({len(werte)} gegen {len(m)}). "
+            f"Zwei Karten verschiedener Grösse zu vergleichen ergäbe eine Zahl ohne Sinn.")
+
+    n_maske = sum(1 for treffer in m if treffer)
+    n_durch = sum(1 for i, treffer in enumerate(m)
+                  if treffer and (not math.isfinite(werte[i]) or werte[i] >= grenze_m))
+    anteil = (n_durch / n_maske) if n_maske else 0.0
+    durchsichtig = anteil > MAX_DURCHSICHT_ANTEIL
+
+    warnungen = []
+    if durchsichtig:
+        warnungen.append(
+            f"Die SOLL-Karte ist durchsichtig: An {n_durch} von {n_maske} Maskenpunkten "
+            f"({anteil:.2%}) meldet der Material-ID-Pass ein Bauteil und der Tiefenpass "
+            f"Hintergrund. Beide stammen aus demselben Render derselben Szene; sie können "
+            f"nicht beide recht haben. Der wahrscheinliche Grund ist ein Tiefenpass MIT "
+            f"Transparenz-Bounces über einem Material mit Alpha < 1 — der Strahl geht "
+            f"durch die Scheibe und schreibt, was dahinter liegt. FOLGE FUER JEDE ZAHL "
+            f"DIESES LAUFS: Score, Rangkorrelation und geom_iou messen dann gegen eine "
+            f"Referenz, die das Bauwerk stellenweise nicht zeigt, und fallen dadurch ZU "
+            f"NIEDRIG aus. Um wieviel, sagt diese Pruefung NICHT — sie zaehlt nur, wo die "
+            f"Durchsicht bis zum Hintergrund durchschlaegt, nicht die vielen Punkte, die "
+            f"bloss ein paar Meter zu weit hinten liegen. An dem einen nachgerechneten "
+            f"Fall waren es Score 0.0000 statt 0.2001 (Demolauf 17, 03.09.2026).")
+    return {
+        "n_maske": n_maske,
+        "n_durchsicht": n_durch,
+        "anteil": anteil,
+        "durchsichtig": durchsichtig,
+        "methode": "maskenpunkte_ohne_endliche_solltiefe",
+        "warnungen": warnungen,
+    }
+
+
 def _kantenstaerken(werte: list[float], breite: int, hoehe: int) -> list[float]:
     """Je Bildpunkt: wie stark sich die Tiefe zu den Nachbarn ändert.
 

@@ -1139,7 +1139,7 @@ def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
     (`auf-20260821-26`: ein leeres Grundstück erreicht dort 0.9530 und besteht das Tor).
     """
     leer = {"rho_maske": None, "kante": None, "kantenanteil": None,
-            "himmel": None, "paarurteil": None}
+            "himmel": None, "paarurteil": None, "soll_durchsichtig": None}
     if maske is None or breite is None:
         return leer
 
@@ -1175,7 +1175,15 @@ def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
     #
     # Die Funktion bleibt in `geometrie_qa`, mit dem Befund im Docstring. Wer sie wieder
     # anschliessen will, liest ihn zuerst.
+    # DER RIEGEL AUF DIE SOLL-KARTE SELBST. Alles darueber misst Ist gegen Soll und
+    # setzt dabei voraus, dass das Soll das Bauwerk zeigt. Am 03.09.2026 tat es das nicht:
+    # Der Tiefenpass sah durch 750 Glas-Primitive hindurch, und der Score fiel dadurch von
+    # 0.2001 auf 0.0000 — bei einem Modell, das BESSER geworden war. Die Pruefung braucht
+    # weder Bild noch Schaetzung, nur Soll und Maske; sie steht darum hier und nicht
+    # hinter der Diffusion.
+    durchsichtig = geometrie_qa.durchsichtiges_soll(list(soll), maske)
     return {"rho_maske": rho, "kante": kante, "kantenanteil": anteil, "himmel": himmel,
+            "soll_durchsichtig": durchsichtig,
             "paarurteil": geometrie_qa.paarurteil(rho, kante, anteil_ergebnis=anteil,
                                                   himmel_ergebnis=himmel)}
 
@@ -1358,8 +1366,18 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
             n_punkte=len(roh), error=f"{type(fehler).__name__}: {fehler}",
         )
 
+    masken_ergebnis = _maskenweg(soll, roh, maske, ist_ergebnis["breite"], schaetzer,
+                                 eintrag.polaritaet)
+
     warnungen = tuple(ist_ergebnis["warnungen"]) + tuple(aufloesungs_warnungen) \
         + tuple(markierung["warnungen"]) + tuple(urteil["warnungen"])
+
+    # EIN DURCHSICHTIGES SOLL MUSS GANZ OBEN STEHEN, nicht in einem Unterwoerterbuch.
+    # Der Vorbehalt betrifft JEDE Zahl dieses Laufs — Score, Rangkorrelation, geom_iou —,
+    # weil sie alle gegen dieselbe Referenz gemessen sind. Wer nur `score` liest, muss
+    # ihn trotzdem sehen; genau daran ist der 03.09.2026 vorbeigegangen.
+    _durchsichtig = masken_ergebnis.get("soll_durchsichtig") or {}
+    warnungen = warnungen + tuple(_durchsichtig.get("warnungen") or ())
 
     # OHNE MASKE FEHLT DAS EINZIGE MASS, DAS DIE ABWESENHEIT FAENGT — und bis zum
     # 26.08.2026 sagte das an dieser Stelle niemand.
@@ -1445,8 +1463,7 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
         # und nicht in Ordnung. Warum die Maske hier hinein und die Schätzkarte nicht
         # heraus geht: Die Karte ist gross und wird nach diesem Aufruf nicht mehr
         # gebraucht; sie herauszureichen hiesse, sie an jeder Aufrufstelle mitzuschleppen.
-        **_maskenweg(soll, roh, maske, ist_ergebnis["breite"], schaetzer,
-                     eintrag.polaritaet),
+        **masken_ergebnis,
         "anteil_hintergrund_ist": markierung["anteil_hintergrund"],
         "dauer_s": round(time.perf_counter() - beginn, 3),
         "error": None,

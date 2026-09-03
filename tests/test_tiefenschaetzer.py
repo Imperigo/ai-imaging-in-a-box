@@ -685,7 +685,11 @@ def test_beide_wege_liefern_dieselben_felder(bild, tmp_path):
 
     assert gemessen["status"] == ts.STATUS_OK
     assert ohne["status"] != ts.STATUS_OK
-    maskenfelder = {"rho_maske", "kante", "kantenanteil", "himmel", "paarurteil"}
+    # `soll_durchsichtig` gehoert seit dem 03.09.2026 dazu: Der Riegel vergleicht die
+    # Soll-Tiefe mit der MASKE aus dem Material-ID-Pass und haengt damit an derselben
+    # Bedingung wie die uebrigen vier — ohne Maske gibt es keinen Widerspruch zu finden.
+    maskenfelder = {"rho_maske", "kante", "kantenanteil", "himmel", "paarurteil",
+                    "soll_durchsichtig"}
 
     assert set(gemessen) - maskenfelder == set(ohne), (
         "ein Feld, das nur einer der beiden Wege trägt, zwingt jeden Aufrufer zu einer "
