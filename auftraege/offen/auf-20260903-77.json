@@ -25,5 +25,6 @@
     "M3 Der gemessene Wert von `doc.byKind('zone').length` nach einem IFC-Import mit Raeumen — die Zahl, die hier nicht erhebbar war.",
     "M4 Zum Widerspruch ueber die «Uebersicht»: Welche Seite soll gelten? Falls ein Feld am Standpunkt eingefuehrt wird, das eine Vogelperspektive AUSWEIST: sein Name und seine Form, damit die Bildseite darauf hoeren kann.",
     "M5 Ob die 1600 mm in `kamera.ts` eine benannte Konstante bekommen — und welchen Wert."
-  ]
+  ],
+  "rang": 9
 }

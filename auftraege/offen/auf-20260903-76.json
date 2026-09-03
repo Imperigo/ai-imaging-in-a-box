@@ -25,5 +25,6 @@
     "M3 Ob `test/p-bilddeckel-meldung.test.ts` mit angepasst wurde und wie er jetzt lautet.",
     "M4 Bestaetigung, dass `BILD_DECKEL_BASE64_ZEICHEN` unveraendert bei 1 048 576 steht und der Vergleich weiterhin Zeichen gegen Zeichen laeuft.",
     "M5 Falls ihr die Meldung anders lost als vorgeschlagen: warum — der Weg ist eure Entscheidung, die Einheitengleichheit nicht."
-  ]
+  ],
+  "rang": 8
 }
