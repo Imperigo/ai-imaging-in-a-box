@@ -40,5 +40,6 @@
     "verzeichnis": "auftraege/ergebnisse",
     "nur_zahlen": false,
     "hinweis": "Je Punkt eine Antwort: machen wir / machen wir nicht / brauchen es anders (dann wie). Punkt Null zuerst."
-  }
+  },
+  "rang": 5
 }

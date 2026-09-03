@@ -80,5 +80,6 @@
     "verzeichnis": "auftraege/ergebnisse",
     "nur_zahlen": true,
     "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
-  }
+  },
+  "rang": 3
 }

@@ -180,7 +180,21 @@ def test_ein_beantworteter_auftrag_wird_nicht_mehr_ausgegeben(tmp_path):
     (ordner / "auf-20260827-77.json").write_text(json.dumps(_satz()), encoding="utf-8")
     assert len(auftragspost.offene_blocks(tmp_path)) == 1
 
-    (tmp_path / "auftraege" / "ergebnisse" / "auf-20260827-77.json").write_text("{}")
+    # EIN LEERES ERGEBNIS SCHLIESST SEIT DEM 02.09.2026 NICHTS MEHR.
+
+    # Hier stand `write_text("{}")` — eine Datei ohne Status, und der Auftrag
+
+    # galt als beantwortet. Genau diese Milde hat drei Auftraege geschlossen,
+
+    # von denen einer in seinem eigenen Text sagte, dass die uebrigen Teile
+
+    # noch folgen. Was `baue_ergebnis` nicht kennt, ist keine Antwort.
+
+    (tmp_path / "auftraege" / "ergebnisse" / "auf-20260827-77.json").write_text(
+
+        json.dumps(auftrag.baue_ergebnis(auftrag_id="auf-20260827-77",
+
+                                         status="ok")), encoding="utf-8")
     assert auftragspost.offene_blocks(tmp_path) == []
 
 

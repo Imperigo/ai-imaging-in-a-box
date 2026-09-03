@@ -230,3 +230,36 @@ def test_der_waechter_faellt_bei_einem_neuen_ungedrueckten_schalter(tmp_path):
     (tmp_path / "tests" / "test_leer.py").write_text("pass\n", encoding="utf-8")
 
     assert _werkzeug("schalterprobe").ungedrueckt(tmp_path)["n_ungedrueckt"] == 1
+
+
+# ======================================================================================
+# Und ein falscher Alarm des Nachbarwerkzeugs
+# ======================================================================================
+
+def test_tote_kanten_sieht_einen_aufruf_ueber_getattr(tmp_path):
+    """**Der falsche Alarm vom 02.09.2026.**
+
+    `tools/tote_kanten.py` meldete `jobs.vermerke_meldung` als «von keinem Einstiegspunkt
+    erreichbar», obwohl der Weg dorthin lebt: Er läuft über
+    `getattr(quelle, "vermerke_grund", None)`, und ein solcher Aufruf ist im Syntaxbaum
+    keine Attributzugriff, sondern eine Zeichenkette.
+
+    *Ein Werkzeug, das falsche Alarme gibt, wird nicht schärfer gelesen, sondern gar
+    nicht mehr.* Es meldet mit Absicht lieber zu wenig als zu viel — dieser Fall gehörte
+    auf die andere Seite.
+    """
+    import ast
+    tote = _werkzeug("tote_kanten")
+    baum = ast.parse('def f(x):\n    return getattr(x, "gesucht", None)\n')
+
+    assert "gesucht" in tote._namen_in(baum)
+
+
+def test_eine_gewoehnliche_zeichenkette_gilt_NICHT_als_name():
+    """Die Gegenprobe, und sie ist die wichtigere: Zählte jede Zeichenkette als Name,
+    hielte ein Wort in irgendeiner Fehlermeldung jede tote Kante am Leben."""
+    import ast
+    tote = _werkzeug("tote_kanten")
+    baum = ast.parse('def f():\n    return "gesucht"\n')
+
+    assert "gesucht" not in tote._namen_in(baum)

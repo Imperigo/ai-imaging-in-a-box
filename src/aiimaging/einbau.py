@@ -388,6 +388,10 @@ def bericht(repo_wurzel, blatt=None, *, heute: date | None = None) -> dict:
         # überhaupt jemand ist. Am 01.09.2026 lagen elf der 28 offenen Aufträge bei zwei
         # Adressaten, von denen noch NIE eine Antwort gekommen war.
         "antwortverhalten": _auftrag.antwortverhalten(wurzel),
+        # ERGEBNISSE MIT EINEM STATUS, DEN DER VERTRAG NICHT KENNT. Sie zaehlen seit dem
+        # 02.09.2026 als offen — und stehen hier, weil «offen» allein nicht sagt, dass
+        # jemand etwas mitteilen WOLLTE und dafuer ein eigenes Wort erfunden hat.
+        "unbekannter_status": _auftrag.ergebnisse_mit_unbekanntem_status(wurzel),
         "ohne_adressat": verwaist,
         "ohne_geraetebeweis": unbelegt,
         "offene_posten": [p for p in alle if p["offen"]],

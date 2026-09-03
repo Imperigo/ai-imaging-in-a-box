@@ -65,6 +65,16 @@ def _zeilen(bericht: dict, nur: str | None) -> list[str]:
                 continue
             alter = "?" if e["tage"] is None else f"{e['tage']}d"
             aus.append(f"      {e['auftrag_id']:<22} {alter:>4}  {e['beschreibung'][:70]}")
+    unbekannt = bericht.get("unbekannter_status") or []
+    if unbekannt:
+        aus.append("")
+        aus.append(f"STATUS, DEN DER VERTRAG NICHT KENNT: {len(unbekannt)} Ergebnis(se) "
+                   f"— sie gelten als OFFEN, nicht als beantwortet:")
+        for e in unbekannt:
+            aus.append(f"      {e['auftrag_id']:<22} status={e['status']!r}")
+            if e["art"]:
+                aus.append(f"          {e['art']}")
+
     aus.append("")
     offen = bericht["offene_posten"]
     aus.append(f"EINBAU-STAND: {len(offen)} von {bericht['n_posten']} Posten noch nicht "

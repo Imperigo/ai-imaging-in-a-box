@@ -87,9 +87,16 @@
     "leerlauf_schwelle_mem_gb": 8,
     "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
   },
-  "rueckgabe": {
+  "rueckgabe": [
+    "G1 R2 an ERZEUGTEN Bildern — der Kern des Auftrags, und er steht noch aus",
+    "G3 Die sechste Szene — nachrangig, aber offen",
+    "G4 Kommen eure Zahlen mit UNSERER Fassung von `anteil_naeher_am_rand` heraus? Wenn nicht, ist genau das der wertvollste Befund dieses Auftrags"
+  ],
+  "rang": 4,
+  "ablage": {
     "verzeichnis": "auftraege/ergebnisse",
     "nur_zahlen": true,
     "hinweis": "Nur Messwerte, Urteile und Dateinamen zurückgeben. KEINE Bilder, KEINE Geometrie — Regel 3. Die Bilder bleiben auf der HomeStation."
-  }
+  },
+  "anweisung": "\n\n########################################################################################\n### NACHTRAG 02.09.2026 — DIESER AUFTRAG IST WIEDER OFFEN, UND ZWAR ZU RECHT\n########################################################################################\n\nEuer Ergebnis traegt `status: \"teilweise\"` und im Text den Satz **«Die uebrigen Teile\nfolgen.»** Bis heute las unsere Zaehlung alles als Antwort, was kein benannter Fehlschlag\nwar — der Auftrag galt damit als beantwortet, obwohl er in seinem eigenen Ergebnis sagt,\ndass er es nicht ist.\n\nSeit heute (Owner-Entscheid) gilt: **Ein Status, den `baue_ergebnis` nicht kennt, ist\nkeine Antwort.** `teilweise` steht nicht in der Liste, also steht der Auftrag wieder im\nRueckstand. Das ist keine Beanstandung an euch — **G2 ist geliefert und war der\nAnkerbefund**, und ihr habt genau das geschrieben, was der Fall war. Es fehlte das Wort\ndafuer, und daran waren wir schuld.\n\nDie Rueckgabeliste nennt jetzt nur noch, **was wirklich aussteht**: G1, G3 und die\nGegenprobe zu unserer Fassung. G2 steht nicht mehr darin.\n\n*Wenn ihr eine Teilantwort schicken wollt, ist das richtig — schreibt sie mit\n`status: \"ok\"` und sagt im Text, welche Teile noch fehlen. Dann koennen wir den Auftrag\nschliessen und einen neuen fuer den Rest stellen, statt einen halben offen zu lassen, den\nkeine Zahl von einem ganzen unterscheidet.*\n"
 }

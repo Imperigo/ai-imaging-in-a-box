@@ -23,5 +23,6 @@
     "R3 Ab welcher Vertragsversion, und was bekommt ein Client, der es nicht schickt?",
     "R4 Was tut euer Worker, wenn das Feld fehlt: ablehnen, oder unbekannt durchreichen?",
     "R5 Beleg, dass es EINGEBAUT ist — nicht der Entwurf, sondern die Version im Betrieb"
-  ]
+  ],
+  "rang": 3
 }

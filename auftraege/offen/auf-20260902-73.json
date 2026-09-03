@@ -1,0 +1,34 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260902-73",
+  "art": "frage",
+  "rang": 22,
+  "beschreibung": "Die Hoehenachse einer echten KosmoOrbit-glb AN DER DATEI messen, damit `herkunft.py` die Kennung `kosmoorbit` bekommt — euer eigener Befund V17c, den ihr zu Recht offen gelassen habt.",
+  "anweisung": "=== DIE HERKUNFTSTABELLE KENNT `kosmoorbit` NICHT — UND SOLL SIE ERST NACH EINER MESSUNG KENNEN ===\n\nDieser Auftrag stammt aus **eurem** Befund. In `auf-vis-20260902-17` habt ihr V17c\nausdruecklich offen gelassen, und die Begruendung war richtig:\n\n  «Dass die glb aus KosmoOrbit Y-up ist, habe ich aus dem Quelltext des Exporters\n   GELESEN, nicht an einer Datei GEMESSEN. Eine Herkunftstabelle ist kein Ort fuer eine\n   Lesart. Sie sagt einem Betrachter, wie er die Datei zu drehen hat; steht dort eine\n   Vermutung, dreht er falsch und niemand sieht es der Zeile an.»\n\nGenau dieser Unterschied war am 01.09. teuer: ein Achsenbruch, bei dem die Geometrie\ngedreht wurde und die Kamera nicht — und keine Massprobe konnte es sehen, weil R_x(180)\njede Kantenlaenge gleich laesst.\n\n--- 1 · WARUM DIESER AUFTRAG UEBERHAUPT ZU EUCH GEHT ---\n\nMessen kann es nur, wer eine **echte** KosmoOrbit-Ausgabe hat. Hier gibt es keine, und\neine zu erfinden waere genau die Lesart, die ihr vermeiden wolltet.\n\n--- 2 · WAS ZU TUN IST ---\n\nM1 · Nehmt eine echte, von KosmoOrbit erzeugte `.glb` — eine, die wirklich aus dem\n     Exporter kam und nicht aus unserer Kette.\n\nM2 · Lest die Hoehenachse AN DER DATEI ab, nicht am Quelltext. Der glTF-Kopf traegt\n     min/max je POSITION-Accessor; welche der drei Achsen die groesste Spanne nach oben\n     hat, ist an einem Gebaeude eindeutig. `tools/glbbox.py` (bzw.\n     `aiimaging.glbbox.bauwerksbox`) liest genau das, ohne Blender und ohne trimesh.\n\nM3 · Sagt dazu, WORAN ihr es festgemacht habt. Eine Zahl ohne den Weg dorthin ist wieder\n     eine Lesart, nur mit mehr Stellen.\n\nM4 · Falls die Datei es NICHT hergibt: sagt das. «Nicht messbar» ist hier eine\n     vollwertige Antwort, und sie ist besser als eine gedrehte Vermutung.\n\n--- 3 · WAS AUSDRUECKLICH NICHT ZU TUN IST ---\n\n  * **Nichts in `herkunft.py` eintragen, bevor M2 gemessen ist.** Der Eintrag ist der\n    Zweck dieses Auftrags, nicht seine Vorbedingung.\n  * Nicht aus dem Exporter-Quelltext schliessen — das habt ihr selbst ausgeschlossen, und\n    ihr hattet recht.\n  * Keine Pfade mit Benutzernamen, keine Projekt- oder Kundennamen. Unser Repo ist\n    oeffentlich; die Achse ist eine Zahl und traegt nichts davon mit.\n\n--- 4 · IN EIGENER SACHE: DIESER AUFTRAG SPRENGT MEINEN EIGENEN DECKEL ---\n\n`local` traegt 21 offene Auftraege, meine Selbstbindung liegt bei 8. Ich stelle ihn\ntrotzdem, und der Grund gehoert hierher statt in eine Fussnote:\n\nEin Posten OHNE Adressaten wird nie eingebaut, und es faellt keinem auf — das ist eine\nHausregel des Owners und sie sticht meine eigene Bremse. Der Posten steht als `C15` im\nEinbau-Stand; ohne diesen Auftrag haette er dort als «treibt niemand» gestanden.\n\n**Er hat darum den letzten Rang.** Er blockiert nichts, und wenn er ein halbes Jahr liegt,\nist das die richtige Reihenfolge — aber er liegt sichtbar.\n",
+  "erstellt": "2026-09-02T08:30:00Z",
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "eine echte KosmoOrbit-Ausgabe auf eurer Maschine",
+    "erzeugen_mit": null
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Nichts in herkunft.py eintragen, bevor M2 gemessen ist",
+      "Nicht aus dem Exporter-Quelltext schliessen — das habt ihr selbst ausgeschlossen, und ihr hattet recht",
+      "Regel 3: keine Pfade mit Benutzernamen, keine Projekt- oder Kundennamen",
+      "Braucht keine GPU — der glTF-Kopf genuegt"
+    ]
+  },
+  "rueckgabe": [
+    "M1 Woher stammt die Datei — wirklich aus dem KosmoOrbit-Exporter?",
+    "M2 Die Hoehenachse, AN DER DATEI abgelesen: Y oder Z?",
+    "M3 Woran habt ihr es festgemacht? Eine Zahl ohne den Weg dorthin ist eine Lesart",
+    "M4 Falls die Datei es nicht hergibt: sagt es — «nicht messbar» ist hier eine vollwertige Antwort"
+  ]
+}

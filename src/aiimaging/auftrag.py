@@ -142,6 +142,17 @@ _ID_MUSTER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 #:
 #: Der Deckel sperrt das SCHREIBEN, nicht das Denken. Wer trotzdem einen stellen muss,
 #: schliesst zuerst einen anderen — und genau das ist der Zweck.
+#:
+#: **ER IST EINE SELBSTBINDUNG UND KEINE HAUSREGEL** (Owner-Entscheid 02.09.2026, nach
+#: einer Nachfrage). Er wirkt in :func:`schreibe_auftrag` — also bei dem, der Auftraege
+#: durch dieses Modul schreibt. Die HomeStation legt ihre Auftragsdateien selbst an und
+#: kommt daran vorbei; **das soll so bleiben**, denn sie kennt ihre Lage am besten, und
+#: eine Bremse, die ein Dritter bedient, ist Buerokratie und keine Steuerung.
+#:
+#: Damit ist er ehrlicherweise ein Vorsatz mit Werkzeug und kein Riegel. **Gemessen:**
+#: Seit seiner Einfuehrung am 01.09.2026 ist der Rueckstand von 27 auf 35 gestiegen — in
+#: einem Tag, ohne dass er ein einziges Mal ausgeloest haette. *Ein Deckel, der nur den
+#: bindet, der ihn eingefuehrt hat, bremst niemanden. Er darf dann aber nicht so tun.*
 DECKEL_JE_WORKER = 8
 
 #: **Der Rang eines Auftrags** — freiwillig, ganze Zahl ab 1, kleinere Zahl zuerst.
@@ -162,7 +173,12 @@ RANG_OHNE = 10 ** 6
 
 
 class DeckelError(ValueError):
-    """Der Adressat traegt schon genug. Erst schliessen, dann stellen."""
+    """Der Adressat traegt schon genug. Erst schliessen, dann stellen.
+
+    **Trifft nur, wer durch :func:`schreibe_auftrag` schreibt** — siehe
+    :data:`DECKEL_JE_WORKER`. Wer seine Auftragsdatei selbst anlegt, sieht diesen Fehler
+    nie, und das ist so entschieden.
+    """
 
 
 class AuftragError(ValueError):
@@ -374,6 +390,9 @@ def _pruefe_deckel(satz: dict, repo_wurzel) -> None:
     raise DeckelError(
         f"{worker!r} traegt bereits {len(offen)} unbeantwortete Auftraege — der Deckel "
         f"liegt bei {DECKEL_JE_WORKER}. Erst schliessen, dann stellen.\n"
+        f"(Der Deckel ist eine Selbstbindung dessen, der durch schreibe_auftrag "
+        f"schreibt. Wer seine Datei selbst anlegt, kommt daran vorbei — so entschieden "
+        f"am 02.09.2026.)\n"
         f"Die aeltesten drei: {liste}\n"
         f"Ein Auftrag mehr macht keine Antwort schneller; er macht nur die Reihe laenger, "
         f"in der die wichtige Frage steht.")
@@ -453,8 +472,12 @@ def baue_ergebnis(*, auftrag_id: str, status: str, messwerte: dict | None = None
         AuftragError: wenn jemand versucht, Bilddaten zurückzugeben.
     """
     _pruefe_id(auftrag_id)
-    if status not in {"ok", "fehler", "abgelehnt", "uebersprungen"}:
-        raise AuftragError(f"Unbekannter Status {status!r}")
+    if status not in STATUS_BEKANNT:
+        raise AuftragError(
+            f"Unbekannter Status {status!r}. Bekannt: {', '.join(sorted(STATUS_BEKANNT))}. "
+            f"Ein von Hand geschriebener Status wie 'teilweise' oder 'erledigt' gilt seit "
+            f"dem 02.09.2026 als NICHT beantwortet — er schliesst den Auftrag also nicht, "
+            f"sondern laesst ihn im Rueckstand stehen.")
 
     satz = {
         "schema": SCHEMA_ERGEBNIS,
@@ -660,6 +683,12 @@ UNBEANTWORTET = (ZUSTAND_OFFEN, ZUSTAND_GERECHNET, ZUSTAND_WEITERGEREICHT)
 #: Ergebnis-Status, die einen Auftrag NICHT beantworten. ``ok`` fehlt hier — nur er tut es.
 _NICHT_BEANTWORTET = {"fehler", "abgelehnt", "uebersprungen"}
 
+#: **Die vollständige Liste der Status, die :func:`baue_ergebnis` überhaupt schreibt.**
+#:
+#: Sie steht hier, weil ``zustand`` sie braucht, und `baue_ergebnis` prüft gegen dieselbe
+#: — an einer Stelle, nicht an zweien.
+STATUS_BEKANNT = frozenset({"ok"}) | frozenset(_NICHT_BEANTWORTET)
+
 
 def zustand(auftrag_id: str, repo_wurzel) -> str:
     """Der abgeleitete Zustand eines Auftrags — aus seinem Ergebnis, nicht aus einem Feld.
@@ -671,6 +700,7 @@ def zustand(auftrag_id: str, repo_wurzel) -> str:
     ``status: ok``                          ``beantwortet``
     ``fehler`` / ``abgelehnt`` /            ``gerechnet, nicht beantwortet``
     ``uebersprungen``
+    ein **unbekannter** Status                ``gerechnet, nicht beantwortet``
     ``art: weitergereicht…``                ``weitergereicht``
     ``art: zurueckgezogen``                 ``zurueckgezogen``
     ======================================  ==================================
@@ -692,6 +722,25 @@ def zustand(auftrag_id: str, repo_wurzel) -> str:
         return ZUSTAND_WEITERGEREICHT
     if art.startswith("zurueckgezogen") or art.startswith("abgelehnt"):
         return ZUSTAND_ZURUECKGEZOGEN
+    # EIN UNBEKANNTER STATUS IST KEINE ANTWORT (Owner-Entscheid 02.09.2026).
+    #
+    # Bis dahin las die letzte Zeile ALLES als Antwort, was kein *benannter* Fehlschlag
+    # war. Gezaehlt am selben Morgen: Drei Ergebnisse trugen einen Status, den
+    # `baue_ergebnis` gar nicht schreibt — von Hand geschrieben, an der Pruefung vorbei:
+    #
+    #     teilweise                                   «Die uebrigen Teile folgen.»
+    #     teilweise — gerettet aus einem abgebrochenen Lauf
+    #     erledigt
+    #
+    # Alle drei galten als beantwortet. Der erste sagt in seinem eigenen Text, dass er es
+    # nicht ist.
+    #
+    # *Dieselbe Entscheidung wie am 28.08. beim Weiterleitungsvermerk, eine Ebene tiefer:
+    # Ein Ergebnis zu haben heisst nicht, beantwortet zu sein.* Und dieselbe Richtung:
+    # Im Zweifel offen, nie im Zweifel erledigt — ein zu Unrecht offener Auftrag kostet
+    # eine Rueckfrage, ein zu Unrecht geschlossener eine Antwort, die nie kommt.
+    if str(ergebnis.get("status")) not in STATUS_BEKANNT:
+        return ZUSTAND_GERECHNET
     if str(ergebnis.get("status")) in _NICHT_BEANTWORTET:
         return ZUSTAND_GERECHNET
     return ZUSTAND_BEANTWORTET
@@ -701,6 +750,40 @@ def zustaende(repo_wurzel) -> dict[str, str]:
     """Der Zustand **jedes** Auftrags — die Zählung, die der Ordner nicht führt."""
     return {a["auftrag_id"]: zustand(a["auftrag_id"], repo_wurzel)
             for a in offene_auftraege(repo_wurzel)}
+
+
+def ergebnisse_mit_unbekanntem_status(repo_wurzel) -> list[dict]:
+    """Ergebnisse, deren ``status`` :data:`STATUS_BEKANNT` nicht kennt.
+
+    **Sie sind seit dem 02.09.2026 nicht mehr «beantwortet», und sie sollen auffallen.**
+    Ein stillschweigend als offen geführter Auftrag wäre nur die halbe Auskunft: Der
+    Schreiber wollte etwas mitteilen, und was er meinte, steht in einem Wort, das die
+    Zählung nicht kennt.
+
+    *Gefunden wurden sie, weil eine Zahl nicht aufging* — der Rückstand meiner
+    Nachrechnung wich um drei von dem des Werkzeugs ab.
+
+    **Was sie nicht sieht, und das ist gemessen:** Gezählt wird über die
+    *Auftragsdateien*. Ein Ergebnis ohne Auftrag — eine **Waise** — taucht hier nicht auf.
+    Am 02.09.2026 war das ein Fund von dreien (`auf-20260824-38`, Status *«teilweise —
+    gerettet aus einem abgebrochenen Lauf»*). Die Waisen gehören in die Runde der
+    HomeStation; sie hier mitzuzählen hiesse, ihre Aufräumarbeit zu übernehmen und dabei
+    stillschweigend zu entscheiden, welcher Auftrag zu einem verwaisten Ergebnis gehörte.
+
+    Returns:
+        Je Fund ``{auftrag_id, status, art}`` — **keine Pfade**, Regel 3.
+    """
+    aus = []
+    for satz in offene_auftraege(repo_wurzel):
+        ergebnis = lies_ergebnis(satz["auftrag_id"], repo_wurzel)
+        if ergebnis is None:
+            continue
+        status = str(ergebnis.get("status"))
+        if status in STATUS_BEKANNT:
+            continue
+        aus.append({"auftrag_id": satz["auftrag_id"], "status": status,
+                    "art": str(ergebnis.get("art") or "")[:80]})
+    return aus
 
 
 def antwortverhalten(repo_wurzel) -> dict[str, dict]:

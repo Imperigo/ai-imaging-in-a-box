@@ -1067,6 +1067,42 @@ wird irgendwann nicht mehr eingehalten.*
 *Die Zahl ist eine Setzung und keine Messung* (acht, beschlossen am 28.08.2026) — sie
 steht deshalb als benannte Konstante und nicht als Zahl im Code.
 
+**Fassungsabstand (zwischen zwei Maschinen)** — Wenn zwei Rechner dasselbe Repo mit
+verschiedenen Sprachfassungen bearbeiten und der neuere Code schreibt, den der ältere
+nicht einmal **einlesen** kann.
+*Im Projekt am 02.09.2026:* Die HomeStation fährt Python **3.14.4**, diese Umgebung
+**3.11.15**, das Repo sagt `>=3.11` zu. Ein mehrzeiliger Ausdruck *innerhalb* eines
+f-Strings (erlaubt ab 3.12, PEP 701) machte `abholer.py` hier unlesbar: **25 Testdateien
+brachen ab, bevor eine einzige Probe lief** — während dieselbe Sammlung drüben grün war.
+*Das Tückische ist die Richtung:* Der Bruch entsteht auf der neueren Maschine und zeigt
+sich nur auf der älteren. Wer ihn verursacht, kann ihn nicht sehen; wer ihn sieht, hat ihn
+nicht verursacht. **Ein Wächter kann nur die eine Seite decken** — `ast.feature_version`
+deckt Sprachmerkmale ab, nicht den Tokenizer. Die andere Hälfte der Antwort ist keine
+Probe, sondern eine Ansage.
+
+**Erfundener Status** — Ein Wort im Ergebnisfeld, das der Vertrag nicht kennt, von Hand
+geschrieben und an der Prüfung vorbei: `teilweise`, `erledigt`, `teilweise — gerettet aus
+einem abgebrochenen Lauf`.
+*Warum es zählt:* Die Zustandsableitung las bis zum 02.09.2026 **alles** als Antwort, was
+kein *benannter* Fehlschlag war. Drei Aufträge galten damit als beantwortet — einer sagte
+in seinem eigenen Ergebnistext *«Die übrigen Teile folgen.»*
+*Seither gilt:* Was `baue_ergebnis` nicht kennt, ist **keine Antwort** — der Auftrag
+bleibt im Rückstand und der Fund wird benannt. *Ein zu Unrecht offener Auftrag kostet eine
+Rückfrage, ein zu Unrecht geschlossener eine Antwort, die nie kommt.*
+*Dieselbe Entscheidung wie beim **Weiterleitungsvermerk**, eine Ebene tiefer.*
+
+**Selbstbindung (gegen Hausregel)** — Eine Regel, die nur den bindet, der sie sich gegeben
+hat, weil sie an *seinem* Werkzeug hängt und nicht am Gegenstand.
+*Im Projekt:* Der **Rückstandsdeckel** wirkt in `schreibe_auftrag`. Wer seine Auftragsdatei
+selbst anlegt — die HomeStation tut das —, kommt daran vorbei. Owner-Entscheid 02.09.2026:
+**Das bleibt so**, denn sie kennt ihre Lage am besten, und eine Bremse, die ein Dritter
+bedient, ist Bürokratie und keine Steuerung.
+*Was daraus folgt, ist keine Änderung, sondern ein Name:* Der Deckel heisst seither
+Selbstbindung und nicht Regel — samt der gemessenen Zahl, dass der Rückstand seit seiner
+Einführung von 27 auf 36 gestiegen ist, ohne dass er ein einziges Mal ausgelöst hätte.
+*Ein Deckel, der nur den bindet, der ihn eingeführt hat, bremst niemanden — er darf dann
+aber nicht so tun.*
+
 **Ungedrückter Schalter** — Ein Bedienelement, das keine Probe je benutzt hat. Es kann
 still nichts tun: Kein Test wird rot, kein Benutzer bekommt eine Fehlermeldung, und wer
 es setzt, hält das Ausbleiben der Wirkung für seine eigene Schuld.
@@ -3962,6 +3998,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-02 | Ergaenzt: **Fassungsabstand (zwischen zwei Maschinen)**, **Erfundener Status**, **Selbstbindung (gegen Hausregel)**. Anlass: Das Repo liess sich hier nicht mehr einlesen (Python 3.14 drueben, 3.11 hier, 25 Sammelabbrueche gegen «alles gruen» auf der anderen Seite); drei Ergebnisse mit einem Status, den der Vertrag nicht kennt, galten als beantwortet; und der Deckel bindet nur den, der ihn eingefuehrt hat |
 | 2026-09-01 | Ergaenzt: **Ungedrueckter Schalter**. Anlass sind drei Fehler desselben Tages, alle an Schaltern, die nie eine Probe gedrueckt hatte. Gemessen: 9 von 33; zwei waren kaputt, drei weitere nicht einmal pruefbar, weil `abholen.main()` kein argv entgegennahm — ein Einstieg, den keine Probe aufrufen kann, hat keine ungeprueften Schalter, er ist selbst einer. Nach dem Bau: 0 |
 | 2026-09-01 | Ergaenzt: **Gleichstand (in einer Auswahl)** und **Eine Zahl, die an einer falschen Messung geeicht wurde**. Anlass ist ein Folgeposten ohne Adressaten aus der Abstandsberichtigung der HomeStation: Nachgemessen kennt die Standpunktguete ueber acht taugliche Standpunkte hoechstens ZWEI Werte, auf einem Wuerfel einen — und 16 von 56 Kombinationen erreichen den Bestwert. Der Flaechenanteil entscheidet den besten Standpunkt in einer von sechs Formen |
 | 2026-09-01 | Ergaenzt: **Vorzeichenfehler**, **Einbahnstrasse (zwischen Annahme und Entscheidung)**, **Umfeld (gegen Bauwerk und Gelaende)**. Anlass sind zwei Messungen der HomeStation an einem echten Modell: Das Gebaeude stand auf dem Kopf, und keine Massprobe konnte es sehen (R_x(180) laesst jede Kantenlaenge gleich); und die Gelaenderegel fand auf echtem Bestand nichts — das Gelaende hiess `IfcCovering_Toposolid_1`, die Bauwerksbox schrumpfte um 2,1 % statt um 34,5 %. Der zweite Eintrag stammt aus einem Fehler im eigenen neuen Waechter desselben Tages |

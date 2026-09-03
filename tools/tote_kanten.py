@@ -115,6 +115,23 @@ def _namen_in(knoten) -> set[str]:
             gefunden.add(k.id)
         elif isinstance(k, ast.Attribute):
             gefunden.add(k.attr)
+        # EIN NAME IN EINER ZEICHENKETTE IST AUCH EIN NAME — wenn er an `getattr`
+        # uebergeben wird.
+        #
+        # Gefunden am 02.09.2026 an einem FALSCHEN ALARM dieses Werkzeugs: Es meldete
+        # `jobs.vermerke_meldung` als «von keinem Einstiegspunkt erreichbar», obwohl der
+        # Weg dorthin lebt — er laeuft ueber
+        # `getattr(quelle, "vermerke_grund", None)` in `abholer`, und ein solcher Aufruf
+        # ist im Syntaxbaum kein `Attribute`, sondern eine Zeichenkette.
+        #
+        # *Ein Werkzeug, das falsche Alarme gibt, wird nicht schaerfer gelesen, sondern
+        # gar nicht mehr.* Es meldet lieber zu wenig als zu viel — dieser Fall gehoerte
+        # auf die andere Seite.
+        elif (isinstance(k, ast.Call) and isinstance(k.func, ast.Name)
+              and k.func.id in ("getattr", "hasattr")
+              and len(k.args) >= 2 and isinstance(k.args[1], ast.Constant)
+              and isinstance(k.args[1].value, str)):
+            gefunden.add(k.args[1].value)
     return gefunden
 
 

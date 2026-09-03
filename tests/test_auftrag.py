@@ -680,3 +680,102 @@ def test_ein_neuer_local_auftrag_ohne_auflagen_wird_gar_nicht_erst_geschrieben(t
     satz["auflagen"] = ["Nur Prosa"]
     with pytest.raises(auf.AuftragError, match="leistungsgrenze_w"):
         auf.schreibe_auftrag(satz, tmp_path)
+
+
+# ======================================================================================
+# Ein unbekannter Status ist keine Antwort
+# ======================================================================================
+#
+# Owner-Entscheid 02.09.2026. Gezählt am selben Morgen: Drei Ergebnisse trugen einen
+# Status, den `baue_ergebnis` gar nicht schreibt — von Hand geschrieben, an der Prüfung
+# vorbei: `teilweise` («Die übrigen Teile folgen»), `teilweise — gerettet aus einem
+# abgebrochenen Lauf`, `erledigt`. Alle drei galten als beantwortet. Der erste sagt in
+# seinem eigenen Text, dass er es nicht ist.
+
+def test_ein_erfundener_status_beantwortet_nichts(tmp_path):
+    _mit_ergebnis(tmp_path, "auf-a", auf.WORKER_LOCAL, status="ok")
+    # ...und dann von Hand ueberschrieben, so wie es wirklich geschah:
+    pfad = tmp_path / auf.VERZ_ERGEBNISSE / "auf-a.json"
+    satz = json.loads(pfad.read_text(encoding="utf-8"))
+    satz["status"] = "teilweise"
+    pfad.write_text(json.dumps(satz), encoding="utf-8")
+
+    assert auf.zustand("auf-a", tmp_path) == auf.ZUSTAND_GERECHNET
+    assert [a["auftrag_id"] for a in auf.unerledigt(tmp_path)] == ["auf-a"]
+
+
+def test_die_bekannten_status_bleiben_was_sie_waren(tmp_path):
+    """Die Gegenprobe. Ohne sie wäre der Test darüber auch grün, wenn **jeder** Status
+    als offen gälte — und dann wäre nie ein Auftrag beantwortet."""
+    _mit_ergebnis(tmp_path, "auf-ok", auf.WORKER_LOCAL, status="ok")
+    _mit_ergebnis(tmp_path, "auf-fehler", auf.WORKER_LOCAL, status="fehler")
+    assert auf.zustand("auf-ok", tmp_path) == auf.ZUSTAND_BEANTWORTET
+    assert auf.zustand("auf-fehler", tmp_path) == auf.ZUSTAND_GERECHNET
+
+
+def test_ein_erfundener_status_wird_beim_bauen_gar_nicht_erst_angenommen():
+    """Die Prüfung in `baue_ergebnis` und die Liste in `zustand` sind **dieselbe** Liste.
+    Zwei Listen wären die doppelte Vorgabe, an der genau diese Ergebnisse entstanden."""
+    with pytest.raises(auf.AuftragError, match="teilweise"):
+        auf.baue_ergebnis(auftrag_id="auf-a", status="teilweise")
+
+
+def test_die_fehlermeldung_sagt_was_ein_erfundener_status_bewirkt():
+    """*Er schliesst den Auftrag nicht — er lässt ihn im Rückstand stehen.* Wer das
+    vorher weiss, schreibt keinen."""
+    with pytest.raises(auf.AuftragError, match="Rueckstand"):
+        auf.baue_ergebnis(auftrag_id="auf-a", status="erledigt")
+
+
+def test_erfundene_status_werden_benannt_und_nicht_nur_gezaehlt(tmp_path):
+    """*«Offen» allein sagt nicht, dass jemand etwas mitteilen WOLLTE und dafür ein
+    eigenes Wort erfunden hat.*"""
+    _mit_ergebnis(tmp_path, "auf-a", auf.WORKER_LOCAL, status="ok")
+    pfad = tmp_path / auf.VERZ_ERGEBNISSE / "auf-a.json"
+    satz = json.loads(pfad.read_text(encoding="utf-8"))
+    satz.update({"status": "teilweise", "art": "Die uebrigen Teile folgen."})
+    pfad.write_text(json.dumps(satz), encoding="utf-8")
+
+    funde = auf.ergebnisse_mit_unbekanntem_status(tmp_path)
+
+    assert [f["auftrag_id"] for f in funde] == ["auf-a"]
+    assert funde[0]["status"] == "teilweise"
+    assert "uebrigen Teile" in funde[0]["art"]
+
+
+def test_ein_sauberes_ergebnis_taucht_dort_nicht_auf(tmp_path):
+    """Die Gegenprobe — sonst stünde die Meldung unter jedem Lauf und wäre eine
+    Dauerwarnung."""
+    _mit_ergebnis(tmp_path, "auf-a", auf.WORKER_LOCAL, status="ok")
+    assert auf.ergebnisse_mit_unbekanntem_status(tmp_path) == []
+
+
+def test_der_deckel_nennt_sich_selbst_eine_selbstbindung(tmp_path):
+    """**Owner-Entscheid 02.09.2026.** Er wirkt nur in `schreibe_auftrag`; die HomeStation
+    legt ihre Dateien selbst an und kommt daran vorbei. *Ein Deckel, der nur den bindet,
+    der ihn eingeführt hat, bremst niemanden — er darf dann aber nicht so tun.*"""
+    for i in range(auf.DECKEL_JE_WORKER):
+        _mit_ergebnis(tmp_path, f"auf-{i:02d}", auf.WORKER_LOCAL)
+    with pytest.raises(auf.DeckelError, match="Selbstbindung"):
+        auf.schreibe_auftrag(
+            auf.baue_auftrag(auftrag_id="auf-zuviel", art="qa", beschreibung="x"),
+            tmp_path)
+
+
+def test_eine_von_hand_abgelegte_datei_faellt_nicht_unter_den_deckel(tmp_path):
+    """Die Gegenprobe, und sie hält den Entscheid fest: Der Weg an `schreibe_auftrag`
+    vorbei bleibt offen — er ist nicht vergessen worden, er ist gewollt."""
+    ordner = tmp_path / auf.VERZ_OFFEN
+    ordner.mkdir(parents=True)
+    (tmp_path / auf.VERZ_ERGEBNISSE).mkdir(parents=True)
+    # ALLE von Hand abgelegt — so, wie die HomeStation es tut. Ueber `schreibe_auftrag`
+    # waere schon die Vorbereitung am Deckel gescheitert, und genau das ist der Punkt.
+    for i in range(auf.DECKEL_JE_WORKER + 3):
+        satz = auf.baue_auftrag(auftrag_id=f"auf-{i:02d}", art="qa", beschreibung="x")
+        (ordner / f"auf-{i:02d}.json").write_text(json.dumps(satz), encoding="utf-8")
+
+    offen = {a["auftrag_id"] for a in auf.unerledigt(tmp_path)}
+
+    assert len(offen) == auf.DECKEL_JE_WORKER + 3, (
+        "Elf Auftraege liegen da, obwohl der Deckel bei acht steht — der Weg an "
+        "schreibe_auftrag vorbei ist nicht vergessen worden, er ist gewollt.")

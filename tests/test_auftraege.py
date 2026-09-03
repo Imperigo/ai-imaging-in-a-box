@@ -218,3 +218,49 @@ def test_eine_leere_anweisung_erzeugt_kein_feld():
     satz = auftrag_modul.baue_auftrag(
         auftrag_id="auf-20260826-98", art="qa", beschreibung="Überschrift", anweisung="   ")
     assert "anweisung" not in satz
+
+
+# ======================================================================================
+# Der Rang ist eine Reihenfolge, und eine Reihenfolge hat keine Doppelten
+# ======================================================================================
+#
+# Am 02.09.2026 trugen zwei offene `local`-Auftraege beide den Rang 3 — die HomeStation
+# hatte den Rang uebernommen und ihn ohne Kenntnis der bestehenden Reihe vergeben. Bei
+# `--hoechstens 1` entscheidet dann wieder der Dateiname, welcher zuerst laeuft: genau
+# das, wogegen es den Rang gibt.
+
+def test_kein_rang_kommt_bei_einem_adressaten_zweimal_vor():
+    """**Zwei Auftraege auf demselben Platz sind keine Reihenfolge, sondern eine
+    Behauptung.**"""
+    from collections import Counter
+    for worker in auftrag_modul.WORKER:
+        raenge = [a.get("rang") for a in auftrag_modul.unerledigt(WURZEL)
+                  if a.get("worker") == worker and a.get("rang") is not None]
+        doppelt = [r for r, n in Counter(raenge).items() if n > 1]
+        assert not doppelt, f"{worker}: Rang {doppelt} mehrfach vergeben"
+
+
+def test_jeder_offene_auftrag_traegt_einen_rang():
+    """*Der Rang ist freiwillig im Vertrag* — die rund sechzig beantworteten Auftraege
+    haben keinen, und sie nachtraeglich zu nummerieren hiesse, eine Zahl zu erfinden.
+
+    **Fuer die OFFENEN ist er es nicht.** Wer auf eine Antwort wartet, sagt auch, worauf
+    zuerst — sonst waehlt der Zufall des Dateinamens, und bei `--hoechstens 1` waehlt er
+    jeden Takt aufs Neue denselben.
+    """
+    ohne = [a["auftrag_id"] for a in auftrag_modul.unerledigt(WURZEL)
+            if a.get("rang") is None]
+    assert not ohne, (
+        f"{len(ohne)} offene Auftraege ohne Rang: {ohne[:6]}. Wer einen Auftrag stellt, "
+        f"sagt auch, wo er in der Reihe steht.")
+
+
+def test_die_raenge_sind_lueckenlos_von_eins_an():
+    """Eine Lücke ist kein Fehler der Rechnung, aber eine Frage: *Ist da einer
+    herausgefallen?* Lückenlos zu nummerieren beantwortet sie, bevor sie gestellt wird."""
+    for worker in auftrag_modul.WORKER:
+        raenge = sorted(a.get("rang") for a in auftrag_modul.unerledigt(WURZEL)
+                        if a.get("worker") == worker and a.get("rang") is not None)
+        if not raenge:
+            continue
+        assert raenge == list(range(1, len(raenge) + 1)), (worker, raenge)
