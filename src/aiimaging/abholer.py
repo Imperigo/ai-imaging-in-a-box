@@ -88,6 +88,24 @@ class AbholerError(ValueError):
     """Der Abholer ist falsch aufgesetzt. Erbt von ``ValueError`` wie alle Fehler hier."""
 
 
+
+def _blickrichtung_satz(blickfeld: dict) -> str:
+    """Der Satz zur Blickrichtung — als Funktion und nicht im f-String.
+
+    **Er stand als mehrzeiliger Ausdruck INNERHALB eines f-Strings**, und das gibt es
+    erst ab Python 3.12 (PEP 701). Dieses Repo verlangt ``>=3.11`` (`pyproject.toml`),
+    und auf 3.11 liess sich `abholer.py` daraufhin nicht einmal mehr einlesen: 25
+    Testdateien brachen beim Einsammeln ab, bevor eine einzige Probe lief.
+
+    *Auf der Maschine, auf der er entstand (Python 3.14.4), war alles gruen.*
+    """
+    if blickfeld.get("grund"):
+        return str(blickfeld["grund"])
+    if blickfeld.get("geprueft"):
+        return "geprueft, der Sehstrahl trifft die Szene"
+    return "NICHT GEPRUEFT — der Bericht traegt keine brauchbare Huellbox oder Kamera"
+
+
 def _zeit(_uhr) -> float:
     return float((_uhr or time.time)())
 
@@ -1775,9 +1793,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     f"Konditionierung, und ein Render ohne sie wäre genau die erfundene "
                     f"Kubatur, gegen die dieses Projekt antritt. Grund: "
                     f"{bericht.get('depth_png_fehler')}\n"
-                    f"Blickrichtung: {blickfeld['grund'] or ('geprueft, der Sehstrahl '
-                    'trifft die Szene' if blickfeld['geprueft'] else 'NICHT GEPRUEFT — '
-                    'der Bericht traegt keine brauchbare Huellbox oder Kamera')}"
+                    f"Blickrichtung: {_blickrichtung_satz(blickfeld)}"
                 )
 
             # DIE PRUEFUNG VOR DEM BILDLAUF. Sie steht hier und nicht weiter unten,
