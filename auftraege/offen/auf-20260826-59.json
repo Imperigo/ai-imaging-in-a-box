@@ -37,5 +37,5 @@
     "V9 Ist bei euch ein `python3.11` erreichbar? Falls ja, genuegt `python3.11 -m compileall -q src tools tests` vor dem Push",
     "V10 Falls nein: sagt es — dann ist unsere Zusage `>=3.11` die falsche Zahl, und wir heben sie gemessen statt geraten"
   ],
-  "rang": 1
+  "rang": 2
 }

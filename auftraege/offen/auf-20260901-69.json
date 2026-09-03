@@ -34,5 +34,5 @@
     "M4 resolve_kosmodraw() True oder False",
     "M5 falls True: Dateiname von kosmodraw.ifc_export und die Liste seiner oeffentlichen Namen (KEIN Pfad)"
   ],
-  "rang": 2
+  "rang": 3
 }
