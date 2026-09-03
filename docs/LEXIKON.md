@@ -1067,6 +1067,32 @@ wird irgendwann nicht mehr eingehalten.*
 *Die Zahl ist eine Setzung und keine Messung* (acht, beschlossen am 28.08.2026) — sie
 steht deshalb als benannte Konstante und nicht als Zahl im Code.
 
+**Geerbter Vorbehalt** — Eine Einschränkung, die man aus einer **fremden** Messung
+übernimmt und im eigenen Text weiterträgt, ohne sie nachgerechnet zu haben. Sie wird mit
+jeder Weitergabe unschärfer, und irgendwann liest sie sich wie eigenes Wissen.
+*Im Projekt am 02.09.2026:* Die Bauwerksmaske trug den Satz, der Kantenanteil sei bei
+einem Nachbargebäude hinter dem Bau eingeschränkt — samt zwei Zahlen aus einer Messung
+der HomeStation. Nachgerechnet **reproduzierte er hier nicht**: Mit gebauten Karten
+trennt der Kantenanteil mit Nachbarn genauso gut wie mit Himmel (0.9431 gegen 0.9480).
+*Das war kein Widerspruch, sondern die **Eingrenzung**:* Der Befund ist eine Aussage über
+den **Schätzer** und nicht über die **Szene** — bei 170 m Abstand ist ein Nachbar 1 m
+dahinter ein relativer Unterschied von 0,6 %, den eine gebaute Karte exakt trägt und ein
+Schätzer nicht.
+*Was daraus folgt:* Ein Vorbehalt nennt, **wessen** Messung er trägt, **wofür** sie gilt
+und **was daran nicht nachgerechnet** ist. *Ein Vorbehalt, der mehr behauptet als er
+belegt, ist derselbe Fehler wie eine Zahl ohne Anker — nur in die vorsichtige Richtung.*
+
+**Die Bedingung nicht hergestellt** — Der häufigste Weg, eine Messung zu verfehlen: Der
+Aufbau sieht aus wie der gefragte Fall, stellt aber die Bedingung gar nicht her, und das
+Ergebnis liest sich trotzdem wie eine Antwort.
+*Im Projekt, zweimal am selben Nachmittag:* Ein Nachbargebäude sollte den Hintergrund
+hinter einem Bauwerk füllen. Im ersten Anlauf war es zu klein und deckte **9,8 %**; im
+zweiten war es gross genug, aber die Kamera rahmte die **ganze Szene** statt des Ziels —
+also stand über dem Nachbarn Himmel und der Hintergrund war zu **86 %** wieder Himmel.
+Erst der dritte Anlauf (51,7 %) hat gemessen, was gefragt war.
+*Die Abhilfe ist eine Zahl im Bericht, die sagt, ob die Bedingung herrschte* — hier
+``anteil_hintergrund_endlich``. Ohne sie wäre «Nachbar ja/nein» nur ein Dateiname gewesen.
+
 **Fassungsabstand (zwischen zwei Maschinen)** — Wenn zwei Rechner dasselbe Repo mit
 verschiedenen Sprachfassungen bearbeiten und der neuere Code schreibt, den der ältere
 nicht einmal **einlesen** kann.
@@ -3998,6 +4024,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-02 | Ergaenzt: **Geerbter Vorbehalt** und **Die Bedingung nicht hergestellt**. Anlass ist die Nachrechnung eines fremden Befundes: Der Nachbargebaeude-Vorbehalt reproduziert hier nicht — er gilt fuer den Schaetzer und nicht fuer die Szene. Zwei von drei Anlaeufen der Messung stellten die Bedingung gar nicht her (9,8 % und 14,1 % Hintergrunddeckung statt 51,7 %) |
 | 2026-09-02 | Ergaenzt: **Fassungsabstand (zwischen zwei Maschinen)**, **Erfundener Status**, **Selbstbindung (gegen Hausregel)**. Anlass: Das Repo liess sich hier nicht mehr einlesen (Python 3.14 drueben, 3.11 hier, 25 Sammelabbrueche gegen «alles gruen» auf der anderen Seite); drei Ergebnisse mit einem Status, den der Vertrag nicht kennt, galten als beantwortet; und der Deckel bindet nur den, der ihn eingefuehrt hat |
 | 2026-09-01 | Ergaenzt: **Ungedrueckter Schalter**. Anlass sind drei Fehler desselben Tages, alle an Schaltern, die nie eine Probe gedrueckt hatte. Gemessen: 9 von 33; zwei waren kaputt, drei weitere nicht einmal pruefbar, weil `abholen.main()` kein argv entgegennahm — ein Einstieg, den keine Probe aufrufen kann, hat keine ungeprueften Schalter, er ist selbst einer. Nach dem Bau: 0 |
 | 2026-09-01 | Ergaenzt: **Gleichstand (in einer Auswahl)** und **Eine Zahl, die an einer falschen Messung geeicht wurde**. Anlass ist ein Folgeposten ohne Adressaten aus der Abstandsberichtigung der HomeStation: Nachgemessen kennt die Standpunktguete ueber acht taugliche Standpunkte hoechstens ZWEI Werte, auf einem Wuerfel einen — und 16 von 56 Kombinationen erreichen den Bestwert. Der Flaechenanteil entscheidet den besten Standpunkt in einer von sechs Formen |

@@ -839,6 +839,15 @@ def test_ein_nachbargebaeude_bringt_den_vorbehalt_zum_umrissmass_mit(bild, tabel
 
     assert "NACHBARGEBAEUDE" in warnungen
     assert "Kantenanteil" in warnungen
+    # UND SIE SAGT SEIT DEM 02.09.2026, WESSEN MESSUNG SIE TRAEGT UND WAS DARAN NICHT
+    # NACHGERECHNET IST. Nachgemessen (tools/studie_nachbargebaeude.py) trennt der
+    # Kantenanteil mit Nachbarn genauso gut wie mit Himmel — der Befund gilt fuer einen
+    # SCHAETZER und nicht fuer die Szene. *Ein Vorbehalt, der mehr behauptet als er
+    # belegt, ist derselbe Fehler wie eine Zahl ohne Anker, nur in die vorsichtige
+    # Richtung.*
+    assert "auf-20260823-37" in warnungen, "wessen Messung er traegt"
+    assert "NICHT REPRODUZIERBAR" in warnungen, "und was daran hier nicht nachgerechnet ist"
+    assert "Schaetzer" in warnungen or "SCHAETZER" in warnungen
 
 
 def test_ein_baum_allein_bringt_den_nachbarvorbehalt_NICHT(bild, tabelle):

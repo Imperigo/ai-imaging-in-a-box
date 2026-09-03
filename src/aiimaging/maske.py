@@ -702,11 +702,19 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
             # (+0.0016 gegen -0.0024). Ein Vorbehalt, den der Leser erbt statt ihn zu
             # sehen, ist keiner.
             warnungen.append(
-                "NACHBARGEBAEUDE IN DER SZENE: Der Kantenanteil an der Maskengrenze ist "
-                "hier nur eingeschränkt aussagekräftig. Gemessen (auf-20260823-37): "
-                "Steht hinter dem Bauwerk ein Nachbargebäude statt Himmel, trennt das "
-                "Umrissmass ein perfektes Bild nicht mehr von weissem Rauschen "
-                "(+0.0016 gegen −0.0024). Das Paarurteil ruht dann allein auf ρ.")
+                "NACHBARGEBAEUDE IN DER SZENE: Der Kantenanteil an der Maskengrenze "
+                "könnte hier eingeschränkt sein — **mit einem echten Tiefenschätzer**. "
+                "Der Befund stammt von der HomeStation (auf-20260823-37): Steht hinter "
+                "dem Bauwerk ein Nachbargebäude statt Himmel, trennt das Umrissmass ein "
+                "perfektes Bild nicht mehr von weissem Rauschen (+0.0016 gegen −0.0024). "
+                "HIER IST ER NICHT REPRODUZIERBAR: Mit gebauten Karten trennt der "
+                "Kantenanteil mit Nachbarn genauso gut wie mit Himmel (0.9431 gegen "
+                "0.9480 Abstand, `tools/studie_nachbargebaeude.py`, 02.09.2026) — und "
+                "das ist kein Widerspruch, sondern die Eingrenzung: Es ist eine Aussage "
+                "über den SCHAETZER und nicht über die Szene. Bei 170 m Abstand ist ein "
+                "Nachbar 1 m dahinter ein relativer Unterschied von 0,6 %. "
+                "Was daraus folgt: Das Paarurteil kann hier allein auf ρ ruhen — geprüft "
+                "ist das nicht.")
 
     # ── Bildpunkte einsortieren ───────────────────────────────────────────────────────
     n_gelaende = n_hintergrund = n_unbekannt = 0
