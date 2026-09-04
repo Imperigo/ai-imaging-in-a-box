@@ -3248,7 +3248,7 @@ def _bester_seed(seeds, aus, kuerzel, rendere_seed, messe, *, maske_da: bool):
         ausgewaehlt = True
 
     shutil.copyfile(sieger["bild"], ziel_png)
-    _blatt_ablegen(aus, kuerzel, ziel_png)
+    _groesse_ablegen(aus, kuerzel, ziel_png)
     erg = dict(sieger["_erg"], bild_png=ziel_png)
     auswahl = {"gewaehlt": sieger["seed"], "ausgewaehlt": ausgewaehlt, "grund": grund,
                "vorsprung": vorsprung,
@@ -3258,42 +3258,37 @@ def _bester_seed(seeds, aus, kuerzel, rendere_seed, messe, *, maske_da: bool):
     return erg, sieger["_urteil"], auswahl
 
 
-def _blatt_ablegen(aus, kuerzel, bild_png) -> None:
-    """Die **Blattfassung** neben das Bild legen — und, wenn sie nicht noetig ist, sagen,
-    dass sie nicht noetig war.
+def _groesse_ablegen(aus, kuerzel, bild_png) -> None:
+    """Die **Groesse** des Bildes neben das Bild legen. Nur die Zahl, kein Urteil.
 
-    **Der Anlass.** Demolauf 15 und 17 blieben an derselben Naht stehen: Der Knopf «Aufs
-    Blatt» in KosmoOrbit wies das Regelergebnis dieser Kette ab. Gemessen am 03.09.2026
-    liegen **60 von 66** Nutzbildern dieser Kette ueber dem Deckel der Gegenstelle (Median
-    1 277 231 Byte gegen 786 432). Die Ablehnung war der Normalfall, nicht der Ausreisser.
+    **Was hier bis zum 04.09.2026 stand und warum es weg ist.** Bis gestern legte diese
+    Funktion eine verkleinerte Kopie an, sobald das Bild ueber dem Deckel der Gegenstelle
+    lag (1 048 576 Base64-Zeichen = 786 432 Byte). Das war bei **60 von 66** Nutzbildern
+    der Fall, Median 1 277 231 Byte — also fast immer. Der Owner hat den Deckel am
+    04.09.2026 entfernt («Deckel weg»), nachdem die Messung vom 03.09. gezeigt hatte,
+    dass er 1.0 MB HIESS und 0.79 MB WAR und dass ein technischer Grund fuer die Zahl
+    nirgends auffindbar ist.
 
-    **Warum eine Fassung und nicht ein kleineres Render.** Das Bild ist das Produkt und
-    bleibt, wie es ist; fuer das Blatt entsteht daneben eine benannte, kleinere Kopie.
-    Der Deckel selbst wird nicht angefasst — er gehoert einer anderen Lane und ist ein
-    Owner-Entscheid vom 02.09.2026.
+    **Die Messung bleibt, der Zwang faellt.** Eine Kette, die ihre eigene Ausgabegroesse
+    nicht kennt, haette diesen Befund nie erheben koennen — die Zahl war das Werkzeug,
+    das den Deckel ueberfuehrt hat, und sie hat nichts verbrochen. Was faellt, ist die
+    ungefragte zweite Datei: Niemand hat um eine kleinere Kopie gebeten, und wer eine
+    will, ruft :func:`aiimaging.bildschreiben.kleinere_fassung` mit einer Grenze, die er
+    selbst nennt.
 
-    **Warum keine Kopie, wenn es schon passt.** Eine zweite Datei mit demselben Inhalt
-    verbraucht Platz und stiftet Zweifel, welche der beiden gilt. Der Befund sagt dann,
-    dass das Bild selbst aufs Blatt kann.
-
-    Wie ``_auswahl_ablegen``: Ein Fehlschlag hier darf den Lauf nicht kosten. Das Bild ist
-    da; die Blattfassung ist eine Auskunft ueber die naechste Stufe, keine Stufe.
+    Wie ``_auswahl_ablegen``: Ein Fehlschlag hier darf den Lauf nicht kosten. Das Bild
+    ist da; die Groesse ist eine Auskunft ueber es, keine Stufe.
     """
     import json as _json
 
     from . import bildschreiben        # lokal wie in `_verarbeite`, siehe dort
 
     try:
-        befund = bildschreiben.passt_aufs_blatt(bild_png)
-        if befund["passt"]:
-            bericht = dict(befund, verkleinert=False, blatt_png=None)
-        else:
-            ziel = Path(aus) / f"{kuerzel}_blatt.png"
-            bericht = dict(bildschreiben.blattfassung(bild_png, ziel),
-                           blatt_png=str(ziel), grund=befund["grund"])
-        (Path(aus) / f"{kuerzel}_blatt.json").write_text(
-            _json.dumps(bericht, ensure_ascii=False, indent=1), encoding="utf-8")
-    except (OSError, ValueError):
+        (Path(aus) / f"{kuerzel}_groesse.json").write_text(
+            _json.dumps(bildschreiben.bildgroesse(bild_png),
+                        ensure_ascii=False, indent=1),
+            encoding="utf-8")
+    except (OSError, ValueError):        # SchreibError ist ein ValueError
         pass
 
 

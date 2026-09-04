@@ -1,0 +1,22 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260903-76",
+ "status": "ok",
+ "beendet": "2026-09-04T06:00:00Z",
+ "dauer_s": null,
+ "messwerte": {
+  "deckel_hiess_mb": 1.0,
+  "deckel_war_mb": 0.79,
+  "deckel_war_byte": 786432,
+  "nutzbilder_gesamt": 66,
+  "nutzbilder_ueber_deckel": 60,
+  "median_byte": 1277231
+ },
+ "urteil": {
+  "auftrag": "zurueckgezogen",
+  "grund": "Der Auftrag bat um eine bessere MELDUNG bei unveraendertem Deckel — so stand der Owner-Entscheid vom 02.09.2026. Am 04.09.2026 hat der Owner anders entschieden: «Deckel weg.» Damit hat der Auftrag kein Ziel mehr: Eine Meldung zu einer Grenze, die es nicht mehr gibt, ist nichts zu verbessern. Der Befund, der ihn ausgeloest hat, bleibt gueltig und ist die Begruendung des neuen Entscheids: Der Deckel hiess 1.0 MB und war 0.79 MB (786432 Byte), 60 von 66 Nutzbildern lagen darueber, Median 1277231 Byte, und ein technischer Grund fuer die Zahl war nirgends auffindbar. Das Tor selbst faellt in der KosmoOrbit-Lane; diese Seite hat am 04.09. nachgezogen: `bildschreiben` kennt keinen Vorgabedeckel mehr, der Abholer legt keine ungefragte verkleinerte Kopie mehr an, und die Messung bleibt (`bildgroesse`, `<kuerzel>_groesse.json`)."
+ },
+ "umgebung": {},
+ "fehler": null,
+ "art": "zurueckgezogen"
+}
