@@ -2,6 +2,12 @@
 
 Vertiefungsarbeit ETH Zürich · HS26 · ITA · Betreuung Gonzalo Casas
 
+> **Wofür dieses Repo da ist (Owner-Entscheid E23, 04.09.2026; Freigabe E37, 05.09.2026):**
+> die Vertiefungsarbeit — eine lokal lauffähige, geometrie-treue und **verifizierte**
+> Bildkette, öffentlich unter Apache-2.0. **Wofür nicht:** kein Kosmo-Produktcode, keine
+> Projektdaten, keine Oberfläche — der Einbau geschieht in KosmoOrbit, und was dort fehlt,
+> steht in `docs/EINBAU_CLOUDWORKER_2026-08-22.md`.
+
 Ein lokal lauffähiges, knotenbasiertes Framework für geometrie-treue KI-Architektur-
 Visualisierung: IFC-Geometrie hinein, **verifizierte** Bilder heraus — ohne Cloud, mit
 austauschbarem lokalem Bildmodell.
