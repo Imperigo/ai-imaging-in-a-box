@@ -1243,6 +1243,20 @@ prüfte das Skript mit erfundenen Aufträgen und die Aufträge ohne das Skript; 
 lag der Fehler.* Die Abhilfe ist eine Probe, die die **wirklichen** Dateien durch den
 **wirklichen** Aufruf schickt.
 
+**Zustellung ist gerichtet** — Dass etwas **hinkommt**, sagt nichts darüber, ob etwas
+**zurückkommt**. Ein Weg, der in einer Richtung trägt, ist noch kein Kanal, und ein Beleg
+über die eine Richtung belegt nicht die andere.
+*Im Projekt am 06.09.2026:* Nach fünfzehn Tagen Stille von `cloud` und `ui` lautete der
+Schluss: «Der Weg über ihr Repo ist gemessen und trägt nicht.» Er trug. Die Blöcke waren
+seit dem 01.09. dort, und beide Adressaten hatten am **03.09.** auf **alle siebzehn**
+geantwortet — ihre Antworten lagen im Orbit-Repo, und nur zwei erreichten je unseres.
+*Der Fehler lag auf dem Rückweg, und geprüft worden war der Hinweg.*
+*Was die Verwechslung teuer machte:* Auf dem falschen Schluss wurde ein dritter
+Zustellweg gebaut, und in den Blöcken stand als Begründung ein Vorwurf, der nicht stimmte.
+Der eigene `zustellung.json` belegte immer nur die Hinrichtung — gelesen wurde er, als
+belege er beide. Verwandt mit **Abgelegt gegen ausgeliefert**, eine Richtung weiter: Dort
+war offen, ob etwas hinausging; hier, ob etwas zurückkam.
+
 **Aus Nichtwissen einen Vorwurf machen** — Ein Werkzeug meldet nicht, was es gemessen
 hat, sondern was es daraus über andere schliesst. *Der Unterschied fällt erst auf, wenn
 der Schluss falsch war.*
@@ -4177,6 +4191,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-06 | Ergaenzt: **Zustellung ist gerichtet**. Anlass ist die Berichtigung derselben Sache am selben Abend: Der Weg zu `cloud` und `ui` trug sehr wohl, beide hatten am 03.09. auf alle siebzehn geantwortet — der Fehler lag auf dem Rueckweg, geprueft worden war der Hinweg |
 | 2026-09-06 | Ergaenzt: **Aus Nichtwissen einen Vorwurf machen**. Anlass ist der teuerste Fehler dieses Tages: `tools/einbau.py` meldete `NIE GEANTWORTET`, gemessen war aber nur «keine Datei in unserer Ablage» — und 15 Antworten von `cloud` und `ui` lagen seit dem 03.09. in einem Verzeichnis, in das wir nie sehen. Der Vorwurf war da bereits uebergeben |
 | 2026-09-06 | Ergaenzt: **Abgelehnt (Lauf gegen Frage)**. Anlass ist eine Falle, die beim Bau von `tools/antwort.py` fast eingebaut wurde: Ein begruendetes Nein auf eine Frage haette als `abgelehnt` weiter als OFFEN gezaehlt — wir haetten nachgefragt, was uns beantwortet wurde |
 | 2026-09-06 | Ergaenzt: **Ein Wort, zwei Gegenstaende**. Anlass ist eine ueberschriebene Datei: Ein neuer Ordner `auftraege/prompts/` fuer den dritten Zustellweg liess `tests/test_prompts.py` entstehen — die es mit 59 Proben zur Prompt-Bibliothek des Bildgenerators schon gab. Aus der Versionsgeschichte zurueckgeholt, Ordner in `auftraege/bloecke/` umbenannt |

@@ -9,13 +9,37 @@ muss.
 Für `local` reicht das Repo: Die HomeStation macht `git pull` und sieht `auftraege/offen/`.
 
 Für `cloud` und `ui` wurde ab dem 01.09.2026 ein zweiter Weg gebaut — erzeugte Blöcke
-unter `kosmo-orbit/docs/auftraege-kosmovis/`, also in **ihrem** Repo. **Dieser Weg ist
-gemessen und er trägt nicht.** Stand 06.09.2026:
+unter `kosmo-orbit/docs/auftraege-kosmovis/`, also in **ihrem** Repo.
+
+> ### ⚠ Berichtigung vom 06.09.2026, abends
+>
+> **Was hier stand, war falsch: «Dieser Weg ist gemessen und er trägt nicht.»**
+>
+> Der Weg hat getragen. Die Blöcke sind angekommen, und `cloud` und `ui` haben am
+> **03.09.** auf **alle siebzehn** geantwortet. Ihre Antworten liegen im Orbit-Repo unter
+> `auftraege/ergebnisse/` — nur **zwei** davon haben je unser Repo erreicht.
+>
+> *Der Fehler lag nicht auf dem Hinweg, sondern auf dem Rückweg.* Aus «keine Antwort in
+> unserer Ablage» habe ich «der Weg trägt nicht» geschlossen — und dabei genau die
+> Richtung nicht geprüft, die kaputt war. **Eine Zustellung ist gerichtet: Dass sie
+> hinkommt, sagt nichts darüber, ob sie zurückkommt.**
+>
+> Was von der Diagnose bleibt: Zwei Aufträge (`auf-70`, `auf-72`) waren tatsächlich nie
+> ausgeliefert — dieser Befund vom 03.09. steht. Und die Blöcke hier sind trotzdem
+> nützlich, aber aus einem anderen Grund als dem, aus dem sie entstanden: Sie fassen
+> zusammen, sie ersetzen keinen Weg.
+>
+> **Die beiden Blöcke vom 06.09. tragen deshalb einen falschen Vorwurf** («Auf keinen
+> davon kam je eine Antwort»), und sie sind übergeben. Die Richtigstellung folgt, sobald
+> die fünfzehn Antworttexte hier lesbar sind.
+
+Die Zahlen, die zu dem falschen Schluss geführt haben — Stand 06.09.2026, gemessen an
+**unserer** Ablage und an nichts sonst:
 
 | Adressat | Aufträge | ältester | je geantwortet |
 |---|---|---|---|
 | `cloud` | 9 | 15 Tage | **nie** |
-| `ui` | 8 | 12 Tage | **nie** |
+| `ui` | 8 | 12 Tage | nicht bei uns |
 
 Dazu ab dem 01.09. ein `ZUSTELLBELEG` an jeder Einzeldatei und am 03.09. je ein eigener
 Auftrag, der nichts verlangt als einen Satz. Auf alles zusammen: nichts.
