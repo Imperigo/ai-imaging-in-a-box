@@ -1,60 +1,61 @@
 {
+  "schema": "aiimaging.homeworker-ergebnis/v1",
   "auftrag_id": "auf-20260903-73",
-  "worker": "local",
-  "status": "erledigt",
-  "datum": "2026-09-06",
-  "maschine": "andrins-workstation",
-
-  "M1": {
-    "auf-20260902-71": "nicht erledigt, weil die vorgeschriebene Sichtpruefung selbst NEIN sagt: vier der fuenf Fragen sind ja, die fuenfte (Anordnung unveraendert) ist nein — das alte Blatt zeigte EIN Plan-Render mit Konzepttext und Materialleiste, das neue packt rund sechzehn Plaene ueber die ganze Flaeche, Konzepttext und Materialleiste fehlen ganz. Das Blatt sagt: 'Ist eine dieser fuenf Antworten NEIN, setzt das Bild NICHT neu.' Golden unveraendert.",
-    "auf-20260901-69": "erledigt — gemessen, nichts installiert, kein Code geaendert.",
-    "auf-20260828-01": "erledigt — Inkscape ist auf dieser Maschine nicht installiert (kein Paket, kein Snap, kein Flatpak, je mit Gegenprobe). Nichts installiert, kein Owner-Go eingeholt, kein Umweg gesucht. 'Nicht messbar, weil nicht installiert' ist die vollstaendige Antwort, wie das Blatt sie vorsieht."
+  "status": "ok",
+  "beendet": "2026-09-06T12:00:00Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "maschine": "andrins-workstation",
+    "M1": {
+      "auf-20260902-71": "nicht erledigt, weil die vorgeschriebene Sichtpruefung selbst NEIN sagt: vier der fuenf Fragen sind ja, die fuenfte (Anordnung unveraendert) ist nein — das alte Blatt zeigte EIN Plan-Render mit Konzepttext und Materialleiste, das neue packt rund sechzehn Plaene ueber die ganze Flaeche, Konzepttext und Materialleiste fehlen ganz. Das Blatt sagt: 'Ist eine dieser fuenf Antworten NEIN, setzt das Bild NICHT neu.' Golden unveraendert.",
+      "auf-20260901-69": "erledigt — gemessen, nichts installiert, kein Code geaendert.",
+      "auf-20260828-01": "erledigt — Inkscape ist auf dieser Maschine nicht installiert (kein Paket, kein Snap, kein Flatpak, je mit Gegenprobe). Nichts installiert, kein Owner-Go eingeholt, kein Umweg gesucht. 'Nicht messbar, weil nicht installiert' ist die vollstaendige Antwort, wie das Blatt sie vorsieht."
+    },
+    "M2": "Keiner der drei war vorab abgearbeitet. Kein Ergebnis lag irgendwo, alle drei lagen unveraendert in auftraege/offen/.",
+    "M3": {
+      "befund": "Der Rueckstand sieht hier anders aus — aber nicht, weil wir verschieden zaehlen, sondern weil zwei Zahlen zwei verschiedene Dinge messen.",
+      "dateien_in_offen_gesamt": 80,
+      "dateien_worker_local_roh": 60,
+      "unerledigt_laut_werkzeug_local": 23,
+      "eure_messung_0609": 21,
+      "erklaerung": "auftrag.unerledigt() zaehlt seit dem 28.08.2026 nicht mehr 'ohne Ergebnisdatei', sondern 'nicht beantwortet'. Der Docstring nennt den Anlass selbst: von zwei cloud-Auftraegen mit Ergebnis waren zwei Weiterleitungsvermerke, ein weiterer trug status=erledigt mit leeren Messwerten. Ein Ergebnis zu haben heisst nicht, beantwortet zu sein.",
+      "deckel_bestaetigt": "DECKEL_JE_WORKER = 8 in src/aiimaging/auftrag.py:156. Euer Fund traegt, und der Quelltext sagt es an Ort und Stelle selbst (Zeile 179): wer seine Auftragsdatei selbst anlegt, sieht diesen Fehler nicht. Die Stelle, die den Rueckstand begrenzen soll, wird vom ueblichen Weg nicht beruehrt."
+    },
+    "befunde_die_ihr_wissen_solltet": [
+      {
+        "zu": "auf-20260902-71",
+        "schwere": "hoeher als der Auftrag selbst",
+        "text": "Die Quellen des Plakats sind NICHT synthetisch. output/planraw/ traegt 15 Dateien vom 26./27. Mai, bis 52.5 MB, mit '_FINAL' im Namen — reale, detaillierte Gebaeudegeometrie (Raumteilung, Fenster- und Dachaufbauten), unangetastet vom September-Umbau. Gemessen: die 15 Quellen sind NICHT versioniert (.gitignore Zeile 22 'output/*'), aber von fuenf verfolgten Dateien in output/ sind alle fuenf Golden-Bilder — darunter generativ-poster.png, 2107x1490 Bildpunkte, verfolgt seit 15.06. Das heisst: das Golden koennte bereits jetzt reale Projektgeometrie als Bildpunkte tragen, unabhaengig vom Namensfeld. Ein Neusetzen aus denselben Quellen haette daran nichts verbessert, sondern mehr davon eingefroren. Das gehoert dem Owner vorgelegt, bevor jemand dieses Golden anfasst."
+      },
+      {
+        "zu": "auf-20260902-71",
+        "text": "bridge-grundriss meldet 100 % Unterschied, und die Ursache hat NICHTS mit der Namens-Entfernung zu tun: die Blattgroesse aenderte sich von 1200x840 auf 1200x800 durch die bridge_to_svg-Commits nach dem Golden-Datum. Genau der Fall aus eurem Nachtrag 1a — der Umbau reichte weiter als beim Schreiben bekannt war."
+      },
+      {
+        "zu": "auf-20260901-69",
+        "schwere": "widerlegt eine Praemisse des Auftrags",
+        "text": "Der Auftrag sagt: 'diese sieben Proben laufen nur bei euch, weil ihr das KosmoDraw-Paket habt.' Gemessen und unabhaengig nachgeprueft: resolve_kosmodraw() ist auch hier False, die sieben Proben werden auch hier uebersprungen (Ran 19 tests, OK, skipped=7), und das kosmodraw-Paket gibt es auf dieser Maschine nirgends — bei intakter Gegenprobe, die andere Ordner sehr wohl findet. Zwei Gegenproben schaerfen das: mit einem vorhandenen Interpreter, der ifcopenshell schon traegt, wird die Grenze bereit — die sieben ueberspringen trotzdem, also ist nicht der Interpreter der Engpass; und mit einem gebauten Testordner liefert resolve_kosmodraw() korrekt True, die Funktion ist also nicht kaputt."
+      },
+      {
+        "zu": "auf-20260901-69",
+        "text": "Zur eigentlichen Frage: im engen Sinn geht bei einer Entfernung von ifcopenshell KEINE laufende Messung verloren, weil gerade nirgends eine laeuft. Das beantwortet die Absicht aber nicht — die sieben sollten die kuenftige Kontrolle von build_native_ifc sein. Der wirkliche Engpass ist damit nicht die Bibliothek in requirements.txt, sondern das fehlende kosmodraw-Paket, das in keinem erreichbaren Repository liegt, weder bei euch noch hier. Diese Unterscheidung ist der Befund; der Entscheid bleibt beim Owner."
+      },
+      {
+        "zu": "auf-20260901-69",
+        "text": "Berichtigung an einer eigenen Angabe: KosmoPrepare hat sehr wohl ein Git-Repo, es liegt eine Ebene tiefer in 01_Source_Code/ und war 13 Commits im Rueckstand. .venv-ifc existiert hier nicht; es anzulegen waere eine Installation gewesen (Auflage: nichts ohne Owner-Go), darum wurde stattdessen mit einem bereits vorhandenen Interpreter gegengeprobt."
+      }
+    ],
+    "auflagen_nachweis": {
+      "leistungsgrenze": "GPU durchgehend im Leerlauf gemessen: 42-46 W, 647 MiB — weit unter Schwelle 120 W / 8 GB.",
+      "installiert": "nichts",
+      "code_geaendert": "kein Code in KosmoPublish oder KosmoPrepare",
+      "regel3": "keine absoluten Pfade mit Benutzernamen, keine Kunden-, Buero- oder Wettbewerbsnamen in dieser Rueckgabe",
+      "suiten": "KosmoPublish 2917 OK (skipped=18), KosmoDraw 2925 passed — beide Ausgangszahlen selbst gemessen, beide gruen geblieben"
+    },
+    "bemerkung_zum_sammelauftrag": "Der Sammelauftrag wurde nicht statt der drei abgearbeitet. Er hat genau das bewirkt, was er wollte: die drei bekamen eine Antwort, zwei davon sind erledigt, und der dritte hat einen Grund statt eines Schweigens.",
+    "huelle_berichtigt": "Die Antwort kam mit status='erledigt' und ohne Schema — ein Status, den der Vertrag nicht kennt und `baue_ergebnis` nie schreibt. Sie galt dadurch als OFFEN. Am 06.09.2026 in die Vertragsform gebracht; am Inhalt ist nichts geaendert."
   },
-
-  "M2": "Keiner der drei war vorab abgearbeitet. Kein Ergebnis lag irgendwo, alle drei lagen unveraendert in auftraege/offen/.",
-
-  "M3": {
-    "befund": "Der Rueckstand sieht hier anders aus — aber nicht, weil wir verschieden zaehlen, sondern weil zwei Zahlen zwei verschiedene Dinge messen.",
-    "dateien_in_offen_gesamt": 80,
-    "dateien_worker_local_roh": 60,
-    "unerledigt_laut_werkzeug_local": 23,
-    "eure_messung_0609": 21,
-    "erklaerung": "auftrag.unerledigt() zaehlt seit dem 28.08.2026 nicht mehr 'ohne Ergebnisdatei', sondern 'nicht beantwortet'. Der Docstring nennt den Anlass selbst: von zwei cloud-Auftraegen mit Ergebnis waren zwei Weiterleitungsvermerke, ein weiterer trug status=erledigt mit leeren Messwerten. Ein Ergebnis zu haben heisst nicht, beantwortet zu sein.",
-    "deckel_bestaetigt": "DECKEL_JE_WORKER = 8 in src/aiimaging/auftrag.py:156. Euer Fund traegt, und der Quelltext sagt es an Ort und Stelle selbst (Zeile 179): wer seine Auftragsdatei selbst anlegt, sieht diesen Fehler nicht. Die Stelle, die den Rueckstand begrenzen soll, wird vom ueblichen Weg nicht beruehrt."
-  },
-
-  "befunde_die_ihr_wissen_solltet": [
-    {
-      "zu": "auf-20260902-71",
-      "schwere": "hoeher als der Auftrag selbst",
-      "text": "Die Quellen des Plakats sind NICHT synthetisch. output/planraw/ traegt 15 Dateien vom 26./27. Mai, bis 52.5 MB, mit '_FINAL' im Namen — reale, detaillierte Gebaeudegeometrie (Raumteilung, Fenster- und Dachaufbauten), unangetastet vom September-Umbau. Gemessen: die 15 Quellen sind NICHT versioniert (.gitignore Zeile 22 'output/*'), aber von fuenf verfolgten Dateien in output/ sind alle fuenf Golden-Bilder — darunter generativ-poster.png, 2107x1490 Bildpunkte, verfolgt seit 15.06. Das heisst: das Golden koennte bereits jetzt reale Projektgeometrie als Bildpunkte tragen, unabhaengig vom Namensfeld. Ein Neusetzen aus denselben Quellen haette daran nichts verbessert, sondern mehr davon eingefroren. Das gehoert dem Owner vorgelegt, bevor jemand dieses Golden anfasst."
-    },
-    {
-      "zu": "auf-20260902-71",
-      "text": "bridge-grundriss meldet 100 % Unterschied, und die Ursache hat NICHTS mit der Namens-Entfernung zu tun: die Blattgroesse aenderte sich von 1200x840 auf 1200x800 durch die bridge_to_svg-Commits nach dem Golden-Datum. Genau der Fall aus eurem Nachtrag 1a — der Umbau reichte weiter als beim Schreiben bekannt war."
-    },
-    {
-      "zu": "auf-20260901-69",
-      "schwere": "widerlegt eine Praemisse des Auftrags",
-      "text": "Der Auftrag sagt: 'diese sieben Proben laufen nur bei euch, weil ihr das KosmoDraw-Paket habt.' Gemessen und unabhaengig nachgeprueft: resolve_kosmodraw() ist auch hier False, die sieben Proben werden auch hier uebersprungen (Ran 19 tests, OK, skipped=7), und das kosmodraw-Paket gibt es auf dieser Maschine nirgends — bei intakter Gegenprobe, die andere Ordner sehr wohl findet. Zwei Gegenproben schaerfen das: mit einem vorhandenen Interpreter, der ifcopenshell schon traegt, wird die Grenze bereit — die sieben ueberspringen trotzdem, also ist nicht der Interpreter der Engpass; und mit einem gebauten Testordner liefert resolve_kosmodraw() korrekt True, die Funktion ist also nicht kaputt."
-    },
-    {
-      "zu": "auf-20260901-69",
-      "text": "Zur eigentlichen Frage: im engen Sinn geht bei einer Entfernung von ifcopenshell KEINE laufende Messung verloren, weil gerade nirgends eine laeuft. Das beantwortet die Absicht aber nicht — die sieben sollten die kuenftige Kontrolle von build_native_ifc sein. Der wirkliche Engpass ist damit nicht die Bibliothek in requirements.txt, sondern das fehlende kosmodraw-Paket, das in keinem erreichbaren Repository liegt, weder bei euch noch hier. Diese Unterscheidung ist der Befund; der Entscheid bleibt beim Owner."
-    },
-    {
-      "zu": "auf-20260901-69",
-      "text": "Berichtigung an einer eigenen Angabe: KosmoPrepare hat sehr wohl ein Git-Repo, es liegt eine Ebene tiefer in 01_Source_Code/ und war 13 Commits im Rueckstand. .venv-ifc existiert hier nicht; es anzulegen waere eine Installation gewesen (Auflage: nichts ohne Owner-Go), darum wurde stattdessen mit einem bereits vorhandenen Interpreter gegengeprobt."
-    }
-  ],
-
-  "auflagen_nachweis": {
-    "leistungsgrenze": "GPU durchgehend im Leerlauf gemessen: 42-46 W, 647 MiB — weit unter Schwelle 120 W / 8 GB.",
-    "installiert": "nichts",
-    "code_geaendert": "kein Code in KosmoPublish oder KosmoPrepare",
-    "regel3": "keine absoluten Pfade mit Benutzernamen, keine Kunden-, Buero- oder Wettbewerbsnamen in dieser Rueckgabe",
-    "suiten": "KosmoPublish 2917 OK (skipped=18), KosmoDraw 2925 passed — beide Ausgangszahlen selbst gemessen, beide gruen geblieben"
-  },
-
-  "bemerkung_zum_sammelauftrag": "Der Sammelauftrag wurde nicht statt der drei abgearbeitet. Er hat genau das bewirkt, was er wollte: die drei bekamen eine Antwort, zwei davon sind erledigt, und der dritte hat einen Grund statt eines Schweigens."
+  "umgebung": {},
+  "fehler": null
 }
