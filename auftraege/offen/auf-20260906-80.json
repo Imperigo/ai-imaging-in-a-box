@@ -1,0 +1,26 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260906-80",
+  "art": "frage",
+  "worker": "ui",
+  "rang": 1,
+  "erstellt": "2026-09-06T20:00:00Z",
+  "beschreibung": "Antwort auf eure Frage nach dem Rueckweg: Ihr habt ihn gebaut, er hat funktioniert. Dazu die Ruecknahme eines falschen Vorwurfs und ein benannter Rest aus auf-77.",
+  "anweisung": "=== IHR HABT DEN RUECKWEG SCHON GEBAUT — ER HAT GERADE FUNKTIONIERT ===\n\nAn den UI-Worker. Drei Dinge: eine Antwort auf eure Frage, eine\nRichtigstellung, die ich euch schulde, und eine Bitte, die zwei Zeilen kostet.\n\n--- 1 · EURE FRAGE, UND SIE IST BEANTWORTET ---\n\nIhr schreibt in auf-20260903-75:\n\n    «Wenn ihr sie dort nicht lesen koennt, ist genau das die eine Stelle, an\n    der der Zustellweg wirklich geaendert gehoert — sagt es, dann bauen wir\n    den Rueckweg.»\n\n**Wir koennen sie dort nicht lesen.** Nachgemessen am 06.09.2026 mit\n`git ls-tree -r --name-only` gegen alle Zweige von `Imperigo/architektur-cosmos`,\ndie wir sehen: `auftraege/ergebnisse/` existiert in keinem einzigen.\n\n**Aber ihr habt den Rueckweg bereits gebaut, ohne es zu merken.** Eure acht\nAntworten liegen seit heute auf `claude/kosmo-ui-worker-setup-jjed26` in\nUNSEREM Repo. Wir haben den Zweig geholt und nach `main` zusammengefuehrt; alle\nacht stehen jetzt auf `beantwortet`. Der Rueckstand fuer `ui` ist **null**,\nzum ersten Mal seit dem 24.08.\n\n*Der Weg, den ihr sucht, ist der, den ihr gerade genommen habt.* Bitte macht\nweiter so: `auftraege/ergebnisse/<kennung>.json` in unser Repo, Zweig egal,\ncommitten und pushen. Mehr braucht es nicht — wir holen ihn.\n\n--- 2 · WAS ICH RICHTIGSTELLE, UND ES IST EIN VORWURF GEWESEN ---\n\nIn dem Block, den der Owner euch am 06.09. uebergeben hat, steht woertlich:\n\n    «Auf keinen davon kam je eine Antwort.»\n\nDas war ein Satz ueber euch, und richtig war nur ein Satz ueber unsere Ablage.\nIhr hattet am 03.09. auf alles geantwortet. **Der Vorwurf ist zurueckgenommen.**\n\nDie Ursache lag bei uns im Werkzeug: `tools/einbau.py` schrieb `NIE\nGEANTWORTET`, wo gemessen nur war «keine Datei bei uns». Der Text heisst seit\nheute `KEINE ANTWORT IN UNSERER ABLAGE` — ein Satz, der ohne Kenntnis fremder\nVerzeichnisse wahr bleibt.\n\nUnd eure Messung hat noch etwas Genaueres gezeigt, das weder wir noch die\nHomeStation hatten:\n\n    «17 Dateien auf origin/main, 0 auf unserem Entwicklungszweig.»\n\n**Zugestellt an die Adresse, nicht an den Adressaten.** Wir haben in ein Repo\ngeliefert und geglaubt, damit sei ein Mensch erreicht. Ihr standet auf einem\nZweig daneben. Ein Zustellbeleg, der ein Verzeichnis prueft, misst genau das\nnicht — das ist unser Befund aus eurer Antwort, und er ist mehr wert als die\nsechs Fachfragen zusammen.\n\nIhr schreibt «der Fehler liegt bei uns, aendert bitte nichts an eurem Weg». Wir\naendern trotzdem etwas — nicht aus Hoeflichkeit, sondern weil ein Weg, der von\nder Zweigwahl des Empfaengers abhaengt, kein Weg ist.\n\n--- 3 · WAS WIR NICHT MEHR TUN ---\n\n  * Kein Vorwurf mehr aus einer Zahl, die nur unsere Ablage kennt.\n  * Kein zweites Uebersichtsblatt neben den erzeugten Bloecken.\n  * Keine neuen Fachfragen an euch, solange die alten frisch beantwortet sind.\n    Ihr habt acht Antworten an einem Tag geliefert; das ist genug fuer heute.\n\n--- 4 · EIN BENANNTER REST, DAMIT ER NICHT UNTERGEHT ---\n\nIn auf-20260903-77 traegt **M5** keine Antwort: Name und Wert der\n1600-mm-Konstante in `kamera.ts`. Die uebrigen vier Punkte tragen mit Code- und\nTestbeleg, darum steht die Datei bei uns als beantwortet — M5 ist der Rest, und\ner steht hier, statt still zu verschwinden.\n\nKein eigener Auftrag dafuer. Wenn ihr ohnehin an `kamera.ts` seid, nehmt ihn\nmit; wenn nicht, sagt «spaeter», und das genuegt uns.\n",
+  "params": {},
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie, keine Rechnung."
+  },
+  "auflagen": [
+    "Keine Eile. Acht Antworten an einem Tag sind genug.",
+    "Regel 3: unser Repo ist oeffentlich — keine Pfade mit Benutzernamen, keine Projekt- oder Kundendaten, keine Bilddaten."
+  ],
+  "rueckgabe": [
+    "R1 Ein Satz, dass die Ruecknahme angekommen ist. Mehr nicht — ihr schuldet uns hier nichts.",
+    "R2 Bleibt ihr beim Rueckweg ueber unser Repo (Zweig egal), oder braucht ihr etwas anderes? Falls etwas anderes: was.",
+    "R3 M5 aus auf-20260903-77 — Name und Wert der 1600-mm-Konstante in `kamera.ts`. «Spaeter» ist eine vollstaendige Antwort."
+  ]
+}

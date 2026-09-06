@@ -1243,6 +1243,21 @@ prüfte das Skript mit erfundenen Aufträgen und die Aufträge ohne das Skript; 
 lag der Fehler.* Die Abhilfe ist eine Probe, die die **wirklichen** Dateien durch den
 **wirklichen** Aufruf schickt.
 
+**Zugestellt an die Adresse, nicht an den Adressaten** — Eine Sendung erreicht den Ort,
+an dem der Empfänger vermutet wird, aber nicht ihn. Der Zustellbeleg ist echt und trotzdem
+wertlos: Er belegt den Ort, und gemeint war der Mensch.
+*Im Projekt am 06.09.2026, und es ist die genaue Fassung nach zwei ungenauen:* Die Blöcke
+für `cloud` und `ui` lagen seit dem 01.09. in deren Repo — auf `main`. Beide Worker
+entwickeln auf Feature-Zweigen, die `main` nie zusammenführen. Der UI-Worker hat es selbst
+gemessen: *«17 Dateien auf origin/main, 0 auf unserem Entwicklungszweig. Es hat uns nichts
+auf eine neue Datei aufmerksam gemacht, weil es für uns keine Datei gab.»*
+*Warum es zweimal falsch diagnostiziert wurde:* Beide Seiten massen den falschen
+Gegenstand. Wir massen unsere eigene Ablage und schlossen auf den Hinweg; die HomeStation
+mass das fremde Repo und schloss auf den Empfänger. **Ein Verzeichnis ist kein Leser.**
+*Die Regel daraus:* Ein Zustellbeleg, der eine Datei prüft, misst Ankunft am Ort. Ob
+jemand sie sieht, misst nur eine Antwort — was der **Zustellbeleg** von Anfang an
+erbeten hatte, und was hier tatsächlich die einzige Auskunft war, die trug.
+
 **Zustellung ist gerichtet** — Dass etwas **hinkommt**, sagt nichts darüber, ob etwas
 **zurückkommt**. Ein Weg, der in einer Richtung trägt, ist noch kein Kanal, und ein Beleg
 über die eine Richtung belegt nicht die andere.
@@ -4191,6 +4206,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-06 | Ergaenzt: **Zugestellt an die Adresse, nicht an den Adressaten** — die genaue Fassung nach zwei ungenauen. Die Bloecke lagen auf `main` des fremden Repos, beide Worker entwickeln auf Feature-Zweigen, die `main` nie mergen: 17 Dateien dort, 0 bei ihnen. Beide Diagnosen davor massen den falschen Gegenstand |
 | 2026-09-06 | Ergaenzt: **Zustellung ist gerichtet**. Anlass ist die Berichtigung derselben Sache am selben Abend: Der Weg zu `cloud` und `ui` trug sehr wohl, beide hatten am 03.09. auf alle siebzehn geantwortet — der Fehler lag auf dem Rueckweg, geprueft worden war der Hinweg |
 | 2026-09-06 | Ergaenzt: **Aus Nichtwissen einen Vorwurf machen**. Anlass ist der teuerste Fehler dieses Tages: `tools/einbau.py` meldete `NIE GEANTWORTET`, gemessen war aber nur «keine Datei in unserer Ablage» — und 15 Antworten von `cloud` und `ui` lagen seit dem 03.09. in einem Verzeichnis, in das wir nie sehen. Der Vorwurf war da bereits uebergeben |
 | 2026-09-06 | Ergaenzt: **Abgelehnt (Lauf gegen Frage)**. Anlass ist eine Falle, die beim Bau von `tools/antwort.py` fast eingebaut wurde: Ein begruendetes Nein auf eine Frage haette als `abgelehnt` weiter als OFFEN gezaehlt — wir haetten nachgefragt, was uns beantwortet wurde |

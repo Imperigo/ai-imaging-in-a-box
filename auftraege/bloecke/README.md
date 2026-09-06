@@ -24,6 +24,30 @@ unter `kosmo-orbit/docs/auftraege-kosmovis/`, also in **ihrem** Repo.
 > Richtung nicht geprüft, die kaputt war. **Eine Zustellung ist gerichtet: Dass sie
 > hinkommt, sagt nichts darüber, ob sie zurückkommt.**
 >
+> ### ⚠ Und noch einmal genauer, eine Stunde später — die Fassung, die stimmt
+>
+> Beide Berichtigungen oben haben am **falschen Gegenstand** gemessen.
+>
+> * Ich mass «keine Antwort in unserer Ablage» und schloss: *der Hinweg ist kaputt.*
+>   Falsche Richtung.
+> * Der Home-PC-Worker mass «die Blöcke liegen im Orbit-Repo» und schloss: *die Fragen
+>   sind angekommen.* Falsche Auflösung.
+>
+> Der UI-Worker hat es selbst gemessen und aufgeschrieben:
+>
+> > *«Das Verzeichnis existiert auf `main`, wir entwickeln auf einem Feature-Zweig, der
+> > `main` nie merged. Gemessen heute: 17 Dateien auf origin/main, 0 auf unserem
+> > Entwicklungszweig. Es hat uns nichts auf eine neue Datei aufmerksam gemacht, weil es
+> > für uns keine Datei gab.»*
+>
+> **Zugestellt an die Adresse, nicht an den Adressaten.** Das Repo hat die Blöcke
+> bekommen; der Mensch, der darin arbeitet, hat sie nie gesehen — er stand auf einem
+> Zweig daneben. Ein Zustellbeleg, der ein Verzeichnis prüft, misst genau das nicht.
+>
+> Sie schreiben dazu: *«Der Ablageort war nie das Problem — der Fehler liegt bei uns.
+> Ändert bitte nichts an eurem Weg.»* Wir ändern trotzdem etwas, denn dies ist nicht der
+> Ort für Schuld, sondern für Messbarkeit.
+>
 > Was von der Diagnose bleibt: Zwei Aufträge (`auf-70`, `auf-72`) waren tatsächlich nie
 > ausgeliefert — dieser Befund vom 03.09. steht. Und die Blöcke hier sind trotzdem
 > nützlich, aber aus einem anderen Grund als dem, aus dem sie entstanden: Sie fassen

@@ -118,17 +118,26 @@ def test_ein_ui_befund_geht_an_den_ui_worker(kennung, spalten):
     if WEITERGEGEBEN not in stand.lower():
         return
     for name in AUFTRAG.findall(stand):
-        for ordner in ("offen", "ergebnisse"):
-            pfad = REPO / "auftraege" / ordner / f"{name}.json"
-            if not pfad.is_file():
-                continue
-            satz = json.loads(pfad.read_text(encoding="utf-8"))
-            assert satz.get("worker") == auftrag.WORKER_UI, (
-                f"{kennung} ist an {name} weitergegeben, und der geht an "
-                f"{satz.get('worker')!r} statt an {auftrag.WORKER_UI!r}. Dort bleibt er "
-                f"liegen — nicht aus Ablehnung, sondern weil er nicht zum Gegenstand "
-                f"des Lesers gehört."
-            )
+        # NUR DIE AUFTRAGSDATEI TRAEGT EINEN ADRESSATEN — das Ergebnis nicht.
+        #
+        # Diese Schleife lief bis zum 06.09.2026 ueber `offen` UND `ergebnisse` und
+        # pruefte in beiden dasselbe Feld. Solange kein Ergebnis existierte, fiel das
+        # nicht auf. An dem Abend kamen acht Antworten des UI-Workers auf einmal — und
+        # neun Proben wurden rot, weil ein Ergebnissatz kein `worker` hat und `None`
+        # nun einmal nicht `ui` ist.
+        #
+        # *Der Waechter ist am Erfolg gescheitert, den er begleiten sollte.* Geprueft
+        # wird die Frage «an wen geht das?», und die steht im Auftrag.
+        pfad = REPO / "auftraege" / "offen" / f"{name}.json"
+        if not pfad.is_file():
+            continue
+        satz = json.loads(pfad.read_text(encoding="utf-8"))
+        assert satz.get("worker") == auftrag.WORKER_UI, (
+            f"{kennung} ist an {name} weitergegeben, und der geht an "
+            f"{satz.get('worker')!r} statt an {auftrag.WORKER_UI!r}. Dort bleibt er "
+            f"liegen — nicht aus Ablehnung, sondern weil er nicht zum Gegenstand "
+            f"des Lesers gehört."
+        )
 
 
 def test_der_ui_worker_ist_ueberhaupt_ein_bekannter_worker():
