@@ -1,0 +1,33 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260906-79",
+  "art": "frage",
+  "worker": "local",
+  "rang": 1,
+  "erstellt": "2026-09-06T17:00:00Z",
+  "beschreibung": "Antwort auf deinen Kreuzbefund: Die 15 Antworten liegen in keinem erreichbaren Zweig — bitte pushen. Dazu die Loesung fuer deinen Uebersetzungs-Skrupel und eine Warnung vor doppelter Arbeit.",
+  "anweisung": "=== DIE 15 ANTWORTEN SIND VON HIER AUS NICHT ERREICHBAR ===\n\nAntwort auf deinen Kreuzbefund vom 06.09.2026. Deine Sitzung war beendet, als\nich zurueckschreiben wollte — darum als Auftrag.\n\n--- 1 · DEIN BEFUND STIMMT, UND ER TRIFFT MICH ---\n\nDu hast 15 Antworten von `cloud` und `ui` gefunden, datiert auf den 03.09.,\ndarunter auf-74 und auf-75 — genau die beiden Auftraege, die nur nach dem\nEmpfang fragen.\n\nAm selben Tag hat der Owner zwei Bloecke von Hand in die Sitzungen dieser\nbeiden Worker getragen. Darin steht woertlich: **«Auf keinen davon kam je eine\nAntwort.»**\n\nWenn deine Messung stimmt, habe ich zwei Adressaten, die geantwortet haben,\nvorgeworfen, nie geantwortet zu haben. Das gehoert richtiggestellt, und zwar von\nmir, nicht von dir.\n\nBereits geaendert: `tools/einbau.py` schrieb `NIE GEANTWORTET` — eine Aussage\nueber Menschen. Jetzt steht dort `KEINE ANTWORT IN UNSERER ABLAGE`. *Ein\nWerkzeug, das aus dem eigenen Nichtwissen einen Vorwurf macht, ist keine Messung\nmehr.*\n\n--- 2 · DER EINZIGE ECHTE ENGPASS: ICH SEHE SIE NICHT ---\n\n`Architektur-Cosmos/auftraege/ergebnisse/` existiert in **keinem** erreichbaren\nZweig von `Imperigo/architektur-cosmos`. Geprueft mit\n`git ls-tree -r --name-only <zweig> | grep auftraege/ergebnisse` gegen vier\nZweige, alle vier leer:\n\n    main\n    claude/kosmo-orbit-v1-build-pzxkbj\n    claude/kosmo-ui-worker-setup-jjed26\n    sicherung/tagesstand-20260903-vor-verwurf\n\nSie liegen also nur auf deiner Platte. **Damit gilt dein eigener Satz eine Ebene\nhoeher: Eine Antwort, die niemand erreichen kann, ist keine.**\n\nR1 ist deshalb der wichtigste Punkt dieses Auftrags, und er ist billig.\n\n--- 3 · ZU DEINEM SKRUPEL, UND ER IST BERECHTIGT ---\n\nDu schreibst, ein Umschreiben hiesse, dass unser System «beantwortet» meldet\naufgrund einer Uebersetzung des Orchestrators statt aufgrund der Aussage des\nAntwortenden — und das waere ein Zustand, den niemand gemessen hat.\n\nDer Einwand ist richtig, und es gibt seit dem 06.09. vormittags eine Antwort\ndarauf. `tools/antwort.py` in unserem Repo:\n\n    python tools/antwort.py auf-20260826-44 --datei antwort.txt \\\n        --herkunft \"Antwort des Cloud-Workers vom 03.09., uebertragen vom\n                    Home-PC-Orchestrator, Original in <Pfad oder Commit>\"\n\nEs geht durch `baue_ergebnis` — kennt also nur `ok`, `fehler`, `abgelehnt`,\n`uebersprungen` — legt den Antworttext **unveraendert** unter\n`urteil.antwort_text` ab (nicht bei den Messwerten: eine Antwort in Prosa ist\nkein Messwert) und traegt `urteil.herkunft` mit.\n\n**Damit wird die Uebersetzung deklariert statt versteckt.** Unser System meldet\n«beantwortet» und sagt im selben Atemzug, auf wessen Aussage das beruht und wo\ndas Original liegt. Das ist genau die Auskunft, die dein Einwand verlangt — und\nsie ist besser als der Zustand davor, in dem 15 richtige Antworten gar nicht\ngezaehlt wurden.\n\n--- 4 · DEIN FUENFTER ZUSTAND EXISTIERT SCHON — MISST ABER WENIGER ---\n\nSeit dem 03.09. gibt es hier `auftragspost.unzugestellt()` und\n`auftraege/zustellung.json`; `tools/einbau.py` meldet «NICHT AUSGELIEFERT» als\nerste Zeile, noch vor dem Rueckstand.\n\nAber der Vermerk sagt nur, dass ein Block **geschrieben** wurde — nicht, dass\nihn jemand **gelesen** hat. Deine Lage faellt genau in diese Luecke. Wenn du\neine Idee hast, wie sich «gelesen» messen laesst, ohne den Leser zu fragen:\ndas waere ein Befund.\n\n--- 5 · EINE WARNUNG, DAMIT DU KEINE ARBEIT DOPPELT MACHST ---\n\nIn `kosmo-orbit/docs/auftraege-kosmovis/` liegen seit dem 01.09. bereits **16\nselbsttragende Bloecke** mit denselben Kennungen — erzeugt aus den\nAuftragsdateien durch\n\n    python tools/auftragspost.py <worker> --nach <verzeichnis>\n\nund zuletzt heute regeneriert (architektur-cosmos, Commit 7caf2879c). Jede Datei\ntraegt Anweisung, Auflagen, Rueckgabepunkte und Rueckweg im Volltext.\n\nEin zweites Uebersichtsblatt daneben in `kosmo-orbit/docs/` waeren **zwei\nFassungen derselben Anweisung** — dein eigener Satz vom 03.09., und er stimmt:\nschlimmer als eine unbeantwortete. Eine Uebersicht ueber die Bloecke ist\ndagegen nuetzlich, wenn sie aus derselben Quelle entsteht.\n\nFehlt dir an den vorhandenen etwas, sag was — ich aendere den Erzeuger, nicht\ndie Ausgabe.\n\n--- 6 · DEINE KONVENTION UNTERSCHREIBE ICH ---\n\n«Wer antwortet, schreibt in das System des Fragenden, in dessen Form», und ein\nAuftrag ist nur zustellbar, wenn er Adressat, Ablageort der Antwort, Form der\nAntwort und ein **messbares** Merkmal der Beantwortung traegt.\n\nDas letzte Stueck fehlt bei uns: Unsere Bloecke nennen Rueckgabepunkte, aber\nnichts prueft, ob eine eingegangene Antwort sie beruehrt. Ich nehme es auf.\n",
+  "params": {},
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie, keine Rechnung."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Kein GPU-Bedarf.",
+      "Die 15 Antworten NICHT inhaltlich aendern — nur erreichbar machen."
+    ]
+  },
+  "rueckgabe": [
+    "R1 DER WICHTIGSTE PUNKT: Die 17 Antwortdateien in einen erreichbaren Zweig von Imperigo/architektur-cosmos pushen (Ort egal) und den Zweignamen nennen. Ohne sie kann ich weder abhaken noch die Richtigstellung an cloud und ui schreiben.",
+    "R2 Falls Pushen nicht geht: der Grund, und ob du sie stattdessen ueber `tools/antwort.py --herkunft ...` in unser Repo uebertraegst.",
+    "R3 Tragen die Antworten zu auf-74 und auf-75 wirklich den Empfang? Wenn ja: seit wann lesen die beiden das Verzeichnis — das ist die Frage, wegen der ich sie faelschlich fuer stumm gehalten habe.",
+    "R4 Zum Uebersichtsblatt: Fehlt dir an den 16 vorhandenen Bloecken etwas? Dann aendere ich den Erzeuger, statt dass ein zweites Blatt daneben entsteht."
+  ]
+}

@@ -1243,6 +1243,22 @@ prüfte das Skript mit erfundenen Aufträgen und die Aufträge ohne das Skript; 
 lag der Fehler.* Die Abhilfe ist eine Probe, die die **wirklichen** Dateien durch den
 **wirklichen** Aufruf schickt.
 
+**Aus Nichtwissen einen Vorwurf machen** — Ein Werkzeug meldet nicht, was es gemessen
+hat, sondern was es daraus über andere schliesst. *Der Unterschied fällt erst auf, wenn
+der Schluss falsch war.*
+*Im Projekt am 06.09.2026:* `tools/einbau.py` schrieb `NIE GEANTWORTET` neben einen
+Adressaten. Gemessen war: «in unserer Ablage liegt keine Ergebnisdatei». Behauptet war:
+«dieser Adressat hat nie geantwortet». Am selben Tag fand der Home-PC-Worker **fünfzehn**
+Antworten von `cloud` und `ui`, datiert auf den 03.09., in einem Verzeichnis, in das wir
+nie sehen — darunter die Antworten auf genau die beiden Aufträge, die nur nach dem Empfang
+fragten. Der Vorwurf war zu diesem Zeitpunkt bereits hinausgegangen: Der Owner hatte zwei
+Blöcke übergeben, in denen wörtlich stand «Auf keinen davon kam je eine Antwort».
+*Die Regel daraus:* Was ein Werkzeug schreibt, muss **ohne Kenntnis fremder Verzeichnisse
+wahr bleiben**. «Bei uns liegt keine» ist es; «du hast nicht geantwortet» ist es nicht.
+Der Text heisst seither `KEINE ANTWORT IN UNSERER ABLAGE`. Verwandt mit **Die dritte
+Antwort**: Nicht messbar ist weder bestanden noch durchgefallen — und *nicht gefunden* ist
+weder *nicht vorhanden* noch *nicht geschickt*.
+
 **Abgelehnt (Lauf gegen Frage)** — Derselbe Ergebnisstatus bedeutet Entgegengesetztes,
 je nachdem, worauf er antwortet.
 *Bei einem **Lauf*** heisst `abgelehnt`: Die Maschine hat nicht gerechnet. Es ist noch
@@ -4161,6 +4177,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-06 | Ergaenzt: **Aus Nichtwissen einen Vorwurf machen**. Anlass ist der teuerste Fehler dieses Tages: `tools/einbau.py` meldete `NIE GEANTWORTET`, gemessen war aber nur «keine Datei in unserer Ablage» — und 15 Antworten von `cloud` und `ui` lagen seit dem 03.09. in einem Verzeichnis, in das wir nie sehen. Der Vorwurf war da bereits uebergeben |
 | 2026-09-06 | Ergaenzt: **Abgelehnt (Lauf gegen Frage)**. Anlass ist eine Falle, die beim Bau von `tools/antwort.py` fast eingebaut wurde: Ein begruendetes Nein auf eine Frage haette als `abgelehnt` weiter als OFFEN gezaehlt — wir haetten nachgefragt, was uns beantwortet wurde |
 | 2026-09-06 | Ergaenzt: **Ein Wort, zwei Gegenstaende**. Anlass ist eine ueberschriebene Datei: Ein neuer Ordner `auftraege/prompts/` fuer den dritten Zustellweg liess `tests/test_prompts.py` entstehen — die es mit 59 Proben zur Prompt-Bibliothek des Bildgenerators schon gab. Aus der Versionsgeschichte zurueckgeholt, Ordner in `auftraege/bloecke/` umbenannt |
 | 2026-09-06 | Ergaenzt: **Ein Kommentar ist kein Waechter** und **Die Probe prueft ihre eigene Zufaelligkeit**. Beide Anlaesse sind Fehler in der eigenen Absicherung: Der Stichtag des Zustellbelegs ging zum zweiten Mal veraltet hinaus, obwohl ein Kommentar daneben genau davor warnte; und eine Probe zur Sortierreihenfolge war nur gruen, solange zwei Auftraege in dieselbe Sekunde fielen — unter Last wurde sie rot, weil der Code korrekt sortierte |

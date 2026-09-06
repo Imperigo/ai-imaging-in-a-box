@@ -64,11 +64,24 @@ def _zeilen(bericht: dict, nur: str | None) -> list[str]:
         if nur and worker != nur:
             continue
         # DIE ANTWORTZEILE STEHT BEI DER ZAHL UND NICHT IN EINER ZWEITEN TABELLE. «Sieben
-        # offen» und «sieben offen, noch nie geantwortet» sind zwei verschiedene Lagen,
-        # und die zweite verlangt keine Geduld, sondern einen anderen Zustellweg.
+        # offen» und «sieben offen, keine Antwort in unserer Ablage» sind zwei
+        # verschiedene Lagen, und die zweite verlangt keine Geduld, sondern eine Frage
+        # nach dem Zustellweg.
+        #
+        # DER TEXT HAT AM 06.09.2026 SEINE BEHAUPTUNG VERKLEINERT, und der Anlass war
+        # peinlich. Er hiess «NIE GEANTWORTET» — eine Aussage ueber MENSCHEN. Gemessen
+        # werden kann aber nur eine Aussage ueber unsere ABLAGE. Der Home-PC-Worker fand
+        # am selben Tag 15 Antworten von `cloud` und `ui`, datiert auf den 03.09., in
+        # einem Verzeichnis, in das wir nie sehen. Zu diesem Zeitpunkt hatte der Owner
+        # bereits zwei Bloecke von Hand hinuebergetragen, in denen woertlich stand: «Auf
+        # keinen davon kam je eine Antwort.»
+        #
+        # *Ein Werkzeug, das aus dem eigenen Nichtwissen einen Vorwurf macht, ist keine
+        # Messung mehr.* Was hier steht, muss ohne Kenntnis fremder Verzeichnisse wahr
+        # bleiben — und «bei uns liegt keine» ist es.
         v = verhalten.get(worker) or {}
         if anzahl and v.get("n_antworten") == 0:
-            zusatz = "  NIE GEANTWORTET"
+            zusatz = "  KEINE ANTWORT IN UNSERER ABLAGE"
             if v.get("n_weitergereicht"):
                 zusatz += f" ({v['n_weitergereicht']} weitergereicht)"
         elif v.get("letzte_antwort"):

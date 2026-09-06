@@ -378,7 +378,9 @@ def test_die_ausgabe_nennt_einen_stummen_adressaten_beim_namen(tmp_path, capsys)
     _mit_blatt(tmp_path)
     _einbau_cli().main(["--repo", str(tmp_path)])
     ausgabe = capsys.readouterr().out
-    assert "NIE GEANTWORTET" in ausgabe
+    assert "KEINE ANTWORT IN UNSERER ABLAGE" in ausgabe, (
+        "Der Satz muss ohne Kenntnis fremder Verzeichnisse wahr bleiben — «nie\n"
+        "geantwortet» war es am 06.09.2026 nachweislich nicht.")
 
 
 def test_ein_adressat_mit_antwort_wird_nicht_als_stumm_gemeldet(tmp_path, capsys):
@@ -393,7 +395,7 @@ def test_ein_adressat_mit_antwort_wird_nicht_als_stumm_gemeldet(tmp_path, capsys
         auf.baue_ergebnis(auftrag_id="auf-b", status="ok"), tmp_path)
     _mit_blatt(tmp_path)
     _einbau_cli().main(["--repo", str(tmp_path)])
-    assert "NIE GEANTWORTET" not in capsys.readouterr().out
+    assert "KEINE ANTWORT IN UNSERER ABLAGE" not in capsys.readouterr().out
 
 
 # ---------------------------------------------------------------------------------
