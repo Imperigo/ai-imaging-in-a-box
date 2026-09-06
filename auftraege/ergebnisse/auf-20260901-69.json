@@ -1,0 +1,61 @@
+{
+  "auftrag_id": "auf-20260901-69",
+  "worker": "local",
+  "status": "erledigt — gemessen, nichts installiert, kein Code geaendert",
+  "datum": "2026-09-06",
+  "maschine": "andrins-workstation",
+
+  "vorab_korrektur": "KosmoPrepare hat sehr wohl ein eigenes Git-Repo — es liegt eine Ebene tiefer in 01_Source_Code/ und war 13 Commits im Rueckstand. git pull gefahren (Fast-Forward). Ein bereits vorhandener uncommitteter Fremd-Fix an register_in_odysseus.sh wurde vor dem Pull gestasht und danach unveraendert zurueckgeholt — nicht unsere Aenderung, nicht angefasst.",
+
+  "M1_run_tests": {
+    "befehl": "cd <KosmoPrepare>/01_Source_Code && unset KOSMOPREPARE_IFC_PYTHON && ./run_tests.sh",
+    "setup_grenze_nicht_gefahren": "tools/setup_grenze.py haette .venv-ifc per pip install NEU ANGELEGT — das ist eine echte Installation (ifcopenshell samt Abhaengigkeiten), und die Auflage lautet: nichts installieren ohne Owner-Go. Deshalb nicht ausgefuehrt. Kein Umweg gesucht.",
+    "ergebnis": "pytest nicht gefunden -> Fallback stdlib-unittest. Ran 1169 tests in 8.258s / OK (skipped=70), Exitcode 0. Keine Failures, keine Errors.",
+    "hinweis_zur_auflage": "Die woertlich letzten fuenf Zeilen sind Stdout-Rauschen eines Massing-Tests, das NACH der Zusammenfassung gedruckt wird. Die massgebliche Zeile ist 'OK (skipped=70)'."
+  },
+
+  "M2_die_sieben_proben": {
+    "befehl": "python3 -m unittest tests.test_archicad_native_export tests.test_publish_ifc_export -v",
+    "ergebnis": "Ran 19 tests / OK (skipped=7)",
+    "urteil": "GRUEN im Sinn 'keine Failures' — aber sie messen aktuell NICHTS. Genau die sieben (TestNativeIfc x4 + TestPublishIfcExport x3) werden uebersprungen, nicht ausgefuehrt. Kein Bruch durch euren Umbau: nichts ist rot.",
+    "gegenprobe_1": "Mit KOSMOPREPARE_IFC_PYTHON auf einen BEREITS VORHANDENEN Interpreter gesetzt (KosmoDraws .venv-night, traegt ifcopenshell schon — nichts neu installiert) wird grenze_bereit() True. Die sieben ueberspringen TROTZDEM. Damit ist bewiesen: nicht der Interpreter ist der Engpass.",
+    "gegenprobe_2": "Mit einem gebauten Testordner (kosmodraw/__init__.py in einem Temp-Verzeichnis) liefert resolve_kosmodraw() korrekt True. Die Funktion ist also nicht kaputt — das False ist ein echter Umweltbefund."
+  },
+
+  "M3_pip_liste": {
+    "abweichung": ".venv-ifc existiert auf dieser Maschine NICHT. Ersatzweise die Liste des schon vorhandenen Interpreters aus der Gegenprobe:",
+    "pakete": [
+      "ifcopenshell==0.8.5",
+      "numpy==2.4.6",
+      "shapely==2.1.2",
+      "lark==1.3.1",
+      "isodate==0.7.2",
+      "python-dateutil==2.9.0.post0",
+      "six==1.17.0",
+      "typing_extensions==4.15.0"
+    ],
+    "einzige_abweichung_zur_wolke": "typing_extensions 4.15.0 hier gegen 4.16.0 dort"
+  },
+
+  "M4_resolve_kosmodraw": "False — identisch zur Wolke. Nachgesehen, nicht vermutet: im hiesigen KosmoDraw-Repo gibt es weder einen kosmodraw/-Ordner noch eine ifc_export.py. Unabhaengig nachgeprueft, bei intakter Gegenprobe (dieselbe Suche findet andere Ordner sehr wohl).",
+
+  "M5": "entfaellt, da M4 False — wie im Auftrag vorgesehen.",
+
+  "kernbefund_die_praemisse_traegt_nicht": {
+    "text": "Der Auftrag sagt: 'Diese sieben Proben laufen NUR BEI EUCH, weil sie das KosmoDraw-Paket brauchen.' Gemessen: sie laufen hier genauso wenig. Diese Maschine hat das Paket ebenfalls nicht — die sieben ueberspringen hier exakt wie in der Wolke.",
+    "was_das_fuer_die_frage_heisst": "Im engen Sinn geht bei einer Entfernung von ifcopenshell aus requirements.txt KEINE laufende Messung verloren, weil gerade nirgends eine laeuft. Das beantwortet die Absicht aber nicht: die sieben sollten die einzige KUENFTIGE Kontrolle von build_native_ifc sein, sobald das Paket irgendwo verfuegbar wird.",
+    "der_eigentliche_engpass": "Nicht ifcopenshell in requirements.txt, sondern das fehlende kosmodraw-Paket, das gemessen in keinem erreichbaren Repository liegt — weder in der Wolke noch hier. Diese Unterscheidung, nicht die Ja/Nein-Antwort, ist der Befund. Der Entscheid bleibt beim Owner.",
+    "eure_eigene_einordnung_trifft_zu": "Ihr schreibt selbst: 'ein Paket, von dem eine Kernfunktion abhaengt und das in keinem Repository liegt, ist derselbe Fall wie der fehlende PDF-Korpus — faellt die Platte, ist es weg.' Das ist nach dieser Messung die dringendere Frage."
+  },
+
+  "auflagen_nachweis": {
+    "ifcopenshell_entfernt": "nein — weder aus libs/ noch aus requirements.txt",
+    "code_geaendert": "nein, weder in KosmoPrepare noch in KosmoPublish",
+    "ins_produkt_venv_installiert": "nein",
+    "installiert": "nichts",
+    "gpu": "durchgehend im Leerlauf, weit unter Schwelle 120 W / 8 GB",
+    "regel3": "keine absoluten Pfade mit Benutzernamen, keine echten Projektdaten und keine Dateinamen daraus",
+    "nebenbefund_kosmodraw": ".venv-night/bin/python -m pytest code/tests -q -> 2925 passed, Exit 0. Ausgangszahl selbst gemessen, unveraendert gruen; an KosmoDraw wurde nichts geschrieben, der vorhandene Interpreter nur fuer die Gegenprobe mitbenutzt.",
+    "committet": "nichts — es gab nichts zu committen, da kein Code geaendert wurde"
+  }
+}
