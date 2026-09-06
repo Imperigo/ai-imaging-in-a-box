@@ -1,0 +1,118 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260824-40",
+  "status": "ok",
+  "beendet": "2026-09-06T19:28:09Z",
+  "dauer_s": null,
+  "messwerte": {
+    "zustellbeleg": "ZUERST, vor der inhaltlichen Antwort (nachgetragen bei Ueberpruefung am 03.09.2026): Diese Datei ist bei uns angekommen — am 03.09.2026, in dieser Sitzung. Keine Messung, keine Zusage, kein Termin ueber diesen Satz hinaus. Der Ursachenbefund dazu (warum keine Antwort frueher kam) steht unter 'zustellhinweis' am Ende dieser Datei sowie ausfuehrlich in unserer Antwort auf euer Empfangs-Blatt auf-20260903-75.",
+    "art": "inhaltliche Antwort auf F1 bis F4 — F5 ist ausdruecklich nicht Teil dieses Blattes (s. Hinweis am Ende)",
+    "F1": {
+      "urteil": "ERLEDIGT — seit v0.9.49 (25.08.2026, P-STUMM, ROADMAP-Eintrag 1098), erneut bestaetigt in v0.9.51 (26.08.2026, ROADMAP 1163). Das sind heute (03.09.2026) neun Tage.",
+      "raeumt_ab_oder_ueberlagert": "'Zur Zentrale' raeumt die Vis-Station tatsaechlich ab (React-Statuswechsel per setScreen, keine zweite Ebene bleibt liegen). Die beschriebene Taubheit kam nicht vom fehlenden Abraeumen, sondern von der Umblende-Technik selbst.",
+      "ursache": "document.startViewTransition in der Funktion gehZu() liess ein echtes Zeiger-Ereignis, das waehrend der laufenden Blende (bis ca. 630 ms) eintraf, in Chromium auf <html> statt auf das Ziel-Element hit-testen — React haengt seine Handler an #root, ein Vorfahre-Knoten wie <html> bekommt sie nie.",
+      "fix": "Die Vorgabe fuer uebergaengeAktiv() steht auf false, auf BEIDEN Plattformen (vorher nur fuer Tauri) — damit laeuft gehZu() im Regelfall den synchronen, nicht transition-basierten Pfad, und die Taubheit tritt nicht ein.",
+      "selbst_nachgemessen": [
+        "apps/kosmo-orbit/src/App.tsx:285 — 'if (navigator.webdriver || !uebergaengeAktiv()) { setScreen(s); return; }'",
+        "apps/kosmo-orbit/src/shell/sicherer-modus.ts:145-148 — uebergaengeAktiv() liefert ohne gespeicherten Wert 'return false', fuer beide Plattformen gleich, keine Tauri/Browser-Unterscheidung im Code"
+      ],
+      "rest_risiko_offen_benannt": "Ein Owner, der Uebergaenge ueber die eigene Einstellung ausdruecklich wieder einschaltet, kann laut demselben ROADMAP-Eintrag erneut in die Taubheit laufen. Das ist ein bewusst in Kauf genommener Schalter-Zustand, kein struktureller Fix des Hit-Test-Fehlers selbst — kein unbemerkter Rest."
+    },
+    "F2": {
+      "urteil": "ZWEIGETEILT: der Warnhinweis-Teil ist ERLEDIGT, die Uebernahme-Frage ist offener ENTSCHEID.",
+      "teil_1_warnhinweis": {
+        "urteil": "ERLEDIGT seit v0.9.49 (25.08.2026, P-LEERSZENE, ROADMAP 1097), einen Tag nach diesem Auftragsblatt gebaut.",
+        "beschreibung": "'Ausfuehren' ist gesperrt, sobald die Szene 0 Bauteile hat — auch am reinen Command-Weg, nicht nur am UI-Knopf. Der Render-Auftrag wird in diesem Fall gar nicht erst verschickt; die von euch befuerchtete leere Huellbox mit sinnloser Kameraaufstellung entsteht nicht.",
+        "selbst_nachgemessen": [
+          "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts:558-560 — 'if (szeneBauteileAnzahl(doc) === 0) { melde(KEINE_GEOMETRIE_HINWEIS, { ton: 'fehler' }); return; }'",
+          "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts:297-303 — Text nennt Ursache ('In KosmoDesign wurde noch nichts gebaut oder geladen') und Weg (Befehlspalette -> Beispielprojekt Demohaus laden)"
+        ]
+      },
+      "teil_2_uebernahme_frage": {
+        "urteil": "NICHT GEBAUT — offener ENTSCHEID, kein Versaeumnis.",
+        "befund": "Aus der Vis-Station heraus gibt es weiterhin keinen direkten Weg zu Geometrie. Der Knopf 'Beispielprojekt laden' navigiert nach dem Laden fest nach der Design-Station, nie in die Vis-Station.",
+        "selbst_nachgemessen": "apps/kosmo-orbit/src/App.tsx:1690-1694 — onClick ruft loadTkbDemo() gefolgt von gehZu('design')",
+        "entscheid_noetig": "Soll gehZu('vis') kuenftig automatisch das zuletzt aktive Projekt mitfuehren? Kosten laut eigener Pruefung: eine geaenderte Navigationsfunktion, gegen rund 90 E2E-Fundstellen zu pruefen, die den heutigen Zwei-Schritt-Weg (Startseite -> Palette -> zurueck) voraussetzen. Das ist eine Owner-Entscheidung, die wir nicht ohne Freigabe treffen.",
+        "nachtrag_03_09_2026": {
+          "urteil": "GEBAUT — der Entscheid ist am 03.09.2026 gefallen und noch am selben Tag umgesetzt. Der Owner hat GEGEN unsere eigene Empfehlung entschieden: 'Ja, mitfuehren.' ROADMAP-Eintrag 1336.",
+          "berichtigung_unserer_eigenen_zahl": "Die Zahl 'rund 90 E2E-Fundstellen' im Feld 'entscheid_noetig' oben ist FALSCH und stammte aus einer Schaetzung, nicht aus einer Messung. Gemessen: 'grep -n \"aktivesProjektId\\\\|kosmo.projekt.aktiv\" e2e/*.spec.ts' findet ueber alle 24 Spec-Dateien 0 Treffer; genau 2 Dateien (vis-oberflaeche.spec.ts, visgraph.spec.ts) fahren den Zwei-Schritt-Weg ueberhaupt, und beide bleiben gruen. Grund: Playwright startet jeden Test in einem frischen Browser-Kontext, also mit frischer IndexedDB — der Tresor-Record, den die neue Wache braucht, existiert dort nie. Wir lassen die falsche Zahl oben stehen, statt sie zu ueberschreiben, damit nachvollziehbar bleibt, worauf unsere Empfehlung beruhte.",
+          "gebaut": [
+            "apps/kosmo-orbit/src/state/project-vault.ts — neue Funktion versucheAktivesProjektNachzuladen(): laedt den Tresor-Record unter aktivesProjektId() in den lebenden Doc, aber NUR wenn der Doc gerade leer ist UND der Record selbst Entities traegt. Die Pruefung ist nicht abgeschrieben, sondern aus initVault() herausgeloest — Start-Weg und Navigations-Weg teilen dieselbe eine Wache.",
+            "apps/kosmo-orbit/src/App.tsx — gehZu() ruft sie AUSSCHLIESSLICH fuer s === 'vis' (kein Umbau der Navigation) und NICHT blockierend vor setScreen/mitUebergang; der Stationswechsel bleibt synchron wie bisher, der uebergaengeAktiv()-Riegel aus F1 ist unberuehrt.",
+            "apps/kosmo-orbit/src/App.tsx — die Vis-Stationshuelle traegt data-vis-aktives-projekt='ja'|'nein', im DOM ablesbar statt behauptet. Liest denselben szeneBauteileAnzahl() wie die Render-Sperre aus F2 Teil 1, keine zweite Zaehlung.",
+            "apps/kosmo-orbit/test/vis-aktives-projekt-mitfuehren.test.ts — neu, vier Faelle: Nachladen bei leerem Doc; kein Record; Record mit 0 Entities; bereits befuellter Doc wird nicht ueberschrieben."
+          ],
+          "kein_erfundenes_projekt": "Fehlt der Tresor-Record unter aktivesProjektId(), oder traegt er selbst 0 Entities, passiert nichts — die Vis-Station bleibt leer wie heute. Kein Rueckfall auf 'irgendein Projekt', kein zweiter Schluessel.",
+          "offen_benannt_statt_verschwiegen": [
+            "Die Wache prueft doc.entities.size === 0 (dieselbe Bedingung wie initVault()), nicht szeneBauteileAnzahl(doc) === 0. Der seltene Fall 'Design besucht, etwas angelegt, aber nie gezeichnet, dann direkt in die Vis-Station' ist damit NICHT abgedeckt, obwohl der DOM-Marker daneben szeneBauteileAnzahl() liest. Die Asymmetrie ist bewusst (Wache folgt dem Start-Weg, Marker der Render-Sperre) und bleibt offen.",
+            "Die Wache steht zweimal da, vor und nach dem await. Unsere Gegenprobe zeigt: nimmt man nur die ERSTE heraus, bleiben alle vier Faelle gruen — erst wenn beide fallen, wird Fall 4 rot. Die Vor-await-Pruefung ist also eine Ersparnis (kein IndexedDB-Lesen), keine getestete Zusicherung.",
+            "gehZu() selbst ist nicht auf Zeilenebene getestet (kein voller App-Render in dieser Suite); getestet ist die Funktion, nicht die Verdrahtung."
+          ],
+          "selbst_nachgemessen": [
+            "test/vis-aktives-projekt-mitfuehren.test.ts: 4/4 gruen (exit 0)",
+            "Gegenprobe A — Auflage-2-Wache entfernt: 1 Fall rot (exit 1); Gegenprobe C — beide Doc-ist-leer-Wachen entfernt: 1 Fall rot (exit 1); Baum danach wiederhergestellt, wieder 4/4 gruen",
+            "App-Suite: 420 Dateien / 4419 gruen, 5 uebersprungen (exit 0) — die Differenz zum Vorstand ist genau die neue Datei",
+            "typecheck ueber alle Workspaces: exit 0",
+            "lint-deckel-gate gruen (kein Wachstum), nutzersprache-gate, insel-ueberdeckungs-gate, kontrast-gate, zodprobe-gate, version-gleichstand-gate: je exit 0",
+            "vor jeder Zahl: ps aux | grep '[v]itest' = 0"
+          ]
+        }
+      }
+    },
+    "F3": {
+      "urteil": "ERLEDIGT, in zwei unabhaengigen Wellen.",
+      "welle_1": {
+        "version": "v0.9.48, 24.08.2026, P-ZWEITKANTE, ROADMAP 1096",
+        "ursache": "pointercancel (nicht pointerup) auf dem zweiten Zug — eine dokumentierte Chromium/Playwright-Eigenheit. Der Handler fehlte vorher ganz: ein abgebrochener Zug liess einen internen 'pending'-Zustand stehen, und der naechste, unbeteiligte Klick zog lautlos eine falsche Kante.",
+        "selbst_nachgemessen": "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx:1123 — onPointerCancel={() => {...}} raeumt pending/drag/marquee auf, ohne zu committen"
+      },
+      "welle_2": {
+        "version": "v0.9.54, 01.09.2026, P-SELEKTIONSZUG, ROADMAP 1242",
+        "ursache": "Ein zweiter, unabhaengiger Rest: der erste Verbindungszug hinterliess eine Text-Markierung im DOM, die den zweiten Zug 'mitzog'.",
+        "fix": "Zwei Zeilen CSS.",
+        "selbst_nachgemessen": "apps/kosmo-orbit/src/modules/vis/vis-visual.css:128-129 — 'user-select: none; -webkit-user-select: none;'",
+        "wachen": [
+          "apps/kosmo-orbit/test/p-zweitkante-zwei-kanten-ein-durchgang.test.tsx",
+          "e2e/p-zweitkante-versuche.spec.ts"
+        ]
+      },
+      "zusaetzlich_nachgetragen": "Die im Auftrag selbst benannte Auflage 'ohne jede Meldung an den Nutzer' ist geschlossen: ein abgebrochener Zug zeigt seither eine Info-Meldung im pending-Zweig."
+    },
+    "F4": {
+      "a_knoten_stapeln": {
+        "urteil": "ERLEDIGT — v0.9.53 (28.08.2026), P-KNOTENFELD, ROADMAP 1215.",
+        "ursache": "Die Rand-Klemme (Math.max(20, x)) stand HINTER der Kollisionspruefung — ein an sich korrekt gepruefter freier Platz aus der Spirale (die auch ins Negative laeuft) wurde danach auf einen ungeprueften Rand-Wert verschoben. Bei 5 Testknoten trat der Fall nicht auf (Spirale reicht nicht ins Negative), bei 8 schon — deshalb zunaechst als 'nicht reproduzierbar' eingestuft, dann mit einem eigens geschriebenen 8-Knoten-Riegel doch gefunden.",
+        "fix": "Klemme wandert vor die Kollisionspruefung."
+      },
+      "b_kamera_vorschlagen_ohne_escape": {
+        "urteil": "ERLEDIGT als Messung — v0.9.53, ROADMAP 1215. Nicht reproduzierbar in der gemeldeten Form.",
+        "befund": "Der Knopf traegt hatPopup:false; die interne Klick-Behandlung kehrt fuer solche Knoepfe VOR jedem Modus-Wechsel zurueck — es gibt strukturell keinen Modus, der haengen bleiben koennte.",
+        "wahrscheinlichste_erklaerung": "Verwechslung mit dem direkten Nachbarn 'Report' im selben Katalog, der genau diesen Defekt hatte (behoben seit v0.9.29) — ein Vertrags-Riegel haelt den Zustand jetzt fest."
+      },
+      "c_inseln_erst_nach_hover": {
+        "urteil": "ERLEDIGT als Messung — v0.9.53, ROADMAP 1217. Trifft nicht zu.",
+        "befund": "Die Spezifikation sieht 'Hover (Desktop) / Tap (iPad)' fuer die erste Stufe ausdruecklich vor, UND das Bedienelement traegt zusaetzlich einen eigenen Klick-Handler, der dasselbe ausloest. Gemessen: ein einziger Klick reicht."
+      },
+      "d_graph_erstellen_leerer_graph": {
+        "urteil": "ERLEDIGT als Messung — v0.9.48, ROADMAP 1095. Kein Regress.",
+        "befund": "Der Befehl legt seit dem allerersten KosmoVis-Commit einen leeren Graphen an (Kernel-Kommandodatei, kommentiert 'Erstellt einen leeren Render-Graphen'). Im gesamten behaupteten Regressionsfenster (92 Commits) hat keine der drei zustaendigen Dateien sich veraendert.",
+        "wahrscheinlichste_erklaerung": "Am 20.08. lief die Demo auf einem Browser-Profil, das noch einen von Hand gebauten Graphen vom Vortag trug (profilgebundene IndexedDB-Speicherung) — kein Rueckfall, ein warmes Profil.",
+        "riegel": "test/p-graphstart-leerer-graph.test.tsx haelt fest, dass der Befehl absichtlich leer anlegt."
+      }
+    },
+    "hinweis_f5": "F5 (die Frage, ob kosmovis_query_qa_verdict die flachen Feldnamen oder render-result/v2 liest) ist laut eurem eigenen Nachtrag vom 27.08.2026 als eigener Auftrag auf-20260827-64 beim Cloud-Worker angesiedelt — sie ist Vertragsfrage, nicht Oberflaechenfrage, und wird hier bewusst nicht beantwortet.",
+    "zustellhinweis": "Dieses Blatt lag zwoelf Tage auf einem Zweig (origin/main), den unsere Entwicklungs-Lane nie liest — Ursache und Abhilfe dazu stehen getrennt in unserer Antwort auf euer Empfangs-Blatt (auf-20260903-75). Diese Verspaetung ist unser Rueckstand, nicht eurer.",
+    "_zustellhinweis": "Diese Antwort wurde am 03.09.2026 gerechnet und lag seither als auftraege/ergebnisse/auf-20260824-40.json im Repo Architektur-Cosmos — im System des Antwortenden statt in dem des Fragenden. Sie ist damit nie angekommen. Der Inhalt ist unveraendert uebernommen; neu ist nur die Form und der Ort."
+  },
+  "urteil": {
+    "kurz": "Vier Befunde der Bildkette: alle vier erledigt, drei davon vor dem Auftragsblatt.",
+    "beantwortet_am": "2026-09-03",
+    "uebertragen_am": "2026-09-06"
+  },
+  "umgebung": {
+    "beantwortet_von": "KosmoOrbit-UI-Worker",
+    "gemessen_gegen": "kosmo-orbit 71b7f325 (Zweig claude/kosmo-orbit-v1-build-pzxkbj)",
+    "container": true
+  },
+  "fehler": null
+}

@@ -1,0 +1,69 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260903-77",
+  "status": "ok",
+  "beendet": "2026-09-06T19:29:15Z",
+  "dauer_s": null,
+  "messwerte": {
+    "M1_filter_innenraum": {
+      "zustand_heute": "UNVERAENDERT. `istUeberDiesenWegBestellbar` steht in apps/kosmo-orbit/src/modules/vis/vis-jobs.ts:333-335 und gibt weiterhin `standpunktName !== 'Innenraum'` zurueck; angewendet wird sie auf :459, und :460 faellt auf `undefined` zurueck, wenn die gefilterte Liste leer ist.",
+      "sagt_der_besteller_etwas": "NEIN. `grep -n Innenraum vis-jobs.ts` -> sechs Treffer: drei Kommentarbloecke (:317-321, :447, :452-458), die Funktion (:334), ihre Anwendung (:459) und ein unbeteiligtes Label (:895). KEINE Meldung, kein `melde(...)`, kein Hinweis am Bedienelement. Die Bestellung wird still gekuerzt — eure Diagnose trifft zu.",
+      "unsere_antwort": "Der Filter selbst ist richtig und soll bleiben: er verhindert genau die Zusage, die P-INTERIOR geschlossen hat. Falsch ist das SCHWEIGEN. Wer drei Perspektiven bestellt und zwei bekommt, muss erfahren, dass die dritte ueber diesen Weg strukturell nicht geht — sonst sieht der Filter von aussen aus wie ein Ableiter, der nichts gefunden hat. Das ist Oberflaeche und damit unser Kreis.",
+      "wo_der_hinweis_hin_gehoert": "An die Stelle, an der die Kuerzung entsteht, sichtbar ohne Aufklappen — dieselbe Anatomie wie der QA-Vorbehalt aus auf-20260827-62 (Warnzeichen plus vollstaendiger Satz direkt darunter, offen im DOM). Vorschlag, kein Einbau: die Zahl der bestellten und die der gesendeten Standpunkte nennen, plus den Grund fuer die Differenz.",
+      "preis": "vis-jobs.ts ist eine .ts und liegt ausserhalb des UI-Dateikreises (docs/AUFTRAEGE-AN-WORKER.md §1a: apps/kosmo-orbit/src/**/*.css). Der Einbau gehoert in den Hauptstrang; der Wortlaut und die Anatomie sind unsere."
+    },
+    "M2_ifcspace_im_einleser": {
+      "antwort": "JA, seit dem 04.09.2026 — nach eurem Auftrag vom 03.09. gebaut, im Code als «P-DRITTE-PERSPEKTIVE» benannt (apps/kosmo-orbit/src/modules/design/ifc-import.ts:111).",
+      "in_welche_klassenliste": "In KEINE der drei. IFCSPACE wird als eigener Typ `ErkannterRaum` gefuehrt (ifc-import.ts:128) und ueber `GetLineIDsWithType(modelId, WebIFC.IFCSPACE)` gelesen (:531). Begruendung im Code: ein Raum ist kein Bauteil — er hat keine Bauteilart, kein Material, kein graues Netz. Dieselbe Trennung wie bei SONSTIGE_TYPEN.",
+      "als_welche_kind": "`zone`. Eingefuegt ueber `runCommand('design.zoneErstellen', { storeyId, outline, name, sia? })` in apps/kosmo-orbit/src/modules/design/DesignWorkspace.tsx:3305. Das `sia`-Feld wird nur gesetzt, wenn die Datei es wirklich sagt.",
+      "was_hauptnutzraum_liest": "Unveraendert `doc.byKind('zone')` — die Zonen sind jetzt da, die Funktion musste nicht angefasst werden.",
+      "teilausfall": "Raeume ohne zuordenbares Geschoss werden GEZAEHLT uebersprungen (raeumeUebersprungen, DesignWorkspace.tsx:3301/3316), nicht stillschweigend verschluckt."
+    },
+    "M3_zonen_nach_import": {
+      "antwort": 26,
+      "datei": "kosmo-orbit/abgabe/PROBE-DEMOHAUS.ifc (im Repo, 26 IFCSPACE: `grep -c IFCSPACE` -> 26)",
+      "messweg": "Echter Bedienweg im Browser (Playwright, frischer Bau von 71b7f325, 1400x900): Design-Station, Knopf `import-ifc`, Datei gewaehlt, `bestand-uebernehmen` geklickt, danach `window.__kosmo.state().doc.byKind('zone').length` gelesen.",
+      "vorher": {
+        "zonen": 0,
+        "waende": 0,
+        "decken": 0
+      },
+      "nachher": {
+        "zonen": 26,
+        "waende": 32,
+        "decken": 2,
+        "freemesh": 0,
+        "geschosse": 2,
+        "zonen_mit_sia": 26
+      },
+      "urteil": "Alle 26 IFCSPACE der Datei kommen als Zone an, keiner uebersprungen, alle 26 mit SIA-Kategorie. Beispielnamen: «Wohnen Whg 1», «Essen Whg 1», «Kueche Whg 1».",
+      "einschraenkung": "Gemessen an unserer Probedatei mit 26 Raeumen, NICHT an eurer lauf26.ifc mit 198. Dass 198 ebenso vollstaendig ankommen, ist NICHT gemessen — die Datei liegt nicht in unserem Baum."
+    },
+    "M4_widerspruch_uebersicht": {
+      "zustand_heute": "Die Ausnahme steht weiterhin, in packages/kosmo-kernel/src/derive/kamera.ts:374 — allerdings mit UMLAUT: `standpunkt.name !== 'Übersicht'`, nicht 'Uebersicht' wie in eurem Blatt zitiert. Der Standpunkt selbst heisst 'Übersicht' (:280). Kleine Berichtigung an eurem Zitat; an der Sache aendert es nichts.",
+      "welche_seite_soll_gelten": "KEINE VON BEIDEN — jedenfalls nicht ueber den Namen. Eure Seite hat recht, dass eine Pruefung keine Kameranamen kennen sollte; unsere hat recht, dass eine Vogelperspektive ueber der Gebaeudehoehe stehen MUSS. Der Fehler ist, dass die Absicht heute im NAMEN steckt statt in einem Feld. Solange das so ist, kostet jeder Lauf eine Kamera, und beide Seiten haben fuer sich recht.",
+      "vorschlag_feld": "Additives, optionales Feld am Standpunkt — Vorbild ist das bereits bestehende `referenzpunkt?: KameraReferenzpunkt` (kamera.ts:76), das aus eurem eigenen Auftrag auf-20260901-68 R2 stammt (N1, ROADMAP 1331). Form genauso: optional, KEIN Vorgabewert, Fehlen heisst «nicht ausgewiesen» und NICHT «keine Vogelperspektive».",
+      "namensvorschlag": "`ueberhoeht?: true` oder `vogelperspektive?: true` — wir legen uns nicht fest, das ist euer Vertrag. Massgeblich ist nur: ein Feld, das die ABSICHT ausspricht, kein Name, aus dem man sie erraet.",
+      "was_dann_bei_uns_faellt": "Die Namensausnahme auf :374 kann weg — sie wird durch das Feld ersetzt. Dann urteilen beide Seiten nach derselben Angabe, und keine muss Kameranamen kennen.",
+      "hinweis_zur_ehrlichkeit_des_feldes": "Der Kopfkommentar auf :268-277 begruendet, warum «Übersicht» heute KEIN `referenzpunkt` traegt: keiner der vier Vertragsnamen beschreibt diesen Fall ehrlich, und ein weggelassenes Feld ist dort die ehrliche Aussage. Ein NEUES Feld fuer die Ueberhoehung geraet damit nicht in Konflikt — es sagt etwas anderes aus als der Bodenbezug."
+    },
+    "M5_1600_als_konstante": {
+      "zustand_heute": "KEINE benannte Konstante. Die 1600 steht dreimal als nacktes Literal in packages/kosmo-kernel/src/derive/kamera.ts — :179 (Eingang), :298 und :299 (Innenraum, position und target). Eure Angabe nannte Z. 157 und 251; die Datei ist seither gewachsen, und es sind drei Stellen, nicht zwei.",
+      "unsere_antwort": "JA, sie sollte eine bekommen — drei Fundstellen fuer denselben Wert sind eine Drift, die nur darauf wartet. Der Wert bleibt 1600 mm.",
+      "warum_nicht_1700": "Wir schlagen NICHT vor, auf eure 1.70 m zu wechseln. 1.60 liegt in eurem Band 1.60-1.70 und ist unser gemessener Bestand; ein Wechsel waere eine Aenderung am Bild ohne Anlass. Dass es passt, ist heute Zufall — genau darum gehoert der Wert benannt, damit der Zufall sichtbar wird.",
+      "preis": "kamera.ts liegt im Kernel und damit ausserhalb des UI-Dateikreises. Der Einbau gehoert in den Hauptstrang."
+    }
+  },
+  "urteil": {
+    "kurz": "Alle fuenf beantwortet. M2 ist seit dem 04.09. gebaut, M3 ist gemessen (26 Zonen), M1/M4/M5 sind Vorschlaege mit Preis.",
+    "nicht_gebaut": "Nichts. Dieser Auftrag ist eine Frage, und die drei offenen Punkte liegen in .ts-Dateien ausserhalb des UI-Dateikreises.",
+    "zustellhinweis": "Dieser Auftrag ist im Repo Architektur-Cosmos nie angekommen — weder unter docs/auftraege-kosmovis/ noch als Ergebnis (`ls | grep -c 77` -> 0). Die anderen sieben lagen dort und wurden am 03.09. beantwortet; auf-77 war der einzige, den wir gar nicht hatten. Gelesen haben wir ihn heute erstmals, hier im Repo des Fragenden."
+  },
+  "umgebung": {
+    "beantwortet_von": "KosmoOrbit-UI-Worker",
+    "gemessen_gegen": "kosmo-orbit 71b7f325 (Zweig claude/kosmo-orbit-v1-build-pzxkbj), frischer Bau",
+    "container": true,
+    "browser": "Chromium ueber Playwright, 1400x900"
+  },
+  "fehler": null
+}

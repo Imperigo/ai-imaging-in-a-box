@@ -1,0 +1,42 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260901-70",
+  "status": "ok",
+  "beendet": "2026-09-06T19:28:09Z",
+  "dauer_s": null,
+  "messwerte": {
+    "zustellbeleg": "Angekommen und gelesen am 03.09.2026.",
+    "urteil": "GEBAUT. Beide Haelften stehen jetzt — inklusive der Stelle, die die erste Antwort selbst als offen benannt hatte.",
+    "nachtrag_03.09.2026": "Die erste Antwort (unten, unveraendert dokumentiert) hatte den zweiten Ort selbst gemeldet statt ihn stillschweigend offen zu lassen: 'Zwei weitere Stellen zeigen dieselbe feste Ersatzzeile ... Sie lagen ausserhalb des Dateikreises dieses Pakets und sind NICHT nachgezogen'. Dieser Nachtrag schliesst die 3D-Ansicht (Viewport3D.tsx:813, RENDER_STATUS_LABEL.wartetGpu) — dieselbe Beschriftung, derselbe Bridge-Poll, bisher unrepariert. Die Begleitleiste (WARTET_ABHOLER_KURZ in shell/companion-daten.ts) ist bewusst NICHT Teil dieses Auftrags: er nennt nur NodeCanvas.tsx und Viewport3D.tsx als Fundstellen, und die Kurzform traegt laut eigenem Kopfkommentar ohnehin nie einen Grund (Platzzwang in der Grossbuchstaben-Badge) — eine dritte, unbestellte Aenderung waere hier fehl am Platz.",
+    "was_gebaut_ist": {
+      "kern": "NodeCanvas.tsx liest RenderJob.message jetzt auch im queued-Zweig — vorher nur bei kein-render-worker. Bei gesetztem Grund erscheint der woertliche Vertragstext statt der festen Ersatzzeile.",
+      "ohne_grund": "Fehlt oder leer, bleibt die bisherige Beschriftung BYTE-GLEICH. Kein erfundener Text.",
+      "loeschen": "Der Grund wird aktiv geloescht, sobald der Job den Status wechselt. Ohne das haette der Merge der Laufdaten einen alten Grund stehen lassen — mit einer eigenen Probe belegt.",
+      "im_dom_erkennbar": "data-testid=render-wartet-text traegt data-grund-bekannt=true|false. Der Unterschied zwischen «kein Grund geliefert» und «Grund geliefert» ist damit messbar, nicht nur lesbar.",
+      "zweiter_ort_viewport3d": "Viewport3D.tsx: derselbe Bridge-Poll kannte j.message bisher gar nicht (weder im Erfolgs- noch im Freigabe-/Abbruch-Pfad). Der Erfolgs-Zweig ist jetzt als eigene reine Funktion viewportRenderPollErfolgAusgang(j) extrahiert (Zwilling zum bereits bestehenden viewportRenderPollFehlerAusgang — <Viewport3D> ist in jsdom nicht mountbar) und setzt wartetGrund IMMER explizit aus j.message, unabhaengig vom Zielstatus, weil patchLauf nur mischt. Die kompakte Badge (RENDER_STATUS_LABEL.wartetGpu) zeigt jetzt wartetAbholerLabel(renderLauf?.wartetGrund) — dieselbe geteilte Funktion, die NodeCanvas.tsx schon nutzt, keine zweite Formulierung.",
+      "nicht_gebaut": "Kein neuer Status, kein neues Vertragsfeld."
+    },
+    "U9a": "Klartext genuegt. Wir bauen keine eigene Verzweigung nach Ursachen-Codes — der Satz, den ihr schickt, wird gezeigt, nicht ausgewertet.",
+    "U9b": "Bei running und done lesen wir das Feld nicht. Fuellt es dort nicht extra; stoert uns aber auch nicht, falls doch.",
+    "U9c": "Keine harte Laengengrenze, an KEINEM der beiden Orte. NodeCanvas.tsx: die kompakte Statuszeile zeigt einen festen Kurztext, die grosse Flaeche darunter den vollen Wortlaut ungekuerzt (dort gemessen: der Beispielsatz aus dem Auftrag, 98 Zeichen, erscheint vollstaendig, kein Abschneiden beobachtet). Viewport3D.tsx hat gar keine grosse Flaeche fuer diesen Zustand — nur dieselbe kompakte Badge, ebenfalls ungekuerzt.",
+    "belege": {
+      "rot_vor_gruen_nodecanvas": "Aus der ersten Antwort, unveraendert: mit dem damals unveraenderten Vorstand 3 von 5 Proben rot, nach dem Bau 5 von 5 gruen.",
+      "rot_vor_gruen_viewport3d": "Eigens fuer diesen Nachtrag gemessen: `npx vitest run test/auf-20260901-70-viewport-wartet-grund.test.ts` gegen den unveraenderten Viewport3D-Stand (git stash der Datei) — 5 von 5 Proben rot (`viewportRenderPollErfolgAusgang is not a function`), Exit 1. Nach dem Bau derselbe Befehl 5 von 5 gruen, Exit 0.",
+      "suite": "App-Suite 418 gruen-Dateien / 4408 gruen + 5 Skips (vorher 417/4398 laut erstem Stand dieser Datei — Delta ueberwiegend Fremdpakete, +1 Datei aus diesem Nachtrag). Die drei betroffenen Suiten zusammen (NodeCanvas-Zwilling + bestehender Viewport3D-Vertragsbruch-Test + neuer Viewport3D-Wartegrund-Test): 14 von 14 gruen in 3 Dateien.",
+      "wachen": "npm run typecheck (alle 8 Workspaces) exit 0. node tools/roadmap-nummern-gate.mjs nach dem ROADMAP-Eintrag exit 0 (TREFFER: 0, keine unentschuldigte Kollision)."
+    },
+    "ehrlich_dazu": "Aus der ersten Antwort, jetzt geschlossen statt offen: NICHT nachgezogen bleibt weiterhin nur die Begleitleiste (WARTET_ABHOLER_KURZ) — sie ist kein Fund dieses Auftrags (s. Nachtrag oben) und traegt aus Platzgruenden ohnehin nie einen Grund.",
+    "_zustellhinweis": "Diese Antwort wurde am 03.09.2026 gerechnet und lag seither als auftraege/ergebnisse/auf-20260901-70.json im Repo Architektur-Cosmos — im System des Antwortenden statt in dem des Fragenden. Sie ist damit nie angekommen. Der Inhalt ist unveraendert uebernommen; neu ist nur die Form und der Ort."
+  },
+  "urteil": {
+    "kurz": "Der Wartegrund wird jetzt an beiden Orten gelesen; Klartext genuegt, keine Laengengrenze.",
+    "beantwortet_am": "2026-09-03",
+    "uebertragen_am": "2026-09-06"
+  },
+  "umgebung": {
+    "beantwortet_von": "KosmoOrbit-UI-Worker",
+    "gemessen_gegen": "kosmo-orbit 71b7f325 (Zweig claude/kosmo-orbit-v1-build-pzxkbj)",
+    "container": true
+  },
+  "fehler": null
+}
