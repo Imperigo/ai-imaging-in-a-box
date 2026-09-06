@@ -1243,6 +1243,24 @@ prüfte das Skript mit erfundenen Aufträgen und die Aufträge ohne das Skript; 
 lag der Fehler.* Die Abhilfe ist eine Probe, die die **wirklichen** Dateien durch den
 **wirklichen** Aufruf schickt.
 
+**Abgelehnt (Lauf gegen Frage)** — Derselbe Ergebnisstatus bedeutet Entgegengesetztes,
+je nachdem, worauf er antwortet.
+*Bei einem **Lauf*** heisst `abgelehnt`: Die Maschine hat nicht gerechnet. Es ist noch
+nichts da, der Auftrag zählt zu Recht weiter als unbeantwortet, und irgendwann wird
+nachgefragt.
+*Bei einer **Frage*** heisst dasselbe Wort: Hier ist die Antwort, und sie lautet nein. Ein
+begründetes «machen wir nicht» ist die **vollständige** Antwort — so steht es in jedem
+Block, den dieses Projekt hinausgibt: *«Ein 'machen wir nicht' ist eine verwertbare
+Antwort, Schweigen ist keine.»*
+*Was die Verwechslung kostet:* Die Antwort zählt weiter als offen. Wir fragen nach, was
+uns längst beantwortet wurde, und der Adressat sieht seine Antwort ignoriert — bei
+Adressaten, die überhaupt zum ersten Mal antworten, der teuerste denkbare Fehler.
+*Im Projekt am 06.09.2026:* beim Bau von `tools/antwort.py` beinahe eingebaut; der
+Schalter stand schon in der Hilfe. Aufgefallen an einer Probe, die `beantwortet` erwartete
+und `gerechnet, nicht beantwortet` bekam. Das Werkzeug weist `abgelehnt` auf eine Frage
+jetzt ab und nennt den richtigen Weg. **Der Status beschreibt, ob die Aufgabe erfüllt ist,
+nicht ob die Antwort gefällt.**
+
 **Ein Wort, zwei Gegenstände** — Derselbe Begriff bezeichnet im Projekt zwei
 verschiedene Dinge. Solange beide selten nebeneinander vorkommen, fällt es nicht auf; wer
 dann etwas nach dem Namen sucht oder anlegt, greift irgendwann daneben.
@@ -4143,6 +4161,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-06 | Ergaenzt: **Abgelehnt (Lauf gegen Frage)**. Anlass ist eine Falle, die beim Bau von `tools/antwort.py` fast eingebaut wurde: Ein begruendetes Nein auf eine Frage haette als `abgelehnt` weiter als OFFEN gezaehlt — wir haetten nachgefragt, was uns beantwortet wurde |
 | 2026-09-06 | Ergaenzt: **Ein Wort, zwei Gegenstaende**. Anlass ist eine ueberschriebene Datei: Ein neuer Ordner `auftraege/prompts/` fuer den dritten Zustellweg liess `tests/test_prompts.py` entstehen — die es mit 59 Proben zur Prompt-Bibliothek des Bildgenerators schon gab. Aus der Versionsgeschichte zurueckgeholt, Ordner in `auftraege/bloecke/` umbenannt |
 | 2026-09-06 | Ergaenzt: **Ein Kommentar ist kein Waechter** und **Die Probe prueft ihre eigene Zufaelligkeit**. Beide Anlaesse sind Fehler in der eigenen Absicherung: Der Stichtag des Zustellbelegs ging zum zweiten Mal veraltet hinaus, obwohl ein Kommentar daneben genau davor warnte; und eine Probe zur Sortierreihenfolge war nur gruen, solange zwei Auftraege in dieselbe Sekunde fielen — unter Last wurde sie rot, weil der Code korrekt sortierte |
 | 2026-09-03 | Ergaenzt: **Tiefenpass (Z-Pass) und Material-ID-Pass**, **Transparenz-Bounce**, **Alphakanal / alphaMode: BLEND**. Anlass ist der Rueckschritt von Demolauf 17: Bildwert 0.2015 -> 0.000 bei einem Modell, das BESSER geworden war. Gemessen: Die Kette war unveraendert (beide Laeufe rechnen auf vier Stellen nach), die REFERENZ war es nicht — der Tiefenpass sah durch 750 Glas-Primitive hindurch, im Median 4.49 m tiefer als der eigene Rand, an 2106 Punkten bis in den Hintergrund. Glas im Soll dicht gemacht: Score zurueck auf 0.2001. Drei Scheinproben trennen den Befund vom Eingriff |

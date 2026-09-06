@@ -62,3 +62,25 @@ Textbausteinen, die an den Bildgenerator gehen. Zwei verschiedene Dinge, ein Wor
 
 *Ein Wort mit zwei Bedeutungen im selben Projekt kostet früher oder später eine Datei.*
 Hier heissen sie **Blöcke**; «Prompt» bleibt dem Bildgenerator vorbehalten.
+
+---
+
+## Übergabeprotokoll
+
+Wann ein Block wirklich beim Adressaten war. **Nicht, wann er geschrieben wurde** — das
+steht im Dateinamen, und die beiden auseinanderzuhalten ist der ganze Zweck dieses
+Ordners.
+
+| Datum | Block | übergeben durch | Antwort |
+|---|---|---|---|
+| 06.09.2026 | `2026-09-06_cloud.md` | Owner, von Hand in die Sitzung | — |
+| 06.09.2026 | `2026-09-06_ui.md` | Owner, von Hand in die Sitzung | — |
+
+**Warum das Datum zählt.** Bis hierher liess sich Schweigen zweifach lesen: Die Frage
+liegt quer, oder niemand hat sie je gesehen. Ab dem 06.09.2026 ist die zweite Lesart für
+diese beiden Blöcke ausgeschlossen — sie sind nachweislich in der Sitzung des Adressaten
+angekommen.
+
+*Damit wird das Schweigen zum ersten Mal aussagekräftig.* Was jetzt noch ausbleibt, bleibt
+aus, obwohl gelesen werden konnte — und das ist eine andere Lage als die vorherige, die
+Geduld verlangte.
