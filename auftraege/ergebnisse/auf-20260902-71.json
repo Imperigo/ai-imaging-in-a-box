@@ -1,54 +1,55 @@
 {
+  "schema": "aiimaging.homeworker-ergebnis/v1",
   "auftrag_id": "auf-20260902-71",
-  "worker": "local",
-  "status": "nicht erledigt — Golden bewusst NICHT neu gesetzt",
-  "datum": "2026-09-06",
-  "maschine": "andrins-workstation",
-
-  "M1_tier1_vor_dem_neusetzen": {
-    "befehl": ".venv/bin/python tools/kosmopublish_cli.py visual-test --tier1-only --golden output/visual_tests/golden --out <tmp>",
-    "abweichung_zum_auftrag": "Der genannte Befehl 'tools/visual_test_runner.py --tier1-only' existiert so nicht — die Datei hat kein __main__, das CLI liegt in kosmopublish_cli.py. Gemeldet, nicht geglaettet.",
-    "generativ-poster": "Diff 2.46 %, Basis 83 Tage alt -> BASIS VERALTET, kein Regressionsurteil moeglich",
-    "massing-demo": "Diff 0.00 % -> unveraendert",
-    "bridge-grundriss": "Diff 100.00 % -> BASIS VERALTET"
+  "status": "ok",
+  "beendet": "2026-09-06T12:00:00Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "maschine": "andrins-workstation",
+    "M1_tier1_vor_dem_neusetzen": {
+      "befehl": ".venv/bin/python tools/kosmopublish_cli.py visual-test --tier1-only --golden output/visual_tests/golden --out <tmp>",
+      "abweichung_zum_auftrag": "Der genannte Befehl 'tools/visual_test_runner.py --tier1-only' existiert so nicht — die Datei hat kein __main__, das CLI liegt in kosmopublish_cli.py. Gemeldet, nicht geglaettet.",
+      "generativ-poster": "Diff 2.46 %, Basis 83 Tage alt -> BASIS VERALTET, kein Regressionsurteil moeglich",
+      "massing-demo": "Diff 0.00 % -> unveraendert",
+      "bridge-grundriss": "Diff 100.00 % -> BASIS VERALTET"
+    },
+    "M2_fuenf_sichtpruefungen": {
+      "1_titelblock_oben": "ja",
+      "2_zweite_zeile": "ja",
+      "3_alter_name_nirgends": "ja — der alte Name kommt nicht mehr vor, auch nicht im Lageplan-Baukoerper (dort steht die gekuerzte neue Kennung nach derselben Kuerzungsregel wie zuvor, kein Leck)",
+      "4_raumprogramm_und_konzepttext": "ja fuer die Tabelle — sie zeigt genau die sechs Werte aus Teil 1a, Summe 2800, und keine Zahl von der Minus-Seite des Diffs kommt vor. ABER: dieser Poster-Fall rendert gar keinen Konzepttext und keine Materialleiste — es gibt nichts, worin die Summe als Fliesstext stehen koennte, obwohl config/poster_content.py diesen Text sehr wohl traegt.",
+      "5_anordnung_unveraendert": "NEIN. Das alte Vergleichsbild hatte genau EIN Grundriss-/Fassaden-Render, Tabelle oben rechts, Konzepttext darunter, Materialleiste unten rechts. Das neue Bild packt rund sechzehn Plaene dicht ueber die ganze Flaeche; Konzepttext und Materialleiste fehlen vollstaendig. Es geht dabei NICHT um die Hoehe des Baukoerpers — die Aenderung ist die Anordnung selbst."
+    },
+    "M3_neu_gesetzt": "Nein. Der Auftrag sagt: 'Ist eine dieser fuenf Antworten NEIN, setzt das Bild NICHT neu.' Die fuenfte ist nein. UPDATE_SNAPSHOTS blieb ungesetzt, das Golden ist unveraendert.",
+    "M4_die_zwei_anderen_goldens": {
+      "massing-demo": "unveraendert gemeldet (0.00 %)",
+      "bridge-grundriss": "NICHT unveraendert — 100 % Diff. Ursache gefunden und sie hat nichts mit der Namens-Entfernung zu tun: die Blattgroesse aenderte sich von 1200x840 auf 1200x800 Bildpunkte durch die bridge_to_svg-Commits nach dem Golden-Datum. Genau der Fall aus eurem Nachtrag 1a — der Umbau reicht weiter als beim Schreiben bekannt war."
+    },
+    "M5_plakat_schnappschuesse": {
+      "befehl": ".venv/bin/python -m unittest discover tests_slow -p \"test_*.py\" -v",
+      "ergebnis": "Ran 18 tests ... OK (skipped=4)",
+      "die_vier": "alle vier gruen: test_plakat_1_konzept_fingerprint, test_plakat_2_grundrisse_fingerprint, test_plakat_3_schnitte_fingerprint, test_plakat_4_fassaden_fingerprint — je 'ok'",
+      "zu_den_vier_skips": "unabhaengige Ollama-Live-Tests, keine der vier Plakat-Proben"
+    },
+    "befund_der_schwerer_wiegt_als_der_auftrag": {
+      "text": "Die Quellen des Plakats sind NICHT synthetisch. output/planraw/ traegt 15 Dateien vom 26./27. Mai, bis 52.5 MB, mit '_FINAL' im Namen — reale, detaillierte Gebaeudegeometrie (Raumteilung, Fenster- und Dachaufbauten), unangetastet vom September-Umbau, der nur config/poster_content.py aenderte. Nachgemessen: die 15 Quellen sind NICHT versioniert (.gitignore Zeile 22, 'output/*'), aber von fuenf verfolgten Dateien in output/ sind alle fuenf Golden-Bilder — darunter generativ-poster.png, 2107x1490 Bildpunkte, verfolgt seit dem 15.06.",
+      "folge": "Das Golden koennte bereits jetzt reale Projektgeometrie als Bildpunkte tragen — unabhaengig vom Namensfeld. Ein Neusetzen aus denselben Quellen haette daran nichts verbessert, sondern mehr davon eingefroren.",
+      "empfehlung": "Dem Owner vorlegen, bevor jemand dieses Golden anfasst. Euer Auftrag zielte auf einen Namen; das eigentliche Problem koennte die Geometrie sein, und die findet erst recht keine Textsuche."
+    },
+    "auflagen_nachweis": {
+      "UPDATE_SNAPSHOTS": "nie gesetzt",
+      "code_geaendert": "nein, weder in KosmoPublish noch in KosmoPrepare",
+      "andere_goldens_neu_gesetzt": "nein",
+      "installiert": "nichts",
+      "gpu": "durchgehend im Leerlauf gemessen: 42-46 W, 647 MiB — weit unter Schwelle 120 W / 8 GB",
+      "regel3": "keine absoluten Pfade mit Benutzernamen, kein Kundenname in dieser Rueckgabe",
+      "suite": ".venv/bin/python -m unittest discover -s tests -> Ran 2917 tests, OK (skipped=18); Ausgangszahl selbst gemessen, gruen geblieben",
+      "regel3_waechter": "tests/test_regel3_keine_fremden_namen.py -> Ran 11 tests, OK"
+    },
+    "status_wie_geliefert": "nicht erledigt — Golden bewusst NICHT neu gesetzt",
+    "huelle_berichtigt": "Die Antwort kam mit einem freien Statustext und ohne Schema — `baue_ergebnis` schreibt so etwas nie, und `zustand` las sie darum als UNBEANTWORTET. Am 06.09.2026 in die Vertragsform gebracht; am Inhalt ist nichts geaendert. Der Status sagt, ob die AUFGABE erfuellt ist, nicht ob das Ergebnis gefaellt."
   },
-
-  "M2_fuenf_sichtpruefungen": {
-    "1_titelblock_oben": "ja",
-    "2_zweite_zeile": "ja",
-    "3_alter_name_nirgends": "ja — der alte Name kommt nicht mehr vor, auch nicht im Lageplan-Baukoerper (dort steht die gekuerzte neue Kennung nach derselben Kuerzungsregel wie zuvor, kein Leck)",
-    "4_raumprogramm_und_konzepttext": "ja fuer die Tabelle — sie zeigt genau die sechs Werte aus Teil 1a, Summe 2800, und keine Zahl von der Minus-Seite des Diffs kommt vor. ABER: dieser Poster-Fall rendert gar keinen Konzepttext und keine Materialleiste — es gibt nichts, worin die Summe als Fliesstext stehen koennte, obwohl config/poster_content.py diesen Text sehr wohl traegt.",
-    "5_anordnung_unveraendert": "NEIN. Das alte Vergleichsbild hatte genau EIN Grundriss-/Fassaden-Render, Tabelle oben rechts, Konzepttext darunter, Materialleiste unten rechts. Das neue Bild packt rund sechzehn Plaene dicht ueber die ganze Flaeche; Konzepttext und Materialleiste fehlen vollstaendig. Es geht dabei NICHT um die Hoehe des Baukoerpers — die Aenderung ist die Anordnung selbst."
-  },
-
-  "M3_neu_gesetzt": "Nein. Der Auftrag sagt: 'Ist eine dieser fuenf Antworten NEIN, setzt das Bild NICHT neu.' Die fuenfte ist nein. UPDATE_SNAPSHOTS blieb ungesetzt, das Golden ist unveraendert.",
-
-  "M4_die_zwei_anderen_goldens": {
-    "massing-demo": "unveraendert gemeldet (0.00 %)",
-    "bridge-grundriss": "NICHT unveraendert — 100 % Diff. Ursache gefunden und sie hat nichts mit der Namens-Entfernung zu tun: die Blattgroesse aenderte sich von 1200x840 auf 1200x800 Bildpunkte durch die bridge_to_svg-Commits nach dem Golden-Datum. Genau der Fall aus eurem Nachtrag 1a — der Umbau reicht weiter als beim Schreiben bekannt war."
-  },
-
-  "M5_plakat_schnappschuesse": {
-    "befehl": ".venv/bin/python -m unittest discover tests_slow -p \"test_*.py\" -v",
-    "ergebnis": "Ran 18 tests ... OK (skipped=4)",
-    "die_vier": "alle vier gruen: test_plakat_1_konzept_fingerprint, test_plakat_2_grundrisse_fingerprint, test_plakat_3_schnitte_fingerprint, test_plakat_4_fassaden_fingerprint — je 'ok'",
-    "zu_den_vier_skips": "unabhaengige Ollama-Live-Tests, keine der vier Plakat-Proben"
-  },
-
-  "befund_der_schwerer_wiegt_als_der_auftrag": {
-    "text": "Die Quellen des Plakats sind NICHT synthetisch. output/planraw/ traegt 15 Dateien vom 26./27. Mai, bis 52.5 MB, mit '_FINAL' im Namen — reale, detaillierte Gebaeudegeometrie (Raumteilung, Fenster- und Dachaufbauten), unangetastet vom September-Umbau, der nur config/poster_content.py aenderte. Nachgemessen: die 15 Quellen sind NICHT versioniert (.gitignore Zeile 22, 'output/*'), aber von fuenf verfolgten Dateien in output/ sind alle fuenf Golden-Bilder — darunter generativ-poster.png, 2107x1490 Bildpunkte, verfolgt seit dem 15.06.",
-    "folge": "Das Golden koennte bereits jetzt reale Projektgeometrie als Bildpunkte tragen — unabhaengig vom Namensfeld. Ein Neusetzen aus denselben Quellen haette daran nichts verbessert, sondern mehr davon eingefroren.",
-    "empfehlung": "Dem Owner vorlegen, bevor jemand dieses Golden anfasst. Euer Auftrag zielte auf einen Namen; das eigentliche Problem koennte die Geometrie sein, und die findet erst recht keine Textsuche."
-  },
-
-  "auflagen_nachweis": {
-    "UPDATE_SNAPSHOTS": "nie gesetzt",
-    "code_geaendert": "nein, weder in KosmoPublish noch in KosmoPrepare",
-    "andere_goldens_neu_gesetzt": "nein",
-    "installiert": "nichts",
-    "gpu": "durchgehend im Leerlauf gemessen: 42-46 W, 647 MiB — weit unter Schwelle 120 W / 8 GB",
-    "regel3": "keine absoluten Pfade mit Benutzernamen, kein Kundenname in dieser Rueckgabe",
-    "suite": ".venv/bin/python -m unittest discover -s tests -> Ran 2917 tests, OK (skipped=18); Ausgangszahl selbst gemessen, gruen geblieben",
-    "regel3_waechter": "tests/test_regel3_keine_fremden_namen.py -> Ran 11 tests, OK"
-  }
+  "umgebung": {},
+  "fehler": null
 }

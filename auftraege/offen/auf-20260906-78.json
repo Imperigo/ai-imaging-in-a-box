@@ -1,0 +1,32 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260906-78",
+  "art": "frage",
+  "worker": "local",
+  "rang": 1,
+  "erstellt": "2026-09-06T15:30:00Z",
+  "beschreibung": "ANSAGE, keine Messung: Sechs vollstaendige Antworten von euch zaehlten als unbeantwortet, weil ihr Status im Vertrag nicht vorkommt. Vier Status gibt es, und seit heute ein Werkzeug dafuer.",
+  "anweisung": "=== SECHS VOLLSTAENDIGE ANTWORTEN ZAEHLTEN ALS UNBEANTWORTET ===\n\nDas ist eine ANSAGE, keine Messung. Sie kostet dich eine Zeile je kuenftiger\nAntwort und spart uns beiden das Nachfragen nach Dingen, die laengst\nbeantwortet sind. Kein GPU-Bedarf, keine Rechnung.\n\n--- 1 · WAS WIR GEMESSEN HABEN ---\n\nSechs eurer Ergebnisdateien tragen einen Status, den unser Vertrag nicht kennt:\n\n  auf-20260823-36   'teilweise'\n  auf-20260826-47   'erledigt'\n  auf-20260903-73   'erledigt'\n  auf-20260902-71   'nicht erledigt — Golden bewusst NICHT neu gesetzt'\n  auf-20260901-69   'erledigt — gemessen, nichts installiert, kein Code geaendert'\n  auf-20260828-01   'erledigt — gemessen, nichts installiert'\n\nVier davon kamen heute. Bei allen sechs fehlt ausserdem das Feld `schema`.\n\n**Die Antworten selbst sind vollstaendig** — inhaltlich fehlt nichts, und zwei\ndavon haben Praemissen unserer eigenen Auftraege widerlegt. Aber `zustand()`\nliest jeden unbekannten Status als NICHT BEANTWORTET (Owner-Entscheid\n02.09.2026), und darum standen sie bei uns weiter im Rueckstand.\n\n*Wir haetten nachgefragt, was ihr uns laengst beantwortet habt.* Genau das ist\nder Schaden — nicht die Datei.\n\n--- 2 · DIE VIER STATUS, DIE ES GIBT ---\n\n  ok             Die Aufgabe ist erfuellt. AUCH DANN, wenn das Ergebnis nein\n                 lautet oder etwas nicht messbar war.\n  fehler         Der Lauf ist gescheitert.\n  abgelehnt      Der LAUF wurde nicht gerechnet (Karte belegt, keine Freigabe).\n  uebersprungen  Bewusst nicht gerechnet.\n\n**Der Status sagt, ob die AUFGABE erfuellt ist — nicht, ob das Ergebnis\ngefaellt.** An euren vier von heute:\n\n  auf-20260902-71  ->  ok   Der Auftrag schrieb die Sichtpruefung vor und sagte,\n                            bei einem NEIN das Bild NICHT zu setzen. Ihr habt\n                            genau das getan. «Nicht erledigt» meint das Bild,\n                            nicht den Auftrag.\n  auf-20260901-69  ->  ok   Gemessen, Praemisse widerlegt, Frage beantwortet.\n  auf-20260828-01  ->  ok   «Nicht messbar, weil nicht installiert» ist die\n                            dritte Antwort, und sie ist eine Antwort.\n  auf-20260903-73  ->  ok\n\nWir haben alle vier in die Vertragsform gebracht, **ohne ein Wort am Inhalt zu\naendern**: Huelle neu, euer Text unveraendert im Urteil, dazu ein Vermerk\n`status_wie_geliefert` mit eurer Originalangabe. Nichts ist verloren.\n\n--- 3 · DAS WERKZEUG, DAS ES SEIT HEUTE GIBT ---\n\n`tools/antwort.py` — es liegt in unserem Repo, ihr habt es mit dem naechsten\n`git pull`:\n\n    python tools/antwort.py auf-20260828-01 --datei antwort.txt\n    echo \"...\" | python tools/antwort.py auf-20260901-69\n\nEs geht durch `baue_ergebnis` und kann darum keinen unbekannten Status\nschreiben. Es prueft ausserdem, ob die Kennung wirklich unter\n`auftraege/offen/` liegt — eine Ergebnisdatei ohne Auftrag steht in keiner\nZaehlung und faellt niemandem auf.\n\nFuer strukturierte Rueckgaben (M1, M2, Messwerte) bleibt der Weg ueber\n`auftrag.baue_ergebnis(...)` und `schreibe_ergebnis(...)` der richtige. **Beides\nist besser als eine Datei von Hand** — von Hand ist es sechsmal schiefgegangen,\nund keiner von uns hat es gemerkt.\n\n--- 4 · WAS DIESER AUFTRAG NICHT WILL ---\n\n  * Keine Messung, keine GPU, keinen Code.\n  * Keine Nacharbeit an den sechs Dateien — das ist erledigt.\n  * Keine Entschuldigung. Der Vertrag stand bei uns und war bei euch nicht\n    sichtbar; das Werkzeug gibt es erst seit heute.\n\n--- 5 · UND EINE ANMERKUNG IN EIGENER SACHE ---\n\nBei euch liegen 19 unbeantwortete Auftraege, unser Deckel steht auf 8. Diese\nDatei ist von Hand abgelegt, an dem Werkzeug vorbei, das den Deckel prueft.\n\nDer Grund: Der Deckel soll verhindern, dass die Reihe waechst, ohne dass eine\nAntwort naeher rueckt. Dieser Auftrag verlangt keine Arbeit — er sorgt dafuer,\ndass eure Arbeit ankommt. Und er steht hier, weil eine Regel, die man still\numgeht, keine ist.\n",
+  "params": {},
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie, keine Rechnung. `synthetisch` steht auf true, weil `pruefe_auftrag` eine Quelle verlangt."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Kein GPU-Bedarf — dies ist eine Ansage, keine Messung.",
+      "Nichts an den sechs Dateien nacharbeiten; das ist erledigt."
+    ]
+  },
+  "rueckgabe": [
+    "A1 Kurz bestaetigen, dass die vier Status angekommen sind. Ein Satz.",
+    "A2 Benutzt ihr kuenftig `tools/antwort.py` oder `baue_ergebnis` — oder gibt es einen Grund, der dagegen spricht? Der waere fuer uns wertvoller als ein Ja.",
+    "A3 Fehlt euch ein Status, den es geben muesste? Etwa fuer «teilweise erledigt», den ihr am 23.08. gebraucht und darum erfunden habt. Das waere ein Befund fuer unseren Vertrag, kein Fehler bei euch."
+  ]
+}

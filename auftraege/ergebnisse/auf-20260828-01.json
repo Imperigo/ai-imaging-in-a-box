@@ -1,66 +1,68 @@
 {
+  "schema": "aiimaging.homeworker-ergebnis/v1",
   "auftrag_id": "auf-20260828-01",
-  "worker": "local",
-  "status": "erledigt — gemessen, nichts installiert",
-  "datum": "2026-09-06",
-  "maschine": "andrins-workstation",
-
-  "V1_tabelle_unveraendert": {
-    "befehl": ".venv/bin/python tools/schraffur_renderer_probe.py --json <tmp>/a4.json",
-    "exit": 0,
-    "kopf": "Schraffur-Renderer-Probe (A4, Darstellungsvertrag)",
-    "massstab_1_50": {
-      "erwartet": "Muster erhalten",
-      "zeilen": [
-        "reportlab   Muster erhalten               79 Striche  1 Fuell  1 Clip   0 Kachel",
-        "cairosvg    nicht gemessen                kein .venv-mess (Messwerkzeuge nicht installiert)",
-        "typst       nicht gemessen                kein .venv-mess (Messwerkzeuge nicht installiert)",
-        "rsvg        Muster erhalten                4 Striche  6 Fuell  0 Clips  1 Kachel",
-        "inkscape    nicht gemessen                inkscape nicht installiert"
-      ]
+  "status": "ok",
+  "beendet": "2026-09-06T12:00:00Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "maschine": "andrins-workstation",
+    "V1_tabelle_unveraendert": {
+      "befehl": ".venv/bin/python tools/schraffur_renderer_probe.py --json <tmp>/a4.json",
+      "exit": 0,
+      "kopf": "Schraffur-Renderer-Probe (A4, Darstellungsvertrag)",
+      "massstab_1_50": {
+        "erwartet": "Muster erhalten",
+        "zeilen": [
+          "reportlab   Muster erhalten               79 Striche  1 Fuell  1 Clip   0 Kachel",
+          "cairosvg    nicht gemessen                kein .venv-mess (Messwerkzeuge nicht installiert)",
+          "typst       nicht gemessen                kein .venv-mess (Messwerkzeuge nicht installiert)",
+          "rsvg        Muster erhalten                4 Striche  6 Fuell  0 Clips  1 Kachel",
+          "inkscape    nicht gemessen                inkscape nicht installiert"
+        ]
+      },
+      "massstab_1_200": {
+        "erwartet": "auf Poche ausgewichen",
+        "zeilen": [
+          "reportlab   auf Poche ausgewichen          0 Striche  1 Fuell  0 Clips  0 Kachel",
+          "cairosvg    nicht gemessen                kein .venv-mess (Messwerkzeuge nicht installiert)",
+          "typst       nicht gemessen                kein .venv-mess (Messwerkzeuge nicht installiert)",
+          "rsvg        auf Poche ausgewichen          4 Striche  6 Fuell  0 Clips  0 Kachel",
+          "inkscape    nicht gemessen                inkscape nicht installiert"
+        ]
+      }
     },
-    "massstab_1_200": {
-      "erwartet": "auf Poche ausgewichen",
-      "zeilen": [
-        "reportlab   auf Poche ausgewichen          0 Striche  1 Fuell  0 Clips  0 Kachel",
-        "cairosvg    nicht gemessen                kein .venv-mess (Messwerkzeuge nicht installiert)",
-        "typst       nicht gemessen                kein .venv-mess (Messwerkzeuge nicht installiert)",
-        "rsvg        auf Poche ausgewichen          4 Striche  6 Fuell  0 Clips  0 Kachel",
-        "inkscape    nicht gemessen                inkscape nicht installiert"
-      ]
-    }
+    "V2_urteil_inkscape": {
+      "1_50": "nicht installiert — nicht gemessen",
+      "1_200": "nicht installiert — nicht gemessen",
+      "owner_go": "nicht eingeholt, nichts installiert",
+      "begruendung": "Der Auftrag sieht diese Antwort ausdruecklich als vollstaendig vor: 'Ohne Go meldet ihr inkscape nicht installiert, kein Go eingeholt, und das ist eine vollstaendige Antwort.' Es wurde kein Umweg gesucht.",
+      "gegenprobe_zur_null": {
+        "command_v_inkscape": "exit 1 (nicht gefunden)",
+        "dpkg_pakete": 0,
+        "snaps": 0,
+        "flatpaks": 0,
+        "beweis_dass_der_befehl_treffen_kann": "command -v rsvg-convert -> exit 0. Derselbe Befehl findet einen anderen Renderer, die Null bei inkscape ist also echt und kein Werkzeugfehler."
+      }
+    },
+    "abweichung_zur_wolkenmessung": {
+      "text": "Der Auftrag zitiert vier von fuenf Wegen als gemessen und einig. Auf dieser Maschine sind es ZWEI: reportlab und rsvg. cairosvg und typst melden hier 'nicht gemessen', weil .venv-mess fehlt (nachgesehen, nicht vermutet). Das ist kein Widerspruch zu eurer Messung — es ist eine andere Maschine —, aber die Tabelle kommt so zurueck, wie sie hier entsteht, nicht wie sie dort aussah.",
+      "was_hier_belegt_ist": "Zwei von fuenf Wegen erfuellen den Vertrag an dieser Maschine: bei 1:50 Muster erhalten, bei 1:200 auf Poche ausgewichen. Drei sind ungemessen — cairosvg und typst mangels .venv-mess, inkscape mangels Installation."
+    },
+    "teil_2_a5": "faellt weg, wie im Auftrag vermerkt — am 01.09.2026 bereits gemessen (22 von 22 Pfaden geschlossen). Nichts getan.",
+    "auflagen_nachweis": {
+      "installiert": "nichts — weder inkscape noch cairosvg, weder ins Produkt-venv noch sonstwohin",
+      "ifcopenshell_ins_produkt_venv": "nein",
+      "schraffur_im_ifc_draw_weg": "nicht angefasst — erst messen, wie der Auftrag sagt",
+      "code_geaendert": "nein",
+      "gpu": "durchgehend im Leerlauf gemessen: 42-46 W, 647 MiB — weit unter Schwelle 120 W / 8 GB",
+      "regel3": "keine absoluten Pfade mit Benutzernamen, synthetisch gemessen, keine Projektdaten in dieser Rueckgabe",
+      "suite": ".venv/bin/python -m unittest discover -s tests -> Ran 2917 tests, OK (skipped=18)"
+    },
+    "was_ihr_mit_der_antwort_machen_koennt": "Weder das eine noch das andere eurer zwei Szenarien tritt ein: inkscape erhaelt das Muster nicht und verliert es auch nicht — es bleibt ungemessen, und zwar aus einem benannten Grund. Die Luecke im Vertrag bleibt offen, aber sie ist jetzt datiert und begruendet statt unbestimmt. Ein Owner-Go zur Installation wuerde sie in einem Lauf schliessen.",
+    "status_wie_geliefert": "erledigt — gemessen, nichts installiert",
+    "huelle_berichtigt": "Die Antwort kam mit einem freien Statustext und ohne Schema — `baue_ergebnis` schreibt so etwas nie, und `zustand` las sie darum als UNBEANTWORTET. Am 06.09.2026 in die Vertragsform gebracht; am Inhalt ist nichts geaendert. Der Status sagt, ob die AUFGABE erfuellt ist, nicht ob das Ergebnis gefaellt."
   },
-
-  "V2_urteil_inkscape": {
-    "1_50": "nicht installiert — nicht gemessen",
-    "1_200": "nicht installiert — nicht gemessen",
-    "owner_go": "nicht eingeholt, nichts installiert",
-    "begruendung": "Der Auftrag sieht diese Antwort ausdruecklich als vollstaendig vor: 'Ohne Go meldet ihr inkscape nicht installiert, kein Go eingeholt, und das ist eine vollstaendige Antwort.' Es wurde kein Umweg gesucht.",
-    "gegenprobe_zur_null": {
-      "command_v_inkscape": "exit 1 (nicht gefunden)",
-      "dpkg_pakete": 0,
-      "snaps": 0,
-      "flatpaks": 0,
-      "beweis_dass_der_befehl_treffen_kann": "command -v rsvg-convert -> exit 0. Derselbe Befehl findet einen anderen Renderer, die Null bei inkscape ist also echt und kein Werkzeugfehler."
-    }
-  },
-
-  "abweichung_zur_wolkenmessung": {
-    "text": "Der Auftrag zitiert vier von fuenf Wegen als gemessen und einig. Auf dieser Maschine sind es ZWEI: reportlab und rsvg. cairosvg und typst melden hier 'nicht gemessen', weil .venv-mess fehlt (nachgesehen, nicht vermutet). Das ist kein Widerspruch zu eurer Messung — es ist eine andere Maschine —, aber die Tabelle kommt so zurueck, wie sie hier entsteht, nicht wie sie dort aussah.",
-    "was_hier_belegt_ist": "Zwei von fuenf Wegen erfuellen den Vertrag an dieser Maschine: bei 1:50 Muster erhalten, bei 1:200 auf Poche ausgewichen. Drei sind ungemessen — cairosvg und typst mangels .venv-mess, inkscape mangels Installation."
-  },
-
-  "teil_2_a5": "faellt weg, wie im Auftrag vermerkt — am 01.09.2026 bereits gemessen (22 von 22 Pfaden geschlossen). Nichts getan.",
-
-  "auflagen_nachweis": {
-    "installiert": "nichts — weder inkscape noch cairosvg, weder ins Produkt-venv noch sonstwohin",
-    "ifcopenshell_ins_produkt_venv": "nein",
-    "schraffur_im_ifc_draw_weg": "nicht angefasst — erst messen, wie der Auftrag sagt",
-    "code_geaendert": "nein",
-    "gpu": "durchgehend im Leerlauf gemessen: 42-46 W, 647 MiB — weit unter Schwelle 120 W / 8 GB",
-    "regel3": "keine absoluten Pfade mit Benutzernamen, synthetisch gemessen, keine Projektdaten in dieser Rueckgabe",
-    "suite": ".venv/bin/python -m unittest discover -s tests -> Ran 2917 tests, OK (skipped=18)"
-  },
-
-  "was_ihr_mit_der_antwort_machen_koennt": "Weder das eine noch das andere eurer zwei Szenarien tritt ein: inkscape erhaelt das Muster nicht und verliert es auch nicht — es bleibt ungemessen, und zwar aus einem benannten Grund. Die Luecke im Vertrag bleibt offen, aber sie ist jetzt datiert und begruendet statt unbestimmt. Ein Owner-Go zur Installation wuerde sie in einem Lauf schliessen."
+  "umgebung": {},
+  "fehler": null
 }
