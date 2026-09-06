@@ -1243,6 +1243,24 @@ prüfte das Skript mit erfundenen Aufträgen und die Aufträge ohne das Skript; 
 lag der Fehler.* Die Abhilfe ist eine Probe, die die **wirklichen** Dateien durch den
 **wirklichen** Aufruf schickt.
 
+**Ein Satz, der nur auf einer Maschine wahr ist** — Ein Kommentar behauptet eine Tatsache
+über *die Umgebung*, in der der Code läuft. Auf der Maschine, auf der er geschrieben
+wurde, stimmt er; auf jeder anderen ist er falsch — und dort **lädt er zu genau der
+Änderung ein, die er verhindern sollte.**
+*Im Projekt am 06.09.2026:* Neben `szene.cycles.device = "CPU"` stand
+`# in dieser Umgebung gibt es keine GPU`. Im Entwicklungscontainer wahr; auf der
+HomeStation steht eine RTX 5090. Wer den Satz dort las, sah eine ungenutzte Karte und
+hatte jeden Grund umzustellen. Gemessen wurde dann statt umgestellt: OptiX ist bei den
+real genutzten 8–128 Samples auf 512 px in allen drei Konfigurationen **10–35 %
+langsamer** (fester Anlaufaufwand), und es verschiebt Kantenpixel der Material-ID-Maske
+(bis 217/255 bei 28 von 262 144 Pixeln). *Der Kommentar war falsch, das Verhalten
+richtig.*
+*Die Abhilfe ist nicht Löschen, sondern Ersetzen:* Der Grund heisst jetzt «gemessen am
+…, so viel langsamer, und ein Wechsel verschiebt Zahlen». Der falsche Satz steht als
+**Zitat** daneben — wer ihn spurlos löscht, nimmt dem nächsten die Warnung, und der stellt
+dieselbe Frage neu. Verwandt mit **Fassungsabstand**: Dort ist die Maschine verschieden,
+hier der Satz über sie.
+
 **Zugestellt an die Adresse, nicht an den Adressaten** — Eine Sendung erreicht den Ort,
 an dem der Empfänger vermutet wird, aber nicht ihn. Der Zustellbeleg ist echt und trotzdem
 wertlos: Er belegt den Ort, und gemeint war der Mensch.
@@ -4206,6 +4224,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-06 | Ergaenzt: **Ein Satz, der nur auf einer Maschine wahr ist**. Anlass ist ein Befund der HomeStation: Der Kommentar «in dieser Umgebung gibt es keine GPU» ist dort falsch — gemessen wurde dann statt umgestellt, und OptiX ist 10-35 % langsamer und verschiebt Kantenpixel. Verhalten richtig, Kommentar falsch |
 | 2026-09-06 | Ergaenzt: **Zugestellt an die Adresse, nicht an den Adressaten** — die genaue Fassung nach zwei ungenauen. Die Bloecke lagen auf `main` des fremden Repos, beide Worker entwickeln auf Feature-Zweigen, die `main` nie mergen: 17 Dateien dort, 0 bei ihnen. Beide Diagnosen davor massen den falschen Gegenstand |
 | 2026-09-06 | Ergaenzt: **Zustellung ist gerichtet**. Anlass ist die Berichtigung derselben Sache am selben Abend: Der Weg zu `cloud` und `ui` trug sehr wohl, beide hatten am 03.09. auf alle siebzehn geantwortet — der Fehler lag auf dem Rueckweg, geprueft worden war der Hinweg |
 | 2026-09-06 | Ergaenzt: **Aus Nichtwissen einen Vorwurf machen**. Anlass ist der teuerste Fehler dieses Tages: `tools/einbau.py` meldete `NIE GEANTWORTET`, gemessen war aber nur «keine Datei in unserer Ablage» — und 15 Antworten von `cloud` und `ui` lagen seit dem 03.09. in einem Verzeichnis, in das wir nie sehen. Der Vorwurf war da bereits uebergeben |

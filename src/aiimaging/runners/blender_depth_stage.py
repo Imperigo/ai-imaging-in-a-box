@@ -1234,7 +1234,30 @@ def _renderparameter_setzen(a) -> None:
     szene = bpy.context.scene
     szene.render.engine = "CYCLES"
     szene.cycles.samples = a.samples
-    szene.cycles.device = "CPU"                          # in dieser Umgebung gibt es keine GPU
+    # CPU IST GEMESSEN, NICHT ERZWUNGEN — und der Unterschied ist der Grund dafuer,
+    # dass hier ein Block steht und kein Halbsatz.
+    #
+    # Hier stand: «in dieser Umgebung gibt es keine GPU». Das war ein Satz ueber die
+    # UMGEBUNG, und er ist nur im Entwicklungscontainer wahr. Auf der HomeStation steht
+    # eine RTX 5090; dort las ihn jemand, sah eine ungenutzte Karte und haette
+    # umgestellt. *Ein Kommentar, der eine falsche Tatsache behauptet, laedt zu genau
+    # der Aenderung ein, die er verhindern sollte.*
+    #
+    # Gemessen am 06.09.2026 auf der HomeStation, n=3 je Seite, drei Konfigurationen,
+    # ueber die echte Produktionsfunktion und mit OptiX auf einer Kopie ausserhalb des
+    # Repos:
+    #
+    #   * OptiX ist bei den real genutzten 8-128 Samples auf 512 px in ALLEN drei
+    #     Konfigurationen 10-35 % LANGSAMER. Der feste Anlaufaufwand uebersteigt die
+    #     Ersparnis beim Rechnen.
+    #   * Es wurde wirklich auf der Karte gerechnet: VRAM 631 -> 4338 MiB unter Last.
+    #     Die Gegenprobe haette dem Befund widersprechen koennen und tat es nicht.
+    #   * Die Ergebnisse sind NICHT gleich. Bei 876 Dreiecken weichen Kantenpixel der
+    #     Material-ID-Maske ab, bis 217/255 bei 28 von 262144 Pixeln. Ein Wechsel waere
+    #     also nicht nur langsamer, er wuerde auch Zahlen verschieben.
+    #
+    # Der Grund fuer CPU ist damit die Messung und nicht die Abwesenheit einer GPU.
+    szene.cycles.device = "CPU"
     szene.render.resolution_x = a.aufloesung
     szene.render.resolution_y = a.hoehe or a.aufloesung
     szene.render.resolution_percentage = 100
