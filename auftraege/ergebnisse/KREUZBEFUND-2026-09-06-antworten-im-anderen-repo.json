@@ -1,0 +1,132 @@
+{
+  "schema": "kosmo.kreuzbefund/v1",
+  "erstellt": "2026-09-06",
+  "von": "Home-PC-Worker (lokaler Orchestrator)",
+  "titel": "Fuenfzehn Auftraege gelten hier als offen und sind anderswo beantwortet",
+  "befund": "System A leitet den Zustand aus auftraege/ergebnisse/<id>.json ab. Der Cloud-/UI-Worker hat dieses Repo nicht und legt seine Antworten darum in Architektur-Cosmos/auftraege/ergebnisse/ ab - in einem eigenen Schema ohne status- und auftrag_id-Feld. A schaut dort nie nach und wird es nie tun. Gemessen: 17 Antworten liegen dort, alle 17 tragen A-Kennungen, 15 existieren NUR dort.",
+  "warum_nicht_einfach_kopiert": "Die Antworten tragen ein anderes Schema (Felder an/antworten/auftrag/beantwortet_am/von, kein status). A erkennt sie auch am richtigen Ort nicht als Antwort. Sie umzuschreiben hiesse, dass A 'beantwortet' meldet aufgrund einer Uebersetzung des Orchestrators statt aufgrund der Aussage des Antwortenden. Das waere ein vierter Zustand, den niemand gemessen hat.",
+  "vorschlag_zur_konvention": "Wer antwortet, schreibt in das System des Fragenden, in dessen Form. Wer das nicht kann - weil er das Repo nicht hat - legt eine Zeile hier ab, die sagt, wo die Antwort liegt. Der Entscheid gehoert dem Owner; dieser Befund ist die Messung dazu.",
+  "anzahl": 15,
+  "faelle": [
+    {
+      "auftrag_id": "auf-20260824-40",
+      "auftrag_liegt_offen_in_A": true,
+      "antwort_liegt_in": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260824-40.json",
+      "beantwortet_am": "2026-09-03",
+      "von": null,
+      "an": "ui"
+    },
+    {
+      "auftrag_id": "auf-20260826-44",
+      "auftrag_liegt_offen_in_A": true,
+      "antwort_liegt_in": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260826-44.json",
+      "beantwortet_am": "2026-09-03",
+      "von": "KosmoOrbit-Cloud-Worker (Zweig claude/kosmo-orbit-v1-build-pzxkbj)",
+      "an": "KosmoVis-Worker"
+    },
+    {
+      "auftrag_id": "auf-20260826-49",
+      "auftrag_liegt_offen_in_A": true,
+      "antwort_liegt_in": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260826-49.json",
+      "beantwortet_am": "2026-09-03",
+      "von": "KosmoOrbit-Cloud-Worker (Zweig claude/kosmo-orbit-v1-build-pzxkbj)",
+      "an": "KosmoVis-Worker"
+    },
+    {
+      "auftrag_id": "auf-20260826-52",
+      "auftrag_liegt_offen_in_A": true,
+      "antwort_liegt_in": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260826-52.json",
+      "beantwortet_am": "2026-09-03",
+      "von": null,
+      "an": "ui"
+    },
+    {
+      "auftrag_id": "auf-20260826-53",
+      "auftrag_liegt_offen_in_A": true,
+      "antwort_liegt_in": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260826-53.json",
+      "beantwortet_am": "2026-09-03",
+      "von": null,
+      "an": "ui"
+    },
+    {
+      "auftrag_id": "auf-20260827-62",
+      "auftrag_liegt_offen_in_A": true,
+      "antwort_liegt_in": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260827-62.json",
+      "beantwortet_am": "2026-09-03",
+      "von": null,
+      "an": "ui"
+    },
+    {
+      "auftrag_id": "auf-20260827-63",
+      "auftrag_liegt_offen_in_A": true,
+      "antwort_liegt_in": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260827-63.json",
+      "beantwortet_am": "2026-09-03",
+      "von": "KosmoOrbit-Cloud-Worker (Zweig claude/kosmo-orbit-v1-build-pzxkbj)",
+      "an": "KosmoVis-Worker"
+    },
+    {
+      "auftrag_id": "auf-20260827-64",
+      "auftrag_liegt_offen_in_A": true,
+      "antwort_liegt_in": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260827-64.json",
+      "beantwortet_am": "2026-09-03",
+      "von": "KosmoOrbit-Cloud-Worker (Zweig claude/kosmo-orbit-v1-build-pzxkbj)",
+      "an": "KosmoVis-Worker"
+    },
+    {
+      "auftrag_id": "auf-20260901-67",
+      "auftrag_liegt_offen_in_A": true,
+      "antwort_liegt_in": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260901-67.json",
+      "beantwortet_am": "2026-09-03",
+      "von": "KosmoOrbit-Cloud-Worker (Zweig claude/kosmo-orbit-v1-build-pzxkbj)",
+      "an": "KosmoVis-Worker"
+    },
+    {
+      "auftrag_id": "auf-20260901-68",
+      "auftrag_liegt_offen_in_A": true,
+      "antwort_liegt_in": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260901-68.json",
+      "beantwortet_am": "2026-09-03",
+      "von": "KosmoOrbit-Cloud-Worker (Zweig claude/kosmo-orbit-v1-build-pzxkbj)",
+      "an": "KosmoVis-Worker"
+    },
+    {
+      "auftrag_id": "auf-20260901-70",
+      "auftrag_liegt_offen_in_A": true,
+      "antwort_liegt_in": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260901-70.json",
+      "beantwortet_am": "2026-09-03",
+      "von": null,
+      "an": "ui"
+    },
+    {
+      "auftrag_id": "auf-20260902-72",
+      "auftrag_liegt_offen_in_A": true,
+      "antwort_liegt_in": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260902-72.json",
+      "beantwortet_am": "2026-09-03",
+      "von": null,
+      "an": "ui"
+    },
+    {
+      "auftrag_id": "auf-20260903-74",
+      "auftrag_liegt_offen_in_A": true,
+      "antwort_liegt_in": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260903-74.json",
+      "beantwortet_am": "2026-09-03",
+      "von": null,
+      "an": "cloud"
+    },
+    {
+      "auftrag_id": "auf-20260903-75",
+      "auftrag_liegt_offen_in_A": true,
+      "antwort_liegt_in": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260903-75.json",
+      "beantwortet_am": "2026-09-03",
+      "von": null,
+      "an": "ui"
+    },
+    {
+      "auftrag_id": "auf-20260903-77",
+      "auftrag_liegt_offen_in_A": true,
+      "antwort_liegt_in": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260903-77.json",
+      "beantwortet_am": "2026-09-06",
+      "von": "KosmoOrbit-Hauptstrang (Integrator, Zweig claude/kosmo-orbit-v1-build-pzxkbj)",
+      "an": "KosmoVis-Worker"
+    }
+  ]
+}
