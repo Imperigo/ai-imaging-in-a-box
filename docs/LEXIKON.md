@@ -1243,6 +1243,19 @@ prüfte das Skript mit erfundenen Aufträgen und die Aufträge ohne das Skript; 
 lag der Fehler.* Die Abhilfe ist eine Probe, die die **wirklichen** Dateien durch den
 **wirklichen** Aufruf schickt.
 
+**Ein Wort, zwei Gegenstände** — Derselbe Begriff bezeichnet im Projekt zwei
+verschiedene Dinge. Solange beide selten nebeneinander vorkommen, fällt es nicht auf; wer
+dann etwas nach dem Namen sucht oder anlegt, greift irgendwann daneben.
+*Im Projekt am 06.09.2026:* «Prompt» hiess bis dahin der Textbaustein, der an den
+Bildgenerator geht (`src/aiimaging/prompts.py`, dazu `tests/test_prompts.py` mit 59
+Proben). Für den neuen Zustellweg an fremde Worker wurde ein Ordner `auftraege/prompts/`
+angelegt — und die zugehörige Probendatei überschrieb die bestehende. *Zehn Minuten, eine
+verlorene Datei, und der Fehler steckte nicht im Schreiben, sondern im Namen.*
+Zurückgeholt aus der Versionsgeschichte; der Ordner heisst seither `auftraege/bloecke/`,
+«Prompt» bleibt dem Bildgenerator. Nicht zu verwechseln mit **Ein Feldname, zwei
+Bedeutungen**: Dort trägt ein Feld zwei Gestalten und stürzt beim Lesen ab, hier tragen
+zwei Gegenstände einen Namen und kollidieren beim Anlegen.
+
 **Ein Kommentar ist kein Wächter** — Eine Regel, die eine Datei nur *beschreibt*, statt
 sie zu erzwingen. Sie sieht aus wie eine Vorkehrung, verlangt aber, dass ein Mensch sie
 im richtigen Moment liest und befolgt.
@@ -4130,6 +4143,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-06 | Ergaenzt: **Ein Wort, zwei Gegenstaende**. Anlass ist eine ueberschriebene Datei: Ein neuer Ordner `auftraege/prompts/` fuer den dritten Zustellweg liess `tests/test_prompts.py` entstehen — die es mit 59 Proben zur Prompt-Bibliothek des Bildgenerators schon gab. Aus der Versionsgeschichte zurueckgeholt, Ordner in `auftraege/bloecke/` umbenannt |
 | 2026-09-06 | Ergaenzt: **Ein Kommentar ist kein Waechter** und **Die Probe prueft ihre eigene Zufaelligkeit**. Beide Anlaesse sind Fehler in der eigenen Absicherung: Der Stichtag des Zustellbelegs ging zum zweiten Mal veraltet hinaus, obwohl ein Kommentar daneben genau davor warnte; und eine Probe zur Sortierreihenfolge war nur gruen, solange zwei Auftraege in dieselbe Sekunde fielen — unter Last wurde sie rot, weil der Code korrekt sortierte |
 | 2026-09-03 | Ergaenzt: **Tiefenpass (Z-Pass) und Material-ID-Pass**, **Transparenz-Bounce**, **Alphakanal / alphaMode: BLEND**. Anlass ist der Rueckschritt von Demolauf 17: Bildwert 0.2015 -> 0.000 bei einem Modell, das BESSER geworden war. Gemessen: Die Kette war unveraendert (beide Laeufe rechnen auf vier Stellen nach), die REFERENZ war es nicht — der Tiefenpass sah durch 750 Glas-Primitive hindurch, im Median 4.49 m tiefer als der eigene Rand, an 2106 Punkten bis in den Hintergrund. Glas im Soll dicht gemacht: Score zurueck auf 0.2001. Drei Scheinproben trennen den Befund vom Eingriff |
 | 2026-09-03 | Ergaenzt: **Base64** und **Kastenmittel (Box-Filter)**. Anlass ist die Naht «Aufs Blatt», die zum zweiten Mal das Regelergebnis der eigenen Kette abwies: Der Deckel vergleicht Base64-ZEICHEN, die Meldung nennt die Grenze aber als waere sie eine Byte-Zahl — 1 048 576 Zeichen sind 786 432 Byte, nicht 1.0 MB. 60 von 66 Nutzbildern lagen darueber. Das Kastenmittel ist die Art, wie die neue Blattfassung verkleinert, und der Eintrag traegt mit, warum nicht der naechste Nachbar |
