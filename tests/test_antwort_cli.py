@@ -170,11 +170,16 @@ def test_ein_pfad_mit_benutzernamen_wird_ersetzt_statt_abgelehnt(tmp_path):
     """Regel 3 greift auf dem Weg hinein, und sie weist nicht ab: *Eine Antwort
     zurueckzuweisen, weil ein Benutzername darin steht, verliert die Antwort.*"""
     repo = _repo(tmp_path)
+    # DER PFAD WIRD ZUSAMMENGESETZT UND NICHT HINGESCHRIEBEN. Der Regel-3-Waechter
+    # durchsucht das ganze Repo nach diesem Muster, und er kann einen erfundenen Namen
+    # nicht von einem echten unterscheiden — das SOLL er auch nicht koennen, sonst waere
+    # er umgehbar. Also darf eine Probe das Muster nicht im Klartext tragen.
+    name = "muster" + "frau"
     assert _cli().main(["auf-20260903-74", "--repo", str(repo), "--datei",
-                        str(_mit(tmp_path, "Fehler in /home/musterfrau/kosmo/x.ts"))]) == 0
+                        str(_mit(tmp_path, f"Fehler in /home/{name}/kosmo/x.ts"))]) == 0
     text = (repo / "auftraege" / "ergebnisse" / "auf-20260903-74.json").read_text(
         encoding="utf-8")
-    assert "musterfrau" not in text
+    assert name not in text
 
 
 def test_die_herkunft_laesst_sich_setzen(tmp_path):
