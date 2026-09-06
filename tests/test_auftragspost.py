@@ -495,3 +495,26 @@ def test_der_vermerk_entsteht_erst_NACH_dem_schreiben(tmp_path):
     assert [e["auftrag_id"] for e in auftragspost.unzugestellt(repo)] == [
         satz["auftrag_id"]], (
         "Nichts ist hinausgegangen — dann darf auch nichts vermerkt sein.")
+
+
+def test_der_stichtag_im_zustellbeleg_ist_immer_heute():
+    """**Der Fehler, der sich selbst wiederholt hat.** Bis zum 06.09.2026 war der Stichtag
+    eine Vorgabe mit einem Kommentar daneben: *«wer die Post neu erzeugt, zieht darum
+    dieses Datum mit»*. Am 03.09. wurde er nachgezogen. Am 06.09. ging die Post erneut
+    hinaus — und trug wieder den 03.
+
+    *Ein Kommentar, der einen Menschen erinnert, ist kein Wächter.* Die Zahl daneben war
+    jedes Mal richtig, weil sie gezählt wurde.
+    """
+    from datetime import date
+    assert auftragspost.zustellbeleg_stand() == date.today().strftime("%d.%m.%Y")
+    assert auftragspost.zustellbeleg_stand(date(2026, 1, 2)) == "02.01.2026"
+
+
+def test_der_block_traegt_das_heutige_datum_im_zustellbeleg(tmp_path):
+    """Und zwar **im Block**, nicht nur in der Hilfsfunktion — sonst bewachte die Probe
+    ihre eigene Nachbildung."""
+    from datetime import date
+    satz = _satz(worker="ui")
+    text = auftragspost.block(satz, zustellbeleg=3)
+    assert date.today().strftime("%d.%m.%Y") in text

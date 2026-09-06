@@ -35,7 +35,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from aiimaging import auftrag as _auftrag
@@ -85,16 +85,27 @@ ZUSTELLBELEG = (
     "Ein Satz von euch entscheidet das."
 )
 
-#: Stichtag für :data:`ZUSTELLBELEG`. **Er steht hier als Vorgabe und nicht im Text**,
-#: weil er veraltet: Sobald ein Adressat antwortet, gehört der Beleg weg und nicht eine
-#: falsche Zahl hinein.
-#:
-#: **Er wird von Hand nachgezogen, die Zahl daneben nicht** — ``n_offen`` reicht der
-#: Aufrufer aus einer frischen Zählung herein. Eine frisch gezählte Zahl neben einem
-#: zwei Tage alten Datum liest sich wie ein aktueller Stand und ist keiner; wer die
-#: Post neu erzeugt, zieht darum dieses Datum mit. *Nachgezogen am 03.09.2026, nachdem
-#: der Beleg zwei Tage lang mit dem Datum seiner Einführung hinausging.*
-ZUSTELLBELEG_STAND = "03.09.2026"
+def zustellbeleg_stand(heute: date | None = None) -> str:
+    """Der Stichtag im :data:`ZUSTELLBELEG` — **gerechnet, nicht gepflegt**.
+
+    **Warum das keine Vorgabe mehr ist, und der Beleg dafür ist dieser Wert selbst.**
+    Bis zum 06.09.2026 stand hier ein Datum als Konstante, mit einem Kommentar daneben:
+    *«wer die Post neu erzeugt, zieht darum dieses Datum mit»*. Am 03.09. wurde es
+    nachgezogen, weil es zwei Tage alt geworden war. Am 06.09. ging die Post erneut
+    hinaus — und trug wieder das Datum vom 03.
+
+    *Ein Kommentar, der einen Menschen an etwas erinnert, ist kein Wächter.* Er ist beim
+    ersten Mal gelesen worden, beim zweiten Mal von derselben Hand übergangen und hätte
+    beim dritten Mal genauso versagt. Die Zahl daneben (``n_offen``) war jedes Mal
+    richtig, weil sie **gezählt** wurde.
+
+    Der Stichtag ist jetzt der Tag, an dem der Block entsteht. Damit kann er nicht mehr
+    hinter der Zählung zurückbleiben, neben der er steht.
+
+    Args:
+        heute: Für Proben einsetzbar. Ohne Angabe der heutige Tag.
+    """
+    return (heute or date.today()).strftime("%d.%m.%Y")
 
 
 class PostError(ValueError):
@@ -241,7 +252,7 @@ def block(satz: dict, *, zustellbeleg: int = 0) -> str:
     if zustellbeleg:
         teile += ["", "ZUSTELLBELEG",
                   _punkt(ZUSTELLBELEG.format(n_offen=zustellbeleg,
-                                             stand=ZUSTELLBELEG_STAND), "  ")]
+                                             stand=zustellbeleg_stand()), "  ")]
     teile += ["", "=" * BREITE]
 
     text, ersetzt = _auftrag.ohne_kennungen("\n".join(teile))
@@ -411,4 +422,5 @@ def unzugestellt(repo_wurzel) -> list[dict]:
 
 
 __all__ = ["BREITE", "RUECKWEG", "ZUSTELLUNG_DATEI", "ZUSTELLUNG_NOETIG", "PostError",
-           "block", "lege_ab", "offene_blocks", "unzugestellt", "vermerke_zustellung"]
+           "block", "lege_ab", "offene_blocks", "unzugestellt", "vermerke_zustellung",
+           "zustellbeleg_stand"]

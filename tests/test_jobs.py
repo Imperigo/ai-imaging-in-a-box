@@ -26,6 +26,7 @@ import pytest
 from aiimaging import jobs
 from aiimaging.jobs import (
     ALLE_STATUS,
+    DATEI_ENDUNG,
     JOB_ID_MUSTER,
     STATUS_AWAITING,
     STATUS_CANCELLED,
@@ -370,13 +371,56 @@ def test_liste_jobs_ohne_und_mit_filter(tmp_path):
 
 
 def test_liste_jobs_ist_nach_erstellzeit_sortiert(tmp_path):
-    """Die Reihenfolge, in der ein Scheduler abarbeiten will — und sie muss stabil sein."""
+    """Die Reihenfolge, in der ein Scheduler abarbeiten will — nach **Zeit**, nicht Name.
+
+    **Diese Probe hat bis zum 06.09.2026 ihre eigene Zufälligkeit geprüft.** Sie legte
+    `cccccc` vor `aaaaaa` an und verlangte danach alphabetische Reihenfolge. Das ging nur
+    auf, solange beide Aufträge in **dieselbe Sekunde** fielen — dann greift der
+    Gleichstands-Zweig, und der ordnet nach Kennung. Sobald die Maschine unter Last eine
+    Sekundengrenze dazwischenschob, bekam `cccccc` die frühere Zeit, stand zu Recht vorn,
+    und die Probe wurde rot — *weil der Code tat, was sein Docstring verspricht*.
+
+    Sie konnte Zeitsortierung und Namenssortierung darum überhaupt nicht unterscheiden.
+    Jetzt tut sie es: Die Zeiten werden gesetzt, und zwar **gegen** die Namensfolge.
+    """
     for kennung in ("vis-20260818120002-cccccc", "vis-20260818120000-aaaaaa"):
         _job(tmp_path, kennung)
+    # Die spaeter benannte Kennung bekommt die FRUEHERE Zeit. Eine Sortierung nach Namen
+    # gaebe jetzt die andere Reihenfolge — genau das soll die Probe trennen koennen.
+    _setze_erstellt(tmp_path, "vis-20260818120002-cccccc", "2026-08-18T12:00:00Z")
+    _setze_erstellt(tmp_path, "vis-20260818120000-aaaaaa", "2026-08-18T13:00:00Z")
 
-    kennungen = [s["job_id"] for s in liste_jobs(tmp_path)]
+    assert [s["job_id"] for s in liste_jobs(tmp_path)] == [
+        "vis-20260818120002-cccccc", "vis-20260818120000-aaaaaa"]
 
-    assert kennungen == sorted(kennungen)
+
+def test_bei_gleicher_erstellzeit_entscheidet_die_kennung(tmp_path):
+    """Der Gleichstands-Zweig, jetzt **hergestellt statt erhofft**.
+
+    Vorher trat er nur ein, wenn zwei Schreibvorgänge zufällig in dieselbe Sekunde
+    fielen — und genau dann sah die alte Probe grün aus.
+    """
+    for kennung in ("vis-20260818120002-cccccc", "vis-20260818120000-aaaaaa"):
+        _job(tmp_path, kennung)
+    for kennung in ("vis-20260818120002-cccccc", "vis-20260818120000-aaaaaa"):
+        _setze_erstellt(tmp_path, kennung, "2026-08-18T12:00:00Z")
+
+    assert [s["job_id"] for s in liste_jobs(tmp_path)] == [
+        "vis-20260818120000-aaaaaa", "vis-20260818120002-cccccc"]
+
+
+def _setze_erstellt(verzeichnis, job_id: str, wann: str) -> None:
+    """Die Erstellzeit eines abgelegten Auftrags setzen — nur fuer Proben.
+
+    `baue_job` nimmt bewusst keine Zeit entgegen; sie kommt aus der Uhr. Eine Probe, die
+    die **Reihenfolge** prueft, braucht sie aber bestimmt und nicht aus der Uhr — sonst
+    prueft sie, wie schnell die Maschine gerade ist.
+    """
+    from pathlib import Path as _P
+    pfad = _P(verzeichnis) / f"{job_id}{DATEI_ENDUNG}"
+    satz = json.loads(pfad.read_text(encoding="utf-8"))
+    satz["erstellt"] = wann
+    pfad.write_text(json.dumps(satz, ensure_ascii=False), encoding="utf-8")
 
 
 def test_liste_jobs_auf_leerem_verzeichnis(tmp_path):

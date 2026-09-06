@@ -1243,6 +1243,30 @@ prüfte das Skript mit erfundenen Aufträgen und die Aufträge ohne das Skript; 
 lag der Fehler.* Die Abhilfe ist eine Probe, die die **wirklichen** Dateien durch den
 **wirklichen** Aufruf schickt.
 
+**Ein Kommentar ist kein Wächter** — Eine Regel, die eine Datei nur *beschreibt*, statt
+sie zu erzwingen. Sie sieht aus wie eine Vorkehrung, verlangt aber, dass ein Mensch sie
+im richtigen Moment liest und befolgt.
+*Woran man sie erkennt:* Der Satz enthält ein «bitte», ein «darum» oder ein «wer X tut,
+muss auch Y» — und nichts wird rot, wenn Y ausbleibt.
+*Im Projekt am 06.09.2026:* Neben dem Stichtag des **Zustellbelegs** stand seit dem 03.09.
+der Hinweis *«wer die Post neu erzeugt, zieht darum dieses Datum mit»*. Er war beim ersten
+Mal gelesen, beim zweiten Mal von derselben Hand übergangen worden — die Post ging am
+06.09. wieder mit dem Datum vom 03. hinaus. Die Zahl daneben war jedes Mal richtig, weil
+sie **gezählt** wurde. Der Stichtag wird seither ebenfalls gerechnet.
+
+**Die Probe prüft ihre eigene Zufälligkeit** — Ein Wächter, der grün ist, weil zwei Dinge
+zufällig zusammenfielen, und nicht, weil die geprüfte Regel gilt. Er schlägt dann genau
+dann an, wenn der Zufall ausbleibt — also **nicht bei einem Fehler, sondern bei einer
+langsamen Maschine**.
+*Im Projekt am 06.09.2026:* Eine Probe legte zwei Aufträge an, den alphabetisch späteren
+zuerst, und verlangte danach alphabetische Reihenfolge. Sortiert wird aber nach
+Erstellzeit, mit der Kennung nur als Gleichstands-Regel. Grün war die Probe also nur,
+solange beide Aufträge in **dieselbe Sekunde** fielen. Unter Last schob sich eine
+Sekundengrenze dazwischen, der zuerst angelegte stand zu Recht vorn — und die Probe wurde
+rot, *weil der Code tat, was sein Docstring verspricht*. Sie konnte Zeit- und
+Namenssortierung nie unterscheiden. Verwandt mit **Die Bedingung nicht hergestellt**:
+Dort wird die Lage nicht hergestellt, hier wird sie erhofft.
+
 **Abgelegt gegen ausgeliefert** — Zwei Zustände eines Auftrags, die in jeder Liste
 gleich aussahen. **Abgelegt** heisst: Die Datei liegt in unserem Repo. **Ausgeliefert**
 heisst: Ein Block daraus ist an den Ort gegangen, an den der Adressat sieht.
@@ -4106,6 +4130,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-06 | Ergaenzt: **Ein Kommentar ist kein Waechter** und **Die Probe prueft ihre eigene Zufaelligkeit**. Beide Anlaesse sind Fehler in der eigenen Absicherung: Der Stichtag des Zustellbelegs ging zum zweiten Mal veraltet hinaus, obwohl ein Kommentar daneben genau davor warnte; und eine Probe zur Sortierreihenfolge war nur gruen, solange zwei Auftraege in dieselbe Sekunde fielen — unter Last wurde sie rot, weil der Code korrekt sortierte |
 | 2026-09-03 | Ergaenzt: **Tiefenpass (Z-Pass) und Material-ID-Pass**, **Transparenz-Bounce**, **Alphakanal / alphaMode: BLEND**. Anlass ist der Rueckschritt von Demolauf 17: Bildwert 0.2015 -> 0.000 bei einem Modell, das BESSER geworden war. Gemessen: Die Kette war unveraendert (beide Laeufe rechnen auf vier Stellen nach), die REFERENZ war es nicht — der Tiefenpass sah durch 750 Glas-Primitive hindurch, im Median 4.49 m tiefer als der eigene Rand, an 2106 Punkten bis in den Hintergrund. Glas im Soll dicht gemacht: Score zurueck auf 0.2001. Drei Scheinproben trennen den Befund vom Eingriff |
 | 2026-09-03 | Ergaenzt: **Base64** und **Kastenmittel (Box-Filter)**. Anlass ist die Naht «Aufs Blatt», die zum zweiten Mal das Regelergebnis der eigenen Kette abwies: Der Deckel vergleicht Base64-ZEICHEN, die Meldung nennt die Grenze aber als waere sie eine Byte-Zahl — 1 048 576 Zeichen sind 786 432 Byte, nicht 1.0 MB. 60 von 66 Nutzbildern lagen darueber. Das Kastenmittel ist die Art, wie die neue Blattfassung verkleinert, und der Eintrag traegt mit, warum nicht der naechste Nachbar |
 | 2026-09-03 | Ergaenzt: **Abgelegt gegen ausgeliefert** und **Stale Bytecode nach einer Mutationsprobe**. Anlass ist ein Rueckstand, der keiner beim Adressaten war: Zwei `ui`-Auftraege lagen zwei bzw. einen Tag im Repo und waren nie hinausgegangen — abgelegt und ausgeliefert sahen in jeder Zaehlung gleich aus. Der zweite Eintrag stammt aus der Pruefung dieses Baus: Eine gleich lange Mutation, in derselben Sekunde zurueckgestellt, lief aus dem Zwischenspeicher weiter und meldete eine rote Probe, die es im Quelltext nicht mehr gab |
