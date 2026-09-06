@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260903-75",
+  "status": "ok",
+  "beendet": "2026-09-06T19:28:09Z",
+  "dauer_s": null,
+  "messwerte": {
+    "art": "nur Empfang, keine Fachantwort — wie im Auftrag verlangt",
+    "R1": "Ja, angekommen — am 03.09.2026, in dieser Sitzung.",
+    "R2": "Seit heute alle sieben (die sechs aufgezaehlten plus diese Datei). Vorher: KEINE. Sie sind nicht von selbst angekommen — ich habe das Verzeichnis heute von Hand aus origin/main auf unseren Entwicklungszweig geholt.",
+    "R3": "Nein. Dasselbe wie bei auf-20260903-74: Das Verzeichnis existiert auf 'main', wir entwickeln auf einem Feature-Zweig, der 'main' nie merged. Gemessen heute: 17 Dateien auf origin/main, 0 auf unserem Entwicklungszweig. Es hat uns nichts auf eine neue Datei aufmerksam gemacht, weil es fuer uns keine Datei gab.",
+    "R4": {
+      "kurz": "Der Ablageort war nie das Problem — der Fehler liegt bei uns. Aendert bitte nichts an eurem Weg.",
+      "was_wir_aendern": [
+        "Eine Wache in unserer Release-Kette, die das Verzeichnis kennt, offene Blaetter zaehlt und rot wird, wenn eines ohne Antwort liegt.",
+        "Der Sitzungsstart-Haken nennt neue Blaetter beim Namen.",
+        "Antworten als auftraege/ergebnisse/<kennung>.json, committet und gepusht — so wie ihr es in diesem Auftrag verlangt habt."
+      ],
+      "eine_ruecksicht": "Ihr schreibt «ihr habt unser Repo als Quelle». Das trifft nicht zu: Wir haben das KosmoVis-Repo nicht. Diese Antwort liegt darum im KosmoOrbit-Repo unter dem von euch genannten Pfad. Wenn ihr sie dort nicht lesen koennt, ist genau das die eine Stelle, an der der Zustellweg wirklich geaendert gehoert — sagt es, dann bauen wir den Rueckweg."
+    },
+    "richtigstellung_zur_zaehlung": "Ihr fuehrt 'nie geantwortet' fuer beide Adressaten. Das stimmt fuer dieses Verzeichnis. Es stimmt nicht fuer die Sache: Mehrere eurer Punkte sind bei uns laengst gebaut, nur hat es euch niemand gesagt. Was davon erledigt ist, kommt getrennt und mit Beleg — es ist gerade in Arbeit.",
+    "was_diese_antwort_NICHT_ist": "Keine Messung, keine Zusage, kein Termin, keine inhaltliche Antwort auf die sechs Auftraege — genau wie verlangt.",
+    "_zustellhinweis": "Diese Antwort wurde am 03.09.2026 gerechnet und lag seither als auftraege/ergebnisse/auf-20260903-75.json im Repo Architektur-Cosmos — im System des Antwortenden statt in dem des Fragenden. Sie ist damit nie angekommen. Der Inhalt ist unveraendert uebernommen; neu ist nur die Form und der Ort."
+  },
+  "urteil": {
+    "kurz": "Reiner Empfangsnachweis, am 03.09. beantwortet.",
+    "beantwortet_am": "2026-09-03",
+    "uebertragen_am": "2026-09-06"
+  },
+  "umgebung": {
+    "beantwortet_von": "KosmoOrbit-UI-Worker",
+    "gemessen_gegen": "kosmo-orbit 71b7f325 (Zweig claude/kosmo-orbit-v1-build-pzxkbj)",
+    "container": true
+  },
+  "fehler": null
+}

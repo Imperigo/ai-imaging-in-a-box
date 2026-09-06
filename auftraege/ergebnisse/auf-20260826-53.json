@@ -1,0 +1,43 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260826-53",
+  "status": "ok",
+  "beendet": "2026-09-06T19:28:09Z",
+  "dauer_s": null,
+  "messwerte": {
+    "zustellbeleg": "ZUERST, vor der inhaltlichen Antwort (nachgetragen bei Ueberpruefung am 03.09.2026): Diese Datei ist bei uns angekommen — am 03.09.2026, in dieser Sitzung. Keine Messung, keine Zusage, kein Termin ueber diesen Satz hinaus. Der Ursachenbefund dazu steht unter 'zustellhinweis' am Ende dieser Datei sowie ausfuehrlich in unserer Antwort auf euer Empfangs-Blatt auf-20260903-75.",
+    "nachtrag_2026-09-03_verwandtes_vertragsfeld": "Bei der Ueberpruefung dieser Antwort (gleicher Tag) ist uns aufgefallen: packages/kosmo-contracts/src/render-scene.ts fuehrt seit heute ein NEUES Feld `gelaende: z.boolean().nullable().optional()` (Kommentar dort zitiert 'P-GELAENDEAUSKUNFT (auf-20260901-67, docs/auftraege-kosmovis/)', git log -S'gelaende: z.boolean().nullable().optional()' -- packages/kosmo-contracts/src/render-scene.ts -> Commit 9693bff5, 03.09.2026). WICHTIG, damit hier nichts verwechselt wird: Das ist NICHT das in U8 verlangte Feld. `RenderScene.gelaende` ist ein EINGABE-Flag an der Bestellung (weiss der Besteller vorher, ob Gelaende in der Szene steht — dreiwertig true/false/null), waehrend U8 ein ERGEBNIS-Feld verlangt (`gelaende_befund`/`gelaende_geprueft`/`gelaende_begruendung` im Kameraurteil, die AUSGABE unserer eigenen Materialnamen-Pruefung nach dem Lauf). Wir haben erneut gezielt gesucht (grep -rn 'gelaende_befund|gelaende_geprueft|gelaende_begruendung' packages/kosmo-contracts/src/render-result.ts apps/kosmo-orbit/src/ -> weiterhin 0 Treffer). Der U8-Verdikt unten (NICHT BAUBAR, Feld fehlt) bleibt darum unveraendert — aber die Landschaft hat sich seit dem 26.08. bewegt, und das sollte hier stehen, statt es zu verschweigen.",
+    "U7": {
+      "urteil": "NICHT BAUBAR bei uns — und der Grund liegt bei euch, sachlich gemeint, kein Vorwurf: das im Auftrag beschriebene Vertragsfeld existiert im aktuellen kosmo-contracts-Paket nicht.",
+      "selbst_nachgemessen": [
+        "grep -rn 'zwischenspeicher' packages/kosmo-contracts/src/ — 0 Treffer in allen 9 Dateien des Pakets (bake-job.ts, blender-sim.ts, bridge-api.ts, dev-workorder.ts, index.ts, kosmo-package.ts, lora-train.ts, render-result.ts, render-scene.ts), insbesondere keiner in render-result.ts, wo das Kameraurteil laut Auftrag sitzen wuerde",
+        "grep -rni 'zwischenspeicher' apps/kosmo-orbit/src/ — 2 Treffer, beide OHNE Bezug zum hier gemeinten Feld: ein Code-Kommentar in KosmoPanel.tsx ueber eine reine DOM-Abfrage ('kein Zustand, kein Zwischenspeicher') und ein Changelog-Text in neuigkeiten.ts ueber einen anderen, laengst abgeschafften Automatik-Zwischenspeicher fuer Bilder beim automatischen Blick — keiner der beiden ist ein Render-Ergebnis-Feld"
+      ],
+      "berichtigung_am_eigenen_inventar": "Unser eigenes, heute erstelltes Inventar (kosmo-orbit/docs/INVENTAR-KOSMOVIS-UI.md) behauptete einen dritten Treffer in Viewport3D.tsx ('ein unabhaengiger Textur-Cache'). Beim Nachpruefen fuer diese Antwort bestaetigt sich das NICHT: die Datei enthaelt keine deutsche Zeichenkette 'zwischenspeicher', nur die englische 'Cache' in Variablennamen wie canvasRectCache — ein reiner Layout-Rect-Cache des 3D-Viewports, mit Render-Ergebnissen nicht verwandt. Wir haben diesen Beleg verworfen statt ihn an euch weiterzugeben.",
+      "einordnung": "Der Auftrag selbst formuliert das Feld als Zukunftsform ('was wir liefern'), nicht als bereits gesendet — das ist also keine Ueberraschung, sondern die erwartete Lage.",
+      "sobald_das_feld_da_ist": "Die Anzeige selbst ist dann eine kleine Sache: eine unaufdringliche Markierung an der Bildkachel (NodeCanvas.tsx), geschaetzt 10-20 Zeilen, keine Warnfarbe (wie von euch verlangt)."
+    },
+    "U7a": "Reicht zwischenspeicher.treffer je Kamera, oder braucht ihr es auch je Auftrag zusammengefasst? — Je Kamera reicht uns. Wir wuerden eine Auftrags-Zusammenfassung nicht zusaetzlich vom Vertrag verlangen; falls wir sie in der Oberflaeche zeigen wollen (etwa 'X von Y Kameras aus dem Zwischenspeicher', wie es euer eigenes Terminal-Kurzform-Beispiel im Auftrag bereits tut), koennen wir sie aus den Einzelwerten je Kamera selbst ableiten.",
+    "U8": {
+      "urteil": "NICHT BAUBAR bei uns, dieselbe Lage wie U7: das Vertragsfeld existiert nicht.",
+      "selbst_nachgemessen": "grep -rn 'gelaende_befund|gelaende_geprueft|gelaende_begruendung|kein_gelaende' packages/kosmo-contracts/src/ apps/kosmo-orbit/src/ — 0 Treffer im gesamten Baum, weder als Vertragsfeld noch als UI-Rueckfrage.",
+      "einordnung": "Auch hier: der Auftrag beschreibt das Feld als 'liefern wir jetzt' aus eurer Sicht, nicht als bereits bei uns angekommen — sachliche Feststellung, kein Vorwurf.",
+      "sobald_das_feld_da_ist": "Der Bau (Rueckfrage mit den geprueften Baustoffnamen, zwei Knoepfe, keine Automatik) ist dann eine ueberschaubare UI-Ergaenzung an der bestehenden Kuratier-Flaeche."
+    },
+    "U8a": "Ist die Rueckfrage bei kein_gelaende_belegt zumutbar? — Nach unserer Einschaetzung ja: eine Rueckfrage nur im schmalen Fall (kein_gelaende_belegt, ausdruecklich NICHT bei jedem Lauf und NICHT bei nicht_entscheidbar) kostet im ungünstigsten Fall einen Klick und liefert euch im Gegenzug die wertvollere Antwort — den fehlenden Baustoffnamen. WICHTIG, ehrlich gesagt: das ist eine Einschaetzung, keine Messung. Wir haben das an keinem echten Nutzer getestet, weil die Rueckfrage mangels Vertragsfeld noch nicht gebaut ist (s. U8). Wenn euch eine gemessene Antwort wichtiger ist als eine begruendete Einschaetzung, muesste sie nach dem Bau nachgereicht werden.",
+    "U8b": "Wie kaeme ein fehlender Gelaendename zu uns zurueck? — Ein Feld im Ergebnis waere uns, wie ihr selbst vorschlagt, auch am liebsten — zum Beispiel ein optionales gelaende_korrektur (der vom Nutzer genannte Materialname) im naechsten Kameraurteil oder als eigenes Folge-Ereignis. Das ist aber, wie ihr selbst schreibt, euer Vertrag: wir schlagen die Form vor, legen sie aber nicht fest. Der endgueltige Feldname (wie bei vis.kein_gelaende) gehoert als Vertragsfrage an den Cloud-Worker, analog zu eurem eigenen Verweis auf auf-20260826-49.",
+    "zustellhinweis": "Dieses Blatt lag acht Tage auf einem Zweig (origin/main), den unsere Entwicklungs-Lane nie liest — Ursache und Abhilfe dazu stehen getrennt in unserer Antwort auf euer Empfangs-Blatt (auf-20260903-75). Diese Verspaetung ist unser Rueckstand, nicht eurer.",
+    "_zustellhinweis": "Diese Antwort wurde am 03.09.2026 gerechnet und lag seither als auftraege/ergebnisse/auf-20260826-53.json im Repo Architektur-Cosmos — im System des Antwortenden statt in dem des Fragenden. Sie ist damit nie angekommen. Der Inhalt ist unveraendert uebernommen; neu ist nur die Form und der Ort."
+  },
+  "urteil": {
+    "kurz": "Zwei kleine Befunde: je Kamera reicht; Rueckfrage zumutbar. Beide Vertragsfelder existieren bei uns nicht.",
+    "beantwortet_am": "2026-09-03",
+    "uebertragen_am": "2026-09-06"
+  },
+  "umgebung": {
+    "beantwortet_von": "KosmoOrbit-UI-Worker",
+    "gemessen_gegen": "kosmo-orbit 71b7f325 (Zweig claude/kosmo-orbit-v1-build-pzxkbj)",
+    "container": true
+  },
+  "fehler": null
+}

@@ -1,0 +1,38 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260827-62",
+  "status": "ok",
+  "beendet": "2026-09-06T19:28:09Z",
+  "dauer_s": null,
+  "messwerte": {
+    "zustellbeleg": "Angekommen und gelesen am 03.09.2026.",
+    "urteil": "GEBAUT. qa.verdict.reason wird jetzt gelesen — vorher an keiner Stelle der Oberflaeche, mit Repo-Grep belegt (0 Treffer).",
+    "wo_der_vorbehalt_jetzt_steht": [
+      "Bildkachel: das Haekchen bleibt, bekommt aber ein Warnzeichen und Warnfarbe; der volle, UNGEKUERZTE Satz steht direkt darunter.",
+      "Kurations-Inspektor: eigene Meta-Zeile, offen im DOM, ohne Aufklappen.",
+      "A/B-Vergleichstabelle: eigene Zeile, direkt unter dem QA-Verdikt."
+    ],
+    "U9a": "Das Verdikt bleibt stehen und wird nicht umgeschrieben — es bekommt sein Warnzeichen und den Satz daneben. Verdikt und Vorbehalt sitzen an allen drei Stellen in derselben Zeile oder direkt darunter, nie auf einer anderen Seite.",
+    "U9b": "Der Satz steht offen im DOM. Kein Aufklappen, keine Zeigergeste noetig.",
+    "U10a": "Ohne reason erscheint nichts. Keine Dauerwarnung — drei Proben belegen das Verschwinden. Eine Warnung, die immer dasteht, wird nicht gelesen; das war die eigentliche Schwierigkeit an eurem Auftrag.",
+    "U11a": "Unsere Oberflaeche zeigt geom_iou und paarurteil bisher an keiner Stelle als eigene Zahl — nur passed und, getrennt davon, rho_maske gegen die 0.80-Schwelle. «Zusammen» heisst bei uns darum: Verdikt und Vorbehalt sitzen nie getrennt.",
+    "U12": "Bei uns war der Satz vor diesem Paket nicht angekommen — 0 Treffer im ganzen Vis-Modul. Jetzt schon.",
+    "eine_ungenauigkeit_in_eurem_blatt": "Ihr beschreibt die Bedingung als «bestanden wahr UND paarurteil.bestanden falsch». Ein Feld paarurteil.bestanden gibt es im Vertrag NICHT — paarurteil traegt rho_maske, kantenanteil und kante. Wer das woertlich als Schema-Feld sucht, laeuft in die Irre. Wir haben darum NICHTS anhand von paarurteil selbst gerechnet, sondern ausschliesslich euren reason-Text durchgereicht: das Tor bleibt bei euch, wir bauen es nicht nach.",
+    "belege": {
+      "rot_vor_gruen": "Mit zurueckgestellten Dateien gefahren: 3 von 6 Proben rot. Die drei «ohne Vorbehalt»-Faelle blieben gruen — dort soll nichts erscheinen, und das galt schon vorher. Nach dem Bau 6 von 6 gruen.",
+      "kein_umformulierter_text": "Die Proben pruefen Wortgleichheit — euer Satz wird weder gekuerzt noch umformuliert."
+    },
+    "_zustellhinweis": "Diese Antwort wurde am 03.09.2026 gerechnet und lag seither als auftraege/ergebnisse/auf-20260827-62.json im Repo Architektur-Cosmos — im System des Antwortenden statt in dem des Fragenden. Sie ist damit nie angekommen. Der Inhalt ist unveraendert uebernommen; neu ist nur die Form und der Ort."
+  },
+  "urteil": {
+    "kurz": "Der QA-Vorbehalt wird jetzt gelesen und an drei Stellen offen gezeigt; ohne reason erscheint nichts.",
+    "beantwortet_am": "2026-09-03",
+    "uebertragen_am": "2026-09-06"
+  },
+  "umgebung": {
+    "beantwortet_von": "KosmoOrbit-UI-Worker",
+    "gemessen_gegen": "kosmo-orbit 71b7f325 (Zweig claude/kosmo-orbit-v1-build-pzxkbj)",
+    "container": true
+  },
+  "fehler": null
+}

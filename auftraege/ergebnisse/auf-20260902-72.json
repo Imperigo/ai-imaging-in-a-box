@@ -1,0 +1,49 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260902-72",
+  "status": "ok",
+  "beendet": "2026-09-06T19:28:09Z",
+  "dauer_s": null,
+  "messwerte": {
+    "M1": {
+      "antwort": "Alle sieben sind erreichbar — seit gestern (02.09.2026, ein einziger Commit 'Die Prepare-Werkzeuge bekommen einen Bedienweg', ROADMAP-Eintrag 1295, gelandet noch vor dem Release v0.9.57 desselben Tages). Keines der sieben fehlt.",
+      "selbst_nachgemessen": [
+        "apps/kosmo-orbit/src/modules/prepare/werkbank/prepare-werkbank-werkzeuge.ts:62-70 — KOSMOPREPARE_BEDIENELEMENTE fuehrt genau die sieben Namen (flaechen, baugesetz, raumprogramm, standort, phase0, orchestrate, praezedenz); kosmoprepare_capabilities ist bewusst ausgenommen, wie im Auftrag verlangt",
+        "apps/kosmo-orbit/src/shell/KosmoPanel.tsx:4555 — kosmoprepareWerkzeuge(...) wird tatsaechlich in die Kosmo-Chat-Werkzeugliste (extraReadTools) eingebunden"
+      ],
+      "einschraenkung_die_wir_nicht_verschweigen": "Der einzige Beleg im Repo dafuer, dass die sieben 'echt aufgerufen' wurden, laeuft gegen einen GEMOCKTEN Transport, keinen echten KosmoPrepare-Serveraufruf. Das steht so in unserem eigenen ROADMAP-Eintrag 1297 (03.09.2026), der diese Luecke selbst benennt. Ein echter Aufruf gegen euren laufenden Server ist bei uns heute noch nicht gemessen."
+    },
+    "M2": {
+      "antwort": "Ausschliesslich im Kosmo-Chat, als vom Sprachmodell aufrufbares Werkzeug — keine Rezeptliste, kein Cockpit-Knoten, keine Palette.",
+      "selbst_nachgemessen": "Das gesamte Werkbank-Verzeichnis (apps/kosmo-orbit/src/modules/prepare/werkbank/) enthaelt genau zwei Dateien, beide .ts — KEINE einzige .tsx. Es gibt strukturell kein anklickbares Bedienelement fuer diese sieben Werkzeuge.",
+      "eigene_einordnung": "Das deckt sich mit dem, was unser eigenes ROADMAP wortgleich am 03.09.2026 selbst festhaelt: 'erreichbar fuers Sprachmodell, nicht anklickbar fuer einen Menschen'."
+    },
+    "M3": {
+      "antwort": "Alle fuenf Felder werden angezeigt, aber nicht gleich prominent.",
+      "details": "annahmen, sicher und fragen (sowie review_ready, das engste Analogon zu eurem Vorbehaltsgedanken bei kosmoprepare_orchestrate) haben je eigene, fest formatierte Zeilen — vier interne, dokumentierte Anzeigeregeln. quelle, art und konfidenz haben KEINE eigene Regel, werden aber auch nicht verschwiegen: ein genereller Fallthrough gibt jedes uebrige Feld aus der Werkzeug-Antwort ungefiltert mit aus.",
+      "selbst_nachgemessen": "apps/kosmo-orbit/src/modules/prepare/werkbank/prepare-werkbank-anzeige.ts:104-166 — vier dedizierte Regeln, gefolgt von 'for (const [k, v] of Object.entries(obj)) { if (gezeigt.has(k)) continue; zeilen.push(...) }', das quelle/art/konfidenz ungefiltert mitgibt.",
+      "praktische_folge": "Die Werte erscheinen, aber ohne die von euch verlangte besondere Hervorhebung 'neben der Zahl' — sie stehen als gleichwertige Zeile unter den uebrigen Feldern, nicht optisch abgesetzt."
+    },
+    "M4": {
+      "antwort": "WISSEN WIR NICHT.",
+      "grund": "Der einzige Beleg im Repo laeuft gegen einen gemockten Transport (s. M1) — wir haben die sieben Werkzeuge nicht selbst mit echten Antworten eures Servers durchgespielt. Ein solcher Messauftrag steht seit heute (03.09.2026) in unserem eigenen ROADMAP als offener, noch nicht ausgefuehrter Punkt an unseren lokalen Worker. Eine Antwort ohne diese Messung waere geraten, und genau das wollen wir nicht senden."
+    },
+    "M5": {
+      "antwort": "Nicht weitergereicht — es ist die richtige Adresse. 'Erreichbar fuer den Nutzer' ist eine Oberflaechen-Anzeigefrage, keine Vertragsfrage der Systemschale, und wir haben sie am eigenen Code beantwortet."
+    },
+    "zusaetzliche_ehrlichkeit_ungefragt": "Ein Risiko, das euer Auftrag nicht abgefragt hat, aber zur Sache gehoert: die sieben Werkzeuge sind von unserem Stationsfilter UND vom Budgetschnitt der Kosmo-Werkzeugauswahl ausgenommen (Kern-Werkzeugliste in packages/kosmo-ai/src/chat.ts, selbst nachgemessen: kosmoprepareWerkzeuge() fliesst dort ueber extraReadTools in kernWerkzeugNamen ein). Sie reisen also auf JEDER Station mit, nicht nur in der Prepare-Station. Ob das die allgemeine Werkzeugwahl unseres Modells verschlechtert, ist bei uns NICHT gemessen — auch das steht so in unserem eigenen ROADMAP-Eintrag von heute.",
+    "zustellhinweis": "Dieses Blatt lag bis heute auf einem Zweig (origin/main), den unsere Entwicklungs-Lane nie liest — Ursache und Abhilfe dazu stehen getrennt in unserer Antwort auf euer Empfangs-Blatt (auf-20260903-75). Diese Verspaetung ist unser Rueckstand, nicht eurer.",
+    "_zustellhinweis": "Diese Antwort wurde am 03.09.2026 gerechnet und lag seither als auftraege/ergebnisse/auf-20260902-72.json im Repo Architektur-Cosmos — im System des Antwortenden statt in dem des Fragenden. Sie ist damit nie angekommen. Der Inhalt ist unveraendert uebernommen; neu ist nur die Form und der Ort."
+  },
+  "urteil": {
+    "kurz": "Alle sieben Werkzeuge erreichbar, nur im Sprachweg; Beleg laeuft gegen einen gemockten Transport.",
+    "beantwortet_am": "2026-09-03",
+    "uebertragen_am": "2026-09-06"
+  },
+  "umgebung": {
+    "beantwortet_von": "KosmoOrbit-UI-Worker",
+    "gemessen_gegen": "kosmo-orbit 71b7f325 (Zweig claude/kosmo-orbit-v1-build-pzxkbj)",
+    "container": true
+  },
+  "fehler": null
+}

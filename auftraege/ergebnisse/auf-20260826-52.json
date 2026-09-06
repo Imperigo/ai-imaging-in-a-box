@@ -1,0 +1,124 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260826-52",
+  "status": "ok",
+  "beendet": "2026-09-06T19:28:09Z",
+  "dauer_s": null,
+  "messwerte": {
+    "zustellbeleg": "ZUERST, vor der inhaltlichen Antwort: Diese Datei ist bei uns angekommen — am 03.09.2026, in dieser Sitzung. Keine Messung, keine Zusage, kein Termin ueber diesen Satz hinaus.",
+    "hinweis_zum_baustand": "Dieses Blatt betrifft genau die Dateien (modules/vis/**), an denen waehrend dieser Antwort ein ZWEITER Bauagent parallel arbeitete. Zwei unserer eigenen Zwischenbefunde wurden dabei live ueberholt: ein erster Lesedurchgang fand `qa.verdict.reason` nur in EINER von drei behaupteten Anzeige-Stellen — Minuten spaeter, nach einem Commit desselben Agenten (69f2366a, 'Sechzehn von sechzehn'), war es an allen dreien. Was unten steht, ist der Stand nach einem WIEDERHOLTEN, stabilen Nachlesen (git status sauber, zwei Lesedurchgaenge im Abstand von mehreren Minuten identisch) — nicht der erste Blick.",
+    "regel_1_kein_wirkungsloses_bedienelement": {
+      "urteil": "ERLEDIGT fuer die drei ausdruecklich verbotenen Bedienelemente.",
+      "hochskalieren": {
+        "urteil": "erledigt/gegenstandslos — kein Bedienelement vorhanden, Feld serverseitig fest verdrahtet",
+        "beleg": "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts:486 — `upscale: false,` in der `vis`-Sektion des gesendeten `RenderScene`-Objekts. Kein `data-testid` mit 'upscale' oder 'hochskal' im gesamten vis-Modul.",
+        "git": "git log -S'upscale: false' --oneline -- apps/kosmo-orbit/src/modules/vis/vis-jobs.ts -> aeltere Fundstelle, vor dieser Sitzung entstanden; nicht neu fuer diesen Auftrag gebaut, sondern schon vorher so."
+      },
+      "stil_referenzen": {
+        "urteil": "erledigt/gegenstandslos — keine Datei-Ablage im Code, Feld immer leer gesendet",
+        "beleg": "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts:479 — `style: { mode: lineArt ? 'lineart' : 'none', refs: [], prompt: params.prompt },` — `refs` ist eine feste leere Liste, kein Formularfeld dahinter."
+      },
+      "stil_modus_als_wirkungsloser_regler": {
+        "urteil": "NUANCE, nicht schlicht erledigt — der Auftrag beschreibt einen kontinuierlichen 'Stil-Modus'-Regler, der nichts bewirkt, weil die Stil-QA nicht laeuft. Ein solcher Regler existiert nicht. Was existiert, ist etwas anderes: eine Checkbox 'als Strichzeichnung (Line-Art)', die den Render TATSAECHLICH veraendert (erzwingt `vis.skip: true`, also reines Cycles ohne KI-Veredelung) — sie ist also NICHT wirkungslos im Sinne der Regel, auch wenn die Stil-QA weiterhin nicht misst.",
+        "beleg": [
+          "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts:405 — `mode?: 'none' | 'lineart';` (nur zwei Werte, kein Kontinuum)",
+          "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts:479 — `lineArt ? 'lineart' : 'none'`",
+          "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx:2039-2040 — `data-testid=\"render-lineart\"` Checkbox, `checked={params['lineart'] === true}`",
+          "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts:480 — `vis: { skip: lineArt || params.nurCycles === true, ... }` — die Checkbox hat einen echten, harten Effekt auf den gesendeten Auftrag"
+        ],
+        "einordnung": "Diese Checkbox ist keine Umgehung von Regel 1 — sie ist ein anderes Feature (echter Line-Art-Render) unter demselben Vertragsfeld `style.mode`, das der Auftrag vermutlich nicht kannte, als er 'Stil-Modus' als Beispiel eines wirkungslosen Reglers nannte."
+      }
+    },
+    "regel_2_dreiwertige_anzeige": {
+      "urteil": "GEMISCHT — an einer Stelle sauber dreiwertig, an einer anderen nur zweiwertig plus Stille.",
+      "kuratier_inspektor_dreiwertig_erledigt": {
+        "beleg": "apps/kosmo-orbit/src/modules/vis/varianten-diff.ts:270-275 — `export type BewertungsLage = 'bewertet' | 'ohne-qa' | 'widerrufen';` mit `bewertungsLage()`: `!qa` -> 'ohne-qa', `nurAlteGeometrie(qa.geometry)` -> 'widerrufen', sonst 'bewertet'.",
+        "anzeige": "apps/kosmo-orbit/src/modules/vis/KuratierInspektor.tsx:150-163 — 'ohne-qa' zeigt 'Keine QA-Bewertung vorhanden.', 'widerrufen' zeigt 'Bewertung zurueckgezogen — die Grundlage dieser Zahlen ist widerlegt.' — beides EXPLIZITER Text, kein stilles Fehlen.",
+        "git": "widerrufen-Fall seit v0.9.42 (P-NULLGEOMETRIE/Vertragsgrund-Bilanz, s. Kommentar Zeile 155-157 im File selbst)."
+      },
+      "node_canvas_bildkachel_nur_zweiwertig": {
+        "beleg": "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx:394 — `{qa && ( <span>...QA {qa.verdict.passed ? 'ok' : '✗'}...</span> )}`. Wenn `qa` fehlt (kein Lauf, kein Maskenweg, abbestellt), erscheint GAR KEIN Abzeichen — kein expliziter Text 'nicht gemessen', anders als im Inspektor.",
+        "einordnung": "Das ist keine falsche Anzeige (Regel 2 verbietet ausdruecklich das GRUEN/ROT-Runden, nicht das Weglassen), aber es ist auch nicht die geforderte DRITTE, SICHTBARE Kategorie — ein Nutzer sieht an dieser Stelle nur 'kein Abzeichen', nicht 'nicht gemessen, weil X'. Das ist ein echter, kleiner Rest-Unterschied zwischen den beiden Anzeigeorten derselben Flaeche."
+      }
+    },
+    "regel_3_wert_an_bedingung": {
+      "urteil": "TEILWEISE — zwei der vier genannten Bedingungen (Treue, Samples) stehen neben dem Wert, zwei (Aufloesung, Backbone) und alle drei Vorbehalte aus aiimaging_capabilities fehlen an dieser Stelle.",
+      "vorhanden": {
+        "beleg": "apps/kosmo-orbit/src/modules/vis/KuratierInspektor.tsx:56-57 — 'Geometrie-Treue' (faithful) und 'Samples' erscheinen als eigene Meta-Zeilen, aus apps/kosmo-orbit/src/modules/vis/varianten-diff.ts:113 (`auftrag ? { faithful: auftrag.faithful, samples: auftrag.samples } : {}`)."
+      },
+      "fehlend": "grep -rn \"backbone|aufloesung|resolution|threshold\" apps/kosmo-orbit/src/modules/vis/varianten-diff.ts apps/kosmo-orbit/src/modules/vis/KuratierInspektor.tsx -- ausser Kommentartext keine Fundstelle: weder Aufloesung noch Backbone noch eine Schwellenzahl stehen neben dem QA-Wert. Die drei im Auftrag ausdruecklich verlangten Vorbehaltssaetze (Geometrie-Schwelle unkalibriert, Startwert-Streuung, Tiefenkante-Verhalten) stehen an KEINER Stelle der Oberflaeche — nur der eine, vom Cloud-Worker selbst mitgelieferte `qa.verdict.reason`-Satz (Regel-4/Vorbehalt, s.u.) erscheint."
+    },
+    "regel_4_was_nicht_gerendert_wurde_wird_gesagt": {
+      "urteil": "ZWEIGETEILT: der SCHMALE Spezialfall (bestandener Score trotz widersprechendem Maskenweg) ist seit heute erledigt und an allen drei Stellen sichtbar; der BREITE, im Auftrag urspruenglich gemeinte Fall (fehlende Bilder je Kamera, gruppiert nach Art — 'acht statt zwoelf') ist NICHT gebaut.",
+      "schmaler_fall_erledigt_heute": {
+        "beleg_bildkachel": "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx:371-412 (Funktion `BildKachel`) — Zeile 390 `const vorbehalt = qa?.verdict.reason;`, Zeile 405-409 zeigt den Satz UNGEKUERZT, sichtbar ohne Klick, mit `data-testid=\"vis-bild-kachel-qa-vorbehalt\"`.",
+        "beleg_inspektor": "apps/kosmo-orbit/src/modules/vis/KuratierInspektor.tsx:61-65 — Meta-Zeile 'QA-Vorbehalt' direkt neben 'QA-Verdikt'.",
+        "beleg_ab_tabelle": "apps/kosmo-orbit/src/modules/vis/varianten-diff.ts:88 (`qaVorbehalt?: string` Feld), :125 (`...(qa?.verdict.reason ? { qaVorbehalt: qa.verdict.reason } : {})`), :172 (`zeile('QA-Vorbehalt', fmtVorbehalt(a.qaVorbehalt), fmtVorbehalt(b.qaVorbehalt))`) — die A/B-Vergleichstabelle in KuratierFlaeche.tsx (`VergleichAnsicht`) rendert diese Zeile ueber `varianteDiff()`.",
+        "git": "git log -S'const vorbehalt = qa?.verdict.reason' --oneline -- apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx -> 69f2366a, 03.09.2026, 'Sechzehn von sechzehn — und drei eigene Fehler auf dem Weg dahin'. Dieselbe Commit-ID fuer die qaVorbehalt-Fundstellen in varianten-diff.ts und KuratierInspektor.tsx.",
+        "test": "npx vitest run apps/kosmo-orbit/test/auf-20260827-62-qa-vorbehalt.test.tsx --root apps/kosmo-orbit -> 6 Tests, 6 gruen (gemessen in dieser Sitzung). Fuer die BildKachel-Anzeige selbst (NodeCanvas.tsx) wurde KEIN eigener Test unter diesem Namen gefunden — die Wache deckt varianten-diff.ts und KuratierInspektor.tsx ab, nicht die dritte Stelle.",
+        "einordnung": "Das ist die Antwort auf einen ANDEREN, spaeteren Auftrag (auf-20260827-62), nicht direkt auf diesen — wird hier genannt, weil es Regel 4 dieses Entwurfs beruehrt und weil eine fruehere, inzwischen ueberholte Zwischenmessung dieser Sitzung sonst faelschlich 'nur an einer von drei Stellen' gemeldet haette."
+      },
+      "breiter_fall_nicht_gebaut": {
+        "beleg": "grep -rn \"lieferstatus\" apps/kosmo-orbit/src/modules/vis/*.ts apps/kosmo-orbit/src/modules/vis/*.tsx -> keine Fundstelle. `lieferstatus`/`lieferstatus_grund` (das Vertragsfeld aus packages/kosmo-contracts/src/render-result.ts, das laut Schema-Kommentar 'DIESER Render-Schritt fand insgesamt nicht statt' bedeutet) wird an keiner Stelle der Oberflaeche gelesen.",
+        "einordnung": "Der urspruengliche Text von Regel 4 spricht wortwoertlich von 'acht Bildern statt zwoelf ohne Hinweis' und 'der Abholer gruppiert die Gruende schon nach Art' — das ist eine andere, umfassendere Anzeige als der schmale Vorbehalt-Satz oben. Diese bleibt offen."
+      }
+    },
+    "O1": {
+      "frage_wortlaut": "Wo lebt die Flaeche — Cockpit-Ausklapp, Designzentrale, oder beides?",
+      "urteil": "Durch den bestehenden Bau faktisch beantwortet, nicht mehr offen.",
+      "beleg": "KosmoVis ist eine eigene Station mit eigenem Node-Graph — kein Ausklapp-Bereich eines fremden Cockpit-Knotens: apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx (2282 Zeilen, gemessen mit wc -l), KuratierFlaeche.tsx (530 Zeilen), KuratierInspektor.tsx (185 Zeilen), VisWorkspace.tsx (170 Zeilen) — vier eigenstaendige Dateien, keine handelt von einem Cockpit-Knoten-Ausklapp.",
+      "antwort": "Eigene Station (weder Cockpit-Ausklapp noch Designzentrale-Panel) — das war keine Entscheidung, die dieser Auftrag ausgeloest hat, sie stand vorher schon so."
+    },
+    "O2": {
+      "frage_wortlaut": "Was von unserer Seite fehlt euch fuer die Regeln 2 bis 4?",
+      "urteil": "Nicht am UI-Code beantwortbar — Frage an den Cloud-Worker/Vertrag, nicht an uns.",
+      "antwort": "Wissen wir nicht aus dem UI-Code allein. Was wir MESSEN koennen: welche Vertragsfelder heute genutzt werden (faithful, samples, qa.verdict.passed, qa.verdict.reason, rho_maske, kante_an_maskengrenze) und welche nicht (lieferstatus/lieferstatus_grund existieren im Vertrag, werden aber nirgends in modules/vis gelesen — s. Regel 4 oben; Aufloesung/Backbone/Schwellenwerte werden ebenfalls nicht angezeigt, obwohl sie im Auftrag/Vertrag vermutlich vorhanden sind). Ob DAS die drei vom Absender gemeinten Luecken sind, koennen wir nicht sagen — das ist die angesprochene Cloud-Frage."
+    },
+    "O3": {
+      "frage_wortlaut": "Ist Regel 1 zumutbar — und wenn nicht, an welcher Stelle?",
+      "urteil": "Ja, gemessen am Code bereits so umgesetzt (s. Abschnitt regel_1 oben) — keine der drei verbotenen Kontrollen (Hochskalieren, Stil-Referenzen-Ablage, ein wirkungsloser Stil-Modus-Regler) existiert als Bedienelement.",
+      "einschraenkung": "Die existierende Line-Art-Checkbox ist eine andere Sache als der im Auftrag beschriebene wirkungslose Regler (s. Nuance oben) — sie widerspricht Regel 1 nicht, sollte aber nicht mit einer 'erlaubten Ausnahme' verwechselt werden: sie ist schlicht kein Fall von Regel 1."
+    },
+    "O4": {
+      "frage_wortlaut": "In welcher Reihenfolge nuetzen euch unsere drei offenen Lieferungen?",
+      "urteil": "ENTSCHEID — Owner-/Teamfrage, nicht am UI-Code messbar.",
+      "empfehlung": "QA je Kamera zuerst, dann prompt_original, dann Varianten — gemessen an dem, was heute schon in der Oberflaeche verankert ist: `qa` und `qa.verdict.reason` werden bereits pro Job/Kachel gelesen (s. Regel 2-4 oben), ein Feld 'QA je Kamera' waere eine additive Erweiterung an genau dieser bestehenden Lesestelle. `prompt_original` braucht nur eine zusaetzliche Anzeige-Zeile (kein neuer Zustand). 'Varianten' dagegen sind laut eurem eigenen Auftrag noch ohne Bedeutung (anderer Startwert? anderer Prompt? andere Stilstaerke?) und wuerden auf unserer Seite eine neue UI-Entscheidung erzwingen (s. 'Die Spannung, die der Entwurf nicht aufloest' im Auftrag selbst) — das macht sie am teuersten, nicht am billigsten.",
+      "massstab": "Naehe zu bereits bestehenden Lesestellen im Code + Auftrags-eigene Reihenfolge-Hinweise (QA-Genauigkeit vor Komfortfeature). Das ist eine Einschaetzung, keine Messung — der Absender selbst nennt es eine Owner-/Teamfrage."
+    },
+    "O5": {
+      "frage_wortlaut": "Wie bekommt ihr Auftraege am liebsten — Datei in auftraege/offen/, Nachricht, oder beides?",
+      "urteil": "ENTSCHEID — deckt sich mit unserer separaten Antwort auf das reine Empfangs-Blatt (auf-20260903-75).",
+      "empfehlung": "Datei im Repo, wie bisher (kosmo-orbit/docs/auftraege-kosmovis/... -> unsere Antwort in auftraege/ergebnisse/<kennung>.json), PLUS eine Wache in unserer Release-Kette, die das Verzeichnis aktiv gegenzaehlt, statt auf zufaelliges Lesen zu hoffen — genau der Mechanismus, den wir in auf-20260903-75/R4 vorschlagen. Kein zusaetzlicher Nachrichtenkanal noetig, wenn die Wache steht.",
+      "massstab": "Der Ausfall war mechanisch (Verzeichnis existierte auf dem Entwicklungszweig nicht), nicht organisatorisch — eine Wache behebt die Ursache, ein zweiter Kanal haette dieselbe Luecke nur verdoppelt."
+    },
+    "was_seit_dem_auftrag_zusaetzlich_gebaut_wurde": "Zwei eng verwandte, aber eigene Auftraege wurden in dieser Version bzw. wenige Stunden vor dieser Antwort bearbeitet: der Wartegrund eines wartenden Auftrags (auf-20260901-70, separat beantwortet) und der QA-Vorbehalt am bestandenen Verdikt (auf-20260827-62, separat beantwortet, hier nur zitiert weil es Regel 4 direkt beruehrt).",
+    "wo_wir_dem_inventar_widersprechen": "kosmo-orbit/docs/INVENTAR-KOSMOVIS-UI.md behauptet fuer Regel 4: 'grep -rn \"verdict.reason\" apps/kosmo-orbit/src/modules/vis/ findet KEINE Fundstelle' und 'qa.verdict.reason wird an KEINER Stelle der Oberflaeche gelesen oder angezeigt'. Das war zum Messzeitpunkt des Inventars (03.09.2026, Vormittag) vermutlich richtig, ist aber JETZT falsch: seit Commit 69f2366a (03.09.2026, spaeter am selben Tag) liest und zeigt die Oberflaeche `qa.verdict.reason` an drei Stellen (s. oben). Das Inventar ist keine falsche Messung, sondern eine ÜBERHOLTE — an einem Repo, an dem waehrend dieser Antwort aktiv weitergebaut wurde. Wir melden hier den Stand nach eigenem, zweifach wiederholtem Nachlesen, nicht den des Inventars.",
+    "was_wir_nicht_beantworten_konnten": "O2 und O4 haengen an Wissen ueber den Cloud-Vertrag bzw. an einer Owner-Priorisierung, die aus dem UI-Code allein nicht zu gewinnen ist — hier stehen Einschaetzungen mit genanntem Massstab, keine Messungen.",
+    "nachtrag_03_09_2026": {
+      "anlass": "Owner-Entscheid vom 03.09.2026 zu O4 und O5 — die zwei Punkte, die in der ersten Antwort als «Entscheid ausstehend» standen.",
+      "O4": {
+        "frage": "In welcher Reihenfolge nuetzen euch unsere drei offenen Lieferungen?",
+        "antwort": "1. Der Nullproben-Anker (R4 aus auf-20260822-31) — er entscheidet, ob ein Score ueberhaupt einzuordnen ist; ohne ihn sind die anderen Zahlen weniger wert. 2. QA je Kamera (V2) — beide Felder sind seit heute im Vertrag, ihr koennt senden. 3. Varianten je Kamera: abgesagt, s. R6.",
+        "herkunft": "Diese Reihenfolge ist nicht geraten, sondern folgt aus den drei Entscheiden, die der Owner heute getroffen hat."
+      },
+      "O5": {
+        "frage": "Wie bekommt ihr Auftraege am liebsten — Datei, Nachricht, oder beides?",
+        "antwort": "Datei, genau wie bisher. Aendert euren Weg nicht.",
+        "begruendung": "Der Ablageort war nie das Problem — der fehlende Blick darauf war es. Seit heute zaehlt bei uns eine Wache jedes Blatt in diesem Verzeichnis, wird rot bei jedem neuen, und der Sitzungsstart nennt den Stand mit dem Alter jedes offenen Blattes in Tagen. Damit haengt der Eingang nicht mehr an Aufmerksamkeit.",
+        "keine_nachricht": "Eine zusaetzliche Nachricht an den Owner lehnen wir ab — sie machte ihn wieder zum Boten, und genau das sollte dieser Ordner abschaffen."
+      }
+    },
+    "_zustellhinweis": "Diese Antwort wurde am 03.09.2026 gerechnet und lag seither als auftraege/ergebnisse/auf-20260826-52.json im Repo Architektur-Cosmos — im System des Antwortenden statt in dem des Fragenden. Sie ist damit nie angekommen. Der Inhalt ist unveraendert uebernommen; neu ist nur die Form und der Ort."
+  },
+  "urteil": {
+    "kurz": "KosmoVis-Flaeche: eigene Station; Regel 1 erledigt, Regel 2 gemischt, Regel 3 teilweise, Regel 4 zweigeteilt.",
+    "beantwortet_am": "2026-09-03",
+    "uebertragen_am": "2026-09-06"
+  },
+  "umgebung": {
+    "beantwortet_von": "KosmoOrbit-UI-Worker",
+    "gemessen_gegen": "kosmo-orbit 71b7f325 (Zweig claude/kosmo-orbit-v1-build-pzxkbj)",
+    "container": true
+  },
+  "fehler": null
+}
