@@ -72,18 +72,21 @@ Reihenfolge von ``RICHTUNGSFOLGE``), ohne Lupen. Der Dateiname trägt die Spanne
 Lot-Abweichung über alle zwölf Richtungen je Modus.
 
 ``14_shift-je-hoehe_…png`` — Höhenreihe. Waagrecht die Gebäudehöhe (0 bis 105 m,
-Markierung alle 10 m), senkrecht der nötige Shift in Millimetern (0 bis 14, Linie
-alle 2 mm). Die ROTE waagrechte Linie ist ``MAX_SHIFT_MM``. Je Höhe ein grüner
+Markierung alle 10 m), senkrecht der nötige Shift in Millimetern (−2 bis 14, Linie
+alle 2 mm; die dunkle Waagrechte ist die Nulllinie). Die ROTE waagrechte Linie ist
+``MAX_SHIFT_MM``. Beim 3-m-Bau ist der Shift NEGATIV (Rahmen nach unten): Dort holt
+``ZIEL_HOECHSTANTEIL`` das Blickziel unter die Augenhöhe, und die Kamera sähe gekippt
+leicht nach unten. Je Höhe ein grüner
 Balken von der kleinsten zur grössten der zwölf Richtungen, die zwölf Werte als
 Punkte. Alle Balken liegen unten am Boden des Diagramms, weit unter der roten Linie;
 sie werden mit der Höhe nicht länger und nicht höher. Im Dateinamen: Spanne der
-Höhen, Spanne des Shifts, die Grenze, und wie viele der 96 Kameras die Grenze
+Höhen, Spanne des Shifts (``minus`` steht für das Vorzeichen), die Grenze, und wie viele der 96 Kameras die Grenze
 überschreiten (``ueber-grenze-0``).
 
 ``15_abstand-und-neigung-je-hoehe_…png`` — dieselbe Höhenreihe, zwei Felder.
 LINKS: Abstand der Kamera in Metern (0 bis zum Maximum, Linie alle 50 m) — er wächst
 linear mit der Höhe; das ist der Grund, warum der Shift es nicht tut. RECHTS: Neigung
-im gekippten Modus in Grad (0 bis 6, Linie je Grad) — die Achse, die der Shift-Modus
+im gekippten Modus in Grad (−1 bis 6, Linie je Grad, Nulllinie dunkel) — die Achse, die der Shift-Modus
 waagrecht hält. Auch sie bleibt über alle Höhen nahezu konstant: dieselbe Geometrie,
 einmal als Winkel, einmal als Verschiebung.
 
@@ -469,24 +472,29 @@ def zeichne_uebersicht(paare: list, *, spalten: int = 3, fuge: int = 10):
 # Schritt 4 — die Höhenreihe als Diagramm; jede Zahl aus kamerasatz im selben Lauf
 # --------------------------------------------------------------------------------------
 
-def zeichne_reihe(reihe: list, feld: str, *, y_max: float, y_schritt: float,
+def zeichne_reihe(reihe: list, *, y_min: float, y_max: float, y_schritt: float,
                   grenze: float | None, farbe, breite: int = 1000, hoehe: int = 520,
                   rand: int = 60):
-    """Balken je Höhe von min bis max des Felds über die zwölf Richtungen, dazu Punkte.
+    """Balken je Höhe von min bis max über die zwölf Richtungen, dazu die zwölf Punkte.
 
     ``reihe`` ist eine Liste ``(hoehe_m, [werte je Richtung])``. Die x-Achse ist linear
     in der Gebäudehöhe, damit die Abstände zwischen den Balken selbst eine Aussage sind.
+    ``y_min`` liegt unter null, wo Werte negativ werden können: Bei niedrigen Bauten holt
+    ``ZIEL_HOECHSTANTEIL`` das Blickziel unter die Augenhöhe, die Kamera sieht leicht
+    nach unten, und Shift wie Neigung wechseln das Vorzeichen. Das gehört ins Bild und
+    nicht unter die Achse.
     """
     px = _neues_bild(breite, hoehe, FARBE_RAHMEN)
     x_max = max(h for h, _ in reihe) * 1.05
     plot_b, plot_h = breite - 2 * rand, hoehe - 2 * rand
 
     def nach_px(h, y):
-        return (rand + h / x_max * plot_b, rand + plot_h - y / y_max * plot_h)
+        return (rand + h / x_max * plot_b,
+                rand + plot_h - (y - y_min) / (y_max - y_min) * plot_h)
 
     # Gitter: waagrecht alle y_schritt, senkrecht alle 10 m — ohne Zahlen, aber mit
     # festem Raster, damit der Dateiname die Skala vollständig beschreibt.
-    y = 0.0
+    y = y_min
     while y <= y_max + 1e-9:
         x0, yy = nach_px(0, y)
         x1, _ = nach_px(x_max, y)
@@ -511,9 +519,15 @@ def zeichne_reihe(reihe: list, feld: str, *, y_max: float, y_schritt: float,
             _, yw = nach_px(h, w)
             _scheibe(px, breite, hoehe, xx, yw, 2.2, FARBE_PUNKT)
 
+    # Die Nulllinie ist die Achse — nicht der untere Rand, der liegt bei y_min.
     _strecke(px, breite, hoehe, *nach_px(0, 0), *nach_px(x_max, 0), FARBE_ACHSE, 2.0)
-    _strecke(px, breite, hoehe, *nach_px(0, 0), *nach_px(0, y_max), FARBE_ACHSE, 2.0)
+    _strecke(px, breite, hoehe, *nach_px(0, y_min), *nach_px(0, y_max), FARBE_ACHSE, 2.0)
     return px, breite, hoehe
+
+
+def _zahl(x: float, stellen: int = 2) -> str:
+    """Zahl für den Dateinamen: ``-0.36`` würde nach ``shift-`` zu ``--0.36``."""
+    return f"{x:.{stellen}f}".replace("-", "minus")
 
 
 def zeichne_nebeneinander(a, b, fuge: int = FUGE_PX):
@@ -598,10 +612,10 @@ def main() -> int:
         ueber_grenze += sum(k["shift_ueber_grenze"] for k in satz_s["kameras"])
 
     alle_shift = [w for _, werte in reihe_shift for w in werte]
-    px, b, h = zeichne_reihe(reihe_shift, "shift_mm", y_max=14.0, y_schritt=2.0,
+    px, b, h = zeichne_reihe(reihe_shift, y_min=-2.0, y_max=14.0, y_schritt=2.0,
                              grenze=kameras.MAX_SHIFT_MM, farbe=FARBE_BALKEN)
     pfad = ziel / (f"14_shift-je-hoehe_{HOEHEN_M[0]:.0f}-bis-{HOEHEN_M[-1]:.0f}m_"
-                   f"shift-{min(alle_shift):.2f}-bis-{max(alle_shift):.2f}mm_"
+                   f"shift-{_zahl(min(alle_shift))}-bis-{_zahl(max(alle_shift))}mm_"
                    f"grenze-{kameras.MAX_SHIFT_MM:.0f}mm_"
                    f"ueber-grenze-{ueber_grenze}von{len(alle_shift)}.png")
     bildschreiben.schreibe_farb_png(pfad, px, b, h)
@@ -611,13 +625,13 @@ def main() -> int:
     alle_neigung = [w for _, werte in reihe_neigung for w in werte]
     y_abstand = math.ceil(max(alle_abstand) / 50.0) * 50.0
     px, b, h = zeichne_nebeneinander(
-        zeichne_reihe(reihe_abstand, "abstand_m", y_max=y_abstand, y_schritt=50.0,
+        zeichne_reihe(reihe_abstand, y_min=0.0, y_max=y_abstand, y_schritt=50.0,
                       grenze=None, farbe=FARBE_ABSTAND, breite=700),
-        zeichne_reihe(reihe_neigung, "neigung_grad", y_max=6.0, y_schritt=1.0,
+        zeichne_reihe(reihe_neigung, y_min=-1.0, y_max=6.0, y_schritt=1.0,
                       grenze=None, farbe=FARBE_GEKIPPT, breite=700))
     pfad = ziel / (f"15_abstand-und-neigung-je-hoehe_{HOEHEN_M[0]:.0f}-bis-{HOEHEN_M[-1]:.0f}m_"
                    f"abstand-{min(alle_abstand):.0f}-bis-{max(alle_abstand):.0f}m_"
-                   f"neigung-gekippt-{min(alle_neigung):.2f}-bis-{max(alle_neigung):.2f}grad.png")
+                   f"neigung-gekippt-{_zahl(min(alle_neigung))}-bis-{_zahl(max(alle_neigung))}grad.png")
     bildschreiben.schreibe_farb_png(pfad, px, b, h)
     geschrieben.append(pfad)
 

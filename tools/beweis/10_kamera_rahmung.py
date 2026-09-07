@@ -335,7 +335,7 @@ def lies_messdatei() -> dict | None:
     nicht *falsch*; das Skript sagt es und rechnet weiter.
     """
     if not MESSDATEI.is_file():
-        print(f"NICHT GEPRUEFT: {MESSDATEI.relative_to(WURZEL)} fehlt — Bild 08 (Rampe) "
+        print(f"NICHT GEPRUEFT: {MESSDATEI} fehlt — Bild 08 (Rampe) "
               f"entfaellt, die Szene wird nicht gegen die Messung geprueft.",
               file=sys.stderr)
         return None
