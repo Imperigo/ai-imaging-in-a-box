@@ -309,3 +309,84 @@ def test_ein_unsymmetrischer_satz_haette_weniger_gleichstand():
     wuerfel = kameras.standpunkte([[0.0, 0.0, 0.0], [20.0, 20.0, 20.0]])
     riegel = kameras.standpunkte([[0.0, 0.0, 0.0], [60.0, 12.0, 15.0]])
     assert riegel["n_gleichstand"] < wuerfel["n_gleichstand"]
+
+
+# ---------------------------------------------------------------------------------
+# ENTSCHEIDUNG A, entschieden am 07.09.2026: den Gleichstand OFFENLEGEN
+#
+# Die Empfehlung hatte gelautet: nichts aendern, bis ein echtes Gebaeude gemessen ist —
+# ein Bau mit Vor- und Ruecksprüngen habe mehr Silhouettenklassen, dann ordne die Guete
+# von selbst. Am 06.09.2026 kam die Messung an einer echten KosmoOrbit-glb zurueck,
+# einem 9-geschossigen Bau mit 10625 Netzen: 8 von 56 Kombinationen teilen sich den
+# Bestwert — wie an den Quadern. Die Vermutung ist gemessen und falsch.
+#
+# Also ordnet die Guete hier nicht, und sie wird es auch nicht. Dann ist das Ehrliche,
+# die gleichwertigen Saetze auszuweisen, statt eine Rangfolge vorzutaeuschen.
+# ---------------------------------------------------------------------------------
+
+
+def test_die_gleichwertigen_saetze_kommen_zur_auswahl_zurueck():
+    """**Der Entscheid selbst.** Eine Zahl allein ist die unbequemste Auskunft: Sie sagt,
+    die Antwort sei eine von acht, und nennt die anderen sieben nicht."""
+    aus = kameras.standpunkte([[0, 0, 0], [20, 10, 30]])
+    assert aus["n_gleichstand"] > 1, "diese Box hat einen Gleichstand — sonst misst die Probe nichts"
+    assert aus["gleichwertige"], "die gleichwertigen Saetze fehlen"
+    for eintrag in aus["gleichwertige"]:
+        assert len(eintrag["kuerzel"]) == len(aus["standpunkte"])
+        assert set(eintrag) == {"kuerzel", "streuung_grad", "gewaehlt"}
+
+
+def test_der_gewaehlte_satz_ist_der_erste_und_als_solcher_markiert():
+    """**Und das war bis zum 07.09.2026 nicht so** — es fiel erst auf, als die Liste
+    ausgegeben wurde.
+
+    Verglichen wurde der ROHE Wert (`wert > bester_wert`), also entschied bei einem
+    Gleichstand die dreizehnte Nachkommastelle. Der Quelltext versprach zwei Zeilen
+    darueber das Gegenteil: ein Gleichstand werde «IMMER gleich aufgeloest und nicht nach
+    Laune der Sortierung», und ein Unterschied in der dreizehnten Stelle sei «Rundung,
+    kein Vorsprung». *Solange nur eine Zahl herauskam, war der Widerspruch unsichtbar.*
+    """
+    aus = kameras.standpunkte([[0, 0, 0], [20, 10, 30]])
+    erste = aus["gleichwertige"][0]
+    assert erste["gewaehlt"] is True, (
+        "Der gewaehlte Satz muss der erste der Aufzaehlung sein — sie folgt "
+        "RICHTUNGSFOLGE, und genau das verspricht der Quelltext.")
+    assert erste["kuerzel"] == tuple(s["kuerzel"] for s in aus["standpunkte"])
+    assert sum(1 for e in aus["gleichwertige"] if e["gewaehlt"]) == 1
+
+
+def test_die_auswahl_ist_zwischen_zwei_laeufen_dieselbe():
+    """Ein Gleichstand, der bei jedem Lauf anders aufgeloest wird, ist keine Auswahl,
+    sondern ein Wuerfel mit Begruendung."""
+    a = kameras.standpunkte([[0, 0, 0], [20, 10, 30]])
+    b = kameras.standpunkte([[0, 0, 0], [20, 10, 30]])
+    assert [e["kuerzel"] for e in a["gleichwertige"]] == [e["kuerzel"] for e in b["gleichwertige"]]
+
+
+def test_die_kuerzung_wird_ausgewiesen_und_nicht_still_vorgenommen():
+    """*Eine stille Kuerzung waere schlimmer als keine Liste* — dann stuende dort eine
+    Auswahl, die vollstaendig aussieht und keine ist.
+
+    Auf einem Wuerfel erreichen 16 von 56 Kombinationen den Bestwert.
+    """
+    aus = kameras.standpunkte([[0, 0, 0], [10, 10, 10]])
+    assert len(aus["gleichwertige"]) <= kameras.GLEICHWERTIGE_HOECHSTENS
+    assert aus["gleichwertige_gekuerzt"] == aus["n_gleichstand"] - len(aus["gleichwertige"])
+    assert aus["gleichwertige_gekuerzt"] > 0, "auf einem Wuerfel muss gekuerzt werden"
+
+
+def test_ohne_gleichstand_wird_nichts_gekuerzt_und_nichts_behauptet():
+    """Die Gegenprobe. Sonst stuende die Auswahl auch dort, wo es keine gibt — und der
+    Hinweis «eine von n» waere eine Dauerwarnung."""
+    aus = kameras.standpunkte([[0, 0, 0], [20, 10, 30]], anzahl=1)
+    if aus["n_gleichstand"] <= 1:
+        assert aus["gleichwertige_gekuerzt"] == 0
+        assert "GLEICHWERTIGEN" not in aus["standpunkte"][0]["wahl_begruendung"]
+
+
+def test_die_wahlbegruendung_sagt_selbst_dass_sie_eine_von_mehreren_ist():
+    """Sie las sich bis zum 07.09.2026 wie DIE Antwort. Die Zahl stand nur in einer
+    Warnung daneben — die ein Leser der Begruendung nicht sehen muss."""
+    aus = kameras.standpunkte([[0, 0, 0], [20, 10, 30]])
+    grund = aus["standpunkte"][0]["wahl_begruendung"]
+    assert f"EINE VON {aus['n_gleichstand']} GLEICHWERTIGEN" in grund

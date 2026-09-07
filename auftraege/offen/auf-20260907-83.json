@@ -1,0 +1,33 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260907-83",
+  "erstellt": "2026-09-07T09:00:00Z",
+  "params": {},
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie noetig."
+  },
+  "worker": "local",
+  "rang": 3,
+  "art": "frage",
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Kein GPU-Bedarf.",
+      "Kein automatischer Committer: das ist der ganze Punkt dieses Auftrags."
+    ]
+  },
+  "beschreibung": "Der Takt neu, OHNE git commit und git push — euer Einwand war richtig, und der Owner hat entschieden.",
+  "anweisung": "=== DER TAKT, OHNE COMMITTER ===\n\nIhr habt `auf-20260826-59` geprueft und **absichtlich nicht gestartet**, mit\ndiesem Grund:\n\n    `kosmo-worker.sh` fuehrt am Ende `git commit` und `git push` aus — und dieses\n    Arbeitsverzeichnis wird bereits von mindestens einem weiteren unabhaengigen\n    Prozess veraendert. Ein zweiter, unbeaufsichtigter Committer waere ein\n    Konflikt, den niemand ueberwacht.\n\n**Das war die richtige Entscheidung, und der Owner hat sie uebernommen**\n(Entscheid 07.09.2026). Der Takt kommt ohne Committer.\n\n--- 1 · WAS DER TAKT SOLL UND WAS NICHT ---\n\nEr soll: in Abstaenden nachsehen, ob ein Auftrag fuer `local` offen ist, und\nhoechstens einen davon rechnen. Mehr nicht.\n\nEr soll NICHT: committen, pushen, oder sonst etwas am Repo aendern, das ueber das\nSchreiben der Ergebnisdatei hinausgeht. Das Einchecken macht ein Mensch oder ein\neinzelner, zentraler Lauf — an einer Stelle, die jemand ueberwacht.\n\n--- 2 · WARUM UEBERHAUPT EIN TAKT ---\n\nEr loest heute weniger als frueher: Am 06./07.09. sind zwanzig Antworten an einem\nTag gekommen, ohne dass etwas sie angestossen haette. **Der Takt ist also kein\ndringender Posten mehr, sondern ein bequemer.** Wenn ihr ihn nicht wollt, ist das\neine vollstaendige Antwort — dann schliessen wir den Einbau-Posten C7 als\n«entschieden, nicht gebaut», und niemand fragt wieder.\n\n--- 3 · EIN HINWEIS ZUR SICHERHEIT ---\n\nFalls ihr ihn baut: Die Hardware-Auflagen kommen aus dem Auftrag und nicht aus dem\nSkript — `auftrag.auflagen_maschine(satz)` gibt sie, und `homeworker.darf_starten`\nprueft sie gegen den wirklichen Zustand der Karte. Ein Takt, der die Auflagen\nselbst setzt, waere eine doppelte Vorgabe, und die stille Haelfte gewinnt.",
+  "rueckgabe": [
+    "T1 Wollt ihr den Takt ueberhaupt? «Nein, wir stossen von Hand an» ist eine vollstaendige Antwort — dann schliessen wir C7 und fragen nicht wieder.",
+    "T2 Falls ja: laeuft er ohne Committer, und in welchem Abstand?",
+    "T3 Falls ja: Wie wird eingecheckt — von Hand, oder durch einen einzelnen Lauf, den jemand ueberwacht?",
+    "T4 Der zweite Prozess, der euer Arbeitsverzeichnis veraendert: Wisst ihr inzwischen, welcher das ist? Das war ein Nebenbefund von euch und ist bei uns nicht nachvollziehbar."
+  ]
+}

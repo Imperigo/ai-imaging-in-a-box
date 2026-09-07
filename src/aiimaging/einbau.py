@@ -398,6 +398,12 @@ def bericht(repo_wurzel, blatt=None, *, heute: date | None = None) -> dict:
         # als Rueckstand beim Adressaten und waren einer beim Absender. Beide Zustaende
         # sahen in dieser Liste vorher gleich aus.
         "unzugestellt": _post.unzugestellt(wurzel),
+        # WER UEBER DEM DECKEL LIEGT. Seit dem 07.09.2026 sperrt `schreibe_auftrag`
+        # nicht mehr — der Deckel meldet. Gerechnet wird er hier aus dem Rueckstand und
+        # nicht beim Schreiben: So gilt er fuer JEDEN offenen Auftrag, auch fuer die von
+        # Hand abgelegten, und genau die liefen bisher still vorbei.
+        "ueber_deckel": {w: n for w, n in rueckstand(wurzel, heute=heute)["je_worker"].items()
+                         if n > _auftrag.DECKEL_JE_WORKER},
         "ohne_adressat": verwaist,
         "ohne_geraetebeweis": unbelegt,
         "offene_posten": [p for p in alle if p["offen"]],

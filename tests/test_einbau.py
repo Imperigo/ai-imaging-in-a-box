@@ -432,6 +432,35 @@ def test_ein_ausgelieferter_auftrag_steht_nicht_in_dieser_meldung(tmp_path, caps
     assert "NICHT AUSGELIEFERT" not in capsys.readouterr().out
 
 
+def test_der_bericht_meldet_wer_ueber_dem_deckel_liegt(tmp_path, capsys):
+    """**Der Deckel meldet, statt zu sperren** (Owner-Entscheid 07.09.2026).
+
+    Und er wird hier aus dem **Rückstand** gerechnet, nicht beim Schreiben. Das ist der
+    Unterschied, um den es geht: So gilt er auch für die von Hand abgelegten Dateien —
+    und genau die liefen an der alten Sperre still vorbei.
+    """
+    for i in range(auf.DECKEL_JE_WORKER + 1):
+        auf.schreibe_auftrag(
+            auf.baue_auftrag(auftrag_id=f"auf-2026090{i//10}-{i%10:02d}", art="frage",
+                             beschreibung="x", worker=auf.WORKER_CLOUD), tmp_path)
+    _mit_blatt(tmp_path)
+    _einbau_cli().main(["--repo", str(tmp_path)])
+    ausgabe = capsys.readouterr().out
+    assert "UEBER DEM DECKEL" in ausgabe
+    assert "cloud" in ausgabe
+    assert str(auf.DECKEL_JE_WORKER) in ausgabe
+
+
+def test_unter_dem_deckel_schweigt_der_bericht(tmp_path, capsys):
+    """Die Gegenprobe — eine Zeile, die immer dasteht, wird nicht gelesen."""
+    auf.schreibe_auftrag(
+        auf.baue_auftrag(auftrag_id="auf-20260907-01", art="frage", beschreibung="x",
+                         worker=auf.WORKER_CLOUD), tmp_path)
+    _mit_blatt(tmp_path)
+    _einbau_cli().main(["--repo", str(tmp_path)])
+    assert "UEBER DEM DECKEL" not in capsys.readouterr().out
+
+
 def _einbau_cli():
     import importlib.util
     pfad = Path(__file__).resolve().parents[1] / "tools" / "einbau.py"

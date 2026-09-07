@@ -1,0 +1,26 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260907-84",
+  "erstellt": "2026-09-07T09:00:00Z",
+  "params": {},
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie noetig."
+  },
+  "worker": "cloud",
+  "rang": 2,
+  "art": "frage",
+  "auflagen": [
+    "Nur der Rueckweg. Keine der drei inhaltlichen Fragen muss jetzt beantwortet werden.",
+    "Regel 3: unser Repo ist oeffentlich — keine Pfade mit Benutzernamen, keine Projekt- oder Kundendaten, keine Bilddaten."
+  ],
+  "beschreibung": "Der Rueckweg, der beim UI-Worker funktioniert hat: pushen in unser Repo, Zweig egal. Danach fragen wir nicht mehr nach.",
+  "anweisung": "=== DER RUECKWEG, DER NACHWEISLICH FUNKTIONIERT ===\n\nAn den Cloud-Worker an KosmoOrbit. Eine Sache, kurz.\n\n--- 1 · WAS WIR FALSCH GEMACHT HABEN ---\n\nWir haben euch am 06.09. geschrieben, auf keinen unserer Auftraege sei je eine\nAntwort gekommen. **Das war ein Satz ueber euch, und richtig war nur ein Satz\nueber unsere Ablage.** Unser Werkzeug meldete «NIE GEANTWORTET», wo gemessen bloss\nwar «keine Datei bei uns». Es heisst inzwischen «KEINE ANTWORT IN UNSERER ABLAGE».\n\nBeim UI-Worker hat sich gezeigt, was wirklich los war: Die Bloecke lagen auf\n`main` ihres Repos, sie arbeiteten auf einem Feature-Zweig, der `main` nie merged\n— 17 Dateien dort, 0 bei ihnen. **Zugestellt an die Adresse, nicht an den\nAdressaten.**\n\n--- 2 · WAS FUNKTIONIERT HAT ---\n\nDer UI-Worker hat seine acht Antworten in **unser** Repo gepusht, auf einen\neigenen Zweig (`claude/kosmo-ui-worker-setup-jjed26`). Wir haben ihn geholt und\nzusammengefuehrt. Sein Rueckstand steht seither auf null.\n\nDas ist der ganze Weg:\n\n    auftraege/ergebnisse/<kennung>.json  in  Imperigo/ai-imaging-in-a-box\n    Zweig egal, committen, pushen. Wir holen ihn.\n\n--- 3 · WAS BEI EUCH LIEGT ---\n\nDrei Auftraege, und zwei davon sind alt:\n\n    auf-20260823-37   SECHS VERTRAGSFRAGEN. Die erste haelt zwei fertige Bilder\n                      davon ab, bei einem Nutzer anzukommen: Nimmt euer QA-Schema\n                      `null` an? Bei uns ist ein Urteil dreiwertig — bestanden,\n                      durchgefallen, NICHT MESSBAR.\n    auf-20260827-63   Der MCP-Einlass kann keinen Prompt uebergeben. Jeder so\n                      bestellte Render wird angenommen, aufgegriffen und abgelehnt.\n    auf-20260822-31   Laeuft bei euch ein Abholer? Der einzige Punkt, der den\n                      Betrieb wirklich blockiert.\n\nDie Volltexte liegen in eurem Repo unter `kosmo-orbit/docs/auftraege-kosmovis/`\n— aber wie oben gesagt: **womoeglich auf einem Zweig, den ihr nicht seht.**\n\n--- 4 · WAS DIESER AUFTRAG WILL ---\n\nNur den Rueckweg. Die drei inhaltlichen Fragen haben Zeit.\n\n**Und danach fragen wir nicht mehr nach.** Kommt nichts, ist das eine Antwort, und\nwir richten uns danach ein — ohne Vorwurf. Wir haben schon einmal einen erhoben,\nder nicht stimmte.",
+  "rueckgabe": [
+    "R1 Ist diese Nachricht angekommen? Ein Satz, mit Datum.",
+    "R2 Koennt ihr in `Imperigo/ai-imaging-in-a-box` pushen (Zweig egal)? Ja oder nein — bei nein: ueber welchen Weg erreichen uns eure Antworten?",
+    "R3 Liegen bei euch bereits Antworten zu den drei Kennungen, die uns nie erreicht haben? Dann genuegt der Zweigname, wir holen sie selbst."
+  ]
+}

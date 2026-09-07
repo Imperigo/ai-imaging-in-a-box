@@ -1261,6 +1261,34 @@ richtig.*
 dieselbe Frage neu. Verwandt mit **Fassungsabstand**: Dort ist die Maschine verschieden,
 hier der Satz über sie.
 
+**Zweitmeinung (gegen zweite Regel)** — Zwei Verfahren beurteilen dieselbe Frage. Der
+Unterschied entscheidet, ob daraus Hilfe wird oder Widerspruch.
+*Eine **zweite Regel** widerspricht der ersten.* Dann sind zwei im Spiel, und wenn sie
+verschieden urteilen, ist eine falsch — nur weiss niemand welche. *Eine **Zweitmeinung**
+spricht nur, wenn die erste schweigt.* Sie überstimmt nichts; sie füllt eine Lücke.
+*Im Projekt seit dem 07.09.2026:* `gelaendeform` erkennt Gelände an der Gestalt statt am
+Namen. Sie wird in `glbbox.bauwerksbox` **erst gefragt, wenn die Namensregel unter 5 %
+Schrumpfung geblieben ist** — am echten Bestand mit 2,32 % also sehr wohl. Wo der Name
+getrennt hat, bleibt der Name zuständig, auch wenn die Form noch etwas fände. Und der
+Befund sagt, **welche** entschieden hat (`entschieden_durch`): *Eine Box, der man nicht
+ansieht, woher sie kommt, ist die Box, die um 2,32 % schrumpfte und wie eine Lösung
+aussah.*
+
+**Gelände an der Form** — Gelände daran erkennen, wie ein Körper **aussieht**, nicht wie
+er **heisst**. Drei Zahlen, alle relativ zur Szene: **Grundrissanteil** (Fläche des
+Körpers ÷ Fläche der Szene), **Flachheit** (Höhe ÷ kleinere Grundriss-Kante) und
+**Tieflage** (wo die Oberkante im Höhenbereich sitzt). Gelände ist gross, flach und unten.
+*Warum es das braucht:* Die Namensregel versagt auf echtem Bestand — 2,32 % Schrumpfung
+statt Zehnerprozenten. Und es gibt kein Wort, das sie retten könnte: `decke` wäre nötig
+(111 von 112 Geländeknoten heissen so) und ist unmöglich (418 von 2742 Knoten einer
+Gebäudedatei ebenso). *Wo die Namen die Unterscheidung nicht tragen, muss sie von aussen
+kommen* — und die Gestalt ist das «von aussen», für das niemand gefragt werden muss.
+*Was sie nicht kann, und das steht im Befund:* Eine grosse flache Platte auf halber Höhe
+trennt sie nicht — Geländesockel und Tiefgaragendecke haben dieselben drei Zahlen. Dort
+sagt sie **nicht entscheidbar** (siehe **Die dritte Antwort**), zählt sie in der Rahmung
+als Bauwerk und nennt sie beim Namen. *Gelände in der Maske ist teurer als Gelände
+daneben:* Auf einer Bodenszene erreichte weisses Rauschen dort den Score 0,72.
+
 **Zugestellt an die Adresse, nicht an den Adressaten** — Eine Sendung erreicht den Ort,
 an dem der Empfänger vermutet wird, aber nicht ihn. Der Zustellbeleg ist echt und trotzdem
 wertlos: Er belegt den Ort, und gemeint war der Mensch.
@@ -4224,6 +4252,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-07 | Ergaenzt: **Zweitmeinung (gegen zweite Regel)** und **Gelaende an der Form**. Anlass ist der Owner-Entscheid, zur Bildarbeit zurueckzukehren, und der offenste Strang darin: Die Namensregel findet auf echtem Bestand nichts (2,32 % Schrumpfung), und ein weiteres Wort gibt es nachweislich nicht — `decke` waere noetig und ist unmoeglich. Die Form ist das zweite «von aussen», fuer das niemand gefragt werden muss |
 | 2026-09-06 | Ergaenzt: **Ein Satz, der nur auf einer Maschine wahr ist**. Anlass ist ein Befund der HomeStation: Der Kommentar «in dieser Umgebung gibt es keine GPU» ist dort falsch — gemessen wurde dann statt umgestellt, und OptiX ist 10-35 % langsamer und verschiebt Kantenpixel. Verhalten richtig, Kommentar falsch |
 | 2026-09-06 | Ergaenzt: **Zugestellt an die Adresse, nicht an den Adressaten** — die genaue Fassung nach zwei ungenauen. Die Bloecke lagen auf `main` des fremden Repos, beide Worker entwickeln auf Feature-Zweigen, die `main` nie mergen: 17 Dateien dort, 0 bei ihnen. Beide Diagnosen davor massen den falschen Gegenstand |
 | 2026-09-06 | Ergaenzt: **Zustellung ist gerichtet**. Anlass ist die Berichtigung derselben Sache am selben Abend: Der Weg zu `cloud` und `ui` trug sehr wohl, beide hatten am 03.09. auf alle siebzehn geantwortet — der Fehler lag auf dem Rueckweg, geprueft worden war der Hinweg |

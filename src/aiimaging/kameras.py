@@ -2020,6 +2020,17 @@ def _winkelabstand(a: float, b: float) -> float:
 #: sind kein Vorsprung, sondern Rundung.*
 GLEICHSTAND_STELLEN = 12
 
+#: Wie viele gleichwertige Standpunktsätze der Befund höchstens zeigt.
+#:
+#: **Warum überhaupt gedeckelt:** Auf einem Würfel erreichen 16 von 56 Kombinationen den
+#: Bestwert. Alle sechzehn in einen Befund zu schreiben macht ihn unlesbar — und unlesbar
+#: heisst in diesem Projekt: wird nicht gelesen.
+#:
+#: **Warum die Kürzung ausgewiesen wird** (``gleichwertige_gekuerzt``): Eine stille
+#: Kürzung wäre schlimmer als keine Liste. Dann stünde dort eine Auswahl, die vollständig
+#: aussieht und keine ist — und der Leser hielte fünf für alle.
+GLEICHWERTIGE_HOECHSTENS = 5
+
 
 def guete_standpunkt(kamera, masse, *, bester_flaechenanteil: float) -> dict:
     """Wie gut ein einzelner Standpunkt ist — als Zahl, mit ihren beiden Hälften.
@@ -2267,10 +2278,43 @@ def standpunkte(bbox, *, anzahl: int = STANDPUNKTE_ANZAHL,
     # dreizehnten unterscheiden, sind kein Vorsprung, sondern Rundung.
     beste, bester_wert, beste_streuung = None, -1.0, None
     werte: list[float] = []
+    # DIE KOMBINATIONEN WERDEN MITGEFUEHRT UND NICHT NUR GEZAEHLT — Owner-Entscheid vom
+    # 07.09.2026 zu «Entscheidung A».
+    #
+    # Bis dahin bekam der Betreiber die ZAHL der gleichwertigen Saetze und trotzdem nur
+    # einen Vorschlag. Das ist die unbequemste Form von Auskunft: Sie sagt, dass die
+    # Antwort eine von acht ist, und nennt die anderen sieben nicht.
+    #
+    # Der Anlass ist eine Messung, die eine Vermutung widerlegt hat. Die Empfehlung
+    # lautete: nichts aendern, bis ein echtes Gebaeude gemessen ist — ein Bau mit Vor-
+    # und Ruecksprüngen habe mehr Silhouettenklassen, dann ordne die Guete von selbst.
+    # Am 06.09.2026 kam die Messung an einer echten KosmoOrbit-glb zurueck, einem
+    # 9-geschossigen Bau mit 10625 Netzen: **8 von 56** Kombinationen teilen sich den
+    # Bestwert — wie an den Quadern.
+    #
+    # *Also ordnet die Guete hier nicht, und sie wird es auch nicht.* Dann ist das
+    # Ehrliche, die gleichwertigen Saetze auszuweisen, statt eine Rangfolge
+    # vorzutaeuschen — derselbe Vorwurf, den `guete_standpunkt` dem Fuellgrad macht.
+    # VERGLICHEN WIRD DER GERUNDETE WERT, und das ist eine Berichtigung vom 07.09.2026.
+    #
+    # Hier stand `if wert > bester_wert` — der ROHE Wert. Damit entschied bei einem
+    # Gleichstand die dreizehnte Nachkommastelle, welcher Satz gewaehlt wird. Genau das
+    # nennt der Kommentar oben zwei Absaetze weiter «Rundung, kein Vorsprung», und die
+    # Zeile darueber verspricht, ein Gleichstand werde «IMMER gleich aufgeloest und nicht
+    # nach Laune der Sortierung».
+    #
+    # *Beides stand da, und keines von beidem stimmte.* Aufgefallen ist es erst, als die
+    # gleichwertigen Saetze ausgegeben wurden: Der gewaehlte stand an zweiter Stelle.
+    # Solange nur eine ZAHL herauskam, war der Fehler unsichtbar.
+    #
+    # Jetzt gewinnt der erste in der Aufzaehlung — und die folgt RICHTUNGSFOLGE.
+    alle_gruppen: list[tuple] = []
     for gruppe in itertools.combinations(tauglich, ziel):
         wert, eng = bewerte(gruppe)
-        werte.append(round(wert, GLEICHSTAND_STELLEN))
-        if wert > bester_wert:
+        gerundet = round(wert, GLEICHSTAND_STELLEN)
+        werte.append(gerundet)
+        alle_gruppen.append((gerundet, gruppe, eng))
+        if gerundet > round(bester_wert, GLEICHSTAND_STELLEN):
             beste, bester_wert, beste_streuung = gruppe, wert, eng
 
     n_gleichstand = werte.count(round(bester_wert, GLEICHSTAND_STELLEN)) if werte else 0
@@ -2285,7 +2329,12 @@ def standpunkte(bbox, *, anzahl: int = STANDPUNKTE_ANZAHL,
             f"({g['flaechenanteil']:.4f}), zweite Fassade {g['zweite_fassade']:.0%} der "
             f"ersten — Guete {g['guete']:.4f}."
             + (f" Kleinster Winkelabstand im Satz: {beste_streuung:.0f}° "
-               f"(ideal {ideal:.0f}°)." if beste_streuung is not None else ""))
+               f"(ideal {ideal:.0f}°)." if beste_streuung is not None else "")
+            # DIE BEGRUENDUNG SAGT SELBST, DASS SIE EINE VON MEHREREN IST. Sie las sich
+            # bis zum 07.09.2026 wie DIE Antwort — und «8 von 56» stand nur in einer
+            # Warnung daneben, die ein Leser der Begruendung nicht sehen muss.
+            + (f" EINE VON {n_gleichstand} GLEICHWERTIGEN — siehe `gleichwertige`."
+               if n_gleichstand > 1 else ""))
         gewaehlt.append(eintrag)
 
     if n_gleichstand > 1:
@@ -2297,10 +2346,28 @@ def standpunkte(bbox, *, anzahl: int = STANDPUNKTE_ANZAHL,
             f"eine Box hat davon viele. Wer hier eine Rangfolge liest, liest eine, die "
             f"nicht gemessen ist.")
 
+    # DIE GLEICHWERTIGEN SAETZE ZUR AUSWAHL, in der Reihenfolge, in der sie entstehen —
+    # also nach RICHTUNGSFOLGE, damit sie sich zwischen zwei Laeufen nicht vertauschen.
+    # Der erste Eintrag IST der gewaehlte; das bleibt so, damit nichts umspringt.
+    spitze = round(bester_wert, GLEICHSTAND_STELLEN)
+    gewaehlte_kuerzel = tuple(k["kuerzel"] for k in beste)
+    gleichwertige = tuple(
+        {"kuerzel": tuple(k["kuerzel"] for k in gruppe),
+         "streuung_grad": eng,
+         "gewaehlt": tuple(k["kuerzel"] for k in gruppe) == gewaehlte_kuerzel}
+        for wert, gruppe, eng in alle_gruppen if wert == spitze)
+
+    # GEDECKELT, UND DIE DECKELUNG STEHT DANEBEN. Auf einem Wuerfel sind es 16 Saetze;
+    # sie alle in einen Befund zu schreiben, macht ihn unlesbar, und unlesbar heisst:
+    # wird nicht gelesen. *Eine stille Kuerzung waere schlimmer als keine Liste* — dann
+    # stuende dort eine Auswahl, die vollstaendig aussieht und keine ist.
+    gezeigt = gleichwertige[:GLEICHWERTIGE_HOECHSTENS]
     ergebnis["standpunkte"] = gewaehlt
     ergebnis["streuung_grad"] = beste_streuung
     ergebnis["wert"] = bester_wert
     ergebnis["n_gleichstand"] = n_gleichstand
     ergebnis["n_kombinationen"] = len(werte)
+    ergebnis["gleichwertige"] = gezeigt
+    ergebnis["gleichwertige_gekuerzt"] = len(gleichwertige) - len(gezeigt)
     ergebnis["warnungen"] = tuple(warnungen)
     return ergebnis

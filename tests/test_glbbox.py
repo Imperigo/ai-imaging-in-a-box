@@ -315,3 +315,141 @@ def _neu_schreiben(pfad: Path, js: dict, vorlage: bytes) -> Path:
     kopf = struct.pack("<III", glbbox.GLB_MAGIC, 2, 12 + 8 + len(neu) + len(rest))
     pfad.write_bytes(kopf + struct.pack("<II", len(neu), glbbox.CHUNK_JSON) + neu + rest)
     return pfad
+
+
+# ---------------------------------------------------------------------------------
+# DIE ZWEITMEINUNG — Gelaende an der Form, wenn der Name nichts traegt (07.09.2026)
+#
+# Am echten Bestand (4771 Knoten) schrumpft die Bauwerksbox um 2,32 %: Beide
+# Namensregeln finden das Gelaende nicht. Der Pruefstein ist gemessen — zwanzig
+# `IfcCovering_Sub-Division:…` bilden dort 47 % der Szenenspannweite und blieben nach der
+# Namensregel der groesste «Bauwerks»-Knoten.
+# ---------------------------------------------------------------------------------
+
+
+def _glb(tmp_path, koerper, name="szene.glb"):
+    """Eine glb aus benannten Quadern — ueber den Erzeuger des Repos, nicht von Hand."""
+    import importlib.util
+    from pathlib import Path as _P
+    pfad = _P(__file__).resolve().parents[1] / "tools" / "make_test_glb.py"
+    spec = importlib.util.spec_from_file_location("mk_glb", pfad)
+    mk = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mk)
+    ziel = tmp_path / name
+    ziel.write_bytes(mk.baue_glb(koerper))
+    return ziel
+
+
+PRUEFSTEIN_GLB = [
+    ("IfcCovering_Sub-Division:1", (-47, -0.5, -47), (47, 0, 47)),
+    ("Stuetze-01", (-8, 0, -8), (8, 36, 8)),
+]
+
+
+def test_die_form_entscheidet_wenn_der_name_nichts_traegt(tmp_path):
+    """**Der Prüfstein an der wirklichen Kette**, nicht nur an der Formfunktion.
+
+    `Sub-Division` trägt keines der Wörter aus `maske.GELAENDE_WOERTER`. Vor dem
+    07.09.2026 kam hier eine Bauwerksbox heraus, die gleich der Szenenbox war — und die
+    Meldung sagte nur, dass die Regel nichts gefunden hat.
+    """
+    aus = glbbox.bauwerksbox(_glb(tmp_path, PRUEFSTEIN_GLB), up_axis="Y")
+    assert aus["entschieden_durch"] == "form"
+    assert aus["gelaende_namen"] == ("IfcCovering_Sub-Division:1",)
+    assert aus["schrumpfung"] > 0.5, "die Box muss wirklich enger werden, nicht nur anders"
+    assert "die FORM hat entschieden" in aus["note"]
+
+
+def test_der_befund_sagt_immer_welche_regel_entschieden_hat(tmp_path):
+    """*Eine Box, der man nicht ansieht, woher sie kommt, ist die Box, die am echten
+    Bestand um 2,32 % schrumpfte und wie eine Lösung aussah.*"""
+    mit_namen = [("Gelaende-Platte", (-47, -0.5, -47), (47, 0, 47)),
+                 ("Stuetze-01", (-8, 0, -8), (8, 36, 8))]
+    assert glbbox.bauwerksbox(_glb(tmp_path, mit_namen, "a.glb"),
+                              up_axis="Y")["entschieden_durch"] == "name"
+    assert glbbox.bauwerksbox(_glb(tmp_path, PRUEFSTEIN_GLB, "b.glb"),
+                              up_axis="Y")["entschieden_durch"] == "form"
+
+
+def test_die_namensregel_wird_von_der_form_nicht_ueberstimmt(tmp_path):
+    """**Keine zweite Regel, sondern eine Zweitmeinung.**
+
+    *Zwei Regeln, die sich eine Szene teilen, sind zwei Regeln — und dann ist eine davon
+    falsch.* Wo die Namensregel gegriffen hat, bleibt sie zuständig, auch wenn die Form
+    noch etwas fände.
+    """
+    koerper = [("Gelaende-Platte", (-47, -0.5, -47), (47, 0, 47)),
+               ("Stuetze-01", (-8, 0, -8), (8, 36, 8))]
+    aus = glbbox.bauwerksbox(_glb(tmp_path, koerper), up_axis="Y")
+    assert aus["entschieden_durch"] == "name"
+    assert aus["gelaende_namen"] == ("Gelaende-Platte",)
+
+
+def test_wo_die_form_nichts_entscheidet_steht_es_im_befund(tmp_path):
+    """*Eine Regel, die bei der Hälfte passt, sieht ohne diese Zahl aus wie eine, die
+    alles trifft.*"""
+    koerper = [("Bodenplatte-Bau", (-45, -0.4, -45), (45, 0, 45)),
+               ("Decke-025", (-30, 14, -30), (30, 14.4, 30)),
+               ("Wand-01", (-30, 0, -30), (30, 30, 30))]
+    aus = glbbox.bauwerksbox(_glb(tmp_path, koerper), up_axis="Y")
+    assert aus["form_befund"] is not None
+    assert "Decke-025" in aus["form_befund"]["unklar"]
+    assert "NICHT ENTSCHEIDBAR" in aus["note"]
+    assert "geraten wurde nicht" in aus["note"]
+
+
+def test_die_form_kann_gar_nicht_ALLES_fuer_gelaende_halten(tmp_path):
+    """**Eine Eigenschaft der Regel, kein Zufall dieser Szene** — und sie ist der Grund,
+    warum eine leere Bauwerksbox hier nicht entstehen kann.
+
+    Die Tieflage ist der Abstand der Oberkante vom tiefsten Punkt der Szene, geteilt durch
+    ihre Höhe. Der **höchste** Körper hat darum immer die Tieflage 1,0 und fällt über
+    `TIEFLAGE_UNKLAR_MAX`. *Es bleibt also immer mindestens ein Bauwerk übrig* — auch
+    wenn jeder Körper der Szene eine flache, grosse Platte ist.
+
+    Die Absicherung in `_zweitmeinung` (`len(gelaende) == len(alle)`) bleibt trotzdem
+    stehen: Sie kostet nichts und hält den Fall, falls die Schwellen je gelockert werden.
+    """
+    from aiimaging import gelaendeform as _gf
+
+    # Vier flache Platten uebereinander — jede fuer sich sieht wie Gelaende aus.
+    koerper = [(f"Platte-{i}", (-50, i * 3.0, -50), (50, i * 3.0 + 0.4, 50))
+               for i in range(4)]
+    befund = _gf.gelaende_knoten([(n, lo, hi) for n, lo, hi in koerper])
+    assert befund["bauwerk"], "der hoechste Koerper ist nie Gelaende"
+    assert "Platte-3" in befund["bauwerk"]
+
+    aus = glbbox.bauwerksbox(_glb(tmp_path, koerper), up_axis="Y")
+    assert aus["bbox_bauwerk"] is not None, "eine leere Bauwerksbox darf nicht entstehen"
+
+
+def test_wo_die_namensregel_wirkt_wird_die_form_gar_nicht_erst_gefragt(tmp_path):
+    """**Die Probe, die eine Mutation überlebt hat** — und darum gibt es sie.
+
+    Am 07.09.2026 wurde die Bedingung `schrumpfung < GERINGE_SCHRUMPFUNG` versuchsweise
+    entfernt, und **nichts wurde rot**. Der Grund: Wo die Namensregel gegriffen hat,
+    verhindert `hatte_namen` ohnehin, dass die Form entscheidet — das Urteil blieb also
+    gleich.
+
+    Gleich blieb es nicht ganz: Ohne die Bedingung trägt **jeder** Befund einen
+    `form_befund`, auch der, dessen Namensregel sauber getrennt hat. *Eine Auskunft, die
+    immer dasteht, wird nicht gelesen* — und sie kostet bei jeder Datei eine Rechnung über
+    alle Knoten, die niemand bestellt hat.
+    """
+    koerper = [("Gelaende-Platte", (-47, -0.5, -47), (47, 0, 47)),
+               ("Stuetze-01", (-8, 0, -8), (8, 36, 8))]
+    aus = glbbox.bauwerksbox(_glb(tmp_path, koerper), up_axis="Y")
+    assert aus["schrumpfung"] >= glbbox.GERINGE_SCHRUMPFUNG, (
+        "sonst misst diese Probe den Fall gar nicht")
+    assert aus["form_befund"] is None, (
+        "Die Form wurde gefragt, obwohl der Name getrennt hat.")
+
+
+def test_eine_eigene_regel_schaltet_die_zweitmeinung_ab(tmp_path):
+    """Wer `regel=` übergibt, hat selbst entschieden — dann darf ihm die Form nicht
+    dazwischenreden. *Der Parameter ist zum Prüfen da, nicht zum Ausweichen*, und genau
+    darum muss er allein gelten."""
+    aus = glbbox.bauwerksbox(_glb(tmp_path, PRUEFSTEIN_GLB), up_axis="Y",
+                             regel=lambda name: False)
+    assert aus["entschieden_durch"] == "keine"
+    assert aus["form_befund"] is None

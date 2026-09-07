@@ -1,0 +1,34 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260907-82",
+  "erstellt": "2026-09-07T09:00:00Z",
+  "params": {},
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie noetig."
+  },
+  "worker": "local",
+  "rang": 2,
+  "art": "qa",
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Kein GPU-Bedarf: `glbbox` liest nur den glTF-Kopf, keine Dreiecke, kein Blender.",
+      "Die Datei bleibt bei euch. Zurueck kommen nur Zahlen (Regel 3)."
+    ]
+  },
+  "beschreibung": "Die neue Formregel gegen dieselbe 4771-Knoten-Bestandsdatei laufen lassen, an der die Namensregel nur 2,32 % Schrumpfung erreichte. Die einzige Messung, die zaehlt.",
+  "anweisung": "=== DIE FORMREGEL AM ECHTEN BESTAND ===\n\nSeit heute gibt es `aiimaging.gelaendeform`: eine Zweitmeinung, die Gelaende an\nder **Gestalt** erkennt statt am Namen. Sie ist an selbstgebauten Koerpern\ngemessen — und genau daran ist die Namensregel gescheitert. **Diese Messung ist\ndie einzige, die zaehlt.**\n\n--- 1 · WORUM ES GEHT ---\n\nIhr habt am 06.09.2026 gemessen (`auf-20260826-51`):\n\n    Schrumpfung der Bauwerksbox   2,32 %\n    groesster «Bauwerks»-Knoten   IfcCovering_Sub-Division:… , 90,78 m = 47 % der Szene\n\nEin Wort mehr loest das nicht — `decke` waere noetig (111 von 112 Gelaendeknoten)\nund ist unmoeglich (418 von 2742 Knoten einer Gebaeudedatei heissen ebenso). Die\nFormregel fragt darum nicht nach Namen, sondern nach drei Zahlen je Koerper:\nGrundrissanteil, Flachheit, Tieflage.\n\n--- 2 · WAS ZU TUN IST ---\n\nAuf DERSELBEN Datei, `PYTHONPATH=src`, nach `git pull`:\n\n    from aiimaging import glbbox\n    aus = glbbox.bauwerksbox(<eure 4771-Knoten-glb>, up_axis=\"Y\")\n    print(aus[\"entschieden_durch\"], aus[\"schrumpfung\"])\n    print(aus[\"gelaende_namen\"])\n    print(aus[\"form_befund\"])\n\nKein Render, kein Blender, keine GPU — `glbbox` liest nur den glTF-Kopf.\n\n--- 3 · WORAUF ES ANKOMMT ---\n\nDie Formregel spricht **nur**, wenn die Namensregel unter 5 % Schrumpfung\ngeblieben ist. Bei 2,32 % ist das der Fall, sie sollte also greifen. Tut sie es\nnicht, ist auch das ein Befund — dann sagt `entschieden_durch` \"keine\", und wir\nwissen, dass unsere Schwellen an Quadern geeicht sind und an echtem Bestand nicht\ntragen.\n\n**Bitte nichts anpassen, damit es passt.** Wenn die Zahlen danebenliegen, sind sie\ndie Antwort.\n\n--- 4 · WAS NICHT GEBRAUCHT WIRD ---\n\n  * Keine Aenderung an `gelaendeform.py` oder an den Schwellen. Die gehoeren uns,\n    und eine Schwelle, die an einer Datei nachgezogen wird, ist an ihr geeicht.\n  * Keine Bilddaten, keine Geometrie, keine Pfade mit Benutzernamen.",
+  "rueckgabe": [
+    "M1 `entschieden_durch` und `schrumpfung` — die zwei Zahlen, um die es geht. Erwartet: 'form' und deutlich mehr als 2,32 %.",
+    "M2 `gelaende_namen`: welche Knoten die Form als Gelaende erkannt hat. Ist `Sub-Division` darunter?",
+    "M3 `form_befund.unklar`: was die Form NICHT entschieden hat, und wie viele es sind. Das ist so wichtig wie M2 — eine Regel, die bei der Haelfte passt, sieht ohne diese Zahl aus wie eine, die alles trifft.",
+    "M4 Die drei Merkmale (Grundrissanteil, Flachheit, Tieflage) je erkanntem Knoten, zur Nachpruefung unserer Schwellen.",
+    "M5 Falls sie NICHT greift: `entschieden_durch`, und woran es lag. Ein Nein mit Zahlen ist hier so wertvoll wie ein Ja."
+  ]
+}

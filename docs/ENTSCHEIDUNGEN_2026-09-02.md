@@ -3,6 +3,11 @@
 **02.09.2026 · Vorlage für den Owner. Keine Empfehlung ohne Zahlen, keine Zahl ohne
 ihren Vorbehalt.**
 
+> **Beide entschieden am 07.09.2026.** Die Vorlage bleibt vollständig stehen — auch die
+> Empfehlung zu **A**, die von der Messung widerlegt wurde, die sie selbst verlangt hat.
+> *Ein Blatt, das nur das Ergebnis trägt, macht die Entscheidung unwiderrufbar und den
+> Irrtum unsichtbar.*
+
 ---
 
 ## Wozu dieses Blatt
@@ -68,6 +73,38 @@ Auftrag und kein neuer.
 
 ---
 
+### ✅ Entschieden am 07.09.2026: **den Gleichstand offenlegen** (Möglichkeit 3)
+
+**Und meine Empfehlung oben ist widerlegt — von der Messung, die sie selbst verlangt hat.**
+
+Ich hatte auf Möglichkeit 1 gesetzt, mit der Bedingung: *«erst, wenn ein echtes Gebäude
+gemessen ist»*, und der Begründung, ein Bau mit Vor- und Rücksprüngen habe mehr als zwei
+Silhouettenklassen, dann ordne die Güte womöglich von selbst.
+
+Die Messung kam am 06.09.2026 mit `auf-20260902-73` zurück — an einer **echten
+KosmoOrbit-glb**, einem 9-geschossigen Bau mit **10 625 Netzen**:
+
+| | Quader (01.09.) | echter Bau (06.09.) |
+|---|---|---|
+| Kombinationen mit dem Bestwert | 4 bis 16 von 56 | **8 von 56** |
+
+*Der echte Bau reiht sich ein, statt den Gleichstand aufzulösen.* Die Vermutung, an der
+meine Empfehlung hing, ist damit gemessen und falsch — nicht «noch offen».
+
+**Was daraus folgt und was nicht.** Eine dritte Grösse zu erfinden bleibt der teure Weg:
+Sie würde wieder an Quadern geeicht, und genau das ist der zweiten Grösse eben widerfahren.
+Was billig und ehrlich ist: **Die Automatik gibt zu, dass sie hier nicht ordnet.** Der
+Befund nennt die gleichwertigen Sätze und bietet sie zur Auswahl, statt einen zuzuweisen.
+
+*Das verschiebt die Wahl an den Menschen — und das ist hier richtig, weil es nichts zu
+rechnen gibt.* Eine Rangfolge vorzutäuschen, wo acht Sätze gleich gut sind, wäre dieselbe
+Unehrlichkeit, die `guete_standpunkt` dem Füllgrad vorwirft.
+
+**Gebaut in `kameras.standpunkte()`:** neues Feld `gleichwertige`; `gewaehlt` bleibt
+deterministisch der erste (Reihenfolge nach `RICHTUNGSFOLGE`), damit nichts umspringt.
+
+---
+
 ## Entscheidung B · Die richtungsabhängige ρ-Schwelle — **heute NICHT entscheidbar**
 
 ### Die Frage in einem Satz
@@ -129,6 +166,31 @@ Drei Sätze, die eine echte Messung nur **schärfen**, nicht umdrehen kann:
 Nicht entscheiden, bis `auf-61` zurück ist — *aber im Wissen, dass die Antwort
 wahrscheinlich «richtungsabhängig» lautet.* Dieses Blatt ist die Vorlage dafür; wenn die
 Messung kommt, sind es zwei Zahlen statt einer Untersuchung.
+
+---
+
+### ✅ Entschieden am 07.09.2026: **Messauftrag neu stellen**
+
+`auf-20260827-61` ist am 06.09. zurückgekommen — **beantwortet, aber nicht gemessen.**
+Die Grafikkarte war belegt, Multipass war in jener Sitzung untersagt, und die HomeStation
+hat sich korrekt verhalten: nichts geraten, nichts aus der veröffentlichten Tabelle
+zurückübersetzt.
+
+> *«Wir haben KEINE Werte erfunden oder aus der Markdown-Tabelle in JSON
+> zurückübersetzt, weil die publizierte Tabelle nur Fensterwerte und Einzelbeispiele
+> nennt, nicht alle 176 Rohzeilen — eine Rekonstruktion daraus wäre teilweise geraten.»*
+
+**Das ist die richtige Antwort und zugleich ein Loch in unserer Zählung.** Der Auftrag
+steht auf `beantwortet`; der Rückstand meldet null. Die Messung fehlt trotzdem — und
+nichts erinnert mehr daran. *Beantwortet ist nicht gemessen*, und der abgeleitete Zustand
+kann den Unterschied nicht sehen.
+
+Deshalb: ein **neuer** Auftrag, der ausdrücklich nur die Falltabelle mit echtem Schätzer
+verlangt — mit der Auflage, ihn **zurückzustellen statt abzubrechen**, wenn die Karte
+belegt ist. Genau daran ist der erste gescheitert.
+
+Bis dahin gilt unverändert, was oben steht: `0.80` lässt in beiden Gruppen **kein
+falsches Bild** durch, und der Preis sind fünf zu streng gesperrte gute Frontalfälle.
 
 ---
 

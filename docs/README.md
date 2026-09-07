@@ -43,6 +43,7 @@ Vertiefungsarbeit, nicht ihr Arbeitsprotokoll.
 | [`EMPFINDLICHKEIT_2026-08-20.md`](EMPFINDLICHKEIT_2026-08-20.md) | Die Normierung trägt nicht, und die Metrik ist zu stumpf. |
 | [`RANDKANTE_2026-08-22.md`](RANDKANTE_2026-08-22.md) | Die fehlende Randkante ist ein echter Mangel — und das Mass lässt sich schärfen. |
 | [`NACHBARGEBAEUDE_2026-09-02.md`](NACHBARGEBAEUDE_2026-09-02.md) | Ein geerbter Vorbehalt, nachgerechnet: Er gilt für den **Schätzer**, nicht für die Szene. |
+| [`GELAENDEFORM_2026-09-07.md`](GELAENDEFORM_2026-09-07.md) | Gelände an der **Form** erkennen, wenn der Name es nicht trägt — und was die Schwellen in beiden Fehlerrichtungen kosten. |
 
 ### Die Paarschwellen
 

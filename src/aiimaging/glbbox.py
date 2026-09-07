@@ -347,6 +347,68 @@ def _huelle(eintraege):
     return lo, hi
 
 
+def _unklar_satz(ergebnis: dict) -> str:
+    """Was die Form **nicht** entschieden hat — und warum es dastehen muss.
+
+    *Eine Regel, die bei der Hälfte passt, sieht ohne diese Zahl aus wie eine, die alles
+    trifft.* Wer die Bauwerksbox liest, soll wissen, wie viele Körper weder als Gelände
+    noch als Bauwerk feststanden.
+    """
+    befund = ergebnis.get("form_befund") or {}
+    unklar = befund.get("unklar") or ()
+    if not unklar:
+        return ""
+    namen = ", ".join(f"'{n}'" for n in unklar[:3])
+    return (f" NICHT ENTSCHEIDBAR blieben {len(unklar)} Koerper ({namen}"
+            f"{', …' if len(unklar) > 3 else ''}): gross und flach, aber zu hoch — "
+            f"Gelaendesockel und Tiefgaragendecke sehen an der Form gleich aus. Sie "
+            f"zaehlen als BAUWERK, weil Gelaende IN der Maske teurer ist als Gelaende "
+            f"daneben; geraten wurde nicht.")
+
+
+def _zweitmeinung(alle, *, up_axis: str, hatte_namen: bool) -> dict:
+    """Die Form fragen, wenn die Namensregel nichts getrennt hat.
+
+    Returns:
+        Nur die Felder, die sich ändern — ``entschieden_durch``, ``form_befund`` und, bei
+        einem Treffer, ``gelaende_namen``.
+
+    **Die Höhenachse ist hier ``Y``**, nicht die Weltachse: Die Knotenboxen aus
+    :func:`knotenboxen` stehen in glTF-Koordinaten, und die Umrechnung nach Welt
+    geschieht erst danach. *Die Form an bereits gedrehten Boxen zu messen wäre derselbe
+    Vorzeichenfehler, der am 01.09.2026 ein Gebäude auf den Kopf gestellt hat.*
+    """
+    from . import gelaendeform as _gf
+
+    try:
+        befund = _gf.gelaende_knoten(alle, hoch=1)
+    except _gf.GelaendeformError:
+        # KEINE AUSKUNFT IST BESSER ALS EINE GERATENE. Eine Szene ohne Ausdehnung gibt
+        # keine Anteile her; dann bleibt es bei dem, was die Namensregel ergeben hat.
+        return {}
+
+    aus = {"form_befund": {"gelaende": befund["gelaende"], "unklar": befund["unklar"],
+                           "urteile": tuple(
+                               {"name": u["name"], "urteil": u["urteil"],
+                                "grund": u["grund"], **u["merkmale"]}
+                               for u in befund["urteile"]
+                               if u["urteil"] != _gf.BAUWERK)}}
+    if not befund["gelaende"]:
+        return aus
+    # ALLES WAERE GELAENDE — dann trennt die Form nichts, und eine leere Bauwerksbox
+    # waere schlimmer als eine zu grosse. Derselbe Grund wie bei der Namensregel.
+    if len(befund["gelaende"]) == len(alle):
+        return aus
+    if hatte_namen:
+        # DIE NAMENSREGEL HAT ETWAS GEFUNDEN, nur zu wenig. Dann bleibt sie zustaendig:
+        # Die Form ergaenzt hier NICHT, sie ersetzt auch nicht. *Zwei Regeln, die sich
+        # eine Szene teilen, sind zwei Regeln — und dann ist eine davon falsch.*
+        return aus
+    aus["entschieden_durch"] = "form"
+    aus["gelaende_namen"] = tuple(befund["gelaende"])
+    return aus
+
+
 def bauwerksbox(pfad, *, up_axis: str = "Y", regel=ist_gelaende) -> dict:
     """Die Hüllbox der gebauten Substanz einer glb — Weg (b), ohne Blender.
 
@@ -398,6 +460,13 @@ def bauwerksbox(pfad, *, up_axis: str = "Y", regel=ist_gelaende) -> dict:
     ergebnis = {"bbox_szene": None, "bbox_bauwerk": None, "note": "",
                 "schrumpfung": None, "n_bauwerk": 0, "n_gelaende": 0,
                 "groesster_bauwerksknoten": None,
+                # WELCHE REGEL ENTSCHIEDEN HAT — seit dem 07.09.2026.
+                #
+                # *Eine Box, der man nicht ansieht, woher sie kommt, ist die Box, die am
+                # echten Bestand um 2,32 % schrumpfte und wie eine Loesung aussah.*
+                # "name" = die Wortliste, "form" = die Zweitmeinung aus
+                # `gelaendeform`, "keine" = nichts hat getrennt.
+                "entschieden_durch": "keine", "form_befund": None,
                 "gelaende_namen": (), "n_knoten": len(alle),
                 "dauer_s": 0.0, "up_axis": str(up_axis).strip().upper()}
 
@@ -412,6 +481,8 @@ def bauwerksbox(pfad, *, up_axis: str = "Y", regel=ist_gelaende) -> dict:
 
     gelaende = [k for k in alle if regel(k[0])]
     bauwerk = [k for k in alle if not regel(k[0])]
+    if gelaende:
+        ergebnis["entschieden_durch"] = "name"
     ergebnis["n_gelaende"] = len(gelaende)
     ergebnis["n_bauwerk"] = len(bauwerk)
     ergebnis["gelaende_namen"] = tuple(n for n, _, _ in gelaende)
@@ -447,11 +518,42 @@ def bauwerksbox(pfad, *, up_axis: str = "Y", regel=ist_gelaende) -> dict:
     b_bau = breite(ergebnis["bbox_bauwerk"])
     ergebnis["schrumpfung"] = (1.0 - b_bau / b_szene) if b_szene > 0.0 else 0.0
 
+    # DIE ZWEITMEINUNG — sie spricht NUR, wenn die Namensregel schweigt.
+    #
+    # *Keine zweite Regel, sondern eine Zweitmeinung.* Der Unterschied ist der ganze Bau:
+    # Eine zweite Regel widerspricht der ersten, dann sind zwei im Spiel und eine davon
+    # ist falsch — genau davor warnt der Docstring beim Parameter `regel`. Eine
+    # Zweitmeinung ueberstimmt nichts; sie wird gefragt, wenn die erste nichts gefunden
+    # hat.
+    #
+    # Die Bedingung ist dieselbe Schwelle, die hier ohnehin schon warnt. Am echten
+    # Bestand greift sie: 2,32 % Schrumpfung, also weit unter GERINGE_SCHRUMPFUNG.
+    if regel is ist_gelaende and ergebnis["schrumpfung"] < GERINGE_SCHRUMPFUNG:
+        ergebnis.update(_zweitmeinung(alle, up_axis=up_axis, hatte_namen=bool(gelaende)))
+        if ergebnis["entschieden_durch"] == "form":
+            gelaende = [k for k in alle if k[0] in set(ergebnis["gelaende_namen"])]
+            bauwerk = [k for k in alle if k[0] not in set(ergebnis["gelaende_namen"])]
+            ergebnis["n_gelaende"], ergebnis["n_bauwerk"] = len(gelaende), len(bauwerk)
+            ergebnis["bbox_bauwerk"] = [list(v) for v in
+                                        nach_welt(*_huelle(bauwerk), up_axis=up_axis)]
+            b_bau = breite(ergebnis["bbox_bauwerk"])
+            ergebnis["schrumpfung"] = (1.0 - b_bau / b_szene) if b_szene > 0.0 else 0.0
+
     if not gelaende:
         ergebnis["note"] = (
             "Kein Knoten wurde als Gelaende erkannt; die Bauwerksbox ist hier gleich der "
             "Szenenbox. Das ist ein gueltiges Ergebnis und kein Rueckfall — aber ein "
-            "Bruch zwischen Rahmung und Messung ist damit auch nicht feststellbar.")
+            "Bruch zwischen Rahmung und Messung ist damit auch nicht feststellbar."
+            + _unklar_satz(ergebnis))
+    elif ergebnis["entschieden_durch"] == "form":
+        ergebnis["note"] = (
+            f"DIE NAMENSREGEL HAT NICHTS GETRENNT — die FORM hat entschieden. "
+            f"{len(gelaende)} Knoten sind an ihrer Gestalt als Gelaende erkannt "
+            f"(gross im Grundriss, flach, unten), die Rahmung wird dadurch um "
+            f"{ergebnis['schrumpfung']:.1%} enger. Die Namen dieser Knoten tragen keines "
+            f"der Woerter aus maske.GELAENDE_WOERTER; welches Merkmal je Knoten "
+            f"entschieden hat, steht in `form_befund`."
+            + _unklar_satz(ergebnis))
     elif ergebnis["schrumpfung"] < GERINGE_SCHRUMPFUNG:
         # UND ER NENNT DEN GROESSTEN VERDAECHTIGEN BEIM NAMEN.
         #

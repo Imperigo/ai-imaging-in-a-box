@@ -122,7 +122,8 @@ Ordners.
 | Datum | Block | übergeben durch | Antwort |
 |---|---|---|---|
 | 06.09.2026 | `2026-09-06_cloud.md` | Owner, von Hand in die Sitzung | — |
-| 06.09.2026 | `2026-09-06_ui.md` | Owner, von Hand in die Sitzung | — |
+| 06.09.2026 | `2026-09-06_ui.md` | Owner, von Hand in die Sitzung | **acht Antworten am 07.09.**, gepusht auf einen Zweig unseres Repos |
+| 07.09.2026 | `2026-09-07_cloud.md` | — | — |
 
 **Warum das Datum zählt.** Bis hierher liess sich Schweigen zweifach lesen: Die Frage
 liegt quer, oder niemand hat sie je gesehen. Ab dem 06.09.2026 ist die zweite Lesart für

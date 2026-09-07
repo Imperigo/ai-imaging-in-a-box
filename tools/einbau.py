@@ -94,6 +94,17 @@ def _zeilen(bericht: dict, nur: str | None) -> list[str]:
                 continue
             alter = "?" if e["tage"] is None else f"{e['tage']}d"
             aus.append(f"      {e['auftrag_id']:<22} {alter:>4}  {e['beschreibung'][:70]}")
+    # DER DECKEL MELDET, ER SPERRT NICHT. Er steht bei den Zahlen, zu denen er gehoert,
+    # und nicht als Ausnahme beim Schreiben — dort greift er nur bei dem, der ihn
+    # eingefuehrt hat, und alle anderen laufen still vorbei (gemessen von drei Lanes am
+    # 06.09.2026).
+    ueber = bericht.get("ueber_deckel") or {}
+    if ueber and not nur:
+        aus.append("")
+        for worker, anzahl in sorted(ueber.items()):
+            aus.append(f"UEBER DEM DECKEL: {worker} traegt {anzahl}, der Deckel liegt bei "
+                       f"{auftrag.DECKEL_JE_WORKER}.")
+
     unbekannt = bericht.get("unbekannter_status") or []
     if unbekannt:
         aus.append("")

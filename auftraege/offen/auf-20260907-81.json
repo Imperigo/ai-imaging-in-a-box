@@ -1,0 +1,33 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260907-81",
+  "erstellt": "2026-09-07T09:00:00Z",
+  "params": {},
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie noetig."
+  },
+  "worker": "local",
+  "rang": 1,
+  "art": "qa",
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "ZURUECKSTELLEN STATT ABBRECHEN, wenn die Karte belegt ist. Genau daran ist auf-61 gescheitert.",
+      "Nichts raten und nichts aus der veroeffentlichten Markdown-Tabelle zurueckuebersetzen."
+    ]
+  },
+  "beschreibung": "Die Falltabelle der Paarmasse mit ECHTEM Tiefenschaetzer — Ersatz fuer auf-61, das leer zurueckkam, weil die Karte belegt war. Ohne diese Zahlen bleibt PAAR_RHO_SCHWELLE ungeeicht.",
+  "anweisung": "=== DIE EINE MESSUNG, DIE ENTSCHEIDUNG B SCHLIESST ===\n\nNeuer Anlauf fuer `auf-20260827-61`. Der ist als beantwortet zurueckgekommen, und\neure Antwort war richtig: Die Karte war belegt, Multipass war untersagt, und ihr\nhabt weder geraten noch aus unserer Markdown-Tabelle zurueckuebersetzt. Genau so\nsoll es sein.\n\nNur fehlt die Messung weiterhin — und weil der Auftrag geschlossen ist, erinnert\nnichts mehr daran. **Beantwortet ist nicht gemessen**, und unser Rueckstand kann\nden Unterschied nicht sehen. Darum dieser hier.\n\n--- 1 · WAS GEBRAUCHT WIRD ---\n\n`PAAR_RHO_SCHWELLE = 0.80` gilt heute fuer alle Blickrichtungen. Gemessen an\nGEBAUTEN Karten (Ersatzkalibrierung, `docs/PAARSCHWELLEN_OBERGRENZE_2026-09-01.md`)\nueberschneiden sich die fehlerfreien Fenster nicht:\n\n    frontal    (0.2568, 0.3790]\n    diagonal   (0.5311, 0.9065]\n\nEine einzelne Schwelle kann beide nicht sauber trennen. **Aber alle acht Kurven\njener Studie melden `genuegt_als_kalibrierung: false`** — die Ist-Karten sind\ngebaut, nicht geschaetzt, und der Fehler des Schaetzers kommt darin gar nicht vor.\nEine Schwelle darauf zu setzen waere die abgelesene Schwelle mit mehr\nNachkommastellen.\n\nGebraucht wird die Falltabelle mit **echtem Tiefenschaetzer**\n(`depth-anything-v2-small`, Polaritaet -1), damit die Fenster unter Schaetzerrauschen\nstehen statt unter idealen Bedingungen.\n\n--- 2 · DIE AUFLAGE, DIE DEN UNTERSCHIED MACHT ---\n\n**Ist die Karte belegt oder Multipass untersagt: den Auftrag ZURUECKSTELLEN, nicht\nabbrechen.** Kein Ergebnis ist besser als ein leeres — ein leeres schliesst den\nAuftrag und nimmt uns die Erinnerung.\n\nWenn die Bedingung ueber Tage nicht eintritt, ist das eine vollstaendige Antwort:\nsagt es, mit Datum, und wir suchen einen anderen Weg.\n\n--- 3 · WAS NICHT GEBRAUCHT WIRD ---\n\n  * Keine Neuinterpretation der bestehenden Studie.\n  * Keine Schwellenempfehlung — die Entscheidung liegt beim Owner, dieses Blatt\n    liefert nur die Zahlen.\n  * Keine Rekonstruktion aus der Markdown-Tabelle. Sie nennt Fensterwerte, nicht\n    alle 176 Rohzeilen; alles daraus waere teilweise geraten.",
+  "rueckgabe": [
+    "V1 Die Falltabelle als JSON: je Zeile Szene, Richtung, Fallart, rho, Kantenanteil, Urteil — und die RICHTUNG in JEDER Zeile, sonst ist die Frage spaeter nicht mehr zu beantworten.",
+    "V2 Die fehlerfreien Fenster je Richtungsgruppe, gerechnet aus V1.",
+    "V3 Wie oft `0.80` einen guten frontalen Fall sperrt — die Zahl, die heute niemand kennt.",
+    "V4 Falls die Karte ueber Tage belegt bleibt: sagt es mit Datum, statt leer zu schliessen."
+  ]
+}

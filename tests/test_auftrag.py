@@ -408,19 +408,55 @@ def test_unter_dem_deckel_geht_es_durch(tmp_path):
     assert len(auf.unerledigt(tmp_path)) == auf.DECKEL_JE_WORKER - 1
 
 
-def test_am_deckel_wird_abgewiesen_und_die_aeltesten_werden_genannt(tmp_path):
-    """**Eine Fehlermeldung, die nur «zu viele» sagt, verschiebt die Arbeit des
-    Nachsehens auf den nächsten.**"""
+def test_am_deckel_wird_gemeldet_und_die_aeltesten_werden_genannt(tmp_path):
+    """**Der Deckel meldet, statt zu sperren** (Owner-Entscheid 07.09.2026).
+
+    Bis dahin warf `schreibe_auftrag` einen `DeckelError`. Das war eine Sperre, die
+    nachweislich niemanden sperrte: Sie greift nur über `schreibe_auftrag`, und wer seine
+    Datei selbst anlegt, läuft still vorbei — *und das tun alle.* Drei Lanes haben das an
+    einem Tag unabhängig gemessen; ich selbst bin viermal begründet vorbeigegangen, und
+    drei dieser vier Aufträge haben den Rückstand am Ende **gesenkt**.
+
+    Was bleibt, ist die Meldung — und die muss die ältesten beim Namen nennen.
+    *Eine Meldung, die nur «zu viele» sagt, verschiebt die Arbeit des Nachsehens auf den
+    nächsten.*
+    """
     from aiimaging import auftrag as auf
     _viele(tmp_path, auf.WORKER_LOCAL, auf.DECKEL_JE_WORKER)
 
-    with pytest.raises(auf.DeckelError) as fehler:
-        _viele(tmp_path, auf.WORKER_LOCAL, 1, ab=90)
+    satz = auf.baue_auftrag(auftrag_id="auf-20260901-90", art="qa", beschreibung="x",
+                            worker=auf.WORKER_LOCAL)
+    text = auf.deckelstand(satz, tmp_path)
 
-    text = str(fehler.value)
+    assert text, "ueber dem Deckel muss etwas gemeldet werden"
     assert "auf-20260901-01" in text, "der aelteste wird beim Namen genannt"
     assert str(auf.DECKEL_JE_WORKER) in text
-    assert "Erst schliessen, dann stellen" in text
+    assert "meldet" in text, "und es muss dastehen, dass NICHT gesperrt wird"
+
+
+def test_ueber_dem_deckel_wird_trotzdem_geschrieben(tmp_path):
+    """Die Gegenprobe zur Meldung, und sie ist der ganze Entscheid.
+
+    *Eine Sperre, die man begründet umgeht, ist keine Sperre, sondern eine Formalie mit
+    Aufsatz.*
+    """
+    from aiimaging import auftrag as auf
+    _viele(tmp_path, auf.WORKER_LOCAL, auf.DECKEL_JE_WORKER)
+    ziel = auf.schreibe_auftrag(
+        auf.baue_auftrag(auftrag_id="auf-20260901-90", art="qa", beschreibung="x",
+                         worker=auf.WORKER_LOCAL), tmp_path)
+    assert ziel.is_file()
+    assert len([a for a in auf.unerledigt(tmp_path)
+                if a.get("worker") == auf.WORKER_LOCAL]) == auf.DECKEL_JE_WORKER + 1
+
+
+def test_unter_dem_deckel_wird_nichts_gemeldet(tmp_path):
+    """Sonst stünde die Zeile immer da — und eine Dauerwarnung wird nicht gelesen."""
+    from aiimaging import auftrag as auf
+    _viele(tmp_path, auf.WORKER_LOCAL, auf.DECKEL_JE_WORKER - 1)
+    satz = auf.baue_auftrag(auftrag_id="auf-20260901-90", art="qa", beschreibung="x",
+                            worker=auf.WORKER_LOCAL)
+    assert auf.deckelstand(satz, tmp_path) == ""
 
 
 def test_der_deckel_gilt_je_adressat_und_nicht_insgesamt(tmp_path):
@@ -436,12 +472,13 @@ def test_ein_beantworteter_auftrag_macht_wieder_platz(tmp_path):
     """**Der ganze Zweck.** Der Deckel sperrt nicht das Denken, sondern das Anhäufen."""
     from aiimaging import auftrag as auf
     _viele(tmp_path, auf.WORKER_LOCAL, auf.DECKEL_JE_WORKER)
-    with pytest.raises(auf.DeckelError):
-        _viele(tmp_path, auf.WORKER_LOCAL, 1, ab=90)
+    satz = auf.baue_auftrag(auftrag_id="auf-20260901-90", art="qa", beschreibung="x",
+                            worker=auf.WORKER_LOCAL)
+    assert auf.deckelstand(satz, tmp_path), "voll — also wird gemeldet"
 
     auf.schreibe_ergebnis(
         auf.baue_ergebnis(auftrag_id="auf-20260901-01", status="ok"), tmp_path)
-    _viele(tmp_path, auf.WORKER_LOCAL, 1, ab=90)          # jetzt geht es
+    assert auf.deckelstand(satz, tmp_path) == "", "beantwortet — also wieder still"
 
 
 def test_ein_zurueckgezogener_auftrag_macht_ebenfalls_platz(tmp_path):
@@ -750,16 +787,20 @@ def test_ein_sauberes_ergebnis_taucht_dort_nicht_auf(tmp_path):
     assert auf.ergebnisse_mit_unbekanntem_status(tmp_path) == []
 
 
-def test_der_deckel_nennt_sich_selbst_eine_selbstbindung(tmp_path):
+def test_der_deckel_sperrt_nicht_mehr_und_gilt_dafuer_fuer_alle(tmp_path):
     """**Owner-Entscheid 02.09.2026.** Er wirkt nur in `schreibe_auftrag`; die HomeStation
     legt ihre Dateien selbst an und kommt daran vorbei. *Ein Deckel, der nur den bindet,
     der ihn eingeführt hat, bremst niemanden — er darf dann aber nicht so tun.*"""
     for i in range(auf.DECKEL_JE_WORKER):
         _mit_ergebnis(tmp_path, f"auf-{i:02d}", auf.WORKER_LOCAL)
-    with pytest.raises(auf.DeckelError, match="Selbstbindung"):
-        auf.schreibe_auftrag(
-            auf.baue_auftrag(auftrag_id="auf-zuviel", art="qa", beschreibung="x"),
-            tmp_path)
+    # SEIT DEM 07.09.2026 IST DER SCHLUSS DARAUS GEZOGEN. Die Selbstbindung wurde nicht
+    # besser erklaert, sondern aufgehoben: Der Deckel meldet und sperrt nicht mehr. Damit
+    # gilt er fuer JEDEN offenen Auftrag — auch fuer die von Hand abgelegten, an denen er
+    # vorher vorbeilief. Die Probe haelt beides fest: Es wird geschrieben, und es wird
+    # gemeldet.
+    ziel = auf.schreibe_auftrag(
+        auf.baue_auftrag(auftrag_id="auf-zuviel", art="qa", beschreibung="x"), tmp_path)
+    assert ziel.is_file(), "geschrieben wird jetzt trotzdem"
 
 
 def test_eine_von_hand_abgelegte_datei_faellt_nicht_unter_den_deckel(tmp_path):

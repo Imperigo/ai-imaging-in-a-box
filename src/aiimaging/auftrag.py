@@ -173,11 +173,16 @@ RANG_OHNE = 10 ** 6
 
 
 class DeckelError(ValueError):
-    """Der Adressat traegt schon genug. Erst schliessen, dann stellen.
+    """Der Adressat traegt schon genug.
 
-    **Trifft nur, wer durch :func:`schreibe_auftrag` schreibt** — siehe
-    :data:`DECKEL_JE_WORKER`. Wer seine Auftragsdatei selbst anlegt, sieht diesen Fehler
-    nie, und das ist so entschieden.
+    **Wird seit dem 07.09.2026 nicht mehr ausgelöst** — der Deckel meldet, statt zu
+    sperren (Begründung bei :func:`deckelstand`). Die Klasse bleibt bestehen, damit
+    fremder Code, der sie abfängt, nicht bricht; ein ``except DeckelError`` läuft dann
+    einfach nie an.
+
+    *Sie zu löschen wäre sauberer und zugleich unehrlich:* Der Name steht in fremden
+    Lanes, und ein Import, der plötzlich fehlt, ist eine schlechtere Nachricht als eine
+    Ausnahme, die nicht mehr fliegt.
     """
 
 
@@ -364,35 +369,49 @@ def pruefe_auftrag(satz: dict) -> list[str]:
     return maengel
 
 
-def _pruefe_deckel(satz: dict, repo_wurzel) -> None:
+def deckelstand(satz: dict, repo_wurzel) -> str:
     """Trägt dieser Adressat schon genug? — :data:`DECKEL_JE_WORKER`.
+
+    Returns:
+        Leer, wenn der Deckel eingehalten ist. Sonst der Text der Überschreitung, samt
+        den **ältesten drei**. *Eine Meldung, die nur «zu viele» sagt, verschiebt die
+        Arbeit des Nachsehens auf den nächsten.*
+
+    **Sie WIRFT nicht mehr** (Owner-Entscheid 07.09.2026). Bis dahin brach
+    :func:`schreibe_auftrag` mit ``DeckelError`` ab — und das war eine Sperre, die
+    nachweislich niemanden sperrte:
+
+    * Sie greift nur über :func:`schreibe_auftrag`. Wer seine Datei selbst anlegt, läuft
+      still vorbei, **und das tun alle** — unabhängig gemessen von drei Lanes an einem Tag.
+    * Ich selbst bin viermal daran vorbeigegangen, jedes Mal mit Begründung im Auftrag.
+      Drei dieser vier Aufträge haben den Rückstand am Ende **gesenkt**.
+    * Der Rückstand stieg seit ihrer Einführung von 27 auf 40, ohne dass sie ein einziges
+      Mal ausgelöst hätte.
+
+    *Eine Sperre, die man begründet umgeht, ist keine Sperre, sondern eine Formalie mit
+    Aufsatz.* Die Zahl daneben ist trotzdem nützlich — also misst sie jetzt, statt zu
+    verhindern, was sie nicht verhindern kann. Gemeldet wird sie in ``tools/einbau.py``,
+    also dort, wo ohnehin der Rückstand steht.
 
     **Ein bereits abgelegter Auftrag zählt nicht doppelt:** Wer einen bestehenden
     überschreibt, ändert ihn, und das ist kein neuer Rückstand.
-
-    Raises:
-        DeckelError: mit der Liste dessen, was zuerst zu schliessen wäre — **die
-            ältesten drei**. Eine Fehlermeldung, die nur «zu viele» sagt, verschiebt die
-            Arbeit des Nachsehens auf den nächsten.
     """
     worker = satz.get("worker")
     ziel = Path(repo_wurzel) / VERZ_OFFEN / f"{satz.get('auftrag_id')}.json"
     if ziel.exists():
-        return
+        return ""
 
     offen = [a for a in unerledigt(repo_wurzel) if a.get("worker") == worker]
     if len(offen) < DECKEL_JE_WORKER:
-        return
+        return ""
 
     aeltest = sorted(offen, key=lambda a: str(a.get("erstellt", "")))[:3]
     liste = "; ".join(f"{a['auftrag_id']} ({str(a.get('beschreibung'))[:40]}…)"
                       for a in aeltest)
-    raise DeckelError(
+    return (
         f"{worker!r} traegt bereits {len(offen)} unbeantwortete Auftraege — der Deckel "
-        f"liegt bei {DECKEL_JE_WORKER}. Erst schliessen, dann stellen.\n"
-        f"(Der Deckel ist eine Selbstbindung dessen, der durch schreibe_auftrag "
-        f"schreibt. Wer seine Datei selbst anlegt, kommt daran vorbei — so entschieden "
-        f"am 02.09.2026.)\n"
+        f"liegt bei {DECKEL_JE_WORKER}. Der Auftrag ist trotzdem geschrieben: Seit dem "
+        f"07.09.2026 meldet der Deckel, statt zu sperren.\n"
         f"Die aeltesten drei: {liste}\n"
         f"Ein Auftrag mehr macht keine Antwort schneller; er macht nur die Reihe laenger, "
         f"in der die wichtige Frage steht.")
@@ -409,7 +428,14 @@ def schreibe_auftrag(satz: dict, repo_wurzel) -> Path:
     maengel = pruefe_auftrag(satz)
     if maengel:
         raise AuftragError("Auftrag unvollständig: " + "; ".join(maengel))
-    _pruefe_deckel(satz, repo_wurzel)
+    # HIER WIRD DER DECKEL NICHT MEHR GEPRUEFT (Owner-Entscheid 07.09.2026). Er meldet
+    # jetzt, statt zu sperren — und zwar an genau EINER Stelle, in `tools/einbau.py`
+    # neben dem Rueckstand. Warum, steht bei `deckelstand`.
+    #
+    # *Bewusst wird hier auch nichts zwischengespeichert.* Ein Ergebnis, das eine
+    # Funktion an sich selbst haengt, damit ein Aufrufer es spaeter abholen kann, ist
+    # versteckter Zustand: Er ueberlebt den Aufruf, gilt fuer den naechsten weiter und
+    # ist von aussen nicht anzusehen. Wer den Stand braucht, ruft `deckelstand()`.
     satz, _ = regel3_saeubern(satz)
 
     ziel_verz = Path(repo_wurzel) / VERZ_OFFEN
