@@ -26,80 +26,30 @@ Scheitern die Architektur umwerfen würde.
 
 ## Phase 0 · Feldnamen klären
 
-**Aufwand:** klein · **Blockiert:** Phase 2, faktisch alles mit Schema
-
-Der einzige Punkt, an dem Raten teuer wird. KosmoOrbit verdrahtet Knoten über
-**Feldnamen-Gleichheit** — heisst unsere Eingabe anders als die Ausgabe des Vorgängers,
-entsteht die Kante nicht, und zwar **ohne Fehlermeldung**.
-
-- [x] `KosmoDraw` lesen: Ausgabefelder von `kosmodraw_export_ifc` — **erledigt 2026-08-14** (`8481ea8`)
-- [x] MCP-Registrierungsweg — **erledigt 2026-08-14**, ohne `kosmo-backend`: `register_in_odysseus.sh` dokumentiert ihn vollständig
-- [x] Feldnamen-Tabelle nachgetragen — `EINBINDUNG_KOSMOORBIT_2026-08-14.md` §8
-
-**Fertig, wenn** die Namen belegt sind statt vermutet.
+> **Abgeschlossen** — alle 3 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#phase-0--feldnamen-klären`](erledigt/PLAN_bis_2026-08-28.md#phase-0--feldnamen-klären)
 
 ---
 
 ## Phase 1 · Das Skelett
 
-**Aufwand:** mittel · **Zweck:** die Prozessgrenze beweisen, bevor etwas darauf steht
-
-Der dünnste Pfad, der jede der vier Regeln einmal berührt. Fast ohne Funktionalität —
-absichtlich. Bricht hier eine Annahme, ist es bei 500 Zeilen zu erfahren, nicht bei 5 000.
-
-- [x] **Synthetische Testgeometrie** — erledigt: 8×5×3 m, deterministisch, stdlib-only
-- [x] **IFC → glb** als Subprozess im eigenen `.venv-ifc` — ausgeführt: 5 Bauteile, 60 Dreiecke.
-      *Der CGAL-Befund ist damit praktisch entschärft: GPL-Code läuft jenseits der Grenze.*
-- [x] **glb → Blender headless → Tiefenkarte** — ausgeführt: EXR mit echten Meterwerten
-      (27,3–39,5 m). *Regel 2 in der Praxis bestätigt.*
-- [x] **Vertrag `render-scene.json`** — in `contracts.py`, `up_axis` als Pflichtfeld
-- [x] **Tests ab der ersten Zeile** — 82 grün nach den Korrekturen
-- [x] **`NOTICE`** — Blender GPL, IfcOpenShell LGPL, CGAL GPL deklariert
-
-**Enthält bewusst nicht:** keine KI, kein Graph-Kern, kein MCP, keine QA.
-
-**Fertig, wenn** aus Python heraus, ohne Oberfläche und ohne `import bpy`, aus einer
-synthetischen IFC eine korrekte Tiefenkarte entsteht — und ein Test das festhält.
-
-**Prüffragen der Phase — beantwortet 2026-08-18:**
-- Trägt die Prozessgrenze in der Praxis? **Ja**, beide ausgeführt.
-- Ist der Tiefen-Pass geometrisch korrekt? **Ja** — Blender meldet 8.0 x 5.0 x 3.25 m,
-  exakt die IFC-Masse; die Kette Z-up → Y-up → Z-up ist verlustfrei.
-- Bleibt das Produkt-venv frei von `bpy` und `ifcopenshell`? **Ja**, per Test bewacht.
-
-**Offen geblieben, nach Phase 2 verschoben:** Massstabs- und Georeferenz-Torwächter
-(mm-als-m, LV95 in float32) — Fehlerklasse bekannt, aber ungeprüft.
+> **Abgeschlossen** — alle 6 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#phase-1--das-skelett`](erledigt/PLAN_bis_2026-08-28.md#phase-1--das-skelett)
 
 ---
 
 ## Phase 2 · Kern und Naht
 
-**Aufwand:** mittel · **Setzt voraus:** Phase 0 und 1
-
-- [x] **Graph-Kern** — `graph.py`: typisierter DAG, stabile topologische Sortierung,
-      Artefakt-Cache mit Content-Hashing, serialisierbar. Klein gehalten.
-- [x] **Auftragsverwaltung** — `jobs.py`: Zustandsautomat mit Endzuständen, atomares
-      Schreiben, Pfad-Trickserei abgewehrt. Das Token landet **nie** auf der Platte.
-- [x] **MCP-Schicht** — drei Werkzeuge (`enqueue_render`, `query_render`,
-      `check_geometry`), Verträge als reine Daten, Server als optionaler Zusatz.
-- [x] Eingabe-Schemas **nicht** `additionalProperties: false` — per Test bewacht
-- [x] **Torwächter** (aus Phase 1 verschoben) — `torwaechter.py`: mm-als-m und LV95
-
-**Fertig, wenn** KosmoOrbit unsere Werkzeuge sieht, verdrahten kann und
-`pipelineReadiness` keine toten Kanten meldet.
-
-**Erledigt 2026-08-18.** KosmoOrbits Prüfung ist in `mcp_schemas.pruefe_verdrahtbarkeit`
-nachgebaut und läuft in `tests/test_mcp_schemas.py` gegen die **echten** Ausgabeschemas
-von `kosmodraw_export_ifc`, `_export_glb` und `_bim_layers`: keine toten Kanten, keine
-fehlenden Pflichtfelder. 315 Tests grün.
-
-*Ehrliche Grenze:* Das belegt die Verdrahtbarkeit, nicht die Registrierung. Ob Kosmo den
-Server tatsächlich annimmt, lässt sich nur in der laufenden Umgebung prüfen — der Weg ist
-aus `register_in_odysseus.sh` bekannt, aber hier nicht ausgeführt.
+> **Abgeschlossen** — alle 5 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#phase-2--kern-und-naht`](erledigt/PLAN_bis_2026-08-28.md#phase-2--kern-und-naht)
 
 ---
 
 ## Phase 3 · Bildkette und QA
+
+> **Entschieden:** Zwei Tore statt eines — Geometrie und Stil urteilen getrennt, bestanden ist nur, wer beide besteht. Der Backbone ist eine austauschbare Naht mit Lizenz je Modell, und die EXR-Normalisierung liegt auf der Produktseite, weil Blender 5.2 die Datei, die es schreiben muss, selbst nicht wieder einliest.
+> **Gemessen:** Erster echter Render am 18.08. mit Score 0,359 — durchgefallen, und das ist ein Messwert. Halluzinierte Geometrie 0,199 gegen 0,995 für die treue. Unser EXR-Leser ist bitgleich mit Blender, die PNG-Rückrechnung auf 0,067 mm genau.
+> **Offen:** Ein Punkt: ein Render, der die Schwelle besteht. Bis dahin ist die Kette belegt und die Aussage «geometrietreu» nicht.
 
 **Aufwand:** gross · **Setzt voraus:** Phase 2
 
@@ -165,6 +115,10 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 ---
 
 ## Phase 4 · Wissenschaftlicher Ausbau
+
+> **Entschieden:** Schwellen werden abgeleitet statt gesetzt — die Stil-Schwelle ist Boden + 2·Streuung = 0,666. Die Geometrieschwelle bleibt bei 0,65, statt an eine kaputte Kette angepasst zu werden. Vorgabe-Backbone ist Z-Image-Turbo, weil dort beide Hälften der ControlNet-Naht Apache-2.0 sind, und die Tiefenpolarität ist ein Feld am Backbone statt einer Annahme.
+> **Gemessen:** Der `geom_iou`-Deckel stieg von 0,256 auf 0,406, nachdem sechs Regeln gegeneinander gemessen wurden. Z-Image hält die Geometrie (−0,853), Qwen nicht (+0,005), bei 1,4 s statt 150 s. Die Stil-Schwelle 0,30 liess alle 4950 geprüften Paare durch. 40 echte IFC-Dateien: 40 gedeutet, zwei kaputte Exporte darunter. Die Vakuumprobe fand in 40 Umschreibungen sechs Treffer und keinen falsch-grünen Test.
+> **Offen:** Zwölf Punkte, darunter der Owner-Entscheid zu der Freigabe, die die Brücke sich selbst erteilt; die ungemessene Polarität von sechs Backbones; Z-Image über mehrere Bauwerke; Weg B Schritt 5–7; die zweite Hälfte der Stil-Kalibrierung; ein LoRA-Training an einem echten Lauf.
 
 - [x] **Schwellenstudie, erste Hälfte: die Metrik** — erledigt 2026-08-18,
       `schwellenstudie.py` + `docs/SCHWELLENSTUDIE_2026-08-18.md`. Acht Störungsarten ×
@@ -416,6 +370,10 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 ---
 
 ## Phase 5 · Kameras und die Vis-Stufe
+
+> **Entschieden:** Kein eigener Variantenbewerter — bewertet wird mit `geometrie_qa` und `belichtung`, deren Schwellen absolut und gemessen sind. Die Kamera rahmt die Hüllbox des **Bauwerks**, der Bericht beschreibt die ganze Szene. Eine ungemessene Schwelle darf höchstens warnen, nie sperren.
+> **Gemessen:** Der Rauschboden streut ohne Bodenkörper um 67 %, mit um 14,2 %. Weisses Rauschen besteht das Gate bei 59,8 % Geometrieanteil mit 0,7217. Der Zusammenhang Geometrieanteil → Deckel ist nicht monoton (17 % → 0,504 · 29,1 % → 0,415 · 59,8 % → 0,984). ρ über der Bauwerksmaske ist in beiden Szenen streng monoton und liegt höchstens 0,005 auseinander; der Material-ID-Pass liefert dieselbe Maske ohne zweiten Renderlauf.
+> **Offen:** Fünf Punkte — das Mittelfeld zwischen 20 % und 60 % Geometrieanteil, der Rauschboden am Betriebspunkt mit Boden, «0,80 schlägt 1,00» als unbelegt statt widerlegt, und der blinde Fleck der Vakuumprobe: eine Zusicherung, die etwas prüft, nur nicht das, was ihr Name behauptet.
 
 **Aufwand:** mittel · **Setzt voraus:** Phase 3
 
@@ -727,6 +685,10 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       im Wesentlichen eine Rampe. Zwei Rampen korrelieren.
 
 ## Kamerasetzung — die Recherche ist da, und sie trifft härter als erwartet
+
+> **Entschieden:** Die Kamera steht waagrecht und shiftet (`MODUS_SHIFT` ist seit 23.08. Vorgabe) — wegen der Fachnorm, nicht wegen besserer Zahlen. Drei Ansichten und drei Startwerte je Kamera; das Auftragsurteil ist das der schwächsten Ansicht. Brennweite 35 mm als Owner-Setzung, mit dem Gegenbeleg des Fachs daneben statt weggeräumt. Deckungsgrad 0,70. Die Git-Historie bleibt, wie sie ist.
+> **Gemessen:** `kameras.py` kippte um −0,51° bis +5,98° und nicht um die vier Dokumente lang zitierten 9,46°. Der nötige Shift beträgt 0,94–2,30 mm gegen die 12 mm, die ein Objektiv leistet. Die Rahmung ist eine Rampe mit Knie zwischen 0,5991 und 0,6488 Bildbreite. Das Ortsfeld des Tiefenschätzers erklärt 95,75 % des Rauschbodens, mit einem Ausschlag von 1,28 und Vorzeichenwechsel; ihn abzuziehen erhöht die Streuung. Der Objektname trägt über 2250 Bauteile, der Materialname trennt Wand und Boden nicht.
+> **Offen:** Dreissig Punkte — welche der beiden ρ-Zahlen das Urteil tragen soll, die Rahmung selbst (sie wartet auf `auf-41`), die Stadtfrage ohne Himmel hinter dem Umriss, `null` im fremden QA-Schema, die Liste dessen, was `verarbeiter` nicht durchreicht, und die Lehrbücher des Fachs, die für die schriftliche Arbeit nachzuholen sind.
 
 *Drei Recherchen unter `docs/recherche/`, Synthese in `docs/KAMERAREGELN_2026-08-21.md`.*
 
@@ -2177,6 +2139,10 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
 
 ## (überholt) Kamerasetzung — was die Recherche vom 21.08. treffen muss
 
+> **Entschieden:** Der Abschnitt bleibt als **überholter Stand** stehen. Er hielt fest, wogegen die Recherche zu prüfen war — damit sie einen bekannten Stand trifft und kein Bauchgefühl.
+> **Gemessen:** Der Wächter gegen den teuersten Fehler des Projekts lief nicht: Die geklippte Tiefenkarte war exakt so viel wert wie gar keine Konditionierung (Abstand 0,002). Die Kante misst nicht Schärfe, sondern die Mehrheit des Umrisses — 87,4 % beim perfekten Bild gegen 2,8 % bei Qwen. Die Kameraneigung stört den Schätzer nicht: alle drei Ausrichtungen innerhalb von 0,019.
+> **Offen:** Zehn Punkte, und die Hälfte ist noch aktuell — es gibt keinen Innenraum-Modus, das Seitenverhältnis ist ein Durchreicher ohne Regel, der Stillstandswächter hatte seinen ersten Fehlalarm, und `PAAR_KANTENANTEIL_SCHWELLE = 0.20` ist abgelesen.
+
 *Beim Lesen von `kameras.py` vor der Recherche aufgefallen. Der Befund steht hier, damit
 die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauchgefühl.*
 
@@ -2347,6 +2313,10 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
 
 ## Die gepaarte Reihe — die Methode, an der zwei Messungen gescheitert sind
 
+> **Entschieden:** Gleicher Startwert, eine Sache anders, zählen wer gewinnt. Gerechnet wird **zweiseitig** — einseitig zu rechnen, nachdem man das Ergebnis gesehen hat, halbiert die Zahl und die Ehrlichkeit gleich mit.
+> **Gemessen:** Die Sprachreihe entschied erst bei acht Paaren (8 von 8, p = 0,78 %); bei n = 3 trug der Abstand nicht. Die Startwertstreuung von 0,2269 ist grösser als jeder gemessene Parametereffekt (0,10–0,14) — darum rechnet ein Paarvergleich sie heraus, wo ein Mittelwertvergleich dagegen anmessen müsste.
+> **Offen:** Zwei Punkte — der Sprachbefund trifft den Produktpfad und ist nicht bei uns allein zu lösen; die Vakuumprobe steht bei neun Treffern, alle drei neuen sind gedeckt.
+
 - [x] **`gepaarte_reihe` und `zaehle_siege` gebaut (22.08.), auf Bitte der HomeStation.**
       Sie hat es zweimal an einem Tag erlebt: Bei `auf-28` war der Abstand zwischen zwei
       Backbones (0.165) etwa **eine Standardabweichung** der Startwert-Streuung — an drei
@@ -2391,6 +2361,10 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
       einmal nicht.
 
 ## DAS TOR — offen, und der Weg zu, gefunden (auf-25 bis auf-27)
+
+> **Entschieden:** Zwei Masse nebeneinander statt eines Scores: ρ über der Maske und die Kante an der Maskengrenze werden **geführt und nicht verrechnet**. Existenz und Richtigkeit sind zwei Fragen und brauchen zwei Messungen.
+> **Gemessen:** Jedes der beiden Masse fängt genau die Fälle, die das andere verfehlt — die Kante H1 und H2, das ρ H3 und H4; einzeln deckt keines alle vier ab. Ein leeres Grundstück besteht die alte Geometrie-QA mit 0,95 und liegt damit **über** dem perfekten Bild.
+> **Offen:** Fünf Punkte — der Paartest ist an sieben Fällen aus einer Szene abgelesen und nicht kalibriert, und er würde jedes Bild abweisen, das dieses Projekt je erzeugt hat. Das ist kein Argument gegen ihn, sondern der Befund: erst die Bilder, dann die Schwelle.
 
 - [x] **`auf-27`: Der Prüfstein fällt, und die Antwort ist trotzdem da.** Verlangt war:
       Kante deutlich bei perfekt/H3/H4, keine bei H1/H2. Tatsächlich zeigen H1 (+0.0006)
@@ -2487,6 +2461,10 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
       `geometrie_qa.py` freigibt.
 
 ## Die Geometrie-QA neu bauen — der Stand, auf dem morgen anzufangen ist
+
+> **Entschieden:** Der Score wird `polaritaet · spearman` über der Bauwerksmaske — ohne Normierung und ohne Anker-Arithmetik —, und die alte Rechnung bleibt unterscheidbar stehen statt still ersetzt zu werden. Der Hausstil ist fest formuliert statt gelernt, die Stil-QA misst gegen den Belichtungsrahmen. Der fremde Freigabe-Token gilt nicht.
+> **Gemessen:** Blenders Ausgabetakt beträgt auf der CPU 32 s und auf der GPU gar nichts — 175 s Stille am Stück; die aus der CPU-Messung abgeleitete Frist hätte dort jeden gesunden Lauf abgebrochen. Ein gewöhnlicher Faden schlägt 88-mal über 175 s, wo beide dokumentierten Blender-Haken nullmal feuern. Der Beauty-Pass trennt Bauwerk und Hintergrund mit Trennschärfe 10 bis 14 — die Wertebereiche überlappen trotzdem.
+> **Offen:** Zwanzig Punkte — ob `geom_iou` fallen darf (die halluzinierte Kubatur über der Maske ist ungemessen), welche Stillstandsfrist am echten Lauf trägt, die Hochachse der fremden `model.glb`, und der Verdeckungstest im Runner.
 
 - [ ] **Der Score wird `polaritaet * spearman` über der Bauwerksmaske.** Gemessen
       monoton, gemessen szenenunabhängig, ohne Normierung und ohne Anker-Arithmetik. Die
@@ -2985,95 +2963,16 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
 
 ## Die Prüfung läuft vor dem Bild — Owner-Einwand vom 25.08.2026
 
-Der Owner hat das erste Bild aus einem vollständigen Kettenlauf gesehen und den Kern
-getroffen (`auftraege/von-homestation/auf-vis-20260825-15.md`, Posten 1):
-
-> *«Das sollte natuerlich gar nicht so weit kommen — die Modelle muessen pruefen, ob die
-> Geometrie richtig ist und richtig darstellt, **bevor** AI Imaging startet.»*
-
-Und der Einwand traf auf einen zweiten Befund derselben Nacht: `bbox_bauwerk` und
-`kameras.rahmungsverhaeltnis` hatten **ausser Tests keinen einzigen Aufrufer**. Die
-**sechste tote Kante dieser Woche** — und die einzige, die von aussen wie eine gelöste
-Aufgabe aussah, weil das Werkzeug ja dalag.
-
-- [x] **`kameras.BILDBREITE_ABBRUCH = 0.65`** — die Schwelle, unter der nicht mehr
-      gerendert wird. Gemessen (HomeStation, `auf-20260824-36`/`-37`): 17,5 % Bildbreite
-      → 0.0002, **30 % → 0.0**, 50 % → 0.001, 65 % → 0.637, 70 % → 0.932.
-      *Der Verlauf ist nicht monoton* — 30 % ist gemessen schlechter als 17,5 %. Darum
-      wird zwischen den Stützstellen nicht interpoliert.
-- [x] **Der Widerspruch zu `BILDBREITE_KNIE` (0.5991) steht im Code und wird nicht
-      geglättet.** Die Kniemessung vom 24.08. sah die Schwelle zwischen 0,5991 und 0,6488
-      fallen, die Kettenmessung vom 25.08. sieht bei 50 % noch 0.001. Zwei Messungen, zwei
-      Bedingungen. Genommen wird die vorsichtigere, und `abbruch_grund` **sagt es**, wenn
-      ein Lauf genau in diesem Band liegt.
-- [x] **Der Blender-Runner berichtet die zweite Hüllbox** (`bbox_bauwerk`,
-      `bbox_bauwerk_note`). Entschieden wird über den Objektnamen mit
-      `maske.ist_gelaende` — nach dem GLB-Export gibt es keinen IFC-Typ mehr. **Kein
-      Rückfall auf die Szenenbox:** Findet sich keine gebaute Substanz, kommt `None` mit
-      Grund. Ein Rückfall deckte den Bruch genau dort zu, wo er gemessen werden soll.
-- [x] **`abholer.verarbeiter` prüft vor `_bester_seed`** und überspringt den Bildlauf
-      dieser Kamera, wenn die Rahmung ihn nicht trägt. Das Urteil trägt `score: None`
-      und `gemessen: False` — `_kameraspanne` zählt es **nicht** als gemessen, und
-      `_schlechtestes` nimmt es als das schwächste. Ein Abbruch, der die gemeldete Zahl
-      verbesserte, wäre schlimmer als keiner.
-- [x] **Zwei Wege brechen ausdrücklich nicht ab:** eine **vorgegebene** Kamera (der
-      Deckungsgrad beschreibt sie nicht) und eine **fehlende** Bauwerksbox (das sind alle
-      Aufnahmen vor dem 25.08.2026). *Nicht feststellbar* ist kein Abbruchgrund.
-- [x] Kurzbefundzeile **NICHT GERENDERT (Rahmung)**, ganz oben: die einzige Zeile, die von
-      einem nicht gelaufenen Render berichtet.
-- [x] `tests/test_rahmung_vor_render.py` (19 Fälle), Mutationsprobe beidseitig gefahren:
-      `abbruch` fest auf `True` lässt 2 Tests fallen, fest auf `False` deren 4.
-- [x] Lexikon: **Vorprüfung (Abbruch vor dem teuren Schritt)** und **Abbruchschwelle**;
-      `BILDBREITE_ABBRUCH` in `KONSTANTEN_HERKUNFT` eingetragen, damit die zitierte Zahl
-      nicht still veralten kann.
-
-**Was ausdrücklich NICHT geändert wurde:** die Rahmung selbst. Ob der Runner künftig nach
-der Bauwerksbox rahmt statt nach der Szenenbox, hängt an `auf-41` (G3) — Owner-Entscheid
-vom 26.08. Bis dahin *meldet* die Kette den Bruch und rendert nicht ins Leere; sie
-verstellt aber keine Kamera.
-
-### Nachtrag 01.09.2026 · Weg (b) ist gebaut, und die Rahmung bleibt trotzdem unverstellt
-
-Die offene Hälfte war nie der Schalter, sondern die **Herkunft** der Box. `abholer.py`
-führte dafür drei Wege; **(b) — ein leichter Läufer ohne Blender — gibt es jetzt:**
-`src/aiimaging/glbbox.py`.
-
-- [x] **Weg (b), gemessen statt geschätzt.** Die Schätzung im Abholer lautete 1–2 s;
-      gemessen sind **0,08 s** an einer Bestandsdatei mit 4771 Meshes und 25 MB (n = 5,
-      Median 0,076 s). Gegen Weg (a) mit +40 s je Kamera ist das der Faktor 500. Der Grund
-      ist kein schneller Code: glTF verlangt `min`/`max` an jedem POSITION-Accessor, also
-      steht die Hüllbox je Bauteil im JSON-Kopf und die Dreiecke werden nie gelesen (2,8
-      von 25 MB). **Ohne jede Abhängigkeit** — `trimesh` hätte eine Prozessgrenze
-      erzwungen, die es hier nicht braucht.
-- [x] **Der Blindtest dazu.** Eine Datei mit byteweise zerstörtem Geometrieblock liefert
-      dieselbe Box (`test_der_binaerblock_wird_nicht_angefasst`). *Ein Zeitmass misst den
-      Rechner, ein Strukturmass die Behauptung.*
-
-**Der wichtigere Befund ist der unangenehme, und er ändert die Reihenfolge dieses Postens:
-Die Namensregel sieht das Gelände der Bestandsdatei nicht.** Dort heisst es nicht
-„Gelände", sondern `IfcCovering_Toposolid_1` (135,50 × 130,12 m — das grösste Einzelobjekt
-der Szene), dazu `Sub-Division`, `Umgebung 15 - Gras`, `Aussen - Gras`, Bäume als
-`IfcGeographicElement`, ein Nachbargebäude als `IfcCivilElement`. Keines dieser Wörter
-steht in `maske.GELAENDE_WOERTER`. Gerechnet für die Kamera `sSE` des Laufs vom 28.08.:
-
-| Rahmen | Masse | Abstand |
-|---|---|---|
-| Szenenbox | 135,75 × 136,50 × 25,60 m | **358,02 m** |
-| Bauwerksbox nach heutiger Regel | 135,75 × 130,12 × 25,60 m | 350,33 m (−2,1 %) |
-| nur der Hochbau | 94,50 × 82,75 × 25,60 m | **234,43 m (−34,5 %)** |
-
-Der Weg trägt also; die **Regel**, die er befragt, trägt auf dieser Datei nicht. Deshalb
-meldet `bauwerksbox` das Feld `schrumpfung` — ohne das sähe eine wirkungslose Box im
-Bericht genauso aus wie eine wirksame.
-
-**Was daraus NICHT folgt:** die Rahmung umzustellen. Eine automatisch eingesetzte Box, die
-2 % bringt, wäre schlimmer als keine — sie sähe aus wie die Lösung. Der nächste Schritt ist
-die Regel an ihrer **einen** Stelle, nicht ein zweiter Filter im Läufer. `auf-41` (G3)
-bleibt damit offen, jetzt aber aus einem anderen Grund als gestern.
+> **Abgeschlossen** — alle 10 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#die-prüfung-läuft-vor-dem-bild--owner-einwand-vom-25082026`](erledigt/PLAN_bis_2026-08-28.md#die-prüfung-läuft-vor-dem-bild--owner-einwand-vom-25082026)
 
 ---
 
 ## Zwei weitere Posten aus dem ersten vollständigen Lauf (26.08.2026)
+
+> **Entschieden:** Überspringen heisst **kein Bild, aber sehr wohl eine Antwort** — gar nichts zurückzugeben liesse die bestellende Seite *übersprungen* nicht von *abgestürzt* unterscheiden. Der Geräteweg steht in jedem Ergebnissatz, auch bei einem Fehlschlag.
+> **Gemessen:** Der Geräteweg stand seit dem 19.08. im Modell und wurde nirgends geschrieben — «eine Zeile Protokoll hätte drei Stunden Untersuchung gespart». Die ControlNet-Pipeline teilt 67 Parameter, darunter den ersten, weshalb 454 von 521 Transformer-Parametern auf der CPU blieben; ausgelöst hat es kein Rückfall, sondern zwei Zehntel Gigabyte freier Kartenspeicher.
+> **Offen:** Drei Punkte — die Entflechtung ist am Gerät zu bestätigen, `denoise` und Schrittzahl bildet der fremde Vertrag nicht ab, und `idle_window_only` ist auf einem benutzten Rechner nie erfüllbar.
 
 Aus `auftraege/von-homestation/auf-vis-20260825-15.md`, derselben Liste wie der
 Owner-Einwand oben.
@@ -3189,93 +3088,30 @@ der freie Kartenspeicher — 29,25 GiB verlangt, 28,89 bis 29,07 frei.
 
 ## Die blinde Fortschrittswache (26.08.2026)
 
-**Befund der HomeStation** (`auf-vis-20260824-12`): `fortschritt.verzeichnis_marke`
-zählte `p.iterdir()` und ausdrücklich **nicht rekursiv**. Die Wache läuft auf `out/`,
-geschrieben wird nach `out/<kuerzel>/`. In fünf Läufen meldete sie als längsten Stillstand
-**exakt die Gesamtdauer** — sie hat nie etwas gesehen —, und ihr einziger Alarm (302,6 s)
-war ein Fehlalarm.
-
-- [x] `verzeichnis_marke(pfad, *, endung=None, tiefe=VORGABE_TIEFE)` — bei `tiefe=1`
-      zählen zusätzlich die Dateien **direkter** Unterverzeichnisse. Genau die Ebene, auf
-      der der Runner schreibt.
-- [x] **Eine Ebene und nicht `rglob`.** Das Argument stand seit jeher im Docstring: Ein
-      rekursiver Lauf über einen Ordner, in den gerade geschrieben wird, kostet bei jedem
-      Blick Zeit und kann selbst zur Bremse werden. Eine Ebene ist eine feste, kleine Zahl
-      von Verzeichnisaufrufen statt einer unbekannten.
-- [x] `wache_fuer_verzeichnis` reicht `tiefe` durch; `tools/abholen.py` erbt die Vorgabe
-      und bleibt unverändert.
-- [x] Der Altbestandstest hiess `…_zaehlt_nicht_rekursiv` und prüfte die Blindheit. Er
-      ist umgeschrieben statt gelöscht: Er misst jetzt beide Grenzen — eine Ebene zählt,
-      zwei nicht — und `tiefe=0` bleibt als **Gegenprobe** nachstellbar.
-- [x] Die Naht ist mitgeprüft: Ein Lauf, der nur in Unterordner schreibt, meldet keinen
-      Stillstand mehr; ein Lauf, der gar nichts schreibt, meldet weiterhin einen. *Eine
-      Wache, die nach dem Umbau nie mehr Alarm schlägt, wäre so wertlos wie die blinde.*
+> **Abgeschlossen** — alle 5 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#die-blinde-fortschrittswache-26082026`](erledigt/PLAN_bis_2026-08-28.md#die-blinde-fortschrittswache-26082026)
 
 ---
 
 ## Drei Warnungen, die jeden Auftrag gleich trafen (26.08.2026)
 
-**Der Befund ist schärfer als gemeldet.** `tools/abholen.py` zeigte `warnungen[:3]`, und
-genau drei Warnungen aus `kosmo_szene.lies_szene` feuern bei einem gewöhnlichen Auftrag:
-die Bildmasse 1600×1000 → 1600×992 (die Vertragsvorgabe ist nie ein Vielfaches von 16),
-die `faithful`-Zuordnung (steht ohne jede Bedingung da) und die fehlende Sonnenangabe (die
-Vertragsvorgabe hat keine).
-
-Sie füllten **alle drei Plätze**. Eine echte, auftragsspezifische Warnung, die im Code
-später steht, war damit unsichtbar. *Der Deckel hat nicht die Geschwätzigkeit begrenzt,
-sondern die Auskunft gelöscht.*
-
-- [x] `lies_szene` gibt sie als eigenes Feld `vertragsvorgaben` zurück; `warnungen` trägt
-      nur noch, was **diesen** Auftrag betrifft. Nachgemessen: ein gewöhnlicher Auftrag
-      hat jetzt **null** eigene Warnungen.
-- [x] **Die Bildmasse hängt daran, ob jemand gewählt hat.** Geerbte 1600×1000 →
-      Vertragsvorgabe; selbst bestellte 999×777 → Warnung über *diesen* Auftrag. Der
-      Beschnitt ist dann eine Folge einer Entscheidung und keine Eigenschaft des Vertrags.
-- [x] `DURCHGEREICHT` um das Feld ergänzt — die Tabelle aus `test_naht_durchreichung.py`
-      erzwingt es ohnehin und ist hier der Wächter. `bruecke.lies_auftrag` und
-      `abholer.eines` reichen es **getrennt** weiter; keine Zeile steht in beiden Listen.
-- [x] `tools/abholen.py`: kein `[:3]` mehr, gekürzt wird die einzelne **Zeile** mit
-      `_gekuerzt`. Die Vorgaben stehen **einmal pro Lauf** am Ende, wo sie nichts
-      verdecken.
-- [x] `tests/test_vertragsvorgaben.py` (10 Fälle), darunter die Gegenprobe, dass eine
-      passende Bildmasse **gar keinen** Hinweis erzeugt — sonst wäre es wieder eine
-      Dauerzeile, nur an neuer Stelle.
-
-*Damit ist zugleich Posten 5.1 aus `auf-vis-20260825-15` beantwortet. Offen bleiben 5.2
-(`denoise` und Schrittzahl werden nicht abgebildet) und 5.3 (Sonnenstand wird nicht
-bedient) — beides sind Lücken in der Kette und keine Anzeigefragen.*
+> **Abgeschlossen** — alle 5 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#drei-warnungen-die-jeden-auftrag-gleich-trafen-26082026`](erledigt/PLAN_bis_2026-08-28.md#drei-warnungen-die-jeden-auftrag-gleich-trafen-26082026)
 
 ---
 
 ## Die doppelte Ansicht (26.08.2026)
 
-**Befund** (`auf-vis-20260824-12`): Bei einem Quader sind `sSE` und `nNW` **byte-identisch**
-— zweizählige Drehsymmetrie, die beiden Über-Eck-Ansichten der HABS/NPS-Regel fallen
-zusammen. Ein Renderlauf für nichts, 24,5 s, gerade bei den einfachen Demofällen.
-*Owner-Entscheid vom Morgen des 26.08.: erkennen und überspringen.*
-
-- [x] **An der Soll-Karte, nicht an der Hüllbox.** Die Hüllbox hat *immer* zweizählige
-      Symmetrie; aus ihr allein liesse sich das nicht entscheiden, ohne bei jedem realen
-      Bauwerk falschen Alarm zu schlagen — ein Haus mit Eingang auf einer Seite steckt in
-      derselben Box wie eines ohne. `_sollkennung(soll, breite, hoehe)` hasht die auf
-      sechs Stellen gerundeten Tiefen samt Bildmassen; die Karte liegt **vor** dem teuren
-      Bildrender vor.
-- [x] `None` heisst **nicht vergleichbar** und führt nie zu einer Doppelung: Im Zweifel
-      wird gerendert, denn ein fehlendes Bild ist teurer als ein doppeltes.
-- [x] Kameraurteil trägt `doppelt_von` und neu auch `bild_png` — ohne die Zuordnung wäre
-      bei einer übernommenen Ansicht nicht mehr feststellbar, welches Bild gemeint ist.
-- [x] **`_kameraspanne` zählt die Doppelung nicht als zweite Ziehung.** Sie fällt aus
-      `n_gemessen`, aus der Streuung und aus dem Abschlag; `n` zählt weiter alle Ansichten,
-      `n_doppelt` sagt wie viele es waren. *Mitgezählt wäre es eine stille Verschärfung —
-      genau der Fehler vom 23.08., als drei Ansichten das Gate ungefragt strenger machten.*
-- [x] Kurzbefundzeile «nNW ist mit sSE identisch».
-- [x] `tests/test_doppelansicht.py` (15 Fälle) plus **Mutationsprobe beidseitig**:
-      Erkennung fest auf *immer* lässt 5 Tests fallen, fest auf *nie* deren 2. Eine
-      Erkennung, die immer oder nie greift, ist keine.
+> **Abgeschlossen** — alle 6 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#die-doppelte-ansicht-26082026`](erledigt/PLAN_bis_2026-08-28.md#die-doppelte-ansicht-26082026)
 
 ---
 
 ## Das Bild entstand neun Sekunden vor der Prüfung (26.08.2026)
+
+> **Entschieden:** Was ohne Bild entscheidbar ist, wird **vor** dem Bild entschieden — der Riegel verhindert die Rechnung, statt sie zu kommentieren. Abgebrochen wird nur bei der benannten Bedingung: aus *wir konnten nicht prüfen* ein *durchgefallen* zu machen, wäre die gefährliche Richtung.
+> **Gemessen:** Blender fertig um 08:47:12, Bild um 08:47:49, Ablehnung um 08:47:58 — die beiden verglichenen Zahlen lagen 37 Sekunden vor dem Bild vor. Der Rahmungsriegel war auf seinem eigenen Anlassfall blind: Bauwerksbox 20 × 20 m statt 8 × 5 m, wirksame Bildbreite 0,70 statt 0,28. Acht tote Kanten in einer Woche, die achte war der Torwächter selbst.
+> **Offen:** Sieben Punkte — der Parkhaus-Fall (dieselbe Geometrie wird aus zwei Richtungen zu zwei verschiedenen Gebäuden), die Zahl 0,6909 aus `auf-43`, die Verdeckung am Produktpfad, und ob eine berechnete Maske ohne erkanntes Gelände verworfen gehört.
 
 **Zeitstempel eines einzigen Auftrags** (HomeStation, `auf-vis-20260826-16`), auf die
 Sekunde aus dem Dateisystem:
@@ -3617,6 +3453,10 @@ zweiten Stelle.
 
 ## Stand am Ende von Sitzung 13 (26.08.2026)
 
+> **Entschieden:** Der Stand wird **gezählt und nicht geschätzt**: Tests, Vakuumtreffer, tote Kanten und bewachte Hausregeln, je Tagesabschnitt nebeneinander.
+> **Gemessen:** 3335 → 3935 Tests an einem Tag. 80 von 80 toten Kanten mit Urteil. 4 von 4 Hausregeln mit ausführbarem Wächter, 5 Dokumente mit einem. 53 Commits.
+> **Offen:** Nichts in diesem Abschnitt selbst — er ist ein Stand und trägt keine Punkte. Die neun Aufträge, die er aufzählt, stehen an ihren eigenen Stellen.
+
 Protokoll: `docs/sitzungen/2026-08-26_sitzung-13.md`. Es hat **Abschnitt 0 · «Wenn Sie nur
 eine Seite lesen»** obenauf — mit den drei Dingen, die eine Owner-Antwort brauchen, und den
 fünf schwersten Befunden. Die vollständige **Entscheidliste** (vierundsiebzig Entscheide,
@@ -3664,6 +3504,10 @@ Nachricht — was sonst noch in der Datei steht, ist ungelesen.
 ---
 
 ## Tote Kanten werden gesucht statt gefunden (26.08.2026)
+
+> **Entschieden:** Das Werkzeug **meldet und prüft nicht** — ein Test auf die rohe Zahl wären dutzende Fehlalarme, und daran stirbt ein Suchwerkzeug. Gefragt wird nach der Erreichbarkeit von einem Einstiegspunkt aus, nicht danach, ob ein Name irgendwo vorkommt.
+> **Gemessen:** 261 öffentliche Funktionen, 81 nur über Tests erreichbar, 2 gar nicht genannt. Der erste Entwurf zählte blosse Namensnennungen und meldete 164 von 261 — unbrauchbar. Eine Sondierung über alle Docstrings fand einen echten Fall unter sieben Verdachtsfällen; deshalb ist daraus bewusst kein Werkzeug geworden.
+> **Offen:** Drei Punkte — `kosmo_naht` wartet auf eine Auskunft, `komposition.py` ist zu acht Zehnteln unerreicht, und was «weit» für die Umgebungsansicht heisst, ist eine Setzung, die niemand getroffen hat.
 
 **Diese Woche hat das Projekt sieben tote Kanten gefunden — jede einzeln und jede durch
 Zufall.** Die letzten beiden waren eigene und sind von **aussen** gemeldet worden: Die
@@ -3747,6 +3591,10 @@ zwei nicht:
 
 ## Die 79 ungerufenen Funktionen, eingeordnet (26.08.2026)
 
+> **Entschieden:** Die rohe Zahl bekommt eine Einordnung nach Modul **und** nach Grund — damit sich beim nächsten Mal vergleichen lässt, statt wieder von vorn zu erschrecken.
+> **Gemessen:** 79 nur über Tests erreichbare Funktionen: Analysemodule (`stilstudie` 13, `schwellenstudie` 5, `varianten` 5), der Innenraum-Zweig von `komposition`, die Rückrichtung des fremden Vertrags, der Auftragsweg des Owners, der LoRA-Zweig. `werkzeuge.py` ist über seine Ruftabelle korrekt als erreichbar erkannt — eine Registry ist kein blinder Fleck.
+> **Offen:** Ein Punkt, und er braucht einen Owner-Entscheid: Es gibt zwei Freigabewege, und `jobs.freigeben` — im eigenen Docstring «die einzige Tür zum Ausführungspfad» — hat keinen Aufrufer.
+
 `tools/tote_kanten.py` meldet **79 öffentliche Funktionen, die nur über Tests erreichbar
 sind**. Eine rohe Zahl ist keine Auskunft — hier steht, was dahintersteckt. *Nächstes Mal
 lässt sich vergleichen, statt wieder von vorn zu erschrecken.*
@@ -3815,38 +3663,16 @@ lässt sich vergleichen, statt wieder von vorn zu erschrecken.*
 
 ## Ein Kettenlauf über alle Riegel des Tages (26.08.2026)
 
-An diesem Tag sind **acht Prüfungen** entstanden, jede für sich geprüft. *Acht Prüfungen,
-die einzeln greifen, sind noch keine Kette, die läuft:* Sie stehen im selben Durchgang und
-in einer festen Reihenfolge, sie schreiben in dasselbe Urteil, und mehrere von ihnen können
-einen Lauf abbrechen. Ob sie sich gegenseitig im Weg stehen, zeigt kein einziger von ihnen.
-
-`tests/test_kettenlauf_26august.py` (11 Fälle) fährt einen Auftrag durch
-`hole_einen` → `verarbeiter` → Befund → Vertragsergebnis, mit Attrappen für Blender und
-Diffusion.
-
-- [x] Der gesunde Lauf kommt durch **alle acht** Riegel und liefert drei Bilder.
-- [x] Jedes Feld dieses Tages einmal **an der Naht** nachgesehen: `rahmung`,
-      `komposition`, `sonne`, `geraeteweg`, `erreichbarkeit`, `doppelt_von`, `bild_png`,
-      `habs_ansichten`, `vertragsvorgaben`. *Ein Feld, das nur im Baustein existiert, ist
-      die tote Kante von morgen.*
-- [x] Jeder Riegel auch einzeln an der **ganzen** Kette: zu weite Rahmung, Kamera über
-      dem Dach, Abbestellung, drei gleiche Ansichten, halbes Zwischenbild.
-
-**Und er hat sofort etwas gefunden, das kein Bausteintest sah:** `hole_einen` reichte
-`uebersprungen` **nicht** an `bruecke.schreibe_ergebnis` durch. Im Vertragsergebnis eines
-abbestellten Auftrags stand damit «keine QA gelaufen» — ununterscheidbar von einem
-vergessenen Lauf. *Die vierte Lage war gebaut, geprüft und an der Naht nicht
-angeschlossen.* Behoben; die Antwort trägt jetzt auch im `grund` «Abbestellt (skip: true)
-— nichts gerechnet» statt «0 Bild(er) geschrieben».
-
-*Beim Schreiben fiel zudem eine Verwechslung auf, die im Test selbst steckte:
-`antwort["ergebnis"]` ist das **Vertrags**ergebnis (`images`, `qa`), nicht unser inneres
-(`bilder`, `kameras`). Das steht jetzt als Kommentar dort, wo jemand dieselbe Annahme
-machen würde.*
+> **Abgeschlossen** — alle 3 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#ein-kettenlauf-über-alle-riegel-des-tages-26082026`](erledigt/PLAN_bis_2026-08-28.md#ein-kettenlauf-über-alle-riegel-des-tages-26082026)
 
 ---
 
 ## Der Massstabs-Riegel meldet jetzt dort, wo Bilder entstehen (26.08.2026)
+
+> **Entschieden:** Der Riegel **meldet und bricht nicht ab**, solange seine Fehlalarmrate ungemessen ist. Er steht ausserhalb der Kameraschleife, weil der Massstab eine Eigenschaft der Geometrie ist und nicht der Kamera.
+> **Gemessen:** `torwaechter` kam in `abholer.py`, `bruecke.py` und `tools/abholen.py` **nullmal** vor. Ein `verdacht_faktor` von 0,001 trifft jeden Bauteilrender, einer von 1000 auch ein einzelnes verirrtes Mesh. An 40 echten Dateien fielen zwei Modelle mit 1002 m und 1127 m auf, deren Einheit in Ordnung war.
+> **Offen:** Ein Punkt — den Abbruch scharfzuschalten. Dazu gehört die Setzung, ab welcher Fehlalarmrate ein Abbruch vertretbar ist, und die gehört dem Owner.
 
 **Der fünfte Fall desselben Owner-Einwands, und der einzige, an dem ein fertiger Riegel
 danebenstand.** `torwaechter.py` nennt den Anlass im eigenen Docstring:
@@ -3912,266 +3738,29 @@ Skalierung; sie vertauscht Kanten, ändert aber die **grösste** nicht — und g
 
 ## Die Durchreichungstabelle für `verarbeiter` (26.08.2026)
 
-**Derselbe Anlass wie an der Nachbarnaht**, nur an der Stelle, an der die GPU-Zeit
-anfällt: Am 23.08. kam die Brennweite an der Aussenkante nicht durch, obwohl sie im Kern
-längst einstellbar war; der Geländestand ebenso. *Einstellbar ist ein Versprechen, das man
-an der Naht prüft, nicht am Modul.* Für `kosmo_szene.lies_szene` gibt es die Tabelle seit
-dem 23.08. — für `verarbeiter` gab es sie nicht.
-
-Gezählt: `glb_zu_multipass` hat **18** echte Einstellungen, durchgereicht werden **12**;
-`RenderAuftrag` hat **12** Felder, gesetzt werden **7**.
-
-- [x] Vier Tabellen in `abholer.py`, unmittelbar bei der Funktion, die weitergibt — wie
-      `DURCHGEREICHT` bei `lies_szene` steht und nicht bei der empfangenden Seite. Sie
-      enthalten nur Zeichenketten und lösen keinen Import aus.
-- [x] **Sieben Absichten, vier Lücken** — und beides kommt vor. *Wäre alles «Absicht»,
-      hätte jemand die Frage weggeschrieben statt sie zu beantworten; wäre alles «Lücke»,
-      sagte die Spalte nichts.* Ein Test hält beide Zahlen.
-- [x] **Der Test prüft die Vorgabewerte gegen `inspect.signature`** und gegen
-      `dataclasses.fields` — den Schritt konnte die Nachbarnaht nicht haben. Ändert jemand
-      `beauty` auf `False` oder `timeout` auf 300, wird er rot.
-- [x] **Und gegen den Betrieb, nicht nur gegen sich selbst:** Ein Lauf mit Attrappen
-      schreibt mit, was wirklich übergeben wurde, und hält es gegen die Tabelle. *Eine
-      Tabelle, die nur sich selbst prüft, ist eine Behauptung mit Testabdeckung.*
-- [x] `tests/test_durchreichung_verarbeiter.py` (31 Fälle).
-
-### Die vier Lücken, und jede hat schon eine Adresse
-
-| Lücke | Warum sie eine ist | Wo sie hängt |
-|---|---|---|
-| **`kamera_huellbox`** | Der Docstring von `glb_zu_multipass` sagt selbst, dass sie nötig ist, sobald Gelände in der Szene liegt (6,9 % statt 21,9 % Geometrieanteil). *`verarbeiter` bricht Läufe wegen zu weiter Rahmung ab und reicht dem Runner nie die Box, die die Rahmung heilen würde.* | `auf-41` — die Box entsteht **im** Multipass, gebraucht wird sie **davor** |
-| **`schritte`** | `backbone.py` sagt zu `z-image-turbo` wörtlich «auf **8** Schritte trainiert». Der Vorgabewert ist **20**, und es gibt am Backbone-Eintrag kein Feld, über das die 8 je greifen könnten — 2,5-fache Rechenzeit gegen eine dokumentierte Modellangabe | `auf-44` (F5) |
-| **`denoise`** | Der Bildbearbeitungsmodus ist auf diesem Weg **immer** an; `denoise` bestimmt damit, wieviel vom Blender-Render überlebt, **und** die Zahl der wirklich gerechneten Schritte. Die Bestellung kann `faithful` abbilden, diesen zweiten, gleich starken Regler nicht | `auf-44` (F5) |
-| **`timeout`** | Gekoppelt: `samples` kommt **ungeprüft** aus der Bestellung, der Zeitdeckel ist fest bei 900 s. Eine Bestellung mit hohen Samples killt ihren eigenen Lauf — der eine Regler ist bestellbar, der andere nicht | offen; braucht eine Messung, wie lange ein Multipass **je Sample** dauert |
-
-**Eine Korrektur an der eigenen Zählung:** Zuerst hatte ich fünf nicht durchgereichte
-Multipass-Parameter gezählt. Es sind **sechs** — `shift_y` fehlte, und die Gegenprüfung hat
-es gefunden. *Die Zahl steht jetzt in einem Test und nicht in einer Erinnerung.*
+> **Abgeschlossen** — alle 5 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#die-durchreichungstabelle-für-verarbeiter-26082026`](erledigt/PLAN_bis_2026-08-28.md#die-durchreichungstabelle-für-verarbeiter-26082026)
 
 ---
 
 ## Die Werkzeugnaht endete im Nichts (26.08.2026)
 
-**Der Befund, gezählt und nicht vermutet.** `werkzeuge.enqueue_render` — der MCP-Einlass,
-also der Weg, den ein Knoten in KosmoOrbit nimmt — legte den Auftrag unter
-`job_verzeichnis()` ab. `grep -rn "job_verzeichnis\|lies_job"` über `src` und `tools`
-ergab **genau einen** Leser: `query_render`, die Statusabfrage. Der Abholer las die
-Brücke, `homeworker.py` das Repo.
-
-> Ein Knoten in KosmoOrbit konnte einen Render bestellen, und niemand führte ihn aus.
-> Mit Freigabe ging der Auftrag sogar auf `queued` — er sah aus, als sei er unterwegs.
-
-*Dieselbe Sorte Befund wie die neun toten Kanten dieser Woche, nur an der Naht, die uns
-überhaupt erst zu einem Teil von KosmoOrbit macht.* Und sie war die ganze Woche über
-sichtbar: Der Torwächter hing an genau diesem Einlass, und dass dort niemand weiterlas,
-ist keinem aufgefallen — auch mir nicht, als ich am selben Tag fünf andere Stellen
-derselben Art gefunden habe.
-
-- [x] **Eine zweite Quelle statt eines zweiten Ausführers** (`src/aiimaging/eigene_quelle.py`).
-      Der Abholer trägt die Riegel, die Kameraschleife, die Startwertauswahl und die
-      Doppel-QA. Ein zweiter Ausführer hätte einen zweiten Satz Zusagen, und der läuft
-      auseinander, sobald jemand nur einen davon pflegt. *Regel 4 sagt dasselbe: Die
-      MCP-Schicht ist Übersetzung, keine Logik.*
-- [x] **Der Quellenvertrag sind acht Namen** — `QUELLEN_FEHLER`, `STATUS_RUNNING`,
-      `STATUS_ERROR`, `offene_auftraege`, `laufzettel_pfad`, `lies_auftrag`,
-      `setze_status`, `schreibe_ergebnis`. `bruecke` und `eigene_quelle` führen beide alle
-      acht; ein Test hält es fest.
-- [x] `abholer.hole_einen/durchgang/waisen` nehmen `quelle=…`, **Vorgabe bleibt die
-      Brücke** — jeder bestehende Aufruf trägt unverändert. Auch das steht unter einem Test.
-- [x] `tools/abholen.py --eigener-store` und die Zeile in `betrieb/kosmo-abholer.service`.
-      *Ohne die Unit läuft der Anschluss nur von Hand — und eine Naht, die nur unter
-      Aufsicht trägt, trägt nicht.*
-- [x] `tests/test_eigene_quelle.py` fährt den ganzen Weg von `enqueue_render` bis zum
-      geschriebenen `render-result.json`; nur der Renderlauf ist eine Attrappe.
-
-### Drei Dinge, die dabei mit auffielen
-
-- [x] **Zwei Vorgaben für dieselbe Sache.** Der MCP-Einlass setzte 512 px und 16 Samples,
-      der Vertrag 1600 × 1000 und 128. *Derselbe Auftrag ergab je nach Weg ein anderes
-      Bild, und nirgends stand das.* Der Einlass setzt jetzt nichts mehr; es gibt eine
-      Stelle für eine Vorgabe, und das ist der Vertrag.
-- [x] **Die Hochachse verfiel an der Naht.** Unser Einlass verlangt `up_axis` bei
-      glb-Eingang als **Pflicht** — `kosmovis.render-scene/v1` hat kein Feld dafür. Eine
-      Z-up-glb wäre unter der Annahme Y-up gerechnet worden: Tiefenkarte, Kamera und
-      Geometrie-QA **gemeinsam** verdreht, am einzelnen Bild nicht erkennbar. Sie reist
-      jetzt **neben** der Szene (`kosmo_naht.NICHT_IM_VERTRAG`), schlägt die Annahme, und
-      der Bericht sagt, ob sie bestellt oder angenommen war.
-- [x] Aufträge lagen **flach** nebeneinander; Befund und Vertragsergebnis hätten keinen
-      Ort gehabt. Jeder Auftrag hat jetzt seinen Ordner, wie bei der Brücke.
-
-### Und was das Werkzeug NICHT finden konnte
-
-Nachgeprüft: `tools/tote_kanten.py` hat `enqueue_render` **nie** gemeldet — weder vorher
-noch nachher. Es war immer erreichbar, über die Werkzeugtabelle des MCP-Servers.
-
-*Der Sackgassenbefund lag einen Schritt weiter:* Die Funktion lief, und das, was sie
-schrieb, las niemand. **Das Werkzeug misst die Erreichbarkeit von Funktionen, nicht die
-von Wegen.** Ein Weg, dessen letzte Funktion sauber aufgerufen wird und dessen Ergebnis in
-einem Verzeichnis endet, das kein Leser hat, ist für dieses Werkzeug unsichtbar.
-
-Das ist kein Fehler des Werkzeugs, sondern seine Grenze — und sie gehört benannt, damit
-niemand aus einem leeren Bericht auf einen geschlossenen Weg schliesst. Gefunden wurde der
-Befund durch eine andere Frage: *Wer liest dieses Verzeichnis?* Ein `grep` nach dem
-**Datenort**, nicht nach dem Funktionsnamen.
-
-
-### Die Riegeltabelle
-
-- [x] `abholer.RIEGEL` — welcher Riegel auf welchem Weg läuft, mit **Pflicht zur
-      Begründung**, sobald einer nur einseitig greift. Genau einer ist es: der Torwächter
-      am MCP-Einlass, und zwar an der Stelle, die es nur dort gibt — er entscheidet, ob
-      ein Auftrag **überhaupt entsteht**. Bei der Brücke liegt der Auftrag schon, wenn wir
-      ihn sehen; dort ist der Massstab eine Meldung.
-- [x] **Von der anderen Seite gezählt:** Der Test sucht per `ast` jede Funktion in
-      `abholer`, die ein `abbruch`-Feld führt, und verlangt sie in `RIEGEL` **oder** in
-      `KEINE_RIEGEL` — mit Grund. «Steht nirgends» ist die bequemste Auskunft und die
-      einzige, die nicht vorgesehen ist.
-
-### Was die Mutationsproben gefunden haben
-
-Neun Proben, und **eine hat überlebt**: Die erste Fassung prüfte nur, dass
-`lies_auftrag` die Hochachse heraussagt — `verarbeiter` durfte sie danach wegwerfen, ohne
-dass ein Test rot wurde. *Genau die Form, gegen die dieses Projekt antritt: Der Wert kommt
-an der Naht an und fällt einen Schritt später heraus.* Die Probe hat den Test verbessert,
-nicht den Code.
-
-Und eine zweite, an der Aussenkante: Wird die Zeile, die die zweite Ablage in
-`tools/abholen.py` anhängt, wieder entfernt, blieb **alles grün**. Vier Tests in
-`tests/test_abholen_cli.py` decken das jetzt ab. *Der Anschluss liegt in der Bibliothek,
-gefahren wird er vom Einstieg — und nur dort ist er prüfbar.*
-
-**Eine Lehre über das Vorgehen:** `git checkout` stellt eine **unverfolgte** Datei nicht
-wieder her. Drei Proben am neuen Entwurfsblatt haben sich darum übereinandergelegt, und
-ich musste sie von Hand zurückdrehen. *Neue Dateien werden vor der ersten Mutationsprobe
-eingecheckt.* Derselbe Fehler wie beim README am Vormittag, in anderer Verkleidung.
+> **Abgeschlossen** — alle 10 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#die-werkzeugnaht-endete-im-nichts-26082026`](erledigt/PLAN_bis_2026-08-28.md#die-werkzeugnaht-endete-im-nichts-26082026)
 
 ---
 
 ## Der Einbau bekommt einen Stand, die Oberfläche einen Entwurf (26.08.2026)
 
-**Der Anlass ist eine Aufstellung, die stimmte, als sie geschrieben wurde.**
-`docs/COCKPIT_BESTAND_2026-08-19.md` §4 listet den Weg in KosmoOrbit vollständig auf —
-A1…A8 und B1…B7. Sieben Tage später waren **vier Posten still erledigt** (A1, A2, A3, B4)
-und mehrere still offen, und niemand konnte sagen, welche. Gleichzeitig trug `README.md`
-den entgegengesetzten Fehler: *«Registrierung nicht ausgeführt»*, während Sitzung 07
-Kap. 26 den Server als registriert protokolliert (`id d99fcf67`).
-
-- [x] `docs/EINBAU_STAND.md` — jeder Posten mit **Zustand, Datum, Beleg** und dem Auftrag,
-      der ihn treibt. Zwei Posten sind neu und standen am 19.08. auf keiner Liste: **A9**
-      (die Registrierung liegt acht Tage und ein Werkzeug zurück) und **B8** (der Weg, den
-      niemand las).
-- [x] `tests/test_einbau_stand.py` — ein erledigter Posten nennt einen Beleg, **den es
-      gibt**; ein offener nennt einen Auftrag, der **offen liegt**, oder ausdrücklich
-      «niemand». Belege dürfen auf Dateien **oder Symbole** zeigen; das Symbol ist der
-      schärfere Beleg, weil eine Datei bleiben kann, während die Funktion darin verschwindet.
-- [x] `docs/OBERFLAECHE_KOSMOVIS.md` — der Entwurf der Fläche, baubar ohne Rückfrage:
-      je Bedienelement das Vertragsfeld, der Bereich, die Vorgabe und was geschieht, wenn
-      es fehlt.
-- [x] **Posten A8 entschieden**, seit dem 19.08. als «Owner-Entscheid, keine technische
-      Frage» offen: Bild und QA-Wert erscheinen **in der KosmoVis-Fläche**, nicht als
-      neuer Anzeigetyp im fremden Knotenrahmen. Es ist keine neue Entscheidung, sondern
-      die Wiederholung einer getroffenen — von aussen sind wir **ein Knoten**, innen ein
-      Graph. *Der innere Graph bekommt eine innere Oberfläche.*
-- [x] `tests/test_oberflaeche_entwurf.py` hält den Entwurf gegen `DURCHGEREICHT` und
-      `STEHENGEBLIEBEN`. **Regel 1 des Entwurfs ist damit kein Vorsatz mehr:** Wer ein
-      Bedienelement für `vis.upscale`, `style.mode` oder `style.refs` entwirft, bekommt es
-      rot. Und umgekehrt zählt der Test von der anderen Seite — jedes wirkungslose Feld
-      muss im Entwurf **vorkommen**, sonst verschweigt die Oberfläche, dass es fehlt.
-
-### Was die Vakuumprobe fand — und was sie an sich selbst fand
-
-Zwei neue Zusicherungen dieses Abends waren **vakuum-wahr**, und beide sind behoben:
-
-* `test_die_kurzform_meldet_eine_gedrehte_geometrie` prüfte, dass drei Fälle **schweigen**
-  — für den Fall `{}` war das eine Zusicherung über eine leere Sammlung. Die schweigenden
-  Fälle tragen jetzt einen Befundteil, der nachweislich eine Zeile erzeugt; erst dann ist
-  «und keine davon sagt GEDREHT» eine Aussage.
-* `test_jeder_beleg_zeigt_auf_etwas_das_es_gibt` prüft nichts für die **sechs** Zeilen, die
-  gar keinen Pfad nennen (sie berufen sich auf ein Symbol oder auf «niemand»). Jede Zeile
-  ist zwar von *irgendeiner* der drei Prüfungen erfasst — aber das stand nirgends. Ein
-  Test zählt jetzt je Zeile die prüfbaren Referenzen, zwei weitere sind die **Gegenprobe**
-  am selben Mechanismus.
-
-**Und ein Befund über das Werkzeug selbst.** Die Probe meldete beide neuen Tests als
-*«schon vor dem Umschreiben rot (NICHT gezählt)»*. Der Grund: `betrieb/` stand nicht in
-`MITKOPIEREN`, und `docs/EINBAU_STAND.md` beruft sich auf `betrieb/kosmo-abholer.service`.
-In der Arbeitskopie gab es die Datei nicht, der Wächter war dort rot — und ein vorher
-roter Test zählt nicht mehr als Treffer.
-
-*Die Probe war an dieser Stelle blind und hat es gesagt.* Das ist der Unterschied zu dem
-Fehler vom Vormittag, bei dem sie zwölf Treffer auf null meldete, ohne dass sich etwas
-geändert hatte. `betrieb` und `integrations` sind jetzt in der Liste, und ein Test hält
-fest, dass jeder Eintrag darin auch wirklich existiert. **Treffer wieder 12, unverändert.**
-
-### Der Satz, an dem dieser Entwurf hängt
-
-Aus dem Demoplan vom 18.08.: *«Die Vision beschreibt ein Produkt, und ein Produkt zeigt
-Bilder, keine Messwerte.»*
-
-**Der Forschungskern dieser Arbeit ist genau das, was eine Produktoberfläche wegräumen
-möchte.** Trägt die Fläche die Geometriezahl nicht, ist die Messung im Produkt unsichtbar;
-trägt sie sie als grünes Abzeichen, ist es schlimmer — die Schwelle ist nicht kalibriert,
-und `aiimaging_capabilities` sagt das selbst mit. Darum stehen die Vorbehalte im Entwurf
-**an der Zahl** und nicht in einer Fussnote, und darum kennt die Anzeige **drei** Zustände
-und nicht zwei.
-
-*Die Spannung, die der Entwurf offenlässt und nicht auflöst:* Zeigt die Fläche mehrere
-Varianten, wählt der Mensch nach Aussehen — und das ist genau die Entscheidung, gegen die
-die Geometrie-Messung gebaut ist.
+> **Abgeschlossen** — alle 5 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#der-einbau-bekommt-einen-stand-die-oberfläche-einen-entwurf-26082026`](erledigt/PLAN_bis_2026-08-28.md#der-einbau-bekommt-einen-stand-die-oberfläche-einen-entwurf-26082026)
 
 ---
 
 ## Die Geländeregel belegt ihren Nullbefund (26.08.2026, abends)
 
-**Der Anlass kommt von der HomeStation** (`auf-47`), und der Einwand sitzt:
-
-> *«Er verlangt, dass der Besteller VORHER weiss, dass kein Gelände in der Szene ist. Bei
-> einer fremden glb weiss er das nicht.»*
-
-Dazu ihr Vorschlag: *«Die Geräteregel könnte ihren Nullbefund selbst belegen, indem sie
-meldet, WELCHE Baustoffe sie geprüft hat.»*
-
-**Der Punkt trifft eine Verwechslung, die dieses Projekt sonst überall auseinanderhält.**
-`gelaende_erkannt: False` bedeutete zweierlei — elf lesbare Namen geprüft und keiner nach
-Gelände, oder gar nichts Lesbares vorgefunden. Beides ergab `None`, und `None` liest sich
-wie ein Fehler statt wie eine Enthaltung. *Das ist dieselbe Verwechslung wie «durchgefallen
-gegen nicht gemessen», eine Ebene tiefer.*
-
-- [x] `maske.gelaende_befund(gelaende_namen, bauwerk_namen)` — drei benannte Lagen:
-      `gelaende_gefunden`, `kein_gelaende_belegt`, `nicht_entscheidbar`. **Ohne Bild
-      befragbar**, weil die Frage vor dem Lauf gestellt gehört und nicht danach.
-- [x] `MINDESTENS_BENANNT = 2`, und die Zahl ist nicht gegriffen: Bei genau einem Eintrag
-      steht der Klumpenfall vor uns (eine 56-MB-Kontext-IFC kam als **ein** namenloses
-      Bauteil mit 502 002 Dreiecken). «Kein Gelände gefunden» wäre dort eine Aussage über
-      eine Tabelle, die gar nichts unterscheidet.
-- [x] Die **geprüften Namen wandern mit** (`gelaende_geprueft`). *Ein Nullbefund ohne
-      seine Liste ist eine Behauptung, mit ihr eine Auskunft* — genau das, worum die
-      HomeStation gebeten hat.
-- [x] `befund_kurz` nennt sie am Terminal, **selbstlöschend**: nur im Fall
-      `kein_gelaende_belegt`. Trifft die Regel oder war nichts zu lesen, schweigt die
-      Zeile wieder.
-
-### Und was ausdrücklich NICHT geändert wurde
-
-**Die Maske fällt weiterhin aus.** Das ist die unbequeme Hälfte der Antwort, und sie hat
-einen Grund, der jetzt aussprechbar ist:
-
-> Ein Nullbefund belegt, dass die **Regel** nicht angeschlagen hat — nicht, dass es kein
-> Gelände gibt. Beides fällt nur zusammen, wenn die Regel **vollständig** ist, und
-> Vollständigkeit ist an einem einzelnen Lauf nicht messbar.
-
-Ein Baustoff namens `Erdreich` oder `Humus` stünde in keiner der beiden Listen dieses
-Projekts und wäre trotzdem Gelände. Die Wortliste hat vier Einträge, und sie hat vier, weil
-jeder weitere mehrdeutig würde (`boden` machte jeden Geschossboden zu Gelände).
-
-*Was sich ändert, ist trotzdem das Entscheidende:* Der Betreiber bekommt jetzt die
-**Antwort statt der Frage**. Er liest elf Namen, findet keinen Boden darunter und setzt
-`--kein-gelaende` in Kenntnis der Lage — statt zu raten, ob die Regel versagt hat.
-
-**Für den Owner:** Ob der Nullbefund die Maske selbst tragen soll, ist eine
-Vertrauensentscheidung über die Wortliste und keine technische. Sie ist von drei Tests
-eingezäunt — eine Mutationsprobe, die die Maske im Fall `kein_gelaende_belegt` überleben
-lässt, macht sie rot. **Sie kann also nicht versehentlich passieren.**
+> **Abgeschlossen** — alle 4 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#die-geländeregel-belegt-ihren-nullbefund-26082026-abends`](erledigt/PLAN_bis_2026-08-28.md#die-geländeregel-belegt-ihren-nullbefund-26082026-abends)
 
 ---
 
@@ -4201,572 +3790,65 @@ Abzeichen ohne den Vorbehalt daneben.**
 
 ## Ein Zwischenspeicher um den Multipass — und die Messung, die ihn beinahe widerlegt hätte (26.08.2026)
 
-**Der Anlass ist eine Zahl, die vorher niemand hatte.** In dieser Umgebung gemessen
-(Blender 4.2.1 LTS, CPU, der synthetische Testbau 8 × 5 × 3 m):
-
-| Auflösung | Samples | Multipass je Kamera |
-|---|---|---|
-| 256 px | 8 | 2,1 s |
-| 800 px | 32 | 7,5 s |
-| **1600 px** | **128** | **40,0 s** ← die Vorgaben des Vertrags |
-
-Drei Kameras sind damit **zwei Minuten Blender je Auftrag** — auf einem trivialen Quader.
-Und jeder Lauf, der nur den Prompt ändert, zahlt sie erneut: Der Abholer fährt die Stufen
-als gerade Abfolge, ohne Gedächtnis. *Für eine Messreihe über Prompts oder Stilstärken ist
-das der ganze Kostenblock.*
-
-**Ende zu Ende gemessen: 27,7 s → 0,00 s**, die Tiefenkarte in voller Auflösung
-zurückgeliefert.
-
-### Die Voraussetzung, und sie wäre beinahe falsch gewesen
-
-Ein Inhalts-Cache steht und fällt damit, dass dieselbe Rechnung dasselbe Ergebnis liefert.
-Zweimal dasselbe gerechnet und verglichen:
-
-* **`ifc_zu_glb` ist bytegleich reproduzierbar.** Damit ist der Schlüssel über den
-  glb-Inhalt stabil — die Bedingung, an der ein Inhalts-Cache sonst still scheitert.
-* **`glb_zu_multipass` ist pixelgleich, aber NICHT bytegleich.** Blender stempelt die
-  Uhrzeit in jede Ausgabe: `tEXt Date` im PNG, `Date`-Attribut im EXR. Gemessen: **drei
-  von 30 659 Bytes** im EXR, **33 von 64 235** im PNG — und die Bilddaten identisch.
-
-**Die zweite Messung ist die wichtigere, und sie gilt über diesen Cache hinaus:**
-
-> *Byte-Gleichheit ist bei Blender-Ausgaben kein Mass für Gleichheit.*
-
-Hätte ich sie nicht gemacht und einen Treffer dadurch geprüft, dass ich die Ausgaben neu
-hashe, hätte der Speicher **nie** einen Treffer gehabt — und niemand hätte gesehen warum.
-Er wäre einfach folgenlos gewesen. *Dass `graph.ArtefaktCache` die **Existenz** der
-zugesagten Dateien prüft und nicht ihren Inhalt, ist damit nicht Bequemlichkeit, sondern
-das einzig Richtige.*
-
-### Was gebaut wurde — fast nur Wiederverwendung
-
-- [x] `abholer.multipass_schluessel` über **`graph.inhalts_hash`**, nicht über eine eigene
-      Rechnung. `glb_path` steht in `param_dateien`: Der **Inhalt** der glb zählt, ihr Pfad
-      nicht — ein verschobener Projektordner verwirft den Speicher sonst.
-- [x] `MULTIPASS_NICHT_IM_SCHLUESSEL` — die fünf Einstellungen, die den Betrieb ändern und
-      nicht das Bild (`out_dir`, `timeout`, `stillstand_frist_s`, `herzschlag_takt_s`,
-      `_starte`), **jede mit ihrem Grund**. Die Umkehrung von `MULTIPASS_DURCHGEREICHT`:
-      dort, was ankommt; hier, was ankommt und folgenlos ist.
-- [x] **Die Blender-Fassung steht im Schlüssel.** 4.2 und 5.2 sind zwei Renderer; ein
-      Eintrag aus 4.2 unter 5.2 zu nehmen hiesse, ein Bild zu benutzen, das dieser Rechner
-      so nie erzeugt hätte. Kostet 0,22 s, **einmal je Auftrag**.
-- [x] **Gelesen wird mit `kette._cache_maengel`** — zwei Netze übereinander, und das
-      zweite hat in Sitzung 07 den teuersten Fehler dieses Projekts gefangen: einen Eintrag
-      mit `depth_png = None`, der als Treffer galt.
-- [x] **`--zwischenspeicher` mit Regel-3-Riegel:** Die Einträge tragen absolute Pfade, ein
-      Speicher im Repo landete im nächsten Commit. Der Riegel greift **auch bei `--probe`**.
-- [x] Voreingestellt **AUS**. *Ein Gedächtnis, das niemand bestellt hat, ist die
-      unangenehmste Art von Überraschung.*
-
-### Was die Mutationsproben fanden — acht Proben, zwei Überlebende
-
-**Probe E überlebte:** Ein Treffer, der sich als «gerechnet» ausgibt, blieb grün. Mein Test
-prüfte die Meldung an einem **von Hand gebauten** Befund statt an einem echten Lauf.
-*Dieselbe Form wie beim Hochachsen-Test am selben Tag: Der Wert wird dort geprüft, wo er
-entsteht, und nicht dort, wo er ankommt.* Der Ersatz fährt die volle Kette mit Attrappen.
-
-**Probe H überlebte:** Ein unbrauchbarer Bericht wurde abgelegt. Er hätte nie getroffen —
-aber der Speicher füllte sich mit toten Einträgen, und ein gescheiterter Lauf hinterliess
-einen, der aussah wie ein gelungener.
-
-**Und ein Fund an einer Attrappe:** Die geteilte Kettenattrappe in `test_abholer.py` sagte
-seit jeher eine `depth_exr` zu und **schrieb sie nie**. Aufgefallen ist es daran, dass
-`_cache_maengel` das Ablegen verweigerte — *die Prüfung hatte recht, die Attrappe nicht.*
-Dieselbe Entscheidung wie beim Minimal-PNG heute früh (Entscheid 16): Eine Attrappe, die
-eine Datei vortäuscht, die es so nie gibt, prüft die Kette gegen eine Welt, in der sie
-nicht läuft.
-
-**Ein Fehler im Vorgehen, zum dritten Mal am selben Tag:** `git checkout` während einer
-Mutationsprobe hat eine **uneingecheckte** Korrektur verworfen — und diesmal habe ich
-zwanzig Minuten lang den falschen Fehler gesucht, weil der Test danach aus einem ganz
-anderen Grund rot blieb. *Vor jeder Probenrunde wird eingecheckt, ausnahmslos.*
-
-### Was der Speicher NICHT tut
-
-* **Er wird nicht geteilt.** Ein Eintrag zeigt auf Dateien im Ausgabeordner eines
-  bestimmten Laufs; über zwei Rechner hinweg wäre er eine Zusage ins Leere.
-* **Er nimmt `kette.py` nicht an den Produktivweg.** Zwei Bausteine daraus werden benutzt
-  (`graph.inhalts_hash`, `ArtefaktCache`) und zwei geprüft (`BEDARF`, `_cache_maengel`) —
-  der Graph-Ablauf selbst bleibt draussen, mit derselben Begründung wie vorher.
+> **Abgeschlossen** — alle 6 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#ein-zwischenspeicher-um-den-multipass--und-die-messung-die-ihn-beinahe-widerlegt-hätte-26082026`](erledigt/PLAN_bis_2026-08-28.md#ein-zwischenspeicher-um-den-multipass--und-die-messung-die-ihn-beinahe-widerlegt-hätte-26082026)
 
 ---
 
 ## Ein dritter Worker: die Oberfläche hat ab jetzt einen eigenen Empfänger (26.08.2026)
 
-**Owner-Hinweis, mitten in der Arbeit:** Ein neuer **Kosmo-UI-Worker** ist eingerichtet und
-ab sofort für die **ganze Oberfläche** von KosmoOrbit zuständig. UI-Punkte, die bei der
-eigenen Arbeit auffallen, sollen als Auftrag an ihn gehen.
-
-**Gefunden:** Session «Kosmo UI», seit 15:48 desselben Tages, und — das ist der Punkt, der
-alles einfacher macht — sie führt **unser Repo als Quelle**. Ein Auftrag in
-`auftraege/offen/` erreicht sie also über git. *Direktes Anschreiben geht von hier aus
-nicht;* der Auftragsordner ist der Kanal, und das ist ohnehin die Hausregel.
-
-- [x] `auftrag.WORKER_UI` als dritter Worker, `CLAUDE.md` entsprechend fortgeschrieben.
-      **`ui` und `cloud` bleiben getrennt, obwohl beide «drüben» sind:** Vertrag und
-      Oberfläche sind zwei Gegenstände. *Welchen Feldnamen ein QA-Block je Kamera bekommt*,
-      ist eine Vertragsfrage; *ob neben der Zahl ihr Vorbehalt steht*, eine
-      Oberflächenfrage. Beide an dieselbe Stelle zu schicken hiesse, dass eine liegen
-      bleibt, weil sie nicht zum Auftrag des Lesers gehört.
-- [x] **`auf-52` umadressiert.** Der Oberflächen-Auftrag lag seit dem Abend beim
-      Cloud-Worker — *er wäre dort liegengeblieben, nicht aus Ablehnung, sondern weil er
-      nicht mehr zu ihrem Gegenstand gehört.* Geändert wurde nur das Feld `worker` und ein
-      Vorspann, der die Umadressierung erklärt; der Auftragstext bleibt, wie er war.
-      *(Das ist keine Ausnahme von Entscheid 36 — «laufende Aufträge nicht umschreiben»
-      meint die Frage, nicht den Empfänger.)*
-- [x] `docs/UI_BEFUNDE.md` — die Sammelstelle, mit `tests/test_ui_befunde.py` darüber.
-      Jeder Befund ist **weitergegeben** (mit einem Auftrag, den es gibt, an den
-      **ui**-Worker) oder ausdrücklich **noch nicht**. Die dritte Möglichkeit — «steht da
-      und ist nie irgendwo angekommen» — gibt es nicht.
-- [x] **Acht Befunde eingetragen**, sechs davon aus früherer Arbeit dieses Tages, zwei neu:
-      `auf-53` an den UI-Worker.
-
-### Die zwei neuen Befunde, und woher sie kamen
-
-**U7 — ein Bild aus dem Zwischenspeicher muss erkennbar sein.** Entstanden beim Anschluss
-des Zwischenspeichers, eine halbe Stunde vorher. Seit heute kann die Geometriestufe aus
-einem früheren Lauf stammen; ohne Hinweis zeigt die Oberfläche ein Bild als «gerade
-entstanden», das Stunden alt ist. *Für eine Messreihe über Prompts ist das genau die
-Auskunft, die zählt.*
-
-**U8 — die Geländefrage gehört vorgelegt, nicht abverlangt.** Entstanden beim Beantworten
-der HomeStation-Rückfrage, eine Stunde vorher. Ihr Satz war: *«Er verlangt, dass der
-Besteller VORHER weiss, dass kein Gelände in der Szene ist. Bei einer fremden glb weiss er
-das nicht.»* Der Mensch vor der Oberfläche beantwortet diese Frage in zwei Sekunden — wenn
-man sie ihm **zeigt**, mit den elf geprüften Baustoffnamen daneben.
-
-**Keiner der beiden hatte mit Oberfläche zu tun, bis er es hatte.** Genau darum gibt es
-das Blatt: Ein Befund über die Anzeige entsteht immer beim Bauen von etwas anderem, und
-ohne eine Zeile, in die er sofort hineingeht, denkt man ihn beim nächsten Mal wieder.
+> **Abgeschlossen** — alle 4 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#ein-dritter-worker-die-oberfläche-hat-ab-jetzt-einen-eigenen-empfänger-26082026`](erledigt/PLAN_bis_2026-08-28.md#ein-dritter-worker-die-oberfläche-hat-ab-jetzt-einen-eigenen-empfänger-26082026)
 
 ---
 
 ## Eine Annahme der eigenen Tabelle, gemessen widerlegt (26.08.2026)
 
-In `MULTIPASS_STEHENGEBLIEBEN` stand `timeout` als **Lücke** mit dieser Begründung:
-
-> *«Eine Bestellung mit hohen Samples killt ihren eigenen Lauf nach 900 s.»*
-
-Daneben: *«Beides braucht eine Messung, wie lange ein Multipass je Sample wirklich
-dauert.»* Seit dem Zwischenspeicher ist diese Messung hier billig — also gemacht.
-
-**Blender 4.2.1 LTS, CPU, synthetischer Testbau 8 × 5 × 3 m, Kamera `sSE`:**
-
-| Samples bei 400 px | | Samples bei 800 px | | Auflösung bei 32 Samples | |
-|---|---|---|---|---|---|
-| 1 | 4,37 s | 4 | 7,58 s | 400 px | 4,37 s |
-| 4 | 4,40 s | 16 | 7,50 s | 800 px | 9,45 s |
-| 16 | 4,41 s | 64 | 11,53 s | 1600 px | 27,80 s |
-| 64 | 4,37 s | 256 | 11,54 s | | |
-| **256** | **4,36 s** | | | | |
-
-**Bei 400 px sind 1 bis 256 Samples flach innerhalb 1 %.** Und die Gegenprobe, die es
-entscheidet: Die **Pixel ändern sich jedes Mal** (Bildpunkt-Hash, nicht Dateibytes) — der
-Sampler arbeitet also mehr, es fällt nur nicht ins Gewicht. Der Aufwand steckt im
-**festen Vorlauf**: Start, glb-Import, Szenenaufbau, der zweite Durchgang für die
-Material-ID, Schreiben.
-
-> **Die Sorge war auf die falsche Grösse gerichtet.** Wer einen Lauf sprengt, tut es über
-> die **Auflösung** (16× Pixel kosten 6,4×) oder über die **Szene** — und
-> Szenenkomplexität drückt kein Bestellfeld aus. Ein Deckel, der aus der Bestellung
-> gerechnet wird, schützte gegen das Falsche.
-
-- [x] `timeout` wandert von `STEHENGEBLIEBEN` nach `DURCHGEREICHT`. **Nicht, weil jemand
-      die Tabelle aufgeräumt hätte** — weil die Begründung fiel und nur der fehlende
-      Schalter übrig blieb. Die Lücken sind damit drei statt vier.
-- [x] `verarbeiter(zeitdeckel_s=…)` und `tools/abholen.py --zeitdeckel-s`. **Immer
-      gesetzt, auch auf die Vorgabe:** «durchgereicht, wenn bestellt» wäre ein dritter
-      Zustand neben den beiden Tabellen, und gegen die dritte Möglichkeit sind sie gebaut.
-- [x] `ZEITDECKEL_S = 900` — **übernommen, nicht gemessen**, und ein Test hält ihn gegen
-      den Vorgabewert der Naht. Zwei Zahlen für dieselbe Sache laufen auseinander, sobald
-      eine gepflegt wird.
-- [x] **Der widerlegte Satz bleibt stehen**, mit dem Vermerk, dass er widerlegt ist — und
-      ein Test hält fest, dass er dort bleibt. *Fehlannahmen kommen wieder, wenn man sie
-      nur wegwischt.*
-
-### Was hier ausdrücklich NICHT gemessen ist
-
-Was von alledem auf einer **GPU** und an einem **echten Bauwerk** übrig bleibt. Genau
-diesen Fehler hat das Projekt schon gemacht, und der Vermerk steht bis heute im Code
-(`seams.BLENDER_FRIST_MIN_S`): Eine CPU-Messung wäre dort *«ein Werkzeug zur Zerstörung
-jedes Laufs über 98 Sekunden»* gewesen.
-
-`auf-54` bittet die HomeStation um dieselben zwei Reihen — und um die eine Zahl, die alles
-einordnet: **wie lange ein Lauf mit minimalen Einstellungen dauert.** Ist ihr fester
-Vorlauf klein gegen die Renderzeit, gilt unsere Folgerung für sie **nicht**, und dann
-brauchen wir doch einen mitwachsenden Deckel — aus ihren Zahlen, nicht aus unseren.
+> **Abgeschlossen** — alle 4 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#eine-annahme-der-eigenen-tabelle-gemessen-widerlegt-26082026`](erledigt/PLAN_bis_2026-08-28.md#eine-annahme-der-eigenen-tabelle-gemessen-widerlegt-26082026)
 
 ---
 
 ## Ein zweites Bauwerk — und die Messung von vorhin hält daran (26.08.2026)
 
-**Die Schwäche der Messung von einer Stunde vorher war ihre Szene.** «Samples kosten
-fast nichts» stand auf **einem Quader mit sechs Bauteilen**. Die HomeStation hatte
-denselben Punkt schon benannt, ohne ihn auf uns zu münzen — über ihr eigenes Modell:
-
-> *«Es ist KEIN glatter Quader. Es hat Auskragungen, ein Stuetzenraster, eine gegliederte
-> Huelle und einen Kern — also genau die Merkmale, an denen sich eine Geometriepruefung
-> bewaehren muss.»*
-
-**Ihr Modell dürfen wir nicht haben (Regel 3). Die Merkmale schon** — und Regel 3 verlangt
-Testdaten, die im Repo erzeugbar sind.
-
-- [x] `tools/make_test_ifc.py --hochbau`: **141 Bauteile** statt sechs, fünf Geschosse,
-      3 × 3 Stützenraster je Geschoss, ein Kern aus vier Wänden, 14 Fassadentafeln je
-      Geschoss **mit Fugen**, und eine Auskragung ab dem vierten Geschoss.
-      Hüllbox **12,0 × 9,5 × 15,0 m** — die 9,5 gegen 8,0 Grundrisstiefe ist die
-      Auskragung, und sie ist das Merkmal, das *Hülle* von *Grundriss* abkoppelt.
-- [x] **Reine Komposition aus `_quader`** — kein neuer Geometriecode. Ein zweiter
-      Geometriepfad wäre eine zweite Fehlerquelle; geprüft werden soll die Gliederung,
-      nicht die Extrusion.
-- [x] **Additiv.** Der Vorgabe-Quader bleibt Zeile für Zeile, wie er war — nur der
-      Dateiname im Kopf unterscheidet sich. Ein Test hält das fest, denn der Modulkopf
-      sagt es selbst: *«Eine stillschweigend geänderte Testgeometrie macht eine Messreihe
-      unbrauchbar, ohne dass es auffällt.»*
-- [x] **Vom echten Schemaprüfer beurteilt**, in IFC4 **und** IFC2X3: null Fehler. Genau
-      dieser Weg hat an der ersten Fixture dreizehn Fehler gefunden, die beim Zählen von
-      Attributen unsichtbar waren.
-- [x] **Kein Bauteilname trifft die Geländeregel** — unter einem Test. `IfcWall_Site-A`
-      gälte ihr als Gelände; eine so benannte Wand fiele aus der Bauwerksmaske.
-
-### Und die Gegenprobe zur eigenen Messung
-
-Dieselben Reihen auf dem gegliederten Bau (141 Teile) gegen den Quader (6 Teile):
-
-| | Quader | Hochbau |
-|---|---|---|
-| 400 px, 4 → 256 Samples | 4,40 → 4,36 s | 4,41 → 4,37 s |
-| 800 px, 4 → 256 Samples | 7,58 → 11,54 s (1,5×) | 7,57 → 13,44 s (1,8×) |
-| 32 Samples, 400 → 1600 px | 4,37 → 27,80 s (6,4×) | 4,37 → 30,25 s (6,9×) |
-
-**Der Befund hält — und er wird um eine Überraschung reicher:** *Auch die Zahl der
-Bauteile treibt die Kosten kaum.* 23-mal so viele Teile, 1692 statt 12 Dreiecke, und der
-Multipass kostet fast dasselbe. Bei diesen Grössen entscheidet die **Auflösung**, sonst
-nichts.
-
-*Ein Ausreisser bleibt ungeglättet stehen:* Der allererste Lauf der Reihe brauchte 6,38 s
-statt 4,4 — Blender-Anlauf. Genau das habe ich der HomeStation in `auf-54` untersagt
-(«Zahlen nicht glätten»), also steht er hier.
-
-**Was weiterhin ungemessen ist:** GPU, und eine Szene in der Grössenordnung ihres Modells
-(511 Teile, 11 Geschosse). Der Hochbau schliesst die Lücke zwischen Quader und Wirklichkeit
-zur Hälfte, nicht ganz.
+> **Abgeschlossen** — alle 5 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#ein-zweites-bauwerk--und-die-messung-von-vorhin-hält-daran-26082026`](erledigt/PLAN_bis_2026-08-28.md#ein-zweites-bauwerk--und-die-messung-von-vorhin-hält-daran-26082026)
 
 ---
 
 ## Die schärfste der Lücken bekommt eine Zahl (26.08.2026)
 
-`kamera_huellbox` stand seit dem 23.08. als **schärfste** der offenen Lücken da: *«Der
-Abholer bricht Läufe wegen zu weiter Rahmung ab und reicht dem Runner nie die Box, die
-die Rahmung heilen würde.»* Der Grund, warum sie liegen blieb, war ein Henne-Ei:
-**die Box entsteht IM Multipass und wird DAVOR gebraucht.**
-
-Mit dem gegliederten Testbau von vorhin lässt sich der Fall zum ersten Mal hier bauen —
-`--hochbau --gelaende` ergibt eine 20 × 20 m Szene um ein 12 × 9,5 × 15 m Bauwerk.
-
-**Gemessen** (Kamera `sSE`, 400 px, über `maske.bauwerksmaske_aus_lauf`):
-
-| | `anteil_bauwerk` |
-|---|---|
-| ohne `kamera_huellbox` | **0,0788** |
-| mit `kamera_huellbox` | **0,1730** |
-
-**Faktor 2,2.** Dieselbe Grössenordnung, die der Docstring von `glb_zu_multipass` seit
-jeher behauptet (6,9 % gegen 21,9 %) — jetzt an einer Szene, die im Repo entsteht.
-
-- [x] **Der Schalter ist durchgereicht:** `verarbeiter(kamera_huellbox=…)`. `None` heisst
-      nicht angefasst; jeder bisherige Lauf bleibt reproduzierbar. Die Lücken der
-      Durchreichungstabellen sind damit **zwei** statt vier — beide übrigen warten auf
-      `auf-44`.
-
-### Und ein Befund, der beim Messen abfiel
-
-Der Eintrag nannte den IFC-Report als möglichen Weg zur Box («führt `bbox_bauwerk` seit
-dem 24.08. ebenfalls»). **Nachgemessen ist er auf genau diesem Fall falsch:**
-
-    bbox         (Szene):   [[-6, -7.5, -0.3], [14, 12.5, 15]]
-    bbox_bauwerk (Bauwerk): [[-6, -7.5, -0.3], [14, 12.5, 15]]     ← identisch
-
-Sein Typfilter ist `("IfcSite",)`; die Geländeplatte ist ein `IfcSlab` namens `Gelaende`
-und fällt nicht darunter. *Die **Blender**-Seite trifft es richtig* — sie liest den
-Objektnamen, und der trägt seit heute früh den IFC-Namen:
-
-    bbox_bauwerk (Blender):  [[0, 0, -0.25], [12, 9.5, 15]]        ← das Bauwerk
-
-**Damit ist Weg (c) vom Tisch, ohne dass jemand ihn hätte ausprobieren müssen.** Die drei
-Wege stehen jetzt mit ihren Preisen am Aufrufort:
-
-* **(a) ein zweiter Blender-Lauf je Kamera** — verdoppelt die Blenderzeit, rund 80 s statt
-  40 s bei Vertragsvorgaben. *Mit dem Zwischenspeicher zahlt man das nur beim **ersten**
-  Auftrag einer Geometrie* — bei einer Messreihe über Prompts also genau einmal.
-* **(b) ein leichter Runner**, der die glb nur lädt und die Box nach der Namensregel
-  rechnet — gibt es nicht, geschätzt 1–2 s, gemessen nichts.
-* **(c) der IFC-Report** — auf diesem Fall gemessen falsch, siehe oben.
-
-Der Entscheid liegt bei `auf-41` (G3). *Was sich geändert hat, ist nicht die Frage,
-sondern ihre Grundlage:* Sie hat jetzt eine Wirkungszahl, drei Preise und einen Weg
-weniger.
+> **Abgeschlossen** — alle 1 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#die-schärfste-der-lücken-bekommt-eine-zahl-26082026`](erledigt/PLAN_bis_2026-08-28.md#die-schärfste-der-lücken-bekommt-eine-zahl-26082026)
 
 ---
 
 ## Der Deckel liegt nicht in der Regel — er liegt im Schätzer (26.08.2026)
 
-**Die erste Aufgabe aus Strang A des neuen Plans, und sie kippt eine offene Frage.**
-
-In `PLAN.md` stand seit dem 18.08.: *«Den Rest des Deckels — trägt eine Kombination
-(`ohne_randberuehrung` plus `rand_10`)?»* Die Frage zielt auf die **Silhouettenregel**.
-Nachgemessen — ohne GPU, an im Repo erzeugter Geometrie: **die Regel ist es nicht.**
-
-- [x] `src/aiimaging/deckelstudie.py` + `tests/test_deckelstudie.py` +
-      `docs/DECKELSTUDIE_2026-08-26.md`.
-
-### Die Regel erreicht 0.9999
-
-Ein perfekter Schätzer lässt sich nachstellen: Blenders eigene Tiefe aus dem
-normalisierten PNG — richtige Werte, **keine Hintergrundmarke**, genau wie eine
-Schätzerkarte.
-
-| Szene | Geometrieanteil | `wie_soll` | `ohne_randberuehrung` |
-|---|---|---|---|
-| Quader | 0.1111 | **0.9999** | 0.9999 |
-| Hochbau (141 Teile) | 0.1730 | **0.9998** | 0.9999 |
-| Hochbau mit Gelände | 0.0822 | **0.9977** | 0.9989 |
-
-Die Produktion deckelt bei **0.406**.
-
-### Und woran im Schätzer — zwei Fehler, einzeln aufgebracht
-
-**A · Rauschen nur auf der Geometrie** (Hintergrund perfekt): Selbst bei |rho| **0.393**
-bleibt IoU bei **0.7653**. Die Regel ist gegen Ordnungsfehler *innerhalb* der Geometrie
-robust.
-
-**B · Der Hintergrund rückt in den Wertebereich des Bauwerks** (Geometrie unangetastet):
-|rho| bleibt bei **exakt 1.0000**, IoU fällt 0.9998 → 0.4983 → **0.0000**.
-
-### Die Erklärung, und sie passt auf die Zahl
-
-Gemessen wurde |spearman| **0.990** bei geom_iou **0.406**. Nach A gehörte zu 0.99 ein IoU
-von 0.99 — Ordnungsrauschen erklärt es *nicht*. Nach B gehört zu 0.406 ein Hintergrund bei
-rund **0.56** der Bauwerksspanne.
-
-> **Der Schätzer legt den Himmel mitten in die Tiefenspanne des Bauwerks.**
-
-Keine Ungenauigkeit, sondern eine Eigenschaft **relativer** Tiefenschätzer: Sie bilden auf
-einen beschränkten Bereich ab und haben für *unendlich weit* keinen Wert.
-
-### Was daraus folgt
-
-**Die offene Aufgabe ist beantwortet — mit nein.** Keine Silhouettenregel, die allein die
-Schätzerwerte liest, kann das beheben; `ohne_randberuehrung` hebt 0.256 auf 0.406, weil sie
-randberührende Flächen verwirft, und das erklärt genau die Grössenordnung des Gewinns.
-
-**Drei Wege stehen offen, und die Wahl gehört dem Owner** — sie berührt die
-Forschungsfrage. Jeder hat einen benannten Preis (Details im Studiendokument):
-
-1. Eine Hintergrundtrennung **ausserhalb** der Schätzerwerte — zweites Modell, Lizenzfrage.
-2. `geom_iou` gegen den je Szene erreichbaren Deckel **normalisieren** — dann bedeutet die
-   Schwelle je Szene etwas anderes.
-3. `geom_iou` **aus dem Score nehmen**, auf `rho_maske` stützen — *Fall B zeigt, dass sie
-   von diesem Fehler gar nicht betroffen ist.* Preis: `geom_iou` fängt heute den Fall, den
-   `rho_maske` nicht sieht — ein Bauwerk an der **falschen Stelle** mit richtiger
-   Tiefenordnung.
-
-### Die Studie ist widerlegbar, und das ist ihr Kern
-
-`deckelstudie.wo_liegt_der_himmel` gibt die eine Zahl, aus der alles folgt.
-**Vorhersage: bei einem echten Schätzerlauf liegt sie zwischen 0,55 und 0,60.**
-Beauftragt als `auf-55`. *Fällt sie deutlich anders aus, wird die Erklärung
-zurückgenommen und nicht nachjustiert.*
-
-### Was die Mutationsproben fanden
-
-Vier Proben, **eine überlebte zweimal**: Der Median in `wo_liegt_der_himmel` liess sich
-durch das Minimum ersetzen, ohne dass etwas rot wurde — weil meine Testszene einen
-**konstanten** Hintergrund hatte und Median, Minimum und Maximum dort zusammenfallen.
-
-*Das ist das Messinstrument der Vorhersage.* Hätte es das Minimum gemessen, wäre die
-Vorhersage systematisch zu niedrig und ihre Widerlegung wertlos gewesen. Der zweite Anlauf
-mit einem gestreuten Hintergrund fiel wieder durch — er war zu weit gefasst. Erst der
-dritte, mit drei getrennten Dritteln, fällt bei Minimum **und** Maximum.
+> **Abgeschlossen** — alle 1 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#der-deckel-liegt-nicht-in-der-regel--er-liegt-im-schätzer-26082026`](erledigt/PLAN_bis_2026-08-28.md#der-deckel-liegt-nicht-in-der-regel--er-liegt-im-schätzer-26082026)
 
 ---
 
 ## Die Schwellenstudie steht auf echter Geometrie (26.08.2026)
 
-**Die zweite Aufgabe aus Strang A. Sie bestätigt zwei Befunde, kippt einen Zusatz und
-findet einen vierten, den die synthetische Szene nicht zeigen konnte.**
-
-Die Studie vom 18.08. stand auf einer synthetischen 64 × 64-Karte mit **44 %**
-Geometrieanteil. Unsere echten Szenen liegen bei **8 bis 17 %**, und `geom_iou` hängt am
-Geometrieanteil. Der Docstring der Testszene sagte selbst, was fehlte — *«die Studie nimmt
-jede Karte»* — und es war ein Austausch der Eingabe, kein Umbau: `HINTERGRUND_M` ist
-`1.0e10`, genau der Wert, den Cycles schreibt.
-
-- [x] `schwellenstudie.studie_aus_bericht` + `tests/test_schwellenstudie_echt.py` +
-      `docs/SCHWELLENSTUDIE_ECHT_2026-08-26.md`. Drei Szenen à 56 Zeilen, 400 × 400,
-      13 bis 17 Sekunden je Szene — die Auflösung musste **nicht** sinken.
-
-### Befund 1 · Rangbasiertheit — hält
-
-Exakt **1,000** auf allen drei echten Szenen. Am 18.08. schien diese Kontrolle zu
-scheitern, und schuld war die Szene (1837 Bindungen auf 1936 Punkte). Eine Blender-Karte
-hat das Problem nicht; die Kontrolle steht ohne Nachhilfe.
-
-### Befund 2 · «0,65 ist zu milde» — hält, aber sein Zusatz kippt
-
-| Szene | Anteil | Treffer bei 0,65 | beste Schwelle | bei 0,85 zu Unrecht gesperrt |
-|---|---|---|---|---|
-| synthetisch 64² | 0,4727 | 0,438 | 0,90 | **0** |
-| synthetisch 400² *(Kontrolle)* | 0,4489 | 0,400 | 0,90 | **0** |
-| Quader | 0,1111 | 0,529 | 0,90 | **2** |
-| Hochbau | 0,1730 | 0,514 | 0,85 | **1** |
-| Hochbau mit Gelände | 0,0822 | 0,686 | 0,80 | **4** |
-
-Am 18.08. stand: *«Bis einschliesslich 0,85 wird kein einziger treuer Fall gesperrt — die
-Schwelle anzuheben kostet auf dieser Szene nichts.»* Der Vorbehalt *«auf dieser Szene»*
-trägt: Auf echter Geometrie kostet derselbe Schritt einen bis vier treue Fälle, und alle
-sieben liegen bei Stärke 0,2, also genau an der gesetzten Grenze.
-
-**Die beste Schwelle ist keine Konstante mehr**, sie streut über 0,10. Ein Zusammenhang
-mit dem Geometrieanteil allein besteht **nicht** — der Quader hat den zweitkleinsten
-Anteil und die höchste beste Schwelle.
-
-**Die Kontrollzeile ist der Grund, warum das etwas heisst:** Dieselbe synthetische Szene
-bei 400 × 400 liefert unverändert 0,90 und null zu Unrecht gesperrte Fälle. Die
-Verschiebung liegt an der Szene, nicht am Bildmass. *(Und die 64²-Zeile stimmt Ziffer für
-Ziffer mit dem 18.08. überein — die erste Studie ist unabhängig reproduziert.)*
-
-### Befund 3 · «Verlorene Gliederung kostet vier Tausendstel» — bestätigt und umbenannt
-
-Am Hochbau mit Tafeln, Fugen, Stützenraster und Auskragung kostet vollständige Glättung
-**22 Millionstel** — die synthetische Szene verliert bei gleicher Auflösung 680.
-
-Der Grund ist nicht Grosszügigkeit der Metrik. Was sie verliert, richtet sich nach dem
-**grössten Tiefensprung** der Szene, und die Reihenfolge stimmt über alle vier:
-Quader (2,2 % der Spanne → 9 Millionstel), Hochbau (19,2 % → 22), synthetisch (28,3 % →
-680), Hochbau mit Gelände (31,2 % → 5391).
-
-> **Fassadengliederung ist kein Tiefensprung.** Eine 0,10-m-Fuge ist 1,1 % der Tiefenspanne
-> des Hochbaus. Eine Rangkorrelation über die ganze Silhouette bewegt das nicht.
-
-### Der vierte Punkt · nicht monoton — und die Berichtigung dazu
-
-Die Kurve von `verschiebung` ist **nicht monoton**: Läuft `spearman` durch null, geht der
-Score gegen null und **steigt danach wieder**, weil er den Betrag nimmt.
-
-| Szene | Stärke | `spearman` | Score |
-|---|---|---|---|
-| Hochbau | 0,5 | +0,334 | 0,437 |
-| Hochbau | 0,7 | **−0,030** | **0,117** |
-| Hochbau | 1,0 | **−0,294** | **0,306** |
-
-**Das ist NICHT neu, und die erste Fassung dieses Eintrags hat es dafür ausgegeben.**
-`geometrie_qa.geometrie_gate` hält es seit dem **20.08.2026** mit eigener Messung fest
-(`auf-20260820-23`: 2 m Versatz 0.1191, 4 m Versatz 0.2301). Neu ist allein, dass die
-Studie selbst hineinläuft — auf der synthetischen Szene bleibt `spearman` bis Stärke 1,0
-positiv (+0,780), bei **beiden** Auflösungen. *Eine Studie, die den Fehler ihrer eigenen
-Metrik nicht erreicht, meldet ihn nicht.*
-
-**Die zweite Berichtigung wiegt schwerer.** Ich hatte geschrieben, `auf-47`s 0.7177 könne
-ein `abs()`-Artefakt sein, weil `spearman` dort −0.7325 ist. Nachgesehen statt vermutet:
-
-* `GEMESSENE_POLARITAET` hält fest, dass `depth-anything-v2-small` gegen unsere Soll-Karte
-  **Disparität** liefert (−1) — an **24 Läufen auf zwei Szenen** gemessen. Ein negatives
-  `spearman` ist damit der **erwartete** Fall.
-* Die gerichtete Rechnung ergibt Ziffer für Ziffer dieselbe Zahl: **0.7176** gegen 0.7176,
-  und 0.6804 gegen 0.6804. **Kein Artefakt.**
-
-**Nullbefund dazu:** Die beiden Rechnungen unterscheiden sich nur bei **positivem** `rho`.
-`docs/GEOM_IOU_HALLUZINATION_2026-08-21.md` führt 14 Läufe mit Vorzeichen; zwei haben
-positives `rho` (H3 +0.127 bei Score 0.1842, Versatz 4 m +0.337 bei 0.2301), beide weit
-unter 0.65. **Kein bekanntes Urteil ändert sich.** `auf-56` ist darum zurückgezogen worden,
-bevor ihn jemand geholt hat (`auftraege/ergebnisse/auf-20260826-56.json`).
-
-- [x] ~~**Die gemessene Polarität kommt nicht am Tor an**~~ — **erledigt 2026-08-26.**
-      `tiefenschaetzer.qa_gegen_soll` rief `geometrie_gate` **ohne** `polaritaet`; das
-      Vorzeichen benutzte nur der Maskenweg. Jeder Produktionslauf rechnete darum im
-      nicht-monotonen Modus und trug die Dauerwarnung dazu, obwohl das Vorzeichen seit dem
-      20.08. gemessen war.
-
-      Der Wechsel ist **fail-closed** (`max(0, p·rho) ≤ |rho|`), und was zugeht, hat eine
-      Zahl: Eine Ist-Karte in metrischer Ordnung kam auf **0.7071** und **bestand** die
-      Schwelle 0.65 — jetzt fällt sie durch. `gemessenes_zeichen` fällt dabei
-      ausdrücklich **nicht** auf die deklarierte Polarität zurück wie der Maskenweg: Am
-      Tor würde aus einer Angabe in einer Modellkarte ein durchgefallenes Bild.
-
-      *Nebenbefund, und er wiegt:* Der Wechsel von einem Rechenweg zum anderen machte in
-      4279 Tests **eine** Zusicherung rot — die Beschriftung. Vier neue Tests halten die
-      Stelle jetzt, und `polaritaet_zeichen` steht neben `polaritaet` im Ergebnis, weil
-      das eine das gerechnete Vorzeichen ist und das andere das deklarierte Wort.
-
-### Was `SCHWELLE_GEOMETRIE` betrifft
-
-**Sie bleibt bei 0,65** — aus demselben Grund wie am 18.08., der heute besser belegt ist:
-Die Deckelstudie hat gezeigt, dass der ganze Verlust im Schätzer liegt (Regel 0,9999,
-Produktion 0,406). Eine Schwelle von 0,85 würde im Betrieb jeden Render sperren, auch den
-treuen. Beigetragen hat diese Studie nicht eine neue Zahl, sondern die Form der
-Entscheidung: **Eine einzige globale Schwelle wird immer für einen Teil der Szenen falsch
-sein.**
+> **Abgeschlossen** — alle 2 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#die-schwellenstudie-steht-auf-echter-geometrie-26082026`](erledigt/PLAN_bis_2026-08-28.md#die-schwellenstudie-steht-auf-echter-geometrie-26082026)
 
 ---
 
 ## Der Maskenweg lief an zwei von drei Aufrufstellen nicht (26.08.2026)
 
-**Gezählt statt vermutet:** `tiefenschaetzer.qa_gegen_soll` wird an drei Stellen gerufen —
-`abholer.py`, `kette.py` und `tools/homeworker.py`. **Nur die erste reichte eine Maske
-herein.** Der Homeworker ist der Weg, auf dem die HomeStation ihre Render-Aufträge
-abarbeitet; die Lücke sass also dort, wo wirklich gemessen wird.
-
-Ohne Maske bleiben `rho_maske`, Kante und Paarurteil ungemessen — die Masse, die die
-**Abwesenheit** eines Bauwerks fangen. Der Score über das ganze Bild fängt sie nicht: Ein
-leeres Grundstück erreichte dort **0.9530** und bestand das Tor (`auf-20260821-26`).
-
-- [x] `maske.maske_aus_bericht` (aus `abholer._maske_bauen` herausgehoben), beide
-      Aufrufstellen verdrahtet, und `qa_gegen_soll` meldet den fehlenden Maskenweg jetzt
-      selbst — selbstlöschend, mit der Zahl. Drei neue Tests, einer je Aufrufstelle, plus
-      die Gegenprobe für den ehrlichen Fall ohne Material-ID-Pass.
-
-**Zwei Nebenbefunde, die eigenständig zählen:**
-
-* **Eine Attrappe täuschte eine Welt vor, in der die Kette nicht läuft.** Der Bericht in
-  `tests/test_homeworker.py` trug keinen Material-ID-Pass, obwohl der echte Lauf ihn
-  liefert. Die Lücke *konnte* dort nicht auffallen.
-* **Drei Warntexte sagten dieselbe überholte Folge**, nachdem die Polarität am Tor
-  ankam — und kein Test wurde davon rot. *Eine Behauptung in Prosa über das Verhalten an
-  einer anderen Stelle hat keinen Wächter*, und diesmal traf es ausgerechnet das, was der
-  Betreiber liest, wenn etwas nicht stimmt.
-
-### Owner-Entscheid 26.08.2026: **Der Maskenweg ist ein zweites Tor, keine Zusatzmessung**
-
-Gefragt, weil es die Strenge des Tors festlegt und darum nicht dem Code gehört. Gewählt
-ist die **dreiwertige** Fassung: Läuft der Maskenweg nicht, gibt es **kein Urteil** —
-`bestanden` ist `None` und nicht `True`. Der Score steht daneben und bleibt lesbar.
-
-- [x] `qa_gegen_soll` gibt `bestanden=None`, wenn keine Maske hereinkam.
-- [x] `gate.gesamturteil` rechnet ein **dreiwertiges UND nach Kleene**, ausgeschrieben
-      statt abgekürzt: `False UND unbekannt = False` (ein gerissenes Tor entscheidet
-      allein), `True UND unbekannt = unbekannt`. Python-`and` täte das nicht — `None and
-      False` ergibt `None`, und das wäre falsch.
-- [x] `{"bestanden": None}` stand bis dahin in der Liste der **kaputten** Urteile. Jetzt
-      ist es die dritte Antwort. *Der Unterschied ist der Handgriff, der folgt:* Ein
-      Mangel heisst «repariere die Naht», ein `None` heisst «hole die fehlende Messung
-      nach».
-- [x] Vierte Lage am Vertrag (`KEIN MASKENWEG`) — sonst liefe der Fall in das allgemeine
-      «ein Lauf fehlt», und wer danach handelte, liesse denselben Lauf noch einmal laufen.
-      Er käme wieder ohne Maskenweg zurück.
-- [x] `gelaende_erwartet` reicht jetzt durch Kette und Homeworker, wie `--kein-gelaende`
-      beim Abholer. Ein reines Gebäude-IFC bringt gar kein Gelände mit; ohne die Erklärung
-      fällt die Maske aus und mit ihr das zweite Tor. Der echte Kettenlauf über beide
-      Prozessgrenzen deckt damit jetzt auch die Maske ab.
-
-**Was das im Betrieb heisst, und es ist unbequem:** Jeder Lauf ohne Material-ID-Pass
-bekommt ab sofort gar kein Ja/Nein mehr. Das ist der bezahlte Preis der Entscheidung und
-kein Nebeneffekt.
+> **Abgeschlossen** — alle 6 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#der-maskenweg-lief-an-zwei-von-drei-aufrufstellen-nicht-26082026`](erledigt/PLAN_bis_2026-08-28.md#der-maskenweg-lief-an-zwei-von-drei-aufrufstellen-nicht-26082026)
 
 ---
 
 ## Owner-Entscheid: Ein belegter Nullbefund trägt die Maske — über einem Katalog (26.08.2026)
+
+> **Entschieden:** Die Maske wird im Nullbefund nur behalten, wenn **jeder** geprüfte Eintrag eine IFC-Klasse trägt und keiner davon `IfcSite` ist — dann ist «kein Gelände» ein Beweis über den Katalog. Über Materialnamen gilt das nicht.
+> **Gemessen:** Bei 4,2 % Bodenanteil kostet ein mitmaskierter Boden 0,042 Trennschärfe, bei 59,8 % erreichte ein wertloses Bild |ρ| 0,92. Die Strecke dazwischen ist nachgemessen: bei 0,68 bis 0,80 Bodenanteil kommt eine Rampe mit Boden in der Maske auf ρ 0,92 bis 0,98 und ohne ihn auf exakt null. Der Befund stützt den Entscheid, statt ihn zu weiten.
+> **Offen:** Ein Punkt — zwischen 5 % und 65 % gibt es in dieser Geometrie keinen Zustand, und die Rampe ist ein Ersatzstück, kein Schätzer.
 
 **Die Frage entstand aus dem Entscheid davor.** Seit der Maskenweg ein zweites Tor ist,
 kostet eine verworfene Maske das **ganze Urteil**. Und die Geländeregel verwarf sie auf
@@ -4857,6 +3939,10 @@ Blender-Lauf. Drei rote Läufe an einem Tag (zweimal `test_bauwerksbox`, einmal
 
 ## Owner-Auftrag: Der Einbau ist das Ziel, nicht der Bau (26.08.2026)
 
+> **Entschieden:** Gebauter Code ist kein Ergebnis mehr, sondern eine Zwischenstufe. Vier Pflichten folgen daraus: verteilen, nachhalten, den **Einbau** beauftragen statt der Messung, und bestätigen. «Niemand» ist als Adressat nicht mehr zulässig.
+> **Gemessen:** Am 26.08. 17 Aufträge ohne Antwort und 14 von 24 Posten nicht in der Software, am 27.08. 24 und 17 von 28 — die Zahl steigt, weil verteilt wird. Der alte Wächter prüfte, ob ein Beleg *existiert*: B8 stand sechs Tage als erledigt, während am Gerät die Fassung vom 20.08. lief.
+> **Offen:** Zwei Punkte, und sie sind der Kern des Auftrags: Aus der ersten Antwort des UI-Workers muss ein Auftrag werden, dessen **Rückgabe den Einbau belegt**. Und bestätigen lässt sich noch nichts.
+
 > *«Sorge dafür, dass andere Worker immer alles einbauen in die Software — das ist
 > Endziel. Du verteilst, wo was hin muss, und du bist verantwortlich, dass sie es einbauen
 > und mir dann bestätigst.»*
@@ -4924,6 +4010,10 @@ wird — nicht, weil etwas liegen bleibt. Sie fällt erst, wenn drüben jemand a
 
 ## Der Widerspruch zwischen Score und Maskenweg wird sichtbar (27.08.2026)
 
+> **Entschieden:** Erst die Paarschwellen kalibrieren; das Tor bleibt bis dahin offen, der Fall bekommt aber eine eigene benannte Zeile — und die ist **selbstlöschend**, damit sie keine Dauerwarnung wird.
+> **Gemessen:** Ein vollständig verschwundenes Bauwerk kommt auf `bestanden = true` mit Score 0,951 und `geom_iou` 1,000, während das Paarurteil durchfällt. Über 66 Fälle trennt ρ sauber zwischen 0,6169 und 0,9282, der Kantenanteil trennt gar nicht — beide Masse versagen in entgegengesetzte Richtungen, und das ist das stärkste Argument dafür, sie zu führen statt zu verrechnen.
+> **Offen:** Drei Punkte — die Kalibrierung selbst wartet auf `auf-61`, das zweite Tor ist noch nicht gebaut, und die Oberfläche trägt den Vorbehalt nicht.
+
 **Owner-Entscheid 26.08.2026, aus drei Wegen gewählt:** *«Erst die Paarschwellen
 kalibrieren.»* Das Tor bleibt bis dahin offen — aber der Fall bekommt eine eigene,
 benannte Zeile.
@@ -4979,6 +4069,10 @@ einzige Stelle, an der Soll und Ist sich unterscheiden konnten.
 
 ## `geom_iou` hat einen Boden, und er gehört der Szene (27.08.2026)
 
+> **Entschieden:** Der normierte Wert wird **zusätzlich** ausgewiesen, der Score bleibt unangetastet — 0,65 behält seine Bedeutung und die Schwellenstudie vom 18.08. ihre Gültigkeit.
+> **Gemessen:** Ein konstantes Bild bekommt exakt den Vordergrundanteil der Szene, auf volle Gleitkommagenauigkeit. Ein Bauwerk mit vollständig verkehrter Tiefenordnung bekommt `geom_iou` 1,0000 auf allen drei Szenen. Ohne `geom_iou` erreichte das verschwundene Bauwerk 0,9980 — es ist die einzige Bremse, die der Score hat, und sie reicht nicht.
+> **Offen:** Zwei Punkte — Weg 1 ist hier nicht messbar, Weg 2 kostet die Bedeutung der 0,65 mitten in der Vertiefungsarbeit. Und alles hier ist eine Obergrenze mit perfekten Karten; die Gegenprobe mit dem wirklichen Schätzer fehlt.
+
 **Dieselbe 36-Sekunden-Methode wie bei den Paarschwellen, auf die Frage angewandt, die
 den offenen Entscheid trägt.** 66 Fälle, drei Szenen, Bodenanteile 0,00 bis 0,42, perfekte
 Karten (`docs/GEOM_IOU_BODEN_UND_DECKE_2026-08-27.md`).
@@ -5019,6 +4113,10 @@ Karten (`docs/GEOM_IOU_BODEN_UND_DECKE_2026-08-27.md`).
 ---
 
 ## Die Kamera stand fünf Tage lang gekippt (28.08.2026)
+
+> **Entschieden:** Eine Vorgabe, die an zwei Stellen steht, geht beim nächsten Entscheid wieder auseinander — der Runner holt sie jetzt aus der Bibliothek, und ein Wächter liest seinen Quelltext auf einen eigenen Rückfall. Verhaltensänderungen über Weg C werden angesagt, bevor sie ankommen.
+> **Gemessen:** Auge auf 1,45 m bei Gelände −0,25 m, also exakt 1,70 m über Grund — das Blickziel aber auf 4,50 m. Der Homeworker forderte gar keine Kamera an und bekam Blenders Notkamera. Über acht Richtungen fallen auf den frontalen 5 von 20 guten Fällen unter die ρ-Schwelle, auf den diagonalen keiner.
+> **Offen:** Ein Punkt, und er geht in die Kalibrierung: Die Paarschwelle ist richtungsabhängig, und `auf-61` muss die Richtung je Fall mitführen.
 
 **Der Befund kommt vom Owner, am fertigen Bild:** *«wenn der local worker nun einen
 demolauf macht ist die kamera vom endbild … nicht auf augenhöhe mensch … wieso?»*
@@ -5126,35 +4224,16 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
 
 ## Der Homeworker las nicht, für wen ein Auftrag ist (28.08.2026)
 
-**Der Befund kommt vom Gerät** (`auf-20260828-64`, V1): *«homeworker liest das
-worker-Feld nirgends»*.
-
-- [x] **Gemessen am eigenen Bestand: neun offene Aufträge** an `cloud` und `ui` wären
-      beim nächsten `--alle` durchgelaufen — alle im Multipass-Zweig, alle mit
-      `status: ok, urteil: {"multipass": "ok"}`. **Grün und leer.**
-- [x] **Und das Ergebnis wäre nicht folgenlos:** Ein geschriebenes Ergebnis heisst in
-      diesem Projekt *beantwortet*. Die HomeStation hätte Vertragsfragen an einen fremden
-      Worker geschlossen, ohne dass jemand sie je gelesen hätte. *`auftrag.py` verlangt
-      das Feld seit dem 22.08. als Pflicht — es wurde nur nie gelesen. **Eine
-      Pflichtangabe, die niemand liest, ist eine Zeile Text.***
-- [x] **Fremde Aufträge werden nicht angefasst und ausdrücklich auch nicht abgelehnt** —
-      eine Ablehnung zählte als Antwort und wäre schlimmer als Schweigen. Sie werden
-      gezählt und genannt.
-- [x] **Ein fehlendes `worker`-Feld gilt als fremd**, nicht als eigenes: Ein fehlendes
-      Feld ist keine Zusage, und der teure Fehler liegt auf der Seite «doch ausgeführt».
-- [x] Drei Mutationsproben, jede vom richtigen Test gefangen.
-
-**Die Reihenfolge ist die Sache, nicht die Abhilfe:** Der Takt aus `auf-20260826-59`
-darf **erst nach diesem Filter** installiert werden. Ein Takt ohne ihn schlösse beim
-ersten Durchgang neun fremde Aufträge — und niemand hätte gesehen, dass es geschah.
-
-*Selbst ausgelöst, eine Stunde vorher: Beim Prüfen der Kamera lief mein eigener
-`--alle`-Aufruf in genau diese Falle und schrieb ein Ergebnis für `auf-20260823-38`. Ich
-habe es zurückgenommen — aber es war der Beweis, bevor die Meldung kam.*
+> **Abgeschlossen** — alle 5 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#der-homeworker-las-nicht-für-wen-ein-auftrag-ist-28082026`](erledigt/PLAN_bis_2026-08-28.md#der-homeworker-las-nicht-für-wen-ein-auftrag-ist-28082026)
 
 ---
 
 ## Der Auftragsordner zählte nicht, was er behauptete (28.08.2026)
+
+> **Entschieden:** Der Zustand eines Auftrags wird **abgeleitet**, mit fünf Werten, und `art` wird vor `status` gelesen — ein Weiterleitungsvermerk trägt `status: ok` und ist trotzdem keine Antwort. Dazu eine vierte Adresse `kern` für diese Entwicklungssitzung selbst.
+> **Gemessen:** 63 Aufträge in `offen/`, 44 Ergebnisse, 40 Paare, 0 von 63 mit Zustandsfeld. Nach der Ableitung 34 unbeantwortet statt 26 — acht galten als erledigt und waren es nicht. Acht eigene Aufträge waren gar nicht ausführbar, weil `params` als Notizfeld missbraucht war.
+> **Offen:** Ein Punkt — das Umbenennen des Ordners und die vier Waisen; beides liegt woanders.
 
 **Gemessen von der HomeStation** (`auf-20260828-64`): 63 Aufträge in `offen/`, 44
 Ergebnisse, **40 Paare**, und **0 von 63** mit einem Zustandsfeld. *Der Anteil war
@@ -5226,58 +4305,8 @@ Aufgeräumt wurde nichts, es kamen 13 dazu.*
 
 ## Drei Angaben, die gelesen und nie verwendet wurden (28.08.2026)
 
-**Alle drei vom Gerät gemeldet** (`auf-20260828-66`), alle von derselben Bauart wie der
-Notkamera-Fehler: *nicht falsch gerechnet, sondern eine Angabe nie gelesen.*
-
-- [x] **`geometrie.erzeugen_mit` wurde ignoriert.** Der Aufruf ging **ohne Argument**
-      hinaus; was im Auftrag stand, landete in keiner Variablen. `--hochbau` tauscht den
-      Quader gegen Stützenraster und Kern — **`auf-65` hätte ein anderes Gebäude gemessen
-      als das bestellte.** *Das ist die teure Variante: Der Lauf bricht nicht ab. Er
-      antwortet, nur auf eine andere Frage.*
-      Übernommen wird jetzt eine **Positivliste** von Schaltern, nie der Zielpfad: Ein
-      Auftragstext ungeprüft an eine Kommandozeile zu geben hiesse, jedem Schreiber dieses
-      Ordners einen Prozessaufruf zu schenken.
-- [x] **Der Kamerablock fehlte in `messwerte`.** `bbox_size_m` ist die *Kantenlänge* — sie
-      sagt, wie gross die Hüllbox ist, nicht wo sie liegt. Genau das Wo ist V0 von
-      `auf-65`, und es war aus dem Ergebnis **nicht beantwortbar**. Jetzt stehen `bbox`,
-      `bbox_bauwerk` und `kamera` darin.
-- [x] **`ARTEN` wurde nirgends geprüft** — `grep -c ARTEN` traf **null**. `pruefe_auftrag`
-      kennt die Menge, läuft aber nur beim *Schreiben*, und keine Auftragsdatei dieses
-      Repos ist je über `baue_auftrag` hereingekommen. Ihr eigenes `auf-63` trug
-      `art: "vertrag"` und wäre still als Multipass gelaufen.
-
-### Die blockierende Rückfrage — und sie war es zu Recht
-
-**Die HomeStation hat `auf-59` nicht installiert**, weil mein `qa`-Zweig sechs ihrer
-Aufträge grün-leer geschlossen hätte. *«Vorher schlüsse der erste Takt sechs eurer eigenen
-Fragen grün und leer.»*
-
-- [x] **`art: qa` antwortet nicht mehr grün.** `auftraege/README.md` sagt seit dem 18.08.
-      ehrlich, dass die Art nichts misst — **Ehrlichkeit in einem Dokument hält aber kein
-      grünes Ergebnis auf**, und ein grünes Ergebnis heisst hier: beantwortet. Der Zweig
-      gibt jetzt `status: fehler` mit Begründung; unter dem abgeleiteten Zustand wird
-      daraus *gerechnet, nicht beantwortet*, und der Auftrag bleibt offen.
-      *Der Weg nach vorn ist nicht, `qa` messend zu machen — das ist der `render`-Pfad,
-      und den gibt es.*
-- [x] **Damit ist `auf-20260826-59` frei.** Der Takt kann installiert werden.
-- [x] **Und ihre Rückfrage V3 hat einen zweiten Fehler von mir aufgedeckt:** Meine erste
-      Fassung verschluckte unbekannte Flaggen **still**. Eine unbekannte Flagge lässt den
-      Lauf jetzt gar nicht erst starten. *Eine unbekannte Flagge wegzulassen ist richtig;
-      sie wegzulassen und zu schweigen ist derselbe Fehler noch einmal.*
-- [x] **Beide Aufträge sind beantwortet** — `auf-64` und `auf-66` haben Ergebnisdateien,
-      je Rückfrage eine Antwort. *Zum ersten Mal in dieser Sitzung geht etwas den Weg
-      zurück, statt nur hinaus.*
-
-### Und ein Fehler, den ich beim Beheben beinahe wiederholt hätte
-
-Die erste Fassung prüfte `_schalter_aus` **isoliert** — und die Mutationsprobe, die den
-Aufruf im Prozessstart wieder entfernte, **überlebte**.
-
-> Eine Funktion, die richtig rechnet und nirgends gerufen wird, ist genau der Fehler,
-> gegen den dieser ganze Abschnitt gebaut ist.
-
-Der Test prüft jetzt die **Aufrufstelle**: Er fängt den Prozessstart ab und sieht in der
-Argumentliste nach. Danach fällt die Mutation.
+> **Abgeschlossen** — alle 7 Punkte abgehakt, kein offener geblieben.
+> Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#drei-angaben-die-gelesen-und-nie-verwendet-wurden-28082026`](erledigt/PLAN_bis_2026-08-28.md#drei-angaben-die-gelesen-und-nie-verwendet-wurden-28082026)
 
 ---
 
@@ -5306,6 +4335,10 @@ das Bauen.** Dieses Blatt hier steht bei 5315 Zeilen und ist selbst ein Beleg da
 ---
 
 ## Wissensschulden
+
+> **Entschieden:** Bekannte Schulden werden benannt und nicht stillschweigend mitgeführt. Abgetragene bleiben **durchgestrichen** stehen, damit sichtbar bleibt, wie lange sie galten.
+> **Gemessen:** 39 Pakete am Artefakt geprüft, 79 Fremdkomponenten benannt, **kein neuer GPL-Fund im Produktivpfad**. GEOS (LGPL-2.1) und libquadmath (LGPL-2.1+) stehen seit dem 26.08. mit ihren drei Auflagen im `NOTICE`. `opencv` liegt in keinem Pfad dieses Projekts — die Schuld war an dieser Stelle zu weit gefasst.
+> **Offen:** Die Rust-Wheels linken ihre Kisten statisch ein und liefern keine Aufstellung mit; der Inhalt der grossen `libtorch`-Bibliotheken ist unverifiziert; ein Dutzend Lizenzen stammt weiter nur aus Sekundärquellen; das Ökosystem ist grösstenteils ungelesen.
 
 Bekannt und ausdrücklich nicht erledigt:
 

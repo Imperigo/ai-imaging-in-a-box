@@ -1356,6 +1356,38 @@ Der eigene `zustellung.json` belegte immer nur die Hinrichtung — gelesen wurde
 belege er beide. Verwandt mit **Abgelegt gegen ausgeliefert**, eine Richtung weiter: Dort
 war offen, ob etwas hinausging; hier, ob etwas zurückkam.
 
+**Zielzahl, die nur durch Verstecken erreichbar ist** — Eine Zahl, die einen Zustand
+beschreiben soll, aber nur dadurch erreicht wird, dass etwas aus dem Blickfeld wandert.
+*Sie misst dann nicht mehr die Sache, sondern die Sichtbarkeit der Sache.*
+*Der Unterschied zu einer schlicht verfehlten Zahl ist der ganze Punkt:* Eine verfehlte
+Zahl sagt etwas Wahres — die Sache ist nicht so weit. Eine nur durch Verstecken
+erreichbare sagt etwas Falsches, sobald sie erreicht wird, und niemand merkt es, weil das
+Ergebnis richtig aussieht.
+*Im Projekt am 09.09.2026:* Für Woche 2 stand als Ziel *«`PLAN.md` unter 800 Zeilen»*.
+Nachgemessen: 48 Abschnitte, davon 22 vollständig abgehakt (1205 Zeilen, beweglich), und
+110 offene Punkte, verstreut über fast jeden langen Abschnitt. Nach dem Umzug alles
+Fertigen bleiben rund 4300 Zeilen. Die 800 wären nur erreichbar gewesen, indem man offene
+Punkte von ihren Messungen trennt — dann stünde der Punkt ohne seine Begründung im Plan
+und die Begründung ohne ihre Frage im Archiv. *Der Owner hat das Ziel korrigiert statt es
+still fallenzulassen:* Die Zahl steht im Plan als **gemessen unerreichbar**, mit den
+Zahlen daneben. Denn eine Zielzahl, die einfach verschwindet, sieht aus wie eine, die
+erreicht wurde. Verwandt mit **Aus Nichtwissen einen Vorwurf machen** — beide Male ist
+das Gemessene und das Behauptete auseinandergefallen; hier zugunsten des eigenen Berichts.
+
+**Deckelzeile** — Drei Zeilen unter der Überschrift eines langen Dokuments, die sagen:
+*was entschieden wurde, was gemessen wurde, was offen blieb.* Sie ersetzt das Lesen nicht,
+sie ersetzt das **Suchen** — wer wissen will, ob ein Protokoll seine Frage berührt, muss
+nicht dreitausend Zeilen überfliegen.
+*Warum sie gelesen und nicht erzeugt wird:* Eine Vorlage, die aus Überschriften Sätze
+baut, liefert Text, der aussieht wie eine Zusammenfassung und keine ist — und weil er
+aussieht wie eine, liest danach niemand mehr nach. Wo eine Sitzung keinen Entscheid trug,
+sagt die Zeile das: **Ein Protokoll ohne Entscheid ist ein Bericht, und das darf
+dastehen.**
+*Im Projekt seit dem 09.09.2026* in allen 23 Sitzungsprotokollen und in jedem Abschnitt
+von `docs/PLAN.md` ab 40 Zeilen. `tests/test_plan.py` prüft **Existenz und
+Vollständigkeit der drei Felder**, nicht ihren Inhalt — ob ein Satz zutrifft, entscheidet
+weiterhin ein Mensch.
+
 **Aus Nichtwissen einen Vorwurf machen** — Ein Werkzeug meldet nicht, was es gemessen
 hat, sondern was es daraus über andere schliesst. *Der Unterschied fällt erst auf, wenn
 der Schluss falsch war.*
@@ -4290,6 +4322,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-09 | Ergaenzt: **Zielzahl, die nur durch Verstecken erreichbar ist** und **Deckelzeile**. Anlass ist Woche 2: Das Ziel «PLAN.md unter 800 Zeilen» ist nachgemessen unerreichbar — 110 offene Punkte liegen verstreut ueber fast jeden langen Abschnitt, und nach dem Umzug der 22 fertigen bleiben rund 4300 Zeilen. Korrigiert statt still fallengelassen; an ihre Stelle tritt die Deckelzeile in 23 Protokollen und 21 Planabschnitten |
 | 2026-09-09 | Ergaenzt: **Baulich zwingende Deckung**. Anlass ist die Schliessung der Formbruecke: Ob beide Seiten dieselben Namen sehen, musste ueberall gemessen werden — ausser an der einen Stelle, an der beide `obj.name` desselben Blender-Objekts lesen |
 | 2026-09-08 | Ergaenzt: **Bruecke zwischen zwei Regeln** und **Ein Mangel, der benannt ist, ist kein Loch mehr**. Anlass ist die zweite Seite derselben Regel: Die Bildseite hat keine Geometrie und kann die Formregel nicht rechnen. Gemessen wurde vor dem Bau, ob beide Seiten dieselben Namen sehen — Materialnamen null Prozent, Objektnamen hundert, und bei geteiltem Gelaende brach Blenders Dublettensuffix die Deckung auf 25 % |
 | 2026-09-07 | Ergaenzt: **Zweitmeinung (gegen zweite Regel)** und **Gelaende an der Form**. Anlass ist der Owner-Entscheid, zur Bildarbeit zurueckzukehren, und der offenste Strang darin: Die Namensregel findet auf echtem Bestand nichts (2,32 % Schrumpfung), und ein weiteres Wort gibt es nachweislich nicht — `decke` waere noetig und ist unmoeglich. Die Form ist das zweite «von aussen», fuer das niemand gefragt werden muss |

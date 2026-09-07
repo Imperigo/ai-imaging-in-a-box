@@ -1,12 +1,17 @@
 # Die Dokumente — eine Karte
 
-Achtundsechzig Dateien liegen hier, dazu zwanzig Sitzungsprotokolle. Diese Karte sagt,
-**welche man liest, wenn man etwas Bestimmtes sucht** — und welche man getrost liegen
-lässt, weil eine spätere sie überholt hat.
+Neunundsechzig Dateien liegen hier, dazu dreiundzwanzig Sitzungsprotokolle. Diese Karte
+sagt, **welche man liest, wenn man etwas Bestimmtes sucht** — und welche man getrost
+liegen lässt, weil eine spätere sie überholt hat.
 
-*Warum es sie gibt:* Ein Ordner mit achtundsechzig gleichrangig aussehenden Dateien ist
+*Warum es sie gibt:* Ein Ordner mit neunundsechzig gleichrangig aussehenden Dateien ist
 kein Nachschlagewerk, sondern ein Stapel. Wer darin die richtige Datei nur findet, wenn er
 schon weiss, wie sie heisst, findet sie nicht.
+
+**Seit dem 09.09.2026 gibt es eine zweite Hilfe, und sie steht in den Dateien selbst:**
+Jedes Sitzungsprotokoll und jeder lange Abschnitt von `PLAN.md` trägt oben eine
+**Deckelzeile** — was entschieden wurde, was gemessen wurde, was offen blieb. Sie ist
+gelesen und nicht erzeugt, und `tests/test_plan.py` hält fest, dass sie da ist.
 
 **Die Karte ersetzt keine Datei und fasst keine zusammen.** Sie ordnet.
 
@@ -145,7 +150,8 @@ zeigt, was man an dem Tag für wichtig hielt, und das ist selbst ein Befund.
 
 | Datei | Stand |
 |---|---|
-| [`PLAN.md`](PLAN.md) | der Vorgehensplan über alles |
+| [`PLAN.md`](PLAN.md) | der Vorgehensplan über alles — **offene Punkte und tragende Befunde** |
+| [`erledigt/PLAN_bis_2026-08-28.md`](erledigt/PLAN_bis_2026-08-28.md) | das Archiv: 22 vollständig abgehakte Abschnitte, unverändert, **wird nicht fortgeschrieben** |
 | [`PLAN_AB_2026-09-01.md`](PLAN_AB_2026-09-01.md) | **der laufende** |
 | `PLAN_2026-08-24.md`, `PLAN_2026-08-21.md`, `PLAN_2026-08-20.md` | überholt, in dieser Reihenfolge |
 | [`DEMOPLAN_2026-08-18.md`](DEMOPLAN_2026-08-18.md) | Plan zur Semester-Demo |
@@ -155,7 +161,7 @@ zeigt, was man an dem Tag für wichtig hielt, und das ist selbst ein Befund.
 ## Was hier NICHT liegt
 
 * **Aufträge** stehen in [`../auftraege/`](../auftraege/) — offene, Ergebnisse, und unter
-  `prompts/` die Blöcke für Adressaten, die das Repo nicht lesen.
+  `bloecke/` die Blöcke für Adressaten, die das Repo nicht lesen.
 * **Der Code** steht unter `../src/aiimaging/`, seine Wächter unter `../tests/`.
 * **Bilder, Geometrie, Modellgewichte** liegen grundsätzlich **nicht** im Repo (Regel 3).
   Ein Dokument, das Zahlen aus einem Lauf nennt, nennt Zahlen — nicht die Datei.
