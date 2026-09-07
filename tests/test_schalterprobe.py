@@ -106,11 +106,39 @@ def test_einbau_json_ist_lesbar(capsys):
     assert "rueckstand" in satz and "antwortverhalten" in satz
 
 
-def test_auftragspost_neueste_gibt_genau_einen_block(capsys):
+def test_auftragspost_neueste_gibt_genau_einen_block(tmp_path, capsys):
+    """**Der Schalter wird an einem eigenen Bestand gedrueckt, nicht am echten.**
+
+    Bis zum 07.09.2026 lief diese Probe gegen `WURZEL` und verliess sich darauf, dass
+    dort mehr als ein `ui`-Auftrag offen liegt. An dem Tag beantwortete die andere Seite
+    alles, `ui` fiel auf null — und der Aufruf gab **1** zurueck («Nichts offen»), was
+    die richtige Antwort des Werkzeugs war und trotzdem eine rote Probe ergab.
+
+    *Eine Probe, die vom Rueckstand abhaengt, misst den Rueckstand und nicht den
+    Schalter.* Zwei Auftraege hier, und `--neueste` muss genau einen davon zeigen.
+    """
+    import json as _json
+
+    from aiimaging import auftrag as _auf
+
+    ordner = tmp_path / "auftraege" / "offen"
+    ordner.mkdir(parents=True)
+    for kennung, wann in (("auf-20260101-01", "2026-01-01T08:00:00Z"),
+                          ("auf-20260102-02", "2026-01-02T08:00:00Z")):
+        satz = _auf.baue_auftrag(auftrag_id=kennung, art="frage",
+                                 beschreibung="Attrappe fuer den Schalter.",
+                                 worker=_auf.WORKER_UI)
+        satz["anweisung"] = "=== ATTRAPPE ===\n\nNichts zu tun."
+        satz["rueckgabe"] = ["R1 nichts"]
+        satz["erstellt"] = wann
+        (ordner / f"{kennung}.json").write_text(
+            _json.dumps(satz, ensure_ascii=False), encoding="utf-8")
+
     post = _werkzeug("auftragspost")
-    assert post.main(["--repo", str(WURZEL), "ui", "--neueste"]) == 0
+    assert post.main(["--repo", str(tmp_path), "ui", "--neueste"]) == 0
     ausgabe = capsys.readouterr().out
     assert ausgabe.count("AUFTRAG auf-") == 1, "«neueste» heisst einer, nicht alle"
+    assert "auf-20260102-02" in ausgabe, "und zwar der juengste"
 
 
 def test_vakuumprobe_wurzel_zeigt_auf_ein_fremdes_verzeichnis(tmp_path, capsys):

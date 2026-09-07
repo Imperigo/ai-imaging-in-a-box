@@ -1733,7 +1733,19 @@ def test_kein_offener_local_auftrag_bringt_das_tor_zum_absturz():
                "speicher_belegt_gb": 0.5}
     offen = [a for a in hw.auf.unerledigt(wurzel)
              if a.get("worker") == hw.EIGENER_WORKER]
-    assert offen, "ohne offene Auftraege sagt dieser Test nichts"
+    # EIN LEERER RUECKSTAND IST KEIN FEHLSCHLAG DIESER PROBE, sondern ihr Erfolgsfall.
+    #
+    # Hier stand `assert offen`. Am 07.09.2026 beantwortete die HomeStation zwanzig
+    # Auftraege auf einmal, `local` fiel auf null — und diese Probe wurde rot, obwohl
+    # nichts kaputt war. *Ein Waechter, der am Erfolg scheitert, den er begleiten soll,
+    # wird beim naechsten Mal weggeklickt statt gelesen.*
+    #
+    # Uebersprungen statt gruen: Gruen waere eine Behauptung ueber echte Dateien, die es
+    # gerade nicht gibt — die dritte Antwort, angewandt auf eine Probe.
+    if not offen:
+        pytest.skip("Kein offener local-Auftrag im Repo — diese Probe misst echte "
+                    "Dateien und hat gerade keine. Kein Mangel, sondern ein leerer "
+                    "Rueckstand.")
     for satz in offen:
         frei, grund = hw.darf_starten(zustand, hw.auf.auflagen_maschine(satz))
         assert isinstance(frei, bool) and grund, satz["auftrag_id"]
