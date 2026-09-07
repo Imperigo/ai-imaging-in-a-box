@@ -1,0 +1,68 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260825-41",
+ "status": "ok",
+ "stand": "Stand 06.09.2026",
+ "beendet": "2026-09-06T00:00:00Z",
+ "zusammenfassung": "G1: Auf der L1-Szene (Bauwerk auf 2.5-facher Geländeplatte, wie in auf-35) blockiert der NEUE Rahmungsriegel (BILDBREITE_ABBRUCH, seit 26.08.) den Render bei ALLEN drei Kameras, BEVOR das Tor bei 0.70 ueberhaupt geprueft werden kann — die Frage 'besteht das Tor' stellt sich fuer diese Szene gar nicht mehr. G2: Bildpaare bestaetigen das gestalterisch — beide Deckungsgrade liefern auf der ganzen Szene ein kaum erkennbares Bauwerk. G3: Der Wechsel auf bbox_bauwerk LOEST das Problem tatsaechlich (anteil_bauwerk 2.0% -> 17-20%, bestanden false -> true) — ABER ein NEUER, eigener Befund: der Rahmungsriegel selbst erkennt kamera_huellbox nicht und wuerde den Lauf AUCH mit der Behebung ablehnen, ausser man schaltet die Pruefung ganz ab.",
+
+ "aufbau": {
+  "geometrie": "python3 tools/make_test_ifc.py build/auf41/gel.ifc IFC4 --gelaende (Standard-Vielfaches 2.5 -> 20x20 m Platte, wie auf-35s L1)",
+  "pfad": "aiimaging.abholer.verarbeiter(...) — der eigentliche Produktionspfad fuer diesen Auftrag, NICHT tools/homeworker.py (das misst nur generisch)",
+  "kamerasatz": "cameras='auto' -> AUTO_RICHTUNGEN = ('s','sSE','nNW') — deckt sich mit den drei Ansichten aus auf-35",
+  "backbone": "z-image-turbo, 20 Schritte, 512x512, prompt aus prompts.komponiere('messschnitt')"
+ },
+
+ "G1_besteht_das_tor_bei_070": {
+  "messbefehl": "abholer.verarbeiter(out_wurzel=..., seeds=[0,1,2], gelaende_erwartet=True)(auftrag) — Standardaufrufe, KEIN rahmung_pruefen=False, KEIN kamera_huellbox (Vorgabeverhalten)",
+  "URTEIL": "exit 0",
+  "ergebnis": "Alle drei Kameras (s, sSE, nNW) werden VOR dem Rendern abgelehnt: 'NICHT RENDERN: Das Bauwerk fuellt 27.9-28.0% der Bildbreite, gemessen noetig sind 65%'. Kein einziges Bild entstand, kein Score wurde berechnet, `geometrie_urteil.bestanden` bleibt None fuer alle drei Kameras.",
+  "abweichung_vom_auftrag": "G1 wollte wissen, WIE OFT das Tor bei 0.70 besteht ('Bei auf-13 bestand bei 0.70 jeder von drei Startwerten'). Die tatsaechliche Antwort ist eine ANDERE Frage geworden: Das Tor wird auf dieser Szene bei KEINER der drei Kameras ueberhaupt erreicht — ein JUENGERER Riegel (BILDBREITE_ABBRUCH, 26.08.) greift vorher. Der eigene Nachtrag zum Auftrag (26.08., 'was_das_fuer_G1_heisst') hat genau diesen Fall vorausgesehen: 'Das ist dann KEIN Fehler, sondern genau die Frage von G3 — bitte in dem Fall den Abbruchgrund mitschicken statt den Lauf zu wiederholen.' Das ist hier geschehen.",
+  "rechnerische_erklaerung": "Das Bauwerk (8 m) misst nur 40.0% der Szenenbreite (20 m Platte). Wirksame Bildbreite = Deckungsgrad * Bauwerksanteil = 0.70 * 0.40 = 0.28 — UNTER der 65%-Schranke. Das gilt fuer JEDEN Deckungsgrad bis 1.0: selbst bei Deckungsgrad 1.0 waere die wirksame Bildbreite hoechstens 40%, ebenfalls unter der Schranke. Auf einer Szene mit diesem Bauwerk-zu-Platte-Verhaeltnis kann der Riegel durch KEINE Deckungsgrad-Anpassung befriedigt werden — nur durch eine andere Rahmung (siehe G3)."
+ },
+
+ "G2_was_die_engere_rahmung_gestalterisch_kostet": {
+  "hinweis_zur_ausfuehrung": "Um ueberhaupt ein Bildpaar zu bekommen, musste rahmung_pruefen=False gesetzt werden (sonst kein Bild bei 0.70, siehe G1) UND bei 0.55 (derselbe Grund, kleinerer Deckungsgrad macht es nicht besser).",
+  "messbefehl": "abholer.verarbeiter(out_wurzel=..., seeds=[0], gelaende_erwartet=True, rahmung_pruefen=False, deckungsgrad=0.55|0.70)(auftrag), 3 Kameras je Deckungsgrad",
+  "URTEIL": "exit 0",
+  "einschaetzung_ohne_messung_wie_verlangt": "Auf DIESER Szene (Bauwerk 40% der Plattenbreite) sehen BEIDE Deckungsgrade schlecht aus, nicht nur der neue: Bei 0.55 ist das Bauwerk ein schmaler heller Streifen im oberen Bilddrittel vor viel leerem, dunstigem Grund — nicht als Architekturfoto lesbar, eher wie ein abstrakter Ausschnitt. Bei 0.70 ist es etwas naeher, aber die Kamera schneidet das Bauwerk oben so stark an, dass nur noch das Dachgesims und ein Streifen der obersten Fassade zu sehen sind, auf einem Sockel aus unscharfer Platte — es sieht eher nach einem Produktfoto eines abgeschnittenen Objekts aus als nach einem Gebaeude. WEDER 0.55 NOCH 0.70 wirkt auf dieser Szene wie Architekturfotografie; der Sprung von 0.55 zu 0.70 ist auf DIESER Geometrie also nicht die entscheidende Stellschraube.",
+  "vergleich_zur_richtig_gerahmten_variante": "Zum Kontrast: dieselbe Kamera (sSE), gerahmt auf die Bauwerksbox statt auf die Szene (G3), zeigt ein klar lesbares, wenn auch grau-neutrales Gebaeudevolumen mit sichtbarer Fassadengliederung. Der Unterschied zwischen 0.55/0.70 auf der GANZEN Szene ist gestalterisch KLEIN gegen den Unterschied zwischen 'ganze Szene' und 'Bauwerksbox' als Rahmen.",
+  "bildnamen_regel_3": ["g2_055/sSE/sSE.png", "g2_070/sSE/sSE.png", "g3c_bauwerk/sSE/sSE.png (Referenz)"]
+ },
+
+ "G3_bbox_gegen_bbox_bauwerk": {
+  "messbefehl": "zwei Aufrufe von abholer.verarbeiter(..., rahmung_pruefen=False, kamera_huellbox=<bbox_bauwerk oder weggelassen>)(auftrag), gleiche Szene, gleiche drei Kameras, gleicher Seed",
+  "URTEIL": "exit 0",
+  "ergebnis_je_kamera": {
+   "bbox_vorgabe":    {"s": {"anteil_bauwerk": 0.0197, "bestanden": false}, "sSE": {"anteil_bauwerk": 0.0204, "bestanden": false}, "nNW": {"anteil_bauwerk": 0.0204, "bestanden": false}},
+   "bbox_bauwerk":    {"s": {"anteil_bauwerk": 0.1979, "bestanden": true, "score": 0.8939}, "sSE": {"anteil_bauwerk": 0.1706, "bestanden": true, "score": 0.9839}, "nNW": {"anteil_bauwerk": 0.1706, "bestanden": true, "score": 0.9840}}
+  },
+  "urteil": "Die Erwartung des Auftrags TRIFFT ZU: anteil_maske (anteil_bauwerk) steigt deutlich (Faktor 8-10x), und das Tor besteht bei ALLEN drei Kameras im zweiten Fall (vorher: bei keiner).",
+  "ABER_EIN_EIGENER_BEFUND": "Diese Messung war nur moeglich, weil `rahmung_pruefen=False` gesetzt war. OHNE diesen Schalter wird der bbox_bauwerk-Fall NICHT gerendert (siehe unten) — die Rahmungspruefung selbst kennt `kamera_huellbox` nicht.",
+  "gegenprobe_ohne_rahmung_pruefen_false": {
+   "messbefehl": "dieselben zwei Aufrufe, diesmal OHNE rahmung_pruefen=False (Vorgabe True)",
+   "URTEIL": "exit 0",
+   "ergebnis": "BEIDE Faelle werden abgelehnt, MIT NAHEZU IDENTISCHEM 'breitenanteil' (0.39999994 in beiden Faellen, Abweichung nur in der sechsten Nachkommastelle durch Fliesskomma-Rauschen des Kamerasolves) und identischem Abbruch. `kamera_huellbox=bbox_bauwerk` aendert die tatsaechliche Kameraposition (bestaetigt: das gerenderte Bild sieht bei abgeschalteter Pruefung deutlich anders/naeher aus), aber NICHT das Ergebnis der Rahmungspruefung selbst.",
+   "ursache_vermutet": "Die Rahmungspruefung berechnet 'breitenanteil' aus dem Verhaeltnis Bauwerksbreite/GESAMTSZENENBREITE (eine reine Geometrieeigenschaft: 8 m / 20 m = 40%) — unabhaengig davon, welche Huellbox der tatsaechlichen Kamera als Rahmen uebergeben wurde. Sie fragt damit nicht 'was wird das Bild zeigen', sondern 'wie gross ist das Bauwerk im Verhaeltnis zur Szene', und diese zweite Frage aendert sich durch kamera_huellbox nicht.",
+   "tragweite": "Der in auf-20260825-41 selbst als Loesung vorgeschlagene Weg ('Rahmung nach bbox_bauwerk gegen bbox — die eigentliche Behebung') funktioniert GEOMETRISCH und BILDLICH nachweislich (siehe oben), wird aber vom bestehenden Sicherheitsriegel VOR dem Rendern trotzdem abgewiesen. Wer diesen Weg heute produktiv einschalten wollte, muesste entweder den Riegel anpassen (er soll wissen, WELCHE Huellbox die Kamera tatsaechlich rahmt) oder ihn fuer diesen Pfad ganz abschalten (womit auch der Schutz vor der urspruenglichen, schlechten Rahmung entfaellt). Das ist eine Entscheidung fuer den Owner, keine, die hier getroffen wurde."
+  }
+ },
+
+ "G4_offene_frage_zwoelf_bestandsrenders": {
+  "frage": "Zwoelf Renders bei 0.55 gemessen — bei 0.70 neu messen, oder die alte Zahl an ihren Deckungsgrad binden?",
+  "einschaetzung": "Nach den Zahlen aus G1-G3 ist WEDER die eine noch die andere Option der eigentliche Hebel: Fuer Szenen mit einem aehnlichen Bauwerk-zu-Platte-Verhaeltnis wie hier (Bauwerk misst nur 40% der Szenenbreite) aendert der Sprung von 0.55 auf 0.70 an der BILDWIRKUNG wenig (siehe G2) — die wirksame Bildbreite bleibt so oder so unter der Schranke. Eine Neumessung der zwoelf Bestandsrenders bei 0.70 wuerde also vermutlich AEHNLICHE, nicht deutlich bessere Werte liefern als bei 0.55, WENN diese Renders auf aehnlich grossen Platten sitzen. Empfehlung: 'die alte Zahl an ihren Deckungsgrad binden' (die vorsichtigere, guenstigere Option) UND parallel pruefen, ob die zwoelf Bestandsrenders von der bbox_bauwerk-Frage (G3) mehr profitieren wuerden als von einer reinen Deckungsgrad-Neumessung — das waere aber ein eigener Auftrag.",
+  "einschraenkung": "Diese Einschaetzung beruht auf EINER Szene (Bauwerk 40% Plattenbreite) und ist keine Vermessung der zwoelf realen Bestandsrenders selbst."
+ },
+
+ "was_nicht_getan_wurde": [
+  "Die drei vorab gerechneten Zahlen (Flachbau/Wohnhaus/Turm) wurden nicht nachgerechnet.",
+  "Rahmung nach bbox_bauwerk wurde NICHT zur Vorgabe gemacht — nur gemessen, wie im Auftrag verlangt.",
+  "Keine Bilder ins Repo — nur Dateinamen unter build/, das bleibt auf der HomeStation."
+ ],
+ "umgebung": {
+  "gpu": "NVIDIA GeForce RTX 5090",
+  "leistungsgrenze_w": 400,
+  "backbone": "z-image-turbo",
+  "python": "3.14"
+ }
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260826-51",
+  "status": "ok",
+  "beendet": "2026-09-06T19:38:52Z",
+  "dauer_s": null,
+  "messwerte": {
+    "sub_division_ist_gelaende": false,
+    "sub_division_ist_umfeld": false,
+    "schrumpfung_heute_am_realen_bestand": 0.023201149398744514,
+    "schrumpfung_referenz_01_09_aus_quelltextkommentar": 0.021,
+    "groesster_verbleibender_bauwerksknoten_anteil_szene": 0.47,
+    "n_gelaende_knoten_ausgeschlossen": 10,
+    "n_knoten_gesamt_bestand": 4771,
+    "n_materialien_lauf17_realer_demolauf": 4
+  },
+  "urteil": {
+    "V1_naechste_zeile_stimmt": "GEPRUEFT AN EINEM ECHTEN, NACH dem 01.09.2026 GELAUFENEN Produktionslauf (KosmoVis-Demolauf 'Lauf 17', 03.09.2026) -- kein neuer Render dafuer gestartet, wie im Auftrag verlangt. Die dortige material_id-Tabelle traegt vier Namen (Beton, Glas, Volumen, mauerwerk), keiner ist eine IFC-Klasse. gelaende_befund() darauf angewandt liefert befund='kein_gelaende_belegt', ifc_katalog=False, Begruendung 'Die Namen sind keine IFC-Klassen; ueber sie ist der Nullbefund eine Aussage ueber die REGEL und nicht ueber die Szene'. Das ist GENAU die Unterscheidung, die die neue Zeile treffen soll, und sie trifft sie richtig -- ein Materialnamen-Nullbefund wird NICHT als Beweis ausgegeben. Messbefehl: PYTHONPATH=src .venv-render/bin/python -c \"from aiimaging import maske; namen=['Beton','Glas','Volumen','mauerwerk']; g=[n for n in namen if maske.ist_umfeld(n) or maske.ist_gelaende(n)]; b=[n for n in namen if n not in g]; print(maske.gelaende_befund(g,b))\" -> befund='kein_gelaende_belegt', ifc_katalog=False, exit 0.",
+    "V3_meinung_nullbefund_soll_maske_selbst_tragen": "Nein, nicht pauschal -- und die heutige Messung an der echten 4771-Knoten-Bestandsdatei ist der Grund dafuer, nicht nur eine Meinung. Selbst im STAERKEREN Fall (Namen sind durchweg IFC-Klassen, ifc_katalog=True) bleibt die Wortliste GELAENDE_WOERTER lueckenhaft: 'Sub-Division' (IfcCovering, 20 Instanzen) faellt durch die Regel und bleibt groesster Bauwerksknoten der Datei (47% der Szenenspannweite) -- die Schrumpfung aendert sich dadurch kaum (2.1% -> 2.3%, statt der bei vollstaendiger Trennung erwartbaren deutlich groesseren Zahl). Ein automatisch tragender Nullbefund haette hier eine sichtbar falsche Maske OHNE Warnung durchgehen lassen. Empfehlung: Nullbefund bleibt Auskunft, keine automatische Freigabe -- die schon vorhandene Meldung mit dem groessten verbleibenden Knoten (glbbox.bauwerksbox) ist der richtige Hebel, weil sie das Problem BENENNT statt es zu verstecken.",
+    "V4_sub_division": "Nach der AKTUELL im Repo stehenden Regel ist 'Sub-Division' ein BAUTEIL, nicht Gelaende (ist_gelaende('Sub-Division') == False, ist_umfeld(...) == False, weder GELAENDE_MUSTER noch GELAENDE_WOERTER noch UMFELD_KLASSEN treffen zu). An der echten Bestandsdatei ist das wahrscheinlich FALSCH: die 20 'IfcCovering_Sub-Division:...'-Knoten bilden zusammen den groessten verbleibenden 'Bauwerks'-Knoten (90.78 m, 47% der Szene) -- typisch fuer eine grossflaechige Gelaende-/Terrainplatte und untypisch fuer ein Bauteil. Wir raten das WORT nicht in die Liste ein (Auflage V2 aus auf-51 verbietet das Raten), sondern melden den Befund als Beleg.",
+    "V5_schrumpfung_jetzt": "2.32% (0.023201149398744514), gemessen am selben 4771-Knoten-Realbestand, mit der heutigen Regel (toposolid-Wort + UMFELD_KLASSEN-Trennung aktiv). Zum Vergleich die im Quelltext (glbbox.py) dokumentierte Referenzzahl VOR der heutigen Messung: 2.1% (an einer aehnlichen/dergleichen Datei, Toposolid-only-Stand vom 01.09.). ABWEICHUNG VOM AUFTRAG: Die im Auftragstext zitierten Werte 'Szenenbox 358.02 m / Bauwerksbox alt 350.33 m / nur Hochbau 234.43 m' liessen sich mit der heutigen Definition von 'Schrumpfung' (Grundriss-Diagonale, glbbox.breite()) NICHT nachvollziehen -- sie duerften aus einer anderen Messgroesse (z.B. Kameraabstand statt Grundriss-Diagonale) stammen. Wir melden darum unsere EIGENE, mit der offiziellen schrumpfung-Definition des Moduls berechnete Zahl (2.32%) statt diese alten Werte zu reproduzieren. KERNBEFUND: Die neue Trennung (toposolid-Wort, UMFELD_KLASSEN) veraendert die Schrumpfung an diesem Bestand kaum -- der dominante ungeloeste Fall bleibt 'Sub-Division'.",
+    "messbefehle": {
+      "sub_division_ist_gelaende/sub_division_ist_umfeld": "PYTHONPATH=src .venv-render/bin/python -c \"from aiimaging.maske import ist_gelaende, ist_umfeld; print(ist_gelaende('Sub-Division'), ist_umfeld('Sub-Division'))\" -> False False, exit 0",
+      "schrumpfung_heute_am_realen_bestand": "PYTHONPATH=src .venv-render/bin/python -c \"from aiimaging import glbbox; aus = glbbox.bauwerksbox(<reale 4771-Knoten-Bestandsdatei, 25 MB glb, dieselbe Datei, auf die glbbox.py im eigenen Modul-Docstring als Referenzmessung verweist>, up_axis='Y'); print(aus['schrumpfung'], aus['groesster_bauwerksknoten'])\" -> 0.023201149398744514, {'name': 'IfcCovering_Sub-Division:9589405_...', 'breite_m': 90.78, 'anteil_szene': 0.47}, exit 0. Reine Kopfauswertung der glb (glTF-min/max), kein Blender, kein Render, keine GPU.",
+      "groesster_verbleibender_bauwerksknoten_anteil_szene": "aus derselben bauwerksbox()-Ausgabe wie oben, Feld groesster_bauwerksknoten.anteil_szene",
+      "n_gelaende_knoten_ausgeschlossen": "len(aus['gelaende_namen']) aus demselben Aufruf -> 10",
+      "n_materialien_lauf17_realer_demolauf": "Ausgezaehlt aus der materialid-tabelle.json eines realen KosmoVis-Demolaufs vom 03.09.2026 (kosmovis-demolauf, Lauf 17): 4 Eintraege (Beton, Glas, Volumen, mauerwerk), keine IFC-Klassennamen."
+    }
+  },
+  "umgebung": {},
+  "fehler": null,
+  "stand": "Stand 06.09.2026, HomeStation, ohne GPU (Grafikkarte durch anderen Agenten belegt)."
+}

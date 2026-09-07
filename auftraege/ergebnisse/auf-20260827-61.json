@@ -1,0 +1,30 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260827-61",
+  "status": "ok",
+  "beendet": "2026-09-06T19:38:52Z",
+  "dauer_s": null,
+  "messwerte": {
+    "produktions_schaetzer": "depth-anything-v2-small",
+    "gemessene_polaritaet": -1,
+    "polaritaet_n_laeufe_referenz": 24,
+    "paar_rho_schwelle_heute_im_quelltext": 0.8,
+    "paar_kantenanteil_schwelle_heute_im_quelltext": 0.2
+  },
+  "urteil": {
+    "einordnung": "DIESER AUFTRAG VERLANGT AUSDRUECKLICH EINEN ECHTEN TIEFENSCHAETZER-LAUF (GPU) -- genau das ist in dieser Sitzung untersagt (Grafikkarte belegt). Eine Ersatzkalibrierung MIT GEBAUTEN STATT GESCHAETZTEN KARTEN existiert bereits im Repo (docs/PAARSCHWELLEN_OBERGRENZE_2026-09-01.md, tools/studie_ersatzkalibrierung.py) -- SIE WURDE FRUEHER, NICHT IN DIESER SITZUNG erzeugt. Sie selbst haelt fest: 'Kein Ersatz fuer auf-61. Der Auftrag bleibt offen.' Wir haben diese Studie in dieser Sitzung NICHT neu gerechnet, weil tools/studie_ersatzkalibrierung.py ueber seams.glb_zu_multipass() einen Blender-MULTIPASS-Render ausloest -- exakt das, was diese Sitzung ausdruecklich verbietet ('kein Multipass'), unabhaengig davon, dass jene Studie mit CPU-Geometrie ohne GPU-Modell auskommt. Die Zwischenergebnisse jenes Laufs (build/ersatz/*.json) sind nicht mehr auf der Platte (build/ ist nicht versioniert) -- eine Rekonstruktion der vollen 176-Zeilen-Falltabelle ist darum in dieser Sitzung nicht moeglich, ohne selbst zu rendern.",
+    "V1_falltabelle_json": "NICHT NEU ERZEUGT -- siehe Einordnung. Wir haben KEINE Werte erfunden oder aus der Markdown-Tabelle in JSON zurueckuebersetzt, weil die publizierte Tabelle nur Fensterwerte und Einzelbeispiele nennt, nicht alle 176 Rohzeilen -- eine Rekonstruktion daraus waere teilweise geraten, und das verbietet der Auftrag ausdruecklich ('V2 nicht raten').",
+    "V2_paarschwellen_json_ausgabe": "Aus demselben Grund nicht neu erzeugt.",
+    "V3_rho_maske_bei_fehlendem_bauwerk_mit_echtem_schaetzer": "NICHT MESSBAR ohne GPU-Lauf. Mit GEBAUTEN Karten (Ersatzkalibrierung, PRE-EXISTIEREND, nicht heute gemessen) gilt: rho ist None auf allen Szenen ohne Gelaende (kein Ersatzwert hinter dem Bauwerk moeglich) und ein echter, messbarer Wert nur auf der Gelaende-Szene -- ob dasselbe mit einem echten Schaetzer gilt, ist unbeantwortet.",
+    "V4_schaetzer_und_polaritaet": "depth-anything-v2-small, gemessene Polaritaet -1 (Disparitaet: nah = grosser Wert), gemessen an 24 Laeufen auf zwei Szenen -- direkt aus src/aiimaging/geometrie_qa.py gelesen (POLARITAET_DISPARITAET-Zuordnung fuer 'depth-anything-v2-small', Kommentar zur 24-Laeufe-Messung), keine eigene neue Messung noetig.",
+    "V5_trennt_eine_der_beiden_groessen": "PRE-EXISTIERENDER BEFUND (docs/PAARSCHWELLEN_OBERGRENZE_2026-09-01.md, nicht heute nachgemessen, da das einen verbotenen Multipass braeuchte): rho trennt INNERHALB jeder Richtungsgruppe sauber (frontal: hoechster schlechter 0.2568, niedrigster guter 0.3790; diagonal: 0.5311 / 0.9065), ABER die beiden Fenster ueberschneiden sich NICHT -- es gibt laut jener Studie keine einzelne richtungsblinde rho-Schwelle, die beide Gruppen fehlerfrei trennt. Der Kantenanteil trennt in KEINER Gruppe (bester schlechter Fall erreicht in beiden Gruppen 1.0000). Das ist eine Obergrenze mit perfekten Karten -- ein echter Schaetzer kann diese Luecke laut jener Studie nur vergroessern, nie schliessen.",
+    "V6_fallzahlen": "PRE-EXISTIERENDER BEFUND: nach Entdopplung frontal 23 gute/23 schlechte, diagonal 19 gute/23 schlechte Faelle -- die diagonale Gruppe faellt damit unter die geforderten 20 guten Faelle. Grund: ueber 4 Szenen und 2 Richtungen je Gruppe liefern mehrere Fallarten analytisch fixierte Werte (1.0, -1.0, None), die sich ueber Szenen wiederholen und keine eigenstaendigen Belege sind.",
+    "V7_bodenanteil_und_geometrieanteil": "PRE-EXISTIEREND je Szene/Richtung tabelliert (docs/PAARSCHWELLEN_OBERGRENZE_2026-09-01.md, Geometrieanteil-Tabelle) -- nicht heute neu erhoben.",
+    "V8_luecke_und_richtung": "PRE-EXISTIEREND bestaetigt (Befund 1 aus dem 27.08. haelt): Richtung ist keine Randbedingung, sondern die eigentliche Auswertungseinheit -- die Luecke zwischen frontalen und diagonalen Ansichten (0.3790 bis 0.5311, ca. 0.15) ist die schaerfste Einzelaussage jener Studie und folgt aus vier mit perfekten Karten gemessenen Zahlen, nicht aus Fallzahl oder Schaetzerrauschen.",
+    "V9_symmetrie_und_kamerapaare": "PRE-EXISTIEREND: 88 von 176 Zeilen jener Studie sind Dubletten -- 44 durch eine tatsaechlich doppelte Szene ('raeume' == 'quader' auf allen Stellen, weil zwei innenliegende IfcSpace von aussen unsichtbar sind) und 44 durch vier Fallarten mit analytisch fixiertem rho (treu, skala, innen_vertauscht, flach) -- NICHT durch echte Kamerasymmetrie, wie am 27.08. zunaechst vermutet.",
+    "hinweis_zur_herkunft_der_pre_existierenden_zahlen": "Alle mit 'PRE-EXISTIEREND' markierten Werte in diesem Abschnitt stammen aus docs/PAARSCHWELLEN_OBERGRENZE_2026-09-01.md, das VOR dieser Sitzung im Repo lag (tools/studie_ersatzkalibrierung.py, Owner-Entscheid 01.09.2026). Wir haben diese Zahlen NICHT nachgerechnet (das haette den verbotenen Multipass gebraucht) und melden sie ausdruecklich als Zitat, nicht als eigene Messung -- Messregel 1."
+  },
+  "umgebung": {},
+  "fehler": null,
+  "stand": "Stand 06.09.2026, HomeStation, ohne GPU (Grafikkarte durch anderen Agenten belegt)."
+}

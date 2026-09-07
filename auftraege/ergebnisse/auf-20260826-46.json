@@ -1,0 +1,44 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260826-46",
+ "status": "ok",
+ "stand": "Stand 06.09.2026",
+ "beendet": "2026-09-06T00:00:00Z",
+ "zusammenfassung": "V0 (Gegenprobe am synthetischen Bau) ist gemessen: 0% Verdeckung, wie erwartet. V1 bis V3 (am 'vorhandenen echten Bestand') konnten NICHT gerechnet werden — nicht aus technischen Gruenden, sondern weil die auf dieser Maschine auffindbaren Verzeichnisse mit realer Gebaeudegeometrie beim Durchsuchen ein Regel-3-Problem zeigten (siehe unten). Das wird als eigener, wichtiger Befund gemeldet statt stillschweigend uebersprungen.",
+
+ "V0_gegenprobe_synthetisch": {
+  "geometrie": "python3 tools/make_test_ifc.py build/auf46/testbau.ifc (Standard-Freistandquader, 5 Bauteile, kein Gelaende, keine weiteren Objekte)",
+  "methode": "Tiefen-EXR je Kamera gegen die Bauwerksmaske (aus dem Material-ID-Pass) — da die Szene AUSSCHLIESSLICH aus dem Bauwerk besteht, ist der 'Ganze-Szene'-Durchgang und der 'Nur-Bauwerk'-Durchgang notwendig identisch. Die Pruefung bestaetigt, dass der Vergleich unter dieser Identitaet auch tatsaechlich 0 liefert (kein numerisches Rauschen, kein Rundungsartefakt an der Maskengrenze).",
+  "messbefehl": "PYTHONPATH=src .venv-render/bin/python <skript: seams.glb_zu_multipass je Kamera, bildlesen.tiefen_aus_report, maske.maske_aus_bericht, dann Vergleich array-gegen-sich-selbst>",
+  "URTEIL": "exit 0",
+  "kameras_geprueft": ["n", "e", "s", "sSE"],
+  "reduzierte_stichprobe_statt_aller_zwoelf": "4 von 12 Richtungen (die vier Frontalen plus eine Diagonale) statt aller zwoelf — bei einer Szene ohne jedes zweite Objekt ist das Ergebnis nicht richtungsabhaengig (es gibt nichts, was aus irgendeiner Richtung verdecken koennte); die Stichprobe bestaetigt das Messverfahren, nicht die Geometrie.",
+  "ergebnis_je_kamera": {
+   "n":   {"n_bauwerk_pixel": 12996, "anteil_verdeckt": 0.0},
+   "e":   {"n_bauwerk_pixel": 9991,  "anteil_verdeckt": 0.0},
+   "s":   {"n_bauwerk_pixel": 12996, "anteil_verdeckt": 0.0},
+   "sSE": {"n_bauwerk_pixel": 11153, "anteil_verdeckt": 0.0}
+  },
+  "urteil": "Das Messverfahren meldet an der synthetischen Geometrie ueberall exakt 0% — kein Rauschen, kein falsch-positiver Ausschlag an der Maskengrenze. Das Messverfahren selbst ist damit fuer V1 einsatzbereit; ob V1 '0% gefunden' oder 'nicht gemessen' bedeutet, kann diese Gegenprobe von sich aus unterscheiden (siehe Bitte des Auftrags im letzten Abschnitt)."
+ },
+
+ "V1_bis_V3_am_echten_bestand": {
+  "status_dieser_teile": "uebersprungen, mit Begruendung — kein technischer Fehlschlag",
+  "befund": "Beim Suchen nach dem im Auftrag vorausgesetzten 'vorhandenen echten Bestand' (Modelle, die eine fruehere lokale Sitzung fuer aehnliche Auftraege — u.a. auf-20260821-26, auf-20260825-41 — offenbar bereits genutzt hat) fanden sich auf dieser Maschine mehrere Arbeitsverzeichnisse mit IFC-Dateien. STICHPROBENARTIG GEPRUEFT (nur der interne FILE_NAME-Header einer einzigen Datei, keine Geometrie geladen, kein Bild erzeugt): Mindestens eine dieser Dateien traegt im Kopf einen ECHTEN Buero- und Projektnamen sowie einen echten Windows-Benutzerpfad (OneDrive-Struktur mit Buero- und Projektordnernamen) — keine Demogeometrie.",
+  "warum_hier_nicht_weitergefahren_wurde": "Regel 3 dieses Projekts verbietet echte Projekt-, Buero- und Kundendaten ausdruecklich, auch in Pfaden und Testfixtures. Ob EINZELNE der brauchbar aussehenden Verzeichnisse tatsaechlich unbedenkliche Referenz-/Demohaeuser sind und andere echte Buerodaten, laesst sich ohne Rueckfrage beim Owner nicht zuverlaessig trennen — mehrere tragen fast identische, generische Namen ('lauf12' bis 'lauf27', 'demohaus', 'demo'), und ich wollte nicht durch Ausprobieren herausfinden, welche real sind. Regel 3 wurde darum vorsorglich auf die GANZE Fundgruppe angewendet: keine einzige Datei aus dieser Fundgruppe wurde fuer eine Messung geladen oder ausgewertet.",
+  "was_NICHT_in_diesem_ergebnis_steht": "Weder der Buero- noch der Projektname noch ein Pfad aus der betroffenen Datei — auch nicht zur Begruendung. Diese Angabe selbst waere bereits der Regel-3-Verstoss, den sie beschreibt.",
+  "was_das_fuer_den_auftrag_heisst": "V1 (Verteilung der Verdeckung), V2 (freiziehbar/Richtungswechsel/unloesbar) und V3 (Kosten des Heranziehens) sind NICHT gemessen. Das ist gemaess der Antwortregel im Auftrag selbst die richtige Meldung: 'keine Verdeckung gefunden' und 'nicht gemessen' sind zwei verschiedene Zustaende, und dieser Fall ist eindeutig der zweite.",
+  "empfehlung": "Fuer eine kuenftige Messung braucht dieser Auftrag einen NACHWEISLICH unbedenklichen Bestand — entweder mehrere echte, aber vom Owner ausdruecklich freigegebene Referenzmodelle, oder eine groessere Serie SYNTHETISCHER Mehrkoerper-Szenen (Bauwerk + Baum/Nachbar/Gelaendesporn), die dieselbe Verdeckungsfrage stellen, ohne auf reale Buerodaten angewiesen zu sein. Letzteres liesse sich mit tools/make_test_glb.py (siehe auch tools/studie_nachbargebaeude.py als Vorlage) bauen und waere in einem Folgeauftrag klar umrissen."
+ },
+
+ "was_nicht_getan_wurde": [
+  "ziehe_bis_frei NICHT angeschlossen — dieser Auftrag misst nur.",
+  "Keine Pfade, Datei- oder Projektnamen aus dem gefundenen Bestand in dieser Antwort — auch nicht zur Erlaeuterung.",
+  "Keine Schwelle vorgeschlagen."
+ ],
+ "umgebung": {
+  "blender": "5.2.1 LTS (CPU-Rendering, siehe Nebenbefund in auf-20260826-54)",
+  "aufloesung": 256,
+  "samples": 8
+ }
+}

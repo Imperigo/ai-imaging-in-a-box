@@ -1,0 +1,67 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260826-42",
+ "status": "ok",
+ "stand": "Stand 06.09.2026",
+ "beendet": "2026-09-06T00:00:00Z",
+ "zusammenfassung": "G1 bestaetigt (voller Weg, keine Entflechtung noetig). G2 zeigt GENAU den Fall, den der Auftrag als moeglich benannt hat: nachher=2, nicht 0 — die Reparatur greift NICHT vollstaendig durch, und der Renderlauf stirbt weiterhin am selben Geraetekonflikt wie vor der Reparatur. Ursache gefunden und unten benannt. G3: 1.3647 GiB, deckt sich mit der dokumentierten Schaetzung ~1.35 GiB. G4: die dritte Stufe (Schichtauslagerung) laesst sich jetzt OHNE Fehler AUFSETZEN — ob sie auch bis zu einem Bild durchlaeuft, wurde NICHT geprueft (siehe G4).",
+ "G1_gegenprobe_voller_weg": {
+  "messbefehl": "PYTHONPATH=src AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers .venv-render/bin/python -c \"from aiimaging import render; m = render.lade_modell('z-image-turbo'); print(m.geraet, m.entflechtung)\"  — GPU vorher leer (30.23 GiB frei von 31.36 GiB)",
+  "URTEIL": "exit 0",
+  "geraet": "cuda",
+  "entflechtung": null,
+  "urteil": "Wie erwartet: Bei freier Karte (30.23 GiB >= 29.25 GiB verlangt) wird NICHT entflochten. Die Bedingung ist richtig verdrahtet."
+ },
+ "G2_der_fall_der_den_anlass_gab": {
+  "vorgehen": "GPU mit einem zweiten Prozess auf ~3.0 GiB belegt (torch.empty(...).cuda(), Speicher gehalten, nicht gerechnet), damit frei zwischen groesster*1.25 (14.625 GiB) und summe*1.25 (29.25 GiB) liegt.",
+  "gemessene_lage": {"frei_vor_laden_gib": 26.63, "damit_erwartet": "cuda+auslagerung"},
+  "messbefehl": "PYTHONPATH=src AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers .venv-render/bin/python <skript: laedt z-image-turbo via render.lade_modell bei ~3 GiB belegter Karte, danach ein echter Renderlauf ueber render.rendere() mit vorhandener Tiefenkarte, 8 Schritte>",
+  "URTEIL": "exit 0",
+  "geraet": "cuda+auslagerung",
+  "entflechtung": {
+   "vorher": 67,
+   "nachher": 2,
+   "kopiert": ["t_embedder", "all_x_embedder", "cap_embedder", "noise_refiner", "context_refiner"],
+   "grund_wortlaut": "NICHT DURCHGEGRIFFEN: 2 von 67 Parametern sind weiter geteilt, obwohl 5 Untermodule kopiert wurden. Das Auslagern wird voraussichtlich scheitern."
+  },
+  "ist_ein_bild_entstanden": false,
+  "render_status": "fehler",
+  "render_dauer_bis_zum_fehler_s": 2.5,
+  "render_fehler_voll": "RuntimeError: Expected all tensors to be on the same device, but got mat1 is on cuda:0, different from other tensors on cpu (when checking argument in method wrapper_CUDA_addmm)",
+  "urteil": "GENAU DER FALL, VOR DEM DER AUFTRAG WARNT: nachher=2, nicht 0. Die Reparatur greift NICHT vollstaendig durch, und der Lauf stirbt auf dem Auslagerungsweg an DEMSELBEN Fehlerbild wie vor der Reparatur (Geraetekonflikt zwischen cuda:0 und cpu). Sechs Demolaeufe waren also weiterhin offen zum Zeitpunkt dieser Messung — bis die zwei uebrigen Parameter ebenfalls geloest sind, bringt die Entflechtung auf DIESER Installation (diffusers 0.39.0) keinen Lauf durch, der vorher nicht durchkam.",
+  "ursache_der_zwei_uebrigen_parameter": {
+   "messbefehl": "dieselbe Sitzung: geteilte Parameter je direktem Kind von controlnet.named_children() vor UND nach _entflechte_controlnet, gegen pipeline.transformer",
+   "URTEIL": "exit 0",
+   "je_kind_vor_der_entflechtung": {"t_embedder": 4, "all_x_embedder": 2, "cap_embedder": 3, "noise_refiner": 30, "context_refiner": 26},
+   "summe_ueber_die_fuenf_kinder": 65,
+   "je_kind_nach_der_entflechtung": {},
+   "befund": "Nach der Entflechtung tragen ALLE FUENF kopierten Kinder null geteilte Parameter mehr (65 von 67 geloest) — die Kopie der direkten Kinder wirkt genau dort, wo sie hinzielt. Die zwei VERBLEIBENDEN Parameter liegen aber NICHT unter irgendeinem Kind von controlnet.named_children() (65+2=67, aber 0 der zwei tauchen in obiger Aufschluesselung auf). Das heisst: mindestens ein Parameter ist DIREKT auf dem controlnet-Modul selbst registriert (nicht in einem Unterkindmodul) und wird von der aktuellen Schleife (die nur named_children() durchgeht) nicht erfasst. `_entflechte_controlnet` kopiert Kinder, aber keine direkten Attribute des ControlNets selbst — das ist die Luecke."
+  }
+ },
+ "G3_der_preis": {
+  "messbefehl": "torch.cuda.memory_allocated() unmittelbar vor und nach render._entflechte_controlnet(pipeline), auf einer frisch geladenen, voll auf cuda liegenden Pipeline (Karte nicht belegt)",
+  "URTEIL": "exit 0",
+  "vor_gib": 22.192,
+  "nach_gib": 23.5567,
+  "differenz_gib": 1.3647,
+  "dokumentierte_zahl": 1.35,
+  "abweichung": "+0.0147 GiB (rund 1.1% ueber dem dokumentierten Wert) — im Rahmen der Messgenauigkeit, die dokumentierte Schaetzung 'rund 1,35 GiB' traegt weiterhin. Keine Berichtigung noetig.",
+  "urteil": "Die Zahl im Docstring von _entflechte_controlnet und in docs/LEXIKON.md muss NICHT geaendert werden."
+ },
+ "G4_die_dritte_stufe": {
+  "frage": "Aendert die Entflechtung etwas daran, dass enable_sequential_cpu_offload() fuer diese Pipeline schon beim Aufsetzen sterbe?",
+  "messbefehl": "pipeline.enable_sequential_cpu_offload() direkt nach _entflechte_controlnet() aufgerufen, auf derselben Pipeline-Instanz",
+  "URTEIL": "exit 0",
+  "ergebnis": "aufgesetzt ohne Fehler",
+  "einschraenkung_ausdruecklich": "GEPRUEFT wurde NUR das Aufsetzen (der Funktionsaufruf selbst wirft keine Exception mehr). NICHT geprueft: ob auf dieser dritten Stufe danach tatsaechlich ein Bild bis zum Ende durchlaeuft — das haette einen weiteren vollen Renderlauf auf der langsamsten Stufe gebraucht, und dieser Auftrag listet ihn nicht unter den vier Punkten. Dieses Ergebnis ist damit ein TEILBEFUND: 'setzt sich jetzt auf' ist gemessen, 'liefert ein Bild' ist es nicht.",
+  "urteil": "Das ist ein Befund und kein Fehlschlag, wie der Auftrag es vorwegnimmt — aber ein unvollstaendiger: Die Entflechtung AENDERT sichtbar etwas am Aufsetzverhalten (kein sofortiger Fehler mehr), aber ob das die urspruengliche Frage ('bringt die dritte Stufe die Kette durch') beantwortet, ist damit nicht geklaert. Empfehlung: falls das gebraucht wird, ein eigener, knapper Folgeauftrag fuer genau diesen einen Lauf."
+ },
+ "umgebung": {
+  "gpu": "NVIDIA GeForce RTX 5090",
+  "leistungsgrenze_w_waehrend_der_messung": {"messbefehl": "nvidia-smi --query-gpu=power.limit --format=csv,noheader", "wert": "400.00 W"},
+  "diffusers_version": "0.39.0",
+  "torch_version": "2.11.0+cu128",
+  "python": "3.14"
+ },
+ "abweichung_vom_auftrag": "Keine wesentliche. Die Kernerwartung des Auftrags ('vorher sollte 67 sein und nachher 0') trifft NICHT zu — nachher ist 2, und der Auftrag selbst sagt fuer genau diesen Fall, was zu tun ist ('dann bitte die Namen ... mitschicken'); das ist geschehen."
+}

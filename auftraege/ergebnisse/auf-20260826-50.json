@@ -1,0 +1,54 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260826-50",
+  "status": "ok",
+  "beendet": "2026-09-07T06:34:49Z",
+  "dauer_s": null,
+  "messwerte": {
+    "F1_stufe_der_messung": {
+      "antwort": "JA -- der Score 0.7177 ist auf einem tatsaechlich vom Bildmodell erzeugten, ausgewaehlten Diffusionsbild gemessen, nicht auf einer Zwischenstufe.",
+      "beleg_1_code": "_bester_seed() in src/aiimaging/abholer.py (~Zeile 3149ff) rendert ausschliesslich ueber rendere_seed(seed, ziel_png) -- ein Diffusions-Seed je Kandidat -- und misst jeden Kandidaten via messe(erg['bild_png']) = qa_gegen_soll auf dem TATSAECHLICH erzeugten PNG. Der Blender-Beauty-Pass wird an dieser Stelle nie gemessen.",
+      "beleg_2_bestehender_bericht": "auftraege/ergebnisse/auf-20260826-47.json, Feld nachtrag_renderaufrufe.gemessen.mit_kein_gelaende: 3 Kandidaten, Seeds [0,1,2], rho_maske.gerichtet = [0.549, 0.5408, 0.6286], gewaehlt Seed 2 (0.6286) -- exakt der Wert, der im selben Bericht unter M1_lauf_mit_neuer_glb.gemessen.mit_kein_gelaende.rho_maske_gerichtet neben geometrie_score 0.7177 steht. Das verkettet den Score eindeutig mit dem SELEKTIERTEN, tatsaechlich generierten Bild.",
+      "einordnung_der_frage_des_auftrags": "0.73 liegt zwischen dem Beauty-Pass-Wert (|spearman| 0.990) und dem Nullbefund am Bildmodell (0.005) -- aber die vorliegende Kette der Belege zeigt, dass es sich um Stufe 'Bildmodell', nicht 'Beauty-Pass', handelt."
+    },
+    "F2_prompt_und_bauteile": {
+      "status": "offener Rest -- Wortlaut nicht rekonstruierbar",
+      "gesucht_in": [
+        "auftraege/ergebnisse/auf-20260826-47.json",
+        "Commits fe0b90c, fdf8d3d, ebf34e1",
+        "docs/sitzungen/2026-08-26_sitzung-13.md",
+        "docs/EINBAU_STAND.md",
+        "docs/PLAN.md"
+      ],
+      "befund": "An keiner dieser Stellen ist der woertliche Prompt-Text dieses konkreten Laufs festgehalten.",
+      "begruendete_vermutung_kein_beweis": "Das Projekt hat einen bauteilwaechter()-Mechanismus (src/aiimaging/prompts.py, komponiere()), der Bauteil-Nennungen im Freitext automatisch erkennt und als 'hinweise' meldet. Fuer Messlaeufe ist MESS_STIL vorgesehen (treue_geeignet=True), dessen Bausteine an anderen Stellen im Projekt (z.B. auf-18-09) generische Stil-/Lichtworte verwenden, keine konkreten Bauteile. Im auf-47-Bericht steht keine Bauteilwaechter-Warnung. Das macht einen bauteilfreien MESS_STIL-Prompt PLAUSIBEL -- aber es ist eine Vermutung aus der Code-Konvention, kein Beleg fuer DIESEN Lauf."
+    },
+    "F3_bildmodell_startwert_stabilitaet": {
+      "bildmodell_name": {
+        "status": "offener Rest",
+        "befund": "An keiner der durchsuchten Stellen ist Backbone/Modellname fuer diesen konkreten Lauf genannt."
+      },
+      "startwert": "2 (von den gefahrenen Seeds 0, 1, 2 -- der mit dem hoechsten rho_maske.gerichtet ausgewaehlte).",
+      "stabilitaet_ueber_startwerte": {
+        "antwort": "NEIN, nicht als robust belegt -- eher im Gegenteil.",
+        "beleg": "Derselbe auf-47-Bericht: Auswahlabstand 0.6286 (Seed 2) gegen 0.5490 (naechstbester), Differenz 0.0796, liegt AUSDRUECKLICH innerhalb von 2x Rauschboden (0.4538); 'vorsprung.belegt' steht auf false.",
+        "einschraenkung": "Das ist die Rangkorrelation ueber die Bauwerksmaske (Auswahlmass), nicht der finale geometrie_score selbst -- fuer die beiden nicht gewaehlten Seeds wurde geometrie_score nirgends berichtet. Die Kernaussage 'haelt der Wert ueber mehrere Startwerte' ist damit aber bereits mit Nein beantwortbar: die Auswahl ist selbst laut dem eigenen Vorsprungsriegel NICHT als robust ausgewiesen."
+      },
+      "kein_neuer_lauf_durchgefuehrt": "Wie im Auftrag erlaubt ('hat Zeit') wurde kein zweites Startwert-Tripel gefahren -- ohne GPU in dieser Session ohnehin nicht moeglich."
+    },
+    "einordnung_nach_der_auftragseigenen_logik": {
+      "hinweis": "Der Auftrag beschreibt selbst, was aus jeder Antwortkombination folgen wuerde -- das ist eine Wiedergabe dieser Logik, keine eigene Aenderung.",
+      "zutreffende_kategorie": "F1=ja, aber F3 schwaecht ihn (Seed-Auswahl nicht als robust belegt) -- laut Auftrag waere das der Fall fuer 'Praezisierung statt Streichung' des README-Satzes.",
+      "readme_status_heute": "Der betroffene README-Satz ('Ein Bild, das die Geometrie-Schwelle besteht, gibt es noch nicht ... mit einem Prompt ohne Bauteile und einer Geometrie, die ein Gebaeude ist statt einer offenen Schachtel') stammt laut git-Historie vom 26.08.2026, 10:59 Uhr -- VOR der 0.7177-Messung am selben Tag. Er ist keine nachtraegliche Reaktion auf diese Frage, sondern eine unabhaengig aeltere Formulierung, und steht bis heute unveraendert.",
+      "keine_eigene_aenderung_vorgenommen": "README.md wurde in dieser Session NICHT angefasst -- die Entscheidung, den Satz zu praezisieren oder stehen zu lassen, liegt beim Auftraggeber."
+    }
+  },
+  "urteil": {},
+  "umgebung": {},
+  "fehler": null,
+  "was_nicht_abgeschlossen_werden_konnte": [
+    "F2: woertlicher Prompt-Text des Laufs -- nirgends im Repo festgehalten, nur eine begruendete Vermutung moeglich.",
+    "F3: Name des verwendeten Bildmodells/Backbones -- nirgends im Repo festgehalten.",
+    "F3: geometrie_score der beiden NICHT gewaehlten Seeds -- nur ihr Auswahlmass (rho_maske.gerichtet) ist bekannt, nicht der volle Score."
+  ]
+}

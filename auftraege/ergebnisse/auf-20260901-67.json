@@ -1,0 +1,50 @@
+{
+  "auftrag_id": "auf-20260901-67",
+  "status": "ok",
+  "antworten": {
+    "R1": {
+      "frage": "Gibt es das Feld schon, unter einem anderen Namen?",
+      "einordnung": "erledigt",
+      "antwort": "Nein. Kein gelaende-, terrain- oder ground-Feld in RenderScene, unter keinem Namen.",
+      "beleg": {
+        "messbefehl": "grep -rn \"gelaende|terrain|ground\" packages/kosmo-contracts/src/",
+        "urteil": "exit 1 (kein Treffer)",
+        "messbefehl_archiv": "grep -rl \"gelaende_erwartet|kein-gelaende\" auftraege/",
+        "urteil_archiv": "exit 1 (kein Treffer — auch keine Vorarbeit im internen Archiv)"
+      }
+    },
+    "R2": {
+      "frage": "Falls nein: Name, Ort und Typ des neuen Feldes.",
+      "einordnung": "in_arbeit",
+      "antwort": "Wird in dieser Sitzung parallel gebaut: ein additives, optionales dreiwertiges Feld scene.gelaende: z.boolean().nullable().optional() (Vorgabe unbekannt/null, nie false) in packages/kosmo-contracts/src/render-scene.ts, genau dem additiven Muster folgend, das dieses Paket bereits mehrfach verwendet (GeometryQA, interior, lieferstatus).",
+      "hinweis": "Zum Zeitpunkt dieser Antwort (03.09.2026) noch nicht im Repo sichtbar — ein anderer Bauagent arbeitet parallel in derselben Sitzung an genau diesem Feld. Bitte bei Bedarf erneut nachfragen, falls dieser Auftrag nicht innerhalb weniger Tage einen Nachtrag mit dem fertigen Feldnamen erhaelt."
+    },
+    "R3": {
+      "frage": "Ab welcher Vertragsversion, und was bekommt ein Client, der es nicht schickt?",
+      "einordnung": "in_arbeit",
+      "antwort": "Additiv geplant, wie alle bisherigen Erweiterungen dieses Vertrags: ein Client, der das Feld nicht schickt, bleibt gueltig und bekommt effektiv 'unbekannt' (null), niemals still 'false'. Die genaue Versionsnummer steht erst mit dem fertigen Commit fest."
+    },
+    "R4": {
+      "frage": "Was tut euer Worker, wenn das Feld fehlt: ablehnen, oder unbekannt durchreichen?",
+      "einordnung": "in_arbeit",
+      "antwort": "Geplant: unbekannt durchreichen (null), nicht ablehnen — genau eure eigene Vorgabe ('lieber gar kein Wert als ein geratener'). Verbindlich erst nach Fertigstellung."
+    },
+    "R5": {
+      "frage": "Beleg, dass es EINGEBAUT ist — nicht der Entwurf, sondern die Version im Betrieb.",
+      "einordnung": "in_arbeit",
+      "antwort": "Kann heute (03.09.2026) noch nicht geliefert werden — das Feld ist zum Zeitpunkt dieser Antwort noch nicht im Repo. Wird nachgereicht, sobald es gebaut, getestet und committet ist."
+    }
+  },
+  "beim_nachpruefen_korrigiert": [
+    "Keine Korrektur am Kernbefund noetig. R1 wurde identisch nachgemessen (0 Treffer). Wir haben zusaetzlich den aktuellen Repo-Zustand (git log, git status) gegengeprueft: das Feld ist zum Zeitpunkt dieser Antwort tatsaechlich noch nicht vorhanden — die Einordnung 'BAUBAR' aus dem Inventar wird hier praezisiert zu 'in Arbeit', weil es laut Auftragslage parallel in dieser Sitzung gebaut wird."
+  ],
+  "wissen_wir_nicht": [
+    "Den fertigen Feldnamen/Commit-Hash, weil der Bau zum Zeitpunkt dieser Antwort noch nicht abgeschlossen ist."
+  ],
+  "herkunft": {
+    "pfad": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260901-67.json",
+    "verfasser": "KosmoOrbit-Cloud-Worker (Zweig claude/kosmo-orbit-v1-build-pzxkbj)"
+  },
+  "uebertragen_von": "lokaler Worker (Uebertragungsstelle), 06.09.2026",
+  "stand": "Uebertragen am 06.09.2026 aus System B (Architektur-Cosmos) nach System A (ai-imaging-in-a-box); inhaltlich unveraendert aus der dortigen Antwort vom 2026-09-03 uebernommen."
+}

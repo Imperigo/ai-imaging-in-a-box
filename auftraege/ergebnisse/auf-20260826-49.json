@@ -1,0 +1,87 @@
+{
+  "auftrag_id": "auf-20260826-49",
+  "status": "ok",
+  "antworten": {
+    "V1": {
+      "frage": "Welcher Weg ist der Produktweg — Szenenvertrag oder Werkzeugnaht (MCP)?",
+      "einordnung": "braucht_owner_entscheid",
+      "antwort": "Ausdruecklich vom Owner zu entscheiden, wie ihr selbst verlangt habt — keine Bequemlichkeitsantwort von uns. Szenenvertrag = kosmo-contracts/HomeStation-Datei-Queue seit 22.08., Werkzeugnaht = MCP-Tools aiimaging_enqueue_render/aiimaging_query_render, seit 26.08. an denselben Abholer angeschlossen.",
+      "beleg_beide_existieren": {
+        "messbefehl": "grep -rln \"aiimaging_enqueue_render\\|aiimaging_query_render\" --include=*.ts --include=*.py --include=*.md .",
+        "fund": "kosmo-orbit/docs/HOMESTATION-MELDUNG-2026-08-19.md, kosmo-orbit/docs/auftraege-kosmovis/auf-20260826-49.md — Erwaehnungen vorhanden, aber keine eigene Implementierung in diesem Repo (die MCP-Werkzeugnaht liegt ausserhalb von kosmo-contracts)."
+      }
+    },
+    "V2": {
+      "frage": "Wollt ihr qa je Kamera, und unter welchem Feldnamen?",
+      "einordnung": "braucht_owner_entscheid",
+      "antwort": "Nicht gebaut. render-result.ts fuehrt einen einzigen qa-Block je Lauf, kein qa_je_kamera-Feld. Feldname und ob gewuenscht ist eine Owner-Entscheidung; danach additiv baubar (geschaetzt 15-25 Zeilen plus Tests, analog den bisherigen QA-Erweiterungen).",
+      "beleg": {
+        "messbefehl": "grep -n \"qa_je_kamera\" packages/kosmo-contracts/src/render-result.ts",
+        "urteil": "exit 1 (kein Treffer)"
+      }
+    },
+    "V3": {
+      "frage": "Was ist bei euch eine Variante, wie viele je Kamera, und wie waehlt der Benutzer?",
+      "einordnung": "braucht_owner_entscheid",
+      "antwort": "Nicht gebaut, kein Variant-Feld. images ist eine einfache Liste ohne Mehrfachbelegung eines Blickwinkels. Ihr verlangt selbst eine Bedeutungs-Festlegung (a/b/c-Fragen zu Kosten/Auswahlkriterium) vor jedem Bau — das ist eine Owner-Entscheidung, keine Code-Frage.",
+      "beleg": {
+        "messbefehl": "grep -n \"variante\\|Variante\" packages/kosmo-contracts/src/render-scene.ts packages/kosmo-contracts/src/render-result.ts",
+        "urteil": "exit 0, aber 0 inhaltliche Treffer ausserhalb unverwandter Textstellen (z. B. 'flux-krea'-GGUF-'Variante')"
+      }
+    },
+    "V4": {
+      "frage": "Eingabefeldnamen des Knotens, der eure Bilder abnimmt (KosmoPublish)?",
+      "einordnung": "erledigt",
+      "antwort": "Der Knoten heisst im Knotengraphen 'blatt' ('Aufs Blatt') und hat genau EIN Eingabefeld: 'bild' (Typ 'bild'). Der render-Knoten liefert genau dieses Ausgabefeld (outputs: [{name: 'bild', typ: 'bild'}]) — die Kante entsteht ueber Feldnamen-Gleichheit bild <-> bild, wie in eurem Blatt beschrieben.",
+      "beleg": {
+        "datei_zeile_blatt": "packages/kosmo-kernel/src/derive/visgraph.ts:178-183 (blatt-Knoten)",
+        "datei_zeile_render_output": "packages/kosmo-kernel/src/derive/visgraph.ts:144 (outputs: [{name: 'bild', ...}])",
+        "messbefehl": "sed -n '135,190p' packages/kosmo-kernel/src/derive/visgraph.ts",
+        "urteil": "exit 0"
+      }
+    },
+    "V5": {
+      "frage": "Antworten auf Fragen 5, 9 und 15/16 eines 'Uebergabeblatts'.",
+      "einordnung": "nicht_bei_uns",
+      "antwort": "Dieses 'Uebergabeblatt' ist unter diesem Namen in diesem Repo nicht auffindbar. Gezielt gesucht in auftraege/von-homestation/ (21 Dateien) nach 'Frage 5', 'Frage 9', 'Frage 15', 'Frage 16', 'pruefe_kette' — durchgehend 0 Treffer. Der Name 'Uebergabeblatt' selbst taucht in diesem Repo nur in drei anderen Dokumenten auf, keines davon enthaelt die genannten Fragen.",
+      "beleg": {
+        "messbefehl_1": "grep -rl \"Frage 5|Frage 9|Frage 15|Frage 16|pruefe_kette\" auftraege/von-homestation/",
+        "urteil_1": "kein Treffer",
+        "messbefehl_2": "grep -rli \"uebergabeblatt\" (repoweit)",
+        "urteil_2": "3 Treffer, keiner mit den gefragten Nummern — kosmo-orbit/docs/INVENTAR-WORKER-PUBLISH-UND-UI.md, kosmo-orbit/docs/UI-2026-08-26-ZURUECKGEZOGEN.md, dieses Auftragsblatt selbst"
+      },
+      "teilbefund": {
+        "frage_9_abholer": "Wie bei auf-20260822-31/NULL: die Abholer-Frage ist beantwortbar (Code existiert, siehe unsere Antwort zu auf-20260822-31/R0), aber ob ein Prozess laeuft, ist eine Betriebsfrage."
+      },
+      "rueckfrage": "Wo genau liegt das 'Uebergabeblatt' mit den nummerierten Fragen 5/9/15/16 — in eurem eigenen Repo, oder ist der Name/Ort ungenau uebertragen worden?"
+    }
+  },
+  "beim_nachpruefen_korrigiert": [
+    "V5: Das Inventar hatte hier ehrlich 'NICHT VOLLSTAENDIG GEPRUEFT — aus Zeitgruenden' vermerkt. Wir haben die Suche vervollstaendigt (gezielt in allen 21 Dateien von auftraege/von-homestation/ nach den vier Fragenummern gesucht) — Ergebnis bleibt 0 Treffer, jetzt aber vollstaendig statt unvollstaendig geprueft.",
+    "V1, V2, V3, V4: unabhaengig nachgemessen, keine Abweichung zum Inventar gefunden."
+  ],
+  "wissen_wir_nicht": [
+    "V5: Wo das referenzierte 'Uebergabeblatt' mit den Fragen 5/9/15/16 tatsaechlich liegt — nicht in diesem Repo auffindbar."
+  ],
+  "nachtrag_03_09_2026": {
+    "anlass": "Owner-Entscheid vom 03.09.2026 zu beiden offenen Punkten.",
+    "V2": {
+      "entscheid": "Gebaut, unter dem von euch vorgeschlagenen Namen.",
+      "feld": "qa_je_kamera",
+      "form": "optionales Array von {kamera: string, geometry?: GeometryQA, style?: StyleQA}. 'kamera' ist Pflicht je Eintrag — sonst waere nicht erkennbar, welche Ansicht durchfiel.",
+      "wichtig": "Der bestehende qa-Block bleibt BYTE-IDENTISCH. Das neue Feld steht daneben, es ersetzt nichts.",
+      "bedeutung_wenn_fehlend": "Keine Auskunft je Kamera; der alte, aggregierte qa-Block bleibt die einzige."
+    },
+    "V3": {
+      "entscheid": "NEIN — ausdruecklich, und das ist die Antwort auf euer R6 aus auf-20260822-31.",
+      "begruendung": "Varianten je Kamera verlangen von uns zuerst eine Bedeutungs-Festlegung (was ist eine Variante, wie viele je Kamera, wonach waehlt der Benutzer). Wir haben heute keinen Ort in der Oberflaeche, an dem ein Benutzer zwischen Varianten waehlt — und ohne den waere jede Festlegung geraten. Ihr habt uns Raten ausdruecklich untersagt.",
+      "was_das_fuer_euch_heisst": "Ihr koennt den Vorbau dafuer streichen, statt ihn fuer uns vorzuhalten. Sollte sich das aendern, melden wir uns von selbst — ihr muesst nicht nachfragen."
+    }
+  },
+  "herkunft": {
+    "pfad": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260826-49.json",
+    "verfasser": "KosmoOrbit-Cloud-Worker (Zweig claude/kosmo-orbit-v1-build-pzxkbj)"
+  },
+  "uebertragen_von": "lokaler Worker (Uebertragungsstelle), 06.09.2026",
+  "stand": "Uebertragen am 06.09.2026 aus System B (Architektur-Cosmos) nach System A (ai-imaging-in-a-box); inhaltlich unveraendert aus der dortigen Antwort vom 2026-09-03 uebernommen."
+}

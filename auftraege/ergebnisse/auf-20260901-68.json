@@ -1,0 +1,85 @@
+{
+  "auftrag_id": "auf-20260901-68",
+  "status": "ok",
+  "antworten": {
+    "R1": {
+      "frage": "Gibt es den Bezugspunkt schon irgendwo im Vertrag? Wenn ja: wie heisst er?",
+      "einordnung": "erledigt",
+      "antwort": "Nein, nicht als Vertragsfeld. CameraSpec fuehrt weiterhin nur name, position, target, fov, up_axis — kein Bezugspunkt-Feld.",
+      "beleg": {
+        "datei_zeile": "packages/kosmo-contracts/src/render-scene.ts:33-42",
+        "messbefehl": "grep -n \"referenzpunkt|bezugspunkt|terrain_an_kamera\" packages/kosmo-contracts/src/render-scene.ts",
+        "urteil": "exit 1 (kein Treffer)"
+      }
+    },
+    "R2": {
+      "frage": "Falls nein: Name, Ort und Wertebereich des Feldes neben position/target.",
+      "einordnung": "braucht_owner_entscheid",
+      "antwort": "Baubar, sobald der Owner den Feldnamen und die Enum-Werte bestaetigt — z. B. ein optionales String-Enum referenzpunkt: z.enum(['terrain_an_kamera','okff','huellbox_unterkante','weltnull']).optional() an CameraSpec, additiv, klein. Eure vier vorgeschlagenen Namen sind uebernehmbar, aber die Entscheidung, ob wir sie 1:1 uebernehmen oder eigene Namen verwenden, liegt beim Owner."
+    },
+    "R3": {
+      "frage": "Was liefert deriveAutoKameras, wenn kein Gelaendestand bekannt ist — b.minZ mit Vermerk, oder gar keinen Vorschlag?",
+      "einordnung": "erledigt",
+      "antwort": "b.minZ als Fallback, OHNE Vermerk im ausgehenden Vertrag. Der Fallback ist erdgeschossElevationMm(doc) ?? b.minZ — existiert kein Geschoss mit Index 0, faellt die Ableitung auf b.minZ zurueck. Das steht nur als Code-Kommentar dokumentiert, nicht als Warnfeld im gesendeten CameraSpec.",
+      "beleg": {
+        "datei_zeile": "packages/kosmo-kernel/src/derive/kamera.ts:104-118 (erdgeschossElevationMm), :154 (eingangBodenMm = erdgeschossElevationMm(doc) ?? b.minZ)",
+        "messbefehl": "sed -n '104,120p' packages/kosmo-kernel/src/derive/kamera.ts",
+        "urteil": "exit 0"
+      },
+      "haengt_zusammen_mit": "R2 — derselbe neue Bezugspunkt-Feld koennte beides loesen (Fallback UND dessen Vermerk)."
+    },
+    "R4": {
+      "frage": "Wird 'Eingang' auf storeyElevation umgestellt wie 'Innenraum', oder bleiben zwei Nullpunkte in einem Vorschlagssatz?",
+      "einordnung": "erledigt",
+      "seit": "02.09.2026 — EINEN TAG nach eurem Auftrag (01.09.2026)",
+      "antwort": "Ja, umgestellt. 'Eingang' rechnet jetzt erdgeschossElevationMm(doc) + 1600 statt b.minZ + 1600 — exakt das von euch verlangte Verhalten. Owner-Entscheid B90, Ausgestaltung an den KosmoOrbit-UI-Worker delegiert.",
+      "beleg": {
+        "datei_zeile": "packages/kosmo-kernel/src/derive/kamera.ts:154-221, Kommentarblock 'P-AUGENHOEHE-ENTSCHEID'",
+        "roadmap": "ROADMAP.md Eintrag 1262 (B90), Vorlauf 1249 (P4-KAMERA, 01.09.2026)",
+        "dokument": "docs/AUFTRAG-B90-KAMERA-BODENBEZUG.md",
+        "test": "cd packages/kosmo-kernel && npx vitest run test/p-achsenriegel.test.ts",
+        "test_ergebnis": "11/11 gruen",
+        "test_urteil": "exit 0",
+        "test_zeile_1": "test/p-achsenriegel.test.ts:205 — \"B90: «Eingang» rechnet ab dem EG-Boden (storeyElevation), nicht mehr ab b.minZ — 1.6 m Augenhoehe trotz Untergeschoss\"",
+        "test_zeile_2": "test/p-achsenriegel.test.ts:216 — \"B90: der Riegel meldet dafuer keine Beanstandung mehr\"",
+        "regression": "Derselbe Kellerfall lieferte vor B90 -1.638 m statt 1.6 m; nach B90 korrekt 1.6 m, laut Testkommentar rot-vor-gruen nachgewiesen.",
+        "bleibt_unveraendert": "target (Blickrichtung/Bildkomposition) bleibt bewusst auf b.minZ bezogen — das war nicht bestellt, reine Bildaufteilung."
+      }
+    },
+    "R5": {
+      "frage": "Beleg, dass es EINGEBAUT ist — nicht der Entwurf, sondern die Version im Betrieb.",
+      "einordnung": "erledigt",
+      "antwort": "Siehe R4 — der Testlauf oben (11/11 gruen, test/p-achsenriegel.test.ts) ist der Beleg am eingebauten Stand, nicht am Entwurf. Zusaetzlich selbst gegengeprueft, dass der Code-Pfad tatsaechlich (erdgeschossElevationMm(doc) ?? b.minZ) + 1600 rechnet, nicht mehr b.minZ + 1600 direkt.",
+      "beleg": {
+        "messbefehl": "grep -n \"eingangBodenMm\" packages/kosmo-kernel/src/derive/kamera.ts",
+        "urteil": "exit 0 — Zeile 154: const eingangBodenMm = erdgeschossElevationMm(doc) ?? b.minZ;"
+      }
+    }
+  },
+  "beim_nachpruefen_korrigiert": [
+    "Keine inhaltliche Korrektur. Alle Zeilenangaben (kamera.ts 104-120, 152, 154-221; p-achsenriegel.test.ts 205/216) und der Testlauf (11/11 gruen) wurden unabhaengig nachgemessen und stimmen mit dem Inventar ueberein."
+  ],
+  "wissen_wir_nicht": [],
+  "nachtrag_03_09_2026": {
+    "anlass": "Owner-Entscheid vom 03.09.2026.",
+    "R2": {
+      "entscheid": "Eure vier Namen 1:1 uebernommen, keine eigenen. Begruendung des Owners: es ist euer Vokabular und wir sind der Empfaenger — eigene Namen schuefen eine Uebersetzungsstelle, an der spaeter jemand falsch abbiegt.",
+      "feld": "CameraSpec.referenzpunkt",
+      "werte": [
+        "terrain_an_kamera",
+        "okff",
+        "huellbox_unterkante",
+        "weltnull"
+      ],
+      "form": "optional, kein Default, neben position und target",
+      "bedeutung_wenn_fehlend": "Kein Bezugspunkt benannt — NICHT 'huellbox_unterkante'.",
+      "ehrlich_dazu": "Nur der Vertrag ist gebaut. Unser Kamerarechner weiss bereits, ob er den verlaesslichen Erdgeschoss-Bezug oder den Ruckfall benutzt hat — er SETZT das Feld aber noch nicht. Genau der Fall, den euer Blatt beschreibt, bleibt damit vorerst offen; er ist bei uns als Nachzug vermerkt und nicht vergessen."
+    }
+  },
+  "herkunft": {
+    "pfad": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260901-68.json",
+    "verfasser": "KosmoOrbit-Cloud-Worker (Zweig claude/kosmo-orbit-v1-build-pzxkbj)"
+  },
+  "uebertragen_von": "lokaler Worker (Uebertragungsstelle), 06.09.2026",
+  "stand": "Uebertragen am 06.09.2026 aus System B (Architektur-Cosmos) nach System A (ai-imaging-in-a-box); inhaltlich unveraendert aus der dortigen Antwort vom 2026-09-03 uebernommen."
+}

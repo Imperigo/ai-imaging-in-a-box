@@ -1,0 +1,64 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260826-60",
+ "status": "ok",
+ "stand": "Stand 06.09.2026",
+ "beendet": "2026-09-06T00:00:00Z",
+ "zusammenfassung": "Mit dem echten Schaetzer (depth-anything-v2-small) reproduziert sich GENAU der Befund, den ihr ohne GPU nachgebaut habt: Ein Bauwerk, das komplett fehlt, besteht das Score-Tor (0.687 >= 0.65), waehrend rho_maske es klar durchfallen laesst (0.383 gegen Schwelle 0.80). H2 (Versatz) wurde wie erlaubt weggelassen. V5 (Nachtrag) liefert ein GEGEN DIE ERWARTUNG laufendes, aber erklaerbares Ergebnis: der Schaetzer verliert die Kante NICHT monoton mit wachsendem relativem Tiefenabstand — bei 3.85% ist die Trennung fast perfekt (0.99), bei 19.25% und 77.0% deutlich schlechter (0.44 bzw. 0.29). Begruendung unten.",
+
+ "aufbau": {
+  "geometrie": "python3 tools/make_test_ifc.py build/auf60/gel4.ifc IFC4 --gelaende --gelaende-vielfaches=4 (Bauwerk 8x5x3m auf 4-facher Gelaendeplatte)",
+  "kamera_huellbox": "explizit auf die BAUWERKSBOX gesetzt (aus dem Blender-Bericht, NICHT aus dem IFC-Runner-Bericht — siehe Befund unten), sonst waere das Bauwerk ein Fleck im 32x32m-Gelaende geworden",
+  "wichtiger_nebenbefund": "glb_bericht['bbox_bauwerk'] (IFC-Runner) meldet weiterhin die GANZE Szenenbox 32x32m — die schon in auf-20260825-41 beschriebene, ABSICHTLICH nicht mitreparierte Einschraenkung ('dieselbe Regel an einer dritten Stelle waere der Anfang der naechsten Abweichung'). blender_bericht['bbox_bauwerk'] (aus glb_zu_multipass) meldet dagegen korrekt 8.0 x 5.0 m. Verwendet wurde die BLENDER-Zahl, wie es der Auftrag verlangt.",
+  "H1_erzeugung": "Bauwerk vollstaendig aus der glb entfernt (Blender --background, Objekte ohne 'Gelaende' im Namen geloescht, neu exportiert) und mit EXAKT DERSELBEN kamera_huellbox und Kamerarichtung (sSE) gerendert. Kameraposition auf 4 Nachkommastellen identisch zwischen treu und H1 bestaetigt (Auge [12.2263, -9.2484, 1.45] in beiden Berichten).",
+  "maske": "aus dem material_id-Pass der TREUEN Szene, gelaende_erwartet=True (Gelaende ist tatsaechlich vorhanden und wird als solches erkannt: 'gelaende_gefunden')",
+  "schaetzer": "depth-anything-v2-small (das einzige unter Regel 1 zulaessige)"
+ },
+
+ "V1_je_fall": {
+  "messbefehl": "tiefenschaetzer.qa_gegen_soll(bild, soll, breite=400, hoehe=400, schaetzer='depth-anything-v2-small', maske=<Bauwerksmaske aus der treuen Szene>) je Bild",
+  "URTEIL": "exit 0",
+  "treu": {"score": 0.9826860343150499, "geom_iou": 0.9667182493842768, "spearman": -0.9989175674017701, "rho_maske": 0.9895605918910815, "bestanden": true, "paarurteil_bestanden": true},
+  "H1_bauwerk_ganz_weg": {"score": 0.6874212977092128, "geom_iou": 0.4884491987430617, "spearman": -0.967445625379748, "rho_maske": 0.3832758637378466, "bestanden": true, "paarurteil_bestanden": false},
+  "H2_versetzt": {"nicht_gerendert": true, "grund": "vom Auftrag ausdruecklich als weglassbar erlaubt ('Wenn (c) zu teuer ist, lasst es weg') — bei den vorrangigen Punkten H1 und Rauschen keine zusaetzliche GPU-Zeit dafuer verbraucht"},
+  "rauschen": {"score": 0.7030337120530263, "geom_iou": 0.5350787656085196, "spearman": -0.9237077455708101, "rho_maske": -0.2579328611174233, "bestanden": true, "paarurteil_bestanden": false}
+ },
+
+ "V2_faellt_rho_maske_bei_H1": {
+  "antwort": "JA — mit dem echten Schaetzer faellt rho_maske bei H1 auf 0.383, klar unter der Paarschwelle 0.80. Der Maskenweg faengt den wichtigsten Fall.",
+  "aber": "Der GESAMTBILD-Score faellt NICHT: 0.687 liegt UEBER der Tor-Schwelle 0.65. Bestanden=true trotz vollstaendig fehlendem Bauwerk — genau der Befund, den der Auftrag ohne GPU vorab gemessen hat (0.951 dort, 0.687 hier; unterschiedliche Szene/Aufloesung, gleiche Aussage: das Tor besteht, der Maskenweg nicht)."
+ },
+ "V3_was_der_schaetzer_ausgibt_wo_das_bauwerk_fehlt": {
+  "antwort": "Boden/Gelaende, nicht Himmel und nichts Erfundenes an der Bauwerksstelle. Die H1-Szene zeigt (weil die Kamera exakt gleich gerahmt ist wie bei 'treu') an der Stelle, wo das Bauwerk stehen sollte, die durchlaufende Gelaendeplatte — der Schaetzer legt dort eine plausible, kontinuierliche Bodenebene hinein, die mit der SOLL-Karte an dieser Stelle NICHT uebereinstimmt (daher rho_maske faellt), aber intern konsistent aussieht (daher der Gesamt-Score trotzdem hoch bleibt: geom_iou 0.488 ist niedriger als bei 'treu', aber der grosse Uebereinstimmungsbereich ausserhalb der Bauwerksmaske traegt den Score ueber die Schwelle)."
+ },
+ "V4_falls_H1_nicht_renderbar": {"zutreffend": false, "hinweis": "H1 liess sich rendern — kein Sonderfall aufgetreten."},
+
+ "V5_relative_tiefendifferenz_kante_nachtrag_02_09": {
+  "vorgehen": "tools/studie_nachbargebaeude.py (bislang nur MIT GEBAUTEN KARTEN, ohne Schaetzer) um denselben Vergleich MIT dem echten Schaetzer ergaenzt: dieselben vier Szenen (Ziel + Nachbar in 0/1/5/20 m Abstand), aber statt der gebauten Soll-Karte wird tiefenschaetzer.schaetze_tiefe() auf dem tatsaechlich gerenderten Beauty-Bild aufgerufen und anteil_grenze_mit_kante darauf gerechnet.",
+  "messbefehl": "PYTHONPATH=src .venv-render/bin/python <skript, importiert tools/studie_nachbargebaeude.py als Modul und ersetzt die Soll-Karte durch tiefenschaetzer.schaetze_tiefe(beauty_png)>",
+  "URTEIL": "exit 0",
+  "kamera_abstand_zum_ziel_m": 25.972181223972395,
+  "messwerte": {
+   "himmel_kein_nachbar":    {"relativer_tiefenabstand": null, "kantenanteil_gebaute_karte": 1.0, "kantenanteil_ECHTER_SCHAETZER": 1.0},
+   "nachbar_1m":  {"relativer_tiefenabstand_prozent": 3.85,  "kantenanteil_gebaute_karte": 1.0, "kantenanteil_ECHTER_SCHAETZER": 0.9901},
+   "nachbar_5m":  {"relativer_tiefenabstand_prozent": 19.25, "kantenanteil_gebaute_karte": 1.0, "kantenanteil_ECHTER_SCHAETZER": 0.4381},
+   "nachbar_20m": {"relativer_tiefenabstand_prozent": 77.01, "kantenanteil_gebaute_karte": 1.0, "kantenanteil_ECHTER_SCHAETZER": 0.2946}
+  },
+  "befund_WEICHT_VON_DER_ERWARTETEN_FORM_AB": "Die Frage unterstellt eine MONOTONE Grenze ('Liegt die Grenze bei 1%, 5%, 20%?') — ab welchem Prozentsatz die Kante verloren geht. GEMESSEN wurde das GEGENTEIL einer einfachen Monotonie: Beim KLEINSTEN Abstand (3.85%) ist die Trennung fast perfekt (0.99, kaum unter dem Himmel-Wert 1.0). Bei GROESSEREN Abstaenden (19.25%, 77.0%) faellt der Kantenanteil deutlich staerker (0.44 bzw. 0.29) — der Schaetzer trennt bei einem weiter entfernten Nachbarn SCHLECHTER, nicht besser.",
+  "erklaerung": "Monokulare Schaetzer normieren die Ausgabe typischerweise ueber den GESAMTEN im Bild sichtbaren Tiefenumfang. Ein weiter entfernter Nachbar dehnt diesen Umfang (Ziel ~26 m, Nachbar bei +20 m also ~46 m) – dadurch wird der GRADIENT zwischen Bauwerk und unmittelbarem Hintergrund in der normierten Ausgabe gestaucht, selbst wenn der Nachbar geometrisch weiter weg und die Differenz in Metern groesser ist. Ein NAHER Nachbar (1 m dahinter, 27 m von der Kamera) dehnt den Gesamtumfang kaum, und der lokale Kontrast an der Bauwerksgrenze bleibt erhalten.",
+  "konsequenz_fuer_die_urspruengliche_frage": "Es gibt keine einzelne Prozentzahl, ab der die Kante verloren geht — die Antwort haengt vom GESAMTEN Tiefenumfang der Szene ab, nicht allein vom lokalen Abstand Bauwerk-Nachbar. Fuer die drei hier gemessenen Faelle: bei 3.85% relativem Abstand (in einer Szene mit sonst kleinem Tiefenumfang) bleibt die Kante praktisch erhalten; sobald ein zusaetzliches, weiter entferntes Objekt den Gesamtumfang der Szene aufspannt, verschlechtert sich die Trennung schon bei mittleren Abstaenden (~19%) deutlich, obwohl der Abstand in Metern groesser ist.",
+  "einschraenkung": "Drei Messpunkte an EINER Szenenfamilie (Ziel 8x12m, Nachbar 120x40m, Kameraabstand 26m) — ausreichend, um die Nicht-Monotonie zu zeigen und die urspruengliche Ein-Zahlen-Erwartung zu widerlegen, aber nicht, um eine allgemeine Formel fuer 'ab wann die Kante verloren geht' anzugeben. Dafuer braeuchte es eine Reihe, die den GESAMTEN Tiefenumfang der Szene konstant haelt und NUR den Nachbarabstand variiert."
+ },
+
+ "was_nicht_getan_wurde": [
+  "Keine Schwelle angefasst (weder 0.65 noch PAAR_RHO_SCHWELLE).",
+  "bestanden nicht repariert — der Entscheid gehoert dem Owner.",
+  "Nicht gemittelt — vier Zeilen (drei gerendert, H2 bewusst ausgelassen mit Begruendung)."
+ ],
+ "umgebung": {
+  "gpu": "NVIDIA GeForce RTX 5090",
+  "leistungsgrenze_w": 400,
+  "python": "3.14",
+  "schaetzer": "depth-anything-v2-small"
+ }
+}

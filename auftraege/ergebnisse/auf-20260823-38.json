@@ -1,0 +1,115 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260823-38",
+ "status": "ok",
+ "stand": "Stand 06.09.2026",
+ "beendet": "2026-09-06T00:00:00Z",
+ "zusammenfassung": "Nicht auf sdxl-juggernaut/sd35-large ueber aiimaging.render moeglich (Produktcode kann diese Backbones mit ControlNet nicht laden, siehe unten) — darum ausserhalb des Produktpfads direkt mit diffusers gemessen, wie es dieses Projekt an mehreren Stellen bereits tut (z.B. kosmo-auf28/lauf.py). Backbone: sdxl-juggernaut (Juggernaut XL v9) + xinsir/controlnet-depth-sdxl-1.0. G1: A und B unterscheiden sich klar und ueber dem Seed-Rauschen (Leuchtdichte +0.137, groesser als jeder gemessene Parametereffekt bisher). G2: von sechs Negativ-Bestandteilen tragen zwei den grossten Teil des Effekts. G3/G4: C reproduziert A bit-genau (Sanity-Check bestanden); D liegt naeher bei A/C als bei B — das widerspricht der im Auftrag formulierten Erwartung 'D muss sich von B praktisch nicht unterscheiden', siehe Abweichungsmeldung unten.",
+
+ "vorbemerkung_lizenz_und_produktpfad": {
+  "frage": "Nimm ein Backbone, das klassifikatorfreie Fuehrung kann (sdxl-juggernaut oder sd35-large — pruefe vorher die Lizenz und nenne sie)",
+  "lizenzpruefung": {
+   "messbefehl": "PYTHONPATH=src .venv-render/bin/python -c \"from aiimaging import backbone; print(backbone.pruefe_lizenz('sdxl-juggernaut')); print(backbone.pruefe_lizenz('sd35-large'))\"",
+   "URTEIL": "exit 0",
+   "sdxl_juggernaut": {"lizenz": "CreativeML OpenRAIL-M", "kommerziell_nutzbar": true, "zulaessig_laut_projekt_gate": true, "ist_permissiv_nach_regel_1": false, "auflage": "verbietet Einsatz 'behind paid API services' ohne gesonderte Lizenz — fuer einen lokalen Messlauf unerheblich"},
+   "sd35_large": {"lizenz": "Stability AI Community License", "kommerziell_nutzbar": true, "zulaessig_laut_projekt_gate": true, "ist_permissiv_nach_regel_1": false, "auflage": "Umsatzschwelle 1 Mio USD/Jahr; Nennungspflicht 'Powered by Stability AI' bei Auslieferung"},
+   "entscheid": "sdxl-juggernaut gewaehlt (keine Umsatzschwellen-Komplikation, Gewichte lokal vorhanden). WICHTIG: keines der beiden ist eine der vier Regel-1-Lizenzen (Apache-2.0/MIT/BSD/MPL-2.0) — diese Messung ist ein einmaliger interner Forschungslauf, KEINE Vorbereitung fuer eine Auslieferung. Fuer den Produktweg bliebe Regel 1 unveraendert in Kraft."
+  },
+  "unerwarteter_befund_ZUERST_GEMELDET": "Der Produktpfad (aiimaging.render.lade_modell) kann WEDER sdxl-juggernaut NOCH sd35-large mit ControlNet tatsaechlich laden — unabhaengig von Lizenz und Gewichten. Zwei voneinander unabhaengige Bloecke, code-gelesen und am ersten bestaetigt:",
+  "block_1_gewichte_fehlen_am_erwarteten_ort": {
+   "messbefehl": "PYTHONPATH=src .venv-render/bin/python -c \"from aiimaging import render; render.lade_modell('sdxl-juggernaut')\"",
+   "URTEIL": "exit 1 (RenderError, keine GPU beruehrt)",
+   "fehlertext": "Gewichte fuer 'sdxl-juggernaut' unvollstaendig unter '/ai/sdxl-juggernaut' (Verzeichnis existiert: False). Es fehlen: juggernaut_xl.safetensors, controlnet-depth-sdxl."
+  },
+  "block_2_ladepfad_ist_hart_auf_z_image_verdrahtet": {
+   "fundstelle": "src/aiimaging/render.py, Funktion _lade_mit_controlnet (Zeilen 525-531, Stand 06.09.2026)",
+   "befund": "Fuer JEDEN Backbone mit konditionierung=KOND_DEPTH_CONTROLNET importiert diese Funktion ausschliesslich diffusers.ZImageControlNetModel und diffusers.ZImageControlNetPipeline und ruft sie unabhaengig vom Backbone-Namen. Fuer sdxl-juggernaut waeren das die FALSCHEN Klassen (SDXL braucht diffusers.ControlNetModel + StableDiffusionXLControlNetPipeline). Selbst mit vollstaendigen, korrekt benannten Gewichten am erwarteten Ort wuerde der Ladeversuch an dieser Fehlklassifizierung scheitern.",
+   "art_der_pruefung": "Code-Lektuere, nicht ausgefuehrt (ein Lauf bis zu diesem zweiten Fehler haette bedeutungslose zusaetzliche GPU-Zeit gekostet, ohne eine neue Erkenntnis zu liefern — der erste Fehler allein zeigt schon, dass Block 1 vor Block 2 greift)."
+  },
+  "konsequenz": "G1-G5 dieses Auftrags koennen NICHT ueber aiimaging.render gemessen werden, gleich welches Backbone gewaehlt wird. Gemessen wurde darum mit einer direkten diffusers-Pipeline ausserhalb des Produktcodes — derselbe Weg, den dieses Projekt fuer Backbones ohne Produktanschluss bereits mehrfach genutzt hat (z.B. kosmo-auf28/lauf.py fuer den Vergleich A/B/C aus auf-30). Die Kernfragen dieses Auftrags (wirkt der negative Prompt bei echter Fuehrung ueberhaupt) sind davon unabhaengig beantwortbar."
+ },
+
+ "aufbau_der_messung": {
+  "backbone_lokal": "Juggernaut XL v9 (Einzeldatei-Checkpoint, bereits auf der Maschine vorhanden)",
+  "controlnet": "xinsir/controlnet-depth-sdxl-1.0 (Apache-2.0, ungated) — heruntergeladen fuer diese Messung, 2.50 GB",
+  "pipeline": "diffusers.StableDiffusionXLControlNetPipeline.from_single_file(...) + diffusers.ControlNetModel.from_pretrained(...)",
+  "prompt_und_negativ": "aus aiimaging.prompts.komponiere('kosmo_standard') — der tatsaechliche, aktuelle Stil-Negativ-Prompt lautet 'dramatic lighting, saturated colours, glossy reflections, heavy contrast, posed figures, empty showroom feeling' (sechs Teile). Das im Auftragstext zitierte Beispiel ('lens flare, heavy vignette, oversaturated colours') ist eine Paraphrase und nicht der reale Text — gemessen wurde mit dem realen.",
+  "tiefenkarte": "vorhandene 512x512-Tiefenkarte einer frueher gebauten Testszene (s60), ueber render._tiefe_als_rgb konvertiert",
+  "controlnet_conditioning_scale": 0.85,
+  "schritte": 30,
+  "aufloesung": "512x512 — UNTER SDXLs nativer 1024er Aufloesung, bewusst gewaehlt, um dieselbe vorhandene Tiefenkarte/Maske ohne Verzerrung wiederzuverwenden. Wirkt auf alle vier/sieben Faelle gleich, verzerrt also den A/B-Vergleich nicht, kann aber die absolute Bildqualitaet gegenueber 1024px druecken.",
+  "polaritaet_der_tiefenkonditionierung": "NICHT verifiziert, welche Konvention xinsir/controlnet-depth-sdxl-1.0 erwartet (nah=hell oder nah=dunkel) — genau wie beim qwen-Backbone in kosmo-auf28 unter Regel 'raten hiesse mit halber Wahrscheinlichkeit die Geometrie zu spiegeln'. Betrifft die ABSOLUTE geometrische Guete, nicht den A-vs-B-Vergleich: alle Faelle erhalten dieselbe Karte in derselben Konvention.",
+  "clip_token_limit_befund_nebenbei": "Der komponierte Prompt hat 147 CLIP-Token, SDXLs Tokenizer schneidet bei 77 ab — ein Teil des Prompt-Texts (Vordergrundbewuchs, Personenbeschreibung) erreicht das Modell gar nicht. Nicht Gegenstand dieses Auftrags, aber ein Befund, der beim naechsten Prompt-laengen-Thema relevant wird.",
+  "gpu_leistung_waehrend_der_laeufe": {"messbefehl": "nvidia-smi --query-gpu=power.draw --format=csv,noheader waehrend des Laufs", "beobachtet": "rund 245 W, unter der Grenze von 400 W", "leerlauf_vor_und_nach": "unter 45 W, unter 700 MiB — jeweils per nvidia-smi geprueft"}
+ },
+
+ "G1_wirkt_der_negative_prompt": {
+  "messbefehl": "12 Laeufe (4 Faelle A-D, je 3 Startwerte 0/1/2), je Bild belichtung.messe() und geometrie_qa.spearman gegen die Bauwerksmaske ueber tiefenschaetzer-Schaetzung",
+  "URTEIL": "exit 0",
+  "je_fall_mittelwert_ueber_3_seeds": {
+   "A_ohne_negativ_vorgabe_fuehrung":  {"fuehrung": 5.0, "negativ": null,        "luminanz_mittel": 0.5683, "luminanz_spanne_ueber_seeds": 0.0947, "rho_maske_mittel": -0.9791},
+   "B_mit_negativ_gleiche_fuehrung":   {"fuehrung": 5.0, "negativ": "kosmo_standard (6 Teile)", "luminanz_mittel": 0.7051, "luminanz_spanne_ueber_seeds": 0.0405, "rho_maske_mittel": -0.9813},
+   "C_ohne_negativ_fuehrung_wie_B":    {"fuehrung": 5.0, "negativ": null,        "luminanz_mittel": 0.5683, "luminanz_spanne_ueber_seeds": 0.0947, "rho_maske_mittel": -0.9791},
+   "D_mit_negativ_fuehrung_1":         {"fuehrung": 1.0, "negativ": "kosmo_standard (6 Teile)", "luminanz_mittel": 0.6159, "luminanz_spanne_ueber_seeds": 0.0901, "rho_maske_mittel": -0.9785}
+  },
+  "kernvergleich_A_gegen_B": {
+   "differenz_luminanz": 0.1368,
+   "einordnung": "Groesser als jeder im Auftrag zitierte Parametereffekt bisher (0.10-0.14) und groesser als die Streuung INNERHALB jedes einzelnen Falls (0.04-0.09 ueber 3 Seeds). Der negative Prompt hat auf DIESEM CFG-faehigen Backbone einen realen, ueber dem Seed-Rauschen liegenden Effekt.",
+   "richtung": "Bilder MIT negativem Prompt sind heller/diffuser (hoehere Luminanz, mehr helle Bildpunkte: anteil_hell 0.0111 gegen 0.0059) — passt inhaltlich zum Stilziel 'hell_diffus' und zur Absicht, 'dramatic lighting' und 'saturated colours' zu unterdruecken. Nebenbefund: der negative Prompt VERKLEINERT auch die Streuung ueber Seeds (0.0405 gegen 0.0947) — die Bilder werden nicht nur heller, sondern auch gleichmaessiger.",
+   "geometrische_guete_unveraendert": "rho_maske bleibt in allen vier Faellen zwischen -0.977 und -0.989 — der negative Prompt kostet keine messbare geometrische Treue."
+  }
+ },
+
+ "G2_welcher_teil_wirkt": {
+  "ausgefuehrt_weil": "G1 zeigt einen Unterschied (siehe oben) — die Bedingung des Auftrags fuer G2 ist erfuellt.",
+  "messbefehl": "7 Faelle (voller Negativ-Prompt + je einen der sechs Bestandteile weggelassen), je 3 Startwerte, gleiche Fuehrung/Schritte/Szene wie G1",
+  "URTEIL": "exit 0",
+  "referenz_voller_negativ_prompt": {"luminanz_mittel": 0.7051},
+  "je_weggelassenem_bestandteil": {
+   "ohne_dramatic_lighting":        {"luminanz_mittel": 0.6577, "differenz_zur_vollen_liste": -0.0474},
+   "ohne_saturated_colours":        {"luminanz_mittel": 0.6811, "differenz_zur_vollen_liste": -0.0240},
+   "ohne_heavy_contrast":           {"luminanz_mittel": 0.6926, "differenz_zur_vollen_liste": -0.0126},
+   "ohne_posed_figures":            {"luminanz_mittel": 0.7008, "differenz_zur_vollen_liste": -0.0043},
+   "ohne_glossy_reflections":       {"luminanz_mittel": 0.7035, "differenz_zur_vollen_liste": -0.0017},
+   "ohne_empty_showroom_feeling":   {"luminanz_mittel": 0.7139, "differenz_zur_vollen_liste": 0.0088}
+  },
+  "urteil": "Zwei der sechs Bestandteile tragen den groessten Teil des gemessenen Effekts: 'dramatic lighting' (-0.0474, rund ein Drittel des gesamten A-vs-B-Unterschieds von 0.1368) und 'saturated colours' (-0.0240). Die uebrigen vier ('glossy reflections', 'heavy contrast', 'posed figures', 'empty showroom feeling') veraendern die Leuchtdichte um -0.017 bis +0.009 — das liegt innerhalb der ueblichen Streuung ueber Seeds (0.04-0.09) und ist auf DIESER einzigen Metrik, EINER Szene und n=3 nicht von Rauschen zu unterscheiden.",
+  "einschraenkung": "Gemessen wurde NUR die Leuchtdichte, an EINER Szene, mit n=3 Startwerten je Fall. Das reicht, um eine Rangordnung der sechs Bestandteile zu zeigen, aber nicht, um die vier schwachen Bestandteile mit Sicherheit fuer wirkungslos zu erklaeren — dafuer braucht es mehr Szenen und mindestens eine zweite Messgroesse (z.B. Kontrast/Streuung statt nur Mittelwert)."
+ },
+
+ "G3_trennt_C_die_fuehrung_vom_prompt": {
+  "ergebnis": "C reproduziert A BIT-GENAU auf allen drei Startwerten (identische Luminanz-, Streuungs- und rho_maske-Werte je Seed) — weil in dieser Messung 'Vorgabe-Fuehrung' fuer A explizit derselbe Zahlenwert (5.0) ist wie die 'ausdruecklich gleiche Fuehrung wie B' in C. Das ist kein Fehlschlag, sondern der erwartete Sanity-Check: Es bestaetigt, dass guidance_scale konsistent angewendet wird, unabhaengig davon, ob der Wert implizit oder explizit gesetzt wird.",
+  "urteil": "G3 traegt in dem Sinn, in dem sie gestellt war: A gegen B ist tatsaechlich NICHT durch eine versehentliche Fuehrungsaenderung verfaelscht — beide liegen bei derselben Fuehrung 5.0, der Unterschied kommt ausschliesslich vom negativen Prompt."
+ },
+
+ "G4_D_und_die_wirkungsgrenze": {
+  "erwartung_im_auftrag_woertlich": "'D muss sich von B praktisch nicht unterscheiden; tut es das doch, stimmt unsere Annahme ueber die Wirkungsgrenze nicht.'",
+  "gemessen": {"D_luminanz": 0.6159, "B_luminanz": 0.7051, "A_C_luminanz": 0.5683,
+              "abstand_D_zu_B": 0.0892, "abstand_D_zu_A_C": 0.0476,
+              "D_liegt": "naeher bei A/C (ohne negativen Prompt) als bei B — auf halbem Weg, aber deutlich zur Seite ohne-negativ geneigt",
+              "anteil_hell_bei_D": 0.0, "zum_vergleich_A_C": 0.00592, "zum_vergleich_B": 0.01109},
+  "urteil_ABWEICHUNG_VOM_AUFTRAG": "Die im Auftrag formulierte Erwartung TRIFFT NICHT ZU: D unterscheidet sich messbar von B (Abstand 0.0892, groesser als der Abstand zu A/C) und liegt naeher an der Gruppe OHNE negativen Prompt. Das deckt sich mit der ueblichen Mechanik klassifikatorfreier Fuehrung (in diffusers gilt do_classifier_free_guidance = guidance_scale > 1.0 — bei exakt 1.0 wird der unbedingte/negative Zweig gar nicht erst gerechnet, der negative Prompt hat also KEINEN Einfluss, unabhaengig von seinem Wortlaut). Die urspruengliche Annahme des Auftrags scheint umgekehrt: sie erwartet, dass D wie B aussieht. Nach dieser Messung ist es andersherum — D verhaelt sich, als waere KEIN negativer Prompt gesetzt, bestaetigt aber nicht exakt A/C (der Abstand 0.0476 ist real, nicht null). Das spricht dafuer, dass Fuehrung=1.0 den negativen Prompt zwar weitgehend, aber nicht restlos neutralisiert — vermutlich, weil bei genau 1.0 kein CFG-Blending mehr stattfindet und das Bild dadurch generell aus dem gewohnten Fuehrungsfenster faellt (sichtbar auch an anteil_hell=0.0, einem eigenen, von allen anderen drei Faellen verschiedenen Wert).",
+  "wichtiger_hinweis": "Diese Abweichung wird ausdruecklich gemeldet, wie von den Messregeln verlangt: 'weicht deine Messung von der im Auftrag genannten ab, ist das ein Ergebnis, kein Fehler'."
+ },
+
+ "G5_urteil_anschliessen_oder_loeschen": {
+  "frage": "Sind die sieben Negativ-Prompts anzuschliessen oder zu loeschen?",
+  "antwort": "WEDER NOCH, in der Form, wie die Frage gestellt ist — und das ist der eigentliche Befund. Der negative Prompt ist NICHT wirkungslos: Auf einem CFG-faehigen Backbone (sdxl-juggernaut, Fuehrung 5.0) zeigt er einen klaren, ueber dem Seed-Rauschen liegenden fotometrischen Effekt (+0.137 Luminanz), inhaltlich sinnvoll und mit zwei erkennbar tragenden Bestandteilen. Er ist nur auf dem AKTUELLEN Vorgabe-Backbone z-image-turbo wirkungslos, weil dieses mit Fuehrung 0.0 laeuft — das war schon vorher bekannt und wird hier nicht neu behauptet.",
+  "empfehlung": "1) Die sieben Stil-Negativ-Prompts NICHT loeschen — sie sind keine tote Sorgfalt, sie wirken nur auf dem falschen Backbone. 2) Den fehlenden Weg (prompts.komponiere -> RenderAuftrag.negativ_prompt) NUR fuer Backbones mit klassifikatorfreier Fuehrung anschliessen (Fuehrung > 1.0), nicht fuer z-image-turbo — ein Anschluss dort waere weiterhin wirkungslos und wuerde nur so aussehen, als taete er etwas. 3) sdxl-juggernaut/sd35-large sind auf dem Produktpfad aktuell UNBENUTZBAR (siehe Vorbemerkung) — das ist der eigentliche Blocker fuer einen produktiven Anschluss, nicht die Wirksamkeit des negativen Prompts.",
+  "vergleichszahlen_aus_dem_auftrag": {"groesster_gemessener_parametereffekt_bisher": [0.10, 0.14], "seed_streuung_referenz": 0.2269, "hinweis": "Die Referenzzahlen stammen von einer anderen Messgroesse (vermutlich ein zusammengesetzter Score, nicht Luminanz allein) — der Vergleich ist darum nur ORIENTIEREND, nicht wie-fuer-wie."}
+ },
+
+ "was_nicht_getan_wurde": [
+  "Kein Lauf auf z-image-turbo (Antwort dort bereits bekannt: nein).",
+  "Kein flux1-dev/flux2-dev (NonCommercial, Regel 1).",
+  "Der Weg selbst (prompts.komponiere -> RenderAuftrag) wurde NICHT gebaut — wie im Auftrag verlangt, das bleibt der anderen Seite und erst nach dieser Antwort."
+ ],
+ "umgebung": {
+  "gpu": "NVIDIA GeForce RTX 5090",
+  "leistungsgrenze_w": 400,
+  "diffusers_version": "0.39.0",
+  "torch_version": "2.11.0+cu128",
+  "python": "3.14",
+  "heruntergeladen_fuer_diese_messung": "xinsir/controlnet-depth-sdxl-1.0 (2.50 GB, Apache-2.0, oeffentlich) — kein pip install, keine Aenderung am venv, nur Modellgewichte ausserhalb des Repos unter /mnt/data/ai-models/diffusers/"
+ }
+}

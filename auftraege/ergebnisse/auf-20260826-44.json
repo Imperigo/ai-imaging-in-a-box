@@ -1,0 +1,91 @@
+{
+  "auftrag_id": "auf-20260826-44",
+  "status": "ok",
+  "WICHTIGSTER_BEFUND_ZUERST": {
+    "kurz": "Eure Arbeitsannahme (b, von Sueden) ist NICHT unsere Konvention. Unser Vertrag legt (a, von Norden, im Uhrzeigersinn) fest. Wenn ihr seit dem 26.08.2026 mit (b) rechnet, steht eure Sonne seit zehn Tagen um 180 Grad falsch — Vormittag und Nachmittag vertauscht, an jedem Bild, an dem niemand es sieht.",
+    "was_zu_tun_ist": "Wenn eure feste Blender-Sonne auf (b) beruht: um 180 Grad drehen (aus X Grad wird (X + 180) mod 360), bevor ihr eine weitere Bestellung mit unserem `azimuth` entgegennehmt.",
+    "beleg_unser_vertrag": {
+      "datei_zeile": "kosmo-orbit/packages/kosmo-contracts/src/render-scene.ts:128-134",
+      "woertlich_feldkommentar": "/** Grad, im Uhrzeigersinn ab Nord: 0=N, 90=O, 180=S, 270=W. */ azimuth: z.number().min(0).max(360),",
+      "messbefehl": "grep -n \"azimuth\" -A 15 packages/kosmo-contracts/src/render-scene.ts",
+      "urteil": "exit 0 (Zeile 130-131 zitiert wortgleich)"
+    },
+    "beleg_datum_und_ort": {
+      "aussage": "Diese Konvention steht seit dem 24.08.2026 fest — ZWEI TAGE VOR eurem Auftrag (26.08.2026) — in einer Datei, die NICHT in dem Ordner liegt, den ihr lest (`docs/auftraege-kosmovis/`). Sie kann euch darum nie erreicht haben.",
+      "datei": "kosmo-orbit/docs/AUFTRAG-B63-ANTWORT-F1-F2.md",
+      "messbefehl_dateidatum": "ls -la kosmo-orbit/docs/AUFTRAG-B63-ANTWORT-F1-F2.md",
+      "ergebnis": "-rw-r--r-- 1 root root 7648 Aug 24 12:35 ... (URTEIL: exit 0)",
+      "messbefehl_commit": "git log --diff-filter=A --format=\"%ad %H\" -- kosmo-orbit/docs/AUFTRAG-B63-ANTWORT-F1-F2.md",
+      "ergebnis_commit": "Mon Aug 24 12:36:05 2026 +0000, Commit f369ee78 (URTEIL: exit 0)",
+      "messbefehl_ordner": "ls kosmo-orbit/docs/auftraege-kosmovis/ | grep -i B63",
+      "ergebnis_ordner": "kein Treffer (URTEIL: exit 1) — die Antwort lag nie in eurem gelesenen Ordner",
+      "roadmap": "ROADMAP.md Eintrag 1092 (\"B63 · F1 war schon erledigt, F2 stand nie geschrieben\", v0.9.48)"
+    },
+    "beleg_eure_annahme": {
+      "zitat_aus_eurem_blatt": "\"Wir rechnen mit (b), VON SUEDEN. ... Sie stand 35 Grad oestlich von Sueden.\" (auf-20260826-44.md, Abschnitt \"WAS WIR EINSTWEILEN ANGENOMMEN HABEN\")",
+      "einordnung": "selbst nachgelesen in eurem eigenen Blatt, nicht aus dem Inventar uebernommen"
+    }
+  },
+  "antworten": {
+    "F1": {
+      "frage": "Zaehlt azimuth von Norden (a) oder von Sueden (b)?",
+      "einordnung": "erledigt",
+      "seit": "24.08.2026 (zwei Tage vor eurem Auftrag)",
+      "antwort": "(a) von Norden, im Uhrzeigersinn: 0=N, 90=O, 180=S, 270=W. Fundstelle und Belege siehe WICHTIGSTER_BEFUND_ZUERST oben.",
+      "wichtig": "Das widerspricht eurer eigenen Arbeitsannahme (b) — siehe oben, das ist keine Formsache."
+    },
+    "F2": {
+      "frage": "elevation als Grad ueber dem Horizont (0=Horizont, 90=Zenit), negativ erlaubt fuer Nacht?",
+      "einordnung": "erledigt",
+      "antwort": "Ja, genau so. Bestaetigt.",
+      "beleg": {
+        "datei_zeile": "packages/kosmo-contracts/src/render-scene.ts:132-133",
+        "woertlich": "/** Grad ueber dem Horizont; negativ = unter dem Horizont. */ elevation: z.number().min(-90).max(90),",
+        "messbefehl": "sed -n '128,135p' packages/kosmo-contracts/src/render-scene.ts",
+        "urteil": "exit 0"
+      }
+    },
+    "F3": {
+      "frage": "Weltsystem/Nordrichtung: +Y = Norden, +X = Osten — ist das im Vertrag festgelegt?",
+      "einordnung": "braucht_owner_entscheid",
+      "antwort": "Nur implizit vorhanden, nicht vertraglich festgehalten. `packages/kosmo-kernel/src/derive/kamera.ts:137` behandelt `minY` als Sued-Kante (Kommentar \"Strassenseite, Sued-Kante der Bounds\"), was +Y = Norden impliziert — exakt eure Annahme. Aber das ist ein Kommentar in einer Kern-Ableitung, kein Feld und keine dokumentierte Konvention im Vertrag `render-scene.ts` selbst.",
+      "beleg": {
+        "messbefehl": "grep -n \"Strassenseite\\|Süd-Kante\\|minY\" packages/kosmo-kernel/src/derive/kamera.ts",
+        "fund": "Zeile 137: \"«Eingang» (Strassenseite, Süd-Kante = minY, Annahme mangels Erschliessungs-Tag, ...)\"",
+        "gegenprobe_vertrag": "grep -rn \"Nordrichtung|weltnull\" packages/kosmo-contracts/src packages/kosmo-kernel/src",
+        "gegenprobe_urteil": "exit 1 (kein Treffer — keine formale Konventionsfestlegung im Vertrag)"
+      },
+      "owner_frage": "Soll die Weltsystem-Konvention (+Y=Nord, +X=Ost) explizit in render-scene.ts als Vertragskommentar festgehalten werden? Kleine, additive Doku-Ergaenzung."
+    },
+    "F4": {
+      "frage": "Traegt render.sun weitere Felder (Staerke, Farbtemperatur, Bewoelkung, Datum/Ort)?",
+      "einordnung": "erledigt",
+      "antwort": "Nein. render.sun fuehrt ausschliesslich azimuth und elevation. Ein separates Feld `environment` (preset/hdri/intensitaet/rotationGrad) existiert daneben, aber kein Datum/Ort/Staerke/Farbtemperatur/Bewoelkung.",
+      "beleg": {
+        "messbefehl": "sed -n '128,150p' packages/kosmo-contracts/src/render-scene.ts",
+        "urteil": "exit 0"
+      }
+    },
+    "F5": {
+      "frage": "Was soll render.faithful steuern — nur ControlNet-Staerke (a), Treue insgesamt (b), oder gibt es ungenutzte Regler (c)?",
+      "einordnung": "erledigt",
+      "antwort": "(a). faithful meint ausschliesslich die ControlNet-Staerke. Kein Regler fuer denoise/Schrittzahl im Vertrag.",
+      "beleg": {
+        "datei_zeile": "packages/kosmo-contracts/src/render-scene.ts:102-103",
+        "woertlich": "/** 0..1 — ControlNet-Strength: wie streng folgt die KI der Geometrie. */ faithful: z.number().min(0).max(1).default(0.8),",
+        "messbefehl": "sed -n '96,104p' packages/kosmo-contracts/src/render-scene.ts",
+        "urteil": "exit 0"
+      }
+    }
+  },
+  "beim_nachpruefen_korrigiert": [
+    "Keine der Kernaussagen des Inventars zu diesem Blatt musste verworfen werden — Konvention (a-von-Norden), Datei-Datum (24.08. 12:35), Commit (f369ee78), Ordner-Abwesenheit (0 Treffer) und die drei Presets (entwurf-schnell 180/45, nacht 0/-8) wurden alle einzeln nachgemessen und stimmen wortgleich, inklusive ROADMAP 1092."
+  ],
+  "wissen_wir_nicht": [],
+  "herkunft": {
+    "pfad": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260826-44.json",
+    "verfasser": "KosmoOrbit-Cloud-Worker (Zweig claude/kosmo-orbit-v1-build-pzxkbj)"
+  },
+  "uebertragen_von": "lokaler Worker (Uebertragungsstelle), 06.09.2026",
+  "stand": "Uebertragen am 06.09.2026 aus System B (Architektur-Cosmos) nach System A (ai-imaging-in-a-box); inhaltlich unveraendert aus der dortigen Antwort vom 2026-09-03 uebernommen."
+}

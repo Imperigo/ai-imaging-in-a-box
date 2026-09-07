@@ -1,0 +1,32 @@
+{
+  "auftrag_id": "auf-20260827-64",
+  "status": "ok",
+  "einordnung_gesamt": "nicht_bei_uns",
+  "befund": "Die Funktion kosmovis_query_qa_verdict existiert in diesem Repo nicht — weder als flache Feld-Version noch als render-result/v2-Version. Wir koennen die Frage darum nicht beantworten, auch nicht 'vermutlich v2'.",
+  "belege": [
+    {
+      "messbefehl": "grep -rln \"kosmovis_query_qa_verdict|query_qa_verdict\" --include=*.ts --include=*.py --include=*.js --include=*.tsx .",
+      "urteil": "exit 1 (kein Treffer ausserhalb der Auftragsblaetter selbst)"
+    },
+    {
+      "messbefehl": "grep -rl \"query_qa_verdict\" auftraege",
+      "urteil": "exit 0 — EIN Treffer: auftraege/ergebnisse/auf-20260824-40.json",
+      "einordnung_dieses_treffers": "Das ist die Antwort-Datei zu einem ANDEREN, eng verwandten Auftrag (auf-20260824-40), aus dem F5 dieses Themas am 27.08.2026 herausgeloest wurde — und genau dort steht wortgleich derselbe Befund: 'F5 ... ist ... als eigener Auftrag auf-20260827-64 beim Cloud-Worker angesiedelt ... wird hier bewusst nicht beantwortet.' Kein Widerspruch, sondern derselbe offene Punkt an der richtigen Stelle vermerkt."
+    }
+  ],
+  "warum_das_kein_ausweichen_ist": "Ihr habt ausdruecklich verlangt, nicht 'vermutlich v2' zu raten. Ohne die Funktion im Code zu sehen, waere jede Antwort geraten. Diese Funktion gehoert nicht zu diesem Repo (weder kosmo-contracts/kosmo-ai noch sonstwo).",
+  "rueckfrage": "In welchem Repo liegt kosmovis_query_qa_verdict? Falls es auf eurer eigenen Seite liegt: koennt ihr direkt an eurem eigenen Code nachsehen, welche Feldnamen es liest — das waere schneller als der Weg ueber uns.",
+  "beim_nachpruefen_korrigiert": [
+    "Keine Korrektur am Kernbefund. Ergaenzt: der Treffer in auftraege/ergebnisse/auf-20260824-40.json wurde geprueft und zeigt, dass der Punkt bereits korrekt an diesen Auftrag (auf-20260827-64) verwiesen wurde — das war im Inventar nicht erwaehnt, bestaetigt aber dessen Urteil zusaetzlich."
+  ],
+  "wissen_wir_nicht": [
+    "In welchem Repo kosmovis_query_qa_verdict liegt.",
+    "Ob sie flache Feldnamen oder render-result/v2 liest."
+  ],
+  "herkunft": {
+    "pfad": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260827-64.json",
+    "verfasser": "KosmoOrbit-Cloud-Worker (Zweig claude/kosmo-orbit-v1-build-pzxkbj)"
+  },
+  "uebertragen_von": "lokaler Worker (Uebertragungsstelle), 06.09.2026",
+  "stand": "Uebertragen am 06.09.2026 aus System B (Architektur-Cosmos) nach System A (ai-imaging-in-a-box); inhaltlich unveraendert aus der dortigen Antwort vom 2026-09-03 uebernommen."
+}

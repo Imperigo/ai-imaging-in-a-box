@@ -1,0 +1,106 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260826-45",
+  "status": "ok",
+  "beendet": "2026-09-07T06:33:36Z",
+  "dauer_s": null,
+  "messwerte": {
+    "M0_gegenprobe_synthetisch": {
+      "beschreibung": "Huellbox 8.0 x 5.0 x 3.25 m aus tools/make_test_ifc.py, dreimal durch torwaechter.torwaechter() gejagt.",
+      "messbefehl": "PYTHONPATH=src .venv-render/bin/python m1_torwaechter.py -- URTEIL: exit 0",
+      "zeilen": [
+        {
+          "fall": "wie erzeugt",
+          "groesste_kante_m": 8.0,
+          "entscheidung": "annehmen",
+          "verdacht_faktor": null
+        },
+        {
+          "fall": "mal 1000",
+          "groesste_kante_m": 8000.0,
+          "entscheidung": "ablehnen_massstab",
+          "verdacht_faktor": 1000.0
+        },
+        {
+          "fall": "geteilt 1000",
+          "groesste_kante_m": 0.008,
+          "entscheidung": "ablehnen_massstab",
+          "verdacht_faktor": 0.001
+        }
+      ],
+      "urteil": "Deckt sich exakt mit dem Nachtrag im Auftrag. Der Torwaechter ist nicht kaputt."
+    },
+    "M1_haeufigkeit_am_bestand": {
+      "methodik": "Die 40 echten Dateien selbst sind in dieser Umgebung nicht vorhanden (Regel 3). Wiederverwendet wurden ihre bereits gemessenen groesste-Kante-Werte aus auftraege/ergebnisse/auf-20260818-08.json (Feld messwerte.modelle[*].einheitspruefung.groesste_kante_m) -- pro Datei in eine 1D-Bbox verpackt und durch die AKTUELLE torwaechter.torwaechter()-Funktion gejagt (reine stdlib, kein Blender/GPU noetig).",
+      "messbefehl": "PYTHONPATH=src .venv-render/bin/python m1_torwaechter.py -- URTEIL: exit 0",
+      "abweichung_vom_auftrag": "Der Auftrag verlangt einen Lauf 'ueber ALLE echten IFC-/glb-Dateien, die ihr habt'. Diese Umgebung hat die Rohdateien nicht, nur ihre frueher gemessenen Kantenwerte. Das ist eine METHODISCHE Abweichung, kein Messfehler -- ausdruecklich gemeldet.",
+      "grundgesamtheit_n": 40,
+      "ablehnen_massstab_gesamt": 4,
+      "ablehnen_massstab_anteil": 0.1,
+      "davon_mit_benanntem_faktor": 2,
+      "davon_ohne_faktor_kontextmodell": 2,
+      "annehmen_gesamt": 36,
+      "faelle_ablehnen_massstab": [
+        {
+          "kennung": "modell_31",
+          "groesste_kante_m": 0.16,
+          "verdacht_faktor": 0.001
+        },
+        {
+          "kennung": "modell_36",
+          "groesste_kante_m": 0.4470556,
+          "verdacht_faktor": 0.001
+        },
+        {
+          "kennung": "modell_37",
+          "groesste_kante_m": 1126.6109619140625,
+          "verdacht_faktor": null
+        },
+        {
+          "kennung": "modell_38",
+          "groesste_kante_m": 1002.0,
+          "verdacht_faktor": null
+        }
+      ],
+      "bedeutung": "Genau die im Auftrag genannte Grundgesamtheit von 40 (Uebereinstimmung). 1 von 10 Dateien loest ablehnen_massstab aus -- 5% davon (2 von 40) mit einem benannten Einheitenfaktor, 5% (2 von 40) als erkanntes Kontextmodell ohne Faktor."
+    },
+    "M2_beide_boxen": {
+      "status": "nicht messbar -- offener Rest",
+      "begruendung": "bbox_bauwerk (Trennung Bauwerk von Gelaende) ist ein Konzept seit dem 24.08.2026. Die 40-Dateien-Messung (auf-20260818-08) stammt vom 18.08. und kennt nur EINE Box je Datei. Die echten Dateien liegen nicht in dieser Umgebung, um bbox_bauwerk nachtraeglich zu berechnen."
+    },
+    "M3_fehlalarme_beide_richtungen": {
+      "a_faktor_genannt_aber_kein_fehler": {
+        "gefundene_fehlalarme": 0,
+        "von": 2,
+        "begruendung": "Beide Faelle mit benanntem Faktor (modell_31, modell_36) sind laut der Ursprungsmessung (auf-20260818-08) echte, benennbare Fehlexporte: deklarierte Einheit passt nicht zur tatsaechlichen Groesse, auch nach Anwendung des genannten Faktors ergaebe sich ein plausibles Gebaeude."
+      },
+      "b_fehler_vorhanden_aber_kein_faktor_loch": {
+        "gefundene_kandidaten": 0,
+        "von": 36,
+        "begruendung": "Keine der 36 als 'stimmig' gemeldeten Dateien faellt bei erneuter Pruefung ausserhalb des plausiblen Fensters [1, 1000] m.",
+        "grenze_des_tests": "Dieser Test ist grob: torwaechter sieht nur die finale Metergroesse, nicht die deklarierte Einheit. Eine Datei, die falsch skaliert ist, aber zufaellig trotzdem im plausiblen Fenster landet, waere fuer diesen Test unsichtbar. Das ist eine Grenze der Methode, kein Beleg fuer 'keine solchen Faelle existieren'."
+      },
+      "positiver_nebenbefund": "Die im Auftrag befuerchtete Fehlalarmklasse (ein Kontextmodell/Gelaendemodell bekommt faelschlich einen Einheitenfaktor genannt) ist im AKTUELLEN Code bereits behoben: torwaechter.py enthaelt einen eigenen KONTEXTMODELL_FAKTOR-Zweig mit Kommentar, der explizit auf 'auf-20260818-08' und die zwei Faelle 1002m/1127m verweist. modell_37 und modell_38 bekommen im heutigen Lauf korrekt KEINEN Faktor genannt."
+    },
+    "M4_dateien_unter_1m": {
+      "anzahl": 2,
+      "kennungen": [
+        "modell_31 (0.16 m)",
+        "modell_36 (0.4470556 m)"
+      ],
+      "einordnung": "Beide sind echte Fehlexporte (siehe M3a), keine legitimen kleinen Bauteil-Renders.",
+      "offener_rest": "Die eigentliche Sorge des Auftrags -- trifft das Fenster 0.003-1.0 m legitime kleine Bauteil-Renders? -- bleibt an diesem Sample UNGETESTET: alle 40 Dateien sind vollstaendige Gebaeude/Wettbewerbsprojekte, keine Bauteil-Demoszenen. Kein Beispiel im Sample, an dem sich diese Frage pruefen liesse."
+    },
+    "fehlalarmrate_gesamt": {
+      "zahl": "0 von 40 (0 von 4 Ablehnungen sind falsch)",
+      "bezug_zur_eigenen_neigung_des_auftraggebers": "Der Auftrag nennt als Setzung (nicht Messung) 'unter 1 von 40 falschen Ablehnungen ja, darueber nein'. Die gemessene Rate liegt bei 0 von 40 und damit unter dieser Schwelle -- das ist eine Feststellung, keine Empfehlung: Der Abbruch wird wie aufgetragen NICHT selbst scharfgeschaltet."
+    }
+  },
+  "urteil": {},
+  "umgebung": {},
+  "fehler": null,
+  "mcp_nicht_angefasst": "MIN_GEBAEUDE_M, MAX_GEBAEUDE_M und der Abbruch-Schalter wurden nicht veraendert.",
+  "was_nicht_abgeschlossen_werden_konnte": [
+    "M2: Bauwerksbox vs. Szenenbox fuer die 40 Dateien -- Konzept existiert erst seit nach der Ursprungsmessung, Rohdateien fehlen hier."
+  ]
+}

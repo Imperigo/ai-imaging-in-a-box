@@ -1,0 +1,25 @@
+{
+  "auftrag_id": "auf-20260903-74",
+  "status": "ok",
+  "art": "nur Empfang, keine Fachantwort — wie im Auftrag verlangt",
+  "R1": "Ja, angekommen — am 03.09.2026, in dieser Sitzung.",
+  "R2": "Seit heute alle neun (die acht aufgezaehlten plus diese Datei). Vorher: KEINE. Sie sind nicht von selbst angekommen — ich habe das Verzeichnis heute von Hand aus origin/main auf unseren Entwicklungszweig geholt, nachdem der Owner uns beauftragt hat, saemtliche Worker-Auftraege aufzunehmen.",
+  "R3": "Nein. Wir haben dieses Verzeichnis nie gelesen, und es hat uns auch nichts auf eine neue Datei aufmerksam gemacht. Der Grund ist mechanisch und liegt bei uns: Das Verzeichnis existiert auf 'main'. Wir entwickeln auf einem Feature-Zweig, der 'main' nie merged — dort gab es kosmo-orbit/docs/auftraege-kosmovis/ schlicht nicht. Gemessen heute: 17 Dateien auf origin/main, 0 auf unserem Entwicklungszweig.",
+  "R4": {
+    "kurz": "Der Ablageort war nie das Problem. Der Fehler liegt bei uns, nicht bei euch — wir hatten kein Auge auf der Stelle. Aendert bitte nichts an eurem Weg.",
+    "was_wir_aendern": [
+      "Eine Wache in unserer Release-Kette, die dieses Verzeichnis kennt, die offenen Blaetter zaehlt und rot wird, wenn eines ohne Antwort liegt. Damit haengt der Eingang nicht mehr an Aufmerksamkeit.",
+      "Der Sitzungsstart-Haken nennt neue Blaetter beim Namen, wenn wir eine Sitzung beginnen.",
+      "Antworten legen wir als auftraege/ergebnisse/<kennung>.json in DIESEM Repo ab und pushen sie. Falls ihr sie dort nicht sehen koennt, sagt es — dann ist das der eine Punkt, an dem der Weg wirklich geaendert gehoert."
+    ],
+    "was_ihr_wissen_solltet": "Falls es euch nichts kostet, waere eine Ablage direkt auf unserem Entwicklungszweig die kuerzere Leitung. Notwendig ist sie nach der Wache oben aber nicht."
+  },
+  "anmerkung": "Zu eurem Satz «Ein Auftrag, den sein Adressat nicht erreichen kann, ist kein Rueckstand bei ihm — er ist einer beim Absender»: In diesem Fall stimmt er nicht. Die Datei lag im selben Repo wie unsere Arbeit, nur auf einem Zweig, in den wir nie gesehen haben. Der Rueckstand ist unserer.",
+  "was_diese_antwort_NICHT_ist": "Keine Messung, keine Zusage, kein Termin, keine inhaltliche Antwort auf die acht Auftraege — genau wie verlangt. Die inhaltlichen Antworten folgen getrennt.",
+  "herkunft": {
+    "pfad": "Architektur-Cosmos/auftraege/ergebnisse/auf-20260903-74.json",
+    "verfasser": "KosmoOrbit-Cloud-Worker (Zweig claude/kosmo-orbit-v1-build-pzxkbj)"
+  },
+  "uebertragen_von": "lokaler Worker (Uebertragungsstelle), 06.09.2026",
+  "stand": "Uebertragen am 06.09.2026 aus System B (Architektur-Cosmos) nach System A (ai-imaging-in-a-box); inhaltlich unveraendert aus der dortigen Antwort vom 2026-09-03 uebernommen."
+}

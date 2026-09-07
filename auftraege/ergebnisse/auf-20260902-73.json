@@ -1,0 +1,35 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260902-73",
+  "status": "ok",
+  "beendet": "2026-09-06T19:38:52Z",
+  "dauer_s": null,
+  "messwerte": {
+    "hoehe_referenz_lauf17_m": 30.437,
+    "hoehe_referenz_lauf16_m": 31.068,
+    "glb_span_x_lauf17_m": 106.22899627685547,
+    "glb_span_y_lauf17_m": 30.4370000064373,
+    "glb_span_z_lauf17_m": 59.2599983215332,
+    "glb_span_x_lauf16_m": 105.50999450683594,
+    "glb_span_y_lauf16_m": 31.067999958992004,
+    "glb_span_z_lauf16_m": 59.21000289916992,
+    "n_gleichstand_standpunkte": 8,
+    "n_kombinationen_standpunkte": 56
+  },
+  "urteil": {
+    "M1_herkunft": "ZWEI unabhaengige, wirklich aus dem KosmoOrbit-Exporter stammende glb-Dateien gefunden (KosmoVis-Demolauf, Laeufe 16 und 03.09./17 -- 'gefahren-model.glb'): asset.generator == 'KosmoOrbit V1' im glTF-Kopf, und die begleitende Protokolldatei jedes Laufs nennt ausdruecklich 'erzeuger': 'KosmoOrbit exportGlb'. Das sind Dateien, die eine reale, automatisierte Browsersitzung der KosmoOrbit-Oberflaeche selbst erzeugt hat -- NICHT unsere eigene ifc_to_glb-Kette (die traegt einen anderen Generator-String, 'trimesh' bzw. 'pygltflib').",
+    "M2_hoehenachse": "Y ist die Hoehenachse -- an der Datei gemessen, nicht aus dem Exporter-Quelltext geraten. Fuer beide Laeufe wurde die Datei UNABHAENGIG gegengeprueft: derselbe Bau wurde VOR dem KosmoOrbit-Export bereits per eigenem Blender-Multipass gemessen (Z-up-Weltsystem, gebaeudehoehe_m=30.437 bzw. 31.068). Liest man aus der glb NUR die drei rohen Achsenspannen (X,Y,Z, ohne jede Up-Achsen-Annahme), ergibt sich fuer Lauf 17: X=106.229 m, Y=30.437 m, Z=59.260 m -- die Y-Spanne trifft die unabhaengig bekannte Gebaeudehoehe auf drei Nachkommastellen EXAKT, ebenso X gegen die bekannte Gebaeudebreite (106.229 m) und Z gegen die bekannte Gebaeudetiefe (59.260 m). Dieselbe exakte Uebereinstimmung zeigt sich unabhaengig bei Lauf 16 (Hoehe 31.068 m == Y-Spanne). Y=Hoehe ist damit an zwei unabhaengigen Dateien je einmal EXAKT bestaetigt, nicht nur plausibel.",
+    "M3_woran_festgemacht": "Messweg: aiimaging.glbbox.knotenboxen() auf der glb angewandt (liest nur POSITION-min/max aus dem glTF-JSON-Kopf, keine Dreiecke, kein Blender), daraus die Huellbox ueber alle Knoten und ihre drei Achsenspannen berechnet -- OHNE jede up_axis-Annahme. Diese drei rohen Zahlen wurden dann gegen eine ZWEITE, unabhaengige Quelle gehalten: den Blender-Bericht DERSELBEN Szene, der VOR dem KosmoOrbit-Export in derselben Demolauf-Sitzung erzeugt wurde und sein eigenes, unabhaengig ermitteltes Z-up-Weltsystem samt gemessener Gebaeudehoehe traegt. Die Uebereinstimmung ist die Messung, nicht eine Vermutung ueber den Exporter.",
+    "M4_falls_nicht_messbar": "Entfaellt -- die Datei gab die Antwort her, siehe M2/M3.",
+    "M5_standpunkte": "Auf der Bauwerksbox von Lauf 17 (kein Gelaende in dieser Szene erkannt, Bauwerksbox == Szenenbox): n_gleichstand=8 von n_kombinationen=56, gewaehlte Kuerzel ['eES', 'wWS', 'nNW'], Streuung 90 Grad. Damit reiht sich dieser echte Bestand in den bereits gemessenen Befund ein (hoechstens 1-2 verschiedene Guetewerte ueber 8 taugliche Standpunkte, mehrere gleichwertige Kombinationen) -- die Owner-Frage aus Entscheidung A (docs/ENTSCHEIDUNGEN_2026-09-02.md), ob eine dritte Groesse noetig ist, bleibt beim Owner; unsere Zahl liefert nur den Datenpunkt an einem echten, komplexen (9-geschossigen, 10625 Netzen) Bauwerk statt an einem Quader.",
+    "messbefehle": {
+      "M1": "python3 -Skript: Generator-String aus dem glTF-JSON-Kopf beider gefahren-model.glb-Dateien gelesen (struct.unpack Kopf + json.loads(chunk)) -> 'KosmoOrbit V1' fuer beide, exit 0; zusaetzlich 'erzeuger': 'KosmoOrbit exportGlb' aus der begleitenden Protokolldatei desselben Laufs gelesen.",
+      "M2/M3": "PYTHONPATH=src .venv-render/bin/python -c \"from aiimaging import glbbox; js=glbbox.lies_gltf_json(<gefahren-model.glb, Lauf 17>); kb=glbbox.knotenboxen(js); lo,hi=glbbox._huelle(kb['knoten']); print([hi[i]-lo[i] for i in range(3)])\" -> [106.22899627685547, 30.4370000064373, 59.2599983215332], exit 0. Gegengeprueft gegen die im selben Demolauf VOR dem KosmoOrbit-Export erzeugte eigene Blender-Report-Datei (bbox_size_m [106.229, 59.260, 30.437] in deren eigenem Z-up-Weltsystem, gebaeudehoehe_m 30.437) -- identisch bis auf Achsenvertauschung. Wiederholt an einer zweiten, unabhaengigen Datei (Lauf 16): Y-Spanne 31.068 m == unabhaengig gemessene Gebaeudehoehe 31.068 m, exit 0.",
+      "M5": "PYTHONPATH=src .venv-render/bin/python -c \"from aiimaging import glbbox, kameras; aus=glbbox.bauwerksbox(<gefahren-model.glb, Lauf 17>, up_axis='Y'); sp=kameras.standpunkte(aus['bbox_bauwerk']); print(sp['n_gleichstand'], sp['n_kombinationen'], [k['kuerzel'] for k in sp['standpunkte']])\" -> 8 56 ['eES', 'wWS', 'nNW'], exit 0."
+    },
+    "regel3_hinweis": "Die konkreten Dateipfade (unter dem Home-Verzeichnis der HomeStation, mit Benutzernamen) wurden absichtlich NICHT in dieses Ergebnis geschrieben -- oben stehen nur Lauf-Kennungen ('Lauf 16'/'Lauf 17') und Messwerte."
+  },
+  "umgebung": {},
+  "fehler": null,
+  "stand": "Stand 06.09.2026, HomeStation, ohne GPU (Grafikkarte durch anderen Agenten belegt)."
+}

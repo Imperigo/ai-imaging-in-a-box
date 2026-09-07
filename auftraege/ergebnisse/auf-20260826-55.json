@@ -1,0 +1,28 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260826-55",
+  "status": "ok",
+  "beendet": "2026-09-06T19:38:52Z",
+  "dauer_s": null,
+  "messwerte": {
+    "n_reale_depth_anything_v2_small_laeufe_gefunden": 10,
+    "n_davon_status_fehlgeschlagen_geom_iou_null": 6,
+    "n_davon_geometrie_invertiert": 2,
+    "geom_iou_lauf_a": 0.16566795939400103,
+    "geom_iou_lauf_b": 0.16960095817162005,
+    "geom_iou_referenz_deckelstudie": 0.406
+  },
+  "urteil": {
+    "V1_wo_liegt_der_himmel": "NICHT MESSBAR in dieser Sitzung -- und zwar strukturell, nicht nur wegen der fehlenden GPU. wo_liegt_der_himmel(soll, karte) braucht die ROHE, punktweise Tiefenschaetzung ('karte'). Durchsucht wurden alle unter dieser HomeStation erreichbaren Bildordner (Multipass-Ausgaben + KosmoVis-Demolauf-Ordner): die SOLL-Tiefenkarte (tiefe_.exr) liegt bei jedem Lauf vor, die ROHE Schaetzerkarte wird von der Produktionskette aber NIRGENDS persistiert -- qa_gegen_soll() rechnet Kennzahlen (spearman, geom_iou, ...) und verwirft die Karte danach. Kein einziger .npy/.exr/.png mit rohen Schaetzerwerten wurde gefunden. Ohne GPU-Neulauf UND ohne Aenderung an der Produktionskette (die diese Sitzung nicht vorsieht) ist dieser Wert also nicht rekonstruierbar.",
+    "V2_geom_iou_desselben_laufs": "Ohne V1 nicht sinnvoll paarbar. Zur Einordnung trotzdem: die beiden einzigen REALEN depth-anything-v2-small-Laeufe mit auswertbarem geom_iou, die auf dieser Maschine gefunden wurden, liegen bei 0.166 und 0.170 -- deutlich UNTER der Referenz 0.406 aus auf-20260819-15, und BEIDE mit invertierter Rangkorrelation (spearman positiv bei erwartetem negativem Vorzeichen -- 'vorne und hinten vertauscht', laut eigener Warnung des Laufs). Das ist eine ANDERE Fehlerart als die von der Deckelstudie unterstellte (Himmel im Wertebereich des Bauwerks) und wuerde die Vorhersage weder bestaetigen noch widerlegen, sondern eine fremde Frage beantworten. Wir melden diese Zahlen darum nur als Kontext, nicht als Pruefung von V1/V2.",
+    "V3_beauty_pass": "Nicht gemacht, gleicher Grund wie V1: erfordert einen Tiefenschaetzer-Lauf (Modell-Inferenz), was in dieser Sitzung ausdruecklich untersagt ist.",
+    "messbefehle": {
+      "n_reale_..._gefunden / geom_iou_lauf_a/b": "find <kosmovis-bilder-Ordner> -name urteil.json, je Datei json.load(...)['urteil']['geom_iou'] und ['spearman'] gelesen -- reines Dateilesen, kein Render, keine Inferenz. 10 Kamera-Urteile gefunden: 6x geom_iou=0.0/spearman=None (fehlgeschlagen), 2x geom_iou in {0.166, 0.170} mit invertiertem Vorzeichen, exit 0.",
+      "keine_rohe_karte_gefunden": "find <home> -iname '*.npy' -o -iname '*schaetz*' -o -iname '*tiefen_ist*' -o -iname '*depth_ist*' -o -iname '*geschaetzte*' sowie manuelle Durchsicht der Multipass-Ordner (tiefe_.exr, tiefe_norm.png, beauty_.png, material_id.png vorhanden -- keine Datei mit roher Schaetzerausgabe) -> 0 Treffer, exit 0."
+    },
+    "offener_rest": "V1-V3 bleiben offen. Grund: kein persistiertes Rohkarten-Paar (Soll+Schaetzer) irgendwo auf dieser Maschine, und ein Neulauf braeuchte Modell-Inferenz (depth-anything-v2-small) -- in dieser Sitzung wegen der belegten Grafikkarte ausdruecklich untersagt. Kein Scheitern der Aufgabe: die Suche war erschoepfend und ist dokumentiert. Sobald wieder eine reale Charge geschaetzter Tiefenkarten anfaellt (naechste Gelegenheit, wie im Auftrag verlangt), ist wo_liegt_der_himmel() sofort ohne Codeaenderung anwendbar."
+  },
+  "umgebung": {},
+  "fehler": null,
+  "stand": "Stand 06.09.2026, HomeStation, ohne GPU (Grafikkarte durch anderen Agenten belegt)."
+}

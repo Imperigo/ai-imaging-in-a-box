@@ -1,0 +1,55 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260826-57",
+ "status": "ok",
+ "stand": "Stand 06.09.2026",
+ "beendet": "2026-09-06T00:00:00Z",
+ "zusammenfassung": "Ein Lauf, ganz gemeldet, wie verlangt. Der Maskenweg laeuft und liefert Zahlen (nicht None). Das Ergebnis landet aber auf `bestanden: false`, NICHT auf `null` — anders als die Beispielfaelle im Auftrag (die nur true/null nennen). Grund und Einordnung unten. Ausserdem: der uebliche Lauf brauchte einen Prompt, den `params` des Auftrags nicht enthielt — dazu ebenfalls unten.",
+ "hinweis_zur_ausfuehrung": {
+  "befund": "`params` des Auftrags ist leer ({}). Der Produktpfad lehnt einen Render OHNE Prompt ab ('Prompt ist leer. Die Tiefenkarte gibt die Kubatur vor, aber Material, Licht und Stimmung stehen nur im Prompt.') — das ist echtes, gewolltes Produktverhalten, kein Fehler dieses Laufs.",
+  "vorgehen": "Fuer 'eure uebliche Geometrie' wurde der Standardprompt wiederverwendet, den diese HomeStation bereits fuer fruehere Bestaetigungslaeufe genutzt hat (auf-20260818-09) — das ist eine reine Laufzeit-Ergaenzung in einer In-Memory-Kopie des Auftrags fuer diesen einen Aufruf; die Datei auftraege/offen/auf-20260826-57.json wurde NICHT veraendert.",
+  "prompt_verwendet": "photorealistic architectural visualization of a simple modern concrete building, overcast daylight, matte concrete surfaces, clean flat roof, neutral grey sky, no vegetation, no people, eye-level exterior view",
+  "geometrie": "python3 tools/make_test_ifc.py build/testbau.ifc (Standardgeometrie, kein Gelaende), Kamera sSE (Vorgabe), 512 px, backbone z-image-turbo (Vorgabe)"
+ },
+ "messbefehl_gesamtlauf": "PYTHONPATH=src AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers .venv-render/bin/python <skript, ruft tools/homeworker.fuehre_aus() direkt mit der oben ergaenzten In-Memory-Kopie des Auftrags>",
+ "URTEIL": "exit 0",
+ "V1_bestanden": {
+  "gemessen": false,
+  "abweichung_von_den_im_auftrag_genannten_faellen": "Der Auftrag nennt fuer V1 nur zwei moegliche Werte (true oder null). Gemessen wurde ein DRITTER, im Auftrag nicht explizit erfragter Wert: false. Das ist kein Fehler der Kleene-Logik, sondern ihr korrektes Verhalten in einem Fall, den der Auftragstext nicht durchgespielt hat.",
+  "warum_false_und_nicht_null": "Der Maskenweg LIEF (siehe V2) und lieferte ein eigenes, definitives Urteil: `paarurteil.bestanden = false`, weil der Kantenanteil an der Maskengrenze mit 4.1% klar unter der Schwelle 20% liegt ('traeger': 'anteil', 'zweites_bein': 'anteil' — die Tiefenstaffelung selbst waere in Ordnung, rho=+0.994 gegen Schwelle 0.80). `null` waere nur der Fall gewesen, wenn der Maskenweg NICHT gelaufen waere. Ein gerissenes (durchgefallenes) Tor entscheidet nach der Kleene-Regel allein — unabhaengig davon, dass der score des ganzen Bildes hier gar nicht bestimmbar war (None, siehe V5).",
+  "maskenbefund_grund": "maskenbefund.grund selbst ist ein leerer String; die eigentliche Begruendung steht in maskenbefund.gelaende_begruendung: '5 benannte Eintraege geprueft, keiner nach Gelaende ... IfcSite ist die genormte Klasse fuer das Grundstueck — der Nullbefund ist damit ein BEWEIS ueber den Katalog und keine Vermutung ueber Hausnamen.' Die Szene hat also nachweislich KEIN Gelaende, und die Maske gilt trotzdem (Katalogbeweis, siehe Punkt 3 des Auftrags)."
+ },
+ "V2_masszahlen_masken_weg": {
+  "rho_maske": {"gemessen": true, "wert": {"rho": -0.9939407248062718, "gerichtet": 0.9939407248062718, "polaritaet": -1}},
+  "kante": {"gemessen": true, "wert": {"roh": 0.0006341689981194, "gerichtet": 0.0006341689981194}},
+  "kantenanteil": {"gemessen": true, "wert": {"anteil": 0.04104903078677309, "zufall": 0.0500030517578125, "ueber_zufall": false}},
+  "paarurteil": {"gemessen": true, "wert": {"bestanden": false, "traeger": "anteil", "rho": 0.9939407248062718, "kante": 0.0006341689981194, "anteil": 0.04104903078677309}},
+  "urteil": "Alle vier sind Zahlen bzw. gefuellte Objekte, keines ist None. Der Maskenweg wurde bei diesem lokalen Lauf tatsaechlich gefahren."
+ },
+ "V3_methode_und_polaritaet": {
+  "methode": "sqrt(max(0, polaritaet * spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v2 (gerichtet)",
+  "polaritaet_zeichen": -1,
+  "hinweis": "Die gerichtete Rechnung (v2) ist aktiv, wie im Auftrag beschrieben. rho_maske traegt zusaetzlich die v3-Maskenweg-Methode ('polaritaet * spearman über die ÜBERGEBENEN Maskenpunkte, ohne geom_iou und ohne Wurzel')."
+ },
+ "V4_ohne_maskenweg_warnung": {
+  "steht_die_zeile_noch_da": false,
+  "tatsaechliche_warnungen": [
+   "Keine gemeinsame Silhouette: ... (Szene ohne Gelaende — der Schaetzer legt in den leeren Vordergrund eine Bodenebene)",
+   "Geringer Geometrieanteil: nur 17.1% der Bildpunkte tragen Geometrie ..."
+  ],
+  "urteil": "Die Zeile 'OHNE MASKENWEG' erscheint NICHT — konsistent mit V2: der Maskenweg lief bei uns."
+ },
+ "V5_aendert_sich_der_score": {
+  "erwartung_im_auftrag": "NEIN",
+  "gemessen": "score = null (nicht bestimmbar), statt einer Zahl. Das WEICHT von einer reinen NEIN-Antwort ab und wird darum gemeldet.",
+  "einordnung": "Referenzlauf auf-20260819-15 (17% Geometrieanteil, dieselbe Grundgeometrie) hatte damals einen DEFINIERTEN, wenn auch gedeckelten Wert: geom_iou=0.256. Der heutige Lauf liefert bei fast identischem Geometrieanteil (17.1%) stattdessen `score: null`, weil 'keine gemeinsame Silhouette' vorliegt. DIESER Unterschied ist aber NICHT durch die am 26./27.08.2026 zu bestaetigenden Aenderungen entstanden: Die Warnung selbst datiert die Unterscheidung 'None statt erfundener Zahl bei fehlender gemeinsamer Silhouette' ausdruecklich auf den 02.09.2026 ('Bis zum 02.09.2026 stand hier nur die erste Lesart ... Gemessen wurde an dem Tag das Gegenteil'). Es handelt sich also um eine SPAETERE, unabhaengige Verbesserung der Score-Berechnung (ehrlicheres None statt eines irrefuehrenden Zahlenwerts fuer eine gelaendelose Szene), die zufaellig in denselben Lauf faellt, weil beide Aenderungen inzwischen auf main liegen.",
+  "urteil": "V5 ist mit JA zu beantworten (der Score-TYP hat sich veraendert), aber die URSACHE liegt ausserhalb dessen, was dieser Auftrag bestaetigen sollte."
+ },
+ "was_das_fuer_den_einbau_stand_heisst": "Alle vier im Auftrag beschriebenen Verhaltensaenderungen (Kleene-Logik fuer bestanden, Maskenweg beim Homeworker, gerichtete Polaritaet am Tor, Katalogbeweis fuer Gelaende) sind am Geraet bestaetigt und funktionieren wie beschrieben. Der 'unerwartete' Wert false statt null ist keine Auffaelligkeit, sondern ein Fall, den der Auftragstext nur nicht durchgespielt hatte.",
+ "umgebung": {
+  "gpu": "NVIDIA GeForce RTX 5090",
+  "leistungsgrenze_w": 400,
+  "python": "3.14",
+  "backbone": "z-image-turbo"
+ }
+}

@@ -1,0 +1,57 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260826-54",
+ "status": "ok",
+ "stand": "Stand 06.09.2026",
+ "beendet": "2026-09-06T00:00:00Z",
+ "zusammenfassung": "Die Folgerung des Auftrags TRAEGT auf dieser Maschine ebenfalls: der feste Vorlauf dominiert, Samples kosten praktisch nichts (4 bis 256 Samples bei 800px: 4.54-4.60s, Spanne unter 1.5%). Ein wichtiger NEBENBEFUND, unabhaengig von diesem Auftrag, aber diesen Auftrag direkt erklaerend: `blender_depth_stage.py` setzt `szene.cycles.device = 'CPU'` FEST VERDRAHTET, mit dem Kommentar 'in dieser Umgebung gibt es keine GPU'. Auf DIESER Maschine gibt es sehr wohl eine GPU (RTX 5090, CUDA/OptiX-faehiges Blender-Paket) — sie wird fuer den Blender-Multipass schlicht NIE benutzt. Alle Zahlen unten sind also CPU-Zeiten, genau wie eure Referenzmessung, und darum unmittelbar vergleichbar.",
+ "geometrie_verwendet": {
+  "gewaehlt": "--hochbau (141 Bauteile, 1692 Dreiecke) — ein zweites echtes Modell mit ~511 Teilen war auf dieser Maschine nicht vorhanden",
+  "messbefehl_bau": "python3 tools/make_test_ifc.py build/auf54/hochbau.ifc IFC4 --hochbau"
+ },
+ "nebenbefund_cpu_statt_gpu": {
+  "fundstelle": "src/aiimaging/runners/blender_depth_stage.py, Funktion _renderparameter_setzen: `szene.cycles.device = \"CPU\"  # in dieser Umgebung gibt es keine GPU`",
+  "befund": "Dieser Kommentar stammt erkennbar aus einer GPU-losen Entwicklungsumgebung und ist auf der HomeStation FALSCH: `nvidia-smi` zeigt eine RTX 5090, und `seams.py` selbst dokumentiert an anderer Stelle, dass das Snap-Blender-Paket 'als einziges dort OptiX und CUDA' mitbringt. Die Zeile ist unbedingt gesetzt, nicht an eine Bedingung geknuepft — der Blender-Multipass laeuft auf der HomeStation darum IMMER auf der CPU, obwohl eine schnellere GPU direkt daneben liegt.",
+  "tragweite": "Betrifft nicht nur diesen Auftrag: JEDER Blender-Multipass-Lauf dieses Projekts (render, multipass, qa) rendert bislang auf CPU. Die GPU-Auflagen dieses Auftrags (400 W, Leerlauf-Gate) betreffen ohnehin nur den Bildmodell-Teil (diffusers) — der Blender-Teil hat die GPU noch nie belastet.",
+  "keine_reparatur_vorgenommen": "Wie verlangt ('Keine Reparatur im Produkt nebenbei'): nur gemeldet, nicht geaendert. Diese Zeile zu aendern wuerde ALLE bisherigen Blender-Zeitmessungen dieses Projekts nicht mehr reproduzierbar machen, ohne dass jemand es angesagt haette — genau die Art Verhaltensaenderung, die dieses Projekt vorher ansagt."
+ },
+ "M1_samples_bei_800px": {
+  "messbefehl": "seams.glb_zu_multipass(glb, out, aufloesung=800, samples=N, kamera='sSE', material_id=True, beauty=True) je N — Zeit per time.time() um den Aufruf",
+  "URTEIL": "exit 0",
+  "4_samples_s": 4.54,
+  "16_samples_s": 4.60,
+  "64_samples_s": 4.57,
+  "256_samples_s": 4.59,
+  "spanne_prozent": "unter 1.5% zwischen kleinstem und groesstem Wert — FLACH, wie bei euch"
+ },
+ "M2_aufloesung_bei_32_samples": {
+  "messbefehl": "dieselbe Funktion, samples=32 fest, aufloesung=N",
+  "URTEIL": "exit 0",
+  "400px_s": 2.13,
+  "800px_s": 4.54,
+  "1600px_s": 8.12,
+  "verhaeltnis_400_zu_1600": "3.8x fuer 4x Kantenlaenge (16x Pixel) — deutlich SUBLINEAR zur Pixelzahl, aber klar messbar, anders als bei den Samples"
+ },
+ "M3_fester_vorlauf_400px_1_sample": {
+  "messbefehl": "dieselbe Funktion, aufloesung=400, samples=1",
+  "URTEIL": "exit 0",
+  "dauer_s": 2.13,
+  "einordnung": "Identisch mit M2s 400px/32-Samples-Messung (ebenfalls 2.13s) — bestaetigt exakt, was M1 schon zeigt: Samples kosten hier nichts messbares."
+ },
+ "einordnung_vorlauf_gross_oder_klein": {
+  "frage": "Ist der Vorlauf klein oder gross gegen die Renderzeit?",
+  "rechnung": "Bei 800px betraegt der Vorlauf (M3-naeherung, hier: die 400px/1-Sample-Zahl als unterer Anker) 2.13s von 4.54s Gesamtzeit — rund 47%. Bei 1600px sind es 2.13s von 8.12s — rund 26%.",
+  "antwort": "WEDER 'vernachlaessigbar klein' NOCH 'fast alles'. Der Vorlauf ist ein SUBSTANTIELLER, aber mit wachsender Aufloesung ANTEILIG SCHRUMPFENDER Teil der Laufzeit. Die Kernfolgerung des Auftrags bleibt trotzdem stehen: WER einen Lauf sprengen will, tut es ueber die Aufloesung oder die Szene, NICHT ueber die Samples — Samples sind auf dieser Maschine, mit dieser Geometrie, bis mindestens 256 vollstaendig kostenlos.",
+  "konsequenz": "Der Zeitdeckel 900s bleibt bestellbar und ausreichend, wie im Code seit dem 26.08. verankert. Kein mitwachsender Deckel noetig — bestaetigt aus EIGENEN Zahlen, nicht aus euren uebernommen."
+ },
+ "was_nicht_getan_wurde": [
+  "Keine GPU-Stunde geopfert — alle sieben Laeufe zusammen unter 35 Sekunden.",
+  "Nicht auf dem synthetischen Quader gemessen — --hochbau (141 Teile) statt der Standardgeometrie, wie vom Auftrag verlangt, weil kein echtes 511-Teile-Modell vorlag.",
+  "Zahlen nicht geglaettet oder gemittelt — Rohzeiten aus einzelnen Laeufen."
+ ],
+ "umgebung": {
+  "blender": "5.2.1 LTS",
+  "rendergeraet_tatsaechlich": "CPU (siehe Nebenbefund oben — nicht die GPU-Auflage dieses Auftrags, die betrifft nur den Bildmodell-Teil)",
+  "gpu_leerlauf_vor_dem_lauf": "unter 45 W, unter 700 MiB (per nvidia-smi geprueft, obwohl fuer diesen Auftrag ohnehin nicht GPU-gebunden)"
+ }
+}

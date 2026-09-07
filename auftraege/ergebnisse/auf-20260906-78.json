@@ -1,0 +1,17 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260906-78",
+  "status": "ok",
+  "beendet": "2026-09-06T19:38:52Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "A1_bestaetigung": "Bestaetigt: alle vier genannten Ergebnisdateien (auf-20260828-01, auf-20260901-69, auf-20260902-71, auf-20260903-73) tragen jetzt 'status': 'ok' mit Schema 'aiimaging.homeworker-ergebnis/v1' sowie je einem Feld 'status_vorher' (der urspruengliche, unbekannte Wortlaut) und 'status_begruendung' (warum 'ok' zutrifft) -- eigenstaendig nachgeprueft, nicht nur aus dem Auftragstext uebernommen.",
+    "A1_gegenprobe": "Zur Probe (kann tatsaechlich widersprechen: ein Tippfehler im Statuswort haette hier 'gerechnet, nicht beantwortet' ergeben) wurde aiimaging.auftrag.zustand() live auf alle vier IDs angewandt: alle vier liefern 'beantwortet'. Messbefehl: PYTHONPATH=src .venv-render/bin/python -c \"from aiimaging import auftrag; from pathlib import Path; [print(a, auftrag.zustand(a, Path('.'))) for a in ('auf-20260828-01', 'auf-20260901-69', 'auf-20260902-71', 'auf-20260903-73')]\" -> alle vier 'beantwortet', exit 0.",
+    "A2_werkzeugnutzung": "JA, kuenftig ueber auftrag.baue_ergebnis()/schreibe_ergebnis() (fuer strukturierte Messwerte -- unser Regelfall) bzw. tools/antwort.py (fuer reine Prosa-Antworten ohne Messwerte). Diese sechs Ergebnisdateien selbst sind bereits so geschrieben -- ueber baue_ergebnis()/schreibe_ergebnis(), nicht von Hand -- als direkte Anwendung dieser Zusage.",
+    "A3_fehlender_status": "Aus heutiger Erfahrung: NEIN, kein fuenfter Status noetig. Mehrere der sechs heute bearbeiteten Auftraege (55, 61) sind nur TEILWEISE messbar (GPU fehlt), trotzdem passt 'ok' korrekt, weil der Vertrag klarstellt: 'ok' heisst 'Aufgabe erfuellt', nicht 'Ergebnis vollstaendig' -- der unvollstaendige Teil steht als benannter 'offener Rest' INNERHALB des ok-Ergebnisses, nicht als eigener Status. Ein eigener Status fuer diesen Fall wuerde genau den am 23.08. gemachten Fehler wiederholen (ein Status, der Vertrauen kostet, weil er wie eine Antwort aussieht, aber keine erzwungene Begruendungspflicht traegt)."
+  },
+  "umgebung": {},
+  "fehler": null,
+  "stand": "Stand 06.09.2026, HomeStation, ohne GPU (Grafikkarte durch anderen Agenten belegt)."
+}

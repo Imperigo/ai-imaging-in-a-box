@@ -1,0 +1,31 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260826-58",
+  "status": "ok",
+  "beendet": "2026-09-06T19:38:52Z",
+  "dauer_s": null,
+  "messwerte": {
+    "http_status_login": 200,
+    "http_status_api_mcp_tools": 200,
+    "n_tools_gesamt_backend": 282,
+    "n_aiimaging_tools_gefunden": 4,
+    "n_aiimaging_tools_mit_input_schema": 4,
+    "n_aiimaging_tools_mit_output_schema": 4,
+    "n_aiimaging_tools_direkt_vom_server_mit_beiden_schemata": 4
+  },
+  "urteil": {
+    "V1_liefert_api_mcp_tools_beide_schemata": "JA, am laufenden Backend empirisch bestaetigt. Login (POST /api/auth/login) -> HTTP 200; GET /api/mcp/tools (mit Session-Cookie) -> HTTP 200, 282 Werkzeuge insgesamt. Alle 4 aiimaging-Werkzeuge tragen dort ein vollstaendiges 'input_schema' UND 'output_schema' (jeweils mit properties/type/required, inkl. Beschreibungstexten) -- nicht nur Name/Beschreibung. Feldnamen im JSON sind snake_case (input_schema/output_schema), nicht camelCase (inputSchema/outputSchema) wie im rohen MCP-Protokoll -- das ist eine Uebersetzung des Backends, kein Mangel.",
+    "V2_kommen_schemata_am_server_selbst_an": "JA, direkt per stdio gegen den MCP-Server (nicht ueber /api) geprueft: list_tools() liefert fuer alle 4 Werkzeuge (aiimaging_enqueue_render, aiimaging_query_render, aiimaging_capabilities, aiimaging_check_geometry) je ein befuelltes inputSchema UND outputSchema. Inhaltlich deckungsgleich mit dem, was /api/mcp/tools zurueckgibt (Stichprobe an aiimaging_check_geometry: identische properties/required/Beschreibungen). Damit ist die Unterscheidung aus Schritt 2 des Auftrags eindeutig beantwortet: unsere vier Werkzeuge melden ihre Schemata korrekt, UND das Backend reicht sie heute korrekt durch.",
+    "V3_wo_ging_es_beim_backend_verloren": "Gelesen (nicht geaendert) in integrations/odysseus/../kosmo-backend/src/mcp_manager.py, Funktion _tool_schema (Zeilen ~57-80). Der Quelltext traegt seinen eigenen Befund als Kommentar: die MCP-SDK-Fassung 2.x benennt Tool.inputSchema/outputSchema in input_schema/output_schema um; der fruehere Code fragte NUR die camelCase-Namen ab (hasattr(...) else {}) und bekam darum fuer JEDES Werkzeug jedes Servers ein leeres Schema -- 'gemessen auf der HomeStation 18.08.2026: alle 31 registrierten Werkzeuge kamen mit input_schema:{} und output_schema:null'. DIESER FUND IST BEREITS BEHOBEN: _tool_schema fragt heute BEIDE Schreibweisen ab (camel zuerst, dann snake, erster nicht-None-Wert gewinnt) und wird an allen 4 Fundstellen im Modul so verwendet. Die heutige Live-Messung (V1/V2) bestaetigt, dass dieser Fix auch im LAUFENDEN Prozess aktiv ist, nicht nur im Quelltext. ABWEICHUNG VOM AUFTRAG: A4 galt laut EINBAU_STAND.md als unveraendert offen seit dem 19.08. -- der Fund zeigt, dass das Problem zwischenzeitlich (nach dem 18.08., vermutlich durch den fuer das Odysseus-Repo zustaendigen Cloud-Worker/Owner) bereits behoben wurde, ohne dass A4 nachgefuehrt worden waere. Es war kein Patch von uns noetig, weil er schon vorlag.",
+    "V4_feldnamen_verdrahtung_messbar": "JA -- die Vorbedingung (vollstaendige Schemata am Endpunkt) ist jetzt erfuellt, damit ist A7 (Feldnamen gegen den Vorgaenger pruefen) am laufenden Cockpit grundsaetzlich messbar. Diese Sitzung hat das nur ENTSPERRT, aber die eigentliche A7-Messung (contracts.LANE_FIELDS gegen die live gelieferten Schemata, tote Kanten suchen) nicht vollstaendig durchgefuehrt -- das ist ein eigener, klar abgegrenzter Folgeschritt und wuerde diesen Diagnoseauftrag sprengen.",
+    "keine_aenderung_am_odysseus_backend": "Bestaetigt: nur gelesen (routes/mcp_routes.py, src/mcp_manager.py), nichts geschrieben oder gepatcht. Keine erneute MCP-Registrierung ausgefuehrt (auf-20260826-48 war/ist nicht Gegenstand dieser Pruefung).",
+    "messbefehle": {
+      "login": "curl -s -c cookies.txt -X POST http://localhost:7860/api/auth/login -H 'Content-Type: application/json' -d '{\"username\":\"admin\",\"password\":\"***\"}' -> HTTP 200 {\"ok\":true,\"username\":\"admin\"}, exit 0",
+      "api_mcp_tools": "curl -s -b cookies.txt http://localhost:7860/api/mcp/tools -> HTTP 200, 282 Eintraege, davon 4 mit server_name='aiimaging' und je vollem input_schema/output_schema, exit 0",
+      "direkter_server_test": "eigenes Skript ueber mcp.client.stdio.stdio_client + mcp.ClientSession gegen integrations/odysseus/aiimaging_mcp_server.py (python /usr/bin/python3), session.list_tools() -> 4 Tools, je hat_inputSchema=True und hat_outputSchema=True, exit 0"
+    }
+  },
+  "umgebung": {},
+  "fehler": null,
+  "stand": "Stand 06.09.2026, HomeStation, ohne GPU (Grafikkarte durch anderen Agenten belegt)."
+}

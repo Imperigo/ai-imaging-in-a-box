@@ -1,0 +1,72 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260826-59",
+ "status": "ok",
+ "stand": "Stand 06.09.2026",
+ "beendet": "2026-09-06T00:00:00Z",
+ "zusammenfassung": "Die drei Dateien wurden geprueft und sind installierbar (kein Platzhalter mehr, %h korrekt verwendet). ABSICHTLICH NICHT installiert/gestartet, mit Begruendung: `kosmo-worker.sh` fuehrt am Ende `git commit` und `git push` aus — das widerspricht einer ausdruecklichen, uebergeordneten Anweisung fuer diese Sitzung ('Nicht committen und nicht pushen. Schreibe nur die Ergebnisdateien; das Committen mache ich zentral.'). Einen Timer zu starten, der binnen fuenf Minuten selbststaendig committet und pusht, waere ein vorhersehbarer Verstoss gegen diese Anweisung — nicht ein Versehen. Dazu kommt ein frischer, eigener Befund: Dieses Arbeitsverzeichnis wird OFFENSICHTLICH bereits von mindestens einem weiteren, unabhaengigen Prozess veraendert (siehe unten) — ein zweiter, hier gestarteter automatischer Committer waere ein Konflikt, den niemand beaufsichtigt.",
+
+ "V1_lauf_von_hand": {
+  "frage": "Laeuft bash betrieb/kosmo-worker.sh 1 von Hand durch?",
+  "antwort": "NICHT VOLLSTAENDIG AUSGEFUEHRT, aus dem oben genannten Grund. Stattdessen wurden die EINZELNEN, UNGEFAEHRLICHEN Schritte geprueft:",
+  "schritt_1_git_pull_ff_only": {"geprueft": true, "befund": "Repo ist aktuell (main), ff-only waere ein No-Op oder harmlos — keine Ausfuehrung noetig, da bereits synchron."},
+  "schritt_2_homeworker_alle_hoechstens_1": {
+   "NICHT ausgefuehrt": "Ein Testlauf haette (Stand jetzt) auf-20260826-59 SELBST gewaehlt (Rang 1 der unerledigten local-Auftraege) und mit dem GENERISCHEN Multipass-Pfad ueberschrieben — bevor diese sorgfaeltig verfasste Antwort geschrieben ist. Das haette die eigentliche Antwort auf diesen Auftrag durch eine bedeutungslose 'multipass: ok'-Zeile ersetzt."
+  },
+  "schritt_3_commit_und_push": {"ausgefuehrt": false, "grund": "siehe Zusammenfassung — Regelkonflikt mit der uebergeordneten Anweisung dieser Sitzung."}
+ },
+
+ "V2_push_nicht_interaktiv": {
+  "frage": "Geht der Push aus einem nicht-interaktiven Kontext?",
+  "NICHT GETESTET": "Ein echter `git push` wurde bewusst nicht versucht (siehe oben). Stattdessen geprueft, WORAUF ein Push treffen wuerde:",
+  "remote": "origin -> https://github.com/Imperigo/ai-imaging-in-a-box.git (echtes GitHub-Repo, HTTPS)",
+  "einschraenkung": "Ob ein Credential-Helper oder ein zwischengespeichertes Token fuer einen nicht-interaktiven Push bereitsteht, wurde NICHT geprueft — das haette einen Verbindungsversuch zum Remote bedeutet, und dafuer gilt dieselbe Zurueckhaltung wie fuer den Push selbst. Diese Frage bleibt offen und muss vom Owner oder in einem eigens dafuer freigegebenen Testlauf beantwortet werden."
+ },
+
+ "V3_timer_in_list_timers": {"frage": "Steht der Timer in systemctl --user list-timers?", "antwort": false, "grund": "Nicht installiert (siehe Zusammenfassung). kosmo-worker.timer/.service liegen nur unter betrieb/ im Repo, wurden nicht nach ~/.config/systemd/user/ kopiert."},
+ "V4_ergebnis_nach_takt": {"frage": "Ist nach einem Takt ein Ergebnis entstanden und gepusht?", "antwort": "entfaellt — kein Takt gestartet."},
+
+ "V5_was_wir_anders_machen_wuerden": {
+  "hauptpunkt": "Der commit+push am Ende von kosmo-worker.sh sollte NICHT unbedingt sein. Vorschlag: ein Schalter (z.B. `kosmo-worker.sh 1 --ohne-push`), der nur rechnet und die Ergebnisdatei liegen laesst — fuer Sitzungen, in denen das Committen zentral/von Hand geschieht (wie in dieser). So bleibt der Dienst fuer den Normalbetrieb nutzbar, ohne dass er in einer betreuten Sitzung automatisch gegen eine geltende 'nicht committen'-Anweisung laeuft.",
+  "zweiter_punkt": "`git add auftraege/ergebnisse` (ohne weitere Einschraenkung) staged ALLES, was dort liegt — auch Dateien, die ein ANDERER Prozess dorthin geschrieben und noch nicht selbst committet hat (siehe Nebenbefund unten). Ein automatischer Commit sollte nur die Datei(en) hinzufuegen, die DIESER Durchgang selbst geschrieben hat, nicht den ganzen Ordner — sonst vermischt ein Takt fremde, ungeprüfte Ergebnisse mit den eigenen."
+ },
+
+ "nebenbefund_konkurrierende_aenderung_am_selben_arbeitsverzeichnis": {
+  "befund": "Waehrend dieser Sitzung sind im selben Arbeitsverzeichnis ACHT neue, unbeaufsichtigte (untracked) Ergebnisdateien aufgetaucht, die NICHT von dieser Sitzung geschrieben wurden — inhaltlich klar dem 'ui'/Cloud-Worker zuzuordnen (Felder wie 'zustellbeleg', 'Diese Datei ist bei uns angekommen — am 03.09.2026'). Sie folgen offenbar der Empfehlung aus KREUZBEFUND-2026-09-06 ('wer antwortet, schreibt in das System des Fragenden'), sind aber lokal noch NICHT committet.",
+  "warum_das_hier_relevant_ist": "Es bedeutet, dass DIESES Arbeitsverzeichnis nicht exklusiv dieser Sitzung gehoert — mindestens ein weiterer Prozess/Worker schreibt gerade parallel hinein. Einen automatischen Committer (den Takt aus diesem Auftrag) JETZT zu starten, hiesse: der naechste Tick wuerde `git add auftraege/ergebnisse` auf ALLE diese fremden, ungeprueften Dateien anwenden und sie ohne Review mit-committen und -pushen. Das ist ein zusaetzlicher, eigenstaendiger Grund, den Takt nicht ungeprueft zu starten — unabhaengig vom commit/push-Konflikt oben.",
+  "empfehlung": "Bevor der Takt aus diesem Auftrag produktiv laeuft, sollte geklaert werden, WER auf dieser Maschine sonst noch in dieses Arbeitsverzeichnis schreibt, und ob ein `git add` auf den ganzen Ordner uberhaupt sicher ist."
+ },
+
+ "V6_liste_zahlen": {
+  "messbefehl": "PYTHONPATH=src .venv-render/bin/python tools/homeworker.py --liste",
+  "URTEIL": "exit 0",
+  "gemessen_heute": {"fremd": 3, "fragen": 4, "unerledigt_fuer_local": 2},
+  "erwartet_laut_auftrag_01_09": {"fremd_unbekannt": null, "fragen": 9, "laeufe": 8},
+  "urteil": "Stimmt NICHT mehr mit den am 01.09.2026 genannten Zahlen ueberein — erwartungsgemaess, denn seither sind mehrere Auftraege beantwortet worden (u.a. durch diese Sitzung: neun der zehn frueher unerledigten local-Auftraege sind jetzt beantwortet, siehe die uebrigen acht Ergebnisdateien dieser Sitzung). Die 9-Fragen/8-Laeufe-Zahl war eine Momentaufnahme vom 01.09. und ist als Pruefzahl fuer HEUTE nicht mehr die richtige Referenz. Aktueller Stand: 4 Fragen, 2 unerledigte Laeufe (davon einer dieser Auftrag selbst) — nach Abschluss dieses Auftrags bleibt nur noch auf-20260826-47 [qa] unerledigt fuer 'local'."
+ },
+ "V7_rangfolge": {
+  "frage": "Haltet ihr die Rangfolge fuer richtig?",
+  "antwort": "Ja, im Rahmen dessen, was diese Sitzung beobachten konnte: Die im Nachtrag genannte Spitze (59, 61, 57, 60, 43 ...) ergab in der Praxis eine sinnvolle Bearbeitungsreihenfolge — die Antworten mit den groessten neuen Erkenntnissen (R2-Wiederfund bei auf-36, der Rahmungs-Riegel-Befund bei auf-41/57, der Entflechtungs-Fehlschlag bei auf-42) lagen alle in der vorderen Haelfte des Rangs. Kein Verbesserungsvorschlag von dieser Seite."
+ },
+ "V8_takt_vor_nachtrag_installiert": {"frage": "Habt ihr den Takt vor dem Nachtrag installiert und den AttributeError gesehen?", "antwort": false, "grund": "Diese Sitzung hat den Takt zu keinem Zeitpunkt gestartet — weder vor noch nach dem Nachtrag."},
+ "V9_python311_erreichbar": {
+  "frage": "Ist ein python3.11 erreichbar?",
+  "antwort": false,
+  "messbefehl": "which python3.11 && python3.11 --version",
+  "URTEIL": "exit 1 (Kommando nicht gefunden)",
+  "ersatzpruefung": "PYTHONPATH=src .venv-render/bin/python -m pytest tests/test_pythonstand.py -q -> 189 passed (Python 3.14.x). Bestaetigt: auf 3.14 laeuft alles gruen, kann aber laut dem Test selbst die 3.11-spezifische PEP-701-Falle NICHT erkennen (dokumentierte blinde Stelle des Tests)."
+ },
+ "V10_zusage_zu_hoch": {
+  "antwort": "Ja, meldet: Auf dieser Maschine ist kein python3.11 vorhanden, und diese Sitzung hat keinen neuen Python-Interpreter installiert (waere eine Systemaenderung ausserhalb des Messauftrags). Die Zusage `>=3.11` in pyproject.toml kann von HIER aus also nicht durch einen echten 3.11-Lauf bestaetigt werden — nur durch den (eingeschraenkten) 3.14-Testlauf oben. Ob die Zusage `>=3.11` gesenkt werden soll, ist damit weiterhin nicht MESSBAR beantwortet, sondern bleibt offen."
+ },
+
+ "was_installiert_und_was_nicht": {
+  "installiert": "nichts (keine Dateien nach ~/.config/systemd/user kopiert, kein daemon-reload, kein enable, kein start)",
+  "warum_nicht_stillschweigend_uebersprungen": "Der Auftrag bittet ausdruecklich: 'Wenn euch etwas daran nicht passt, sagt es BEVOR ihr es installiert — ihr kennt die Maschine.' Genau das ist hier geschehen: zwei eigenstaendige, in dieser Antwort ausfuehrlich begruendete Gruende (Regelkonflikt mit 'nicht committen/pushen' und die entdeckte Nebenlaeufigkeit im Arbeitsverzeichnis) sprechen dagegen, den Takt JETZT zu starten."
+ },
+ "umgebung": {
+  "python_system": "3.14 (kein python3.11 erreichbar)",
+  "git_remote": "https://github.com/Imperigo/ai-imaging-in-a-box.git",
+  "hinweis": "Diese Ergebnisdatei selbst wird NICHT committet oder gepusht — das geschieht zentral, ausserhalb dieser Sitzung."
+ }
+}
