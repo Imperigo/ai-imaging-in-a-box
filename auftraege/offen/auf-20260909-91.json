@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260909-91",
+  "art": "frage",
+  "worker": "cloud",
+  "rang": 5,
+  "erstellt": "2026-09-09T21:00:00Z",
+  "params": {},
+  "beschreibung": "Eine Innenraumkamera geht heute schon durch euren Vertrag — belegt mit zwei Renderlaeufen. Was fehlt, ist die Antwort darauf, WER die Standpunkte ableitet: ihr vor der Konversion, oder wir aus einem neuen Feld.",
+  "anweisung": "=== WER LEITET DIE INNENSTANDPUNKTE AB? EINE VERTRAGSFRAGE, KEINE MESSUNG ===\n\nWAS WIR HEUTE GEMESSEN HABEN, UND ES IST GUTE NACHRICHT\n\nEine Innenraumkamera geht durch euren Vertrag, heute schon, ohne dass irgendwo\netwas geaendert werden muss. Gepruefte Kette:\n\n  IFC-Raeume (IfcSpace)\n    -> raumkamera.standpunkte  (unser Modul, rechnet Auge und Blickziel)\n    -> CameraSpec  {position, target, fov, up_axis}   EUER VERTRAG, unveraendert\n    -> kosmo_szene.spec_zu_kamera  -> auge / blick_auf / brennweite_mm\n    -> abholer.verarbeiter -> seams.glb_zu_multipass -> Blender\n\nBelegt mit zwei echten Renderlaeufen (tools/beweis/21_innenraum_produktivweg.py).\nIm Blender-Bericht steht kamera.brennweite_mm = 24.0 und kamera.weg =\n'vorgegeben' — die Zahlen haben den ganzen Weg ueberstanden.\n\nWir hatten das Gegenteil in unserem Plan stehen. Das war falsch, und wir sagen\nes hier ausdruecklich, weil es EURE Seite entlastet: Es fehlt kein Feld.\n\n\nWAS DAGEGEN NICHT GEHT, UND WARUM ES KEIN FEHLER IST\n\nNiemand rechnet die Standpunkte auf dem Renderweg aus. Der Grund ist baulich\nund nicht vergesslich:\n\n  Der Renderweg bekommt eine glb. Raeume sind IfcSpace. In der glb gibt es\n  keine IfcSpace mehr.\n\nUnsere eigene Uebersetzungstabelle sagt es woertlich\n(kosmo_szene.DURCHGEREICHT['geometrie']: «abholer: Pfad der glb»). Wer den\nStandpunkt haben will, muss ihn rechnen, SOLANGE er die IFC noch hat — also\nvor der Konversion.\n\n\nDIE FRAGE AN EUCH, UND ES IST GENAU EINE\n\nWer rechnet die Innenstandpunkte, und wann?\n\n  A  IHR, vor der Konversion. Ihr habt die IFC-Datei. Ihr schickt fertige\n     CameraSpecs, so wie heute fuer Aussenkameras auch. Kein Vertragsfeld noetig,\n     kein Code bei uns noetig — es laeuft bereits.\n     Was ihr dafuer braucht: die Rechenregel. Sie steht in\n     src/aiimaging/raumkamera.py und ist reine Arithmetik ohne Blender, ohne\n     GPU, ohne Gewichte. Wir portieren sie euch, wenn ihr sie in eurer Sprache\n     braucht — sagt uns nur, welche.\n\n  B  WIR, aus einem Raumblock in der Bestellung. Ihr lest die Raeume einmal aus\n     der IFC und legt sie als Block in die Szene (Name, Grundriss-Polygon in\n     Metern, z_unten_m, hoehe_m — genau das, was unser Raumleser ausgibt). Dann\n     leiten wir ab und ihr muesst die Regel nicht kennen.\n     Preis: EIN NEUES FELD IN EUREM VERTRAG. Darum fragen wir und bauen nicht.\n\n  C  WIR, aus der IFC. Ihr schickt ifc_path statt glb_path. Euer Vertrag laesst\n     das zu (contracts.LANE_FIELDS kennt beide), unser Renderweg nimmt es heute\n     NICHT entgegen. Preis: Arbeit bei uns, und die IFC-Datei muss dorthin, wo\n     gerendert wird.\n\nWIR HABEN KEINE PRAEFERENZ, DIE WIR EUCH AUFDRAENGEN WOLLTEN. A ist am\nbilligsten und laeuft heute; B ist am bequemsten fuer euch; C verschiebt die\nLast zu uns. Was zaehlt, ist dass es EINE Antwort gibt — solange keine da ist,\nrechnet niemand die Standpunkte, und das faellt keinem auf, weil ein Auftrag\nohne Innenkamera einfach keine Innenbilder hat.\n\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n\n- Nichts bauen, bevor die Antwort da ist. Wir haben heute schon einmal etwas\n  fuer nicht verdrahtet gehalten, das laengst durchging.\n- Keinen Feldnamen erfinden und ihn dann in zwei Vertraegen pflegen muessen.\n- B nicht «vorsichtshalber» dazunehmen, wenn A ohnehin laeuft. Zwei Wege fuer\n  dieselbe Frage laufen auseinander, sobald einer gepflegt wird — dieser Satz\n  hat uns in diesem Projekt schon dreimal Geld gekostet.\n\n\nZUM MITLESEN, FALLS IHR ES SELBST NACHRECHNEN WOLLT\n\nDer frontale Standpunkt an unserer Testgeometrie (Raum 'Raum-Nord',\nGrundriss [[0.3,0.3],[5.0,0.3],[5.0,2.5],[7.7,2.5],[7.7,4.7],[0.3,4.7]],\nz_unten_m 0.0, hoehe_m 2.7):\n\n  auge [4.000, 0.600, 1.350]   blick_auf [4.000, 4.700, 1.350]   24 mm\n  ueber Eck: auge [0.604, 0.604, 1.350]   blick_auf [4.394, 4.394, 1.350]\n\nAugenhoehe ist die halbe Raumhoehe ab z_unten_m, die Kamera ist waagrecht\n(auge[2] == blick_auf[2]), der Wandabstand ist in raumkamera.WANDABSTAND_INNEN_M\nfestgelegt.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_ifc.py --raeume",
+    "hinweis": "Nur zum Nachrechnen. Dieser Auftrag ist eine Vertragsfrage und verlangt keinen Lauf."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "Keine Messung, kein Renderlauf, keine GPU. Eine Antwort in Worten genuegt.",
+      "Nichts bauen, bevor die Antwort da ist.",
+      "Keinen Feldnamen erfinden, der dann in zwei Vertraegen gepflegt werden muss.",
+      "Keine Kunden-, Buero- oder Projektnamen in der Rueckgabe."
+    ]
+  },
+  "rueckgabe": [
+    "V1 A, B oder C — wer rechnet die Innenstandpunkte, und wann? Ein Buchstabe genuegt, eine Begruendung ist willkommen.",
+    "V2 Bei A: In welcher Sprache braucht ihr die Rechenregel, falls ihr sie nicht selbst schreiben wollt?",
+    "V3 Bei B: Wie soll das Feld heissen, und wo im Schema steht es? Wir bauen erst danach.",
+    "V4 Bei C: Kommt die IFC-Datei ueberhaupt dorthin, wo gerendert wird? Wenn nein, faellt C weg und ihr braucht V4 nicht zu beantworten.",
+    "V5 Wieviele Innenansichten pro Auftrag stellt ihr euch vor? Aussen ist die Vorgabe EINE Richtung und nicht zwoelf, weil zwoelf Standpunkte zwoelf Renderlaeufe sind. Innen haben wir bewusst KEINE Vorgabe gesetzt.",
+    "V6 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}
