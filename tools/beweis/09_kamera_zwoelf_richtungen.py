@@ -75,10 +75,10 @@ Länge), ``flaeche`` (Bildfläche), ``abstand`` in Metern, ``shift`` in Millimet
 nimmt das Bauwerk nur rund die halbe Bildhöhe ein. Das ist kein Widerspruch der
 Zeichnung, sondern die Definition in ``abstand_aus_bildwinkel``: Der vertikale Bedarf
 wird **vom Blickziel aus asymmetrisch** gemessen — die grössere der beiden Halbhöhen
-(hier: vom Ziel auf 4,7 m bis zur Traufe auf 15,2 m) wird verdoppelt und gegen den
-Deckungsgrad gesetzt. Die kleinere Hälfte unter dem Ziel bleibt leer. Bei einem 15 m
-hohen Bau sind das 15,2 / 20,9 · 0,70 ≈ 0,51 sichtbare Bildhöhe; genau das zeigt das
-Bild. Wer die Höhe füllen will, muss den Deckungsgrad anders definieren, nicht die
+(hier: vom Ziel 4,75 m über dem Fuss bis zur Traufe auf 15,25 m, also 10,5 m) wird
+verdoppelt und gegen den Deckungsgrad gesetzt; ``massgebend`` ist bei allen zwölf
+Kameras ``"hoehe"``. Die kleinere Hälfte unter dem Ziel bleibt leer. Damit sind
+15,25 / 21,0 · 0,70 ≈ 0,51 der Bildhöhe belegt; genau das zeigt das Bild. Wer die Höhe füllen will, muss den Deckungsgrad anders definieren, nicht die
 Kamera näher stellen — und diese Frage stellt der Beweis, er beantwortet sie nicht.
 
 ``14_uebersicht_…png`` — die zwölf Rahmen als Tafel 4 × 3 in der Ausgabereihenfolge
