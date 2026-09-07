@@ -41,8 +41,9 @@ steht im Dateinamen als Meter je Bildpunkt, unten links liegt ein 10-m-Balken).
     Orange       die vier frontalen Kameras (n, e, s, w)
     Teal         die acht diagonalen Kameras
     Kreis        der Standort (``auge``); die Linie mit Pfeil zeigt zum Blickziel
-                 (``blick_auf``); die zwei dünnen Strahlen sind die Kanten des
-                 horizontalen Bildwinkels — das Bauwerk liegt dazwischen.
+                 (``blick_auf``); der blasse Keil ist der horizontale Bildwinkel
+                 (54° bei 35 mm Kleinbild), in der Länge auf ein Drittel des Abstands
+                 gekürzt, im Öffnungswinkel echt.
 
 Man sieht: zwölf Kreise auf einem Ring um das Bauwerk, alle Pfeile zeigen auf dessen
 Mitte, die frontalen sind seitlich leicht versetzt, und die diagonalen sitzen nicht auf
@@ -119,7 +120,6 @@ FARBE_BAUTEIL = (70, 110, 160)
 FARBE_HUELLBOX = (40, 40, 40)
 FARBE_FRONTAL = (230, 120, 40)
 FARBE_DIAGONAL = (40, 150, 150)
-FARBE_STRAHL = (190, 190, 190)
 FARBE_MASSSTAB = (60, 60, 60)
 
 FARBE_RAHMEN = (255, 255, 255)
@@ -224,8 +224,9 @@ def _konvexe_huelle(punkte) -> list:
     return halb(p) + halb(list(reversed(p)))
 
 
-def _polygon_fuellen(px, breite, hoehe, ecken, farbe) -> None:
-    """Scanline-Füllung eines einfachen Polygons (hier: der konvexen Hülle)."""
+def _polygon_fuellen(px, breite, hoehe, ecken, farbe, anteil: float = 1.0) -> None:
+    """Scanline-Füllung eines einfachen Polygons. ``anteil`` < 1 mischt die Farbe mit
+    dem, was schon dasteht — der Ersatz für einen Alphakanal, den das PNG hier nicht hat."""
     if len(ecken) < 3:
         return
     y_min = max(0, int(min(y for _, y in ecken)))
@@ -240,7 +241,13 @@ def _polygon_fuellen(px, breite, hoehe, ecken, farbe) -> None:
                 schnitte.append(x0 + (ys - y0) * (x1 - x0) / (y1 - y0))
         schnitte.sort()
         for a, b in zip(schnitte[0::2], schnitte[1::2]):
-            _rechteck(px, breite, hoehe, a, y, b, y + 1, farbe)
+            if anteil >= 1.0:
+                _rechteck(px, breite, hoehe, a, y, b, y + 1, farbe)
+                continue
+            for x in range(max(0, int(round(a))), min(breite, int(round(b)))):
+                alt = px[y * breite + x]
+                px[y * breite + x] = tuple(int(round(alt[i] + (farbe[i] - alt[i]) * anteil))
+                                           for i in range(3))
 
 
 def _formatiere_zahl(x: float, stellen: int = 2) -> str:
@@ -309,9 +316,11 @@ def zeichne_grundriss(geometrie: dict, satz: dict, *, kante_px: int = GRUNDRISS_
         bx, by, _ = kam["blick_auf"]
         xs.append(ax); ys.append(ay)
         w = math.atan2(by - ay, bx - ax)
-        # Bis knapp hinter die ferne Ecke des Bauwerks — länger würden sich die 24
-        # Strahlen zu einem Stern kreuzen, der nichts mehr zeigt.
-        laenge = kam["abstand_m"] + 0.6 * math.hypot(satz["masse_m"][0], satz["masse_m"][1])
+        # Der Keil ist VERKÜRZT gezeichnet (ein Drittel des Abstands): Bei 54° Bildwinkel
+        # und 59 m Abstand ist das Sichtfeld am Bauwerk 60 m breit; zwölf solche Keile in
+        # voller Länge kreuzten sich zu einem Stern, der nichts mehr zeigt. Der
+        # Öffnungswinkel ist der echte.
+        laenge = kam["abstand_m"] * 0.33
         enden = [(ax + laenge * math.cos(w + s * hfov / 2.0),
                   ay + laenge * math.sin(w + s * hfov / 2.0)) for s in (+1, -1)]
         strahlen[kam["kuerzel"]] = enden
@@ -340,11 +349,13 @@ def zeichne_grundriss(geometrie: dict, satz: dict, *, kante_px: int = GRUNDRISS_
     x0, y0 = nach_px(bbox[0][0], bbox[1][1]); x1, y1 = nach_px(bbox[1][0], bbox[0][1])
     _rahmen(px, breite, hoehe, x0, y0, x1, y1, FARBE_HUELLBOX, 2)
 
-    # Strahlen des Bildwinkels unter die Kameras, damit die Pfeile obenauf liegen.
+    # Keile des Bildwinkels unter die Kameras, damit die Pfeile obenauf liegen.
     for kam in kams:
+        frontal = kameras.RICHTUNGEN[kam["kuerzel"]][1] == 0
         ax, ay = nach_px(kam["auge"][0], kam["auge"][1])
-        for ex, ey in strahlen[kam["kuerzel"]]:
-            _strecke(px, breite, hoehe, ax, ay, *nach_px(ex, ey), FARBE_STRAHL, 1.0)
+        keil = [(ax, ay)] + [nach_px(ex, ey) for ex, ey in strahlen[kam["kuerzel"]]]
+        _polygon_fuellen(px, breite, hoehe, keil,
+                         FARBE_FRONTAL if frontal else FARBE_DIAGONAL, anteil=0.18)
     for kam in kams:
         frontal = kameras.RICHTUNGEN[kam["kuerzel"]][1] == 0
         farbe = FARBE_FRONTAL if frontal else FARBE_DIAGONAL
