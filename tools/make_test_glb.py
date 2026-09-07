@@ -171,9 +171,30 @@ VORGABE_SZENE = (
 )
 
 
+#: Die Frage nach der Bedienung — und die Antwort darauf ist kein Dateiname.
+#:
+#: **Gefunden am 07.09.2026, indem genau das passierte:** `make_test_glb.py --help` schrieb
+#: eine glb namens ``--help``. Der Aufruf nahm das erste Argument als Ziel, ohne hinzusehen.
+#:
+#: *Ein Erzeuger, der auf eine Frage nach seiner Bedienung mit einer Datei antwortet, ist
+#: ein ungedrückter Schalter mit Nebenwirkung* — und die Datei landet unbemerkt im
+#: Arbeitsbaum, wo sie ein Stop-Haken als «nicht eingecheckte Arbeit» meldet.
+HILFE_SCHALTER = ("-h", "--help", "--hilfe")
+
+
 def main(argv=None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] in HILFE_SCHALTER:
+        print(__doc__.strip())
+        return 0
     ziel = Path(argv[0] if argv else "test.glb")
+    if str(ziel).startswith("-"):
+        # KEIN ZIEL, DAS WIE EIN SCHALTER AUSSIEHT. Ein Tippfehler in einem Schalternamen
+        # erzeugte sonst still eine Datei mit diesem Namen — derselbe Fehler wie oben,
+        # nur ohne die Gelegenheit, ihn zu bemerken.
+        print(f"'{ziel}' sieht aus wie ein Schalter, nicht wie ein Zielpfad. "
+              f"Bekannt sind {', '.join(HILFE_SCHALTER)}.", file=sys.stderr)
+        return 2
     ziel.parent.mkdir(parents=True, exist_ok=True)
     ziel.write_bytes(baue_glb(VORGABE_SZENE))
     print(f"{ziel} — {len(VORGABE_SZENE)} Knoten, {ziel.stat().st_size} Byte")

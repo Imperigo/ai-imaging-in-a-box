@@ -1261,6 +1261,32 @@ richtig.*
 dieselbe Frage neu. Verwandt mit **Fassungsabstand**: Dort ist die Maschine verschieden,
 hier der Satz über sie.
 
+**Brücke zwischen zwei Regeln** — Ein **Ergebnis** von der einen Seite zur anderen
+tragen, statt die **Regel** zu verdoppeln. Die zweite Seite lernt nichts dazu; sie bekommt,
+was die erste gemessen hat.
+*Warum das nicht dasselbe ist wie eine zweite Regel:* Eine kopierte Regel läuft auf beiden
+Seiten eigenständig und kann eigenständig danebenliegen — dann gibt es zwei Wahrheiten und
+keine Auskunft, welche gilt. Ein übertragenes Ergebnis hat genau eine Quelle, und die steht
+im Befund.
+*Im Projekt seit dem 08.09.2026:* `maske.bauwerksmaske(gelaende_zusatz=…)` nimmt die
+Geländenamen, die `glbbox` an der **Form** erkannt hat. Die Bildseite hat keine Geometrie
+und könnte die Formregel gar nicht rechnen. Der Befund sagt `gelaende_quelle: "name+form"`
+— und zwar erst, wenn ein übertragener Name wirklich **gegriffen** hat: *Eine
+Herkunftsangabe, die eine Absicht meldet statt einer Wirkung, ist keine.*
+*Und eine Brücke muss vor dem Bau vermessen werden.* Ob beide Ufer zusammenpassen, war hier
+nicht selbstverständlich — siehe **Ein Mangel, der benannt ist, ist kein Loch mehr**.
+
+**Ein Mangel, der benannt ist, ist kein Loch mehr** — Wo etwas nachweislich nicht geht,
+ist der Satz darüber das Ergebnis. Nicht als Entschuldigung, sondern als Auskunft: Wer ihn
+liest, sucht nicht mehr nach einer Lösung, die es nicht gibt, und hält den Zustand nicht
+für versehentlich.
+*Im Projekt am 08.09.2026:* Trägt die Materialtabelle Materialnamen, kann die Formregel der
+Boxseite der Bildseite **nicht** aushelfen — gemessen: Deckung null. Die Boxseite findet
+das Gelände, die Bildseite nicht; die Rahmung wäre richtig und die Maske trotzdem leer.
+*Ohne diesen Satz liest jemand `glbbox`, sieht dort die Zweitmeinung und hält beide Seiten
+für versorgt.* Er steht nur, wo er zutrifft — bei Objektnamen trägt die Brücke, und dort
+wäre er eine **Dauerwarnung**.
+
 **Zweitmeinung (gegen zweite Regel)** — Zwei Verfahren beurteilen dieselbe Frage. Der
 Unterschied entscheidet, ob daraus Hilfe wird oder Widerspruch.
 *Eine **zweite Regel** widerspricht der ersten.* Dann sind zwei im Spiel, und wenn sie
@@ -4252,6 +4278,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-08 | Ergaenzt: **Bruecke zwischen zwei Regeln** und **Ein Mangel, der benannt ist, ist kein Loch mehr**. Anlass ist die zweite Seite derselben Regel: Die Bildseite hat keine Geometrie und kann die Formregel nicht rechnen. Gemessen wurde vor dem Bau, ob beide Seiten dieselben Namen sehen — Materialnamen null Prozent, Objektnamen hundert, und bei geteiltem Gelaende brach Blenders Dublettensuffix die Deckung auf 25 % |
 | 2026-09-07 | Ergaenzt: **Zweitmeinung (gegen zweite Regel)** und **Gelaende an der Form**. Anlass ist der Owner-Entscheid, zur Bildarbeit zurueckzukehren, und der offenste Strang darin: Die Namensregel findet auf echtem Bestand nichts (2,32 % Schrumpfung), und ein weiteres Wort gibt es nachweislich nicht — `decke` waere noetig und ist unmoeglich. Die Form ist das zweite «von aussen», fuer das niemand gefragt werden muss |
 | 2026-09-06 | Ergaenzt: **Ein Satz, der nur auf einer Maschine wahr ist**. Anlass ist ein Befund der HomeStation: Der Kommentar «in dieser Umgebung gibt es keine GPU» ist dort falsch — gemessen wurde dann statt umgestellt, und OptiX ist 10-35 % langsamer und verschiebt Kantenpixel. Verhalten richtig, Kommentar falsch |
 | 2026-09-06 | Ergaenzt: **Zugestellt an die Adresse, nicht an den Adressaten** — die genaue Fassung nach zwei ungenauen. Die Bloecke lagen auf `main` des fremden Repos, beide Worker entwickeln auf Feature-Zweigen, die `main` nie mergen: 17 Dateien dort, 0 bei ihnen. Beide Diagnosen davor massen den falschen Gegenstand |

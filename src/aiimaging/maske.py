@@ -395,6 +395,38 @@ class MaskeError(ValueError):
 # Die Regel
 # ======================================================================================
 
+#: Blenders Eindeutigkeitssuffix: Ein zweites Objekt desselben Namens heisst ``…​.001``.
+#:
+#: **Warum die Brücke von der Boxseite es kennen muss.** Gemessen am 08.09.2026
+#: (`tools/studie_namensdeckung.py`): Besteht das Gelände aus vier Knoten desselben
+#: Namens, trägt die Materialtabelle vier Einträge — und ein Vergleich auf Gleichheit
+#: trifft nur den ersten. **Deckung 25 %.** Am echten Bestand sind es *zwanzig*
+#: ``IfcCovering_Sub-Division``-Knoten; dort wären es 5 %.
+#:
+#: *Das ist keine weiche Regel.* Verglichen wird gegen ein Suffix, das Blender selbst
+#: nach einer festen Regel anhängt — drei Ziffern nach einem Punkt, sonst nichts. Ein
+#: Wort mitten im Namen wäre etwas anderes, und genau davor warnt der Kommentar an
+#: :data:`UMFELD_KLASSEN`.
+BLENDER_DUBLETTE = re.compile(r"\.\d{3}$")
+
+
+def deckt_uebertragenen_namen(name: str, uebertragen) -> bool:
+    """Trifft dieser Tabelleneintrag einen der von aussen übergebenen Geländenamen?
+
+    Gleichheit — oder Gleichheit nach Abzug von Blenders Dublettensuffix
+    (:data:`BLENDER_DUBLETTE`).
+
+    *Warum nicht einfach «fängt an mit»:* Dann träfe ``Wand`` auch ``Wandschrank``, und
+    aus einer übertragenen Messung würde eine geratene Regel. Das Suffix ist die einzige
+    Abweichung, die eine bekannte Mechanik erzeugt — und nur sie wird zugelassen.
+    """
+    if not uebertragen:
+        return False
+    menge = {str(n) for n in uebertragen}
+    n = str(name)
+    return n in menge or BLENDER_DUBLETTE.sub("", n) in menge
+
+
 def ist_umfeld(name: str, klassen: Sequence[str] = UMFELD_KLASSEN) -> bool:
     """Gehört ``name`` zum **Umfeld** — also weder zum Bauwerk noch zum Gelände?
 
@@ -561,7 +593,8 @@ def tabelle_aus_report(report) -> list[dict]:
 
 def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
                   gelaende_muster: Sequence[str] = GELAENDE_MUSTER,
-                  gelaende_erwartet: bool = True) -> dict:
+                  gelaende_erwartet: bool = True,
+                  gelaende_zusatz: Sequence[str] = ()) -> dict:
     """Farben eines Material-ID-Passes + Tabelle → Bauwerksmaske. Ohne Dateizugriff.
 
     Args:
@@ -583,11 +616,25 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
             Boden gibt. Beides sieht gleich aus. Wer es weiss, sagt es — mit ``False``.
             Wer es nicht weiss, bekommt ``None`` und damit eine Frage statt einer
             Antwort.
+        gelaende_zusatz: Geländenamen, die **anderswo gemessen** wurden — in der Regel
+            ``glbbox.bauwerksbox(...)["gelaende_namen"]`` aus einem Lauf, in dem die
+            **Form** entschieden hat (:mod:`aiimaging.gelaendeform`).
+
+            *Keine zweite Regel, sondern ein übertragenes Ergebnis.* Die Namensregel
+            läuft unverändert zuerst; die Übertragung überstimmt nichts, sie ergänzt eine
+            Lücke. Verglichen wird mit :func:`deckt_uebertragenen_namen` — Gleichheit
+            oder Gleichheit nach Blenders Dublettensuffix.
+
+            **Und sie trägt nicht immer.** Gemessen am 08.09.2026
+            (`docs/NAMENSDECKUNG_2026-09-08.md`): Bei einer Tabelle aus *Materialnamen*
+            ist die Deckung **null** — die Boxseite liest Knotennamen, die Bildseite
+            Materialnamen, und die beiden treffen sich nie. Vorgabe ist darum die leere
+            Liste: Ohne ausdrückliche Übergabe ändert sich nichts.
 
     Returns:
         ``{maske, n_bildpunkte, n_bauwerk, n_gelaende, n_hintergrund, n_unbekannt,
-        anteil_bauwerk, gelaende_erkannt, gelaende_namen, bauwerk_namen, quelle, muster,
-        methode, warnungen}``
+        anteil_bauwerk, gelaende_erkannt, gelaende_namen, gelaende_quelle,
+        gelaende_von_aussen, bauwerk_namen, quelle, muster, methode, warnungen}``
 
         * ``maske`` — Liste von ``bool``, ``True`` wo das Bauwerk steht; ``None``, wenn
           die Geländeregel auf keinen Eintrag passte und Gelände erwartet war.
@@ -606,6 +653,12 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         * ``anteil_bauwerk`` — ``n_bauwerk / n_bildpunkte``. Zum Vergleich: Im Messstand
           waren es 17,02 %.
         * ``gelaende_erkannt`` — ob die Regel auf mindestens einen Tabelleneintrag passte.
+        * ``gelaende_quelle`` — ``"name"`` oder ``"name+form"``. **Eine Maske, der man
+          nicht ansieht, woher ihr Gelände stammt, ist die Maske, die den Boden mitzählte,
+          ohne es zu sagen.**
+        * ``gelaende_von_aussen`` — welche Einträge nur über :attr:`gelaende_zusatz`
+          hereinkamen. Leer, wenn keiner gegriffen hat — auch dann, wenn eine Liste
+          übergeben wurde.
         * ``gelaende_namen``/``bauwerk_namen`` — was die Regel wohin sortiert hat. Ohne
           diese beiden Listen wäre die Regel eine Blackbox, und eine Regel, deren Wirkung
           man nicht sieht, prüft niemand nach.
@@ -638,6 +691,7 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
     gelaende_namen: list[str] = []
     bauwerk_namen: list[str] = []
     umfeld_namen: list[str] = []
+    zusatz_getroffen: list[str] = []
     warnungen: list[str] = []
 
     for stelle, eintrag in enumerate(tabelle):
@@ -647,7 +701,21 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         # eigenen Liste, weil es etwas anderes IST — ein Baum ist kein Boden, und die
         # Namen im Befund sollen sagen, was ausgeschlossen wurde und warum.
         umfeld = ist_umfeld(name)
-        gelaende = umfeld or ist_gelaende(name, gelaende_muster)
+        # DIE BRUECKE VON DER BOXSEITE — kein neuer Massstab, ein uebertragenes Ergebnis.
+        #
+        # `glbbox.bauwerksbox` kann Gelaende an der GESTALT erkennen, wenn der Name es
+        # nicht traegt (`gelaendeform`, seit 07.09.2026). Hier gibt es keine Gestalt: Die
+        # Maske bekommt Bildpunkte und eine Farbtabelle, keine Geometrie. Was sie
+        # bekommen kann, ist das ERGEBNIS jener Messung.
+        #
+        # *Die Reihenfolge ist Absicht.* Erst die Namensregel, dann die Uebertragung —
+        # die Uebertragung ueberstimmt nichts, sie ergaenzt eine Luecke. Derselbe
+        # Unterschied wie auf der Boxseite: Zweitmeinung, nicht zweite Regel.
+        von_aussen = (not umfeld and not ist_gelaende(name, gelaende_muster)
+                      and deckt_uebertragenen_namen(name, gelaende_zusatz))
+        gelaende = umfeld or ist_gelaende(name, gelaende_muster) or von_aussen
+        if von_aussen:
+            zusatz_getroffen.append(name)
         if farbe == HINTERGRUND_FARBE:
             raise MaskeError(
                 f"material_id_tabelle[{stelle}] ('{name}') trägt die Hintergrundfarbe "
@@ -683,6 +751,30 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
 
     gelaende_erkannt = bool(gelaende_namen)
     lage = gelaende_befund(gelaende_namen, bauwerk_namen)
+
+    # DIE ZWEITMEINUNG DER BOXSEITE IST HIER NICHT ANWENDBAR — und das gehoert gesagt.
+    #
+    # Seit dem 07.09.2026 kann `glbbox.bauwerksbox` Gelaende an der GESTALT erkennen.
+    # Wer das liest, haelt beide Seiten fuer versorgt. Sie sind es nicht: Diese Tabelle
+    # traegt MATERIALNAMEN, die Formregel arbeitet auf KNOTENNAMEN, und gemessen am
+    # 08.09.2026 ist die Deckung zwischen beiden **null**
+    # (`docs/NAMENSDECKUNG_2026-09-08.md`).
+    #
+    # *Ein Mangel, der benannt ist, ist kein Loch mehr* — er ist eine Auskunft. Der Satz
+    # steht nur da, wo er zutrifft: kein Gelaende gefunden UND Materialnamen. Bei
+    # Objektnamen traegt die Bruecke, und dann waere er eine Dauerwarnung.
+    quellen = {str(e.get("quelle", "")).strip().lower() for e in tabelle}
+    if (not gelaende_erkannt and gelaende_erwartet and quellen == {"material"}
+            and not gelaende_zusatz):
+        warnungen.append(
+            "DIE FORMREGEL KANN HIER NICHT AUSHELFEN. Auf der Boxseite erkennt "
+            "`gelaendeform` Gelaende an der Gestalt, wenn der Name es nicht traegt — "
+            "diese Tabelle traegt aber MATERIALnamen, und die Formregel arbeitet auf "
+            "KNOTENnamen. Gemessen (08.09.2026): Deckung null. Die Boxseite kann das "
+            "Gelaende in dieser Szene also finden und die Bildseite nicht; die Rahmung "
+            "waere richtig und die Maske trotzdem leer. Wer den Maskenweg hier braucht, "
+            "laesst den Lauf Objektnamen vergeben (`quelle: objekt`, der Normalfall "
+            "ohne Materialzuordnung) — dann traegt die Uebertragung.")
 
     if umfeld_namen:
         # NICHT STILL AUSSCHLIESSEN. Der einzige ernsthafte Einwand gegen das
@@ -894,6 +986,11 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         "n_unbekannt": n_unbekannt,
         "anteil_bauwerk": n_bauwerk / n_bildpunkte,
         "gelaende_erkannt": gelaende_erkannt,
+        # WOHER DAS GELAENDE STAMMT. `"name+form"` erst dann, wenn ein uebertragener
+        # Name wirklich GEGRIFFEN hat — nicht schon, wenn eine Liste uebergeben wurde.
+        # *Eine Herkunftsangabe, die eine Absicht meldet statt einer Wirkung, ist keine.*
+        "gelaende_quelle": "name+form" if zusatz_getroffen else "name",
+        "gelaende_von_aussen": tuple(dict.fromkeys(zusatz_getroffen)),
         # WELCHE DER DREI LAGEN — und woran man das sieht. Bis zum 26.08.2026 bedeutete
         # `gelaende_erkannt: False` zweierlei: geprüft und nichts gefunden, oder gar
         # nichts zu prüfen gehabt. Auf Rückfrage der HomeStation (auf-47) getrennt.
@@ -917,6 +1014,7 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
 
 
 def bauwerksmaske_aus_lauf(material_id_png, report, *,
+                           gelaende_zusatz: Sequence[str] = (),
                            gelaende_muster: Sequence[str] = GELAENDE_MUSTER,
                            gelaende_erwartet: bool = True) -> dict:
     """Wie :func:`bauwerksmaske`, aber von den beiden Dateien eines Blender-Laufs aus.
@@ -950,6 +1048,7 @@ def bauwerksmaske_aus_lauf(material_id_png, report, *,
     ergebnis = bauwerksmaske(
         farben, tabelle,
         gelaende_muster=gelaende_muster, gelaende_erwartet=gelaende_erwartet,
+        gelaende_zusatz=gelaende_zusatz,
     )
     ergebnis["breite"] = breite
     ergebnis["hoehe"] = hoehe
@@ -957,7 +1056,8 @@ def bauwerksmaske_aus_lauf(material_id_png, report, *,
     return ergebnis
 
 
-def maske_aus_bericht(bericht: dict, *, gelaende_erwartet: bool = True) -> dict:
+def maske_aus_bericht(bericht: dict, *, gelaende_erwartet: bool = True,
+                      gelaende_zusatz: Sequence[str] = ()) -> dict:
     """Die Bauwerksmaske aus dem Material-ID-Pass — oder eine benannte Lücke.
 
     **Warum ein Fehlschlag hier den Lauf nicht aufhält.** Die Maske ist die *zusätzliche*
@@ -979,6 +1079,11 @@ def maske_aus_bericht(bericht: dict, *, gelaende_erwartet: bool = True) -> dict:
     und war von aussen nicht erreichbar. Dieselbe Naht-Sache wie bei Brennweite und
     Geländestand: einstellbar im Modul, nicht im Betrieb.
 
+    **``gelaende_zusatz`` wird aus demselben Grund gleich mit durchgereicht.** Ein
+    Schalter, der nur im Modul steht, ist keiner — und er wäre hier besonders wertlos:
+    Die Namen, die er aufnimmt, entstehen auf der Boxseite, also ausserhalb dieses
+    Moduls. *Ein Weg, der an einer Stelle endet, an der niemand steht, ist kein Weg.*
+
     Returns:
         ``{maske, gemessen, grund, ...}``. ``maske`` ist ``None``, wenn sie sich nicht
         bauen liess — dann bleibt der Maskenweg in der QA ungemessen.
@@ -991,7 +1096,8 @@ def maske_aus_bericht(bericht: dict, *, gelaende_erwartet: bool = True) -> dict:
             "Der Lauf geht weiter; die Frage bleibt UNGEMESSEN.")}
     try:
         gebaut = bauwerksmaske_aus_lauf(
-            png, bericht, gelaende_erwartet=gelaende_erwartet)
+            png, bericht, gelaende_erwartet=gelaende_erwartet,
+            gelaende_zusatz=gelaende_zusatz)
     except Exception as fehler:        # noqa: BLE001 — siehe Docstring
         return {"maske": None, "gemessen": False, "grund": (
             f"Bauwerksmaske nicht baubar: {type(fehler).__name__}: {fehler}")}

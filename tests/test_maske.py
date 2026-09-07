@@ -874,3 +874,121 @@ def test_toposolid_gilt_als_gelaende_umgebung_und_gras_ausdruecklich_nicht():
     assert m.ist_gelaende("IfcCovering_Toposolid_1") is True
     assert m.ist_gelaende("IfcCovering_Umgebung-Gras_1") is False
     assert m.ist_gelaende("Sub-Division") is False
+
+
+# ---------------------------------------------------------------------------------
+# DIE BRUECKE VON DER BOXSEITE (08.09.2026)
+#
+# Seit dem 07.09. erkennt `glbbox.bauwerksbox` Gelaende an der GESTALT, wenn der Name es
+# nicht traegt. Die Bildseite kann das nicht: Sie bekommt Bildpunkte und eine Farbtabelle,
+# keine Geometrie. Was sie bekommen kann, ist das ERGEBNIS jener Messung.
+#
+# Ob das traegt, ist gemessen (`tools/studie_namensdeckung.py`, 08.09.2026):
+#   Materialnamen  -> Deckung 0 %   (die Bruecke traegt nicht)
+#   Objektnamen    -> Deckung 100 %
+#   geteiltes Gelaende mit Blenders Dublettensuffix -> 25 % ohne Suffixregel
+# ---------------------------------------------------------------------------------
+
+def _tab_objekt():
+    return [
+        {"name": "IfcCovering_Sub-Division:1", "farbe_srgb_8bit": [10, 20, 30],
+         "quelle": "objekt"},
+        {"name": "IfcCovering_Sub-Division:1.001", "farbe_srgb_8bit": [40, 50, 60],
+         "quelle": "objekt"},
+        {"name": "IfcWall_Aussenwand:12", "farbe_srgb_8bit": [70, 80, 90],
+         "quelle": "objekt"},
+    ]
+
+
+_FARBEN = [(10, 20, 30)] * 4 + [(40, 50, 60)] * 4 + [(70, 80, 90)] * 2
+
+
+def test_ohne_uebertragung_steckt_der_boden_als_bauwerk_in_der_maske():
+    """**Der Ausgangszustand, und er ist der teure.** Kein Name trägt ein Geländewort,
+    also zählt alles als Bauwerk — auf einer Bodenszene erreichte weisses Rauschen so den
+    Score 0,72."""
+    aus = m.bauwerksmaske(_FARBEN, _tab_objekt())
+    assert aus["gelaende_erkannt"] is False
+    assert aus["anteil_bauwerk"] == 1.0
+    assert aus["gelaende_quelle"] == "name"
+
+
+def test_die_uebertragung_holt_das_gelaende_herein():
+    """Der gemessene Formbefund der Boxseite wirkt hier — **ohne dass die Bildseite etwas
+    über Formen wissen müsste.**"""
+    aus = m.bauwerksmaske(_FARBEN, _tab_objekt(),
+                              gelaende_zusatz=["IfcCovering_Sub-Division:1"])
+    assert aus["gelaende_quelle"] == "name+form"
+    assert aus["anteil_bauwerk"] == pytest.approx(0.2)
+
+
+def test_blenders_dublettensuffix_wird_mitgefasst():
+    """**Der Befund, der den Bau geändert hat.**
+
+    Gemessen am 08.09.2026: Besteht das Gelände aus vier Knoten desselben Namens, trägt
+    die Tabelle vier Einträge — und ein Vergleich auf Gleichheit trifft nur den ersten.
+    Deckung 25 %. *Am echten Bestand sind es zwanzig `Sub-Division`-Knoten; dort wären es
+    fünf Prozent.*
+    """
+    aus = m.bauwerksmaske(_FARBEN, _tab_objekt(),
+                              gelaende_zusatz=["IfcCovering_Sub-Division:1"])
+    assert set(aus["gelaende_von_aussen"]) == {
+        "IfcCovering_Sub-Division:1", "IfcCovering_Sub-Division:1.001"}
+
+
+def test_die_uebertragung_ueberstimmt_die_namensregel_nicht():
+    """*Zweitmeinung, nicht zweite Regel.* Was die Namensregel als Bauwerk führt, bleibt
+    Bauwerk — es sei denn, es steht ausdrücklich in der übergebenen Liste."""
+    aus = m.bauwerksmaske(_FARBEN, _tab_objekt(),
+                              gelaende_zusatz=["IfcCovering_Sub-Division:1"])
+    assert "IfcWall_Aussenwand:12" in aus["bauwerk_namen"]
+    assert "IfcWall_Aussenwand:12" not in aus["gelaende_von_aussen"]
+
+
+def test_eine_uebergebene_liste_die_nicht_greift_aendert_die_herkunft_nicht():
+    """*Eine Herkunftsangabe, die eine Absicht meldet statt einer Wirkung, ist keine.*"""
+    aus = m.bauwerksmaske(_FARBEN, _tab_objekt(), gelaende_zusatz=["Gibt-es-nicht"])
+    assert aus["gelaende_quelle"] == "name"
+    assert aus["gelaende_von_aussen"] == ()
+
+
+def test_ein_teiltreffer_im_namen_greift_NICHT():
+    """Sonst träfe `Wand` auch `Wandschrank` — und aus einer übertragenen Messung würde
+    eine geratene Regel. Nur Blenders Suffix ist zugelassen, weil es eine bekannte
+    Mechanik ist."""
+    assert m.deckt_uebertragenen_namen("IfcCovering_Sub-Division:12", 
+                                           ["IfcCovering_Sub-Division:1"]) is False
+    assert m.deckt_uebertragenen_namen("IfcCovering_Sub-Division:1.001",
+                                           ["IfcCovering_Sub-Division:1"]) is True
+
+
+def test_bei_materialnamen_sagt_die_maske_dass_die_form_nicht_aushelfen_kann():
+    """**Ein Mangel, der benannt ist, ist kein Loch mehr.**
+
+    Wer `glbbox` liest und dort die Zweitmeinung sieht, hält die Bildseite für
+    mitversorgt. Sie ist es nicht: Materialnamen und Knotennamen treffen sich nie
+    (gemessen: Deckung null).
+    """
+    tab = [{"name": "Beton", "farbe_srgb_8bit": [10, 20, 30], "quelle": "material"},
+           {"name": "Glas", "farbe_srgb_8bit": [40, 50, 60], "quelle": "material"}]
+    aus = m.bauwerksmaske([(10, 20, 30)] * 3 + [(40, 50, 60)] * 3, tab)
+    assert any("FORMREGEL KANN HIER NICHT AUSHELFEN" in w for w in aus["warnungen"])
+    assert any("Deckung null" in w for w in aus["warnungen"])
+
+
+def test_bei_objektnamen_steht_dieser_satz_NICHT_da():
+    """Die Gegenprobe — sonst wäre er eine Dauerwarnung, und die wird nicht gelesen."""
+    aus = m.bauwerksmaske(_FARBEN, _tab_objekt())
+    assert not any("FORMREGEL KANN HIER NICHT" in w for w in aus["warnungen"])
+
+
+def test_der_schalter_kommt_auch_am_lauf_an():
+    """**Ein Schalter, der nur im Modul steht, ist keiner** — und hier besonders: Die
+    Namen entstehen auf der Boxseite, also ausserhalb dieses Moduls.
+
+    Genau dieser Fehler ist am 24.08.2026 mit `gelaende_erwartet` passiert.
+    """
+    import inspect
+    for name in ("bauwerksmaske_aus_lauf", "maske_aus_bericht"):
+        assert "gelaende_zusatz" in inspect.signature(
+            getattr(m, name)).parameters, f"{name} reicht den Schalter nicht durch"

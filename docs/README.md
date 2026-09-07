@@ -44,6 +44,7 @@ Vertiefungsarbeit, nicht ihr Arbeitsprotokoll.
 | [`RANDKANTE_2026-08-22.md`](RANDKANTE_2026-08-22.md) | Die fehlende Randkante ist ein echter Mangel — und das Mass lässt sich schärfen. |
 | [`NACHBARGEBAEUDE_2026-09-02.md`](NACHBARGEBAEUDE_2026-09-02.md) | Ein geerbter Vorbehalt, nachgerechnet: Er gilt für den **Schätzer**, nicht für die Szene. |
 | [`GELAENDEFORM_2026-09-07.md`](GELAENDEFORM_2026-09-07.md) | Gelände an der **Form** erkennen, wenn der Name es nicht trägt — und was die Schwellen in beiden Fehlerrichtungen kosten. |
+| [`NAMENSDECKUNG_2026-09-08.md`](NAMENSDECKUNG_2026-09-08.md) | Sehen Box- und Bildseite dieselben Namen? Materialnamen **0 %**, Objektnamen 100 % — und Blenders Dublettensuffix bricht es auf 25 %. |
 
 ### Die Paarschwellen
 

@@ -453,3 +453,27 @@ def test_eine_eigene_regel_schaltet_die_zweitmeinung_ab(tmp_path):
                              regel=lambda name: False)
     assert aus["entschieden_durch"] == "keine"
     assert aus["form_befund"] is None
+
+
+def test_der_erzeuger_beantwortet_help_und_schreibt_keine_datei(tmp_path, capsys, monkeypatch):
+    """**Gefunden, indem es passierte** (07.09.2026): `make_test_glb.py --help` schrieb
+    eine glb namens `--help` in den Arbeitsbaum, wo sie ein Stop-Haken als nicht
+    eingecheckte Arbeit meldete.
+
+    *Ein Erzeuger, der auf eine Frage nach seiner Bedienung mit einer Datei antwortet, ist
+    ein ungedrückter Schalter mit Nebenwirkung.*
+    """
+    import importlib.util
+    from pathlib import Path as _P
+    spec = importlib.util.spec_from_file_location(
+        "mk_glb_hilfe", _P(__file__).resolve().parents[1] / "tools" / "make_test_glb.py")
+    mk = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mk)
+
+    monkeypatch.chdir(tmp_path)
+    assert mk.main(["--help"]) == 0
+    assert "glb" in capsys.readouterr().out
+    assert list(tmp_path.iterdir()) == [], "eine Hilfe schreibt keine Datei"
+
+    assert mk.main(["--unbekannt"]) == 2, "ein Schalter ist kein Zielpfad"
+    assert list(tmp_path.iterdir()) == []
