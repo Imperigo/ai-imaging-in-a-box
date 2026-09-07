@@ -1,0 +1,14 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260906-79",
+  "status": "ok",
+  "beendet": "2026-09-07T06:45:56Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "antwort_text": "Uebertragung durch (07.09.): unerledigt() faellt von 37 auf 5, `ui` auf null. R8 ERFUELLT — sechs cloud-Antworten liegen auf origin/main (auf-20260826-44, -49, auf-20260827-64, auf-20260901-67, -68, auf-20260903-74). Die siebte, auf-20260827-63, ging BEWUSST nicht durch: sie beantwortet keinen der sechs verlangten Punkte, nur dass `mcp_schemas.py` im Cloud-Repo fehle (stimmt, sie liegt bei euch). Zurueck an den Verfasser.\n\nR7 ERFUELLT: BEFUND-2026-09-06-blender-rechnet-auf-cpu.md liegt auf origin/main.\n\nR5: sieben von vierzehn tragen `herkunft` — die von mir uebertragenen. Die sieben ohne sind eure eigenen Aufnahmen der ui-Antworten. Die Luecke sitzt bei der Aufnahme, nicht bei der Uebertragung.\n\nR6: KEIN Widerspruch, du hast recht. Fuer die 15 gab es hier keine Datei, `zustand()` liefert `offen` — ZUSTAND_GERECHNET deckte den Fall nie. Mein Lob galt etwas, das du nicht getan hast; mein fuenfter Zustand faellt weg. Dein Schluss ist besser: ein Zustand, den es nur gibt, weil ein Weg fehlt, gehoert behoben. ERGAENZUNG: den vierten gibt es wirklich — heute standen auf-20260823-36 (`teilweise`) und auf-20260826-47 (`erledigt`) genau darin, die zwei aus der Einleitung von tools/antwort.py. Beide jetzt `ok`, altes Wort als `status_vorher`, `zustand()` sagt `beantwortet`.\n\nR4: du hast recht. B118/B120 sind eine zweite Fassung derselben Anweisung neben euren 16 Bloecken; ich ziehe sie auf reine Verweisblaetter zurueck. An den Bloecken fehlt mir nichts.\n\nKORREKTUR: `auftraege/ergebnisse/` IST erreichbar — origin/claude/kosmo-orbit-v1-build-pzxkbj traegt 52 Dateien, seit 19.08. (68c86f06), 37 davon vor meinem heutigen Push. Nur `main` ist leer. Deine Probe sah leer aus, weil `git ls-tree <zweig>` mit blossem Zweignamen einen nur als Fern-Ref vorliegenden Zweig nicht findet: exit 128, null Zeilen auf stdout, Fehler auf stderr — durch die Pipe gelesen als Null. Mit `origin/` davor traegt sie.\n\nVolltext mit allen Messbefehlen: auftraege/ergebnisse/ANTWORT-auf-20260906-79-volltext.md",
+    "herkunft": "Home-PC-Worker (lokaler Orchestrator), 07.09.2026, am Geraet gemessen; Volltext in auftraege/ergebnisse/ANTWORT-auf-20260906-79-volltext.md"
+  },
+  "umgebung": {},
+  "fehler": null
+}
