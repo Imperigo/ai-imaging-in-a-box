@@ -63,18 +63,20 @@ Knotens (dieselben Farben wie in Beweis 05):
 Die Kacheln selbst:
 
     IFC          Grundriss (Nord oben, massstäblich) aus dem, was der Knoten aus der IFC
-                 zurückgab: sandfarben die Grundfläche der gemeldeten Hüllbox, türkis
-                 die Grundrisspolygone der Räume (``raeume``, über ``seams.ifc_raeume``
-                 durch die Prozessgrenze gelesen — das L-förmige Polygon ist ein echtes
-                 Polygon, keine Box). Der Rand des Bauwerks ist NICHT gezeichnet: Der
-                 Knoten liefert von der IFC nur Hüllbox, Räume und Zahlen; Wände sieht
-                 erst die glb.
+                 zurückgab: sandfarben die Grundfläche der gemeldeten Hüllbox, in zwei
+                 Türkistönen mit dunklem Umriss die Grundrisspolygone der Räume
+                 (``raeume``, über ``seams.ifc_raeume`` durch die Prozessgrenze gelesen
+                 — das L-förmige Polygon ist ein echtes Polygon, keine Box; der zweite
+                 Raum füllt seine Kerbe). Der Rand des Bauwerks ist NICHT gezeichnet:
+                 Der Knoten liefert von der IFC nur Hüllbox, Räume und Zahlen; Wände
+                 sieht erst die glb.
     glb          Derselbe Grundriss, derselbe Massstab, aus den Knotenboxen der
                  erzeugten glb (``glbbox.knotenboxen`` → ``nach_welt``): Gelände braun,
-                 Bauwerksknoten stahlblau, brauner Rahmen = Szenenbox, schwarzer Rahmen =
-                 Bauwerksbox (``glbbox.bauwerksbox``). Man sieht die vier Wände als
-                 Ring — und dass die Räume der IFC-Kachel INNERHALB dieses Rings liegen:
-                 zwei Wege durch die Prozessgrenze, ein Bezugssystem.
+                 Bauwerksknoten stahlblau mit dunklem Umriss (Bodenplatte und vier
+                 Wände), brauner Rahmen = Szenenbox, schwarzer Rahmen = Bauwerksbox
+                 (``glbbox.bauwerksbox``). Man sieht die vier Wände als Ring — und dass
+                 die Räume der IFC-Kachel INNERHALB dieses Rings liegen: zwei Wege durch
+                 die Prozessgrenze, ein Bezugssystem.
     multipass    Der Beauty-Pass des Blender-Laufs, verkleinert; darunter zwei kleine
                  Kacheln: die normalisierte Tiefe (nah = hell) und die Material-ID
                  (Kennfarben). Alle drei tragen dieselbe Silhouette — eine Kamera, ein
@@ -220,15 +222,16 @@ FARBE_DAUER = (40, 40, 40)
 
 FARBE_GELAENDE = (139, 101, 60)
 FARBE_BAUWERK = (70, 110, 160)
-FARBE_RAUM = (60, 160, 160)
+FARBE_RAEUME = ((60, 160, 160), (110, 190, 185))   # reihum, damit Nachbarn sich trennen
+FARBE_UMRISS = (30, 30, 30)
 FARBE_PLAN_GRUND = (245, 245, 245)
 FARBE_SAND = (222, 205, 165)
 FARBE_SZENENBOX = (110, 75, 40)
 FARBE_BAUWERKSBOX = (20, 20, 20)
 
-KACHEL = 192
+KACHEL = 240                             # 20 m Szene → 0,3 m Wand sind drei Pixel
 KOPF = 14
-SUB = 84                                 # Nebenkachel unter dem Multipass
+SUB = 108                                # Nebenkachel unter dem Multipass
 SUB_FUGE = KACHEL - 2 * SUB
 FUGE_X = 56
 RAND = 28
@@ -331,6 +334,32 @@ def _polygon(px, breite, hoehe, punkte, farbe) -> None:
             _rechteck(px, breite, hoehe, a, y, b, y + 1, farbe)
 
 
+def _strich(px, breite, hoehe, x0, y0, x1, y1, farbe) -> None:
+    """Ein Pixel breite Strecke in beliebiger Richtung (Bresenham) — für Polygonumrisse."""
+    x0, y0, x1, y1 = int(round(x0)), int(round(y0)), int(round(x1)), int(round(y1))
+    dx, dy = abs(x1 - x0), -abs(y1 - y0)
+    sx, sy = (1 if x0 < x1 else -1), (1 if y0 < y1 else -1)
+    fehler = dx + dy
+    while True:
+        if 0 <= x0 < breite and 0 <= y0 < hoehe:
+            px[y0 * breite + x0] = farbe
+        if x0 == x1 and y0 == y1:
+            break
+        e2 = 2 * fehler
+        if e2 >= dy:
+            fehler += dy
+            x0 += sx
+        if e2 <= dx:
+            fehler += dx
+            y0 += sy
+
+
+def _umriss(px, breite, hoehe, punkte, farbe) -> None:
+    for i, (xa, ya) in enumerate(punkte):
+        xb, yb = punkte[(i + 1) % len(punkte)]
+        _strich(px, breite, hoehe, xa, ya, xb, yb, farbe)
+
+
 def _zaehler(px, breite, hoehe, x, y, n: int) -> None:
     for i in range(n):
         x0 = x + i * (ZAEHLER_KANTE + ZAEHLER_FUGE)
@@ -387,7 +416,9 @@ def kachel_ifc(geometrie: dict) -> tuple[list, dict]:
         ring = eintrag["raum"].get("grundriss_m")
         if not ring:
             continue
-        _polygon(px, KACHEL, KACHEL, [plan.p(x, y) for x, y in ring], FARBE_RAUM)
+        ecken = [plan.p(x, y) for x, y in ring]
+        _polygon(px, KACHEL, KACHEL, ecken, FARBE_RAEUME[n_gezeichnet % len(FARBE_RAEUME)])
+        _umriss(px, KACHEL, KACHEL, ecken, FARBE_UMRISS)
         n_gezeichnet += 1
     return px, {"n_raeume": len(raeume), "n_gezeichnet": n_gezeichnet,
                 "n_elements": geometrie.get("n_elements"),
@@ -406,7 +437,13 @@ def kachel_glb(geometrie: dict, box: dict) -> tuple[list, dict]:
     def flaeche(e):
         return (e[2][0] - e[1][0]) * (e[2][1] - e[1][1])
     for name, lo, hi in sorted(welt, key=lambda e: (not ist_gelaende(e[0]), -flaeche(e))):
-        plan.rechteck(px, lo, hi, FARBE_GELAENDE if ist_gelaende(name) else FARBE_BAUWERK)
+        if ist_gelaende(name):
+            plan.rechteck(px, lo, hi, FARBE_GELAENDE)
+        else:
+            # Mit Umriss: Bodenplatte und Wände teilen sich die Grundfläche, und ohne
+            # Kante wäre der Wandring in der Platte unsichtbar.
+            plan.rechteck(px, lo, hi, FARBE_BAUWERK)
+            plan.rechteck(px, lo, hi, None, rahmen=FARBE_UMRISS)
     plan.rechteck(px, *box["bbox_szene"], None, rahmen=FARBE_SZENENBOX, dicke=2)
     if box["bbox_bauwerk"] is not None:
         plan.rechteck(px, *box["bbox_bauwerk"], None, rahmen=FARBE_BAUWERKSBOX, dicke=2)
