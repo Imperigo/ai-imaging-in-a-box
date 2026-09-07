@@ -1,104 +1,114 @@
 {
- "schema": "aiimaging.homeworker-ergebnis/v1",
- "auftrag_id": "auf-20260826-47",
- "status": "erledigt",
- "beendet": "2026-08-26",
- "gerechnet_von": "HomeStation",
- "warum_hier": "M2 und M3 waren ohne Karte zu beantworten. M1 ist jetzt nachgeholt — zwei Laeufe, einer mit --kein-gelaende und einer ohne, damit der Unterschied gemessen und nicht behauptet ist.",
- "die_frage": "Traegt der Bericht nach dem Namensbefund jetzt rho_maske?",
- "M3_welcher_konverter": {
-  "antwort": "WEDER NOCH — die glb kommt nicht aus ifc_to_glb_runner",
-  "womit": "eigenes Blender-Skript, bpy.ops.export_scene.gltf, export_yup=True",
-  "folge": "Euer Namensbefund vom 26.08. frueh betrifft diesen Fall NICHT. Der Knotenname ueberlebt hier, weil Blender ihn direkt aus dem Objektnamen nimmt.",
-  "beleg": "511 von 511 Knoten benannt, Beispiele: DECKE_01__t000, STUETZE_HOLZ_G05_P07, FASS_N_BRUEST_03"
- },
- "M2_reines_gebaeude_oder_gelaende": {
-  "antwort": "REINES GEBAEUDE — kein Gelaende in der Szene",
-  "beleg": "11 Baustoffe: Beton_Decke, Beton_Kern, Beton_Querwand, Beton_Erdbebenwand, Beton_Treppe, Holz_Stuetze, Trennwand_Leichtbau, Terrassenbelag, Metall_Fassade, Metall_Bruestung, Glas_Fassade. Kein einziger traegt Gelaende, Terrain, Boden.",
-  "folge": "Damit ist unser Fall genau die dritte Zeile eurer Tabelle: ohne Gelaende, gelaende_erwartet True → Maske None. --kein-gelaende ist der Weg, und M1 wird ohne ihn nicht besser.",
-  "was_ihr_daraus_schliessen_koennt": "Fuer diesen Fall ist bei euch nichts mehr zu tun. Die Maske wurde zu Recht verworfen; wir haben den Schalter nicht gesetzt."
- },
- "M1_lauf_mit_neuer_glb": {
-  "antwort": "JA, rho_maske entsteht — aber NICHT wegen der neuen glb, sondern wegen --kein-gelaende",
-  "aufbau": "Dieselbe frisch konvertierte glb (511 Knoten, alle benannt), dieselbe Szene, zwei Laeufe. Einziger Unterschied: der Schalter.",
-  "gemessen": {
-   "mit_kein_gelaende": {
-    "rho_maske_gerichtet": 0.6286,
-    "rho_roh": -0.6286,
-    "n_maske": 1239196,
-    "anteil_maske": 0.8068,
-    "gelaende_erkannt": false,
-    "gelaende_namen": [],
-    "spearman": -0.7325,
-    "geom_iou": 0.7031,
-    "geometrie_score": 0.7177
-   },
-   "ohne": {
-    "rho_maske": null,
-    "gelaende_erkannt": false,
-    "gelaende_namen": [],
-    "spearman": -0.6753,
-    "geom_iou": 0.6855,
-    "geometrie_score": 0.6804
-   }
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260826-47",
+  "status": "ok",
+  "beendet": "2026-08-26",
+  "gerechnet_von": "HomeStation",
+  "warum_hier": "M2 und M3 waren ohne Karte zu beantworten. M1 ist jetzt nachgeholt — zwei Laeufe, einer mit --kein-gelaende und einer ohne, damit der Unterschied gemessen und nicht behauptet ist.",
+  "die_frage": "Traegt der Bericht nach dem Namensbefund jetzt rho_maske?",
+  "M3_welcher_konverter": {
+    "antwort": "WEDER NOCH — die glb kommt nicht aus ifc_to_glb_runner",
+    "womit": "eigenes Blender-Skript, bpy.ops.export_scene.gltf, export_yup=True",
+    "folge": "Euer Namensbefund vom 26.08. frueh betrifft diesen Fall NICHT. Der Knotenname ueberlebt hier, weil Blender ihn direkt aus dem Objektnamen nimmt.",
+    "beleg": "511 von 511 Knoten benannt, Beispiele: DECKE_01__t000, STUETZE_HOLZ_G05_P07, FASS_N_BRUEST_03"
   },
-  "der_punkt": "gelaende_erkannt ist in BEIDEN Laeufen False. Trotzdem entsteht rho_maske nur mit dem Schalter. Damit ist eure Erklaerung vom 26.08. Punkt fuer Punkt bestaetigt: Die Maske wird gebaut und dann verworfen, weil ein Nullbefund der Geraeteregel nicht von einem Fehlgriff der Regel zu unterscheiden ist. Der Schalter ist die ERKLAERUNG, die den Nullbefund entscheidbar macht — nicht die Knotennamen und nicht die Konvertierung.",
-  "folge_fuer_euch": "Wenn das so gewollt ist, ist hier nichts zu bauen — dann fehlt nur ein Satz in der Ausgabe, der sagt WARUM rho_maske fehlt. Heute steht dort nur 'None', und das liest sich wie ein Fehler statt wie eine bewusste Enthaltung.",
-  "polaritaet": "Die Warnung im Bericht ist richtig und war fuer uns hilfreich: rho ist negativ, weil der Schaetzer Disparitaet liefert (Polaritaet -1). Gewertet wird -1 * rho = +0.6286."
- },
- "unsere_vier_laeufe_erklaert": {
-  "eure_diagnose": "Die Maske wird berechnet und dann verworfen, nicht «konnte nicht».",
-  "unser_fall": "ohne Gelaende, gelaende_erwartet=True, --kein-gelaende NICHT gesetzt",
-  "warum_wir_es_nicht_sahen": "Der Maskenbefund meldete anteil_bauwerk 0.8068 — wir haben daraus geschlossen, die Maske sei gebaut UND behalten worden. Sie war gebaut und verworfen. Der Unterschied stand nicht im Bericht.",
-  "was_geholfen_haette": "Genau die Zeile, die ihr jetzt eingebaut habt: der Grund mit der Folge UND dem Schalter. Wir haben von aussen nicht unterscheiden koennen, ob maske None oder breite None war."
- },
- "zu_eurem_punkt_4": {
-  "gelesen": "Geometrie-QA-Zahlen aus eurer IFC-Kette von vor dem 26.08. sind nicht vergleichbar.",
-  "betrifft_uns_nicht": "Unsere Zahlen stammen nicht aus eurer IFC-Kette, sondern aus einem eigenen Blender-Bau. Sie sind untereinander vergleichbar, aber mit euren nicht gemeinsam auswertbar.",
-  "unser_stand": "26.08.2026, eigenes Bauskript, glb mit export_yup=True"
- },
- "angebot": {
-  "was": "Eine ZWEITE SZENE fuer eure Schwellenmessungen. In fast jeder eurer Ergebnisdateien steht der Vorbehalt «eine Szene, ein Backbone, ein Prompt».",
-  "womit": "Ein Wohnhaus aus einer Handskizze: 511 Bauteile, 11 Geschosse, Kern, 132 Stuetzen, gegliederte Vorhangfassade, Terrasse. Huellbox 30 x 30 x 35 m. Liegt als valides IFC4 vor (0 Fehler bei express_rules=True) und als glb.",
-  "warum_es_taugt": "Es ist KEIN glatter Quader. Es hat Auskragungen, ein Stuetzenraster, eine gegliederte Huelle und einen Kern — also genau die Merkmale, an denen sich eine Geometriepruefung bewaehren muss.",
-  "gemessen_daran": "Geometriewert 0.6804 bei Schwelle 0.65, mit 10 von 10 Bauinvarianten."
- },
- "was_offen_bleibt": [
-  "Ob der Schalter im Regelbetrieb zumutbar ist: Er verlangt, dass der Besteller VORHER weiss, dass kein Gelaende in der Szene ist. Bei einer fremden glb weiss er das nicht.",
-  "Vorschlag zur Pruefung, nicht als Forderung: Die Geraeteregel koennte ihren Nullbefund selbst belegen, indem sie meldet, WELCHE Baustoffe sie geprueft hat. Findet sie 11 Baustoffe und keiner heisst nach Gelaende, ist das ein anderer Befund als 'keine Baustofftabelle gefunden'.",
-  "Die Sonnenangabe des Auftrags wird weiterhin nicht bedient (fester Sonnenstand im Runner) — steht schon in eurer Vertragsliste, hier nur als Bestaetigung aus dem Lauf."
- ],
- "nachtrag_renderaufrufe": {
-  "worauf": "Euer Befund 0fa49af — ohne Maske faellt die Drei-Startwert-Vorgabe still auf einen zurueck.",
-  "antwort": "BESTAETIGT, und zwar am selben Laufpaar. Der zweite Beleg, um den ihr gebeten habt, ist da.",
-  "gemessen": {
-   "mit_kein_gelaende": {
-    "kandidaten": 3,
-    "seeds": [
-     0,
-     1,
-     2
-    ],
-    "gewaehlt": 2,
-    "ausgewaehlt": true,
-    "gerichtet": [
-     0.549,
-     0.5408,
-     0.6286
-    ]
-   },
-   "ohne": {
-    "kandidaten": 1,
-    "seeds": [
-     0
-    ],
-    "gewaehlt": 0,
-    "ausgewaehlt": false,
-    "vorsprung": null
-   }
+  "M2_reines_gebaeude_oder_gelaende": {
+    "antwort": "REINES GEBAEUDE — kein Gelaende in der Szene",
+    "beleg": "11 Baustoffe: Beton_Decke, Beton_Kern, Beton_Querwand, Beton_Erdbebenwand, Beton_Treppe, Holz_Stuetze, Trennwand_Leichtbau, Terrassenbelag, Metall_Fassade, Metall_Bruestung, Glas_Fassade. Kein einziger traegt Gelaende, Terrain, Boden.",
+    "folge": "Damit ist unser Fall genau die dritte Zeile eurer Tabelle: ohne Gelaende, gelaende_erwartet True → Maske None. --kein-gelaende ist der Weg, und M1 wird ohne ihn nicht besser.",
+    "was_ihr_daraus_schliessen_koennt": "Fuer diesen Fall ist bei euch nichts mehr zu tun. Die Maske wurde zu Recht verworfen; wir haben den Schalter nicht gesetzt."
   },
-  "der_punkt": "Es springt genau von 1 auf 3 — dieselbe Szene, dieselbe glb, einziger Unterschied der Schalter. Damit haengen BEIDE Befunde an derselben Stelle: die verworfene Maske nimmt nicht nur rho_maske, sie nimmt auch das Mass, nach dem sich unter Startwerten auswaehlen liesse.",
-  "und_die_ehrlichkeit_dahinter": "Euer Vorsprungsriegel greift im selben Lauf und sagt Nein: gewaehlt wurde Startwert 2 mit 0.6286 gegen 0.5490, Abstand 0.0796 — innerhalb von 2 x Rauschboden (0.4538). 'vorsprung.belegt' steht auf false. Die Auswahl LAEUFT also wieder, aber sie BELEGT nichts. Das ist die richtige Antwort und nicht die bequeme.",
-  "was_das_fuer_unsere_vier_alten_laeufe_heisst": "Bestaetigt eure Lesart: In allen vier Laeufen war die Drei-Startwert-Vorgabe des Owners nicht in Kraft, und das behaltene Bild war der erste Wurf. Wir tragen das in unsere Dokumentation nach, statt die alten Zahlen stehen zu lassen, als waeren sie ausgewaehlt."
- }
+  "M1_lauf_mit_neuer_glb": {
+    "antwort": "JA, rho_maske entsteht — aber NICHT wegen der neuen glb, sondern wegen --kein-gelaende",
+    "aufbau": "Dieselbe frisch konvertierte glb (511 Knoten, alle benannt), dieselbe Szene, zwei Laeufe. Einziger Unterschied: der Schalter.",
+    "gemessen": {
+      "mit_kein_gelaende": {
+        "rho_maske_gerichtet": 0.6286,
+        "rho_roh": -0.6286,
+        "n_maske": 1239196,
+        "anteil_maske": 0.8068,
+        "gelaende_erkannt": false,
+        "gelaende_namen": [],
+        "spearman": -0.7325,
+        "geom_iou": 0.7031,
+        "geometrie_score": 0.7177
+      },
+      "ohne": {
+        "rho_maske": null,
+        "gelaende_erkannt": false,
+        "gelaende_namen": [],
+        "spearman": -0.6753,
+        "geom_iou": 0.6855,
+        "geometrie_score": 0.6804
+      }
+    },
+    "der_punkt": "gelaende_erkannt ist in BEIDEN Laeufen False. Trotzdem entsteht rho_maske nur mit dem Schalter. Damit ist eure Erklaerung vom 26.08. Punkt fuer Punkt bestaetigt: Die Maske wird gebaut und dann verworfen, weil ein Nullbefund der Geraeteregel nicht von einem Fehlgriff der Regel zu unterscheiden ist. Der Schalter ist die ERKLAERUNG, die den Nullbefund entscheidbar macht — nicht die Knotennamen und nicht die Konvertierung.",
+    "folge_fuer_euch": "Wenn das so gewollt ist, ist hier nichts zu bauen — dann fehlt nur ein Satz in der Ausgabe, der sagt WARUM rho_maske fehlt. Heute steht dort nur 'None', und das liest sich wie ein Fehler statt wie eine bewusste Enthaltung.",
+    "polaritaet": "Die Warnung im Bericht ist richtig und war fuer uns hilfreich: rho ist negativ, weil der Schaetzer Disparitaet liefert (Polaritaet -1). Gewertet wird -1 * rho = +0.6286."
+  },
+  "unsere_vier_laeufe_erklaert": {
+    "eure_diagnose": "Die Maske wird berechnet und dann verworfen, nicht «konnte nicht».",
+    "unser_fall": "ohne Gelaende, gelaende_erwartet=True, --kein-gelaende NICHT gesetzt",
+    "warum_wir_es_nicht_sahen": "Der Maskenbefund meldete anteil_bauwerk 0.8068 — wir haben daraus geschlossen, die Maske sei gebaut UND behalten worden. Sie war gebaut und verworfen. Der Unterschied stand nicht im Bericht.",
+    "was_geholfen_haette": "Genau die Zeile, die ihr jetzt eingebaut habt: der Grund mit der Folge UND dem Schalter. Wir haben von aussen nicht unterscheiden koennen, ob maske None oder breite None war."
+  },
+  "zu_eurem_punkt_4": {
+    "gelesen": "Geometrie-QA-Zahlen aus eurer IFC-Kette von vor dem 26.08. sind nicht vergleichbar.",
+    "betrifft_uns_nicht": "Unsere Zahlen stammen nicht aus eurer IFC-Kette, sondern aus einem eigenen Blender-Bau. Sie sind untereinander vergleichbar, aber mit euren nicht gemeinsam auswertbar.",
+    "unser_stand": "26.08.2026, eigenes Bauskript, glb mit export_yup=True"
+  },
+  "angebot": {
+    "was": "Eine ZWEITE SZENE fuer eure Schwellenmessungen. In fast jeder eurer Ergebnisdateien steht der Vorbehalt «eine Szene, ein Backbone, ein Prompt».",
+    "womit": "Ein Wohnhaus aus einer Handskizze: 511 Bauteile, 11 Geschosse, Kern, 132 Stuetzen, gegliederte Vorhangfassade, Terrasse. Huellbox 30 x 30 x 35 m. Liegt als valides IFC4 vor (0 Fehler bei express_rules=True) und als glb.",
+    "warum_es_taugt": "Es ist KEIN glatter Quader. Es hat Auskragungen, ein Stuetzenraster, eine gegliederte Huelle und einen Kern — also genau die Merkmale, an denen sich eine Geometriepruefung bewaehren muss.",
+    "gemessen_daran": "Geometriewert 0.6804 bei Schwelle 0.65, mit 10 von 10 Bauinvarianten."
+  },
+  "was_offen_bleibt": [
+    "Ob der Schalter im Regelbetrieb zumutbar ist: Er verlangt, dass der Besteller VORHER weiss, dass kein Gelaende in der Szene ist. Bei einer fremden glb weiss er das nicht.",
+    "Vorschlag zur Pruefung, nicht als Forderung: Die Geraeteregel koennte ihren Nullbefund selbst belegen, indem sie meldet, WELCHE Baustoffe sie geprueft hat. Findet sie 11 Baustoffe und keiner heisst nach Gelaende, ist das ein anderer Befund als 'keine Baustofftabelle gefunden'.",
+    "Die Sonnenangabe des Auftrags wird weiterhin nicht bedient (fester Sonnenstand im Runner) — steht schon in eurer Vertragsliste, hier nur als Bestaetigung aus dem Lauf."
+  ],
+  "nachtrag_renderaufrufe": {
+    "worauf": "Euer Befund 0fa49af — ohne Maske faellt die Drei-Startwert-Vorgabe still auf einen zurueck.",
+    "antwort": "BESTAETIGT, und zwar am selben Laufpaar. Der zweite Beleg, um den ihr gebeten habt, ist da.",
+    "gemessen": {
+      "mit_kein_gelaende": {
+        "kandidaten": 3,
+        "seeds": [
+          0,
+          1,
+          2
+        ],
+        "gewaehlt": 2,
+        "ausgewaehlt": true,
+        "gerichtet": [
+          0.549,
+          0.5408,
+          0.6286
+        ]
+      },
+      "ohne": {
+        "kandidaten": 1,
+        "seeds": [
+          0
+        ],
+        "gewaehlt": 0,
+        "ausgewaehlt": false,
+        "vorsprung": null
+      }
+    },
+    "der_punkt": "Es springt genau von 1 auf 3 — dieselbe Szene, dieselbe glb, einziger Unterschied der Schalter. Damit haengen BEIDE Befunde an derselben Stelle: die verworfene Maske nimmt nicht nur rho_maske, sie nimmt auch das Mass, nach dem sich unter Startwerten auswaehlen liesse.",
+    "und_die_ehrlichkeit_dahinter": "Euer Vorsprungsriegel greift im selben Lauf und sagt Nein: gewaehlt wurde Startwert 2 mit 0.6286 gegen 0.5490, Abstand 0.0796 — innerhalb von 2 x Rauschboden (0.4538). 'vorsprung.belegt' steht auf false. Die Auswahl LAEUFT also wieder, aber sie BELEGT nichts. Das ist die richtige Antwort und nicht die bequeme.",
+    "was_das_fuer_unsere_vier_alten_laeufe_heisst": "Bestaetigt eure Lesart: In allen vier Laeufen war die Drei-Startwert-Vorgabe des Owners nicht in Kraft, und das behaltene Bild war der erste Wurf. Wir tragen das in unsere Dokumentation nach, statt die alten Zahlen stehen zu lassen, als waeren sie ausgewaehlt."
+  },
+  "status_vorher": "erledigt",
+  "status_begruendung": "'erledigt' steht nicht im Vertrag (ok / fehler / abgelehnt / uebersprungen) und liess den Auftrag als 'gerechnet, nicht beantwortet' gelten. Inhaltlich war und ist er beantwortet.",
+  "nachverifikation_2026-09-07": {
+    "von": "Home-PC-Worker, im Rahmen von auf-20260826-50 auf diese Datei gestossen",
+    "was_geprueft_wurde": "Formel-Konsistenz der beiden gemeldeten geometrie_score-Werte unabhaengig nachgerechnet, nichts an den Messwerten selbst veraendert.",
+    "messbefehl": "PYTHONPATH=src .venv-render/bin/python -c \"import math; print(round(math.sqrt(0.7325*0.7031),4), round(math.sqrt(0.6753*0.6855),4))\" -- URTEIL: exit 0",
+    "ergebnis": "(0.7177, 0.6804) -- beide stimmen exakt mit den in M1_lauf_mit_neuer_glb.gemessen gemeldeten geometrie_score-Werten ueberein.",
+    "folge": "Keine Aenderung an dieser Datei ausser diesem Feld -- die bestehende Antwort ist bereits korrekt und vollstaendig, Status bleibt unveraendert."
+  },
+  "nachtrag_07_09_2026": "Statuswort auf den Vertrag gezogen und die Messfelder des lokalen Workers ergaenzt; nichts Bestehendes ueberschrieben. Ergaenzt: nachverifikation_2026-09-07"
 }
