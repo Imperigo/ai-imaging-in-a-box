@@ -11,7 +11,16 @@ für dieses Skript **NICHT GEMESSEN**, nicht **DURCHGEFALLEN** — genau die Unt
 die die Hausregel dieses Projekts verlangt. Sollte dieses Skript auf der HomeStation
 laufen (Gewichte unter ``$AIIMAGING_MODELLE`` bzw. ``/ai``, ``torch``+``diffusers``
 installiert), rendert Kachel C in Bild 02 tatsächlich und zeigt das echte Ergebnis statt
-der hier eingebauten Attrappen-Stufe — siehe ``_kachel_c``.
+der hier eingebauten Attrappen-Stufe — siehe die ``else``-Verzweigung in
+:func:`bild_gatter`.
+
+Kachel B setzt **hier** voraus, dass die Modellwurzel des Vorgabe-Backbones fehlt — nur
+dann ist ihr GELB eine Messung und keine Behauptung (siehe die ``assert``-Reihe direkt
+nach ihrer Berechnung). Läge sie tatsächlich vor (etwa auf der HomeStation, wo die
+Gewichte liegen), würde ``render.rendere`` dort **nicht** ablehnen, sondern tatsächlich zu
+laden versuchen — Kachel B bräche dann laut mit einem ``AssertionError`` ab, statt still
+die falsche Farbe zu zeigen. Das ist kein Mangel dieses Beweises, sondern die
+Konsequenz daraus, dass hier bewusst nur die Umgebung ohne Ablage gezeigt wird.
 
 Was hier SEHR WOHL gemessen wird — vollständig, ohne GPU, ohne ein einziges Gewicht
 --------------------------------------------------------------------------------------
@@ -39,17 +48,25 @@ Vier Felder je Zeile, von links:
     Feld 1  Lizenz des BASISMODELLS       grün = permissiv & ohne Auflage
     Feld 2  Lizenz des CONTROLNETS        gelb = zulässig, aber mit Auflage
                                           (Umsatzschwelle, Nennungspflicht, …)
-    Feld 3  GESAMTURTEIL (Regel 1)         rot  = unter Regel 1 ausgeschlossen
                                           grau = kein ControlNet nötig (integriertes
-                                                 Edit; Feld 2 bleibt dann grau)
+                                                 Edit — es gibt keine zweite Hälfte,
+                                                 die geprüft werden könnte)
+    Feld 3  GESAMTURTEIL (Regel 1)         rot  = unter Regel 1 ausgeschlossen
+                                          grün = zulässig
     Feld 4  Balken, Länge ∝ vram_gb        aus der Registry gelesen, nicht hier
             (aus render.RenderAuftrag-Sicht: je länger, desto mehr Kartenspeicher)
 
-Beide FLUX-Zeilen (7. und 8.) sind in Feld 1 UND Feld 2 rot: FLUX ist **beidseitig**
-gesperrt — selbst ein permissives FLUX-Basismodell würde die Naht nicht retten, weil
-auch die verbreiteten Depth-ControlNets für FLUX nicht-kommerziell lizenziert sind
-(``backbone.pruefe_lizenz``, Abschnitt „Die zweite Hälfte der Naht"). Das ist der Befund,
-den Feld 2 zeigt und den ein Blick nur auf Feld 1 verdeckt hätte.
+Die beiden FLUX-Zeilen (7. und 8.) sehen im Bild NICHT gleich aus, und genau das ist der
+Befund. Zeile 7 (flux1-dev) ist in Feld 1 UND Feld 2 rot: Sie führt ein eigenes
+Depth-ControlNet (``jasperai/Flux.1-dev-Controlnet-Depth``), und das steht selbst unter
+der FLUX.1-[dev]-Non-Commercial-Lizenz — die Naht ist hier **beidseitig** gesperrt, ein
+permissives Basismodell würde sie nicht retten (``backbone.pruefe_lizenz``, Abschnitt
+„Die zweite Hälfte der Naht"). Zeile 8 (flux2-dev) ist in Feld 2 dagegen GRAU: Sie führt
+``integriertes_edit`` statt ``depth_controlnet`` und hat gar kein zweites Repo, das man
+gegen Regel 1 prüfen könnte. Ihr Ausschluss (Feld 1 und Feld 3 rot) kommt allein aus der
+Basislizenz. Der Unterschied zwischen den beiden Zeilen ist selbst ein Befund: „beidseitig
+gesperrt" gilt nur dort, wo überhaupt eine zweite Hälfte existiert — ein Blick, der beide
+FLUX-Zeilen für gleich hält, hätte genau diesen Unterschied verdeckt.
 
 ``02_pruefe_auftrag_gatter_<A-status>_<B-status>_<C-status>.png``
 
@@ -228,12 +245,23 @@ def _tiefe_dummy(ziel: Path) -> Path:
 
 
 def _torch_verfuegbar() -> bool:
+    """Ob ``torch`` UND ``diffusers`` importierbar wären — OHNE sie zu importieren.
+
+    ``importlib.util.find_spec`` löst nur auf, es lädt nicht aus. Ein echtes
+    ``import torch`` an dieser Stelle würde 'torch' in ``sys.modules`` eintragen,
+    lange bevor ``render.rendere`` auch nur gerufen wurde — und die MARKE-Prüfung in
+    :func:`bild_gatter` würde dann für JEDE Kachel fälschlich melden, die GPU-Bibliothek
+    sei benutzt worden, unabhängig davon, ob der gemessene Aufruf sie je angefasst hat.
+    Auf diesem Rechner (kein Modul vorhanden) macht das keinen Unterschied; auf der
+    HomeStation, wo beide Pakete installiert sind, wäre es der Unterschied zwischen einer
+    Messung und einem selbst erzeugten Artefakt.
+    """
+    import importlib.util
     try:
-        import torch  # noqa: F401
-        import diffusers  # noqa: F401
-    except ImportError:
+        return (importlib.util.find_spec("torch") is not None
+                and importlib.util.find_spec("diffusers") is not None)
+    except (ImportError, ValueError):
         return False
-    return True
 
 
 def _baue_stub_gewichte(ziel: Path, eintrag) -> Path:
@@ -305,6 +333,23 @@ def bild_gatter(ziel: Path) -> Path:
     print(f"Kachel B ({render.VORGABE_BACKBONE}, Ablage {lage_b['wurzel']!r} "
           f"existiert: {lage_b['existiert']}): status={ergebnis_b['status']!r}, "
           f"{len(mangel_b)} Mangel/Mängel, {dauer_b * 1000:.3f} ms")
+    # Kachel B trägt GELB als fest eingetragene Farbe (siehe unten) — das ist nur dann
+    # eine Messung und keine Behauptung, wenn genau DIESE drei Dinge hier tatsächlich
+    # zutreffen: kein Vertragsmangel, Ablehnung, und zwar mangels Ablage. Träfen sie
+    # nicht zu (z.B. auf einem Rechner, auf dem die Modellwurzel existiert), wäre GELB
+    # falsch gefärbt — darum bricht das Skript hier laut ab, statt still falsch zu malen.
+    assert not mangel_b, (
+        f"Kachel B soll nur an der fehlenden Ablage scheitern, nicht am Vertrag "
+        f"selbst: {mangel_b}")
+    assert ergebnis_b["status"] == render.STATUS_ABGELEHNT, (
+        f"Kachel B setzt status=abgelehnt voraus, bekam {ergebnis_b['status']!r}.")
+    assert not lage_b["existiert"], (
+        "Die Modellwurzel existiert HIER doch — GELB wäre dann eine Behauptung statt "
+        "eine Messung. Dieser Fall ist nicht vorgesehen (siehe Docstring, Abschnitt "
+        "'Was hier NICHT gemessen werden kann').")
+    assert ergebnis_b["error"] == lage_b["grund"], (
+        "Der Ablehnungsgrund von rendere() weicht von modellwurzel_lage() ab — dann "
+        "scheiterte Kachel B an etwas anderem als der Ablage.")
 
     eintrag_c = backbone.hole(render.VORGABE_BACKBONE)
     torch_da = _torch_verfuegbar()

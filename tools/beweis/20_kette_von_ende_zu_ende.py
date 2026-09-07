@@ -143,8 +143,9 @@ Was das Gerät braucht — und was nicht
 -------------------------------------
 * IFC → glb, Räume, Torwächter, Grundrisse, alle fünf Gegenproben: **hier**, ohne GPU,
   ohne Blender (``.venv-ifc`` genügt).
-* Multipass: **Blender 4.2 auf der CPU genügt** (rund zwei Minuten bei 256 px, 8
-  Samples). Mit ``--ohne-blender`` oder ohne Blender wird die Stufe als «nicht gefahren»
+* Multipass: **Blender 4.2 auf der CPU genügt** (``tools/beweise_fahren.py`` rechnet mit
+  rund 97 s je Kamera; hier ist es eine Kamera bei 256 px und 8 Samples, zwei
+  Durchgänge). Mit ``--ohne-blender`` oder ohne Blender wird die Stufe als «nicht gefahren»
   geführt (Blau), render und qa werden übersprungen (Grau), und drei Riegel der ersten
   Zeile bleiben grau. Kein Fehlschlag: Rückgabe 0.
 * Render und QA: **das Gerät** (Gewichte, torch, GPU). Hier: Blau mit Marke.
