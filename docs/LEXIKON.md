@@ -1261,6 +1261,18 @@ richtig.*
 dieselbe Frage neu. Verwandt mit **Fassungsabstand**: Dort ist die Maschine verschieden,
 hier der Satz über sie.
 
+**Baulich zwingende Deckung** — Zwei Stellen sehen dieselben Daten nicht **zufällig**,
+sondern weil sie **dieselbe Quelle lesen**. Der Unterschied entscheidet, ob eine Messung
+nötig ist oder ob sie sich erübrigt.
+*Im Projekt am 09.09.2026:* Ob Box- und Bildseite dieselben Namen sehen, musste gemessen
+werden — Materialnamen decken sich zu **0 %**, Objektnamen zu 100 %. An **einer** Stelle
+war die Messung überflüssig: `blender_depth_stage._bbox_bauwerk` und
+`_material_id_zuweisen` lesen beide ``obj.name`` desselben Blender-Objekts. Dort ist die
+Deckung keine Beobachtung, sondern eine Eigenschaft des Baus.
+*Warum das trotzdem dasteht:* Eine baulich zwingende Deckung kann durch eine Änderung an
+einer der beiden Stellen aufhören zu gelten, **ohne dass irgendwo etwas bricht**. Sie ist
+darum kein Grund, nicht hinzusehen — sondern einer, den Grund aufzuschreiben.
+
 **Brücke zwischen zwei Regeln** — Ein **Ergebnis** von der einen Seite zur anderen
 tragen, statt die **Regel** zu verdoppeln. Die zweite Seite lernt nichts dazu; sie bekommt,
 was die erste gemessen hat.
@@ -4278,6 +4290,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-09 | Ergaenzt: **Baulich zwingende Deckung**. Anlass ist die Schliessung der Formbruecke: Ob beide Seiten dieselben Namen sehen, musste ueberall gemessen werden — ausser an der einen Stelle, an der beide `obj.name` desselben Blender-Objekts lesen |
 | 2026-09-08 | Ergaenzt: **Bruecke zwischen zwei Regeln** und **Ein Mangel, der benannt ist, ist kein Loch mehr**. Anlass ist die zweite Seite derselben Regel: Die Bildseite hat keine Geometrie und kann die Formregel nicht rechnen. Gemessen wurde vor dem Bau, ob beide Seiten dieselben Namen sehen — Materialnamen null Prozent, Objektnamen hundert, und bei geteiltem Gelaende brach Blenders Dublettensuffix die Deckung auf 25 % |
 | 2026-09-07 | Ergaenzt: **Zweitmeinung (gegen zweite Regel)** und **Gelaende an der Form**. Anlass ist der Owner-Entscheid, zur Bildarbeit zurueckzukehren, und der offenste Strang darin: Die Namensregel findet auf echtem Bestand nichts (2,32 % Schrumpfung), und ein weiteres Wort gibt es nachweislich nicht — `decke` waere noetig und ist unmoeglich. Die Form ist das zweite «von aussen», fuer das niemand gefragt werden muss |
 | 2026-09-06 | Ergaenzt: **Ein Satz, der nur auf einer Maschine wahr ist**. Anlass ist ein Befund der HomeStation: Der Kommentar «in dieser Umgebung gibt es keine GPU» ist dort falsch — gemessen wurde dann statt umgestellt, und OptiX ist 10-35 % langsamer und verschiebt Kantenpixel. Verhalten richtig, Kommentar falsch |

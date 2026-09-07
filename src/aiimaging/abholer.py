@@ -1842,7 +1842,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Silhouette exakt. Das PNG war die Eingabe des Modells, die EXR ist der
             # Massstab.
             soll, breite, hoch = soll_lesen(bericht)
-            maskenbefund = _maske_bauen(bericht, gelaende_erwartet=gelaende_erwartet)
+            maskenbefund = _maske_bauen(
+                bericht, gelaende_erwartet=gelaende_erwartet,
+                gelaende_zusatz=_formgelaende_aus_bericht(bericht))
 
             # DIE DOPPELTE ANSICHT. Zweizaehlige Drehsymmetrie laesst die beiden
             # Ueber-Eck-Ansichten der HABS/NPS-Regel zusammenfallen; bei einem Quader
@@ -2851,6 +2853,30 @@ def _modellstand_gemeldet(pfad) -> dict:
     return {"geprueft": _ms.bestanden(befund), "urteil": befund["urteil"],
             "maengel": befund["maengel"], "warnungen": befund["warnungen"],
             "quelle": befund["quelle"], "grund": befund["begruendung"]}
+
+
+def _formgelaende_aus_bericht(bericht: dict) -> tuple:
+    """Die Geländenamen, die im Lauf die **Form** gefunden hat — sonst leer.
+
+    Die Brücke von der Boxseite zur Bildseite. `blender_depth_stage._bbox_bauwerk` fragt
+    seit dem 09.09.2026 `aiimaging.gelaendeform`, wenn die Namensregel fast nichts
+    getrennt hat, und legt das Ergebnis in den Bericht. Von dort erreicht es
+    `maske.bauwerksmaske(gelaende_zusatz=…)`.
+
+    **Warum nur bei ``"form"`` und nicht, sobald Namen dastehen.** Hat die *Namensregel*
+    entschieden, findet die Maske dieselben Namen ohnehin selbst — die Übertragung wäre
+    wirkungslos und stünde trotzdem als ``gelaende_quelle: "name+form"`` im Befund.
+    *Eine Herkunftsangabe, die eine Absicht meldet statt einer Wirkung, ist keine.*
+
+    **Und warum die Namen hier passen, anders als sonst.** Gemessen am 08.09.2026
+    (`docs/NAMENSDECKUNG_2026-09-08.md`): Materialnamen und Knotennamen decken sich zu
+    **0 %**. Hier decken sie sich nicht zufällig, sondern **baulich**: `_bbox_bauwerk`
+    und `_material_id_zuweisen` lesen beide ``obj.name`` desselben Blender-Objekts.
+    """
+    if str(bericht.get("bbox_bauwerk_entschieden_durch") or "") != "form":
+        return ()
+    namen = bericht.get("bbox_bauwerk_gelaende_namen") or []
+    return tuple(str(n) for n in namen)
 
 
 def _kamera_ueber_dach(kamera: dict) -> dict:

@@ -274,7 +274,7 @@ def test_die_bauwerksbox_laesst_das_gelaende_weg(monkeypatch):
         _mesh("Wand_Nord", (0, 0, 0), (8, 5, 7)),
     ])
 
-    lo, hi, note, _ = modul._bbox_bauwerk()
+    lo, hi, note, _, _form = modul._bbox_bauwerk()
 
     assert lo == [0, 0, 0] and hi == [8, 5, 7]
     assert note == ""
@@ -288,7 +288,7 @@ def test_ohne_gebaute_substanz_gibt_es_keine_bauwerksbox_und_keinen_rueckfall(mo
         _mesh("Gelaende_Hang", (-20, -20, -0.2), (20, 20, 0.0)),
     ])
 
-    lo, hi, note, _ = modul._bbox_bauwerk()
+    lo, hi, note, _, _form = modul._bbox_bauwerk()
 
     assert lo is None and hi is None
     assert "NICHT auf die Szenenbox" in note
@@ -300,7 +300,7 @@ def test_ein_unerreichbares_maske_modul_ist_kein_fehlendes_gelaende(monkeypatch)
     modul = _runner_mit_objekten(monkeypatch, [_mesh("Wand", (0, 0, 0), (8, 5, 7))])
     monkeypatch.setattr(modul, "_maske_modul", lambda: None)
 
-    lo, hi, note, _ = modul._bbox_bauwerk()
+    lo, hi, note, _, _form = modul._bbox_bauwerk()
 
     assert lo is None and hi is None
     assert "nicht erreichbar" in note
@@ -318,13 +318,39 @@ def test_der_bericht_traegt_die_zweite_huellbox(monkeypatch):
 
 def test_die_gelaenderegel_wird_nicht_zweimal_hingeschrieben(monkeypatch):
     """Eine zweite Wortliste an der Aussenkante liefe bei der nächsten Schärfung still
-    auseinander — genau der Fehler, gegen den `_vorgabe` gebaut ist."""
+    auseinander — genau der Fehler, gegen den `_vorgabe` gebaut ist.
+
+    **Gesucht wird seit dem 09.09.2026 im Syntaxbaum und nicht im Text.**
+
+    Vorher stand hier ``f'"{wort}"' not in quelle`` — die Zeichenkette irgendwo. Das war
+    ein Stellvertreter für die eigentliche Frage, und er schlug an dem Tag falsch an:
+    `_form_zweitmeinung` liest ``befund["gelaende"]``, den **Wörterbuchschlüssel** von
+    `gelaendeform`, und das ist keine Wortliste.
+
+    *Einen Wächter aufzuweichen, damit der eigene Code durchgeht, wäre der falsche Weg* —
+    also wird er statt dessen genau: Verboten ist ein Geländewort **als Element einer
+    Aufzählung oder in einem Vergleich**, denn so sieht eine zweite Wortliste aus. Ein
+    Schlüsselzugriff ist etwas anderes und war nie gemeint.
+    """
+    import ast
+
     from aiimaging import maske
 
-    quelle = RUNNER.read_text(encoding="utf-8")
-    for wort in maske.GELAENDE_WOERTER:
-        assert f'"{wort}"' not in quelle, (
-            f"{wort!r} steht im Runner — die Regel gehoert in aiimaging.maske")
+    woerter = set(maske.GELAENDE_WOERTER)
+    baum = ast.parse(RUNNER.read_text(encoding="utf-8"))
+    for knoten in ast.walk(baum):
+        if isinstance(knoten, (ast.Tuple, ast.List, ast.Set)):
+            teile = [k.value for k in knoten.elts
+                     if isinstance(k, ast.Constant) and isinstance(k.value, str)]
+        elif isinstance(knoten, ast.Compare):
+            teile = [k.value for k in [knoten.left, *knoten.comparators]
+                     if isinstance(k, ast.Constant) and isinstance(k.value, str)]
+        else:
+            continue
+        treffer = woerter.intersection(teile)
+        assert not treffer, (
+            f"{sorted(treffer)} steht im Runner als Aufzaehlung oder Vergleich — "
+            f"die Regel gehoert in aiimaging.maske")
 
 
 # ======================================================================================
@@ -343,24 +369,61 @@ def test_die_gelaenderegel_wird_nicht_zweimal_hingeschrieben(monkeypatch):
 
 def test_eine_bauwerksbox_die_fast_nichts_wegnimmt_sagt_es(monkeypatch):
     """**Der wichtigste Test dieser Gruppe.** Eine Box, die 2 % bringt, sah im Bericht
-    aus wie eine, die 35 % bringt — und nur eine von beiden traegt."""
+    aus wie eine, die 35 % bringt — und nur eine von beiden traegt.
+
+    **Der grosse Knoten ragt hier auf** (18 m hoch), und das ist seit dem 09.09.2026
+    nötig: Wäre er flach, erkennte ihn die *Formregel* als Gelände und der Fall träte gar
+    nicht mehr ein. Der Warntext gilt also nur noch, wo auch die Zweitmeinung nichts
+    findet — und genau so soll es sein.
+    """
     modul = _runner_mit_objekten(monkeypatch, [
         # Ein schmaler Streifen heisst nach Gelaende. Die Regel greift also, aber sie
         # nimmt der Rahmung so gut wie nichts.
         _mesh("Gelaende_Randstein", (-40.5, -40, 0.0), (-40, 40, 0.2)),
-        _mesh("IfcSlab_Umgebung_13_Gras", (-40, -40, -0.2), (40, 40, 0.0)),
+        _mesh("IfcSlab_Halle_13", (-40, -40, 0.0), (40, 40, 18.0)),
         _mesh("Wand_Nord", (0, 0, 0), (8, 5, 7)),
     ])
 
-    lo, hi, note, schrumpfung = modul._bbox_bauwerk()
+    lo, hi, note, schrumpfung, form = modul._bbox_bauwerk()
 
     assert lo is not None and schrumpfung is not None
     assert 0.0 < schrumpfung < 0.05, schrumpfung
     assert f"{schrumpfung:.1%}" in note
     # Und die Notiz nennt den groessten Knoten, den die Regel hier als Bauwerk gezaehlt
     # hat: an ihm haengt die Auskunft, welches Wort der Regel fehlt.
-    assert "IfcSlab_Umgebung_13_Gras" in note
+    assert "IfcSlab_Halle_13" in note
     assert "GELAENDE_WOERTER" in note
+    assert form["entschieden_durch"] == "keine", (
+        "Die Form darf hier nichts finden — sonst prueft dieser Test den Warntext an "
+        "einem Fall, den es nicht mehr gibt.")
+
+
+def test_die_form_rettet_genau_den_fall_der_den_mangel_dokumentiert_hat(monkeypatch):
+    """**Der Bestand, an dem der Mangel gemessen wurde — jetzt behoben.**
+
+    Dieselben drei Objekte, mit denen der wirkungslose Befund am 02.09.2026 belegt wurde:
+    `IfcSlab_Umgebung_13_Gras` ist eine 80 × 80 m grosse, 20 cm dünne Platte am Boden, und
+    **kein Wort aus `maske.GELAENDE_WOERTER` passt darauf** (`umgebung` und `gras` stehen
+    ausdrücklich in `WOERTER_AUSDRUECKLICH_NICHT`).
+
+    Die Namensregel brachte hier **2 %**. Die Form bringt **17,6 %** — und der Bericht
+    trägt die Namen, an denen die Bauwerksmaske anknüpfen kann.
+    """
+    modul = _runner_mit_objekten(monkeypatch, [
+        _mesh("Gelaende_Randstein", (-40.5, -40, 0.0), (-40, 40, 0.2)),
+        _mesh("IfcSlab_Umgebung_13_Gras", (-40, -40, -0.2), (40, 40, 0.0)),
+        _mesh("Wand_Nord", (0, 0, 0), (8, 5, 7)),
+    ])
+
+    lo, hi, note, schrumpfung, form = modul._bbox_bauwerk()
+
+    assert form["entschieden_durch"] == "form"
+    assert "IfcSlab_Umgebung_13_Gras" in form["gelaende_namen"]
+    assert schrumpfung > 0.15, schrumpfung
+    assert "die FORM hat entschieden" in note
+    assert "bbox_bauwerk_gelaende_namen" in note, (
+        "Die Notiz muss sagen, WO die Namen stehen — sonst weiss der Leser nicht, "
+        "dass sie die Maske erreichen.")
 
 
 def test_die_schrumpfung_wird_an_der_diagonale_gemessen(monkeypatch):
@@ -376,7 +439,7 @@ def test_die_schrumpfung_wird_an_der_diagonale_gemessen(monkeypatch):
         _mesh("Wand", (-50, -40, 0), (50, 40, 7)),
     ])
 
-    _, _, _, schrumpfung = modul._bbox_bauwerk()
+    _, _, _, schrumpfung, _form = modul._bbox_bauwerk()
 
     # dx bleibt 100, dy faellt von 100 auf 80.
     assert schrumpfung == pytest.approx(1.0 - math.hypot(100, 80) / math.hypot(100, 100))
@@ -392,7 +455,7 @@ def test_ohne_glbbox_wird_die_schwelle_nicht_geraten(monkeypatch):
     ])
     monkeypatch.setattr(modul, "_glbbox_modul", lambda: None)
 
-    _, _, note, schrumpfung = modul._bbox_bauwerk()
+    _, _, note, schrumpfung, _form = modul._bbox_bauwerk()
 
     assert schrumpfung is not None and f"{schrumpfung:.1%}" in note
     assert "nicht erreichbar" in note and "nicht geraten" in note

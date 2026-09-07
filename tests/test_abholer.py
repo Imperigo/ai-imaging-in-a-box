@@ -338,7 +338,7 @@ def test_ein_zweiter_durchgang_fasst_erledigte_nicht_wieder_an(tmp_path):
 # Der Weg durch unsere Kette — je Kamera einmal
 # ======================================================================================
 
-def _kette(*, scores=(0.8,), fehlt_tiefe=False, render_status="ok"):
+def _kette(*, scores=(0.8,), fehlt_tiefe=False, render_status="ok", formgelaende=None):
     """Attrappen für Multipass, Render, Soll-Karte und QA. Zählt, was gerufen wurde."""
     protokoll = {"multipass": [], "render": [], "qa": [], "nullprobe": []}
     werte = list(scores)
@@ -379,7 +379,15 @@ def _kette(*, scores=(0.8,), fehlt_tiefe=False, render_status="ok"):
                      "quelle": "material"},
                     {"index": 2, "name": "Boden_Platte", "farbe_srgb_8bit": [40, 50, 60],
                      "quelle": "material"},
-                ]}
+                ],
+                # DER FORMBEFUND DES LAUFS, seit dem 09.09.2026. Der Runner legt ihn ab,
+                # wenn die Namensregel fast nichts getrennt hat und die FORM entschieden
+                # hat; von hier erreicht er `maske.bauwerksmaske(gelaende_zusatz=…)`.
+                **({"bbox_bauwerk_entschieden_durch": "form",
+                    "bbox_bauwerk_gelaende_namen": list(formgelaende)}
+                   if formgelaende else
+                   {"bbox_bauwerk_entschieden_durch": "name",
+                    "bbox_bauwerk_gelaende_namen": []})}
 
     def rendere(a, **kw):
         protokoll["render"].append(a)
@@ -448,6 +456,58 @@ def test_drei_kameras_ergeben_drei_bilder_und_drei_urteile(tmp_path):
     assert len(protokoll["render"]) == 3 * len(abholer.VORGABE_SEEDS)
     ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
     assert len(ergebnis["images"]) == 3, "behalten wird je Kamera genau ein Bild"
+
+
+def test_der_formbefund_des_laufs_erreicht_die_bauwerksmaske(tmp_path, monkeypatch):
+    """**Der Aufruf, nicht seine Nachbildung.**
+
+    Am 09.09.2026 überlebte die erste Mutationsprobe: Der Durchgriff im Abholer liess sich
+    entfernen, ohne dass etwas rot wurde — geprüft war nur `_formgelaende_aus_bericht` für
+    sich, und *ein Wächter, der den Aufruf selbst nachbaut, bewacht seine eigene
+    Nachbildung.*
+
+    Hier läuft die echte Kette, und der Spion sitzt an der Stelle, an der die Übertragung
+    ankommen muss.
+    """
+    gesehen = []
+    echt = abholer._maske_bauen
+
+    def spion(bericht, **kw):
+        gesehen.append(kw.get("gelaende_zusatz"))
+        return echt(bericht, **kw)
+
+    monkeypatch.setattr(abholer, "_maske_bauen", spion)
+    ordner = _auftrag(tmp_path)
+    _, attrappen = _kette(formgelaende=["Boden_Platte"])
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
+                       verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                                                      **attrappen))
+
+    assert gesehen, "die Maske wurde gar nicht gebaut — dann prueft diese Probe nichts"
+    assert all(z == ("Boden_Platte",) for z in gesehen), (
+        f"Der Formbefund des Laufs kam nicht an: {gesehen}")
+
+
+def test_ohne_formbefund_kommt_nichts_an(tmp_path, monkeypatch):
+    """Die Gegenprobe. Hat die **Namensregel** entschieden, findet die Maske dieselben
+    Namen ohnehin selbst — die Übertragung wäre wirkungslos und stünde trotzdem als
+    `gelaende_quelle: "name+form"` im Befund."""
+    gesehen = []
+    echt = abholer._maske_bauen
+
+    def spion(bericht, **kw):
+        gesehen.append(kw.get("gelaende_zusatz"))
+        return echt(bericht, **kw)
+
+    monkeypatch.setattr(abholer, "_maske_bauen", spion)
+    ordner = _auftrag(tmp_path)
+    _, attrappen = _kette()
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
+                       verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                                                      **attrappen))
+
+    assert gesehen
+    assert all(z == () for z in gesehen), f"unerwartete Uebertragung: {gesehen}"
 
 
 def test_je_kamera_eine_eigene_tiefenkarte(tmp_path):

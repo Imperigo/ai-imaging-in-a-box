@@ -106,6 +106,21 @@ Gemessen wird seither über die Einträge, mit der bekannten Wahrheit je Eintrag
 
 ---
 
+## Nachtrag 09.09.2026 · Eine Stelle, an der nicht gemessen werden muss
+
+`blender_depth_stage._bbox_bauwerk` und `_material_id_zuweisen` lesen **beide `obj.name`
+desselben Blender-Objekts**. Dort ist die Deckung keine Beobachtung, sondern eine
+**Eigenschaft des Baus** — und genau darum ist die Formbrücke an dieser Stelle geschlossen
+worden und an keiner anderen.
+
+*Das ist trotzdem kein Grund, nicht hinzusehen:* Eine baulich zwingende Deckung kann durch
+eine Änderung an einer der beiden Stellen aufhören zu gelten, **ohne dass irgendwo etwas
+bricht.** Deshalb steht der Grund aufgeschrieben, und deshalb fragt `auf-20260909-85` als
+erstes nach `material_id_quelle` — denn trägt der Lauf Materialnamen, gilt hier die 0 %
+aus der Tabelle oben, und die Brücke ist für diese Datei wertlos.
+
+---
+
 ## Was diese Studie **nicht** misst
 
 **Sie läuft ohne Blender.** Sie baut die beiden Tabellenformen so nach, wie der Runner sie

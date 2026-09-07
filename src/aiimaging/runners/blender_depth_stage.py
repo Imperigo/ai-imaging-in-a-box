@@ -431,6 +431,79 @@ def _achsen_modul():
         return None
 
 
+def _gelaendeform_modul():
+    """``aiimaging.gelaendeform`` von hier aus erreichbar machen — oder ``None``.
+
+    Dieselbe Bauart und Begründung wie :func:`_sonne_modul` und :func:`_achsen_modul`:
+    Der Runner darf aus dem Produkt **lesen**, nur der umgekehrte Weg ist verboten
+    (Regel 2). ``gelaendeform`` ist reine Arithmetik über Hüllboxen — kein ``bpy``, keine
+    Dateien, nur stdlib.
+
+    **Ist es nicht erreichbar, bleibt es bei der Namensregel — und der Bericht sagt das.**
+    Ein stiller Rückfall wäre hier besonders teuer: Er sähe aus wie «die Form hat nichts
+    gefunden», und richtig wäre «die Form wurde nie gefragt».
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from aiimaging import gelaendeform                   # noqa: PLC0415
+        return gelaendeform
+    except Exception:                                      # noqa: BLE001
+        return None
+
+
+#: Die Höhenachse in **Blenders Weltkoordinaten**: Z, also Index 2.
+#:
+#: **Sie steht hier als benannte Zahl, weil sie eine andere ist als drüben.**
+#: :mod:`aiimaging.gelaendeform` hat die Vorgabe ``hoch=1`` — glTF, Y oben, so wie
+#: :func:`aiimaging.glbbox.knotenboxen` die Boxen liefert. Hier ist die Datei längst
+#: importiert und gedreht.
+#:
+#: *Ein falscher Achsenindex machte Wände flach und Böden aufragend — und keine Massprobe
+#: sähe es.* Genau die Klasse Fehler, die am 01.09.2026 ein Gebäude auf den Kopf gestellt
+#: hat: ``R_x(180)`` lässt jede Kantenlänge gleich, nur die Vorzeichen kippen. Darum wird
+#: der Wert **ausdrücklich übergeben** und nicht geerbt.
+HOCHACHSE_BLENDER = 2
+
+#: Der Formbefund, wenn die Form nichts gesagt hat.
+#:
+#: **Er steht als eigene Vorgabe da, damit er auf JEDEM Rueckgabeweg gleich aussieht.**
+#: Ein Feld, das mal da ist und mal nicht, zwingt jeden Leser zu einer Fallunterscheidung,
+#: die er vergessen wird — und dann liest er `None` als «kein Gelaende» statt als «nicht
+#: gefragt».
+LEERER_FORMBEFUND = {"entschieden_durch": "keine", "gelaende_namen": ()}
+
+
+def _form_zweitmeinung(alle_knoten, gelaende):
+    """Die Formregel befragen — **nur wenn die Namensregel nichts getrennt hat**.
+
+    Dieselbe Bauart wie in :func:`aiimaging.glbbox.bauwerksbox` seit dem 07.09.2026, und
+    aus demselben Grund: *Eine zweite Regel widerspricht der ersten; eine Zweitmeinung
+    spricht nur, wenn die erste schweigt.*
+
+    Returns:
+        ``{"entschieden_durch": …, "gelaende_namen": (…)}`` — ``"form"`` nur, wenn die
+        Form wirklich etwas gefunden hat, das die Namensregel nicht hatte. ``"keine"``
+        heisst hier auch: **nicht gefragt** oder **nicht erreichbar**, und der Bericht
+        unterscheidet das über die Notiz.
+    """
+    gf = _gelaendeform_modul()
+    if gf is None or not alle_knoten:
+        return {"entschieden_durch": "keine", "gelaende_namen": ()}
+    try:
+        befund = gf.gelaende_knoten(alle_knoten, hoch=HOCHACHSE_BLENDER)
+    except Exception:                                      # noqa: BLE001
+        # KEINE AUSKUNFT IST BESSER ALS EINE GERATENE — dieselbe Entscheidung wie in
+        # `glbbox._zweitmeinung`. Eine Szene ohne Ausdehnung gibt keine Anteile her.
+        return {"entschieden_durch": "keine", "gelaende_namen": ()}
+    gefunden = [n for n in befund["gelaende"] if n not in set(gelaende)]
+    # ALLES WAERE GELAENDE — dann trennt die Form nichts, und eine leere Bauwerksbox
+    # waere schlimmer als eine zu grosse.
+    if not gefunden or len(befund["gelaende"]) == len(alle_knoten):
+        return {"entschieden_durch": "keine", "gelaende_namen": ()}
+    return {"entschieden_durch": "form",
+            "gelaende_namen": tuple(dict.fromkeys(befund["gelaende"]))}
+
+
 def _bbox_bauwerk():
     """Die Hüllbox der **gebauten Substanz** — Meshes, deren Name kein Gelände nennt.
 
@@ -478,7 +551,7 @@ def _bbox_bauwerk():
     if maske is None:
         return None, None, ("'aiimaging.maske' ist von diesem Blender aus nicht "
                             "erreichbar — die Gelaenderegel konnte NICHT angewendet "
-                            "werden. Das ist etwas anderes als 'es gibt kein Gelaende'."), None
+                            "werden. Das ist etwas anderes als 'es gibt kein Gelaende'."), None, LEERER_FORMBEFUND
 
     lo = [float("inf")] * 3
     hi = [float("-inf")] * 3
@@ -486,6 +559,7 @@ def _bbox_bauwerk():
     szene_hi = [float("-inf")] * 3
     n = 0
     gelaende = []
+    alle_knoten = []
     # Der grösste Knoten, den die Regel als BAUWERK gezählt hat — an ihm hängt die
     # Auskunft, welches Wort der Regel fehlt, wenn die Box nichts verliert.
     groesster = ("", 0.0)
@@ -498,12 +572,15 @@ def _bbox_bauwerk():
             for i in range(3):
                 szene_lo[i] = min(szene_lo[i], welt[i])
                 szene_hi[i] = max(szene_hi[i], welt[i])
+        o_lo = [min(w[i] for w in ecken) for i in range(3)]
+        o_hi = [max(w[i] for w in ecken) for i in range(3)]
+        # ALLE KNOTEN, auch die als Gelaende erkannten: Die Formregel braucht die ganze
+        # Szene als Bezug, sonst bedeutet kein einziger ihrer drei Anteile etwas.
+        alle_knoten.append((obj.name, o_lo, o_hi))
         if maske.ist_gelaende(obj.name):
             gelaende.append(obj.name)
             continue
         n += 1
-        o_lo = [min(w[i] for w in ecken) for i in range(3)]
-        o_hi = [max(w[i] for w in ecken) for i in range(3)]
         b = math.hypot(o_hi[0] - o_lo[0], o_hi[1] - o_lo[1])
         if b > groesster[1]:
             groesster = (obj.name, b)
@@ -516,7 +593,7 @@ def _bbox_bauwerk():
             f"Kein einziges Mesh-Objekt blieb nach der Gelaenderegel uebrig "
             f"({len(gelaende)} als Gelaende erkannt). Entweder besteht die Szene nur aus "
             f"Gelaende — dann ist der Auftrag ohne Bauwerk —, oder die Namen tragen die "
-            f"Unterscheidung nicht. Es wird NICHT auf die Szenenbox zurueckgefallen."), None
+            f"Unterscheidung nicht. Es wird NICHT auf die Szenenbox zurueckgefallen."), None, LEERER_FORMBEFUND
 
     # Gemessen an der Grundriss-Diagonale, und die Wahl ist geliehen und nicht neu
     # getroffen: `glbbox.bauwerksbox` rechnet genauso, mit der Herleitung an Ort und
@@ -529,7 +606,7 @@ def _bbox_bauwerk():
         return lo, hi, ("Kein Objekt wurde als Gelaende erkannt; die Bauwerksbox ist "
                         "hier gleich der Szenenbox. Das ist ein gueltiges Ergebnis und "
                         "kein Rueckfall — aber ein Bruch zwischen Rahmung und Messung "
-                        "ist damit auch nicht feststellbar."), schrumpfung
+                        "ist damit auch nicht feststellbar."), schrumpfung, LEERER_FORMBEFUND
 
     glbbox = _glbbox_modul()
     if glbbox is None:
@@ -537,9 +614,32 @@ def _bbox_bauwerk():
             f"Die Gelaenderegel hat {len(gelaende)} Objekt(e) aussortiert und die Rahmung "
             f"damit um {schrumpfung:.1%} enger gemacht. Ob das viel oder wenig ist, steht "
             f"hier NICHT: 'aiimaging.glbbox' ist von diesem Blender aus nicht erreichbar, "
-            f"und die Schwelle dafuer (GERINGE_SCHRUMPFUNG) wird nicht geraten."), schrumpfung
+            f"und die Schwelle dafuer (GERINGE_SCHRUMPFUNG) wird nicht geraten."), schrumpfung, LEERER_FORMBEFUND
 
     if schrumpfung < glbbox.GERINGE_SCHRUMPFUNG:
+        # DIE ZWEITMEINUNG, an derselben Schwelle wie in `glbbox.bauwerksbox`.
+        #
+        # Der Docstring dieser Funktion verlangt sie seit dem 02.09.2026 selbst: *«Zwei
+        # Wege zur selben Zahl sollen bei derselben Lage dieselbe Auskunft geben.»*
+        # Damals ging es um den wirkungslosen Befund; seit dem 07.09. gilt derselbe Satz
+        # fuer die Formregel, und dieser Weg schwieg wieder.
+        form = _form_zweitmeinung(alle_knoten, gelaende)
+        if form["entschieden_durch"] == "form":
+            namen = set(form["gelaende_namen"])
+            bau = [k for k in alle_knoten if k[0] not in namen]
+            if bau:
+                lo = [min(k[1][i] for k in bau) for i in range(3)]
+                hi = [max(k[2][i] for k in bau) for i in range(3)]
+                b_bau = math.hypot(hi[0] - lo[0], hi[1] - lo[1])
+                schrumpfung = (1.0 - b_bau / b_szene) if b_szene > 0.0 else 0.0
+                return lo, hi, (
+                    f"DIE NAMENSREGEL HAT FAST NICHTS GETRENNT — die FORM hat "
+                    f"entschieden. {len(namen)} Objekt(e) sind an ihrer Gestalt als "
+                    f"Gelaende erkannt (gross im Grundriss, flach, unten), die Rahmung "
+                    f"wird dadurch um {schrumpfung:.1%} enger. Ihre Namen tragen keines "
+                    f"der Woerter aus maske.GELAENDE_WOERTER; sie stehen im Bericht "
+                    f"unter 'bbox_bauwerk_gelaende_namen' und erreichen von dort die "
+                    f"Bauwerksmaske."), schrumpfung, form
         return lo, hi, (
             f"Die Gelaenderegel hat {len(gelaende)} Objekt(e) aussortiert, die Rahmung "
             f"wird davon aber nur um {schrumpfung:.1%} enger — unter "
@@ -549,8 +649,8 @@ def _bbox_bauwerk():
             f"{(groesster[1] / b_szene if b_szene > 0.0 else 0.0):.0%} der Szene — wenn "
             f"das kein Bauteil ist, fehlt der Regel genau sein Wort. Wer eine wirksame "
             f"Box braucht, ergaenzt die REGEL an ihrer einen Stelle "
-            f"(maske.GELAENDE_WOERTER) — nicht diesen Aufruf."), schrumpfung
-    return lo, hi, "", schrumpfung
+            f"(maske.GELAENDE_WOERTER) — nicht diesen Aufruf."), schrumpfung, form
+    return lo, hi, "", schrumpfung, LEERER_FORMBEFUND
 
 
 def _kamera_setzen(lo, hi, a=None):
@@ -1342,7 +1442,7 @@ def main() -> int:
     # Und daneben die Box der gebauten Substanz. Sie ENTSCHEIDET hier nichts — der Runner
     # rahmt weiterhin, was ihm gesagt wird. Sie wird berichtet, damit diesseits der
     # Prozessgrenze VOR dem Bildlauf entscheidbar ist, ob die Rahmung ein Urteil zulaesst.
-    bau_lo, bau_hi, bau_note, bau_schrumpfung = _bbox_bauwerk()
+    bau_lo, bau_hi, bau_note, bau_schrumpfung, bau_form = _bbox_bauwerk()
     # Die Kamera darf sich auf eine ANDERE Hüllbox beziehen als der Bericht: Der Bericht
     # beschreibt, was dasteht; die Kamera rahmt, was gezeigt werden soll.
     kam_lo, kam_hi = (_huellbox_aus_text(a.kamera_huellbox)
@@ -1460,6 +1560,18 @@ def main() -> int:
         # Ohne sie sieht eine Box, die 2 % bringt, im Bericht genauso aus wie
         # eine, die 35 % bringt. `None` heisst: es gibt keine Bauwerksbox.
         "bbox_bauwerk_schrumpfung": bau_schrumpfung,
+        # WELCHE REGEL DIE BAUWERKSBOX BESTIMMT HAT — und die Namen, an denen die
+        # Bauwerksmaske anknuepfen kann.
+        #
+        # *Beide Felder stehen IMMER da*, auch wenn nichts gefunden wurde (dann "keine"
+        # und leer). Ein Feld, das mal da ist und mal nicht, zwingt jeden Leser zu einer
+        # Fallunterscheidung, die er vergessen wird.
+        #
+        # Nur Namen und ein Wort, keine Boxen und keine Merkmale: Was die Bildseite
+        # braucht, ist die Liste. Die drei Merkmale je Knoten bleiben auf der Boxseite
+        # (`glbbox`), wo man sie nachrechnen kann.
+        "bbox_bauwerk_entschieden_durch": bau_form["entschieden_durch"],
+        "bbox_bauwerk_gelaende_namen": list(bau_form["gelaende_namen"]),
         # Welcher Sonnenstand gestellt wurde, unter welcher Azimutkonvention, und ob er
         # BESTELLT war oder die Vorgabe ist. Bis zum 26.08.2026 lief der Sonnenstand
         # einer Bestellung ins Leere, und das Bild sah trotzdem richtig aus.
