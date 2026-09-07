@@ -160,8 +160,27 @@ def test_jeder_verlegte_abschnitt_hat_eine_verweiszeile_hinterlassen() -> None:
 # ---------------------------------------------------------------- 3 · die Deckelzeile
 
 def _deckelzeile_fehlt(block: list[str], ab_zeile: int) -> list[str]:
-    """Gibt die fehlenden Felder zurück — leer heisst: vollständig."""
-    kopf = "\n".join(block[ab_zeile:ab_zeile + 6])
+    """Gibt die fehlenden Felder zurück — leer heisst: vollständig.
+
+    Gelesen wird der **zusammenhängende Zitatblock** direkt unter der Überschrift, nicht
+    ein Fenster fester Länge. Der erste Anlauf zählte sechs Zeilen ab der Überschrift und
+    fiel an der ersten Deckelzeile, deren Felder über mehrere Zeilen umbrachen —
+    *ein Wächter, der eine Formatierung erzwingt, die er nicht meint, wird beim ersten
+    Fehlalarm aufgeweicht.*
+
+    Die Bedingung bleibt streng, wo es zählt: Der Block muss **direkt** unter der
+    Überschrift stehen. Wer Prosa davor setzt, hat keine Deckelzeile mehr, sondern eine
+    Fussnote.
+    """
+    zeilen = block[ab_zeile:]
+    while zeilen and not zeilen[0].strip():
+        zeilen.pop(0)
+    zitat = []
+    for z in zeilen:
+        if not z.startswith(">"):
+            break
+        zitat.append(z)
+    kopf = "\n".join(zitat)
     return [f for f in DECKELFELDER if f not in kopf]
 
 

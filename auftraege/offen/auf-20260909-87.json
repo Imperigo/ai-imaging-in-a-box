@@ -1,0 +1,40 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260909-87",
+  "art": "render",
+  "worker": "local",
+  "rang": 6,
+  "erstellt": "2026-09-09T15:00:00Z",
+  "params": {},
+  "beschreibung": "Traegt eine frontale Innenansicht ein Geometrie-Urteil? Die Vorpruefung an der Soll-Karte ist hier gemessen (frontal 57-79 % auf EINER Ebene, ueber Eck 0,5 %); rho braucht den Schaetzer und damit euch.",
+  "anweisung": "=== TRAEGT EINE FRONTALE INNENANSICHT UEBERHAUPT EIN URTEIL? ===\n\nWORUM ES GEHT\n\nDer Plan traegt seit dem 22.08.2026 einen Verdacht gegen die frontale\nInnenansicht und daneben sein eigenes Gegenargument. Beides war ungemessen.\nHeute ist die VORPRUEFUNG gemessen — an der Soll-Karte, ohne Schaetzer, ohne\nGPU (docs/INNENANSICHT_2026-09-09.md, nachbaubar mit\ntools/studie_innenansicht.py):\n\n  Raum      Blick      Brennweite   Geometrie  Spanne m  Stufen  groesste Ebene\n  Raum-Nord frontal    24 mm            93.3%     1.191      73          78.8%\n  Raum-Nord frontal    50 mm           100.0%     0.000       1         100.0%\n  Raum-Nord ueber_eck  24 mm            84.2%     4.998     489           0.6%\n  Raum-Sued frontal    24 mm            96.2%     2.288     207          56.9%\n  Raum-Sued ueber_eck  24 mm            85.1%     5.106     497           0.5%\n\n\"Groesste Ebene\" ist der Anteil des GANZEN Bildes, der auf einem einzigen\nTiefenwert liegt (auf 1 cm gerundet). Frontal 57-79 %, ueber Eck 0,5-0,6 % —\nFaktor ueber hundert, und die beiden Raeume sind sich einig.\n\nDer zweite Fund stand nicht in der Frage: Ohne uebergebene Brennweite stellt der\nRunner 50 mm, und dann traegt die Tiefenkarte des groesseren Raums EINEN\nEINZIGEN WERT. Das ist bei uns behoben (kette._fuehre_multipass reicht\nraumkamera's Sichtfeld-Brennweite durch, drei Mutationsproben).\n\nWAS WIR NICHT WISSEN, UND NUR IHR KOENNT ES MESSEN\n\nOb \"von einer Flaeche beherrscht\" auch heisst \"rho misst dort nichts\". Unsere\nZahl ist eine Aussage ueber die SOLL-Karte. Rho laeuft ueber die GESCHAETZTE\nKarte, und der Schaetzer braucht torch — hier nicht vorhanden.\n\nDie Hausregel dazu ist vom 24.08.2026 und gilt gegen uns: Renders und Nullanker\nkoennen ein Mass widerlegen, aber nicht tragen. Drei Vorschlaege dieses Projekts\nsind genau an dieser Stelle gefallen.\n\n\nWAS ZU TUN IST\n\nGeometrie: tools/make_test_ifc.py --raeume (im Repo erzeugbar, keine\nProjektdaten). Wer eine eigene Datei MIT Raeumen und MIT Decke hat, nimmt gern\nzusaetzlich die — das ist der Fall, den unsere Testgeometrie nicht stellen kann.\n\nWICHTIG, WEIL ES BIS HEUTE NICHT GING: Der Homeworker konnte einen\nInnenstandpunkt gar nicht entgegennehmen. `auge` und `blick_auf` standen nicht in\n_KAMERA_PARAMS, ein Auftrag mit ihnen waere als \"unverstandener Parameter\"\nabgewiesen worden. Seit heute stehen sie drin (tools/homeworker.py, zwei Proben,\neine Mutationsprobe). WENN EUER STAND AELTER IST, holt ihn bitte zuerst — sonst\nlaeuft dieser Auftrag nicht, und das waere kein Befund, sondern ein alter Stand.\n\nVier Laeufe, dieselbe Geometrie, je ein Bild. Die Standpunkte stehen hier, damit\nihr sie nicht ableiten muesst — gerechnet von raumkamera.standpunkte an der oben\ngenannten Geometrie:\n\n  A  Raum-Nord frontal    auge [4.000, 0.600, 1.35]  blick_auf [4.000, 4.700, 1.35]  24 mm\n  B  Raum-Nord ueber Eck  auge [0.604, 0.604, 1.35]  blick_auf [4.394, 4.394, 1.35]  24 mm\n  C  Raum-Sued frontal    auge [6.350, 0.610, 1.30]  blick_auf [6.350, 2.500, 1.30]  24 mm\n  D  Raum-Sued ueber Eck  auge [7.396, 0.604, 1.30]  blick_auf [5.805, 2.195, 1.30]  24 mm\n\nAls params: auge, blick_auf, brennweite. Die Hoehe ist halbe Raumhoehe ab\nz_unten_m und die Kamera ist waagrecht — auge[2] == blick_auf[2].\n\nUND DIE GEGENPROBE, sie kostet nichts: Lasst raumkamera.standpunkte auf EURER\nSeite ueber denselben ifc_raeume-Bericht laufen und sagt, ob dieselben Zahlen\nherauskommen. Wenn unsere Rechnung falsch ist, soll das auffallen — und zwar\nBEVOR ihr vier Bilder darauf baut.\n\nJe Lauf: Multipass, dann ein Bild durch den Backbone mit der Tiefenkarte als\nFuehrung, dann qa_gegen_soll MIT der Bauwerksmaske aus dem Material-ID-Pass.\n\nDrei Startwerte je Fall (0, 1, 2), weil die Startwertstreuung von 0,2269 groesser\nist als jeder Parametereffekt, den diese Kette je gezeigt hat. Ohne sie ist ein\nUnterschied zwischen A und B nicht von Rauschen zu trennen.\n\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n\n- Keine Schwelle aendern, keinen Riegel scharfstellen. Dies ist eine Messung.\n- Nicht bei A abbrechen, wenn rho unbrauchbar aussieht. Ein unbrauchbares rho IST\n  die Antwort auf V1 — bitte mit Zahl, nicht mit Urteil.\n- Nicht die Brennweite von Hand auf 24 setzen, falls unser Durchgriff bei euch\n  noch nicht angekommen ist. Dann bitte melden, was ankam (V4) — das ist ein\n  Befund ueber den Weg und wertvoller als ein geflicktes Ergebnis.\n- Ist die Karte belegt: ZURUECKSTELLEN, nicht abbrechen. Genau daran ist auf-61\n  gescheitert.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_ifc.py --raeume",
+    "hinweis": "Im Repo erzeugbar, keine Projektdaten (Regel 3). Die vier Standpunkte stehen in der Anweisung und gehen als params auge/blick_auf/brennweite — seit dem 09.09.2026 nimmt der Homeworker sie an; aeltere Staende weisen sie ab. Eine eigene Datei MIT Decke waere die Zugabe, um die V6 bittet."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Ist die Karte belegt: zurueckstellen, nicht abbrechen. Daran ist auf-61 gescheitert.",
+      "Laeuft der Auftrag mit 'unverstandener Parameter: auge' auf, ist euer Stand aelter als der 09.09. — dann bitte holen und nicht von Hand umschreiben.",
+      "Drei Startwerte je Fall (0, 1, 2). Ohne sie ist ein Unterschied nicht von Rauschen zu trennen.",
+      "Keine Schwelle aendern, keinen Riegel scharfstellen — dies ist eine Messung.",
+      "Ein unbrauchbares rho ist die Antwort und kein Fehlschlag. Bitte mit Zahl.",
+      "Keine Kunden-, Buero- oder Projektnamen in der Rueckgabe."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Je Fall A-D: rho ueber der Maske, alle drei Startwerte einzeln. Das ist die eine Zahl, um die es geht — trennt rho frontal von ueber Eck, oder nicht?",
+    "V2 Je Fall der Kantenanteil an der Maskengrenze, ebenfalls je Startwert. Zwei Masse, nicht verrechnet — Existenz und Richtigkeit sind zwei Fragen.",
+    "V3 Je Fall der Nullanker aus derselben Nullprobe (weisses Rauschen ueber derselben Maskenlage). Ohne ihn ist rho eine Zahl ohne Bezug; das Ortsfeld des Schaetzers erklaert bis zu 95,75 % davon.",
+    "V4 Welche Brennweite ist im Multipass-Bericht angekommen (kamera.brennweite_mm)? Kam 24 mm an oder der Rueckfall 50 mm? Bitte den Wert, nicht ja/nein.",
+    "V5 Die Gegenprobe: Kommen bei euch dieselben vier Standpunkte heraus wie oben? Ja/nein, bei nein die Zahlen. Kostet keinen Renderlauf.",
+    "V6 Falls ihr eine eigene Datei mit Raeumen UND Decke habt: dieselben vier Zahlen dafuer. Unsere Testgeometrie hat keine Decke, und genau darauf stuetzt sich das Gegenargument im Plan. Habt ihr keine: 'haben wir nicht' ist eine vollstaendige Antwort.",
+    "V7 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}

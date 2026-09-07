@@ -1356,6 +1356,37 @@ Der eigene `zustellung.json` belegte immer nur die Hinrichtung — gelesen wurde
 belege er beide. Verwandt mit **Abgelegt gegen ausgeliefert**, eine Richtung weiter: Dort
 war offen, ob etwas hinausging; hier, ob etwas zurückkam.
 
+**Flächenbeherrschte Aufnahme** — Ein Bild, dessen Tiefenkarte zum grossen Teil auf
+*einem* Wert liegt: Die Kamera sieht im Wesentlichen eine Fläche senkrecht zur
+Blickachse.
+*Warum das zählt:* Die Geometrie-QA dieses Projekts ruht auf **Tiefenrängen**. Wo alles
+gleich weit weg ist, gibt es keine Ordnung zu vergleichen — eine Rangkorrelation misst
+dort nicht die Geometrie, sondern den Schätzer. Die Aufnahme wird dadurch nicht
+*ungenauer*, sondern **unmessbar**, und das sieht man ihr nicht an: Es ist ein
+vollständiges, plausibles Bild.
+*Gemessen wird der Anteil des **ganzen Bildes** auf einer Tiefenebene, nicht die Spanne.*
+Ein Bild kann fünf Meter Spanne haben und trotzdem zu vier Fünfteln auf einer Ebene
+liegen. Und der Anteil wird nicht an der Geometrie gerechnet — *ein Blick, der halb aus
+Himmel besteht, ist nicht dadurch besser, dass die andere Hälfte eine einzige Wand ist.*
+*Im Projekt am 09.09.2026* (`docs/INNENANSICHT_2026-09-09.md`): Eine frontale
+Innenaufnahme liegt zu 56,9 % bzw. 78,8 % auf einer Ebene, dieselben Räume über Eck zu
+0,5 % bzw. 0,6 %. Und ohne übergebene Brennweite — der Runner stellt dann 50 mm — trägt
+die Karte des grösseren Raums **einen einzigen Wert**. Verwandt mit **Die dritte
+Antwort**: Nicht messbar ist weder bestanden noch durchgefallen.
+
+**Vorprüfung (gegen tragende Messung)** — Eine Messung, die ein Verfahren **widerlegen**
+kann, aber nicht **tragen**.
+*Der Unterschied ist eine Hausregel dieses Projekts vom 24.08.2026, und sie ist teuer
+gelernt:* `kantenanteil`, Variante F und R2 sind alle drei an Blender-Renders und
+Nullankern geeicht worden, sahen dort gut aus und sind am erzeugten Bild gefallen.
+*Was eine Vorprüfung darf:* ausschliessen. Zeigt die Soll-Karte keine Tiefenordnung, kann
+kein Schätzer eine hineinbringen — dieser Schluss gilt.
+*Was sie nicht darf:* etwas zusagen. Dass die Soll-Karte Ordnung trägt, sagt über das
+erzeugte Bild nichts.
+*Warum das Wort nötig ist:* Beide Sorten Messung sehen im Bericht gleich aus — eine
+Tabelle mit Zahlen. Wer die eine für die andere hält, baut auf einem Ergebnis, das nur
+in eine Richtung gilt.
+
 **Zielzahl, die nur durch Verstecken erreichbar ist** — Eine Zahl, die einen Zustand
 beschreiben soll, aber nur dadurch erreicht wird, dass etwas aus dem Blickfeld wandert.
 *Sie misst dann nicht mehr die Sache, sondern die Sichtbarkeit der Sache.*
@@ -4322,6 +4353,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-09 | Ergaenzt: **Flaechenbeherrschte Aufnahme** und **Vorpruefung (gegen tragende Messung)**. Anlass ist der Verdacht gegen die frontale Innenansicht, der seit dem 22.08. ungemessen im Plan stand: Frontal liegen 57-79 % des Bildes auf EINER Tiefenebene, ueber Eck 0,5 % — und ohne uebergebene Brennweite traegt die Karte des groesseren Raums einen einzigen Wert. Das zweite Wort trennt, was diese Messung leisten kann (ausschliessen) von dem, was sie nicht kann (zusagen) |
 | 2026-09-09 | Ergaenzt: **Zielzahl, die nur durch Verstecken erreichbar ist** und **Deckelzeile**. Anlass ist Woche 2: Das Ziel «PLAN.md unter 800 Zeilen» ist nachgemessen unerreichbar — 110 offene Punkte liegen verstreut ueber fast jeden langen Abschnitt, und nach dem Umzug der 22 fertigen bleiben rund 4300 Zeilen. Korrigiert statt still fallengelassen; an ihre Stelle tritt die Deckelzeile in 23 Protokollen und 21 Planabschnitten |
 | 2026-09-09 | Ergaenzt: **Baulich zwingende Deckung**. Anlass ist die Schliessung der Formbruecke: Ob beide Seiten dieselben Namen sehen, musste ueberall gemessen werden — ausser an der einen Stelle, an der beide `obj.name` desselben Blender-Objekts lesen |
 | 2026-09-08 | Ergaenzt: **Bruecke zwischen zwei Regeln** und **Ein Mangel, der benannt ist, ist kein Loch mehr**. Anlass ist die zweite Seite derselben Regel: Die Bildseite hat keine Geometrie und kann die Formregel nicht rechnen. Gemessen wurde vor dem Bau, ob beide Seiten dieselben Namen sehen — Materialnamen null Prozent, Objektnamen hundert, und bei geteiltem Gelaende brach Blenders Dublettensuffix die Deckung auf 25 % |

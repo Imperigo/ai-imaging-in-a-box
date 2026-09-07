@@ -266,7 +266,19 @@ VORGABE_KAMERA = "sSE"
 #: Kameraangaben, die ein Auftrag setzen darf. Sie werden **nur weitergereicht, wenn sie
 #: dastehen** — ein ``None`` würde die gerechnete Vorgabe überschreiben.
 _KAMERA_PARAMS = ("augenhoehe", "gelaende_z", "kamera_modus", "kamera_huellbox",
-                  "brennweite", "deckungsgrad", "bias_grad", "shift_y")
+                  "brennweite", "deckungsgrad", "bias_grad", "shift_y",
+                  # **Der Innenstandpunkt, 09.09.2026.** `seams.glb_zu_multipass` kennt
+                  # `auge` und `blick_auf` seit jeher, und der Runner lässt sie dem
+                  # Richtungskürzel vorgehen (`weg: "vorgegeben"`). Hier standen sie
+                  # nicht — und damit war eine **Innenaufnahme über diesen Weg gar nicht
+                  # bestellbar**: `raumkamera` rechnet die Standpunkte, aber kein Auftrag
+                  # konnte sie mitschicken, ohne als «unverstandener Parameter»
+                  # abgewiesen zu werden.
+                  #
+                  # Aufgefallen beim Schreiben von `auf-20260909-87`, also **bevor** der
+                  # Auftrag hinausging. Am 28.08. sind acht Aufträge unausführbar
+                  # abgelegt worden, weil dieselbe Frage nicht gestellt wurde.
+                  "auge", "blick_auf")
 
 #: Was die einzelnen Pfade an `params` tatsächlich verbrauchen. Wird ein Auftrag mit
 #: Angaben gestellt, die hier nicht stehen, ist er hier nicht ausführbar — und das muss

@@ -27,6 +27,11 @@ GEWOLLTE_TRENNUNGEN = {
     "prädiktor",     # Kompression / Byte-Entflechtung
     "rauschboden",   # Streuung einer Saatreihe / Boden einer Metrik ohne Geometrie
     "validierung",   # eines Verfahrens / Daten gegen Schema
+    # Zwei Gegenstände, und die Verwechslung ist teuer: Die eine spart Rechenzeit
+    # (Abbruch vor dem teuren Schritt), die andere begrenzt, was ein Ergebnis TRÄGT —
+    # sie darf widerlegen und nichts zusagen. Wer die zweite für die erste hält, baut
+    # auf einem Ergebnis, das nur in eine Richtung gilt.
+    "vorprüfung",    # Abbruch vor dem teuren Schritt / gegen tragende Messung
 }
 
 

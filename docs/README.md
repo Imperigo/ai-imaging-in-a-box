@@ -1,10 +1,10 @@
 # Die Dokumente — eine Karte
 
-Neunundsechzig Dateien liegen hier, dazu dreiundzwanzig Sitzungsprotokolle. Diese Karte
+Siebzig Dateien liegen hier, dazu dreiundzwanzig Sitzungsprotokolle. Diese Karte
 sagt, **welche man liest, wenn man etwas Bestimmtes sucht** — und welche man getrost
 liegen lässt, weil eine spätere sie überholt hat.
 
-*Warum es sie gibt:* Ein Ordner mit neunundsechzig gleichrangig aussehenden Dateien ist
+*Warum es sie gibt:* Ein Ordner mit siebzig gleichrangig aussehenden Dateien ist
 kein Nachschlagewerk, sondern ein Stapel. Wer darin die richtige Datei nur findet, wenn er
 schon weiss, wie sie heisst, findet sie nicht.
 
@@ -68,6 +68,7 @@ Vertiefungsarbeit, nicht ihr Arbeitsprotokoll.
 | [`KAMERABLICK_2026-08-19.md`](KAMERABLICK_2026-08-19.md) | Zwölf Bilder angesehen — was zwölf grüne Zahlen nicht zeigten. |
 | [`KAMERANEIGUNG_2026-08-22.md`](KAMERANEIGUNG_2026-08-22.md) | Die Neigung stört den Schätzer nicht; der erste Anlauf war der lehrreichere. |
 | [`STANDPUNKTE_2026-09-01.md`](STANDPUNKTE_2026-09-01.md) | Was `guete_standpunkt` wirklich unterscheidet: acht Standpunkte, **zwei** Werte. |
+| [`INNENANSICHT_2026-09-09.md`](INNENANSICHT_2026-09-09.md) | Frontal innen liegen **57–79 %** des Bildes auf *einer* Tiefenebene, über Eck 0,5 % — und ohne übergebene Brennweite trägt die Karte **einen einzigen Wert**. |
 
 ### Die Bildkette — ControlNet, Polarität, Seed
 

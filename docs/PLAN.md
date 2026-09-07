@@ -2301,6 +2301,17 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
       geliefert; sie wegzulassen wäre ein Schluss von einer Messung auf einen Fall, den
       sie nicht enthält. Die Messung ist billig: dieselbe Szene, beide Blickarten, ρ und
       Kante vergleichen.
+
+      **Die Vorfrage ist am 09.09.2026 gemessen, und der Verdacht trägt**
+      (`docs/INNENANSICHT_2026-09-09.md`): Frontal liegen **56,9 %** und **78,8 %** des
+      Bildes auf *einer* Tiefenebene, über Eck **0,5 %** und **0,6 %** — Faktor über
+      hundert, in zwei Räumen, die sich um mehr als das Vierfache unterscheiden. Das
+      Gegenargument ist nicht falsch (Boden und Seitenwände tragen 1,19 m bzw. 2,29 m
+      Spanne bei statt 0,000 m), es reicht nur nicht.
+      **Der Punkt bleibt offen und ist enger geworden:** Gemessen ist die *Soll*-Karte
+      ohne Schätzer — ob ρ dort wirklich nichts misst, fragt `auf-20260909-87` am Gerät.
+      Und die Testräume haben **keine Decke**; genau darauf stützt sich das
+      Gegenargument, und mit dieser Geometrie ist es nicht prüfbar.
 - [x] **`auf-29`: Die Kameraneigung stört den Schätzer NICHT.** Eckansicht, drei
       Ausrichtungen, alle innerhalb von 0.019 — die waagrechten sind sogar marginal
       schlechter. **Der Umbau von `kameras.py` bleibt richtig, weil die Fachnorm ihn
@@ -4226,6 +4237,73 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
 
 > **Abgeschlossen** — alle 5 Punkte abgehakt, kein offener geblieben.
 > Der Volltext steht unverändert im Archiv: [`erledigt/PLAN_bis_2026-08-28.md#der-homeworker-las-nicht-für-wen-ein-auftrag-ist-28082026`](erledigt/PLAN_bis_2026-08-28.md#der-homeworker-las-nicht-für-wen-ein-auftrag-ist-28082026)
+
+---
+
+## Die frontale Innenansicht zeigt eine Fläche (09.09.2026)
+
+> **Entschieden:** Die frontale Innenansicht wird **nicht abgeschaltet** — die Metrik
+> nicht messen zu können ist kein Grund, das Bild nicht zu machen, sondern einer, das
+> Urteil darüber zurückzuhalten. Gebaut ist der **Durchgriff, nicht die Regel**: Ob eine
+> flächenbeherrschte Aufnahme ihr Geometrie-Urteil tragen darf, wird erst nach der
+> Messung am Gerät entschieden. Eine Zuständigkeitsgrenze wie bei `himmel_hinter_umriss`
+> wäre naheliegend und darum verdächtig.
+> **Gemessen:** Frontal liegen 56,9 % und 78,8 % des Bildes auf *einer* Tiefenebene, über
+> Eck 0,5 % und 0,6 %. Und ohne übergebene Brennweite stellt der Runner 50 mm — dann trägt
+> die Tiefenkarte des grösseren Raums **einen einzigen Wert**: Spanne 0,000 m, eine Stufe,
+> 100 % des Bildes.
+> **Offen:** Ob ρ über der geschätzten Karte dasselbe sagt (`auf-20260909-87`), und der
+> Deckenfall, den die Testgeometrie nicht stellen kann.
+
+- [x] **Die Brennweite der Innenkamera erreichte den Runner nicht — zum vierten Mal
+      dieselbe Naht-Sache.** `raumkamera` rechnet je Standpunkt ein Sichtfeld: 24 mm,
+      die sichtbare Breite an der Zielwand, und die **nötige** Brennweite, wenn die Wand
+      nicht ins Bild passt — geprüft gegen die belegte 16-mm-Grenze. `kette._fuehre_multipass`
+      reichte Auge und Blickziel hinüber und liess die Brennweite fallen; der Runner
+      stellt dann **50 mm**.
+      **Was das kostet, ist gemessen und nicht geschätzt:** Bei 50 mm trägt die
+      Tiefenkarte des Raum-Nord frontal einen einzigen Wert. Eine Rangkorrelation über
+      eine Karte ohne jede Ordnung misst nichts — die Aufnahme wird nicht ungenauer,
+      sondern **unmessbar**, und nichts daran sieht nach einem Fehler aus.
+      *Brennweite und Geländestand am 23.08., `gelaende_erwartet` am 24.08., drei
+      Kameraparameter am 26.08., und jetzt diese.* Die Zahl wird aus dem **Standpunkt**
+      gelesen, nicht aus der Konstanten — sonst könnte `noetige_brennweite` nie ankommen.
+      Drei Mutationsproben (`tests/test_innenansicht.py`), jede vom richtigen Test
+      gefangen.
+- [x] **Die Vorprüfung ist gebaut und nachbaubar** — `tools/studie_innenansicht.py`,
+      acht Läufe, kein Schätzer, keine GPU. Gemessen wird der **Anteil des ganzen Bildes
+      auf einer Tiefenebene**, nicht die Spanne: Ein Bild kann fünf Meter Spanne haben und
+      trotzdem zu vier Fünfteln auf einer Ebene liegen.
+      Der Anteil wird am **ganzen Bild** gerechnet und nicht an der Geometrie — *ein
+      Blick, der halb aus Himmel besteht, ist nicht dadurch besser, dass die andere
+      Hälfte eine einzige Wand ist.*
+- [ ] **Ob ρ dasselbe sagt, ist ungemessen** (`auf-20260909-87`). Alles hier steht auf der
+      **Soll**-Karte; ρ läuft über die geschätzte. Die Hausregel vom 24.08. gilt gegen uns:
+      Renders und Nullanker können ein Mass widerlegen, aber nicht tragen — drei
+      Vorschläge dieses Projekts sind genau an dieser Stelle gefallen.
+- [ ] **Der Deckenfall ist mit dieser Geometrie nicht zu stellen.** `--hochbau` und
+      `--raeume` schliessen einander aus, mit Begründung, und die zwei Testräume haben
+      vier Wände und eine Bodenplatte. Das Gegenargument im Plan nennt die Decke
+      ausdrücklich; es ist damit **nicht widerlegt, sondern ungeprüft**. `auf-87` fragt
+      als V5, ob drüben eine Datei mit Räumen *und* Decke liegt.
+- [x] **Der Homeworker konnte einen Innenstandpunkt gar nicht entgegennehmen.** `auge`
+      und `blick_auf` standen nicht in `_KAMERA_PARAMS`; ein Auftrag mit ihnen wäre als
+      *«unverstandener Parameter»* abgewiesen worden — obwohl `seams.glb_zu_multipass`
+      sie seit jeher kennt und der Runner sie dem Richtungskürzel **vorgehen** lässt.
+      `raumkamera` rechnet die Standpunkte seit dem 22.08.; **niemand konnte sie
+      hinüberreichen.**
+      *Aufgefallen beim Schreiben von `auf-87`, also bevor der Auftrag hinausging* — am
+      28.08. sind acht Aufträge unausführbar abgelegt worden, weil dieselbe Frage nicht
+      gestellt wurde. Zwei Proben, eine Mutationsprobe.
+- [ ] **Und die Innenansicht wird auf dem Produktivweg weiterhin nicht ABGELEITET.**
+      Bestellbar ist sie seit heute (Zahlen als `params`), berechnet wird sie nur in
+      `kette.py` — und `kette.baue_kette` hat ausserhalb seiner Tests **keinen
+      Aufrufer**; `abholer.py` nennt weder `raumkamera` noch `raeume`. Wer eine
+      Innenansicht will, muss die Standpunkte **kennen**, und kennen kann er sie nur, wenn
+      er sie selbst gerechnet hat. *Sitzung 18 nannte für die dritte Perspektive zwei
+      Ursachen, beide in KosmoOrbit — es gibt eine dritte, und sie ist unsere.*
+      Der Weg dorthin führt über den **Bericht**, wie bei der Formbrücke am 09.09. Ihn
+      nebenbei zu legen hiesse, eine zweite Brücke ins Leere zu bauen.
 
 ---
 

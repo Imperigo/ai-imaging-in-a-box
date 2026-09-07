@@ -480,7 +480,7 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     # Innenansicht: NUR auf ausdrückliche Bestellung. Ein Auftrag, der nicht danach
     # gefragt hat, soll keine Innenaufnahme bekommen — und ein Auftrag, der danach
     # gefragt hat und sie nicht bekommen kann, soll scheitern statt aussen zu rendern.
-    auge = blick_auf = None
+    auge = blick_auf = brennweite = None
     if p.get("innenraum"):
         wunsch = p["innenraum"]
         wahl = raumkamera.waehle(geometrie.get("raeume"),
@@ -493,13 +493,28 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
                     "innenraum": wahl}
         auge = list(wahl["standpunkt"]["auge"])
         blick_auf = list(wahl["standpunkt"]["blick_auf"])
+        # **Die Brennweite gehört zum Standpunkt, nicht zur Szene.** `raumkamera` rechnet
+        # das Sichtfeld mit ``BRENNWEITE_INNEN_MM`` (24 mm) und prüft es gegen die belegte
+        # 16-mm-Grenze; wer nur Auge und Blickziel hinüberreicht, bekommt drüben den
+        # Rückfall des Runners — **50 mm**.
+        #
+        # Gemessen am 09.09.2026 (`docs/INNENANSICHT_2026-09-09.md`), Raum-Nord frontal,
+        # 800 × 496: Bei 50 mm trägt die ganze Tiefenkarte **einen einzigen Wert** —
+        # Spanne 0,000 m, eine Stufe, 100 % des Bildes auf einer Ebene. Bei 24 mm sind es
+        # 1,191 m über 73 Stufen. *Eine Tiefenkarte aus einem Wert kann keine Rangordnung
+        # tragen; die Geometrie-QA misst dort nichts mehr.*
+        #
+        # Dieselbe Naht-Sache wie Brennweite und Geländestand am 23.08. und wie
+        # `gelaende_erwartet` am 24.08.: im Modul längst gerechnet, auf dem Weg nicht
+        # durchgereicht. Zum vierten Mal — und darum steht sie hier mit ihrer Messung.
+        brennweite = (wahl["standpunkt"].get("sichtfeld") or {}).get("brennweite_mm")
 
     bericht = seams.glb_zu_multipass(
         glb_path, out_dir,
         up_axis=geometrie.get("up_axis"),
         aufloesung=p["aufloesung"], samples=p["samples"],
         beauty=p["beauty"], material_id=p["material_id"],
-        auge=auge, blick_auf=blick_auf,
+        auge=auge, blick_auf=blick_auf, brennweite=brennweite,
     )
     bericht.setdefault("status", STATUS_OK)
 

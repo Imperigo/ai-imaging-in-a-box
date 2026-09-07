@@ -1271,6 +1271,41 @@ def test_kameraangaben_gelten_als_verbraucht_und_werden_nicht_bemaengelt(ifc, au
     assert hw._unverstandene_params("multipass", params) == []
 
 
+def test_ein_innenstandpunkt_ist_ueber_diesen_weg_bestellbar(mitgeschrieben, ifc, aus,
+                                                             tmp_path):
+    """Bis zum 09.09.2026 war eine Innenaufnahme über den Homeworker **gar nicht** zu
+    bestellen.
+
+    ``seams.glb_zu_multipass`` kennt ``auge`` und ``blick_auf`` seit jeher, und der Runner
+    lässt sie dem Richtungskürzel vorgehen (``weg: "vorgegeben"``). Sie standen nur nicht
+    in :data:`_KAMERA_PARAMS` — ein Auftrag, der sie mitschickte, wäre als
+    *unverstandener Parameter* abgewiesen worden.
+
+    `raumkamera` rechnet die Standpunkte seit dem 22.08.; **niemand konnte sie
+    hinüberreichen.** Aufgefallen beim Schreiben von ``auf-20260909-87``, also bevor der
+    Auftrag hinausging — am 28.08. sind acht Aufträge unausführbar abgelegt worden, weil
+    dieselbe Frage nicht gestellt wurde.
+    """
+    satz = _multipass_satz("multipass", ifc, aus)
+    satz["params"]["auge"] = [4.0, 0.6, 1.35]
+    satz["params"]["blick_auf"] = [4.0, 4.7, 1.35]
+    satz["params"]["brennweite"] = 24.0
+    hw.fuehre_aus(satz, tmp_path)
+
+    assert mitgeschrieben.get("auge") == [4.0, 0.6, 1.35]
+    assert mitgeschrieben.get("blick_auf") == [4.0, 4.7, 1.35], (
+        "Ohne Blickziel wirft der Runner — Auge allein ist kein Standpunkt.")
+    assert mitgeschrieben.get("brennweite") == 24.0, (
+        "Ohne sie stellt der Runner 50 mm, und die Tiefenkarte trug gemessen EINEN "
+        "EINZIGEN WERT (docs/INNENANSICHT_2026-09-09.md).")
+
+
+def test_ein_innenstandpunkt_wird_nicht_als_unverstanden_gemeldet(ifc, aus):
+    """Sonst liefe der Auftrag gar nicht — genau das war der Zustand bis heute."""
+    assert hw._unverstandene_params(
+        "render", {"auge": [0, 0, 1.3], "blick_auf": [0, 2, 1.3]}) == []
+
+
 # ======================================================================================
 # Der Empfängerfilter — der Befund kam vom Gerät (auf-20260828-64, 28.08.2026)
 # ======================================================================================
