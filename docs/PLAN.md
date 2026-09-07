@@ -4307,6 +4307,39 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
 
 ---
 
+## Die Warteschlange hatte keine Vergabestelle (09.09.2026)
+
+> **Entschieden:** Die Kollision wird **an der Quelle** beseitigt statt hinterher
+> gemeldet — `auftrag.naechste_laufnummer` und `auftrag.naechster_rang` lesen den Bestand
+> und sagen, was frei ist, und `tools/einbau.py` nennt es dort, wo ohnehin gezählt wird.
+> **Nicht** gebaut wird eine automatische Umnummerierung fremder Dateien: Der Rang ist das
+> Dringlichkeitssignal einer Lane, und ihn zu überschreiben wäre derselbe Eingriff, der
+> heute zweimal abgelehnt wurde.
+> **Gemessen:** Zwei Kollisionen an einem Abend, beide von den Wächtern des 03.09.
+> gemeldet, bevor sie jemand las. Der Preis fiel bei uns an: `auf-82` — daran hängen die
+> Formregel und zwei Einbau-Posten — rutschte von Rang 2 auf Rang 4. Fünf
+> Mutationsproben, alle gefallen.
+> **Offen:** Ob die Vergabestelle reicht. Sie hilft dem, der sie benutzt; eine Lane, die
+> ihre Nummer weiterhin von Hand schreibt, kollidiert wie bisher.
+
+- [x] **`tests/test_auftraege.py` verlangte eine lückenlose Rangreihe und sagte
+      niemandem, welcher Rang frei ist.** Vier Lanes schreiben in dieselbe Warteschlange.
+      *Eine Vorschrift ohne Vergabestelle verlagert die Arbeit auf den, der zuletzt
+      kommt* — und der Fehler sieht dann wie seiner aus.
+- [x] **`neue_auftrag_id` stand seit Phase 0 da und formatierte nur.** Sie kannte den
+      Bestand nicht und hätte die doppelte Laufnummer auch dort nicht verhindert, wo ich
+      sie benutzt hätte. Mit `repo_wurzel` bestimmt sie die Nummer jetzt **am Bestand**;
+      ohne bleibt sie wortgleich, damit kein Aufrufer still sein Verhalten ändert.
+      Gezählt wird über `offen/` **und** `ergebnisse/` und **datumsübergreifend**: Eine
+      beantwortete Nummer ist vergeben, und `auf-20260823-38` gegen `auf-20260824-38` war
+      am 25.08. schon einmal derselbe Fall.
+- [ ] **Sie hilft nur dem, der sie benutzt.** Eine Lane, die ihre Nummer weiterhin von
+      Hand schreibt, kollidiert wie bisher — der Wächter meldet es dann wieder erst beim
+      Zusammenführen. Ob daraus eine Absprache zwischen den Lanes werden muss, ist eine
+      Frage an den Owner und keine Messung.
+
+---
+
 ## Der Auftragsordner zählte nicht, was er behauptete (28.08.2026)
 
 > **Entschieden:** Der Zustand eines Auftrags wird **abgeleitet**, mit fünf Werten, und `art` wird vor `status` gelesen — ein Weiterleitungsvermerk trägt `status: ok` und ist trotzdem keine Antwort. Dazu eine vierte Adresse `kern` für diese Entwicklungssitzung selbst.

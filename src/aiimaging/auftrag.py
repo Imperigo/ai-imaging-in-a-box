@@ -194,9 +194,75 @@ def _jetzt() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def neue_auftrag_id(zeitstempel: str | None = None, laufnummer: int = 1) -> str:
-    """Form: ``auf-<JJJJMMTT>-<NN>``. Beide Teile injizierbar, damit Tests reproduzierbar sind."""
+#: Aus welcher Kennung sich die Laufnummer lesen lässt: ``auf-20260909-88`` → 88.
+_LAUFNUMMER = re.compile(r"^auf-\d{8}-(\d+)$")
+
+
+def _vergebene_laufnummern(repo_wurzel) -> set[int]:
+    """Alle je vergebenen Laufnummern — **offen und beantwortet**.
+
+    Warum auch die Ergebnisse: Eine beantwortete Nummer ist vergeben. Sie neu zu
+    vergeben hiesse, zwei verschiedene Fragen unter einem Namen abzulegen, und die
+    Antwort auf die eine zeigte auf die andere.
+    """
+    vergeben: set[int] = set()
+    for verz in (VERZ_OFFEN, VERZ_ERGEBNISSE):
+        ordner = Path(repo_wurzel) / verz
+        if not ordner.is_dir():
+            continue
+        for pfad in ordner.glob("auf-*.json"):
+            treffer = _LAUFNUMMER.match(pfad.stem)
+            if treffer:
+                vergeben.add(int(treffer.group(1)))
+    return vergeben
+
+
+def naechste_laufnummer(repo_wurzel) -> int:
+    """Die kleinste Laufnummer, die noch niemand vergeben hat.
+
+    **Datumsübergreifend, und das ist der ganze Punkt.** Die Kennung trägt zwar ein
+    Datum, aber gezählt wird über alle Tage: Am 09.09.2026 lagen ``auf-20260907-87``
+    (einer fremden Lane) und ``auf-20260909-87`` (unserer) gleichzeitig im Ordner, und am
+    25.08. war es schon einmal ``auf-20260823-38`` gegen ``auf-20260824-38``.
+    """
+    vergeben = _vergebene_laufnummern(repo_wurzel)
+    return max(vergeben, default=0) + 1
+
+
+def naechster_rang(worker: str, repo_wurzel) -> int:
+    """Der kleinste freie Rang dieses Adressaten.
+
+    ``tests/test_auftraege.py`` verlangt je Adressat eine **lückenlose Reihe von eins
+    an** — und sagte bisher niemandem, welcher Rang frei ist. Vier Lanes schreiben in
+    dieselbe Warteschlange; wer zuletzt pusht, macht ``main`` rot, und aufräumen muss der
+    Nächste. *Eine Vorschrift ohne Vergabestelle verlagert die Arbeit auf den, der zuletzt
+    kommt.*
+
+    Gezählt wird über die **unbeantworteten** Aufträge, denn nur die stehen in der Reihe.
+    """
+    belegt = {a.get("rang") for a in unerledigt(repo_wurzel)
+              if a.get("worker") == worker and isinstance(a.get("rang"), int)}
+    rang = 1
+    while rang in belegt:
+        rang += 1
+    return rang
+
+
+def neue_auftrag_id(zeitstempel: str | None = None, laufnummer: int = 1,
+                    repo_wurzel=None) -> str:
+    """Form: ``auf-<JJJJMMTT>-<NN>``. Beide Teile injizierbar, damit Tests reproduzierbar sind.
+
+    Mit ``repo_wurzel`` wird die Laufnummer **am Bestand bestimmt** statt geglaubt —
+    ``laufnummer`` ist dann nur noch die Untergrenze. Ohne bleibt das Verhalten
+    wortgleich wie seit Phase 0; kein bestehender Aufrufer ändert sich.
+
+    *Warum das nachgereicht wurde:* Die Funktion stand seit Phase 0 da und **formatierte
+    nur**. Sie kannte den Bestand nicht und hat darum am 09.09.2026 eine doppelte
+    Laufnummer nicht verhindert — auch dort nicht, wo ich sie benutzt hätte.
+    """
     stamp = zeitstempel or datetime.now(timezone.utc).strftime("%Y%m%d")
+    if repo_wurzel is not None:
+        laufnummer = max(laufnummer, naechste_laufnummer(repo_wurzel))
     return f"auf-{stamp}-{laufnummer:02d}"
 
 

@@ -105,6 +105,27 @@ def _zeilen(bericht: dict, nur: str | None) -> list[str]:
             aus.append(f"UEBER DEM DECKEL: {worker} traegt {anzahl}, der Deckel liegt bei "
                        f"{auftrag.DECKEL_JE_WORKER}.")
 
+    # DIE VERGABESTELLE STEHT DORT, WO OHNEHIN GEZAEHLT WIRD (09.09.2026).
+    #
+    # Der Anlass ist an einem Abend zweimal angefallen: Eine fremde Lane nahm erst einen
+    # belegten Rang, eine Stunde spaeter Rang UND Laufnummer — beide Male wurde `main`
+    # rot, und aufgeraeumt hat der, der zuletzt pushte. `tests/test_auftraege.py`
+    # VERLANGT eine lueckenlose Reihe je Adressat und sagte niemandem, welcher Rang frei
+    # ist.
+    #
+    # *Eine Vorschrift ohne Vergabestelle verlagert die Arbeit auf den, der zuletzt
+    # kommt.* Die Auskunft gehoert darum in die Zeile, die man ohnehin liest, bevor man
+    # einen Auftrag schreibt — und nicht in eine Funktion, die man kennen muesste.
+    vergabe = bericht.get("vergabe") or {}
+    if vergabe:
+        aus.append("")
+        aus.append(f"FREI ZU VERGEBEN: Laufnummer {vergabe['laufnummer']:02d} "
+                   f"(auf-<JJJJMMTT>-{vergabe['laufnummer']:02d}), "
+                   + ", ".join(f"Rang {r} bei {w}"
+                               for w, r in sorted(vergabe["raenge"].items())))
+        aus.append("      Gezaehlt ueber offen UND ergebnisse, datumsuebergreifend. "
+                   "Vier Lanes schreiben hier hinein.")
+
     unbekannt = bericht.get("unbekannter_status") or []
     if unbekannt:
         aus.append("")

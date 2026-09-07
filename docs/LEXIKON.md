@@ -1356,6 +1356,22 @@ Der eigene `zustellung.json` belegte immer nur die Hinrichtung — gelesen wurde
 belege er beide. Verwandt mit **Abgelegt gegen ausgeliefert**, eine Richtung weiter: Dort
 war offen, ob etwas hinausging; hier, ob etwas zurückkam.
 
+**Vorschrift ohne Vergabestelle** — Eine Regel, die eine Ordnung *verlangt*, aber
+niemandem sagt, welcher Platz darin frei ist.
+*Was dabei geschieht:* Die Arbeit verlagert sich auf den, der zuletzt kommt. Jeder
+Einzelne tut das Naheliegende und nimmt eine Zahl, die aus seiner Sicht frei aussieht;
+wer als Letzter ankommt, findet den Widerspruch und räumt ihn auf. Der Fehler sieht dabei
+wie ein Fehler des Letzten aus, und er ist keiner.
+*Im Projekt am 09.09.2026 zweimal an einem Abend:* `tests/test_auftraege.py` verlangt je
+Adressat eine **lückenlose Rangreihe von eins an**. Vier Lanes schreiben in dieselbe
+Warteschlange, und keine sah die Ränge der anderen. Erst nahm eine fremde Lane einen
+belegten Rang, eine Stunde später Rang **und** Laufnummer — beide Male wurde `main` rot.
+*Die Abhilfe ist keine strengere Vorschrift, sondern eine Vergabestelle:*
+`auftrag.naechste_laufnummer` und `auftrag.naechster_rang` lesen den Bestand und sagen,
+was frei ist; `tools/einbau.py` nennt es dort, wo ohnehin gezählt wird. Verwandt mit
+**Tote Kante**: Dort ist etwas gebaut und wird nicht gerufen, hier ist etwas verlangt und
+wird nicht angeboten.
+
 **Flächenbeherrschte Aufnahme** — Ein Bild, dessen Tiefenkarte zum grossen Teil auf
 *einem* Wert liegt: Die Kamera sieht im Wesentlichen eine Fläche senkrecht zur
 Blickachse.
@@ -4353,6 +4369,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-09 | Ergaenzt: **Vorschrift ohne Vergabestelle**. Anlass sind zwei Kollisionen an einem Abend: Eine fremde Lane nahm erst einen belegten Rang, dann Rang UND Laufnummer, und beide Male wurde main rot. Der Waechter verlangte eine lueckenlose Reihe und sagte niemandem, welche Zahl frei ist — die Abhilfe ist keine strengere Vorschrift, sondern eine Vergabestelle |
 | 2026-09-09 | Ergaenzt: **Flaechenbeherrschte Aufnahme** und **Vorpruefung (gegen tragende Messung)**. Anlass ist der Verdacht gegen die frontale Innenansicht, der seit dem 22.08. ungemessen im Plan stand: Frontal liegen 57-79 % des Bildes auf EINER Tiefenebene, ueber Eck 0,5 % — und ohne uebergebene Brennweite traegt die Karte des groesseren Raums einen einzigen Wert. Das zweite Wort trennt, was diese Messung leisten kann (ausschliessen) von dem, was sie nicht kann (zusagen) |
 | 2026-09-09 | Ergaenzt: **Zielzahl, die nur durch Verstecken erreichbar ist** und **Deckelzeile**. Anlass ist Woche 2: Das Ziel «PLAN.md unter 800 Zeilen» ist nachgemessen unerreichbar — 110 offene Punkte liegen verstreut ueber fast jeden langen Abschnitt, und nach dem Umzug der 22 fertigen bleiben rund 4300 Zeilen. Korrigiert statt still fallengelassen; an ihre Stelle tritt die Deckelzeile in 23 Protokollen und 21 Planabschnitten |
 | 2026-09-09 | Ergaenzt: **Baulich zwingende Deckung**. Anlass ist die Schliessung der Formbruecke: Ob beide Seiten dieselben Namen sehen, musste ueberall gemessen werden — ausser an der einen Stelle, an der beide `obj.name` desselben Blender-Objekts lesen |
