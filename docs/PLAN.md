@@ -4302,8 +4302,20 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
       Innenansicht will, muss die Standpunkte **kennen**, und kennen kann er sie nur, wenn
       er sie selbst gerechnet hat. *Sitzung 18 nannte für die dritte Perspektive zwei
       Ursachen, beide in KosmoOrbit — es gibt eine dritte, und sie ist unsere.*
-      Der Weg dorthin führt über den **Bericht**, wie bei der Formbrücke am 09.09. Ihn
-      nebenbei zu legen hiesse, eine zweite Brücke ins Leere zu bauen.
+      **Nachtrag 09.09.2026, nach Beweis 21 — die Diagnose war falsch, der Befund nicht.**
+      Hier stand, der Weg führe über den **Bericht**, wie bei der Formbrücke. Er führt
+      nicht dorthin: Eine Innenraumkamera geht **heute schon** durch den fremden Vertrag,
+      und zwar über `CameraSpec` → `kosmo_szene.spec_zu_kamera` → `abholer` → Blender.
+      Zwei echte Renderläufe belegen es (`tools/beweis/21_innenraum_produktivweg.py`,
+      im Blender-Bericht `kamera.brennweite_mm 24.0`, `kamera.weg 'vorgegeben'`).
+      **Es fehlt kein Kabel.** Was fehlt, ist eine Zuständigkeit, und sie ist baulich
+      begründet: Der Renderweg bekommt eine **glb**, und Räume sind `IfcSpace`, die es
+      in der glb nicht mehr gibt (`kosmo_szene.DURCHGEREICHT["geometrie"]`). Wer den
+      Standpunkt will, muss ihn rechnen, **solange er die IFC noch hat**.
+      *Der Unterschied ist teuer:* «nicht verdrahtet» hiesse, jemand schreibt eine Zeile.
+      «Sieht die Räume nicht» heisst, die Zahlen müssen vorher gerechnet und mitgeschickt
+      werden. **Adressat: `cloud`, `auf-20260909-91`** — drei Wege stehen darin, einer
+      läuft heute und kostet nichts. Gebaut wird erst nach der Antwort.
 
 ---
 
