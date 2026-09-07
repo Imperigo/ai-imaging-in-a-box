@@ -110,7 +110,47 @@ def test_gemessen_wird_was_auf_der_platte_liegt(fahrer, ablage, tmp_path):
     bericht = fahrer.fahre(ablage / "01_schreibt.py")
     assert bericht["code"] == 0
     assert bericht["bilder"] == ["a.png", "b.png"]
-    assert bericht["neu"] == ["a.png", "b.png"]
+
+
+def test_ein_bild_aus_einem_frueheren_lauf_ueberlebt_nicht(fahrer, ablage, tmp_path):
+    """**Die dritte Fehlerart, und sie ist die stillste.**
+
+    Ein Skript wird geändert und schreibt nur noch ein Bild statt zwei. Ohne Räumung
+    liegt das zweite weiter da, der Fahrer zählt zwei, und **eines davon beweist eine
+    Fassung, die es nicht mehr gibt.** Dieselbe Gestalt wie der liegengebliebene
+    Blender-Report aus Sitzung 03: Es sah nach Erfolg aus.
+    """
+    ziel = tmp_path / "build" / "beweis" / "01_schreibt"
+    ziel.mkdir(parents=True)
+    (ziel / "alt.png").write_bytes(b"x")          # aus einem frueheren Lauf
+    _skript(ablage, "01_schreibt.py", (
+        "import pathlib\n"
+        f"z = pathlib.Path({str(ziel)!r})\n"
+        "z.mkdir(parents=True, exist_ok=True)\n"
+        "(z / 'neu.png').write_bytes(b'x')\n"))
+    bericht = fahrer.fahre(ablage / "01_schreibt.py")
+    assert bericht["bilder"] == ["neu.png"], "das alte Bild hat den Lauf ueberlebt"
+    assert bericht["geraeumt"] == ["alt.png"]
+    assert bericht["verschwunden"] == ["alt.png"], (
+        "der Fahrer muss sagen, dass eine fruehere Datei nicht mehr entsteht")
+
+
+def test_geraeumt_wird_nur_der_eigene_ordner(fahrer, ablage, tmp_path):
+    """Ein Beweis raeumt nie die Ergebnisse eines anderen weg.
+
+    Sonst haette `--nur 09` den Nebeneffekt, die uebrigen neunzehn Beweisreihen zu
+    loeschen — und das faellt erst auf, wenn man sie ausliefern will.
+    """
+    fremd = tmp_path / "build" / "beweis" / "02_anderer"
+    fremd.mkdir(parents=True)
+    (fremd / "fremd.png").write_bytes(b"x")
+    _skript(ablage, "01_meiner.py", (
+        "import pathlib\n"
+        f"z = pathlib.Path({str(tmp_path / 'build' / 'beweis' / '01_meiner')!r})\n"
+        "z.mkdir(parents=True, exist_ok=True)\n"
+        "(z / 'a.png').write_bytes(b'x')\n"))
+    fahrer.fahre(ablage / "01_meiner.py")
+    assert (fremd / "fremd.png").exists(), "ein fremder Beweisordner wurde geraeumt"
 
 
 def test_ein_skript_das_gelingt_und_nichts_schreibt_faellt_auf(fahrer, ablage, capsys):
