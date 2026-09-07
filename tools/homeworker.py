@@ -275,7 +275,7 @@ _KAMERA_PARAMS = ("augenhoehe", "gelaende_z", "kamera_modus", "kamera_huellbox",
                   # konnte sie mitschicken, ohne als «unverstandener Parameter»
                   # abgewiesen zu werden.
                   #
-                  # Aufgefallen beim Schreiben von `auf-20260909-87`, also **bevor** der
+                  # Aufgefallen beim Schreiben von `auf-20260909-88`, also **bevor** der
                   # Auftrag hinausging. Am 28.08. sind acht Aufträge unausführbar
                   # abgelegt worden, weil dieselbe Frage nicht gestellt wurde.
                   "auge", "blick_auf")

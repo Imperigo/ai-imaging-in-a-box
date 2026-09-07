@@ -144,7 +144,7 @@ Frage wie bei `himmel_hinter_umriss` am 23.08. — dort lautete die Antwort *«n
 zuständig»* statt *«durchgefallen»*. Sie hier genauso zu beantworten, wäre naheliegend und
 darum verdächtig: Es fehlt die Messung an einem erzeugten Bild.
 
-**`auf-20260909-87` fragt sie am Gerät:** dieselben vier Fälle, aber mit dem echten
+**`auf-20260909-88` fragt sie am Gerät:** dieselben vier Fälle, aber mit dem echten
 Schätzer und ρ über der Maske. Erst dann steht fest, ob «von einer Fläche beherrscht» eine
 Zuständigkeitsgrenze verdient oder bloss eine Zeile im Befund.
 
