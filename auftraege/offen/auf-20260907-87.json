@@ -1,0 +1,42 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "auftrag_id": "auf-20260907-87",
+ "erstellt": "2026-09-07T11:40:00Z",
+ "worker": "local",
+ "art": "frage",
+ "rang": 3,
+ "beschreibung": "Zwei Messungen, die nur an eurer Maschine gehen: kosmoprepare_praezedenz an einem echten .gehirn-Korpus, und der DXF-Export der Plan-SVGs mit ezdxf.",
+ "anweisung": "=== ZWEI MESSUNGEN, DIE IN DER WOLKE NICHT GEHEN ===\n\nVom Cloud-Worker fuer KosmoPublish und KosmoPrepare. Beide Messungen brauchen\nDinge, die es nur an eurer Maschine gibt. Sie hier als Vorbehalt in ein\nDokument zu schreiben waere der bequeme Weg gewesen; die Regel unserer Lane\nsagt, eine Messung, die hier nicht geht, ist kein offener Punkt, sondern ein\nunverschickter Auftrag.\n\nKein Bau, keine Aenderung an eurem Code. Zwei Laeufe und ein paar Zahlen.\n\n--- 1 - VORAUSSETZUNG, EINMAL PRUEFEN ---\n\n    cd <euer Klon von KosmoPrepare> && git pull\n    cd <euer Klon von KosmoPublish>  && git pull\n\nBeide Messungen unten laufen aus dem jeweiligen Repo-Stamm.\n\n--- 2 - MESSUNG A: kosmoprepare_praezedenz an einem echten .gehirn-Korpus ---\n\nDas ist das einzige der acht KosmoPrepare-Werkzeuge, das hier nicht laufen\nkonnte. Es meldete sauber ab:\n\n    KosmoPrepare error: 'blend_dir' (Projektordner mit .gehirn/) erforderlich\n\nDer Korpus liegt in keinem Repository. Ihr habt ihn, wir nicht. Ohne einen\nLauf an echten Daten ist der Anspruch des Werkzeugs — \"belegt-garantierte\nPraezedenz-Bezuege, fail-closed: jeder Treffer loest auf ein reales Dokument\nauf\" — unbelegt. Genau dieser Anspruch ist der Grund, warum es das Werkzeug\ngibt.\n\nIn KosmoPrepare:\n\n    python3 - <<'PY'\n    import json, sys\n    sys.path.insert(0, '.')\n    from integrations.odysseus.kosmoprepare_mcp_tools import handle_tool\n    r = handle_tool(\"kosmoprepare_praezedenz\", {\n        \"frage\": \"Wohnbau am Hofrand\",\n        \"blend_dir\": \"<EUER Projektordner mit .gehirn/>\",\n    })\n    print(json.dumps({k: v for k, v in r.items() if k != \"text\"},\n                     ensure_ascii=False, indent=1)[:3000])\n    print(\"--- text ---\")\n    print((r.get(\"text\") or \"\")[:2000])\n    PY\n\nREGEL 3 UND KEINE PROJEKTDATEN: unser Repo ist oeffentlich. Schickt KEINE\nDokumententitel, Kunden-, Buero-, Orts- oder Wettbewerbsnamen und keine\nTextausschnitte zurueck. Nur die Zahlen und Urteile aus P1 bis P4 unten. Wo\nein Name unvermeidlich waere, schreibt \"Name vorhanden\" statt des Namens.\n\n--- 3 - MESSUNG B: der DXF-Export der Plan-SVGs ---\n\n`kosmopublish_cli.py dxf` schreibt aus den Plan-SVGs eine DXF mit einer Ebene\nje IfcClass. Es braucht `ezdxf` (MIT, in `requirements.txt` als 1.4.4\ndeklariert). Hier ist es nicht installiert, und installieren aendert die\nMaschine — also ungemessen, weder bestanden noch durchgefallen.\n\nDas Erzeugnis ist erfunden, die ganze Kette laeuft aus dem Repo. In\nKosmoPublish, in EINEM Rutsch:\n\n    T=$(mktemp -d)\n    .venv/bin/python tools/fixture_generator.py --only haus_ifc --out $T\n    .venv/bin/python tools/kosmopublish_cli.py ifc-bridge \\\n        --ifc $T/synth_haus.ifc --out $T/proj/bridge_export_v015_haus.json\n    .venv/bin/python tools/kosmopublish_cli.py materialize \\\n        --project $T/proj --sia-full\n    .venv/bin/python tools/kosmopublish_cli.py dxf \\\n        --planraw $T/proj/output/planraw --out $T/dxf\n    ls -la $T/dxf\n\nErwartet nach unserem Lauf ohne den letzten Schritt: 9 Plan-SVG, 0 Fehler,\n0 Linterbefunde. Wenn bei euch schon davor etwas anderes herauskommt, ist DAS\ndie Meldung — dann bitte den letzten Schritt gar nicht erst fahren.\n\n--- 4 - WAS NICHT GETAN WERDEN SOLL ---\n\n* NICHT `ezdxf` installieren, falls es fehlt. Fehlt es, ist die Antwort auf\n  B \"fehlt auch hier\" — das ist eine gueltige Messung und aendert nichts an\n  der Maschine.\n* NICHT den .gehirn-Korpus kopieren, verschieben oder aufraeumen.\n* NICHT unseren Code aendern. Faellt etwas auf, gehoert es in die Antwort,\n  nicht in einen Patch.\n* KEINE GPU noetig. Kein Blender noetig. Beides sind Sekunden-Laeufe.\n\n--- 5 - EIN FUND BEI EUCH, NEBENBEI ---\n\n`auftraege/offen/auf-20260909-85.json` traegt `erstellt: 2026-09-09T09:00:00Z`\n— zwei Tage in der Zukunft, gemessen am 07.09.2026. Ein Rueckstandszaehler\nliest ihn damit als minus zwei Tage alt und sortiert ihn falsch ein. Wir\naendern in eurem Repo nichts; darum steht es hier statt als Korrektur.\n\nGemessen dabei, weil wir es ohnehin gezaehlt haben: von 89 Dateien in\n`auftraege/offen/` haben 82 ein Ergebnis in `auftraege/ergebnisse/`. Sieben\nnicht, davon fuenf von heute. Der Rueckstand ist klein — das ist ein Lob, kein\nVorwurf.",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": null,
+  "hinweis": "Keine eigene Geometrie noetig. Messung B erzeugt ihr IFC selbst ueber tools/fixture_generator.py."
+ },
+ "params": {},
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweis": "Formal: dieser Auftrag rechnet nichts auf der GPU. Beide Messungen sind Sekunden-Laeufe auf der CPU. Die Auflage steht trotzdem, weil ein Auftrag ohne erklaerte Grenze der Fall ist, an dem der Rechner haengt.",
+  "hinweise": [
+   "Nichts installieren. Fehlt ezdxf, ist 'fehlt auch hier' die Antwort.",
+   "Nichts an unserem Code aendern. Befunde gehoeren in die Antwort.",
+   "Den .gehirn-Korpus nicht kopieren, verschieben oder aufraeumen.",
+   "REGEL 3: keine Pfade mit Benutzernamen, keine Dokumententitel, keine Kunden-, Buero-, Orts- oder Wettbewerbsnamen. Nur Zahlen und Urteile.",
+   "Keine GPU, kein Blender. Beide Laeufe dauern Sekunden."
+  ]
+ },
+ "rueckgabe": [
+  "P1 kosmoprepare_praezedenz: `ok` true oder false, und bei false die Fehlermeldung woertlich.",
+  "P2 Wie viele Treffer kamen zurueck, und loest JEDER auf ein existierendes Dokument auf? Die Zahl der Treffer und die Zahl der aufloesenden — ohne Titel.",
+  "P3 Steht bei jedem Treffer eine Herkunft (Datei, Seite, Score o.ae.)? Nennt die SCHLUESSEL, die im Ergebnis stehen, nicht ihre Werte.",
+  "P4 Gab es einen Treffer OHNE aufloesendes Dokument? Das waere der Bruch des fail-closed-Versprechens und die wichtigste Zahl hier.",
+  "D1 Ist `ezdxf` bei euch installiert? Ja oder nein, mit Fassung.",
+  "D2 Wie viele SVG lagen in planraw, und wie viele DXF entstanden? Und die Dateigroessen.",
+  "D3 Welche Ebenennamen fuehrt die DXF? Die Liste der Layer — das sind IfcClass-Namen, keine Projektdaten.",
+  "D4 Bricht `dxf` bei einem der neun Plaene ab? Dann bei welchem Dateinamen und mit welcher Meldung.",
+  "D5 Falls die Kette schon vor dem DXF-Schritt anders lief als bei uns (9 SVG, 0 Fehler, 0 Linterbefunde): welche Zahlen kamen stattdessen?"
+ ]
+}
