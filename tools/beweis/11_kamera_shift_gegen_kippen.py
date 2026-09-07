@@ -74,21 +74,21 @@ Lot-Abweichung über alle zwölf Richtungen je Modus.
 ``14_shift-je-hoehe_…png`` — Höhenreihe. Waagrecht die Gebäudehöhe (0 bis 105 m,
 Markierung alle 10 m), senkrecht der nötige Shift in Millimetern (−2 bis 14, Linie
 alle 2 mm; die dunkle Waagrechte ist die Nulllinie). Die ROTE waagrechte Linie ist
-``MAX_SHIFT_MM``. Beim 3-m-Bau ist der Shift NEGATIV (Rahmen nach unten): Dort holt
+``MAX_SHIFT_MM``. Je Höhe ein grüner Balken von der kleinsten zur grössten der zwölf
+Richtungen, die zwölf Werte als Punkte. Alle Balken liegen dicht über der Nulllinie,
+weit unter der roten Linie; sie werden mit der Höhe nicht länger und nicht höher.
+Beim 3-m-Bau ist der Shift NEGATIV (Rahmen nach unten): Dort holt
 ``ZIEL_HOECHSTANTEIL`` das Blickziel unter die Augenhöhe, und die Kamera sähe gekippt
-leicht nach unten. Je Höhe ein grüner
-Balken von der kleinsten zur grössten der zwölf Richtungen, die zwölf Werte als
-Punkte. Alle Balken liegen unten am Boden des Diagramms, weit unter der roten Linie;
-sie werden mit der Höhe nicht länger und nicht höher. Im Dateinamen: Spanne der
-Höhen, Spanne des Shifts (``minus`` steht für das Vorzeichen), die Grenze, und wie viele der 96 Kameras die Grenze
+leicht nach unten. Im Dateinamen: Spanne der Höhen, Spanne des Shifts (``minus``
+steht für das Vorzeichen), die Grenze, und wie viele der 96 Kameras die Grenze
 überschreiten (``ueber-grenze-0``).
 
 ``15_abstand-und-neigung-je-hoehe_…png`` — dieselbe Höhenreihe, zwei Felder.
 LINKS: Abstand der Kamera in Metern (0 bis zum Maximum, Linie alle 50 m) — er wächst
 linear mit der Höhe; das ist der Grund, warum der Shift es nicht tut. RECHTS: Neigung
-im gekippten Modus in Grad (−1 bis 6, Linie je Grad, Nulllinie dunkel) — die Achse, die der Shift-Modus
-waagrecht hält. Auch sie bleibt über alle Höhen nahezu konstant: dieselbe Geometrie,
-einmal als Winkel, einmal als Verschiebung.
+im gekippten Modus in Grad (−1 bis 6, Linie je Grad, Nulllinie dunkel) — die Achse,
+die der Shift-Modus waagrecht hält. Auch sie bleibt über alle Höhen nahezu konstant:
+dieselbe Geometrie, einmal als Winkel, einmal als Verschiebung.
 
 Was hier NICHT bewiesen wird
 ----------------------------
