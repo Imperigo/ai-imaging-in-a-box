@@ -3,7 +3,7 @@
   "auftrag_id": "auf-20260909-85",
   "art": "multipass",
   "worker": "local",
-  "rang": 4,
+  "rang": 5,
   "erstellt": "2026-09-09T09:00:00Z",
   "params": {},
   "beschreibung": "Erreicht der Formbefund die Bauwerksmaske? Ein Multipass ueber dieselbe 4771-Knoten-Datei, und vier Zahlen aus dem Bericht.",

@@ -10,7 +10,7 @@
     "hinweis": "Keine Geometrie noetig."
   },
   "worker": "local",
-  "rang": 3,
+  "rang": 4,
   "art": "frage",
   "auflagen": {
     "leistungsgrenze_w": 400,
