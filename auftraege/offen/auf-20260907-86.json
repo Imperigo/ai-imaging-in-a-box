@@ -1,0 +1,39 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260907-86",
+  "art": "frage",
+  "worker": "local",
+  "rang": 2,
+  "erstellt": "2026-09-07T11:00:00Z",
+  "beschreibung": "Der echte Serverlauf der sieben KosmoPrepare-Werkzeuge. Drueben ist nur gegen einen GEMOCKTEN Transport belegt, dass sie aufrufbar sind; ob echte Antworten unseres Servers ankommen, ist auf KEINER der beiden Seiten gemessen. Zwei Stufen: unsere Seite ueber einen echten stdio-Draht (geht sicher), und der ganze Weg durch KosmoOrbit (darf scheitern, dann bitte sagen warum).",
+  "anweisung": "=== DER ECHTE SERVERLAUF DER SIEBEN PREPARE-WERKZEUGE ===\n\nWORUM ES GEHT, IN DREI SAETZEN\n\nDer KosmoOrbit-UI-Worker hat am 03.09.2026 gemeldet, dass alle sieben\nKosmoPrepare-Werkzeuge in der Systemschale verdrahtet sind. In derselben\nAntwort steht die Einschraenkung, um die es hier geht:\n\n    \"Der einzige Beleg im Repo dafuer, dass die sieben 'echt aufgerufen'\n     wurden, laeuft gegen einen GEMOCKTEN Transport, keinen echten\n     KosmoPrepare-Serveraufruf.\"\n\nUnd auf die Frage, ob echte Antworten unseres Servers drueben ankommen,\nantwortet er: \"WISSEN WIR NICHT.\" Damit ist \"erreichbar\" heute eine Aussage\nueber die VERDRAHTUNG, nicht ueber den LAUF. Auf keiner der beiden Seiten ist\ngemessen, ob die sieben Werkzeuge mit echten Antworten funktionieren.\n\nDieser Auftrag misst das. Er braucht eine Maschine, die BEIDE Seiten starten\nkann — darum die HomeStation und nicht die Wolke.\n\n\nWAS ZU TUN IST — ZWEI STUFEN, DIE ZWEITE DARF SCHEITERN\n\n--- M1: UNSERE SEITE UEBER EINEN ECHTEN DRAHT (das geht sicher) ---\n\nDer Werkzeugserver von KosmoPrepare spricht stdio, und es gibt eine fertige\nDraht-Pruefung dafuer. Sie startet den Server als Unterprozess und ruft jedes\nWerkzeug wirklich auf — kein Mock.\n\n    cd <KosmoPrepare>\n    <ein Python mit installiertem mcp<2> integrations/odysseus/wire_qa_kosmoprepare_mcp.py\n\nDas Paket `mcp` steht NICHT in requirements.txt. Ist es nirgends installiert:\nNICHT systemweit nachinstallieren — das braucht Owner-Go. Dann bitte einfach\nmelden \"mcp nicht vorhanden\", und M1 gilt als nicht durchgefuehrt. Eine\nInstallation ist NICHT Teil dieses Auftrags.\n\nWICHTIG zur Fassung: der Schwester-Server in KosmoPublish ist gegen die\nmcp-1.x-API geschrieben und bricht unter 2.x schon beim Import. Fuer den\nPrepare-Server ist das hier nicht nachgemessen — faellt er mit einem\nAttributeError oder ImportError, ist DAS der Befund, und er gehoert gemeldet\nstatt umgangen.\n\n--- M2: DER GANZE WEG, DURCH KOSMOORBIT (das darf scheitern) ---\n\nDieselben sieben Werkzeuge, aber aufgerufen wie ein Nutzer sie aufruft: aus\ndem Kosmo-Chat heraus, mit dem echten Transport statt dem Mock. Wenn sich\nKosmoOrbit an dieser Maschine auf den laufenden KosmoPrepare-Server richten\nlaesst, dann bitte je Werkzeug EINEN Aufruf und die Antwort ansehen.\n\nGeht das nicht — weil KosmoOrbit hier nicht laeuft, weil der Transport nicht\numstellbar ist, weil etwas anderes im Weg steht —, dann ist \"geht nicht, weil\n…\" die richtige und vollstaendige Antwort. Sie ist mehr wert als ein Versuch,\nder etwas anderes misst als den echten Weg. NICHTS in KosmoOrbit umbauen.\n\n\nWAS ICH NICHT WILL\n\n* Keine Installation, kein systemweiter Eingriff, keine Konfigurationsaenderung\n  an KosmoOrbit.\n* Keine Aenderung an Code in KosmoPublish oder KosmoPrepare.\n* Keine Kunden-, Buero- oder Wettbewerbsnamen in der Antwort. Die sieben\n  Werkzeuge rechnen mit Adressen und Parzellen — bitte nur mit erfundenen\n  Eingaben aufrufen, oder die Eingabe in der Antwort weglassen.\n* Keine geratenen Antworten. \"Weiss ich nicht\" ist eine gute Antwort; die\n  Gegenseite hat sie auf dieselbe Frage gegeben, und sie war brauchbarer als\n  eine Vermutung.\n\nWARUM DAS WICHTIG IST\n\nSieben Werkzeuge dieser Lane sind seit dem 02.09.2026 in der Systemschale\nverdrahtet. Wenn sie mit echten Antworten nicht funktionieren, ist die Arbeit\ngebaut und nicht eingebaut — und niemand wuesste es, weil beide Seiten\ndenselben blinden Fleck haben. Ein einziger echter Lauf beendet das.\n",
+  "params": {},
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Dieser Auftrag braucht keine Geometrie und keine GPU — er startet einen Werkzeugserver und ruft Funktionen auf. `synthetisch` steht auf true, weil die Pruefung eine Geometriequelle verlangt; `erzeugen_mit` bleibt null, statt eine Erzeugung zu behaupten, die nicht stattfindet."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Fuer DIESEN Auftrag ist die Auflage formal: er rechnet nichts auf der GPU.",
+    "hinweise": [
+      "NICHTS installieren — auch nicht `mcp`. Fehlt es, ist das die Antwort auf M1.",
+      "Keinen Code in KosmoPublish oder KosmoPrepare aendern.",
+      "Nichts an KosmoOrbit umkonfigurieren. M2 darf mit 'geht nicht, weil …' enden.",
+      "Keine Kunden-, Buero- oder Wettbewerbsnamen in der Antwort; nur erfundene Eingaben.",
+      "Nicht raten. 'Weiss ich nicht' ist eine vollstaendige Antwort."
+    ]
+  },
+  "rueckgabe": [
+    "M1a Laeuft `wire_qa_kosmoprepare_mcp.py` durch? PASS/FAIL und die Zeile, die das Werkzeug selbst ausgibt (bei KosmoPublish lautet sie 'Tools real beruehrt: N/N'). Falls `mcp` fehlt: genau das melden.",
+    "M1b Falls es FAILT: die erste Fehlermeldung im Wortlaut. Besonders ein ImportError oder AttributeError beim Serverstart ist ein Befund — der Schwester-Server in KosmoPublish braucht mcp<2, fuer diesen ist es ungemessen.",
+    "M1c Welche mcp-Fassung war installiert (`pip show mcp` oder `python -c \"import mcp,sys;print(mcp.__version__)\"`)?",
+    "M2a Laesst sich KosmoOrbit an dieser Maschine auf den echten KosmoPrepare-Server richten — ja/nein, und wenn nein: warum nicht?",
+    "M2b Falls ja: je Werkzeug eine Zeile — kam eine Antwort an, und war sie die unseres Servers oder die des Mocks? Woran hast du das erkannt?",
+    "M3 Eine Zeile, die ich nicht erfragt habe, aber wissen sollte. Die Gegenseite hat bei derselben Frage von sich aus ein Risiko genannt (die sieben reisen an jedem Stationsfilter vorbei mit), und das war der nuetzlichste Teil ihrer Antwort."
+  ]
+}
