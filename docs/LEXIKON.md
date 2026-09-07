@@ -3127,6 +3127,20 @@ sondern verlorene Rechenzeit.*
 *Weil der Verlauf nicht gleichmässig steigt, wird zwischen den gemessenen Stützstellen
 **nicht** gerechnet: Ein Zwischenwert sähe aus wie eine Messung und wäre eine Erfindung.*
 
+**Bauwerksbox (gegen Szenenbox)** — Zwei verschiedene Quader um dieselbe Szene. Die
+**Szenenbox** umschliesst *alles*, was in der Datei steht, die Geländeplatte eingeschlossen.
+Die **Bauwerksbox** umschliesst nur das, was gezeigt werden soll — das Gebäude.
+*Warum der Unterschied zählt:* Die Kamera rahmt nach einer der beiden. Nach der Szenenbox
+gerahmt hält sie den bestellten **Deckungsgrad** ein — und füllt ihn mit Gelände: Am
+26.08.2026 gemessen sank der Anteil des Bauwerks am Bild dadurch von 17,3 % auf 7,9 %, und
+im Beweisgang vom 09.09. schrumpfte es auf einen Streifen von 0,2795, wo 0,6985 bestellt
+waren. *Der Bericht beschreibt, was dasteht; die Kamera rahmt, was gezeigt werden soll —
+zwei Fragen, zwei Boxen.*
+*Woran erkannt wird, was Gelände ist:* an einer **Namensregel** (Wörter wie «Gelände»,
+«Terrain») und, seit dem 07.09.2026, ersatzweise an der **Form** — ein Körper, der flach
+und weit ist, ist Gelände, auch wenn er anders heisst. Die Namensregel ist auf einem
+verdeckten Namen blind; die Formregel nicht.
+
 **Füllgrad** — Welchen Anteil des Bildes das Bauwerk tatsächlich einnimmt. Zu
 unterscheiden vom **Deckungsgrad**, der sagt, welchen Anteil es einnehmen *soll*.
 *Gemessen wird er an der zugewandten Fassade, nicht in der Gebäudemitte — der Abstand
@@ -4410,6 +4424,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-09 | Ergaenzt aus dem Beweisgang: Bauwerksbox gegen Szenenbox. Der Begriff wurde zweimal benutzt und nie erklaert — und er ist der Unterschied zwischen «Deckungsgrad eingehalten» und «Deckungsgrad vom Gelaende eingehalten» |
 | 2026-09-09 | Ergaenzt aus dem Beweisgang (Sitzung 14): Nullanker, Startwertstreuung, Beweisgang, Kontrollbild. **Nullanker stand seit dem 24.08.2026 im Text und war nie erklaert** — eine Definition, die einen unerklaerten Begriff voraussetzt, ist genau der Fall, den die Arbeitsregel verbietet |
 | 2026-09-09 | Ergaenzt: **Vorschrift ohne Vergabestelle**. Anlass sind zwei Kollisionen an einem Abend: Eine fremde Lane nahm erst einen belegten Rang, dann Rang UND Laufnummer, und beide Male wurde main rot. Der Waechter verlangte eine lueckenlose Reihe und sagte niemandem, welche Zahl frei ist — die Abhilfe ist keine strengere Vorschrift, sondern eine Vergabestelle |
 | 2026-09-09 | Ergaenzt: **Flaechenbeherrschte Aufnahme** und **Vorpruefung (gegen tragende Messung)**. Anlass ist der Verdacht gegen die frontale Innenansicht, der seit dem 22.08. ungemessen im Plan stand: Frontal liegen 57-79 % des Bildes auf EINER Tiefenebene, ueber Eck 0,5 % — und ohne uebergebene Brennweite traegt die Karte des groesseren Raums einen einzigen Wert. Das zweite Wort trennt, was diese Messung leisten kann (ausschliessen) von dem, was sie nicht kann (zusagen) |
