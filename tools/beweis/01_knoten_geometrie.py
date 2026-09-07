@@ -23,9 +23,12 @@ Woran man es im Bild sieht
   ``06_torwaechter_georef-versatz_*.png`` — drei ECHTE ``torwaechter.torwaechter()``-
   Urteile über drei Varianten derselben gemessenen bbox (unverändert / ×1000 /
   +LV95-Versatz). Grün = annehmen, Rot = ablehnen_massstab; ein blaues Feld am
-  rechten Rand markiert ``empfiehlt_neuzentrierung``. Die drei Bilder unterscheiden
-  sich in Farbe UND Balkenlänge (Balkenlänge ist log10 der grössten Kante in Metern,
-  weil Faktor 1000 sonst nicht auf dieselbe Leinwand passt) — und der genaue
+  rechten Rand markiert ``empfiehlt_neuzentrierung``. Balkenlänge ist log10 der
+  grössten Kante in Metern (weil Faktor 1000 sonst nicht auf dieselbe Leinwand passt).
+  04 und 06 haben DIESELBE grösste Kante (ein XY-Versatz ändert keine Kantenlänge) —
+  sie sind darum gleich lang und beide grün; einzig 06 trägt zusätzlich das blaue
+  Neuzentrierungs-Feld, das 04 fehlt. 05 unterscheidet sich von beiden in Farbe UND
+  Balkenlänge (Rot, deutlich länger: log10 der ×1000 grösseren Kante). Der genaue
   Zahlenwert steht im Dateinamen, nicht im Bild (Regel 2: keine Bitmap-Schrift).
 
 Braucht KEIN Blender und KEIN GPU
@@ -85,7 +88,17 @@ def _dunkler(farbe, faktor: float = 0.6):
 def _rechteck(px: list, breite: int, hoehe: int, x0: float, y0: float, x1: float,
               y1: float, farbe, *, rahmen=True) -> None:
     """Füllt ein Rechteck, mit optionalem dunklerem 1px-Rahmen (Kanten bleiben sichtbar,
-    wenn zwei gleichfarbige Knoten aneinanderstossen — z.B. vier Wände)."""
+    wenn zwei gleichfarbige Knoten aneinanderstossen — z.B. vier Wände).
+
+    GEFUNDEN BEIM GEGENPRÜFEN (kein Mess-, sondern ein Rasterfehler): Eine dünne
+    Geländeplatte (0,05 m) landet bei diesem Massstab nach dem Runden bei genau 1 Pixel
+    Höhe. Ein 1px-Rahmen oben UND unten trifft dann dieselbe Zeile — die Füllfarbe
+    verschwindet vollständig hinter der (dunkleren) Rahmenfarbe, und das echte Braun wäre
+    im Bild nicht mehr von einer zufälligen dunklen Linie zu unterscheiden. Der Rahmen
+    wird darum je Achse nur gezeichnet, wenn danach mindestens eine Zeile/Spalte
+    Füllfarbe übrig bleibt — die Box selbst bleibt exakt die gemessene, nur ihr
+    Rahmen wird bei einem entarteten 1-2px-Streifen ausgelassen.
+    """
     xa, xb = sorted((max(0, int(round(x0))), min(breite, int(round(x1)))))
     ya, yb = sorted((max(0, int(round(y0))), min(hoehe, int(round(y1)))))
     if xa >= xb or ya >= yb:
@@ -95,12 +108,14 @@ def _rechteck(px: list, breite: int, hoehe: int, x0: float, y0: float, x1: float
             px[y * breite + x] = farbe
     if rahmen:
         rand = _dunkler(farbe)
-        for x in range(xa, xb):
-            px[ya * breite + x] = rand
-            px[(yb - 1) * breite + x] = rand
-        for y in range(ya, yb):
-            px[y * breite + xa] = rand
-            px[y * breite + (xb - 1)] = rand
+        if yb - ya >= 3:
+            for x in range(xa, xb):
+                px[ya * breite + x] = rand
+                px[(yb - 1) * breite + x] = rand
+        if xb - xa >= 3:
+            for y in range(ya, yb):
+                px[y * breite + xa] = rand
+                px[y * breite + (xb - 1)] = rand
 
 
 # ----------------------------------------------------------------------------------

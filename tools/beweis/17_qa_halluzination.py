@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""BEWEIS 17 — Die vier Halluzinationsfälle H1–H4 mit bekannter Wahrheit: ρ über der
-Maske und die Tiefenkante an der Maskengrenze fragen zwei verschiedene Dinge, und keines
-der beiden Masse beantwortet allein, ob das gezeigte Bauwerk das entworfene ist.
+"""BEWEIS 17 — Die Halluzinationsfälle H1–H4 mit bekannter Wahrheit: ρ über der Maske und
+die Tiefenkante an der Maskengrenze sind zwei Fragen, nicht eine — ρ ist exakt blind für
+eine Kubatur, die die richtigen Wände enthält, die Kante exakt blind für falsche Tiefen
+hinter dem richtigen Umriss. Zusammen decken sie alle Fälle, einzeln keiner von beiden.
 
 Was bewiesen wird
 -----------------
@@ -9,14 +10,19 @@ Die Halluzinationsfälle aus ``docs/HALLUZINATION_2026-08-21.md`` und
 ``docs/GEOM_IOU_HALLUZINATION_2026-08-21.md`` — dort am Gerät mit Blender und dem
 Tiefenschätzer gemessen — werden hier als Soll/Ist-Paare mit **bekannter Wahrheit**
 nachgebaut. Soll-Karte und Maske stammen in ALLEN Fällen vom unverstellten Bauwerk;
-geändert wird ausschliesslich, was im Bild steht (so hat es ``auf-20260821-25``
-verlangt):
+geändert wird ausschliesslich, was im Bild steht (so hat es ``auf-20260821-25`` verlangt):
 
     perfekt   das entworfene Bauwerk, unverstellt — die Nullprobe (ρ muss 1.000 geben)
     H1        Bauwerk ganz weg, nur Gelände: das leere Grundstück
     H2        Bauwerk 20 m versetzt — ausserhalb der Maske, im Bild noch sichtbar
-    H3        andere Kubatur am richtigen Ort (doppelte Höhe, halber Grundriss)
+    H3        andere Kubatur am richtigen Ort: DOPPELTE HÖHE, gleicher Grundriss — die
+              Variante, die ``auf-25`` selbst vorschlägt («etwa doppelte Höhe»)
     H4        dasselbe Bauwerk, um 90° gedreht, am richtigen Ort
+    H5        ZUSATZ, KONSTRUIERT, KEINE SZENE: Umriss richtig, Tiefen innerhalb der
+              Maske nah↔fern gespiegelt (der Fall «umgekehrt» aus Beweis 15). Er steht
+              hier, weil keiner der vier Szenenfälle die Grenze richtig zeichnet und
+              innen falsch ordnet — und das ist genau der Fall, für den die Kante blind
+              sein muss. Ohne ihn wäre die Blindheit der Kante behauptet, nicht gemessen.
     rauschen  weisses Rauschen als Ist-Karte (``bildschreiben.kontrollwerte``), drei
               Startwerte — der Rauschboden, gegen den alles gehalten wird
 
@@ -26,7 +32,7 @@ Je Fall werden DREI Masse aus ``aiimaging.geometrie_qa`` gerechnet, auf denselbe
               Fragt: sind die Tiefen INNERHALB des Umrisses richtig gestaffelt?
     Kante     ``kante_an_maskengrenze``: Median innen minus Median aussen am Randband,
               geteilt durch die Spanne der Ist-Karte. Fragt: steht AN der Maskengrenze
-              ein Tiefensprung — steht dort überhaupt etwas?
+              ein Tiefensprung — endet dort etwas?
     Anteil    ``anteil_grenze_mit_kante``: wieviel der Grenze eine der stärksten 5 %
               Kanten trägt. Das zweite Bein des Paartests seit dem 22.08.2026; hier
               mitgeführt, in der Kreuztabelle stehen nur die beiden ersten.
@@ -36,55 +42,72 @@ Je Fall werden DREI Masse aus ``aiimaging.geometrie_qa`` gerechnet, auf denselbe
 ``(wert − rauschen) / (perfekt − rauschen)`` — 1 heisst «wie das perfekte Bild», 0 heisst
 «wie Rauschen». Beide Anker werden IN DIESEM LAUF gemessen. Ein Mass fängt einen Fall,
 wenn ihm höchstens ein Zehntel des Signals bleibt: Der Fall liegt dann praktisch auf dem
-Rauschboden, und genau so haben die Gerätemessungen «gefangen» gelesen (H1 bei ρ lag
-ÜBER dem Rauschboden → nicht gefangen; H1 bei der Kante lag AUF ihm → gefangen).
+Rauschboden — so haben auch die Gerätemessungen «gefangen» gelesen.
+
+Zwei Dinge sind nicht nur messbar, sondern aus der Geometrie beweisbar, und der Lauf
+prüft sie mit Rückgabe 1, wenn sie nicht eintreten:
+
+* **H3 hat ρ = 1.000.** Ein Bauwerk gleicher Grundfläche und doppelter Höhe zeigt der
+  Kamera auf Augenhöhe dieselben zwei Wände; innerhalb der Maske ist die Ist-Karte mit
+  der Soll-Karte identisch. ρ kann diesen Fall nicht sehen — nicht «fast nicht», sondern
+  exakt nicht. Die Kante sieht ihn: Am oberen Maskenrand läuft die Wand weiter, dort
+  steht kein Sprung mehr.
+* **H5 hat ρ = −1.000.** Die Spiegelung kehrt jede Rangfolge um. Die Kante sieht davon
+  nichts: Der Umriss ist unverändert, und die gespiegelten Randpunkte springen zum
+  Hintergrund mindestens so hoch wie zuvor.
 
 Woran man es im Bild sieht
 --------------------------
 Keine Schrift im Bild. Alle Karten sind 192×108 (16:9, wie die Kamera), dreifach
 vergrössert, nächster Nachbar. Tiefe: nah = hell (``bildschreiben.normalisiere_tiefe``),
-Hintergrund schwarz. Jede Zahl im Dateinamen ist ein Rückgabewert dieses Laufs;
-negative Zahlen stehen als ``minus0.123``.
+Hintergrund schwarz. Jede Zahl im Dateinamen ist ein Rückgabewert dieses Laufs; negative
+Zahlen stehen als ``minus0.123``.
 
-    01  Material-ID-Pass des unverstellten Bauwerks: Rot Gelände, Blau Wände, Grün Dach,
-        Himmel schwarz — Kennfarben der Runner-Palette, daraus liest ``maske`` die Maske.
-    02  Die Maske: Weiss = Bauwerk. ``n`` und ``anteil`` im Dateinamen.
-    03  Die Soll-Karte (mit Gelände). Man sieht den Eckblick: die nahe Gebäudekante hell,
-        beide Fassaden laufen nach aussen dunkler; das Gelände ist die Rampe darunter.
-    je Fall  ``NN_<fall>_ist_….png`` — die Ist-Karte des Falls, ganzes Bild. Bei H1 ist
-        an der Stelle des Bauwerks Gelände und Himmel; bei H2 steht rechts ein kleineres
-        Bauwerk; bei H3 ein schmaler, hoher Turm; bei H4 der Baukörper quer.
+    01  Material-ID-Pass des unverstellten Bauwerks: Rot Gelände, Blau Wände, Himmel
+        schwarz — Kennfarben der Runner-Palette, daraus liest ``maske`` die Maske. Das
+        Dach (Grün in der Tabelle) ist von Augenhöhe aus nicht zu sehen.
+    02  Die Maske: Weiss = Bauwerk. ``n`` und ``anteil`` im Dateinamen — rund 17 %, wie
+        in der Referenzmessung (17.02 %).
+    03  Die Soll-Karte (mit Gelände). Der Eckblick: die nahe Gebäudekante hell, beide
+        Fassaden laufen nach aussen dunkler; das Gelände ist die Rampe darunter.
+    je Fall  ``NN_<fall>_ist_….png`` — die Ist-Karte des Falls, ganzes Bild. H1: an der
+        Stelle des Bauwerks Gelände und Himmel. H2: rechts ein kleineres Bauwerk. H3:
+        derselbe Baukörper, doppelt so hoch. H4: der Baukörper quer. H5: innen gespiegelt,
+        die nahe Kante dunkel, die Aussenkanten hell.
         ``NN_<fall>_nebeneinander_….png`` — vier Kacheln: Soll | Ist | Ist-nur-Maske |
-        Randband. Die Randband-Kachel ist die Kante, Punkt für Punkt: Die Maske grau,
-        das innere Randband (``geometrie_qa._randpunkte``) eingefärbt nach dem Sprung zum
-        nächsten Nachbarn ausserhalb — Orange = Sprung wie im perfekten Bild, dunkles
-        Rot = kein Sprung. Bei H1/H2 ist das ganze Band rot: Nichts steht an der Grenze.
-        Bei H3/H4 ist es rot, wo die falsche Kubatur den Umriss nicht ausfüllt, und
-        orange, wo sie ihn zufällig trifft. Darunter zwei Streifen — oben ρ, unten
-        Kante: Grün = das Mass lässt den Fall DURCH (Restsignal über einem Zehntel), Rot
-        = das Mass fängt ihn. Beim perfekten Bild sind beide grün, beim Rauschen beide
-        rot — das sind die Anker.
-    Balken  ``NN_balken_….png`` — drei Tafeln übereinander (ρ, Kante, Anteil), je sechs
-        Gruppen von links: perfekt, H1, H2, H3, H4, Rauschen. Blau = ρ (Achse −1…1, rote
-        Linie bei ``PAAR_RHO_SCHWELLE`` 0.80 — die einzige nicht hier gemessene Zahl im
-        Bild), Orange = Kante, Grün = Anteil (graue Linie: der Zufallswert des Masses).
-        Der graue Balken je Gruppe ist der Rauschanker derselben Tafel. Man sieht die
-        Kreuztabelle schon hier: H1/H2 haben bei ρ noch einen Balken, bei der Kante
-        keinen; H3/H4 umgekehrt oder beides — was davon zutrifft, hat dieser Lauf
-        gemessen, nicht dieses Skript entschieden.
-    Kreuz   ``NN_kreuztabelle_….png`` — DAS Ergebnis. Vier Zeilen (H1–H4, von oben),
-        Zeilenkopf ist die Ist-Karte des Falls (nur Maske). Zwei Spalten: links ρ
-        (Spaltenkopf: die Maske gefüllt, blau — ρ misst das Innere), rechts Kante
+        Randband. Die Randband-Kachel ist die Kante, Punkt für Punkt: die Maske grau, das
+        innere Randband (``geometrie_qa._randpunkte``) eingefärbt nach dem Sprung zum
+        fernsten Nachbarn ausserhalb — Orange = Sprung wie im perfekten Bild, dunkles Rot
+        = kein Sprung. H1/H2: das ganze Band rot. H3: die Seiten orange, der obere Rand
+        rot — dort geht die Wand weiter. H4: rot, wo der gedrehte Körper den Umriss nicht
+        füllt. H5: orange wie perfekt. Darunter zwei Streifen — oben ρ, unten Kante: Grün
+        = das Mass lässt den Fall DURCH (Restsignal über einem Zehntel), Rot = das Mass
+        fängt ihn. Beim perfekten Bild beide grün, beim Rauschen beide rot: die Anker.
+    Balken  ``NN_balken_….png`` — drei Tafeln übereinander (ρ, Kante, Anteil), je sieben
+        Gruppen von links: perfekt, H1, H2, H3, H4, H5, Rauschen. Blau = ρ (Achse −1…1,
+        rote Linie bei ``PAAR_RHO_SCHWELLE`` 0.80 — die einzige nicht hier gemessene Zahl
+        im Bild), Orange = Kante, Grün = Anteil (graue Linie: der Zufallswert des Masses
+        beim perfekten Bild). Der graue Balken je Gruppe ist der Rauschanker derselben
+        Tafel. ρ-Werte aller Gruppen im Dateinamen; Kante und Anteil stehen je Fall im
+        Dateinamen des Nebeneinander-Bilds.
+    Kreuz   ``NN_kreuztabelle_….png`` — DAS Ergebnis. Zeilen H1–H4 von oben, nach einer
+        Lücke H5. Zeilenkopf ist die Ist-Karte des Falls (nur Maske). Zwei Spalten: links
+        ρ (Spaltenkopf: die Maske gefüllt, blau — ρ misst das Innere), rechts Kante
         (Spaltenkopf: nur das Randband, orange — die Kante misst die Grenze). Jede Zelle
         trägt einen Balken mit dem Restsignal von 0 (Rauschen, links) bis 1 (perfekt,
-        rechts), die Zehntel-Marke als dünne Linie. Zelle DUNKEL AUSGEFÜLLT = das Mass
-        fängt den Fall; Zelle HELL MIT ROTEM RAHMEN = das Mass verfehlt ihn. Die
-        Behauptung «jedes Mass fängt genau die Fälle, die das andere verfehlt» ist dann
-        wahr, wenn kein Paar von Zellen in einer Zeile beide hell ist — und das Muster
-        über Kreuz liegt. Der Dateiname sagt für jedes Mass, welche Fälle es fängt.
+        rechts); dünne Marken bei 0, einem Zehntel und 1. Zelle DUNKEL AUSGEFÜLLT = das
+        Mass fängt den Fall; Zelle HELL MIT ROTEM RAHMEN = das Mass verfehlt ihn. Der
+        Dateiname sagt für jedes Mass, welche Fälle es fängt, und welche Fälle BEIDE
+        verfehlen — die Zahl, die zählt, ist die letzte: keiner.
+    Blick   ``NN_blicklagen_….png`` — warum das Gerät etwas anderes gesehen hat, siehe
+        unten. Vier Gruppen: Frontale ``s`` mit Shift, ``s`` gekippt, Eckblick ``sSE``
+        mit Shift, ``sSE`` gekippt — alle vier von ``kameras.kamerasatz`` gestellt. Je
+        Gruppe zwei Balken: Hellblau = ρ einer reinen Rampe von unten (nah) nach oben
+        (fern) über dem Umriss — die Karte, die der Schätzer in Boden und Himmel legt;
+        Blau = ρ des leeren Grundstücks (H1) mit idealem Schätzer. Achse −1…1.
 
-Was «idealer Schätzer» heisst — und was das Gerät anders sieht
----------------------------------------------------------------
+Was «idealer Schätzer» heisst — und warum die Kreuztabelle hier anders liegt als am Gerät
+-----------------------------------------------------------------------------------------
 Im Betrieb kommt die Ist-Karte aus einem monokularen Tiefenschätzer (Gewichte, GPU); der
 läuft hier nicht. Die Ist-Karte ist darum die **Wahrheit des gezeigten Bildes**: dieselbe
 Lochkamera, dieselbe Tiefe in Metern, nur die Szene ist die halluzinierte. Der Himmel
@@ -92,30 +115,37 @@ bekommt eine endliche Zahl jenseits des fernsten Bodenpunkts (``HIMMEL_FAKTOR``)
 Schätzer dort keine Marke schreibt, sondern eine Zahl — und weil ``kante_an_maskengrenze``
 eine Hintergrundmarke ausdrücklich zurückweist (sie sättigt das Mass bei ±1).
 
-Was der ideale Schätzer NICHT hat, ist die Eigenheit des echten: Der legt über Boden und
-Himmel eine glatte Rampe, und die korrelierte in der Gerätemessung mit der Fassade des
-fehlenden Bauwerks (H1 bei ρ: −0.686 gegen Rauschboden −0.521, ``auf-25``). Diese Zahl
-ist eine Aussage über den Schätzer und hier nicht reproduzierbar — ob ρ das leere
-Grundstück durchlässt, entscheidet hier allein die Geometrie: das Gelände unter dem Umriss
-ist eine Rampe von unten nach oben, und die Fassaden des Eckblicks staffeln sich von der
-nahen Kante nach beiden Seiten. Was daraus wird, misst der Lauf. Die Gerätezahlen stehen
-in den beiden Dokumenten oben und werden hier nicht abgeschrieben.
+Am Gerät (``auf-25``, ``auf-27``) lag H1 bei ρ ÜBER dem Rauschboden — ρ hat das leere
+Grundstück durchgelassen —, und H3 fiel bei ρ durch. Hier ist es umgekehrt, und der Grund
+ist gemessen, nicht vermutet (Bild «Blicklagen»): Der Schätzer legt über Boden und Himmel
+eine Rampe von unten nach oben. Ob die mit der Fassade korreliert, entscheidet die
+Blicklage. **Frontal und gekippt** staffelt sich die Wand längs der geneigten Achse von
+unten nach oben — die Rampe passt, ρ ist blind. **Im Eckblick mit waagrechter Achse**
+(der Produktivweg seit dem 23.08.2026) staffeln sich die Fassaden von der nahen Kante nach
+beiden Seiten — die Rampe passt nicht, ρ fängt das leere Grundstück. Das ist derselbe
+Nebenbefund wie in ``docs/KAMERANEIGUNG_2026-08-22.md`` («frontal misst ρ den Schätzer»),
+nur von der anderen Seite: Die Blindheit von ρ für Abwesenheit ist eine Eigenschaft der
+Blicklage plus Schätzer, nicht der Metrik. Was die Metrik STRUKTURELL nicht sehen kann,
+ist H3 — und das gilt in jeder Blicklage. Welche Gerätezahlen sich mit einem echten
+Schätzer im Eckblick ergeben, ist damit nicht gemessen; es ist ein Messauftrag, kein Teil
+dieses Beweises.
 
 Die Kamera ist die des Produkts: ``kameras.kamerasatz`` stellt sie (Eckblick ``sSE``,
 Augenhöhe 1,70 m, Shift-Modus, 35 mm) und dieses Skript bildet sie als Lochkamera nach —
 Sensorbreite 36 mm, Shift in Millimetern auf dem Sensor, Tiefe längs der Achse. Der
 Deckungsgrad steht auf 0.45 statt 0.70, damit neben der Maske Platz für ein um 20 m
 versetztes Bauwerk bleibt (H2 muss ausserhalb der Maske und im Bild sein — beides wird
-gezählt und steht im Dateinamen). Die Szene ist synthetisch (Regel 3): eine Geländeplatte
-und ein Quader 12 × 8 × 6 m. Alles läuft ohne Gerät, ohne Blender, ohne numpy (Regel 4).
+gezählt, steht im Dateinamen, und der Lauf bricht ab, wenn es nicht stimmt). Die Szene ist
+synthetisch (Regel 3): eine Geländeplatte und ein Quader 12 × 8 × 6 m. Alles läuft ohne
+Gerät, ohne Blender, ohne numpy (Regel 4).
 
 Aufruf:
     python3 tools/beweis/17_qa_halluzination.py [ziel_verzeichnis]
 
-Ohne Argument schreibt es nach ``build/beweis/17_qa_halluzination/``. Rückgabe 1, wenn
-die Nullprobe (perfekt) nicht ρ = 1.000 liefert, die Maske nicht entsteht oder H2 die
-Maske berührt — jeweils ein Befund gegen Metrik, Maske oder Szenenaufbau, nicht gegen
-den Beweis.
+Ohne Argument schreibt es nach ``build/beweis/17_qa_halluzination/``. Rückgabe 1, wenn die
+Nullprobe (perfekt) nicht ρ = 1.000 liefert, H3 nicht exakt ρ = 1.000 oder H5 nicht exakt
+ρ = −1.000, die Maske nicht entsteht oder H2 die Maske berührt — jeweils ein Befund gegen
+Metrik, Maske oder Szenenaufbau, nicht gegen den Beweis.
 """
 from __future__ import annotations
 
@@ -153,17 +183,16 @@ HINTERGRUND_M = 1.0e10
 KUERZEL = "sSE"
 DECKUNGSGRAD = 0.45
 SENSOR_BREITE_MM = kameras.SENSOR_BREITE_MM
+#: Die vier Blicklagen der Nebenmessung: Frontale und Eckblick, je Shift und gekippt.
+BLICKLAGEN = (("s", kameras.MODUS_SHIFT), ("s", kameras.MODUS_GEKIPPT),
+              ("sSE", kameras.MODUS_SHIFT), ("sSE", kameras.MODUS_GEKIPPT))
 
 #: H2: Versatz 20 m. Richtung in der Bildebene: ``H2_QUER`` nach rechts (Kameraachse ×
-#: Aufwärts), ``H2_LAENGS`` von der Kamera weg — zusammen 20 m. Der Anteil quer ist so
-#: gewählt, dass das Bauwerk neben der Maske und noch im Bild steht; ob das gelungen
-#: ist, ZÄHLT das Skript und bricht ab, wenn nicht.
-# 24,0 m und nicht 20,0: Bei 20 m lagen noch 54 Bauwerkspunkte INNERHALB der Maske, und
-# der Selbstcheck weiter unten hat den Lauf dafuer angehalten — richtig so, denn H2 soll
-# den Fall «ausserhalb der Maske, im Bild noch sichtbar» stellen. 24 m ist der kleinste
-# der geprueften Werte, der ihn wirklich stellt; ab 36 m faellt das Bauwerk ganz aus dem
-# Bild und der Fall waere ein anderer.
-H2_VERSATZ_M = 24.0
+#: Aufwärts), der Rest von der Kamera weg — zusammen 20 m. Der Queranteil ist so
+#: gewählt, dass das Bauwerk neben der Maske und noch im Bild steht (bei 0.83 schnitt es
+#: die Maske um 54 Punkte, bei 1.0 läuft die Hälfte aus dem Bild); ob es gelungen ist,
+#: ZÄHLT das Skript und bricht ab, wenn nicht.
+H2_VERSATZ_M = 20.0
 H2_QUER = 0.90
 
 #: Die Regel, bevor gemessen wird: Ein Mass fängt einen Fall, wenn dem Fall höchstens
@@ -187,6 +216,7 @@ FARBE_ACHSE = (120, 120, 120)
 FARBE_MASKE_AN = (235, 235, 235)
 FARBE_MASKE_GRAU = (90, 90, 90)
 FARBE_RHO = (50, 110, 210)
+FARBE_RHO_HELL = (150, 190, 235)
 FARBE_KANTE = (230, 120, 40)
 FARBE_ANTEIL = (60, 150, 70)
 FARBE_RAUSCHEN = (170, 170, 170)
@@ -224,10 +254,11 @@ def _norm(a):
 class Lochkamera:
     """Die Kamera aus ``kameras.kamerasatz`` als Strahlerzeuger.
 
-    Bildpunkt → Richtung im Weltsystem. Die Achse ist waagrecht (Shift-Modus); der Shift
-    verschiebt das Bildfenster auf dem Sensor nach oben, in Millimetern wie ``shift_mm``.
-    Die Tiefe eines Treffers ist der Abstand längs der Achse (``t · brennweite``), nicht
-    die Strahllänge — eine Fläche parallel zum Sensor hat dann überall dieselbe Tiefe.
+    Bildpunkt → Richtung im Weltsystem. Die Achse zeigt auf ``blick_auf`` (im Shift-Modus
+    waagrecht, gekippt geneigt); der Shift verschiebt das Bildfenster auf dem Sensor nach
+    oben, in Millimetern wie ``shift_mm``. Die Tiefe eines Treffers ist der Abstand längs
+    der Achse (``t · brennweite``), nicht die Strahllänge — eine Fläche parallel zum
+    Sensor hat dann überall dieselbe Tiefe.
     """
 
     def __init__(self, kamera: dict):
@@ -244,6 +275,16 @@ class Lochkamera:
         ys = self.sensor_h / 2.0 - (py + 0.5) / HOEHE * self.sensor_h + self.shift
         f, r, u = self.f, self.r, self.u
         return tuple(f[k] * self.brennweite + r[k] * xs + u[k] * ys for k in range(3))
+
+
+def kamera_fuer(kuerzel: str, modus: str) -> tuple[Lochkamera, dict]:
+    lx, ly, lz = BAU_MASSE
+    bbox = [[-lx / 2, -ly / 2, 0.0], [lx / 2, ly / 2, lz]]
+    satz = kameras.kamerasatz(bbox, gelaende_z=0.0, deckungsgrad=DECKUNGSGRAD,
+                              seitenverhaeltnis=SEITENVERHAELTNIS, kuerzel=(kuerzel,),
+                              modus=modus)
+    k = satz["kameras"][0]
+    return Lochkamera(k), k
 
 
 # ----------------------------------------------------------------------------------
@@ -324,6 +365,19 @@ def raster(kamera: Lochkamera, koerper: list[dict]):
 def als_schaetzung(tiefe, himmel_m: float) -> list[float]:
     """Die Wahrheit des gezeigten Bildes als Schätzkarte: Himmel wird zur Zahl."""
     return [himmel_m if t >= geometrie_qa.HINTERGRUND_SCHWELLE_M else t for t in tiefe]
+
+
+def gespiegelt(ist, m) -> list[float]:
+    """H5: innerhalb der Maske nah ↔ fern gespiegelt, alles andere unverändert."""
+    werte = [ist[k] for k in range(len(ist)) if m[k]]
+    lo, hi = min(werte), max(werte)
+    return [lo + hi - ist[k] if m[k] else ist[k] for k in range(len(ist))]
+
+
+def rampe_unten_nah() -> list[float]:
+    """Die Karte, die ein Schätzer in Boden und Himmel legt: von unten (nah) nach oben
+    (fern). Ein winziger x-Anteil bricht die Bindungen je Zeile (Beweis 15)."""
+    return [float(HOEHE - (i // BREITE)) + (i % BREITE) * 1e-4 for i in range(BREITE * HOEHE)]
 
 
 # ----------------------------------------------------------------------------------
@@ -434,29 +488,30 @@ def nebeneinander(kacheln, gefangen_liste, *, streifen: int = 14):
 
 
 # ----------------------------------------------------------------------------------
-# Balken — drei Tafeln, nur Zahlen aus diesem Lauf
+# Balken — nur Zahlen aus diesem Lauf
 # ----------------------------------------------------------------------------------
 
-def tafel(px, breite, hoehe, y_oben, y_unten, werte, farbe, *, unten, oben,
-          linien, anker=None, rand: int = 40) -> None:
+def tafel(px, breite, hoehe, y_oben, y_unten, gruppen, *, unten, oben, linien,
+          rand: int = 40) -> None:
+    """Gruppen von (Wert, Farbe) auf einer Achse von ``unten`` bis ``oben``."""
     def y_von(v):
         return y_unten - (v - unten) / (oben - unten) * (y_unten - y_oben)
 
     for wert, lf in linien:
         _rechteck(px, breite, hoehe, rand, y_von(wert), breite - rand, y_von(wert) + 1, lf)
-    n = len(werte)
+    n = len(gruppen)
     gb = (breite - 2 * rand) / n
-    for g, v in enumerate(werte):
-        x0 = rand + g * gb + gb * 0.2
-        x1 = rand + g * gb + gb * 0.55
-        if anker is not None:
-            _rechteck(px, breite, hoehe, x1 + 2, y_von(anker), x1 + gb * 0.25, y_von(0.0),
-                      FARBE_RAUSCHEN)
-        if v is not None:
-            _rechteck(px, breite, hoehe, x0, y_von(v), x1, y_von(0.0), farbe)
+    for g, gruppe in enumerate(gruppen):
+        bb = gb / (len(gruppe) + 1.5)
+        x_start = rand + g * gb + bb * 0.75
+        for k, (v, farbe) in enumerate(gruppe):
+            if v is None:
+                continue
+            x0 = x_start + k * bb
+            _rechteck(px, breite, hoehe, x0 + 2, y_von(v), x0 + bb - 2, y_von(0.0), farbe)
 
 
-def balken(messungen: list[dict], rausch_mittel: dict, *, breite: int = 900, hoehe: int = 720):
+def balken(messungen: list[dict], rausch_mittel: dict, *, breite: int = 960, hoehe: int = 720):
     px = [FARBE_LEINWAND] * (breite * hoehe)
     tafeln = (
         ("rho", FARBE_RHO, -1.0, 1.0,
@@ -473,10 +528,18 @@ def balken(messungen: list[dict], rausch_mittel: dict, *, breite: int = 900, hoe
         if unten is None:
             spitze = max(abs(v) for v in werte if v is not None) or 1.0
             unten, oben = -0.25 * spitze * 1.1, spitze * 1.1
+        gruppen = [[(v, farbe), (rausch_mittel[feld], FARBE_RAUSCHEN)] for v in werte]
         y0 = 20 + k * h_tafel + 10
         y1 = 20 + (k + 1) * h_tafel - 10
-        tafel(px, breite, hoehe, y0, y1, werte, farbe, unten=unten, oben=oben,
-              linien=linien, anker=rausch_mittel[feld])
+        tafel(px, breite, hoehe, y0, y1, gruppen, unten=unten, oben=oben, linien=linien)
+    return px, breite, hoehe
+
+
+def blicklagen_bild(werte: list[tuple[float, float]], *, breite: int = 760, hoehe: int = 360):
+    px = [FARBE_LEINWAND] * (breite * hoehe)
+    gruppen = [[(r_rampe, FARBE_RHO_HELL), (r_h1, FARBE_RHO)] for r_rampe, r_h1 in werte]
+    tafel(px, breite, hoehe, 30, hoehe - 30, gruppen, unten=-1.0, oben=1.0,
+          linien=[(0.0, FARBE_ACHSE), (1.0, FARBE_ACHSE), (-1.0, FARBE_ACHSE)])
     return px, breite, hoehe
 
 
@@ -484,21 +547,24 @@ def balken(messungen: list[dict], rausch_mittel: dict, *, breite: int = 900, hoe
 # Die Kreuztabelle
 # ----------------------------------------------------------------------------------
 
-def kreuztabelle(zeilen: list[tuple[list, dict]], m, *, zelle_b: int = 300):
-    """``zeilen``: je Fall (Ist-Kachel nur Maske in Originalgrösse, Restsignal je Mass).
-    Kopfzeile: links leer, dann die beiden Piktogramme; jede Zeile: Ist-Kachel, dann
-    zwei Zellen. Zellen tragen den Restsignalbalken von 0 (links) bis 1 (rechts)."""
+def kreuztabelle(zeilen: list[tuple[list, dict, bool]], m, *, zelle_b: int = 300):
+    """``zeilen``: je Fall (Ist-Kachel nur Maske in Originalgrösse, Restsignal je Mass,
+    Lücke davor). Kopfzeile: links leer, dann die beiden Piktogramme; jede Zeile:
+    Ist-Kachel, dann zwei Zellen mit dem Restsignalbalken von 0 (links) bis 1 (rechts)."""
     kopf_b, kopf_h = BREITE, HOEHE
     zelle_h = HOEHE
-    n = len(zeilen)
+    luecke = 3 * FUGE
     breite = kopf_b + FUGE + 2 * (zelle_b + FUGE)
-    hoehe = kopf_h + FUGE + n * (zelle_h + FUGE)
+    hoehe = (kopf_h + FUGE + len(zeilen) * (zelle_h + FUGE)
+             + sum(luecke for _, _, l in zeilen if l))
     px = [FARBE_LEINWAND] * (breite * hoehe)
     _einblenden(px, breite, kachel_pikto_maske(m, False), BREITE, HOEHE, kopf_b + FUGE, 0)
     _einblenden(px, breite, kachel_pikto_maske(m, True), BREITE, HOEHE,
                 kopf_b + FUGE + zelle_b + FUGE, 0)
-    for z, (kachel, reste) in enumerate(zeilen):
-        y0 = kopf_h + FUGE + z * (zelle_h + FUGE)
+    y0 = kopf_h + FUGE
+    for kachel, reste, mit_luecke in zeilen:
+        if mit_luecke:
+            y0 += luecke
         _einblenden(px, breite, kachel, BREITE, HOEHE, 0, y0)
         for s, feld in enumerate(("rho", "kante")):
             x0 = kopf_b + FUGE + s * (zelle_b + FUGE)
@@ -517,8 +583,8 @@ def kreuztabelle(zeilen: list[tuple[list, dict]], m, *, zelle_b: int = 300):
                 _rechteck(px, breite, hoehe, x0 + 4, y0 + 4, x0 + zelle_b - 4,
                           y0 + zelle_h - 4, FARBE_ZELLE_VERFEHLT)
                 balkenfarbe, achse = FARBE_RHO if feld == "rho" else FARBE_KANTE, FARBE_ACHSE
-            # Skala: 0 bei einem Achtel der Zelle, 1 bei sieben Achteln; darunter wird
-            # abgeschnitten, damit ein negatives Restsignal nicht aus der Zelle läuft.
+            # Skala: 0 bei einem Achtel der Zelle, 1 bei sieben Achteln; darüber hinaus
+            # wird abgeschnitten, damit ein Restsignal ausserhalb 0…1 in der Zelle bleibt.
             xa, xb = x0 + zelle_b / 8.0, x0 + zelle_b * 7.0 / 8.0
             ym = y0 + zelle_h / 2.0
             _rechteck(px, breite, hoehe, xa, ym - 1, xb, ym + 1, achse)
@@ -528,6 +594,7 @@ def kreuztabelle(zeilen: list[tuple[list, dict]], m, *, zelle_b: int = 300):
             r = max(-0.125, min(1.125, rest))
             xr = xa + r * (xb - xa)
             _rechteck(px, breite, hoehe, min(xa, xr), ym - 9, max(xa, xr), ym + 9, balkenfarbe)
+        y0 += zelle_h + FUGE
     return px, breite, hoehe
 
 
@@ -562,12 +629,8 @@ def main() -> int:
         return pfad
 
     # ── Kamera aus dem Produktivweg ──
+    kamera, k = kamera_fuer(KUERZEL, kameras.MODUS_SHIFT)
     lx, ly, lz = BAU_MASSE
-    bbox = [[-lx / 2, -ly / 2, 0.0], [lx / 2, ly / 2, lz]]
-    satz = kameras.kamerasatz(bbox, gelaende_z=0.0, deckungsgrad=DECKUNGSGRAD,
-                              seitenverhaeltnis=SEITENVERHAELTNIS, kuerzel=(KUERZEL,))
-    k = satz["kameras"][0]
-    kamera = Lochkamera(k)
 
     # ── Die Wahrheit: Soll-Karte, Material-ID-Pass, Maske ──
     bau = quader((0.0, 0.0), BAU_MASSE)
@@ -586,7 +649,7 @@ def main() -> int:
     boden = [t for t, f in zip(soll, farben) if f == FARBE_GELAENDE]
     himmel_m = HIMMEL_FAKTOR * max(boden)
 
-    schreibe(f"material-id-pass_gelaende-rot_wand-blau_dach-gruen_kamera-{KUERZEL}_"
+    schreibe(f"material-id-pass_gelaende-rot_wand-blau_kamera-{KUERZEL}_"
              f"abstand-{k['abstand_m']:.1f}m_shift-{k['shift_mm']:.2f}mm_"
              f"fuellgrad-{k['fuellgrad']:.2f}", vergroessere(farben), KACHEL_B, KACHEL_H)
     schreibe(f"maske_bauwerk-weiss_n-{ergebnis['n_bauwerk']}_anteil-"
@@ -598,23 +661,22 @@ def main() -> int:
              kachel_soll, KACHEL_B, KACHEL_H)
 
     # ── Die Fälle: nur das Bild ändert sich ──
-    # H2: 20 m in der Bildebene, Anteil quer und längs (Docstring).
     quer, laengs = kamera.r, kamera.f
     a_q = H2_QUER * H2_VERSATZ_M
     a_l = math.sqrt(H2_VERSATZ_M ** 2 - a_q ** 2)
     h2_mitte = (quer[0] * a_q + laengs[0] * a_l, quer[1] * a_q + laengs[1] * a_l)
-    faelle = [
+    szenen = [
         ("perfekt", "unverstellt", [bau]),
         ("H1", "bauwerk-ganz-weg", []),
         ("H2", f"bauwerk-{H2_VERSATZ_M:.0f}m-versetzt", [quader(h2_mitte, BAU_MASSE)]),
-        ("H3", "andere-kubatur_doppelte-hoehe-halber-grundriss",
-         [quader((0.0, 0.0), (lx / 2, ly / 2, lz * 2))]),
+        ("H3", "andere-kubatur_doppelte-hoehe-gleicher-grundriss",
+         [quader((0.0, 0.0), (lx, ly, 2 * lz))]),
         ("H4", "um-90-grad-gedreht", [quader((0.0, 0.0), BAU_MASSE, 90.0)]),
     ]
 
     messungen: list[dict] = []
     ist_karten: list[list[float]] = []
-    for name, beschreibung, koerper in faelle:
+    for name, beschreibung, koerper in szenen:
         tiefe, _, punkte = raster(kamera, koerper)
         ist = als_schaetzung(tiefe, himmel_m)
         e = messe(soll, ist, m)
@@ -623,24 +685,36 @@ def main() -> int:
         e["n_koerper_in_maske"] = sum(1 for i in punkte if m[i])
         messungen.append(e)
         ist_karten.append(ist)
+    # H5 — konstruiert aus der perfekten Ist-Karte, keine Szene (Docstring).
+    ist_h5 = gespiegelt(ist_karten[0], m)
+    e = messe(soll, ist_h5, m)
+    e["name"], e["beschreibung"] = "H5", "konstruiert_umriss-richtig_innen-gespiegelt"
+    messungen.append(e)
+    ist_karten.append(ist_h5)
 
     rauschen: list[dict] = []
     for seed in RAUSCH_SEEDS:
         ist = bildschreiben.kontrollwerte("rauschen", BREITE, HOEHE, seed=seed)
         e = messe(soll, ist, m)
+        e["name"] = "rauschen"
         rauschen.append(e)
         if seed == RAUSCH_SEEDS[0]:
             ist_rauschen = ist
     rausch_mittel = {feld: sum(e[feld] for e in rauschen) / len(rauschen)
                      for feld in ("rho", "kante", "anteil")}
     perfekt = messungen[0]
+    nach_name = {e["name"]: e for e in messungen}
 
-    # Nullprobe und Aufbauprüfung, bevor irgendein Bild diese Zahlen trägt.
-    if perfekt["rho"] is None or abs(perfekt["rho"] - 1.0) > 1e-9:
-        print(f"NULLPROBE VERFEHLT: perfekt gibt rho={perfekt['rho']!r} statt 1.000 — "
-              f"Befund gegen die Metrik, nicht gegen die Szene.", file=sys.stderr)
-        return 1
-    h2 = messungen[2]
+    # Nullprobe, die beiden beweisbaren Zahlen und der Aufbau — geprüft, bevor irgendein
+    # Bild diese Zahlen trägt.
+    for name, soll_rho in (("perfekt", 1.0), ("H3", 1.0), ("H5", -1.0)):
+        wert = nach_name[name]["rho"]
+        if wert is None or abs(wert - soll_rho) > 1e-9:
+            print(f"BEWEISBARE ZAHL VERFEHLT: {name} gibt rho={wert!r} statt "
+                  f"{soll_rho:+.3f} — Befund gegen die Metrik oder den Aufbau.",
+                  file=sys.stderr)
+            return 1
+    h2 = nach_name["H2"]
     if h2["n_koerper_in_maske"] != 0 or h2["n_koerper"] == 0:
         print(f"H2 FALSCH AUFGEBAUT: {h2['n_koerper_in_maske']} Bauwerkspunkte in der "
               f"Maske, {h2['n_koerper']} im Bild — verlangt sind 0 und > 0.",
@@ -648,24 +722,21 @@ def main() -> int:
         return 1
     for e in messungen + rauschen:
         for w in e["warnungen"]:
-            print(f"WARNUNG {e.get('name', 'rauschen')}: {w}", file=sys.stderr)
+            print(f"WARNUNG {e['name']}: {w}", file=sys.stderr)
+
+    for e in messungen + rauschen:
+        e["rest"] = {f: restsignal(e[f], perfekt[f], rausch_mittel[f])
+                     for f in ("rho", "kante", "anteil")}
 
     # ── Bilder je Fall ──
-    for e, ist in zip(messungen, ist_karten):
-        e["rest"] = {f: restsignal(e[f], perfekt[f], rausch_mittel[f])
-                     for f in ("rho", "kante", "anteil")}
-    for e in rauschen:
-        e["rest"] = {f: restsignal(e[f], perfekt[f], rausch_mittel[f])
-                     for f in ("rho", "kante", "anteil")}
-
-    def bilder_fuer(name, beschreibung, e, ist, zusatz=""):
+    def bilder_fuer(e, ist, zusatz=""):
         k_ist = vergroessere(kachel_tiefe(ist))
         k_ist_m = vergroessere(kachel_tiefe(ist, m))
         k_rand = vergroessere(kachel_randband(ist, m, perfekt["kante"]))
-        schreibe(f"{name}_ist_{beschreibung}{zusatz}", k_ist, KACHEL_B, KACHEL_H)
+        schreibe(f"{e['name']}_ist_{e['beschreibung']}{zusatz}", k_ist, KACHEL_B, KACHEL_H)
         px, b, h = nebeneinander([kachel_soll, k_ist, k_ist_m, k_rand],
                                  [gefangen(e["rest"]["rho"]), gefangen(e["rest"]["kante"])])
-        schreibe(f"{name}_nebeneinander_soll-ist-istmaske-randband_rho-{_z(e['rho'])}_"
+        schreibe(f"{e['name']}_nebeneinander_soll-ist-istmaske-randband_rho-{_z(e['rho'])}_"
                  f"kante-{_z(e['kante'])}_anteil-{_z(e['anteil'])}_rest-rho-"
                  f"{_z(e['rest']['rho'])}_rest-kante-{_z(e['rest']['kante'])}", px, b, h)
 
@@ -673,35 +744,57 @@ def main() -> int:
         zusatz = ""
         if e["name"] == "H2":
             zusatz = f"_in-maske-{e['n_koerper_in_maske']}px_im-bild-{e['n_koerper']}px"
-        bilder_fuer(e["name"], e["beschreibung"], e, ist, zusatz)
-    bilder_fuer("rauschen", f"weisses-rauschen_seed-{RAUSCH_SEEDS[0]}", rauschen[0],
-                ist_rauschen)
+        bilder_fuer(e, ist, zusatz)
+    rauschen[0]["beschreibung"] = f"weisses-rauschen_seed-{RAUSCH_SEEDS[0]}"
+    bilder_fuer(rauschen[0], ist_rauschen)
 
     # ── Balken ──
     px, b, h = balken(messungen + [rauschen[0]], rausch_mittel)
-    # DER NAME BLEIBT UNTER 255 BYTE. Der erste Anlauf haengte rho UND Kantenanteil je
-    # Fall an und kam auf rund 290 Zeichen — das Dateisystem lehnt das ab, und der Beweis
-    # scheiterte an seinem eigenen Dateinamen. Hier stehen die rho-Werte; der
-    # Kantenanteil ist in der Kreuztabelle darunter ohnehin die zweite Spalte.
-    schreibe("balken_rho-blau_kante-orange_gruppen-perfekt-H1-H2-H3-H4-rauschen_"
-             + "_".join(f"{e['name']}-rho-{_z(e['rho'])}" for e in messungen)
-             + f"_rauschboden-rho-{_z(rausch_mittel['rho'])}"
-             f"_schwelle-{geometrie_qa.PAAR_RHO_SCHWELLE:.2f}",
+    schreibe("balken_rho-blau_kante-orange_anteil-gruen_rauschanker-grau_gruppen-"
+             + "-".join(e["name"] for e in messungen) + "-rauschen_rho-"
+             + "-".join(_z(e["rho"]) for e in messungen)
+             + f"_rauschboden-rho-{_z(rausch_mittel['rho'])}-kante-"
+             f"{_z(rausch_mittel['kante'])}_schwelle-{geometrie_qa.PAAR_RHO_SCHWELLE:.2f}",
              px, b, h)
 
     # ── Kreuztabelle ──
-    zeilen = [(kachel_tiefe(ist, m), e["rest"]) for e, ist in zip(messungen[1:], ist_karten[1:])]
+    zeilen = [(kachel_tiefe(ist, m), e["rest"], e["name"] == "H5")
+              for e, ist in zip(messungen[1:], ist_karten[1:])]
     px, b, h = kreuztabelle(zeilen, m)
-    faengt = {}
-    for feld in ("rho", "kante"):
-        faengt[feld] = [e["name"] for e in messungen[1:] if gefangen(e["rest"][feld])]
+    faengt = {feld: [e["name"] for e in messungen[1:] if gefangen(e["rest"][feld])]
+              for feld in ("rho", "kante")}
     verfehlt_beide = [e["name"] for e in messungen[1:]
                       if not gefangen(e["rest"]["rho"]) and not gefangen(e["rest"]["kante"])]
-    schreibe(f"kreuztabelle_zeilen-H1-H2-H3-H4_spalten-rho-kante_dunkel-gefangen_"
+    schreibe(f"kreuztabelle_zeilen-H1-H2-H3-H4-luecke-H5_spalten-rho-kante_dunkel-gefangen_"
              f"rho-faengt-{'-'.join(faengt['rho']) or 'keinen'}_"
              f"kante-faengt-{'-'.join(faengt['kante']) or 'keinen'}_"
              f"beide-verfehlen-{'-'.join(verfehlt_beide) or 'keinen'}_"
              f"regel-rest-bis-{GEFANGEN_REST:.2f}", px, b, h)
+
+    # ── Blicklagen: warum ρ am Gerät das leere Grundstück durchliess ──
+    rampe = rampe_unten_nah()
+    werte: list[tuple[float, float]] = []
+    neigungen: list[float] = []
+    for kuerzel, modus in BLICKLAGEN:
+        kam2, k2 = kamera_fuer(kuerzel, modus)
+        soll2, farben2, _ = raster(kam2, [bau])
+        # Maske hier direkt aus den Kennfarben — dieselbe Zuordnung, die die Tabelle
+        # oben für `maske` beschreibt; der Dateiweg ist mit Bild 02 belegt.
+        m2 = [f in (FARBE_WAND, FARBE_DACH) for f in farben2]
+        boden2 = [t for t, f in zip(soll2, farben2) if f == FARBE_GELAENDE]
+        h1_2 = als_schaetzung(raster(kam2, [])[0], HIMMEL_FAKTOR * max(boden2))
+        r_rampe = geometrie_qa.rho_ueber_maske(
+            soll2, rampe, m2, polaritaet=geometrie_qa.POLARITAET_TIEFE)["gerichtet"]
+        r_h1 = geometrie_qa.rho_ueber_maske(
+            soll2, h1_2, m2, polaritaet=geometrie_qa.POLARITAET_TIEFE)["gerichtet"]
+        werte.append((r_rampe, r_h1))
+        neigungen.append(k2["neigung_grad"])
+    px, b, h = blicklagen_bild(werte)
+    schreibe("blicklagen_rampe-hellblau_H1-blau_gruppen-"
+             + "-".join(f"{kz}-{mo}" for kz, mo in BLICKLAGEN)
+             + "_neigung-" + "-".join(f"{n:.1f}" for n in neigungen)
+             + "_rho-rampe-" + "-".join(_z(r) for r, _ in werte)
+             + "_rho-H1-" + "-".join(_z(r) for _, r in werte), px, b, h)
 
     for p in geschrieben:
         print(p)
