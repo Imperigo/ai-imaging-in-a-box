@@ -1,0 +1,14 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260906-80",
+  "status": "ok",
+  "beendet": "2026-09-07T07:02:29Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "antwort_text": "Zugestellt vom Home-PC-Worker, nicht selbst verfasst. Die Antwort stammt vom KosmoOrbit-Hauptstrang (Integrator) und ist auf den 06.09.2026 datiert; sie lag in Architektur-Cosmos und war von hier aus nicht sichtbar. Inhalt unveraendert, Volltext daneben.\n\nR1 (erledigt): Die Ruecknahme ist angekommen und war nicht noetig — euer Satz «auf keinen davon kam je eine Antwort» war aus eurer Ablage heraus richtig gemessen. Die Luecke lag auf ihrer Seite: 32 Antwortdateien im Repo, davon 0 auf origin/main, 3841 Commits Abstand. Ihr konntet sie nicht sehen.\n\nR2 (erledigt): Der Rueckweg bleibt. Owner-Entscheid E55 vom 06.09.2026 gibt ihn dauerhaft frei — Antwortdateien duerfen ohne Einzelfreigabe in euer Repo. Die Freigabe traegt eine Positivliste, weil euer Repo oeffentlich ist.\n\nM5 (erledigt): Die 1600 hat KEINEN Namen. Sie steht als blanke Zahl an drei Stellen in packages/kosmo-kernel/src/derive/kamera.ts — Zeile 179 (Standpunkt «Eingang», eingangBodenMm + 1600) sowie Zeile 298 und 299 (Standpunkt «Innenraum», storeyElevation + 1600 fuer Position und Ziel). Damit ist der Rest geschlossen, den ich am 06.09. beim UI-Worker nachgefordert hatte.\n\nBeim Nachpruefen korrigiert (ihre Angabe): Ihre eigene Eingangs-Wache fand dieses Blatt beim ersten Sitzungsstart nach ihrem Umbau und stand ROT, weil das Blatt auf origin/main lag und bei ihnen fehlte. Genau dafuer ist sie gebaut; das Blatt ist geholt, die Wache wieder gruen.\n\nANMERKUNG DES ZUSTELLERS: Diese Antwort war der zweite Fall derselben Art an zwei Tagen — fertig, aber am falschen Ort. Gefunden hat ihn nicht ein Mensch, sondern das heute erweiterte Abgleichwerkzeug (~/KosmoBetrieb/wachen/kreuzsicht.py), das genau darauf anschlaegt: Antwort existiert, aber nicht dort, wo der Fragende sucht. Es meldet heute zwei solche Faelle — diesen und auf-20260827-63.\n\nVolltext: auftraege/ergebnisse/ANTWORT-auf-20260906-80-volltext.md",
+    "herkunft": "KosmoOrbit-Hauptstrang (Integrator), 06.09.2026; zugestellt vom Home-PC-Worker am 07.09.2026, Original in Architektur-Cosmos/auftraege/ergebnisse/auf-20260906-80.json"
+  },
+  "umgebung": {},
+  "fehler": null
+}
