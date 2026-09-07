@@ -1,9 +1,9 @@
 {
   "schema": "aiimaging.homeworker-auftrag/v1",
-  "auftrag_id": "auf-20260909-88",
+  "auftrag_id": "auf-20260909-89",
   "art": "render",
   "worker": "local",
-  "rang": 7,
+  "rang": 8,
   "erstellt": "2026-09-09T15:00:00Z",
   "params": {},
   "beschreibung": "Traegt eine frontale Innenansicht ein Geometrie-Urteil? Die Vorpruefung an der Soll-Karte ist hier gemessen (frontal 57-79 % auf EINER Ebene, ueber Eck 0,5 %); rho braucht den Schaetzer und damit euch.",

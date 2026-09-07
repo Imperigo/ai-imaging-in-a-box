@@ -2309,7 +2309,7 @@ die Recherche gegen einen bekannten Stand geprüft wird und nicht gegen ein Bauc
       Gegenargument ist nicht falsch (Boden und Seitenwände tragen 1,19 m bzw. 2,29 m
       Spanne bei statt 0,000 m), es reicht nur nicht.
       **Der Punkt bleibt offen und ist enger geworden:** Gemessen ist die *Soll*-Karte
-      ohne Schätzer — ob ρ dort wirklich nichts misst, fragt `auf-20260909-88` am Gerät.
+      ohne Schätzer — ob ρ dort wirklich nichts misst, fragt `auf-20260909-89` am Gerät.
       Und die Testräume haben **keine Decke**; genau darauf stützt sich das
       Gegenargument, und mit dieser Geometrie ist es nicht prüfbar.
 - [x] **`auf-29`: Die Kameraneigung stört den Schätzer NICHT.** Eckansicht, drei
@@ -4252,7 +4252,7 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
 > Eck 0,5 % und 0,6 %. Und ohne übergebene Brennweite stellt der Runner 50 mm — dann trägt
 > die Tiefenkarte des grösseren Raums **einen einzigen Wert**: Spanne 0,000 m, eine Stufe,
 > 100 % des Bildes.
-> **Offen:** Ob ρ über der geschätzten Karte dasselbe sagt (`auf-20260909-88`), und der
+> **Offen:** Ob ρ über der geschätzten Karte dasselbe sagt (`auf-20260909-89`), und der
 > Deckenfall, den die Testgeometrie nicht stellen kann.
 
 - [x] **Die Brennweite der Innenkamera erreichte den Runner nicht — zum vierten Mal
@@ -4277,14 +4277,14 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
       Der Anteil wird am **ganzen Bild** gerechnet und nicht an der Geometrie — *ein
       Blick, der halb aus Himmel besteht, ist nicht dadurch besser, dass die andere
       Hälfte eine einzige Wand ist.*
-- [ ] **Ob ρ dasselbe sagt, ist ungemessen** (`auf-20260909-88`). Alles hier steht auf der
+- [ ] **Ob ρ dasselbe sagt, ist ungemessen** (`auf-20260909-89`). Alles hier steht auf der
       **Soll**-Karte; ρ läuft über die geschätzte. Die Hausregel vom 24.08. gilt gegen uns:
       Renders und Nullanker können ein Mass widerlegen, aber nicht tragen — drei
       Vorschläge dieses Projekts sind genau an dieser Stelle gefallen.
 - [ ] **Der Deckenfall ist mit dieser Geometrie nicht zu stellen.** `--hochbau` und
       `--raeume` schliessen einander aus, mit Begründung, und die zwei Testräume haben
       vier Wände und eine Bodenplatte. Das Gegenargument im Plan nennt die Decke
-      ausdrücklich; es ist damit **nicht widerlegt, sondern ungeprüft**. `auf-88` fragt
+      ausdrücklich; es ist damit **nicht widerlegt, sondern ungeprüft**. `auf-89` fragt
       als V5, ob drüben eine Datei mit Räumen *und* Decke liegt.
 - [x] **Der Homeworker konnte einen Innenstandpunkt gar nicht entgegennehmen.** `auge`
       und `blick_auf` standen nicht in `_KAMERA_PARAMS`; ein Auftrag mit ihnen wäre als
@@ -4292,7 +4292,7 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
       sie seit jeher kennt und der Runner sie dem Richtungskürzel **vorgehen** lässt.
       `raumkamera` rechnet die Standpunkte seit dem 22.08.; **niemand konnte sie
       hinüberreichen.**
-      *Aufgefallen beim Schreiben von `auf-88`, also bevor der Auftrag hinausging* — am
+      *Aufgefallen beim Schreiben von `auf-89`, also bevor der Auftrag hinausging* — am
       28.08. sind acht Aufträge unausführbar abgelegt worden, weil dieselbe Frage nicht
       gestellt wurde. Zwei Proben, eine Mutationsprobe.
 - [ ] **Und die Innenansicht wird auf dem Produktivweg weiterhin nicht ABGELEITET.**
@@ -4333,10 +4333,17 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
       Gezählt wird über `offen/` **und** `ergebnisse/` und **datumsübergreifend**: Eine
       beantwortete Nummer ist vergeben, und `auf-20260823-38` gegen `auf-20260824-38` war
       am 25.08. schon einmal derselbe Fall.
-- [ ] **Sie hilft nur dem, der sie benutzt.** Eine Lane, die ihre Nummer weiterhin von
-      Hand schreibt, kollidiert wie bisher — der Wächter meldet es dann wieder erst beim
-      Zusammenführen. Ob daraus eine Absprache zwischen den Lanes werden muss, ist eine
-      Frage an den Owner und keine Messung.
+- [ ] **Sie hilft nur dem, der sie benutzt — und das ist am selben Abend belegt worden.**
+      Eine Stunde nach dem Bau kam `auf-20260907-88` derselben fremden Lane: dieselbe
+      Laufnummer wie unserer, **und ein Rang, den ihr eigenes `auf-86` schon trug.**
+      *Das war der Fall, den Nachgeben nicht löst* — zwei Dateien **derselben** Lane
+      kollidieren miteinander, und keine Verschiebung unserer Dateien macht eine Reihe
+      mit einer Dublette lückenlos. Bewegt wurde darum genau eine fremde Datei, die
+      jüngere, auf den nächsten freien Rang.
+      **Dreimal an einem Abend, immer dieselbe Ursache:** Vier Lanes schreiben in eine
+      Warteschlange, und keine sieht die Zahlen der anderen, bevor sie pusht. Das ist eine
+      **Absprache und kein Code** — und sie gehört dem Owner. `auf-82` steht nach dem
+      dritten Mal auf Rang 5; am Morgen war sie auf 2.
 
 ---
 

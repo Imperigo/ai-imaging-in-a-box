@@ -71,6 +71,11 @@ def test_der_fall_vom_09_09_2026_liefert_88_und_nicht_87(tmp_path):
 
     Ein Bestand, in dem ``auf-20260907-87`` einer fremden Lane liegt, darf für uns
     **nicht** wieder 87 vergeben, auch nicht unter einem anderen Datum.
+
+    **Die Zahlen hier sind fest und folgen nicht dem echten Ordner.** Beim dritten
+    Zusammenstoss desselben Abends hat ein zu breiter Rename sie mitgezogen und diese
+    Probe rot gemacht — *eine Probe, die den historischen Fall festhält, darf sich nicht
+    mit dem heutigen Bestand ändern, sonst hält sie ihn nicht mehr fest.*
     """
     _ablage(tmp_path, {"auf-20260907-86": _satz("auf-20260907-86"),
                        "auf-20260907-87": _satz("auf-20260907-87")})
