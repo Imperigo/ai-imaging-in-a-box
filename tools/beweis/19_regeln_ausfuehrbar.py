@@ -163,6 +163,12 @@ def pruefe_regel1() -> dict:
         "n_gewaehlt": len(gewaehlt),
         "n_ausgeschlossen": len(namen) - len(gewaehlt),
         "flux_namen": flux_namen,
+        # Immer leer an dieser Stelle — der Zweig oben hätte sonst schon geworfen. Trotzdem
+        # aus der echten Messung zurückgegeben statt im Dateinamen als Literal "False"
+        # hingeschrieben: Ein Dateiname, der eine feste Zeichenkette trägt, wo eine
+        # gemessene stehen sollte, ist genau die Art hartcodierter Behauptung, die dieser
+        # Beweis bei jedem anderen Wert verbietet.
+        "flux_in_waehle": flux_in_waehle,
         "zeilen": zeilen,
     }
 
@@ -436,7 +442,7 @@ def main() -> int:
     name = (f"01_regel1_lizenz-ampel_registry-{befund1['n_registry']}"
             f"_gewaehlt-{befund1['n_gewaehlt']}"
             f"_ausgeschlossen-{befund1['n_ausgeschlossen']}"
-            f"_flux-dev-in-waehle-False.png")
+            f"_flux-dev-in-waehle-{bool(befund1['flux_in_waehle'])}.png")
     pfad = ziel / name
     bildschreiben.schreibe_farb_png(pfad, px, b, h)
     geschrieben.append(pfad)

@@ -101,7 +101,7 @@ waagrechte Achse: Bildbreite 0 … 1, feine Striche je 0,1, langer Strich bei 0,
                     deren Farben — das Bindeglied zwischen den Rahmen und der Rampe
     Keine Linie     zwischen den Punkten. Absichtlich.
 
-Man sieht: links vier Punkte praktisch bei null (drei davon ohne Score), dann der Sprung
+Man sieht: links drei Punkte praktisch bei null (zwei davon ohne Score), dann der Sprung
 zwischen 0,50 und 0,55 (das Knie), darüber ein stetiger Anstieg; die Schwelle wird
 zwischen dem grauen und dem roten Strich überschritten; der orange Strich steht rechts
 davon mit sichtbarem Abstand zur Schwelle. Genau das ist der Grund für 0,70.

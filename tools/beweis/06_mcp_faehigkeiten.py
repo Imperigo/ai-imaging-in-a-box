@@ -40,7 +40,9 @@ Woran man es im Bild sieht
 Drei Felder übereinander, durch schwarze Fugen getrennt, Hintergrund helles Grau:
 
   Oben     Vier Balken, einer je zugesagtem Werkzeug (Reihenfolge = sortierte Namen,
-           steht im Dateinamen). Balkenhöhe = Anzahl Ausgabefelder seines
+           links nach rechts — steht als eigene Zeile in der Konsolenausgabe, nicht
+           im Dateinamen: vier volle Werkzeugnamen wären dort unlesbar lang).
+           Balkenhöhe = Anzahl Ausgabefelder seines
            ``outputSchema`` (echt gezählt, kein Schätzwert — 6/6/9/8). Goldener Rahmen
            um den Balken des Werkzeugs, das diesen Beweis gerade beantwortet hat
            (``aiimaging_capabilities`` selbst). Grüner Streifen darunter über die
@@ -273,10 +275,12 @@ def main() -> int:
     geschrieben: list[Path] = []
 
     antwort = rufe_capabilities_echt()
+    werkzeuge_sortiert = sorted(antwort["werkzeuge"])
     print(f"Echt aufgerufen: mcp__aiimaging__{WERKZEUG_FAEHIGKEITEN} -> "
           f"{len(antwort['werkzeuge'])} Werkzeuge, "
           f"Schwelle {antwort['geometrie_schwelle']}, "
           f"{len(antwort['vorbehalte'])} Vorbehalte")
+    print("Balkenreihenfolge oben (links nach rechts): " + ", ".join(werkzeuge_sortiert))
 
     feldzahlen = {name: len(WERKZEUGE[name].get("outputSchema", {}).get("properties", {}))
                   for name in antwort["werkzeuge"]}

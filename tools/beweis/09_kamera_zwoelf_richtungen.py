@@ -48,9 +48,18 @@ steht im Dateinamen als Meter je Bildpunkt, unten links liegt ein 10-m-Balken).
 Man sieht: zwölf Kreise auf einem Ring um das Bauwerk, alle Pfeile zeigen auf dessen
 Mitte, die frontalen sind seitlich leicht versetzt, und die diagonalen sitzen nicht auf
 45°, sondern um 35° aus der Frontalen gedreht — je zwei nahe beieinander, wie es der
-Bias vorgibt. Die Abstände sind nicht gleich: Aus der Schmalseite steht die Kamera
-näher als von der Breitseite, weil der Bildwinkel und nicht ein fester Radius den
-Abstand setzt.
+Bias vorgibt. Die Abstände sind nicht gleich: n und s (Blick auf die 12-m-Fassade)
+stehen näher als e und w (Blick auf die 9,5-m-Fassade) — **nicht**, weil die
+sichtbare Fassadenbreite es verlangt (bei diesem Hochbau ist bei allen zwölf Kameras
+``massgebend == "hoehe"``, die Höhe setzt den Abstand, nie die Breite), sondern wegen
+des Terms ``tiefe / 2`` in ``abstand_aus_bildwinkel``: Der Höhenbedarf gilt für die
+NAHE, dem Betrachter zugewandte Fassade, gemessen wird aber der Abstand zur
+Gebäude**mitte** — und die liegt um die halbe Gebäudetiefe hinter dieser Fassade.
+Diese Tiefe ist für n/s die schmale Gebäudeseite (9,5 m), für e/w die breite (12 m);
+je tiefer das Bauwerk in der jeweiligen Blickrichtung, desto weiter hinten die Mitte
+und desto grösser der gemeldete Abstand. Ein Bildwinkel und kein fester Radius setzt
+den Abstand — und welche Kamera dabei näher steht, entscheidet die Gebäudetiefe längs
+der Blickachse, nicht die im Bild sichtbare Fassadenbreite.
 
 ``02_kamera-n_…`` bis ``13_kamera-nNW_…png`` — je Richtung die Hüllbox, mit der
 Kamera dieser Richtung in die Bildebene projiziert (dieselbe Projektion wie in

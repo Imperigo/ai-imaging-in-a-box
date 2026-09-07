@@ -72,13 +72,17 @@ Alle Karten sind 96×96, viermal vergrössert (nächster Nachbar, nichts interpo
         bei 0.80 (``PAAR_RHO_SCHWELLE``, Konstante des Moduls — die einzige nicht in
         diesem Lauf gemessene Zahl im Bild). Negative Balken hängen unter die Nulllinie.
     Reihe   ``NN_reihe_versatz_…png`` — fünf Gruppen von links nach rechts, Versatz
-        0/2/4/8/16 px; je Gruppe Blau = ρ ganz, Dunkelblau = ρ Maske, Grau = Score ganz.
-        Die Reihe über der Maske fällt mit jedem Schritt, von 1 bis unter Null; ob die
-        über das ganze Bild das auch tut, steht im Dateinamen
-        (``monoton-ja``/``monoton-nein``) und ist gemessen. Sichtbar ist so oder so:
-        Über das ganze Bild bewegt sich ρ kaum vom Balkenrand weg — der Boden trägt es,
-        gleichgültig, wo das Bauwerk steht. Negative Zahlen stehen in Dateinamen als
-        ``minus0.607``, weil ein zweiter Bindestrich nicht lesbar wäre.
+        0/2/4/8/16 px; je Gruppe Blau = ρ ganz, Dunkelblau = ρ Maske, Grau = Score ganz,
+        Hellorange = ``geom_iou`` über der Maske. Die Reihe über der Maske fällt mit
+        jedem Schritt, von 1 bis unter Null; ob die über das ganze Bild das auch tut,
+        steht im Dateinamen (``monoton-ja``/``monoton-nein``) und ist gemessen. Sichtbar
+        ist so oder so: Über das ganze Bild bewegt sich ρ kaum vom Balkenrand weg — der
+        Boden trägt es, gleichgültig, wo das Bauwerk steht. Die Hellorange-Säule zeigt,
+        was der Abschnitt oben behauptet und die anderen drei Fälle nicht zeigen können,
+        weil dort konstruktionsbedingt immer 1.000 steht: Erst hier, wo das Bauwerk aus
+        seiner Maske herauswandert, fällt ``geom_iou`` über der Maske mit — von 1.000 auf
+        0.630 bei 16 px (die genauen Werte stehen im Dateinamen). Negative Zahlen stehen
+        in Dateinamen als ``minus0.607``, weil ein zweiter Bindestrich nicht lesbar wäre.
 
 Was ``geom_iou`` über der Maske bedeutet — und was nicht
 --------------------------------------------------------
@@ -542,7 +546,8 @@ def main() -> int:
         ist, _ = baue_szene(v)
         reihe.append(messe(soll, ist, m))
     gruppen = [[(e["rho_ganz"], FARBE_RHO_GANZ), (e["rho_maske"], FARBE_RHO_MASKE),
-                (e["score_ganz"], FARBE_SCORE)] for e in reihe]
+                (e["score_ganz"], FARBE_SCORE), (e["iou_maske"], FARBE_IOU_MASKE)]
+               for e in reihe]
     px, b, h = zeichne_gruppen(gruppen, schwelle=None)
     mono_maske = _monoton_fallend([e["rho_maske"] for e in reihe])
     mono_ganz = _monoton_fallend([e["rho_ganz"] for e in reihe])
@@ -550,7 +555,8 @@ def main() -> int:
              + "-".join(_z(e["rho_maske"]) for e in reihe)
              + f"_monoton-{'ja' if mono_maske else 'nein'}_rho-ganz-"
              + "-".join(_z(e["rho_ganz"]) for e in reihe)
-             + f"_monoton-{'ja' if mono_ganz else 'nein'}", px, b, h)
+             + f"_monoton-{'ja' if mono_ganz else 'nein'}_iou-maske-"
+             + "-".join(_z(e["iou_maske"]) for e in reihe), px, b, h)
 
     for p in geschrieben:
         print(p)

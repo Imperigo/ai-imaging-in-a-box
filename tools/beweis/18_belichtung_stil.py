@@ -50,26 +50,42 @@ Woran man es im Bild sieht
    das von ``GEERBTER_RAHMEN`` — Grün = bestanden ohne Befund, Gelb = Warnung, Rot =
    Fehler. Der Dateiname trägt beide Wörter ausgeschrieben.
 
-Der Punkt, an dem man es sieht: ``pruefe`` vergleicht mit einem STRIKTEN „grösser als" —
-ein Bild GENAU an einer Grenze besteht sie. Bei Tafel 04 (exakt 8 %, die alte
-``HIGHLIGHT_WARN_PCT``) ist der rechte (geerbte) Streifen darum noch GRÜN; erst Tafel 05
-(10 %, real gemessen darüber) zeigt Gelb — die alte Schwelle IST jetzt gerissen. Er
-bleibt aber bis zur letzten Tafel GELB, nie Rot, weil ``GEERBTER_RAHMEN.gemessen == ()``
-das Modul zwingt, jeden seiner Befunde als Warnung zu behandeln — selbst bei 30 %, fast
-dem Vierfachen seiner eigenen Zahl. Der linke (Hausstil-)Streifen bleibt aus demselben
-Grund bis Tafel 07 (exakt 21.4 %, die eigene gemessene Grenze) GRÜN und wird erst bei
-Tafel 08 (30 %, real darüber) ROT — die einzige Stelle im ganzen Bilderpaar, an der
-überhaupt ein Fehler entsteht, und sie entsteht an der gemessenen, nicht an der
-geerbten Zahl.
+Der Punkt, an dem man es sieht — und er ist genauer, als die erste Messung vermuten
+liess: ``pruefe`` prüft mehrere Felder gleichzeitig, und ``GEERBTER_RAHMEN`` bringt ZWEI
+ungemessene Schwellen ins Spiel, nicht nur eine. Seine ``streuung_min`` (0.10, geerbt aus
+dem alten ``LOW_CONTRAST_THRESHOLD``) reisst bereits bei den zwei DUNKELSTEN Tafeln (01,
+02 — 2 % und 5 %): Bei so wenig weissen Punkten ist das Bild zu gleichmässig,
+``belichtung.pruefe`` meldet ``flach`` — GELB, aber nicht wegen Ausgefressenheit, sondern
+wegen Kontrastarmut. Die Streuung wächst mit dem Lichteranteil; ab Tafel 03 (7.55 %)
+liegt sie über 0.10, und da der Lichteranteil selbst noch unter der 8-%-Grenze bleibt,
+sind Tafel 03 und 04 die einzigen zwei GRÜNEN Tafeln auf der geerbten Seite — ein kurzer
+Rückfall auf Grün, kein monotoner Anstieg. Erst ab Tafel 05 (10 %, real über der alten
+``HIGHLIGHT_WARN_PCT``) meldet ``zu-viel-ausgefressen``, und ab Tafel 07 (21.4 %)
+zusätzlich ``zu-hell`` (die geerbte ``TARGET_LUMA_MAX`` 0.65 reisst ebenfalls). GELB
+bleibt es von da an bis zur letzten Tafel — gleich WELCHER der drei Befunde gerade greift,
+denn ``GEERBTER_RAHMEN.gemessen == ()`` zwingt JEDEN seiner Befunde zur Warnung. Das ist
+die eigentliche Pointe, breiter als die einzelne Schwelle, um die es im Modulkopf zuerst
+geht: Ein Rahmen ohne eine einzige gemessene Zahl kann an KEINER seiner Kanten einen
+Fehler melden, gleich an welcher er reisst — nicht nur an der einen, über die dieses
+Skript eingangs spricht. Der linke (Hausstil-)Streifen bleibt aus demselben
+``gemessen``-Mechanismus, aber mit anderen (tatsächlich gemessenen) Zahlen bis Tafel 07
+(exakt 21.4 %, die eigene gemessene Grenze) GRÜN und wird erst bei Tafel 08 (30 %, real
+darüber) ROT — die einzige Stelle im ganzen Bilderpaar, an der überhaupt ein Fehler
+entsteht, und sie entsteht an der gemessenen, nicht an der geerbten Zahl.
 
 ``09_uebersicht_…png`` — dieselben acht Messungen als eine Tafel: der gemessene
 Lichteranteil steigt von links nach rechts, zwei waagrechte Linien markieren die beiden
-Schwellen (Magenta 0.08, Blau 0.214), und unter jeder Gruppe stehen zwei Punkte in
-Rahmenfarbe (links Hausstil, rechts Geerbt) auf der Höhe ihres jeweils gemessenen
-Anteils. Die rechten Punkte kreuzen die Magenta-Linie (0.08) ab der fünften Gruppe und
-bleiben danach gelb; die linken Punkte kreuzen die Blau-Linie (0.214) erst bei der
-letzten Gruppe und werden erst dort rot — dieselbe Auseinanderentwicklung wie in den
-Einzeltafeln, hier in einem Bild zusammengefasst.
+``hell_anteil_max``-Schwellen (Magenta 0.08, Blau 0.214), und unter jeder Gruppe stehen
+zwei Punkte in Urteilsfarbe (links Hausstil, rechts Geerbt) auf der Höhe des jeweils
+gemessenen Lichteranteils. Die rechten Punkte sind schon bei den ersten BEIDEN Gruppen
+gelb — weit UNTER der Magenta-Linie, denn dort schlägt nicht die Fläche an, sondern die
+Streuung (``streuung_min``, eine dritte, ebenfalls ungemessene Zahl des geerbten Rahmens):
+Die Farbe eines Punktes ist hier also ausdrücklich KEINE reine Funktion des Abstands zur
+gezeichneten Linie. Bei Gruppe 3 und 4 sind sie GRÜN (weder Streuung noch Fläche reisst),
+erst ab Gruppe 5 — jetzt tatsächlich über der Magenta-Linie — werden sie wieder, und
+diesmal bis zum Schluss durchgehend, gelb. Die linken Punkte kreuzen die Blau-Linie
+(0.214) erst bei der letzten Gruppe und werden erst dort rot — die einzige rote Stelle im
+ganzen Diagramm, und die einzige, die an einer wirklich gemessenen Zahl hängt.
 
 Braucht kein Gerät. Läuft vollständig hier: Nur ``aiimaging.bildschreiben`` (schreibt)
 und ``aiimaging.belichtung`` (misst, liest über ``aiimaging.bildlesen`` intern zurück —
@@ -269,6 +285,13 @@ def main() -> int:
         tafel_px, tafel_b, tafel_h = baue_tafel(farben, hist_px, urteil_haus,
                                                 urteil_geerbt)
 
+        # Welches Feld genau den Befund auslöst — nicht nur die Schwere. GEERBTER_RAHMEN
+        # prüft mehrere Felder gleichzeitig (hell_anteil_max, luma_max, streuung_min),
+        # und WELCHES davon greift, ändert sich über die Serie (siehe Modulkopf); ohne
+        # diese Liste liesse sich die Docstring-Erzählung nicht gegen die Messung prüfen.
+        befunde_haus = tuple(b["feld"] for b in urteil_haus["befunde"])
+        befunde_geerbt = tuple(b["feld"] for b in urteil_geerbt["befunde"])
+
         eintrag = {
             "lichteranteil_soll": p,
             "n_hell": n_hell,
@@ -278,6 +301,8 @@ def main() -> int:
             "schwere_geerbt": urteil_geerbt["schwere"],
             "bestanden_haus": urteil_haus["bestanden"],
             "bestanden_geerbt": urteil_geerbt["bestanden"],
+            "befunde_haus": befunde_haus,
+            "befunde_geerbt": befunde_geerbt,
         }
         ergebnisse.append(eintrag)
 
@@ -289,9 +314,10 @@ def main() -> int:
 
         print(f"  p={p:.4f} (n_hell={n_hell:6d})  "
               f"gemessen anteil_hell={messung_haus['anteil_hell']:.4f}  "
-              f"Haus={urteil_haus['schwere']:5s} (bestanden={urteil_haus['bestanden']})  "
+              f"Haus={urteil_haus['schwere']:5s} (bestanden={urteil_haus['bestanden']}, "
+              f"befunde={befunde_haus or '-'})  "
               f"Geerbt={urteil_geerbt['schwere']:5s} "
-              f"(bestanden={urteil_geerbt['bestanden']})")
+              f"(bestanden={urteil_geerbt['bestanden']}, befunde={befunde_geerbt or '-'})")
 
     px, b, h = zeichne_uebersicht(ergebnisse)
     stamm = "uebersicht_" + "-".join(
@@ -319,6 +345,28 @@ def main() -> int:
            for e in ergebnisse if e["lichteranteil_soll"] <= 0.145):
         fehlgeschlagen.append("HAUSSTIL_RAHMEN meldet unterhalb seiner gemessenen "
                               "Grenze bereits einen Fehler.")
+
+    # Die Docstring-Erzählung behauptet mehr als nur "irgendwann gelb": Sie behauptet,
+    # WELCHES Feld bei welchem Anteil greift (erst streuung_min, dann eine grüne Lücke,
+    # dann hell_anteil_max). Das ist keine Illustration, wenn es hier gegen die echten
+    # Befund-Namen aus pruefe() geprüft wird — sonst wäre es nur eine Geschichte, die zum
+    # Bild passt, ohne dass irgendetwas sie hätte widerlegen können.
+    by_p = {e["lichteranteil_soll"]: e for e in ergebnisse}
+    if by_p[0.02]["befunde_geerbt"] != ("streuung_min",) or \
+            by_p[0.05]["befunde_geerbt"] != ("streuung_min",):
+        fehlgeschlagen.append("Bei 2%/5% meldet GEERBTER_RAHMEN nicht mehr ausschliesslich "
+                              "'streuung_min' (Kontrastarmut) — die Docstring-Erklärung "
+                              "des frühen Gelb passt nicht mehr zur Messung.")
+    if by_p[0.0755]["befunde_geerbt"] or by_p[0.08]["befunde_geerbt"]:
+        fehlgeschlagen.append("Bei 7.55%/8% meldet GEERBTER_RAHMEN einen Befund — die "
+                              "behauptete grüne Lücke zwischen den beiden Gelb-Phasen "
+                              "gibt es in dieser Messung nicht (mehr).")
+    if not all("hell_anteil_max" in by_p[p]["befunde_geerbt"]
+               for p in (0.10, 0.145, 0.214, 0.30)):
+        fehlgeschlagen.append("Ab 10% meldet GEERBTER_RAHMEN nicht durchgehend "
+                              "'hell_anteil_max' — die Kernbehauptung dieses Beweises "
+                              "(die alte HIGHLIGHT_WARN_PCT reisst) trägt nicht mehr.")
+
     if fehlgeschlagen:
         print("AUSEINANDERENTWICKLUNG NICHT WIE ERWARTET:", file=sys.stderr)
         for zeile in fehlgeschlagen:
