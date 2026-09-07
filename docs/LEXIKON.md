@@ -1940,6 +1940,47 @@ sich als `XPASS` und verlangt, dass jemand nachsieht.
 für immer. Ein `xfail` ist eine Aussage mit Verfallsdatum — er ist die ehrliche Form,
 einen bekannten Mangel im Testnetz zu führen, statt ihn zu verstecken.*
 
+**Nullanker** — Ein zweiter Durchgang derselben Messung, bei dem das Bild durch
+**weisses Rauschen** ersetzt wird — also durch reinen Zufall, in dem nichts abgebildet
+ist. Die Maske und alle übrigen Bedingungen bleiben gleich.
+*Wozu:* Er sagt, wieviel von einer Zahl auch ohne Bauwerk herausgekommen wäre. Ein
+Messwert von 0,4 klingt nach Übereinstimmung — steht daneben ein Nullanker von 0,38, war
+fast alles davon die Eigenart des Verfahrens und nicht das Bauwerk. Bei einem
+Tiefenschätzer sind in diesem Projekt bis zu **95,75 %** eines Werts allein aus seiner
+Vorliebe für bestimmte Bildstellen erklärbar gewesen (sein *Ortsfeld*).
+*Wo im Projekt:* in jedem QA-Auftrag an die HomeStation, und als Rückgabepunkt in
+`auf-20260909-90`. **Ohne Nullanker ist eine Zahl eine Zahl ohne Bezug.**
+
+**Startwertstreuung** — Bildmodelle beginnen jedes Bild bei einem Zufallsrauschen; welches
+Rauschen es ist, legt der **Startwert** (engl. *seed*) fest. Derselbe Auftrag mit einem
+anderen Startwert ergibt ein anderes Bild. Die Startwertstreuung ist, wie weit die
+Messwerte allein dadurch auseinandergehen.
+*Warum sie hier ständig auftaucht:* In dieser Kette beträgt sie **0,2269** und ist damit
+grösser als jeder Einfluss, den irgendeine Einstellung je gezeigt hat. Ein Vergleich
+zweier Einstellungen mit je einem Bild misst darum den Zufall und nicht die Einstellung —
+darum verlangen die Aufträge dieses Projekts **drei Startwerte** (0, 1, 2) je Fall.
+
+**Beweisgang** — Ein Durchlauf, dessen Ergebnis **Bilder** sind und nicht Zahlen. Er misst
+nichts Neues; er macht sichtbar, was die Software an jeder Station tatsächlich tut.
+*Abgrenzung zur Messung:* Eine Messung beantwortet eine offene Frage. Ein Beweisgang
+beantwortet die Frage, ob das Beschriebene überhaupt läuft — und er beantwortet sie so,
+dass man es ansehen kann, statt es zu glauben.
+*Die zwei Regeln, die ihn tragen:* Erstens **keine Montage** — jede Station bleibt ein
+eigenes Bild, denn eine Collage entscheidet vorweg, was verglichen wird. Zweitens **die
+misslungenen gehören dazu**; ein Beweisgang, aus dem die Fehlschläge herausfallen, beweist
+die Auswahl.
+*Wo im Projekt:* `tools/beweis/`, gefahren von `tools/beweise_fahren.py`, und als Auftrag
+`auf-20260909-90` an die HomeStation für den Teil, der hier nicht laufen kann.
+
+**Kontrollbild (überlagerte Maske)** — Das erzeugte Bild mit der Umrisslinie der
+Bauwerksmaske darübergelegt.
+*Wozu:* Eine Zahl sagt, wie gut Bild und Geometrie zusammenpassen. Das Kontrollbild sagt,
+**wo** sie es nicht tun — ob das Bauwerk um zwei Pixel verrutscht ist oder ob im ganzen
+oberen Bilddrittel etwas steht, das in der Geometrie nicht vorkommt. Diese beiden Fälle
+können dieselbe Zahl ergeben.
+*Wo im Projekt:* `aiimaging.bildschreiben.schreibe_kontrollbild`, und als Station S6 im
+Beweisgang.
+
 ---
 
 ## 5 · Geometrie, Daten und Rendering
@@ -4369,6 +4410,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-09 | Ergaenzt aus dem Beweisgang (Sitzung 14): Nullanker, Startwertstreuung, Beweisgang, Kontrollbild. **Nullanker stand seit dem 24.08.2026 im Text und war nie erklaert** — eine Definition, die einen unerklaerten Begriff voraussetzt, ist genau der Fall, den die Arbeitsregel verbietet |
 | 2026-09-09 | Ergaenzt: **Vorschrift ohne Vergabestelle**. Anlass sind zwei Kollisionen an einem Abend: Eine fremde Lane nahm erst einen belegten Rang, dann Rang UND Laufnummer, und beide Male wurde main rot. Der Waechter verlangte eine lueckenlose Reihe und sagte niemandem, welche Zahl frei ist — die Abhilfe ist keine strengere Vorschrift, sondern eine Vergabestelle |
 | 2026-09-09 | Ergaenzt: **Flaechenbeherrschte Aufnahme** und **Vorpruefung (gegen tragende Messung)**. Anlass ist der Verdacht gegen die frontale Innenansicht, der seit dem 22.08. ungemessen im Plan stand: Frontal liegen 57-79 % des Bildes auf EINER Tiefenebene, ueber Eck 0,5 % — und ohne uebergebene Brennweite traegt die Karte des groesseren Raums einen einzigen Wert. Das zweite Wort trennt, was diese Messung leisten kann (ausschliessen) von dem, was sie nicht kann (zusagen) |
 | 2026-09-09 | Ergaenzt: **Zielzahl, die nur durch Verstecken erreichbar ist** und **Deckelzeile**. Anlass ist Woche 2: Das Ziel «PLAN.md unter 800 Zeilen» ist nachgemessen unerreichbar — 110 offene Punkte liegen verstreut ueber fast jeden langen Abschnitt, und nach dem Umzug der 22 fertigen bleiben rund 4300 Zeilen. Korrigiert statt still fallengelassen; an ihre Stelle tritt die Deckelzeile in 23 Protokollen und 21 Planabschnitten |
