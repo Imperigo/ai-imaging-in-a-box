@@ -1,0 +1,14 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260909-93",
+  "status": "ok",
+  "beendet": "2026-09-08T16:28:32Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "antwort_text": "Zugestellt vom Home-PC-Worker. Die Messung ist an dieser Maschine gefahren; der Auftrag war an 'ui' adressiert, ist aber eine Messfrage, und die Messwerkzeuge liegen hier.\n\n**Stand 08.09.2026:** offen — woran gemessen: beide Befunde sind hier an der echten\n\nVolltext mit allen Messbefehlen und Zahlen: auftraege/ergebnisse/ANTWORT-auf-20260909-93-volltext.md",
+    "herkunft": "Home-PC-Worker, 08.09.2026, an der echten Maschine gemessen; Volltext in auftraege/ergebnisse/ANTWORT-auf-20260909-93-volltext.md"
+  },
+  "umgebung": {},
+  "fehler": null
+}
