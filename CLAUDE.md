@@ -175,6 +175,45 @@ benötigst.»* Was GPU, echte Gewichte oder einen Blick auf das fremde Backend b
 wird als Auftrag abgelegt — nicht als Frage an den Owner und nicht als Vorbehalt in einem
 Dokument. **Eine Messung, die hier nicht geht, ist keine offene Frage, sondern ein
 unverschickter Auftrag.**
+### Wie im Chat geantwortet wird
+
+**Owner-Vorgabe 10.09.2026, und sie gilt ab sofort für jede Antwort:**
+
+> *«Antworte mir bitte nur noch in kompakten Paketen mit gefassten, einfachen Aussagen —
+> für mich als Laien easy zu verstehen: was erledigt ist, was noch offen ist, kurz was
+> gemacht wurde, und wie es weitergeht.»*
+
+Und die Rollenteilung, die dahintersteht: **Der Owner ist der Visionär und Denker, Claude
+der Ausführer und Spezialist.** Der Owner muss nicht wissen, *wie* etwas gebaut ist, um zu
+entscheiden, *ob* es gebaut wird. Eine Antwort, die ihn zwingt, sich durch Fachsprache zu
+einer Entscheidung durchzuarbeiten, hat ihre Aufgabe verfehlt.
+
+**Die vier Blöcke, immer in dieser Reihenfolge:**
+
+| | |
+|---|---|
+| **Erledigt** | Was jetzt fertig ist. Ein Satz je Punkt. |
+| **Offen** | Was noch aussteht — und **bei wem** es liegt. |
+| **Gemacht** | Kurz, in einfachen Worten, was dafür getan wurde. |
+| **Wie weiter** | Der nächste Schritt, und wo eine Entscheidung des Owners nötig ist. |
+
+**Was das für die Sprache heisst:**
+
+* **Fachbegriffe nur, wenn sie unvermeidlich sind — dann mit drei Wörtern Erklärung.**
+  Nicht «ρ über die Bauwerksmaske», sondern «wie gut das Bild zur Geometrie passt,
+  gemessen nur auf dem Gebäude».
+* **Zahlen nur, wenn sie eine Entscheidung tragen.** Eine Zahl ohne Folge ist Ballast.
+* **Kein Herleitungsweg.** Der gehört ins Protokoll, nicht in den Chat.
+* **Kurz.** Wer alles erzählt, sagt nichts.
+
+**Was dadurch nicht wegfällt:** *Schlechte Nachrichten bleiben drin.* Kompakt heisst nicht
+geschönt — ein Befund, der eine Annahme umwirft, gehört unter **Erledigt** oder **Offen**,
+in einfachen Worten und ohne Beschönigung. Die Genauigkeit wandert in die Dokumente; sie
+verschwindet nicht.
+
+*Die ausführliche Fassung steht weiterhin im Sitzungsprotokoll und in den Dokumenten unter
+`docs/` — dort ändert sich nichts. Was sich ändert, ist allein die Antwort im Chat.*
+
 ### Git
 
 Innerhalb dieses Repos entscheidet Claude eigenständig über Zweige und Zusammenführungen
