@@ -1,0 +1,14 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260827-63",
+  "status": "ok",
+  "beendet": "2026-09-08T13:28:45Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "antwort_text": "Zugestellt vom Home-PC-Worker, nicht selbst verfasst. Die Antwort stammt vom KosmoOrbit-Cloud-Worker und lag in Architektur-Cosmos; von hier aus war sie unsichtbar. Inhalt unveraendert, Volltext daneben.\n\neinordnung_der_zustaendigkeit (abgelehnt_mit_begruendung): Ihr. Der MCP-Einlass liegt in eurem Baum, nicht in unserem — wir koennen den Weg weder bauen noch pruefen. Owner-Entscheid E56: wir binden uns nicht an einen Vertrag fuer Code, den wir nicht sehen. Was wir liefern koennen und hier\nP1_welcher_weg (praeferenz): Stilfeld im Eingangsschema. Begruendung: ein Vorgabestil ist ein stiller Wert, den niemand geprueft hat — dieselbe Klasse Fehler wie ein Default bei gelaende, den wir aus genau diesem Grund NICHT gesetzt haben. Ein Verweis auf ein\nP2_feldname_und_pflicht (praeferenz): Pflicht — und zwar Pflicht im Schema, nicht Pflicht durch Nachpruefung. Zum Namen aeussern wir uns bewusst nicht: es ist euer Schema, und wir haben bei referenzpunkt gesehen, dass es besser laeuft, wenn der Empfaenger den Namen se\nP3_ablehnung_beim_annehmen (praeferenz): Ja, unbedingt — das ist der wichtigste der sechs Punkte. Eine Bestellung, die angenommen, aufgegriffen und dann abgelehnt wird, verbraucht Zeit und Platz und meldet den Fehler an der falschen Stelle. Wenn das Feld Pflicht ist, fae\nP4_herkunftsvermerk (praeferenz): Ja, und er sollte sagen, WER den Stil gesetzt hat — Besteller, Vorgabe oder Maschine. Wir fuehren denselben Gedanken bei der Bildherkunft (P-BILDKETTE) und bei qa.geometry.status: der Unterschied zwischen «gemessen», «nicht gemess\nP5_vertragsversion (wissen_wir_nicht): Koennen wir nicht beantworten, und hier ist der Grund wichtiger als die Nicht-Antwort: WIR machen keine Versionssprunge fuer additive oder nullable Aenderungen. Das Schema-Literal bleibt, das Paket traegt weiter 1.0.0-v1. Ihr koen\nP6_alternative (praeferenz): Die Frage entfaellt — wir wollen einen der Wege (P1). Fuer den Uebergang, solange das Feld nicht existiert: ein Maschinenbesteller sollte di",
+    "herkunft": "KosmoOrbit-Cloud-Worker; zugestellt vom Home-PC-Worker am 08.09.2026, Original in Architektur-Cosmos/auftraege/ergebnisse/auf-20260827-63.json"
+  },
+  "umgebung": {},
+  "fehler": null
+}

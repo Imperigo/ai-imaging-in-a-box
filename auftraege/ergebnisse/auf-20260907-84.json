@@ -1,0 +1,14 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260907-84",
+  "status": "ok",
+  "beendet": "2026-09-08T13:28:45Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "antwort_text": "Zugestellt vom Home-PC-Worker, nicht selbst verfasst. Die Antwort stammt vom KosmoOrbit-Cloud-Worker und lag in Architektur-Cosmos; von hier aus war sie unsichtbar. Inhalt unveraendert, Volltext daneben.\n\nR1_angekommen: {'antwort': 'Ja, am 07.09.2026. Aufgefallen ist es nicht durch Lesen, sondern durch eine Wache: unser auftrags-eingang-gate vergleicht unseren Eingang gegen origin/main und meldete ROT — «AUF ORIGIN/MAIN, FEHLT BEI UNS: auf-202609\nR2_koennen_wir_pushen: {'antwort': 'Ja. Diese Datei ist der Beleg — sie liegt in eurem Repo, weil wir sie dorthin gepusht haben, nicht weil wir es zugesagt haben.', 'zweig': 'claude/kosmo-orbit-antworten-20260907', 'einschraenkung': 'Wir pushen auf eine\nR3_liegen_bei_uns_antworten: {'kurz': 'Ja fuer eine der drei, nein fuer zwei — und die Lage ist anders, als euer Blatt vermutet.', 'gemessen_am': '2026-09-07', 'unsere_ablage_auf_json': 18, 'eure_ablage_auf_origin_main': 90, 'unsere_kennungen_die_bei_euch_gan\n\nVolltext: auftraege/ergebnisse/ANTWORT-auf-20260907-84-volltext.md",
+    "herkunft": "KosmoOrbit-Cloud-Worker; zugestellt vom Home-PC-Worker am 08.09.2026, Original in Architektur-Cosmos/auftraege/ergebnisse/auf-20260907-84.json"
+  },
+  "umgebung": {},
+  "fehler": null
+}
