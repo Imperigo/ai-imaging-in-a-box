@@ -44,6 +44,7 @@ durch eine Vorgabe vorwegzunehmen.
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 from aiimaging import jobs
 
@@ -329,6 +330,21 @@ def als_render_scene(satz: dict) -> dict:
     params = dict(satz.get("params") or {})
     pfad = params.get("glb_path")
     if not pfad:
+        # WER `ifc_path` SCHICKT, SOLL DAS AUCH ZU HÖREN BEKOMMEN (10.09.2026).
+        #
+        # `contracts.LANE_FIELDS` führt `ifc_path` als gültiges Feld; diese Naht nimmt
+        # es nicht. Bis heute war die Meldung darüber «trägt keinen `glb_path`» — wahr,
+        # aber irreführend: Sie liest sich wie ein vergessenes Feld und nicht wie ein
+        # Weg, den es hier nicht gibt. Wer daraufhin die IFC-Datei in `glb_path`
+        # einträgt, kommt durch — und bekommt eine Bestellung, die `format: "glb"`
+        # behauptet, während die Datei STEP trägt.
+        if params.get("ifc_path"):
+            raise NahtError(
+                "Der Auftrag trägt `ifc_path`. Dieser Weg nimmt heute nur `glb_path` — "
+                "die Konversion IFC → glb läuft im Abholer noch nicht vor der "
+                "Übersetzung. Trage die IFC NICHT als `glb_path` ein: Die Bestellung "
+                "würde `format: \"glb\"` melden, während die Datei STEP trägt."
+            )
         raise NahtError(
             "Der Auftrag trägt keinen `glb_path`. Eine render-scene ohne "
             "`geometry.path` ist keine Bestellung, sondern eine leere Hülle — und "
@@ -354,9 +370,28 @@ def als_render_scene(satz: dict) -> dict:
     if params.get("samples") is not None:
         render["samples"] = params["samples"]
 
+    # DAS FORMAT WIRD GELESEN, NICHT GESETZT (10.09.2026).
+    #
+    # Hier stand fest `"glb"`. Eine `.ifc`-Datei unter `glb_path` kam damit als
+    # `format: "glb"` heraus — der Vertrag behauptete etwas über einen Inhalt, den er
+    # nicht angesehen hatte. Der Home-PC-Worker hat denselben Fehler am 10.09.2026 auf
+    # SEINER Seite gemeldet (B117: die Bridge überschreibt `geometry.format` an drei
+    # Stellen hart auf «glb», die abgelegte Szene heisst `model.glb` und trägt STEP).
+    #
+    # *Ein Feld, das nicht gemessen, sondern gesetzt wird, ist keine Angabe, sondern eine
+    # Behauptung.* Gelesen wird jetzt die Endung; weicht sie vom erwarteten glb ab, steht
+    # das als Hinweis dabei und nicht in einem stillen Vorgabewert.
+    endung = Path(str(pfad)).suffix.lower().lstrip(".")
+    fmt = endung or "glb"
+    if fmt not in ("glb", "gltf"):
+        hinweise.append(
+            f"`glb_path` zeigt auf eine Datei mit der Endung {endung!r}. Das Format der "
+            f"Bestellung heisst darum {fmt!r} und nicht 'glb' — wer hier eine IFC "
+            f"einträgt, bekommt keine stillschweigend umbenannte glb."
+        )
     szene: dict = {
         "schema": SCHEMA_RENDER_SCENE,
-        "geometry": {"path": str(pfad), "format": "glb"},
+        "geometry": {"path": str(pfad), "format": fmt},
     }
     if params.get("out_dir"):
         szene["out"] = str(params["out_dir"])

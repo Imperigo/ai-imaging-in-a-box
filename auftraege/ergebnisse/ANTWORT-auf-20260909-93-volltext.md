@@ -8,7 +8,7 @@ in System A liegt fertig und ist im Trockenlauf durch `tools/antwort.py` gegange
 ausdruecklich nicht getroffen wurden. Offen bleibt genau das: absenden und entscheiden.
 
 **Fremder Auftrag.** `auf-20260909-93` ist an `worker: ui` gerichtet und liegt im Repo
-des KosmoVis (`~/ai-imaging-in-a-box/auftraege/offen/`). Am Blatt wurde nichts geaendert,
+des KosmoVis (`auftraege/offen/` im Repo). Am Blatt wurde nichts geaendert,
 keine Stand-Zeile eingetragen, nichts committet, nichts gepusht. Was hier steht, ist
 gemessen — nicht entschieden.
 
@@ -22,7 +22,7 @@ gemessen — nicht entschieden.
 ### 1.1 Die zwei rho-Zahlen — nachgefahren, nicht abgeschrieben
 
 ```
-cd ~/ai-imaging-in-a-box
+cd <euer Klon von ai-imaging-in-a-box>
 python3 tools/beweis/15_qa_maske.py <ziel>        # EXITCODE 0, 16 Bilder
 ```
 

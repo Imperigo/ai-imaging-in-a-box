@@ -32,7 +32,7 @@ import json
 
 import pytest
 
-from aiimaging import jobs, kosmo_naht
+from aiimaging import contracts, jobs, kosmo_naht
 from aiimaging.jobs import TOKEN_PRAEFIX
 from aiimaging.kosmo_naht import (
     FREMDES_JOB_ID_MUSTER,
@@ -701,3 +701,51 @@ def test_mit_gueltigem_token_schweigt_die_meldung_trotz_queued():
                                         approval_token=GUELTIG))
     assert unser["freigegeben"] is True
     assert not any("setzt eine Freigabe voraus" in h for h in unser["hinweise"])
+
+def test_das_format_wird_gelesen_und_nicht_gesetzt():
+    """**Ein Feld, das nicht gemessen, sondern gesetzt wird, ist eine Behauptung.**
+
+    Hier stand fest ``"glb"``. Eine ``.ifc``-Datei unter ``glb_path`` kam damit als
+    ``format: "glb"`` heraus — der Vertrag sagte etwas über einen Inhalt, den er nie
+    angesehen hatte.
+
+    Der Home-PC-Worker hat denselben Fehler am 10.09.2026 auf **seiner** Seite gemeldet
+    (B117): Die Bridge überschreibt ``geometry.format`` an drei Stellen hart auf «glb»,
+    ein gültiger IFC-Auftrag wird mit ``queued`` angenommen, und die abgelegte
+    ``render-scene.json`` fällt danach durch den **eigenen** Vertrag — die Datei heisst
+    ``model.glb`` und trägt STEP-Inhalt. *Unbemerkt, weil kein Worker läuft.*
+    """
+    satz = jobs.baue_job(job_id=jobs.neue_job_id(), art="render",
+                         params={"glb_path": "/nirgends/bau.ifc", "prompt": "a"})
+    aus = kosmo_naht.als_render_scene(satz)
+    assert aus["szene"]["geometry"]["format"] == "ifc", (
+        "eine .ifc-Datei darf nicht als 'glb' bestellt werden")
+    assert any("ifc" in h for h in aus["hinweise"]), (
+        "die Abweichung gehoert als Hinweis dazu, nicht in einen stillen Vorgabewert")
+
+
+def test_eine_echte_glb_bleibt_glb():
+    """Die Gegenprobe — sonst könnte die Endungslesung alles auf 'ifc' setzen."""
+    satz = jobs.baue_job(job_id=jobs.neue_job_id(), art="render",
+                         params={"glb_path": "/nirgends/szene.glb", "prompt": "a"})
+    aus = kosmo_naht.als_render_scene(satz)
+    assert aus["szene"]["geometry"]["format"] == "glb"
+    assert not [h for h in aus["hinweise"] if "Endung" in h]
+
+
+def test_wer_ifc_path_schickt_hoert_das_auch():
+    """``contracts.LANE_FIELDS`` führt ``ifc_path``; diese Naht nimmt es nicht.
+
+    Bis zum 10.09.2026 hiess die Meldung «trägt keinen `glb_path`» — wahr, aber
+    irreführend: Sie liest sich wie ein vergessenes Feld und nicht wie ein Weg, den es
+    hier nicht gibt. *Wer daraufhin die IFC in `glb_path` einträgt, kommt durch* — und
+    genau dieser Umweg hat die falsche Formatangabe erst erzeugt.
+    """
+    assert "ifc_path" in contracts.LANE_FIELDS
+    satz = jobs.baue_job(job_id=jobs.neue_job_id(), art="render",
+                         params={"ifc_path": "/nirgends/bau.ifc", "prompt": "a"})
+    with pytest.raises(kosmo_naht.NahtError) as fehler:
+        kosmo_naht.als_render_scene(satz)
+    text = str(fehler.value)
+    assert "ifc_path" in text, "die Meldung muss das Feld nennen, das dasteht"
+    assert "glb_path" in text, "und den Weg, den es hier gibt"
