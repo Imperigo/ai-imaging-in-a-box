@@ -40,6 +40,23 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--auftrag", help="genau diese Kennung, egal ob offen oder beantwortet")
     p.add_argument("--repo", default=".", help="Wurzel des Repos (Vorgabe: hier)")
     p.add_argument("--neueste", action="store_true", help="nur den juengsten Auftrag")
+    # DER ZWEITE ZUSTELLWEG HATTE KEINEN VERMERK, und das ist am 10.09.2026 aufgefallen.
+    #
+    # `--nach` schreibt Einzeldateien in ein FREMDES Verzeichnis und vermerkt die
+    # Zustellung. Fuer `ui` und `cloud` laeuft die Zustellung aber ueber **git**: Der Block
+    # liegt unter `auftraege/bloecke/`, sie haben unser Repo als Quelle, und
+    # `tests/test_auftragsbloecke.py` erzwingt, dass der juengste Block jeden offenen
+    # Auftrag nennt. Auf diesem Weg gab es keine Moeglichkeit, den Vermerk zu setzen —
+    # `tools/einbau.py` meldete den Auftrag darum dauerhaft als NICHT AUSGELIEFERT, obwohl
+    # er hinausgegangen war.
+    #
+    # Der Ausweg war bisher, `--nach` in ein Verzeichnis im eigenen Repo zu richten. Genau
+    # das habe ich am 09.09. getan, und es legte fuenf Dateien an, die den Wortlaut aus
+    # `offen/*.json` verdoppeln. *Ein Werkzeug, das man zweckentfremden muss, um eine
+    # wahre Angabe zu machen, erzeugt dabei eine zweite Wahrheit.*
+    p.add_argument("--vermerken", action="store_true",
+                   help="nur die Zustellung vermerken, nichts schreiben — fuer den "
+                        "git-Weg, bei dem der Block unter auftraege/bloecke/ liegt")
     p.add_argument("--nach", type=Path,
                    help="Blocks als <kennung>.md in dieses Verzeichnis schreiben, statt "
                         "sie zu drucken. Der Pfad wird NICHT im Repo festgeschrieben — "
@@ -71,6 +88,9 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"geschrieben: {ziel.name}")
             _vermerke(block, a.repo)
             return 0
+        if a.vermerken:
+            _vermerke(block, a.repo)
+            return 0
         print(block[0][1])
         return 0
 
@@ -84,6 +104,13 @@ def main(argv: list[str] | None = None) -> int:
     if a.nach:
         for ziel in auftragspost.lege_ab(blocks, a.nach):
             print(f"geschrieben: {ziel.name}")
+        _vermerke(blocks, a.repo)
+        return 0
+
+    if a.vermerken:
+        # NICHTS SCHREIBEN, NUR VERMERKEN. Der Block liegt schon unter
+        # `auftraege/bloecke/` und geht ueber git hinaus; hier wird nur nachgezogen, was
+        # dort bereits passiert ist.
         _vermerke(blocks, a.repo)
         return 0
 

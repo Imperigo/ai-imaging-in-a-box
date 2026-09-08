@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260909-93",
+  "art": "frage",
+  "worker": "ui",
+  "rang": 1,
+  "erstellt": "2026-09-10T00:30:00Z",
+  "params": {},
+  "beschreibung": "Zwei Zahlen, die ohne ihre Bedingung das Gegenteil bedeuten: rho ueber die Maske gegen rho ueber das ganze Bild (0,962 gegen -1,000 an derselben Szene), und der Wandanteil ausserhalb seines Gueltigkeitsbereichs.",
+  "anweisung": "=== ZWEI ZAHLEN, DIE OHNE IHRE BEDINGUNG DAS GEGENTEIL BEDEUTEN ===\n\nWORUM ES GEHT\n\nWir haben in der Nacht auf den 10.09.2026 den ganzen Kern in Bildern belegt\n(tools/beweis/, 22 Skripte, 205 Bilder). Dabei sind zwei Befunde angefallen, die\nNICHT den Kern betreffen, sondern die Anzeige — und beide sind von der Art, die\nman an einer Zahl nicht sieht.\n\nDie bisherigen neun Punkte (U1-U9 in docs/UI_BEFUNDE.md) sind alle bei euch. Das\nhier sind U10 und U11.\n\n\nU10 — «rho» IST ZWEI VERSCHIEDENE ZAHLEN, UND SIE KOENNEN GEGENSAETZLICH SEIN\n\nGemessen in Beweis 15, an einer Szene, in der das Bauwerk in der Tiefe\nGESPIEGELT ist und der Boden stimmt:\n\n    rho ueber das ganze Bild        0,962\n    rho ueber die Bauwerksmaske    -1,000\n\nUnd bei einem Bauwerk, das nur um 16 Pixel versetzt ist:\n\n    rho ueber das ganze Bild        0,993\n    rho ueber die Bauwerksmaske    -0,607\n\nDer Boden traegt die Rangkorrelation. Wer «rho = 0,99» anzeigt, ohne zu sagen\nWORUEBER gerechnet wurde, zeigt eine Zahl, deren Vorzeichen sich mit dem Bezug\numdreht. Das ist kein Genauigkeitsproblem, sondern ein Bedeutungsproblem.\n\nWAS WIR VORSCHLAGEN — und es ist ein Vorschlag, keine Vorgabe: Die Zahl steht nie\nallein, sondern immer mit ihrem Bezug («ueber die Bauwerksmaske» / «ueber das\nganze Bild»). Ist kein Maskenweg gelaufen, ist es NICHT dieselbe Zahl, und die\nAnzeige sollte das sagen statt zu runden.\n\n\nU11 — DER WANDANTEIL GILT NUR, SOLANGE BEIDE KANTEN IM BILD SIND\n\nkomposition.bildanteile gibt zurueck: bodenanteil, deckenanteil, wandanteil —\nund dazu boden_kante_im_bild und decken_kante_im_bild.\n\nGemessen in Beweis 22, derselbe Raum, drei Kamerahoehen, gegen den ECHTEN\ngerenderten Bildinhalt gezaehlt (Abweichung 0,001):\n\n    0,68 m   Bodenanteil 0,323   Deckenkante AUS dem Bild   Wandanteil 0,677\n    1,35 m   Bodenanteil 0,146   beide Kanten im Bild       Wandanteil 0,708\n    2,02 m   Bodenanteil 0,000   Bodenkante AUS dem Bild    Wandanteil 0,677\n\nDas Modul sagt, der Wandanteil haenge nicht von der Kamerahoehe ab. Das stimmt —\naber nur in der mittleren Zeile. Aussen wird der jeweils andere Anteil auf 0\nbegrenzt, und «1 - Boden - Decke» beschreibt das Bild nicht mehr.\n\nWAS WIR VORSCHLAGEN: Wo ein Wandanteil angezeigt wird, gehoeren die beiden\nWahrheitswerte mit ins Bild. Eine Zahl ausserhalb ihres Gueltigkeitsbereichs ist\nschlimmer als keine, weil sie plausibel aussieht.\n\n\nWAS WIR NICHT VERLANGEN\n\nKeinen Umbau. Beide Punkte sind Beschriftungen, nicht Funktionen. Und beide sind\nVorschlaege: Wenn ihr einen besseren Weg seht, die Bedingung an die Zahl zu\nhaengen, nehmt euren — es geht um die Sache, nicht um die Formulierung.\n\nWAS WIR NICHT WISSEN\n\nOb die Oberflaeche rho ueberhaupt anzeigt und in welcher Form. Wir sehen euren\nCode nicht. Wenn einer der beiden Punkte bei euch gar nicht auftritt, ist «tritt\nbei uns nicht auf» eine vollstaendige Antwort und kostet euch eine Zeile.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie noetig. Dies ist eine Oberflaechenfrage und verlangt keinen Lauf."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "Keine Messung, kein Lauf, keine GPU. Eine Antwort in Worten genuegt.",
+      "«Tritt bei uns nicht auf» ist eine vollstaendige Antwort.",
+      "Beides sind Vorschlaege, keine Vorgaben — wenn ihr einen besseren Weg seht, nehmt euren.",
+      "Keine Kunden-, Buero- oder Projektnamen in der Rueckgabe."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Zeigt eure Oberflaeche rho an, und wenn ja: steht der Bezug dabei? Wenn rho gar nicht vorkommt, genuegt das als Antwort.",
+    "V2 Zeigt sie einen Wandanteil oder eine Bildaufteilung? Wenn ja, kommen boden_kante_im_bild und decken_kante_im_bild dort an?",
+    "V3 Welcher der beiden Punkte ist bei euch mit weniger Aufwand zu haben? Wir haben keine Praeferenz.",
+    "V4 Braucht ihr von uns ein Feld, das es noch nicht gibt? Dann sagt welches — wir bauen es.",
+    "V5 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}

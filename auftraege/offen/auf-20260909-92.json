@@ -1,0 +1,41 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260909-92",
+  "art": "render",
+  "worker": "local",
+  "rang": 10,
+  "erstellt": "2026-09-10T00:30:00Z",
+  "params": {},
+  "beschreibung": "Das eine Bild, das die Geometrie-Schwelle besteht — es gibt keines. Vier Laeufe trennen die zwei Verdachte: offene Schachtel gegen geschlossenes Gebaeude, Prompt mit Bauteilen gegen ohne.",
+  "anweisung": "=== DAS EINE BILD, DAS DIE SCHWELLE BESTEHT ===\n\nWENN IHR NUR EINEN AUFTRAG FAHRT, DANN DIESEN\n\nDas ist keine Hoeflichkeitsfloskel, sondern eine Einordnung, die wir euch\nschulden. Bei euch liegen zehn Auftraege von uns, und der Deckel steht bei\nacht. Neun davon messen einzelne Groessen. Dieser hier entscheidet, ob die\nKernaussage der ganzen Arbeit tragfaehig ist.\n\nWORUM ES GEHT\n\nDie Kette laesst eine erfundene Kubatur nachweislich durchfallen. Das ist heute\nin Bildern belegt (tools/beweis/, 22 Skripte, 205 Bilder): Eine halluzinierte\nKubatur erreicht rho 0,966 und faellt trotzdem durch, weil geom_iou 0,101 ist.\nEine massstaeblich verzerrte Karte kommt mit 1,000 durch. Rho ueber das ganze\nBild sagt 0,962, wo rho ueber die Bauwerksmaske -1,000 sagt.\n\nWAS ES NICHT GIBT, UND ES IST DIE LUECKE, UM DIE ES HIER GEHT:\n\n  Ein erzeugtes Bild, das die Geometrie-Schwelle BESTEHT.\n\nDer erste echte Lauf mit echten Gewichten (auf-20260818-09, 18.08.2026,\nQwen-Image-Edit-2511, 147,9 s) erreichte 0,359 und fiel durch. Das ist ein\nMesswert und kein Fehlschlag — aber es ist auch keine bestandene Probe.\n\nSolange keine existiert, sagt diese Arbeit: «Wir haben ein Verfahren, das\nErfundenes durchfallen laesst.» Sie sagt NICHT: «Wir erzeugen geometrietreue\nBilder.» Der Unterschied ist der Unterschied zwischen einem Pruefverfahren und\neiner Behauptung ueber die Bildqualitaet, und er steht seit heute schriftlich in\ndocs/STRUKTUR_VERTIEFUNGSARBEIT.md.\n\n\nWARUM DIE BISHERIGEN LAEUFE DURCHGEFALLEN SIND — ZWEI VERDACHTE, NICHT EINER\n\nBeide sind ungemessen, und beide lassen sich in diesem Auftrag trennen:\n\n  (1) DIE GEOMETRIE. Unsere Testgeometrie ist eine offene Schachtel: vier Waende\n      ohne Dach, ohne Fenster, ohne Sockel. Ein Bildmodell macht daraus kein\n      Gebaeude, sondern etwas Gebaeudeaehnliches mit anderer Kubatur — und die\n      Tiefenordnung stimmt dann zu Recht nicht.\n\n  (2) DER PROMPT. Nennt er Bauteile («Fenster», «Dach», «Balkon»), lädt er das\n      Modell ausdruecklich dazu ein, Geometrie zu erfinden, die im Modell nicht\n      steht. Unser Bauteilwaechter (prompts.bauteilwaechter) meldet das, aber er\n      verbietet es nicht.\n\nWenn beide zusammen die Ursache sind, muss ein Lauf mit geschlossener Geometrie\nUND bauteilfreiem Prompt deutlich besser abschneiden. Wenn nicht, ist der Befund\nhaerter und wertvoller: Dann liegt es am Verfahren oder am Modell, und das\nmuessen wir wissen, BEVOR die Arbeit geschrieben wird.\n\n\nWAS ZU TUN IST\n\nVier Laeufe, dieselbe Kamera, dieselben drei Startwerte (0, 1, 2) — zwoelf\nBilder. Die Startwertstreuung dieser Kette betraegt 0,2269 und ist groesser als\njeder Parametereffekt, den sie je gezeigt hat; mit einem Bild je Fall messt ihr\nden Zufall.\n\n  A  Testgeometrie (offene Schachtel)   + Prompt MIT Bauteilen\n  B  Testgeometrie (offene Schachtel)   + Prompt OHNE Bauteile\n  C  geschlossenes Gebaeude             + Prompt MIT Bauteilen\n  D  geschlossenes Gebaeude             + Prompt OHNE Bauteile\n\n«Geschlossenes Gebaeude» heisst: mit Dach, mit Fenstern oder wenigstens\nFensteroeffnungen, mit einer Kubatur, die als Gebaeude lesbar ist. Wir haben\nKEINE solche Datei, die Regel 3 haelt — deshalb steht sie nicht hier. Nehmt\netwas Synthetisches oder ein oeffentlich lizenziertes Modell und sagt in der\nRueckgabe, was es war. Ein Bueroprojekt kommt nicht in Frage.\n\n«Prompt OHNE Bauteile» heisst: prompts.bauteilwaechter meldet 0 Woerter.\nPrueft das VOR dem Lauf, es kostet nichts.\n\nJe Lauf: Multipass, Bild durch den Backbone mit der Tiefenkarte als Fuehrung,\ndann qa_gegen_soll MIT der Bauwerksmaske aus dem Material-ID-Pass.\n\nUnd AUFHEBEN, was entsteht: Beauty, Tiefe, Maske, das erzeugte Bild je\nStartwert. Wenn eines besteht, ist es das wichtigste Bild dieser Arbeit; wenn\nkeines besteht, sind die zwoelf Bilder der Beleg dafuer, wie es aussieht.\n\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n\n- KEINE SCHWELLE SENKEN. Wenn nichts besteht, ist das die Antwort. Eine\n  Schwelle, die verschoben wird, bis etwas besteht, misst nichts mehr.\n- NICHT ABBRECHEN, wenn A und B schlecht aussehen. C und D sind der Punkt.\n- NICHT NUR DEN BESTEN STARTWERT MELDEN. Alle drei, einzeln.\n- KEIN NON-COMMERCIAL-BACKBONE (FLUX.1-dev, FLUX.2-dev sind unter Regel 1\n  ausgeschlossen). Was waehle(kommerziell=True) hergibt, und schreibt hin, was\n  es war.\n- KEINE KUNDEN-, BUERO- ODER PROJEKTNAMEN, auch nicht im Namen der Geometrie.\n  Das Repo ist oeffentlich.\n- IST DIE KARTE BELEGT: zurueckstellen, nicht abbrechen. Daran ist auf-61\n  gescheitert.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_ifc.py fuer A und B; fuer C und D braucht es eine geschlossene Geometrie, die wir nicht haben",
+    "hinweis": "A und B im Repo erzeugbar. C und D brauchen ein Gebaeude mit Dach und Oeffnungen — synthetisch oder oeffentlich lizenziert, niemals ein Bueroprojekt (Regel 3). Herkunft und Lizenz gehoeren in die Rueckgabe."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Ist die Karte belegt: zurueckstellen, nicht abbrechen. Daran ist auf-61 gescheitert.",
+      "Keine Schwelle senken. Wenn nichts besteht, ist das die Antwort.",
+      "Nicht abbrechen, wenn A und B schlecht aussehen — C und D sind der Punkt.",
+      "Alle drei Startwerte einzeln melden, nicht den besten.",
+      "Kein Non-Commercial-Backbone (Regel 1).",
+      "Keine Kunden-, Buero- oder Projektnamen, auch nicht im Namen der Geometrie."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Je Fall A-D und je Startwert (0,1,2): score, spearman, geom_iou, bestanden ja/nein. Zwoelf Zeilen, keine Mittelwerte.",
+    "V2 Besteht EINES der zwoelf Bilder die Schwelle? Wenn ja, welches — und bitte das Bild selbst.",
+    "V3 Der Nullanker je Fall, aus derselben Nullprobe. Ohne ihn ist score eine Zahl ohne Bezug.",
+    "V4 Welche Geometrie habt ihr fuer C und D genommen? Herkunft und Lizenz, keine Projektnamen.",
+    "V5 Die beiden Prompts im Wortlaut, und was prompts.bauteilwaechter dazu gemeldet hat (Anzahl Woerter).",
+    "V6 Welcher Backbone, welche Gewichtsdatei, welche Lizenz?",
+    "V7 Die zwoelf erzeugten Bilder, einzeln. Auch und gerade die misslungenen.",
+    "V8 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}

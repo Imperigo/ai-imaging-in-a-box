@@ -7,6 +7,8 @@ Vollständigkeit.
 
 import json
 
+import pathlib
+
 import pytest
 
 from aiimaging import auftrag, auftragspost
@@ -495,6 +497,46 @@ def test_der_vermerk_entsteht_erst_NACH_dem_schreiben(tmp_path):
     assert [e["auftrag_id"] for e in auftragspost.unzugestellt(repo)] == [
         satz["auftrag_id"]], (
         "Nichts ist hinausgegangen — dann darf auch nichts vermerkt sein.")
+
+
+def test_vermerken_schreibt_nichts_und_vermerkt_doch(tmp_path):
+    """``--vermerken`` — der zweite Zustellweg, und er hatte bis zum 10.09.2026 keinen.
+
+    Für ``ui`` und ``cloud`` läuft die Zustellung über **git**: Der Block liegt unter
+    ``auftraege/bloecke/``, sie haben unser Repo als Quelle. Auf diesem Weg gab es keine
+    Möglichkeit, den Vermerk zu setzen — ``tools/einbau.py`` meldete den Auftrag darum
+    dauerhaft als NICHT AUSGELIEFERT, obwohl er hinausgegangen war.
+
+    Der Ausweg war, ``--nach`` in ein Verzeichnis im **eigenen** Repo zu richten. Genau
+    das ist am 09.09.2026 geschehen und legte fünf Dateien an, die den Wortlaut aus
+    ``offen/*.json`` verdoppeln. *Ein Werkzeug, das man zweckentfremden muss, um eine
+    wahre Angabe zu machen, erzeugt dabei eine zweite Wahrheit.*
+    """
+    satz = _satz(worker="ui")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    vorher = sorted(pfad.name for pfad in repo.rglob("*") if pfad.is_file())
+
+    assert _cli().main(["ui", "--repo", str(repo), "--vermerken"]) == 0
+
+    assert auftragspost.unzugestellt(repo) == [], "der Vermerk ist nicht gesetzt worden"
+    nachher = sorted(pfad.name for pfad in repo.rglob("*") if pfad.is_file())
+    assert set(nachher) - set(vorher) == {pathlib.Path(
+        auftragspost.ZUSTELLUNG_DATEI).name}, (
+        "ausser dem Vermerk selbst darf keine Datei entstanden sein")
+
+
+def test_vermerken_gilt_auch_fuer_einen_einzelnen_auftrag(tmp_path):
+    """Derselbe Schalter im ``--auftrag``-Zweig.
+
+    Die beiden Zweige sind schon einmal auseinandergelaufen: ``--nach`` galt im
+    ``--auftrag``-Zweig zuerst **nicht**, und ein Schalter ohne Wirkung sagt, etwas sei
+    geschehen (gefunden am 01.09.2026 beim ersten Gebrauch).
+    """
+    satz = _satz(worker="ui")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    assert _cli().main(
+        ["--repo", str(repo), "--auftrag", satz["auftrag_id"], "--vermerken"]) == 0
+    assert auftragspost.unzugestellt(repo) == []
 
 
 def test_der_stichtag_im_zustellbeleg_ist_immer_heute():
