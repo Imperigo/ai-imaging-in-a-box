@@ -78,7 +78,7 @@ ablesbar.
 |---|---|
 | **Behauptet** | Die Verarbeitung ist ein gerichteter Graph aus vier Knoten (`geometrie`, `multipass`, `render`, `qa`) mit Zwischenspeicher; eine Prompt-Änderung rechnet die Geometriestufen nicht neu. |
 | **Trägt** | `src/aiimaging/kette.py`, `graph.py`, `seams.py`. **Als Bild**: `tools/beweis/01`–`05` — je Knoten eine Reihe, und `05_der_graph` zeigt vier Läufe, in denen die Aufrufzahl je Knoten gemessen wird (Lauf 2 ändert nur den Prompt: zwei Knoten aus dem Speicher; Lauf 4 ändert die Geometrie: alles dahinter fällt). Die ganze Kette in einem Bild: `tools/beweis/20`. |
-| **Fehlt** | **Der Graph läuft nicht am Produktivweg.** `abholer.py` fährt die Stufen als gerade Abfolge; `kette.baue_kette` hat ausserhalb seiner Tests keinen Aufrufer. Das ist im Text zu sagen und nicht zu verschweigen — es ist der Unterschied zwischen «gebaut» und «im Betrieb». |
+| **Fehlt** | **Der Graph läuft nicht am Produktivweg** — `abholer.py` fährt die Stufen als gerade Abfolge, und `kette.baue_kette` hat ausserhalb seiner Tests keinen Aufrufer. **Nachtrag 10.09.2026, gemessen:** Der *Nutzen* fehlt dort trotzdem nicht. `tools/beweis/23_speicher_am_produktivweg.py` stellt Beweis 05 dieselbe Frage an `abholer.verarbeiter` und zählt die echten Blender-Aufrufe: Lauf 1 rechnet (2,48 s), eine reine Prompt-Änderung kommt aus dem Speicher (0,26 s, **kein Blender**), eine Geometrie-Änderung rechnet wieder (2,43 s). *Damit trennt sich «gebaut, aber nicht im Betrieb» von «der Nutzen fehlt» — und nur das Erste stimmt.* Im Text ist der Posten so zu formulieren, sonst behauptet er mehr, als offen ist. |
 
 ---
 
