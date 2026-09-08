@@ -1,0 +1,51 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260907-83",
+  "status": "ok",
+  "beendet": "2026-09-08T13:39:10Z",
+  "dauer_s": null,
+  "messwerte": {
+    "takte_auf_kopie_gefahren": 3,
+    "takt1_gewaehlt": "auf-20260907-81",
+    "takt2_gewaehlt": "auf-20260907-81",
+    "takt1_status": "fehler",
+    "takt2_status": "fehler",
+    "kopf_nach_zwei_takten": "auf-20260907-81",
+    "zustand_kopf_nach_zwei_takten": "gerechnet, nicht beantwortet",
+    "neuschreibungen_je_tag_bei_5min_takt": 288,
+    "unerledigt_fuer_local": 6,
+    "davon_qa_nie_gruen_beantwortbar": 2,
+    "davon_render_oder_multipass": 4,
+    "fremde_auftraege": 4,
+    "fragen": 4,
+    "ergebnisse_nach_feld_beendet_06_09": 26,
+    "ergebnisse_nach_feld_beendet_07_09": 5,
+    "ergebnisdateien_committet_06_09": 13,
+    "ergebnisdateien_committet_07_09": 28,
+    "abholer_laeufe_im_messfenster": 16,
+    "abholer_aenderungen_am_verfolgten_baum": 0,
+    "dienste_mit_workingdirectory_im_repo": 1,
+    "kosmo_worker_timer_installiert": false,
+    "pytest_ausgewaehlt_failed": 1,
+    "pytest_ausgewaehlt_passed": 701,
+    "pytest_ausgewaehlt_skipped": 28,
+    "raenge_ohne_unsere_antwort": "1,2,3,6,7,8,9,10 — schon vorher lueckenhaft"
+  },
+  "urteil": {
+    "entscheid": "NEIN — wir wollen den Takt nicht. C7 kann als «entschieden, nicht gebaut» geschlossen werden. Der Committer war nicht der einzige Grund und nicht der groesste; er war der, den man sehen konnte.",
+    "T1_wollt_ihr_den_takt": "Nein, drei gemessene Gruende. (1) Er kaeme nicht von der Stelle: zwei Takte auf einer Kopie, beide Male derselbe Auftrag auf-20260907-81, beide Male 'fehler'. Der qa-Zweig antwortet bauartbedingt mit fehler, und fehler zaehlt als 'gerechnet, nicht beantwortet' (auftrag.py:776/:773) — also rang 1, also naechster Takt derselbe. Mit --hoechstens 1 blockiert JEDER Kopf, der nicht ok werden kann, die ganze Reihe auf Dauer; das trifft auch render, das bei belegter Karte 'abgelehnt' bekommt. (2) Der zweite Schreiber bleibt auch ohne Committer — siehe T4; der Konflikt ist zur Haelfte einer um dieselbe ERGEBNISDATEI, nicht um git. (3) Der Rueckstand ist kleiner, aber nicht weg: 6 unerledigt fuer 'local'. Details und Messbefehle im Volltext.",
+    "T2_ohne_committer_und_abstand": "Entfaellt, weil nein. Falls der Owner ihn doch will, sind das unsere Bedingungen, damit ein spaeteres Ja nicht neu verhandelt werden muss: B1 der Kopf darf nicht blockieren — ein Auftrag mit bestehendem 'fehler'/'abgelehnt'-Ergebnis wird uebersprungen statt neu geschrieben. B2 ein Riegel gegen den zweiten Schreiber (Sperrdatei), solange eine Sitzung im Arbeitsbaum arbeitet. B3 Abstand einmal je Stunde statt alle fuenf Minuten. Ohne B1 und B2 ist ein Takt schlechter als kein Takt: er sieht aus wie Betrieb. Zu eurem Sicherheitshinweis: einverstanden, und schon so gebaut — darf_starten liest auf.auflagen_maschine(satz), kosmo-worker.sh setzt keine eigenen Auflagen.",
+    "T3_wie_wird_eingecheckt": "Zwei Haelften, nur eine ist offen. COMMITTEN: von Hand, durch die Sitzung, die die Antwort geschrieben hat — wer den Text verantwortet, verantwortet den Commit. PUSHEN: gibt es bereits als einzelnen, ueberwachten Lauf, aber nicht in betrieb/ dieses Repos, sondern als Wache auf dieser Maschine: kosmo-zustellung.timer, stuendlich, ~/KosmoBetrieb/wachen/zustellung.sh. Sie fetcht, zaehlt @{u}..HEAD, pusht was liegt, committet nichts und fasst den Arbeitsbaum nicht an. Dieses Repo ist eine von fuenf Bahnen darin. Journalbeleg 08.09. 14:50:18 — 'ai-imaging  nichts liegen'.",
+    "T4_der_zweite_prozess": "Gefunden: eine parallele Claude-Code-Sitzung derselben Linie, kein Dienst. Beleg 1: die acht unverfolgten Dateien vom 06.09. sind Antworten des UI-Workers aus dem anderen Repo, hierher uebertragen und committet als a4afba3, 2026-09-06 19:30:04 +0000. Beleg 2, live: git status war 15:25 leer, um 15:33:30 lag tools/studie_echtschaetzer.py darin (15400 Bytes), Kopfzeile nennt selbst 'auf-20260907-81' — genau den Auftrag, den ein Takt alle fuenf Minuten mit fehler ueberschrieben haette. GEGENPROBE: im selben Fenster lief kosmo-abholer.service 16x (einziger Dienst mit WorkingDirectory in diesem Repo) und hat den verfolgten Baum nicht einmal beruehrt — er schreibt nach build/ (gitignore). Die Probe konnte widersprechen und tat es nicht.",
+    "abweichung_vom_auftrag": "Eure Zahl «zwanzig Antworten an einem Tag am 06./07.09.» trifft die Groessenordnung, aber keine unserer beiden Messungen ergibt zwanzig, und die beiden Massstaebe widersprechen sich in der Verteilung: nach dem Feld 'beendet' 26 am 06.09. und 5 am 07.09.; nach committeten Dateien 13 am 06.09. und 28 am 07.09. Erklaerbar (Nachtrag der acht UI-Antworten, gebuendelt committet), aber die Zahl traegt als Groessenordnung und nicht als Beleg fuer einen Tag.",
+    "was_nicht_gemessen_wurde": "Kein Render, kein Multipass, keine Modell-Inferenz — die Karte faehrt eine zweite Bahn; alle Laeufe blieben im qa-Zweig, der vor jedem Blender-Aufruf zurueckkehrt. Ob ein Push aus nicht-interaktivem Kontext geht (V2 aus auf-20260826-59), ist weiterhin nicht selbst geprueft. Nichts installiert, nichts committet, nichts gepusht; betrieb/kosmo-worker.* bleibt unveraendert und steht nicht in systemctl --user list-timers. Die Taktproben liefen ausschliesslich auf einer Kopie im Kratzverzeichnis.",
+    "volltext": "auftraege/ergebnisse/ANTWORT-auf-20260907-83-volltext.md",
+    "befund_roter_test": "tests/test_auftraege.py::test_die_raenge_sind_lueckenlos_von_eins_an ist ROT (1 failed, 701 passed, 28 skipped). NICHT durch diese Antwort: Gegenprobe auf einer Kopie ohne unsere Ergebnisdatei ergibt Raenge [1,2,3,6,7,8,9,10] — Rang 4 und 5 fehlten schon, weil die parallele Bahn auf-20260907-88 und auf-20260907-82 um 15:35 beantwortet hat; um 15:31 war die Reihe noch 1..10 und der Test gruen. Der Test prueft die Raenge der UNERLEDIGTEN Auftraege auf Lueckenlosigkeit ab eins — das stimmt nur unmittelbar nach einer Neuvergabe. Im Normalbetrieb ist er rot, sobald ein Auftrag beantwortet wird, der nicht der letzte im Rang ist. Wir aendern ihn nicht: der Rang steht in EUREM Auftrag. Wir melden ihn, weil ein Waechter, der im Normalbetrieb rot steht, uebersehen wird — auch dann, wenn er einmal etwas Echtes meldet."
+  },
+  "umgebung": {
+    "messbefehle": "alle im Volltext, Datei siehe urteil.volltext",
+    "python": "venv .venv-render, PYTHONPATH=src",
+    "karte": "nicht benutzt — zweite Bahn faehrt die kartenintensiven Auftraege"
+  },
+  "fehler": null
+}

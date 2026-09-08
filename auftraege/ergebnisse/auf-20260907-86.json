@@ -1,0 +1,14 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260907-86",
+  "status": "ok",
+  "beendet": "2026-09-08T13:43:16Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "antwort_text": "Volltext mit allen Messbefehlen: auftraege/ergebnisse/ANTWORT-auf-20260907-86-volltext.md\nGemessen 08.09.2026, ohne GPU, ohne Installation, ohne Umbau.\n\nABWEICHUNG: es sind ACHT Werkzeuge, nicht sieben. Server 8, Transport der Schale 8,\nBedienelemente/Chat 7 — capabilities fehlt dort absichtlich.\n\nM1a PASS: `/usr/bin/python3 integrations/odysseus/wire_qa_kosmoprepare_mcp.py`, Exit 0,\n18/18 OK. Eigene Zeile: Werkzeuge real beruehrt: 8/8 + WIRE-QA: PASS.\nM1b entfaellt (nichts gefailt). ABER nachgemessen: der Prepare-Server bricht unter mcp\n2.0.0 genauso wie KosmoPublish — Exit 1, Zeile 92 `@server.list_tools()`,\n«AttributeError: 'Server' object has no attribute 'list_tools'». Gegenprobe:\nhasattr(Server,'list_tools') ist 1.27.2 True / 2.0.0 False, auch in lowlevel.\nM1c mcp 1.27.2, Python 3.14.4. `mcp.__version__` gibt es nicht — wer so misst, haelt\ndas faelschlich fuer «mcp fehlt».\n\nM2a Der Auftrag vermutet den falschen Weg: die Schale ruft Prepare NICHT ueber das\nBackend, sondern ueber einen eigenen Rust-stdio-Klienten (Tauri `kosmoprepare_call`);\n/api/mcp im Quellbaum UND im ausgelieferten Bundle = 0 Treffer.\nBackend (:7860): JA, alle acht aufgerufen, HTTP 200, structuredContent ueberall.\nSchale selbst: NEIN — nur in der Desktop-App vorhanden, hier laeuft KosmoOrbit gemessen\nnur als vite preview im Browser, kein Tauri-Prozess; vier der sieben haben keinen Knopf,\nder Rest ginge nur ueber den Chat = Modell-Inferenz. Gerichtet IST sie: der Serverpfad\nsteht im localStorage und zeigt auf die gefahrene Datei.\nM2b Alle acht antworteten, alle unser Server: (1) jede Antwort rechnet mit MEINEN\nerfundenen Zahlen (0.123 x 9999 -> 1229.9); (2) IO-Gegenprobe: der aufgerufene Prozess\nlas +137/schrieb +314 Bytes, der zweite exakt 0. Zusatz: die drei Rahmen des\nRust-Klienten nachgefahren -> 8/8; ungemessen bleibt das kompilierte Programm.\n\nM3 Der Prepare-Server ist im Backend ZWEIMAL registriert, zwei Prozesse, jedes Werkzeug\ndoppelt in der 165er-Liste. Der Abschalt-Filter wirkt je Kennung — abschalten trifft nur\ndie Haelfte.",
+    "herkunft": "HomeStation-Messung 08.09.2026, eigener Lauf (kein Block, keine Uebergabe)"
+  },
+  "umgebung": {},
+  "fehler": null
+}

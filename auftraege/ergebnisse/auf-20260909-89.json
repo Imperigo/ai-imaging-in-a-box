@@ -1,0 +1,681 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260909-89",
+  "status": "ok",
+  "beendet": "2026-09-08T14:24:36Z",
+  "dauer_s": null,
+  "messwerte": {
+    "V1_V2_V3_je_fall_und_startwert": {
+      "A_512x512": {
+        "blick": "frontal",
+        "rho_maske_seed_0_1_2": [
+          0.5448,
+          0.8573,
+          0.6202
+        ],
+        "spanne_ueber_startwerte": 0.3125,
+        "nullanker_rho": {
+          "rauschen": 0.8167,
+          "grau": 0.6839,
+          "verlauf": 0.4418
+        },
+        "abstand_zum_rauschanker": [
+          -0.2719,
+          0.0406,
+          -0.1965
+        ],
+        "kantenanteil_seed_0_1_2": [
+          0.0,
+          0.0,
+          0.18627450980392157
+        ],
+        "kante_gerichtet_seed_0_1_2": [
+          1.6e-05,
+          -1e-05,
+          0.011946
+        ],
+        "n_grenze": 510,
+        "himmel_am_aussenrand": 1.0,
+        "paarurteil_bestanden": [
+          false,
+          false,
+          false
+        ],
+        "score_seed_0_1_2": [
+          0.5739,
+          0.7237,
+          0.6685
+        ],
+        "bestanden_seed_0_1_2": [
+          false,
+          true,
+          true
+        ],
+        "kamera_brennweite_mm": 24.0,
+        "sollkarte": {
+          "n_endlich": 201216,
+          "n_bild": 262144,
+          "groesste_ebene_anteil_bild": 0.4883,
+          "stufen": 138,
+          "spanne_m": 2.296
+        },
+        "anteil_bauwerk": 0.767578125
+      },
+      "B_512x512": {
+        "blick": "ueber_eck",
+        "rho_maske_seed_0_1_2": [
+          0.9993,
+          0.9989,
+          0.9941
+        ],
+        "spanne_ueber_startwerte": 0.0052,
+        "nullanker_rho": {
+          "rauschen": 0.876,
+          "grau": 0.8796,
+          "verlauf": 0.8174
+        },
+        "abstand_zum_rauschanker": [
+          0.1233,
+          0.1229,
+          0.1181
+        ],
+        "kantenanteil_seed_0_1_2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kante_gerichtet_seed_0_1_2": [
+          -0.00021,
+          -0.000135,
+          -0.000118
+        ],
+        "n_grenze": 510,
+        "himmel_am_aussenrand": 1.0,
+        "paarurteil_bestanden": [
+          false,
+          false,
+          false
+        ],
+        "score_seed_0_1_2": [
+          0.7029,
+          0.7026,
+          0.6991
+        ],
+        "bestanden_seed_0_1_2": [
+          true,
+          true,
+          true
+        ],
+        "kamera_brennweite_mm": 24.0,
+        "sollkarte": {
+          "n_endlich": 186930,
+          "n_bild": 262144,
+          "groesste_ebene_anteil_bild": 0.0043,
+          "stufen": 521,
+          "spanne_m": 6.11
+        },
+        "anteil_bauwerk": 0.7130813598632812
+      },
+      "C_512x512": {
+        "blick": "frontal",
+        "rho_maske_seed_0_1_2": [
+          0.8732,
+          0.8916,
+          0.9131
+        ],
+        "spanne_ueber_startwerte": 0.0399,
+        "nullanker_rho": {
+          "rauschen": 0.7205,
+          "grau": 0.6267,
+          "verlauf": 0.3963
+        },
+        "abstand_zum_rauschanker": [
+          0.1527,
+          0.1711,
+          0.1926
+        ],
+        "kantenanteil_seed_0_1_2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kante_gerichtet_seed_0_1_2": [
+          2e-05,
+          -0.004444,
+          -0.003823
+        ],
+        "n_grenze": 481,
+        "himmel_am_aussenrand": 1.0,
+        "paarurteil_bestanden": [
+          false,
+          false,
+          false
+        ],
+        "score_seed_0_1_2": [
+          0.7886,
+          0.7898,
+          0.7903
+        ],
+        "bestanden_seed_0_1_2": [
+          true,
+          true,
+          true
+        ],
+        "kamera_brennweite_mm": 24.0,
+        "sollkarte": {
+          "n_endlich": 214944,
+          "n_bild": 262144,
+          "groesste_ebene_anteil_bild": 0.3533,
+          "stufen": 187,
+          "spanne_m": 2.353
+        },
+        "anteil_bauwerk": 0.8199462890625
+      },
+      "D_512x512": {
+        "blick": "ueber_eck",
+        "rho_maske_seed_0_1_2": [
+          0.9994,
+          0.9998,
+          0.9989
+        ],
+        "spanne_ueber_startwerte": 0.0009,
+        "nullanker_rho": {
+          "rauschen": 0.8052,
+          "grau": 0.85,
+          "verlauf": 0.5954
+        },
+        "abstand_zum_rauschanker": [
+          0.1942,
+          0.1946,
+          0.1937
+        ],
+        "kantenanteil_seed_0_1_2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kante_gerichtet_seed_0_1_2": [
+          0.000183,
+          -0.000294,
+          0.000104
+        ],
+        "n_grenze": 510,
+        "himmel_am_aussenrand": 1.0,
+        "paarurteil_bestanden": [
+          false,
+          false,
+          false
+        ],
+        "score_seed_0_1_2": [
+          0.7099,
+          0.7072,
+          0.7086
+        ],
+        "bestanden_seed_0_1_2": [
+          true,
+          true,
+          true
+        ],
+        "kamera_brennweite_mm": 24.0,
+        "sollkarte": {
+          "n_endlich": 188625,
+          "n_bild": 262144,
+          "groesste_ebene_anteil_bild": 0.0043,
+          "stufen": 523,
+          "spanne_m": 6.177
+        },
+        "anteil_bauwerk": 0.7195472717285156
+      },
+      "A_800x496": {
+        "blick": "frontal",
+        "rho_maske_seed_0_1_2": [
+          0.9037,
+          0.8045,
+          0.5571
+        ],
+        "spanne_ueber_startwerte": 0.3466,
+        "nullanker_rho": {
+          "rauschen": 0.58,
+          "grau": 0.2636,
+          "verlauf": 0.0981
+        },
+        "abstand_zum_rauschanker": [
+          0.3237,
+          0.2245,
+          -0.0229
+        ],
+        "kantenanteil_seed_0_1_2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kante_gerichtet_seed_0_1_2": [
+          -5e-06,
+          6.9e-05,
+          2.9e-05
+        ],
+        "n_grenze": 798,
+        "himmel_am_aussenrand": 1.0,
+        "paarurteil_bestanden": [
+          false,
+          false,
+          false
+        ],
+        "score_seed_0_1_2": [
+          0.9171,
+          0.8619,
+          0.6924
+        ],
+        "bestanden_seed_0_1_2": [
+          true,
+          true,
+          true
+        ],
+        "kamera_brennweite_mm": 24.0,
+        "sollkarte": {
+          "n_endlich": 370400,
+          "n_bild": 396800,
+          "groesste_ebene_anteil_bild": 0.7883,
+          "stufen": 73,
+          "spanne_m": 1.191
+        },
+        "anteil_bauwerk": 0.9334677419354839
+      },
+      "B_800x496": {
+        "blick": "ueber_eck",
+        "rho_maske_seed_0_1_2": [
+          0.9976,
+          0.9981,
+          0.9978
+        ],
+        "spanne_ueber_startwerte": 0.0005,
+        "nullanker_rho": {
+          "rauschen": 0.6881,
+          "grau": 0.7016,
+          "verlauf": 0.8376
+        },
+        "abstand_zum_rauschanker": [
+          0.3095,
+          0.31,
+          0.3097
+        ],
+        "kantenanteil_seed_0_1_2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kante_gerichtet_seed_0_1_2": [
+          -0.001528,
+          0.003435,
+          0.000703
+        ],
+        "n_grenze": 735,
+        "himmel_am_aussenrand": 1.0,
+        "paarurteil_bestanden": [
+          false,
+          false,
+          false
+        ],
+        "score_seed_0_1_2": [
+          0.8347,
+          0.8417,
+          0.8354
+        ],
+        "bestanden_seed_0_1_2": [
+          true,
+          true,
+          true
+        ],
+        "kamera_brennweite_mm": 24.0,
+        "sollkarte": {
+          "n_endlich": 334216,
+          "n_bild": 396800,
+          "groesste_ebene_anteil_bild": 0.0055,
+          "stufen": 489,
+          "spanne_m": 4.998
+        },
+        "anteil_bauwerk": 0.8422782258064516
+      },
+      "C_800x496": {
+        "blick": "frontal",
+        "rho_maske_seed_0_1_2": [
+          -0.0351,
+          0.8184,
+          0.9042
+        ],
+        "spanne_ueber_startwerte": 0.9393,
+        "nullanker_rho": {
+          "rauschen": 0.3471,
+          "grau": 0.0915,
+          "verlauf": -0.1042
+        },
+        "abstand_zum_rauschanker": [
+          -0.3822,
+          0.4713,
+          0.5571
+        ],
+        "kantenanteil_seed_0_1_2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kante_gerichtet_seed_0_1_2": [
+          -5.7e-05,
+          6.2e-05,
+          4.5e-05
+        ],
+        "n_grenze": 601,
+        "himmel_am_aussenrand": 1.0,
+        "paarurteil_bestanden": [
+          false,
+          false,
+          false
+        ],
+        "score_seed_0_1_2": [
+          0.2887,
+          0.8797,
+          0.9195
+        ],
+        "bestanden_seed_0_1_2": [
+          false,
+          true,
+          true
+        ],
+        "kamera_brennweite_mm": 24.0,
+        "sollkarte": {
+          "n_endlich": 381548,
+          "n_bild": 396800,
+          "groesste_ebene_anteil_bild": 0.569,
+          "stufen": 207,
+          "spanne_m": 2.288
+        },
+        "anteil_bauwerk": 0.9615625
+      },
+      "D_800x496": {
+        "blick": "ueber_eck",
+        "rho_maske_seed_0_1_2": [
+          0.9944,
+          0.9886,
+          0.9979
+        ],
+        "spanne_ueber_startwerte": 0.0093,
+        "nullanker_rho": {
+          "rauschen": 0.6735,
+          "grau": 0.6074,
+          "verlauf": 0.3394
+        },
+        "abstand_zum_rauschanker": [
+          0.3209,
+          0.3151,
+          0.3244
+        ],
+        "kantenanteil_seed_0_1_2": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "kante_gerichtet_seed_0_1_2": [
+          0.000222,
+          0.000251,
+          0.000874
+        ],
+        "n_grenze": 709,
+        "himmel_am_aussenrand": 1.0,
+        "paarurteil_bestanden": [
+          false,
+          false,
+          false
+        ],
+        "score_seed_0_1_2": [
+          0.8422,
+          0.8379,
+          0.8464
+        ],
+        "bestanden_seed_0_1_2": [
+          true,
+          true,
+          true
+        ],
+        "kamera_brennweite_mm": 24.0,
+        "sollkarte": {
+          "n_endlich": 337766,
+          "n_bild": 396800,
+          "groesste_ebene_anteil_bild": 0.0055,
+          "stufen": 497,
+          "spanne_m": 5.106
+        },
+        "anteil_bauwerk": 0.8512247983870967
+      },
+      "E_512x512_datei_mit_decke": {
+        "blick": "frontal",
+        "rho_maske_seed_0_1_2": [
+          0.3389,
+          0.9384,
+          0.7641
+        ],
+        "spanne_ueber_startwerte": 0.5995,
+        "nullanker_rho": {
+          "rauschen": 0.7927,
+          "grau": 0.8981,
+          "verlauf": 0.7303
+        },
+        "abstand_zum_rauschanker": [
+          -0.4538,
+          0.1457,
+          -0.0286
+        ],
+        "kantenanteil_seed_0_1_2": [
+          null,
+          null,
+          null
+        ],
+        "kante_gerichtet_seed_0_1_2": [
+          null,
+          null,
+          null
+        ],
+        "n_grenze": 0,
+        "himmel_am_aussenrand": 0.0,
+        "paarurteil_bestanden": [
+          null,
+          null,
+          null
+        ],
+        "score_seed_0_1_2": [
+          0.5822,
+          0.9687,
+          0.8741
+        ],
+        "bestanden_seed_0_1_2": [
+          false,
+          true,
+          true
+        ],
+        "kamera_brennweite_mm": 24.0,
+        "sollkarte": {
+          "n_endlich": 262144,
+          "n_bild": 262144,
+          "groesste_ebene_anteil_bild": 0.416,
+          "stufen": 206,
+          "spanne_m": 2.758
+        },
+        "anteil_bauwerk": 1.0
+      },
+      "F_512x512_datei_mit_decke": {
+        "blick": "ueber_eck",
+        "rho_maske_seed_0_1_2": [
+          0.9945,
+          0.9931,
+          0.9695
+        ],
+        "spanne_ueber_startwerte": 0.025,
+        "nullanker_rho": {
+          "rauschen": 0.8338,
+          "grau": 0.9059,
+          "verlauf": 0.8098
+        },
+        "abstand_zum_rauschanker": [
+          0.1607,
+          0.1593,
+          0.1357
+        ],
+        "kantenanteil_seed_0_1_2": [
+          null,
+          null,
+          null
+        ],
+        "kante_gerichtet_seed_0_1_2": [
+          null,
+          null,
+          null
+        ],
+        "n_grenze": 0,
+        "himmel_am_aussenrand": 0.0,
+        "paarurteil_bestanden": [
+          null,
+          null,
+          null
+        ],
+        "score_seed_0_1_2": [
+          0.9972,
+          0.9965,
+          0.9846
+        ],
+        "bestanden_seed_0_1_2": [
+          true,
+          true,
+          true
+        ],
+        "kamera_brennweite_mm": 24.0,
+        "sollkarte": {
+          "n_endlich": 262144,
+          "n_bild": 262144,
+          "groesste_ebene_anteil_bild": 0.0059,
+          "stufen": 607,
+          "spanne_m": 7.082
+        },
+        "anteil_bauwerk": 1.0
+      }
+    },
+    "V4_brennweite": {
+      "angekommen_mm": 24.0,
+      "weg": "vorgegeben",
+      "in_wievielen_multipass_berichten": 10,
+      "gegenprobe_ohne_brennweite_mm": 50.0,
+      "messbefehl": "PYTHONPATH=src .venv-render/bin/python -c \"from aiimaging import seams; b=seams.glb_zu_tiefenkarte(<glb>, <out>, up_axis='Y', aufloesung=512, samples=8, auge=[4.0,0.6,1.35], blick_auf=[4.0,4.7,1.35]); print(b['kamera']['brennweite_mm'])\"",
+      "nebenbefund": "homeworker._render_und_qa traegt den Kamerablock NICHT in seine messwerte (Zeile 446 nur im Multipass-Zweig). Aus einem gewoehnlichen art:'render'-Ergebnis waere V4 nicht zu beantworten gewesen."
+    },
+    "V5_standpunkte_gegenprobe": {
+      "gleich": true,
+      "A_auge": [
+        4.0,
+        0.6000000000000432,
+        1.35
+      ],
+      "A_blick_auf": [
+        4.0,
+        4.7,
+        1.35
+      ],
+      "B_auge": [
+        0.6040559159102156,
+        0.6040559159102156,
+        1.35
+      ],
+      "B_blick_auf": [
+        4.394148263070054,
+        4.394148263070054,
+        1.35
+      ],
+      "C_auge": [
+        6.35,
+        0.61,
+        1.3
+      ],
+      "C_blick_auf": [
+        6.35,
+        2.5,
+        1.3
+      ],
+      "D_auge": [
+        7.395944084089784,
+        0.6040559159102156,
+        1.3
+      ],
+      "D_blick_auf": [
+        5.804954,
+        2.195046,
+        1.3
+      ],
+      "messbefehl": "PYTHONPATH=src .venv-render/bin/python -c \"from aiimaging import kette; print(kette._raeume_lesen('<ifc>'))\""
+    },
+    "V6_datei_mit_decke": {
+      "haben_wir": true,
+      "quelle": "Pilotdatei aus dem eigenen Oekosystem, IFC4/Millimeter, 13 IfcSpace auf 3 Geschossen, 82 Elemente, 1016 Dreiecke; gewaehlt der groesste EG-Raum 47.5 m2, Raumhoehe 3.0 m, zwei Geschosse darueber",
+      "kantenanteil_messbar": false,
+      "n_grenze": 0,
+      "anteil_bauwerk": 1.0,
+      "paarurteil_zustaendig": false,
+      "grund": "Die Bauwerksmaske fuellt das ganze Bild; ohne Maskengrenze sind kante und kantenanteil NICHT GEMESSEN (weder 0 noch 1), und paarurteil erklaert sich fuer nicht zustaendig (0.0 % Himmel gegen verlangte 10 %). Innen bleibt vom Maskenweg nur rho.",
+      "hinweis_standpunkte": "Nur erreichbar ueber eine KOPIE des Raumlesers unter build/, die zusaetzlich IfcIndexedPolyCurve liest. Der Produktleser wurde nicht angefasst."
+    },
+    "V7_ifc_indexed_poly_curve": {
+      "geprueft_dateien": 6,
+      "ifc_space_gesamt": 972,
+      "mit_standpunkt": 0,
+      "ursache_indexed_poly_curve": 941,
+      "ursache_keine_repraesentation": 28,
+      "ursache_kein_extrusionskoerper": 3,
+      "messbefehl": "PYTHONPATH=src .venv-render/bin/python -c \"from aiimaging import kette; b=kette._raeume_lesen('<ifc>'); print(b['n_mit_standpunkt'], len(b['raeume']))\" je Datei",
+      "stelle": "src/aiimaging/runners/ifc_raeume_runner.py:302",
+      "nach_erweiterung_der_kopie": "13 von 13 Raeumen mit Grundriss (Pilotdatei)"
+    },
+    "abweichung_vorpruefung": {
+      "befund": "Unsere Vorpruefungszahlen weichen bei 512x512 ab und stimmen bei 800x496 stellengleich mit eurer Tabelle. Ursache: Seitenverhaeltnis (sensor_fit HORIZONTAL).",
+      "A_frontal_groesste_ebene_512": 0.4883,
+      "A_frontal_groesste_ebene_800": 0.7883,
+      "C_frontal_groesste_ebene_512": 0.3533,
+      "C_frontal_groesste_ebene_800": 0.569,
+      "eure_tabelle_bei_800x496_reproduziert": true,
+      "messbefehl": "PYTHONPATH=src .venv-render/bin/python -c \"seams.glb_zu_tiefenkarte(..., aufloesung=800, hoehe=496, samples=8, auge=..., blick_auf=..., brennweite=24.0); bildlesen.tiefen_aus_report(b)\""
+    },
+    "gegenprobe_produktpfad": {
+      "weg": "homeworker.fuehre_aus mit In-Memory-Kopie, Fall A, seed 0",
+      "rho_maske": 0.5448032913998685,
+      "score": 0.5739281678494094,
+      "kantenanteil": 0.0,
+      "stellengleich_mit_der_studie": true
+    },
+    "laufwerte": {
+      "renderlaeufe": 30,
+      "multipasslaeufe": 10,
+      "nullprobenbilder": 30,
+      "multipass_s": 4.3,
+      "render_s_je_bild": 3.6,
+      "gpu_leerlauf_vor_start_w": 47.4,
+      "gpu_leerlauf_vor_start_mib": 737,
+      "gpu_spitze_w": 307.3,
+      "gpu_spitze_mib": 26023,
+      "leistungsgrenze_w": 400.0,
+      "karte_nach_lauf_frei": true
+    }
+  },
+  "urteil": {
+    "V1_trennt_rho": "JA, ohne Ueberschneidung: ueber Eck +0.9695..+0.9998 (15 Laeufe), frontal -0.0351..+0.9384 (15 Laeufe). Der frontale Wert ist aber keine Messung: Spanne ueber drei Startwerte bis 0.9393, und 6 von 15 frontalen Laeufen liegen UNTER dem weissen Rauschen derselben Maskenlage (ueber Eck: 0 von 15).",
+    "V2_kantenanteil": "Traegt innen nicht. Ohne Decke 0.0000 in 23 von 24 Laeufen (einmal 0.1863), Schwelle 0.20 nie erreicht; paarurteil in allen 24 false, immer getragen von 'anteil', nie von rho. Die Maskengrenze ist zu 100 % Himmel — der offene Deckenrand.",
+    "V3_nullanker": "Je Fall gemessen, nicht nachgeschlagen; er schwankt zwischen -0.10 und +0.88. Bei zwei frontalen Faellen liegt der Mittelwert der drei Renders UNTER dem Rauschanker (A/512: 0.6741 gegen 0.8167; V6-Datei: 0.6805 gegen 0.7927).",
+    "V4_brennweite": "24.0 mm angekommen, weg 'vorgegeben'. Ohne den Parameter: 50.0 mm.",
+    "V5_standpunkte": "Ja, dieselben vier Standpunkte, stellengleich.",
+    "V6_decke": "Haben wir und gemessen. Die Decke rettet die frontale Ansicht NICHT — sie ist dort der schlechteste frontale Fall (Spanne 0.5995, Mittel unter dem Rauschanker). Und sie nimmt das zweite Bein ganz weg: Maske = 100 % des Bildes, keine Grenze, kein Kantenmass, paarurteil nicht zustaendig.",
+    "V7": "Ausserhalb eurer Testgeometrie liefert raumkamera hier NULL Standpunkte: 6 echte Dateien, 972 IfcSpace, kein Grundriss — 941 davon an einer einzigen Ursache, IfcIndexedPolyCurve als Profilkurve.",
+    "volltext": "auf-20260909-89-innenmessung.md (neben dieser Datei)",
+    "nichts_geaendert": "Keine Schwelle, kein Riegel, kein Commit, kein Push; die Auftragsdatei und der Produkt-Raumleser blieben unveraendert."
+  },
+  "umgebung": {
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "leistungsgrenze_w": 400.0,
+    "python": "3.14.4",
+    "blender": "/snap/bin/blender"
+  },
+  "fehler": null
+}

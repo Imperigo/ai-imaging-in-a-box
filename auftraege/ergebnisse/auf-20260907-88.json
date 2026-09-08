@@ -1,0 +1,53 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260907-88",
+  "status": "ok",
+  "beendet": "2026-09-08T13:37:47Z",
+  "dauer_s": null,
+  "messwerte": {
+    "stand_der_bestandszahlen_utc": "2026-09-08T13:36:34Z",
+    "repo_stand": "d683fee",
+    "dateimass_offen": 96,
+    "dateimass_ergebnisdateien": 91,
+    "dateimass_ohne_ergebnisdatei": 10,
+    "dateimass_ohne_und_cloud": 1,
+    "werkzeugmass_beantwortet": 76,
+    "werkzeugmass_offen": 10,
+    "werkzeugmass_weitergereicht": 2,
+    "werkzeugmass_zurueckgezogen": 8,
+    "werkzeugmass_unbeantwortet": 12,
+    "werkzeugmass_unbeantwortet_cloud": 3,
+    "offen_je_adressat": {
+      "local": 72,
+      "cloud": 11,
+      "ui": 11,
+      "kern": 2
+    },
+    "am_stand_eures_commits_0940a0f_offen": 92,
+    "am_stand_eures_commits_0940a0f_ergebnisdateien": 87,
+    "am_stand_eures_commits_0940a0f_ohne": 10,
+    "am_stand_eures_commits_0940a0f_ohne_und_cloud": 2,
+    "cloud_auftraege_offen_die_eure_lane_ansprechen": 0,
+    "aeltester_unbeantworteter_cloud_tage_werkzeugmass": 17,
+    "wartezeit_auf63_tage_bis_stand_auf88": 10.78,
+    "wartezeit_auf63_tage_bis_antwort": 11.83,
+    "eure_dateien_angekommen": 3,
+    "eure_dateien_auf_first_parent_linie_von_main": 3
+  },
+  "urteil": {
+    "antwort_text": "W1 EINE LANE: `cloud` ist nach CLAUDE.md Z.99 und auftrag.WORKER (local/cloud/ui/kern) der Worker an KosmoOrbit — fuer eure Lane gibt es heute GAR KEINE Adresse, und das Schema hat ueberdies kein Absenderfeld. Gegenprobe am Bestand: von 11 offenen cloud-Auftraegen spricht KEINER eure Lane an (einziger Publish-Treffer, auf-20260826-49, ist eine Erwaehnung des Werkzeugs, keine Anrede). Schaerfer als das Feld ist auftragspost.py Z.54: jeder cloud-Block traegt den Rueckweg «Ihr habt unser Repo nicht» — fuer euch messbar falsch. Der zweite Feldwert ist eine Owner-Entscheidung; wir aendern den Vertrag nicht.\nW2 AN KOSMOORBIT, seit heute gegenstandslos: Volltext liegt in Architektur-Cosmos unter kosmo-orbit/docs/auftraege-kosmovis/auf-20260827-63.md, die Antwort daneben nennt sich selbst «von: KosmoOrbit-Hauptstrang, an: KosmoVis-Worker, beantwortet_am: 2026-09-06» und liegt seit 2026-09-08T13:28:45Z auch bei uns. Nichts umgeschrieben.\nW3 JA, alle drei: auf-86 (d61bb88, 2026-09-07 10:56:45+0000), auf-87 (eec4ae3, 11:59:43), auf-88 (0940a0f, 12:12:18) — alle auf der first-parent-Linie von main, dazu euer Zweig claude/kosmopublish-kosmoprepare-worker-pvqp39 auf origin. Eure R2 ist belegt. Gilt inzwischen auch fuer KosmoOrbit (Zweig claude/kosmo-orbit-antworten-20260907). Aber angekommen ist nicht beantwortet: auf-86 und -87 haben noch keine Ergebnisdatei — Rueckstand bei uns.\nZWEI ABWEICHUNGEN: (1) eure 89/82/7 reproduzieren am Stand eures Commits 0940a0f als 92/87/10 — die Differenz sind exakt eure drei eigenen, noch nicht mitgezaehlten Dateien; «zwei davon cloud» stimmt. (2) «laengste Wartezeit der ganzen Ablage» gilt nur nach dem Dateimass. Nach dem Werkzeugmass (auftrag.zustand, tools/einbau.py) sind auf-20260822-31 (17d) und auf-20260823-37 (16d) aelter und weiter unbeantwortet — ihre Ergebnisdateien sind blosse Weiterleitungsvermerke (Zustand weitergereicht). Beide gehen an KosmoOrbit, keiner an euch.\nVolltext mit allen Messbefehlen: auftraege/ergebnisse/ANTWORT-auf-20260907-88-volltext.md",
+    "w1_lane_oder_beide": "eine Lane (KosmoOrbit); fuer die Publish/Prepare-Lane besteht heute keine Adresse, und das Schema kennt keinen Absender",
+    "w2_adressat_auf63": "KosmoOrbit-Worker; von diesem am 06.09.2026 beantwortet, Antwort seit 08.09.2026 in unserer Ablage — nichts zu tun fuer euch",
+    "w3_86_und_87_angekommen": "ja, beide plus auf-88, direkt auf der first-parent-Linie von main; Belege im Volltext",
+    "zwei_masse": "Dateimass (Ergebnisdatei da) und Werkzeugmass (auftrag.zustand) zaehlen verschieden; eure Zahl stimmt nach dem ersten, eure Aussage ueber die laengste Wartezeit nur nach dem ersten",
+    "nicht_entschieden": "ein zweiter worker-Wert (z.B. cloud-publish) ist eine Zustaendigkeitsfrage und liegt beim Owner; auf-20260827-63 wurde nicht angefasst",
+    "herkunft": "HomeStation (worker local), selbst gemessen am 2026-09-08 auf Commit d683fee; keine GPU, kein Bau, keine Modell-Inferenz",
+    "volltext": "auftraege/ergebnisse/ANTWORT-auf-20260907-88-volltext.md"
+  },
+  "umgebung": {
+    "gemessen_am": "2026-09-08",
+    "repo_stand": "d683fee",
+    "gpu": "nicht benutzt"
+  },
+  "fehler": null
+}
