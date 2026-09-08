@@ -106,6 +106,22 @@ HERZSCHLAG_DATEI = "herzschlag.txt"
 #: GIL frei.
 HERZSCHLAG_TAKT_S = 2.0
 
+#: Wieviel Zeit ein Lauf bekommt, **bis das erste Zeichen kommt** — der Anlauf.
+#:
+#: GEMESSEN AM 10.09.2026 in dieser Umgebung, viermal hintereinander dieselbe
+#: `blender --background --version`:
+#:
+#:     Start 1  12,63 s      Start 2  0,66 s      Start 3  0,26 s      Start 4  0,15 s
+#:
+#: Der erste Start kostet das Fünfzigfache der folgenden: Das Binary liegt dann noch
+#: nicht im Seitencache. Die Frist der Standardausgabe steht bei 10 s — ein kalter Start
+#: riss sie damit **zuverlässig**, nicht gelegentlich. Vier Beweisläufe sind in einer
+#: Nacht daran gescheitert, und jeder war kerngesund.
+#:
+#: 60 s sind das Fünffache des gemessenen kalten Starts. Nach dem ersten Zeichen gilt
+#: wieder die kurze Frist; der Gesamt-Timeout begrenzt den Anlauf ohnehin.
+ANLAUF_S = 60.0
+
 #: Wie viele ausgefallene Schläge nötig sind, bevor die Wache anschlägt.
 #:
 #: Fünf statt zwei, weil ein Faden ins Hintertreffen geraten kann, ohne dass etwas kaputt
@@ -185,7 +201,8 @@ def starter_mit_wache(wache=None, *, frist_s: float | None = None,
             aus = Path(tmp) / "stdout.txt"
             fehler = Path(tmp) / "stderr.txt"
             diese = wache if wache is not None else fortschritt.wache_fuer_datei(
-                aus, frist_s=frist_s, name="Standardausgabe des Laufs", _uhr=_uhr)
+                aus, frist_s=frist_s, anlauf_s=ANLAUF_S,
+                name="Standardausgabe des Laufs", _uhr=_uhr)
             prozess = oeffne(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             faeden = [_giesse(prozess.stdout, aus), _giesse(prozess.stderr, fehler)]
             try:

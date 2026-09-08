@@ -115,6 +115,10 @@ class Wache:
     """
 
     frist_s: float = FRIST_S
+    #: Die Frist, **solange noch kein einziges Zeichen kam** — der Anlauf. ``None`` heisst
+    #: «dieselbe wie `frist_s`» und ist die Vorgabe; ohne ausdrückliche Angabe ändert sich
+    #: also nichts. Siehe :meth:`befund` für den gemessenen Anlass.
+    anlauf_s: float | None = None
     art: str = BEHAUPTET
     name: str = "Lauf"
     _uhr: object = field(default=None, repr=False)
@@ -217,6 +221,24 @@ class Wache:
         """
         still = self.still_seit_s
         belegt = self.art == BELEGT
+        # DER ANLAUF IST KEIN STILLSTAND (10.09.2026, gemessen).
+        #
+        # Solange **noch kein einziges Zeichen** kam, ist der Lauf nicht stehengeblieben —
+        # er hat nicht angefangen. Zwei Lagen, die eine Frist bisher gleich behandelt hat.
+        #
+        # Der Anlass ist eine Messung und keine Vorsicht: Blender braucht auf dieser
+        # Maschine beim **ersten** Start 12,63 s, danach 0,66 / 0,26 / 0,15 s. Die Frist
+        # der Standardausgabe stand bei 10 s. Ein kalter Start riss sie damit
+        # **zuverlässig** — vier Beweisläufe sind in einer Nacht daran gescheitert, und
+        # jedes Mal war der Lauf kerngesund.
+        #
+        # *Das ist keine Lockerung der Wache.* Nach dem ersten Zeichen gilt wieder
+        # `frist_s`, und der Gesamt-Timeout begrenzt den Anlauf ohnehin. Was sich ändert,
+        # ist allein, dass «hat noch nicht angefangen» nicht mehr «ist stehengeblieben»
+        # heisst.
+        frist = self.frist_s
+        if self._schritte == 0 and self.anlauf_s is not None:
+            frist = float(self.anlauf_s)
         grund = {
             "befund": None,
             "schwere": SCHWERE_OK,
@@ -227,10 +249,12 @@ class Wache:
             "schritte": self._schritte,
             "detail": "",
         }
-        if still <= self.frist_s:
+        grund["frist_s"] = frist
+        grund["im_anlauf"] = self._schritte == 0 and frist != self.frist_s
+        if still <= frist:
             grund["detail"] = (
                 f"{self.name}: letztes Fortschrittszeichen vor {still:.0f} s "
-                f"(Frist {self.frist_s:.0f} s, {self._schritte} Zeichen bisher)."
+                f"(Frist {frist:.0f} s, {self._schritte} Zeichen bisher)."
             )
             return grund
 
@@ -239,7 +263,10 @@ class Wache:
             grund["schwere"] = SCHWERE_FEHLER
             grund["detail"] = (
                 f"{self.name}: seit {still:.0f} s kein Fortschritt (Frist "
-                f"{self.frist_s:.0f} s). Das Zeichen ist BELEGT — es kommt aus etwas, das "
+                f"{frist:.0f} s"
+                + (", Anlauf — es kam noch kein einziges Zeichen" if grund["im_anlauf"]
+                   else "")
+                + f"). Das Zeichen ist BELEGT — es kommt aus etwas, das "
                 f"sich unabhängig vom Erzähler bewegt. Stillstand heisst hier wirklich "
                 f"Stillstand."
             )
@@ -247,7 +274,7 @@ class Wache:
             grund["schwere"] = SCHWERE_WARN
             grund["detail"] = (
                 f"{self.name}: seit {still:.0f} s keine Änderung (Frist "
-                f"{self.frist_s:.0f} s). Das Zeichen ist nur BEHAUPTET — es kommt aus "
+                f"{frist:.0f} s). Das Zeichen ist nur BEHAUPTET — es kommt aus "
                 f"einem Statuswort. Daraus lässt sich LANGSAM nicht von HÄNGEND "
                 f"unterscheiden, und darum bleibt es eine Warnung. Wer hier Gewissheit "
                 f"will, braucht ein belegtes Zeichen: einen Schrittzähler, eine "
@@ -336,15 +363,16 @@ def verzeichnis_marke(pfad, *, endung: str | None = None,
     return anzahl, summe
 
 
-def wache_fuer_datei(pfad, *, frist_s: float = FRIST_S, name: str | None = None,
-                     _uhr=None) -> Wache:
+def wache_fuer_datei(pfad, *, frist_s: float = FRIST_S, anlauf_s: float | None = None,
+                     name: str | None = None, _uhr=None) -> Wache:
     """Eine Wache auf eine wachsende Datei. Die Art ist zwangsläufig :data:`BELEGT`.
 
     Der Pfad wird **gebunden**: :meth:`Wache.blick` holt sich die Marke selbst. Ein
     Pfadparameter, den die Wache nicht liest, wäre eine tote Kante — genau die Fehlerart,
     gegen die dieses Projekt seit Phase 0 antritt.
     """
-    return Wache(frist_s=frist_s, art=BELEGT, name=name or f"Datei {Path(pfad).name}",
+    return Wache(frist_s=frist_s, anlauf_s=anlauf_s, art=BELEGT,
+                 name=name or f"Datei {Path(pfad).name}",
                  _uhr=_uhr, _zeichen=lambda: datei_marke(pfad))
 
 

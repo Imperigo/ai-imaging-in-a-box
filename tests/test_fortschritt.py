@@ -1084,3 +1084,102 @@ def test_beobachte_laeuft_als_kontext_und_raeumt_auf(tmp_path):
     assert b._faden is None, (
         "nach dem Block bleibt kein Faden zurueck — ein Beobachter, der weiterlaeuft, "
         "waere ein Daemon ohne Besitzer")
+
+# ======================================================================================
+# Der Anlauf ist kein Stillstand — gemessen am 10.09.2026
+# ======================================================================================
+
+class _Uhr:
+    """Eine Uhr, die man von Hand stellt. Die Wache soll ohne echtes Warten prüfbar sein."""
+
+    def __init__(self):
+        self.t = 0.0
+
+    def __call__(self):
+        return self.t
+
+
+def test_der_anlauf_bekommt_eine_eigene_frist():
+    """**Solange kein Zeichen kam, ist der Lauf nicht stehengeblieben — er hat nicht
+    angefangen.**
+
+    Der Anlass ist eine Messung: Blender braucht auf dieser Maschine beim ersten Start
+    12,63 s, danach 0,66 / 0,26 / 0,15 s. Die Frist der Standardausgabe stand bei 10 s;
+    ein kalter Start riss sie **zuverlässig**, und vier Beweisläufe sind in einer Nacht
+    daran gescheitert — jeder davon kerngesund.
+    """
+    uhr = _Uhr()
+    wache = fortschritt.Wache(frist_s=10.0, anlauf_s=60.0, art=fortschritt.BELEGT,
+                              _uhr=uhr)
+    uhr.t = 30.0                               # laenger als frist_s, kuerzer als anlauf_s
+    befund = wache.melde(None)
+    assert befund["schwere"] == fortschritt.SCHWERE_OK, (
+        "im Anlauf darf die kurze Frist nicht greifen")
+    assert befund["im_anlauf"] is True
+    assert befund["frist_s"] == 60.0
+
+
+def test_nach_dem_ersten_zeichen_gilt_wieder_die_kurze_frist():
+    """**Die Gegenprobe, und sie ist der Punkt.**
+
+    Ohne sie wäre der Anlauf eine Lockerung der Wache: Ein Lauf, der anläuft und dann
+    hängt, bekäme dauerhaft 60 s statt 10. *Ein Wächter, der nach dem ersten Lebenszeichen
+    weiter schläft, bewacht den Anlauf und nicht den Lauf.*
+    """
+    uhr = _Uhr()
+    wache = fortschritt.Wache(frist_s=10.0, anlauf_s=60.0, art=fortschritt.BELEGT,
+                              _uhr=uhr)
+    wache.melde(("erstes", 1))                 # jetzt ist der Anlauf vorbei
+    uhr.t = 30.0
+    befund = wache.melde(("erstes", 1))        # dieselbe Marke: kein Fortschritt
+    assert befund["schwere"] == fortschritt.SCHWERE_FEHLER, (
+        "nach dem ersten Zeichen muss die kurze Frist wieder greifen")
+    assert befund["im_anlauf"] is False
+    assert befund["frist_s"] == 10.0
+
+
+def test_ohne_anlauf_s_aendert_sich_nichts():
+    """Die Vorgabe ist ``None`` — bestehende Aufrufer erben kein neues Verhalten."""
+    uhr = _Uhr()
+    wache = fortschritt.Wache(frist_s=10.0, art=fortschritt.BELEGT, _uhr=uhr)
+    uhr.t = 30.0
+    befund = wache.melde(None)
+    assert befund["schwere"] == fortschritt.SCHWERE_FEHLER
+    assert befund["im_anlauf"] is False
+    assert befund["frist_s"] == 10.0
+
+
+def test_ein_lauf_der_NIE_anlaeuft_wird_trotzdem_gefangen():
+    """Der Anlauf ist eine Frist, kein Freibrief."""
+    uhr = _Uhr()
+    wache = fortschritt.Wache(frist_s=10.0, anlauf_s=60.0, art=fortschritt.BELEGT,
+                              _uhr=uhr)
+    uhr.t = 61.0
+    assert wache.melde(None)["schwere"] == fortschritt.SCHWERE_FEHLER
+
+
+def test_seams_setzt_den_gemessenen_anlauf():
+    """*Ein Wert, den niemand setzt, wirkt nicht.* — dieselbe Naht-Regel wie beim Shift.
+
+    Der Anlauf nützt nichts, wenn `starter_mit_wache` ihn nicht durchreicht; geprüft wird
+    darum die Naht und nicht die Rechnung.
+    """
+    from aiimaging import seams
+    gesehen = {}
+    echt = fortschritt.wache_fuer_datei
+
+    def merke(pfad, **kw):
+        gesehen.update(kw)
+        return echt(pfad, **kw)
+
+    fortschritt.wache_fuer_datei = merke
+    try:
+        starte = seams.starter_mit_wache(frist_s=10.0, takt_s=0.01)
+        try:
+            starte(["/bin/true"], timeout=5)
+        except Exception:
+            pass
+    finally:
+        fortschritt.wache_fuer_datei = echt
+    assert gesehen.get("anlauf_s") == seams.ANLAUF_S, (
+        f"seams reicht den Anlauf nicht durch: {gesehen}")
