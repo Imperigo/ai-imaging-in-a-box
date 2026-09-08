@@ -1,0 +1,349 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260909-90",
+  "status": "ok",
+  "beendet": "2026-09-08T15:11:08Z",
+  "dauer_s": 103.3,
+  "messwerte": {
+    "bildreihe": {
+      "n_png": 54,
+      "je_kamera": 9,
+      "bemerkung": "7 Bildstellen, S5 sind 3 Dateien. Ablage build/beweis/<kamera>/S<n>_<name>.png; build/ ist ignoriert, die Bilder bleiben hier.",
+      "kameras": [
+        "aussen_01",
+        "aussen_02",
+        "aussen_03",
+        "aussen_04",
+        "innen_frontal",
+        "innen_ueber_eck"
+      ]
+    },
+    "kameras": {
+      "aussen_01": {
+        "brennweite_mm_multipass": 35.0,
+        "kamera_weg": "vorgegeben",
+        "anteil_maske": 0.1563,
+        "je_startwert": {
+          "s0": {
+            "rho": 0.8682,
+            "kantenanteil": 0.3574,
+            "kante": 0.0037,
+            "score_ganzes_bild": 0.8189,
+            "paar_bestanden": true
+          },
+          "s1": {
+            "rho": 0.9915,
+            "kantenanteil": 0.2081,
+            "kante": 0.0222,
+            "score_ganzes_bild": 0.3195,
+            "paar_bestanden": true
+          },
+          "s2": {
+            "rho": 0.9889,
+            "kantenanteil": 0.0453,
+            "kante": 0.0008,
+            "score_ganzes_bild": null,
+            "paar_bestanden": false
+          }
+        },
+        "nullanker_rho": {
+          "rauschen": -0.2516,
+          "grau": -0.2722,
+          "verlauf": -0.0036
+        },
+        "nullanker_score": null,
+        "zeiten_s": {
+          "multipass": 2.2,
+          "erzeugung": 10.5,
+          "qa": 1.7,
+          "nullprobe": 2.0,
+          "gesamt": 16.4
+        }
+      },
+      "aussen_02": {
+        "brennweite_mm_multipass": 35.0,
+        "kamera_weg": "vorgegeben",
+        "anteil_maske": 0.1563,
+        "je_startwert": {
+          "s0": {
+            "rho": 0.9897,
+            "kantenanteil": 0.0857,
+            "kante": 0.0002,
+            "score_ganzes_bild": null,
+            "paar_bestanden": false
+          },
+          "s1": {
+            "rho": 0.9923,
+            "kantenanteil": 0.0086,
+            "kante": 0.0002,
+            "score_ganzes_bild": null,
+            "paar_bestanden": false
+          },
+          "s2": {
+            "rho": 0.995,
+            "kantenanteil": 0.0918,
+            "kante": 0.0032,
+            "score_ganzes_bild": null,
+            "paar_bestanden": false
+          }
+        },
+        "nullanker_rho": {
+          "rauschen": -0.4896,
+          "grau": -0.5397,
+          "verlauf": -0.6748
+        },
+        "nullanker_score": null,
+        "zeiten_s": {
+          "multipass": 2.2,
+          "erzeugung": 10.2,
+          "qa": 1.6,
+          "nullprobe": 2.0,
+          "gesamt": 16.0
+        }
+      },
+      "aussen_03": {
+        "brennweite_mm_multipass": 35.0,
+        "kamera_weg": "vorgegeben",
+        "anteil_maske": 0.1563,
+        "je_startwert": {
+          "s0": {
+            "rho": 0.8681,
+            "kantenanteil": 0.3574,
+            "kante": 0.0037,
+            "score_ganzes_bild": 0.8189,
+            "paar_bestanden": true
+          },
+          "s1": {
+            "rho": 0.9914,
+            "kantenanteil": 0.2081,
+            "kante": 0.0222,
+            "score_ganzes_bild": 0.3194,
+            "paar_bestanden": true
+          },
+          "s2": {
+            "rho": 0.9888,
+            "kantenanteil": 0.0453,
+            "kante": 0.0008,
+            "score_ganzes_bild": null,
+            "paar_bestanden": false
+          }
+        },
+        "nullanker_rho": {
+          "rauschen": -0.2509,
+          "grau": -0.2721,
+          "verlauf": -0.0039
+        },
+        "nullanker_score": null,
+        "zeiten_s": {
+          "multipass": 2.2,
+          "erzeugung": 10.1,
+          "qa": 1.7,
+          "nullprobe": 2.0,
+          "gesamt": 16.0
+        }
+      },
+      "aussen_04": {
+        "brennweite_mm_multipass": 35.0,
+        "kamera_weg": "vorgegeben",
+        "anteil_maske": 0.1563,
+        "je_startwert": {
+          "s0": {
+            "rho": 0.9898,
+            "kantenanteil": 0.0857,
+            "kante": 0.0002,
+            "score_ganzes_bild": null,
+            "paar_bestanden": false
+          },
+          "s1": {
+            "rho": 0.9923,
+            "kantenanteil": 0.0086,
+            "kante": 0.0002,
+            "score_ganzes_bild": null,
+            "paar_bestanden": false
+          },
+          "s2": {
+            "rho": 0.9951,
+            "kantenanteil": 0.0918,
+            "kante": 0.0032,
+            "score_ganzes_bild": null,
+            "paar_bestanden": false
+          }
+        },
+        "nullanker_rho": {
+          "rauschen": -0.4903,
+          "grau": -0.5399,
+          "verlauf": -0.6745
+        },
+        "nullanker_score": null,
+        "zeiten_s": {
+          "multipass": 2.2,
+          "erzeugung": 10.1,
+          "qa": 1.7,
+          "nullprobe": 2.1,
+          "gesamt": 16.1
+        }
+      },
+      "innen_frontal": {
+        "brennweite_mm_multipass": 24.0,
+        "kamera_weg": "vorgegeben",
+        "anteil_maske": 0.7676,
+        "je_startwert": {
+          "s0": {
+            "rho": 0.5448,
+            "kantenanteil": 0.0,
+            "kante": 0.0,
+            "score_ganzes_bild": 0.5739,
+            "paar_bestanden": false
+          },
+          "s1": {
+            "rho": 0.8573,
+            "kantenanteil": 0.0,
+            "kante": -0.0,
+            "score_ganzes_bild": 0.7237,
+            "paar_bestanden": false
+          },
+          "s2": {
+            "rho": 0.6202,
+            "kantenanteil": 0.1863,
+            "kante": 0.0119,
+            "score_ganzes_bild": 0.6685,
+            "paar_bestanden": false
+          }
+        },
+        "nullanker_rho": {
+          "rauschen": 0.8167,
+          "grau": 0.6839,
+          "verlauf": 0.4418
+        },
+        "nullanker_score": {
+          "rauschen": 0.6798,
+          "grau": 0.6445,
+          "verlauf": 0.4962
+        },
+        "zeiten_s": {
+          "multipass": 4.3,
+          "erzeugung": 10.0,
+          "qa": 2.4,
+          "nullprobe": 2.9,
+          "gesamt": 19.6
+        }
+      },
+      "innen_ueber_eck": {
+        "brennweite_mm_multipass": 24.0,
+        "kamera_weg": "vorgegeben",
+        "anteil_maske": 0.7131,
+        "je_startwert": {
+          "s0": {
+            "rho": 0.9993,
+            "kantenanteil": 0.0,
+            "kante": -0.0002,
+            "score_ganzes_bild": 0.7029,
+            "paar_bestanden": false
+          },
+          "s1": {
+            "rho": 0.9989,
+            "kantenanteil": 0.0,
+            "kante": -0.0001,
+            "score_ganzes_bild": 0.7026,
+            "paar_bestanden": false
+          },
+          "s2": {
+            "rho": 0.9941,
+            "kantenanteil": 0.0,
+            "kante": -0.0001,
+            "score_ganzes_bild": 0.6991,
+            "paar_bestanden": false
+          }
+        },
+        "nullanker_rho": {
+          "rauschen": 0.876,
+          "grau": 0.8796,
+          "verlauf": 0.8174
+        },
+        "nullanker_score": {
+          "rauschen": 0.6728,
+          "grau": 0.6187,
+          "verlauf": 0.4998
+        },
+        "zeiten_s": {
+          "multipass": 4.2,
+          "erzeugung": 10.0,
+          "qa": 2.3,
+          "nullprobe": 2.7,
+          "gesamt": 19.2
+        }
+      }
+    },
+    "backbone": {
+      "name": "z-image-turbo",
+      "erste_kommerzielle_wahl": "z-image-turbo",
+      "lizenz": "Apache-2.0",
+      "lizenz_quelle": "modellkarte",
+      "controlnet_id": "alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union",
+      "controlnet_lizenz": "Apache-2.0",
+      "gewichtsdatei_controlnet": "Z-Image-Turbo-Fun-Controlnet-Union.safetensors",
+      "gewichte_basis": "diffusers-Verzeichnis z-image-turbo (model_index.json, transformer, vae, text_encoder, tokenizer, scheduler)",
+      "ladeweg": "ZImageControlNetPipeline + from_single_file(Z-Image-Turbo-Fun-Controlnet-Union.safetensors)",
+      "ladezeit_s": 4.7,
+      "geraet": "cuda",
+      "schaetzer": "depth-anything-v2-small"
+    },
+    "zeiten_gesamt_s": 103.3,
+    "multipass_gpu_gegen_97s_cpu": {
+      "aussen_s": 2.2,
+      "innen_s": 4.25,
+      "faktor_aussen": 44,
+      "faktor_innen": 23
+    },
+    "gpu": {
+      "vor_lauf_w": [
+        46.63,
+        47.09,
+        43.75
+      ],
+      "vor_lauf_mib": [
+        749,
+        733,
+        754
+      ],
+      "nach_lauf_w": 44.91,
+      "nach_lauf_mib": 734,
+      "leistungsgrenze_w": 400.0
+    },
+    "aufloesung": [
+      512,
+      512
+    ],
+    "samples": 32,
+    "schritte": 20,
+    "controlnet_staerke": 0.8,
+    "denoise": 0.6,
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "volltext": "auf-20260909-90-bildreihe.md"
+  },
+  "urteil": {
+    "bildreihe": "vollstaendig",
+    "V3_backbone": "z-image-turbo, Apache-2.0; ControlNet Z-Image-Turbo-Fun-Controlnet-Union, Apache-2.0, Einzeldatei .safetensors. Kein FLUX.",
+    "V4_brennweite_innen_mm": 24.0,
+    "V5_je_kamera_s": "aussen 16.0-16.4, innen 19.2-19.6; Multipass 2.2 bzw. 4.2-4.3 s statt 97 s auf der CPU",
+    "V6_am_falschesten": "aussen_01/S5_erzeugt_s2 (= aussen_03): zeigt die Dachflaeche von oben, obwohl das Auge auf 1.70 m steht und der Bau 3.25 m hoch ist - von dort liegt das Dach ueber dem Horizont.",
+    "V7_unerfragt": "Der Beauty-Anker kommt beim Vorgabe-Backbone nicht an: ZImageControlNetPipeline kennt weder 'image' noch 'strength'. Beleg am Bild: aussen_01 und aussen_03 haben identisches 8-Bit-Steuerbild (0 abweichende Bytes) und verschiedene Beauty-Bilder (128191 abweichende Bytes) - die erzeugten Bilder sind fuer alle drei Startwerte byte-gleich. denoise=0.6 und mit_beauty sind wirkungslos.",
+    "befund_kameras": "aussen_01==aussen_03 und aussen_02==aussen_04 byte-gleich: der Testquader ist punktsymmetrisch, vier Standpunkte ergeben zwei Messlagen.",
+    "befund_fuehrung": "innen_frontal verliert 127488 von 201216 Geometriepunkten (63.4%) an den Grauwert 0 des Hintergrunds; aussen und innen ueber Eck 0.1-0.2%.",
+    "befund_nullanker": "Innen erreicht weisses Rauschen rho +0.8167 (frontal) und +0.8760 (ueber Eck) - zwei der drei frontalen Bilder liegen darunter. Aussen liegt der Anker bei -0.25 bis -0.49.",
+    "befund_score": "Der Score ueber das ganze Bild ist bei allen vier Aussenkameras fuer alle Kontrollbilder nicht messbar (n_gemeinsam 0, Geometrieanteil 15.6%). Gegenprobe: innen liefert derselbe Weg 0.4962-0.6798.",
+    "nichts_geaendert": "Keine Schwelle, kein Riegel, kein Commit, kein Push."
+  },
+  "umgebung": {
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "leistungsgrenze_w": 400.0,
+    "blender": "/snap/bin/blender",
+    "venv": ".venv-render",
+    "werkzeug": "tools/beweisreihe.py"
+  },
+  "fehler": null
+}

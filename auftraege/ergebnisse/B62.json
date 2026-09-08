@@ -1,0 +1,83 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "B62",
+  "status": "ok",
+  "beendet": "2026-09-08T15:52:35Z",
+  "dauer_s": null,
+  "messwerte": {
+    "echter_render_job": {
+      "abfragen_gesamt": 39,
+      "http_200": 39,
+      "http_nicht_2xx": 0,
+      "curl_fehler": 0,
+      "statusfolge": "queued 3x -> running 21x -> done 15x",
+      "dauer_s_erste_bis_letzte_abfrage": 38,
+      "bilder_geschrieben": 1,
+      "geraeteweg": "cuda, ZImageControlNetPipeline + Z-Image-Turbo-Fun-Controlnet-Union",
+      "geometrie_score": 0.5309,
+      "schwelle": 0.65,
+      "passed": false
+    },
+    "drei_stille_pfade_zeilen": {
+      "jobId_ausstieg_erfolgszweig": 584,
+      "jobId_ausstieg_fehlerzweig": 633,
+      "http_und_netz_schlucken": 639,
+      "datei": "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx",
+      "triage_nannte": "583/632/638 - um eine Zeile verschoben, Wortlaut identisch"
+    },
+    "weg1_gegenprobe": {
+      "unbekannte_job_id": 404,
+      "bekannte_job_id": 200,
+      "derselbe_job_vor_bruecken_neustart": 200,
+      "derselbe_job_nach_bruecken_neustart": 404,
+      "health_nach_neustart": 200
+    },
+    "weg1_im_normalbetrieb": {
+      "ablage_ohne_angabe": "/tmp/kosmo-jobs",
+      "tmp_dateisystem": "tmpfs",
+      "systemstart": "2026-09-08T06:44:36",
+      "ablage_angelegt": "2026-09-08T06:44:54",
+      "abstand_s": 18
+    },
+    "weg2_cors": {
+      "origin_geprueft": "http://localhost:5183",
+      "access_control_allow_origin": "http://localhost:5183",
+      "http": 200
+    },
+    "vorabpruefung_auftrag": {
+      "paarurteil_im_rumpf": false,
+      "kantenanteil_im_rumpf": false,
+      "gegenprobe_qa_geometry": true,
+      "gegenprobe_geom_iou": true
+    },
+    "karte": {
+      "leerlauf_vor_lauf_w": 41.55,
+      "leerlauf_vor_lauf_mib": 748,
+      "spitze_mib": 25517,
+      "spitze_w": 314,
+      "leistungsgrenze_w": 400,
+      "nach_lauf_w": 39.7,
+      "nach_lauf_mib": 746
+    }
+  },
+  "urteil": {
+    "kernbefund": "An einem echten Render-Job hat KEINER der drei stillen Pfade gefeuert: 39 von 39 Abfragen HTTP 200, queued->running->done in 38 s. Die Null ist belegt, nicht blind - dieselbe Aufzeichnung zeigt fuer eine unbekannte Job-Kennung im selben Atemzug 404.",
+    "weg1_bridgehttperror": "NICHT ausgeschlossen, sondern im Normalbetrieb sicher: die Ablage steht ohne Angabe auf /tmp/kosmo-jobs, /tmp ist tmpfs und bei jedem Neustart leer (Verzeichnis 18 s nach dem Systemstart neu angelegt). Woertlich nachgestellt: dieselbe Job-Kennung 200 vor, 404 nach einem Neustart der Bruecke, /health dabei 200. 404 ist genau der Fall, den Zeile 639 schluckt.",
+    "berichtigung_am_auftragstext": "Der Auftrag sagt, JEDE Nicht-2xx-Antwort werde verschluckt. Seit KLEIN 8 stimmt das nicht mehr ganz: istAuthFehler (vis-jobs.ts:54) zeigt 401 und 403 an, festgehalten in test/vis-lebenszyklus.test.ts:110. Verschluckt wird alles uebrige - 404, 429, 5xx. Der verschwundene Job faellt weiter in die stille Haelfte.",
+    "weg2_typeerror": "CORS ist es in dieser Aufstellung nicht: die Bruecke schickt access-control-allow-origin fuer den Ursprung der Oberflaeche. Nicht ausgeschlossen - ein totes Netz oder ein beendeter Bruecken-Prozess erzeugt denselben TypeError, und der bleibt still.",
+    "weg3_jobid": "Unveraendert in Zeile 584 und 633, rein auf der Client-Seite und von der Bruecke aus nicht ausloesbar. An einem echten Job nicht messbar - eine Grenze der Messung, kein Freispruch.",
+    "vorabpruefung": "Der echte Ergebnisrumpf traegt WEDER paarurteil NOCH kantenanteil. Nach der Regel des Auftrags faellt diese Spur damit aus. Eigener Messfehler unterwegs berichtigt: zuerst am bei 300 Zeichen abgeschnittenen Mitschnitt gemessen, wo auch die Gegenprobe 0 lieferte - die Probe konnte gar nicht widersprechen.",
+    "nicht_gemessen": "Der Knoten im Browser. Port 5183 ist der Dauerbetrieb des Owners und wurde nicht angefasst. 'Der Knoten bleibt auf RENDERT stehen' ist aus der Server-Messung und dem gelesenen Client-Code geschlossen, NICHT am Bildschirm beobachtet.",
+    "abweichung_auftragsort": "Der Auftrag liegt NICHT unter auftraege/offen/B62.json und nirgends in diesem Repo - systemweit keine einzige B-nummerierte Auftragsdatei. Gegenprobe: dieselbe Suche findet eine bekannte Kennung 5x. Der Auftrag steht in KosmoOrbit unter docs/AUFTRAG-B62-RENDERKNOTEN-REAGIERT-NICHT.md.",
+    "waise": "Diese Ergebnisdatei hat keinen Auftrag unter auftraege/offen/. tools/antwort.py verweigert genau das und wurde darum nicht benutzt; gebaut mit auftrag.baue_ergebnis(). Sie steht damit in keiner Zaehlung dieses Repos - festgehalten, statt es zu verstecken.",
+    "volltext": "B62-mitschnitt.md"
+  },
+  "umgebung": {
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "leistungsgrenze_w": 400.0,
+    "backbone": "z-image-turbo (Apache-2.0) + Fun-ControlNet-Union (Apache-2.0)",
+    "bruecke": "eigene Instanz auf freiem Port, eigene Ablage; Port 8600 und 5183 unangetastet",
+    "owner_dienste_vor_und_nach": "gleiche Prozesskennungen auf 8600 und 5183"
+  },
+  "fehler": null
+}
