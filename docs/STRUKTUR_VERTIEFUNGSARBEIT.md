@@ -42,8 +42,8 @@ durch. Das ist ein Messwert und kein Fehlschlag, aber es ist auch keine bestande
 | | |
 |---|---|
 | **Behauptet** | Bildmodelle erfinden Bauteile, und niemand merkt es systematisch. Ein Prüfverfahren fehlt. |
-| **Trägt** | `docs/LAGEBEURTEILUNG_2026-08-14.md` — die erste Lagebeurteilung, ausdrücklich **kein Bau**, sondern eine Bestandsaufnahme mit Lizenzangabe je Baustein. |
-| **Fehlt** | Der Beleg für die Prämisse selbst: *dass* Bildmodelle in dieser Anwendung Geschosse hinzuerfinden, ist im Repo behauptet und nicht gemessen. Entweder eine Literaturstelle oder eine eigene kleine Messreihe am Gerät. **Das ist die einzige echte Lücke in Kapitel 1, und sie steht am Anfang des Textes.** |
+| **Trägt** | `docs/LAGEBEURTEILUNG_2026-08-14.md` — die erste Lagebeurteilung, ausdrücklich **kein Bau**, sondern eine Bestandsaufnahme mit Lizenzangabe je Baustein. Seit dem 10.09.2026 dazu `docs/FORSCHUNGSSTAND_2026-09-10.md`: **die Prämisse ist belegt** — Aithal et al. (arXiv:2406.09358) und Sobieski et al. (arXiv:2605.05026) zeigen, dass Diffusionsmodelle Dinge erzeugen, die es nicht gab. |
+| **Fehlt** | **Der Beleg trägt die Prämisse nur zur Hälfte, und die Hälfte ist präzisierbar.** Beide Arbeiten definieren Halluzination **modellintern** — Abweichung von der Trainingsverteilung oder von gelernten Strukturregeln. Ein Bild mit einem zusätzlichen Geschoss ist danach in Ordnung: Es ist ein plausibles Haus, nur nicht *dieses*. Was fehlt, ist die Häufigkeit **in dieser Anwendung**, gemessen an unserer eigenen Kette — als `auf-20260909-92` bei der HomeStation. |
 
 ---
 
@@ -52,8 +52,9 @@ durch. Das ist ein Messwert und kein Fehlschlag, aber es ist auch keine bestande
 | | |
 |---|---|
 | **Behauptet** | Die Bausteine existieren einzeln (IFC-Leser, Renderer, Bildmodelle, ControlNet); was fehlt, ist die **Verbindung mit einer Messung am Ende**. |
-| **Trägt** | `docs/OEKOSYSTEM_2026-08-18.md`, `docs/KI_MODULE_BESTAND_2026-08-19.md`, `docs/BLENDER_ADDON_BESTAND_2026-08-18.md`, `docs/BACKBONE_2026-08-22.md`, `docs/BACKBONE_CONTROLNET_2026-08-18.md`, `docs/CONTROLNET_NAHT_2026-08-20.md`, `docs/WELCHE_APP_2026-08-19.md` |
-| **Fehlt** | Eine Einordnung gegenüber **veröffentlichter** Arbeit. Der Bestand ist als Werkzeugbestand erhoben, nicht als Forschungsstand. Für eine Vertiefungsarbeit an der ETH ist das zu wenig — hier fehlt Literatur, nicht Code. |
+| **Trägt** | Werkzeugbestand: `docs/OEKOSYSTEM_2026-08-18.md`, `docs/KI_MODULE_BESTAND_2026-08-19.md`, `docs/BLENDER_ADDON_BESTAND_2026-08-18.md`, `docs/BACKBONE_2026-08-22.md`, `docs/BACKBONE_CONTROLNET_2026-08-18.md`, `docs/CONTROLNET_NAHT_2026-08-20.md`, `docs/WELCHE_APP_2026-08-19.md`. **Forschungsstand, erste Erhebung:** `docs/FORSCHUNGSSTAND_2026-09-10.md` — sechs Arbeiten, jede einzeln abgerufen und gegen ihre eigene Seite geprüft. |
+| **Die Lücke, die sie benennt** | Die Literatur kennt Halluzination als Abweichung von dem, was ein Modell **gelernt** hat, und Formtreue als Vergleich zweier **Geometrien** (Chamfer, F-Score) oder zweier **Bilder** (PSNR, SSIM, LPIPS). Ein etabliertes Mass dafür, ob ein **einzelnes erzeugtes Bild** zu der **Geometrie** passt, aus der es entstand, hat diese Suche nicht gefunden. Das Nächstverwandte — GeCo (arXiv:2512.22274) — gilt für **Video** und braucht Kamerabewegung. |
+| **Fehlt** | Die Erhebung ist eine Suche, keine systematische Recherche, US-beschränkt und ohne Zugriff auf CAADRIA, eCAADe, ACADIA, CAAD Futures — also gerade dort blind, wo die Frage in der Architekturinformatik verhandelt wird. *Und eine gescheiterte Suche ist ein schwacher Beleg für eine Lücke* — dieselbe Sorte Aussage, die dieses Projekt bei `tools/einbau.py` schon einmal verkleinern musste. Vor der Abgabe zu wiederholen; hier kann der Betreuer in Minuten helfen, wofür ich Stunden bräuchte. |
 
 ---
 
@@ -179,10 +180,12 @@ Nur was aus der Arbeit selbst folgt, nicht was man sich wünschen könnte:
 
 In dieser Reihenfolge, und die Reihenfolge ist begründet:
 
-1. **Die Prämisse belegen** (Kapitel 1). Sie steht am Anfang und ist die einzige Lücke,
-   die den ganzen Text trägt.
-2. **Den Forschungsstand nachziehen** (Kapitel 2). Literatur, nicht Code — und der
-   einzige Punkt, an dem diese Arbeit als ETH-Arbeit heute zu dünn ist.
+1. **Die Prämisse messen, nicht nur belegen** (Kapitel 1). Belegt ist sie seit dem
+   10.09.2026 aus der Literatur — aber modellintern, und damit nicht ganz für unsere
+   Frage. Die Häufigkeit in dieser Anwendung liefert `auf-20260909-92`.
+2. **Den Forschungsstand über die Bauinformatik nachziehen** (Kapitel 2). Die erste
+   Erhebung steht; sie ist an genau der Stelle blind, an der die Frage vermutlich schon
+   gestellt wurde.
 3. **Kapitel 3, 5, 7 schreiben.** Sie sind belegt, sie sind bebildert, und sie stehen
    nicht unter Vorbehalt.
 4. **Kapitel 6 mit dem Vorbehalt an jeder Zahl schreiben.** Wer ihn erst am Schluss
