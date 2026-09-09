@@ -5027,3 +5027,22 @@ Bekannt und ausdrücklich nicht erledigt:
       es wäre eine Verhaltensänderung auf dem git-Weg zur HomeStation, und sie verschöbe
       die Rahmung **jeder** künftigen Messung. **Das ist ein Owner-Entscheid, kein
       Aufräumen.**
+
+---
+
+## Nebenbefunde vom 09.09.2026, abends
+
+- [x] **Die Präsentation lag im Ordner für Wegwerfbares.** `vortrag.mjs` — dreissig
+      Folien, zwei Sitzungen Zuschnitt — stand unter `build/`, das nicht versioniert wird.
+      Ein Neustart des Containers hätte sie mitgenommen. Versioniert ist jetzt
+      `praesentation/` mit den Folien, der **Bildauswahl** (`bilder.json`), dem Holer und
+      der Layoutprüfung; die Bilder selbst bleiben draussen, weil sie erzeugt und
+      nachbaubar sind. *Die Auswahl ist die Entscheidung, das Bild ist ihr Ergebnis.*
+      Die Zuordnung wurde über Prüfsummen hergestellt, nicht aus dem Gedächtnis — 36 von
+      36 Bildern haben genau eine Quelle im Beweisgang, 13 davon stammen aus der
+      verworfenen ersten Fassung und sind draussen.
+- [ ] **Die vier Platzhalter der Präsentation.** Sie warten auf `auf-20260909-96` bei der
+      HomeStation: das erzeugte Bild, das die Kernaussage trägt, und die drei, die den
+      ehrlichen Teil danach tragen. *Adressat: `local`.* Ohne sie steht auf vier von
+      dreissig Folien ein sichtbarer Platzhalter — sichtbar und nicht leer, denn eine
+      leere Folie sähe aus wie eine Gestaltungsentscheidung.
