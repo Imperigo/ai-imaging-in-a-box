@@ -4507,9 +4507,11 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
 > liegt im sechsten. Mit gezeigtem Paket ist `build_native_ifc` erstmals an erzeugter
 > Geometrie gemessen (3 `IfcSlab`, 2 Geschosse, 1 `IfcMapConversion` mit den übergebenen
 > LV95-Werten).
-> **Offen:** Der Owner-Entscheid zwischen drei Wegen — die zwei Funktionen selbst
-> schreiben (sie sind dünne Hüllen um `ifcopenshell.api`), das Paket als eigenständiges
-> Programm aufrufen, oder den Weg stilllegen.
+> **Offen:** Nichts mehr an der Lizenz. **Der Entscheid ist am selben Abend gefallen und
+> gebaut** (KosmoPrepare `4e372c5`, gemeldet mit `auf-94` am 09.09.): Das IFC-Gerüst ist
+> selbst geschrieben, und das GPL-Paket wird nur noch **als Programm aufgerufen** — also
+> Weg 1 und Weg 2 zusammen. Der Import ist weg, damit auch der Link. Offen bleibt die
+> **Haltbarkeit**: Ein archiviertes privates Repo ist keine Bezugsquelle.
 
 - [ ] **Der Fund ist ausdrücklich ein GPL-Fund, und Regel 1 verlangt genau das.**
       `KosmoDraw-Privat` steht unter **GPL-3.0-or-later**, und
@@ -4523,6 +4525,12 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
       *Der Fund betrifft nicht dieses Repo, sondern KosmoPrepare — gemeldet wird er
       trotzdem hier, weil Regel 1 kein «bei uns nicht» kennt.* Fragen an die Maschine
       liegen in `auf-20260909-94`.
+      **Erledigt am 09.09.2026, abends:** Der Import ist ersetzt. `build_native_ifc`
+      schreibt das IFC-Gerüst selbst (dünne Hülle um `ifcopenshell.api`), und `kosmodraw`
+      wird nur noch als eigenständiges Programm aufgerufen — dieselbe Grenze wie bei
+      Blender und IfcOpenShell. **Kein GPL-Link mehr.** Nebenbefund aus demselben Zug:
+      Sieben Proben, die am 06.09. übersprungen haben, laufen jetzt durch, und
+      `build_labels_ifc` war seit dem 01.09. in *jedem* Lauf kaputt und ist repariert.
 - [ ] **Und die Lehre daraus gehört uns genauso:** «liegt in keinem Repository» ist nie
       eine Messung, sondern immer nur eine Aussage über die Repos, in die jemand gesehen
       hat. Dazu eine Namenskollision, die jede Suche in die falsche Richtung schickte —
