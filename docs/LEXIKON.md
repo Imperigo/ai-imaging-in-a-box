@@ -1681,6 +1681,31 @@ monoton umrechnen. Jede Art trägt eine **Erwartung**, welchen Anteil des Scores
 soll — damit ist jede Störung eine Vorhersage, die zutreffen oder scheitern kann, statt
 bloss eine weitere Kurve.*
 
+**Vertauschprobe** — Dasselbe Bild ein zweites Mal messen, aber gegen die **falsche**
+Vorlage: das Bild eines fünfgeschossigen Baus gegen die Soll-Tiefenkarte einer 8 × 5 × 3 m
+grossen Schachtel. Zwei Bauwerke, die nichts gemein haben ausser dem Standpunkt.
+*Sie beantwortet eine Frage, die keine Bestätigung beantworten kann: **Misst die Prüfung
+das Bauwerk — oder etwas, das jedes Bild hat?** Am 08.09.2026 bestanden alle zwölf
+erzeugten Bilder die Schwelle auch gegen die falsche Karte (0,8279–0,8763). Das war der
+Befund, der die Geometrie-Schwelle in ihre Schranken gewiesen hat: Bei viel Boden im Bild
+trägt sie den Boden-Himmel-Aufbau, den jedes Architekturbild auf Augenhöhe hat.*
+
+**Stärkeprobe** — Dieselbe Messung noch einmal, aber mit **abgeschwächter Führung**: Die
+ControlNet-Stärke wird von 1,00 auf 0,75 und 0,30 gesenkt, alles andere bleibt gleich.
+*Bei 0,30 hat das Bild mit dem Modell nachweislich nichts mehr zu tun — die Übereinstimmung
+über der Bauwerksmaske liegt bei null. Eine Prüfung, die dort noch besteht, misst nicht
+das Bauwerk. Elf von zwölf bestanden.*
+
+**Konditionierungsweg** — **Wie** die Tiefenkarte in das Bildmodell hineinkommt, nicht
+**ob**. Ein echter Steuereingang (ControlNet) führt das Bild; dieselbe Karte über den
+Bildeingang eingespeist *ersetzt* dagegen nur das Ausgangsbild — die Kette sieht in beiden
+Fällen gleich aus und tut etwas völlig anderes.
+*Der teuerste Einzelbefund dieses Projekts hängt daran. Der Fehlschlag vom 18.08.2026
+(Score 0,359) galt vier Wochen lang als Aussage über die Kette; er war eine Aussage über
+den Konditionierungsweg. Das damalige Modell hat gar keinen ControlNet-Eingang, die
+Tiefenkarte ging als `image` hinein. Mit einer echten Tiefen-Naht liegt derselbe Wert bei
+0,98. **Er stand in keinem der beiden Verdachte, die wir untersucht hatten.***
+
 **Nullprobe** — Der Messpunkt ganz ohne Störung. Sie sagt nichts über den Gegenstand,
 sondern über das Messverfahren: Zeigt schon sie etwas anderes als das Erwartete, ist jede
 weitere Zeile der Messreihe wertlos — dann wird nicht die Störung gemessen, sondern ein
@@ -4456,6 +4481,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-09 | Ergaenzt aus dem Befund der HomeStation zu `auf-20260909-92`: **Vertauschprobe**, **Staerkeprobe**, **Konditionierungsweg**. Alle drei tragen denselben Befund: Zwoelf erzeugte Bilder bestanden die Geometrie-Schwelle — und dieselben zwoelf bestanden sie auch gegen die falsche Soll-Karte. Der Konditionierungsweg erklaert nachtraeglich den Fehlschlag vom 18.08. (0,359): Das damalige Modell hatte gar keinen ControlNet-Eingang |
 | 2026-09-09 | Ergaenzt aus den Beweisen 23-28: **Anlauffrist (Anlauf gegen Stillstand)**, **Seitencache**, **Differenzbild**. Alle drei aus gemessenen Befunden: Der kalte Blender-Start kostet 12,63 s gegen 0,15 s warm und hat vier gesunde Beweislaeufe getoetet; das Differenzbild traegt zwei gegensaetzliche Beweise (Sonne: darf nicht schwarz sein / IFC-Spielarten: muss es sein). Ausgebaut: **Beugung (Flexion)** um den gemessenen Fall «Fenstern» aus Beweis 27 |
 | 2026-09-09 | Ergaenzt aus dem Beweisgang: Bauwerksbox gegen Szenenbox. Der Begriff wurde zweimal benutzt und nie erklaert — und er ist der Unterschied zwischen «Deckungsgrad eingehalten» und «Deckungsgrad vom Gelaende eingehalten» |
 | 2026-09-09 | Ergaenzt aus dem Beweisgang (Sitzung 14): Nullanker, Startwertstreuung, Beweisgang, Kontrollbild. **Nullanker stand seit dem 24.08.2026 im Text und war nie erklaert** — eine Definition, die einen unerklaerten Begriff voraussetzt, ist genau der Fall, den die Arbeitsregel verbietet |

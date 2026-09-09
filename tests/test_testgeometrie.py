@@ -932,3 +932,80 @@ def test_ohne_gelaende_ist_die_plattengroesse_gegenstandslos(tmp_path):
     schlicht = FIXTURE.erzeuge_ifc(tmp_path / "b.ifc")
 
     assert _ohne_dateinamen(ohne) == _ohne_dateinamen(schlicht)
+
+
+# ======================================================================================
+# Die Platte lag unter dem falschen Bauwerk (Befund der HomeStation, 09.09.2026)
+# ======================================================================================
+
+def _platte(pfad):
+    """Kantenlänge und Mittelpunkt der Geländeplatte, aus dem STEP-Text gelesen.
+
+    Gelesen wird der Text und kein Konverterergebnis — dieser Test soll auch dort laufen,
+    wo kein `ifcopenshell` liegt. Die Platte ist an zwei Stellen eindeutig: Sie trägt das
+    grösste Rechteckprofil der Datei, und sie ist das einzige Bauteil, dessen Platzierung
+    auf ``-(PLATTENDICKE + GELAENDE_DICKE)`` sitzt.
+    """
+    import re
+    text = Path(pfad).read_text(encoding="utf-8")
+    kanten = re.findall(
+        r"IFCRECTANGLEPROFILEDEF\(\.AREA\.,\$,#\d+,([\d.]+),([\d.]+)\)", text)
+    kante = max(max(float(a), float(b)) for a, b in kanten)
+    z_platte = -(FIXTURE.PLATTENDICKE + FIXTURE.GELAENDE_DICKE)
+    flach = text.replace("((", "(").replace("))", ")")
+    mitten = [(float(x), float(y)) for x, y, z in re.findall(
+        r"IFCCARTESIANPOINT\((-?[\d.]+),(-?[\d.]+),(-?[\d.]+)\)", flach)
+        if abs(float(z) - z_platte) < 1e-9]
+    assert len(mitten) == 1, f"nicht genau eine Plattenplatzierung: {mitten}"
+    return kante, mitten[0]
+
+
+def test_die_platte_liegt_unter_dem_bauwerk_das_wirklich_gebaut_wurde(tmp_path):
+    """Bis zum 09.09.2026 rechnete sie **immer** mit den Konstanten des Quaders.
+
+    Gemeldet von der HomeStation zu `auf-20260909-92`, gemessen und nicht vermutet: Der
+    Hochbau ist 12,0 × 9,5 × 15,25 m gross, die Kamera stellt sich entsprechend weit weg
+    — und stand damit **neben** der 20-m-Platte. 80,8 % des Bildes Hintergrund,
+    `n_gemeinsam` = 0, `score = None` **auch für das perfekte Blender-Bild**. Der ganze
+    Fall war unmessbar, und zwar nicht wegen des Bildmodells.
+
+    Verlangt wird darum zweierlei: Die Platte folgt der grössten Ausdehnung des Bauwerks,
+    das wirklich gebaut wurde, und sie liegt **mittig** auf dessen Grundriss.
+    """
+    kante, (mx, my) = _platte(FIXTURE.erzeuge_ifc(tmp_path / "hb.ifc",
+                                                  hochbau=True, mit_gelaende=True))
+    spanne = max(FIXTURE.HB_LAENGE_X,
+                 FIXTURE.HB_BREITE_Y + FIXTURE.HB_AUSKRAGUNG,
+                 FIXTURE.HB_GESCHOSSE * FIXTURE.HB_GESCHOSSHOEHE + FIXTURE.HB_DECKENDICKE)
+    assert kante == pytest.approx(FIXTURE.GELAENDE_VIELFACHES * spanne, abs=1e-6)
+    assert kante > FIXTURE.HB_LAENGE_X, "eine Platte kleiner als ihr Bauwerk ist keine"
+    assert mx == pytest.approx(FIXTURE.HB_LAENGE_X / 2, abs=1e-6), "nicht mittig in X"
+    assert my == pytest.approx((FIXTURE.HB_BREITE_Y + FIXTURE.HB_AUSKRAGUNG) / 2,
+                               abs=1e-6), "nicht mittig in Y"
+
+
+def test_am_quader_hat_sich_durch_die_reparatur_nichts_geaendert(tmp_path):
+    """Die Gegenprobe, und sie ist der Grund für die Form der Reparatur.
+
+    `max(8,0; 5,0; 3,25)` ist 8,0 — genau der bisherige Bezug. Darum steht in
+    `erzeuge_ifc` ein Maximum über alle drei Ausdehnungen und keine Fallunterscheidung:
+    **Jede bestehende Messreihe behält ihre Platte, Zahl für Zahl.** Eine Reparatur, die
+    nebenbei die Testgeometrie verschiebt, macht alle früheren Messungen unvergleichbar,
+    ohne dass es auffällt.
+    """
+    kante, mitte = _platte(FIXTURE.erzeuge_ifc(tmp_path / "q.ifc", mit_gelaende=True))
+    assert kante == pytest.approx(20.0, abs=1e-9)
+    assert mitte == pytest.approx((4.0, 2.5), abs=1e-9)
+
+
+def test_die_platte_waechst_mit_dem_bauwerk_und_nicht_nur_mit_dem_knopf(tmp_path):
+    """Die Mutationsprobe in Testform: **derselbe** Knopfwert, zwei Bauwerke.
+
+    Wäre die Spanne wieder an den Quaderkonstanten festgemacht, lieferten beide Dateien
+    dieselbe Plattengrösse — und dieser Test fiele. Ein Wächter, der nicht fallen kann,
+    bewacht nichts.
+    """
+    q, _ = _platte(FIXTURE.erzeuge_ifc(tmp_path / "q.ifc", mit_gelaende=True))
+    h, _ = _platte(FIXTURE.erzeuge_ifc(tmp_path / "h.ifc",
+                                       hochbau=True, mit_gelaende=True))
+    assert h > 1.8 * q, f"Quader {q:.3f} m, Hochbau {h:.3f} m — die Platte folgt nicht"

@@ -669,3 +669,29 @@ def test_ein_controlnet_an_einem_edit_modell_ist_ein_widerspruch():
     from aiimaging.backbone import _pruefe_controlnet
     cn = _pruefe_controlnet(edit)
     assert any("Widerspruch" in a for a in cn["auflagen"])
+
+
+def test_die_vram_zahl_ist_die_groessere_der_beiden_messungen():
+    """Zwei Messungen an derselben Karte, 9,7 % auseinander — und die Richtung zählt.
+
+    `auf-20260818-13` mass **23,4 GiB** (bfloat16, ControlNet über den Ordnerweg),
+    `auf-20260909-92` am 08.09.2026 **25,1 GiB** (diffusers 0.39.0, ControlNet über
+    `from_single_file`, 512 × 512). Beide sind richtig; sie gelten für verschiedene
+    Bedingungen.
+
+    Im Register steht die **grössere**, weil dieses Feld eine einzige Frage beantwortet:
+    *Passt es auf die Karte?* Eine zu kleine Zahl lässt `waehle(max_vram_gb=24)` das
+    Modell durchgehen, und der Lauf stirbt am Speicher. Eine zu grosse verweigert nur
+    einen Lauf, der vielleicht ginge. **Von den beiden Irrtümern ist der zweite der
+    billigere** — und dieser Test hält fest, dass die Wahl bewusst so fiel.
+    """
+    z = hole("z-image-turbo")
+    assert z.vram_gb == pytest.approx(25.1), (
+        "die kleinere der beiden Messungen wäre die gefährlichere Zahl"
+    )
+    assert z.name not in {b.name for b in waehle(max_vram_gb=24.0)}, (
+        "mit 25,1 GiB darf eine 24-GB-Schranke dieses Modell nicht mehr durchlassen"
+    )
+    assert z.name in {b.name for b in waehle(max_vram_gb=26.0)}, (
+        "und eine Schranke oberhalb der Messung muss es weiterhin zulassen"
+    )

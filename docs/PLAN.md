@@ -4449,14 +4449,15 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
 
 ## Zwölf Bilder bestehen die Schwelle — und die Schwelle besteht die Gegenprobe nicht (08.09.2026, gelesen am 09.09.)
 
-> **Gemessen (HomeStation, `auf-20260909-92`):** 12 von 12 erzeugten Bildern bestehen die
-> Geometrie-Schwelle 0,65, Scores 0,8965–0,9884. **Und dieselben zwölf bestehen sie auch
-> gegen die falsche Soll-Karte** (0,8279–0,8763). Bei ControlNet-Stärke 0,30, wo ρ über der
-> Bauwerksmaske bei null liegt, bestehen immer noch 11 von 12.
-> **Entschieden ist damit nichts, und das ist der Punkt:** Das Prüfverfahren ist an dieser
-> Stelle **schwächer als das Erzeugungsverfahren**. Die Schwelle trägt bei 56 %
-> Geometrieanteil zu grossen Teilen den Boden-Himmel-Aufbau, den jedes Architekturbild auf
-> Augenhöhe hat.
+> **Entschieden:** Nichts — und genau das ist der Befund. Die Geometrie-Schwelle bleibt
+> unangetastet (0,65, in allen 36 Läufen), sie wird aber ab hier **nicht mehr als Beleg
+> für Formtreue gelesen**: Das Prüfverfahren ist an dieser Stelle **schwächer als das
+> Erzeugungsverfahren**. Bei 56 % Geometrieanteil trägt der Score zu grossen Teilen den
+> Boden-Himmel-Aufbau, den jedes Architekturbild auf Augenhöhe hat.
+> **Gemessen:** (HomeStation, `auf-20260909-92`, 08.09.2026) 12 von 12 erzeugten Bildern
+> bestehen die Schwelle, Scores 0,8965–0,9884. **Und dieselben zwölf bestehen sie auch
+> gegen die falsche Soll-Karte** (0,8279–0,8763). Bei ControlNet-Stärke 0,30, wo ρ über
+> der Bauwerksmaske bei null liegt, bestehen immer noch 11 von 12.
 > **Offen:** Die Schwelle für `rho_maske`. Sie ist der einzige Wert, der die Vertauschprobe
 > trennt — und sie müsste **kalibriert** werden, nicht gesetzt.
 
@@ -4472,6 +4473,13 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
       wurde als `image` übergeben und ersetzte den Beauty-Pass. Das war Bildbearbeitung,
       keine Tiefenführung. Der Abstand 0,359 → 0,98 gehört dem **Konditionierungsweg** und
       stand in keinem unserer Verdachte.
+- [x] **Beweis 30 zeichnet den Befund**, aus der gelieferten Messtabelle und keiner
+      eigenen Rechnung: die zwölf Scores gegen die richtige Karte, dieselben zwölf gegen
+      die falsche (**alle 24 Balken über der Schwelle**), `rho_maske` als der Wert, der
+      trennt, und die Stärkeprobe, bei der `rho_maske` auf null fällt, während elf von
+      zwölf weiter bestehen. **Der Dateiname jedes Bildes nennt Messer und Datum** — die
+      Lehre aus Beweis 28. Der Selbstcheck rechnet jede der vier Behauptungen aus der
+      Tabelle nach und schreibt kein Bild, wenn eine nicht trägt.
 - [ ] **`rho_maske` braucht eine kalibrierte Schwelle.** Er trennt die Vertauschprobe
       (richtig 0,798 im Mittel gegen falsch 0,349), zeigt den Geometrieunterschied
       (−0,338 gegen −0,038 beim Score) und bricht bei Stärke 0,30 auf null zusammen,
@@ -4485,8 +4493,23 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
       Schätzer legt dort keinen Tiefensprung an. Ein Verfahren, das aus beiden ein Urteil
       bildet, gibt es heute nicht, und `homeworker._render_und_qa` schreibt nur den Score
       ins Urteil. *Das Paarurteil steht im Ergebnis und entscheidet nichts.*
-- [ ] **`--hochbau --gelaende` erzeugt eine unmessbare Szene** — Mangel in unserem eigenen
-      Erzeuger. Die Platte rechnet mit `max(LAENGE_X, BREITE_Y)`, den Konstanten des
+- [x] **`--hochbau --gelaende` erzeugte eine unmessbare Szene** — Mangel in unserem eigenen
+      Erzeuger, **behoben am 09.09.2026**. Die Platte folgt jetzt der grössten Ausdehnung
+      des Bauwerks, das wirklich gebaut wurde, und liegt mittig auf dessen Grundriss; die
+      Höhe zählt mit, weil der Kameraabstand an ihr hängt. **Am Quader ändert sich nichts,
+      Zahl für Zahl** — `max(8,0; 5,0; 3,25)` ist 8,0, genau der bisherige Bezug; ein Test
+      hält Kante 20,00 m und Mittelpunkt 4,0/2,5 fest, ein zweiter fällt, sobald die alte
+      Konstante zurückkehrt.
+      **Und die Reparatur reicht nicht, das steht mit im Code.** Gemessen (256 × 160,
+      Kamera `sSE` auf die Bauwerks-Hüllbox, Deckungsgrad 0,70): Der Hochbau steigt von
+      0,1285 auf **0,1525**, der Quader liegt bei 0,5903. Vergleichbar wird die Szene in
+      dieser Rahmung erst bei rund `--gelaende-vielfaches=6.0`. *Die Reparatur beseitigt
+      eine falsche Konstante; die Kalibrierung ist eine zweite Frage.*
+      **Angesagt statt still ausgeliefert:** `auf-20260909-95` an `local` — sie fahren
+      `make_test_ifc.py` aus diesem Repo, und ihr kalibriertes `8.0` bedeutet unter der
+      neuen Regel 122 m statt 64 m. Der umgerechnete Wert (4,2) steht im Auftrag.
+- [ ] ~~**`--hochbau --gelaende` erzeugt eine unmessbare Szene** — Mangel in unserem eigenen
+      Erzeuger.~~ Die Platte rechnet mit `max(LAENGE_X, BREITE_Y)`, den Konstanten des
       **Quaders**; der Hochbau ist 12 × 8 × 15 m, die Kamera steht bei 36,5 m neben der
       Platte. Gemessen: 80,8 % Hintergrund, `n_gemeinsam` 0, `score = None` **auch für das
       perfekte Blender-Bild**. Mit `--gelaende-vielfaches=8.0` liegt der Geometrieanteil

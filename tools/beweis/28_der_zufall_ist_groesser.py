@@ -13,6 +13,22 @@ Zum Vergleich der stärkste Parametereffekt, den diese Kette je gezeigt hat — 
 ControlNet-Stärke von 0,65 auf 1,00: **0,10 bis 0,14.** Der Zufall ist damit **1,6- bis
 2,3-mal so gross** wie die Einstellung, die man verändern wollte.
 
+Unter welcher Bedingung diese Zahl gilt — nachgetragen am 09.09.2026
+------------------------------------------------------------------
+Die 0,2269 stammen aus einem Lauf **ohne Tiefen-ControlNet**: Das damalige Backbone
+(`qwen-image-edit-2511`) hat gar keinen ControlNet-Eingang, die Tiefenkarte ging als
+`image` hinein und ersetzte dabei den Beauty-Pass.
+
+Die HomeStation hat am 08.09.2026 dieselbe Frage an einer **echten** Tiefen-Naht gemessen
+(`auf-20260909-92`, `z-image-turbo` mit Fun-ControlNet-Union): Die grösste Spanne
+innerhalb eines Falls über drei Startwerte beträgt dort **0,0820** — knapp ein Drittel.
+
+*Das entwertet diesen Beweis nicht, es bindet ihn.* Hausregel seit dem 23.08.2026:
+**Eine Zahl gehört an die Bedingung, unter der sie gemessen wurde.** Der Befund «der
+Zufall ist grösser als jede Einstellung» gilt für die Kette ohne Tiefenführung. Ob er für
+die Kette **mit** Tiefenführung gilt, ist mit drei Startwerten je Fall nicht entschieden —
+neun waren es dort nicht.
+
 **Daraus folgen zwei Dinge, und beide sind hier zu sehen:**
 
 1. *Ein Vergleich zweier Einstellungen mit je einem Bild misst den Zufall.* Darum verlangt

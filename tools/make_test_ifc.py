@@ -53,6 +53,28 @@ WANDDICKE, PLATTENDICKE = 0.30, 0.25
 #:
 #: 2,5 — dieselbe Grösse wie die Szene ``platte_endlich`` aus `auf-20260819-15`, damit die
 #: Zahlen vergleichbar bleiben.
+#:
+#: **Der Wert ist am Quader kalibriert und trägt am Hochbau nicht.** Gemessen am
+#: 09.09.2026 (256 × 160, Kamera ``sSE`` auf die Bauwerks-Hüllbox, Deckungsgrad 0,70;
+#: Geometrieanteil = Anteil der Soll-Tiefenkarte, der nicht Hintergrund ist):
+#:
+#: =========================  ==========  =================
+#: Szene                      Platte      Geometrieanteil
+#: =========================  ==========  =================
+#: Quader, Vorgabe 2,5         20,00 m    0,5903
+#: Hochbau, alte Regel         20,00 m    0,1285
+#: Hochbau, Vorgabe 2,5        38,12 m    0,1525
+#: Hochbau, 3,5                53,38 m    0,2040
+#: Hochbau, 4,2                64,05 m    0,2665
+#: Hochbau, 5,0                76,25 m    0,4373
+#: Hochbau, 6,0                91,50 m    0,5003
+#: =========================  ==========  =================
+#:
+#: Die Reparatur vom 09.09. hebt den Hochbau von 0,1285 auf 0,1525 — sie beseitigt eine
+#: falsche Konstante und macht die Szene **nicht** vergleichbar. Wer den Hochbau gegen den
+#: Quader stellen will, braucht rund ``--gelaende-vielfaches=6.0``; die HomeStation misst
+#: in ihrer Rahmung (512 × 512) 0,5616 bei 64 m. *Zwei Zahlen, zwei Bedingungen — und
+#: keine der beiden gilt für die andere.*
 GELAENDE_VIELFACHES = 2.5
 
 #: Dicke der Geländeplatte. Dünn, aber nicht null: Eine Fläche ohne Dicke hat keine
@@ -574,10 +596,32 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
                 f"Gelaende, sondern ein unsichtbarer Eintrag in der Materialtabelle — "
                 f"die Gelaenderegel schlueg an, und die Maske traege nichts aus."
             )
-        kante = float(gelaende_vielfaches) * max(LAENGE_X, BREITE_Y)
+        # WELCHES BAUWERK LIEGT DARAUF? Bis zum 09.09.2026 rechnete die Platte in jedem
+        # Fall mit `max(LAENGE_X, BREITE_Y)` — den Konstanten des QUADERS, auch unter dem
+        # Hochbau. Der ist 12,0 x 9,5 x 15,25 m gross; die Kamera stellt sich entsprechend
+        # weit weg (36,5 m statt 14,3 m) und stand damit NEBEN der 20-m-Platte.
+        #
+        # Gemeldet von der HomeStation zu `auf-20260909-92`, gemessen und nicht vermutet:
+        # 80,8 % des Bildes Hintergrund, `n_gemeinsam` = 0, und `qa_gegen_soll` liefert
+        # `score = None` — auch fuer das perfekte Blender-Beauty-Bild. Der ganze Fall war
+        # unmessbar, und zwar nicht wegen des Bildmodells.
+        #
+        # DIE HOEHE ZAEHLT MIT, weil der Kameraabstand an der groessten Ausdehnung haengt
+        # und nicht am Grundriss. Fuer den Quader aendert das nichts: max(8,0; 5,0; 3,25)
+        # ist 8,0, also genau der bisherige Wert — jede bestehende Messreihe behaelt ihre
+        # Platte. Das ist Absicht und der Grund, warum hier ein Maximum steht und keine
+        # Fallunterscheidung.
+        if hochbau:
+            spanne_x = HB_LAENGE_X
+            spanne_y = HB_BREITE_Y + HB_AUSKRAGUNG
+            spanne_z = HB_GESCHOSSE * HB_GESCHOSSHOEHE + HB_DECKENDICKE
+        else:
+            spanne_x, spanne_y = LAENGE_X, BREITE_Y
+            spanne_z = HOEHE_Z + PLATTENDICKE
+        kante = float(gelaende_vielfaches) * max(spanne_x, spanne_y, spanne_z)
         shape, ort = _quader(
             s, kontext, kante, kante, GELAENDE_DICKE,
-            (LAENGE_X - kante) / 2.0, (BREITE_Y - kante) / 2.0,
+            (spanne_x - kante) / 2.0, (spanne_y - kante) / 2.0,
             -PLATTENDICKE - GELAENDE_DICKE, ort_gesch,
             einheit_je_meter=einheit_je_meter)
         bauteile.append(s.add(
@@ -703,7 +747,10 @@ GEBRAUCH = (
     "  Vorsatz    MILLI fuer Millimeter, sonst Meter\n"
     "  --gelaende zusaetzlich eine Gelaendeplatte unter dem Bauwerk\n"
     "  --gelaende-vielfaches=N Kantenlaenge der Platte als Vielfaches der\n"
-    "             Gebaeudespanne (Vorgabe 2.5) — nur mit --gelaende\n"
+    "             groessten Ausdehnung DES GEBAUTEN Bauwerks (Vorgabe 2.5)\n"
+    "             — nur mit --gelaende. Am Hochbau traegt 2.5 nicht: gemessen\n"
+    "             0.1525 Geometrieanteil gegen 0.5903 am Quader; vergleichbar\n"
+    "             wird es erst bei rund 6.0\n"
     "  --raeume   zusaetzlich zwei IfcSpace im Wandinneren\n"
     "  --hochbau  STATT des Quaders ein gegliedertes Bauwerk: Stuetzenraster, Kern,\n"
     "             Fassadentafeln, Auskragung. Fuer Messungen, an denen ein glatter\n"

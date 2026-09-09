@@ -276,7 +276,18 @@ _eintrag(Backbone(
     # ControlNet nicht mit; wir laden es aber immer mit, sonst gibt es keine
     # Konditionierung. Der Docstring von `_vram_schaetzung` verlangt genau diesen
     # Austausch: «wer eine gemessene Zahl hat, trägt sie an die Stelle der Schätzung ein».
-    vram_gb=23.4,
+    #
+    # ZWEITE MESSUNG, 08.09.2026 (`auf-20260909-92`, HomeStation, diffusers 0.39.0,
+    # ControlNet über `from_single_file`, 512 x 512, 4-s-Raster über den ganzen Lauf):
+    # **25 671 / 25 663 / 25 677 MiB** Spitze, also rund **25,1 GiB** — 9,7 % über der
+    # ersten Messung. Zwei Zahlen, zwei Bedingungen; keine von beiden ist falsch.
+    #
+    # HIER STEHT DIE GRÖSSERE, und das ist eine Entscheidung über die Richtung des
+    # Fehlers: Dieses Feld beantwortet «passt es auf die Karte?». Eine zu kleine Zahl
+    # lässt `waehle(max_vram_gb=24)` dieses Modell durchgehen, und der Lauf stirbt am
+    # Speicher — eine zu grosse verweigert nur einen Lauf, der vielleicht ginge. Von den
+    # beiden Irrtümern ist der zweite der billigere.
+    vram_gb=25.1,
     dateien=_DIFFUSERS_DATEIEN,
     # Geprüft 2026-08-18 an der Modellkarte selbst: Front-Matter "license: apache-2.0".
     # https://huggingface.co/Tongyi-MAI/Z-Image-Turbo — Repo offen, nicht gated.

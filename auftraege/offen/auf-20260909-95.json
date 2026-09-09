@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260909-95",
+  "art": "frage",
+  "worker": "local",
+  "rang": 2,
+  "erstellt": "2026-09-09T23:30:00Z",
+  "params": {},
+  "beschreibung": "Ansage einer Verhaltensaenderung in tools/make_test_ifc.py: Die Gelaendeplatte folgt ab sofort dem gebauten Bauwerk statt den Quaderkonstanten. Am Quader aendert sich nichts; am Hochbau bedeutet --gelaende-vielfaches etwas anderes als bisher (euer kalibriertes 8.0 entspricht jetzt 4.2).",
+  "anweisung": "=== ANSAGE: DIE GELAENDEPLATTE FOLGT AB SOFORT DEM BAUWERK ===\n\nDIES IST ZUERST EINE ANSAGE UND ERST DANN EINE FRAGE\n\nIhr fahrt `tools/make_test_ifc.py` AUS UNSEREM REPO. Ein `git pull` bei euch\naendert damit, was gerechnet wird, ohne dass irgendwo ein Posten umspringt.\nUnsere Hausregel dazu lautet: eine Verhaltensaenderung auf diesem Weg wird\nangesagt, BEVOR sie ankommt — sonst sieht sie bei euch aus wie ein Fehler.\n\nDas hier ist die Ansage. Der Anlass ist euer eigener Befund aus auf-92.\n\n\nWAS IHR GEMESSEN HABT, UND IHR HATTET RECHT\n\n    --hochbau --gelaende ergab eine unmessbare Szene: 80,8 % Hintergrund,\n    n_gemeinsam = 0, score = None AUCH FUER DAS PERFEKTE BLENDER-BILD.\n\nUrsache, wie ihr sie benannt habt: Die Platte rechnete mit\n`gelaende_vielfaches * max(LAENGE_X, BREITE_Y)` — den Konstanten des QUADERS\n(8,0 / 5,0 m), auch unter dem Hochbau. Der ist 12,0 x 9,5 x 15,25 m gross, die\nKamera stellt sich entsprechend weit weg, und stand damit neben der Platte.\n\nDas war ein Mangel bei uns und kein Kniff bei euch. Er ist behoben.\n\n\nWAS SICH GEAENDERT HAT\n\nDie Platte folgt jetzt der groessten Ausdehnung DES BAUWERKS, DAS WIRKLICH\nGEBAUT WURDE, und sie liegt mittig auf dessen Grundriss:\n\n    Quader    max(8,0; 5,0; 3,25)   = 8,00 m    -> 2,5 x 8,00  = 20,00 m\n    Hochbau   max(12,0; 9,5; 15,25) = 15,25 m   -> 2,5 x 15,25 = 38,12 m\n\nDIE HOEHE ZAEHLT MIT, weil der Kameraabstand an der groessten Ausdehnung\nhaengt und nicht am Grundriss.\n\nAM QUADER AENDERT SICH NICHTS, Zahl fuer Zahl: max(8,0; 5,0; 3,25) ist 8,0,\nalso genau der bisherige Bezug. Ein Test haelt das fest (Platte 20,00 m,\nMittelpunkt 4,0 / 2,5) — jede eurer bestehenden Messreihen behaelt ihre Platte.\n\n\nDIE EINE ZAHL, DIE IHR UMRECHNEN MUESST\n\nIhr habt in auf-92 `--gelaende-vielfaches=8.0` kalibriert. Das ergab unter der\nALTEN Regel eine Platte von 8,0 x 8,00 m = 64,00 m.\n\nUnter der NEUEN Regel ergaebe derselbe Wert 8,0 x 15,25 m = 122,00 m.\n\n    Wollt ihr wieder 64 m, ist der Wert jetzt --gelaende-vielfaches=4.2\n    (4,2 x 15,25 = 64,05 m).\n\nNur der Hochbau ist betroffen. Am Quader bedeutet jeder Wert dasselbe wie\nbisher.\n\n\nWAS WIR HIER GEMESSEN HABEN, UND UNTER WELCHER BEDINGUNG\n\n256 x 160, Kamera sSE auf die Bauwerks-Huellbox, Deckungsgrad 0,70;\nGeometrieanteil = Anteil der Soll-Tiefenkarte, der nicht Hintergrund ist.\n\n    Quader, Vorgabe 2,5        20,00 m    0,5903\n    Hochbau, ALTE Regel        20,00 m    0,1285\n    Hochbau, Vorgabe 2,5       38,12 m    0,1525\n    Hochbau, 3,5               53,38 m    0,2040\n    Hochbau, 4,2               64,05 m    0,2665\n    Hochbau, 5,0               76,25 m    0,4373\n    Hochbau, 6,0               91,50 m    0,5003\n\nSAGEN WIR ES DEUTLICH: Die Reparatur hebt den Hochbau von 0,1285 auf 0,1525.\nSie beseitigt eine falsche Konstante und macht die Szene NICHT vergleichbar.\nIn unserer Rahmung braeuchte es dafuer rund 6,0.\n\nUnd sie passt nicht zu eurer Zahl: Ihr messt bei 64 m einen Geometrieanteil\nvon 0,5616, wir bei 64,05 m nur 0,2665. Das ist kein Widerspruch, sondern\nzwei Bedingungen — ihr fahrt 512 x 512 (quadratisch, mehr Boden im Bild), wir\n256 x 160 (breit). Eine Zahl gehoert an die Bedingung, unter der sie gemessen\nwurde, und keine der beiden gilt fuer die andere.\n\n\nWAS WIR VON EUCH BRAUCHEN\n\nNur eine Messung, und sie kostet keine GPU: derselbe Multipass wie in auf-92,\nkein Bildmodell, kein Schaetzerlauf ueber erzeugte Bilder.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py <ziel>.ifc IFC4 --hochbau --gelaende --gelaende-vielfaches=<wert>",
+    "hinweis": "Dieselbe Testgeometrie wie in auf-92, nur mit dem reparierten Erzeuger. Kein Bildmodell noetig — der Geometrieanteil steht in der Soll-Tiefenkarte."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "Kein Bildmodell, kein Schaetzerlauf ueber erzeugte Bilder — nur Multipass.",
+      "Nie zwei Blender-Laeufe gleichzeitig.",
+      "Keine absoluten Pfade mit Benutzernamen in der Rueckgabe (REGEL 3).",
+      "Die Schwelle 0,65 wird nicht angefasst — hier wird nichts bewertet.",
+      "«Weiss ich nicht» ist eine vollstaendige Antwort und besser als eine geratene."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Der Geometrieanteil in EURER Rahmung (512 x 512, Deckungsgrad 0,70, Augenhoehe 1,70 m, Kamera sSE), fuer --hochbau --gelaende mit den Werten 2.5 / 4.2 / 6.0 unter dem REPARIERTEN Erzeuger. Je Wert eine Zahl, dazu die Plattenkante in Metern. Wir wollen wissen, wo eure Kurve liegt, nicht ob unsere stimmt.",
+    "V2 Welcher Wert bringt den Hochbau bei euch auf den Geometrieanteil der Schachtelszene (bei euch 0,5569)? Eine Zahl mit einer Nachkommastelle genuegt. Wir tragen sie als kalibrierten Wert in den Erzeuger ein — mit eurer Bedingung daneben, nicht als Vorgabe.",
+    "V3 Besteht das perfekte Blender-Beauty-Bild der Hochbauszene bei 2.5 unter dem reparierten Erzeuger die Schwelle, oder liefert qa_gegen_soll weiterhin score = None? Das ist die eigentliche Frage: Ein Fall, dessen perfektes Bild durchfaellt, laesst kein Urteil ueber ein erzeugtes zu.",
+    "V4 Habt ihr nach dem Pull noch andere Stellen, an denen sich eine Zahl veraendert hat? Wir haben nur den Quaderfall abgesichert.",
+    "V5 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}
