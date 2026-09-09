@@ -143,3 +143,93 @@ def test_die_regel_hat_die_gestalt_der_namensregel():
     regel = gf.ist_gelaende_nach_form(PRUEFSTEIN)
     assert callable(regel)
     assert isinstance(regel("Stuetze-01"), bool)
+
+
+# ======================================================================================
+# Die Familienprüfung — kein Schwellenproblem, ein Korngrössenproblem
+# ======================================================================================
+
+def _zerlegte_platte(stuecke=20, kante=100.0, dicke=0.3):
+    """Eine Geländeplatte, in ``stuecke`` Streifen zerlegt — wie ein Bestandsexport sie
+    liefert. Jeder Streifen allein ist zu schmal für :data:`GRUNDRISSANTEIL_MIN`."""
+    breite = kante / stuecke
+    knoten = [(f"IfcCovering_Sub-Division:Kies:{i}",
+               (i * breite, -dicke, 0.0), ((i + 1) * breite, 0.0, kante))
+              for i in range(stuecke)]
+    # Ein Bauwerk darauf, damit die Szene eine Höhe hat.
+    knoten.append(("IfcWall_Aussenwand_ABC", (40.0, 0.0, 40.0), (60.0, 12.0, 60.0)))
+    return knoten
+
+
+def test_eine_zerlegte_platte_faellt_knoten_fuer_knoten_durch():
+    """Der gemessene Ausgangspunkt (`auf-20260907-82`): **kein einziger** Streifen
+    erreicht den Grundrissanteil, obwohl sie zusammen das ganze Gelände sind."""
+    alle = _zerlegte_platte()
+    befund = gf.gelaende_knoten(alle)
+
+    assert befund["gelaende"] == ()
+    grosster = max(gf.merkmale(k, alle)["grundrissanteil"] for k in alle[:-1])
+    assert grosster < gf.GRUNDRISSANTEIL_MIN
+
+
+def test_als_familie_beurteilt_erkennt_sie_dieselbe_platte():
+    """Die Hüllbox über die Familie urteilt Gelände — und dann gelten alle Streifen.
+
+    *Die drei Merkmale sind richtig gewählt; sie treffen die Platte, sobald sie eine
+    Platte ist.* Geändert wird die Korngrösse, nicht die Schwelle.
+    """
+    alle = _zerlegte_platte()
+    befund = gf.gelaende_knoten(alle, als_familie=True)
+
+    assert len(befund["gelaende"]) == 20
+    assert all(n.startswith("IfcCovering_Sub-Division") for n in befund["gelaende"])
+    assert "IfcWall_Aussenwand_ABC" in befund["bauwerk"], "die Wand bleibt Bauwerk"
+
+
+def test_der_grund_nennt_die_familie_und_das_einzelurteil():
+    """Ein Urteil, das die Korngrösse gewechselt hat, muss sagen, dass es das tat."""
+    alle = _zerlegte_platte()
+    befund = gf.gelaende_knoten(alle, als_familie=True)
+    einer = next(u for u in befund["urteile"] if u["urteil"] == gf.GELAENDE)
+
+    assert einer["familie"] == "IfcCovering_Sub-Division"
+    assert "Einzeln nicht entschieden" in einer["grund"]
+    assert "20 Knoten" in einer["grund"]
+
+
+def test_die_familienpruefung_ist_vorgabe_aus():
+    """**Sie ändert, was als Gelände gilt** — und daran hängt die Bauwerksmaske.
+
+    Eine stillschweigend geänderte Maske wäre genau die Sorte Änderung, die eine
+    Messreihe unbrauchbar macht, ohne dass es auffällt.
+    """
+    alle = _zerlegte_platte()
+    assert gf.gelaende_knoten(alle) == gf.gelaende_knoten(
+        alle, als_familie=False)
+    assert gf.gelaende_knoten(alle)["gelaende"] == ()
+
+
+def test_aufragende_bauteile_werden_nicht_zur_familie_zusammengefasst():
+    """Die Gegenprobe, und ohne sie prüfte der Test darüber nur, dass irgendetwas grün wird.
+
+    Zwanzig Fassadentafeln teilen sich einen Namensstamm wie die Geländestreifen. Ihre
+    gemeinsame Hüllbox ragt aber auf — die Flachheit fängt sie.
+    """
+    tafeln = [(f"IfcCurtainWall_Fassadentafel:Alu:{i}",
+               (i * 5.0, 0.0, 0.0), ((i + 1) * 5.0, 15.0, 0.4)) for i in range(20)]
+    tafeln.append(("IfcSlab_Boden_XYZ", (0.0, -0.3, -40.0), (100.0, 0.0, 60.0)))
+
+    befund = gf.gelaende_knoten(tafeln, als_familie=True)
+    assert not any(n.startswith("IfcCurtainWall") for n in befund["gelaende"])
+
+
+def test_ein_paar_ist_keine_familie():
+    """Drei ist die kleinste Zahl, die eine Familie von einem Paar unterscheidet.
+
+    Zwei grosse flache Körper nebeneinander sind eher zwei Decken als eine zerlegte
+    Platte — und wer aus zweien eine Familie macht, fasst irgendwann alles zusammen.
+    """
+    zwei = [("IfcSlab_Decke:OG:1", (0.0, 5.0, 0.0), (50.0, 5.3, 100.0)),
+            ("IfcSlab_Decke:OG:2", (50.0, 5.0, 0.0), (100.0, 5.3, 100.0)),
+            ("IfcWall_W_ABC", (40.0, 0.0, 40.0), (60.0, 12.0, 60.0))]
+    assert gf.familien(zwei) == {}

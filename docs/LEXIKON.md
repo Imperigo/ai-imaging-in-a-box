@@ -1681,6 +1681,28 @@ monoton umrechnen. Jede Art trägt eine **Erwartung**, welchen Anteil des Scores
 soll — damit ist jede Störung eine Vorhersage, die zutreffen oder scheitern kann, statt
 bloss eine weitere Kurve.*
 
+**Korngrösse (einer Regel)** — Die Frage, **worüber** eine Regel urteilt: über jedes
+einzelne Stück oder über die Gruppe, zu der es gehört. Dieselbe Regel mit denselben
+Zahlen kann bei der einen Korngrösse zutreffen und bei der anderen nicht.
+*Der Fall, an dem es dieses Projekt gelernt hat: Eine Geländeplatte kommt aus dem
+Bestandsmodell als **zwanzig** Streifen. Jeder einzelne ist zu schmal, um als Gelände zu
+gelten — die Hüllbox über alle zwanzig zusammen dagegen wird zweifelsfrei erkannt
+(Grundrissanteil 0,918 statt 0,221). Es war also kein Schwellenproblem: Die Schwelle war
+richtig, sie wurde nur auf das falsche Korn angewandt. Wer in so einem Fall die Schwelle
+nachzieht, hat sie an genau dieser Datei geeicht — und die Regel wird schlechter, nicht
+besser.*
+
+**Familienprüfung (in der Geländeform)** — Knoten, deren Namen dieselben ersten zwei
+Segmente tragen, werden als **eine** Familie beurteilt: Erst wird jeder für sich geprüft,
+und erst wenn keiner davon als Gelände gilt, urteilt dieselbe Regel noch einmal über die
+gemeinsame Hüllbox.
+*Sie ist Vorgabe **aus**, und das ist keine Vorsicht, sondern eine Hausregel: Was als
+Gelände gilt, bestimmt die Bauwerksmaske, und an der hängt jede Messwertreihe des
+Projekts. Eine stillschweigend geänderte Maske macht alle früheren Zahlen unvergleichbar,
+ohne dass es auffällt. Die Gegenprobe steht daneben — zwanzig Fassadentafeln teilen sich
+ebenfalls einen Namensstamm, und ihre gemeinsame Hüllbox ragt auf, also fängt sie die
+Flachheit.*
+
 **Vertauschprobe** — Dasselbe Bild ein zweites Mal messen, aber gegen die **falsche**
 Vorlage: das Bild eines fünfgeschossigen Baus gegen die Soll-Tiefenkarte einer 8 × 5 × 3 m
 grossen Schachtel. Zwei Bauwerke, die nichts gemein haben ausser dem Standpunkt.
@@ -4481,6 +4503,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-09 | Ergaenzt aus der Familienpruefung: **Korngroesse (einer Regel)** und **Familienpruefung (in der Gelaendeform)**. Beide aus einem Befund der HomeStation: Ein Gelaende aus zwanzig Streifen faellt Knoten fuer Knoten durch (groesster Grundrissanteil 0,2215) und wird als Huellbox ueber alle zwanzig zweifelsfrei erkannt (0,918). Kein Schwellenproblem, ein Korngroessenproblem |
 | 2026-09-09 | Ergaenzt aus dem Befund der HomeStation zu `auf-20260909-92`: **Vertauschprobe**, **Staerkeprobe**, **Konditionierungsweg**. Alle drei tragen denselben Befund: Zwoelf erzeugte Bilder bestanden die Geometrie-Schwelle — und dieselben zwoelf bestanden sie auch gegen die falsche Soll-Karte. Der Konditionierungsweg erklaert nachtraeglich den Fehlschlag vom 18.08. (0,359): Das damalige Modell hatte gar keinen ControlNet-Eingang |
 | 2026-09-09 | Ergaenzt aus den Beweisen 23-28: **Anlauffrist (Anlauf gegen Stillstand)**, **Seitencache**, **Differenzbild**. Alle drei aus gemessenen Befunden: Der kalte Blender-Start kostet 12,63 s gegen 0,15 s warm und hat vier gesunde Beweislaeufe getoetet; das Differenzbild traegt zwei gegensaetzliche Beweise (Sonne: darf nicht schwarz sein / IFC-Spielarten: muss es sein). Ausgebaut: **Beugung (Flexion)** um den gemessenen Fall «Fenstern» aus Beweis 27 |
 | 2026-09-09 | Ergaenzt aus dem Beweisgang: Bauwerksbox gegen Szenenbox. Der Begriff wurde zweimal benutzt und nie erklaert — und er ist der Unterschied zwischen «Deckungsgrad eingehalten» und «Deckungsgrad vom Gelaende eingehalten» |

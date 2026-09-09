@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260909-98",
+  "art": "qa",
+  "worker": "local",
+  "rang": 5,
+  "erstellt": "2026-09-09T16:00:00Z",
+  "params": {},
+  "beschreibung": "Kalibrierung von rho_maske als Riegel — an Faellen mit vorab bekannter Wahrheit, NICHT an den zwoelf Laeufen aus auf-92. Dazu die Frage, ob das zweite Bein des Paarurteils an erzeugten Bildern ueberhaupt messbar ist.",
+  "anweisung": "=== DIE ZWEI RIEGEL MIT ENTGEGENGESETZTEM FEHLER ===\n\nWORUM ES GEHT\n\nAus eurem eigenen Befund zu auf-20260909-92, und ihr habt ihn selbst so genannt:\n\n    «Damit habt ihr zwei Riegel mit entgegengesetztem Fehler am selben Bild: Der Score\n    laesst bei 56 % Geometrieanteil fast alles durch, auch das falsche Gebaeude. Das\n    Paarurteil laesst fast nichts durch, auch das richtige.»\n\n    Score:      12 von 12 bestehen — und 12 von 12 auch gegen die FALSCHE Soll-Karte.\n    Paarurteil: 2 von 36 bestehen — darunter faellt auch rho_maske 0,985 durch.\n\nUnd ihr habt auch gesagt, welcher Wert brauchbar waere:\n\n    «Der brauchbarste Einzelwert dieser ganzen Messung ist rho_maske. Er hat nur keine\n    Schwelle. Wenn ihr aus dieser Arbeit einen Riegel mitnehmt, dann den — und die\n    Schwelle dafuer muesste kalibriert werden, nicht gesetzt.»\n\nGenau das ist bestellt. UND ES IST AUSDRUECKLICH KEINE KALIBRIERUNG AN DEN ZWOELF\nLAEUFEN: Eine Schwelle, die aus denselben zwoelf Bildern abgelesen wird, an denen sie\ndanach misst, ist am eigenen Ergebnis geeicht. Dagegen tritt dieses Projekt seit dem\n18.08.2026 an.\n\n\nWAS EINE TRAGENDE KALIBRIERUNG BRAUCHT\n\nFaelle mit VORAB BEKANNTER Wahrheit, die NICHT aus der Reihe stammen, an der die\nSchwelle spaeter misst. Ihr habt das Werkzeug dafuer schon gebaut:\n`tools/studie_echtschaetzer.py` aus auf-20260907-81, 176 Zeilen, elf Stoerungsarten mit\nEtikett gut/schlecht.\n\nDer Unterschied zu auf-81: Dort lag das BILD aus Blender vor und die Stoerung wurde auf\ndie geschaetzte Karte gerechnet. Hier soll rho_maske an ERZEUGTEN Bildern kalibriert\nwerden — denn dort wird es angewandt.\n\n\nDIE BREMSE, DIE WIR SELBST DAZUSAGEN\n\nIhr habt in auf-81 gemessen, dass der Paartest unter dem echten Schaetzer FRONTAL kein\nfehlerfreies Fenster mehr hat (hoechster schlechter 0,9957 ueber niedrigstem guten\n0,1426). Falls dasselbe fuer rho_maske an erzeugten Bildern gilt, ist die Antwort auf\ndiesen Auftrag: ES GIBT KEINE TRAGENDE SCHWELLE. Das ist ein vollstaendiges Ergebnis\nund kein Fehlschlag — und es waere der wichtigste Satz der ganzen Arbeit.\n\nBitte messt in dieser Reihenfolge: erst ob ein Fenster ueberhaupt existiert, dann wo es\nliegt. Nicht umgekehrt.\n\n\nZUM PAARURTEIL, ZWEITER TEIL\n\nSein zweites Bein — die Kante an der Maskengrenze — verlangt 0,05 und misst ueber alle\n36 Laeufe -0,0045 bis +0,0194. Eure Erklaerung: «Das Bauwerk ist matt und grau, der\nHimmel ist matt und grau, und der monokulare Schaetzer legt an dieser Grenze schlicht\nkeinen Tiefensprung an.»\n\nWenn das so ist, ist dieses Bein an erzeugten Bildern nicht messbar — und dann gehoert\nes abgeschaltet und nicht kalibriert. Auch das ist eine vollstaendige Antwort.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/studie_echtschaetzer.py aus auf-20260907-81",
+    "hinweis": "Braucht Gewichte und Karte: erzeugte Bilder, nicht Blender-Renders."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Nie zwei Blender-Laeufe gleichzeitig.",
+      "Keine Schwelle in unserem Code aendern — die Zahl gehoert dem Owner.",
+      "Keine absoluten Pfade mit Benutzernamen in der Rueckgabe (REGEL 3).",
+      "«Es gibt kein tragendes Fenster» ist eine vollstaendige Antwort."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Existiert an erzeugten Bildern ueberhaupt ein fehlerfreies Fenster fuer rho_maske — hoechster schlechter Fall gegen niedrigsten guten, je Richtungsgruppe? Diese Frage zuerst; ein «nein» ist ein vollstaendiges Ergebnis.",
+    "V2 Falls ja: wo liegt das Fenster, und wie viele Faelle tragen es? Bitte die Zeilen mitliefern, nicht nur die Schwelle.",
+    "V3 Der Kantenanteil an der Maskengrenze: bestaetigt sich -0,0045 bis +0,0194 auch an erzeugten Bildern? Wenn ja, schlagen wir vor, dieses Bein abzuschalten statt es zu kalibrieren — eure Einschaetzung dazu.",
+    "V4 Woher die Faelle stammen und warum sie NICHT aus der Reihe von auf-92 kommen. Diese Zeile ist der eigentliche Beleg des Auftrags.",
+    "V5 Was diese Messung ausdruecklich nicht traegt."
+  ]
+}

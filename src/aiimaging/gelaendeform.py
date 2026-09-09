@@ -224,7 +224,81 @@ def urteil(knoten, alle, *, hoch: int = 1) -> dict:
                       f"Decke, kein Gelaende.")}
 
 
-def gelaende_knoten(alle, *, hoch: int = 1) -> dict:
+#: Ab wie vielen Knoten eine Namensfamilie als **eine** Platte beurteilt wird.
+#:
+#: Der Anlass ist ein gemessener Befund der HomeStation (`auf-20260907-82`, 08.09.2026):
+#: An der 4771-Knoten-Bestandsdatei erreicht **genau einer** von 4771 Knoten den
+#: :data:`GRUNDRISSANTEIL_MIN`. Die zwanzig ``IfcCovering_Sub-Division:…``-Knoten — das
+#: eigentliche Gelände — scheitern alle daran, der grösste mit 0,2215.
+#:
+#: **Die Hüllbox über alle zwanzig ZUSAMMEN urteilt dagegen `gelaende`**: Grundrissanteil
+#: 0,918, Flachheit 0,037, Tieflage 0,258. *Die drei Merkmale sind also richtig gewählt;
+#: sie treffen die Platte, sobald sie eine Platte ist.* Der Bestand liefert sie als
+#: Familie aus zwanzig Stücken, und diese Funktion urteilte bis zum 09.09.2026 je Knoten.
+#:
+#: **Kein Schwellenproblem, ein Korngrössenproblem** — und darum wird hier auch keine
+#: Schwelle nachgezogen. Eine an dieser Datei nachgezogene Schwelle wäre an ihr geeicht.
+#:
+#: Drei ist die kleinste Zahl, die eine *Familie* von einem Paar unterscheidet.
+FAMILIE_MINDEST = 3
+
+#: Zeichen, an denen ein Knotenname in Segmente zerfällt.
+#:
+#: Die Namen kommen aus dem glTF und tragen die Gestalt ``<IfcKlasse>_<Name>_<GUID>``
+#: bzw. ``<IfcKlasse>_<Typ>:<Ausprägung>:<Nummer>``. Die ersten **zwei** Segmente
+#: benennen die Bauteilfamilie, alles danach die einzelne Ausprägung.
+FAMILIE_TRENNER = "_:"
+
+
+def familienschluessel(name) -> str:
+    """Der Familienname eines Knotens — die ersten zwei Segmente seines Namens.
+
+    ``IfcCovering_Sub-Division:Kies:184321`` → ``IfcCovering_Sub-Division``
+    ``IfcSlab_Bodenplatte_2eYuY4S81HqRN8GZ4SZVcP`` → ``IfcSlab_Bodenplatte``
+
+    *Warum zwei und nicht eines:* Ein Segment wäre die IFC-Klasse allein, und damit
+    fielen alle Decken eines Hauses in eine Familie. Warum nicht drei: Die dritte Stelle
+    ist bereits die einzelne Ausprägung, und dann ist jeder Knoten seine eigene Familie.
+    """
+    roh = str(name)
+    stuecke, feld = [], []
+    for zeichen in roh:
+        if zeichen in FAMILIE_TRENNER:
+            stuecke.append("".join(feld))
+            feld = []
+            if len(stuecke) >= 2:
+                break
+        else:
+            feld.append(zeichen)
+    if len(stuecke) < 2:
+        stuecke.append("".join(feld))
+    return "_".join(s for s in stuecke if s)
+
+
+def familien(alle, *, mindest: int = FAMILIE_MINDEST) -> dict:
+    """Namensfamilien mit mindestens ``mindest`` Knoten.
+
+    Returns:
+        ``{familienname: (knotenname, …)}``, nur Familien ab ``mindest`` Mitgliedern.
+        Einzelstücke und Paare kommen nicht vor — sie sind keine zerlegte Platte,
+        sondern ein Bauteil.
+    """
+    gefunden: dict[str, list] = {}
+    for k in alle:
+        gefunden.setdefault(familienschluessel(k[0]), []).append(str(k[0]))
+    return {stamm: tuple(namen) for stamm, namen in gefunden.items()
+            if len(namen) >= mindest}
+
+
+def _familienbox(alle, namen):
+    """Die Hüllbox über eine Familie — als Knoten, damit :func:`urteil` sie beurteilen kann."""
+    teile = [k for k in alle if str(k[0]) in namen]
+    lo = [min(float(k[1][i]) for k in teile) for i in range(3)]
+    hi = [max(float(k[2][i]) for k in teile) for i in range(3)]
+    return ("familie", lo, hi)
+
+
+def gelaende_knoten(alle, *, hoch: int = 1, als_familie: bool = False) -> dict:
     """Alle Knoten einer Szene beurteilen.
 
     Returns:
@@ -236,6 +310,33 @@ def gelaende_knoten(alle, *, hoch: int = 1) -> dict:
     eine Regel, die bei der Hälfte passt, aus wie eine, die alles trifft.
     """
     urteile = [urteil(k, alle, hoch=hoch) for k in alle]
+
+    # DIE FAMILIENPRUEFUNG, und sie ist VORGABE AUS.
+    #
+    # Sie aendert, was als Gelaende gilt — und daran haengt die Bauwerksmaske, an der
+    # jede Messung dieses Projekts haengt. Eine stillschweigend geaenderte Maske waere
+    # genau die Sorte Aenderung, die eine Messreihe unbrauchbar macht, ohne dass es
+    # auffaellt. Wer sie einschaltet, weiss also, dass er sie einschaltet.
+    if als_familie:
+        nach_name = {u["name"]: u for u in urteile}
+        for stamm, namen in familien(alle).items():
+            if any(nach_name[n]["urteil"] == GELAENDE for n in namen if n in nach_name):
+                continue
+            u_familie = urteil(_familienbox(alle, set(namen)), alle, hoch=hoch)
+            if u_familie["urteil"] != GELAENDE:
+                continue
+            for n in namen:
+                if n not in nach_name:
+                    continue
+                nach_name[n] = dict(
+                    nach_name[n],
+                    urteil=GELAENDE,
+                    familie=stamm,
+                    grund=(f"Einzeln nicht entschieden ({nach_name[n]['grund']}) — aber "
+                           f"die Huellbox ueber die {len(namen)} Knoten der Familie "
+                           f"{stamm!r} urteilt Gelaende: {u_familie['grund']}"))
+        urteile = [nach_name[u["name"]] for u in urteile]
+
     return {
         "gelaende": tuple(u["name"] for u in urteile if u["urteil"] == GELAENDE),
         "unklar": tuple(u["name"] for u in urteile if u["urteil"] == NICHT_ENTSCHEIDBAR),
@@ -263,5 +364,6 @@ def ist_gelaende_nach_form(alle, *, hoch: int = 1):
 __all__ = [
     "BAUWERK", "GELAENDE", "NICHT_ENTSCHEIDBAR", "FLACHHEIT_MAX",
     "GRUNDRISSANTEIL_MIN", "TIEFLAGE_MAX", "TIEFLAGE_UNKLAR_MAX", "GelaendeformError",
+    "FAMILIE_MINDEST", "FAMILIE_TRENNER", "familien", "familienschluessel",
     "gelaende_knoten", "ist_gelaende_nach_form", "merkmale", "urteil",
 ]

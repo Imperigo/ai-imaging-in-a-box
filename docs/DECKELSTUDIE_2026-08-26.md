@@ -1,6 +1,25 @@
 # Woran `geom_iou` deckelt — und woran nicht
 
 **26.08.2026** · gemessen in dieser Umgebung, **ohne GPU**, an im Repo erzeugter Geometrie
+
+> ### ⚠ Vorbehalt, nachgetragen am 09.09.2026 — Zahlen aus **diagonalen** Ansichten
+>
+> Am 01.09.2026 hat `kameras.py` (Commit `e99caba`) den Kameraabstand für **schräge**
+> Richtungen um rund 24 % verkürzt: Bis dahin setzte `+ tiefe/2` die seitlichen
+> Silhouettenkanten auf die Vorderkante — bei der frontalen Ansicht richtig, schräg
+> nicht. Seither wird die Silhouette projiziert.
+>
+> **Was das heisst:** Jede Zahl in diesem Dokument, die an einer diagonalen Kamera
+> (`nNE`, `eES`, `wWS`, `wWN`, `sSE` …) gemessen wurde, steht auf einem Repostand, den es
+> nicht mehr gibt. Sie ist damit **nicht falsch, aber nicht mehr reproduzierbar**.
+> Gemessen ist der Unterschied an einem Fall: Der Geometrieanteil diagonaler Ansichten
+> liegt heute bei 0,1698 statt 0,1108 (`auf-20260907-81`, 08.09.2026).
+>
+> **Frontale Zahlen sind unberührt** — dort war die alte Rechnung richtig, und
+> `auf-20260907-81` reproduziert sie auf vier Stellen.
+>
+> *Dieser Vorbehalt ersetzt keine Neumessung. Er sagt nur, was ohne sie nicht mehr gilt.*
+
 · Modul `src/aiimaging/deckelstudie.py`, Tests `tests/test_deckelstudie.py`
 
 ---

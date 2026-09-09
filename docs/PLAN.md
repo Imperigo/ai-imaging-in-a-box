@@ -4576,7 +4576,19 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
       des Längenanteils 0,2224. Die Schwelle liegt damit **über** dem Knoten, den sie
       fangen sollte, und verfehlt ihn um 0,0285. *Korrigiert ist die Begründung, nicht der
       Wert — eine falsche Herleitung ist schlimmer als keine, weil sie geprüft aussieht.*
-- [ ] **Es ist kein Schwellenproblem, es ist ein Korngrössenproblem.** Die Hüllbox über
+- [x] **Es ist kein Schwellenproblem, es ist ein Korngrössenproblem — und die Regel
+      kann jetzt beides.** `gelaendeform.gelaende_knoten(..., als_familie=True)` gruppiert
+      Knoten nach den ersten zwei Segmenten ihres Namens, beurteilt eine Familie ab drei
+      Mitgliedern als **eine** Hüllbox und schreibt die Familie in den Grund des Urteils.
+      **Keine Schwelle wurde angezogen** — eine an dieser Datei nachgezogene wäre an ihr
+      geeicht. Sechs Proben, zwei Gegenproben (zwanzig Fassadentafeln teilen sich einen
+      Namensstamm und werden von der Flachheit gefangen; ein Paar ist keine Familie), eine
+      Mutationsprobe.
+      **Vorgabe AUS, und das ist der Punkt:** `ist_gelaende_nach_form` speist die
+      Bauwerksmaske, an der jede Zahl dieses Projekts hängt. Ob sie Vorgabe wird,
+      entscheidet der Owner nach der Messung der HomeStation, nicht nach unserer
+      Bauentscheidung — `auf-20260909-97`.
+- [ ] ~~**Es ist kein Schwellenproblem, es ist ein Korngrössenproblem.**~~ Die Hüllbox über
       alle zwanzig Sub-Division-Knoten **zusammen** hat Grundrissanteil 0,918, Flachheit
       0,037, Tieflage 0,258 — darauf urteilt die Form `gelaende`. Die drei Merkmale sind
       richtig gewählt; sie treffen die Platte, **sobald sie eine Platte ist**. Der Bestand
@@ -4599,8 +4611,19 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
       *Was die perfekte Karte an einer unendlichen Kante fängt, glättet der Schätzer weg.*
       Damit hängt der ganze Paartest an einer Eigenschaft der **Soll**-Karte, die die
       Ist-Karte nicht hat.
-- [ ] **Ein veröffentlichtes Fenster ist auf diesem Repostand nicht mehr reproduzierbar —
-      und schuld ist eine eigene Änderung.** Diagonal gemessen 0,5826 / 0,9223 gegen
+- [x] **Die Durchsicht ist gefahren: sieben Dokumente tragen jetzt den Vorbehalt.**
+      Gesucht wurde nach Dokumenten mit Zahlen aus **diagonalen** Ansichten, die vor dem
+      01.09.2026 gemessen wurden — dem Tag, an dem `e99caba` den Kameraabstand für
+      schräge Richtungen um rund 24 % verkürzte. Betroffen und vermerkt:
+      `KAMERABLICK_2026-08-19`, `RICHTUNGEN_2026-08-28`, `SCHWELLENSTUDIE_ECHT_2026-08-26`,
+      `PAARSCHWELLEN_OBERGRENZE_2026-08-27`, `PAARSCHWELLEN_OBERGRENZE_2026-09-01`,
+      `DECKELSTUDIE_2026-08-26`, `BODENANTEIL_2026-08-26`.
+      Der Vorbehalt sagt drei Dinge: Was sich geändert hat, dass die Zahlen **nicht
+      falsch, aber nicht mehr reproduzierbar** sind, und dass **frontale Zahlen unberührt**
+      bleiben — dort war die alte Rechnung richtig, und `auf-81` reproduziert sie auf vier
+      Stellen. *Er ersetzt keine Neumessung; er sagt, was ohne sie nicht mehr gilt.*
+- [ ] ~~**Ein veröffentlichtes Fenster ist auf diesem Repostand nicht mehr reproduzierbar —
+      und schuld ist eine eigene Änderung.**~~ Diagonal gemessen 0,5826 / 0,9223 gegen
       veröffentlicht 0,5311 / 0,9065. Grund gemessen: Der Geometrieanteil der diagonalen
       Ansichten ist heute **0,1698 statt 0,1108** (Faktor 1,53 in der Fläche), frontal
       identisch. Ursache ist die **Untergrenze**, die am 01.09. in `kameras.py` dazukam
@@ -4661,7 +4684,15 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
       zwölf weiter bestehen. **Der Dateiname jedes Bildes nennt Messer und Datum** — die
       Lehre aus Beweis 28. Der Selbstcheck rechnet jede der vier Behauptungen aus der
       Tabelle nach und schreibt kein Bild, wenn eine nicht trägt.
-- [ ] **`rho_maske` braucht eine kalibrierte Schwelle.** Er trennt die Vertauschprobe
+- [~] **`rho_maske` braucht eine kalibrierte Schwelle — beauftragt.**
+      `auf-20260909-98` an `local`, und der Auftrag sagt zweierlei ausdrücklich: Die
+      Kalibrierung darf **nicht** aus den zwölf Läufen von `auf-92` kommen, und die erste
+      Frage lautet, ob an erzeugten Bildern überhaupt ein fehlerfreies Fenster existiert.
+      *Ein «nein» ist dort ein vollständiges Ergebnis* — und nach dem Befund von `auf-81`
+      (frontal kein Fenster mehr unter dem echten Schätzer) durchaus zu erwarten. Derselbe
+      Auftrag fragt, ob das zweite Bein des Paarurteils an erzeugten Bildern messbar ist
+      oder abgeschaltet gehört.
+- [ ] ~~**`rho_maske` braucht eine kalibrierte Schwelle.**~~ Er trennt die Vertauschprobe
       (richtig 0,798 im Mittel gegen falsch 0,349), zeigt den Geometrieunterschied
       (−0,338 gegen −0,038 beim Score) und bricht bei Stärke 0,30 auf null zusammen,
       während der Score elfmal besteht. **Er hat heute keine Schwelle** — und die aus
