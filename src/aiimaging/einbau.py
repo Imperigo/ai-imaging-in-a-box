@@ -449,6 +449,29 @@ def rueckstand(repo_wurzel, *, heute: date | None = None) -> dict:
     }
 
 
+def _beruehrte_messungen(wurzel) -> dict:
+    """``{"beruehrt": [...]}`` — oder ein leeres Wörterbuch, wenn die Frage hier nicht geht.
+
+    Eingekapselt, damit `bericht` nicht daran scheitert: `aiimaging.beruehrung` braucht ein
+    echtes git-Repo, und `bericht` läuft in Proben auch über blosse Ordner.
+    """
+    docs = Path(wurzel) / "docs"
+    if not docs.is_dir():
+        return {}
+    from aiimaging import beruehrung as _ber
+    reihe = _ber.durchsicht(docs, repo=wurzel)
+    # BEIDE LISTEN, und die zweite ist der Grund fuer diese Funktion. `beruehrt` sagt
+    # «ansehen»; `unklar` sagt «hier laesst sich nicht einmal fragen» — ein Dokument ohne
+    # Grundlagenzeile, oder eines, dessen Stand dieses Arbeitsverzeichnis nie gesehen hat.
+    # Nur die erste Liste zu melden hiesse, das Unklare als unberuehrt zu zaehlen, und
+    # genau das ist die stille Fehlmeldung, gegen die dieses Modul gebaut ist.
+    return {
+        "beruehrt": [{"datei": s["datei"], "betroffen": s["betroffen"]}
+                     for s in reihe if s["zustand"] == _ber.BERUEHRT],
+        "beruehrt_unklar": [s["datei"] for s in reihe if s["zustand"] == _ber.UNKLAR],
+    }
+
+
 def bericht(repo_wurzel, blatt=None, *, heute: date | None = None) -> dict:
     """Beides zusammen — die Vorlage für die Bestätigung an den Owner.
 
@@ -518,6 +541,16 @@ def bericht(repo_wurzel, blatt=None, *, heute: date | None = None) -> dict:
         # Zaehler* — und ein beantworteter Auftrag verschwand damit aus jeder Zaehlung,
         # bevor jemand die Antwort gelesen hatte.
         "unverarbeitet": unverarbeitete_antworten(wurzel),
+        # MESSUNGEN, DEREN BODEN SICH BEWEGT HAT (09.09.2026). Dieselbe Begruendung wie
+        # bei der Vergabestelle: Was von Hand gezaehlt wird, wird irgendwann nicht mehr
+        # gezaehlt. Der Anlass war der 01.09. — eine eigene Aenderung entwertete sieben
+        # veroeffentlichte Dokumente, und acht Tage lang hat es niemand bemerkt.
+        #
+        # STILL, WENN DIE FRAGE HIER NICHT GESTELLT WERDEN KANN: In einem Probeordner ohne
+        # git gibt es keinen Codestand, gegen den sich vergleichen liesse. Dann fehlt der
+        # Schluessel ganz, statt eine Null zu melden — eine Null hiesse «nichts beruehrt»,
+        # und das waere die falscheste aller Antworten auf «hier ist nichts messbar».
+        **_beruehrte_messungen(wurzel),
         "ohne_adressat": verwaist,
         "ohne_geraetebeweis": unbelegt,
         "offene_posten": [p for p in alle if p["offen"]],

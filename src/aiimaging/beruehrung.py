@@ -105,6 +105,18 @@ def _wurzel(repo=None) -> Path:
     return Path(repo) if repo else Path(__file__).resolve().parents[2]
 
 
+def _hat_zeile(pfad, marke: str) -> bool:
+    """Beginnt eine **Zeile** dieses Dokuments mit ``marke``?
+
+    Zeilenanfang und nicht «kommt vor»: `EINBINDUNG_KOSMOORBIT_2026-08-14.md` benutzt das
+    Wort «Grundlage» im Fliesstext, und eine Suche nach dem blossen Vorkommen zog es als
+    Messdokument herein. *Ein Wächter, der auf ein Wort statt auf eine Sache prüft, prüft
+    die Prosa* — derselbe Fehler wie bei `einbau.ohne_adressat` am 26.08.2026.
+    """
+    text = Path(pfad).read_text(encoding="utf-8", errors="ignore")
+    return any(z.startswith(marke) for z in text.splitlines())
+
+
 def stand_aus_dokument(pfad) -> str | None:
     """Der Commit, den ein Dokument in seiner Codestand-Zeile nennt — oder ``None``."""
     text = Path(pfad).read_text(encoding="utf-8", errors="ignore")
@@ -249,9 +261,21 @@ def durchsicht(docs_ordner, *, bis: str = "HEAD", repo=None) -> list[dict]:
     """
     ordner = Path(docs_ordner)
     reihe = {BERUEHRT: 0, UNKLAR: 1, UNBERUEHRT: 2}
-    ergebnisse = [beruehrung(p, bis=bis, repo=repo)
-                  for p in sorted(ordner.glob("*.md"))
-                  if messstand.MARKE in p.read_text(encoding="utf-8", errors="ignore")]
+    # DIESELBE DEFINITION VON «MESSDOKUMENT» WIE IN `ohne_grundlage` UND IN `messstand`:
+    # Datum im Namen, dieselbe Ausnahmeliste. Der erste Entwurf nahm stattdessen jede
+    # Datei, in der die Marke irgendwo VORKAM — und meldete damit prompt das LEXIKON,
+    # das den Begriff bloss ERKLAERT. *Ein Waechter, der auf ein Wort statt auf eine Sache
+    # prueft, prueft die Prosa.* Denselben Fehler hat `einbau.ohne_adressat` am
+    # 26.08.2026 schon einmal gemacht.
+    ergebnisse = []
+    for pfad in sorted(ordner.glob("*.md")):
+        if pfad.name in messstand.AUSNAHMEN:
+            continue
+        if messstand._datum_im_namen(pfad.name) is None:
+            continue
+        if not _hat_zeile(pfad, messstand.MARKE):
+            continue
+        ergebnisse.append(beruehrung(pfad, bis=bis, repo=repo))
     return sorted(ergebnisse, key=lambda s: (reihe[s["zustand"]], s["datei"]))
 
 
@@ -270,7 +294,7 @@ def ohne_grundlage(docs_ordner) -> list[str]:
         wann = messstand._datum_im_namen(p.name)
         if wann is None or wann < STICHTAG_GRUNDLAGE:
             continue
-        if MARKE_GRUNDLAGE not in p.read_text(encoding="utf-8", errors="ignore"):
+        if not _hat_zeile(p, MARKE_GRUNDLAGE):
             fehlend.append(p.name)
     return fehlend
 

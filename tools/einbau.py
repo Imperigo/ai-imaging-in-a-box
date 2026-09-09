@@ -126,6 +126,29 @@ def _zeilen(bericht: dict, nur: str | None) -> list[str]:
         aus.append("      Gezaehlt ueber offen UND ergebnisse, datumsuebergreifend. "
                    "Vier Lanes schreiben hier hinein.")
 
+    # MESSUNGEN, DEREN BODEN SICH BEWEGT HAT (09.09.2026). Sie stehen hier aus demselben
+    # Grund wie die Vergabestelle: Wer sie von Hand zaehlen muesste, zaehlt sie bald nicht
+    # mehr. «Beruehrt» heisst ANSEHEN, nicht falsch — das steht in der Zeile, damit
+    # niemand aus der Meldung mehr liest, als drinsteht.
+    beruehrt = bericht.get("beruehrt") or []
+    if beruehrt and not nur:
+        aus.append("")
+        aus.append(f"BERUEHRTE MESSUNGEN: {len(beruehrt)} Dokument(e) — ansehen, nicht "
+                   f"falsch:")
+        for e in beruehrt:
+            aus.append(f"      {e['datei']:<34} {', '.join(e['betroffen'])}")
+        aus.append("      Geklaert wird mit einer Zeile «Nachgesehen bis: <commit>» im "
+                   "Dokument. Naeher: python tools/beruehrung.py")
+
+    unklar = bericht.get("beruehrt_unklar") or []
+    if unklar and not nur:
+        aus.append("")
+        aus.append(f"NICHT FESTSTELLBAR: {len(unklar)} Messdokument(e) sagen nicht, worauf "
+                   f"sie stehen — {', '.join(unklar[:4])}"
+                   + (" …" if len(unklar) > 4 else ""))
+        aus.append("      Sie zaehlen NICHT als unberuehrt. Eine Zeile «Grundlage: "
+                   "<Module>» macht sie beantwortbar.")
+
     # ANTWORTEN, DIE NIEMAND AUFGESCHRIEBEN HAT (09.09.2026). Sie stehen VOR dem
     # Einbau-Stand, weil eine ungelesene Antwort die teuerste Sorte offener Posten ist:
     # Sie sieht in jeder Zaehlung erledigt aus.

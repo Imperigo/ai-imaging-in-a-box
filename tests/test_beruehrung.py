@@ -291,3 +291,60 @@ def test_werkzeug_bis_vergleicht_gegen_einen_anderen_endstand(repo, capsys):
 
     assert rueckgabe == 0
     assert "ruhig" in capsys.readouterr().out
+
+
+# ── Der Bericht zaehlt es mit ────────────────────────────────────────────────────────
+#
+# «Was von Hand gezaehlt wird, wird irgendwann nicht mehr gezaehlt» — dieselbe Begründung
+# wie bei der Vergabestelle. Darum steht die Zahl dort, wo ohnehin gezählt wird.
+
+def test_der_einbaubericht_meldet_beruehrte_messungen(repo):
+    from aiimaging import einbau
+
+    _dokument(repo, "MESSUNG_2026-09-09.md", stand=_null(repo), grundlage="`kameras`")
+
+    befund = einbau._beruehrte_messungen(repo)
+
+    assert [e["datei"] for e in befund["beruehrt"]] == ["MESSUNG_2026-09-09.md"]
+    assert befund["beruehrt"][0]["betroffen"] == ["kameras"]
+
+
+def test_das_unklare_wird_getrennt_gezaehlt_und_nicht_als_unberuehrt(tmp_path):
+    """Die dritte Antwort, auf den Bericht angewandt.
+
+    Ein Dokument, dessen Stand dieses Arbeitsverzeichnis nie gesehen hat, ist nicht
+    «unberührt» — es ist unbeantwortbar. Nur die berührten zu melden hiesse, das Unklare
+    stillschweigend zu den Ruhigen zu zählen.
+    """
+    from aiimaging import einbau
+
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "M_2026-09-09.md").write_text(
+        f"# M\n\n{messstand.MARKE} `abc1234`\n", encoding="utf-8")
+
+    befund = einbau._beruehrte_messungen(tmp_path)
+
+    assert befund["beruehrt"] == []
+    assert befund["beruehrt_unklar"] == ["M_2026-09-09.md"]
+
+
+def test_ein_dokument_das_den_begriff_nur_erklaert_ist_kein_messdokument(repo):
+    """Der Fehler, den der erste Entwurf gemacht hat — zweimal am selben Nachmittag.
+
+    Das Lexikon **erklärt** die Marke und das Einbindungsblatt benutzt das Wort
+    «Grundlage» im Fliesstext. Beide wurden als Messdokument gemeldet, weil die Marke
+    irgendwo vorkam. *Ein Wächter, der auf ein Wort statt auf eine Sache prüft, prüft die
+    Prosa.*
+    """
+    docs = repo / "docs"
+    docs.mkdir(exist_ok=True)
+    (docs / "LEXIKON.md").write_text(
+        f"# Lexikon\n\nSo sieht sie aus: `{messstand.MARKE} `abc1234``.\n",
+        encoding="utf-8")
+    (docs / "PROSA_2026-09-09.md").write_text(
+        f"# Prosa\n\nDie {ber.MARKE_GRUNDLAGE} dieser Arbeit ist eine andere.\n",
+        encoding="utf-8")
+    _dokument(docs.parent, "ECHT_2026-09-09.md", stand=_null(repo), grundlage="`maske`")
+
+    assert [s["datei"] for s in ber.durchsicht(docs, repo=repo)] == ["ECHT_2026-09-09.md"]
+    assert ber.ohne_grundlage(docs) == []
