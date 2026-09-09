@@ -5087,7 +5087,16 @@ Bekannt und ausdrücklich nicht erledigt:
       beschreibt. **Aufgelöst haben es die Uhrzeiten:** `auf-66` meldet die Fixes um
       11:10:55, `auf-65` lief um 11:19:01 — acht Minuten später, auf dem behobenen Stand.
       Alle drei jetzt **erledigt**, mit Beleg und Datum.
-- [ ] **Die restlichen 18 Posten einzeln gegen ihre Antwort halten.** Jeder braucht: Antwort gelesen,
+- [x] **Vier weitere, und der Beleg stand im Klartext da.** `C3`, `C4`, `C5`, `C6` hingen
+      alle an `auf-20260826-57`, dessen Antwort seit dem 06.09. den Satz trägt: *«Alle vier
+      im Auftrag beschriebenen Verhaltensänderungen … sind am Gerät bestätigt.»* Die
+      Einzelzahlen sind in die Zeilen übernommen, nicht bloss verlinkt.
+      **Stand am Ende des Abends: 16 von 35 offen statt 23.** Sieben Posten geschlossen,
+      **kein einziger durch neuen Code** — alle sieben lagen fertig da und waren nur nie
+      nachgetragen worden.
+- [ ] **Die restlichen 14 Posten einzeln gegen ihre Antwort halten.** `C8` und `C10` zuerst:
+      Ihre Bestätigung steht in `auf-57` **nicht** klar drin und wurde darum nicht auf
+      Verdacht geschlossen. Jeder braucht: Antwort gelesen,
       Zustand nachgezogen oder begründet belassen, Beleg mit Datum. *Adressat: `kern`.*
       Nicht in derselben Sitzung erledigt, und der Grund gehört dazu: Zehn Urteile in
       einer halben Stunde wären genau die Erfolgsmeldung ohne Beleg, gegen die die fünfte
