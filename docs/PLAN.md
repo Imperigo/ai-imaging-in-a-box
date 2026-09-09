@@ -4422,6 +4422,19 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
       kerngesunde Beweisläufe sind in einer Nacht daran gestorben. `Wache.anlauf_s` gilt,
       solange kein einziges Zeichen kam — danach wieder `frist_s`. Die Mutationsprobe
       (Anlauf gilt immer) fällt.
+- [x] **Beweis 29 — dieselbe Datei, ein anderes Bauwerk.** Viermal derselbe Pfad
+      `szene.glb`, dazwischen der Inhalt getauscht: A, B, B, A. Gerechnet wird bei 1 und 2,
+      geholt bei 3 und 4 — die Zuordnung folgt dem **Inhalt**, nicht dem Namen. Der
+      mittlere Bildunterschied zwischen A und B beträgt 0,05394, der Tausch kommt also
+      wirklich im Bild an.
+      *Wäre der Schlüssel am Pfad festgemacht* — der bequeme Weg, der fast immer stimmt —,
+      hätte Lauf 2 das Bild von Lauf 1 zurückgegeben: ein anderes Haus, dasselbe Bild,
+      und niemand sieht es dem Ergebnis an. Lauf 4 zeigt die Gegenrichtung: Eine neu
+      geschriebene Datei mit altem Inhalt rechnet **nicht** neu, also hängt der Schlüssel
+      auch nicht an mtime.
+      **Gezählt wird doppelt:** was die Kette in ihrem Bericht sagt und wie oft Blender
+      wirklich lief. Widersprächen sie sich, hielte der Lauf an — *wer nur den Bericht
+      liest, glaubt dem Erzähler.*
 - [ ] **Was die Reihe weiterhin nicht kann:** Sie beweist die Kette, nicht das Bild. Ohne
       Gewichte und GPU steht hier kein einziges **erzeugtes** Bild, das die Schwelle
       besteht — und ob eines existiert, ist die wichtigste offene Frage des Projekts.
