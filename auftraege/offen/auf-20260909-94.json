@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260909-94",
+  "art": "frage",
+  "worker": "local",
+  "rang": 2,
+  "erstellt": "2026-09-09T21:00:00Z",
+  "params": {},
+  "beschreibung": "Antwort auf auf-20260901-69: das Paket `kosmodraw` ist gefunden (Imperigo/KosmoDraw-Privat, archiviert). Es ist GPL-3, und wir importieren es — bevor jemand den Weg wieder anschliesst, brauchen wir zwei Angaben von der Maschine.",
+  "anweisung": "=== `kosmodraw` IST GEFUNDEN — UND ES IST EIN LIZENZFALL ===\n\nDIES IST DIE ANTWORT AUF EURE MESSUNG\n\nIhr habt am 06.09.2026 in auf-20260901-69 gemessen, dass `resolve_kosmodraw()`\nan eurer Maschine False liefert und die sieben Proben um `build_native_ifc`\ndort genauso ueberspringen wie in der Wolke. Euer Kernbefund war: der Engpass\nist nicht ifcopenshell, sondern das fehlende Paket.\n\nDer Befund stimmte. Der Schluss, den WIR daraus gezogen haben, war falsch.\n\n\nWO ES LIEGT\n\n    Imperigo/KosmoDraw-Privat     privat, ARCHIVIERT seit dem 31.05.2026\n    Ordner `kosmodraw/`           Fassung 0.13.5, 13 Module\n    darin `ifc_export.py`         mit `_setup_file` UND `_add_element`\n\nAuch die `run.py`, nach der gesucht wurde, liegt dort.\n\nGesucht worden war in fuenf Repositories; es liegt im sechsten. Dazu eine\nNamenskollision, die jede Suche in die falsche Richtung schickte:\n`Imperigo/KosmoDraw` ist das Blender-Add-on `kosmo_design` und hat `kosmodraw/`\nnie enthalten — auch keine Loeschung in seiner Geschichte.\n\nLEHRE, die euch so viel angeht wie uns: «liegt in keinem Repository» ist nie\neine Messung, sondern immer nur eine Aussage ueber die Repos, in die man\ngesehen hat.\n\n\nWAS WIR DAMIT ZUM ERSTEN MAL GEMESSEN HABEN\n\n`build_native_ifc` war seit dem 01.09.2026 an keiner Maschine gefahren worden.\nMit gezeigtem Paket und stehender Prozessgrenze:\n\n    Eingabe   3 erfundene Volumen, 2 Hoehenlagen, LV95-Georeferenz\n    Ergebnis  3 IfcSlab, 2 IfcBuildingStorey, 1 IfcMapConversion mit genau den\n              uebergebenen Ost-/Nordwerten, 0 uebersprungen\n    Grenze    weder ifcopenshell noch kosmodraw im Produktprozess geladen\n\n\nUND JETZT DER GRUND, WARUM IHR NICHTS ANSCHLIESSEN SOLLT\n\n`KosmoDraw-Privat` steht unter **GPL-3.0-or-later**. Unser\n`tools/archicad_ifc_impl.py` macht `from kosmodraw import ifc_export` — ein\nImport in einen Prozess, der unser eigenes Programm ist, und ein Import ist ein\nLink. Owner-Mandat Q29 sagt «kein GPL-Link».\n\nDie Prozessgrenze loest das NICHT. Sie ist fuer ifcopenshell gebaut (LGPL,\ndynamische Bindung zulaessig). GPL-Komponenten sind in diesem Kosmos nur als\neigenstaendig aufgerufenes PROGRAMM zugelassen — so wie Blender und\nIfcOpenShell aufgerufen werden. Dass der Prozess jenseits der Grenze laeuft,\naendert daran nichts.\n\nDESHALB AUSDRUECKLICH: setzt `$KOSMOPREPARE_KOSMODRAW` NICHT dauerhaft, und\nbaut den Weg nicht in einen Ablauf ein, solange der Owner nicht entschieden\nhat. Drei Wege stehen zur Wahl (die zwei Funktionen selbst schreiben — sie sind\nduenne Huellen um `ifcopenshell.api`; als eigenstaendiges Programm aufrufen;\noder den Weg stilllegen). Der Entscheid gehoert ihm, nicht uns.\n\n\nWAS WIR VON EUCH BRAUCHEN — zwei Angaben, keine Messung mit Last\n\nBeide betreffen die Maschine, und beide koennen wir von hier aus nicht sehen.\nDie erste ist ein Blick in einen Ordner, die zweite eine Erinnerungsfrage.\n\nWICHTIG zur ersten: falls dort ein `kosmodraw/` liegt, sagt NUR ob es liegt,\nunter welcher Fassung, und ob `ifc_export.py` dabei ist. Schickt KEINEN Code\nund keinen absoluten Pfad zurueck — wir duerfen den Code nicht haben, und ein\nPfad mit Benutzernamen faellt bei uns unter REGEL 3.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie, kein Render, keine GPU. Ein Blick in einen Ordner und eine Erinnerungsfrage."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "Kein Lauf, keine Installation, keine Maschinen-Aenderung.",
+      "$KOSMOPREPARE_KOSMODRAW NICHT dauerhaft setzen — der Lizenzentscheid steht aus.",
+      "Keinen Quelltext und keinen absoluten Pfad zurueckschicken (GPL bzw. REGEL 3).",
+      "Keine Kunden-, Buero- oder Projektnamen in der Rueckgabe.",
+      "«Weiss ich nicht» ist eine vollstaendige Antwort und besser als eine geratene."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Liegt in dem unversionierten Huellenordner um KosmoPrepare (oder sonstwo auf der Maschine) ein Ordner `kosmodraw/`? Wenn ja: welche Fassung nennt sein README oder __init__, und ist `ifc_export.py` dabei? NUR ja/nein, Fassung, Dateiname — kein Pfad, kein Code.",
+    "V2 Ist der ArchiCAD-native-Export (`build_native_ifc` / `Raumprogramm_Volumen.ifc` ueber KosmoDraw) in den letzten Monaten ueberhaupt benutzt worden, oder laeuft der ArchiCAD-Weg in der Praxis ueber den Swiss-Tool-Export? Das entscheidet, ob Weg 3 (stilllegen) ueberhaupt etwas kostet.",
+    "V3 Falls ihr ein lokales `kosmodraw/` findet: traegt es einen Lizenzhinweis, der von GPL-3.0-or-later abweicht? Nur die Zeile, nicht die Datei.",
+    "V4 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}
