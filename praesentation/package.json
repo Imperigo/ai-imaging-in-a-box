@@ -1,0 +1,12 @@
+{
+  "name": "beweisgang-kosmovis",
+  "private": true,
+  "description": "Erzeugt die Schlusspraesentation aus den Beweisbildern. Kein Teil des Produkts.",
+  "type": "module",
+  "scripts": {
+    "bauen": "node vortrag.mjs"
+  },
+  "dependencies": {
+    "pptxgenjs": "4.0.1"
+  }
+}
