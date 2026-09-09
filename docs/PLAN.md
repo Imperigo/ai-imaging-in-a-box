@@ -1222,6 +1222,14 @@ GPU und Gewichte und ist als `auf-20260818-06` beauftragt.
       rechnet `kamerasatz` mit der Hüllbox-Unterkante — bei einem Bauwerk mit
       Untergeschoss steht die Kamera damit im Keller. Aus der IFC wäre es zu haben; der
       Weg dorthin führt über den Vertrag und ist keine Programmfrage.
+      **Am 09.09.2026 nachgetragen, was das am echten Modell heisst** (`auf-20260828-65`,
+      V3, gemessen am Gerät am 28.08.): Die Kamera steht **3,238 m unter dem
+      Erdgeschossfussboden** und **12 mm über dem Untergeschossfussboden** — *«sie steht
+      buchstäblich im Keller, genau wie euer Quelltext warnt»*. Der Erdgeschossfussboden
+      liegt 4,938 m über der Hüllbox-Unterkante, und diese Zahl ist belastbar: Sie stammt
+      aus der Platzierungskette der `IfcBuildingStorey`, nicht aus einer Schätzung. *Die
+      Geländeoberkante selbst ist weiterhin ungemessen — die HomeStation sagt das
+      ausdrücklich dazu.* Adressat: `cloud` (Vertragsfrage), verfolgt in `auf-20260823-37`.
 - [x] **Eine fremde Eichung hat unseren Umrissanteil erledigt — und unsere Fassung hatte
       denselben Defekt, nur halb verdeckt.** `docs/EICHUNG_2026-08-23.md` (HomeStation)
       prüfte dieselbe Idee in zwei Fassungen und zog sie zurück: In der relativen Fassung
@@ -5032,6 +5040,17 @@ Bekannt und ausdrücklich nicht erledigt:
 
 ## Nebenbefunde vom 09.09.2026, abends
 
+> **Entschieden:** Die Präsentation wird versioniert, die Bilder nicht — die Auswahl ist
+> die Entscheidung, das Bild ist ihr Ergebnis. Und der Abgleich des Einbau-Stands gegen
+> die vorliegenden Antworten wird **gezählt statt geschätzt**.
+> **Gemessen:** 36 von 36 Präsentationsbildern haben genau eine Quelle im Beweisgang (über
+> Prüfsummen zugeordnet), 13 davon stammen aus der verworfenen ersten Fassung. **21 der 23
+> offenen Einbau-Posten** nennen ausschliesslich Aufträge, die längst beantwortet sind —
+> der älteste seit zwölf Tagen. Drei davon (`C11`, `C12`, `C14`) sind daraufhin belegt
+> geschlossen worden; der entscheidende Beleg waren zwei Zeitstempel acht Minuten
+> auseinander.
+> **Offen:** Die restlichen 18 Posten, und die vier Platzhalter der Präsentation.
+
 - [x] **Die Präsentation lag im Ordner für Wegwerfbares.** `vortrag.mjs` — dreissig
       Folien, zwei Sitzungen Zuschnitt — stand unter `build/`, das nicht versioniert wird.
       Ein Neustart des Containers hätte sie mitgenommen. Versioniert ist jetzt
@@ -5060,7 +5079,15 @@ Bekannt und ausdrücklich nicht erledigt:
       **Ansehen, nicht falsch** — dieselbe Unterscheidung wie bei der Berührung: Eine
       Antwort kann einen Posten schliessen, ihn ausdrücklich **nicht** schliessen oder
       nur einen Teil betreffen. Was gilt, sagt keine Zählung.
-- [ ] **Die 21 Posten einzeln gegen ihre Antwort halten.** Jeder braucht: Antwort gelesen,
+- [x] **Drei davon sind sofort abgearbeitet — der Beleg lag in zwei Zeitstempeln.**
+      `C11`, `C12` und `C14` standen seit dem 28.08.2026 auf *gebaut, am Gerät
+      unbestätigt*; ihre Bestätigung lag die ganze Zeit in `auf-20260828-65`. Der Knoten
+      war ein scheinbarer Widerspruch — `C14` sagte, `erzeugen_mit` werde ignoriert,
+      während `auf-65` seine Geometrie als «synthetischer Hochbau (`--hochbau`)»
+      beschreibt. **Aufgelöst haben es die Uhrzeiten:** `auf-66` meldet die Fixes um
+      11:10:55, `auf-65` lief um 11:19:01 — acht Minuten später, auf dem behobenen Stand.
+      Alle drei jetzt **erledigt**, mit Beleg und Datum.
+- [ ] **Die restlichen 18 Posten einzeln gegen ihre Antwort halten.** Jeder braucht: Antwort gelesen,
       Zustand nachgezogen oder begründet belassen, Beleg mit Datum. *Adressat: `kern`.*
       Nicht in derselben Sitzung erledigt, und der Grund gehört dazu: Zehn Urteile in
       einer halben Stunde wären genau die Erfolgsmeldung ohne Beleg, gegen die die fünfte
