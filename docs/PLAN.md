@@ -4870,6 +4870,33 @@ Bekannt und ausdrücklich nicht erledigt:
 
 ---
 
+## Der Kontaktbogen wird gebaut, nicht gepflegt (09.09.2026)
+
+> **Entschieden:** Die Übersicht der Beweisbilder wird **erzeugt**, nicht von Hand
+> gesetzt — `tools/beweisgalerie.py` liest, was unter `build/beweis/` wirklich liegt.
+> **Gemessen:** Die handgesetzte Fassung stand auf **22 Tafeln**, während dreissig
+> Skripte gelaufen waren. Acht Tafeln fehlten ganz, und zwei zeigten weniger Bilder, als
+> der zugehörige Beweis inzwischen schreibt (16: 5 statt 8, 18: 9 statt 17). Jetzt:
+> **30 Tafeln, 212 Bilder**, gezählt beim Bauen.
+> **Offen:** Nichts an der Übersicht selbst. Sie veraltet ab jetzt nur noch, wenn niemand
+> sie neu baut — und das ist ein Aufruf, keine Handarbeit.
+
+- [x] **Eine Übersicht, die jemand von Hand nachführen muss, ist genau das, was die
+      Hausregel verbietet:** *Was der Owner erst zusammensuchen muss, existiert nicht.*
+      Sie veraltete in dem Augenblick, in dem ein Beweis dazukam — und es fiel nicht auf,
+      weil eine unvollständige Galerie vollständig aussieht.
+- [x] **Ohne Text keine Tafel.** Ein Ordner ohne Eintrag in `TAFELN` hält den Lauf an und
+      wird beim Namen genannt. *Ein Bild ohne den Satz daneben ist Dekoration* — und der
+      Satz ist die Stelle, an der steht, was man sieht und was die Messung nicht trägt.
+      Umgekehrt wird ein Eintrag ohne Ordner gemeldet und übersprungen: kein Fehler,
+      sondern ein Beweis, der in diesem Lauf nicht gefahren wurde.
+- [x] **Der Schlusssatz der Übersicht war falsch geworden.** Dort stand: «Es fehlt ein
+      Bild, das die Geometrie-Schwelle besteht.» Es fehlt nicht — zwölf bestehen sie, und
+      dieselben zwölf bestehen sie auch gegen die falsche Soll-Karte. Der alte Satz ist
+      ersetzt und der Grund steht dabei.
+
+---
+
 ## Zwei Aufträge der HomeStation an uns sind weiterhin offen (Durchsicht 09.09.2026)
 
 > **Entschieden:** Nichts von beidem wird nebenbei gebaut. Beim einen liegt der Entscheid
