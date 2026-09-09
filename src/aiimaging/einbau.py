@@ -472,6 +472,61 @@ def _beruehrte_messungen(wurzel) -> dict:
     }
 
 
+def wartet_auf_beantwortetes(repo_wurzel, blatt=None, *, heute: date | None = None) -> list[dict]:
+    """Offene Posten, deren **treibende Aufträge alle schon beantwortet sind**.
+
+    **Der blinde Fleck, den das hier schliesst** (09.09.2026). Der Einbau-Stand zählt
+    Posten, und der Rückstand zählt Aufträge *ohne* Antwort. Zwischen beidem liegt ein
+    Zustand, den niemand zählte: **Der Posten steht offen, und die Antwort, auf die er
+    wartet, liegt längst da.** Beim ersten Lauf traf das auf **21 der 23** offenen Posten
+    zu, den ältesten seit dem 28.08. — zwölf Tage.
+
+    **Das ist eine Frage und kein Befund** — dieselbe Unterscheidung wie bei
+    :mod:`aiimaging.beruehrung`: *ansehen, nicht falsch.* Eine Antwort kann den Posten
+    schliessen, ihn ausdrücklich **nicht** schliessen, oder nur einen Teil betreffen. Was
+    davon gilt, sagt keine Zählung — das sagt, wer die Antwort liest. Diese Funktion sagt
+    nur, **wo hinzusehen ist**, und dass 21 von 23 dort stehen, ist selbst der Befund: Der
+    Einbau-Stand ist gegen die Antworten nie abgeglichen worden.
+
+    Verwandt mit :func:`unverarbeitete_antworten`, eine Ebene höher: Dort ist die Antwort
+    nirgends aufgeschrieben, hier ist sie aufgeschrieben und der **Posten** nicht
+    nachgezogen. *Ein Posten, der auf etwas wartet, das schon da ist, sieht in jeder
+    Zählung aus wie einer, an dem gearbeitet wird.*
+
+    Gemeldet wird nur, wenn **alle** genannten Aufträge beantwortet sind. Steht daneben
+    noch einer offen, wartet der Posten zu Recht.
+
+    Returns:
+        Je Posten ``{kennung, zustand, auftraege, seit_tagen}``. ``seit_tagen`` zählt ab
+        der **jüngsten** Antwort — die frühere kann den Posten nicht geschlossen haben,
+        wenn eine spätere noch aussteht.
+    """
+    wurzel = Path(repo_wurzel)
+    seite = blatt or wurzel / "docs" / "EINBAU_STAND.md"
+    beantwortet = beantwortete_auftraege(wurzel)
+    stichtag = heute or datetime.now(timezone.utc).date()
+
+    wartend = []
+    for p in posten(seite):
+        if not p["offen"]:
+            continue
+        ids = AUFTRAGSKENNUNG.findall(p.get("beleg", ""))
+        if not ids or not all(i in beantwortet for i in ids):
+            continue
+        tage = []
+        for i in ids:
+            satz = _auftrag.lies_ergebnis(i, wurzel) or {}
+            wann = str(satz.get("beendet") or "")[:10]
+            try:
+                tage.append((stichtag - date.fromisoformat(wann)).days)
+            except ValueError:
+                pass
+        wartend.append({"kennung": p["kennung"], "zustand": p["zustand"],
+                        "auftraege": sorted(set(ids)),
+                        "seit_tagen": min(tage) if tage else None})
+    return wartend
+
+
 def bericht(repo_wurzel, blatt=None, *, heute: date | None = None) -> dict:
     """Beides zusammen — die Vorlage für die Bestätigung an den Owner.
 
@@ -541,6 +596,10 @@ def bericht(repo_wurzel, blatt=None, *, heute: date | None = None) -> dict:
         # Zaehler* — und ein beantworteter Auftrag verschwand damit aus jeder Zaehlung,
         # bevor jemand die Antwort gelesen hatte.
         "unverarbeitet": unverarbeitete_antworten(wurzel),
+        # POSTEN, DIE AUF ETWAS WARTEN, DAS SCHON DA IST. Siehe
+        # `wartet_auf_beantwortetes` — am 09.09.2026 waren es zehn, der aelteste seit
+        # vierzehn Tagen.
+        "wartet_auf_beantwortetes": wartet_auf_beantwortetes(wurzel, blatt, heute=heute),
         # MESSUNGEN, DEREN BODEN SICH BEWEGT HAT (09.09.2026). Dieselbe Begruendung wie
         # bei der Vergabestelle: Was von Hand gezaehlt wird, wird irgendwann nicht mehr
         # gezaehlt. Der Anlass war der 01.09. — eine eigene Aenderung entwertete sieben
@@ -564,5 +623,5 @@ __all__ = [
     "unverarbeitete_antworten",
     "MESSZEIT", "OFFENE_ZUSTAENDE", "OHNE_ADRESSAT", "ZEILE", "ZUSTAENDE",
     "EinbauError", "beantwortete_auftraege", "bericht", "ohne_adressat",
-    "ohne_geraetebeweis", "posten", "rueckstand",
+    "ohne_geraetebeweis", "posten", "rueckstand", "wartet_auf_beantwortetes",
 ]

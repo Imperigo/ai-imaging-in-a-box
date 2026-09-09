@@ -149,6 +149,22 @@ def _zeilen(bericht: dict, nur: str | None) -> list[str]:
         aus.append("      Sie zaehlen NICHT als unberuehrt. Eine Zeile «Grundlage: "
                    "<Module>» macht sie beantwortbar.")
 
+    # POSTEN, DIE AUF ETWAS WARTEN, DAS SCHON DA IST (09.09.2026). Wie bei den beruehrten
+    # Messungen ist das eine FRAGE und kein Befund: Eine Antwort kann den Posten
+    # schliessen, ihn ausdruecklich nicht schliessen, oder nur einen Teil betreffen.
+    wartend = bericht.get("wartet_auf_beantwortetes") or []
+    if wartend and not nur:
+        aus.append("")
+        aeltest = max((w["seit_tagen"] or 0) for w in wartend)
+        aus.append(f"WARTEN AUF EINE ANTWORT, DIE DA IST: {len(wartend)} Posten — "
+                   f"aeltester seit {aeltest} Tagen. Ansehen, nicht falsch:")
+        for w in sorted(wartend, key=lambda x: -(x["seit_tagen"] or 0)):
+            tage = f"{w['seit_tagen']}d" if w["seit_tagen"] is not None else "  ?"
+            aus.append(f"      {w['kennung']:<5}{tage:>4}  {w['zustand'][:28]:<30}"
+                       f"{', '.join(w['auftraege'])}")
+        aus.append("      Jeder dieser Posten nennt NUR Auftraege, die beantwortet sind. "
+                   "Ob die Antwort ihn schliesst, sagt keine Zaehlung.")
+
     # ANTWORTEN, DIE NIEMAND AUFGESCHRIEBEN HAT (09.09.2026). Sie stehen VOR dem
     # Einbau-Stand, weil eine ungelesene Antwort die teuerste Sorte offener Posten ist:
     # Sie sieht in jeder Zaehlung erledigt aus.

@@ -52,6 +52,12 @@ betraf eine geänderte Wartezeit, die nicht ändert, was gerechnet wird. Ein Wer
 nur meldet, was sicher falsch ist, meldet fast nie etwas — und dann heisst sein Schweigen
 nichts mehr.*
 
+**Rückstand gegen Einbau-Stand** — Zwei Zählungen, die verschiedene Dinge zählen: Der
+*Rückstand* zählt Aufträge, auf die noch keine Antwort da ist. Der *Einbau-Stand* zählt
+Posten, die noch nicht in der fremden Software stehen. *Zwischen beiden liegt ein Zustand,
+den lange niemand zählte: Der Posten steht offen, und die Antwort, auf die er wartet, liegt
+längst da. Am 09.09.2026 traf das auf 21 von 23 offenen Posten zu.*
+
 **Nachgesehen bis** — Der Vermerk, bis zu welchem Commit jemand ein gemeldetes Dokument
 durchgesehen hat. *Ohne ihn ruft die Meldung ewig weiter, auch nach der Klärung — und ein
 Wächter, der nach der Klärung weiterruft, wird abgestellt.*
@@ -4544,6 +4550,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |
 | 2026-09-09 | Ergaenzt aus `messstand` und `beruehrung`: **Codestand (eines Dokuments)**, **Grundlage (eines Dokuments)**, **Beruehrung (einer Messung)**, **Nachgesehen bis**. Der Codestand war am Vortag gebaut und NICHT ins Lexikon eingetragen worden — nachgeholt, gemeinsam mit der zweiten Haelfte derselben Frage |
 | 2026-09-09 | Ergaenzt aus dem Tokenbuch (`auf-vis-20260821-03`): **Form und Befugnis**, **Tokenbuch**, **Abdruck (eines Tokens)**. Der Befund der HomeStation vom 21.08. lautete: Das Freigabe-Gate prueft, ob eine Zeichenfolge wie ein Schluessel *aussieht*, nicht ob wir sie *ausgegeben* haben. Der Abdruck kam beim Bauen dazu — ein Buch mit Klartext-Token haette die Freigabe eine Datei weiter wieder offen hingelegt |
 | 2026-09-09 | Ergaenzt aus der Familienpruefung: **Korngroesse (einer Regel)** und **Familienpruefung (in der Gelaendeform)**. Beide aus einem Befund der HomeStation: Ein Gelaende aus zwanzig Streifen faellt Knoten fuer Knoten durch (groesster Grundrissanteil 0,2215) und wird als Huellbox ueber alle zwanzig zweifelsfrei erkannt (0,918). Kein Schwellenproblem, ein Korngroessenproblem |

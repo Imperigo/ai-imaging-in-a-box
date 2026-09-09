@@ -5046,3 +5046,22 @@ Bekannt und ausdrücklich nicht erledigt:
       ehrlichen Teil danach tragen. *Adressat: `local`.* Ohne sie steht auf vier von
       dreissig Folien ein sichtbarer Platzhalter — sichtbar und nicht leer, denn eine
       leere Folie sähe aus wie eine Gestaltungsentscheidung.
+
+- [x] **Ein blinder Fleck zwischen zwei Zählungen — gefunden am 09.09.2026.** Der
+      Rückstand zählt Aufträge **ohne** Antwort, der Einbau-Stand zählt **Posten**.
+      Dazwischen lag ein Zustand, den niemand zählte: *der Posten steht offen, und die
+      Antwort, auf die er wartet, liegt längst da.* `einbau.wartet_auf_beantwortetes`
+      meldet ihn jetzt, und `tools/einbau.py` druckt ihn.
+      **Was der erste Lauf ergeben hat, und es ist keine gute Nachricht: 21 von 23
+      offenen Posten** nennen ausschliesslich Aufträge, die beantwortet sind — der
+      älteste seit dem 28.08., zwölf Tage. Zehn davon stehen auf *gebaut, am Gerät
+      unbestätigt*, und ihre Bestätigung liegt seit Tagen in `auftraege/ergebnisse/`.
+      *Der Einbau-Stand ist gegen die Antworten nie abgeglichen worden.*
+      **Ansehen, nicht falsch** — dieselbe Unterscheidung wie bei der Berührung: Eine
+      Antwort kann einen Posten schliessen, ihn ausdrücklich **nicht** schliessen oder
+      nur einen Teil betreffen. Was gilt, sagt keine Zählung.
+- [ ] **Die 21 Posten einzeln gegen ihre Antwort halten.** Jeder braucht: Antwort gelesen,
+      Zustand nachgezogen oder begründet belassen, Beleg mit Datum. *Adressat: `kern`.*
+      Nicht in derselben Sitzung erledigt, und der Grund gehört dazu: Zehn Urteile in
+      einer halben Stunde wären genau die Erfolgsmeldung ohne Beleg, gegen die die fünfte
+      Regel steht.

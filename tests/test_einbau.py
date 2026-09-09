@@ -556,3 +556,90 @@ def test_ohne_dokumente_wird_nicht_alles_fuer_gelesen_erklaert(tmp_path):
     (tmp_path / "auftraege" / "ergebnisse").mkdir(parents=True)
     with pytest.raises(einbau.EinbauError):
         einbau.unverarbeitete_antworten(tmp_path)
+
+
+# ── Posten, die auf eine Antwort warten, die schon da ist (09.09.2026) ────────────────
+
+def _tafel(tmp_path, zeilen: list[str]):
+    kopf = ["| # | Posten | Zustand | Seit | Beleg |", "|---|---|---|---|---|"]
+    pfad = tmp_path / "EINBAU_STAND.md"
+    pfad.write_text("\n".join(kopf + zeilen) + "\n", encoding="utf-8")
+    return pfad
+
+
+def _antwort(tmp_path, kennung, *, beendet="2026-09-06T00:00:00Z"):
+    """Auftrag **und** Antwort — der abgeleitete Zustand braucht beide Seiten."""
+    offen = tmp_path / "auftraege" / "offen"
+    offen.mkdir(parents=True, exist_ok=True)
+    (offen / f"{kennung}.json").write_text(json.dumps({
+        "schema": "aiimaging.homeworker-auftrag/v1", "auftrag_id": kennung,
+        "art": "qa", "worker": "local", "rang": 1, "params": {},
+        "beschreibung": "Probe", "anweisung": "Probe",
+    }, ensure_ascii=False), encoding="utf-8")
+    ordner = tmp_path / "auftraege" / "ergebnisse"
+    ordner.mkdir(parents=True, exist_ok=True)
+    (ordner / f"{kennung}.json").write_text(json.dumps({
+        "schema": "aiimaging.homeworker-ergebnis/v1", "auftrag_id": kennung,
+        "status": "ok", "beendet": beendet, "zusammenfassung": "gemessen",
+    }, ensure_ascii=False), encoding="utf-8")
+
+
+def test_ein_offener_posten_dessen_auftrag_beantwortet_ist_wird_gemeldet(tmp_path):
+    """Der blinde Fleck zwischen zwei Zählungen.
+
+    Der Rückstand zählt Aufträge **ohne** Antwort, der Einbau-Stand zählt Posten. Ein
+    Posten, der auf etwas wartet, das schon da ist, fällt durch beide — und sieht in
+    jeder Zählung aus wie einer, an dem gearbeitet wird.
+    """
+    blatt = _tafel(tmp_path, [
+        "| C3 | Etwas | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-26 | "
+        "Bestätigung über `auftraege/offen/auf-20260826-57.json` |"])
+    _antwort(tmp_path, "auf-20260826-57")
+
+    (befund,) = einbau.wartet_auf_beantwortetes(tmp_path, blatt, heute=date(2026, 9, 9))
+
+    assert befund["kennung"] == "C3"
+    assert befund["auftraege"] == ["auf-20260826-57"]
+    assert befund["seit_tagen"] == 3
+
+
+def test_wer_noch_auf_einen_offenen_auftrag_wartet_wartet_zu_recht(tmp_path):
+    """Die Gegenprobe — und sie ist der Grund für das «alle» in der Bedingung.
+
+    Steht neben der Antwort noch ein unbeantworteter Auftrag, ist der Posten kein Fall
+    für diese Liste. Ihn zu melden hiesse, zur Eile zu mahnen, wo noch etwas fehlt.
+    """
+    blatt = _tafel(tmp_path, [
+        "| C8 | Etwas | 🟩 **gebaut, am Gerät unbestätigt** | 2026-08-27 | "
+        "`auf-20260826-57` und `auf-20260827-61` |"])
+    _antwort(tmp_path, "auf-20260826-57")          # nur EINE der beiden Antworten
+
+    assert einbau.wartet_auf_beantwortetes(tmp_path, blatt, heute=date(2026, 9, 9)) == []
+
+
+def test_ein_erledigter_posten_wartet_auf_nichts(tmp_path):
+    blatt = _tafel(tmp_path, [
+        "| A2 | Etwas | 🟩 **erledigt** | 2026-08-18 | **belegt im Repo:** nach "
+        "`auf-20260826-57` |"])
+    _antwort(tmp_path, "auf-20260826-57")
+
+    assert einbau.wartet_auf_beantwortetes(tmp_path, blatt, heute=date(2026, 9, 9)) == []
+
+
+def test_ein_posten_ohne_genannten_auftrag_ist_kein_fall_fuer_diese_liste(tmp_path):
+    """Er ist ein Fall für `ohne_adressat` — und dort steht er auch."""
+    blatt = _tafel(tmp_path, [
+        "| A9 | Etwas | 🟥 **offen** | 2026-08-26 | noch niemand gefragt |"])
+
+    assert einbau.wartet_auf_beantwortetes(tmp_path, blatt, heute=date(2026, 9, 9)) == []
+
+
+def test_eine_antwort_ohne_datum_meldet_unbekannt_statt_null(tmp_path):
+    """Null Tage hiesse «heute beantwortet». Unbekannt heisst unbekannt."""
+    blatt = _tafel(tmp_path, [
+        "| B5 | Etwas | 🟩 **halb** | 2026-08-26 | `auf-20260826-49` |"])
+    _antwort(tmp_path, "auf-20260826-49", beendet="")
+
+    (befund,) = einbau.wartet_auf_beantwortetes(tmp_path, blatt, heute=date(2026, 9, 9))
+
+    assert befund["seit_tagen"] is None
