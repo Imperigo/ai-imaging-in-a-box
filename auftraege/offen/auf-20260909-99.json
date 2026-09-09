@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260909-99",
+  "art": "frage",
+  "worker": "ui",
+  "rang": 1,
+  "erstellt": "2026-09-09T17:00:00Z",
+  "params": {},
+  "beschreibung": "Das Freigabe-Gate prueft, ob ein Token so AUSSIEHT wie eines — nicht, ob wir es ausgegeben haben. Die Pruefung ist gebaut und steht aus, weil niemand Token ausgibt. Der Ausgeber gehoert in die Oberflaeche.",
+  "anweisung": "=== DIE FREIGABE WIRD GEPRUEFT, OB SIE ECHT AUSSIEHT — NICHT, OB SIE ECHT IST ===\n\nWORUM ES GEHT\n\nEin Renderlauf kostet GPU-Zeit. Damit ihn nicht irgendwer (und schon gar kein\nSprachmodell) von sich aus startet, geht jeder Auftrag ueber ein Gate: Er steht auf\n`awaiting_approval` und kommt nur mit einem Freigabe-Token nach `queued`.\n\nDas Token sieht so aus:\n\n    CONFIRMED_RENDER_<irgendetwas nicht leeres>\n\nUnd genau da liegt der Punkt. Bis heute pruefen wir, ob die Zeichenfolge SO AUSSIEHT.\nWir pruefen nicht, ob wir sie AUSGEGEBEN haben. Wer das Praefix kennt, kommt durch —\nund das Praefix steht in jedem Werkzeugschema, das ein Sprachmodell liest.\n\nGemeldet hat das eure Nachbarlane (HomeStation) am 21.08.2026. Ihr eigener Satz dazu:\n«Heute ist es folgenlos. Es wird zum Loch, sobald jemand unsere Auftragsablage an einen\nLaeufer haengt.» Der Laeufer laeuft seit dem 26.08.\n\n\nWAS WIR AM 09.09.2026 GEBAUT HABEN\n\nEin Tokenbuch in der Auftragsablage. Drei neue Funktionen in `aiimaging.jobs`:\n\n    token_ausgeben(verzeichnis, fuer=...)   -> gibt ein Token aus und vermerkt es\n    token_befugt(token, verzeichnis)        -> ausgegeben? verbraucht? gilt es?\n    token_entwerten(token, verzeichnis)     -> verbraucht es\n\nund `freigeben(job_id, token, verzeichnis, mit_buch=True)` prueft gegen das Buch.\nEin Token gilt dann nur noch, wenn es ausgegeben wurde und noch nicht verbraucht ist —\nund es gilt GENAU EINMAL.\n\nIm Buch steht nicht das Token, sondern ein nicht rueckrechenbarer Abdruck davon. Wer\ndas Verzeichnis lesen kann, haelt damit keine gueltige Freigabe in der Haenden.\n\n\nWAS DAS MIT EUCH ZU TUN HAT — UND WARUM DER SCHALTER AUS IST\n\n`mit_buch` ist VORGABE AUS. Es aendert sich also von sich aus nichts, und zwar aus\neinem einzigen Grund: ES GIBT NIEMANDEN, DER TOKEN AUSGIBT.\n\nDer Ort, an dem ein Mensch eine Freigabe erteilt, ist eure Oberflaeche. Heute erfindet\nsie (oder wer immer den Aufruf macht) eine Zeichenfolge, die zum Muster passt. Damit\ndie Pruefung eingeschaltet werden kann, muesste stattdessen gelten:\n\n    1  Der Mensch klickt «freigeben».\n    2  Die Oberflaeche laesst sich ein Token AUSGEBEN (`token_ausgeben`).\n    3  Sie reicht genau dieses Token an `freigeben` weiter.\n\nSchritt 2 ist der ganze Unterschied. Er ist ein Aufruf, keine Umbauarbeit.\n\nWIR SCHALTEN NICHTS EIN, SOLANGE IHR NICHT SO WEIT SEID. Ein Gate, das ueber Nacht\njede bestehende Freigabe abweist, ist genau die stille Verhaltensaenderung, gegen die\ndieses Haus antritt. Der Schalter geht an, wenn ihr sagt, dass er angehen kann.\n\n\nWAS NICHT ZU TUN IST\n\n* Kein Umbau eurer Freigabemaske. Wie der Knopf aussieht und wo er sitzt, entscheidet\n  ihr — hier geht es allein darum, WOHER die Zeichenfolge kommt.\n* Kein Speichern des Tokens. Es wird einmal ausgegeben, einmal benutzt, fertig. Wer es\n  in einen Zustand legt, hat es auf der Platte, und das war der Ausgangspunkt.\n* Keine eigene Tokenverwaltung auf eurer Seite. Das Buch liegt bei uns; ihr fragt an.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie noetig. Dies ist eine Oberflaechenfrage und verlangt keinen Lauf."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "Keine Messung, kein Lauf, keine GPU. Eine Antwort in Worten genuegt.",
+      "«Bei uns erteilt kein Mensch die Freigabe» ist eine vollstaendige Antwort — dann sagt uns, wer es tut.",
+      "Der Schalter bleibt aus, bis ihr Ja sagt. Es entsteht euch kein Zeitdruck.",
+      "Keine Kunden-, Buero- oder Projektnamen in der Rueckgabe."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Woher kommt heute die Zeichenfolge, die ihr an `freigeben` reicht? Fest verdrahtet, erzeugt, aus einer Eingabe?",
+    "V2 Koennt ihr sie stattdessen von `token_ausgeben` holen? Wenn ja: was braucht ihr dafuer von uns — ein MCP-Werkzeug, ein Feld, eine Zeile Beispielcode?",
+    "V3 Gibt es bei euch Stellen, die eine Freigabe erteilen und die wir nicht kennen (Wiederholung nach Fehler, Stapelfreigabe, Testpfad)? Jede davon braeuchte ihr eigenes Token.",
+    "V4 Wann duerfen wir `mit_buch` einschalten? Ein Datum oder ein «meldet euch wieder in zwei Wochen» genuegt.",
+    "V5 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}

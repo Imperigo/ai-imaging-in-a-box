@@ -38,6 +38,7 @@ Insbesondere kein ``import bpy`` und kein ``import ifcopenshell`` (Regel 1 und 2
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import os
 import re
@@ -438,6 +439,12 @@ def liste_jobs(verzeichnis, status: str | None = None) -> list[dict]:
     for pfad in sorted(verzeichnis.glob(f"*{DATEI_ENDUNG}")):
         if pfad.name.startswith("."):
             continue          # temporäre Reste und versteckte Dateien sind keine Aufträge
+        if pfad.name == TOKENBUCH:
+            # Das Tokenbuch liegt in derselben Ablage, und sein Name kommt durch
+            # `_pruefe_job_id` glatt hindurch. Ohne diese Zeile erschiene es als Auftrag
+            # ohne Status — kein Absturz, sondern eine stille Fehlmeldung, und die ist
+            # die teurere Sorte.
+            continue
         satz = lies_job(pfad.name[: -len(DATEI_ENDUNG)], verzeichnis)
         if status is None or satz.get("status") == status:
             gefunden.append(satz)
@@ -538,7 +545,153 @@ def vermerke_meldung(job_id: str, verzeichnis, meldung: str) -> dict:
     return satz
 
 
-def freigeben(job_id: str, token: str, verzeichnis) -> dict:
+#: Dateiname des Tokenbuchs im Auftragsverzeichnis.
+#:
+#: **Warum es das braucht** (Home-PC-Worker, `auf-vis-20260821-03`, 21.08.2026):
+#: :func:`ist_gueltiges_token` prüft die **Form** eines Tokens, nicht die **Befugnis**.
+#: Wer ``CONFIRMED_RENDER_`` und ein beliebiges Zeichen kennt, kommt durch — und das
+#: Modell, das die Werkzeuge bedient, kennt beides aus dem Schema. Der Befund lautete:
+#: *«Heute ist es folgenlos. Es wird zum Loch, sobald jemand unsere Auftragsablage an
+#: einen Läufer hängt.»*
+#:
+#: Das Buch schliesst es: Ein Token gilt nur, wenn es **ausgegeben** wurde und **noch
+#: nicht verbraucht** ist.
+#:
+#: Im Buch steht nicht das Token, sondern sein Abdruck (:func:`_fingerabdruck`) — sonst
+#: läge eine gültige Freigabe offen in derselben Ablage, aus der wir sie am 18.08.2026
+#: gerade entfernt haben.
+TOKENBUCH = "freigabe-token.json"
+
+
+def _tokenbuch_pfad(verzeichnis) -> Path:
+    return Path(verzeichnis) / TOKENBUCH
+
+
+def _fingerabdruck(token) -> str:
+    """Der Eintrag, unter dem ein Token im Buch steht — **nicht das Token selbst**.
+
+    **Warum nicht der Klartext.** Das Buch liegt in derselben Ablage wie die Aufträge,
+    und für die gilt seit dem 18.08.2026: *das Token landet nie auf der Platte* — wer das
+    Verzeichnis lesen kann, hätte sonst eine gültige Freigabe in der Hand. Ein Buch mit
+    Klartext-Token wäre genau dieses Loch, eine Datei weiter.
+
+    Der Abdruck kann alles, was hier gebraucht wird: wiedererkennen, ob **dieses** Token
+    ausgegeben wurde. Zurückrechnen lässt er sich nicht. Das ist derselbe Handel wie bei
+    einem Passwortspeicher, und er geht hier auf, weil niemand das Token je aus dem Buch
+    zurücklesen muss — es liegt beim Menschen, der es erteilt hat.
+    """
+    return hashlib.sha256(str(token).encode("utf-8")).hexdigest()
+
+
+def _tokenbuch_lesen(verzeichnis) -> dict:
+    pfad = _tokenbuch_pfad(verzeichnis)
+    if not pfad.is_file():
+        return {}
+    try:
+        inhalt = json.loads(pfad.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as fehler:
+        raise JobError(
+            f"Tokenbuch {pfad} ist nicht lesbar: {fehler}. Ein unlesbares Buch heisst "
+            f"NICHT «kein Token gilt» und auch nicht «alle gelten» — es heisst, dass "
+            f"hier nichts entschieden werden kann."
+        ) from fehler
+    return inhalt if isinstance(inhalt, dict) else {}
+
+
+def _tokenbuch_schreiben(buch: dict, verzeichnis) -> Path:
+    """Dasselbe atomare Verfahren wie :func:`schreibe_job` — aus demselben Grund."""
+    verzeichnis = Path(verzeichnis)
+    verzeichnis.mkdir(parents=True, exist_ok=True)
+    ziel = _tokenbuch_pfad(verzeichnis)
+    fd, temporaer = tempfile.mkstemp(dir=verzeichnis, prefix=".tokenbuch.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as datei:
+            json.dump(buch, datei, ensure_ascii=False, indent=2, sort_keys=True)
+            datei.write("\n")
+            datei.flush()
+            os.fsync(datei.fileno())
+        os.replace(temporaer, ziel)
+    except BaseException:
+        Path(temporaer).unlink(missing_ok=True)
+        raise
+    return ziel
+
+
+def token_ausgeben(verzeichnis, *, fuer=None, zufall=None) -> str:
+    """Ein Freigabe-Token **ausgeben** und seinen Abdruck im Buch vermerken.
+
+    Args:
+        verzeichnis: Das Auftragsverzeichnis; das Buch liegt darin.
+        fuer: Wofür es gedacht ist — eine ``job_id`` oder ein Vermerk. Nur Auskunft:
+            Gebunden wird das Token damit **nicht**. Wer eine Bindung will, prüft sie
+            beim Freigeben; hier stünde sonst eine Zusage, die niemand einlöst.
+        zufall: Nur für Proben — sonst wird gewürfelt.
+
+    Returns:
+        Das Token, in derselben Gestalt, die :func:`ist_gueltiges_token` kennt. **Es
+        wird hier einmal zurückgegeben und nirgends aufbewahrt.** Wer es verliert, gibt
+        ein neues aus; aus dem Buch holt es niemand zurück.
+    """
+    teil = zufall if zufall is not None else secrets.token_hex(8)
+    if not str(teil).strip():
+        raise JobError("Ein Token mit leerem Rest ist genau das Beinahe-Token, gegen "
+                       "das ist_gueltiges_token gebaut ist.")
+    token = f"{TOKEN_PRAEFIX}{teil}"
+    buch = _tokenbuch_lesen(verzeichnis)
+    abdruck = _fingerabdruck(token)
+    if abdruck in buch:
+        raise JobError("Dieses Token ist bereits ausgegeben — zweimal dasselbe "
+                       "auszugeben hiesse, die Einmalverwendung aufzugeben.")
+    buch[abdruck] = {"ausgegeben": _jetzt(), "fuer": (str(fuer) if fuer else None),
+                     "verbraucht": None}
+    _tokenbuch_schreiben(buch, verzeichnis)
+    return token
+
+
+def token_befugt(token, verzeichnis) -> dict:
+    """Ist dieses Token **ausgegeben und unverbraucht**? — die Befugnis, nicht die Form.
+
+    Returns:
+        ``{form, ausgegeben, verbraucht, gilt, grund}``. Alle vier Lagen stehen einzeln
+        da: Ein Token kann formal falsch, nie ausgegeben oder schon verbraucht sein, und
+        das sind drei verschiedene Befunde. Ein blosses ``False`` verschwiege, welcher.
+        Kein Rückgabewert trägt das Token selbst — auch nicht der ``grund``.
+    """
+    form = ist_gueltiges_token(token)
+    if not form:
+        return {"form": False, "ausgegeben": False, "verbraucht": None, "gilt": False,
+                "grund": f"Kein {TOKEN_PRAEFIX}<etwas>-Token."}
+    eintrag = _tokenbuch_lesen(verzeichnis).get(_fingerabdruck(token))
+    if eintrag is None:
+        return {"form": True, "ausgegeben": False, "verbraucht": None, "gilt": False,
+                "grund": ("Die Form stimmt, ausgegeben wurde es nie. Genau das ist der "
+                          "Fall, den die Formpruefung allein nicht sieht.")}
+    verbraucht = eintrag.get("verbraucht")
+    if verbraucht:
+        return {"form": True, "ausgegeben": True, "verbraucht": verbraucht, "gilt": False,
+                "grund": f"Bereits verbraucht am {verbraucht}. Freigaben gelten einmal."}
+    return {"form": True, "ausgegeben": True, "verbraucht": None, "gilt": True,
+            "grund": "Ausgegeben und unverbraucht."}
+
+
+def token_entwerten(token, verzeichnis, *, job_id=None) -> dict:
+    """Ein Token verbrauchen. Der Vermerk sagt, **wofür** es verbraucht wurde."""
+    buch = _tokenbuch_lesen(verzeichnis)
+    abdruck = _fingerabdruck(token)
+    eintrag = buch.get(abdruck)
+    if eintrag is None:
+        raise JobError("Token nicht im Buch — es kann nicht verbraucht werden, was nie "
+                       "ausgegeben wurde.")
+    if eintrag.get("verbraucht"):
+        raise JobError(f"Token wurde am {eintrag['verbraucht']} schon verbraucht.")
+    eintrag["verbraucht"] = _jetzt()
+    eintrag["verbraucht_fuer"] = str(job_id) if job_id else None
+    buch[abdruck] = eintrag
+    _tokenbuch_schreiben(buch, verzeichnis)
+    return eintrag
+
+
+def freigeben(job_id: str, token: str, verzeichnis, *, mit_buch: bool = False) -> dict:
     """``awaiting_approval`` → ``queued``, ausschliesslich mit gültigem Token.
 
     Die einzige Tür zum Ausführungspfad. Sie prüft in dieser Reihenfolge:
@@ -561,12 +714,31 @@ def freigeben(job_id: str, token: str, verzeichnis) -> dict:
             f"nicht-leerem Rest. Ohne gültige Freigabe wird keine GPU belegt."
         )
 
+    # DIE BEFUGNIS, und sie ist VORGABE AUS — `mit_buch=False`.
+    #
+    # Eingeschaltet gilt ein Token nur, wenn es ausgegeben und unverbraucht ist. Das
+    # schliesst das Loch aus `auf-vis-20260821-03`: Wer das Praefix kennt, kommt sonst
+    # durch, und das Modell, das die Werkzeuge bedient, kennt es aus dem Schema.
+    #
+    # Warum nicht sofort Vorgabe: Es gibt heute kein Buch. Eingeschaltet wuerde JEDE
+    # bestehende Freigabe abgewiesen — ein Gate, das ueber Nacht alles sperrt, ist
+    # dieselbe Sorte stille Verhaltensaenderung, gegen die dieses Haus antritt.
+    if mit_buch:
+        befund = token_befugt(token, verzeichnis)
+        if not befund["gilt"]:
+            raise JobError(f"Freigabe abgelehnt: {befund['grund']}")
+
     satz = lies_job(job_id, verzeichnis)
     _pruefe_uebergang(satz.get("status"), STATUS_QUEUED)
 
     _wechsle(satz, STATUS_QUEUED)
     satz["freigegeben"] = True
     satz["freigegeben_am"] = satz["geaendert"]
+    # ERST ENTWERTEN, DANN SCHREIBEN. Bricht das Schreiben ab, ist das Token verbraucht
+    # und der Auftrag nicht freigegeben — die teurere Reihenfolge waere die andere: ein
+    # freigegebener Auftrag mit einem Token, das noch einmal gilt.
+    if mit_buch:
+        token_entwerten(token, verzeichnis, job_id=job_id)
     schreibe_job(satz, verzeichnis)
     return satz
 
@@ -578,6 +750,8 @@ __all__ = [
     "STATUS_AWAITING", "STATUS_CANCELLED", "STATUS_DONE", "STATUS_ERROR",
     "STATUS_QUEUED", "STATUS_RUNNING",
     "JobError", "UebergangError",
+    "TOKENBUCH",
     "baue_job", "freigeben", "ist_gueltiges_token", "lies_job", "liste_jobs",
+    "token_ausgeben", "token_befugt", "token_entwerten",
     "neue_job_id", "schreibe_job", "setze_status",
 ]

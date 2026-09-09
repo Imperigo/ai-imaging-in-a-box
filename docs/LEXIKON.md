@@ -4228,6 +4228,23 @@ teurer Vorgang starten. *Hier `CONFIRMED_RENDER_*`. Es wird bewusst **nie** in d
 Auftragsdatei geschrieben — läge es darin, wäre die Befugnis mit der Datei weiterreichbar,
 und jeder, der das Verzeichnis lesen kann, hätte sie.*
 
+**Form und Befugnis** — Zwei verschiedene Fragen an dieselbe Zeichenfolge. *Sieht sie aus
+wie ein Schlüssel?* ist die Form. *Ist es ein Schlüssel, den wir ausgegeben haben?* ist die
+Befugnis. *Bis zum 09.09.2026 prüfte dieses Projekt nur die Form: Wer `CONFIRMED_RENDER_`
+kannte und irgendein Zeichen anhängte, kam durch — und das Muster steht in jedem Schema,
+das ein Sprachmodell liest. Gemeldet hat es die HomeStation am 21.08.2026.*
+
+**Tokenbuch** — Die Liste der Freigaben, die tatsächlich erteilt wurden, samt Vermerk, ob
+eine schon verbraucht ist. *Es macht aus der Formprüfung eine Befugnisprüfung: Ein Token
+gilt nur, wenn es im Buch steht und noch nicht verbraucht ist — und es gilt genau einmal,
+sonst wären zwei Renderläufe mit einer Zusage bezahlt.*
+
+**Abdruck (eines Tokens)** — Eine kurze, nicht rückrechenbare Zahl, die aus dem Token
+berechnet wird (ein **Hash**, siehe Abschnitt 8). Im Tokenbuch steht der Abdruck, nicht das
+Token. *Damit kann das Buch wiedererkennen, ob ein vorgelegtes Token ausgegeben wurde, ohne
+selbst eine gültige Freigabe zu enthalten. Dasselbe Verfahren, mit dem ein Dienst Passwörter
+speichert, ohne sie zu kennen.*
+
 **Pfad-Trickserei (Path Traversal)** — Ein Angriff, bei dem in einem Namen `..` oder `/`
 steckt, um aus dem vorgesehenen Verzeichnis auszubrechen — etwa `../../etc/passwd`. Abwehr:
 Namen prüfen, bevor sie zu Pfaden werden.
@@ -4503,6 +4520,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-09 | Ergaenzt aus dem Tokenbuch (`auf-vis-20260821-03`): **Form und Befugnis**, **Tokenbuch**, **Abdruck (eines Tokens)**. Der Befund der HomeStation vom 21.08. lautete: Das Freigabe-Gate prueft, ob eine Zeichenfolge wie ein Schluessel *aussieht*, nicht ob wir sie *ausgegeben* haben. Der Abdruck kam beim Bauen dazu — ein Buch mit Klartext-Token haette die Freigabe eine Datei weiter wieder offen hingelegt |
 | 2026-09-09 | Ergaenzt aus der Familienpruefung: **Korngroesse (einer Regel)** und **Familienpruefung (in der Gelaendeform)**. Beide aus einem Befund der HomeStation: Ein Gelaende aus zwanzig Streifen faellt Knoten fuer Knoten durch (groesster Grundrissanteil 0,2215) und wird als Huellbox ueber alle zwanzig zweifelsfrei erkannt (0,918). Kein Schwellenproblem, ein Korngroessenproblem |
 | 2026-09-09 | Ergaenzt aus dem Befund der HomeStation zu `auf-20260909-92`: **Vertauschprobe**, **Staerkeprobe**, **Konditionierungsweg**. Alle drei tragen denselben Befund: Zwoelf erzeugte Bilder bestanden die Geometrie-Schwelle — und dieselben zwoelf bestanden sie auch gegen die falsche Soll-Karte. Der Konditionierungsweg erklaert nachtraeglich den Fehlschlag vom 18.08. (0,359): Das damalige Modell hatte gar keinen ControlNet-Eingang |
 | 2026-09-09 | Ergaenzt aus den Beweisen 23-28: **Anlauffrist (Anlauf gegen Stillstand)**, **Seitencache**, **Differenzbild**. Alle drei aus gemessenen Befunden: Der kalte Blender-Start kostet 12,63 s gegen 0,15 s warm und hat vier gesunde Beweislaeufe getoetet; das Differenzbild traegt zwei gegensaetzliche Beweise (Sonne: darf nicht schwarz sein / IFC-Spielarten: muss es sein). Ausgebaut: **Beugung (Flexion)** um den gemessenen Fall «Fenstern» aus Beweis 27 |

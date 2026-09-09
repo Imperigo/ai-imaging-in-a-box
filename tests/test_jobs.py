@@ -649,7 +649,121 @@ def test_jobs_bleibt_reine_stdlib():
     quelle = Path(jobs.__file__).read_text(encoding="utf-8")
     baum = re.findall(r"^\s*(?:import|from)\s+([\w.]+)", quelle, flags=re.MULTILINE)
     fremd = {name.split(".")[0] for name in baum} - {
-        "__future__", "copy", "json", "os", "re", "secrets", "tempfile", "datetime", "pathlib",
+        # `hashlib` kam am 09.09.2026 dazu: Das Tokenbuch speichert Abdrücke statt
+        # Token. Stdlib, kein Fremdpaket — die Liste wächst hier bewusst von Hand,
+        # damit jede Erweiterung eine Entscheidung ist und keine Nebenwirkung.
+        "__future__", "copy", "hashlib", "json", "os", "re", "secrets", "tempfile",
+        "datetime", "pathlib",
     }
 
     assert not fremd, f"jobs.py zieht {sorted(fremd)} herein"
+
+
+# --------------------------------------------------------------------------------------
+# 4 · Die Befugnis: das Tokenbuch (auf-vis-20260821-03)
+# --------------------------------------------------------------------------------------
+#
+# Der Befund des Home-PC-Workers vom 21.08.2026 lautete: `ist_gueltiges_token` prüft die
+# **Form**, nicht die **Befugnis**. Wer `CONFIRMED_RENDER_` und ein beliebiges Zeichen
+# kennt, kommt durch — und beides steht im Schema, das jedes Modell liest, das unsere
+# Werkzeuge bedient. Die Tests hier prüfen die drei Eigenschaften, auf die es ankommt:
+# ein nie ausgegebenes Token wird abgewiesen, ein Token gilt genau einmal, und die
+# Vorgabe (`mit_buch=False`) lässt das heutige Verhalten unangetastet.
+
+
+def test_erfundenes_token_kommt_durch_die_form_aber_nicht_durch_das_buch(tmp_path):
+    """Der Befund selbst, als Test: Form bestanden, Befugnis nicht."""
+    erfunden = TOKEN_PRAEFIX + "ausgedacht"
+
+    assert ist_gueltiges_token(erfunden) is True          # die Form sieht nichts
+    befund = jobs.token_befugt(erfunden, tmp_path)
+    assert befund["form"] is True and befund["ausgegeben"] is False
+    assert befund["gilt"] is False
+
+    _job(tmp_path, "a1")
+    with pytest.raises(JobError, match="ausgegeben"):
+        freigeben("a1", erfunden, tmp_path, mit_buch=True)
+    assert lies_job("a1", tmp_path)["status"] == STATUS_AWAITING
+
+
+def test_ein_token_gilt_genau_einmal(tmp_path):
+    """Zwei Aufträge mit derselben Freigabe wären zwei GPU-Läufe auf eine Zusage."""
+    token = jobs.token_ausgeben(tmp_path, fuer="a1")
+    _job(tmp_path, "a1")
+    _job(tmp_path, "a2")
+
+    freigeben("a1", token, tmp_path, mit_buch=True)
+    assert lies_job("a1", tmp_path)["status"] == STATUS_QUEUED
+
+    with pytest.raises(JobError, match="verbraucht"):
+        freigeben("a2", token, tmp_path, mit_buch=True)
+    assert lies_job("a2", tmp_path)["status"] == STATUS_AWAITING
+
+
+def test_das_buch_traegt_den_abdruck_und_nicht_das_token(tmp_path):
+    """Regel vom 18.08.2026, eine Datei weiter gedacht.
+
+    Das Buch liegt in derselben Ablage wie die Aufträge. Stünde das Token darin im
+    Klartext, hätte jeder, der das Verzeichnis liest, eine gültige Freigabe in der Hand —
+    dasselbe Loch, das wir aus der Auftragsdatei entfernt haben, nur nebenan.
+    """
+    token = jobs.token_ausgeben(tmp_path)
+    _job(tmp_path, "a1")
+    freigeben("a1", token, tmp_path, mit_buch=True)
+
+    for datei in tmp_path.glob("*.json"):
+        assert token not in datei.read_text(encoding="utf-8"), f"{datei.name} trägt es"
+    buch = json.loads((tmp_path / jobs.TOKENBUCH).read_text(encoding="utf-8"))
+    (eintrag,) = buch.values()
+    assert eintrag["verbraucht_fuer"] == "a1" and eintrag["verbraucht"]
+
+
+def test_die_vorgabe_laesst_das_heutige_verhalten_unberuehrt(tmp_path):
+    """`mit_buch=False` ist Vorgabe, und das ist kein Versehen.
+
+    Es gibt heute kein Buch. Wäre die Prüfung sofort Vorgabe, wiese sie über Nacht jede
+    bestehende Freigabe ab — eine stille Verhaltensänderung an genau dem Gate, das die
+    Hardware schützt.
+    """
+    _job(tmp_path, "a1")
+    freigeben("a1", GUELTIG, tmp_path)                    # nie ausgegeben, kein Buch
+
+    assert lies_job("a1", tmp_path)["status"] == STATUS_QUEUED
+    assert not (tmp_path / jobs.TOKENBUCH).exists()
+
+
+def test_das_tokenbuch_ist_kein_auftrag(tmp_path):
+    """`liste_jobs` glob't ``*.json`` — und ``freigabe-token`` käme als Kennung durch.
+
+    Ohne die Ausnahme erschiene das Buch als Auftrag ohne Status: kein Absturz, sondern
+    eine stille Fehlmeldung in jeder Zählung, die auf `liste_jobs` steht.
+    """
+    _job(tmp_path, "a1")
+    jobs.token_ausgeben(tmp_path)
+
+    assert [s["job_id"] for s in liste_jobs(tmp_path)] == ["a1"]
+
+
+def test_unlesbares_buch_entscheidet_nichts(tmp_path):
+    """Die dritte Antwort am Gate: weder «gilt» noch «gilt nicht», sondern ein Fehler."""
+    (tmp_path / jobs.TOKENBUCH).write_text("{kein json", encoding="utf-8")
+
+    with pytest.raises(JobError, match="nicht lesbar"):
+        jobs.token_befugt(TOKEN_PRAEFIX + "x", tmp_path)
+
+
+def test_mutationsprobe_ohne_buchpruefung_faellt_der_wachter(tmp_path, monkeypatch):
+    """Ein Wächter, der nicht fällt, bewacht nichts.
+
+    Entfernt man die Befugnisprüfung — hier, indem `token_befugt` jedes Token gelten
+    lässt —, muss das erfundene Token durchkommen. Tut es das nicht, prüft der Test
+    oben etwas anderes als das, was er zu prüfen vorgibt.
+    """
+    monkeypatch.setattr(jobs, "token_befugt", lambda token, verzeichnis: {
+        "form": True, "ausgegeben": True, "verbraucht": None, "gilt": True, "grund": "-"})
+    monkeypatch.setattr(jobs, "token_entwerten", lambda *a, **k: {})
+    _job(tmp_path, "a1")
+
+    freigeben("a1", TOKEN_PRAEFIX + "ausgedacht", tmp_path, mit_buch=True)
+
+    assert lies_job("a1", tmp_path)["status"] == STATUS_QUEUED

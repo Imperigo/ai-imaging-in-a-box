@@ -4977,12 +4977,26 @@ Bekannt und ausdrücklich nicht erledigt:
 > schliesst» — Hausregel dieses Ordners). Zwei tragen keinen.
 > **Offen:** Genau diese zwei.
 
-- [ ] **`auf-vis-20260821-03` — das Freigabe-Token wird auf Form geprüft, nicht auf
-      Befugnis.** `jobs.ist_gueltiges_token` prüft unverändert nur die Gestalt
-      (`CONFIRMED_RENDER_<nicht leer>`); **einen Speicher ausgegebener Token gibt es
-      nicht**. Der Auftrag sagt selbst: heute folgenlos, *«es wird zum Loch, sobald jemand
-      unsere Auftragsablage an einen Läufer hängt»*. Er ist unbearbeitet, und das passt zu
-      seinem eigenen «nicht dringend» — aber er steht seit dem 21.08. da.
+- [x] **`auf-vis-20260821-03` — das Freigabe-Token wurde auf Form geprüft, nicht auf
+      Befugnis.** *Erledigt am 09.09.2026.* Das Tokenbuch (`jobs.TOKENBUCH`,
+      `token_ausgeben` / `token_befugt` / `token_entwerten`) macht aus der Formprüfung
+      eine Befugnisprüfung: Ein Token gilt nur, wenn es **ausgegeben** wurde und **noch
+      nicht verbraucht** ist, und es gilt **genau einmal**.
+      **Drei Entscheide, die beim Bauen fielen:**
+      1. **Die Prüfung ist Vorgabe AUS** (`freigeben(..., mit_buch=False)`). Es gibt heute
+         kein Buch; eingeschaltet wiese sie über Nacht jede bestehende Freigabe ab — eine
+         stille Verhaltensänderung an genau dem Gate, das die Hardware schützt.
+      2. **Im Buch steht der Abdruck, nicht das Token.** Sonst läge eine gültige Freigabe
+         offen in derselben Ablage, aus der wir sie am 18.08.2026 gerade entfernt haben.
+         *Beim Bauen aufgefallen, nicht im Auftrag gefordert.*
+      3. **Entwertet wird vor dem Schreiben.** Bricht das Schreiben ab, ist das Token
+         verbraucht und der Auftrag nicht freigegeben. Die andere Reihenfolge liesse einen
+         freigegebenen Auftrag mit einem Token zurück, das noch einmal gilt.
+      **Und ein eigener Fehler, den erst der Test fand:** Das Buch liegt als `*.json` in
+      der Auftragsablage, und `freigabe-token` kommt als Kennung durch `_pruefe_job_id`
+      glatt hindurch — `liste_jobs` hätte es als Auftrag ohne Status geführt. Kein
+      Absturz, sondern eine stille Fehlmeldung in jeder Zählung, die darauf steht.
+      Sieben neue Proben, darunter die Mutationsprobe.
 - [ ] **`auf-vis-20260825-15` — sechs Posten, und Posten 1 ist ein Owner-Einwand.**
       *«Das sollte gar nicht so weit kommen — die Modelle müssen prüfen, ob die Geometrie
       richtig ist, **bevor** AI Imaging startet.»* Heute prüft die Kette danach.
