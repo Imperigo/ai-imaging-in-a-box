@@ -4539,6 +4539,38 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
 
 ---
 
+## Eine Messung trägt ab jetzt ihren Codestand (09.09.2026)
+
+> **Entschieden:** Jedes Messdokument mit Datum im Namen nennt ab dem 09.09.2026 den
+> Commit, auf dem es steht — eine Zeile unter der Datumszeile, und ein Wächter, der sie
+> verlangt. **Rückwirkend gilt die Regel nicht:** Welcher Commit unter einer Messung vom
+> 20.08. stand, ist heute nicht mehr feststellbar, und eine nachgetragene Zahl wäre
+> geraten.
+> **Gemessen:** Die Durchsicht desselben Tages hat **sieben** Dokumente entwertet, alle
+> durch eine einzige eigene Änderung (`e99caba`, 01.09.2026), und acht Tage lang ist es
+> niemandem aufgefallen.
+> **Offen:** Nichts an der Regel. Was sie nicht leistet: Sie sagt, *auf welchem Stand*
+> eine Zahl steht — nicht, *ob* eine spätere Änderung sie berührt. Das bleibt Arbeit für
+> den, der die Änderung macht.
+
+- [x] **`aiimaging.messstand` stellt die Verbindung her**, die in der Durchsicht gefehlt
+      hat: `codestand()` liest Commit und Sauberkeit aus git, `zeile()` macht die
+      Dokumentzeile daraus, `ohne_codestand()` findet die Dokumente, die sie nicht haben.
+      **Ein veränderter Arbeitsbaum steht in der Zeile** und nicht in einer Fussnote —
+      eine Messung auf einem veränderten Baum steht auf keinem benennbaren Stand.
+- [x] **Fail-closed statt «unbekannt».** Ohne git wirft `codestand()`, statt eine Zeile
+      zu schreiben, die *«unbekannt»* sagt. *Eine solche Zeile sieht aus wie eine Angabe
+      und ist keine* — dieselbe Lesart, gegen die die dritte Antwort steht.
+- [x] **Acht Proben, davon drei Gegenproben und eine Mutationsprobe.** Ältere Dokumente
+      werden nicht gestempelt, fortlaufende Dokumente (Plan, Lexikon, Einbau-Stand) sind
+      nicht gemeint, und die Ausnahmeliste muss ihren Grund im Quelltext tragen — eine
+      unbegründete Ausnahmeliste wächst, bis sie die Regel ersetzt.
+- [ ] **Was der Stempel nicht ersetzt:** Er verbindet eine Messung mit einem Stand. Ob
+      eine spätere Änderung diese Messung *berührt*, sagt er nicht — das sah man am
+      01.09. auch nicht, und es ist die schwierigere Hälfte. *Adressat: `kern`.*
+
+---
+
 ## Drei Antworten der HomeStation lagen zwei Tage ungelesen — und alle drei kippen etwas (08.09.2026, gelesen am 09.09.)
 
 > **Entschieden:** Keine Schwelle wird nachgezogen. Weder `GRUNDRISSANTEIL_MIN` noch

@@ -1,5 +1,7 @@
 # Forschungsstand — erste Erhebung
 
+**Codestand:** `ea10cdb` — der Commit, in dem dieses Dokument entstanden ist. Nachgetragen am 09.09.2026, seit die Regel gilt.
+
 *10.09.2026. Angelegt, weil `docs/STRUKTUR_VERTIEFUNGSARBEIT.md` am Vorabend über Kapitel 2
 geschrieben hat: «Der Bestand ist als **Werkzeug**bestand erhoben, nicht als
 **Forschungs**stand. Für eine Vertiefungsarbeit an der ETH ist das zu wenig — hier fehlt

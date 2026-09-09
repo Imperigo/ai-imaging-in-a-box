@@ -3,6 +3,8 @@
 **Stand:** 2026-09-09 · **Nachbaubar:** `python tools/studie_innenansicht.py` ·
 **Braucht:** Blender und `.venv-ifc`, **keine GPU**
 
+**Codestand:** `b118fdb` — der Commit, in dem dieses Dokument entstanden ist. Nachgetragen am 09.09.2026, seit die Regel gilt.
+
 ---
 
 ## Die Frage, und warum sie seit dem 22.08. offen lag
