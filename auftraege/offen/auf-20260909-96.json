@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260909-96",
+  "art": "frage",
+  "worker": "local",
+  "rang": 3,
+  "erstellt": "2026-09-09T13:10:00Z",
+  "params": {},
+  "beschreibung": "Acht bereits gerechnete Bilder aus auf-92 fuer die Schlusspraesentation herueberreichen — kein neuer Lauf, keine GPU-Stunde. Die Geometrie ist synthetisch (make_test_ifc), darum duerfen die Bilder nach Regel 3 reisen; eure Einschaetzung dazu sticht.",
+  "anweisung": "=== ACHT BILDER FUER DIE SCHLUSSPRAESENTATION ===\n\nWAS DAS IST\n\nDer Owner haelt die Schlusspraesentation zur Vertiefungsarbeit. Ihre Kernaussage\nist: DAS WERKZEUG KANN ETWAS. Die Folien zeigen fast keinen Text, dafuer grosse\nBilder — und genau an der Stelle, an der das erzeugte Bild stehen muesste, haben\nwir keines. Alle zwoelf liegen bei euch unter build/auf92/bilder/.\n\nEs geht also NICHT um eine neue Messung. Es geht darum, acht bereits gerechnete\nBilder herueberzureichen.\n\n\nREGEL 3, ZUERST — UND WARUM SIE HIER NICHT GREIFT\n\nRegel 3 dieses Repos verbietet echte Projektdaten: keine Buerodaten, keine\nKundenprojekte, keine IFC/Plaene/Renders aus echten Auftraegen.\n\nDie zwoelf Bilder aus auf-92 sind synthetisch. Sie stammen aus\n`tools/make_test_ifc.py` — dem Quader und dem Hochbau, beide aus unserem eigenen\nRepo erzeugbar. Es ist kein Bueroprojekt darauf, kein Kundenname, kein Ort.\n\nDARUM DUERFEN SIE REISEN. Wenn ihr das anders seht, schickt KEINE Bilder und sagt\nes in V5 — eure Einschaetzung sticht.\n\n\nWELCHE ACHT, UND WARUM GENAU DIESE\n\nNicht die schoensten und nicht die besten, sondern die, die zusammen die Wahrheit\nerzaehlen. Aus `ergebnis.json` (Staerke 1,00) und `ergebnis_s030.json`:\n\n    1  C0.png    Gebaeude + MIT Bauteilen, Startwert 0\n                 score 0,9682 · rho_maske 0,9029\n                 Das Bild, das BEIDES hat: sieht nach Bauwerk aus und folgt der\n                 Tiefenkarte. Es traegt die Kernaussage der Praesentation.\n\n    2  C2.png    derselbe Fall, Startwert 2\n                 score 0,8965 · rho_maske 0,1437\n                 «Das mit Abstand schoenste Bild und das mit der schlechtesten\n                 Bauwerkstreue» — euer Satz, und er ist der Kern des zweiten\n                 Teils. Fenster, Gesimse, Satteldach, und die Karte trifft nicht.\n\n    3  B0.png    Schachtel + OHNE Bauteile, Startwert 0\n                 score 0,9884 · rho_maske 0,9748\n                 Der bestbewertete Lauf ueberhaupt — und laut eurem Befund «eine\n                 graue geriffelte Masse, die kein Mensch als Gebaeude bezeichnen\n                 wuerde». Genau dieser Widerspruch soll auf die Folie.\n\n    4  A0.png    Schachtel + MIT Bauteilen, Startwert 0\n                 score 0,9860 · rho_maske 0,9157\n                 Zeigt, was fuenf Bauteilwoerter im Prompt am BILD aendern\n                 (Fensteroeffnungen), waehrend der Score sich um 0,0007 bewegt.\n\n    5  C0_s030.png (oder wie eure Staerkeprobe die Datei nennt)\n                 ControlNet-Staerke 0,30, derselbe Fall wie 1\n                 Das voellig andere Gebaeude, das die Schwelle trotzdem besteht.\n\n    6  gebaeude/beauty_.png       der Blender-Render der Gebaeudeszene\n    7  gebaeude/tiefe_norm.png    die Tiefenkarte, die als Soll gedient hat\n    8  schachtel/beauty_.png      derselbe Blick auf die Schachtelszene\n\nDie letzten drei sind die VORLAGE. Ohne sie steht das erzeugte Bild allein da,\nund niemand im Raum sieht, wogegen es gemessen wurde.\n\n\nFORM — bitte genau so, sonst passt es nicht auf die Folie\n\n  * PNG, unveraendert aus dem Lauf. Kein Zuschnitt, keine Skalierung, keine\n    Nachbearbeitung, keine Beschriftung ins Bild.\n  * Falls eines ueber 400 KB liegt: so lassen und es in V4 sagen. Lieber gross\n    und echt als klein und angefasst.\n  * Ablage im Repo: `auftraege/ergebnisse/auf-20260909-96-bilder/` mit genau\n    diesen Namen: C0.png, C2.png, B0.png, A0.png, C0_staerke030.png,\n    gebaeude_beauty.png, gebaeude_tiefe.png, schachtel_beauty.png\n\n\nWAS WIR SONST NOCH BRAUCHEN, UND ES IST WENIG\n\nJe Bild eine Zeile mit den Zahlen, die schon in euren Tabellen stehen — wir\nschreiben sie unter das Bild, damit auf der Folie keine Zahl ohne ihre Bedingung\nsteht. Kein neuer Lauf, kein Nachrechnen: abschreiben aus ergebnis.json genuegt.\n\n\nWAS AUSDRUECKLICH NICHT BESTELLT IST\n\n  * Keine neue Messung, kein Renderlauf, keine GPU-Stunde.\n  * Keine Montage, keine Bildunterschrift im Bild, kein Vorher-Nachher-Bild.\n  * Keine Auswahl nach Schoenheit. Wenn eines der acht nicht existiert oder\n    anders heisst, schickt das vorhandene und sagt in V4, was ihr genommen habt.\n  * Keine absoluten Pfade mit Benutzernamen in der Rueckgabe (REGEL 3).\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_ifc.py (Quader und --hochbau) — schon gelaufen",
+    "hinweis": "Nichts zu erzeugen. Die Bilder liegen bei euch unter build/auf92/bilder/ sowie build/auf92/gebaeude/ und build/auf92/schachtel/."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "Kein Renderlauf, kein Bildmodell, keine GPU — nur Dateien kopieren.",
+      "Bilder unveraendert: kein Zuschnitt, keine Skalierung, keine Beschriftung.",
+      "Wenn ihr Regel 3 hier anders lest: keine Bilder schicken, in V5 begruenden.",
+      "Keine absoluten Pfade mit Benutzernamen in der Rueckgabe.",
+      "«Gibt es nicht» ist eine vollstaendige Antwort und besser als ein Ersatz."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Die acht Bilder unter auftraege/ergebnisse/auf-20260909-96-bilder/ mit den im Auftrag genannten Namen. Fehlt eines, sagt welches und warum.",
+    "V2 Je Bild eine Zeile aus euren vorhandenen Tabellen: Fall, Startwert, score, rho_maske, ControlNet-Staerke. Abgeschrieben, nicht neu gerechnet.",
+    "V3 Ein Satz je Bild, was darauf zu sehen ist — in euren Worten. Ihr habt sie angesehen, wir nicht. Der Satz kommt so oder so aehnlich unter die Folie.",
+    "V4 Was ihr anders gemacht habt: ein Bild, das anders heisst, eines ueber 400 KB, eines das fehlt.",
+    "V5 Eure Einschaetzung zu Regel 3 bei diesen Bildern. Wenn ihr sie fuer gebunden haltet, schickt keine und sagt es hier — das ist keine Absage an den Auftrag, sondern seine Antwort."
+  ]
+}
