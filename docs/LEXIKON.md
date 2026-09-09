@@ -637,6 +637,26 @@ nicht mitnimmt, schlägt weiter. Der Umkehrschluss trägt aber — ein **ausblei
 Herzschlag heisst zuverlässig, dass der Prozess tot oder eingefroren ist —, und nur auf
 ihn schlägt die Wache an.*
 
+**Anlauffrist (Anlauf gegen Stillstand)** — Zwei Lagen, die eine Wache leicht
+verwechselt: *«hat noch nicht angefangen»* und *«ist stehengeblieben»*. Beide sehen von
+aussen gleich aus — es kommt kein Zeichen —, bedeuten aber das Gegenteil voneinander.
+Die Anlauffrist ist die längere Frist, die **nur so lange** gilt, wie überhaupt noch kein
+Zeichen kam; nach dem ersten Zeichen greift wieder die kurze.
+*Gemessen, viermal derselbe Aufruf `blender --background --version`: 12,63 s / 0,66 /
+0,26 / 0,15. Der erste Start kostet das Fünfzigfache der folgenden. Die Frist stand bei
+10 s — ein kalter Start riss sie **zuverlässig**, nicht gelegentlich, und vier
+kerngesunde Beweisläufe sind in einer Nacht daran gestorben. `Wache.anlauf_s` in
+`fortschritt.py`; die Mutationsprobe «Anlauf gilt immer» fällt, denn dann bewacht die
+Wache einen Prozess, der nie anfängt, ewig.*
+
+**Seitencache (page cache)** — Der Teil des Arbeitsspeichers, in dem das Betriebssystem
+zuletzt gelesene Dateien behält. Beim ersten Zugriff wird von der Platte gelesen, danach
+aus dem Speicher — derselbe Aufruf ist dann um ein Vielfaches schneller, ohne dass am
+Programm etwas anders wäre.
+*Er ist der Grund für die Anlauffrist: Das Blender-Binary ist gross, und sein erster
+Start bezahlt das Lesen. Er ist auch eine Falle für Zeitmessungen — wer den ersten Lauf
+mitmisst, misst die Platte, nicht das Programm.*
+
 **Monotone Uhr (monotonic clock)** — Eine Uhr, die nur vorwärts läuft und nie springt, im
 Gegensatz zur *Wanduhr*, die durch Zeitumstellung oder Zeitabgleich rückwärts gehen kann.
 Für Zeitmessungen („wie lange läuft das schon") ist die monotone Uhr die richtige — eine
@@ -3682,6 +3702,18 @@ nachzuschlagen ist darum die zweite grosse Verbesserung — und sie kann nichts 
 weil sie nur gilt, wenn danach wirklich ein Eintrag dasteht. Welche Endungen mitspielen,
 ist eine Entscheidung mit Folgen: `s` musste weichen, weil `Dachs` sonst zu „roof" wird;
 `n` musste bleiben, weil ohne es jede Mehrzahl stehenbliebe (`Fassaden`).*
+*Beweis 27 zeigt den Fall an einem Bild: «ein Gebäude mit Dach, **Fenstern** und einem
+Balkon» ergibt beim Bauteilwächter im deutschen Original **zwei** Funde und nach der
+Übersetzung **drei** — die Wortliste kennt `fenster`, nicht die gebeugte Form `fenstern`.
+Genau darum werden beide Fassungen geprüft.*
+
+**Differenzbild** — Zwei Bilder Punkt für Punkt voneinander abgezogen; übrig bleibt
+genau das, was sich geändert hat. Wo beide gleich sind, ist es schwarz.
+*Zwei Beweise dieses Projekts hängen daran, und sie fragen Gegenteiliges. Beweis 25
+verlangt, dass es **nicht** schwarz ist: Morgen gegen Abend muss die Fassade hell werden,
+die im Tagesverlauf ins Licht kommt — sonst kam die bestellte Sonne nicht an. Beweis 26
+verlangt, dass es **vollständig** schwarz ist: Vier verschiedene IFC-Spielarten desselben
+Bauwerks müssen dasselbe Bild ergeben, der grösste Unterschied betrug 0,00000.*
 
 **Signalwort (bei der Spracherkennung)** — Ein Wort, dessen blosses Vorkommen für eine
 Sprache spricht: „ohne", „zwischen", „keine" für Deutsch; „the", „without", „between"
@@ -4424,6 +4456,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-09 | Ergaenzt aus den Beweisen 23-28: **Anlauffrist (Anlauf gegen Stillstand)**, **Seitencache**, **Differenzbild**. Alle drei aus gemessenen Befunden: Der kalte Blender-Start kostet 12,63 s gegen 0,15 s warm und hat vier gesunde Beweislaeufe getoetet; das Differenzbild traegt zwei gegensaetzliche Beweise (Sonne: darf nicht schwarz sein / IFC-Spielarten: muss es sein). Ausgebaut: **Beugung (Flexion)** um den gemessenen Fall «Fenstern» aus Beweis 27 |
 | 2026-09-09 | Ergaenzt aus dem Beweisgang: Bauwerksbox gegen Szenenbox. Der Begriff wurde zweimal benutzt und nie erklaert — und er ist der Unterschied zwischen «Deckungsgrad eingehalten» und «Deckungsgrad vom Gelaende eingehalten» |
 | 2026-09-09 | Ergaenzt aus dem Beweisgang (Sitzung 14): Nullanker, Startwertstreuung, Beweisgang, Kontrollbild. **Nullanker stand seit dem 24.08.2026 im Text und war nie erklaert** — eine Definition, die einen unerklaerten Begriff voraussetzt, ist genau der Fall, den die Arbeitsregel verbietet |
 | 2026-09-09 | Ergaenzt: **Vorschrift ohne Vergabestelle**. Anlass sind zwei Kollisionen an einem Abend: Eine fremde Lane nahm erst einen belegten Rang, dann Rang UND Laufnummer, und beide Male wurde main rot. Der Waechter verlangte eine lueckenlose Reihe und sagte niemandem, welche Zahl frei ist — die Abhilfe ist keine strengere Vorschrift, sondern eine Vergabestelle |

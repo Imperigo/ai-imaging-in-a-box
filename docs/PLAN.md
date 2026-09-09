@@ -4359,6 +4359,75 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
 
 ---
 
+## Die Beweisreihe misst am Produktivweg — und findet zwei eigene Fehler (09.09.2026)
+
+> **Entschieden:** Ein Beweis wird **am Produktivweg** gefahren, nicht an einem Nachbau
+> daneben. Der Unterschied ist keine Formsache: Beweis 21 hat das Tiefenmass zuerst
+> nachgebaut und kam auf 15,8 % statt 0,6 % — der Hintergrund liefert endliche ~1e10 und
+> kein `inf`, und der Nachbau wusste das nicht. Seither holt jeder Beweis die Kennzahl aus
+> dem Modul, das sie im Betrieb rechnet.
+> **Gemessen:** Acht weitere Beweise (21–28). Zwei davon haben **Fehler in unserem
+> eigenen Code** gefunden, beide durch Messen statt Annehmen: das festgeschriebene
+> `geometry.format` und die fehlende Anlauffrist der Wache.
+> **Offen:** Das AI Imaging selbst ist hier weiterhin nicht beweisbar — keine Gewichte,
+> keine GPU. `auf-20260909-90` und `auf-20260909-92` liegen dafür bei der HomeStation.
+
+- [x] **Beweis 23 — der Zwischenspeicher am Produktivweg**, nicht am Testaufbau:
+      2,48 s / 0,26 s / 0,29 s / 2,43 s. Der dritte Wert ist der wichtige: Ein *geänderter*
+      Auftrag holt sich **kein** altes Bild.
+- [x] **Beweis 24 — der Weg eines Auftrags über zehn Stationen**, neun belegt, eine
+      schraffiert. Der Beweis ist zweimal durchgefallen, beide Male an einer Wahrheit über
+      uns selbst: Der Auftragsordner muss nach der `job_id` heissen, und die `params`
+      tragen **unsere** Feldnamen. Wer dort ihre Namen einträgt, überspringt genau die
+      Übersetzung, die Station 5 beweisen soll.
+- [x] **Beweis 25 — die bestellte Sonne kommt beim Renderer an.** Drei Stände, dieselbe
+      Kamera, dazu das Differenzbild Morgen gegen Abend. Bis zum 26.08. lief diese
+      Bestellung ins Leere und ergab ein sauberes, gut belichtetes, **falsches** Bild.
+      Der Beweis hat sich zuerst selbst angehalten: Mein erstes Mass zählte Bildpunkte
+      unter 0,25 als Schatten — der dunkelste Wert dieser Renders liegt bei 0,34, es gab
+      **null** solche Punkte. *Drei gleiche Balken wären als Beweis durchgegangen.*
+- [x] **Beweis 26 — vier IFC-Spielarten, ein Bauwerk.** Zwei Normversionen mal zwei
+      Einheiten; alle vier messen 8,0 × 5,0 × 3,25 m, der grösste Unterschied zwischen
+      zwei Renders beträgt 0,00000. Wichtig, weil an 40 echten Dateien gemessen: 10 von 40
+      waren IFC2X3 — und **alle zehn ArchiCAD-Exporte** darunter.
+      Auch dieser Beweis fiel zuerst durch, an der eigenen Wahrheit: `make_test_ifc.HOEHE_Z`
+      ist die **Wand**höhe (3,0 m), die Hüllbox ist um die Bodenplatte höher. *Falsch war
+      die Wahrheit, nicht die Umwandlung* — darum kommt die Sollzahl vom Aufrufer.
+- [x] **Beweis 27 — der Prompt verrät sich.** Sechs Prompts vor dem Bauteilwächter, die
+      Erwartung steht vor der Messung, alle sechs treffen. Der deutsche Fall zeigt mehr als
+      geplant: «mit Dach, **Fenstern** und einem Balkon» ergibt im Original zwei Funde und
+      übersetzt drei — die Wortliste kennt `fenster`, nicht die gebeugte Form. *Genau
+      darum werden beide Fassungen geprüft*, und das stand bisher nur als Satz im
+      Kommentar.
+- [x] **Beweis 28 — der Zufall ist grösser als jede Einstellung.** Neun Läufe, derselbe
+      Aufbau, nur der Startwert verschieden: drei über der Schwelle, sechs darunter. Die
+      gemessene Streuung 0,2269 ist **1,62-mal** so gross wie der stärkste Parametereffekt
+      dieser Kette (0,14).
+      **Und beim Bauen ist mir genau der Fehler unterlaufen, gegen den dieses Projekt
+      antritt.** Von den neun Werten sind nur Mittel, Streuung und die beiden Enden
+      überliefert; die sieben dazwischen habe ich für das Bild gewählt. Ihre Streuung
+      beträgt 0,1929 — und die stand im ersten Anlauf im Dateinamen, **als wäre sie die
+      gemessene**. Gerechnet wird jetzt überall mit `varianten.GEMESSENER_BODEN`, die neun
+      Punkte sind im Dateinamen als DARSTELLUNG ausgewiesen. Der Faktor steigt damit von
+      1,38 auf 1,62: *Die falsche Zahl hatte den Befund kleiner aussehen lassen, als er ist.*
+- [x] **`kosmo_naht.als_render_scene` behauptete ein Format, das sie nie angesehen hatte.**
+      Der Home-PC-Worker meldete denselben Fehler an ihrer Bridge (B117); nachgemessen
+      hatten wir ihn in eigener Form. Das Format wird jetzt aus der Endung **gelesen**,
+      eine Abweichung steht als Hinweis dabei, und wer `ifc_path` schickt, hört das auch —
+      bisher hiess die Meldung «trägt keinen `glb_path`», und genau dieser Umweg hat die
+      falsche Formatangabe erst erzeugt.
+- [x] **Die Wache hielt «hat noch nicht angefangen» für «ist stehengeblieben».** Gemessen,
+      viermal dieselbe `blender --background --version`: 12,63 s / 0,66 / 0,26 / 0,15. Der
+      kalte Start riss die 10-Sekunden-Frist **zuverlässig**, nicht gelegentlich; vier
+      kerngesunde Beweisläufe sind in einer Nacht daran gestorben. `Wache.anlauf_s` gilt,
+      solange kein einziges Zeichen kam — danach wieder `frist_s`. Die Mutationsprobe
+      (Anlauf gilt immer) fällt.
+- [ ] **Was die Reihe weiterhin nicht kann:** Sie beweist die Kette, nicht das Bild. Ohne
+      Gewichte und GPU steht hier kein einziges **erzeugtes** Bild, das die Schwelle
+      besteht — und ob eines existiert, ist die wichtigste offene Frage des Projekts.
+
+---
+
 ## Der Auftragsordner zählte nicht, was er behauptete (28.08.2026)
 
 > **Entschieden:** Der Zustand eines Auftrags wird **abgeleitet**, mit fünf Werten, und `art` wird vor `status` gelesen — ein Weiterleitungsvermerk trägt `status: ok` und ist trotzdem keine Antwort. Dazu eine vierte Adresse `kern` für diese Entwicklungssitzung selbst.
