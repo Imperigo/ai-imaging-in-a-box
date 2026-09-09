@@ -32,6 +32,30 @@ Planstand. Ein Commit umfasst die geänderten Dateien, Zeitpunkt, Urheber:in und
 Nachricht, die erklärt *warum* geändert wurde. Er ist unveränderlich und wird durch eine
 Prüfsumme identifiziert (z. B. `ae2cfa7`).
 
+**Codestand (eines Dokuments)** — Der Commit, gegen den eine veröffentlichte Zahl
+gemessen wurde, als Zeile im Dokument: `**Codestand:** \`b118fdb\``. *Ohne ihn ist eine
+Messung nicht falsch, aber auch nicht nachfahrbar: Wer sie wiederholt und etwas anderes
+herausbekommt, weiss nicht, ob er einen Fehler gemacht hat oder eine andere Software
+fährt. Anlass war der 01.09.2026 — eine einzige Änderung entwertete sieben Dokumente, und
+acht Tage lang fiel es niemandem auf.*
+
+**Grundlage (eines Dokuments)** — Die Liste der Programmteile, auf denen die Zahlen eines
+Dokuments stehen: `**Grundlage:** \`kameras\`, \`maske\``. *Sie beantwortet die
+Gegenfrage zum Codestand — nicht «fahre ich dieselbe Software?», sondern «geht mich diese
+Änderung überhaupt etwas an?». `**Grundlage:** keine` ist eine vollständige Angabe: Ein
+Text, der fremde Arbeiten liest, misst nichts an unserem Code.*
+
+**Berührung (einer Messung)** — Der Befund, dass sich seit dem Codestand eines Dokuments
+etwas an seiner Grundlage geändert hat. **«Berührt» heisst ansehen, nicht falsch.**
+*Gezählt wird je Programmteil, und der ist gröber als eine Zahl: Der erste gemeldete Fall
+betraf eine geänderte Wartezeit, die nicht ändert, was gerechnet wird. Ein Werkzeug, das
+nur meldet, was sicher falsch ist, meldet fast nie etwas — und dann heisst sein Schweigen
+nichts mehr.*
+
+**Nachgesehen bis** — Der Vermerk, bis zu welchem Commit jemand ein gemeldetes Dokument
+durchgesehen hat. *Ohne ihn ruft die Meldung ewig weiter, auch nach der Klärung — und ein
+Wächter, der nach der Klärung weiterruft, wird abgestellt.*
+
 **Commit-Message** — Die Begründung zu einem Commit. Konvention: die erste Zeile fasst
 in einem Satz zusammen, was sich ändert; der Rumpf erklärt die Gründe. Das *Was* steht
 ohnehin im Code — die Message trägt das *Warum*.
@@ -4520,6 +4544,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-09 | Ergaenzt aus `messstand` und `beruehrung`: **Codestand (eines Dokuments)**, **Grundlage (eines Dokuments)**, **Beruehrung (einer Messung)**, **Nachgesehen bis**. Der Codestand war am Vortag gebaut und NICHT ins Lexikon eingetragen worden — nachgeholt, gemeinsam mit der zweiten Haelfte derselben Frage |
 | 2026-09-09 | Ergaenzt aus dem Tokenbuch (`auf-vis-20260821-03`): **Form und Befugnis**, **Tokenbuch**, **Abdruck (eines Tokens)**. Der Befund der HomeStation vom 21.08. lautete: Das Freigabe-Gate prueft, ob eine Zeichenfolge wie ein Schluessel *aussieht*, nicht ob wir sie *ausgegeben* haben. Der Abdruck kam beim Bauen dazu — ein Buch mit Klartext-Token haette die Freigabe eine Datei weiter wieder offen hingelegt |
 | 2026-09-09 | Ergaenzt aus der Familienpruefung: **Korngroesse (einer Regel)** und **Familienpruefung (in der Gelaendeform)**. Beide aus einem Befund der HomeStation: Ein Gelaende aus zwanzig Streifen faellt Knoten fuer Knoten durch (groesster Grundrissanteil 0,2215) und wird als Huellbox ueber alle zwanzig zweifelsfrei erkannt (0,918). Kein Schwellenproblem, ein Korngroessenproblem |
 | 2026-09-09 | Ergaenzt aus dem Befund der HomeStation zu `auf-20260909-92`: **Vertauschprobe**, **Staerkeprobe**, **Konditionierungsweg**. Alle drei tragen denselben Befund: Zwoelf erzeugte Bilder bestanden die Geometrie-Schwelle — und dieselben zwoelf bestanden sie auch gegen die falsche Soll-Karte. Der Konditionierungsweg erklaert nachtraeglich den Fehlschlag vom 18.08. (0,359): Das damalige Modell hatte gar keinen ControlNet-Eingang |

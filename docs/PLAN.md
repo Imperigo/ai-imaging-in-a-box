@@ -4565,9 +4565,24 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
       werden nicht gestempelt, fortlaufende Dokumente (Plan, Lexikon, Einbau-Stand) sind
       nicht gemeint, und die Ausnahmeliste muss ihren Grund im Quelltext tragen — eine
       unbegründete Ausnahmeliste wächst, bis sie die Regel ersetzt.
-- [ ] **Was der Stempel nicht ersetzt:** Er verbindet eine Messung mit einem Stand. Ob
-      eine spätere Änderung diese Messung *berührt*, sagt er nicht — das sah man am
-      01.09. auch nicht, und es ist die schwierigere Hälfte. *Adressat: `kern`.*
+- [x] **Was der Stempel nicht ersetzt** — *erledigt am 09.09.2026.* Der Stempel sagt,
+      auf welchem Stand eine Messung steht; er sagt nicht, ob eine spätere Änderung sie
+      *berührt*. `aiimaging.beruehrung` und `tools/beruehrung.py` beantworten die
+      Gegenfrage: **Geht mich diese Änderung überhaupt etwas an?**
+      Ein Dokument nennt dazu seine **Grundlage** (`**Grundlage:** \`kameras\`, …`), und
+      das Werkzeug hält sie gegen die Module, die sich seither geändert haben. Drei
+      Antworten, und die dritte ist die wichtigste: **berührt / unberührt / nicht
+      feststellbar.** *Wer keine Grundlage nennt, bekommt kein «unberührt».*
+      **Der erste Lauf hat sofort etwas gefunden** — und zwar das, was das Werkzeug
+      können muss und was es zugleich begrenzt: `INNENANSICHT_2026-09-09.md` stand auf
+      «ansehen», weil sich `seams` geändert hatte. Nachgesehen: Es war die **Anlauffrist**
+      der Prozesswache (`b7a53d8`), also eine Wartezeit und nicht das Gerechnete. Die
+      Zahlen stehen unverändert. **«Berührt» heisst ansehen, nicht falsch** — und damit
+      der Wächter nach der Klärung nicht ewig weiterruft, trägt das Dokument jetzt ein
+      `**Nachgesehen bis:**`.
+      13 Proben, darunter eine Mutationsprobe; die Grundlagenzeile ist ab dem 10.09.2026
+      Pflicht (`ohne_grundlage`), rückwirkend ausdrücklich **nicht** — sie liesse sich
+      für ältere Dokumente nur vermuten.
 
 ---
 

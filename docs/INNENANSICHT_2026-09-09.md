@@ -5,6 +5,10 @@
 
 **Codestand:** `b118fdb` — der Commit, in dem dieses Dokument entstanden ist. Nachgetragen am 09.09.2026, seit die Regel gilt.
 
+**Grundlage:** `bildlesen`, `raumkamera`, `seams` — abgelesen an den Importen von `tools/studie_innenansicht.py`, dem Skript, das dieses Dokument nachbaubar macht. Nachgetragen am 09.09.2026, weil sie hier feststellbar war und nicht geraten werden musste.
+
+**Nachgesehen bis:** `4c804e9` — am 09.09.2026 mit `python tools/beruehrung.py`. Gemeldet war `seams`, geändert in `b7a53d8`: die **Anlauffrist** der Prozesswache. Sie betrifft, wie lange auf das erste Zeichen gewartet wird, nicht das Gerechnete. *Die Zahlen unten stehen unverändert.* — Genau dafür ist die Meldung da: Sie sagt «ansehen», nicht «falsch».
+
 ---
 
 ## Die Frage, und warum sie seit dem 22.08. offen lag

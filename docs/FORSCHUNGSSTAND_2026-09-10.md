@@ -2,6 +2,8 @@
 
 **Codestand:** `ea10cdb` — der Commit, in dem dieses Dokument entstanden ist. Nachgetragen am 09.09.2026, seit die Regel gilt.
 
+**Grundlage:** keine — dieses Dokument misst nichts an unserem Code; es liest fremde Arbeiten. Was sich im Kern ändert, geht es nichts an.
+
 *10.09.2026. Angelegt, weil `docs/STRUKTUR_VERTIEFUNGSARBEIT.md` am Vorabend über Kapitel 2
 geschrieben hat: «Der Bestand ist als **Werkzeug**bestand erhoben, nicht als
 **Forschungs**stand. Für eine Vertiefungsarbeit an der ETH ist das zu wenig — hier fehlt
