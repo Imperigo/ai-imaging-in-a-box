@@ -3,7 +3,7 @@
   "auftrag_id": "auf-20260909-94",
   "art": "frage",
   "worker": "local",
-  "rang": 2,
+  "rang": 1,
   "erstellt": "2026-09-09T21:00:00Z",
   "params": {},
   "beschreibung": "Antwort auf auf-20260901-69: das Paket `kosmodraw` ist gefunden (Imperigo/KosmoDraw-Privat, archiviert). Es ist GPL-3, und wir importieren es — bevor jemand den Weg wieder anschliesst, brauchen wir zwei Angaben von der Maschine.",

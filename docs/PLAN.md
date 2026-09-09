@@ -4435,9 +4435,69 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
       **Gezählt wird doppelt:** was die Kette in ihrem Bericht sagt und wie oft Blender
       wirklich lief. Widersprächen sie sich, hielte der Lauf an — *wer nur den Bericht
       liest, glaubt dem Erzähler.*
-- [ ] **Was die Reihe weiterhin nicht kann:** Sie beweist die Kette, nicht das Bild. Ohne
+- [x] ~~**Was die Reihe weiterhin nicht kann:** Sie beweist die Kette, nicht das Bild. Ohne
       Gewichte und GPU steht hier kein einziges **erzeugtes** Bild, das die Schwelle
-      besteht — und ob eines existiert, ist die wichtigste offene Frage des Projekts.
+      besteht — und ob eines existiert, ist die wichtigste offene Frage des Projekts.~~
+      **Falsch, und zwar zum Zeitpunkt des Schreibens.** Die Antwort lag beim Schreiben
+      dieser Zeile bereits im Repo (`auftraege/ergebnisse/auf-20260909-92-befund.md`,
+      seit dem 08.09.2026). Ich habe eine Notiz aus der Nacht abgeschrieben, statt in den
+      Ergebnisordner zu sehen. *Genau die fünfte Regel, und diesmal an mir: Ein Stand, der
+      wie der aktuelle aussieht, wird nicht geprüft — er wird geglaubt.* Der Befund steht
+      im Abschnitt darunter.
+
+---
+
+## Zwölf Bilder bestehen die Schwelle — und die Schwelle besteht die Gegenprobe nicht (08.09.2026, gelesen am 09.09.)
+
+> **Gemessen (HomeStation, `auf-20260909-92`):** 12 von 12 erzeugten Bildern bestehen die
+> Geometrie-Schwelle 0,65, Scores 0,8965–0,9884. **Und dieselben zwölf bestehen sie auch
+> gegen die falsche Soll-Karte** (0,8279–0,8763). Bei ControlNet-Stärke 0,30, wo ρ über der
+> Bauwerksmaske bei null liegt, bestehen immer noch 11 von 12.
+> **Entschieden ist damit nichts, und das ist der Punkt:** Das Prüfverfahren ist an dieser
+> Stelle **schwächer als das Erzeugungsverfahren**. Die Schwelle trägt bei 56 %
+> Geometrieanteil zu grossen Teilen den Boden-Himmel-Aufbau, den jedes Architekturbild auf
+> Augenhöhe hat.
+> **Offen:** Die Schwelle für `rho_maske`. Sie ist der einzige Wert, der die Vertauschprobe
+> trennt — und sie müsste **kalibriert** werden, nicht gesetzt.
+
+- [x] **Die Kernfrage ist beantwortet.** Sie lautete: *Gibt es ein erzeugtes Bild, das die
+      Schwelle besteht?* Antwort: zwölf. Bestes `B0` mit 0,9884.
+- [x] **Beide unserer Verdachte sind widerlegt, einer in die Gegenrichtung.** Der
+      Bauteil-Prompt wirkt auf den Score mit **−0,0007** (zwei Grössenordnungen unter der
+      Startwertstreuung), und die offene Schachtel schneidet **besser** ab als das
+      geschlossene Gebäude. *Aus 1,70 m Augenhöhe ist eine 3,0 m hohe offene Schachtel gar
+      nicht als offen zu sehen* — der Verdacht konnte an dieser Kamera nie wirken.
+- [x] **Der Fehlschlag vom 18.08.2026 (0,359) ist erklärt, und nicht durch uns.**
+      `QwenImageEditPlusPipeline` hat **gar keinen ControlNet-Eingang**; die Tiefenkarte
+      wurde als `image` übergeben und ersetzte den Beauty-Pass. Das war Bildbearbeitung,
+      keine Tiefenführung. Der Abstand 0,359 → 0,98 gehört dem **Konditionierungsweg** und
+      stand in keinem unserer Verdachte.
+- [ ] **`rho_maske` braucht eine kalibrierte Schwelle.** Er trennt die Vertauschprobe
+      (richtig 0,798 im Mittel gegen falsch 0,349), zeigt den Geometrieunterschied
+      (−0,338 gegen −0,038 beim Score) und bricht bei Stärke 0,30 auf null zusammen,
+      während der Score elfmal besteht. **Er hat heute keine Schwelle** — und die aus
+      diesen zwölf Läufen abzulesen wäre genau die Kalibrierung am eigenen Ergebnis, gegen
+      die dieses Projekt am 18.08. angetreten ist. *Adressat: `local`.*
+- [ ] **Zwei Riegel mit entgegengesetztem Fehler am selben Bild.** Das `paarurteil` weist
+      **34 von 36** Läufen zurück, auch solche mit `rho_maske` 0,985: Sein zweites Bein
+      verlangt an der Maskengrenze eine Kante von 0,05, gemessen wurden über alle 36 Läufe
+      **−0,0045 bis +0,0194**. Bauwerk matt und grau, Himmel matt und grau — der monokulare
+      Schätzer legt dort keinen Tiefensprung an. Ein Verfahren, das aus beiden ein Urteil
+      bildet, gibt es heute nicht, und `homeworker._render_und_qa` schreibt nur den Score
+      ins Urteil. *Das Paarurteil steht im Ergebnis und entscheidet nichts.*
+- [ ] **`--hochbau --gelaende` erzeugt eine unmessbare Szene** — Mangel in unserem eigenen
+      Erzeuger. Die Platte rechnet mit `max(LAENGE_X, BREITE_Y)`, den Konstanten des
+      **Quaders**; der Hochbau ist 12 × 8 × 15 m, die Kamera steht bei 36,5 m neben der
+      Platte. Gemessen: 80,8 % Hintergrund, `n_gemeinsam` 0, `score = None` **auch für das
+      perfekte Blender-Bild**. Mit `--gelaende-vielfaches=8.0` liegt der Geometrieanteil
+      bei 0,5616 gegen 0,5569 der Schachtelszene — dann sind die Fälle vergleichbar.
+- [ ] **`z-image-turbo` führt `vram_gb = 23.4`, gemessen sind 25,1 GiB** (25 671 MiB Spitze
+      über drei Läufe, +9,7 %). Die Zahl im Register ist zu klein. *Sie wird nicht still
+      überschrieben — die 23,4 sind unter einer anderen Bedingung gemessen worden.*
+- [ ] **Unsere Startwertstreuung 0,2269 gilt für ihre Bedingung, nicht für diese.** Die
+      grösste Spanne innerhalb eines Falls misst die HomeStation mit **0,0820** — die
+      0,2269 stammen aus einem Lauf **ohne** Tiefen-ControlNet. *Beweis 28 bleibt richtig
+      und bekommt seine Bedingung dazugeschrieben.*
 
 ---
 
