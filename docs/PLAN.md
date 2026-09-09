@@ -5094,9 +5094,14 @@ Bekannt und ausdrücklich nicht erledigt:
       **Stand am Ende des Abends: 16 von 35 offen statt 23.** Sieben Posten geschlossen,
       **kein einziger durch neuen Code** — alle sieben lagen fertig da und waren nur nie
       nachgetragen worden.
-- [ ] **Die restlichen 14 Posten einzeln gegen ihre Antwort halten.** `C8` und `C10` zuerst:
-      Ihre Bestätigung steht in `auf-57` **nicht** klar drin und wurde darum nicht auf
-      Verdacht geschlossen. Jeder braucht: Antwort gelesen,
+- [x] **`C8` und `C10` nachgesehen — und der Beleg war nie einer.** Beide nannten `auf-57`
+      als Bestätigung. Der Lauf enthielt den Fall **nicht**: `score` war `null`, also gab es
+      keinen Widerspruch, also erschien die Zeile nicht. *Ein Fall, der nicht eintritt,
+      bestätigt keine Anzeige.* Neu beauftragt an einem Fall, der ihn enthält
+      (`auf-20260909-100`) — die zwölf Bilder aus `auf-92` liefern ihn bei Führungsstärke
+      0,30 in Reinform, und der Auftrag verlangt **keinen neuen Render**.
+- [ ] **Die restlichen 13 Posten einzeln gegen ihre Antwort halten.** *Adressat: `kern`.*
+      Die Liste druckt `python tools/einbau.py` bei jedem Lauf. Jeder braucht: Antwort gelesen,
       Zustand nachgezogen oder begründet belassen, Beleg mit Datum. *Adressat: `kern`.*
       Nicht in derselben Sitzung erledigt, und der Grund gehört dazu: Zehn Urteile in
       einer halben Stunde wären genau die Erfolgsmeldung ohne Beleg, gegen die die fünfte

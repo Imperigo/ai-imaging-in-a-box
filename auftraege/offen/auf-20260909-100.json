@@ -1,0 +1,35 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260909-100",
+  "art": "qa",
+  "worker": "local",
+  "rang": 6,
+  "erstellt": "2026-09-09T19:25:00Z",
+  "params": {},
+  "beschreibung": "Zwei Einbau-Posten (C8, C10) warten auf eine Zeile aus einem Lauf, den ihr schon habt: den Widerspruch zwischen Score und Maskenweg. auf-92 liefert den Fall in Reinform. Kein neuer Render, keine GPU.",
+  "anweisung": "=== ZWEI ZEILEN AUS EINEM LAUF, DEN IHR SCHON HABT ===\n\nWORUM ES GEHT — UND WARUM DAS KEIN NEUER LAUF IST\n\nIm Einbau-Stand stehen zwei Posten seit dem 27./28.08.2026 auf «gebaut, am Geraet\nunbestaetigt». Beide haengen an auf-20260826-57, und beide sind dort NICHT\nbestaetigt worden — nicht, weil etwas fehlgeschlagen waere, sondern weil der\nLauf den Fall gar nicht enthielt:\n\n  C8  Der Widerspruch zwischen Score und Maskenweg steht im Befund\n      (abholer.befund_kurz, kosmo_szene)\n\n      Die Zeile erscheint nur, WENN es einen Widerspruch gibt: hoher Score,\n      niedriges rho ueber der Maske. In auf-57 war score = null. Kein\n      Widerspruch, also keine Zeile — und damit kein Beleg.\n\n  C10 `geom_iou` weist aus, wie viel davon der Szene gehoert\n      (geometrie_qa._iou_ohne_boden, tiefenschaetzer.qa_gegen_soll ->\n      `geom_iou_norm`, abholer.befund_kurz)\n\n      In auf-57 stand score auf null; ob `geom_iou_norm` neben dem Score\n      erscheint, ist daraus nicht ablesbar.\n\nWIR HABEN DEN PASSENDEN FALL SCHON — BEI EUCH\n\nauf-20260909-92 hat zwoelf Bilder erzeugt, und die Staerkeprobe (0,30) hat elf davon\nmit rho_maske nahe null durch die Schwelle gelassen. DAS IST DER WIDERSPRUCH in\nReinform: Der Score sagt bestanden, der Maskenweg sagt, das Bauwerk stimmt nicht.\n\n\nWAS ZU TUN IST\n\n  1  Nehmt EINEN der Faelle aus auf-92, bei dem score hoch und rho_maske niedrig ist\n     (die Staerke-030-Laeufe sind dafuer die deutlichsten).\n  2  Lasst darueber `abholer.befund_kurz` laufen — oder zeigt uns den Befund, den\n     euer Lauf ohnehin geschrieben hat.\n  3  Schickt uns den BEFUNDTEXT im Wortlaut, dazu die beiden Zahlen (score und\n     rho_maske) und den Wert von `geom_iou_norm`, falls er dabeisteht.\n\nKein neuer Render. Keine GPU-Stunde. Es geht um Text aus einem Lauf, den ihr habt.\n\n\nWAS NICHT ZU TUN IST\n\n  * Nichts neu rechnen, wenn der Befund schon irgendwo liegt.\n  * Nichts schoenschreiben: Wenn die Zeile NICHT erscheint, ist das die wertvollere\n    Antwort — dann ist der Posten offen und nicht bestaetigt, und wir wissen es.\n  * Keine Bilder mitschicken. Wir brauchen Text und zwei Zahlen.\n\n\nWARUM WIR FRAGEN, STATT ES ZU BEHAUPTEN\n\nSieben Posten des Einbau-Stands sind heute abend geschlossen worden, weil ihre\nBestaetigung seit Tagen in euren Antworten stand und niemand sie nachgetragen hat.\nDiese zwei sind die, bei denen wir es NICHT konnten — und wir haben sie nicht auf\nVerdacht mitgeschlossen.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine neue Geometrie. Die Faelle aus auf-20260909-92 liegen bei euch."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "Kein neuer Render. Text aus einem vorhandenen Lauf genuegt.",
+      "«Die Zeile erscheint nicht» ist die wertvollere Antwort — dann bleibt der Posten offen.",
+      "Keine Kunden-, Buero- oder Projektnamen in der Rueckgabe, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Der Befundtext im Wortlaut zu einem Fall mit hohem score und niedrigem rho_maske.",
+    "V2 Die beiden Zahlen dieses Falls: score und rho_maske.",
+    "V3 Steht `geom_iou_norm` neben dem Score? Wenn ja mit welchem Wert, wenn nein: sagt es.",
+    "V4 Falls die Widerspruchszeile NICHT erscheint: was steht stattdessen da?",
+    "V5 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}
