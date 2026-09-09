@@ -5100,7 +5100,15 @@ Bekannt und ausdrücklich nicht erledigt:
       bestätigt keine Anzeige.* Neu beauftragt an einem Fall, der ihn enthält
       (`auf-20260909-100`) — die zwölf Bilder aus `auf-92` liefern ihn bei Führungsstärke
       0,30 in Reinform, und der Auftrag verlangt **keinen neuen Render**.
-- [ ] **Die restlichen 13 Posten einzeln gegen ihre Antwort halten.** *Adressat: `kern`.*
+- [x] **`A8` und `A10` nachgezogen.** Der UI-Worker hat am 03.09. je Regel einzeln
+      geantwortet, mit Datei und Zeile, gemessen gegen `kosmo-orbit 71b7f325`. `A8` ist
+      **erledigt** — die KosmoVis-Fläche ist dort längst eine eigene Station mit eigenem
+      Node-Graph, und *«das war keine Entscheidung, die dieser Auftrag ausgelöst hat»*.
+      `A10` steht auf **halb**: Regel 1 erledigt, Regel 2 gemischt, Regel 3 teilweise,
+      Regel 4 zweigeteilt — die offenen Hälften laufen als `U1`–`U9` weiter.
+      **Stand am Ende des Abends: 15 von 35 offen statt 23. Acht Posten, kein einziger
+      durch neuen Code.**
+- [ ] **Die restlichen 12 Posten einzeln gegen ihre Antwort halten.** *Adressat: `kern`.*
       Die Liste druckt `python tools/einbau.py` bei jedem Lauf. Jeder braucht: Antwort gelesen,
       Zustand nachgezogen oder begründet belassen, Beleg mit Datum. *Adressat: `kern`.*
       Nicht in derselben Sitzung erledigt, und der Grund gehört dazu: Zehn Urteile in
