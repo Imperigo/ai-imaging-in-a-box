@@ -29,6 +29,17 @@ Zufall ist grösser als jede Einstellung» gilt für die Kette ohne Tiefenführu
 die Kette **mit** Tiefenführung gilt, ist mit drei Startwerten je Fall nicht entschieden —
 neun waren es dort nicht.
 
+Und ein zweiter Vorbehalt, aus derselben Richtung
+-------------------------------------------------
+Die **Kamera** ist eine Einstellung, und sie ist grösser als der Zufall — sobald man
+richtig misst. Gemessen am 24.08.2026 (`auf-20260823-35`, fünf volle Läufe): Roh sind
+Seedstreuung (0,3155) und Kamerastreuung (0,2459) fast gleich gross. **Gegen den
+Rauschboden der jeweiligen Maskenlage gemessen steigt die Kamerastreuung auf 0,5614** —
+mehr als das Anderthalbfache der Seedstreuung.
+
+Der Satz «der Zufall ist grösser als jede Einstellung» gilt also für die Einstellungen,
+die hier verglichen wurden — nicht für die Wahl des Standpunkts.
+
 **Daraus folgen zwei Dinge, und beide sind hier zu sehen:**
 
 1. *Ein Vergleich zweier Einstellungen mit je einem Bild misst den Zufall.* Darum verlangt

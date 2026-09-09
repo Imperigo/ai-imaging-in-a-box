@@ -4447,6 +4447,179 @@ jemand einen Fehler sieht»*. Sechs Tests, zwei Mutationsproben.
 
 ---
 
+## Fünf ältere Antworten, nachgetragen — drei waren verarbeitet, ohne es zu zeigen (09.09.2026)
+
+> **Entschieden:** Eine Antwort gilt als gelesen, wenn ihre **Kennung** in `docs/` steht.
+> Das ist absichtlich kein Häkchen, das man setzen kann: Wer eine Kennung in den Plan
+> schreibt, hat den Befund aufgeschrieben.
+> **Gemessen:** `einbau.unverarbeitete_antworten` meldete bei der Einführung fünf
+> Antworten. Nachgesehen: **drei waren sachlich längst verarbeitet, nur ohne ihre
+> Kennung**; zwei standen wirklich offen. Der Zähler ist damit ein Anlass nachzusehen und
+> kein Vorwurf — die drei vom 08.09., die wirklich ungelesen waren, hätte er am ersten Tag
+> gemeldet.
+> **Offen:** Ein Owner-Go zur Installation von `inkscape` — ohne es bleibt eine Lücke im
+> Darstellungsvertrag ungemessen.
+
+- [x] **`auf-20260818-04` — zurückgezogen.** *«Seine eigene Selbstdiagnose hat geliefert,
+      wofür sie gebaut war, und den Bruch woanders verortet — der Auftrag hat sich damit
+      selbst überholt.»* Nichts zu verarbeiten.
+- [x] **`auf-20260823-35` — Kamerastreuung gegen Seedstreuung, längst eingearbeitet.** Roh
+      sind beide fast gleich gross (Seed 0,3155, Kamera 0,2459); **gegen den Rauschboden
+      der jeweiligen Maskenlage gemessen steigt die Kamerastreuung auf 0,5614** und ist
+      dann mehr als das Anderthalbfache der Seedstreuung. Die Zahlen stehen in `PLAN.md`
+      und in `varianten.py` — nur die Kennung fehlte.
+      **Und das ist ein Vorbehalt zu Beweis 28:** Dort heisst es, der Zufall sei grösser
+      als jede Einstellung. Die **Kamera** ist eine Einstellung, und gegen den Rauschboden
+      gemessen ist sie grösser als der Zufall. Beweis 28 sagt es jetzt dazu.
+- [x] **`auf-20260826-54` — der CPU-Befund, seit dem 06.09. im Code.** Der Runner setzte
+      `szene.cycles.device = "CPU"` mit dem Kommentar «in dieser Umgebung gibt es keine
+      GPU» — *ein Satz über die Umgebung, wahr nur im Entwicklungscontainer.* Auf der
+      HomeStation steht eine RTX 5090. Heute steht dort der gemessene Grund: OptiX ist bei
+      8–128 Samples auf 512 px in allen drei Konfigurationen **10–35 % langsamer**, und
+      die Ergebnisse sind **nicht gleich** (Kantenpixel der Material-ID-Maske weichen ab).
+      *Ein Kommentar, der eine falsche Tatsache behauptet, lädt zu genau der Änderung ein,
+      die er verhindern sollte.*
+      Aus derselben Antwort, ebenfalls im Code: Samples kosten praktisch nichts (4 bis 256
+      Samples bei 800 px: 4,54–4,60 s, Spanne unter 1,5 %), die Auflösung dagegen schon
+      (400/800/1600 px: 2,13/4,54/8,12 s — sublinear zur Pixelzahl).
+- [ ] **`auf-20260828-01` — `inkscape` ist nicht installiert, und es wurde kein Umweg
+      gesucht.** Die Auflage lautete «nichts installieren ohne Owner-Go», das Go wurde
+      nicht eingeholt, und der Auftrag sieht genau diese Antwort ausdrücklich als
+      vollständig vor. *Die Lücke im Darstellungsvertrag bleibt offen — aber sie ist jetzt
+      datiert und begründet statt unbestimmt.* **Ein Owner-Go würde sie in einem Lauf
+      schliessen.** Nebenbefund: Auf dieser Maschine erfüllen **zwei** von fünf Wegen den
+      Vertrag (reportlab, rsvg), nicht vier — `cairosvg` und `typst` melden «nicht
+      gemessen», weil `.venv-mess` fehlt. Kein Widerspruch zur Wolkenmessung, eine andere
+      Maschine.
+- [x] **`auf-20260901-69` — beantwortet und überholt.** Die HomeStation mass am 06.09.,
+      dass `resolve_kosmodraw()` auch dort `False` liefert. Der Befund stimmte, unser
+      Schluss daraus war falsch — das Paket fehlte nicht, es lag im sechsten Repo. Siehe
+      den Abschnitt darüber.
+
+---
+
+## GPL-3 im Nachbarsystem: `kosmodraw` ist gefunden, und wir verlinken es (09.09.2026)
+
+> **Entschieden:** Nichts wird angeschlossen. `$KOSMOPREPARE_KOSMODRAW` bleibt ungesetzt,
+> bis der Owner entschieden hat — die Wahl gehört ihm.
+> **Gemessen:** Das Paket liegt in `Imperigo/KosmoDraw-Privat` (privat, archiviert seit
+> 31.05.2026), Ordner `kosmodraw/`, Fassung 0.13.5. Gesucht wurde in fünf Repositories, es
+> liegt im sechsten. Mit gezeigtem Paket ist `build_native_ifc` erstmals an erzeugter
+> Geometrie gemessen (3 `IfcSlab`, 2 Geschosse, 1 `IfcMapConversion` mit den übergebenen
+> LV95-Werten).
+> **Offen:** Der Owner-Entscheid zwischen drei Wegen — die zwei Funktionen selbst
+> schreiben (sie sind dünne Hüllen um `ifcopenshell.api`), das Paket als eigenständiges
+> Programm aufrufen, oder den Weg stilllegen.
+
+- [ ] **Der Fund ist ausdrücklich ein GPL-Fund, und Regel 1 verlangt genau das.**
+      `KosmoDraw-Privat` steht unter **GPL-3.0-or-later**, und
+      `tools/archicad_ifc_impl.py` (KosmoPrepare) macht `from kosmodraw import ifc_export`
+      — ein Import in den eigenen Prozess, und **ein Import ist ein Link**. Das
+      Owner-Mandat Q29 sagt «kein GPL-Link».
+      **Die Prozessgrenze deckt das nicht.** Sie ist für `ifcopenshell` gebaut (LGPL,
+      dynamische Bindung, zulässig). GPL-Komponenten sind in diesem Kosmos nur als
+      **eigenständig aufgerufenes Programm** zugelassen — so wie Blender und IfcOpenShell
+      aufgerufen werden. Dass der Prozess jenseits einer Grenze läuft, ändert daran nichts.
+      *Der Fund betrifft nicht dieses Repo, sondern KosmoPrepare — gemeldet wird er
+      trotzdem hier, weil Regel 1 kein «bei uns nicht» kennt.* Fragen an die Maschine
+      liegen in `auf-20260909-94`.
+- [ ] **Und die Lehre daraus gehört uns genauso:** «liegt in keinem Repository» ist nie
+      eine Messung, sondern immer nur eine Aussage über die Repos, in die jemand gesehen
+      hat. Dazu eine Namenskollision, die jede Suche in die falsche Richtung schickte —
+      `Imperigo/KosmoDraw` ist das Add-on `kosmo_design` und hat `kosmodraw/` nie
+      enthalten.
+
+---
+
+## Drei Antworten der HomeStation lagen zwei Tage ungelesen — und alle drei kippen etwas (08.09.2026, gelesen am 09.09.)
+
+> **Entschieden:** Keine Schwelle wird nachgezogen. Weder `GRUNDRISSANTEIL_MIN` noch
+> `PAAR_RHO_SCHWELLE`: Beide liessen sich an der Datei bzw. an den Fällen, die sie gerade
+> verfehlt haben, «passend» machen — und das wäre die Kalibrierung am eigenen Ergebnis.
+> Korrigiert wird, was falsch **begründet** war.
+> **Gemessen:** Drei Aufträge (`auf-20260907-81`, `-82`, `-83`), am 08.09. beantwortet,
+> hier am 09.09. gelesen. Der Rückstand hat sie nie gemeldet — er zählt Aufträge **ohne
+> Antwort**, und diese drei hatten eine.
+> **Offen:** Das Korngrössenproblem der Geländeform, das fehlende frontale Fenster der
+> Paarmasse, und die Frage, wie viele veröffentlichte Zahlen sonst noch auf einem
+> Repostand stehen, den es nicht mehr gibt.
+
+- [x] **`auf-82`: Die Formregel greift an der echten Datei nicht** — und der Grund ist
+      nicht der, den wir vermutet haben. Die Schrumpfung bleibt **Bit für Bit** bei 2,32 %.
+      Zwei unabhängige Gründe: Der Riegel `hatte_namen` in `glbbox._zweitmeinung` gibt
+      sofort zurück (die Bedingung im Quelltext ist **zweiteilig** — unter 5 % **und** die
+      Namensregel hat gar nichts gefunden; unser eigener Auftragstext nannte nur die erste
+      Hälfte). Und wichtiger: **auch ohne den Riegel** fände die Form genau einen Knoten,
+      den die Namensregel schon hat — die Rahmung wäre nicht enger, sondern 0,00 % weiter.
+      *Der Riegel hat hier nicht gebremst, er hat geschützt.*
+- [x] **Und die Bezugszahl der ganzen Geländeuntersuchung misst eine Planbeschriftung.**
+      Jeden der zehn Namensknoten einzeln entfernt: neun liefern 0,000 % Schrumpfung, einer
+      liefert die vollen 2,320 % — und das ist `IfcSite_Model_Text:600mm_Arial`,
+      49,75 × 19,75 × 0,15 m, eine **Textbeschriftung**, die am Südrand über das Modell
+      hinausragt. Das eigentliche Gelände (`Toposolid_1`, 95 % der Grundfläche) trägt
+      **0,000 %**, weil es ganz innerhalb der übrigen Szene liegt.
+      **Auch eine perfekte Formregel könnte diese Zahl nicht verbessern.** Die 2,32 % sind
+      seit dem 26.08. die Zahl, an der die ganze Untersuchung hängt — sie misst, wie weit
+      eine Beschriftung hinausragt.
+- [x] **Eine Einheitenverwechslung in unserer eigenen Herleitung, korrigiert.** Der
+      Docstring zu `GRUNDRISSANTEIL_MIN` begründet die 0,25 mit «47 % der Szenenspannweite»
+      — das ist ein Anteil an einer **Länge**; `grundrissanteil` ist ein Anteil an einer
+      **Fläche**. Am selben Knoten: Längenanteil 0,4715, **Flächenanteil 0,2215**, Quadrat
+      des Längenanteils 0,2224. Die Schwelle liegt damit **über** dem Knoten, den sie
+      fangen sollte, und verfehlt ihn um 0,0285. *Korrigiert ist die Begründung, nicht der
+      Wert — eine falsche Herleitung ist schlimmer als keine, weil sie geprüft aussieht.*
+- [ ] **Es ist kein Schwellenproblem, es ist ein Korngrössenproblem.** Die Hüllbox über
+      alle zwanzig Sub-Division-Knoten **zusammen** hat Grundrissanteil 0,918, Flachheit
+      0,037, Tieflage 0,258 — darauf urteilt die Form `gelaende`. Die drei Merkmale sind
+      richtig gewählt; sie treffen die Platte, **sobald sie eine Platte ist**. Der Bestand
+      liefert sie als Familie aus zwanzig Stücken, und `gelaende_knoten` urteilt je Knoten.
+      *Wer das lösen will, muss Knoten zusammenfassen, bevor er sie beurteilt — und das ist
+      eine neue Regel, keine neue Zahl.* **Adressat: `kern`.**
+- [x] **`auf-81`: Unter dem echten Schätzer gibt es frontal kein fehlerfreies Fenster
+      mehr.** 176 Zeilen, echter Schätzer: höchster schlechter Fall **0,9957** liegt über
+      dem niedrigsten guten **0,1426**. Diagonal trennt weiter (0,5906 < t ≤ 0,9468). Die
+      Schwelle 0,80 sperrt **11 statt 5** gute frontale Fälle — auf zwei von acht Ansichten
+      den treuen Blender-Render selbst — **und lässt erstmals 2 schlechte durch**. *Der
+      Satz der Studie vom 01.09. — «kein einziger schlechter Fall kommt durch» — gilt unter
+      Schätzerrauschen nicht mehr.*
+- [x] **Der Mechanismus ist gemessen, nicht vermutet.** Bei `quader-w-versatz_20px` holen
+      1220 von 5635 Maskenpunkten (21,7 %) ihren Wert von **ausserhalb** des Umrisses. In
+      der Soll-Karte steht dort 1220-mal die Hintergrundmarke 1e10 — eine Konstante ohne
+      Rangfolge, über die ρ nicht einmal definiert ist. In der **Schätzung** stehen dort
+      gewöhnliche Werte, die den Maskenbereich überlappen; über diese 1220 Punkte allein
+      korreliert der verrutschte Streifen mit **+0,9873**.
+      *Was die perfekte Karte an einer unendlichen Kante fängt, glättet der Schätzer weg.*
+      Damit hängt der ganze Paartest an einer Eigenschaft der **Soll**-Karte, die die
+      Ist-Karte nicht hat.
+- [ ] **Ein veröffentlichtes Fenster ist auf diesem Repostand nicht mehr reproduzierbar —
+      und schuld ist eine eigene Änderung.** Diagonal gemessen 0,5826 / 0,9223 gegen
+      veröffentlicht 0,5311 / 0,9065. Grund gemessen: Der Geometrieanteil der diagonalen
+      Ansichten ist heute **0,1698 statt 0,1108** (Faktor 1,53 in der Fläche), frontal
+      identisch. Ursache ist die **Untergrenze**, die am 01.09. in `kameras.py` dazukam
+      (`e99caba`) — der Blender-Bericht nennt `kamera.massgebend` bei `sSE` jetzt
+      `untergrenze` statt `breite`. *Eine Kamerakorrektur hat eine veröffentlichte Messung
+      still ungültig gemacht.* **Zu klären: welche anderen Zahlen auf dem Stand vor dem
+      01.09. stehen.** Adressat: `kern`.
+- [x] **Die vierte Testszene ist keine.** `raeume` liefert in **44 von 44** Zeilen exakt
+      dieselben Zahlen wie `quader`; `gelaende` weicht nur in 8 von 44 ab. Gemessen sind
+      drei Szenen, nicht vier — jede Aussage «über vier Szenen» ist eine über drei.
+- [x] **`auf-83`: Der Takt wird nicht installiert, C7 ist geschlossen.** Drei gemessene
+      Gründe: Er käme nicht von der Stelle (zwei Takte auf einer Kopie wählten beide Male
+      denselben Auftrag und endeten beide Male mit `fehler`, und `fehler` zählt als
+      *gerechnet, nicht beantwortet* — also bleibt der Rang, also wählt der nächste Takt
+      dasselbe); 288 Neuschreibungen je Tag bei 5-Minuten-Takt; und *«der Committer war
+      nicht der einzige Grund und nicht der grösste — er war der, den man sehen konnte.»*
+      Im Einbau-Stand auf **entschieden, nicht gebaut**.
+- [x] **Ein Fail-open im eigenen Zählwerk, gefunden am eigenen Ausrutscher.** Beim Umtragen
+      von C7 stand dort eine Ampel, die `einbau.AMPELN` nicht kennt (⬛ statt 🟩). Das
+      Zeichen blieb im Zustandstext stehen, `startswith` traf keinen offenen Zustand — und
+      der Posten **verschwand aus der Zählung**. Der Stand sprang von 22 auf 21, und *das
+      sah aus wie Fortschritt.* `einbau.posten` weist einen unbekannten Zustand jetzt ab;
+      die Mutationsprobe fällt. Für das ganze Blatt gab es diesen Riegel längst — für die
+      einzelne Zeile nicht.
+
+---
+
 ## Zwölf Bilder bestehen die Schwelle — und die Schwelle besteht die Gegenprobe nicht (08.09.2026, gelesen am 09.09.)
 
 > **Entschieden:** Nichts — und genau das ist der Befund. Die Geometrie-Schwelle bleibt
@@ -4694,3 +4867,36 @@ Bekannt und ausdrücklich nicht erledigt:
 - **KosmoVis' Reife nicht nachgeprüft** — alle Angaben stammen aus dessen eigener
   Dokumentation, die sich selbst bei ~60–65 % einordnet und einräumt, dass noch kein
   echtes Projekt durchgerendert war.
+
+---
+
+## Zwei Aufträge der HomeStation an uns sind weiterhin offen (Durchsicht 09.09.2026)
+
+> **Entschieden:** Nichts von beidem wird nebenbei gebaut. Beim einen liegt der Entscheid
+> ausdrücklich woanders (`auf-41`, G3), beim anderen hängt heute nichts daran.
+> **Gemessen:** 16 Aufträge liegen in `auftraege/von-homestation/`. **14 tragen einen
+> Abschlussvermerk** («Erledigt heisst: Der Auftrag verweist auf den Commit, der ihn
+> schliesst» — Hausregel dieses Ordners). Zwei tragen keinen.
+> **Offen:** Genau diese zwei.
+
+- [ ] **`auf-vis-20260821-03` — das Freigabe-Token wird auf Form geprüft, nicht auf
+      Befugnis.** `jobs.ist_gueltiges_token` prüft unverändert nur die Gestalt
+      (`CONFIRMED_RENDER_<nicht leer>`); **einen Speicher ausgegebener Token gibt es
+      nicht**. Der Auftrag sagt selbst: heute folgenlos, *«es wird zum Loch, sobald jemand
+      unsere Auftragsablage an einen Läufer hängt»*. Er ist unbearbeitet, und das passt zu
+      seinem eigenen «nicht dringend» — aber er steht seit dem 21.08. da.
+- [ ] **`auf-vis-20260825-15` — sechs Posten, und Posten 1 ist ein Owner-Einwand.**
+      *«Das sollte gar nicht so weit kommen — die Modelle müssen prüfen, ob die Geometrie
+      richtig ist, **bevor** AI Imaging startet.»* Heute prüft die Kette danach.
+      **Der Stand ist nicht mehr der von damals, und das gehört dazu:** `kamera_huellbox`
+      ist inzwischen bis in den Runner verdrahtet, und der Nutzen ist gemessen
+      (anteil_bauwerk 0,0788 ohne, 0,1730 mit — Faktor 2,2). **Was fehlt, ist die
+      Vorbelegung:** `verarbeiter(kamera_huellbox=None)` rahmt weiterhin nach der Szene —
+      *wer die Box hat, reicht sie; wer nicht, rahmt wie bisher.*
+      **Und der billigste der drei Wege liegt seit dem 01.09. fertig da:**
+      `aiimaging.glbbox` liest die Hüllbox aus dem glTF-Kopf, gemessen **0,08 s** an 4771
+      Meshes und 25 MB, ohne Unterprozess. Der Abholer ruft ihn nicht.
+      *Nicht gebaut wird das hier trotzdem:* Der Entscheid ist bei `auf-41` (G3) geparkt,
+      es wäre eine Verhaltensänderung auf dem git-Weg zur HomeStation, und sie verschöbe
+      die Rahmung **jeder** künftigen Messung. **Das ist ein Owner-Entscheid, kein
+      Aufräumen.**

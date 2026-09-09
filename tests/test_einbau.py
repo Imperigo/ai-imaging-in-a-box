@@ -22,6 +22,7 @@ selbst handeln und beide unbemerkt geblieben wären:
 """
 from __future__ import annotations
 
+import json
 from datetime import date
 from pathlib import Path
 
@@ -185,6 +186,18 @@ def test_der_rueckstand_traegt_keine_pfade(tmp_path):
     assert not [w for w in eintrag.values() if isinstance(w, str) and "/" in w]
 
 
+
+def _mit_docs(tmp_path):
+    """Ein Repo braucht seit dem 09.09.2026 einen Dokumentordner, um zählbar zu sein.
+
+    :func:`einbau.unverarbeitete_antworten` liest dort nach, welche Antwort
+    aufgeschrieben wurde. Fehlt der Ordner, verweigert sie die Auskunft, statt «alles
+    gelesen» zu melden — und :func:`einbau.bericht` reicht das durch.
+    """
+    (tmp_path / "docs").mkdir(exist_ok=True)
+    (tmp_path / "docs" / "PLAN.md").write_text("kein Befund", encoding="utf-8")
+    return tmp_path
+
 def test_der_bericht_ist_erst_bereit_wenn_jeder_posten_einen_adressaten_hat(tmp_path):
     """``bereit`` sagt **nicht**, dass alles eingebaut ist.
 
@@ -192,6 +205,7 @@ def test_der_bericht_ist_erst_bereit_wenn_jeder_posten_einen_adressaten_hat(tmp_
     Der Einbau selbst geschieht drüben, und ihn hier als erledigt zu führen wäre dieselbe
     Verwechslung, gegen die der ganze Auftrag steht.
     """
+    _mit_docs(tmp_path)
     blatt = tmp_path / "stand.md"
     blatt.write_text(BLATT, encoding="utf-8")
     assert einbau.bericht(tmp_path, blatt)["bereit"] is False
@@ -365,7 +379,7 @@ def test_der_bericht_traegt_das_antwortverhalten_je_adressat(tmp_path):
     jemand ist.* Beide Lagen sahen bis zum 01.09.2026 gleich aus."""
     auf.schreibe_auftrag(
         auf.baue_auftrag(auftrag_id="auf-a", art="qa", beschreibung="x",
-                              worker=auf.WORKER_UI), tmp_path)
+                              worker=auf.WORKER_UI), _mit_docs(tmp_path))
     satz = einbau.bericht(tmp_path, BLATT)
     assert satz["antwortverhalten"][auf.WORKER_UI]["n_antworten"] == 0
 
@@ -475,3 +489,70 @@ def _mit_blatt(wurzel):
     ordner = Path(wurzel) / "docs"
     ordner.mkdir(parents=True, exist_ok=True)
     (ordner / "EINBAU_STAND.md").write_text(BLATT, encoding="utf-8")
+
+
+def test_ein_unbekannter_zustand_faellt_auf_statt_als_erledigt_zu_zaehlen():
+    """Gefunden an einem eigenen Ausrutscher, und er war lehrreich.
+
+    Für C7 stand am 09.09.2026 eine Ampel im Blatt, die :data:`einbau.AMPELN` nicht kennt
+    (⬛ statt 🟩). Das Zeichen blieb im Text stehen, der Zustand hiess damit
+    ``"⬛ entschieden, nicht gebaut"``, und die Prüfung auf die offenen Zustände traf
+    nichts. **Der Posten verschwand aus der Zählung — der Stand sprang von 22 auf 21, und
+    das sah aus wie Fortschritt.**
+
+    Ein unlesbares Blatt hatte schon einen Riegel, weil es von aussen wie «nichts offen»
+    aussieht. Eine unlesbare **Zeile** sieht aus wie «dieser eine Posten ist fertig», und
+    das fällt niemandem auf.
+    """
+    blatt = _blatt("| C7 | Der Homeworker hat einen Takt | ⬛ **entschieden, nicht "
+                   "gebaut** | 2026-09-08 | `betrieb/kosmo-worker.service` |")
+    with pytest.raises(einbau.EinbauError) as fehler:
+        einbau.posten(blatt)
+    assert "C7" in str(fehler.value)
+    assert "unbekannter Zustand" in str(fehler.value)
+
+
+def test_die_richtige_ampel_zaehlt_denselben_posten_weiterhin_als_offen():
+    """Die Gegenprobe: Ohne sie prüfte der Test darüber nur, dass irgendetwas fliegt."""
+    blatt = _blatt("| C7 | Der Homeworker hat einen Takt | 🟩 **entschieden, nicht "
+                   "gebaut** | 2026-09-08 | `betrieb/kosmo-worker.service` |")
+    gelesen = einbau.posten(blatt)
+    assert [p["zustand"] for p in gelesen] == ["entschieden, nicht gebaut"]
+    assert [p["offen"] for p in gelesen] == [True]
+
+
+def test_eine_beantwortete_aber_nirgends_aufgeschriebene_antwort_wird_gemeldet(tmp_path):
+    """Der Anlass ist eine Frage des Owners, und die Antwort darauf war *nein*.
+
+    Am 09.09.2026 lagen drei Antworten der HomeStation zwei Tage ungelesen im Repo
+    (`auf-20260907-81`, `-82`, `-83`) — und alle drei kippten etwas. :func:`rueckstand`
+    konnte sie nicht melden: Er zählt Aufträge **ohne** Antwort, und diese hatten eine.
+
+    *Zwischen «beantwortet» und «gelesen» lag kein Zähler.* Diesen füllt die Funktion.
+    """
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "PLAN.md").write_text("Zu auf-20260907-82 steht hier etwas.",
+                                               encoding="utf-8")
+    erg = tmp_path / "auftraege" / "ergebnisse"
+    erg.mkdir(parents=True)
+    for kennung in ("auf-20260907-81", "auf-20260907-82"):
+        (erg / f"{kennung}.json").write_text(
+            json.dumps({"auftrag_id": kennung, "status": "ok",
+                        "beendet": "2026-09-08T13:00:00Z"}), encoding="utf-8")
+
+    offen = einbau.unverarbeitete_antworten(tmp_path)
+    assert [a["kennung"] for a in offen] == ["auf-20260907-81"], (
+        "die im Plan genannte Antwort gilt als gelesen, die andere nicht"
+    )
+
+
+def test_ohne_dokumente_wird_nicht_alles_fuer_gelesen_erklaert(tmp_path):
+    """Fail-closed, und der Grund steht in der Fehlermeldung.
+
+    Fehlt der Dokumentordner, stünde **keine** Kennung irgendwo — die bequeme Lesart
+    wäre dann «alles gelesen», und sie wäre die falsche. Ein leeres Blatt hat in diesem
+    Modul schon einmal wie «nichts offen» ausgesehen.
+    """
+    (tmp_path / "auftraege" / "ergebnisse").mkdir(parents=True)
+    with pytest.raises(einbau.EinbauError):
+        einbau.unverarbeitete_antworten(tmp_path)

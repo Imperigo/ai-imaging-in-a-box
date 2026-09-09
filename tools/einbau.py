@@ -126,6 +126,19 @@ def _zeilen(bericht: dict, nur: str | None) -> list[str]:
         aus.append("      Gezaehlt ueber offen UND ergebnisse, datumsuebergreifend. "
                    "Vier Lanes schreiben hier hinein.")
 
+    # ANTWORTEN, DIE NIEMAND AUFGESCHRIEBEN HAT (09.09.2026). Sie stehen VOR dem
+    # Einbau-Stand, weil eine ungelesene Antwort die teuerste Sorte offener Posten ist:
+    # Sie sieht in jeder Zaehlung erledigt aus.
+    unverarbeitet = bericht.get("unverarbeitet") or []
+    if unverarbeitet and not nur:
+        aus.append("")
+        aus.append(f"BEANTWORTET, ABER NIRGENDS AUFGESCHRIEBEN: {len(unverarbeitet)} "
+                   f"Antwort(en) — keine Kennung davon steht in docs/:")
+        for e in unverarbeitet:
+            aus.append(f"      {e['kennung']:<22} beendet {e['beendet'][:10] or '?'}")
+        aus.append("      Der Rueckstand meldet sie nicht: Er zaehlt Auftraege OHNE "
+                   "Antwort, und diese haben eine.")
+
     unbekannt = bericht.get("unbekannter_status") or []
     if unbekannt:
         aus.append("")

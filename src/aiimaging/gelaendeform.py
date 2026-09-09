@@ -66,6 +66,28 @@ NICHT_ENTSCHEIDBAR = "nicht entscheidbar"
 #: «Bauwerks»-Knoten mit **47 % der Szenenspannweite** — typisch für eine Geländeplatte,
 #: untypisch für ein Bauteil.
 #:
+#: **Die Begründung war eine Einheitenverwechslung, gemessen am 08.09.2026**
+#: (`auf-20260907-82`): Diese 47 % sind ein Anteil an einer **Länge** (der
+#: Szenenspannweite); ``grundrissanteil`` ist ein Anteil an einer **Fläche**
+#: (Grundfläche ÷ Grundfläche, siehe :func:`merkmale`). Am selben Knoten gemessen:
+#: Längenanteil **0,4715**, Flächenanteil **0,2215**, Quadrat des Längenanteils 0,2224.
+#: Die 0,25 liegen damit **über** dem Knoten, den sie fangen sollten — er verfehlt sie um
+#: 0,0285, und der Trichter fällt an genau dieser ersten Schwelle zu.
+#:
+#: **Die Zahl bleibt trotzdem stehen, und das ist eine Entscheidung.** Eine Schwelle, die
+#: an diesem Knoten nachgezogen wird, ist an *dieser einen Datei* geeicht — genau die
+#: Kalibrierung am eigenen Ergebnis, gegen die dieses Projekt seit dem 18.08. antritt.
+#: Korrigiert ist die Begründung, nicht der Wert: *Eine falsche Herleitung ist schlimmer
+#: als keine, weil sie geprüft aussieht.*
+#:
+#: **Und ein Nachziehen träfe ohnehin nicht den Kern** (dieselbe Messung): Die Hüllbox
+#: über alle zwanzig Sub-Division-Knoten **zusammen** hat Grundrissanteil 0,918,
+#: Flachheit 0,037, Tieflage 0,258 — darauf urteilt die Form ``gelaende``. Die drei
+#: Merkmale sind also richtig gewählt; sie treffen die Platte, **sobald sie eine Platte
+#: ist**. Der Bestand liefert sie als Familie aus zwanzig Stücken, und
+#: :func:`gelaende_knoten` urteilt je Knoten. *Kein Schwellenproblem, ein
+#: Korngrössenproblem.*
+#:
 #: *Warum nicht höher:* Ein Gelände muss das Bauwerk nicht umschliessen; ein Vorplatz
 #: reicht. *Warum nicht tiefer:* Eine grosse Bodenplatte des Bauwerks liegt darunter,
 #: und die soll drinbleiben. Die Zahl kommt aus `tools/studie_gelaendeform.py`.

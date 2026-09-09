@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import re
 from datetime import date, datetime, timezone
+import json as _json
 from pathlib import Path
 
 from aiimaging import auftrag as _auftrag
@@ -178,6 +179,24 @@ def posten(blatt) -> list[dict]:
         if len(spalten) < 4:
             continue
         zustand = _ohne_auszeichnung(spalten[1]).lower()
+        # EIN UNBEKANNTER ZUSTAND IST EIN FEHLER UND KEIN «NICHT OFFEN».
+        #
+        # Gefunden am 09.09.2026 an einem eigenen Ausrutscher: Für C7 stand hier eine
+        # Ampel, die `AMPELN` nicht kennt (⬛ statt 🟩). Das Zeichen blieb im Text stehen,
+        # der Zustand hiess damit «⬛ entschieden, nicht gebaut», und `startswith` traf
+        # keinen der offenen Zustände. Der Posten verschwand aus der Zählung — der Stand
+        # sprang von 22 auf 21, und **das sah aus wie Fortschritt.**
+        #
+        # Genau die Lesart, gegen die drei Zeilen weiter unten schon ein Riegel steht: Ein
+        # unlesbares Blatt sähe von aussen aus wie «nichts offen». Eine unlesbare ZEILE
+        # sieht aus wie «dieser eine Posten ist fertig», und das fällt niemandem auf.
+        if not any(zustand.startswith(z) for z in ZUSTAENDE):
+            raise EinbauError(
+                f"Posten {treffer.group(1)}: unbekannter Zustand {zustand!r}. Erlaubt "
+                f"sind {', '.join(ZUSTAENDE)} — und eine Ampel aus {' '.join(AMPELN)}. "
+                f"Ein Zustand, den dieses Modul nicht kennt, zählte sonst als erledigt: "
+                f"Der Posten fiele aus dem Rückstand, ohne dass jemand ihn eingebaut hat."
+            )
         aus.append({
             "kennung": treffer.group(1),
             "posten": _ohne_auszeichnung(spalten[0]),
@@ -232,6 +251,75 @@ def beantwortete_auftraege(repo_wurzel) -> set[str]:
     return {kennung for kennung, zustand
             in _auftrag.zustaende(Path(repo_wurzel)).items()
             if zustand == _auftrag.ZUSTAND_BEANTWORTET}
+
+
+def unverarbeitete_antworten(repo_wurzel, *, docs_ordner: str = "docs") -> list[dict]:
+    """Antworten, die **beantwortet und nirgends aufgeschrieben** sind.
+
+    Der Anlass ist eine Frage des Owners vom 09.09.2026 — *«sind alle Aufgaben vom
+    Homeworker von dir erledigt?»* — und die Antwort war **nein**: Drei Antworten der
+    HomeStation lagen zwei Tage ungelesen, und alle drei kippten etwas
+    (`auf-20260907-81`, `-82`, `-83`).
+
+    **Warum sie durchrutschen konnten, ist der eigentliche Befund.** :func:`rueckstand`
+    zählt Aufträge **ohne** Antwort. Diese drei hatten eine — sie verschwanden damit aus
+    jeder Zählung, **bevor** irgendjemand geprüft hatte, ob die Antwort verarbeitet wurde.
+    *Zwischen «beantwortet» und «gelesen» lag in diesem Repo kein Zähler.*
+
+    Als **gelesen** gilt eine Antwort, wenn ihre Auftragskennung irgendwo unter ``docs/``
+    steht — im Plan, im Sitzungsprotokoll, im Einbau-Stand oder in einem Bericht. Das ist
+    absichtlich **kein Merkmal, das man setzen kann**: Ein Häkchen liesse sich anhaken,
+    ohne die Antwort gelesen zu haben. Wer eine Kennung in den Plan schreibt, hat den
+    Befund aufgeschrieben — und genau daran hängt die Regel des Projekts, dass jede
+    Erfolgsmeldung an etwas hängen muss, das vom Erzähler unabhängig ist.
+
+    **Was diese Zahl NICHT sagt, gemessen bei der Einführung:** Von den fünf Antworten,
+    die sie am 09.09.2026 zuerst meldete, waren **drei sachlich längst verarbeitet** — nur
+    ohne ihre Kennung. Der CPU-Befund aus `auf-20260826-54` steht seit dem 06.09. als
+    gemessener Block im Runner, die Kamerastreuung aus `auf-20260823-35` in `PLAN.md` und
+    in `varianten.py`, und `auf-20260818-04` war zurückgezogen. *Die Funktion misst, ob
+    jemand die Kennung aufgeschrieben hat, nicht ob jemand den Befund verstanden hat.* Sie
+    ist ein Anlass nachzusehen und kein Vorwurf — aber die drei, die am selben Tag
+    wirklich ungelesen waren, hätte sie am ersten Tag gemeldet.
+
+    Args:
+        repo_wurzel: Wurzel des Repos.
+        docs_ordner: Der Ordner, in dem nachgesehen wird. Nur zum Prüfen gedacht.
+
+    Returns:
+        Je Antwort ``{kennung, beendet, datei}``, nach Kennung sortiert.
+
+    Raises:
+        EinbauError: Der Dokumentordner fehlt oder trägt kein einziges Markdown. Ohne
+            ihn sähe **jede** Antwort unverarbeitet aus — die harmlosere Lesart wäre
+            «alles gelesen», und die ist hier die falsche.
+    """
+    wurzel = Path(repo_wurzel)
+    ordner = wurzel / docs_ordner
+    texte = list(ordner.rglob("*.md")) if ordner.is_dir() else []
+    if not texte:
+        raise EinbauError(
+            f"Kein einziges Markdown unter {ordner}. Ohne die Dokumente lässt sich nicht "
+            f"sagen, welche Antwort aufgeschrieben wurde — und jede Antwort sähe "
+            f"unverarbeitet aus."
+        )
+    geschrieben = "\n".join(d.read_text(encoding="utf-8", errors="ignore") for d in texte)
+
+    aus: list[dict] = []
+    for datei in sorted((wurzel / "auftraege" / "ergebnisse").glob("auf-*.json")):
+        try:
+            inhalt = _json.loads(datei.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        kennung = inhalt.get("auftrag_id") if isinstance(inhalt, dict) else None
+        if not kennung or kennung in geschrieben:
+            continue
+        if any(a["kennung"] == kennung for a in aus):
+            continue
+        aus.append({"kennung": kennung,
+                    "beendet": inhalt.get("beendet") or "",
+                    "datei": datei.name})
+    return sorted(aus, key=lambda a: a["kennung"])
 
 
 def ohne_geraetebeweis(blatt, repo_wurzel) -> list[dict]:
@@ -421,6 +509,15 @@ def bericht(repo_wurzel, blatt=None, *, heute: date | None = None) -> dict:
                        for w in (_auftrag.WORKER_LOCAL, _auftrag.WORKER_CLOUD,
                                  _auftrag.WORKER_UI)},
         },
+        # ANTWORTEN, DIE NIEMAND AUFGESCHRIEBEN HAT. Der Owner hat am 09.09.2026
+        # gefragt, ob alle Aufgaben vom Homeworker erledigt seien — und die Antwort war
+        # NEIN: Drei Antworten lagen zwei Tage ungelesen, und alle drei kippten etwas.
+        #
+        # Der Rueckstand konnte sie nicht melden, denn er zaehlt Auftraege OHNE Antwort.
+        # Diese drei hatten eine. *Zwischen «beantwortet» und «gelesen» lag hier kein
+        # Zaehler* — und ein beantworteter Auftrag verschwand damit aus jeder Zaehlung,
+        # bevor jemand die Antwort gelesen hatte.
+        "unverarbeitet": unverarbeitete_antworten(wurzel),
         "ohne_adressat": verwaist,
         "ohne_geraetebeweis": unbelegt,
         "offene_posten": [p for p in alle if p["offen"]],
@@ -431,6 +528,7 @@ def bericht(repo_wurzel, blatt=None, *, heute: date | None = None) -> dict:
 
 __all__ = [
     "AMPELN", "AUFTRAGSKENNUNG", "BELEG_GERAET", "BELEG_REPO", "GERAETEZEICHEN",
+    "unverarbeitete_antworten",
     "MESSZEIT", "OFFENE_ZUSTAENDE", "OHNE_ADRESSAT", "ZEILE", "ZUSTAENDE",
     "EinbauError", "beantwortete_auftraege", "bericht", "ohne_adressat",
     "ohne_geraetebeweis", "posten", "rueckstand",
