@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260910-101",
+  "art": "qa",
+  "worker": "local",
+  "rang": 7,
+  "erstellt": "2026-09-10T05:00:00Z",
+  "params": {},
+  "beschreibung": "A7 am laufenden Cockpit messen: contracts.LANE_FIELDS gegen die live gelieferten Schemata, tote Kanten suchen. Seit auf-58 ist es moeglich — dort wurde es ausdruecklich nur entsperrt, nicht gemessen. Kein Render, keine GPU. Zweiter, getrennter Teil: die Luecke aus eurem eigenen R4-Befund (aiimaging_capabilities fehlt in READ_ONLY_MCP_TOOLS).",
+  "anweisung": "=== A7: DIE FELDNAMEN AM LAUFENDEN COCKPIT MESSEN ===\n\nWORUM ES GEHT\n\nSeit `auf-20260826-58` liefert `/api/mcp/tools` unsere vier Werkzeuge mit vollem\n`input_schema` UND `output_schema` — 282 Werkzeuge insgesamt, 4 davon von\n`aiimaging`, alle vier vollstaendig. Ihr habt das am 06.09.2026 um 19:38:52 am\nlaufenden Backend gemessen.\n\nIhr habt in derselben Antwort aber auch etwas anderes gesagt, und das ist der Anlass\ndieses Auftrags:\n\n    «Diese Sitzung hat das nur ENTSPERRT, aber die eigentliche A7-Messung\n     (contracts.LANE_FIELDS gegen die live gelieferten Schemata, tote Kanten\n     suchen) nicht vollstaendig durchgefuehrt — das ist ein eigener, klar\n     abgegrenzter Folgeschritt.»\n\nGenau dieser Folgeschritt ist hiermit beauftragt. Er stand seit dem 18.08.2026 als\n«halb» im Einbau-Stand, und der Grund dafuer ist seit dem 06.09. weg.\n\n\nWAS GEMESSEN WERDEN SOLL\n\n`src/aiimaging/contracts.py` traegt `LANE_FIELDS` — die Feldnamen, mit denen der\nvorgesehene Vorgaenger in der Kette redet. `src/aiimaging/mcp_schemas.py` traegt\n`pruefe_verdrahtbarkeit`. Beide sagen heute RECHNERISCH, dass es passt. Am laufenden\nCockpit ist das nie nachgesehen worden.\n\n  1  Holt die vier Schemata vom laufenden Endpunkt (`GET /api/mcp/tools`, wie am\n     06.09.).\n\n  2  Haltet sie gegen `contracts.LANE_FIELDS`. Gesucht sind DREI Dinge:\n\n       a) TOTE KANTEN — ein Feld, das wir senden oder erwarten und das im\n          Schema des Gegenuebers gar nicht vorkommt.\n       b) NAMENSABWEICHUNGEN — dasselbe gemeinte Feld unter zwei Namen.\n       c) TYPABWEICHUNGEN — gleicher Name, unvertraeglicher Typ (etwa Zahl\n          gegen Zeichenkette, oder nullbar gegen nicht nullbar).\n\n  3  Sagt uns je Fund, WELCHES Werkzeug und WELCHES Feld.\n\n`aiimaging.mcp_schemas.pruefe_verdrahtbarkeit` macht diesen Vergleich bereits — wenn\nsie euch die Arbeit abnimmt, nehmt sie. Wenn ihr sie fuer ungeeignet haltet, sagt\nwarum; das waere selbst ein Befund.\n\n\nWAS NICHT ZU TUN IST\n\n  * NICHTS am fremden Backend aendern. Lesen, messen, berichten — wie am 06.09.\n  * Keine erneute MCP-Registrierung. Die ist ein anderer Auftrag (`auf-20260826-48`).\n  * Keine Schemata bei uns «passend machen», bevor der Befund da ist. Wenn eine\n    Kante tot ist, wollen wir das zuerst WISSEN.\n\nKeine GPU, kein Render. Das Backend muss laufen.\n\n\nWARUM WIR DAS JETZT SCHICKEN\n\nA7 stand seit 23 Tagen auf «halb», und sein Beleg zeigte auf einen Auftrag, der ihn\nausdruecklich NICHT gemessen hat. Beim Abgleich des Einbau-Stands gegen die\nvorliegenden Antworten ist das aufgefallen — zusammen mit acht Posten, die laengst\nbelegt waren und nur nie nachgetragen wurden.\n\n\n=== ZWEITER, GETRENNTER TEIL: EINE LUECKE AUS EUREM EIGENEN BEFUND ===\n\nDas ist eine ANDERE Sache als oben, und sie steht hier nur, weil sie dieselbe\nSitzung am selben Backend braucht. Wenn ihr nur einen der beiden Teile schafft,\nnehmt den ersten.\n\nIn `auf-20260826-48` (R4) habt ihr gemessen:\n\n    READ_ONLY_MCP_TOOLS enthaelt `aiimaging_check_geometry` und\n    `aiimaging_query_render` (beide seit dem 18.08.2026).\n    `aiimaging_enqueue_render` bleibt bewusst draussen — korrekt, es schreibt\n    eine Auftragsdatei.\n    `aiimaging_capabilities` fehlt in der Liste — «vermutlich ein Versaeumnis,\n    da alle anderen Lanes ihr eigenes _capabilities-Werkzeug dort eintragen».\n\nDazu habt ihr selbst gesagt, es liege «in der eigenen Verantwortung des\nHome-PC-Betriebs, nicht in einer fremden Lane».\n\n  W1  Traegt `aiimaging_capabilities` heute noch kein Eintrag in\n      READ_ONLY_MCP_TOOLS? (Der Befund ist vom 07.09.)\n  W2  Wenn nein: tragt ihn ein, wenn ihr es fuer richtig haltet — es ist eure\n      Liste und euer Backend. `capabilities` liest nur und schreibt nichts.\n  W3  Wenn ihr es NICHT fuer richtig haltet, sagt warum. Wir haben dazu keine\n      Meinung, die eure ueberstimmen wuerde.\n\nWIR AENDERN NICHTS AN EUREM BACKEND. Das ist der Grund, warum das hier als Frage\nsteht und nicht als Anweisung.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie. Es geht um Feldnamen an einer Schnittstelle."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "Nur lesen. Am fremden Backend wird nichts geaendert.",
+      "«Keine tote Kante gefunden» ist eine vollstaendige Antwort — dann ist A7 erledigt.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade, keine Passwoerter in der Rueckgabe."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Tote Kanten: welches Werkzeug, welches Feld, welche Richtung (wir senden / wir erwarten)?",
+    "V2 Namensabweichungen: dasselbe gemeinte Feld unter zwei Namen — Liste mit beiden Namen.",
+    "V3 Typabweichungen: gleicher Name, unvertraeglicher Typ.",
+    "V4 Hat euch `mcp_schemas.pruefe_verdrahtbarkeit` die Arbeit abgenommen? Wenn nein: woran hat es gefehlt?",
+    "V5 Eine Zeile, die wir nicht erfragt haben und wissen sollten.",
+    "W1-W3 Zweiter Teil: Steht `aiimaging_capabilities` inzwischen in READ_ONLY_MCP_TOOLS? Wenn nein — eingetragen oder mit Begruendung nicht?"
+  ]
+}

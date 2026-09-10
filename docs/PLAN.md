@@ -5108,8 +5108,22 @@ Bekannt und ausdrücklich nicht erledigt:
       Regel 4 zweigeteilt — die offenen Hälften laufen als `U1`–`U9` weiter.
       **Stand am Ende des Abends: 15 von 35 offen statt 23. Acht Posten, kein einziger
       durch neuen Code.**
-- [ ] **Die restlichen 12 Posten einzeln gegen ihre Antwort halten.** *Adressat: `kern`.*
-      Die Liste druckt `python tools/einbau.py` bei jedem Lauf. Jeder braucht: Antwort gelesen,
+- [x] **Fünf weitere am 10.09.2026 abgearbeitet — und drei waren längst erledigt.**
+      `C13` (der Empfängerfilter läuft am Gerät: 9 unausführbare Aufträge vorher, 0
+      nachher), `A4` (die Schemata kommen an — 282 Werkzeuge, 4/4 vollständig; die Ursache
+      lag im fremden Backend und ist dort behoben) und `A5` (beide Werkzeuge stehen seit
+      dem **18.08.** in der Liste, **acht Tage vor unserer Bitte** — *«der Auftragsteller
+      hat keine Einsicht in dieses private Backend-Repo»*).
+      **Zwei waren keine Erledigung, sondern eine falsche Buchung:** `A7` verwies auf einen
+      Auftrag, der ausdrücklich sagt, er habe die Messung **nicht** durchgeführt — 23 Tage
+      lang ungelesen; jetzt beauftragt (`auf-20260910-101`). `A6` hatte 15 Tage lang
+      **überhaupt keinen Auftrag beim richtigen Worker**; jetzt bei `cloud`
+      (`auf-20260910-102`).
+      **12 von 35 offen, zu Beginn des Vorabends 23. Elf Posten, kein einziger durch neuen
+      Code an der Kette.**
+- [ ] **Die restlichen 7 Posten einzeln gegen ihre Antwort halten** (`A10`, `A11`, `C15`,
+      `C7`, `C9`, `B5`, `B6`). *Adressat: `kern`.* Die Liste druckt `python tools/einbau.py`
+      bei jedem Lauf. Jeder braucht: Antwort gelesen,
       Zustand nachgezogen oder begründet belassen, Beleg mit Datum. *Adressat: `kern`.*
       Nicht in derselben Sitzung erledigt, und der Grund gehört dazu: Zehn Urteile in
       einer halben Stunde wären genau die Erfolgsmeldung ohne Beleg, gegen die die fünfte

@@ -1,0 +1,35 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260910-102",
+  "art": "frage",
+  "worker": "cloud",
+  "rang": 4,
+  "erstellt": "2026-09-10T05:05:00Z",
+  "params": {},
+  "beschreibung": "17 Rezepte in KosmoOrbit, keines fuer aiimaging. Vorschlag fuer eines in vier Schritten, mit check_geometry als Tor — und der ausdrueckliche Hinweis, dass enqueue_render schreibt und nicht automatisch laufen darf.",
+  "anweisung": "=== DAS REZEPT «AI-IMAGING» — 17 REZEPTE, KEINES FUER UNS ===\n\nAN DEN CLOUD-WORKER AN KOSMOORBIT. Du hast unser Repo nicht; alles Noetige steht\nhier.\n\n\nWORUM ES GEHT\n\nKosmoOrbit kennt Rezepte: vorgefertigte Abfolgen von Schritten, die ein Nutzer\nanstossen kann, statt jeden Knoten von Hand zu setzen. Sie stehen bei euch in\n`src/lib/recipes.ts` (`RECIPE_META`, `RECIPE_STEPS`).\n\nDie HomeStation hat am 07.09.2026 nachgesehen und gemessen:\n\n    17 Rezepte insgesamt, KEINES fuer aiimaging.\n\nDamit ist unsere Lane ueber Rezepte nicht erreichbar. Wer ein geometrietreues Bild\nwill, muss die Werkzeuge einzeln und in der richtigen Reihenfolge aufrufen — und die\nReihenfolge ist der Punkt, denn einer der Schritte ist ein Tor.\n\n\nWAS WIR VORSCHLAGEN — ES IST EIN VORSCHLAG, KEINE VORGABE\n\nVier Schritte, in dieser Reihenfolge:\n\n  1  `aiimaging_capabilities`\n     Liest nur. Liefert, was diese Lane heute kann, mit welcher Schwelle sie\n     urteilt (0,65) und welche VORBEHALTE dazugehoeren (derzeit vier). Ein Rezept,\n     das damit anfaengt, zeigt dem Nutzer die Grenzen, bevor er etwas bestellt.\n\n  2  `aiimaging_check_geometry`  — DAS TOR\n     Bekommt die Huellbox des Modells und entscheidet. Es lehnt ab, was nicht\n     sinnvoll zu rendern ist; ein 30-km-Modell etwa mit `ablehnen_massstab`.\n     Gemessen am 07.09. am laufenden Backend, HTTP 200, korrekt abgelehnt.\n\n     WENN DIESER SCHRITT ABLEHNT, ENDET DAS REZEPT. Das ist seine Aufgabe. Bei\n     euch gibt es dafuer das Muster `render_preflight` — die HomeStation nennt es\n     ausdruecklich als passende Vorlage.\n\n  3  `aiimaging_enqueue_render`\n     Stellt den Auftrag ein. ACHTUNG, und das ist der wichtigste Satz dieses\n     Blattes: Dieses Werkzeug SCHREIBT. Es gehoert NICHT in eine Read-only-Liste,\n     und ein Rezept darf es nicht ohne Zutun eines Menschen ausloesen. Ohne\n     gueltige Freigabe bleibt der Auftrag auf `awaiting_approval` stehen und\n     belegt keine Grafikkarte — genau so ist es gebaut.\n\n  4  `aiimaging_query_render`\n     Liest nur. Holt Bild und QA-Wert, wenn der Lauf durch ist.\n\n\nWAS NICHT ZU TUN IST\n\n  * `aiimaging_enqueue_render` NICHT in READ_ONLY_MCP_TOOLS eintragen. Es schreibt.\n  * Das Rezept NICHT so bauen, dass Schritt 3 automatisch nach Schritt 2 laeuft.\n    Zwischen Tor und Bestellung gehoert ein Mensch.\n  * Nichts an unserem Vertrag aendern, um das Rezept einfacher zu machen. Wenn der\n    Vertrag im Weg steht, sagt es — dann aendern WIR ihn.\n\n\nWARUM WIR JETZT FRAGEN\n\nDer Posten steht seit dem 26.08.2026 im Einbau-Stand und hat 15 Tage lang auf einen\nAuftrag gezeigt, der ihn nicht enthielt. Beim Abgleich am 10.09.2026 ist das\naufgefallen. «Nicht umgesetzt» wussten wir seit dem 07.09. — beauftragt war es nie.\n\nUnd die ehrliche Fassung dazu: Es ist gut moeglich, dass ein Rezept fuer diese Lane\nheute verfrueht ist. Es gibt noch kein erzeugtes Bild, das unsere eigene\nGeometrie-Schwelle unter allen Vorbehalten besteht. Wenn ihr sagt «spaeter», ist das\neine vollstaendige Antwort — wir wollen sie nur schriftlich haben und nicht raten.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie. Es geht um eine Schrittabfolge in eurer Oberflaeche."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "Keine Messung, kein Lauf, keine GPU. Eine Antwort in Worten genuegt.",
+      "«Spaeter» ist eine vollstaendige Antwort — wir wollen sie nur schriftlich.",
+      "Keine Kunden-, Buero- oder Projektnamen in der Rueckgabe, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Wollt ihr ein Rezept fuer diese Lane — jetzt, spaeter, oder gar nicht?",
+    "V2 Falls ja: passt die vorgeschlagene Reihenfolge, oder wuerdet ihr sie anders schneiden?",
+    "V3 Traegt `render_preflight` das Tor-Muster so, wie wir es fuer Schritt 2 brauchen?",
+    "V4 Braucht ihr von unserem Vertrag ein Feld, das es noch nicht gibt?",
+    "V5 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}
