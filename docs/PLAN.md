@@ -5121,9 +5121,21 @@ Bekannt und ausdrücklich nicht erledigt:
       (`auf-20260910-102`).
       **12 von 35 offen, zu Beginn des Vorabends 23. Elf Posten, kein einziger durch neuen
       Code an der Kette.**
-- [ ] **Die restlichen 7 Posten einzeln gegen ihre Antwort halten** (`A10`, `A11`, `C15`,
-      `C7`, `C9`, `B5`, `B6`). *Adressat: `kern`.* Die Liste druckt `python tools/einbau.py`
-      bei jedem Lauf. Jeder braucht: Antwort gelesen,
+- [x] **Vier weitere am 11.09.2026** — und einer davon ist der erste, der **neuen Code**
+      gebraucht hat. `A11` erledigt (der QA-Vorbehalt steht an drei Stellen offen im DOM,
+      wortgleich, und verschwindet ohne `reason`). `C7` und `B6` **verworfen** — beide
+      ausdrücklich abgelehnt, und der neue Zustand war nötig, weil
+      `entschieden, nicht gebaut` zweierlei hiess: *«entschieden ist, WIE»* (offen) und
+      *«entschieden ist, DASS NICHT»* (fertig). `B5` gebaut: wir senden `qa_je_kamera`.
+      **Stand: 9 von 35 offen, am 09.09. abends 23.**
+- [ ] **`B5` bleibt halb, bis der Ort geklärt ist.** Ihr Entscheid sagt nicht, ob
+      `qa_je_kamera` **neben** dem `qa`-Block steht oder **darin**. Wir haben es daneben
+      gelegt — ein Schluss aus ihrem Satz *«der `qa`-Block bleibt byte-identisch»*, denn ein
+      zusätzlicher Schlüssel darin wäre genau das nicht. *Solange die Rückfrage
+      (`auf-20260911-105`) offen ist, steht dort ein Schluss und keine Angabe.*
+- [ ] **Die restlichen Posten einzeln gegen ihre Antwort halten** (`A7`, `A10`, `C9`,
+      `C15` und die vier, die auf eine offene Antwort warten). *Adressat: `kern`.* Die
+      Liste druckt `python tools/einbau.py` bei jedem Lauf. Jeder braucht: Antwort gelesen,
       Zustand nachgezogen oder begründet belassen, Beleg mit Datum. *Adressat: `kern`.*
       Nicht in derselben Sitzung erledigt, und der Grund gehört dazu: Zehn Urteile in
       einer halben Stunde wären genau die Erfolgsmeldung ohne Beleg, gegen die die fünfte

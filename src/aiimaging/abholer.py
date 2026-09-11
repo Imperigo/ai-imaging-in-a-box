@@ -301,6 +301,11 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         # WARUM einzelne Kameras kein Bild bekamen. Ohne diese Durchreichung stuende im
         # Vertragsergebnis nur, DASS nichts gemessen wurde — siehe `_nicht_gerendert_kurz`.
         nicht_gerendert=_nicht_gerendert_kurz(ergebnis.get("kameras")),
+        # QA JE KAMERA. Ihr Vertrag traegt das Feld seit dem 03.09.2026; wir haben es
+        # acht Tage lang nicht gesendet, und der Einbau-Stand fuehrte den Posten
+        # derweil als IHRE Vertragsaenderung. Gebaut heisst nicht angeschlossen —
+        # dieselbe Lehre wie bei `uebersprungen` am 26.08.
+        je_kamera=_qa_je_kamera_eintraege(ergebnis.get("kameras")),
         # Ohne diese Durchreichung stuende im Vertragsergebnis eines ABBESTELLTEN
         # Auftrags «keine QA gelaufen» — ununterscheidbar von einem vergessenen Lauf.
         # Gefunden am 26.08.2026 vom Kettenlauf-Test, nicht von den Bausteintests: Die
@@ -3058,6 +3063,29 @@ def _komposition_vor_dem_render(bericht: dict) -> dict:
         f"NICHT RENDERN: {ueber_dach['grund']} Diese Pruefung braucht KEIN Bild; sie "
         f"stand bis zum 26.08.2026 hinter der Diffusion und hat dort eine fertige "
         f"Bilddatei kommentiert, statt sie zu verhindern (auf-vis-20260826-16)."))
+
+
+def _qa_je_kamera_eintraege(kameras) -> list[dict]:
+    """Aus unseren Kameraurteilen die Eintraege fuer ihr ``qa_je_kamera``.
+
+    **Eine Kamera, die nicht gemessen wurde, traegt nur ihren Namen** — kein
+    Geometrieblock. Das ist Absicht und die dritte Antwort an dieser Stelle: Ein Block
+    mit ``geometry_fidelity: null`` und ``passed: false`` laese sich als
+    *durchgefallen*, und genau der Unterschied ist hier der Punkt. Wer den Namen ohne
+    Block sieht, weiss: diese Ansicht wurde nicht beurteilt.
+    """
+    aus: list[dict] = []
+    for k in kameras or ():
+        if not isinstance(k, dict):
+            continue
+        name = k.get("kamera")
+        if not name:
+            continue
+        satz = {"kamera": str(name)}
+        if k.get("gemessen"):
+            satz["geometrie_urteil"] = k
+        aus.append(satz)
+    return aus
 
 
 def _uebersprungenes_urteil(kuerzel, rahmung: dict) -> dict:

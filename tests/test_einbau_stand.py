@@ -181,7 +181,7 @@ def test_jedes_belegte_symbol_gibt_es_wirklich(kennung, spalten):
 def test_jeder_erledigte_posten_hat_ueberhaupt_einen_beleg(kennung, spalten):
     """Sonst wäre «erledigt» eine Behauptung — und genau daran ist die alte Liste zerfallen."""
     zustand = _zustand(spalten)
-    if not zustand.startswith(("erledigt", "halb", "entschieden")):
+    if not zustand.startswith(("erledigt", "halb", "entschieden", "verworfen")):
         return
     assert _pfade(spalten[-1]) or _symbole(spalten[-1]) or "Sitzung" in spalten[-1], (
         f"{kennung} gilt als {zustand!r} und nennt weder Datei noch Symbol noch Sitzung "

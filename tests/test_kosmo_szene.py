@@ -764,3 +764,84 @@ def test_die_karte_deckt_ab_was_lies_szene_wirklich_liest():
 
     assert ks.unbekannte_felder(voll) == ()
     assert ks.lies_szene(voll)["maengel"] == ()
+
+
+# --------------------------------------------------------------------------------------
+# QA je Kamera — seit dem 03.09.2026 in ihrem Vertrag, bei uns erst seit dem 11.09.
+# --------------------------------------------------------------------------------------
+#
+# Der Posten `B5` stand acht Tage lang als IHRE Vertragsänderung im Einbau-Stand,
+# während er längst unserer war: Ihr Owner-Entscheid vom 03.09. hat `qa_je_kamera`
+# gebaut, wir haben es nicht gesendet.
+
+def _urteil(score=0.71, bestanden=True):
+    return {"score": score, "spearman": 0.8, "geom_iou": 0.6,
+            "bestanden": bestanden, "schwelle": 0.65}
+
+
+def test_ohne_angabe_bleibt_das_ergebnis_wie_es_war():
+    """Das Feld ist **optional** in ihrem Vertrag, und ein leeres Array wäre etwas anderes
+    als keine Auskunft: Es hiesse «je Kamera gemessen, Ergebnis leer»."""
+    e = ks.als_ergebnis("vis-20260911120000-abc123", ["a.png"],
+                        geometrie_urteil=_urteil())
+
+    assert "qa_je_kamera" not in e
+
+
+def test_je_kamera_traegt_denselben_block_wie_der_lauf():
+    """Der Rückruf ist der Punkt: Ein QA-Block je Kamera **bedeutet** dasselbe wie der
+    QA-Block des Laufs — sonst hätten wir zwei Fassungen, die morgen auseinanderlaufen."""
+    urteil = _urteil()
+    ganz = ks.als_ergebnis("vis-20260911120000-abc123", [], geometrie_urteil=urteil)
+    e = ks.als_ergebnis("vis-20260911120000-abc123", ["a.png"], geometrie_urteil=urteil,
+                        je_kamera=[{"kamera": "sSE", "geometrie_urteil": urteil}])
+
+    assert e["qa_je_kamera"][0]["geometry"] == ganz["qa"]["geometry"]
+
+
+def test_das_verdikt_wird_je_kamera_weggelassen():
+    """Es trägt den Gesamtgrund des Laufs. Je Kamera wäre das eine Aussage, die niemand
+    gemessen hat — und sie sähe aus wie eine gemessene."""
+    e = ks.als_ergebnis("vis-20260911120000-abc123", [], geometrie_urteil=_urteil(),
+                        je_kamera=[{"kamera": "sSE", "geometrie_urteil": _urteil()}])
+
+    assert set(e["qa_je_kamera"][0]) == {"kamera", "geometry"}
+
+
+def test_der_qa_block_des_laufs_bleibt_unberuehrt():
+    """Ihr Entscheid sagt wörtlich: *«Der bestehende `qa`-Block bleibt BYTE-IDENTISCH.»*
+
+    Darum steht `qa_je_kamera` **neben** ihm und nicht darin. Das ist ein Schluss aus
+    ihrem Satz und keine Angabe von ihnen — die Rückfrage läuft (`auf-20260911-105`).
+    """
+    urteil = _urteil()
+    ohne = ks.als_ergebnis("vis-20260911120000-abc123", ["a.png"], geometrie_urteil=urteil)
+    mit = ks.als_ergebnis("vis-20260911120000-abc123", ["a.png"], geometrie_urteil=urteil,
+                          je_kamera=[{"kamera": "sSE", "geometrie_urteil": urteil}])
+
+    assert mit["qa"] == ohne["qa"]
+    assert "qa_je_kamera" in mit and "qa_je_kamera" not in mit["qa"]
+
+
+def test_ein_eintrag_ohne_kameranamen_wird_abgewiesen():
+    """`kamera` ist Pflicht je Eintrag — *«sonst wäre nicht erkennbar, welche Ansicht
+    durchfiel»* (ihr Wortlaut)."""
+    with pytest.raises(ks.SzenenError, match="kamera"):
+        ks.als_ergebnis("vis-20260911120000-abc123", [],
+                        je_kamera=[{"geometrie_urteil": _urteil()}])
+
+
+def test_eine_kamera_ohne_urteil_traegt_nur_ihren_namen():
+    """Nicht gemessen ist nicht dasselbe wie durchgefallen — auch je Kamera nicht."""
+    e = ks.als_ergebnis("vis-20260911120000-abc123", [], geometrie_urteil=_urteil(),
+                        je_kamera=[{"kamera": "nNW"}])
+
+    assert e["qa_je_kamera"] == [{"kamera": "nNW"}]
+
+
+def test_nur_vertragsfelder_laesst_qa_je_kamera_stehen():
+    """Es ist ein Vertragsfeld, kein Hinweis — sonst käme es nie an."""
+    e = ks.als_ergebnis("vis-20260911120000-abc123", [], geometrie_urteil=_urteil(),
+                        je_kamera=[{"kamera": "sSE", "geometrie_urteil": _urteil()}])
+
+    assert "qa_je_kamera" in ks.nur_vertragsfelder(e)

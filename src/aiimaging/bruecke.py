@@ -354,7 +354,7 @@ def vermerke_grund(verzeichnis, grund: str) -> dict:
 
 def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
                       geometrie_urteil=None, stil_urteil=None, zeiten=None,
-                      nicht_gerendert=(),
+                      nicht_gerendert=(), je_kamera=None,
                       status: str = STATUS_DONE, uebersprungen: bool = False) -> dict:
     """Das Ergebnis danebenlegen und den Laufzettel fortschreiben — in dieser Reihenfolge.
 
@@ -393,7 +393,7 @@ def schreibe_ergebnis(verzeichnis, bilder, *, job_id: str | None = None,
     ergebnis = kosmo_szene.als_ergebnis(
         kennung, namen, geometrie_urteil=geometrie_urteil,
         stil_urteil=stil_urteil, zeiten=zeiten, uebersprungen=uebersprungen,
-        nicht_gerendert=nicht_gerendert)
+        nicht_gerendert=nicht_gerendert, je_kamera=je_kamera)
 
     # ZUERST das Ergebnis, DANN der Laufzettel — siehe Docstring.
     _schreibe_atomar(ordner / DATEI_ERGEBNIS, kosmo_szene.nur_vertragsfelder(ergebnis))

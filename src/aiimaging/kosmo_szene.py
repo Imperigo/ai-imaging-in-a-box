@@ -826,9 +826,42 @@ def stehengebliebene_felder(szene: dict) -> tuple[dict, ...]:
 # Unser Ergebnis in ihren Vertrag
 # --------------------------------------------------------------------------------------
 
+def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
+    """Je Kamera ein ``{kamera, geometry?, style?}`` — in **ihrer** Form.
+
+    **Gebaut, indem diese Funktion sich selbst aufruft.** Die Umrechnung unserer Urteile
+    in ihre Blöcke steht in :func:`als_ergebnis` und ist über hundert Zeilen lang; sie
+    hier ein zweites Mal zu schreiben hiesse, zwei Fassungen zu haben, die morgen
+    auseinanderlaufen. *Der Rückruf garantiert, dass ein QA-Block je Kamera genau
+    dasselbe bedeutet wie der QA-Block des Laufs.*
+
+    Das ``verdict`` des Rückrufs wird **weggelassen**: Es trägt den Gesamtgrund des Laufs
+    und wäre je Kamera eine Aussage, die niemand gemessen hat.
+    """
+    aus: list[dict] = []
+    for eintrag in je_kamera:
+        if not isinstance(eintrag, dict):
+            raise SzenenError(f"qa_je_kamera-Eintrag ist kein Wörterbuch: {eintrag!r}")
+        name = eintrag.get("kamera")
+        if not name:
+            raise SzenenError(
+                "Ein Eintrag in qa_je_kamera ohne 'kamera'. Ihr Vertrag führt das Feld "
+                "als Pflicht je Eintrag, und aus gutem Grund: Ohne den Namen ist nicht "
+                "erkennbar, welche Ansicht durchfiel.")
+        block = als_ergebnis(job_id, [],
+                             geometrie_urteil=eintrag.get("geometrie_urteil"),
+                             stil_urteil=eintrag.get("stil_urteil"))["qa"]
+        satz = {"kamera": str(name)}
+        for feld in ("geometry", "style"):
+            if feld in block:
+                satz[feld] = block[feld]
+        aus.append(satz)
+    return aus
+
+
 def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None,
                  zeiten=None, uebersprungen: bool = False,
-                 nicht_gerendert=()) -> dict:
+                 nicht_gerendert=(), je_kamera=None) -> dict:
     """Unsere QA → ``kosmovis.render-result/v2``.
 
     **Hier liegt die Entscheidung dieses Moduls.** Der fremde Vertrag trägt für die
@@ -1173,6 +1206,17 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     }
     if zeiten:
         ergebnis["timings"] = dict(zeiten)
+
+    # QA JE KAMERA — seit dem 03.09.2026 in ihrem Vertrag, bei uns bis zum 11.09. nicht
+    # gesendet. Acht Tage lang war der Posten `B5` als IHRE Vertragsänderung geführt,
+    # während er längst unserer war.
+    #
+    # NEBEN dem qa-Block und nicht darin: Ihr Entscheid sagt woertlich, der bestehende
+    # `qa`-Block bleibe BYTE-IDENTISCH — ein Feld darin hinzuzufuegen waere genau das
+    # nicht. Das ist ein SCHLUSS aus ihrem Satz und keine Angabe von ihnen; die Rueckfrage
+    # laeuft (`auf-20260911-105`). Steht es bei ihnen anders, ist es eine Zeile.
+    if je_kamera:
+        ergebnis["qa_je_kamera"] = _qa_je_kamera(job_id, je_kamera)
     return ergebnis
 
 

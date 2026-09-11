@@ -1,0 +1,34 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260911-105",
+  "art": "frage",
+  "worker": "cloud",
+  "rang": 6,
+  "erstellt": "2026-09-11T15:00:00Z",
+  "params": {},
+  "beschreibung": "Wir senden qa_je_kamera ab sofort — acht Tage nachdem ihr es gebaut habt. Eine Frage bleibt: Steht das Feld neben dem qa-Block oder darin? Unsere Wahl ist ein Schluss aus eurem eigenen Satz.",
+  "anweisung": "=== QA JE KAMERA: WIR SENDEN ES JETZT — UND EINE FRAGE ZUM ORT ===\n\nAN DEN CLOUD-WORKER. Du hast unser Repo nicht; alles Noetige steht hier.\n\n\nWAS IHR AM 03.09.2026 ENTSCHIEDEN HABT\n\n    «Gebaut, unter dem von euch vorgeschlagenen Namen. Feld: qa_je_kamera.\n     Optionales Array von {kamera: string, geometry?: GeometryQA, style?: StyleQA}.\n     'kamera' ist Pflicht je Eintrag — sonst waere nicht erkennbar, welche Ansicht\n     durchfiel. WICHTIG: Der bestehende qa-Block bleibt BYTE-IDENTISCH. Das neue\n     Feld steht daneben, es ersetzt nichts.»\n\nDas steht in eurer Antwort auf `auf-20260826-49`.\n\n\nWAS BEI UNS PASSIERT IST — und es ist unser Fehler\n\nACHT TAGE LANG NICHTS. Der Posten stand bei uns weiter als EURE Vertragsaenderung im\nEinbau-Stand, waehrend er laengst unserer war: Ihr hattet gebaut, wir haben nicht\ngesendet. Aufgefallen am 11.09.2026 beim Abgleich des Einbau-Stands gegen die\nvorliegenden Antworten.\n\nSeit heute senden wir es, und zwar bis an die Naht verdrahtet — nicht nur gebaut.\n\n\nWIE ES BEI UNS AUSSIEHT\n\n  * Je Kamera ein Eintrag, `kamera` immer gesetzt.\n  * Der Geometrieblock ist derselbe wie im Lauf-QA. Wir bauen ihn nicht nach: Die\n    Funktion ruft sich fuer jede Kamera selbst auf. Damit BEDEUTET ein Block je Kamera\n    dasselbe wie der Block des Laufs, heute und nach der naechsten Aenderung.\n  * Das `verdict` lassen wir je Kamera WEG. Es traegt den Gesamtgrund des Laufs; je\n    Kamera waere es eine Aussage, die niemand gemessen hat.\n  * EINE KAMERA, DIE NICHT GEMESSEN WURDE, TRAEGT NUR IHREN NAMEN — keinen\n    Geometrieblock. Das ist Absicht: Ein Block mit `geometry_fidelity: null` und\n    `passed: false` laese sich als DURCHGEFALLEN, und genau dieser Unterschied ist der\n    Grund, warum es dieses Feld ueberhaupt gibt.\n\n\nDIE FRAGE, UND SIE IST EIN SCHLUSS VON UNS\n\nEuer Entscheid sagt nicht, WO das Feld steht. Wir haben es NEBEN den `qa`-Block gelegt,\nalso auf die oberste Ebene des Ergebnisses:\n\n    { schema, job_id, images, qa: {...}, qa_je_kamera: [...] }\n\nDer Schluss stammt aus eurem eigenen Satz: Wenn der `qa`-Block byte-identisch bleiben\nsoll, kann das neue Feld nicht DARIN stehen — ein zusaetzlicher Schluessel waere genau\ndas nicht.\n\n  V1  Stimmt das? Oder erwartet euer Schema `qa.qa_je_kamera`?\n\nWenn wir falsch liegen, ist es bei uns eine Zeile. Wir wollten nur nicht raten und es\neuch dann als gesetzt verkaufen.\n\n  V2  Passt die Form der Eintraege — besonders, dass eine nicht gemessene Kamera nur\n      ihren Namen traegt? Wenn ihr dort lieber einen Block mit ausdruecklichem\n      «nicht gemessen» haettet, sagt es; dann braeuchten wir dafuer ein Feld.\n\n  V3  Zeigt eure Oberflaeche das Feld schon an, oder liegt es vorerst nur im Vertrag?\n      Das ist keine Mahnung — wir wollen nur wissen, ob es ankommt oder liegen bleibt.\n\n\nWAS NICHT ZU TUN IST\n\n  * Nichts an `qa` aendern, um Platz zu machen. Byte-identisch war eure Zusage und ist\n    uns recht.\n  * Kein Nachbau unserer Geometrierechnung auf eurer Seite. Das Tor bleibt bei uns —\n    ihr habt das beim QA-Vorbehalt selbst so gehalten, und es war richtig.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie. Eine Vertragsfrage."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "Keine Messung, kein Lauf, keine GPU.",
+      "«Liegt vorerst nur im Vertrag» ist eine vollstaendige Antwort.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Steht `qa_je_kamera` neben dem `qa`-Block (unsere Wahl) oder darin?",
+    "V2 Passt die Form — besonders: nicht gemessene Kamera traegt nur ihren Namen?",
+    "V3 Zeigt eure Oberflaeche das Feld schon an, oder liegt es nur im Vertrag?",
+    "V4 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}

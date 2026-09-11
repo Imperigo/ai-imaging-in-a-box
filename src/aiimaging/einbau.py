@@ -130,14 +130,29 @@ AMPELN = ("🟩", "🟥")
 #: der HomeStation über ``git pull`` ankommt, ist bei uns fertig und drüben ungeprüft.
 #: Weder ``erledigt`` noch ``offen`` trifft das — es ist die dritte Antwort dieses
 #: Projekts, angewandt auf den Einbau.
+#:
+#: ``verworfen`` ist am 11.09.2026 dazugekommen, und der Anlass ist eine **Verwechslung
+#: zweier Sachverhalte unter einem Wort.** ``entschieden, nicht gebaut`` hiess bis dahin
+#: beides:
+#:
+#: * *«Entschieden ist, WIE es gebaut wird — gebaut ist es noch nicht.»* (``A8``: die
+#:   Fläche gehört in die KosmoVis-Station.) Das ist ein offener Posten mit Richtung.
+#: * *«Entschieden ist, dass es NICHT gebaut wird.»* (``C7``: der Takt des Homeworkers,
+#:   vom Gerät mit drei gemessenen Gründen abgelehnt.) Das ist ein **fertiger** Posten.
+#:
+#: Der zweite stand damit für immer im Rückstand — an etwas, das niemand je bauen wird.
+#: *Ein Posten, der nicht mehr zu erledigen ist, gehört nicht in eine Liste dessen, was
+#: noch zu tun ist; er verdeckt sonst, was wirklich aussteht.*
 ZUSTAENDE = ("erledigt", "halb", "entschieden, nicht gebaut", "offen",
-             "gebaut, am gerät unbestätigt")
+             "gebaut, am gerät unbestätigt", "verworfen")
 
 #: Zustände, die als **noch nicht in der Software** gelten. ``halb`` gehört dazu — ein
 #: halb eingebauter Posten ist einer, an dem noch etwas fehlt, und genau die fehlen sonst.
 #: ``gebaut, am gerät unbestätigt`` ebenso: Gebaut ist seit dem Owner-Auftrag vom
 #: 26.08.2026 kein Ergebnis mehr, sondern eine Zwischenstufe.
-OFFENE_ZUSTAENDE = tuple(z for z in ZUSTAENDE if z != "erledigt")
+#: ``verworfen`` zählt wie ``erledigt`` NICHT als offen — aus dem umgekehrten Grund: Dort
+#: ist die Sache in der Software, hier wird sie es nie sein, und beides ist eine Antwort.
+OFFENE_ZUSTAENDE = tuple(z for z in ZUSTAENDE if z not in ("erledigt", "verworfen"))
 
 
 class EinbauError(ValueError):

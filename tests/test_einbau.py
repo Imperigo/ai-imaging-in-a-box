@@ -643,3 +643,41 @@ def test_eine_antwort_ohne_datum_meldet_unbekannt_statt_null(tmp_path):
     (befund,) = einbau.wartet_auf_beantwortetes(tmp_path, blatt, heute=date(2026, 9, 9))
 
     assert befund["seit_tagen"] is None
+
+
+# ── «verworfen» gegen «entschieden, nicht gebaut» (11.09.2026) ────────────────────────
+
+def test_ein_verworfener_posten_zaehlt_nicht_mehr_als_offen(tmp_path):
+    """Der Anlass ist eine Verwechslung zweier Sachverhalte unter einem Wort.
+
+    `entschieden, nicht gebaut` hiess beides: *«entschieden ist, WIE»* — ein offener
+    Posten mit Richtung — und *«entschieden ist, DASS NICHT»* — ein fertiger. Der zweite
+    stand damit für immer im Rückstand, an etwas, das niemand je bauen wird.
+    """
+    blatt = _tafel(tmp_path, [
+        "| C7 | Ein Takt | 🟩 **verworfen** | 2026-09-11 | **Vom Gerät abgelehnt** mit "
+        "drei gemessenen Gründen, `tools/homeworker.py` |"])
+
+    (p,) = einbau.posten(blatt)
+
+    assert p["zustand"] == "verworfen"
+    assert p["offen"] is False
+
+
+def test_entschieden_nicht_gebaut_bleibt_offen(tmp_path):
+    """Die Gegenprobe — ohne sie hätte die Umstellung beide Zustände stillgelegt."""
+    blatt = _tafel(tmp_path, [
+        "| A8 | Ein Ort dafür | 🟩 **entschieden, nicht gebaut** | 2026-08-26 | "
+        "Entwurf in `docs/EINBAU_STAND.md` |"])
+
+    (p,) = einbau.posten(blatt)
+
+    assert p["offen"] is True, "«entschieden, WIE» ist noch nicht eingebaut"
+
+
+def test_verworfen_steht_im_vertrag_der_zustaende():
+    """Ein Zustand, den das Blatt benutzt und das Modul nicht kennt, fliegt sonst als
+    «unbekannter Zustand» — und das ist genau der Wächter von gestern."""
+    assert "verworfen" in einbau.ZUSTAENDE
+    assert "verworfen" not in einbau.OFFENE_ZUSTAENDE
+    assert "erledigt" not in einbau.OFFENE_ZUSTAENDE

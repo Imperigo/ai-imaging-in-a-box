@@ -1544,3 +1544,42 @@ def test_das_werkzeug_schreibt_die_startwerte_nicht_ab():
     quelle = pfad.read_text(encoding="utf-8")
     assert "VORGABE_SEEDS" in quelle
     assert 'default="0"' not in quelle, "die alte, abgeschriebene Voreinstellung"
+
+
+# ── QA je Kamera: die Naht (11.09.2026) ──────────────────────────────────────────────
+#
+# Gebaut ist nicht angeschlossen. Dieselbe Lehre wie am 26.08.2026 bei `uebersprungen`:
+# Die vierte Lage war gebaut, geprüft — und an der Naht nicht verdrahtet.
+
+def test_eine_gemessene_kamera_traegt_ihren_geometrieblock():
+    eintraege = abholer._qa_je_kamera_eintraege([
+        {"kamera": "sSE", "gemessen": True, "score": 0.71, "bestanden": True}])
+
+    assert eintraege == [{"kamera": "sSE",
+                          "geometrie_urteil": {"kamera": "sSE", "gemessen": True,
+                                               "score": 0.71, "bestanden": True}}]
+
+
+def test_eine_nicht_gemessene_kamera_traegt_nur_ihren_namen():
+    """Die dritte Antwort an dieser Stelle.
+
+    Ein Block mit `geometry_fidelity: null` und `passed: false` läse sich als
+    **durchgefallen** — und genau dieser Unterschied ist hier der Punkt.
+    """
+    eintraege = abholer._qa_je_kamera_eintraege([
+        {"kamera": "nNW", "gemessen": False, "score": None, "bestanden": None}])
+
+    assert eintraege == [{"kamera": "nNW"}]
+
+
+def test_ein_urteil_ohne_kameranamen_wird_uebergangen():
+    """Ein Eintrag ohne Namen wäre in ihrem Vertrag ungültig — und hier ist Weglassen
+    richtig, nicht Abbrechen: Ein kaputtes Urteil darf die anderen nicht mitnehmen."""
+    assert abholer._qa_je_kamera_eintraege(
+        [{"gemessen": True, "score": 0.4}, {"kamera": "s", "gemessen": True}]) == [
+        {"kamera": "s", "geometrie_urteil": {"kamera": "s", "gemessen": True}}]
+
+
+def test_ohne_kameras_entsteht_kein_feld():
+    assert abholer._qa_je_kamera_eintraege(None) == []
+    assert abholer._qa_je_kamera_eintraege(()) == []
