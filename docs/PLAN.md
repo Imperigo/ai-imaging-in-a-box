@@ -5179,12 +5179,37 @@ Bekannt und ausdrücklich nicht erledigt:
       als nicht-kommerziell und bittet um eine Prüfung. **Hält:** `flux-krea` ist bei uns
       nur ein *erkannter, ausdrücklich ausgeschlossener* fremder Name — eine Bestellung
       darauf ergibt einen Mangel und fällt **nicht** auf die Vorgabe zurück.
-- [ ] **Für das Tiefenbild müssen Glasmaterialien undurchsichtig gestellt werden.**
-      Ihr Befund, bei uns nachgesehen: Im Runner kein `blend_method`, kein Umschalten von
-      Glas. An synthetischer Geometrie fällt das nie auf; an einem echten Modell misst der
-      Strahl die Landschaft **hinter** dem Fenster, und die Konditionierung baut dann
-      einen Raum ohne Fensterebene. *Adressat: `kern`, zu messen aber nur an einem echten
-      Modell — also ein Auftrag an `local`, sobald die Richtung klar ist.*
+- [ ] **Für das Tiefenbild müssen Glasmaterialien undurchsichtig gestellt werden — und
+      es sind DREI verschiedene Griffe, nicht einer.** Am Nachmittag des 11.09.2026 hat die
+      HomeStation den Befund geschärft, und die Schärfung ist die eigentliche Nachricht:
+      Ihr erster Griff (alles mit `Transmission > 0` undurchsichtig) traf **15** Materialien
+      — *«allesamt Blüten, Laub und das Weinglas»* —, und **das Rauschen blieb stehen.**
+      Das Fensterglas arbeitet gar nicht über Durchlass, sondern über **Alpha** (0,12–0,49).
+      Die eigentliche Quelle war eine dritte: **121 Materialien auf `HASHED`**, gestreute
+      Alpha-Mischung, die je Strahl würfelt.
+      **Durchlass → 0; Alpha fest → 1; Alpha verknüpft bleibt, aber `CLIP` statt `HASHED`**
+      — ein Gitter oder ein Farn hat einen echten Umriss, den man nicht zuschmieren darf,
+      nur das Würfeln muss weg. Gemessen, Nachbarabweichung im Fensterband: **0,10482 gegen
+      0,00091, Faktor 115.**
+      Bei uns tut der Läufer davon **nichts** (null Treffer für `glas|glass|transmission`).
+      *Adressat: `kern`.* **Gebaut wird es erst, wenn es eine Probe gibt, die wir selbst
+      erzeugen können** — beauftragt in `auf-20260911-106`. Ein Riegel dieses Projekts darf
+      nicht an einer Datei hängen, die wir nie sehen dürfen.
+- [x] **Regel 3 gegen ein Angebot gehalten, und sie hat gehalten.** Die HomeStation bot die
+      Ebenen ihres Renderprojekts an: 121 MB, darunter der Tiefenanker samt Wertebereich —
+      genau das, was uns fehlt. **Nicht geholt, und sie dürfen nicht in dieses Repo:** Es
+      sind Renders aus einem **laufenden Wettbewerbsprojekt**, und dieses Repo ist
+      öffentlich. Ihr eigener Satz sagte es von der anderen Seite: *«bitte nicht
+      weiterreichen».* Die Stelle, an der eine Regel etwas kostet, ist die, an der sie gilt.
+- [ ] **Die Lücken-Trennung statt eines festen Perzentils.** Aus demselben Nachtrag, und
+      für unsere Tiefenkarten brauchbar: Ein festes Perzentil kann die Ferne nie sauber
+      abtrennen — bei ihnen nahm die Fernsichtebene 1,13 % der Fläche ein, also mehr als
+      das eine Prozent, das ein 99er-Perzentil wegschneidet. *«Wie viel Himmel im Bild
+      steht, weiss nur das Bild.»* Der Weg: den grössten **Verhältnis**-Sprung der
+      sortierten Verteilung suchen, und **zweimal** — zwischen Fernsicht und Innenraum
+      stehen noch Nachbarhäuser. Gemessen: Obergrenze 145,5 m → Innenraum nutzt 5,7 % des
+      Wertebereichs, Obergrenze 9,4 m → 100 %. *Adressat: `kern`; betrifft
+      `aiimaging.bildlesen` und die Normierung der Soll-Karte.*
 - [ ] **Laufzeit und Platz gehören in den Vertrag.** 775,5 s gegen unsere Planungszahl von
       rund 18 s ist Faktor 40; ein Ebenensatz misst 467 MB, neun davon 3,3 GB. Unser
       Auftragswesen kennt weder Laufzeitklasse noch Platzangabe. *Adressat: `cloud`

@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260911-106",
+  "art": "frage",
+  "worker": "local",
+  "rang": 9,
+  "erstellt": "2026-09-11T16:00:00Z",
+  "params": {},
+  "beschreibung": "Die 121 MB aus dem Wettbewerbsprojekt holen wir NICHT — Regel 3, und unser Repo ist oeffentlich. Was wir brauchen: die acht synthetischen Bilder aus auf-96, und euren Glas-Dreigriff an einer Probe, die wir selbst erzeugen duerfen.",
+  "anweisung": "=== DIE EBENEN KOENNEN NICHT ZU UNS — UND WAS WIR STATTDESSEN BRAUCHEN ===\n\nZUERST DAS WICHTIGE, UND ES IST EIN NEIN\n\nDanke fuer den Link mit den 121 MB. WIR HOLEN SIE NICHT, und sie duerfen auch nicht in\nunser Repo.\n\nRegel 3 dieses Projekts, woertlich: «Keine Buerodaten, keine Kundenprojekte, keine\nIFC/Plaene/Renders aus echten Auftraegen. Auch keine Buero-, Kunden- oder Projektnamen in\nPfaden, Kommentaren oder Testfixtures.»\n\nEuer eigener Satz sagt dasselbe von der anderen Seite: «bitte nicht weiterreichen, es ist\nein laufendes Wettbewerbsprojekt». UNSER REPO IST OEFFENTLICH. Ein Bild daraus waere dort\nnicht nur regelwidrig, es waere ein Schaden fuer den Bauherrn.\n\nDas ist kein Vorwurf — ihr habt die Bilder geschickt, weil wir Tiefenbilder brauchen, und\ndas stimmt ja. Es ist nur die falsche Quelle.\n\n\nWAS WIR WIRKLICH BRAUCHEN — UND ES LIEGT SCHON BEI EUCH\n\n`auf-20260909-96` steht seit dem 09.09. offen: ACHT BEREITS GERECHNETE BILDER aus\n`auf-20260909-92`. Die sind synthetisch — Quader und Hochbau aus `tools/make_test_ifc.py`,\nalso aus unserem eigenen Repo erzeugbar. Kein Bueroprojekt, kein Kundenname, kein Ort.\n\nDIE DUERFEN REISEN. Die Wettbewerbsbilder nicht.\n\nSie sind fuer die Schlusspraesentation des Owners, und dort klafft an vier von dreissig\nFolien ein Platzhalter — genau an der Stelle, an der das erzeugte Bild stehen muesste.\n\n\nUND DAS ZWEITE, DAS UNS MEHR WERT IST ALS DIE BILDER\n\nEuer Glas-Befund ist der schaerfste, den wir heute bekommen haben, und er trifft unseren\nLaeufer direkt. Was ihr gemessen habt:\n\n    Erster Griff (Durchlass > 0 undurchsichtig stellen) — 15 Materialien,\n    allesamt Blueten, Laub, ein Weinglas. DAS RAUSCHEN BLIEB.\n\n    Das Fensterglas dieser Ausfuhr arbeitet gar nicht ueber Durchlass,\n    sondern ueber ALPHA (0.12 bis 0.49).\n\n    Die eigentliche Quelle war eine dritte: 121 Materialien standen auf\n    HASHED — gestreute Alpha-Mischung, die je Strahl wuerfelt.\n\n    Drei Griffe, und der dritte unterscheidet:\n      Durchlass        -> 0\n      Alpha fest       -> 1\n      Alpha VERKNUEPFT -> bleibt, aber CLIP statt HASHED\n      (ein Gitter oder ein Farn hat einen echten Umriss, den man nicht\n       zuschmieren darf; nur das Wuerfeln muss weg)\n\n    Gemessen, mittlere Abweichung zum Nachbarpunkt im Fensterband:\n      vorher 0.10482, nachher 0.00091 — Faktor 115.\n\nUnser `blender_depth_stage.py` tut davon NICHTS. Nachgesehen am 11.09.2026: kein\n`blend_method`, kein Umschalten von Glas, null Treffer fuer `glas|glass|transmission`.\n\nAn unserer synthetischen Geometrie faellt das nie auf — sie hat kein Glas. An einem echten\nModell misst der Strahl die Landschaft HINTER dem Fenster, und die Konditionierung baut\ndann einen Raum ohne Fensterebene.\n\n\nDIE BITTE, UND SIE IST DIE EIGENTLICHE\n\nWir wollen das bauen. Dafuer brauchen wir einen Fall, den wir SELBST erzeugen koennen —\nsonst haengt ein Riegel dieses Projekts an einer Datei, die wir nie sehen duerfen.\n\n  V1  Koennt ihr eine SYNTHETISCHE Probe bauen? Ein Quader mit einer Fensteroeffnung,\n      darin eine Flaeche mit Alpha 0.3 und Mischart HASHED, dahinter in einigem Abstand\n      eine zweite Flaeche. Dann euer Dreigriff, und die Nachbarabweichung im Fensterband\n      vorher gegen nachher — dieselbe Zahl wie oben, nur an einer Geometrie, die in\n      unser Repo darf.\n\n  V2  Falls ihr die Probe lieber bei uns gebaut haettet: sagt die Masse, wir bauen sie\n      in `tools/make_test_ifc.py` und schicken euch die glb.\n\n  V3  Eure drei Griffe als Pseudocode oder als Bloecke aus eurem `render_lauf.py`, so\n      genau, dass wir sie nachbauen koennen. Falls der Quelltext selbst reisen darf,\n      sagt uns seine LIZENZ — die Frage aus `auf-vis-20260911-01/F1` ist noch offen.\n\n  V4  Ist die Unterscheidung «Alpha fest gegen Alpha verknuepft» an Blender 4.2 dieselbe\n      wie an 5.2? Wir fahren beide.\n\n\nWAS NICHT ZU TUN IST\n\n  * Keine weiteren Bilder aus echten Projekten schicken — auch nicht als Ausschnitt,\n    auch nicht verkleinert, auch nicht in einer Antwortdatei.\n  * Nicht auf uns warten, bevor ihr die Ebenen fuer EUER Renderprojekt nutzt. Der Link\n    laeuft am 14.09. ab; bei uns aendert das nichts, weil wir ihn ohnehin nicht holen.\n  * Cryptomatte braucht ihr uns nicht nachzuschicken. Dieselbe Regel, derselbe Grund.\n\n\nNOCH ETWAS, DAS WIR BESTAETIGEN KOENNEN\n\nEure Tiefenkarten-Befunde decken sich mit unseren. Dass Blenders eigene Mehrschicht-EXR\nmit den ueblichen Lesern nicht zu oeffnen ist, steht seit einem frueheren Befund als\nKommentar in unserem Runner; wir schreiben darum den rohen Z-Wert als EINSCHICHTIGE EXR\nund rechnen ausserhalb von Blender um. Euer Weg und unserer sind derselbe, unabhaengig\ngefunden.\n\nUnd die Luecken-Trennung statt eines festen Perzentils nehmen wir als Regel mit. Euer Satz\ndazu trifft genau: «Wie viel Himmel im Bild steht, weiss nur das Bild.»\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python tools/make_test_ifc.py",
+    "hinweis": "Ausdruecklich synthetisch. Eine Probe fuer den Glasbefund muss aus dem Repo erzeugbar sein — sonst haengt ein Riegel an einer Datei, die wir nie sehen duerfen."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "KEINE Bilder aus echten Projekten — auch nicht als Ausschnitt oder verkleinert.",
+      "Die acht Bilder aus auf-96 sind synthetisch und duerfen reisen.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade, kein Ort.",
+      "Die Glasprobe darf klein sein. Es geht um den Mechanismus, nicht um Schoenheit."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Synthetische Glasprobe: Nachbarabweichung im Fensterband vorher gegen nachher.",
+    "V2 Oder: die Masse, dann bauen wir die Geometrie und schicken euch die glb.",
+    "V3 Die drei Griffe so genau, dass wir sie nachbauen koennen — und die Lizenz von render_lauf.py.",
+    "V4 Ist «Alpha fest gegen Alpha verknuepft» an Blender 4.2 dieselbe Unterscheidung wie an 5.2?",
+    "V5 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}
