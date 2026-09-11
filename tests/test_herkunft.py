@@ -47,6 +47,7 @@ from aiimaging import seams
 from aiimaging.contracts import ContractError
 from aiimaging.herkunft import (
     BELEGT,
+    GEMESSEN,
     HERKUENFTE,
     LESEFENSTER_BYTE,
     UNBEKANNT,
@@ -872,9 +873,38 @@ def test_keine_kennung_passt_auf_zwei_eintraege():
 
 
 def test_unbekannte_sicherheit_kommt_in_der_registry_nicht_vor():
-    """Nur die drei benannten Stufen — eine vierte wäre eine Aussage, die niemand auswertet."""
+    """Nur die benannten Stufen — eine weitere wäre eine Aussage, die niemand auswertet.
+
+    **Am 11.09.2026 ist eine vierte dazugekommen, und der Einwand dieses Tests war der
+    Prüfstein dafür:** `GEMESSEN` zählt in `fordere_up_axis` wie `BELEGT` (siehe
+    `SICHER`), wird also ausgewertet. Es steht nur als eigenes Wort da, damit sichtbar
+    bleibt, **worauf** die Sicherheit ruht — auf der Norm oder auf einer Messung. Der Test
+    darunter hält fest, dass das Wort wirklich wirkt.
+    """
     for eintrag in HERKUENFTE:
-        assert eintrag.sicherheit in (BELEGT, VERMUTET, UNBEKANNT), eintrag
+        assert eintrag.sicherheit in (BELEGT, GEMESSEN, VERMUTET, UNBEKANNT), eintrag
+
+
+def test_ein_gemessener_wert_wird_ohne_rueckfrage_verwendet():
+    """Sonst wäre `GEMESSEN` genau die Aussage, die niemand auswertet.
+
+    Zwei unabhängige echte Dateien, die Höhenachse auf drei Nachkommastellen gegen eine
+    unabhängig bekannte Gebäudehöhe geprüft — das als Vermutung zu führen und dann
+    nachzufragen, hiesse, eine Messung wie eine Gewohnheit zu behandeln.
+    """
+    kopf = {"sicherheit": GEMESSEN, "up_axis": "Y_UP", "generator": "KosmoOrbit V1",
+            "format": "glb"}
+
+    assert fordere_up_axis(kopf) == "Y"
+
+
+def test_eine_vermutung_wird_weiterhin_nicht_verwendet():
+    """Die Gegenprobe — ohne sie hätte die vierte Stufe die dritte stillgelegt."""
+    kopf = {"sicherheit": VERMUTET, "up_axis": "Y_UP", "generator": "Blender",
+            "format": "glb"}
+
+    with pytest.raises(HerkunftError, match="Vermutung"):
+        fordere_up_axis(kopf)
 
 
 def test_unbekannte_eintraege_tragen_keine_up_achse():
@@ -929,3 +959,36 @@ def test_modul_kommt_ohne_ifcopenshell_und_ohne_numpy_aus():
 
     for verboten in ("import ifcopenshell", "import numpy", "import bpy", "import trimesh"):
         assert verboten not in quelle, f"{verboten} steht in herkunft.py"
+
+
+# ── KosmoOrbit: der einzige Eintrag, dessen BELEGT aus einer Messung stammt ───────────
+#
+# Er stand bis zum 11.09.2026 gar nicht in der Tabelle. Dass die glb aus KosmoOrbit Y-up
+# ist, war im **Quelltext des Exporters gelesen** worden — und eine Herkunftstabelle ist
+# kein Ort für eine Lesart: Sie sagt einem Betrachter, wie er die Datei zu drehen hat.
+# Steht dort eine Vermutung, dreht er falsch, und niemand sieht es der Zeile an.
+
+def test_kosmoorbit_wird_erkannt_und_ist_belegt():
+    """Gemessen an zwei echten Dateien (`auf-20260902-73`), nicht aus dem Exporter."""
+    gefunden = hk._erkenne("KosmoOrbit V1")
+
+    assert gefunden is not None and gefunden.name == "KosmoOrbit"
+    assert gefunden.up_axis == "Y_UP"
+    assert gefunden.sicherheit == hk.GEMESSEN
+
+
+def test_kosmoorbit_und_kosmovis_werden_nicht_verwechselt():
+    """Zwei Namen mit demselben Anfang, zwei verschiedene Herkünfte — und die eine ist
+    belegt, die andere vermutet. Eine Verwechslung wäre hier eine falsche Drehung."""
+    assert hk._erkenne("KosmoVis").name == "KosmoVis"
+    assert hk._erkenne("KosmoOrbit V1").name == "KosmoOrbit"
+    assert hk._erkenne("KosmoVis").sicherheit == hk.VERMUTET
+
+
+def test_der_beleg_nennt_die_messung_und_nicht_den_quelltext():
+    """Ein `belegt`, das sich auf eine Lektüre beruft, ist ein `vermutet` mit falschem
+    Etikett. Der Wächter ist grob — er verlangt nur, dass das Wort «gemessen» dasteht."""
+    eintrag = hk._erkenne("KosmoOrbit V1")
+
+    assert "GEMESSEN" in eintrag.beleg.upper()
+    assert "auf-20260902-73" in eintrag.beleg

@@ -5133,9 +5133,21 @@ Bekannt und ausdrücklich nicht erledigt:
       gelegt — ein Schluss aus ihrem Satz *«der `qa`-Block bleibt byte-identisch»*, denn ein
       zusätzlicher Schlüssel darin wäre genau das nicht. *Solange die Rückfrage
       (`auf-20260911-105`) offen ist, steht dort ein Schluss und keine Angabe.*
-- [ ] **Die restlichen Posten einzeln gegen ihre Antwort halten** (`A7`, `A10`, `C9`,
-      `C15` und die vier, die auf eine offene Antwort warten). *Adressat: `kern`.* Die
-      Liste druckt `python tools/einbau.py` bei jedem Lauf. Jeder braucht: Antwort gelesen,
+- [x] **`C15` geschlossen — und der eigene Wächter hat sich zu Recht gewehrt.**
+      Die HomeStation hat die Höhenachse von KosmoOrbit an **zwei echten Dateien
+      gemessen**, nicht im Exporter gelesen: nur die drei rohen Achsenspannen, ohne jede
+      Annahme, gegen einen Blender-Bericht derselben Szene gehalten — die Y-Spanne trifft
+      die unabhängig bekannte Gebäudehöhe auf drei Nachkommastellen (30,437 m; zweite
+      Datei 31,068 m). Eingebaut in `herkunft.py`.
+      **Dafür brauchte es eine vierte Sicherheitslage.** `BELEGT` heisst dort «folgt aus
+      der Norm» und ist immer `Z_UP` — ein Test hält das fest. `VERMUTET` wäre eine
+      Untertreibung, `BELEGT` eine Gleichsetzung von Messung und Norm. Neu: `GEMESSEN`,
+      zählt wie `BELEGT` und bleibt als Wort sichtbar. *Eine Sicherheit gehört an ihre
+      Quelle.* Der zweite Wächter — *«eine vierte wäre eine Aussage, die niemand
+      auswertet»* — ist mit zwei Proben beantwortet.
+- [ ] **Die restlichen Posten einzeln gegen ihre Antwort halten** (`A10`, `C9` und die
+      sechs, die auf eine offene Antwort warten). *Adressat: `kern`.* Die Liste druckt
+      `python tools/einbau.py` bei jedem Lauf. Jeder braucht: Antwort gelesen,
       Zustand nachgezogen oder begründet belassen, Beleg mit Datum. *Adressat: `kern`.*
       Nicht in derselben Sitzung erledigt, und der Grund gehört dazu: Zehn Urteile in
       einer halben Stunde wären genau die Erfolgsmeldung ohne Beleg, gegen die die fünfte

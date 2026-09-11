@@ -81,6 +81,25 @@ BELEGT = "belegt"
 VERMUTET = "vermutet"
 UNBEKANNT = "unbekannt"
 
+#: Die vierte Lage, dazugekommen am 11.09.2026: **an echten Dateien gemessen**.
+#:
+#: :data:`BELEGT` heisst in diesem Modul ausdrücklich *«folgt aus dem Format»* — aus der
+#: IFC-Norm, und damit immer ``Z_UP``. Ein Test hält das fest, und er soll es halten.
+#:
+#: Für `KosmoOrbit` gab es aber etwas, das weder eine Norm noch eine Gewohnheit ist: zwei
+#: unabhängige echte Dateien, an denen die Höhenachse **nachgemessen** wurde, jede auf drei
+#: Nachkommastellen gegen eine unabhängig bekannte Gebäudehöhe. Das als ``VERMUTET`` zu
+#: führen wäre eine Untertreibung, als ``BELEGT`` eine Gleichsetzung von Messung und Norm.
+#:
+#: ``GEMESSEN`` zählt darum wie ``BELEGT``, wenn :func:`fordere_up_axis` entscheidet —
+#: aber es steht als eigenes Wort da, damit jeder Leser sieht, **worauf** die Sicherheit
+#: ruht. *Eine Zahl gehört an die Bedingung, unter der sie gemessen wurde; eine Sicherheit
+#: an ihre Quelle.*
+GEMESSEN = "gemessen"
+
+#: Sicherheiten, mit denen :func:`fordere_up_axis` ohne Rückfrage arbeitet.
+SICHER = (BELEGT, GEMESSEN)
+
 #: Wieviel vom Dateianfang gelesen wird, wenn die Datei gross ist.
 #:
 #: Eine echte IFC kann hunderte Megabyte haben; der Kopf und die Einheitenzuweisung stehen
@@ -173,6 +192,28 @@ HERKUENFTE: tuple[Herkunft, ...] = (
         kennungen=("kosmovis",),
         up_axis="Y_UP", sicherheit=VERMUTET,
         beleg="Phase-0-Befund vom 14.08.2026, ebenda. Aus der Dokumentation, nicht gemessen.",
+    ),
+    Herkunft(
+        name="KosmoOrbit",
+        kennungen=("kosmoorbit",),
+        up_axis="Y_UP", sicherheit=GEMESSEN,
+        beleg=("AN ZWEI ECHTEN DATEIEN GEMESSEN, nicht im Exporter gelesen "
+               "(HomeStation, `auf-20260902-73`, 06.09.2026). Beide tragen "
+               "`asset.generator == \'KosmoOrbit V1\'` und stammen aus einer echten "
+               "Browsersitzung der Oberfläche. Aus der glb wurden **nur die drei rohen "
+               "Achsenspannen** gelesen — ohne jede Up-Achsen-Annahme — und gegen einen "
+               "Blender-Bericht **derselben** Szene gehalten, der vorher in eigenem "
+               "Z-up-System entstand: Lauf 17 X 106,229 m, Y 30,437 m, Z 59,260 m gegen "
+               "die unabhängig bekannte Breite, **Höhe** und Tiefe — die Y-Spanne trifft "
+               "die Höhe auf drei Nachkommastellen exakt. Lauf 16 ebenso (31,068 m). "
+               "*Die Übereinstimmung ist die Messung, nicht eine Vermutung über den "
+               "Exporter.*"),
+        bemerkung=("Der einzige Eintrag dieser Tabelle, dessen `BELEGT` **nicht** aus "
+                   "einer Norm stammt, sondern aus zwei unabhängigen Messungen. Er stand "
+                   "bis zum 11.09.2026 gar nicht hier: Dass die glb aus KosmoOrbit Y-up "
+                   "ist, war im Quelltext des Exporters gelesen worden, und *eine "
+                   "Herkunftstabelle ist kein Ort für eine Lesart* — sie sagt einem "
+                   "Betrachter, wie er die Datei zu drehen hat."),
     ),
 )
 
@@ -576,7 +617,10 @@ def fordere_up_axis(kopf: dict, *, angabe=None) -> str:
 
     1. Eine **ausdrückliche Angabe** des Aufrufers hat immer Vorrang — auch vor einem
        belegten Wert. Wer die Datei besser kennt als ihr Kopf, darf das sagen.
-    2. Sonst ein :data:`BELEGT`-Wert. Der stammt aus dem Format selbst (IFC/ISO 16739).
+    2. Sonst ein :data:`BELEGT`-Wert (aus dem Format selbst, IFC/ISO 16739) **oder** ein
+       :data:`GEMESSEN`-Wert (an echten Dateien nachgemessen, mit genanntem Messweg).
+       Beide stehen in :data:`SICHER`. Der Unterschied bleibt im Wort sichtbar, damit ein
+       Leser sieht, worauf die Sicherheit ruht.
     3. Eine :data:`VERMUTET`-Deutung genügt **nicht**. Sie wird in der Fehlermeldung
        genannt, damit der Aufrufer sie bestätigen kann — aber sie wird nicht angenommen.
 
@@ -592,7 +636,7 @@ def fordere_up_axis(kopf: dict, *, angabe=None) -> str:
 
     if angabe is not None:
         return contracts.normalize_up_axis(angabe)
-    if kopf.get("sicherheit") == BELEGT and kopf.get("up_axis"):
+    if kopf.get("sicherheit") in SICHER and kopf.get("up_axis"):
         return contracts.normalize_up_axis(kopf["up_axis"])
 
     vermutung = ""
@@ -686,6 +730,7 @@ def pruefe_einheit_gegen_masse(kopf: dict, bbox) -> dict:
 
 
 __all__ = [
+    "GEMESSEN", "SICHER",
     "BELEGT", "HERKUENFTE", "HerkunftError", "Herkunft", "LESEFENSTER_BYTE",
     "SI_VORSAETZE", "UNBEKANNT", "VERMUTET",
     "FILE_NAME_ERZEUGERFELDER", "FILE_NAME_ORIGINATING_SYSTEM",

@@ -52,6 +52,17 @@ betraf eine geänderte Wartezeit, die nicht ändert, was gerechnet wird. Ein Wer
 nur meldet, was sicher falsch ist, meldet fast nie etwas — und dann heisst sein Schweigen
 nichts mehr.*
 
+**Herkunftstabelle** — Eine Liste, die zu jedem Programm, das eine 3D-Datei erzeugen
+kann, festhält, **wie herum** dessen Dateien stehen — welche Achse nach oben zeigt. *Sie
+ist kein Nachschlagewerk, sondern eine Anweisung: Ein Leser dreht die Datei danach. Steht
+dort eine Vermutung, dreht er falsch, und niemand sieht es der Zeile an.*
+
+**Belegt, gemessen, vermutet, unbekannt** — Die vier Stufen, mit denen dieses Projekt die
+Sicherheit einer solchen Angabe kennzeichnet. *«Belegt» heisst: folgt aus der Norm des
+Dateiformats. «Gemessen» heisst: an echten Dateien nachgeprüft — seit dem 11.09.2026, als
+die Höhenachse von KosmoOrbit an zwei Dateien exakt bestätigt wurde. Die ersten beiden
+werden ohne Rückfrage benutzt, die anderen nie. Eine Sicherheit gehört an ihre Quelle.*
+
 **Stilles Abstreifen (unbekannter Felder)** — Wenn eine Schnittstelle ein Feld, das sie
 nicht kennt, einfach wegwirft, statt sich zu beschweren. *Klingt harmlos und ist es nicht:
 Wer ein Feld setzt und kein Wort hört, hält es für bedient. Bei uns hätte ein
@@ -4557,6 +4568,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-11 | Ergaenzt aus `herkunft.py`: **Herkunftstabelle** und **Belegt, gemessen, vermutet, unbekannt**. Die vierte Stufe entstand, weil eine zweifach exakte Messung weder «Norm» noch «Gewohnheit» ist |
 | 2026-09-11 | Ergaenzt aus dem Befund der HomeStation zum Renderprojekt: **Stilles Abstreifen (unbekannter Felder)**. Der Begriff wurde noetig, weil `lies_szene` erfundene Bestellfelder spurlos verschluckt hat — gemessen, nicht vermutet |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |
 | 2026-09-09 | Ergaenzt aus `messstand` und `beruehrung`: **Codestand (eines Dokuments)**, **Grundlage (eines Dokuments)**, **Beruehrung (einer Messung)**, **Nachgesehen bis**. Der Codestand war am Vortag gebaut und NICHT ins Lexikon eingetragen worden — nachgeholt, gemeinsam mit der zweiten Haelfte derselben Frage |
