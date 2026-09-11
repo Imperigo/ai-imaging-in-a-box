@@ -2232,3 +2232,76 @@ def test_der_score_hat_sich_durch_die_normierung_NICHT_geaendert():
     erwartet = sqrt(max(0.0, ergebnis["spearman"]) * ergebnis["geom_iou"])
     assert ergebnis["score"] == pytest.approx(erwartet), (
         "der Score ruht weiter auf dem ROHEN geom_iou")
+
+
+# ── Wieviel der Maske auf der Hintergrundmarke steht (11.09.2026) ─────────────────────
+#
+# `auf-20260907-81` hat den Mechanismus aufgeklärt, an dem der Paartest frontal
+# zerbricht: 1220 von 5635 Maskenpunkten (21,7 %) holten ihren Wert von **ausserhalb**
+# des Umrisses. In der Soll-Karte steht dort die Hintergrundmarke — eine Konstante ohne
+# Rangfolge —, in der Schätzung stehen gewöhnliche Werte, und über genau diese Punkte
+# korrelierte ein verrutschter Streifen mit +0,9873.
+#
+# Gemessen wird das jetzt. Geändert wird an ρ ausdrücklich **nichts**.
+
+def test_eine_saubere_maske_meldet_nichts():
+    """Ohne diese Zeile prüften die Tests darunter nur, dass irgendetwas warnt."""
+    befund = geometrie_qa.maske_auf_hintergrund([1.0, 2.0, 3.0, 4.0], [True, True, True, True])
+
+    assert befund["n_hintergrund"] == 0
+    assert befund["anteil"] == 0.0
+    assert befund["warnungen"] == []
+
+
+def test_markierte_punkte_in_der_maske_werden_gezaehlt_und_gemeldet():
+    soll = [1.0, 2.0] + [1e10] * 2
+    befund = geometrie_qa.maske_auf_hintergrund(soll, [True] * 4)
+
+    assert befund["n_maske"] == 4 and befund["n_hintergrund"] == 2
+    assert befund["anteil"] == pytest.approx(0.5)
+    assert "Hintergrundmarke" in befund["warnungen"][0]
+
+
+def test_punkte_ausserhalb_der_maske_zaehlen_nicht_mit():
+    """Der Hintergrund **ausserhalb** der Maske ist der Normalfall und kein Befund."""
+    befund = geometrie_qa.maske_auf_hintergrund([1.0, 1e10, 1e10], [True, False, False])
+
+    assert befund["n_maske"] == 1 and befund["n_hintergrund"] == 0
+    assert befund["warnungen"] == []
+
+
+def test_eine_leere_maske_meldet_nicht_gemessen_und_nicht_null():
+    """*Kein Punkt* ist etwas anderes als *kein markierter Punkt*."""
+    befund = geometrie_qa.maske_auf_hintergrund([1.0, 2.0], [False, False])
+
+    assert befund["anteil"] is None
+    assert "NICHT GEMESSEN" in befund["warnungen"][0]
+
+
+def test_unter_der_warnschwelle_wird_gezaehlt_aber_nicht_gewarnt():
+    """Die Zahl steht immer da, die Warnung nur über der Schwelle — sonst wäre sie nach
+    dem dritten Mal keine Warnung mehr."""
+    soll = [1.0] * 99 + [1e10]
+    befund = geometrie_qa.maske_auf_hintergrund(soll, [True] * 100)
+
+    assert befund["n_hintergrund"] == 1 and befund["anteil"] == pytest.approx(0.01)
+    assert befund["warnungen"] == []
+
+
+def test_rho_ueber_maske_bleibt_unveraendert():
+    """**Die Messung greift nicht ein**, und das ist der Entscheid.
+
+    `rho_ueber_maske` rechnet markierte Punkte ausdrücklich mit; eine Schwellenprüfung im
+    Mass wäre wieder die Hintergrundstrategie, an der der Weg über die übliche Kette
+    zerbrochen ist. Wer sie herausnehmen will, tut es in der Maske — dort gehört sie hin.
+    """
+    soll = [1.0, 2.0, 3.0, 1e10]
+    ist = [0.1, 0.2, 0.3, 0.4]
+    maske = [True] * 4
+
+    vorher = geometrie_qa.rho_ueber_maske(soll, ist, maske, polaritaet=geometrie_qa.POLARITAET_TIEFE)
+    geometrie_qa.maske_auf_hintergrund(soll, maske)
+    nachher = geometrie_qa.rho_ueber_maske(soll, ist, maske, polaritaet=geometrie_qa.POLARITAET_TIEFE)
+
+    assert vorher == nachher
+    assert vorher["n_maske"] == 4, "der markierte Punkt wird weiterhin mitgerechnet"

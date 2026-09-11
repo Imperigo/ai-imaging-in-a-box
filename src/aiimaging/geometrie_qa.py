@@ -2209,6 +2209,89 @@ def himmel_hinter_umriss(soll, maske, *, breite: int,
 MAX_DURCHSICHT_ANTEIL = 0.001
 
 
+#: Ab welchem Anteil markierter Maskenpunkte gewarnt wird.
+#:
+#: **Gemessen, nicht gesetzt:** Die HomeStation hat am 08.09.2026 (`auf-20260907-81`) den
+#: Mechanismus aufgeklärt, an dem der Paartest frontal zerbricht — bei
+#: ``quader-w-versatz_20px`` holten **1220 von 5635 Maskenpunkten (21,7 %)** ihren Wert
+#: von ausserhalb des Umrisses. Ein Zehntel ist damit deutlich unter dem beobachteten
+#: Fall und immer noch weit über dem, was eine saubere Maske hat.
+MASKE_HINTERGRUND_WARNSCHWELLE = 0.10
+
+
+def maske_auf_hintergrund(soll, maske, *,
+                          grenze_m: float = HINTERGRUND_SCHWELLE_M,
+                          warnschwelle: float = MASKE_HINTERGRUND_WARNSCHWELLE) -> dict:
+    """Wie viele Maskenpunkte stehen in der **Soll**-Karte auf der Hintergrundmarke?
+
+    **Eine Messung, kein Eingriff.** :func:`rho_ueber_maske` rechnet solche Punkte
+    ausdrücklich mit, und der Grund dort ist gut: Eine Schwellenprüfung *im Mass* wäre
+    wieder die Hintergrundstrategie, an der der Weg über die übliche Kette zerbrochen ist.
+    *Die Maske entscheidet, und wer sie erzeugt, verantwortet sie.* Diese Funktion ändert
+    daran nichts — sie macht nur sichtbar, **wie viel** dort mitgerechnet wird.
+
+    **Warum das sichtbar sein muss** (`auf-20260907-81`, HomeStation, 08.09.2026). Unter
+    dem echten Schätzer trennt der Paartest frontal nicht mehr: Der höchste schlechte Fall
+    liegt mit 0,9957 über dem niedrigsten guten mit 0,1426. Der Mechanismus ist gemessen
+    und liegt genau hier:
+
+    * 1220 von 5635 Maskenpunkten (**21,7 %**) holen ihren Wert von **ausserhalb** des
+      Umrisses.
+    * In der **Soll**-Karte steht dort 1220-mal die Hintergrundmarke — *eine Konstante
+      ohne Rangfolge*, über die ρ nicht einmal definiert ist.
+    * In der **Schätzung** stehen dort gewöhnliche Werte, die den Maskenbereich
+      überlappen; über diese 1220 Punkte allein korreliert der verrutschte Streifen mit
+      **+0,9873**.
+
+    *Was die perfekte Karte an einer unendlichen Kante fängt, glättet der Schätzer weg.*
+
+    Eine hohe Zahl heisst **nicht**, dass die Messung falsch ist — sie heisst, dass ein
+    Teil von ρ aus Punkten stammt, an denen die Referenz gar keine Geometrie trägt. Wer
+    die Zahl kennt, kann das einordnen; wer sie nicht kennt, liest ρ als Aussage über das
+    Bauwerk.
+
+    Returns:
+        ``{n_maske, n_hintergrund, anteil, grenze_m, warnungen}``. ``anteil`` ist ``None``,
+        wenn die Maske leer ist — nicht 0: *Kein Punkt* ist etwas anderes als *kein
+        markierter Punkt*.
+    """
+    if maske is None:
+        raise QaError("maske fehlt (None) — diese Prüfung braucht eine Auswahl.")
+    if len(soll) != len(maske):
+        raise QaError(f"soll ({len(soll)}) und maske ({len(maske)}) sind ungleich lang.")
+
+    grenze = float(grenze_m)
+    n_maske = 0
+    n_hintergrund = 0
+    for wert, drin in zip(soll, maske):
+        if not drin:
+            continue
+        n_maske += 1
+        if float(wert) >= grenze:
+            n_hintergrund += 1
+
+    antwort = {"n_maske": n_maske, "n_hintergrund": n_hintergrund, "anteil": None,
+               "grenze_m": grenze, "warnungen": []}
+    if n_maske == 0:
+        antwort["warnungen"].append(
+            "Leere Maske — kein Punkt zu prüfen. Das heisst NICHT GEMESSEN und nicht "
+            "'keine Hintergrundpunkte'.")
+        return antwort
+
+    anteil = n_hintergrund / n_maske
+    antwort["anteil"] = anteil
+    if anteil >= warnschwelle:
+        antwort["warnungen"].append(
+            f"{n_hintergrund} von {n_maske} Maskenpunkten ({anteil:.1%}) stehen in der "
+            f"SOLL-Karte auf der Hintergrundmarke (≥ {grenze:.3g} m). Dort trägt die "
+            f"Referenz keine Geometrie: eine Konstante ohne Rangfolge. Sie gehen in "
+            f"rho_maske als gewöhnliche Zahlen mit ein — in der SCHAETZUNG stehen an "
+            f"denselben Stellen gewöhnliche Werte, und über genau solche Punkte "
+            f"korrelierte ein verrutschter Streifen am 08.09.2026 mit +0,9873. "
+            f"Die Maske passt nicht zum Umriss dieses Renders.")
+    return antwort
+
+
 def durchsichtiges_soll(soll, maske, *,
                         grenze_m: float = HINTERGRUND_SCHWELLE_M) -> dict:
     """Sieht die **Soll**-Karte durch das eigene Bauwerk hindurch? Ein Riegel, kein Mass.

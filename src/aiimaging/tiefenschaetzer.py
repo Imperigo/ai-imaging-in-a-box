@@ -1139,7 +1139,8 @@ def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
     (`auf-20260821-26`: ein leeres Grundstück erreicht dort 0.9530 und besteht das Tor).
     """
     leer = {"rho_maske": None, "kante": None, "kantenanteil": None,
-            "himmel": None, "paarurteil": None, "soll_durchsichtig": None}
+            "himmel": None, "paarurteil": None, "soll_durchsichtig": None,
+            "maske_auf_hintergrund": None}
     if maske is None or breite is None:
         return leer
 
@@ -1182,8 +1183,17 @@ def _maskenweg(soll: Sequence[float], roh: Sequence[float], maske, breite,
     # weder Bild noch Schaetzung, nur Soll und Maske; sie steht darum hier und nicht
     # hinter der Diffusion.
     durchsichtig = geometrie_qa.durchsichtiges_soll(list(soll), maske)
+    # WIEVIEL VON rho AUS PUNKTEN STAMMT, AN DENEN DIE REFERENZ NICHTS TRAEGT.
+    #
+    # Keine Aenderung an rho — `rho_ueber_maske` rechnet solche Punkte ausdruecklich mit,
+    # und der Grund dort ist gut. Aber die ZAHL gehoert neben das Mass: Am 08.09.2026 lag
+    # sie in einem Fall bei 21,7 %, und ueber genau diese Punkte korrelierte ein
+    # verrutschter Streifen mit +0,9873. Wer die Zahl nicht kennt, liest rho als Aussage
+    # ueber das Bauwerk.
+    auf_hintergrund = geometrie_qa.maske_auf_hintergrund(list(soll), maske)
     return {"rho_maske": rho, "kante": kante, "kantenanteil": anteil, "himmel": himmel,
             "soll_durchsichtig": durchsichtig,
+            "maske_auf_hintergrund": auf_hintergrund,
             "paarurteil": geometrie_qa.paarurteil(rho, kante, anteil_ergebnis=anteil,
                                                   himmel_ergebnis=himmel)}
 
@@ -1378,6 +1388,12 @@ def qa_gegen_soll(bild_png, soll_tiefen: Sequence[float], *,
     # ihn trotzdem sehen; genau daran ist der 03.09.2026 vorbeigegangen.
     _durchsichtig = masken_ergebnis.get("soll_durchsichtig") or {}
     warnungen = warnungen + tuple(_durchsichtig.get("warnungen") or ())
+    # Dieselbe Durchreichung fuer die zweite Bedingung der Referenz: wieviel der Maske
+    # auf der Hintergrundmarke steht. Auch sie betrifft JEDE Zahl dieses Laufs, die ueber
+    # die Maske gerechnet wird — und auch sie stuende sonst nur in einem Unterfeld, das
+    # niemand aufschlaegt, waehrend er auf rho sieht.
+    _auf_hg = masken_ergebnis.get("maske_auf_hintergrund") or {}
+    warnungen = warnungen + tuple(_auf_hg.get("warnungen") or ())
 
     # OHNE MASKE FEHLT DAS EINZIGE MASS, DAS DIE ABWESENHEIT FAENGT — und bis zum
     # 26.08.2026 sagte das an dieser Stelle niemand.

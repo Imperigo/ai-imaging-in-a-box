@@ -5220,3 +5220,17 @@ Bekannt und ausdrücklich nicht erledigt:
       veröffentlichte Zahl hängt (Messfrage). Zurückgefragt: Lizenz von `render_lauf.py`,
       und ob ein Qualitätsprofil die **Tiefenkarte** anfasst. *Eine Antwort darauf ist
       billiger als ein falsch übernommener Läufer.*
+
+- [x] **`C9`: die Zahl neben das Mass gestellt, statt am Mass zu drehen (11.09.2026).**
+      Die Versuchung war, die Paarschwelle neu zu ziehen oder das Tor frontal
+      abzuschalten. Beides wäre eine Eichung am falschen Bestand — die Fälle aus `auf-81`
+      stammen aus Blender-Renders plus Schätzer, nicht aus erzeugten Bildern.
+      Der **Mechanismus** dagegen ist allgemein: 21,7 % der Maskenpunkte holen ihren Wert
+      von ausserhalb des Umrisses; in der Soll-Karte steht dort die Hintergrundmarke, eine
+      Konstante ohne Rangfolge, und über genau diese Punkte korrelierte ein verrutschter
+      Streifen mit +0,9873. `geometrie_qa.maske_auf_hintergrund` zählt das jetzt je Lauf
+      und warnt ab 10 %; die Warnung wandert in die Warnungen des ganzen Laufs.
+      **An ρ ändert sich nichts, und eine Probe hält das fest.** Wer diese Punkte
+      herausnehmen will, tut es in der Maske — dort ist es eine Entscheidung mit einem
+      Verantwortlichen statt einer stillen Korrektur im Mass.
+      *Die Schwelle bleibt unkalibriert und steht weiter als unkalibriert da.*
