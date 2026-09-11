@@ -1,0 +1,35 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260911-107",
+  "art": "frage",
+  "worker": "cloud",
+  "rang": 7,
+  "erstellt": "2026-09-11T17:00:00Z",
+  "params": {},
+  "beschreibung": "Posten 6 aus auf-vis-20260825-15, siebzehn Tage nie weitergereicht: Wer setzt idle_window_only, und was soll es auf einem Rechner bedeuten, an dem jemand arbeitet? Der Riegel ist richtig gebaut — die Frage ist die Voreinstellung der bestellenden Seite.",
+  "anweisung": "=== WER SETZT `idle_window_only`, UND WAS SOLL ES AUF EINEM BENUTZTEN RECHNER HEISSEN? ===\n\nAN DEN CLOUD-WORKER AN KOSMOORBIT. Du hast unser Repo nicht; alles Noetige steht hier.\n\n\nDER BEFUND, UND ER IST NICHT UNSERER\n\nAm 25.08.2026 lief die Kette zum ersten Mal von eurer Oberflaeche bis in den Renderlauf\ndurch. Der ERSTE Anlauf wurde abgelehnt:\n\n    «Der Auftrag traegt 'idle_window_only' und die Karte ist nicht frei:\n     Auslastung 21 % (Grenze 10 %).»\n\nBelegt war die Auslastung durch: Sunshine 508 MiB, VS Code 497, Firefox 245, Notion 132,\ngnome-shell 159. Also durch einen Rechner, an dem jemand ARBEITET.\n\nDer Riegel selbst ist richtig gebaut — fail-closed, mit ehrlicher Begruendung. Die\nHomeStation hat das ausdruecklich festgehalten. Ihr Satz zum eigentlichen Problem:\n\n    «Das Problem ist die Voreinstellung der BESTELLENDEN Seite. Die Frage\n     gehoert an KosmoOrbit weitergereicht: Wer setzt sie, und was soll sie\n     auf einem Rechner bedeuten, der auch benutzt wird?»\n\n\nUND JETZT DER TEIL, DER UNS PEINLICH IST\n\nDieser Satz steht seit dem 25.08.2026 da. WEITERGEREICHT WURDE ER NIE. Aufgefallen am\n11.09.2026, als der Owner gefragt hat, ob die Auftraege der HomeStation abgearbeitet\nsind — fuenf von sechs Posten waren es, dieser nicht. Er hatte in unserem Haus einen\nAdressaten im Text und keinen Auftrag beim richtigen Worker. Siebzehn Tage.\n\nDas ist derselbe Fehler wie bei `auf-20260910-102` vor einem Tag, und darum sagen wir es\ndazu: Es ist ein Muster bei uns und keine Einzelheit.\n\n\nWAS WIR WISSEN WOLLEN\n\n  V1  Wer setzt `idle_window_only` heute — die Oberflaeche fest, der Benutzer, oder\n      steht es als Vorgabe im Vertrag? Wir sehen bei uns nur den fertigen Auftrag.\n\n  V2  Was SOLL es bedeuten? Zwei Lesarten, und sie sind nicht dasselbe:\n        (a) «Rechne nur, wenn die Karte voellig frei ist» — auf einem Arbeitsrechner\n            praktisch nie erfuellt.\n        (b) «Rechne nur, wenn kein anderer RENDER laeuft» — dann stoert ein Browser\n            nicht, und die Grenze muesste auf die Belegung durch Rechenlast zielen,\n            nicht auf die Gesamtauslastung.\n\n  V3  Falls (b): Welche Grenze haltet ihr fuer richtig? Wir haben dazu keine Meinung,\n      die eure ueberstimmen wuerde — es ist EUER Rechner, auf dem das laeuft, und euer\n      Benutzer, der daran sitzt.\n\n  V4  Soll ein abgelehnter Lauf in der Warteschlange BLEIBEN und spaeter noch einmal\n      versucht werden, oder soll er als abgelehnt zurueckkommen? Heute kommt er\n      zurueck. Beides ist vertretbar; wir wollen nicht raten.\n\n\nWAS WIR NICHT TUN\n\n  * Wir aendern die Grenze nicht von uns aus. Ein Riegel, der die Grafikkarte schuetzt,\n    wird nicht von der Seite gelockert, die den Auftrag stellt.\n  * Wir setzen `idle_window_only` nicht still auf `false`. Das waere die bequemste\n    Loesung und die falscheste: Der Auftraggeber haette dann bestellt, was er nicht\n    bekommt, und niemand saehe es.\n  * «Lasst es, wie es ist» ist eine vollstaendige Antwort. Dann steht der Posten als\n    entschieden da statt als offen — und das allein ist den Auftrag wert.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie. Eine Frage zur Voreinstellung."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "Keine Messung, kein Lauf, keine GPU.",
+      "«Lasst es, wie es ist» ist eine vollstaendige Antwort.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Wer setzt `idle_window_only` heute — Oberflaeche, Benutzer, oder Vertragsvorgabe?",
+    "V2 Was soll es bedeuten: Karte voellig frei, oder kein anderer Render?",
+    "V3 Falls das zweite: welche Grenze haltet ihr fuer richtig?",
+    "V4 Soll ein abgelehnter Lauf in der Warteschlange bleiben oder zurueckkommen?",
+    "V5 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}

@@ -5234,3 +5234,22 @@ Bekannt und ausdrücklich nicht erledigt:
       herausnehmen will, tut es in der Maske — dort ist es eine Entscheidung mit einem
       Verantwortlichen statt einer stillen Korrektur im Mass.
       *Die Schwelle bleibt unkalibriert und steht weiter als unkalibriert da.*
+
+- [x] **Nachgesehen, ob die Aufträge der HomeStation erledigt sind (Owner-Frage 11.09.2026).**
+      17 Briefe, vier ohne Abschlussvermerk. Befund: **grösstenteils ja — und das stand
+      nirgends.** `auf-vis-20260821-03` war seit dem 09.09. erledigt, `auf-vis-20260825-14`
+      bis auf eine benannte Lücke, `auf-vis-20260825-15` in fünf von sechs Posten. Alle
+      drei sagten weiter «OFFEN». Sie tragen jetzt eine Tabelle mit Datum und Beleg je
+      Posten. *Dieselbe Buchführungslücke wie im Einbau-Stand, eine Ablage weiter.*
+- [x] **Und einer war wirklich offen — siebzehn Tage, bei niemandem.** Posten 6 aus
+      `auf-vis-20260825-15`: `idle_window_only` ist auf einem benutzten Rechner nie
+      erfüllbar (abgelehnt bei 21 % Auslastung gegen 10 % Grenze, belegt durch Sunshine,
+      VS Code, Firefox, Notion, Gnome-Shell). Die HomeStation hatte das Richtige
+      geschrieben — *«der Riegel ist richtig gebaut, das Problem ist die Voreinstellung der
+      bestellenden Seite, die Frage gehört an KosmoOrbit»* — und **weitergereicht wurde sie
+      nie.** Jetzt bei `cloud`: `auf-20260911-107`, mit beiden Lesarten ausbuchstabiert.
+      **Zum zweiten Mal in zwei Tagen dasselbe Muster** (gestern `A6`, fünfzehn Tage):
+      *ein Adressat, der nur in Prosa steht, ist keiner.*
+- [ ] **Offen aus `auf-vis-20260825-14`, Lücke 5.2:** `denoise` und die Schrittzahl des
+      fremden Vertrags werden nicht abgebildet. Im Quelltext benannt, nirgends beauftragt.
+      *Adressat: `cloud` — es ist eine Vertragsfrage, keine Programmfrage.*
