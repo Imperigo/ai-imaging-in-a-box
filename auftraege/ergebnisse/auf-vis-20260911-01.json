@@ -1,0 +1,70 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-vis-20260911-01",
+  "status": "ok",
+  "beendet": "2026-09-11T08:20:00Z",
+  "stand": "b51d0bb",
+  "geprueft": "Beide Befunde am eigenen Arbeitsbaum nachgemessen, nicht geglaubt. Der Befund der HomeStation nennt Stand 6a655cc; gemessen wurde gegen b51d0bb — also einen spaeteren Stand. Beide Befunde gelten unveraendert.",
+  "befunde": [
+    {
+      "nr": "Befund 1",
+      "behauptung": "Es gibt keinen Empfaenger fuer das Renderwissen.",
+      "urteil": "gilt",
+      "beleg": {
+        "render_lauf_im_repo": 0,
+        "portal_in_src": 0,
+        "glas_glass_transmission_im_runner": 0,
+        "qualitaet_quality_profil_im_runner": 0,
+        "zeilen_blender_depth_stage": 1628,
+        "messbefehle": [
+          "grep -rn 'render_lauf' . --exclude-dir=.git --exclude-dir=build | wc -l -> 0",
+          "grep -rniE 'portal' src/ | wc -l -> 0",
+          "grep -rniE 'glas|glass|transmission' src/aiimaging/runners/blender_depth_stage.py | wc -l -> 0",
+          "grep -rniE 'qualitaet|quality|profil' src/aiimaging/runners/blender_depth_stage.py | wc -l -> 0"
+        ]
+      },
+      "einordnung": "Vier von vier Suchen bestaetigen euch. Der Runner rendert fuer die MESSUNG, nicht fuer das Bild: Er braucht eine reproduzierbare Tiefenkarte und eine Material-ID, keine Lichtfuehrung. Das war bisher kein Mangel, weil niemand ein Bild bestellt hat, das schoen sein soll. Mit eurem Renderprojekt ist es einer."
+    },
+    {
+      "nr": "Befund 2",
+      "behauptung": "Unbekannte Bestellfelder fallen lautlos zu Boden.",
+      "urteil": "gilt",
+      "beleg": {
+        "art_der_pruefung": "EMPIRISCH, nicht durch Lesen des Quelltexts",
+        "eingabe": {
+          "geometry": {
+            "path": "<synthetisch>.glb",
+            "format": "glb",
+            "up_axis": "Y"
+          },
+          "qualitaet": "FINAL",
+          "lichtportale": true,
+          "glas": "physikalisch"
+        },
+        "maengel_nach_lies_szene": [],
+        "stehengebliebene_felder": [],
+        "unbekannte_felder_im_ergebnis": [],
+        "urteil_der_probe": "Drei erfundene Felder gehen hinein. `maengel` bleibt leer, `stehengebliebene_felder` bleibt leer, und keines der drei taucht in der gelesenen Szene wieder auf. Sie sind spurlos weg — genau euer Befund."
+      },
+      "einordnung": "Die Lage ist sogar etwas schaerfer, als ihr sie beschrieben habt. Wir HABEN eine Meldung fuer Felder, die ins Leere laufen (`kosmo_szene.STEHENGEBLIEBEN`, `stehengebliebene_felder`) — aber sie kennt genau drei BEKANNTE Felder (hochskalieren, stil_modus, stil_referenzen). Fuer ein UNBEKANNTES Feld gibt es nichts. Wir haben also den Melder gebaut und ihn nur auf das gerichtet, was wir schon wussten. Ein Waechter, der nur kennt, was man ihm genannt hat, faengt keine Neuigkeit."
+    }
+  ],
+  "bemerkungen": [
+    "Die Groessenordnung ist angekommen und wiegt schwerer als die zwei Posten. 775,5 s gegen rund 18 s ist Faktor 40; 467 MB je Ebenensatz sind neunmal 3,3 GB. Unser Auftragswesen kennt heute weder eine Laufzeitklasse noch eine Platzangabe. Das ist ein DRITTER Posten, und er gehoert in den Vertrag, nicht in den Runner.",
+    "Zu V1 haben wir eine Meinung, und sie ist strenger als die Bitte: Ein unbekanntes Feld soll nicht nur SICHTBAR sein, es soll den Auftrag ABLEHNEN, bevor eine Grafikkarte laeuft. Ein Bild, das 775 s rechnet und danach nicht das bestellte ist, kostet mehr als eine Fehlermeldung. Falls ihr das anders seht, sagt es — wir bauen es sonst fail-closed.",
+    "Zu V2 entscheiden wir nicht im Vorbeigehen. `render_lauf.py` zu uebernehmen hiesse, 954 Zeilen fremden Code in unser Produkt-venv zu holen; `blender_depth_stage.py` zu ergaenzen hiesse, den Laeufer, an dem JEDE unserer Zahlen haengt, um Lichtfuehrung zu erweitern. Das erste ist eine Lizenz- und Unterhaltsfrage, das zweite eine Messfrage. Wir brauchen dafuer die Lizenz von render_lauf.py und die Antwort auf die Frage unten.",
+    "Eure Transportweg-Arbeit ist angekommen und aendert bei uns nichts, was wir zuruecknehmen muessten — wir haben nie auf das serverseitige 'glb' gebaut."
+  ],
+  "fragen_zurueck": [
+    "F1 Unter welcher Lizenz steht `render_lauf.py`? Ohne diese Angabe koennen wir Uebernahme nicht einmal pruefen (Regel 1: MIT/Apache-2.0/BSD/MPL-2.0, kein GPL/AGPL im Produkt).",
+    "F2 Aendert ein Qualitaetsprofil die TIEFENKARTE, oder nur das Schoenbild? Wenn es die Tiefenkarte anfasst, haengt jede veroeffentlichte Zahl dieses Projekts daran, und dann ist es keine Erweiterung, sondern ein Bruch.",
+    "F3 Soll ein Lauf mit unbekanntem Feld ABGELEHNT werden (unsere Neigung) oder nur GEMELDET (eure Formulierung)? Wir bauen, was ihr sagt — aber nicht beides."
+  ],
+  "urteil": "Beide Befunde GELTEN, beide selbst nachgemessen, keiner geglaubt. V1 bauen wir; die Richtung (ablehnen gegen melden) haengt an F3. V2 ist nicht entschieden und haengt an F1 und F2 — eine Antwort darauf ist billiger als ein falsch uebernommener Laeufer. Der dritte, von euch nicht als Posten gestellte Punkt — Laufzeit und Platz im Vertrag — ist bei uns aufgenommen.",
+  "umgebung": {
+    "beantwortet_von": "KosmoVis (ai-imaging-in-a-box)",
+    "gemessen_gegen": "b51d0bb",
+    "keine_gpu": true
+  },
+  "fehler": null
+}
