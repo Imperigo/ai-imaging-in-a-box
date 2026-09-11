@@ -52,6 +52,13 @@ betraf eine geänderte Wartezeit, die nicht ändert, was gerechnet wird. Ein Wer
 nur meldet, was sicher falsch ist, meldet fast nie etwas — und dann heisst sein Schweigen
 nichts mehr.*
 
+**Stilles Abstreifen (unbekannter Felder)** — Wenn eine Schnittstelle ein Feld, das sie
+nicht kennt, einfach wegwirft, statt sich zu beschweren. *Klingt harmlos und ist es nicht:
+Wer ein Feld setzt und kein Wort hört, hält es für bedient. Bei uns hätte ein
+`qualitaet: "FINAL"` so einen Renderlauf von zwölf Minuten gekostet, an dessen Ende ein
+Bild steht, das niemand bestellt hat. Seit dem 11.09.2026 hält ein unbekanntes Feld den
+Lauf auf.*
+
 **Rückstand gegen Einbau-Stand** — Zwei Zählungen, die verschiedene Dinge zählen: Der
 *Rückstand* zählt Aufträge, auf die noch keine Antwort da ist. Der *Einbau-Stand* zählt
 Posten, die noch nicht in der fremden Software stehen. *Zwischen beiden liegt ein Zustand,
@@ -4550,6 +4557,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-11 | Ergaenzt aus dem Befund der HomeStation zum Renderprojekt: **Stilles Abstreifen (unbekannter Felder)**. Der Begriff wurde noetig, weil `lies_szene` erfundene Bestellfelder spurlos verschluckt hat — gemessen, nicht vermutet |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |
 | 2026-09-09 | Ergaenzt aus `messstand` und `beruehrung`: **Codestand (eines Dokuments)**, **Grundlage (eines Dokuments)**, **Beruehrung (einer Messung)**, **Nachgesehen bis**. Der Codestand war am Vortag gebaut und NICHT ins Lexikon eingetragen worden — nachgeholt, gemeinsam mit der zweiten Haelfte derselben Frage |
 | 2026-09-09 | Ergaenzt aus dem Tokenbuch (`auf-vis-20260821-03`): **Form und Befugnis**, **Tokenbuch**, **Abdruck (eines Tokens)**. Der Befund der HomeStation vom 21.08. lautete: Das Freigabe-Gate prueft, ob eine Zeichenfolge wie ein Schluessel *aussieht*, nicht ob wir sie *ausgegeben* haben. Der Abdruck kam beim Bauen dazu — ein Buch mit Klartext-Token haette die Freigabe eine Datei weiter wieder offen hingelegt |

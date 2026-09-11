@@ -674,3 +674,93 @@ def test_die_obergrenzen_eigenschaft_gilt_wirklich():
             ungerichtet = math.sqrt(abs(rho) * 0.8)
             gerichtet = math.sqrt(max(0.0, polaritaet * rho) * 0.8)
             assert gerichtet <= ungerichtet + 1e-12, (rho, polaritaet)
+
+
+# --------------------------------------------------------------------------------------
+# Unbekannte Bestellfelder — der Befund der HomeStation vom 11.09.2026
+# --------------------------------------------------------------------------------------
+#
+# Gemeldet von der HomeStation, unabhängig davon vom Cloud-Worker auf SEINER Seite belegt
+# (kein `.strict()` in kosmo-contracts, unbekannte Felder werden still abgestreift). Zwei
+# Seiten, dieselbe Lücke.
+#
+# Und die Regel, die sie aus ihrem Renderprojekt mitgeschickt haben, ist genau die, an
+# der wir gescheitert waren: *Ein Riegel prüft, ob jedes Element der WIRKLICHKEIT in
+# seiner Liste steht — nicht, ob jedes Element seiner Liste in der Wirklichkeit vorkommt.
+# Der zweite besteht immer.*
+
+def test_eine_gewoehnliche_bestellung_traegt_nichts_unbekanntes():
+    """Ohne diese Zeile sagten die Tests darunter nichts — sie prüften nur, dass etwas
+    auffällt, nicht dass im Normalfall nichts auffällt."""
+    assert ks.unbekannte_felder(szene()) == ()
+    assert ks.lies_szene(szene())["maengel"] == ()
+
+
+def test_ein_erfundenes_feld_haelt_den_lauf_auf():
+    """Der Fall aus dem Befund: `qualitaet: "FINAL"` käme an und würde verschluckt.
+
+    Ein Lauf, der 775 Sekunden rechnet (HomeStation, 10.09.2026) und danach nicht das
+    bestellte Bild ist, kostet mehr als eine Fehlermeldung — und er fällt niemandem auf.
+    """
+    gelesen = ks.lies_szene(szene(qualitaet="FINAL"))
+
+    assert any("qualitaet" in m for m in gelesen["maengel"])
+    assert gelesen["maengel"], "unbekanntes Feld muss den Lauf aufhalten"
+
+
+def test_auch_in_einem_block_wird_gesucht():
+    """`render.glas` ist genauso unbekannt wie ein Feld ganz oben — und schwerer zu sehen."""
+    assert ks.unbekannte_felder(
+        szene(render={"samples": 128, "glas": "physikalisch"})) == ("render.glas",)
+
+
+def test_der_sonnenblock_wird_nicht_durchsucht():
+    """`render.sun` reichen wir unverändert an den Runner weiter.
+
+    Was darin steht, ist seine Sache. Eine Prüfung hier würde eine Zuständigkeit
+    erfinden, die wir nicht haben — und jede Erweiterung des Sonnenmodells abweisen.
+    """
+    assert ks.unbekannte_felder(
+        szene(render={"samples": 128, "sun": {"azimut": 135, "irgendwas": 7}})) == ()
+
+
+def test_streng_false_meldet_statt_aufzuhalten():
+    """Der Ausweg für den Fall, dass ihr Vertrag ein Feld trägt, das wir noch nicht kennen.
+
+    **Sichtbar bleibt es in beiden Fällen** — das ist der Punkt des ganzen Befundes.
+    """
+    mild = ks.lies_szene(szene(qualitaet="FINAL"), streng=False)
+
+    assert mild["maengel"] == ()
+    assert any("qualitaet" in w for w in mild["warnungen"])
+
+
+def test_mutationsprobe_ohne_karte_faellt_der_wachter(monkeypatch):
+    """Ein Wächter, der nicht fällt, bewacht nichts.
+
+    Nimmt man die Karte weg — hier, indem jedes Feld als bekannt gilt —, muss das
+    erfundene Feld wieder lautlos durchgehen. Genau das war der Zustand bis zum
+    11.09.2026.
+    """
+    monkeypatch.setattr(ks, "unbekannte_felder", lambda fremd: ())
+
+    assert ks.lies_szene(szene(qualitaet="FINAL"))["maengel"] == ()
+
+
+def test_die_karte_deckt_ab_was_lies_szene_wirklich_liest():
+    """Die Gegenrichtung, und sie ist die schwierigere.
+
+    Eine Karte, die ein Feld **nicht** nennt, das `lies_szene` sehr wohl liest, weist
+    eine gültige Bestellung ab. Geprüft wird darum an der Testszene dieses Moduls, die
+    jeden Block einmal füllt — und zusätzlich an den Feldern, die der Vertrag als
+    Pflicht führt.
+    """
+    voll = szene(cameras="auto",
+                 geometry={"path": "/synthetisch/m.glb", "format": "glb", "up_axis": "Y"},
+                 render={"resolution": [1600, 1000], "samples": 128, "faithful": 0.8,
+                         "sun": {"azimut": 135.0, "hoehe": 40.0}},
+                 style={"mode": "none", "refs": [], "prompt": "ein Haus"},
+                 vis={"skip": False, "backbone": "qwen", "upscale": False})
+
+    assert ks.unbekannte_felder(voll) == ()
+    assert ks.lies_szene(voll)["maengel"] == ()

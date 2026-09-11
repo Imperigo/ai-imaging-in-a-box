@@ -420,7 +420,83 @@ def _auf_raster(aufl):
     )
 
 
-def lies_szene(fremd: dict) -> dict:
+#: Welche Felder der fremden Bestellung wir **lesen** — je Block.
+#:
+#: **Warum es diese Karte gibt** (HomeStation, 11.09.2026, und der Cloud-Worker hat
+#: dieselbe Lücke unabhängig auf seiner Seite gefunden):
+#:
+#:     `lies_szene` liest feldweise mit ``.get()`` und prüft **nicht** auf unbekannte
+#:     Felder. Ein neues ``qualitaet: "FINAL"`` käme also an und würde verschluckt — der
+#:     Besteller hält das Bild für das bestellte.
+#:
+#: Am 11.09.2026 hier nachgemessen und bestätigt: Drei erfundene Felder gehen hinein,
+#: ``maengel`` bleibt leer, ``stehengebliebene_felder`` bleibt leer, keines taucht wieder
+#: auf. **Und die Lage war schärfer als gemeldet:** Wir hatten den Melder längst
+#: (:data:`STEHENGEBLIEBEN`) — er kannte genau drei **bekannte** Felder. *Ein Wächter, der
+#: nur kennt, was man ihm genannt hat, fängt keine Neuigkeit.*
+#:
+#: Die HomeStation hat die Regel dazu aus ihrem Renderprojekt mitgeschickt, und sie ist
+#: der Grund für die Form dieser Karte: **Ein Riegel prüft, ob jedes Element der
+#: WIRKLICHKEIT in seiner Liste steht — nicht, ob jedes Element seiner Liste in der
+#: Wirklichkeit vorkommt. Der zweite besteht immer.**
+BEKANNTE_FELDER = {
+    "": ("schema", "geometry", "render", "style", "vis", "cameras", "out"),
+    "geometry": ("path", "format", "up_axis"),
+    "render": ("resolution", "faithful", "samples", "sun"),
+    "style": ("prompt", "mode", "refs"),
+    "vis": ("backbone", "skip", "upscale"),
+}
+
+#: Blöcke, deren Inhalt **nicht** durchsucht wird, mit dem Grund.
+#:
+#: ``render.sun`` reichen wir unverändert an den Runner weiter — was darin steht, ist
+#: seine Sache, und eine Prüfung hier würde eine Zuständigkeit erfinden. ``cameras`` ist
+#: entweder ``"auto"`` oder eine Liste von Kameraspezifikationen, die
+#: :func:`spec_zu_kamera` einzeln prüft.
+NICHT_DURCHSUCHT = ("render.sun", "cameras")
+
+
+def unbekannte_felder(fremd: dict) -> tuple[str, ...]:
+    """Welche Felder dieser Bestellung wir **gar nicht kennen** — mit Punktpfad.
+
+    Unterschieden wird von :func:`stehengebliebene_felder`, und der Unterschied ist der
+    ganze Punkt:
+
+    ========================  ===================================================
+    :func:`stehengebliebene_felder`  Wir **kennen** das Feld und bedienen es nicht.
+    :func:`unbekannte_felder`        Wir kennen es **nicht** — es kann alles heissen.
+    ========================  ===================================================
+
+    Das erste ist eine bekannte Lücke mit einem Grund. Das zweite ist eine Bestellung,
+    die wir nicht verstanden haben — und die niemandem auffällt, wenn sie durchrutscht.
+
+    Returns:
+        Punktpfade in der Reihenfolge der Karte, dann alphabetisch. Leer, wenn alles
+        bekannt ist.
+    """
+    if not isinstance(fremd, dict):
+        raise SzenenError(f"render-scene ist kein Wörterbuch: {type(fremd).__name__}")
+
+    gefunden: list[str] = []
+    for block, bekannt in BEKANNTE_FELDER.items():
+        if block == "":
+            inhalt = fremd
+        else:
+            if block in NICHT_DURCHSUCHT:
+                continue
+            inhalt = fremd.get(block)
+            if not isinstance(inhalt, dict):
+                continue          # fehlt, oder ist kein Block — beides nicht hier zu melden
+        for name in sorted(inhalt):
+            pfad = f"{block}.{name}" if block else str(name)
+            if pfad in NICHT_DURCHSUCHT:
+                continue
+            if name not in bekannt:
+                gefunden.append(pfad)
+    return tuple(gefunden)
+
+
+def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     """``kosmovis.render-scene/v1`` → unsere Felder, mit allem, was dabei auffällt.
 
     Returns:
@@ -449,6 +525,29 @@ def lies_szene(fremd: dict) -> dict:
     # Was JEDEN Auftrag gleich trifft — siehe `vertragsvorgaben` im Rueckgabewert.
     vorgaben: list[str] = []
     maengel: list[str] = []
+
+    # UNBEKANNTE FELDER SIND EIN MANGEL, und `maengel` haelt den Lauf auf.
+    #
+    # Das ist eine Entscheidung und keine Selbstverstaendlichkeit: Sie kann eine
+    # bestehende Bestellung abweisen, die heute durchginge. Sie faellt so, weil der
+    # andere Fall teurer ist — ein Lauf, der 775 Sekunden rechnet (gemessen auf der
+    # HomeStation am 10.09.2026) und danach nicht das bestellte Bild ist, kostet mehr als
+    # eine Fehlermeldung. Und er faellt NICHT auf: Wer ein Feld setzt und kein Wort hoert,
+    # haelt es fuer bedient.
+    #
+    # `streng=False` gibt es fuer den Fall, dass der fremde Vertrag ein Feld traegt, das
+    # wir noch nicht kennen, und der Betrieb nicht warten kann. Dann steht es unter
+    # `warnungen` statt unter `maengel` — sichtbar bleibt es in beiden Faellen.
+    unbekannt = unbekannte_felder(fremd)
+    if unbekannt:
+        satz = (
+            f"Unbekannte Felder in der Bestellung: {', '.join(unbekannt)}. Wir wissen "
+            f"nicht, was sie verlangen, und wuerden sie stillschweigend uebergehen — das "
+            f"Bild waere dann nicht das bestellte, ohne dass es jemandem auffiele. "
+            f"Entweder der Vertrag hat sich geaendert (dann sagt es uns), oder es ist ein "
+            f"Tippfehler."
+        )
+        (maengel if streng else warnungen).append(satz)
 
     kennung = fremd.get("schema", SCHEMA_SZENE)
     if kennung != SCHEMA_SZENE:

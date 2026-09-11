@@ -1,0 +1,33 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260911-103",
+  "art": "frage",
+  "worker": "local",
+  "rang": 8,
+  "erstellt": "2026-09-11T09:00:00Z",
+  "params": {},
+  "beschreibung": "ANSAGE: lies_szene weist ab jetzt Bestellungen mit unbekannten Feldern ab (maengel haelt den Lauf auf). Geht auf euren Befund auf-vis-20260911-01/V1 zurueck.",
+  "anweisung": "=== ANSAGE: EINE BESTELLUNG MIT UNBEKANNTEM FELD WIRD AB JETZT ABGEWIESEN ===\n\nDIES IST EINE ANSAGE, KEIN AUFTRAG. Ihr fahrt `tools/abholen.py` und `tools/homeworker.py`\naus unserem Repo. Ein `git pull` bringt euch diese Aenderung, ohne dass irgendwo ein\nPosten umspringt — und eine Verhaltensaenderung auf diesem Weg wird angesagt, BEVOR sie\nankommt. Sonst sieht sie bei euch aus wie ein Fehler.\n\nWAS SICH AENDERT\n\n`aiimaging.kosmo_szene.lies_szene` prueft ab jetzt, ob die Bestellung Felder traegt,\ndie wir GAR NICHT KENNEN. Findet sie welche, steht das unter `maengel` — und\n`maengel` HAELT DEN LAUF AUF.\n\nVorher fielen solche Felder lautlos zu Boden. Gemessen am 11.09.2026: Drei erfundene\nFelder gehen hinein, `maengel` bleibt leer, `stehengebliebene_felder` bleibt leer,\nkeines taucht wieder auf. Spurlos weg.\n\n\nWAS WIR KENNEN (und was also durchgeht)\n\n    oben        schema, geometry, render, style, vis, cameras, out\n    geometry    path, format, up_axis\n    render      resolution, faithful, samples, sun\n    style       prompt, mode, refs\n    vis         backbone, skip, upscale\n\nNICHT durchsucht werden `render.sun` (was darin steht, ist Sache des Runners) und\n`cameras` (die Kameraspezifikationen pruefen wir einzeln an anderer Stelle).\n\n\nWARUM WIR ABWEISEN STATT NUR ZU MELDEN\n\nEin Lauf, der 775 Sekunden rechnet — eure eigene Zahl vom 10.09.2026 —, und danach\nnicht das bestellte Bild ist, kostet mehr als eine Fehlermeldung. Und er faellt\nniemandem auf: Wer ein Feld setzt und kein Wort hoert, haelt es fuer bedient.\n\nEs gibt einen Ausweg, und er ist eine Zeile: `lies_szene(fremd, streng=False)` meldet\ndasselbe unter `warnungen` statt unter `maengel`. Sichtbar bleibt es in beiden\nFaellen — das war der ganze Punkt des Befundes.\n\n\nWAS DAS FUER EUCH HEISST\n\nWahrscheinlich nichts. Eure Auftragsdateien gehen nicht durch `lies_szene` — diese\nFunktion liest die BESTELLUNG AUS KOSMOORBIT, nicht unser eigenes Auftragsformat. Wenn\nbei euch also ploetzlich ein Lauf mit «Unbekannte Felder in der Bestellung» stehen\nbleibt, kommt er ueber den MCP-Einlass und nicht aus `auftraege/offen/`.\n\nSOLLTE ES DOCH EINEN LAUF AUFHALTEN, DER VORHER LIEF: Sagt es uns, mit dem Feldnamen.\nDann fehlt die Zeile in unserer Karte, und das ist unser Fehler, nicht eurer.\n\n\nWAS NICHT ZU TUN IST\n\n  * NICHT `streng=False` setzen, um es wegzubekommen. Erst melden, dann entscheiden wir\n    gemeinsam, ob das Feld in die Karte gehoert.\n  * Nichts an `BEKANNTE_FELDER` aendern. Die Karte ist die Stelle, an der eine\n    Vertragsaenderung sichtbar wird — wer sie stillschweigend erweitert, schaltet den\n    Melder ab.\n\n\nES GEHT AUF EUREN BEFUND ZURUECK\n\n`auf-vis-20260911-01`, V1. Ihr habt geschrieben: «Ein Feld, das niemand ausfuehrt und\nniemand beanstandet, ist schlimmer als ein fehlendes Feld: dann sucht es niemand mehr.»\nGenau so ist es gebaut. Eure Frage nach der Richtung — abweisen oder melden — haben wir\nnach eurer Formulierung «sichtbar abweisen statt schlucken» entschieden: abweisen, mit\ndem Ausweg als Zeile.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie. Ansage zu einer Verhaltensaenderung."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "Keine Messung, kein Lauf, keine GPU.",
+      "«Bei uns aendert sich nichts» ist eine vollstaendige Antwort.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Ist bei euch ein Lauf stehengeblieben, der vorher lief? Wenn ja: welches Feld?",
+    "V2 Sonst genuegt «angekommen, nichts aufgefallen».",
+    "V3 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260911-104",
+  "art": "frage",
+  "worker": "cloud",
+  "rang": 5,
+  "erstellt": "2026-09-11T09:00:00Z",
+  "params": {},
+  "beschreibung": "ANSAGE mit einer Frage: Wir weisen Bestellungen mit unbekannten Feldern ab. Welche Felder traegt eure render-scene, die in unserer Karte nicht stehen?",
+  "anweisung": "=== ANSAGE AN KOSMOORBIT: UNBEKANNTE FELDER IN DER BESTELLUNG WERDEN ABGEWIESEN ===\n\nAN DEN CLOUD-WORKER. Du hast unser Repo nicht; alles Noetige steht hier. Dies ist eine\nANSAGE mit einer Frage daran — kein Umbau, den du machen musst.\n\nWAS SICH AENDERT\n\n`aiimaging.kosmo_szene.lies_szene` prueft ab jetzt, ob die Bestellung Felder traegt,\ndie wir GAR NICHT KENNEN. Findet sie welche, steht das unter `maengel` — und\n`maengel` HAELT DEN LAUF AUF.\n\nVorher fielen solche Felder lautlos zu Boden. Gemessen am 11.09.2026: Drei erfundene\nFelder gehen hinein, `maengel` bleibt leer, `stehengebliebene_felder` bleibt leer,\nkeines taucht wieder auf. Spurlos weg.\n\n\nWAS WIR KENNEN (und was also durchgeht)\n\n    oben        schema, geometry, render, style, vis, cameras, out\n    geometry    path, format, up_axis\n    render      resolution, faithful, samples, sun\n    style       prompt, mode, refs\n    vis         backbone, skip, upscale\n\nNICHT durchsucht werden `render.sun` (was darin steht, ist Sache des Runners) und\n`cameras` (die Kameraspezifikationen pruefen wir einzeln an anderer Stelle).\n\n\nWARUM WIR ABWEISEN STATT NUR ZU MELDEN\n\nEin Lauf, der 775 Sekunden rechnet — eure eigene Zahl vom 10.09.2026 —, und danach\nnicht das bestellte Bild ist, kostet mehr als eine Fehlermeldung. Und er faellt\nniemandem auf: Wer ein Feld setzt und kein Wort hoert, haelt es fuer bedient.\n\nEs gibt einen Ausweg, und er ist eine Zeile: `lies_szene(fremd, streng=False)` meldet\ndasselbe unter `warnungen` statt unter `maengel`. Sichtbar bleibt es in beiden\nFaellen — das war der ganze Punkt des Befundes.\n\n\nDIE FRAGE AN DICH, UND SIE IST DIE EIGENTLICHE\n\n  V1  Traegt eure `render-scene` heute Felder, die oben NICHT in der Liste stehen?\n      Wenn ja: welche, und was bedeuten sie?\n\nDas ist keine rhetorische Frage. Unsere Karte ist aus unserem Quelltext gewonnen — aus\ndem, was wir LESEN. Was ihr SENDET, wissen wir nicht. Wenn die beiden auseinandergehen,\nweist unsere Naht ab dem naechsten Auftrag gueltige Bestellungen ab, und das waere unser\nFehler.\n\n  V2  Wollt ihr, dass wir stattdessen nur melden (`streng=False`)? Wir haben uns fuer\n      Abweisen entschieden und halten das fuer richtig — aber ihr seid der Absender, und\n      wenn euch das den Betrieb bricht, sagt es.\n\n\nDER BEFUND STAMMT VON EUCH BEIDEN, UNABHAENGIG\n\nDie HomeStation hat die Luecke bei uns gemeldet. Du hast dieselbe Art Luecke auf DEINER\nSeite belegt: In `kosmo-contracts` gibt es kein `.strict()`, unbekannte Felder werden\nstill abgestreift, ausdruecklich als gewollt dokumentiert samt eigenem Test.\n\nZwei Seiten, dieselbe Luecke, unabhaengig gefunden. Wir haben unsere geschlossen. Ob ihr\neure schliesst, ist eure Entscheidung — aber solange sie offen ist, kann ein Tippfehler\nin einem Feldnamen bei euch durchgehen und bei uns auflaufen, und dann sucht ihn niemand\nan der Stelle, an der er entstand.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie. Ansage zu einer Verhaltensaenderung."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "Keine Messung, kein Lauf, keine GPU.",
+      "«Bei uns aendert sich nichts» ist eine vollstaendige Antwort.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Welche Felder eurer render-scene stehen NICHT in unserer Karte? Mit Bedeutung.",
+    "V2 Soll es abweisen (unsere Wahl) oder nur melden? Ihr seid der Absender.",
+    "V3 Schliesst ihr die gleiche Luecke auf eurer Seite (.strict() in kosmo-contracts)?",
+    "V4 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}

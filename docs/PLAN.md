@@ -5128,3 +5128,46 @@ Bekannt und ausdrücklich nicht erledigt:
       Nicht in derselben Sitzung erledigt, und der Grund gehört dazu: Zehn Urteile in
       einer halben Stunde wären genau die Erfolgsmeldung ohne Beleg, gegen die die fünfte
       Regel steht.
+
+
+---
+
+## Zwei Befunde von aussen über unseren eigenen Code (11.09.2026)
+
+> **Entschieden:** Ein unbekanntes Bestellfeld hält den Lauf auf — fail-closed. Und:
+> `render_lauf.py` der HomeStation wird **nicht** im Vorbeigehen übernommen.
+> **Gemessen:** Beide Befunde am eigenen Baum bestätigt; `flux-krea` steht nicht im Pfad;
+> drei von vier Punkten des Renderprojekt-Nachtrags waren bei uns schon versorgt.
+> **Offen:** Die Glasfrage am Tiefenbild, drei Fragen an die HomeStation, und die
+> Laufzeit-/Platzangabe im Vertrag.
+
+- [x] **Unbekannte Bestellfelder fielen lautlos zu Boden — behoben.** `lies_szene` las
+      feldweise mit `.get()` und prüfte nicht auf Unbekanntes. Empirisch bestätigt: drei
+      erfundene Felder hinein, `maengel` leer, keines taucht wieder auf.
+      **Und die Lage war schärfer als gemeldet:** Den Melder gab es längst
+      (`STEHENGEBLIEBEN`) — er kannte genau drei **bekannte** Felder. *Wir hatten den
+      Wächter gebaut und ihn nur auf das gerichtet, was wir schon wussten.*
+      Gebaut: `BEKANNTE_FELDER`, `unbekannte_felder()`, Befund als **Mangel** (hält den
+      Lauf auf), Ausweg `streng=False` als Warnung. Sieben Proben, darunter die
+      Mutationsprobe und die Gegenrichtung. Angesagt an `local` (`auf-20260911-103`) und
+      `cloud` (`auf-20260911-104`).
+- [x] **Regel 1 gegen den Krea-Hinweis geprüft.** Die HomeStation meldet FLUX.1-krea-dev
+      als nicht-kommerziell und bittet um eine Prüfung. **Hält:** `flux-krea` ist bei uns
+      nur ein *erkannter, ausdrücklich ausgeschlossener* fremder Name — eine Bestellung
+      darauf ergibt einen Mangel und fällt **nicht** auf die Vorgabe zurück.
+- [ ] **Für das Tiefenbild müssen Glasmaterialien undurchsichtig gestellt werden.**
+      Ihr Befund, bei uns nachgesehen: Im Runner kein `blend_method`, kein Umschalten von
+      Glas. An synthetischer Geometrie fällt das nie auf; an einem echten Modell misst der
+      Strahl die Landschaft **hinter** dem Fenster, und die Konditionierung baut dann
+      einen Raum ohne Fensterebene. *Adressat: `kern`, zu messen aber nur an einem echten
+      Modell — also ein Auftrag an `local`, sobald die Richtung klar ist.*
+- [ ] **Laufzeit und Platz gehören in den Vertrag.** 775,5 s gegen unsere Planungszahl von
+      rund 18 s ist Faktor 40; ein Ebenensatz misst 467 MB, neun davon 3,3 GB. Unser
+      Auftragswesen kennt weder Laufzeitklasse noch Platzangabe. *Adressat: `cloud`
+      (Vertragsfrage).* Stand in keinem der beiden Posten und ist trotzdem der grösste.
+- [ ] **`render_lauf.py` übernehmen oder den eigenen Läufer erweitern?** Nicht im
+      Vorbeigehen entschieden: Das erste sind 954 Zeilen fremder Code im Produkt-venv
+      (Lizenz- und Unterhaltsfrage), das zweite fasst den Läufer an, an dem **jede**
+      veröffentlichte Zahl hängt (Messfrage). Zurückgefragt: Lizenz von `render_lauf.py`,
+      und ob ein Qualitätsprofil die **Tiefenkarte** anfasst. *Eine Antwort darauf ist
+      billiger als ein falsch übernommener Läufer.*
