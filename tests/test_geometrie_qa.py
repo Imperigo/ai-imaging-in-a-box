@@ -2305,3 +2305,77 @@ def test_rho_ueber_maske_bleibt_unveraendert():
 
     assert vorher == nachher
     assert vorher["n_maske"] == 4, "der markierte Punkt wird weiterhin mitgerechnet"
+
+
+# ── Tiefenstruktur: hat die Karte Kanten, oder ist sie ein Verlauf? (12.09.2026) ──────
+#
+# Der Rahmungsriegel misst den Füllgrad und hat damit falsch herum entschieden: die
+# brauchbare Übersichtskamera abgewiesen (59,9 % gegen 65 % nötig), die nutzlose
+# Nahaufnahme durchgelassen (100 % Füllgrad, 5,1 m vor einer fensterlosen Wand).
+
+def _feld(f, breite=16, hoehe=16):
+    return [float(f(x, y)) for y in range(hoehe) for x in range(breite)]
+
+
+def test_ein_reiner_verlauf_traegt_keine_struktur():
+    """Der Fall aus dem Befund: eine leere Wand aus 5,1 m."""
+    befund = geometrie_qa.tiefenstruktur(_feld(lambda x, y: 5.0 + 0.01 * x), breite=16)
+
+    assert befund["struktur"] == pytest.approx(0.0, abs=1e-12)
+
+
+def test_eine_harte_kante_traegt_struktur():
+    befund = geometrie_qa.tiefenstruktur(
+        _feld(lambda x, y: 3.0 if x < 8 else 9.0), breite=16)
+
+    assert befund["struktur"] > 0.05
+
+
+def test_die_erste_differenz_trennt_die_beiden_NICHT():
+    """**Der Prüfstein, und er ist der Grund für die zweite Zahl.**
+
+    Der Vorschlag von der HomeStation war die mittlere Abweichung zum Nachbarpunkt.
+    Massstabsfrei gemacht liefert sie für beide Karten dieselbe Zahl: Ein Verlauf hat an
+    jedem Paar eine kleine Differenz, eine Kante an einem Paar eine grosse.
+
+    *Eine Kennzahl, die stimmt, während das Bild schlechter wird, ist die falsche
+    Kennzahl* — ihr eigener Satz, auf ihren eigenen Vorschlag angewandt.
+    """
+    verlauf = geometrie_qa.tiefenstruktur(_feld(lambda x, y: 5.0 + 0.01 * x), breite=16)
+    kante = geometrie_qa.tiefenstruktur(_feld(lambda x, y: 3.0 if x < 8 else 9.0), breite=16)
+
+    assert verlauf["glaette"] == pytest.approx(kante["glaette"], abs=1e-9)
+    assert verlauf["struktur"] != pytest.approx(kante["struktur"], abs=1e-3)
+
+
+def test_die_zahl_ist_massstabsfrei():
+    """Dieselbe Szene in Metern und in Zentimetern muss dieselbe Zahl ergeben."""
+    meter = geometrie_qa.tiefenstruktur(_feld(lambda x, y: 3.0 if x < 8 else 9.0), breite=16)
+    zenti = geometrie_qa.tiefenstruktur(_feld(lambda x, y: 300.0 if x < 8 else 900.0), breite=16)
+
+    assert meter["struktur"] == pytest.approx(zenti["struktur"])
+
+
+def test_hintergrundpunkte_und_ihre_kanten_zaehlen_nicht_mit():
+    """Der Sprung von der Fassade auf die Himmelsmarke ist keine Struktur des Bauwerks.
+
+    Ohne diese Ausnahme sähe **jede** Aussenansicht strukturreich aus, auch eine leere.
+    """
+    mit_himmel = _feld(lambda x, y: 5.0 + 0.01 * x if x < 8 else 1e10)
+    befund = geometrie_qa.tiefenstruktur(mit_himmel, breite=16)
+
+    assert befund["n_hintergrund"] == 8 * 16
+    assert befund["struktur"] == pytest.approx(0.0, abs=1e-12), \
+        "die Kante zur Marke darf nicht als Struktur zaehlen"
+
+
+def test_eine_karte_ohne_spanne_ist_nicht_gemessen_und_nicht_strukturlos():
+    befund = geometrie_qa.tiefenstruktur([4.0] * 256, breite=16)
+
+    assert befund["struktur"] is None
+    assert "NICHT GEMESSEN" in befund["warnungen"][0]
+
+
+def test_eine_karte_die_nicht_zur_breite_passt_fliegt():
+    with pytest.raises(geometrie_qa.QaError, match="passt nicht"):
+        geometrie_qa.tiefenstruktur([1.0] * 10, breite=3)

@@ -63,6 +63,21 @@ Dateiformats. «Gemessen» heisst: an echten Dateien nachgeprüft — seit dem 1
 die Höhenachse von KosmoOrbit an zwei Dateien exakt bestätigt wurde. Die ersten beiden
 werden ohne Rückfrage benutzt, die anderen nie. Eine Sicherheit gehört an ihre Quelle.*
 
+**Örtliche Ergänzung (Drop-in)** — Eine kleine Zusatzdatei neben einer
+Dienstbeschreibung, die einzelne Einstellungen überschreibt, ohne die Hauptdatei
+anzufassen. *Das Betriebssystem liest beide. Unser Wächter las lange nur die Hauptdatei —
+und meldete darum «alles gleich», während der Dienst mit einer anderen Einstellung lief.*
+
+**Zweite Differenz (Krümmung)** — Nicht «wie stark ändert sich der Wert von Punkt zu
+Punkt», sondern «ändert sich die Änderung». *Der Unterschied entscheidet hier alles: Eine
+gleichmässig ansteigende Tiefenkarte — eine leere Wand — hat eine ständige, aber immer
+gleiche Änderung; die zweite Differenz ist null. Eine Kante hat sie nicht. Deshalb erkennt
+sie eine strukturlose Vorlage, während die erste Differenz beide Fälle gleich bewertet.*
+
+**Ersatzschreibung der Umlaute** — «ae», «oe», «ue» statt ä, ö, ü — was jeder tippt, der
+keine deutsche Tastatur hat. *Unser Wörterbuch war auf echte Umlaute geschlüsselt, und
+darum blieb «betonwaende» unübersetzt, während «betonwände» zu «concrete walls» wurde.*
+
 **Stilles Abstreifen (unbekannter Felder)** — Wenn eine Schnittstelle ein Feld, das sie
 nicht kennt, einfach wegwirft, statt sich zu beschweren. *Klingt harmlos und ist es nicht:
 Wer ein Feld setzt und kein Wort hört, hält es für bedient. Bei uns hätte ein
@@ -4568,6 +4583,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-12 | Ergaenzt aus dem ersten Lauf bis zum fertigen Bild: **Oertliche Ergaenzung (Drop-in)**, **Zweite Differenz (Kruemmung)**, **Ersatzschreibung der Umlaute**. Alle drei aus gemessenen Befunden — der Waechter las nur die Hauptdatei, die vorgeschlagene Kennzahl trennte Verlauf und Kante nicht, und «betonwaende» erreichte das Glossar nicht |
 | 2026-09-11 | Ergaenzt aus `herkunft.py`: **Herkunftstabelle** und **Belegt, gemessen, vermutet, unbekannt**. Die vierte Stufe entstand, weil eine zweifach exakte Messung weder «Norm» noch «Gewohnheit» ist |
 | 2026-09-11 | Ergaenzt aus dem Befund der HomeStation zum Renderprojekt: **Stilles Abstreifen (unbekannter Felder)**. Der Begriff wurde noetig, weil `lies_szene` erfundene Bestellfelder spurlos verschluckt hat — gemessen, nicht vermutet |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |

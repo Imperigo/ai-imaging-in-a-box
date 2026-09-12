@@ -608,3 +608,66 @@ def test_ein_wirklich_unbekanntes_wort_wird_weiterhin_gemeldet():
 
     assert ergebnis["unbekannt"], "die Meldung muss weiter greifen"
     assert ergebnis["vollstaendig"] is False
+
+
+# ── Ersatzschreibung der Umlaute (12.09.2026) ────────────────────────────────────────
+#
+# Der Anlass ist ein Ausfall an der Naht, gemeldet von der HomeStation nach dem ersten
+# Lauf von der Szene bis zum fertigen Bild: Im Prompt stand «vier, betonwaende», und
+# beides blieb deutsch stehen. Nachgemessen:
+#
+#     betonwände  -> concrete walls    (das Glossar kann es)
+#     betonwaende -> betonwaende       (dasselbe Wort, unberührt)
+#
+# Das Glossar ist auf echte Umlaute geschlüsselt. Wer ohne deutsche Tastatur tippt,
+# erreicht es nicht — und dieses Repo selbst schreibt in jedem zweiten Kommentar
+# «waende».
+
+def test_der_gemeldete_fall_wird_jetzt_uebersetzt():
+    """Wörtlich der Prompt aus dem Befund."""
+    assert sprache.uebersetze("vier, betonwaende")["uebersetzt"] == "vier, concrete walls"
+
+
+def test_ersatzschreibung_und_umlaut_ergeben_dasselbe():
+    mit = sprache.glossar_uebersetzung("betonwände")["text"]
+    ohne = sprache.glossar_uebersetzung("betonwaende")["text"]
+
+    assert mit == ohne == "concrete walls"
+
+
+def test_die_regel_kann_nichts_erfinden():
+    """Dieselbe Zusage wie bei `grundform`: gefunden wird nur, was im Glossar steht.
+
+    `blue` würde zu `blü`, `value` zu `valü`, `true` zu `trü` — keines davon ist ein
+    Eintrag, also bleibt alles stehen. Ein englischer Prompt darf hier nicht kippen.
+    """
+    for englisch in ("blue", "value", "true", "queue", "guest"):
+        assert sprache.glossar_uebersetzung(englisch)["text"] == englisch
+
+
+def test_ein_englischer_prompt_gilt_weiterhin_nicht_als_deutsch():
+    """Die Gegenprobe zum zweiten Zeugen — ohne sie hätte er alles Deutsche gefunden."""
+    for englisch in ("a modern concrete building with glass facade, four storeys",
+                     "exterior view, afternoon light, soft shadows",
+                     "photorealistic render of a house"):
+        assert sprache.ist_deutsch(englisch) is False, englisch
+        assert sprache.uebersetze(englisch)["uebersetzt"] == englisch
+
+
+def test_der_zweite_zeuge_kennt_jetzt_die_regeln():
+    """**Der eigentliche Fehler war nicht das Glossar, sondern der Zeuge.**
+
+    `betonwaende` ist kein Eintrag; erst die Regeln machen daraus `concrete walls`.
+    `glossar_evidenz` sah nur Einträge, `ist_deutsch` sagte darum nein — und die
+    Übersetzung lief gar nicht erst an. *Ein Zeuge, der weniger kennt als der, für den er
+    aussagt, spricht regelmässig frei.*
+    """
+    assert "betonwaende" in sprache.glossar_evidenz("vier, betonwaende")
+    assert sprache.ist_deutsch("vier, betonwaende") is True
+
+
+def test_einzelne_stellen_werden_auch_geprueft():
+    """Ein echtes «ue» anderswo im Wort darf die Umlautstelle nicht blockieren."""
+    kandidaten = sprache._umlaut_kandidaten("neuewaende")
+
+    assert "neuewände" in kandidaten

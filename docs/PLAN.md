@@ -5253,3 +5253,48 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Offen aus `auf-vis-20260825-14`, Lücke 5.2:** `denoise` und die Schrittzahl des
       fremden Vertrags werden nicht abgebildet. Im Quelltext benannt, nirgends beauftragt.
       *Adressat: `cloud` — es ist eine Vertragsfrage, keine Programmfrage.*
+
+
+---
+
+## Drei Befunde aus dem ersten Lauf bis zum fertigen Bild (12.09.2026)
+
+> **Entschieden:** Der Ablageort der Brücke kommt aus `$AIIMAGING_STORE`, nicht in die
+> eingecheckte Diensteinheit. Der Wächter über die Einheiten liest ab jetzt die örtlichen
+> Ergänzungen mit.
+> **Gemessen:** Die vorgeschlagene Nachbarabweichung trennt Verlauf und Kante **nicht**
+> (beide 0,0333); die zweite Differenz trennt (0,0000 gegen 0,0714). Der halb übersetzte
+> Prompt ist reproduziert und in zwei Ursachen zerlegt.
+> **Offen:** Ob aus der Strukturzahl ein zweites Tor neben dem Füllgrad wird.
+
+- [x] **Der Abholer war taub, und die Probe merkte es nicht.** Die HomeStation hat die
+      Ablage der Brücke verlegt (richtig begründet: `/tmp` ist dort ein tmpfs, jeder
+      Auftrag hätte 1,7 GB RAM gekostet) und eine örtliche Ergänzung der Diensteinheit
+      gesetzt. Sie haben uns gewarnt, unsere Probe werde das melden — **sie tat es nicht**:
+      Sie vergleicht die Einheit *als Datei*, und eine Ergänzung liegt daneben in
+      `<name>.d/*.conf`. *Ein Wächter, der nur die Datei vergleicht, die er kennt, bewacht
+      nicht den Dienst, sondern ein Dokument.* Drei Entscheide: `$AIIMAGING_STORE` statt
+      Pfad in der Vorlage (der Pfad trägt einen **Projektnamen**, Regel 3), die Probe liest
+      Ergänzungen mit und nennt sie, und der Lauf nennt den Pfad, den er angesehen hat —
+      *eine Null ohne den Ort, an dem sie entstanden ist, ist keine Auskunft.*
+- [x] **Der halb übersetzte Prompt — zwei Ursachen, nicht eine.** «vier, betonwaende» blieb
+      deutsch stehen. Erstens ist das Glossar auf **echte Umlaute** geschlüsselt:
+      `betonwände` → «concrete walls», `betonwaende` → unberührt. Zweitens, und tiefer: Der
+      Zeuge `glossar_evidenz` kannte nur **Einträge**, nicht die Regeln — `ist_deutsch`
+      sagte darum nein, und die Übersetzung lief **gar nicht erst an**. *Ein Zeuge, der
+      weniger kennt als der, für den er aussagt, spricht regelmässig frei.* Beides behoben,
+      die Umlautauflösung greift nur bei Formen, die **im Glossar stehen** — `blue`,
+      `value`, `true` bleiben unberührt, drei englische Prompts gegengeprüft.
+- [ ] **Der Rahmungsriegel entscheidet falsch herum.** Er wies die brauchbare
+      Übersichtskamera ab (59,9 % — auf die Stelle genau unser gemessenes Knie) und liess
+      die nutzlose Nahaufnahme durch (100 % Füllgrad, 5,1 m vor einer fensterlosen Wand,
+      Tiefenkarte ein reiner Verlauf). *Der Riegel schliesst von einer Messreihe auf ein
+      Gebiet, das sie nicht enthält* — die Kurve ist nicht monoton, und der obere Bereich
+      ist nie gemessen worden.
+      **Gebaut ist die Messung, nicht das Tor:** `geometrie_qa.tiefenstruktur`. Dabei ist
+      der Vorschlag der HomeStation durchgefallen — die mittlere Nachbarabweichung liefert
+      für Verlauf und Kante **dieselbe Zahl**; erst die zweite Differenz trennt.
+      *Adressat: `local` für eine Messreihe an ihren beiden Kameras, dann `kern`.*
+- [ ] **Zahlwörter stehen in keinem Glossar.** `vier` bleibt im Prompt deutsch. Eine Lücke
+      und kein Fehler — sie gehört benannt, bevor jemand sie für einen hält. *Adressat:
+      `kern`.*

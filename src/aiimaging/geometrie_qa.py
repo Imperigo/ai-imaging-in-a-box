@@ -2209,6 +2209,136 @@ def himmel_hinter_umriss(soll, maske, *, breite: int,
 MAX_DURCHSICHT_ANTEIL = 0.001
 
 
+def tiefenstruktur(karte: Sequence[float], *, breite: int,
+                   hintergrund_grenze: float = HINTERGRUND_SCHWELLE_M) -> dict:
+    """Hat diese Tiefenkarte **Kanten** — oder ist sie ein reiner Verlauf?
+
+    **Der Anlass** (HomeStation, 12.09.2026, erster Lauf von der Szene bis zum fertigen
+    Bild): Der Rahmungsriegel misst den **Füllgrad** und entschied damit falsch herum. Er
+    wies die brauchbare Übersichtskamera ab — *«Das Bauwerk füllt 59.9 % der Bildbreite,
+    gemessen nötig sind 65 %»* — und liess die **nutzlose Nahaufnahme durch**, die mit
+    100 % Füllgrad 5,1 m vor einer fensterlosen Wand stand. Dort war *«die Tiefenkarte ein
+    reiner Verlauf ohne jede Kante, und das Bildmodell hat frei erfunden»*.
+
+    **Warum es zwei Zahlen sind, und warum die erste allein nicht reicht.** Der Vorschlag
+    von dort war die *mittlere Abweichung zum Nachbarpunkt*. Beim Nachrechnen an zwei
+    synthetischen Karten fiel auf: massstabsfrei gemacht — also durch die Spanne geteilt —
+    liefert sie für einen reinen Verlauf und für eine harte Kante **dieselbe Zahl** —
+    an einem 16×16-Feld beide Male 0,0333, auf vier Stellen gleich. Der Grund ist
+    einfach: Ein Verlauf hat an *jedem* Paar eine kleine Differenz, eine Kante an
+    *einem* Paar eine grosse, und Mittelwert geteilt durch Spanne hebt das gegeneinander
+    auf.
+
+    *Eine Kennzahl, die stimmt, während das Bild schlechter wird, ist die falsche
+    Kennzahl* — derselbe Satz, den die HomeStation aus ihrem Renderprojekt mitgeschickt
+    hat, hier auf ihren eigenen Vorschlag angewandt.
+
+    Was trennt, ist die **zweite Differenz** (Krümmung): Ein linearer Verlauf hat sie
+    **null**, eine Kante nicht. Gemessen an denselben Karten, 16×16:
+
+    ===================  ============  ==================
+    Karte (16×16)        ``glaette``   ``struktur``
+    ===================  ============  ==================
+    reiner Verlauf          0,0333       **0,0000**
+    harte Kante             0,0333       **0,0714**
+    Raum mit Boden          0,0479       **0,0402**
+    ===================  ============  ==================
+
+    Die mittlere Zeile ist der Prüfstein: Dieselbe ``glaette``, und die eine Karte trägt
+    alles, was ein ControlNet braucht, die andere nichts.
+
+    ``struktur`` ist die tragende Zahl, ``glaette`` steht daneben, weil sie der
+    ursprüngliche Vorschlag war und ihr Versagen dokumentiert gehört.
+
+    **Das ist eine Messung und kein Riegel.** Sie entscheidet nichts. Eine Schwelle aus
+    zwei Fällen wäre an zwei Fällen geeicht — dieselbe Zurückhaltung wie bei den
+    Paarschwellen. Ob daraus ein zweites Tor neben dem Füllgrad wird, entscheidet eine
+    Messreihe.
+
+    Hintergrundpunkte (≥ ``hintergrund_grenze``) werden **ausgelassen**, und jedes Paar
+    mit einem: Der Sprung von einer Fassade auf die Himmelsmarke ist keine Struktur des
+    Bauwerks, sondern der Abstand zu einer Konstanten — er liesse jede Aussenansicht
+    strukturreich aussehen, auch eine leere.
+
+    Returns:
+        ``{struktur, glaette, n_stellen, n_paare, n_hintergrund, spanne, warnungen}``.
+        ``struktur`` ist ``None``, wenn zu wenig zu vergleichen war oder die Karte keine
+        Spanne hat — *nicht* 0: Eine Karte ohne Spanne ist **nicht gemessen** und nicht
+        *strukturlos*.
+    """
+    if breite is None or int(breite) <= 0:
+        raise QaError(f"breite muss eine positive ganze Zahl sein, war {breite!r}")
+    breite = int(breite)
+    if len(karte) % breite:
+        raise QaError(f"Karte mit {len(karte)} Punkten passt nicht zu Breite {breite}.")
+
+    hoehe = len(karte) // breite
+    grenze = float(hintergrund_grenze)
+    echt = [float(w) for w in karte]
+    innen = [w < grenze for w in echt]
+
+    antwort = {"struktur": None, "glaette": None, "n_stellen": 0, "n_paare": 0,
+               "n_hintergrund": sum(1 for d in innen if not d), "spanne": None,
+               "warnungen": []}
+
+    werte = [w for w, d in zip(echt, innen) if d]
+    if len(werte) < 2:
+        antwort["warnungen"].append(
+            "Weniger als zwei Punkte ohne Hintergrundmarke — NICHT GEMESSEN.")
+        return antwort
+    spanne = max(werte) - min(werte)
+    antwort["spanne"] = spanne
+    if spanne <= 0.0:
+        antwort["warnungen"].append(
+            "Die Karte hat keine Spanne — alle Punkte tragen denselben Wert. NICHT "
+            "GEMESSEN; eine massstabsfreie Zahl entstuende hier nur durch Division durch "
+            "null. (Eine Tiefenkarte ohne jede Staffelung ist fuer sich schon ein Befund.)")
+        return antwort
+
+    # Erste Differenz — der urspruengliche Vorschlag. Steht da, trennt aber nicht.
+    summe1 = 0.0
+    paare = 0
+    for y in range(hoehe):
+        for x in range(breite):
+            i = y * breite + x
+            if not innen[i]:
+                continue
+            if x + 1 < breite and innen[i + 1]:
+                summe1 += abs(echt[i] - echt[i + 1])
+                paare += 1
+            if y + 1 < hoehe and innen[i + breite]:
+                summe1 += abs(echt[i] - echt[i + breite])
+                paare += 1
+
+    # Zweite Differenz — die Zahl, die traegt.
+    summe2 = 0.0
+    stellen = 0
+    for y in range(hoehe):
+        for x in range(1, breite - 1):
+            i = y * breite + x
+            if innen[i - 1] and innen[i] and innen[i + 1]:
+                summe2 += abs(echt[i - 1] - 2 * echt[i] + echt[i + 1])
+                stellen += 1
+    for y in range(1, hoehe - 1):
+        for x in range(breite):
+            i = y * breite + x
+            if innen[i - breite] and innen[i] and innen[i + breite]:
+                summe2 += abs(echt[i - breite] - 2 * echt[i] + echt[i + breite])
+                stellen += 1
+
+    antwort["n_paare"] = paare
+    antwort["n_stellen"] = stellen
+    if paare:
+        antwort["glaette"] = (summe1 / paare) / spanne
+    if stellen == 0:
+        antwort["warnungen"].append(
+            "Keine Stelle mit drei benachbarten Punkten ohne Hintergrundmarke — die "
+            "zweite Differenz ist NICHT GEMESSEN.")
+        return antwort
+    antwort["struktur"] = (summe2 / stellen) / spanne
+    return antwort
+
+
 #: Ab welchem Anteil markierter Maskenpunkte gewarnt wird.
 #:
 #: **Gemessen, nicht gesetzt:** Die HomeStation hat am 08.09.2026 (`auf-20260907-81`) den

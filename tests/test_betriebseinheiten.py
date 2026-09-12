@@ -118,6 +118,29 @@ def test_eingebaut_deckt_sich_mit_eingecheckt(einheit: Path):
             f"Geraet. Neu einspielen und `systemctl --user daemon-reload`."
         )
 
+    # OERTLICHE ERGAENZUNGEN SIND ERLAUBT — ABER NICHT UNSICHTBAR (12.09.2026).
+    #
+    # systemd liest neben der Einheit auch `<name>.d/*.conf`. Die HomeStation hat dort
+    # am 11.09.2026 ihren eigenen Ablageort gesetzt, statt unsere Vorlage zu aendern, und
+    # hat uns das ausdruecklich gesagt: «Deine Probe wird das melden, und sie hat recht.»
+    #
+    # Sie hatte NICHT recht — sie sah die Ergaenzung gar nicht. Die Datei deckte sich, und
+    # der Dienst lief mit einer anderen Einstellung. *Ein Waechter, der nur die Datei
+    # vergleicht, die er kennt, bewacht nicht den Dienst, sondern ein Dokument.*
+    #
+    # Verboten wird die Ergaenzung nicht: Ein Pfad, der nur auf einer Maschine gilt,
+    # gehoert nicht in eine eingecheckte Vorlage — und der hier traegt ausserdem einen
+    # Projektnamen (Regel 3). Verlangt wird nur, dass sie SICHTBAR ist.
+    ergaenzungen = sorted((EINHEITEN / f"{einheit.name}.d").glob("*.conf"))
+    if ergaenzungen:
+        zeilen = []
+        for datei in ergaenzungen:
+            for zeile in datei.read_text(encoding="utf-8").splitlines():
+                if zeile.strip().startswith(("ExecStart", "Environment")):
+                    zeilen.append(f"{datei.name}: {zeile.strip()}")
+        print(f"\n{einheit.name}: {len(ergaenzungen)} oertliche Ergaenzung(en) — "
+              + ("; ".join(zeilen) if zeilen else "ohne ExecStart/Environment"))
+
 
 def _hilfetexte(pfad: Path):
     """(Zeile, Hilfetext) jedes ``add_argument(help=...)`` mit auswertbarem Literal."""
@@ -169,3 +192,53 @@ def test_jede_argparse_hilfe_ist_formatierbar(skript: Path):
         f"argparse als `%%` geschrieben. Unter Python 3.14 wirft schon `add_argument` — "
         f"das Werkzeug startet dann ueberhaupt nicht mehr."
     )
+
+
+# ── Oertliche Ergaenzungen: erlaubt, aber nicht unsichtbar (12.09.2026) ───────────────
+
+def test_ein_dropin_wird_gefunden_und_genannt(tmp_path, capsys):
+    """Der Wächter las bis zum 12.09.2026 nur die Einheit selbst.
+
+    Die HomeStation hat an jenem Tag ihren Ablageort über eine Ergänzung gesetzt und uns
+    gewarnt: *«Deine Probe wird das melden, und sie hat recht.»* **Sie hatte nicht
+    recht** — die Datei deckte sich, und der Dienst lief trotzdem mit einer anderen
+    Einstellung. *Ein Wächter, der nur die Datei vergleicht, die er kennt, bewacht nicht
+    den Dienst, sondern ein Dokument.*
+    """
+    einheiten = tmp_path / "systemd"
+    (einheiten / "probe.service.d").mkdir(parents=True)
+    (einheiten / "probe.service.d" / "store.conf").write_text(
+        "[Service]\nEnvironment=AIIMAGING_STORE=/anderswo/auftraege\n", encoding="utf-8")
+
+    gefunden = sorted((einheiten / "probe.service.d").glob("*.conf"))
+    zeilen = [z.strip() for d in gefunden
+              for z in d.read_text(encoding="utf-8").splitlines()
+              if z.strip().startswith(("ExecStart", "Environment"))]
+
+    assert len(gefunden) == 1
+    assert zeilen == ["Environment=AIIMAGING_STORE=/anderswo/auftraege"]
+
+
+def test_der_ablageort_kommt_aus_der_umgebung():
+    """`--store` ist ab dem 12.09.2026 über `$AIIMAGING_STORE` setzbar.
+
+    Damit braucht die eingecheckte Vorlage den maschinenabhängigen Pfad nicht zu tragen —
+    und sie darf ihn auch nicht: Der Pfad der HomeStation führt einen **Projektnamen**,
+    und der hat nach Regel 3 in diesem Repo nichts zu suchen.
+    """
+    import importlib.util
+    import os
+
+    spec = importlib.util.spec_from_file_location("abholen_probe", REPO / "tools" / "abholen.py")
+    modul = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modul)
+
+    alt = os.environ.get(modul.UMGEBUNG_STORE)
+    try:
+        os.environ[modul.UMGEBUNG_STORE] = "/anderswo/auftraege"
+        assert modul.vorgabe_store() == "/anderswo/auftraege"
+        del os.environ[modul.UMGEBUNG_STORE]
+        assert modul.vorgabe_store() == modul.VORGABE_STORE
+    finally:
+        if alt is not None:
+            os.environ[modul.UMGEBUNG_STORE] = alt

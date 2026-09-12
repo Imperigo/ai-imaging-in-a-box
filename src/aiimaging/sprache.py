@@ -783,6 +783,57 @@ def _entumlautet(wort: str) -> str:
     return "".join(_ENTUMLAUTUNG.get(z, z) for z in wort)
 
 
+#: Die Ersatzschreibung der Umlaute, wie sie jeder tippt, der keine deutsche Tastatur hat.
+UMLAUTSCHREIBUNG = (("ae", "ä"), ("oe", "ö"), ("ue", "ü"))
+
+
+def _umlaut_kandidaten(wort: str) -> tuple[str, ...]:
+    """Mögliche Umlautformen eines in Ersatzschreibung getippten Wortes.
+
+    **Der Anlass ist ein Ausfall an der Naht** (HomeStation, 12.09.2026): Im Prompt
+    standen *«vier, betonwaende»*, und beide Wörter blieben deutsch stehen. Nachgemessen:
+
+        ``betonwände``  → ``concrete walls``    (das Glossar kann es)
+        ``betonwaende`` → ``betonwaende``       (dasselbe Wort, unberührt)
+
+    Das Glossar ist auf echte Umlaute geschlüsselt. Wer ohne deutsche Tastatur tippt —
+    oder aus einer Datei kommt, die keine Umlaute führt —, erreicht es nicht. *Dieses Repo
+    selbst schreibt in jedem zweiten Kommentar «waende».*
+
+    **Diese Regel kann nichts erfinden, sie kann nur finden** — dieselbe Zusage wie in
+    :func:`grundform`. Zurückgegeben werden Kandidaten; ob einer gilt, entscheidet
+    ausschliesslich, ob er **im Glossar steht**. ``blue`` wird zu ``blü`` und damit zu
+    nichts, ``neue`` zu ``neü`` und damit zu nichts.
+    """
+    klein = (wort or "").lower()
+    kandidaten: list[str] = []
+
+    alle = klein
+    for ersatz, umlaut in UMLAUTSCHREIBUNG:
+        alle = alle.replace(ersatz, umlaut)
+    if alle != klein:
+        kandidaten.append(alle)
+
+    # Und jede EINZELNE Stelle für sich — «Steuerhaus» darf nicht daran scheitern, dass
+    # anderswo im selben Wort ein echtes «ue» steht.
+    for ersatz, umlaut in UMLAUTSCHREIBUNG:
+        stelle = klein.find(ersatz)
+        while stelle >= 0:
+            kandidat = klein[:stelle] + umlaut + klein[stelle + len(ersatz):]
+            if kandidat not in kandidaten:
+                kandidaten.append(kandidat)
+            stelle = klein.find(ersatz, stelle + 1)
+    return tuple(kandidaten)
+
+
+def _bekannte_umlautform(wort: str) -> str | None:
+    """Die erste Umlautform, die **im Glossar steht** — oder ``None``."""
+    for kandidat in _umlaut_kandidaten(wort):
+        if kandidat in GLOSSAR:
+            return kandidat
+    return None
+
+
 def grundform(wort: str) -> str | None:
     """Die Glossarform eines gebeugten Wortes — oder ``None``.
 
@@ -797,12 +848,18 @@ def grundform(wort: str) -> str | None:
     klein = (wort or "").lower()
     if not klein or klein in GLOSSAR:
         return klein if klein in GLOSSAR else None
+    # Ersatzschreibung der Umlaute, VOR dem Abstreifen von Endungen: «waende» ist als
+    # «wände» ein Eintrag, und kein Stamm davon ist einer.
+    umlautform = _bekannte_umlautform(klein)
+    if umlautform:
+        return umlautform
     for endung in ENDUNGEN:
         if not klein.endswith(endung) or len(klein) - len(endung) < 3:
             continue
         stamm = klein[: -len(endung)]
-        for kandidat in (stamm, _entumlautet(stamm)):
-            if kandidat in GLOSSAR:
+        for kandidat in (stamm, _entumlautet(stamm),
+                         _bekannte_umlautform(stamm) or ""):
+            if kandidat and kandidat in GLOSSAR:
                 return kandidat
     return None
 
@@ -833,6 +890,8 @@ def zerlege_kompositum(wort: str) -> tuple[str, ...] | None:
         return None
     for schnitt in range(MIN_TEILLAENGE, len(klein) - MIN_TEILLAENGE + 1):
         vorn, hinten = klein[:schnitt], klein[schnitt:]
+        if vorn not in GLOSSAR:
+            vorn = _bekannte_umlautform(vorn) or vorn
         if vorn not in GLOSSAR:
             continue
         hinten_grund = hinten if hinten in GLOSSAR else grundform(hinten)
@@ -951,6 +1010,25 @@ def glossar_evidenz(text: str) -> tuple[str, ...]:
     for fund in _GLOSSAR_MUSTER.finditer(text or ""):
         wort = fund.group(1).lower()
         if wort not in ENGLISCH_AUCH and wort not in funde:
+            funde.append(wort)
+
+    # ZWEITER BLICK: Wörter, die kein EINTRAG sind, aber von den REGELN erreicht werden.
+    #
+    # **Der Anlass** (HomeStation, 12.09.2026): Im Prompt stand «vier, betonwaende», und
+    # beides blieb deutsch stehen. `betonwaende` ist kein Glossareintrag — erst die Regeln
+    # machen daraus `concrete walls`. Dieser Zeuge sah davon nichts, `ist_deutsch` sagte
+    # nein, und die Übersetzung lief gar nicht erst an.
+    #
+    # *Ein Zeuge, der weniger kennt als der, für den er aussagt, spricht regelmässig frei.*
+    # Gezählt wird darum genau das, was die Übersetzung auch WIRKLICH umsetzen könnte —
+    # und nichts, was der englische Wortschatz kennt.
+    for fund in _WORT.finditer(text or ""):
+        wort = fund.group(0).lower()
+        if wort in funde or wort in ENGLISCH_AUCH:
+            continue
+        if wort in _ENGLISCHER_WORTSCHATZ:
+            continue
+        if grundform(wort) or zerlege_kompositum(wort):
             funde.append(wort)
     return tuple(funde)
 

@@ -240,6 +240,36 @@ def _gekuerzt(text: str, laenge: int = GEKUERZT_AUF) -> str:
     return f"{schnitt} … (+{len(text) - len(schnitt)} Zeichen)"
 
 
+#: Wo die Bruecke ihre Auftraege ablegt, wenn niemand etwas anderes sagt.
+VORGABE_STORE = "/tmp/kosmo-jobs"
+
+#: Die Umgebungsvariable, mit der ein Geraet seinen eigenen Ablageort setzt.
+UMGEBUNG_STORE = "AIIMAGING_STORE"
+
+
+def vorgabe_store() -> str:
+    """Der Ablageort der Bruecke: ``$AIIMAGING_STORE``, sonst :data:`VORGABE_STORE`.
+
+    **Der Anlass ist ein Ausfall, den niemand gemerkt hat** (HomeStation, 11.09.2026).
+    Sie haben die Ablage der Bruecke von ``/tmp/kosmo-jobs`` auf eine eigene Platte
+    verlegt, und der Grund war richtig und gemessen: ``/tmp`` ist dort ein tmpfs, also
+    Arbeitsspeicher, und mit dem angehobenen Upload-Deckel haette jeder Auftrag rund
+    1,7 GB RAM gekostet.
+
+    Verschoben wurde damit **eine Seite der Naht**. Der Abholer sah weiter unter seiner
+    Vorgabe nach, fand einen leeren Ordner — *der Ordner war da, nur leer* — und meldete
+    brav ``verarbeitet: 0``. Kein Fehler, keine Warnung, einfach taub.
+
+    **Warum eine Umgebungsvariable und nicht der neue Pfad in der Diensteinheit.** Der
+    Pfad gilt nur auf diesem einen Geraet. Er in die eingecheckte Vorlage zu schreiben
+    hiesse, eine Maschine zur Norm zu machen — und er traegt ausserdem einen
+    Projektnamen, der nach Regel 3 in diesem Repo nichts zu suchen hat. Dieselbe Bauform
+    benutzen ``AIIMAGING_MODELLE`` und ``AIIMAGING_JOB_DIR`` bereits.
+    """
+    import os
+    return os.environ.get(UMGEBUNG_STORE) or VORGABE_STORE
+
+
 def main(argv=None) -> int:
     """Der Einstieg — und ``argv`` ist seit dem 01.09.2026 ein Parameter.
 
@@ -253,8 +283,9 @@ def main(argv=None) -> int:
     selbst einer.* Die Vorgabe ``None`` ändert am Dienstbetrieb nichts.
     """
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--store", default="/tmp/kosmo-jobs",
-                    help="Ablageort der Auftraege der BRUECKE (Vorgabe: /tmp/kosmo-jobs)")
+    ap.add_argument("--store", default=vorgabe_store(),
+                    help="Ablageort der Auftraege der BRUECKE (Vorgabe: $AIIMAGING_STORE, "
+                         "sonst /tmp/kosmo-jobs)")
     ap.add_argument("--out-wurzel", dest="out_wurzel", default=None,
                     help="Wohin die BILDER geschrieben werden — ein Ordner je Auftrag darunter, "
                          "benannt wie der Auftrag. Ohne Angabe schreibt der Lauf dorthin, wo der "
@@ -412,7 +443,15 @@ def main(argv=None) -> int:
             name=f"Auftrag {auftrag.get('job_id') or ziel.parent.name}")
 
     for name, pfad, quelle in ablagen:
-        print(f"\n=== Ablage: {name} ===")
+        # DER PFAD GEHOERT IN DIE ZEILE, NICHT NUR DER NAME.
+        #
+        # Bis zum 12.09.2026 stand hier «=== Ablage: Bruecke ===», und darunter
+        # «verarbeitet: 0». Beides war richtig und sagte das Entscheidende nicht: WO
+        # nachgesehen wurde. Am 11.09. hatte die HomeStation die Ablage verschoben, der
+        # Abholer sah weiter am alten Ort nach und meldete taub eine Null.
+        #
+        # Eine Null ohne den Ort, an dem sie entstanden ist, ist keine Auskunft.
+        print(f"\n=== Ablage: {name} — {pfad} ===")
         bericht = abholer.durchgang(pfad, verarbeite=verarbeite,
                                     fremde_freigabe_gilt=a.fremde_freigabe,
                                     darf_rechnen=karte_auskunft,
