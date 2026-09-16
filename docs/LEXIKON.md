@@ -2429,6 +2429,33 @@ als eines. Das Ergebnis war eine flachgedrückte Karte, auf der 98,7 % aller Pun
 0,99 lagen. **Ein festes Perzentil setzt voraus, dass man vorher weiss, wie viel Ferne im
 Bild steht — und wie viel Himmel im Bild steht, weiss nur das Bild.***
 
+**Feste Schranke (einer Tiefennormierung)** — Ein vorab gesetzter Meterwert, ab dem ein
+Tiefenwert als „Hintergrund" gilt und nicht mehr mitgerechnet wird. *In diesem Projekt
+`hintergrund_ab_m` = 10 000 000 m in `bildschreiben.normalisiere_tiefe`. Sie wurde
+eingeführt, weil Blenders eigener `Normalize`-Knoten über **alle** Bildpunkte normiert,
+also auch über den Hintergrund mit rund 10¹⁰ Metern — das Gebäude landet dann in den
+untersten Promille und wäre gleichmässig schwarz. Die Begründung stimmt, aber sie löst nur
+den extremen Fall. Am 16.09.2026 nachgerechnet: Eine Fernsichtebene bei 1600 m liegt weit
+unter der Schranke, gilt also als Gebäude — und das eigentliche Bauwerk nutzt danach
+**0,52 %** des Grauwertbereichs. **Eine feste Schranke setzt genauso wie ein festes
+Perzentil voraus, dass man vorher weiss, wo die Ferne anfängt.** Der Fall war der
+HomeStation aufgefallen, die ihn für einen Fehler ihrer eigenen Normierung hielt; er ist
+unserer.*
+
+**Nutzung des Wertebereichs** — Welchen Anteil der verfügbaren Helligkeitsstufen ein
+Bildinhalt tatsächlich belegt. Zwei Karten können dieselben Meter enthalten und trotzdem
+verschieden brauchbar sein: Drängt sich alles Wesentliche in ein halbes Prozent der Stufen,
+fallen feine Tiefenunterschiede beim Runden einfach weg. *In diesem Projekt die Zahl, an
+der die Lücken-Trennung ihren Nutzen zeigt: 0,52 % gegen 100 % an derselben Karte — die
+192-fache Auflösung dort, wo das Bild stattfindet, für 1,14 % Punkte, die dafür geklemmt
+werden.*
+
+**Klemmen (einer Tiefenkarte)** — Alles jenseits einer Obergrenze auf genau diese Grenze
+setzen, statt es wegzuwerfen. Der geklemmte Punkt bleibt Geometrie, verliert aber seine
+Abstufung. *In diesem Projekt der Preis der Lücken-Trennung, und er muss in den Angaben zur
+Karte stehen: Wer aus dem PNG wieder Meter rechnet, hält geklemmte Punkte sonst für echte
+Messwerte — ein Fehlschlag, der wie ein Erfolg aussieht.*
+
 **Verhältnissprung gegen Abstandssprung** — Zwei Arten, „hier ist eine Lücke" zu messen.
 Der **Abstand** fragt *wie viele Meter* zwischen zwei benachbarten Werten liegen, das
 **Verhältnis** fragt *um welchen Faktor* der grössere den kleineren übertrifft. *In diesem

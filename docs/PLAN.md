@@ -5221,6 +5221,19 @@ Bekannt und ausdrücklich nicht erledigt:
       stehen noch Nachbarhäuser. Gemessen: Obergrenze 145,5 m → Innenraum nutzt 5,7 % des
       Wertebereichs, Obergrenze 9,4 m → 100 %. *Adressat: `kern`; betrifft
       `aiimaging.bildlesen` und die Normierung der Soll-Karte.*
+- [ ] **Der Einbauort war falsch notiert — und dahinter lag ein grösserer Befund**
+      (16.09.2026). Die Normierung sitzt nicht in `bildlesen`, sondern in
+      `bildschreiben.normalisiere_tiefe`. Wichtiger: Die flachgedrückte Karte vom
+      11.09.2026 stammt **nicht** aus dem Perzentil der HomeStation, sondern aus
+      unserer eigenen festen Schranke `hintergrund_ab_m` (10⁷ m). Nachgerechnet ergibt
+      unsere Normierung an der gemeldeten Verteilung genau die gemeldete Zahl: 98,9 %
+      der Punkte über 0,99, der Kern nutzt **0,52 %** des Grauwertbereichs. Mit der
+      Lücke als Obergrenze sind es **100 %**, Preis 1,14 % geklemmte Punkte.
+      *Eine feste Schranke setzt genauso wie ein festes Perzentil voraus, dass man
+      vorher weiss, wo die Ferne anfängt.* Der Schalter wird gebaut und bleibt **aus**,
+      die Messung läuft mit — die Umstellung muss der HomeStation angesagt werden,
+      bevor sie bei ihr ankommt. *Adressat: `kern` für den Schalter, `local` für die
+      Ansage und den Entscheid.*
 - [ ] **Laufzeit und Platz gehören in den Vertrag.** 775,5 s gegen unsere Planungszahl von
       rund 18 s ist Faktor 40; ein Ebenensatz misst 467 MB, neun davon 3,3 GB. Unser
       Auftragswesen kennt weder Laufzeitklasse noch Platzangabe. *Adressat: `cloud`
