@@ -74,6 +74,40 @@ KONVENTION = (
 
 RUECKRECHNUNG = "meter = max_m - grau * (max_m - min_m), grau in 0..1"
 
+#: Der dunkelste Grauwert, den **geklemmte Geometrie** noch bekommen darf.
+#:
+#: **Der Anlass ist ein Fehlschlag der ersten Fassung vom 16.09.2026, gemessen:** Geklemmt
+#: wurde auf ``max_m``, und das ergibt nach der Formel oben Grauwert genau 0.0 — also
+#: :data:`HINTERGRUND_GRAUWERT`. Die geklemmte Fernsichtebene war damit im PNG **byte-gleich
+#: mit dem Himmel**::
+#:
+#:     geklemmte Geometrie {0.0}   echter Hintergrund {0.0}   unterscheidbar: nein
+#:
+#: Das ist nicht nur hässlich, es ist genau der Silhouettenverlust, vor dem
+#: :mod:`aiimaging.bildlesen` an anderer Stelle warnt — nur absichtlich herbeigeführt und
+#: für 1,14 % der Punkte statt für den einen hintersten. Die Silhouette entsteht aus
+#: „Grauwert > Hintergrund"; geklemmte Punkte fielen heraus, und ``geom_iou`` fiele mit
+#: ihnen. **Eine Kennzahl, die stimmt, während das Bild schlechter wird, ist die falsche
+#: Kennzahl** — hier wäre es umgekehrt schlimmer: Das Bild bliebe gleich, die Kennzahl
+#: würde schlechter, und niemand wüsste warum.
+#:
+#: **Warum ein ganzer 8-Bit-Schritt und nicht ein halber.** Der erste Versuch war ein
+#: halber (1/510) mit der Begründung, er überlebe beide Bittiefen. Nachgemessen überlebt
+#: er sie nicht::
+#:
+#:     Boden 1/510:  16 Bit → Stufe 128 (≠ 0, gut)   8 Bit → Stufe 0 (KOLLISION)
+#:     Boden 1/255:  16 Bit → Stufe 257 (≠ 0, gut)   8 Bit → Stufe 1 (≠ 0, gut)
+#:
+#: Ein halber Schritt rundet auf null, das ist die Bedeutung von „halb". Unsere
+#: ``tiefe_norm.png`` ist 16-Bit, der 8-Bit-Fall wäre also gar nicht unser Weg — aber
+#: eine Begründung, die nur für den Weg gilt, den man ohnehin geht, trägt nichts. Ein
+#: ganzer 8-Bit-Schritt kostet 0,39 % des Wertebereichs; dagegen stehen die 192 Fachen,
+#: die die Lücken-Trennung überhaupt erst einbringt.
+#:
+#: **Gesetzt und nicht kalibriert**, aber die Richtung ist zwingend: Irgendein Wert echt
+#: über null muss es sein, sonst ist die Geometrie weg.
+GEKLEMMT_MINDESTGRAU = 1.0 / 255.0
+
 #: Ab welchem Faktor die Lücken-Messung einen Satz in ``warnungen`` wert ist.
 #:
 #: Verglichen wird, wie breit der Wertebereich **jetzt** ist (``max_m - min_m``) und wie
@@ -530,7 +564,20 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
             n_geklemmt += 1
         # nah = hell (ControlNet-Konvention). Der Hintergrund bleibt 0.0 — unendlich fern
         # ist der Grenzfall von „dunkel", nicht ein eigener Sonderfall.
-        grau[i] = 1.0 - (t - min_m) / spanne
+        wert = 1.0 - (t - min_m) / spanne
+        if ferne_getrennt:
+            # DER BODEN, UND ER GILT FUER ALLE GEOMETRIE DIESES LAUFS, nicht nur fuer die
+            # geklemmten Punkte. Zoege man ihn nur bei den geklemmten hoch, waeren sie
+            # HELLER als die echten hintersten Punkte — die Tiefenordnung stuende auf dem
+            # Kopf, und zwar genau bei den Punkten, die am weitesten weg sind. Ein Boden
+            # fuer alle verschiebt die Ordnung nicht, er staucht sie um einen halben
+            # 8-Bit-Schritt. Siehe GEKLEMMT_MINDESTGRAU.
+            #
+            # NUR im eingeschalteten Fall: Mit ausgeschaltetem Schalter bleibt die
+            # Rechnung Bit fuer Bit die von vorher. Die HomeStation faehrt diesen Code
+            # aus unserem Repo — was sie nicht bestellt hat, aendert sich nicht.
+            wert = GEKLEMMT_MINDESTGRAU + wert * (1.0 - GEKLEMMT_MINDESTGRAU)
+        grau[i] = wert
 
     # ── Die gefährlichste Stelle: Wer Meter zurückrechnet, muss das Klemmen sehen ─────
     #
@@ -565,7 +612,16 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
         "max_m": float(max_m),
         "konvention": KONVENTION,
         "hintergrund_grauwert": HINTERGRUND_GRAUWERT,
-        "rueckrechnung": RUECKRECHNUNG,
+        # DIE FORMEL, UND SIE IST IM EINGESCHALTETEN FALL EINE ANDERE. Der Boden unter
+        # der Geometrie (GEKLEMMT_MINDESTGRAU) staucht die Skala; wer weiter mit der
+        # alten Formel raeumt, bekommt jeden Punkt um bis zu einen halben 8-Bit-Schritt
+        # zu weit nach hinten. Das ist wenig — und genau darum gefaehrlich: Es faellt
+        # niemandem auf. Ein Feld, das in zwei Faellen dasselbe sagt und zwei
+        # verschiedene Dinge meint, ist schlimmer als zwei Felder.
+        "rueckrechnung": (RUECKRECHNUNG if not ferne_getrennt else
+                          "meter = max_m - (grau - boden) / (1 - boden) * (max_m - min_m), "
+                          "grau in boden..1, boden = geklemmt_mindestgrau"),
+        "geklemmt_mindestgrau": GEKLEMMT_MINDESTGRAU if ferne_getrennt else None,
         "n_geometriepixel": len(gueltig),
         # Wer den Wert später anders setzt, soll in der Datei sehen, wogegen gemessen
         # wurde — die Schranke bestimmt min_m und max_m mit.
@@ -635,7 +691,8 @@ def tiefe_exr_zu_png(exr, ziel_png, *, hintergrund_ab_m: float = HINTERGRUND_AB_
 
 
 __all__ = [
-    "HINTERGRUND_AB_M", "HINTERGRUND_GRAUWERT", "KONVENTION", "RUECKRECHNUNG",
+    "GEKLEMMT_MINDESTGRAU", "HINTERGRUND_AB_M", "HINTERGRUND_GRAUWERT", "KONVENTION",
+    "RUECKRECHNUNG",
     "LUECKE_WARNT_AB_FAKTOR",
     "SchreibError",
     "normalisiere_tiefe", "schreibe_farb_png", "schreibe_graustufen_png",

@@ -2450,6 +2450,26 @@ der die Lücken-Trennung ihren Nutzen zeigt: 0,52 % gegen 100 % an derselben Kar
 192-fache Auflösung dort, wo das Bild stattfindet, für 1,14 % Punkte, die dafür geklemmt
 werden.*
 
+**Boden (eines Wertebereichs)** — Ein kleinster Wert, den echter Bildinhalt nicht
+unterschreiten darf, damit er sich von „nichts" unterscheidet. *In diesem Projekt der
+Grund, warum geklemmte Geometrie nicht auf Grauwert 0 landet: Das **ist** der Wert des
+Hintergrunds. Am 16.09.2026 gemessen — die geklemmte Fernsichtebene war im Bild
+byte-gleich mit dem Himmel. Der Schaden liegt nicht im Bild, sondern in der Kennzahl: Die
+Silhouette entsteht aus „heller als der Hintergrund", geklemmte Punkte fielen heraus, und
+`geom_iou` fiele mit ihnen — **das Bild bliebe gleich gut, die Zahl würde schlechter, und
+niemand wüsste warum.** Der Boden gilt für alle Geometrie desselben Laufs und nicht nur
+für die geklemmten Punkte: Zöge man ihn nur dort hoch, wären die fernsten Punkte heller
+als die zweitfernsten, und die Tiefenordnung stünde auf dem Kopf.*
+
+**Quantisierungsschritt als Prüfstein** — Ein Unterschied zählt erst, wenn die Datei ihn
+noch trägt. Zwischen zwei Grauwerten kann rechnerisch etwas liegen und nach dem Runden auf
+die Stufen der Datei trotzdem nichts. *In diesem Projekt an der eigenen ersten Fassung
+vorgeführt: Als Boden war ein **halber** 8-Bit-Schritt gewählt, mit der Begründung, er
+überlebe beide Bittiefen. Nachgemessen tut er das nicht — ein halber Schritt rundet auf
+null, das ist die Bedeutung von «halb». Erst ein ganzer Schritt übersteht 16 **und** 8 Bit.
+Die Begründung war plausibel und falsch, und nur das Nachmessen hat den Unterschied
+gemacht.*
+
 **Klemmen (einer Tiefenkarte)** — Alles jenseits einer Obergrenze auf genau diese Grenze
 setzen, statt es wegzuwerfen. Der geklemmte Punkt bleibt Geometrie, verliert aber seine
 Abstufung. *In diesem Projekt der Preis der Lücken-Trennung, und er muss in den Angaben zur
@@ -4695,6 +4715,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-16 | Ergaenzt beim EINBAU der vier Bausteine: **Feste Schranke (einer Tiefennormierung)**, **Nutzung des Wertebereichs**, **Klemmen (einer Tiefenkarte)**, **Boden (eines Wertebereichs)**, **Quantisierungsschritt als Pruefstein**. Alle fuenf aus Befunden gegen den eigenen Code: Die am 11.09. gemeldete flachgedrueckte Tiefenkarte stammt aus UNSERER festen Schranke und nicht aus dem Perzentil der HomeStation (98,9 % der Punkte ueber 0,99, nachgerechnet); die erste Fassung des Ersatzes klemmte Geometrie auf den Hintergrundwert und machte sie damit unsichtbar fuer die Silhouette; und der zuerst gewaehlte halbe 8-Bit-Schritt als Boden ueberlebt die Rundung nicht, obwohl der Kommentar daneben behauptete, er tue es |
 | 2026-09-16 | Ergaenzt aus vier gleichzeitig gebauten Bausteinen: **Zweigipflige Verteilung**, **Luecke (einer Verteilung)**, **Verhaeltnissprung gegen Abstandssprung**, **Strukturwert einer Tiefenkarte**, **Auskunft neben dem Urteil**, **Rueckkanal**, **Falscher Freund**, **Kollision beim Endungsabstreifen**. Fuenf davon tragen einen Befund und keine Lehrmeinung: Das feste Perzentil scheiterte daran, dass die Fernsichtebene 1,13 % der Flaeche einnahm und nicht unter 1 % lag; die erste Differenz trennt Verlauf und Kante NICHT (beide 0,0333); die Strukturschwelle ist gesetzt und nicht kalibriert und entscheidet darum nichts; `elf` und `acht` bleiben aus dem Zahlwort-Glossar draussen, jedes aus einem eigenen, nachgemessenen Grund. **Berichtigt am selben Tag:** Die zweite Stufe der Luecken-Trennung lief zuerst von selbst und nahm in der nachgestellten Aussenansicht eine echte Nachbarzeile als Ferne weg — sie ist jetzt abgeschaltet, und ihre urspruengliche Begruendung war ohnehin hinfaellig, weil die erste Stufe den gemeldeten Fall schon selbst loest |
 | 2026-09-16 | Ergaenzt: **Warum eine Antwort fehlt — die vier Lagen**. Der Rueckstand zaehlte bis dahin nur, DASS eine Antwort fehlt. Bei 18 offenen Auftraegen und acht stillen Tagen war das zu wenig, um zu entscheiden, ob eine Nachfrage angebracht ist — gemessen: bei 2 von 18 |
 | 2026-09-12 | Ergaenzt aus dem ersten Lauf bis zum fertigen Bild: **Oertliche Ergaenzung (Drop-in)**, **Zweite Differenz (Kruemmung)**, **Ersatzschreibung der Umlaute**. Alle drei aus gemessenen Befunden — der Waechter las nur die Hauptdatei, die vorgeschlagene Kennzahl trennte Verlauf und Kante nicht, und «betonwaende» erreichte das Glossar nicht |

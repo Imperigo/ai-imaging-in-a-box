@@ -1026,7 +1026,8 @@ def zerlege_kompositum(wort: str) -> tuple[str, ...] | None:
 # Die Endungsregel deckt die ersten fünf Zeilen ab. Die letzten drei deckt sie nicht, und
 # keine Endungsregel der Welt könnte das: **ob ein Wort zählbar ist, steht nicht in seinen
 # Buchstaben.** Darum wird nur gebeugt, was in :data:`ZAEHLBAR` steht — ein Verzeichnis,
-# das am 16.09.2026 Eintrag für Eintrag durch alle 387 Glossarwerte gegangen ist.
+# das am 16.09.2026 Eintrag für Eintrag durch alle 387 Glossareinträge gegangen ist
+# (387 deutsche Einträge, darin 340 verschiedene englische Werte — nachgezählt).
 #
 # Was nicht darin steht, bleibt stehen. Ein unverändertes ``twelve window`` ist ein
 # sichtbarer Schönheitsfehler; ein erfundenes ``twelve concretes`` liest sich wie richtiges
@@ -1146,8 +1147,11 @@ SCHON_MEHRZAHL = frozenset({
 #:
 #: Dasselbe für mehrwortige Glossareinträge, die kein Hauptwort am Ende haben —
 #: ``in front of``, ``during the day``, ``out of focus``, ``black and white``,
-#: ``painted in a pale tone``. Alle fünf enden hier an ihrem ersten Funktionswort und
-#: werden nicht angefasst.
+#: ``painted in a pale tone``. Alle fünf enden hier an ihrem Funktionswort und werden
+#: nicht angefasst. Bei vieren steht es vorne; bei ``black and white`` steht es an
+#: zweiter Stelle, die Gruppe endet also erst nach ``black`` — auch das ist kein Kopf,
+#: den ein Verzeichnis kennt, und auch dort geschieht darum nichts (nachgefahren am
+#: 16.09.2026: ``zwei schwarzweiss`` → ``two black and white``).
 _MEHRZAHL_TRENNER = frozenset({
     "a", "an", "the", "of", "in", "at", "on", "to", "from", "and", "or", "with",
     "without", "no", "not", "for", "above", "below", "behind", "beside", "between",
@@ -1278,9 +1282,10 @@ def _ist_nachkommastelle(text: str, stuecke: list[re.Match], i: int) -> bool:
 
         ``f2.8 objektiv``  →  ``f2.8 lenses``
 
-    :data:`_ZAHL_ODER_WORT` liest ``\d+``, und ``2.8`` sind darin zwei Funde: ``2`` und
-    ``8``. Die ``8`` steht unmittelbar vor ``objektiv`` → ``lens``, ist grösser als eins,
-    und die Regel machte daraus pflichtschuldig eine Mehrzahl. Ebenso gemessen:
+    :data:`_ZAHL_ODER_WORT` liest Ziffernfolgen, und ``2.8`` sind darin zwei Funde:
+    ``2`` und ``8``. Die ``8`` steht unmittelbar vor ``objektiv`` → ``lens``, ist
+    grösser als eins, und die Regel machte daraus pflichtschuldig eine Mehrzahl.
+    Ebenso gemessen:
     ``f5.6 objektiv`` → ``f5.6 lenses``, ``f1.4 objektiv`` → ``f1.4 lenses``,
     ``16.09.2026 fenster`` → ``16.09.2026 windows``.
 

@@ -5221,7 +5221,7 @@ Bekannt und ausdrücklich nicht erledigt:
       stehen noch Nachbarhäuser. Gemessen: Obergrenze 145,5 m → Innenraum nutzt 5,7 % des
       Wertebereichs, Obergrenze 9,4 m → 100 %. *Adressat: `kern`; betrifft
       `aiimaging.bildlesen` und die Normierung der Soll-Karte.*
-- [ ] **Der Einbauort war falsch notiert — und dahinter lag ein grösserer Befund**
+- [~] **Der Einbauort war falsch notiert — und dahinter lag ein grösserer Befund**
       (16.09.2026). Die Normierung sitzt nicht in `bildlesen`, sondern in
       `bildschreiben.normalisiere_tiefe`. Wichtiger: Die flachgedrückte Karte vom
       11.09.2026 stammt **nicht** aus dem Perzentil der HomeStation, sondern aus
@@ -5234,6 +5234,15 @@ Bekannt und ausdrücklich nicht erledigt:
       die Messung läuft mit — die Umstellung muss der HomeStation angesagt werden,
       bevor sie bei ihr ankommt. *Adressat: `kern` für den Schalter, `local` für die
       Ansage und den Entscheid.*
+      **Gebaut am 16.09.2026:** `normalisiere_tiefe(..., ferne_trennen=False)`, die
+      Messung läuft in jeder Karte mit (`max_m_luecke`, `luecke`, `ferne_getrennt`). Die
+      Ansage liegt als `auf-20260916-112` bei der HomeStation, samt Laufzeitkosten
+      (0,86 s je 1024er Karte, je Kamera). **Halb und nicht erledigt**, weil der
+      Entscheid, ob umgeschaltet wird, ihrer ist und noch aussteht.
+      *Dabei ist ein eigener Fehler aufgefallen und behoben:* Die erste Fassung klemmte
+      Geometrie auf Grauwert 0 — den Hintergrundwert — und machte sie damit für die
+      Silhouette unsichtbar. Jetzt liegt ein Boden von einem 8-Bit-Schritt darunter, und
+      zwar nur im eingeschalteten Fall.
 - [ ] **Laufzeit und Platz gehören in den Vertrag.** 775,5 s gegen unsere Planungszahl von
       rund 18 s ist Faktor 40; ein Ebenensatz misst 467 MB, neun davon 3,3 GB. Unser
       Auftragswesen kennt weder Laufzeitklasse noch Platzangabe. *Adressat: `cloud`
@@ -5310,7 +5319,12 @@ Bekannt und ausdrücklich nicht erledigt:
       die Umlautauflösung greift nur bei Formen, die **im Glossar stehen** — `blue`,
       `value`, `true` bleiben unberührt, drei englische Prompts gegengeprüft.
 - [~] **Der Rahmungsriegel entscheidet falsch herum.** — *Die Messung steht jetzt neben
-      dem Urteil, das Urteil selbst ist unverändert.* `kameras.rahmungsverhaeltnis` nimmt
+      dem Urteil, sie läuft im Produktivpfad, und das Urteil ist unverändert.*
+      **Angeschlossen am 16.09.2026:** `kameras.struktur_nachtragen`, gerufen im Abholer
+      nach dem Lesen der Soll-Karte — also nach dem billigen Rahmungsriegel und trotzdem
+      vor der Diffusion. Der Riegel wurde bewusst NICHT nach hinten verschoben: Er sitzt
+      dort, weil alles darunter Geld kostet, und das Lesen der Karte kann im
+      EXR-Rückfall einen zweiten Blender-Prozess starten. `kameras.rahmungsverhaeltnis` nimmt
       seit dem 16.09.2026 eine Tiefenkarte entgegen, meldet ihren Strukturwert und warnt
       bei der Paarung *hoher Füllgrad, strukturlose Karte* — dem Fall vom 12.09. Es bleibt
       offen, weil `abbruch` **allein am Füllgrad hängt**: Die Warnschwelle ist gesetzt und
@@ -5346,8 +5360,14 @@ Bekannt und ausdrücklich nicht erledigt:
       *Beides erst richten, wenn der Einstieg gebaut wird: Eine Signatur zu drehen, die
       niemand aufruft, ändert nichts und kostet eine Stelle mehr Gedächtnis. Adressat:
       `kern`.*
-- [ ] **Eine Zahl vor einem Einzahl-Hauptwort, aufgefallen beim Nachmessen der Zahlwörter.**
-      `zwoelf fenster` ergibt `twelve window` — die Zahl ist richtig übersetzt, das Hauptwort
+- [x] **Eine Zahl vor einem Einzahl-Hauptwort.** — Behoben am 16.09.2026: `zwölf fenster`
+      ergibt `twelve windows`. **Die Grenzen sind der eigentliche Inhalt:** `drei glas`
+      bleibt `three glass` und `zwei beton` bleibt `two concrete`, weil nicht zählbare
+      Hauptwörter keine Mehrzahl haben; `vier betonwaende` wird nicht doppelt gebeugt,
+      weil der Eintrag schon Mehrzahl ist. *Ein erfundenes `three glasses` wäre schlimmer
+      als der sichtbare Schönheitsfehler — es ist ein Fehler, den niemand mehr als Fehler
+      erkennt.* Ursprünglicher Befund:
+      `zwoelf fenster` ergab `twelve window` — die Zahl ist richtig übersetzt, das Hauptwort
       steht in der Einzahl. Das Glossar bildet je ein Wort ab und kennt keine Übereinstimmung
       zwischen Zahl und Hauptwort; die Zahlwörter haben den Fall nur sichtbar gemacht, nicht
       verursacht. *Kein Fehlschlag des neuen Bausteins, aber ein englischer Prompt mit einem
@@ -5396,7 +5416,12 @@ Bekannt und ausdrücklich nicht erledigt:
       siebzehnten hätte es niemand mehr gelesen.* Nachfrage steht im Block für `cloud`.
       Sechs Proben; `tools/einbau.py` druckt die Zählung bei jedem Lauf.
 - [~] **Was die Messung nicht kann, und es ist die nächste Lücke.** — *Der Mechanismus
-      steht, die Bitte ist noch nicht heraus.* `auftragspost.vermerke_gesehen` und die
+      steht samt Einstieg, die Bitte ist heraus, die Antwort fehlt.*
+      **Bedienbar seit dem 16.09.2026:** `tools/auftragspost.py --gesehen <kennung> --von
+      <worker>`, dazu `--warum` als Ansicht der Lagen. Eine Kennung, die es nicht gibt,
+      wird mit Rückgabewert 2 abgewiesen und hinterlässt **keine** halbe Ablage — ein
+      Vermerk auf einen Auftrag, den es nicht gibt, wirkte nie, und die Datei sähe
+      danach trotzdem ordentlich aus. Die Bitte liegt als `auf-20260916-109/110/111`. `auftragspost.vermerke_gesehen` und die
       fünfte Lage `gesehen, ohne antwort` sind seit dem 16.09.2026 gebaut: Ein bestätigter
       Blick schlägt die beiden **geschlossenen** Lagen, weil er vom Adressaten kommt und
       nicht aus unserem Rateverfahren — aber nicht `nicht zugestellt`, denn widersprechen

@@ -565,6 +565,10 @@ def test_die_normalisierung_traegt_alles_was_die_rueckrechnung_braucht():
         # für die Rückrechnung hiesse. Siehe Abschnitt 6b.
         "max_m_luecke", "luecke", "ferne_getrennt",
         "geklemmt_ab_m", "n_geklemmt", "max_m_gemessen", "rueckrechnung_vorbehalt",
+        # `geklemmt_mindestgrau` steht IMMER da, auch als None: Wer zurückrechnet, muss
+        # aus der Datei allein sehen können, ob ein Boden galt — nicht aus der Abwesenheit
+        # eines Schlüssels. Ein fehlendes Feld liest sich wie ein altes Format.
+        "geklemmt_mindestgrau",
         "warnungen",
     }
     assert norm["konvention"] == KONVENTION
@@ -751,7 +755,11 @@ def test_mit_dem_schalter_bekommt_der_innenraum_den_ganzen_wertebereich():
 
     assert norm_an["max_m"] == 10.0 and norm_aus["max_m"] == 1600.0
     assert norm_an["ferne_getrennt"] is True
-    assert sum(kern_an) / len(kern_an) == pytest.approx(0.5, abs=1e-3)
+    # Der Boden unter der Geometrie hebt jeden Grauwert um `boden` an, den Mittelwert
+    # also auch. Nicht die Toleranz aufweiten, sondern die erwartete Zahl ausrechnen —
+    # eine Probe, die man weich macht, bis sie wieder grün ist, prüft nichts mehr.
+    boden = bildschreiben.GEKLEMMT_MINDESTGRAU
+    assert sum(kern_an) / len(kern_an) == pytest.approx(0.5 + boden / 2.0, abs=1e-3)
     assert sum(1 for wert in grau_an if wert > 0.99) / len(grau_an) < 0.02
     assert norm_an["n_geklemmt"] == 23
     assert norm_an["n_geometriepixel"] == 2023, "geklemmt heisst nicht weggeworfen"
@@ -879,7 +887,15 @@ def test_geklemmt_wird_dunkel_und_nicht_hell():
 
     assert norm["ferne_getrennt"] is True and norm["max_m"] == 6.0
     assert grau[0] == 1.0, "der nächste Punkt bleibt der hellste"
-    assert grau[3] == 0.0, "die Ferne ist das Dunkelste — nicht das Hellste"
+    # BERICHTIGT AM 16.09.2026 — hier stand `grau[3] == 0.0`, und das war der Fehler,
+    # nicht die Probe. Grauwert 0.0 IST der Hintergrundwert: Die geklemmte Ferne wurde
+    # damit byte-gleich mit dem Himmel, die Silhouette verlor sie, und `geom_iou` fiel,
+    # ohne dass am Bild etwas schlechter geworden wäre. „Das Dunkelste" ist die Aussage
+    # dieser Probe; „genau null" war eine Zahl, die sie nie prüfen wollte.
+    assert grau[3] == min(grau), "die Ferne ist das Dunkelste — nicht das Hellste"
+    assert grau[3] > bildschreiben.HINTERGRUND_GRAUWERT, (
+        "das Dunkelste der GEOMETRIE ist nicht der Hintergrund — siehe "
+        "test_geklemmte_geometrie_ist_nicht_der_hintergrund")
     assert grau[3] < grau[2] or grau[3] == grau[2]
     assert grau == sorted(grau, reverse=True), "die Tiefenordnung bleibt monoton"
 
@@ -908,11 +924,21 @@ def test_die_rueckrechnung_aus_einer_geklemmten_karte_verraet_das_klemmen(tmp_pa
     assert norm["max_m_gemessen"] == 1000.0, "die echte Entfernung bleibt im Bericht stehen"
     assert "UNTERGRENZE" in norm["rueckrechnung_vorbehalt"]
     assert "1000" in norm["rueckrechnung_vorbehalt"]
-    assert norm["rueckrechnung"] == RUECKRECHNUNG, "die Formel selbst ändert sich nicht"
+    # BERICHTIGT AM 16.09.2026: Die Formel ändert sich doch — seit die Geometrie einen
+    # Boden hat, damit sie nicht auf dem Hintergrundwert landet. Sie MUSS sich ändern,
+    # und das Feld muss es sagen: Ein Feld, das in zwei Fällen dasselbe sagt und zwei
+    # verschiedene Dinge meint, ist schlimmer als zwei Felder.
+    assert norm["rueckrechnung"] != RUECKRECHNUNG, "mit Boden gilt die alte nicht mehr"
+    assert "boden" in norm["rueckrechnung"]
 
-    # Die Formel wörtlich angewandt — wie es ein fremdes Werkzeug täte.
+    # Die Formel wörtlich angewandt — wie es ein fremdes Werkzeug täte, das `rueckrechnung`
+    # liest. Seit dem Boden unter der Geometrie ist das die Fassung MIT `boden`; wer
+    # stattdessen die Modulkonstante nimmt, liegt um bis zu einen 8-Bit-Schritt daneben.
+    # Genau darum steht die geltende Formel im Feld und nicht nur im Modul.
     gelesen, _, _ = bildlesen.lies_png_graustufen(pfad)
-    von_hand = [norm["max_m"] - wert * (norm["max_m"] - norm["min_m"]) for wert in gelesen]
+    boden = norm["geklemmt_mindestgrau"]
+    von_hand = [norm["max_m"] - (wert - boden) / (1.0 - boden) * (norm["max_m"] - norm["min_m"])
+                for wert in gelesen]
 
     assert von_hand[:4] == pytest.approx(tiefen[:4], abs=3.0 / 65535)
     assert von_hand[4] == pytest.approx(5.0, abs=3.0 / 65535), "900 m kommen als 5 m zurück"
@@ -1407,3 +1433,109 @@ def test_eine_unbekannte_kontrollart_wird_abgewiesen():
 def test_unbrauchbare_masse_werden_abgewiesen(breite, hoehe):
     with pytest.raises(bildschreiben.SchreibError, match="kein Bild"):
         bildschreiben.kontrollwerte("grau", breite, hoehe)
+
+
+def test_geklemmte_geometrie_ist_nicht_der_hintergrund():
+    """**Der Fehlschlag der ersten Fassung, und er sah aus wie ein Erfolg.**
+
+    Geklemmt wurde auf ``max_m``, und das ergibt nach der Normierungsformel Grauwert genau
+    0.0 — also :data:`bildschreiben.HINTERGRUND_GRAUWERT`. Die geklemmte Fernsichtebene war
+    damit im PNG **byte-gleich mit dem Himmel**. Gemessen am 16.09.2026::
+
+        geklemmte Geometrie {0.0}   echter Hintergrund {0.0}   unterscheidbar: nein
+
+    Der Schaden ist nicht das Bild, sondern die Kennzahl: Die Silhouette entsteht aus
+    „Grauwert über dem Hintergrund", geklemmte Punkte fielen heraus, und ``geom_iou`` fiele
+    mit ihnen. Das Bild bliebe gleich gut, die Zahl würde schlechter, und niemand wüsste
+    warum — genau der Silhouettenverlust, vor dem :mod:`aiimaging.bildlesen` an anderer
+    Stelle warnt, hier aber absichtlich herbeigeführt und für 1,14 % statt für einen Punkt.
+    """
+    innenraum = [1.75 + 8.25 * i / 2000 for i in range(2000)]
+    fernsicht = [1600.0] * 23
+    himmel = [1.0e9] * 100
+
+    grau, angaben = bildschreiben.normalisiere_tiefe(innenraum + fernsicht + himmel,
+                                                     ferne_trennen=True)
+    assert angaben["ferne_getrennt"] is True, "sonst prüft dieser Test gar nichts"
+    assert angaben["n_geklemmt"] == 23
+
+    geklemmt = set(grau[2000:2023])
+    hintergrund = set(grau[2023:])
+    assert hintergrund == {bildschreiben.HINTERGRUND_GRAUWERT}
+    assert geklemmt.isdisjoint(hintergrund), (
+        f"Geklemmte Geometrie darf nicht auf dem Hintergrundwert landen. "
+        f"geklemmt={geklemmt!r}, hintergrund={hintergrund!r}")
+
+    # UND SIE MUSS ES AUCH NACH DEM RUNDEN BLEIBEN. Ein Unterschied, den die Datei nicht
+    # mehr trägt, ist keiner — bei 16 Bit (unser Weg) wie bei 8.
+    wert = next(iter(geklemmt))
+    for bittiefe in (16, 8):
+        stufen = (1 << bittiefe) - 1
+        assert round(wert * stufen) != round(bildschreiben.HINTERGRUND_GRAUWERT * stufen), (
+            f"Bei {bittiefe} Bit fällt der geklemmte Wert {wert!r} wieder auf den "
+            f"Hintergrund. Ein halber Schritt rundet auf null — das ist die Bedeutung "
+            f"von «halb».")
+
+
+def test_der_boden_dreht_die_tiefenordnung_nicht_um():
+    """Der Boden gilt für **alle** Geometrie, nicht nur für die geklemmten Punkte.
+
+    Zöge man ihn nur bei den geklemmten hoch, wären sie **heller** als die echten
+    hintersten Punkte — nah = hell, also stünde die Tiefenordnung auf dem Kopf, und zwar
+    genau bei dem, was am weitesten weg ist. Dagegen ist dieses ganze Modul geschrieben.
+    """
+    karte = [2.0, 4.0, 6.0, 8.0, 500.0, 600.0]
+    grau, angaben = bildschreiben.normalisiere_tiefe(karte, ferne_trennen=True)
+    assert angaben["ferne_getrennt"] is True
+
+    # Weiter weg heisst dunkler — ohne Ausnahme, auch über die Klemmgrenze hinweg.
+    for naeher, ferner in zip(karte, karte[1:]):
+        i, j = karte.index(naeher), karte.index(ferner)
+        assert grau[i] >= grau[j], (
+            f"{naeher} m ist näher als {ferner} m, muss also heller sein — "
+            f"war {grau[i]!r} gegen {grau[j]!r}.")
+    assert grau[0] == pytest.approx(1.0), "der nächste Punkt bleibt der hellste"
+
+
+def test_der_boden_gilt_NUR_mit_eingeschaltetem_schalter():
+    """**Die wichtigste Probe dieses Bausteins — sie schützt die HomeStation.**
+
+    Der Boden staucht die Skala um einen 8-Bit-Schritt. Täte er das auch mit
+    ausgeschaltetem Schalter, sähe ab dem nächsten ``git pull`` **jede** Tiefenkarte
+    anders aus als alle Messungen davor — und niemand hätte es bestellt.
+    """
+    karte = [2.0, 4.0, 6.0, 8.0, 500.0, 600.0]
+    aus, angaben_aus = bildschreiben.normalisiere_tiefe(karte)
+
+    assert angaben_aus["ferne_getrennt"] is False
+    assert min(g for g in aus if g > 0.0 or True) == 0.0, (
+        "Ohne Schalter bleibt der hinterste Punkt bei 0.0 — unverändert, samt des dort "
+        "seit je dokumentierten Silhouettenverlusts.")
+    assert angaben_aus["geklemmt_mindestgrau"] is None, (
+        "Ein Boden, der nicht gilt, darf auch nicht als Zahl dastehen — sonst rechnet "
+        "jemand mit ihm zurück.")
+    assert angaben_aus["rueckrechnung"] == bildschreiben.RUECKRECHNUNG
+
+
+def test_die_rueckrechnung_kennt_den_boden_und_ist_exakt():
+    """Zwei Fälle, zwei Formeln — und das Feld sagt, welche gilt.
+
+    Ein Feld, das in zwei Fällen dasselbe sagt und zwei verschiedene Dinge meint, ist
+    schlimmer als zwei Felder: Wer mit der alten Formel zurückrechnet, bekommt jeden Punkt
+    um bis zu einen 8-Bit-Schritt zu weit nach hinten. Das ist wenig — und genau darum
+    gefährlich, denn es fällt niemandem auf.
+    """
+    karte = [1.75 + 8.25 * i / 200 for i in range(200)] + [1600.0] * 3
+    grau, angaben = bildschreiben.normalisiere_tiefe(karte, ferne_trennen=True)
+
+    boden = angaben["geklemmt_mindestgrau"]
+    assert boden == bildschreiben.GEKLEMMT_MINDESTGRAU
+    assert "boden" in angaben["rueckrechnung"], (
+        f"Die Formel muss den Boden nennen: {angaben['rueckrechnung']!r}")
+
+    min_m, max_m = angaben["min_m"], angaben["max_m"]
+    for grauwert, soll in zip(grau[:200], karte[:200]):
+        zurueck = max_m - (grauwert - boden) / (1.0 - boden) * (max_m - min_m)
+        assert zurueck == pytest.approx(soll, abs=1e-9), (
+            f"Rückgerechnet {zurueck!r} statt {soll!r} — die Formel im Feld stimmt nicht "
+            f"mit dem überein, was geschrieben wurde.")

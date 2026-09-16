@@ -1334,8 +1334,11 @@ def test_kein_verzeichnis_fuehrt_ein_wort_das_im_glossar_nicht_vorkommt(name):
 def test_mutationsprobe_ohne_die_endungsregel_entstehen_falsche_formen(monkeypatch):
     """Wächter: die Endungsregel. Entschärft zu «immer +s».
 
-    Das ist die Regel, die jeder zuerst schreibt, und sie trifft drei der neun Formen
-    dieses Glossars nicht.
+    Das ist die Regel, die jeder zuerst schreibt, und sie trifft **fünf** der neun
+    Formen dieses Glossars nicht: ``lens``, ``bush``, ``sketch``, ``city``, ``balcony``.
+    (Im Bericht vom 16.09.2026 stand «drei»; nachgezählt am entschärften Lauf sind es
+    fünf — ``storey``, ``chimney``, ``terrace`` und ``roof`` sind die vier, die auch
+    eine nackte «+s»-Regel trifft.)
     """
     monkeypatch.setattr(sprache, "_endungsregel", lambda wort: wort + "s")
 

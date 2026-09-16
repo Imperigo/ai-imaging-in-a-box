@@ -25,6 +25,12 @@ GEWOLLTE_TRENNUNGEN = {
     "aggregation",   # Lizenzrecht / Messwerte
     "parameter",     # Aufrufargument / Modellgewichte
     "prädiktor",     # Kompression / Byte-Entflechtung
+    # Zwei Gegenstaende, und sie liegen naeher beieinander, als es aussieht: Der eine ist
+    # der Wert, den eine Kennzahl OHNE Geometrie schon erreicht (ein Mindestwert des
+    # MESSENS), der andere der Wert, den echter Bildinhalt nicht unterschreiten darf,
+    # damit er vom Hintergrund unterscheidbar bleibt (ein Mindestwert des BILDES). Wer
+    # sie verwechselt, haelt einen Silhouettenverlust fuer eine Eigenschaft der Metrik.
+    "boden",         # einer Aehnlichkeitsmetrik / eines Wertebereichs
     "rauschboden",   # Streuung einer Saatreihe / Boden einer Metrik ohne Geometrie
     "validierung",   # eines Verfahrens / Daten gegen Schema
     # Zwei Gegenstände, und die Verwechslung ist teuer: Die eine spart Rechenzeit
