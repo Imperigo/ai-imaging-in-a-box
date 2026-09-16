@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260916-109",
+  "art": "frage",
+  "worker": "local",
+  "rang": 11,
+  "erstellt": "2026-09-16T21:00:00Z",
+  "params": {},
+  "beschreibung": "Eine Zeile zurueck: Was ist bei euch angekommen, und was habt ihr angesehen? Wir messen seit heute, WARUM eine Antwort fehlt — aber ob ein Auftrag bei euch ankam, koennen nur ihr sagen. Keine Arbeit an den offenen Auftraegen.",
+  "anweisung": "=== EINE ZEILE ZURUECK, UND SIE KOSTET EUCH EINE MINUTE ===\n\nWAS WIR HIER NICHT WISSEN, UND ES IST MEHR, ALS WIR DACHTEN\n\nWir haben am 16.09.2026 zum ersten Mal gemessen, warum unsere Auftraege\nunbeantwortet sind, statt es zu schaetzen. Der Stand: 18 offene Auftraege, der\naelteste 25 Tage, und seit dem 08.09. hat KEINER der drei Adressaten geantwortet.\n\nDie Messung hat unsere geplante Handlung umgedreht. Wir wollten mahnen. Von 18\nAuftraegen rechtfertigen genau ZWEI eine Nachfrage — bei den uebrigen sechzehn\nwaere sie die falsche Handlung am falschen Ort: Wer seit Wochen nichts schickt,\nhat die Mahnung vielleicht ebenso wenig gesehen wie den Auftrag.\n\nAber die Messung hat eine Grenze, und sie ist der Grund fuer diesen Auftrag:\n\n    EIN ZUGESTELLTER AUFTRAG, DESSEN ADRESSAT SCHWEIGT, KANN\n      (a) gelesen und verworfen,\n      (b) ungelesen liegengeblieben oder\n      (c) NIE ANGEKOMMEN\n    SEIN. VON HIER AUS SIEHT DAS DREIERLEI GLEICH AUS.\n\nDas ist nicht mit mehr Nachdenken zu loesen. Es braucht eine Auskunft von EUCH.\nWir koennen jede Zahl ueber unsere eigene Ablage selbst erheben — aber ob ihr\netwas gesehen habt, koennen nur ihr sagen.\n\nFall (c) ist dabei der, der uns umtreibt: Kaeme bei euch seit Wochen gar nichts\nan, dann waere der ganze Rueckstand KEIN Rueckstand bei euch, sondern ein Fehler\nbei uns — und wir wuerden ihn seit 25 Tagen dem Falschen anlasten.\n\n\nWAS WIR GEBAUT HABEN, DAMIT EURE ANTWORT ETWAS AENDERT\n\n`aiimaging.auftragspost` kennt seit heute eine fuenfte Lage: `gesehen, ohne\nantwort`. Sie schlaegt die beiden Lagen, die wir nur ERRATEN («kein\nlebenszeichen», «aktiv, diesen uebergangen»), weil sie auf einer Auskunft von\neuch beruht statt auf einem Schluss aus eurem Antwortverhalten.\n\nSolange niemand etwas zurueckmeldet, bleibt diese Ablage leer. Und leer heisst\nbei uns ausdruecklich NICHT «niemand hat hingesehen», sondern NICHT GEMESSEN.\n\n\nWAS ZU TUN IST — und es ist wirklich nur das\n\n  1  Sagt uns, welche unserer Auftraege bei euch ANGEKOMMEN sind. Eine Liste von\n     Kennungen reicht. Wenn ihr keine Liste habt: die Zahl und der neueste, den\n     ihr kennt.\n\n  2  Sagt uns zu jedem, ob ihr ihn ANGESEHEN habt — unabhaengig davon, ob ihr\n     ihn bearbeitet habt. «Gesehen und liegengelassen» ist eine vollwertige und\n     nuetzliche Antwort. Sie ist uns LIEBER als Schweigen, weil sie den Fall\n     von (c) trennt.\n\n  3  Wenn etwas NICHT angekommen ist: sagt ab wann. Das Datum genuegt.\n\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n\n  * KEINEN der offenen Auftraege bearbeiten, nur weil er hier erwaehnt wird.\n    Dieser Auftrag fragt nach dem Briefkasten, nicht nach der Arbeit.\n  * KEINE Entschuldigung und keine Begruendung fuer den Rueckstand. Wir messen\n    ihn, wir werfen ihn niemandem vor — und eine Begruendung beantwortet die\n    Frage nicht, die wir haben.\n  * NICHTS nachliefern, was ihr fuer ueberfaellig haltet. Erst wollen wir\n    wissen, was ueberhaupt bei euch liegt.\n\nNUR FUER EUCH, HOMESTATION: Ihr lest dieses Repo selbst, darum braucht ihr\nkeinen Postweg — und genau das macht euren Fall unklar. Bei euch ist «angekommen»\ngleichbedeutend mit «git pull gelaufen». Sagt uns darum bitte STATT einer\nZustellliste: wann ihr zuletzt gezogen habt, und ob `auftraege/offen/` bei euch\ndieselben Dateien enthaelt wie hier (die Zahl genuegt: hier liegen 110).\n\nUnd eine Vorwarnung, die wir euch schulden: Ihr fahrt `tools/homeworker.py` und\n`tools/abholen.py` AUS DIESEM REPO. Ein `git pull` bei euch aendert also, was\ngerechnet wird, ohne dass bei euch etwas umspringt. Wir sagen euch jede solche\nAenderung an, BEVOR sie ankommt — sonst sieht sie bei euch wie ein Fehler aus.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Kein Lauf, keine GPU, kein Render. Dies ist eine Frage nach eurem Briefkasten."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "Keine Messung, kein Lauf, keine GPU. Eine Antwort in Worten genuegt.",
+      "«Wir ziehen seit dem X. nicht mehr» ist eine vollstaendige Antwort.",
+      "Nicht die offenen Auftraege abarbeiten — dieser fragt nach dem Briefkasten, nicht nach der Arbeit.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Welche Auftragskennungen sind bei euch angekommen? Liste, oder Zahl plus neueste Kennung.",
+    "V2 Welche davon habt ihr angesehen? «Gesehen und liegengelassen» ist eine vollwertige Antwort.",
+    "V3 Falls etwas nicht ankam: ab welchem Datum?",
+    "V4 Auf welchem Weg erreichen euch unsere Auftraege ueberhaupt — und ist der noch derselbe wie im August?",
+    "V5 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}
