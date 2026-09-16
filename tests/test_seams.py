@@ -509,16 +509,36 @@ def test_beide_erzeugen_bei_gleichen_angaben_dasselbe_kommando():
                    sonne={"elevation": 25.0, "azimuth": -40.0},
                    deckungsgrad=0.55, augenhoehe=1.7, bias_grad=35.0)
 
+    # OHNE BLENDER GIBT ES HIER NICHTS ZU VERGLEICHEN — und das ist ein SKIP, kein Fehler.
+    #
+    # `glb_zu_multipass` sucht das Binary, BEVOR es das Kommando baut. Fehlt es, fliegt
+    # ein `SeamError` aus `finde_blender`, und der sah bis zum 16.09.2026 genauso aus wie
+    # der Sentinel unten: Der Test meldete «Der echte Lauf hat kein Kommando gebaut» und
+    # klang nach einem Defekt in der Naht. *Ein Test, der ein fehlendes Werkzeug als
+    # Fehler des Programms meldet, schickt den Leser in die falsche Datei.*
+    #
+    # Aufgefallen an einem frischen Container ohne Blender — dieselbe Lage, in der die
+    # uebrigen 144 Proben sauber uebersprungen werden.
+    try:
+        seams.finde_blender()
+    except seams.SeamError as fehlt:
+        pytest.skip(f"Blender ist auf diesem Geraet nicht da: {fehlt}")
+
     gesehen = {}
+    SENTINEL = "nur das Kommando einsammeln"
 
     def _falscher_start(cmd, timeout):
         gesehen["cmd"] = list(cmd)
-        raise seams.SeamError("nur das Kommando einsammeln")
+        raise seams.SeamError(SENTINEL)
 
+    # NUR DEN SENTINEL VERSCHLUCKEN, nicht jeden SeamError. Ein echter Fehler weiter
+    # innen kaeme sonst als «kein Kommando gebaut» heraus — dieselbe Verwechslung eine
+    # Ebene tiefer.
     try:
         seams.glb_zu_multipass("x.glb", "/tmp/aus", _starte=_falscher_start, **angaben)
-    except seams.SeamError:
-        pass
+    except seams.SeamError as fehler:
+        if SENTINEL not in str(fehler):
+            raise
 
     trocken = seams.baue_kommando_multipass("x.glb", "/tmp/aus", **angaben)
     assert gesehen.get("cmd"), "Der echte Lauf hat kein Kommando gebaut."

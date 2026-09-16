@@ -5298,3 +5298,39 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Zahlwörter stehen in keinem Glossar.** `vier` bleibt im Prompt deutsch. Eine Lücke
       und kein Fehler — sie gehört benannt, bevor jemand sie für einen hält. *Adressat:
       `kern`.*
+
+
+---
+
+## Der Container war weg — und die Bilanz hat zwei Seiten (16.09.2026)
+
+> **Entschieden:** Nichts Neues gebaut, solange der Rückstand bei den Wartenden wächst.
+> **Gemessen:** Seit dem 08.09.2026 — **acht Tagen** — hat **keiner** der drei Worker
+> geantwortet. 18 Aufträge offen, ältester 25 Tage. Dagegen: 8 von 35 Einbau-Posten offen
+> statt 22 von 34 am 09.09.
+> **Offen:** Der Grund für die acht stillen Tage ist nicht feststellbar.
+
+- [x] **Der Entscheid vom 09.09. hat sich ausgezahlt.** Diese Sitzung startete in einem
+      frischen Container: kein `build/`, kein Blender, kein `pytest`. Die **Präsentation
+      steht** — dreissig Folien, Bildauswahl, Holer, Layoutprüfung —, weil sie sieben Tage
+      zuvor aus `build/` nach `praesentation/` gewandert ist, mit genau dieser Begründung.
+      Die **Bilder sind weg**, und das war die andere Hälfte desselben Entscheids: erzeugt
+      und nachbaubar. `hole_bilder.py --pruefen` nennt auf die Datei genau, was zu fahren
+      ist. *Nachbaubar heisst nachzubauen — und dafür fehlt hier Blender.*
+- [x] **Eine Probe meldete ein fehlendes Werkzeug als Defekt.** `test_seams.py` liess einen
+      `SeamError` aus `finde_blender` durch dieselbe Klausel laufen wie seinen eigenen
+      Sentinel und meldete dann «Der echte Lauf hat kein Kommando gebaut». *Ein Test, der
+      ein fehlendes Werkzeug als Fehler des Programms meldet, schickt den Leser in die
+      falsche Datei.* Jetzt: Skip ohne Blender wie die anderen 144 — und **nur** noch der
+      Sentinel wird geschluckt, damit ein echter Fehler nicht als «kein Kommando» erscheint.
+- [x] **Die Bilanz für Kapitel 8 nachgeführt, und die Nachführung ist der Befund.**
+      Fünfzehn Posten in einer Woche geschlossen, **nur einer durch neuen Code** — alle
+      anderen lagen fertig da und waren nie nachgetragen. Im selben Zeitraum wuchs der
+      Rückstand bei den Wartenden von 14 auf 18. *Der eigene Rückstand liess sich durch
+      Lesen halbieren; der fremde nicht durch Schreiben.*
+- [ ] **Wir können nicht unterscheiden, warum eine Antwort ausbleibt.** Ob drüben niemand
+      gearbeitet hat, ob der Auftrag nicht ankam, oder ob er ankam und liegen blieb — dieses
+      Repo sieht dasselbe. Für den **Hinweg** gibt es diese Unterscheidung seit dem 03.09.
+      (`auftragspost.py`, Zustellvermerk); für den **Rückweg** fehlt sie. *Adressat: `kern`.*
+      **Erst messen, dann mahnen:** Eine Mahnung an drei Wartende, von denen vielleicht
+      zwei die Aufträge nie gesehen haben, ist die falsche Handlung am falschen Ort.
