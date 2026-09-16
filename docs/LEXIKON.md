@@ -2410,6 +2410,83 @@ Stehen reicht vom 5. Perzentil der Frauen (1,43 m) bis zum 95. der Männer (1,74
 Projekt gesetzte Wert 1,70 m ist damit keine Durchschnitts-Augenhöhe, sondern ein hoher
 Wert — wer 1,70 gegen 1,60 verteidigt, verteidigt einen Geschmack und keine Zahl.*
 
+**Zweigipflige Verteilung (bimodal)** — Eine Messreihe, deren Werte sich nicht um eine
+Mitte scharen, sondern um **zwei** getrennte Häufungen, mit einem weitgehend leeren Bereich
+dazwischen. Der Mittelwert liegt dann genau dort, wo fast nichts ist, und beschreibt
+niemanden. *In diesem Projekt die Regel und nicht die Ausnahme: Eine Tiefenkarte aus einem
+Innenraum mit Fenster enthält den Raum (wenige Meter) und die Welt draussen (hunderte
+Meter), und dazwischen nichts. Am 11.09.2026 lagen an einem gemessenen Raum 98,6 % der
+Punkte zwischen 1,75 m und 10 m, 1,13 % bei 1600 m — und zwischen 146 m und 1000 m kein
+einziger.*
+
+**Lücke (einer Verteilung)** — Der leere Bereich zwischen zwei Häufungen einer
+zweigipfligen Verteilung. Sie ist die Stelle, an der sich die Verteilung **von selbst**
+teilt: Man muss keine Grenze erfinden, man liest ab, wo das Bild nichts hat.
+*In diesem Projekt trennt :func:`ferne_abtrennen` die Ferne an dieser Lücke ab, statt ein
+festes Perzentil zu verwenden. Der Anlass war ein Fehlschlag: Ein 99er-Perzentil schneidet
+das oberste Prozent weg — die gemessene Fernsichtebene machte aber 1,13 % aus, also mehr
+als eines. Das Ergebnis war eine flachgedrückte Karte, auf der 98,7 % aller Punkte über
+0,99 lagen. **Ein festes Perzentil setzt voraus, dass man vorher weiss, wie viel Ferne im
+Bild steht — und wie viel Himmel im Bild steht, weiss nur das Bild.***
+
+**Verhältnissprung gegen Abstandssprung** — Zwei Arten, „hier ist eine Lücke" zu messen.
+Der **Abstand** fragt *wie viele Meter* zwischen zwei benachbarten Werten liegen, das
+**Verhältnis** fragt *um welchen Faktor* der grössere den kleineren übertrifft. *In diesem
+Projekt trägt das Verhältnis, aus zwei Gründen. Erstens ist absolut gemessen ein Sprung
+bei 1600 m immer grösser als einer bei 5 m — ein Wächter fände dann in jeder Aussenansicht
+dieselbe Lücke ganz hinten und nie die, die das Bild teilt. Zweitens ist ein Verhältnis
+massstabsfrei: dieselbe Szene in Zentimetern ergibt dieselbe Trennung.*
+
+**Strukturwert einer Tiefenkarte** — Eine Zahl dafür, ob eine Tiefenkarte **Kanten**
+enthält oder nur einen gleichmässigen Verlauf. Gemessen wird sie als *zweite Differenz*:
+nicht wie stark sich die Tiefe von Punkt zu Punkt ändert, sondern wie stark sich diese
+Änderung selbst ändert. *Der Unterschied ist der ganze Punkt und wurde am 12.09.2026 an
+16×16-Karten nachgemessen: Ein reiner Verlauf und eine harte Kante haben **dieselbe**
+erste Differenz (beide 0,0333) — die erste Differenz unterscheidet sie also nicht. Die
+zweite trennt sie sauber: 0,0000 gegen 0,0714. Ein gleichmässiger Anstieg hat überall
+dieselbe Steigung, eine Kante ändert sie sprunghaft.*
+
+**Auskunft neben dem Urteil** — Ein gemessener Wert, der im Ergebnis **steht** und warnt,
+aber über Bestehen oder Durchfallen **nicht mitentscheidet**. *In diesem Projekt der
+Strukturwert in der Rahmungsprüfung. Der Anlass, ihn zu messen, war ein Fehlurteil: Der
+Riegel misst nur den Füllgrad, wies darum am 12.09.2026 die brauchbare Übersichtskamera ab
+(59,9 % statt nötiger 65 %) und liess die nutzlose Nahaufnahme durch — 100 % Füllgrad,
+5,1 m vor einer fensterlosen Wand, die Tiefenkarte ein reiner Verlauf. Trotzdem bricht der
+Strukturwert nichts ab, denn seine Schwelle ist **gesetzt und nicht kalibriert**; die
+Messreihe dazu liegt als Auftrag bei der HomeStation. Der Grund für die Zurückhaltung ist
+selbst ein Argument: **Wer eine Schwelle vorzieht, verliert die Messung, mit der er sie
+hätte eichen können** — ab dann läuft der Fall gar nicht mehr durch.*
+
+**Rückkanal** — Eine Auskunft, die **vom Adressaten** kommt und nicht aus der eigenen
+Buchführung geschlossen ist. *In diesem Projekt der Vermerk «gesehen». Die Auswertung, warum
+ein Auftrag unbeantwortet ist, liest sonst nur unsere Seite: wann er entstand, ob er
+hinausging, wann der Adressat zuletzt irgendetwas beantwortet hat. Ein zugestellter Auftrag
+ohne Antwort kann gelesen und verworfen, ungelesen liegengeblieben oder nie angekommen
+sein — von hier aus sieht das dreierlei gleich aus. Darum schlägt ein bestätigter Blick die
+beiden geschlossenen Lagen: **Eine Tatsache vom Adressaten ist stärker als jeder Schluss
+aus seinem Antwortverhalten.** Er schlägt aber nicht «nicht zugestellt» — widersprechen
+sich beide, ist das ein Fehler in unserer eigenen Ablage, und ihn zuzudecken hiesse, die
+einzige Stelle zu verlieren, an der er noch auffällt.*
+
+**Falscher Freund** — Ein Wort, das in zwei Sprachen gleich aussieht und etwas anderes
+bedeutet. *In diesem Projekt der Grund, warum `elf` **nicht** im Übersetzungsglossar steht:
+Im Englischen ist es ein Fabelwesen. Der Eintrag hätte `elf statue` zu `eleven statue`
+gemacht und den englischen Prompt zugleich für deutsch gehalten. Es ist der einzige echte
+falsche Freund unter den zwölf Zahlwörtern — nachgemessen am 16.09.2026, indem jeder
+Eintrag versuchsweise gesetzt und geprüft wurde, was sich an englischem Text ändert. Alle
+übrigen änderten genau nichts ausser sich selbst.*
+
+**Kollision beim Endungsabstreifen** — Wenn die Regel, mit der ein Wort auf seine Grundform
+zurückgeführt wird, zwei verschiedene Wörter auf denselben Eintrag führt. *In diesem Projekt
+der Grund, warum `acht` nicht im Glossar steht — obwohl es im Englischen völlig harmlos ist.
+`achte` und `achten` streifen ihre Endung ab und landen beide auf `acht`; der Eintrag hätte
+darum durch die Hintertür die **Ordnungszahl** (`achte` = eighth, nicht eight) und den
+Verbstamm von «achten» mitübersetzt. Es ist das einzige der zwölf Zahlwörter, dem das
+passiert: Bei `zweite`, `vierte`, `zehnte` bleibt `zweit`, `viert`, `zehnt` übrig, und das
+ist kein Eintrag. Die Abwägung dahinter ist die Hausregel im Kleinen: Ein stehengebliebenes
+`acht` wird als unbekannt gemeldet und kostet einen Blick — ein stilles `achte` → `eight`
+kostet ein Bild.*
+
 **Mittelwertfilter (Glättung)** — Jeder Bildpunkt wird durch den Durchschnitt aus sich
 selbst und seinen Nachbarn ersetzt, je nach Stärke mehrfach hintereinander. Kanten werden
 weich, feine Gliederung verschwindet, die grobe Form bleibt. *In diesem Projekt die
@@ -4591,6 +4668,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-16 | Ergaenzt aus vier gleichzeitig gebauten Bausteinen: **Zweigipflige Verteilung**, **Luecke (einer Verteilung)**, **Verhaeltnissprung gegen Abstandssprung**, **Strukturwert einer Tiefenkarte**, **Auskunft neben dem Urteil**, **Rueckkanal**, **Falscher Freund**, **Kollision beim Endungsabstreifen**. Fuenf davon tragen einen Befund und keine Lehrmeinung: Das feste Perzentil scheiterte daran, dass die Fernsichtebene 1,13 % der Flaeche einnahm und nicht unter 1 % lag; die erste Differenz trennt Verlauf und Kante NICHT (beide 0,0333); die Strukturschwelle ist gesetzt und nicht kalibriert und entscheidet darum nichts; `elf` und `acht` bleiben aus dem Zahlwort-Glossar draussen, jedes aus einem eigenen, nachgemessenen Grund. **Berichtigt am selben Tag:** Die zweite Stufe der Luecken-Trennung lief zuerst von selbst und nahm in der nachgestellten Aussenansicht eine echte Nachbarzeile als Ferne weg — sie ist jetzt abgeschaltet, und ihre urspruengliche Begruendung war ohnehin hinfaellig, weil die erste Stufe den gemeldeten Fall schon selbst loest |
 | 2026-09-16 | Ergaenzt: **Warum eine Antwort fehlt — die vier Lagen**. Der Rueckstand zaehlte bis dahin nur, DASS eine Antwort fehlt. Bei 18 offenen Auftraegen und acht stillen Tagen war das zu wenig, um zu entscheiden, ob eine Nachfrage angebracht ist — gemessen: bei 2 von 18 |
 | 2026-09-12 | Ergaenzt aus dem ersten Lauf bis zum fertigen Bild: **Oertliche Ergaenzung (Drop-in)**, **Zweite Differenz (Kruemmung)**, **Ersatzschreibung der Umlaute**. Alle drei aus gemessenen Befunden — der Waechter las nur die Hauptdatei, die vorgeschlagene Kennzahl trennte Verlauf und Kante nicht, und «betonwaende» erreichte das Glossar nicht |
 | 2026-09-11 | Ergaenzt aus `herkunft.py`: **Herkunftstabelle** und **Belegt, gemessen, vermutet, unbekannt**. Die vierte Stufe entstand, weil eine zweifach exakte Messung weder «Norm» noch «Gewohnheit» ist |

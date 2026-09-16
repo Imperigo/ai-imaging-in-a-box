@@ -5201,7 +5201,18 @@ Bekannt und ausdrücklich nicht erledigt:
       sind Renders aus einem **laufenden Wettbewerbsprojekt**, und dieses Repo ist
       öffentlich. Ihr eigener Satz sagte es von der anderen Seite: *«bitte nicht
       weiterreichen».* Die Stelle, an der eine Regel etwas kostet, ist die, an der sie gilt.
-- [ ] **Die Lücken-Trennung statt eines festen Perzentils.** Aus demselben Nachtrag, und
+- [x] **Die Lücken-Trennung statt eines festen Perzentils.** — `geometrie_qa.ferne_abtrennen`,
+      16.09.2026. **Die Vorgabe unten stimmte in der Sache und nicht im Verfahren, und die
+      Berichtigung steht im Code:** Gefordert waren *zwei* Stufen, weil zwischen Fernsicht
+      und Innenraum noch Nachbarhäuser stehen. Nachgerechnet findet die **erste** Stufe den
+      gemeldeten Fall schon selbst — gewählt wird der grösste Sprung, nicht der hinterste,
+      und Innenraum → Nachbarhäuser ist Faktor 14,5 gegen Faktor 11 weiter hinten. Die
+      zweite Stufe ändert an diesem Fall nichts; wo sie etwas ändert, nimmt sie Bauwerk
+      weg: In der nachgestellten Aussenansicht (Bauwerk 5–15 m, echte Nachbarzeile 60–64 m)
+      klemmt sie die Nachbarzeile als «Ferne» ab. **Ob ein Klumpen bei 60 m Fernsicht ist
+      oder ein Nachbargebäude, steht nicht in der Tiefenkarte** — darum läuft sie nicht von
+      selbst (`stufen=1`), und wenn sie läuft, beziffert sie, was sie kostet. *Ursprüngliche
+      Vorgabe:* Aus demselben Nachtrag, und
       für unsere Tiefenkarten brauchbar: Ein festes Perzentil kann die Ferne nie sauber
       abtrennen — bei ihnen nahm die Fernsichtebene 1,13 % der Fläche ein, also mehr als
       das eine Prozent, das ein 99er-Perzentil wegschneidet. *«Wie viel Himmel im Bild
@@ -5285,7 +5296,15 @@ Bekannt und ausdrücklich nicht erledigt:
       weniger kennt als der, für den er aussagt, spricht regelmässig frei.* Beides behoben,
       die Umlautauflösung greift nur bei Formen, die **im Glossar stehen** — `blue`,
       `value`, `true` bleiben unberührt, drei englische Prompts gegengeprüft.
-- [ ] **Der Rahmungsriegel entscheidet falsch herum.** Er wies die brauchbare
+- [~] **Der Rahmungsriegel entscheidet falsch herum.** — *Die Messung steht jetzt neben
+      dem Urteil, das Urteil selbst ist unverändert.* `kameras.rahmungsverhaeltnis` nimmt
+      seit dem 16.09.2026 eine Tiefenkarte entgegen, meldet ihren Strukturwert und warnt
+      bei der Paarung *hoher Füllgrad, strukturlose Karte* — dem Fall vom 12.09. Es bleibt
+      offen, weil `abbruch` **allein am Füllgrad hängt**: Die Warnschwelle ist gesetzt und
+      nicht kalibriert, und ein zweites Tor aus zwei Fällen wäre an zwei Fällen geeicht.
+      Der Grund für die Zurückhaltung ist selbst ein Argument: *Wer eine Schwelle vorzieht,
+      verliert die Messung, mit der er sie hätte eichen können.* Es schliesst, wenn
+      `auf-20260912-108` zurück ist. *Ursprünglicher Befund:* Er wies die brauchbare
       Übersichtskamera ab (59,9 % — auf die Stelle genau unser gemessenes Knie) und liess
       die nutzlose Nahaufnahme durch (100 % Füllgrad, 5,1 m vor einer fensterlosen Wand,
       Tiefenkarte ein reiner Verlauf). *Der Riegel schliesst von einer Messreihe auf ein
@@ -5295,9 +5314,31 @@ Bekannt und ausdrücklich nicht erledigt:
       der Vorschlag der HomeStation durchgefallen — die mittlere Nachbarabweichung liefert
       für Verlauf und Kante **dieselbe Zahl**; erst die zweite Differenz trennt.
       *Adressat: `local` für eine Messreihe an ihren beiden Kameras, dann `kern`.*
-- [ ] **Zahlwörter stehen in keinem Glossar.** `vier` bleibt im Prompt deutsch. Eine Lücke
-      und kein Fehler — sie gehört benannt, bevor jemand sie für einen hält. *Adressat:
+- [x] **Zahlwörter stehen in keinem Glossar.** — Zehn Einträge in `sprache.GLOSSAR`,
+      16.09.2026; `vier, betonwaende` ergibt jetzt `four, concrete walls`. **Zwei der zwölf
+      bleiben absichtlich draussen, jedes aus einem eigenen, nachgemessenen Grund:** `elf`
+      ist im Englischen ein Fabelwesen und der einzige echte falsche Freund der Reihe
+      (`elf statue` wäre zu `eleven statue` geworden); `acht` scheitert an der eigenen
+      Beugungsregel, weil `achte` und `achten` beide darauf abstreifen und der Eintrag so
+      durch die Hintertür die Ordnungszahl mitübersetzt hätte. Geprüft wurde differenziell
+      — jeder Eintrag versuchsweise gesetzt, dann gemessen, was sich an englischem Text
+      ändert; die übrigen zehn änderten **genau nichts** ausser sich selbst.
+- [ ] **Zwei Ecken der Auftragspost, von der Gegenprüfung gemeldet.** Erstens steht
+      `vermerke_zustellung(kennungen, repo_wurzel, …)` gegen
+      `vermerke_gesehen(repo_wurzel, kennungen, …)` — dieselbe Datei, vertauschte
+      Reihenfolge. Vertauscht aufgerufen bricht es laut ab (`TypeError`) und nicht still,
+      aber es ist eine Falle für den `tools/`-Einstieg, den es noch nicht gibt. Zweitens
+      nimmt `vermerke_gesehen` auch `von="kern"` an, also einen «Gesehen»-Vermerk von uns
+      selbst — und der Sinn der Ablage ist gerade die Auskunft *vom Adressaten*.
+      *Beides erst richten, wenn der Einstieg gebaut wird: Eine Signatur zu drehen, die
+      niemand aufruft, ändert nichts und kostet eine Stelle mehr Gedächtnis. Adressat:
       `kern`.*
+- [ ] **Eine Zahl vor einem Einzahl-Hauptwort, aufgefallen beim Nachmessen der Zahlwörter.**
+      `zwoelf fenster` ergibt `twelve window` — die Zahl ist richtig übersetzt, das Hauptwort
+      steht in der Einzahl. Das Glossar bildet je ein Wort ab und kennt keine Übereinstimmung
+      zwischen Zahl und Hauptwort; die Zahlwörter haben den Fall nur sichtbar gemacht, nicht
+      verursacht. *Kein Fehlschlag des neuen Bausteins, aber ein englischer Prompt mit einem
+      Grammatikfehler. Adressat: `kern`.*
 
 
 ---
@@ -5341,7 +5382,17 @@ Bekannt und ausdrücklich nicht erledigt:
       *Ohne die Messung hätte ich achtzehn gemahnt: sechzehn davon zu Unrecht, und beim
       siebzehnten hätte es niemand mehr gelesen.* Nachfrage steht im Block für `cloud`.
       Sechs Proben; `tools/einbau.py` druckt die Zählung bei jedem Lauf.
-- [ ] **Was die Messung nicht kann, und es ist die nächste Lücke.** Ein zugestellter
+- [~] **Was die Messung nicht kann, und es ist die nächste Lücke.** — *Der Mechanismus
+      steht, die Bitte ist noch nicht heraus.* `auftragspost.vermerke_gesehen` und die
+      fünfte Lage `gesehen, ohne antwort` sind seit dem 16.09.2026 gebaut: Ein bestätigter
+      Blick schlägt die beiden **geschlossenen** Lagen, weil er vom Adressaten kommt und
+      nicht aus unserem Rateverfahren — aber nicht `nicht zugestellt`, denn widersprechen
+      sich beide, ist das ein Fehler in unserer eigenen Ablage, und ihn zuzudecken hiesse,
+      die einzige Stelle zu verlieren, an der er noch auffällt. **Offen bleibt der zweite
+      Teil und er ist der wichtigere:** Solange kein Worker etwas zurückmeldet, ist die
+      Ablage leer, und leer heisst hier *nicht gemessen* und nicht *niemand hat
+      hingesehen*. *Adressat: alle drei Worker, mit der Bitte im nächsten Auftrag.*
+      *Ursprünglicher Befund:* Ein zugestellter
       Auftrag, dessen Adressat schweigt, kann **gelesen und verworfen**, **ungelesen
       liegengeblieben** oder **nie angekommen** sein — das unterscheidet sie nicht. Dafür
       bräuchte es eine Rückmeldung *vom Adressaten*: Der Zustellbeleg steht seit dem

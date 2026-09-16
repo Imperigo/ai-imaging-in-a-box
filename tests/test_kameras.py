@@ -1012,3 +1012,274 @@ def test_die_hoehe_bleibt_an_der_vorderkante_gerahmt():
         # unverändert gegenüber der Fassung vor dem 01.09.2026
         assert r["abstand_hoehe_m"] == pytest.approx(
             r["halbe_hoehe_m"] / math.tan(vfov / 2.0) / 0.7 + r["tiefe_m"] / 2.0)
+
+
+# --------------------------------------------------------------------------------------
+# Die Strukturzahl neben dem Füllgrad
+# --------------------------------------------------------------------------------------
+#
+# **Der Befund** (HomeStation, 12.09.2026, erster Lauf von der Szene bis zum Bild): Der
+# Rahmungsriegel misst NUR den Füllgrad und entschied damit falsch herum. Er wies die
+# brauchbare Übersichtskamera ab («Das Bauwerk füllt 59.9 % der Bildbreite, gemessen
+# nötig sind 65 %») und liess die nutzlose Nahaufnahme durch: 100 % Füllgrad, 5,1 m vor
+# einer fensterlosen Wand, die Tiefenkarte ein reiner Verlauf ohne jede Kante — und das
+# Bildmodell hat frei erfunden.
+#
+# Seit dem 12.09.2026 misst `geometrie_qa.tiefenstruktur` genau das. Diese Proben halten
+# fest, dass die Zahl danebensteht und das Urteil NICHT anfasst.
+
+#: Eine Szene, die das Bauwerk füllt — 70 % wirksame Bildbreite, also über der Schwelle.
+_SZENE_ENG = [[0, 0, 0], [8, 5, 10]]
+#: Eine Szene mit viel Gelände ringsum — das Bauwerk fällt unter die Abbruchschwelle.
+_SZENE_WEIT = [[0, 0, 0], [40, 40, 10]]
+_BAUWERK = [[0, 0, 0], [8, 5, 7]]
+
+
+def _karte(f, breite=16, hoehe=16):
+    """Ein Tiefenfeld aus einer Formel — dieselbe Machart wie in `test_geometrie_qa`."""
+    return [float(f(x, y)) for y in range(hoehe) for x in range(breite)]
+
+
+def _verlauf():
+    """Die Nahaufnahme vor der leeren Wand: ein reiner Verlauf, struktur 0,0000."""
+    return _karte(lambda x, y: 5.0 + 0.01 * x)
+
+
+def _kante():
+    """Eine Karte mit einer harten Kante: struktur 0,0714 (gemessen 12.09.2026)."""
+    return _karte(lambda x, y: 3.0 if x < 8 else 9.0)
+
+
+def test_ohne_tiefenkarte_bleibt_alles_wie_vorher_und_struktur_ist_none():
+    """**Die Gegenprobe zum ganzen Zusatz.** Wer keine Karte mitgibt, bekommt das alte
+    Ergebnis — Feld für Feld, ohne eine einzige Warnung.
+
+    ``struktur`` ist dann ``None``, und das heisst NICHT GEMESSEN. Es heisst weder
+    «strukturlos» noch «in Ordnung»: Genau diese Verwechslung hat den Riegel am
+    12.09.2026 falsch herum entscheiden lassen.
+    """
+    lage = kameras.rahmungsverhaeltnis(_SZENE_ENG, _BAUWERK)
+    assert lage["struktur"] is None
+    assert lage["warnungen"] == []
+    assert lage["abbruch"] is False
+    assert lage["wirksame_bildbreite"] == pytest.approx(0.70)
+
+
+def test_strukturlose_karte_bei_hohem_fuellgrad_warnt_und_bricht_trotzdem_nicht_ab():
+    """**Der Fall, um den es geht** — die Nahaufnahme, die der Füllgrad durchgelassen hat.
+
+    Der Füllgrad trägt (70 % über 65 %), die Karte ist ein reiner Verlauf. Es kommt eine
+    Warnung, die den Fall beim Namen nennt — und ``abbruch`` bleibt ``False``. Ein Riegel
+    daraus wäre an zwei Fällen geeicht; die Messreihe dafür liegt als `auf-20260912-108`
+    bei der HomeStation.
+    """
+    lage = kameras.rahmungsverhaeltnis(_SZENE_ENG, _BAUWERK,
+                                       tiefenkarte=_verlauf(), tiefenbreite=16)
+    assert lage["abbruch"] is False, "die Struktur darf nichts abbrechen"
+    assert lage["struktur"]["struktur"] < kameras.STRUKTUR_WARNSCHWELLE
+    assert len(lage["warnungen"]) == 1
+    text = lage["warnungen"][0]
+    assert "strukturlos" in text
+    assert "fensterlosen Wand" in text, "die Warnung muss den bekannten Fall benennen"
+    assert "auf-20260912-108" in text, "und sagen, woher die fehlende Eichung kommt"
+
+
+def test_strukturreiche_karte_warnt_nicht():
+    """Die Gegenprobe zur Warnung: Dieselbe Rahmung, eine Karte mit Kante — kein Wort.
+
+    Eine Warnung, die auch bei der guten Karte käme, wäre keine.
+    """
+    lage = kameras.rahmungsverhaeltnis(_SZENE_ENG, _BAUWERK,
+                                       tiefenkarte=_kante(), tiefenbreite=16)
+    assert lage["warnungen"] == []
+    assert lage["struktur"]["struktur"] == pytest.approx(0.0714, abs=0.0005)
+    assert lage["abbruch"] is False
+
+
+@pytest.mark.parametrize("szene,erwartet", [(_SZENE_ENG, False), (_SZENE_WEIT, True)])
+def test_gegenprobe_dasselbe_urteil_mit_beiden_karten(szene, erwartet):
+    """**Die tragende Gegenprobe: Das Urteil hängt nachweislich nicht an der Struktur.**
+
+    Derselbe Füllgrad, einmal mit der strukturlosen und einmal mit der strukturreichen
+    Karte — ``abbruch`` und ``abbruch_grund`` müssen Zeichen für Zeichen gleich sein, und
+    gleich dem Lauf ganz ohne Karte. Geprüft an beiden Seiten der Schwelle, damit die
+    Probe nicht nur den bequemen Fall trifft.
+    """
+    ohne = kameras.rahmungsverhaeltnis(szene, _BAUWERK)
+    flach = kameras.rahmungsverhaeltnis(szene, _BAUWERK,
+                                        tiefenkarte=_verlauf(), tiefenbreite=16)
+    scharf = kameras.rahmungsverhaeltnis(szene, _BAUWERK,
+                                         tiefenkarte=_kante(), tiefenbreite=16)
+    assert ohne["abbruch"] is erwartet
+    for lage in (flach, scharf):
+        assert lage["abbruch"] is erwartet
+        assert lage["abbruch_grund"] == ohne["abbruch_grund"]
+        assert lage["traegt"] == ohne["traegt"]
+        assert lage["wirksame_bildbreite"] == pytest.approx(ohne["wirksame_bildbreite"])
+
+
+def test_mutationsprobe_ohne_schwelle_verschwindet_die_warnung():
+    """**Waffe entschärfen, Probe muss fallen.** Setzt man die Warnschwelle auf null, sagt
+    der Riegel zur Nahaufnahme vor der leeren Wand wieder nichts.
+
+    Das hält fest, woran die Warnung wirklich hängt: an :data:`kameras.STRUKTUR_WARNSCHWELLE`
+    und nicht an einem Nebeneffekt der Rahmung. Wer die Zahl später aus einer Messreihe
+    ersetzt, sieht hier, was er anfasst.
+    """
+    karte = _verlauf()
+    vorher = kameras.rahmungsverhaeltnis(_SZENE_ENG, _BAUWERK,
+                                         tiefenkarte=karte, tiefenbreite=16)
+    assert vorher["warnungen"], "ohne Mutation muss gewarnt werden, sonst prueft das nichts"
+    # Und zwar mit DIESER Warnung: Am 16.09.2026 beim Nachprüfen gesehen, dass ein toter
+    # Warnzweig hier unbemerkt bliebe — der Zweig «wird ohnehin abgewiesen» fing den Fall
+    # auf und schrieb einen Satz, der nicht stimmte. Eine Probe auf «irgendeine Warnung»
+    # prüft zu wenig.
+    assert "fensterlosen Wand" in vorher["warnungen"][0]
+
+    echt = kameras.STRUKTUR_WARNSCHWELLE
+    try:
+        kameras.STRUKTUR_WARNSCHWELLE = 0.0
+        nachher = kameras.rahmungsverhaeltnis(_SZENE_ENG, _BAUWERK,
+                                              tiefenkarte=karte, tiefenbreite=16)
+    finally:
+        kameras.STRUKTUR_WARNSCHWELLE = echt
+    assert nachher["warnungen"] == []
+    assert nachher["abbruch"] is False, "und das Urteil bleibt auch entschaerft dasselbe"
+
+
+def test_die_glaette_haette_die_beiden_karten_nicht_getrennt():
+    """Warum die zweite Differenz und nicht die erste — an diesen zwei Karten belegt.
+
+    Der ursprüngliche Vorschlag vom 12.09.2026 war die mittlere Abweichung zum Nachbarn
+    (``glaette``). Sie ist für den reinen Verlauf und für die harte Kante **dieselbe Zahl**
+    (0,0333), während ``struktur`` 0,0000 gegen 0,0714 sagt. Hinge die Warnung an
+    ``glaette``, käme sie bei beiden Karten oder bei keiner.
+    """
+    flach = kameras.rahmungsverhaeltnis(_SZENE_ENG, _BAUWERK,
+                                        tiefenkarte=_verlauf(), tiefenbreite=16)["struktur"]
+    scharf = kameras.rahmungsverhaeltnis(_SZENE_ENG, _BAUWERK,
+                                         tiefenkarte=_kante(), tiefenbreite=16)["struktur"]
+    assert flach["glaette"] == pytest.approx(scharf["glaette"], abs=1e-9)
+    assert flach["struktur"] < kameras.STRUKTUR_WARNSCHWELLE < scharf["struktur"]
+
+
+def test_karte_ohne_spanne_ist_nicht_gemessen_und_nicht_strukturlos():
+    """Die dritte Antwort, an der Stelle, an der sie am leichtesten verlorengeht.
+
+    Eine Tiefenkarte, in der alle Punkte denselben Wert tragen, hat keine Spanne — der
+    massstabsfreie Wert entstünde nur durch Division durch null. ``struktur`` ist dann
+    ``None``, und die Warnung sagt NICHT GEMESSEN statt «strukturlos». Der Unterschied
+    ist der zwischen einem Befund und einem Rateschluss.
+    """
+    lage = kameras.rahmungsverhaeltnis(_SZENE_ENG, _BAUWERK,
+                                       tiefenkarte=[4.0] * 256, tiefenbreite=16)
+    assert lage["struktur"]["struktur"] is None
+    assert lage["warnungen"] and "NICHT GEMESSEN" in lage["warnungen"][0]
+    assert "strukturlos" not in lage["warnungen"][0].replace("NICHT strukturlos", "")
+    assert lage["abbruch"] is False
+
+
+def test_die_karte_wird_auch_ohne_bauwerksbox_gemessen():
+    """Zwei Messungen, die nichts miteinander zu tun haben — und eine fehlt.
+
+    Ohne Bauwerksbox ist der Füllgrad NICHT FESTSTELLBAR (``abbruch`` bleibt ``None``).
+    Die Tiefenkarte liegt trotzdem vor und wird gemessen; sie wegzulassen hiesse, eine
+    vorhandene Messung zu verschweigen, weil eine andere fehlt. Gewarnt wird dort aber
+    nicht: *hoher Füllgrad und strukturlose Karte* liesse sich ohne Füllgrad gar nicht
+    behaupten.
+    """
+    lage = kameras.rahmungsverhaeltnis(_SZENE_ENG, None,
+                                       tiefenkarte=_verlauf(), tiefenbreite=16)
+    assert lage["abbruch"] is None
+    assert lage["struktur"]["struktur"] == pytest.approx(0.0, abs=1e-9)
+    assert lage["warnungen"] == [], "ohne Fuellgrad wird die Paarung nicht behauptet"
+
+
+
+def _verlauf_exakt():
+    """Ein Verlauf in Viertelmetern — ``struktur`` wird hier **genau** 0,0.
+
+    0,25 ist im Binärformat exakt darstellbar, darum ist die zweite Differenz an jeder
+    Stelle exakt null. Der Verlauf in :func:`_verlauf` (Schritt 0,01) trifft dagegen nur
+    1,5e-15 — nahe genug für die Schwelle, aber nicht null. Für die Probe darunter ist
+    genau das der Unterschied, auf den es ankommt.
+    """
+    return _karte(lambda x, y: 3.0 + 0.25 * x)
+
+
+def test_struktur_genau_null_ist_gemessen_und_nicht_ungemessen():
+    """**Die dritte Antwort von der anderen Seite: 0,0 ist ein Befund, kein fehlender.**
+
+    Eine strukturlose Karte kann den Wert *exakt* null tragen. Wer den Wert dann auf
+    Wahrheit prüft statt auf ``None``, verwechselt «gemessen, und es ist nichts da» mit
+    «nicht gemessen» — dieselbe Verwechslung wie beim Füllgrad, nur eine Ebene tiefer.
+
+    Am 16.09.2026 beim Nachprüfen belegt: Ersetzt man im Riegel ``wert is None`` durch
+    eine Wahrheitsprüfung, fiel vorher **keine** Probe. Diese hier fällt.
+    """
+    karte = _verlauf_exakt()
+    lage = kameras.rahmungsverhaeltnis(_SZENE_ENG, _BAUWERK,
+                                       tiefenkarte=karte, tiefenbreite=16)
+    assert lage["struktur"]["struktur"] == 0.0, "exakt null, nicht ungefähr"
+    assert lage["struktur"]["struktur"] is not None
+    assert len(lage["warnungen"]) == 1
+    assert "fensterlosen Wand" in lage["warnungen"][0], "der bekannte Fall, nicht der offene"
+    assert "NICHT GEMESSEN" not in lage["warnungen"][0]
+    assert lage["abbruch"] is False
+
+
+def test_am_fuellgrad_abgewiesen_gibt_die_struktur_nur_auskunft():
+    """Der abgewiesene Lauf bekommt **keinen zweiten Grund**, nur eine Randbemerkung.
+
+    Ist der Füllgrad schon zu klein, ist der Lauf entschieden. Die strukturlose Karte
+    danebenzustellen ist Auskunft; sie als zweiten Abweisungsgrund zu führen hiesse, eine
+    ungeeichte Schwelle im Abbruchtext mitzuführen, wo sie niemand mehr als ungeeicht
+    liest.
+    """
+    ohne = kameras.rahmungsverhaeltnis(_SZENE_WEIT, _BAUWERK)
+    lage = kameras.rahmungsverhaeltnis(_SZENE_WEIT, _BAUWERK,
+                                       tiefenkarte=_verlauf(), tiefenbreite=16)
+    assert lage["abbruch"] is True
+    assert lage["abbruch_grund"] == ohne["abbruch_grund"], "kein Wort mehr als vorher"
+    assert len(lage["warnungen"]) == 1
+    assert "nicht als zweiter Grund" in lage["warnungen"][0]
+    assert "fensterlosen Wand" not in lage["warnungen"][0]
+
+
+@pytest.mark.parametrize("zusatz", [
+    {"tiefenkarte": [4.0] * 256},
+    {"tiefenbreite": 16},
+])
+def test_ein_halbes_argument_faellt_auf_statt_stillschweigend_nicht_zu_messen(zusatz):
+    """Karte ohne Breite (oder umgekehrt) ist ein Fehler des Aufrufers, kein Befund.
+
+    Stillschweigend ``struktur is None`` zurückzugeben hiesse hier NICHT GEMESSEN — und
+    der Aufrufer läse sein vergessenes Argument als Aussage über die Karte. Am
+    16.09.2026 beim Nachprüfen eingebaut.
+    """
+    with pytest.raises(ValueError, match="gehören zusammen"):
+        kameras.rahmungsverhaeltnis(_SZENE_ENG, _BAUWERK, **zusatz)
+
+
+def test_gegenprobe_gar_kein_argument_ist_kein_fehler():
+    """Die Gegenprobe zum Wächter darüber: **Wer keine Karte hat, darf weiterrechnen.**
+
+    Der Riegel lief vor dem 12.09.2026 ohne Tiefenkarte, und er muss es weiterhin tun —
+    ein Wächter, der den Normalfall abweist, ist schlimmer als keiner.
+    """
+    lage = kameras.rahmungsverhaeltnis(_SZENE_ENG, _BAUWERK)
+    assert lage["struktur"] is None
+    assert lage["warnungen"] == []
+
+
+def test_ein_wahrheitswert_ist_keine_bildbreite():
+    """``True`` als Breite ergäbe eine ein Punkt breite Spalte — und eine Scheinzahl.
+
+    Nachgerechnet am 16.09.2026: Ohne diesen Wächter lieferte dieselbe strukturlose Karte
+    mit ``tiefenbreite=True`` den Wert 0,1260 statt 0,0000 — sie sähe strukturreicher aus
+    als die harte Kante (0,0714), und die Warnung bliebe aus. Derselbe Wächter steht
+    einige Zeilen höher schon bei ``gemessener_fuellgrad``.
+    """
+    with pytest.raises(ValueError, match="Wahrheitswert"):
+        kameras.rahmungsverhaeltnis(_SZENE_ENG, _BAUWERK,
+                                    tiefenkarte=_verlauf(), tiefenbreite=True)

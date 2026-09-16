@@ -437,6 +437,62 @@ GLOSSAR: dict[str, str] = {
     "raum": "room",
     "räume": "rooms",
 
+    # --- Zahlwörter -------------------------------------------------------------------
+    # **Der Anlass ist die zweite Hälfte eines gemeldeten Prompts** (HomeStation,
+    # 12.09.2026): Im Feld stand «vier, betonwaende». Die Ersatzschreibung war am
+    # 12.09. behoben, `betonwaende` wurde seither zu `concrete walls` — und `vier`
+    # blieb deutsch stehen. Ein deutsches Wort im englischen Prompt ist genau der
+    # halbdeutsche Zustand, gegen den dieses Modul gebaut ist: Am 21.08.2026 über
+    # 8 gepaarte Startwerte gemessen, fiel der deutsche Prompt messbar schlechter aus
+    # (Blauüberschuss +40.1 gegen +13.9, 8 von 8 Mal schlechter).
+    #
+    # Eine Zahl im Prompt ist auch kein Beiwerk: «vier Geschosse» ist eine Aussage über
+    # das Gebäude, und das Modell soll sie verstehen.
+    #
+    # **Was hier NICHT steht, und warum — jedes Wort einzeln geprüft** (16.09.2026,
+    # differenziell gemessen: Glossareintrag versuchsweise gesetzt, dann geprüft, was
+    # sich an englischem Text ändert; Korpus war `_ENGLISCHER_WORTSCHATZ` plus kurze
+    # englische Prompts ohne Signalwörter):
+    #
+    # * **`elf` fehlt.** Es ist im Englischen ein Fabelwesen und damit ein echter
+    #   falscher Freund — der einzige der zwölf. Gemessen: 3 englische Eingaben kippten,
+    #   `elf statue` wurde zu `eleven statue` und galt zugleich als deutsch. Alle
+    #   übrigen Zahlwörter änderten an englischem Text **genau nichts** ausser sich
+    #   selbst. Eine `11` schreibt ohnehin, wer elf meint.
+    # * **`acht` fehlt.** Nicht wegen des Englischen — dort ist es sauber —, sondern
+    #   wegen der eigenen Beugungsregel: `achte` und `achten` streifen ihre Endung ab
+    #   und landen auf `acht`. Damit übersetzte der Eintrag durch die Hintertür die
+    #   **Ordnungszahl** (`achte` = eighth, nicht eight) und den Verbstamm von «achten».
+    #   Es ist das einzige Zahlwort, dem das passiert; bei `zweite`, `vierte`, `zehnte`
+    #   bleibt nach dem Abstreifen `zweit`, `viert`, `zehnt` übrig, und das ist kein
+    #   Eintrag. Ein stehengebliebenes `acht` wird als `unbekannt` gemeldet und kostet
+    #   einen Blick — ein stilles `achte` → `eight` kostet ein Bild.
+    # * **`ein` und `eine` bleiben Artikel.** Sie stehen weiter unten schon, und zwar
+    #   als `a`. Das ist im Prompt fast immer richtig: «ein Wohnhaus» ist *a residential
+    #   building*, nicht *one residential building*. Wer wirklich die Zahl meint,
+    #   schreibt `eins` — und das steht hier.
+    # * **Ordnungszahlen fehlen ganz** (`erste`, `zweite`, …). Bewusste Grenze: Sie sind
+    #   gebeugt, und im Englischen greift die Wortstellung anders («the second floor»
+    #   gegen «zweites Geschoss»). Für eine Aufzählung durch Kommata, wie ein Bildprompt
+    #   sie ist, trägt eine Grundzahl; eine gebeugte Ordnungszahl trüge nicht. Sie
+    #   bleiben stehen und werden gemeldet.
+    #
+    # Die Ersatzschreibung (`fuenf`, `zwoelf`) braucht **keine eigenen Einträge**:
+    # :func:`_umlaut_kandidaten` löst sie auf, und :func:`grundform` schlägt die
+    # Umlautform hier nach. Nachgemessen am 16.09.2026 — `fuenf` und `fünf` ergeben
+    # beide `five`. Ein zweiter Eintrag wäre eine zweite Stelle, die mitgepflegt
+    # werden müsste, ohne etwas zu können.
+    "eins": "one",
+    "zwei": "two",
+    "drei": "three",
+    "vier": "four",
+    "fünf": "five",
+    "sechs": "six",
+    "sieben": "seven",
+    "neun": "nine",
+    "zehn": "ten",
+    "zwölf": "twelve",
+
     # --- Häufige Funktionswörter, die sonst als „unbekannt" stehenblieben -------------
     # Sie tragen nichts zum Bild bei, aber ein stehengebliebenes „mit" macht aus einem
     # übersetzten Prompt wieder einen halbdeutschen.
@@ -751,7 +807,7 @@ def _nicht_englisch(text: str) -> tuple[str, ...]:
 #: Ein gemeldetes Wort kostet einen Blick, ein falsch übersetztes ein Bild.
 #:
 #: **``n`` flog im selben Zug mit heraus und musste zurück.** Es sah nach derselben
-#: Sorte Risiko aus und ist keine: Der reguläre Plural der Femininа bildet sich mit ``n``
+#: Sorte Risiko aus und ist keine: Der reguläre Plural der Feminina bildet sich mit ``n``
 #: — ``Fassade`` → ``Fassaden``, ``Terrasse`` → ``Terrassen``. Ohne diese eine Endung
 #: bleibt jede Mehrzahl stehen. Die Gegenprobe über die englischen Wörter unserer
 #: Übersetzungen fand genau einen gefährlichen Fall (``seen`` → ``see`` → ``lake``), und
@@ -770,6 +826,34 @@ _ENTUMLAUTUNG = {"ä": "a", "ö": "o", "ü": "u"}
 #: falsch**. Der Schutz liegt ohnehin nicht in der Länge, sondern in der Bedingung, dass
 #: **beide** Teile im Glossar stehen.
 MIN_TEILLAENGE = 3
+
+#: Die Grundzahlen des Glossars — **gesperrt für die Kompositumsregel**.
+#:
+#: **Der Anlass ist eine Nachmessung** (16.09.2026, am Tag der Aufnahme): Mit den
+#: Zahlwörtern im Glossar zerlegte :func:`zerlege_kompositum` plötzlich Wörter, die keine
+#: Summe ihrer Teile sind. Über den Wortschatz dieses Repos gemessen (69'273 verschiedene
+#: Wörter), **sechs** davon, und alle sechs still — ``unbekannt`` war leer,
+#: ``vollstaendig`` war ``True``:
+#:
+#:     ``dreizehn``  → ``three ten``     (thirteen)
+#:     ``vierzehn``  → ``four ten``      (fourteen)
+#:     ``fünfzehn``  → ``five ten``      (fifteen)
+#:     ``neunzehn``  → ``nine ten``      (nineteen)
+#:     ``dreiecke``  → ``three corner``  (triangles)
+#:     ``obendrein`` → ``above three``   (moreover)
+#:
+#: Deutsch zählt und bildet Formen **zusammengesetzt**, wo Englisch ein eigenes Wort hat.
+#: Das ist die Klasse, die der Kompositumsregel entgeht: Sie prüft, ob beide Teile im
+#: Glossar stehen, und bei einer Zahl stehen sie immer. Ohne Sperre trüge der Prompt eine
+#: Zahl, die es nicht gibt — und *das* ist schlimmer als ein stehengebliebenes Wort:
+#: ``dreizehn`` bleibt jetzt stehen und wird gemeldet.
+#:
+#: Gesperrt sind **beide** Stellen, vorn wie hinten — ``obendrein`` ist der Fall hinten.
+#: Verloren geht dabei nichts: Über denselben Wortschatz gemessen, zerlegt die Regel mit
+#: dieser Sperre **kein einziges** Wort weniger, das richtig zerlegt war.
+ZAHLWOERTER = frozenset({
+    "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "neun", "zehn", "zwölf",
+})
 
 #: Verfahrensnamen für das Protokoll. Was durch eine REGEL übersetzt wurde und nicht
 #: durch einen Eintrag, soll unterscheidbar bleiben — eine Regel irrt anders als ein
@@ -873,7 +957,8 @@ def zerlege_kompositum(wort: str) -> tuple[str, ...] | None:
     diese Regel nicht; es gibt einen Glossareintrag.
 
     Zerlegt wird in **genau zwei** Teile, beide mindestens :data:`MIN_TEILLAENGE` lang,
-    beide im Glossar. Der zweite Teil darf gebeugt sein (``Nordfassaden``).
+    beide im Glossar, und **keiner davon ein Zahlwort** (:data:`ZAHLWOERTER` — der Grund
+    steht dort). Der zweite Teil darf gebeugt sein (``Nordfassaden``).
 
     **Was das falsch machen kann, und warum es trotzdem so steht.** Ein Kompositum ist
     nicht immer die Summe seiner Teile. Zwei echte Fälle aus unserem eigenen Glossar:
@@ -892,10 +977,10 @@ def zerlege_kompositum(wort: str) -> tuple[str, ...] | None:
         vorn, hinten = klein[:schnitt], klein[schnitt:]
         if vorn not in GLOSSAR:
             vorn = _bekannte_umlautform(vorn) or vorn
-        if vorn not in GLOSSAR:
+        if vorn not in GLOSSAR or vorn in ZAHLWOERTER:
             continue
         hinten_grund = hinten if hinten in GLOSSAR else grundform(hinten)
-        if hinten_grund:
+        if hinten_grund and hinten_grund not in ZAHLWOERTER:
             return (vorn, hinten_grund)
     return None
 
@@ -1189,6 +1274,7 @@ __all__ = [
     "VERFAHREN_ERKENNUNG", "VERFAHREN_GLOSSAR", "VERFAHREN_KEINE",
     "ENGLISCH_AUCH", "glossar_evidenz", "glossar_uebersetzung",
     "ART_BEUGUNG", "ART_EINTRAG", "ART_KOMPOSITUM", "ENDUNGEN", "MIN_TEILLAENGE",
+    "ZAHLWOERTER",
     "grundform", "ist_deutsch", "sieht_englisch_aus", "sprachwarnung", "uebersetze",
     "zerlege_kompositum",
 ]

@@ -34,6 +34,8 @@ Repo verlässt** und die Datei nicht.
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from collections.abc import Sequence
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -392,7 +394,22 @@ def vermerke_zustellung(kennungen, repo_wurzel, *, wann: str | None = None) -> P
 
     Gemerkt hat es niemand, weil es nichts zu merken gab: Abgelegt und ausgeliefert
     sahen in jeder Liste gleich aus. Seither sind es zwei Zustände.
+
+    Raises:
+        PostError: ``kennungen`` ist eine einzelne Zeichenkette (siehe unten).
     """
+    if isinstance(kennungen, str):
+        # DERSELBE FEHLER WIE IN `vermerke_gesehen`, nur älter — am 16.09.2026 beim
+        # Absichern der neuen Ablage auch hier nachgemessen:
+        # `vermerke_zustellung("auf-1", wurzel)` legte fünf Zustellvermerke an («a», «u»,
+        # «f», «-», «1»). Und hier wiegt er schwerer als drüben: Der echte Auftrag bleibt
+        # dabei als NICHT ZUGESTELLT stehen — also in genau der Lage, die «unser Fehler»
+        # heisst — während das Buch mit fünf Kennungen gefüllt ist, die es nicht gibt.
+        # Ein Fehlschlag, der wie ein Erfolg aussieht, wird nicht gefunden; er wird
+        # geglaubt. Darum laut statt still.
+        raise PostError(
+            f"«{kennungen}» ist eine einzelne Kennung und keine Folge. Eine Zeichenkette "
+            f"würde Buchstabe für Buchstabe vermerkt — bitte [{kennungen!r}] übergeben.")
     vermerk = _zustellvermerk(repo_wurzel)
     zeit = wann or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     for kennung in kennungen:
@@ -404,15 +421,159 @@ def vermerke_zustellung(kennungen, repo_wurzel, *, wann: str | None = None) -> P
     return pfad
 
 
+#: Wo vermerkt wird, dass ein Adressat einen Auftrag **gesehen** hat — dieselbe Bauform
+#: wie :data:`ZUSTELLUNG_DATEI`, und aus demselben Grund kein Pfad darin (Regel 3).
+#:
+#: **Der dritte Zustand des Rückwegs.** Bis zum 16.09.2026 kannte dieses Repo auf dem
+#: Rückweg zwei Tatsachen: hinausgegangen (Zustellvermerk) und beantwortet (Ergebnis).
+#: Dazwischen lag alles, was :func:`warum_keine_antwort` nur *vermuten* kann — ein
+#: zugestellter Auftrag ohne Antwort ist gelesen und verworfen, ungelesen liegengeblieben
+#: oder gar nie angekommen, und von hier aus sieht das dreierlei gleich aus.
+#:
+#: Diese Ablage trägt die eine Auskunft, die wir uns nicht selbst geben können: dass
+#: drüben jemand hingesehen hat. Sie kommt **vom Adressaten** (Zustellbeleg, Nebensatz in
+#: einem Ergebnis, mündlich über den Owner) und wird von Hand oder von `tools/` eingetragen.
+GESEHEN_DATEI = "auftraege/gesehen.json"
+
+
+def _schreibe_atomar(pfad: Path, daten: dict) -> Path:
+    """Die Ablage in einem Zug ersetzen — **nie halb beschrieben zurücklassen**.
+
+    Warum hier strenger als beim Zustellvermerk: Eine unlesbare ``gesehen.json`` lässt
+    :func:`gesehen_vermerke` absichtlich hart fehlschlagen. Damit wäre eine abgebrochene
+    Schreiboperation kein Schönheitsfehler, sondern ein Repo, in dem die Rückstandsfrage
+    gar nicht mehr beantwortet werden kann. Der Zustellvermerk verkraftet eine zerrissene
+    Datei (er liest sie als «nichts zugestellt»); diese hier nicht — also darf sie gar
+    nicht erst entstehen.
+    """
+    pfad.parent.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(daten, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
+    kennung, zwischenpfad = tempfile.mkstemp(dir=str(pfad.parent), suffix=".tmp")
+    try:
+        with os.fdopen(kennung, "w", encoding="utf-8") as datei:
+            datei.write(text)
+            datei.flush()
+            # OHNE fsync LIEGT DER INHALT NUR IM PUFFER DES BETRIEBSSYSTEMS. `os.replace`
+            # wäre dann zwar unteilbar, aber unteilbar auf eine leere Datei.
+            os.fsync(datei.fileno())
+        os.replace(zwischenpfad, pfad)
+    except BaseException:
+        try:
+            os.unlink(zwischenpfad)
+        except OSError:
+            pass
+        raise
+    return pfad
+
+
+def gesehen_vermerke(repo_wurzel) -> dict:
+    """Die Ablage :data:`GESEHEN_DATEI` lesen.
+
+    Returns:
+        Je Kennung ``{"am": ISO-Zeit, "von": worker, "bemerkung": str | None}``. Eine
+        **fehlende** Datei heisst «noch nie hat jemand einen Blick bestätigt» — das ist
+        der Normalzustand dieses Repos und kein Befund.
+
+    Raises:
+        PostError: Die Datei ist da und nicht lesbar.
+
+    **Warum das hier hart fehlschlägt und beim Zustellvermerk nicht.** Der Zustellvermerk
+    liest eine kaputte Datei als «nichts zugestellt»: Die strengere Auslegung kostet dort
+    eine Auslieferung zu viel, die mildere einen Auftrag, der nie ankommt. Hier gibt es
+    diese sichere Richtung nicht. Ein leeres Ergebnis hiesse «niemand hat hingesehen» und
+    würde eine bestätigte Tatsache still in eine Vermutung zurückverwandeln — ein
+    unlesbares Buch heisst weder «nichts gesehen» noch «alles gesehen». *Die dritte
+    Antwort: nicht messbar ist weder bestanden noch durchgefallen*, und sie wird laut.
+    """
+    pfad = Path(repo_wurzel) / GESEHEN_DATEI
+    if not pfad.is_file():
+        return {}
+    try:
+        gelesen = json.loads(pfad.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as fehler:
+        raise PostError(
+            f"{GESEHEN_DATEI} ist da und nicht lesbar ({fehler}). Diese Ablage wird NICHT "
+            f"als leer gelesen: «leer» hiesse «niemand hat hingesehen», und das wäre eine "
+            f"Aussage über den Adressaten, die aus einer kaputten Datei stammt.") from fehler
+    if not isinstance(gelesen, dict):
+        raise PostError(
+            f"{GESEHEN_DATEI} trägt kein Wörterbuch, sondern {type(gelesen).__name__}. "
+            f"Auch das wird nicht als leer gelesen — siehe oben.")
+    return gelesen
+
+
+def vermerke_gesehen(repo_wurzel, kennungen, *, von: str,
+                     bemerkung: str | None = None, jetzt: str | None = None) -> int:
+    """Festhalten, dass ein Adressat diese Aufträge **gesehen** hat.
+
+    Args:
+        kennungen: Die Auftragskennungen, für die ein Blick bestätigt ist.
+        von: Wer hingesehen hat — einer aus :data:`aiimaging.auftrag.WORKER`. Ohne diese
+            Angabe wäre der Vermerk wertlos: «jemand hat es gesehen» beantwortet keine
+            der Fragen, für die es ihn gibt.
+        bemerkung: Woher wir es wissen (ein Satz), oder ``None``. ``None`` heisst **nicht
+            gemessen** — nicht «ohne Anlass». Ein leerer Text wird zu ``None``: Er sähe in
+            der Ablage aus wie eine Bemerkung, die jemand geschrieben hat, und wäre keine.
+        jetzt: Für Proben einsetzbar. Ohne Angabe die aktuelle UTC-Zeit.
+
+    Returns:
+        Wieviele Kennungen **neu** eingetragen wurden.
+
+    **Ein zweiter Vermerk überschreibt den ersten nicht.** Der erste Blick ist der, der
+    zählt: Er beantwortet die Frage, ob der Auftrag angekommen ist, und er datiert, seit
+    wann der Adressat ihn kennt. Ein späterer Eintrag mit heutigem Datum wäre eine zweite
+    Wahrheit — und zwar die bequemere, weil sie den Auftrag jedes Mal wieder jung aussehen
+    liesse. *Der Vermerk soll den Fall finden, nicht ihn zudecken* (derselbe Satz wie beim
+    Zustellvermerk am 03.09.2026, und derselbe Grund).
+
+    Raises:
+        PostError: ``von`` ist kein bekannter Adressat. Ein Tippfehler dort erzeugt einen
+            Vermerk, den keine Auswertung je einem Worker zuordnet.
+        PostError: ``kennungen`` ist eine einzelne Zeichenkette (siehe unten).
+    """
+    if isinstance(kennungen, str):
+        # EINE ZEICHENKETTE IST AUCH EINE FOLGE — und zwar eine von Buchstaben. Gemessen
+        # am 16.09.2026: `vermerke_gesehen(wurzel, "auf-1", von="ui")` trug fuenf
+        # Vermerke ein («a», «u», «f», «-», «1») und meldete `5` zurueck. Kein Aufruf
+        # waere je gescheitert, kein Auftrag je gefunden worden, und der Rueckstand haette
+        # ab da eine Zahl getragen, die nichts zaehlt. Darum hier laut statt still.
+        raise PostError(
+            f"«{kennungen}» ist eine einzelne Kennung und keine Folge. Eine Zeichenkette "
+            f"wuerde Buchstabe fuer Buchstabe vermerkt — bitte [{kennungen!r}] uebergeben.")
+    if von not in _auftrag.WORKER:
+        raise PostError(
+            f"«{von}» ist kein bekannter Adressat ({', '.join(_auftrag.WORKER)}). Ein "
+            f"Vermerk unter einem unbekannten Namen wird von keiner Auswertung gefunden.")
+
+    vermerk = gesehen_vermerke(repo_wurzel)
+    zeit = jetzt or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Ein leerer oder nur aus Leerzeichen bestehender Text SIEHT in der Ablage aus wie
+    # eine Bemerkung, die jemand geschrieben hat, und ist keine. Er wird zu None, und
+    # None heisst hier NICHT GEMESSEN — nicht «ohne Anlass».
+    bemerkung = str(bemerkung).strip() if bemerkung is not None else None
+    bemerkung = bemerkung or None
+    neu = 0
+    for kennung in kennungen:
+        schluessel = str(kennung)
+        if schluessel in vermerk:
+            continue
+        vermerk[schluessel] = {"am": zeit, "von": von, "bemerkung": bemerkung}
+        neu += 1
+    if neu:
+        _schreibe_atomar(Path(repo_wurzel) / GESEHEN_DATEI, vermerk)
+    return neu
+
+
+
 #: Wie jung ein Auftrag sein darf, bevor sein Ausbleiben überhaupt etwas heisst.
 #:
 #: Zwei Tage, und die Zahl ist bewusst grosszügig: Die Worker arbeiten in Sitzungen, nicht
 #: im Takt. *Ein Auftrag von gestern, der noch keine Antwort hat, ist kein Befund.*
 FRIST_FRISCH_TAGE = 2
 
-#: Die vier Lagen, in denen ein unbeantworteter Auftrag stehen kann.
+#: Die fünf Lagen, in denen ein unbeantworteter Auftrag stehen kann.
 #:
-#: **Warum es vier sind und nicht eine.** Bis zum 16.09.2026 kannte dieses Repo nur
+#: **Warum es mehr als eine ist.** Bis zum 16.09.2026 kannte dieses Repo nur
 #: «unbeantwortet». Am selben Tag stand der Rückstand bei 18 Aufträgen, der älteste 25
 #: Tage, und **seit acht Tagen hatte keiner der drei Worker geantwortet** — aber ob drüben
 #: niemand arbeitete, ob die Aufträge nicht ankamen, oder ob sie ankamen und liegen
@@ -426,12 +587,21 @@ FRIST_FRISCH_TAGE = 2
 #: lassen — dort ist eine Nachfrage angebracht. Bei ``KEIN_LEBENSZEICHEN`` wäre sie es
 #: nicht: Wer seit Wochen nichts schickt, hat die Nachfrage vielleicht ebenso wenig
 #: gesehen wie den Auftrag. **Erst messen, dann mahnen.**
+#:
+#: **Die fünfte kam am 16.09.2026 dazu, und sie ist die einzige, die nicht geraten ist.**
+#: Die vier anderen lesen unsere eigene Ablage — wann der Auftrag entstand, ob er
+#: hinausging, wann der Adressat zuletzt irgendetwas beantwortet hat. ``GESEHEN_OHNE_ANTWORT``
+#: liest eine Auskunft *vom Adressaten* (:data:`GESEHEN_DATEI`). Darum schlägt sie die
+#: beiden Vermutungslagen: **Ein bestätigter Blick ist stärker als jeder Schluss aus dem
+#: Antwortverhalten** — auch dann, wenn dieser Adressat seit Wochen nichts geschickt hat.
 NICHT_ZUGESTELLT = "nicht zugestellt"
 FRISCH = "frisch"
+GESEHEN_OHNE_ANTWORT = "gesehen, ohne antwort"
 AKTIV_UEBERGANGEN = "aktiv, diesen uebergangen"
 KEIN_LEBENSZEICHEN = "kein lebenszeichen"
 
-LAGEN = (NICHT_ZUGESTELLT, FRISCH, AKTIV_UEBERGANGEN, KEIN_LEBENSZEICHEN)
+LAGEN = (NICHT_ZUGESTELLT, FRISCH, GESEHEN_OHNE_ANTWORT, AKTIV_UEBERGANGEN,
+         KEIN_LEBENSZEICHEN)
 
 
 def _tag(wert) -> str:
@@ -443,7 +613,7 @@ def warum_keine_antwort(repo_wurzel, *, heute=None,
                         frist_tage: int = FRIST_FRISCH_TAGE) -> list[dict]:
     """Je unbeantwortetem Auftrag: **warum** die Antwort fehlt, soweit das hier messbar ist.
 
-    Vier Lagen (:data:`LAGEN`), und die Unterscheidung ist der ganze Zweck:
+    Fünf Lagen (:data:`LAGEN`), und die Unterscheidung ist der ganze Zweck:
 
     ``nicht zugestellt``
         Der Auftrag ist nie hinausgegangen. **Unser Fehler**, nicht seiner.
@@ -451,6 +621,11 @@ def warum_keine_antwort(repo_wurzel, *, heute=None,
     ``frisch``
         Jünger als ``frist_tage``. Noch keine Aussage — die Worker arbeiten in Sitzungen,
         nicht im Takt.
+
+    ``gesehen, ohne antwort``
+        Zu diesem Auftrag liegt ein Vermerk in :data:`GESEHEN_DATEI`: Der Adressat hat ihn
+        **gesehen** und nicht beantwortet. *Hier ist eine Nachfrage angebracht, und sie
+        kann sich auf den Vermerk berufen statt auf eine Vermutung.*
 
     ``aktiv, diesen uebergangen``
         Der Adressat hat **nach** diesem Auftrag etwas anderes beantwortet. Er war also
@@ -462,11 +637,13 @@ def warum_keine_antwort(repo_wurzel, *, heute=None,
         Wer seit Wochen nichts schickt, hat eine Mahnung vielleicht ebenso wenig gesehen
         wie den Auftrag.
 
-    **Was diese Funktion nicht kann, und das gehört an ihre Antwort:** Sie sieht nur
-    unsere Seite. Ein Auftrag, der zugestellt wurde und dessen Adressat schweigt, kann
-    gelesen und verworfen, ungelesen liegengeblieben oder nie angekommen sein. Die
-    Unterscheidung dazwischen bräuchte eine Rückmeldung *vom Adressaten* — den
-    Zustellbeleg gibt es, gelesen hat ihn bisher niemand zurückgemeldet.
+    **Was diese Funktion nicht kann, und das gehört an ihre Antwort:** Vier der fünf
+    Lagen lesen nur unsere Seite. Ein zugestellter Auftrag, dessen Adressat schweigt, kann
+    gelesen und verworfen, ungelesen liegengeblieben oder nie angekommen sein — von hier
+    aus sieht das dreierlei gleich aus. Nur ``gesehen, ohne antwort`` beruht auf einer
+    Auskunft *vom Adressaten*, und die kommt nicht von selbst: Sie muss über
+    :func:`vermerke_gesehen` eingetragen werden. **Ohne Vermerk bleibt es beim Raten**, und
+    das Raten heisst dann ``kein lebenszeichen`` und nicht «in Ordnung».
 
     Returns:
         Je Auftrag ``{auftrag_id, worker, erstellt, tage, lage, grund}``, älteste zuerst.
@@ -476,6 +653,9 @@ def warum_keine_antwort(repo_wurzel, *, heute=None,
     wurzel = Path(repo_wurzel)
     stichtag = heute or _date.today()
     vermerk = _zustellvermerk(wurzel)
+    # KEIN `try` DARUM. Eine unlesbare `gesehen.json` reisst diese Auswertung ab, statt
+    # sie mit Vermutungen weiterlaufen zu lassen — siehe `gesehen_vermerke`.
+    gesehen = gesehen_vermerke(wurzel)
     verhalten = _auftrag.antwortverhalten(wurzel)
 
     # WANN HAT DIESER ADRESSAT ZULETZT GEANTWORTET — je Adressat ein Tag.
@@ -500,6 +680,33 @@ def warum_keine_antwort(repo_wurzel, *, heute=None,
             lage = FRISCH
             grund = (f"Erst {tage} Tag(e) alt. Die Worker arbeiten in Sitzungen und nicht "
                      f"im Takt; darunter sagt ein Ausbleiben nichts.")
+        elif kennung in gesehen:
+            # ER SCHLÄGT DIE BEIDEN VERMUTUNGSLAGEN, ABER NICHT `nicht zugestellt`.
+            #
+            # Gegen `AKTIV_UEBERGANGEN` und `KEIN_LEBENSZEICHEN` gewinnt er, weil beide
+            # aus dem Antwortverhalten geschlossen sind und dieser hier bestätigt ist.
+            #
+            # Gegen `NICHT_ZUGESTELLT` verliert er, obwohl «gesehen» die Zustellung
+            # logisch einschliesst: Stehen beide Angaben gegeneinander, ist das ein Fehler
+            # in UNSERER Buchführung — der Zustellvermerk wurde beim Ausliefern
+            # vergessen. Wer ihn hier vom Blickvermerk zudecken lässt, verliert die
+            # einzige Stelle, an der dieses Versäumnis noch auffällt. Und die
+            # Handlungsanweisung wäre die falsche: nachfragen statt die eigene Ablage
+            # in Ordnung bringen.
+            eintrag = gesehen.get(kennung)
+            if not isinstance(eintrag, dict):
+                # EIN VON HAND EINGETRAGENER ZEITSTEMPEL statt des Wörterbuchs. Daran
+                # abzustürzen hiesse, eine richtige Auskunft wegen ihrer Form zu
+                # verwerfen — die Kennung steht da, und das ist die Aussage.
+                eintrag = {"am": eintrag, "von": worker, "bemerkung": None}
+            am = _tag(eintrag.get("am")) or "unbekannt"
+            bemerkung = str(eintrag.get("bemerkung") or "").strip()
+            lage = GESEHEN_OHNE_ANTWORT
+            grund = (f"{worker} hat ihn gesehen (vermerkt am {am}) und nicht beantwortet. "
+                     f"Eine Nachfrage ist angebracht und kann sich auf den Vermerk berufen "
+                     f"statt auf eine Vermutung.")
+            if bemerkung:
+                grund += f" Vermerk: {bemerkung}"
         elif letzte.get(worker) and letzte[worker] > erstellt:
             lage = AKTIV_UEBERGANGEN
             grund = (f"{worker} hat am {letzte[worker]} geantwortet, also NACH diesem "
@@ -535,8 +742,9 @@ def unzugestellt(repo_wurzel) -> list[dict]:
              "erstellt": a.get("erstellt")} for a in offen]
 
 
-__all__ = ["AKTIV_UEBERGANGEN", "BREITE", "FRISCH", "FRIST_FRISCH_TAGE", "KEIN_LEBENSZEICHEN",
+__all__ = ["AKTIV_UEBERGANGEN", "BREITE", "FRISCH", "FRIST_FRISCH_TAGE", "GESEHEN_DATEI",
+           "GESEHEN_OHNE_ANTWORT", "KEIN_LEBENSZEICHEN",
            "LAGEN", "NICHT_ZUGESTELLT", "RUECKWEG", "ZUSTELLUNG_DATEI", "ZUSTELLUNG_NOETIG",
            "PostError", "warum_keine_antwort",
-           "block", "lege_ab", "offene_blocks", "unzugestellt", "vermerke_zustellung",
-           "zustellbeleg_stand"]
+           "block", "gesehen_vermerke", "lege_ab", "offene_blocks", "unzugestellt",
+           "vermerke_gesehen", "vermerke_zustellung", "zustellbeleg_stand"]

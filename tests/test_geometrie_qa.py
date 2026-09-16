@@ -2379,3 +2379,369 @@ def test_eine_karte_ohne_spanne_ist_nicht_gemessen_und_nicht_strukturlos():
 def test_eine_karte_die_nicht_zur_breite_passt_fliegt():
     with pytest.raises(geometrie_qa.QaError, match="passt nicht"):
         geometrie_qa.tiefenstruktur([1.0] * 10, breite=3)
+
+
+# ======================================================================================
+# Lücken-Trennung — die Ferne abtrennen, ohne vorher zu wissen, wie viel Ferne da ist
+# ======================================================================================
+#
+# Der Anlass steht im Modul: Ein festes 99er-Perzentil machte am 11.09.2026 ein Bild
+# flach (Mittel 0.9869), weil die Fernsichtebene 1.13 % der Fläche einnahm — mehr als
+# das eine Prozent, das ein 99er-Perzentil wegschneidet.
+#
+# Alle Karten hier sind synthetisch und nach den gemessenen Verhältnissen nachgebaut:
+# ein dichter Innenraum von wenigen Metern, ein dünner Klumpen weit hinten, und
+# dazwischen nichts.
+
+#: Der Innenraum aus der Messung: 800 Punkte zwischen 1.75 m und rund 10 m.
+def _innenraum(n: int = 800, von: float = 1.75, bis: float = 9.98) -> list[float]:
+    """Ein dichter Tiefenverlauf ohne jede Lücke — das, was ein Raum liefert."""
+    schritt = (bis - von) / (n - 1)
+    return [von + schritt * i for i in range(n)]
+
+
+def test_die_erste_stufe_trennt_bei_zehn_metern_und_nicht_bei_1600():
+    """Der nachgebaute Fall vom 11.09.2026: Innenraum plus Fernsichtebene.
+
+    Die Lücke zwischen 10 m und 1600 m ist der grösste Verhältnissprung der Karte. Ein
+    99er-Perzentil läge hier mitten in der Fernsichtebene, weil sie mehr als ein Prozent
+    der Punkte stellt (hier 1.11 %, gemessen wurden 1.13 %).
+    """
+    karte = _innenraum() + [1600.0 + 0.1 * i for i in range(9)]
+
+    befund = geometrie_qa.ferne_abtrennen(karte)
+
+    assert befund["obergrenze"] == pytest.approx(9.98, abs=0.05), \
+        "getrennt wird an der Lücke, nicht an der Ferne selbst"
+    assert befund["obergrenze"] < 100.0
+    assert befund["stufen_gefunden"] == 1
+    assert befund["verhaeltnis"] > 100.0
+    assert befund["anteil_geklemmt"] == pytest.approx(9 / 809, abs=1e-6)
+    assert befund["anteil_wertebereich"] == pytest.approx(1.0)
+    assert befund["warnungen"] == []
+
+
+def test_ein_festes_perzentil_haette_hier_in_die_fernsicht_hinein_geschnitten():
+    """**Der Prüfstein, und er ist der Grund für das ganze Verfahren.**
+
+    Dieselbe Karte über ihr 99er-Perzentil normiert: Die Obergrenze landet mitten in der
+    Fernsichtebene, und dem Innenraum bleibt ein halbes Prozent des Wertebereichs — das
+    Bild ist flach. Der Grund ist die Anteilsrechnung und kein Zufall: Die Ferne stellt
+    hier 1.13 % der Punkte, genau wie am 11.09.2026 gemessen, und ein 99er-Perzentil
+    schneidet nur 1 % weg. Es schneidet also IN die Ferne hinein.
+    """
+    karte = sorted(_innenraum(n=787) + [1600.0 + 0.1 * i for i in range(9)])
+    assert 9 / len(karte) == pytest.approx(0.0113, abs=0.0002)
+    perzentil = karte[int(0.99 * (len(karte) - 1))]
+    innen = max(w for w in karte if w < 100.0)
+
+    luecke = geometrie_qa.ferne_abtrennen(karte)["obergrenze"]
+
+    assert perzentil > 1000.0, "die Fernsicht stellt mehr als ein Prozent der Punkte"
+    assert (innen - karte[0]) / (perzentil - karte[0]) < 0.01, \
+        "nach dem Perzentil bleibt dem Innenraum unter einem Prozent des Wertebereichs"
+    assert (innen - karte[0]) / (luecke - karte[0]) == pytest.approx(1.0), \
+        "nach der Lücke bleibt ihm alles"
+
+
+def test_die_zweite_stufe_holt_die_nachbarhaeuser_weg():
+    """Zwei Lücken: Innenraum 2–9 m, ein Klumpen bei 60 m, ein Klumpen bei 1600 m.
+
+    Die Ferne ist hier der grössere Sprung (Faktor 26 gegen Faktor 6.7), also trennt die
+    erste Stufe bei 60 m — und lässt den Klumpen bei 60 m stehen::
+
+        Obergrenze 60.6 m → Innenraum nutzt  11.9 % des Wertebereichs, geklemmt 2.1 %
+        Obergrenze  9.0 m → Innenraum nutzt 100.0 % des Wertebereichs, geklemmt 5.0 %
+
+    Für knapp drei Prozentpunkte mehr Klemmung gibt es die achtfache Auflösung dort, wo
+    das Bild stattfindet. **Das ist der GEWINN der zweiten Stufe — nicht ihr Freibrief.**
+    Dieselbe Rechnung mit einer echten Nachbarzeile statt einer Fernsichtebene steht in
+    :func:`test_die_zweite_stufe_nimmt_in_der_aussenansicht_bauwerk_weg`, und dort ist
+    derselbe Schnitt ein Verlust. Die Zahlen sind konstruiert, nicht gemessen: Die
+    HomeStation mass am 11.09.2026 einen anderen Raum (1.75–10 m, 145 m, 1600 m), und
+    dessen Fall löst schon die erste Stufe.
+    """
+    karte = ([2.0 + 0.0175 * i for i in range(400)]
+             + [60.0 + 0.05 * i for i in range(12)]
+             + [1600.0 + 0.1 * i for i in range(9)])
+
+    eine = geometrie_qa.ferne_abtrennen(karte, stufen=1)
+    zwei = geometrie_qa.ferne_abtrennen(karte, stufen=2)
+
+    assert eine["obergrenze"] == pytest.approx(60.55, abs=0.1)
+    assert eine["stufen_gefunden"] == 1
+    assert zwei["obergrenze"] == pytest.approx(8.98, abs=0.1), \
+        "die zweite Stufe sucht die naechste Luecke UNTERHALB der ersten Obergrenze"
+    assert zwei["stufen_gefunden"] == 2
+    assert eine["anteil_wertebereich"] < 0.15
+    assert zwei["anteil_wertebereich"] == pytest.approx(1.0)
+    assert zwei["anteil_geklemmt"] - eine["anteil_geklemmt"] < 0.05, \
+        "der Preis der zweiten Stufe ist ein paar Prozentpunkte Klemmung"
+
+
+def test_der_fall_aus_der_aufgabe_landet_bei_neun_und_nicht_bei_145():
+    """Punkte 2–9 m, ein Klumpen bei 145 m, ein Klumpen bei 1600 m.
+
+    Hier ist schon der untere Sprung der grössere (Faktor 16 gegen Faktor 11), die erste
+    Stufe trifft also direkt. Dass eine Stufe genügt, ist kein Widerspruch zur zweiten:
+    Gesucht wird der grösste Sprung, nicht der hinterste.
+    """
+    karte = ([2.0 + 0.0175 * i for i in range(400)]
+             + [145.0 + 0.05 * i for i in range(12)]
+             + [1600.0 + 0.1 * i for i in range(9)])
+
+    befund = geometrie_qa.ferne_abtrennen(karte)
+
+    assert befund["obergrenze"] == pytest.approx(8.98, abs=0.1)
+    assert befund["obergrenze"] < 100.0, "nicht bei 145 und erst recht nicht bei 1600"
+    assert befund["anteil_wertebereich"] == pytest.approx(1.0)
+
+
+def test_eine_gleichmaessige_verteilung_meldet_KEINE_luecke():
+    """**GEGENPROBE.** Ohne Loch gibt es nichts zu trennen — und ``None`` heisst hier
+    NICHT GEMESSEN, nicht „keine Ferne“.
+
+    200 Punkte gleichmässig zwischen 1.75 m und 10 m: Der Abstand ist konstant
+    (0.041 m), der grösste Nachbarsprung damit 1.024. Das ist die Zahl, gegen die
+    ``MINDEST_LUECKEN_VERHAELTNIS`` = 3.0 gewählt wurde.
+    """
+    gleich = _innenraum(n=200, bis=10.0)
+
+    befund = geometrie_qa.ferne_abtrennen(gleich)
+
+    assert befund["obergrenze"] is None
+    assert befund["stufen_gefunden"] == 0
+    assert befund["anteil_geklemmt"] is None, "None heisst NICHT GEMESSEN, niemals 0"
+    assert befund["anteil_wertebereich"] is None
+    assert befund["verhaeltnis"] is None
+    assert befund["warnungen"], "ein Nein ohne Begruendung ist keines"
+    assert "NICHT GEMESSEN" in befund["warnungen"][0]
+    assert "1.024" in befund["warnungen"][0], "der gefundene Sprung gehoert in die Meldung"
+
+
+def test_der_abstand_zum_waechter_ist_gross_und_nicht_knapp():
+    """Der grösste Sprung einer lückenlosen Verteilung gegen die gemessenen Lücken.
+
+    Gleichmässig: Faktor 1.024. Echte Lücken am 11.09.2026: Faktor 14.5 und Faktor 11.
+    Die Schwelle 3.0 liegt zwischen beidem, mit Luft nach beiden Seiten.
+    """
+    gleich = _innenraum(n=200, bis=10.0)
+    groesster = max(b / a for a, b in zip(gleich, gleich[1:]))
+
+    assert groesster < 1.05
+    assert groesster * 2 < geometrie_qa.MINDEST_LUECKEN_VERHAELTNIS
+    assert geometrie_qa.MINDEST_LUECKEN_VERHAELTNIS * 3 < 11.0
+
+
+def test_eine_karte_nur_aus_hintergrundmarken_ist_NICHT_GEMESSEN():
+    """**GEGENPROBE.** Marken sind eine Konstante des Renderers und keine Tiefe.
+
+    Nähme man sie mit, wäre der Sprung auf die Marke immer die grösste Lücke der Karte —
+    der Wächter fände dann in jedem Bild dasselbe und nie das Bild.
+    """
+    befund = geometrie_qa.ferne_abtrennen([HINTERGRUND] * 64)
+
+    assert befund["obergrenze"] is None
+    assert befund["n_gemessen"] == 0
+    assert befund["n_ausgelassen"] == 64
+    assert befund["anteil_geklemmt"] is None
+    assert "NICHT GEMESSEN" in befund["warnungen"][0]
+
+
+def test_die_hintergrundmarke_erzeugt_keine_scheinbare_luecke():
+    """Dieselbe Karte mit und ohne Himmel muss dieselbe Obergrenze ergeben."""
+    ohne = _innenraum() + [1600.0 + 0.1 * i for i in range(9)]
+    mit = ohne + [HINTERGRUND] * 300
+
+    assert (geometrie_qa.ferne_abtrennen(mit)["obergrenze"]
+            == pytest.approx(geometrie_qa.ferne_abtrennen(ohne)["obergrenze"]))
+    assert geometrie_qa.ferne_abtrennen(mit)["n_ausgelassen"] == 300
+
+
+def test_die_trennung_ist_massstabsfrei():
+    """Dieselbe Verteilung in Zentimetern: dieselbe relative Trennung.
+
+    Ein Verhältnis kennt keine Einheit — ein Abstand in Metern schon. Darum wird am
+    Verhältnis getrennt und nicht am Sprung.
+    """
+    meter = _innenraum() + [1600.0 + 0.1 * i for i in range(9)]
+    zenti = [w * 100.0 for w in meter]
+
+    m = geometrie_qa.ferne_abtrennen(meter)
+    z = geometrie_qa.ferne_abtrennen(zenti)
+
+    assert z["obergrenze"] == pytest.approx(m["obergrenze"] * 100.0)
+    assert z["verhaeltnis"] == pytest.approx(m["verhaeltnis"])
+    assert z["anteil_geklemmt"] == pytest.approx(m["anteil_geklemmt"])
+    assert z["anteil_wertebereich"] == pytest.approx(m["anteil_wertebereich"])
+
+
+def test_ein_einzelner_ausreisser_nach_vorn_wird_nicht_zur_obergrenze():
+    """Ein Punkt bei 0.001 m ergäbe den grössten Sprung der Karte (Faktor 1750).
+
+    Die Ferne wird hinten abgetrennt, nicht vorne: ``MINDEST_KERN_ANTEIL`` verlangt, dass
+    die Mehrheit der Punkte unterhalb der Lücke liegt.
+    """
+    karte = [0.001] + _innenraum() + [1600.0 + 0.1 * i for i in range(9)]
+
+    befund = geometrie_qa.ferne_abtrennen(karte)
+
+    assert befund["obergrenze"] == pytest.approx(9.98, abs=0.05)
+
+
+def test_MUTATION_ohne_waechter_meldet_die_gleichmaessige_verteilung_eine_luecke():
+    """**MUTATIONSPROBE.** Mindestverhältnis auf 1.0 — und der Wächter fällt.
+
+    Bei Faktor 1.0 gilt jeder Sprung als Lücke, auch der von 0.041 m in einem
+    lückenlosen Verlauf. Die Gegenprobe oben prüft also wirklich den Wächter und nicht
+    bloss die Form der Testkarte.
+    """
+    gleich = _innenraum(n=200, bis=10.0)
+
+    entschaerft = geometrie_qa.ferne_abtrennen(gleich, mindest_verhaeltnis=1.0)
+    scharf = geometrie_qa.ferne_abtrennen(gleich)
+
+    assert entschaerft["obergrenze"] is not None, \
+        "ohne Waechter meldet auch eine Verteilung ohne Loch eine Luecke"
+    assert entschaerft["verhaeltnis"] < 1.05, "und zwar eine voellig belanglose"
+    assert scharf["obergrenze"] is None
+
+
+def test_unsinnige_schalter_fliegen_statt_zu_raten():
+    with pytest.raises(geometrie_qa.QaError, match="stufen"):
+        geometrie_qa.ferne_abtrennen([1.0, 2.0, 9.0], stufen=0)
+    with pytest.raises(geometrie_qa.QaError, match="mindest_verhaeltnis"):
+        geometrie_qa.ferne_abtrennen([1.0, 2.0, 9.0], mindest_verhaeltnis=0.5)
+    with pytest.raises(geometrie_qa.QaError, match="leer"):
+        geometrie_qa.ferne_abtrennen([])
+
+
+def test_die_zweite_stufe_nimmt_in_der_aussenansicht_bauwerk_weg():
+    """**GEGENPROBE zur zweiten Stufe, und sie ist der Grund für ``stufen=1``.**
+
+    Nachgestellte Aussenansicht: Bauwerk 5–15 m, eine ECHTE Nachbarzeile 60–64 m, Himmel.
+    Beide Lücken sind echt. Die zweite Stufe trennt trotzdem die Nachbarzeile ab — und die
+    ist Bauwerk, nicht Ferne.
+
+    Dass die Tiefenkarte das nicht unterscheiden kann, ist kein Mangel des Verfahrens,
+    sondern seine Grenze: *Ob ein Klumpen bei 60 m Fernsicht ist oder ein Nachbargebäude,
+    steht nicht in der Tiefe.* Darum läuft die zweite Stufe nicht von selbst, und wenn sie
+    läuft, beziffert sie, was sie kostet.
+    """
+    bauwerk = [5.0 + 10.0 * i / 1000 for i in range(1000)]
+    nachbarzeile = [60.0 + i * 0.05 for i in range(80)]
+    himmel = [10000.0] * 50
+    karte = bauwerk + nachbarzeile + himmel
+
+    eine = geometrie_qa.ferne_abtrennen(karte)          # Voreinstellung
+    assert eine["stufen_gefunden"] == 1, "Die Voreinstellung muss eine Stufe sein."
+    assert 60.0 < eine["obergrenze"] <= 64.0, (
+        f"Eine Stufe muss die Nachbarzeile STEHEN lassen, "
+        f"Obergrenze war {eine['obergrenze']!r}.")
+    assert eine["kanten"] == (eine["obergrenze"],)
+
+    zwei = geometrie_qa.ferne_abtrennen(karte, stufen=2)
+    assert zwei["obergrenze"] < 16.0, "Zwei Stufen schneiden hier ins Bauwerk."
+    assert zwei["anteil_geklemmt"] > eine["anteil_geklemmt"]
+    assert len(zwei["kanten"]) == 2
+    assert zwei["kanten"][0] == eine["obergrenze"], (
+        "Die erste Kante muss dieselbe sein — die zweite Stufe fügt hinzu, sie ersetzt "
+        "nicht.")
+
+    # Und sie sagt es: Ein Verlust, der still geschieht, wird geglaubt statt geprüft.
+    assert any("stufen=1" in w for w in zwei["warnungen"]), (
+        f"Die zusätzliche Klemmung muss beziffert werden, Warnungen: {zwei['warnungen']!r}")
+
+
+def test_MUTATION_ohne_die_kern_mehrheit_gewinnt_der_ausreisser_nach_vorn():
+    """**MUTATIONSPROBE für :data:`MINDEST_KERN_ANTEIL`.**
+
+    Der Riegel verlangt, dass unterhalb einer Lücke die Mehrheit der Punkte liegt. Fällt er
+    weg, entscheidet ein einzelner Punkt bei 0.001 m — sein Sprung auf den Raum ist Faktor
+    1750 und damit der grösste der ganzen Karte. Die Obergrenze läge dann bei 0.001 m, und
+    99.9 % des Bildes wären „Ferne".
+
+    Ein Wächter, der nicht fällt, bewacht nichts — hier fällt er.
+    """
+    karte = [0.001] + [1.75 + 8.25 * i / 500 for i in range(500)] + [1600.0] * 10
+
+    echt = geometrie_qa.ferne_abtrennen(karte)
+    assert echt["obergrenze"] is not None and echt["obergrenze"] > 1.0, (
+        "Mit Riegel darf der Ausreisser nach vorn nicht gewinnen.")
+
+    urspruenglich = geometrie_qa.MINDEST_KERN_ANTEIL
+    try:
+        geometrie_qa.MINDEST_KERN_ANTEIL = 0.0
+        ohne = geometrie_qa.ferne_abtrennen(karte)
+    finally:
+        geometrie_qa.MINDEST_KERN_ANTEIL = urspruenglich
+
+    assert ohne["obergrenze"] == 0.001, (
+        f"Ohne Riegel muss der Ausreisser die Obergrenze stellen — sonst prüft der Riegel "
+        f"etwas anderes, als seine Begründung behauptet. Er ergab {ohne['obergrenze']!r}.")
+    assert ohne["anteil_geklemmt"] > 0.99
+
+
+def test_eine_obergrenze_ohne_breite_ist_NICHT_GEMESSEN_und_nicht_null():
+    """**Der Fall, den die dritte Antwort meint** — und er fehlte in den Proben.
+
+    Zehn Punkte auf 1 m, drei auf 500 m: Die Lücke ist echt (Faktor 500), die Obergrenze
+    ist 1 m — und damit zugleich der kleinste Wert. Der Bereich ``[kleinster Wert,
+    obergrenze]`` hat dann keine Breite, und ein Anteil an einer Breite von null ist keine
+    Zahl. Er ist ``None``, nicht 0: 0 hiesse „der Kern nutzt nichts“, und das ist eine
+    Aussage, die hier niemand gemessen hat.
+
+    Der geklemmte Anteil dagegen IST gemessen (3 von 13) und bleibt eine Zahl — die beiden
+    Felder dürfen nicht miteinander verrechnet werden.
+    """
+    befund = geometrie_qa.ferne_abtrennen([1.0] * 10 + [500.0] * 3)
+
+    assert befund["obergrenze"] == pytest.approx(1.0)
+    assert befund["anteil_wertebereich"] is None, "None heisst NICHT GEMESSEN, niemals 0"
+    assert befund["anteil_geklemmt"] == pytest.approx(3 / 13), \
+        "der geklemmte Anteil ist hier sehr wohl messbar"
+    assert any("NICHT GEMESSEN" in w for w in befund["warnungen"]), \
+        f"eine nicht gemessene Zahl ohne Begruendung ist keine, Warnungen: {befund['warnungen']!r}"
+
+
+def test_nicht_endliche_und_nicht_positive_werte_werden_gezaehlt_statt_geraten():
+    """NaN, ``inf``, 0 und negative Tiefen sind keine Tiefen — und sie verschwinden nicht
+    still.
+
+    NaN ist eine gescheiterte Schätzung, ``inf`` ein leerer Himmel, ``≤ 0`` ein Punkt
+    hinter der Kamera. Ein Verhältnis gegen null oder gegen NaN ist keine Zahl, also
+    fallen sie vor der Suche heraus. Was herausfällt, wird in ``n_ausgelassen`` gezählt:
+    Eine Karte, von der die Hälfte unbrauchbar ist, sieht sonst genauso aus wie eine
+    vollständige.
+    """
+    sauber = _innenraum() + [1600.0 + 0.1 * i for i in range(9)]
+    verschmutzt = sauber + [float("nan"), float("inf"), -3.0, 0.0]
+
+    a = geometrie_qa.ferne_abtrennen(sauber)
+    b = geometrie_qa.ferne_abtrennen(verschmutzt)
+
+    assert b["n_ausgelassen"] == 4, "vier unbrauchbare Werte, vier gezaehlte"
+    assert b["n_gemessen"] == a["n_gemessen"] == 809
+    assert b["obergrenze"] == pytest.approx(a["obergrenze"]), \
+        "der Schmutz darf die Trennung nicht verschieben"
+    assert b["anteil_geklemmt"] == pytest.approx(a["anteil_geklemmt"])
+
+
+def test_der_geklemmte_anteil_zaehlt_gegen_die_gemessenen_punkte():
+    """Hintergrundmarken können nicht geklemmt werden, also zählen sie auch nicht mit.
+
+    Dieselbe Szene einmal ohne und einmal mit 300 Himmelspunkten: Zählte der Nenner die
+    ganze Karte, sänke der geklemmte Anteil von 1.11 % auf 0.81 %, ohne dass sich an der
+    Tiefe irgendetwas geändert hätte. Die Marke ist eine Konstante des Renderers; sie
+    verdünnt keine Messung.
+    """
+    ohne = _innenraum() + [1600.0 + 0.1 * i for i in range(9)]
+    mit = ohne + [HINTERGRUND] * 300
+
+    a = geometrie_qa.ferne_abtrennen(ohne)
+    b = geometrie_qa.ferne_abtrennen(mit)
+
+    assert a["anteil_geklemmt"] == pytest.approx(9 / 809, abs=1e-9)
+    assert b["anteil_geklemmt"] == pytest.approx(a["anteil_geklemmt"], abs=1e-9), \
+        "der Nenner sind die gemessenen Punkte, nicht die Laenge der Karte"
+    assert b["anteil_geklemmt"] > 9 / 1109, "sonst waere der Himmel im Nenner"

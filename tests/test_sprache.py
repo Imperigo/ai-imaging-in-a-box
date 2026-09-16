@@ -624,8 +624,16 @@ def test_ein_wirklich_unbekanntes_wort_wird_weiterhin_gemeldet():
 # «waende».
 
 def test_der_gemeldete_fall_wird_jetzt_uebersetzt():
-    """Wörtlich der Prompt aus dem Befund."""
-    assert sprache.uebersetze("vier, betonwaende")["uebersetzt"] == "vier, concrete walls"
+    """Wörtlich der Prompt aus dem Befund — und was am 12.09.2026 davon zu holen war.
+
+    Diese Probe hielt zuerst ``"vier, concrete walls"`` fest, weil die Umlautregel nur
+    das zweite Wort erreichte. Seit dem 16.09.2026 stehen die Zahlwörter im Glossar, und
+    ``vier`` fällt mit; die Erwartung ist darum auf den ganzen Satz nachgezogen. Sie
+    bleibt hier trotzdem stehen: Sie prüft die **Umlautstelle** — ``betonwaende`` ist
+    kein Eintrag und wird es nie —, und ein Test, der mit dem Befund gealtert ist, wird
+    gelöscht, nicht verstümmelt.
+    """
+    assert sprache.uebersetze("vier, betonwaende")["uebersetzt"] == "four, concrete walls"
 
 
 def test_ersatzschreibung_und_umlaut_ergeben_dasselbe():
@@ -671,3 +679,295 @@ def test_einzelne_stellen_werden_auch_geprueft():
     kandidaten = sprache._umlaut_kandidaten("neuewaende")
 
     assert "neuewände" in kandidaten
+
+
+# ======================================================================================
+# Zahlwörter (Posten «Zahlwörter stehen in keinem Glossar», 12.09.2026)
+# ======================================================================================
+#
+# Der Befund ist die zweite Hälfte desselben gemeldeten Prompts: Im Feld der HomeStation
+# stand «vier, betonwaende». Seit dem 12.09.2026 wird das zweite Wort übersetzt; «vier»
+# blieb deutsch stehen. Ein deutsches Wort im englischen Prompt kostet messbar
+# Bildqualität — am 21.08.2026 über 8 gepaarte Startwerte gemessen, fiel der deutsche
+# Prompt 8 von 8 Mal schlechter aus.
+#
+# Was dabei NICHT ins Glossar durfte, steht unten in zwei Gegenproben. Sie sind der
+# eigentliche Inhalt dieses Blocks: Ein Glossar wächst leicht, und jedes Wort, das zu
+# viel darin steht, übersetzt englischen Text, den niemand übersetzt haben wollte.
+
+
+def test_der_gemeldete_fall_wird_jetzt_ganz_uebersetzt():
+    """Wörtlich der Prompt aus dem Befund — und diesmal ohne deutschen Rest.
+
+    Nicht nur der Text zählt: ``vollstaendig`` muss ``True`` sein und ``unbekannt`` leer.
+    Ein Prompt, der richtig übersetzt ist und sich selbst als lückenhaft meldet, wäre
+    derselbe Fehler nochmal, nur andersherum.
+    """
+    ergebnis = sprache.uebersetze("vier, betonwaende")
+
+    assert ergebnis["uebersetzt"] == "four, concrete walls"
+    assert ergebnis["unbekannt"] == ()
+    assert ergebnis["vollstaendig"] is True
+
+
+@pytest.mark.parametrize("deutsch, englisch", [
+    ("eins", "one"),
+    ("zwei", "two"),
+    ("drei", "three"),
+    ("vier", "four"),
+    ("fünf", "five"),
+    ("sechs", "six"),
+    ("sieben", "seven"),
+    ("neun", "nine"),
+    ("zehn", "ten"),
+    ("zwölf", "twelve"),
+])
+def test_jedes_aufgenommene_zahlwort_kommt_englisch_heraus(deutsch, englisch):
+    assert sprache.glossar_uebersetzung(deutsch)["text"] == englisch
+
+
+def test_neun_wurde_vorher_zu_new():
+    """Der stillste der Funde, und der Grund, warum ein Eintrag mehr ist als ein Komfort.
+
+    Ohne Eintrag griff bei ``neun`` die Beugungsregel: Endung ``n`` abgestreift ergibt
+    ``neu``, und ``neu`` steht im Glossar als ``new``. «neun Fenster» wurde damit zu
+    «new window» — nicht unübersetzt, sondern **falsch**, und ohne jede Meldung. Der
+    direkte Eintrag schlägt die Regel, weil das Nachschlagewerk zuerst läuft.
+    """
+    assert sprache.glossar_uebersetzung("neun fenster")["text"] == "nine window"
+    assert sprache.GLOSSAR["neu"] == "new", "Die Falle steht noch; der Eintrag hält sie zu."
+
+
+@pytest.mark.parametrize("ersatz, umlaut, englisch", [
+    ("fuenf", "fünf", "five"),
+    ("zwoelf", "zwölf", "twelve"),
+])
+def test_ersatzschreibung_und_umlaut_ergeben_dasselbe_zahlwort(ersatz, umlaut, englisch):
+    """Wer ohne deutsche Tastatur tippt, erreicht dasselbe Wort.
+
+    Und zwar **ohne zweiten Glossareintrag**: ``_umlaut_kandidaten`` leistet das schon,
+    ``grundform`` schlägt die Umlautform nach. Nachgemessen am 16.09.2026 — darum steht
+    ``fuenf`` bewusst NICHT im Glossar. Diese Probe hält genau das fest: Verschwände die
+    Umlautauflösung, fiele sie, und nicht erst ein Bild.
+    """
+    assert sprache.glossar_uebersetzung(ersatz)["text"] == englisch
+    assert sprache.glossar_uebersetzung(umlaut)["text"] == englisch
+    assert ersatz not in sprache.GLOSSAR
+
+
+def test_ersatzschreibung_im_satz_mit_zahlwort():
+    """Beides zusammen, wie es aus der Oberfläche käme."""
+    assert sprache.uebersetze("fuenf betonwaende")["uebersetzt"] == "five concrete walls"
+
+
+# --- GEGENPROBEN ----------------------------------------------------------------------
+
+@pytest.mark.parametrize("englisch", [
+    "a modern concrete building with four storeys, six windows",
+    "seven trees in front of the house, ten metres tall",
+    "nine people seen at eye level, twelve columns behind them",
+])
+def test_englische_zahlwoerter_bleiben_unberuehrt(englisch):
+    """Die Gegenprobe, die auslösen dürfte und nicht darf.
+
+    Drei englische Prompts, jeder voller Zahlwörter. Sie müssen **Wort für Wort**
+    stehenbleiben und dürfen auch nicht als deutsch gelten — sonst warnte die QA bei
+    jedem englischen Prompt, und eine Warnung, die immer kommt, wird weggeklickt.
+    """
+    assert sprache.ist_deutsch(englisch) is False, englisch
+    assert sprache.uebersetze(englisch)["uebersetzt"] == englisch
+    assert sprache.sprachwarnung(englisch) == ""
+
+
+@pytest.mark.parametrize("wort, grund", [
+    ("elf", "Im Englischen ein Fabelwesen — der einzige echte falsche Freund der zwölf. "
+            "Gemessen am 16.09.2026: Mit Eintrag wurde «elf statue» zu «eleven statue» "
+            "und galt zugleich als deutsch."),
+    ("acht", "Im Englischen sauber, aber die eigene Beugungsregel streift «achte» und "
+             "«achten» auf «acht» ab. Der Eintrag übersetzte damit durch die Hintertür "
+             "die Ordnungszahl (eighth, nicht eight) und den Stamm des Verbs «achten». "
+             "Es ist das einzige Zahlwort, dem das passiert."),
+])
+def test_weggelassene_zahlwoerter_bleiben_stehen(wort, grund):
+    """Was nicht aufgenommen wurde, bleibt deutsch — und wird **gemeldet**.
+
+    Das ist die dritte Antwort, angewandt aufs Glossar: nicht übersetzt ist weder
+    richtig noch falsch, sondern unbearbeitet. Ein stehengebliebenes Wort kostet einen
+    Blick, ein falsch übersetztes ein Bild.
+    """
+    assert wort not in sprache.GLOSSAR, grund
+    assert sprache.glossar_uebersetzung(wort)["text"] == wort
+    assert wort in sprache.glossar_uebersetzung(wort)["unbekannt"], (
+        f"«{wort}» wird nicht übersetzt und muss deshalb als unbekannt gemeldet werden. "
+        f"Grund für die Auslassung: {grund}")
+
+
+@pytest.mark.parametrize("ordnungszahl", [
+    "erste", "zweite", "dritte", "vierte", "fünfte", "sechste", "siebte", "achte",
+    "neunte", "zehnte", "elfte", "zwölfte",
+])
+def test_ordnungszahlen_bleiben_draussen(ordnungszahl):
+    """Bewusste Grenze (16.09.2026): Ordnungszahlen sind gebeugt, Grundzahlen nicht.
+
+    «zweites Geschoss» und «the second floor» stellen anders; für eine Aufzählung durch
+    Kommata trägt eine Grundzahl, eine gebeugte Ordnungszahl trüge nicht. Sie bleiben
+    also stehen und werden gemeldet — und diese Probe hält fest, dass kein neu
+    aufgenommenes Grundzahlwort seine Ordnungszahl durch die Beugungsregel nachzieht.
+    """
+    assert sprache.glossar_uebersetzung(ordnungszahl)["text"] == ordnungszahl
+
+
+def test_achten_wird_nicht_zu_eight():
+    """Der Einzelfall, an dem «acht» gescheitert ist — namentlich festgehalten.
+
+    «achten» ist im Deutschen ein Verb («auf etwas achten») und zugleich eine gebeugte
+    Ordnungszahl. Beides ist nicht die Zahl acht. Nähme jemand «acht» ins Glossar auf,
+    fiele diese Probe — und genau dafür steht sie hier.
+    """
+    assert sprache.glossar_uebersetzung("achten")["text"] == "achten"
+    assert sprache.grundform("achte") is None
+
+
+# --- MUTATIONSPROBE -------------------------------------------------------------------
+
+def test_mutationsprobe_ohne_den_eintrag_faellt_der_gemeldete_fall_wieder():
+    """Wächter entschärfen, Probe muss fallen.
+
+    Ohne diese Probe könnte der Eintrag ``vier`` aus dem Glossar verschwinden, und die
+    Tests darüber sagten nur, dass irgendetwas übersetzt wurde. Hier wird er
+    herausgenommen — und der gemeldete Prompt muss wieder genau den Zustand zeigen, der
+    am 12.09.2026 gemeldet wurde: «vier» deutsch stehengeblieben und als unbekannt
+    gemeldet.
+    """
+    gesichert = dict(sprache.GLOSSAR)
+    muster = sprache._GLOSSAR_MUSTER
+    wortschatz = sprache._ENGLISCHER_WORTSCHATZ
+    try:
+        del sprache.GLOSSAR["vier"]
+        sprache._GLOSSAR_MUSTER = sprache._glossar_muster()
+        sprache._ENGLISCHER_WORTSCHATZ = sprache._englischer_wortschatz()
+
+        entschaerft = sprache.uebersetze("vier, betonwaende")
+        assert entschaerft["uebersetzt"] == "vier, concrete walls"
+        assert "vier" in entschaerft["unbekannt"]
+        assert entschaerft["vollstaendig"] is False
+    finally:
+        sprache.GLOSSAR.clear()
+        sprache.GLOSSAR.update(gesichert)
+        sprache._GLOSSAR_MUSTER = muster
+        sprache._ENGLISCHER_WORTSCHATZ = wortschatz
+
+    # Und danach steht wieder alles, wie es stehen soll — sonst vergiftete diese Probe
+    # jede Probe, die nach ihr läuft.
+    assert sprache.uebersetze("vier, betonwaende")["uebersetzt"] == "four, concrete walls"
+
+
+# ======================================================================================
+# Die Sperre der Kompositumsregel gegen Zahlwörter (Nachmessung 16.09.2026)
+# ======================================================================================
+#
+# Der Fund entstand bei der Prüfung der Zahlwort-Aufnahme, nicht beim Bau: Über den
+# Wortschatz dieses Repos gemessen (69'273 verschiedene Wörter) zerlegte
+# `zerlege_kompositum` mit den neuen Einträgen **sechs** Wörter falsch — `dreizehn` zu
+# «three ten», `dreiecke` zu «three corner», `obendrein` zu «above three». Alle sechs
+# **still**: `unbekannt` war leer, `vollstaendig` war `True`.
+#
+# Das ist der teuerste Fehler dieses Moduls, nicht der billigste: Ein stehengebliebenes
+# Wort kostet einen Blick, eine erfundene Zahl im Prompt kostet ein Bild — und niemand
+# sieht ihr an, dass sie erfunden ist.
+
+
+@pytest.mark.parametrize("wort, falsch_gewesen", [
+    ("dreizehn", "three ten"),
+    ("vierzehn", "four ten"),
+    ("fünfzehn", "five ten"),
+    ("neunzehn", "nine ten"),
+    ("dreiecke", "three corner"),
+    ("obendrein", "above three"),
+])
+def test_zusammengesetzte_zahlwoerter_werden_nicht_zerlegt(wort, falsch_gewesen):
+    """Deutsch zählt zusammengesetzt, wo Englisch ein eigenes Wort hat.
+
+    ``dreizehn`` ist *thirteen*, nicht *three ten*; ``Dreieck`` ist *triangle*, nicht
+    *three corner*. Die Kompositumsregel kann das nicht wissen — sie prüft nur, ob beide
+    Teile im Glossar stehen, und bei einer Zahl stehen sie immer.
+
+    Geprüft wird beides: dass das Wort stehenbleibt **und** dass es als ``unbekannt``
+    gemeldet wird. Nur stehenbleiben genügte nicht — dann wäre der Prompt still halb
+    deutsch, und das ist der Zustand, gegen den dieses Modul gebaut ist.
+    """
+    ergebnis = sprache.glossar_uebersetzung(wort)
+
+    assert ergebnis["text"] == wort, (
+        f"Zerlegt zu «{ergebnis['text']}» — {falsch_gewesen!r} war der Stand vor der "
+        f"Sperre, und er war still.")
+    assert wort in ergebnis["unbekannt"]
+    assert ergebnis["regeln"] == ()
+
+
+def test_ein_ganzer_prompt_mit_zusammengesetzter_zahl_meldet_sich_unvollstaendig():
+    """Die dritte Antwort am ganzen Prompt: nicht übersetzt ist nicht «in Ordnung».
+
+    Vor der Sperre kam hier «three ten window» heraus, mit ``vollstaendig is True``. Eine
+    erfundene Zahl, die sich selbst für vollständig erklärt.
+    """
+    ergebnis = sprache.uebersetze("dreizehn fenster")
+
+    assert ergebnis["uebersetzt"] == "dreizehn window"
+    assert "dreizehn" in ergebnis["unbekannt"]
+    assert ergebnis["vollstaendig"] is False
+
+
+# --- GEGENPROBE -----------------------------------------------------------------------
+
+@pytest.mark.parametrize("wort, englisch", [
+    ("nordfassade", "north facade"),
+    ("nordfassaden", "north facade"),
+    ("holzfassade", "wood facade"),
+    ("südseite", "south side"),
+    ("betonwaende", "concrete walls"),
+])
+def test_echte_komposita_werden_weiterhin_zerlegt(wort, englisch):
+    """Die Sperre darf genau die Zahlwörter treffen und sonst nichts.
+
+    Über denselben Wortschatz gemessen (16.09.2026) blockiert sie **sieben** Wortformen,
+    und alle sieben waren falsch zerlegt. Eine Sperre, die nebenbei ``Nordfassade``
+    mitnähme, wäre teurer als der Fehler, den sie behebt.
+    """
+    assert sprache.glossar_uebersetzung(wort)["text"] == englisch
+
+
+def test_das_zahlwort_allein_bleibt_uebersetzt():
+    """Die Sperre gilt der **Regel**, nicht dem Eintrag.
+
+    ``vier`` steht im Glossar und wird nachgeschlagen; gesperrt ist nur, ``vier`` als
+    Baustein eines zusammengesetzten Wortes zu verwenden. Ohne diese Unterscheidung hätte
+    die Sperre den gemeldeten Fall vom 12.09.2026 wieder aufgemacht.
+    """
+    assert sprache.uebersetze("vier, betonwaende")["uebersetzt"] == "four, concrete walls"
+    assert sprache.glossar_uebersetzung("neun fenster")["text"] == "nine window"
+
+
+# --- MUTATIONSPROBE -------------------------------------------------------------------
+
+def test_mutationsprobe_ohne_die_sperre_erfindet_die_regel_wieder_zahlen():
+    """Wächter entschärfen, Probe muss fallen.
+
+    ``ZAHLWOERTER`` wird geleert — damit greift wieder die blosse Bedingung «beide Teile
+    stehen im Glossar», und genau die sechs Wörter kippen zurück in den Zustand vom
+    Vormittag des 16.09.2026.
+    """
+    gesichert = sprache.ZAHLWOERTER
+    try:
+        sprache.ZAHLWOERTER = frozenset()
+
+        assert sprache.glossar_uebersetzung("dreizehn")["text"] == "three ten"
+        assert sprache.glossar_uebersetzung("dreiecke")["text"] == "three corner"
+        entschaerft = sprache.uebersetze("dreizehn fenster")
+        assert entschaerft["uebersetzt"] == "three ten window"
+        # Und das ist der eigentliche Schaden: Der Prompt hält sich für fertig.
+        assert entschaerft["vollstaendig"] is True
+    finally:
+        sprache.ZAHLWOERTER = gesichert
+
+    assert sprache.glossar_uebersetzung("dreizehn")["text"] == "dreizehn"

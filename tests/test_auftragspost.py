@@ -674,3 +674,356 @@ def test_ein_kern_auftrag_braucht_keine_zustellung(tmp_path):
     (befund,) = auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))
 
     assert befund["lage"] != auftragspost.NICHT_ZUGESTELLT
+
+
+# ── «Gesehen» — der dritte Zustand des Rückwegs (16.09.2026) ──────────────────────────
+#
+# `warum_keine_antwort` unterschied vier Lagen, und eine Unterscheidung fehlte ihr
+# ausdrücklich: Ein ZUGESTELLTER Auftrag, dessen Adressat schweigt, kann gelesen und
+# verworfen, ungelesen liegengeblieben oder nie angekommen sein. Von unserer Seite sieht
+# das dreierlei gleich aus. `auftraege/gesehen.json` trägt die eine Auskunft, die wir uns
+# nicht selbst geben können — und sie kommt vom Adressaten.
+
+
+def test_ein_gesehener_auftrag_ohne_antwort_bekommt_die_neue_lage(tmp_path):
+    """**Die einzige Lage, die nicht geraten ist.** Sie darf sich darum auf einen Vermerk
+    berufen statt auf eine Vermutung — genau das steht in ihrem Grundtext."""
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+    _vermerke(tmp_path, "auf-20260901-01")
+    assert auftragspost.vermerke_gesehen(
+        tmp_path, ["auf-20260901-01"], von="cloud",
+        bemerkung="im Chat bestaetigt", jetzt="2026-09-10T08:00:00Z") == 1
+
+    (befund,) = auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))
+
+    assert befund["lage"] == auftragspost.GESEHEN_OHNE_ANTWORT
+    assert "Nachfrage" in befund["grund"]
+    assert "2026-09-10" in befund["grund"], "ohne Datum ist der Vermerk eine Behauptung"
+    assert "im Chat bestaetigt" in befund["grund"]
+
+
+def test_der_vermerk_schlaegt_kein_lebenszeichen(tmp_path):
+    """**Derselbe Auftrag, einmal ohne und einmal mit Vermerk.**
+
+    Ohne Vermerk ist `kein lebenszeichen` richtig: Wer seit Wochen nichts schickt, hat die
+    Mahnung vielleicht ebenso wenig gesehen wie den Auftrag. Mit Vermerk ist dieselbe
+    Zurückhaltung falsch — ein bestätigter Blick ist stärker als jeder Schluss aus dem
+    Antwortverhalten.
+    """
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+    _lege_antwort(tmp_path, "auf-20260820-02", "cloud", "2026-08-20T00:00:00Z")
+    _vermerke(tmp_path, "auf-20260901-01", "auf-20260820-02")
+
+    vorher = {e["auftrag_id"]: e["lage"] for e in
+              auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))}
+    assert vorher["auf-20260901-01"] == auftragspost.KEIN_LEBENSZEICHEN
+
+    auftragspost.vermerke_gesehen(tmp_path, ["auf-20260901-01"], von="cloud",
+                                  jetzt="2026-09-12T08:00:00Z")
+
+    nachher = {e["auftrag_id"]: e["lage"] for e in
+               auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))}
+    assert nachher["auf-20260901-01"] == auftragspost.GESEHEN_OHNE_ANTWORT
+
+
+def test_der_vermerk_schlaegt_auch_aktiv_uebergangen(tmp_path):
+    """Auch gegen die andere Vermutungslage — sie ist aus dem Antwortverhalten geschlossen,
+    der Vermerk ist bestätigt."""
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+    _lege_antwort(tmp_path, "auf-20260905-02", "cloud", "2026-09-05T00:00:00Z")
+    _vermerke(tmp_path, "auf-20260901-01", "auf-20260905-02")
+    auftragspost.vermerke_gesehen(tmp_path, ["auf-20260901-01"], von="cloud",
+                                  jetzt="2026-09-12T08:00:00Z")
+
+    lagen = {e["auftrag_id"]: e["lage"] for e in
+             auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))}
+    assert lagen["auf-20260901-01"] == auftragspost.GESEHEN_OHNE_ANTWORT
+
+
+def test_ohne_vermerk_bleibt_es_bei_der_vermutung(tmp_path):
+    """**Die Gegenprobe.** Sonst bekäme jeder Auftrag die neue Lage, und sie sagte nichts
+    mehr — eine Lage, die immer gilt, unterscheidet nichts."""
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+    _lege_auftrag(tmp_path, "auf-20260902-03", "cloud", "2026-09-02T00:00:00Z", rang=3)
+    _vermerke(tmp_path, "auf-20260901-01", "auf-20260902-03")
+    auftragspost.vermerke_gesehen(tmp_path, ["auf-20260901-01"], von="cloud",
+                                  jetzt="2026-09-12T08:00:00Z")
+
+    lagen = {e["auftrag_id"]: e["lage"] for e in
+             auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))}
+    assert lagen["auf-20260901-01"] == auftragspost.GESEHEN_OHNE_ANTWORT
+    assert lagen["auf-20260902-03"] == auftragspost.KEIN_LEBENSZEICHEN, (
+        "der Vermerk gilt je Kennung und nicht je Adressat")
+
+
+def test_ein_zweiter_vermerk_ueberschreibt_den_ersten_nicht(tmp_path):
+    """**Der erste Blick ist der, der zählt.**
+
+    Ein späterer Eintrag mit neuem Datum wäre eine zweite Wahrheit — und zwar die
+    bequemere: Er liesse den Auftrag bei jedem Lauf wieder jung aussehen. Seit wann der
+    Adressat ihn kennt, steht dann nirgends mehr.
+    """
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+    assert auftragspost.vermerke_gesehen(
+        tmp_path, ["auf-20260901-01"], von="cloud", bemerkung="erster Blick",
+        jetzt="2026-09-05T08:00:00Z") == 1
+    assert auftragspost.vermerke_gesehen(
+        tmp_path, ["auf-20260901-01"], von="cloud", bemerkung="zweiter Blick",
+        jetzt="2026-09-14T08:00:00Z") == 0, "nichts NEU eingetragen"
+
+    eintrag = auftragspost.gesehen_vermerke(tmp_path)["auf-20260901-01"]
+    assert eintrag["am"] == "2026-09-05T08:00:00Z"
+    assert eintrag["bemerkung"] == "erster Blick"
+    assert eintrag["von"] == "cloud"
+
+
+def test_neue_kennungen_kommen_dazu_ohne_die_alten_zu_verlieren(tmp_path):
+    """Die Gegenprobe zum Überschreibschutz: Er darf nicht die ganze Ablage einfrieren."""
+    auftragspost.vermerke_gesehen(tmp_path, ["auf-20260901-01"], von="ui",
+                                  jetzt="2026-09-05T08:00:00Z")
+    assert auftragspost.vermerke_gesehen(
+        tmp_path, ["auf-20260901-01", "auf-20260902-02"], von="ui",
+        jetzt="2026-09-14T08:00:00Z") == 1
+
+    vermerke = auftragspost.gesehen_vermerke(tmp_path)
+    assert set(vermerke) == {"auf-20260901-01", "auf-20260902-02"}
+    assert vermerke["auf-20260901-01"]["am"] == "2026-09-05T08:00:00Z"
+    assert vermerke["auf-20260902-02"]["am"] == "2026-09-14T08:00:00Z"
+
+
+def test_ohne_bemerkung_steht_dort_None_und_nicht_leer(tmp_path):
+    """*None heisst NICHT GEMESSEN* — hier: wir wissen nicht, woher die Auskunft kam. Ein
+    leerer Text sähe aus wie eine Bemerkung, die jemand geschrieben hat."""
+    auftragspost.vermerke_gesehen(tmp_path, ["auf-20260901-01"], von="ui",
+                                  jetzt="2026-09-05T08:00:00Z")
+    assert auftragspost.gesehen_vermerke(tmp_path)["auf-20260901-01"]["bemerkung"] is None
+
+
+def test_ein_nie_zugestellter_auftrag_bleibt_nicht_zugestellt_auch_mit_vermerk(tmp_path):
+    """**Die Reihenfolge, und warum sie so herum richtig ist.**
+
+    «Gesehen» schliesst die Zustellung logisch ein — stehen beide Angaben gegeneinander,
+    ist das ein Fehler in UNSERER Buchführung: Der Zustellvermerk wurde beim Ausliefern
+    vergessen. Liesse man ihn hier vom Blickvermerk zudecken, verschwände die einzige
+    Stelle, an der dieses Versäumnis noch auffällt — und die Handlungsanweisung wäre die
+    falsche: nachfragen, statt die eigene Ablage in Ordnung zu bringen.
+    """
+    _lege_auftrag(tmp_path, "auf-20260901-01", "ui", "2026-09-01T00:00:00Z")
+    auftragspost.vermerke_gesehen(tmp_path, ["auf-20260901-01"], von="ui",
+                                  jetzt="2026-09-12T08:00:00Z")
+
+    (befund,) = auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))
+
+    assert befund["lage"] == auftragspost.NICHT_ZUGESTELLT
+    assert "bei UNS" in befund["grund"]
+
+
+def test_ein_frischer_auftrag_bleibt_frisch_auch_mit_vermerk(tmp_path):
+    """Dass er ihn gesehen hat, macht ein Ausbleiben von einem Tag nicht zum Befund. *Erst
+    messen, dann mahnen.*"""
+    _lege_auftrag(tmp_path, "auf-20260915-01", "cloud", "2026-09-15T00:00:00Z")
+    _vermerke(tmp_path, "auf-20260915-01")
+    auftragspost.vermerke_gesehen(tmp_path, ["auf-20260915-01"], von="cloud",
+                                  jetzt="2026-09-15T08:00:00Z")
+
+    (befund,) = auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))
+    assert befund["lage"] == auftragspost.FRISCH
+
+
+def test_die_neue_lage_steht_in_LAGEN_und_traegt_den_vereinbarten_wortlaut():
+    """Der Wortlaut ist eine Schnittstelle: `tools/` und die Auswertungen vergleichen ihn."""
+    assert auftragspost.GESEHEN_OHNE_ANTWORT == "gesehen, ohne antwort"
+    assert auftragspost.GESEHEN_OHNE_ANTWORT in auftragspost.LAGEN
+    assert len(set(auftragspost.LAGEN)) == 5
+
+
+def test_eine_unlesbare_gesehen_datei_wird_zum_fehler_und_nicht_zu_leerlauf(tmp_path):
+    """**Anders als beim Zustellvermerk, und mit Absicht.**
+
+    Dort ist «kaputt = nichts zugestellt» die sichere Richtung: Sie kostet eine
+    Auslieferung zu viel. Hier gibt es keine sichere Richtung — «leer» hiesse «niemand hat
+    hingesehen» und verwandelte eine bestätigte Tatsache still in eine Vermutung. *Ein
+    unlesbares Buch heisst weder «nichts gesehen» noch «alles gesehen».*
+    """
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+    _vermerke(tmp_path, "auf-20260901-01")
+    ziel = tmp_path / auftragspost.GESEHEN_DATEI
+    ziel.parent.mkdir(parents=True, exist_ok=True)
+    ziel.write_text("{kein json", encoding="utf-8")
+
+    with pytest.raises(auftragspost.PostError, match="nicht lesbar"):
+        auftragspost.gesehen_vermerke(tmp_path)
+
+    # UND SIE REISST AUCH DIE AUSWERTUNG AB, statt sie mit Vermutungen weiterlaufen zu
+    # lassen. Ohne diese zweite Zeile prüfte die Probe nur die Hilfsfunktion — und
+    # `warum_keine_antwort` dürfte den Fehler still schlucken.
+    with pytest.raises(auftragspost.PostError):
+        auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))
+
+
+def test_eine_fehlende_gesehen_datei_ist_kein_fehler(tmp_path):
+    """Die Gegenprobe: Keine Datei heisst «noch nie hat jemand einen Blick bestätigt» —
+    der Normalzustand dieses Repos, und kein Befund."""
+    assert auftragspost.gesehen_vermerke(tmp_path) == {}
+
+
+def test_ein_unbekannter_adressat_wird_abgewiesen(tmp_path):
+    """Ein Tippfehler in `von` erzeugt einen Vermerk, den keine Auswertung je einem Worker
+    zuordnet — er stünde da und wirkte nirgends."""
+    with pytest.raises(auftragspost.PostError, match="kein bekannter Adressat"):
+        auftragspost.vermerke_gesehen(tmp_path, ["auf-20260901-01"], von="cloudd")
+    assert not (tmp_path / auftragspost.GESEHEN_DATEI).exists()
+
+
+def test_der_vermerk_wird_in_einem_zug_ersetzt(tmp_path):
+    """**Atomar wie der Zustellvermerk.** Eine halb geschriebene Datei wäre hier schlimmer
+    als dort: `gesehen_vermerke` lässt sie hart fehlschlagen, also könnte ein Abbruch
+    mitten im Schreiben die Rückstandsfrage ganz unbeantwortbar machen.
+
+    Geprüft wird an der Spur: Nach dem Lauf liegt genau eine Datei da, kein Rest einer
+    Zwischendatei.
+    """
+    auftragspost.vermerke_gesehen(tmp_path, ["auf-20260901-01"], von="ui",
+                                  jetzt="2026-09-05T08:00:00Z")
+    dateien = sorted(p.name for p in (tmp_path / "auftraege").iterdir())
+    assert dateien == ["gesehen.json"], dateien
+    assert json.loads((tmp_path / auftragspost.GESEHEN_DATEI).read_text(
+        encoding="utf-8"))["auf-20260901-01"]["von"] == "ui"
+
+
+def test_ein_von_hand_eingetragener_zeitstempel_bringt_die_auswertung_nicht_zu_fall(tmp_path):
+    """Die Ablage wird auch von Hand gepflegt. Eine Kennung mit blossem Zeitstempel statt
+    des Wörterbuchs ist eine richtige Auskunft in falscher Form — sie deshalb zu verwerfen
+    hiesse, den bestätigten Blick wegen seiner Schreibweise zu vergessen."""
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+    _vermerke(tmp_path, "auf-20260901-01")
+    ziel = tmp_path / auftragspost.GESEHEN_DATEI
+    ziel.write_text(json.dumps({"auf-20260901-01": "2026-09-11T00:00:00Z"}),
+                    encoding="utf-8")
+
+    (befund,) = auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))
+    assert befund["lage"] == auftragspost.GESEHEN_OHNE_ANTWORT
+    assert "2026-09-11" in befund["grund"]
+
+
+def test_ein_leerer_bemerkungstext_wird_zu_None_und_nicht_zu_leerem_text(tmp_path):
+    """Ein leerer Text sähe in der Ablage aus wie eine Bemerkung und wäre keine.
+
+    Der Unterschied ist nicht kosmetisch: ``""`` liest sich als «jemand hat hier etwas
+    hingeschrieben, und es war nichts», ``None`` als **nicht gemessen**. Der Grund, warum
+    wir von dem Blick wissen, ist genau die Auskunft, die diesen Vermerk von einer
+    Vermutung unterscheidet — fehlt sie, muss das dastehen.
+    """
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+    _vermerke(tmp_path, "auf-20260901-01")
+
+    for leer in ("", "   ", "\n\t "):
+        pfad = tmp_path / auftragspost.GESEHEN_DATEI
+        if pfad.is_file():
+            pfad.unlink()
+        auftragspost.vermerke_gesehen(tmp_path, ["auf-20260901-01"], von="cloud",
+                                      bemerkung=leer, jetzt="2026-09-10T08:00:00Z")
+        eintrag = auftragspost.gesehen_vermerke(tmp_path)["auf-20260901-01"]
+        assert eintrag["bemerkung"] is None, (
+            f"{leer!r} muss zu None werden, war {eintrag['bemerkung']!r}")
+
+    # Und der Grund erscheint dann auch nicht als leerer Anhang im Befund.
+    befund = auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))
+    eintrag = [b for b in befund if b["auftrag_id"] == "auf-20260901-01"][0]
+    assert eintrag["lage"] == auftragspost.GESEHEN_OHNE_ANTWORT
+    assert "Vermerk:" not in eintrag["grund"], (
+        f"Ohne Bemerkung darf kein leeres «Vermerk:» angehängt werden: {eintrag['grund']!r}")
+
+
+# ── Nachgezogen bei der Gegenprüfung (16.09.2026) ─────────────────────────────────────
+#
+# Zwei Wächter standen ohne Probe da: Der `isinstance`-Wächter in `gesehen_vermerke` liess
+# sich entschärfen, ohne dass eine Probe fiel, und das atomare Schreiben ebenso. Und zwei
+# Eingaben wurden still falsch verarbeitet statt abgewiesen.
+
+
+def test_eine_einzelne_kennung_statt_einer_folge_wird_abgewiesen(tmp_path):
+    """**Gemessen, nicht vermutet.** Vor dieser Prüfung trug
+    ``vermerke_gesehen(wurzel, "auf-1", von="ui")`` fünf Vermerke ein — «a», «u», «f»,
+    «-», «1» — und meldete ``5`` zurück. Eine Zeichenkette ist auch eine Folge, und zwar
+    eine von Buchstaben. Kein Aufruf wäre gescheitert, kein Auftrag je gefunden worden,
+    und der Rückstand hätte ab da eine Zahl getragen, die nichts zählt.
+    """
+    with pytest.raises(auftragspost.PostError, match="einzelne Kennung"):
+        auftragspost.vermerke_gesehen(tmp_path, "auf-20260901-01", von="ui")
+    assert not (tmp_path / auftragspost.GESEHEN_DATEI).exists()
+
+
+def test_eine_liste_mit_einer_kennung_geht_weiterhin(tmp_path):
+    """Die Gegenprobe: Der Wächter darf nur die Zeichenkette treffen, nicht den
+    Einzelfall."""
+    assert auftragspost.vermerke_gesehen(
+        tmp_path, ["auf-20260901-01"], von="ui", jetzt="2026-09-05T08:00:00Z") == 1
+    assert list(auftragspost.gesehen_vermerke(tmp_path)) == ["auf-20260901-01"]
+
+
+def test_eine_gesehen_datei_mit_einer_liste_wird_zum_fehler(tmp_path):
+    """Lesbares JSON in der falschen Gestalt — und damit **keine** Auskunft über
+    irgendeinen Blick.
+
+    Dieser Fall stand bis zum 16.09.2026 ohne Probe da: Der Wächter liess sich durch
+    ``return {}`` ersetzen, ohne dass eine einzige Probe fiel. Still als «niemand hat
+    hingesehen» gelesen, wäre er genau die Verwandlung einer Tatsache in eine Vermutung,
+    gegen die diese Ablage gebaut ist.
+    """
+    ziel = tmp_path / auftragspost.GESEHEN_DATEI
+    ziel.parent.mkdir(parents=True, exist_ok=True)
+    ziel.write_text('["auf-20260901-01"]', encoding="utf-8")
+
+    with pytest.raises(auftragspost.PostError, match="kein Wörterbuch"):
+        auftragspost.gesehen_vermerke(tmp_path)
+
+
+def test_ein_abbruch_mitten_im_schreiben_laesst_die_alte_ablage_stehen(tmp_path,
+                                                                      monkeypatch):
+    """**Die Probe, die das atomare Schreiben wirklich hält.**
+
+    Die vorhandene Probe prüft nur die Spur danach — sie bleibt grün, wenn man das
+    Ersetzen durch ein schlichtes Überschreiben tauscht. Hier bricht der letzte Schritt
+    ab: Danach muss die alte Ablage **unverändert** dastehen und kein Rest der
+    Zwischendatei herumliegen. Ein Überschreiben hätte die alte Datei da schon
+    abgeschnitten — und `gesehen_vermerke` liesse den Rückstand ab dann hart scheitern.
+    """
+    auftragspost.vermerke_gesehen(tmp_path, ["auf-20260901-01"], von="ui",
+                                  jetzt="2026-09-05T08:00:00Z")
+    vorher = (tmp_path / auftragspost.GESEHEN_DATEI).read_text(encoding="utf-8")
+
+    def _abbruch(*args, **kwargs):
+        raise OSError("Abbruch mitten im Schreiben")
+
+    monkeypatch.setattr(auftragspost.os, "replace", _abbruch)
+    with pytest.raises(OSError):
+        auftragspost.vermerke_gesehen(tmp_path, ["auf-20260902-02"], von="ui",
+                                      jetzt="2026-09-14T08:00:00Z")
+
+    assert (tmp_path / auftragspost.GESEHEN_DATEI).read_text(encoding="utf-8") == vorher
+    assert sorted(p.name for p in (tmp_path / "auftraege").iterdir()) == ["gesehen.json"]
+
+
+def test_eine_zeichenkette_als_zustellung_wird_abgewiesen_und_nicht_zerlegt(tmp_path):
+    """**Dieselbe Falle wie beim Blickvermerk, nur älter — und hier wiegt sie schwerer.**
+
+    ``vermerke_zustellung("auf-1", wurzel)`` legte bis zum 16.09.2026 fünf Zustellvermerke
+    an: ``a``, ``u``, ``f``, ``-``, ``1``. Kein Aufruf scheiterte, keine Datei fehlte.
+
+    Der Schaden ist nicht der Unsinn im Buch, sondern was danebensteht: Der **echte**
+    Auftrag bleibt `nicht zugestellt` — in genau der Lage, die nach unserer eigenen Lesart
+    *unser* Fehler ist — während das Buch aussieht, als sei fleissig ausgeliefert worden.
+    *Ein Fehlschlag, der wie ein Erfolg aussieht, wird nicht gefunden; er wird geglaubt.*
+    """
+    with pytest.raises(auftragspost.PostError, match="einzelne Kennung"):
+        auftragspost.vermerke_zustellung("auf-20260901-01", tmp_path)
+
+    assert not (tmp_path / auftragspost.ZUSTELLUNG_DATEI).exists(), (
+        "Ein abgewiesener Aufruf darf keine halbe Ablage hinterlassen.")
+
+    # GEGENPROBE: Die Liste mit einer einzigen Kennung geht weiter — der Wächter darf
+    # nicht den Normalfall treffen.
+    auftragspost.vermerke_zustellung(["auf-20260901-01"], tmp_path, wann="2026-09-05T08:00:00Z")
+    vermerk = json.loads((tmp_path / auftragspost.ZUSTELLUNG_DATEI).read_text(encoding="utf-8"))
+    assert vermerk == {"auf-20260901-01": "2026-09-05T08:00:00Z"}

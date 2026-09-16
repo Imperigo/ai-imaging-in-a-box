@@ -3214,3 +3214,246 @@ def einordnung(score: float | None, anker: dict | None, *,
 def anker_fuer(szene: str) -> dict | None:
     """Die Nullprobe einer Szene, oder ``None``. **Keine Schätzung aus einer anderen.**"""
     return NULLANKER.get(szene)
+
+
+# ======================================================================================
+# Lücken-Trennung — wo die Ferne aufhört, weiss nur das Bild
+# ======================================================================================
+#
+# **Der Anlass** (HomeStation, 11.09.2026, an einem echten Innenraum gemessen): Um aus
+# einer Tiefenkarte die Ferne abzutrennen, wurde über das 99er-Perzentil normiert. Das
+# Ergebnis war flach — Mittel 0.9869, 98.7 % der Punkte über 0.99 —, weil die
+# Fernsichtebene 1.13 % der Fläche einnahm, also MEHR als das eine Prozent, das ein
+# 99er-Perzentil wegschneidet. Ein festes Perzentil setzt voraus, dass man vorher weiss,
+# wie viel Ferne im Bild steht.
+#
+#     „Wie viel Himmel im Bild steht, weiss nur das Bild."
+#
+# Was stattdessen trägt, steht in derselben Messung: Die Verteilung ist **zweigipflig**.
+# 98.6 % der Punkte lagen zwischen 1.75 m und 10 m, 1.13 % bei 1600 m — und zwischen
+# 146 m und 1000 m lag KEIN EINZIGER Punkt. Diese Lücke ist im Bild selbst vorhanden,
+# unabhängig davon, wie gross die Ferne ausfällt.
+
+#: Ab welchem VERHÄLTNIS zweier benachbarter Tiefenwerte eine Lücke als Trennung gilt.
+#:
+#: **Warum ein Verhältnis und kein Abstand in Metern.** Absolut gemessen wäre ein Sprung
+#: bei 1600 m immer grösser als einer bei 5 m; der Wächter fände dann in jeder
+#: Aussenansicht dieselbe Lücke ganz hinten und nie die, die das Bild teilt. Ein
+#: Verhältnis ist zudem massstabsfrei: dieselbe Szene in Zentimetern ergibt dieselbe
+#: Trennung.
+#:
+#: **Warum der Wert 3.0 ist.** Er muss zwei gemessene Zahlen trennen: Die echten Lücken
+#: des Innenraums vom 11.09.2026 lagen bei Faktor 14.5 (10 m → 145 m) und Faktor 11
+#: (145.5 m → 1600 m). Eine GLEICHMÄSSIGE Verteilung ohne Loch bleibt weit darunter —
+#: bei 200 Punkten zwischen 1.75 m und 10 m beträgt der grösste Nachbarsprung 1.024,
+#: denn der Abstand ist dort konstant (0.041 m) und das Verhältnis damit höchstens
+#: 1 + 0.041/1.75. Faktor 3 liegt zwischen beidem, und zwar nicht knapp: Er verlangt,
+#: dass hinter einem Punkt ein Bereich doppelt so breit wie dessen eigener Abstand
+#: vollständig leer ist. Das ist keine kalibrierte Schwelle, sondern eine begründete —
+#: eine Messreihe über mehrere Räume steht aus.
+MINDEST_LUECKEN_VERHAELTNIS = 3.0
+
+#: Welcher Anteil der betrachteten Punkte mindestens UNTERHALB einer Lücke liegen muss,
+#: damit sie als Trennung in Frage kommt.
+#:
+#: Ohne diesen Riegel entschiede ein einziger Ausreisser nach vorn: Ein Punkt bei 0.001 m
+#: vor einem Raum ab 1.75 m ergäbe das Verhältnis 1750 — den grössten Sprung der ganzen
+#: Karte — und die Obergrenze läge bei 0.001 m. Die Ferne wird hinten abgetrennt, nicht
+#: vorne; der Kern ist die Mehrheit. Der Riegel wirft die Lücke aus der AUSWAHL, er
+#: verwirft nicht die Karte: Eine echte Trennung weiter hinten wird weiterhin gefunden.
+MINDEST_KERN_ANTEIL = 0.5
+
+
+def ferne_abtrennen(karte: Sequence[float], *, stufen: int = 1,
+                    mindest_verhaeltnis: float = MINDEST_LUECKEN_VERHAELTNIS,
+                    hintergrund_grenze: float = HINTERGRUND_SCHWELLE_M) -> dict:
+    """Die Obergrenze einer Tiefenkarte aus ihrer eigenen **Lücke**, nicht aus einem Perzentil.
+
+    Gesucht wird der grösste **Verhältnis**-Sprung zwischen zwei benachbarten Werten der
+    sortierten Verteilung. Er trennt dort, wo das Bild selbst nichts hat.
+
+    **Warum die zweite Stufe nicht von selbst läuft** (gemessen 16.09.2026, und die
+    Messung hat den ursprünglichen Entwurf umgeworfen). Der Gedanke war: Eine Lücke trennt
+    eine Ferne ab, nicht jede — nach der Fernsichtebene blieben am 11.09.2026 noch die
+    Nachbarhäuser bis 145 m übrig, und die kosteten fast den ganzen Wertebereich. Eine
+    zweite Stufe sollte darum immer die nächste Lücke darunter suchen.
+
+    Nachgerechnet trägt das nicht, aus zwei Gründen:
+
+    1. **Die erste Stufe findet den Fall vom 11.09.2026 schon selbst.** Gewählt wird der
+       GRÖSSTE Verhältnis-Sprung, nicht der hinterste. Innenraum → Nachbarhäuser ist
+       Faktor 14.5, Nachbarhäuser → Fernsichtebene nur Faktor 11 — die erste Stufe landet
+       also direkt bei 10 m, und der Kern nutzt 100 % des Wertebereichs. Die zweite Stufe
+       ändert an diesem Fall **nichts**.
+    2. **Wo sie etwas ändert, nimmt sie Bauwerk weg.** Nachgestellte Aussenansicht
+       (Bauwerk 5–15 m, echte Nachbarzeile 60–64 m, Himmel)::
+
+           stufen=1 → Obergrenze 63.95 m, geklemmt  4.4 %   (die Nachbarzeile bleibt)
+           stufen=2 → Obergrenze 14.99 m, geklemmt 11.5 %   (die Nachbarzeile ist weg)
+
+       Beide Male ist die Lücke echt. Ob der Klumpen bei 60 m eine Fernsichtebene ist oder
+       ein Nachbargebäude, steht **nicht in der Tiefenkarte** — es ist ein Entscheid über
+       den Bildinhalt, und dieses Modul hat ihn nicht zu treffen.
+
+    Darum ist ``stufen=1`` die Voreinstellung. Wer mehr will, bekommt mit ``kanten`` alle
+    gefundenen Trennungen und in ``warnungen`` den Satz, wie viel die späteren Stufen
+    zusätzlich wegnehmen — die Wahl bleibt beim Aufrufer und wird nicht hier versteckt.
+
+    Hintergrundmarken (``≥ hintergrund_grenze``) werden **vorher ausgelassen**: Sie sind
+    eine Konstante des Renderers und keine Tiefe. Nähme man sie mit, wäre die grösste
+    Lücke der Karte immer der Sprung auf diese Marke — der Wächter fände also stets
+    dasselbe und nie das Bild. Aus demselben Grund fliegen Werte ``≤ 0`` heraus: Ein
+    Verhältnis gegen null ist keine Zahl.
+
+    Args:
+        karte: Tiefenwerte in beliebiger, aber einheitlicher Längeneinheit.
+        stufen: Wie viele Lücken nacheinander gesucht werden, jede unterhalb der
+            vorigen. Mindestens 1.
+        mindest_verhaeltnis: Ab welchem Sprung eine Lücke als Trennung gilt
+            (:data:`MINDEST_LUECKEN_VERHAELTNIS`).
+        hintergrund_grenze: Ab hier gilt ein Wert als Marke, nicht als Tiefe.
+
+    Returns:
+        ``{obergrenze, stufen_gefunden, kanten, anteil_geklemmt, anteil_wertebereich,
+        verhaeltnis, n_gemessen, n_ausgelassen, warnungen}``.
+
+        ``kanten`` sind alle gefundenen Trennungen in der Reihenfolge ihrer Stufen, von
+        aussen nach innen. Mit ``stufen=1`` steht dort genau ein Wert.
+
+        ``obergrenze`` ist ``None``, wenn KEINE taugliche Lücke gefunden wurde. Das heisst
+        **NICHT GEMESSEN** — weder „keine Ferne“ noch „alles Ferne“. Eine Karte ohne Lücke
+        kann ein durchgehender Verlauf sein oder eine, in der die Ferne fliessend anfängt;
+        beides ist ein Befund für den Aufrufer und keine Zahl, die dieses Modul erfinden
+        darf. In diesem Fall sind auch ``anteil_geklemmt`` und ``anteil_wertebereich``
+        ``None``, und in ``warnungen`` steht der grösste tatsächlich gefundene Sprung.
+
+        ``anteil_wertebereich`` sagt, welchen Anteil des Bereichs ``[kleinster Wert,
+        obergrenze]`` der **Kern** nutzt — die Punkte unterhalb der tiefsten tauglichen
+        Lücke. Das ist die Zahl zur Tabelle oben: dieselbe Aussenansicht nutzt mit einer
+        Stufe **17.0 %** des Wertebereichs und mit zwei Stufen 100 %. Ist die Obergrenze
+        gleich dem kleinsten Wert, hat der Bereich keine Breite — dann ist der Anteil
+        ``None``, also NICHT GEMESSEN, und ausdrücklich nicht 0.
+
+        ``anteil_geklemmt`` zählt gegen ``n_gemessen`` und nicht gegen die Länge der
+        Karte: Hintergrundmarken sind keine Tiefe, also können sie auch nicht geklemmt
+        werden. ``verhaeltnis`` ist der Sprung der **zuletzt** gefundenen Stufe, also der
+        Sprung an ``obergrenze`` — bei ``stufen=1`` der einzige.
+
+    Raises:
+        QaError: leere Karte, ``stufen < 1``, ``mindest_verhaeltnis < 1`` (ein Sprung
+            unter Faktor 1 ist keiner) oder unbrauchbare Werte.
+    """
+    stufen = int(stufen)
+    if stufen < 1:
+        raise QaError(f"stufen muss mindestens 1 sein, war {stufen!r}.")
+    mindest = float(mindest_verhaeltnis)
+    if not math.isfinite(mindest) or mindest < 1.0:
+        raise QaError(
+            f"mindest_verhaeltnis muss endlich und ≥ 1 sein, war {mindest_verhaeltnis!r}. "
+            f"Ein Sprung um weniger als das Einfache ist kein Sprung."
+        )
+    grenze = _hintergrund_grenze(hintergrund_grenze)
+    roh = _als_zahlen(karte, "karte")
+    if not roh:
+        raise QaError("karte ist leer — es gibt nichts abzutrennen.")
+
+    werte = sorted(w for w in roh if math.isfinite(w) and 0.0 < w < grenze)
+    antwort = {"obergrenze": None, "stufen_gefunden": 0, "kanten": (),
+               "anteil_geklemmt": None, "anteil_wertebereich": None, "verhaeltnis": None,
+               "n_gemessen": len(werte), "n_ausgelassen": len(roh) - len(werte),
+               "warnungen": []}
+
+    if len(werte) < 2:
+        antwort["warnungen"].append(
+            f"Weniger als zwei verwertbare Tiefen ({len(werte)} von {len(roh)} Punkten; "
+            f"der Rest ist Hintergrundmarke, nicht endlich oder ≤ 0) — NICHT GEMESSEN. "
+            f"Eine Obergrenze aus einem einzigen Wert wäre dieser Wert selbst.")
+        return antwort
+
+    # Die Lücken liegen zwischen VERSCHIEDENEN Werten; gleiche Werte haben Verhältnis 1.
+    # Zu jedem Wert wird mitgezählt, wie viele Punkte auf ihm oder darunter liegen — das
+    # entscheidet über MINDEST_KERN_ANTEIL.
+    stufen_werte: list[float] = []
+    kleinster = werte[0]
+    n_gesamt = len(werte)
+
+    def _luecke(betrachtet: list[float]) -> tuple[float, float] | tuple[None, float]:
+        """Grösste taugliche Lücke in ``betrachtet`` als ``(untere Kante, Verhältnis)``.
+
+        Zurück kommt auch der grösste ÜBERHAUPT gefundene Sprung, damit die Warnung im
+        Fall ohne Lücke eine Zahl nennen kann statt nur ein Nein.
+        """
+        bester_wert: float | None = None
+        bestes_v = 0.0
+        groesster_sprung = 1.0
+        n = len(betrachtet)
+        for i in range(n - 1):
+            unten, oben = betrachtet[i], betrachtet[i + 1]
+            if oben <= unten:
+                continue
+            v = oben / unten
+            groesster_sprung = max(groesster_sprung, v)
+            # i+1 Punkte liegen auf `unten` oder darunter.
+            if (i + 1) < MINDEST_KERN_ANTEIL * n:
+                continue
+            if v >= mindest and v > bestes_v:
+                bester_wert, bestes_v = unten, v
+        return (bester_wert, bestes_v if bester_wert is not None else groesster_sprung)
+
+    betrachtet = werte
+    verhaeltnis = None
+    letzter_sprung = 1.0
+    for _ in range(stufen):
+        kante, v = _luecke(betrachtet)
+        if kante is None:
+            letzter_sprung = v
+            break
+        stufen_werte.append(kante)
+        verhaeltnis = v
+        betrachtet = [w for w in betrachtet if w <= kante]
+        if len(betrachtet) < 2:
+            break
+
+    if not stufen_werte:
+        antwort["warnungen"].append(
+            f"KEINE taugliche Lücke gefunden — NICHT GEMESSEN, und das heisst weder "
+            f"„keine Ferne“ noch „alles Ferne“. Der grösste Nachbarsprung war Faktor "
+            f"{letzter_sprung:.4g}, verlangt sind {mindest:.4g}. Eine Verteilung ohne Loch "
+            f"lässt sich nicht an einem Loch trennen; wer hier trotzdem klemmt, wählt eine "
+            f"Grenze, die im Bild nicht steht (Perzentil-Befund vom 11.09.2026).")
+        return antwort
+
+    obergrenze = stufen_werte[-1]
+    # Der Kern endet an der TIEFSTEN tauglichen Lücke unterhalb der Obergrenze. Fand die
+    # letzte Stufe keine mehr, ist die Obergrenze selbst das Ende des Kerns — dann nutzt
+    # der Kern den Wertebereich vollständig, und genau das ist die Aussage.
+    kern_kante, _ = _luecke([w for w in werte if w <= obergrenze])
+    kern_max = kern_kante if kern_kante is not None else obergrenze
+
+    antwort["obergrenze"] = obergrenze
+    antwort["stufen_gefunden"] = len(stufen_werte)
+    antwort["kanten"] = tuple(stufen_werte)
+    antwort["verhaeltnis"] = verhaeltnis
+    antwort["anteil_geklemmt"] = sum(1 for w in werte if w > obergrenze) / n_gesamt
+
+    # Jede Stufe nach der ersten ist ein Entscheid über den BILDINHALT und keine Messung:
+    # Ob der Klumpen hinter der ersten Lücke Fernsicht ist oder ein Nachbargebäude, steht
+    # in der Tiefenkarte nicht. Was sie zusätzlich wegnimmt, wird darum beziffert — still
+    # geschieht das nicht.
+    if len(stufen_werte) > 1:
+        erste = stufen_werte[0]
+        zusatz = sum(1 for w in werte if obergrenze < w <= erste) / n_gesamt
+        antwort["warnungen"].append(
+            f"{len(stufen_werte)} Stufen: Die erste Lücke lag bei {erste:.4g}, geklemmt "
+            f"wird erst ab {obergrenze:.4g} — {zusatz:.1%} der Punkte fallen allein durch "
+            f"die späteren Stufen weg. Diese Punkte sind ENTWEDER Ferne ODER Bauwerk; "
+            f"welches von beidem, steht nicht in der Tiefenkarte. Wer ihnen nicht traut, "
+            f"nimmt stufen=1.")
+    spanne = obergrenze - kleinster
+    if spanne > 0.0:
+        antwort["anteil_wertebereich"] = (kern_max - kleinster) / spanne
+    else:
+        antwort["warnungen"].append(
+            "Obergrenze gleich kleinstem Wert — der Wertebereich hat keine Breite, der "
+            "genutzte Anteil ist NICHT GEMESSEN und nicht 0.")
+    return antwort
