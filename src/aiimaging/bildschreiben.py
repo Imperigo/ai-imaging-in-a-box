@@ -74,6 +74,30 @@ KONVENTION = (
 
 RUECKRECHNUNG = "meter = max_m - grau * (max_m - min_m), grau in 0..1"
 
+#: Ab welchem Faktor die Lücken-Messung einen Satz in ``warnungen`` wert ist.
+#:
+#: Verglichen wird, wie breit der Wertebereich **jetzt** ist (``max_m - min_m``) und wie
+#: breit er mit der Lücken-Obergrenze **wäre** (``max_m_luecke - min_m``). Der Quotient
+#: sagt, um welchen Faktor der Kern — also das Bauwerk — an Auflösung gewänne.
+#:
+#: **Der Faktor kann nie unter 3 liegen, und das bestimmt die Schwelle mit.** Eine Lücke
+#: gilt erst ab Verhältnis 3 (``geometrie_qa.MINDEST_LUECKEN_VERHAELTNIS``); der nächste
+#: Wert über der Obergrenze liegt also mindestens beim Dreifachen, und das grösste Mass
+#: liegt nochmals darüber. Aus ``faktor = (max_m - min_m) / (obergrenze - min_m)`` mit
+#: ``max_m ≥ 3 · obergrenze`` und ``0 < min_m < obergrenze`` folgt ``faktor > 3`` — immer.
+#: Eine Schwelle bei 2 wäre darum ein Wächter, der nie schweigt und deshalb nichts sagt.
+#:
+#: **Warum 10.0.** Der reproduzierte Fall vom 11.09.2026 ergibt 193.7 (Wertebereich
+#: 1598.25 m gegen 8.25 m) — der Kern bekommt ein halbes Prozent des Wertebereichs, und
+#: genau das war die flachgedrückte Karte. Der kleinstmögliche Fall liegt knapp über 3;
+#: dort hat der Kern noch ein Drittel des Bereichs, und ein Satz darüber wäre eine Meldung
+#: über den Normalfall. 10 heisst: Der Kern nutzt weniger als ein Zehntel — bei 8 Bit sind
+#: das unter 26 von 255 Graustufen für das ganze Bauwerk.
+#:
+#: **Diese Schwelle ist GESETZT und nicht kalibriert.** Geprüft ist sie an zwei Punkten
+#: (193.7 meldet, 3.33 schweigt), nicht an einer Messreihe über mehrere Räume eingestellt.
+LUECKE_WARNT_AB_FAKTOR = 10.0
+
 
 class SchreibError(ValueError):
     """Es lässt sich kein sinnvolles Bild aus diesen Daten schreiben."""
@@ -313,8 +337,39 @@ def schreibe_farb_png(ziel, farben: Sequence[Sequence[int]], breite: int,
 
 # ── Normalisierung ────────────────────────────────────────────────────────────────────
 
+def _luecke_messen(tiefe: Sequence[float], hintergrund_ab_m: float) -> tuple[dict | None, str | None]:
+    """Die Lücken-Messung, so verpackt, dass sie die Normierung **nie** umwerfen kann.
+
+    Zurück kommt ``(befund, fehlersatz)``. Genau eines von beiden ist ``None``.
+
+    Warum das Abfangen: Die Messung ist eine Zugabe, die Normierung ist der Auftrag. Eine
+    Zugabe, die den Auftrag scheitern lässt, ist keine. ``ferne_abtrennen`` prüft seine
+    Eingabe strenger als diese Funktion (Wahrheitswerte, Zahlen in Textform, eine
+    unbrauchbare Schranke) — wo es abbricht, steht hinterher **NICHT GEMESSEN** und ein
+    Satz, der sagt warum, und nicht ein Abbruch des ganzen Schreibwegs.
+    """
+    from aiimaging import geometrie_qa      # lokal wie in `tiefe_exr_zu_png`, siehe dort
+
+    try:
+        befund = geometrie_qa.ferne_abtrennen(tiefe, hintergrund_grenze=hintergrund_ab_m)
+    except Exception as e:                   # Befund als Feld, nicht als Absturz
+        return None, (
+            f"Die Lücken-Messung ist nicht gelaufen ({type(e).__name__}: {e}) — die "
+            f"Obergrenze aus der Lücke ist NICHT GEMESSEN. Die Normierung darunter ist "
+            f"davon unberührt; sie hat diese Zahl nie benutzt."
+        )
+    # `kanten` kommt als Tupel. Das Ergebnis landet über `tiefe_exr_zu_png` im Report und
+    # damit in JSON, wo aus einem Tupel beim Zurücklesen eine Liste wird. Wer die Datei
+    # mit dem Speicherabbild vergleicht, sähe sonst einen Unterschied, den es nicht gibt.
+    bericht = dict(befund)
+    bericht["kanten"] = list(befund["kanten"])
+    bericht["warnungen"] = list(befund["warnungen"])
+    return bericht, None
+
+
 def normalisiere_tiefe(tiefe: Sequence[float], *,
-                       hintergrund_ab_m: float = HINTERGRUND_AB_M) -> tuple[list[float], dict]:
+                       hintergrund_ab_m: float = HINTERGRUND_AB_M,
+                       ferne_trennen: bool = False) -> tuple[list[float], dict]:
     """Meterwerte → Grauwerte 0..1 (*nah = hell*) plus die Angaben zur Rückrechnung.
 
     Warum nicht Blenders ``Normalize``-Knoten
@@ -323,6 +378,46 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
     ~1e10 Metern. Das Gebäude landete dann in den untersten Promille des Wertebereichs
     und wäre gleichmässig schwarz. Deshalb wird hier mit einer ausdrücklichen
     Hintergrundschranke gerechnet.
+
+    Warum die Schranke allein nicht reicht — reproduziert am 16.09.2026
+    -------------------------------------------------------------------
+    Die HomeStation meldete am 11.09.2026 eine flachgedrückte Tiefenkarte (Mittel 0.9869,
+    98.7 % der Punkte über 0.99) und hielt das für einen Fehler ihrer eigenen Normierung
+    über ein 99er-Perzentil. Es ist **diese** Normierung hier. An der gemeldeten Verteilung
+    nachgerechnet — Innenraum 1.75 bis 10 m mit 2000 Punkten, dazu 23 Punkte einer
+    Fernsichtebene bei 1600 m::
+
+        max_m = 1600.0, min_m = 1.75
+        Mittel über dem Innenraum: 0.9974
+        Anteil aller Punkte über 0.99: 0.989
+
+    Der Grund: ``max_m`` ist das grösste gültige Mass unterhalb von ``hintergrund_ab_m``
+    (1e7). Eine Fernsichtebene bei 1600 m liegt weit darunter, gilt also als Geometrie und
+    frisst den ganzen Wertebereich. Die feste Schranke löst nur den **extremen** Fall
+    (Cycles' ~1e10 für Strahlen ins Leere); sie setzt genau wie ein festes Perzentil
+    voraus, dass man vorher weiss, wo die Ferne anfängt. Weiss man nicht — das weiss nur
+    das Bild.
+
+    Die Messung läuft immer, das Verhalten ist aus
+    -----------------------------------------------
+    ``normalisierung`` trägt darum in **jeder** geschriebenen Karte, wie sie ausgesehen
+    hätte: ``max_m_luecke`` (die Obergrenze aus der eigenen Lücke der Verteilung, siehe
+    :func:`aiimaging.geometrie_qa.ferne_abtrennen`), ``luecke`` (der ganze Befund) und
+    ``ferne_getrennt`` (ob wirklich danach normiert wurde). Ohne diese Zahl kann niemand
+    entscheiden, ob der Schalter umgelegt werden soll — und wer zuerst umlegt, verliert
+    die Messung, mit der er es hätte begründen können.
+
+    Args:
+        ferne_trennen: Ob ``max_m`` die Lücken-Obergrenze wird statt das grösste gültige
+            Mass. **Vorgabe ist AUS.** Das ist keine Vorsicht, sondern eine Hausregel:
+            Die HomeStation führt unseren Code aus diesem Repo aus, ein ``git pull`` dort
+            ändert sonst still, was gerechnet wird. Eine Verhaltensänderung wird angesagt,
+            BEVOR sie ankommt — sonst sieht sie drüben wie ein Fehler aus.
+
+            Ist der Schalter an und eine Lücke gemessen, wird alles darüber **geklemmt**
+            und nicht zu Hintergrund gemacht: Es *ist* Geometrie, nur zu weit weg, um
+            Auflösung zu verdienen. Findet die Messung **keine** Lücke, bleibt alles wie
+            bisher — NICHT GEMESSEN darf nie zu einer erfundenen Grenze werden.
 
     Returns:
         ``(grau, normalisierung)``. Ohne ``min_m``/``max_m`` in ``normalisierung`` ist
@@ -345,14 +440,102 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
         )
 
     min_m = min(tiefe[i] for i in gueltig)
-    max_m = max(tiefe[i] for i in gueltig)
+    max_m_gemessen = max(tiefe[i] for i in gueltig)
+
+    warnungen: list[str] = []
+    luecke, fehlersatz = _luecke_messen(tiefe, hintergrund_ab_m)
+    if fehlersatz:
+        warnungen.append(fehlersatz)
+    max_m_luecke = luecke["obergrenze"] if luecke else None
+
+    # ── Umschalten oder nicht, und in beiden Fällen: warum ───────────────────────────
+    max_m = max_m_gemessen
+    ferne_getrennt = False
+    if max_m_luecke is None:
+        if ferne_trennen:
+            # Der Schalter ist an und es passiert trotzdem nichts. Das gehört gesagt:
+            # Ein Aufruf, der wirkungslos bleibt und schweigt, sieht aus wie einer, der
+            # gewirkt hat.
+            warnungen.append(
+                "ferne_trennen ist gesetzt, aber es wurde KEINE taugliche Lücke gemessen "
+                "— normiert wurde wie bisher über das grösste gültige Mass. NICHT "
+                "GEMESSEN wird hier nicht zu einer erfundenen Grenze.")
+    elif max_m_luecke < max_m_gemessen:
+        # Die Lücke liegt auf dem KLEINSTEN Wert: Der Kern hätte keine Breite mehr, alle
+        # Geometrie bekäme denselben Grauwert. Das ist eine Maske und keine Tiefenkarte —
+        # dieselbe Regel wie bei „keine Lücke gefunden": lieber die alte Skala als eine
+        # Grenze, die nichts mehr trennt.
+        if max_m_luecke <= min_m:
+            warnungen.append(
+                f"Die Lücke liegt bei {max_m_luecke:g} m und damit auf dem nächsten Punkt "
+                f"({min_m:g} m) — der Kern hätte keine Breite mehr und jede Geometrie "
+                f"denselben Grauwert. NICHT umgeschaltet, auch wenn ferne_trennen gesetzt "
+                f"ist.")
+        elif ferne_trennen:
+            max_m = max_m_luecke
+            ferne_getrennt = True
+        else:
+            # GESETZTE Schwelle, siehe `LUECKE_WARNT_AB_FAKTOR`. Der Satz nennt beide
+            # Zahlen, damit die Entscheidung ohne einen zweiten Lauf zu treffen ist.
+            faktor = (max_m_gemessen - min_m) / (max_m_luecke - min_m)
+            if faktor >= LUECKE_WARNT_AB_FAKTOR:
+                warnungen.append(
+                    f"Normiert wurde über max_m = {max_m_gemessen:g} m; die eigene Lücke "
+                    f"der Verteilung liegt bei {max_m_luecke:g} m. Der Kern bekäme damit "
+                    f"den {faktor:.4g}-fachen Wertebereich. NICHT umgeschaltet — "
+                    f"ferne_trennen ist aus, und das bleibt es, bis es angesagt ist. Die "
+                    f"Schwelle für diesen Satz (Faktor {LUECKE_WARNT_AB_FAKTOR:g}) ist "
+                    f"gesetzt und nicht kalibriert.")
+
     spanne = (max_m - min_m) or 1.0          # eine ebene Fläche frontal: Spanne 0
 
     grau = [HINTERGRUND_GRAUWERT] * len(tiefe)
+    n_geklemmt = 0
     for i in gueltig:
+        t = tiefe[i]
+        if ferne_getrennt and t > max_m:
+            # GEKLEMMT, nicht ausgeblendet: Der Punkt bleibt Geometrie und zählt in
+            # `n_geometriepixel` mit; er verliert nur seine Auflösung.
+            #
+            # Geklemmt wird auf den DUNKELSTEN Wert und nicht auf den hellsten. „nah =
+            # hell" heisst: Was weiter weg ist, wird dunkler, und die Fernsichtebene ist
+            # das Fernste im Bild. Auf 1.0 zu klemmen gäbe ihr den Grauwert des NÄCHSTEN
+            # Punktes und drehte die Tiefenordnung für diese Punkte um — genau der Fehler,
+            # gegen den die Konvention geschrieben ist (die Rangkorrelation der
+            # Geometrie-QA meldete dann −1 auf korrekter Geometrie).
+            t = max_m
+            n_geklemmt += 1
         # nah = hell (ControlNet-Konvention). Der Hintergrund bleibt 0.0 — unendlich fern
         # ist der Grenzfall von „dunkel", nicht ein eigener Sonderfall.
-        grau[i] = 1.0 - (tiefe[i] - min_m) / spanne
+        grau[i] = 1.0 - (t - min_m) / spanne
+
+    # ── Die gefährlichste Stelle: Wer Meter zurückrechnet, muss das Klemmen sehen ─────
+    #
+    # RUECKRECHNUNG bleibt WÖRTLICH gültig — die Formel ist dieselbe, und `max_m` ist
+    # weiterhin die Zahl, gegen die normiert wurde. Was sich ändert, ist die BEDEUTUNG des
+    # Ergebnisses für die geklemmten Punkte: Sie tragen Grauwert 0 und ergeben
+    # zurückgerechnet genau `max_m` Meter. Das ist eine UNTERGRENZE ihrer Entfernung und
+    # keine Messung. `max_m` allein verrät das nicht; darum stehen drei Felder daneben:
+    #
+    #   geklemmt_ab_m   ab welcher Entfernung abgeschnitten wurde (None = gar nicht)
+    #   n_geklemmt      wie viele Punkte es trifft
+    #   max_m_gemessen  wie weit sie tatsächlich reichen — die Zahl geht NICHT verloren
+    #
+    # Dazu ein Satz im Klartext in `rueckrechnung_vorbehalt`, weil ein fremder Auswerter
+    # `rueckrechnung` liest und nicht diesen Kommentar. Ohne ihn hielte er geklemmte
+    # Punkte für echte Messwerte an der Grenze — ein Fehlschlag, der wie ein Erfolg
+    # aussieht.
+    vorbehalt = None
+    if ferne_getrennt:
+        vorbehalt = (
+            f"ACHTUNG: {n_geklemmt} von {len(gueltig)} Geometriepunkten wurden bei "
+            f"{max_m:g} m abgeschnitten (ferne_trennen). Die Formel in `rueckrechnung` "
+            f"gilt unverändert, aber für diese Punkte liefert sie {max_m:g} m als "
+            f"UNTERGRENZE und nicht als Messwert — tatsächlich reichen sie bis "
+            f"{max_m_gemessen:g} m. Sie tragen Grauwert 0 und sind im PNG weder "
+            f"untereinander noch vom Hintergrund zu unterscheiden; wer echte Entfernungen "
+            f"braucht, nimmt die EXR."
+        )
 
     return grau, {
         "min_m": float(min_m),
@@ -365,18 +548,34 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
         # wurde — die Schranke bestimmt min_m und max_m mit.
         "hintergrund_ab_m": float(hintergrund_ab_m),
         "quelle": "produkt",
+        # Die Messung, die IMMER läuft — auch wenn der Schalter aus ist.
+        "max_m_luecke": None if max_m_luecke is None else float(max_m_luecke),
+        "luecke": luecke,
+        "ferne_getrennt": ferne_getrennt,
+        # Was das Klemmen für die Rückrechnung heisst. `max_m_gemessen` steht immer da,
+        # auch ungeklemmt — dann ist es dasselbe wie `max_m`, und genau das darf man sehen.
+        "geklemmt_ab_m": float(max_m) if ferne_getrennt else None,
+        "n_geklemmt": n_geklemmt,
+        "max_m_gemessen": float(max_m_gemessen),
+        "rueckrechnung_vorbehalt": vorbehalt,
+        "warnungen": warnungen,
     }
 
 
 def tiefe_exr_zu_png(exr, ziel_png, *, hintergrund_ab_m: float = HINTERGRUND_AB_M,
-                     bittiefe: int = 16, timeout: int = 300, _leser=None,
-                     _starte=None) -> dict:
+                     bittiefe: int = 16, ferne_trennen: bool = False,
+                     timeout: int = 300, _leser=None, _starte=None) -> dict:
     """EXR in Metern → normalisiertes Graustufen-PNG. Der ganze Weg, ohne Blender.
 
     Das ist die Stelle, die :func:`aiimaging.seams.glb_zu_multipass` nach dem Blender-Lauf
     aufruft. Sie ersetzt den Schritt, der bis zum 18.08.2026 im Runner stand.
 
     Args:
+        ferne_trennen: **Nur durchgereicht, Vorgabe AUS** — siehe
+            :func:`normalisiere_tiefe`. Ohne dieses Argument wäre der Schalter von der
+            Kette aus gar nicht erreichbar, also ein Schalter ohne Draht. Die Messung
+            (``max_m_luecke``, ``luecke``, ``ferne_getrennt``) steht ohnehin in jedem
+            zurückgegebenen Bericht und damit in jedem Report.
         timeout, _starte: **Die Prozessgrenze, die hier versteckt liegt.** Die Vorgabe
             :func:`aiimaging.bildlesen.lies_exr_tiefe` liest zuerst mit der stdlib und
             fällt bei EXR-Spielarten, die sie nicht kann (PIZ, DWAA/B, B44, PXR24,
@@ -403,7 +602,8 @@ def tiefe_exr_zu_png(exr, ziel_png, *, hintergrund_ab_m: float = HINTERGRUND_AB_
     else:
         werte, breite, hoehe = bildlesen.lies_exr_tiefe(
             Path(exr), timeout=timeout, _starte=_starte)
-    grau, normalisierung = normalisiere_tiefe(werte, hintergrund_ab_m=hintergrund_ab_m)
+    grau, normalisierung = normalisiere_tiefe(
+        werte, hintergrund_ab_m=hintergrund_ab_m, ferne_trennen=ferne_trennen)
     schreibe_graustufen_png(ziel_png, grau, breite, hoehe, bittiefe=bittiefe)
     normalisierung["breite"] = breite
     normalisierung["hoehe"] = hoehe
@@ -413,6 +613,7 @@ def tiefe_exr_zu_png(exr, ziel_png, *, hintergrund_ab_m: float = HINTERGRUND_AB_
 
 __all__ = [
     "HINTERGRUND_AB_M", "HINTERGRUND_GRAUWERT", "KONVENTION", "RUECKRECHNUNG",
+    "LUECKE_WARNT_AB_FAKTOR",
     "SchreibError",
     "normalisiere_tiefe", "schreibe_farb_png", "schreibe_graustufen_png",
     "tiefe_exr_zu_png",

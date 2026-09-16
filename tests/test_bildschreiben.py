@@ -561,6 +561,11 @@ def test_die_normalisierung_traegt_alles_was_die_rueckrechnung_braucht():
     assert set(norm) == {
         "min_m", "max_m", "konvention", "hintergrund_grauwert", "rueckrechnung",
         "n_geometriepixel", "hintergrund_ab_m", "quelle",
+        # Seit dem 16.09.2026: die Lücken-Messung, die immer läuft, und was das Klemmen
+        # für die Rückrechnung hiesse. Siehe Abschnitt 6b.
+        "max_m_luecke", "luecke", "ferne_getrennt",
+        "geklemmt_ab_m", "n_geklemmt", "max_m_gemessen", "rueckrechnung_vorbehalt",
+        "warnungen",
     }
     assert norm["konvention"] == KONVENTION
     assert norm["rueckrechnung"] == RUECKRECHNUNG
@@ -665,6 +670,339 @@ def test_die_grauwerte_bleiben_im_einheitsintervall():
     assert min(grau) == 0.0 and max(grau) == 1.0
     assert all(0.0 <= wert <= 1.0 for wert in grau)
 
+
+# ======================================================================================
+# 6b · Die Lücken-Trennung — die Messung läuft immer, das Verhalten ist aus
+# ======================================================================================
+#
+# DER BEFUND. Die HomeStation meldete am 11.09.2026 eine flachgedrückte Tiefenkarte
+# (Mittel 0.9869, 98.7 % der Punkte über 0.99) und hielt das für einen Fehler ihrer
+# eigenen Normierung über ein 99er-Perzentil. Es war unsere. `normalisiere_tiefe` nimmt
+# als `max_m` das grösste gültige Mass unterhalb von `hintergrund_ab_m` (1e7) — eine
+# Fernsichtebene bei 1600 m liegt weit darunter, gilt also als Geometrie und frisst den
+# ganzen Wertebereich. Die feste Schranke löst nur den EXTREMEN Fall; sie setzt genau wie
+# ein festes Perzentil voraus, dass man vorher weiss, wo die Ferne anfängt.
+#
+# DIE VERTEILUNG STEHT IM TESTCODE und nicht in einer Fixture-Datei: Sie ist aus der
+# Meldung nachgebildet (Innenraum 1.75..10 m mit 2000 Punkten, 23 Punkte bei 1600 m), und
+# eine Probe, die ihre eigenen Zahlen zeigt, ist nachrechenbar.
+
+def szene_elfter_september(n_innen: int = 2000, n_ferne: int = 23) -> list[float]:
+    """Die Verteilung aus der HomeStation-Meldung vom 11.09.2026, hier erzeugt.
+
+    Innenraum von 1.75 m bis 10 m, dazu eine Fernsichtebene bei 1600 m. Die 23 Punkte
+    sind 1.14 % der Karte — also MEHR als das eine Prozent, das ein 99er-Perzentil
+    wegschneidet. Genau daran ist der Perzentil-Weg drüben gescheitert.
+    """
+    innen = [1.75 + (10.0 - 1.75) * i / (n_innen - 1) for i in range(n_innen)]
+    return innen + [1600.0] * n_ferne
+
+
+def test_die_vorgabe_ist_aus_und_das_schuetzt_die_homestation():
+    """**Die wichtigste Probe dieses Abschnitts.**
+
+    Die HomeStation führt unseren Code aus diesem Repo aus. Ein ``git pull`` dort ändert
+    sonst still, was gerechnet wird — und eine Verhaltensänderung, die nicht angesagt
+    wurde, sieht drüben nicht wie eine Änderung aus, sondern wie ein Fehler.
+
+    Geprüft wird beides: die Signatur (damit der Vorgabewert nicht unbemerkt kippt) und
+    das Ergebnis (damit ein umgangener Vorgabewert nicht doch wirkt).
+    """
+    import inspect
+
+    vorgabe = inspect.signature(normalisiere_tiefe).parameters["ferne_trennen"].default
+    assert vorgabe is False, "Vorgabe AUS — das ist die Zusage an die HomeStation"
+
+    _grau, norm = normalisiere_tiefe(szene_elfter_september())
+
+    assert norm["ferne_getrennt"] is False
+    assert norm["max_m"] == 1600.0, "ohne Ansage bleibt die Skala, die drüben erwartet wird"
+    assert norm["geklemmt_ab_m"] is None and norm["n_geklemmt"] == 0
+
+
+def test_der_befund_vom_elften_september_ist_hier_reproduziert():
+    """Mit dem Schalter AUS entsteht genau die gemeldete flache Karte.
+
+    Die Zahlen stehen in der Probe, weil sie der Grund für den ganzen Umbau sind: Mittel
+    über dem Innenraum 0.9974, Anteil aller Punkte über 0.99 gleich 0.989. Die Meldung
+    drüben nannte 0.9869 und 98.7 % — dieselbe Grössenordnung, mit einem anderen
+    Normierungsweg erreicht.
+    """
+    karte = szene_elfter_september()
+    grau, norm = normalisiere_tiefe(karte)
+    kern = grau[:2000]
+
+    assert (norm["min_m"], norm["max_m"]) == (1.75, 1600.0)
+    assert sum(kern) / len(kern) == pytest.approx(0.9974, abs=5e-4)
+    assert sum(1 for wert in grau if wert > 0.99) / len(grau) == pytest.approx(0.989, abs=5e-4)
+
+
+def test_mit_dem_schalter_bekommt_der_innenraum_den_ganzen_wertebereich():
+    """Dieselbe Karte, Schalter AN — und das ist der Gegenbeweis zur Probe darüber.
+
+    Der Innenraum spreizt sich von 0 bis 1 auf; sein Mittel liegt bei 0.5 statt bei
+    0.9974, und über 0.99 liegt nur noch das vorderste Prozent. Die 23 Punkte der
+    Fernsichtebene sind nicht verschwunden — sie sind geklemmt.
+    """
+    karte = szene_elfter_september()
+    grau_aus, norm_aus = normalisiere_tiefe(karte)
+    grau_an, norm_an = normalisiere_tiefe(karte, ferne_trennen=True)
+    kern_an = grau_an[:2000]
+
+    assert norm_an["max_m"] == 10.0 and norm_aus["max_m"] == 1600.0
+    assert norm_an["ferne_getrennt"] is True
+    assert sum(kern_an) / len(kern_an) == pytest.approx(0.5, abs=1e-3)
+    assert sum(1 for wert in grau_an if wert > 0.99) / len(grau_an) < 0.02
+    assert norm_an["n_geklemmt"] == 23
+    assert norm_an["n_geometriepixel"] == 2023, "geklemmt heisst nicht weggeworfen"
+
+
+def test_die_messung_laeuft_auch_wenn_der_schalter_aus_ist():
+    """In JEDER geschriebenen Karte muss stehen, wie sie ausgesehen hätte.
+
+    Ohne diese Zahl kann niemand entscheiden, ob der Schalter umgelegt werden soll — und
+    wer zuerst umlegt, verliert die Messung, mit der er es hätte begründen können.
+    """
+    _grau, norm = normalisiere_tiefe(szene_elfter_september())
+
+    assert norm["ferne_getrennt"] is False, "gerechnet wurde OHNE"
+    assert norm["max_m_luecke"] == 10.0, "gemessen wurde TROTZDEM"
+    assert norm["luecke"]["verhaeltnis"] == pytest.approx(160.0)
+    assert norm["luecke"]["anteil_geklemmt"] == pytest.approx(23 / 2023)
+    assert norm["luecke"]["n_gemessen"] == 2023
+
+
+def test_die_warnung_nennt_beide_zahlen_und_sagt_dass_nicht_umgeschaltet_wurde():
+    """Ein Satz, der nur „Achtung" sagt, zwingt zu einem zweiten Lauf.
+
+    Darum stehen beide Zahlen darin — die benutzte Obergrenze und die gemessene — und
+    dazu, dass NICHT umgeschaltet wurde. Ausgegeben wird er über ``warnungen`` und nicht
+    über ``warnings``: Das Modul bleibt leise, der Bericht nicht.
+    """
+    _grau, norm = normalisiere_tiefe(szene_elfter_september())
+
+    assert len(norm["warnungen"]) == 1
+    satz = norm["warnungen"][0]
+    assert "1600" in satz and "10 m" in satz
+    assert "NICHT umgeschaltet" in satz
+    assert "193.7" in satz, "der Faktor, um den der Kern gewänne"
+    assert "gesetzt und nicht kalibriert" in satz
+
+
+def test_bei_kleinem_gewinn_bleibt_die_warnung_aus():
+    """Ein Wächter, der bei jeder Lücke meldet, meldet nichts.
+
+    Kern 1..10 m, ein Fernklumpen bei 30..31 m: Die Lücke ist echt (Faktor 3), aber der
+    Kern bekäme nur den 3.33-fachen Wertebereich — über der rechnerischen Untergrenze von
+    3 und weit unter der gesetzten Schwelle von 10. Gemessen und gemeldet wird die Lücke
+    trotzdem; nur der Satz bleibt weg.
+    """
+    kern = [1.0 + 9.0 * i / 199 for i in range(200)]
+    _grau, norm = normalisiere_tiefe(kern + [30.0, 30.5, 31.0])
+
+    assert norm["max_m_luecke"] == 10.0, "die Lücke ist gemessen"
+    assert norm["warnungen"] == [], "aber sie ist keinen Satz wert"
+    faktor = (norm["max_m"] - norm["min_m"]) / (norm["max_m_luecke"] - norm["min_m"])
+    assert faktor == pytest.approx(10.0 / 3.0)
+    assert faktor < bildschreiben.LUECKE_WARNT_AB_FAKTOR
+
+
+def test_ohne_luecke_aendert_der_schalter_nichts():
+    """NICHT GEMESSEN darf nie zu einer erfundenen Grenze werden.
+
+    Eine gleichmässige Verteilung hat kein Loch, an dem sich trennen liesse — der grösste
+    Nachbarsprung liegt bei Faktor 1.02. Wer hier trotzdem klemmt, wählt eine Grenze, die
+    im Bild nicht steht. Genau das war der Perzentil-Fehler vom 11.09.2026.
+    """
+    karte = [2.0 + 28.0 * i / 499 for i in range(500)]
+    grau_aus, norm_aus = normalisiere_tiefe(karte)
+    grau_an, norm_an = normalisiere_tiefe(karte, ferne_trennen=True)
+
+    assert norm_an["max_m_luecke"] is None, "NICHT GEMESSEN, nicht 0 und nicht „keine Ferne“"
+    assert grau_an == grau_aus
+    assert norm_an["max_m"] == norm_aus["max_m"] == pytest.approx(30.0)
+    assert norm_an["ferne_getrennt"] is False
+    assert norm_an["n_geklemmt"] == 0
+    # Wirkungslos UND stumm wäre der schlimmere Fall: Der Aufruf sähe aus, als hätte er
+    # gewirkt.
+    assert any("KEINE taugliche Lücke" in satz for satz in norm_an["warnungen"])
+
+
+def test_eine_szene_ganz_ohne_ferne_meldet_nichts_auffaelliges():
+    """Ein Bauwerk von 5 bis 15 m vor leerem Himmel — der Normalfall.
+
+    Der Himmel steht bei 1e10 und ist damit Hintergrund, keine Tiefe; er zieht die Skala
+    nicht und kann auch keine Lücke vortäuschen. Was hier zu sehen sein muss, ist:
+    **keine Warnung.** Ein Wächter, der auch über unauffällige Karten spricht, wird
+    weggehört.
+    """
+    karte = [5.0 + 10.0 * i / 99 for i in range(100)] + [1e10] * 20
+    _grau, norm = normalisiere_tiefe(karte)
+
+    assert norm["warnungen"] == []
+    assert norm["max_m_luecke"] is None
+    assert (norm["min_m"], norm["max_m"]) == (5.0, 15.0)
+    assert norm["luecke"]["n_ausgelassen"] == 20, "der Himmel ist ausgelassen, nicht gemessen"
+
+
+def test_eine_luecke_auf_dem_naechsten_punkt_schaltet_nicht_um():
+    """Der entartete Fall: Die Trennung läge auf dem kleinsten Wert.
+
+    Sechs Punkte bei 1 m, einer bei 100 m — die grösste Lücke sitzt auf 1 m, also auf dem
+    nächsten Punkt. Umgeschaltet ergäbe das einen Kern ohne Breite: Jede Geometrie bekäme
+    denselben Grauwert, das PNG wäre eine Maske und keine Tiefenkarte. Dieselbe Regel wie
+    bei „keine Lücke gefunden" — lieber die alte Skala als eine Grenze, die nichts trennt.
+    """
+    _grau, norm = normalisiere_tiefe([1.0] * 6 + [100.0], ferne_trennen=True)
+
+    assert norm["max_m_luecke"] == 1.0, "gemessen ist sie"
+    assert norm["ferne_getrennt"] is False, "benutzt wird sie nicht"
+    assert norm["max_m"] == 100.0
+    assert any("keine Breite" in satz for satz in norm["warnungen"])
+
+
+def test_geklemmt_wird_dunkel_und_nicht_hell():
+    """**Abweichung vom Wortlaut des Auftrags, und sie ist absichtlich.**
+
+    Der Auftrag sagt, alles über der Obergrenze werde „auf den hellsten Wert geklemmt".
+    Genommen wird der DUNKELSTE. Grund: Die Konvention dieses Moduls ist *nah = hell*, und
+    die Fernsichtebene ist das Fernste im Bild. Auf 1.0 geklemmt bekäme sie den Grauwert
+    des NÄCHSTEN Punktes — die Tiefenordnung wäre für diese Punkte umgedreht, und die
+    Rangkorrelation der Geometrie-QA meldete auf korrekter Geometrie einen negativen Wert.
+    Das ist derselbe Fehler, gegen den ``test_der_naechste_punkt_wird_hell_der_fernste_dunkel``
+    steht.
+
+    Was der Auftrag mit „nicht zu Hintergrund gemacht" meint, bleibt erfüllt: Die Punkte
+    zählen weiter als Geometrie (``n_geometriepixel``), sie verlieren nur ihre Auflösung.
+    """
+    grau, norm = normalisiere_tiefe([2.0, 4.0, 6.0] + [500.0], ferne_trennen=True)
+
+    assert norm["ferne_getrennt"] is True and norm["max_m"] == 6.0
+    assert grau[0] == 1.0, "der nächste Punkt bleibt der hellste"
+    assert grau[3] == 0.0, "die Ferne ist das Dunkelste — nicht das Hellste"
+    assert grau[3] < grau[2] or grau[3] == grau[2]
+    assert grau == sorted(grau, reverse=True), "die Tiefenordnung bleibt monoton"
+
+
+def test_die_rueckrechnung_aus_einer_geklemmten_karte_verraet_das_klemmen(tmp_path):
+    """**Die gefährlichste Stelle dieser Aufgabe, und hier steht ihre Lösung.**
+
+    Wer aus dem PNG Meter rechnet, bekommt für einen geklemmten Punkt genau ``max_m``
+    zurück — und das sieht aus wie ein Messwert am Rand der Szene. Ist es nicht: Es ist
+    eine UNTERGRENZE. Die Formel in ``rueckrechnung`` bleibt wörtlich gültig; was
+    danebenstehen muss, sind vier Angaben:
+
+    * ``geklemmt_ab_m`` — ab welcher Entfernung abgeschnitten wurde (``None`` = gar nicht),
+    * ``n_geklemmt`` — wie viele Punkte es trifft,
+    * ``max_m_gemessen`` — wie weit sie tatsächlich reichen; die Zahl geht NICHT verloren,
+    * ``rueckrechnung_vorbehalt`` — derselbe Sachverhalt im Klartext, weil ein fremder
+      Auswerter ``rueckrechnung`` liest und nicht unseren Quelltext.
+    """
+    tiefen = [2.0, 3.0, 4.0, 5.0, 900.0, 1000.0]
+    grau, norm = normalisiere_tiefe(tiefen, ferne_trennen=True)
+    pfad = schreibe_graustufen_png(tmp_path / "geklemmt.png", grau, 6, 1)
+
+    assert (norm["min_m"], norm["max_m"]) == (2.0, 5.0)
+    assert norm["geklemmt_ab_m"] == 5.0
+    assert norm["n_geklemmt"] == 2
+    assert norm["max_m_gemessen"] == 1000.0, "die echte Entfernung bleibt im Bericht stehen"
+    assert "UNTERGRENZE" in norm["rueckrechnung_vorbehalt"]
+    assert "1000" in norm["rueckrechnung_vorbehalt"]
+    assert norm["rueckrechnung"] == RUECKRECHNUNG, "die Formel selbst ändert sich nicht"
+
+    # Die Formel wörtlich angewandt — wie es ein fremdes Werkzeug täte.
+    gelesen, _, _ = bildlesen.lies_png_graustufen(pfad)
+    von_hand = [norm["max_m"] - wert * (norm["max_m"] - norm["min_m"]) for wert in gelesen]
+
+    assert von_hand[:4] == pytest.approx(tiefen[:4], abs=3.0 / 65535)
+    assert von_hand[4] == pytest.approx(5.0, abs=3.0 / 65535), "900 m kommen als 5 m zurück"
+    assert von_hand[5] == pytest.approx(5.0, abs=3.0 / 65535), "1000 m ebenso"
+    # Und genau deshalb steht der Vorbehalt da: DREI Punkte lesen sich als 5 m — einer
+    # ist wirklich 5 m weit weg, zwei sind geklemmt. Im PNG sind sie nicht zu trennen;
+    # nur `n_geklemmt` sagt, dass zwei davon keine Messwerte sind.
+    an_der_grenze = sum(1 for wert in von_hand if abs(wert - norm["max_m"]) < 3.0 / 65535)
+    assert an_der_grenze == 3
+    assert norm["n_geklemmt"] == 2
+
+
+def test_ohne_klemmen_steht_kein_vorbehalt_da_aber_die_zahl_steht_da():
+    """Ein Vorbehalt, der immer dasteht, wird überlesen — also steht er nur, wenn er gilt.
+
+    ``max_m_gemessen`` dagegen steht immer, auch ungeklemmt. Dann ist es dasselbe wie
+    ``max_m``, und genau das darf man sehen: Ein Feld, das mal da ist und mal nicht,
+    zwingt jeden Auswerter zu einer Fallunterscheidung, die er vergessen kann.
+    """
+    _grau, norm = normalisiere_tiefe([2.0, 4.0, 6.0])
+
+    assert norm["rueckrechnung_vorbehalt"] is None
+    assert norm["geklemmt_ab_m"] is None
+    assert norm["n_geklemmt"] == 0
+    assert norm["max_m_gemessen"] == norm["max_m"] == 6.0
+
+
+def test_die_messung_wirft_die_normierung_nie_um(monkeypatch):
+    """Eine Zugabe, die den Auftrag scheitern lässt, ist keine.
+
+    Die Normierung ist der Auftrag, die Lücken-Messung ist die Zugabe. ``ferne_abtrennen``
+    prüft seine Eingabe strenger als diese Funktion (Wahrheitswerte, Zahlen in Textform,
+    eine unbrauchbare Schranke) — wo es abbricht, muss hinterher **NICHT GEMESSEN** stehen
+    und ein Satz, der sagt warum, und nicht ein Abbruch des ganzen Schreibwegs.
+
+    Der Abbruch wird hier eingesetzt statt herbeigeführt: Welche Eingabe die Messung heute
+    umwirft, ist ihre Sache und darf sich ändern; dass ein Abbruch aufgefangen wird, ist
+    unsere.
+    """
+    from aiimaging import geometrie_qa
+
+    def platzt(*args, **kwargs):
+        raise geometrie_qa.QaError("nachgestellt: die Messung bricht ab")
+
+    monkeypatch.setattr(geometrie_qa, "ferne_abtrennen", platzt)
+
+    grau, norm = normalisiere_tiefe([10.0, 20.0, 30.0], ferne_trennen=True)
+
+    assert grau == [1.0, 0.5, 0.0], "die Normierung ist gelaufen"
+    assert norm["max_m"] == 30.0 and norm["ferne_getrennt"] is False
+    assert norm["max_m_luecke"] is None and norm["luecke"] is None
+    assert any("NICHT GEMESSEN" in satz for satz in norm["warnungen"])
+    assert any("QaError" in satz for satz in norm["warnungen"]), "und woran es lag"
+
+
+def test_der_bericht_ueberlebt_den_weg_durch_json():
+    """Der Bericht landet über ``tiefe_exr_zu_png`` im Report und damit in einer Datei.
+
+    ``ferne_abtrennen`` gibt ``kanten`` als Tupel zurück; aus JSON kommt eine Liste
+    zurück. Wer die Datei gegen das Speicherabbild hält, sähe sonst einen Unterschied, den
+    es nicht gibt — also wird hier schon eine Liste hinterlegt.
+    """
+    import json
+
+    _grau, norm = normalisiere_tiefe(szene_elfter_september())
+
+    assert norm["luecke"]["kanten"] == [10.0]
+    assert json.loads(json.dumps(norm)) == norm
+
+
+def test_der_schalter_reicht_durch_die_ganze_funktion_durch(tmp_path):
+    """Ein Schalter, den die Kette nicht erreicht, ist ein Schalter ohne Draht.
+
+    ``tiefe_exr_zu_png`` reicht ihn weiter — und auch dort ist die Vorgabe AUS.
+    """
+    import inspect
+
+    tiefen = [2.0, 3.0, 4.0, 5.0, 900.0, 1000.0]
+    leser = leser_mit(tiefen, 6, 1)
+
+    vorgabe = inspect.signature(tiefe_exr_zu_png).parameters["ferne_trennen"].default
+    assert vorgabe is False
+
+    aus = tiefe_exr_zu_png(tmp_path / "x.exr", tmp_path / "aus.png", _leser=leser)
+    an = tiefe_exr_zu_png(tmp_path / "x.exr", tmp_path / "an.png", _leser=leser,
+                          ferne_trennen=True)
+
+    assert aus["max_m"] == 1000.0 and aus["ferne_getrennt"] is False
+    assert an["max_m"] == 5.0 and an["ferne_getrennt"] is True
+    assert aus["max_m_luecke"] == an["max_m_luecke"] == 5.0, "gemessen wird in beiden Fällen"
 
 # ======================================================================================
 # 7 · Die ganze Kette: Meter → PNG → Meter

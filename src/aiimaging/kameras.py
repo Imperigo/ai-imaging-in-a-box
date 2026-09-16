@@ -1562,11 +1562,6 @@ def rahmungsverhaeltnis(szene_bbox, bauwerk_bbox, *,
         QaError: ``tiefenbreite`` passt nicht zur Länge der Karte (aus
             :func:`geometrie_qa.tiefenstruktur` durchgereicht).
     """
-    antwort = {"breitenanteil": None, "wirksame_bildbreite": None, "traegt": None,
-               "knie": BILDBREITE_KNIE, "abbruch": None, "abbruch_grund": "",
-               "grundlage": None, "basis": None, "grund": "",
-               "struktur": None, "warnungen": []}
-
     # Karte und Breite gehören zusammen: Eine Zahlenreihe ohne Breite hat keine Form.
     # Wer nur eine Hälfte übergibt, bekäme sonst stillschweigend ``struktur is None`` —
     # und None heisst in diesem Haus NICHT GEMESSEN, nicht «ein Argument vergessen». Der
@@ -1589,10 +1584,36 @@ def rahmungsverhaeltnis(szene_bbox, bauwerk_bbox, *,
     # VOR den Ausstiegen unten: Die Karte hängt nicht an den Hüllboxen. Wer keine
     # Bauwerksbox hat, hat trotzdem eine gemessene Tiefenkarte — und sie hier
     # wegzulassen hiesse, eine vorhandene Messung zu verschweigen, weil eine andere
-    # fehlt.
-    if tiefenkarte is not None and tiefenbreite is not None:
-        antwort["struktur"] = geometrie_qa.tiefenstruktur(tiefenkarte,
-                                                         breite=int(tiefenbreite))
+    # fehlt. `struktur_nachtragen` hält das durch: Es misst die Karte auch dann, wenn
+    # der Füllgrad NICHT FESTSTELLBAR ist.
+    antwort = _fuellgradbefund(szene_bbox, bauwerk_bbox, deckungsgrad=deckungsgrad,
+                               gemessener_fuellgrad=gemessener_fuellgrad)
+    if tiefenkarte is None:
+        return antwort
+    # EINE Umsetzung der Strukturlogik, nicht zwei. Der Block stand bis zum 16.09.2026
+    # hier drin; seit der Produktivpfad die Karte erst NACH dem Riegel lesen kann
+    # (`abholer`, Kostengrund dort), braucht er dieselbe Rechnung ein zweites Mal — und
+    # zwei Umsetzungen derselben Frage sind zwei Wahrheiten, die getrennt veralten.
+    return struktur_nachtragen(antwort, tiefenkarte, breite=int(tiefenbreite))
+
+
+def _fuellgradbefund(szene_bbox, bauwerk_bbox, *, deckungsgrad: float,
+                     gemessener_fuellgrad: float | None) -> dict:
+    """Der Füllgradteil von :func:`rahmungsverhaeltnis` — **ohne** die Tiefenkarte.
+
+    Steht seit dem 16.09.2026 als eigene Funktion da, weil die Struktur nachgetragen
+    werden kann: Der Füllgrad folgt aus den beiden Hüllboxen und ist sofort zu haben,
+    die Tiefenkarte gibt es im Produktivpfad erst zwanzig Zeilen später. ``struktur``
+    ist hier darum ``None`` und ``warnungen`` leer — **nicht gemessen**, nicht
+    *strukturlos* und nicht *in Ordnung*.
+
+    Nicht öffentlich: Wer den Befund ohne Karte will, ruft :func:`rahmungsverhaeltnis`
+    ohne ``tiefenkarte``; wer ihn danach ergänzt, :func:`struktur_nachtragen`.
+    """
+    antwort = {"breitenanteil": None, "wirksame_bildbreite": None, "traegt": None,
+               "knie": BILDBREITE_KNIE, "abbruch": None, "abbruch_grund": "",
+               "grundlage": None, "basis": None, "grund": "",
+               "struktur": None, "warnungen": []}
 
     if bauwerk_bbox is None or szene_bbox is None:
         antwort["grund"] = (
@@ -1656,32 +1677,6 @@ def rahmungsverhaeltnis(szene_bbox, bauwerk_bbox, *,
                 f"trotzdem unter der Abbruchschwelle — die beiden Messungen sind sich in "
                 f"diesem Band uneinig, siehe BILDBREITE_ABBRUCH.")
 
-    # Die zweite Auskunft — ausdruecklich NACH `abbruch` und ohne ihn anzufassen.
-    struktur = antwort["struktur"]
-    if struktur is not None:
-        wert = struktur.get("struktur")
-        if wert is None:
-            antwort["warnungen"].append(
-                "Die Tiefenkarte liegt vor, ihr Strukturwert ist aber NICHT GEMESSEN "
-                "(siehe struktur.warnungen). Das heisst NICHT strukturlos und NICHT in "
-                "Ordnung — es heisst, dass diese Frage offen bleibt.")
-        elif wert < STRUKTUR_WARNSCHWELLE and not antwort["abbruch"]:
-            antwort["warnungen"].append(
-                f"ACHTUNG, DIESER FALL IST BEKANNT: Der Füllgrad traegt "
-                f"({wirksam:.1%} der Bildbreite, nötig {BILDBREITE_ABBRUCH:.0%}), aber "
-                f"die Tiefenkarte ist fast strukturlos (struktur {wert:.4f}, gewarnt "
-                f"wird unter {STRUKTUR_WARNSCHWELLE}). Genau so sah am 12.09.2026 die "
-                f"Nahaufnahme vor der fensterlosen Wand aus: 100 % Füllgrad, 5,1 m "
-                f"Abstand, die Karte ein reiner Verlauf — und das Bildmodell hat frei "
-                f"erfunden, was es nicht sah. NICHT ABGEBROCHEN wird trotzdem: Die "
-                f"Warnschwelle ist gesetzt und nicht kalibriert, die Messreihe dazu "
-                f"liegt als auf-20260912-108 bei der HomeStation.")
-        elif wert < STRUKTUR_WARNSCHWELLE:
-            antwort["warnungen"].append(
-                f"Die Tiefenkarte ist fast strukturlos (struktur {wert:.4f}), der Lauf "
-                f"wird aber ohnehin schon am Füllgrad abgewiesen. Die Zahl steht hier "
-                f"als Auskunft, nicht als zweiter Grund.")
-
     if antwort["traegt"]:
         antwort["grund"] = (
             f"Das Bauwerk misst {anteil:.1%} der Szenenbreite; bei Deckungsgrad "
@@ -1698,6 +1693,121 @@ def rahmungsverhaeltnis(szene_bbox, bauwerk_bbox, *,
             f"ist eine nähere Kamera oder die Bauwerksbox als Rahmen, keine gesenkte "
             f"Schwelle.")
     return antwort
+
+
+def struktur_nachtragen(lage: dict, tiefenkarte, *, breite: int) -> dict:
+    """Einen **fertigen** Rahmungsbefund um den Strukturwert der Tiefenkarte ergänzen.
+
+    **Der Anlass ist eine Reihenfolge, die nicht zu ändern ist** (16.09.2026): Im
+    Produktivpfad (:func:`aiimaging.abholer.verarbeiter`) fällt der Rahmungsriegel, bevor
+    irgendetwas Geld kostet — und die Soll-Tiefenkarte gibt es erst danach, weil ihr
+    Lesen im EXR-Rückfall einen zweiten Blender-Prozess startet (Zeitlimit 300 s). Den
+    Riegel nach hinten zu schieben, damit die Struktur früher danebensteht, hiesse: *ein
+    billiger Abbruch wird teuer.* Das ist eine Verschlechterung, auch wenn die neue Zahl
+    schöner aussieht.
+
+    Also wird die Zahl **nachgetragen**, statt den Riegel zu verschieben.
+
+    Die Warnung kommt dadurch trotzdem **vor der Diffusion** — sie ist rechtzeitig, nur
+    nicht mehr vor dem Multipass. Und weil die Struktur ``abbruch`` ohnehin nicht
+    anfasst, verliert das Nachtragen nichts: Es gab nie etwas, das sie hätte abbrechen
+    können.
+
+    Args:
+        lage: ein Befund von :func:`rahmungsverhaeltnis` (oder derselben Form). Er wird
+            **nicht verändert**; zurück kommt ein neues Dictionary, auch die Liste
+            ``warnungen`` ist eine neue.
+        tiefenkarte: die Tiefenwerte, zeilenweise — dasselbe, was
+            :func:`geometrie_qa.tiefenstruktur` erwartet.
+        breite: die Bildbreite dieser Karte in Punkten.
+
+    Returns:
+        ``dict(lage, struktur=…, warnungen=[…])``.
+
+    .. important::
+       ``abbruch`` und ``abbruch_grund`` werden **durchgereicht wie sie sind**. Diese
+       Funktion kann einen Lauf weder abbrechen noch freigeben — die Warnschwelle
+       :data:`STRUKTUR_WARNSCHWELLE` ist gesetzt und nicht kalibriert (Messreihe
+       `auf-20260912-108` bei der HomeStation). Geprüft wird das mit einer Probe und
+       nicht mit diesem Absatz.
+
+    **Gewarnt wird nur, wo der Füllgrad bekannt ist.** Ohne ``wirksame_bildbreite`` steht
+    die gemessene Struktur trotzdem da, aber die Paarung *hoher Füllgrad und strukturlose
+    Karte* ist NICHT FESTSTELLBAR und wird nicht behauptet.
+
+    Raises:
+        ValueError: ``tiefenkarte`` ist ``None`` oder ``breite`` ist ein Wahrheitswert.
+        QaError: ``breite`` passt nicht zur Länge der Karte (aus
+            :func:`geometrie_qa.tiefenstruktur` durchgereicht).
+    """
+    if tiefenkarte is None:
+        raise ValueError(
+            "struktur_nachtragen ohne Tiefenkarte: Es gibt nichts nachzutragen. Wer "
+            "keine Karte hat, lässt den Befund wie er ist — struktur bleibt dann None, "
+            "und das heisst NICHT GEMESSEN.")
+    # Derselbe Wächter wie in `rahmungsverhaeltnis`, und aus demselben Grund: ``True``
+    # würde zu 1 und ergäbe eine ein Punkt breite Spalte samt Scheinzahl (nachgerechnet
+    # 16.09.2026: struktur 0,1260 statt 0,0000 an derselben Karte).
+    if isinstance(breite, bool):
+        raise ValueError(
+            f"breite muss eine ganze Zahl sein, kein Wahrheitswert: {breite!r} würde zu "
+            f"{int(breite)} und ergäbe eine Scheinmessung an einer ein Punkt breiten "
+            f"Spalte.")
+
+    struktur = geometrie_qa.tiefenstruktur(tiefenkarte, breite=int(breite))
+    warnungen = list(lage.get("warnungen") or [])
+    wirksam = lage.get("wirksame_bildbreite")
+    abbruch = lage.get("abbruch")
+    wert = struktur.get("struktur")
+
+    # Die zweite Auskunft — ausdruecklich OHNE `abbruch` anzufassen.
+    if wirksam is None:
+        # Kein Füllgrad, keine Paarung. Die Karte ist trotzdem gemessen.
+        pass
+    elif wert is None:
+        warnungen.append(
+            "Die Tiefenkarte liegt vor, ihr Strukturwert ist aber NICHT GEMESSEN "
+            "(siehe struktur.warnungen). Das heisst NICHT strukturlos und NICHT in "
+            "Ordnung — es heisst, dass diese Frage offen bleibt.")
+    elif wert < STRUKTUR_WARNSCHWELLE and abbruch is False:
+        warnungen.append(
+            f"ACHTUNG, DIESER FALL IST BEKANNT: Der Füllgrad traegt "
+            f"({wirksam:.1%} der Bildbreite, nötig {BILDBREITE_ABBRUCH:.0%}), aber "
+            f"die Tiefenkarte ist fast strukturlos (struktur {wert:.4f}, gewarnt "
+            f"wird unter {STRUKTUR_WARNSCHWELLE}). Genau so sah am 12.09.2026 die "
+            f"Nahaufnahme vor der fensterlosen Wand aus: 100 % Füllgrad, 5,1 m "
+            f"Abstand, die Karte ein reiner Verlauf — und das Bildmodell hat frei "
+            f"erfunden, was es nicht sah. NICHT ABGEBROCHEN wird trotzdem: Die "
+            f"Warnschwelle ist gesetzt und nicht kalibriert, die Messreihe dazu "
+            f"liegt als auf-20260912-108 bei der HomeStation.")
+    elif wert < STRUKTUR_WARNSCHWELLE and abbruch is True:
+        warnungen.append(
+            f"Die Tiefenkarte ist fast strukturlos (struktur {wert:.4f}), der Lauf "
+            f"wird aber ohnehin schon am Füllgrad abgewiesen. Die Zahl steht hier "
+            f"als Auskunft, nicht als zweiter Grund.")
+    elif wert < STRUKTUR_WARNSCHWELLE:
+        # `abbruch` ist weder wahr noch falsch, sondern NICHT FESTSTELLBAR. Aus
+        # `rahmungsverhaeltnis` kommt dieser Fall nie — dort steht neben einer
+        # gerechneten Bildbreite immer auch ein Abbruchentscheid. Aus dem Abholer schon:
+        # Kam die Kamera als Zahlenpaar herein statt aus der Hüllbox, setzt
+        # `_rahmung_vor_dem_render` `abbruch` auf None, weil der Deckungsgrad diesen Lauf
+        # nicht beschreibt — und **so schickt die Oberfläche ihre Kameras**.
+        #
+        # Gerendert wird dann trotzdem. Die Warnung darf hier also nicht ausfallen, aber
+        # sie darf auch nicht sagen «der Füllgrad traegt»: Das ist genau die Zahl, die
+        # für diesen Lauf nicht gilt. Ein Satz, der eine ungeprüfte Grösse behauptet,
+        # ist schlimmer als keiner.
+        warnungen.append(
+            f"ACHTUNG: Die Tiefenkarte ist fast strukturlos (struktur {wert:.4f}, "
+            f"gewarnt wird unter {STRUKTUR_WARNSCHWELLE}) — so sah am 12.09.2026 die "
+            f"Nahaufnahme vor der fensterlosen Wand aus, bei der das Bildmodell frei "
+            f"erfunden hat, was es nicht sah. Ob der Füllgrad diesen Lauf trägt, ist "
+            f"NICHT FESTSTELLBAR (abbruch ist None), gerechnet sind "
+            f"{wirksam:.1%} der Bildbreite. Abgebrochen wird nichts: Die Warnschwelle "
+            f"ist gesetzt und nicht kalibriert, die Messreihe dazu liegt als "
+            f"auf-20260912-108 bei der HomeStation.")
+
+    return dict(lage, struktur=struktur, warnungen=warnungen)
 
 
 def berichtsfelder_aus_stellung(auge, blick_auf, bbox, *,

@@ -1283,3 +1283,143 @@ def test_ein_wahrheitswert_ist_keine_bildbreite():
     with pytest.raises(ValueError, match="Wahrheitswert"):
         kameras.rahmungsverhaeltnis(_SZENE_ENG, _BAUWERK,
                                     tiefenkarte=_verlauf(), tiefenbreite=True)
+
+
+# --------------------------------------------------------------------------------------
+# Die Struktur NACHTRAGEN — dieselbe Rechnung, nur später
+# --------------------------------------------------------------------------------------
+#
+# **Der Anlass ist eine Reihenfolge im Produktivpfad** (16.09.2026): `abholer` fällt den
+# Rahmungsriegel, bevor irgendetwas Geld kostet — und die Soll-Tiefenkarte gibt es erst
+# zwanzig Zeilen später, weil ihr Lesen im EXR-Rückfall einen zweiten Blender-Prozess
+# startet (Zeitlimit 300 s). Der Riegel blieb darum stehen, wo er steht, und die Struktur
+# wird nachgetragen.
+#
+# Die Gefahr dabei ist nicht die Zahl, sondern die zweite Umsetzung: Zwei Stellen, die
+# dasselbe rechnen, sind zwei Wahrheiten, die getrennt veralten. Die Proben hier halten
+# fest, dass es EINE ist.
+
+
+def _lage_ohne_karte(szene=_SZENE_ENG, bauwerk=_BAUWERK):
+    """Ein fertiger Rahmungsbefund ohne Tiefenkarte — so, wie ihn der Riegel abgibt."""
+    return kameras.rahmungsverhaeltnis(szene, bauwerk)
+
+
+@pytest.mark.parametrize("szene,bauwerk", [
+    (_SZENE_ENG, _BAUWERK),     # der Lauf läuft durch: abbruch False
+    (_SZENE_WEIT, _BAUWERK),    # der Lauf wird abgewiesen: abbruch True
+    (_SZENE_ENG, None),         # der Füllgrad ist NICHT FESTSTELLBAR: abbruch None
+])
+@pytest.mark.parametrize("karte", [_verlauf(), _kante(), [4.0] * 256])
+def test_nachtragen_liefert_dasselbe_wie_der_gesamtaufruf(szene, bauwerk, karte):
+    """**Die tragende Probe: es gibt EINE Umsetzung der Strukturlogik, nicht zwei.**
+
+    Wer den Befund in einem Zug rechnet und wer ihn nachträgt, muss Feld für Feld
+    dasselbe bekommen — sonst entscheidet die Bibliothek anders als der Produktivpfad,
+    und zwar still. Geprüft über beide Seiten der Abbruchschwelle, über den Fall ohne
+    Bauwerksbox und über alle drei Kartenarten (Verlauf, Kante, ohne Spanne).
+    """
+    zusammen = kameras.rahmungsverhaeltnis(szene, bauwerk,
+                                           tiefenkarte=karte, tiefenbreite=16)
+    nachgetragen = kameras.struktur_nachtragen(
+        kameras.rahmungsverhaeltnis(szene, bauwerk), karte, breite=16)
+    assert nachgetragen == zusammen
+
+
+@pytest.mark.parametrize("szene,bauwerk,erwartet", [
+    (_SZENE_ENG, _BAUWERK, False),
+    (_SZENE_WEIT, _BAUWERK, True),
+    (_SZENE_ENG, None, None),
+])
+@pytest.mark.parametrize("karte", [_verlauf(), _verlauf_exakt(), _kante(), [4.0] * 256])
+def test_nachtragen_faesst_das_urteil_nie_an(szene, bauwerk, erwartet, karte):
+    """``abbruch`` und ``abbruch_grund`` überstehen das Nachtragen unverändert — auch bei
+    einer völlig strukturlosen Karte.
+
+    Das ist der Grund, warum das Nachtragen überhaupt zulässig ist: Die Struktur
+    entscheidet nichts, solange ihre Schwelle ungeeicht ist (`auf-20260912-108`). Käme
+    hier ein Entscheid dazu, wäre die Reihenfolge im Abholer plötzlich eine Frage von
+    Geld gegen Urteil — und die wäre anders zu beantworten.
+    """
+    vorher = kameras.rahmungsverhaeltnis(szene, bauwerk)
+    nachher = kameras.struktur_nachtragen(vorher, karte, breite=16)
+    assert vorher["abbruch"] is erwartet
+    assert nachher["abbruch"] is erwartet
+    assert nachher["abbruch_grund"] == vorher["abbruch_grund"]
+    assert nachher["traegt"] is vorher["traegt"]
+    assert nachher["wirksame_bildbreite"] == vorher["wirksame_bildbreite"]
+    assert nachher["grund"] == vorher["grund"]
+
+
+def test_nachtragen_veraendert_den_uebergebenen_befund_nicht():
+    """Ein neues Dictionary, und auch eine neue Warnliste.
+
+    Der Abholer reicht denselben Befund weiter, den er dem Riegel abgenommen hat. Würde
+    das Nachtragen ihn an Ort und Stelle ändern, hinge das Urteil daran, wer ihn wann
+    gelesen hat — und `warnungen` ist eine Liste, die `dict(lage, …)` allein **mitnimmt**
+    statt zu kopieren.
+    """
+    vorher = _lage_ohne_karte()
+    warnliste = vorher["warnungen"]
+    abzug = dict(vorher)
+    nachher = kameras.struktur_nachtragen(vorher, _verlauf(), breite=16)
+
+    assert vorher == abzug, "der übergebene Befund bleibt, wie er war"
+    assert vorher["struktur"] is None, "insbesondere: struktur bleibt NICHT GEMESSEN"
+    assert vorher["warnungen"] == [], "und die Warnliste bleibt leer"
+    assert nachher["warnungen"] is not warnliste, "eine NEUE Liste, nicht dieselbe"
+    assert nachher["struktur"] is not None
+
+
+def test_nachtragen_ohne_fuellgrad_misst_und_behauptet_nichts():
+    """Ohne Bauwerksbox wird die Karte gemessen — die Paarung aber nicht behauptet.
+
+    Dieselbe Haltung wie im Gesamtaufruf: Zwei Messungen, die nichts miteinander zu tun
+    haben, und eine fehlt. *Hoher Füllgrad und strukturlose Karte* liesse sich ohne
+    Füllgrad gar nicht sagen.
+    """
+    nachher = kameras.struktur_nachtragen(_lage_ohne_karte(bauwerk=None),
+                                          _verlauf(), breite=16)
+    assert nachher["struktur"]["struktur"] == pytest.approx(0.0, abs=1e-9)
+    assert nachher["warnungen"] == []
+
+
+def test_bei_unfeststellbarem_abbruch_warnt_das_nachtragen_ohne_den_fuellgrad_zu_behaupten():
+    """**Der Fall, den der Produktivpfad am häufigsten hat — und der leicht danebenginge.**
+
+    Kommt die Kamera als Zahlenpaar von der Oberfläche statt aus der Hüllbox, setzt
+    `abholer._rahmung_vor_dem_render` ``abbruch`` auf ``None``: Der Deckungsgrad
+    beschreibt diesen Lauf nicht. Gerendert wird trotzdem — die Warnung darf hier also
+    weder ausfallen noch sagen «der Füllgrad traegt». Genau diese Zahl gilt für den Lauf
+    ja nicht.
+    """
+    lage = dict(_lage_ohne_karte(), abbruch=None, abbruch_grund="Kamera vorgegeben")
+    nachher = kameras.struktur_nachtragen(lage, _verlauf(), breite=16)
+
+    assert nachher["abbruch"] is None
+    assert nachher["abbruch_grund"] == "Kamera vorgegeben"
+    assert len(nachher["warnungen"]) == 1
+    text = nachher["warnungen"][0]
+    assert "fensterlosen Wand" in text, "der bekannte Fall muss trotzdem benannt werden"
+    assert "NICHT FESTSTELLBAR" in text
+    assert "Der Füllgrad traegt" not in text, "das ist genau die ungeprüfte Behauptung"
+
+
+def test_nachtragen_ohne_karte_ist_ein_aufruferfehler_und_kein_befund():
+    """``None`` als Karte hiesse sonst still NICHT GEMESSEN — obwohl nur ein Argument fehlt.
+
+    Derselbe Wächter wie beim halben Argumentpaar in :func:`rahmungsverhaeltnis`: Der
+    Aufrufer läse seinen eigenen Fehler als Aussage über die Tiefenkarte.
+    """
+    with pytest.raises(ValueError, match="nichts nachzutragen"):
+        kameras.struktur_nachtragen(_lage_ohne_karte(), None, breite=16)
+
+
+def test_ein_wahrheitswert_ist_auch_beim_nachtragen_keine_bildbreite():
+    """``True`` würde zu 1 — eine ein Punkt breite Spalte und eine Scheinzahl.
+
+    Der Wächter steht im Gesamtaufruf schon; er muss auch auf dem zweiten Weg stehen,
+    sonst hat der Produktivpfad ihn nicht.
+    """
+    with pytest.raises(ValueError, match="Wahrheitswert"):
+        kameras.struktur_nachtragen(_lage_ohne_karte(), _verlauf(), breite=True)

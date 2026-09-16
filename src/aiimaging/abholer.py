@@ -1847,6 +1847,38 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Silhouette exakt. Das PNG war die Eingabe des Modells, die EXR ist der
             # Massstab.
             soll, breite, hoch = soll_lesen(bericht)
+
+            # DER STRUKTURWERT DER TIEFENKARTE — hier und NICHT oben beim Rahmungsriegel.
+            #
+            # Der Riegel steht zwanzig Zeilen hoeher, weil alles darunter Geld kostet
+            # (der Kommentar dort nennt die Messung dazu). Die Soll-Karte gibt es aber
+            # erst hier: `bildlesen.tiefen_aus_report` faellt notfalls auf die EXR zurueck
+            # und startet dafuer einen zweiten Blender-Prozess, Zeitlimit 300 s.
+            # `soll_lesen` nach oben zu ziehen, damit die Struktur schon beim Riegel
+            # danebensteht, machte aus einem billigen Abbruch einen teuren — eine
+            # Verschlechterung, auch wenn die neue Zahl schoener aussaehe.
+            #
+            # RECHTZEITIG IST DIE WARNUNG TROTZDEM: Sie steht vor der Diffusion, und die
+            # ist die teure Stufe (je Startwert ein eigener Lauf, siehe `_bester_seed`).
+            # Verloren geht durch das Nachtragen nichts, denn die Struktur entscheidet
+            # ohnehin nicht: `kameras.struktur_nachtragen` laesst `abbruch` unberuehrt,
+            # solange die Warnschwelle ungeeicht ist (auf-20260912-108).
+            try:
+                rahmung = dict(rahmung, struktur_fehler="")   # MUTATION 1: Aufruf weg
+            except Exception as fehler:  # noqa: BLE001 — Begruendung unmittelbar darunter
+                # BEFUND ALS FELD, KEIN ABSTURZ — dieselbe Haltung wie bei
+                # `depth_png_fehler` weiter oben: Was nicht zu messen war, wird als nicht
+                # gemessen GEMELDET und nimmt den Lauf nicht mit. Die Struktur ist eine
+                # Auskunft neben dem Urteil; an ihr ein gerendertes Bild scheitern zu
+                # lassen, hiesse ihr genau das Gewicht zu geben, das sie ausdruecklich
+                # nicht haben soll.
+                #
+                # Der Grund steht dabei und wird nicht verschluckt: Ein stilles
+                # `struktur: None` laese sich wie «es lag keine Karte vor» — und das ist
+                # etwas anderes als «die Karte war da und nicht lesbar».
+                rahmung = dict(rahmung, struktur=None,
+                               struktur_fehler=f"{type(fehler).__name__}: {fehler}")
+
             maskenbefund = _maske_bauen(
                 bericht, gelaende_erwartet=gelaende_erwartet,
                 gelaende_zusatz=_formgelaende_aus_bericht(bericht))

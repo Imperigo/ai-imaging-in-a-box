@@ -1583,3 +1583,186 @@ def test_ein_urteil_ohne_kameranamen_wird_uebergangen():
 def test_ohne_kameras_entsteht_kein_feld():
     assert abholer._qa_je_kamera_eintraege(None) == []
     assert abholer._qa_je_kamera_eintraege(()) == []
+
+
+# ======================================================================================
+# Der Strukturwert der Tiefenkarte — nachgetragen, nicht vorgezogen (16.09.2026)
+# ======================================================================================
+#
+# **Der Befund, der das ausgeloest hat** (HomeStation, 12.09.2026): Der Rahmungsriegel
+# misst nur den Fuellgrad und entschied damit falsch herum — er liess die nutzlose
+# Nahaufnahme durch (100 % Fuellgrad, 5,1 m vor einer fensterlosen Wand, die Tiefenkarte
+# ein reiner Verlauf) und wies die brauchbare Uebersicht ab.
+#
+# `kameras.rahmungsverhaeltnis` kann die Struktur seit dem 16.09.2026 messen — auf DIESEM
+# Weg wurde sie aber nie gerufen, weil der Riegel vor dem Lesen der Soll-Karte faellt.
+# Eine Faehigkeit, die der Produktivpfad nicht ruft, existiert nicht.
+#
+# Verschoben wird der Riegel darum NICHT: `soll_lesen` faellt notfalls auf die EXR zurueck
+# und startet dafuer einen zweiten Blender-Prozess (Zeitlimit 300 s). Ein billiger
+# Abbruch, der teuer wird, ist eine Verschlechterung.
+
+def _feld16(f):
+    """Ein 16x16-Tiefenfeld aus einer Formel — dieselbe Machart wie in `test_kameras`."""
+    return [float(f(x, y)) for y in range(16) for x in range(16)]
+
+
+#: Die Nahaufnahme vor der leeren Wand: reiner Verlauf, `struktur` exakt 0,0.
+#: 0,25 ist binaer exakt darstellbar, darum ist die zweite Differenz ueberall genau null.
+_KARTE_VERLAUF = _feld16(lambda x, y: 3.0 + 0.25 * x)
+#: Eine Karte mit einer harten Kante: `struktur` 0,0714 (gemessen 12.09.2026).
+_KARTE_KANTE = _feld16(lambda x, y: 3.0 if x < 8 else 9.0)
+
+
+def _mit_huellboxen(attrappen, *, szene=((0, 0, 0), (8, 5, 10)),
+                    bauwerk=((0, 0, 0), (8, 5, 7)), fuellgrad=0.70):
+    """Die Multipass-Attrappe um die beiden Huellboxen ergaenzen.
+
+    Ohne Bauwerksbox ist der Fuellgrad NICHT FESTSTELLBAR, und dann wird ueber die
+    Paarung *hoher Fuellgrad und strukturlose Karte* gar nichts behauptet — die Proben
+    hier traefen ins Leere. `weg="abgeleitet"` steht dabei, weil `abbruch` sonst
+    ausdruecklich auf None gesetzt wird (siehe `_rahmung_vor_dem_render`).
+    """
+    echt = attrappen["_multipass"]
+
+    def multipass(glb, out, **kw):
+        bericht = echt(glb, out, **kw)
+        bericht.update({"bbox": [list(szene[0]), list(szene[1])],
+                        "bbox_bauwerk": [list(bauwerk[0]), list(bauwerk[1])],
+                        "deckungsgrad": 0.70,
+                        "kamera": {"weg": "abgeleitet", "fuellgrad": fuellgrad}})
+        return bericht
+
+    return dict(attrappen, _multipass=multipass)
+
+
+def _lauf(tmp_path, attrappen, karte=_KARTE_VERLAUF, breite=16, hoehe=16):
+    """Einen ganzen Auftrag durch die echte Kette schicken und die Urteile zurueckgeben."""
+    ordner = _auftrag(tmp_path)
+    attrappen = dict(_mit_huellboxen(attrappen),
+                     _soll=lambda bericht: (list(karte), breite, hoehe))
+    gesehen = {}
+
+    def merke(auftrag):
+        e = abholer.verarbeiter(out_wurzel=tmp_path / "aus", **attrappen)(auftrag)
+        gesehen.update(e)
+        return e
+
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True, verarbeite=merke)
+    assert gesehen.get("kameras"), "keine Kamera ausgewertet — die Probe prueft sonst nichts"
+    return gesehen["kameras"]
+
+
+def test_der_strukturwert_der_tiefenkarte_landet_im_urteil(tmp_path):
+    """**Der Einbau selbst: die Zahl kommt im Urteil an, nicht nur in der Bibliothek.**
+
+    Bis zum 16.09.2026 stand unter `rahmung.struktur` auf diesem Weg immer ``None`` —
+    NICHT GEMESSEN, obwohl die Karte dalag. Hier liegt sie wieder da, und die Zahl steht
+    im Urteil jeder Kamera, samt der Warnung, die den bekannten Fall beim Namen nennt.
+    """
+    _protokoll, attrappen = _kette(scores=(0.9,))
+    kameras_urteile = _lauf(tmp_path, attrappen, karte=_KARTE_VERLAUF)
+
+    for urteil in kameras_urteile:
+        struktur = (urteil["rahmung"] or {}).get("struktur")
+        assert struktur is not None, "die Karte lag vor — None hiesse hier NICHT GEMESSEN"
+        assert struktur["struktur"] == pytest.approx(0.0, abs=1e-12)
+        warnungen = urteil["rahmung"]["warnungen"]
+        assert len(warnungen) == 1
+        assert "fensterlosen Wand" in warnungen[0], "der bekannte Fall, beim Namen genannt"
+        assert urteil["rahmung"]["struktur_fehler"] == ""
+
+
+def test_die_strukturreiche_karte_erzeugt_dieselbe_zahl_und_keine_warnung(tmp_path):
+    """Die Gegenprobe: Eine Karte mit Kante laeuft durch, ohne ein Wort.
+
+    Eine Warnung, die auch bei der guten Karte kaeme, waere keine — und eine Zahl, die
+    bei beiden Karten gleich aussaehe, waere die falsche Kennzahl.
+    """
+    _protokoll, attrappen = _kette(scores=(0.9,))
+    kameras_urteile = _lauf(tmp_path, attrappen, karte=_KARTE_KANTE)
+
+    for urteil in kameras_urteile:
+        assert urteil["rahmung"]["struktur"]["struktur"] == pytest.approx(0.0714, abs=5e-4)
+        assert urteil["rahmung"]["warnungen"] == []
+
+
+def test_das_nachtragen_aendert_den_abbruch_nie(tmp_path):
+    """**Die tragende Gegenprobe: das Urteil haengt nachweislich nicht an der Struktur.**
+
+    Derselbe Auftrag, einmal mit der strukturlosen und einmal mit der strukturreichen
+    Karte — ``abbruch`` und ``abbruch_grund`` muessen Zeichen fuer Zeichen gleich sein,
+    und in beiden Faellen entsteht ein Bild. Waere es anders, haette die ungeeichte
+    Warnschwelle heimlich einen Renderlauf verhindert.
+    """
+    _p1, a1 = _kette(scores=(0.9,))
+    _p2, a2 = _kette(scores=(0.9,))
+    flach = _lauf(tmp_path / "flach", a1, karte=_KARTE_VERLAUF)
+    scharf = _lauf(tmp_path / "scharf", a2, karte=_KARTE_KANTE)
+
+    assert len(flach) == len(scharf) >= 1
+    for links, rechts in zip(flach, scharf):
+        assert links["rahmung"]["abbruch"] is False
+        assert rechts["rahmung"]["abbruch"] is False
+        assert links["rahmung"]["abbruch_grund"] == rechts["rahmung"]["abbruch_grund"]
+        assert links["rahmung"]["wirksame_bildbreite"] == \
+            rechts["rahmung"]["wirksame_bildbreite"]
+        assert links["bild_png"] and rechts["bild_png"], \
+            "die strukturlose Karte darf den Lauf nicht verhindern"
+
+
+def test_eine_unlesbare_tiefenkarte_ist_nicht_gemessen_und_kein_absturz(tmp_path):
+    """**Befund als Feld, kein Absturz** — dieselbe Haltung wie bei `depth_png_fehler`.
+
+    Passt die Breite nicht zur Laenge der Karte, kann `geometrie_qa.tiefenstruktur` nichts
+    messen und wirft. Der Lauf bleibt trotzdem gueltig: Die Struktur ist eine Auskunft
+    NEBEN dem Urteil, und an ihr ein gerendertes Bild scheitern zu lassen, gaebe ihr genau
+    das Gewicht, das sie nicht haben soll.
+
+    ``struktur`` ist dann ``None``, und weil das fuer sich gelesen wie «es lag keine Karte
+    vor» aussaehe, steht der Grund in einem eigenen Feld daneben.
+    """
+    _protokoll, attrappen = _kette(scores=(0.9,))
+    kameras_urteile = _lauf(tmp_path, attrappen, karte=[1.0] * 10, breite=3, hoehe=4)
+
+    for urteil in kameras_urteile:
+        assert urteil["bild_png"], "der Lauf ist gueltig, auch ohne Strukturwert"
+        assert urteil["rahmung"]["struktur"] is None, "NICHT GEMESSEN"
+        assert urteil["rahmung"]["struktur_fehler"], \
+            "ein stilles None laese sich wie 'es lag keine Karte vor'"
+        assert "QaError" in urteil["rahmung"]["struktur_fehler"]
+
+
+def test_der_rahmungsriegel_faellt_weiterhin_vor_dem_lesen_der_sollkarte(tmp_path):
+    """**Der Riegel bleibt billig** — die Probe, die den Grund der ganzen Reihenfolge haelt.
+
+    `soll_lesen` faellt notfalls auf die EXR zurueck und startet dafuer einen zweiten
+    Blender-Prozess mit 300 s Zeitlimit. Wird der Lauf schon an der Rahmung abgewiesen,
+    darf er gar nicht erst gelesen werden. Zoege jemand `soll_lesen` nach oben, damit die
+    Struktur beim Riegel danebensteht, faellt diese Probe.
+    """
+    _protokoll, attrappen = _kette(scores=(0.9,))
+    gelesen = []
+
+    def soll(bericht):
+        gelesen.append(bericht.get("depth_png"))
+        return list(_KARTE_VERLAUF), 16, 16
+
+    # Ein Bauwerk, das nur einen Bruchteil der Szene einnimmt: Der Riegel bricht ab.
+    attrappen = dict(_mit_huellboxen(attrappen, szene=((0, 0, 0), (40, 40, 10))),
+                     _soll=soll)
+    ordner = _auftrag(tmp_path)
+    gesehen = {}
+
+    def merke(auftrag):
+        e = abholer.verarbeiter(out_wurzel=tmp_path / "aus", **attrappen)(auftrag)
+        gesehen.update(e)
+        return e
+
+    abholer.hole_einen(ordner, fremde_freigabe_gilt=True, verarbeite=merke)
+
+    assert gesehen["kameras"], "keine Kamera ausgewertet"
+    assert all(k["rahmung"]["abbruch"] is True for k in gesehen["kameras"])
+    assert gelesen == [], "der abgewiesene Lauf darf die Soll-Karte gar nicht erst lesen"
+    # Und die Struktur ist dort ehrlich NICHT GEMESSEN statt still auf null gesetzt.
+    assert all(k["rahmung"]["struktur"] is None for k in gesehen["kameras"])
