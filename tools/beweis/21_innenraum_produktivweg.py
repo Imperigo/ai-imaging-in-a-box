@@ -258,7 +258,21 @@ def main(ziel_arg: str | None = None) -> int:
         "render": {"resolution": [BREITE, HOEHE], "samples": SAMPLES, "faithful": 0.8},
         "vis": {"backbone": "qwen"},
         "out": str(ziel / "_lauf"),
-        "prompt": "Innenraum",
+        # DER PROMPT GEHOERT UNTER `style`, UND HIER STAND ER OBEN (gefunden 16.09.2026).
+        #
+        # Der fremde Vertrag fuehrt ihn als `style.prompt`; `lies_szene` liest ihn genau
+        # dort. Ein `prompt` auf der obersten Ebene wurde bis zum 11.09.2026 lautlos
+        # verschluckt — dieser Beweis hat also seit jeher OHNE den Prompt gerendert,
+        # waehrend im Skript steht, dass er ihn setzt.
+        #
+        # Aufgefallen ist es erst, als die neue Pruefung auf unbekannte Felder scharf
+        # gestellt wurde und den Lauf anhielt. *Der erste Fang des Riegels war einer
+        # unserer eigenen Beweise.*
+        #
+        # Was der Beweis zeigt, aendert sich dadurch nicht — er belegt den KAMERAWEG bis
+        # in den Produktivweg, nicht die Wirkung eines Prompts. Falsch war die Absicht im
+        # Skript, nicht seine Aussage.
+        "style": {"prompt": "Innenraum"},
     }
     szene = kosmo_szene.lies_szene(fremd)
     if szene["maengel"]:

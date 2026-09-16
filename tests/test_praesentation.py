@@ -57,15 +57,28 @@ def test_die_auswahl_traegt_nichts_ueberzaehliges():
         f"{ueberzaehlig} steht in bilder.json und wird auf keiner Folie verlangt.")
 
 
-@pytest.mark.parametrize("ziel,quelle", sorted(KARTE.items()))
-def test_jede_quelle_zeigt_in_den_beweisgang(ziel, quelle):
-    """Regel 3 und die Nachbaubarkeit in einem: relativer Pfad, unter `build/beweis/`.
+@pytest.mark.parametrize("ziel,kennung", sorted(KARTE.items()))
+def test_jede_kennung_zeigt_in_den_beweisgang(ziel, kennung):
+    """Regel 3 und die Nachbaubarkeit in einem: **Ordner und Muster**, kein Dateiname.
 
-    Ein absoluter Pfad trüge fast immer einen Benutzernamen, und ein Pfad ausserhalb des
-    Beweisgangs wäre ein Bild, das dieses Repo nicht selbst erzeugen kann.
+    **Warum kein Dateiname mehr** (gemessen am 16.09.2026): Die Beweisskripte schreiben
+    ihre **Messwerte in den Namen** — ``03_regel3_waechter_dateien-542_treffer-0.png``
+    wurde beim Nachbau zu ``…dateien-626…``, weil das Repo gewachsen ist. Nach dem
+    Verlust von ``build/`` fanden **fünf von 23** Einträgen ihre Datei nicht mehr,
+    obwohl das Bild neu erzeugt dastand.
+
+    Ein absoluter Pfad trüge ausserdem fast immer einen Benutzernamen, und ein Ordner
+    ausserhalb des Beweisgangs wäre ein Bild, das dieses Repo nicht selbst erzeugen kann.
     """
-    assert not quelle.startswith("/"), f"{ziel} zeigt auf einen absoluten Pfad"
-    assert quelle.startswith("build/beweis/"), f"{ziel} zeigt nach {quelle}"
+    assert not kennung.startswith("/"), f"{ziel} zeigt auf einen absoluten Pfad"
+    assert "/" in kennung, f"{ziel} nennt keinen Beweisordner: {kennung}"
+    ordner, _, muster = kennung.partition("/")
+    assert (WURZEL / "tools" / "beweis").is_dir()
+    assert muster.endswith("*"), (
+        f"{ziel} pinnt einen vollen Namen ({kennung}) — der traegt Messwerte und haelt "
+        f"keinen Nachbau lang.")
+    assert (WURZEL / "tools" / "beweis" / f"{ordner}.py").is_file(), (
+        f"{ziel} zeigt auf den Ordner {ordner}, zu dem es kein Beweisskript gibt.")
 
 
 def test_die_platzhalter_sagen_worauf_sie_warten():
