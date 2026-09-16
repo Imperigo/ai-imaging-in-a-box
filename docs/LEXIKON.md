@@ -63,6 +63,14 @@ Dateiformats. «Gemessen» heisst: an echten Dateien nachgeprüft — seit dem 1
 die Höhenachse von KosmoOrbit an zwei Dateien exakt bestätigt wurde. Die ersten beiden
 werden ohne Rückfrage benutzt, die anderen nie. Eine Sicherheit gehört an ihre Quelle.*
 
+**Warum eine Antwort fehlt — die vier Lagen** — Ein unbeantworteter Auftrag kann aus
+vier verschiedenen Gründen unbeantwortet sein, und sie verlangen Verschiedenes: *Er ist nie
+hinausgegangen* (unser Fehler), *er ist zu frisch* (noch keine Aussage), *der Empfänger hat
+danach anderes beantwortet* (er war da — hier ist Nachfragen angebracht), oder *vom
+Empfänger kam seither gar nichts* (**wir wissen es nicht** — hier wäre Mahnen falsch, denn
+wer nichts schickt, hat die Mahnung vielleicht ebenso wenig gesehen wie den Auftrag).
+*Erst messen, dann mahnen.*
+
 **Örtliche Ergänzung (Drop-in)** — Eine kleine Zusatzdatei neben einer
 Dienstbeschreibung, die einzelne Einstellungen überschreibt, ohne die Hauptdatei
 anzufassen. *Das Betriebssystem liest beide. Unser Wächter las lange nur die Hauptdatei —
@@ -4583,6 +4591,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-16 | Ergaenzt: **Warum eine Antwort fehlt — die vier Lagen**. Der Rueckstand zaehlte bis dahin nur, DASS eine Antwort fehlt. Bei 18 offenen Auftraegen und acht stillen Tagen war das zu wenig, um zu entscheiden, ob eine Nachfrage angebracht ist — gemessen: bei 2 von 18 |
 | 2026-09-12 | Ergaenzt aus dem ersten Lauf bis zum fertigen Bild: **Oertliche Ergaenzung (Drop-in)**, **Zweite Differenz (Kruemmung)**, **Ersatzschreibung der Umlaute**. Alle drei aus gemessenen Befunden — der Waechter las nur die Hauptdatei, die vorgeschlagene Kennzahl trennte Verlauf und Kante nicht, und «betonwaende» erreichte das Glossar nicht |
 | 2026-09-11 | Ergaenzt aus `herkunft.py`: **Herkunftstabelle** und **Belegt, gemessen, vermutet, unbekannt**. Die vierte Stufe entstand, weil eine zweifach exakte Messung weder «Norm» noch «Gewohnheit» ist |
 | 2026-09-11 | Ergaenzt aus dem Befund der HomeStation zum Renderprojekt: **Stilles Abstreifen (unbekannter Felder)**. Der Begriff wurde noetig, weil `lies_szene` erfundene Bestellfelder spurlos verschluckt hat — gemessen, nicht vermutet |

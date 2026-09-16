@@ -579,6 +579,14 @@ def bericht(repo_wurzel, blatt=None, *, heute: date | None = None) -> dict:
         # als Rueckstand beim Adressaten und waren einer beim Absender. Beide Zustaende
         # sahen in dieser Liste vorher gleich aus.
         "unzugestellt": _post.unzugestellt(wurzel),
+        # WARUM eine Antwort fehlt — nicht nur DASS sie fehlt (16.09.2026).
+        #
+        # Am 16.09. standen 18 Auftraege offen und seit acht Tagen hatte keiner der drei
+        # Worker geantwortet. Der Rueckstand sagte dazu nur eine Zahl. Ob drueben niemand
+        # arbeitete, ob die Auftraege nicht ankamen, oder ob sie ankamen und liegen
+        # blieben, unterschied dieses Repo nicht — und die drei verlangen verschiedene
+        # Handgriffe. *Erst messen, dann mahnen.*
+        "rueckweg": _post.warum_keine_antwort(wurzel, heute=heute),
         # WER UEBER DEM DECKEL LIEGT. Seit dem 07.09.2026 sperrt `schreibe_auftrag`
         # nicht mehr — der Deckel meldet. Gerechnet wird er hier aus dem Rueckstand und
         # nicht beim Schreiben: So gilt er fuer JEDEN offenen Auftrag, auch fuer die von

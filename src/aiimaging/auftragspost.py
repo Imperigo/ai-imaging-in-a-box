@@ -404,6 +404,120 @@ def vermerke_zustellung(kennungen, repo_wurzel, *, wann: str | None = None) -> P
     return pfad
 
 
+#: Wie jung ein Auftrag sein darf, bevor sein Ausbleiben überhaupt etwas heisst.
+#:
+#: Zwei Tage, und die Zahl ist bewusst grosszügig: Die Worker arbeiten in Sitzungen, nicht
+#: im Takt. *Ein Auftrag von gestern, der noch keine Antwort hat, ist kein Befund.*
+FRIST_FRISCH_TAGE = 2
+
+#: Die vier Lagen, in denen ein unbeantworteter Auftrag stehen kann.
+#:
+#: **Warum es vier sind und nicht eine.** Bis zum 16.09.2026 kannte dieses Repo nur
+#: «unbeantwortet». Am selben Tag stand der Rückstand bei 18 Aufträgen, der älteste 25
+#: Tage, und **seit acht Tagen hatte keiner der drei Worker geantwortet** — aber ob drüben
+#: niemand arbeitete, ob die Aufträge nicht ankamen, oder ob sie ankamen und liegen
+#: blieben, liess sich nicht unterscheiden.
+#:
+#: Für den **Hinweg** gibt es diese Unterscheidung seit dem 03.09.2026: der
+#: Zustellvermerk. Für den **Rückweg** gab es sie nicht.
+#:
+#: *Und der Unterschied trägt eine Handlung:* Bei ``NICHT_ZUGESTELLT`` liegt der Fehler
+#: bei uns. Bei ``AKTIV_UEBERGANGEN`` hat der Adressat gearbeitet und diesen einen liegen
+#: lassen — dort ist eine Nachfrage angebracht. Bei ``KEIN_LEBENSZEICHEN`` wäre sie es
+#: nicht: Wer seit Wochen nichts schickt, hat die Nachfrage vielleicht ebenso wenig
+#: gesehen wie den Auftrag. **Erst messen, dann mahnen.**
+NICHT_ZUGESTELLT = "nicht zugestellt"
+FRISCH = "frisch"
+AKTIV_UEBERGANGEN = "aktiv, diesen uebergangen"
+KEIN_LEBENSZEICHEN = "kein lebenszeichen"
+
+LAGEN = (NICHT_ZUGESTELLT, FRISCH, AKTIV_UEBERGANGEN, KEIN_LEBENSZEICHEN)
+
+
+def _tag(wert) -> str:
+    """Die ersten zehn Zeichen eines Zeitstempels — oder ``""``."""
+    return str(wert or "")[:10]
+
+
+def warum_keine_antwort(repo_wurzel, *, heute=None,
+                        frist_tage: int = FRIST_FRISCH_TAGE) -> list[dict]:
+    """Je unbeantwortetem Auftrag: **warum** die Antwort fehlt, soweit das hier messbar ist.
+
+    Vier Lagen (:data:`LAGEN`), und die Unterscheidung ist der ganze Zweck:
+
+    ``nicht zugestellt``
+        Der Auftrag ist nie hinausgegangen. **Unser Fehler**, nicht seiner.
+
+    ``frisch``
+        Jünger als ``frist_tage``. Noch keine Aussage — die Worker arbeiten in Sitzungen,
+        nicht im Takt.
+
+    ``aktiv, diesen uebergangen``
+        Der Adressat hat **nach** diesem Auftrag etwas anderes beantwortet. Er war also
+        da, und dieser eine blieb liegen. *Hier ist eine Nachfrage angebracht.*
+
+    ``kein lebenszeichen``
+        Seit diesem Auftrag kam von diesem Adressaten **gar nichts**. Das heisst
+        ausdrücklich **nicht** «er ignoriert uns» — es heisst, dass wir es nicht wissen.
+        Wer seit Wochen nichts schickt, hat eine Mahnung vielleicht ebenso wenig gesehen
+        wie den Auftrag.
+
+    **Was diese Funktion nicht kann, und das gehört an ihre Antwort:** Sie sieht nur
+    unsere Seite. Ein Auftrag, der zugestellt wurde und dessen Adressat schweigt, kann
+    gelesen und verworfen, ungelesen liegengeblieben oder nie angekommen sein. Die
+    Unterscheidung dazwischen bräuchte eine Rückmeldung *vom Adressaten* — den
+    Zustellbeleg gibt es, gelesen hat ihn bisher niemand zurückgemeldet.
+
+    Returns:
+        Je Auftrag ``{auftrag_id, worker, erstellt, tage, lage, grund}``, älteste zuerst.
+    """
+    from datetime import date as _date
+
+    wurzel = Path(repo_wurzel)
+    stichtag = heute or _date.today()
+    vermerk = _zustellvermerk(wurzel)
+    verhalten = _auftrag.antwortverhalten(wurzel)
+
+    # WANN HAT DIESER ADRESSAT ZULETZT GEANTWORTET — je Adressat ein Tag.
+    letzte = {w: _tag((verhalten.get(w) or {}).get("letzte_antwort"))
+              for w in _auftrag.WORKER}
+
+    aus: list[dict] = []
+    for a in sorted(_auftrag.unerledigt(wurzel), key=lambda x: str(x.get("erstellt", ""))):
+        kennung = a.get("auftrag_id")
+        worker = a.get("worker")
+        erstellt = _tag(a.get("erstellt"))
+        try:
+            tage = (stichtag - _date.fromisoformat(erstellt)).days
+        except ValueError:
+            tage = None
+
+        if worker in ZUSTELLUNG_NOETIG and kennung not in vermerk:
+            lage = NICHT_ZUGESTELLT
+            grund = ("Nie hinausgegangen. Das ist ein Rueckstand bei UNS und keiner beim "
+                     "Adressaten — er kann nicht beantworten, was er nicht hat.")
+        elif tage is not None and tage < frist_tage:
+            lage = FRISCH
+            grund = (f"Erst {tage} Tag(e) alt. Die Worker arbeiten in Sitzungen und nicht "
+                     f"im Takt; darunter sagt ein Ausbleiben nichts.")
+        elif letzte.get(worker) and letzte[worker] > erstellt:
+            lage = AKTIV_UEBERGANGEN
+            grund = (f"{worker} hat am {letzte[worker]} geantwortet, also NACH diesem "
+                     f"Auftrag vom {erstellt}. Er war da und hat diesen liegen lassen — "
+                     f"hier ist eine Nachfrage angebracht.")
+        else:
+            lage = KEIN_LEBENSZEICHEN
+            seit = letzte.get(worker) or "nie"
+            grund = (f"Seit diesem Auftrag kam von {worker} gar nichts (letzte Antwort: "
+                     f"{seit}). Das heisst NICHT, dass er uns uebergeht — es heisst, dass "
+                     f"wir es nicht wissen. Eine Mahnung haette er vielleicht ebenso wenig "
+                     f"gesehen wie den Auftrag.")
+
+        aus.append({"auftrag_id": kennung, "worker": worker, "erstellt": erstellt,
+                    "tage": tage, "lage": lage, "grund": grund})
+    return aus
+
+
 def unzugestellt(repo_wurzel) -> list[dict]:
     """Offene Aufträge an :data:`ZUSTELLUNG_NOETIG`, die noch nie ausgeliefert wurden.
 
@@ -421,6 +535,8 @@ def unzugestellt(repo_wurzel) -> list[dict]:
              "erstellt": a.get("erstellt")} for a in offen]
 
 
-__all__ = ["BREITE", "RUECKWEG", "ZUSTELLUNG_DATEI", "ZUSTELLUNG_NOETIG", "PostError",
+__all__ = ["AKTIV_UEBERGANGEN", "BREITE", "FRISCH", "FRIST_FRISCH_TAGE", "KEIN_LEBENSZEICHEN",
+           "LAGEN", "NICHT_ZUGESTELLT", "RUECKWEG", "ZUSTELLUNG_DATEI", "ZUSTELLUNG_NOETIG",
+           "PostError", "warum_keine_antwort",
            "block", "lege_ab", "offene_blocks", "unzugestellt", "vermerke_zustellung",
            "zustellbeleg_stand"]

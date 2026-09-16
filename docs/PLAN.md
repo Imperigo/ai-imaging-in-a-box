@@ -5328,9 +5328,22 @@ Bekannt und ausdrücklich nicht erledigt:
       anderen lagen fertig da und waren nie nachgetragen. Im selben Zeitraum wuchs der
       Rückstand bei den Wartenden von 14 auf 18. *Der eigene Rückstand liess sich durch
       Lesen halbieren; der fremde nicht durch Schreiben.*
-- [ ] **Wir können nicht unterscheiden, warum eine Antwort ausbleibt.** Ob drüben niemand
-      gearbeitet hat, ob der Auftrag nicht ankam, oder ob er ankam und liegen blieb — dieses
-      Repo sieht dasselbe. Für den **Hinweg** gibt es diese Unterscheidung seit dem 03.09.
-      (`auftragspost.py`, Zustellvermerk); für den **Rückweg** fehlt sie. *Adressat: `kern`.*
-      **Erst messen, dann mahnen:** Eine Mahnung an drei Wartende, von denen vielleicht
-      zwei die Aufträge nie gesehen haben, ist die falsche Handlung am falschen Ort.
+- [x] **Gebaut: warum eine Antwort ausbleibt — vier Lagen statt einer Zahl (16.09.2026).**
+      `auftragspost.warum_keine_antwort` unterscheidet: *nicht zugestellt* (unser
+      Rückstand — er kann nicht beantworten, was er nicht hat), *frisch* (unter zwei Tagen
+      sagt ein Ausbleiben nichts), *aktiv, diesen übergangen* (der Adressat hat **nach**
+      diesem Auftrag anderes beantwortet — **hier ist eine Nachfrage angebracht**), und
+      *kein Lebenszeichen* (seither kam von ihm gar nichts — **das heisst nicht, dass er
+      uns übergeht, sondern dass wir es nicht wissen**).
+      **Der erste Lauf ändert die Handlung:** 16× kein Lebenszeichen, 2× aktiv übergangen.
+      **Von achtzehn Aufträgen rechtfertigen genau zwei eine Nachfrage** — `auf-31` (25
+      Tage) und `auf-37` (24 Tage) bei `cloud`, der nach beiden noch geantwortet hat.
+      *Ohne die Messung hätte ich achtzehn gemahnt: sechzehn davon zu Unrecht, und beim
+      siebzehnten hätte es niemand mehr gelesen.* Nachfrage steht im Block für `cloud`.
+      Sechs Proben; `tools/einbau.py` druckt die Zählung bei jedem Lauf.
+- [ ] **Was die Messung nicht kann, und es ist die nächste Lücke.** Ein zugestellter
+      Auftrag, dessen Adressat schweigt, kann **gelesen und verworfen**, **ungelesen
+      liegengeblieben** oder **nie angekommen** sein — das unterscheidet sie nicht. Dafür
+      bräuchte es eine Rückmeldung *vom Adressaten*: Der Zustellbeleg steht seit dem
+      01.09. in jedem Auftrag, zurückgemeldet hat ihn bisher **niemand**. *Adressat:
+      `kern` für den Mechanismus, danach alle drei Worker für die Bitte.*

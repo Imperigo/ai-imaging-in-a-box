@@ -560,3 +560,117 @@ def test_der_block_traegt_das_heutige_datum_im_zustellbeleg(tmp_path):
     satz = _satz(worker="ui")
     text = auftragspost.block(satz, zustellbeleg=3)
     assert date.today().strftime("%d.%m.%Y") in text
+
+
+# ── Warum eine Antwort fehlt — die vier Lagen (16.09.2026) ────────────────────────────
+#
+# Am 16.09.2026 standen 18 Aufträge offen, der älteste 25 Tage, und seit acht Tagen hatte
+# **keiner** der drei Worker geantwortet. Der Rückstand sagte dazu eine Zahl. Ob drüben
+# niemand arbeitete, ob die Aufträge nicht ankamen, oder ob sie ankamen und liegen
+# blieben, unterschied dieses Repo nicht — und die drei verlangen verschiedene Handgriffe.
+
+from datetime import date as _date
+
+
+def _lege_auftrag(tmp_path, kennung, worker, erstellt, rang=1):
+    ordner = tmp_path / "auftraege" / "offen"
+    ordner.mkdir(parents=True, exist_ok=True)
+    (ordner / f"{kennung}.json").write_text(json.dumps({
+        "schema": "aiimaging.homeworker-auftrag/v1", "auftrag_id": kennung,
+        "art": "frage", "worker": worker, "rang": rang, "params": {},
+        "erstellt": erstellt, "beschreibung": "Probe", "anweisung": "Probe",
+    }, ensure_ascii=False), encoding="utf-8")
+
+
+def _lege_antwort(tmp_path, kennung, worker, beendet):
+    """Eine BEANTWORTETE Kennung — Auftrag und Ergebnis, sonst zaehlt sie nicht."""
+    _lege_auftrag(tmp_path, kennung, worker, beendet, rang=9)
+    ordner = tmp_path / "auftraege" / "ergebnisse"
+    ordner.mkdir(parents=True, exist_ok=True)
+    (ordner / f"{kennung}.json").write_text(json.dumps({
+        "schema": "aiimaging.homeworker-ergebnis/v1", "auftrag_id": kennung,
+        "status": "ok", "beendet": beendet, "zusammenfassung": "gemessen",
+    }, ensure_ascii=False), encoding="utf-8")
+
+
+def _vermerke(tmp_path, *kennungen):
+    (tmp_path / "auftraege").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "auftraege" / "zustellung.json").write_text(
+        json.dumps({k: {"am": "2026-09-01T00:00:00Z"} for k in kennungen}),
+        encoding="utf-8")
+
+
+def test_ein_nie_zugestellter_auftrag_ist_unser_rueckstand(tmp_path):
+    """*Er kann nicht beantworten, was er nicht hat.*"""
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+
+    (befund,) = auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))
+
+    assert befund["lage"] == auftragspost.NICHT_ZUGESTELLT
+    assert "bei UNS" in befund["grund"]
+
+
+def test_ein_frischer_auftrag_sagt_noch_nichts(tmp_path):
+    """Die Worker arbeiten in Sitzungen, nicht im Takt."""
+    _lege_auftrag(tmp_path, "auf-20260915-01", "cloud", "2026-09-15T00:00:00Z")
+    _vermerke(tmp_path, "auf-20260915-01")
+
+    (befund,) = auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))
+
+    assert befund["lage"] == auftragspost.FRISCH
+
+
+def test_wer_danach_anderes_beantwortet_hat_diesen_uebergangen(tmp_path):
+    """**Die einzige Lage, in der eine Nachfrage angebracht ist.**
+
+    Der Adressat hat nach diesem Auftrag etwas anderes beantwortet — er war also da, und
+    dieser eine blieb liegen.
+    """
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+    _lege_antwort(tmp_path, "auf-20260905-02", "cloud", "2026-09-05T00:00:00Z")
+    _vermerke(tmp_path, "auf-20260901-01", "auf-20260905-02")
+
+    lagen = {e["auftrag_id"]: e["lage"]
+             for e in auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))}
+
+    assert lagen["auf-20260901-01"] == auftragspost.AKTIV_UEBERGANGEN
+
+
+def test_ohne_lebenszeichen_wird_ausdruecklich_nicht_gemahnt(tmp_path):
+    """**Die dritte Antwort, auf den Rückweg angewandt.**
+
+    Wer seit Wochen nichts schickt, hat eine Mahnung vielleicht ebenso wenig gesehen wie
+    den Auftrag. *Es heisst nicht «er übergeht uns» — es heisst, dass wir es nicht wissen.*
+    """
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+    _lege_antwort(tmp_path, "auf-20260820-02", "cloud", "2026-08-20T00:00:00Z")
+    _vermerke(tmp_path, "auf-20260901-01", "auf-20260820-02")
+
+    lagen = {e["auftrag_id"]: e for e in
+             auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))}
+
+    assert lagen["auf-20260901-01"]["lage"] == auftragspost.KEIN_LEBENSZEICHEN
+    assert "nicht wissen" in lagen["auf-20260901-01"]["grund"]
+
+
+def test_die_lagen_schliessen_einander_aus(tmp_path):
+    """Jeder Auftrag bekommt **genau eine** Lage — sonst wäre die Zählung mehrdeutig."""
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+    _lege_auftrag(tmp_path, "auf-20260915-02", "cloud", "2026-09-15T00:00:00Z", rang=2)
+    _vermerke(tmp_path, "auf-20260915-02")
+
+    befunde = auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))
+
+    assert len(befunde) == 2
+    for e in befunde:
+        assert e["lage"] in auftragspost.LAGEN
+
+
+def test_ein_kern_auftrag_braucht_keine_zustellung(tmp_path):
+    """`kern` sind wir selbst — dorthin wird nichts zugestellt, und das Fehlen eines
+    Vermerks ist kein Befund."""
+    _lege_auftrag(tmp_path, "auf-20260901-01", "kern", "2026-09-01T00:00:00Z")
+
+    (befund,) = auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))
+
+    assert befund["lage"] != auftragspost.NICHT_ZUGESTELLT

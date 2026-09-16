@@ -34,7 +34,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from aiimaging import auftrag, einbau  # noqa: E402
+from aiimaging import auftrag
+from aiimaging import auftragspost, einbau  # noqa: E402
 
 
 def _zeilen(bericht: dict, nur: str | None) -> list[str]:
@@ -104,6 +105,28 @@ def _zeilen(bericht: dict, nur: str | None) -> list[str]:
         for worker, anzahl in sorted(ueber.items()):
             aus.append(f"UEBER DEM DECKEL: {worker} traegt {anzahl}, der Deckel liegt bei "
                        f"{auftrag.DECKEL_JE_WORKER}.")
+
+    # WARUM EINE ANTWORT FEHLT (16.09.2026). Der Rueckstand sagt, WIEVIELE fehlen; diese
+    # Zeilen sagen, was daraus folgt — und fuer die meisten folgt ausdruecklich NICHTS.
+    rueckweg = bericht.get("rueckweg") or []
+    if rueckweg and not nur:
+        from collections import Counter
+        zaehlung = Counter(e["lage"] for e in rueckweg)
+        aus.append("")
+        aus.append("WARUM DIE ANTWORT FEHLT: "
+                   + ", ".join(f"{n}x {lage}" for lage, n in zaehlung.most_common()))
+        nachfragen = [e for e in rueckweg if e["lage"] == auftragspost.AKTIV_UEBERGANGEN]
+        if nachfragen:
+            aus.append(f"      NACHFRAGE ANGEBRACHT bei {len(nachfragen)}: "
+                       + ", ".join(f"{e['auftrag_id']} ({e['worker']}, {e['tage']}d)"
+                                   for e in nachfragen))
+            aus.append("      Der Adressat hat NACH diesem Auftrag anderes beantwortet — "
+                       "er war da, und dieser blieb liegen.")
+        stille = [e for e in rueckweg if e["lage"] == auftragspost.KEIN_LEBENSZEICHEN]
+        if stille:
+            aus.append(f"      KEINE MAHNUNG bei {len(stille)}: Seit dem Auftrag kam von "
+                       f"dem Adressaten gar nichts. Das heisst NICHT, dass er uns "
+                       f"uebergeht — es heisst, dass wir es nicht wissen.")
 
     # DIE VERGABESTELLE STEHT DORT, WO OHNEHIN GEZAEHLT WIRD (09.09.2026).
     #
