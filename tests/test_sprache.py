@@ -734,7 +734,9 @@ def test_neun_wurde_vorher_zu_new():
     «new window» — nicht unübersetzt, sondern **falsch**, und ohne jede Meldung. Der
     direkte Eintrag schlägt die Regel, weil das Nachschlagewerk zuerst läuft.
     """
-    assert sprache.glossar_uebersetzung("neun fenster")["text"] == "nine window"
+    # Das ``windows`` kam am Nachmittag des 16.09.2026 dazu (Mehrzahlregel). Geprüft
+    # wird hier weiterhin das ``nine``: dass der Eintrag die Beugungsregel schlägt.
+    assert sprache.glossar_uebersetzung("neun fenster")["text"] == "nine windows"
     assert sprache.GLOSSAR["neu"] == "new", "Die Falle steht noch; der Eintrag hält sie zu."
 
 
@@ -945,7 +947,7 @@ def test_das_zahlwort_allein_bleibt_uebersetzt():
     die Sperre den gemeldeten Fall vom 12.09.2026 wieder aufgemacht.
     """
     assert sprache.uebersetze("vier, betonwaende")["uebersetzt"] == "four, concrete walls"
-    assert sprache.glossar_uebersetzung("neun fenster")["text"] == "nine window"
+    assert sprache.glossar_uebersetzung("neun fenster")["text"] == "nine windows"
 
 
 # --- MUTATIONSPROBE -------------------------------------------------------------------
@@ -962,12 +964,595 @@ def test_mutationsprobe_ohne_die_sperre_erfindet_die_regel_wieder_zahlen():
         sprache.ZAHLWOERTER = frozenset()
 
         assert sprache.glossar_uebersetzung("dreizehn")["text"] == "three ten"
-        assert sprache.glossar_uebersetzung("dreiecke")["text"] == "three corner"
+        # ``corners`` und ``windows``: Die Mehrzahlregel vom Nachmittag des 16.09.2026
+        # läuft auch über den entschärften Stand. Der Fund bleibt derselbe — aus einer
+        # Dreizehn werden eine Drei und eine Zehn.
+        assert sprache.glossar_uebersetzung("dreiecke")["text"] == "three corners"
         entschaerft = sprache.uebersetze("dreizehn fenster")
-        assert entschaerft["uebersetzt"] == "three ten window"
+        assert entschaerft["uebersetzt"] == "three ten windows"
         # Und das ist der eigentliche Schaden: Der Prompt hält sich für fertig.
         assert entschaerft["vollstaendig"] is True
     finally:
         sprache.ZAHLWOERTER = gesichert
 
     assert sprache.glossar_uebersetzung("dreizehn")["text"] == "dreizehn"
+
+
+# ======================================================================================
+# Die Mehrzahl: eine Zahl vor einem Hauptwort
+# ======================================================================================
+#
+# **Der gemeldete Fall** (16.09.2026): «zwoelf fenster» ergab ``twelve window``. Die Zahl
+# stimmte, das Hauptwort stand in der Einzahl — ein englischer Prompt mit einem
+# Grammatikfehler, aus einem Modul, das es genau dagegen gibt.
+#
+# Die Proben unten stehen auf zwei Fragen, und die zweite ist die wichtigere:
+# **beugt die Regel, wo sie soll** — und **lässt sie in Ruhe, wo sie es nicht weiss.**
+
+def test_der_gemeldete_fall_zieht_jetzt_die_mehrzahl():
+    """Der Befund vom 16.09.2026, wörtlich.
+
+    ``fenster`` → ``window`` stand schon vorher im Glossar; die Zahlwörter desselben
+    Vormittags haben den Fall nur sichtbar gemacht. Was fehlte, war die Übereinstimmung
+    zwischen zwei Wörtern — und die konnte ein Nachschlagewerk nie leisten, das je ein
+    Wort sieht.
+    """
+    assert sprache.glossar_uebersetzung("zwoelf fenster")["text"] == "twelve windows"
+    assert sprache.uebersetze("zwölf Fenster")["uebersetzt"] == "twelve windows"
+
+
+def test_der_gebeugte_prompt_meldet_sich_weiterhin_vollstaendig():
+    """Die stillste Stelle des Einbaus, und sie wäre fast danebengegangen.
+
+    ``unbekannt`` prüft gegen den englischen Wortschatz dieses Moduls, und der kennt nur
+    die Formen, die im Glossar stehen — ``windows`` steht dort nicht. Erst gemessen,
+    meldete der Prompt darum ausgerechnet das Wort als «nicht übersetzt», das die neue
+    Regel gerade richtig gestellt hatte. Gemessen wird ``unbekannt`` deshalb VOR der
+    Beugung; die Regel fasst ohnehin nur an, was schon englisch ist.
+    """
+    ergebnis = sprache.uebersetze("zwölf Fenster")
+
+    assert ergebnis["unbekannt"] == ()
+    assert ergebnis["vollstaendig"] is True
+
+
+@pytest.mark.parametrize("deutsch, englisch", [
+    ("zwei fenster", "two windows"),
+    ("drei baum", "three trees"),
+    ("vier fassade", "four facades"),
+    ("fünf treppe", "five stairs"),
+    ("sechs kamin", "six chimneys"),
+    ("sieben stütze", "seven columns"),
+    ("neun gaube", "nine dormers"),
+    ("zehn tür", "ten doors"),
+    ("zwölf balkon", "twelve balconies"),
+])
+def test_jedes_zahlwort_ab_zwei_zieht_die_mehrzahl(deutsch, englisch):
+    assert sprache.glossar_uebersetzung(deutsch)["text"] == englisch
+
+
+@pytest.mark.parametrize("deutsch, englisch", [
+    ("12 fenster", "12 windows"),
+    ("2 bäume", "2 trees"),
+    ("144 fenster", "144 windows"),
+])
+def test_eine_ziffer_loest_die_mehrzahl_ebenso_aus(deutsch, englisch):
+    """Ziffern werden **gerechnet**, nicht nachgeschlagen.
+
+    Das Glossar reicht bis ``zwölf``, aus guten Gründen (Zahlwörter oben). Eine Liste
+    englischer Zahlwörter bis zwölf wäre hier aber genau die Sorte Grenze, die beim
+    dreizehnten Fenster still kippt: ``144 fenster`` ist derselbe Satz wie
+    ``zwölf fenster``, nur grösser.
+    """
+    assert sprache.glossar_uebersetzung(deutsch)["text"] == englisch
+
+
+@pytest.mark.parametrize("deutsch, englisch", [
+    ("ein fenster", "a window"),
+    ("eine fassade", "a facade"),
+    ("eins fenster", "one window"),
+    ("1 fenster", "1 window"),
+    ("0 fenster", "0 window"),
+])
+def test_eins_loest_keine_mehrzahl_aus(deutsch, englisch):
+    """Eins ist keine Mehrzahl — und ``ein`` ist nicht einmal eine Zahl.
+
+    «ein Wohnhaus» ist *a residential building*, nicht *one residential building*; der
+    Artikel steht im Glossar als ``a`` und bleibt es. Die Null steht mit in dieser Probe,
+    weil sie der Fall ist, den man beim Schreiben einer Regel «grösser als eins» am
+    ehesten übersieht: ``zero windows`` wäre zwar richtiges Englisch, aber ``0`` kommt aus
+    einer Ziffernrechnung und nicht aus dem Glossar — die Verneinung hat hier ihren
+    eigenen Weg (``kein`` → ``no``), und zwei Wege zu einer Aussage sind einer zu viel.
+    """
+    assert sprache.glossar_uebersetzung(deutsch)["text"] == englisch
+
+
+# --- DIE GRENZEN: WO DIE REGEL BEWUSST NICHTS TUT -------------------------------------
+
+@pytest.mark.parametrize("deutsch, englisch", [
+    ("vier geschosse", "four storeys"),
+    ("zwei balkone", "two balconies"),
+    ("sechs stützen", "six columns"),
+    ("drei räume", "three rooms"),
+    ("zwei dächer", "two roofs"),
+    ("vier betonwaende", "four concrete walls"),
+    ("zwei hohe wolken", "two high thin clouds"),
+    ("drei lange schatten", "three long shadows"),
+])
+def test_ein_schon_mehrzahliger_eintrag_bleibt_unveraendert(deutsch, englisch):
+    """Keine doppelte Bildung.
+
+    Das Glossar führt zu vielen Hauptwörtern **beide** Formen (``wand`` → ``wall``,
+    ``wände`` → ``walls``), und mehrere mehrwortige Einträge enden auf einer Mehrzahl.
+    Eine Regel, die stur ein ``s`` anhängt, macht daraus ``wallses`` — und das liest sich
+    nicht wie ein Tippfehler, sondern wie eine Sprache.
+    """
+    assert sprache.glossar_uebersetzung(deutsch)["text"] == englisch
+
+
+@pytest.mark.parametrize("deutsch, englisch", [
+    ("zwei beton", "two concrete"),
+    ("drei glas", "three glass"),
+    ("zwei licht", "two light"),
+    ("vier holz", "four wood"),
+    ("zwei schnee", "two snow"),
+    ("drei sichtbeton", "three exposed concrete"),
+])
+def test_nicht_zaehlbares_bleibt_unveraendert(deutsch, englisch):
+    """``two concretes`` wäre schlimmer als der Fehler, den diese Regel behebt.
+
+    Ein stehengebliebenes ``two concrete`` ist ein sichtbarer Schönheitsfehler: Wer den
+    Prompt liest, sieht sofort, dass da etwas nicht stimmt. Ein ``two concretes`` sieht
+    dagegen aus wie richtiges Englisch und wird nie wieder als Fehler erkannt.
+    """
+    assert sprache.glossar_uebersetzung(deutsch)["text"] == englisch
+
+
+@pytest.mark.parametrize("deutsch, englisch", [
+    ("drei wohnhaus", "three residential buildings"),
+    ("zwei neubau", "two new buildings"),
+    ("vier flachdach", "four flat roofs"),
+    ("zwei fensterband", "two ribbon windows"),
+    ("drei erdgeschoss", "three ground floors"),
+    ("zwei modellfoto", "two photographs of an architectural model"),
+])
+def test_ein_mehrwortiger_eintrag_beugt_nur_das_letzte_wort(deutsch, englisch):
+    """Deutsch wie Englisch stellen das Hauptwort ans Ende der Wortgruppe.
+
+    ``residential building`` → ``residential buildings``, nicht ``residentials
+    building``. Und ``photograph of an architectural model`` zeigt, warum die Wortgruppe
+    am ersten Funktionswort endet: Gebeugt wird ``photograph``, nicht ``model`` —
+    obwohl ``model`` das letzte Wort des Eintrags ist.
+    """
+    assert sprache.glossar_uebersetzung(deutsch)["text"] == englisch
+
+
+def test_die_einzige_unregelmaessige_form():
+    """``person`` → ``people``, und es ist die einzige in diesem Glossar.
+
+    Nachgezählt am 16.09.2026 über alle Glossarwerte. ``roof`` → ``roofs`` sieht nach
+    einem zweiten Fall aus und ist keiner — das Glossar führt ``dächer`` → ``roofs`` und
+    bestätigt die regelmässige Form.
+    """
+    assert sprache.mehrzahl("person") == "people"
+    assert sprache.glossar_uebersetzung("zwei person")["text"] == "two people"
+    assert set(sprache.MEHRZAHL_UNREGELMAESSIG) == {"person"}
+
+
+@pytest.mark.parametrize("deutsch, englisch", [
+    # Das Komma macht aus zwei Gliedern einer Aufzählung keine Wortgruppe.
+    ("vier, betonwaende", "four, concrete walls"),
+    ("zwei, fenster", "two, window"),
+    # Ein Verhältnis- oder Bindewort beendet die Gruppe: Die Zwei zählt nicht den Garten.
+    ("zwei mit garten", "two with garden"),
+    ("drei ohne fenster", "three without window"),
+    ("zwei tagsüber", "two during the day"),
+])
+def test_die_zahl_muss_unmittelbar_davorstehen(deutsch, englisch):
+    """«Unmittelbar» heisst wörtlich: nur ein Abstand, kein Zeichen, kein Zwischenwort.
+
+    Der erste Fall steht seit dem 12.09.2026 als gemeldeter Prompt in diesen Tests. Er
+    ist der Grund, dass die Einschränkung überhaupt auffiel — «vier, betonwaende» ist
+    eine Aufzählung aus zwei Gliedern, und das Komma sagt es. Was danach käme, wäre
+    geraten, nicht gelesen.
+    """
+    assert sprache.glossar_uebersetzung(deutsch)["text"] == englisch
+
+
+def test_ein_unbekannter_kopf_wird_nicht_gebeugt_sondern_gemeldet():
+    """Die dritte Antwort, auf Grammatik angewandt.
+
+    ``twelve window frames``: ``frames`` kennt das Glossar nicht, aber es ist
+    offensichtlich der Kopf der Wortgruppe. Endete die Gruppe vor ihm, entstünde
+    ``twelve windows frames`` — falscher als vorher. Sie läuft darum bis zum Kopf, und
+    weil der in keinem Verzeichnis steht, geschieht nichts. Der Befund sagt aber, dass
+    nichts geschah und **warum**: ``nicht entschieden`` ist nicht ``in Ordnung``.
+    """
+    text, befunde = sprache._mehrzahl_anwenden("twelve window frames")
+
+    assert text == "twelve window frames"
+    assert befunde == ({"zahl": "twelve", "einzahl": "frames", "mehrzahl": None,
+                        "grund": sprache.MEHRZAHL_OFFEN},)
+
+
+def test_die_beiden_none_sind_auseinanderzuhalten():
+    """``None`` heisst hier zweierlei, und das Ergebnis sagt welches.
+
+    Bei ``concrete`` ist entschieden, dass nicht gebeugt wird — jemand hat hingesehen.
+    Bei ``cantilevered`` hat niemand hingesehen. Beide Male bleibt der Text gleich; nur
+    der zweite Fall ist eine offene Stelle, und nur wenn man sie unterscheiden kann,
+    findet sie jemand.
+    """
+    assert sprache.mehrzahl("concrete") is None
+    assert sprache.mehrzahl("cantilevered") is None
+
+    assert sprache.mehrzahl_befund("concrete")["grund"] == sprache.MEHRZAHL_UNZAEHLBAR
+    assert sprache.mehrzahl_befund("walls")["grund"] == sprache.MEHRZAHL_SCHON
+    assert sprache.mehrzahl_befund("cantilevered")["grund"] == sprache.MEHRZAHL_OFFEN
+    assert sprache.mehrzahl_befund("window")["grund"] == sprache.MEHRZAHL_GEBEUGT
+
+
+def test_zwei_zahlen_vor_einem_kopf_beugen_ihn_nur_einmal():
+    """Ein gemessener Fehler, gefunden von einer fremden Mutationsprobe.
+
+    ``three ten window`` entsteht, wenn man die Zahlwortsperre der Kompositumsregel
+    entschärft und «dreizehn fenster» durchlässt. Beide Zahlen sind Auslöser, beide
+    fanden denselben Kopf, und die erste Fassung dieser Regel beugte ihn zweimal:
+    ``three ten windowss``. Es gewinnt jetzt die **nähere** Zahl, und sie gewinnt genau
+    einmal.
+    """
+    text, befunde = sprache._mehrzahl_anwenden("three ten window")
+
+    assert text == "three ten windows"
+    assert [b["zahl"] for b in befunde] == ["ten"]
+
+
+# --- ENGLISCHE EINGABEN ---------------------------------------------------------------
+
+@pytest.mark.parametrize("text", [
+    "twelve windows and two doors",
+    "a photograph of the house with two balconies",
+    "seen from the street, four storeys above the trees",
+])
+def test_englische_eingaben_bleiben_vollstaendig_unberuehrt(text):
+    """Was englisch aussieht, wird nicht angefasst — auch nicht von dieser Regel.
+
+    Die Mehrzahl läuft im Glossarübersetzer, und der läuft nur bei erkanntem Deutsch.
+    Ein englischer Prompt geht unverändert durch, mitsamt seiner schon richtigen
+    Mehrzahl; eine Regel, die ihn «verbessert», könnte ihn nur verschlechtern.
+    """
+    ergebnis = sprache.uebersetze(text)
+
+    assert ergebnis["noetig"] is False
+    assert ergebnis["uebersetzt"] == text
+    assert ergebnis["mehrzahl"] == ()
+
+
+def test_der_befund_nennt_zahl_wort_und_grund():
+    """Sichtbarkeit statt Vermeidung — dieselbe Zusage wie bei der Kompositumsregel.
+
+    Wer den Prompt prüft, soll sehen, was die Regel getan hat und was sie liegen liess,
+    ohne den Code zu lesen. Darum steht der Befund auch da, wo nichts geändert wurde.
+    """
+    ergebnis = sprache.uebersetze("zwölf Fenster und zwei Balkone")
+
+    assert ergebnis["uebersetzt"] == "twelve windows and two balconies"
+    assert ergebnis["mehrzahl"] == (
+        {"zahl": "twelve", "einzahl": "window", "mehrzahl": "windows",
+         "grund": sprache.MEHRZAHL_GEBEUGT},
+        {"zahl": "two", "einzahl": "balconies", "mehrzahl": None,
+         "grund": sprache.MEHRZAHL_SCHON},
+    )
+
+
+# --- DIE VERZEICHNISSE ----------------------------------------------------------------
+
+def test_die_endungsregel_trifft_die_mehrzahlen_des_glossars():
+    """Die Gegenprobe steckt im Glossar selbst — sie ist gemessen, nicht geschätzt.
+
+    Zu fünfzehn zählbaren Hauptwörtern führt das Glossar die Mehrzahl **unabhängig** als
+    eigenen deutschen Eintrag: ``wände`` → ``walls``, ``dächer`` → ``roofs``, ``balkone``
+    → ``balconies``, ``geschosse`` → ``storeys``, ``personen`` → ``people`` und zehn
+    weitere. Sie sind Jahre vor dieser Regel entstanden und wissen nichts von ihr. Wenn
+    die Regel für alle fünfzehn dieselbe Form liefert, ist das ein Abgleich gegen fremde
+    Daten und nicht gegen die eigene Erwartung.
+
+    Die Zahl steht mit in der Probe: Fällt sie unter fünfzehn, hat jemand einen Eintrag
+    entfernt — und dann ist dieser Abgleich schwächer, ohne dass es auffiele.
+    """
+    letzte_woerter = {
+        sprache._WORT.findall(englisch)[-1]
+        for englisch in sprache.GLOSSAR.values() if sprache._WORT.findall(englisch)
+    }
+    treffer = {
+        wort: sprache.mehrzahl(wort) for wort in sprache.ZAEHLBAR
+        if sprache.mehrzahl(wort) in letzte_woerter
+    }
+
+    assert len(treffer) == 15, treffer
+    assert treffer["wall"] == "walls"
+    assert treffer["roof"] == "roofs"
+    assert treffer["balcony"] == "balconies"
+    assert treffer["storey"] == "storeys"
+    assert treffer["person"] == "people"
+
+
+@pytest.mark.parametrize("wort, mehrzahl", [
+    ("lens", "lenses"),      # auf -s
+    ("bush", "bushes"),      # auf -sh
+    ("sketch", "sketches"),  # auf -ch
+    ("city", "cities"),      # Mitlaut + y
+    ("balcony", "balconies"),
+    ("storey", "storeys"),   # Selbstlaut + y — NICHT storeies
+    ("chimney", "chimneys"),
+    ("terrace", "terraces"), # auf -ce, nicht auf -c+e-Sonderweg
+    ("roof", "roofs"),       # NICHT rooves
+])
+def test_die_endungsregel_kennt_ihre_faelle(wort, mehrzahl):
+    assert sprache.mehrzahl(wort) == mehrzahl
+
+
+def test_die_verzeichnisse_ueberschneiden_sich_nicht():
+    """Der Stolperdraht für den nächsten, der ein Wort aufnimmt.
+
+    ``ZAEHLBAR`` sagt «beugen», ``OHNE_MEHRZAHL`` und ``SCHON_MEHRZAHL`` sagen «nicht
+    beugen». Ein Wort in zwei Listen wäre eine Frage mit zwei Antworten, und welche
+    gewinnt, entschiede die Reihenfolge der ``if`` in :func:`mehrzahl_befund` — also der
+    Zufall.
+    """
+    assert not sprache.ZAEHLBAR & sprache.OHNE_MEHRZAHL
+    assert not sprache.ZAEHLBAR & sprache.SCHON_MEHRZAHL
+    assert not sprache.OHNE_MEHRZAHL & sprache.SCHON_MEHRZAHL
+    assert not set(sprache.MEHRZAHL_UNREGELMAESSIG) & sprache.OHNE_MEHRZAHL
+    assert not set(sprache.MEHRZAHL_UNREGELMAESSIG) & sprache.SCHON_MEHRZAHL
+
+
+@pytest.mark.parametrize("name", ["ZAEHLBAR", "OHNE_MEHRZAHL", "SCHON_MEHRZAHL"])
+def test_kein_verzeichnis_fuehrt_ein_wort_das_im_glossar_nicht_vorkommt(name):
+    """Jedes Wort in den drei Listen muss im Glossar auch wirklich auftauchen.
+
+    Sonst sammelt sich hier über die Jahre Wortschatz an, den niemand mehr prüft — und
+    eine Liste, die mehr behauptet, als das Glossar hergibt, sieht gepflegt aus und ist
+    es nicht. Geprüft wird gegen das **letzte** Wort jedes Glossarwerts, denn nur dieses
+    kann je ein Kopf sein.
+    """
+    letzte_woerter = {
+        sprache._WORT.findall(englisch)[-1]
+        for englisch in sprache.GLOSSAR.values() if sprache._WORT.findall(englisch)
+    }
+
+    assert not getattr(sprache, name) - letzte_woerter
+
+
+# --- MUTATIONSPROBEN ------------------------------------------------------------------
+#
+# Fünf Wächter, fünf Proben. Jede entschärft genau einen und muss dabei rot werden — ein
+# Wächter, der nicht fällt, bewacht nichts. Alle fünf sind am 16.09.2026 wirklich
+# gefahren worden, und alle fünf sind rot geworden; was dabei herauskam, steht jeweils
+# als erwarteter Text in der Probe.
+
+def test_mutationsprobe_ohne_die_endungsregel_entstehen_falsche_formen(monkeypatch):
+    """Wächter: die Endungsregel. Entschärft zu «immer +s».
+
+    Das ist die Regel, die jeder zuerst schreibt, und sie trifft drei der neun Formen
+    dieses Glossars nicht.
+    """
+    monkeypatch.setattr(sprache, "_endungsregel", lambda wort: wort + "s")
+
+    assert sprache.glossar_uebersetzung("drei skizze")["text"] == "three sketchs"
+    assert sprache.glossar_uebersetzung("zwei balkon")["text"] == "two balconys"
+    assert sprache.glossar_uebersetzung("zwei objektiv")["text"] == "two lenss"
+
+
+def test_mutationsprobe_ohne_die_unzaehlbaren_entsteht_two_concretes(monkeypatch):
+    """Wächter: :data:`OHNE_MEHRZAHL`, hinter der Sperre von :data:`ZAEHLBAR`.
+
+    Entschärft werden **beide** — erst die Sperre (``concrete`` wird für zählbar erklärt),
+    dann die Ausnahme. Genau so entsteht der Fehler in echt: Jemand nimmt ein Wort in die
+    zählbaren auf und sieht die Ausnahmeliste nicht.
+    """
+    monkeypatch.setattr(sprache, "ZAEHLBAR", sprache.ZAEHLBAR | {"concrete"})
+    monkeypatch.setattr(sprache, "OHNE_MEHRZAHL", frozenset())
+
+    assert sprache.glossar_uebersetzung("zwei beton")["text"] == "two concretes"
+
+
+def test_mutationsprobe_ohne_die_mehrzahlformen_entsteht_wallses(monkeypatch):
+    """Wächter: :data:`SCHON_MEHRZAHL`. Die doppelte Bildung.
+
+    ``walls`` endet auf ``s``, die Endungsregel hängt darum ``es`` an — ``wallses``. Das
+    ist die Sorte Wort, die niemand als Tippfehler erkennt.
+    """
+    monkeypatch.setattr(sprache, "ZAEHLBAR", sprache.ZAEHLBAR | {"walls"})
+    monkeypatch.setattr(sprache, "SCHON_MEHRZAHL", frozenset())
+
+    assert sprache.glossar_uebersetzung("vier betonwaende")["text"] == "four concrete wallses"
+
+
+def test_mutationsprobe_mit_eins_als_ausloeser_entsteht_one_windows(monkeypatch):
+    """Wächter: :data:`MEHRZAHL_AUSLOESER`. Die Grenze bei zwei.
+
+    Sie ist der Grund, warum «ein Fenster» ein Fenster bleibt. Ohne sie steht im Prompt
+    ``a windows``, und das ist kein halbrichtiges Englisch mehr, sondern falsches.
+    """
+    monkeypatch.setattr(sprache, "MEHRZAHL_AUSLOESER",
+                        sprache.MEHRZAHL_AUSLOESER | {"one", "a"})
+
+    assert sprache.glossar_uebersetzung("eins fenster")["text"] == "one windows"
+    assert sprache.glossar_uebersetzung("ein fenster")["text"] == "a windows"
+
+
+def test_mutationsprobe_ohne_die_trennwoerter_zaehlt_die_zahl_ueber_das_komma_hinaus(
+        monkeypatch):
+    """Wächter: :data:`_MEHRZAHL_TRENNER`. Wo die Wortgruppe endet.
+
+    ``two with garden`` — die Zwei zählt nicht den Garten, sie steht vor dem ``mit``.
+    Ohne die Trennwörter greift die Regel über das Verhältniswort hinweg und behauptet
+    etwas, das im Prompt nicht steht.
+    """
+    monkeypatch.setattr(sprache, "_MEHRZAHL_TRENNER", frozenset())
+
+    assert sprache.glossar_uebersetzung("zwei mit garten")["text"] == "two with gardens"
+    assert sprache.glossar_uebersetzung("drei ohne fenster")["text"] == "three without windows"
+
+
+# ======================================================================================
+# Die Mehrzahl — was die Prüfung vom 16.09.2026 nachgetragen hat
+# ======================================================================================
+#
+# Drei Befunde aus dem Nachfahren der Mehrzahlregel:
+#
+# 1. **Ein Fehler.** ``f2.8 objektiv`` ergab ``f2.8 lenses``. Die Blendenzahl zerfiel im
+#    Muster in ``2`` und ``8``, und die ``8`` stand unmittelbar vor ``lens``.
+# 2. **Ein Wächter ohne Probe.** :data:`MEHRZAHL_MAX_GRUPPE` von 3 auf 99 gesetzt — kein
+#    einziger Test wurde rot.
+# 3. **Ein zweiter Wächter ohne Probe.** Die leere Lücke («24mm») aus der Bedingung
+#    entfernt — ebenfalls kein einziger Test rot.
+#
+# Zu jedem der drei steht unten eine Probe und eine Mutationsprobe.
+
+
+@pytest.mark.parametrize("deutsch, englisch", [
+    # Die Blende — der gemessene Fall. `objektiv` → `lens` steht im Glossar.
+    ("f2.8 objektiv", "f2.8 lens"),
+    ("f5.6 objektiv", "f5.6 lens"),
+    ("f1.4 objektiv", "f1.4 lens"),
+    # Deutsche Schreibung mit Komma, derselbe Fall.
+    ("2,8 objektiv", "2,8 lens"),
+    # Ein Datum ist auch keine Stückzahl.
+    ("16.09.2026 fenster", "16.09.2026 window"),
+    # Die Gegenprobe: eine ganze Zahl zählt weiterhin.
+    ("12 fenster", "12 windows"),
+])
+def test_eine_nachkommastelle_ist_keine_anzahl(deutsch, englisch):
+    """Die Blendenzahl zählt nichts — gemessener Fehler vom 16.09.2026.
+
+    ``f2.8`` sind für das Zahlenmuster zwei Funde, ``2`` und ``8``. Die ``8`` steht
+    unmittelbar vor ``objektiv`` → ``lens``, ist grösser als eins, und die erste Fassung
+    machte daraus ``lenses``. Das ist die fünfte Regel dieses Repos in Reinform: Ein
+    Prompt mit ``f2.8 lenses`` sieht heil aus, liest sich wie Englisch, und niemand
+    sucht dort je einen Fehler.
+
+    ``24mm f8`` führt dieses Modul an zwei Stellen als Musterfall eines Prompts, der
+    weder deutsch noch englisch ist — die Blendenzahl ist hier also kein erfundener Fall,
+    sondern der Normalfall der Oberfläche.
+    """
+    assert sprache.glossar_uebersetzung(deutsch)["text"] == englisch
+
+
+def test_die_nachkommastelle_taucht_nicht_als_gebeugt_im_befund_auf():
+    """Und sie behauptet auch im Protokoll nichts.
+
+    Der Befund der ersten Fassung lautete ``{zahl: '8', einzahl: 'lens', mehrzahl:
+    'lenses', grund: 'gebeugt'}`` — er zeigte den Unsinn sogar an, nur las ihn keiner.
+    Jetzt steht dort keine Beugung mehr.
+    """
+    befunde = sprache.glossar_uebersetzung("f2.8 objektiv")["mehrzahl"]
+
+    assert all(b["mehrzahl"] is None for b in befunde)
+    assert all(b["grund"] != sprache.MEHRZAHL_GEBEUGT for b in befunde)
+
+
+def test_mutationsprobe_ohne_die_nachkommasperre_entsteht_f2_8_lenses(monkeypatch):
+    """Wächter: :func:`sprache._ist_nachkommastelle`. Entschärft zu «gibt es nicht».
+
+    Das ist wörtlich der Zustand vor dem 16.09.2026, und er ist hier festgehalten, damit
+    niemand die Sperre für überflüssige Vorsicht hält.
+    """
+    monkeypatch.setattr(sprache, "_ist_nachkommastelle", lambda text, stuecke, i: False)
+
+    assert sprache.glossar_uebersetzung("f2.8 objektiv")["text"] == "f2.8 lenses"
+    assert sprache.glossar_uebersetzung("16.09.2026 fenster")["text"] == \
+        "16.09.2026 windows"
+
+
+def test_eine_zu_lange_wortgruppe_bleibt_in_ruhe():
+    """Wächter: :data:`MEHRZAHL_MAX_GRUPPE`. Er hatte bis zum 16.09.2026 keine Probe.
+
+    Vier Wörter zwischen Zahl und Kopf sind kein Wortgruppe mehr, sondern ein halber
+    Satz — und in einem halben Satz weiss diese Regel nicht mehr, welches Wort zur Zahl
+    gehört. Sie lässt ihn dann in Ruhe, und der Befund sagt, dass sie es tat.
+    """
+    ergebnis = sprache.glossar_uebersetzung("drei grosse alte hohe fenster")
+
+    assert ergebnis["text"] == "three large old tall window"
+    assert ergebnis["mehrzahl"] == (
+        {"zahl": "three", "einzahl": None, "mehrzahl": None,
+         "grund": sprache.MEHRZAHL_OFFEN},
+    )
+    # Drei Wörter sind noch eine Wortgruppe — die Grenze liegt genau dazwischen.
+    assert sprache.glossar_uebersetzung("drei grosse alte fenster")["text"] == \
+        "three large old windows"
+
+
+def test_mutationsprobe_ohne_die_gruppengrenze_zaehlt_die_zahl_ueber_den_halben_satz(
+        monkeypatch):
+    """Wächter: :data:`MEHRZAHL_MAX_GRUPPE`, entschärft von 3 auf 99.
+
+    Am 16.09.2026 gemessen: Mit dieser Entschärfung wurde **kein einziger** der 208
+    Tests dieses Moduls rot. Ein Wächter, der nicht fällt, bewacht nichts — darum diese
+    Probe.
+    """
+    monkeypatch.setattr(sprache, "MEHRZAHL_MAX_GRUPPE", 99)
+
+    assert sprache.glossar_uebersetzung("drei grosse alte hohe fenster")["text"] == \
+        "three large old tall windows"
+
+
+def test_eine_zahl_ohne_abstand_zaehlt_nichts():
+    """Wächter: die **leere** Lücke in :func:`sprache._schliesst_an`. Auch ohne Probe.
+
+    ``24mm`` ist eine Brennweite. Klebt die Zahl am nächsten Wort, ist sie keine Anzahl
+    — und ``24mm f8`` ist ausgerechnet der Prompt, den dieses Modul an zwei Stellen als
+    Musterfall führt.
+    """
+    assert sprache.glossar_uebersetzung("24mm wand")["text"] == "24mm wall"
+    assert sprache.glossar_uebersetzung("50mm objektiv")["text"] == "50mm lens"
+
+
+def test_mutationsprobe_ohne_die_leere_luecke_wird_die_brennweite_zur_anzahl(monkeypatch):
+    """Wächter: :func:`sprache._schliesst_an`, entschärft auf «nur Satzzeichen trennen».
+
+    Am 16.09.2026 gemessen: Auch diese Entschärfung liess alle 208 Tests grün. Danach
+    zählt die Brennweite die Wände.
+    """
+    monkeypatch.setattr(sprache, "_schliesst_an", lambda luecke: not luecke.strip())
+
+    assert sprache.glossar_uebersetzung("24mm wand")["text"] == "24mm walls"
+    # Das Komma bleibt dabei ein Trenner — die beiden Hälften sind auseinanderzuhalten.
+    assert sprache.glossar_uebersetzung("zwei, fenster")["text"] == "two, window"
+
+
+def test_eine_zahl_ohne_lesbare_wortgruppe_meldet_sich_als_offen():
+    """Die dritte Antwort, an der Stelle, an der die Regel aufgibt.
+
+    Vorher stand hier ein blosses ``continue``: Der Text blieb richtigerweise stehen,
+    aber im Befund stand danach **gar nichts** — und gar nichts liest sich wie «nichts
+    zu tun». Eine Zahl, deren Wortgruppe die Regel nicht lesen konnte, ist aber genau
+    der NICHT-GEMESSEN-Fall: «zwei, fenster» wäre mit einem Tippfehler weniger eine
+    Mehrzahl, und niemand sähe es je.
+    """
+    for deutsch in ("zwei, fenster", "zwei mit garten", "drei grosse alte hohe fenster"):
+        befunde = sprache.glossar_uebersetzung(deutsch)["mehrzahl"]
+        assert len(befunde) == 1, (deutsch, befunde)
+        assert befunde[0]["grund"] == sprache.MEHRZAHL_OFFEN, deutsch
+        assert befunde[0]["einzahl"] is None, deutsch
+        assert befunde[0]["mehrzahl"] is None, deutsch
+
+
+def test_mutationsprobe_ohne_den_offenen_befund_schweigt_die_regel(monkeypatch):
+    """Wächter: der Befund am Abbruch. Entschärft, indem die Liste nichts mehr aufnimmt.
+
+    Entschärft wird hier nicht der Text — der bleibt richtig —, sondern die **Auskunft**
+    darüber. Genau das ist der Fehlschlag, der wie ein Erfolg aussieht.
+    """
+    echt = sprache._mehrzahl_anwenden
+
+    def ohne_offene(text):
+        neu, befunde = echt(text)
+        return neu, tuple(b for b in befunde if b["grund"] != sprache.MEHRZAHL_OFFEN
+                          or b["einzahl"] is not None)
+
+    monkeypatch.setattr(sprache, "_mehrzahl_anwenden", ohne_offene)
+
+    assert sprache.glossar_uebersetzung("zwei, fenster")["mehrzahl"] == ()

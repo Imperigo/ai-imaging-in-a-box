@@ -1027,3 +1027,411 @@ def test_eine_zeichenkette_als_zustellung_wird_abgewiesen_und_nicht_zerlegt(tmp_
     auftragspost.vermerke_zustellung(["auf-20260901-01"], tmp_path, wann="2026-09-05T08:00:00Z")
     vermerk = json.loads((tmp_path / auftragspost.ZUSTELLUNG_DATEI).read_text(encoding="utf-8"))
     assert vermerk == {"auf-20260901-01": "2026-09-05T08:00:00Z"}
+
+
+# ── Der Einstieg zum Blickvermerk (16.09.2026) ────────────────────────────────────────
+#
+# `vermerke_gesehen` stand seit demselben Tag, und es gab keinen Weg, sie zu benutzen,
+# ohne Python von Hand zu schreiben. Damit existierte sie praktisch nicht: Die Auskunft
+# «drueben hat jemand hingesehen» kommt muendlich, per Zustellbeleg oder als Nebensatz in
+# einem Ergebnis — also immer dann, wenn gerade niemand ein Schnipsel tippt. Ohne Vermerk
+# raet `warum_keine_antwort` weiter, und ihr Raten heisst `kein lebenszeichen` — genau die
+# Lage, in der wir ausdruecklich NICHT mahnen.
+
+
+def _repo_mit_offenen(tmp_path):
+    """Zwei offene Auftraege, beide zugestellt, beide alt genug fuer eine Aussage."""
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+    _lege_auftrag(tmp_path, "auf-20260902-02", "ui", "2026-09-02T00:00:00Z", rang=2)
+    _vermerke(tmp_path, "auf-20260901-01", "auf-20260902-02")
+    return tmp_path
+
+
+def test_der_einstieg_traegt_den_vermerk_wirklich_ein_und_die_lage_springt_um(tmp_path):
+    """**Der ganze Zweck dieses Einstiegs, in einer Probe.**
+
+    Nicht «der Aufruf lief durch», sondern: Der Vermerk liegt in der Ablage, und die
+    Auswertung sagt daraufhin etwas anderes als vorher. Ein Einstieg, der schreibt, ohne
+    dass die Auswertung es merkt, waere ein Fehlschlag, der wie ein Erfolg aussieht.
+    """
+    repo = _repo_mit_offenen(tmp_path)
+    vorher = {e["auftrag_id"]: e["lage"] for e in
+              auftragspost.warum_keine_antwort(repo, heute=_date(2026, 9, 16))}
+    assert vorher["auf-20260901-01"] == auftragspost.KEIN_LEBENSZEICHEN
+
+    assert _cli().main(["--repo", str(repo), "--gesehen", "auf-20260901-01",
+                        "--von", "cloud"]) == 0
+
+    assert auftragspost.gesehen_vermerke(repo)["auf-20260901-01"]["von"] == "cloud"
+    nachher = {e["auftrag_id"]: e["lage"] for e in
+               auftragspost.warum_keine_antwort(repo, heute=_date(2026, 9, 16))}
+    assert nachher["auf-20260901-01"] == auftragspost.GESEHEN_OHNE_ANTWORT
+    assert nachher["auf-20260902-02"] == auftragspost.KEIN_LEBENSZEICHEN, (
+        "der Vermerk gilt je Kennung und nicht je Adressat")
+
+
+def test_die_bemerkung_erreicht_die_ablage(tmp_path):
+    """*Woher wir es wissen* ist die Angabe, die den Vermerk von einer Vermutung trennt."""
+    repo = _repo_mit_offenen(tmp_path)
+    assert _cli().main(["--repo", str(repo), "--gesehen", "auf-20260901-01",
+                        "--von", "cloud", "--bemerkung", "im Chat bestaetigt"]) == 0
+    eintrag = auftragspost.gesehen_vermerke(repo)["auf-20260901-01"]
+    assert eintrag["bemerkung"] == "im Chat bestaetigt"
+
+
+def test_eine_unbekannte_kennung_wird_abgewiesen_und_hinterlaesst_keine_halbe_ablage(
+        tmp_path, capsys):
+    """**Die fuenfte Regel am Einstieg.**
+
+    Ein Tippfehler legte sonst einen Vermerk fuer einen Auftrag an, den es nicht gibt. Der
+    wirkt nie — `warum_keine_antwort` schlaegt seine Kennungen in `auftraege/offen/` nach
+    und findet diese nicht —, waehrend der ECHTE Auftrag in seiner Vermutungslage
+    stehenbleibt und die Ablage ordentlich aussieht. *Ein Fehlschlag, der wie ein Erfolg
+    aussieht, wird nicht gefunden; er wird geglaubt.*
+
+    Und die zweite Haelfte ist die wichtigere: Auch die Kennung daneben, die es gibt, wird
+    NICHT vermerkt. Erst pruefen, dann schreiben — eine halbe Ablage sieht ordentlich aus.
+    """
+    repo = _repo_mit_offenen(tmp_path)
+
+    assert _cli().main(["--repo", str(repo), "--gesehen", "auf-20260901-01",
+                        "auf-20260901-99", "--von", "cloud"]) == 2
+
+    assert not (repo / auftragspost.GESEHEN_DATEI).exists(), (
+        "Ein abgewiesener Aufruf darf keine halbe Ablage hinterlassen.")
+    fehler = capsys.readouterr().err
+    assert "auf-20260901-99" in fehler, "die falsche Kennung muss dastehen"
+    assert "auf-20260901-01" not in fehler.split("gibt es hier nicht:")[1].split("\n")[0]
+
+
+def test_ein_unbekannter_adressat_wird_auch_am_einstieg_abgewiesen(tmp_path, capsys):
+    """Der Waechter steht in der Bibliothek; diese Probe haelt fest, dass der Einstieg ihn
+    nicht verschluckt — und dass ein Missgriff eine Meldung ist und kein Stapelauszug."""
+    repo = _repo_mit_offenen(tmp_path)
+
+    assert _cli().main(["--repo", str(repo), "--gesehen", "auf-20260901-01",
+                        "--von", "cloudd"]) == 2
+
+    assert not (repo / auftragspost.GESEHEN_DATEI).exists()
+    assert "kein bekannter Adressat" in capsys.readouterr().err
+
+
+def test_ohne_von_wird_nichts_vermerkt(tmp_path, capsys):
+    """«Jemand hat es gesehen» beantwortet keine der Fragen, fuer die es den Vermerk gibt —
+    und stuende trotzdem in der Ablage, von keiner Auswertung einem Worker zuzuordnen."""
+    repo = _repo_mit_offenen(tmp_path)
+
+    assert _cli().main(["--repo", str(repo), "--gesehen", "auf-20260901-01"]) == 2
+
+    assert not (repo / auftragspost.GESEHEN_DATEI).exists()
+    assert "--von" in capsys.readouterr().err
+
+
+def test_ein_zweiter_vermerk_meldet_schon_vermerkt_statt_still_nichts_zu_tun(
+        tmp_path, capsys):
+    """**Das gehoert dem Benutzer gesagt, sonst haelt er es fuer einen Fehlschlag.**
+
+    Der erste Blick ist der, der zaehlt; ein zweiter ueberschreibt nicht. Ohne Meldung
+    saehe «0 neu» aus, als haette das Werkzeug versagt — und der naechste Griff waere, von
+    Hand in die Datei zu schreiben.
+    """
+    repo = _repo_mit_offenen(tmp_path)
+    # BEIDE KENNUNGEN GEHOEREN `cloud`. Die erste Fassung dieser Probe nahm die zweite
+    # Kennung von `ui` und trug sie unter `--von cloud` ein — genau der Widerspruch, den
+    # der Waechter seit dem 16.09.2026 abweist: Die Ablage haette «von cloud» gesagt und
+    # die Ansicht «ui hat ihn gesehen».
+    _lege_auftrag(repo, "auf-20260903-03", "cloud", "2026-09-03T00:00:00Z", rang=3)
+    assert _cli().main(["--repo", str(repo), "--gesehen", "auf-20260901-01",
+                        "--von", "cloud"]) == 0
+    erster = auftragspost.gesehen_vermerke(repo)["auf-20260901-01"]["am"]
+    capsys.readouterr()
+
+    # Rueckgabe 1 = «nichts NEU» — wie `1` beim Postlauf «nichts offen» heisst. Kein
+    # Fehler, aber ohne den Text zu lesen von «eingetragen» unterscheidbar.
+    assert _cli().main(["--repo", str(repo), "--gesehen", "auf-20260901-01",
+                        "auf-20260903-03", "--von", "cloud"]) == 0
+    ausgabe = capsys.readouterr().out
+    assert "schon vermerkt" in ausgabe, (
+        "Ein stiller Nicht-Eintrag sieht aus wie ein Fehlschlag.")
+    assert "auf-20260901-01" in ausgabe
+    assert auftragspost.gesehen_vermerke(repo)["auf-20260901-01"]["am"] == erster, (
+        "der erste Blick wurde ueberschrieben")
+
+
+def test_alles_schon_vermerkt_meldet_null_neu_und_unterscheidet_sich(tmp_path, capsys):
+    """Die Gegenprobe zur Rueckgabe: Nichts Neu ist kein Fehler (**2**) und kein
+    Eintrag (**0**), sondern **1**."""
+    repo = _repo_mit_offenen(tmp_path)
+    assert _cli().main(["--repo", str(repo), "--gesehen", "auf-20260901-01",
+                        "--von", "cloud"]) == 0
+    assert _cli().main(["--repo", str(repo), "--gesehen", "auf-20260901-01",
+                        "--von", "cloud"]) == 1
+    assert "0 von 1" in capsys.readouterr().out
+
+
+def test_von_ohne_gesehen_wirkt_nicht_still(tmp_path, capsys):
+    """*Ein Bedienelement ohne Wirkung ist schlimmer als keines: Es sagt, etwas sei
+    geschehen.* Dieselbe Regel, an der am 01.09.2026 `--nach` aufgefallen ist."""
+    repo = _repo_mit_offenen(tmp_path)
+    assert _cli().main(["cloud", "--repo", str(repo), "--von", "cloud"]) == 2
+    assert "NICHTS vermerkt" in capsys.readouterr().err
+    assert not (repo / auftragspost.GESEHEN_DATEI).exists()
+
+
+def test_die_ansicht_zeigt_jeden_offenen_mit_adressat_alter_und_lage(tmp_path, capsys):
+    """**Ohne diese Ansicht muesste man die JSON-Ablage lesen**, um zu sehen, ob ein
+    Vermerk gewirkt hat — und wer die Ablage liest, liest sie irgendwann statt der
+    Auswertung."""
+    repo = _repo_mit_offenen(tmp_path)
+
+    assert _cli().main(["--repo", str(repo), "--warum"]) == 0
+
+    ausgabe = capsys.readouterr().out
+    # GEPRUEFT WIRD DIE ZEILE, NICHT DIE GESAMTAUSGABE — und das ist der Unterschied
+    # zwischen einer Probe und einer Beruhigung. Die erste Fassung suchte die Lage
+    # irgendwo im Text; sie blieb gruen, als ich die Lage aus der Zeile entfernte, weil
+    # die Zusammenfassung unten sie ebenfalls nennt. *Ein Waechter, der nicht faellt,
+    # bewacht nichts* — gemessen am 16.09.2026 als Mutation M6.
+    zeilen = {z.split()[0]: z for z in ausgabe.splitlines() if z.startswith("auf-")}
+    assert set(zeilen) == {"auf-20260901-01", "auf-20260902-02"}
+    assert "cloud" in zeilen["auf-20260901-01"], "ohne Adressat weiss man nicht, wer liegt"
+    assert "ui" in zeilen["auf-20260902-02"]
+    for zeile in zeilen.values():
+        assert auftragspost.KEIN_LEBENSZEICHEN in zeile, (
+            f"ohne Lage ist es eine blosse Liste: {zeile!r}")
+        assert "Tage" in zeile, (
+            f"ohne Alter fehlt die Angabe, ob das Ausbleiben etwas heisst: {zeile!r}")
+    # AELTESTE ZUERST — sonst steht der dringendste Posten irgendwo mittendrin.
+    assert ausgabe.index("auf-20260901-01") < ausgabe.index("auf-20260902-02")
+
+
+def test_die_ansicht_zeigt_dass_der_vermerk_gewirkt_hat(tmp_path, capsys):
+    """Die beiden neuen Wege zusammen: eintragen, dann nachsehen. Das ist der Handgriff,
+    fuer den es sie gibt."""
+    repo = _repo_mit_offenen(tmp_path)
+    _cli().main(["--repo", str(repo), "--warum"])
+    assert auftragspost.GESEHEN_OHNE_ANTWORT not in capsys.readouterr().out
+
+    _cli().main(["--repo", str(repo), "--gesehen", "auf-20260901-01", "--von", "cloud",
+                 "--bemerkung", "im Chat bestaetigt"])
+    capsys.readouterr()
+
+    assert _cli().main(["--repo", str(repo), "--warum"]) == 0
+    ausgabe = capsys.readouterr().out
+    assert auftragspost.GESEHEN_OHNE_ANTWORT in ausgabe
+    assert "im Chat bestaetigt" in ausgabe, "der Grund des Vermerks gehoert in die Ansicht"
+
+
+def test_die_ansicht_filtert_auf_einen_adressaten(tmp_path, capsys):
+    repo = _repo_mit_offenen(tmp_path)
+    assert _cli().main(["ui", "--repo", str(repo), "--warum"]) == 0
+    ausgabe = capsys.readouterr().out
+    assert "auf-20260902-02" in ausgabe
+    assert "auf-20260901-01" not in ausgabe
+
+
+def test_die_ansicht_ohne_offene_meldet_es_und_unterscheidet_sich(tmp_path, capsys):
+    """Rueckgabe **1** wie beim Postlauf: kein Fehler, aber ohne Textlesen erkennbar."""
+    repo = _repo_mit_offenen(tmp_path)
+    assert _cli().main(["local", "--repo", str(repo), "--warum"]) == 1
+    assert "Nichts offen" in capsys.readouterr().out
+
+
+def test_die_ansicht_meldet_ein_unbestimmbares_alter_als_solches(tmp_path, capsys):
+    """**Die dritte Antwort in der Anzeige.** Ein unlesbares Erstelldatum heisst NICHT
+    GEMESSEN — niemals `0 Tage`. Eine Null waere die bequemste Luege der ganzen Ansicht:
+    Sie liesse den aeltesten Posten von heute sein.
+    """
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "keindatum")
+    _vermerke(tmp_path, "auf-20260901-01")
+
+    assert _cli().main(["--repo", str(tmp_path), "--warum"]) == 0
+
+    zeile = [z for z in capsys.readouterr().out.splitlines()
+             if z.startswith("auf-20260901-01")][0]
+    assert "?" in zeile, f"ein unbestimmbares Alter muss als solches dastehen: {zeile!r}"
+    assert "0 Tage" not in zeile, f"nicht gemessen ist nicht null: {zeile!r}"
+
+
+def test_eine_unlesbare_ablage_wird_in_der_ansicht_gemeldet_und_nicht_geworfen(
+        tmp_path, capsys):
+    """Die Auswertung reisst bei unlesbarer `gesehen.json` mit Absicht ab. Am Einstieg
+    wird daraus eine Meldung — ein Stapelauszug ist keine Auskunft."""
+    repo = _repo_mit_offenen(tmp_path)
+    (repo / auftragspost.GESEHEN_DATEI).write_text("{kein json", encoding="utf-8")
+
+    assert _cli().main(["--repo", str(repo), "--warum"]) == 2
+    assert "nicht lesbar" in capsys.readouterr().err
+
+
+def test_von_wirkt_auch_neben_der_ansicht_nicht_still(tmp_path, capsys):
+    """Die Gegenprobe zur Stellung des Waechters: Er stand zuerst NACH dem Ansichtszweig,
+    und dort waere `--von` stumm durchgelaufen — ein Schalter ohne Wirkung, an derselben
+    Stelle wie die Meldung, dass alles in Ordnung sei."""
+    repo = _repo_mit_offenen(tmp_path)
+    assert _cli().main(["--repo", str(repo), "--warum", "--von", "cloud"]) == 2
+    assert "NICHTS vermerkt" in capsys.readouterr().err
+
+
+# ── Nachgezogen bei der Gegenpruefung am 16.09.2026 ───────────────────────────────────
+#
+# Drei Luecken, alle von derselben Art: Etwas geschieht (oder geschieht gerade NICHT),
+# und keine Probe faellt, wenn man es abschaltet.
+
+
+def test_ein_von_das_nicht_dem_adressaten_gehoert_wird_abgewiesen(tmp_path, capsys):
+    """**Der Vermerk wuerde eine Unwahrheit anzeigen, und sie waere nicht zu loeschen.**
+
+    `warum_keine_antwort` liest den Adressaten des AUFTRAGS und nicht das ``von`` des
+    Vermerks. Ein Blickvermerk `von: cloud` auf einem ui-Auftrag laesst die Ansicht «ui
+    hat ihn gesehen» melden — waehrend in der Ablage cloud steht. Gemessen am 16.09.2026
+    von Hand, bevor der Waechter da war.
+
+    Und die zweite Haelfte: Der erste Blick zaehlt, ein zweiter ueberschreibt ihn nie —
+    ein falsches ``--von`` ist durch das Werkzeug **nicht mehr zurueckzunehmen**.
+    """
+    repo = _repo_mit_offenen(tmp_path)
+
+    assert _cli().main(["--repo", str(repo), "--gesehen", "auf-20260902-02",
+                        "--von", "cloud"]) == 2
+
+    assert not (repo / auftragspost.GESEHEN_DATEI).exists(), (
+        "ein Widerspruch darf keine Ablage hinterlassen — sie waere nicht zu loeschen")
+    fehler = capsys.readouterr().err
+    assert "gehoert ui" in fehler, f"wem er gehoert, ist die Auskunft: {fehler!r}"
+
+
+def test_ein_tippfehler_im_von_meldet_den_tippfehler_und_nicht_die_kennung(
+        tmp_path, capsys):
+    """Die Gegenprobe zur Reihenfolge der beiden Waechter.
+
+    Ein unbekanntes ``--von`` passt zu KEINEM Adressaten — der Widerspruchswaechter wuerde
+    also zuerst anschlagen und «auf-… gehoert cloud» melden. Das ist wahr und zeigt auf
+    die falsche Stelle: Der Fehler steckt in ``--von``, nicht in der Kennung.
+    """
+    repo = _repo_mit_offenen(tmp_path)
+
+    assert _cli().main(["--repo", str(repo), "--gesehen", "auf-20260901-01",
+                        "--von", "cloudd"]) == 2
+
+    fehler = capsys.readouterr().err
+    assert "kein bekannter Adressat" in fehler, fehler
+    assert "gehoert" not in fehler, (
+        f"der Widerspruchswaechter zeigt hier auf die falsche Stelle: {fehler!r}")
+
+
+def test_ein_unlesbarer_auftrag_ist_kein_widerspruch(tmp_path, capsys):
+    """**Die dritte Antwort im Waechter selbst.** Wessen Auftrag es ist, steht in der
+    Datei; ist sie unlesbar, wissen wir es NICHT — und «wir wissen es nicht» ist kein
+    Widerspruch. Ein Waechter, der aus Unkenntnis abweist, verhindert den richtigen
+    Vermerk genauso wie den falschen.
+    """
+    repo = _repo_mit_offenen(tmp_path)
+    (repo / "auftraege" / "offen" / "auf-20260901-01.json").write_text(
+        "{kaputt", encoding="utf-8")
+
+    assert _cli().main(["--repo", str(repo), "--gesehen", "auf-20260901-01",
+                        "--von", "ui"]) == 0
+    assert auftragspost.gesehen_vermerke(repo)["auf-20260901-01"]["von"] == "ui"
+
+
+def test_ein_schalter_neben_gesehen_wirkt_nicht_still(tmp_path, capsys):
+    """**Dieselbe Regel wie bei `--von`, nur in der anderen Richtung.**
+
+    Gemessen am 16.09.2026: `--gesehen … --von cloud --nach raus/ --vermerken` trug den
+    Blick ein, legte **keine** Datei an, zog **keinen** Zustellvermerk nach — und meldete
+    «gesehen vermerkt», Rueckgabe 0. Drei Handgriffe verlangt, einer geschehen, kein Wort
+    darueber. *Ein Fehlschlag, der wie ein Erfolg aussieht, wird nicht gefunden; er wird
+    geglaubt.*
+    """
+    repo = _repo_mit_offenen(tmp_path)
+    ziel = tmp_path / "raus"
+
+    assert _cli().main(["--repo", str(repo), "--gesehen", "auf-20260901-01",
+                        "--von", "cloud", "--nach", str(ziel), "--vermerken"]) == 2
+
+    assert not (repo / auftragspost.GESEHEN_DATEI).exists(), "auch der Vermerk unterbleibt"
+    assert not ziel.exists()
+    fehler = capsys.readouterr().err
+    assert "--nach" in fehler and "--vermerken" in fehler, fehler
+
+
+def test_die_ansicht_neben_gesehen_wird_nicht_verschluckt(tmp_path, capsys):
+    """«Eintragen und gleich nachsehen» ist der naheliegendste Handgriff ueberhaupt — und
+    er lief still nur halb durch: Der Vermerk wurde geschrieben, die Lage nie gezeigt."""
+    repo = _repo_mit_offenen(tmp_path)
+
+    assert _cli().main(["--repo", str(repo), "--gesehen", "auf-20260901-01",
+                        "--von", "cloud", "--warum"]) == 2
+
+    assert not (repo / auftragspost.GESEHEN_DATEI).exists()
+    assert "--warum" in capsys.readouterr().err
+
+
+def test_ein_schalter_neben_der_ansicht_wirkt_nicht_still(tmp_path, capsys):
+    """Die Ansicht liest nur. `--nach` daneben schrieb nichts und sagte nichts."""
+    repo = _repo_mit_offenen(tmp_path)
+    ziel = tmp_path / "raus"
+
+    assert _cli().main(["--repo", str(repo), "--warum", "--nach", str(ziel)]) == 2
+
+    assert not ziel.exists()
+    assert "--nach" in capsys.readouterr().err
+
+
+def test_der_positionsadressat_filtert_die_ansicht_und_wird_nicht_abgewiesen(
+        tmp_path, capsys):
+    """Die Gegenprobe zum Waechter darueber: `ui --warum` **wirkt** (es filtert), also
+    darf es nicht als wirkungslos gelten. Ein Waechter, der das Richtige abweist, ist
+    schlimmer als keiner."""
+    repo = _repo_mit_offenen(tmp_path)
+    assert _cli().main(["ui", "--repo", str(repo), "--warum"]) == 0
+    assert "auf-20260902-02" in capsys.readouterr().out
+
+
+def test_die_ansicht_zaehlt_je_lage_und_die_summe_stimmt(tmp_path, capsys):
+    """**Die Zaehlung unten trug keine Probe.**
+
+    Sie ist die einzige Zeile, die man liest, wenn zwanzig Auftraege offen sind — und sie
+    ordnet nach :data:`aiimaging.auftragspost.LAGEN`, also von «unser Fehler» zu «wir
+    wissen es nicht». In derselben Reihenfolge ist zu handeln; eine andere Reihenfolge
+    waere eine andere Empfehlung.
+    """
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+    _lege_auftrag(tmp_path, "auf-20260902-02", "ui", "2026-09-02T00:00:00Z", rang=2)
+    # NUR DER ZWEITE IST ZUGESTELLT — der erste steht damit bei UNS, der zweite bei ihm.
+    _vermerke(tmp_path, "auf-20260902-02")
+
+    assert _cli().main(["--repo", str(tmp_path), "--warum"]) == 0
+
+    zeile = [z for z in capsys.readouterr().out.splitlines() if z.startswith("2 offen:")]
+    assert zeile, "ohne Zaehlung muss man zwanzig Zeilen selbst addieren"
+    assert f"1x {auftragspost.NICHT_ZUGESTELLT}" in zeile[0]
+    assert f"1x {auftragspost.KEIN_LEBENSZEICHEN}" in zeile[0]
+    # DIE REIHENFOLGE IST DIE HANDLUNGSANWEISUNG, nicht Schmuck.
+    assert (zeile[0].index(auftragspost.NICHT_ZUGESTELLT)
+            < zeile[0].index(auftragspost.KEIN_LEBENSZEICHEN))
+    # UND KEINE LAGE OHNE FALL — sonst stuende dauerhaft «0x» da und verdeckte die echten.
+    assert "0x" not in zeile[0]
+
+
+def test_ein_von_hand_eingetragener_zeitstempel_wird_vertragen(tmp_path, capsys):
+    """Die Ablage wird von Hand gepflegt — die Auskunft kommt muendlich oder als Nebensatz
+    in einem Ergebnis. Steht dort ein blosser Zeitstempel statt des Woerterbuchs, ist das
+    eine richtige Auskunft in ungewohnter Form; daran abzustuerzen hiesse, sie wegen ihrer
+    Form zu verwerfen (dieselbe Milde wie in `warum_keine_antwort`).
+
+    **Und wessen Blick es war, wird NICHT erfunden:** Der blosse Zeitstempel sagt es
+    nicht, also steht dort `unbekannt` und nicht der Adressat des Auftrags.
+    """
+    repo = _repo_mit_offenen(tmp_path)
+    (repo / auftragspost.GESEHEN_DATEI).write_text(
+        json.dumps({"auf-20260901-01": "2026-09-05T10:00:00Z"}), encoding="utf-8")
+
+    assert _cli().main(["--repo", str(repo), "--gesehen", "auf-20260901-01",
+                        "--von", "cloud"]) == 1
+
+    ausgabe = capsys.readouterr().out
+    assert "gesehen am 2026-09-05" in ausgabe, ausgabe
+    assert "von unbekannt" in ausgabe, (
+        f"wessen Blick es war, sagt der blosse Zeitstempel nicht: {ausgabe!r}")

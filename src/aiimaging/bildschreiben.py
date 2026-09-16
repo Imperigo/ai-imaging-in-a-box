@@ -337,7 +337,8 @@ def schreibe_farb_png(ziel, farben: Sequence[Sequence[int]], breite: int,
 
 # ── Normalisierung ────────────────────────────────────────────────────────────────────
 
-def _luecke_messen(tiefe: Sequence[float], hintergrund_ab_m: float) -> tuple[dict | None, str | None]:
+def _luecke_messen(tiefe: Sequence[float],
+                   hintergrund_ab_m: float) -> tuple[dict | None, str | None]:
     """Die Lücken-Messung, so verpackt, dass sie die Normierung **nie** umwerfen kann.
 
     Zurück kommt ``(befund, fehlersatz)``. Genau eines von beiden ist ``None``.
@@ -460,11 +461,18 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
                 "ferne_trennen ist gesetzt, aber es wurde KEINE taugliche Lücke gemessen "
                 "— normiert wurde wie bisher über das grösste gültige Mass. NICHT "
                 "GEMESSEN wird hier nicht zu einer erfundenen Grenze.")
+    # Eine Vertragsprüfung an `ferne_abtrennen`: Die Obergrenze ist dort die UNTERE Kante
+    # einer Lücke, über der noch mindestens ein Wert liegt — sie ist also immer kleiner als
+    # das grösste Mass. Trifft das einmal nicht mehr zu, wird hier nichts umgeschaltet,
+    # statt eine Skala zu bauen, die niemand gemeint hat. Der `else`-Zweig darunter ist der
+    # Grund, warum das eine Prüfung mit Stimme ist und nicht bloss ein stilles `elif`.
     elif max_m_luecke < max_m_gemessen:
         # Die Lücke liegt auf dem KLEINSTEN Wert: Der Kern hätte keine Breite mehr, alle
         # Geometrie bekäme denselben Grauwert. Das ist eine Maske und keine Tiefenkarte —
         # dieselbe Regel wie bei „keine Lücke gefunden": lieber die alte Skala als eine
-        # Grenze, die nichts mehr trennt.
+        # Grenze, die nichts mehr trennt. Derselbe Zweig hält auch die Division im
+        # Warnzweig darunter von der Null fern; die Mutationsprobe M7 (16.09.2026) hat
+        # genau das gezeigt, indem sie eine ZeroDivisionError über zwei Punkten erzeugte.
         if max_m_luecke <= min_m:
             warnungen.append(
                 f"Die Lücke liegt bei {max_m_luecke:g} m und damit auf dem nächsten Punkt "
@@ -486,6 +494,21 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
                     f"ferne_trennen ist aus, und das bleibt es, bis es angesagt ist. Die "
                     f"Schwelle für diesen Satz (Faktor {LUECKE_WARNT_AB_FAKTOR:g}) ist "
                     f"gesetzt und nicht kalibriert.")
+    else:
+        # Der Vertrag von `ferne_abtrennen` ist gebrochen: gemessen wurde eine Obergrenze,
+        # die NICHT unter dem grössten gültigen Mass liegt. Umgeschaltet wird darum nicht —
+        # aber geschwiegen wird auch nicht. Bis zur Prüfung vom 16.09.2026 fiel dieser Fall
+        # stumm durch: `max_m_luecke` stand als Zahl im Bericht, `ferne_getrennt` auf False,
+        # und in `warnungen` nichts. Wer den Schalter gesetzt hatte, sah einen wirkungslosen
+        # Aufruf, der wie ein wirksamer aussah — derselbe Fehlschlag, gegen den der Satz im
+        # Zweig „keine Lücke gemessen" geschrieben ist, nur eine Verzweigung weiter.
+        warnungen.append(
+            f"Die Lücken-Messung meldet die Obergrenze {max_m_luecke:g} m, und die liegt "
+            f"NICHT unter dem grössten gültigen Mass ({max_m_gemessen:g} m). Damit ist die "
+            f"Zusage von ferne_abtrennen verletzt (die Obergrenze ist dort die untere Kante "
+            f"einer Lücke, über der noch etwas liegt). NICHT umgeschaltet — eine Skala aus "
+            f"einer Zahl zu bauen, die so nicht gemeint sein kann, wäre schlimmer als die "
+            f"alte Skala.")
 
     spanne = (max_m - min_m) or 1.0          # eine ebene Fläche frontal: Spanne 0
 

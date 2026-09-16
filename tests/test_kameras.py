@@ -1312,12 +1312,21 @@ def _lage_ohne_karte(szene=_SZENE_ENG, bauwerk=_BAUWERK):
 ])
 @pytest.mark.parametrize("karte", [_verlauf(), _kante(), [4.0] * 256])
 def test_nachtragen_liefert_dasselbe_wie_der_gesamtaufruf(szene, bauwerk, karte):
-    """**Die tragende Probe: es gibt EINE Umsetzung der Strukturlogik, nicht zwei.**
+    """**Die tragende Probe: beide Wege sagen Feld für Feld dasselbe.**
 
     Wer den Befund in einem Zug rechnet und wer ihn nachträgt, muss Feld für Feld
     dasselbe bekommen — sonst entscheidet die Bibliothek anders als der Produktivpfad,
     und zwar still. Geprüft über beide Seiten der Abbruchschwelle, über den Fall ohne
     Bauwerksbox und über alle drei Kartenarten (Verlauf, Kante, ohne Spanne).
+
+    **Was diese Probe NICHT leistet, gemessen bei der Prüfung am 16.09.2026:** Sie
+    beweist nicht, dass es nur EINE Umsetzung gibt. Baut man die alte, wortgleiche
+    Zweitfassung wieder in :func:`kameras.rahmungsverhaeltnis` ein, bleibt der Lauf
+    grün (293 Proben) — zwei gleiche Umsetzungen liefern eben gleiche Zahlen. Rot wird
+    die Probe erst, wenn die Zweitfassung **abdriftet**; schon ein geänderter
+    Warnungsanfang genügte (eine der neun Belegungen fiel). Sie ist also ein
+    Driftmelder und kein Doppelmelder. Dass es nur eine Umsetzung gibt, hält der Code
+    fest, nicht diese Probe.
     """
     zusammen = kameras.rahmungsverhaeltnis(szene, bauwerk,
                                            tiefenkarte=karte, tiefenbreite=16)
@@ -1401,8 +1410,62 @@ def test_bei_unfeststellbarem_abbruch_warnt_das_nachtragen_ohne_den_fuellgrad_zu
     assert len(nachher["warnungen"]) == 1
     text = nachher["warnungen"][0]
     assert "fensterlosen Wand" in text, "der bekannte Fall muss trotzdem benannt werden"
-    assert "NICHT FESTSTELLBAR" in text
+    assert "NICHT BELEGT" in text
     assert "Der Füllgrad traegt" not in text, "das ist genau die ungeprüfte Behauptung"
+
+
+def test_der_abgeschaltete_riegel_laesst_die_warnung_nichts_falsches_behaupten():
+    """**Der zweite Weg, auf dem ``abbruch`` und die Zahl auseinanderfallen.**
+
+    `abholer._rahmung_abgeschaltet` setzt ``abbruch`` auf ``False`` für einen Lauf, der
+    abgebrochen worden WÄRE — der Schalter ist da, damit eine Messung eine schlechte
+    Rahmung überhaupt sehen kann (`auf-20260825-41`). Hinge die Warnung allein an
+    ``abbruch``, stünde dort «Der Füllgrad traegt (19.3 % der Bildbreite, nötig 65 %)»:
+    ein Satz, der sich selbst widerspricht — und ein Fehlschlag, der wie ein Erfolg
+    aussieht, wird nicht gefunden, er wird geglaubt.
+    """
+    riegel = kameras.rahmungsverhaeltnis(_SZENE_WEIT, _BAUWERK)
+    assert riegel["abbruch"] is True, "sonst prueft die Probe den falschen Fall"
+    abgeschaltet = dict(riegel, abbruch=False, abgeschaltet=True, abbruch_grund="")
+    nachher = kameras.struktur_nachtragen(abgeschaltet, _verlauf(), breite=16)
+
+    assert nachher["abbruch"] is False, "der Schalter bleibt der Schalter"
+    assert len(nachher["warnungen"]) == 1
+    text = nachher["warnungen"][0]
+    assert "Der Füllgrad traegt" not in text
+    assert "NICHT BELEGT" in text
+    assert "fensterlosen Wand" in text
+
+
+def test_beim_tragenden_fuellgrad_steht_der_vorbehalt_gerade_NICHT_da():
+    """**Die fehlende Gegenrichtung zu den beiden Proben darüber** (nachgetragen bei der
+    Prüfung, 16.09.2026).
+
+    Die beiden Proben oben halten fest, dass der Satz «Der Füllgrad traegt» **nicht**
+    fällt, wo er unbelegt wäre. Die Gegenrichtung fehlte: dass er fällt, wo er belegt
+    ist. Nachgemessen — ersetzt man die Bedingung des Zweigs durch ``False``, sodass
+    jeder gewöhnliche Lauf in den Vorbehalt rutscht, blieb der ganze Lauf **grün**
+    (293 Proben). Der gewöhnliche Lauf trüge dann den Satz *«Dass der Füllgrad diesen
+    Lauf traegt, ist hier NICHT BELEGT … abbruch steht auf False»* — über einem Lauf,
+    dessen Füllgrad mit 70,0 % über den nötigen 65 % liegt und damit sehr wohl belegt
+    ist.
+
+    Ein Dauervorbehalt über jedem gesunden Lauf ist kein Vorbehalt mehr, sondern
+    Möblierung: Er steht da, er trifft nie zu, also liest ihn niemand — und dann wird er
+    auch in dem einen Lauf nicht gelesen, in dem er zutrifft. Genau davor warnt die
+    Begründung des Zweigs; geprüft wurde bis hierher nur die eine Hälfte davon.
+    """
+    lage = kameras.rahmungsverhaeltnis(_SZENE_ENG, _BAUWERK,
+                                       tiefenkarte=_verlauf(), tiefenbreite=16)
+    assert lage["abbruch"] is False, "sonst prueft die Probe den falschen Fall"
+    assert lage["wirksame_bildbreite"] >= kameras.BILDBREITE_ABBRUCH
+    text = lage["warnungen"][0]
+    assert "Der Füllgrad traegt" in text, \
+        "hier IST er belegt — der Satz gehoert hierher und nur hierher"
+    assert "NICHT BELEGT" not in text, \
+        "ein Vorbehalt ueber einem Fuellgrad von 70 % waere schlicht falsch"
+    assert "abbruch steht auf" not in text, \
+        "der Schalter gehoert in den Zweig fuer den Fall, in dem er von der Zahl abweicht"
 
 
 def test_nachtragen_ohne_karte_ist_ein_aufruferfehler_und_kein_befund():

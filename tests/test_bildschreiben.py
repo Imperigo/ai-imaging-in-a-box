@@ -968,6 +968,69 @@ def test_die_messung_wirft_die_normierung_nie_um(monkeypatch):
     assert any("QaError" in satz for satz in norm["warnungen"]), "und woran es lag"
 
 
+def test_die_hintergrundschranke_gilt_auch_fuer_die_luecken_messung():
+    """Gemessen werden muss dieselbe Karte, die auch normiert wird.
+
+    ``hintergrund_ab_m`` entscheidet, was überhaupt als Tiefe zählt — und damit über
+    ``min_m``, ``max_m`` **und** über die Werte, in denen die Lücke gesucht wird. Reichte
+    das Argument nicht bis in die Messung durch, liefe die Messung auf einer anderen Karte
+    als die Normierung: Die Obergrenze käme dann aus Punkten, die hier gar keine Geometrie
+    mehr sind, und stünde als Zahl neben einem ``max_m``, zu dem sie nicht gehört.
+
+    Hier: zehn Punkte 1..10 m und einer bei 500 m, Schranke 50 m. Der 500er ist damit
+    Hintergrund, nicht Ferne. Die verbleibenden zehn Punkte haben kein Loch — also
+    **NICHT GEMESSEN**, und mit gesetztem Schalter ein Satz dazu. Mit der Vorgabeschranke
+    (1e7) gemessen wäre der 500er dabei, und die Messung meldete eine Obergrenze von 10 m,
+    die hier niemand gemeint hat.
+    """
+    karte = [1.0 + i for i in range(10)] + [500.0]
+    _grau, norm = normalisiere_tiefe(karte, hintergrund_ab_m=50.0, ferne_trennen=True)
+
+    assert norm["luecke"]["n_gemessen"] == 10, "gemessen wird, was hier Geometrie ist"
+    assert norm["luecke"]["n_ausgelassen"] == 1, "der 500er ist Hintergrund, nicht Ferne"
+    assert norm["max_m_luecke"] is None, "zehn Punkte ohne Loch — NICHT GEMESSEN"
+    assert norm["max_m"] == 10.0 and norm["ferne_getrennt"] is False
+    assert any("KEINE taugliche Lücke" in satz for satz in norm["warnungen"])
+
+
+def test_eine_obergrenze_ueber_dem_groessten_mass_wird_nicht_stumm_verworfen(monkeypatch):
+    """**Der Fall, der bis zur Prüfung vom 16.09.2026 stumm durchfiel.**
+
+    ``ferne_abtrennen`` sagt zu, dass die Obergrenze die UNTERE Kante einer Lücke ist —
+    über ihr liegt also noch mindestens ein Wert, und damit ist sie kleiner als das grösste
+    Mass. Hält diese Zusage einmal nicht, darf hier nicht umgeschaltet werden: Eine Skala
+    aus einer Zahl, die so nicht gemeint sein kann, ist schlimmer als die alte Skala.
+
+    Bis zur Prüfung geschah dabei aber **gar nichts** — kein Umschalten und kein Satz. Im
+    Bericht stand ``max_m_luecke`` als Zahl, ``ferne_getrennt`` auf ``False``, und in
+    ``warnungen`` nichts. Wer den Schalter gesetzt hatte, sah einen wirkungslosen Aufruf,
+    der wie ein wirksamer aussieht — genau der Fehlschlag, gegen den der Satz im Zweig
+    „keine Lücke gemessen" geschrieben ist.
+
+    Der Vertragsbruch wird eingesetzt und nicht herbeigeführt: Mit dem heutigen
+    ``ferne_abtrennen`` ist er nicht erreichbar, und eine Probe, die auf die Erreichbarkeit
+    eines fremden Fehlers wartet, prüft nichts.
+    """
+    from aiimaging import geometrie_qa
+
+    def zu_hoch(karte, **kwargs):
+        return {"obergrenze": 1000.0, "stufen_gefunden": 1, "kanten": (1000.0,),
+                "anteil_geklemmt": 0.0, "anteil_wertebereich": None, "verhaeltnis": 5.0,
+                "n_gemessen": 4, "n_ausgelassen": 0, "warnungen": []}
+
+    monkeypatch.setattr(geometrie_qa, "ferne_abtrennen", zu_hoch)
+
+    grau, norm = normalisiere_tiefe([2.0, 3.0, 4.0, 1000.0], ferne_trennen=True)
+
+    assert norm["ferne_getrennt"] is False, "NICHT umgeschaltet"
+    assert norm["max_m"] == 1000.0 and norm["n_geklemmt"] == 0
+    assert grau[0] == 1.0 and grau[3] == 0.0, "gerechnet wurde mit der alten Skala"
+    assert norm["max_m_luecke"] == 1000.0, "die gemessene Zahl bleibt im Bericht stehen"
+    satz = [s for s in norm["warnungen"] if "NICHT unter dem grössten" in s]
+    assert len(satz) == 1, "und sie bleibt nicht unkommentiert stehen"
+    assert "1000" in satz[0] and "NICHT umgeschaltet" in satz[0]
+
+
 def test_der_bericht_ueberlebt_den_weg_durch_json():
     """Der Bericht landet über ``tiefe_exr_zu_png`` im Report und damit in einer Datei.
 

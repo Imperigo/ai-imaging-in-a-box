@@ -1769,7 +1769,23 @@ def struktur_nachtragen(lage: dict, tiefenkarte, *, breite: int) -> dict:
             "Die Tiefenkarte liegt vor, ihr Strukturwert ist aber NICHT GEMESSEN "
             "(siehe struktur.warnungen). Das heisst NICHT strukturlos und NICHT in "
             "Ordnung — es heisst, dass diese Frage offen bleibt.")
-    elif wert < STRUKTUR_WARNSCHWELLE and abbruch is False:
+    elif wert >= STRUKTUR_WARNSCHWELLE:
+        # Die Karte hat Kanten. Kein Wort — eine Warnung, die auch bei der guten Karte
+        # käme, wäre keine.
+        pass
+    elif abbruch is True:
+        warnungen.append(
+            f"Die Tiefenkarte ist fast strukturlos (struktur {wert:.4f}), der Lauf "
+            f"wird aber ohnehin schon am Füllgrad abgewiesen. Die Zahl steht hier "
+            f"als Auskunft, nicht als zweiter Grund.")
+    elif abbruch is False and wirksam >= BILDBREITE_ABBRUCH:
+        # **Der Füllgrad wird an der ZAHL geprüft und nicht an ``abbruch``**, obwohl die
+        # beiden in :func:`rahmungsverhaeltnis` dasselbe sagen. Auf dem Produktivweg tun
+        # sie es nicht immer: `abholer._rahmung_abgeschaltet` setzt ``abbruch`` auf False
+        # für einen Lauf, der abgebrochen WORDEN WÄRE — der Schalter ist da, damit eine
+        # Messung eine schlechte Rahmung sehen kann. Ein Satz «Der Füllgrad traegt
+        # (30.0 % der Bildbreite, nötig 65 %)» wäre dort in sich falsch, und ein
+        # Fehlschlag, der wie ein Erfolg aussieht, wird nicht gefunden — er wird geglaubt.
         warnungen.append(
             f"ACHTUNG, DIESER FALL IST BEKANNT: Der Füllgrad traegt "
             f"({wirksam:.1%} der Bildbreite, nötig {BILDBREITE_ABBRUCH:.0%}), aber "
@@ -1780,31 +1796,32 @@ def struktur_nachtragen(lage: dict, tiefenkarte, *, breite: int) -> dict:
             f"erfunden, was es nicht sah. NICHT ABGEBROCHEN wird trotzdem: Die "
             f"Warnschwelle ist gesetzt und nicht kalibriert, die Messreihe dazu "
             f"liegt als auf-20260912-108 bei der HomeStation.")
-    elif wert < STRUKTUR_WARNSCHWELLE and abbruch is True:
-        warnungen.append(
-            f"Die Tiefenkarte ist fast strukturlos (struktur {wert:.4f}), der Lauf "
-            f"wird aber ohnehin schon am Füllgrad abgewiesen. Die Zahl steht hier "
-            f"als Auskunft, nicht als zweiter Grund.")
-    elif wert < STRUKTUR_WARNSCHWELLE:
-        # `abbruch` ist weder wahr noch falsch, sondern NICHT FESTSTELLBAR. Aus
-        # `rahmungsverhaeltnis` kommt dieser Fall nie — dort steht neben einer
-        # gerechneten Bildbreite immer auch ein Abbruchentscheid. Aus dem Abholer schon:
-        # Kam die Kamera als Zahlenpaar herein statt aus der Hüllbox, setzt
-        # `_rahmung_vor_dem_render` `abbruch` auf None, weil der Deckungsgrad diesen Lauf
-        # nicht beschreibt — und **so schickt die Oberfläche ihre Kameras**.
+    else:
+        # **Gerendert wird, aber der Füllgrad steht nicht dafür gerade.** Aus
+        # :func:`rahmungsverhaeltnis` kommt dieser Fall nie — dort heisst ``abbruch is
+        # False`` genau ``wirksam >= BILDBREITE_ABBRUCH``. Aus dem Abholer kommt er auf
+        # zwei Wegen:
         #
-        # Gerendert wird dann trotzdem. Die Warnung darf hier also nicht ausfallen, aber
-        # sie darf auch nicht sagen «der Füllgrad traegt»: Das ist genau die Zahl, die
-        # für diesen Lauf nicht gilt. Ein Satz, der eine ungeprüfte Grösse behauptet,
-        # ist schlimmer als keiner.
+        # * ``abbruch is None`` — die Kamera kam als Zahlenpaar herein statt aus der
+        #   Hüllbox, der Deckungsgrad beschreibt diesen Lauf darum nicht
+        #   (`_rahmung_vor_dem_render`). **So schickt die Oberfläche ihre Kameras.**
+        # * ``abbruch is False`` bei zu kleiner Bildbreite — der Riegel wurde
+        #   abbestellt (`_rahmung_abgeschaltet`), damit eine Messung eine schlechte
+        #   Rahmung überhaupt SEHEN kann.
+        #
+        # In beiden Fällen entsteht ein Bild, die Warnung darf also nicht ausfallen. Sie
+        # darf aber auch nicht «der Füllgrad traegt» sagen: Im ersten Fall gilt die Zahl
+        # für diesen Lauf nicht, im zweiten sagt sie das Gegenteil. Ein Satz, der eine
+        # ungeprüfte Grösse behauptet, ist schlimmer als keiner.
         warnungen.append(
             f"ACHTUNG: Die Tiefenkarte ist fast strukturlos (struktur {wert:.4f}, "
             f"gewarnt wird unter {STRUKTUR_WARNSCHWELLE}) — so sah am 12.09.2026 die "
             f"Nahaufnahme vor der fensterlosen Wand aus, bei der das Bildmodell frei "
-            f"erfunden hat, was es nicht sah. Ob der Füllgrad diesen Lauf trägt, ist "
-            f"NICHT FESTSTELLBAR (abbruch ist None), gerechnet sind "
-            f"{wirksam:.1%} der Bildbreite. Abgebrochen wird nichts: Die Warnschwelle "
-            f"ist gesetzt und nicht kalibriert, die Messreihe dazu liegt als "
+            f"erfunden hat, was es nicht sah. Dass der Füllgrad diesen Lauf traegt, ist "
+            f"hier NICHT BELEGT: gerechnet sind {wirksam:.1%} der Bildbreite bei "
+            f"{BILDBREITE_ABBRUCH:.0%} noetigen, und abbruch steht auf {abbruch!r}. "
+            f"Abgebrochen wird von dieser Seite trotzdem nichts: Die Warnschwelle ist "
+            f"gesetzt und nicht kalibriert, die Messreihe dazu liegt als "
             f"auf-20260912-108 bei der HomeStation.")
 
     return dict(lage, struktur=struktur, warnungen=warnungen)

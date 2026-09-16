@@ -1864,7 +1864,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # ohnehin nicht: `kameras.struktur_nachtragen` laesst `abbruch` unberuehrt,
             # solange die Warnschwelle ungeeicht ist (auf-20260912-108).
             try:
-                rahmung = dict(rahmung, struktur_fehler="")   # MUTATION 1: Aufruf weg
+                rahmung = dict(
+                    _kameras_modul.struktur_nachtragen(rahmung, soll, breite=breite),
+                    struktur_fehler="")
             except Exception as fehler:  # noqa: BLE001 — Begruendung unmittelbar darunter
                 # BEFUND ALS FELD, KEIN ABSTURZ — dieselbe Haltung wie bei
                 # `depth_png_fehler` weiter oben: Was nicht zu messen war, wird als nicht

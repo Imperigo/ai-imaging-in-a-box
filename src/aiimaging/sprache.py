@@ -985,6 +985,416 @@ def zerlege_kompositum(wort: str) -> tuple[str, ...] | None:
     return None
 
 
+# --------------------------------------------------------------------------------------
+# Die Mehrzahl — die einzige Regel dieses Moduls, die zwei Wörter zugleich sieht
+# --------------------------------------------------------------------------------------
+#
+# **Der Anlass, heute gemessen** (16.09.2026):
+#
+#     ``zwoelf fenster``  →  ``twelve window``
+#
+# Die Zahl stimmt, das Hauptwort steht in der Einzahl. Das Glossar bildet je EIN Wort auf
+# je ein englisches ab und sieht nie zwei Wörter zugleich; dass die Zahl davor das
+# Hauptwort dahinter bestimmt, kann es darum nicht wissen. Die Zahlwörter vom Vormittag
+# des 16.09. haben den Fall **sichtbar gemacht, nicht verursacht** — ``fenster`` →
+# ``window`` stand schon vorher im Glossar, und «zwölf fenster» war schon vorher
+# ``zwölf window``.
+#
+# Deutsch bräuchte die Regel nicht: «zwölf Fenster» ist im Deutschen schon Mehrzahl, und
+# genau deshalb fällt beim Schreiben des Prompts nichts auf. Englisch braucht sie, und
+# dieses Modul gibt es dafür, dass kein halbrichtiges Englisch ins Bildmodell geht.
+#
+# **Warum eine Regel und keine zweite Glossarspalte.** Ein Mehrzahleintrag je Hauptwort
+# wäre die zweite Hälfte jedes Eintrags und träfe doch nur, was jemand eingetragen hat.
+# Die Regel greift auch da, wo das englische Hauptwort erst durch :func:`grundform` oder
+# :func:`zerlege_kompositum` entstanden ist — «vier betonwaende» geht durch die
+# Kompositumsregel, und kein Eintrag der Welt sähe es kommen.
+#
+# **Warum sie trotzdem ein Verzeichnis ist und keine blosse Endungsregel.** Englische
+# Mehrzahl ist nicht durchgängig «+s». Alle acht Zeilen unten stehen so im Glossar
+# dieses Moduls, keine ist ausgedacht:
+#
+#     ``sketch``   → ``sketches``    (auf -ch)
+#     ``bush``     → ``bushes``      (auf -sh)
+#     ``lens``     → ``lenses``      (auf -s)
+#     ``balcony``  → ``balconies``   (Mitlaut + y)
+#     ``storey``   → ``storeys``     (Selbstlaut + y — NICHT ``storeies``)
+#     ``person``   → ``people``      (unregelmässig)
+#     ``concrete`` → ``concrete``    (nicht zählbar; ``two concretes`` gibt es nicht)
+#     ``walls``    → ``walls``       (steht schon in der Mehrzahl)
+#
+# Die Endungsregel deckt die ersten fünf Zeilen ab. Die letzten drei deckt sie nicht, und
+# keine Endungsregel der Welt könnte das: **ob ein Wort zählbar ist, steht nicht in seinen
+# Buchstaben.** Darum wird nur gebeugt, was in :data:`ZAEHLBAR` steht — ein Verzeichnis,
+# das am 16.09.2026 Eintrag für Eintrag durch alle 387 Glossarwerte gegangen ist.
+#
+# Was nicht darin steht, bleibt stehen. Ein unverändertes ``twelve window`` ist ein
+# sichtbarer Schönheitsfehler; ein erfundenes ``twelve concretes`` liest sich wie richtiges
+# Englisch und wird darum nie wieder als Fehler erkannt — die fünfte Regel dieses Repos,
+# angewandt auf Grammatik.
+
+#: Zahlwörter, die im **englischen** Text die Mehrzahl auslösen — alles ab zwei.
+#:
+#: Es sind die englischen Formen, nicht die deutschen: Die Regel läuft NACH dem
+#: Nachschlagen, auf dem bereits übersetzten Text. Dort steht ``twelve``, nicht ``zwölf``.
+#: Ziffern kommen dazu und werden gerechnet, nicht aufgezählt — ``12 fenster`` ist
+#: dieselbe Aussage wie ``zwölf fenster`` (siehe :func:`_loest_mehrzahl_aus`).
+#:
+#: ``one`` fehlt, und ``a``/``an`` ebenfalls: «ein Wohnhaus» ist *a residential building*
+#: und bleibt Einzahl. ``eight`` und ``eleven`` stehen mit drin, obwohl das Glossar sie
+#: nicht erzeugen kann — ``acht`` und ``elf`` sind bewusst keine Glossareinträge, die
+#: Gründe stehen oben bei den Zahlwörtern. Käme ein englisches ``eight`` doch einmal in
+#: einem deutschen Prompt vor, wäre die Mehrzahl danach genauso richtig wie bei ``nine``.
+MEHRZAHL_AUSLOESER = frozenset({
+    "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven",
+    "twelve",
+})
+
+#: Die englischen Hauptwörter des Glossars, die **zählbar** sind — nur sie werden gebeugt.
+#:
+#: Aufgenommen ist, was in einem Bildprompt wirklich gezählt wird: Bauteile, Baukörper,
+#: Orte, Dinge im Bild, Bildsorten. Die Liste ist am 16.09.2026 von Hand durch alle
+#: Glossarwerte gegangen; sie ist mit Absicht **kürzer als die Menge der Hauptwörter**.
+#:
+#: **Die Gegenprobe steckt im Glossar selbst.** Zu fünfzehn dieser Wörter führt das
+#: Glossar die Mehrzahl als eigenen Eintrag — ``wände`` → ``walls``, ``dächer`` →
+#: ``roofs``, ``balkone`` → ``balconies``, ``geschosse`` → ``storeys``, ``oberflächen`` →
+#: ``surfaces``, ``personen`` → ``people`` und neun weitere. Die Endungsregel unten
+#: liefert für alle fünfzehn genau die Form, die das Glossar unabhängig davon führt. Das
+#: ist keine Schätzung, sondern ein gemessener Abgleich, und er läuft bei jedem Testlauf
+#: mit: ``test_die_endungsregel_trifft_die_mehrzahlen_des_glossars``.
+ZAEHLBAR = frozenset({
+    # --- Baukörper und Räume ----------------------------------------------------------
+    "building", "house", "volume", "extension", "basement", "floor", "storey",
+    "room", "kitchen", "ceiling",
+    # --- Bauteile ---------------------------------------------------------------------
+    "roof", "window", "door", "entrance", "balcony", "terrace", "loggia", "facade",
+    "wall", "column", "stair", "railing", "parapet", "chimney", "dormer", "canopy",
+    "cornice", "gable", "skylight", "plinth", "reveal",
+    # --- Umgebung ---------------------------------------------------------------------
+    "tree", "bush", "hedge", "garden", "courtyard", "square", "street", "path",
+    "city", "village", "lake", "river", "corner", "side", "season",
+    # --- Was im Bild steht und sich zählen lässt ---------------------------------------
+    "person", "bicycle", "car",
+    # --- Bild und Aufnahme ------------------------------------------------------------
+    "photograph", "drawing", "sketch", "rendering", "visualisation", "model", "view",
+    "detail", "lens",
+    # --- Übriges, das gezählt wird ----------------------------------------------------
+    "cloud", "colour", "material", "surface",
+})
+
+#: Die unregelmässigen Formen. In diesem Glossar ist es **genau eine**.
+#:
+#: Nachgezählt am 16.09.2026 über alle Glossarwerte: ``person`` → ``people`` ist das
+#: einzige Hauptwort, dessen Mehrzahl die Endungsregel verfehlen würde. ``roof`` →
+#: ``roofs`` sieht nach einem zweiten Fall aus und ist keiner (``rooves`` ist veraltet) —
+#: das Glossar führt ``dächer`` → ``roofs`` und bestätigt die regelmässige Form.
+MEHRZAHL_UNREGELMAESSIG = {
+    "person": "people",
+}
+
+#: Hauptwörter ohne Mehrzahl — **entschieden, nicht vergessen**.
+#:
+#: Stoffe (``concrete``, ``glass``, ``wood``, ``steel``), Wetter (``rain``, ``snow``,
+#: ``fog``), Licht (``light``, ``daylight``) und Bildeigenschaften (``contrast``,
+#: ``sharpness``, ``grain``) haben im Englischen keine Mehrzahl, jedenfalls nicht in der
+#: Bedeutung, in der sie hier stehen. ``two concretes`` wäre schlimmer als der Fehler, den
+#: diese Regel behebt.
+#:
+#: Die Liste ist für den Ablauf **nicht nötig** — gebeugt wird ohnehin nur, was in
+#: :data:`ZAEHLBAR` steht. Sie steht hier aus zwei Gründen: Sie trennt im Befund das
+#: «entschieden: keine Mehrzahl» vom «nicht entschieden» (siehe :func:`mehrzahl_befund`),
+#: und sie ist der Stolperdraht für den nächsten, der :data:`ZAEHLBAR` erweitert — der
+#: Test hält beide Mengen auseinander.
+OHNE_MEHRZAHL = frozenset({
+    # Stoffe
+    "concrete", "glass", "wood", "steel", "metal", "aluminium", "copper", "zinc",
+    "render", "cladding", "patina",
+    # Wetter, Licht, Luft
+    "rain", "snow", "water", "fog", "haze", "wind", "weather",
+    "light", "daylight", "lighting", "sunshine",
+    # Boden und Bewuchs
+    "grass", "vegetation", "planting", "terrain", "countryside", "ground",
+    # Bildeigenschaften und Bildzonen
+    "contrast", "sharpness", "grain", "foreground", "background",
+})
+
+#: Glossarwerte, die **schon in der Mehrzahl** stehen.
+#:
+#: Das Glossar führt zu vielen Hauptwörtern beide Formen (``wand`` → ``wall``, ``wände``
+#: → ``walls``), und mehrwortige Einträge enden teils auf einer Mehrzahl (``concrete
+#: walls``, ``mature trees``, ``long shadows``). An ihnen ist nichts zu tun; eine zweite
+#: Bildung ergäbe ``wallses``.
+#:
+#: Auch hier gilt: Für den Ablauf reicht, dass sie nicht in :data:`ZAEHLBAR` stehen. Die
+#: Liste macht die Entscheidung sichtbar und prüfbar — und sie enthält mit ``eaves`` und
+#: ``surroundings`` zwei Wörter, die im Englischen **nur** in der Mehrzahl vorkommen und
+#: darum auch niemandem als Einzahl in :data:`ZAEHLBAR` rutschen dürfen.
+SCHON_MEHRZAHL = frozenset({
+    "balconies", "cars", "clouds", "colours", "columns", "doors", "eaves", "figures",
+    "materials", "mountains", "people", "roofs", "rooms", "shadows", "shrubs",
+    "stairs", "storeys", "surfaces", "surroundings", "trees", "walls",
+})
+
+#: Wörter, hinter denen die Wortgruppe der Zahl **endet**.
+#:
+#: Der Grund ist der Kopf der Gruppe. Deutsch wie Englisch stellen das Hauptwort ans Ende
+#: einer Wortgruppe aus Beiwörtern (``residential building``, ``concrete wall``), und
+#: genau dieses letzte Wort wird gebeugt. Ein Verhältniswort oder ein Bindewort beendet
+#: die Gruppe aber: In ``two with garden`` gehört ``garden`` nicht zur Zwei, und
+#: ``two with gardens`` wäre eine erfundene Aussage.
+#:
+#: Dasselbe für mehrwortige Glossareinträge, die kein Hauptwort am Ende haben —
+#: ``in front of``, ``during the day``, ``out of focus``, ``black and white``,
+#: ``painted in a pale tone``. Alle fünf enden hier an ihrem ersten Funktionswort und
+#: werden nicht angefasst.
+_MEHRZAHL_TRENNER = frozenset({
+    "a", "an", "the", "of", "in", "at", "on", "to", "from", "and", "or", "with",
+    "without", "no", "not", "for", "above", "below", "behind", "beside", "between",
+    "through", "against", "next", "opposite", "after", "before", "during", "over",
+    "under", "near", "by", "into", "onto", "out", "off", "up", "down",
+    "is", "are", "was", "were", "be", "seen", "taken", "painted", "very", "slightly",
+})
+
+#: Wie viele Wörter eine Zahl höchstens überspannen darf.
+#:
+#: **Drei**, und der Wert ist nicht geraten: Es ist die Länge des längsten mehrwortigen
+#: Glossareintrags ohne Funktionswort (``high thin clouds``). Was länger ist, ist keine
+#: Wortgruppe mehr, sondern ein halber Satz — und in einem halben Satz weiss diese Regel
+#: nicht, welches Wort zur Zahl gehört. Sie lässt ihn dann in Ruhe.
+MEHRZAHL_MAX_GRUPPE = 3
+
+#: Die vier Ausgänge von :func:`mehrzahl_befund`, für das Protokoll und für die Tests.
+MEHRZAHL_GEBEUGT = "gebeugt"
+MEHRZAHL_UNZAEHLBAR = "nicht zaehlbar"
+MEHRZAHL_SCHON = "schon mehrzahl"
+MEHRZAHL_OFFEN = "nicht entschieden"
+
+#: Wort ODER Ziffernfolge. Das reguläre :data:`_WORT` wirft Ziffern weg — hier sind sie
+#: der halbe Fall («12 fenster»), und darum braucht die Mehrzahl ein eigenes Muster.
+_ZAHL_ODER_WORT = re.compile(r"\d+|[^\W\d_]+(?:-[^\W\d_]+)*", re.UNICODE)
+
+
+def _endungsregel(wort: str) -> str:
+    """Die regelmässige englische Mehrzahl — gültig **nur** für :data:`ZAEHLBAR`.
+
+    Drei Zeilen, und jede hat ihren Beleg im Glossar dieses Moduls:
+
+    * auf ``s``, ``sh``, ``ch``, ``x`` → ``+es``: ``lens`` → ``lenses``, ``bush`` →
+      ``bushes``, ``sketch`` → ``sketches``.
+    * auf Mitlaut + ``y`` → ``ies``: ``balcony`` → ``balconies``, ``city`` → ``cities``.
+      Auf **Selbstlaut** + ``y`` gilt das ausdrücklich nicht: ``storey`` → ``storeys``
+      (das Glossar führt ``geschosse`` → ``storeys``), ``chimney`` → ``chimneys``.
+    * sonst ``+s``.
+
+    Auf ``z`` endet kein Wort in :data:`ZAEHLBAR`. Die Endung fehlt darum hier: Eine
+    Regel, die dieses Repo nie ausführt, ist eine Regel, die niemand je prüft.
+    """
+    if wort.endswith(("s", "sh", "ch", "x")):
+        return wort + "es"
+    if len(wort) > 1 and wort.endswith("y") and wort[-2] not in "aeiou":
+        return wort[:-1] + "ies"
+    return wort + "s"
+
+
+def mehrzahl_befund(wort: str) -> dict:
+    """Was aus einem englischen Hauptwort wird, wenn eine Zahl davorsteht — mit Grund.
+
+    Returns:
+        ``{einzahl, mehrzahl, grund}``. ``mehrzahl`` ist **die dritte Antwort dieses
+        Repos, auf Grammatik angewandt**:
+
+        * eine Zeichenkette — gebeugt (``grund`` = ``"gebeugt"``).
+        * ``None`` mit ``grund`` = ``"nicht zaehlbar"`` oder ``"schon mehrzahl"`` —
+          **entschieden**, dass nicht gebeugt wird. Jemand hat hingesehen.
+        * ``None`` mit ``grund`` = ``"nicht entschieden"`` — **nicht entschieden**. Weder
+          Verzeichnis noch Ausnahme kennt dieses Wort. Das ist kein «in Ordnung»: Der
+          Text bleibt zwar unverändert, aber er bleibt es aus Unwissen, und der Befund
+          sagt das. So steht im Ergebnis, was diese Regel nicht konnte, statt dass es
+          jemand am Bild suchen muss.
+    """
+    klein = (wort or "").lower()
+    if not klein:
+        return {"einzahl": klein, "mehrzahl": None, "grund": MEHRZAHL_OFFEN}
+    if klein in SCHON_MEHRZAHL:
+        return {"einzahl": klein, "mehrzahl": None, "grund": MEHRZAHL_SCHON}
+    if klein in OHNE_MEHRZAHL:
+        return {"einzahl": klein, "mehrzahl": None, "grund": MEHRZAHL_UNZAEHLBAR}
+    if klein in MEHRZAHL_UNREGELMAESSIG:
+        return {"einzahl": klein, "mehrzahl": MEHRZAHL_UNREGELMAESSIG[klein],
+                "grund": MEHRZAHL_GEBEUGT}
+    if klein in ZAEHLBAR:
+        return {"einzahl": klein, "mehrzahl": _endungsregel(klein),
+                "grund": MEHRZAHL_GEBEUGT}
+    return {"einzahl": klein, "mehrzahl": None, "grund": MEHRZAHL_OFFEN}
+
+
+def mehrzahl(wort: str) -> str | None:
+    """Die englische Mehrzahl eines Wortes — oder ``None``, wenn nicht gebeugt wird.
+
+    Der kurze Weg für den häufigen Fall. **Warum** nicht gebeugt wird, sagt nur
+    :func:`mehrzahl_befund`; wer die drei Antworten auseinanderhalten muss, fragt dort.
+    """
+    return mehrzahl_befund(wort)["mehrzahl"]
+
+
+def _loest_mehrzahl_aus(zeichen: str) -> bool:
+    """Ist das eine Zahl grösser als eins?
+
+    Ziffern werden **gerechnet**, nicht nachgeschlagen: ``12`` steht in keiner Liste, und
+    eine Liste bis zwölf wäre genau die Sorte Grenze, die beim dreizehnten Fenster kippt.
+    ``1`` löst nicht aus, ``0`` auch nicht — ``no window`` ist der Fall der Verneinung und
+    hat mit dieser Regel nichts zu tun.
+    """
+    if zeichen.isdigit():
+        return int(zeichen) >= 2
+    return zeichen.lower() in MEHRZAHL_AUSLOESER
+
+
+def _schliesst_an(luecke: str) -> bool:
+    """Trägt diese Lücke zwischen zwei Fundstellen die Wortgruppe weiter?
+
+    Nur ein **reiner Abstand** tut das, und die beiden Gegenfälle sind verschieden:
+
+    * **Leer** — die beiden Stücke kleben aneinander. ``24mm`` ist eine Brennweite, keine
+      Anzahl von Millimetern; ``3d`` ist eine Schreibweise, keine Anzahl von d. Ohne diese
+      Hälfte ergibt ``24mm wand`` ein ``24mm walls`` — gemessen am 16.09.2026 an der
+      entschärften Fassung, und `24mm f8` ist ausgerechnet der Prompt, den dieses Modul
+      an zwei Stellen als Musterfall führt.
+    * **Nicht leer und nicht nur Abstand** — dazwischen steht ein Satzzeichen. «vier,
+      betonwaende» ist eine Aufzählung aus zwei Gliedern, kein Zahlwort vor seinem
+      Hauptwort.
+
+    Eigene Funktion statt zweier Bedingungen in der Schleife, damit eine Mutationsprobe
+    genau diesen Wächter entschärfen kann und keinen zweiten mit.
+    """
+    return bool(luecke) and not luecke.strip()
+
+
+def _ist_nachkommastelle(text: str, stuecke: list[re.Match], i: int) -> bool:
+    """Ist diese Ziffernfolge die **Nachkommastelle** einer Zahl — und damit keine Anzahl?
+
+    **Gemessener Fehler, gefunden in der Prüfung vom 16.09.2026:**
+
+        ``f2.8 objektiv``  →  ``f2.8 lenses``
+
+    :data:`_ZAHL_ODER_WORT` liest ``\d+``, und ``2.8`` sind darin zwei Funde: ``2`` und
+    ``8``. Die ``8`` steht unmittelbar vor ``objektiv`` → ``lens``, ist grösser als eins,
+    und die Regel machte daraus pflichtschuldig eine Mehrzahl. Ebenso gemessen:
+    ``f5.6 objektiv`` → ``f5.6 lenses``, ``f1.4 objektiv`` → ``f1.4 lenses``,
+    ``16.09.2026 fenster`` → ``16.09.2026 windows``.
+
+    Das ist genau die Sorte Fehler, gegen die die fünfte Regel dieses Repos steht:
+    ``lenses`` liest sich wie richtiges Englisch, und ein Prompt mit einer Blendenzahl
+    darin sieht heil aus. Die Blende ist aber keine Stückzahl — sie zählt gar nichts.
+
+    Erkannt wird der Fall an seiner Form, nicht an einer Liste von Einheiten: Eine
+    Ziffernfolge, vor der **unmittelbar** ein Punkt oder ein Komma steht und davor wieder
+    eine Ziffernfolge, ist die zweite Hälfte einer Zahl und keine eigene. Das deckt die
+    deutsche Schreibung (``2,8``) mit ab, ohne dass irgendwo ``mm``, ``f`` oder ``ISO``
+    stehen müsste — eine Einheitenliste wäre wieder eine Grenze, die beim nächsten
+    Kürzel kippt.
+
+    Die vordere Hälfte (``2`` in ``f2.8``) braucht keine eigene Sperre: Ihre Wortgruppe
+    endet ohnehin am Punkt, denn der ist kein Abstand (:func:`_schliesst_an`).
+    """
+    fund = stuecke[i]
+    if i == 0 or not fund.group(0).isdigit():
+        return False
+    davor = stuecke[i - 1]
+    if not davor.group(0).isdigit():
+        return False
+    return text[davor.end():fund.start()] in (".", ",")
+
+
+def _mehrzahl_anwenden(text: str) -> tuple[str, tuple[dict, ...]]:
+    """Die Regel auf den **schon übersetzten** Text anwenden.
+
+    Der Ablauf, und er ist bewusst eng gefasst:
+
+    1. Eine Zahl grösser eins finden (Wort oder Ziffer).
+    2. Die Wortgruppe dahinter lesen — höchstens :data:`MEHRZAHL_MAX_GRUPPE` Wörter,
+       **nur durch Leerzeichen getrennt** und keines davon aus :data:`_MEHRZAHL_TRENNER`.
+    3. Das **letzte** Wort dieser Gruppe ist der Kopf. Nur er wird gebeugt.
+
+    **Warum nur Leerzeichen trennen dürfen.** «vier, betonwaende» ist eine Aufzählung aus
+    zwei Gliedern, kein Zahlwort vor seinem Hauptwort; das Komma sagt es. Der Auftrag
+    verlangt «unmittelbar davor», und unmittelbar heisst hier wörtlich. Dieser Fall ist
+    auch der Grund, dass die Einschränkung überhaupt auffiel: Er steht seit dem 12.09.2026
+    als gemeldeter Prompt in den Tests dieses Moduls.
+
+    **Warum die Gruppe an einem unbekannten Wort nicht endet.** ``twelve window frames``
+    — ``frames`` kennt das Glossar nicht, aber es ist offensichtlich der Kopf. Endete die
+    Gruppe davor, entstünde ``twelve windows frames``: falscher als vorher. Die Gruppe
+    läuft darum bis zum Trennwort, und weil der Kopf dann ``frames`` heisst und in keinem
+    Verzeichnis steht, geschieht nichts. Das ist die richtige Richtung.
+    """
+    stuecke = list(_ZAHL_ODER_WORT.finditer(text or ""))
+    befunde: list[dict] = []
+    ersetzungen: list[tuple[int, int, str]] = []
+    # Welche Köpfe schon eine Zahl haben. Der Grund steht unten bei `behandelt.add`.
+    behandelt: set[int] = set()
+
+    # Von HINTEN nach vorn, damit bei zwei Zahlen vor demselben Kopf die NÄHERE gewinnt.
+    for i in range(len(stuecke) - 1, -1, -1):
+        zahlfund = stuecke[i]
+        if not _loest_mehrzahl_aus(zahlfund.group(0)):
+            continue
+        # Eine Nachkommastelle ist keine Anzahl — `f2.8 objektiv` ergab `lenses`.
+        if _ist_nachkommastelle(text, stuecke, i):
+            continue
+
+        gruppe: list[re.Match] = []
+        j = i + 1
+        while j < len(stuecke):
+            if not _schliesst_an(text[stuecke[j - 1].end():stuecke[j].start()]):
+                break
+            wort = stuecke[j].group(0).lower()
+            if wort.isdigit() or wort in _MEHRZAHL_TRENNER:
+                break
+            gruppe.append(stuecke[j])
+            if len(gruppe) > MEHRZAHL_MAX_GRUPPE:
+                break
+            j += 1
+
+        if not gruppe or len(gruppe) > MEHRZAHL_MAX_GRUPPE:
+            # **Hier gab die Regel auf — und sagt es.** Vorher stand an dieser Stelle ein
+            # blosses `continue`: Der Text blieb richtigerweise stehen, aber im Befund
+            # stand danach gar nichts, und nichts liest sich wie «nichts zu tun». Eine
+            # Zahl ohne lesbare Wortgruppe ist aber genau der NICHT-GEMESSEN-Fall dieses
+            # Repos — «zwei, fenster» wäre mit einem Tippfehler weniger eine Mehrzahl,
+            # und «drei grosse alte hohe fenster» ist der Regel schlicht zu lang.
+            # `einzahl` ist `None`, weil es kein Wort gibt, auf das sich der Befund
+            # bezöge; der Grund ist derselbe wie beim unbekannten Kopf.
+            befunde.append({"zahl": zahlfund.group(0).lower(), "einzahl": None,
+                            "mehrzahl": None, "grund": MEHRZAHL_OFFEN})
+            continue
+
+        kopf = gruppe[-1]
+        # **Ein Kopf, eine Zahl** — und das ist keine Vorsichtsmassnahme, sondern ein
+        # gemessener Fehler. In ``three ten window`` (so entsteht ein zerlegtes
+        # «dreizehn», wenn man die Zahlwortsperre der Kompositumsregel entschärft) sind
+        # BEIDE Zahlen Auslöser, beide fanden denselben Kopf, und beide beugten ihn:
+        # ``three ten windowss``. Genau die doppelte Bildung, gegen die
+        # :data:`SCHON_MEHRZAHL` steht — nur eine Ebene tiefer, im eigenen Durchgang.
+        # Gefunden hat ihn die Mutationsprobe zur Zahlwortsperre, nicht das Nachdenken.
+        if kopf.start() in behandelt:
+            continue
+        behandelt.add(kopf.start())
+
+        befund = {"zahl": zahlfund.group(0).lower(), **mehrzahl_befund(kopf.group(0))}
+        befunde.append(befund)
+        if befund["mehrzahl"]:
+            ersetzungen.append((kopf.start(), kopf.end(), befund["mehrzahl"]))
+
+    # Von hinten, damit die vorderen Stellen gültig bleiben. Der Lauf oben ging schon
+    # rückwärts, die Liste steht also bereits in dieser Reihenfolge.
+    for anfang, ende, ersatz in ersetzungen:
+        text = text[:anfang] + ersatz + text[ende:]
+    # Der Befund dagegen soll in der Reihenfolge des Textes lesbar sein.
+    return text, tuple(reversed(befunde))
+
+
 def _glossar_muster() -> re.Pattern:
     """Ein Muster über alle Glossareinträge, **längste Wendung zuerst**.
 
@@ -1066,6 +1476,19 @@ def glossar_uebersetzung(text: str) -> dict:
 
     neu = _WORT.sub(_regel, neu)
 
+    # `unbekannt` wird VOR der Mehrzahl gemessen — und das ist kein Detail.
+    #
+    # Die Mehrzahlregel fasst ausschliesslich Wörter an, die bereits englisch sind, und
+    # macht aus `window` ein `windows`. Der englische Wortschatz dieses Moduls
+    # (`_ENGLISCHER_WORTSCHATZ`) kennt aber nur die Formen, die im Glossar stehen — ein
+    # `windows` steht dort nicht. Nach der Beugung gemessen, meldete `unbekannt` also
+    # ausgerechnet das Wort als «nicht übersetzt», das diese Regel gerade richtig
+    # gestellt hat, und `vollstaendig` kippte auf False. Gemessen am 16.09.2026 an
+    # «zwölf fenster»: vor dieser Zeile `unbekannt = ('windows',)`.
+    unbekannt = _nicht_englisch(neu)
+
+    neu, mehrzahlen = _mehrzahl_anwenden(neu)
+
     return {
         "text": neu,
         "verfahren": VERFAHREN_GLOSSAR,
@@ -1075,7 +1498,12 @@ def glossar_uebersetzung(text: str) -> dict:
         # Kompositum zerlegen, das keines ist —, und wer das Ergebnis prüft, soll die
         # beiden Sorten auseinanderhalten können, ohne den Code zu lesen.
         "regeln": tuple(regeln),
-        "unbekannt": _nicht_englisch(neu),
+        # Die Mehrzahl steht getrennt von `regeln`, weil sie eine andere Sorte Eingriff
+        # ist: `regeln` sagt, wie ein DEUTSCHES Wort zu seinem englischen kam; `mehrzahl`
+        # sagt, was danach am ENGLISCHEN Wort noch geändert wurde. Und sie steht auch da,
+        # wo nichts geändert wurde — ein Eintrag mit `mehrzahl: None` nennt den Grund.
+        "mehrzahl": mehrzahlen,
+        "unbekannt": unbekannt,
     }
 
 
@@ -1157,8 +1585,8 @@ def uebersetze(text: str, *, uebersetzer=None) -> dict:
             Übersetzungsmodell ein, ohne dass ein einziger Aufrufer sich ändert.
 
     Returns:
-        ``{original, uebersetzt, noetig, ersetzt, unbekannt, vollstaendig, verfahren,
-        erkennung, warnungen}``.
+        ``{original, uebersetzt, noetig, ersetzt, regeln, mehrzahl, unbekannt,
+        vollstaendig, verfahren, erkennung, warnungen}``.
 
         ``noetig`` sagt, ob überhaupt Deutsch erkannt wurde. Ist es ``False``, bleibt
         ``uebersetzt`` gleich ``original`` und ``verfahren`` ist ``"keine"`` — ein
@@ -1196,6 +1624,7 @@ def uebersetze(text: str, *, uebersetzer=None) -> dict:
             "evidenz": (),
             "ersetzt": (),
             "regeln": (),
+            "mehrzahl": (),
             "unbekannt": (),
             "vollstaendig": True,
             "verfahren": VERFAHREN_KEINE,
@@ -1232,6 +1661,10 @@ def uebersetze(text: str, *, uebersetzer=None) -> dict:
         "evidenz": evidenz,
         "ersetzt": tuple(ergebnis.get("ersetzt") or ()),
         "regeln": tuple(ergebnis.get("regeln") or ()),
+        # Ein eingehängter Übersetzer muss die Mehrzahl nicht kennen; er liefert den
+        # Schlüssel dann schlicht nicht, und hier steht ein leeres Feld statt einer
+        # Behauptung.
+        "mehrzahl": tuple(ergebnis.get("mehrzahl") or ()),
         "unbekannt": unbekannt,
         "vollstaendig": not unbekannt,
         "verfahren": ergebnis["verfahren"],
@@ -1275,6 +1708,9 @@ __all__ = [
     "ENGLISCH_AUCH", "glossar_evidenz", "glossar_uebersetzung",
     "ART_BEUGUNG", "ART_EINTRAG", "ART_KOMPOSITUM", "ENDUNGEN", "MIN_TEILLAENGE",
     "ZAHLWOERTER",
+    "MEHRZAHL_AUSLOESER", "MEHRZAHL_GEBEUGT", "MEHRZAHL_MAX_GRUPPE", "MEHRZAHL_OFFEN",
+    "MEHRZAHL_SCHON", "MEHRZAHL_UNREGELMAESSIG", "MEHRZAHL_UNZAEHLBAR",
+    "OHNE_MEHRZAHL", "SCHON_MEHRZAHL", "ZAEHLBAR", "mehrzahl", "mehrzahl_befund",
     "grundform", "ist_deutsch", "sieht_englisch_aus", "sprachwarnung", "uebersetze",
     "zerlege_kompositum",
 ]
