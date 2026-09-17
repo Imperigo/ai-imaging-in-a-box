@@ -1008,7 +1008,7 @@ def test_ein_abbruch_mitten_im_schreiben_laesst_die_alte_ablage_stehen(tmp_path,
 def test_eine_zeichenkette_als_zustellung_wird_abgewiesen_und_nicht_zerlegt(tmp_path):
     """**Dieselbe Falle wie beim Blickvermerk, nur älter — und hier wiegt sie schwerer.**
 
-    ``vermerke_zustellung("auf-1", wurzel)`` legte bis zum 16.09.2026 fünf Zustellvermerke
+    ``vermerke_zustellung(wurzel, "auf-1")`` legte bis zum 16.09.2026 fünf Zustellvermerke
     an: ``a``, ``u``, ``f``, ``-``, ``1``. Kein Aufruf scheiterte, keine Datei fehlte.
 
     Der Schaden ist nicht der Unsinn im Buch, sondern was danebensteht: Der **echte**
@@ -1017,14 +1017,14 @@ def test_eine_zeichenkette_als_zustellung_wird_abgewiesen_und_nicht_zerlegt(tmp_
     *Ein Fehlschlag, der wie ein Erfolg aussieht, wird nicht gefunden; er wird geglaubt.*
     """
     with pytest.raises(auftragspost.PostError, match="einzelne Kennung"):
-        auftragspost.vermerke_zustellung("auf-20260901-01", tmp_path)
+        auftragspost.vermerke_zustellung(tmp_path, "auf-20260901-01")
 
     assert not (tmp_path / auftragspost.ZUSTELLUNG_DATEI).exists(), (
         "Ein abgewiesener Aufruf darf keine halbe Ablage hinterlassen.")
 
     # GEGENPROBE: Die Liste mit einer einzigen Kennung geht weiter — der Wächter darf
     # nicht den Normalfall treffen.
-    auftragspost.vermerke_zustellung(["auf-20260901-01"], tmp_path, wann="2026-09-05T08:00:00Z")
+    auftragspost.vermerke_zustellung(tmp_path, ["auf-20260901-01"], wann="2026-09-05T08:00:00Z")
     vermerk = json.loads((tmp_path / auftragspost.ZUSTELLUNG_DATEI).read_text(encoding="utf-8"))
     assert vermerk == {"auf-20260901-01": "2026-09-05T08:00:00Z"}
 
@@ -1435,3 +1435,110 @@ def test_ein_von_hand_eingetragener_zeitstempel_wird_vertragen(tmp_path, capsys)
     assert "gesehen am 2026-09-05" in ausgabe, ausgabe
     assert "von unbekannt" in ausgabe, (
         f"wessen Blick es war, sagt der blosse Zeitstempel nicht: {ausgabe!r}")
+
+
+def test_ein_blickvermerk_von_uns_selbst_wird_abgewiesen(tmp_path):
+    """**Der teuerste Fehler, den diese Ablage machen kann.**
+
+    Alle anderen Lagen von :func:`warum_keine_antwort` lesen unsere eigene Buchführung.
+    ``gesehen, ohne antwort`` liest das eine, was wir uns **nicht selbst geben können**:
+    dass drüben jemand hingesehen hat. Genau darum schlägt diese Lage die beiden
+    Vermutungslagen.
+
+    Ein Eintrag mit ``von="kern"`` hiesse *«wir haben gesehen, dass wir es geschrieben
+    haben»* — und er würde die Vermutungslagen trotzdem schlagen, obwohl er selbst nichts
+    als eine dritte Vermutung ist. *Eine Zahl, die aussieht wie eine Tatsache von drüben
+    und von uns kommt, ist schlimmer als gar keine.*
+    """
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+
+    with pytest.raises(auftragspost.PostError, match="sind wir selbst"):
+        auftragspost.vermerke_gesehen(tmp_path, ["auf-20260901-01"],
+                                      von=auftragspost.SELBST)
+
+    assert not (tmp_path / auftragspost.GESEHEN_DATEI).exists(), (
+        "Ein abgewiesener Aufruf darf keine halbe Ablage hinterlassen.")
+
+    # GEGENPROBE: Die echten Adressaten gehen weiter durch — der Riegel darf nicht
+    # einfach alles abweisen.
+    for adressat in ("cloud", "ui", "local"):
+        pfad = tmp_path / auftragspost.GESEHEN_DATEI
+        if pfad.is_file():
+            pfad.unlink()
+        assert auftragspost.vermerke_gesehen(
+            tmp_path, ["auf-20260901-01"], von=adressat,
+            jetzt="2026-09-05T08:00:00Z") == 1, f"{adressat} muss durchgehen"
+
+
+def test_MUTATION_ohne_den_selbst_riegel_schlaegt_ein_eigener_vermerk_die_vermutung(tmp_path):
+    """**MUTATIONSPROBE.** Der Riegel weg — und wir belegen uns selbst.
+
+    Ohne ihn trägt `warum_keine_antwort` die Lage ``gesehen, ohne antwort`` für einen
+    Auftrag, den **niemand ausser uns** je angesehen hat.
+
+    **Und die Probe hat gezeigt, dass es schlimmer ist als gedacht.** Die Auswertung nennt
+    den Adressaten des *Auftrags*, nicht das ``von`` des Vermerks — das ist so gewollt und
+    anderswo begründet. Ein Eintrag von uns erscheint darum nicht als *«kern hat
+    hingesehen»*, sondern als **«cloud hat ihn gesehen»**: eine Aussage über einen Dritten,
+    die wir selbst erzeugt haben und die er nie gemacht hat. Wer den Befund liest, sieht
+    uns darin nirgends.
+
+    *Genau deshalb wird der Eintrag vorne abgewiesen und nicht hinten gekennzeichnet.*
+    """
+    _lege_auftrag(tmp_path, "auf-20260901-01", "cloud", "2026-09-01T00:00:00Z")
+    _vermerke(tmp_path, "auf-20260901-01")
+
+    echt = auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))
+    assert echt[0]["lage"] == auftragspost.KEIN_LEBENSZEICHEN, "ohne Vermerk: Vermutung"
+
+    urspruenglich = auftragspost.SELBST
+    try:
+        auftragspost.SELBST = "niemand-mit-diesem-namen"   # der Riegel greift nicht mehr
+        auftragspost.vermerke_gesehen(tmp_path, ["auf-20260901-01"], von="kern",
+                                      jetzt="2026-09-05T08:00:00Z")
+    finally:
+        auftragspost.SELBST = urspruenglich
+
+    ohne = auftragspost.warum_keine_antwort(tmp_path, heute=_date(2026, 9, 16))
+    assert ohne[0]["lage"] == auftragspost.GESEHEN_OHNE_ANTWORT, (
+        "Ohne Riegel muss der eigene Vermerk die Vermutungslage schlagen — sonst prüft "
+        "der Riegel etwas anderes, als seine Begründung behauptet.")
+
+    # UND HIER IST ES SCHLIMMER, ALS DER RIEGEL BEHAUPTET. Die Auswertung nennt den
+    # Adressaten des AUFTRAGS und nicht das `von` des Vermerks (so gewollt, siehe
+    # `tools/auftragspost.py`). Ein Eintrag von uns erscheint damit nicht als «kern hat
+    # hingesehen», sondern als «CLOUD hat ihn gesehen» — eine Aussage über einen Dritten,
+    # die wir selbst erzeugt haben und die er nie gemacht hat.
+    assert "cloud hat ihn gesehen" in ohne[0]["grund"], (
+        f"Der Grund schreibt den eigenen Vermerk dem Adressaten zu: {ohne[0]['grund']!r}")
+    assert "kern" not in ohne[0]["grund"], (
+        "…und nennt uns dabei nirgends. Wer den Befund liest, sieht nicht, dass er von "
+        "uns stammt — genau darum wird der Eintrag vorne abgewiesen und nicht hinten "
+        "gekennzeichnet.")
+
+
+def test_die_vertauschte_argumentreihenfolge_bekommt_einen_wegweiser(tmp_path):
+    """Seit dem 17.09.2026 steht die Repo-Wurzel zuerst — wie überall sonst im Modul.
+
+    Ein vertauschter Aufruf bräche ohnehin, aber mit ``TypeError: expected str, bytes or
+    os.PathLike object, not list`` aus dem Inneren von ``pathlib``. Daran sieht niemand,
+    was er falsch gemacht hat. *Ein Wegweiser kostet drei Zeilen; ein falsch gelesener
+    Traceback kostet eine halbe Stunde.*
+    """
+    with pytest.raises(auftragspost.PostError, match="vertauscht"):
+        auftragspost.vermerke_zustellung(["auf-20260901-01"], tmp_path)   # alte Ordnung
+
+    assert not (tmp_path / auftragspost.ZUSTELLUNG_DATEI).exists()
+
+    # GEGENPROBE: die neue Ordnung geht durch.
+    auftragspost.vermerke_zustellung(tmp_path, ["auf-20260901-01"],
+                                     wann="2026-09-05T08:00:00Z")
+    vermerk = json.loads((tmp_path / auftragspost.ZUSTELLUNG_DATEI).read_text(encoding="utf-8"))
+    assert vermerk == {"auf-20260901-01": "2026-09-05T08:00:00Z"}
+
+    # Und die beiden Funktionen sind jetzt gleich gebaut — das war der ganze Punkt.
+    import inspect
+    erste = list(inspect.signature(auftragspost.vermerke_zustellung).parameters)[:2]
+    zweite = list(inspect.signature(auftragspost.vermerke_gesehen).parameters)[:2]
+    assert erste == zweite == ["repo_wurzel", "kennungen"], (
+        f"Dieselbe Datei, zwei Reihenfolgen — genau das war der Befund: {erste} / {zweite}")

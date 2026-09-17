@@ -5364,7 +5364,7 @@ Bekannt und ausdrücklich nicht erledigt:
       markiert), zweiter Auftragsweg ja/nein, Push-Zugang für KosmoOrbit in unser
       öffentliches Repo, und das Scharfschalten der neuen Normierung. *Keiner davon ist
       technisch; alle vier sind Produktentscheide. Adressat: Owner.*
-- [ ] **Zwei Ecken der Auftragspost, von der Gegenprüfung gemeldet.** Erstens steht
+- [x] **Zwei Ecken der Auftragspost, von der Gegenprüfung gemeldet.** Erstens steht
       `vermerke_zustellung(kennungen, repo_wurzel, …)` gegen
       `vermerke_gesehen(repo_wurzel, kennungen, …)` — dieselbe Datei, vertauschte
       Reihenfolge. Vertauscht aufgerufen bricht es laut ab (`TypeError`) und nicht still,
@@ -5372,8 +5372,17 @@ Bekannt und ausdrücklich nicht erledigt:
       nimmt `vermerke_gesehen` auch `von="kern"` an, also einen «Gesehen»-Vermerk von uns
       selbst — und der Sinn der Ablage ist gerade die Auskunft *vom Adressaten*.
       *Beides erst richten, wenn der Einstieg gebaut wird: Eine Signatur zu drehen, die
-      niemand aufruft, ändert nichts und kostet eine Stelle mehr Gedächtnis. Adressat:
-      `kern`.*
+      niemand aufruft, ändert nichts und kostet eine Stelle mehr Gedächtnis.*
+      **Erledigt am 17.09.2026, weil der Einstieg seit dem 16.09. da ist.** Die Wurzel
+      steht jetzt in beiden Funktionen zuerst — wie überall sonst im Modul; der alte
+      Aufruf bekommt einen Wegweiser statt eines `TypeError` aus dem Inneren von
+      `pathlib`. Und `von="kern"` wird abgewiesen.
+      **Dabei kam heraus, dass der zweite Punkt schwerer wiegt als gemeldet:** Die
+      Auswertung nennt den Adressaten des *Auftrags*, nicht das `von` des Vermerks. Ein
+      Eintrag von uns erschiene darum nicht als «kern hat hingesehen», sondern als
+      **«cloud hat ihn gesehen»** — eine Aussage über einen Dritten, die wir selbst
+      erzeugt haben und die er nie gemacht hat. *Darum wird er vorne abgewiesen und nicht
+      hinten gekennzeichnet.* Beide Riegel mit Mutationsprobe belegt.
 - [x] **Eine Zahl vor einem Einzahl-Hauptwort.** — Behoben am 16.09.2026: `zwölf fenster`
       ergibt `twelve windows`. **Die Grenzen sind der eigentliche Inhalt:** `drei glas`
       bleibt `three glass` und `zwei beton` bleibt `two concrete`, weil nicht zählbare

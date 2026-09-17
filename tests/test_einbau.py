@@ -440,7 +440,7 @@ def test_ein_ausgelieferter_auftrag_steht_nicht_in_dieser_meldung(tmp_path, caps
     auf.schreibe_auftrag(
         auf.baue_auftrag(auftrag_id="auf-c", art="frage", beschreibung="x",
                          worker=auf.WORKER_UI), tmp_path)
-    auftragspost.vermerke_zustellung(["auf-c"], tmp_path)
+    auftragspost.vermerke_zustellung(tmp_path, ["auf-c"])
     _mit_blatt(tmp_path)
     _einbau_cli().main(["--repo", str(tmp_path)])
     assert "NICHT AUSGELIEFERT" not in capsys.readouterr().out

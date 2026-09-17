@@ -419,7 +419,7 @@ def _vermerke(blocks, repo) -> None:
         if satz and satz.get("worker") in auftragspost.ZUSTELLUNG_NOETIG:
             kennungen.append(kennung)
     if kennungen:
-        auftragspost.vermerke_zustellung(kennungen, repo)
+        auftragspost.vermerke_zustellung(repo, kennungen)
         print(f"zustellvermerk: {len(kennungen)} Kennung(en) nachgezogen")
 
 

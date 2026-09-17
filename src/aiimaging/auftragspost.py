@@ -380,7 +380,7 @@ def _zustellvermerk(repo_wurzel) -> dict:
     return gelesen if isinstance(gelesen, dict) else {}
 
 
-def vermerke_zustellung(kennungen, repo_wurzel, *, wann: str | None = None) -> Path:
+def vermerke_zustellung(repo_wurzel, kennungen, *, wann: str | None = None) -> Path:
     """Festhalten, dass diese Kennungen als Block hinausgegangen sind.
 
     **Wozu, und der Fehler, der es ausgelöst hat.** Am 03.09.2026 lagen ``auf-70`` und
@@ -398,6 +398,24 @@ def vermerke_zustellung(kennungen, repo_wurzel, *, wann: str | None = None) -> P
     Raises:
         PostError: ``kennungen`` ist eine einzelne Zeichenkette (siehe unten).
     """
+    # DIE ARGUMENTE HABEN AM 17.09.2026 DIE PLAETZE GETAUSCHT, und ein alter Aufruf soll
+    # das erfahren statt es zu erraten. Bis dahin hiess es hier `(kennungen, repo_wurzel)`
+    # und in `vermerke_gesehen` `(repo_wurzel, kennungen)` — dieselbe Datei, zwei
+    # Reihenfolgen. Ueberall sonst in diesem Modul steht die Repo-Wurzel zuerst
+    # (`offene_blocks`, `gesehen_vermerke`, `warum_keine_antwort`), also war DIESE Funktion
+    # der Ausreisser.
+    #
+    # Ein vertauschter Aufruf braeche ohnehin — aber mit `TypeError: expected str, bytes or
+    # os.PathLike object, not list` aus dem Inneren von `pathlib`, und daran sieht niemand,
+    # was er falsch gemacht hat. Ein Wegweiser kostet drei Zeilen.
+    if isinstance(repo_wurzel, (list, tuple, set)) and not isinstance(kennungen, (list, tuple, set)):
+        raise PostError(
+            f"Die Argumente stehen vertauscht: seit dem 17.09.2026 heisst es "
+            f"vermerke_zustellung(repo_wurzel, kennungen) — die Repo-Wurzel zuerst, wie "
+            f"ueberall sonst in diesem Modul. Bekommen habe ich "
+            f"{type(repo_wurzel).__name__} als Wurzel und {type(kennungen).__name__} als "
+            f"Kennungen.")
+
     if isinstance(kennungen, str):
         # DERSELBE FEHLER WIE IN `vermerke_gesehen`, nur älter — am 16.09.2026 beim
         # Absichern der neuen Ablage auch hier nachgemessen:
@@ -434,6 +452,11 @@ def vermerke_zustellung(kennungen, repo_wurzel, *, wann: str | None = None) -> P
 #: drüben jemand hingesehen hat. Sie kommt **vom Adressaten** (Zustellbeleg, Nebensatz in
 #: einem Ergebnis, mündlich über den Owner) und wird von Hand oder von `tools/` eingetragen.
 GESEHEN_DATEI = "auftraege/gesehen.json"
+
+#: Wir selbst. Ein Blickvermerk unter diesem Namen wird abgewiesen — siehe
+#: :func:`vermerke_gesehen`. Die Konstante steht hier und nicht als Zeichenkette im
+#: Code, damit der Riegel mitwandert, wenn der Adressat einmal anders heisst.
+SELBST = "kern"
 
 
 def _schreibe_atomar(pfad: Path, daten: dict) -> Path:
@@ -544,6 +567,20 @@ def vermerke_gesehen(repo_wurzel, kennungen, *, von: str,
         raise PostError(
             f"«{von}» ist kein bekannter Adressat ({', '.join(_auftrag.WORKER)}). Ein "
             f"Vermerk unter einem unbekannten Namen wird von keiner Auswertung gefunden.")
+    if von == SELBST:
+        # DER GANZE ZWECK DIESER ABLAGE IST DIE AUSKUNFT VOM ADRESSATEN. Alle anderen
+        # Lagen von `warum_keine_antwort` lesen unsere eigene Buchfuehrung; diese eine
+        # liest etwas, das nur drueben jemand wissen kann. Ein Vermerk mit `von="kern"`
+        # hiesse «wir haben gesehen, dass wir es geschrieben haben» — er schluege die
+        # beiden Vermutungslagen, obwohl er selbst nichts als eine dritte Vermutung ist.
+        #
+        # Das waere der teuerste Fehler, den diese Ablage machen kann: Sie wuerde eine
+        # Zahl liefern, die aussieht wie eine Tatsache von drueben, und sie kaeme von uns.
+        raise PostError(
+            f"«{SELBST}» sind wir selbst — ein Blickvermerk von uns ueber uns ist keine "
+            f"Auskunft. Diese Ablage traegt das eine, was wir uns NICHT selbst geben "
+            f"koennen: dass drueben jemand hingesehen hat. Ein Eintrag von hier waere "
+            f"eine Vermutung im Gewand einer Tatsache.")
 
     vermerk = gesehen_vermerke(repo_wurzel)
     zeit = jetzt or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -742,7 +779,7 @@ def unzugestellt(repo_wurzel) -> list[dict]:
              "erstellt": a.get("erstellt")} for a in offen]
 
 
-__all__ = ["AKTIV_UEBERGANGEN", "BREITE", "FRISCH", "FRIST_FRISCH_TAGE", "GESEHEN_DATEI",
+__all__ = ["AKTIV_UEBERGANGEN", "BREITE", "FRISCH", "SELBST", "FRIST_FRISCH_TAGE", "GESEHEN_DATEI",
            "GESEHEN_OHNE_ANTWORT", "KEIN_LEBENSZEICHEN",
            "LAGEN", "NICHT_ZUGESTELLT", "RUECKWEG", "ZUSTELLUNG_DATEI", "ZUSTELLUNG_NOETIG",
            "PostError", "warum_keine_antwort",
