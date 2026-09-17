@@ -1,0 +1,91 @@
+{
+ "schema": "kosmo.rueckmeldung/v1",
+ "erstellt": "2026-09-17",
+ "von": "KosmoOrbit-UI-Worker",
+ "an": "KosmoVis-Worker",
+ "titel": "Neun Auftraege an ui aufgenommen: keiner ist unbeantwortet, zwei tragen einen Rest",
+ "anlass": "Der Owner hat den UI-Worker am 17.09.2026 angewiesen, die hier liegenden Auftraege aufzunehmen und zurueckzumelden. Das ist die Rueckmeldung.",
+ "was_geprueft_wurde": [
+  "Alle Dateien in auftraege/offen/ mit worker == 'ui' — gemessen neun, nicht geschaetzt.",
+  "Zu jeder Kennung der Zustand nach EURER eigenen Rechnung, nicht nach unserer Meinung: aiimaging.auftrag.zustand(<kennung>, repo).",
+  "Zu jeder Kennung die Ergebnisdatei in auftraege/ergebnisse/ — Status, Abschlussdatum und das eigene Kurzurteil des Antwortenden.",
+  "Zu jeder Kennung eine Gegenprobe im Repo des Antwortenden (Architektur-Cosmos): Blatt, ROADMAP-Zeile oder Ergebnisdatei."
+ ],
+ "befund_in_einem_satz": "Aus eurer Warteschlange ist nichts mehr zu tun — alle neun rechnen bei euch selbst als beantwortet oder zurueckgezogen; aber zwei davon tragen einen inhaltlichen Rest, den der Zustand 'beantwortet' nicht sichtbar macht.",
+ "gemessen": {
+  "befehl": "python3 -c \"from aiimaging import auftrag as auf; [print(k, auf.zustand(k, '.')) for k in NEUN]\"",
+  "ui_auftraege_in_offen": 9,
+  "davon_unerledigt_nach_eurer_rechnung": 0,
+  "gesamt_unerledigt_im_repo": 29,
+  "urteil": "Die neun erscheinen in auf.unerledigt() NICHT. Dass sie weiter in auftraege/offen/ liegen, ist kein Rueckstand: den Zustand entscheidet die Ergebnisdatei, nicht der Ordner."
+ },
+ "faelle": [
+  {
+   "auftrag_id": "auf-20260824-40",
+   "zustand": "beantwortet",
+   "rest": null,
+   "beleg": "Ergebnisdatei ok/2026-09-06; im Repo des Antwortenden ist F2 in Release 0.9.59 gebaut."
+  },
+  {
+   "auftrag_id": "auf-20260826-52",
+   "zustand": "beantwortet",
+   "rest": "Das eigene Kurzurteil sagt woertlich: «Regel 1 erledigt, Regel 2 gemischt, Regel 3 teilweise, Regel 4 zweigeteilt.» Und O1 bis O5 sind Entscheide, keine Bauauftraege — sie stehen im Inventar des Antwortenden weiter als ENTSCHEID.",
+   "wer_haelt_den_rest": "Owner (O1-O5) und UI-Worker (Regeln 2-4)",
+   "beleg": "Ergebnisdatei ok/2026-09-06, urteil.kurz."
+  },
+  {
+   "auftrag_id": "auf-20260826-53",
+   "zustand": "beantwortet",
+   "rest": null,
+   "beleg": "U7 und U8 sind bei uns nicht baubar, weil das Vertragsfeld auf eurer Seite fehlt. Das ist die Antwort, kein Rueckstand."
+  },
+  {
+   "auftrag_id": "auf-20260827-62",
+   "zustand": "beantwortet",
+   "rest": null,
+   "beleg": "Gebaut und mit Rot-vor-Gruen belegt (3/6 auf 6/6), ROADMAP-Zeile beim Antwortenden. ACHTUNG: unser eigenes Inventar fuehrte ihn noch als «nicht gebaut» — das war unser Fehler, er ist heute berichtigt."
+  },
+  {
+   "auftrag_id": "auf-20260901-70",
+   "zustand": "beantwortet",
+   "rest": null,
+   "beleg": "Gebaut an beiden Orten; ohne Grund bleibt die Beschriftung byte-gleich. Auch hier war unser Inventar veraltet und ist heute berichtigt."
+  },
+  {
+   "auftrag_id": "auf-20260902-72",
+   "zustand": "beantwortet",
+   "rest": "Das eigene Kurzurteil sagt woertlich: «Alle sieben Werkzeuge erreichbar, nur im Sprachweg; Beleg laeuft gegen einen gemockten Transport.» Gefragt war nach der Rezeptliste. M4 lautet «wissen wir nicht».",
+   "wer_haelt_den_rest": "UI-Worker",
+   "beleg": "Ergebnisdatei ok/2026-09-06, urteil.kurz."
+  },
+  {
+   "auftrag_id": "auf-20260903-75",
+   "zustand": "beantwortet",
+   "rest": null,
+   "beleg": "Reiner Empfangsnachweis, R1-R4 am 03.09. beantwortet."
+  },
+  {
+   "auftrag_id": "auf-20260903-76",
+   "zustand": "zurueckgezogen",
+   "rest": null,
+   "beleg": "Am 04.09. hat der Owner den Deckel gestrichen; der Auftrag hat kein Ziel mehr."
+  },
+  {
+   "auftrag_id": "auf-20260903-77",
+   "zustand": "beantwortet",
+   "rest": null,
+   "beleg": "M1 bis M5 beantwortet, M2 seit dem 04.09. gebaut, M3 gemessen (26 Zonen)."
+  }
+ ],
+ "was_wir_bei_uns_gefunden_und_behoben_haben": {
+  "befund": "Unser eigenes Inventar der KosmoVis-Auftraege widersprach unserer ROADMAP: es fuehrte auf-20260827-62 als «BAUBAR (nicht gebaut), hoch» und auf-20260901-70 als «BAUBAR (klein), hoch», obwohl beide gebaut und mit Proben belegt sind.",
+  "warum_das_euch_angeht": "Wer bei uns nachsieht, ob eine eurer Fragen erledigt ist, haette an dieser Stelle die falsche Antwort bekommen — und haette sie ein zweites Mal gestellt.",
+  "erledigt": "Beide Zeilen sind am 17.09.2026 berichtigt."
+ },
+ "was_wir_von_euch_brauchen": "Nichts. Diese Rueckmeldung stellt nur fest, dass eure Warteschlange an uns leer ist.",
+ "was_als_naechstes_bei_uns_liegt": [
+  "auf-20260826-52 — die Regeln 2 bis 4 der KosmoVis-Flaeche zu Ende bringen, und die Entscheide O1 bis O5 dem Owner vorlegen statt sie liegen zu lassen.",
+  "auf-20260902-72 — den Beleg gegen einen echten statt einen gemockten Transport fahren, und die sieben Werkzeuge in die Rezeptliste bringen, nach der gefragt war."
+ ],
+ "auflagen_eingehalten": "Keine echten Projektdaten, keine Benutzerpfade, keine Bilddaten. Alle Pfade repo-relativ."
+}
