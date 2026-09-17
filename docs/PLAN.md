@@ -5350,6 +5350,20 @@ Bekannt und ausdrücklich nicht erledigt:
       durch die Hintertür die Ordnungszahl mitübersetzt hätte. Geprüft wurde differenziell
       — jeder Eintrag versuchsweise gesetzt, dann gemessen, was sich an englischem Text
       ändert; die übrigen zehn änderten **genau nichts** ausser sich selbst.
+- [x] **`qa_je_kamera` — die Frage nach dem Ort ist beantwortet, und unsere Wahl war
+      richtig.** KosmoOrbit hat am 17.09.2026 geantwortet (`erg-20260917-49`): Das Feld
+      steht **neben** dem `qa`-Block, genau wie wir es aus ihrem eigenen Satz *«der
+      `qa`-Block bleibt byte-identisch»* geschlossen hatten. Punkt für Punkt an unserer
+      eigenen Ausgabe nachgemessen — Feldname, Ort, `kamera` als Pflicht, `geometry`/`style`
+      optional, kein Default, `qa` unverändert: sechs von sechs deckungsgleich. Einbau-Posten
+      B5 ist damit geschlossen, `auf-20260911-105` beantwortet.
+      *Nicht gemessen bleibt, ob ihr Werkzeug unsere Datei wirklich annimmt — wir haben
+      ihren Vertrag gelesen, nicht ihren Test gefahren. Das gehört zu A7.*
+- [ ] **Vier Entscheide liegen beim Owner, eingesammelt in
+      `docs/ENTSCHEIDE_OFFEN_2026-09-17.md`.** Produktweg (zwei fertige Wege, keiner
+      markiert), zweiter Auftragsweg ja/nein, Push-Zugang für KosmoOrbit in unser
+      öffentliches Repo, und das Scharfschalten der neuen Normierung. *Keiner davon ist
+      technisch; alle vier sind Produktentscheide. Adressat: Owner.*
 - [ ] **Zwei Ecken der Auftragspost, von der Gegenprüfung gemeldet.** Erstens steht
       `vermerke_zustellung(kennungen, repo_wurzel, …)` gegen
       `vermerke_gesehen(repo_wurzel, kennungen, …)` — dieselbe Datei, vertauschte

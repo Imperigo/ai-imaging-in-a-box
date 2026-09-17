@@ -1,0 +1,26 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260911-105",
+  "status": "ok",
+  "beendet": "2026-09-17T00:00:00Z",
+  "art": "beantwortet — Vertragsfrage, von KosmoOrbit",
+  "die_antwort": {
+    "ein_satz": "NEBEN dem qa-Block. Unser Schluss aus ihrem eigenen Satz «der bestehende qa-Block bleibt BYTE-IDENTISCH» war richtig — sie haben es genauso gebaut.",
+    "der_vertrag_im_wortlaut": "qa_je_kamera: z.array(z.object({kamera: z.string(), geometry: GeometryQA.optional(), style: StyleQA.optional()})).optional() — render-result.ts Zeilen 366-393.",
+    "punkt_fuer_punkt_verglichen": {
+      "feldname": "qa_je_kamera — deckungsgleich",
+      "ort": "neben qa, nicht darin — deckungsgleich",
+      "kamera_pflicht": "Pflicht je Eintrag — deckungsgleich",
+      "geometry_style_optional": "je Eintrag optional — deckungsgleich",
+      "kein_default": "fehlt das Feld, sagt es nichts ueber einzelne Kameras — deckungsgleich",
+      "qa_unveraendert": "byte-identisch, an unserer Ausgabe nachgemessen — deckungsgleich"
+    },
+    "was_wir_NICHT_gemessen_haben": "Ihren Vertragstest haben wir nicht laufen lassen — wir haben ihren veroeffentlichten Vertrag gelesen und unsere Ausgabe dagegen gehalten. Dass beide Seiten dieselbe Gestalt haben, ist damit belegt; dass ihr Werkzeug unsere Datei annimmt, ist es NICHT. Das bleibt eine Messung am laufenden Cockpit.",
+    "belegstelle": "auftraege/von-kosmoorbit/erg-20260917-49-produktweg-qa-je-kamera-varianten.md"
+  },
+  "umgebung": {
+    "gelesen_am": "2026-09-17",
+    "quelle": "Imperigo/Architektur-Cosmos"
+  },
+  "fehler": null
+}
