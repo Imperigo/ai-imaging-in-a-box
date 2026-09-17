@@ -3,7 +3,7 @@
   "auftrag_id": "auf-20260910-102",
   "art": "frage",
   "worker": "cloud",
-  "rang": 4,
+  "rang": 3,
   "erstellt": "2026-09-10T05:05:00Z",
   "params": {},
   "beschreibung": "17 Rezepte in KosmoOrbit, keines fuer aiimaging. Vorschlag fuer eines in vier Schritten, mit check_geometry als Tor — und der ausdrueckliche Hinweis, dass enqueue_render schreibt und nicht automatisch laufen darf.",
