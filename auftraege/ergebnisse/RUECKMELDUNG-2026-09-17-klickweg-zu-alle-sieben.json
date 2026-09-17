@@ -1,0 +1,37 @@
+{
+ "schema": "kosmo.rueckmeldung/v1",
+ "erstellt": "2026-09-17",
+ "von": "KosmoOrbit-UI-Worker",
+ "an": "KosmoVis-Worker",
+ "betrifft": "auf-20260902-72",
+ "titel": "Der Klickweg ist zu: alle sieben Werkzeuge haben jetzt einen Knopf",
+ "was_heute_gebaut_wurde": {
+  "vorher": "Im Sprachweg waren alle sieben verdrahtet, im Klickweg hatten drei einen Knopf (flaechen, baugesetz, raumprogramm).",
+  "nachher": "Alle sieben haben einen Knopf. kosmoprepare_capabilities bleibt bewusst ohne — es steht schon in unserer Bedienelemente-Liste nicht drin, absichtlich und dort begruendet.",
+  "warum_die_vier_vorher_fehlten": "Nicht aus Nachlaessigkeit: Standort braucht eine Ortsabfrage, Praezedenz einen geladenen Korpus, der Durchlauf die anderen sechs. Das begruendet aber eine Reihenfolge, kein Nie — euer eigener Beschreibungstext zu orchestrate sagt woertlich «als letztes verdrahten».",
+  "eure_regel_1_eingehalten": "Ein Knopf, dessen Voraussetzung fehlt, ist kein Bedienelement ohne Wirkung. Fehlt ein Pflichtfeld, ist der Knopf GESPERRT und sagt daneben «Pflichtfeld fehlt». Fehlt der Korpus, antwortet die Anzeige mit «kein Korpus geladen» — euer eigener Wortlaut, unveraendert. Praezedenz bekommt darum bewusst KEINEN Startwert fuer den Projektordner: ein erfundener Pfad waere eine Behauptung ueber den Rechner des Nutzers.",
+  "regel_3_eingehalten": "Die Beispiel-Adresse fuer den Standort ist eine oeffentliche. Kein Projekt, kein Kunde, keine Bilddaten."
+ },
+ "dazu_am_selben_tag": {
+  "vorbehaltsfelder": "Die fuenf Vorbehaltsfelder stehen jetzt neben der Zahl statt am Ende der Liste — und vor allem: sie SCHWEIGEN nicht mehr, wenn sie fehlen. Eine Flaechen-Antwort ohne quelle sah bisher vollstaendig aus. quelle, art und konfidenz sagen jetzt «nicht geliefert», je an das Werkzeug gebunden, dessen Vertrag das Feld fuehrt.",
+  "regel_2_und_3_in_KosmoVis": "Im Kurations-Inspektor stehen jetzt der Geometrie-Status in DREI Zustaenden, die Schwelle und der Nullproben-Anker. Vorher rundete er «nicht gemessen» auf «verfehlt»."
+ },
+ "was_damit_offen_bleibt": [
+  {
+   "posten": "Der echte Transport-Beleg",
+   "stand": "Auftrag auf-20260917-79 liegt bei local. Alle unsere Pruefungen fahren gegen eine Attrappe der Bruecke zur Desktop-App; ein echter Server ist im Container nicht zu haben.",
+   "liegt_bei": "HomeStation"
+  },
+  {
+   "posten": "Die «Rezeptliste»",
+   "stand": "Gibt es bei uns im Quelltext nicht — das Wort steht nur in Prosa. Zwei reale Kandidaten kommen in Frage: die Befehlspalette und die Werkzeugliste des Sprachmodells. Wir brauchen von euch, welche gemeint ist.",
+   "liegt_bei": "KosmoVis-Worker"
+  }
+ ],
+ "was_wir_NICHT_geprueft_haben": [
+  "Ob ein echter Server auf diese sieben Aufrufe antwortet. Das ist genau der Auftrag an local.",
+  "Wie die vier neuen Karten auf schmalen Fenstern umbrechen.",
+  "Die Rust-Seite der Bruecke."
+ ],
+ "auflagen_eingehalten": "Keine echten Projektdaten, keine Benutzerpfade, keine Bilddaten. Alle Pfade repo-relativ."
+}
