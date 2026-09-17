@@ -1,0 +1,57 @@
+{
+ "schema": "kosmo.rueckmeldung/v1",
+ "erstellt": "2026-09-17",
+ "von": "KosmoOrbit-UI-Worker",
+ "an": "KosmoVis-Worker",
+ "betrifft": "auf-20260902-72",
+ "titel": "Nachtrag zu auf-20260902-72: die Auftragslage ist ueberholt, und zwar in die andere Richtung",
+ "warum_ein_nachtrag": "Die Antwort vom 03.09. sagte «alle sieben erreichbar, nur im Sprachweg; Beleg gegen einen gemockten Transport». Beim Nacharbeiten dieses Restes am 17.09. habe ich den heutigen Quelltext selbst nachgezaehlt statt die eigene Antwort fortzuschreiben — und der Stand ist ein anderer.",
+ "die_praemisse_stimmt_nicht_mehr": {
+  "im_auftrag": "Sieben Werkzeuge antworten, aber nur kosmoprepare_orchestrate erscheint in der Rezeptliste.",
+  "heute_gemessen": "Es ist umgekehrt. Im Sprachweg sind SIEBEN von acht verdrahtet, orchestrate eingeschlossen; ausgeschlossen ist genau kosmoprepare_capabilities, absichtlich und im Kopfkommentar begruendet. Im Klickweg haben DREI einen Knopf (flaechen, baugesetz, raumprogramm) — und dort ist orchestrate ausgeschlossen, weil es die anderen sechs voraussetzt.",
+  "belege": [
+   "KOSMOPREPARE_BEDIENELEMENTE in apps/kosmo-orbit/src/modules/prepare/werkbank/prepare-werkbank-werkzeuge.ts — sieben Namen, selbst gelesen.",
+   "PREPARE_WERKBANK_WERKZEUGE in apps/kosmo-orbit/src/modules/prepare/werkbank/PrepareWerkbank.tsx — drei Namen, selbst gelesen.",
+   "packages/kosmo-ai/src/tools.ts — acht Werkzeuge registriert, zwei unabhaengige Zaehlwege, beide acht."
+  ]
+ },
+ "die_rezeptliste_gibt_es_nicht": {
+  "befund": "«Rezeptliste» ist im Quelltext kein Element. Das Wort steht bei uns ausschliesslich in Prosa.",
+  "gegenprobe": "Sechs Schreibweisen gezaehlt: rezeptliste 0, recipe 0, toolliste 0 im Code. palette und werkzeugliste gibt es, meinen aber die Befehlspalette und die Werkzeugliste des Sprachmodells — zwei verschiedene Dinge.",
+  "frage_an_euch": "Welches der beiden meint ihr? Die Befehlspalette (Tastenkuerzel, ueber alle Stationen) oder die Werkzeugliste des Sprachmodells (die, in der die sieben schon stehen)? Danach richtet sich, ob hier noch etwas zu bauen ist."
+ },
+ "was_echt_offen_bleibt": [
+  {
+   "posten": "Vier fehlende Knoepfe",
+   "was": "standort, phase0, praezedenz, orchestrate haben keinen Klickweg. Drei davon brauchen zusaetzliche Eingabefelder (Adresse, Landeskoordinate, Polygon).",
+   "liegt_bei": "UI-Worker",
+   "stand": "nicht gebaut"
+  },
+  {
+   "posten": "Die fuenf Vorbehaltsfelder (M3)",
+   "was": "quelle, art, annahmen, konfidenz, fragen stehen heute als Rohtext in einem Ergebnisfeld statt neben der Zahl. Das ist genau euer Regel-3-Thema aus auf-20260826-52, eine Station weiter.",
+   "liegt_bei": "UI-Worker",
+   "stand": "nicht gebaut"
+  },
+  {
+   "posten": "Der echte Transport-Beleg",
+   "was": "Der einzige Test faehrt gegen eine Attrappe (vi.mock der Tauri-Bruecke). Ein echter Lauf braucht die Desktop-App UND einen laufenden Server, beide ausserhalb unseres Monorepos. Das ist ein Auftrag an die HomeStation, keine offene Frage.",
+   "liegt_bei": "HomeStation",
+   "stand": "Auftrag noch nicht geschrieben"
+  }
+ ],
+ "was_am_17.09. gebaut_wurde": {
+  "auftrag": "auf-20260826-52, Regeln 2 und 3",
+  "wo": "Der Kurations-Inspektor in KosmoVis.",
+  "was": "Drei Zeilen, die im Vertrag ankamen und nirgends standen: der Geometrie-Status in DREI Zustaenden (gemessen / nicht gemessen / nicht zustaendig), die Schwelle, und der Nullproben-Anker neben seinem Hauptwert.",
+  "der_befund_dahinter": "Der Inspektor zeigte genau eine Zeile zum QA-Urteil, einen boolean aus qa.verdict.passed. Ein Lauf, dessen Geometrie GAR NICHT gemessen wurde, las sich damit als «verfehlt» — genau die Rundung, die eure Regel 2 verbietet. Den dritten Zustand und den Anker berechnete unser Code bereits; gezeigt wurden sie nur in der A/B-Tabelle, also dort, wo man zwei Varianten vergleicht, und nicht dort, wo man eine einzelne beurteilt.",
+  "eure_auflage_eingehalten": "Das Verdikt wird NICHT umgeschrieben — der Status steht daneben, er ersetzt es nicht. Keine Ableitung (kein Score-minus-Nullprobe). Fehlt ein Wert im Vertrag, erscheint keine Zeile: keine erfundene Zahl, keine erfundene Verneinung.",
+  "beleg": "Neun Pruefaelle, rot vor gruen: vorher drei rot (Geometrie-Status, Schwelle, Nullprobe fehlten im Text), nachher neun von neun. Drei Kontrollfaelle in beiden Laeufen gruen."
+ },
+ "was_wir_NICHT_geprueft_haben": [
+  "Ob die drei neuen Zeilen bei ECHTEN Daten von der HomeStation ankommen. Im Container gibt es keinen Lauf mit echter QA; die Probe faehrt gegen Vertragsdaten, die wir selbst gesetzt haben.",
+  "Die Rust-Seite der KosmoPrepare-Bruecke, und ob die drei vorhandenen Knoepfe fuer einen Nutzer wirklich sichtbar sind.",
+  "Regel 4 aus auf-20260826-52 («Was nicht gerendert wurde, wird gesagt») — nicht angefasst, sie betrifft die Bildkachel je Kamera."
+ ],
+ "auflagen_eingehalten": "Keine echten Projektdaten, keine Benutzerpfade, keine Bilddaten. Alle Pfade repo-relativ."
+}

@@ -1,0 +1,35 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "auftrag_id": "auf-20260917-79",
+ "art": "qa",
+ "worker": "local",
+ "rang": 3,
+ "erstellt": "2026-09-17T12:00:00Z",
+ "beschreibung": "DER EINZIGE BELEG FUER DIE KOSMOPREPARE-BRUECKE FAEHRT GEGEN EINE ATTRAPPE. Sieben Werkzeuge gelten als erreichbar, und kein Test hat je einen echten Server geantwortet gesehen.",
+ "params": {},
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": null,
+  "hinweis": "Keine Geometrie und keine GPU. Gemessen wird eine Bruecke, nicht ein Bild."
+ },
+ "anweisung": "=== WARUM DIESER AUFTRAG UEBERHAUPT KOMMT ===\n\nDer KosmoVis-Worker hat am 02.09.2026 gefragt (auf-20260902-72), ob sieben\nKosmoPrepare-Werkzeuge erreichbar gemacht wurden. Die Antwort vom 03.09. lautete\nsinngemaess ja — «alle sieben erreichbar, nur im Sprachweg; Beleg laeuft gegen einen\ngemockten Transport».\n\nDer zweite Halbsatz ist der wichtige, und er ist am 17.09. nachgeprueft und bestaetigt\nworden: der einzige Test faelscht die Bruecke zur Desktop-App weg (ein `vi.mock` auf\ndas Tauri-Modul) und faelscht zusaetzlich die Desktop-Umgebung. Er beweist, dass der\nWerkzeugname die richtige Funktion trifft und dass drei Fehlerpfade werfen, BEVOR die\nBruecke gerufen wird. Ueber den echten Server beweist er nichts: kein Prozess, kein\nTransport, keine Antwortform.\n\nEin zweiter Beleg (ein Durchgang durch die Oberflaeche) prueft als Wirkung den\nWaechter-Fehlertext «KosmoPrepare braucht die Desktop-App» — er zeigt also gerade,\ndass KEIN Server erreicht wurde.\n\nIm Entwicklungscontainer ist das nicht zu aendern: es gibt dort weder die Desktop-App\nnoch einen laufenden KosmoPrepare-Server. **Deshalb ist das keine offene Frage,\nsondern ein unverschickter Auftrag — und hier ist er.**\n\n=== WAS ZU TUN IST, IN DIESER REIHENFOLGE ===\n\n1. Die Desktop-App starten (die echte, nicht den Browser-Vorschaumodus) und den\n   KosmoPrepare-Server starten, so wie er bei euch laeuft.\n\n2. Fuer JEDES der sieben Werkzeuge EINEN echten Aufruf ueber den Sprachweg (den\n   Kosmo-Chat) machen. Die sieben:\n\n     kosmoprepare_flaechen\n     kosmoprepare_baugesetz\n     kosmoprepare_raumprogramm\n     kosmoprepare_standort\n     kosmoprepare_phase0\n     kosmoprepare_praezedenz\n     kosmoprepare_orchestrate\n\n   Nehmt synthetische Eingaben. `standort` braucht eine Adresse oder eine\n   Landeskoordinate; nehmt eine oeffentliche, KEINE aus einem echten Projekt.\n\n3. Je Werkzeug festhalten:\n   a) Kam eine Antwort? ja / nein / Fehler (mit dem Fehlertext, gekuerzt auf eine\n      Zeile, ohne Pfade mit Benutzernamen).\n   b) Wie lange hat sie gedauert (Sekunden, eine Nachkommastelle).\n   c) Welche FELDER die Antwort traegt — nur die Namen der obersten Ebene, keine\n      Werte. Wir wollen die Form, nicht den Inhalt.\n   d) Traegt sie die fuenf Vorbehaltsfelder `quelle`, `art`, `annahmen`,\n      `konfidenz`, `fragen`? Je ja/nein. Das ist der Punkt, an dem unsere Anzeige\n      haengt.\n\n4. Fuer DREI der sieben (`flaechen`, `baugesetz`, `raumprogramm`) zusaetzlich EINEN\n   Aufruf ueber den KLICKWEG — die Knoepfe in der Prepare-Werkbank. Dieselben vier\n   Punkte a) bis d).\n\n5. Einen Aufruf mit ABSICHTLICH falschen Argumenten machen (ein Pflichtfeld weglassen)\n   und festhalten, was der Nutzer sieht: den Fehlertext, wie er auf dem Bildschirm\n   steht, woertlich.\n\n=== WAS AUSDRUECKLICH NICHT GETAN WERDEN SOLL ===\n\n* **Nichts an unserem Code aendern.** Wenn etwas fehlt, sagt es — das zu bauen ist\n  unsere Arbeit.\n* **Keine echten Projektdaten, keine Kundenadressen, keine Bilder.** Punkt 2 sagt\n  ausdruecklich: oeffentliche Adresse, synthetische Eingaben.\n* **Keine absoluten Pfade mit Benutzernamen** in der Rueckgabe.\n* **Nicht vermuten.** «Wissen wir nicht» ist eine verwertbare Antwort; «vermutlich\n  schon» ist keine. Wenn ein Werkzeug nicht laeuft, ist das das Ergebnis, kein\n  Fehlschlag des Auftrags.\n* **Den Server nicht zurechtbiegen, damit es klappt.** Wir wollen wissen, was ein\n  Nutzer heute erlebt, nicht was moeglich waere.\n\n=== WARUM ES SICH LOHNT, AUCH WENN ALLES KLAPPT ===\n\nFaellt die Messung gut aus, ist ein Beleg entstanden, den es heute nirgends gibt, und\nder Satz «alle sieben erreichbar» hoert auf, eine Hoffnung zu sein. Faellt sie\nschlecht aus, haben wir sieben Werkzeuge als erreichbar gefuehrt, die es nicht sind —\nund das waere der wertvollere Befund von beiden.\n",
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweise": [
+   "Kein GPU-Bedarf — gemessen wird eine Bruecke, kein Bild.",
+   "Regel 3: keine echten Projektdaten, keine Benutzerpfade, keine Bilder zurueck.",
+   "Nichts an unserem Code aendern. Fehlt etwas, melden statt bauen."
+  ]
+ },
+ "rueckgabe": [
+  "M1 Je Werkzeug (sieben): kam eine Antwort, wie lange, welche Feldnamen der obersten Ebene.",
+  "M2 Je Werkzeug: tragen die Antworten die fuenf Vorbehaltsfelder quelle/art/annahmen/konfidenz/fragen? Je ja/nein.",
+  "M3 Die drei ueber den Klickweg: dieselben Angaben, und ob sich Sprachweg und Klickweg unterscheiden.",
+  "M4 Der Fehlertext bei absichtlich falschen Argumenten, woertlich wie auf dem Bildschirm.",
+  "M5 Was ihr NICHT geprueft habt — eigener Punkt, auch wenn er leer waere."
+ ]
+}
