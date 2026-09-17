@@ -60,7 +60,14 @@ def test_die_zahl_im_kopf_wird_gezaehlt_und_nicht_behauptet(bogen):
     modul, wurzel, _ = bogen
     html = modul.baue(wurzel)
 
-    assert "1 Tafeln · 2 Bilder" in html
+    # WORTLAUT AM 17.09.2026 GEAENDERT, ABSICHT UNVERAENDERT: Die Kopfzeile nennt jetzt
+    # auch, wie viele Tafeln es UEBERHAUPT gibt — sonst sieht ein Bogen aus zwanzig
+    # gefahrenen Tafeln so vollstaendig aus wie einer aus dreissig. Genau der Fehler, den
+    # diese Probe seit je bewacht, nur eine Ebene hoeher.
+    # Gegen die Konstante und nicht gegen eine feste Zahl: Kommt ein Beweis dazu,
+    # aendert sich der Nenner, und eine festgeschriebene 30 machte die Probe rot, ohne
+    # dass etwas kaputt waere.
+    assert f"1 von {len(modul.TAFELN)} Tafeln mit Bildern · 2 Bilder" in html
     assert html.count('<section class="tafel"') == 1
     assert html.count('<figure class="platte') == 2
 
@@ -118,7 +125,8 @@ def test_der_schalter_bilder_zeigt_wirklich_woanders_hin(bogen, tmp_path):
     ziel = tmp_path / "aus" / "bogen.html"
 
     assert modul.main([str(ziel), "--bilder", str(wurzel)]) == 0
-    assert "1 Tafeln · 2 Bilder" in ziel.read_text(encoding="utf-8")
+    assert (f"1 von {len(modul.TAFELN)} Tafeln mit Bildern · 2 Bilder"
+            in ziel.read_text(encoding="utf-8"))
 
 
 def test_ein_fehlender_bilderordner_ist_kein_leerer_bogen(tmp_path, capsys):
@@ -140,3 +148,69 @@ def test_die_seite_bringt_keine_zweite_huelle_mit(bogen):
     assert "<!doctype" not in html.lower()
     assert "</body>" not in html.lower()
     assert html.lstrip().startswith("<title>")
+
+
+def test_eine_nicht_gefahrene_tafel_verschwindet_nicht_aus_dem_bogen(bogen):
+    """**Die dritte Antwort, angewandt auf eine Galerie.**
+
+    Bis zum 17.09.2026 wurden nicht gefahrene Beweise nur auf ``stderr`` gemeldet und
+    verschwanden aus der Übersicht. Eine Übersicht, aus der das Fehlende verschwindet,
+    **sieht vollständig aus** — wer sie liest, zählt die Tafeln und glaubt, das sei alles.
+
+    *NICHT GEFAHREN ist weder vorhanden noch «gibt es nicht».*
+    """
+    modul, wurzel, name = bogen
+    html = modul.baue(wurzel)
+
+    fehlende = len(modul.TAFELN) - 1
+    assert html.count('<section class="tafel ohnebilder"') == fehlende, (
+        f"Alle {fehlende} nicht gefahrenen Tafeln gehören in den Bogen.")
+    assert html.count("NICHT GEFAHREN") == fehlende
+    assert f"1 von {len(modul.TAFELN)} Tafeln mit Bildern" in html, (
+        "Der Kopf muss den Nenner nennen, sonst sagt die Zahl nichts.")
+
+    # UND SIE ERFINDET KEINEN GRUND. Wo im Tafeltext kein Vorbehalt steht, sagt die
+    # Galerie, dass der Lauf selbst den Grund kennt — nicht sie.
+    assert "sie erfindet keinen Grund" in html
+
+
+def test_die_auswahl_des_vortrags_steht_am_bild_und_nicht_als_zweite_galerie(bogen, tmp_path):
+    """`praesentation/bilder/` ist kein zweiter Bestand, sondern eine **Auswahl**.
+
+    Dieselben Bilder ein zweites Mal zu zeigen hiesse, dieselbe Messung zweimal zu
+    behaupten — und beim nächsten Lauf hätte man zwei Stände, von denen einer still
+    veraltet. *Eine Auswahl ist eine Eigenschaft des Bildes, kein eigenes Bild.*
+    """
+    import json
+    modul, wurzel, name = bogen
+
+    wahl = tmp_path / "wahl.json"
+    wahl.write_text(json.dumps({"erstes.png": {"ziel": f"{name}/01_erstes*"}}),
+                    encoding="utf-8")
+    modul.VORTRAGSWAHL = wahl
+    modul.BILDER = wurzel
+    html = modul.baue(wurzel)
+
+    assert html.count('class="vortrag"') == 1, "genau das eine gewählte Bild trägt die Marke"
+    assert html.count('class="platte beweis') == 2, "beide Bilder stehen weiterhin da"
+    assert "1 davon im Vortrag" in html
+
+
+def test_eine_fehlende_vortragswahl_kostet_nicht_die_galerie(bogen, tmp_path):
+    """**GEGENPROBE.** Eine Nebenauskunft darf das Ganze nicht mitreissen.
+
+    Fehlt die Auswahl oder ist sie unlesbar, steht der Bogen ohne Marken da — und das
+    heisst «nicht bekannt, welche Bilder im Vortrag sind», nicht «keines ist drin». Ein
+    Abbruch kostete die ganze Galerie, weil eine Zusatzangabe fehlt.
+    """
+    modul, wurzel, _ = bogen
+
+    modul.VORTRAGSWAHL = tmp_path / "gibt-es-nicht.json"
+    assert modul._vortragsbilder() == set()
+    assert "0 davon im Vortrag" in modul.baue(wurzel)
+
+    kaputt = tmp_path / "kaputt.json"
+    kaputt.write_text("{das ist kein json", encoding="utf-8")
+    modul.VORTRAGSWAHL = kaputt
+    assert modul._vortragsbilder() == set(), "unlesbar heisst nicht «keines»"
+    assert modul.baue(wurzel), "und die Galerie steht trotzdem"

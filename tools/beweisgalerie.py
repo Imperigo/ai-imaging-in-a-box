@@ -36,6 +36,43 @@ from pathlib import Path
 WURZEL = Path(__file__).resolve().parents[1]
 BILDER = WURZEL / "build" / "beweis"
 
+#: Wo die Auswahl des Vortrags steht — dieselben Bilder, nur ausgesucht.
+#:
+#: **Warum markiert und nicht als eigene Tafel.** `praesentation/bilder/` ist kein zweiter
+#: Bestand, sondern eine **Auswahl**: 23 Bilder aus 16 der 30 Beweise, über
+#: `praesentation/bilder.json` als Muster auf denselben Ordner gezeigt. Sie hier ein
+#: zweites Mal zu zeigen hiesse, dieselbe Messung zweimal zu behaupten — und beim nächsten
+#: Lauf hätte man zwei Stände, von denen einer still veraltet.
+#:
+#: *Eine Auswahl ist eine Eigenschaft des Bildes, kein eigenes Bild.*
+VORTRAGSWAHL = WURZEL / "praesentation" / "bilder.json"
+
+
+def _vortragsbilder() -> set:
+    """Welche Bilder der Vortrag benutzt — als Menge von ``(ordner, dateiname)``.
+
+    Fehlt die Datei oder ist sie unlesbar, kommt eine **leere Menge** zurück und die
+    Galerie steht ohne Marken da. Das ist der richtige Ausfall: Eine fehlende Auswahl
+    heisst «nicht bekannt, welche Bilder im Vortrag sind», nicht «keines ist drin» — und
+    ein Bogen ohne Marken sagt genau das, während ein Abbruch die ganze Galerie kostete,
+    weil eine Nebenauskunft fehlt.
+    """
+    import json
+    try:
+        eintraege = json.loads(VORTRAGSWAHL.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return set()
+    treffer = set()
+    for wert in eintraege.values():
+        kennung = wert.get("ziel") if isinstance(wert, dict) else wert
+        ordner, _, muster = str(kennung).partition("/")
+        ziel = BILDER / ordner
+        if not ziel.is_dir():
+            continue
+        for datei in ziel.glob(f"{muster}.png"):
+            treffer.add((ordner, datei.name))
+    return treffer
+
 #: Je Ordner: Titel, Marke (oder ``None``), der Satz darunter, ein Vorbehalt (oder ``None``).
 #:
 #: **Der Vorbehalt steht im Kopf der Tafel und nicht in einer Fussnote.** Wo eine Messung
@@ -304,6 +341,14 @@ code { font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.88em; colo
   margin:14px 0 0; padding:10px 14px; font-size:14px; color:var(--matt);
   border-left:3px solid var(--warn);
 }
+.platte.gewaehlt .rahmen{outline:2px solid var(--wahl,#c2831f);outline-offset:2px}
+.vortrag{display:inline-block;margin-left:.4em;padding:0 .4em;border-radius:3px;
+  background:var(--wahl,#c2831f);color:#fff;font-size:.72em;letter-spacing:.04em;
+  text-transform:uppercase;vertical-align:middle}
+.tafel.ohnebilder{opacity:.72}
+.tafel.ohnebilder .tzahl{color:var(--wahl,#c2831f);font-weight:600;letter-spacing:.04em}
+.register li.rfehlt{opacity:.55}
+.register li.rfehlt .rzahl{font-variant-numeric:tabular-nums}
 .vorbehalt span {
   display:block; font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px;
   letter-spacing:.12em; text-transform:uppercase; color:var(--warn); margin-bottom:3px;
@@ -445,23 +490,27 @@ def _felder(name: str) -> list[str]:
     return [t.replace("-", " ") for t in teile if t]
 
 
-def _platte(pfad: Path) -> str:
+def _platte(pfad: Path, im_vortrag: bool = False) -> str:
     daten = base64.b64encode(pfad.read_bytes()).decode("ascii")
     felder = _felder(pfad.name)
     nr, rest = (felder[0], felder[1:]) if felder and felder[0].isdigit() else ("", felder)
     kacheln = "".join('<span class="feld">%s</span>' % f for f in rest)
+    # Die Auswahl des Vortrags steht AM Bild und nicht in einer zweiten Galerie — siehe
+    # VORTRAGSWAHL. Sie sagt nichts über die Güte des Bildes, nur wo es noch auftaucht.
+    wahl = '<span class="vortrag" title="im Vortrag verwendet">Vortrag</span>' if im_vortrag else ""
     return (
-        '<figure class="platte beweis"><button class="rahmen" type="button" '
+        '<figure class="platte beweis%s"><button class="rahmen" type="button" '
         'aria-label="%s vergrössern">'
         '<img src="data:image/png;base64,%s" alt="%s" loading="lazy"></button>'
-        '<figcaption><span class="nr">%s</span>%s</figcaption></figure>'
-        % (pfad.name, daten, pfad.name, nr, kacheln)
+        '<figcaption><span class="nr">%s</span>%s%s</figcaption></figure>'
+        % (" gewaehlt" if im_vortrag else "", pfad.name, daten, pfad.name, nr, kacheln, wahl)
     )
 
 
-def _tafel(nr: int, ordner: Path, titel: str, marke, was: str, vorbehalt) -> tuple[str, int]:
+def _tafel(nr: int, ordner: Path, titel: str, marke, was: str, vorbehalt,
+           vortrag=frozenset()) -> tuple[str, int]:
     bilder = sorted(ordner.glob("*.png"))
-    platten = "".join(_platte(p) for p in bilder)
+    platten = "".join(_platte(p, (ordner.name, p.name) in vortrag) for p in bilder)
     markenteil = '<span class="marke">%s</span>' % marke if marke else ""
     vorteil = ('<p class="vorbehalt"><span>Vorbehalt</span>%s</p>' % vorbehalt
                if vorbehalt else "")
@@ -489,11 +538,12 @@ def baue(bilderwurzel: Path) -> str:
               "nicht."
         )
     fehlend = [k for k in TAFELN if not (bilderwurzel / k).is_dir()]
+    vortrag = _vortragsbilder()
 
     tafeln, register, gesamt = [], [], 0
     for nr, p in enumerate(ordner, 1):
         titel, marke, was, vorbehalt = TAFELN[p.name]
-        html, anzahl = _tafel(nr, p, titel, marke, was, vorbehalt)
+        html, anzahl = _tafel(nr, p, titel, marke, was, vorbehalt, vortrag)
         tafeln.append(html)
         gesamt += anzahl
         register.append(
@@ -503,11 +553,38 @@ def baue(bilderwurzel: Path) -> str:
         )
 
     if fehlend:
-        print("NICHT GEFAHREN, darum nicht im Bogen: " + ", ".join(sorted(fehlend)),
+        # SIE GEHOEREN IN DEN BOGEN, NICHT NUR AUF stderr. Bis zum 17.09.2026 wurden sie
+        # nur gemeldet und verschwanden aus der Uebersicht — und eine Uebersicht, aus der
+        # das Fehlende verschwindet, sieht vollstaendig aus. Wer sie liest, zaehlt die
+        # Tafeln und glaubt, das sei alles.
+        #
+        # Die dritte Antwort, angewandt auf eine Galerie: NICHT GEFAHREN ist weder
+        # vorhanden noch «gibt es nicht». Es ist ein Beweis, der in DIESEM Lauf keine
+        # Bilder geschrieben hat, und der Grund steht daneben.
+        print("NICHT GEFAHREN, darum ohne Bilder im Bogen: " + ", ".join(sorted(fehlend)),
               file=sys.stderr)
+        for k in sorted(fehlend):
+            titel, marke, was, vorbehalt = TAFELN[k]
+            markenteil = '<span class="marke">%s</span>' % marke if marke else ""
+            tafeln.append(
+                '<section class="tafel ohnebilder">\n  <header>\n'
+                '    <div class="kopfzeile"><span class="tnr">—</span><h2>%s</h2>%s\n'
+                '      <span class="tzahl">NICHT GEFAHREN</span></div>\n'
+                '    <p class="was">%s</p>\n'
+                '    <p class="vorbehalt"><span>Kein Bild in diesem Lauf</span>%s</p>\n'
+                '  </header>\n</section>\n'
+                % (titel, markenteil, was,
+                   vorbehalt or ("Dieser Beweis hat in diesem Lauf keine Bilder "
+                                 "geschrieben. Warum, sagt der Lauf selbst — nicht diese "
+                                 "Galerie; sie erfindet keinen Grund.")))
+            register.append(
+                '<li class="rfehlt"><a href="#"><span class="rnr">—</span>'
+                '<span class="rtitel">%s</span><span class="rzahl">0</span></a></li>'
+                % titel)
 
-    kopfzeile = ('<p class="zahlen">%d Tafeln · %d Bilder · erzeugt aus build/beweis/</p>'
-                 % (len(ordner), gesamt))
+    kopfzeile = ('<p class="zahlen">%d von %d Tafeln mit Bildern · %d Bilder · %d davon im '
+                 'Vortrag · erzeugt aus build/beweis/</p>'
+                 % (len(ordner), len(TAFELN), gesamt, len(vortrag)))
     return (
         KOPF
         + '<div class="huelle">\n<nav class="register">\n'
