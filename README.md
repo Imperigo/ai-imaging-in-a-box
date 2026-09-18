@@ -1,4 +1,8 @@
-# ai-imaging-in-a-box
+# Visbox
+
+*Das Repo heisst `ai-imaging-in-a-box`, die Software heisst **Visbox** (Owner-Entscheid
+18.09.2026). Auf PyPI: `pip install visbox`. Der Importpfad bleibt `aiimaging` — wie bei
+`pip install pillow` → `import PIL`; die Begründung steht in `pyproject.toml`.*
 
 Vertiefungsarbeit ETH Zürich · HS26 · ITA · Betreuung Gonzalo Casas
 
@@ -70,7 +74,7 @@ darüber liegt: [`docs/OBERFLAECHE_KOSMOVIS.md`](docs/OBERFLAECHE_KOSMOVIS.md). 
 bei der eigenen Arbeit an der Oberfläche auffällt und an den UI-Worker geht:
 [`docs/UI_BEFUNDE.md`](docs/UI_BEFUNDE.md).
 
-Tests: **6061**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+Tests: **6213**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
 (`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
 
 ---

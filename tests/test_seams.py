@@ -68,6 +68,36 @@ def verweigerer(cmd, timeout):
     raise AssertionError(f"Es wurde ein Prozess gestartet, obwohl der Vertrag brach: {cmd}")
 
 
+@pytest.fixture(autouse=True)
+def ohne_zeitfaktor(monkeypatch):
+    """Diese Proben messen den Code, nicht die Maschine, auf der sie laufen.
+
+    GEMESSEN AM 18.09.2026: Mit ``AIIMAGING_ZEITFAKTOR=3`` in der Umgebung — also mit
+    genau der Angabe, die eine langsamere Maschine laut :func:`seams.zeitfaktor` machen
+    SOLL — fielen drei Proben der Gesamtsuite um, zwei davon hier
+    (``test_tiefenkarte_reicht_timeout_durch``,
+    ``test_ohne_gesamtfrist_hat_die_nachbearbeitung_trotzdem_eine``). Die Studierende auf
+    dem MacBook haette die Variable gesetzt, die Suite gefahren und rote Proben gesehen —
+    und den Fehler dort gesucht, wo keiner ist. Das ist derselbe Schaden, gegen den die
+    Variable gebaut wurde.
+
+    Wer den Faktor pruefen WILL, setzt ihn danach selbst: ``monkeypatch.setenv`` in der
+    Probe wirkt nach dieser Vorbereitung.
+    """
+    monkeypatch.delenv(seams.ZEITFAKTOR_ENV, raising=False)
+
+
+def test_die_proben_hier_laufen_auf_faktor_eins():
+    """Die Gegenprobe zur Vorbereitung oben — ohne sie faellt diese Zeile um.
+
+    Sie faellt nur dort, wo es darauf ankommt: auf einer Maschine, die den Faktor
+    wirklich gesetzt hat. Genau deshalb steht sie hier und nicht als Kommentar.
+    """
+    assert seams.zeitfaktor() == seams.ZEITFAKTOR_VORGABE, (
+        "Die Umgebung dieser Maschine faerbt auf die Proben ab. Die Vorbereitung "
+        "`ohne_zeitfaktor` raeumt sie darum weg.")
+
+
 @pytest.fixture
 def blender_attrappe(monkeypatch):
     """Ein Pfad, der so tut, als wäre Blender installiert — gestartet wird er nie."""
@@ -583,3 +613,598 @@ def test_ohne_angabe_wird_keiner_der_drei_gesetzt():
     for schalter in ("--deckungsgrad", "--augenhoehe", "--bias"):
         assert not any(a.startswith(schalter) for a in cmd), (
             f"{schalter} steht im Kommando, obwohl nichts bestellt war.")
+
+
+# ======================================================================================
+# DIE ZEITGRENZEN — nachgesehen am 18.09.2026, als die Zielmaschine gewechselt hat
+# ======================================================================================
+#
+# Nicht mehr die HomeStation (Ryzen 9 9950X, 16 Kerne), sondern der Laptop einer
+# Studierenden. Eine Frist, die auf dem langsamen Gerät zuschlägt, ohne dass etwas kaputt
+# ist, ist schlimmer als keine: Sie macht aus einem langsamen Lauf einen Fehlschlag, und
+# die Nutzerin sucht den Fehler an der falschen Stelle.
+#
+# Die Proben hier trennen zwei Sorten Frist, und die Trennung ist der ganze Punkt:
+#
+#   * MASCHINENFEST sind die Fristen auf unser eigenes Lebenszeichen (Herzschlag,
+#     Anlauf). Sie messen nicht die Rechenzeit, sondern einen Faden, den wir selbst
+#     starten — sie dürfen auf einem langsamen Gerät bleiben, wie sie sind.
+#   * MASCHINENGEBUNDEN sind die Gesamtfristen. Sie decken die Rechenzeit und sind damit
+#     eine Aussage über EINE Maschine.
+
+
+def _report_schreiber():
+    """Ein ``_starte``, das tut, was Blender täte: den Report hinterlassen."""
+    return Aufrufer(nebenwirkung=lambda cmd: Path(
+        cmd[cmd.index("--out") + 1], "blender-report.json").write_text(
+            "{}", encoding="utf-8"))
+
+
+class Uhr:
+    """Eine Uhr, die nur vorrückt, wenn man sie schiebt.
+
+    Ohne sie liesse sich ein kalter Start von 13 Sekunden nur prüfen, indem man dreizehn
+    Sekunden wartet — und ein Test, der so teuer ist, läuft nicht.
+    """
+
+    def __init__(self):
+        self.t = 0.0
+
+    def __call__(self):
+        return self.t
+
+    def weiter(self, s):
+        self.t += float(s)
+
+
+# --------------------------------------------------------------------------------------
+# 1 · Jede Zahl sagt, worauf sie ruht
+# --------------------------------------------------------------------------------------
+
+#: Die Zeitgrenzen dieses Moduls. Wer eine neue hinzufügt, trägt sie hier nach — und
+#: merkt dabei, dass er ihre Herkunft aufschreiben muss.
+ZEITGRENZEN = (
+    "TAKT_S", "BLENDER_TAKT_S", "BLENDER_GPU_STILLE_S", "HERZSCHLAG_TAKT_S",
+    "ANLAUF_S", "HERZSCHLAG_AUSFAELLE", "BLENDER_FRIST_MIN_S",
+    "GESAMTFRIST_IFC_S", "ZEITDECKEL_HOMESTATION_S", "GESAMTFRIST_NACHBEARBEITUNG_S",
+)
+
+#: Woran man erkennt, dass die Herkunft dasteht.
+HERKUNFTSWOERTER = ("gemessen", "gesetzt", "setzung", "messung")
+
+
+def _herkunftstext(name: str) -> str:
+    """Der Kommentarblock über einer Zuweisung — das, was ihre Herkunft tragen muss."""
+    zeilen = Path(seams.__file__).read_text(encoding="utf-8").splitlines()
+    treffer = [i for i, z in enumerate(zeilen) if z.startswith(f"{name} = ")]
+    assert len(treffer) == 1, f"{name} ist nicht genau einmal zugewiesen: {len(treffer)}×"
+    i = treffer[0] - 1
+    block = []
+    while i >= 0 and zeilen[i].lstrip().startswith("#"):
+        block.append(zeilen[i])
+        i -= 1
+    return "\n".join(reversed(block))
+
+
+@pytest.mark.parametrize("name", ZEITGRENZEN)
+def test_jede_zeitgrenze_sagt_ob_sie_gemessen_oder_gesetzt_ist(name):
+    """Hausregel: Wo eine Zahl steht, steht daneben, ob sie GEMESSEN oder GESETZT ist.
+
+    Der Anlass ist der Maschinenwechsel: Erst an der Herkunft lässt sich entscheiden, ob
+    eine Zahl auf ein anderes Gerät mitgenommen werden darf. Eine Frist ohne Herkunft
+    wandert stillschweigend mit — und schlägt drüben zu, ohne dass jemand weiss, warum sie
+    je so hoch stand.
+    """
+    text = _herkunftstext(name).lower()
+    assert any(w in text for w in HERKUNFTSWOERTER), (
+        f"Über {name} steht nicht, worauf die Zahl ruht. Erwartet wird eines dieser "
+        f"Wörter: {HERKUNFTSWOERTER}. Ohne das ist auf einem anderen Gerät nicht "
+        f"entscheidbar, ob die Zahl mitgenommen werden darf.")
+
+
+def test_die_gesamtfrist_des_blender_laufs_nennt_ihre_maschine_im_namen():
+    """900 s sind keine Eigenschaft eines Laufs, sondern eine Auskunft über einen Rechner.
+
+    Der Name trägt sie mit, damit niemand sie auf einem Laptop für ein Naturgesetz hält.
+    Die Zahl selbst bleibt, wo sie ist: `abholer.ZEITDECKEL_S` hängt daran, und
+    `tests/test_durchreichung_verarbeiter.py` hält beide aneinander.
+    """
+    import inspect
+    assert seams.ZEITDECKEL_HOMESTATION_S == 900
+    vorgabe = inspect.signature(seams.glb_zu_multipass).parameters["timeout"].default
+    assert vorgabe == seams.ZEITDECKEL_HOMESTATION_S
+
+
+# --------------------------------------------------------------------------------------
+# 2 · Der Anlauf der Herzschlagwache — die Frist, die auf dem Laptop als erste zuschlug
+# --------------------------------------------------------------------------------------
+#
+# GEMESSEN am 10.09.2026 in dieser Umgebung: Der erste `blender --background --version`
+# braucht 12,63 s, die drei danach 0,66 / 0,26 / 0,15 s. Die Herzschlagwache hatte eine
+# Frist von 10 s und KEINEN Anlauf — vor dem ersten Schlag gibt es die Datei nicht, die
+# Wache zählt keinen Schritt, und die kurze Frist gilt vom ersten Blick an.
+
+def _gebaute_wache(monkeypatch, tmp_path, **kw):
+    """Die Wache abfangen, die `glb_zu_multipass` für den Herzschlag baut."""
+    gebaut = {}
+
+    def merke(wache=None, **_kw):
+        gebaut["wache"] = wache
+        raise SeamError("Wache gebaut")
+
+    monkeypatch.setattr(seams, "starter_mit_wache", merke)
+    glb = tmp_path / "m.glb"
+    glb.write_bytes(b"glTF")
+    with pytest.raises(SeamError, match="Wache gebaut"):
+        seams.glb_zu_multipass(glb, tmp_path / "aus", up_axis="Y_UP",
+                               herzschlag_takt_s=2.0, **kw)
+    return gebaut["wache"]
+
+
+def test_die_herzschlagwache_bekommt_einen_anlauf(tmp_path, monkeypatch, blender_attrappe):
+    """Ohne Anlauf reisst der kalte Blender-Start die Frist, bevor der erste Schlag kommt."""
+    wache = _gebaute_wache(monkeypatch, tmp_path)
+
+    assert wache.anlauf_s == seams.ANLAUF_S, (
+        "Die Herzschlagwache läuft ohne Anlauf. Vor dem ersten Schlag gibt es die Datei "
+        "nicht — dann gilt vom ersten Blick an die kurze Frist, und der Blender-Start "
+        "passt nicht hinein.")
+    assert wache.anlauf_s > 12.63, (
+        "Der Anlauf muss über dem gemessenen kalten Start von 12,63 s liegen.")
+    assert wache.frist_s == seams.HERZSCHLAG_AUSFAELLE * 2.0, (
+        "Nach dem ersten Schlag gilt wieder die kurze Frist — der Anlauf ist keine "
+        "Lockerung der Wache.")
+
+
+def test_ein_kalter_start_ueberlebt_die_herzschlagwache(tmp_path, monkeypatch,
+                                                        blender_attrappe):
+    """Die Gegenprobe am Verhalten, nicht am Feld: 30 s ohne Herzschlag sind kein Stillstand.
+
+    Geprüft werden die Werte, die `glb_zu_multipass` der Wache wirklich mitgibt — nachgebaut
+    mit einer stellbaren Uhr, weil ein Test, der dreissig Sekunden wartet, nicht läuft.
+    """
+    from aiimaging import fortschritt
+
+    echte = _gebaute_wache(monkeypatch, tmp_path)
+    uhr = Uhr()
+    schlag = tmp_path / "leer" / seams.HERZSCHLAG_DATEI          # gibt es noch nicht
+    wache = fortschritt.wache_fuer_datei(
+        schlag, frist_s=echte.frist_s, anlauf_s=echte.anlauf_s, _uhr=uhr)
+
+    uhr.weiter(30.0)                      # kalter Start: Blender lädt, nichts schlägt
+    befund = wache.blick()
+    assert befund["schwere"] != fortschritt.SCHWERE_FEHLER, (
+        "Ein Lauf, der noch nicht angefangen hat, ist nicht stehengeblieben — und ein "
+        "kalter Blender-Start dauert gemessen über 12 s.")
+    assert befund["im_anlauf"] is True
+
+    schlag.parent.mkdir(parents=True, exist_ok=True)
+    schlag.write_text("1 30.0\n", encoding="utf-8")
+    wache.blick()                         # der erste Schlag ist da
+    uhr.weiter(30.0)
+    assert wache.blick()["schwere"] == fortschritt.SCHWERE_FEHLER, (
+        "Nach dem ersten Schlag muss wieder die kurze Frist gelten. Sonst wäre der "
+        "Anlauf eine stille Entschärfung der Wache.")
+
+
+# --------------------------------------------------------------------------------------
+# 3 · Der Herzschlag des Vorlaufs — eine Datei, die den neuen Lauf umbringt
+# --------------------------------------------------------------------------------------
+
+def test_der_herzschlag_des_vorlaufs_wird_vor_dem_start_entfernt(tmp_path, blender_attrappe):
+    """`out_dir` wird wiederverwendet — die alte Datei sähe aus wie ein Schlag dieses Laufs.
+
+    Und sie wäre teuer: Die Wache zählte beim ersten Blick einen Schritt, der Anlauf wäre
+    damit verbraucht, und es gälte vom Start weg die kurze Frist, die der kalte
+    Blender-Start reisst. Die Datei von gestern brächte den Lauf von heute um.
+    """
+    aus = tmp_path / "aus"
+    aus.mkdir()
+    alt = aus / seams.HERZSCHLAG_DATEI
+    alt.write_text("88 176.6\n", encoding="utf-8")
+
+    glb_zu_tiefenkarte("bau.glb", aus, up_axis="Y", _starte=_report_schreiber())
+
+    assert not alt.exists(), (
+        "Der Herzschlag des Vorlaufs liegt noch da. Die Wache dieses Laufs liest ihn als "
+        "eigenes Zeichen — dieselbe Lehre wie beim Report: Die Existenz einer Datei ist "
+        "kein Beleg für ihren Lauf.")
+
+
+def test_ein_liegengebliebener_herzschlag_verbraucht_den_anlauf(tmp_path):
+    """Warum die Zeile oben nötig ist — am Mechanismus gezeigt, nicht behauptet."""
+    from aiimaging import fortschritt
+
+    uhr = Uhr()
+    schlag = tmp_path / seams.HERZSCHLAG_DATEI
+    schlag.write_text("88 176.6\n", encoding="utf-8")          # der Lauf von gestern
+    wache = fortschritt.wache_fuer_datei(schlag, frist_s=10.0, anlauf_s=60.0, _uhr=uhr)
+
+    wache.blick()                          # die alte Datei zählt als Zeichen
+    uhr.weiter(30.0)
+    assert wache.blick()["schwere"] == fortschritt.SCHWERE_FEHLER, (
+        "Mit einer liegengebliebenen Datei gilt sofort die kurze Frist — genau darum "
+        "wird sie vor dem Lauf entfernt.")
+
+
+# --------------------------------------------------------------------------------------
+# 4 · Die Gesamtfrist ist ein Budget, kein Hängerwächter
+# --------------------------------------------------------------------------------------
+
+def test_ohne_gesamtfrist_laeuft_der_blender_lauf_weiter(tmp_path, blender_attrappe):
+    """`timeout=None` heisst: Die Stillstandswache urteilt, nicht die Uhr.
+
+    Das ist die Bauform für ein langsames Gerät. Der Hänger fällt weiter nach zehn
+    Sekunden auf (Herzschlag); was entfällt, ist allein das Budget — und ein Budget ist
+    eine Aussage über die Maschine, nicht über den Lauf.
+    """
+    aufrufer = _report_schreiber()
+
+    glb_zu_tiefenkarte("bau.glb", tmp_path / "aus", up_axis="Y", timeout=None,
+                       _starte=aufrufer)
+
+    assert aufrufer.timeouts == [None], "None muss als None ankommen, nicht als Zahl"
+
+
+def test_ohne_frist_und_ohne_wache_wird_abgewiesen(tmp_path, blender_attrappe):
+    """Beides zugleich abzuschalten hiesse, einen unbegrenzten Prozess zu starten.
+
+    Fail-closed: Genau eines von beidem muss stehen. Und die Meldung nennt den Ausweg,
+    statt ihn raten zu lassen.
+    """
+    with pytest.raises(SeamError) as fehler:
+        seams.glb_zu_multipass("bau.glb", tmp_path / "aus", up_axis="Y",
+                               timeout=None, herzschlag_takt_s=None)
+
+    assert "herzschlag_takt_s" in str(fehler.value)
+
+
+def test_die_ifc_laeufe_lassen_sich_die_frist_nicht_nehmen(ifc_python_attrappe, tmp_path):
+    """Hinter ihnen wacht nichts — der Runner meldet sich erst am Ende.
+
+    Darum ist `None` hier kein zulässiger Wert, und es wird auch kein Prozess gestartet:
+    `verweigerer` belegt, dass vorher abgebrochen wurde.
+    """
+    for lauf in (lambda: ifc_zu_glb(tmp_path / "b.ifc", tmp_path / "b.glb",
+                                    timeout=None, _starte=verweigerer),
+                 lambda: seams.ifc_raeume(tmp_path / "b.ifc", timeout=None,
+                                          _starte=verweigerer)):
+        with pytest.raises(SeamError) as fehler:
+            lauf()
+        assert seams.ZEITFAKTOR_ENV in str(fehler.value), (
+            "Die Meldung muss den Weg für eine langsame Maschine NENNEN.")
+
+
+# --------------------------------------------------------------------------------------
+# 5 · Der Zeitfaktor — die Maschine gibt über sich selbst Auskunft
+# --------------------------------------------------------------------------------------
+#
+# Keine erfundene Laptop-Zahl: In diesem Repo ist für kein MacBook etwas gemessen. Was es
+# gibt, ist eine Stelle, an der eine langsamere Maschine sagen kann, WIEVIEL langsamer sie
+# ist — und ohne Angabe ändert sich nirgends etwas.
+
+def test_ohne_angabe_bleibt_jede_frist_auf_die_zahl_genau_wie_bisher(tmp_path,
+                                                                     blender_attrappe,
+                                                                     monkeypatch):
+    """Die HomeStation fährt diesen Code — sie muss dieselbe Zahl sehen wie gestern."""
+    monkeypatch.delenv(seams.ZEITFAKTOR_ENV, raising=False)
+    aufrufer = _report_schreiber()
+
+    glb_zu_tiefenkarte("bau.glb", tmp_path / "aus", up_axis="Y", _starte=aufrufer)
+
+    assert aufrufer.timeouts == [seams.ZEITDECKEL_HOMESTATION_S]
+    assert isinstance(aufrufer.timeouts[0], int), (
+        "Ohne Faktor wird nicht einmal der Typ angefasst — sonst stünde in Berichten "
+        "plötzlich 900.0, wo bisher 900 stand.")
+
+
+def test_der_faktor_streckt_die_gesamtfrist_des_blender_laufs(tmp_path, blender_attrappe,
+                                                              monkeypatch):
+    """Drei heisst: Diese Maschine braucht für dasselbe dreimal so lange."""
+    monkeypatch.setenv(seams.ZEITFAKTOR_ENV, "3")
+    aufrufer = _report_schreiber()
+
+    glb_zu_tiefenkarte("bau.glb", tmp_path / "aus", up_axis="Y", _starte=aufrufer)
+
+    assert aufrufer.timeouts == [3 * seams.ZEITDECKEL_HOMESTATION_S]
+
+
+def test_der_faktor_streckt_auch_die_ifc_laeufe(ifc_python_attrappe, tmp_path, monkeypatch):
+    """Sonst bliebe die Frist ohne Wache ausgerechnet die, die niemand strecken kann."""
+    monkeypatch.setenv(seams.ZEITFAKTOR_ENV, "2.5")
+    aufrufer = Aufrufer(Ergebnis(stdout=json.dumps({"glb_path": "b.glb", "up_axis": "Y"})))
+
+    ifc_zu_glb(tmp_path / "b.ifc", tmp_path / "b.glb", _starte=aufrufer)
+
+    assert aufrufer.timeouts == [2.5 * seams.GESAMTFRIST_IFC_S]
+
+
+def test_eine_bestellte_frist_wird_mitgestreckt(tmp_path, blender_attrappe, monkeypatch):
+    """Auch die Zahl des Aufrufers ist auf der schnellen Maschine gesetzt worden.
+
+    `abholer.ZEITDECKEL_S` reicht sie IMMER durch — hier ankommend als 900. Wirkte der
+    Faktor nur auf den Vorgabewert, bliebe der Produktivweg auf dem Laptop ungedeckt.
+    """
+    monkeypatch.setenv(seams.ZEITFAKTOR_ENV, "4")
+    aufrufer = _report_schreiber()
+
+    glb_zu_tiefenkarte("bau.glb", tmp_path / "aus", up_axis="Y", timeout=900,
+                       _starte=aufrufer)
+
+    assert aufrufer.timeouts == [3600.0]
+
+
+@pytest.mark.parametrize("roh", ["viel", "3,5", "0", "-2", "inf", "nan"])
+def test_ein_unlesbarer_faktor_wird_abgewiesen_statt_verworfen(roh, tmp_path,
+                                                               blender_attrappe,
+                                                               monkeypatch):
+    """Ein Tippfehler darf nicht stillschweigend die alte Frist gelten lassen.
+
+    Das wäre genau der Schaden, gegen den die Variable gebaut ist: Der Lauf bräche auf dem
+    langsamen Gerät ab, und die Angabe, die ihn retten sollte, sähe aus, als wirkte sie.
+    """
+    monkeypatch.setenv(seams.ZEITFAKTOR_ENV, roh)
+
+    with pytest.raises(SeamError) as fehler:
+        seams.glb_zu_multipass("bau.glb", tmp_path / "aus", up_axis="Y",
+                               _starte=verweigerer)
+
+    assert seams.ZEITFAKTOR_ENV in str(fehler.value)
+
+
+def test_eine_leere_angabe_ist_keine_angabe(monkeypatch):
+    """Eine leergeräumte Umgebungsvariable heisst «nicht gesetzt», nicht «kaputt»."""
+    monkeypatch.setenv(seams.ZEITFAKTOR_ENV, "  ")
+    assert seams.zeitfaktor() == seams.ZEITFAKTOR_VORGABE
+
+
+# --------------------------------------------------------------------------------------
+# 6 · Die Nachbearbeitung erbt die Wache des Renderlaufs nicht
+# --------------------------------------------------------------------------------------
+
+def _lauf_mit_attrappenstarter(monkeypatch, tmp_path, **kw):
+    """Ein Lauf mit Herzschlagzweig, aber ohne echten Prozess — gibt zurück, was die
+    Nachbearbeitung bekommen hat."""
+    gesehen = {}
+
+    def merke(report, out_dir, **kwargs):
+        gesehen.update(kwargs)
+        return report
+
+    def starter(wache=None, **_kw):
+        def starte(cmd, timeout):
+            Path(cmd[cmd.index("--out") + 1], "blender-report.json").write_text(
+                "{}", encoding="utf-8")
+            return Ergebnis()
+        return starte
+
+    monkeypatch.setattr(seams, "_tiefe_nachbearbeiten", merke)
+    monkeypatch.setattr(seams, "starter_mit_wache", starter)
+    seams.glb_zu_multipass("bau.glb", tmp_path / "aus", up_axis="Y", **kw)
+    return gesehen
+
+
+def test_die_nachbearbeitung_bekommt_nicht_den_wachstarter(tmp_path, monkeypatch,
+                                                           blender_attrappe):
+    """Sonst liefe sie unter einer Wache auf eine Datei, die niemand mehr schreibt.
+
+    Blender ist zu diesem Zeitpunkt beendet, `herzschlag.txt` rührt sich nicht mehr, und
+    die Stillstandsuhr der wiederverwendeten Wache läuft seit dem letzten Schlag. Der
+    Rückfall auf einen zweiten Blender-Prozess wäre fast sofort als «Stillstand»
+    abgeräumt worden — und im Report stünde ein irreführendes `depth_png_fehler` statt
+    einer Tiefenkarte.
+    """
+    gesehen = _lauf_mit_attrappenstarter(monkeypatch, tmp_path, herzschlag_takt_s=2.0)
+
+    assert gesehen["_starte"] is None, (
+        "Die Nachbearbeitung hat den überwachten Starter des Renderlaufs geerbt.")
+
+
+def test_die_naht_des_aufrufers_erreicht_die_nachbearbeitung_weiterhin(tmp_path,
+                                                                       monkeypatch,
+                                                                       blender_attrappe):
+    """Die Gegenprobe: Was der Aufrufer schickt, muss ankommen — sonst wäre die
+    EXR-Nachbearbeitung ohne Blender nicht mehr prüfbar."""
+    gesehen = {}
+
+    def merke(report, out_dir, **kwargs):
+        gesehen.update(kwargs)
+        return report
+
+    monkeypatch.setattr(seams, "_tiefe_nachbearbeiten", merke)
+    aufrufer = _report_schreiber()
+
+    glb_zu_tiefenkarte("bau.glb", tmp_path / "aus", up_axis="Y", _starte=aufrufer)
+
+    assert gesehen["_starte"] is aufrufer
+
+
+def test_ohne_gesamtfrist_hat_die_nachbearbeitung_trotzdem_eine(tmp_path, monkeypatch,
+                                                                blender_attrappe):
+    """Hinter ihr wacht nichts — wie bei den IFC-Läufen. `None` dürfte hier nicht ankommen."""
+    gesehen = _lauf_mit_attrappenstarter(monkeypatch, tmp_path, herzschlag_takt_s=2.0,
+                                         timeout=None)
+
+    assert gesehen["timeout"] == seams.GESAMTFRIST_NACHBEARBEITUNG_S
+
+
+# --------------------------------------------------------------------------------------
+# 7 · Die Stelle, an der `timeout=None` wirklich ankommt — der ueberwachte Starter
+# --------------------------------------------------------------------------------------
+#
+# NACHGETRAGEN AM 18.09.2026 BEI DER GEGENPRUEFUNG, und der Anlass ist ein Waechter ohne
+# Probe: `starter_mit_wache` hat beim Erlauben von `timeout=None` zwei neue Zweige
+# bekommen — die Abfrage `timeout is not None` in der Warteschleife und die
+# Stillstandsmeldung, die ohne Gesamtfrist anders lautet. Beide waren durch NICHTS
+# gedeckt.
+#
+# GEMESSEN (18.09.2026): Setzt man beide Zweige auf den Stand von vorher zurueck, bleiben
+# `tests/test_seams.py` und `tests/test_fortschritt.py` zusammen bei 168 von 168 gruen —
+# waehrend der echte Aufruf `glb_zu_multipass(..., timeout=None)` mit voreingestelltem
+# Herzschlag beim ersten Blick stirbt:
+#
+#     TypeError: '>' not supported between instances of 'float' and 'NoneType'
+#
+# Also ausgerechnet auf dem Weg, fuer den `timeout=None` gebaut wurde: dem langsamen
+# Laptop. Die Proben weiter oben fassen das nicht, weil sie alle ein eigenes `_starte`
+# hineinreichen und den ueberwachten Starter damit gar nicht betreten.
+
+
+class Strom:
+    """Ein Ausgabestrom, der eine feste Bytefolge liefert und dann endet.
+
+    Gebaut wie der in ``tests/test_fortschritt.py``: Seit dem 20.08.2026 laufen die
+    Stroeme ueber ``PIPE`` und einen Faden, der sie laufend in eine Datei giesst.
+    """
+
+    def __init__(self, inhalt: bytes = b""):
+        self._rest = bytearray(inhalt)
+
+    def read(self, n: int = 1) -> bytes:
+        if not self._rest:
+            return b""
+        heraus = bytes(self._rest[:n])
+        del self._rest[:n]
+        return heraus
+
+    def close(self):
+        pass
+
+
+class Prozessattrappe:
+    """Ein Popen-Doppelgaenger: ``laeuft_blicke`` Blicke lang am Leben, dann fertig.
+
+    ``None`` heisst **wird nie fertig** — der haengende Lauf, um den es geht.
+    """
+
+    def __init__(self, laeuft_blicke=0, ausgabe: bytes = b"blender sagt etwas\n"):
+        self.laeuft_blicke = laeuft_blicke
+        self.ausgabe = ausgabe
+        self.returncode = None
+        self.getoetet = False
+
+    def __call__(self, cmd, stdout=None, stderr=None):
+        self.stdout = Strom(self.ausgabe)
+        self.stderr = Strom(b"")
+        return self
+
+    def poll(self):
+        if self.laeuft_blicke is None:
+            return None
+        if self.laeuft_blicke <= 0:
+            self.returncode = 0
+            return 0
+        self.laeuft_blicke -= 1
+        return None
+
+    def kill(self):
+        self.getoetet = True
+        self.returncode = -9
+
+    def wait(self):
+        return self.returncode
+
+
+def test_ohne_gesamtfrist_laeuft_der_ueberwachte_starter_wirklich_durch():
+    """`timeout=None` muss den Starter erreichen, nicht nur die Signatur.
+
+    Ohne die Abfrage `timeout is not None` in der Warteschleife vergleicht die zweite
+    Runde `float` mit `None` und der Lauf stirbt mit einem `TypeError` — beim ERSTEN
+    Blick, also lange vor jedem Rendern.
+    """
+    uhr = Uhr()
+    prozess = Prozessattrappe(laeuft_blicke=3)
+    starte = seams.starter_mit_wache(frist_s=100, takt_s=1,
+                                     _schlaf=lambda s: uhr.weiter(s),
+                                     _popen=prozess, _uhr=uhr)
+
+    ergebnis = starte(["blender"], None)
+
+    assert ergebnis.returncode == 0
+    assert "blender sagt etwas" in ergebnis.stdout
+    assert not prozess.getoetet, "ohne Gesamtfrist darf die Uhr niemanden beenden"
+
+
+def test_ohne_gesamtfrist_greift_die_wache_trotzdem():
+    """Was entfaellt, ist das Budget — nicht die Wache.
+
+    Sonst waere `timeout=None` das ungepruefte Durchlassen, gegen das die Abweisung in
+    `glb_zu_multipass` gebaut ist.
+    """
+    uhr = Uhr()
+    prozess = Prozessattrappe(laeuft_blicke=None, ausgabe=b"")   # schreibt nie etwas
+    starte = seams.starter_mit_wache(frist_s=100, takt_s=30,
+                                     _schlaf=lambda s: uhr.weiter(s),
+                                     _popen=prozess, _uhr=uhr)
+
+    with pytest.raises(SeamError) as fehler:
+        starte(["blender"], None)
+
+    assert prozess.getoetet, "ein haengender Prozess muss auch wirklich beendet werden"
+    meldung = str(fehler.value)
+    assert "Gesamtfrist gibt es bei diesem Lauf nicht" in meldung, (
+        "Die Meldung muss sagen, dass es hier keine Gesamtfrist gibt. Die alte Fassung "
+        "rechnete stattdessen aus, wann der Gesamt-Timeout gegriffen haette — mit None "
+        "ist das ein TypeError mitten in der Fehlermeldung.")
+    assert "wäre erst in" not in meldung, (
+        "Ohne Gesamtfrist darf die Meldung keine ausrechnen.")
+
+
+def test_der_produktivweg_ohne_gesamtfrist_kommt_bis_zum_report(tmp_path, monkeypatch,
+                                                                blender_attrappe):
+    """Die Gegenprobe am ganzen Weg: kein eigenes `_starte`, also der echte Wachstarter.
+
+    Genau diese Kombination — `timeout=None` und voreingestellter Herzschlag — ist die,
+    die auf dem Laptop gefahren werden soll. Alle uebrigen Proben zu `timeout=None`
+    reichen ein `_starte` hinein und betreten den Wachstarter darum nie.
+    """
+    aus = tmp_path / "aus"
+    prozess = Prozessattrappe(laeuft_blicke=1)
+
+    def oeffne(cmd, stdout=None, stderr=None):
+        # Tut, was Blender taete: den Report hinterlassen.
+        Path(cmd[cmd.index("--out") + 1], "blender-report.json").write_text(
+            "{}", encoding="utf-8")
+        return prozess(cmd, stdout, stderr)
+
+    monkeypatch.setattr(seams.subprocess, "Popen", oeffne)
+    monkeypatch.setattr(seams.time, "sleep", lambda s: None)     # ein Blick, kein Warten
+
+    report = seams.glb_zu_multipass("bau.glb", aus, up_axis="Y", timeout=None)
+
+    assert report["depth_png"] is None, "ohne EXR bleibt das PNG NICHT GEMESSEN"
+    assert report["depth_png_fehler"], "und der Grund steht als Feld da"
+
+
+# --------------------------------------------------------------------------------------
+# 8 · Eine Frist, die keine Zahl ist — die zweite Abweisung ohne Probe
+# --------------------------------------------------------------------------------------
+#
+# Auch am 18.09.2026 nachgetragen. `_gesamtfrist` weist seit heute nicht-positive,
+# nicht-endliche und nicht-numerische Fristen ab. GEMESSEN: Nimmt man beide Abweisungen
+# heraus, bleiben `tests/test_seams.py`, `tests/test_fortschritt.py` und
+# `tests/test_durchreichung_verarbeiter.py` zusammen bei 204 von 204 gruen. Eine
+# Verhaltensaenderung, die der HomeStation angesagt werden muss, darf nicht die einzige
+# ihrer Art ohne fallende Probe sein.
+
+@pytest.mark.parametrize("frist", [0, -5, float("inf"), float("nan"), "900", True])
+def test_eine_frist_die_keine_ist_wird_abgewiesen(frist, tmp_path, blender_attrappe):
+    """Null Sekunden sind keine Frist, und `True` ist keine Zahl.
+
+    Wer keine Gesamtfrist will, sagt ``None`` — das ist etwas anderes als null. Und es
+    wird KEIN Prozess gestartet: `verweigerer` belegt, dass vorher abgebrochen wurde.
+    """
+    with pytest.raises(SeamError) as fehler:
+        seams.glb_zu_multipass("bau.glb", tmp_path / "aus", up_axis="Y",
+                               timeout=frist, _starte=verweigerer)
+
+    assert "timeout" in str(fehler.value)
+
+
+@pytest.mark.parametrize("frist", [0, -5, float("nan"), "300"])
+def test_auch_die_ifc_laeufe_nehmen_keine_frist_die_keine_ist(frist, ifc_python_attrappe,
+                                                              tmp_path):
+    """Dieselbe Pruefung hinter `_ifc_frist` — dort ist die Frist der einzige Riegel."""
+    with pytest.raises(SeamError):
+        ifc_zu_glb(tmp_path / "b.ifc", tmp_path / "b.glb", timeout=frist,
+                   _starte=verweigerer)

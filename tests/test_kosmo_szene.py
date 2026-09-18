@@ -845,3 +845,375 @@ def test_nur_vertragsfelder_laesst_qa_je_kamera_stehen():
                         je_kamera=[{"kamera": "sSE", "geometrie_urteil": _urteil()}])
 
     assert "qa_je_kamera" in ks.nur_vertragsfelder(e)
+
+
+# ======================================================================================
+# Die zwei Tore im Vertragsergebnis — R3, 18.09.2026
+# ======================================================================================
+#
+# Der Befund: Die alte Geometriepruefung liess elf von zwoelf Muellbildern durch, und
+# dieselben zwoelf bestanden sie auch gegen ein voellig anderes Gebaeude. `zwei_tore`
+# stellt seither zwei Fragen statt einer — hier wird geprueft, dass die Antwort auch
+# ueber die Naht kommt, und zwar **ohne** das Bestehende anzufassen.
+
+def _tore(**kw):
+    """Ein Urteil aus der echten `zwei_tore` — keine nachgebaute Attrappe.
+
+    Eine Attrappe wuerde prüfen, ob die Uebersetzung zu ihr passt, und nicht, ob sie zum
+    Urteil passt. Genau so entstehen die toten Kanten, die dieses Modul verhindern soll.
+    """
+    grund = {"rho_maske": 0.80, "geom_iou": 0.96,
+             "rho_maske_fremd": 0.05, "geom_iou_fremd": 0.77}
+    grund.update(kw)
+    return geometrie_qa.zwei_tore(**grund)
+
+
+def test_ohne_torurteil_fehlt_das_feld_ganz():
+    """Ein leerer Block hiesse «gemessen, Ergebnis leer» — und das ist etwas anderes als
+    «nicht gemessen». Dieselbe Entscheidung wie bei `qa_je_kamera`."""
+    e = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"], geometrie_urteil=_urteil())
+
+    assert ks.FELD_ZWEI_TORE not in e
+
+
+def test_der_bestehende_qa_block_bleibt_byte_identisch():
+    """Die Gegenseite hat sich woertlich darauf verlassen: *«der bestehende qa-Block
+    bleibt byte-identisch»* — und jede bisher gemessene Zahl dieses Projekts haengt daran.
+
+    Geprueft wird auf **Byte** und nicht auf Gleichheit von Woerterbuechern: Eine
+    geaenderte Schluesselreihenfolge waere in ihrem Diff sichtbar und hier unsichtbar.
+    """
+    import json
+
+    urteil = _urteil()
+    ohne = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"], geometrie_urteil=urteil)
+    mit = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"], geometrie_urteil=urteil,
+                          zwei_tore_urteil=_tore())
+
+    assert json.dumps(mit["qa"]) == json.dumps(ohne["qa"])
+    assert mit["hinweise"] == ohne["hinweise"], "auch die Hinweise bleiben unberuehrt"
+    assert ks.FELD_ZWEI_TORE in mit and ks.FELD_ZWEI_TORE not in mit["qa"]
+
+
+def test_nicht_entscheidbar_wird_nicht_zu_durchgefallen():
+    """**Der Kern dieses ganzen Blattes.**
+
+    Besteht dasselbe Bild auch gegen eine FREMDE Geometrie, hat die Messung nichts
+    gezeigt — weder dass das Bild geometrietreu ist noch dass es das nicht ist. Ein
+    Vertragsfeld, das diesen Fall als `false` ausliefert, behauptet einen Befund ueber das
+    Bild, wo nur einer ueber das Verfahren vorliegt. Genau dieser Fall lag am 08.09.2026
+    zwoelfmal vor — und wurde als Erfolg gelesen.
+    """
+    b = ks.als_ergebnis("vis-1787123048-098c6e", [],
+                        zwei_tore_urteil=_tore(rho_maske_fremd=0.75,
+                                               geom_iou_fremd=0.95))[ks.FELD_ZWEI_TORE]
+
+    assert b["passed"] is None, "nicht entscheidbar, nicht durchgefallen"
+    assert b["passed"] is not False
+    assert b["status"] == ks.STATUS_DEGENERIERT
+    assert b["separates"] is False
+    assert b["counter_check_status"] == ks.STATUS_DEGENERIERT
+    assert "gegenprobe_trennt_nicht" in b["fail_reasons"]
+    assert b["released"] is False
+
+
+def test_nicht_entscheidbar_und_durchgefallen_bleiben_unterscheidbar():
+    """Beide sind falsy. Wer nur `if block['passed']` liest, urteilt richtig; wer die
+    beiden Faelle auseinanderhalten will, muss es koennen."""
+    unklar = ks.als_ergebnis("vis-1787123048-098c6e", [],
+                             zwei_tore_urteil=_tore(rho_maske_fremd=0.75,
+                                                    geom_iou_fremd=0.95))[ks.FELD_ZWEI_TORE]
+    durch = ks.als_ergebnis("vis-1787123048-098c6e", [],
+                            zwei_tore_urteil=_tore(rho_maske=0.02,
+                                                   geom_iou=0.40))[ks.FELD_ZWEI_TORE]
+
+    assert not unklar["passed"] and not durch["passed"]
+    assert unklar["passed"] is not durch["passed"]
+    assert durch["passed"] is False
+    assert durch["status"] == ks.STATUS_OK, "durchgefallen ist ein gemessener Befund"
+    assert "rho_mask_unter_schwelle" in durch["fail_reasons"]
+
+
+def test_ohne_gegenprobe_steht_es_im_ergebnis_und_nicht_in_einem_logbuch():
+    """*Ohne Gegenprobe gegen eine fremde Geometrie ist keine Geometriekennzahl etwas
+    wert.* Wer die Datei liest, muss das sehen — und `hinweise` wird beim strikten Senden
+    weggeworfen, taugt dafuer also nicht.
+    """
+    e = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"],
+                        zwei_tore_urteil=_tore(rho_maske_fremd=None, geom_iou_fremd=None))
+    b = ks.nur_vertragsfelder(e)[ks.FELD_ZWEI_TORE]
+
+    assert b["separates"] is None, "keine erfundene Trennung"
+    assert b["counter_check_status"] == ks.STATUS_FEHLT
+    assert "gegenprobe_fehlt" in b["fail_reasons"]
+    assert b["released"] is False, "ohne Gegenprobe wird nichts freigegeben"
+    assert b["passed"] is True, "das Torurteil selbst bleibt lesbar"
+    assert "OHNE GUELTIGE GEGENPROBE" in b["reason"]
+    assert any("OHNE GEGENPROBE" in w for w in b["warnings"])
+
+
+def test_eine_halbe_gegenprobe_zaehlt_an_dieser_naht_nicht_als_trennung():
+    """Der Befund vom 18.09. — drinnen berichtigt, hier trotzdem abgefangen.
+
+    `zwei_tore` setzte `trennt = True`, wenn nur EINE der beiden fremden Zahlen gemessen
+    wurde: Das fremde Tor fiel dann durch, WEIL es nicht gemessen war. Aus einer fehlenden
+    Messung wurde so eine positive Aussage. Die Bibliothek ist am selben Tag berichtigt
+    worden und meldet dort jetzt `trennt = None`.
+
+    **Diese Naht haengt trotzdem nicht daran**, und genau das prueft die zweite Haelfte:
+    Sie liest `gegenprobe["tor_*"]["gemessen"]` selbst, statt `trennt` zu glauben. Faellt
+    die Berichtigung drinnen je wieder heraus, meldet der Vertrag hier weiterhin keine
+    Trennung. Ein Vertrag, der «getrennt» meldet, wo nichts getrennt wurde, ist derselbe
+    Fehler, gegen den die zwei Tore gebaut sind.
+    """
+    urteil = _tore(rho_maske_fremd=None, geom_iou_fremd=0.77)
+    assert urteil["trennt"] is None, "seit der Berichtigung vom 18.09. keine Trennung mehr"
+
+    b = ks.als_ergebnis("vis-1787123048-098c6e", [],
+                        zwei_tore_urteil=urteil)[ks.FELD_ZWEI_TORE]
+
+    assert b["separates"] is None
+    assert b["counter_check_status"] == ks.STATUS_FEHLT
+    assert "gegenprobe_unvollstaendig" in b["fail_reasons"]
+    assert b["released"] is False
+    assert any("UNVOLLSTAENDIG" in w for w in b["warnings"])
+
+    # Der Rueckfall: ein Urteil, das die alte Behauptung wieder traegt. Die Naht darf sie
+    # nicht uebernehmen — sonst waere ihre Pruefung nur eine Kopie der drinnen.
+    rueckfall = dict(urteil, trennt=True)
+    rueckfall["gegenprobe"] = dict(urteil["gegenprobe"], bestanden=False,
+                                   vollstaendig=True)
+    z = ks.als_ergebnis("vis-1787123048-098c6e", [],
+                        zwei_tore_urteil=rueckfall)[ks.FELD_ZWEI_TORE]
+    assert z["separates"] is None, \
+        "die Naht glaubt 'trennt' nicht, sie rechnet die Gegenprobe selbst nach"
+    assert z["released"] is False
+
+
+def test_ein_nicht_gemessenes_tor_wird_nicht_zu_null():
+    """`None` heisst NICHT GEMESSEN. Nicht «in Ordnung», nicht 0 — eine 0 waere hier eine
+    gemessene Rangkorrelation von null und damit die Aussage «folgt dem Modell gar nicht»."""
+    b = ks.als_ergebnis("vis-1787123048-098c6e", [],
+                        zwei_tore_urteil=_tore(rho_maske=None))[ks.FELD_ZWEI_TORE]
+
+    assert b["rho_mask"] is None, "keine erfundene Null"
+    assert b["rho_mask_status"] == ks.STATUS_DEGENERIERT
+    assert b["rho_mask_passed"] is False, "fail-closed: ungeprueft wird nicht durchgelassen"
+    assert b["geom_iou_status"] == ks.STATUS_OK
+    assert "rho_mask_nicht_gemessen" in b["fail_reasons"]
+    assert b["status"] == ks.STATUS_DEGENERIERT
+
+
+def test_kein_torurteil_ist_kein_durchgefallenes_torurteil():
+    """Fail-closed, aber ohne Behauptung: `released` ist falsch, `passed` bleibt leer.
+
+    Geworfen wird nicht — eine Ausnahme kann jemand fangen und weiterlaufen, ein
+    `released: false` kann niemand mit einem Durchlass verwechseln.
+    """
+    b = ks.als_ergebnis("vis-1787123048-098c6e", [],
+                        zwei_tore_urteil={"kaputt": True})[ks.FELD_ZWEI_TORE]
+
+    assert b["status"] == ks.STATUS_FEHLT
+    assert b["released"] is False
+    assert b["passed"] is None
+    assert b["fail_reasons"] == ["zwei_tore_fehlt"]
+
+
+def test_released_ist_fail_closed_und_nie_leer():
+    """Ueber alle Lagen hinweg: `released` ist immer ein Wahrheitswert und nur dann wahr,
+    wenn beide Tore gemessen sind, beide bestehen und die Gegenprobe getrennt hat."""
+    lagen = [_tore(),
+             _tore(rho_maske=None),
+             _tore(rho_maske=0.02),
+             _tore(rho_maske_fremd=0.75, geom_iou_fremd=0.95),
+             _tore(rho_maske_fremd=None, geom_iou_fremd=None),
+             {"kaputt": True}]
+    bloecke = [ks.als_ergebnis("vis-1787123048-098c6e", [],
+                               zwei_tore_urteil=u)[ks.FELD_ZWEI_TORE] for u in lagen]
+
+    assert all(isinstance(b["released"], bool) for b in bloecke)
+    assert [b["released"] for b in bloecke] == [True, False, False, False, False, False]
+
+
+def test_ein_wahrheitswert_der_keiner_ist_kommt_nicht_durch():
+    """Geprueft wird auf `bool`, nicht auf Wahrheitswert — `"nein"` waere truthy.
+
+    Dieselbe Stelle wie in `gate._lies_urteil`, und dort steht der Grund: Genau so
+    entstehen die Fehler, die ein Gate verhindern soll.
+    """
+    urteil = dict(_tore())
+    urteil["bestanden"] = "ja"
+    b = ks.als_ergebnis("vis-1787123048-098c6e", [],
+                        zwei_tore_urteil=urteil)[ks.FELD_ZWEI_TORE]
+
+    assert b["passed"] is False
+    assert b["released"] is False
+    assert "bestanden_kein_wahrheitswert" in b["fail_reasons"]
+
+
+def test_die_feldnamen_sind_flach_englisch_und_als_unabgestimmt_erklaert():
+    """Sie sind ein **Schluss** aus der Namensart der Gegenseite, keine Angabe von ihr.
+
+    `geom_iou` heisst buchstabengleich wie im bestehenden `qa`-Block — dieselbe Zahl darf
+    im selben Ergebnis nicht zwei Namen haben. `rho_mask` heisst anders als das
+    bestehende `spearman`, weil es etwas anderes ist: die Rangkorrelation ueber der
+    Bauwerksmaske statt ueber dem ganzen Bild. Genau diese Verwechslung ist der Befund.
+    """
+    import inspect
+
+    b = ks.als_ergebnis("vis-1787123048-098c6e", [],
+                        zwei_tore_urteil=_tore())[ks.FELD_ZWEI_TORE]
+
+    assert set(b) == {
+        "status", "released", "passed", "separates", "counter_check_status",
+        "rho_mask", "rho_mask_threshold", "rho_mask_status", "rho_mask_passed",
+        "geom_iou", "geom_iou_threshold", "geom_iou_status", "geom_iou_passed",
+        "fail_reasons", "reason", "warnings"}
+    assert all(name.isascii() and name.islower() for name in b)
+
+    doku = inspect.getdoc(ks.als_zwei_tore_block)
+    assert "NICHT ABGESTIMMT" in doku
+    assert "Schluss" in doku
+
+
+def test_die_zustandswoerter_sind_dieselben_wie_an_der_anderen_naht():
+    """Zwei Vokabulare fuer denselben dritten Zustand im selben Ergebnis waeren die Sorte
+    tote Kante, gegen die dieses Modul gebaut ist."""
+    from aiimaging import gate
+
+    assert (ks.STATUS_OK, ks.STATUS_FEHLT, ks.STATUS_DEGENERIERT) == \
+        (gate.STATUS_OK, gate.STATUS_FEHLT, gate.STATUS_DEGENERIERT)
+
+
+def test_mutationsprobe_ohne_die_dritte_antwort_wird_aus_unklar_ein_durchgefallen(monkeypatch):
+    """**Ein Waechter, der nicht faellt, bewacht nichts.**
+
+    Entschaerft man die Uebersetzung an genau der Stelle, um die es geht — `passed` wird
+    zu `bool(passed)` statt dreiwertig zu bleiben —, dann liefert der Vertrag «nicht
+    entscheidbar» als «durchgefallen» aus. Diese Probe haelt fest, dass das auffaellt.
+    """
+    echt = ks.als_zwei_tore_block
+
+    def entschaerft(urteil):
+        block = dict(echt(urteil))
+        block["passed"] = bool(block["passed"])       # die dritte Antwort faellt weg
+        return block
+
+    unklar = _tore(rho_maske_fremd=0.75, geom_iou_fremd=0.95)
+    durchgefallen = _tore(rho_maske=0.02, geom_iou=0.40)
+
+    # Ungetruebt sind die beiden Lagen unterscheidbar — das ist der Zweck der Uebung.
+    assert echt(unklar)["passed"] is not echt(durchgefallen)["passed"]
+
+    monkeypatch.setattr(ks, "als_zwei_tore_block", entschaerft)
+    lauf = [ks.als_ergebnis("vis-1787123048-098c6e", [],
+                            zwei_tore_urteil=u)[ks.FELD_ZWEI_TORE]["passed"]
+            for u in (unklar, durchgefallen)]
+
+    assert lauf == [False, False], (
+        "Entschaerft sind 'nicht entscheidbar' und 'durchgefallen' im Vertrag nicht mehr "
+        "zu unterscheiden. Genau dieser Verlust ist der Schaden.")
+
+
+# ======================================================================================
+# Nachpruefung der Naht am 18.09.2026 — zwei Stellen, an denen sie zu viel durchliess
+# ======================================================================================
+
+
+def test_eine_gegenprobe_ohne_lesbares_urteil_hat_nicht_getrennt():
+    """**Die einzige fail-open Stelle dieser Naht, und sie gab frei.**
+
+    Die Gegenprobe ist der ganze Gehalt des Befunds vom 18.09.: Besteht dasselbe Bild auch
+    gegen eine FREMDE Geometrie, ist nichts gezeigt. Ihr Urteil wurde hier auf `is True`
+    abgefragt — und alles andere fiel in den Zweig «hat getrennt». Ein `"ja"` ist nicht
+    `True`, also kam eine Gegenprobe, die BESTANDEN hat und damit gerade NICHT trennt, als
+    `separates: true` und `released: true` heraus.
+
+    Geprueft wird darum auf `bool`, nicht auf Wahrheitswert — dieselbe Stelle wie eine
+    Ebene hoeher bei `bestanden` und wie in `gate._lies_urteil`.
+    """
+    urteil = dict(_tore())
+    urteil["gegenprobe"] = {"tor_folgt": {"gemessen": True, "bestanden": True},
+                            "tor_dieses": {"gemessen": True, "bestanden": True},
+                            "bestanden": "ja"}
+
+    b = ks.als_ergebnis("vis-1787123048-098c6e", [],
+                        zwei_tore_urteil=urteil)[ks.FELD_ZWEI_TORE]
+
+    assert b["separates"] is None, "keine erfundene Trennung aus einem unlesbaren Urteil"
+    assert b["separates"] is not True
+    assert b["counter_check_status"] == ks.STATUS_FEHLT
+    assert b["released"] is False, "fail-closed: ungeprueft wird nicht freigegeben"
+    assert "gegenprobe_kein_wahrheitswert" in b["fail_reasons"]
+    assert "OHNE GUELTIGE GEGENPROBE" in b["reason"]
+    assert any("UNLESBAR" in w for w in b["warnings"])
+
+
+def test_gemessen_heisst_es_liegt_eine_zahl_vor_und_nicht_ein_feld_behauptet_es():
+    """Ein Tor mit `{"gemessen": True, "wert": None}` galt als gemessen UND bestanden.
+
+    Herausgekommen war `rho_mask: null` neben `rho_mask_status: "ok"` und
+    `rho_mask_passed: true` — eine leere Stelle, im Vertrag als gemessene, bestandene Zahl
+    ausgewiesen, und `released: true` dazu. Das ist die Verwechslung des ganzen Befunds,
+    eine Ebene tiefer: NICHT GEMESSEN wurde still zu «in Ordnung».
+
+    Dasselbe gilt fuer Text und fuer `NaN`/`inf` — letztere ueberdies, weil sie kein
+    gueltiges JSON sind und drueben schon am Einlesen scheitern wuerden.
+    """
+    for leer in (None, "0.8", float("nan"), float("inf"), True):
+        urteil = dict(_tore())
+        urteil["tor_folgt"] = dict(urteil["tor_folgt"], wert=leer, gemessen=True,
+                                   bestanden=True)
+
+        b = ks.als_ergebnis("vis-1787123048-098c6e", [],
+                            zwei_tore_urteil=urteil)[ks.FELD_ZWEI_TORE]
+
+        assert b["rho_mask"] is None, f"{leer!r} ist keine gemessene Zahl"
+        assert b["rho_mask_status"] == ks.STATUS_DEGENERIERT
+        assert b["rho_mask_passed"] is False
+        assert "rho_mask_nicht_gemessen" in b["fail_reasons"]
+        assert b["status"] == ks.STATUS_DEGENERIERT
+        assert b["released"] is False
+
+
+def test_der_block_bleibt_gueltiges_json():
+    """`NaN` und `inf` schreibt `json.dumps` als `NaN`/`Infinity` — und `JSON.parse`
+    drueben wirft daran. Ein Ergebnis, das niemand einlesen kann, ist nicht abgeliefert."""
+    import json
+
+    urteil = dict(_tore())
+    urteil["tor_dieses"] = dict(urteil["tor_dieses"], wert=float("nan"))
+    b = ks.als_ergebnis("vis-1787123048-098c6e", [],
+                        zwei_tore_urteil=urteil)[ks.FELD_ZWEI_TORE]
+
+    json.dumps(b, allow_nan=False)
+
+
+def test_zwei_zahlen_unter_einem_namen_geben_nichts_frei():
+    """`geom_iou` steht zweimal im selben Ergebnis — der Docstring sagt *«Es ist dieselbe
+    Zahl»*, und bis zur Nachpruefung hielt sie niemand gegeneinander.
+
+    Ein Ergebnis mit `qa.geometry.geom_iou = 0.60` neben `geometry_gates.geom_iou = 0.96`
+    war moeglich. Wer drueben liest, kann dann nicht wissen, welche gilt — und zwei Namen
+    fuer eine Messung ist genau das, was dieser Block vermeiden sollte.
+    """
+    e = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"],
+                        geometrie_urteil=_urteil(),            # geom_iou 0.60
+                        zwei_tore_urteil=_tore(geom_iou=0.96))
+    b = e[ks.FELD_ZWEI_TORE]
+
+    assert e["qa"]["geometry"]["geom_iou"] == 0.6, "der bestehende Block bleibt unberuehrt"
+    assert "geom_iou_widerspruch" in b["fail_reasons"]
+    assert any("ZWEI ZAHLEN UNTER EINEM NAMEN" in w for w in b["warnings"])
+    assert b["released"] is False, "fail-closed: solange sie sich widersprechen, gilt keine"
+
+
+def test_dieselbe_zahl_zweimal_ist_kein_widerspruch():
+    """Der Waechter darf nicht bei jedem Lauf anschlagen — sonst liest ihn niemand mehr."""
+    urteil = _urteil()
+    urteil["geom_iou"] = 0.96
+    b = ks.als_ergebnis("vis-1787123048-098c6e", ["a.png"], geometrie_urteil=urteil,
+                        zwei_tore_urteil=_tore(geom_iou=0.96))[ks.FELD_ZWEI_TORE]
+
+    assert "geom_iou_widerspruch" not in b["fail_reasons"]
+    assert b["released"] is True

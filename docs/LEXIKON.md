@@ -2119,6 +2119,45 @@ können dieselbe Zahl ergeben.
 *Wo im Projekt:* `aiimaging.bildschreiben.schreibe_kontrollbild`, und als Station S6 im
 Beweisgang.
 
+**Zwei Tore statt einer Kennzahl** — Zwei getrennte Prüfungen, die beide bestanden sein
+müssen, statt einer einzigen Zahl, die beide verrechnet.
+*Wozu:* Die alte Prüfung stellte zwei Fragen auf einmal — *folgt das Bild dem Modell
+überhaupt* und *folgt es genau diesem Modell*. Sie zog aus beiden Antworten eine
+Durchschnittszahl, und damit konnte ein sehr guter Wert der einen Frage einen sehr
+schlechten der anderen verdecken. Gemessen: Elf von zwölf absichtlich erzeugten
+Müllbildern kamen so durch. Werden die zwei Fragen einzeln gestellt und beide verlangt,
+kommt keines mehr durch. *Eine Kennzahl, die zwei Fragen zu einer verrechnet, beantwortet
+keine von beiden.*
+*Wo im Projekt:* `aiimaging.geometrie_qa.zwei_tore`, an KosmoOrbit ausgeliefert als
+Vertragsfeld `geometry_gates` in `aiimaging.kosmo_szene`.
+
+**Rauschband** — Der Wertebereich, den eine Messgrösse annimmt, wenn nachweislich *nichts*
+zu messen ist.
+*Wozu:* Eine Schwelle braucht einen Boden. Erzeugt man absichtlich Bilder, die der
+Geometrie nicht folgen, und misst sie trotzdem, streut die Zahl um null herum — im Projekt
+zwischen −0,047 und +0,055. Alles innerhalb dieses Bandes ist ununterscheidbar von Zufall.
+Eine Schwelle darunter wäre wertlos.
+*Wo im Projekt:* Begründung von `SCHWELLE_FOLGT` in `aiimaging.geometrie_qa`; gemessen in
+`auf-20260909-92`.
+
+**Fehlalarm gegen Durchlasser** — Die zwei Arten, auf die ein Riegel danebenliegen kann:
+Er weist etwas Gutes ab (Fehlalarm), oder er lässt etwas Schlechtes durch (Durchlasser).
+*Wozu:* Sie sind nicht gleich schlimm. Ein Fehlalarm ist sichtbar — jemand wundert sich
+und schaut nach. Ein Durchlasser ist unsichtbar; er sieht aus wie ein Erfolg, und niemand
+sucht danach. Wer eine Schwelle setzt, entscheidet damit, welchen der beiden Fehler er
+lieber macht. Im Projekt gilt: lieber Fehlalarm.
+*Wo im Projekt:* Die Schwelle von Tor A weist ein brauchbares Bild von zwölf ab — das ist
+festgehalten, nicht wegkalibriert.
+
+**Ein gemeldeter Mangel, der in der Naht abgefangen wird** — Ein Fehler in der Bibliothek,
+den die Schicht darüber zusätzlich abfängt, statt sich auf die Reparatur zu verlassen.
+*Wozu:* Die Reparatur kann später wieder herausfallen — bei einem Umbau, einem
+Zusammenführen, einer Rücknahme. Prüft die äussere Schicht selbst nach, statt der inneren
+zu glauben, hält sie auch dann. Der Preis ist eine doppelte Rechnung; der Gewinn ist, dass
+zwei Fehler gleichzeitig passieren müssten.
+*Wo im Projekt:* `aiimaging.kosmo_szene.als_zwei_tore_block` rechnet die Gegenprobe selbst
+nach, obwohl `zwei_tore` sie seit dem 18.09.2026 richtig meldet.
+
 ---
 
 ## 5 · Geometrie, Daten und Rendering
@@ -4667,6 +4706,32 @@ sich der Zustand nicht feststellen, wird **abgelehnt** statt geraten (siehe
 *Fail-closed*): Ein übersprungener Auftrag kostet Wartezeit, ein abgestürzter Rechner
 mehr.
 
+**Anwendungsdatenordner** — Der Ort, den ein Betriebssystem einer Anwendung für ihre
+eigenen Dateien zuweist.
+*Wozu:* Jedes System hat einen anderen, und keiner davon ist frei wählbar. Auf macOS ist
+es `~/Library/Application Support`, auf Windows `%LOCALAPPDATA%`, auf Linux
+`~/.local/share`. Wer stattdessen einen eigenen Ordner direkt unter der Systemwurzel
+verlangt — im Projekt war das `/ai` — bekommt auf dem Laptop einer Studierenden einen
+Rechtefehler aus dem Inneren einer Bibliothek, bevor überhaupt etwas geladen ist. Auf
+Windows gibt es diesen Ordner gar nicht.
+*Wo im Projekt:* `aiimaging.render.anwendungsdaten_wurzel`; `/ai` gilt weiterhin, **wenn
+es den Ordner gibt**, damit bestehende Maschinen nichts umstellen müssen.
+
+**Zeitfaktor (für Fristen)** — Ein Multiplikator, mit dem alle Zeitgrenzen einer Software
+an ein langsameres Gerät angepasst werden, ohne jede einzelne Zahl zu ändern.
+*Wozu:* Die Fristen im Projekt (fünf Minuten für einen IFC-Import, fünfzehn für einen
+Render) sind auf der schnellen HomeStation gemessen. Auf einem Laptop wäre dieselbe Frist
+ein Abbruch mitten in einer gesunden Rechnung — und der sieht aus wie ein Fehler, obwohl
+nur die Uhr zu knapp stand. Ein Faktor von 3 verdreifacht alle Fristen auf einmal.
+*Wo im Projekt:* `AIIMAGING_ZEITFAKTOR`, gelesen von `aiimaging.seams.zeitfaktor`.
+
+**Grössenriegel** — Eine Prüfung, die verhindert, dass eine Modellgrösse behauptet wird,
+die niemand nachgemessen hat.
+*Wozu:* Bei manchen Modellfamilien hängt die Lizenz an der Grösse — die kleine Fassung ist
+frei verwendbar, die grosse nicht. Steht im Namen eine Zahl, die nicht zur tatsächlichen
+Grösse passt, ist das kein Schönheitsfehler, sondern eine mögliche Lizenzverletzung.
+*Wo im Projekt:* `aiimaging.backbone.groessen_riegel`.
+
 ---
 
 ## 9 · Arbeit mit Claude Code
@@ -4721,6 +4786,7 @@ System laufen.
 | 2026-09-12 | Ergaenzt aus dem ersten Lauf bis zum fertigen Bild: **Oertliche Ergaenzung (Drop-in)**, **Zweite Differenz (Kruemmung)**, **Ersatzschreibung der Umlaute**. Alle drei aus gemessenen Befunden — der Waechter las nur die Hauptdatei, die vorgeschlagene Kennzahl trennte Verlauf und Kante nicht, und «betonwaende» erreichte das Glossar nicht |
 | 2026-09-11 | Ergaenzt aus `herkunft.py`: **Herkunftstabelle** und **Belegt, gemessen, vermutet, unbekannt**. Die vierte Stufe entstand, weil eine zweifach exakte Messung weder «Norm» noch «Gewohnheit» ist |
 | 2026-09-11 | Ergaenzt aus dem Befund der HomeStation zum Renderprojekt: **Stilles Abstreifen (unbekannter Felder)**. Der Begriff wurde noetig, weil `lies_szene` erfundene Bestellfelder spurlos verschluckt hat — gemessen, nicht vermutet |
+| 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |
 | 2026-09-09 | Ergaenzt aus `messstand` und `beruehrung`: **Codestand (eines Dokuments)**, **Grundlage (eines Dokuments)**, **Beruehrung (einer Messung)**, **Nachgesehen bis**. Der Codestand war am Vortag gebaut und NICHT ins Lexikon eingetragen worden — nachgeholt, gemeinsam mit der zweiten Haelfte derselben Frage |
 | 2026-09-09 | Ergaenzt aus dem Tokenbuch (`auf-vis-20260821-03`): **Form und Befugnis**, **Tokenbuch**, **Abdruck (eines Tokens)**. Der Befund der HomeStation vom 21.08. lautete: Das Freigabe-Gate prueft, ob eine Zeichenfolge wie ein Schluessel *aussieht*, nicht ob wir sie *ausgegeben* haben. Der Abdruck kam beim Bauen dazu — ein Buch mit Klartext-Token haette die Freigabe eine Datei weiter wieder offen hingelegt |

@@ -15,6 +15,14 @@ Dateien und Prozess-Rückgabewerte.
 
 Dieses Modul importiert weder `bpy` noch `ifcopenshell` — und darf es nie.
 
+Zeitgrenzen
+-----------
+Sie stehen gesammelt im Abschnitt «DIE ZEITGRENZEN» weiter unten, und dort steht zu jeder
+Zahl, worauf sie ruht. Die kurze Fassung: Was den Herzschlag misst, ist maschinenfest;
+was die Rechenzeit deckelt, ist eine Aussage über eine bestimmte Maschine und trägt das
+im Namen. :data:`ZEITFAKTOR_ENV` ist die Stelle, an der ein langsameres Gerät das sagen
+kann, ohne dass jemand eine Zahl erfindet.
+
 Test-Naht
 ---------
 Jede Funktion nimmt ein optionales `_starte`, mit dem der Subprozessaufruf ersetzt
@@ -54,6 +62,161 @@ def _default_starte(cmd: list[str], timeout: int) -> subprocess.CompletedProcess
 #: Wie oft eine überwachte Ausführung nachsieht. Zwei Sekunden wie im Altbestand — die
 #: Zahl ist eine Setzung und keine Messung, sie steht darum als Parameter.
 TAKT_S = 2.0
+
+
+# ======================================================================================
+# DIE ZEITGRENZEN — und worauf jede einzelne ruht
+# ======================================================================================
+#
+# Durchgesehen am 18.09.2026, weil die Zielmaschine gewechselt hat: nicht mehr die
+# HomeStation (Ryzen 9 9950X, 16 Kerne, 96 GB), sondern der Laptop einer Studierenden
+# (MacBook M1 Max). Eine Frist, die auf der langsamen Maschine zuschlaegt, ohne dass etwas
+# kaputt ist, macht aus einem langsamen Lauf einen Fehlschlag — und schickt die Nutzerin
+# an die falsche Stelle suchen.
+#
+# WAS DIE DURCHSICHT ERGEBEN HAT, in zwei Sorten getrennt:
+#
+# 1) MASCHINENFEST, weil sie NICHT die Rechenzeit messen, sondern unser eigenes
+#    Lebenszeichen: `HERZSCHLAG_TAKT_S`, `HERZSCHLAG_AUSFAELLE`, `ANLAUF_S`, `TAKT_S`.
+#    Der Herzschlag kommt aus einem Faden, den wir selbst starten; er schlaegt gleich
+#    schnell, ob Cycles nun 30 Sekunden oder 3 Stunden rechnet. Diese Fristen duerfen auf
+#    einem langsamen Geraet bleiben, wie sie sind — genau darum sind sie das richtige
+#    Werkzeug fuer den Laptop.
+#
+# 2) MASCHINENGEBUNDEN, weil sie die Rechenzeit selbst decken: die Gesamtfristen
+#    (`GESAMTFRIST_IFC_S`, `ZEITDECKEL_HOMESTATION_S`). Eine feste Sekundenzahl ist hier
+#    eine Aussage ueber EINE Maschine und nicht ueber den Lauf. Sie sind GESETZT und nicht
+#    gemessen — weder `docs/` noch die Kommentare dieser Datei nennen einen Lauf, an dem
+#    sie geeicht waeren; `docs/PLAN_BIS_FEBRUAR_2027.md` fuehrt sie unter Januar als «neu
+#    zu setzen» auf.
+#
+# WIE GROSS IST DER ABSTAND ZWISCHEN DEN MASCHINEN WIRKLICH? Kleiner, als der Wechsel von
+# der RTX 5090 zum MacBook vermuten laesst — und das ist die wichtigste Zahl dieser
+# Durchsicht:
+#
+#   * Der Runner rechnet auf BEIDEN Maschinen auf der CPU (`cycles.device = "CPU"` in
+#     `runners/blender_depth_stage.py`, und dort steht die Messung vom 06.09.2026 dazu:
+#     OptiX war bei den real genutzten 8-128 Samples 10-35 % LANGSAMER und verschob
+#     ausserdem Kantenpixel der Material-ID). Der Unterschied ist also CPU gegen CPU,
+#     nicht GPU gegen CPU.
+#   * Damit liegt der Abstand in der Groessenordnung von Kernzahl und Takt — ein
+#     einstelliger Faktor. Er ist in diesem Repo fuer keinen M1 Max GEMESSEN; die einzige
+#     ehrliche Antwort darauf ist eine Messung auf dem Geraet, nicht eine Zahl hier.
+#
+# DIE FOLGE FUER DIE BAUFORM: Die Gesamtfrist bekommt keine neue erfundene Zahl. Sie
+# bekommt (a) einen Namen, der die Maschine nennt, auf der sie gilt, (b) die Moeglichkeit,
+# ganz zu entfallen, solange die Stillstandswache laeuft, und (c) einen Faktor, mit dem
+# eine langsamere Maschine ueber sich selbst Auskunft gibt.
+
+#: Die Umgebungsvariable, mit der eine Maschine sagt, wieviel langsamer sie ist als die,
+#: auf der die Gesamtfristen dieser Datei stehen.
+#:
+#: **Warum ueberhaupt eine Variable und keine Erkennung:** Eine Erkennung muesste die
+#: Rechenleistung schaetzen, und eine geschaetzte Zahl waere hier nicht von einer
+#: gemessenen zu unterscheiden. Die Variable ist eine ANGABE — sie sagt, wer sie setzt,
+#: und sie steht in der Umgebung und nicht im Code.
+ZEITFAKTOR_ENV = "AIIMAGING_ZEITFAKTOR"
+
+#: Der Wert, der ohne Angabe gilt. **1.0 heisst: nichts aendert sich.** Die HomeStation
+#: faehrt diesen Code; eine Voreinstellung ungleich 1.0 waere eine Verhaltensaenderung,
+#: die dort ohne Ansage ankaeme.
+ZEITFAKTOR_VORGABE = 1.0
+
+#: Gesamtfrist der beiden IFC-Laeufe, in Sekunden. **GESETZT, nicht gemessen.**
+#:
+#: Die Zahl steht seit dem ersten Entwurf dieser Datei als Vorgabewert in der Signatur.
+#: Nachgesehen am 18.09.2026: keine Messung in `docs/`, keine im Kommentar, kein Auftrag,
+#: der sie geeicht haette. Sie ist damit eine Schaetzung von der schnellen Maschine.
+#:
+#: **Sie ist auch die heiklere der beiden Gesamtfristen**, denn hinter ihr steht *keine*
+#: Stillstandswache: Der IFC-Runner schreibt seinen Bericht erst am Ende, waehrend des
+#: Laufs gibt es nichts, was nachweislich waechst. Ohne Gesamtfrist waere ein haengender
+#: `ifcopenshell`-Prozess durch nichts begrenzt — darum ist `None` hier abgewiesen und
+#: nicht erlaubt (fail-closed), und darum ist der Faktor der Weg fuer ein langsames Geraet.
+GESAMTFRIST_IFC_S = 300
+
+#: Gesamtfrist des Blender-Laufs. **GESETZT, nicht gemessen — und der Name sagt, auf
+#: welcher Maschine sie gesetzt wurde.**
+#:
+#: `abholer.ZEITDECKEL_S` traegt dieselbe Zahl, und
+#: `tests/test_durchreichung_verarbeiter.py` haelt beide aneinander: Wer eine der beiden
+#: aendert, muss die andere mitaendern. Die Zahl steht hier deshalb weiter bei 900 —
+#: **sie laesst sich in dieser Datei allein nicht senken oder heben.**
+#:
+#: Was sie noch bedeutet, seit die Herzschlagwache voreingestellt ist: **Sie ist kein
+#: Haengerwaechter mehr, sondern ein Budget.** Ein toter oder eingefrorener Lauf faellt
+#: nach 10 s auf (`HERZSCHLAG_AUSFAELLE` × `HERZSCHLAG_TAKT_S`), neunzigmal frueher.
+#: Uebrig bleibt fuer die Gesamtfrist allein der Lauf, der stetig vorankommt und trotzdem
+#: zu lange dauert — und **auf einem langsamen Geraet ist genau das der Normalfall und
+#: kein Defekt.**
+ZEITDECKEL_HOMESTATION_S = 900
+
+#: Gesamtfrist der Tiefen-Nachbearbeitung (EXR → PNG), falls sie auf einen zweiten
+#: Blender-Prozess zurueckfaellt. **GESETZT** — dieselbe Zahl, die
+#: :func:`_tiefe_nachbearbeiten` seit jeher als Vorgabe trug. Sie gilt nur, wenn der Lauf
+#: selbst ohne Gesamtfrist gefahren ist; sonst erbt die Nachbearbeitung dessen Frist wie
+#: bisher.
+GESAMTFRIST_NACHBEARBEITUNG_S = 300
+
+
+def zeitfaktor() -> float:
+    """Wieviel langsamer diese Maschine ist als die, auf der die Gesamtfristen stehen.
+
+    Aus :data:`ZEITFAKTOR_ENV`; ohne Angabe :data:`ZEITFAKTOR_VORGABE`. Ein MacBook, auf
+    dem ein Lauf dreimal so lange braucht wie auf der HomeStation, setzt ``3``.
+
+    **Unlesbares wird abgewiesen und nicht stillschweigend auf 1.0 zurueckgesetzt.** Ein
+    Tippfehler in der Umgebung wuerde sonst genau das tun, wogegen die Variable gebaut
+    ist: die alte Frist gelten lassen und den Lauf auf dem langsamen Geraet abschneiden —
+    und niemand wuesste, warum die Angabe nicht wirkt.
+
+    Raises:
+        SeamError: keine Zahl, nicht endlich oder nicht positiv.
+    """
+    roh = os.environ.get(ZEITFAKTOR_ENV)
+    if roh is None or roh.strip() == "":
+        return ZEITFAKTOR_VORGABE
+    try:
+        wert = float(roh)
+    except (TypeError, ValueError) as e:
+        raise SeamError(
+            f"{ZEITFAKTOR_ENV}={roh!r} ist keine Zahl. Gemeint ist ein Vielfaches der "
+            f"Maschine, auf der die Gesamtfristen geeicht sind: '3' heisst dreimal so "
+            f"lange. Unlesbares wird abgewiesen, damit eine Angabe, die nicht wirkt, "
+            f"nicht wie eine wirkende aussieht."
+        ) from e
+    if wert != wert or wert in (float("inf"), float("-inf")) or wert <= 0:
+        raise SeamError(
+            f"{ZEITFAKTOR_ENV}={roh!r} muss positiv und endlich sein. Ein Faktor von 0 "
+            f"oder weniger hiesse, jeder Lauf ist schon vor dem Start zu lang."
+        )
+    return wert
+
+
+def _gesamtfrist(wert, *, was: str):
+    """Eine bestellte Gesamtfrist auf diese Maschine umrechnen.
+
+    ``None`` bleibt ``None`` — das heisst hier **keine Gesamtfrist**, nicht «null
+    Sekunden» und nicht «Vorgabe». Bei einem Faktor von 1.0 kommt der Wert **unveraendert
+    und im selben Typ** zurueck; die HomeStation sieht damit exakt dieselbe Zahl wie
+    bisher, einschliesslich ihres Typs.
+
+    Raises:
+        SeamError: keine Zahl, nicht endlich oder nicht positiv.
+    """
+    if wert is None:
+        return None
+    if isinstance(wert, bool) or not isinstance(wert, (int, float)):
+        raise SeamError(f"{was} muss eine Zahl oder None sein, war: {wert!r}")
+    if wert != wert or wert in (float("inf"), float("-inf")) or wert <= 0:
+        raise SeamError(
+            f"{was}={wert!r} muss positiv und endlich sein. Wer keine Gesamtfrist will, "
+            f"sagt None — das ist etwas anderes als null Sekunden."
+        )
+    faktor = zeitfaktor()
+    if faktor == ZEITFAKTOR_VORGABE:
+        return wert
+    return float(wert) * faktor
 
 #: **Gemessen am 20.08.2026, Blender 4.2, Cycles auf CPU, 512×512, 3000 Samples ohne
 #: adaptives Sampling, stdout in eine Datei umgeleitet.**
@@ -218,11 +381,24 @@ def starter_mit_wache(wache=None, *, frist_s: float | None = None,
                             prozess.wait()
                             raise SeamError(
                                 f"Lauf abgebrochen wegen Stillstand: {befund['detail']} "
-                                f"Der Gesamt-Timeout ({timeout} s) wäre erst in "
-                                f"{max(0.0, timeout - (float(uhr()) - beginn)):.0f} s "
-                                f"gegriffen."
+                                + (
+                                    f"Der Gesamt-Timeout ({timeout} s) wäre erst in "
+                                    f"{max(0.0, timeout - (float(uhr()) - beginn)):.0f} s "
+                                    f"gegriffen."
+                                    if timeout is not None else
+                                    "Eine Gesamtfrist gibt es bei diesem Lauf nicht — die "
+                                    "Stillstandswache ist hier der einzige Riegel, und sie "
+                                    "hat gegriffen."
+                                )
                             )
-                        if float(uhr()) - beginn > timeout:
+                        # `timeout is None` heisst KEINE GESAMTFRIST — nicht «null» und
+                        # nicht «Vorgabe». Dann urteilt allein die Stillstandswache, und
+                        # das ist auf einer langsamen Maschine die richtige Aufteilung:
+                        # Die Wache misst, OB sich etwas bewegt; die Gesamtfrist misst,
+                        # WIE LANGE es dauert, und das ist eine Aussage ueber die
+                        # Maschine. Wer hier ohne Frist laeuft, laeuft nicht unbewacht —
+                        # er laeuft ohne Budget.
+                        if timeout is not None and float(uhr()) - beginn > timeout:
                             prozess.kill()
                             prozess.wait()
                             raise subprocess.TimeoutExpired(cmd, timeout)
@@ -339,7 +515,32 @@ def finde_blender() -> str:
     )
 
 
-def ifc_zu_glb(ifc_path, glb_path, *, timeout: int = 300, _starte=None) -> dict:
+def _ifc_frist(timeout):
+    """Die Gesamtfrist eines IFC-Laufs — umgerechnet, und ``None`` ausdrücklich abgewiesen.
+
+    Hinter den IFC-Läufen steht **keine** Stillstandswache: Der Runner schreibt seinen
+    Bericht erst am Ende, während des Laufs wächst nichts nachweislich. Die Gesamtfrist
+    ist hier also der einzige Riegel, und ein Lauf ohne Riegel wäre genau das
+    Durchlassen des Ungeprüften, gegen das dieses Projekt steht.
+
+    Wer auf einem langsamen Gerät mehr Zeit braucht, sagt es über
+    :data:`ZEITFAKTOR_ENV` oder übergibt eine grössere Zahl — nicht ``None``.
+    """
+    if timeout is None:
+        raise SeamError(
+            f"timeout=None gibt es für die IFC-Läufe nicht. Anders als beim Blender-Lauf "
+            f"wacht hier nichts über den Fortschritt — der Runner schreibt seinen Bericht "
+            f"erst am Ende, und bis dahin ist nicht belegbar, ob sich etwas bewegt. Ohne "
+            f"Gesamtfrist wäre ein hängender Prozess durch NICHTS begrenzt.\n"
+            f"Auf einer langsamen Maschine ist der Weg ein anderer: {ZEITFAKTOR_ENV} "
+            f"setzen (Vielfaches der Maschine, auf der die Fristen stehen) oder eine "
+            f"grössere Zahl übergeben."
+        )
+    return _gesamtfrist(timeout, was="timeout")
+
+
+def ifc_zu_glb(ifc_path, glb_path, *, timeout: float = GESAMTFRIST_IFC_S,
+               _starte=None) -> dict:
     """IFC → glb (Y-up) über den Subprozess im `.venv-ifc`.
 
     **IFC4 *und* IFC2X3.** Hier stand bis zum 18.08.2026 „IFC4". Das war eine Behauptung
@@ -358,9 +559,10 @@ def ifc_zu_glb(ifc_path, glb_path, *, timeout: int = 300, _starte=None) -> dict:
         SeamError: venv fehlt, Subprozess scheitert oder liefert keinen lesbaren Report.
     """
     starte = _starte or _default_starte
+    frist = _ifc_frist(timeout)
     cmd = [finde_ifc_python(), str(IFC_RUNNER), str(ifc_path), str(glb_path)]
 
-    ergebnis = starte(cmd, timeout)
+    ergebnis = starte(cmd, frist)
     if ergebnis.returncode != 0:
         raise SeamError(
             f"IFC→glb fehlgeschlagen (Code {ergebnis.returncode}):\n"
@@ -404,7 +606,7 @@ def _fehlertext(ergebnis) -> str:
     return "\n".join(teile)[:800] or "(keine Ausgabe)"
 
 
-def ifc_raeume(ifc_path, *, timeout: int = 300, _starte=None) -> dict:
+def ifc_raeume(ifc_path, *, timeout: float = GESAMTFRIST_IFC_S, _starte=None) -> dict:
     """Räume (``IfcSpace``) aus einer IFC — über den Subprozess im `.venv-ifc`.
 
     Gebaut wie :func:`ifc_zu_glb` und aus demselben Grund: `ifcopenshell` bringt statisch
@@ -425,7 +627,9 @@ def ifc_raeume(ifc_path, *, timeout: int = 300, _starte=None) -> dict:
 
     Args:
         ifc_path: Die zu lesende IFC-Datei.
-        timeout: Frist des Subprozesses in Sekunden.
+        timeout: Frist des Subprozesses in Sekunden. ``None`` gibt es hier **nicht** —
+            siehe :func:`_ifc_frist`. Auf einer langsameren Maschine ist
+            :data:`ZEITFAKTOR_ENV` der Weg, nicht das Abschalten.
         _starte: Testnaht — ersetzt den Subprozessaufruf, damit die Aufrufkonstruktion
             auch ohne `.venv-ifc` prüfbar bleibt.
 
@@ -468,9 +672,10 @@ def ifc_raeume(ifc_path, *, timeout: int = 300, _starte=None) -> dict:
         SeamError: venv fehlt, Subprozess scheitert oder liefert keinen lesbaren Report.
     """
     starte = _starte or _default_starte
+    frist = _ifc_frist(timeout)
     cmd = [finde_ifc_python(), str(IFC_RAEUME_RUNNER), str(ifc_path)]
 
-    ergebnis = starte(cmd, timeout)
+    ergebnis = starte(cmd, frist)
     if ergebnis.returncode != 0:
         raise SeamError(
             f"IFC-Räume fehlgeschlagen (Code {ergebnis.returncode}):\n"
@@ -628,7 +833,8 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                      kamera=None, auge=None, blick_auf=None, brennweite=None,
                      kamera_modus=None, shift_y=None,
                      gelaende_z=None, hoehe=None,
-                     timeout: int = 900, stillstand_frist_s: float | None = None,
+                     timeout: float | None = ZEITDECKEL_HOMESTATION_S,
+                     stillstand_frist_s: float | None = None,
                      herzschlag_takt_s: float | None = HERZSCHLAG_TAKT_S,
                      kamera_huellbox=None, sonne=None,
                      deckungsgrad=None, augenhoehe=None, bias_grad=None,
@@ -682,6 +888,20 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             diesem Projekt ausgeschaltet. Der Preis ist ein Faden und rund zehn Bytes je
             zwei Sekunden; der Gewinn ist, dass ein hängender Lauf nach 10 statt nach 900
             Sekunden auffällt.
+        timeout: Die **Gesamtfrist** in Sekunden, oder ``None`` für keine.
+            Voreingestellt ist :data:`ZEITDECKEL_HOMESTATION_S`, und der Name sagt, worauf
+            die Zahl ruht: Sie ist auf der schnellen Maschine gesetzt (nicht gemessen) und
+            gilt streng genommen nur dort.
+            **Was sie seit der Herzschlagwache noch leistet:** Sie ist kein Hängerwächter
+            mehr — ein toter Lauf fällt nach 10 s auf, neunzigmal früher. Sie ist ein
+            *Budget*, und auf einem langsamen Gerät ist ein Lauf, der das Budget sprengt,
+            der Normalfall und kein Defekt.
+            ``None`` ist darum erlaubt, **solange eine Stillstandswache läuft** — also bei
+            voreingestelltem ``herzschlag_takt_s`` oder bei einem eigenen ``_starte``.
+            Ohne Wache wird ``None`` abgewiesen: Ein Lauf, den weder eine Frist noch eine
+            Wache begrenzt, ist unbegrenzt, und Ungeprüftes wird hier nicht durchgelassen.
+            Wer die Zahl behalten, aber auf eine langsamere Maschine übertragen will, setzt
+            :data:`ZEITFAKTOR_ENV` — sie wirkt auf jede Gesamtfrist dieses Moduls.
         stillstand_frist_s: **Wird immer abgewiesen** — der Parameter bleibt nur
             bestehen, damit ein Aufrufer eine Begründung bekommt statt eines
             ``TypeError``. Blenders Standardausgabe schweigt auf der GPU zwischen Start
@@ -728,6 +948,23 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             f"176 s, längste Lücke 2,10 s."
         )
 
+    # KEINE FRIST UND KEINE WACHE — das eine ist erlaubt, beides zusammen nicht.
+    #
+    # `timeout=None` heisst: Die Stillstandswache urteilt, nicht die Uhr. Das ist auf einem
+    # langsamen Geraet die richtige Aufteilung. Ohne Wache bliebe aber gar nichts uebrig,
+    # und ein unbegrenzter Prozess ist kein «grosszuegiger» Lauf, sondern ein ungeprueftes
+    # Durchlassen.
+    if timeout is None and _starte is None and herzschlag_takt_s is None:
+        raise SeamError(
+            "timeout=None UND herzschlag_takt_s=None — dann begrenzt diesen Lauf gar "
+            "nichts mehr: keine Frist auf der Uhr und keine Wache auf dem Fortschritt. "
+            "Genau eines von beidem muss stehen.\n"
+            "Gemeint ist vermutlich: «lauf so lange, wie du brauchst, solange du lebst». "
+            "Das ist der voreingestellte Herzschlag (herzschlag_takt_s bei "
+            f"{HERZSCHLAG_TAKT_S} s) zusammen mit timeout=None."
+        )
+    frist = _gesamtfrist(timeout, was="timeout")
+
     if _starte is not None:
         starte = _starte
     elif herzschlag_takt_s is not None:
@@ -735,6 +972,24 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             fortschritt.wache_fuer_datei(
                 Path(out_dir) / HERZSCHLAG_DATEI,
                 frist_s=HERZSCHLAG_AUSFAELLE * herzschlag_takt_s,
+                # DER ANLAUF HAT HIER GEFEHLT, und das war die Zeitgrenze, die auf einem
+                # langsamen Geraet als erste zuschlaegt — grundlos.
+                #
+                # Vor dem ersten Herzschlag gibt es die Datei nicht; die Marke ist `None`,
+                # die Wache zaehlt keinen Schritt, und ohne `anlauf_s` gilt vom ersten
+                # Blick an die kurze Frist von 10 s. Dazwischen liegt aber der ganze
+                # Blender-Start: GEMESSEN am 10.09.2026 in dieser Umgebung sind das beim
+                # ersten Start 12,63 s fuer ein blosses `--version` (danach 0,66 / 0,26 /
+                # 0,15 s) — und der Runner laedt danach noch sein Python. Ein kalter Start
+                # riss die 10 s also ZUVERLAESSIG, nicht gelegentlich.
+                #
+                # Derselbe Befund hatte am 10.09.2026 schon die Standardausgabe-Wache
+                # getroffen und dort `ANLAUF_S` bekommen (siehe `starter_mit_wache`). Die
+                # Herzschlagwache ist beim Nachziehen uebersehen worden — auf der
+                # HomeStation faellt das kaum auf, weil Blender dort im Seitencache liegt.
+                # Auf einem Laptop, der die Software zum ersten Mal startet, faellt es
+                # jedes Mal auf.
+                anlauf_s=ANLAUF_S,
                 name="Herzschlag des Blender-Laufs"),
             takt_s=min(TAKT_S, herzschlag_takt_s))
     else:
@@ -757,6 +1012,18 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
     # Beleg fuer ihren Inhalt. Darum wird hier abgeraeumt statt geprueft.
     bericht = out_dir / "blender-report.json"
     bericht.unlink(missing_ok=True)
+    # DER HERZSCHLAG DES VORLAUFS MUSS MIT WEG, und das ist mehr als Ordnung.
+    #
+    # `out_dir` wird ueblicherweise wiederverwendet. Blieb die alte `herzschlag.txt`
+    # liegen, sah die Wache beim allerersten Blick eine gueltige Marke — und zaehlte damit
+    # einen Schritt, den es in diesem Lauf nie gab. Der Anlauf ein paar Zeilen weiter oben
+    # waere dann sofort verbraucht, und es galte vom Start weg die kurze Frist von 10 s,
+    # die der kalte Blender-Start zuverlaessig reisst. Die Datei des Vorlaufs haette den
+    # neuen Lauf umgebracht.
+    #
+    # Dieselbe Lehre wie beim Report und bei den Bildern zwei Zeilen tiefer: Die Existenz
+    # einer Datei ist kein Beleg fuer ihren Inhalt — und hier nicht einmal fuer ihren Lauf.
+    (out_dir / HERZSCHLAG_DATEI).unlink(missing_ok=True)
     for muster in ("tiefe_*.exr", "tiefe_norm.png", "material_id.png", "beauty_*.png"):
         for alt_datei in out_dir.glob(muster):
             alt_datei.unlink(missing_ok=True)
@@ -775,7 +1042,7 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                               bias_grad=bias_grad),
     ]
 
-    ergebnis = starte(cmd, timeout)
+    ergebnis = starte(cmd, frist)
 
     # Zwei unabhaengige Bedingungen, beide notwendig: Der Prozess muss sauber geendet
     # haben UND einen Report hinterlassen haben. Nur die Datei zu pruefen genuegt nicht
@@ -798,10 +1065,32 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             f"{type(report).__name__}. Eine abgeschnittene oder fremde Datei — der Lauf "
             f"ist damit nicht deutbar."
         )
-    return _tiefe_nachbearbeiten(report, out_dir, timeout=timeout, _starte=starte)
+    # DIE NACHBEARBEITUNG BEKOMMT NICHT DEN HERZSCHLAG-STARTER, und das ist eine
+    # Fehlerbehebung und keine Vereinfachung.
+    #
+    # Hier stand `_starte=starte`. Ist der Herzschlag an — die Voreinstellung —, war
+    # `starte` der ueberwachte Starter MIT DER WACHE DIESES LAUFS. Faellt die
+    # EXR-Normalisierung auf einen zweiten Blender-Prozess zurueck, lief dieser zweite
+    # Prozess damit unter einer Wache auf `herzschlag.txt`, die niemand mehr schreibt:
+    # Blender ist zu diesem Zeitpunkt beendet, die Datei ruehrt sich nicht mehr, und die
+    # Stillstandsuhr der WIEDERVERWENDETEN Wache laeuft seit dem letzten Schlag. Der
+    # zweite Prozess waere also fast sofort als «Stillstand» abgeraeumt worden — und weil
+    # `_tiefe_nachbearbeiten` jeden Fehlschlag als Feld meldet, stuende danach nur ein
+    # irrefuehrendes `depth_png_fehler` im Report, ohne Tiefen-PNG.
+    #
+    # `_starte` (die Naht des Aufrufers) wird weitergereicht wie bisher; nur der intern
+    # gebaute Wachstarter bleibt, wo er hingehoert: beim Renderlauf.
+    return _tiefe_nachbearbeiten(
+        report, out_dir,
+        # Ohne Gesamtfrist fuer den Lauf hat die Nachbearbeitung trotzdem eine: Hinter ihr
+        # steht keine Wache, genau wie bei den IFC-Laeufen.
+        timeout=frist if frist is not None
+        else _gesamtfrist(GESAMTFRIST_NACHBEARBEITUNG_S, was="timeout"),
+        _starte=_starte)
 
 
-def _tiefe_nachbearbeiten(report: dict, out_dir: Path, *, timeout: int = 300,
+def _tiefe_nachbearbeiten(report: dict, out_dir: Path,
+                          *, timeout: float = GESAMTFRIST_NACHBEARBEITUNG_S,
                           _starte=None) -> dict:
     """Aus der EXR das normalisierte PNG rechnen — auf dieser Seite der Prozessgrenze.
 

@@ -5459,3 +5459,78 @@ Bekannt und ausdrücklich nicht erledigt:
       bräuchte es eine Rückmeldung *vom Adressaten*: Der Zustellbeleg steht seit dem
       01.09. in jedem Auftrag, zurückgemeldet hat ihn bisher **niemand**. *Adressat:
       `kern` für den Mechanismus, danach alle drei Worker für die Bitte.*
+
+---
+
+## Sitzung 27 — 18.09.2026 · Die Fokusarbeit beginnt, und der alte Riegel fällt
+
+> **Entschieden:** Der alte Geometrie-Riegel wird nicht nachjustiert, sondern durch zwei
+> getrennte Tore mit UND ersetzt; `geometrie_gate` bleibt unverändert daneben stehen,
+> damit alle bisherigen Zahlen reproduzierbar bleiben. Die Software heisst **Visbox**.
+> **Gemessen:** Der alte Riegel liess **11 von 12** Müllbildern durch und gab alle 12
+> echten Bilder auch gegen eine **fremde** Geometrie frei. Mit den zwei Toren: Müllbilder
+> **0/12**, echte **12/12**, Trennung **12/12**.
+> **Offen:** Bei ControlNet-Stärke 0,75 liegt ein brauchbares Bild unter dem gesamten
+> Rauschband — ob das Bild weniger folgt oder die Kennzahl versagt, ist **nicht
+> entscheidbar**. Gegenprobe als `auf-20260918-115` bei `local`.
+
+- [x] **62 Fragen gestellt, bevor gebaut wurde.** `docs/FRAGEN_OPENSOURCE_2026-09-18.md`
+      — dreifarbig geordnet: 🔴 blockiert den Bau, 🟠 kostet später Umbau, 🔵 kann warten.
+      Die roten hat der Owner nach meiner Empfehlung freigegeben; daraus wurden zwanzig
+      Entscheide in `docs/ENTSCHEIDE_VISBOX_2026-09-18.md`.
+- [x] **Die Software heisst Visbox** (Owner-Entscheid). Zwei Namen vorher verworfen, einer
+      davon an einer harten Kippbedingung: *Baukasten* war auf PyPI und npm vergeben —
+      und das npm-Paket ist **GPL-3.0**. Der Verteilungsname ist `visbox`, der Importpfad
+      bleibt `aiimaging`; 40 000 Zeilen mitten im Bau umzubenennen kauft heute nichts.
+- [x] **R3 gerechnet, und es ist der erste tragende Befund der Vertiefungsarbeit.**
+      Der alte Riegel (`score ≥ 0.65`) liess **elf von zwölf absichtlich erzeugten
+      Müllbildern** durch, und alle zwölf echten Bilder bestanden ihn auch gegen die
+      Tiefenkarte eines **fremden Gebäudes**. Ursache: Der Score verrechnet zwei Fragen
+      zu einer Zahl und lässt die eine die andere decken.
+      *Eine Kennzahl, die zwei Fragen zu einer verrechnet, beantwortet keine von beiden.*
+      → `docs/R3_WELCHES_MASS_TRENNT_2026-09-18.md`
+- [x] **Gebaut: `aiimaging.geometrie_qa.zwei_tore`.** Zwei Tore mit UND statt eines
+      Mittelwerts, und die Gegenprobe gegen eine fremde Geometrie ist **eingebaut**, nicht
+      angehängt. Gemessen an denselben Daten: Müllbilder **0 von 12**, echte Bilder
+      **12 von 12**, Trennung **12 von 12**. `geometrie_gate` bleibt unverändert daneben
+      stehen — alle bisherigen Zahlen des Projekts sind mit ihm entstanden.
+- [x] **Zwei Defekte im eigenen Neubau, beide von gegnerischen Prüfern gefunden, beide am
+      selben Tag behoben.**
+      *Erstens:* Eine **halbe** Gegenprobe (nur eine der beiden fremden Zahlen gemessen)
+      meldete `trennt = True`. Das fremde Tor fiel dort nur durch, **weil es nicht
+      gemessen war** — fail-closed kehrt sich in der Gegenprobe um und wird zu einer
+      positiven Aussage. Behoben über `gegenprobe["vollstaendig"]`; eine unvollständige
+      Gegenprobe meldet jetzt `trennt = None` und warnt.
+      *Zweitens:* Der Kommentar an `SCHWELLE_FOLGT` behauptete mehr, als die Daten tragen
+      — siehe unten.
+- [x] **Berichtigt: die Begründung der Schwelle von Tor A.** Sie nannte +0,144 als
+      niedrigsten Wert eines Bildes, das dem Modell folgt. Das gilt **nur bei
+      ControlNet-Stärke 1,00**. Nachgerechnet über alle drei Reihen desselben Laufs:
+      Bei Stärke 0,75 liegt Fall C / `gebaeude` / Seed 2 auf `rho_maske` **−0,1549** —
+      **unter dem gesamten Rauschband** — bei einer `geom_iou` von 0,9119, die Silhouette
+      sitzt also. Die Lücke, aus der 0,10 stammt, gibt es an dieser Stelle des eigenen
+      Datensatzes nicht. **Was das kostet, ist gezählt statt geschätzt:** Bei 0,75 fällt
+      damit ein brauchbares Bild von zwölf durch Tor A. Ein **Fehlalarm**, kein
+      Durchlasser — die richtige Richtung für einen Riegel, aber ein ungeklärter Fall.
+- [x] **Die zwölf Antworten von KosmoOrbit eingelesen und abgelegt** unter
+      `auftraege/von-kosmoorbit/`, mit README.
+- [x] **Der öffentliche Auftritt existiert.** `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`,
+      `SECURITY.md`, `.github/` — bei 700 Commits war davon nichts da.
+- [x] **Drei gemessene Lücken zur Zielhardware geschlossen** (MacBook M1 Max statt
+      HomeStation): Der Vorgabeort der Modelle war `/ai`, ein Ordner direkt unter der
+      Systemwurzel, auf macOS nicht beschreibbar und auf Windows nicht vorhanden — jetzt
+      der Anwendungsdatenordner des jeweiligen Systems, mit `/ai` weiterhin gültig, **wenn
+      es den Ordner gibt**. Die Fristen (300 s / 900 s) sind auf der schnellen Maschine
+      gemessen und über `AIIMAGING_ZEITFAKTOR` anpassbar. Und `backbone.groessen_riegel`
+      hält fest, dass bei FLUX.2-klein die **Lizenz an der Grösse hängt**.
+- [~] **Offen bei `local`: die Gegenprobe bei Stärke 0,75** (`auf-20260918-115`). Ob das
+      Bild dort dem Modell wirklich weniger folgt oder ob `rho_maske` dort versagt, ist
+      **nicht entscheidbar** — zwölf Bilder sagen es nicht, und die Vertauschprobe bei
+      0,75 gibt es im Datensatz nicht. *Eine Messung, die hier nicht geht, ist keine
+      offene Frage, sondern ein unverschickter Auftrag.* Verschickt.
+      *Adressat: `local`.*
+- [~] **Offen bei `local`: R2** (`auf-20260918-114`) — trägt `flux2-klein-4b`
+      (Apache-2.0, 9,6 GB) überhaupt eine Tiefen-Konditionierung? Daran hängt, ob die
+      Open-Source-Fassung auf einem Laptop läuft. *Adressat: `local`.*
+- [~] **Offen beim Owner: R1** — Zugang zu einem MacBook M1 Max. Ohne ihn bleibt jede
+      Zahl zur Zielhardware gesetzt statt gemessen. *Adressat: Owner.*

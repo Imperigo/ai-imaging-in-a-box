@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260918-115",
+  "art": "qa",
+  "worker": "local",
+  "rang": 14,
+  "erstellt": "2026-09-18T15:00:00Z",
+  "params": {},
+  "beschreibung": "Die Gegenprobe bei ControlNet-Staerke 0.75, die im Datensatz fehlt. Ein konditioniertes Bild (Fall C, Szene gebaeude, Seed 2) liegt dort auf rho_maske -0.1549 und damit UNTER dem gesamten gemessenen Rauschband, bei geom_iou 0.9119. Ohne Vertauschprobe bei 0.75 ist nicht entscheidbar, ob das Bild dem Modell dort wirklich weniger folgt oder ob rho_maske versagt. Davon haengt die Schwelle SCHWELLE_FOLGT = 0.10 ab.",
+  "anweisung": "=== DIE GEGENPROBE BEI STAERKE 0.75 ===\n\nWORUM ES GEHT, in einem Absatz:\n\nTor A der neuen QA fragt «folgt das Bild dem Modell ueberhaupt?» und misst das mit\nrho_maske, der Rangkorrelation zwischen Bildhelligkeit und Tiefenkarte, gerechnet nur\nauf der Bauwerksmaske. Die Schwelle 0.10 ruht auf zwei Messungen aus auf-20260909-92:\ndem Rauschband bei ControlNet-Staerke 0.30 (-0.0473 bis +0.0554, zwoelf Bilder) und dem\nniedrigsten Wert der Reihe bei Staerke 1.00 (+0.1437).\n\nDIE DRITTE REIHE DESSELBEN LAUFS WIDERSPRICHT DEM. Bei Staerke 0.75 steht\nFall C / Szene gebaeude / Seed 2 auf:\n\n    rho_maske  -0.1549      geom_iou  0.9119\n\nDie Silhouette sitzt also (geom_iou 0.9119 liegt klar ueber Tor B bei 0.85), und\ntrotzdem liegt rho_maske unter dem gesamten Rauschband. Mit der Schwelle 0.10 faellt\ndieses Bild durch Tor A — ein Fehlalarm, kein Durchlasser, aber ein ungeklaerter.\n\nZWEI DEUTUNGEN, UND VON HIER AUS IST KEINE ZU BELEGEN:\n\n  (1) Das Bild folgt bei 0.75 dem Modell wirklich weniger. Dann ist Tor A im Recht,\n      und die Schwelle darf bleiben, wo sie ist.\n  (2) rho_maske misst bei 0.75 etwas anderes als bei 1.00 — etwa weil die Helligkeit\n      dort von Material und Licht getragen wird statt von der Tiefe. Dann ist Tor A\n      im Unrecht, und die Schwelle ruht auf einer Luecke, die es nicht ueberall gibt.\n\nDie Vertauschprobe entscheidet das: Ein Bild, das dem Modell folgt, muss gegen die\nFALSCHE Tiefenkarte deutlich schlechter abschneiden als gegen die richtige. Tut es das\nauch bei rho_maske -0.1549, ist die Zahl unbrauchbar und nicht das Bild (Deutung 2).\nSchneidet es gegen beide Karten gleich ab, folgt das Bild wirklich nichts (Deutung 1).\n\nWAS ZU TUN IST, in dieser Reihenfolge:\n\n  1. Die zwoelf Bilder der Reihe staerke_0.75 aus auf-20260909-92 neu erzeugen —\n     dieselben zwei Szenen, dieselben Seeds, derselbe Prompt-Satz, dieselben\n     Aufbau-Parameter. Die Tabelle liegt bei euch als\n     auftraege/ergebnisse/auf-20260909-92-tabelle.json; der Block \"aufbau\" nennt\n     jeden Parameter. Stimmen die neuen rho_maske-Werte nicht auf drei Stellen mit\n     den alten ueberein, ist der Lauf nicht reproduziert — dann meldet das und\n     macht NICHT weiter.\n\n  2. Zu jedem der zwoelf Bilder rho_maske UND geom_iou gegen die RICHTIGE und gegen\n     die FALSCHE Tiefenkarte rechnen. Falsch heisst wie bei auf-20260909-92: die\n     jeweils andere der beiden Szenen (Schachtel gegen Gebaeude und umgekehrt).\n     Vierundzwanzig Messungen also, nicht zwoelf.\n\n  3. Dasselbe fuer die Reihe staerke_1.00 wiederholen, soweit die Vertauschprobe\n     dort nur geom_iou getragen hat — wir brauchen rho_maske gegen die falsche Karte\n     aus demselben Lauf, sonst vergleichen wir zwei Laeufe miteinander.\n\n  4. Fall C / gebaeude / Seed 2 bei Staerke 0.75 zusaetzlich einzeln ansehen:\n     Legt das Bild neben seine Tiefenkarte und neben das 1.00-Bild derselben Zelle.\n     Zwei Saetze in Worten, was anders aussieht — das traegt die Deutung mehr als\n     jede weitere Zahl.\n\n  5. Wenn ihr dabei seid: dieselben vierundzwanzig Messungen auch fuer Staerke 0.30,\n     damit das Rauschband eine Vertauschprobe bekommt statt nur einen Bereich.\n\nWAS NICHT ZU TUN IST:\n\n  * Die Schwelle NICHT selbst aendern. Wir setzen sie hier, wenn eure Zahlen da sind.\n  * KEINE anderen Modelle, keine anderen Staerken, keine Verbesserung des Prompts.\n    Wer den Lauf variiert, kann ihn nicht mehr mit dem alten vergleichen.\n  * Keine Non-Commercial-Gewichte, auch nicht zum Vergleich.\n  * Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade in der Rueckgabe.\n\nWAS EINE VOLLSTAENDIGE ANTWORT IST: die Tabelle aus Schritt 2 und 3, die zwei Saetze\naus Schritt 4, und eine Zeile eurer Einschaetzung, welche der zwei Deutungen die\nZahlen tragen. «Laesst sich nicht reproduzieren» mit Belegen ist ebenfalls eine\nvollstaendige Antwort — und die wichtigste, die es gibt.",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python tools/make_test_ifc.py --gelaende  bzw.  --hochbau",
+    "hinweis": "Dieselben zwei Szenen wie in auf-20260909-92, sonst sind die Zahlen nicht vergleichbar."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 60,
+    "leerlauf_schwelle_mem_gb": 2,
+    "hinweise": [
+      "Der Lauf muss auf drei Stellen reproduzieren, sonst ist er kein Vergleich.",
+      "Ohne die falsche Tiefenkarte ist keine der Zahlen etwas wert.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Reproduktion: die zwoelf rho_maske-Werte der Reihe staerke_0.75, neben den alten. Abweichung je Zelle.",
+    "V2 Vertauschprobe 0.75: je Bild rho_maske und geom_iou gegen die richtige UND die falsche Karte.",
+    "V3 Vertauschprobe 1.00: dasselbe fuer rho_maske, aus demselben Lauf.",
+    "V4 Fall C / gebaeude / Seed 2 bei 0.75: zwei Saetze in Worten, was am Bild anders ist als bei 1.00.",
+    "V5 Wenn machbar: dieselbe Vertauschprobe fuer Staerke 0.30.",
+    "V6 Eure Einschaetzung in einer Zeile: folgt das Bild wirklich weniger, oder misst rho_maske dort etwas anderes?",
+    "V7 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}

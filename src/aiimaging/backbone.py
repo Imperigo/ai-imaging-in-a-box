@@ -21,6 +21,13 @@ FLUX" umgangen. Darum trägt jeder Eintrag seine Lizenz und sein
 ``tests/test_backbone.py`` hält fest, dass FLUX.1-dev und FLUX.2-dev dort **niemals**
 erscheinen. Regel 1 in ausführbarer Form.
 
+Und seit dem 18.09.2026 reicht das Feld allein nicht mehr: Bei FLUX.2-klein hängt die
+Lizenz an der **Grösse** — 4B ist Apache-2.0, 9B ist Non-Commercial. Ein Riegel, der auf
+den Namen schaut, lässt die 9B-Fassung durch, sobald jemand sie einträgt. Darum steht
+die Lizenz solcher Familien in :data:`GROESSENGEBUNDENE_FAMILIEN` und nicht im Eintrag;
+:func:`groessen_riegel` urteilt daraus, und zwar an drei Stellen — beim Eintragen, beim
+Auswählen und beim Prüfen.
+
 Zwei Konditionierungsarten, und warum die Unterscheidung früh gehört
 --------------------------------------------------------------------
 * ``depth_controlnet`` — die Qwen-Familie, SDXL und SD3.5 nehmen eine Tiefenkarte über
@@ -45,6 +52,7 @@ ebenfalls nur stdlib benutzt) — kein ``torch``, kein ``diffusers``, kein ``bpy
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -77,6 +85,60 @@ KONDITIONIERUNGEN = (KOND_DEPTH_CONTROLNET, KOND_INTEGRIERTES_EDIT)
 #: Weitergeführt aus `lizenzquelle`, damit die Regel an EINER Stelle steht. Drei
 #: Kopien derselben Liste laufen früher oder später auseinander.
 PERMISSIVE_LIZENZEN = lizenzquelle.PERMISSIVE_LIZENZEN
+
+
+#: Modellfamilien, bei denen die Lizenz **an der Grösse hängt** und nicht am Namen.
+#:
+#: BEFUND DER KARTIERUNG 18.09.2026: Bei FLUX.2-klein tragen zwei Fassungen denselben
+#: Namen und zwei verschiedene Lizenzen —
+#:
+#:     FLUX.2-klein-4B   Apache-2.0                      unter Regel 1 zulässig
+#:     FLUX.2-klein-9B   FLUX.2 [klein] Non-Commercial   unter Regel 1 AUSGESCHLOSSEN
+#:
+#: Ein Riegel, der auf den Namen „flux2-klein" schaut, hält die 9B-Fassung für die
+#: 4B-Fassung. Das ist kein Randfall, sondern der wahrscheinlichste Weg: Ein neuer
+#: Eintrag entsteht durch Abschreiben des benachbarten, und wer ``flux2-klein-9b`` aus
+#: ``flux2-klein-4b`` kopiert, erbt dabei ``lizenz="Apache-2.0"`` und
+#: ``kommerziell_nutzbar=True``. Der Datensatz behauptet dann etwas Falsches — und jede
+#: Prüfung, die allein den Datensatz liest, bestätigt es.
+#:
+#: Darum steht die Lizenz dieser Familien **hier** und nicht im Eintrag: Die Tabelle ist
+#: die Quelle, das Feld ``lizenz`` des Eintrags nur seine Behauptung. Widersprechen sich
+#: beide, gewinnt die Tabelle. Das ist der ganze Unterschied zwischen einem Riegel und
+#: einer Beschriftung.
+GROESSENGEBUNDENE_FAMILIEN: dict[str, dict] = {
+    "FLUX.2-klein": {
+        # Woran die Familie erkannt wird — an ``name`` UND an ``modell_id``, beide
+        # kleingeschrieben. Beide, weil beide veränderlich sind: Fehler 1 derselben
+        # Kartierung war eine falsche ``modell_id`` bei richtigem ``name``, und der
+        # umgekehrte Fall ist genauso möglich. Ein Riegel, der nur eine der beiden
+        # Spuren liest, ist durch das Ändern der anderen zu umgehen.
+        "kennmuster": ("flux2-klein", "flux.2-klein", "flux2_klein"),
+        # Die einzige Grösse dieser Familie, die permissiv lizenziert ist.
+        # Geprüft an Modellkarte UND LICENSE.md des 4B-Repos (Apache-2.0-Volltext).
+        "freie_groessen_b": {4.0: "Apache-2.0"},
+        # Bekannt gesperrte Grössen, mit der Lizenz, die dort wirklich gilt. Sie stehen
+        # namentlich da, damit die Meldung sagen kann WARUM — nicht bloss „nicht in der
+        # Freiliste".
+        "gesperrte_groessen_b": {9.0: "FLUX.2 [klein] Non-Commercial License"},
+        "quelle": "geprueft 2026-09-18 "
+                  "(https://huggingface.co/black-forest-labs/FLUX.2-klein-4B)",
+    },
+}
+
+#: Toleranz beim Vergleich der Parameterzahl, in Milliarden.
+#:
+#: GESETZT, nicht gemessen. ``parameter_b`` ist eine Grössenordnung („4B") und kein
+#: Datenblatt — 4.0 und 4.03 sind dieselbe Fassung. Eng genug gewählt, dass 4 und 9
+#: niemals zusammenfallen können.
+#:
+#: **Das Fenster ist absichtlich unsymmetrisch angewandt** (Gegenprüfung 18.09.2026):
+#: Die Freiliste vergleicht mit ``<``, die Sperrliste mit ``<=``. Ein Riegel, der
+#: fail-closed sein soll, darf am Rand nicht öffnen — bei genau 4.5 ist „das ist die
+#: 4B-Fassung" eine Behauptung und keine Ablesung, und der vorherige Stand (``<=``
+#: auf beiden Seiten) liess sie durch. Beim Sperren ist dasselbe Fenster umgekehrt
+#: richtig: Dort schadet ein Rand zu viel nichts, und ein Rand zu wenig öffnet.
+GROESSEN_TOLERANZ_B = 0.5
 
 
 #: Tiefenkonvention: nah = grosser Grauwert (hell). **Das ist unsere `tiefe_norm.png`.**
@@ -225,6 +287,164 @@ def _vram_schaetzung(parameter_b: float) -> float:
     return round(parameter_b * 2.0 * 1.2, 1)
 
 
+#: Eine Grössenangabe in einem Bezeichner: Ziffern, dann ``b``, dann Wortende.
+#: ``"flux2-klein-9b"`` ergibt ``9``, ``"black-forest-labs/flux.2-klein-4b"`` ergibt ``4``.
+#: Das ``flux2`` am Anfang ergibt nichts — dort folgt kein ``b`` — und ``labs`` ebenso
+#: wenig, weil davor keine Ziffer steht.
+_GROESSE_IM_BEZEICHNER = re.compile(r"(\d+(?:[.,]\d+)?)\s*b(?![a-z0-9])")
+
+
+def _groessen_behauptungen(spuren) -> set[float]:
+    """Welche Grössen behaupten Name und Kennung dieses Eintrags — in Milliarden?
+
+    Nicht die Grösse des Modells, sondern das, was seine Bezeichner darüber sagen. Für
+    ``groessen_riegel`` ist das die zweite, unabhängige Spur neben ``parameter_b``: Beide
+    stehen in derselben Zeile der Registry, aber sie werden von Hand getrennt gepflegt,
+    und darum gehen sie auseinander, wenn jemand nur eine davon ändert.
+
+    Leere Menge heisst **nicht gemessen** — die Bezeichner sagen nichts über die Grösse.
+    Dann gibt es hier nichts gegenzuprüfen, und ``parameter_b`` bleibt die einzige
+    Angabe. Eine leere Menge ist also keine Bestätigung.
+    """
+    gefunden: set[float] = set()
+    for spur in spuren:
+        for treffer in _GROESSE_IM_BEZEICHNER.finditer(spur):
+            gefunden.add(float(treffer.group(1).replace(",", ".")))
+    return gefunden
+
+
+def groessen_riegel(backbone) -> dict:
+    """Hängt die Lizenz dieses Eintrags an seiner GRÖSSE — und hält sie dann stand?
+
+    Warum es diesen Riegel überhaupt gibt
+    -------------------------------------
+    :func:`pruefe_lizenz` liest die Felder des Eintrags. Das ist richtig, solange der
+    Eintrag die Wahrheit sagt — und genau das ist bei FLUX.2-klein nicht verlässlich:
+    Dieselbe Familie trägt unter demselben Namen zwei Lizenzen, und welche gilt,
+    entscheidet die Parameterzahl. Ein Eintrag, der von der 4B-Fassung abgeschrieben
+    ist, bringt deren ``lizenz="Apache-2.0"`` mit, auch wenn er auf die 9B-Gewichte
+    zeigt. Der Datensatz lügt dann nicht böswillig, er ist bloss kopiert.
+
+    Dieser Riegel steht darum **über** dem Datensatz: Sagt
+    :data:`GROESSENGEBUNDENE_FAMILIEN` nein, hilft kein Lizenzfeld im Eintrag.
+
+    Returns:
+        ``{familie, greift, groesse_b, erwartete_lizenz, zulaessig, grund, auflagen}``.
+
+        ``zulaessig`` ist **dreiwertig**, wie bei :func:`_pruefe_controlnet`:
+
+        * ``None`` — dieser Riegel hat zu diesem Eintrag nichts zu sagen, weil er
+          keiner grössengebundenen Familie angehört. Das heisst **nicht** „in
+          Ordnung", sondern „andere Frage"; die Lizenzprüfung urteilt weiter.
+        * ``True``  — die Grösse steht in der Freiliste der Familie.
+        * ``False`` — sie steht nicht darin. FAIL-CLOSED: auch eine Grösse, deren
+          Lizenz schlicht niemand nachgesehen hat, wird nicht durchgelassen.
+
+        ``grund`` hält die drei Fälle des ``False`` auseinander —
+        ``"bekannt_nicht_kommerziell"`` (nachgesehen und ausgeschlossen),
+        ``"nicht_freigegebene_groesse"`` (nicht nachgesehen) und
+        ``"groessenangabe_widerspruechlich"`` (der Eintrag sagt zwei Grössen, siehe
+        :func:`_groessen_behauptungen`). Durchgefallen und nicht gemessen bleiben damit
+        unterscheidbar, obwohl alle drei dasselbe Tor schliessen.
+    """
+    spuren = (str(backbone.name).lower(), str(backbone.modell_id).lower())
+    familie = None
+    daten = None
+    for kandidat, tabelle in GROESSENGEBUNDENE_FAMILIEN.items():
+        if any(muster in spur for spur in spuren for muster in tabelle["kennmuster"]):
+            familie, daten = kandidat, tabelle
+            break
+
+    groesse = float(backbone.parameter_b)
+
+    if daten is None:
+        return {"familie": None, "greift": False, "groesse_b": groesse,
+                "erwartete_lizenz": None, "zulaessig": None,
+                "grund": "keine_groessengebundene_familie", "auflagen": ()}
+
+    # --- Und `parameter_b` ist auch bloss ein Feld des Eintrags ------------------------
+    #
+    # BEFUND DER GEGENPRÜFUNG 18.09.2026, GEMESSEN: Bis hierher ersetzte dieser Riegel
+    # das Vertrauen in `lizenz` durch Vertrauen in `parameter_b` — ein Feld derselben
+    # Zeile, genauso mitkopiert. Ein Eintrag mit name="flux2-klein-9b",
+    # modell_id=".../FLUX.2-klein-9B" und parameter_b=4.0 kam durch alle drei Standorte:
+    # `groessen_riegel` sagte zulaessig=True, `pruefe_lizenz` sagte zulässig, `waehle`
+    # gab ihn aus, und `_eintrag` nahm ihn an. Also genau der Fall, gegen den der Riegel
+    # gebaut ist, ein Feld weiter links.
+    #
+    # Und es ist der WAHRSCHEINLICHERE Kopierfehler: Wer `flux2-klein-4b` abschreibt,
+    # ändert zuerst den Namen — das ist der Schlüssel, ohne den der Eintrag nicht
+    # entsteht — und übersieht die Zahl darunter. Die Annahme des vorherigen Standes war
+    # die umgekehrte: Name und Grösse gerichtet, nur die Lizenz vergessen.
+    #
+    # Der Ausweg braucht keine neue Quelle: Name und Kennung TRAGEN die Grösse bereits
+    # („-9B"), und dieser Riegel liest beide ohnehin. Widersprechen sie `parameter_b`,
+    # ist nicht entscheidbar, welche der beiden Angaben stimmt — und dann wird nicht
+    # geraten, sondern geschlossen. FAIL-CLOSED, vor der Freiliste, damit die Freiliste
+    # den Widerspruch nicht überstimmen kann.
+    behauptet = _groessen_behauptungen(spuren)
+    abweichend = sorted(b for b in behauptet if abs(groesse - b) > GROESSEN_TOLERANZ_B)
+    if abweichend:
+        return {"familie": familie, "greift": True, "groesse_b": groesse,
+                "erwartete_lizenz": None, "zulaessig": False,
+                "grund": "groessenangabe_widerspruechlich",
+                "auflagen": (
+                    f"WIDERSPRUCH IN DER GRÖSSE: Der Eintrag '{backbone.name}' führt "
+                    f"parameter_b={groesse:g}, seine Bezeichner nennen aber "
+                    f"{', '.join(f'{b:g}B' for b in abweichend)} "
+                    f"(name='{backbone.name}', modell_id='{backbone.modell_id}'). Bei "
+                    f"der Familie '{familie}' entscheidet die Grösse über die Lizenz — "
+                    f"welche der beiden Angaben stimmt, ist von hier aus nicht "
+                    f"entscheidbar. Der Eintrag wird darum abgewiesen und nicht auf "
+                    f"Verdacht der freundlicheren Lesart zugeschlagen. Wer ihn braucht, "
+                    f"bringt Bezeichner und parameter_b in Übereinstimmung.",
+                )}
+
+    for frei, lizenz in daten["freie_groessen_b"].items():
+        if abs(groesse - frei) < GROESSEN_TOLERANZ_B:
+            auflagen: list[str] = []
+            if backbone.lizenz != lizenz:
+                # Die Grösse ist freigegeben, aber der Eintrag nennt eine andere Lizenz
+                # als die Tabelle. Einer von beiden ist veraltet — und weil die Tabelle
+                # die Quelle ist, ist es der Eintrag. Gemeldet statt still übernommen.
+                auflagen.append(
+                    f"WIDERSPRUCH: Für {groesse:g}B der Familie '{familie}' gilt "
+                    f"'{lizenz}' ({daten['quelle']}), der Eintrag '{backbone.name}' "
+                    f"traegt '{backbone.lizenz}'. Die Tabelle ist die Quelle."
+                )
+            return {"familie": familie, "greift": True, "groesse_b": groesse,
+                    "erwartete_lizenz": lizenz, "zulaessig": True,
+                    "grund": "freigegebene_groesse", "auflagen": tuple(auflagen)}
+
+    for gesperrt, lizenz in daten.get("gesperrte_groessen_b", {}).items():
+        if abs(groesse - gesperrt) <= GROESSEN_TOLERANZ_B:
+            return {"familie": familie, "greift": True, "groesse_b": groesse,
+                    "erwartete_lizenz": lizenz, "zulaessig": False,
+                    "grund": "bekannt_nicht_kommerziell",
+                    "auflagen": (
+                        f"Die Familie '{familie}' lizenziert nach GRÖSSE. Die "
+                        f"{groesse:g}B-Fassung steht unter '{lizenz}' und ist unter "
+                        f"Regel 1 AUSGESCHLOSSEN — gleichgültig, was der Eintrag "
+                        f"'{backbone.name}' im Feld 'lizenz' behauptet "
+                        f"('{backbone.lizenz}'), und gleichgültig, wie sehr sein Name "
+                        f"der zugelassenen Fassung ähnelt. Der Ausschluss erstreckt "
+                        f"sich auf daraus abgeleitete LoRAs.",
+                    )}
+
+    frei_genannt = ", ".join(f"{g:g}B" for g in sorted(daten["freie_groessen_b"]))
+    return {"familie": familie, "greift": True, "groesse_b": groesse,
+            "erwartete_lizenz": None, "zulaessig": False,
+            "grund": "nicht_freigegebene_groesse",
+            "auflagen": (
+                f"Die Familie '{familie}' lizenziert nach GRÖSSE; freigegeben ist "
+                f"allein {frei_genannt}. Die {groesse:g}B-Fassung ('{backbone.name}') "
+                f"ist keine davon, und ihre Lizenz ist NICHT geprüft. Sie wird darum "
+                f"abgewiesen und nicht durchgewunken — nicht gemessen ist kein "
+                f"Freibrief. Wer sie braucht, liest ihre Lizenz am Original und trägt "
+                f"die Grösse in GROESSENGEBUNDENE_FAMILIEN nach.",
+            )}
+
+
 #: Dateien eines Modells im diffusers-Ordnerformat. Es sind Ordner, keine Einzeldateien —
 #: ``vorhandene_dateien`` prüft darum auf Existenz, nicht auf „ist eine Datei".
 _DIFFUSERS_DATEIEN = ("model_index.json", "transformer", "vae", "text_encoder", "tokenizer")
@@ -256,6 +476,24 @@ def _eintrag(backbone: Backbone) -> None:
             f"{backbone.name}: unbekannte Konditionierung {backbone.konditionierung!r}. "
             f"Erlaubt: {', '.join(KONDITIONIERUNGEN)}."
         )
+
+    # Der früheste der drei Standorte des Grössenriegels (siehe `groessen_riegel`):
+    # Ein widersprüchlicher Eintrag kommt gar nicht erst in die Tabelle, und zwar beim
+    # Import — also bei uns, nicht auf der Maschine der Nutzerin.
+    #
+    # Abgewiesen wird NUR der Widerspruch, nicht der Ausschluss: Ein ehrlich als
+    # nicht-kommerziell deklarierter Eintrag darf in der Registry stehen, genau wie
+    # `flux1-dev`. Ein ausgeschlossenes Modell, das gar nicht erst auftaucht, kann auch
+    # nicht als ausgeschlossen gemeldet werden.
+    riegel = groessen_riegel(backbone)
+    if riegel["zulaessig"] is False and backbone.kommerziell_nutzbar:
+        raise BackboneError(
+            f"{backbone.name}: {riegel['auflagen'][0]} Der Eintrag führt trotzdem "
+            f"kommerziell_nutzbar=True — so ist er unter Regel 1 nicht eintragbar."
+        )
+    if riegel["zulaessig"] is True and riegel["auflagen"]:
+        raise BackboneError(f"{backbone.name}: {riegel['auflagen'][0]}")
+
     BACKBONES[backbone.name] = backbone
 
 
@@ -434,7 +672,27 @@ _eintrag(Backbone(
 
 _eintrag(Backbone(
     name="flux2-klein-4b",
-    modell_id="black-forest-labs/FLUX.2-klein",
+    # KORREKTUR 18.09.2026 (Kartierung): Hier stand "black-forest-labs/FLUX.2-klein".
+    # Diese Kennung gibt es auf Hugging Face nicht — der Abruf endet mit 401, weil ein
+    # nicht existierendes Repo von einem gesperrten nicht zu unterscheiden ist. Die
+    # Gewichte liegen unter ".../FLUX.2-klein-4B".
+    #
+    # WO DAS AUFSCHLÄGT — und wo nicht (nachgeprüft 18.09.2026): NICHT beim Laden. Kein
+    # Pfad dieser Software lädt je über `modell_id`; `render.lade_modell` liest ein
+    # lokales Verzeichnis, und das leitet `render.standard_modell_wurzel` aus `name` ab,
+    # nicht aus der Kennung. Die einzige Stelle, die `modell_id` überhaupt anfasst, ist
+    # das Berichtsfeld in `render` — sie wird gelesen, nicht aufgerufen.
+    #
+    # Genau deshalb ist die Zeile trotzdem keine Kleinigkeit: Sie ist die Anweisung an
+    # den Menschen, der die Gewichte holt. Falsch, gibt Hugging Face 401 zurück, weil ein
+    # nicht existierendes Repo von einem gesperrten nicht zu unterscheiden ist — die
+    # Meldung spricht dann von Zugangsrechten, wo ein Tippfehler steht, und sie erscheint
+    # bei der Nutzerin, nie bei uns. Eine falsche Angabe, gegen die kein Lauf anschlägt,
+    # braucht eine Probe.
+    modell_id="black-forest-labs/FLUX.2-klein-4B",
+    # 4.0 ist hier nicht nur Grössenordnung, sondern LIZENZTRAGEND: Für diese Familie
+    # entscheidet die Parameterzahl über die Lizenz (siehe GROESSENGEBUNDENE_FAMILIEN).
+    # Wer sie ändert, ändert die Lizenzlage — `groessen_riegel` hält dagegen.
     parameter_b=4.0,
     lizenz="Apache-2.0",
     kommerziell_nutzbar=True,
@@ -447,10 +705,11 @@ _eintrag(Backbone(
     # Geprüft 2026-08-18 an Modellkarte UND LICENSE.md des 4B-Repos: Front-Matter
     # "license: apache-2.0", LICENSE.md ist der Apache-2.0-Volltext.
     # https://huggingface.co/black-forest-labs/FLUX.2-klein-4B
-    # Zwei Befunde dazu im Prüfbericht: (a) die oben eingetragene modell_id
-    # "black-forest-labs/FLUX.2-klein" existiert nicht (401), die Gewichte liegen unter
-    # ".../FLUX.2-klein-4B"; (b) Apache-2.0 gilt nur für die 4B-Grösse — FLUX.2-klein-9B
-    # steht unter der FLUX Non-Commercial License. Die Lizenz hängt an der Grösse.
+    # Zwei Befunde dazu im Prüfbericht, beide am 18.09.2026 gerichtet: (a) die frühere
+    # modell_id "black-forest-labs/FLUX.2-klein" existiert nicht (401) — steht oben
+    # richtig; (b) Apache-2.0 gilt nur für die 4B-Grösse, FLUX.2-klein-9B steht unter der
+    # FLUX Non-Commercial License. Die Lizenz hängt an der Grösse, und seit (b) hängt
+    # auch der Riegel dort: GROESSENGEBUNDENE_FAMILIEN statt Namensvergleich.
     lizenz_quelle=QUELLE_MODELLKARTE,
 ))
 
@@ -590,6 +849,18 @@ def waehle(*, kommerziell: bool = True, max_vram_gb: float | None = None,
     for backbone in BACKBONES.values():
         if kommerziell and not backbone.kommerziell_nutzbar:
             continue
+        # Der zweite Standort des Grössenriegels, und der unumgehbare: `waehle` liest
+        # die Registry direkt und ruft `pruefe_lizenz` nicht auf. Ein Riegel allein in
+        # der Lizenzprüfung liesse also genau den Weg offen, über den ein Modell
+        # tatsächlich ausgewählt wird.
+        #
+        # Er hängt an `kommerziell` wie der Filter darüber — aus demselben Grund:
+        # `kommerziell=False` lockert die Anforderung für Forschung und
+        # Vergleichsmessungen, und es wäre inkonsequent, dort `flux1-dev` zu zeigen,
+        # aber eine 9B-Fassung zu verbergen. Für die Auslieferung zählt die Vorgabe,
+        # und die ist `True`.
+        if kommerziell and groessen_riegel(backbone)["zulaessig"] is False:
+            continue
         if max_vram_gb is not None and backbone.vram_gb > max_vram_gb:
             continue
         if konditionierung is not None and backbone.konditionierung != konditionierung:
@@ -692,7 +963,13 @@ def pruefe_lizenz(name: str) -> dict:
 
     Returns:
         ``{name, lizenz, kommerziell_nutzbar, zulaessig, auflagen, lizenz_quelle,
-        lizenz_belegt, lizenz_hinweis, begruendung}``.
+        lizenz_belegt, lizenz_hinweis, begruendung, controlnet, groessen_riegel,
+        regel_1_spannung}``.
+
+        ``controlnet`` und ``groessen_riegel`` tragen die beiden Teilurteile als Daten
+        weiter, statt sie nur als Satz in ``auflagen`` abzulegen — ein Aufrufer soll sie
+        nicht aus Text zurückgewinnen müssen. In beiden heisst ``zulaessig: None`` „andere
+        Frage", nicht „in Ordnung".
 
         ``zulaessig`` ist die Antwort auf „darf verwendet werden", ``auflagen`` sagt
         „unter welchen Bedingungen". Beides getrennt, weil zwei Einträge (SDXL mit den
@@ -784,6 +1061,44 @@ def pruefe_lizenz(name: str) -> dict:
             f"nicht bedingungslos. " + " ".join(auflagen)
         )
 
+    # --- Die Lizenz hängt manchmal an der GRÖSSE, nicht am Namen ------------------------
+    #
+    # Der dritte Standort des Grössenriegels — der, an dem geurteilt wird. Alles bis
+    # hierher liest die Felder des Eintrags; genau die sind es aber, die beim Abschreiben
+    # eines benachbarten Eintrags mitwandern. Der Riegel steht darum ÜBER dem Datensatz:
+    # Sagt die Tabelle nein, hilft kein `lizenz="Apache-2.0"` im Eintrag.
+    riegel = groessen_riegel(backbone)
+    if riegel["zulaessig"] is False:
+        auflagen.extend(riegel["auflagen"])
+        if zulaessig:
+            begruendung = (
+                f"{backbone.name}: Nach dem Lizenzfeld des Eintrags wäre dieses Modell "
+                f"zulässig — nach seiner GRÖSSE ist es das nicht. "
+                + " ".join(riegel["auflagen"])
+            )
+        else:
+            # Der ältere Ausschlussgrund bleibt stehen; zwei Gründe sind zwei Gründe.
+            begruendung += " HINZU KOMMT: " + " ".join(riegel["auflagen"])
+        zulaessig = False
+    elif riegel["auflagen"]:
+        auflagen.extend(riegel["auflagen"])
+        # Und die Begründung wird ERSETZT, nicht ergänzt. GEMESSEN 18.09.2026: Bis hierher
+        # wanderte der WIDERSPRUCH nur in `auflagen`, während `begruendung` weiterhin
+        # wörtlich „ist permissiv und OHNE WEITERE AUFLAGE mit Regel 1 vereinbar" sagte —
+        # ein Satz bestritt den anderen. Wer nur die Begründung liest (und das tut jede
+        # Fehlermeldung, die sie durchreicht), erfuhr nie, dass Tabelle und Eintrag
+        # auseinandergehen.
+        #
+        # Anhängen genügt dabei nicht: Der alte Satz behauptet Bedingungslosigkeit, und
+        # die ist jetzt widerlegt. Eine widerlegte Behauptung mit einem „aber" stehen zu
+        # lassen, heisst sie stehen zu lassen. Der Ausgang bleibt `zulaessig=True` — die
+        # Grösse ist ja freigegeben; strittig ist allein der Lizenzname.
+        begruendung = (
+            f"{backbone.name}: Die Grösse ist unter Regel 1 freigegeben, aber die "
+            f"Lizenzangabe des Eintrags deckt sich nicht mit der geprüften Quelle. "
+            + " ".join(riegel["auflagen"])
+        )
+
     # --- Die zweite Hälfte der Naht ---------------------------------------------------
     #
     # Ein Depth-ControlNet ist immer zwei Modelle. Bis zum 18.08.2026 hat diese Funktion
@@ -829,6 +1144,10 @@ def pruefe_lizenz(name: str) -> dict:
         "name": backbone.name,
         # Die zweite Hälfte der Naht, als eigenes Feld statt als Textprobe in `auflagen`.
         "controlnet": controlnet,
+        # Die Grössenfrage ebenso: als Datum, nicht als Satz, den ein Aufrufer wieder
+        # auseinandernehmen müsste. `zulaessig: None` heisst hier „andere Frage", nicht
+        # „in Ordnung" — siehe `groessen_riegel`.
+        "groessen_riegel": riegel,
         "lizenz": backbone.lizenz,
         "kommerziell_nutzbar": backbone.kommerziell_nutzbar,
         "zulaessig": zulaessig,

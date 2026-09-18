@@ -24,6 +24,7 @@ Zahlen liefert.
 from __future__ import annotations
 
 import ast
+import json
 import math
 import random
 import sys
@@ -38,6 +39,8 @@ from aiimaging.geometrie_qa import (
     HINTERGRUND_SCHWELLE_M,
     METHODE,
     MIN_GEMEINSAME_PUNKTE,
+    SCHWELLE_DIESES,
+    SCHWELLE_FOLGT,
     SCHWELLE_GEOMETRIE,
     QaError,
     geometrie_gate,
@@ -45,8 +48,9 @@ from aiimaging.geometrie_qa import (
     iou,
     silhouette,
     spearman,
+    zwei_tore,
 )
-from conftest import PAKET
+from conftest import PAKET, REPO
 
 # --------------------------------------------------------------------------------------
 # Synthetische Tiefenkarten
@@ -2745,3 +2749,620 @@ def test_der_geklemmte_anteil_zaehlt_gegen_die_gemessenen_punkte():
     assert b["anteil_geklemmt"] == pytest.approx(a["anteil_geklemmt"], abs=1e-9), \
         "der Nenner sind die gemessenen Punkte, nicht die Laenge der Karte"
     assert b["anteil_geklemmt"] > 9 / 1109, "sonst waere der Himmel im Nenner"
+
+
+# ======================================================================================
+# DIE ZWEI TORE — die wichtigste Pruefung dieses Repos
+# ======================================================================================
+#
+# Der Anlass steht in `docs/R3_WELCHES_MASS_TRENNT_2026-09-18.md` und im Modul selbst.
+# Kurz: Der alte Riegel (ein zusammengesetzter Score gegen die Schwelle 0.65) liess bei
+# ControlNet-Staerke 0.30 ELF von ZWOELF Muellbildern durch.
+#
+# Die Tests dieses Abschnitts rechnen nicht mit erfundenen Zahlen, sondern mit den
+# GEMESSENEN Zahlen jenes Laufs (`auf-20260909-92`, 09.09.2026, HomeStation). Sie sind
+# damit kein Gedankenexperiment, sondern der Nachweis an dem Datensatz, der den Fehler
+# ueberhaupt sichtbar gemacht hat.
+
+#: Die Messtabelle von `auf-20260909-92`: zwoelf Bilder, dreimal gemessen (ControlNet
+#: 1.00 / 0.75 / 0.30), dazu die Gegenprobe jedes Bildes gegen die Tiefenkarte eines
+#: ANDEREN Gebaeudes. Beide Szenen sind synthetisch (Regel 3): eine Schachtel und ein
+#: fuenfgeschossiger Bau, im Repo erzeugbar.
+TABELLE_92 = REPO / "auftraege" / "ergebnisse" / "auf-20260909-92-tabelle.json"
+
+
+@pytest.fixture(scope="module")
+def tabelle_92() -> dict:
+    """Die gemessenen Zahlen vom 09.09.2026. Fehlt die Datei, ist das ein FEHLER, kein Skip.
+
+    Ein uebersprungener Test meldet gruen. Genau diese Pruefungen duerfen nie gruen
+    melden, ohne gelaufen zu sein — sie tragen die Kernaussage der Arbeit.
+    """
+    assert TABELLE_92.is_file(), (
+        f"Die Messtabelle fehlt: {TABELLE_92.relative_to(REPO)} — ohne sie ist die "
+        "wichtigste Probe dieses Repos nicht durchfuehrbar.")
+    return json.loads(TABELLE_92.read_text(encoding="utf-8"))
+
+
+def _mit_gegenprobe(tabelle: dict) -> list[tuple[dict, dict]]:
+    """Die zwoelf Bilder bei Staerke 1.00, jedes neben seiner Gegenprobe.
+
+    Zusammengefuehrt ueber ``(fall, seed)``: Die Vertauschprobe haelt dasselbe Bild
+    einmal gegen die richtige und einmal gegen eine fremde Tiefenkarte.
+    """
+    fremd = {(e["fall"], e["seed"]): e
+             for e in tabelle["vertauschprobe"] if e["gegen"] == "falsch"}
+    paare = [(e, fremd[(e["fall"], e["seed"])]) for e in tabelle["reihen"]["staerke_1.00"]]
+    assert len(paare) == 12, "zwoelf Bilder, zwoelf Gegenproben — sonst stimmt die Tabelle nicht"
+    return paare
+
+
+# --------------------------------------------------------------------------------------
+# 1 · Die echten Zahlen von damals
+# --------------------------------------------------------------------------------------
+
+def test_DIE_ZWOELF_ECHTEN_BILDER_BESTEHEN_UND_DIE_GEGENPROBE_TRENNT_ZWOELF_VON_ZWOELF(
+        tabelle_92):
+    """DIE WICHTIGSTE PROBE DIESES REPOS. Wird sie rot, ist die Kernaussage der Arbeit weg.
+
+    Geprueft an den GEMESSENEN Zahlen von `auf-20260909-92` (09.09.2026): zwoelf Bilder
+    bei ControlNet-Staerke 1.00, jedes zusaetzlich gegen die Tiefenkarte eines fremden
+    Gebaeudes gerechnet.
+
+    Zwei Aussagen zugleich, und nur beide zusammen sind etwas wert:
+
+    * **Die zwoelf echten Bilder bestehen** — der Riegel sperrt nicht alles aus.
+      Gemessen: ``rho_maske`` 0.1437 … 0.9931 (alle ueber SCHWELLE_FOLGT 0.10),
+      ``geom_iou`` 0.9257 … 0.9784 (alle ueber SCHWELLE_DIESES 0.85).
+    * **Die Gegenprobe trennt 12 von 12** — dieselbe Messung faellt gegen die fremde
+      Geometrie durch. Gemessen: ``geom_iou`` (fremd) 0.7350 … 0.7766, also durchweg
+      unter 0.85. Die Luecke betraegt +0.1491.
+
+    *Ohne Gegenprobe gegen eine fremde Geometrie ist keine Geometriekennzahl etwas wert.*
+    Am 08.09.2026 bestanden alle zwoelf Bilder auch gegen die falsche Karte, und das
+    wurde als Erfolg gelesen.
+    """
+    bestanden, trennt = 0, 0
+    for echt, fremd in _mit_gegenprobe(tabelle_92):
+        urteil = zwei_tore(echt["rho_maske"], echt["geom_iou"],
+                           rho_maske_fremd=fremd["rho_maske"],
+                           geom_iou_fremd=fremd["geom_iou"])
+        bestanden += urteil["bestanden"] is True
+        trennt += urteil["trennt"] is True
+
+    assert bestanden == 12, "die zwoelf geometrietreuen Bilder muessen bestehen"
+    assert trennt == 12, (
+        "die Gegenprobe muss in allen zwoelf Faellen trennen — sonst ist nichts gezeigt")
+
+
+def test_DIE_MUELLBILDER_BESTEHEN_NULL_VON_ZWOELF_STATT_ELF_VON_ZWOELF(tabelle_92):
+    """DIE ZWEITE HAELFTE DERSELBEN AUSSAGE, und der Grund, warum es die zwei Tore gibt.
+
+    Bei ControlNet-Staerke 0.30 folgt das Bild dem Modell nachweislich nicht mehr.
+    Derselbe Datensatz, dieselben zwoelf Faelle:
+
+        alter Riegel (Score >= 0.65)   11 von 12 bestanden   <- der Fehler
+        zwei Tore                       0 von 12 bestanden
+
+    Gefangen werden sie von **Tor A**: ``rho_maske`` liegt ueber alle zwoelf zwischen
+    −0.0473 und +0.0554, also im Rauschband um null, und faellt damit unter
+    SCHWELLE_FOLGT 0.10. ``geom_iou`` haette sie nicht gefangen — bei Bild B/Seed 0 steht
+    es auf 0.8579 und besteht Tor B allein.
+
+    **Genau das darf nie wieder passieren.** Wird diese Probe rot, laesst der Riegel
+    wieder Bilder durch, die mit dem Modell nichts zu tun haben.
+    """
+    reihe = tabelle_92["reihen"]["staerke_0.30"]
+    assert len(reihe) == 12
+
+    alter_riegel = sum(bool(e["bestanden"]) for e in reihe)
+    assert alter_riegel == 11, (
+        "der historische Befund: elf von zwoelf Muellbildern gingen durch den alten "
+        "Riegel — faellt diese Zahl, ist die Tabelle nicht mehr die von damals")
+
+    urteile = [zwei_tore(e["rho_maske"], e["geom_iou"]) for e in reihe]
+    assert sum(u["bestanden"] is True for u in urteile) == 0, \
+        "kein einziges Muellbild darf die zwei Tore bestehen"
+    assert all(u["tor_folgt"]["bestanden"] is False for u in urteile), \
+        "Tor A ist der Faenger: rho_maske liegt bei allen zwoelf im Rauschband um null"
+    assert any(u["tor_dieses"]["bestanden"] is True for u in urteile), (
+        "mindestens ein Muellbild besteht Tor B allein (B/Seed 0: geom_iou 0.8579) — "
+        "genau darum reicht ein Tor nicht")
+
+
+def test_MUTATION_ein_ODER_statt_dem_UND_liesse_ein_gemessenes_muellbild_durch(tabelle_92):
+    """Der Beleg, dass das UND traegt — an echten Zahlen und nicht am Grundsatz.
+
+    Dieselbe Reihe bei Staerke 0.30, einmal mit ODER statt UND gerechnet: Bild B/Seed 0
+    (``rho_maske`` 0.0494, ``geom_iou`` 0.8579) besteht Tor B und ginge durch. Ein
+    Mittelwert taete dasselbe — er ist die weiche Fassung desselben ODER.
+
+    Das ist derselbe Fehler wie beim alten ``score``, nur an anderer Stelle: *Eine
+    Kennzahl, die zwei Fragen zu einer verrechnet, beantwortet keine von beiden.*
+    """
+    urteile = [zwei_tore(e["rho_maske"], e["geom_iou"])
+               for e in tabelle_92["reihen"]["staerke_0.30"]]
+
+    mit_und = sum(u["bestanden"] is True for u in urteile)
+    mit_oder = sum(u["tor_folgt"]["bestanden"] or u["tor_dieses"]["bestanden"]
+                   for u in urteile)
+
+    assert mit_und == 0
+    assert mit_oder == 1, (
+        "mit ODER ginge genau ein gemessenes Muellbild durch — die Mutation ist damit "
+        "an echten Daten sichtbar und nicht nur behauptet")
+
+
+# --------------------------------------------------------------------------------------
+# 2 · Das UND ist ein UND — beide Richtungen
+# --------------------------------------------------------------------------------------
+
+def test_nur_wenn_beide_tore_bestehen_ist_das_urteil_bestanden():
+    """Beide gut — und nur dann. Werte deutlich jenseits beider Schwellen."""
+    urteil = zwei_tore(0.80, 0.96)
+    assert urteil["bestanden"] is True
+    assert urteil["tor_folgt"]["bestanden"] is True
+    assert urteil["tor_dieses"]["bestanden"] is True
+    assert urteil["begruendung"].startswith("BESTANDEN")
+
+
+def test_tor_A_faellt_durch_also_faellt_das_ganze_urteil_durch():
+    """Das Bild folgt dem Modell nicht (rho_maske 0.02), trifft aber die Silhouette (0.96).
+
+    Das ist der gemessene Muellfall bei Staerke 0.30 in Reinform. Ein Mittelwert der
+    beiden Erfuellungsgrade laege hier hoch und liesse durch.
+    """
+    urteil = zwei_tore(0.02, 0.96)
+    assert urteil["bestanden"] is False
+    assert urteil["tor_folgt"]["bestanden"] is False
+    assert urteil["tor_dieses"]["bestanden"] is True
+    assert urteil["begruendung"].startswith("NICHT BESTANDEN")
+
+
+def test_tor_B_faellt_durch_also_faellt_das_ganze_urteil_durch():
+    """Die Tiefen sind sauber gestaffelt (rho_maske 0.80), aber es ist ein anderes Haus.
+
+    ``geom_iou`` 0.77 ist der gemessene Bereich der Gegenprobe gegen fremde Geometrie
+    (0.7350 … 0.7766). Die andere Richtung desselben UND.
+    """
+    urteil = zwei_tore(0.80, 0.77)
+    assert urteil["bestanden"] is False
+    assert urteil["tor_folgt"]["bestanden"] is True
+    assert urteil["tor_dieses"]["bestanden"] is False
+    assert urteil["begruendung"].startswith("NICHT BESTANDEN")
+
+
+def test_beide_tore_fallen_durch():
+    """Der klare Fall — er darf nicht versehentlich zu NICHT ENTSCHEIDBAR werden."""
+    urteil = zwei_tore(0.01, 0.40)
+    assert urteil["bestanden"] is False
+    assert urteil["bestanden"] is not None
+
+
+# --------------------------------------------------------------------------------------
+# 3 · Die Gegenprobe macht das Urteil zu NICHT ENTSCHEIDBAR — nicht zu «durchgefallen»
+# --------------------------------------------------------------------------------------
+
+def test_besteht_das_bild_auch_gegen_fremde_geometrie_ist_das_urteil_None():
+    """Die dritte Antwort an ihrer wichtigsten Stelle: ``bestanden is None``.
+
+    Besteht dieselbe Messung auch gegen ein Gebaeude, das es nicht ist, dann hat sie
+    NICHTS gezeigt — weder dass das Bild geometrietreu ist noch dass es das nicht ist.
+    ``False`` waere hier genauso falsch wie ``True``: Es behauptete einen Befund ueber
+    das Bild, wo nur einer ueber das Verfahren vorliegt.
+
+    Genau dieser Fall lag am 08.09.2026 zwoelfmal vor — und wurde als Erfolg gelesen.
+    """
+    urteil = zwei_tore(0.80, 0.96, rho_maske_fremd=0.75, geom_iou_fremd=0.95)
+
+    assert urteil["bestanden"] is None, "nicht entscheidbar, nicht bestanden, nicht durchgefallen"
+    assert urteil["bestanden"] is not False, "die dritte Antwort ist keine Verneinung"
+    assert urteil["trennt"] is False
+    assert urteil["gegenprobe"]["bestanden"] is True
+    assert urteil["begruendung"].startswith("NICHT ENTSCHEIDBAR")
+
+
+def test_die_warnung_sagt_dass_die_messung_nicht_trennt():
+    """Ein ``None`` ohne Erklaerung ist ein Raetsel. Die Warnung muss den Grund tragen."""
+    urteil = zwei_tore(0.80, 0.96, rho_maske_fremd=0.75, geom_iou_fremd=0.95)
+    text = " ".join(urteil["warnungen"])
+
+    assert "TRENNT NICHT" in text
+    assert "FREMDE" in text
+    assert "NICHT ENTSCHEIDBAR" in text
+
+
+def test_die_bestandene_gegenprobe_darf_nicht_als_wahr_durchgehen():
+    """``None`` ist falsy — wer nur ``if urteil['bestanden']`` schreibt, liest richtig.
+
+    Wer dagegen ``is not False`` prueft, liest falsch. Diese Probe haelt fest, dass die
+    beiden Faelle im Ergebnis unterscheidbar bleiben und nicht ueber die Wahrheitswertung
+    zusammenfallen.
+    """
+    nicht_entscheidbar = zwei_tore(0.80, 0.96, rho_maske_fremd=0.75, geom_iou_fremd=0.95)
+    durchgefallen = zwei_tore(0.02, 0.40, rho_maske_fremd=0.01, geom_iou_fremd=0.30)
+
+    assert not nicht_entscheidbar["bestanden"]
+    assert not durchgefallen["bestanden"]
+    assert nicht_entscheidbar["bestanden"] is not durchgefallen["bestanden"], \
+        "nicht entscheidbar und durchgefallen duerfen nicht dasselbe Ergebnis sein"
+
+
+def test_die_gegenprobe_faellt_durch_dann_ist_das_urteil_gueltig(tabelle_92):
+    """Der gute Fall, an gemessenen Zahlen: fremde Geometrie faellt an Tor B.
+
+    Bild A/Seed 0: gegen die richtige Karte ``geom_iou`` 0.9771, gegen die fremde 0.7735.
+    """
+    echt, fremd = _mit_gegenprobe(tabelle_92)[0]
+    urteil = zwei_tore(echt["rho_maske"], echt["geom_iou"],
+                       rho_maske_fremd=fremd["rho_maske"],
+                       geom_iou_fremd=fremd["geom_iou"])
+
+    assert urteil["bestanden"] is True
+    assert urteil["trennt"] is True
+    assert urteil["gegenprobe"]["tor_dieses"]["bestanden"] is False, \
+        "geom_iou ist der Traeger der Trennung, mit der groessten gemessenen Luecke"
+    assert urteil["warnungen"] == [], "ein vollstaendig geprueftes Urteil warnt nicht"
+
+
+# --------------------------------------------------------------------------------------
+# 4 · Ohne Gegenprobe: ein Urteil, aber ein vorlaeufiges
+# --------------------------------------------------------------------------------------
+
+def test_ohne_gegenprobe_gibt_es_ein_urteil_aber_trennt_bleibt_None():
+    """``trennt is None`` heisst NICHT GEMESSEN — nicht «trennt nicht» und nicht «trennt».
+
+    Das Urteil selbst faellt trotzdem, sonst waere die Funktion ohne zweiten Durchlauf
+    unbrauchbar. Aber es ist so viel wert wie das alte, und das alte war nichts wert.
+    """
+    urteil = zwei_tore(0.80, 0.96)
+
+    assert urteil["bestanden"] is True
+    assert urteil["trennt"] is None
+    assert urteil["gegenprobe"] is None
+    assert any("OHNE GEGENPROBE" in w for w in urteil["warnungen"])
+
+
+def test_die_warnung_ohne_gegenprobe_nennt_den_gemessenen_preis():
+    """Eine Warnung ohne Zahl wird ueberlesen. Diese traegt den Befund von damals."""
+    warnung = " ".join(zwei_tore(0.80, 0.96)["warnungen"])
+    assert "elf von zwoelf" in warnung, \
+        "die Warnung muss sagen, was der Verzicht gekostet hat — gemessen, nicht gemahnt"
+
+
+def test_ohne_gegenprobe_warnt_es_auch_beim_durchgefallenen_bild():
+    """Auch ein NEIN ist ohne Gegenprobe ungedeckt — die Warnung haengt nicht am Urteil."""
+    urteil = zwei_tore(0.02, 0.40)
+    assert urteil["bestanden"] is False
+    assert urteil["trennt"] is None
+    assert any("OHNE GEGENPROBE" in w for w in urteil["warnungen"])
+
+
+# BEFUND 18.09.2026, repariert am selben Tag: Eine HALBE Gegenprobe (nur eine der beiden
+# fremden Zahlen gemessen) setzte trennt=True, ohne dass etwas getrennt wurde. Das fremde
+# Tor fiel dort nur durch, WEIL es nicht gemessen war — fail-closed kehrt sich in der
+# Gegenprobe um und wird zu einer positiven Aussage. Der Befund stand hier als
+# xfail(strict); `zwei_tore` unterscheidet jetzt ueber `gegenprobe["vollstaendig"]`, und
+# die Probe steht als gewoehnlicher Waechter.
+def test_eine_halbe_gegenprobe_darf_nicht_als_trennung_zaehlen():
+    """Nicht gemessen ist keine Trennung. Diese Probe wird gruen, sobald das gefixt ist.
+
+    Aufruf mit ``geom_iou_fremd`` allein: ``rho_maske (fremd)`` ist NICHT GEMESSEN und
+    gilt darum als nicht bestanden, damit gilt die ganze Gegenprobe als durchgefallen,
+    und daraus wird ``trennt = True``. Aus einer fehlenden Messung wird so eine positive
+    Aussage — genau die Verwechslung, gegen die die dritte Antwort gebaut ist.
+
+    Nachgeprueft am 18.09.2026, und der Fall ist schaerfer als zuerst beschrieben: Es
+    genuegt nicht, dass die eine gemessene fremde Zahl durchfaellt. Auch wenn sie
+    **besteht** — ``geom_iou_fremd=0.99``, die fremde Geometrie sieht der richtigen also
+    messbar aehnlich —, meldet die Funktion ``trennt = True``, ``bestanden = True``, keine
+    Warnung, und schreibt in die Begruendung «Gegen fremde Geometrie faellt sie durch, wie
+    sie soll». Das ist keine unvollstaendige Aussage mehr, sondern eine falsche: Die eine
+    Zahl, die gemessen wurde, sagt das Gegenteil.
+    """
+    halb_durchgefallen = zwei_tore(0.80, 0.96, geom_iou_fremd=0.77)
+    halb_bestanden = zwei_tore(0.80, 0.96, geom_iou_fremd=0.99)
+
+    assert halb_durchgefallen["gegenprobe"]["tor_folgt"]["gemessen"] is False
+    assert halb_bestanden["gegenprobe"]["tor_dieses"]["bestanden"] is True, \
+        "die eine gemessene fremde Zahl besteht — hier trennt nachweislich nichts"
+    assert halb_bestanden["trennt"] is not True, \
+        "die einzige gemessene fremde Zahl besteht, und trotzdem heisst es «trennt»"
+    assert halb_durchgefallen["trennt"] is not True, \
+        "eine halb gemessene Gegenprobe hat nichts getrennt"
+
+
+# --------------------------------------------------------------------------------------
+# 5 · NICHT GEMESSEN — fail-closed, aber unterscheidbar
+# --------------------------------------------------------------------------------------
+
+def test_ohne_rho_maske_ist_tor_A_nicht_gemessen_und_damit_nicht_bestanden():
+    """``None`` heisst NICHT GEMESSEN. Nicht «in Ordnung», nicht 0, und nicht bestanden.
+
+    ``gemessen=False`` haelt es trotzdem auseinander: *Nicht gemessen und durchgefallen
+    sind beides «nicht bestanden» — aber nur eines davon ist ein Befund ueber das Bild.*
+    """
+    urteil = zwei_tore(None, 0.96)
+
+    assert urteil["bestanden"] is False
+    assert urteil["tor_folgt"]["gemessen"] is False
+    assert urteil["tor_folgt"]["wert"] is None, "keine erfundene Null"
+    assert urteil["tor_folgt"]["bestanden"] is False
+    assert urteil["tor_dieses"]["gemessen"] is True
+    assert "NICHT GEMESSEN" in urteil["tor_folgt"]["begruendung"]
+    assert any("NICHT GEMESSEN" in w for w in urteil["warnungen"])
+
+
+def test_ohne_geom_iou_ist_tor_B_nicht_gemessen_und_damit_nicht_bestanden():
+    """Derselbe Fall an der anderen Zahl — einzeln geprueft, weil einzeln ausfallbar."""
+    urteil = zwei_tore(0.80, None)
+
+    assert urteil["bestanden"] is False
+    assert urteil["tor_dieses"]["gemessen"] is False
+    assert urteil["tor_dieses"]["wert"] is None
+    assert urteil["tor_dieses"]["bestanden"] is False
+    assert urteil["tor_folgt"]["gemessen"] is True
+    assert "NICHT GEMESSEN" in urteil["tor_dieses"]["begruendung"]
+    assert any("NICHT GEMESSEN" in w for w in urteil["warnungen"])
+
+
+def test_gar_nichts_gemessen_ist_nicht_bestanden_und_sagt_es_zweimal():
+    """Beide Tore blind. Das Ergebnis bleibt ein NEIN, keine Enthaltung.
+
+    Die Enthaltung (``None``) ist fuer den Fall reserviert, in dem die Gegenprobe zeigt,
+    dass die Messung nicht trennt. Eine fehlende Messung ist etwas anderes: Da wurde
+    nicht zu viel gezeigt, sondern gar nichts versucht.
+    """
+    urteil = zwei_tore(None, None)
+
+    assert urteil["bestanden"] is False
+    assert urteil["bestanden"] is not None
+    assert urteil["tor_folgt"]["gemessen"] is False
+    assert urteil["tor_dieses"]["gemessen"] is False
+
+
+def test_die_begruendung_bei_fehlender_messung_urteilt_ueber_die_messung_nicht_ueber_das_bild():
+    """Der Satz, der den Unterschied traegt — er darf nicht wegfallen."""
+    urteil = zwei_tore(None, 0.96)
+    assert "kein Urteil über das Bild" in urteil["tor_folgt"]["begruendung"]
+
+
+@pytest.mark.parametrize("wert", [True, False, "0.9", [0.9], object()])
+def test_was_keine_zahl_ist_wird_abgewiesen_statt_gedeutet(wert):
+    """Wahrheitswerte und Text fliegen. ``True`` waere sonst still die Zahl 1.0.
+
+    ``bool`` ist in Python eine ``int``-Unterart: ohne die ausdrueckliche Abweisung
+    bestuende ``zwei_tore(True, True)`` beide Tore mit 1.0 — ein bestandenes Urteil aus
+    einem Tippfehler.
+    """
+    with pytest.raises(QaError):
+        zwei_tore(wert, 0.96)
+    with pytest.raises(QaError):
+        zwei_tore(0.80, wert)
+
+
+@pytest.mark.parametrize("wert", [True, "0.9"])
+def test_auch_die_gegenprobe_nimmt_nur_zahlen(wert):
+    """Die Pruefung gilt fuer alle vier Eingaben, nicht nur fuer die ersten zwei."""
+    with pytest.raises(QaError):
+        zwei_tore(0.80, 0.96, rho_maske_fremd=wert)
+    with pytest.raises(QaError):
+        zwei_tore(0.80, 0.96, geom_iou_fremd=wert)
+
+
+# --------------------------------------------------------------------------------------
+# 6 · Die Schwellen selbst — genau auf der Kante
+# --------------------------------------------------------------------------------------
+
+def test_genau_auf_beiden_schwellen_besteht_es():
+    """``>=``, nicht ``>``. Der Wert AUF der Schwelle gehoert auf die bestandene Seite."""
+    urteil = zwei_tore(SCHWELLE_FOLGT, SCHWELLE_DIESES)
+    assert urteil["bestanden"] is True
+    assert urteil["tor_folgt"]["bestanden"] is True
+    assert urteil["tor_dieses"]["bestanden"] is True
+
+
+def test_knapp_unter_der_schwelle_von_tor_A_besteht_es_nicht():
+    """Die kleinstmoegliche Unterschreitung — schaerfer als jede Handvoll Nachkommastellen.
+
+    ``math.nextafter`` liefert die naechste darstellbare Gleitkommazahl Richtung null.
+    Ein ``>`` statt ``>=`` im Code wuerde hier nicht auffallen; die Probe darueber faengt es.
+    """
+    knapp_darunter = math.nextafter(SCHWELLE_FOLGT, 0.0)
+    urteil = zwei_tore(knapp_darunter, 0.96)
+    assert urteil["tor_folgt"]["bestanden"] is False
+    assert urteil["bestanden"] is False
+
+
+def test_knapp_unter_der_schwelle_von_tor_B_besteht_es_nicht():
+    knapp_darunter = math.nextafter(SCHWELLE_DIESES, 0.0)
+    urteil = zwei_tore(0.80, knapp_darunter)
+    assert urteil["tor_dieses"]["bestanden"] is False
+    assert urteil["bestanden"] is False
+
+
+def test_die_schwellen_liegen_in_den_gemessenen_luecken(tabelle_92):
+    """Die Schwellen sind GESETZT, aber nicht beliebig — sie muessen die Luecke treffen.
+
+    Gemessen an den Zahlen von `auf-20260909-92`:
+
+        Tor A: Muellband (Staerke 0.30) endet bei  +0.0554
+               niedrigstes echtes Bild liegt bei   +0.1437
+        Tor B: fremde Geometrie endet bei           0.7766
+               niedrigstes echtes Bild liegt bei    0.9257
+
+    Wandert eine Schwelle aus ihrer Luecke heraus, kippt die Trennung — ohne dass ein
+    einzelner Fall es zeigen muesste. Diese Probe haelt beide Schwellen fest.
+
+    **Beide Luecken sind hier ueber die Reihe bei Staerke 1.00 gerechnet, und das ist
+    keine Nachlaessigkeit, sondern der Befund selbst:** Bei Staerke 0.75 gibt es die
+    Luecke von Tor A nicht (siehe
+    :func:`test_die_luecke_von_tor_A_ist_nur_bei_voller_staerke_sauber`). Wer diese Probe
+    als Beleg liest, dass die Schwellen ueberall sitzen, liest sie falsch — sie belegt
+    nur, dass sie dort sitzen, wo sie hergeleitet wurden.
+    """
+    muell = tabelle_92["reihen"]["staerke_0.30"]
+    echt = tabelle_92["reihen"]["staerke_1.00"]
+    fremd = [e for e in tabelle_92["vertauschprobe"] if e["gegen"] == "falsch"]
+
+    assert max(e["rho_maske"] for e in muell) < SCHWELLE_FOLGT <= \
+        min(e["rho_maske"] for e in echt), "SCHWELLE_FOLGT liegt nicht mehr in der Luecke"
+    assert max(e["geom_iou"] for e in fremd) < SCHWELLE_DIESES <= \
+        min(e["geom_iou"] for e in echt), "SCHWELLE_DIESES liegt nicht mehr in der Luecke"
+
+
+def test_eigene_schwellen_werden_uebernommen():
+    """Die Schwellen sind Voreinstellung, kein Gesetz — eine Studie muss sie schieben koennen."""
+    urteil = zwei_tore(0.20, 0.90, schwelle_folgt=0.50, schwelle_dieses=0.95)
+    assert urteil["bestanden"] is False
+    assert urteil["tor_folgt"]["schwelle"] == 0.50
+    assert urteil["tor_dieses"]["schwelle"] == 0.95
+
+
+def test_die_gegenprobe_wird_an_denselben_schwellen_gemessen():
+    """Eine Gegenprobe mit anderer Schwelle waere keine Gegenprobe, sondern ein zweiter Test."""
+    urteil = zwei_tore(0.20, 0.90, rho_maske_fremd=0.19, geom_iou_fremd=0.89,
+                       schwelle_folgt=0.15, schwelle_dieses=0.85)
+    assert urteil["gegenprobe"]["tor_folgt"]["schwelle"] == 0.15
+    assert urteil["gegenprobe"]["tor_dieses"]["schwelle"] == 0.85
+    assert urteil["bestanden"] is None, "beide bestehen auch fremd — also nichts gezeigt"
+
+
+# --------------------------------------------------------------------------------------
+# Das Ergebnis traegt seine Herkunft mit
+# --------------------------------------------------------------------------------------
+
+def test_jedes_tor_nennt_seine_frage_und_seinen_wert():
+    """Eine Zahl ohne ihre Frage ist im Bericht nicht mehr zuzuordnen."""
+    urteil = zwei_tore(0.80, 0.96)
+
+    assert "Folgt das Bild dem Modell" in urteil["tor_folgt"]["frage"]
+    assert "DIESEM Modell" in urteil["tor_dieses"]["frage"]
+    assert urteil["tor_folgt"]["wert"] == pytest.approx(0.80)
+    assert urteil["tor_dieses"]["wert"] == pytest.approx(0.96)
+    assert urteil["tor_folgt"]["name"] == "rho_maske"
+    assert urteil["tor_dieses"]["name"] == "geom_iou"
+
+
+def test_die_zwei_tore_lassen_das_alte_gate_unangetastet(tabelle_92):
+    """``geometrie_gate`` bleibt daneben stehen, damit alte Zahlen reproduzierbar bleiben.
+
+    Gegenprobe an einem gemessenen Muellbild (A/Seed 0 bei Staerke 0.30): Der alte Riegel
+    sagt weiterhin «bestanden» (Score 0.830 >= 0.65), die zwei Tore sagen nein. Waeren
+    beide gleich, haette eines von beidem seinen Zweck verloren.
+    """
+    fall = tabelle_92["reihen"]["staerke_0.30"][0]
+
+    assert fall["bestanden"] is True, "der alte Riegel liess dieses Bild durch"
+    assert fall["score"] >= fall["schwelle"]
+    assert zwei_tore(fall["rho_maske"], fall["geom_iou"])["bestanden"] is False
+
+
+# --------------------------------------------------------------------------------------
+# Nachpruefung 18.09.2026 — drei Waechter, die keine Probe hatten
+# --------------------------------------------------------------------------------------
+#
+# Gefunden durch Mutationsproben gegen den Stand von `zwei_tore`: drei Stellen liessen
+# sich veraendern, ohne dass eine einzige der 250 Proben rot wurde. Alle drei betreffen
+# nicht das Urteil, sondern das, was der Mensch davon zu lesen bekommt — und genau daran
+# ist das Projekt am 08.09.2026 gescheitert: Die Zahlen lagen vor, der Satz daneben war
+# falsch, und gelesen wurde der Satz.
+
+def test_die_begruendung_sagt_welchen_weg_die_gegenprobe_nahm():
+    """Der Nachsatz zur Gegenprobe muss zum Befund passen — nicht zu seinem Gegenteil.
+
+    MUTATIONSPROBE 18.09.2026: Vertauscht man die beiden Nachsaetze im Code, blieben
+    alle 250 bisherigen Proben gruen. Das Urteilsfeld ``trennt`` stimmte weiter, aber der
+    Satz daneben behauptete das Gegenteil — und in einen Bericht wandert der Satz.
+
+    Genau diese Verwechslung steht in `docs/R3_WELCHES_MASS_TRENNT_2026-09-18.md`: Zwei
+    Prosa-Saetze waren plausibel und beide falsch, und es hat einen Tag gekostet, das
+    nachzurechnen.
+    """
+    trennt = zwei_tore(0.80, 0.96, rho_maske_fremd=0.05, geom_iou_fremd=0.77)
+    trennt_nicht = zwei_tore(0.80, 0.96, rho_maske_fremd=0.75, geom_iou_fremd=0.95)
+
+    assert trennt["trennt"] is True
+    assert "faellt sie durch" in trennt["begruendung"]
+    assert "besteht ebenfalls" not in trennt["begruendung"], \
+        "der Nachsatz behauptet das Gegenteil des gemessenen Befunds"
+
+    assert trennt_nicht["trennt"] is False
+    assert "besteht ebenfalls" in trennt_nicht["begruendung"]
+    assert "faellt sie durch" not in trennt_nicht["begruendung"], \
+        "der Nachsatz behauptet das Gegenteil des gemessenen Befunds"
+
+
+def test_die_fremden_tore_tragen_fremd_im_namen():
+    """Vier Tore in einem Ergebnis — ohne Kennzeichnung sind zwei davon nicht zuzuordnen.
+
+    MUTATIONSPROBE 18.09.2026: Streicht man das ``(fremd)`` aus beiden Namen, blieben alle
+    250 bisherigen Proben gruen. In einem Bericht stuenden dann vier Zeilen ``rho_maske``
+    und ``geom_iou`` mit verschiedenen Zahlen und ohne Unterschied — und die Gegenprobe
+    waere von der Messung nicht mehr zu trennen, um die es ueberhaupt geht.
+    """
+    urteil = zwei_tore(0.80, 0.96, rho_maske_fremd=0.05, geom_iou_fremd=0.77)
+
+    assert urteil["gegenprobe"]["tor_folgt"]["name"] == "rho_maske (fremd)"
+    assert urteil["gegenprobe"]["tor_dieses"]["name"] == "geom_iou (fremd)"
+    assert urteil["gegenprobe"]["tor_folgt"]["name"] != urteil["tor_folgt"]["name"], \
+        "die Gegenprobe muss im Bericht von der Messung unterscheidbar bleiben"
+    assert urteil["gegenprobe"]["tor_dieses"]["name"] != urteil["tor_dieses"]["name"]
+
+
+def test_die_begruendung_traegt_beide_gemessenen_werte_mit():
+    """Ein Urteil ohne seine Zahlen ist nicht nachpruefbar — und wird darum geglaubt.
+
+    MUTATIONSPROBE 18.09.2026: Kuerzt man die Begruendung auf den Kopf («BESTANDEN.»),
+    blieben alle 250 bisherigen Proben gruen — sie pruefen nur den Anfang des Satzes.
+
+    Geprueft wird darum der ganze Satz: beide Namen, beide Werte, beide Schwellen.
+    """
+    urteil = zwei_tore(0.80, 0.96)
+    begruendung = urteil["begruendung"]
+
+    assert begruendung.startswith("BESTANDEN")
+    for stueck in ("rho_maske", "0.8000", "0.10", "geom_iou", "0.9600", "0.85"):
+        assert stueck in begruendung, \
+            f"die Begruendung traegt ihre Herkunft nicht mit: {stueck!r} fehlt"
+
+
+def test_die_luecke_von_tor_A_ist_nur_bei_voller_staerke_sauber(tabelle_92):
+    """NACHGEMESSEN 18.09.2026: Die Luecke unter SCHWELLE_FOLGT ist enger als dokumentiert.
+
+    Der Kommentar an :data:`SCHWELLE_FOLGT` nannte zwei gemessene Zahlen: das Rauschband
+    bei ControlNet-Staerke 0.30 (−0.047 … +0.055) und den niedrigsten Wert eines Bildes,
+    **das dem Modell folgt** (+0.144). Beide stimmen — aber die zweite ist nur ueber die
+    Reihe bei Staerke 1.00 gerechnet. Der Kommentar ist am 18.09.2026 berichtigt worden;
+    diese Probe haelt die Zahl fest, die ihn berichtigt hat.
+
+    **Dieselbe Tabelle bei Staerke 0.75 widerspricht ihr.** Dort steht C/Seed 2 auf
+    ``rho_maske`` −0.1549 bei einer ``geom_iou`` von 0.9119 — die Silhouette sitzt also,
+    das Bild folgt der Geometrie, und trotzdem liegt die Zahl **unterhalb des gesamten
+    Rauschbands**. Der niedrigste Wert eines konditionierten Bildes im Datensatz ist damit
+    nicht +0.144, sondern −0.1549.
+
+    Was das heisst, und was es NICHT heisst: Tor A faellt damit nicht. Es heisst, dass die
+    Luecke, aus der 0.10 stammt, an einer Stelle des eigenen Datensatzes nicht existiert,
+    und dass ``rho_maske`` bei 0.75 mindestens einmal etwas anderes misst als bei 1.00.
+    Ohne Gegenprobe bei 0.75 ist der Fall nicht deutbar — die Messung dazu fehlt.
+
+    Diese Probe haelt die Zahl fest, damit die Luecke nicht weiter nur an der bequemen
+    Reihe nachgewiesen wird.
+    """
+    schwach = {(e["fall"], e["seed"]): e for e in tabelle_92["reihen"]["staerke_0.75"]}
+    ausreisser = schwach[("C", 2)]
+
+    assert ausreisser["rho_maske"] == pytest.approx(-0.1549, abs=5e-5), \
+        "die Zahl, die der Luecke widerspricht — aendert sie sich, ist es eine neue Messung"
+    assert ausreisser["geom_iou"] == pytest.approx(0.9119, abs=5e-5)
+    assert ausreisser["rho_maske"] < min(
+        e["rho_maske"] for e in tabelle_92["reihen"]["staerke_0.30"]), (
+        "ein konditioniertes Bild liegt unter dem gesamten gemessenen Rauschband — "
+        "genau das traegt der berichtigte Kommentar an SCHWELLE_FOLGT jetzt mit")
+
+    urteil = zwei_tore(ausreisser["rho_maske"], ausreisser["geom_iou"])
+    assert urteil["tor_folgt"]["bestanden"] is False
+    assert urteil["tor_dieses"]["bestanden"] is True, \
+        "die Silhouette sitzt — es ist kein Muellbild, und Tor A sperrt es trotzdem aus"
+    assert urteil["bestanden"] is False

@@ -567,6 +567,7 @@ def test_standard_modellwurzel_folgt_der_umgebungsvariable(monkeypatch):
         "/woanders/modelle/qwen-image-2512")
 
     monkeypatch.delenv(render.UMGEBUNG_MODELLE, raising=False)
+    monkeypatch.setattr(render, "ALTWURZEL_HOMESTATION", "/gibt-es-hier-sicher-nicht")
     assert render.standard_modell_wurzel("qwen-image-2512") == Path(
         f"{render.VORGABE_MODELLWURZEL}/qwen-image-2512")
 
@@ -1307,6 +1308,7 @@ def test_ohne_umgebungsvariable_und_ohne_ersatzpfad_wird_es_gesagt(monkeypatch):
     mit Schrägstrich."""
     monkeypatch.delenv(render.UMGEBUNG_MODELLE, raising=False)
     monkeypatch.setattr(render, "VORGABE_MODELLWURZEL", "/gibt-es-hier-sicher-nicht")
+    monkeypatch.setattr(render, "ALTWURZEL_HOMESTATION", "/gibt-es-hier-auch-nicht")
 
     lage = render.modellwurzel_lage("z-image-turbo")
 
@@ -1344,6 +1346,7 @@ def test_der_auftrag_wird_abgelehnt_bevor_geladen_wird(monkeypatch, tmp_path):
     der Grund steht im Ergebnis, nicht erst im Stapelabbruch einer fremden Bibliothek."""
     monkeypatch.delenv(render.UMGEBUNG_MODELLE, raising=False)
     monkeypatch.setattr(render, "VORGABE_MODELLWURZEL", "/gibt-es-hier-sicher-nicht")
+    monkeypatch.setattr(render, "ALTWURZEL_HOMESTATION", "/gibt-es-hier-auch-nicht")
     tiefe = tmp_path / "t.png"
     tiefe.write_bytes(b"\x89PNG\r\n\x1a\n")
 
@@ -1361,6 +1364,7 @@ def test_ein_uebergebenes_modell_wird_davon_nicht_aufgehalten(monkeypatch, tmp_p
     Testsuite stillgelegt."""
     monkeypatch.delenv(render.UMGEBUNG_MODELLE, raising=False)
     monkeypatch.setattr(render, "VORGABE_MODELLWURZEL", "/gibt-es-hier-sicher-nicht")
+    monkeypatch.setattr(render, "ALTWURZEL_HOMESTATION", "/gibt-es-hier-auch-nicht")
     tiefe = tmp_path / "t.png"
     tiefe.write_bytes(b"\x89PNG\r\n\x1a\n")
     ziel = tmp_path / "b.png"
@@ -1374,3 +1378,358 @@ def test_ein_uebergebenes_modell_wird_davon_nicht_aufgehalten(monkeypatch, tmp_p
                              ausgabe_png=str(ziel)), modell=modell)
 
     assert erg["status"] == render.STATUS_OK
+
+
+# ======================================================================================
+# Die Startsperre: ein Vorgabepfad, den es nur auf einer einzigen Maschine gibt
+# ======================================================================================
+#
+# Bis zum 18.09.2026 stand in `render.py` `VORGABE_MODELLWURZEL = "/ai"`. Das ist die
+# Konvention der HomeStation. Auf dem MacBook, das seit der Umstellung auf Visbox die
+# Zielhardware ist, liegt `/ai` direkt unter der nicht beschreibbaren Systemwurzel; auf
+# Windows gibt es den Pfad ueberhaupt nicht. Der erste Start einer fremden Maschine
+# endete damit in einem Rechtefehler aus dem Inneren einer Bibliothek — bevor ein
+# einziges Modell geladen war.
+#
+# Was hier belegt wird, ist die Leiter aus drei Stufen: Umgebung, dann `/ai` FALLS
+# VORHANDEN, dann der Anwendungsdatenort des Betriebssystems.
+#
+# Zur mittleren Stufe gehoert eine Richtigstellung (Gegenpruefung 18.09.2026): Sie ist
+# NICHT der Bestandsschutz der HomeStation. Dort gibt es `/ai` gemessen nicht —
+# `auftraege/ergebnisse/auf-20260823-36.json` sagt es ausdruecklich, und
+# `auf-20260823-38.json` zeigt es im Lauf («Verzeichnis existiert: False»). Die
+# HomeStation bleibt bei ihrer Ablage, weil sie `AIIMAGING_MODELLE` setzt (Stufe 1,
+# gemessen in auf-20260823-36 und auf-20260826-42). Genau das belegt
+# `test_die_homestation_haengt_an_der_umgebung_nicht_an_der_altwurzel`. Stufe 2 leistet
+# das Schmalere: Wer `/ai` doch fuehrt, behaelt es ohne einen Handgriff.
+#
+# Kein Test hier darf sein Urteil daraus beziehen, auf welchem Betriebssystem er laeuft —
+# sonst waere der Mac-Weg genau dort unbelegt, wo er gebraucht wird. Dafuer gibt es die
+# Nahtargumente `system=`, `umgebung=` und `heim=`.
+
+def test_jedes_system_bekommt_seinen_ueblichen_ort():
+    """macOS, Windows und Linux legen Anwendungsdaten an drei verschiedenen Orten ab."""
+    mac = render.anwendungsdaten_wurzel(system="Darwin", heim="/Users/nutzer",
+                                        umgebung={})
+    assert mac == Path("/Users/nutzer/Library/Application Support/Visbox/modelle")
+
+    win = render.anwendungsdaten_wurzel(
+        system="Windows", heim="C:/Users/nutzer",
+        umgebung={"LOCALAPPDATA": "C:/Users/nutzer/AppData/Local"})
+    assert win == Path("C:/Users/nutzer/AppData/Local/Visbox/modelle")
+
+    linux = render.anwendungsdaten_wurzel(system="Linux", heim="/home/nutzer",
+                                          umgebung={})
+    assert linux == Path("/home/nutzer/.local/share/visbox/modelle")
+
+
+def test_windows_nimmt_local_und_nicht_roaming():
+    """Zwanzig Gigabyte Gewichte gehoeren nicht in ein Profil, das synchronisiert wird."""
+    win = render.anwendungsdaten_wurzel(
+        system="Windows", heim="C:/Users/nutzer",
+        umgebung={"LOCALAPPDATA": "C:/Users/nutzer/AppData/Local",
+                  "APPDATA": "C:/Users/nutzer/AppData/Roaming"})
+    assert "Roaming" not in str(win)
+    assert "Local" in str(win)
+
+
+def test_xdg_wird_beachtet_wenn_es_gesetzt_ist():
+    """Wer seine Ablage per XDG verschoben hat, findet Visbox dort wieder."""
+    pfad = render.anwendungsdaten_wurzel(system="Linux", heim="/home/nutzer",
+                                         umgebung={"XDG_DATA_HOME": "/daten/xdg"})
+    assert pfad == Path("/daten/xdg/visbox/modelle")
+
+
+def test_eine_relative_angabe_wird_ignoriert():
+    """Die XDG-Spezifikation verlangt das ausdruecklich — und aus gutem Grund: Ein
+    relativer Modellpfad zeigte je nach Arbeitsverzeichnis woandershin, und genau so ein
+    Fehler wird dann fuer einen Modellfehler gehalten."""
+    linux = render.anwendungsdaten_wurzel(system="Linux", heim="/home/nutzer",
+                                          umgebung={"XDG_DATA_HOME": "relativ/daten"})
+    assert linux == Path("/home/nutzer/.local/share/visbox/modelle")
+
+    win = render.anwendungsdaten_wurzel(system="Windows", heim="C:/Users/nutzer",
+                                        umgebung={"LOCALAPPDATA": "relativ"})
+    assert win == Path("C:/Users/nutzer/AppData/Local/Visbox/modelle")
+
+
+def test_kein_vorgabeort_liegt_an_der_systemwurzel():
+    """**Die Probe auf die Startsperre selbst.** `/ai` war ein Ordner direkt unter `/` —
+    dort darf eine Studentin nichts anlegen. Jeder Vorgabeort muss im Bereich des
+    Benutzers liegen, sonst ist der erste Start ein Rechtefehler."""
+    heim = {"Darwin": "/Users/nutzer", "Windows": "C:/Users/nutzer",
+            "Linux": "/home/nutzer"}
+    for system, zuhause in heim.items():
+        pfad = render.anwendungsdaten_wurzel(system=system, heim=zuhause, umgebung={})
+        assert str(pfad).startswith(zuhause), f"{system}: {pfad} liegt nicht im Heim"
+        assert len(pfad.parts) > 3, f"{system}: {pfad} liegt zu nah an der Wurzel"
+
+
+def test_ein_unbekanntes_system_faellt_auf_den_xdg_weg():
+    """FreeBSD, ein Container ohne Kennung: Es gibt immer einen Weg, und er endet nicht
+    an der Systemwurzel."""
+    pfad = render.anwendungsdaten_wurzel(system="Irgendwas", heim="/home/nutzer",
+                                         umgebung={})
+    assert pfad == Path("/home/nutzer/.local/share/visbox/modelle")
+
+
+def test_der_vorgabepfad_des_moduls_ist_der_ort_dieses_systems():
+    """Die Gegenprobe gegen einen Rueckfall: Wer `VORGABE_MODELLWURZEL` wieder von Hand
+    auf eine einzelne Maschine setzt, faellt hier auf."""
+    assert render.VORGABE_MODELLWURZEL == str(render.anwendungsdaten_wurzel())
+    assert render.VORGABE_MODELLWURZEL != render.ALTWURZEL_HOMESTATION
+
+
+# --------------------------------------------------------------------------------------
+# Die HomeStation darf sich nicht aendern — sie faehrt denselben Code aus demselben Repo
+# --------------------------------------------------------------------------------------
+
+def test_die_homestation_haengt_an_der_umgebung_nicht_an_der_altwurzel(monkeypatch,
+                                                                      tmp_path):
+    """**Die Richtigstellung, und sie gehoert unter eine Probe.**
+
+    Eine fruehere Fassung dieser Datei begruendete Stufe 2 damit, `/ai` existiere auf der
+    HomeStation. Gemessen ist das Gegenteil: `auf-20260823-36` haelt fest, dass die
+    Vorgabe `/ai` dort *nicht* existiert, `auf-20260823-38` zeigt im Lauf «Verzeichnis
+    existiert: False». Was die HomeStation bei ihrer Ablage haelt, ist `AIIMAGING_MODELLE`
+    — Stufe 1.
+
+    Belegt wird darum der Fall, wie er drueben wirklich aussieht: Variable gesetzt,
+    Altwurzel nicht vorhanden. Waere das Verhalten an Stufe 2 gehaengt, faende diese Probe
+    den Anwendungsdatenort statt der Ablage."""
+    monkeypatch.setattr(render, "ALTWURZEL_HOMESTATION", "/gibt-es-hier-sicher-nicht")
+    ablage = tmp_path / "ai-models" / "diffusers"
+    ablage.mkdir(parents=True)
+    monkeypatch.setenv(render.UMGEBUNG_MODELLE, str(ablage))
+
+    wurzel, herkunft = render.modellwurzel()
+
+    assert herkunft == render.HERKUNFT_UMGEBUNG
+    assert wurzel == ablage
+    assert render.standard_modell_wurzel("z-image-turbo") == ablage / "z-image-turbo"
+
+
+def test_die_homestation_bleibt_bei_ihrer_ablage(monkeypatch, tmp_path):
+    """Ist die Altwurzel da, gilt sie — ohne dass jemand etwas setzt.
+
+    Das ist Stufe 2, und sie gilt fuer jede Maschine, die `/ai` fuehrt. Fuer die
+    HomeStation trifft sie gemessen nicht zu (siehe die Probe darueber) — ein
+    Bestandsschutz, der auf einer falschen Annahme ruht, ist keiner."""
+    ai = tmp_path / "ai"
+    ai.mkdir()
+    monkeypatch.delenv(render.UMGEBUNG_MODELLE, raising=False)
+    monkeypatch.setattr(render, "ALTWURZEL_HOMESTATION", str(ai))
+
+    wurzel, herkunft = render.modellwurzel()
+
+    assert wurzel == ai
+    assert herkunft == render.HERKUNFT_ALTWURZEL
+    assert render.standard_modell_wurzel("z-image-turbo") == ai / "z-image-turbo"
+
+
+def test_ohne_altwurzel_gilt_der_ort_des_betriebssystems(monkeypatch):
+    """Die Gegenprobe. Sonst belegte die Probe oben nur, dass irgendein Pfad gewinnt."""
+    monkeypatch.delenv(render.UMGEBUNG_MODELLE, raising=False)
+    monkeypatch.setattr(render, "ALTWURZEL_HOMESTATION", "/gibt-es-hier-sicher-nicht")
+
+    wurzel, herkunft = render.modellwurzel()
+
+    assert herkunft == render.HERKUNFT_ANWENDUNGSDATEN
+    assert wurzel == Path(render.VORGABE_MODELLWURZEL)
+
+
+def test_die_umgebungsvariable_schlaegt_auch_eine_vorhandene_altwurzel(monkeypatch, tmp_path):
+    """Sonst koennte niemand mehr von `/ai` weg — auch nicht auf der HomeStation."""
+    ai = tmp_path / "ai"
+    ai.mkdir()
+    anderswo = tmp_path / "anderswo"
+    anderswo.mkdir()
+    monkeypatch.setattr(render, "ALTWURZEL_HOMESTATION", str(ai))
+    monkeypatch.setenv(render.UMGEBUNG_MODELLE, str(anderswo))
+
+    assert render.modellwurzel() == (anderswo, render.HERKUNFT_UMGEBUNG)
+
+
+def test_eine_unlesbare_altwurzel_haelt_den_start_nicht_auf(monkeypatch):
+    """Ein gesperrtes Laufwerk ist keine Antwort — und kein Grund, gar nicht zu starten."""
+    def wirft(_selbst):
+        raise OSError("Laufwerk gesperrt")
+
+    monkeypatch.delenv(render.UMGEBUNG_MODELLE, raising=False)
+    monkeypatch.setattr(Path, "is_dir", wirft)
+
+    _wurzel, herkunft = render.modellwurzel()
+
+    assert herkunft == render.HERKUNFT_ANWENDUNGSDATEN
+
+
+# --------------------------------------------------------------------------------------
+# Die Meldung: was zu tun ist, nicht ein Rechtefehler aus dem Inneren einer Bibliothek
+# --------------------------------------------------------------------------------------
+
+def test_schreibprobe_fragt_den_naechsten_vorhandenen_elternordner(tmp_path):
+    """Die Wurzel selbst gibt es ja gerade nicht — beschreibbar sein muss der Ort, an dem
+    sie entstuende."""
+    probe = render.schreibprobe(tmp_path / "gibt" / "es" / "nicht")
+
+    assert probe["beschreibbar"] is True
+    assert probe["anker"] == str(tmp_path)
+
+
+def test_ein_nicht_beschreibbarer_ort_nennt_den_handgriff(monkeypatch, tmp_path):
+    """Der Mac-Fall: `/` ist da, aber es darf dort nichts entstehen.
+
+    `os.access` wird hier ersetzt statt `chmod` benutzt, weil der Testlauf je nach
+    Maschine als `root` laeuft — und `root` darf ueberall schreiben. Eine Probe, die auf
+    der einen Maschine misst und auf der anderen durchwinkt, belegt nichts."""
+    monkeypatch.setattr(render.os, "access", lambda *_a, **_k: False)
+
+    probe = render.schreibprobe(tmp_path / "modelle")
+
+    assert probe["beschreibbar"] is False
+
+
+def test_nicht_messbar_ist_nicht_dasselbe_wie_nicht_erlaubt(monkeypatch, tmp_path):
+    """**Die dritte Antwort.** `None` heisst NICHT GEMESSEN — nicht `False`, nicht 'in
+    Ordnung'. 'Darf nicht' und 'weiss nicht' verlangen verschiedene Handgriffe."""
+    def wirft(*_a, **_k):
+        raise OSError("Rechte nicht lesbar")
+
+    monkeypatch.setattr(render.os, "access", wirft)
+
+    probe = render.schreibprobe(tmp_path / "modelle")
+
+    assert probe["beschreibbar"] is None
+    assert probe["beschreibbar"] is not False
+
+
+def test_die_meldung_sagt_was_zu_tun_ist(monkeypatch, tmp_path):
+    """Nicht 'Permission denied', sondern: Variable setzen, und zwar diese."""
+    monkeypatch.setenv(render.UMGEBUNG_MODELLE, str(tmp_path / "ablage"))
+    monkeypatch.setattr(render.os, "access", lambda *_a, **_k: False)
+
+    lage = render.modellwurzel_lage("z-image-turbo")
+
+    assert lage["existiert"] is False
+    assert lage["beschreibbar"] is False
+    assert render.UMGEBUNG_MODELLE in lage["grund"]
+    assert "nicht beschreibbar" in lage["grund"]
+    assert "kein Modellfehler" in lage["grund"]
+
+
+def test_ein_anlegbarer_ort_wird_auch_so_gemeldet(monkeypatch, tmp_path):
+    """Zwei Lagen, zwei Handgriffe: Ordner anlegen gegen Ablage wechseln."""
+    monkeypatch.setenv(render.UMGEBUNG_MODELLE, str(tmp_path / "ablage"))
+
+    lage = render.modellwurzel_lage("z-image-turbo")
+
+    assert lage["beschreibbar"] is True
+    assert "lässt sich anlegen" in lage["grund"]
+
+
+def test_die_lage_nennt_die_herkunft_des_pfades(monkeypatch, tmp_path):
+    """Ohne Herkunft raet der Leser, ob er eine Variable setzen oder berichtigen soll."""
+    monkeypatch.setenv(render.UMGEBUNG_MODELLE, str(tmp_path))
+    assert render.modellwurzel_lage("z-image-turbo")["herkunft"] == \
+        render.HERKUNFT_UMGEBUNG
+
+    (tmp_path / "z-image-turbo").mkdir()
+    lage = render.modellwurzel_lage("z-image-turbo")
+    assert lage["existiert"] is True
+    assert lage["grund"] == ""
+    # Ein vorhandener Ordner wird nicht auf Schreibrechte geprueft: Zum Laden von
+    # Gewichten muss niemand schreiben duerfen. Nicht gefragt heisst None, nicht False.
+    assert lage["beschreibbar"] is None
+
+
+def test_der_lauf_bricht_mit_dem_handgriff_ab_und_nicht_mit_einem_rechtefehler(
+        monkeypatch, tmp_path):
+    """Die ganze Kette, von aussen gesehen: Ein Start ohne Gewichte endet in einer
+    Ablehnung mit Handgriff — nicht in einem `PermissionError` aus `diffusers`."""
+    monkeypatch.delenv(render.UMGEBUNG_MODELLE, raising=False)
+    monkeypatch.setattr(render, "ALTWURZEL_HOMESTATION", "/gibt-es-hier-sicher-nicht")
+    monkeypatch.setattr(render, "VORGABE_MODELLWURZEL",
+                        str(tmp_path / "vorgabe" / "modelle"))
+    monkeypatch.setattr(render.os, "access", lambda *_a, **_k: False)
+    tiefe = tmp_path / "t.png"
+    tiefe.write_bytes(PNG_PLATZHALTER)
+
+    erg = render.rendere(render.RenderAuftrag(depth_png=str(tiefe), prompt="a house",
+                                              ausgabe_png=str(tmp_path / "b.png")))
+
+    assert erg["status"] == STATUS_ABGELEHNT
+    assert render.UMGEBUNG_MODELLE in erg["error"]
+    assert "nicht beschreibbar" in erg["error"]
+
+
+# --------------------------------------------------------------------------------------
+# Drei Zweige, die bei der Gegenpruefung (18.09.2026) ohne fallende Probe dastanden
+# --------------------------------------------------------------------------------------
+#
+# Jeder von ihnen liess sich entschaerfen, ohne dass ein einziger Test rot wurde — ein
+# Waechter ohne fallende Probe bewacht nichts. Zwei davon tragen die dritte Antwort in
+# die Meldung an den Menschen; der dritte ist die einzige Stelle, an der die vorhandene
+# Altablage ueberhaupt erklaert wird.
+
+def test_die_meldung_sagt_es_auch_wenn_sie_es_nicht_messen_konnte(monkeypatch, tmp_path):
+    """**Die dritte Antwort, bis in den Satz hinein.**
+
+    Dass `beschreibbar` bei unlesbaren Rechten `None` wird, war belegt. Dass der Leser es
+    auch *erfaehrt*, war es nicht: Der NICHT-GEMESSEN-Zweig des Wegweisers liess sich auf
+    einen leeren Text setzen, ohne dass etwas rot wurde. Dann verschwiegen die Meldung und
+    damit der abgelehnte Lauf, dass hier gar nichts gemessen wurde — und ein
+    verschwiegenes «weiss nicht» liest sich wie ein «in Ordnung»."""
+    def wirft(*_a, **_k):
+        raise OSError("Rechte nicht lesbar")
+
+    monkeypatch.setenv(render.UMGEBUNG_MODELLE, str(tmp_path / "ablage"))
+    monkeypatch.setattr(render.os, "access", wirft)
+
+    lage = render.modellwurzel_lage("z-image-turbo")
+
+    assert lage["beschreibbar"] is None
+    assert "NICHT GEMESSEN" in lage["grund"]
+    assert render.UMGEBUNG_MODELLE in lage["grund"]
+    # Kein Urteil in beide Richtungen: weder «nicht beschreibbar» noch «laesst sich
+    # anlegen» darf hier stehen, denn beides waere behauptet statt gemessen.
+    assert "nicht beschreibbar" not in lage["grund"]
+    assert "lässt sich anlegen" not in lage["grund"]
+
+
+def test_ein_unbefragbarer_ort_ist_nicht_beschreibbar_gemeldet(monkeypatch, tmp_path):
+    """Laesst sich schon die Frage «ist das ein Ordner?» nicht stellen, ist die Antwort
+    NICHT GEMESSEN — nicht `True`, und auch kein Anker, den es nie gab.
+
+    Auch dieser Zweig liess sich auf `beschreibbar: True` setzen, ohne dass eine Probe
+    fiel; ein gesperrtes Netzlaufwerk haette dann als anlegbar gegolten."""
+    def wirft(*_a, **_k):
+        raise OSError("Laufwerk gesperrt")
+
+    monkeypatch.setattr(Path, "is_dir", wirft)
+
+    probe = render.schreibprobe(tmp_path / "modelle")
+
+    assert probe["beschreibbar"] is None
+    assert probe["anker"] is None
+    assert "nicht befragen" in probe["grund"]
+
+
+def test_die_vorhandene_altablage_wird_als_solche_erklaert(monkeypatch, tmp_path):
+    """Drei Herkuenfte, drei Handgriffe — und die mittlere hatte keinen Text unter Probe.
+
+    Ohne diese Probe liess sich der Altwurzel-Zweig der Begruendung entfernen: Der Leser
+    bekaeme dann den Satz ueber den «Vorgabeort dieses Betriebssystems» zu sehen, waehrend
+    in Wahrheit eine vorhandene Ablage gilt — und suchte an einem Ort, der gar nicht
+    befragt wurde."""
+    ai = tmp_path / "ai"
+    ai.mkdir()
+    monkeypatch.delenv(render.UMGEBUNG_MODELLE, raising=False)
+    monkeypatch.setattr(render, "ALTWURZEL_HOMESTATION", str(ai))
+
+    lage = render.modellwurzel_lage("z-image-turbo")
+
+    assert lage["herkunft"] == render.HERKUNFT_ALTWURZEL
+    assert lage["existiert"] is False
+    assert str(ai) in lage["grund"]
+    assert "vorhandene Ablage" in lage["grund"]
+    assert "Vorgabeort" not in lage["grund"]

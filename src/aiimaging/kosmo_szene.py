@@ -57,6 +57,7 @@ import re
 from . import backbone as _backbone
 from . import contracts as _contracts
 from . import geometrie_qa, prompts, sprache, stil_qa
+from . import gate as _gate
 from . import kameras as _kameras
 from . import sonne as _sonne
 
@@ -859,9 +860,312 @@ def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
     return aus
 
 
+
+# --------------------------------------------------------------------------------------
+# Die zwei Tore im Vertragsergebnis — der Befund vom 18.09.2026 an der Naht
+# --------------------------------------------------------------------------------------
+#
+# **Der Anlass** (`docs/R3_WELCHES_MASS_TRENNT_2026-09-18.md`): Die alte Geometriepruefung
+# liess elf von zwoelf Muellbildern durch, und dieselben zwoelf bestanden sie auch gegen
+# die Tiefenkarte eines voellig anderen Gebaeudes. Nachgerechnet sind es **zwei** Fragen,
+# und eine einzige Zahl kann beide nicht beantworten:
+#
+#     rho_maske   folgt das Bild dem Modell ueberhaupt?      (faellt auf null, wenn nicht)
+#     geom_iou    folgt es DIESEM Modell und keinem anderen?  (groesste Luecke: +0.149)
+#
+# `geometrie_qa.zwei_tore(...)` verbindet sie mit UND und haelt bei jedem Lauf eine
+# fremde Geometrie dagegen. Was die Software nach aussen gibt, wusste davon bis heute
+# nichts — und ein Befund, der die Naht nicht ueberquert, hat niemanden erreicht.
+#
+# **Additiv, nie an Stelle des Bestehenden.** Der `qa`-Block bleibt byte-identisch: Die
+# Gegenseite hat sich ausdruecklich darauf verlassen, und jede bisher gemessene Zahl
+# dieses Projekts haengt an ihm. Der neue Block steht daneben, wie `qa_je_kamera` seit
+# dem 11.09.2026 daneben steht.
+
+#: Der Schluessel, unter dem die zwei Tore **neben** dem `qa`-Block stehen.
+#:
+#: **Nicht abgestimmt.** Dieser Name und alle Felder darunter sind von uns gewaehlt; die
+#: Gegenseite kennt sie noch nicht. Siehe :func:`als_zwei_tore_block`.
+FELD_ZWEI_TORE = "geometry_gates"
+
+#: Die drei Zustandswoerter, woertlich aus :mod:`aiimaging.gate` uebernommen.
+#:
+#: **Warum uebernommen und nicht neu erfunden:** `gate.als_kosmovis_verdikt` bringt den
+#: dritten Zustand seit dem 26.08.2026 auf genau diesem Weg ueber die Naht — ein
+#: Statuswort neben einem dreiwertigen Wahrheitswert. Zwei Vokabulare fuer dieselbe Sache
+#: im selben Ergebnis waeren genau die Sorte tote Kante, gegen die dieses Modul gebaut
+#: ist: Wer `ok` lesen kann, soll es ueberall lesen koennen.
+STATUS_OK = _gate.STATUS_OK
+STATUS_FEHLT = _gate.STATUS_FEHLT
+STATUS_DEGENERIERT = _gate.STATUS_DEGENERIERT
+
+
+def _tor_felder(tor, praefix: str, gruende: list[str]) -> dict:
+    """Ein einzelnes Tor aus :func:`geometrie_qa.zwei_tore` in flache Vertragsfelder.
+
+    Vier Felder je Tor: der Wert, seine Schwelle, sein Status und sein Urteil. Die
+    Aufteilung ist dieselbe wie drueben bei `geometry_fidelity` / `geometry_threshold` /
+    `geometry_status`, und sie ist der Grund, warum hier nichts verschachtelt wird.
+
+    **Die Statuszuordnung folgt** :func:`aiimaging.gate.als_kosmovis_verdikt` **Wort fuer
+    Wort**, damit dasselbe Wort im selben Ergebnis dasselbe heisst:
+
+    * ``fehlt``       — es liegt gar kein Tor vor (unlesbar oder nicht uebergeben).
+    * ``degeneriert`` — das Tor liegt vor, **traegt aber keine endliche Zahl**: NICHT
+      GEMESSEN.
+    * ``ok``          — gemessen.
+
+    **Gemessen heisst: es liegt eine Zahl vor — nicht: ein Feld behauptet es.** Bis zur
+    Nachpruefung am 18.09.2026 stand hier allein ``tor["gemessen"] is True``; ein Tor mit
+    ``{"gemessen": True, "wert": None}`` lieferte darum ``rho_mask: null`` zusammen mit
+    ``rho_mask_status: "ok"`` und ``rho_mask_passed: true`` — eine leere Stelle, als
+    gemessen und bestanden ausgewiesen. Genau die Verwechslung, gegen die der ganze
+    Befund geschrieben ist, nur eine Ebene tiefer. Geprueft wird darum der **Wert**:
+    keine Zahl (``None``, Text, ``bool``, ``NaN``, ``inf``) heisst NICHT GEMESSEN, ganz
+    gleich was danebensteht. ``NaN`` und ``inf`` zaehlen mit, weil sie ueberdies kein
+    gueltiges JSON sind und drueben schon am Einlesen scheitern wuerden.
+
+    ``…_passed`` ist **fail-closed** und darum immer ein Wahrheitswert: Was ungeprueft
+    ist, wird nicht durchgelassen. Unterscheidbar bleibt es am Status — *nicht gemessen
+    und durchgefallen sind beides «nicht bestanden», aber nur eines davon ist ein Befund
+    ueber das Bild.*
+    """
+    if not isinstance(tor, dict):
+        gruende.append(f"{praefix}_fehlt")
+        return {praefix: None, f"{praefix}_threshold": None,
+                f"{praefix}_status": STATUS_FEHLT, f"{praefix}_passed": False}
+
+    wert = tor.get("wert")
+    # `bool` ist in Python eine Zahl — `True >= 0.10` waere wahr. Dieselbe Ausnahme wie in
+    # `geometrie_qa.zwei_tore` bei der Eingangspruefung.
+    ist_zahl = (isinstance(wert, (int, float)) and not isinstance(wert, bool)
+                and math.isfinite(wert))
+    gemessen = tor.get("gemessen") is True and ist_zahl
+    bestanden = gemessen and tor.get("bestanden") is True
+    if not gemessen:
+        gruende.append(f"{praefix}_nicht_gemessen")
+    elif not bestanden:
+        gruende.append(f"{praefix}_unter_schwelle")
+    return {praefix: wert if ist_zahl else None,
+            f"{praefix}_threshold": tor.get("schwelle"),
+            f"{praefix}_status": STATUS_OK if gemessen else STATUS_DEGENERIERT,
+            f"{praefix}_passed": bestanden}
+
+
+def als_zwei_tore_block(urteil) -> dict:
+    """Ein Urteil aus :func:`geometrie_qa.zwei_tore` in flache englische Vertragsfelder.
+
+    Args:
+        urteil: Die Antwort von ``geometrie_qa.zwei_tore(...)``. Alles andere gilt als
+            fehlendes Urteil und wird fail-closed gemeldet, nicht geworfen — eine
+            Ausnahme kann jemand fangen und weiterlaufen.
+
+    Returns:
+        ``{status, released, passed, separates, counter_check_status, rho_mask*,
+        geom_iou*, fail_reasons, reason, warnings}``.
+
+    **Die Feldnamen, und warum diese.** Die Gegenseite liest flache englische Namen —
+    `geometry_fidelity`, `geometry_threshold`, `geometry_status`, `style_score`,
+    `fail_reasons`, `passed`, `released` (siehe :func:`aiimaging.gate.als_kosmovis_verdikt`
+    und ihr Werkzeug `kosmovis_query_qa_verdict`). Hier steht dieselbe Bauform:
+
+    * ``rho_mask`` — die Rangkorrelation ueber der Bauwerksmaske. Der `qa`-Block fuehrt
+      schon ``spearman`` fuer die Fassung ueber das **ganze Bild**; ein zweites
+      ``spearman`` waere nicht unterscheidbar, und genau diese Verwechslung ist der
+      Befund vom 18.09.
+    * ``geom_iou`` — **buchstabengleich zum bestehenden** ``qa.geometry.geom_iou``. Es ist
+      dieselbe Zahl, und sie hier anders zu nennen hiesse, zwei Namen fuer eine Messung in
+      dasselbe Ergebnis zu schreiben.
+    * ``released`` / ``passed`` / ``fail_reasons`` / ``…_threshold`` / ``…_status`` —
+      woertlich die Namen, die drueben schon gelesen werden.
+
+    **NICHT ABGESTIMMT.** Kein einziger dieser Namen steht in einem Schema der
+    Gegenseite; `kosmovis.render-result/v2` kennt die zwei Tore nicht. Die Wahl ist ein
+    **Schluss** aus ihrer bestehenden Namensart, keine Angabe von ihnen. Steht es bei
+    ihnen anders, ist es hier eine Zeile — und solange nichts abgestimmt ist, ist dieser
+    Block fuer sie ein Zusatzfeld, das ihr `zod`-Schema in aller Regel durchlaesst.
+
+    **Drei Zustaende, nicht zwei — und das ist der Kern.** ``zwei_tore`` kennt
+    ``bestanden = None``: *nicht entscheidbar*, weil die Gegenprobe gezeigt hat, dass
+    diese Messung gar nicht trennt. Das wird hier **nicht** zu ``false``. Ein
+    Vertragsfeld, das «nicht entscheidbar» als «durchgefallen» ausliefert, ist genau der
+    Fehler, gegen den der ganze Befund geschrieben ist — und die umgekehrte Verwechslung
+    («nicht entscheidbar» als «bestanden») hat am 08.09.2026 zwoelfmal als Erfolg
+    gegolten. ``passed`` bleibt darum dreiwertig, wie ``passed`` drueben auch, und
+    ``status`` traegt das Wort dazu.
+
+    ``released`` ist wie drueben **fail-closed und nie** ``None``: wahr nur, wenn beide
+    Tore gemessen sind, beide bestehen **und** die Gegenprobe wirklich getrennt hat.
+
+    **Eine halbe Gegenprobe zaehlt hier nicht als Trennung.** ``zwei_tore`` setzte
+    ``trennt = True``, wenn nur **eine** der beiden fremden Zahlen gemessen wurde: Das
+    fremde Tor faellt dann durch, weil es nicht gemessen ist, und aus einer fehlenden
+    Messung wird eine positive Aussage. Die Bibliothek ist am 18.09.2026 berichtigt
+    worden und meldet dort ``trennt = None``.
+
+    **Diese Naht haengt trotzdem nicht daran.** Sie liest ``gegenprobe["tor_*"]
+    ["gemessen"]`` selbst, statt ``trennt`` zu glauben — ``separates`` bleibt ``None``
+    und ``counter_check_status`` ``fehlt``, solange nicht beide fremden Zahlen vorliegen,
+    und zwar auch dann, wenn drinnen wieder etwas anderes stuende. Eine Vertragsnaht, die
+    nur wiederholt, was die Bibliothek sagt, prueft nichts.
+
+    **Und eine unlesbare Gegenprobe zaehlt ebenso wenig.** Traegt ihr Urteil keinen
+    ``bool``, bleibt ``separates`` ``None`` — nicht ``True``. Geprueft wird auf ``bool``
+    und nicht auf Wahrheitswert: Ein ``"ja"`` ist nicht ``True``, aber es ist truthy, und
+    ein Zweig, der alles ausser ``True`` als «hat getrennt» liest, gibt genau dann frei,
+    wenn er es nicht duerfte.
+    """
+    gruende: list[str] = []
+
+    if not isinstance(urteil, dict) or "bestanden" not in urteil:
+        # Fail-closed wie `gate._lies_urteil`: kein Urteil heisst nicht freigegeben. Aber
+        # `passed` ist hier None und nicht False — False waere eine Aussage ueber das
+        # Bild, und vorliegen tut nur eine ueber die Messung.
+        return {"status": STATUS_FEHLT, "released": False, "passed": None,
+                "rho_mask": None, "rho_mask_threshold": None,
+                "rho_mask_status": STATUS_FEHLT, "rho_mask_passed": False,
+                "geom_iou": None, "geom_iou_threshold": None,
+                "geom_iou_status": STATUS_FEHLT, "geom_iou_passed": False,
+                "separates": None, "counter_check_status": STATUS_FEHLT,
+                "fail_reasons": ["zwei_tore_fehlt"],
+                "reason": ("KEIN TORURTEIL: Es liegt keine Antwort von zwei_tore vor. "
+                           "'released: false' heisst hier ungeprueft und nicht "
+                           "durchgefallen."),
+                "warnings": []}
+
+    tor_a = _tor_felder(urteil.get("tor_folgt"), "rho_mask", gruende)
+    tor_b = _tor_felder(urteil.get("tor_dieses"), "geom_iou", gruende)
+
+    bestanden = urteil.get("bestanden")
+    if bestanden is not None and not isinstance(bestanden, bool):
+        # Geprueft wird auf bool, nicht auf Wahrheitswert — ein "nein" waere truthy und
+        # kaeme durch. Dieselbe Stelle wie in `gate._lies_urteil`.
+        gruende.append("bestanden_kein_wahrheitswert")
+        bestanden = False
+
+    warnungen = [str(w) for w in (urteil.get("warnungen") or ())]
+
+    # ── Die Gegenprobe, und was sie wert ist ──────────────────────────────────────────
+    gegen = urteil.get("gegenprobe")
+    if not isinstance(gegen, dict):
+        counter = STATUS_FEHLT
+        trennt = None
+        gruende.append("gegenprobe_fehlt")
+    elif not all(isinstance(gegen.get(f), dict) and gegen[f].get("gemessen") is True
+                 for f in ("tor_folgt", "tor_dieses")):
+        counter = STATUS_FEHLT
+        trennt = None
+        gruende.append("gegenprobe_unvollstaendig")
+        warnungen.append(
+            "GEGENPROBE UNVOLLSTAENDIG: Nur eine der beiden Zahlen gegen die fremde "
+            "Geometrie wurde gemessen. Die fremde Seite faellt dann durch, WEIL sie nicht "
+            "gemessen ist — das ist keine Trennung. 'separates' bleibt darum leer.")
+    elif not isinstance(gegen.get("bestanden"), bool):
+        # NACHGEPRUEFT AM 18.09.2026, und es war die einzige fail-OPEN Stelle dieser Naht:
+        # Die Abfrage lautete `gegen.get("bestanden") is True`, und alles andere fiel in
+        # den Zweig «hat getrennt». Ein `{"bestanden": "ja"}` — also eine Gegenprobe, die
+        # BESTANDEN hat und damit gerade NICHT trennt — kam so als `separates: true`,
+        # `counter_check_status: "ok"` und `released: true` heraus. Aus einem unlesbaren
+        # Urteil wurde eine Freigabe.
+        #
+        # Geprueft wird darum auf `bool` und nicht auf Wahrheitswert, wie eine Ebene
+        # hoeher bei `bestanden` und wie in `gate._lies_urteil`. Kein lesbares Urteil
+        # heisst: keine Trennung, nicht «getrennt».
+        counter = STATUS_FEHLT
+        trennt = None
+        gruende.append("gegenprobe_kein_wahrheitswert")
+        warnungen.append(
+            "GEGENPROBE UNLESBAR: Ihr Urteil ist kein Wahrheitswert. Ob dieselbe Messung "
+            "auch gegen eine fremde Geometrie besteht, ist damit ungeklaert — 'separates' "
+            "bleibt leer, und freigegeben wird nichts.")
+    elif gegen["bestanden"]:
+        # Dieselbe Messung sagt dasselbe ueber ein Gebaeude, das es nicht ist. Damit ist
+        # nichts gezeigt — und `degeneriert` ist drueben genau dafuer da.
+        counter = STATUS_DEGENERIERT
+        trennt = False
+        gruende.append("gegenprobe_trennt_nicht")
+    else:
+        counter = STATUS_OK
+        trennt = True
+
+    beide_gemessen = (tor_a["rho_mask_status"] == STATUS_OK
+                      and tor_b["geom_iou_status"] == STATUS_OK)
+    if bestanden is None:
+        gruende.append("nicht_entscheidbar")
+        status = STATUS_DEGENERIERT
+    elif not beide_gemessen:
+        status = STATUS_DEGENERIERT
+    else:
+        status = STATUS_OK
+
+    reason = str(urteil.get("begruendung") or "")
+    if counter == STATUS_FEHLT:
+        # OHNE GUELTIGE GEGENPROBE gehoert in das Ergebnis und nicht in ein Logbuch: Wer
+        # die Datei liest, muss sehen, dass nicht gegengeprueft wurde. `warnings` traegt
+        # den langen Satz, `reason` den kurzen — denn `reason` ist die eine Zeile, die
+        # eine Oberflaeche anzeigt.
+        #
+        # NUR bei `fehlt`. Eine Gegenprobe, die gelaufen ist und NICHT getrennt hat, ist
+        # `degeneriert` — dort steht der Satz schon in der Begruendung, und ein zweiter
+        # daneben behauptete, sie sei ausgeblieben.
+        reason = (reason + " OHNE GUELTIGE GEGENPROBE gegen fremde Geometrie — das "
+                           "Urteil ist damit so viel wert wie das alte.").strip()
+
+    # Die Reihenfolge ist die des Lesens: erst das Urteil, dann die Gegenprobe, dann die
+    # zwei Zahlen, auf denen beides ruht.
+    block = {
+        "status": status,
+        "released": bool(status == STATUS_OK and bestanden is True and trennt is True),
+        # Dreiwertig: None heisst NICHT ENTSCHEIDBAR, nicht durchgefallen.
+        "passed": bestanden,
+        "separates": trennt,
+        "counter_check_status": counter,
+    }
+    block.update(tor_a)
+    block.update(tor_b)
+    block.update({"fail_reasons": gruende, "reason": reason, "warnings": warnungen})
+    return block
+
+def _pruefe_ein_name_eine_zahl(block: dict, geometrie_urteil) -> None:
+    """``geom_iou`` steht zweimal im selben Ergebnis — hier wird geprueft, dass es einmal
+    dasselbe heisst.
+
+    :func:`als_zwei_tore_block` nennt die Silhouetten-Ueberdeckung **buchstabengleich** wie
+    der bestehende ``qa``-Block, und der Docstring dort sagt warum: *«Es ist dieselbe
+    Zahl.»* Nur kamen die beiden bis zur Nachpruefung am 18.09.2026 aus zwei
+    Uebergabewerten, die niemand gegeneinander hielt. Ein Ergebnis mit
+    ``qa.geometry.geom_iou = 0.6`` neben ``geometry_gates.geom_iou = 0.96`` war moeglich —
+    zwei Zahlen unter einem Namen in einer Datei, und der Leser drueben kann nicht wissen,
+    welche gilt.
+
+    Geworfen wird nicht: Das Ergebnis ist bereits geschrieben, und eine Ausnahme hier
+    liesse den ganzen Lauf verschwinden statt den Widerspruch. Stattdessen **fail-closed** —
+    der Widerspruch steht im Block selbst, und freigegeben wird nichts.
+    """
+    if not isinstance(geometrie_urteil, dict):
+        return
+    alt = geometrie_urteil.get("geom_iou")
+    neu = block.get("geom_iou")
+    for wert in (alt, neu):
+        if not (isinstance(wert, (int, float)) and not isinstance(wert, bool)
+                and math.isfinite(wert)):
+            return          # Fehlt eine der beiden, gibt es nichts zu vergleichen.
+    if math.isclose(float(alt), float(neu), rel_tol=1e-9, abs_tol=1e-12):
+        return
+
+    block["fail_reasons"] = [*block.get("fail_reasons", ()), "geom_iou_widerspruch"]
+    block["warnings"] = [*block.get("warnings", ()),
+                         f"ZWEI ZAHLEN UNTER EINEM NAMEN: qa.geometry.geom_iou meldet "
+                         f"{float(alt):.4f}, dieser Block {float(neu):.4f}. Beide heissen "
+                         f"'geom_iou' und sollen dieselbe Messung sein. Solange sie sich "
+                         f"widersprechen, gilt keine von beiden."]
+    block["released"] = False
+
+
 def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None,
                  zeiten=None, uebersprungen: bool = False,
-                 nicht_gerendert=(), je_kamera=None) -> dict:
+                 nicht_gerendert=(), je_kamera=None,
+                 zwei_tore_urteil=None) -> dict:
     """Unsere QA → ``kosmovis.render-result/v2``.
 
     **Hier liegt die Entscheidung dieses Moduls.** Der fremde Vertrag trägt für die
@@ -887,6 +1191,10 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         bilder: Liste von Bildpfaden.
         geometrie_urteil: Antwort von ``geometrie_qa.geometrie_gate(...)`` oder ``None``.
         stil_urteil: Antwort von ``stil_qa.stil_gate(...)`` oder ``None``.
+        zwei_tore_urteil: Antwort von ``geometrie_qa.zwei_tore(...)`` oder ``None``.
+            Wandert **neben** den ``qa``-Block, siehe :func:`als_zwei_tore_block`. Ohne
+            Angabe fehlt das Feld ganz — ein leerer Block hiesse «gemessen, Ergebnis
+            leer», und das ist etwas anderes als «nicht gemessen».
         zeiten: ``{name: sekunden}``, wandert unverändert in ``timings``.
         uebersprungen: Der Auftrag trug ``skip: true`` und wurde **nicht gerechnet**.
         nicht_gerendert: Kurzgründe für Kameras, die **absichtlich** kein Bild bekamen —
@@ -1215,6 +1523,14 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     # `qa`-Block bleibe BYTE-IDENTISCH — ein Feld darin hinzuzufuegen waere genau das
     # nicht. Das ist ein SCHLUSS aus ihrem Satz und keine Angabe von ihnen; die Rueckfrage
     # laeuft (`auf-20260911-105`). Steht es bei ihnen anders, ist es eine Zeile.
+    # DIE ZWEI TORE — neben dem `qa`-Block und nicht darin, aus demselben Grund wie
+    # `qa_je_kamera`: Der bestehende Block bleibt byte-identisch. Was hier dazukommt, ist
+    # keine Berichtigung des alten Urteils, sondern die zweite Frage, die es nie gestellt
+    # hat (R3, 18.09.2026).
+    if zwei_tore_urteil is not None:
+        ergebnis[FELD_ZWEI_TORE] = als_zwei_tore_block(zwei_tore_urteil)
+        _pruefe_ein_name_eine_zahl(ergebnis[FELD_ZWEI_TORE], geometrie_urteil)
+
     if je_kamera:
         ergebnis["qa_je_kamera"] = _qa_je_kamera(job_id, je_kamera)
     return ergebnis

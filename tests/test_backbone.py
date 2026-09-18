@@ -20,14 +20,18 @@ Kein Netz, keine GPU, keine Gewichte — die Registry ist Daten.
 from __future__ import annotations
 
 import ast
+import contextlib
 import dataclasses
 import sys
 from pathlib import Path
 
 import pytest
 
+from aiimaging import backbone as backbone_modul
 from aiimaging.backbone import (
     BACKBONES,
+    GROESSENGEBUNDENE_FAMILIEN,
+    groessen_riegel,
     FRUEHERER_VORGABE_BACKBONE,
     KOND_DEPTH_CONTROLNET,
     KOND_INTEGRIERTES_EDIT,
@@ -573,8 +577,11 @@ def test_backbone_importiert_nur_stdlib():
     """
     import aiimaging.backbone as modul
 
+    # ``re`` kam am 18.09.2026 dazu: Der Grössenriegel liest die Grössenangabe aus Name
+    # und Kennung (``_groessen_behauptungen``). Stdlib, keine Fremdabhängigkeit — die
+    # Tabelle bleibt überall lesbar, worum es diesem Test geht.
     assert _importierte_wurzelmodule(modul) <= {
-        "__future__", "dataclasses", "pathlib", "aiimaging",
+        "__future__", "dataclasses", "pathlib", "re", "aiimaging",
     }
 
 
@@ -695,3 +702,428 @@ def test_die_vram_zahl_ist_die_groessere_der_beiden_messungen():
     assert z.name in {b.name for b in waehle(max_vram_gb=26.0)}, (
         "und eine Schranke oberhalb der Messung muss es weiterhin zulassen"
     )
+
+
+# --------------------------------------------------------------------------------------
+# 6 · Die Lizenz hängt an der GRÖSSE, nicht am Namen
+#
+# Zwei Funde der Kartierung vom 18.09.2026, und beide schlagen erst beim LADEN zu — also
+# auf der Maschine der Nutzerin und nicht bei uns, wo die Registry blosse Daten ist:
+#
+#   1  `flux2-klein-4b` trug die Kennung "black-forest-labs/FLUX.2-klein". Die gibt es
+#      nicht (401); die Gewichte liegen unter ".../FLUX.2-klein-4B".
+#   2  Der Lizenzriegel las den Namen. Bei FLUX.2-klein entscheidet aber die Grösse:
+#      4B ist Apache-2.0, 9B ist Non-Commercial. Ein Namensvergleich hält die eine für
+#      die andere — und das ist ein Loch in Regel 1, also in der Grundlage der ganzen
+#      Open-Source-Auslieferung.
+# --------------------------------------------------------------------------------------
+
+@contextlib.contextmanager
+def _vorruebergehend(eintrag):
+    """Legt einen erfundenen Eintrag direkt in die Registry und räumt ihn wieder weg.
+
+    **Absichtlich an ``_eintrag`` vorbei.** Der Riegel soll auch dann halten, wenn ein
+    Eintrag nicht durch die Eingangsprüfung gekommen ist — sonst wäre er genau einmal
+    wirksam, nämlich beim Import, und jede spätere Änderung an ``BACKBONES`` liefe an
+    ihm vorbei. Dass ``_eintrag`` denselben Fall schon früher abfängt, prüft ein eigener
+    Test weiter unten; hier geht es um den Weg daran vorbei.
+    """
+    BACKBONES[eintrag.name] = eintrag
+    try:
+        yield eintrag
+    finally:
+        BACKBONES.pop(eintrag.name, None)
+
+
+def _klein(name, *, parameter_b, lizenz, kommerziell, modell_id=None):
+    """Ein erfundener FLUX.2-klein-Eintrag — die Bausteine der Proben hier unten."""
+    return Backbone(
+        name=name,
+        modell_id=modell_id or f"black-forest-labs/FLUX.2-klein-{parameter_b:g}B",
+        parameter_b=parameter_b,
+        lizenz=lizenz,
+        kommerziell_nutzbar=kommerziell,
+        konditionierung=KOND_INTEGRIERTES_EDIT,
+        vram_gb=parameter_b * 2.4,
+        dateien=("model_index.json",),
+        lizenz_quelle=QUELLE_MODELLKARTE,
+    )
+
+
+def test_die_kennung_der_4b_fassung_zeigt_auf_ein_repo_das_es_gibt():
+    """Fund 1: Die eingetragene Kennung existierte nicht — und das fiel erst beim Laden auf.
+
+    "black-forest-labs/FLUX.2-klein" liefert 401, weil ein nicht existierendes Repo von
+    einem gesperrten nicht zu unterscheiden ist. Die Fehlermeldung zeigt damit in die
+    falsche Richtung: Sie liest sich wie ein Zugangsproblem und ist ein Tippfehler.
+
+    Hier bleibt es still — die Registry lädt nichts. Genau deshalb braucht dieser
+    Buchstabe eine Probe.
+    """
+    b = hole("flux2-klein-4b")
+    assert b.modell_id == "black-forest-labs/FLUX.2-klein-4B"
+    assert b.modell_id.endswith("-4B"), "die Grösse gehört in die Kennung"
+    for eintrag in BACKBONES.values():
+        assert eintrag.modell_id != "black-forest-labs/FLUX.2-klein", (
+            "die Kennung ohne Grössenangabe existiert auf Hugging Face nicht"
+        )
+
+
+def test_die_9b_fassung_wird_abgewiesen_obwohl_ihr_name_dem_zugelassenen_gleicht():
+    """Fund 2, der Kern: ein ehrlich deklarierter 9B-Eintrag darf nicht in die Auswahl.
+
+    Der Name ähnelt dem zugelassenen bis auf zwei Zeichen. Genau darauf hat der alte
+    Riegel geschaut.
+    """
+    neun = _klein("flux2-klein-9b", parameter_b=9.0,
+                  lizenz="FLUX.2 [klein] Non-Commercial License", kommerziell=False)
+    with _vorruebergehend(neun):
+        urteil = pruefe_lizenz("flux2-klein-9b")
+        assert urteil["zulaessig"] is False
+        assert "flux2-klein-9b" not in {b.name for b in waehle(kommerziell=True)}
+
+
+def test_der_riegel_haengt_an_der_groesse_und_nicht_am_lizenzfeld():
+    """Der schwerere Fall — und der wahrscheinlichere.
+
+    Ein neuer Eintrag entsteht durch Abschreiben des benachbarten. Wer ``flux2-klein-9b``
+    aus ``flux2-klein-4b`` kopiert, erbt dabei ``lizenz="Apache-2.0"`` und
+    ``kommerziell_nutzbar=True``. Der Datensatz behauptet dann etwas Falsches — und eine
+    Prüfung, die allein den Datensatz liest, bestätigt es.
+
+    Der Riegel muss hier gegen die eigenen Felder des Eintrags entscheiden. Tut er das
+    nicht, ist er eine Beschriftung und kein Riegel.
+    """
+    getarnt = _klein("flux2-klein-9b", parameter_b=9.0,
+                     lizenz="Apache-2.0", kommerziell=True)
+
+    riegel = groessen_riegel(getarnt)
+    assert riegel["zulaessig"] is False
+    assert riegel["grund"] == "bekannt_nicht_kommerziell"
+    assert "Non-Commercial" in riegel["erwartete_lizenz"]
+
+    with _vorruebergehend(getarnt):
+        urteil = pruefe_lizenz("flux2-klein-9b")
+        assert urteil["zulaessig"] is False, (
+            "ein permissives Lizenzfeld darf die Grösse nicht überstimmen"
+        )
+        assert "GRÖSSE" in urteil["begruendung"]
+        assert "flux2-klein-9b" not in {b.name for b in waehle(kommerziell=True)}, (
+            "und die Auswahl darf es ebenso wenig durchlassen wie die Prüfung"
+        )
+
+
+def test_die_4b_fassung_geht_weiter_durch():
+    """Die Gegenprobe. Ein Riegel, der alles sperrt, bewacht nichts.
+
+    Ohne diesen Test wäre der obige auch dann grün, wenn der Riegel die ganze Familie
+    ausschlösse — und dann hätte er die eine Fassung mitgenommen, auf der die
+    Laptop-Tauglichkeit dieser Arbeit beruht.
+    """
+    vier = hole("flux2-klein-4b")
+    riegel = groessen_riegel(vier)
+    assert riegel["zulaessig"] is True
+    assert riegel["grund"] == "freigegebene_groesse"
+    assert riegel["erwartete_lizenz"] == "Apache-2.0"
+    assert riegel["auflagen"] == (), "Tabelle und Eintrag sagen dasselbe"
+
+    assert pruefe_lizenz("flux2-klein-4b")["zulaessig"] is True
+    assert "flux2-klein-4b" in {b.name for b in waehle(kommerziell=True)}
+
+
+@pytest.mark.parametrize("name, modell_id", [
+    # Der Name verrät die Familie, die Kennung ist harmlos …
+    ("flux2-klein-9b", "irgendwer/ein-ganz-anderes-repo"),
+    # … und umgekehrt. Fund 1 dieser Sitzung war eine falsche Kennung bei richtigem
+    # Namen; der umgekehrte Fall ist genauso möglich, und ein Riegel, der nur eine der
+    # beiden Spuren liest, ist durch Ändern der anderen zu umgehen.
+    ("kleines-modell", "black-forest-labs/FLUX.2-klein-9B"),
+])
+def test_die_familie_wird_an_beiden_spuren_erkannt(name, modell_id):
+    """Umbenennen darf den Riegel nicht aushebeln — weder der Name noch die Kennung."""
+    getarnt = _klein(name, parameter_b=9.0, lizenz="Apache-2.0", kommerziell=True,
+                     modell_id=modell_id)
+    assert groessen_riegel(getarnt)["zulaessig"] is False
+
+
+def test_eine_unbekannte_groesse_faellt_zu_und_sagt_dass_sie_ungeprueft_ist():
+    """FAIL-CLOSED — und die dritte Antwort bleibt trotzdem lesbar.
+
+    Erscheint morgen eine 6B-Fassung, weiss niemand ihre Lizenz. Sie wird abgewiesen,
+    nicht durchgewunken. Aber ``grund`` hält den Unterschied fest: ``9B`` ist
+    nachgesehen und ausgeschlossen, ``6B`` ist schlicht nicht nachgesehen. Beide Male
+    schliesst dasselbe Tor — die Gründe sind verschieden, und wer nachträgt, muss
+    wissen, welcher vorliegt.
+    """
+    sechs = _klein("flux2-klein-6b", parameter_b=6.0,
+                   lizenz="Apache-2.0", kommerziell=True)
+    riegel = groessen_riegel(sechs)
+    assert riegel["zulaessig"] is False
+    assert riegel["grund"] == "nicht_freigegebene_groesse"
+    assert riegel["erwartete_lizenz"] is None, "nicht gemessen heisst nicht gemessen"
+    assert any("NICHT geprüft" in a for a in riegel["auflagen"])
+
+    neun = _klein("flux2-klein-9b", parameter_b=9.0,
+                  lizenz="Apache-2.0", kommerziell=True)
+    assert groessen_riegel(neun)["grund"] != riegel["grund"], (
+        "durchgefallen und nicht gemessen dürfen nicht dasselbe Wort tragen"
+    )
+
+
+@pytest.mark.parametrize("name", ["z-image-turbo", "sdxl-juggernaut", "flux1-dev"])
+def test_der_riegel_schweigt_zu_familien_die_er_nicht_kennt(name):
+    """``None`` heisst „andere Frage" — nicht „in Ordnung" und nicht „durchgefallen".
+
+    Der Riegel beantwortet genau eine Frage: hängt die Lizenz dieser Familie an der
+    Grösse? Für die meisten Einträge lautet die Antwort „gilt hier nicht". Gäbe er dort
+    ``True`` zurück, sähe ein ungeprüfter Eintrag wie ein freigegebener aus — und
+    ``flux1-dev`` bliebe trotzdem ausgeschlossen, nur eben aus einem anderen Grund.
+    """
+    riegel = groessen_riegel(hole(name))
+    assert riegel["zulaessig"] is None
+    assert riegel["greift"] is False
+    assert riegel["grund"] == "keine_groessengebundene_familie"
+
+    # Und die Lizenzprüfung urteilt davon unberührt weiter.
+    assert pruefe_lizenz(name)["zulaessig"] is (name != "flux1-dev")
+
+
+def test_ein_widerspruechlicher_eintrag_kommt_gar_nicht_erst_in_die_registry():
+    """Der früheste der drei Standorte: beim Import, also bei uns statt bei der Nutzerin.
+
+    ``_eintrag`` weist den Widerspruch ab — nicht den Ausschluss. Ein ehrlich als
+    nicht-kommerziell deklarierter Eintrag darf in der Registry stehen, genau wie
+    ``flux1-dev``: Ein ausgeschlossenes Modell, das gar nicht erst auftaucht, kann auch
+    nicht als ausgeschlossen gemeldet werden.
+    """
+    getarnt = _klein("flux2-klein-9b-getarnt", parameter_b=9.0,
+                     lizenz="Apache-2.0", kommerziell=True)
+    with pytest.raises(BackboneError, match="GRÖSSE"):
+        backbone_modul._eintrag(getarnt)
+    assert "flux2-klein-9b-getarnt" not in BACKBONES
+
+    ehrlich = _klein("flux2-klein-9b-ehrlich", parameter_b=9.0,
+                     lizenz="FLUX.2 [klein] Non-Commercial License", kommerziell=False)
+    try:
+        backbone_modul._eintrag(ehrlich)
+        assert "flux2-klein-9b-ehrlich" in BACKBONES
+        assert pruefe_lizenz("flux2-klein-9b-ehrlich")["zulaessig"] is False
+    finally:
+        BACKBONES.pop("flux2-klein-9b-ehrlich", None)
+
+
+def test_die_tabelle_ist_die_quelle_und_nicht_das_lizenzfeld():
+    """Auch auf der freigegebenen Grösse gewinnt die Tabelle — und sagt es laut.
+
+    Trägt jemand für 4B eine andere Lizenz ein als die geprüfte, ist einer von beiden
+    veraltet. Weil die Tabelle die Quelle ist, ist es der Eintrag; der Widerspruch wird
+    gemeldet statt still übernommen.
+    """
+    schief = _klein("flux2-klein-4b-schief", parameter_b=4.0,
+                    lizenz="MIT", kommerziell=True)
+    riegel = groessen_riegel(schief)
+    assert riegel["zulaessig"] is True
+    assert any("WIDERSPRUCH" in a for a in riegel["auflagen"])
+    with pytest.raises(BackboneError, match="WIDERSPRUCH"):
+        backbone_modul._eintrag(schief)
+
+
+def test_die_groessengebundene_tabelle_ist_nicht_leer():
+    """Ohne Eintrag in der Tabelle wäre jeder Test dieses Abschnitts vakuös.
+
+    Ein Riegel, der nichts kennt, lässt alles durch und bleibt dabei grün.
+    """
+    assert "FLUX.2-klein" in GROESSENGEBUNDENE_FAMILIEN
+    familie = GROESSENGEBUNDENE_FAMILIEN["FLUX.2-klein"]
+    assert 4.0 in familie["freie_groessen_b"]
+    assert 9.0 in familie["gesperrte_groessen_b"]
+    assert "Non-Commercial" in familie["gesperrte_groessen_b"][9.0]
+
+
+# --------------------------------------------------------------------------------------
+# 7 · Gegenprüfung 18.09.2026 — der Riegel traute einem Feld, das genauso kopiert wird
+#
+# Der Riegel aus Abschnitt 6 nimmt dem Feld ``lizenz`` das Vertrauen und gibt es dem Feld
+# ``parameter_b``. Beide stehen in derselben Zeile derselben Registry und werden von Hand
+# gepflegt. Gemessen: Ein Eintrag, dessen Name UND Kennung „-9B" sagen, dessen
+# ``parameter_b`` aber 4.0 führt, kam durch alle drei Standorte — Riegel, Prüfung,
+# Auswahl — und liess sich ausserdem eintragen.
+#
+# Und es ist der wahrscheinlichere Kopierfehler: Der Name MUSS geändert werden, sonst
+# entsteht kein zweiter Eintrag (der Schlüssel kollidiert). Die Zahl darunter muss nicht.
+# --------------------------------------------------------------------------------------
+
+def test_der_riegel_glaubt_auch_dem_feld_parameter_b_nicht_allein():
+    """Name und Kennung sagen 9B, ``parameter_b`` sagt 4.0 — das darf nicht durchgehen.
+
+    Welche der beiden Angaben stimmt, ist von der Registry aus nicht entscheidbar. Ein
+    fail-closed Riegel entscheidet sich dann nicht für die freundlichere Lesart.
+    """
+    verrutscht = _klein("flux2-klein-9b", parameter_b=4.0,
+                        lizenz="Apache-2.0", kommerziell=True,
+                        modell_id="black-forest-labs/FLUX.2-klein-9B")
+
+    riegel = groessen_riegel(verrutscht)
+    assert riegel["zulaessig"] is False, (
+        "die Bezeichner nennen 9B — parameter_b=4.0 allein darf das nicht aufwiegen"
+    )
+    assert riegel["grund"] == "groessenangabe_widerspruechlich"
+    assert riegel["erwartete_lizenz"] is None, "welche Grösse gilt, ist nicht gemessen"
+    assert any("WIDERSPRUCH IN DER GRÖSSE" in a for a in riegel["auflagen"])
+
+    with _vorruebergehend(verrutscht):
+        assert pruefe_lizenz("flux2-klein-9b")["zulaessig"] is False
+        assert "flux2-klein-9b" not in {b.name for b in waehle(kommerziell=True)}
+
+    with pytest.raises(BackboneError, match="WIDERSPRUCH IN DER GRÖSSE"):
+        backbone_modul._eintrag(verrutscht)
+    assert "flux2-klein-9b" not in BACKBONES
+
+
+@pytest.mark.parametrize("name, modell_id, parameter_b", [
+    # Nur der NAME widerspricht — die Kennung schweigt zur Grösse.
+    ("flux2-klein-9b", "black-forest-labs/FLUX.2-klein", 4.0),
+    # Nur die KENNUNG widerspricht — der Name schweigt zur Grösse. Ohne diesen Fall
+    # bliebe die Probe grün, wenn die Gegenprüfung die Kennung gar nicht läse
+    # (nachgefahren als Mutationsprobe, 18.09.2026: sie war es).
+    ("flux2-klein", "black-forest-labs/FLUX.2-klein-9B", 4.0),
+])
+def test_der_widerspruch_wird_auf_beiden_spuren_gesehen(name, modell_id, parameter_b):
+    """Eine Spur genügt. Wer nur eine der beiden liest, übersieht die Hälfte der Fälle.
+
+    Dieselbe Begründung wie bei der Familienerkennung: Name und Kennung sind zwei von
+    Hand gepflegte Angaben, und Fund 1 derselben Kartierung war eine falsche Kennung bei
+    richtigem Namen.
+    """
+    verrutscht = _klein(name, parameter_b=parameter_b, lizenz="Apache-2.0",
+                        kommerziell=True, modell_id=modell_id)
+    riegel = groessen_riegel(verrutscht)
+    assert riegel["zulaessig"] is False
+    assert riegel["grund"] == "groessenangabe_widerspruechlich"
+
+
+def test_der_widerspruch_gilt_in_beide_richtungen():
+    """Auch der umgekehrte Verrutscher — Bezeichner 4B, ``parameter_b`` 9.0 — fällt.
+
+    Hier wäre das Urteil zufällig ohnehin „nein", aber aus dem falschen Grund. Der
+    Unterschied zählt: ``bekannt_nicht_kommerziell`` hiesse, jemand habe die 9B-Lizenz
+    nachgesehen. Nachgesehen hat niemand — der Eintrag widerspricht sich.
+    """
+    verrutscht = _klein("flux2-klein-4b-kopie", parameter_b=9.0,
+                        lizenz="Apache-2.0", kommerziell=True,
+                        modell_id="black-forest-labs/FLUX.2-klein-4B")
+    riegel = groessen_riegel(verrutscht)
+    assert riegel["zulaessig"] is False
+    assert riegel["grund"] == "groessenangabe_widerspruechlich"
+
+
+def test_bezeichner_ohne_groessenangabe_sind_keine_bestaetigung():
+    """Leere Menge heisst nicht gemessen — und darf weder freisprechen noch verurteilen.
+
+    Sagen die Bezeichner nichts über die Grösse, bleibt ``parameter_b`` die einzige
+    Angabe. Dann urteilt der Riegel wie zuvor, nicht strenger und nicht milder.
+    """
+    assert backbone_modul._groessen_behauptungen(("flux2-klein", "irgendwer/flux2-klein")) == set()
+
+    stumm = _klein("flux2-klein", parameter_b=4.0, lizenz="Apache-2.0", kommerziell=True,
+                   modell_id="black-forest-labs/FLUX.2-klein")
+    assert groessen_riegel(stumm)["grund"] == "freigegebene_groesse"
+
+    stumm_neun = _klein("flux2-klein", parameter_b=9.0, lizenz="Apache-2.0",
+                        kommerziell=True, modell_id="black-forest-labs/FLUX.2-klein")
+    assert groessen_riegel(stumm_neun)["grund"] == "bekannt_nicht_kommerziell"
+
+
+def test_die_groessenangabe_wird_gelesen_und_nicht_erraten():
+    """Was als Grössenangabe zählt — und was ausdrücklich nicht.
+
+    ``flux2`` trägt eine Ziffer und ist keine Grösse; ``labs`` trägt ein ``b`` und ist
+    keine. Ein zu gieriges Muster machte den Riegel unbrauchbar, weil dann jeder echte
+    Eintrag sich selbst widerspräche.
+    """
+    lies = backbone_modul._groessen_behauptungen
+    assert lies(("flux2-klein-9b",)) == {9.0}
+    assert lies(("black-forest-labs/flux.2-klein-4b",)) == {4.0}
+    assert lies(("flux2-klein-4b", "black-forest-labs/flux.2-klein-4b")) == {4.0}
+    assert lies(("black-forest-labs/flux.2-klein",)) == set(), "labs ist keine Grösse"
+    assert lies(("sdxl-juggernaut",)) == set()
+
+
+def test_der_echte_eintrag_widerspricht_sich_nicht():
+    """Die Gegenprobe zur ganzen Gegenprüfung: Der Riegel darf 4B nicht mitreissen.
+
+    Ein Widerspruchsriegel, der den einzigen echten Eintrag der Familie abweist, hätte
+    die Fassung genommen, auf der die Laptop-Tauglichkeit dieser Arbeit beruht.
+    """
+    vier = hole("flux2-klein-4b")
+    assert backbone_modul._groessen_behauptungen(
+        (vier.name.lower(), vier.modell_id.lower())) == {4.0}
+    assert groessen_riegel(vier)["zulaessig"] is True
+    assert pruefe_lizenz("flux2-klein-4b")["zulaessig"] is True
+    assert "flux2-klein-4b" in {b.name for b in waehle(kommerziell=True)}
+
+
+def test_am_rand_der_toleranz_wird_geschlossen_und_nicht_geoeffnet():
+    """Bei genau 4.5 ist „das ist die 4B-Fassung" eine Behauptung, keine Ablesung.
+
+    GEMESSEN: Der vorherige Stand verglich die Freiliste mit ``<=`` und gab bei 4.5
+    ``freigegebene_groesse`` zurück. Ein fail-closed Riegel öffnet am Rand nicht.
+    """
+    rand = _klein("flux2-klein-rand", parameter_b=4.0 + backbone_modul.GROESSEN_TOLERANZ_B,
+                  lizenz="Apache-2.0", kommerziell=True,
+                  modell_id="black-forest-labs/FLUX.2-klein")
+    riegel = groessen_riegel(rand)
+    assert riegel["zulaessig"] is False
+    assert riegel["grund"] == "nicht_freigegebene_groesse"
+
+    # Knapp innerhalb bleibt frei — sonst wäre der Riegel bloss strenger geworden.
+    drin = _klein("flux2-klein-drin", parameter_b=4.03,
+                  lizenz="Apache-2.0", kommerziell=True,
+                  modell_id="black-forest-labs/FLUX.2-klein")
+    assert groessen_riegel(drin)["zulaessig"] is True
+
+
+def test_die_begruendung_verschweigt_den_widerspruch_nicht():
+    """Ein Satz darf den anderen nicht bestreiten.
+
+    GEMESSEN: Bei einem 4B-Eintrag mit abweichendem Lizenzfeld stand der WIDERSPRUCH in
+    ``auflagen``, während ``begruendung`` wörtlich „ohne weitere Auflage mit Regel 1
+    vereinbar" sagte. Wer nur die Begründung liest — und das tut jede Fehlermeldung, die
+    sie durchreicht —, erfuhr davon nichts.
+    """
+    schief = _klein("flux2-klein-4b-schief-lizenz", parameter_b=4.0,
+                    lizenz="MIT", kommerziell=True,
+                    modell_id="black-forest-labs/FLUX.2-klein-4B")
+    with _vorruebergehend(schief):
+        urteil = pruefe_lizenz("flux2-klein-4b-schief-lizenz")
+        assert urteil["zulaessig"] is True, "4B bleibt zulässig — die Grösse stimmt ja"
+        assert any("WIDERSPRUCH" in a for a in urteil["auflagen"])
+        assert "WIDERSPRUCH" in urteil["begruendung"], (
+            "die Begründung muss den Widerspruch mittragen, nicht nur die Auflagen"
+        )
+        assert "ohne weitere Auflage" not in urteil["begruendung"]
+
+
+def test_die_modell_id_treibt_keinen_ladevorgang():
+    """Die Zusage des Kommentars an der 4B-Kennung, nachgeprüft statt geglaubt.
+
+    Der Kommentar dort sagt, wo die falsche Kennung aufschlägt und wo nicht: Kein Pfad
+    dieser Software lädt über ``modell_id``; das Verzeichnis kommt aus ``name``. Diese
+    Probe hält das fest, damit der Kommentar nicht stillschweigend unwahr wird — träte
+    einmal ein Ladeweg über die Kennung hinzu, wäre die Kennung plötzlich laufgefährlich
+    und nicht mehr bloss eine Angabe für Menschen.
+    """
+    quelle = (Path(__file__).resolve().parents[1] / "src" / "aiimaging" / "render.py"
+              ).read_text(encoding="utf-8")
+    baum = ast.parse(quelle)
+    for knoten in ast.walk(baum):
+        if not isinstance(knoten, ast.Call):
+            continue
+        for arg in list(knoten.args) + [s.value for s in knoten.keywords]:
+            for teil in ast.walk(arg):
+                if isinstance(teil, ast.Attribute) and teil.attr == "modell_id":
+                    raise AssertionError(
+                        "render.py reicht `modell_id` in einen Aufruf — der Kommentar an "
+                        "der 4B-Kennung behauptet, das gebe es nicht. Einer von beiden "
+                        "muss nachgezogen werden."
+                    )

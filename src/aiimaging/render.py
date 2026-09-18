@@ -64,6 +64,37 @@ Geworfen wird nur dort, wo es gar kein sinnvolles Ergebnis geben kann: in
 bekommt, das gar kein :class:`RenderAuftrag` ist — dann gibt es keine Parameter, die man
 protokollieren könnte.
 
+Wo die Gewichte liegen — und warum das eine Startsperre war
+------------------------------------------------------------
+Bis zum 18.09.2026 stand hier ``VORGABE_MODELLWURZEL = "/ai"``. Das ist eine Konvention
+der HomeStation; auf dem MacBook, das jetzt die Zielhardware ist, liegt ``/ai`` direkt
+unter der nicht beschreibbaren Systemwurzel, und auf Windows gibt es den Pfad gar nicht.
+Der erste Start einer fremden Maschine endete damit in einem Rechtefehler aus dem Inneren
+einer Bibliothek, bevor ein einziges Modell geladen war.
+
+Neu gilt eine Leiter aus drei Stufen (:func:`modellwurzel`): ``$AIIMAGING_MODELLE``,
+dann ``/ai`` **falls vorhanden**, dann der Anwendungsdatenort des Betriebssystems
+(:func:`anwendungsdaten_wurzel`).
+
+Was sich für die HomeStation ändert — und was nicht
+....................................................
+Sie fährt denselben Code aus demselben Repo; ein ``git pull`` dort darf ihr Verhalten
+nicht unangesagt ändern. **Gemessen** (`auf-20260823-36`, `auf-20260826-42`) läuft sie
+mit gesetztem ``AIIMAGING_MODELLE=/mnt/data/ai-models/diffusers`` — Stufe 1, und die ist
+unverändert. Für jeden Lauf, der die Variable setzt, ändert sich also nichts.
+
+``/ai`` existiert dort **nicht**: `auf-20260823-36` sagt es ausdrücklich, und
+`auf-20260823-38` zeigt es gemessen (*«unter '/ai/sdxl-juggernaut' (Verzeichnis
+existiert: False)»*). Stufe 2 trifft auf der HomeStation also nicht — sie ist kein
+Bestandsschutz, sondern eine Rückfalllinie für jede Maschine, die ``/ai`` doch führt.
+
+Damit bleibt **eine** Verhaltensänderung drüben, und sie wird hier benannt statt
+behauptet weg zu sein: Ein Lauf **ohne** ``AIIMAGING_MODELLE`` nannte bisher
+``/ai/<modell>`` in seiner Meldung und nennt jetzt den Anwendungsdatenort. Der Lauf
+scheitert in beiden Fällen (die Gewichte liegen weder hier noch dort) — nur der genannte
+Pfad ist ein anderer. Das ist die Art Änderung, die nach CLAUDE.md angesagt gehört,
+bevor sie ankommt.
+
 Abhängigkeiten: keine. Reine stdlib. ``torch`` und ``diffusers`` werden **ausschliesslich
 innerhalb** von :func:`lade_modell` importiert — ein Import auf Modulebene machte
 ``import aiimaging.render`` auf jedem Rechner ohne GPU-Stack unmöglich und hinge damit
@@ -73,6 +104,7 @@ from __future__ import annotations
 
 import math
 import os
+import platform
 import re
 import time
 from dataclasses import dataclass
@@ -90,11 +122,113 @@ KONDITIONIERUNGEN = backbone.KONDITIONIERUNGEN
 #: eigener Vorgabewert an dieser Stelle liefe beim nächsten Registry-Wechsel auseinander.
 VORGABE_BACKBONE = backbone.VORGABE_BACKBONE
 
-#: Umgebungsvariable für die Modellwurzel. Auf der HomeStation liegen die Gewichte unter
-#: ``/ai`` (siehe ``auftrag.py``); jedes Modell in einem eigenen Unterordner mit seinem
-#: Registry-Namen. Das ist eine **Setzung**, keine Messung — hier existiert kein ``/ai``.
+# --------------------------------------------------------------------------------------
+# Wo die Gewichte liegen — drei Stufen, und die erste gehört der Umgebung
+# --------------------------------------------------------------------------------------
+
+#: Umgebungsvariable für die Modellwurzel. Sie hat Vorrang vor allem anderen: Wer eine
+#: eigene Ablage hat, nennt sie hier und behält sie. Dasselbe Muster wie
+#: ``AIIMAGING_BLENDER`` in ``seams.py``.
 UMGEBUNG_MODELLE = "AIIMAGING_MODELLE"
-VORGABE_MODELLWURZEL = "/ai"
+
+#: Die Ablage der HomeStation (siehe ``auftrag.py``): Dort liegen die Gewichte unter
+#: ``/ai``, jedes Modell in einem eigenen Unterordner mit seinem Registry-Namen.
+#:
+#: Der Pfad wird **vor** dem Betriebssystem-Vorgabeort geprüft — aber nur, wenn es ihn
+#: als Verzeichnis wirklich gibt. Auf einem MacBook gibt es ihn nicht (``/`` ist dort die
+#: nicht beschreibbare Wurzel), auf Windows kennt ihn niemand; dort fällt die Stufe still
+#: weg. Sie kostet einen ``is_dir``-Aufruf.
+#:
+#: **Diese Stufe ist NICHT der Bestandsschutz der HomeStation** — das wäre eine bequeme
+#: Behauptung, und sie ist gemessen falsch: `auf-20260823-36` hält fest, dass ``/ai``
+#: *«auf dieser Maschine nicht existiert»*, und `auf-20260823-38` zeigt es im Lauf
+#: (*«Verzeichnis existiert: False»*). Die HomeStation bleibt bei ihrer Ablage, weil sie
+#: ``AIIMAGING_MODELLE`` setzt — Stufe 1, gemessen in `auf-20260823-36` und
+#: `auf-20260826-42`. Was diese Stufe leistet, ist schmaler: Jede Maschine, die ``/ai``
+#: **doch** führt, behält es, ohne etwas zu setzen. Der Rest steht im Modul-Docstring,
+#: samt der einen Verhaltensänderung, die drüben bleibt.
+ALTWURZEL_HOMESTATION = "/ai"
+
+#: Woher die Wurzel stammt. Die Auskunft gehört ins Ergebnis: „nicht gefunden" braucht
+#: je nach Herkunft einen anderen Handgriff (Variable setzen / Variable berichtigen /
+#: Ordner anlegen).
+HERKUNFT_UMGEBUNG = "umgebung"
+HERKUNFT_ALTWURZEL = "altwurzel"
+HERKUNFT_ANWENDUNGSDATEN = "anwendungsdaten"
+
+#: Ordnername unter den Anwendungsdaten. Gross auf macOS und Windows, klein unter XDG —
+#: so schreiben es die jeweiligen Konventionen, und ein Ordner, der aussieht wie die
+#: Nachbarn, wird von seinem Besitzer wiedererkannt.
+ANWENDUNG = "Visbox"
+ANWENDUNG_KLEIN = "visbox"
+
+#: Unterordner unter dem Anwendungsordner. Getrennt, weil unter denselben Anwendungsdaten
+#: später anderes liegen kann (Zwischenstände, Protokolle) und Gewichte zweistellige
+#: Gigabyte gross sind — wer aufräumt, soll einen Ordner treffen können.
+UNTERORDNER_MODELLE = "modelle"
+
+
+def anwendungsdaten_wurzel(*, system=None, umgebung=None, heim=None) -> Path:
+    """Der Ort, an dem dieses Betriebssystem Anwendungsdaten erlaubt.
+
+    **Der Anlass** (18.09.2026, Umstellung auf Visbox): Zielhardware ist der Laptop einer
+    Studierenden — ein MacBook M1 Max, nicht mehr die HomeStation. Der bisherige
+    Vorgabepfad ``/ai`` ist dort ein Ordner direkt unter der Systemwurzel, und die ist
+    nicht beschreibbar. Wer Visbox startet, bekommt einen Rechtefehler aus dem Inneren
+    einer Bibliothek, bevor ein einziges Modell geladen wird. Auf Windows gibt es ``/ai``
+    überhaupt nicht.
+
+    Gewählt wird je System der übliche Ort — **gesetzt** nach der jeweiligen Konvention,
+    nicht gemessen:
+
+    * **macOS**: ``~/Library/Application Support/Visbox/modelle``. Apple sieht
+      *Application Support* für Daten vor, die eine Anwendung selbst anlegt und die der
+      Benutzer nicht direkt bearbeitet.
+    * **Windows**: ``%LOCALAPPDATA%\\Visbox\\modelle`` — **Local**, nicht *Roaming*:
+      Roaming wird zwischen Maschinen synchronisiert, und zwanzig Gigabyte Gewichte durch
+      ein Firmennetz zu schieben ist kein Versehen, das man einer Studentin zumutet.
+    * **Linux und alles übrige**: ``$XDG_DATA_HOME/visbox/modelle``, ersatzweise
+      ``~/.local/share/visbox/modelle`` (XDG Base Directory Specification).
+
+    Die XDG-Spezifikation verlangt ausdrücklich, eine **relative** Angabe in
+    ``XDG_DATA_HOME`` zu ignorieren; dasselbe gilt hier für ``LOCALAPPDATA``. Ein
+    relativer Modellpfad zeigte je nach Arbeitsverzeichnis woandershin — das ist genau
+    die Sorte Fehler, die als Modellfehler missverstanden wird.
+
+    Args:
+        system: Naht für die Probe. ``None`` heisst :func:`platform.system`. Nur so lässt
+            sich der macOS- und der Windows-Weg auf einem Linux-Container belegen — ohne
+            diese Naht wäre der Befund, um den es hier geht, unprüfbar.
+        umgebung: Naht für die Probe. ``None`` heisst ``os.environ``.
+        heim: Naht für die Probe. ``None`` heisst das Heimverzeichnis dieses Benutzers.
+
+    Reine Pfadrechnung: Es wird nichts angelegt, nichts geprüft, nichts geladen.
+    """
+    system = platform.system() if system is None else system
+    umgebung = os.environ if umgebung is None else umgebung
+    # `expanduser("~")` statt `Path.home()`: Es wirft nicht, wenn sich das
+    # Heimverzeichnis nicht ermitteln lässt. Ein Import, der wegen eines fehlenden HOME
+    # abbricht, machte das ganze Modul unbenutzbar — und dieses Modul wird importiert,
+    # lange bevor jemand ein Gewicht sucht.
+    heim = Path(os.path.expanduser("~")) if heim is None else Path(heim)
+
+    if system == "Darwin":
+        return heim / "Library" / "Application Support" / ANWENDUNG / UNTERORDNER_MODELLE
+    if system == "Windows":
+        lokal = umgebung.get("LOCALAPPDATA")
+        basis = Path(lokal) if lokal and Path(lokal).is_absolute() \
+            else heim / "AppData" / "Local"
+        return basis / ANWENDUNG / UNTERORDNER_MODELLE
+    xdg = umgebung.get("XDG_DATA_HOME")
+    basis = Path(xdg) if xdg and Path(xdg).is_absolute() else heim / ".local" / "share"
+    return basis / ANWENDUNG_KLEIN / UNTERORDNER_MODELLE
+
+
+#: Der Vorgabeort dieses Rechners, einmal beim Import gerechnet. Er bleibt ein
+#: beschreibbarer Name (und keine Funktion), weil Proben ihn ersetzen und weil ein
+#: Herkunftspfad, den man nicht nennen kann, in keiner Fehlermeldung auftaucht.
+#: **Setzung**, keine Messung: Ob dort etwas liegt, sagt :func:`modellwurzel_lage`.
+VORGABE_MODELLWURZEL = str(anwendungsdaten_wurzel())
 
 #: Obergrenze für die Schrittzahl. Nicht physikalisch begründet, sondern als Schutz vor
 #: dem Tippfehler: ``schritte=2000`` läuft nicht falsch, es läuft stundenlang und
@@ -187,18 +321,113 @@ class RenderAuftrag:
     modell_wurzel: str | None = None
 
 
+def modellwurzel(*, umgebung=None) -> tuple[Path, str]:
+    """Welche Modellwurzel auf diesem Rechner gilt — **und woher sie kommt**.
+
+    Drei Stufen, in dieser Reihenfolge, und die Reihenfolge ist der ganze Entwurf:
+
+    1. ``$AIIMAGING_MODELLE`` — die Umgebung gewinnt immer. Sie ist der Weg, auf dem eine
+       Maschine ihre Ablage festschreibt, ohne dass wir Code ändern.
+    2. :data:`ALTWURZEL_HOMESTATION` (``/ai``) — **aber nur, wenn es den Ordner gibt.**
+       Wer ``/ai`` führt, behält es, ohne etwas zu setzen; bei einer Studentin fällt die
+       Stufe durch. Sie ist ausdrücklich **nicht** der Bestandsschutz der HomeStation:
+       Dort gibt es ``/ai`` gemessen nicht (`auf-20260823-36`, `auf-20260823-38`), dort
+       trifft Stufe 1. Siehe :data:`ALTWURZEL_HOMESTATION`.
+    3. :data:`VORGABE_MODELLWURZEL` — der Anwendungsdatenort dieses Betriebssystems
+       (siehe :func:`anwendungsdaten_wurzel`).
+
+    Returns:
+        ``(wurzel, herkunft)`` mit ``herkunft`` aus :data:`HERKUNFT_UMGEBUNG`,
+        :data:`HERKUNFT_ALTWURZEL`, :data:`HERKUNFT_ANWENDUNGSDATEN`.
+
+    Args:
+        umgebung: Naht für die Probe. ``None`` heisst ``os.environ``.
+    """
+    umgebung = os.environ if umgebung is None else umgebung
+    if (gesetzt := umgebung.get(UMGEBUNG_MODELLE)):
+        return Path(gesetzt), HERKUNFT_UMGEBUNG
+    alt = Path(ALTWURZEL_HOMESTATION)
+    try:
+        alt_vorhanden = alt.is_dir()
+    except OSError:
+        # Ein unlesbarer Ort ist keine Antwort, also zählt er nicht als Treffer. Auf
+        # einem gesperrten Laufwerk soll der Start nicht an dieser Frage scheitern.
+        alt_vorhanden = False
+    if alt_vorhanden:
+        return alt, HERKUNFT_ALTWURZEL
+    return Path(VORGABE_MODELLWURZEL), HERKUNFT_ANWENDUNGSDATEN
+
+
 def standard_modell_wurzel(backbone_name: str) -> Path:
     """Wo die Gewichte eines Backbones vermutet werden, wenn nichts angegeben ist.
 
-    ``$AIIMAGING_MODELLE/<backbone-name>``, ersatzweise ``/ai/<backbone-name>``. Die
-    Umgebungsvariable hat Vorrang, damit die Ablage austauschbar bleibt — dasselbe
-    Muster wie ``AIIMAGING_BLENDER`` in ``seams.py``.
+    :func:`modellwurzel` plus der Registry-Name als Unterordner. Die Umgebungsvariable
+    hat Vorrang, damit die Ablage austauschbar bleibt — dasselbe Muster wie
+    ``AIIMAGING_BLENDER`` in ``seams.py``.
 
     Reine Pfadrechnung: Es wird nichts geladen und nichts geprüft. Damit ist diese
     Funktion auch dort testbar, wo kein einziges Gewicht liegt.
     """
-    wurzel = os.environ.get(UMGEBUNG_MODELLE) or VORGABE_MODELLWURZEL
-    return Path(wurzel) / backbone_name
+    return modellwurzel()[0] / backbone_name
+
+
+def schreibprobe(pfad) -> dict:
+    """Dürfte dort etwas angelegt werden? — gefragt am nächsten vorhandenen Elternordner.
+
+    Warum der Elternordner: Die Modellwurzel selbst gibt es ja gerade nicht, sonst stünde
+    die Frage nicht. Beschreibbar sein muss der Ort, an dem sie entstünde.
+
+    Returns:
+        ``{pfad, anker, beschreibbar, grund}``. ``beschreibbar`` ist ``None``, wenn die
+        Frage **nicht gemessen** werden konnte — nicht ``False``: „darf nicht" und „weiss
+        nicht" verlangen verschiedene Handgriffe, und die dritte Antwort dieses Projekts
+        heisst nicht „in Ordnung".
+
+    Reine Dateisystemauskunft, kein Schreibversuch: Eine Probedatei in einem fremden
+    Ordner anzulegen ist eine Nebenwirkung, und Nebenwirkungen beim Nachsehen sind der
+    Anfang von Schäden. ``os.access`` kann bei ausgefallenen Rechtemodellen (ACLs,
+    Netzlaufwerke) irren — deshalb trägt die Meldung einen Handgriff und kein Urteil.
+    """
+    ziel = Path(pfad).expanduser()
+    anker = None
+    for kandidat in (ziel, *ziel.parents):
+        try:
+            if kandidat.is_dir():
+                anker = kandidat
+                break
+        except OSError as fehler:
+            return {"pfad": str(ziel), "anker": None, "beschreibbar": None,
+                    "grund": f"Der Ort liess sich nicht befragen ({fehler})."}
+    if anker is None:
+        return {"pfad": str(ziel), "anker": None, "beschreibbar": None,
+                "grund": "Kein vorhandener Elternordner gefunden — nicht gemessen."}
+    try:
+        erlaubt = os.access(anker, os.W_OK | os.X_OK)
+    except OSError as fehler:
+        return {"pfad": str(ziel), "anker": str(anker), "beschreibbar": None,
+                "grund": f"Die Rechte liessen sich nicht lesen ({fehler})."}
+    return {"pfad": str(ziel), "anker": str(anker), "beschreibbar": bool(erlaubt),
+            "grund": ""}
+
+
+def _wegweiser(wurzel: Path, probe: dict) -> str:
+    """Der Satz, der aus einer Diagnose einen Handgriff macht.
+
+    Ohne ihn endet die Meldung bei „gibt es nicht", und der Leser darf raten, ob er einen
+    Ordner anlegen, eine Variable setzen oder den Rechner wechseln soll.
+    """
+    if probe["beschreibbar"] is None:
+        return (f" Ob sich {str(wurzel)!r} anlegen lässt, wurde NICHT GEMESSEN "
+                f"({probe['grund']}). Handgriff: einen Ordner anlegen, in dem Sie "
+                f"schreiben dürfen, und {UMGEBUNG_MODELLE} darauf setzen.")
+    if probe["beschreibbar"]:
+        return (f" Der Ort lässt sich anlegen ({probe['anker']!r} ist beschreibbar): "
+                f"Ordner {str(wurzel)!r} erzeugen und die Gewichte hineinlegen — oder "
+                f"{UMGEBUNG_MODELLE} auf eine vorhandene Ablage setzen.")
+    return (f" Und dort darf nichts angelegt werden: {probe['anker']!r} ist für Sie "
+            f"nicht beschreibbar. Das ist kein Modellfehler und keine kaputte "
+            f"Installation. Handgriff: {UMGEBUNG_MODELLE} auf einen Ordner setzen, in "
+            f"dem Sie schreiben dürfen.")
 
 
 def modellwurzel_lage(backbone_name: str) -> dict:
@@ -214,28 +443,53 @@ def modellwurzel_lage(backbone_name: str) -> dict:
     *Ein Ersatzpfad, der nirgends existiert, ist keine Vorgabe, sondern ein Ratefehler mit
     Schrägstrich.*
 
-    Returns:
-        ``{wurzel, aus_umgebung, existiert, umgebung, grund}``. ``grund`` ist ``""``,
-        wenn nichts zu sagen ist.
+    **Der zweite Anlass** (18.09.2026): Auf einem MacBook war der Ersatzpfad ``/ai`` nicht
+    nur leer, sondern unanlegbar — ``/`` ist dort nicht beschreibbar. Wer der bisherigen
+    Meldung folgte und den Ordner anlegte, bekam einen Rechtefehler statt einer Antwort.
+    Darum steht hier jetzt auch, **ob** sich der Ort anlegen lässt.
 
-    Reine Pfad- und Dateisystemauskunft: Es wird nichts geladen. Damit bleibt die Funktion
-    dort prüfbar, wo kein einziges Gewicht liegt — also hier.
+    Returns:
+        ``{wurzel, herkunft, aus_umgebung, existiert, beschreibbar, schreibanker,
+        umgebung, grund}``. ``grund`` ist ``""``, wenn nichts zu sagen ist;
+        ``beschreibbar`` ist ``None``, wenn die Frage nicht gemessen werden konnte, und
+        ebenfalls ``None``, wenn sie sich nicht stellt (der Ordner ist da).
+
+    Reine Pfad- und Dateisystemauskunft: Es wird nichts geladen und nichts angelegt. Damit
+    bleibt die Funktion dort prüfbar, wo kein einziges Gewicht liegt — also hier.
     """
-    aus_umgebung = bool(os.environ.get(UMGEBUNG_MODELLE))
-    wurzel = standard_modell_wurzel(backbone_name)
+    basis, herkunft = modellwurzel()
+    wurzel = basis / backbone_name
     existiert = wurzel.is_dir()
+
     if existiert:
-        grund = ""
-    elif aus_umgebung:
+        # Keine Schreibprobe: Zum Laden von Gewichten muss niemand schreiben dürfen, und
+        # eine Meldung, die bei jedem gesunden Lauf mitläuft, wird nach drei Tagen
+        # überlesen.
+        return {"wurzel": str(wurzel), "herkunft": herkunft,
+                "aus_umgebung": herkunft == HERKUNFT_UMGEBUNG, "existiert": True,
+                "beschreibbar": None, "schreibanker": None,
+                "umgebung": UMGEBUNG_MODELLE, "grund": ""}
+
+    probe = schreibprobe(wurzel)
+    if herkunft == HERKUNFT_UMGEBUNG:
         grund = (f"{UMGEBUNG_MODELLE} zeigt auf {str(wurzel.parent)!r}, und dort liegt "
                  f"kein Ordner {backbone_name!r}. Der Pfad ist gesetzt und trifft nicht.")
+    elif herkunft == HERKUNFT_ALTWURZEL:
+        grund = (f"{UMGEBUNG_MODELLE} ist NICHT gesetzt; es gilt die vorhandene Ablage "
+                 f"{ALTWURZEL_HOMESTATION!r}, und dort liegt kein Ordner "
+                 f"{backbone_name!r}. Das ist keine Aussage ueber das Modell, sondern "
+                 f"ueber die Umgebung (auf-vis-20260826-16).")
     else:
-        grund = (f"{UMGEBUNG_MODELLE} ist NICHT gesetzt; es gilt der Ersatzpfad "
-                 f"{VORGABE_MODELLWURZEL!r}, und dort liegt kein Ordner "
+        grund = (f"{UMGEBUNG_MODELLE} ist NICHT gesetzt; es gilt der Vorgabeort dieses "
+                 f"Betriebssystems {str(wurzel.parent)!r}, und dort liegt kein Ordner "
                  f"{backbone_name!r}. Das ist keine Aussage ueber das Modell, sondern "
                  f"ueber die Umgebung — wer hier das Modell prueft, sucht am falschen "
                  f"Ort (auf-vis-20260826-16).")
-    return {"wurzel": str(wurzel), "aus_umgebung": aus_umgebung, "existiert": existiert,
+    grund += _wegweiser(wurzel, probe)
+
+    return {"wurzel": str(wurzel), "herkunft": herkunft,
+            "aus_umgebung": herkunft == HERKUNFT_UMGEBUNG, "existiert": False,
+            "beschreibbar": probe["beschreibbar"], "schreibanker": probe["anker"],
             "umgebung": UMGEBUNG_MODELLE, "grund": grund}
 
 
@@ -1587,5 +1841,8 @@ __all__ = [
     "MAX_SCHRITTE", "MAX_SEED", "MODUS_IMAGE_EDIT", "MODUS_TXT2IMG",
     "STATUSSE", "STATUS_ABGELEHNT", "STATUS_FEHLER", "STATUS_OK",
     "VORGABE_BACKBONE", "RenderAuftrag", "RenderError",
-    "lade_modell", "pruefe_auftrag", "rendere", "standard_modell_wurzel",
+    "ALTWURZEL_HOMESTATION", "HERKUNFT_ALTWURZEL", "HERKUNFT_ANWENDUNGSDATEN",
+    "HERKUNFT_UMGEBUNG", "UMGEBUNG_MODELLE", "VORGABE_MODELLWURZEL",
+    "anwendungsdaten_wurzel", "lade_modell", "modellwurzel", "modellwurzel_lage",
+    "pruefe_auftrag", "rendere", "schreibprobe", "standard_modell_wurzel",
 ]

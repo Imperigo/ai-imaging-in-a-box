@@ -3498,16 +3498,45 @@ def ferne_abtrennen(karte: Sequence[float], *, stufen: int = 1,
 #:
 #: **Woher die Zahl kommt, und woher nicht.** Gemessen ist das *Rauschband*: Bei
 #: ControlNet-Stärke 0.30, wo das Bild dem Modell nachweislich nicht mehr folgt, lag
-#: ``rho_maske`` über zwölf Bilder zwischen **−0.047 und +0.055**. Gemessen ist auch der
-#: niedrigste Wert eines Bildes, das dem Modell folgt: **+0.144**.
+#: ``rho_maske`` über zwölf Bilder zwischen **−0.0473 und +0.0554**. 0.10 liegt darüber,
+#: und darauf allein ruht die Zahl. Sie ist **gesetzt, nicht kalibriert.**
 #:
-#: Die Schwelle muss also zwischen 0.055 und 0.144 liegen. **Wo genau, sagen zwölf Bilder
-#: nicht** — 0.10 liegt ungefähr in der Mitte und ist damit **gesetzt und nicht
-#: kalibriert**. Der Abstand nach unten ist knapp zweifach, nach oben knapp anderthalb.
+#: **BERICHTIGUNG 18.09.2026 — hier stand eine Behauptung zu viel.** Der Satz lautete:
+#: «Gemessen ist auch der niedrigste Wert eines Bildes, das dem Modell folgt: +0.144»,
+#: und daraus wurde eine Lücke 0.055…0.144 abgeleitet, in deren Mitte 0.10 liege. Das
+#: gilt **nur für Stärke 1.00**. Nachgerechnet über alle drei Reihen desselben Laufs
+#: (``auf-20260909-92-tabelle.json``)::
+#:
+#:     Stärke 1.00   rho_maske  +0.1437 … +0.9931     iou 0.9257 … 0.9784
+#:     Stärke 0.75   rho_maske  −0.1549 … +0.9961     iou 0.9119 … 0.9845
+#:     Stärke 0.30   rho_maske  −0.0473 … +0.0554     iou 0.6037 … 0.8579
+#:
+#: Ein Bild bei Stärke 0.75 (Fall C, Szene ``gebaeude``, Seed 2) hat ``rho_maske``
+#: **−0.1549** — **unterhalb des ganzen Rauschbandes** — und zugleich ``geom_iou``
+#: **0.9119**, also eine Silhouette, die sauber sitzt. Die Lücke, aus der 0.10 stammt,
+#: existiert an dieser Stelle des eigenen Datensatzes **nicht**.
+#:
+#: **Was das kostet, gezählt statt geschätzt.** Mit 0.10 fällt genau dieses eine Bild
+#: durch Tor A::
+#:
+#:     Stärke 1.00   Tor A 12/12   Tor B 12/12   UND 12/12
+#:     Stärke 0.75   Tor A 11/12   Tor B 12/12   UND 11/12
+#:     Stärke 0.30   Tor A  0/12   Tor B  1/12   UND  0/12
+#:
+#: Das ist ein **Fehlalarm**, kein Durchlasser: Ein brauchbares Bild wird abgewiesen.
+#: Das ist die richtige Richtung für einen Riegel — aber es heisst auch, dass
+#: ``rho_maske`` bei 0.75 mindestens einmal **etwas anderes misst als bei 1.00**.
+#:
+#: **Nicht entscheidbar ist, welches von beiden zutrifft:** ob das Bild bei 0.75 dem
+#: Modell wirklich weniger folgt, oder ob ``rho_maske`` dort versagt, wo Tor B noch
+#: trägt. Zwölf Bilder sagen es nicht. Die Gegenprobe, die es sagen würde — jedes
+#: 0.75-Bild auch gegen eine fremde Tiefenkarte — gibt es im Datensatz nicht; sie liegt
+#: als Messauftrag bei der HomeStation (``auf-20260918-115``).
 #:
 #: *Genau diese Sorte Zahl war die alte 0.65, und sie hat elf von zwölf Müllbildern
-#: durchgelassen.* Der Unterschied ist, dass hier dransteht, worauf sie ruht — und dass
-#: die Gegenprobe in :func:`zwei_tore` sie bei jedem Lauf prüft, statt ihr zu glauben.
+#: durchgelassen.* Der Unterschied ist, dass hier dransteht, worauf sie ruht **und wo
+#: sie im eigenen Datensatz schon einmal danebenliegt** — und dass die Gegenprobe in
+#: :func:`zwei_tore` sie bei jedem Lauf prüft, statt ihr zu glauben.
 SCHWELLE_FOLGT = 0.10
 
 #: Ab welchem ``geom_iou`` gilt **Tor B** als bestanden: folgt es DIESEM Modell?
@@ -3522,6 +3551,10 @@ SCHWELLE_FOLGT = 0.10
 #: 0.85 liegt in der Mitte dieser Lücke. **Ebenfalls gesetzt und nicht kalibriert**, aber
 #: mit siebenfach mehr Luft als bei Tor A — und die Lücke ist an echten Gegenproben
 #: gemessen, nicht an Störungen.
+#:
+#: **Warum Tor B allein nicht genügt:** In der 0.30-Reihe erreicht ein Müllbild gegen
+#: seine *richtige* Karte ``geom_iou`` **0.8579** und damit Tor B. Erst das UND mit Tor A
+#: (dort 0.0008) weist es ab. Ein Tor ist kein Riegel.
 #:
 #: **Woran sie kippt:** Die falsche Karte war immer die jeweils *andere von zweien* — eine
 #: Schachtel und ein fünfgeschossiger Bau. Zwei **ähnliche** Gebäude sind nicht geprüft,
@@ -3615,9 +3648,41 @@ def zwei_tore(rho_maske, geom_iou, *,
         a_f = _tor(rho_maske_fremd, float(schwelle_folgt), a["frage"], "rho_maske (fremd)")
         b_f = _tor(geom_iou_fremd, float(schwelle_dieses), b["frage"], "geom_iou (fremd)")
         fremd_bestanden = a_f["bestanden"] and b_f["bestanden"]
-        gegenprobe = {"tor_folgt": a_f, "tor_dieses": b_f, "bestanden": fremd_bestanden}
-        trennt = not fremd_bestanden
-        if fremd_bestanden:
+        vollstaendig = a_f["gemessen"] and b_f["gemessen"]
+        gegenprobe = {"tor_folgt": a_f, "tor_dieses": b_f,
+                      "bestanden": fremd_bestanden, "vollstaendig": vollstaendig}
+
+        # EINE HALBE GEGENPROBE IST KEINE TRENNUNG — und das war hier ein echter Fehler,
+        # gefunden von der Gegenpruefung am 18.09.2026 und selbst nachgestellt:
+        #
+        #     zwei_tore(0.80, 0.96, geom_iou_fremd=0.99)
+        #       -> bestanden True, trennt True, keine Warnung,
+        #          Begruendung: "Gegen fremde Geometrie faellt sie durch, wie sie soll."
+        #
+        # Die EINZIGE gemessene fremde Zahl (0.99) BESTAND Tor B — die fremde Geometrie
+        # sah der richtigen messbar aehnlich. Und die Funktion meldete Trennung.
+        #
+        # Die Ursache ist eine Verwechslung von zwei Richtungen: `_tor` ist fail-closed,
+        # ein nicht gemessenes Tor gilt als nicht bestanden. Fuer das URTEIL ist das
+        # richtig. Fuer die GEGENPROBE ist es die Umkehrung: Dort wuerde daraus
+        # "die fremde Karte ist durchgefallen", also "es trennt" — aus einer fehlenden
+        # Messung eine positive Behauptung.
+        #
+        # Genau der Fehler, gegen den diese ganze Funktion geschrieben ist, und er stand
+        # in ihrem Herzstueck.
+        if not vollstaendig:
+            trennt = None
+            fehlt = [n for n, t in (("rho_maske", a_f), ("geom_iou", b_f))
+                     if not t["gemessen"]]
+            warnungen.append(
+                f"HALBE GEGENPROBE: Von der fremden Geometrie fehlt {', '.join(fehlt)}. "
+                f"Ob diese Messung trennt, ist damit NICHT GEMESSEN — weder ja noch nein. "
+                f"Eine fehlende Zahl darf hier nicht als «die fremde Karte ist "
+                f"durchgefallen» gelesen werden; genau so entstuende aus einer Luecke eine "
+                f"Zusage.")
+        else:
+            trennt = not fremd_bestanden
+        if fremd_bestanden and vollstaendig:
             # HIER IST DIE DRITTE ANTWORT AM MEISTEN WERT. Ein Urteil «bestanden» waere
             # jetzt nachweislich wertlos — dieselbe Messung sagt dasselbe ueber ein
             # Gebaeude, das es nicht ist.
@@ -3650,6 +3715,9 @@ def zwei_tore(rho_maske, geom_iou, *,
         begruendung += " Die Gegenprobe gegen fremde Geometrie besteht ebenfalls."
     elif trennt is True:
         begruendung += " Gegen fremde Geometrie faellt sie durch, wie sie soll."
+    elif gegenprobe is not None:
+        # Der Satz oben waere hier eine Behauptung ueber eine Messung, die es nicht gibt.
+        begruendung += " Die Gegenprobe ist unvollstaendig; ob sie trennt, ist offen."
 
     return {"bestanden": bestanden, "trennt": trennt,
             "tor_folgt": a, "tor_dieses": b, "gegenprobe": gegenprobe,
