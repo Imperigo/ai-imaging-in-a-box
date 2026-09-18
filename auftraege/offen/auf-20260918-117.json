@@ -1,0 +1,33 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260918-117",
+  "art": "frage",
+  "worker": "local",
+  "rang": 1,
+  "erstellt": "2026-09-18T18:30:00Z",
+  "params": {},
+  "beschreibung": "ANSAGE VOR DEM PULL, keine Messung. Sieben Verhaltensaenderungen kommen mit dem naechsten `git pull` bei euch an. Keine davon ist ein Fehler — aber drei davon sehen wie einer aus, wenn niemand sie angesagt hat. Lest das, BEVOR ihr zieht.",
+  "anweisung": "=== ANSAGE: WAS SICH MIT DEM NAECHSTEN PULL BEI EUCH AENDERT ===\n\nDIES IST KEIN MESSAUFTRAG. Es gibt nichts zu rechnen. Es gibt etwas zu wissen,\nbevor ihr zieht.\n\nIhr fahrt `tools/homeworker.py` und `tools/abholen.py` AUS UNSEREM REPO. Ein `git pull`\nbei euch aendert also, was gerechnet wird, ohne dass hier ein Posten umspringt. Das ist\nder stillste der drei Zustellwege — und darum sagen wir Verhaltensaenderungen an,\nbevor sie ankommen. Sonst sehen sie drueben aus wie ein Fehler.\n\nSIEBEN AENDERUNGEN, nach Auffaelligkeit geordnet:\n\n  V1  HAENGERERKENNUNG: VORHER 10 s, JETZT 60 s — aber nur vor dem ersten Schlag.\n      Die Herzschlagwache hat einen Anlauf bekommen. Ein Lauf, der schon einmal\n      geschlagen hat und dann einfriert, faellt weiterhin nach 10 s auf. Ein Lauf, der\n      NIE schlaegt (Blender startet nicht, falsches Binary, Haenger im GLB-Import),\n      faellt jetzt nach 60 s auf statt nach 10.\n      GRUND: Der kalte Blender-Start plus Python-Laden dauert bei uns gemessen 12,63 s.\n      Mit 10 s Anlauf brach ein gesunder Lauf ab, bevor er losgelaufen war.\n      WAS IHR MERKT: Ein kaputter Lauf haengt 50 Sekunden laenger, bevor er meldet.\n\n  V2  Die Datei `herzschlag.txt` eines Vorlaufs wird jetzt VOR dem Start geloescht.\n      Vorher blieb sie liegen, und die Wache sah den Schlag des letzten Laufs.\n      Das ist eine Fehlerbehebung; sie macht die Erkennung strenger, nicht laxer.\n\n  V3  Die Tiefen-Nachbearbeitung startet einen ZWEITEN Blender-Prozess, und der laeuft\n      jetzt OHNE Stillstandswache — nur unter der Gesamtfrist.\n      WAS IHR MERKT: Haengt der zweite Prozess, faellt das erst an der Gesamtfrist auf\n      (300 s), nicht nach 10. Wenn euch das stoert, sagt es — wir bauen die Wache\n      dort hinein, das ist kein grosser Umbau.\n\n  V4  `ifc_zu_glb` und `ifc_raeume` mit `timeout=None` werfen jetzt einen Fehler statt\n      unbegrenzt zu laufen. Kein Aufrufer im Repo ist betroffen (geprueft: kette.py,\n      werkzeuge.py, homeworker.py — alle mit Vorgabe). Nur relevant, wenn ihr eigene\n      Skripte habt, die diese Funktionen direkt rufen.\n\n  V5  `glb_zu_multipass` weist jetzt unsinnige Fristen ab (0, negativ, nan, unendlich,\n      Text, Wahrheitswerte) statt loszulaufen. `abholer.ZEITDECKEL_S` reicht weiter 900\n      als ganze Zahl durch — unveraendert.\n\n  V6  DER MODELLORDNER: Ohne `AIIMAGING_MODELLE` hiess der Vorgabeort frueher `/ai`.\n      Jetzt gilt `/ai` NUR NOCH, WENN ES DEN ORDNER GIBT — sonst der\n      Anwendungsdatenordner des Betriebssystems.\n      FUER EUCH AENDERT SICH NICHTS: Ihr setzt `AIIMAGING_MODELLE`, und die Umgebung\n      gewinnt immer. Gemessen an euren eigenen Rueckgaben (auf-20260823-36,\n      auf-20260823-38): `/ai` existiert bei euch gar nicht.\n      GRUND: Zielhardware ist ab jetzt der Laptop einer Studierenden. `/ai` liegt direkt\n      unter der Systemwurzel — auf macOS nicht beschreibbar, auf Windows nicht\n      vorhanden.\n\n  V7  `standard_modell_wurzel` war reine Pfadrechnung und macht jetzt einen\n      Dateisystemzugriff (`Path('/ai').is_dir()`). Vernachlaessigbar schnell, aber es\n      ist nicht mehr nichts — relevant, falls ihr sie in einer engen Schleife ruft.\n\nUND EINE NEUE STELLSCHRAUBE, die euch nichts kostet:\n\n  `AIIMAGING_ZEITFAKTOR` streckt ALLE Fristen auf einmal (Gesamtfristen und seit heute\n  auch den Anlauf aus V1). Ohne die Variable aendert sich nichts, und bei Faktor 1.0\n  kommt jede Zahl typgleich und unveraendert zurueck — nachgeprueft. Sie ist fuer\n  langsame Geraete gedacht, nicht fuer euch. Setzt sie NICHT, ausser ihr wollt es.\n\nWAS WIR VON EUCH BRAUCHEN:\n\n  Eine Zeile: gelesen, und ob V1 oder V3 euch stoeren. Mehr nicht. Wenn ihr nichts\n  sagt, ziehen wir daraus KEIN Einverstaendnis — nur, dass wir es nicht wissen.\n\nWAS NICHT ZU TUN IST: Nichts davon selbst zurueckbauen. Stoert etwas, sagt es, und wir\nbauen es hier. Ein Unterschied zwischen eurem Stand und unserem ist teurer als jede\neinzelne dieser sieben Aenderungen.",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie noetig — es ist eine Ansage, keine Messung."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 60,
+    "leerlauf_schwelle_mem_gb": 2,
+    "hinweise": [
+      "Nichts rechnen. Nur lesen und eine Zeile zurueckgeben.",
+      "Nichts davon selbst zurueckbauen — stoert etwas, sagt es."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Gelesen, ja oder nein.",
+    "V2 Stoert euch die laengere Haengererkennung (60 s statt 10 s vor dem ersten Schlag)?",
+    "V3 Stoert euch, dass der zweite Blender-Prozess ohne Stillstandswache laeuft?",
+    "V4 Etwas, das bei euch anders laeuft als hier angesagt — das waere der wichtigste Punkt."
+  ]
+}

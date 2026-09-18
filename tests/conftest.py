@@ -170,3 +170,29 @@ MINI_PNG = _mini_png()
 @pytest.fixture
 def mini_png() -> bytes:
     return MINI_PNG
+
+
+# --------------------------------------------------------------------- Der Zeitfaktor
+#
+# BEFUND 18.09.2026, gegnerisch geprueft: Die Vorbereitung, die den Zeitfaktor aus der
+# Umgebung nimmt, stand in `tests/test_seams.py` — also in genau der Datei, in der die
+# Aenderung gebaut wurde. Ihre eigene Begruendung sagte, mit `AIIMAGING_ZEITFAKTOR=3`
+# fielen DREI Proben der Gesamtsuite um, "zwei davon hier". Die dritte liegt in
+# `tests/test_raeume.py` und hat nie eine bekommen:
+#
+#     AIIMAGING_ZEITFAKTOR=3 python3 -m pytest -q
+#     FAILED tests/test_raeume.py::test_naht_reicht_die_frist_durch
+#       assert [51.0] == [17]
+#
+# Damit trat genau der Schaden ein, gegen den die Variable gebaut ist: Die Studierende
+# auf dem MacBook setzt die dokumentierte Angabe, faehrt die Suite und sieht eine rote
+# Probe an einer Stelle, an der nichts kaputt ist.
+#
+# **Eine Schutzvorkehrung, die nur die Datei deckt, in der der Fehler gebaut wurde,
+# schuetzt die Datei und nicht die Sache.** Sie steht darum hier, fuer die ganze
+# Sammlung. Wer den Faktor pruefen WILL, setzt ihn in der Probe selbst mit
+# `monkeypatch.setenv` — das wirkt nach dieser Vorbereitung.
+@pytest.fixture(autouse=True)
+def ohne_zeitfaktor_ueberall(monkeypatch):
+    """Alle Proben messen den Code, nicht die Maschine, auf der sie laufen."""
+    monkeypatch.delenv("AIIMAGING_ZEITFAKTOR", raising=False)

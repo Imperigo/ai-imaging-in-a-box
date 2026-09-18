@@ -3,7 +3,7 @@
   "auftrag_id": "auf-20260918-114",
   "art": "qa",
   "worker": "local",
-  "rang": 13,
+  "rang": 14,
   "erstellt": "2026-09-18T12:00:00Z",
   "params": {},
   "beschreibung": "R2 — die Messung, an der die Vertiefungsarbeit haengt: Traegt flux2-klein-4b (Apache-2.0, 9,6 GB, laptoptauglich) eine Tiefen-Konditionierung? Drei Wege pruefen. Neu und verbindlich: zu jedem Bild rho_maske UND geom_iou, jeweils auch gegen eine FALSCHE Tiefenkarte — ohne diese Gegenprobe ist die Messung wertlos.",

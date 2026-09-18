@@ -106,6 +106,28 @@ PERMISSIVE_LIZENZEN = lizenzquelle.PERMISSIVE_LIZENZEN
 #: die Quelle, das Feld ``lizenz`` des Eintrags nur seine Behauptung. Widersprechen sich
 #: beide, gewinnt die Tabelle. Das ist der ganze Unterschied zwischen einem Riegel und
 #: einer Beschriftung.
+#:
+#: **UND HIER IST SEINE GRENZE, gegnerisch gemessen am 18.09.2026.** Die Tabelle
+#: entscheidet ueber die Lizenz — aber ob sie ueberhaupt greift, haengt allein an den
+#: Bezeichnern des Eintrags, und die sind drei Zeichenketten. Nachgestellt::
+#:
+#:     name="bfl-klein-9b"  modell_id="black-forest-labs/bfl2klein9b"
+#:     parameter_b=9.0      lizenz="Apache-2.0"   kommerziell_nutzbar=True
+#:
+#:     _eintrag       ANGENOMMEN
+#:     pruefe_lizenz  zulaessig=True
+#:     waehle         enthaelt den Eintrag
+#:
+#: Alle drei Standorte durch. **Beide Spuren zu lesen halbiert die Luecke, es schliesst
+#: sie nicht** — wer beide aendert, ist draussen. Der Satz unten («Ein Riegel, der nur
+#: eine der beiden Spuren liest, ist durch das Aendern der anderen zu umgehen») bleibt
+#: richtig, aber er sagt nicht, dass das Aendern BEIDER ebenso wirkt.
+#:
+#: Schliessen laesst sich das von hier aus nicht: Es braeuchte eine Angabe, die nicht im
+#: Eintrag steht — die Groesse der Gewichte auf der Platte oder eine Pruefsumme. Beides
+#: ist eine Messung am Geraet und liegt als Auftrag bei der HomeStation
+#: (``auf-20260918-116``). Bis dahin gilt: Dieser Riegel faengt den ABSCHREIBFEHLER, und
+#: nur den. Gegen jemanden, der beide Bezeichner umschreibt, ist er keine Sicherung.
 GROESSENGEBUNDENE_FAMILIEN: dict[str, dict] = {
     "FLUX.2-klein": {
         # Woran die Familie erkannt wird — an ``name`` UND an ``modell_id``, beide
@@ -358,9 +380,14 @@ def groessen_riegel(backbone) -> dict:
     groesse = float(backbone.parameter_b)
 
     if daten is None:
+        # `bestaetigt_durch` ist hier `None` und nicht `()`: Es wurde gar nicht erst
+        # gefragt, weil keine groessengebundene Familie greift. `()` hiesse «gefragt, und
+        # kein Bezeichner deckt die Groesse» — die dritte Antwort gilt auch fuer dieses
+        # Feld.
         return {"familie": None, "greift": False, "groesse_b": groesse,
                 "erwartete_lizenz": None, "zulaessig": None,
-                "grund": "keine_groessengebundene_familie", "auflagen": ()}
+                "grund": "keine_groessengebundene_familie",
+                "bestaetigt_durch": None, "auflagen": ()}
 
     # --- Und `parameter_b` ist auch bloss ein Feld des Eintrags ------------------------
     #
@@ -384,10 +411,34 @@ def groessen_riegel(backbone) -> dict:
     # den Widerspruch nicht überstimmen kann.
     behauptet = _groessen_behauptungen(spuren)
     abweichend = sorted(b for b in behauptet if abs(groesse - b) > GROESSEN_TOLERANZ_B)
+
+    # BEFUND 18.09.2026, gegnerisch geprueft: «nicht gemessen» und «doppelt belegt»
+    # ergaben BYTEWEISE DASSELBE Urteil. Nachgestellt mit zwei 4B-Eintraegen —
+    # modell_id '…/FLUX.2-klein-4B' (Groesse zweifach belegt) und '…/FLUX.2-klein' (die
+    # Bezeichner schweigen) — kamen zwei identische dicts heraus:
+    #
+    #     zulaessig=True, grund='freigegebene_groesse', erwartete_lizenz='Apache-2.0',
+    #     auflagen=()
+    #
+    # Der Docstring von `_groessen_behauptungen` sagt ausdruecklich: «Eine leere Menge
+    # ist also keine Bestaetigung.» Im Urteil war sie genau das. Wer den zweiten Fall
+    # liest, kann nicht erkennen, dass allein `parameter_b` geurteilt hat — also genau
+    # das Feld, dem dieser Riegel nicht allein glauben soll.
+    #
+    # `bestaetigt_durch` traegt darum mit, WELCHE Bezeichner die Groesse decken. Leeres
+    # Tupel heisst: keiner. Das ist kein Ausschlussgrund — es gibt zulaessige Eintraege
+    # ohne Groesse im Namen — aber es ist ein Unterschied, und er gehoert ins Urteil und
+    # nicht in den Kopf des Lesers.
+    bestaetigt_durch = tuple(
+        feld for feld, spur in (("name", spuren[0]), ("modell_id", spuren[1]))
+        if any(abs(groesse - b) <= GROESSEN_TOLERANZ_B
+               for b in _groessen_behauptungen((spur,)))
+    )
     if abweichend:
         return {"familie": familie, "greift": True, "groesse_b": groesse,
                 "erwartete_lizenz": None, "zulaessig": False,
                 "grund": "groessenangabe_widerspruechlich",
+                "bestaetigt_durch": bestaetigt_durch,
                 "auflagen": (
                     f"WIDERSPRUCH IN DER GRÖSSE: Der Eintrag '{backbone.name}' führt "
                     f"parameter_b={groesse:g}, seine Bezeichner nennen aber "
@@ -412,15 +463,29 @@ def groessen_riegel(backbone) -> dict:
                     f"'{lizenz}' ({daten['quelle']}), der Eintrag '{backbone.name}' "
                     f"traegt '{backbone.lizenz}'. Die Tabelle ist die Quelle."
                 )
+            if not bestaetigt_durch:
+                # Kein Ausschluss, aber ein Vorbehalt: Hier hat `parameter_b` allein
+                # entschieden, und eine zweite Spur, die widersprechen koennte, gibt es
+                # nicht. Er steht in `auflagen`, weil das die Stelle ist, die gelesen
+                # wird.
+                auflagen.append(
+                    f"NUR EINE SPUR: Weder Name noch Kennung des Eintrags "
+                    f"'{backbone.name}' nennen eine Groesse. Ueber die Lizenz entschied "
+                    f"damit allein das Feld parameter_b={groesse:g} — die Gegenprobe, "
+                    f"die ein Abschreibfehler ausloesen wuerde, gibt es hier nicht."
+                )
             return {"familie": familie, "greift": True, "groesse_b": groesse,
                     "erwartete_lizenz": lizenz, "zulaessig": True,
-                    "grund": "freigegebene_groesse", "auflagen": tuple(auflagen)}
+                    "grund": "freigegebene_groesse",
+                    "bestaetigt_durch": bestaetigt_durch,
+                    "auflagen": tuple(auflagen)}
 
     for gesperrt, lizenz in daten.get("gesperrte_groessen_b", {}).items():
         if abs(groesse - gesperrt) <= GROESSEN_TOLERANZ_B:
             return {"familie": familie, "greift": True, "groesse_b": groesse,
                     "erwartete_lizenz": lizenz, "zulaessig": False,
                     "grund": "bekannt_nicht_kommerziell",
+                    "bestaetigt_durch": bestaetigt_durch,
                     "auflagen": (
                         f"Die Familie '{familie}' lizenziert nach GRÖSSE. Die "
                         f"{groesse:g}B-Fassung steht unter '{lizenz}' und ist unter "
@@ -435,6 +500,7 @@ def groessen_riegel(backbone) -> dict:
     return {"familie": familie, "greift": True, "groesse_b": groesse,
             "erwartete_lizenz": None, "zulaessig": False,
             "grund": "nicht_freigegebene_groesse",
+            "bestaetigt_durch": bestaetigt_durch,
             "auflagen": (
                 f"Die Familie '{familie}' lizenziert nach GRÖSSE; freigegeben ist "
                 f"allein {frei_genannt}. Die {groesse:g}B-Fassung ('{backbone.name}') "
@@ -1067,6 +1133,12 @@ def pruefe_lizenz(name: str) -> dict:
     # hierher liest die Felder des Eintrags; genau die sind es aber, die beim Abschreiben
     # eines benachbarten Eintrags mitwandern. Der Riegel steht darum ÜBER dem Datensatz:
     # Sagt die Tabelle nein, hilft kein `lizenz="Apache-2.0"` im Eintrag.
+    # Der Stand VOR dem Riegel, und er entscheidet unten, ob die Begründung ersetzt oder
+    # ergänzt wird. Eine leere Liste heisst: Der Satz oben behauptet Bedingungslosigkeit.
+    # Eine gefüllte heisst: Er trägt seine Auflagen bereits mit — dann ist er nicht
+    # widerlegt, sondern unvollständig, und Ersetzen wäre Löschen.
+    auflagen_vor_dem_riegel = list(auflagen)
+
     riegel = groessen_riegel(backbone)
     if riegel["zulaessig"] is False:
         auflagen.extend(riegel["auflagen"])
@@ -1082,22 +1154,61 @@ def pruefe_lizenz(name: str) -> dict:
         zulaessig = False
     elif riegel["auflagen"]:
         auflagen.extend(riegel["auflagen"])
-        # Und die Begründung wird ERSETZT, nicht ergänzt. GEMESSEN 18.09.2026: Bis hierher
-        # wanderte der WIDERSPRUCH nur in `auflagen`, während `begruendung` weiterhin
-        # wörtlich „ist permissiv und OHNE WEITERE AUFLAGE mit Regel 1 vereinbar" sagte —
-        # ein Satz bestritt den anderen. Wer nur die Begründung liest (und das tut jede
-        # Fehlermeldung, die sie durchreicht), erfuhr nie, dass Tabelle und Eintrag
-        # auseinandergehen.
+        # Die Begründung wird ERSETZT, nicht ergänzt — aber nur dort, wo bis hierher ein
+        # Freispruch stand. GEMESSEN 18.09.2026: Bis dahin wanderte der WIDERSPRUCH nur
+        # in `auflagen`, während `begruendung` weiterhin wörtlich „ist permissiv und OHNE
+        # WEITERE AUFLAGE mit Regel 1 vereinbar" sagte — ein Satz bestritt den anderen.
+        # Wer nur die Begründung liest (und das tut jede Fehlermeldung, die sie
+        # durchreicht), erfuhr nie, dass Tabelle und Eintrag auseinandergehen.
         #
-        # Anhängen genügt dabei nicht: Der alte Satz behauptet Bedingungslosigkeit, und
-        # die ist jetzt widerlegt. Eine widerlegte Behauptung mit einem „aber" stehen zu
-        # lassen, heisst sie stehen zu lassen. Der Ausgang bleibt `zulaessig=True` — die
-        # Grösse ist ja freigegeben; strittig ist allein der Lizenzname.
-        begruendung = (
-            f"{backbone.name}: Die Grösse ist unter Regel 1 freigegeben, aber die "
-            f"Lizenzangabe des Eintrags deckt sich nicht mit der geprüften Quelle. "
-            + " ".join(riegel["auflagen"])
-        )
+        # Anhängen genügt dort nicht: Der alte Satz behauptet Bedingungslosigkeit, und die
+        # ist jetzt widerlegt. Eine widerlegte Behauptung mit einem „aber" stehen zu
+        # lassen, heisst sie stehen zu lassen.
+        #
+        # BERICHTIGT AM 18.09.2026, und der erste Anlauf war schlimmer als das Problem:
+        # Ersetzt wurde BEDINGUNGSLOS, mit der Begründung «Der Ausgang bleibt
+        # `zulaessig=True` — die Grösse ist ja freigegeben». Diese Prämisse ist falsch.
+        # `zulaessig` kann hier längst `False` sein, denn die Lizenzprüfung oben läuft
+        # zuerst. Nachgestellt mit einem 4B-Eintrag, dessen Lizenzfeld auf
+        # nicht-kommerziell steht:
+        #
+        #     zulaessig         False          (richtig)
+        #     begruendung       „Die Grösse ist unter Regel 1 freigegeben, aber …"
+        #     verschwunden      „erlaubt keine kommerzielle Nutzung",
+        #                       „Unter Regel 1 AUSGESCHLOSSEN", der Satz über LoRAs
+        #
+        # Das Urteil war richtig und der Satz daneben las sich wie ein Etikettenstreit.
+        # **Ein Fehlschlag, der wie ein Erfolg aussieht, wird nicht gefunden — er wird
+        # geglaubt**, und hier ging es um einen Lizenzausschluss.
+        #
+        # Steht also schon ein Ausschlussgrund, wird er VORANGESTELLT und der Widerspruch
+        # kommt hinzu: zwei Gründe sind zwei Gründe, genau wie im Zweig darüber.
+        #
+        # ZWEITER BEFUND DERSELBEN DURCHSICHT: Ersetzt wurde auch dort, wo die alte
+        # Begründung ihre eigenen Auflagen schon mittrug. Nachgestellt mit einem
+        # 4B-Eintrag auf 'Stability AI Community License': `zulaessig` blieb `True`, und
+        # aus der Begründung fielen die Umsatzschwelle von 1 Mio USD, die Nennungspflicht
+        # 'Powered by Stability AI' und das Trainingsverbot heraus — alle drei standen
+        # danach nur noch in `auflagen`. Dasselbe Loch, eine Ebene tiefer.
+        #
+        # Die Unterscheidung ist darum nicht `zulaessig`, sondern **ob der alte Satz
+        # etwas behauptet hat, das jetzt widerlegt ist**:
+        #
+        #   keine Auflagen vorher  → der Satz sagt „bedingungslos". Widerlegt. ERSETZEN.
+        #   Auflagen vorher        → der Satz trägt seine Bedingungen mit. Nicht
+        #                            widerlegt, nur unvollständig. ERGÄNZEN.
+        if zulaessig and not auflagen_vor_dem_riegel:
+            begruendung = (
+                f"{backbone.name}: Die Grösse ist unter Regel 1 freigegeben, aber die "
+                f"Lizenzangabe des Eintrags deckt sich nicht mit der geprüften Quelle. "
+                + " ".join(riegel["auflagen"])
+            )
+        else:
+            begruendung += (
+                " HINZU KOMMT: Die Grösse selbst wäre unter Regel 1 freigegeben, aber "
+                "die Lizenzangabe des Eintrags deckt sich nicht mit der geprüften "
+                "Quelle. " + " ".join(riegel["auflagen"])
+            )
 
     # --- Die zweite Hälfte der Naht ---------------------------------------------------
     #

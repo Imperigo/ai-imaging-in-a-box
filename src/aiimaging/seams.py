@@ -77,18 +77,29 @@ TAKT_S = 2.0
 # WAS DIE DURCHSICHT ERGEBEN HAT, in zwei Sorten getrennt:
 #
 # 1) MASCHINENFEST, weil sie NICHT die Rechenzeit messen, sondern unser eigenes
-#    Lebenszeichen: `HERZSCHLAG_TAKT_S`, `HERZSCHLAG_AUSFAELLE`, `ANLAUF_S`, `TAKT_S`.
+#    Lebenszeichen: `HERZSCHLAG_TAKT_S`, `HERZSCHLAG_AUSFAELLE`, `TAKT_S`.
 #    Der Herzschlag kommt aus einem Faden, den wir selbst starten; er schlaegt gleich
 #    schnell, ob Cycles nun 30 Sekunden oder 3 Stunden rechnet. Diese Fristen duerfen auf
 #    einem langsamen Geraet bleiben, wie sie sind — genau darum sind sie das richtige
 #    Werkzeug fuer den Laptop.
 #
+#    `ANLAUF_S` STAND BIS ZUM 18.09.2026 HIER — zu Unrecht, und das war die stillste
+#    Fehlstelle dieser Durchsicht. Der Anlauf deckt die Spanne VOR dem ersten Herzschlag,
+#    und in dieser Spanne schlaegt unser Faden noch gar nicht: Was dort vergeht, ist
+#    Blender-Kaltstart plus Python-Laden, also reine Maschinenzeit. Der Kommentar bei
+#    `ANLAUF_S` begruendet die 60 s denn auch selbst mit einer Kaltstartmessung (12,63 s
+#    IN DIESER UMGEBUNG). Er steht darum jetzt unter 2).
+#
 # 2) MASCHINENGEBUNDEN, weil sie die Rechenzeit selbst decken: die Gesamtfristen
-#    (`GESAMTFRIST_IFC_S`, `ZEITDECKEL_HOMESTATION_S`). Eine feste Sekundenzahl ist hier
-#    eine Aussage ueber EINE Maschine und nicht ueber den Lauf. Sie sind GESETZT und nicht
-#    gemessen — weder `docs/` noch die Kommentare dieser Datei nennen einen Lauf, an dem
-#    sie geeicht waeren; `docs/PLAN_BIS_FEBRUAR_2027.md` fuehrt sie unter Januar als «neu
-#    zu setzen» auf.
+#    (`GESAMTFRIST_IFC_S`, `ZEITDECKEL_HOMESTATION_S`) und der Anlauf (`ANLAUF_S`). Eine
+#    feste Sekundenzahl ist hier eine Aussage ueber EINE Maschine und nicht ueber den
+#    Lauf. Die Gesamtfristen sind GESETZT und nicht gemessen — weder `docs/` noch die
+#    Kommentare dieser Datei nennen einen Lauf, an dem sie geeicht waeren;
+#    `docs/PLAN_BIS_FEBRUAR_2027.md` fuehrt sie unter Januar als «neu zu setzen» auf.
+#    `ANLAUF_S` ist GEMESSEN — aber auf DIESER Maschine, und damit gilt fuer ihn dasselbe
+#    wie fuer eine gesetzte Zahl: Er geht durch `zeitfaktor()` (siehe
+#    :func:`anlauf_frist_s`). Sonst waere er auf dem langsamen Zielgeraet die Frist, die
+#    als erste zuschlaegt — und die einzige, die sich nicht strecken laesst.
 #
 # WIE GROSS IST DER ABSTAND ZWISCHEN DEN MASCHINEN WIRKLICH? Kleiner, als der Wechsel von
 # der RTX 5090 zum MacBook vermuten laesst — und das ist die wichtigste Zahl dieser
@@ -144,8 +155,19 @@ GESAMTFRIST_IFC_S = 300
 #: **sie laesst sich in dieser Datei allein nicht senken oder heben.**
 #:
 #: Was sie noch bedeutet, seit die Herzschlagwache voreingestellt ist: **Sie ist kein
-#: Haengerwaechter mehr, sondern ein Budget.** Ein toter oder eingefrorener Lauf faellt
-#: nach 10 s auf (`HERZSCHLAG_AUSFAELLE` × `HERZSCHLAG_TAKT_S`), neunzigmal frueher.
+#: Haengerwaechter mehr, sondern ein Budget.** Wie frueh die Wache greift, haengt davon
+#: ab, ob schon ein Herzschlag geschrieben wurde — das sind zwei verschiedene Zahlen:
+#:
+#: * **Nach dem ersten Schlag** gilt der Takt: **10 s** (`HERZSCHLAG_AUSFAELLE` ×
+#:   `HERZSCHLAG_TAKT_S` = 5 × 2,0 s). Ein eingefrorener Lauf faellt damit neunzigmal
+#:   frueher auf als nach diesen 900 s.
+#: * **Vor dem ersten Schlag** gilt der Anlauf: **60 s** (`ANLAUF_S`). Ein Lauf, der NIE
+#:   einen Herzschlag schreibt — Blender startet nicht, falsches Binary, Haenger im
+#:   GLB-Import —, faellt darum erst nach 60 s auf, also fuenfzehnmal frueher und nicht
+#:   neunzigmal. Der Anlauf ist laenger als der Takt, weil ein Blender-Kaltstart samt
+#:   Python-Laden laenger dauert als ein Takt (GEMESSEN 10.09.2026: 12,63 s fuer ein
+#:   blosses `--version`); ein Kaltstart riss die 10 s zuverlaessig.
+#:
 #: Uebrig bleibt fuer die Gesamtfrist allein der Lauf, der stetig vorankommt und trotzdem
 #: zu lange dauert — und **auf einem langsamen Geraet ist genau das der Normalfall und
 #: kein Defekt.**
@@ -283,6 +305,11 @@ HERZSCHLAG_TAKT_S = 2.0
 #:
 #: 60 s sind das Fünffache des gemessenen kalten Starts. Nach dem ersten Zeichen gilt
 #: wieder die kurze Frist; der Gesamt-Timeout begrenzt den Anlauf ohnehin.
+#:
+#: **Diese Zahl ist MASCHINENGEBUNDEN, nicht maschinenfest** (richtiggestellt am
+#: 18.09.2026): Sie misst einen Kaltstart, und ein Kaltstart dauert auf einem langsameren
+#: Gerät länger. Benutzt wird sie darum nirgends roh, sondern nur über
+#: :func:`anlauf_frist_s` — das ist die Stelle, die :func:`zeitfaktor` anwendet.
 ANLAUF_S = 60.0
 
 #: Wie viele ausgefallene Schläge nötig sind, bevor die Wache anschlägt.
@@ -307,6 +334,28 @@ HERZSCHLAG_AUSFAELLE = 5
 #: lehrreich war: Sie war die Antwort auf die CPU-Messung und wäre auf der Maschine, die
 #: wirklich rechnet, ein Werkzeug zur Zerstörung jedes Laufs über 98 Sekunden gewesen.
 BLENDER_FRIST_MIN_S = 3 * BLENDER_TAKT_S
+
+
+def anlauf_frist_s() -> float:
+    """Der Anlauf, auf DIESE Maschine umgerechnet: :data:`ANLAUF_S` mal :func:`zeitfaktor`.
+
+    **Warum der Anlauf gestreckt wird und der Herzschlagtakt nicht:** Der Takt misst einen
+    Faden, den wir selbst starten — er schlägt auf jedem Gerät gleich schnell. Der Anlauf
+    misst die Spanne davor, und die besteht aus Blender-Kaltstart und Python-Laden, also
+    aus Rechenzeit. Auf einem langsameren Gerät wäre er sonst die Frist, die als erste
+    zuschlägt, und zugleich die einzige, die sich nicht strecken lässt: Wer
+    :data:`ZEITFAKTOR_ENV` setzt, dehnt heute jede Gesamtfrist — und stünde trotzdem vor
+    einem Lauf, der beim kalten Start abgebrochen wird.
+
+    Bei Faktor 1.0 kommt :data:`ANLAUF_S` **unverändert** zurück; die HomeStation sieht
+    damit genau dieselbe Zahl wie bisher.
+
+    Raises:
+        SeamError: :data:`ZEITFAKTOR_ENV` ist unlesbar — dieselbe Abweisung wie bei jeder
+            Gesamtfrist, aus demselben Grund: Eine Angabe, die nicht wirkt, darf nicht wie
+            eine wirkende aussehen.
+    """
+    return _gesamtfrist(ANLAUF_S, was="ANLAUF_S")
 
 
 def starter_mit_wache(wache=None, *, frist_s: float | None = None,
@@ -364,7 +413,7 @@ def starter_mit_wache(wache=None, *, frist_s: float | None = None,
             aus = Path(tmp) / "stdout.txt"
             fehler = Path(tmp) / "stderr.txt"
             diese = wache if wache is not None else fortschritt.wache_fuer_datei(
-                aus, frist_s=frist_s, anlauf_s=ANLAUF_S,
+                aus, frist_s=frist_s, anlauf_s=anlauf_frist_s(),
                 name="Standardausgabe des Laufs", _uhr=_uhr)
             prozess = oeffne(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             faeden = [_giesse(prozess.stdout, aus), _giesse(prozess.stderr, fehler)]
@@ -887,15 +936,24 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             Nummern. Vorher war es eine Vermutung von der CPU, und Vermutungen bleiben in
             diesem Projekt ausgeschaltet. Der Preis ist ein Faden und rund zehn Bytes je
             zwei Sekunden; der Gewinn ist, dass ein hängender Lauf nach 10 statt nach 900
-            Sekunden auffällt.
+            Sekunden auffällt — **sobald der erste Schlag geschrieben ist.**
+            *Davor gilt eine andere Zahl:* Solange noch kein Schlag da ist, wacht die
+            Wache mit dem Anlauf aus :func:`anlauf_frist_s` (:data:`ANLAUF_S`, 60 s), denn
+            ein Blender-Kaltstart samt Python-Laden dauert länger als ein Takt (gemessen
+            10.09.2026: 12,63 s). Ein Lauf, der **nie** einen Schlag schreibt — Blender
+            startet nicht, falsches Binary, Hänger im GLB-Import —, fällt darum nach
+            60 s auf und nicht nach 10.
         timeout: Die **Gesamtfrist** in Sekunden, oder ``None`` für keine.
             Voreingestellt ist :data:`ZEITDECKEL_HOMESTATION_S`, und der Name sagt, worauf
             die Zahl ruht: Sie ist auf der schnellen Maschine gesetzt (nicht gemessen) und
             gilt streng genommen nur dort.
             **Was sie seit der Herzschlagwache noch leistet:** Sie ist kein Hängerwächter
-            mehr — ein toter Lauf fällt nach 10 s auf, neunzigmal früher. Sie ist ein
-            *Budget*, und auf einem langsamen Gerät ist ein Lauf, der das Budget sprengt,
-            der Normalfall und kein Defekt.
+            mehr — ein Lauf, der schon geschlagen hat und dann einfriert, fällt nach
+            **10 s** auf (neunzigmal früher als diese 900 s); ein Lauf, der **nie** einen
+            Herzschlag schreibt, nach **60 s** (fünfzehnmal früher). Die 60 s sind der
+            Anlauf (:data:`ANLAUF_S` über :func:`anlauf_frist_s`), der den kalten
+            Blender-Start deckt. Sie ist ein *Budget*, und auf einem langsamen Gerät ist
+            ein Lauf, der das Budget sprengt, der Normalfall und kein Defekt.
             ``None`` ist darum erlaubt, **solange eine Stillstandswache läuft** — also bei
             voreingestelltem ``herzschlag_takt_s`` oder bei einem eigenen ``_starte``.
             Ohne Wache wird ``None`` abgewiesen: Ein Lauf, den weder eine Frist noch eine
@@ -977,7 +1035,8 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                 #
                 # Vor dem ersten Herzschlag gibt es die Datei nicht; die Marke ist `None`,
                 # die Wache zaehlt keinen Schritt, und ohne `anlauf_s` gilt vom ersten
-                # Blick an die kurze Frist von 10 s. Dazwischen liegt aber der ganze
+                # Blick an die kurze Frist von 10 s (`HERZSCHLAG_AUSFAELLE` ×
+                # `herzschlag_takt_s`). Dazwischen liegt aber der ganze
                 # Blender-Start: GEMESSEN am 10.09.2026 in dieser Umgebung sind das beim
                 # ersten Start 12,63 s fuer ein blosses `--version` (danach 0,66 / 0,26 /
                 # 0,15 s) — und der Runner laedt danach noch sein Python. Ein kalter Start
@@ -989,7 +1048,11 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                 # HomeStation faellt das kaum auf, weil Blender dort im Seitencache liegt.
                 # Auf einem Laptop, der die Software zum ersten Mal startet, faellt es
                 # jedes Mal auf.
-                anlauf_s=ANLAUF_S,
+                #
+                # DER ANLAUF GEHT DURCH `zeitfaktor()`, die kurze Frist nicht: Der
+                # Kaltstart ist Rechenzeit und wird auf einem langsameren Geraet laenger;
+                # der Herzschlagtakt kommt aus unserem eigenen Faden und bleibt gleich.
+                anlauf_s=anlauf_frist_s(),
                 name="Herzschlag des Blender-Laufs"),
             takt_s=min(TAKT_S, herzschlag_takt_s))
     else:

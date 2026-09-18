@@ -813,6 +813,87 @@ def test_der_riegel_haengt_an_der_groesse_und_nicht_am_lizenzfeld():
         )
 
 
+def test_ein_ausschlussgrund_darf_vom_widerspruch_nicht_geloescht_werden():
+    """BEFUND 18.09.2026: Das Urteil war richtig — und der Satz daneben sagte das Gegenteil.
+
+    Der Widerspruchszweig in :func:`pruefe_lizenz` ersetzte die Begruendung
+    BEDINGUNGSLOS, begruendet mit «Der Ausgang bleibt `zulaessig=True` — die Groesse ist
+    ja freigegeben». Diese Praemisse ist falsch: Die Lizenzpruefung laeuft zuerst, und
+    `zulaessig` kann dort laengst `False` geworden sein.
+
+    Nachgestellt mit einem 4B-Eintrag (Groesse freigegeben), dessen Lizenzfeld auf
+    nicht-kommerziell steht::
+
+        zulaessig     False                                  richtig
+        begruendung   «Die Groesse ist unter Regel 1 freigegeben, aber …»
+        verschwunden  «erlaubt keine kommerzielle Nutzung»,
+                      «Unter Regel 1 AUSGESCHLOSSEN», der Satz ueber LoRAs
+
+    Wer nur die Begruendung liest — und das tut jede Fehlermeldung, die sie durchreicht —
+    las einen Etikettenstreit, wo ein Lizenzausschluss stand. **Ein Fehlschlag, der wie
+    ein Erfolg aussieht, wird nicht gefunden, er wird geglaubt.**
+    """
+    boes = _klein("probe-4b-nc", parameter_b=4.0,
+                  lizenz="FLUX.2 [klein] Non-Commercial License", kommerziell=False)
+
+    with _vorruebergehend(boes):
+        urteil = pruefe_lizenz("probe-4b-nc")
+
+    assert urteil["zulaessig"] is False
+    for stueck in ("AUSGESCHLOSSEN", "kommerzielle Nutzung", "LoRA"):
+        assert stueck in urteil["begruendung"], (
+            f"der Ausschlussgrund ist aus der Begruendung verschwunden: {stueck!r} fehlt"
+        )
+    assert "WIDERSPRUCH" in urteil["begruendung"], \
+        "und der zweite Grund muss daneben stehen — zwei Gruende sind zwei Gruende"
+
+
+def test_bestehende_auflagen_ueberleben_den_widerspruch():
+    """Derselbe Fund eine Ebene tiefer, und hier bleibt das Urteil sogar `True`.
+
+    Traegt die alte Begruendung ihre Auflagen bereits mit, ist sie nicht widerlegt,
+    sondern unvollstaendig — Ersetzen waere Loeschen. Nachgestellt an einem 4B-Eintrag
+    auf 'Stability AI Community License': Umsatzschwelle, Nennungspflicht und
+    Trainingsverbot fielen aus der Begruendung heraus und standen danach nur noch in
+    `auflagen`.
+
+    Die Unterscheidung ist darum nicht `zulaessig`, sondern ob der alte Satz
+    Bedingungslosigkeit behauptet hat.
+    """
+    stability = _klein("probe-4b-stab", parameter_b=4.0,
+                       lizenz="Stability AI Community License", kommerziell=True)
+
+    with _vorruebergehend(stability):
+        urteil = pruefe_lizenz("probe-4b-stab")
+
+    assert urteil["zulaessig"] is True, "die Groesse ist freigegeben, strittig ist der Name"
+    for stueck in ("Mio USD", "Powered by Stability AI", "trainieren"):
+        assert stueck in urteil["begruendung"], (
+            f"eine bestehende Auflage ist aus der Begruendung verschwunden: {stueck!r}"
+        )
+    assert "WIDERSPRUCH" in urteil["begruendung"]
+
+
+def test_ohne_bestehende_auflagen_wird_die_begruendung_ersetzt_und_nicht_ergaenzt():
+    """Die Gegenprobe zu den beiden oben — sonst waere «immer ergaenzen» auch gruen.
+
+    Behauptet der alte Satz Bedingungslosigkeit, ist er durch den Widerspruch widerlegt.
+    Eine widerlegte Behauptung mit einem «aber» stehen zu lassen, heisst sie stehen zu
+    lassen. Genau dieser Satz darf danach NICHT mehr dastehen.
+    """
+    sauber = _klein("probe-4b-apache", parameter_b=4.0,
+                    lizenz="MIT", kommerziell=True)
+
+    with _vorruebergehend(sauber):
+        urteil = pruefe_lizenz("probe-4b-apache")
+
+    assert "OHNE WEITERE AUFLAGE" not in urteil["begruendung"], (
+        "der widerlegte Satz steht noch da — dann bestreitet wieder ein Satz den anderen"
+    )
+    assert "HINZU KOMMT" not in urteil["begruendung"], \
+        "hier war nichts zu ergaenzen, sondern etwas zu ersetzen"
+
+
 def test_die_4b_fassung_geht_weiter_durch():
     """Die Gegenprobe. Ein Riegel, der alles sperrt, bewacht nichts.
 
@@ -1034,6 +1115,50 @@ def test_bezeichner_ohne_groessenangabe_sind_keine_bestaetigung():
     assert groessen_riegel(stumm_neun)["grund"] == "bekannt_nicht_kommerziell"
 
 
+def test_das_urteil_sagt_ob_die_bezeichner_die_groesse_decken():
+    """BEFUND 18.09.2026: «nicht gemessen» und «doppelt belegt» ergaben DASSELBE Urteil.
+
+    Zwei 4B-Eintraege — einer mit der Groesse in Name und Kennung, einer mit
+    schweigenden Bezeichnern — lieferten byteweise identische dicts. Wer den zweiten las,
+    konnte nicht erkennen, dass allein `parameter_b` geurteilt hatte: genau das Feld, dem
+    dieser Riegel nicht allein glauben soll.
+
+    Der Ausgang bleibt gleich, und das ist richtig — ein Eintrag ohne Groesse im Namen
+    ist nicht unzulaessig. Unterscheidbar muss er trotzdem sein.
+    """
+    belegt = _klein("flux2-klein-4b-x", parameter_b=4.0, lizenz="Apache-2.0",
+                    kommerziell=True, modell_id="black-forest-labs/FLUX.2-klein-4B")
+    stumm = _klein("flux2-klein-neu", parameter_b=4.0, lizenz="Apache-2.0",
+                   kommerziell=True, modell_id="black-forest-labs/FLUX.2-klein")
+
+    a, b = groessen_riegel(belegt), groessen_riegel(stumm)
+
+    assert a != b, "zwei verschiedene Lagen duerfen nicht dasselbe Urteil ergeben"
+    assert a["zulaessig"] is b["zulaessig"] is True, "am Ausgang aendert sich nichts"
+
+    assert a["bestaetigt_durch"] == ("name", "modell_id")
+    assert b["bestaetigt_durch"] == (), "gefragt, und kein Bezeichner deckt die Groesse"
+    assert any("NUR EINE SPUR" in auf for auf in b["auflagen"]), \
+        "der Vorbehalt gehoert dorthin, wo gelesen wird"
+    assert not any("NUR EINE SPUR" in auf for auf in a["auflagen"])
+
+
+def test_ohne_groessengebundene_familie_wurde_gar_nicht_erst_gefragt():
+    """Die dritte Antwort, angewandt auf das neue Feld: `None` ist nicht `()`.
+
+    `()` heisst «gefragt, und kein Bezeichner deckt die Groesse». `None` heisst «nicht
+    gefragt» — der Riegel greift hier gar nicht. Die beiden zu verschmelzen hiesse, einen
+    Vorbehalt zu melden, wo es nichts vorzubehalten gibt.
+    """
+    fremd = _klein("etwas-anderes", parameter_b=4.0, lizenz="Apache-2.0",
+                   kommerziell=True, modell_id="jemand/etwas-anderes")
+    urteil = groessen_riegel(fremd)
+
+    assert urteil["greift"] is False
+    assert urteil["zulaessig"] is None
+    assert urteil["bestaetigt_durch"] is None, "nicht gefragt ist nicht dasselbe wie leer"
+
+
 def test_die_groessenangabe_wird_gelesen_und_nicht_erraten():
     """Was als Grössenangabe zählt — und was ausdrücklich nicht.
 
@@ -1112,18 +1237,34 @@ def test_die_modell_id_treibt_keinen_ladevorgang():
     Probe hält das fest, damit der Kommentar nicht stillschweigend unwahr wird — träte
     einmal ein Ladeweg über die Kennung hinzu, wäre die Kennung plötzlich laufgefährlich
     und nicht mehr bloss eine Angabe für Menschen.
+
+    **BERICHTIGT 18.09.2026 — der Wächter fiel nicht, wo er fallen sollte.** Er suchte
+    ``modell_id`` nur in den ARGUMENTEN eines Aufrufs. Gemessen an zwei Mutationen::
+
+        return str(b.modell_id)              → Probe faellt   (gut)
+        kennung = b.modell_id; str(kennung)  → Probe bleibt gruen
+
+    Die zweite Form ist die, in der ein echter Ladeweg geschrieben wuerde. *Ein Waechter,
+    der nicht faellt, bewacht nichts.*
+
+    Gesucht wird darum jeder Zugriff auf das Feld — **ausser als Wert in einem
+    Woerterbuch.** Das ist der Laufzettel (`render.py:1517`), und dort wird die Kennung
+    aufgeschrieben, nicht befolgt. Ein Waechter, der auch sie meldet, faellt beim ersten
+    Lauf und wird dann aufgeweicht statt geschaerft.
     """
     quelle = (Path(__file__).resolve().parents[1] / "src" / "aiimaging" / "render.py"
               ).read_text(encoding="utf-8")
     baum = ast.parse(quelle)
-    for knoten in ast.walk(baum):
-        if not isinstance(knoten, ast.Call):
-            continue
-        for arg in list(knoten.args) + [s.value for s in knoten.keywords]:
-            for teil in ast.walk(arg):
-                if isinstance(teil, ast.Attribute) and teil.attr == "modell_id":
-                    raise AssertionError(
-                        "render.py reicht `modell_id` in einen Aufruf — der Kommentar an "
-                        "der 4B-Kennung behauptet, das gebe es nicht. Einer von beiden "
-                        "muss nachgezogen werden."
-                    )
+    # Erlaubt ist GENAU EINE Verwendung: als Wert in einem Wörterbuch. Das ist der
+    # Laufzettel — dort wird die Kennung aufgeschrieben, nicht befolgt. Jede andere
+    # Stelle (Zuweisung, Aufrufargument, Pfadrechnung, f-String) ist ein Fund.
+    aufgeschrieben = {id(wert) for knoten in ast.walk(baum)
+                      if isinstance(knoten, ast.Dict) for wert in knoten.values}
+    treffer = [knoten.lineno for knoten in ast.walk(baum)
+               if isinstance(knoten, ast.Attribute) and knoten.attr == "modell_id"
+               and id(knoten) not in aufgeschrieben]
+    assert not treffer, (
+        f"render.py verwendet `modell_id` ausserhalb des Laufzettels (Zeile(n) "
+        f"{treffer}) — der Kommentar an der 4B-Kennung behauptet, es gebe keinen "
+        f"Ladeweg über die Kennung. Einer von beiden muss nachgezogen werden."
+    )

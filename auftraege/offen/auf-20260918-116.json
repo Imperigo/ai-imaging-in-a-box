@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260918-116",
+  "art": "frage",
+  "worker": "local",
+  "rang": 16,
+  "erstellt": "2026-09-18T18:00:00Z",
+  "params": {},
+  "beschreibung": "Der Groessenriegel erkennt die lizenzgebundene Modellfamilie allein an den Bezeichnern des Eintrags. Wer beide aendert, ist draussen — gemessen und nachgestellt. Geschlossen wird das nur durch eine Angabe, die NICHT im Eintrag steht: die Groesse der Gewichte auf der Platte oder eine Pruefsumme. Beides ist eine Messung am Geraet.",
+  "anweisung": "=== EINE ZWEITE SPUR FUER DEN GROESSENRIEGEL ===\n\nWORUM ES GEHT:\n\nBei der Modellfamilie FLUX.2-klein haengt die Lizenz an der Groesse: Die 4B-Fassung\nist Apache-2.0, die 9B-Fassung ist es NICHT. Ein Eintrag, der sich als 4B ausgibt und\nin Wahrheit 9B ist, waere eine Lizenzverletzung in einem Projekt, dessen erste Regel\n«kein Copyleft, keine Non-Commercial-Gewichte» lautet.\n\nDagegen steht `aiimaging.backbone.groessen_riegel`. Er prueft drei selbsterklaerte\nFelder (`name`, `modell_id`, `parameter_b`) gegen eine Tabelle im Quelltext. Das faengt\nden ABSCHREIBFEHLER — jemand kopiert den 4B-Eintrag, aendert den Namen auf 9B und\nvergisst `parameter_b`.\n\nWAS ER NICHT FAENGT, gegnerisch gemessen am 18.09.2026:\n\n    name=\"bfl-klein-9b\"   modell_id=\"black-forest-labs/bfl2klein9b\"\n    parameter_b=9.0       lizenz=\"Apache-2.0\"   kommerziell_nutzbar=True\n\n    _eintrag       ANGENOMMEN\n    pruefe_lizenz  zulaessig=True\n    waehle         enthaelt den Eintrag\n\nAlle drei Standorte durch. Die Familienerkennung haengt allein an drei Zeichenketten\nim Eintrag. Wer beide Bezeichner umschreibt, ist draussen.\n\nDAS LAESST SICH VON HIER AUS NICHT SCHLIESSEN. Es braucht eine Angabe, die nicht im\nEintrag steht — und die gibt es nur dort, wo die Gewichte wirklich liegen.\n\nWAS ZU TUN IST:\n\n  1. Fuer jedes Modell, das bei euch auf der Platte liegt, messen:\n     - Gesamtgroesse des Modellordners in Byte (nicht gerundet).\n     - Groesse jeder einzelnen Gewichtsdatei (*.safetensors, *.bin, *.gguf).\n     - Wenn ohne grossen Aufwand moeglich: die Parameterzahl aus den Metadaten\n       (bei safetensors steht sie im Kopf; sonst aus `config.json`).\n     - Den SHA-256 der groessten Gewichtsdatei, falls das in vertretbarer Zeit laeuft.\n       Wenn nicht: sagt, wie lange es gedauert haette, und lasst es weg.\n\n  2. Sagt uns, welche dieser Angaben sich BILLIG pruefen laesst — also beim Laden eines\n     Modells, ohne dass jemand darauf wartet. Eine Pruefsumme ueber 9 GB ist ein Riegel,\n     den niemand einschaltet; die Ordnergroesse ist in Millisekunden da.\n\n  3. Und die eigentliche Frage, auf die es uns ankommt: Reicht die Ordnergroesse, um\n     4B von 9B zu unterscheiden? Also: Wie weit liegen die beiden Fassungen in Byte\n     auseinander, und wie stark schwankt dieselbe Fassung zwischen zwei Ablagen\n     (verschiedene Quantisierungen, fehlende Nebendateien, Cache-Reste)? Ohne diese\n     Schwankungsbreite ist jede Schwelle geraten.\n\n  4. Wenn ihr FLUX.2-klein in beiden Fassungen habt: beide messen. Wenn nur eine da\n     ist: die eine messen und sagen, welche fehlt. Wenn keine: sagt das — dann messen\n     wir an dem, was da ist, und uebertragen nicht.\n\nWAS NICHT ZU TUN IST:\n\n  * KEINE Non-Commercial-Gewichte herunterladen, um sie zu messen. Nicht einmal dafuer.\n    Messt, was ohnehin da ist.\n  * Den Riegel NICHT selbst umbauen. Wir bauen ihn hier, wenn eure Zahlen da sind.\n  * Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade in der Rueckgabe —\n    relative Pfade ab dem Modellordner genuegen.\n\nWAS EINE VOLLSTAENDIGE ANTWORT IST: die Tabelle aus Schritt 1, eure Einschaetzung zu\nSchritt 2, und eine Zahl zu Schritt 3. «Bei uns liegt davon nichts» ist ebenfalls eine\nvollstaendige Antwort — dann wissen wir, dass diese Luecke offen bleibt, und schreiben\nes hin, statt sie fuer geschlossen zu halten.",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie noetig — es wird nur die Ablage gemessen."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 60,
+    "leerlauf_schwelle_mem_gb": 2,
+    "hinweise": [
+      "Keine Gewichte herunterladen — auch nicht zum Messen.",
+      "Eine Pruefsumme, die niemand abwartet, ist kein Riegel. Sagt uns die Laufzeit.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Je Modell: Ordnergroesse in Byte, Groesse jeder Gewichtsdatei, Parameterzahl aus den Metadaten wenn greifbar.",
+    "V2 SHA-256 der groessten Gewichtsdatei, oder die Laufzeit, die euch davon abgehalten hat.",
+    "V3 Welche Angabe laesst sich beim Laden billig pruefen, ohne dass jemand wartet?",
+    "V4 Reicht die Ordnergroesse, um 4B von 9B zu trennen? Abstand in Byte und Schwankung derselben Fassung.",
+    "V5 Welche FLUX.2-klein-Fassungen liegen bei euch ueberhaupt — und welche nicht?",
+    "V6 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}

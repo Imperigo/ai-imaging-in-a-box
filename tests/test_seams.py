@@ -11,6 +11,7 @@ Es wird kein echter Prozess gestartet: kein Blender, keine GPU, kein Netz.
 """
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 
@@ -739,6 +740,53 @@ def _gebaute_wache(monkeypatch, tmp_path, **kw):
         seams.glb_zu_multipass(glb, tmp_path / "aus", up_axis="Y_UP",
                                herzschlag_takt_s=2.0, **kw)
     return gebaut["wache"]
+
+
+def test_der_anlauf_wird_vom_zeitfaktor_gestreckt(monkeypatch):
+    """BEFUND 18.09.2026: ``ANLAUF_S`` stand unter MASCHINENFEST und misst Maschinenzeit.
+
+    Die anderen drei Zahlen dieser Gruppe messen einen Faden, den wir selbst starten — der
+    schlaegt auf jedem Geraet gleich schnell. Der Anlauf deckt die Spanne DAVOR: Blender
+    kalt starten und Python laden, also Rechenzeit. Der Kommentar an der Konstante
+    begruendet die 60 s selbst mit einer Kaltstartmessung von 12,63 s *in dieser
+    Umgebung*.
+
+    Solange ``zeitfaktor()`` nicht darauf wirkte, war das auf dem langsamen Zielgeraet die
+    Frist, die als erste zuschlaegt — **und die einzige, die sich nicht strecken laesst.**
+    Wer ``AIIMAGING_ZEITFAKTOR`` setzt, dehnte jede Gesamtfrist und stand trotzdem vor
+    einem Lauf, der beim kalten Start abbricht.
+
+    Die Gegenprobe steckt mit drin: Bei Faktor 1.0 kommt die Zahl UNVERAENDERT zurueck.
+    Die HomeStation sieht nach einem ``git pull`` genau dieselbe Frist wie vorher — eine
+    Verhaltensaenderung waere dort meldepflichtig, und hier gibt es keine.
+    """
+    assert seams.anlauf_frist_s() == seams.ANLAUF_S, \
+        "ohne Angabe darf sich nichts aendern — sonst ist es eine stille Umstellung"
+
+    monkeypatch.setenv(seams.ZEITFAKTOR_ENV, "3")
+    assert seams.anlauf_frist_s() == pytest.approx(3 * seams.ANLAUF_S), \
+        "der Anlauf muss mitwachsen, sonst bricht der kalte Start trotz gesetztem Faktor"
+
+    monkeypatch.setenv(seams.ZEITFAKTOR_ENV, "0.5")
+    assert seams.anlauf_frist_s() == pytest.approx(0.5 * seams.ANLAUF_S), \
+        "und in die andere Richtung ebenso — ein Faktor, der nur streckt, ist keiner"
+
+
+def test_die_wachen_holen_den_anlauf_ueber_die_frist_und_nicht_ueber_die_konstante():
+    """Der Wert allein genuegt nicht — er muss auch dort ankommen, wo gewacht wird.
+
+    Ohne diese Probe bliebe die obige gruen, waehrend die Wache weiterhin die rohe
+    Konstante bekaeme: eine Funktion, die richtig rechnet und die niemand ruft.
+    """
+    quelle = (Path(seams.__file__)).read_text(encoding="utf-8")
+    baum = ast.parse(quelle)
+    roh = [k.lineno for k in ast.walk(baum)
+           if isinstance(k, ast.keyword) and k.arg == "anlauf_s"
+           and isinstance(k.value, ast.Name) and k.value.id == "ANLAUF_S"]
+    assert not roh, (
+        f"seams.py reicht ANLAUF_S roh an eine Wache durch (Zeile(n) {roh}) — dort "
+        f"gehoert anlauf_frist_s() hin, sonst wirkt der Zeitfaktor nicht."
+    )
 
 
 def test_die_herzschlagwache_bekommt_einen_anlauf(tmp_path, monkeypatch, blender_attrappe):
