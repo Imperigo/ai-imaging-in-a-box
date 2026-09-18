@@ -55,13 +55,61 @@ erst im Januar entdeckt, ist im Februar nicht zu retten.
 
 # Die Entscheide
 
-## E1 · Der Name — **Baukasten** *(Owner)*
+## E1 · Der Name — **BERICHTIGT: Baukasten fällt durch, ich empfehle Baugespann**
 
-Englischer Untertitel: *an AI imaging workbench for architects*. Repo-Name bleibt
-`ai-imaging-in-a-box`; das Paket heisst `baukasten`.
+**Die Kippbedingung, die ich selbst genannt hatte, ist eingetreten** — noch am selben Tag.
+Ich hatte geschrieben: *«Kippt an: einem Markenkonflikt. Ich prüfe PyPI, npm und die
+Markenregister, bevor der Name irgendwo festgeschrieben wird.»* Geprüft, und zwar selbst
+nachgemessen am 18.09.2026:
 
-**Kippt an:** einem Markenkonflikt. Ich prüfe PyPI, npm und die Markenregister, bevor
-der Name irgendwo festgeschrieben wird.
+| | PyPI | npm |
+|---|---|---|
+| `baukasten` | **200 — belegt** | **200 — belegt** |
+| `baugespann` | 404 — frei | 404 — frei |
+| `reissbrett` | 404 — frei | 404 — frei |
+| `schaubild` | 404 — frei | 404 — frei |
+
+Was auf PyPI liegt: `baukasten 0.0.2`, *«A plugin framework»*, **Lizenz GPL-3.0**.
+*Ausgerechnet die Lizenzfamilie, die dieses Projekt ausschliesst, sitzt auf seinem Namen.*
+`pip install baukasten` ist damit für uns nicht zu haben.
+
+Dazu ein zweiter, schwererer Einwand aus der Sprache selbst: **Im deutschsprachigen
+Software-Alltag heisst «Baukasten» der Website-Baukasten** — Jimdo, Wix, Squarespace. Wer
+den Namen in der Schweiz hört, denkt an einen Homepage-Bausatz, nicht an ein
+Architekturwerkzeug.
+
+### Empfehlung: **Baugespann**
+
+Das Baugespann ist die Holz- oder Metallkonstruktion, die vor dem Baugesuch auf der
+Parzelle steht und **Form und Ausdehnung des künftigen Gebäudes sichtbar macht, bevor es
+gebaut ist** — damit Nachbarn und Behörde es beurteilen können.
+
+*Das ist wörtlich, was diese Software tut.* Und die Metapher trägt den wissenschaftlichen
+Kern gleich mit: **prüfen, bevor gebaut wird** — nicht bloss erzeugen.
+
+| | |
+|---|---|
+| PyPI, npm | frei (selbst geprüft, 18.09.2026) |
+| GitHub | `baugespann in:name` → **0 Treffer** |
+| Suche | keine Software dieses Namens auffindbar |
+| dagegen | elf Buchstaben; ausserhalb der Schweiz kaum bekannt; braucht einen englischen Untertitel |
+
+Englischer Untertitel: *the profile you set before you build*.
+Paket: `baugespann`. Repo-Name bleibt `ai-imaging-in-a-box`.
+
+**Rang 2 und 3, falls Ihnen Baugespann zu schweizerisch ist:** **Reissbrett** (jeder
+Architekt kennt es, *«zurück ans Reissbrett»* ist genau dieser Entwurfsdurchgang — aber
+`reissbrett.ch` ist belegt und es gibt Hinweise auf ein Planungsprodukt gleichen Namens)
+und **Schaubild** (frei, sachlich — aber im Alltag heisst Schaubild meist *Diagramm*).
+
+**Ausdrücklich geprüft und verworfen:** `Rissbild` (im Bauingenieurwesen der Fachbegriff
+für das **Rissmuster im Beton** — an der ETH sitzt D-BAUG neben D-ARCH, das ist kein
+Randrisiko), `Werkbank` (npm belegt durch eine aktive React-Bibliothek in genau unserer
+Nische), `AIBox` (PyPI belegt, Hauslizenz), `Kubatur` (englisch *cubature* ist numerische
+Mathematik und auf PyPI vergeben).
+
+**Kippt an:** Ihrem Geschmack. Das ist Ihr Name, nicht meiner — ich liefere die Prüfung,
+nicht den Entscheid.
 
 ## E2 · Module, die mitkommen — **`vis`, `asset`, `spez`; `design` nur teilweise**
 
@@ -260,28 +308,61 @@ altert.**
 Hand doppelt gepflegt**, und es gibt kein Programm, das das bemerkt. Das ist der erste
 Posten der Zweispurigkeit und wird im Oktober gebaut.
 
-## E19 · Die Forschungsfrage — **und der Befund oben hat sie geschärft**
+## E19 · Die Forschungsfrage — **BERICHTIGT, und die Messung dazu ist schon gelaufen**
 
-> **Lässt sich ein Entwurfswerkzeug bauen, das aus einem Architekturmodell Bilder erzeugt,
-> deren Geometrie nachweislich erhalten bleibt — unter ausschliesslich permissiven Lizenzen
-> und auf der Hardware, die Studierende besitzen?**
+Ich habe beim Schreiben dieses Blatts eine Messung übersehen, die im eigenen Repo liegt und
+die Frage umstellt: **`auf-20260909-92`, HomeStation, 08.09.2026.**
 
-Und die drei Teilfragen, die die Arbeit beantworten kann, weil sie messbar sind:
+Vier Fälle, je drei Startwerte, zwölf Bilder:
 
-1. **Was kostet die Lizenztreue an Bildqualität?** Wir wissen jetzt: Der zugelassene
-   Tiefenschätzer ist dreizehnmal kleiner als der übliche, und das stärkste permissive
-   Modell passt nicht auf den Laptop. *Das ist eine messbare Grösse, keine Meinung.*
-2. **Was kostet die Laptoptauglichkeit an Bildqualität?** Derselbe Ablauf auf einem
-   kleinen und einem grossen Modell, mit unserer Geometriekennzahl gemessen.
-3. **Trägt die Kennzahl überhaupt?** Wir haben `geometrie_qa` gebaut und an Störungen
-   geeicht — hier kommt sie zum ersten Mal an echten Entwürfen zum Einsatz.
+| | Ergebnis |
+|---|---|
+| gegen die **richtige** Soll-Karte | **12 von 12 bestehen**, 0,8965 – 0,9884 |
+| gegen die **falsche** Soll-Karte (anderes Gebäude) | **12 von 12 bestehen ebenfalls**, 0,8279 – 0,8763 |
+| bei ControlNet-Stärke 0,30, wo ρ über der Bauwerksmaske ≈ 0 ist | **11 von 12 bestehen immer noch** |
 
-**Warum das eine gute Forschungsfrage ist:** Sie hat ein Ergebnis, auch wenn die Antwort
-*nein* lautet. Eine Arbeit, die zeigt, dass es unter diesen Bedingungen **nicht** geht,
-und genau beziffert woran, ist mehr wert als eine Software, die auf einer Grafikkarte für
-2000 Franken schöne Bilder macht.
+> **Das gesuchte Bild existiert — aber die Schwelle, die es besteht, belegt nicht, was sie
+> belegen sollte.** Sie misst zum grossen Teil den Boden-Himmel-Aufbau, den jedes
+> Architekturbild auf Augenhöhe hat.
 
----
+**Und die Rettung steht im selben Befund:** `rho_maske` — die Rangkorrelation **über der
+Bauwerksmaske allein** — trennt sauber, wo der zusammengesetzte Score es nicht tut.
+
+*Das ist kein Scheitern, sondern das beste Ergebnis, das dieses Projekt bisher hat.* Ein
+Prüfverfahren, das schwächer ist als das Erzeugungsverfahren, ist genau die Sorte Befund,
+die man nur durch eine Gegenprobe findet — und wir haben sie gefahren, obwohl niemand sie
+verlangt hatte.
+
+### Die Forschungsfrage, neu gefasst
+
+> **Woran lässt sich messen, dass ein erzeugtes Architekturbild die Geometrie seines
+> Modells wirklich trägt — und was kostet es, dieses Mass auf Studierenden-Hardware unter
+> ausschliesslich permissiven Lizenzen einzuhalten?**
+
+Die drei Teilfragen, alle messbar und alle schon angefangen:
+
+1. **Welches Mass trennt?** Der zusammengesetzte Score tut es nicht, `rho_maske`
+   offenbar schon. Das ist zu belegen — mit derselben Gegenprobe gegen fremde Geometrie,
+   die den ersten Befund erzeugt hat. **Ohne eine Gegenprobe gegen die falsche Karte ist
+   keine Geometriekennzahl etwas wert**, und das ist ein Ergebnis, das über dieses Projekt
+   hinaus gilt.
+2. **Was kostet die Lizenztreue?** Der zugelassene Tiefenschätzer ist dreizehnmal kleiner
+   als der übliche; das stärkste permissive Bildmodell passt nicht auf den Laptop.
+   Beides ist in derselben Kennzahl zu beziffern.
+3. **Was kostet die Laptoptauglichkeit?** Derselbe Ablauf, kleines und grosses Modell.
+
+**Warum diese Fassung besser ist als meine erste:** Sie fragt nicht *ob es geht*, sondern
+*woran man es erkennt*. Die erste Fassung hätte eine Messung gebraucht, die es schon gibt
+— und die sie widerlegt hätte.
+
+### Zwei Berichtigungen, die daraus folgen
+
+* **Im Repo standen zwei verschiedene Forschungsfragen** — eine vom 09.09.2026 und die,
+  die ich heute geschrieben habe. Es gibt jetzt eine, und sie steht hier.
+* **README und `STRUKTUR_VERTIEFUNGSARBEIT.md` waren stehengeblieben.** Die README
+  behauptete weiterhin, es gebe kein bestehendes Bild; das Strukturpapier führt
+  `auf-20260909-92` als noch ausstehend. Die README ist nachgezogen, das Strukturpapier
+  folgt beim Schreiben des Plans.
 
 # Was ich nicht entscheiden kann
 

@@ -33,10 +33,23 @@ sich gar nichts messen:
 „braucht die Arbeitsstation" galten: dass der Deckungsgrad unter 8 m Kantenlänge gar nicht
 bindet, und dass die Bauwerksbox das Gelände nicht abtrennte.
 
-Die Lücke, die bleibt, ist eine andere und schmalere: **Ein Bild, das die
-Geometrie-Schwelle besteht, gibt es noch nicht** — mit einem Prompt ohne Bauteile und
-einer Geometrie, die ein Gebäude ist statt einer offenen Schachtel. Bis dahin ist die
-Kette belegt, die Aussage *geometrietreu* aber noch nicht.
+Die Lücke ist **seit dem 08.09.2026 geschlossen — und die Antwort ist unbequemer als
+ein Ja.** `auf-20260909-92` hat auf der HomeStation vier Fälle mit je drei Startwerten
+gefahren: **zwölf von zwölf bestehen die Geometrie-Schwelle 0,65**, mit Werten zwischen
+0,8965 und 0,9884.
+
+**Dieselben zwölf bestehen sie aber auch gegen die Tiefenkarte eines völlig anderen
+Gebäudes** (0,8279 bis 0,8763) — und bei einer ControlNet-Stärke, bei der die Bilder
+nachweislich nichts mehr mit dem Modell zu tun haben (ρ über der Bauwerksmaske ≈ 0),
+bestehen immer noch **elf von zwölf**.
+
+> **Das gesuchte Bild existiert. Die Schwelle, die es besteht, belegt aber nicht, was sie
+> belegen sollte.** Sie misst zum grossen Teil den Boden-Himmel-Aufbau, den jedes
+> Architekturbild auf Augenhöhe hat.
+
+Was trennt, steht schon da: **`rho_maske`** — die Rangkorrelation über der Bauwerksmaske
+allein. Sie unterscheidet sauber, wo der zusammengesetzte Score es nicht tut. *Die Aussage
+`geometrietreu` ist damit nicht widerlegt, sondern an die falsche Zahl gehängt gewesen.*
 
 | | Stand |
 |---|---|
