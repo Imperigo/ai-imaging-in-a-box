@@ -3457,3 +3457,200 @@ def ferne_abtrennen(karte: Sequence[float], *, stufen: int = 1,
             "Obergrenze gleich kleinstem Wert — der Wertebereich hat keine Breite, der "
             "genutzte Anteil ist NICHT GEMESSEN und nicht 0.")
     return antwort
+
+
+# ======================================================================================
+# Die zwei Tore — zwei Fragen, zwei Zahlen, verbunden mit UND
+# ======================================================================================
+#
+# **Der Anlass ist der schwerste Befund dieses Projekts** (R3, nachgerechnet am
+# 18.09.2026 an den Zahlen von `auf-20260909-92`, ausgeschrieben in
+# `docs/R3_WELCHES_MASS_TRENNT_2026-09-18.md`):
+#
+# Zwölf erzeugte Bilder bestanden die Schwelle 0.65. **Dieselben zwölf bestanden sie auch
+# gegen die Tiefenkarte eines völlig anderen Gebäudes.** Und bei einer ControlNet-Stärke
+# von 0.30, wo das Bild dem Modell nachweislich nicht mehr folgt, bestanden immer noch
+# elf von zwölf.
+#
+# Nachgerechnet an denselben zwölf Bildern, dreimal gemessen:
+#
+#     Kennzahl     folgt dem Modell   folgt NICHT (0.30)   trennt richtig/falsch
+#     score            0.966          0.766  besteht noch   ja  (paarweise 12/12)
+#     geom_iou         0.961          0.722  besteht noch   ja  (Lücke +0.149)
+#     rho_maske        0.798         -0.009  EXAKT NULL     NEIN (nur 10/12)
+#
+# **Es sind zwei Fragen, und eine einzige Zahl kann beide nicht beantworten:**
+#
+#   A  Folgt das Bild dem Modell überhaupt?      → `rho_maske`, und nur sie.
+#   B  Folgt es DIESEM Modell und keinem andern? → `geom_iou`, mit der grössten Lücke.
+#
+# Der zusammengesetzte `score` multipliziert A (über `spearman`) mit B (`geom_iou`) und
+# zieht die Wurzel. Damit gleicht ein guter Wert der einen einen schlechten der anderen
+# aus — und genau das lässt Müllbilder durch.
+#
+#     Eine Kennzahl, die zwei Fragen zu einer verrechnet, beantwortet keine von beiden.
+#
+# `geometrie_gate` bleibt unverändert daneben stehen: Alle bisher gemessenen Zahlen des
+# Projekts sind mit ihm entstanden und müssen reproduzierbar bleiben. Die zwei Tore sind
+# der Weg nach vorn, nicht eine Berichtigung nach hinten.
+
+#: Ab welchem ``rho_maske`` gilt **Tor A** als bestanden: folgt das Bild dem Modell?
+#:
+#: **Woher die Zahl kommt, und woher nicht.** Gemessen ist das *Rauschband*: Bei
+#: ControlNet-Stärke 0.30, wo das Bild dem Modell nachweislich nicht mehr folgt, lag
+#: ``rho_maske`` über zwölf Bilder zwischen **−0.047 und +0.055**. Gemessen ist auch der
+#: niedrigste Wert eines Bildes, das dem Modell folgt: **+0.144**.
+#:
+#: Die Schwelle muss also zwischen 0.055 und 0.144 liegen. **Wo genau, sagen zwölf Bilder
+#: nicht** — 0.10 liegt ungefähr in der Mitte und ist damit **gesetzt und nicht
+#: kalibriert**. Der Abstand nach unten ist knapp zweifach, nach oben knapp anderthalb.
+#:
+#: *Genau diese Sorte Zahl war die alte 0.65, und sie hat elf von zwölf Müllbildern
+#: durchgelassen.* Der Unterschied ist, dass hier dransteht, worauf sie ruht — und dass
+#: die Gegenprobe in :func:`zwei_tore` sie bei jedem Lauf prüft, statt ihr zu glauben.
+SCHWELLE_FOLGT = 0.10
+
+#: Ab welchem ``geom_iou`` gilt **Tor B** als bestanden: folgt es DIESEM Modell?
+#:
+#: **Gemessen** an zwölf Paaren, jedes Bild gegen die richtige und gegen eine falsche
+#: Tiefenkarte::
+#:
+#:     gegen die richtige Karte    0.9257 … 0.9784
+#:     gegen die falsche Karte     0.7350 … 0.7766
+#:     Lücke                       +0.1491
+#:
+#: 0.85 liegt in der Mitte dieser Lücke. **Ebenfalls gesetzt und nicht kalibriert**, aber
+#: mit siebenfach mehr Luft als bei Tor A — und die Lücke ist an echten Gegenproben
+#: gemessen, nicht an Störungen.
+#:
+#: **Woran sie kippt:** Die falsche Karte war immer die jeweils *andere von zweien* — eine
+#: Schachtel und ein fünfgeschossiger Bau. Zwei **ähnliche** Gebäude sind nicht geprüft,
+#: und dort wird es schwer. Die Messung dazu ist bestellt.
+SCHWELLE_DIESES = 0.85
+
+
+def _tor(wert, schwelle: float, frage: str, name: str) -> dict:
+    """Ein einzelnes Tor. ``wert is None`` heisst NICHT GEMESSEN — und damit nicht bestanden.
+
+    **Fail-closed, wie der Torwächter und wie** :func:`geometrie_gate`: Was ungeprüft ist,
+    wird nicht durchgelassen. Ein Freispruch aus Mangel an Messung wäre die teuerste Sorte
+    Fehler, denn niemand sucht danach.
+
+    Unterschieden bleibt es trotzdem: ``gemessen`` sagt, ob überhaupt eine Zahl vorlag.
+    *Nicht gemessen und durchgefallen sind beides «nicht bestanden» — aber nur eines davon
+    ist ein Befund über das Bild.*
+    """
+    if wert is None:
+        return {"name": name, "frage": frage, "wert": None, "schwelle": schwelle,
+                "gemessen": False, "bestanden": False,
+                "begruendung": f"{name}: NICHT GEMESSEN, damit nicht bestanden. "
+                               f"Das ist kein Urteil über das Bild, sondern über die Messung."}
+    bestanden = wert >= schwelle
+    return {"name": name, "frage": frage, "wert": float(wert), "schwelle": schwelle,
+            "gemessen": True, "bestanden": bestanden,
+            "begruendung": f"{name}: {wert:.4f} {'≥' if bestanden else '<'} {schwelle:.2f}"}
+
+
+def zwei_tore(rho_maske, geom_iou, *,
+              rho_maske_fremd=None, geom_iou_fremd=None,
+              schwelle_folgt: float = SCHWELLE_FOLGT,
+              schwelle_dieses: float = SCHWELLE_DIESES) -> dict:
+    """Das Urteil aus **zwei** Toren — und aus der Gegenprobe, die es erst gültig macht.
+
+    Args:
+        rho_maske: Rangkorrelation über der Bauwerksmaske, gegen die **richtige**
+            Soll-Karte. Aus :func:`rho_ueber_maske`. ``None`` = nicht gemessen.
+        geom_iou: Silhouetten-Überdeckung gegen die **richtige** Soll-Karte. Aus
+            :func:`geometrie_score`. ``None`` = nicht gemessen.
+        rho_maske_fremd, geom_iou_fremd: dieselben zwei Zahlen gegen eine **fremde**
+            Geometrie — die Gegenprobe. Ohne sie ist das Urteil vorläufig, und das Ergebnis
+            sagt es (siehe unten).
+        schwelle_folgt, schwelle_dieses: siehe :data:`SCHWELLE_FOLGT` und
+            :data:`SCHWELLE_DIESES`. Beide sind **gesetzt und nicht kalibriert**.
+
+    Returns:
+        ``{bestanden, trennt, tor_folgt, tor_dieses, gegenprobe, begruendung, warnungen}``
+
+        ``bestanden`` ist ``True`` nur, wenn **beide** Tore bestehen — ein UND, kein
+        Mittelwert. Es ist ``None``, wenn die Gegenprobe zeigt, dass diese Messung gar
+        nicht trennt (siehe unten). Sonst ``False``.
+
+    **Warum ein UND und kein Mittelwert.** Der bisherige ``score`` verrechnet beide Fragen
+    miteinander; ein guter Wert der einen hebt einen schlechten der anderen über die
+    Schwelle. An zwölf Bildern gemessen liess das elf Müllbilder durch.
+
+    **Die Gegenprobe, und sie ist der eigentliche Gehalt dieser Funktion.**
+    Besteht das Bild auch gegen eine **fremde** Geometrie, dann hat diese Messung nichts
+    gezeigt. Das Ergebnis ist dann **nicht «bestanden»**, sondern ``bestanden = None`` —
+    *nicht entscheidbar*. Das ist die dritte Antwort an der Stelle, an der sie am meisten
+    wert ist:
+
+        Ein Prüfverfahren, das auch die falsche Antwort durchlässt, hat nicht die richtige
+        bestätigt — es hat gar nichts gemessen.
+
+    Ohne Gegenprobe (``…_fremd is None``) urteilt die Funktion trotzdem, setzt aber
+    ``trennt = None`` und schreibt eine Warnung: *Das Urteil ist dann so viel wert wie das
+    alte, und das alte war nichts wert.*
+    """
+    for name, wert in (("rho_maske", rho_maske), ("geom_iou", geom_iou),
+                       ("rho_maske_fremd", rho_maske_fremd),
+                       ("geom_iou_fremd", geom_iou_fremd)):
+        if wert is None or isinstance(wert, (int, float)) and not isinstance(wert, bool):
+            continue
+        raise QaError(f"{name}: Zahl oder None erwartet, war {wert!r} "
+                      f"({type(wert).__name__}).")
+
+    a = _tor(rho_maske, float(schwelle_folgt),
+             "Folgt das Bild dem Modell ueberhaupt?", "rho_maske")
+    b = _tor(geom_iou, float(schwelle_dieses),
+             "Folgt es DIESEM Modell und keinem anderen?", "geom_iou")
+
+    warnungen: list[str] = []
+    bestanden = a["bestanden"] and b["bestanden"]
+
+    # ── Die Gegenprobe ────────────────────────────────────────────────────────────────
+    gegenprobe = None
+    trennt = None
+    if rho_maske_fremd is not None or geom_iou_fremd is not None:
+        a_f = _tor(rho_maske_fremd, float(schwelle_folgt), a["frage"], "rho_maske (fremd)")
+        b_f = _tor(geom_iou_fremd, float(schwelle_dieses), b["frage"], "geom_iou (fremd)")
+        fremd_bestanden = a_f["bestanden"] and b_f["bestanden"]
+        gegenprobe = {"tor_folgt": a_f, "tor_dieses": b_f, "bestanden": fremd_bestanden}
+        trennt = not fremd_bestanden
+        if fremd_bestanden:
+            # HIER IST DIE DRITTE ANTWORT AM MEISTEN WERT. Ein Urteil «bestanden» waere
+            # jetzt nachweislich wertlos — dieselbe Messung sagt dasselbe ueber ein
+            # Gebaeude, das es nicht ist.
+            bestanden = None
+            warnungen.append(
+                "DIESE MESSUNG TRENNT NICHT: Das Bild besteht auch gegen eine FREMDE "
+                "Geometrie. Damit ist nichts gezeigt — weder dass es geometrietreu ist "
+                "noch dass es das nicht ist. Das Urteil ist NICHT ENTSCHEIDBAR, nicht "
+                "«bestanden». Genau dieser Fall lag am 08.09.2026 zwoelfmal vor und wurde "
+                "als Erfolg gelesen.")
+    else:
+        warnungen.append(
+            "OHNE GEGENPROBE. Es wurde nicht geprueft, ob dieselbe Messung auch gegen eine "
+            "fremde Geometrie besteht. Das Urteil ist damit so viel wert wie das alte — "
+            "und das alte liess elf von zwoelf Muellbildern durch.")
+
+    if not a["gemessen"] or not b["gemessen"]:
+        warnungen.append(
+            "Mindestens ein Tor ist NICHT GEMESSEN und gilt darum als nicht bestanden. "
+            "Fail-closed wie der Torwaechter: Was ungeprueft ist, wird nicht durchgelassen.")
+
+    if bestanden is None:
+        kopf = "NICHT ENTSCHEIDBAR"
+    elif bestanden:
+        kopf = "BESTANDEN"
+    else:
+        kopf = "NICHT BESTANDEN"
+    begruendung = f"{kopf} — {a['begruendung']}; {b['begruendung']}."
+    if trennt is False:
+        begruendung += " Die Gegenprobe gegen fremde Geometrie besteht ebenfalls."
+    elif trennt is True:
+        begruendung += " Gegen fremde Geometrie faellt sie durch, wie sie soll."
+
+    return {"bestanden": bestanden, "trennt": trennt,
+            "tor_folgt": a, "tor_dieses": b, "gegenprobe": gegenprobe,
+            "begruendung": begruendung, "warnungen": warnungen}
