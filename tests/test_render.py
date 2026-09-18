@@ -1408,15 +1408,22 @@ def test_ein_uebergebenes_modell_wird_davon_nicht_aufgehalten(monkeypatch, tmp_p
 # Nahtargumente `system=`, `umgebung=` und `heim=`.
 
 def test_jedes_system_bekommt_seinen_ueblichen_ort():
-    """macOS, Windows und Linux legen Anwendungsdaten an drei verschiedenen Orten ab."""
+    """macOS, Windows und Linux legen Anwendungsdaten an drei verschiedenen Orten ab.
+
+    Der Windows-Wert liegt hier absichtlich auf einem **anderen Laufwerk** als `heim`.
+    Das ist kein Schmuck: Stuende dort `C:/Users/nutzer/AppData/Local`, waere er Zeichen
+    fuer Zeichen derselbe Pfad, den der Rueckfall `heim/AppData/Local` erzeugt — die
+    Probe kaeme also auch dann durch, wenn `LOCALAPPDATA` gar nicht gelesen wuerde. Genau
+    dieser Fall war bis zum 18.09.2026 gegeben (siehe die Probe darunter).
+    """
     mac = render.anwendungsdaten_wurzel(system="Darwin", heim="/Users/nutzer",
                                         umgebung={})
     assert mac == Path("/Users/nutzer/Library/Application Support/Visbox/modelle")
 
     win = render.anwendungsdaten_wurzel(
         system="Windows", heim="C:/Users/nutzer",
-        umgebung={"LOCALAPPDATA": "C:/Users/nutzer/AppData/Local"})
-    assert win == Path("C:/Users/nutzer/AppData/Local/Visbox/modelle")
+        umgebung={"LOCALAPPDATA": "D:/Profile/nutzer/AppData/Local"})
+    assert win == Path("D:/Profile/nutzer/AppData/Local/Visbox/modelle")
 
     linux = render.anwendungsdaten_wurzel(system="Linux", heim="/home/nutzer",
                                           umgebung={})
@@ -1424,13 +1431,62 @@ def test_jedes_system_bekommt_seinen_ueblichen_ort():
 
 
 def test_windows_nimmt_local_und_nicht_roaming():
-    """Zwanzig Gigabyte Gewichte gehoeren nicht in ein Profil, das synchronisiert wird."""
+    """Zwanzig Gigabyte Gewichte gehoeren nicht in ein Profil, das synchronisiert wird.
+
+    **Diese Probe fiel bis zum 18.09.2026 nicht** — gemessen, nicht vermutet: Ersetzt man
+    in `render.anwendungsdaten_wurzel` `umgebung.get("LOCALAPPDATA")` durch
+    `umgebung.get("APPDATA")`, blieben alle Proben dieser Datei gruen. Der Grund lag
+    nicht an der Probe, sondern an der Bibliothek: Sie fragte `Path(lokal).is_absolute()`,
+    und `Path` ist auf einem Linux-Container eine `PosixPath` — fuer die ist
+    `C:/Users/nutzer/AppData/Local` **relativ**. Der Windows-Zweig fiel also immer durch
+    die Pruefung, und gemessen wurde stets der Rueckfall `heim/AppData/Local`.
+
+    **Der gewaehlte Weg, und warum dieser** (18.09.2026): Die Bibliothek entscheidet die
+    Frage „absolut?" jetzt nach den Regeln des Systems, das `system=` nennt
+    (`render._ist_absolut`, `PureWindowsPath` fuer Windows). Zwei andere Wege waren
+    moeglich und wurden verworfen:
+
+    * **Einen POSIX-absoluten Wert einsetzen** (`/tmp/localappdata` als `LOCALAPPDATA`)
+      haette die Probe zum Fallen gebracht, ohne die Bibliothek anzufassen. Sie
+      bewiese dann aber etwas, das keine Windows-Maschine je erlebt: Kein Windows setzt
+      `LOCALAPPDATA` auf einen Pfad ohne Laufwerksbuchstaben. Ein gruener Waechter ueber
+      einer erfundenen Umgebung ist schwerer zu entdecken als ein fehlender.
+    * **`PureWindowsPath` nur in der Probe** haette dasselbe Problem eine Ebene hoeher:
+      Die Probe rechnete Windows-Regeln, die Bibliothek POSIX-Regeln — und belegt haette
+      sie, dass die beiden auseinanderlaufen.
+
+    Der Ausschlag gab, dass hier nicht nur eine Probe schwach war, sondern die Naht
+    selbst: `anwendungsdaten_wurzel(system="Windows", …)` gibt es, damit der Windows-Weg
+    auf einem Linux-Container **gerechnet** werden kann. Solange sie `LOCALAPPDATA` dort
+    still verwirft, rechnet sie etwas anderes als die Zielmaschine — und das ist kein
+    Testproblem, sondern eine falsche Auskunft. Der Preis ist eine Verhaltensaenderung,
+    und sie steht im Docstring von `anwendungsdaten_wurzel`.
+    """
     win = render.anwendungsdaten_wurzel(
         system="Windows", heim="C:/Users/nutzer",
-        umgebung={"LOCALAPPDATA": "C:/Users/nutzer/AppData/Local",
-                  "APPDATA": "C:/Users/nutzer/AppData/Roaming"})
+        umgebung={"LOCALAPPDATA": "D:/Profile/nutzer/AppData/Local",
+                  "APPDATA": "D:/Profile/nutzer/AppData/Roaming"})
+    # Die Gleichheit ist der Waechter gegen den Rueckfall (`heim/AppData/Local` laege auf
+    # C:), die beiden Saetze darunter der gegen die verwechselte Variable.
+    assert win == Path("D:/Profile/nutzer/AppData/Local/Visbox/modelle")
     assert "Roaming" not in str(win)
     assert "Local" in str(win)
+
+
+def test_ein_windows_pfad_gilt_auch_auf_linux_als_absolut():
+    """Die Naht muss rechnen, was die Zielmaschine rechnet — sonst belegt sie nichts.
+
+    `C:/…` ist auf Windows absolut. Wird die Frage mit dem Pfadtyp des laufenden Rechners
+    gestellt, lautet die Antwort auf jedem Linux-Container `False`, und der Windows-Zweig
+    ist auf genau der Maschine unpruefbar, auf der er geprueft werden soll. Diese Probe
+    haelt die Regel fest, nicht bloss ihr Ergebnis."""
+    assert render._ist_absolut("C:/Users/nutzer/AppData/Local", "Windows") is True
+    assert render._ist_absolut("/home/nutzer", "Linux") is True
+    # Der klassische Windows-Stolperstein: laufwerksbezogen, aber NICHT absolut — er
+    # zeigt auf das aktuelle Verzeichnis von C:, und das ist genau die Sorte Pfad, die
+    # je nach Arbeitsverzeichnis woandershin zeigt.
+    assert render._ist_absolut("C:relativ", "Windows") is False
+    assert render._ist_absolut("/home/nutzer", "Windows") is False
 
 
 def test_xdg_wird_beachtet_wenn_es_gesetzt_ist():
@@ -1451,6 +1507,37 @@ def test_eine_relative_angabe_wird_ignoriert():
     win = render.anwendungsdaten_wurzel(system="Windows", heim="C:/Users/nutzer",
                                         umgebung={"LOCALAPPDATA": "relativ"})
     assert win == Path("C:/Users/nutzer/AppData/Local/Visbox/modelle")
+
+    # `C:relativ` sieht absolut aus und ist es nicht: Es zeigt auf das aktuelle
+    # Verzeichnis von Laufwerk C. Wer nur auf den Doppelpunkt schaut, laesst es durch.
+    win_laufwerksbezogen = render.anwendungsdaten_wurzel(
+        system="Windows", heim="C:/Users/nutzer", umgebung={"LOCALAPPDATA": "C:relativ"})
+    assert win_laufwerksbezogen == Path("C:/Users/nutzer/AppData/Local/Visbox/modelle")
+
+
+def test_auch_ein_relatives_heim_wird_abgewehrt():
+    """**Die Luecke in der eigenen Regel** (Gegenpruefung 18.09.2026).
+
+    Bis dahin wies die Funktion relative Angaben in `XDG_DATA_HOME` und `LOCALAPPDATA` ab
+    — das Heimverzeichnis aber nicht. `heim="~"` ergab `~/.local/share/visbox/modelle`,
+    also genau den Fehler, den der eigene Docstring beschreibt: ein Pfad, der je nach
+    Arbeitsverzeichnis woandershin zeigt.
+
+    Erreichbar ist das nicht nur ueber die Naht: `os.path.expanduser("~")` gibt `"~"`
+    unveraendert zurueck, wenn sich weder `HOME` noch ein Eintrag in der
+    Benutzerdatenbank finden laesst — ein Container ohne gesetztes `HOME` genuegt.
+
+    Was hier belegt wird, ist die Eigenschaft und nicht der Ersatzpfad: Das Ergebnis ist
+    **absolut**. Welchen Ersatz die Bibliothek waehlt, darf sie spaeter anders
+    entscheiden; dass sie nie etwas Relatives liefert, nicht."""
+    for system in ("Linux", "Darwin", "Windows"):
+        pfad = render.anwendungsdaten_wurzel(system=system, heim="~", umgebung={})
+        # Gefragt wird mit `Path` und nicht mit `render._ist_absolut(..., system)`: Der
+        # Ersatz ist der Temporaerordner der Maschine, die gerade laeuft — auf einem
+        # Linux-Container also `/tmp`, auch wenn `system="Windows"` gefragt war. Diese
+        # eine Mischung ist der Naht geschuldet und keine Aussage ueber Windows.
+        assert Path(pfad).is_absolute(), f"{system}: {pfad} ist relativ"
+        assert "~" not in str(pfad), f"{system}: {pfad} traegt die Tilde weiter"
 
 
 def test_kein_vorgabeort_liegt_an_der_systemwurzel():
@@ -1548,6 +1635,49 @@ def test_die_umgebungsvariable_schlaegt_auch_eine_vorhandene_altwurzel(monkeypat
     monkeypatch.setenv(render.UMGEBUNG_MODELLE, str(anderswo))
 
     assert render.modellwurzel() == (anderswo, render.HERKUNFT_UMGEBUNG)
+
+
+def test_die_naht_erreicht_auch_die_dritte_stufe(monkeypatch):
+    """**Eine halbe Naht** (Gegenpruefung 18.09.2026, gemessen).
+
+    `modellwurzel(umgebung={"XDG_DATA_HOME": "/erfundenes/xdg"})` ergab bis dahin den
+    Anwendungsdatenort *dieses* Rechners, waehrend `anwendungsdaten_wurzel` mit derselben
+    Umgebung `/erfundenes/xdg/visbox/modelle` ergab. Stufe 3 las die Modulkonstante
+    `VORGABE_MODELLWURZEL`, und die wird **einmal beim Import** gerechnet — eine
+    uebergebene Umgebung erreichte sie nie.
+
+    Das ist die gefaehrliche Sorte Naht: Sie nimmt das Argument an, schweigt und rechnet
+    ohne es. Wer Stufe 3 so prueft, prueft den Rechner, auf dem der Test laeuft.
+
+    Geprueft wird darum die Eigenschaft und nicht ein bestimmter Pfad: Stufe 3 muss
+    dasselbe liefern wie `anwendungsdaten_wurzel` mit derselben Umgebung, und sie darf
+    **nicht** die Konstante liefern. Der gemessene Pfad oben (`/erfundenes/xdg/…`) gilt
+    nur auf einem System mit XDG-Weg; macOS liest gar keine Variable. Ein Test, der ihn
+    festschriebe, bezoege sein Urteil aus dem Betriebssystem — genau das verbietet der
+    Kopf dieser Datei."""
+    monkeypatch.setattr(render, "ALTWURZEL_HOMESTATION", "/gibt-es-hier-sicher-nicht")
+    monkeypatch.setattr(render, "VORGABE_MODELLWURZEL", "/die-konstante-vom-import")
+    fremde = {"XDG_DATA_HOME": "/erfundenes/xdg"}
+
+    wurzel, herkunft = render.modellwurzel(umgebung=fremde)
+
+    assert herkunft == render.HERKUNFT_ANWENDUNGSDATEN
+    assert wurzel == render.anwendungsdaten_wurzel(umgebung=fremde)
+    assert wurzel != Path("/die-konstante-vom-import")
+
+
+def test_ohne_uebergebene_umgebung_gilt_weiter_die_modulkonstante(monkeypatch):
+    """Die Gegenprobe zur Probe darueber — und der Schutz der uebrigen Proben.
+
+    Mehrere Proben in dieser Datei ersetzen `VORGABE_MODELLWURZEL`, um einen Ort zu
+    bekommen, den es sicher nicht gibt. Wuerde Stufe 3 auch ohne Argument neu rechnen,
+    liefe diese Ersetzung ins Leere und die Proben bewachten nichts mehr."""
+    monkeypatch.delenv(render.UMGEBUNG_MODELLE, raising=False)
+    monkeypatch.setattr(render, "ALTWURZEL_HOMESTATION", "/gibt-es-hier-sicher-nicht")
+    monkeypatch.setattr(render, "VORGABE_MODELLWURZEL", "/gesetzt/von/der/probe")
+
+    assert render.modellwurzel() == (Path("/gesetzt/von/der/probe"),
+                                     render.HERKUNFT_ANWENDUNGSDATEN)
 
 
 def test_eine_unlesbare_altwurzel_haelt_den_start_nicht_auf(monkeypatch):

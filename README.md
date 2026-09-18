@@ -74,7 +74,7 @@ darüber liegt: [`docs/OBERFLAECHE_KOSMOVIS.md`](docs/OBERFLAECHE_KOSMOVIS.md). 
 bei der eigenen Arbeit an der Oberfläche auffällt und an den UI-Worker geht:
 [`docs/UI_BEFUNDE.md`](docs/UI_BEFUNDE.md).
 
-Tests: **6213**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+Tests: **6232**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
 (`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
 
 ---
@@ -198,17 +198,29 @@ python3 -m pytest
 
 ### Umgebungsvariablen
 
-Alle zeigen auf etwas jenseits der Prozessgrenze. Für die ersten beiden gibt es einen
-Rückfall auf die üblichen Orte; für die übrigen **bewusst nicht** — ein Rückfall auf das
-Produkt-Python würde genau die Grenze aufheben, die es zu ziehen gilt.
+Alle zeigen auf etwas jenseits der Prozessgrenze. Für die ersten drei gibt es einen
+Rückfall auf die üblichen Orte; für die beiden letzten **bewusst nicht** — ein Rückfall
+auf das Produkt-Python würde genau die Grenze aufheben, die es zu ziehen gilt.
 
 | Variable | wofür | ohne sie |
 |---|---|---|
 | `AIIMAGING_IFC_PYTHON` | Python des IFC-Environments | `.venv-ifc/bin/python` |
 | `AIIMAGING_BLENDER` | das Blender-Binary | `blender` im PATH, dann `/opt/blender/blender` |
-| `AIIMAGING_MODELLE` | Ablage der Modellgewichte | `/ai` |
+| `AIIMAGING_MODELLE` | Ablage der Modellgewichte | `/ai`, **falls es den Ordner gibt** — sonst der Anwendungsdatenordner des Systems: macOS `~/Library/Application Support/Visbox/modelle`, Windows `%LOCALAPPDATA%\Visbox\modelle`, sonst `$XDG_DATA_HOME/visbox/modelle` |
 | `AIIMAGING_LORA_PYTHON` | Python des Trainer-Environments | **Fehler**, kein Rückfall |
 | `AIIMAGING_LORA_TRAINER` | Verzeichnis des LoRA-Trainers | **Fehler**, kein Rückfall |
+
+Und eine, die nichts adressiert, sondern eine Uhr stellt:
+
+| Variable | wofür | ohne sie |
+|---|---|---|
+| `AIIMAGING_ZEITFAKTOR` | streckt **alle** Zeitgrenzen auf einmal — die Gesamtfristen und den Anlauf, den ein kalter Blender-Start braucht | Faktor `1.0`, also jede Zahl unverändert |
+
+Die Zahlen dahinter (300 s für einen IFC-Import, 900 s für einen Render, 60 s Anlauf) sind
+auf einer schnellen Maschine **gemessen**. Auf einem Laptop wäre dieselbe Frist ein
+Abbruch mitten in einer gesunden Rechnung — und der sieht aus wie ein Fehler, obwohl nur
+die Uhr zu knapp stand. `AIIMAGING_ZEITFAKTOR=3` verdreifacht sie alle; bei `1.0` kommt
+jede Zahl typgleich und unverändert zurück, geprüft.
 
 ### Aufträge an eine Maschine mit GPU
 

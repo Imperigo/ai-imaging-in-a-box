@@ -5523,6 +5523,29 @@ Bekannt und ausdrücklich nicht erledigt:
       es den Ordner gibt**. Die Fristen (300 s / 900 s) sind auf der schnellen Maschine
       gemessen und über `AIIMAGING_ZEITFAKTOR` anpassbar. Und `backbone.groessen_riegel`
       hält fest, dass bei FLUX.2-klein die **Lizenz an der Grösse hängt**.
+- [x] **Die Arbeit der Agenten gegnerisch durchgesehen — und zwei schwere Funde behoben.**
+      *Erstens:* Der Grössenriegel **löschte den Lizenzausschluss aus seiner eigenen
+      Begründung.** Ein 4B-Eintrag mit nicht-kommerziellem Lizenzfeld kam als «Die Grösse
+      ist freigegeben, aber die Lizenzangabe deckt sich nicht» heraus — Urteil richtig,
+      Satz daneben ein Etikettenstreit. Derselbe Fund eine Ebene tiefer liess drei
+      bestehende Lizenzauflagen verschwinden.
+      *Zweitens:* Die Schutzvorkehrung für langsame Rechner stand nur in der Datei, in der
+      sie gebaut wurde; ihre eigene Begründung nannte drei betroffene Proben und deckte
+      zwei. *Eine Vorkehrung, die nur die Datei deckt, in der der Fehler gebaut wurde,
+      schützt die Datei und nicht die Sache.* Steht jetzt in der `conftest.py`.
+      Dazu drei Wächter, die nachweislich **nicht fielen** — darunter einer, der den
+      ganzen Windows-Ablageort nie geprüft hat, weil ein Windows-Pfad auf Linux als
+      unvollständig gilt. Jeder neue Wächter ist gegen seinen eigenen Fehler
+      gegengeprüft.
+- [x] **Sieben Verhaltensänderungen an die HomeStation angesagt** (`auf-20260918-117`,
+      Rang 1). Sie fährt diesen Code aus diesem Repo; drei der Änderungen sähen drüben
+      ohne Ansage wie ein Defekt aus. *Adressat: `local`.*
+- [~] **Offen bei `local`: die Lücke im Lizenzriegel** (`auf-20260918-116`). Er erkennt
+      die lizenzgebundene Modellfamilie allein an den Bezeichnern des Eintrags — wer
+      **beide** umschreibt, kommt durch alle drei Standorte. Beide Spuren zu lesen
+      halbiert die Lücke, es schliesst sie nicht. Geschlossen wird sie nur durch eine
+      Angabe ausserhalb des Eintrags: die Grösse der Gewichte auf der Platte.
+      *Adressat: `local`.*
 - [~] **Offen bei `local`: die Gegenprobe bei Stärke 0,75** (`auf-20260918-115`). Ob das
       Bild dort dem Modell wirklich weniger folgt oder ob `rho_maske` dort versagt, ist
       **nicht entscheidbar** — zwölf Bilder sagen es nicht, und die Vertauschprobe bei

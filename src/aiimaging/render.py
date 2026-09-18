@@ -106,9 +106,10 @@ import math
 import os
 import platform
 import re
+import tempfile
 import time
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from aiimaging import backbone, sprache
 
@@ -168,6 +169,39 @@ ANWENDUNG_KLEIN = "visbox"
 UNTERORDNER_MODELLE = "modelle"
 
 
+def _ist_absolut(wert, system) -> bool:
+    """Ist dieser Pfad **auf dem gemeinten System** absolut?
+
+    **Der Anlass** (Gegenpruefung 18.09.2026, gemessen und nicht vermutet): Bis dahin
+    stand hier schlicht ``Path(wert).is_absolute()``. ``Path`` ist aber der Pfadtyp des
+    *laufenden* Rechners — auf Linux eine ``PosixPath``, und die haelt
+    ``C:/Users/nutzer/AppData/Local`` fuer **relativ**. Der Windows-Zweig fiel damit auf
+    jedem Linux-Rechner immer durch die Pruefung; was danach herauskam, war der Rueckfall
+    ``heim/AppData/Local`` und nie der gelesene Wert. Belegt wurde das so: Ersetzt man in
+    :func:`anwendungsdaten_wurzel` ``LOCALAPPDATA`` durch ``APPDATA``, blieben vorher
+    **alle** Proben gruen — ein Waechter, der nicht faellt, bewacht nichts.
+
+    Die Naht ``system=`` gibt es genau dafuer, dass der Windows- und der macOS-Weg auch
+    auf einem Linux-Container belegbar sind. Eine Naht, die etwas anderes rechnet als die
+    Zielmaschine, belegt aber nichts — also wird hier nach den Regeln des **gemeinten**
+    Systems gerechnet: ``PureWindowsPath`` fuer Windows, sonst ``PurePosixPath``. Beide
+    rechnen rein, ohne das Dateisystem anzufassen.
+
+    Auf echtem Windows ist ``Path`` eine ``WindowsPath`` und damit selbst eine
+    ``PureWindowsPath``; dort aendert sich das Urteil nicht. Was sich aendert, steht bei
+    :func:`anwendungsdaten_wurzel`.
+    """
+    # `os.fspath` und nicht der Wert selbst: Wird ein fertiger Pfad eines **anderen**
+    # Geschmacks uebergeben (eine `PosixPath` etwa), uebernimmt `PureWindowsPath` dessen
+    # bereits zerlegte Teile, statt neu zu zerlegen — `PureWindowsPath(PosixPath(
+    # "C:/Users/nutzer")).is_absolute()` ergibt **False** (gemessen, Python 3.11). Ueber
+    # die Zeichenkette wird neu gelesen, und nur das beantwortet die gestellte Frage.
+    text = os.fspath(wert)
+    if system == "Windows":
+        return PureWindowsPath(text).is_absolute()
+    return PurePosixPath(text).is_absolute()
+
+
 def anwendungsdaten_wurzel(*, system=None, umgebung=None, heim=None) -> Path:
     """Der Ort, an dem dieses Betriebssystem Anwendungsdaten erlaubt.
 
@@ -195,6 +229,21 @@ def anwendungsdaten_wurzel(*, system=None, umgebung=None, heim=None) -> Path:
     relativer Modellpfad zeigte je nach Arbeitsverzeichnis woandershin — das ist genau
     die Sorte Fehler, die als Modellfehler missverstanden wird.
 
+    **Und dasselbe gilt für ``heim``** (Gegenprüfung 18.09.2026): Bis dahin prüfte diese
+    Funktion die beiden Variablen und das Heimverzeichnis nicht. ``heim="~"`` ergab
+    ``~/.local/share/visbox/modelle`` — relativ, also genau der Fehler, den der Absatz
+    darüber beschreibt. Erreichbar ist das nicht nur über die Naht: ``expanduser("~")``
+    gibt ``"~"`` unverändert zurück, wenn sich weder ``HOME`` noch ein Eintrag in der
+    Benutzerdatenbank finden lässt. Siehe den Ersatz unten im Code.
+
+    **Absolut nach den Regeln welches Systems?** Nach denen von ``system`` — siehe
+    :func:`_ist_absolut`. Das ist eine **Verhaltensänderung** gegenüber dem Stand vor dem
+    18.09.2026, und sie betrifft genau einen Fall: einen Aufruf mit ``system="Windows"``
+    auf einem Nicht-Windows-Rechner. Ein Windows-Pfad mit Laufwerksbuchstabe
+    (``C:/…``) galt dort bisher als relativ und wurde still verworfen; jetzt gilt er als
+    absolut und wird verwendet — also so, wie es die Zielmaschine täte. Auf echtem
+    Windows, macOS und Linux ändert sich nichts.
+
     Args:
         system: Naht für die Probe. ``None`` heisst :func:`platform.system`. Nur so lässt
             sich der macOS- und der Windows-Weg auf einem Linux-Container belegen — ohne
@@ -202,7 +251,12 @@ def anwendungsdaten_wurzel(*, system=None, umgebung=None, heim=None) -> Path:
         umgebung: Naht für die Probe. ``None`` heisst ``os.environ``.
         heim: Naht für die Probe. ``None`` heisst das Heimverzeichnis dieses Benutzers.
 
-    Reine Pfadrechnung: Es wird nichts angelegt, nichts geprüft, nichts geladen.
+    Reine Pfadrechnung — mit **einer** Ausnahme, und die steht hier, weil ein Satz, der
+    eine Eigenschaft behauptet, die nicht gilt, schlimmer ist als gar keiner: Lässt sich
+    das Heimverzeichnis nicht ermitteln, fragt der Ersatz einmal
+    :func:`tempfile.gettempdir`, und der legt beim ersten Aufruf eine Probedatei an und
+    entfernt sie wieder. Auf jedem Rechner mit Heimverzeichnis — also in jedem normalen
+    Lauf — wird nichts angelegt, nichts geprüft und nichts geladen.
     """
     system = platform.system() if system is None else system
     umgebung = os.environ if umgebung is None else umgebung
@@ -211,16 +265,25 @@ def anwendungsdaten_wurzel(*, system=None, umgebung=None, heim=None) -> Path:
     # abbricht, machte das ganze Modul unbenutzbar — und dieses Modul wird importiert,
     # lange bevor jemand ein Gewicht sucht.
     heim = Path(os.path.expanduser("~")) if heim is None else Path(heim)
+    if not _ist_absolut(heim, system):
+        # Der Ersatz ist der Temporärordner: absolut, vorhanden, beschreibbar. Er ist
+        # keine gute Ablage für zwanzig Gigabyte Gewichte — aber `modellwurzel_lage`
+        # nennt ihn dann im Klartext samt Handgriff, und das ist mehr, als ein relativer
+        # Pfad je zugelassen hätte. Abbrechen fällt aus (siehe oben), und ein relatives
+        # Ergebnis durchzulassen wäre das, was diese Funktion für `XDG_DATA_HOME` und
+        # `LOCALAPPDATA` ausdrücklich abwehrt.
+        heim = Path(tempfile.gettempdir())
 
     if system == "Darwin":
         return heim / "Library" / "Application Support" / ANWENDUNG / UNTERORDNER_MODELLE
     if system == "Windows":
         lokal = umgebung.get("LOCALAPPDATA")
-        basis = Path(lokal) if lokal and Path(lokal).is_absolute() \
+        basis = Path(lokal) if lokal and _ist_absolut(lokal, system) \
             else heim / "AppData" / "Local"
         return basis / ANWENDUNG / UNTERORDNER_MODELLE
     xdg = umgebung.get("XDG_DATA_HOME")
-    basis = Path(xdg) if xdg and Path(xdg).is_absolute() else heim / ".local" / "share"
+    basis = Path(xdg) if xdg and _ist_absolut(xdg, system) \
+        else heim / ".local" / "share"
     return basis / ANWENDUNG_KLEIN / UNTERORDNER_MODELLE
 
 
@@ -341,8 +404,27 @@ def modellwurzel(*, umgebung=None) -> tuple[Path, str]:
         :data:`HERKUNFT_ALTWURZEL`, :data:`HERKUNFT_ANWENDUNGSDATEN`.
 
     Args:
-        umgebung: Naht für die Probe. ``None`` heisst ``os.environ``.
+        umgebung: Naht für die Probe. ``None`` heisst ``os.environ`` — **und nur dann**
+            liefert Stufe 3 die Modulkonstante :data:`VORGABE_MODELLWURZEL`.
+
+            Das war bis zum 18.09.2026 anders, und es war eine halbe Naht (gemessen):
+            ``modellwurzel(umgebung={"XDG_DATA_HOME": "/erfundenes/xdg"})`` ergab den
+            Anwendungsdatenort *dieses* Rechners, während
+            ``anwendungsdaten_wurzel(umgebung=dasselbe)`` ``/erfundenes/xdg/…`` ergab.
+            Stufe 3 las eben die Konstante, und die wird **einmal beim Import** gerechnet.
+            Eine Naht, die nur zwei von drei Stufen erreicht, kann die dritte nicht
+            prüfen — sie sieht bloss so aus.
+
+            Neu: Wird eine Umgebung übergeben, rechnet auch Stufe 3 mit ihr. Das ist eine
+            **Verhaltensänderung**, und sie trifft ausschliesslich Aufrufe mit
+            ``umgebung=``; ohne Argument bleibt alles, wie es war — auch für Proben, die
+            :data:`VORGABE_MODELLWURZEL` ersetzen.
     """
+    # WARUM vorher gemerkt: Eine Zeile später ist `umgebung` in beiden Fällen belegt, und
+    # die Unterscheidung wäre verloren. Sie lautet nicht „ist das os.environ?", sondern
+    # „hat der Aufrufer eine Umgebung genannt?" — nur im zweiten Fall darf Stufe 3 die
+    # Modulkonstante übergehen, die Proben absichtlich ersetzen.
+    eigene_umgebung = umgebung is not None
     umgebung = os.environ if umgebung is None else umgebung
     if (gesetzt := umgebung.get(UMGEBUNG_MODELLE)):
         return Path(gesetzt), HERKUNFT_UMGEBUNG
@@ -355,6 +437,8 @@ def modellwurzel(*, umgebung=None) -> tuple[Path, str]:
         alt_vorhanden = False
     if alt_vorhanden:
         return alt, HERKUNFT_ALTWURZEL
+    if eigene_umgebung:
+        return anwendungsdaten_wurzel(umgebung=umgebung), HERKUNFT_ANWENDUNGSDATEN
     return Path(VORGABE_MODELLWURZEL), HERKUNFT_ANWENDUNGSDATEN
 
 
@@ -365,8 +449,15 @@ def standard_modell_wurzel(backbone_name: str) -> Path:
     hat Vorrang, damit die Ablage austauschbar bleibt — dasselbe Muster wie
     ``AIIMAGING_BLENDER`` in ``seams.py``.
 
-    Reine Pfadrechnung: Es wird nichts geladen und nichts geprüft. Damit ist diese
-    Funktion auch dort testbar, wo kein einziges Gewicht liegt.
+    Es wird **nichts geladen und nichts angelegt** — aber der Satz „nichts geprüft", der
+    hier bis zum 18.09.2026 stand, war falsch (Gegenprüfung desselben Tages): Stufe 2 von
+    :func:`modellwurzel` fragt das Dateisystem einmal, ob es
+    :data:`ALTWURZEL_HOMESTATION` als Verzeichnis gibt. Ein ``is_dir``-Aufruf, mehr nicht,
+    und ein Fehler daraus wird dort gefangen.
+
+    Was der Satz sagen wollte, gilt weiterhin: Diese Funktion ist auch dort aufrufbar, wo
+    kein einziges Gewicht liegt, und sie sagt nichts darüber, ob dort etwas liegt — das
+    beantwortet :func:`modellwurzel_lage`.
     """
     return modellwurzel()[0] / backbone_name
 

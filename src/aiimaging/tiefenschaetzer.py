@@ -777,11 +777,19 @@ def markiere_hintergrund(tiefen: Sequence[float], *, polaritaet: str,
 # --------------------------------------------------------------------------------------
 
 def standard_modell_wurzel(schaetzer_name: str) -> Path:
-    """Wo die Gewichte auf der HomeStation liegen — eine Konvention, keine Prüfung.
+    """Wo die Gewichte vermutet werden — eine Konvention, keine Prüfung.
 
-    ``$AIIMAGING_MODELLE/<schaetzer-name>``, ersatzweise ``/ai/<schaetzer-name>`` — genau
+    ``$AIIMAGING_MODELLE/<schaetzer-name>``, ersatzweise das, was
+    :func:`aiimaging.render.modellwurzel` als nächste Stufe nennt: ``/ai`` **nur, wenn es
+    den Ordner auf dieser Maschine gibt**, sonst der Anwendungsdatenort des
+    Betriebssystems (macOS ``~/Library/Application Support/Visbox/modelle``, Windows
+    ``%LOCALAPPDATA%\\Visbox\\modelle``, sonst ``$XDG_DATA_HOME/visbox/modelle``). Genau
     dieselbe Rechnung wie :func:`aiimaging.render.standard_modell_wurzel`, und darum von
     dort geholt statt hier nachgebaut.
+
+    Bis zum 18.09.2026 stand hier ``ersatzweise /ai/<schaetzer-name>``. Das war seit der
+    Umstellung auf Visbox veraltet — und ein Docstring, der einen Pfad nennt, den die
+    Funktion nicht mehr rechnet, schickt den Suchenden an den falschen Ort.
 
     Der Grund, warum das hier steht: Bis zum 18.08.2026 rechnete diese Funktion fest mit
     ``/ai/modelle`` und las die Umgebungsvariable **nicht** — obwohl der Docstring
@@ -792,7 +800,10 @@ def standard_modell_wurzel(schaetzer_name: str) -> Path:
     HomeStation, `auf-20260818-09`). Zwei Konventionen, die sich „dieselbe" nennen, sind
     schlimmer als zwei, die es offen nicht sind.
 
-    Reine Pfadrechnung: Es wird nichts geladen und nichts geprüft.
+    Es wird nichts geladen und nichts angelegt, und ob dort Gewichte liegen, fragt diese
+    Funktion nicht. Das Dateisystem berührt sie trotzdem einmal — für die Frage, ob es
+    ``/ai`` als Ordner gibt; die Begründung steht bei
+    :func:`aiimaging.render.standard_modell_wurzel`.
     """
     from aiimaging import render          # nur für die Pfadrechnung, zieht keinen GPU-Stack
     return render.standard_modell_wurzel(hole(schaetzer_name).name)

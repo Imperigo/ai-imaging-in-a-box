@@ -4725,6 +4725,17 @@ ein Abbruch mitten in einer gesunden Rechnung — und der sieht aus wie ein Fehl
 nur die Uhr zu knapp stand. Ein Faktor von 3 verdreifacht alle Fristen auf einmal.
 *Wo im Projekt:* `AIIMAGING_ZEITFAKTOR`, gelesen von `aiimaging.seams.zeitfaktor`.
 
+**Absoluter Pfad, und warum er vom System abhängt** — Eine vollständige Adresse einer
+Datei, die von der Wurzel aus gilt und nicht davon, wo man gerade steht.
+*Wozu:* Was als vollständig gilt, ist je System verschieden. `/home/x/datei` ist unter
+Linux und macOS vollständig, `C:\Users\x\datei` unter Windows. Lässt man einen
+Linux-Rechner über einen Windows-Pfad urteilen, hält er ihn für **unvollständig** — und
+eine Prüfung, die unvollständige Pfade abweist, weist ihn ab. Am 18.09.2026 fiel dadurch
+der ganze Windows-Weg der Modellablage durch die Prüfung, ohne dass eine einzige Probe
+rot wurde: Das Ergebnis war zufällig trotzdem brauchbar, weil ein Ersatzwert einsprang.
+*Wo im Projekt:* `aiimaging.render._ist_absolut` rechnet nach den Regeln des **gemeinten**
+Systems, nicht des laufenden.
+
 **Grössenriegel** — Eine Prüfung, die verhindert, dass eine Modellgrösse behauptet wird,
 die niemand nachgemessen hat.
 *Wozu:* Bei manchen Modellfamilien hängt die Lizenz an der Grösse — die kleine Fassung ist
@@ -4786,7 +4797,7 @@ System laufen.
 | 2026-09-12 | Ergaenzt aus dem ersten Lauf bis zum fertigen Bild: **Oertliche Ergaenzung (Drop-in)**, **Zweite Differenz (Kruemmung)**, **Ersatzschreibung der Umlaute**. Alle drei aus gemessenen Befunden — der Waechter las nur die Hauptdatei, die vorgeschlagene Kennzahl trennte Verlauf und Kante nicht, und «betonwaende» erreichte das Glossar nicht |
 | 2026-09-11 | Ergaenzt aus `herkunft.py`: **Herkunftstabelle** und **Belegt, gemessen, vermutet, unbekannt**. Die vierte Stufe entstand, weil eine zweifach exakte Messung weder «Norm» noch «Gewohnheit» ist |
 | 2026-09-11 | Ergaenzt aus dem Befund der HomeStation zum Renderprojekt: **Stilles Abstreifen (unbekannter Felder)**. Der Begriff wurde noetig, weil `lies_szene` erfundene Bestellfelder spurlos verschluckt hat — gemessen, nicht vermutet |
-| 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel** |
+| 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |
 | 2026-09-09 | Ergaenzt aus `messstand` und `beruehrung`: **Codestand (eines Dokuments)**, **Grundlage (eines Dokuments)**, **Beruehrung (einer Messung)**, **Nachgesehen bis**. Der Codestand war am Vortag gebaut und NICHT ins Lexikon eingetragen worden — nachgeholt, gemeinsam mit der zweiten Haelfte derselben Frage |
 | 2026-09-09 | Ergaenzt aus dem Tokenbuch (`auf-vis-20260821-03`): **Form und Befugnis**, **Tokenbuch**, **Abdruck (eines Tokens)**. Der Befund der HomeStation vom 21.08. lautete: Das Freigabe-Gate prueft, ob eine Zeichenfolge wie ein Schluessel *aussieht*, nicht ob wir sie *ausgegeben* haben. Der Abdruck kam beim Bauen dazu — ein Buch mit Klartext-Token haette die Freigabe eine Datei weiter wieder offen hingelegt |
