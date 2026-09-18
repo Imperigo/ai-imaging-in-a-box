@@ -265,7 +265,14 @@ Aggregation, mitgeliefert wird die Frage schwieriger, als sie sein muss.
 genau zwei `import bpy`, beide in Runner-Skripten, bewacht von einer Probe, die **den
 Syntaxbaum prüft statt den Text**. Das wird nicht angetastet.
 
-**Verbindlich: Blender 4.2 LTS.**
+**BERICHTIGT am 18.09.2026.** Ich schrieb hier «verbindlich: Blender 4.2 LTS». Im Code
+stehen **zwei** Fassungen nebeneinander: 4.2 für die CPU-Messungen, **5.2.0 LTS** für
+alles, was auf der HomeStation mit GPU lief (`seams.py:76, 264, 717`). Eine Fassung
+festzuschreiben bleibt richtig — sie muss aber die sein, auf der die Messungen beruhen,
+und das ist zu klären, bevor sie im `INSTALL` steht.
+
+**Und die Grösse war falsch:** Ich schrieb «~300 MB», gemessen sind **1,3 GB entpackt**.
+Der Entscheid ändert sich dadurch nicht, die Zahl schon.
 
 ## E15 · Die Messlatte — **Apple Silicon, 16 GB Minimum, 32 GB empfohlen**
 
