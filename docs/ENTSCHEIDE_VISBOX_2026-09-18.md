@@ -1,4 +1,4 @@
-# Baukasten — die zwanzig Entscheide, die den Anfang tragen
+# Visbox — die zwanzig Entscheide, die den Anfang tragen
 
 **Grundlage:** keine
 **Nachgesehen bis:** 2796ea5
@@ -55,61 +55,39 @@ erst im Januar entdeckt, ist im Februar nicht zu retten.
 
 # Die Entscheide
 
-## E1 · Der Name — **BERICHTIGT: Baukasten fällt durch, ich empfehle Baugespann**
+## E1 · Der Name — **Visbox** *(Owner, 18.09.2026, dritte und letzte Fassung)*
 
-**Die Kippbedingung, die ich selbst genannt hatte, ist eingetreten** — noch am selben Tag.
-Ich hatte geschrieben: *«Kippt an: einem Markenkonflikt. Ich prüfe PyPI, npm und die
-Markenregister, bevor der Name irgendwo festgeschrieben wird.»* Geprüft, und zwar selbst
-nachgemessen am 18.09.2026:
+Der Name ist an einem Tag zweimal gewechselt, und beide Male aus einem Grund, der
+dokumentiert gehört:
 
-| | PyPI | npm |
+| | | |
 |---|---|---|
-| `baukasten` | **200 — belegt** | **200 — belegt** |
-| `baugespann` | 404 — frei | 404 — frei |
-| `reissbrett` | 404 — frei | 404 — frei |
-| `schaubild` | 404 — frei | 404 — frei |
+| **Baukasten** | Owner-Wahl am Vormittag | **gefallen** — PyPI und npm belegt, und zwar von einem **GPL-3.0**-Paket. Dazu heisst «Baukasten» im deutschen Software-Alltag der *Website-Baukasten*. |
+| **Baugespann** | meine Empfehlung | vom Owner angenommen, dann verworfen — zu schweizerisch, kein Bezug zur Sache für jemanden ausserhalb. |
+| **Visbox** | Owner-Wahl, endgültig | PyPI **404**, npm **404** — selbst geprüft am 18.09.2026. |
 
-Was auf PyPI liegt: `baukasten 0.0.2`, *«A plugin framework»*, **Lizenz GPL-3.0**.
-*Ausgerechnet die Lizenzfamilie, die dieses Projekt ausschliesst, sitzt auf seinem Namen.*
-`pip install baukasten` ist damit für uns nicht zu haben.
-
-Dazu ein zweiter, schwererer Einwand aus der Sprache selbst: **Im deutschsprachigen
-Software-Alltag heisst «Baukasten» der Website-Baukasten** — Jimdo, Wix, Squarespace. Wer
-den Namen in der Schweiz hört, denkt an einen Homepage-Bausatz, nicht an ein
-Architekturwerkzeug.
-
-### Empfehlung: **Baugespann**
-
-Das Baugespann ist die Holz- oder Metallkonstruktion, die vor dem Baugesuch auf der
-Parzelle steht und **Form und Ausdehnung des künftigen Gebäudes sichtbar macht, bevor es
-gebaut ist** — damit Nachbarn und Behörde es beurteilen können.
-
-*Das ist wörtlich, was diese Software tut.* Und die Metapher trägt den wissenschaftlichen
-Kern gleich mit: **prüfen, bevor gebaut wird** — nicht bloss erzeugen.
+**Visbox** trifft die Sache direkt: Visualisierung, und «Box» trägt die Verheissung des
+Ein-Klick-Downloads — *alles drin, eine Datei*. In beiden Sprachen lesbar und sprechbar,
+was an einer Hochschule zählt, an der englisch gelesen wird.
 
 | | |
 |---|---|
-| PyPI, npm | frei (selbst geprüft, 18.09.2026) |
-| GitHub | `baugespann in:name` → **0 Treffer** |
-| Suche | keine Software dieses Namens auffindbar |
-| dagegen | elf Buchstaben; ausserhalb der Schweiz kaum bekannt; braucht einen englischen Untertitel |
+| Die Software | **Visbox** |
+| Das Paket | `pip install visbox` |
+| Der Importpfad | bleibt `aiimaging` — siehe unten |
+| Das Repo | bleibt `ai-imaging-in-a-box` |
+| Die Vertiefungsarbeit | trägt ihren eigenen Titel |
 
-Englischer Untertitel: *the profile you set before you build*.
-Paket: `baugespann`. Repo-Name bleibt `ai-imaging-in-a-box`.
+**Warum der Importpfad `aiimaging` bleibt.** Ihn mitzuziehen hiesse, rund 40 000 Zeilen und
+131 Testdateien anzufassen, ohne dass danach etwas ginge, was vorher nicht ging. Im
+Python-Raum ist die Trennung üblich und unauffällig (`pip install pillow` → `import PIL`).
+Umbenannt wird er, wenn die Produktfläche steht und der Schnitt ohnehin fällt — *nicht
+heute, mitten im Bau.*
 
-**Rang 2 und 3, falls Ihnen Baugespann zu schweizerisch ist:** **Reissbrett** (jeder
-Architekt kennt es, *«zurück ans Reissbrett»* ist genau dieser Entwurfsdurchgang — aber
-`reissbrett.ch` ist belegt und es gibt Hinweise auf ein Planungsprodukt gleichen Namens)
-und **Schaubild** (frei, sachlich — aber im Alltag heisst Schaubild meist *Diagramm*).
-
-**Ausdrücklich geprüft und verworfen:** `Rissbild` (im Bauingenieurwesen der Fachbegriff
-für das **Rissmuster im Beton** — an der ETH sitzt D-BAUG neben D-ARCH, das ist kein
-Randrisiko), `Werkbank` (npm belegt durch eine aktive React-Bibliothek in genau unserer
-Nische), `AIBox` (PyPI belegt, Hauslizenz), `Kubatur` (englisch *cubature* ist numerische
-Mathematik und auf PyPI vergeben).
-
-**Kippt an:** Ihrem Geschmack. Das ist Ihr Name, nicht meiner — ich liefere die Prüfung,
-nicht den Entscheid.
+**Nicht geprüft:** GitHub-Namen und Markenregister. Die GitHub-Schnittstelle verlangte
+eine Anmeldung; das Markenregister habe ich nicht angesehen. **Für einen Paketnamen
+entscheiden PyPI und npm, und die sind frei** — aber «ungeprüft» heisst hier ungeprüft und
+nicht «frei».
 
 ## E2 · Module, die mitkommen — **`vis`, `asset`, `spez`; `design` nur teilweise**
 
@@ -122,7 +100,7 @@ kein Zeichnen auf einem Bild — für unseren Schritt 5 also fast wertlos. Wir n
 
 ## E3 · BIM-Kern — **nein**
 
-Baukasten importiert Modelle, es baut keine. Das ist der grösste einzelne Brocken drüben
+Visbox importiert Modelle, es baut keine. Das ist der grösste einzelne Brocken drüben
 und gehört nicht zu dem Ablauf, den der Owner beschrieben hat.
 
 **Kippt an:** dem Satz «man muss das Importierte auch ändern können». Dann bräuchte es
@@ -205,7 +183,7 @@ Erweiterung — sie ist aufgeschoben, nicht verbaut.
 
 ## E10 · KI ohne Konto — **ja, Ollama ist die Vorgabe**
 
-Baukasten läuft vollständig ohne Konto und ohne Schlüssel. Ein eigener Anthropic-Schlüssel
+Visbox läuft vollständig ohne Konto und ohne Schlüssel. Ein eigener Anthropic-Schlüssel
 ist optional und macht die KI besser; die Software sagt ehrlich, was der Unterschied ist.
 
 **Ein Fund, der hier hilft:** Kosmo kennt bereits acht Anbieter, darunter Ollama, LM Studio
@@ -277,14 +255,14 @@ Der Entscheid ändert sich dadurch nicht, die Zahl schon.
 ## E15 · Die Messlatte — **Apple Silicon, 16 GB Minimum, 32 GB empfohlen**
 
 Mit `flux2-klein-4b` (9,6 GB) sind 16 GB knapp, aber machbar. 32 GB ist die Grösse, auf
-der es angenehm ist. Darunter lehnt Baukasten ab, statt eine Stunde zu rechnen und dann zu
+der es angenehm ist. Darunter lehnt Visbox ab, statt eine Stunde zu rechnen und dann zu
 sterben.
 
 **Diese Zahlen sind gerechnet, nicht gemessen** — siehe die offenen Punkte am Ende.
 
 ## E16 · Der Speicherdeckel — **60 % des vereinten Speichers**
 
-Also 9,6 GB bei 16 GB, 19,2 GB bei 32 GB. Darüber bricht Baukasten ab **mit einer
+Also 9,6 GB bei 16 GB, 19,2 GB bei 32 GB. Darüber bricht Visbox ab **mit einer
 Erklärung und einem Vorschlag** (kleineres Modell, kleinere Auflösung, weniger Schritte)
 statt das System einfrieren zu lassen.
 
@@ -294,7 +272,7 @@ Grund ist besser als ein Erfolg, auf den man nicht warten kann.*
 
 ## E17 · Der eine Download — **App plus Python, ohne Gewichte, ohne Blender**
 
-Grössenordnung 150–200 MB. Beim ersten Start holt Baukasten, was fehlt, und sagt vorher,
+Grössenordnung 150–200 MB. Beim ersten Start holt Visbox, was fehlt, und sagt vorher,
 wie viel und wie lange.
 
 **Ein Befund, der Arbeit bedeutet:** Der Tauri-Bauweg liefert heute **nur Linux**

@@ -3,9 +3,17 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "aiimaging"
+# DER NAME DER SOFTWARE IST **VISBOX** (Owner-Entscheid 18.09.2026), und der
+# Verteilungsname folgt ihm: `pip install visbox`.
+#
+# DER IMPORTPFAD BLEIBT `aiimaging`, und das ist Absicht, kein Rest. Ihn mitzuziehen
+# hiesse, rund 40 000 Zeilen und 131 Testdateien anzufassen, ohne dass sich etwas
+# koennte, was vorher nicht ging. Das ist im Python-Raum ueblich und unauffaellig
+# (`pip install pillow` → `import PIL`). Umbenannt wird er, wenn die Produktflaeche
+# steht und der Schnitt ohnehin faellt — nicht heute, mitten im Bau.
+name = "visbox"
 version = "0.0.1"
-description = "Geometrie-treue KI-Architektur-Visualisierung: IFC-Geometrie hinein, verifizierte Bilder heraus."
+description = "Visbox — geometrie-treue KI-Architektur-Visualisierung: Modell hinein, geprueftes Bild heraus."
 readme = "README.md"
 requires-python = ">=3.11"
 # Tabellenform statt SPDX-String: die hier installierte setuptools 68 weist die

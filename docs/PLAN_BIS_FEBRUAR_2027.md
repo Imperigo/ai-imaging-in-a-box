@@ -183,8 +183,8 @@ messen kann.
 
 | wann | was | warum |
 |---|---|---|
-| **sofort** | Der Name — **Baugespann**? | Paketname, Titelblatt, jeder Dateikopf |
-| **sofort** | **Abgabetermin und Form** | Der ganze Plan ist rückwärts gerechnet und steht auf einer Annahme |
+| ~~sofort~~ | ~~Der Name~~ | **erledigt 18.09.2026: Visbox** |
+| ~~sofort~~ | ~~Abgabetermin~~ | **erledigt: Ende Februar 2027** — meine Annahme war richtig |
 | **im Oktober** | **Zugang zu einem M1 Max** | Ohne ihn bleibt Risiko 1 und 6 ungemessen bis zum Schluss |
 | **im November** | Zwei Bildschirmfotos von Figma Weave | E7 ist von mir entschieden, ohne das Vorbild gesehen zu haben |
 | **bis Dezember** | Soll ein KI-verändertes Bild als solches erkennbar sein? | Ein Entwurfsbild kann in einem Baugesuch landen. *Diese Frage stellt sich eine Arbeit an einer Architekturschule, oder jemand anderes stellt sie ihr.* |

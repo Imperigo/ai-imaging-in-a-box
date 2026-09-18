@@ -53,21 +53,10 @@ Bauentscheidung ist (Frage 12).
 
 # 1 · Der Name
 
-**🔴 F1 — Wie soll die Software heissen?**
-Das ist die erste Entscheidung, weil alles andere daran hängt: Repo, Paketname, Fenstertitel,
-Titelblatt der Arbeit, und ob sie zur Kosmo-Familie gehört oder nicht.
+**✅ F1 — Wie soll die Software heissen?** → **BEANTWORTET: Visbox** (Owner, 18.09.2026).
 
-Meine vier Vorschläge, in Rangfolge:
-
-| | Name | dafür | dagegen |
-|---|---|---|---|
-| 1 | **Baukasten** | Bauhaus-Resonanz, an einer Architekturschule sofort verstanden. Trifft „in a Box" wörtlich: Kasten = Box. Kurz, sprechbar. | Deutsch; international braucht es einen Untertitel. Häufiges Wort — Markenlage zu prüfen. |
-| 2 | **AI Imaging in a Box** (bleibt) | Sagt genau, was es ist. Ist schon der Repo-Name, also null Reibung. Die Verheissung *ein Download, alles drin* steckt im Namen. | Lang, generisch, nicht schützbar, klingt nach Werkzeug statt nach Werk. |
-| 3 | **Rissbild** | „Riss" ist der Fachbegriff für die Zeichnung (Grundriss, Aufriss), „Bild" das Ergebnis — der Bogen der Software in einem Wort. Distinktiv. | Für Englischsprachige weder lesbar noch sprechbar. „Riss" heisst auch Sprung/Bruch. |
-| 4 | **KosmoBox** | Bleibt in der Familie, macht die Herkunft sichtbar, erleichtert das Zurückführen im Februar. | Bindet die offene Arbeit an ein geschlossenes Produkt — genau das, was eine ETH-Arbeit nicht will. |
-
-**Meine Empfehlung: Baukasten**, mit dem englischen Untertitel *an AI imaging workbench for
-architects*. Der Repo-Name kann bleiben.
+*Der Weg dahin steht in `ENTSCHEIDE_VISBOX_2026-09-18.md`, E1 — er ging über zwei
+verworfene Namen, und beide Male hat die Prüfung entschieden und nicht der Geschmack.*
 
 **🟠 F2 — Soll der Name in die Kosmo-Familie gehören oder sich absetzen?**
 Das ist eine andere Frage als F1 und wird oft mit ihr verwechselt. *Dafür:* Herkunft
