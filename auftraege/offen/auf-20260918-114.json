@@ -1,0 +1,38 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260918-114",
+  "art": "qa",
+  "worker": "local",
+  "rang": 13,
+  "erstellt": "2026-09-18T12:00:00Z",
+  "params": {},
+  "beschreibung": "R2 — die Messung, an der die Vertiefungsarbeit haengt: Traegt flux2-klein-4b (Apache-2.0, 9,6 GB, laptoptauglich) eine Tiefen-Konditionierung? Drei Wege pruefen. Neu und verbindlich: zu jedem Bild rho_maske UND geom_iou, jeweils auch gegen eine FALSCHE Tiefenkarte — ohne diese Gegenprobe ist die Messung wertlos.",
+  "anweisung": "=== R2 · TRAEGT DAS KLEINE MODELL EINE TIEFEN-KONDITIONIERUNG? ===\n\nDies ist die Messung, an der die ganze Vertiefungsarbeit haengt. Sie braucht\neine GPU und echte Gewichte — darum kommt sie zu euch.\n\nWAS SICH GEAENDERT HAT, damit ihr den Rahmen kennt\n\nAus dem KosmoVis-Bestand wird eine eigenstaendige Open-Source-Software\nherausgeloest: BAUGESPANN, Vertiefungsarbeit ETH D-ARCH ITA, Abgabe Ende\nFebruar 2027, Apache-2.0. Zielhardware ist ausdruecklich der Laptop einer\nStudierenden — ein MacBook M1 Max, nicht eure Maschine.\n\nDaraus folgt eine Klemme, die wir am 18.09.2026 vermessen haben. Ein Modell\nmuesste DREI Bedingungen zugleich erfuellen: permissiv lizenziert,\nlaptoptauglich, und mit der Tiefen-Naht, die unsere Geometrietreue traegt.\nEs gibt keines. Immer nur zwei von dreien:\n\n    z-image-turbo     Apache-2.0  Tiefen-Naht    25,1 GB  -> zu gross\n    qwen-image-2512   permissiv   Tiefen-Naht    48   GB  -> zu gross\n    flux2-klein-4b    Apache-2.0  KEINE Naht      9,6 GB  -> passt\n    sdxl-juggernaut   OpenRAIL-M  Tiefen-Naht     8,4 GB  -> Lizenz faellt\n\nUnser Entscheid: flux2-klein-4b wird die Vorgabe, UND DIE FEHLENDE NAHT WIRD\nGEBAUT. Ob das geht, weiss heute niemand. Das ist eure Messung.\n\n\nWAS ZU TUN IST — DREI WEGE, IN DIESER REIHENFOLGE\n\n  WEG A · GIBT ES SCHON EINES?\n  Sucht auf Hugging Face nach einem Depth-ControlNet fuer FLUX.2-klein bzw.\n  FLUX.2. Wenn ja: LIZENZ PRUEFEN (nur MIT, BSD, Apache-2.0, MPL-2.0 sind fuer\n  uns brauchbar — OpenRAIL-M und Non-Commercial NICHT), Groesse in GB nennen,\n  und einen Lauf damit fahren.\n  Findet ihr keines, ist das ein vollstaendiges Ergebnis. Sagt es und geht zu B.\n\n  WEG B · TRAEGT DER INTEGRIERTE EDIT-WEG DIE TIEFE?\n  flux2-klein-4b fuehrt bei uns `konditionierung = KOND_INTEGRIERTES_EDIT`,\n  also Bildkonditionierung statt ControlNet. Die Frage ist schlicht:\n\n      Wenn man ihm die TIEFENKARTE als Referenzbild gibt — folgt das erzeugte\n      Bild dann der Geometrie?\n\n  Das ist kein Umbau, sondern ein Versuch: Tiefenkarte rein, Prompt dazu, Bild\n  raus, messen. Probiert mindestens drei Staerken der Bildkonditionierung.\n\n  WEG C · WENN A UND B NICHT TRAGEN\n  Dann sagt das klar. Ein \"geht nicht\" mit Belegen ist fuer diese Arbeit MEHR\n  wert als ein halbes \"vielleicht\" — es entscheidet naemlich, ob wir das\n  Standardmodell wechseln oder die Zielhardware.\n  Nennt in dem Fall bitte auch: Was waere die naechstkleinere permissive\n  Alternative MIT Naht, und wie gross ist sie wirklich (auf der Platte UND im\n  Speicher)?\n\n\nWIE GEMESSEN WIRD — UND HIER HAT SICH HEUTE ETWAS GEAENDERT\n\nWir haben am 18.09.2026 eure eigenen Zahlen aus auf-20260909-92 neu\nausgewertet, und dabei ist unsere Pruefung durchgefallen. Der Kern:\n\n  * Bei ControlNet-Staerke 0.30, wo das Bild NACHWEISLICH nichts mehr mit dem\n    Modell zu tun hat, steht `score` noch bei 0,766 und `geom_iou` bei 0,722.\n    BEIDE bestehen die Schwelle 0,65 weiterhin. Elf von zwoelf Muellbildern\n    gingen durch.\n  * Nur `rho_maske` faellt dort auf minus 0,009 — also exakt null.\n  * Umgekehrt trennt `rho_maske` NICHT zwischen richtiger und falscher\n    Geometrie (paarweise nur 10 von 12), `geom_iou` dagegen sauber (+0,149).\n\n    Es sind ZWEI Fragen, und eine einzige Zahl kann beide nicht beantworten.\n\nDARUM VERLANGEN WIR AB SOFORT ZU JEDEM BILD BEIDE ZAHLEN UND DIE GEGENPROBE:\n\n    1  rho_maske gegen die RICHTIGE Tiefenkarte    (folgt es dem Modell?)\n    2  geom_iou  gegen die RICHTIGE Tiefenkarte    (folgt es DIESEM Modell?)\n    3  dieselben zwei gegen eine FALSCHE Tiefenkarte\n\nOhne Punkt 3 ist die Messung wertlos — genau daran ist die alte gescheitert.\nNehmt als falsche Karte die jeweils andere Szene, wie ihr es schon getan habt.\n\nAls Vergleichsanker fahrt bitte DENSELBEN Satz einmal mit z-image-turbo, damit\nwir wissen, was wir mit dem kleinen Modell verlieren. Das ist die Zahl, die in\nder Arbeit steht.\n\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n\n  * NICHT an unserem Code herumbauen. Das hier ist eine Messung. Wenn der Weg\n    einen Umbau braucht, sagt WELCHEN — wir bauen ihn.\n  * KEINE Non-Commercial-Gewichte laden, auch nicht zum Vergleich. FLUX.1-dev,\n    FLUX.2-dev und FLUX.2-klein-9B sind fuer uns gesperrt. Die 4B-Groesse ist\n    Apache-2.0, die 9B NICHT — die Lizenz haengt an der Groesse.\n  * NICHT auf eine gute Zahl hin optimieren. Wir wollen wissen, was ist.\n  * Keine echten Projektdaten, keine absoluten Pfade mit Benutzernamen.\n\n\nZWEI FEHLER IN UNSEREM CODE, DIE IHR BEIM LADEN TREFFEN WERDET\n\n  1  `backbone.py` traegt `modell_id = \"black-forest-labs/FLUX.2-klein\"`. Die\n     Kennung existiert nicht (401) — die Gewichte liegen unter\n     \".../FLUX.2-klein-4B\". Wir richten das; nehmt einstweilen die richtige.\n  2  Unser Lizenzriegel prueft den NAMEN, nicht die GROESSE. Da die Lizenz bei\n     9B kippt, ist das ein Loch. Wird ebenfalls gerichtet.\n\nBeides gefunden bei der Kartierung am 18.09.2026, nicht von euch verursacht.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python tools/make_test_ifc.py --gelaende  bzw.  --hochbau",
+    "hinweis": "Dieselben zwei Szenen wie in auf-20260909-92, damit die Zahlen vergleichbar bleiben."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 60,
+    "leerlauf_schwelle_mem_gb": 2,
+    "hinweise": [
+      "KEINE Non-Commercial-Gewichte laden — auch nicht zum Vergleich.",
+      "FLUX.2-klein-4B ist Apache-2.0, FLUX.2-klein-9B ist es NICHT. Die Lizenz haengt an der Groesse.",
+      "«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Weg A: Gibt es ein Depth-ControlNet fuer FLUX.2-klein? Wenn ja: Kennung, Lizenz, Groesse in GB, ein Lauf damit.",
+    "V2 Weg B: Traegt der integrierte Edit-Weg die Tiefenkarte als Referenz? Mindestens drei Staerken, je mit Bild.",
+    "V3 Je Bild: rho_maske und geom_iou gegen die RICHTIGE und gegen die FALSCHE Tiefenkarte. Ohne die falsche keine Messung.",
+    "V4 Derselbe Satz einmal mit z-image-turbo als Anker — was verlieren wir mit dem kleinen Modell?",
+    "V5 Speicherspitze in GB und Laufzeit je Bild, fuer beide Modelle.",
+    "V6 Wenn weder A noch B traegt: Was ist die naechstkleinere permissive Alternative MIT Naht, und wie gross ist sie auf der Platte UND im Speicher?",
+    "V7 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}
