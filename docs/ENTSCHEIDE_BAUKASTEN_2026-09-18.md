@@ -332,8 +332,25 @@ Vier Fälle, je drei Startwerte, zwölf Bilder:
 > belegen sollte.** Sie misst zum grossen Teil den Boden-Himmel-Aufbau, den jedes
 > Architekturbild auf Augenhöhe hat.
 
-**Und die Rettung steht im selben Befund:** `rho_maske` — die Rangkorrelation **über der
-Bauwerksmaske allein** — trennt sauber, wo der zusammengesetzte Score es nicht tut.
+**BERICHTIGT am 18.09.2026 — dieser Satz war falsch.** Ich hatte hier geschrieben:
+*«Die Rettung steht im selben Befund: `rho_maske` trennt sauber, wo der zusammengesetzte
+Score es nicht tut.»* Das war aus der Prosa des Befunds übernommen, **ohne die Tabelle
+danebenzulegen, die im selben Verzeichnis lag.**
+
+Nachgerechnet (`docs/R3_WELCHES_MASS_TRENNT_2026-09-18.md`): Für die Frage *«richtiges oder
+falsches Gebäude?»* trennt `rho_maske` **am schlechtesten von allen dreien** — paarweise nur
+10 von 12, mit fast vollständig überlappenden Wertebereichen.
+
+**Die Rettung ist eine andere und bessere:** Es sind **zwei** Fragen, und sie brauchen
+**zwei** Zahlen.
+
+| | folgt das Bild dem Modell überhaupt? | folgt es DIESEM Modell? |
+|---|---|---|
+| **`rho_maske`** | **ja** — fällt auf −0,009, also exakt null | nein (10/12) |
+| **`geom_iou`** | nein — bleibt bei 0,72, wenn nichts mehr stimmt | **ja** — Lücke +0,149, paarweise 12/12 |
+
+*Eine Kennzahl, die zwei Fragen zu einer verrechnet, beantwortet keine von beiden* — und
+genau das tut der zusammengesetzte `score`.
 
 *Das ist kein Scheitern, sondern das beste Ergebnis, das dieses Projekt bisher hat.* Ein
 Prüfverfahren, das schwächer ist als das Erzeugungsverfahren, ist genau die Sorte Befund,

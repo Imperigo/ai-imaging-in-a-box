@@ -19,7 +19,7 @@
 |---|---|---|---|---|
 | **R1** | Auf Apple Silicon läuft gar nichts Sinnvolles | Die Zielhardware fällt weg — das Vorhaben braucht eine andere Fassung | Ein einziger Lauf: lädt `flux2-klein-4b` auf MPS und erzeugt ein Bild | **einen Mac** |
 | **R2** | Die Tiefen-Naht ist für das kleine Modell nicht baubar | Entweder Lizenz oder Laptop fällt — beides nicht beides | Prototyp der Konditionierung, ein Bild gegen eine Tiefenkarte | GPU (HomeStation) |
-| **R3** | `rho_maske` trennt auch nicht | **Die Forschungsfrage hat keine Antwort** | Nachrechnen an Daten, die schon da sind | **nichts — geht hier und heute** |
+| ~~**R3**~~ | ~~`rho_maske` trennt auch nicht~~ | — | **ERLEDIGT 18.09.2026** → `docs/R3_WELCHES_MASS_TRENNT_2026-09-18.md` | — |
 
 **R3 ist zuerst dran, weil es nichts kostet.** Die zwölf Bilder aus `auf-20260909-92`
 liegen samt Zahlen im Repo. Wenn `rho_maske` gegen die falsche Soll-Karte **nicht**
@@ -67,7 +67,7 @@ der Vergleichsknoten, Mehrsprachigkeit, Windows, Selbstaktualisierung.
 
 | | |
 |---|---|
-| **R3 zuerst** | `rho_maske` gegen die falsche Soll-Karte nachrechnen. Geht hier, kostet einen Tag. **Ergebnis entscheidet über die Forschungsfrage.** |
+| ~~R3~~ | **Erledigt am 18.09.2026, am ersten Tag.** Es gibt eine Antwort, und sie ist schärfer als erwartet: **zwei** Zahlen für **zwei** Fragen. `rho_maske` sagt, ob das Bild dem Modell überhaupt folgt (fällt auf null, wenn nicht); `geom_iou` sagt, ob es **diesem** Modell folgt (Lücke +0,149). Der zusammengesetzte Score kann beides nicht und fällt. → `docs/R3_WELCHES_MASS_TRENNT_2026-09-18.md` |
 | **R1** | Ein Mac-Lauf: MPS-Zweig in `render.py` (heute kennt sie nur `cuda` und `cpu`), `bfloat16` auf MPS prüfen. |
 | **R2** | Tiefen-Konditionierung für `flux2-klein-4b` als Prototyp — auf der HomeStation, wo eine GPU steht. |
 | nebenher | Die **Startsperre** beseitigen: `VORGABE_MODELLWURZEL = "/ai"` ist auf macOS nicht beschreibbar. *Eine Studentin läuft heute in einen Rechtefehler, bevor irgendetwas rechnet.* |
