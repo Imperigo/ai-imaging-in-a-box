@@ -16,6 +16,7 @@ behauptet, was es trägt und was ihm fehlt.
 
 | Datei | Stand |
 |---|---|
+| `kapitel-03-die-randbedingungen.md` | **Entwurf, 19.09.2026.** Alle Zahlen darin sind **erzeugt, nicht zitiert** — aus `tools/beweis/19_regeln_ausfuehrbar.py`, gefahren für dieses Kapitel. |
 | `kapitel-07-die-methode.md` | **Entwurf, 19.09.2026.** Erstes geschriebenes Kapitel. |
 
 ## Die Reihenfolge, in der geschrieben wird
@@ -36,3 +37,8 @@ ausgeht als erwartet, ändert sich der Ton der ganzen Arbeit.
    einer Tabellenspalte — und er steht dort jetzt als Beispiel.
 3. **Was nicht gemessen ist, steht als nicht gemessen da.** Nicht als Vorbehalt in einer
    Fussnote, sondern in demselben Satz wie das Ergebnis.
+4. **Jedes Kapitel schliesst mit seinen eigenen Grenzen** — und zwar mit denen, die weh
+   tun. Kapitel 7 sagt, dass die Regeln Fehler nicht verhindert, sondern nur auffindbar
+   gemacht haben. Kapitel 3 sagt, dass seine These nicht widerlegbar formuliert ist.
+   *Ein Kapitel, dessen Grenzen niemandem unangenehm sind, hat seine Grenzen nicht
+   gesucht.*

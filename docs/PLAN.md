@@ -5801,6 +5801,22 @@ Bekannt und ausdrücklich nicht erledigt:
 > **Offen:** Ob die Vermutung hinter der Achsen-Gegenprobe überhaupt trägt — Gelände ist
 > in der Hochachse flach — ist nicht gemessen.
 
+- [x] **Kapitel 3 geschrieben: «Die Randbedingungen sind der Entwurf».**
+      Das zweite Kapitel, und es ist das am besten belegte der Arbeit — **weil seine
+      Belege ausführbar sind.** Alle Zahlen darin sind für das Kapitel **erzeugt, nicht
+      zitiert** (`tools/beweis/19_regeln_ausfuehrbar.py`, gefahren am 19.09.2026):
+      8 Registry-Einträge, 6 wählbar, 2 gesperrt · IFC-Bibliothek und Blender-Modul im
+      Produktprozess **nicht geladen** · 685 versionierte Dateien, **0 Treffer** auf
+      Kunden-, Büro- oder Projektnamen · 167 Module beim Import, **0 von 13** verbotenen
+      Markern.
+      **Die These:** Die vier Auflagen haben den Entwurf nicht eingeschränkt, sondern
+      erzeugt. Alle vier drängen in dieselbe Richtung — **Trennung** —, und daraus ist
+      eine Software entstanden, deren Teile einzeln prüfbar sind. *Das ist die
+      Voraussetzung dafür, dass diese Arbeit überhaupt Messwerte vorlegen kann.*
+      **Und die Grenzen stehen dabei**, auch die unangenehme: Die These ist **nicht
+      widerlegbar formuliert.** Es gibt keine zweite Fassung dieser Software, die ohne die
+      Regeln entstanden wäre. Gezeigt werden kann nur das Schwächere — dass jede Regel
+      eine benennbare Entscheidung erzwungen hat und mindestens eine etwas gekostet hat.
 - [x] **Der Text der Arbeit ist angefangen.** `docs/arbeit/` mit dem ersten geschriebenen
       Kapitel: **Kapitel 7, Die Methode.** Bei über 700 Commits stand bis heute keine
       Zeile — *keine technische Hürde, es war nur nie angefangen worden.*
