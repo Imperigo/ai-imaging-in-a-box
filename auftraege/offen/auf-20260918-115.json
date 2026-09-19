@@ -3,7 +3,7 @@
   "auftrag_id": "auf-20260918-115",
   "art": "qa",
   "worker": "local",
-  "rang": 16,
+  "rang": 17,
   "erstellt": "2026-09-18T15:00:00Z",
   "params": {},
   "beschreibung": "Die Gegenprobe bei ControlNet-Staerke 0.75, die im Datensatz fehlt. Ein konditioniertes Bild (Fall C, Szene gebaeude, Seed 2) liegt dort auf rho_maske -0.1549 und damit UNTER dem gesamten gemessenen Rauschband, bei geom_iou 0.9119. Ohne Vertauschprobe bei 0.75 ist nicht entscheidbar, ob das Bild dem Modell dort wirklich weniger folgt oder ob rho_maske versagt. Davon haengt die Schwelle SCHWELLE_FOLGT = 0.10 ab.",

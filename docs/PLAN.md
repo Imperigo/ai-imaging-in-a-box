@@ -5787,3 +5787,53 @@ Bekannt und ausdrücklich nicht erledigt:
       **Gelände ist in der Hochachse flach**. Welche Achse das ist, liesse sich daran
       messen statt glauben. Ob das an echten Modellen trägt, ist **nicht gemessen**.
       **Adressat: `kern` für den Bau, `local` für die Gegenprobe an echten Modellen.**
+
+---
+
+## Sitzung 30 — 19.09.2026, spät · Beides parallel
+
+> **Entschieden:** Auf Owner-Weisung parallel — der Bau (geometrische Gegenprobe zur
+> Hochachse) und **der Text der Arbeit**. Dazu: den Workern melden, was bei ihnen offen
+> ist.
+> **Gemessen:** `local` trägt **17 offene Aufträge** gegen eine Selbstbindung von acht,
+> und seit elf Tagen kam von dort keine Antwort. *Wir haben in dieser Zeit weitere
+> Aufträge gestellt, statt aufzuhören.*
+> **Offen:** Ob die Vermutung hinter der Achsen-Gegenprobe überhaupt trägt — Gelände ist
+> in der Hochachse flach — ist nicht gemessen.
+
+- [x] **Der Text der Arbeit ist angefangen.** `docs/arbeit/` mit dem ersten geschriebenen
+      Kapitel: **Kapitel 7, Die Methode.** Bei über 700 Commits stand bis heute keine
+      Zeile — *keine technische Hürde, es war nur nie angefangen worden.*
+      Ausgeführt sind die fünf Regeln mit je einem belegten Fall: die dritte Antwort, die
+      Mutationsprobe, Vorprüfung gegen tragende Messung, die Zahl an ihrer Bedingung, und
+      der Fehlschlag, der wie ein Erfolg aussieht. Dazu der gemeinsame Nenner (*ein Riegel
+      prüft gegen seine Liste, nicht gegen die Wirklichkeit*), die Stelle, an der eine
+      Regel 121 MB gekostet hat, und **drei Grenzen der Methode** — darunter die
+      unangenehmste: *Die Regeln haben Fehler nicht verhindert, sie haben sie auffindbar
+      gemacht.*
+- [x] **Beim Schreiben denselben Fehler gemacht, gegen den das Kapitel argumentiert.**
+      Die Tabelle zu Abschnitt 7.4 führte zwei verschiedene Kennzahlen in **einer** Spalte
+      — Flächenüberschneidung und den zusammengesetzten Wert —, weil beide Zahlen zwischen
+      null und eins sind. Berichtigt, und der Fehler steht jetzt **als Beispiel im
+      Kapitel**: *Der Entwurf dieses Kapitels hat ihn zuerst gemacht.*
+- [x] **Alle Zahlen des Kapitels gegen ihre Quelle geprüft**, nicht aus dem Gedächtnis
+      geschrieben: 0,9848 / 0,9703 (Sitzung 10 bzw. `EMPFINDLICHKEIT_2026-08-20`),
+      0,1191 / 0,2301 (`SCHWELLENSTUDIE_ECHT_2026-08-26`), 0,7217 / 0,8911
+      (`MASKE_2026-08-21`), 21 von 23 (`STRUKTUR_VERTIEFUNGSARBEIT`). *Ein Methodenkapitel
+      mit ungeprüften Zahlen wäre eine Selbstwiderlegung.*
+- [x] **Den Workern gemeldet, was bei ihnen offen ist.**
+      An `local` die Übersicht, die fehlte (`auf-20260919-121`): siebzehn Aufträge,
+      geordnet nach dem, was sie kosten — **vier nur lesen, fünf eine Antwort ohne
+      Maschine, acht brauchen die Karte, und davon tragen zwei die Arbeit.** Dazu das
+      Eingeständnis, dass die Zahl unser Fehler ist, und das Angebot: *Sagt, welche ihr
+      nicht machen wollt, und wir ziehen sie zurück.*
+      **Und die Selbstbindung greift ab heute wirklich:** kein weiterer Messauftrag an
+      `local`, bis wir unter acht sind.
+      `cloud` und `ui` haben ihre gesammelten Meldungen heute bereits erhalten
+      (`auf-20260919-118` und `-119`), beide zugestellt — dort wäre eine zweite eine
+      Wiederholung und keine Auskunft.
+- [~] **Im Bau: die geometrische Gegenprobe zur Hochachse.** Sie soll aus der Geometrie
+      messen, welche Achse oben ist, statt der Angabe zu glauben. *Die Vermutung dahinter
+      — Gelände ist in der Hochachse flach — ist **nicht gemessen**, und sie kann fallen:*
+      an einem Modell ohne Gelände, an einer Hanglage, an einem Turm. **Fällt sie, ist das
+      ein vollständiges Ergebnis** und kein Fehlschlag. *Adressat: `kern`.*
