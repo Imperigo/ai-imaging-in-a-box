@@ -1,0 +1,37 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "auftrag_id": "auf-20260919-81",
+ "art": "qa",
+ "worker": "local",
+ "rang": 2,
+ "erstellt": "2026-09-19T01:30:00Z",
+ "beschreibung": "DER E2E-VOLLLAUF BRICHT IM CONTAINER ZWEIMAL DURCH MASCHINEN-NEUSTART AB (98 % und 88 %). Auf echter Hardware dauert er 97 statt 189 Minuten. Gemessen werden soll der Stand NACH zwoelf nachgezogenen Pruefungen und zwei behobenen Oberflaechen-Defekten.",
+ "params": {},
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": null,
+  "hinweis": "Keine Geometrie noetig. Der Lauf erzeugt seine Szenen selbst; die Attrappen-Bruecke startet das Gate."
+ },
+ "anweisung": "=== WARUM DIESER AUFTRAG KOMMT ===\n\nDer vollstaendige E2E-Lauf von KosmoOrbit (1240 Faelle, rund drei Stunden) ist am\n18.09.2026 zum ersten Mal ueberhaupt durchgelaufen \u2014 im Entwicklungscontainer, 189\nMinuten, 1223 gruen. Danach sind zwoelf veraltete Pruefungen nachgezogen und ZWEI echte\nOberflaechen-Defekte behoben worden.\n\nDer Nachweislauf dazu ist **zweimal abgebrochen**, beide Male durch einen Neustart der\nMaschine, nicht durch den Lauf:\n\n  Lauf 2: kam bis 1221 von 1240 (98 %), 2 rote Faelle\n  Lauf 3: kam bis 1095 von 1240 (88 %), 1 roter Fall\n\nBeide Male 15 GB freier Speicher und 21 GB freier Platz \u2014 es ist nicht der Lauf, der zu\ngross ist. Die Umgebung traegt derzeit keine drei Stunden am Stueck.\n\n**Damit ist das keine offene Frage, sondern ein unverschickter Auftrag.** Bei euch\nlaeuft derselbe Lauf auf echter Hardware; am 03.09.2026 hat er dort 97.4 Minuten\ngebraucht statt 189.\n\n=== WAS ZU TUN IST, IN DIESER REIHENFOLGE ===\n\n1. Den Zweig `claude/kosmo-ui-sammelzweig-2026-09-08` des Repos Architektur-Cosmos\n   auschecken, Stand `b94afe50` oder neuer.\n\n2. Frisch bauen \u2014 NICHT den vorhandenen Stand benutzen:\n\n     cd kosmo-orbit && npm ci && npm run build -w @kosmo/orbit-app\n\n3. Den Frischebeleg selbst nachsehen, bevor der Lauf startet. Beide Reparaturen muessen\n   im GEBAUTEN CSS stehen (nicht im Quelltext \u2014 das ist der Unterschied, der frueheren\n   Messungen dieses Projekts den Wert genommen hat):\n\n     cd apps/kosmo-orbit/dist\n     grep -c \"bottom:240px\" assets/*.css            -> muss 1 sein\n     grep -c \"bottom:160px\" assets/*.css            -> muss 0 sein\n     grep -o \"kp-blase-griff{[^}]*}\" assets/*.css   -> muss top:24px;bottom:24px zeigen\n\n4. Den Volllauf fahren \u2014 ueber das Gate, nicht ueber playwright direkt, damit das\n   Urteil gegen die Listen faellt:\n\n     cd kosmo-orbit\n     node tools/e2e-lauf-gate.mjs\n\n   Auf eurer Maschine OHNE `PLAYWRIGHT_CHROMIUM_PATH` (dort gibt es /opt/pw-browsers\n   nicht). Python 3 mit fastapi ist Voraussetzung; das Gate startet Attrappe,\n   Sync-Server und Vorschau selbst.\n\n5. Die Ausgabe vollstaendig mitschneiden und am Ende diese Zeilen festhalten:\n\n     [e2e-lauf-gate] Volllauf: ... Faelle \u2014 ... gruen \u00b7 ... rot \u00b7 ... uebersprungen\n     URTEIL e2e-lauf-gate: ...\n\n6. Jeden roten Fall EINZELN nachfahren, allein:\n\n     node tools/e2e-lauf-gate.mjs --nur e2e/<datei>.spec.ts\n\n   und je Fall festhalten: im Volllauf rot, allein rot ODER allein gruen. Das ist die\n   wichtigste Angabe des ganzen Auftrags \u2014 sie unterscheidet einen echten Befund von\n   einem, der nur im langen Lauf auftritt.\n\n=== WORAUF BESONDERS ZU ACHTEN IST ===\n\n* `e2e/viewport3d-marquee.spec.ts:182` steht seit dem 04.09. in\n  `e2e/flatterhafte.json` mit inzwischen SECHS Beobachtungen. Seine Kippbedingung\n  lautet woertlich \u00abzwei Volllaeufe in Folge gruen\u00bb. Bitte ausdruecklich sagen, ob er\n  bei euch gruen oder rot war \u2014 wenn zweimal gruen, faellt der Eintrag.\n* `e2e/projekt-tableiste.spec.ts:92` ist bei uns EINMAL rot gewesen und einzeln gruen.\n  Die Regel verlangt zwei Beobachtungen fuer einen Eintrag. Wenn er bei euch auch rot\n  wird, ist das die zweite \u2014 bitte mit Datum melden.\n\n=== WAS AUSDRUECKLICH NICHT GETAN WERDEN SOLL ===\n\n* **Nichts reparieren.** Wir wollen den Zustand messen, nicht ihn verbessern. Findet\n  ihr einen Defekt, meldet ihn \u2014 das Bauen ist unsere Arbeit.\n* **Keinen Test ueberspringen, nichts in erklaerte-rote.json eintragen.** Das ist ein\n  Owner-Entscheid, kein Handgriff (E8, \u00abkein dritter Weg\u00bb).\n* **Den Lauf nicht filtern**, um Zeit zu sparen. Ein gefilterter Lauf hat in diesem\n  Projekt schon einmal acht Tage lang verborgen, dass der volle tot war.\n* **Keine absoluten Pfade mit Benutzernamen** in der Rueckgabe, keine Bildschirmabzuege\n  mit echten Projektdaten.\n\n=== WARUM ES SICH LOHNT, AUCH WENN ALLES GRUEN IST ===\n\nDann steht zum ersten Mal eine belastbare Gesamtzahl auf dem neuen Stand, und das\nletzte Glied der Freigabekette hat ein Urteil, das es seit Monaten nicht hatte. Faellt\netwas rot, habt ihr es an echter Hardware gefunden statt in einem Container, der alle\nzwei Stunden neu startet \u2014 und das ist der Ort, an dem der Owner die Software wirklich\nbenutzt.\n",
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "hinweise": [
+   "Rund 100 Minuten am Stueck \u2014 bitte eine Zeit waehlen, in der die Maschine durchlaufen darf.",
+   "Ein Browser, workers 1 \u2014 das Gate setzt das selbst; bitte nicht auf mehrere Arbeiter stellen, sonst ist die Zahl mit unserer nicht vergleichbar.",
+   "Regel 3: keine echten Projektdaten, keine Benutzerpfade, keine Bildschirmabzuege mit Kundeninhalten.",
+   "Nichts reparieren, nichts ueberspringen, nichts eintragen."
+  ]
+ },
+ "rueckgabe": [
+  "M1 Die beiden Abschlusszeilen des Gates woertlich: Faelle, gruen, rot, uebersprungen, flaky, Dauer, und die URTEIL-Zeile.",
+  "M2 Der Frischebeleg aus Schritt 3: die drei grep-Ergebnisse.",
+  "M3 Je roter Fall: Datei, Zeile, Titel, Fehlermeldung (eine Zeile) \u2014 und ob er ALLEIN ebenfalls rot ist.",
+  "M4 viewport3d-marquee.spec.ts:182 ausdruecklich: gruen oder rot?",
+  "M5 projekt-tableiste.spec.ts:92 ausdruecklich: gruen oder rot?",
+  "M6 Was ihr NICHT geprueft habt \u2014 eigener Punkt, auch wenn er leer waere."
+ ]
+}
