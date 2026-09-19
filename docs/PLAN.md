@@ -5801,6 +5801,25 @@ Bekannt und ausdrücklich nicht erledigt:
 > **Offen:** Ob die Vermutung hinter der Achsen-Gegenprobe überhaupt trägt — Gelände ist
 > in der Hochachse flach — ist nicht gemessen.
 
+- [x] **OWNER-ENTSCHEID 19.09.2026 eingebaut: «nicht anwendbar» nach einem Handeingriff.**
+      Zeichnet jemand einen Balkon ins Bild, den das Modell nicht hat, misst die
+      Geometrie-QA genau die Abweichung, die er **absichtlich** erzeugt hat. Drei
+      Antworten standen zur Wahl, gewählt ist die dritte:
+      * *prüfen wie bisher* — dann fällt **jedes** bearbeitete Bild durch, und eine
+        Warnung, die immer kommt, liest nach dem dritten Mal niemand mehr;
+      * *gar nicht prüfen* — dann trägt das Bild **keine Auskunft**, und später sieht ihm
+        niemand an, ob es je geprüft war;
+      * **«nicht anwendbar»** — `bestanden = None`, `status` bleibt **ok** (es ist nichts
+        schiefgegangen), und der Grund steht im Klartext daneben.
+      *Die dritte Antwort dieses Projekts, angewandt auf den Handeingriff.*
+      **Und der Vorbehalt wird vererbt:** Eine Bildquelle setzt ihn, ein Nachrender reicht
+      ihn weiter, über beliebig viele Runden. *Ein Vorbehalt, der beim Weiterrechnen
+      verfällt, ist keiner — er ist eine Fussnote mit Verfallsdatum.*
+      Fünf Mutationen, alle fünf fallen — darunter beide Gegenrichtungen: «immer nicht
+      anwendbar» (dann misst die QA gar nichts mehr) und «nie vererben».
+      **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
+      darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
+
 - [x] **Kapitel 5 geschrieben: «Die Kamera: was die Software selbst entscheidet».**
       Das dritte Kapitel, und alle Zahlen darin sind **für das Kapitel gerechnet**:
       12 Richtungen · **56** geprüfte Dreierkombinationen · Deckungsgrad exakt 0,7000 ·
@@ -5909,3 +5928,69 @@ Bekannt und ausdrücklich nicht erledigt:
       zwischen **4,0 und 4,1**. Die erste Messung fuhr 0,2er-Schritte und nannte darum die
       nächstgrössere Stufe. *Eine Grenze, die feiner gemessen woanders liegt, war vorher
       nicht gemessen, sondern eingegrenzt.*
+
+---
+
+## Sitzung 31 — 19.09.2026, spät · Der Bild-Eingang
+
+> **Entschieden:** Erst messen, dann bauen — und gebaut wurde der **Graph**, nicht die
+> Bibliothek, weil die Messung genau dort die Lücke fand.
+> **Gemessen:** Vier Ebenen getrennt — Bibliothek **geht halb**, Graph **geht nicht**,
+> Vertrag **geht nicht**, Naht nach drüben **geht nicht**.
+> **Offen:** Schritt 6 («Photoshop ersetzen») hat weiterhin **keinen** Pfad — und der
+> Grund ist eine Regel, keine fehlende Zeile.
+> Protokoll: [`sitzungen/2026-09-19_sitzung-31.md`](sitzungen/2026-09-19_sitzung-31.md)
+
+- [x] **Gemessen: der Novemberbefund stimmt für den Graphen — und unterschätzt die
+      Bibliothek.** `docs/PLAN_BIS_FEBRUAR_2027.md` sagt, der `render`-Knoten habe keinen
+      Bild-Eingang. Das ist für den Knotenbaum richtig (`BEDARF[ART_RENDER]` hat **einen**
+      Slot, und der muss `depth_png` zusagen). Die Bibliothek dagegen reicht ein
+      Ausgangsbild sehr wohl bis an das Modell durch: `RenderAuftrag.beauty_png` schaltet
+      den Bildbearbeitungsmodus ein, der Adapter übergibt es als `image` samt `strength`.
+- [x] **Und der schärfere Befund liegt darunter: es kommt womöglich nicht an.**
+      Hat die geladene Pipeline nur **einen** Bildeingang, bekommt ihn die Tiefenkarte,
+      und das Ausgangsbild fällt weg (`render.py`, Zweig `if "control_image" in
+      verworfen`). Für `qwen-image-edit-2511` ist genau das am Gerät gemessen
+      (`auf-20260818-09`) — *ausgerechnet der Backbone, dessen Konditionierungsart
+      «integriertes Edit» heisst.* Der Lauf gelingt dabei, ein Bild liegt da.
+      **Beide Fälle tragen jetzt eine Probe**; vorher stand der Befund nur als Kommentar
+      in der Registry, und ein Befund ohne Probe ist eine Erinnerung.
+- [x] **Gebaut: zwei Knotenarten, `bildquelle` und `nachrender`** (`aiimaging.kette`).
+      `nachrender` hat **zwei** Slots — Slot 0 die Tiefenkarte, Slot 1 das Bild, auf dem
+      weitergerechnet wird. Slot 1 nimmt jeden Knoten, der ein `bild_png` zusagt; der Weg
+      Bild → Rechnung → Bild ist damit beliebig oft möglich.
+      `bildquelle` holt eine Datei von der Platte — **die Stelle, an der ein Mensch wieder
+      hereinkommt.** `haenge_nachrender_an` hängt beides an eine bestehende Kette.
+      **Die bestehende Kette bleibt Zeile für Zeile, wie sie war:** Ein zweiter Slot am
+      `render`-Knoten hätte jeden heutigen Graphen zum Verdrahtungsfehler gemacht, weil
+      `Bedarf` keinen wahlweisen Slot kennt.
+- [x] **Der Ablauf des Architekten steht als Probe im Repo:** rendern, Datei öffnen,
+      hineinzeichnen, **unter demselben Namen speichern**, noch einmal rechnen.
+      Gezählt wird, nicht gemessen — der Nachrender läuft ein zweites Mal, Geometrie,
+      Multipass und erster Render laufen **nicht**. Möglich macht es `bild_png` in
+      `EINGABEDATEIEN`: Der **Inhalt** der Zeichnung geht in den Hash, nicht ihr Name.
+      Und die Bildquelle **kopiert**, statt zu verweisen — sonst zeigte ein alter
+      Cache-Eintrag nach der nächsten Zeichnung auf neuen Inhalt.
+      Neun Mutationsproben, alle gefallen und zurückgenommen. Testzahl 6347 → 6368.
+- [~] **Schritt 6 «Photoshop ersetzen» hat weiterhin keinen Pfad — und das ist kein
+      Versäumnis dieser Sitzung.** `render.RenderAuftrag.depth_png` ist Pflichtfeld ohne
+      Vorgabewert; ein Bild ohne Modell lässt sich nicht bearbeiten. Das zu ändern heisst,
+      die Konditionierung wahlweise zu machen — *die Regel, gegen die dieses Projekt
+      gebaut ist.* **Entscheid des Owners nötig**, nicht Code.
+- [~] **Keine QA am Nachrender, und das ist eine Entscheidung mit einem Namen.**
+      Die Geometrie-QA misst das Bild gegen die Tiefenkarte des Modells. Ein
+      hineingezeichneter Balkon, den das Modell nicht hat, lässt sie **zu Recht und
+      zugleich sinnlos** durchfallen: Sie misst die Abweichung, die der Mensch
+      absichtlich erzeugt hat. *Offene Frage an den Owner.*
+- [~] **Ob das Ausgangsbild auf `z-image-turbo` ankommt: NICHT GEMESSEN.** Braucht GPU und
+      echte Gewichte. **Kein Auftrag abgelegt** — `auf-20260919-121` sagt am selben Tag
+      zu: «kein weiterer Messauftrag an euch, bis wir unter acht sind.» Die Frage steht
+      stattdessen im Code, wo sie jemand sieht, der sie braucht
+      (`kette.bildeingang_lage` → `traegt: None`). *Adressat: `local`, sobald die
+      Selbstbindung gelöst ist.*
+- [~] **Der fremde Vertrag hat kein Feld für ein Eingangsbild.** `kosmo_szene`
+      kennt keines, und ein erfundenes Feld wird als unbekannt **abgewiesen** — der Weg
+      über KosmoOrbit existiert nicht. *Adressat: `cloud` für das Vertragsfeld, `ui` für
+      die Stelle, an der ein Mensch das Bild auswählt.* Noch nicht abgelegt, weil beide
+      heute bereits ihre gesammelte Meldung bekommen haben (`auf-20260919-118`/`-119`)
+      und eine zweite am selben Tag eine Wiederholung wäre.

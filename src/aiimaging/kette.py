@@ -34,6 +34,30 @@ Unterschied zeigt sich genau hier, im Datenfluss:
   Die QA-Stufe hat zwei Eingänge (Soll aus dem Multipass, Ist aus dem Render); würden sie
   verschmolzen, wäre nicht mehr entscheidbar, welches ``depth_png`` gemeint ist.
 
+Der Bild-Eingang — und wo er heute endet
+----------------------------------------
+Seit dem 19.09.2026 kann ein Bild **zurück in eine Rechnung**: ``ART_NACHRENDER`` hat
+einen zweiten Eingangsslot für ``bild_png``, und ``ART_BILDQUELLE`` holt eine Bilddatei
+von der Platte in den Graphen (``haenge_nachrender_an``). Damit existiert der Pfad für
+«Hineinskizzieren»: rendern → die PNG öffnen und hineinzeichnen → dieselbe Datei als
+Bildquelle → nachrendern.
+
+**Drei Grenzen, und sie sind gemessen, nicht befürchtet:**
+
+1. **Die Tiefenkarte bleibt Pflicht.** ``render.RenderAuftrag.depth_png`` hat keinen
+   Vorgabewert, und ``render.pruefe_auftrag`` lehnt einen Auftrag ohne sie ab. Für das
+   Hineinskizzieren ist das richtig — der Strich soll in derselben Geometrie landen. Eine
+   **reine** Bildbearbeitung ohne Modell («Photoshop ersetzen») geht damit **nicht**: Sie
+   bräuchte einen Auftrag, der ein Bild ohne Geometrie annimmt.
+2. **Ob das Ausgangsbild beim Modell ankommt, hängt an der Pipeline.** Hat sie keinen
+   eigenen Steuereingang, bekommt die Tiefenkarte den einen Bildeingang und das
+   Ausgangsbild fällt weg. Für ``qwen-image-edit-2511`` ist das am Gerät gemessen
+   (``auf-20260818-09``); für alle anderen ist es **nicht gemessen**. Siehe
+   :func:`bildeingang_lage`.
+3. **Der fremde Vertrag hat kein Feld dafür.** ``kosmo_szene.BEKANNTE_FELDER`` kennt kein
+   Eingangsbild, und ein erfundenes Feld wird als unbekannt **abgelehnt**. Der Weg über
+   KosmoOrbit existiert also nicht; aus Python heraus existiert er (Regel 4).
+
 Zwei Wege nebeneinander
 -----------------------
 ``werkzeuge.enqueue_render`` bleibt unangetastet, bis diese Kette belegt ist. Zwei Wege
@@ -46,13 +70,14 @@ Blender durch (siehe ``AUSFUEHRER``).
 from __future__ import annotations
 
 import re
+import shutil
 import tempfile
 import time
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from aiimaging import (
-    bildlesen, contracts, geometrie_qa, maske, raumkamera, render, seams,
+    backbone, bildlesen, contracts, geometrie_qa, maske, raumkamera, render, seams,
     tiefenschaetzer, torwaechter,
 )
 from aiimaging.graph import (
@@ -71,11 +96,56 @@ ART_MULTIPASS = "multipass"
 ART_RENDER = "render"
 ART_QA = "qa"
 
+#: Zwei Arten **ausserhalb** der Standardkette: der Bild-Eingang.
+#:
+#: **Der Befund, der sie erzwingt** (`docs/PLAN_BIS_FEBRUAR_2027.md`, November, und hier
+#: am 19.09.2026 nachgemessen): Der `render`-Knoten hat genau einen Eingangsslot, und der
+#: muss ein Multipass sein (``BEDARF[ART_RENDER]``). Ein Bild kann im Graphen entstehen
+#: und verglichen werden — **zurück in eine Rechnung kommt es nie.** Damit haben
+#: «Hineinskizzieren» und «Photoshop ersetzen» keinen Pfad.
+#:
+#: Warum zwei **neue** Arten und nicht ein zweiter Slot am `render`-Knoten: ``Bedarf``
+#: kennt keinen wahlweisen Slot. Ein zweiter deklarierter Slot machte jeden heutigen
+#: `render`-Knoten zu einem Verdrahtungsfehler (``pruefe_bedarf`` → ``fehlender-eingang``,
+#: Schwere ``error``) — ein neues Tor, das sperrt, was gestern lief. Die bestehende Kette
+#: bleibt darum Zeile für Zeile, wie sie war.
+#:
+#: ``ART_BILDQUELLE`` ist der Weg, auf dem **ein Mensch** wieder hereinkommt: eine Datei
+#: von der Platte, mit Inhalts-Hash. Ohne sie könnte nur Maschine an Maschine reichen —
+#: und genau dazwischen sitzt der Architekt, der in das Bild hineinzeichnet.
+ART_BILDQUELLE = "bildquelle"
+ART_NACHRENDER = "nachrender"
+
+#: Das Feld, mit dem ein Bild mitführt, dass ein **Mensch** daran war.
+#:
+#: **Owner-Entscheid 19.09.2026.** Zeichnet jemand einen Balkon ins Bild, den das Modell
+#: nicht hat, misst die Geometrie-QA genau die Abweichung, die der Mensch **absichtlich**
+#: erzeugt hat. Drei Antworten waren möglich, und die gewählte ist die dritte:
+#:
+#: * *Prüfen wie bisher* — dann fällt **jedes** hineingezeichnete Bild durch. Eine
+#:   Warnung, die immer kommt, liest nach dem dritten Mal niemand mehr.
+#: * *Gar nicht prüfen* — dann trägt das Bild danach **keine Auskunft**, und später sieht
+#:   ihm niemand an, ob es je geprüft war.
+#: * **«Nicht anwendbar»** — die Prüfung läuft, und ihr Urteil lautet weder bestanden noch
+#:   durchgefallen. *Die dritte Antwort dieses Projekts, angewandt auf den Handeingriff.*
+#:
+#: **Und es wird VERERBT.** Ein Nachrender eines Nachrenders trägt es weiter, und eine
+#: Bildquelle setzt es von sich aus: Eine Datei, die von der Platte kommt, ist per
+#: Definition nicht aus dieser Rechnung. *Ein Vorbehalt, der beim Weiterrechnen verfällt,
+#: ist keiner — er ist eine Fussnote mit Verfallsdatum.*
+FELD_HANDEINGRIFF = "handeingriff"
+
 #: Knoten-IDs der Standardkette.
 KNOTEN_GEOMETRIE = "geometrie"
 KNOTEN_MULTIPASS = "multipass"
 KNOTEN_RENDER = "render"
 KNOTEN_QA = "qa"
+
+#: Knoten-IDs des Bild-Eingangs. Sie tragen eine laufende Nummer, sobald mehr als eine
+#: Runde angehängt wird (siehe :func:`haenge_nachrender_an`) — zwei Runden im selben
+#: Graphen sind der Normalfall und keine Ausnahme.
+KNOTEN_BILDQUELLE = "bildquelle"
+KNOTEN_NACHRENDER = "nachrender"
 
 #: Zustände eines Knotens im Lauf.
 #:
@@ -97,6 +167,12 @@ STATUS_UEBERSPRUNGEN = "uebersprungen"
 #: brächte keine einzige zusätzliche Aussage.
 EINGABEDATEIEN: dict[str, tuple[str, ...]] = {
     ART_GEOMETRIE: ("ifc_path", "glb_path"),
+    # DER GRUND, WARUM DER BILD-EINGANG ÜBERHAUPT FUNKTIONIEREN KANN. Ein Mensch
+    # zeichnet in ein Bild und speichert es — **unter demselben Namen**. Stünde
+    # ``bild_png`` nicht hier, ginge nur der Pfad in den Hash, der Hash bliebe gleich,
+    # und der Zwischenspeicher lieferte das Bild von vor der Zeichnung zurück. Die
+    # Zeichnung wäre verschwunden, und zwar lautlos.
+    ART_BILDQUELLE: ("bild_png",),
 }
 
 #: Endungen von Ausgabefeldern, die auf eine Datei zeigen. Gebraucht beim Cache-Treffer:
@@ -146,6 +222,26 @@ BEDARF: dict[str, Bedarf] = {
         # Bedeutung, und genau darum ist ``braucht`` je Slot aufgeschrieben.
         braucht=(("depth_png",), ("bild_png",)),
         liefert=("bestanden",),
+    ),
+    # --- Der Bild-Eingang ------------------------------------------------------------
+    ART_BILDQUELLE: Bedarf(
+        # Kein ``braucht``: Dieser Knoten hat keine Vorgänger. Er ist ein Quellknoten wie
+        # die Geometriestufe, nur dass seine Quelle ein Bild ist.
+        liefert=("bild_png",),
+        dateien=("bild_png",),
+    ),
+    ART_NACHRENDER: Bedarf(
+        # ZWEI SLOTS, UND DIE REIHENFOLGE IST BEDEUTUNG — dieselbe Bauform wie die QA.
+        # Slot 0 trägt die Geometrie (Tiefenkarte aus dem Multipass), Slot 1 das Bild,
+        # auf dem weitergerechnet wird. Verschmölzen sie, wäre nicht mehr entscheidbar,
+        # welches der beiden Bilder das Ausgangsbild ist und welches die Konditionierung.
+        #
+        # Slot 1 nimmt ``bild_png`` und damit **jeden** Knoten, der eines zusagt: einen
+        # ``render``, einen ``bildquelle``, oder einen weiteren ``nachrender``. Der Weg
+        # Bild → Rechnung → Bild ist damit beliebig oft hintereinander möglich.
+        braucht=(("depth_png",), ("bild_png",)),
+        liefert=("bild_png",),
+        dateien=("bild_png",),
     ),
 }
 
@@ -350,6 +446,181 @@ def baue_kette(
             eingaenge=(KNOTEN_MULTIPASS, KNOTEN_RENDER),
         ))
     return Graph(knoten)
+
+
+def haenge_nachrender_an(
+    graph: Graph,
+    *,
+    prompt: str,
+    eingangsbild: str | Path | None = None,
+    bildquelle_knoten: str | None = None,
+    multipass_knoten: str = KNOTEN_MULTIPASS,
+    negativ_prompt: str = "",
+    backbone: str | None = None,
+    seed: int | None = None,
+    schritte: int | None = None,
+    controlnet_staerke: float | None = None,
+    denoise: float = 0.6,
+    id_vorsatz: str | None = None,
+) -> Graph:
+    """Einen Bild-Eingang an einen bestehenden Graphen hängen: **Bild rein, Bild raus.**
+
+    Das ist die zweite Hälfte des Entwurfsablaufs, und bis zum 19.09.2026 gab es sie
+    nicht: Ein Bild konnte im Graphen entstehen und geprüft werden, aber nie wieder in
+    eine Rechnung zurück.
+
+    Args:
+        graph: Ein bestehender Graph, üblicherweise aus :func:`baue_kette`. Er wird
+            **nicht verändert** — zurück kommt ein neuer Graph mit denselben Knoten und
+            den angehängten dazu. ``Knoten`` ist ``frozen``, und ein Graph, der sich unter
+            dem Aufrufer ändert, hätte einen anderen Hash, als der Aufrufer glaubt.
+        prompt: Was am Bild geändert werden soll. **Pflicht und bewusst ohne Vorgabe:**
+            Der Prompt des ersten Renders beschreibt, was entstehen sollte; dieser hier
+            beschreibt, was sich ändern soll. Denselben Text zweimal zu nehmen wäre eine
+            Vorgabe, die fast immer falsch ist.
+        eingangsbild: Eine Bilddatei von der Platte — **der Weg, auf dem ein Mensch
+            hereinkommt.** Gesetzt, entsteht ein ``bildquelle``-Knoten davor. ``None``
+            heisst: Das Ausgangsbild kommt aus dem Graphen selbst.
+        bildquelle_knoten: Die ID des Knotens, dessen ``bild_png`` als Ausgangsbild
+            dient. ``None`` und ohne ``eingangsbild`` heisst :data:`KNOTEN_RENDER`.
+            Genau eines von beiden — ``eingangsbild`` und ``bildquelle_knoten`` zugleich
+            wäre zwei Ausgangsbilder für einen Eingang.
+        multipass_knoten: Woher die Tiefenkarte kommt. Sie bleibt Pflicht: Der Strich
+            soll in **derselben** Geometrie landen wie das Bild, in das er gezeichnet
+            wurde.
+        backbone, seed, schritte, controlnet_staerke: ``None`` übernimmt den Wert des
+            Renderknotens dieses Graphen, sofern es einen gibt — sonst die Vorgaben von
+            :func:`baue_kette`. Ein zweiter Lauf mit stillschweigend anderen Einstellungen
+            wäre ein Vergleich zwischen zwei Sachen.
+        denoise: Wieviel vom Ausgangsbild überschrieben wird, 0..1. Klein heisst: Die
+            Zeichnung bleibt stehen und wird nur angeglichen. Gross heisst: Das Modell
+            rechnet fast neu. **Der Vorgabewert 0.6 ist GESETZT und nicht gemessen** — er
+            ist derselbe wie in :class:`aiimaging.render.RenderAuftrag`, damit nicht zwei
+            Orte zwei Zahlen führen.
+        id_vorsatz: Vorsatz für die neuen Knoten-IDs, z.B. ``"runde2"``. ``None`` wählt
+            selbst einen freien Namen. Zwei Runden im selben Graphen sind der Normalfall.
+
+    Returns:
+        Ein neuer ``Graph``. Er wird **nicht** ausgeführt.
+
+    Raises:
+        KettenError: Der Graph ist keiner, ein genannter Knoten fehlt, ``prompt`` ist
+            leer, oder es sind zwei Ausgangsbilder genannt.
+
+    **Was diese Funktion nicht von sich aus anhängt: eine QA-Stufe** — und was passiert,
+    wenn man sie anhängt, ist seit dem 19.09.2026 entschieden.
+
+    Die Geometrie-QA vergleicht das Bild mit der Tiefenkarte des Modells. Zeichnet jemand
+    einen Balkon hinein, der im Modell nicht steht, misst sie genau die Abweichung, die
+    der Mensch **absichtlich** erzeugt hat.
+
+    **Owner-Entscheid: Das Urteil lautet dann «nicht anwendbar».** Nicht durchgefallen
+    (sonst fiele jedes bearbeitete Bild durch, und eine Warnung, die immer kommt, wird
+    nicht gelesen) und nicht übersprungen (sonst trüge das Bild keine Auskunft mehr).
+    ``bestanden`` ist ``None``, ``status`` bleibt ``ok``, und der Grund steht im Klartext
+    daneben.
+
+    Getragen wird das von :data:`FELD_HANDEINGRIFF`, und es **wird vererbt**: Eine
+    Bildquelle setzt es, ein Nachrender reicht es weiter. *Ein Vorbehalt, der beim
+    Weiterrechnen verfällt, ist keiner.*
+
+    Wer die Stufe anhängen will, tut es mit ``eingaenge=(multipass, nachrender)``.
+    """
+    if not isinstance(graph, Graph):
+        raise KettenError(
+            f"haenge_nachrender_an erwartet einen Graph, bekam {type(graph).__name__}."
+        )
+    if not isinstance(prompt, str) or not prompt.strip():
+        raise KettenError(
+            f"prompt fehlt oder ist leer ({prompt!r}). Ein Nachrender ohne Anweisung "
+            f"wäre ein zweiter Lauf, der dasselbe noch einmal versucht."
+        )
+    if eingangsbild is not None and bildquelle_knoten is not None:
+        raise KettenError(
+            "eingangsbild und bildquelle_knoten zugleich: Das wären zwei Ausgangsbilder "
+            "für einen Eingang. Genau eines von beiden."
+        )
+    if multipass_knoten not in graph.knoten:
+        raise KettenError(
+            f"Den Knoten {multipass_knoten!r} gibt es in diesem Graphen nicht. "
+            f"Vorhanden: {sorted(graph.knoten)}. Ohne Tiefenkarte gibt es keine "
+            f"Konditionierung — und ohne sie erfände das Modell die Kubatur."
+        )
+
+    quelle = bildquelle_knoten
+    if eingangsbild is None and quelle is None:
+        quelle = KNOTEN_RENDER
+    if quelle is not None and quelle not in graph.knoten:
+        raise KettenError(
+            f"Den Knoten {quelle!r} gibt es in diesem Graphen nicht. "
+            f"Vorhanden: {sorted(graph.knoten)}."
+        )
+
+    # Die Einstellungen des vorhandenen Renderknotens übernehmen, soweit nichts anderes
+    # gesagt ist. Zwei Läufe mit stillschweigend verschiedenem Backbone oder Seed sähen
+    # aus wie ein Vergleich und wären keiner.
+    # ACHTUNG beim Weiterbauen: Der Parameter `backbone` verdeckt in dieser Funktion das
+    # gleichnamige Modul. Wer hier einen Registry-Zugriff braucht, holt ihn über
+    # `render.backbone` oder benennt die lokale Variable um — ein `backbone.hole(...)`
+    # an dieser Stelle riefe einen String auf.
+    vorlage: dict = {}
+    for kid in sorted(graph.knoten):
+        if graph.knoten[kid].art in (ART_RENDER, ART_NACHRENDER):
+            vorlage = graph.knoten[kid].params
+            break
+
+    def _wahl(wert, name, vorgabe):
+        if wert is not None:
+            return wert
+        return vorlage.get(name, vorgabe)
+
+    vorsatz = id_vorsatz or _freier_vorsatz(graph)
+    quelle_id = f"{vorsatz}-{KNOTEN_BILDQUELLE}"
+    nach_id = f"{vorsatz}-{KNOTEN_NACHRENDER}"
+    for kid in (quelle_id, nach_id):
+        if kid in graph.knoten:
+            raise KettenError(
+                f"Die Knoten-ID {kid!r} ist schon vergeben. Ein anderer 'id_vorsatz' "
+                f"löst das; ein stilles Überschreiben wäre ein anderer Graph, als der "
+                f"Aufrufer aufgeschrieben hat."
+            )
+
+    neue: list[Knoten] = []
+    if eingangsbild is not None:
+        neue.append(Knoten(id=quelle_id, art=ART_BILDQUELLE,
+                           params={"bild_png": str(eingangsbild)}))
+        quelle = quelle_id
+
+    neue.append(Knoten(
+        id=nach_id,
+        art=ART_NACHRENDER,
+        params={
+            "prompt": prompt,
+            "negativ_prompt": negativ_prompt,
+            "backbone": _wahl(backbone, "backbone", render.VORGABE_BACKBONE),
+            "seed": int(_wahl(seed, "seed", 0)),
+            "schritte": int(_wahl(schritte, "schritte", 20)),
+            "controlnet_staerke": float(_wahl(controlnet_staerke,
+                                              "controlnet_staerke", 0.8)),
+            "denoise": float(denoise),
+        },
+        # Reihenfolge ist Bedeutung: Slot 0 = Geometrie (Tiefenkarte), Slot 1 = Bild.
+        eingaenge=(multipass_knoten, quelle),
+    ))
+    return Graph(list(graph.knoten.values()) + neue)
+
+
+def _freier_vorsatz(graph: Graph) -> str:
+    """Ein Namensvorsatz, den dieser Graph noch nicht trägt: ``runde2``, ``runde3``, …
+
+    Von Hand vergebene IDs kollidieren irgendwann, und eine Kollision meldet ``Graph``
+    zwar — aber erst, wenn der Aufrufer schon alles aufgeschrieben hat. Billiger ist ein
+    Name, der von vornherein frei ist.
+    """
+    n = 2
+    while any(kid.startswith(f"runde{n}-") for kid in graph.knoten):
+        n += 1
+    return f"runde{n}"
 
 
 # --------------------------------------------------------------------------------------
@@ -606,6 +877,205 @@ def render_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
     return fuehre_render
 
 
+def _fuehre_bildquelle(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
+    """Ein Bild von der Platte in den Graphen holen — **die Stelle, an der ein Mensch
+    wieder hereinkommt.**
+
+    Zwischen dem erzeugten Bild und dem nächsten Render sitzt niemand, den der Graph
+    kennt: Der Architekt öffnet die PNG, zeichnet einen Balkon hinein, speichert. Der
+    Graph kann diesen Schritt nicht rechnen — aber er kann sein Ergebnis **lesen**, und
+    zwar so, dass eine zweite Zeichnung auch eine zweite Rechnung auslöst
+    (``EINGABEDATEIEN``).
+
+    **Die Datei wird kopiert, nicht verwiesen**, und das ist keine Umständlichkeit. Der
+    Zwischenspeicher legt Pfade ab, keine Bilder (``graph.ArtefaktCache``). Bliebe hier
+    der Originalpfad stehen, zeigte ein alter Cache-Eintrag nach der nächsten Zeichnung
+    auf **neuen** Inhalt: Der Schlüssel spräche von der ersten Fassung, die Datei
+    enthielte die zweite. Genau der Fehler, den ``_arbeitsverzeichnis`` für alle anderen
+    Stufen schon verhindert — die Kopie liegt im hashbenannten Ordner und ändert sich
+    nicht mehr.
+
+    Geprüft wird mit ``bildlesen.pruefe_png``: Signatur und Blockprüfsummen, ohne das
+    Bild zu entpacken. Das kostet fast nichts und fängt die umbenannte JPG ebenso wie die
+    halb geschriebene Datei — hier, wo der Dateiname steht, und nicht drei Stufen später
+    in der Bildbibliothek, wo die Meldung die Datei gar nicht mehr nennt.
+    """
+    quelle = knoten.params.get("bild_png")
+    if not quelle:
+        return {"status": STATUS_FEHLER,
+                "error": ("Der Bildquellen-Knoten hat keinen Parameter 'bild_png'. Ohne "
+                          "Dateinamen gibt es nichts zu lesen.")}
+
+    befund = bildlesen.pruefe_png(quelle)
+    if not befund["lesbar"]:
+        return {"status": STATUS_FEHLER, "error": befund["grund"],
+                "groesse_byte": befund["groesse_byte"]}
+
+    ziel = out_dir / "eingang.png"
+    try:
+        shutil.copyfile(quelle, ziel)
+    except OSError as fehler:
+        return {"status": STATUS_FEHLER,
+                "error": (f"Das Bild liess sich nicht in den Arbeitsordner kopieren: "
+                          f"{type(fehler).__name__}: {fehler}")}
+
+    return {
+        "status": STATUS_OK,
+        "bild_png": str(ziel),
+        # ABSICHTLICH NICHT ``herkunft_path``: Felder auf ``_path`` werden beim
+        # Cache-Treffer auf Existenz geprüft (``_fehlende_ausgabedateien``). Ein gültiger
+        # Eintrag verfiele dann, sobald jemand seine Zeichnung aufräumt — obwohl die
+        # Kopie im Arbeitsordner unverändert daliegt. Die Herkunft ist eine Notiz für
+        # Menschen, keine Zusage über eine Datei.
+        "herkunft": str(quelle),
+        "groesse_byte": befund["groesse_byte"],
+        # HIER ENTSTEHT DER VORBEHALT. Eine Datei von der Platte ist nicht aus dieser
+        # Rechnung — was zwischen dem letzten Lauf und jetzt damit geschehen ist, weiss
+        # niemand hier. Ob jemand wirklich gezeichnet hat, ist damit NICHT gesagt; gesagt
+        # ist nur, dass es niemand ausschliessen kann. Für ein Urteil über die
+        # Geometrietreue ist das dasselbe.
+        FELD_HANDEINGRIFF: True,
+        "error": None,
+    }
+
+
+def nachrender_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
+    """Baut die Nachrender-Stufe: **rechnen auf einem Bild, das schon da ist.**
+
+    Der Unterschied zu ``render_ausfuehrer`` ist genau ein Slot. Dort kommt das
+    Ausgangsbild aus dem Multipass (der Beauty-Pass aus Blender, und nur er); hier kommt
+    es aus Slot 1 und darf von überall stammen — aus einem früheren Render, aus einem
+    weiteren Nachrender, oder aus einer Datei, in die ein Mensch hineingezeichnet hat.
+
+    Die Tiefenkarte bleibt Pflicht, und das ist eine Entscheidung und kein Rest:
+    ``render.RenderAuftrag`` verlangt sie (``depth_png`` ohne Vorgabewert), weil ohne
+    Konditionierung das Modell die Kubatur erfindet — der Fall, gegen den dieses Projekt
+    antritt. Für das Hineinskizzieren ist das **richtig**: Der Strich soll in derselben
+    Geometrie landen, in der das Bild entstanden ist. Für eine reine Bildbearbeitung ohne
+    Geometrie ist es eine **Grenze**, und sie ist oben im Modulkopf benannt.
+
+    ``bildeingang_lage`` wird mitgemeldet, nicht geprüft: Ob das Ausgangsbild beim Modell
+    **ankommt**, entscheidet die geladene Pipeline (siehe die Funktion). Ein Riegel wäre
+    hier falsch — wir wüssten ihn nur für einen einzigen Backbone zu setzen, und ein
+    Riegel auf ungemessener Grundlage sperrt irgendwann das Richtige.
+    """
+    def fuehre_nachrender(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
+        if len(eingaben) < 2:
+            return {"status": STATUS_FEHLER,
+                    "error": ("Der Nachrender braucht zwei Eingänge: Slot 0 Multipass "
+                              "(Tiefenkarte als Konditionierung), Slot 1 ein Bild "
+                              "('bild_png') als Ausgangsbild. Ohne Slot 1 wäre er ein "
+                              "gewöhnlicher Render — und der heisst 'render'.")}
+        multipass, bildeingang = eingaben[0], eingaben[1]
+
+        depth_png = multipass.get("depth_png")
+        if not depth_png:
+            return {"status": STATUS_FEHLER,
+                    "error": (f"Slot 0 lieferte kein 'depth_png'. Grund des Vorgängers: "
+                              f"{multipass.get('depth_png_fehler') or multipass.get('error') or 'nicht genannt'}. "
+                              f"Vorhandene Felder: {sorted(multipass)}")}
+
+        ausgangsbild = bildeingang.get("bild_png")
+        if not ausgangsbild:
+            return {"status": STATUS_FEHLER,
+                    "error": (f"Slot 1 lieferte kein 'bild_png' — es gibt also kein "
+                              f"Ausgangsbild, auf dem weitergerechnet werden könnte. "
+                              f"Grund des Vorgängers: "
+                              f"{bildeingang.get('error') or 'nicht genannt'}. "
+                              f"Vorhandene Felder: {sorted(bildeingang)}")}
+
+        p = knoten.params
+        auftrag = render.RenderAuftrag(
+            depth_png=depth_png,
+            prompt=p["prompt"],
+            negativ_prompt=p["negativ_prompt"],
+            backbone=p["backbone"],
+            seed=p["seed"],
+            schritte=p["schritte"],
+            controlnet_staerke=p["controlnet_staerke"],
+            # DIESE ZWEI ZEILEN SIND DER GANZE BILD-EINGANG. `denoise` bestimmt, wieviel
+            # vom Ausgangsbild überlebt; `beauty_png` IST das Ausgangsbild. Ohne die
+            # zweite Zeile wäre dieser Knoten ein zweiter Text-zu-Bild-Lauf, der nur so
+            # aussieht, als hätte er das Bild gesehen.
+            denoise=p["denoise"],
+            beauty_png=ausgangsbild,
+            ausgabe_png=str(out_dir / "bild.png"),
+        )
+        ergebnis = render.rendere(auftrag, modell=modell, _lader=_lader)
+        lage = bildeingang_lage(p["backbone"])
+        # DER VORBEHALT WIRD VERERBT, und zwar aus dem Bildeingang. Ein Nachrender auf
+        # einem unberührten Render trägt ihn nicht; einer auf einer Bildquelle oder auf
+        # einem weiteren Nachrender trägt ihn. So wandert er genau so weit, wie der
+        # Handeingriff reicht — und nicht weiter.
+        return dict(ergebnis, ausgangsbild=ausgangsbild, bildeingang_lage=lage,
+                    **{FELD_HANDEINGRIFF: bool(bildeingang.get(FELD_HANDEINGRIFF))})
+
+    return fuehre_nachrender
+
+
+def bildeingang_lage(backbone_name: str) -> dict:
+    """Kommt das Ausgangsbild auf diesem Backbone **beim Modell an**?
+
+    Die Frage sieht überflüssig aus und ist sie nicht. ``render._pipeline_adapter``
+    übergibt die Tiefenkarte als ``control_image`` und das Ausgangsbild als ``image`` —
+    aber **nur, wenn die Pipeline beide Eingänge hat.** Kennt sie kein ``control_image``,
+    bekommt die Tiefenkarte den einen vorhandenen Bildeingang, und das Ausgangsbild fällt
+    weg (``render.py``, Zweig ``if "control_image" in verworfen``). Der Lauf gelingt,
+    das Bild ist da, und vom Hineingezeichneten ist nichts übrig.
+
+    Returns:
+        ``{backbone, konditionierung, traegt, grund, beleg}``.
+
+        ``traegt`` ist ``False`` oder ``None``. **``None`` heisst NICHT GEMESSEN** —
+        weder bestanden noch durchgefallen. ``True`` steht hier für **keinen** Backbone,
+        und das ist kein Versehen: Es gäbe erst nach einem Lauf an echten Gewichten etwas
+        zu behaupten, und hier gibt es weder GPU noch Gewichte.
+
+    Der einzige gemessene Fall ist ``qwen-image-edit-2511``: ``auf-20260818-09`` hat am
+    Gerät belegt, dass ``QwenImageEditPlusPipeline`` weder ``control_image`` noch
+    ``strength`` kennt (siehe ``backbone.py``, Eintrag qwen). Dort fällt das Ausgangsbild
+    nachweislich weg — ausgerechnet auf dem Backbone, dessen Konditionierungsart
+    «integriertes Edit» heisst.
+    """
+    try:
+        eintrag = backbone.hole(backbone_name)
+    except backbone.BackboneError as fehler:
+        return {"backbone": backbone_name, "konditionierung": None, "traegt": None,
+                "grund": str(fehler),
+                "beleg": "kein Registry-Eintrag — über diesen Namen ist nichts bekannt"}
+
+    if eintrag.name == "qwen-image-edit-2511":
+        return {
+            "backbone": eintrag.name, "konditionierung": eintrag.konditionierung,
+            "traegt": False,
+            "grund": ("Diese Pipeline hat genau einen Bildeingang, und den bekommt die "
+                      "Tiefenkarte. Das Ausgangsbild wird überschrieben — das "
+                      "Hineingezeichnete erreicht das Modell nicht."),
+            "beleg": "auf-20260818-09, am Gerät gemessen (siehe backbone.py, Eintrag qwen)",
+        }
+
+    if eintrag.konditionierung == backbone.KOND_INTEGRIERTES_EDIT:
+        return {
+            "backbone": eintrag.name, "konditionierung": eintrag.konditionierung,
+            "traegt": None,
+            "grund": ("Nicht gemessen. Diese Konditionierungsart hat typischerweise einen "
+                      "einzigen Bildeingang; hat diese Pipeline keinen eigenen "
+                      "Steuereingang, überschreibt die Tiefenkarte das Ausgangsbild — so "
+                      "wie bei qwen-image-edit-2511 gemessen."),
+            "beleg": "NICHT GEMESSEN — braucht einen Lauf an echten Gewichten",
+        }
+
+    return {
+        "backbone": eintrag.name, "konditionierung": eintrag.konditionierung,
+        "traegt": None,
+        "grund": ("Nicht gemessen. Eine ControlNet-Pipeline hat einen eigenen "
+                  "Steuereingang für die Tiefenkarte; ob sie daneben ein Ausgangsbild "
+                  "annimmt, hängt daran, ob es die img2img-Fassung ist. Der Adapter "
+                  "meldet es nach dem Lauf in den Hinweisen."),
+        "beleg": "NICHT GEMESSEN — braucht einen Lauf an echten Gewichten",
+    }
+
+
 def qa_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
     """Baut die QA-Stufe — Soll aus dem Multipass, Ist aus dem erzeugten Bild.
 
@@ -636,6 +1106,43 @@ def qa_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
         if not bild_png:
             return {"status": STATUS_FEHLER,
                     "error": f"Vorgänger lieferte kein 'bild_png': {sorted(render_ergebnis)}"}
+
+        # ── Hat ein Mensch das Bild angefasst? ───────────────────────────────────────
+        #
+        # OWNER-ENTSCHEID 19.09.2026, und er ist die dritte Antwort, angewandt auf den
+        # Handeingriff. Zeichnet jemand einen Balkon hinein, den das Modell nicht hat,
+        # misst diese Stufe genau die Abweichung, die der Mensch ABSICHTLICH erzeugt hat.
+        # Sie fiele durch — zu Recht und zugleich sinnlos.
+        #
+        # Gewählt wurde weder «wie bisher prüfen» (dann fällt jedes bearbeitete Bild
+        # durch, und eine Warnung, die immer kommt, wird nicht gelesen) noch «gar nicht
+        # prüfen» (dann trägt das Bild keine Auskunft, und später sieht ihm niemand an, ob
+        # es je geprüft war), sondern: **Die Prüfung läuft nicht, und das Urteil lautet
+        # NICHT ANWENDBAR.**
+        #
+        # `bestanden` ist `None` — weder bestanden noch durchgefallen, wie überall in
+        # diesem Projekt. `status` ist AUSDRÜCKLICH NICHT `fehler`: Es ist nichts
+        # schiefgegangen, und ein Fehlerstatus liesse den Knoten übersprungen aussehen.
+        #
+        # Und die Messung wird gar nicht erst gefahren: Eine Zahl, die niemand deuten
+        # darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
+        if render_ergebnis.get(FELD_HANDEINGRIFF):
+            return {
+                "status": STATUS_OK,
+                "bestanden": None,
+                "nicht_anwendbar": True,
+                "grund": (
+                    "NICHT ANWENDBAR: An diesem Bild wurde von Hand gearbeitet. Die "
+                    "Geometrie-Prüfung vergleicht ein Bild mit der Tiefenkarte des "
+                    "Modells — was jemand hineingezeichnet hat, steht dort nicht, und "
+                    "die Abweichung wäre genau das, was er wollte. Das Urteil ist darum "
+                    "weder bestanden noch durchgefallen: Die Frage «folgt dieses Bild dem "
+                    "Modell?» ist für dieses Bild nicht mehr die richtige."
+                ),
+                "bild_png": bild_png,
+                "handeingriff": True,
+                "error": None,
+            }
 
         p = knoten.params
         # Lizenz zuerst, vor dem Lesen der EXR: Regel 1 ist die bindendste und billigste
@@ -689,6 +1196,8 @@ AUSFUEHRER: dict[str, Callable[..., dict]] = {
     ART_MULTIPASS: _fuehre_multipass,
     ART_RENDER: render_ausfuehrer(),
     ART_QA: qa_ausfuehrer(),
+    ART_BILDQUELLE: _fuehre_bildquelle,
+    ART_NACHRENDER: nachrender_ausfuehrer(),
 }
 
 

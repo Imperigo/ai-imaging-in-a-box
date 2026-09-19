@@ -1863,3 +1863,89 @@ def test_die_vorhandene_altablage_wird_als_solche_erklaert(monkeypatch, tmp_path
     assert str(ai) in lage["grund"]
     assert "vorhandene Ablage" in lage["grund"]
     assert "Vorgabeort" not in lage["grund"]
+
+
+# ==========================================================================================
+# Der Bild-Eingang: kommt das Ausgangsbild beim Modell an?
+#
+# Die Frage klingt nach einer Selbstverstaendlichkeit und ist keine. `_pipeline_adapter`
+# uebergibt die Tiefenkarte als `control_image` und das Ausgangsbild als `image` — aber
+# **nur, wenn die Pipeline beide Eingaenge hat**. Hat sie nur einen, bekommt ihn die
+# Tiefenkarte, und vom Hineingezeichneten bleibt nichts.
+#
+# Das ist am Geraet gemessen (`auf-20260818-09`, QwenImageEditPlusPipeline) und stand
+# bisher nur als Kommentar in der Registry. Ein Befund ohne Probe ist eine Erinnerung.
+# ==========================================================================================
+
+class _NurEinBildeingang:
+    """Wie `QwenImageEditPlusPipeline`: ein `image`, kein `control_image`, kein `strength`."""
+
+    def __init__(self):
+        self.gesehen = {}
+
+    def __call__(self, *, prompt=None, negative_prompt=None, image=None,
+                 num_inference_steps=None, guidance_scale=None, generator=None,
+                 height=None, width=None, callback_on_step_end=None):
+        self.gesehen = {"image": image}
+        return type("Aus", (), {"images": [_Bildattrappe()]})()
+
+
+class _ZweiBildeingaenge:
+    """Eine ControlNet-img2img-Pipeline: Steuerbild und Ausgangsbild getrennt."""
+
+    def __init__(self):
+        self.gesehen = {}
+
+    def __call__(self, *, prompt=None, negative_prompt=None, image=None,
+                 control_image=None, controlnet_conditioning_scale=None, strength=None,
+                 num_inference_steps=None, guidance_scale=None, generator=None,
+                 height=None, width=None, callback_on_step_end=None):
+        self.gesehen = {"image": image, "control_image": control_image,
+                        "strength": strength}
+        return type("Aus", (), {"images": [_Bildattrappe()]})()
+
+
+def _bildedit_parameter(tmp_path, tiefe, eingang):
+    return {"depth_png": str(tiefe), "beauty_png": str(eingang),
+            "tiefe_invertiert": False, "seed": 1, "prompt": "ein Balkon dazu",
+            "negativ_prompt": "", "controlnet_staerke": 0.8, "schritte": 4,
+            "fuehrung": 1.0, "modus": render.MODUS_IMAGE_EDIT, "denoise": 0.35,
+            "ausgabe_png": str(tmp_path / "b.png")}
+
+
+def test_eine_pipeline_mit_einem_bildeingang_verliert_das_ausgangsbild(tmp_path,
+                                                                       pillow_attrappe):
+    """**Der gemessene Verlust, hier als Probe.**
+
+    Die Tiefenkarte gewinnt den einen Bildeingang — das ist richtig so, sie ist der
+    Geometrietraeger. Entscheidend ist, dass es **gesagt** wird: Der Lauf gelingt, ein
+    Bild liegt da, und ohne den Hinweis haette niemand einen Grund, nach der verlorenen
+    Zeichnung zu suchen.
+    """
+    tiefe = _schreibe_graustufen_png(tmp_path / "TIEFE.png")
+    eingang = _schreibe_graustufen_png(tmp_path / "EINGANG.png")
+    pipeline = _NurEinBildeingang()
+
+    ergebnis = _adapter(pipeline)(_bildedit_parameter(tmp_path, tiefe, eingang))
+
+    hinweise = " ".join(ergebnis["hinweise"])
+    assert "ersetzt dabei den Beauty-Pass" in hinweise
+    assert "'strength' (0.35)" in hinweise, (
+        "auch der Regler ist wirkungslos, und eine Vergleichsreihe darueber saehe wie "
+        "ein Befund aus")
+
+
+def test_eine_pipeline_mit_zwei_bildeingaengen_bekommt_beide(tmp_path, pillow_attrappe):
+    """Wo die Naht traegt, traegt sie — und wird nicht als kaputt gemeldet."""
+    tiefe = _schreibe_graustufen_png(tmp_path / "TIEFE.png")
+    eingang = _schreibe_graustufen_png(tmp_path / "EINGANG.png")
+    pipeline = _ZweiBildeingaenge()
+
+    ergebnis = _adapter(pipeline)(_bildedit_parameter(tmp_path, tiefe, eingang))
+
+    assert pipeline.gesehen["control_image"] is not None
+    assert pipeline.gesehen["image"] is not None
+    assert pipeline.gesehen["image"] is not pipeline.gesehen["control_image"], (
+        "Ausgangsbild und Steuerbild sind zwei verschiedene Bilder")
+    assert pipeline.gesehen["strength"] == 0.35
+    assert not any("ersetzt dabei den Beauty-Pass" in h for h in ergebnis["hinweise"])

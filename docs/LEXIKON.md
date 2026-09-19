@@ -3788,6 +3788,43 @@ heisst nah am Original, hoch heisst freier.
 
 **Inpainting** — Gezieltes Neuerzeugen nur eines maskierten Bildbereichs.
 
+**Bild-Eingang** — Die Möglichkeit, ein **fertiges Bild wieder in eine Rechnung zu
+geben**, statt es nur anzusehen, zu vergleichen oder auszudrucken. *Klingt
+selbstverständlich und war es hier lange nicht: Bis zum 19.09.2026 konnte in diesem
+Projekt ein Bild entstehen und geprüft werden — aber kein Rechenschritt konnte es als
+Ausgangsmaterial entgegennehmen. Damit gab es für die zweite Hälfte des
+Entwurfsablaufs (ins Bild zeichnen, das Bild weiterbearbeiten) keinen Weg, nicht
+einmal einen halben.*
+
+**Hineinskizzieren** — Der Arbeitsschritt, den Architektinnen von Hand kennen: Man nimmt
+ein fertiges Bild, zeichnet etwas hinein — einen Balkon, ein Vordach, einen Baum — und
+lässt es neu berechnen, damit die Zeichnung aussieht wie der Rest des Bildes. *In der
+Software heisst das: Bild erzeugen, Datei öffnen, zeichnen, speichern, noch einmal
+rechnen lassen. Der Mensch sitzt dabei mitten im Ablauf, und der Rechenweg muss das
+aushalten.*
+
+**Bildquelle (als Arbeitsschritt)** — Ein Schritt im Rechenweg, der nichts anderes tut,
+als **eine Bilddatei von der Festplatte hereinzuholen**. *Er wirkt überflüssig und ist
+der Angelpunkt: Er ist die Stelle, an der ein Mensch wieder hereinkommt. Alle anderen
+Schritte bekommen ihr Material vom Schritt davor; dieser bekommt es von jemandem, der
+gerade etwas gezeichnet hat.*
+
+**Nachrender** — Ein Rechenschritt, der **nicht bei null anfängt**, sondern auf einem
+Bild weiterarbeitet, das schon da ist. Er bekommt zwei Dinge: die Geometrie des Modells
+und das Bild, auf dem gerechnet werden soll. *Der Unterschied zum gewöhnlichen
+Renderschritt ist genau diese zweite Zutat — und dass sie von überall kommen darf: aus
+einem früheren Bild derselben Rechnung oder aus einer Datei, in die jemand hineingemalt
+hat.*
+
+**Ein Bildeingang, den die Tiefenkarte gewinnt** — Eine Falle, die am Gerät gemessen
+wurde und nicht vermutet ist. Manche Bildmodelle haben nur **einen einzigen** Platz für
+ein hineingegebenes Bild. Unser Programm gibt dorthin die Tiefenkarte (die Information
+über die Form des Gebäudes), weil sie die wichtigere ist. Das hineingezeichnete Bild
+fällt dann weg. *Der Lauf gelingt, ein Bild liegt am Ende da, und ohne einen
+ausdrücklichen Hinweis hätte niemand einen Grund, nach der verschwundenen Zeichnung zu
+suchen. Gemessen am 18.08.2026 an `Qwen-Image-Edit` — ausgerechnet an dem Modell, dessen
+Betriebsart «integriertes Edit» heisst.*
+
 **ControlNet** — Ein Zusatzmodell, das die Bilderzeugung an eine Vorgabe bindet — etwa
 an eine Tiefenkarte oder Kantenzeichnung. *Der entscheidende Baustein dieses Projekts:
 Er ist der Grund, warum die KI die echte Kubatur übernimmt statt eine zu erfinden.*
@@ -4846,6 +4883,7 @@ System laufen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-19 | Zum Bild-Eingang: **Bild-Eingang**, **Hineinskizzieren**, **Bildquelle (als Arbeitsschritt)**, **Nachrender**, **Ein Bildeingang, den die Tiefenkarte gewinnt**. Der letzte Eintrag traegt den scharfen Befund dieses Tages: Die Bibliothek reicht ein Ausgangsbild sehr wohl an das Modell durch — aber auf einer Pipeline mit nur EINEM Bildeingang bekommt ihn die Tiefenkarte, und das Hineingezeichnete faellt weg. Am Geraet gemessen (`auf-20260818-09`), hier erstmals mit einer Probe hinterlegt statt nur als Kommentar in der Registry |
 | 2026-09-16 | Ergaenzt beim EINBAU der vier Bausteine: **Feste Schranke (einer Tiefennormierung)**, **Nutzung des Wertebereichs**, **Klemmen (einer Tiefenkarte)**, **Boden (eines Wertebereichs)**, **Quantisierungsschritt als Pruefstein**. Alle fuenf aus Befunden gegen den eigenen Code: Die am 11.09. gemeldete flachgedrueckte Tiefenkarte stammt aus UNSERER festen Schranke und nicht aus dem Perzentil der HomeStation (98,9 % der Punkte ueber 0,99, nachgerechnet); die erste Fassung des Ersatzes klemmte Geometrie auf den Hintergrundwert und machte sie damit unsichtbar fuer die Silhouette; und der zuerst gewaehlte halbe 8-Bit-Schritt als Boden ueberlebt die Rundung nicht, obwohl der Kommentar daneben behauptete, er tue es |
 | 2026-09-16 | Ergaenzt aus vier gleichzeitig gebauten Bausteinen: **Zweigipflige Verteilung**, **Luecke (einer Verteilung)**, **Verhaeltnissprung gegen Abstandssprung**, **Strukturwert einer Tiefenkarte**, **Auskunft neben dem Urteil**, **Rueckkanal**, **Falscher Freund**, **Kollision beim Endungsabstreifen**. Fuenf davon tragen einen Befund und keine Lehrmeinung: Das feste Perzentil scheiterte daran, dass die Fernsichtebene 1,13 % der Flaeche einnahm und nicht unter 1 % lag; die erste Differenz trennt Verlauf und Kante NICHT (beide 0,0333); die Strukturschwelle ist gesetzt und nicht kalibriert und entscheidet darum nichts; `elf` und `acht` bleiben aus dem Zahlwort-Glossar draussen, jedes aus einem eigenen, nachgemessenen Grund. **Berichtigt am selben Tag:** Die zweite Stufe der Luecken-Trennung lief zuerst von selbst und nahm in der nachgestellten Aussenansicht eine echte Nachbarzeile als Ferne weg — sie ist jetzt abgeschaltet, und ihre urspruengliche Begruendung war ohnehin hinfaellig, weil die erste Stufe den gemeldeten Fall schon selbst loest |
 | 2026-09-16 | Ergaenzt: **Warum eine Antwort fehlt — die vier Lagen**. Der Rueckstand zaehlte bis dahin nur, DASS eine Antwort fehlt. Bei 18 offenen Auftraegen und acht stillen Tagen war das zu wenig, um zu entscheiden, ob eine Nachfrage angebracht ist — gemessen: bei 2 von 18 |
