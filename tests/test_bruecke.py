@@ -13,6 +13,7 @@ Der Befund, um den es hier vor allem geht, steht in ihrem `create_job`::
 from __future__ import annotations
 
 import json
+import struct
 from pathlib import Path
 
 import pytest
@@ -23,13 +24,34 @@ from aiimaging import bruecke
 TOKEN = "CONFIRMED_RENDER_deadbeef"
 
 
+def minimale_glb(generator: str = "Blender 4.2") -> bytes:
+    """Eine **gültige** minimale glb — Kennung, Fassung, Gesamtlänge, JSON-Block.
+
+    **GEÄNDERT 19.09.2026, und die alte Fassung ist selbst ein Befund.** Hier standen
+    acht Byte: ``b"glTF\x02\x00\x00\x00"`` — Kennung und Fassungsnummer, danach nichts.
+    Das ist **keine gültige glb**; ihr fehlen die Gesamtlänge und der JSON-Block. Solange
+    niemand hineinsah, fiel es nicht auf.
+
+    Seit die Brücke den Sichtgang ruft, sieht jemand hinein. *Eine Attrappe, die eine
+    kaputte Datei nachbaut und dabei eine heile meint, prüft die falsche Sache* — und
+    zwar in einer Richtung, die nie rot wird.
+
+    Regel 3: von Hand gebaut, synthetisch, nichts aus einem echten Projekt.
+    """
+    js = json.dumps({"asset": {"version": "2.0", "generator": generator}}).encode()
+    js += b" " * (-len(js) % 4)
+    block = struct.pack("<II", len(js), 0x4E4F534A) + js
+    return struct.pack("<4sII", b"glTF", 2, 12 + len(block)) + block
+
+
 def auftrag(tmp_path, *, name="vis-1755600000-0f9e2a", status="queued",
-            token=TOKEN, mit_modell=True, szene=None) -> Path:
+            token=TOKEN, mit_modell=True, szene=None, modell_inhalt=None) -> Path:
     """Ein Auftragsverzeichnis in der Form, die die fremde Brücke wirklich anlegt."""
     d = tmp_path / name
     d.mkdir(parents=True, exist_ok=True)
     if mit_modell:
-        (d / bruecke.DATEI_MODELL).write_bytes(b"glTF\x02\x00\x00\x00")
+        (d / bruecke.DATEI_MODELL).write_bytes(
+            minimale_glb() if modell_inhalt is None else modell_inhalt)
     (d / bruecke.DATEI_SZENE).write_text(json.dumps(szene or {
         "schema": "kosmovis.render-scene/v1",
         "geometry": {"path": str(d / "model.glb"), "format": "glb"},
@@ -389,3 +411,75 @@ def test_der_status_steht_erst_nach_den_bildern(tmp_path, monkeypatch):
     monkeypatch.setattr(bruecke, "setze_status", beobachte)
     bruecke.schreibe_ergebnis(ordner, [str(quelle)])
     assert gesehen == {"bild_da": True, "ergebnis_da": True}
+
+
+# --------------------------------------------------------------------------------------
+# Der Sichtgang an der Brücke (19.09.2026)
+# --------------------------------------------------------------------------------------
+
+def test_eine_umbenannte_jpg_als_modell_kommt_nicht_mehr_mit_null_maengeln_durch(tmp_path):
+    """**GEMESSEN am 19.09.2026, und es war der Befund, der diese Verdrahtung ausgelöst hat.**
+
+    Ein Brückenauftrag mit einer umbenannten JPG als ``model.glb`` kam mit **null
+    Mängeln** durch: ``lies_auftrag`` prüfte nur ``is_file()``. Gescheitert ist der Lauf
+    erst zwei Stufen später in Blender — dort, wo die Meldung niemand mehr liest, und in
+    einer Sprache, die niemand versteht, der nicht Blender kennt.
+
+    Die Meldung muss beides tragen: **was es ist** und **was zu tun ist**.
+    """
+    ordner = auftrag(tmp_path, modell_inhalt=b"\xff\xd8\xff\xe0\x00\x10JFIF" + b"\x00" * 90)
+    gelesen = bruecke.lies_auftrag(ordner)
+
+    passende = [m for m in gelesen["maengel"] if bruecke.DATEI_MODELL in m]
+    assert passende, "die JPG kommt weiterhin ohne Mangel durch"
+    assert "JPEG" in passende[0], "die Meldung muss sagen, WAS es ist"
+    assert "Dateiname" in passende[0], "und was zu tun waere"
+
+
+def test_eine_gueltige_glb_bleibt_ohne_diesen_mangel(tmp_path):
+    """Die Gegenprobe. *Ein Waechter, der alles abweist, bewacht nichts.*
+
+    Ohne sie waere «melde immer einen Mangel am Modell» ebenso gruen — und der Befund
+    oben waere kein Befund, sondern ein Nebengeraeusch.
+    """
+    gelesen = bruecke.lies_auftrag(auftrag(tmp_path))
+
+    assert not [m for m in gelesen["maengel"] if bruecke.DATEI_MODELL in m]
+
+
+def test_ein_unbekanntes_format_haelt_die_bruecke_nicht_auf(tmp_path):
+    """Hier kehrt sich fail-closed um — und der Grund gehoert in eine Probe, nicht nur in
+    einen Kommentar.
+
+    Abgewiesen wird nur, was der Sichtgang **sicher** ablehnt. Ein «nicht erkannt» geht
+    durch: Dies ist ein Tor, das **nachtraeglich** in einen laufenden Weg eingezogen
+    wurde, und ein neues Tor, das sperrt, was gestern lief, ist ein Rueckschritt.
+
+    *Ohne diese Probe waere «weise alles ab, was du nicht kennst» ebenso gruen — und
+    niemand saehe, dass damit brauchbare Auftraege verloren gehen.*
+    """
+    ordner = auftrag(tmp_path, modell_inhalt=b"etwas voellig unbekanntes" * 8)
+    gelesen = bruecke.lies_auftrag(ordner)
+
+    assert not [m for m in gelesen["maengel"] if bruecke.DATEI_MODELL in m]
+
+
+def test_der_sichtgang_haelt_die_bruecke_nicht_auf_wenn_er_selbst_scheitert(tmp_path, monkeypatch):
+    """Ein Waechter, der den Betrieb anhaelt, weil ER nicht laufen kann, ist schlimmer als keiner.
+
+    Kann der Sichtgang die Datei nicht ansehen — Rechte, Netzlaufwerk —, ist das ein
+    Fehler des Werkzeugs und kein Urteil ueber den Auftrag. Er wird als **Warnung**
+    gemeldet und nicht als Mangel.
+    """
+    from aiimaging import einlass
+
+    ordner = auftrag(tmp_path)
+    monkeypatch.setattr(einlass, "sichte", lambda p: (_ for _ in ()).throw(
+        einlass.EinlassError("Laufwerk nicht erreichbar")))
+
+    gelesen = bruecke.lies_auftrag(ordner)
+
+    assert not [m for m in gelesen["maengel"] if bruecke.DATEI_MODELL in m], \
+        "ein Werkzeugfehler darf den Auftrag nicht abweisen"
+    assert any("nicht ansehen" in w for w in gelesen["warnungen"]), \
+        "aber er muss dastehen — sonst ist die Pruefung still ausgefallen"

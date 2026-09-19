@@ -35,6 +35,28 @@ KOSMOVIS_UP = "Y (glTF-2.0-Standard; Blender-Import → Z-up/aufrecht)"
 FLAGGE = "--rotiere-z-up"
 
 
+@pytest.fixture
+def ifc_datei(tmp_path):
+    """Eine winzige, **gueltige** IFC auf der Platte.
+
+    **Gebraucht seit dem 19.09.2026**, und der Grund ist selbst ein Befund: `ifc_zu_glb`
+    sieht die Datei jetzt an, bevor es den Subprozess startet. Die Proben hier reichten
+    bis dahin einen Pfad durch, den es gar nicht gab — mit einem Aufrufer, der so tat,
+    als haette ein Prozess ihn gelesen. *Eine Attrappe, die eine Lage nachbaut, die es
+    nicht geben kann, prueft die falsche Sache.*
+
+    Regel 3: synthetisch und hier erzeugt, nichts aus einem echten Projekt.
+    """
+    pfad = tmp_path / "b.ifc"
+    pfad.write_text(
+        "ISO-10303-21;\nHEADER;\nFILE_DESCRIPTION((''),'');\n"
+        "FILE_NAME('b.ifc','2026-09-19T00:00:00',(''),(''),'','Testfixture','');\n"
+        "FILE_SCHEMA(('IFC4'));\nENDSEC;\nDATA;\n"
+        "#1=IFCSIUNIT(*,.LENGTHUNIT.,$,.METRE.);\nENDSEC;\nEND-ISO-10303-21;\n",
+        encoding="utf-8")
+    return pfad
+
+
 class Ergebnis:
     """Doppelgänger eines ``subprocess.CompletedProcess`` — nur, was die Naht ausliest."""
 
@@ -224,7 +246,7 @@ def test_tiefenkarte_meldet_abbruch_des_prozesses(tmp_path, blender_attrappe):
         glb_zu_tiefenkarte("bau.glb", tmp_path / "depth", up_axis="Y", _starte=aufrufer)
 
 
-def test_die_diagnose_der_ifc_steht_vor_dem_rauschen_der_fremden_bibliothek():
+def test_die_diagnose_der_ifc_steht_vor_dem_rauschen_der_fremden_bibliothek(ifc_datei):
     """BEFUND 19.09.2026: `ifc_zu_glb` hat die einzige brauchbare Meldung verworfen.
 
     Gemessen an einer umbenannten JPG mit der Endung `.ifc`::
@@ -256,7 +278,7 @@ def test_die_diagnose_der_ifc_steht_vor_dem_rauschen_der_fremden_bibliothek():
         stderr="Exception ignored in: <function file.__del__ at 0x7f6a>\nKeyError: 404872384\n"))
 
     with pytest.raises(SeamError) as fehler:
-        seams.ifc_zu_glb("umbenannt.ifc", "raus.glb", _starte=aufrufer)
+        seams.ifc_zu_glb(ifc_datei, "raus.glb", _starte=aufrufer)
 
     text = str(fehler.value)
     assert "Unable to parse IFC SPF header" in text, \
@@ -267,7 +289,7 @@ def test_die_diagnose_der_ifc_steht_vor_dem_rauschen_der_fremden_bibliothek():
         "das Rauschen bleibt trotzdem drin — bei einem Absturz ist es die einzige Spur"
 
 
-def test_die_ifc_naht_kommt_auch_ohne_lesbaren_report_zurecht():
+def test_die_ifc_naht_kommt_auch_ohne_lesbaren_report_zurecht(ifc_datei):
     """Die Gegenprobe: Ohne JSON auf stdout bleibt stderr die beste Quelle.
 
     Ohne sie waere «lies immer den Report» auch dann gruen, wenn es gar keinen gibt — und
@@ -276,7 +298,7 @@ def test_die_ifc_naht_kommt_auch_ohne_lesbaren_report_zurecht():
     aufrufer = Aufrufer(Ergebnis(returncode=1, stdout="", stderr="Segmentation fault"))
 
     with pytest.raises(SeamError, match="Segmentation fault"):
-        seams.ifc_zu_glb("bau.ifc", "raus.glb", _starte=aufrufer)
+        seams.ifc_zu_glb(ifc_datei, "raus.glb", _starte=aufrufer)
 
 
 def test_blender_zeigt_seinen_eigenen_report_statt_nur_sein_rauschen(tmp_path, blender_attrappe):
@@ -366,49 +388,106 @@ def test_tiefenkarte_reicht_timeout_durch(tmp_path, blender_attrappe):
 # ifc_zu_glb — Prozess im fremden venv, Verständigung über JSON
 # --------------------------------------------------------------------------------------
 
-def test_ifc_lauf_ruft_das_fremde_venv_mit_dem_runner_auf(ifc_python_attrappe, tmp_path):
+def test_ifc_lauf_ruft_das_fremde_venv_mit_dem_runner_auf(ifc_python_attrappe, tmp_path, ifc_datei):
     """LGPL-Auflage 1: Der Runner läuft im eigenen venv, nicht im Produkt-Interpreter."""
     aufrufer = Aufrufer(Ergebnis(stdout=json.dumps({"glb_path": "b.glb", "up_axis": "Y"})))
 
-    bericht = ifc_zu_glb(tmp_path / "b.ifc", tmp_path / "b.glb", _starte=aufrufer)
+    bericht = ifc_zu_glb(ifc_datei, tmp_path / "b.glb", _starte=aufrufer)
 
     assert aufrufer.kommando[0] == ifc_python_attrappe
     assert aufrufer.kommando[1] == str(seams.IFC_RUNNER)
     assert bericht["up_axis"] == "Y", "Der eigene Pfad liefert glTF-konformes Y-up"
 
 
-def test_ifc_lauf_meldet_rueckgabewert_ungleich_null(ifc_python_attrappe, tmp_path):
+def test_ifc_lauf_meldet_rueckgabewert_ungleich_null(ifc_python_attrappe, tmp_path, ifc_datei):
     """Ein gescheiterter Subprozess wird zum ``SeamError`` — kein stilles Weiterlaufen."""
     aufrufer = Aufrufer(Ergebnis(returncode=2, stderr="ifcopenshell: Datei nicht lesbar"))
 
     with pytest.raises(SeamError) as fehler:
-        ifc_zu_glb(tmp_path / "b.ifc", tmp_path / "b.glb", _starte=aufrufer)
+        ifc_zu_glb(ifc_datei, tmp_path / "b.glb", _starte=aufrufer)
 
     assert "Code 2" in str(fehler.value)
     assert "nicht lesbar" in str(fehler.value), "Die Meldung des Runners muss durchgereicht werden"
 
 
-def test_ifc_lauf_meldet_nicht_json_ausgabe(ifc_python_attrappe, tmp_path):
+def test_ifc_lauf_meldet_nicht_json_ausgabe(ifc_python_attrappe, tmp_path, ifc_datei):
     """Die Verständigung läuft über JSON — was das nicht ist, wird als Nahtfehler gemeldet."""
     aufrufer = Aufrufer(Ergebnis(stdout="Segmentation fault (core dumped)"))
 
     with pytest.raises(SeamError, match="kein JSON"):
-        ifc_zu_glb(tmp_path / "b.ifc", tmp_path / "b.glb", _starte=aufrufer)
+        ifc_zu_glb(ifc_datei, tmp_path / "b.glb", _starte=aufrufer)
 
 
-def test_ifc_lauf_meldet_leere_ausgabe(ifc_python_attrappe, tmp_path):
+def test_ifc_lauf_meldet_leere_ausgabe(ifc_python_attrappe, tmp_path, ifc_datei):
     """Auch ein stiller Runner ist ein Fehler: Ohne Report weiss der Aufrufer nichts."""
     with pytest.raises(SeamError, match="kein JSON"):
-        ifc_zu_glb(tmp_path / "b.ifc", tmp_path / "b.glb", _starte=Aufrufer(Ergebnis(stdout="")))
+        ifc_zu_glb(ifc_datei, tmp_path / "b.glb", _starte=Aufrufer(Ergebnis(stdout="")))
 
 
-def test_ifc_lauf_startet_nichts_ohne_venv(monkeypatch, tmp_path):
+def test_eine_skp_erreicht_den_subprozess_gar_nicht_mehr(ifc_python_attrappe, tmp_path):
+    """DER SICHTGANG, VERDRAHTET — bis zum 19.09.2026 prueft diese Naht **gar nichts**.
+
+    Nicht die Existenz, nicht die Endung, nicht den Inhalt. Eine `.skp` lief als kaputte
+    IFC in den Subprozess und kam als Fehler einer fremden Bibliothek zurueck. Jetzt
+    kostet die Abweisung einen Dateikopf und spart einen ganzen Prozessstart.
+
+    Geprueft wird beides: **dass der Satz stimmt** und **dass nichts gestartet wurde.**
+    Nur das erste zu pruefen liesse offen, ob die Ersparnis ueberhaupt eintritt.
+    """
+    (skp := tmp_path / "haus.skp").write_bytes(b"SketchUp Model\x00" + b"\x00" * 64)
+
+    with pytest.raises(SeamError) as fehler:
+        ifc_zu_glb(skp, tmp_path / "b.glb", _starte=verweigerer)
+
+    text = str(fehler.value)
+    assert "SketchUp" in text, "das Format muss beim Namen genannt werden"
+    assert "IFC" in text, "und die Absage muss den Ausweg nennen"
+
+
+def test_ein_NICHT_ERKANNTES_format_geht_weiterhin_durch(ifc_python_attrappe, tmp_path):
+    """**Hier kehrt sich fail-closed um, und das ist der Entscheid dieser Stelle.**
+
+    Abgewiesen wird nur, was der Sichtgang **sicher** ablehnt. Ein «nicht erkannt» geht
+    durch zu ifcopenshell — und das ist Absicht, kein Nachlassen:
+
+    Dies ist ein Tor, das **nachtraeglich** in einen laufenden Weg eingezogen wird. Ein
+    neues Tor, das etwas sperrt, was gestern funktioniert hat, ist ein Rueckschritt und
+    keine Verbesserung. Und «nicht erkannt» ist eine Aussage ueber **unsere Kennungen**,
+    nicht ueber die Datei: ifcopenshell kennt mehr IFC-Formen als unser Dateikopf-Blick.
+    Wer sie abwiese, ersetzte einen unverstaendlichen Fehlschlag durch einen unnoetigen.
+
+    *Ohne diese Probe waere «weise alles ab, was du nicht kennst» ebenso gruen — und
+    niemand saehe, dass damit brauchbare Dateien verloren gehen.*
+    """
+    (fremd := tmp_path / "eigenartig.ifc").write_bytes(b"etwas, das wir nicht kennen" * 4)
+    aufrufer = Aufrufer(Ergebnis(stdout=json.dumps({"glb_path": "x.glb"})))
+
+    ifc_zu_glb(fremd, tmp_path / "b.glb", _starte=aufrufer)
+
+    assert aufrufer.kommandos, "der Subprozess muss gelaufen sein"
+
+
+def test_die_installation_wird_vor_der_datei_geprueft(monkeypatch, tmp_path):
+    """Fehlt das `.venv-ifc`, hilft kein Urteil ueber die Datei.
+
+    Wer dann «deine Datei gibt es nicht» zu hoeren bekaeme, suchte den Fehler bei sich,
+    waehrend er bei der Einrichtung liegt. *Eine Frage nach dem Gegenstand setzt voraus,
+    dass das Werkzeug ihn ueberhaupt anfassen koennte.*
+    """
+    monkeypatch.delenv("AIIMAGING_IFC_PYTHON", raising=False)
+    monkeypatch.setattr(Path, "exists", lambda self: False)
+
+    with pytest.raises(SeamError, match=".venv-ifc"):
+        ifc_zu_glb(tmp_path / "gibtsnicht.ifc", tmp_path / "b.glb", _starte=verweigerer)
+
+
+def test_ifc_lauf_startet_nichts_ohne_venv(monkeypatch, tmp_path, ifc_datei):
     """Fehlt das ``.venv-ifc``, wird gar kein Prozess versucht — und schon gar nicht der eigene."""
     monkeypatch.delenv("AIIMAGING_IFC_PYTHON", raising=False)
     monkeypatch.setattr(Path, "exists", lambda self: False)
 
     with pytest.raises(SeamError, match=".venv-ifc"):
-        ifc_zu_glb(tmp_path / "b.ifc", tmp_path / "b.glb", _starte=verweigerer)
+        ifc_zu_glb(ifc_datei, tmp_path / "b.glb", _starte=verweigerer)
 
 
 # ==========================================================================================
@@ -1004,13 +1083,13 @@ def test_ohne_frist_und_ohne_wache_wird_abgewiesen(tmp_path, blender_attrappe):
     assert "herzschlag_takt_s" in str(fehler.value)
 
 
-def test_die_ifc_laeufe_lassen_sich_die_frist_nicht_nehmen(ifc_python_attrappe, tmp_path):
+def test_die_ifc_laeufe_lassen_sich_die_frist_nicht_nehmen(ifc_python_attrappe, tmp_path, ifc_datei):
     """Hinter ihnen wacht nichts — der Runner meldet sich erst am Ende.
 
     Darum ist `None` hier kein zulässiger Wert, und es wird auch kein Prozess gestartet:
     `verweigerer` belegt, dass vorher abgebrochen wurde.
     """
-    for lauf in (lambda: ifc_zu_glb(tmp_path / "b.ifc", tmp_path / "b.glb",
+    for lauf in (lambda: ifc_zu_glb(ifc_datei, tmp_path / "b.glb",
                                     timeout=None, _starte=verweigerer),
                  lambda: seams.ifc_raeume(tmp_path / "b.ifc", timeout=None,
                                           _starte=verweigerer)):
@@ -1054,12 +1133,12 @@ def test_der_faktor_streckt_die_gesamtfrist_des_blender_laufs(tmp_path, blender_
     assert aufrufer.timeouts == [3 * seams.ZEITDECKEL_HOMESTATION_S]
 
 
-def test_der_faktor_streckt_auch_die_ifc_laeufe(ifc_python_attrappe, tmp_path, monkeypatch):
+def test_der_faktor_streckt_auch_die_ifc_laeufe(ifc_python_attrappe, tmp_path, monkeypatch, ifc_datei):
     """Sonst bliebe die Frist ohne Wache ausgerechnet die, die niemand strecken kann."""
     monkeypatch.setenv(seams.ZEITFAKTOR_ENV, "2.5")
     aufrufer = Aufrufer(Ergebnis(stdout=json.dumps({"glb_path": "b.glb", "up_axis": "Y"})))
 
-    ifc_zu_glb(tmp_path / "b.ifc", tmp_path / "b.glb", _starte=aufrufer)
+    ifc_zu_glb(ifc_datei, tmp_path / "b.glb", _starte=aufrufer)
 
     assert aufrufer.timeouts == [2.5 * seams.GESAMTFRIST_IFC_S]
 
@@ -1351,5 +1430,5 @@ def test_auch_die_ifc_laeufe_nehmen_keine_frist_die_keine_ist(frist, ifc_python_
                                                               tmp_path):
     """Dieselbe Pruefung hinter `_ifc_frist` — dort ist die Frist der einzige Riegel."""
     with pytest.raises(SeamError):
-        ifc_zu_glb(tmp_path / "b.ifc", tmp_path / "b.glb", timeout=frist,
+        ifc_zu_glb(ifc_datei, tmp_path / "b.glb", timeout=frist,
                    _starte=verweigerer)

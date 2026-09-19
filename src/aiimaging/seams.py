@@ -41,6 +41,7 @@ import threading
 import time
 from pathlib import Path
 
+from aiimaging import einlass
 from aiimaging import fortschritt
 from aiimaging.contracts import ContractError, needs_rotation
 
@@ -609,7 +610,40 @@ def ifc_zu_glb(ifc_path, glb_path, *, timeout: float = GESAMTFRIST_IFC_S,
     """
     starte = _starte or _default_starte
     frist = _ifc_frist(timeout)
-    cmd = [finde_ifc_python(), str(IFC_RUNNER), str(ifc_path), str(glb_path)]
+
+    # ZUERST DIE INSTALLATION, DANN DIE DATEI — und die Reihenfolge ist ein Entscheid.
+    #
+    # Fehlt das `.venv-ifc`, kann dieses Werkzeug ueberhaupt nichts mit einer IFC tun.
+    # Wer dann zu hoeren bekaeme «deine Datei gibt es nicht», suchte den Fehler bei sich,
+    # waehrend er bei der Einrichtung liegt. *Eine Frage nach dem Gegenstand setzt
+    # voraus, dass das Werkzeug ihn ueberhaupt anfassen koennte.*
+    ifc_python = finde_ifc_python()
+
+    # DER SICHTGANG VOR DEM SUBPROZESS — verdrahtet am 19.09.2026.
+    #
+    # Bis dahin pruefte diese Naht **gar nichts**: nicht die Existenz, nicht die Endung,
+    # nicht den Inhalt. Eine `.skp` lief als kaputte IFC in den Subprozess und kam als
+    # Fehler einer fremden Bibliothek zurueck. Der Sichtgang kostet einen Dateikopf
+    # (512 Byte) und spart im Fehlerfall einen ganzen Prozessstart.
+    #
+    # **ABGEWIESEN WIRD NUR, WAS SICHER FALSCH IST** (`brauchbar is False`). Ein
+    # «nicht erkannt» geht durch zu ifcopenshell, und das ist Absicht: Dies ist ein Tor,
+    # das nachtraeglich in einen laufenden Weg eingezogen wird, und ein Tor, das etwas
+    # sperrt, was gestern lief, ist ein Rueckschritt. ifcopenshell kennt mehr IFC-Formen
+    # als unsere Kennung — wer sie abwiese, ersetzte einen unverstaendlichen Fehlschlag
+    # durch einen unnoetigen.
+    #
+    # Der Sichtgang selbst darf hier nicht scheitern lassen: Kommt er nicht durch (Rechte,
+    # Netzlaufwerk), gilt weiter der alte Weg. Ein Waechter, der den Betrieb anhaelt, weil
+    # er selbst nicht laufen kann, ist schlimmer als keiner.
+    try:
+        befund = einlass.sichte(ifc_path)
+    except einlass.EinlassError:
+        befund = None
+    if befund is not None and befund["brauchbar"] is False:
+        raise SeamError(f"{befund['grund']} {befund['naechster_schritt']}")
+
+    cmd = [ifc_python, str(IFC_RUNNER), str(ifc_path), str(glb_path)]
 
     ergebnis = starte(cmd, frist)
     if ergebnis.returncode != 0:

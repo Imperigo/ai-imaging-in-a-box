@@ -3,7 +3,7 @@
   "auftrag_id": "auf-20260909-98",
   "art": "qa",
   "worker": "local",
-  "rang": 6,
+  "rang": 7,
   "erstellt": "2026-09-09T16:00:00Z",
   "params": {},
   "beschreibung": "Kalibrierung von rho_maske als Riegel — an Faellen mit vorab bekannter Wahrheit, NICHT an den zwoelf Laeufen aus auf-92. Dazu die Frage, ob das zweite Bein des Paarurteils an erzeugten Bildern ueberhaupt messbar ist.",

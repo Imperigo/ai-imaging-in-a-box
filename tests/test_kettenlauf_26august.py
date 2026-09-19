@@ -27,6 +27,8 @@ Blender und Diffusion.
    `tests/test_kettenlauf_echt.py`.
 """
 from __future__ import annotations
+import json as _json_glb
+import struct as _struct_glb
 
 import json
 from pathlib import Path
@@ -39,6 +41,27 @@ from conftest import MINI_PNG
 #: Ein Bauwerk, das die Rahmung TRAEGT: 8 von 8,5 m Szenenbreite.
 BBOX_SZENE = [[0.0, 0.0, 0.0], [8.5, 5.5, 12.0]]
 BBOX_BAUWERK = [[0.0, 0.0, 0.0], [8.0, 5.0, 11.0]]
+
+
+# EINE GUELTIGE MINIMALE glb — und die alte Fassung war selbst ein Befund.
+#
+# Hier stand `_minimale_glb()`: Kennung und Fassungsnummer, danach nichts. Das ist
+# KEINE gueltige glb; ihr fehlen die Gesamtlaenge und der JSON-Block. Solange niemand
+# hineinsah, fiel es nicht auf — und niemand sah hinein, weil `bruecke.lies_auftrag` bis
+# zum 19.09.2026 nur `is_file()` prueste.
+#
+# Kaum sah jemand hinein (`einlass.sichte`, verdrahtet am 19.09.2026), wurden daraus
+# siebenundfuenfzig rote Proben in `test_abholer.py` allein. *Eine Attrappe, die eine
+# kaputte Datei nachbaut und dabei eine heile meint, prueft die falsche Sache — und zwar
+# in einer Richtung, die nie rot wird.*
+#
+# Regel 3: von Hand gebaut, synthetisch, nichts aus einem echten Projekt.
+def _minimale_glb(generator: str = "Blender 4.2") -> bytes:
+    """Kennung, Fassung, Gesamtlaenge, JSON-Block — das Mindeste, was eine glb ausmacht."""
+    js = _json_glb.dumps({"asset": {"version": "2.0", "generator": generator}}).encode()
+    js += b" " * (-len(js) % 4)
+    block = _struct_glb.pack("<II", len(js), 0x4E4F534A) + js
+    return _struct_glb.pack("<4sII", b"glTF", 2, 12 + len(block)) + block
 
 
 def _kamerablock(kuerzel):
@@ -64,7 +87,7 @@ def _auftragsordner(tmp_path, *, sonne=None, skip=False):
     if sonne is not None:
         szene["render"]["sun"] = sonne
     (ordner / bruecke.DATEI_SZENE).write_text(json.dumps(szene), encoding="utf-8")
-    (ordner / bruecke.DATEI_MODELL).write_bytes(b"glTF\x02\x00\x00\x00")
+    (ordner / bruecke.DATEI_MODELL).write_bytes(_minimale_glb())
     return ordner
 
 

@@ -3,7 +3,7 @@
   "auftrag_id": "auf-20260912-108",
   "art": "qa",
   "worker": "local",
-  "rang": 11,
+  "rang": 12,
   "erstellt": "2026-09-12T10:30:00Z",
   "params": {},
   "beschreibung": "Drei Antworten auf euren Lauf vom 12.09.: Ablageort kommt aus $AIIMAGING_STORE, die Probe liest jetzt Ergaenzungen mit, der Lauf nennt den Pfad. Der Prompt ist repariert. Euer Vorschlag fuer den zweiten Rahmungsriegel traegt nicht — die zweite Differenz schon. Dafuer brauchen wir eine Messreihe. Kein neuer Render.",

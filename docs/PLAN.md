@@ -5706,11 +5706,40 @@ Bekannt und ausdrücklich nicht erledigt:
       **kein brauchbares Modell abweisen**, weil unsere drei Formate vorher erkannt
       werden. Eine Probe hält genau das fest.
       28 Proben, fünf Mutationen — alle fünf fallen.
-- [~] **Offen geblieben, obwohl der Einlass jetzt steht: Er ist noch nicht verdrahtet.**
-      `sichte` ist aus Python heraus nutzbar (Regel 4 erfüllt), aber **keine der neunzehn
-      Eintrittsstellen ruft sie**. Eine JPG als `model.glb` kommt über die Brücke
-      weiterhin mit null Mängeln durch. *Ein Wächter, den niemand ruft, bewacht nichts —
-      und genau das war heute Morgen der Vorwurf an `herkunft`.* **Adressat: `kern`.**
+- [x] **Verdrahtet, am selben Tag** — an den zwei Stellen, an denen die Messung den
+      Schaden gezeigt hat: `seams.ifc_zu_glb` (prüfte bis dahin **gar nichts**) und
+      `bruecke.lies_auftrag` (prüfte nur `is_file()`, und eine JPG als `model.glb` kam mit
+      **null Mängeln** durch).
+      *Ein Wächter, den niemand ruft, bewacht nichts — und genau das war der Vorwurf an
+      `herkunft`.* Er wäre billig auch auf den eigenen Neubau anwendbar gewesen.
+      **Und hier kehrt sich fail-closed um, das ist der Entscheid dieser beiden Stellen:**
+      Abgewiesen wird **nur**, was der Sichtgang *sicher* ablehnt. Ein «nicht erkannt»
+      geht durch. Der Grund ist kein Nachlassen: Dies sind Tore, die **nachträglich** in
+      laufende Wege eingezogen werden, und *ein neues Tor, das sperrt, was gestern lief,
+      ist ein Rückschritt und keine Verbesserung* — dazu kennt ifcopenshell mehr
+      IFC-Formen als ein Blick auf 512 Byte. Beide Richtungen stehen unter einer Probe.
+      **Die Reihenfolge ist ebenfalls ein Entscheid:** erst die Einrichtung
+      (`.venv-ifc`), dann die Datei. Wer bei fehlender Einrichtung «deine Datei gibt es
+      nicht» zu hören bekäme, suchte den Fehler bei sich.
+- [x] **Dabei gefunden, und es ist der grössere Fund: Die Attrappen bauten eine kaputte
+      Datei nach und meinten eine heile.** Sie schrieben acht Byte — Kennung und
+      Fassungsnummer, danach nichts. Das ist **keine gültige glb**; es fehlen Gesamtlänge
+      und JSON-Block.
+      **Gezählt, als endlich jemand hinsah: 57 rote Proben in `test_abholer.py` allein**,
+      dazu `test_befund.py`, `test_demolauf12_befunde.py`, `test_kettenlauf_26august.py`
+      und die Brücke — **fünf Dateien**, die ihren Weg an einer Datei prüften, die es so
+      nie gegeben hätte.
+      *Eine Attrappe, die eine kaputte Datei nachbaut und dabei eine heile meint, prüft
+      die falsche Sache — und zwar in einer Richtung, die nie rot wird.* Sie konnte
+      jahrelang grün bleiben, weil die geprüfte Stelle selbst nie hineinsah: `is_file()`
+      fragt nicht, was in der Datei steht.
+      **Der Befund ist damit grösser als sein Anlass:** Nicht nur die Brücke sah nicht
+      hin — die ganze Testsammlung hatte an dieser Stelle nie etwas zu sehen bekommen.
+- [x] **Angesagt, bevor es ankommt** (`auf-20260919-120`, Rang 2 bei `local`). Die
+      HomeStation fährt `tools/homeworker.py` aus diesem Repo; ein `git pull` dort ändert,
+      was gerechnet wird, ohne dass hier ein Posten umspringt. Die Ansage sagt auch, was
+      **nicht** passiert — und lädt ausdrücklich zum Gegenbefund ein: *«Wenn euch eine
+      Datei abgewiesen wird, die früher lief, ist das ein echter Fund.»*
 - [x] **Der Befund, aus dem `einlass.sichte` entstanden ist** *(erledigt am selben Tag —
       die Zeile bleibt stehen, weil sie den Ausgangszustand hält).*
       Am Morgen des 19.09.2026 beantwortete **kein** Aufruf die Frage *«ist diese Datei

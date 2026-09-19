@@ -3,7 +3,7 @@
   "auftrag_id": "auf-20260909-95",
   "art": "frage",
   "worker": "local",
-  "rang": 3,
+  "rang": 4,
   "erstellt": "2026-09-09T23:30:00Z",
   "params": {},
   "beschreibung": "Ansage einer Verhaltensaenderung in tools/make_test_ifc.py: Die Gelaendeplatte folgt ab sofort dem gebauten Bauwerk statt den Quaderkonstanten. Am Quader aendert sich nichts; am Hochbau bedeutet --gelaende-vielfaches etwas anderes als bisher (euer kalibriertes 8.0 entspricht jetzt 4.2).",

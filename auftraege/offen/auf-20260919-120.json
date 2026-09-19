@@ -1,0 +1,29 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260919-120",
+  "art": "frage",
+  "beschreibung": "ANSAGE VOR DEM PULL, keine Messung. Der IFC-Eingang sieht ab jetzt in die Datei, bevor er den Subprozess startet — bis heute prueft er GAR NICHTS. Abgewiesen wird nur, was sicher falsch ist; was wir nicht erkennen, geht durch wie bisher. Ein Lauf, der bisher lief, laeuft weiter. Dasselbe an der Bruecke: Eine umbenannte JPG als model.glb kam bis heute mit null Maengeln durch.",
+  "anweisung": "=== ANSAGE: DER IFC-EINGANG SIEHT AB JETZT IN DIE DATEI ===\n\nDIES IST KEIN MESSAUFTRAG. Nichts zu rechnen. Eine Zeile zurueck genuegt.\n\nIhr fahrt `tools/homeworker.py` aus unserem Repo. Ein `git pull` bei euch\naendert also, was gerechnet wird, ohne dass hier ein Posten umspringt —\ndarum sagen wir Verhaltensaenderungen an, bevor sie ankommen.\n\nWAS SICH AENDERT\n\n  `seams.ifc_zu_glb` prueft die Datei, BEVOR es den Subprozess startet.\n  Bis heute prueft diese Naht GAR NICHTS: nicht die Existenz, nicht die\n  Endung, nicht den Inhalt. Alles ging an ifcopenshell, und was\n  zurueckkam, war im Fehlerfall dessen Stacktrace.\n\n  Neu: Ein Blick auf die ersten 512 Byte. Wird dort ein Format erkannt,\n  mit dem wir nicht rechnen (SketchUp, Rhino, DWG, FBX, Blender, USD,\n  STL, Collada, ein Bild, ein PDF, ein ZIP), oder ist die Datei leer oder\n  gar nicht da, gibt es einen SeamError MIT SATZ statt eines\n  Prozessstarts.\n\nWAS IHR MERKT, und es ist wenig:\n\n  * Eine kaputte IFC scheitert schneller und mit einer lesbaren Meldung.\n  * Ein Lauf, der bisher lief, laeuft weiter. ABGEWIESEN WIRD NUR, WAS\n    SICHER FALSCH IST. Eine Datei, die wir nicht erkennen, geht durch zu\n    ifcopenshell — genau wie bisher. Das ist Absicht: ifcopenshell kennt\n    mehr IFC-Formen als unser Dateikopf-Blick, und ein neues Tor, das\n    sperrt, was gestern lief, waere ein Rueckschritt.\n  * Die Reihenfolge ist: erst `.venv-ifc` gefunden, DANN die Datei\n    angesehen. Fehlt die Einrichtung, sagt die Meldung das und nicht\n    etwas ueber eure Datei.\n\nWAS SICH AN DER BRUECKE AENDERT (falls ihr sie fahrt):\n\n  `bruecke.lies_auftrag` sieht sich `model.glb` an. Gemessen am\n  19.09.2026: Ein Auftrag mit einer umbenannten JPG als `model.glb` kam\n  bis heute mit NULL MAENGELN durch und scheiterte erst zwei Stufen\n  spaeter in Blender. Jetzt steht der Mangel im Auftrag, wo ihn jemand\n  liest. Auch hier: Nicht erkannt heisst durchgelassen.\n\nWAS AUSDRUECKLICH NICHT PASSIERT\n\n  * Keine Datei wird umgewandelt, repariert oder skaliert.\n  * Keine Groessengrenze. Eine grosse Datei bekommt einen Hinweis ab\n    500 MB, sonst nichts — wer eine grosse Datei hat, hat sie.\n  * Kein zusaetzlicher Prozess, kein Netz, keine GPU. Der Blick kostet\n    einen Dateikopf und spart im Fehlerfall einen ganzen Prozessstart.\n\nUND EIN VORBEHALT, DEN IHR KENNEN SOLLTET\n\n  Die Kennungen der fremden Formate stammen aus veroeffentlichten\n  Formatbeschreibungen und sind NICHT an echten Dateien gemessen. Waere\n  eine davon falsch, schriebe sie hoechstens einen falschen Namen in eine\n  Absage — sie kann keine brauchbare IFC abweisen, weil unser Format\n  vorher erkannt wird. Eine Probe haelt genau das fest.\n\n  Wenn euch trotzdem eine Datei abgewiesen wird, die frueher lief: Das\n  waere ein echter Fund, und er ist uns viel wert. Schickt uns die\n  ersten 64 Byte (`head -c 64 datei.ifc | od -c`) — mehr brauchen wir\n  nicht, und mehr wollen wir nach Regel 3 auch nicht.\n\nWAS WIR BRAUCHEN: eine Zeile. Gelesen, und ob euch etwas stoert. Sagt\nihr nichts, ziehen wir daraus KEIN Einverstaendnis — nur, dass wir es\nnicht wissen.",
+  "erstellt": "2026-09-19T20:00:00Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "rueckgabe": [
+    "V1 Gelesen, ja oder nein.",
+    "V2 Wird euch eine Datei abgewiesen, die frueher lief? Das waere ein echter Fund — dann die ersten 64 Byte (head -c 64 | od -c).",
+    "V3 Stoert euch etwas an der Reihenfolge (erst .venv-ifc, dann die Datei)?",
+    "V4 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ],
+  "rang": 2
+}

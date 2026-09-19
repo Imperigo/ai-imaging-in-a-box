@@ -54,6 +54,7 @@ import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
+from . import einlass
 from . import kosmo_szene
 
 #: Die Dateinamen der fremden Warteschlange, wörtlich aus ihrer ``main.py``.
@@ -182,6 +183,35 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
     modell = ordner / DATEI_MODELL
     if not modell.is_file():
         maengel.append(f"Die Geometrie fehlt: {DATEI_MODELL} liegt nicht im Verzeichnis.")
+    else:
+        # DER SICHTGANG, VERDRAHTET — und bis zum 19.09.2026 stand hier nur `is_file()`.
+        #
+        # GEMESSEN an demselben Tag: Ein Brueckenauftrag mit einer umbenannten JPG als
+        # `model.glb` kam mit **null Maengeln** durch und scheiterte erst zwei Stufen
+        # spaeter in Blender — dort, wo die Meldung niemand mehr liest.
+        #
+        # **UND HIER KEHRT SICH FAIL-CLOSED UM, das ist der Entscheid dieser Stelle.**
+        # Abgewiesen wird NUR, was der Sichtgang sicher ablehnt (`brauchbar is False`).
+        # Ein `None` — also «nicht erkannt» — geht **durch**.
+        #
+        # Warum, und es ist kein Nachlassen: Dies ist ein Tor, das **nachtraeglich** in
+        # einen laufenden Weg eingezogen wird. Ein neues Tor, das etwas sperrt, was
+        # gestern funktioniert hat, ist ein Rueckschritt und keine Verbesserung — und
+        # «nicht erkannt» ist eine Aussage ueber unsere Kennungen, nicht ueber die Datei.
+        # Der Zweck dieser Stelle ist **die bessere Meldung**, nicht die strengere Regel.
+        # Wer sie zur strengeren Regel machen will, aendert das bewusst und misst vorher,
+        # wieviel davon betroffen waere.
+        try:
+            befund = einlass.sichte(modell)
+        except einlass.EinlassError as fehler:
+            # Der Sichtgang selbst ist gescheitert — ein Fehler des Werkzeugs und kein
+            # Urteil ueber die Datei. Er darf darum den Auftrag nicht abweisen.
+            warnungen.append(f"Die Geometrie liess sich nicht ansehen: {fehler}")
+        else:
+            if befund["brauchbar"] is False:
+                maengel.append(
+                    f"{DATEI_MODELL}: {befund['grund']} {befund['naechster_schritt']}")
+            warnungen.extend(befund["hinweise"])
 
     freigegeben, grund = _freigabe(laufzettel, fremde_freigabe_gilt)
     if not freigegeben:
