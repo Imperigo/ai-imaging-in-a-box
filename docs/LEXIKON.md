@@ -4725,6 +4725,30 @@ ein Abbruch mitten in einer gesunden Rechnung — und der sieht aus wie ein Fehl
 nur die Uhr zu knapp stand. Ein Faktor von 3 verdreifacht alle Fristen auf einmal.
 *Wo im Projekt:* `AIIMAGING_ZEITFAKTOR`, gelesen von `aiimaging.seams.zeitfaktor`.
 
+**Einlass (Sichtgang an der Tür)** — Eine kurze Prüfung, die eine Datei ansieht und in
+einem Satz sagt, ob mit ihr zu rechnen ist — **bevor** die teure Rechnung beginnt.
+*Wozu:* Ein Import kann eine halbe Stunde dauern. Erfährt jemand erst danach, dass die
+Datei gar keine ist, hat er die halbe Stunde verloren. Der Sichtgang liest nur den
+Dateianfang und ist darum bei einer 500-MB-Datei so schnell wie bei einer 5-KB-Datei.
+*Wo im Projekt:* `aiimaging.einlass.sichte` — «Datei hinein, ein Satz heraus».
+
+**Das Format am Inhalt statt an der Endung bestimmen** — Nachsehen, womit eine Datei
+*beginnt*, statt dem zu glauben, was hinter dem Punkt im Namen steht.
+*Wozu:* Eine Endung ist eine Behauptung dessen, der die Datei benannt hat; der
+Dateianfang ist eine des Programms, das sie geschrieben hat. Wer eine Datei umbenennt,
+ändert nur die erste. Im Projekt endete eine als `.ifc` umbenannte Fotodatei darum in
+einem Absturz tief in einer fremden Bibliothek — statt in dem Satz «das ist ein Bild und
+kein Modell».
+*Wo im Projekt:* `aiimaging.einlass` und `aiimaging.herkunft.deute`.
+
+**Eine Absage ohne Ausweg ist eine halbe Auskunft** — Wer etwas ablehnt, sagt dazu, wie
+man weiterkommt.
+*Wozu:* «SketchUp kann ich nicht» beendet den Versuch. «SketchUp kann IFC ausgeben, Datei
+→ Exportieren → IFC» setzt ihn fort. Der Unterschied kostet einen Satz und entscheidet,
+ob jemand das Werkzeug ein zweites Mal öffnet.
+*Wo im Projekt:* Jeder Eintrag in `einlass.FREMDE_FORMATE` führt einen Rat mit, und eine
+Probe hält das für jeden künftigen Eintrag fest.
+
 **Ansage gegen Messauftrag** — Zwei Dinge, die eine Datei nicht gleichzeitig sein sollte:
 die Mitteilung, dass sich etwas ändert, und die Bitte, etwas zu messen.
 *Wozu:* Eine Ansage ist **eilig und billig** — sie muss gelesen werden, bevor der
@@ -4828,6 +4852,7 @@ System laufen.
 | 2026-09-12 | Ergaenzt aus dem ersten Lauf bis zum fertigen Bild: **Oertliche Ergaenzung (Drop-in)**, **Zweite Differenz (Kruemmung)**, **Ersatzschreibung der Umlaute**. Alle drei aus gemessenen Befunden — der Waechter las nur die Hauptdatei, die vorgeschlagene Kennzahl trennte Verlauf und Kante nicht, und «betonwaende» erreichte das Glossar nicht |
 | 2026-09-11 | Ergaenzt aus `herkunft.py`: **Herkunftstabelle** und **Belegt, gemessen, vermutet, unbekannt**. Die vierte Stufe entstand, weil eine zweifach exakte Messung weder «Norm» noch «Gewohnheit» ist |
 | 2026-09-11 | Ergaenzt aus dem Befund der HomeStation zum Renderprojekt: **Stilles Abstreifen (unbekannter Felder)**. Der Begriff wurde noetig, weil `lies_szene` erfundene Bestellfelder spurlos verschluckt hat — gemessen, nicht vermutet |
+| 2026-09-19 | Zum Einlass: **Einlass (Sichtgang an der Tür)**, **Das Format am Inhalt statt an der Endung bestimmen**, **Eine Absage ohne Ausweg ist eine halbe Auskunft** |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |

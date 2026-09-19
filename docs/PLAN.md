@@ -5673,9 +5673,48 @@ Bekannt und ausdrücklich nicht erledigt:
       nennt, lag ungelesen in der Datei daneben. `_fehlertext` nimmt jetzt einen
       Dateireport entgegen. Vier Proben, drei Mutationen — alle drei fallen, auch die
       Gegenprobe «ohne Report bleibt die rohe Ausgabe übrig».
-- [~] **Offen, und es ist der eigentliche Bau: der Vorab-Blick auf das Modell.**
-      Heute beantwortet **kein** Aufruf die Frage *«ist diese Datei brauchbar?»*, bevor
-      die teuren Stufen laufen. Gemessen:
+- [x] **GEBAUT: `aiimaging.einlass.sichte` — Datei hinein, ein Satz heraus.**
+      Die Antwort auf den Befund von heute Morgen. Sie liest **nur den Dateianfang**:
+      kein Subprozess, kein Blender, kein `.venv-ifc`, keine GPU — bei einer 500-MB-IFC
+      dasselbe wie bei einer 5-KB-IFC. Eine Probe hält fest, dass kein Prozess startet.
+      **Was eine Architektin jetzt statt eines Stacktrace bekommt:**
+
+          leere Datei      «haus.ifc ist leer (0 Byte).»
+          umbenannte JPG   «Das sieht aus wie JPEG-Bild. … Stimmt der Dateiname?»
+          SketchUp         «SketchUp kann IFC ausgeben (Datei → Exportieren → IFC) —
+                            das ist der bessere Weg, weil dabei die Bauteile
+                            erhalten bleiben.»
+          Rhino, DWG, FBX, Blender, USD, STL, Collada, PDF, ZIP: je beim Namen,
+                            je mit dem Ausweg, den das Ausgangsprogramm schon kann.
+          gültige IFC      «IFC4, Längen in METRE, erzeugt mit … Damit lässt sich
+                            rechnen.» → «Der Lauf kann beginnen.»
+
+      **Drei Entscheide, die dabei nicht selbstverständlich sind:**
+      *Erstens:* `brauchbar` ist **dreiwertig**. Was wir nicht erkennen, ist
+      `None` — eine Aussage über **unsere Kennungen**, nicht über die Datei. Es als
+      unbrauchbar zu melden hiesse, aus einem Nichtwissen einen Vorwurf zu machen.
+      *Zweitens:* Eine unbrauchbare Datei ist ein **Befund** und kommt zurück; ein
+      Sichtgang, der nicht stattfinden konnte, ist ein **Fehler des Werkzeugs** und
+      fliegt. Wer beides zusammenwirft, kann später nicht mehr unterscheiden, ob die
+      Datei schlecht war oder die Prüfung.
+      *Drittens:* Die Endung entscheidet **nichts** — eine inhaltlich richtige, falsch
+      benannte Datei geht durch und bekommt einen Hinweis. *Eine Endung ist eine
+      Behauptung des Benennenden, der Dateianfang eine des Erzeugers.*
+      **Und der Schadensdeckel steht dran:** Die Kennungen der fremden Formate sind aus
+      veröffentlichten Formatbeschreibungen **gesetzt**, nicht an Dateien gemessen. Wäre
+      eine falsch, schriebe sie höchstens einen falschen Namen in eine Absage — sie kann
+      **kein brauchbares Modell abweisen**, weil unsere drei Formate vorher erkannt
+      werden. Eine Probe hält genau das fest.
+      28 Proben, fünf Mutationen — alle fünf fallen.
+- [~] **Offen geblieben, obwohl der Einlass jetzt steht: Er ist noch nicht verdrahtet.**
+      `sichte` ist aus Python heraus nutzbar (Regel 4 erfüllt), aber **keine der neunzehn
+      Eintrittsstellen ruft sie**. Eine JPG als `model.glb` kommt über die Brücke
+      weiterhin mit null Mängeln durch. *Ein Wächter, den niemand ruft, bewacht nichts —
+      und genau das war heute Morgen der Vorwurf an `herkunft`.* **Adressat: `kern`.**
+- [x] **Der Befund, aus dem `einlass.sichte` entstanden ist** *(erledigt am selben Tag —
+      die Zeile bleibt stehen, weil sie den Ausgangszustand hält).*
+      Am Morgen des 19.09.2026 beantwortete **kein** Aufruf die Frage *«ist diese Datei
+      brauchbar?»*, bevor die teuren Stufen liefen. Gemessen:
       * Der IFC-Eingang prüft **gar nichts** — nicht Existenz, nicht Endung, nicht Inhalt.
       * `.skp`, `.3dm`, `.dwg` haben **keinen eigenen Satz** und laufen als kaputte IFC
         ins Leere. Nur eine einzige Stelle nennt ein Format beim Namen, und nur wenn das
@@ -5687,7 +5726,9 @@ Bekannt und ausdrücklich nicht erledigt:
       `herkunft.pruefe_einheit_gegen_masse` macht aus dem Massstabs-*Verdacht* eine
       *Diagnose* und hat **null Aufrufer**; `glbbox.bauwerksbox` rechnet Hüllbox und
       Geländetrennung in 0,0013 s, läuft aber erst **nach** der Konversion.
-      *Der Prototyp misst besser, als er prüft.* **Adressat: `kern`.**
+      *Der Prototyp misst besser, als er prüft.*
+      **Geschlossen durch `aiimaging.einlass` (siehe oben). Offen bleibt allein die
+      Verdrahtung** — die Eintrittsstellen rufen den Sichtgang noch nicht.
 - [~] **Offen: Die Hochachse wird auf dem Produktivweg geraten, und die falsche Angabe
       fällt nirgends auf.** `contracts.normalize_up_axis` liest **den ersten Buchstaben** —
       `up_axis="Zeichnung"` dreht das Gebäude, ohne dass etwas rot wird. Eine Gegenprobe
