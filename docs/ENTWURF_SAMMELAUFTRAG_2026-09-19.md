@@ -1,6 +1,24 @@
-# Entwurf: Sammelauftrag an die HomeStation — NICHT gestellt
+# Sammelauftrag an die HomeStation — GESTELLT am 19.09.2026
 
-**Stand 19.09.2026 — dieser Auftrag liegt bewusst NICHT in `auftraege/offen/`.**
+**Nachtrag 19.09.2026, nach dem Owner-Entscheid:** Der Auftrag liegt seit heute als
+`auftraege/offen/auf-20260919-82.json` in der Reihe. Der Owner hat auf die Frage nach
+dem Vorrang **«nur den einen Sammellauf»** gewaehlt: einmal fahren, danach hat die
+KosmoOrbit-Reihe wieder Vorrang. Damit ist die Bedingung erfuellt, unter der dieser
+Entwurf zurueckgehalten wurde.
+
+**Der Deckel ist nicht stillschweigend uebergangen worden.** Er hat abgewiesen (23
+offene, Grenze 8); die Freigabe fuer genau diesen einen Auftrag steht als Feld
+`params.deckel` in der Auftragsdatei selbst, mit dem, was trotzdem gefahren wurde
+(`pruefe_auftrag`, `regel3_saeubern`) und mit dem Preis, falls die Sichtung ausbleibt.
+Uebergangen ist ausschliesslich die Deckelzaehlung.
+
+*Der Text unten ist der gestellte Wortlaut. Er blieb unveraendert.*
+
+---
+
+## Was hier vorher stand, und warum
+
+**Stand vor dem Entscheid — dieser Auftrag lag bewusst NICHT in `auftraege/offen/`.**
 
 `schreibe_auftrag` hat ihn abgewiesen:
 
