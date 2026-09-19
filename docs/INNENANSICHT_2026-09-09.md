@@ -7,7 +7,7 @@
 
 **Grundlage:** `bildlesen`, `raumkamera`, `seams` — abgelesen an den Importen von `tools/studie_innenansicht.py`, dem Skript, das dieses Dokument nachbaubar macht. Nachgetragen am 09.09.2026, weil sie hier feststellbar war und nicht geraten werden musste.
 
-**Nachgesehen bis:** `889296e` — am 19.09.2026 mit `python tools/beruehrung.py`. Gemeldet war wieder `seams`, geändert in `46b2acc` und `afa1bc9`. *Die Zahlen unten stehen unverändert.* Der Prüfweg steht unter «Zweite Durchsicht» am Fuss dieses Dokuments — **samt dem, was dabei nicht ging.**
+**Nachgesehen bis:** `a00eaae` — am 19.09.2026 mit `python tools/beruehrung.py`, in zwei Durchgängen. Gemeldet war wieder `seams`, geändert in `46b2acc` und `afa1bc9`. *Die Zahlen unten stehen unverändert.* Der Prüfweg steht unter «Zweite Durchsicht» am Fuss dieses Dokuments — **samt dem, was dabei nicht ging.**
 
 *Zuvor nachgesehen bis `4c804e9`* — am 09.09.2026. Gemeldet war `seams`, geändert in `b7a53d8`: die **Anlauffrist** der Prozesswache. Sie betrifft, wie lange auf das erste Zeichen gewartet wird, nicht das Gerechnete. — Genau dafür ist die Meldung da: Sie sagt «ansehen», nicht «falsch».
 
@@ -168,6 +168,29 @@ python tools/studie_innenansicht.py --json
 
 Die Zahlen oben stammen aus dem Lauf mit den Vorgabewerten. *Eine Zahl, die in einem
 Dokument steht und nicht nachgebaut werden kann, ist eine Behauptung.*
+
+---
+
+## Dritte Durchsicht · 19.09.2026, abends — der Einlass kam dazwischen
+
+`seams` hat sich am selben Tag noch zweimal geändert, und `tools/beruehrung.py` meldete
+dieses Blatt sofort wieder. **Geprüft, und es berührt die Zahlen unten nicht:**
+
+1. **`634b1e3` — die Fehlermeldung.** `ifc_zu_glb` zeigte im Fehlerfall das Rauschen
+   einer fremden Bibliothek statt der Diagnose. Betrifft ausschliesslich den **Fehlerweg**;
+   ein gelungener Lauf nimmt ihn nicht.
+2. **`72442af` — der Sichtgang vor dem Subprozess.** `einlass.sichte` sieht die Datei an,
+   bevor `ifc_zu_glb` etwas startet. **Das könnte diese Studie treffen**, denn sie erzeugt
+   ihre IFC selbst und schickt sie genau dort hindurch.
+
+**Nachgemessen statt angenommen**, an beiden Fixtures, die `tools/make_test_ifc.py`
+erzeugt::
+
+    --gelaende   brauchbar=True   IFC4, Längen in METRE, erzeugt mit … Testfixture
+    --hochbau    brauchbar=True   dito
+
+Beide gehen durch. *Das war die eine Änderung des Tages, die diese Studie wirklich hätte
+anhalten können — darum ist sie gefahren worden und nicht bloss gelesen.*
 
 ---
 
