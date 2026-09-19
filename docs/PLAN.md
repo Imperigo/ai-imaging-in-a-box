@@ -5832,8 +5832,50 @@ Bekannt und ausdrücklich nicht erledigt:
       `cloud` und `ui` haben ihre gesammelten Meldungen heute bereits erhalten
       (`auf-20260919-118` und `-119`), beide zugestellt — dort wäre eine zweite eine
       Wiederholung und keine Auskunft.
-- [~] **Im Bau: die geometrische Gegenprobe zur Hochachse.** Sie soll aus der Geometrie
-      messen, welche Achse oben ist, statt der Angabe zu glauben. *Die Vermutung dahinter
-      — Gelände ist in der Hochachse flach — ist **nicht gemessen**, und sie kann fallen:*
-      an einem Modell ohne Gelände, an einer Hanglage, an einem Turm. **Fällt sie, ist das
-      ein vollständiges Ergebnis** und kein Fehlschlag. *Adressat: `kern`.*
+- [x] **Gebaut: die geometrische Gegenprobe zur Hochachse** (`aiimaging.hochachse`).
+      Sie misst aus der Geometrie, welche Achse oben ist, statt der Angabe zu glauben —
+      nur aus dem glTF-Kopf, ohne Blender, ohne GPU.
+      **Die Vermutung trägt, unter Bedingungen, und sie ist gemessen:**
+
+          Platte + Haus, Y-up            "Y", eindeutig — X und Z: Stärke 0,0
+          dieselbe Szene, Z-up           "Z", eindeutig
+          Turm 10×40×10 allein           None — obwohl Y die GRÖSSTE Achse ist
+          Flachbau 30×4×24 allein        None — die Gegenrichtung zum Turm
+          Hang bis 4,0 m auf 40 m        "Y"
+          Hang ab 4,1 m                  None — still, nicht falsch
+
+      Der Bau ist **geliehen, nicht nachgebaut**: `gelaendeform.gelaende_knoten` nimmt die
+      Höhenachse schon als Parameter. Das Modul stellt ihr dieselbe Frage dreimal — X, Y,
+      Z — und sieht nach, welche antwortet. **Es setzt keine eigene Formschwelle**, und
+      eine Probe hält das fest.
+      *Und X wird mitgemessen, obwohl der Vertrag es nie zulässt:* Gewinnt X, ist die
+      Antwort `None` — nicht die zweitbeste Achse. **Eine Messung, die nur zwischen zwei
+      Achsen wählen darf, muss sich für eine entscheiden, auch wenn keine passt.**
+- [~] **Und der wichtigste Befund ist, wo sie NICHT trägt — er steht als Probe im Repo.**
+      Eine grosse dünne Platte ist geometrisch dasselbe, ob sie **liegt oder steht**. Eine
+      Y-up-Szene mit einer Fassadenplatte und ohne Gelände wird als **`"Z"`, Sicherheit
+      «eindeutig»** gemessen. *Sie irrt, und sie merkt es nicht.* Selbst nachgestellt.
+      **Nicht zu `None` repariert**, und das ist ein Entscheid: Es gibt kein billiges
+      Merkmal, das eine liegende von einer stehenden Platte trennt, und ein nachgezogener
+      Schwellenwert wäre an genau dieser Datei geeicht — *ein Deckel, den man dem Befund
+      hinterherzieht.*
+      **Was ihn einordnet, ebenfalls gemessen:** Sobald dieselbe Szene ein echtes Gelände
+      enthält, verschwindet der falsche Kandidat von selbst. *Die Irreführung braucht eine
+      Szene ohne Gelände — und in der ist die Antwort ohnehin unverdient.*
+      **Nicht verdrahtet.** Eine Probe hält fest, dass kein Modul sie importiert. Wer sie
+      zum Tor macht, bevor sie an echten Modellen gemessen ist, macht genau den Fehler,
+      den diese Arbeit zweimal an einem Tag gefunden hat. *Adressat: `local` für die
+      Gegenprobe an echten Modellen, danach `kern` für den Einbau.*
+- [x] **Eine Mutationsprobe fiel beim ersten Anlauf NICHT** — und der Grund ist lehrreich.
+      Geprüft werden sollte, dass die Stärke einer Achse als **Hülle** und nicht als
+      **Summe** gerechnet wird. Die Testszene hatte lückenlos aneinanderliegende Kacheln;
+      dort ist die Summe der Anteile **gleich** der Hülle, und der Wächter hielt still,
+      obwohl die Rechnung vertauscht war. Die Szene überlappt jetzt (12×8 m im
+      10×6-m-Raster): Summe 1,43, Hülle 1,00 — danach fällt er.
+      *Eine Attrappe, in der zwei verschiedene Rechnungen dasselbe ergeben, prüft keine
+      von beiden.*
+- [x] **Berichtigt: die Hanggrenze lag feiner, als die erste Messung sagte.** Gemeldet war
+      «4,0 m noch, 4,2 m nicht mehr» — nachgemessen in Schritten von 0,1 m kippt sie
+      zwischen **4,0 und 4,1**. Die erste Messung fuhr 0,2er-Schritte und nannte darum die
+      nächstgrössere Stufe. *Eine Grenze, die feiner gemessen woanders liegt, war vorher
+      nicht gemessen, sondern eingegrenzt.*
