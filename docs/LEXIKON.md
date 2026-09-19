@@ -4835,6 +4835,43 @@ frei verwendbar, die grosse nicht. Steht im Namen eine Zahl, die nicht zur tats�
 Grösse passt, ist das kein Schönheitsfehler, sondern eine mögliche Lizenzverletzung.
 *Wo im Projekt:* `aiimaging.backbone.groessen_riegel`.
 
+**Gebaut, am Gerät unbestätigt** — Ein **dritter** Zustand für einen Posten, der
+eingebaut werden soll: hier fertig, drüben noch nie ausprobiert.
+*Wozu:* Ohne ihn gibt es nur «erledigt» und «offen», und beide sagen etwas Falsches.
+«Erledigt» behauptet eine Bestätigung, die niemand gegeben hat; «offen» behauptet Arbeit,
+die längst getan ist. *Es ist dieselbe dritte Antwort wie bei einer Messung, die nicht
+möglich war — angewandt auf den Einbau.*
+*Wo im Projekt:* `docs/EINBAU_STAND.md`; gezählt von `aiimaging.einbau`.
+
+**Abgelegt ist nicht zugestellt** — Der Unterschied zwischen «der Auftrag liegt bei uns
+in der richtigen Schublade» und «der Auftrag ist bei dem angekommen, der ihn ausführen
+soll».
+*Wozu:* Manche Empfänger haben unser Repo gar nicht. Für sie ist eine Datei bei uns
+unsichtbar. In einer Rückstandsliste sah das bisher genauso aus wie ein zugestellter
+Auftrag, auf den niemand antwortet — und es ist das Gegenteil: ein Rückstand beim
+**Absender**. *Er kann nicht beantworten, was er nicht hat.*
+*Wo im Projekt:* `aiimaging.auftragspost.unzugestellt`; die Meldung steht bewusst ganz
+oben in `tools/einbau.py`.
+
+**Handeingriff** — Wenn ein Mensch in ein erzeugtes Bild hineinmalt, es beschneidet oder
+sonst von Hand verändert, bevor damit weitergerechnet wird.
+*Wozu:* Danach lässt sich nicht mehr sagen, ob eine Abweichung vom Gebäudemodell vom
+Bildmodell stammt oder von der Hand. Die Prüfung sagt darum **«nicht anwendbar»** statt
+einer Zahl — und dieser Vorbehalt wird an jedes daraus entstehende Bild weitergereicht.
+*Ein Vorbehalt, der beim Weiterrechnen verfällt, ist keiner.*
+*Wo im Projekt:* `aiimaging.kette`, Feld `handeingriff`.
+
+**Geometrielayer und AI-Imaging-Layer** — Die zwei Stufen, aus denen ein fertiges Bild in
+diesem Projekt besteht.
+*Wozu:* Die **erste** Stufe wird aus dem Gebäudemodell gerechnet und gegen dessen Form
+nachgemessen; sie trägt ein echtes Urteil. Die **zweite** Stufe liegt darauf: dort werden
+Bildpunkte verändert — Lichtstimmung, Materialien, Varianten —, so wie man es sonst in
+einem Bildbearbeitungsprogramm täte, hier aber über KI. Sie trägt **kein eigenes** Urteil
+über die Form, wohl aber das ihrer Unterlage.
+*Die eine bindende Regel:* Ein geerbtes Urteil ist kein eigenes, und beide dürfen nie im
+selben Feld stehen. *Ein Vorbehalt soll die Auskunft einschränken, nicht sie löschen.*
+*Wo im Projekt:* Entscheid E20 in `docs/ENTSCHEIDE_VISBOX_2026-09-18.md`.
+
 ---
 
 ## 9 · Arbeit mit Claude Code
@@ -4891,6 +4928,7 @@ System laufen.
 | 2026-09-11 | Ergaenzt aus `herkunft.py`: **Herkunftstabelle** und **Belegt, gemessen, vermutet, unbekannt**. Die vierte Stufe entstand, weil eine zweifach exakte Messung weder «Norm» noch «Gewohnheit» ist |
 | 2026-09-11 | Ergaenzt aus dem Befund der HomeStation zum Renderprojekt: **Stilles Abstreifen (unbekannter Felder)**. Der Begriff wurde noetig, weil `lies_szene` erfundene Bestellfelder spurlos verschluckt hat — gemessen, nicht vermutet |
 | 2026-09-19 | Zum Einlass: **Einlass (Sichtgang an der Tür)**, **Das Format am Inhalt statt an der Endung bestimmen**, **Eine Absage ohne Ausweg ist eine halbe Auskunft** |
+| 2026-09-19 | Zum Einbau und zu den zwei Schichten: **Gebaut, am Gerät unbestätigt**, **Abgelegt ist nicht zugestellt**, **Handeingriff**, **Geometrielayer und AI-Imaging-Layer** |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |
