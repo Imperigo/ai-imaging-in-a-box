@@ -58,6 +58,30 @@ Bildquelle → nachrendern.
    Eingangsbild, und ein erfundenes Feld wird als unbekannt **abgelehnt**. Der Weg über
    KosmoOrbit existiert also nicht; aus Python heraus existiert er (Regel 4).
 
+Zwei Schichten, und jedes Bild weiss, welche es ist
+--------------------------------------------------
+**Owner-Entscheid 19.09.2026, nachmittags** — und er berichtigt den Bau vom Vormittag:
+
+* **Layer 1, der Geometrielayer.** Aus dem Modell gerechnet, gegen die Tiefenkarte
+  gemessen. Er trägt ein **eigenes** Geometrie-Urteil.
+* **Layer 2, der AI-Imaging-Layer.** Pixelbasiert, darauf aufgesetzt — Hineingezeichnetes,
+  Lichtstimmung, Materialvarianten; der Lightroom- und Photoshop-Ersatz. Er trägt **kein
+  eigenes** Geometrie-Urteil, wohl aber das **seiner Basis**.
+
+Am Vormittag hatte die Kette gelernt, ein von Hand bearbeitetes Bild mit einem Vorbehalt
+zu versehen (:data:`FELD_HANDEINGRIFF`): Die Prüfung meldet «nicht anwendbar». Das ist
+richtig und war zu grob — mit dem eigenen Urteil verschwand auch das Urteil über die
+Geometrie **darunter**. Bei einer Variantenstudie will genau das jemand wissen.
+
+    *Ein Vorbehalt soll die Auskunft einschränken, nicht sie löschen.*
+
+Getragen wird das von :data:`FELD_SCHICHT` (welche Schicht dieses Bild ist) und
+:data:`FELD_BASIS` (das Urteil der Basis, ausdrücklich als fremdes). Die beiden Urteile
+stehen unter **verschiedenen Namen auf verschiedenen Ebenen** und sind nie verwechselbar:
+``bestanden`` ist immer das eigene, ``basis['geometrie_bestanden']`` immer das der Basis.
+Wo der Block herkommt und warum er nie zwischengespeichert wird, steht bei
+:func:`schichtbefund`.
+
 Zwei Wege nebeneinander
 -----------------------
 ``werkzeuge.enqueue_render`` bleibt unangetastet, bis diese Kette belegt ist. Zwei Wege
@@ -579,6 +603,12 @@ def haenge_nachrender_an(
     Getragen wird das von :data:`FELD_HANDEINGRIFF`, und es **wird vererbt**: Eine
     Bildquelle setzt es, ein Nachrender reicht es weiter. *Ein Vorbehalt, der beim
     Weiterrechnen verfällt, ist keiner.*
+
+    **Und seit dem Nachmittag desselben Tages verschwindet damit nicht mehr alles.** Das
+    Bild ist dann Layer 2 (:data:`SCHICHT_AI_IMAGING`) und führt das Urteil **seiner
+    Basis** mit — welches Layer-1-Bild darunter liegt, von welchem Knoten es stammt und
+    wie es dort ausgegangen ist (:data:`FELD_BASIS`, gefüllt von :func:`schichtbefund`).
+    Acht Varianten auf derselben geprüften Geometrie sind damit als solche erkennbar.
 
     Wer die Stufe anhängen will, tut es mit ``eingaenge=(multipass, nachrender)``.
     """
@@ -1458,6 +1488,317 @@ def pruefe_kette(graph: Graph, *, bedarf: dict[str, Bedarf] | None = None) -> li
     return pruefe_bedarf(graph, BEDARF if bedarf is None else bedarf)
 
 
+# --------------------------------------------------------------------------------------
+# Die zweite Schicht: welches Bild steht worauf — und welches Urteil gehoert wem
+# --------------------------------------------------------------------------------------
+#
+# OWNER-ENTSCHEID 19.09.2026. Ein Layer-2-Bild traegt kein eigenes Geometrie-Urteil, wohl
+# aber das seiner Basis. Das ist mehr, als ein einzelner Knoten wissen kann, und darum
+# steht es hier und nicht in einer Ausfuehrerfunktion:
+#
+# * Ein Knoten sieht seine Vorgaenger. Das Urteil ueber sein Ausgangsbild faellt aber ein
+#   QA-Knoten im NEBENZWEIG — der haengt am selben Render, nicht an ihm. Ein Knoten kann
+#   es also gar nicht wissen, und was er nicht wissen kann, soll er nicht behaupten.
+# * Ein Urteil aus dem Zwischenspeicher waere ein Urteil aus einem ANDEREN LAUF. Der Hash
+#   eines Nachrenders enthaelt die Parameter der QA nicht; ein mitgespeichertes Basisurteil
+#   ueberdauerte damit eine geaenderte Schwelle, ohne dass es jemandem auffiele. Deshalb
+#   wird der Basis-Block NIE mitgespeichert, sondern nach jedem Lauf frisch gelesen.
+#
+# Gelesen wird aus dem Graphen und aus den Ergebnissen desselben Laufs — nie aus einer
+# Angabe des Aufrufers. Eine erklaerte Basis waere eine Behauptung, die kein Lauf
+# widerlegen kann.
+
+
+def _ist_bildart(art: str) -> bool:
+    """Bringt diese Knotenart ein Bild hervor? Nur solche Knoten haben eine Schicht."""
+    return art in (ART_RENDER, ART_BILDQUELLE, ART_NACHRENDER)
+
+
+def _ausgaben_von(knoten_ergebnisse: dict, kid: str) -> dict:
+    """Die Ausgaben eines Knotens aus einem Laufergebnis — leer, wenn es sie nicht gibt."""
+    eintrag = knoten_ergebnisse.get(kid) or {}
+    return eintrag.get("ausgaben") or {}
+
+
+def schicht_von(art: str, ausgaben: dict) -> str:
+    """Welche Schicht ein Bildergebnis ist: :data:`SCHICHT_GEOMETRIE` oder
+    :data:`SCHICHT_AI_IMAGING`.
+
+    Zuerst wird gelesen, was der Knoten selbst gesagt hat (:data:`FELD_SCHICHT`). Der
+    Rueckfall darunter ist kein Schoenheitsfehler, sondern der Grund, warum diese Funktion
+    ueberhaupt eine ist: **Eintraege im Zwischenspeicher, die vor dem 19.09.2026 entstanden
+    sind, tragen das Feld nicht.** Ohne Rueckfall sagte ein Cache-Treffer «keine Schicht»,
+    und ein bearbeitetes Bild saehe nach einem Neustart aus wie ein gerechnetes.
+
+    Der Rueckfall liest denselben Sachverhalt aus dem, was es damals schon gab: die
+    Bildquelle ist immer Stufe zwei, und sonst entscheidet der Handeingriff.
+    """
+    wert = ausgaben.get(FELD_SCHICHT)
+    if wert in (SCHICHT_GEOMETRIE, SCHICHT_AI_IMAGING):
+        return wert
+    if art == ART_BILDQUELLE:
+        return SCHICHT_AI_IMAGING
+    return SCHICHT_AI_IMAGING if ausgaben.get(FELD_HANDEINGRIFF) else SCHICHT_GEOMETRIE
+
+
+def _schicht_im_graphen(graph: Graph, knoten_ergebnisse: dict, kid: str,
+                        memo: dict[str, str], pfad: frozenset = frozenset()) -> str:
+    """Die Schicht eines Bildknotens — aus seinem Ergebnis, sonst **aus dem Graphen**.
+
+    Warum es beide Wege braucht: Nach einem Lauf steht die Schicht im Knotenergebnis, und
+    das ist die verlaesslichste Quelle — sie kommt von der Stufe selbst. Vorher (und bei
+    einem Eintrag aus der Zeit vor dem 19.09.2026) steht sie dort nicht, und dann ist sie
+    trotzdem bestimmt: Eine Bildquelle ist **immer** Stufe zwei, und ein Nachrender ist,
+    was sein Bildeingang ist. Ein Graph kann seine Schichten also nennen, bevor er
+    gerechnet hat — derselbe Unterschied zwischen Bau und Lauf wie ueberall hier.
+
+    ``pfad`` schuetzt gegen einen von Hand gebauten Graphen mit Kreis; ``memo`` spart die
+    Wiederholung, wenn acht Varianten auf derselben Kette stehen.
+    """
+    if kid in memo:
+        return memo[kid]
+    knoten = graph.knoten[kid]
+    ausgaben = _ausgaben_von(knoten_ergebnisse, kid)
+    if (ausgaben.get(FELD_SCHICHT) in (SCHICHT_GEOMETRIE, SCHICHT_AI_IMAGING)
+            or FELD_HANDEINGRIFF in ausgaben):
+        wert = schicht_von(knoten.art, ausgaben)
+    elif knoten.art == ART_BILDQUELLE:
+        wert = SCHICHT_AI_IMAGING
+    elif (knoten.art == ART_NACHRENDER and len(knoten.eingaenge) >= 2
+          and knoten.eingaenge[1] in graph.knoten
+          and _ist_bildart(graph.knoten[knoten.eingaenge[1]].art)
+          and knoten.eingaenge[1] not in pfad):
+        wert = _schicht_im_graphen(graph, knoten_ergebnisse, knoten.eingaenge[1],
+                                   memo, pfad | {kid})
+    else:
+        wert = schicht_von(knoten.art, ausgaben)
+    memo[kid] = wert
+    return wert
+
+
+def _basisblock(*, knoten=None, bild=None, bestanden=None, urteil_von=None,
+                herkunft: str = "", grund: str = "") -> dict:
+    """Ein Basis-Block in immer derselben Gestalt — alle Felder immer, auch die leeren.
+
+    Dieselbe Linie wie ``_knoteneintrag``: Ein fehlendes Feld soll nicht wie ein anderer
+    Fall aussehen als ein leeres. Und der Schluessel fuer das Urteil heisst
+    :data:`BASIS_BESTANDEN` und nicht ``bestanden`` — wer den Block versehentlich flach
+    zieht, soll kein zweites ``bestanden`` bekommen, das neben dem eigenen steht.
+    """
+    return {
+        BASIS_KNOTEN: knoten,
+        BASIS_BILD: bild,
+        BASIS_BESTANDEN: bestanden,
+        BASIS_URTEIL_VON: urteil_von,
+        BASIS_HERKUNFT: herkunft,
+        BASIS_GRUND: grund,
+    }
+
+
+def _basis_ueber_bildkette(graph: Graph, knoten_ergebnisse: dict, kid: str,
+                           memo: dict[str, str]) -> str | None:
+    """Rueckwaerts durch die Bildeingaenge, bis ein Layer-1-Bild kommt. ``None``: keines.
+
+    **Warum die ERSTE Basis gilt und nicht die jeweils vorige** — Layer 2 auf Layer 2 auf
+    Layer 2: Die vorige Runde ist selbst Layer 2 und hat darum gar kein eigenes
+    Geometrie-Urteil. Wer sie als Basis naehme, reichte ein Urteil weiter, das sie selbst
+    nur geerbt hat: Hoerensagen zweiter Ordnung, und mit jeder Runde eine Quelle weiter
+    weg. Gemessen wurde genau einmal — an dem letzten Bild, das noch aus dem Modell kam.
+    Das ist die Basis, und sie bleibt es, solange weitergerechnet wird.
+
+    Slot 1 ist der Bildeingang des Nachrenders (Slot 0 ist die Tiefenkarte). Die
+    Besuchtmenge schuetzt gegen einen von Hand gebauten Graphen mit Kreis: ``fuehre_aus``
+    haette so einen zwar schon zurueckgewiesen, aber diese Funktion laeuft auch allein.
+    """
+    aktuell = kid
+    gesehen = {kid}
+    while True:
+        knoten = graph.knoten.get(aktuell)
+        if knoten is None or knoten.art != ART_NACHRENDER or len(knoten.eingaenge) < 2:
+            return None
+        vor = knoten.eingaenge[1]
+        if vor in gesehen or vor not in graph.knoten:
+            return None
+        gesehen.add(vor)
+        art = graph.knoten[vor].art
+        if not _ist_bildart(art):
+            return None
+        if _schicht_im_graphen(graph, knoten_ergebnisse, vor, memo) == SCHICHT_GEOMETRIE:
+            return vor
+        aktuell = vor
+
+
+def _geometriequelle(graph: Graph, kid: str) -> str | None:
+    """Der Knoten an Slot 0 eines Bildknotens — die Stufe, aus der seine Tiefenkarte kommt."""
+    knoten = graph.knoten.get(kid)
+    if knoten is None or not knoten.eingaenge:
+        return None
+    return knoten.eingaenge[0]
+
+
+def _basis_ueber_geometrie(graph: Graph, knoten_ergebnisse: dict, kid: str,
+                           memo: dict[str, str]) -> tuple[str | None, str]:
+    """Das Layer-1-Bild, das auf **derselben Geometrie** steht. ``(knoten|None, grund)``.
+
+    Der zweite Weg, und der haeufigere: Wer ein Bild oeffnet, hineinzeichnet und speichert,
+    bringt es als ``bildquelle`` zurueck — **von der Platte**, ohne Kante zum Render, aus
+    dem es entstanden ist. Die Bildkette reisst an dieser Stelle, und zwar unvermeidlich:
+    Was ein Mensch zwischen zwei Laeufen tut, steht in keinem Graphen.
+
+    Was **nicht** reisst, ist die Geometrie. Der Nachrender haengt an Slot 0 an derselben
+    Multipass-Stufe wie der Render, dessen Bild geprueft wurde. Ueber die gilt die Aussage,
+    um die es geht: *die Geometrie unter diesem Bild ist geprueft.*
+
+    **Und genau so weit geht sie auch.** Dass die Zeichnung aus jenem Render stammt, ist
+    hier NICHT bewiesen — beweisbar ist, dass beide auf derselben Tiefenkarte stehen.
+    Darum traegt der Block seine :data:`BASIS_HERKUNFT` mit: Wer ihn liest, sieht, worauf
+    die Zuordnung beruht, und kann sie bestreiten.
+
+    Mehrdeutig heisst ``None``: Stehen zwei Layer-1-Bilder auf derselben Geometrie, waere
+    jede Wahl geraten. Ein geratenes Urteil ist schlimmer als keines.
+    """
+    quelle = _geometriequelle(graph, kid)
+    if quelle is None:
+        return None, ("Dieses Bild haengt an keiner Geometriestufe — es gibt nichts, "
+                      "worueber sich eine gemeinsame Basis bestimmen liesse.")
+    kandidaten = [
+        k for k in sorted(graph.knoten)
+        if k != kid and _ist_bildart(graph.knoten[k].art)
+        and _geometriequelle(graph, k) == quelle
+        and _schicht_im_graphen(graph, knoten_ergebnisse, k, memo) == SCHICHT_GEOMETRIE
+    ]
+    if not kandidaten:
+        return None, (f"Auf der Geometrie {quelle!r} steht in diesem Graphen kein "
+                      f"Layer-1-Bild — es gibt keine geprueft Basis, auf die sich dieses "
+                      f"Bild berufen koennte.")
+    if len(kandidaten) > 1:
+        return None, (f"Auf der Geometrie {quelle!r} stehen mehrere Layer-1-Bilder "
+                      f"({', '.join(kandidaten)}). Welches die Basis ist, waere geraten — "
+                      f"und ein geratenes Urteil ist schlimmer als keines.")
+    return kandidaten[0], ""
+
+
+def _urteil_ueber(graph: Graph, knoten_ergebnisse: dict,
+                  basis_id: str) -> tuple[object, str | None, str]:
+    """Das Geometrie-Urteil ueber ein Layer-1-Bild. ``(bestanden, qa_knoten, grund)``.
+
+    Gesucht wird der QA-Knoten, dessen **Ist-Eingang** (Slot 1) genau dieses Bild ist.
+    ``bestanden`` kommt unveraendert aus dessen Ausgaben: ``True``, ``False`` oder
+    ``None`` — und ``None`` heisst hier wie ueberall NICHT GEMESSEN, nicht
+    durchgefallen.
+
+    **Ein durchgefallenes Basisurteil wird ausdruecklich weitergereicht.** Es ist die
+    unangenehmste Auskunft dieses Blocks und die wichtigste: Wer acht Varianten auf einer
+    Geometrie rechnet, die die Pruefung nicht bestanden hat, soll das an jeder der acht
+    sehen.
+    """
+    qas = [k for k in sorted(graph.knoten)
+           if graph.knoten[k].art == ART_QA
+           and len(graph.knoten[k].eingaenge) >= 2
+           and graph.knoten[k].eingaenge[1] == basis_id]
+    if not qas:
+        return None, None, ("Zu diesem Bild gibt es in diesem Graphen keine "
+                            "Geometrie-Pruefung. Das Urteil der Basis ist damit NICHT "
+                            "GEMESSEN — weder bestanden noch durchgefallen.")
+
+    urteile = []
+    for k in qas:
+        eintrag = knoten_ergebnisse.get(k) or {}
+        if eintrag.get("status", STATUS_OK) != STATUS_OK:
+            continue
+        ausgaben = eintrag.get("ausgaben") or {}
+        if "bestanden" not in ausgaben:
+            continue
+        urteile.append((k, ausgaben["bestanden"]))
+    if not urteile:
+        return None, None, (f"Die Pruefung {', '.join(qas)} hat in diesem Lauf kein "
+                            f"Urteil geliefert (nicht gelaufen, uebersprungen oder "
+                            f"gescheitert). NICHT GEMESSEN.")
+    werte = {w for _, w in urteile}
+    if len(werte) > 1:
+        return None, None, (f"Mehrere Pruefungen urteilen ueber dasselbe Bild und "
+                            f"widersprechen sich ({', '.join(k for k, _ in urteile)}). "
+                            f"Ein Urteil auszuwaehlen hiesse, das andere zu verschweigen.")
+    qa_id, bestanden = urteile[0]
+    if bestanden is None:
+        return None, qa_id, (f"Die Pruefung {qa_id!r} lief, hat aber kein Urteil "
+                             f"gefaellt. NICHT GEMESSEN.")
+    return bestanden, qa_id, ""
+
+
+def schichtbefund(graph: Graph, knoten_ergebnisse: dict | None = None) -> dict[str, dict]:
+    """Je Knoten-ID die Felder zur **zweiten Schicht** — zum Nachtragen an die Ausgaben.
+
+    Args:
+        graph: der gelaufene (oder nur gebaute) Graph.
+        knoten_ergebnisse: die Auswertung je Knoten-ID aus ``fuehre_aus`` (``ergebnis
+            ["knoten"]``). ``None`` heisst: nur den Graphen ansehen. Dann steht die
+            Schicht schon fest, das Urteil der Basis aber noch nicht — es gibt es erst,
+            wenn gerechnet wurde.
+
+    Returns:
+        ``{knoten_id: felder}``. Bildknoten bekommen :data:`FELD_SCHICHT` und
+        :data:`FELD_BASIS`, QA-Knoten ``beurteilte_schicht`` und :data:`FELD_BASIS`.
+        :data:`FELD_BASIS` ist ``None`` fuer ein Layer-1-Bild — **es ist die Basis und hat
+        keine unter sich.**
+
+    **Was diese Funktion nie tut: das Feld ``bestanden`` anfassen.** Sie legt daneben,
+    nie darueber. Das eigene Urteil eines Knotens bleibt, was sein Ausfuehrer gesagt hat;
+    das fremde steht im Block und heisst dort anders.
+    """
+    ergebnisse = knoten_ergebnisse or {}
+    nachtrag: dict[str, dict] = {}
+    basen: dict[str, dict | None] = {}
+    memo: dict[str, str] = {}
+
+    for kid in sorted(graph.knoten):
+        art = graph.knoten[kid].art
+        if not _ist_bildart(art):
+            continue
+        schicht = _schicht_im_graphen(graph, ergebnisse, kid, memo)
+        if schicht == SCHICHT_GEOMETRIE:
+            # LAYER 1 BEKOMMT KEINEN BASIS-BLOCK, und das ist die Aussage und kein Loch:
+            # Er ist selbst die Basis. Ein Block mit lauter None saehe aus wie «Basis
+            # vorhanden, nichts gemessen» — etwas ganz anderes.
+            basen[kid] = None
+            nachtrag[kid] = {FELD_SCHICHT: schicht, FELD_BASIS: None}
+            continue
+
+        basis_id = _basis_ueber_bildkette(graph, ergebnisse, kid, memo)
+        herkunft, grund = HERKUNFT_BILDKETTE, ""
+        if basis_id is None:
+            basis_id, grund = _basis_ueber_geometrie(graph, ergebnisse, kid, memo)
+            herkunft = HERKUNFT_GEOMETRIE if basis_id is not None else ""
+
+        if basis_id is None:
+            block = _basisblock(grund=grund)
+        else:
+            bestanden, qa_id, urteilsgrund = _urteil_ueber(graph, ergebnisse, basis_id)
+            block = _basisblock(
+                knoten=basis_id,
+                bild=_ausgaben_von(ergebnisse, basis_id).get("bild_png"),
+                bestanden=bestanden, urteil_von=qa_id,
+                herkunft=herkunft, grund=urteilsgrund)
+        basen[kid] = block
+        nachtrag[kid] = {FELD_SCHICHT: schicht, FELD_BASIS: block}
+
+    for kid in sorted(graph.knoten):
+        knoten = graph.knoten[kid]
+        if knoten.art != ART_QA or len(knoten.eingaenge) < 2:
+            continue
+        beurteilt = knoten.eingaenge[1]
+        if beurteilt not in graph.knoten or not _ist_bildart(graph.knoten[beurteilt].art):
+            continue
+        # DIE BASIS DES URTEILS IST DIE BASIS DES BEURTEILTEN BILDES — der Pruefer erbt
+        # sie, er bestimmt sie nicht. Und sein eigenes `bestanden` bleibt unberuehrt:
+        # Beide Urteile stehen nebeneinander, unter verschiedenen Namen.
+        nachtrag[kid] = {
+            "beurteilte_schicht": _schicht_im_graphen(graph, ergebnisse, beurteilt, memo),
+            FELD_BASIS: basen.get(beurteilt),
+        }
+    return nachtrag
+
+
 def fuehre_aus(
     graph: Graph,
     *,
@@ -1670,6 +2011,26 @@ def fuehre_aus(
                 uebersprungen.setdefault(
                     nachfolger, f"Vorgänger {kid!r} endete mit status={status!r}.")
 
+    # --- 3) Die zweite Schicht nachtragen --------------------------------------------
+    #
+    # NACH dem Lauf und NICHT waehrend: Das Urteil ueber die Basis faellt ein QA-Knoten im
+    # Nebenzweig, und ob der vor oder nach dem Nachrender an der Reihe war, entscheidet
+    # die topologische Reihenfolge. Wer waehrend des Laufs nachtruege, bekaeme je nach
+    # Sortierung einmal ein Urteil und einmal «nicht gemessen» — dieselbe Frage, zwei
+    # Antworten. Hier ist alles gerechnet, und die Antwort haengt an nichts als am Graphen.
+    #
+    # NACH dem Ablegen im Zwischenspeicher und nicht davor: Der Basis-Block darf nicht
+    # mitgespeichert werden (siehe ``schichtbefund``). Diese Reihenfolge ist der ganze
+    # Schutz davor — ein Urteil aus einem anderen Lauf waere kein Urteil ueber diesen.
+    #
+    # ADDITIV, ausdruecklich: Es wird nur danebengelegt. Kein bestehendes Feld aendert
+    # sich, und ``bestanden`` schon gar nicht.
+    for kid, zusatz in schichtbefund(graph, knoten_ergebnisse).items():
+        eintrag = knoten_ergebnisse.get(kid)
+        if eintrag is None:
+            continue
+        eintrag["ausgaben"] = {**(eintrag["ausgaben"] or {}), **zusatz}
+
     treffer = sum(1 for e in knoten_ergebnisse.values() if e["aus_cache"])
     gerechnet = sum(1 for e in knoten_ergebnisse.values()
                     if not e["aus_cache"] and e["status"] != STATUS_UEBERSPRUNGEN)
@@ -1689,11 +2050,18 @@ def fuehre_aus(
 
 
 __all__ = [
-    "ART_GEOMETRIE", "ART_MULTIPASS", "ART_QA", "ART_RENDER",
+    "ART_BILDQUELLE", "ART_GEOMETRIE", "ART_MULTIPASS", "ART_NACHRENDER", "ART_QA",
+    "ART_RENDER",
     "AUSFUEHRER", "BEDARF", "EINGABEDATEIEN",
-    "KNOTEN_GEOMETRIE", "KNOTEN_MULTIPASS", "KNOTEN_QA", "KNOTEN_RENDER",
+    "BASIS_BESTANDEN", "BASIS_BILD", "BASIS_GRUND", "BASIS_HERKUNFT", "BASIS_KNOTEN",
+    "BASIS_URTEIL_VON", "HERKUNFT_BILDKETTE", "HERKUNFT_GEOMETRIE",
+    "FELD_BASIS", "FELD_HANDEINGRIFF", "FELD_SCHICHT",
+    "SCHICHT_AI_IMAGING", "SCHICHT_GEOMETRIE",
+    "KNOTEN_BILDQUELLE", "KNOTEN_GEOMETRIE", "KNOTEN_MULTIPASS", "KNOTEN_NACHRENDER",
+    "KNOTEN_QA", "KNOTEN_RENDER",
     "STATUS_ABGELEHNT", "STATUS_FEHLER", "STATUS_OK", "STATUS_UEBERSPRUNGEN",
     "KettenError",
-    "baue_kette", "fuehre_aus", "pruefe_kette", "qa_ausfuehrer", "render_ausfuehrer",
-    "standard_out_dir",
+    "baue_kette", "bildeingang_lage", "fuehre_aus", "haenge_nachrender_an",
+    "nachrender_ausfuehrer", "pruefe_kette", "qa_ausfuehrer", "render_ausfuehrer",
+    "schicht_von", "schichtbefund", "standard_out_dir",
 ]

@@ -4166,6 +4166,31 @@ genau ausrechnen, ohne die Datei herunterzuladen — es genügen die ersten Kilo
 wurden die 22,0 GiB des empfohlenen Backbones bestimmt: gerechnet aus gemessenen
 Datentypen, nicht geschätzt.*
 
+**Basis (eines Bildes)** — Das Layer-1-Bild, das unter einem Layer-2-Bild liegt: das
+letzte Bild der Kette, das noch aus dem Modell gerechnet wurde. *Sie wird **benannt**,
+nicht behauptet — mit Knotennamen, Bildpfad und der Angabe, **wie** die Zuordnung
+zustande kam (über die Bildkette, also belegt, oder über dieselbe Geometrie, also
+plausibel zugeordnet). Bei mehreren Runden bleibt die **erste** Basis die Basis: Die
+vorige Runde ist selbst Layer 2 und hätte nur weiterzureichen, was sie selbst geerbt hat
+— Hörensagen zweiter Ordnung. In `aiimaging.kette` steht sie im Feld `basis`, zusammen mit ihrer Herkunft.*
+
+**Basis-Urteil (geerbtes Urteil)** — Das Geometrie-Urteil, das über die **Basis** gefällt
+wurde, mitgeführt an einem Layer-2-Bild. *Es beantwortet die Frage «ist die Geometrie
+unter diesem Bild geprüft?» — und ausdrücklich **nicht** die Frage «folgt dieses Bild dem
+Modell?». Damit die beiden nie verwechselt werden, stehen sie unter verschiedenen Namen:
+das eigene Urteil heisst `bestanden`, das geerbte `basis.geometrie_bestanden`. Ein
+geerbtes Urteil ist nie ein eigenes; sähe es je so aus, als hätte ein bearbeitetes Bild
+die Geometrieprüfung bestanden, wäre der Bau falsch. Ein **durchgefallenes** Basis-Urteil
+wird genauso weitergereicht wie ein bestandenes — es ist die unangenehmere und die
+wichtigere Auskunft.*
+
+**Variantenstudie** — Mehrere Bildfassungen derselben Sache nebeneinander, um zu
+vergleichen und zu entscheiden: acht Lichtstimmungen, drei Materialien, zwei
+Fassadengliederungen. *Ein Begriff aus dem Architekturbüro, kein Fachbegriff der
+Informatik. Er trägt im Projekt eine technische Bedingung: Die Varianten müssen **als
+Varianten derselben Basis erkennbar** sein. Acht Bilder ohne gemeinsam benannte Grundlage
+sind acht Bilder und keine Studie. Geprüft wird das in `tests/test_schichten.py`.*
+
 
 ---
 
@@ -4859,6 +4884,9 @@ sonst von Hand verändert, bevor damit weitergerechnet wird.
 Bildmodell stammt oder von der Hand. Die Prüfung sagt darum **«nicht anwendbar»** statt
 einer Zahl — und dieser Vorbehalt wird an jedes daraus entstehende Bild weitergereicht.
 *Ein Vorbehalt, der beim Weiterrechnen verfällt, ist keiner.*
+*Was er seit dem 19.09.2026 nicht mehr tut:* das Urteil über die Geometrie **darunter**
+mit wegwerfen. Das Bild ist dann ein **AI-Imaging-Layer** und führt das **Basis-Urteil**
+mit. Der Handeingriff ist im Projekt die Ursache, aus der ein Bild zur zweiten Stufe wird.
 *Wo im Projekt:* `aiimaging.kette`, Feld `handeingriff`.
 
 **Geometrielayer und AI-Imaging-Layer** — Die zwei Stufen, aus denen ein fertiges Bild in
@@ -4870,7 +4898,12 @@ einem Bildbearbeitungsprogramm täte, hier aber über KI. Sie trägt **kein eige
 über die Form, wohl aber das ihrer Unterlage.
 *Die eine bindende Regel:* Ein geerbtes Urteil ist kein eigenes, und beide dürfen nie im
 selben Feld stehen. *Ein Vorbehalt soll die Auskunft einschränken, nicht sie löschen.*
-*Wo im Projekt:* Entscheid E20 in `docs/ENTSCHEIDE_VISBOX_2026-09-18.md`.
+*Abgrenzung:* Mit der **Ebene (Layer) in einer Bilddatei** (Abschnitt 5) hat das nichts zu
+tun. Dort ist «Layer» eine technische Spur in einer Datei; hier eine Stufe der Entstehung.
+*Wo im Projekt:* Entscheid E20 in `docs/ENTSCHEIDE_VISBOX_2026-09-18.md`; gebaut am
+19.09.2026 in `aiimaging.kette` — Feld `schicht` sagt, welche Stufe ein Bild ist, Feld
+`basis` trägt das Urteil der Unterlage. Das eigene Urteil heisst weiterhin `bestanden`;
+das geerbte heisst `basis.geometrie_bestanden` und **nie** gleich.
 
 ---
 
@@ -5026,6 +5059,7 @@ System laufen.
 | 2026-08-18 | Ergaenzt aus der Kameraanbindung und auf-12: **Fuellgrad** (abgegrenzt zum Deckungsgrad), **zusammenhaengende Flaeche** samt Vierer-/Achter-Nachbarschaft, **Randberuehrung**. Vor dem Schreiben dieser Zeile nachgezaehlt — die Gegenmassnahme aus der Zeile darunter |
 | 2026-08-18 | Ergaenzt aus den drei HomeStation-Ergebnissen (auf-10, auf-11, MCP-Registrierung): **Boden (einer Aehnlichkeitsmetrik)**, **abgeleitete Schwelle**, **Ausleseort (pooler_output / last_hidden_state)**, **Ausgabeschema-Verletzung**. **Berichtigt:** **Stil-Score** und **Schwelle** trugen 0.30 als Massstab — gemessen ist die Zahl kleiner als der Boden von SigLIP 2 und laesst jedes beliebige Bildpaar durch; die Schwelle ist jetzt abgeleitet (0.666). **Praezisiert:** Der Eintrag zum Muster "innen stimmig, aussen daneben" nannte nur die erfundene Kubatur als Ursache — die zweite (Silhouettenauswahl aus einer hineingelegten Bodenebene) ist nachgetragen |
 | 2026-08-18 | **Schuld aus drei Straengen beglichen (Sitzung 07, Fortsetzung).** *Kameraableitung* (`src/aiimaging/kameras.py`, aus dem alten Add-on-Bestand nachgebaut): Brennweite, Bildwinkel, Azimut, Deckungsgrad, Frustum, perspektivische Division, Raycast, orthografische Projektion/Ortho-Scale, Axonometrie, Depsgraph; **Bounding Box** zu *Bounding Box (Huellbox)* erweitert und um die Acht-Ecken-Pruefung ergaenzt. *Echte IFC-Dateien:* IFC4/IFC2X3, Pflichtattribut, OwnerHistory, Schema-Validierung, `preprocessor_version`/`originating_system`. *ControlNet-Suche:* ControlNet-Staerke, ControlNet-Union, Blockwise-ControlNet, destilliertes Modell, Fuehrung/`guidance_scale`, `control_context_scale`, Single-File-Konverter, `.safetensors`-Kopf. *Pruefen:* Rundlauf, xfail. *Knotenoberflaeche:* Node-Tree, Socket, Multipass. **Nachgetragen, was ein frueheres Aenderungsverzeichnis behauptet hat:** die Zeile vom selben Tag versprach *tote Kante* im Graph-Kern — der Begriff stand nur in der Prosa eines anderen Eintrags, nie als eigener. Zum zweiten Mal in dieser Sitzung derselbe Befund: Ein Verzeichnis, das Eintraege behauptet, die es nicht gibt, macht die Luecke unauffindbar |
+| 2026-09-19 | Ergaenzt aus dem Schichtenbau der Bildkette: **Basis (eines Bildes)**, **Basis-Urteil (geerbtes Urteil)**, **Variantenstudie**. Ausgebaut: **Geometrielayer und AI-Imaging-Layer** um den Ort im Code und die Abgrenzung zur *Ebene (Layer) in einer Bilddatei*, **Handeingriff** um das, was er seit heute NICHT mehr wegwirft. **Nicht** nachgetragen wurden Geometrielayer und AI-Imaging-Layer als eigene Eintraege: Sie standen schon in Abschnitt 8, und ein zweiter Eintrag desselben Begriffs macht die Luecke unauffindbar statt kleiner |
 | 2026-08-14 | Erstfassung: 9 Themengruppen, ~200 Begriffe |
 | 2026-08-14 | Ergaenzt: IPC, stdout/stderr, Exit-Code, Protokoll, Subprozess praezisiert |
 | 2026-08-18 | **Connector-Schicht, Binaerpruefung und Lizenzvokabular nachgetragen** (wieder erreichten mehrere Laeufe `docs/` nicht). *Connector-Schicht* (`src/aiimaging/herkunft.py`): SI-Vorsatz, Umrechnungseinheit, Lesefenster, glb-Block, `FILE_NAME` samt Feldreihenfolge, belegt/vermutet/unbekannt; **STEP** um das Lesen des Dateikopfs ergaenzt. *Binaer-Lizenzpruefung:* gebuendeltes Binary, Ausnahmeklausel/GCC Runtime Library Exception, proprietaer, EULA, Platzhalterpaket, Metapaket, transitive Abhaengigkeit, `dist-info`, Symbol/Symbolverweis, Versionen festschreiben, Range-Abruf; **Dual License** um die Lizenzwahl zwischen zwei offenen Lizenzen (FreeType) erweitert, **Wheel**, **PyPI** und **LGPL** ergaenzt. *Lizenzvokabular* (`src/aiimaging/lizenzquelle.py`): **Regel-1-Spannung** neu, **permissive Lizenz** um „permissiv ist nicht kommerziell erlaubt", **vakuoeser Test** um die zweite Bauart — ein Test fand das gesuchte Wort im falschen Eintrag. **Berichtigt:** **Optionale Abhaengigkeitsgruppe** behauptete, „alles Schwere" liege jenseits der Prozessgrenze; torch, diffusers, transformers und Pillow werden im Produkt-Environment importiert — die Grenze trennt nach Lizenz, nicht nach Gewicht. **Runner** nannte zwei Dateien als Beispiele, die es in diesem Repo nicht gibt: Sie gehoeren zu KosmoDraw |

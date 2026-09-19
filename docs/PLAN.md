@@ -6048,3 +6048,35 @@ Bekannt und ausdrücklich nicht erledigt:
       die Stelle, an der ein Mensch das Bild auswählt.* Noch nicht abgelegt, weil beide
       heute bereits ihre gesammelte Meldung bekommen haben (`auf-20260919-118`/`-119`)
       und eine zweite am selben Tag eine Wiederholung wäre.
+
+- [x] **E20 gebaut: Zwei Schichten, und jedes Bild weiss, welche es ist.**
+      Der Eintrag oben («E20 eingetragen») war eine Festlegung; das hier ist ihr Einbau
+      in `aiimaging.kette` — **rein additiv**, die bestehende Kette blieb Zeile für Zeile.
+      **Neu:** `schicht` an jedem Bildergebnis (`geometrielayer` / `ai-imaging-layer`) und
+      `basis` an jedem Layer-2-Ergebnis — Knoten, Bild, Urteil der Basis, prüfender Knoten,
+      **Herkunft** der Zuordnung und Grund im Klartext.
+      **Die bindende Auflage ist gehalten und geprüft:** Das eigene Urteil heisst
+      `bestanden`, das geerbte `basis.geometrie_bestanden`. Zwei Namen, zwei Ebenen. Eine
+      Probe durchsucht **jedes** Feld eines Layer-2-Ergebnisses, das wie ein Urteil heisst,
+      und verlangt `None`.
+      **Die Basis bleibt die erste, nicht die jeweils vorige:** Die vorige Runde ist selbst
+      Layer 2 und hätte nur weiterzureichen, was sie geerbt hat — Hörensagen zweiter
+      Ordnung. Gemessen wurde genau einmal.
+      **Zwei Wege zur Basis, und der Unterschied steht dabei:** über die Bildkette (belegt)
+      oder, wenn die Zeichnung von der Platte kam und die Kette dort reisst, über dieselbe
+      Geometrie (plausibel zugeordnet). Mehrdeutig heisst `None` — *ein geratenes Urteil
+      ist schlimmer als keines.*
+      **Das Basis-Urteil wird nie zwischengespeichert.** Es fällt ein QA-Knoten im
+      Nebenzweig, dessen Parameter nicht im Hash der Bildstufe stehen; abgelegt wäre es ein
+      Urteil aus einem anderen Lauf. Nachgewiesen mit zwei Läufen an einem Speicher: Die
+      Bildstufe kommt aus dem Cache, das Urteil folgt der geänderten Schwelle.
+      Acht Mutationsproben, alle gefallen und zurückgenommen. Testzahl 6375 → 6395 (davon 18 neue Proben; der Rest sind Prüfungen, die das neue Protokoll selbst mitbringt).
+- [~] **Layer 2 aus einer «Rechnung ohne Modell» gibt es noch nicht.** Heute entsteht die
+      zweite Schicht nur aus einem Handeingriff, und der kommt als Datei von der Platte.
+      Der Weg für die dritte Ursache steht im Code und ist mit einer Attrappe geprüft —
+      gebaut ist er nicht, und er hängt an derselben offenen Owner-Frage wie Schritt 6
+      («Photoshop ersetzen»): Darf die Tiefenkarte wahlweise werden?
+- [~] **Die Oberfläche zeigt die zwei Urteile noch nicht getrennt.** Ein Feld, in dem
+      einmal das eigene und einmal das fremde Urteil steht, wäre genau der Fehler, gegen
+      den E20 gebaut ist. *Adressat: `ui`.* Noch nicht abgelegt — gehört in die nächste
+      gesammelte Meldung.
