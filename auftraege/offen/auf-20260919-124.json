@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260919-124",
+  "art": "qa",
+  "worker": "local",
+  "rang": 21,
+  "erstellt": "2026-09-19T23:25:00Z",
+  "params": {},
+  "beschreibung": "Die Gegenprobe an zwei AEHNLICHEN Gebaeuden. Heute ist nur belegt, dass das Verfahren eine Schachtel von einem fuenfgeschossigen Bau unterscheidet — die leichte Uebung. Drei Paare mit abgestufter Aehnlichkeit, je vier Messungen ueber Kreuz. Frage: Ab welcher Aehnlichkeit verschwindet der Abstand von +0,149?",
+  "anweisung": "=== DIE GEGENPROBE AN ZWEI AEHNLICHEN GEBAEUDEN — DIE SCHWERE UEBUNG ===\n\nWAS HEUTE BELEGT IST, UND WARUM ES DIE LEICHTE UEBUNG WAR\n\nAm 18.09.2026 ist gezeigt worden, dass unser neues Pruefverfahren ein Bild\nseiner EIGENEN Geometrie zuordnen kann: Haelt man ein echtes Bild gegen die\nForm des jeweils ANDEREN Gebaeudes, faellt es durch — 12 von 12 mal.\n\n  gegen die richtige Form   0,9257 ... 0,9784\n  gegen die falsche Form    0,7350 ... 0,7766\n  Abstand +0,149\n\nNur: Die beiden Gebaeude sind eine SCHACHTEL und ein FUENFGESCHOSSIGER BAU.\nSie sind offensichtlich verschieden. Dass ein Mass sie auseinanderhaelt, ist\nkein starker Beleg — es ist die leichte Uebung.\n\n    Eine Trennung, die nur an offensichtlich Verschiedenem gezeigt ist, sagt\n    nichts ueber den Fall, um den es im Betrieb geht: zwei Entwuerfe\n    desselben Hauses.\n\nGenau das ist die Anwendung. Eine Architektin vergleicht nicht eine Schachtel\nmit einem Wohnhaus. Sie vergleicht Variante A mit Variante B.\n\n\nWAS ZU TUN IST\n\n  SCHRITT 1 · DREI PAARE MIT ABGESTUFTER AEHNLICHKEIT BAUEN\n\n  Nehmt `tools/make_test_ifc.py --hochbau` als Ausgangsbau. Baut daraus drei\n  Varianten, jede einzeln und jede nur in EINEM Punkt geaendert:\n\n     PAAR 1 (gross verschieden):  ein Geschoss mehr\n     PAAR 2 (mittel):             dieselbe Hoehe, Fassade um 1,5 m versetzt\n     PAAR 3 (klein):              dieselbe Kubatur, nur die Fensterachsen\n                                  um eine halbe Achsbreite verschoben\n\n  Wenn eine dieser drei Aenderungen mit dem Werkzeug nicht baubar ist, sagt\n  das und baut die naechstaehnliche, die geht — mit einem Satz, was ihr\n  stattdessen geaendert habt. Eine ersetzte Variante ist brauchbar, eine\n  stillschweigend ersetzte nicht.\n\n  SCHRITT 2 · JE PAAR VIER MESSUNGEN\n\n  Rendert je Variante ein Bild (dieselbe Kamera, derselbe Seed, dieselbe\n  Staerke — nur die Geometrie unterscheidet sich). Dann rechnet die zwei Tore\n  ueber Kreuz:\n\n     Bild A gegen Form A        (soll bestehen)\n     Bild A gegen Form B        (soll durchfallen)\n     Bild B gegen Form B        (soll bestehen)\n     Bild B gegen Form A        (soll durchfallen)\n\n  SCHRITT 3 · DEN ABSTAND JE PAAR AUSWEISEN\n\n  Gebt je Paar den Abstand zwischen richtiger und falscher Zuordnung an — so\n  wie oben die +0,149. Die Frage lautet:\n\n     AB WELCHER AEHNLICHKEIT VERSCHWINDET DER ABSTAND?\n\n  Wenn er schon bei Paar 1 verschwindet, ist das Verfahren schwaecher als\n  gedacht, und wir muessen es sagen. Wenn er bis Paar 3 haelt, ist es\n  staerker als heute belegt. Beides ist ein Ergebnis.\n\n\nWAS NICHT ZU TUN IST\n\n  - KEINE echten Projekte als Variantenpaar. Alles synthetisch, alles bei\n    euch erzeugbar (Regel 3, und unser Repo ist oeffentlich).\n  - Die Schwelle 0,85 NICHT anpassen. Sie ist gesetzt, nicht kalibriert; sie\n    hier nachzuziehen wuerde genau die Frage verdecken, die wir stellen.\n  - Nur EINE Sache je Paar aendern. Zwei gleichzeitig geaenderte Dinge sind\n    nicht mehr auseinanderzuhalten.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python tools/make_test_ifc.py --hochbau, daraus drei Varianten",
+    "hinweis": "Je Paar nur EINE Sache aendern. Eine ersetzte Variante ist brauchbar, eine stillschweigend ersetzte nicht."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 60,
+    "leerlauf_schwelle_mem_gb": 2,
+    "hinweise": [
+      "KEINE Non-Commercial-Gewichte laden — auch nicht zum Vergleich.",
+      "Die Schwelle 0,85 NICHT anpassen.",
+      "Alles synthetisch, alles bei euch erzeugbar. Keine echten Projekte als Variantenpaar.",
+      "«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Je Paar: was genau geaendert wurde (und falls ersetzt, wodurch und warum).",
+    "V2 Je Paar die vier Messungen ueber Kreuz, mit beiden Torwerten.",
+    "V3 Je Paar der Abstand zwischen richtiger und falscher Zuordnung.",
+    "V4 Eine Zeile Urteil: Ab welcher Aehnlichkeit traegt die Gegenprobe nicht mehr?"
+  ]
+}

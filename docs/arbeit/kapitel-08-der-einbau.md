@@ -214,6 +214,17 @@ Aufträge ankamen und niemand sie öffnete, oder ob jemand sie las und nichts zu
 unterscheidet keine unserer Zahlen. Es gibt einen Vermerk dafür — *gesehen* —, aber er
 muss von drüben gesetzt werden, und das ist bisher **kein einziges Mal** geschehen.
 
+> **Nachtrag vom 19.09.2026, und er gehört genau hierhin:** Auf die Frage, ob die
+> Werkstatt überhaupt läuft, hat der Auftraggeber geantwortet: *«Er arbeitet.»* Damit ist
+> **eine** der drei Erklärungen weg — aber durch eine **Auskunft**, nicht durch eine
+> Messung. Die beiden übrigen stehen unverändert nebeneinander: Die Aufträge kommen an und
+> bleiben liegen, oder sie kommen gar nicht an.
+>
+> *Eine Auskunft ist kein Messwert. Sie ist aber mehr als nichts, und sie gehört dorthin,
+> wo die Messung fehlt — nicht an ihre Stelle.* Die Lücke, die das Kapitel benennt, wird
+> dadurch kleiner und verschwindet nicht: Genau die Unterscheidung, die dieses Repo für
+> den Hinweg gebaut hat, fehlt für den Rückweg weiterhin.
+
 **Drittens: Die eigene Bilanz ist selbstgemessen.** Dass 7 von 35 Posten offen sind, sagt
 ein Werkzeug, das aus einer Datei liest, die wir selbst pflegen. Es prüft die Buchführung
 — ob sie vollständig ist, ob jeder Posten einen Adressaten hat, ob jede erledigte Zeile

@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260919-125",
+  "art": "qa",
+  "worker": "local",
+  "rang": 22,
+  "erstellt": "2026-09-19T23:30:00Z",
+  "params": {},
+  "beschreibung": "Die Achsenpruefung `aiimaging.hochachse` gegen die 40 echten IFC-Dateien. Das Modul misst aus der Geometrie selbst, welche Achse oben ist — es ist gebaut, synthetisch geprueft und NIRGENDS eingehaengt, weil hier nicht messbar ist, ob es an echten Dateien traegt. Kern: Wo Modul und Datei sich widersprechen — wer hat recht? Braucht keine GPU.",
+  "anweisung": "=== DIE ACHSENPRUEFUNG GEGEN ECHTE MODELLE — GEBAUT, ABER NIE ANGEWENDET ===\n\nWORUM ES GEHT\n\nEs gibt ein Modul `aiimaging.hochachse`, das aus der Geometrie SELBST misst,\nwelche Achse oben ist. Es ist gebaut, es ist mit synthetischen Modellen\ngeprueft — und es ist an KEINER Stelle der Software eingehaengt. Der Grund:\nWir koennen hier nicht messen, ob es an echten Dateien funktioniert.\n\n    Ein gebautes Modul ohne Aufrufer ist kein Werkzeug, sondern ein Vorrat.\n\nWARUM ES DIESES MODUL GIBT — DIE TEUERSTE STELLE DER KETTE\n\nJedes Gebaeudemodell sagt in einem Feld, welche Achse «oben» ist. Steht dort\netwas Falsches, wird das Gebaeude gekippt — und zwar KONSISTENT: Tiefenkarte,\nKameraableitung und Geometriepruefung kippen gemeinsam mit. Das Ergebnis ist\nin sich stimmig und vollstaendig falsch.\n\nEin Tippfehler wird seit dem 19.09.2026 abgefangen. Der IRRTUM nicht: Wer\n«Z» schreibt, waehrend das Modell Y-up ist, schreibt etwas syntaktisch\nTadelloses.\n\n    Ein Fehlschlag, der wie ein Erfolg aussieht, wird nicht gefunden. Er wird\n    geglaubt.\n\nDas Modul misst darum nach — an der Annahme, dass GELAENDE in der Hochachse\nflach liegt. Es antwortet ausdruecklich MIT NICHTS, wenn es sich nicht sicher\nist: kein Gelaende erkannt, mehrdeutig, oder der Vorsprung zwischen der besten\nund der zweitbesten Achse unter dem Mindestwert von 4,0.\n\n\nWAS ZU TUN IST\n\n  SCHRITT 1 · GEGEN DIE 40 ECHTEN DATEIEN FAHREN\n\n  Ihr habt einen Bestand von 40 echten IFC-Dateien, an denen die\n  IFC-nach-glb-Wandlung schon belegt ist. Fahrt `hochachse.gegenprobe_datei`\n  ueber jede davon.\n\n  Gebt je Datei DREI Angaben zurueck — und nur diese drei, keine Dateinamen\n  aus echten Projekten, keine Pfade:\n\n     laufende Nummer | was die DATEI behauptet | was das MODUL misst\n\n  Wo das Modul nichts sagt, schreibt den Grund, den es selbst nennt.\n\n  SCHRITT 2 · DIE DREI ZAHLEN, AUF DIE ES ANKOMMT\n\n     A) In wie vielen Faellen sagt das Modul ueberhaupt etwas?\n     B) Wo es etwas sagt: wie oft stimmt es mit der Dateiangabe ueberein?\n     C) Wo es WIDERSPRICHT: ist die Datei falsch oder das Modul?\n        Das entscheidet ein Blick — rendert den Fall einmal und sagt, welche\n        Fassung aufrecht steht.\n\n  Punkt C ist der eigentliche Auftrag. A und B sind Buchhaltung.\n\n  SCHRITT 3 · DER MINDESTVORSPRUNG\n\n  Der Wert 4,0 ist GESETZT, nicht gemessen. Gebt je Datei den tatsaechlichen\n  Vorsprung mit zurueck. Daraus sehen wir, ob die Grenze an der richtigen\n  Stelle liegt — und ob sie zu viele brauchbare Faelle verschweigt.\n\n\nWAS NICHT ZU TUN IST\n\n  - KEINE Dateinamen, keine Projektnamen, keine Pfade aus echten Auftraegen\n    in die Rueckgabe. Laufende Nummern genuegen, und Regel 3 gilt hier\n    besonders: unser Repo ist oeffentlich.\n  - NICHTS einhaengen. Dieser Auftrag misst; das Einhaengen machen wir, wenn\n    die Zahlen da sind.\n  - Den Mindestvorsprung NICHT nachjustieren, damit mehr Faelle durchgehen.\n  - Braucht keine GPU und keine Gewichte — nur die Dateien.",
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "$AIIMAGING_MODELLE_3D",
+    "erzeugen_mit": null,
+    "hinweis": "Der vorhandene Bestand von 40 echten IFC-Dateien. Die Dateien bleiben bei euch; zurueck kommen nur laufende Nummern und Zahlen."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 60,
+    "leerlauf_schwelle_mem_gb": 2,
+    "hinweise": [
+      "Regel 3 gilt hier besonders: unser Repo ist oeffentlich. Keine Dateinamen, keine Projektnamen, keine Pfade.",
+      "NICHTS einhaengen — dieser Auftrag misst nur.",
+      "Den Mindestvorsprung von 4,0 NICHT nachjustieren.",
+      "Braucht keine GPU und keine Gewichte.",
+      "«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Je Datei drei Angaben: laufende Nummer, Angabe der Datei, Messung des Moduls (oder der Grund fuer das Schweigen).",
+    "V2 Wie oft sagt das Modul ueberhaupt etwas, und wie oft stimmt es mit der Datei ueberein?",
+    "V3 Jeder Widerspruch einzeln aufgeloest: Datei falsch oder Modul falsch — mit einem Blick auf das gerenderte Bild belegt.",
+    "V4 Je Datei der tatsaechliche Vorsprung, damit wir sehen, ob die Grenze von 4,0 richtig liegt."
+  ]
+}

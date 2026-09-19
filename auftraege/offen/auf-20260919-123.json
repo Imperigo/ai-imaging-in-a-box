@@ -1,0 +1,35 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260919-123",
+  "art": "qa",
+  "worker": "local",
+  "rang": 20,
+  "erstellt": "2026-09-19T23:20:00Z",
+  "params": {},
+  "beschreibung": "Kommt ein hineingezeichnetes Bild am Vorgabe-Modell z-image-turbo an, oder gewinnt die Tiefenkarte den einen Bildeingang — wie am 18.08.2026 bei Qwen-Image-Edit gemessen? Der Pfad fuer Schritt 5 (Hineinskizzieren) ist gebaut; ob er traegt, ist auf unserem Vorgabe-Modell NICHT GEMESSEN.",
+  "anweisung": "=== KOMMT EIN HINEINGEZEICHNETES BILD AM VORGABE-MODELL UEBERHAUPT AN? ===\n\nWORUM ES GEHT, IN EINEM SATZ\n\nWir haben am 19.09.2026 den Pfad gebaut, auf dem ein vorhandenes Bild in die\nRechnung zurueckgeht — Hineinskizzieren, Variantenstudien, Bildbearbeitung\nueber KI. Ob das Bild am anderen Ende ankommt, ist auf unserem VORGABE-Modell\nNICHT GEMESSEN.\n\nWARUM DAS KEINE SPITZFINDIGKEIT IST\n\nAm 18.08.2026 habt ihr an `Qwen-Image-Edit` eine Falle gemessen: Das Modell\nhat nur EINEN Platz fuer ein hineingegebenes Bild. Unsere Software legt\ndorthin die Tiefenkarte, weil sie die wichtigere ist. Das hineingezeichnete\nBild faellt dann still weg.\n\n    Der Lauf gelingt. Ein Bild liegt am Ende da. Ohne ausdruecklichen Hinweis\n    haette niemand einen Grund, nach der verschwundenen Zeichnung zu suchen.\n\nDas war ausgerechnet das Modell, dessen Betriebsart «integriertes Edit»\nheisst. Seither ist unsere Vorgabe ein anderes Modell — `z-image-turbo` —,\nund fuer das ist dieselbe Frage offen.\n\n    Ein Fehlschlag, der wie ein Erfolg aussieht, wird nicht gefunden. Er wird\n    geglaubt.\n\n\nWAS ZU TUN IST\n\n  SCHRITT 1 · EIN BILD, DAS MAN WIEDERERKENNT\n\n  Rendert eine der beiden Standardszenen. Malt in das fertige Bild etwas\n  hinein, das im Modell NICHT vorkommt und das man nicht uebersehen kann —\n  ein grosses farbiges Rechteck an einer Fassade genuegt. Es muss synthetisch\n  sein und hier erzeugbar: kein Bild aus einem echten Projekt.\n\n  SCHRITT 2 · DAMIT WEITERRECHNEN\n\n  Gebt dieses Bild zusammen mit derselben Tiefenkarte an `z-image-turbo` und\n  rechnet eine Runde mit MITTLERER Staerke — also so, dass das Ergebnis dem\n  Eingangsbild noch aehnlich sehen soll.\n\n  SCHRITT 3 · DIE FRAGE BEANTWORTEN\n\n  Ist das hineingemalte Rechteck im Ergebnis noch zu sehen — an derselben\n  Stelle, in erkennbarer Form? Drei Antworten sind moeglich, und alle drei\n  sind vollstaendig:\n\n     JA   — das Bild kommt an. Dann steht der Pfad fuer Schritt 5.\n     NEIN — die Tiefenkarte gewinnt, wie bei Qwen. Dann bauen wir eine\n            ausdrueckliche Warnung ein, statt still ein Bild zu verlieren.\n     TEILS— es kommt an, aber nur bei bestimmten Staerken. Dann nennt die\n            Grenze.\n\n  SCHRITT 4 · DASSELBE OHNE TIEFENKARTE, FALLS ES GEHT\n\n  Wenn `z-image-turbo` ein Bild auch OHNE Tiefenkarte annimmt: rechnet\n  dieselbe Runde noch einmal so. Das beantwortet eine zweite offene Frage —\n  ob eine reine Bildbearbeitung ueberhaupt moeglich ist.\n  Wenn es nicht geht, sagt das; auch das ist ein Ergebnis.\n\n\nWAS NICHT ZU TUN IST\n\n  - KEINE echten Projektbilder, keine Kundendaten. Das Bild wird bei euch\n    erzeugt und bleibt synthetisch.\n  - KEIN neues Modell suchen. Die Frage gilt genau dem Vorgabe-Backbone.\n  - Kein Urteil aus dem Gefuehl: Legt die zwei Bilder nebeneinander in die\n    Rueckgabe, damit wir es selbst sehen koennen.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python tools/make_test_ifc.py --hochbau",
+    "hinweis": "Eine der beiden Standardszenen genuegt. Das hineingemalte Zeichen wird bei euch erzeugt."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 60,
+    "leerlauf_schwelle_mem_gb": 2,
+    "hinweise": [
+      "KEINE Non-Commercial-Gewichte laden — auch nicht zum Vergleich.",
+      "Das Eingangsbild ist synthetisch und wird bei euch erzeugt. Keine echten Projektbilder.",
+      "«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Kommt das hineingemalte Zeichen im Ergebnis an? ja / nein / teils — und bei «teils» die Grenze.",
+    "V2 Die beiden Bilder nebeneinander (Eingang und Ergebnis), damit wir es selbst sehen.",
+    "V3 Nimmt z-image-turbo ein Bild auch OHNE Tiefenkarte an? Wenn ja: ein Lauf damit. Wenn nein: der Fehlertext.",
+    "V4 Bei welchen Staerken wurde gerechnet."
+  ]
+}

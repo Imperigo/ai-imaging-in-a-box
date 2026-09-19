@@ -5820,6 +5820,24 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Drei weitere Messauftraege abgelegt — und die Werkstatt laeuft.**
+      Owner-Auskunft 19.09.2026 auf die Rueckfrage, ob dort ueberhaupt jemand arbeitet:
+      *«Er arbeitet.»* Darauf abgelegt:
+      `auf-20260919-123` — kommt ein **hineingezeichnetes Bild** am Vorgabe-Modell an,
+      oder gewinnt die Tiefenkarte den einen Bildeingang? (Bei einem anderen Modell ist
+      genau das am 18.08.2026 gemessen worden.)
+      `auf-20260919-124` — die Gegenprobe an zwei **aehnlichen** Gebaeuden. Drei Paare mit
+      abgestufter Aehnlichkeit. *Eine Trennung, die nur an offensichtlich Verschiedenem
+      gezeigt ist, sagt nichts ueber den Fall, um den es im Betrieb geht.*
+      `auf-20260919-125` — die **Achsenpruefung** gegen 40 echte Dateien. *Ein gebautes
+      Modul ohne Aufrufer ist kein Werkzeug, sondern ein Vorrat.*
+      **Was die Auskunft aendert, und was nicht:** Von den drei Erklaerungen fuer fehlende
+      Antworten faellt **eine** weg — durch eine Auskunft, nicht durch eine Messung. Die
+      beiden uebrigen stehen unveraendert: Die Auftraege kommen an und bleiben liegen,
+      oder sie kommen gar nicht an. *Eine Auskunft gehoert dorthin, wo die Messung fehlt —
+      nicht an ihre Stelle.* Nachgetragen in Kapitel 8 an genau der Stelle, an der es
+      diese Leerstelle selbst benennt.
+      Bei `local` liegen damit **22** Auftraege bei einem Deckel von acht.
 - [x] **Die Selbstbindung durchbrochen — mit Freigabe, Datum und Namen.**
       Owner-Freigabe 19.09.2026 auf die ausdrueckliche Frage: *«Ja kannst durchbrechen.»*
       Bei `local` liegen damit **19** offene Auftraege bei einem Deckel von acht.
