@@ -17,6 +17,7 @@ behauptet, was es trägt und was ihm fehlt.
 | Datei | Stand |
 |---|---|
 | `kapitel-03-die-randbedingungen.md` | **Entwurf, 19.09.2026.** Alle Zahlen darin sind **erzeugt, nicht zitiert** — aus `tools/beweis/19_regeln_ausfuehrbar.py`, gefahren für dieses Kapitel. |
+| `kapitel-05-die-kamera.md` | **Entwurf, 19.09.2026.** Alle Zahlen für das Kapitel **gerechnet**, nicht zitiert — und eine Vorarbeit dabei berichtigt: «unter 2 mm» misst sich über die weitere Spanne als **2,01 mm**. |
 | `kapitel-07-die-methode.md` | **Entwurf, 19.09.2026.** Erstes geschriebenes Kapitel. |
 
 ## Die Reihenfolge, in der geschrieben wird

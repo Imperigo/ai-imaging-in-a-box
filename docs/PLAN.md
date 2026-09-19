@@ -5801,6 +5801,20 @@ Bekannt und ausdrücklich nicht erledigt:
 > **Offen:** Ob die Vermutung hinter der Achsen-Gegenprobe überhaupt trägt — Gelände ist
 > in der Hochachse flach — ist nicht gemessen.
 
+- [x] **Kapitel 5 geschrieben: «Die Kamera: was die Software selbst entscheidet».**
+      Das dritte Kapitel, und alle Zahlen darin sind **für das Kapitel gerechnet**:
+      12 Richtungen · **56** geprüfte Dreierkombinationen · Deckungsgrad exakt 0,7000 ·
+      Begründung jedes Standpunkts *«Alle acht Ecken im Bild.»*
+      **Und die Shift-Frage über 216 Fälle nachgerechnet** (Höhen 3 bis 100 m, vier
+      Grundrisse): **Lotabweichung 0,000° in allen 216**, grösster Shift **2,01 mm**,
+      Objektivgrenze 12 mm, **0 von 216** darüber.
+      **Berichtigt: Die Vorarbeit sagte «unter 2 mm».** Über die hier gerechnete, weitere
+      Spanne sind es **2,01** — knapp darüber. An der Aussage ändert das nichts
+      (sechsfache Reserve), aber *eine Zahl, die «unter 2» sagt, wo 2,01 gemessen wird,
+      ist falsch, und sie wäre bei der nächsten Messung noch falscher geworden.*
+      Der stärkste Abschnitt ist der, in dem die Software **nicht** entscheidet: Bei
+      Innenräumen liefert sie beide Blickarten, weil die Wahl davon abhängt, ob die
+      Stirnwand ein Motiv trägt — *und das steht in keinem Gebäudemodell.*
 - [x] **Kapitel 3 geschrieben: «Die Randbedingungen sind der Entwurf».**
       Das zweite Kapitel, und es ist das am besten belegte der Arbeit — **weil seine
       Belege ausführbar sind.** Alle Zahlen darin sind für das Kapitel **erzeugt, nicht
