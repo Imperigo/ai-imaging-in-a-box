@@ -86,7 +86,8 @@ def main(argv: list[str] | None = None) -> int:
                    help="Blocks als <kennung>.md in dieses Verzeichnis schreiben, statt "
                         "sie zu drucken. Der Pfad wird NICHT im Repo festgeschrieben — "
                         "er zeigt auf ein fremdes Repo, und dessen Aufbau gehoert nicht "
-                        "in unser oeffentliches.")
+                        "in unser oeffentliches. Ein Ziel IM eigenen Repo wird "
+                        "abgewiesen: Dort abzulegen ist keine Zustellung.")
     # ── Der Rueckweg: «gesehen» eintragen und die Lage ansehen (16.09.2026) ───────────
     #
     # DIE BIBLIOTHEKSFUNKTION STAND, DER EINSTIEG FEHLTE — und damit gab es sie praktisch
@@ -199,6 +200,21 @@ def main(argv: list[str] | None = None) -> int:
         blocks = blocks[-1:]
 
     if a.nach:
+        if (drin := _zeigt_ins_eigene_repo(a.nach, a.repo)) is not None:
+            print(
+                f"--nach zeigt in unser EIGENES Repo ({drin}).\n"
+                f"\n"
+                f"Dort abzulegen ist keine Zustellung. `cloud` liest unser Repo nicht, "
+                f"und was hier liegt, hat den Adressaten nicht erreicht — der Vermerk "
+                f"waere eine Falschaussage, und zwar genau die, die am 09.09.2026 schon "
+                f"einmal fuenf Dateien erzeugt hat.\n"
+                f"\n"
+                f"Gemeint ist vermutlich einer von zwei Wegen:\n"
+                f"  --nach <pfad-im-fremden-repo>   der Block geht wirklich hinaus\n"
+                f"  --vermerken                     der Block liegt unter "
+                f"auftraege/bloecke/ und ist ueber git hinausgegangen",
+                file=sys.stderr)
+            return 2
         for ziel in auftragspost.lege_ab(blocks, a.nach):
             print(f"geschrieben: {ziel.name}")
         _vermerke(blocks, a.repo)
@@ -220,6 +236,40 @@ def main(argv: list[str] | None = None) -> int:
 
 #: Wie ein Schalter in der Meldung heisst. Der Positionsadressat hat keinen Strichnamen,
 #: und «worker wirkt nicht» waere fuer den Leser keine Auskunft.
+def _zeigt_ins_eigene_repo(nach: Path, repo) -> str | None:
+    """Liegt ``--nach`` innerhalb unseres eigenen Repos? Dann ist es keine Zustellung.
+
+    **BEFUND 19.09.2026, und es ist derselbe Fehler zum zweiten Mal.** Am 09.09.2026 ist
+    `--nach` schon einmal auf ein Verzeichnis im eigenen Repo gerichtet worden; der
+    Kommentar an `--vermerken` erzaehlt es seither. Am 19.09. habe ich es wieder getan —
+    `--nach auftraege/bloecke` — und damit acht Auftraege als ZUGESTELLT vermerkt, die
+    nirgendwo hingegangen sind. Darunter der aelteste offene Posten des Projekts.
+
+        Ein Kommentar ist kein Waechter.
+
+    `cloud` liest unser Repo **nicht** (siehe :data:`auftragspost.RUECKWEG`). Eine Datei,
+    die hier liegt, hat den Adressaten nicht erreicht — und ein Zustellvermerk darauf ist
+    keine halbe Wahrheit, sondern eine falsche: Die Lage «nicht zugestellt» ist die
+    einzige, in der eine ausbleibende Antwort UNSER Versaeumnis ist und nicht seins. Sie
+    zuzudecken heisst, den eigenen Rueckstand dem Adressaten anzuhaengen.
+
+    Returns:
+        Den Pfad als Text, wenn er im Repo liegt — sonst ``None``. **Nicht** ``False``:
+        Hier wird eine Lage gemeldet und kein Urteil gefaellt.
+
+    Geprueft wird ueber aufgeloeste Pfade, damit `..` und Verknuepfungen nicht
+    daran vorbeifuehren. Laesst sich ein Pfad nicht aufloesen, gilt er als
+    ``None`` — ein Ziel, das es noch nicht gibt, liegt in aller Regel draussen,
+    und ein Werkzeug, das am haeufigsten Fall scheitert, wird umgangen.
+    """
+    try:
+        ziel = Path(nach).resolve()
+        wurzel = Path(repo).resolve()
+    except OSError:
+        return None
+    return str(ziel) if ziel == wurzel or wurzel in ziel.parents else None
+
+
 _SCHALTERNAME = {"warum": "--warum/--lage", "nach": "--nach", "vermerken": "--vermerken",
                  "neueste": "--neueste", "auftrag": "--auftrag",
                  "worker": "der Adressat als Positionsangabe"}

@@ -5557,3 +5557,51 @@ Bekannt und ausdrücklich nicht erledigt:
       Open-Source-Fassung auf einem Laptop läuft. *Adressat: `local`.*
 - [~] **Offen beim Owner: R1** — Zugang zu einem MacBook M1 Max. Ohne ihn bleibt jede
       Zahl zur Zielhardware gesetzt statt gemessen. *Adressat: Owner.*
+
+---
+
+## Sitzung 28 — 19.09.2026 · Die offenen Punkte, und einer davon war ich selbst
+
+> **Entschieden:** Keine neue Auftragsart «Ansage». Der Rückstandsdeckel zählt richtig;
+> falsch ist, wie ich Aufträge schreibe. Und: heute keine weiteren Messaufträge an
+> `local` — der Engpass ist nicht das Bauen.
+> **Gemessen:** `local` trägt **16 offene Aufträge**, der selbstgesetzte Deckel liegt bei
+> **8**. Von den sechzehn sind genau **zwei** reine Ansagen; **vier weitere nennen sich
+> im ersten Satz Ansage und verlangen in der Rückgabe Messwerte.**
+> **Offen:** Bei `cloud` steht seit **28 Tagen** die eine Frage, die den Betrieb
+> blockiert — läuft dort überhaupt ein Abholer? Ohne ihn bleibt jeder Auftrag liegen.
+
+- [x] **Eine gesammelte Nachfrage an `cloud` statt sechs Mahnungen** (`auf-20260919-118`).
+      Sechs der sieben offenen Posten stehen auf *aktiv, diesen übergangen* — sie haben
+      **nach** diesen Aufträgen anderes beantwortet. Das ist die einzige der vier Lagen,
+      in der eine Nachfrage etwas wert ist; bei den übrigen sagt ein Ausbleiben nichts
+      über den Adressaten, sondern über uns.
+      Der Auftrag verlangt **keine Arbeit**, sondern eine Zeile je Posten: geschlossen,
+      abgelehnt, oder was fehlt. *Eine Ablehnung ist uns so viel wert wie eine
+      Erledigung — ein abgelehnter Posten verschwindet aus der Zählung, ein schweigender
+      bleibt darin stehen und verdeckt die, auf die es ankommt.*
+- [x] **Verworfen: eine eigene Auftragsart «Ansage», die nicht auf den Deckel zählt.**
+      Der Gedanke war, dass eine Ansage («lies das, bevor du ziehst») den Adressaten eine
+      Minute kostet und darum den Rückstand nicht so belasten sollte wie eine Messung.
+      **Nachgezählt, und das Ergebnis dreht den Entscheid um:**
+
+          reine Ansage                        2 von 16
+          nennt sich Ansage, verlangt Arbeit  4 von 16
+          echte Arbeit                       10 von 16
+
+      Die Kategorie hätte **zwei** Aufträge aus der Zählung genommen — von sechzehn auf
+      vierzehn, bei einem Deckel von acht. Sie hätte nichts gelöst und dafür genau die
+      Falschbeschriftung eingeladen, die die Zählung gerade gefunden hat: *ich nenne es
+      Ansage und hänge vier Fragen an.*
+      **Der Deckel zählt richtig. Falsch ist, wie ich Aufträge schreibe.**
+- [x] **Daraus die Regel, die vorher nicht dastand:** Eine Ansage und ein Messauftrag
+      gehören in **zwei Dateien**. Eine Ansage muss **vor** dem nächsten Abgleich gelesen
+      werden; eine Messung kann warten. Zusammengebunden wartet der eilige Teil hinter
+      dem trägen — und zwar genau so lange wie die Warteschlange. `auf-20260918-117` ist
+      der einzige der sechzehn, der das richtig macht.
+- [~] **Nicht behoben, sondern offengelegt: `local` trägt das Doppelte des Deckels.**
+      Acht ist eine Setzung, und ihre Begründung lautete: *«Mehr Tempo verschlimmert das;
+      der Engpass ist nicht das Bauen.»* Seit dem 07.09.2026 sperrt der Deckel nicht mehr,
+      er meldet — und er hat gemeldet. Die Folge daraus ist nicht, die Zählung zu
+      entschärfen, sondern **heute keinen weiteren Messauftrag an `local` zu stellen.**
+      *Adressat: `kern`, und die Handlung ist ein Unterlassen.*

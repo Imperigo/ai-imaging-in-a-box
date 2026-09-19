@@ -2564,6 +2564,33 @@ def _kantenstaerken(werte: list[float], breite: int, hoehe: int) -> list[float]:
 #: **ABGELESEN, NICHT KALIBRIERT.** Sieben Fälle aus einer Szene. Die HomeStation sagt
 #: das selbst dazu, und der Unterschied ist der, an dem dieses Projekt seit Phase 0
 #: arbeitet.
+#:
+#: **UND SEIT DEM 08.09.2026 IST GEMESSEN, WAS SIE AUF FRONTALEN ANSICHTEN ANRICHTET —
+#: nachgetragen am 19.09.2026, weil es bis dahin nur im Ergebnis stand und nicht hier.**
+#: `auf-20260907-81` hat dieselbe Falltabelle mit einem echten Schätzer
+#: (`depth-anything-v2-small`) statt mit der Soll-Karte gerechnet. Unter dessen Rauschen
+#: gibt es **auf frontalen Ansichten kein fehlerfreies Fenster mehr**::
+#:
+#:     hoechster Wert eines SCHLECHTEN frontalen Falls   0,9957
+#:     niedrigster Wert eines GUTEN frontalen Falls      0,1426
+#:
+#: Die beiden Mengen überlappen also fast vollständig; diagonal trennt das Mass weiter.
+#: Mit 0.80 sperrt es **11 von 40 guten frontalen Fällen** — darunter das treue
+#: Blender-Render selbst — und lässt erstmals zwei schlechte durch.
+#:
+#: **Was das heisst, und was es NICHT heisst.** Das Paarurteil ist kein Tor: Es sperrt
+#: nichts, es schreibt einen Satz in ``verdict.reason``
+#: (:func:`aiimaging.kosmo_szene`). Dieser Satz — «SCORE BESTEHT, MASKENWEG
+#: WIDERSPRICHT» — ist auf frontalen Ansichten damit **zu gut einem Viertel falsch**.
+#: Eine Warnung, die jedes vierte Mal grundlos kommt, wird nach der dritten nicht mehr
+#: gelesen; sie ist dann schlimmer als keine.
+#:
+#: **Geändert wird hier trotzdem nichts, und das ist der Punkt.** `auf-20260907-81` sagt
+#: über alle acht Kurven ``genuegt_als_kalibrierung: false`` — nicht wegen des Umfangs,
+#: sondern wegen der Herkunft: Die Bilder kommen aus **Blender**, nicht aus dem
+#: Bildmodell. Eine Schwelle an Blender-Bildern zu eichen und auf erzeugte anzuwenden
+#: wäre genau der Fehler, der bei der Stil-Schwelle schon einmal gemacht wurde. Die
+#: Messung an erzeugten Bildern steht als `auf-20260909-98` bei `local`.
 PAAR_RHO_SCHWELLE = 0.80
 
 #: Schwelle für die gerichtete Tiefenkante. Abgelesen (`auf-20260821-27`).

@@ -4725,6 +4725,37 @@ ein Abbruch mitten in einer gesunden Rechnung — und der sieht aus wie ein Fehl
 nur die Uhr zu knapp stand. Ein Faktor von 3 verdreifacht alle Fristen auf einmal.
 *Wo im Projekt:* `AIIMAGING_ZEITFAKTOR`, gelesen von `aiimaging.seams.zeitfaktor`.
 
+**Ansage gegen Messauftrag** — Zwei Dinge, die eine Datei nicht gleichzeitig sein sollte:
+die Mitteilung, dass sich etwas ändert, und die Bitte, etwas zu messen.
+*Wozu:* Eine Ansage ist **eilig und billig** — sie muss gelesen werden, bevor der
+Adressat den neuen Stand übernimmt, und kostet ihn eine Minute. Ein Messauftrag ist
+**träge und teuer** — er kann Tage warten und kostet Rechenzeit. Steht beides in einer
+Datei, wartet der eilige Teil hinter dem trägen, und zwar genau so lange wie die ganze
+Warteschlange.
+*Wo im Projekt:* Am 19.09.2026 nachgezählt: Von sechzehn offenen Aufträgen an die
+HomeStation waren zwei reine Ansagen — und **vier weitere nannten sich im ersten Satz
+Ansage und verlangten in der Rückgabe Messwerte.**
+
+**Nachfrage gegen Mahnung** — Der Unterschied zwischen «du hast das übergangen» und «wir
+wissen nicht, ob es bei dir angekommen ist».
+*Wozu:* Bleibt eine Antwort aus, gibt es dafür mindestens vier Gründe, und nur bei einem
+davon ist eine Nachfrage berechtigt: wenn der Adressat **nach** diesem Auftrag anderes
+beantwortet hat. Dann war er da, und dieser blieb liegen. In allen anderen Fällen — nie
+zugestellt, zu frisch, seither gar kein Lebenszeichen — sagt das Ausbleiben nichts über
+ihn, sondern über uns, und eine Mahnung wäre eine Unterstellung.
+*Wo im Projekt:* `aiimaging.auftragspost.warum_keine_antwort`. Beim ersten Lauf
+rechtfertigten von achtzehn Aufträgen genau **zwei** eine Nachfrage. *Ohne die Messung
+hätte ich achtzehn gemahnt — sechzehn davon zu Unrecht, und beim siebzehnten hätte es
+niemand mehr gelesen.*
+
+**Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** — Und manchmal
+besser.
+*Wozu:* Ein abgelehnter Auftrag («machen wir nicht, weil X») verschwindet aus der
+Zählung. Ein schweigender bleibt darin stehen und verdeckt die Posten, auf die es
+ankommt. Wer nur Erledigungen als Abschluss zählt, züchtet sich eine Liste, in der das
+Wichtige zwischen dem Unentschiedenen verschwindet.
+*Wo im Projekt:* Ausdrücklich so verlangt in `auf-20260919-118` an `cloud`.
+
 **Absoluter Pfad, und warum er vom System abhängt** — Eine vollständige Adresse einer
 Datei, die von der Wurzel aus gilt und nicht davon, wo man gerade steht.
 *Wozu:* Was als vollständig gilt, ist je System verschieden. `/home/x/datei` ist unter
@@ -4797,6 +4828,7 @@ System laufen.
 | 2026-09-12 | Ergaenzt aus dem ersten Lauf bis zum fertigen Bild: **Oertliche Ergaenzung (Drop-in)**, **Zweite Differenz (Kruemmung)**, **Ersatzschreibung der Umlaute**. Alle drei aus gemessenen Befunden — der Waechter las nur die Hauptdatei, die vorgeschlagene Kennzahl trennte Verlauf und Kante nicht, und «betonwaende» erreichte das Glossar nicht |
 | 2026-09-11 | Ergaenzt aus `herkunft.py`: **Herkunftstabelle** und **Belegt, gemessen, vermutet, unbekannt**. Die vierte Stufe entstand, weil eine zweifach exakte Messung weder «Norm» noch «Gewohnheit» ist |
 | 2026-09-11 | Ergaenzt aus dem Befund der HomeStation zum Renderprojekt: **Stilles Abstreifen (unbekannter Felder)**. Der Begriff wurde noetig, weil `lies_szene` erfundene Bestellfelder spurlos verschluckt hat — gemessen, nicht vermutet |
+| 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |
 | 2026-09-09 | Ergaenzt aus `messstand` und `beruehrung`: **Codestand (eines Dokuments)**, **Grundlage (eines Dokuments)**, **Beruehrung (einer Messung)**, **Nachgesehen bis**. Der Codestand war am Vortag gebaut und NICHT ins Lexikon eingetragen worden — nachgeholt, gemeinsam mit der zweiten Haelfte derselben Frage |

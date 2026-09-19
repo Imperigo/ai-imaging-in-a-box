@@ -233,11 +233,29 @@ def _cli():
 
 
 def _repo_mit_auftrag(tmp_path, satz):
-    ordner = tmp_path / "auftraege" / "offen"
+    """Ein Repo unter ``tmp_path/repo`` — und der Ausgang liegt DANEBEN, nicht darin.
+
+    **GEAENDERT 19.09.2026.** Bis dahin war das Repo ``tmp_path`` selbst, und die Proben
+    schickten Blocks nach ``tmp_path/hinaus`` — also in ein Verzeichnis INNERHALB des
+    Repos, das ein fremdes darstellen sollte. Solange nichts davon abhing, fiel es nicht
+    auf; seit `--nach` ein Ziel im eigenen Repo abweist, ist es der Unterschied zwischen
+    der Lage, die gemeint war, und der, die nachgebaut wurde.
+
+    *Eine Attrappe, die die falsche Gestalt nachbaut, prueft die falsche Sache.* Der
+    Ausgang heisst darum :func:`_hinaus` und liegt neben dem Repo, wie ein fremdes Repo
+    es tut.
+    """
+    repo = tmp_path / "repo"
+    ordner = repo / "auftraege" / "offen"
     ordner.mkdir(parents=True)
     (ordner / f"{satz['auftrag_id']}.json").write_text(
         json.dumps(satz, ensure_ascii=False), encoding="utf-8")
-    return tmp_path
+    return repo
+
+
+def _hinaus(tmp_path):
+    """Das Zielverzeichnis eines FREMDEN Repos — neben unserem, nie darin."""
+    return tmp_path / "fremdes-repo" / "auftraege"
 
 
 def test_nach_wirkt_auch_zusammen_mit_auftrag(tmp_path):
@@ -250,7 +268,7 @@ def test_nach_wirkt_auch_zusammen_mit_auftrag(tmp_path):
     """
     satz = _satz()
     repo = _repo_mit_auftrag(tmp_path, satz)
-    ziel = tmp_path / "hinaus"
+    ziel = _hinaus(tmp_path)
     assert _cli().main(["--repo", str(repo), "--auftrag", satz["auftrag_id"],
                         "--nach", str(ziel)]) == 0
     datei = ziel / f"{satz['auftrag_id']}.md"
@@ -358,7 +376,7 @@ def test_auch_der_einzelweg_haengt_den_zustellbeleg_an(tmp_path):
     """
     satz = _satz(worker="ui")
     repo = _repo_mit_auftrag(tmp_path, satz)
-    ziel = tmp_path / "hinaus"
+    ziel = _hinaus(tmp_path)
     assert _cli().main(["--repo", str(repo), "--auftrag", satz["auftrag_id"],
                         "--nach", str(ziel)]) == 0
     text = (ziel / f"{satz['auftrag_id']}.md").read_text(encoding="utf-8")
@@ -373,7 +391,7 @@ def test_der_einzelweg_haengt_ihn_NICHT_an_wenn_der_adressat_geantwortet_hat(tmp
     auftrag.schreibe_auftrag(frueher, repo)
     auftrag.schreibe_ergebnis(
         auftrag.baue_ergebnis(auftrag_id="auf-20260827-70", status="ok"), repo)
-    ziel = tmp_path / "hinaus"
+    ziel = _hinaus(tmp_path)
     assert _cli().main(["--repo", str(repo), "--auftrag", satz["auftrag_id"],
                         "--nach", str(ziel)]) == 0
     assert "ZUSTELLBELEG" not in (ziel / f"{satz['auftrag_id']}.md").read_text(
@@ -408,7 +426,7 @@ def test_der_postlauf_traegt_die_zustellung_ein_und_die_liste_wird_leer(tmp_path
     """
     satz = _satz(worker="ui")
     repo = _repo_mit_auftrag(tmp_path, satz)
-    assert _cli().main(["ui", "--repo", str(repo), "--nach", str(tmp_path / "hinaus")]) == 0
+    assert _cli().main(["ui", "--repo", str(repo), "--nach", str(_hinaus(tmp_path))]) == 0
     assert auftragspost.unzugestellt(repo) == []
 
 
@@ -418,7 +436,63 @@ def test_auch_der_einzelweg_vermerkt_die_zustellung(tmp_path):
     satz = _satz(worker="cloud")
     repo = _repo_mit_auftrag(tmp_path, satz)
     assert _cli().main(["--repo", str(repo), "--auftrag", satz["auftrag_id"],
-                        "--nach", str(tmp_path / "hinaus")]) == 0
+                        "--nach", str(_hinaus(tmp_path))]) == 0
+    assert auftragspost.unzugestellt(repo) == []
+
+
+def test_ein_ziel_im_eigenen_repo_ist_keine_zustellung(tmp_path):
+    """BEFUND 19.09.2026, und es war derselbe Fehler zum zweiten Mal.
+
+    Am 09.09.2026 wurde `--nach` schon einmal auf ein Verzeichnis im eigenen Repo
+    gerichtet; seither erzaehlt der Kommentar an `--vermerken` davon. Am 19.09. ist es
+    wieder passiert — `--nach auftraege/bloecke` — und hat **acht** Auftraege als
+    zugestellt vermerkt, die nirgendwo hingegangen sind. Darunter den aeltesten offenen
+    Posten des Projekts, 28 Tage alt.
+
+        Ein Kommentar ist kein Waechter.
+
+    `cloud` liest unser Repo nicht. Eine Datei, die hier liegt, hat den Adressaten nicht
+    erreicht — und der Vermerk darauf ist keine halbe Wahrheit, sondern eine falsche:
+    «nicht zugestellt» ist die einzige der vier Lagen, in der eine ausbleibende Antwort
+    UNSER Versaeumnis ist und nicht seins. Sie zuzudecken heisst, den eigenen Rueckstand
+    dem Adressaten anzuhaengen.
+    """
+    satz = _satz(worker="cloud")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+
+    assert _cli().main(["cloud", "--repo", str(repo),
+                        "--nach", str(repo / "auftraege" / "bloecke")]) == 2, \
+        "ein Ziel im eigenen Repo muss abgewiesen werden"
+    assert [e["auftrag_id"] for e in auftragspost.unzugestellt(repo)] == [
+        satz["auftrag_id"]], "und es darf dabei NICHTS vermerkt worden sein"
+    assert not list((repo / "auftraege" / "bloecke").glob("*.md")) \
+        if (repo / "auftraege" / "bloecke").exists() else True, \
+        "abgewiesen heisst auch: keine halbe Ablage hinterlassen"
+
+
+def test_die_repo_wurzel_selbst_ist_ebenso_abgewiesen(tmp_path):
+    """Die Gegenprobe zur Gegenprobe: Auch das Repo-Verzeichnis selbst zaehlt als drinnen.
+
+    Ohne sie bliebe die Probe oben gruen, wenn der Waechter nur Unterverzeichnisse
+    prueft — und `--nach .` waere dann der Weg daran vorbei.
+    """
+    satz = _satz(worker="cloud")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    assert _cli().main(["cloud", "--repo", str(repo), "--nach", str(repo)]) == 2
+
+
+def test_ein_ziel_ausserhalb_geht_weiterhin_durch(tmp_path):
+    """Und die wichtigste Gegenprobe: Ein Waechter, der alles sperrt, bewacht nichts.
+
+    Der eigentliche Weg — ein Pfad in ein FREMDES Repo — muss unveraendert tragen, sonst
+    hat der Waechter das Werkzeug unbenutzbar gemacht statt es zu schaerfen.
+    """
+    satz = _satz(worker="cloud")
+    repo = _repo_mit_auftrag(tmp_path, satz)
+    hinaus = _hinaus(tmp_path)
+
+    assert _cli().main(["cloud", "--repo", str(repo), "--nach", str(hinaus)]) == 0
+    assert (hinaus / f"{satz['auftrag_id']}.md").exists()
     assert auftragspost.unzugestellt(repo) == []
 
 
@@ -439,7 +513,7 @@ def test_local_wird_nicht_vermerkt_denn_local_liest_das_repo_selbst(tmp_path):
     satz = _satz(worker="local")
     repo = _repo_mit_auftrag(tmp_path, satz)
     assert _cli().main(["local", "--repo", str(repo),
-                        "--nach", str(tmp_path / "hinaus")]) == 0
+                        "--nach", str(_hinaus(tmp_path))]) == 0
     assert not (repo / auftragspost.ZUSTELLUNG_DATEI).exists(), (
         "Fuer `local` darf gar kein Vermerk entstehen.")
     assert auftragspost.unzugestellt(repo) == []
