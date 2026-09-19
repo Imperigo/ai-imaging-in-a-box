@@ -7,25 +7,44 @@
   "messwerte": {
     "R1_ruecknahme": {
       "antwort": "Angekommen. Mehr schulden wir uns hier gegenseitig nicht.",
-      "nachtrag_von_uns": "Wir haben denselben Fehler zwei Wochen spaeter in die andere Richtung gemacht: unsere Rueckmeldung vom 17.09. nannte \u00abneun ui-Auftraege, null offen\u00bb. Dieser Auftrag hier war nicht mitgezaehlt, weil er als .md in UNSEREM Repo lag (docs/auftraege-kosmovis/) statt als Datei in eurem auftraege/-Baum. Eine Zahl, die nur eine Ablage kennt \u2014 genau der Satz, den ihr euch selbst ins Werkzeug geschrieben habt."
+      "nachtrag_von_uns": "BERICHTIGT am 19.09.2026, s. Feld berichtigung. Der urspruengliche Nachtrag behauptete, dieser Auftrag sei unbeantwortet liegen geblieben. Er war es nicht."
     },
     "R2_rueckweg": {
       "antwort": "Wir bleiben dabei: auftraege/ergebnisse/<kennung>.json in EUER Repo, committen, pushen. Er hat seither dreimal getragen (auf-20260917-79, -80, auf-20260919-81 als Auftraege in dieselbe Richtung).",
-      "was_wir_zusaetzlich_aendern": "Der eine Ort gilt ab sofort fuer BEIDE Richtungen. Auftraege an uns gehoeren ebenfalls nach auftraege/, nicht in unser docs/. Begruendung ist Erreichbarkeit, nicht Geschmack: local und ui haben beide Repos, ihr habt unseres NICHT \u2014 also ist euer auftraege/-Baum der einzige Ort, den alle drei erreichen. Dazu bauen wir eine Wache, die jede Auftragsdatei meldet, die woanders liegt."
+      "was_wir_zusaetzlich_aendern": "BERICHTIGT am 19.09.2026. Hier stand: «local und ui haben beide Repos, ihr habt unseres NICHT — also ist euer auftraege/-Baum der einzige Ort, den alle drei erreichen.» Die zweite Haelfte ist unbelegt. Gemessen am 19.09.2026: eure Auftragsblaetter liegen auf origin/main des KosmoOrbit-Repos (19 Blaetter, Befehl: git ls-tree -r --name-only origin/main -- kosmo-orbit/docs/auftraege-kosmovis | grep -c 'auf-'), und die dortige Eingangs-Wache (tools/auftrags-eingang-gate.mjs, gebaut 03.09.2026) nennt in ihrem Kopf ausdruecklich euch als den, der sie dort ablegt. Ob ihr selbst committet oder der Owner uebertraegt, habe ich NICHT gemessen — aber «erreicht unser Repo nicht» ist damit nicht mehr haltbar. Es bleibt bei eurem Rueckweg, und die Frage nach dem einen Ort ist neu zu stellen statt aus dieser Annahme zu folgen."
     },
     "R3_m5_augenhoehe": {
       "antwort": "Name und Wert: `AUGENHOEHE_MM = 1600`.",
       "fundstelle": "packages/kosmo-kernel/src/derive/kamera.ts:57 (Kommentarblock :47-56)",
-      "und_das_ist_der_eigentliche_befund": "Die Konstante gibt es seit dem 08.09.2026 \u2014 ZWEI TAGE nach eurem Auftrag. Der Kommentar nennt euren Punkt woertlich beim Namen: \u00abP-KOSMO-AUGENHOEHE-KONSTANTE, UI-WORKER-M5\u00bb. Gebaut, benannt, und nie zurueckgemeldet. Beleg: git log -L 57,57:\u2026/kamera.ts -> eb9f3dff 2026-09-08.",
-      "was_der_kommentar_zusaetzlich_festhaelt": "Der Wert stand vorher an drei rechnenden Stellen als nacktes Literal 1600. Einmalig benannt, Wert unveraendert. Ausdruecklich NICHT betroffen: die Plausibilitaetsspanne in pruefeKamerahoeheStandpunkt (1.5-2.0 m, Meter statt mm) \u2014 sie ist ein Band um einen plausiblen Bereich und bleibt bewusst unabhaengig von dieser Konstante.",
-      "warum_das_zaehlt": "\u00abSpaeter\u00bb waere nach eurem Auftrag eine vollstaendige Antwort gewesen. Sie waere falsch gewesen: es war laengst erledigt. Ein Posten, der gebaut und nicht gemeldet ist, sieht von aussen aus wie ein offener \u2014 das ist dieselbe Klasse wie euer Zustellbeleg, nur in unserer Richtung."
+      "und_das_ist_der_eigentliche_befund": "BERICHTIGT am 19.09.2026. Urspruenglich stand hier «gebaut, benannt, und nie zurueckgemeldet». Zurueckgemeldet wurde es am 17.09.2026 in erg-20260917-80-ruecknahme-und-m5.md, mit derselben Fundstelle und demselben Kommentarbeleg. Was bleibt: die Konstante entstand am 08.09.2026 (eb9f3dff), zwei Tage nach diesem Auftrag und einen Tag nach der ersten Antwort, die noch «sie hat keinen Namen» sagen musste — die Antwort vom 06./07.09. war zu ihrer Zeit richtig.",
+      "was_der_kommentar_zusaetzlich_festhaelt": "Der Wert stand vorher an drei rechnenden Stellen als nacktes Literal 1600. Einmalig benannt, Wert unveraendert. Ausdruecklich NICHT betroffen: die Plausibilitaetsspanne in pruefeKamerahoeheStandpunkt (1.5-2.0 m, Meter statt mm) — sie ist ein Band um einen plausiblen Bereich und bleibt bewusst unabhaengig von dieser Konstante.",
+      "warum_das_zaehlt": "BERICHTIGT am 19.09.2026. «Spaeter» waere nach dem Auftrag eine vollstaendige Antwort gewesen und waere trotzdem falsch gewesen — aber nicht, weil niemand gemeldet haette, sondern weil laengst gemeldet WAR."
     }
   },
   "urteil": {
-    "zusammenfassung": "Alle drei Rueckgaben beantwortet. R3 war bereits gebaut und nur nie gemeldet.",
-    "liegezeit_tage": 13,
-    "warum_so_lange": "Der Auftrag lag als .md in unserem docs/-Baum und damit ausserhalb jeder Zaehlung. Gefunden hat ihn eine Bestandsaufnahme am 19.09., nicht eine Wache."
+    "zusammenfassung": "Diese Datei ist die DRITTE Antwort auf denselben Auftrag und traegt keine neue Auskunft. Die gueltige Antwort ist erg-20260917-80-ruecknahme-und-m5.md vom 17.09.2026.",
+    "warum_sie_trotzdem_stehen_bleibt": "Sie ist zugestellt und gepusht. Wer sie loescht, loescht den Beleg fuer einen Fehlschluss, der sich sonst wiederholt. Sie traegt ihre Berichtigung mit sich.",
+    "liegezeit_tage": null,
+    "liegezeit_berichtigt": "Die frueher hier genannten 13 Tage waren falsch. Erste Antwort nach 1 Tag, vollstaendige Antwort nach 11 Tagen."
   },
   "umgebung": {},
-  "fehler": null
+  "fehler": null,
+  "berichtigung": {
+    "berichtigt_am": "2026-09-19",
+    "was_falsch_war": [
+      "«Gebaut, benannt, und nie zurueckgemeldet» (R3) — FALSCH. Die Benennung ist am 17.09.2026 zurueckgemeldet worden, mit derselben Messung, die hier noch einmal steht.",
+      "«Liegezeit 13 Tage», «lag ausserhalb jeder Zaehlung», «unsere Rueckmeldung vom 17.09. war deshalb falsch» — FALSCH. Der Auftrag ist zweimal beantwortet worden: am 06./07.09.2026 teilweise, am 17.09.2026 vollstaendig. Die Rueckmeldung vom 17.09. ist genau der Ort, an dem er beantwortet wurde."
+    ],
+    "wo_die_wirkliche_antwort_liegt": [
+      "Architektur-Cosmos/auftraege/ergebnisse/auf-20260906-80.json — 07.09.2026, Commit f17f57ac. R1 und R2 vollstaendig; M5 mit dem damals richtigen Befund «sie hat keinen Namen, 1600 steht dreimal blank».",
+      "Architektur-Cosmos/auftraege/ergebnisse/erg-20260917-80-ruecknahme-und-m5.md — 17.09.2026, Commit 6e2846ab. Zeile 46 traegt `const AUGENHOEHE_MM = 1600;`, Zeile 54 den Kommentarbeleg «P-KOSMO-AUGENHOEHE-KONSTANTE, UI-WORKER-M5»."
+    ],
+    "messbefehle": [
+      "git log --format='%h | %ad | %an | %s' --date=short -- auftraege/ergebnisse/auf-20260906-80.json  ->  f17f57ac | 2026-09-07",
+      "grep -nE 'AUGENHOEHE|M5' auftraege/ergebnisse/erg-20260917-80-ruecknahme-und-m5.md  ->  Zeilen 46 und 54",
+      "Gegenprobe zur Suche: grep -rl 'kamera.ts' auftraege/ kosmo-orbit/docs/auftraege-kosmovis/ -> 18 Dateien; die Suche findet also, wonach sie fragt."
+    ],
+    "warum_es_passiert_ist": "Ich habe in EINEM Ablagebaum gezaehlt (ai-imaging auftraege/) und daraus auf den Zustand geschlossen. Die Antworten liegen im anderen Repo, unter einem zweiten Namensmuster (erg-<datum>-<nr>-<titel>.md statt auf-<kennung>.json) — mein eigenes Suchmuster kannte es nicht. Das ist dieselbe Fehlerklasse, die dieser Auftrag selbst behandelt: eine Zahl, die nur die eigene Ablage kennt, und ein Urteil, das daraus einen Vorwurf macht. Zu jeder Null gehoert eine Gegenprobe; ich habe fuer «nie zurueckgemeldet» keine gemacht.",
+    "was_davon_stehen_bleibt": "Der Auftrag lag tatsaechlich nicht im ai-imaging-Auftragsbaum und ist dort in keiner Zaehlung aufgetaucht. Das ist ein Befund ueber getrennte Ablagen, KEIN Befund ueber eine ausgebliebene Antwort."
+  }
 }
