@@ -115,6 +115,58 @@ sei von allen dreien erreichbar. Gemessen liegen 19 Blaetter des Gegenuebers auf
 nicht mehr haltbar. **Welcher Ort der eine sein soll, ist wieder offen** — und es ist
 eine Owner-Frage, weil sie beide Seiten bindet.
 
-**Was jetzt zaehlt:** der Rueckstand ist **21**, nicht 32 und nicht 28, und er ist
-**vollstaendig `local`**. Fuer `cloud` ist er **null** — mit Gegenprobe: die sieben
-tragen drueben je eine Ergebnisdatei mit uebereinstimmendem Feld `auftrag`.
+**Was jetzt zaehlt:** fuer `cloud` ist der Rueckstand **null** — mit Gegenprobe: die
+sieben tragen drueben je eine Ergebnisdatei mit uebereinstimmendem Feld `auftrag`.
+
+---
+
+## 5 · Die zwei Zahlen 32 und 28, und warum beide stimmen
+
+`tools/einbau.py` meldet **32 ohne Antwort**, meine Zaehlung **28 offen**. Das ist kein
+Widerspruch, und der Unterschied ist nachgerechnet statt erklaert:
+
+```
+beantwortet                      45
+offen                            28
+zurueckgezogen                    8
+weitergereicht                    2
+gerechnet, nicht beantwortet      2
+   -> UNBEANTWORTET = offen + gerechnet + weitergereicht = 28 + 2 + 2 = 32
+```
+
+*Das Werkzeug zaehlt, was unbeantwortet IST; ich hatte gezaehlt, was noch niemand
+angefasst hat.* Beide Fragen sind sinnvoll, und wer die Zahlen nebeneinander stellt,
+muss dazusagen, welche er meint.
+
+**Der Rueckstand nach Abzug der sieben drueben beantworteten: 25.** Davon 21 schlicht
+offen (alle `local`), 2 weitergereicht, 2 mit einem Status, den der Vertrag nicht kennt.
+
+---
+
+## 6 · Die zwei unbekannten Status — nicht gebaut, und das ist der Entscheid
+
+Plan §3b sah vor: «Entweder der Vertrag lernt sie, oder die Dateien werden berichtigt.»
+**Beides unterbleibt, und zwar aus einem Grund, der aelter ist als der Plan.**
+
+Gelesen, was gemeint war:
+
+* `auf-20260823-36`, Status `teilweise` — traegt selbst die Liste
+  `offen_aus_diesem_auftrag` mit drei Punkten. Er ist wirklich nicht beantwortet. Der
+  heutige Zustand «gerechnet, nicht beantwortet» ist richtig; es gibt nichts zu
+  reparieren.
+* `auf-20260826-47`, Status `erledigt`, gerechnet von der HomeStation — M1, M2 und M3
+  sind beantwortet. Hier meint `erledigt` wirklich `ok`.
+
+**Warum der Vertrag das Wort trotzdem nicht lernt:** Es gibt dazu einen Owner-Entscheid
+vom 02.09.2026, und er steht als Prueffall im Code
+(`tests/test_auftrag.py`, Abschnitt «Ein unbekannter Status ist keine Antwort»). Zwei
+Tests halten ausdruecklich fest, dass `baue_ergebnis` die Woerter `teilweise` und
+`erledigt` **zurueckweist**, und die Begruendung dort lautet: *«Im Zweifel offen, nie im
+Zweifel erledigt — ein zu Unrecht offener Auftrag kostet eine Rueckfrage, ein zu Unrecht
+geschlossener eine Antwort, die nie kommt.»* Ein Synonym einzubauen hiesse, diesen
+Entscheid still aufzuheben.
+
+**Und die Datei berichtigen heisst, die Aussage eines anderen aendern.** Beide stammen
+nicht von mir. Die richtige Stelle ist der Absender: `auf-20260826-47` kommt von der
+HomeStation, und die Bitte, ihr Ergebnis auf `ok` zu stellen, geht als Punkt in den
+Sammelauftrag (Paket 0d) — nicht als stiller Eingriff in ihre Datei.
