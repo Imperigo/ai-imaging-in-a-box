@@ -1,36 +1,36 @@
 {
- "schema": "aiimaging.homeworker-auftrag/v1",
- "auftrag_id": "auf-20260917-80",
- "art": "qa",
- "worker": "local",
- "rang": 3,
- "erstellt": "2026-09-17T17:30:00Z",
- "beschreibung": "DREI NEUE ANZEIGEZEILEN DER VIS-STATION SIND NUR GEGEN SELBSTGESETZTE VERTRAGSDATEN GEPRUEFT. Ob ein echter Renderlauf Schwelle, Nullprobe und Geometrie-Status ueberhaupt liefert, ist ungemessen.",
- "params": {},
- "geometrie": {
-  "synthetisch": true,
-  "pfad": null,
-  "erzeugen_mit": null,
-  "hinweis": "Synthetische Szene genuegt. Gemessen wird die FORM des QA-Blocks, nicht die Guete des Bildes."
- },
- "anweisung": "=== WARUM DIESER AUFTRAG KOMMT ===\n\nDer Kurations-Inspektor der Vis-Station zeigt seit dem 16.09.2026 drei neue Zeilen:\nden Geometrie-Status, die Schwelle, gegen die er urteilt, und den Anker der Nullprobe.\nSie sollen verhindern, dass eine Zahl ohne ihren Vorbehalt gelesen wird \u2014 genau der\nFehler, den der KosmoVis-Worker am 22.08.2026 selbst gemeldet hat, als er seine\neigenen Messwerte widerlegte (ein leeres Grundstueck bekam die bessere Note als das\nperfekte Bild).\n\n**Alle drei Zeilen sind bisher nur gegen Vertragsdaten geprueft, die ich selbst\ngesetzt habe.** Ob ein echter Renderlauf diese Felder ueberhaupt liefert, weiss im\nEntwicklungscontainer niemand \u2014 dort gibt es weder GPU noch echte Gewichte. Damit ist\ndas keine offene Frage, sondern ein unverschickter Auftrag.\n\n**Was hier NICHT drinsteht, weil es schon laeuft:** die Werkbank-Seite derselben Frage\n(Quelle, Art, Konfidenz bei den KosmoPrepare-Werkzeugen) steht in `auf-20260917-79`,\nM2. Bitte nicht doppelt messen.\n\n=== WAS ZU TUN IST, IN DIESER REIHENFOLGE ===\n\n1. EINEN echten Renderlauf mit QA fahren \u2014 so, wie er bei euch normal laeuft. Eine\n   synthetische Szene genuegt; es geht um die FORM der Antwort, nicht um ihre Guete.\n\n2. Aus dem QA-Block der Antwort die Namen der Felder festhalten, die wirklich\n   ankommen. Nur Namen und ja/nein, keine Projektinhalte. Gefragt sind diese, weil\n   unsere Anzeige an ihnen haengt:\n\n     geometry.threshold          (unsere Zeile \u00abSchwelle\u00bb)\n     geometry.rho_maske          (der Wert, gegen den die Schwelle urteilt)\n     geometry.nullprobe.rho_maske (unsere Zeile \u00abNullprobe\u00bb)\n     geometry.geom_iou\n     geometry.geometry_fidelity\n     geometry.spearman\n     geometry.kantenanteil\n     geometry.paarurteil\n\n   Je Feld genau eine von vier Antworten:\n     \u00abkommt mit Wert\u00bb \u00b7 \u00abkommt als null\u00bb \u00b7 \u00abkommt gar nicht\u00bb \u00b7 \u00abheisst anders: <Name>\u00bb\n\n   Der vierte Fall ist der wichtige. Am 22.08.2026 hatten wir `kantenanteil` zu\n   `kante` abgekuerzt, und gemessen an eurem woertlichen Vertrag haette das den\n   GANZEN Renderbefund verworfen. Ein Name, der anders lautet, ist deshalb kein\n   Schoenheitsfehler.\n\n3. Den Unterschied zwischen \u00abnull\u00bb und \u00abfehlt\u00bb ausdruecklich beantworten. Bei uns\n   heisst `nullprobe.rho_maske = null` NICHT \u00abWert 0\u00bb, sondern \u00abnicht gemessen\u00bb, und\n   die Anzeige sagt das auch so. Wenn euer Server in denselben Fall etwas anderes\n   hineinlegt, muessen wir das wissen, bevor ein Nutzer es liest.\n\n4. Einen Lauf fahren, bei dem die Geometrieprobe NICHT gemessen werden kann (leere\n   Szene oder abgeschaltete Geometrie-QA, was bei euch dafuer vorgesehen ist), und\n   dieselben acht Felder noch einmal festhalten. Was in diesem Fall ankommt, ist der\n   Zustand, in dem unsere neuen Zeilen am meisten Schaden anrichten koennen.\n\n5. Einen Satz dazu, ob der QA-Block je Kamera oder je Lauf kommt. Unsere Anzeige\n   nimmt heute an: je Lauf.\n\n=== WAS AUSDRUECKLICH NICHT GETAN WERDEN SOLL ===\n\n* **Nichts an eurem Vertrag aendern, nur damit es zu unserer Anzeige passt.** Wenn\n  eure Form eine andere ist, ist eure Form richtig und unsere Anzeige falsch. Wir\n  ziehen nach, nicht ihr.\n* **Keine echten Projektdaten, keine Kundenszenen, keine Bilder zurueck.**\n* **Keine absoluten Pfade mit Benutzernamen** in der Rueckgabe.\n* **Keine Werte, nur Formen.** Wir brauchen Feldnamen und ja/nein, nicht eure Zahlen.\n* **Nicht vermuten.** \u00abKommt gar nicht\u00bb ist eine verwertbare Antwort; \u00absollte\n  eigentlich\u00bb ist keine.\n* **Die Werkbank-Felder nicht noch einmal messen** \u2014 s. oben, `auf-20260917-79` M2.\n\n=== WARUM ES SICH LOHNT, AUCH WENN ALLES PASST ===\n\nPasst es, dann steht zum ersten Mal fest, dass die drei neuen Zeilen bei echten Daten\ngefuellt sind statt nur bei meinen. Passt es nicht, dann zeigt die Vis-Station seit\ndem 16.09. drei Zeilen, die im Betrieb leer bleiben \u2014 und das waere der wertvollere\nBefund von beiden.\n",
- "auflagen": {
-  "leistungsgrenze_w": 400,
-  "nur_bei_leerlauf": false,
-  "leerlauf_schwelle_w": 120,
-  "leerlauf_schwelle_mem_gb": 8,
-  "hinweise": [
-   "Ein Renderlauf braucht die GPU \u2014 bitte nach den ueblichen Auflagen einplanen.",
-   "Regel 3: keine echten Projektdaten, keine Benutzerpfade, keine Bilder zurueck.",
-   "Nur Feldnamen und ja/nein zurueckgeben, keine Messwerte.",
-   "Die Werkbank-Felder stehen in auf-20260917-79 M2 \u2014 nicht doppelt messen."
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260917-80",
+  "art": "qa",
+  "worker": "local",
+  "rang": 7,
+  "erstellt": "2026-09-17T17:30:00Z",
+  "beschreibung": "DREI NEUE ANZEIGEZEILEN DER VIS-STATION SIND NUR GEGEN SELBSTGESETZTE VERTRAGSDATEN GEPRUEFT. Ob ein echter Renderlauf Schwelle, Nullprobe und Geometrie-Status ueberhaupt liefert, ist ungemessen.",
+  "params": {},
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Synthetische Szene genuegt. Gemessen wird die FORM des QA-Blocks, nicht die Guete des Bildes."
+  },
+  "anweisung": "=== WARUM DIESER AUFTRAG KOMMT ===\n\nDer Kurations-Inspektor der Vis-Station zeigt seit dem 16.09.2026 drei neue Zeilen:\nden Geometrie-Status, die Schwelle, gegen die er urteilt, und den Anker der Nullprobe.\nSie sollen verhindern, dass eine Zahl ohne ihren Vorbehalt gelesen wird — genau der\nFehler, den der KosmoVis-Worker am 22.08.2026 selbst gemeldet hat, als er seine\neigenen Messwerte widerlegte (ein leeres Grundstueck bekam die bessere Note als das\nperfekte Bild).\n\n**Alle drei Zeilen sind bisher nur gegen Vertragsdaten geprueft, die ich selbst\ngesetzt habe.** Ob ein echter Renderlauf diese Felder ueberhaupt liefert, weiss im\nEntwicklungscontainer niemand — dort gibt es weder GPU noch echte Gewichte. Damit ist\ndas keine offene Frage, sondern ein unverschickter Auftrag.\n\n**Was hier NICHT drinsteht, weil es schon laeuft:** die Werkbank-Seite derselben Frage\n(Quelle, Art, Konfidenz bei den KosmoPrepare-Werkzeugen) steht in `auf-20260917-79`,\nM2. Bitte nicht doppelt messen.\n\n=== WAS ZU TUN IST, IN DIESER REIHENFOLGE ===\n\n1. EINEN echten Renderlauf mit QA fahren — so, wie er bei euch normal laeuft. Eine\n   synthetische Szene genuegt; es geht um die FORM der Antwort, nicht um ihre Guete.\n\n2. Aus dem QA-Block der Antwort die Namen der Felder festhalten, die wirklich\n   ankommen. Nur Namen und ja/nein, keine Projektinhalte. Gefragt sind diese, weil\n   unsere Anzeige an ihnen haengt:\n\n     geometry.threshold          (unsere Zeile «Schwelle»)\n     geometry.rho_maske          (der Wert, gegen den die Schwelle urteilt)\n     geometry.nullprobe.rho_maske (unsere Zeile «Nullprobe»)\n     geometry.geom_iou\n     geometry.geometry_fidelity\n     geometry.spearman\n     geometry.kantenanteil\n     geometry.paarurteil\n\n   Je Feld genau eine von vier Antworten:\n     «kommt mit Wert» · «kommt als null» · «kommt gar nicht» · «heisst anders: <Name>»\n\n   Der vierte Fall ist der wichtige. Am 22.08.2026 hatten wir `kantenanteil` zu\n   `kante` abgekuerzt, und gemessen an eurem woertlichen Vertrag haette das den\n   GANZEN Renderbefund verworfen. Ein Name, der anders lautet, ist deshalb kein\n   Schoenheitsfehler.\n\n3. Den Unterschied zwischen «null» und «fehlt» ausdruecklich beantworten. Bei uns\n   heisst `nullprobe.rho_maske = null` NICHT «Wert 0», sondern «nicht gemessen», und\n   die Anzeige sagt das auch so. Wenn euer Server in denselben Fall etwas anderes\n   hineinlegt, muessen wir das wissen, bevor ein Nutzer es liest.\n\n4. Einen Lauf fahren, bei dem die Geometrieprobe NICHT gemessen werden kann (leere\n   Szene oder abgeschaltete Geometrie-QA, was bei euch dafuer vorgesehen ist), und\n   dieselben acht Felder noch einmal festhalten. Was in diesem Fall ankommt, ist der\n   Zustand, in dem unsere neuen Zeilen am meisten Schaden anrichten koennen.\n\n5. Einen Satz dazu, ob der QA-Block je Kamera oder je Lauf kommt. Unsere Anzeige\n   nimmt heute an: je Lauf.\n\n=== WAS AUSDRUECKLICH NICHT GETAN WERDEN SOLL ===\n\n* **Nichts an eurem Vertrag aendern, nur damit es zu unserer Anzeige passt.** Wenn\n  eure Form eine andere ist, ist eure Form richtig und unsere Anzeige falsch. Wir\n  ziehen nach, nicht ihr.\n* **Keine echten Projektdaten, keine Kundenszenen, keine Bilder zurueck.**\n* **Keine absoluten Pfade mit Benutzernamen** in der Rueckgabe.\n* **Keine Werte, nur Formen.** Wir brauchen Feldnamen und ja/nein, nicht eure Zahlen.\n* **Nicht vermuten.** «Kommt gar nicht» ist eine verwertbare Antwort; «sollte\n  eigentlich» ist keine.\n* **Die Werkbank-Felder nicht noch einmal messen** — s. oben, `auf-20260917-79` M2.\n\n=== WARUM ES SICH LOHNT, AUCH WENN ALLES PASST ===\n\nPasst es, dann steht zum ersten Mal fest, dass die drei neuen Zeilen bei echten Daten\ngefuellt sind statt nur bei meinen. Passt es nicht, dann zeigt die Vis-Station seit\ndem 16.09. drei Zeilen, die im Betrieb leer bleiben — und das waere der wertvollere\nBefund von beiden.\n",
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweise": [
+      "Ein Renderlauf braucht die GPU — bitte nach den ueblichen Auflagen einplanen.",
+      "Regel 3: keine echten Projektdaten, keine Benutzerpfade, keine Bilder zurueck.",
+      "Nur Feldnamen und ja/nein zurueckgeben, keine Messwerte.",
+      "Die Werkbank-Felder stehen in auf-20260917-79 M2 — nicht doppelt messen."
+    ]
+  },
+  "rueckgabe": [
+    "M1 Je der acht genannten Felder genau eine von vier Antworten: kommt mit Wert / kommt als null / kommt gar nicht / heisst anders (mit Name).",
+    "M2 Was bedeutet bei euch null gegenueber fehlend — ein Satz, verbindlich.",
+    "M3 Derselbe Satz Felder aus einem Lauf, in dem die Geometrieprobe NICHT gemessen werden konnte.",
+    "M4 Kommt der QA-Block je Kamera oder je Lauf?",
+    "M5 Was ihr NICHT geprueft habt — eigener Punkt, auch wenn er leer waere."
   ]
- },
- "rueckgabe": [
-  "M1 Je der acht genannten Felder genau eine von vier Antworten: kommt mit Wert / kommt als null / kommt gar nicht / heisst anders (mit Name).",
-  "M2 Was bedeutet bei euch null gegenueber fehlend \u2014 ein Satz, verbindlich.",
-  "M3 Derselbe Satz Felder aus einem Lauf, in dem die Geometrieprobe NICHT gemessen werden konnte.",
-  "M4 Kommt der QA-Block je Kamera oder je Lauf?",
-  "M5 Was ihr NICHT geprueft habt \u2014 eigener Punkt, auch wenn er leer waere."
- ]
 }
