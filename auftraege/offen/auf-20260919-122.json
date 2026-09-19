@@ -1,0 +1,38 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260919-122",
+  "art": "qa",
+  "worker": "local",
+  "rang": 19,
+  "erstellt": "2026-09-19T23:00:00Z",
+  "params": {},
+  "beschreibung": "R3 unter einem ECHTEN Schaetzer — die Messung, die Kapitel 6 traegt. Dieselben zwoelf Laeufe aus auf-20260909-92, beide Tore ein zweites Mal gerechnet: gegen eine GESCHAETZTE Tiefenkarte statt gegen die Soll-Karte. Kern ist die Gegenprobe — bleibt die Luecke von +0,149? Owner-Freigabe 19.09.2026, die Selbstbindung von acht Auftraegen ausdruecklich fuer DIESE Messung zu durchbrechen.",
+  "anweisung": "=== R3 UNTER EINEM ECHTEN SCHAETZER — DIE MESSUNG, DIE KAPITEL 6 TRAEGT ===\n\nWARUM DIESER AUFTRAG TROTZ DER SELBSTBINDUNG KOMMT\n\nBei euch liegen 18 offene Auftraege, unsere Selbstbindung liegt bei acht. Der\nOwner hat am 19.09.2026 ausdruecklich freigegeben, sie fuer DIESE eine Messung\nzu durchbrechen. Es ist kein Versehen und keine Schludrigkeit — es ist eine\nAusnahme mit Namen und Datum. Wenn ihr priorisieren muesst: DIESER hier vor\nallen anderen ausser auf-20260918-114 (R2).\n\n\nWAS BEWIESEN IST, UND WAS GENAU NICHT\n\nAm 18.09.2026 ist der alte Riegel gefallen und ein neuer gebaut worden.\n\n  DER ALTE RIEGEL (ein zusammengesetzter Wert >= 0,65):\n    echte Bilder                                   12 von 12 bestanden\n    echte Bilder gegen die Tiefenkarte eines\n      FREMDEN Gebaeudes                            12 von 12 bestanden  <-- er misst\n    Muellbilder                                    11 von 12 bestanden      die Geometrie\n                                                                            gar nicht\n\n  DIE ZWEI TORE (Rangkorrelation UND Flaechenueberschneidung, beide muessen):\n    echte Bilder                                   12 von 12\n    Muellbilder                                     0 von 12\n    Trennung gegen die fremde Geometrie            12 von 12\n\n  Die Luecke, auf der das zweite Tor steht:\n    gegen die richtige Karte   0,9257 ... 0,9784\n    gegen die falsche Karte    0,7350 ... 0,7766\n    Abstand +0,149             Schwelle 0,85 (gesetzt, nicht kalibriert)\n\nUND JETZT DER HAKEN, UM DEN ES IN DIESEM AUFTRAG GEHT:\n\nAlle diese Zahlen sind gegen SOLL-Karten gerechnet — gegen die Tiefenkarte,\ndie das Modell selbst geliefert hat. Im Betrieb steht dort aber eine\nGESCHAETZTE Karte, die eine zweite KI aus dem erzeugten Bild ableitet. Deren\nRauschen steckt in keiner dieser Zahlen.\n\nNach unserer Hausregel duerfen solche Messungen AUSSCHLIESSEN, aber nichts\nZUSAGEN. Gezeigt ist also: der alte Riegel ist widerlegt. NICHT gezeigt: dass\nder neue unter Schaetzerrauschen traegt.\n\nEine erste Teilmessung liegt vor (euer auf-20260907-81) und sie ist\nunangenehm: Auf FRONTALEN Ansichten ueberlappen unter Schaetzerrauschen die\nWerte guter und schlechter Faelle fast vollstaendig. Diagonale Ansichten\ntrennen weiter. Auch diese Messung stammt aus GERENDERTEN Bildern, nicht aus\nERZEUGTEN — und beantwortet die Frage darum nicht.\n\n\nWAS ZU TUN IST\n\n  SCHRITT 1 · DIESELBEN ZWOELF LAEUFE, ABER MIT SCHAETZER\n\n  Nehmt die zwoelf Laeufe aus auf-20260909-92 — dieselben zwei Szenen\n  (Schachtel und fuenfgeschossiger Bau), dieselben Seeds, dieselben\n  ControlNet-Staerken. Nichts neu wuerfeln.\n\n  Rechnet beide Tore ein zweites Mal, diesmal gegen eine GESCHAETZTE\n  Tiefenkarte aus dem erzeugten Bild statt gegen die Soll-Karte. Welcher\n  Schaetzer: der, den ihr in auf-20260907-81 benutzt habt. Nennt ihn mit\n  Kennung und Lizenz.\n\n  Gebt je Lauf BEIDE Zahlenpaare zurueck, nebeneinander:\n      rho_maske(soll)   geom_iou(soll)   rho_maske(schaetz)   geom_iou(schaetz)\n\n\n  SCHRITT 2 · DIE GEGENPROBE, UNTER DENSELBEN BEDINGUNGEN\n\n  Das ist der Kern, nicht die Kuer. Rechnet jedes der zwoelf Bilder ein\n  zweites Mal gegen die Geometrie der JEWEILS ANDEREN Szene — genau so, wie\n  es gegen die Soll-Karten schon gemacht wurde.\n\n  Die Frage lautet: BLEIBT DIE LUECKE? Gegen Soll-Karten betraegt sie +0,149.\n  Unter dem Schaetzer kann sie schrumpfen, verschwinden oder das Vorzeichen\n  wechseln. Jedes dieser drei Ergebnisse ist eine vollstaendige Antwort.\n\n\n  SCHRITT 3 · DIE MUELLBILDER, EBENFALLS UNTER DEM SCHAETZER\n\n  Dieselben zwoelf Muellbilder wie im Datensatz. Unter Soll-Karten bestehen\n  sie 0 von 12. Wenn sie unter dem Schaetzer bestehen, ist das Tor wertlos —\n  und das ist eine wichtigere Auskunft als jede bestandene Messung.\n\n\n  SCHRITT 4 · FRONTAL GEGEN DIAGONAL, GETRENNT AUSGEWIESEN\n\n  auf-20260907-81 sagt, dass frontale Ansichten unter Rauschen nicht mehr\n  trennen. Weist die zwoelf Laeufe darum nach Blickrichtung getrennt aus.\n  Wenn das Ergebnis lautet «diagonal traegt, frontal nicht», ist das ein\n  brauchbares Ergebnis — wir bauen dann eine Einschraenkung und behaupten\n  nichts Falsches.\n\n\nWAS NICHT ZU TUN IST\n\n  - KEINE neuen Seeds, keine neuen Szenen, keine neuen Prompts. Ein zweiter\n    Datensatz beantwortet eine andere Frage.\n  - KEINE Schwelle nachjustieren, damit es passt. Wenn 0,85 unter dem\n    Schaetzer nicht traegt, ist das der Befund — nicht der Anlass fuer eine\n    neue Zahl.\n  - KEINE Non-Commercial-Gewichte, auch nicht zum Vergleich.\n  - Der Schaetzer muss permissiv lizenziert sein. Ist er es nicht, sagt das\n    und rechnet NICHT.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade in der\n    Rueckgabe.\n\n\nWAS DAVON ABHAENGT, DAMIT IHR DEN EINSATZ KENNT\n\nKapitel 6 der Vertiefungsarbeit ist geschrieben und steht mit dem Satz da,\ndass seine tragende Messung fehlt. Kommt eure Antwort, wird aus «wir duerfen\nnur ausschliessen» entweder ein belegtes Verfahren oder ein belegter\nMisserfolg. Beides ist ein Ergebnis. Was wir nicht brauchen koennen, ist\nkeine Antwort — dann bleibt im Text ein Vorbehalt stehen, den niemand\naufloesen kann.\n\n«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort.",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python tools/make_test_ifc.py --gelaende  bzw.  --hochbau",
+    "hinweis": "Dieselben zwei Szenen wie in auf-20260909-92 und dieselben Seeds. Ein zweiter Datensatz beantwortet eine andere Frage."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 60,
+    "leerlauf_schwelle_mem_gb": 2,
+    "hinweise": [
+      "KEINE Non-Commercial-Gewichte laden — auch nicht zum Vergleich.",
+      "Der Tiefenschaetzer muss permissiv lizenziert sein (MIT, BSD, Apache-2.0, MPL-2.0). Ist er es nicht: sagen und NICHT rechnen.",
+      "Keine Schwelle nachjustieren, damit ein Ergebnis passt.",
+      "«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Je Lauf vier Zahlen nebeneinander: rho_maske(soll), geom_iou(soll), rho_maske(schaetz), geom_iou(schaetz).",
+    "V2 Kennung und Lizenz des benutzten Tiefenschaetzers.",
+    "V3 Die Gegenprobe unter dem Schaetzer: jedes Bild gegen die Geometrie der ANDEREN Szene. Bleibt die Luecke von +0,149, schrumpft sie, oder kehrt sie sich um?",
+    "V4 Die zwoelf Muellbilder unter dem Schaetzer: wie viele bestehen beide Tore?",
+    "V5 Dieselben Zahlen nach Blickrichtung getrennt — frontal gegen diagonal.",
+    "V6 Eine Zeile Urteil: Traegt das Zwei-Tore-Verfahren unter Schaetzerrauschen, traegt es nur diagonal, oder traegt es nicht?"
+  ]
+}

@@ -5820,6 +5820,19 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Die Selbstbindung durchbrochen — mit Freigabe, Datum und Namen.**
+      Owner-Freigabe 19.09.2026 auf die ausdrueckliche Frage: *«Ja kannst durchbrechen.»*
+      Bei `local` liegen damit **19** offene Auftraege bei einem Deckel von acht.
+      Abgelegt ist `auf-20260919-122`: **R3 unter einem ECHTEN Schaetzer** — dieselben
+      zwoelf Laeufe aus `auf-20260909-92`, beide Tore ein zweites Mal gerechnet, diesmal
+      gegen eine **geschaetzte** Tiefenkarte statt gegen die Soll-Karte.
+      **Der Kern ist die Gegenprobe:** Gegen Soll-Karten betraegt die Luecke **+0,149**.
+      Unter dem Schaetzer kann sie schrumpfen, verschwinden oder das Vorzeichen wechseln —
+      *jedes der drei ist eine vollstaendige Antwort.*
+      **Warum das die Ausnahme wert war:** Kapitel 6 steht geschrieben da mit dem Satz,
+      dass seine tragende Messung fehlt. Ohne diese Antwort bleibt dort ein Vorbehalt
+      stehen, den niemand aufloesen kann.
+      *Eine Ausnahme mit Namen und Datum ist keine Schludrigkeit. Eine ohne waere eine.*
 - [x] **Kapitel 8 geschrieben: «Der Einbau» — und die zweite Zahl steht neben der ersten.**
       Alle Zahlen **erzeugt**, nicht zitiert (`tools/einbau.py --json`, 19.09.2026):
       **7 von 35** Posten nicht in der Software (09.09.: 22 von 34), aber **29** Auftraege
