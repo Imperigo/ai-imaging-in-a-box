@@ -18,6 +18,7 @@ behauptet, was es trägt und was ihm fehlt.
 |---|---|
 | `kapitel-03-die-randbedingungen.md` | **Entwurf, 19.09.2026.** Alle Zahlen darin sind **erzeugt, nicht zitiert** — aus `tools/beweis/19_regeln_ausfuehrbar.py`, gefahren für dieses Kapitel. |
 | `kapitel-05-die-kamera.md` | **Entwurf, 19.09.2026.** Alle Zahlen für das Kapitel **gerechnet**, nicht zitiert — und eine Vorarbeit dabei berichtigt: «unter 2 mm» misst sich über die weitere Spanne als **2,01 mm**. |
+| `kapitel-04-die-kette.md` | **Entwurf, 19.09.2026.** Alle Zeitangaben für das Kapitel **gemessen** (Beweis 05 und 23, beide gefahren). **Der Kapitelname der Gliederung ist überholt:** Dort heisst es «vier Knoten» — seit dem 19.09.2026 sind es sechs. |
 | `kapitel-08-der-einbau.md` | **Entwurf, 19.09.2026.** Alle Zahlen **erzeugt**, nicht zitiert — `python tools/einbau.py --json`, gefahren für das Kapitel. **Zwei Angaben der Vorarbeit berichtigt:** Der Satz «seit acht Tagen hat keiner der drei Worker geantwortet» stimmt nicht mehr (einer hat), und für die beiden anderen sind daraus elf Tage geworden. |
 | `kapitel-06-das-messen.md` | **Entwurf, 19.09.2026.** Das tragende Kapitel. Alle Zahlen am 19.09.2026 **neu gerechnet**. Die Strukturnotiz dazu ist überholt — ihre Kernbehauptung (ein zusammengesetzter Wert) wurde am 18.09.2026 widerlegt; das Kapitel ist um das neue Ergebnis herum geschrieben. |
 | `kapitel-07-die-methode.md` | **Entwurf, 19.09.2026.** Erstes geschriebenes Kapitel. |

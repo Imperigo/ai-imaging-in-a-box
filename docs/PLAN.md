@@ -5820,6 +5820,21 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Kapitel 4 geschrieben: «Die Kette» — aus vier Knoten wurden sechs.**
+      Alle Zeitangaben **gemessen**, nicht zitiert (Beweis 05 und 23, beide am 19.09.2026
+      gefahren).
+      Vier Laeufe am Graphen: erster Durchlauf **4 gerechnet / 0 aus dem Speicher**, nur
+      der Prompt geaendert **2 / 2**, nichts geaendert **0 / 4**, Geometrie geaendert
+      wieder **4 / 0**. *Ein Speicher, der zu viel behaelt, ist gefaehrlicher als gar
+      keiner — er liefert ein Bild zu einem Gebaeude, das es nicht mehr gibt.*
+      Dieselben vier Laeufe am **Produktivweg**: **2,42 s · 0,27 s · 0,19 s · 2,32 s**,
+      und in den beiden mittleren startet das externe Renderprogramm **kein einziges Mal**.
+      Faktor rund **neun**.
+      **Der Einwand bleibt stehen, aber praezise:** `baue_kette` hat ausserhalb von Tests
+      und Beweisen bis heute keinen Aufrufer. Gemessen ist, dass der **Nutzen** trotzdem
+      ankommt — weil beide Wege dieselbe Speicherregel benutzen. *So trennt sich «gebaut,
+      aber nicht im Betrieb» von «der Nutzen fehlt», und nur das Erste stimmt.*
+      **Die Gliederung ist damit an einer Stelle ueberholt:** Sie nennt vier Knoten.
 - [x] **Drei weitere Messauftraege abgelegt — und die Werkstatt laeuft.**
       Owner-Auskunft 19.09.2026 auf die Rueckfrage, ob dort ueberhaupt jemand arbeitet:
       *«Er arbeitet.»* Darauf abgelegt:
