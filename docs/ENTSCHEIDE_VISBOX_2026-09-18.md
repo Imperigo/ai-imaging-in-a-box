@@ -368,6 +368,47 @@ Die drei Teilfragen, alle messbar und alle schon angefangen:
 
 # Was ich nicht entscheiden kann
 
+## E20 · Zwei Schichten — **Geometrielayer, und ein AI-Imaging-Layer darauf**
+
+**Owner-Entscheid 19.09.2026**, auf die Frage, ob ein Bild auch ohne Gebäudeform
+weiterbearbeitet werden kann. Die Antwort war grösser als die Frage:
+
+> *«Es wird sozusagen Stufe zwei, Layer aktiv — also ein AI-Imaging-Layer, wo
+> pixelbasierte Anpassungen gemacht werden können, also Lightroom- und Photoshop-Ersatz
+> über AI Imaging. Das wird auf den Geometrielayer draufgesetzt, für Variantenstudien
+> etc.»*
+
+**Damit ist nicht eine Ausnahme erlaubt, sondern eine Architektur festgelegt.**
+
+| | |
+|---|---|
+| **Layer 1 · Geometrielayer** | Aus dem Modell gerechnet, gegen die Tiefenkarte gemessen. Trägt ein **echtes** Geometrie-Urteil: bestanden, durchgefallen oder nicht gemessen. |
+| **Layer 2 · AI-Imaging-Layer** | Pixelbasiert, auf Layer 1 aufgesetzt. Hineingezeichnetes, Lichtstimmung, Materialvarianten. Trägt **kein eigenes** Geometrie-Urteil — wohl aber **das seiner Basis**. |
+
+**Was das berichtigt, und zwar an etwas, das am selben Tag gebaut wurde.** Vormittags war
+entschieden worden: Nach einem Handeingriff lautet das Urteil «nicht anwendbar»
+(`bestanden = None`). Das ist richtig und **es wirft zu viel weg** — das Urteil über die
+Geometrie *darunter* verschwand mit.
+
+Bei einer Variantenstudie — acht Bildvarianten auf **derselben** geprüften Geometrie —
+will genau das jemand wissen: *Die Geometrie darunter ist geprüft und bestanden; was Sie
+hier sehen, ist Stufe zwei darauf.*
+
+> **Ein Vorbehalt soll die Auskunft einschränken, nicht sie löschen.**
+
+**Die bindende Auflage**, und sie ist die einzige: *Die beiden Urteile dürfen nie
+verwechselbar sein.* Ein geerbtes Urteil ist kein eigenes. Ein Feld, in dem einmal das
+eigene und einmal das fremde steht, ist genau der Fehler, gegen den dieses Projekt seit
+Wochen anschreibt.
+
+**Was daraus für die Forschungsfrage folgt** — und das ist der Grund, warum dieser
+Entscheid hier steht und nicht in einem Bauzettel: Die Arbeit misst **Layer 1**. Layer 2
+ist Produktfläche und kein Gegenstand der Messung. *Ein Bild, das auf Stufe zwei entsteht,
+belegt nichts über Geometrietreue — es zeigt, was man mit einer geprüften Geometrie
+anfangen kann.*
+
+---
+
 Diese zwei sind **Tatsachen, keine Wahl**. Ich trage sie nicht als entschieden ein.
 
 ## O1 · Der Abgabetermin und die Form (F59) — **offen**

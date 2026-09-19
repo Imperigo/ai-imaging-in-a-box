@@ -18,6 +18,7 @@ behauptet, was es trägt und was ihm fehlt.
 |---|---|
 | `kapitel-03-die-randbedingungen.md` | **Entwurf, 19.09.2026.** Alle Zahlen darin sind **erzeugt, nicht zitiert** — aus `tools/beweis/19_regeln_ausfuehrbar.py`, gefahren für dieses Kapitel. |
 | `kapitel-05-die-kamera.md` | **Entwurf, 19.09.2026.** Alle Zahlen für das Kapitel **gerechnet**, nicht zitiert — und eine Vorarbeit dabei berichtigt: «unter 2 mm» misst sich über die weitere Spanne als **2,01 mm**. |
+| `kapitel-06-das-messen.md` | **Entwurf, 19.09.2026.** Das tragende Kapitel. Alle Zahlen am 19.09.2026 **neu gerechnet**. Die Strukturnotiz dazu ist überholt — ihre Kernbehauptung (ein zusammengesetzter Wert) wurde am 18.09.2026 widerlegt; das Kapitel ist um das neue Ergebnis herum geschrieben. |
 | `kapitel-07-die-methode.md` | **Entwurf, 19.09.2026.** Erstes geschriebenes Kapitel. |
 
 ## Die Reihenfolge, in der geschrieben wird
@@ -25,6 +26,11 @@ behauptet, was es trägt und was ihm fehlt.
 Sie steht in `docs/STRUKTUR_VERTIEFUNGSARBEIT.md` und ist begründet. Kapitel 7 steht an
 dritter Stelle der dortigen Liste — es ist belegt, es steht nicht unter Vorbehalt, und es
 ist das Kapitel, das diese Arbeit von einem Softwareprojekt unterscheidet.
+
+**Kapitel 6 ist als viertes geschrieben, obwohl es das erste der Liste ist.** Der Grund
+steht in ihm selbst: Seine Kernbehauptung hat bis zum 18.09.2026 nicht gehalten. Wer es
+früher geschrieben hätte, hätte es zweimal schreiben müssen — *ein Kapitel, dessen
+Ergebnis noch in Bewegung ist, wird nicht besser davon, dass man es früh aufschreibt.*
 
 **Kapitel 9 zuletzt.** Es kann sich noch ändern: Wenn eine der offenen Messungen anders
 ausgeht als erwartet, ändert sich der Ton der ganzen Arbeit.

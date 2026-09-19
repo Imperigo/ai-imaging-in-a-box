@@ -5820,6 +5820,37 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Kapitel 6 geschrieben: «Das Messen» — das tragende Kapitel der Arbeit.**
+      Das vierte geschriebene, und das erste der Gliederung. **Alle Zahlen am 19.09.2026
+      neu gerechnet**, nicht aus Dokumenten zitiert:
+      alter Riegel **12 von 12** echten Bildern bestanden — aber auch **12 von 12** gegen
+      die Tiefenkarte eines **fremden** Gebäudes, und **11 von 12** Müllbildern.
+      Zwei Tore mit Gegenprobe: echte Bilder **12/12**, Müllbilder **0/12**, Trennung
+      **12/12**. Die Lücke, auf der Tor B steht: **0,9257…0,9784** gegen die richtige
+      Karte, **0,7350…0,7766** gegen die falsche — **+0,149** Abstand, Schwelle 0,85.
+      **Die Strukturnotiz zu diesem Kapitel ist überholt**, und das steht als erster Satz
+      darin: Sie nennt als Kernbehauptung einen zusammengesetzten Wert, und genau der ist
+      am 18.09.2026 widerlegt worden.
+      **Der eigene Grenzfall steht im Kapitel, nicht im Anhang:** Bei mittlerer Führung
+      liegt ein Bild mit sauber sitzender Silhouette bei **−0,155** — unter dem gesamten
+      Streubereich der unbrauchbaren Bilder. Paarweise **12/12** an den Rändern, **7/12**
+      in der Mitte. *An den Rändern ist die Ordnung sauber, in der Mitte gibt es nur
+      Streuung — und für eine Schwelle zählt die Mitte.*
+      **Die schwerste Grenze zuerst:** Alle Zahlen sind an **Soll-Karten** gerechnet, nicht
+      an geschätzten. Sie dürfen darum **ausschliessen, aber nichts zusagen** — gezeigt ist,
+      dass der alte Riegel widerlegt ist, **nicht**, dass der neue unter Schätzerrauschen
+      trägt.
+- [x] **E20 eingetragen: Zwei Schichten — Geometrielayer, AI-Imaging-Layer darauf.**
+      Owner-Entscheid 19.09.2026 auf eine kleine Frage, mit einer grossen Antwort: Auf den
+      geprüften Geometrielayer kommt ein **pixelbasierter AI-Imaging-Layer** (Lightroom-
+      und Photoshop-Ersatz über AI Imaging) für Variantenstudien.
+      **Das berichtigt etwas, das am selben Tag gebaut wurde:** Vormittags galt nach einem
+      Handeingriff «nicht anwendbar» — richtig, aber es wirft das Urteil über die Geometrie
+      *darunter* mit weg. *Ein Vorbehalt soll die Auskunft einschränken, nicht sie löschen.*
+      Die bindende Auflage ist die einzige: **Ein geerbtes Urteil ist kein eigenes**, und
+      die beiden dürfen nie in demselben Feld stehen.
+      **Für die Forschungsfrage:** Die Arbeit misst **Layer 1**. Layer 2 ist Produktfläche
+      und kein Gegenstand der Messung.
 - [x] **Kapitel 5 geschrieben: «Die Kamera: was die Software selbst entscheidet».**
       Das dritte Kapitel, und alle Zahlen darin sind **für das Kapitel gerechnet**:
       12 Richtungen · **56** geprüfte Dreierkombinationen · Deckungsgrad exakt 0,7000 ·

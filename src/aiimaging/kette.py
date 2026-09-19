@@ -135,6 +135,62 @@ ART_NACHRENDER = "nachrender"
 #: ist keiner — er ist eine Fussnote mit Verfallsdatum.*
 FELD_HANDEINGRIFF = "handeingriff"
 
+#: **Die zwei Schichten** — Owner-Entscheid 19.09.2026.
+#:
+#: Bis hierher kannte die Kette nur *ein* Bild: aus dem Modell gerechnet, gegen die
+#: Tiefenkarte gemessen. Der Handeingriff hat daneben einen zweiten Fall aufgemacht, und
+#: die erste Fassung hat ihn zu grob behandelt — sie warf mit dem eigenen Urteil auch das
+#: Urteil ueber die Geometrie darunter weg. *Ein Vorbehalt soll die Auskunft
+#: einschraenken, nicht sie loeschen.*
+#:
+#: * :data:`SCHICHT_GEOMETRIE` — **Layer 1, der Geometrielayer.** Aus dem Modell
+#:   gerechnet, gegen die Tiefenkarte messbar. Er traegt ein **eigenes**
+#:   Geometrie-Urteil: bestanden, durchgefallen oder nicht gemessen.
+#: * :data:`SCHICHT_AI_IMAGING` — **Layer 2, der AI-Imaging-Layer.** Pixelbasiert, auf
+#:   Layer 1 aufgesetzt: Hineingezeichnetes, Lichtstimmung, Materialvarianten. Er traegt
+#:   **kein eigenes** Geometrie-Urteil, wohl aber das **seiner Basis**.
+#:
+#: **Layer 1 ist der Normalfall.** Layer 2 entsteht heute aus zwei Quellen — einem
+#: Handeingriff (:data:`FELD_HANDEINGRIFF`) und einer Bildquelle von der Platte — und
+#: kuenftig aus einer Rechnung ohne Modell. Ein Nachrender auf einem unberuehrten Render
+#: bleibt Layer 1: Er rechnet weiter gegen dieselbe Tiefenkarte, und sein Bild ist gegen
+#: sie messbar.
+SCHICHT_GEOMETRIE = "geometrielayer"
+SCHICHT_AI_IMAGING = "ai-imaging-layer"
+
+#: Das Feld, mit dem **jedes Bildergebnis sagt, welche Schicht es ist**. Es steht im
+#: Knotenergebnis und geht damit in den Zwischenspeicher — das darf es, weil es allein
+#: aus den Eingaengen dieses Knotens folgt und aus nichts sonst.
+FELD_SCHICHT = "schicht"
+
+#: Das Feld, in dem ein Layer-2-Bild **das Urteil seiner Basis** mitfuehrt — und zwar
+#: ausdruecklich als *fremdes* Urteil.
+#:
+#: **Die Trennung ist bindend** (Owner-Vorgabe 19.09.2026): Das eigene Urteil steht in
+#: ``bestanden``, das der Basis in ``basis[BASIS_BESTANDEN]``. Zwei verschiedene Namen auf
+#: zwei verschiedenen Ebenen. Ein Feld, in dem einmal das eigene und einmal das fremde
+#: Urteil steht, waere genau der Fehler, gegen den dieses Projekt seit Wochen
+#: anschreibt — darum heisst der Schluessel im Block **nicht** ``bestanden``.
+#:
+#: ``None`` fuer den ganzen Block heisst: Dieses Bild ist selbst Layer 1, es hat keine
+#: Basis unter sich. Ein Block mit ``geometrie_bestanden = None`` heisst etwas anderes:
+#: Es gibt eine Basis, aber ueber sie ist **nichts gemessen**.
+FELD_BASIS = "basis"
+
+#: Die Schluessel des Basis-Blocks. Aufgezaehlt statt hingeschrieben, damit ein Leser
+#: nicht raten muss und ein Tippfehler auffaellt.
+BASIS_KNOTEN = "knoten"                    #: Wer die Basis gerechnet hat (Knoten-ID).
+BASIS_BILD = "bild"                        #: Welches Bild die Basis ist (Pfad).
+BASIS_BESTANDEN = "geometrie_bestanden"    #: DAS URTEIL DER BASIS — nie das eigene.
+BASIS_URTEIL_VON = "urteil_von"            #: Welcher QA-Knoten es gefaellt hat.
+BASIS_HERKUNFT = "herkunft"                #: WIE die Basis bestimmt wurde.
+BASIS_GRUND = "grund"                      #: Klartext, auch und gerade bei ``None``.
+
+#: Wie eine Basis bestimmt wurde. Ohne diese Angabe waere die Basis eine Behauptung ohne
+#: Herkunft — und eine Behauptung ohne Herkunft ist in diesem Projekt keine Auskunft.
+HERKUNFT_BILDKETTE = "ueber die Bildkette"
+HERKUNFT_GEOMETRIE = "ueber dieselbe Geometrie"
+
 #: Knoten-IDs der Standardkette.
 KNOTEN_GEOMETRIE = "geometrie"
 KNOTEN_MULTIPASS = "multipass"
@@ -872,7 +928,12 @@ def render_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
             beauty_png=multipass.get("beauty_png") if p.get("nutze_beauty", True) else None,
             ausgabe_png=str(out_dir / "bild.png"),
         )
-        return render.rendere(auftrag, modell=modell, _lader=_lader)
+        # LAYER 1, UND ZWAR IMMER. Dieses Bild ist aus dem Modell gerechnet und gegen
+        # dessen Tiefenkarte messbar — es ist der Geometrielayer in Person. Das Feld wird
+        # auch an ein gescheitertes Ergebnis gehaengt: Welche Schicht gemeint war, bleibt
+        # auch dann die Auskunft, wenn die Rechnung nicht durchkam.
+        return dict(render.rendere(auftrag, modell=modell, _lader=_lader),
+                    **{FELD_SCHICHT: SCHICHT_GEOMETRIE})
 
     return fuehre_render
 
@@ -935,6 +996,11 @@ def _fuehre_bildquelle(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -
         # ist nur, dass es niemand ausschliessen kann. Für ein Urteil über die
         # Geometrietreue ist das dasselbe.
         FELD_HANDEINGRIFF: True,
+        # UND DAMIT IST DIESES BILD STUFE ZWEI. Eine Datei von der Platte ist nicht gegen
+        # die Tiefenkarte dieses Laufs gerechnet worden — sie ist pixelbasiert entstanden,
+        # irgendwo zwischen dem letzten Lauf und jetzt. Der AI-Imaging-Layer faengt hier
+        # an, und er faengt genau hier an und keine Stufe frueher.
+        FELD_SCHICHT: SCHICHT_AI_IMAGING,
         "error": None,
     }
 
@@ -1007,8 +1073,18 @@ def nachrender_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
         # einem unberührten Render trägt ihn nicht; einer auf einer Bildquelle oder auf
         # einem weiteren Nachrender trägt ihn. So wandert er genau so weit, wie der
         # Handeingriff reicht — und nicht weiter.
+        handeingriff = bool(bildeingang.get(FELD_HANDEINGRIFF))
+        # WELCHE SCHICHT DIESE RUNDE IST — und sie folgt aus dem Eingang, nicht aus einer
+        # Ansage. Ein Nachrender auf einem unberuehrten Render rechnet weiter gegen
+        # dieselbe Tiefenkarte: Sein Bild ist gegen sie messbar, also Layer 1. Ein
+        # Nachrender auf einer Bildquelle oder auf einer weiteren Layer-2-Runde rechnet
+        # auf Pixeln, die niemand mehr gegen das Modell halten kann: Layer 2.
+        #
+        # Die Schicht wird aus dem Eingang GELESEN und nicht vom Aufrufer ERKLAERT. Eine
+        # erklaerte Schicht waere eine Behauptung, die kein Lauf widerlegen kann.
+        schicht = SCHICHT_AI_IMAGING if handeingriff else SCHICHT_GEOMETRIE
         return dict(ergebnis, ausgangsbild=ausgangsbild, bildeingang_lage=lage,
-                    **{FELD_HANDEINGRIFF: bool(bildeingang.get(FELD_HANDEINGRIFF))})
+                    **{FELD_HANDEINGRIFF: handeingriff, FELD_SCHICHT: schicht})
 
     return fuehre_nachrender
 
@@ -1137,10 +1213,21 @@ def qa_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
                     "Modells — was jemand hineingezeichnet hat, steht dort nicht, und "
                     "die Abweichung wäre genau das, was er wollte. Das Urteil ist darum "
                     "weder bestanden noch durchgefallen: Die Frage «folgt dieses Bild dem "
-                    "Modell?» ist für dieses Bild nicht mehr die richtige."
+                    "Modell?» ist für dieses Bild nicht mehr die richtige. Das Urteil "
+                    "über die Geometrie DARUNTER steht davon unberührt im Feld 'basis' — "
+                    "es ist das Urteil der Basis und ausdrücklich nicht das dieses Bildes."
                 ),
                 "bild_png": bild_png,
                 "handeingriff": True,
+                # WELCHE SCHICHT GEPRÜFT WURDE. Bewusst nicht ``schicht``: Dieser Knoten
+                # ist kein Bild, und ein gleichnamiges Feld auf Bild und Urteil wäre die
+                # erste Stelle, an der jemand das eine für das andere hält.
+                "beurteilte_schicht": SCHICHT_AI_IMAGING,
+                # DAS URTEIL DER BASIS, DURCHGEREICHT — nie selbst gefällt. Was hier
+                # ankommt, hat das beurteilte Bild mitgebracht; gefüllt wird es im Lauf
+                # (siehe ``schichtbefund``), weil nur dort beide Zweige des Graphen
+                # sichtbar sind. ``None`` heisst: Über eine Basis ist hier nichts bekannt.
+                FELD_BASIS: render_ergebnis.get(FELD_BASIS),
                 "error": None,
             }
 
@@ -1179,7 +1266,12 @@ def qa_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
             breite=breite, hoehe=hoehe,
             maske=maskenbefund.get("maske"),
         )
-        return dict(urteil, maskenbefund=ohne_maske)
+        # `bestanden` aus `urteil` ist und bleibt das EIGENE Urteil dieses Bildes.
+        # Daneben steht die Basis — bei einem Layer-1-Bild üblicherweise `None`, denn es
+        # IST die Basis und hat keine unter sich.
+        return dict(urteil, maskenbefund=ohne_maske,
+                    beurteilte_schicht=SCHICHT_GEOMETRIE,
+                    **{FELD_BASIS: render_ergebnis.get(FELD_BASIS)})
 
     return fuehre_qa
 
