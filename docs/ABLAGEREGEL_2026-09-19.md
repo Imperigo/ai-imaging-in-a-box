@@ -83,3 +83,31 @@ weiten Verzeichnissen 10 Treffer, mit dem einen richtigen 9.
 Die Konvention drueben kennt diesen Nachtrag noch nicht. Ein Verweis von dort hierher
 fehlt — und genau das ist die Fehlerklasse, die dieses Blatt behandelt. Er wird
 nachgetragen.
+
+---
+
+## 6 · Das Umbenennen ist entschieden und wartet auf den Sammellauf
+
+**Owner-Entscheid 19.09.2026:** Die beiden Worker, die heute beide «cloud» heissen,
+bekommen eindeutige Namen.
+
+**Es geschieht NICHT sofort, und der Grund ist die stille Zustellung.** Das Feld
+`worker` steuert, wer einen Auftrag bekommt: `tools/homeworker.py` vergleicht es mit
+seinem eigenen Namen und ueberspringt, was nicht fuer ihn ist. Die HomeStation fuehrt
+dieses Werkzeug **aus diesem Repo** aus — ein `git pull` dort aendert ihr Verhalten,
+ohne dass hier etwas umspringt.
+
+Gerade jetzt liegt `auf-20260919-82` in ihrer Reihe, der Sammellauf, den der Owner
+heute freigegeben hat. Benennt man mitten hinein um, kann sie den eigenen Auftrag
+ueberspringen, weil sein Adressat ploetzlich anders heisst. **Ein Umbau am Briefkasten
+waehrend der Zustellung.**
+
+**Reihenfolge, wenn es soweit ist:**
+
+1. Beide Namen zulassen (der Vertrag kennt alt und neu, nichts bricht).
+2. Ansagen, bevor es ankommt — die Regel dafuer steht in der Anleitung dieses Repos.
+3. Die Dateien umstellen, die 85 bestehenden mit.
+4. Den alten Namen abkuendigen, erst danach entfernen.
+
+*Bis dahin gilt: `cloud` in diesem Repo meint den Worker an KosmoOrbit; `Cloud` in der
+KosmoOrbit-Anleitung meint den Worker hier. Jede Seite nennt die andere so.*
