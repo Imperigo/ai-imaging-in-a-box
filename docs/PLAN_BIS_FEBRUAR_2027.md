@@ -17,7 +17,7 @@
 
 | | Risiko | Wenn es zutrifft | Messung | Braucht |
 |---|---|---|---|---|
-| **R1** | Auf Apple Silicon läuft gar nichts Sinnvolles | Die Zielhardware fällt weg — das Vorhaben braucht eine andere Fassung | Ein einziger Lauf: lädt `flux2-klein-4b` auf MPS und erzeugt ein Bild | **einen Mac** |
+| **R1** | Auf Apple Silicon läuft gar nichts Sinnvolles | Die Zielhardware fällt weg — das Vorhaben braucht eine andere Fassung | ~~Ein einziger Lauf auf MPS~~ **NICHT MESSBAR, Owner-Entscheid 19.09.2026** → siehe unten | **einen Mac — es gibt keinen** |
 | **R2** | Die Tiefen-Naht ist für das kleine Modell nicht baubar | Entweder Lizenz oder Laptop fällt — beides nicht beides | Prototyp der Konditionierung, ein Bild gegen eine Tiefenkarte | GPU (HomeStation) |
 | ~~**R3**~~ | ~~`rho_maske` trennt auch nicht~~ | — | **ERLEDIGT 18.09.2026** → `docs/R3_WELCHES_MASS_TRENNT_2026-09-18.md` | — |
 
@@ -27,6 +27,49 @@ trennt, ist die neu gefasste Forschungsfrage schon in der ersten Oktoberwoche to
 dann ist noch Zeit, eine andere zu stellen.
 
 *Eine Arbeit, die ihr tragendes Risiko im Januar prüft, prüft es zu spät.*
+
+---
+
+### R1 wird nicht gemessen, und das gehört in die Arbeit — nicht in eine Fussnote
+
+**Owner-Entscheid 19.09.2026: Es gibt keinen Zugang zu einem Apple-Silicon-Rechner.**
+Weder zu einem MacBook M1 Max noch zu irgendeinem anderen Mac. R1 bleibt damit bis zur
+Abgabe **ungemessen** — und das ist keine Lücke, die sich noch schliesst, sondern eine
+Bedingung, unter der diese Arbeit steht.
+
+**Was das konkret heisst, ohne Beschönigung.** Die Zielhardware der Software ist der
+Laptop einer Studierenden. Über diesen Laptop weiss die Arbeit:
+
+| | |
+|---|---|
+| Läuft der Apple-Rechenweg (`mps`)? | **Nicht gemessen.** `mps` kommt im ganzen Python-Bestand **null Mal** vor — es gibt keinen Zweig dafür, und niemand hat je einen Mac gestartet. |
+| Passt das Modell in den Speicher? | **Nicht gemessen.** Die 9,6 GB sind eine Angabe der Modellkarte, keine eigene Messung, und sie gelten für eine andere Rechenart. |
+| Reichen die Zeitfristen? | **Nicht gemessen.** 300 s und 900 s sind auf der HomeStation gemessen (RTX 5090). `AIIMAGING_ZEITFAKTOR` kann sie strecken — **um wieviel, weiss niemand.** |
+| Ist der Modellordner beschreibbar? | **Gerechnet, nicht gemessen.** `~/Library/Application Support/Visbox/modelle` ist die Konvention von Apple, nachgelesen und nicht nachgeprüft. |
+
+**Die dritte Antwort, angewandt auf die eigene Zielhardware:** *Nicht messbar ist weder
+bestanden noch durchgefallen.* Es wird darum **nicht** behauptet, Visbox laufe auf einem
+MacBook — und ebenso wenig, es laufe dort nicht.
+
+**Was stattdessen getan wird**, denn eine ungemessene Bedingung ist kein Grund, schlechter
+zu bauen:
+
+1. **Der MPS-Zweig wird trotzdem gebaut.** Er ist rechnerisch prüfbar (welcher Zweig bei
+   welcher Angabe gewählt wird), auch wenn niemand ihn fährt. Ein Zweig, der nicht
+   existiert, kann auch von jemand anderem nicht getestet werden.
+2. **Jede Zahl zur Zielhardware wird als GESETZT gekennzeichnet**, nie als gemessen. Das
+   gilt für Speicher, Laufzeit und Fristen gleichermassen.
+3. **Die Arbeit sagt es in ihrem eigenen Text**, nicht nur hier. In den Grenzen der Arbeit
+   steht: *Die Zielplattform wurde nie ausgeführt.* Wer das später nachholt, findet hier
+   die Liste, was zu messen wäre.
+4. **Ein fertiger Messauftrag liegt bereit**, falls sich doch ein Mac findet — eine halbe
+   Stunde, ohne Programmierkenntnisse ausführbar. *Eine Messung, für die das Gerät fehlt,
+   ist kein Vorbehalt in einem Dokument, sondern ein Auftrag ohne Adressaten.*
+
+**Und die ehrliche Folge für die Forschungsfrage:** Sie darf nicht *«läuft auf einem
+Laptop»* behaupten. Sie kann behaupten, dass das Verfahren **hardwareunabhängig
+formuliert** und die Software **so gebaut** ist, dass ein Laptop-Lauf möglich ist — das
+ist prüfbar. Der Lauf selbst ist es nicht.
 
 ---
 

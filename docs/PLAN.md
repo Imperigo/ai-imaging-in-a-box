@@ -5599,6 +5599,36 @@ Bekannt und ausdrücklich nicht erledigt:
       werden; eine Messung kann warten. Zusammengebunden wartet der eilige Teil hinter
       dem trägen — und zwar genau so lange wie die Warteschlange. `auf-20260918-117` ist
       der einzige der sechzehn, der das richtig macht.
+- [x] **Owner-Entscheid: kein Mac. R1 bleibt bis zur Abgabe ungemessen** — und das steht
+      jetzt in der Arbeit statt in einer Fussnote. Über die Zielhardware weiss diese
+      Arbeit **nichts Gemessenes**: ob der Apple-Rechenweg überhaupt läuft (`mps` kommt
+      im ganzen Bestand null Mal vor), ob das Modell in den Speicher passt, um wieviel
+      die Zeitfristen gestreckt werden müssten, ob der Modellordner beschreibbar ist.
+      *Nicht messbar ist weder bestanden noch durchgefallen* — es wird darum weder
+      behauptet, Visbox laufe auf einem MacBook, noch, es laufe dort nicht. Die
+      Forschungsfrage darf entsprechend nicht «läuft auf einem Laptop» behaupten; sie
+      kann behaupten, dass die Software **so gebaut** ist, dass es möglich ist, und das
+      ist prüfbar. → `docs/PLAN_BIS_FEBRUAR_2027.md`, Abschnitt zu R1.
+- [x] **Die Messung liegt trotzdem fertig da** (`docs/MESSUNG_APPLE_SILICON.md`): sechs
+      Schritte zum Abtippen, eine halbe Stunde, ohne Programmierkenntnisse. Sie hat
+      **keinen Adressaten**, und das ist der einzige Posten des Projekts, bei dem das
+      kein Versäumnis ist, sondern die Lage — die HomeStation ist ein Linux-Rechner und
+      kann sie nicht machen. Ein Auftrag an sie stünde in der Zählung und verdeckte die,
+      die wirklich warten. *«Es geht nicht» wäre eine vollständige Antwort, und ein Nein
+      im Oktober ist einem Vielleicht im Februar weit überlegen.*
+- [x] **Owner-Freigabe: acht festliegende Aufträge direkt in das KosmoOrbit-Repo
+      zugestellt.** Für die Richtung zu ihnen gab es keinen Dateiweg — die Annahme war,
+      sie hätten unser Repo nicht, also bleibe nur der Weg über den Owner von Hand. *Für
+      den Rückweg stimmte das nachweislich nicht:* Am 17.09. kamen zwölf Antworten über
+      genau diesen Zweig. **Eine Zustellung ist gerichtet, und dass sie in eine Richtung
+      trägt, sagt nichts über die andere.** Der älteste lag **28 Tage**. Neuer Ordner
+      `auftraege/von-kosmovis/` drüben, nur neue Dateien, an ihrem Code nichts angefasst.
+- [x] **Ihre Meldung vom 19.09. gelesen — und sie macht einen eigenen Befund hinfällig.**
+      Ihre Brücke bog `geometry.format` an drei Stellen unbedingt auf `glb` zurück; damit
+      war der IFC-Weg **strukturell blockiert**, nicht bloss ungenutzt. Behoben seit dem
+      11.09., acht Tage lang, ohne dass es jemand wusste. Wir haben in dieser Zeit über
+      die Innenraumfrage geschrieben, *als hänge sie an einer Entscheidung — sie hing an
+      einem Fehler.* Die Nachfrage ist vor dem Versand entsprechend umgeschrieben worden.
 - [~] **Nicht behoben, sondern offengelegt: `local` trägt das Doppelte des Deckels.**
       Acht ist eine Setzung, und ihre Begründung lautete: *«Mehr Tempo verschlimmert das;
       der Engpass ist nicht das Bauen.»* Seit dem 07.09.2026 sperrt der Deckel nicht mehr,
