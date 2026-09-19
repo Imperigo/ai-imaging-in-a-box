@@ -5820,6 +5820,29 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Kapitel 8 geschrieben: «Der Einbau» — und die zweite Zahl steht neben der ersten.**
+      Alle Zahlen **erzeugt**, nicht zitiert (`tools/einbau.py --json`, 19.09.2026):
+      **7 von 35** Posten nicht in der Software (09.09.: 22 von 34), aber **29** Auftraege
+      ohne Antwort und der aelteste bei **28 Tagen** (16.09.: 18 und 25).
+      *Der eigene Rueckstand liess sich durch Lesen halbieren, der fremde nicht durch
+      Schreiben* — 15 von 15 geschlossenen Posten, und nur **einer** davon durch neuen Code.
+      **Die Aufschlüsselung steht daneben, nicht im Anhang:** 15x kein Lebenszeichen, 8x
+      frisch, 6x aktiv-uebergangen. Nur die letzten sechs rechtfertigen eine Nachfrage.
+      **Zwei Angaben der Vorarbeit berichtigt:** «seit acht Tagen hat keiner geantwortet»
+      stimmt nicht mehr (`cloud` hat am 17.09. geantwortet) — und fuer `local` und `ui` ist
+      daraus **elf** geworden.
+      **Und eine Zahl gegen das eigene Kapitel:** Der Rueckstand misst zur Haelfte die
+      eigene Schreibgeschwindigkeit — 13 der 29 Auftraege sind in den letzten drei Tagen
+      entstanden.
+- [x] **Der Auftrag an die Oberflaeche ist zugestellt, nicht nur abgelegt.**
+      `tools/einbau.py` meldete `auf-20260919-119` ganz oben als NICHT AUSGELIEFERT: Er lag
+      seit dem Vormittag nur bei uns. *Ein Auftrag, der nur beim Absender liegt, zaehlt als
+      Rueckstand beim Adressaten und ist in Wahrheit einer bei uns — er kann nicht
+      beantworten, was er nicht hat.*
+      Zugestellt in ihren Zweig, in einen **eigenen** Ordner neben dem des Cloud-Workers:
+      Vertrag und Oberflaeche sind zwei Gegenstaende, und in einem gemeinsamen Ordner
+      bleibt die Haelfte liegen, die nicht zum Auftrag des Lesers gehoert.
+      «Nicht zugestellt» steht wieder bei **null**.
 - [x] **Kapitel 6 geschrieben: «Das Messen» — das tragende Kapitel der Arbeit.**
       Das vierte geschriebene, und das erste der Gliederung. **Alle Zahlen am 19.09.2026
       neu gerechnet**, nicht aus Dokumenten zitiert:
