@@ -20,6 +20,7 @@ wo weder Blender noch ifcopenshell existieren.
 from __future__ import annotations
 
 import math
+import re
 
 import copy
 import json
@@ -39,6 +40,34 @@ class ContractError(ValueError):
     """Eingabe verletzt den Vertrag. Bewusst laut statt stillschweigend geraten."""
 
 
+#: Was als Up-Achsen-Angabe durchgeht: ein ``Y`` oder ``Z``, gefolgt von einem
+#: Trennzeichen oder dem Ende der Angabe.
+#:
+#: **BIS ZUM 19.09.2026 GENÜGTE DER ERSTE BUCHSTABE, und das war zu wenig.** Gemessen an
+#: dieser Funktion::
+#:
+#:     'Zeichnung'   → Z → das Gebäude wird gedreht
+#:     'Zoll'        → Z → dito
+#:     'Zentimeter'  → Z → dito
+#:     'Yard'        → Y
+#:     'yes'         → Y
+#:
+#: Ein Tippfehler oder ein deutsches Wort mit Z am Anfang legt das Gebäude auf die Seite,
+#: und **es fällt nirgends auf**: Tiefenkarte, Kamera und Geometrie-QA sind danach
+#: *gemeinsam* verdreht und darum in sich stimmig. Der Fehlschlag sieht wie ein Erfolg aus.
+#:
+#: **Die Verschärfung ist an allen echten Werten dieses Repos gemessen**, nicht geraten.
+#: Gezählt über ``src/``, ``tests/``, ``tools/`` und ``auftraege/``::
+#:
+#:     "Y" 121×   "Z_UP" 46×   "Y_UP" 18×   "z" 15×   "Z" 15×   "y" 11×
+#:     "Y-up (glTF-Konvention)" 1×   "Y (glTF-2.0-Vorschrift)" 1×
+#:
+#: **Jeder einzelne davon passt.** Die Toleranz, die der ursprüngliche Kommentar
+#: begründet — ein beschreibender Satz, der mit Y beginnt — bleibt also erhalten; sie
+#: braucht nur das Trennzeichen, das jeder echte Satz ohnehin hat.
+_UP_ACHSE = re.compile(r"^([YZ])(?:[\s_\-]|$)", re.IGNORECASE)
+
+
 def normalize_up_axis(value) -> str:
     """Beliebige Up-Achsen-Angabe → ``"Y"`` oder ``"Z"``.
 
@@ -46,6 +75,14 @@ def normalize_up_axis(value) -> str:
     KosmoDraw liefert das blosse ``"Z"``, KosmoVis einen beschreibenden Satz, der mit
     ``"Y"`` beginnt. Toleranz endet allerdings bei Abwesenheit — ``None`` ist ein Fehler,
     keine Gelegenheit für einen Default.
+
+    **Und sie endet seit dem 19.09.2026 auch beim blossen Anfangsbuchstaben.** Warum,
+    steht bei :data:`_UP_ACHSE`: ``"Zeichnung"`` hat das Gebäude gedreht.
+
+    *Was diese Funktion weiterhin NICHT kann:* prüfen, ob die Angabe **stimmt**. Wer
+    ``"Z"`` schreibt, während das Modell Y-up ist, bekommt hier kein Wort — dafür
+    bräuchte es eine Gegenprobe an der Geometrie, und die gibt es nicht. Die Verschärfung
+    fängt den Tippfehler, nicht den Irrtum.
 
     Raises:
         ContractError: fehlend, leer oder nicht als Y/Z deutbar.
@@ -59,10 +96,15 @@ def normalize_up_axis(value) -> str:
     text = str(value).strip()
     if not text:
         raise ContractError("up_axis ist leer.")
-    first = text[0].upper()
-    if first in ("Y", "Z"):
-        return first
-    raise ContractError(f"up_axis nicht als Y oder Z deutbar: {value!r}")
+    treffer = _UP_ACHSE.match(text)
+    if treffer:
+        return treffer.group(1).upper()
+    raise ContractError(
+        f"up_axis nicht als Y oder Z deutbar: {value!r}. Erwartet wird 'Y' oder 'Z' — "
+        f"auch mit Zusatz ('Y_UP', 'Z-up', 'Y (glTF-Konvention)'), aber der Buchstabe "
+        f"muss für sich stehen. Bis zum 19.09.2026 genügte hier der erste Buchstabe, "
+        f"und damit drehte 'Zeichnung' das Gebäude."
+    )
 
 
 def needs_rotation(up_axis) -> bool:

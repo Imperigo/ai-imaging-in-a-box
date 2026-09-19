@@ -5758,10 +5758,32 @@ Bekannt und ausdrücklich nicht erledigt:
       *Der Prototyp misst besser, als er prüft.*
       **Geschlossen durch `aiimaging.einlass` (siehe oben). Offen bleibt allein die
       Verdrahtung** — die Eintrittsstellen rufen den Sichtgang noch nicht.
-- [~] **Offen: Die Hochachse wird auf dem Produktivweg geraten, und die falsche Angabe
-      fällt nirgends auf.** `contracts.normalize_up_axis` liest **den ersten Buchstaben** —
-      `up_axis="Zeichnung"` dreht das Gebäude, ohne dass etwas rot wird. Eine Gegenprobe
-      an der Geometrie gibt es nicht. *Das ist die Stelle, an der das Haus auf der Seite
+- [x] **Der Tippfehler an der Hochachse ist behoben** — die Hälfte des Befunds, die sich
+      ohne Geometrie erledigen lässt. `contracts.normalize_up_axis` las **den ersten
+      Buchstaben**::
+
+          'Zeichnung'  → Z → das Gebäude wird gedreht
+          'Zoll'       → Z → dito
+          'Yard'       → Y
+
+      Verlangt wird jetzt ein Trennzeichen nach dem Buchstaben. **Gemessen gegen jeden
+      echten Wert dieses Repos**, gezählt über `src/`, `tests/`, `tools/`, `auftraege/`:
+      `"Y"` 121×, `"Z_UP"` 46×, `"Y_UP"` 18×, `"z"` 15×, `"Z"` 15×, `"y"` 11×,
+      `"Y-up (glTF-Konvention)"` und `"Y (glTF-2.0-Vorschrift)"` je 1× — **jeder einzelne
+      passt.** *Eine Verschärfung, die niemand gegen den Bestand gerechnet hat, sperrt
+      beim ersten Lauf etwas aus, das gestern funktioniert hat.* Zwei Mutationen, beide
+      Richtungen: zu lasch → der Tippfehler kommt durch; zu streng → die beschreibenden
+      Sätze der zwei Erzeuger fallen.
+      **Dabei wieder in die Falle getreten, die seit dem 03.09.2026 im Lexikon steht:**
+      Die erste Mutationsprobe meldete nach dem Zurücknehmen weiter rote Proben —
+      *stale Bytecode*. Wiederholt mit geleertem Zwischenspeicher; die Befunde stehen.
+- [~] **Offen bleibt die andere Hälfte, und sie ist die grössere: der IRRTUM.**
+      Die Verschärfung fängt den Tippfehler. Wer `"Z"` schreibt, während das Modell Y-up
+      ist, bekommt weiterhin **kein Wort** — dafür bräuchte es eine Gegenprobe an der
+      Geometrie, und die gibt es nicht. *Das ist die Stelle, an der das Haus auf der Seite
       liegt: Tiefenkarte, Kamera und Geometrie-QA sind dann **gemeinsam** verdreht und
-      darum in sich stimmig — der Fehlschlag sieht wie ein Erfolg aus.* **Adressat:
-      `kern`.**
+      darum in sich stimmig — der Fehlschlag sieht wie ein Erfolg aus.*
+      Ein Ansatz liegt da und ist nicht geprüft: `glbbox` trennt Gelände vom Bauwerk, und
+      **Gelände ist in der Hochachse flach**. Welche Achse das ist, liesse sich daran
+      messen statt glauben. Ob das an echten Modellen trägt, ist **nicht gemessen**.
+      **Adressat: `kern` für den Bau, `local` für die Gegenprobe an echten Modellen.**

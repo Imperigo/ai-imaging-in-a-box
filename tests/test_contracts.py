@@ -68,6 +68,60 @@ def test_schreibweisen_werden_toleriert(eingabe, erwartet):
     assert normalize_up_axis(eingabe) == erwartet
 
 
+@pytest.mark.parametrize("wort", [
+    "Zeichnung", "Zoll", "Zentimeter", "Zone", "zurueck",
+    "Yard", "yes", "Yacht",
+])
+def test_ein_wort_mit_Y_oder_Z_am_anfang_ist_KEINE_achsenangabe(wort):
+    """BEFUND 19.09.2026: Bis dahin genuegte hier **der erste Buchstabe**.
+
+    Gemessen an der alten Fassung::
+
+        'Zeichnung'   → Z → das Gebaeude wird gedreht
+        'Zoll'        → Z → dito
+        'Yard'        → Y
+
+    **Und es faellt nirgends auf.** Tiefenkarte, Kamera und Geometrie-QA sind danach
+    *gemeinsam* verdreht und darum in sich stimmig — der Fehlschlag sieht wie ein Erfolg
+    aus. Das ist die teuerste Sorte Fehler, die diese Kette kennt.
+    """
+    with pytest.raises(ContractError, match="nicht als Y oder Z deutbar"):
+        normalize_up_axis(wort)
+
+
+@pytest.mark.parametrize("echt, erwartet", [
+    ("Y", "Y"), ("Z", "Z"), ("y", "Y"), ("z", "Z"),
+    ("Y_UP", "Y"), ("Z_UP", "Z"),
+    ("Y-up (glTF-Konvention)", "Y"),
+    ("Y (glTF-2.0-Vorschrift)", "Y"),
+])
+def test_jeder_echte_wert_dieses_repos_geht_weiterhin_durch(echt, erwartet):
+    """Die Gegenprobe zur Verschaerfung, und sie ist **gemessen und nicht geraten**.
+
+    Gezaehlt ueber `src/`, `tests/`, `tools/` und `auftraege/` — das sind alle Werte, die
+    in diesem Repo als `up_axis` wirklich vorkommen::
+
+        "Y" 121x   "Z_UP" 46x   "Y_UP" 18x   "z" 15x   "Z" 15x   "y" 11x
+        "Y-up (glTF-Konvention)" 1x   "Y (glTF-2.0-Vorschrift)" 1x
+
+    *Eine Verschaerfung, die niemand gegen den Bestand gerechnet hat, sperrt beim ersten
+    Lauf etwas aus, das gestern funktioniert hat.* Diese Probe haelt fest, dass es hier
+    nicht so ist.
+    """
+    assert normalize_up_axis(echt) == erwartet
+
+
+def test_die_toleranz_fuer_beschreibende_saetze_bleibt():
+    """Der Grund, warum diese Funktion ueberhaupt tolerant ist, bleibt bestehen.
+
+    Die zwei Erzeuger im Oekosystem schreiben verschieden: der eine ein blosses Kuerzel,
+    der andere einen ganzen Satz. Die Verschaerfung verlangt darum nur **ein
+    Trennzeichen** nach dem Buchstaben — und das hat jeder echte Satz ohnehin.
+    """
+    assert normalize_up_axis("Z ist oben, so exportiert KosmoDraw") == "Z"
+    assert normalize_up_axis("Y_UP wie in der glTF-Vorschrift") == "Y"
+
+
 def test_fehlende_up_achse_wird_abgelehnt():
     """Kein Default bei ``None``: ein geratener Wert wäre eine stille Verdrehung."""
     with pytest.raises(ContractError, match="up_axis"):
