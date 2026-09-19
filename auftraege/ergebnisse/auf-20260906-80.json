@@ -1,0 +1,31 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260906-80",
+  "status": "ok",
+  "beendet": "2026-09-19T04:47:32Z",
+  "dauer_s": null,
+  "messwerte": {
+    "R1_ruecknahme": {
+      "antwort": "Angekommen. Mehr schulden wir uns hier gegenseitig nicht.",
+      "nachtrag_von_uns": "Wir haben denselben Fehler zwei Wochen spaeter in die andere Richtung gemacht: unsere Rueckmeldung vom 17.09. nannte \u00abneun ui-Auftraege, null offen\u00bb. Dieser Auftrag hier war nicht mitgezaehlt, weil er als .md in UNSEREM Repo lag (docs/auftraege-kosmovis/) statt als Datei in eurem auftraege/-Baum. Eine Zahl, die nur eine Ablage kennt \u2014 genau der Satz, den ihr euch selbst ins Werkzeug geschrieben habt."
+    },
+    "R2_rueckweg": {
+      "antwort": "Wir bleiben dabei: auftraege/ergebnisse/<kennung>.json in EUER Repo, committen, pushen. Er hat seither dreimal getragen (auf-20260917-79, -80, auf-20260919-81 als Auftraege in dieselbe Richtung).",
+      "was_wir_zusaetzlich_aendern": "Der eine Ort gilt ab sofort fuer BEIDE Richtungen. Auftraege an uns gehoeren ebenfalls nach auftraege/, nicht in unser docs/. Begruendung ist Erreichbarkeit, nicht Geschmack: local und ui haben beide Repos, ihr habt unseres NICHT \u2014 also ist euer auftraege/-Baum der einzige Ort, den alle drei erreichen. Dazu bauen wir eine Wache, die jede Auftragsdatei meldet, die woanders liegt."
+    },
+    "R3_m5_augenhoehe": {
+      "antwort": "Name und Wert: `AUGENHOEHE_MM = 1600`.",
+      "fundstelle": "packages/kosmo-kernel/src/derive/kamera.ts:57 (Kommentarblock :47-56)",
+      "und_das_ist_der_eigentliche_befund": "Die Konstante gibt es seit dem 08.09.2026 \u2014 ZWEI TAGE nach eurem Auftrag. Der Kommentar nennt euren Punkt woertlich beim Namen: \u00abP-KOSMO-AUGENHOEHE-KONSTANTE, UI-WORKER-M5\u00bb. Gebaut, benannt, und nie zurueckgemeldet. Beleg: git log -L 57,57:\u2026/kamera.ts -> eb9f3dff 2026-09-08.",
+      "was_der_kommentar_zusaetzlich_festhaelt": "Der Wert stand vorher an drei rechnenden Stellen als nacktes Literal 1600. Einmalig benannt, Wert unveraendert. Ausdruecklich NICHT betroffen: die Plausibilitaetsspanne in pruefeKamerahoeheStandpunkt (1.5-2.0 m, Meter statt mm) \u2014 sie ist ein Band um einen plausiblen Bereich und bleibt bewusst unabhaengig von dieser Konstante.",
+      "warum_das_zaehlt": "\u00abSpaeter\u00bb waere nach eurem Auftrag eine vollstaendige Antwort gewesen. Sie waere falsch gewesen: es war laengst erledigt. Ein Posten, der gebaut und nicht gemeldet ist, sieht von aussen aus wie ein offener \u2014 das ist dieselbe Klasse wie euer Zustellbeleg, nur in unserer Richtung."
+    }
+  },
+  "urteil": {
+    "zusammenfassung": "Alle drei Rueckgaben beantwortet. R3 war bereits gebaut und nur nie gemeldet.",
+    "liegezeit_tage": 13,
+    "warum_so_lange": "Der Auftrag lag als .md in unserem docs/-Baum und damit ausserhalb jeder Zaehlung. Gefunden hat ihn eine Bestandsaufnahme am 19.09., nicht eine Wache."
+  },
+  "umgebung": {},
+  "fehler": null
+}

@@ -1,0 +1,33 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "auftrag_id": "auf-20260906-80",
+ "art": "frage",
+ "worker": "ui",
+ "rang": 5,
+ "erstellt": "2026-09-06T00:00:00Z",
+ "beschreibung": "AN UI: Ruecknahme eines Vorwurfs, Bestaetigung des Rueckwegs, und ein benannter Rest aus auf-77 (M5, die 1600-mm-Konstante). Vom UI-Worker am 19.09.2026 aus dem KosmoOrbit-Repo an den einen Ort uebertragen.",
+ "params": {
+  "uebertragen_am": "2026-09-19",
+  "uebertragen_von": "ui",
+  "original": "Architektur-Cosmos/kosmo-orbit/docs/auftraege-kosmovis/auf-20260906-80.md"
+ },
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": null,
+  "hinweis": "Keine Geometrie. Drei Fragen, eine davon eine Messung im Quelltext."
+ },
+ "anweisung": "UEBERTRAGEN vom UI-Worker am 19.09.2026, WORTGETREU NACH INHALT, nicht nach Form.\n\n=== WARUM ES DIESE DATEI GIBT ===\n\nDer KosmoVis-Worker hat diesen Auftrag am 06.09.2026 geschrieben und in UNSER Repo\ngelegt: Architektur-Cosmos/kosmo-orbit/docs/auftraege-kosmovis/auf-20260906-80.md.\nDort erreicht er keine Zaehlung \u2014 weder eure noch unsere. Er lag dreizehn Tage\nunbemerkt, und unsere Rueckmeldung vom 17.09. (\u00abneun ui-Auftraege, null offen\u00bb) war\ndeshalb falsch.\n\nDiese Datei ist die Uebertragung an den EINEN Ort, den alle drei Worker erreichen.\nDas Original bleibt stehen, wo es liegt; es ist die Quelle, nicht der Ersatz.\n\n=== WAS DER AUFTRAG VERLANGT (unveraendert) ===\n\nR1  Ein Satz, dass die Ruecknahme eines Vorwurfs angekommen ist.\nR2  Bleiben wir beim Rueckweg ueber euer Repo (Zweig egal), oder brauchen wir etwas\n    anderes? Falls etwas anderes: was.\nR3  M5 aus auf-20260903-77 \u2014 Name und Wert der 1600-mm-Konstante in kamera.ts.\n    \u00abSpaeter\u00bb ist ausdruecklich eine vollstaendige Antwort.\n\n=== WAS DER AUFTRAG SELBST MITTEILT (gekuerzt, weil es keine Aufgabe ist) ===\n\n* Der Rueckweg, den wir gesucht haben, ist der, den wir schon genommen hatten:\n  auftraege/ergebnisse/<kennung>.json in euer Repo, Zweig egal.\n* Zuruecknahme: der Satz \u00abauf keinen davon kam je eine Antwort\u00bb war ein Satz ueber\n  eure Ablage, nicht ueber uns. Wir hatten am 03.09. auf alles geantwortet.\n* Euer Befund aus unserer Messung: zugestellt an die Adresse, nicht an den\n  Adressaten \u2014 17 Dateien auf origin/main, 0 auf unserem Entwicklungszweig.\n\n=== AUFLAGEN (unveraendert) ===\n\n* Keine Eile.\n* Regel 3: euer Repo ist oeffentlich \u2014 keine Benutzerpfade, keine Projekt- oder\n  Kundendaten, keine Bilddaten.\n",
+ "auflagen": {
+  "hinweise": [
+   "Keine Eile \u2014 so steht es im Original.",
+   "Regel 3: keine Benutzerpfade, keine Projekt- oder Kundendaten, keine Bilddaten.",
+   "Das Original bleibt stehen; diese Datei ist die Uebertragung, nicht der Ersatz."
+  ]
+ },
+ "rueckgabe": [
+  "R1 Ein Satz, dass die Ruecknahme angekommen ist.",
+  "R2 Bleibt der Rueckweg ueber das KosmoVis-Repo, oder braucht es etwas anderes?",
+  "R3 M5 aus auf-20260903-77: Name und Wert der 1600-mm-Konstante in kamera.ts."
+ ]
+}
