@@ -613,9 +613,33 @@ def ifc_zu_glb(ifc_path, glb_path, *, timeout: float = GESAMTFRIST_IFC_S,
 
     ergebnis = starte(cmd, frist)
     if ergebnis.returncode != 0:
+        # HIER STAND `(stderr or stdout)`, UND DAS HAT DIE DIAGNOSE VERWORFEN.
+        #
+        # Gemessen am 19.09.2026 an einer umbenannten JPG mit der Endung `.ifc`:
+        #
+        #     stdout   {"status":"error","error":"Error: Unable to parse IFC SPF header"}
+        #     stderr   Exception ignored in: <function file.__del__ …>
+        #              KeyError: 404872384
+        #
+        # `stderr` ist bei ifcopenshell 0.8.5 **nie leer** — die Bibliothek hinterlässt
+        # beim Herunterfahren eine Destruktor-Meldung, die mit der Ursache nichts zu tun
+        # hat. Also gewann immer das Rauschen, und `stdout` wurde nie gelesen. Wer eine
+        # beschädigte IFC, eine umbenannte Datei oder eine `.skp` hineinlegte, bekam
+        # **immer denselben KeyError aus einer fremden Bibliothek** statt des einen
+        # Satzes, der sagt, was los ist.
+        #
+        # Die Zielgruppe sind Architektinnen und Studierende. Ein Stacktrace aus einem
+        # Destruktor ist für sie keine Antwort, sondern das Ende des Versuchs.
+        #
+        # **Und die Reparatur lag seit dem 22.08.2026 zwanzig Zeilen tiefer.**
+        # :func:`_fehlertext` ist genau für diesen Fall gebaut, ihr Docstring beschreibt
+        # ihn wörtlich, und `ifc_raeume` benutzt sie. Beim Nachziehen ist `ifc_zu_glb`
+        # übersehen worden — und weil der Fehlerweg nur im Fehlerfall läuft, fiel es
+        # dreissig Tage lang niemandem auf. *Eine Reparatur, die nur an einer von zwei
+        # gleichen Stellen sitzt, ist eine halbe.*
         raise SeamError(
             f"IFC→glb fehlgeschlagen (Code {ergebnis.returncode}):\n"
-            f"{(ergebnis.stderr or ergebnis.stdout or '').strip()[:800]}"
+            f"{_fehlertext(ergebnis)}"
         )
     try:
         return json.loads(ergebnis.stdout)
@@ -623,7 +647,7 @@ def ifc_zu_glb(ifc_path, glb_path, *, timeout: float = GESAMTFRIST_IFC_S,
         raise SeamError(f"Runner lieferte kein JSON: {e}\n{ergebnis.stdout[:400]}") from e
 
 
-def _fehlertext(ergebnis) -> str:
+def _fehlertext(ergebnis, bericht=None) -> str:
     """Die aussagekräftigste Fehlermeldung aus einem gescheiterten Lauf.
 
     Warum nicht einfach ``stderr``: Der Raum-Runner schreibt seine Diagnose als **Report
@@ -640,6 +664,18 @@ def _fehlertext(ergebnis) -> str:
     Darum: erst der ``error``-Eintrag des Reports, dann stderr, dann die rohe Ausgabe.
     Beides zusammen, wenn es beides gibt — was die fremde Bibliothek sagt, kann bei einem
     Absturz die einzige Spur sein.
+
+    Args:
+        bericht: Pfad eines Reports, den der Runner als **Datei** hinterlässt statt auf
+            stdout. Blender macht das: ``blender_depth_stage`` schreibt
+            ``blender-report.json`` mit dem Feld ``error`` **auch im Fehlerfall** und
+            meldet den Fehlschlag über den Rückgabewert. Wird die Datei hier nicht
+            gelesen, zeigt der Aufrufer die letzten 1500 Zeichen Blender-Rauschen und
+            verschweigt den einen Satz, der die Ursache nennt — dieselbe Lage wie bei
+            ifcopenshell, nur eine Ebene höher (nachgetragen 19.09.2026).
+
+            ``None`` heisst: Es gibt keinen Dateireport. Das ist keine Aussage darüber,
+            ob der Lauf einen hätte schreiben sollen.
     """
     teile: list[str] = []
     try:
@@ -648,6 +684,17 @@ def _fehlertext(ergebnis) -> str:
             teile.append(str(report["error"]))
     except (json.JSONDecodeError, TypeError):
         pass
+    if bericht is not None:
+        # Ein Report, der nicht da ist oder nicht lesbar, ist kein Fehler DIESER
+        # Funktion: Sie baut eine Fehlermeldung, und dabei darf sie selbst nicht
+        # scheitern. Was sie nicht lesen kann, laesst sie weg — die uebrigen Quellen
+        # bleiben.
+        try:
+            datei = json.loads(Path(bericht).read_text(encoding="utf-8"))
+            if isinstance(datei, dict) and datei.get("error"):
+                teile.append(str(datei["error"]))
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            pass
     if (ergebnis.stderr or "").strip():
         teile.append(ergebnis.stderr.strip())
     if not teile and (ergebnis.stdout or "").strip():
@@ -1112,14 +1159,23 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
     # (siehe oben), nur den Rueckgabewert auch nicht — Blender kann 0 melden und am
     # Compositor gescheitert sein.
     if ergebnis.returncode != 0:
+        # DER REPORT WIRD MITGELESEN, und das war er bis zum 19.09.2026 nicht.
+        # `blender_depth_stage` schreibt `blender-report.json` mit dem Feld `error`
+        # **auch wenn es scheitert**, und meldet den Fehlschlag danach ueber den
+        # Rueckgabewert 1. Hier stand nur `(stderr or stdout)`, also die letzten 1500
+        # Zeichen Blender-Rauschen — und der eine Satz, der die Ursache nennt, lag
+        # ungelesen daneben. Dieselbe Lage wie bei ifcopenshell, eine Ebene hoeher.
         raise SeamError(
             f"Blender endete mit Code {ergebnis.returncode}:\n"
-            f"{(ergebnis.stderr or ergebnis.stdout or '').strip()[-1500:]}"
+            f"{_fehlertext(ergebnis, bericht)}"
         )
     if not bericht.exists():
+        # HIER ausdruecklich OHNE `bericht`: Die Datei fehlt ja gerade, das ist der
+        # Befund. Sie trotzdem zu uebergeben waere harmlos, aber es stuende da, als
+        # erwarte jemand etwas von ihr.
         raise SeamError(
             f"Blender schrieb keinen Report (Code {ergebnis.returncode}):\n"
-            f"{(ergebnis.stderr or ergebnis.stdout or '').strip()[-1500:]}"
+            f"{_fehlertext(ergebnis)}"
         )
     report = json.loads(bericht.read_text(encoding="utf-8"))
     if not isinstance(report, dict):

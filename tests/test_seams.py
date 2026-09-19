@@ -224,6 +224,103 @@ def test_tiefenkarte_meldet_abbruch_des_prozesses(tmp_path, blender_attrappe):
         glb_zu_tiefenkarte("bau.glb", tmp_path / "depth", up_axis="Y", _starte=aufrufer)
 
 
+def test_die_diagnose_der_ifc_steht_vor_dem_rauschen_der_fremden_bibliothek():
+    """BEFUND 19.09.2026: `ifc_zu_glb` hat die einzige brauchbare Meldung verworfen.
+
+    Gemessen an einer umbenannten JPG mit der Endung `.ifc`::
+
+        stdout   {"status":"error","error":"Error: Unable to parse IFC SPF header"}
+        stderr   Exception ignored in: <function file.__del__ …>
+                 KeyError: 404872384
+
+    Die Naht baute ihre Meldung als `(stderr or stdout)`. Bei ifcopenshell 0.8.5 ist
+    `stderr` **nie leer** — die Bibliothek hinterlaesst beim Herunterfahren eine
+    Destruktor-Meldung, die mit der Ursache nichts zu tun hat. Also gewann immer das
+    Rauschen. Wer eine beschaedigte IFC, eine umbenannte Datei oder eine `.skp`
+    hineinlegte, sah **immer denselben KeyError aus einer fremden Bibliothek.**
+
+    Die Zielgruppe sind Architektinnen und Studierende. Ein Stacktrace aus einem
+    Destruktor ist fuer sie keine Antwort, sondern das Ende des Versuchs.
+
+    **Die Reparatur lag seit dem 22.08.2026 zwanzig Zeilen tiefer:** `_fehlertext` ist
+    genau dafuer gebaut, und `ifc_raeume` benutzt sie. `ifc_zu_glb` ist beim Nachziehen
+    uebersehen worden, und weil der Fehlerweg nur im Fehlerfall laeuft, fiel es dreissig
+    Tage lang niemandem auf. *Eine Reparatur, die nur an einer von zwei gleichen Stellen
+    sitzt, ist eine halbe.*
+    """
+    aufrufer = Aufrufer(Ergebnis(
+        returncode=1,
+        stdout=json.dumps({"status": "error",
+                           "error": "Error: Unable to parse IFC SPF header",
+                           "glb_path": None}),
+        stderr="Exception ignored in: <function file.__del__ at 0x7f6a>\nKeyError: 404872384\n"))
+
+    with pytest.raises(SeamError) as fehler:
+        seams.ifc_zu_glb("umbenannt.ifc", "raus.glb", _starte=aufrufer)
+
+    text = str(fehler.value)
+    assert "Unable to parse IFC SPF header" in text, \
+        "die einzige brauchbare Diagnose fehlt — genau das war der Befund"
+    assert text.index("Unable to parse") < text.index("KeyError"), \
+        "sie muss VOR dem Rauschen stehen; wer den ersten Satz liest, hat genug gelesen"
+    assert "KeyError" in text, \
+        "das Rauschen bleibt trotzdem drin — bei einem Absturz ist es die einzige Spur"
+
+
+def test_die_ifc_naht_kommt_auch_ohne_lesbaren_report_zurecht():
+    """Die Gegenprobe: Ohne JSON auf stdout bleibt stderr die beste Quelle.
+
+    Ohne sie waere «lies immer den Report» auch dann gruen, wenn es gar keinen gibt — und
+    die Meldung waere leer statt roh.
+    """
+    aufrufer = Aufrufer(Ergebnis(returncode=1, stdout="", stderr="Segmentation fault"))
+
+    with pytest.raises(SeamError, match="Segmentation fault"):
+        seams.ifc_zu_glb("bau.ifc", "raus.glb", _starte=aufrufer)
+
+
+def test_blender_zeigt_seinen_eigenen_report_statt_nur_sein_rauschen(tmp_path, blender_attrappe):
+    """Derselbe Befund eine Ebene hoeher, nachgetragen am 19.09.2026.
+
+    `blender_depth_stage` schreibt `blender-report.json` mit dem Feld `error` **auch wenn
+    es scheitert**, und meldet den Fehlschlag danach ueber den Rueckgabewert 1. Die Naht
+    zeigte bis hierher nur die letzten 1500 Zeichen Blender-Ausgabe — und der eine Satz,
+    der die Ursache nennt, lag ungelesen in der Datei daneben.
+
+    Blender laeuft in dieser Umgebung nicht; nachgestellt wird darum die Lage, nicht der
+    Lauf: ein Aufrufer, der den Report schreibt und dann 1 zurueckgibt.
+    """
+    ziel = tmp_path / "raus"
+
+    def schreibt_report(cmd):
+        ziel.mkdir(parents=True, exist_ok=True)
+        (ziel / "blender-report.json").write_text(
+            json.dumps({"status": "error",
+                        "error": "Kamera ausserhalb der Szene — kein Bauwerk im Bild"}),
+            encoding="utf-8")
+
+    aufrufer = Aufrufer(Ergebnis(returncode=1, stderr="Blender quit\n" * 200),
+                        nebenwirkung=schreibt_report)
+
+    with pytest.raises(SeamError) as fehler:
+        glb_zu_tiefenkarte("bau.glb", ziel, up_axis="Y", _starte=aufrufer)
+
+    assert "Kamera ausserhalb der Szene" in str(fehler.value), \
+        "der Report lag daneben und wurde nicht gelesen — genau das war der Befund"
+
+
+def test_ein_fehlender_report_wird_nicht_zur_leeren_meldung(tmp_path, blender_attrappe):
+    """Die Gegenprobe dazu: Gibt es keinen Report, bleibt die rohe Ausgabe uebrig.
+
+    Ohne sie koennte `_fehlertext` still eine leere Zeichenkette liefern, und die Meldung
+    saehe aus wie «gescheitert, Grund unbekannt» — obwohl der Grund auf stderr steht.
+    """
+    aufrufer = Aufrufer(Ergebnis(returncode=1, stderr="Cycles: out of memory"))
+
+    with pytest.raises(SeamError, match="out of memory"):
+        glb_zu_tiefenkarte("bau.glb", tmp_path / "raus", up_axis="Y", _starte=aufrufer)
+
+
 def test_tiefenkarte_meldet_fehlenden_report_als_seamerror(tmp_path, blender_attrappe):
     """Sauberes Ende ohne Report heisst trotzdem gescheitert — Blender kann 0 melden und
     am Compositor scheitern. Beide Bedingungen sind notwendig, keine genuegt allein."""

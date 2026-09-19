@@ -5635,3 +5635,63 @@ Bekannt und ausdrücklich nicht erledigt:
       er meldet — und er hat gemeldet. Die Folge daraus ist nicht, die Zählung zu
       entschärfen, sondern **heute keinen weiteren Messauftrag an `local` zu stellen.**
       *Adressat: `kern`, und die Handlung ist ein Unterlassen.*
+
+---
+
+## Sitzung 29 — 19.09.2026 · Der Importer, bevor er gebaut wird
+
+> **Entschieden:** Erst messen, was der Import heute tut, dann bauen. Und die billigste
+> Reparatur zuerst: Sie lag seit dem 22.08.2026 zwanzig Zeilen tiefer in derselben Datei.
+> **Gemessen:** Eine falsche Datei — beschädigte IFC, umbenannte JPG, `.skp` — beantwortet
+> der Import **immer mit demselben fremden Stacktrace**. Die brauchbare Diagnose existiert
+> und wurde verworfen. Der IFC-Eingang prüft **weder Existenz noch Endung noch Inhalt**.
+> **Offen:** Es gibt keine Funktion «sag mir, ob diese Datei brauchbar ist». Die Bausteine
+> dafür liegen fertig da — und haben **null Produktivaufrufer**.
+
+- [x] **Bestandsaufnahme des Importwegs, gemessen statt geschätzt.** Neunzehn Eintritts-
+      stellen gefunden, an denen der Kern eine Modelldatei entgegennimmt. **Genau zwei**
+      sehen in die Datei hinein, bevor gerechnet wird.
+- [x] **Behoben: Die einzige brauchbare Fehlermeldung wurde verworfen.**
+      `seams.ifc_zu_glb` baute seine Meldung als `(stderr or stdout)`. Bei ifcopenshell
+      0.8.5 ist `stderr` **nie leer** — die Bibliothek hinterlässt beim Herunterfahren
+      eine Destruktor-Meldung, die mit der Ursache nichts zu tun hat. Also gewann immer
+      das Rauschen::
+
+          stdout   {"error": "Error: Unable to parse IFC SPF header"}   ← verworfen
+          stderr   Exception ignored in: <function file.__del__ …>      ← gezeigt
+                   KeyError: 404872384
+
+      **Die Reparatur lag seit dem 22.08.2026 zwanzig Zeilen tiefer.** `_fehlertext` ist
+      genau dafür gebaut, ihr Docstring beschreibt diesen Fall wörtlich, und die
+      Nachbarfunktion `ifc_raeume` benutzt sie. `ifc_zu_glb` ist beim Nachziehen übersehen
+      worden — und weil der Fehlerweg nur im Fehlerfall läuft, fiel es **dreissig Tage**
+      niemandem auf. *Eine Reparatur, die nur an einer von zwei gleichen Stellen sitzt,
+      ist eine halbe.*
+- [x] **Derselbe Befund eine Ebene höher, mitbehoben.** `blender_depth_stage` schreibt
+      `blender-report.json` mit dem Feld `error` **auch wenn es scheitert**. Die Naht
+      zeigte nur die letzten 1500 Zeichen Blender-Rauschen; der Satz, der die Ursache
+      nennt, lag ungelesen in der Datei daneben. `_fehlertext` nimmt jetzt einen
+      Dateireport entgegen. Vier Proben, drei Mutationen — alle drei fallen, auch die
+      Gegenprobe «ohne Report bleibt die rohe Ausgabe übrig».
+- [~] **Offen, und es ist der eigentliche Bau: der Vorab-Blick auf das Modell.**
+      Heute beantwortet **kein** Aufruf die Frage *«ist diese Datei brauchbar?»*, bevor
+      die teuren Stufen laufen. Gemessen:
+      * Der IFC-Eingang prüft **gar nichts** — nicht Existenz, nicht Endung, nicht Inhalt.
+      * `.skp`, `.3dm`, `.dwg` haben **keinen eigenen Satz** und laufen als kaputte IFC
+        ins Leere. Nur eine einzige Stelle nennt ein Format beim Namen, und nur wenn das
+        Feld `format` gesetzt ist; fehlt es, geht der Pfad **still durch**.
+      * Ein Brückenauftrag mit einer JPG als `model.glb` kommt mit **null Mängeln** durch.
+      * Es gibt **keine Grössengrenze**. Nirgends.
+      **Und die Bausteine liegen fertig da:** `herkunft.deute` (Format am Inhalt,
+      Einheitenzeile, belegte Hochachse) hat **null Produktivaufrufer**;
+      `herkunft.pruefe_einheit_gegen_masse` macht aus dem Massstabs-*Verdacht* eine
+      *Diagnose* und hat **null Aufrufer**; `glbbox.bauwerksbox` rechnet Hüllbox und
+      Geländetrennung in 0,0013 s, läuft aber erst **nach** der Konversion.
+      *Der Prototyp misst besser, als er prüft.* **Adressat: `kern`.**
+- [~] **Offen: Die Hochachse wird auf dem Produktivweg geraten, und die falsche Angabe
+      fällt nirgends auf.** `contracts.normalize_up_axis` liest **den ersten Buchstaben** —
+      `up_axis="Zeichnung"` dreht das Gebäude, ohne dass etwas rot wird. Eine Gegenprobe
+      an der Geometrie gibt es nicht. *Das ist die Stelle, an der das Haus auf der Seite
+      liegt: Tiefenkarte, Kamera und Geometrie-QA sind dann **gemeinsam** verdreht und
+      darum in sich stimmig — der Fehlschlag sieht wie ein Erfolg aus.* **Adressat:
+      `kern`.**
