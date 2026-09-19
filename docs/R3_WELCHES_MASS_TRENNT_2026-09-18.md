@@ -1,8 +1,24 @@
 # R3 — Welches Mass trennt? Die Antwort ist: **zwei, und sie beantworten verschiedene Fragen**
 
 **Grundlage:** `geometrie_qa`, `tiefenschaetzer`
-**Nachgesehen bis:** 6c69a45
+**Nachgesehen bis:** `38c740f` — am 19.09.2026, jede Zahl unten neu an
+`auftraege/ergebnisse/auf-20260909-92-tabelle.json` nachgerechnet. **Alle Zahlen stimmen.
+Die Aussage zu Frage A nicht mehr ganz** — siehe «Nachtrag 19.09.2026».
+
+*Der zweite Anlauf derselben Durchsicht:* Die erste ging bis `889296e`; danach hat
+`geometrie_qa` sich noch einmal geändert, und das Werkzeug meldete das Dokument sofort
+wieder. **Geprüft, und es berührt hier nichts:** Die Änderung trägt einen Befund an
+`PAAR_RHO_SCHWELLE` nach — eine **andere, ältere** Schwelle, die zum Paarurteil gehört und
+in diesem Dokument nicht vorkommt. Keine Zahl unten hängt an ihr. *Eine Meldung, die man
+prüft und dann als unbeachtlich abschreibt, ist keine übergangene Meldung — sie ist eine
+beantwortete.*
 **Codestand:** `6c69a45`
+
+> **Formfehler, mitberichtigt:** Hier stand `**Nachgesehen bis:** 6c69a45` **ohne
+> Grave-Akzente**. `aiimaging.beruehrung.nachgesehen_aus_dokument` sucht den Commit
+> zwischen Akzenten — die Zeile war also da, wirkte aber nicht, und das Werkzeug fiel auf
+> den Codestand zurück. Hier zufällig derselbe Commit, also folgenlos; bei einem späteren
+> Nachsehen wäre die geleistete Arbeit stillschweigend verfallen.
 
 > **Risiko R3 aus `PLAN_BIS_FEBRUAR_2027.md`:** *«Trennt `rho_maske` auch nicht? Dann hat
 > die Forschungsfrage keine Antwort.»* — Gemessen am 18.09.2026 an den Daten von
@@ -43,6 +59,43 @@ Sie fällt auf **−0,009** — also exakt null —, wenn das Bild dem Modell ni
 Müllbildern durchgingen.
 
 > *`rho_maske` ist die einzige der drei, die **auf Müll auch wie Müll aussieht.***
+
+#### Nachtrag 19.09.2026 · Sie sieht mindestens einmal auch auf ein **brauchbares** Bild wie auf Müll
+
+**Keine Zahl oben ist falsch. Das Wort «und nur sie» ist zu stark.**
+
+Dieser Abschnitt stützt sich auf zwei Reihen desselben Laufs — Stärke 1,00 und 0,30. Die
+**mittlere** Reihe war nicht ausgewertet. Nachgeholt am 19.09.2026, alle drei Reihen von
+`auf-20260909-92-tabelle.json` nebeneinander:
+
+| ControlNet-Stärke | `rho_maske` | `geom_iou` |
+|---|---|---|
+| 1,00 | +0,1437 … +0,9931 | 0,9257 … 0,9784 |
+| **0,75** | **−0,1549** … +0,9961 | **0,9119** … 0,9845 |
+| 0,30 (Rauschband) | −0,0473 … +0,0554 | 0,6037 … 0,8579 |
+
+Ein einzelnes Bild bei Stärke 0,75 — Fall C, Szene `gebaeude`, Startwert 2 — liegt auf
+`rho_maske` bei **−0,1549** und damit **unter dem ganzen Rauschband**, also niedriger als
+jedes der zwölf Müllbilder. Seine Silhouette sitzt dabei sauber: `geom_iou` **0,9119**,
+nahe am besten Wert der 1,00-Reihe.
+
+**Was das heisst — und was ausdrücklich nicht:**
+
+* Es heisst: `rho_maske` misst bei Stärke 0,75 mindestens einmal **etwas anderes** als bei
+  1,00. Zwischen den beiden **Randreihen** ist die Ordnung sauber — paarweise fällt
+  `rho_maske` von 1,00 auf 0,30 in **12 von 12** Fällen. Zwischen 1,00 und 0,75 tut sie es
+  in **7 von 12**, `geom_iou` in 5 von 12. *In der Mitte gibt es keine Ordnung, nur
+  Streuung* — und für eine Schwelle ist die Mitte genau der Bereich, der zählt.
+* Es heisst **nicht**, dass `rho_maske` für Frage A untauglich wäre. Ob das Bild bei 0,75
+  dem Modell wirklich weniger folgt, oder ob `rho_maske` dort versagt, während die
+  Silhouette noch trägt, ist mit zwölf Bildern **nicht entscheidbar** — es fehlt die
+  Gegenprobe gegen fremde Geometrie für die 0,75-Reihe.
+* Für die **Schwelle** ist es ein **Fehlalarm**, kein Durchlasser: ein brauchbares Bild
+  wird abgewiesen. Das ist die Richtung, in die ein Riegel danebenliegen soll.
+
+*Der alte Stand dieses Abschnitts bleibt oben stehen, weil er die Reihen 1,00 und 0,30
+richtig beschreibt. Ergänzt ist nur, was die dritte Reihe dazu sagt — und die lag im
+selben Verzeichnis, genau wie die Tabelle, die am 18.09. den ersten Fehler entlarvt hat.*
 
 ### Frage B · Folgt es **diesem** Modell und nicht einem anderen?
 
@@ -102,6 +155,22 @@ null ist.
    Fehler überhaupt sichtbar gemacht hat, und sie kostet einen zweiten Durchlauf derselben
    Messung.
 
+**Stand 19.09.2026 — was davon steht, und wo es abweicht.** Punkt 1 und 3 sind gebaut:
+`aiimaging.geometrie_qa.zwei_tore` verbindet beide Tore mit einem Und und wertet die
+Gegenprobe aus. Eine Berichtigung kam am 18.09. dazu und schärft Punkt 3:
+
+> Ist die Gegenprobe **unvollständig** — fehlt von der fremden Geometrie eine der beiden
+> Zahlen —, meldet die Funktion `trennt = None` statt `True`. Vorher wurde aus einer
+> **fehlenden** Messung eine **positive** Aussage: «gegen fremde Geometrie fällt sie
+> durch». Genau der Fehler, gegen den dieses Dokument geschrieben ist, und er stand in
+> seinem Herzstück. *Eine halbe Gegenprobe ist keine Trennung.*
+
+Punkt 2 dagegen steht **anders als hier geschrieben**: Die Schwelle 0,65 ist nicht
+gefallen, sondern **daneben stehen geblieben**. `geometrie_gate` rechnet unverändert
+weiter, weil jede bisher veröffentlichte Zahl dieses Projekts mit ihr entstanden ist und
+nachbaubar bleiben muss. Die zwei Tore sind der Weg nach vorn, nicht eine Berichtigung
+nach hinten. *«Fällt» hiess gemeint: fällt als **Urteil**. Als Rechenweg bleibt sie.*
+
 > **Ohne Gegenprobe gegen eine fremde Geometrie ist keine Geometriekennzahl etwas wert.**
 > Das gilt über dieses Projekt hinaus und ist das erste Ergebnis, das die Arbeit tragen
 > kann.
@@ -119,6 +188,11 @@ null ist.
 * **Ein Bildmodell, eine Maschine.** Alles auf `z-image-turbo` und auf der HomeStation.
 * **Die Gegenprobe lief bei Stärke 1,00.** Ob `geom_iou` auch bei 0,75 noch trennt, ist
   nicht ausgewertet.
+* **Und dasselbe gilt für `rho_maske` — dort ist es dringender** *(ergänzt 19.09.2026)*.
+  Bei Stärke 0,75 liegt ein Bild mit sauberer Silhouette auf `rho_maske` unter dem
+  Rauschband. Ohne Gegenprobe für diese Reihe lässt sich nicht sagen, ob die Zahl recht
+  hat oder danebenliegt. Der Messauftrag dazu liegt bei der HomeStation
+  (`auf-20260918-115`). Siehe «Nachtrag 19.09.2026» oben.
 
 **Die nächste Messung folgt daraus von selbst:** dieselbe Gegenprobe mit **ähnlichen**
 Gebäuden statt zweier offensichtlich verschiedener. Wenn `geom_iou` dort nicht mehr trennt,

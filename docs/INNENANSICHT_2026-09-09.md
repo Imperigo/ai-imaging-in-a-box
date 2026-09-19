@@ -7,7 +7,9 @@
 
 **Grundlage:** `bildlesen`, `raumkamera`, `seams` — abgelesen an den Importen von `tools/studie_innenansicht.py`, dem Skript, das dieses Dokument nachbaubar macht. Nachgetragen am 09.09.2026, weil sie hier feststellbar war und nicht geraten werden musste.
 
-**Nachgesehen bis:** `4c804e9` — am 09.09.2026 mit `python tools/beruehrung.py`. Gemeldet war `seams`, geändert in `b7a53d8`: die **Anlauffrist** der Prozesswache. Sie betrifft, wie lange auf das erste Zeichen gewartet wird, nicht das Gerechnete. *Die Zahlen unten stehen unverändert.* — Genau dafür ist die Meldung da: Sie sagt «ansehen», nicht «falsch».
+**Nachgesehen bis:** `889296e` — am 19.09.2026 mit `python tools/beruehrung.py`. Gemeldet war wieder `seams`, geändert in `46b2acc` und `afa1bc9`. *Die Zahlen unten stehen unverändert.* Der Prüfweg steht unter «Zweite Durchsicht» am Fuss dieses Dokuments — **samt dem, was dabei nicht ging.**
+
+*Zuvor nachgesehen bis `4c804e9`* — am 09.09.2026. Gemeldet war `seams`, geändert in `b7a53d8`: die **Anlauffrist** der Prozesswache. Sie betrifft, wie lange auf das erste Zeichen gewartet wird, nicht das Gerechnete. — Genau dafür ist die Meldung da: Sie sagt «ansehen», nicht «falsch».
 
 ---
 
@@ -166,3 +168,42 @@ python tools/studie_innenansicht.py --json
 
 Die Zahlen oben stammen aus dem Lauf mit den Vorgabewerten. *Eine Zahl, die in einem
 Dokument steht und nicht nachgebaut werden kann, ist eine Behauptung.*
+
+---
+
+## Zweite Durchsicht · 19.09.2026 — und was dabei nicht ging
+
+`tools/beruehrung.py` meldete dieses Dokument erneut: `seams` hat sich seit `4c804e9`
+geändert, und `seams` steht in seiner Grundlage. Nachgesehen wurde bis `889296e`.
+
+**Was sich in `seams` geändert hat** (`46b2acc`, `afa1bc9`) — alles drei betrifft
+**Fristen**, nicht das Gerechnete:
+
+1. **Zeitgrenzen nach Maschine.** Neu sind `zeitfaktor()`, `ZEITFAKTOR_ENV`,
+   `GESAMTFRIST_IFC_S` und `anlauf_frist_s()`. Ohne gesetzte Umgebungsvariable ist der
+   Faktor **1,0**, und dann kommt jede Frist unverändert zurück — nachgerechnet:
+   `ANLAUF_S` 60,0 → `anlauf_frist_s()` 60,0; `TAKT_S` 2,0 unverändert.
+2. **`timeout=None` wird bei den IFC-Läufen abgewiesen.** Die Studie übergibt dort nichts
+   und bekommt die Vorgabe — vorher 300 s, heute `GESAMTFRIST_IFC_S` = 300 s. Dieselbe
+   Zahl.
+3. **Eine Fehlerbehebung an der Tiefen-Nachbearbeitung.** Sie bekommt nicht mehr die
+   Prozesswache des Renderlaufs. Das ändert, ob ein **Tiefen-PNG** entsteht — und nur
+   das.
+
+**Warum Punkt 3 die Zahlen oben nicht berührt.** Die vier Kennzahlen je Fall liest
+`tools/studie_innenansicht.py` über `bildlesen.tiefen_aus_report`, und das nimmt die
+**EXR** vor dem PNG (`QUELLE_AUTO`). Die EXR schreibt der Renderlauf selbst.
+`bildlesen` hat sich seit `4c804e9` nicht geändert, `raumkamera` auch nicht, und die
+Renderskripte unter `src/aiimaging/runners/` sind unverändert — von dort kommen sowohl die
+Tiefenkarte als auch der **50-mm-Rückfall**, um den es in Befund 2 geht.
+
+**Und jetzt der Vorbehalt, und er gehört in dieselbe Zeile wie das Ergebnis:**
+
+> **Nachgerechnet wurde am Code, nicht nachgemessen.** Auf der Maschine, auf der diese
+> Durchsicht lief, gibt es kein Blender und kein `.venv-ifc` mit Inhalt —
+> `tools/studie_innenansicht.py` konnte **nicht** erneut gefahren werden. Was hier steht,
+> ist ein Beleg über den *Rechenweg*, kein zweiter Messwert.
+
+*Das ist schwächer als ein Nachlauf, und es wäre falsch, es stärker zu schreiben.* Ein
+erneuter Lauf an der HomeStation würde aus diesem Absatz eine Messung machen; bis dahin
+bleibt er eine begründete Auskunft darüber, dass sich am Rechenweg nichts bewegt hat.
