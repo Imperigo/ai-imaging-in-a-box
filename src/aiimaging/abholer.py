@@ -675,6 +675,51 @@ MASKENWEG_FOLGE = (
     "auf-20260821-26).")
 
 
+#: Ab wie wenig freiem Rest der Kurzbefund einen vollen Ladeweg als **knapp** meldet.
+#:
+#: **Eine Setzung, und sie steht hier, damit sie als Setzung erkennbar bleibt.** Gemessen
+#: ist der Anlass, nicht die Grenze: Am 21.09.2026 (`auf-20260919-123`) wurde ein Lauf mit
+#: 5 GiB Luft auf den Auslagerungsweg geschickt, weil die Bedarfsrechnung die
+#: Aktivierungen zweimal zaehlte. Seit der Korrektur waehlt dieselbe Lage den vollen Weg —
+#: und damit gibt es erstmals den umgekehrten Fehlerfall, dass der volle Weg zu knapp
+#: gewaehlt wird.
+#:
+#: 2 GiB, weil die drei Messungen desselben Modells 22,89 … 25,1 GiB auseinanderliegen —
+#: rund 2,2 GiB. Wer weniger Rest hat als die bekannte Schwankung desselben Modells, hat
+#: keinen Puffer, sondern Glueck gehabt.
+KNAPPER_SPIELRAUM_BYTE = 2 * 2**30
+
+
+def _ist_knapp(bedarf: dict | None) -> bool:
+    """War der volle Ladeweg knapp gewaehlt? ``None`` und Unbekanntes heissen **nein**.
+
+    Nicht aus Bequemlichkeit: Eine Warnung aus einer Zahl, die es nicht gibt, ist ein
+    Fehlalarm, und Fehlalarme sind das, woran ein Kurzbefund stirbt. Wo nichts gemessen
+    ist, wird nichts behauptet — *die dritte Antwort, angewandt auf eine Warnung.*
+    """
+    if not isinstance(bedarf, dict):
+        return False
+    spielraum = bedarf.get("spielraum_byte")
+    if not isinstance(spielraum, (int, float)):
+        return False
+    return 0 <= spielraum < KNAPPER_SPIELRAUM_BYTE
+
+
+def _bedarfszusatz(kameras: list) -> str:
+    """Die Zahlen, mit denen der Auslagerungsweg gewaehlt wurde — oder nichts.
+
+    *Eine Entscheidung, deren Eingangszahlen nirgends stehen, ist von aussen nicht von
+    einer Eigenschaft der Maschine zu unterscheiden.* Genau daran hat sich
+    `auf-20260919-123` drei Wochen lang aufgehalten: Der Kurzbefund sagte, der freie
+    Kartenspeicher habe entschieden — er sagte nicht, gegen welche Zahl.
+    """
+    for kamera in kameras:
+        bedarf = (kamera.get("geraeteweg") or {}).get("bedarf")
+        if isinstance(bedarf, dict) and bedarf.get("grund"):
+            return f". {bedarf['grund']}"
+    return ""
+
+
 def _paarzeile(kamera: dict) -> str:
     """Ein gemessenes Paarurteil in einem Atemzug: ``s rho +0.7713/Anteil +0.2132``.
 
@@ -1185,7 +1230,22 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
         zeilen.append(f"Bildmodell lief auf {', '.join(str(g) for g in langsam)} — nicht "
                       f"ganz auf der Karte. Das erklaert Laufzeit, nicht Qualitaet; "
                       f"entschieden hat der FREIE Kartenspeicher, nicht der Code "
-                      f"(auf-vis-20260825-15, Posten 4)")
+                      f"(auf-vis-20260825-15, Posten 4)"
+                      + _bedarfszusatz(kameras))
+
+    # Und die Gegenrichtung, die bis zum 21.09.2026 GAR NICHT gemeldet wurde: Der volle
+    # Weg kann knapp gewaehlt worden sein. Ein Lauf, der mit 200 MiB Luft auf die Karte
+    # kam, ist nicht gesund — er hatte Glueck, und beim naechsten Bild in groesserer
+    # Aufloesung hat er es nicht mehr. *Kein Abzeichen sieht aus wie kein Problem.*
+    knapp = sorted({k.get("kamera") for k in kameras
+                    if (k.get("geraeteweg") or {}).get("geraet") == "cuda"
+                    and _ist_knapp((k.get("geraeteweg") or {}).get("bedarf"))})
+    if knapp:
+        zeilen.append(f"Voll auf der Karte, aber KNAPP bei "
+                      f"{', '.join(str(k) for k in knapp)} — unter "
+                      f"{KNAPPER_SPIELRAUM_BYTE // 2**30} GiB Luft. Die gemessene Spitze "
+                      f"stammt von 512 x 512; ein groesseres Bild braucht mehr, und um "
+                      f"wie viel mehr, ist NICHT gemessen (auf-20260919-123)")
 
     # Und wenn die Entflechtung nicht durchgriff, steht es hier — VOR dem Lauf, der
     # daran stirbt. Bis zum 26.08.2026 hiess dieser Fall «Expected all tensors to be on

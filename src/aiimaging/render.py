@@ -813,19 +813,14 @@ def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None):
         pipeline = DiffusionPipeline.from_pretrained(str(wurzel), torch_dtype=torch.bfloat16)
         weg = None
 
-    erwartet = None
-    if eintrag.vram_gb:
-        # Die Registry trägt für dieses Backbone eine GEMESSENE Zahl; die Platte trägt
-        # eine irreführende (s. `_lege_auf_geraet`). Die grösste Einzelkomponente wird
-        # als Hälfte der Summe angesetzt — grob, aber auf der sicheren Seite: sie ist
-        # nie grösser, und ein zu grosser Wert wählt höchstens den langsameren Weg.
-        summe = int(eintrag.vram_gb * 2**30)
-        erwartet = (summe, summe // 2)
-    geraet, entflechtung = _lege_auf_geraet(pipeline, wurzel, torch, erwartet=erwartet)
+    erwartet = _erwarteter_bedarf(eintrag)
+    geraet, entflechtung, bedarf = _lege_auf_geraet(
+        pipeline, wurzel, torch, erwartet=erwartet)
 
     modell = _pipeline_adapter(pipeline, eintrag, torch, schrittzaehler=schrittzaehler)
     modell.geraet = geraet
     modell.entflechtung = entflechtung
+    modell.bedarf = bedarf
     if weg:
         modell.ladeweg = weg
     return modell
@@ -879,12 +874,38 @@ def _lade_mit_controlnet(eintrag, wurzel, torch):
     return pipeline, f"ZImageControlNetPipeline + from_single_file({dateien[0].name})"
 
 
-#: Vielfaches der Gewichtsgrösse, das frei sein muss, damit das ganze Modell auf der Karte
-#: bleiben darf. Gemessen auf der HomeStation (`auf-20260818-09`): Qwen-Image-Edit-2511 in
-#: bfloat16 belegt 29,57 GiB auf einer Karte mit 31,36 GiB nutzbar — voll geladen, und dann
-#: scheitert die Bilderzeugung an einer Anforderung von **18 MiB**. Die Gewichte passen also,
-#: die Aktivierungen nicht mehr. Der Zuschlag deckt genau diese Differenz ab.
+#: Vielfaches der **Plattengrösse**, das frei sein muss, damit das ganze Modell auf der
+#: Karte bleiben darf. Gemessen auf der HomeStation (`auf-20260818-09`):
+#: Qwen-Image-Edit-2511 in bfloat16 belegt 29,57 GiB auf einer Karte mit 31,36 GiB
+#: nutzbar — voll geladen, und dann scheitert die Bilderzeugung an einer Anforderung von
+#: **18 MiB**. Die Gewichte passen also, die Aktivierungen nicht mehr. Der Zuschlag deckt
+#: genau diese Differenz ab: von den Gewichten zum Laufzeitbedarf.
 GERAETE_ZUSCHLAG = 1.25
+
+#: Vielfaches einer **gemessenen Spitze**, das frei sein muss. Deutlich kleiner, und das
+#: ist der ganze Punkt.
+#:
+#: **Anlass, und er ist gemessen** (`auf-20260919-123`, HomeStation, 21.09.2026): Der
+#: Vorgabe-Backbone lief auf der Werkstattmaschine **überhaupt nicht mehr**. Frei waren
+#: 30 717 MiB, gemessen gebraucht hatte derselbe Lauf 25 671 MiB — er passte mit über
+#: 5 GiB Luft. Verlangt wurden trotzdem 32 128 MiB, also wurde ausgelagert, und der
+#: Auslagerungsweg starb an einem Gerätekonflikt.
+#:
+#: **Der Fehler war nicht die Zahl, sondern der Zuschlag darauf.** ``GERAETE_ZUSCHLAG``
+#: führt von der *Gewichtsgrösse* zum *Laufzeitbedarf* — er bezahlt die Aktivierungen.
+#: ``vram_gb`` aus der Registry ist aber bereits eine **Spitze im Betrieb**, Aktivierungen
+#: eingeschlossen. Beides zu multiplizieren zählt dieselbe Sache zweimal.
+#:
+#: **Warum trotzdem nicht 1,0:** Dieselbe Spitze schwankt mit den Bedingungen. Für
+#: ``z-image-turbo`` liegen drei Messungen vor — 22,89 / 23,4 / 25,1 GiB —, das sind
+#: **9,7 %** zwischen der kleinsten und der grössten. Die Registry trägt bereits die
+#: grösste; dieser Zuschlag deckt eine weitere Bedingungsänderung derselben Grösse ab.
+#:
+#: **Was er NICHT abdeckt, und das steht hier, damit es niemand für abgedeckt hält:**
+#: Alle drei Messungen sind bei 512 x 512 entstanden. Ein deutlich grösseres Bild
+#: braucht mehr Aktivierungen, und um wie viel mehr, ist nicht gemessen. Der Spielraum
+#: einer Entscheidung steht darum in jedem Ergebnis (`geraeteweg.bedarf`).
+MESSUNG_ZUSCHLAG = 1.10
 
 
 def _gewichte_byte(wurzel) -> tuple[int, int]:
@@ -1005,6 +1026,64 @@ def _entflechte_controlnet(pipeline) -> dict:
             "nachher": nachher, "grund": grund}
 
 
+def _erwarteter_bedarf(eintrag) -> tuple[int, int] | None:
+    """Der Bedarf aus der **Registry**, oder ``None``, wenn dort keine Messung steht.
+
+    Die Registry trägt für manche Backbones eine GEMESSENE Spitze; die Platte trägt eine
+    irreführende Zahl (s. :func:`_lege_auf_geraet`). Die grösste Einzelkomponente wird als
+    Hälfte der Summe angesetzt — grob, aber auf der sicheren Seite: sie ist nie grösser,
+    und ein zu grosser Wert wählt höchstens den langsameren Weg.
+
+    **Eigene Funktion seit dem 21.09.2026**, und zwar damit eine Probe sie rufen kann.
+    Solange die Rechnung mitten in :func:`lade_modell` stand, liess sich die eine Frage,
+    an der `auf-20260919-123` hing — *wählt der Vorgabe-Backbone auf dieser Karte den
+    vollen Weg?* — nur beantworten, indem man sie in der Probe nachbaute. *Eine Probe, die
+    die geprüfte Rechnung nachbaut, prüft ihre eigene Kopie.*
+    """
+    if not getattr(eintrag, "vram_gb", None):
+        return None
+    summe = int(eintrag.vram_gb * 2**30)
+    return summe, summe // 2
+
+
+#: Woher die Zahl stammt, mit der über den Ladeweg entschieden wurde. Drei Werte, weil es
+#: drei Lagen gibt — und die dritte ist nicht «null», sondern **unbekannt**.
+QUELLE_MESSUNG = "gemessene Spitze (Registry)"
+QUELLE_PLATTE = "Groesse der Gewichtsdateien auf der Platte"
+QUELLE_KEINE = "nicht bestimmbar"
+
+
+def _bedarfsbericht(*, quelle, summe, groesster, zuschlag, frei, grund="") -> dict:
+    """Mit welcher Zahl und mit wie viel Spielraum der Ladeweg entschieden wurde.
+
+    **Der Anlass ist ein Lauf, der drei Wochen lang falsch entschied, ohne es zu sagen**
+    (`auf-20260919-123`): Frei 30 717 MiB, wirklich gebraucht 25 671 MiB, verlangt
+    32 128 MiB. Aus dem Ergebnis war keine dieser drei Zahlen zu lesen — nur der gewählte
+    Weg, und der sah aus wie eine Eigenschaft der Maschine statt wie eine Rechnung.
+
+    *Eine Entscheidung, deren Eingangszahlen nirgends stehen, ist von aussen nicht von
+    einer Eigenschaft der Maschine zu unterscheiden.*
+
+    ``spielraum_byte`` ist ``frei - verlangt``. **Negativ heisst ausgelagert**, und je
+    näher an null, desto knapper war es — genau die Zahl, an der sich später ablesen
+    lässt, ob ein Zuschlag getroffen hat oder bloss Glück hatte.
+
+    Returns:
+        ``{quelle, summe_byte, groesster_byte, zuschlag, verlangt_byte, frei_byte,
+        spielraum_byte, grund}``. Jedes Feld darf ``None`` sein und heisst dann
+        **unbekannt** — nie null.
+    """
+    verlangt = int(summe * zuschlag) if (summe and zuschlag) else None
+    spielraum = (frei - verlangt) if (verlangt is not None and frei is not None) else None
+    if not grund:
+        grund = (f"Entschieden an {quelle}: {summe / 2**20:.0f} MiB x {zuschlag} = "
+                 f"{verlangt / 2**20:.0f} MiB verlangt, {frei / 2**20:.0f} MiB frei."
+                 if verlangt is not None and frei is not None else "")
+    return {"quelle": quelle, "summe_byte": summe, "groesster_byte": groesster,
+            "zuschlag": zuschlag, "verlangt_byte": verlangt, "frei_byte": frei,
+            "spielraum_byte": spielraum, "grund": grund}
+
+
 def _lege_auf_geraet(pipeline, wurzel, torch, *, erwartet=None) -> tuple[str, dict | None]:
     """Modell auf die Karte legen — ganz, komponentenweise, schichtweise, oder gar nicht.
 
@@ -1036,42 +1115,63 @@ def _lege_auf_geraet(pipeline, wurzel, torch, *, erwartet=None) -> tuple[str, di
     scheitert ebenfalls — weil der Transformer mit 38 GiB grösser ist als die Karte.
     Erst Stufe 3 trägt. Wer nur die Summe prüft, wählt Stufe 2 und scheitert erneut.
 
+    **Der Zuschlag hängt daran, WOHER die Zahl kommt** (Befund `auf-20260919-123`): Eine
+    Plattengrösse ist noch kein Laufzeitbedarf und bekommt ``GERAETE_ZUSCHLAG``; eine
+    gemessene Spitze *ist* der Laufzeitbedarf und bekommt nur ``MESSUNG_ZUSCHLAG``. Wer
+    beide gleich behandelt, zählt die Aktivierungen zweimal — und schickt einen Lauf, der
+    mit 5 GiB Luft auf die Karte passt, auf den Auslagerungsweg.
+
     Returns:
-        ``(weg, entflechtung)``. ``entflechtung`` ist ``None`` auf den beiden Wegen, die
-        **nicht** auslagern — dort wird :func:`_entflechte_controlnet` bewusst nicht
-        gerufen, weil seine 1,35 GiB einen gesunden Lauf erst in die Auslagerung drängen
-        könnten. ``None`` heisst hier also *nicht nötig gewesen*, und der Grund steht in
-        dieser Zeile.
+        ``(weg, entflechtung, bedarf)``. ``entflechtung`` ist ``None`` auf den beiden
+        Wegen, die **nicht** auslagern — dort wird :func:`_entflechte_controlnet` bewusst
+        nicht gerufen, weil seine 1,35 GiB einen gesunden Lauf erst in die Auslagerung
+        drängen könnten. ``None`` heisst hier also *nicht nötig gewesen*, und der Grund
+        steht in dieser Zeile. ``bedarf`` sagt, mit welcher Zahl und mit wie viel
+        Spielraum entschieden wurde — siehe :func:`_bedarfsbericht`.
     """
     if not torch.cuda.is_available():
         pipeline.to("cpu")
-        return "cpu", None
+        return "cpu", None, _bedarfsbericht(
+            quelle=QUELLE_KEINE, summe=None, groesster=None, zuschlag=None, frei=None,
+            grund="Keine CUDA-Karte sichtbar — es gab nichts zu entscheiden.")
 
     frei, _gesamt = torch.cuda.mem_get_info()
-    summe, groesster = _gewichte_byte(wurzel) if erwartet is None else erwartet
+    if erwartet is None:
+        summe, groesster = _gewichte_byte(wurzel)
+        quelle, zuschlag = QUELLE_PLATTE, GERAETE_ZUSCHLAG
+    else:
+        summe, groesster = erwartet
+        quelle, zuschlag = QUELLE_MESSUNG, MESSUNG_ZUSCHLAG
 
     if not summe:                                  # nichts messbar: wie bisher verfahren
         pipeline.to("cuda")
-        return "cuda", None
+        return "cuda", None, _bedarfsbericht(
+            quelle=QUELLE_KEINE, summe=None, groesster=None, zuschlag=None, frei=frei,
+            grund=("Der Bedarf liess sich nicht bestimmen. Dann wird der volle Weg "
+                   "gewaehlt — UNBEKANNT ist kein Grund zum Auslagern, und der volle Weg "
+                   "meldet sein Scheitern wenigstens sofort."))
 
-    if frei >= summe * GERAETE_ZUSCHLAG:
+    bericht = _bedarfsbericht(quelle=quelle, summe=summe, groesster=groesster,
+                              zuschlag=zuschlag, frei=frei)
+
+    if frei >= summe * zuschlag:
         pipeline.to("cuda")
-        return "cuda", None
+        return "cuda", None, bericht
 
     # Ab hier wird ausgelagert — und erst ab hier ist die Verflechtung toedlich. Siehe
     # `_entflechte_controlnet`: Sie kostet Speicher, und Speicher ist genau das, woran
     # dieser Weg schon haengt.
     entflechtung = _entflechte_controlnet(pipeline)
 
-    if frei >= groesster * GERAETE_ZUSCHLAG:
+    if frei >= groesster * zuschlag:
         # diffusers holt jede Komponente einzeln auf die Karte und legt sie danach zurück.
         pipeline.enable_model_cpu_offload()
-        return "cuda+auslagerung", entflechtung
+        return "cuda+auslagerung", entflechtung, bericht
 
     # Selbst die grösste Komponente passt nicht am Stück. Dann wandern die Untermodule
     # einzeln — deutlich langsamer, aber der Lauf kommt durch. Ein Abbruch kostet ihn ganz.
     pipeline.enable_sequential_cpu_offload()
-    return "cuda+schichtauslagerung", entflechtung
+    return "cuda+schichtauslagerung", entflechtung, bericht
 
 
 #: Orte, an denen eine Einzeldatei-Ablage vermutet wird, wenn das diffusers-Verzeichnis
@@ -1751,17 +1851,19 @@ def _geraeteweg(modell) -> dict:
     gemessen wird und nirgends landet, ist für jede spätere Untersuchung nicht vorhanden.
 
     Returns:
-        ``{geraet, ladeweg, gemeldet, grund}``. ``gemeldet`` ist ``False``, wenn kein
+        ``{geraet, ladeweg, entflechtung, bedarf, gemeldet, grund}``. ``gemeldet`` ist ``False``, wenn kein
         Modell geladen wurde **oder** das übergebene Modell die Angaben nicht führt — die
         Dreiteilung dieses Projekts: ``geraet=None`` heisst **unbekannt**, nie „CPU".
     """
     if modell is None:
-        return {"geraet": None, "ladeweg": None, "entflechtung": None, "gemeldet": False,
+        return {"geraet": None, "ladeweg": None, "entflechtung": None, "bedarf": None,
+                "gemeldet": False,
                 "grund": "Es wurde nichts geladen — der Auftrag kam nicht so weit."}
     geraet = getattr(modell, "geraet", None)
     if geraet is None:
         return {"geraet": None, "ladeweg": getattr(modell, "ladeweg", None),
                 "entflechtung": getattr(modell, "entflechtung", None),
+                "bedarf": getattr(modell, "bedarf", None),
                 "gemeldet": False,
                 "grund": ("Das Modell fuehrt keine Geraeteangabe. So sieht eine Attrappe "
                           "aus, und so saehe auch ein fremder Lader aus — UNBEKANNT ist "
@@ -1770,6 +1872,10 @@ def _geraeteweg(modell) -> dict:
             # Ob dem ControlNet vor dem Auslagern eigene Kopien gegeben wurden. `None`
             # auf den Wegen, die nicht auslagern — siehe `_lege_auf_geraet`.
             "entflechtung": getattr(modell, "entflechtung", None),
+            # Mit welcher Zahl und mit wie viel Spielraum der Weg gewaehlt wurde. Ohne
+            # dieses Feld sieht eine Rechnung von aussen aus wie eine Eigenschaft der
+            # Maschine — genau der Irrtum von `auf-20260919-123`.
+            "bedarf": getattr(modell, "bedarf", None),
             "gemeldet": True, "grund": ""}
 
 

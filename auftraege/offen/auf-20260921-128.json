@@ -1,37 +1,37 @@
 {
-  "schema": "aiimaging.homeworker-auftrag/v1",
-  "auftrag_id": "auf-20260921-128",
-  "art": "qa",
-  "worker": "local",
-  "rang": 2,
-  "erstellt": "2026-09-21T15:30:00Z",
-  "params": {},
-  "beschreibung": "Der Widerspruch aus euren eigenen zwei Messungen: geom_iou misst bei RICHTIGER Zuordnung 0,93 an der Szene «gebaeude» (auf-92) und 0,36 an «hochbau» (auf-124). An diesem Widerspruch haengt das tragende Ergebnis der Vertiefungsarbeit. Drei Schritte: Sind es zwei verschiedene Szenen? Ergibt dieselbe Szene auf beiden Messwegen dasselbe? Und wovon haengt die Zahl ab — Bildanteil oder Gliederung?",
-  "anweisung": "=== WARUM MISST DIESELBE KENNZAHL 0,93 UND 0,36 AM SELBEN GEGENSTAND? ===\n\nDER WIDERSPRUCH, UM DEN ES GEHT\n\nZwei Messungen, beide von euch, beide bei RICHTIGER Zuordnung, dieselbe\nKennzahl `geom_iou`:\n\n    auf-20260909-92, Szene «gebaeude»   ->  0,9257 ... 0,9784\n    auf-20260919-124, Szene «hochbau»   ->  0,3635\n\nDas ist mehr als das Zweieinhalbfache Unterschied. Beides sind Gebaeude mit\nGeschossen, beides richtig zugeordnet, beides dieselbe Formel.\n\n    Eine der beiden Szenen ist nicht das, wofuer wir sie halten — oder die\n    Kennzahl haengt an etwas, das keiner von uns benannt hat.\n\nAN DIESEM WIDERSPRUCH HAENGT DAS TRAGENDE ERGEBNIS DER VERTIEFUNGSARBEIT.\nKapitel 6 sagt heute: «Das Verfahren trennt 12 von 12.» Wenn 0,36 der\nNormalfall fuer einen gegliederten Bau ist, gilt dieser Satz nur fuer die\nSchachtel — und das Kapitel muesste umgeschrieben werden. Solange es offen\nist, steht dort ein Vorbehalt, den wir nicht aufloesen koennen.\n\n\nWAS ZU TUN IST\n\n  SCHRITT 1 · SIND ES UEBERHAUPT ZWEI VERSCHIEDENE SZENEN?\n\n  Das ist die billigste Frage, und sie koennte alles erklaeren. Baut beide:\n\n      python tools/make_test_ifc.py --gelaende     (bzw. was auf-92 «gebaeude» nannte)\n      python tools/make_test_ifc.py --hochbau\n\n  Und gebt je Szene zurueck:\n      Huellbox (drei Kantenlaengen) | Zahl der Bauteile | Zahl der Dreiecke\n\n  Wenn das zwei verschiedene Gegenstaende sind, ist der halbe Widerspruch\n  schon erklaert — und wir haben in Kapitel 6 eine Szene beschrieben, die es\n  so nicht gibt.\n\n  SCHRITT 2 · DIESELBE SZENE, DIESELBE KAMERA, BEIDE MESSWEGE\n\n  Nehmt EINE der beiden Szenen und messt `geom_iou` bei richtiger Zuordnung\n  ZWEIMAL: einmal so, wie es in auf-92 gerechnet wurde, und einmal so, wie es\n  in auf-124 gerechnet wurde.\n\n  Wenn dieselbe Szene zwei verschiedene Zahlen ergibt, liegt es am MESSWEG und\n  nicht am Gebaeude. Dann sagt uns, welcher Schritt sich unterscheidet:\n  Aufloesung, Maske, Schaetzer, Hintergrundbehandlung, Kameraentfernung.\n\n  SCHRITT 3 · WOVON HAENGT DIE ZAHL AB?\n\n  Wenn es an der Szene liegt: Was am Hochbau macht die Silhouette so schlecht\n  treffbar? Zwei Verdaechtige, beide ohne neuen Renderlauf pruefbar:\n\n    a) DER ANTEIL. Wieviel Prozent des Bildes fuellt das Bauwerk je Szene?\n       Bei auf-92 ist «56 Prozent Geometrieanteil» als Kennzahl bekannt.\n       Rechnet denselben Anteil fuer den Hochbau.\n\n    b) DIE GLIEDERUNG. Eine Schachtel hat vier Silhouettenkanten, ein\n       gegliederter Bau hat Dutzende. Zaehlt je Szene die Laenge der\n       Maskengrenze in Bildpunkten, geteilt durch die Flaeche.\n\n  Wenn (a) oder (b) die 0,36 erklaert, haben wir eine BEDINGUNG fuer unsere\n  Kennzahl gefunden — und eine Kennzahl mit benannter Bedingung ist brauchbar.\n  Eine ohne ist es nicht.\n\n\nWAS NICHT ZU TUN IST\n\n  - KEINE Schwelle anpassen. Wenn 0,85 fuer gegliederte Bauten nicht taugt,\n    ist das der Befund und nicht der Anlass fuer eine zweite Zahl.\n  - KEINE neue Kennzahl erfinden. Erst verstehen, warum die alte kippt.\n  - KEIN neuer Bilddatensatz noetig. Beide Messungen liegen vor; es geht um\n    den Vergleich, nicht um mehr Daten.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.\n\nZeitbedarf: gering. Zwei Szenen bauen, ein paar Zahlen gegenueberstellen.\n\n«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort.",
-  "geometrie": {
-    "synthetisch": true,
-    "pfad": null,
-    "erzeugen_mit": "python tools/make_test_ifc.py --gelaende  bzw.  --hochbau",
-    "hinweis": "Kein neuer Bilddatensatz noetig — beide Messungen liegen vor."
-  },
-  "auflagen": {
-    "leistungsgrenze_w": 400,
-    "nur_bei_leerlauf": true,
-    "leerlauf_schwelle_w": 60,
-    "leerlauf_schwelle_mem_gb": 2,
-    "hinweise": [
-      "KEINE Schwelle anpassen — wenn 0,85 nicht taugt, ist das der Befund.",
-      "KEINE neue Kennzahl erfinden. Erst verstehen, warum die alte kippt.",
-      "Braucht keinen neuen Renderlauf.",
-      "«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort.",
-      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
-    ]
-  },
-  "rueckgabe": [
-    "V1 Je Szene: Huellbox (drei Kantenlaengen), Zahl der Bauteile, Zahl der Dreiecke. Sind es zwei verschiedene Gegenstaende?",
-    "V2 Dieselbe Szene, beide Messwege: ergibt sie dieselbe Zahl? Wenn nein, welcher Schritt unterscheidet sich?",
-    "V3 Je Szene der Bildanteil des Bauwerks in Prozent.",
-    "V4 Je Szene die Laenge der Maskengrenze geteilt durch die Flaeche.",
-    "V5 Eine Zeile Urteil: Liegt es an der Szene, am Messweg, oder an beidem?"
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "auftrag_id": "auf-20260921-128",
+ "art": "qa",
+ "worker": "local",
+ "rang": 3,
+ "erstellt": "2026-09-21T15:30:00Z",
+ "params": {},
+ "beschreibung": "Der Widerspruch aus euren eigenen zwei Messungen: geom_iou misst bei RICHTIGER Zuordnung 0,93 an der Szene «gebaeude» (auf-92) und 0,36 an «hochbau» (auf-124). An diesem Widerspruch haengt das tragende Ergebnis der Vertiefungsarbeit. Drei Schritte: Sind es zwei verschiedene Szenen? Ergibt dieselbe Szene auf beiden Messwegen dasselbe? Und wovon haengt die Zahl ab — Bildanteil oder Gliederung?",
+ "anweisung": "=== WARUM MISST DIESELBE KENNZAHL 0,93 UND 0,36 AM SELBEN GEGENSTAND? ===\n\nDER WIDERSPRUCH, UM DEN ES GEHT\n\nZwei Messungen, beide von euch, beide bei RICHTIGER Zuordnung, dieselbe\nKennzahl `geom_iou`:\n\n    auf-20260909-92, Szene «gebaeude»   ->  0,9257 ... 0,9784\n    auf-20260919-124, Szene «hochbau»   ->  0,3635\n\nDas ist mehr als das Zweieinhalbfache Unterschied. Beides sind Gebaeude mit\nGeschossen, beides richtig zugeordnet, beides dieselbe Formel.\n\n    Eine der beiden Szenen ist nicht das, wofuer wir sie halten — oder die\n    Kennzahl haengt an etwas, das keiner von uns benannt hat.\n\nAN DIESEM WIDERSPRUCH HAENGT DAS TRAGENDE ERGEBNIS DER VERTIEFUNGSARBEIT.\nKapitel 6 sagt heute: «Das Verfahren trennt 12 von 12.» Wenn 0,36 der\nNormalfall fuer einen gegliederten Bau ist, gilt dieser Satz nur fuer die\nSchachtel — und das Kapitel muesste umgeschrieben werden. Solange es offen\nist, steht dort ein Vorbehalt, den wir nicht aufloesen koennen.\n\n\nWAS ZU TUN IST\n\n  SCHRITT 1 · SIND ES UEBERHAUPT ZWEI VERSCHIEDENE SZENEN?\n\n  Das ist die billigste Frage, und sie koennte alles erklaeren. Baut beide:\n\n      python tools/make_test_ifc.py --gelaende     (bzw. was auf-92 «gebaeude» nannte)\n      python tools/make_test_ifc.py --hochbau\n\n  Und gebt je Szene zurueck:\n      Huellbox (drei Kantenlaengen) | Zahl der Bauteile | Zahl der Dreiecke\n\n  Wenn das zwei verschiedene Gegenstaende sind, ist der halbe Widerspruch\n  schon erklaert — und wir haben in Kapitel 6 eine Szene beschrieben, die es\n  so nicht gibt.\n\n  SCHRITT 2 · DIESELBE SZENE, DIESELBE KAMERA, BEIDE MESSWEGE\n\n  Nehmt EINE der beiden Szenen und messt `geom_iou` bei richtiger Zuordnung\n  ZWEIMAL: einmal so, wie es in auf-92 gerechnet wurde, und einmal so, wie es\n  in auf-124 gerechnet wurde.\n\n  Wenn dieselbe Szene zwei verschiedene Zahlen ergibt, liegt es am MESSWEG und\n  nicht am Gebaeude. Dann sagt uns, welcher Schritt sich unterscheidet:\n  Aufloesung, Maske, Schaetzer, Hintergrundbehandlung, Kameraentfernung.\n\n  SCHRITT 3 · WOVON HAENGT DIE ZAHL AB?\n\n  Wenn es an der Szene liegt: Was am Hochbau macht die Silhouette so schlecht\n  treffbar? Zwei Verdaechtige, beide ohne neuen Renderlauf pruefbar:\n\n    a) DER ANTEIL. Wieviel Prozent des Bildes fuellt das Bauwerk je Szene?\n       Bei auf-92 ist «56 Prozent Geometrieanteil» als Kennzahl bekannt.\n       Rechnet denselben Anteil fuer den Hochbau.\n\n    b) DIE GLIEDERUNG. Eine Schachtel hat vier Silhouettenkanten, ein\n       gegliederter Bau hat Dutzende. Zaehlt je Szene die Laenge der\n       Maskengrenze in Bildpunkten, geteilt durch die Flaeche.\n\n  Wenn (a) oder (b) die 0,36 erklaert, haben wir eine BEDINGUNG fuer unsere\n  Kennzahl gefunden — und eine Kennzahl mit benannter Bedingung ist brauchbar.\n  Eine ohne ist es nicht.\n\n\nWAS NICHT ZU TUN IST\n\n  - KEINE Schwelle anpassen. Wenn 0,85 fuer gegliederte Bauten nicht taugt,\n    ist das der Befund und nicht der Anlass fuer eine zweite Zahl.\n  - KEINE neue Kennzahl erfinden. Erst verstehen, warum die alte kippt.\n  - KEIN neuer Bilddatensatz noetig. Beide Messungen liegen vor; es geht um\n    den Vergleich, nicht um mehr Daten.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.\n\nZeitbedarf: gering. Zwei Szenen bauen, ein paar Zahlen gegenueberstellen.\n\n«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort.",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "python tools/make_test_ifc.py --gelaende  bzw.  --hochbau",
+  "hinweis": "Kein neuer Bilddatensatz noetig — beide Messungen liegen vor."
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 60,
+  "leerlauf_schwelle_mem_gb": 2,
+  "hinweise": [
+   "KEINE Schwelle anpassen — wenn 0,85 nicht taugt, ist das der Befund.",
+   "KEINE neue Kennzahl erfinden. Erst verstehen, warum die alte kippt.",
+   "Braucht keinen neuen Renderlauf.",
+   "«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort.",
+   "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
   ]
+ },
+ "rueckgabe": [
+  "V1 Je Szene: Huellbox (drei Kantenlaengen), Zahl der Bauteile, Zahl der Dreiecke. Sind es zwei verschiedene Gegenstaende?",
+  "V2 Dieselbe Szene, beide Messwege: ergibt sie dieselbe Zahl? Wenn nein, welcher Schritt unterscheidet sich?",
+  "V3 Je Szene der Bildanteil des Bauwerks in Prozent.",
+  "V4 Je Szene die Laenge der Maskengrenze geteilt durch die Flaeche.",
+  "V5 Eine Zeile Urteil: Liegt es an der Szene, am Messweg, oder an beidem?"
+ ]
 }

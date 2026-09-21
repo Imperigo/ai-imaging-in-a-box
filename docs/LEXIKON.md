@@ -3918,6 +3918,36 @@ seit dem 19.08.2026 ermittelt und bis zum 26.08. nirgends aufgeschrieben — mit
 dass ein Fehlschlag wie ein neu eingebauter Fehler aussah, obwohl sich am Programm nichts
 geändert hatte. Entschieden hatten zwei Zehntel Gigabyte freier Speicher.*
 
+**Bedarfsrechnung (vor dem Ladeweg)** — Die Rechnung, die entscheidet, ob ein Modell ganz
+auf die Grafikkarte darf oder stückweise laufen muss. Sie vergleicht, was jetzt frei ist,
+mit dem, was der Lauf voraussichtlich braucht.
+*Warum sie überhaupt schwierig ist:* Was ein Modell braucht, steht nirgends. Es lässt sich
+nur schätzen — und die beiden Schätzwege liefern verschiedene Grössen, die leicht
+verwechselt werden.
+*Die zwei Wege:* **Grösse der Dateien auf der Festplatte** — leicht zu haben, aber nur die
+Zahlen des Modells, ohne den Platz, den das Rechnen selbst braucht; die Datei kann
+ausserdem in einem grösseren Zahlenformat vorliegen als der Lauf. Oder eine **frühere
+Messung im Betrieb** — sie enthält alles, aber nur für die Bedingungen, unter denen
+gemessen wurde.
+*Und der Fehler, der daraus wurde* (gemessen am 21.09.2026): Auf die Dateigrösse gehört
+ein Aufschlag für das Rechnen. Auf eine Messung im Betrieb gehört er **nicht** — dort ist
+er schon drin. Beide gleich zu behandeln zählte dieselbe Sache zweimal und schickte einen
+Lauf, der mit fünf Gigabyte Luft auf die Karte passte, auf den langsamen und kaputten Weg.
+
+**Aktivierungen** — Die Zwischenergebnisse, die während des Rechnens entstehen und
+ebenfalls im Speicher der Grafikkarte liegen müssen. Sie kommen zu den Zahlen des Modells
+noch hinzu.
+*Wozu der Begriff hier gebraucht wird:* Er ist der Unterschied zwischen «die Datei ist so
+gross» und «der Lauf braucht so viel». Und er wächst mit der Bildgrösse — was bei einem
+kleinen Bild bequem passte, kann bei einem grossen nicht mehr passen.
+
+**Spielraum (einer Ladewegentscheidung)** — Wie viel Speicher nach der Entscheidung noch
+frei geblieben wäre: frei minus verlangt.
+*Wozu:* Eine Entscheidung, die knapp ausging, sieht von aussen genauso aus wie eine, die
+bequem ausging — bis der nächste, etwas grössere Lauf stirbt. Die Zahl steht seit dem
+21.09.2026 in jedem Ergebnis, und unter zwei Gigabyte meldet sich der Kurzbefund.
+*Negativ heisst:* Es reichte nicht, also wurde ausgelagert.
+
 **Geteilte Parameter (Parameter Sharing)** — Zwei Teile eines Modells benutzen
 **dasselbe** Stück Zahlenwerk, statt jeder eine eigene Kopie zu halten. Das spart
 Speicher und ist gewollt.
@@ -5094,6 +5124,7 @@ System laufen.
 | 2026-09-21 | Zur Oberflaeche: **Die Oberflaeche (von Visbox)** |
 | 2026-09-21 | Aus der Anfrage der Modellseite: **Ausbesserung (Inpainting)** |
 | 2026-09-21 | Aus dem Befund «bestellt mit Bild, gerechnet ohne»: **Bestellter und gerechneter Modus**, **Vertraeglichkeitsfilter** |
+| 2026-09-21 | Aus dem Befund «der Vorgabe-Backbone rechnet gar nicht mehr»: **Bedarfsrechnung (vor dem Ladeweg)**, **Aktivierungen**, **Spielraum (einer Ladewegentscheidung)** |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |

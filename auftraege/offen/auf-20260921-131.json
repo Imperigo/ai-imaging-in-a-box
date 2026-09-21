@@ -1,0 +1,36 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "auftrag_id": "auf-20260921-131",
+ "art": "qa",
+ "worker": "local",
+ "rang": 1,
+ "erstellt": "2026-09-21T18:00:00Z",
+ "params": {},
+ "beschreibung": "Ansage plus Messung. Die Bedarfsrechnung ist repariert — der Zuschlag haengt ab jetzt daran, ob die Zahl von der Platte oder aus einer Messung stammt; euer Vorgabelauf waehlt damit wieder den vollen Weg. NICHT repariert ist der Auslagerungsweg: Wir brauchen, wo die Parameter nach dem Auslagern liegen und was `geraeteweg.entflechtung` meldet.",
+ "anweisung": "=== ZWEI TEILE: EINE ANSAGE UND EINE MESSUNG ===\n\nEuer zweiter Befund aus `auf-20260919-123` ist eingearbeitet — der, bei dem\nder Vorgabe-Backbone auf eurer Karte ueberhaupt nicht mehr rechnete. Ihr\nhattet recht, und ihr hattet in BEIDEN Punkten recht: Es sind zwei Fehler\nund nicht einer. Einer ist repariert, der andere ist es nicht.\n\n\nTEIL 1 — WAS MIT DEM NAECHSTEN `git pull` BEI EUCH ANKOMMT\n\nRepariert ist die Bedarfsrechnung. Sie war zu streng, und zwar aus einem\nGrund, den ihr genau benannt habt.\n\nBisher galt EIN Zuschlag von 1.25 fuer jede Bedarfszahl. Er ist dafuer\ngebaut, von der GROESSE DER GEWICHTE auf den Laufzeitbedarf zu kommen — er\nbezahlt die Aktivierungen. Die Zahl aus unserer Registry ist aber schon eine\ngemessene SPITZE IM BETRIEB, Aktivierungen eingeschlossen. Beides zu\nmultiplizieren zaehlt dieselbe Sache zweimal.\n\nAb jetzt haengt der Zuschlag daran, woher die Zahl kommt:\n\n    Plattengroesse   x 1.25   (GERAETE_ZUSCHLAG, unveraendert)\n    gemessene Spitze x 1.10   (MESSUNG_ZUSCHLAG, neu)\n\nDie 1.10 ist eine Setzung mit Begruendung, keine Messung: Fuer\n`z-image-turbo` liegen drei Spitzen vor — 22,89 / 23,4 / 25,1 GB —, das sind\n9,7 Prozent zwischen der kleinsten und der groessten. Die Registry traegt\nbereits die groesste; der Zuschlag deckt eine weitere Bedingungsaenderung\nderselben Groesse ab.\n\nWAS IHR MERKEN WERDET: Derselbe Auftrag, der bei euch ausgelagert wurde,\nwaehlt jetzt den vollen Weg — 25702 MiB x 1.10 = 28272 MiB verlangt, bei\n30717 MiB frei. Das ist genau der Weg, den ihr von Hand erzwungen habt und\nder in Sekunden durchlief. Ihr braucht die Erzwingung nicht mehr.\n\nAUSSERDEM NEU IM ERGEBNIS: `geraeteweg.bedarf` mit Herkunft der Zahl,\nZuschlag, verlangt, frei und Spielraum. Eine Entscheidung, deren\nEingangszahlen nirgends stehen, ist von aussen nicht von einer Eigenschaft\nder Maschine zu unterscheiden — genau daran habt ihr euch aufgehalten.\n\nUnd der Kurzbefund meldet ab jetzt auch die GEGENRICHTUNG: Wurde der volle\nWeg mit weniger als 2 GB Luft gewaehlt, steht das als Warnung da. Wir haben\nunsere Spitzen bei 512 x 512 gemessen; was ein deutlich groesseres Bild\nbraucht, ist NICHT gemessen, und wir behaupten es auch nicht.\n\n\nTEIL 2 — WAS NICHT REPARIERT IST, UND WOFUER WIR EURE MESSUNG BRAUCHEN\n\nDer zweite Fehler steht unveraendert: Der Auslagerungsweg stirbt.\n\nIhr habt geschrieben, wird nur eines repariert, laeuft es wieder, aber der\nandere Fehler bleibt stehen und schlaegt beim naechsten groesseren Modell zu.\nDas ist richtig, und darum steht es hier als eigener Auftrag statt als\nerledigter Nebensatz.\n\nSeit dem 25.08.2026 gibt es `_entflechte_controlnet`. Sie gibt dem ControlNet\neigene Kopien der Untermodule, die es mit dem Transformer teilt — gebaut\ngegen genau die Meldung, die ihr gesehen habt («Expected all tensors to be on\nthe same device»). Entweder greift sie nicht mehr, oder sie greift und der\nFehler kommt woanders her. Von hier aus ist das nicht zu unterscheiden: Wir\nhaben keine Karte und kein `accelerate`.\n\nWAS ZU TUN IST — der Reihe nach, ein Lauf genuegt:\n\n  1. Auslagerung ERZWINGEN, damit der kaputte Weg ueberhaupt gefahren wird.\n     Am einfachsten, indem ihr `render.MESSUNG_ZUSCHLAG` fuer diesen einen\n     Lauf hochsetzt (z. B. auf 1.6) — dann waehlt dieselbe Rechnung wieder\n     `cuda+auslagerung`, ohne dass ihr am Ladeweg selbst etwas anfasst.\n     Bitte NICHT im Repo aendern, nur im Lauf.\n\n  2. Den Bericht mitschicken, den die Software schon erzeugt:\n     `geraeteweg.entflechtung` aus dem Ergebnis, vollstaendig. Interessant\n     sind `noetig`, `vorher`, `nachher`, `kopiert` und `grund`.\n\n  3. Nach dem Auslagern und VOR dem ersten Diffusionsschritt: Wo liegen die\n     Parameter? Je Komponente die Anzahl auf `cuda` und auf `cpu`, also etwa\n\n         fuer name in (\"transformer\", \"controlnet\", \"text_encoder\", \"vae\"):\n             modul = getattr(pipeline, name, None)\n             zaehle Parameter nach p.device.type\n\n     Am 25.08. waren es 454 von 521 Transformer-Parametern auf der CPU. Die\n     Frage ist, ob das heute noch so aussieht.\n\n  4. Die Fassungen: `diffusers`, `accelerate`, `torch`. `accelerate` ist der\n     Verdacht — die Entflechtung haengt daran, wie `accelerate` beim\n     Auslagern entscheidet, wo ein Modul liegt.\n\nWAS ZURUECKKOMMEN SOLL: die vier Punkte oben, und eine Zeile dazu, ob der\nLauf ueberhaupt bis zum ersten Diffusionsschritt kam.\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST:\n\n  - Keine Reparatur bei euch. Wir wollen wissen, WO es steht, nicht dass es\n    an eurem Rechner laeuft.\n  - Nichts im Repo aendern.\n  - Keine Schwelle und keinen Zuschlag dauerhaft umsetzen.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.\n  - Wenn der Lauf schon vor Punkt 3 stirbt: Das ist eine vollstaendige\n    Antwort. Dann schickt die Meldung und den Zeitpunkt, und wir wissen\n    mehr als jetzt.\n",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": null,
+  "hinweis": "Eure Standardszene genuegt — es geht um den Ladeweg, nicht um das Bild."
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 60,
+  "leerlauf_schwelle_mem_gb": 2,
+  "hinweise": [
+   "Nichts im Repo aendern — der Zuschlag wird nur fuer diesen einen Lauf hochgesetzt.",
+   "Keine Reparatur: Wir wollen wissen, WO es steht.",
+   "«Der Lauf starb vorher» ist eine vollstaendige Antwort.",
+   "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+  ]
+ },
+ "rueckgabe": [
+  "V1 `geraeteweg.entflechtung` vollstaendig (noetig, vorher, nachher, kopiert, grund).",
+  "V2 Je Komponente die Zahl der Parameter auf cuda und auf cpu, nach dem Auslagern.",
+  "V3 Fassungen von diffusers, accelerate, torch.",
+  "V4 Kam der Lauf bis zum ersten Diffusionsschritt? Wenn nein: wo und mit welcher Meldung.",
+  "V5 Bestaetigung, dass der Vorgabelauf OHNE Erzwingung jetzt den vollen Weg waehlt."
+ ]
+}

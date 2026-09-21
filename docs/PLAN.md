@@ -5820,6 +5820,36 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Der Vorgabe-Backbone lief auf der Werkstattmaschine gar nicht mehr — die Hälfte
+      davon ist repariert.** Gemessen (`auf-20260919-123`): frei 30 717 MiB, gebraucht
+      25 671 MiB, **verlangt 32 128 MiB**. Der Lauf passte mit über 5 GiB Luft und wurde
+      trotzdem ausgelagert — und der Auslagerungsweg stirbt.
+      **Der Fehler war nicht die Zahl, sondern der Zuschlag darauf.** Ein Zuschlag führt
+      von der *Dateigrösse* zum *Laufzeitbedarf* — er bezahlt die Zwischenergebnisse des
+      Rechnens. Die Zahl aus der Registry ist aber schon eine **Spitze im Betrieb**.
+      *Beides zu multiplizieren zählt dieselbe Sache zweimal.*
+      **Neu:** Der Zuschlag hängt an der **Herkunft** der Zahl — Platte 1,25 (unverändert),
+      gemessene Spitze 1,10. Die 1,10 ist eine Setzung mit Begründung: Drei Messungen
+      desselben Modells liegen 9,7 % auseinander, und die Registry trägt bereits die
+      grösste.
+      **Und die Rechnung steht jetzt im Ergebnis** (`geraeteweg.bedarf`: Herkunft,
+      Zuschlag, verlangt, frei, Spielraum). *Eine Entscheidung, deren Eingangszahlen
+      nirgends stehen, ist von aussen nicht von einer Eigenschaft der Maschine zu
+      unterscheiden* — daran hat sich der Befund drei Wochen aufgehalten.
+      **Dazu die Gegenrichtung, die es bisher gar nicht gab:** Wurde der volle Weg mit
+      weniger als 2 GiB Luft gewählt, meldet der Kurzbefund es. Alle Spitzen sind bei
+      512 x 512 gemessen; was ein grösseres Bild braucht, ist **nicht** gemessen.
+      Elf Wächter, fünf Mutationsproben, alle fünf gefallen.
+- [ ] **Und die andere Hälfte steht unverändert: Der Auslagerungsweg stirbt weiter.**
+      `_entflechte_controlnet` ist seit dem 25.08.2026 genau dagegen gebaut und greift
+      offenbar nicht mehr — oder der Fehler kommt woanders her. *Von hier aus ist das
+      nicht zu unterscheiden: keine Karte, kein `accelerate`.*
+      Die Werkstatt hat es selbst gesagt, und sie hat recht: *Wird nur eines repariert,
+      läuft es wieder — aber der andere Fehler bleibt stehen und schlägt beim nächsten
+      grösseren Modell zu.* Darum ein eigener Posten und kein erledigter Nebensatz.
+      Bestellt als `auf-20260921-131`, **Rang 1 bei `local`** — die drei anderen offenen
+      Messaufträge hängen daran, dass die Maschine wieder rechnet. Umgereiht nach
+      Abhängigkeit, nicht nach Alter.
 - [x] **Ein Lauf sagte «mit Bild», und gerechnet wurde ohne — jetzt sagt er es selbst.**
       Gemessen (`auf-20260919-123`): Sieben Läufe am Vorgabe-Bildmodell, **ein einziger
       sha256**. Das Eingangsbild kam nie an. Die Ursache liegt **in unserem Code** und

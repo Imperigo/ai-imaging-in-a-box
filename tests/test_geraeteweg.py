@@ -308,11 +308,16 @@ def test_auf_dem_auslagerungsweg_wird_sehr_wohl_entflochten():
                 return (2 * 2**30, 32 * 2**30)
 
     pipe = _Pipe()
-    weg, entflechtung = render._lege_auf_geraet(
+    weg, entflechtung, bedarf = render._lege_auf_geraet(
         pipe, "/gibt/es/nicht", _Torch, erwartet=(30 * 2**30, 1 * 2**30))
 
     assert weg == "cuda+auslagerung"
     assert entflechtung["noetig"] is True and entflechtung["nachher"] == 0
+    # Und der Bericht sagt, GEGEN WELCHE ZAHL entschieden wurde — nicht bloss, dass
+    # ausgelagert wurde. Ein negativer Spielraum ist genau das: es reichte nicht.
+    assert bedarf["quelle"] == render.QUELLE_MESSUNG
+    assert bedarf["zuschlag"] == render.MESSUNG_ZUSCHLAG
+    assert bedarf["spielraum_byte"] < 0
 
 
 def test_der_bericht_nennt_die_gemessene_ursache():
@@ -354,12 +359,13 @@ def test_auf_dem_vollen_weg_wird_gar_nicht_entflochten():
         def controlnet(self):
             raise AssertionError("auf dem vollen Weg darf niemand danach fragen")
 
-    weg, entflechtung = render._lege_auf_geraet(
+    weg, entflechtung, bedarf = render._lege_auf_geraet(
         _Pipe(), "/gibt/es/nicht", _Torch, erwartet=(2 * 2**30, 1 * 2**30))
 
     assert weg == "cuda"
     assert entflechtung is None
     assert gerufen == [("to", "cuda")]
+    assert bedarf["spielraum_byte"] > 0
 
 
 def test_der_kurzbefund_meldet_eine_nicht_durchgegriffene_entflechtung():
@@ -391,3 +397,212 @@ def test_ein_lauf_ohne_auslagerung_erzeugt_ebenfalls_keine_zeile():
                                          "entflechtung": None}}]})
 
     assert not [z for z in zeilen if "NICHT durchgegriffen" in z]
+
+
+# ───────────────────────────────────────────── Der Zuschlag haengt an der Herkunft
+#
+# Anlass: `auf-20260919-123`, HomeStation, 21.09.2026. Der Vorgabe-Backbone lief dort
+# UEBERHAUPT NICHT mehr — frei 30 717 MiB, wirklich gebraucht 25 671 MiB, verlangt
+# 32 128 MiB. Er passte mit ueber 5 GiB Luft und wurde trotzdem ausgelagert, und der
+# Auslagerungsweg starb am Geraetekonflikt.
+#
+# Der Fehler war nicht die Zahl, sondern der Zuschlag darauf: `GERAETE_ZUSCHLAG` fuehrt
+# von der GEWICHTSGROESSE zum Laufzeitbedarf — er bezahlt die Aktivierungen. `vram_gb`
+# ist aber schon eine Spitze IM BETRIEB. Beides zu multiplizieren zaehlt dieselbe Sache
+# zweimal.
+
+#: Was auf der Werkstattmaschine frei war, als der Lauf starb (`auf-20260919-123`).
+FREI_HOMESTATION = 30717 * 2**20
+
+#: Was derselbe Lauf wirklich brauchte, gemessen im Viersekundenraster (`auf-20260909-92`).
+SPITZE_GEMESSEN = 25671 * 2**20
+
+
+def _torch_mit(frei):
+    class _Torch:
+        class cuda:
+            @staticmethod
+            def is_available():
+                return True
+
+            @staticmethod
+            def mem_get_info():
+                return (frei, 32 * 2**30)
+    return _Torch
+
+
+class _VollwegPipe:
+    """Eine Pipeline, die **nur** den vollen Weg duldet — jeder andere fliegt auf."""
+
+    def __init__(self):
+        self.gerufen = []
+
+    def to(self, wohin):
+        self.gerufen.append(wohin)
+
+    def enable_model_cpu_offload(self):
+        raise AssertionError("hier darf nicht ausgelagert werden")
+
+    def enable_sequential_cpu_offload(self):
+        raise AssertionError("hier darf erst recht nicht schichtweise ausgelagert werden")
+
+    @property
+    def controlnet(self):
+        raise AssertionError("auf dem vollen Weg wird nicht entflochten")
+
+
+def test_der_vorgabe_backbone_passt_auf_die_werkstattkarte():
+    """**Die Probe, um die es geht.** Nicht eine erfundene Lage, sondern die gemessene:
+    der Vorgabe-Backbone, die Zahl aus der Registry, und der freie Speicher, bei dem der
+    Lauf am 21.09.2026 starb.
+
+    Sie ruft `_erwarteter_bedarf` und rechnet nicht selbst nach — *eine Probe, die die
+    geprüfte Rechnung nachbaut, prüft ihre eigene Kopie.*
+    """
+    from aiimaging import backbone
+
+    eintrag = backbone.hole(render.VORGABE_BACKBONE)
+    erwartet = render._erwarteter_bedarf(eintrag)
+    assert erwartet is not None, "ohne gemessene Zahl prüft diese Probe nichts"
+
+    pipe = _VollwegPipe()
+    weg, entflechtung, bedarf = render._lege_auf_geraet(
+        pipe, "/gibt/es/nicht", _torch_mit(FREI_HOMESTATION), erwartet=erwartet)
+
+    assert weg == "cuda", (
+        f"Der Vorgabe-Backbone muss auf {FREI_HOMESTATION / 2**20:.0f} MiB freiem "
+        f"Speicher voll auf die Karte. Gemessen gebraucht hat er "
+        f"{SPITZE_GEMESSEN / 2**20:.0f} MiB.")
+    assert entflechtung is None
+    assert pipe.gerufen == ["cuda"]
+    assert bedarf["verlangt_byte"] < FREI_HOMESTATION
+    assert bedarf["spielraum_byte"] > 0
+
+
+def test_der_alte_zuschlag_haette_genau_diesen_lauf_ausgelagert():
+    """Die Gegenprobe zur vorigen — **ohne sie wäre jene wertlos.**
+
+    Sie zeigt, dass der Unterschied wirklich am Zuschlag hängt und nicht daran, dass die
+    Zahlen ohnehin bequem passen: Mit ``GERAETE_ZUSCHLAG`` statt ``MESSUNG_ZUSCHLAG``
+    reicht derselbe freie Speicher für denselben Backbone **nicht**.
+    """
+    from aiimaging import backbone
+
+    summe, _groesster = render._erwarteter_bedarf(backbone.hole(render.VORGABE_BACKBONE))
+
+    assert summe * render.GERAETE_ZUSCHLAG > FREI_HOMESTATION, (
+        "Mit dem alten Zuschlag wäre ausgelagert worden — das ist der Befund.")
+    assert summe * render.MESSUNG_ZUSCHLAG <= FREI_HOMESTATION, (
+        "Mit dem neuen Zuschlag bleibt er auf der Karte — das ist die Reparatur.")
+
+
+def test_die_wirklich_gemessene_spitze_passt_mit_luft():
+    """Und der Beleg, dass die Reparatur nicht bloss eine engere Wette ist: Was der Lauf
+    **gemessen** brauchte, liegt deutlich unter dem, was frei war. Der volle Weg ist hier
+    nicht knapp erlaubt, sondern richtig."""
+    assert SPITZE_GEMESSEN < FREI_HOMESTATION
+    assert FREI_HOMESTATION - SPITZE_GEMESSEN > 4 * 2**30
+
+
+def test_die_plattengroesse_behaelt_den_grossen_zuschlag(tmp_path):
+    """Der Fall, den die Reparatur **nicht** anfassen darf.
+
+    Eine Datei auf der Platte ist keine Speichergrösse: ``z-image-turbo`` liegt mit einem
+    fp32-Transformer da und wiegt in bfloat16 die Hälfte. Wer ohne Registryzahl
+    entscheidet, weiss das nicht — und braucht den ganzen Aufschlag.
+    """
+    (tmp_path / "teil.bin").write_bytes(b"\0" * 1024)
+
+    pipe = _VollwegPipe()
+    weg, _entflechtung, bedarf = render._lege_auf_geraet(
+        pipe, tmp_path, _torch_mit(10 * 2**20), erwartet=None)
+
+    assert weg == "cuda"
+    assert bedarf["quelle"] == render.QUELLE_PLATTE
+    assert bedarf["zuschlag"] == render.GERAETE_ZUSCHLAG
+    assert bedarf["summe_byte"] == 1024
+
+
+def test_die_beiden_zuschlaege_sind_verschieden_und_der_gemessene_ist_kleiner():
+    """Ein Wächter gegen die Zusammenlegung, die der Befund gerade widerlegt hat.
+
+    Würden beide wieder derselbe Wert, wären alle Proben darüber grün — sie prüfen Wege,
+    nicht Konstanten. *Ein Zweig ohne Fall ist kein bewachter Zweig.*
+    """
+    assert render.MESSUNG_ZUSCHLAG < render.GERAETE_ZUSCHLAG
+    assert render.MESSUNG_ZUSCHLAG > 1.0, (
+        "Ganz ohne Zuschlag wäre die Schwankung derselben Messung nicht gedeckt — "
+        "22,89 / 23,4 / 25,1 GiB sind 9,7 Prozent.")
+
+
+def test_ohne_jede_messbare_zahl_wird_nicht_ausgelagert(tmp_path):
+    """UNBEKANNT ist kein Grund zum Auslagern. Der volle Weg scheitert wenigstens sofort
+    und sichtbar; der Auslagerungsweg ist langsamer **und** hat den Gerätekonflikt."""
+    pipe = _VollwegPipe()
+    weg, _entflechtung, bedarf = render._lege_auf_geraet(
+        pipe, tmp_path / "gibt-es-nicht", _torch_mit(1), erwartet=None)
+
+    assert weg == "cuda"
+    assert bedarf["quelle"] == render.QUELLE_KEINE
+    assert bedarf["verlangt_byte"] is None, "eine Zahl, die es nicht gibt, steht nicht da"
+
+
+def test_der_bedarf_landet_im_ergebnis(tmp_path):
+    """Die Rechnung muss aus dem Ergebnis lesbar sein — sonst ist sie von aussen nicht von
+    einer Eigenschaft der Maschine zu unterscheiden. Genau daran hat sich der Befund drei
+    Wochen lang aufgehalten."""
+    modell = _modell(tmp_path, geraet="cuda", ladeweg="basis+controlnet",
+                     bedarf={"quelle": render.QUELLE_MESSUNG, "spielraum_byte": 5 * 2**30,
+                             "grund": "Entschieden an gemessener Spitze"})
+
+    ergebnis = render.rendere(_auftrag(tmp_path), modell=modell)
+
+    assert ergebnis["geraeteweg"]["bedarf"]["spielraum_byte"] == 5 * 2**30
+
+
+def test_ein_knapp_gewaehlter_vollweg_wird_gemeldet():
+    """Die Gegenrichtung, die es bis zum 21.09.2026 gar nicht gab: Ein Lauf, der mit
+    200 MiB Luft auf die Karte kam, ist nicht gesund — er hatte Glück, und beim nächsten
+    Bild in grösserer Auflösung hat er es nicht mehr."""
+    zeilen = abholer.befund_kurz({"kameras": [
+        {"kamera": "sSE", "geraeteweg": {"geraet": "cuda", "gemeldet": True,
+                                         "entflechtung": None,
+                                         "bedarf": {"spielraum_byte": 200 * 2**20}}}]})
+
+    assert [z for z in zeilen if "KNAPP" in z], zeilen
+
+
+def test_ein_bequemer_vollweg_wird_nicht_gemeldet():
+    """Die Gegenprobe. Eine Warnung, die bei jedem gesunden Lauf erscheint, wird nach dem
+    dritten Mal nicht mehr gelesen."""
+    zeilen = abholer.befund_kurz({"kameras": [
+        {"kamera": "sSE", "geraeteweg": {"geraet": "cuda", "gemeldet": True,
+                                         "entflechtung": None,
+                                         "bedarf": {"spielraum_byte": 5 * 2**30}}}]})
+
+    assert not [z for z in zeilen if "KNAPP" in z]
+
+
+def test_ohne_bedarfsangabe_wird_nichts_behauptet():
+    """Ältere Befunde führen kein `bedarf` — und ein fehlendes Feld ist **kein** knapper
+    Lauf. *Die dritte Antwort, angewandt auf eine Warnung.*"""
+    for bedarf in (None, {}, {"spielraum_byte": None}):
+        zeilen = abholer.befund_kurz({"kameras": [
+            {"kamera": "sSE", "geraeteweg": {"geraet": "cuda", "gemeldet": True,
+                                             "entflechtung": None, "bedarf": bedarf}}]})
+
+        assert not [z for z in zeilen if "KNAPP" in z], bedarf
+
+
+def test_der_auslagerungsweg_nennt_die_zahl_gegen_die_entschieden_wurde():
+    """Bis zum 21.09.2026 sagte der Kurzbefund, der freie Kartenspeicher habe entschieden.
+    Er sagte nicht, **gegen welche Zahl** — und genau das war die fehlende Auskunft."""
+    zeilen = abholer.befund_kurz({"kameras": [
+        {"kamera": "sSE", "geraeteweg": {
+            "geraet": "cuda+auslagerung", "gemeldet": True,
+            "entflechtung": {"noetig": True, "nachher": 0},
+            "bedarf": {"grund": "Entschieden an gemessene Spitze (Registry): "
+                                "25702 MiB x 1.1 = 28272 MiB verlangt, 20000 MiB frei."}}}]})
+
+    treffer = [z for z in zeilen if "28272 MiB verlangt" in z]
+    assert treffer, zeilen
