@@ -6943,3 +6943,28 @@ Bekannt und ausdrücklich nicht erledigt:
       einmal das eigene und einmal das fremde Urteil steht, wäre genau der Fehler, gegen
       den E20 gebaut ist. *Adressat: `ui`.* Noch nicht abgelegt — gehört in die nächste
       gesammelte Meldung.
+
+## Sitzung 54 — 21.09.2026 · Die iPad-Oberfläche als Entwurf
+
+**Erledigt**
+
+- [x] Acht Entwurfsblätter für die iPad-Oberfläche gezeichnet: Mappe, Standpunkt, Lauf,
+      Zeichenfläche, Skizzen, Bilder, Varianten, Zeichenblatt. Kein Code — die Vorlage,
+      gegen die später gebaut wird.
+- [x] `docs/PRODUKT_DIE_SCHRITTE.md` fortgeschrieben.
+- [x] `docs/LEXIKON.md` um Abschnitt 10 (Oberfläche und Entwurf) ergänzt: Entwurfsblatt,
+      Entwurfsfläche, Berührungsfläche, Kontrastverhältnis, Druckempfindlichkeit,
+      Wortzeichen.
+- [x] Protokoll `docs/sitzungen/2026-09-21_sitzung-54.md`.
+
+**Offen, und bei wem es liegt**
+
+- [ ] **Owner:** zwanzig Bedienfragen zum Entwurf (Stiftgesten, Hand, Ebenen, Rückgängig,
+      Verhalten ohne Netz, Abbruch, Varianten, Benennung, Export, Schriften).
+- [ ] **Kern (wir):** Das Rot für «durchgefallen» (`#c2554f`) erreicht auf dem dunklen
+      Grund nur 3.3 zu 1 statt der nötigen 4.5 zu 1. Im iPad-Entwurf auf `#e2776f`
+      gehoben, **in `oberflaeche/seite.html` noch nicht**. Eigene Sitzung mit Gegenprobe,
+      weil es die geprüfte Oberfläche anfasst.
+- [ ] **Kern (wir):** Schriftfrage — mitliefern oder bei der Systemschrift bleiben. Hängt
+      an der Antwort des Owners und an der Auflage, dass zum Start keine Netzverbindung
+      nötig sein darf.

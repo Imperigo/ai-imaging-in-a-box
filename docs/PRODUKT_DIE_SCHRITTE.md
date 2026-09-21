@@ -91,6 +91,36 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 21.09.2026 · Die iPad-Oberfläche liegt als Entwurf vor — acht Blätter
+
+Bisher gab es die Oberfläche **nur als Browserseite**. Jetzt liegt daneben ein
+gezeichneter Entwurf für das iPad: acht Blätter, die den ganzen Weg zeigen — Mappe
+öffnen, Standpunkt im Grundriss setzen, rechnen lassen, auf dem Bild zeichnen, Skizzen
+verwalten, Urteil ansehen, Varianten vergleichen. Dazu ein neuntes Blatt mit den Zeichen
+selbst: Farben, Abzeichen, Schriften, Knopfgrössen.
+
+Wichtig an diesem Schritt ist, was er **nicht** ist: Es ist **kein Code**. Es ist die
+Vorlage, gegen die Code später gebaut wird — und der Ort, an dem Entscheidungen über die
+Bedienung fallen, bevor sie teuer werden.
+
+Drei Dinge hält der Entwurf fest, die vorher nur im Text standen:
+
+* **Der Stift ist das Hauptwerkzeug, nicht die Maus.** Die Werkzeugleiste sitzt am
+  Bildschirmrand und lässt sich auf die andere Seite legen — eine Hand, die zeichnet,
+  liegt auf dem Glas und verdeckt, was darunter ist.
+* **Prüfen und Entwerfen sind ein Schalter am selben Bild.** Dieselbe Messung, zwei
+  Lesarten: beim Prüfen ein Urteil, beim Entwerfen ein Abstand. Erfundenes Volumen ist
+  dort der Zweck und nicht der Fehler.
+* **Das Abzeichen sitzt auf dem Bild**, wie in der Browserseite — auch auf dem
+  ungeprüften. Kein Zeichen sähe aus wie kein Problem.
+
+**Ein Befund gegen die eigene Oberfläche fiel dabei ab:** Das Rot für «durchgefallen»
+(`#c2554f`) erreicht auf dem dunklen Grund nur ein Kontrastverhältnis von 3.3 zu 1 — unter
+dem Mindestmass von 4.5 zu 1 für normale Schriftgrösse. Auf kleinen Bildschirmen und bei
+Tageslicht ist das schlecht lesbar. Im iPad-Entwurf steht es eine Stufe heller
+(`#e2776f`); **in der Browserseite ist es noch nicht geändert** — das ist ein offener
+Posten, kein erledigter.
+
 ### 21.09.2026 · Die Fläche zeigt Bilder
 
 Bis dahin nannte sie **Dateinamen und Urteile** — ein Werkzeug für Bilder, das keine

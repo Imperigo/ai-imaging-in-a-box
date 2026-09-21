@@ -5261,10 +5261,44 @@ System laufen.
 
 ---
 
+## 10 · Oberfläche und Entwurf
+
+**Entwurfsblatt (Artboard)** — Ein einzelner gezeichneter Bildschirm in einem
+Entwurfsdokument: ein Rechteck in der Grösse, die das Gerät später hat, mit allem darin,
+was der Benutzer dort sähe. Ein Entwurfsblatt ist ein Bild eines Programms, nicht das
+Programm — es tut nichts, es zeigt nur, wie es aussehen soll.
+*In diesem Projekt: die acht Blätter der iPad-Oberfläche.*
+
+**Entwurfsfläche** — Die gemeinsame, beliebig grosse Fläche, auf der mehrere
+Entwurfsblätter nebeneinander liegen, so dass man den ganzen Ablauf auf einen Blick sieht
+statt Bild für Bild. Man schiebt und zoomt darin wie auf einer Landkarte.
+
+**Berührungsfläche (Touch-Ziel)** — Die Fläche, die ein Bedienelement auf einem
+Berührungsbildschirm anbieten muss, damit eine Fingerkuppe sie zuverlässig trifft. Als
+Untergrenze gelten 44 Bildpunkte in beide Richtungen. Kleiner heisst: Es sieht bedienbar
+aus und ist es nicht.
+
+**Kontrastverhältnis** — Eine Zahl dafür, wie deutlich sich Schrift von ihrem Untergrund
+abhebt. 1 zu 1 hiesse unsichtbar; als Mindestmass für gewöhnliche Schriftgrösse gilt
+4.5 zu 1. Die Zahl lässt sich aus den beiden Farben ausrechnen, sie ist also keine
+Geschmacksfrage.
+*In diesem Projekt: Das Rot für «durchgefallen» kam auf dem dunklen Grund nur auf 3.3 zu 1
+und wurde für das iPad eine Stufe heller gesetzt.*
+
+**Druckempfindlichkeit** — Die Fähigkeit eines Stiftes, zu melden, wie fest er aufgedrückt
+wird. Die Oberfläche kann daraus die Strichbreite oder die Deckkraft ableiten — welche von
+beiden, ist eine Entwurfsentscheidung und keine Eigenschaft des Stiftes.
+
+**Wortzeichen** — Der Name eines Produkts in einer festgelegten Schrift, der als Zeichen
+benutzt wird. Kein Bild, kein Symbol — nur der geschriebene Name.
+
+---
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-21 | Neuer Abschnitt **10 · Oberfläche und Entwurf**, aus dem Entwurf der iPad-Oberfläche: **Entwurfsblatt (Artboard)**, **Entwurfsfläche**, **Berührungsfläche (Touch-Ziel)**, **Kontrastverhältnis**, **Druckempfindlichkeit**, **Wortzeichen**. Der Eintrag zum Kontrastverhältnis traegt einen Befund gegen die eigene Oberflaeche: Das Rot fuer «durchgefallen» kommt auf dem dunklen Grund nur auf 3.3 zu 1 und ist damit unter dem Mindestmass — im iPad-Entwurf eine Stufe heller, in der Browser-Oberflaeche noch nicht geaendert |
 | 2026-09-19 | Zum Bild-Eingang: **Bild-Eingang**, **Hineinskizzieren**, **Bildquelle (als Arbeitsschritt)**, **Nachrender**, **Ein Bildeingang, den die Tiefenkarte gewinnt**. Der letzte Eintrag traegt den scharfen Befund dieses Tages: Die Bibliothek reicht ein Ausgangsbild sehr wohl an das Modell durch — aber auf einer Pipeline mit nur EINEM Bildeingang bekommt ihn die Tiefenkarte, und das Hineingezeichnete faellt weg. Am Geraet gemessen (`auf-20260818-09`), hier erstmals mit einer Probe hinterlegt statt nur als Kommentar in der Registry |
 | 2026-09-16 | Ergaenzt beim EINBAU der vier Bausteine: **Feste Schranke (einer Tiefennormierung)**, **Nutzung des Wertebereichs**, **Klemmen (einer Tiefenkarte)**, **Boden (eines Wertebereichs)**, **Quantisierungsschritt als Pruefstein**. Alle fuenf aus Befunden gegen den eigenen Code: Die am 11.09. gemeldete flachgedrueckte Tiefenkarte stammt aus UNSERER festen Schranke und nicht aus dem Perzentil der HomeStation (98,9 % der Punkte ueber 0,99, nachgerechnet); die erste Fassung des Ersatzes klemmte Geometrie auf den Hintergrundwert und machte sie damit unsichtbar fuer die Silhouette; und der zuerst gewaehlte halbe 8-Bit-Schritt als Boden ueberlebt die Rundung nicht, obwohl der Kommentar daneben behauptete, er tue es |
 | 2026-09-16 | Ergaenzt aus vier gleichzeitig gebauten Bausteinen: **Zweigipflige Verteilung**, **Luecke (einer Verteilung)**, **Verhaeltnissprung gegen Abstandssprung**, **Strukturwert einer Tiefenkarte**, **Auskunft neben dem Urteil**, **Rueckkanal**, **Falscher Freund**, **Kollision beim Endungsabstreifen**. Fuenf davon tragen einen Befund und keine Lehrmeinung: Das feste Perzentil scheiterte daran, dass die Fernsichtebene 1,13 % der Flaeche einnahm und nicht unter 1 % lag; die erste Differenz trennt Verlauf und Kante NICHT (beide 0,0333); die Strukturschwelle ist gesetzt und nicht kalibriert und entscheidet darum nichts; `elf` und `acht` bleiben aus dem Zahlwort-Glossar draussen, jedes aus einem eigenen, nachgemessenen Grund. **Berichtigt am selben Tag:** Die zweite Stufe der Luecken-Trennung lief zuerst von selbst und nahm in der nachgestellten Aussenansicht eine echte Nachbarzeile als Ferne weg — sie ist jetzt abgeschaltet, und ihre urspruengliche Begruendung war ohnehin hinfaellig, weil die erste Stufe den gemeldeten Fall schon selbst loest |
