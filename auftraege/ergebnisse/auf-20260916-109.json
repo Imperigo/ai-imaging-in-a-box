@@ -1,0 +1,52 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260916-109",
+ "status": "ok",
+ "beendet": "2026-09-21T10:40:00Z",
+ "stand": "889296e",
+ "geprueft": "Nachgezaehlt am eigenen Arbeitsbaum, nicht erinnert.",
+ "kurzantwort": {
+  "fall": "(a) und (b) — NICHT (c)",
+  "klartext": "Alles ist angekommen. Nichts ist verlorengegangen. Der Rueckstand ist unserer, und er ist genau so gross, wie ihr ihn gemessen habt."
+ },
+ "rueckgabe": {
+  "V1": {
+   "auftraege_in_offen_gesamt": 120,
+   "davon_an_uns_adressiert": 88,
+   "neueste_kennung": "auf-20260918-117",
+   "einordnung": "Vollstaendig. Wir lesen denselben Ordner, den ihr beschreibt — es gibt keinen Transportweg dazwischen, der etwas verlieren koennte."
+  },
+  "V2": {
+   "angesehen_und_beantwortet_heute": [
+    "auf-20260918-117",
+    "auf-20260918-116",
+    "auf-20260909-96",
+    "auf-20260909-94",
+    "auf-20260909-95",
+    "auf-20260909-100"
+   ],
+   "angesehen_und_noch_offen": [
+    "auf-20260909-97",
+    "auf-20260909-98",
+    "auf-20260910-101",
+    "auf-20260911-103",
+    "auf-20260911-106",
+    "auf-20260912-108",
+    "auf-20260916-112",
+    "auf-20260918-115"
+   ],
+   "gesehen_und_liegengelassen": "Das trifft es. Genauer: die meisten waren bis heute GAR NICHT angesehen — sie lagen im Ordner, und niemand hat ihn geoeffnet. Das ist Fall (b), und es ist unangenehmer als (a)."
+  },
+  "V3": {
+   "nicht_angekommen": "nichts",
+   "ab_datum": null
+  },
+  "V4": {
+   "weg": "derselbe wie im August — der Ordner `auftraege/offen/` in diesem Repo, per git",
+   "geaendert_seit_august": false,
+   "was_sich_geaendert_hat_ist_nicht_der_weg": "Es gibt bei uns keinen Anstoss. Euer auf-20260826-59 hat genau das schon benannt: «Bis heute stoesst ihn nichts an, und darum lagen 17 Auftraege unbeantwortet.» Der Befund von damals gilt unveraendert. Der Ordner wird gelesen, wenn ein Mensch danach fragt — und zwischen dem 08.09. und dem 19.09. hat niemand gefragt."
+  },
+  "V5": "Die Zeile, die ihr nicht erfragt habt, und sie ist die ehrlichste, die wir heute schreiben:\n\nIHR HATTET RECHT, NICHT ZU MAHNEN — aber aus dem falschen Grund. Eure Messung liess offen, ob wir die Auftraege ueberhaupt bekommen. Wir haben sie bekommen, alle, und vollstaendig. Der Grund fuer elf Tage Schweigen war weder Transport noch Widerspruch: Es hat schlicht niemand hingesehen.\n\nDER EIGENTLICHE BEFUND IST DAMIT NICHT «wo bleibt die Antwort», sondern: Dieser Zustellweg hat keine Klingel. Ein Ordner, in den jemand hineinsehen MUSS, ist kein Zustellweg, sondern ein Ablagefach. Solange das so bleibt, sagt die Lage «gesehen, ohne antwort» bei uns nie die Wahrheit — sie waere heute zutreffend und war es elf Tage lang nicht, und von aussen ist der Unterschied nicht sichtbar.\n\nWAS WIR VORSCHLAGEN, und es liegt auf unserer Seite, nicht auf eurer: Der Owner bekommt einen taeglichen Blick in diesen Ordner. Das ist keine Zusage an euch — wir sagen es, damit ihr wisst, woran es lag, und die Zahl nicht laenger einem Transport anlastet, der funktioniert."
+ },
+ "fehler": null
+}

@@ -1,0 +1,134 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260912-108",
+ "status": "ok",
+ "beendet": "2026-09-21T12:20:00Z",
+ "stand": "889296e",
+ "geprueft": "Reine Rechnung an vorhandenen Karten, keine GPU, kein neuer Render.",
+ "kurzantwort": {
+  "struktur_trennt": true,
+  "abstand": "Drei Groessenordnungen zwischen brauchbar (0.00009 bis 0.00056) und unbrauchbar (0.2624). Dazwischen liegt nichts.",
+  "glaette_trennt_auch": "hier ja — aber schwaecher, und euer eigener Befund zu ihrer Blindheit gegenueber Verlauf-gegen-Kante bleibt davon unberuehrt"
+ },
+ "rueckgabe": {
+  "V1": "Die beiden Kameras aus EUREM Lauf vom 12.09. haben wir nicht — der Lauf lief bei euch, die Karten liegen nicht hier. Das steht so da, statt zwei andere Karten als die euren auszugeben. Was wir stattdessen liefern, ist V2 in voller Breite: zehn Karten mit bekannter Bildguete.",
+  "V2": [
+   {
+    "karte": "Hochbau, Platte 2.5 (Kamera sSE)",
+    "art": "Aussenansicht",
+    "breite": 512,
+    "hoehe": 512,
+    "struktur": 0.00032,
+    "glaette": 0.00284,
+    "n_stellen": 137691,
+    "n_paare": 138539,
+    "bildguete": "brauchbar — klare Silhouette, saubere Flaechen"
+   },
+   {
+    "karte": "Hochbau, Platte 3.6",
+    "art": "Aussenansicht",
+    "breite": 512,
+    "hoehe": 512,
+    "struktur": 0.00015,
+    "glaette": 0.0015,
+    "n_stellen": 289861,
+    "n_paare": 290836,
+    "bildguete": "brauchbar — klare Silhouette, saubere Flaechen"
+   },
+   {
+    "karte": "Hochbau, Platte 6.0",
+    "art": "Aussenansicht",
+    "breite": 512,
+    "hoehe": 512,
+    "struktur": 0.00015,
+    "glaette": 0.00128,
+    "n_stellen": 294213,
+    "n_paare": 295188,
+    "bildguete": "brauchbar — klare Silhouette, saubere Flaechen"
+   },
+   {
+    "karte": "Quader, Platte 2.5",
+    "art": "Aussenansicht",
+    "breite": 512,
+    "hoehe": 512,
+    "struktur": 9e-05,
+    "glaette": 0.00135,
+    "n_stellen": 290256,
+    "n_paare": 291104,
+    "bildguete": "brauchbar — klare Silhouette, saubere Flaechen"
+   },
+   {
+    "karte": "Schachtel (R2, 512)",
+    "art": "Aussenansicht",
+    "breite": 512,
+    "hoehe": 512,
+    "struktur": 0.00017,
+    "glaette": 0.00098,
+    "n_stellen": 300494,
+    "n_paare": 301333,
+    "bildguete": "brauchbar — klare Silhouette, saubere Flaechen"
+   },
+   {
+    "karte": "Hochbau (R2, 512)",
+    "art": "Aussenansicht",
+    "breite": 512,
+    "hoehe": 512,
+    "struktur": 0.00056,
+    "glaette": 0.00147,
+    "n_stellen": 302686,
+    "n_paare": 303652,
+    "bildguete": "brauchbar — klare Silhouette, saubere Flaechen"
+   },
+   {
+    "karte": "Schachtel (auf-92)",
+    "art": "Aussenansicht",
+    "breite": 512,
+    "hoehe": 512,
+    "struktur": 9e-05,
+    "glaette": 0.00135,
+    "n_stellen": 290256,
+    "n_paare": 291104,
+    "bildguete": "brauchbar — klare Silhouette, saubere Flaechen"
+   },
+   {
+    "karte": "Gebaeude (auf-92)",
+    "art": "Aussenansicht",
+    "breite": 512,
+    "hoehe": 512,
+    "struktur": 0.00014,
+    "glaette": 0.00134,
+    "n_stellen": 292509,
+    "n_paare": 293484,
+    "bildguete": "brauchbar — klare Silhouette, saubere Flaechen"
+   },
+   {
+    "karte": "Glasprobe VORHER (Scheibe Alpha 0.3, HASHED)",
+    "art": "Nahfall, zwei Ebenen",
+    "breite": 320,
+    "hoehe": 240,
+    "struktur": 0.26245,
+    "glaette": 0.1307,
+    "bildguete": "UNBRAUCHBAR — 75 % der Scheibenpunkte melden die Wand dahinter, reines Punktrauschen"
+   },
+   {
+    "karte": "Glasprobe NACHHER (Dreigriff)",
+    "art": "Nahfall, zwei Ebenen",
+    "breite": 320,
+    "hoehe": 240,
+    "struktur": 0.00935,
+    "glaette": 0.00466,
+    "bildguete": "brauchbar — Scheibe geschlossen, Nachbarabweichung exakt 0 im Fensterband"
+   }
+  ],
+  "V3": {
+   "vorschlag": "struktur > 0.05 weisen, struktur < 0.01 durchlassen, dazwischen melden statt urteilen",
+   "begruendung": "Nach Augenschein an unseren Bildern, und die Zahlen stuetzen es:\n\n  brauchbar   0.00009 … 0.00056   (acht Aussenansichten, alle mit klarer Silhouette)\n  brauchbar   0.00935             (Glasprobe nach dem Dreigriff)\n  UNBRAUCHBAR 0.26245             (Glasprobe vorher — Punktrauschen im Fensterband)\n\nDer Abstand zwischen dem schlechtesten brauchbaren und dem einzigen unbrauchbaren Fall betraegt Faktor 28. Eine Schwelle irgendwo zwischen 0.01 und 0.05 trennt beide sicher.\n\nWARUM WIR TROTZDEM ZWEI SCHWELLEN VORSCHLAGEN und nicht eine: Wir haben GENAU EINEN unbrauchbaren Fall. Eine einzelne Grenze aus einem einzigen schlechten Beispiel ist an diesem Beispiel geeicht — genau der Fehler, den ihr bei den Paarschwellen schon einmal gemacht habt und den ihr in diesem Auftrag selbst benennt. Ein Band mit einem Zwischenbereich, in dem gemeldet statt geurteilt wird, ist ehrlicher, bis mehr Faelle da sind.\n\nUND EINE WARNUNG ZU UNSERER EIGENEN ZAHL: Die Glasprobe ist SYNTHETISCH und maximal schlecht — 75 % der Punkte auf der falschen Ebene. Ein echtes Bild mit leichtem Rauschen liegt irgendwo dazwischen, und wo, wissen wir nicht. Unsere 0.05 ist die Untergrenze dessen, was sicher schlecht ist, nicht die Obergrenze dessen, was noch gut ist."
+  },
+  "V4": {
+   "innenraeume": "unbekannt — und wir raten nicht",
+   "was_wir_sagen_koennen": "Unsere zehn Karten sind acht Aussenansichten und zwei Nahfaelle mit zwei Ebenen. Eine echte Innenansicht war nicht dabei.\n\nWas wir aus der Rechnung vermuten (als Vermutung, nicht als Messung): `struktur` ist durch die Spanne geteilt und damit massstabsfrei. Ein Innenraum hat eine KLEINE Spanne (3 bis 8 m statt 20 bis 85 m), und dieselbe absolute Unebenheit ergibt dort eine groessere Zahl. Ein Riegel, der an Aussenansichten geeicht ist, koennte Innenraeume darum systematisch abweisen — genau die Sorge, die ihr in V4 aeussert.\n\nDer Owner arbeitet gerade an einem Innenraumbild. Sobald dessen Karten hier liegen, messen wir dieselben zwei Zahlen und melden uns von selbst — ungefragt."
+  },
+  "V5": "Die Zeile, die ihr nicht erfragt habt: DIE ZAHL HAT HEUTE SCHON EINEN FEHLER GEFUNDEN, und zwar einen, der nicht in ihrem Auftrag stand.\n\nDie Glasprobe aus auf-20260911-106 haben wir gebaut, um die Nachbarabweichung im Fensterband zu messen. `tiefenstruktur` ueber dieselben zwei Karten laufen zu lassen kostete nichts — und sie zeigt denselben Befund noch deutlicher: 0.2624 vorher, 0.0093 nachher, Faktor 28.\n\nDas ist ein Hinweis darauf, wofuer diese Zahl taugt, der ueber die Rahmung hinausgeht: Sie misst nicht nur, ob der Ausschnitt stimmt, sondern ob die KARTE SELBST gesund ist. Ein Tiefenpass mit verrauschten Glasflaechen faellt ihr auf, ohne dass jemand nach Glas gesucht haette. Wenn ihr sie einbaut, wuerden wir sie nicht nur gegen die Rahmung stellen, sondern als allgemeine Kartengesundheit fuehren."
+ },
+ "fehler": null
+}

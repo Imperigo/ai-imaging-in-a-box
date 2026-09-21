@@ -1,0 +1,160 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260918-116",
+ "status": "ok",
+ "beendet": "2026-09-21T08:55:00Z",
+ "stand": "889296e",
+ "geprueft": "Gemessen an den Gewichten, die hier ohnehin liegen. KEINE Non-Commercial-Fassung geladen, auch nicht zum Messen — FLUX.2-klein-9B ist hier nicht vorhanden und wird es nicht werden.",
+ "kurzantwort": {
+  "die_ordnergroesse_reicht_NICHT": true,
+  "es_gibt_eine_bessere_und_billigere_spur": "Die PARAMETERZAHL steht im Kopf jeder safetensors-Datei und ist exakt. Alle Koepfe eines Modells zusammen zu lesen dauerte 0.003 s. Das ist kein Schaetzwert und keine Schwelle, sondern die Zahl selbst.",
+  "gemessen_flux2_klein_4b_transformer": "3 875 544 576 Parameter (3,88 B)",
+  "was_ein_9b_ergaebe": "rund 9 000 000 000 — der Abstand ist mehr als ein Faktor zwei"
+ },
+ "befunde": [
+  {
+   "nr": "Befund 1 — Schritt 3: die Ordnergroesse taugt nicht als Riegel",
+   "urteil": "gilt, und die Zahl sagt warum",
+   "beleg": {
+    "flux2_klein_4b_ordner_byte": 23731258671,
+    "darin_doppelt": {
+     "transformer/diffusion_pytorch_model.safetensors": 7751109744,
+     "flux-2-klein-base-4b.safetensors": 7751105712,
+     "hinweis": "dieselben 3 875 544 576 Parameter, zweimal auf der Platte"
+    },
+    "schwankung_derselben_fassung_byte": 7751105712,
+    "erwarteter_abstand_4b_zu_9b_byte": "rund 10e9 (bf16: 3,88 B -> 7,75 GB gegen ~9 B -> ~18 GB)"
+   },
+   "einordnung": "Genau das, wonach ihr gefragt habt: die Schwankungsbreite DERSELBEN Fassung. Sie betraegt hier 7,75 GB — allein dadurch, dass neben dem `transformer/`-Ordner noch eine Einzeldatei-Kopie derselben Gewichte liegt (das Hub-Repo liefert beides). Der Abstand, den ein Riegel erkennen muesste, liegt bei rund 10 GB. Signal und Rauschen sind damit derselben Groessenordnung — eine Schwelle darauf waere geraten, und zwar schlecht geraten. Dazu kommt der Fall, den eine Groessenschwelle prinzipiell nicht sieht: ein QUANTISIERTES 9B ist kleiner als ein bf16-4B und traegt trotzdem 9 Milliarden Parameter."
+  },
+  {
+   "nr": "Befund 2 — Schritt 2: was sich billig pruefen laesst",
+   "urteil": "der safetensors-Kopf, und nichts sonst kommt ihm nahe",
+   "beleg": {
+    "alle_koepfe_lesen_s": {
+     "flux2-klein-4b": 0.003,
+     "z-image-turbo": 0.001
+    },
+    "sha256_groesste_datei_s": {
+     "flux2-klein-4b (7,75 GB)": 5.0,
+     "z-image-turbo (9,97 GB)": 3.9
+    },
+    "ordnergroesse": "Millisekunden, aber nach Befund 1 ohne Aussagekraft"
+   },
+   "einordnung": "Der Kopf einer safetensors-Datei ist ein JSON-Block am Dateianfang: acht Byte Laenge, dann der Block. Er nennt zu jeder Gewichtsmatrix ihre Form, und die Summe der Produkte IST die Parameterzahl. Man liest dafuer einige Kilobyte, nicht Gigabyte — darum die 3 Millisekunden fuer ein ganzes Modell. Das ist der Riegel, den man beim Laden einschalten kann, ohne dass jemand darauf wartet.\\n\\nDie Pruefsumme ist uebrigens NICHT unbezahlbar — 5 Sekunden ueber 7,75 GB. Sie scheitert an etwas anderem: Es gibt keinen vertrauenswuerdigen Sollwert, gegen den man sie haelt. Eine Pruefsumme ohne Referenz beweist nur, dass die Datei sich nicht geaendert hat, seit man sie zuletzt angesehen hat."
+  },
+  {
+   "nr": "Befund 3 — Schritt 1: die Tabelle",
+   "urteil": "gemessen",
+   "beleg": {
+    "flux2-klein-4b": {
+     "ordner_byte": 23731258671,
+     "gewichte_byte": 23715318326,
+     "parameter_gesamt": 11857603619,
+     "dateien": [
+      {
+       "pfad": "transformer/diffusion_pytorch_model.safetensors",
+       "byte": 7751109744,
+       "parameter": 3875544576
+      },
+      {
+       "pfad": "flux-2-klein-base-4b.safetensors",
+       "byte": 7751105712,
+       "parameter": 3875544576,
+       "hinweis": "Einzeldatei-Kopie desselben Transformers — loeschbar, spart 7,75 GB"
+      },
+      {
+       "pfad": "text_encoder/model-00001-of-00002.safetensors",
+       "byte": 4967215360,
+       "parameter": 2483594496
+      },
+      {
+       "pfad": "text_encoder/model-00002-of-00002.safetensors",
+       "byte": 3077766632,
+       "parameter": 1538873600
+      },
+      {
+       "pfad": "vae/diffusion_pytorch_model.safetensors",
+       "byte": 168120878,
+       "parameter": 84046371
+      }
+     ],
+     "sha256_groesste": "e109674697ffa1a3983126e32512f5428a9442bd8df59f9c95566ee90a473bb6"
+    },
+    "z-image-turbo": {
+     "ordner_byte": 32899678597,
+     "gewichte_byte": 32832339790,
+     "parameter_gesamt": 10261196515,
+     "dateien": [
+      {
+       "pfad": "transformer/diffusion_pytorch_model-00002-of-00003.safetensors",
+       "byte": 9973714824,
+       "parameter": 2493423104
+      },
+      {
+       "pfad": "transformer/diffusion_pytorch_model-00001-of-00003.safetensors",
+       "byte": 9973693184,
+       "parameter": 2493417536
+      },
+      {
+       "pfad": "transformer/diffusion_pytorch_model-00003-of-00003.safetensors",
+       "byte": 4672282880,
+       "parameter": 1168068096
+      },
+      {
+       "pfad": "text_encoder/model-00002-of-00003.safetensors",
+       "byte": 3987450520,
+       "parameter": 1993712640
+      },
+      {
+       "pfad": "text_encoder/model-00001-of-00003.safetensors",
+       "byte": 3957900840,
+       "parameter": 1978940416
+      },
+      {
+       "pfad": "vae/diffusion_pytorch_model.safetensors",
+       "byte": 167666902,
+       "parameter": 83819683
+      },
+      {
+       "pfad": "text_encoder/model-00003-of-00003.safetensors",
+       "byte": 99630640,
+       "parameter": 49815040
+      }
+     ],
+     "sha256_groesste": "a4bbe43ee184a1fb5af4b412d27555f532893bdc3165b1149e304ed82b5d7015"
+    },
+    "refcontrol-depth-lora": {
+     "byte": 92426784,
+     "lizenz": "apache-2.0 (Kopfzeile des Modellblatts)",
+     "hinweis": "eine LoRA, keine eigene Modellfamilie — der Groessenriegel betrifft sie nicht"
+    }
+   },
+   "einordnung": "Zwei Nebenbefunde, die euch beide etwas angehen. Erstens: Die Transformer-Datei von z-image-turbo ist in DREI Teile zerlegt; wer nur die groesste Datei ansieht, sieht 2,49 von 6,15 Milliarden Parametern. Ein Riegel muss die Teile summieren, sonst faellt er auf eine Zerlegung herein. Zweitens: `parameter_gesamt` ist NICHT die Modellgroesse im ueblichen Sinn — bei flux2-klein-4b stehen dort 11,86 Milliarden, weil der Textgeber (4,02 Mrd.) und die doppelte Kopie mitzaehlen. Die Zahl, die «4B» meint, ist die des TRANSFORMERS: 3,88 Milliarden."
+  },
+  {
+   "nr": "Befund 4 — Schritt 4: welche Fassung fehlt",
+   "urteil": "9B ist hier nicht vorhanden und wird es nicht werden",
+   "beleg": {
+    "vorhanden": [
+     "FLUX.2-klein-base-4B (Apache-2.0)",
+     "z-image-turbo",
+     "z-image-controlnet-union",
+     "refcontrol-FLUX.2-klein-4B-reference-depth-lora (Apache-2.0)",
+     "depth-anything-v2-small (Apache-2.0)"
+    ],
+    "nicht_vorhanden": [
+     "FLUX.2-klein-9B"
+    ],
+    "wird_nicht_geholt": "Non-Commercial. Auch nicht zum Messen — eure eigene Auflage, und sie ist richtig."
+   },
+   "einordnung": "Damit ist der Abstand 4B zu 9B hier NICHT direkt gemessen, sondern gerechnet. Das steht ausdruecklich so da, statt eine gemessene Zahl vorzutaeuschen. Fuer den vorgeschlagenen Riegel spielt es keine Rolle: Er vergleicht die gelesene Parameterzahl mit der ERKLAERTEN und braucht keine Kenntnis der anderen Fassung."
+  }
+ ],
+ "vorschlag": {
+  "riegel": "Beim Laden: alle `*.safetensors` unter `transformer/` oeffnen, je den Kopf lesen, die Parameter summieren, und gegen `parameter_b * 1e9` halten. Weicht es um mehr als, sagen wir, 10 % ab, ist der Eintrag falsch — gleich ob nach oben oder unten.",
+  "warum_10_prozent": "Das ist eine Setzung und wird hier auch so genannt. Sie ist gross genug fuer Rundung und Zaehlweise (zaehlt man den Textgeber mit?) und klein genug, um 3,88 von 9 zu trennen. Wenn ihr eine gemessene Grenze wollt, braucht es zwei Faelle, die wir hier nicht beide haben — siehe Befund 4.",
+  "was_es_NICHT_faengt": "Ein Gegner, der die Gewichte selbst neu schreibt. Gegen den hilft nur eine Signatur der Quelle, und die hat das Hub-Oekosystem nicht. Der Riegel faengt den Abschreibfehler und den umbenannten Ordner — und das ist der Fall, den ihr gegnerisch gemessen habt."
+ },
+ "fehler": null
+}

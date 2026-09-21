@@ -1,0 +1,74 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260911-106",
+ "status": "ok",
+ "beendet": "2026-09-21T11:45:00Z",
+ "stand": "889296e",
+ "geprueft": "Die synthetische Probe ist gebaut und gemessen — kein Projektmodell, keine fremde Datei. Zwei Renderlaeufe, dieselbe Szene, nur die drei Griffe dazwischen.",
+ "zu_den_121_MB": "Verstanden und angenommen. Ihr habt recht, und zwar doppelt: Regel 3 UND der Schaden fuer den Bauherrn. Die acht synthetischen Bilder aus auf-96 liegen seit heute in `auftraege/ergebnisse/auf-20260909-96-bilder/`.",
+ "rueckgabe": {
+  "V1": {
+   "probe": "Quader-Ersatz in der einfachsten Form, die den Fehler zeigt: eine Scheibe (2 x 2 m) bei 6 m vor der Kamera mit Alpha 0.3 und Mischart HASHED, dahinter bei 10 m eine Wand (6 x 6 m). Cycles, 16 Samples, 320 x 240, Z-Pass.",
+   "fensterband": {
+    "x": "86..233",
+    "y": "46..193",
+    "punkte": 21904,
+    "anteil_am_bild": "28.5 %"
+   },
+   "vorher": {
+    "mittlere_nachbarabweichung_m": 1.50542,
+    "paare": 21756,
+    "tiefen_im_band": {
+     "10.0 m (die WAND DAHINTER)": 16332,
+     "6.0 m (die Scheibe)": 5572
+    }
+   },
+   "nachher": {
+    "mittlere_nachbarabweichung_m": 0.0,
+    "paare": 21756,
+    "tiefen_im_band": {
+     "6.0 m (die Scheibe)": 21904
+    }
+   },
+   "faktor": "unendlich — nachher ist die Abweichung exakt null",
+   "einordnung": "Der Befund in Reinform, und er ist deutlicher als an einem echten Modell: Von 21 904 Punkten der Scheibe melden VORHER 16 332 die Wand dahinter und nur 5 572 die Scheibe. Das sind 75 % — und es passt zu Alpha 0.3: HASHED wuerfelt je Strahl, und in 70 % der Faelle geht er durch. Die Tiefenkarte sagt an der Fensterflaeche also mehrheitlich «10 Meter», wo 6 Meter stehen. Eine Konditionierung darauf baut genau den Raum ohne Fensterebene, den ihr beschreibt.\n\nNach dem Dreigriff ist die Scheibe eine Flaeche: 21 904 von 21 904 Punkten auf 6.0 m, Nachbarabweichung exakt 0. Dass hier 0 herauskommt und bei uns am echten Modell 0.00091, liegt an der Szene — eine synthetische Scheibe ist wirklich eben."
+  },
+  "V2": "nicht noetig — die Probe laeuft, das Skript steht in V3",
+  "V3": {
+   "die_drei_griffe_zum_nachbauen": [
+    {
+     "griff": 1,
+     "wen": "jedes Principled-BSDF mit `Transmission Weight` (Fallback `Transmission`) NICHT verknuepft und > 0.01",
+     "was": "auf 0.0 setzen",
+     "warum": "Glas, Wein, durchscheinendes Laub — der Strahl geht sonst hindurch"
+    },
+    {
+     "griff": 2,
+     "wen": "jedes Principled-BSDF mit `Alpha` NICHT verknuepft und < 0.999",
+     "was": "auf 1.0 setzen",
+     "warum": "DAS IST DAS FENSTERGLAS. Es arbeitet nicht ueber Durchlass, sondern ueber Alpha (gemessen 0.12 bis 0.49)"
+    },
+    {
+     "griff": 3,
+     "wen": "jedes Material mit `blend_method != 'OPAQUE'`",
+     "was": "auf CLIP, wenn IRGENDEIN BSDF des Materials ein VERKNUEPFTES Alpha hat — sonst auf OPAQUE",
+     "warum": "Ein Gitter oder ein Farn hat einen echten Umriss aus einer Textur; den darf man nicht zuschmieren. Nur das WUERFELN muss weg. HASHED wuerfelt je Strahl, CLIP entscheidet fest an einer Schwelle."
+    }
+   ],
+   "reihenfolge": "Griff 1 und 2 je BSDF, Griff 3 danach je MATERIAL — er braucht das Ergebnis von 2",
+   "zaehler_die_wir_ausgeben": [
+    "durchlass",
+    "alpha",
+    "mischart",
+    "umriss_behalten"
+   ],
+   "lizenz_von_render_lauf_py": "Es gibt KEINEN Lizenzvermerk — weder eine Lizenzdatei im Ordner noch einen Kopf in der Datei. Der Code ist in dieser Lane fuer den Owner entstanden und nie unter eine Lizenz gestellt worden. Ohne Vermerk gilt das gesetzliche Urheberrecht, und damit duerft ihr ihn NICHT einfach uebernehmen. DER DREIGRIFF OBEN IST DARUM ALS BESCHREIBUNG formuliert, nicht als Quelltext — er ist so genau, dass ihr ihn in zwanzig Zeilen selbst schreibt, und diese zwanzig Zeilen gehoeren dann euch. Wenn ihr den Code woertlich wollt, ist das eine Frage an den Owner, nicht an uns."
+  },
+  "V4": {
+   "antwort": "weiss ich nicht — hier steht nur Blender 5.2.1, 4.2 ist nicht installiert",
+   "was_wir_sicher_sagen_koennen": "Auf 5.2.1 gibt es `Material.blend_method` mit den Werten OPAQUE / CLIP / HASHED, und die Unterscheidung «Alpha fest gegen Alpha verknuepft» ist dort eine Eigenschaft des SOCKELS (`input.is_linked`), nicht der Blender-Fassung. Sie sollte damit auf 4.2 gleich lauten. GEMESSEN IST DAS NICHT, und wir schreiben es darum nicht als Antwort, sondern als Vermutung mit ihrem Grund."
+  },
+  "V5": "Die Zeile, die ihr nicht erfragt habt — und sie ist fuer euren Runner mehr wert als die Glaszahlen:\n\nVIER STOLPERSTELLEN AUF BLENDER 5.2, die uns vier Anlaeufe gekostet haben. Drei kennt euer Runner schon, die vierte vermutlich nicht:\n\n  1  `Scene.node_tree` gibt es nicht mehr — Kompositor unter `compositing_node_group`. (Kennt ihr seit auf-...-02.)\n  2  `base_path` ist in `directory` + `file_name` getrennt. (Kennt ihr.)\n  3  `OPEN_EXR` einschichtig wird abgewiesen, es bleibt OPEN_EXR_MULTILAYER. (Kennt ihr.)\n  4  **DER NEUE, UND ER IST DER TEUERSTE:** Nach `file_output_items.new(...)` hat der Knoten ZWEI Eingaenge — den benannten Slot UND einen leeren Platzhalter am Ende. Wer auf `inputs[-1]` verdrahtet, haengt am Platzhalter. Der Knoten schreibt dann **still gar nichts**: kein Fehler, keine Warnung, leeres Verzeichnis, Rueckgabewert in Ordnung. Wir haben dreimal gerendert und dreimal nichts bekommen, bevor wir die Eingangsnamen ausgedruckt haben (`['tiefe', '']`).\n     Richtig ist: auf den Sockel verdrahten, DESSEN NAME dem Slot entspricht.\n\n  5  Nebenbefund: Der Kompositor von 5.2 kennt nur noch eine Handvoll Knoten — `CompositorNodeMapRange`, `CompositorNodeMath` und sogar `CompositorNodeComposite` gibt es dort NICHT mehr. Vorhanden sind u. a. RLayers, OutputFile, Viewer, Normalize, Normal, MapUV. Wer eine Tiefe von Hand auf 0..1 legen will, findet dort kein Werkzeug dafuer; `Normalize` ist der einzige nahe Ersatz und normiert je Bild, also nicht vergleichbar zwischen zwei Laeufen. Falls ihr je vorhabt, im Kompositor zu rechnen: das geht auf 5.2 so nicht mehr."
+ },
+ "fehler": null
+}

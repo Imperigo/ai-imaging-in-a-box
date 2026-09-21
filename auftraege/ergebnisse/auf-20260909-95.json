@@ -1,0 +1,139 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260909-95",
+ "status": "ok",
+ "beendet": "2026-09-21T10:05:00Z",
+ "stand": "889296e",
+ "geprueft": "Gelesen. Und nachgemessen — mit einem Rahmungsfehler im ersten Anlauf, der unten ausdruecklich steht, weil er die Kurve umgedreht hat.",
+ "reproduktionsprobe": {
+  "was": "Quader mit --gelaende-vielfaches=2.5 in unserer Rahmung",
+  "auf_92": 0.5569,
+  "heute": 0.5569,
+  "urteil": "Zahl fuer Zahl gleich. Damit ist belegt, was ihr angesagt habt: Am Quader aendert der reparierte Erzeuger nichts, und unsere Rahmung ist dieselbe wie am 09.09. Erst danach sind die Hochbau-Zahlen unten ueberhaupt etwas wert."
+ },
+ "rueckgabe": {
+  "V1": {
+   "bedingung": "512 x 512, Deckungsgrad 0.70, Augenhoehe 1.70 m, Kamera sSE auf die Bauwerks-Huellbox",
+   "bauwerk_groesste_ausdehnung_m": 15.25,
+   "kurve": [
+    {
+     "vielfaches": 2.5,
+     "plattenkante_m": 38.13,
+     "geometrieanteil": 0.2659
+    },
+    {
+     "vielfaches": 3.5,
+     "plattenkante_m": 53.38,
+     "geometrieanteil": 0.5281
+    },
+    {
+     "vielfaches": 3.6,
+     "plattenkante_m": 54.9,
+     "geometrieanteil": 0.5566
+    },
+    {
+     "vielfaches": 3.7,
+     "plattenkante_m": 56.43,
+     "geometrieanteil": 0.5605
+    },
+    {
+     "vielfaches": 3.8,
+     "plattenkante_m": 57.95,
+     "geometrieanteil": 0.5608
+    },
+    {
+     "vielfaches": 3.9,
+     "plattenkante_m": 59.48,
+     "geometrieanteil": 0.561
+    },
+    {
+     "vielfaches": 4.0,
+     "plattenkante_m": 61.0,
+     "geometrieanteil": 0.5612
+    },
+    {
+     "vielfaches": 4.1,
+     "plattenkante_m": 62.53,
+     "geometrieanteil": 0.5614
+    },
+    {
+     "vielfaches": 4.2,
+     "plattenkante_m": 64.05,
+     "geometrieanteil": 0.5617
+    },
+    {
+     "vielfaches": 6.0,
+     "plattenkante_m": 91.5,
+     "geometrieanteil": 0.5649
+    }
+   ],
+   "einordnung": "Die Kurve hat eine Form, die eure 256x160-Reihe nicht zeigt: Sie STEIGT bis rund 3.6 steil an und laeuft danach fast waagrecht — von 3.6 auf 6.0 gewinnt sie noch 0.0083. Der Grund ist die Rahmung: Die Kamera sitzt auf der Bauwerks-Huellbox, nicht auf der Szene. Ab dem Punkt, an dem die Platte den unteren Bildrand ausfuellt, bringt mehr Platte nichts mehr. Bei euch steigt sie weiter (0.2665 bei 4.2 auf 0.5003 bei 6.0), weil ein breites 256x160-Bild mehr Horizont zeigt. Keine der beiden Kurven gilt fuer die andere Bedingung — genau wie ihr schreibt."
+  },
+  "V2": {
+   "antwort": 3.6,
+   "beleg": {
+    "ziel_schachtel": 0.5569,
+    "hochbau_bei_3.6": 0.5566,
+    "abweichung": 0.0003
+   },
+   "nachbarn": {
+    "3.5": 0.5281,
+    "3.7": 0.5605
+   },
+   "einordnung": "3.6 trifft die Schachtel auf 0.0003 genau. Ein Wort zur Belastbarkeit, weil ihr die Zahl eintragen wollt: Zwischen 3.5 und 3.6 springt der Anteil um 0.0285, zwischen 3.6 und 4.2 nur noch um 0.0051. Wir stehen also GENAU auf der Kante, wo die Kurve umknickt. Wer Reserve will, nimmt 4.0 — dort ist die Kurve flach und eine kleine Aenderung an Bauwerk oder Rahmung verschiebt nichts mehr. 3.6 ist die genauere Zahl, 4.0 die robustere. Entscheidet ihr; die Bedingung steht daneben."
+  },
+  "V3": {
+   "frage": "Besteht das perfekte Blender-Beauty-Bild bei 2.5, oder liefert qa_gegen_soll weiter score = None?",
+   "antwort": "score ist NICHT mehr None — aber es besteht trotzdem nicht.",
+   "messung": [
+    {
+     "fall": "hochbau 2.5",
+     "geometrieanteil": 0.2659,
+     "status": "ok",
+     "score": 0.226,
+     "geom_iou": 0.0514,
+     "rho_maske": 0.9909,
+     "n_gemeinsam": 6810,
+     "bestanden": false
+    },
+    {
+     "fall": "hochbau 3.6",
+     "geometrieanteil": 0.5566,
+     "status": "ok",
+     "score": 0.9901,
+     "geom_iou": 0.9848,
+     "rho_maske": 0.9862,
+     "n_gemeinsam": 144785,
+     "bestanden": true
+    },
+    {
+     "fall": "hochbau 6.0",
+     "geometrieanteil": 0.5649,
+     "status": "ok",
+     "score": 0.9919,
+     "geom_iou": 0.9891,
+     "rho_maske": 0.9822,
+     "n_gemeinsam": 147274,
+     "bestanden": true
+    },
+    {
+     "fall": "quader 2.5",
+     "geometrieanteil": 0.5569,
+     "status": "ok",
+     "score": 0.9873,
+     "geom_iou": 0.9762,
+     "rho_maske": 0.9887,
+     "n_gemeinsam": 144218,
+     "bestanden": true
+    }
+   ],
+   "einordnung": "Zwei Dinge, und sie gehen in verschiedene Richtungen.\n\nERSTENS, und das ist eure Reparatur: Die unmessbare Szene ist WEG. In auf-92 stand dort n_gemeinsam = 0 und score = None. Heute sind es 6810 gemeinsame Punkte und ein gerechneter Score. Die Kamera steht nicht mehr neben der Platte.\n\nZWEITENS, und das bleibt: Bei 2.5 faellt das PERFEKTE Bild trotzdem durch — score 0.226 gegen die Schwelle 0.65. Und die Zerlegung sagt genau, woran: `spearman` steht bei -0.995 und `rho_maske` bei 0.9909, also praktisch bei eins. Das Bild folgt seiner eigenen Tiefenkarte perfekt, wie es muss — es IST sie. Was zusammenbricht, ist `geom_iou` mit 0.0514.\n\nDas ist der geom_iou-Deckel in Reinform, und diese vier Zeilen sind das sauberste Beispiel dafuer, das wir je gemessen haben: DIESELBE Szene, DASSELBE perfekte Bild, nur der Geometrieanteil wandert von 0.27 auf 0.56 — und geom_iou springt von 0.05 auf 0.98, waehrend rho_maske sich um 0.005 bewegt. Wer eine Schwelle auf score setzt, setzt sie auf den Geometrieanteil der Szene und nicht auf die Bildtreue.\n\nFUER EURE FRAGE HEISST DAS: Bei 2.5 laesst die Hochbauszene weiterhin KEIN Urteil ueber ein erzeugtes Bild zu — nicht weil nichts gemessen wird, sondern weil auch das Beste durchfaellt. Ab 3.6 laesst sie es zu."
+  },
+  "V4": {
+   "andere_stellen_mit_veraenderter_zahl": "keine gefunden",
+   "wie_geprueft": "Der Quaderfall ist bei uns Zahl fuer Zahl gleich geblieben (0.5569 gegen 0.5569). Andere Stellen, an denen `make_test_ifc.py` eine Zahl setzt, fahren wir nicht."
+  },
+  "V5": "Die Zeile, die ihr nicht erfragt habt, und sie ist ein Fehler von uns:\n\nUNSER ERSTER ANLAUF MASS EINE KURVE, DIE MIT WACHSENDER PLATTE FIEL — 0.0461 bei 2.5, 0.0176 bei 4.2, 0.0095 bei 6.0. Das sah nach einem Befund aus («die Platte verdraengt das Bauwerk») und war ein Rahmungsfehler: Wir hatten `kamera_huellbox` weggelassen, und dann rahmt die Kamera die GANZE Szene samt Platte. Je groesser die Platte, desto kleiner das Bauwerk im Bild.\n\nAufgefallen ist es an EURER Zahl: Der Quader kam auf 0.031 statt auf die 0.5569, die in auf-92 steht. Ohne diesen Bezugspunkt haetten wir eine erfundene Kurve zurueck-gemeldet, und sie haette plausibel ausgesehen.\n\nDie Lehre, und sie gehoert euch so sehr wie uns: Eine Reproduktionsprobe ist nicht Formsache. Ihr habt sie in auf-20260918-115 zur Bedingung gemacht («stimmen die Werte nicht auf drei Stellen, macht NICHT weiter») — hier hat genau dieser Griff einen Fehler gefangen, und zwar unseren."
+ },
+ "fehler": null
+}

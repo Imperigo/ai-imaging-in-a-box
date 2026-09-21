@@ -1,0 +1,1046 @@
+[
+ {
+  "staerke": "1.00",
+  "bild": "A0.png",
+  "fall": "A",
+  "szene": "schachtel",
+  "prompt_art": "mit",
+  "seed": 0,
+  "gespeichert": {
+   "score": 0.9860320925881305,
+   "rho_maske": 0.9156907135441371,
+   "geom_iou": 0.9771238953035587,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9860320925881305,
+   "geom_iou": 0.9771238953035587,
+   "rho_maske": 0.9156907135441371,
+   "bestanden": true,
+   "kantenanteil": 0.11858608893956671
+  },
+  "falsch": {
+   "score": 0.8762860902602247,
+   "geom_iou": 0.7734708135585053,
+   "rho_maske": 0.18312138032731756,
+   "bestanden": true,
+   "kantenanteil": 0.022673031026252982
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "1.00",
+  "bild": "A1.png",
+  "fall": "A",
+  "szene": "schachtel",
+  "prompt_art": "mit",
+  "seed": 1,
+  "gespeichert": {
+   "score": 0.9798107103762299,
+   "rho_maske": 0.9563512189372265,
+   "geom_iou": 0.9642078635054765,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9798107103762299,
+   "geom_iou": 0.9642078635054765,
+   "rho_maske": 0.9563512189372265,
+   "bestanden": true,
+   "kantenanteil": 0.2805017103762828
+  },
+  "falsch": {
+   "score": 0.8762372216616169,
+   "geom_iou": 0.7765845123533138,
+   "rho_maske": 0.1401523937784572,
+   "bestanden": true,
+   "kantenanteil": 0.14797136038186157
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "1.00",
+  "bild": "A2.png",
+  "fall": "A",
+  "szene": "schachtel",
+  "prompt_art": "mit",
+  "seed": 2,
+  "gespeichert": {
+   "score": 0.9858865714483086,
+   "rho_maske": 0.9854125813220789,
+   "geom_iou": 0.9732486228920956,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9858865714483086,
+   "geom_iou": 0.9732486228920956,
+   "rho_maske": 0.9854125813220789,
+   "bestanden": true,
+   "kantenanteil": 0.012542759407069556
+  },
+  "falsch": {
+   "score": 0.8717012796894149,
+   "geom_iou": 0.7712625494005763,
+   "rho_maske": 0.18017099787185917,
+   "bestanden": true,
+   "kantenanteil": 0.008353221957040573
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "1.00",
+  "bild": "B0.png",
+  "fall": "B",
+  "szene": "schachtel",
+  "prompt_art": "ohne",
+  "seed": 0,
+  "gespeichert": {
+   "score": 0.988374896589821,
+   "rho_maske": 0.9747551197317506,
+   "geom_iou": 0.9784100996821826,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.988374896589821,
+   "geom_iou": 0.9784100996821826,
+   "rho_maske": 0.9747551197317506,
+   "bestanden": true,
+   "kantenanteil": 0.05131128848346636
+  },
+  "falsch": {
+   "score": 0.8748642264927159,
+   "geom_iou": 0.7743684920940995,
+   "rho_maske": 0.22298610424209214,
+   "bestanden": true,
+   "kantenanteil": 0.008353221957040573
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "1.00",
+  "bild": "B1.png",
+  "fall": "B",
+  "szene": "schachtel",
+  "prompt_art": "ohne",
+  "seed": 1,
+  "gespeichert": {
+   "score": 0.9867431415414372,
+   "rho_maske": 0.9931101547069374,
+   "geom_iou": 0.9749171345464385,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9867431415414372,
+   "geom_iou": 0.9749171345464385,
+   "rho_maske": 0.9931101547069374,
+   "bestanden": true,
+   "kantenanteil": 0.036488027366020526
+  },
+  "falsch": {
+   "score": 0.8737942709895757,
+   "geom_iou": 0.7721899901297575,
+   "rho_maske": 0.20302881598981745,
+   "bestanden": true,
+   "kantenanteil": 0.06921241050119331
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "1.00",
+  "bild": "B2.png",
+  "fall": "B",
+  "szene": "schachtel",
+  "prompt_art": "ohne",
+  "seed": 2,
+  "gespeichert": {
+   "score": 0.9838226456248179,
+   "rho_maske": 0.9767027883135285,
+   "geom_iou": 0.9719158420857114,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9838226456248179,
+   "geom_iou": 0.9719158420857114,
+   "rho_maske": 0.9767027883135285,
+   "bestanden": true,
+   "kantenanteil": 0.005701254275940707
+  },
+  "falsch": {
+   "score": 0.8697827312543555,
+   "geom_iou": 0.771060134005365,
+   "rho_maske": 0.1854506714747121,
+   "bestanden": true,
+   "kantenanteil": 0.00954653937947494
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "1.00",
+  "bild": "C0.png",
+  "fall": "C",
+  "szene": "gebaeude",
+  "prompt_art": "mit",
+  "seed": 0,
+  "gespeichert": {
+   "score": 0.9681637260958564,
+   "rho_maske": 0.9028654249311838,
+   "geom_iou": 0.9499758289350825,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9681637260958564,
+   "geom_iou": 0.9499758289350825,
+   "rho_maske": 0.9028654249311838,
+   "bestanden": true,
+   "kantenanteil": 0.007159904534606206
+  },
+  "falsch": {
+   "score": 0.8546336984725099,
+   "geom_iou": 0.741427131362175,
+   "rho_maske": 0.5528580750233072,
+   "bestanden": true,
+   "kantenanteil": 0.1516533637400228
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "1.00",
+  "bild": "C1.png",
+  "fall": "C",
+  "szene": "gebaeude",
+  "prompt_art": "mit",
+  "seed": 1,
+  "gespeichert": {
+   "score": 0.978584594740669,
+   "rho_maske": 0.620110371969851,
+   "geom_iou": 0.9724027061424074,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.978584594740669,
+   "geom_iou": 0.9724027061424074,
+   "rho_maske": 0.620110371969851,
+   "bestanden": true,
+   "kantenanteil": 0.46420047732696895
+  },
+  "falsch": {
+   "score": 0.8556861355610115,
+   "geom_iou": 0.7480690241536637,
+   "rho_maske": 0.39253088628954547,
+   "bestanden": true,
+   "kantenanteil": 0.2394526795895097
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "1.00",
+  "bild": "C2.png",
+  "fall": "C",
+  "szene": "gebaeude",
+  "prompt_art": "mit",
+  "seed": 2,
+  "gespeichert": {
+   "score": 0.8965455516993689,
+   "rho_maske": 0.14374026593271041,
+   "geom_iou": 0.925707932770911,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.8965455516993689,
+   "geom_iou": 0.925707932770911,
+   "rho_maske": 0.14374026593271041,
+   "bestanden": true,
+   "kantenanteil": 0.011933174224343675
+  },
+  "falsch": {
+   "score": 0.8281289321026593,
+   "geom_iou": 0.7349901647917373,
+   "rho_maske": 0.41222972490215354,
+   "bestanden": true,
+   "kantenanteil": 0.06841505131128849
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "1.00",
+  "bild": "D0.png",
+  "fall": "D",
+  "szene": "gebaeude",
+  "prompt_art": "ohne",
+  "seed": 0,
+  "gespeichert": {
+   "score": 0.9073066574940643,
+   "rho_maske": 0.8672549274377584,
+   "geom_iou": 0.9311891707547417,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9073066574940643,
+   "geom_iou": 0.9311891707547417,
+   "rho_maske": 0.8672549274377584,
+   "bestanden": true,
+   "kantenanteil": 0.18854415274463007
+  },
+  "falsch": {
+   "score": 0.8279143628285058,
+   "geom_iou": 0.7369720551400812,
+   "rho_maske": 0.6698413546046408,
+   "bestanden": true,
+   "kantenanteil": 0.18015963511972635
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "1.00",
+  "bild": "D1.png",
+  "fall": "D",
+  "szene": "gebaeude",
+  "prompt_art": "ohne",
+  "seed": 1,
+  "gespeichert": {
+   "score": 0.9744011987189494,
+   "rho_maske": 0.7512285906955215,
+   "geom_iou": 0.9744923959981762,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9744011987189494,
+   "geom_iou": 0.9744923959981762,
+   "rho_maske": 0.7512285906955215,
+   "bestanden": true,
+   "kantenanteil": 0.5883054892601431
+  },
+  "falsch": {
+   "score": 0.8513383674578628,
+   "geom_iou": 0.7565565830560687,
+   "rho_maske": 0.41642331515465236,
+   "bestanden": true,
+   "kantenanteil": 0.2531356898517674
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "1.00",
+  "bild": "D2.png",
+  "fall": "D",
+  "szene": "gebaeude",
+  "prompt_art": "ohne",
+  "seed": 2,
+  "gespeichert": {
+   "score": 0.9587783131785889,
+   "rho_maske": 0.48774070247535595,
+   "geom_iou": 0.941106284237658,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9587783131785889,
+   "geom_iou": 0.941106284237658,
+   "rho_maske": 0.48774070247535595,
+   "bestanden": true,
+   "kantenanteil": 0.0
+  },
+  "falsch": {
+   "score": 0.8537094643785138,
+   "geom_iou": 0.7391449386731478,
+   "rho_maske": 0.6324273196099743,
+   "bestanden": true,
+   "kantenanteil": 0.1345496009122007
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.75",
+  "bild": "A0_s075.png",
+  "fall": "A",
+  "szene": "schachtel",
+  "prompt_art": "mit",
+  "seed": 0,
+  "gespeichert": {
+   "score": 0.9893399157993299,
+   "rho_maske": 0.9625202176947514,
+   "geom_iou": 0.9810144189991519,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9893399157993299,
+   "geom_iou": 0.9810144189991519,
+   "rho_maske": 0.9625202176947514,
+   "bestanden": true,
+   "kantenanteil": 0.0661345496009122
+  },
+  "falsch": {
+   "score": 0.8739109672416471,
+   "geom_iou": 0.7730009633911368,
+   "rho_maske": 0.22516369836501246,
+   "bestanden": true,
+   "kantenanteil": 0.06801909307875895
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.75",
+  "bild": "A1_s075.png",
+  "fall": "A",
+  "szene": "schachtel",
+  "prompt_art": "mit",
+  "seed": 1,
+  "gespeichert": {
+   "score": 0.9585764120574539,
+   "rho_maske": 0.9611029176602237,
+   "geom_iou": 0.921242432219005,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9585764120574539,
+   "geom_iou": 0.921242432219005,
+   "rho_maske": 0.9611029176602237,
+   "bestanden": true,
+   "kantenanteil": 0.0
+  },
+  "falsch": {
+   "score": 0.8700688953320519,
+   "geom_iou": 0.7670957481921565,
+   "rho_maske": 0.1873987355677371,
+   "bestanden": true,
+   "kantenanteil": 0.008353221957040573
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.75",
+  "bild": "A2_s075.png",
+  "fall": "A",
+  "szene": "schachtel",
+  "prompt_art": "mit",
+  "seed": 2,
+  "gespeichert": {
+   "score": 0.9862096438905371,
+   "rho_maske": 0.976745762831026,
+   "geom_iou": 0.9747167641787007,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9862096438905371,
+   "geom_iou": 0.9747167641787007,
+   "rho_maske": 0.976745762831026,
+   "bestanden": true,
+   "kantenanteil": 0.15051311288483465
+  },
+  "falsch": {
+   "score": 0.8707212602226593,
+   "geom_iou": 0.7701019524862941,
+   "rho_maske": 0.12755705753536112,
+   "bestanden": true,
+   "kantenanteil": 0.013126491646778043
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.75",
+  "bild": "B0_s075.png",
+  "fall": "B",
+  "szene": "schachtel",
+  "prompt_art": "ohne",
+  "seed": 0,
+  "gespeichert": {
+   "score": 0.9872173069535616,
+   "rho_maske": 0.9012123746747447,
+   "geom_iou": 0.9796174370588355,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9872173069535616,
+   "geom_iou": 0.9796174370588355,
+   "rho_maske": 0.9012123746747447,
+   "bestanden": true,
+   "kantenanteil": 0.08323831242873432
+  },
+  "falsch": {
+   "score": 0.8766318198672234,
+   "geom_iou": 0.7737699387981302,
+   "rho_maske": 0.2853359786405136,
+   "bestanden": true,
+   "kantenanteil": 0.011933174224343675
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.75",
+  "bild": "B1_s075.png",
+  "fall": "B",
+  "szene": "schachtel",
+  "prompt_art": "ohne",
+  "seed": 1,
+  "gespeichert": {
+   "score": 0.9849926277530117,
+   "rho_maske": 0.9961142900299097,
+   "geom_iou": 0.970970660113687,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9849926277530117,
+   "geom_iou": 0.970970660113687,
+   "rho_maske": 0.9961142900299097,
+   "bestanden": true,
+   "kantenanteil": 0.10604332953249715
+  },
+  "falsch": {
+   "score": 0.8722194086457842,
+   "geom_iou": 0.7696232504191782,
+   "rho_maske": 0.19157746332880876,
+   "bestanden": true,
+   "kantenanteil": 0.06324582338902147
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.75",
+  "bild": "B2_s075.png",
+  "fall": "B",
+  "szene": "schachtel",
+  "prompt_art": "ohne",
+  "seed": 2,
+  "gespeichert": {
+   "score": 0.9842318292393557,
+   "rho_maske": 0.964336197024194,
+   "geom_iou": 0.9738489622067473,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9842318292393557,
+   "geom_iou": 0.9738489622067473,
+   "rho_maske": 0.964336197024194,
+   "bestanden": true,
+   "kantenanteil": 0.05131128848346636
+  },
+  "falsch": {
+   "score": 0.869231216485975,
+   "geom_iou": 0.7704105866296302,
+   "rho_maske": 0.20233551868459096,
+   "bestanden": true,
+   "kantenanteil": 0.010739856801909307
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.75",
+  "bild": "C0_s075.png",
+  "fall": "C",
+  "szene": "gebaeude",
+  "prompt_art": "mit",
+  "seed": 0,
+  "gespeichert": {
+   "score": 0.9697432651467213,
+   "rho_maske": 0.952150181812186,
+   "geom_iou": 0.9460709801070649,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9697432651467213,
+   "geom_iou": 0.9460709801070649,
+   "rho_maske": 0.952150181812186,
+   "bestanden": true,
+   "kantenanteil": 0.025059665871121718
+  },
+  "falsch": {
+   "score": 0.8580029998950613,
+   "geom_iou": 0.746427310957044,
+   "rho_maske": 0.6565944946101773,
+   "bestanden": true,
+   "kantenanteil": 0.14481185860889395
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.75",
+  "bild": "C1_s075.png",
+  "fall": "C",
+  "szene": "gebaeude",
+  "prompt_art": "mit",
+  "seed": 1,
+  "gespeichert": {
+   "score": 0.9617176473977737,
+   "rho_maske": 0.26793920590131304,
+   "geom_iou": 0.9510352824250455,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.9617176473977737,
+   "geom_iou": 0.9510352824250455,
+   "rho_maske": 0.26793920590131304,
+   "bestanden": true,
+   "kantenanteil": 0.15393794749403342
+  },
+  "falsch": {
+   "score": 0.855757225094918,
+   "geom_iou": 0.7458320376970364,
+   "rho_maske": 0.4815554343211634,
+   "bestanden": true,
+   "kantenanteil": 0.21892816419612315
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.75",
+  "bild": "C2_s075.png",
+  "fall": "C",
+  "szene": "gebaeude",
+  "prompt_art": "mit",
+  "seed": 2,
+  "gespeichert": {
+   "score": 0.8700712325456065,
+   "rho_maske": -0.1549420805826696,
+   "geom_iou": 0.9119041126131391,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.8700712325456065,
+   "geom_iou": 0.9119041126131391,
+   "rho_maske": -0.1549420805826696,
+   "bestanden": true,
+   "kantenanteil": 0.11813842482100238
+  },
+  "falsch": {
+   "score": 0.8177808396637382,
+   "geom_iou": 0.7408664023135864,
+   "rho_maske": 0.30010619013244466,
+   "bestanden": true,
+   "kantenanteil": 0.037628278221208664
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.75",
+  "bild": "D0_s075.png",
+  "fall": "D",
+  "szene": "gebaeude",
+  "prompt_art": "ohne",
+  "seed": 0,
+  "gespeichert": {
+   "score": 0.8908435328702444,
+   "rho_maske": 0.8165140312929792,
+   "geom_iou": 0.9337890996972503,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.8908435328702444,
+   "geom_iou": 0.9337890996972503,
+   "rho_maske": 0.8165140312929792,
+   "bestanden": true,
+   "kantenanteil": 0.1718377088305489
+  },
+  "falsch": {
+   "score": 0.8214235386901562,
+   "geom_iou": 0.7397563940600196,
+   "rho_maske": 0.7080305978088991,
+   "bestanden": true,
+   "kantenanteil": 0.2394526795895097
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.75",
+  "bild": "D1_s075.png",
+  "fall": "D",
+  "szene": "gebaeude",
+  "prompt_art": "ohne",
+  "seed": 1,
+  "gespeichert": {
+   "score": 0.6295198382528809,
+   "rho_maske": 0.9470273296593058,
+   "geom_iou": 0.9844591361544113,
+   "bestanden": false
+  },
+  "richtig": {
+   "score": 0.6295198382528809,
+   "geom_iou": 0.9844591361544113,
+   "rho_maske": 0.9470273296593058,
+   "bestanden": false,
+   "kantenanteil": 0.5202863961813843
+  },
+  "falsch": {
+   "score": 0.594747896465492,
+   "geom_iou": 0.7590966878957865,
+   "rho_maske": 0.4502328720630894,
+   "bestanden": false,
+   "kantenanteil": 0.2394526795895097
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.75",
+  "bild": "D2_s075.png",
+  "fall": "D",
+  "szene": "gebaeude",
+  "prompt_art": "ohne",
+  "seed": 2,
+  "gespeichert": {
+   "score": 0.7872712405974203,
+   "rho_maske": 0.3950986598529802,
+   "geom_iou": 0.9457237820229025,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.7872712405974203,
+   "geom_iou": 0.9457237820229025,
+   "rho_maske": 0.3950986598529802,
+   "bestanden": true,
+   "kantenanteil": 0.29952267303102625
+  },
+  "falsch": {
+   "score": 0.7144300202770436,
+   "geom_iou": 0.7710268184823688,
+   "rho_maske": 0.838844947086475,
+   "bestanden": true,
+   "kantenanteil": 0.1265678449258837
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.30",
+  "bild": "A0_s030.png",
+  "fall": "A",
+  "szene": "schachtel",
+  "prompt_art": "mit",
+  "seed": 0,
+  "gespeichert": {
+   "score": 0.8297502558889567,
+   "rho_maske": 0.0008260546881708142,
+   "geom_iou": 0.8398790017645577,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.8297502558889567,
+   "geom_iou": 0.8398790017645577,
+   "rho_maske": 0.0008260546881708142,
+   "bestanden": true,
+   "kantenanteil": 0.020524515393386546
+  },
+  "falsch": {
+   "score": 0.7498762910950849,
+   "geom_iou": 0.6876336105363908,
+   "rho_maske": -0.032400328841011954,
+   "bestanden": true,
+   "kantenanteil": 0.021479713603818614
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.30",
+  "bild": "A1_s030.png",
+  "fall": "A",
+  "szene": "schachtel",
+  "prompt_art": "mit",
+  "seed": 1,
+  "gespeichert": {
+   "score": 0.8679210839957915,
+   "rho_maske": -0.021099838225044822,
+   "geom_iou": 0.8398326233268635,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.8679210839957915,
+   "geom_iou": 0.8398326233268635,
+   "rho_maske": -0.021099838225044822,
+   "bestanden": true,
+   "kantenanteil": 0.04561003420752566
+  },
+  "falsch": {
+   "score": 0.7879913077265706,
+   "geom_iou": 0.6877787075991884,
+   "rho_maske": -0.028065568506957038,
+   "bestanden": true,
+   "kantenanteil": 0.08711217183770883
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.30",
+  "bild": "A2_s030.png",
+  "fall": "A",
+  "szene": "schachtel",
+  "prompt_art": "mit",
+  "seed": 2,
+  "gespeichert": {
+   "score": 0.8487709304607239,
+   "rho_maske": -0.04731876409153796,
+   "geom_iou": 0.8282994645708739,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.8487709304607239,
+   "geom_iou": 0.8282994645708739,
+   "rho_maske": -0.04731876409153796,
+   "bestanden": true,
+   "kantenanteil": 0.027366020524515394
+  },
+  "falsch": {
+   "score": 0.766641345268937,
+   "geom_iou": 0.6713208917949417,
+   "rho_maske": -0.03111756361040216,
+   "bestanden": true,
+   "kantenanteil": 0.025059665871121718
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.30",
+  "bild": "B0_s030.png",
+  "fall": "B",
+  "szene": "schachtel",
+  "prompt_art": "ohne",
+  "seed": 0,
+  "gespeichert": {
+   "score": 0.5903582555721558,
+   "rho_maske": 0.04941387830540184,
+   "geom_iou": 0.857886497562714,
+   "bestanden": false
+  },
+  "richtig": {
+   "score": 0.5903582555721558,
+   "geom_iou": 0.857886497562714,
+   "rho_maske": 0.04941387830540184,
+   "bestanden": false,
+   "kantenanteil": 0.15507411630558723
+  },
+  "falsch": {
+   "score": 0.5605916680647393,
+   "geom_iou": 0.7444519484828019,
+   "rho_maske": -0.011817355399044044,
+   "bestanden": false,
+   "kantenanteil": 0.05489260143198091
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.30",
+  "bild": "B1_s030.png",
+  "fall": "B",
+  "szene": "schachtel",
+  "prompt_art": "ohne",
+  "seed": 1,
+  "gespeichert": {
+   "score": 0.7038721381048675,
+   "rho_maske": 0.0020594758339218104,
+   "geom_iou": 0.6036912936006592,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.7038721381048675,
+   "geom_iou": 0.6036912936006592,
+   "rho_maske": 0.0020594758339218104,
+   "bestanden": true,
+   "kantenanteil": 0.2611174458380844
+  },
+  "falsch": {
+   "score": 0.698521582907254,
+   "geom_iou": 0.6384466862157034,
+   "rho_maske": -0.06132065477145293,
+   "bestanden": true,
+   "kantenanteil": 0.09069212410501193
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.30",
+  "bild": "B2_s030.png",
+  "fall": "B",
+  "szene": "schachtel",
+  "prompt_art": "ohne",
+  "seed": 2,
+  "gespeichert": {
+   "score": 0.8085557514645124,
+   "rho_maske": 0.055431201376652646,
+   "geom_iou": 0.7089706441888372,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.8085557514645124,
+   "geom_iou": 0.7089706441888372,
+   "rho_maske": 0.055431201376652646,
+   "bestanden": true,
+   "kantenanteil": 0.0
+  },
+  "falsch": {
+   "score": 0.776341083927322,
+   "geom_iou": 0.6396144572946306,
+   "rho_maske": -0.0382905478432293,
+   "bestanden": true,
+   "kantenanteil": 0.045346062052505964
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.30",
+  "bild": "C0_s030.png",
+  "fall": "C",
+  "szene": "gebaeude",
+  "prompt_art": "mit",
+  "seed": 0,
+  "gespeichert": {
+   "score": 0.7957739722293358,
+   "rho_maske": -0.01360654159673878,
+   "geom_iou": 0.6876142661462721,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.7957739722293358,
+   "geom_iou": 0.6876142661462721,
+   "rho_maske": -0.01360654159673878,
+   "bestanden": true,
+   "kantenanteil": 0.06682577565632458
+  },
+  "falsch": {
+   "score": 0.8798967155781078,
+   "geom_iou": 0.8397746535676701,
+   "rho_maske": 0.07423589701906032,
+   "bestanden": true,
+   "kantenanteil": 0.05017103762827822
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.30",
+  "bild": "C1_s030.png",
+  "fall": "C",
+  "szene": "gebaeude",
+  "prompt_art": "mit",
+  "seed": 1,
+  "gespeichert": {
+   "score": 0.7834012332844088,
+   "rho_maske": -0.02516348590367479,
+   "geom_iou": 0.6876142661462721,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.7834012332844088,
+   "geom_iou": 0.6876142661462721,
+   "rho_maske": -0.02516348590367479,
+   "bestanden": true,
+   "kantenanteil": 0.028639618138424822
+  },
+  "falsch": {
+   "score": 0.8639787558926462,
+   "geom_iou": 0.8399021918602453,
+   "rho_maske": -0.005158558815552352,
+   "bestanden": true,
+   "kantenanteil": 0.04218928164196123
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.30",
+  "bild": "C2_s030.png",
+  "fall": "C",
+  "szene": "gebaeude",
+  "prompt_art": "mit",
+  "seed": 2,
+  "gespeichert": {
+   "score": 0.7739756174218425,
+   "rho_maske": -0.036980706070795906,
+   "geom_iou": 0.6771466976511061,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.7739756174218425,
+   "geom_iou": 0.6771466976511061,
+   "rho_maske": -0.036980706070795906,
+   "bestanden": true,
+   "kantenanteil": 0.025059665871121718
+  },
+  "falsch": {
+   "score": 0.8535106614532227,
+   "geom_iou": 0.8357719998742416,
+   "rho_maske": -0.11526714540616192,
+   "bestanden": true,
+   "kantenanteil": 0.028506271379703536
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.30",
+  "bild": "D0_s030.png",
+  "fall": "D",
+  "szene": "gebaeude",
+  "prompt_art": "ohne",
+  "seed": 0,
+  "gespeichert": {
+   "score": 0.7357426160833869,
+   "rho_maske": -0.038008497823130115,
+   "geom_iou": 0.6491369557668828,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.7357426160833869,
+   "geom_iou": 0.6491369557668828,
+   "rho_maske": -0.038008497823130115,
+   "bestanden": true,
+   "kantenanteil": 0.046539379474940336
+  },
+  "falsch": {
+   "score": 0.8112377289049026,
+   "geom_iou": 0.7665902228569008,
+   "rho_maske": -0.03842746316243801,
+   "bestanden": true,
+   "kantenanteil": 0.09350057012542759
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.30",
+  "bild": "D1_s030.png",
+  "fall": "D",
+  "szene": "gebaeude",
+  "prompt_art": "ohne",
+  "seed": 1,
+  "gespeichert": {
+   "score": 0.6802142221494513,
+   "rho_maske": -0.026700101334731927,
+   "geom_iou": 0.6439350376007013,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.6802142221494513,
+   "geom_iou": 0.6439350376007013,
+   "rho_maske": -0.026700101334731927,
+   "bestanden": true,
+   "kantenanteil": 0.08353221957040573
+  },
+  "falsch": {
+   "score": 0.6847237550167019,
+   "geom_iou": 0.6096950449630867,
+   "rho_maske": 0.04564814332219514,
+   "bestanden": true,
+   "kantenanteil": 0.2748004561003421
+  },
+  "reproduziert": true
+ },
+ {
+  "staerke": "0.30",
+  "bild": "D2_s030.png",
+  "fall": "D",
+  "szene": "gebaeude",
+  "prompt_art": "ohne",
+  "seed": 2,
+  "gespeichert": {
+   "score": 0.7766139181569448,
+   "rho_maske": -0.0067990796385923695,
+   "geom_iou": 0.6371349304748615,
+   "bestanden": true
+  },
+  "richtig": {
+   "score": 0.7766139181569448,
+   "geom_iou": 0.6371349304748615,
+   "rho_maske": -0.0067990796385923695,
+   "bestanden": true,
+   "kantenanteil": 0.03937947494033413
+  },
+  "falsch": {
+   "score": 0.8107261794206703,
+   "geom_iou": 0.7099816088183959,
+   "rho_maske": 0.10170172863055488,
+   "bestanden": true,
+   "kantenanteil": 0.0
+  },
+  "reproduziert": true
+ }
+]

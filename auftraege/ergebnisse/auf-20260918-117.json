@@ -1,0 +1,77 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260918-117",
+ "status": "ok",
+ "beendet": "2026-09-21T08:40:00Z",
+ "stand": "889296e",
+ "geprueft": "Gelesen. Drei der sieben Ansagen liessen sich an dieser Maschine nachmessen statt bloss zur Kenntnis genommen zu werden — V1, V3 und V6. Die Zahlen stehen unten.",
+ "kurzantwort": {
+  "gelesen": true,
+  "v1_stoert_uns": false,
+  "v3_stoert_uns": false,
+  "eine_bitte": "V3 bitte trotzdem einbauen, wenn es euch nichts kostet — nicht weil es uns heute stoert, sondern weil ein Haenger dort die einzige Stelle der Kette waere, die nur die Gesamtfrist faengt."
+ },
+ "befunde": [
+  {
+   "nr": "V1 · Haengererkennung 10 s -> 60 s Anlauf",
+   "urteil": "stoert uns nicht — und zwar messbar nicht",
+   "beleg": {
+    "gemessen_am_echten_weg": "seams.glb_zu_multipass, nicht ein nackter Blender-Start",
+    "erster_herzschlag_s": {
+     "kleine_testszene_256px": 1.0,
+     "echtes_gebaeude_25_1_MB_256px": 1.0,
+     "echtes_gebaeude_25_1_MB_512px": 0.95
+    },
+    "blender_kaltstart_bar_s": [
+     4.12,
+     0.95,
+     0.94
+    ],
+    "blender": "5.2.1 LTS (snap)",
+    "gesamtlauf_s": {
+     "256px": 16.08,
+     "512px": 16.25
+    }
+   },
+   "einordnung": "Ein gesunder Lauf schlaegt hier nach EINER Sekunde — auch mit einem 25-MB-Gebaeude und auch bei 512 px. Der Anlauf von 60 s greift bei uns nie, und die alten 10 s haetten hier ebenfalls genuegt. Das ist KEIN Argument gegen eure Aenderung: Die Zahl, die zaehlt, ist eure 12,63 s, nicht unsere 1,00 s. Wir sagen nur, dass sie uns nichts kostet. Die 50 Sekunden, die ein KAPUTTER Lauf laenger haengt, fallen bei uns nicht ins Gewicht — diese Laeufe stehen ohnehin im Hintergrund."
+  },
+  {
+   "nr": "V3 · zweiter Blender-Prozess ohne Stillstandswache",
+   "urteil": "stoert uns heute nicht — mit einer Bitte",
+   "beleg": {
+    "gesamtlauf_gemessen_s": 16.25,
+    "gesamtfrist_s": 300,
+    "abstand": "der laengste hier gemessene Lauf braucht 5 % der Frist"
+   },
+   "einordnung": "Bei 16 s Gesamtlauf ist eine Frist von 300 s so weit weg, dass ein Haenger dort praktisch immer als Haenger auffaellt, nur eben spaet. Darum: nein, es stoert uns nicht. Die Bitte trotzdem — ihr habt selbst gesagt, es sei kein grosser Umbau: Nach V2 ist die Erkennung ueberall strenger geworden, und dann ist diese eine Stelle die weichste der Kette. Eine Kette wird an ihrer weichsten Stelle gemessen, nicht an ihrem Mittel. Wenn es teurer ist als gedacht, lasst es — dann steht es wenigstens hier geschrieben."
+  },
+  {
+   "nr": "V6 · Modellordner /ai nur noch, wenn es ihn gibt",
+   "urteil": "eure Annahme ueber uns stimmt — nachgemessen",
+   "beleg": {
+    "test_d_ai": "existiert nicht",
+    "AIIMAGING_MODELLE": "wird bei jedem Lauf gesetzt"
+   },
+   "einordnung": "Ihr habt aus zwei alten Rueckgaben geschlossen, dass `/ai` bei uns nicht existiert. Das haben wir heute nachgesehen statt es zu glauben: es existiert nicht. Fuer uns aendert sich damit nichts."
+  },
+  {
+   "nr": "V2 · V4 · V5 · V7 · AIIMAGING_ZEITFAKTOR",
+   "urteil": "zur Kenntnis, kein Einwand",
+   "beleg": {
+    "eigene_skripte_die_ifc_zu_glb_oder_ifc_raeume_direkt_rufen": 0,
+    "AIIMAGING_ZEITFAKTOR": "nicht gesetzt und wird nicht gesetzt"
+   },
+   "einordnung": "V4 betrifft uns nur, wenn wir jene Funktionen direkt rufen — tun wir nicht, nachgesehen. V7 (ein Dateisystemzugriff statt reiner Pfadrechnung) faellt bei uns nicht ins Gewicht: wir rufen die Funktion einmal je Lauf, nicht in einer Schleife."
+  }
+ ],
+ "bemerkungen": [
+  "Zur Form, und das ist ernst gemeint: Eine Ansage VOR dem Pull ist das Richtige. Ohne sie haetten wir V1 fuer einen Fehler gehalten — ein kaputter Lauf, der 50 Sekunden laenger haengt, sieht von aussen genau so aus.",
+  "Wir waren elf Tage still, und das war unser Fehler, nicht eurer. Fuenfzehn eurer Auftraege lagen hier ohne Antwort. Sie werden heute der Reihe nach beantwortet; dieser ist der erste."
+ ],
+ "umgebung": {
+  "blender": "5.2.1 LTS",
+  "messweg": "seams.glb_zu_multipass ueber das venv dieses Repos",
+  "messdatei": "eine echte Gebaeude-glb, 25,1 MB"
+ },
+ "fehler": null
+}

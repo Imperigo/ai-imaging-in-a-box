@@ -1,0 +1,2288 @@
+[
+ {
+  "weg": "B",
+  "fuehrung": 1.0,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegB_g1.0_schachtel_norm_s0.png",
+  "schritte": 50,
+  "dauer_s": 6.16,
+  "vram_gb": 15.54,
+  "richtig": {
+   "score": 0.8020905551732802,
+   "spearman": -0.905659372303538,
+   "geom_iou": 0.7103655948061651,
+   "bestanden": true,
+   "rho_gerichtet": 0.2941467977009463,
+   "rho_roh": -0.2941467977009463,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.7502239187127461,
+   "spearman": -0.9167370259247809,
+   "geom_iou": 0.6139557062625834,
+   "bestanden": true,
+   "rho_gerichtet": 0.21712138219558935,
+   "rho_roh": -0.21712138219558935,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 1.0,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegB_g1.0_schachtel_norm_s1.png",
+  "schritte": 50,
+  "dauer_s": 5.9,
+  "vram_gb": 15.54,
+  "richtig": {
+   "score": 0.8837867496136612,
+   "spearman": -0.8741113066531436,
+   "geom_iou": 0.8935692889997368,
+   "bestanden": true,
+   "rho_gerichtet": -0.7799551310504222,
+   "rho_roh": 0.7799551310504222,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8200403250988859,
+   "spearman": -0.9289761662048751,
+   "geom_iou": 0.7238787810192128,
+   "bestanden": true,
+   "rho_gerichtet": -0.24241955719894515,
+   "rho_roh": 0.24241955719894515,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 1.0,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegB_g1.0_schachtel_norm_s2.png",
+  "schritte": 50,
+  "dauer_s": 5.9,
+  "vram_gb": 15.54,
+  "richtig": {
+   "score": 0.7577909036116943,
+   "spearman": -0.7937865373794072,
+   "geom_iou": 0.7234275545821641,
+   "bestanden": true,
+   "rho_gerichtet": 0.8783729482074305,
+   "rho_roh": -0.8783729482074305,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.7485032628326826,
+   "spearman": -0.824983428087386,
+   "geom_iou": 0.6791131983948494,
+   "bestanden": true,
+   "rho_gerichtet": 0.33292801974203773,
+   "rho_roh": -0.33292801974203773,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 1.0,
+  "szene": "schachtel",
+  "invertiert": true,
+  "seed": 0,
+  "bild": "wegB_g1.0_schachtel_inv_s0.png",
+  "schritte": 50,
+  "dauer_s": 5.9,
+  "vram_gb": 15.54,
+  "richtig": {
+   "score": 0.7902573967940475,
+   "spearman": -0.9363959542759636,
+   "geom_iou": 0.6669259412494828,
+   "bestanden": true,
+   "rho_gerichtet": 0.4503656123147438,
+   "rho_roh": -0.4503656123147438,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.7624464008550955,
+   "spearman": -0.9471938615053227,
+   "geom_iou": 0.6137334053802062,
+   "bestanden": true,
+   "rho_gerichtet": 0.2280744495937325,
+   "rho_roh": -0.2280744495937325,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 1.0,
+  "szene": "schachtel",
+  "invertiert": true,
+  "seed": 1,
+  "bild": "wegB_g1.0_schachtel_inv_s1.png",
+  "schritte": 50,
+  "dauer_s": 5.9,
+  "vram_gb": 15.54,
+  "richtig": {
+   "score": 0.879101963825382,
+   "spearman": -0.8637441167802403,
+   "geom_iou": 0.8947328818660647,
+   "bestanden": true,
+   "rho_gerichtet": -0.6799077827876022,
+   "rho_roh": 0.6799077827876022,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8134861117307687,
+   "spearman": -0.9249154788506977,
+   "geom_iou": 0.7154812186743256,
+   "bestanden": true,
+   "rho_gerichtet": -0.19149907406430847,
+   "rho_roh": 0.19149907406430847,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 1.0,
+  "szene": "schachtel",
+  "invertiert": true,
+  "seed": 2,
+  "bild": "wegB_g1.0_schachtel_inv_s2.png",
+  "schritte": 50,
+  "dauer_s": 5.9,
+  "vram_gb": 15.54,
+  "richtig": {
+   "score": 0.7595047784967316,
+   "spearman": -0.8020776018482138,
+   "geom_iou": 0.7191916433399331,
+   "bestanden": true,
+   "rho_gerichtet": 0.9179605510092643,
+   "rho_roh": -0.9179605510092643,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.7519559652128515,
+   "spearman": -0.8338726855072336,
+   "geom_iou": 0.6780864554584166,
+   "bestanden": true,
+   "rho_gerichtet": 0.3974899128397329,
+   "rho_roh": -0.3974899128397329,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 1.0,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegB_g1.0_hochbau_norm_s0.png",
+  "schritte": 50,
+  "dauer_s": 5.9,
+  "vram_gb": 15.54,
+  "richtig": {
+   "score": 0.5793810908838245,
+   "spearman": -0.8276271771141062,
+   "geom_iou": 0.40559621258963263,
+   "bestanden": false,
+   "rho_gerichtet": 0.2039408659728206,
+   "rho_roh": -0.2039408659728206,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.5030009883908666,
+   "spearman": -0.6890806011569667,
+   "geom_iou": 0.3671703918197448,
+   "bestanden": false,
+   "rho_gerichtet": 0.06657169063926317,
+   "rho_roh": -0.06657169063926317,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 1.0,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegB_g1.0_hochbau_norm_s1.png",
+  "schritte": 50,
+  "dauer_s": 5.9,
+  "vram_gb": 15.54,
+  "richtig": {
+   "score": 0.7248414769840649,
+   "spearman": -0.9268249726812852,
+   "geom_iou": 0.566876359876756,
+   "bestanden": true,
+   "rho_gerichtet": 0.6437960750154553,
+   "rho_roh": -0.6437960750154553,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.7601755011906498,
+   "spearman": -0.8706927744910724,
+   "geom_iou": 0.6636862157817076,
+   "bestanden": true,
+   "rho_gerichtet": -0.2460892255228026,
+   "rho_roh": 0.2460892255228026,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 1.0,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegB_g1.0_hochbau_norm_s2.png",
+  "schritte": 50,
+  "dauer_s": 5.9,
+  "vram_gb": 15.54,
+  "richtig": {
+   "score": 0.8681970840628959,
+   "spearman": -0.895404573626493,
+   "geom_iou": 0.8418163129572526,
+   "bestanden": true,
+   "rho_gerichtet": 0.48322378085015905,
+   "rho_roh": -0.48322378085015905,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.8162966002647405,
+   "spearman": -0.891175042366209,
+   "geom_iou": 0.7477096057745697,
+   "bestanden": true,
+   "rho_gerichtet": 0.020994775483021446,
+   "rho_roh": -0.020994775483021446,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 1.0,
+  "szene": "hochbau",
+  "invertiert": true,
+  "seed": 0,
+  "bild": "wegB_g1.0_hochbau_inv_s0.png",
+  "schritte": 50,
+  "dauer_s": 5.9,
+  "vram_gb": 15.54,
+  "richtig": {
+   "score": 0.6409252091359355,
+   "spearman": -0.7969530343021151,
+   "geom_iou": 0.5154445820833893,
+   "bestanden": false,
+   "rho_gerichtet": 0.18061631204910805,
+   "rho_roh": -0.18061631204910805,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.5890639118270278,
+   "spearman": -0.7531596628732571,
+   "geom_iou": 0.4607207599158872,
+   "bestanden": false,
+   "rho_gerichtet": -0.10351707798705992,
+   "rho_roh": 0.10351707798705992,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 1.0,
+  "szene": "hochbau",
+  "invertiert": true,
+  "seed": 1,
+  "bild": "wegB_g1.0_hochbau_inv_s1.png",
+  "schritte": 50,
+  "dauer_s": 5.9,
+  "vram_gb": 15.54,
+  "richtig": {
+   "score": 0.7382425518865495,
+   "spearman": -0.9290182949075786,
+   "geom_iou": 0.5866429847543349,
+   "bestanden": true,
+   "rho_gerichtet": 0.46117516764723737,
+   "rho_roh": -0.46117516764723737,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.7696336113070289,
+   "spearman": -0.8750258818771339,
+   "geom_iou": 0.6769352860543972,
+   "bestanden": true,
+   "rho_gerichtet": -0.18233874117808802,
+   "rho_roh": 0.18233874117808802,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 1.0,
+  "szene": "hochbau",
+  "invertiert": true,
+  "seed": 2,
+  "bild": "wegB_g1.0_hochbau_inv_s2.png",
+  "schritte": 50,
+  "dauer_s": 5.9,
+  "vram_gb": 15.54,
+  "richtig": {
+   "score": 0.8773409203103318,
+   "spearman": -0.8792364863454856,
+   "geom_iou": 0.8754494409693149,
+   "bestanden": true,
+   "rho_gerichtet": 0.5399003606761213,
+   "rho_roh": -0.5399003606761213,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.7946755494517076,
+   "spearman": -0.8814212368496084,
+   "geom_iou": 0.7164669995398851,
+   "bestanden": true,
+   "rho_gerichtet": 0.07963974515662833,
+   "rho_roh": -0.07963974515662833,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 2.5,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegB_g2.5_schachtel_norm_s0.png",
+  "schritte": 50,
+  "dauer_s": 11.73,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.8902906762448664,
+   "spearman": -0.8928751024990031,
+   "geom_iou": 0.887713730610409,
+   "bestanden": true,
+   "rho_gerichtet": 0.10043804786794187,
+   "rho_roh": -0.10043804786794187,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8019247363522969,
+   "spearman": -0.9127852823732664,
+   "geom_iou": 0.7045285404927508,
+   "bestanden": true,
+   "rho_gerichtet": 0.0015907940276806577,
+   "rho_roh": -0.0015907940276806577,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 2.5,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegB_g2.5_schachtel_norm_s1.png",
+  "schritte": 50,
+  "dauer_s": 11.73,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.9433582810055701,
+   "spearman": -0.9480370744477066,
+   "geom_iou": 0.938702578546544,
+   "bestanden": true,
+   "rho_gerichtet": 0.08552274918412563,
+   "rho_roh": -0.08552274918412563,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8497249082087737,
+   "spearman": -0.9682328012587115,
+   "geom_iou": 0.7457219159398031,
+   "bestanden": true,
+   "rho_gerichtet": -0.012580307933866462,
+   "rho_roh": 0.012580307933866462,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 2.5,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegB_g2.5_schachtel_norm_s2.png",
+  "schritte": 50,
+  "dauer_s": 11.73,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.803688942393538,
+   "spearman": -0.6614132255570516,
+   "geom_iou": 0.9765693989285504,
+   "bestanden": true,
+   "rho_gerichtet": 0.07007875842124257,
+   "rho_roh": -0.07007875842124257,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.7017171859697905,
+   "spearman": -0.682327989493678,
+   "geom_iou": 0.7216573505225141,
+   "bestanden": true,
+   "rho_gerichtet": -0.005436886710604984,
+   "rho_roh": 0.005436886710604984,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 2.5,
+  "szene": "schachtel",
+  "invertiert": true,
+  "seed": 0,
+  "bild": "wegB_g2.5_schachtel_inv_s0.png",
+  "schritte": 50,
+  "dauer_s": 11.73,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.9174166126103787,
+   "spearman": -0.9609128030464484,
+   "geom_iou": 0.8758892986180952,
+   "bestanden": true,
+   "rho_gerichtet": 0.2865280858850814,
+   "rho_roh": -0.2865280858850814,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.804493714962176,
+   "spearman": -0.9662098686313596,
+   "geom_iou": 0.6698442630589344,
+   "bestanden": true,
+   "rho_gerichtet": 0.09054413017532209,
+   "rho_roh": -0.09054413017532209,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 2.5,
+  "szene": "schachtel",
+  "invertiert": true,
+  "seed": 1,
+  "bild": "wegB_g2.5_schachtel_inv_s1.png",
+  "schritte": 50,
+  "dauer_s": 11.73,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.9610954904386962,
+   "spearman": -0.9403729871403745,
+   "geom_iou": 0.9822746446072804,
+   "bestanden": true,
+   "rho_gerichtet": 0.08025889208169126,
+   "rho_roh": -0.08025889208169126,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8339274389036839,
+   "spearman": -0.9674534728332953,
+   "geom_iou": 0.7188304067169232,
+   "bestanden": true,
+   "rho_gerichtet": -0.0032372579081992345,
+   "rho_roh": 0.0032372579081992345,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 2.5,
+  "szene": "schachtel",
+  "invertiert": true,
+  "seed": 2,
+  "bild": "wegB_g2.5_schachtel_inv_s2.png",
+  "schritte": 50,
+  "dauer_s": 11.73,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.7881084395016313,
+   "spearman": -0.6403008960780602,
+   "geom_iou": 0.9700359881082773,
+   "bestanden": true,
+   "rho_gerichtet": -0.014513425518586412,
+   "rho_roh": 0.014513425518586412,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.6919342854520503,
+   "spearman": -0.6704648771080437,
+   "geom_iou": 0.7140911802109007,
+   "bestanden": true,
+   "rho_gerichtet": 0.012779336679950268,
+   "rho_roh": -0.012779336679950268,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 2.5,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegB_g2.5_hochbau_norm_s0.png",
+  "schritte": 50,
+  "dauer_s": 11.73,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.8735783081714116,
+   "spearman": -0.8106922022877187,
+   "geom_iou": 0.9413425444997483,
+   "bestanden": true,
+   "rho_gerichtet": 0.1306973220557139,
+   "rho_roh": -0.1306973220557139,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.7883385406927145,
+   "spearman": -0.8481362710125208,
+   "geom_iou": 0.7327568410670459,
+   "bestanden": true,
+   "rho_gerichtet": 0.02664662313180805,
+   "rho_roh": -0.02664662313180805,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 2.5,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegB_g2.5_hochbau_norm_s1.png",
+  "schritte": 50,
+  "dauer_s": 11.74,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.8866488973592893,
+   "spearman": -0.9537008976709319,
+   "geom_iou": 0.8243111326709667,
+   "bestanden": true,
+   "rho_gerichtet": 0.10580699702239597,
+   "rho_roh": -0.10580699702239597,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.8127110422167645,
+   "spearman": -0.9774655854320535,
+   "geom_iou": 0.6757263355201499,
+   "bestanden": true,
+   "rho_gerichtet": 0.0707694486802883,
+   "rho_roh": -0.0707694486802883,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 2.5,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegB_g2.5_hochbau_norm_s2.png",
+  "schritte": 50,
+  "dauer_s": 11.74,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.6903172249845334,
+   "spearman": -0.4896822559015852,
+   "geom_iou": 0.9731573185819499,
+   "bestanden": true,
+   "rho_gerichtet": -0.17075050465301533,
+   "rho_roh": 0.17075050465301533,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.6508412941894796,
+   "spearman": -0.5895879460021362,
+   "geom_iou": 0.7184583624793135,
+   "bestanden": true,
+   "rho_gerichtet": -0.07093760456327595,
+   "rho_roh": 0.07093760456327595,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 2.5,
+  "szene": "hochbau",
+  "invertiert": true,
+  "seed": 0,
+  "bild": "wegB_g2.5_hochbau_inv_s0.png",
+  "schritte": 50,
+  "dauer_s": 11.73,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.8600652145944961,
+   "spearman": -0.784897203302723,
+   "geom_iou": 0.9424319136861302,
+   "bestanden": true,
+   "rho_gerichtet": 0.09037778896325777,
+   "rho_roh": -0.09037778896325777,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.7815358399110239,
+   "spearman": -0.8303477893877401,
+   "geom_iou": 0.7355932982200192,
+   "bestanden": true,
+   "rho_gerichtet": -0.005888299472752125,
+   "rho_roh": 0.005888299472752125,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 2.5,
+  "szene": "hochbau",
+  "invertiert": true,
+  "seed": 1,
+  "bild": "wegB_g2.5_hochbau_inv_s1.png",
+  "schritte": 50,
+  "dauer_s": 11.73,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.8732215842928381,
+   "spearman": -0.9587743811666235,
+   "geom_iou": 0.7953027847355238,
+   "bestanden": true,
+   "rho_gerichtet": 0.15814661937291358,
+   "rho_roh": -0.15814661937291358,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.8160816126972426,
+   "spearman": -0.9746033756161463,
+   "geom_iou": 0.683343825031893,
+   "bestanden": true,
+   "rho_gerichtet": 0.11916741581583008,
+   "rho_roh": -0.11916741581583008,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 2.5,
+  "szene": "hochbau",
+  "invertiert": true,
+  "seed": 2,
+  "bild": "wegB_g2.5_hochbau_inv_s2.png",
+  "schritte": 50,
+  "dauer_s": 11.74,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.6839713042424108,
+   "spearman": -0.47391320505755136,
+   "geom_iou": 0.987135914413386,
+   "bestanden": true,
+   "rho_gerichtet": -0.3240823820635966,
+   "rho_roh": 0.3240823820635966,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.6428097858541689,
+   "spearman": -0.5705089731476903,
+   "geom_iou": 0.7242733072366845,
+   "bestanden": false,
+   "rho_gerichtet": -0.13321711624980853,
+   "rho_roh": 0.13321711624980853,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 4.0,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegB_g4.0_schachtel_norm_s0.png",
+  "schritte": 50,
+  "dauer_s": 11.74,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.9493187639118617,
+   "spearman": -0.9061945729970398,
+   "geom_iou": 0.9944951585117127,
+   "bestanden": true,
+   "rho_gerichtet": 0.12058124563321639,
+   "rho_roh": -0.12058124563321639,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.822907675068497,
+   "spearman": -0.9317733832829465,
+   "geom_iou": 0.7267615214556998,
+   "bestanden": true,
+   "rho_gerichtet": 0.006958403624828331,
+   "rho_roh": -0.006958403624828331,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 4.0,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegB_g4.0_schachtel_norm_s1.png",
+  "schritte": 50,
+  "dauer_s": 11.74,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.9485421621710874,
+   "spearman": -0.9532416591285288,
+   "geom_iou": 0.9438658338104459,
+   "bestanden": true,
+   "rho_gerichtet": 0.07961640293180053,
+   "rho_roh": -0.07961640293180053,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8495265893068775,
+   "spearman": -0.9689892358628162,
+   "geom_iou": 0.7447919948220658,
+   "bestanden": true,
+   "rho_gerichtet": -0.0013286119866738875,
+   "rho_roh": 0.0013286119866738875,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 4.0,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegB_g4.0_schachtel_norm_s2.png",
+  "schritte": 50,
+  "dauer_s": 11.73,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.7973696133647125,
+   "spearman": -0.6500193485365171,
+   "geom_iou": 0.9781221155168012,
+   "bestanden": true,
+   "rho_gerichtet": 0.0014955366312790828,
+   "rho_roh": -0.0014955366312790828,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.6999674194146098,
+   "spearman": -0.6792773668128967,
+   "geom_iou": 0.7212876686010702,
+   "bestanden": true,
+   "rho_gerichtet": 0.0023495900827628915,
+   "rho_roh": -0.0023495900827628915,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 4.0,
+  "szene": "schachtel",
+  "invertiert": true,
+  "seed": 0,
+  "bild": "wegB_g4.0_schachtel_inv_s0.png",
+  "schritte": 50,
+  "dauer_s": 11.73,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.9158019815706557,
+   "spearman": -0.8516827359930783,
+   "geom_iou": 0.9847484679501074,
+   "bestanden": true,
+   "rho_gerichtet": -0.3233945044702047,
+   "rho_roh": 0.3233945044702047,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8053219361662274,
+   "spearman": -0.899668232202552,
+   "geom_iou": 0.7208695357429356,
+   "bestanden": true,
+   "rho_gerichtet": -0.05969234965547018,
+   "rho_roh": 0.05969234965547018,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 4.0,
+  "szene": "schachtel",
+  "invertiert": true,
+  "seed": 1,
+  "bild": "wegB_g4.0_schachtel_inv_s1.png",
+  "schritte": 50,
+  "dauer_s": 11.73,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.948270920594013,
+   "spearman": -0.904362776784436,
+   "geom_iou": 0.9943108694073932,
+   "bestanden": true,
+   "rho_gerichtet": -0.015977870283519605,
+   "rho_roh": 0.015977870283519605,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8263436156743914,
+   "spearman": -0.9443427227088818,
+   "geom_iou": 0.7230889323815234,
+   "bestanden": true,
+   "rho_gerichtet": -0.007498020089464567,
+   "rho_roh": 0.007498020089464567,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 4.0,
+  "szene": "schachtel",
+  "invertiert": true,
+  "seed": 2,
+  "bild": "wegB_g4.0_schachtel_inv_s2.png",
+  "schritte": 50,
+  "dauer_s": 11.74,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.8018773464049092,
+   "spearman": -0.6605040753760828,
+   "geom_iou": 0.9735099337748344,
+   "bestanden": true,
+   "rho_gerichtet": 0.0003725815130682706,
+   "rho_roh": -0.0003725815130682706,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.6983432590694107,
+   "spearman": -0.6824815849952917,
+   "geom_iou": 0.7145735770893372,
+   "bestanden": true,
+   "rho_gerichtet": -0.005975877541825735,
+   "rho_roh": 0.005975877541825735,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 4.0,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegB_g4.0_hochbau_norm_s0.png",
+  "schritte": 50,
+  "dauer_s": 11.74,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.9106079130427737,
+   "spearman": -0.8403106532139848,
+   "geom_iou": 0.986785979833292,
+   "bestanden": true,
+   "rho_gerichtet": 0.14078119304622852,
+   "rho_roh": -0.14078119304622852,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.8089074164116049,
+   "spearman": -0.9112390915499304,
+   "geom_iou": 0.718067535066722,
+   "bestanden": true,
+   "rho_gerichtet": 0.02722590711973725,
+   "rho_roh": -0.02722590711973725,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 4.0,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegB_g4.0_hochbau_norm_s1.png",
+  "schritte": 50,
+  "dauer_s": 11.74,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.9568405071053291,
+   "spearman": -0.9443626646564964,
+   "geom_iou": 0.9694832190031616,
+   "bestanden": true,
+   "rho_gerichtet": 0.0999229205750106,
+   "rho_roh": -0.0999229205750106,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.8369413149214242,
+   "spearman": -0.974539340133508,
+   "geom_iou": 0.7187711524569557,
+   "bestanden": true,
+   "rho_gerichtet": 0.054869454744449556,
+   "rho_roh": -0.054869454744449556,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 4.0,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegB_g4.0_hochbau_norm_s2.png",
+  "schritte": 50,
+  "dauer_s": 11.74,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.7165864183518772,
+   "spearman": -0.5182786948231852,
+   "geom_iou": 0.9907721465215829,
+   "bestanden": true,
+   "rho_gerichtet": -0.027024605992769166,
+   "rho_roh": 0.027024605992769166,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.6616970260274446,
+   "spearman": -0.606683360821817,
+   "geom_iou": 0.7216992957585979,
+   "bestanden": true,
+   "rho_gerichtet": -0.0015317574038840023,
+   "rho_roh": 0.0015317574038840023,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 4.0,
+  "szene": "hochbau",
+  "invertiert": true,
+  "seed": 0,
+  "bild": "wegB_g4.0_hochbau_inv_s0.png",
+  "schritte": 50,
+  "dauer_s": 11.74,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.9047555448946396,
+   "spearman": -0.8416589164044244,
+   "geom_iou": 0.9725823371712018,
+   "bestanden": true,
+   "rho_gerichtet": 0.04193533177958448,
+   "rho_roh": -0.04193533177958448,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.8170815415558428,
+   "spearman": -0.9030836194465016,
+   "geom_iou": 0.7392695772296889,
+   "bestanden": true,
+   "rho_gerichtet": 0.013862938028696445,
+   "rho_roh": -0.013862938028696445,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 4.0,
+  "szene": "hochbau",
+  "invertiert": true,
+  "seed": 1,
+  "bild": "wegB_g4.0_hochbau_inv_s1.png",
+  "schritte": 50,
+  "dauer_s": 11.74,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.933369086143801,
+   "spearman": -0.9492371266439539,
+   "geom_iou": 0.9177663057164442,
+   "bestanden": true,
+   "rho_gerichtet": 0.15252623442545665,
+   "rho_roh": -0.15252623442545665,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.8354552416576857,
+   "spearman": -0.9729857932955791,
+   "geom_iou": 0.7173644935237652,
+   "bestanden": true,
+   "rho_gerichtet": 0.059274292342924514,
+   "rho_roh": -0.059274292342924514,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "B",
+  "fuehrung": 4.0,
+  "szene": "hochbau",
+  "invertiert": true,
+  "seed": 2,
+  "bild": "wegB_g4.0_hochbau_inv_s2.png",
+  "schritte": 50,
+  "dauer_s": 11.74,
+  "vram_gb": 15.55,
+  "richtig": {
+   "score": 0.7276013941779856,
+   "spearman": -0.5331430629995191,
+   "geom_iou": 0.9929863587294318,
+   "bestanden": true,
+   "rho_gerichtet": 0.08579808000759337,
+   "rho_roh": -0.08579808000759337,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.6675125965291622,
+   "spearman": -0.6164385179613504,
+   "geom_iou": 0.7228183404221353,
+   "bestanden": true,
+   "rho_gerichtet": 0.036874311421674355,
+   "rho_roh": -0.036874311421674355,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 0.4,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegA_l0.4_schachtel_norm_s0.png",
+  "schritte": 50,
+  "dauer_s": 18.9,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9196206025923649,
+   "spearman": -0.8488199930159624,
+   "geom_iou": 0.9963267355513861,
+   "bestanden": true,
+   "rho_gerichtet": -0.3243385091691222,
+   "rho_roh": 0.3243385091691222,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8059745740436256,
+   "spearman": -0.8932437925704467,
+   "geom_iou": 0.7272314897767093,
+   "bestanden": true,
+   "rho_gerichtet": -0.06601546142326953,
+   "rho_roh": 0.06601546142326953,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 0.4,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegA_l0.4_schachtel_norm_s1.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9766294095614437,
+   "spearman": -0.9620855626381573,
+   "geom_iou": 0.9913931158107012,
+   "bestanden": true,
+   "rho_gerichtet": 0.3302284860757197,
+   "rho_roh": -0.3302284860757197,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8389230130329299,
+   "spearman": -0.970457746121985,
+   "geom_iou": 0.7252163472429886,
+   "bestanden": true,
+   "rho_gerichtet": 0.07336921119896181,
+   "rho_roh": -0.07336921119896181,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 0.4,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegA_l0.4_schachtel_norm_s2.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9537979542218156,
+   "spearman": -0.9136165213076511,
+   "geom_iou": 0.9957465919898553,
+   "bestanden": true,
+   "rho_gerichtet": 0.04948530805677716,
+   "rho_roh": -0.04948530805677716,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.828946673502178,
+   "spearman": -0.9477182038593147,
+   "geom_iou": 0.725060028088615,
+   "bestanden": true,
+   "rho_gerichtet": 0.005828884452690224,
+   "rho_roh": -0.005828884452690224,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 0.4,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegA_l0.4_hochbau_norm_s0.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.8426990333588866,
+   "spearman": -0.9360938604454103,
+   "geom_iou": 0.7586222822635583,
+   "bestanden": true,
+   "rho_gerichtet": 0.040647712960091814,
+   "rho_roh": -0.040647712960091814,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.9029910001314659,
+   "spearman": -0.9382645984540385,
+   "geom_iou": 0.8690434954723143,
+   "bestanden": true,
+   "rho_gerichtet": 0.028496154654218887,
+   "rho_roh": -0.028496154654218887,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 0.4,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegA_l0.4_hochbau_norm_s1.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.8398077910391527,
+   "spearman": -0.9702029447225966,
+   "geom_iou": 0.7269377296022496,
+   "bestanden": true,
+   "rho_gerichtet": -0.014095262191627399,
+   "rho_roh": 0.014095262191627399,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.9737075167173722,
+   "spearman": -0.953669948263069,
+   "geom_iou": 0.9941660947151681,
+   "bestanden": true,
+   "rho_gerichtet": -0.023826838666754172,
+   "rho_roh": 0.023826838666754172,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 0.4,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegA_l0.4_hochbau_norm_s2.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9445906755933705,
+   "spearman": -0.8993327658479282,
+   "geom_iou": 0.9921261387342964,
+   "bestanden": true,
+   "rho_gerichtet": -0.059771428552566674,
+   "rho_roh": 0.059771428552566674,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.8243199006439448,
+   "spearman": -0.9363149377220077,
+   "geom_iou": 0.7257208779033575,
+   "bestanden": true,
+   "rho_gerichtet": -0.0486380575612271,
+   "rho_roh": 0.0486380575612271,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 0.8,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegA_l0.8_schachtel_norm_s0.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9436550360018264,
+   "spearman": -0.8935785922167492,
+   "geom_iou": 0.9965377804794249,
+   "bestanden": true,
+   "rho_gerichtet": 0.16530397082820225,
+   "rho_roh": -0.16530397082820225,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.817433664781115,
+   "spearman": -0.919108718531575,
+   "geom_iou": 0.7270062647050486,
+   "bestanden": true,
+   "rho_gerichtet": 0.026979549259683818,
+   "rho_roh": -0.026979549259683818,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 0.8,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegA_l0.8_schachtel_norm_s1.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9757455089536954,
+   "spearman": -0.956057582912727,
+   "geom_iou": 0.9958388650008917,
+   "bestanden": true,
+   "rho_gerichtet": 0.20382593454345962,
+   "rho_roh": -0.20382593454345962,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8391083858080313,
+   "spearman": -0.9678574234904673,
+   "geom_iou": 0.727486162780147,
+   "bestanden": true,
+   "rho_gerichtet": 0.043557666607067176,
+   "rho_roh": -0.043557666607067176,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 0.8,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegA_l0.8_schachtel_norm_s2.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9665181228890057,
+   "spearman": -0.9371422254233047,
+   "geom_iou": 0.9968148446741163,
+   "bestanden": true,
+   "rho_gerichtet": -0.19456938755039782,
+   "rho_roh": 0.19456938755039782,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8353263778445995,
+   "spearman": -0.962569402885204,
+   "geom_iou": 0.7249037372593431,
+   "bestanden": true,
+   "rho_gerichtet": -0.05377203090192447,
+   "rho_roh": 0.05377203090192447,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 0.8,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegA_l0.8_hochbau_norm_s0.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.810740274192949,
+   "spearman": -0.8858152416341014,
+   "geom_iou": 0.7420280904016836,
+   "bestanden": true,
+   "rho_gerichtet": 0.21866168781395853,
+   "rho_roh": -0.21866168781395853,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.8912423208573654,
+   "spearman": -0.8980362710118617,
+   "geom_iou": 0.8844997692489991,
+   "bestanden": true,
+   "rho_gerichtet": 0.1370614744453105,
+   "rho_roh": -0.1370614744453105,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 0.8,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegA_l0.8_hochbau_norm_s1.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.8428983818296016,
+   "spearman": -0.9773570048148486,
+   "geom_iou": 0.7269377296022496,
+   "bestanden": true,
+   "rho_gerichtet": 0.07266849908119974,
+   "rho_roh": -0.07266849908119974,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.986378664182985,
+   "spearman": -0.9754704959345797,
+   "geom_iou": 0.9974088126809535,
+   "bestanden": true,
+   "rho_gerichtet": 0.4363961431257936,
+   "rho_roh": -0.4363961431257936,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 0.8,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegA_l0.8_hochbau_norm_s2.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.8761740321105623,
+   "spearman": -0.7726262115438589,
+   "geom_iou": 0.9935993926622076,
+   "bestanden": true,
+   "rho_gerichtet": 0.3267175078088624,
+   "rho_roh": -0.3267175078088624,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.7371789643131421,
+   "spearman": -0.7483198509367831,
+   "geom_iou": 0.726203941730934,
+   "bestanden": true,
+   "rho_gerichtet": 0.1334570822440643,
+   "rho_roh": -0.1334570822440643,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 1.0,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegA_l1.0_schachtel_norm_s0.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9536236364928361,
+   "spearman": -0.9117485131718446,
+   "geom_iou": 0.9974220159835009,
+   "bestanden": true,
+   "rho_gerichtet": -0.15715497137640114,
+   "rho_roh": 0.15715497137640114,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8398735478793811,
+   "spearman": -0.9677712782740513,
+   "geom_iou": 0.7288783954050648,
+   "bestanden": true,
+   "rho_gerichtet": -0.03863921329813848,
+   "rho_roh": 0.03863921329813848,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 1.0,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegA_l1.0_schachtel_norm_s1.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9748974082456942,
+   "spearman": -0.9543963285700048,
+   "geom_iou": 0.9958388650008917,
+   "bestanden": true,
+   "rho_gerichtet": 0.1564796478224948,
+   "rho_roh": -0.1564796478224948,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8393144763240419,
+   "spearman": -0.968398108054107,
+   "geom_iou": 0.7274371813701862,
+   "bestanden": true,
+   "rho_gerichtet": 0.05700569183456458,
+   "rho_roh": -0.05700569183456458,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 1.0,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegA_l1.0_schachtel_norm_s2.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9669196168301761,
+   "spearman": -0.9386040849619353,
+   "geom_iou": 0.9960893633324966,
+   "bestanden": true,
+   "rho_gerichtet": -0.13164208340575947,
+   "rho_roh": 0.13164208340575947,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8360273250590542,
+   "spearman": -0.9628744295040111,
+   "geom_iou": 0.7258907982481487,
+   "bestanden": true,
+   "rho_gerichtet": -0.03692301009124262,
+   "rho_roh": 0.03692301009124262,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 1.0,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegA_l1.0_hochbau_norm_s0.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.8495952393955958,
+   "spearman": -0.992855365691386,
+   "geom_iou": 0.7270062647050486,
+   "bestanden": true,
+   "rho_gerichtet": 0.21803186319070036,
+   "rho_roh": -0.21803186319070036,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.9915462257399428,
+   "spearman": -0.9859007933953086,
+   "geom_iou": 0.9972239847715736,
+   "bestanden": true,
+   "rho_gerichtet": 0.7376637019273128,
+   "rho_roh": -0.7376637019273128,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 1.0,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegA_l1.0_hochbau_norm_s1.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.8504656307721015,
+   "spearman": -0.9939265439065007,
+   "geom_iou": 0.7277115130478183,
+   "bestanden": true,
+   "rho_gerichtet": 0.2872195302126672,
+   "rho_roh": -0.2872195302126672,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.9948208744592051,
+   "spearman": -0.9922396510610622,
+   "geom_iou": 0.9974088126809535,
+   "bestanden": true,
+   "rho_gerichtet": 0.9182919086714019,
+   "rho_roh": -0.9182919086714019,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A",
+  "lora": 1.0,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegA_l1.0_hochbau_norm_s2.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9089409124633834,
+   "spearman": -0.8326866473515827,
+   "geom_iou": 0.9921782521401898,
+   "bestanden": true,
+   "rho_gerichtet": 0.21433144219766356,
+   "rho_roh": -0.21433144219766356,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.7792858993333958,
+   "spearman": -0.8364409578996868,
+   "geom_iou": 0.7260363175241479,
+   "bestanden": true,
+   "rho_gerichtet": 0.08511665831061233,
+   "rho_roh": -0.08511665831061233,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A2",
+  "art": "eigen",
+  "lora": 0.8,
+  "referenz": "schachtel",
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegA2_eigen_ref-schachtel_karte-schachtel_s0.png",
+  "schritte": 50,
+  "dauer_s": 18.89,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9939988364041864,
+   "spearman": -0.9901547736411971,
+   "geom_iou": 0.9978578229133609,
+   "bestanden": true,
+   "rho_gerichtet": 0.8323466937636846,
+   "rho_roh": -0.8323466937636846,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8504385740240907,
+   "spearman": -0.9945327154104163,
+   "geom_iou": 0.7272216961607594,
+   "bestanden": true,
+   "rho_gerichtet": 0.2584606295989633,
+   "rho_roh": -0.2584606295989633,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "A2",
+  "art": "eigen",
+  "lora": 0.8,
+  "referenz": "schachtel",
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegA2_eigen_ref-schachtel_karte-schachtel_s1.png",
+  "schritte": 50,
+  "dauer_s": 18.63,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9838280087296642,
+   "spearman": -0.9704706612688588,
+   "geom_iou": 0.9973692038206035,
+   "bestanden": true,
+   "rho_gerichtet": 0.3474527572712853,
+   "rho_roh": -0.3474527572712853,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8417615143632614,
+   "spearman": -0.9747223430689549,
+   "geom_iou": 0.7269377296022496,
+   "bestanden": true,
+   "rho_gerichtet": 0.0642090169720405,
+   "rho_roh": -0.0642090169720405,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "A2",
+  "art": "eigen",
+  "lora": 0.8,
+  "referenz": "schachtel",
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegA2_eigen_ref-schachtel_karte-schachtel_s2.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9890088372617128,
+   "spearman": -0.9808224145317759,
+   "geom_iou": 0.9972635878725388,
+   "bestanden": true,
+   "rho_gerichtet": 0.5626079350946511,
+   "rho_roh": -0.5626079350946511,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.843025994761125,
+   "spearman": -0.9787333476461078,
+   "geom_iou": 0.7261352947176355,
+   "bestanden": true,
+   "rho_gerichtet": 0.09404790115395117,
+   "rho_roh": -0.09404790115395117,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "A2",
+  "art": "eigen",
+  "lora": 0.8,
+  "referenz": "hochbau",
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegA2_eigen_ref-hochbau_karte-hochbau_s0.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.8982259854211915,
+   "spearman": -0.8128500555240127,
+   "geom_iou": 0.9925691896099479,
+   "bestanden": true,
+   "rho_gerichtet": 0.49641938919931267,
+   "rho_roh": -0.49641938919931267,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.7308420842085821,
+   "spearman": -0.7320138651560965,
+   "geom_iou": 0.7296721790050316,
+   "bestanden": true,
+   "rho_gerichtet": 0.060116544998725666,
+   "rho_roh": -0.060116544998725666,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A2",
+  "art": "eigen",
+  "lora": 0.8,
+  "referenz": "hochbau",
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegA2_eigen_ref-hochbau_karte-hochbau_s1.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9577472221871421,
+   "spearman": -0.92421971684932,
+   "geom_iou": 0.9924909898419052,
+   "bestanden": true,
+   "rho_gerichtet": -0.5297783162999525,
+   "rho_roh": 0.5297783162999525,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.8369423068543591,
+   "spearman": -0.9682294632206563,
+   "geom_iou": 0.7234570436151464,
+   "bestanden": true,
+   "rho_gerichtet": -0.1291993360933214,
+   "rho_roh": 0.1291993360933214,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A2",
+  "art": "eigen",
+  "lora": 0.8,
+  "referenz": "hochbau",
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegA2_eigen_ref-hochbau_karte-hochbau_s2.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9782510526638474,
+   "spearman": -0.9613834333944529,
+   "geom_iou": 0.9954146168912412,
+   "bestanden": true,
+   "rho_gerichtet": 0.770831916092543,
+   "rho_roh": -0.770831916092543,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.8365310345266543,
+   "spearman": -0.9691333097567708,
+   "geom_iou": 0.7220721490853137,
+   "bestanden": true,
+   "rho_gerichtet": 0.16037985224188567,
+   "rho_roh": -0.16037985224188567,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A2",
+  "art": "kreuz",
+  "lora": 0.8,
+  "referenz": "schachtel",
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegA2_kreuz_ref-schachtel_karte-hochbau_s0.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.810740274192949,
+   "spearman": -0.8858152416341014,
+   "geom_iou": 0.7420280904016836,
+   "bestanden": true,
+   "rho_gerichtet": 0.21866168781395853,
+   "rho_roh": -0.21866168781395853,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.8912423208573654,
+   "spearman": -0.8980362710118617,
+   "geom_iou": 0.8844997692489991,
+   "bestanden": true,
+   "rho_gerichtet": 0.1370614744453105,
+   "rho_roh": -0.1370614744453105,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A2",
+  "art": "kreuz",
+  "lora": 0.8,
+  "referenz": "schachtel",
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegA2_kreuz_ref-schachtel_karte-hochbau_s1.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.8428983818296016,
+   "spearman": -0.9773570048148486,
+   "geom_iou": 0.7269377296022496,
+   "bestanden": true,
+   "rho_gerichtet": 0.07266849908119974,
+   "rho_roh": -0.07266849908119974,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.986378664182985,
+   "spearman": -0.9754704959345797,
+   "geom_iou": 0.9974088126809535,
+   "bestanden": true,
+   "rho_gerichtet": 0.4363961431257936,
+   "rho_roh": -0.4363961431257936,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A2",
+  "art": "kreuz",
+  "lora": 0.8,
+  "referenz": "schachtel",
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegA2_kreuz_ref-schachtel_karte-hochbau_s2.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.8761740321105623,
+   "spearman": -0.7726262115438589,
+   "geom_iou": 0.9935993926622076,
+   "bestanden": true,
+   "rho_gerichtet": 0.3267175078088624,
+   "rho_roh": -0.3267175078088624,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.7371789643131421,
+   "spearman": -0.7483198509367831,
+   "geom_iou": 0.726203941730934,
+   "bestanden": true,
+   "rho_gerichtet": 0.1334570822440643,
+   "rho_roh": -0.1334570822440643,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "A2",
+  "art": "kreuz",
+  "lora": 0.8,
+  "referenz": "hochbau",
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "wegA2_kreuz_ref-hochbau_karte-schachtel_s0.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9436550360018264,
+   "spearman": -0.8935785922167492,
+   "geom_iou": 0.9965377804794249,
+   "bestanden": true,
+   "rho_gerichtet": 0.16530397082820225,
+   "rho_roh": -0.16530397082820225,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.817433664781115,
+   "spearman": -0.919108718531575,
+   "geom_iou": 0.7270062647050486,
+   "bestanden": true,
+   "rho_gerichtet": 0.026979549259683818,
+   "rho_roh": -0.026979549259683818,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "A2",
+  "art": "kreuz",
+  "lora": 0.8,
+  "referenz": "hochbau",
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "wegA2_kreuz_ref-hochbau_karte-schachtel_s1.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9757455089536954,
+   "spearman": -0.956057582912727,
+   "geom_iou": 0.9958388650008917,
+   "bestanden": true,
+   "rho_gerichtet": 0.20382593454345962,
+   "rho_roh": -0.20382593454345962,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8391083858080313,
+   "spearman": -0.9678574234904673,
+   "geom_iou": 0.727486162780147,
+   "bestanden": true,
+   "rho_gerichtet": 0.043557666607067176,
+   "rho_roh": -0.043557666607067176,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "A2",
+  "art": "kreuz",
+  "lora": 0.8,
+  "referenz": "hochbau",
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "wegA2_kreuz_ref-hochbau_karte-schachtel_s2.png",
+  "schritte": 50,
+  "dauer_s": 18.64,
+  "vram_gb": 15.66,
+  "richtig": {
+   "score": 0.9665181228890057,
+   "spearman": -0.9371422254233047,
+   "geom_iou": 0.9968148446741163,
+   "bestanden": true,
+   "rho_gerichtet": -0.19456938755039782,
+   "rho_roh": 0.19456938755039782,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8353263778445995,
+   "spearman": -0.962569402885204,
+   "geom_iou": 0.7249037372593431,
+   "bestanden": true,
+   "rho_gerichtet": -0.05377203090192447,
+   "rho_roh": 0.05377203090192447,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "anker",
+  "controlnet": 0.8,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "zimage_c0.8_schachtel_norm_s0.png",
+  "schritte": 8,
+  "dauer_s": 2.26,
+  "vram_gb": 22.89,
+  "richtig": {
+   "score": 0.8410119369153326,
+   "spearman": -0.7196261113404997,
+   "geom_iou": 0.9828730043112782,
+   "bestanden": true,
+   "rho_gerichtet": 0.07046969952582668,
+   "rho_roh": -0.07046969952582668,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.7061811580530429,
+   "spearman": -0.6882944765771617,
+   "geom_iou": 0.7245326600165309,
+   "bestanden": true,
+   "rho_gerichtet": 0.022442036597982204,
+   "rho_roh": -0.022442036597982204,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "anker",
+  "controlnet": 0.8,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "zimage_c0.8_schachtel_norm_s1.png",
+  "schritte": 8,
+  "dauer_s": 2.11,
+  "vram_gb": 22.89,
+  "richtig": {
+   "score": 0.6792404315262326,
+   "spearman": -0.47634378588444015,
+   "geom_iou": 0.9685600557658356,
+   "bestanden": true,
+   "rho_gerichtet": 0.39765909825428564,
+   "rho_roh": -0.39765909825428564,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.5578222849783259,
+   "spearman": -0.435997938365212,
+   "geom_iou": 0.7136861765566281,
+   "bestanden": false,
+   "rho_gerichtet": 0.10273135358585998,
+   "rho_roh": -0.10273135358585998,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "anker",
+  "controlnet": 0.8,
+  "szene": "schachtel",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "zimage_c0.8_schachtel_norm_s2.png",
+  "schritte": 8,
+  "dauer_s": 2.11,
+  "vram_gb": 22.89,
+  "richtig": {
+   "score": 0.9611485156436783,
+   "spearman": -0.94238363655813,
+   "geom_iou": 0.9802870437119078,
+   "bestanden": true,
+   "rho_gerichtet": 0.2892051392346789,
+   "rho_roh": -0.2892051392346789,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8336159450981533,
+   "spearman": -0.9667308692404081,
+   "geom_iou": 0.7188304067169232,
+   "bestanden": true,
+   "rho_gerichtet": 0.0706133782192206,
+   "rho_roh": -0.0706133782192206,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "anker",
+  "controlnet": 0.8,
+  "szene": "schachtel",
+  "invertiert": true,
+  "seed": 0,
+  "bild": "zimage_c0.8_schachtel_inv_s0.png",
+  "schritte": 8,
+  "dauer_s": 2.11,
+  "vram_gb": 22.89,
+  "richtig": {
+   "score": 0.9112287717950323,
+   "spearman": -0.8682131130010067,
+   "geom_iou": 0.956375643391279,
+   "bestanden": true,
+   "rho_gerichtet": 0.221663166597393,
+   "rho_roh": -0.221663166597393,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.7848694192678228,
+   "spearman": -0.859303180526236,
+   "geom_iou": 0.7168831900803156,
+   "bestanden": true,
+   "rho_gerichtet": 0.05314900802108843,
+   "rho_roh": -0.05314900802108843,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "anker",
+  "controlnet": 0.8,
+  "szene": "schachtel",
+  "invertiert": true,
+  "seed": 1,
+  "bild": "zimage_c0.8_schachtel_inv_s1.png",
+  "schritte": 8,
+  "dauer_s": 2.11,
+  "vram_gb": 22.89,
+  "richtig": {
+   "score": 0.9475833681031889,
+   "spearman": -0.9368349275943959,
+   "geom_iou": 0.9584551270002787,
+   "bestanden": true,
+   "rho_gerichtet": 0.161044229761608,
+   "rho_roh": -0.161044229761608,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.8362109106422609,
+   "spearman": -0.9664827091415411,
+   "geom_iou": 0.7234983931562033,
+   "bestanden": true,
+   "rho_gerichtet": 0.03944561212362326,
+   "rho_roh": -0.03944561212362326,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "anker",
+  "controlnet": 0.8,
+  "szene": "schachtel",
+  "invertiert": true,
+  "seed": 2,
+  "bild": "zimage_c0.8_schachtel_inv_s2.png",
+  "schritte": 8,
+  "dauer_s": 2.11,
+  "vram_gb": 22.89,
+  "richtig": {
+   "score": 0.8930018997769099,
+   "spearman": -0.8082929756936578,
+   "geom_iou": 0.9865883002642893,
+   "bestanden": true,
+   "rho_gerichtet": -0.18889145336823815,
+   "rho_roh": 0.18889145336823815,
+   "anteil_maske": 0.19792556762695312
+  },
+  "falsch": {
+   "score": 0.7725124760871197,
+   "spearman": -0.8233588962852925,
+   "geom_iou": 0.7248060698714682,
+   "bestanden": true,
+   "rho_gerichtet": -0.027857454289549454,
+   "rho_roh": 0.027857454289549454,
+   "anteil_maske": 0.2117462158203125
+  }
+ },
+ {
+  "weg": "anker",
+  "controlnet": 0.8,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 0,
+  "bild": "zimage_c0.8_hochbau_norm_s0.png",
+  "schritte": 8,
+  "dauer_s": 2.11,
+  "vram_gb": 22.89,
+  "richtig": {
+   "score": 0.29931196046426617,
+   "spearman": -0.09107509349139972,
+   "geom_iou": 0.9836679408451254,
+   "bestanden": false,
+   "rho_gerichtet": 0.165892805339808,
+   "rho_roh": -0.165892805339808,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.33472192404603196,
+   "spearman": -0.15336765829049637,
+   "geom_iou": 0.7305240732362425,
+   "bestanden": false,
+   "rho_gerichtet": 0.0721458010116032,
+   "rho_roh": -0.0721458010116032,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "anker",
+  "controlnet": 0.8,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 1,
+  "bild": "zimage_c0.8_hochbau_norm_s1.png",
+  "schritte": 8,
+  "dauer_s": 2.1,
+  "vram_gb": 22.89,
+  "richtig": {
+   "score": 0.9256390460562757,
+   "spearman": -0.917923295145169,
+   "geom_iou": 0.9334196529443873,
+   "bestanden": true,
+   "rho_gerichtet": 0.14821701161641385,
+   "rho_roh": -0.14821701161641385,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.8468994229596166,
+   "spearman": -0.9482837577695055,
+   "geom_iou": 0.7563544421517626,
+   "bestanden": true,
+   "rho_gerichtet": 0.06998985348065373,
+   "rho_roh": -0.06998985348065373,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "anker",
+  "controlnet": 0.8,
+  "szene": "hochbau",
+  "invertiert": false,
+  "seed": 2,
+  "bild": "zimage_c0.8_hochbau_norm_s2.png",
+  "schritte": 8,
+  "dauer_s": 2.1,
+  "vram_gb": 22.89,
+  "richtig": {
+   "score": 0.5588074405637414,
+   "spearman": -0.3216215965028427,
+   "geom_iou": 0.9709104084577211,
+   "bestanden": false,
+   "rho_gerichtet": 0.1267361293680558,
+   "rho_roh": -0.1267361293680558,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.42278564570756216,
+   "spearman": -0.24326821091639553,
+   "geom_iou": 0.7347762436489939,
+   "bestanden": false,
+   "rho_gerichtet": 0.05722185873179833,
+   "rho_roh": -0.05722185873179833,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "anker",
+  "controlnet": 0.8,
+  "szene": "hochbau",
+  "invertiert": true,
+  "seed": 0,
+  "bild": "zimage_c0.8_hochbau_inv_s0.png",
+  "schritte": 8,
+  "dauer_s": 2.1,
+  "vram_gb": 22.89,
+  "richtig": {
+   "score": 0.9090322471619174,
+   "spearman": -0.848853864380543,
+   "geom_iou": 0.9734768975614813,
+   "bestanden": true,
+   "rho_gerichtet": -0.018028976487233936,
+   "rho_roh": 0.018028976487233936,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.8049201672881408,
+   "spearman": -0.865665186300644,
+   "geom_iou": 0.7484377169837523,
+   "bestanden": true,
+   "rho_gerichtet": 0.060008154784895656,
+   "rho_roh": -0.060008154784895656,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "anker",
+  "controlnet": 0.8,
+  "szene": "hochbau",
+  "invertiert": true,
+  "seed": 1,
+  "bild": "zimage_c0.8_hochbau_inv_s1.png",
+  "schritte": 8,
+  "dauer_s": 2.11,
+  "vram_gb": 22.89,
+  "richtig": {
+   "score": 0.9445445990050381,
+   "spearman": -0.9261529692223419,
+   "geom_iou": 0.9633014514424192,
+   "bestanden": true,
+   "rho_gerichtet": 0.06663426976341578,
+   "rho_roh": -0.06663426976341578,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.8537238168399367,
+   "spearman": -0.9766822537550994,
+   "geom_iou": 0.7462451095405135,
+   "bestanden": true,
+   "rho_gerichtet": 0.04420197013332471,
+   "rho_roh": -0.04420197013332471,
+   "anteil_maske": 0.19792556762695312
+  }
+ },
+ {
+  "weg": "anker",
+  "controlnet": 0.8,
+  "szene": "hochbau",
+  "invertiert": true,
+  "seed": 2,
+  "bild": "zimage_c0.8_hochbau_inv_s2.png",
+  "schritte": 8,
+  "dauer_s": 2.11,
+  "vram_gb": 22.89,
+  "richtig": {
+   "score": 0.8181232448074529,
+   "spearman": -0.9350355578012931,
+   "geom_iou": 0.7158290806268095,
+   "bestanden": true,
+   "rho_gerichtet": 0.0009223037754873225,
+   "rho_roh": -0.0009223037754873225,
+   "anteil_maske": 0.2117462158203125
+  },
+  "falsch": {
+   "score": 0.9268186877017862,
+   "spearman": -0.9275278476170208,
+   "geom_iou": 0.9261100699889089,
+   "bestanden": true,
+   "rho_gerichtet": 0.027997269034707346,
+   "rho_roh": -0.027997269034707346,
+   "anteil_maske": 0.19792556762695312
+  }
+ }
+]

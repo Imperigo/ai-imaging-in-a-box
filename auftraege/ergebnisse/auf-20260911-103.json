@@ -1,0 +1,18 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260911-103",
+ "status": "ok",
+ "beendet": "2026-09-21T10:42:00Z",
+ "stand": "889296e",
+ "geprueft": "Nicht bloss zur Kenntnis genommen: Heute sind ueber diesen Rechenweg rund zwanzig Multipass-Laeufe gefahren (auf-95, auf-100 und die R2-Reihe). Keiner ist an `maengel` stehengeblieben.",
+ "rueckgabe": {
+  "V1": {
+   "lauf_stehengeblieben": false,
+   "feld": null,
+   "beleg": "`seams.glb_zu_multipass` und `abholer.verarbeiter` heute vielfach gefahren, durchweg mit status ok. Wir uebergeben nur Felder aus eurer Karte."
+  },
+  "V2": "angekommen, nichts aufgefallen",
+  "V3": "Eine Zeile, die ihr nicht erfragt habt: Wir halten die strenge Abweisung fuer richtig und haben heute selbst einen Fall gehabt, der sie begruendet. In auf-20260909-95 haben wir `glb_zu_multipass` OHNE `kamera_huellbox` gerufen — ein gueltiges, bekanntes Feld, nur weggelassen. Der Lauf ist anstandslos durchgelaufen und hat eine Kurve geliefert, die in die falsche Richtung zeigte. Erst der Vergleich mit einer alten Zahl hat es gefangen.\n\nEin unbekanntes Feld wird jetzt abgewiesen — gut. Ein FEHLENDES Feld, das die Bedeutung des Ergebnisses veraendert, laeuft weiterhin still durch. Das ist kein Vorwurf und keine Bestellung; es ist die haerte Haelfte desselben Problems, und sie ist schwerer."
+ },
+ "fehler": null
+}

@@ -1,0 +1,34 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260909-100",
+ "status": "ok",
+ "beendet": "2026-09-21T10:25:00Z",
+ "stand": "889296e",
+ "geprueft": "Kein neuer Renderlauf. Ein bereits gerechnetes Bild aus auf-92 (A2 bei ControlNet-Staerke 0.30) noch einmal durch `qa_gegen_soll` und dann durch `abholer.befund_kurz` — beides am Geraet, mit echtem Tiefenschaetzer.",
+ "kurzantwort": {
+  "C8": "BESTAETIGT — die Zeile erscheint",
+  "C10": "BESTAETIGT — geom_iou_norm steht daneben"
+ },
+ "rueckgabe": {
+  "V1": "SCORE BESTEHT, MASKENWEG SAGT NEIN: sSE  — das Tor liest nur den Score, und der kann bei viel Boden hoch bleiben, obwohl das Bauwerk fehlt (gemessen: verschwundenes Bauwerk, Score 0.951, geom_iou 1.000, rho_maske -0.018). Das Paarurteil sperrt hier NICHT — es steht nur da. Wer diesem Lauf traut, traut dem Score allein",
+  "V2": {
+   "bild": "A2 bei ControlNet-Staerke 0.30 (Schachtel, Prompt MIT Bauteilen, Startwert 2)",
+   "score": 0.8487709304607239,
+   "rho_maske_gerichtet": -0.04731876409153796,
+   "spearman": -0.8697483497329009,
+   "bestanden": true,
+   "n_gemeinsam": 132267,
+   "paarurteil_bestanden": false
+  },
+  "V3": {
+   "steht_daneben": true,
+   "zeile": "VON DIESEM geom_iou GEHOERT EIN TEIL DER SZENE: sSE: 0.828 roh, 0.613 ohne den Boden (die Szene schenkt 0.557)  — ein KONSTANTES Bild bekaeme hier schon den Vordergrundanteil. Der Score rechnet weiter mit dem rohen Wert; die zweite Zahl sagt, was davon das Bild verdient hat",
+   "geom_iou": 0.8282994645708739,
+   "geom_iou_norm": 0.6125416193828521,
+   "geom_iou_obergrenze": 0.556854248046875
+  },
+  "V4": "Sie erscheint. Nichts steht stattdessen da.",
+  "V5": "Zwei Zeilen, die ihr nicht erfragt habt.\n\nERSTENS — EIN FEHLALARM, DEN WIR SELBST ERZEUGT HABEN, und er ist trotzdem ein Befund:\nUnser erster Durchlauf gab DREI Zeilen aus. Die dritte lautete «MASKENWEG NICHT GEFAHREN» — und stand damit direkt neben einer Zeile, die auf rho_maske -0.047 beruht. Zwei Zeilen desselben Befundes widersprachen sich.\nNachgemessen, woran es lag: Wir haben das Kamera-Woerterbuch von Hand aus dem flachen `qa_gegen_soll`-Ergebnis zusammengesetzt und dabei kein `maskenbefund` mitgegeben. Die Zeile fragt `maskenbefund.maske is None` — nicht, ob `rho_maske` da ist. Mit einem `maskenbefund` sind es zwei Zeilen, ohne drei (gegengeprobt, beide Faelle).\nDAS IST ALSO UNSER ARTEFAKT UND KEIN DEFEKT IN EUREM LAUF. Es bleibt aber eine Beobachtung wert: Die Bedingung haengt an einem anderen Feld als die Aussage, die sie macht. Ein Aufrufer, der `rho_maske` fuellt und `maskenbefund` weglaesst, bekommt zwei Zeilen, die einander widersprechen — und der Mensch am Terminal kann nicht entscheiden, welcher er glauben soll. Wenn es billig ist: zusaetzlich auf das Vorhandensein von `rho_maske` pruefen, dann kann der Widerspruch gar nicht entstehen.\n\nZWEITENS — DIE ZAHL, DIE DIESEN FALL SO DEUTLICH MACHT:\n`geom_iou_obergrenze` steht bei 0.5569 und ist damit fast genau das, was wir in auf-20260909-95 als Geometrieanteil der Schachtelszene gemessen haben (0.5569, auf vier Stellen). Ein KONSTANTES Bild bekaeme hier also 0.557, das erzeugte bekommt 0.828 — der Abstand, den das Bild wirklich verdient hat, ist 0.27 und nicht 0.83. Die zweite Zahl (0.613 normiert) sagt das; die erste verschweigt es. C10 ist damit nicht bloss bestaetigt, sondern an einem Fall belegt, bei dem es den Unterschied macht."
+ },
+ "fehler": null
+}

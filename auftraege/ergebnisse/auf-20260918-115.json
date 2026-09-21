@@ -1,0 +1,122 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260918-115",
+ "status": "ok",
+ "beendet": "2026-09-21T12:55:00Z",
+ "stand": "889296e",
+ "geprueft": "36 Bilder (drei Staerken x zwoelf), jedes gegen die RICHTIGE und die FALSCHE Tiefenkarte. 72 Messungen. Kein neuer Renderlauf — die Begruendung steht unten und ist wichtig.",
+ "kurzantwort": {
+  "welche_deutung": "DEUTUNG (1) — das Bild folgt bei 0.75 in dieser Zelle wirklich weniger",
+  "beleg_in_einer_zeile": "Fall C / gebaeude / Seed 2 bei 0.75: rho gegen die richtige Karte -0.1549, gegen die FALSCHE +0.3001. Das Bild folgt der fremden Geometrie BESSER als der eigenen. Tor A hat recht.",
+  "und_die_schwelle": "0.10 darf bleiben, wo sie ist",
+  "aber": "Ein zweiter Befund kippt einen Teil eures Bildes: PAARWEISE trennt `geom_iou` sauberer als `rho_maske` — 12 von 12 gegen 10 von 12."
+ },
+ "zum_neulauf": "SCHRITT 1 IST NICHT GEFAHREN WORDEN, und das ist ein Entscheid mit Grund.\n\nDer Rechenweg des Repos kommt heute an z-image-turbo GAR NICHT HERAN: Er lagert aus (entschieden an der Plattengroesse) und scheitert dann an der unvollstaendigen Entflechtung — zwoelf von zwoelf Auftraegen, mit eurer eigenen Vorwarnung im Geraeteweg (s. auf-20260918-114, Befund 7). Ein Neulauf muesste ueber einen ANDEREN Geraeteweg gehen; eine Abweichung waere dann nicht deutbar — Bild oder Geraet?\n\nStattdessen ist die MESSUNG reproduziert: dieselben Bilddateien, derselbe Schaetzer, dieselbe Soll-Karte, und rho_maske gegen den gespeicherten Wert gehalten.\n\n    36 VON 36 STIMMEN AUF VIER STELLEN.\n\nDamit ist belegt, was Schritt 1 belegen sollte: Es sind dieselben Bilder und derselbe Messweg. Nicht belegt ist, dass der RENDER heute dieselben Bilder ergaebe — dafuer muesste erst euer Geraeteweg wieder tragen.",
+ "reihen": {
+  "1.00": {
+   "n": 12,
+   "rho_richtig_mittel": 0.7979,
+   "rho_falsch_mittel": 0.3493,
+   "rho_richtig_spanne": [
+    0.1437,
+    0.9931
+   ],
+   "rho_paarweise_richtig_groesser": 10,
+   "geom_iou_richtig_mittel": 0.9612,
+   "geom_iou_falsch_mittel": 0.758,
+   "geom_iou_paarweise_richtig_groesser": 12
+  },
+  "0.75": {
+   "n": 12,
+   "rho_richtig_mittel": 0.7488,
+   "rho_falsch_mittel": 0.3879,
+   "rho_richtig_spanne": [
+    -0.1549,
+    0.9961
+   ],
+   "rho_paarweise_richtig_groesser": 9,
+   "geom_iou_richtig_mittel": 0.9562,
+   "geom_iou_falsch_mittel": 0.7606,
+   "geom_iou_paarweise_richtig_groesser": 12
+  },
+  "0.30": {
+   "n": 12,
+   "rho_richtig_mittel": -0.009,
+   "rho_falsch_mittel": -0.0117,
+   "rho_richtig_spanne": [
+    -0.0473,
+    0.0554
+   ],
+   "rho_paarweise_richtig_groesser": 7,
+   "geom_iou_richtig_mittel": 0.7218,
+   "geom_iou_falsch_mittel": 0.7226,
+   "geom_iou_paarweise_richtig_groesser": 6
+  }
+ },
+ "die_zelle_um_die_es_geht": [
+  {
+   "staerke": "1.00",
+   "rho_richtig": 0.1437,
+   "rho_falsch": 0.4122,
+   "geom_iou_richtig": 0.9257,
+   "geom_iou_falsch": 0.735,
+   "score": 0.8965
+  },
+  {
+   "staerke": "0.75",
+   "rho_richtig": -0.1549,
+   "rho_falsch": 0.3001,
+   "geom_iou_richtig": 0.9119,
+   "geom_iou_falsch": 0.7409,
+   "score": 0.8701
+  },
+  {
+   "staerke": "0.30",
+   "rho_richtig": -0.037,
+   "rho_falsch": -0.1153,
+   "geom_iou_richtig": 0.6771,
+   "geom_iou_falsch": 0.8358,
+   "score": 0.774
+  }
+ ],
+ "befunde": [
+  {
+   "nr": "Befund 1 — eure Frage, beantwortet",
+   "urteil": "Deutung (1). rho_maske misst bei 0.75 dasselbe wie bei 1.00; das BILD ist anders.",
+   "einordnung": "Die Vertauschprobe entscheidet es so, wie ihr es vorgezeichnet habt: Waere rho_maske bei 0.75 blind (Deutung 2), muesste das Bild gegen BEIDE Karten gleich schlecht abschneiden. Es schneidet gegen die falsche Karte um 0.455 BESSER ab (-0.1549 gegen +0.3001). Eine blinde Zahl kann das nicht; sie sieht dort etwas, und es ist die falsche Geometrie.\n\nDIE SCHWELLE 0.10 DARF BLEIBEN. Dieses Bild faellt durch Tor A, und es soll durchfallen."
+  },
+  {
+   "nr": "Befund 2 — es liegt NICHT an der Staerke 0.75",
+   "urteil": "dieselbe Zelle faellt auch bei 1.00 durch die Vertauschprobe",
+   "einordnung": "Bei 1.00 steht dieselbe Zelle auf rho richtig 0.1437 gegen falsch 0.4122 — ebenfalls falschherum, nur weniger deutlich. Es ist also kein Effekt der Staerke, sondern DIESER Zelle: Gebaeude, Prompt MIT Bauteilen, Startwert 2. Genau das Bild, das ihr in auf-96 als «das mit Abstand schoenste und das mit der schlechtesten Bauwerkstreue» auf die Folie nehmt.\n\nJetzt steht die Erklaerung daneben: Es ist nicht bloss untreu — es ist der SCHACHTEL aehnlicher als dem Hochbau, den es darstellen soll. Das Modell hat aus dem gegliederten Bauwerk einen Block gemacht."
+  },
+  {
+   "nr": "Befund 3 — DER, DER EUER BILD AENDERT: geom_iou trennt paarweise BESSER als rho_maske",
+   "urteil": "gemessen an 36 Bildern",
+   "beleg": {
+    "staerke_1.00": "geom_iou 12/12 · rho_maske 10/12",
+    "staerke_0.75": "geom_iou 12/12 · rho_maske 9/12",
+    "staerke_0.30": "geom_iou 6/12 · rho_maske 7/12 — beide Zufall, wie es sein soll"
+   },
+   "einordnung": "Das widerspricht dem Satz aus auf-92 nicht, aber es ergaenzt ihn um die entscheidende Unterscheidung:\n\n  Als SCHWELLE ist geom_iou wertlos — es laesst bei 56 % Geometrieanteil alles durch, auch das falsche Gebaeude. Das habt ihr richtig gemessen.\n  Als VERGLEICH ist geom_iou das schaerfere Werkzeug: 24 von 24 Paaren richtig geordnet bei 1.00 und 0.75, und bei 0.30 faellt es sauber auf Zufall.\n\nrho_maske ist umgekehrt: als Schwelle brauchbar (es faellt bei 0.30 auf null, geom_iou nicht), als Vergleich schwaecher (2 bis 3 Fehlordnungen je zwoelf).\n\nZWEI WERKZEUGE FUER ZWEI FRAGEN, und keines ersetzt das andere:\n  «Folgt das Bild ueberhaupt etwas?»  -> rho_maske, mit Schwelle\n  «Folgt es DIESEM Modell?»           -> geom_iou, im Vergleich gegen eine falsche Karte\n\nDie zweite Frage braucht also KEINE Schwelle — sie braucht eine zweite Karte. Das ist billiger als jede Kalibrierung und traegt bei uns 24 von 24."
+  },
+  {
+   "nr": "Befund 4 — Staerke 0.30 ist auch in der Vertauschprobe Zufall",
+   "urteil": "bestaetigt die Rauschbandmessung von auf-92",
+   "beleg": {
+    "rho_richtig_mittel": -0.009,
+    "rho_falsch_mittel": -0.0117,
+    "paarweise": "7/12 — statistisch nicht von 6/12 zu unterscheiden"
+   },
+   "einordnung": "Ihr habt das Rauschband bei 0.30 aus zwoelf Werten gegen die richtige Karte bestimmt (-0.0473 bis +0.0554). Mit der Vertauschprobe hat es jetzt eine zweite Haelfte: Gegen die FALSCHE Karte liegt es genauso (-0.115 bis +0.102, Mittel -0.0117). Das Band ist damit belegt als das, was es sein soll — Rauschen und nicht ein schwaches Signal."
+  }
+ ],
+ "zusatz_ungefragt": {
+  "kantenanteil_an_erzeugten_bildern": {
+   "spanne": "0.0125 bis 0.2805 ueber die 36 Bilder",
+   "hinweis": "Das ist der ANTEIL der Maskengrenze mit Kante, nicht die Median-Kante, um die es in eurem Auftrag geht (-0.0045 bis +0.0194). Wir melden es, weil die Zahl in derselben Messung anfiel: Der Anteil liegt bei manchen Bildern ueber der Schwelle 0.20, bei den meisten darunter. Die Median-Kante haben wir in diesem Lauf NICHT erhoben — sie gehoert zu auf-20260909-98, und den haben wir heute nicht geschafft."
+  }
+ },
+ "offen_von_uns": "auf-20260909-98 (Kalibrierung von rho_maske an Faellen mit vorab bekannter Wahrheit) und auf-20260910-101 (A7 am laufenden Cockpit) sind heute NICHT beantwortet. Beide brauchen eine eigene Messreihe, nicht eine Auskunft. Wir sagen es hier, damit ihr nicht darauf wartet.",
+ "fehler": null
+}

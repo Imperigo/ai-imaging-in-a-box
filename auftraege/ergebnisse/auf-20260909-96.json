@@ -1,0 +1,120 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260909-96",
+ "status": "ok",
+ "beendet": "2026-09-21T09:10:00Z",
+ "stand": "889296e",
+ "geprueft": "Acht Bilder unveraendert aus dem Lauf kopiert — kein Zuschnitt, keine Skalierung, keine Beschriftung. Die Zahlen sind aus `ergebnis.json` und `ergebnis_s030.json` abgeschrieben, nicht nachgerechnet.",
+ "ablage": "auftraege/ergebnisse/auf-20260909-96-bilder/",
+ "bilder": {
+  "C0.png": {
+   "erlaeuterung": "Gebaeude + MIT Bauteilen, Startwert 0 — das Bild, das BEIDES hat: sieht nach Bauwerk aus UND folgt der Tiefenkarte.",
+   "zahlen": {
+    "fall": "C",
+    "szene": "gebaeude",
+    "prompt_art": "mit",
+    "seed": 0,
+    "score": 0.9681637260958564,
+    "spearman": -0.9866998422250033,
+    "geom_iou": 0.9499758289350825,
+    "rho_maske": 0.9028654249311838,
+    "bestanden": true,
+    "controlnet_staerke": 1.0
+   },
+   "byte": 134775
+  },
+  "C2.png": {
+   "erlaeuterung": "Derselbe Fall, Startwert 2 — das schoenste Bild der Reihe und das mit der schlechtesten Bauwerkstreue. Fenster, Gesimse, Satteldach, und die Karte trifft nicht.",
+   "zahlen": {
+    "fall": "C",
+    "szene": "gebaeude",
+    "prompt_art": "mit",
+    "seed": 2,
+    "score": 0.8965455516993689,
+    "spearman": -0.8683018669462391,
+    "geom_iou": 0.925707932770911,
+    "rho_maske": 0.14374026593271041,
+    "bestanden": true,
+    "controlnet_staerke": 1.0
+   },
+   "byte": 241482
+  },
+  "B0.png": {
+   "erlaeuterung": "Schachtel + OHNE Bauteile, Startwert 0 — der bestbewertete Lauf ueberhaupt, und eine graue geriffelte Masse, die kein Mensch als Gebaeude bezeichnen wuerde.",
+   "zahlen": {
+    "fall": "B",
+    "szene": "schachtel",
+    "prompt_art": "ohne",
+    "seed": 0,
+    "score": 0.988374896589821,
+    "spearman": -0.9984411817971436,
+    "geom_iou": 0.9784100996821826,
+    "rho_maske": 0.9747551197317506,
+    "bestanden": true,
+    "controlnet_staerke": 1.0
+   },
+   "byte": 110124
+  },
+  "A0.png": {
+   "erlaeuterung": "Schachtel + MIT Bauteilen, Startwert 0 — zeigt, was fuenf Bauteilwoerter im Prompt am BILD aendern (Fensteroeffnungen), waehrend der Score sich um 0.0007 bewegt.",
+   "zahlen": {
+    "fall": "A",
+    "szene": "schachtel",
+    "prompt_art": "mit",
+    "seed": 0,
+    "score": 0.9860320925881305,
+    "spearman": -0.9950215037077565,
+    "geom_iou": 0.9771238953035587,
+    "rho_maske": 0.9156907135441371,
+    "bestanden": true,
+    "controlnet_staerke": 1.0
+   },
+   "byte": 125417
+  },
+  "C0_staerke030.png": {
+   "erlaeuterung": "ControlNet-Staerke 0.30, derselbe Fall wie C0 — das voellig andere Gebaeude, das die Schwelle trotzdem besteht.",
+   "zahlen": {
+    "fall": "C",
+    "szene": "gebaeude",
+    "prompt_art": "mit",
+    "seed": 0,
+    "score": 0.7957739722293358,
+    "spearman": -0.9209468826566592,
+    "geom_iou": 0.6876142661462721,
+    "rho_maske": -0.01360654159673878,
+    "bestanden": true,
+    "controlnet_staerke": 0.3
+   },
+   "byte": 202118
+  },
+  "gebaeude_beauty.png": {
+   "erlaeuterung": "Der Blender-Render der Gebaeudeszene — die VORLAGE, gegen die C0 und C2 gemessen wurden.",
+   "zahlen": {
+    "art": "Blender-Beauty, kein erzeugtes Bild"
+   },
+   "byte": 251735
+  },
+  "gebaeude_tiefe.png": {
+   "erlaeuterung": "Die normierte Tiefenkarte der Gebaeudeszene — das SOLL des Geometrieurteils.",
+   "zahlen": {
+    "art": "Soll-Tiefenkarte, normiert; nah = hell"
+   },
+   "byte": 4262
+  },
+  "schachtel_beauty.png": {
+   "erlaeuterung": "Derselbe Blick auf die Schachtelszene — die VORLAGE zu A0 und B0.",
+   "zahlen": {
+    "art": "Blender-Beauty, kein erzeugtes Bild"
+   },
+   "byte": 249442
+  }
+ },
+ "rueckgabe": {
+  "V1": "Alle acht liegen in der Ablage, mit genau den bestellten Namen. Das fuenfte heisst bei uns im Lauf `C0_s030.png`; es liegt als `C0_staerke030.png` dort, wie ihr es benannt habt.",
+  "V2": "Regel 3: Wir sehen es wie ihr. Die Geometrie kommt aus `tools/make_test_ifc.py`, es ist kein Bueroprojekt, kein Kundenname, kein Ort darauf. Die Bilder duerfen reisen.",
+  "V3": "Alle acht unter 400 KB — das groesste ist gebaeude_beauty.png mit 251 735 B. Nichts musste angefasst werden.",
+  "V4": "Nichts weggelassen, nichts ersetzt. Eine Anmerkung zur Folie: `gebaeude_tiefe.png` ist mit 4 262 B winzig, weil eine normierte Tiefenkarte fast nur Verlaeufe enthaelt. Das ist kein Fehler und kein schlechter Scan — auf der Leinwand sieht sie trotzdem sauber aus, sie ist 512 x 512 wie die anderen.",
+  "V5": "Eine Zeile, die ihr nicht erfragt habt: C2 ist auf der Folie das gefaehrlichste Bild. Es besteht die Schwelle (score 0.8965) und hat rho_maske 0.1437 — das ist der NIEDRIGSTE Wert der ganzen 1.00er-Reihe und liegt knapp ueber der spaeter gesetzten Schwelle 0.10. Wer die Folie erklaert, sollte beide Zahlen nennen, sonst wirkt das schoenste Bild wie das beste."
+ },
+ "fehler": null
+}

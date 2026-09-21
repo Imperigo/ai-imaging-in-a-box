@@ -1,0 +1,462 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260918-114",
+ "status": "ok",
+ "beendet": "2026-09-21T05:15:00Z",
+ "stand": "889296e",
+ "geprueft": "78 Bilder erzeugt und gemessen, jedes gegen die RICHTIGE und die FALSCHE Tiefenkarte, mit rho_maske UND geom_iou UND score. Zwei eigene Messfehler stehen unten unter 'eigene_fehler' — beide gefunden, bevor eine Zahl berichtet wurde, und beide haben die erste Fassung dieses Ergebnisses umgeworfen.",
+ "kurzantwort": {
+  "weg_a": "ES GIBT EINE, UND SIE IST APACHE-2.0 — aber sie traegt die Geometrie nicht. Gefunden: thedeoxen/refcontrol-FLUX.2-klein-4B-reference-depth-lora, 88 MB LoRA auf FLUX.2-klein-base-4B, Apache-2.0. Gemessen: Die Geometrie des Ergebnisses kommt aus dem REFERENZBILD, nicht aus der Tiefenkarte.",
+  "weg_b": "TRAEGT EIN WENIG, UND NUR BEI FUEHRUNG 1.0. rho_maske 0.299 gegen die richtige, 0.031 gegen die falsche Karte, paarweise 10 von 12. Bei Fuehrung 4.0 — dem Wert, den das Modellblatt nennt — faellt rho auf 0.030 und die Bindung ist weg.",
+  "weg_c": "Fuer eine Geometrietreue, auf der eine Pruefung stehen kann, traegt weder A noch B. Und der Anker traegt es auch nicht: z-image-turbo mit seinem ECHTEN Tiefen-ControlNet erreicht 0.120/0.049 — SCHLECHTER als klein-4b bei Fuehrung 1.0. Was ihr mit dem kleinen Modell verliert, ist auf dieser Messung NICHTS.",
+  "die_zahl_fuer_die_arbeit": "klein-4b Fuehrung 1.0: rho 0.299 richtig / 0.031 falsch. z-image-turbo mit ControlNet: 0.120 / 0.049. Der Abstand ist negativ."
+ },
+ "befunde": [
+  {
+   "nr": "Befund 1",
+   "behauptung": "Eure Sorge aus auf-20260909-92 gilt weiter, und zwar schaerfer.",
+   "urteil": "bestaetigt",
+   "beleg": {
+    "bei_fuehrung_4.0_bestanden_gegen_die_FALSCHE_karte": "12 von 12",
+    "bei_fuehrung_4.0_bestanden_gegen_die_richtige_karte": "12 von 12",
+    "score_steigt_waehrend_rho_faellt": {
+     "fuehrung_1.0": {
+      "score_richtig": 0.775,
+      "rho_richtig": 0.299
+     },
+     "fuehrung_2.5": {
+      "score_richtig": 0.848,
+      "rho_richtig": 0.05
+     },
+     "fuehrung_4.0": {
+      "score_richtig": 0.876,
+      "rho_richtig": 0.03
+     }
+    }
+   },
+   "einordnung": "Das ist der Kernbefund und er ist besser als ein Gegenbeispiel: Hier gibt es einen REGLER, der score und geom_iou hinaufdreht und die Geometrie dabei herausdreht. Von Fuehrung 1.0 auf 4.0 steigt score von 0.775 auf 0.876 und geom_iou von 0.700 auf 0.975 — waehrend rho_maske von 0.299 auf 0.030 faellt, also auf null. Wer nach score optimiert, optimiert die Geometrie WEG. geom_iou gegen die falsche Karte steht dabei stur bei 0.72-0.73: Es misst, wieviel Bild ein Bauwerk fuellt, nicht welches."
+  },
+  {
+   "nr": "Befund 2",
+   "behauptung": "Weg A: Es gibt eine Tiefen-Naht fuer FLUX.2-klein-4B, und sie ist brauchbar lizenziert.",
+   "urteil": "gilt",
+   "beleg": {
+    "kennung": "thedeoxen/refcontrol-FLUX.2-klein-4B-reference-depth-lora",
+    "lizenz": "apache-2.0 (Kopfzeile des Modellblatts)",
+    "basis": "black-forest-labs/FLUX.2-klein-base-4B",
+    "art": "LoRA, keine ControlNet — 88 MB auf der Platte, 0.11 GB zusaetzlicher Speicher gemessen",
+    "gebrauch_laut_blatt": "erstes Bild = Tiefenkarte, zweites Bild = Referenz; Ausloeserwort 'refcontrol'; LoRA-Gewicht 0.8-1.0",
+    "braucht": "peft (Apache-2.0) im venv — ohne es lehnt diffusers das Laden ab"
+   },
+   "einordnung": "Damit ist Weg A nicht leer: Die Naht existiert, sie ist klein, und die Lizenz traegt. Ob sie das kann, was ihr braucht, steht in Befund 3."
+  },
+  {
+   "nr": "Befund 3",
+   "behauptung": "Die LoRA folgt dem REFERENZBILD, nicht der Tiefenkarte.",
+   "urteil": "gilt — und das ist die eigentliche Antwort auf Weg A",
+   "beleg": {
+    "probe": "Zwei Anordnungen mit demselben LoRA-Gewicht 0.8. 'eigen': Referenzbild und Tiefenkarte gehoeren zur selben Szene. 'kreuz': Referenz von der einen, Tiefenkarte von der anderen Szene — dann ziehen die Eingaenge auseinander, und es wird sichtbar, welcher gewinnt. Gemessen wird in beiden Faellen gegen die Szene, deren TIEFENKARTE hereinging.",
+    "eigen": {
+     "n": 6,
+     "rho_richtig_mittel": 0.413,
+     "rho_falsch_mittel": 0.085,
+     "rho_richtig_spanne": [
+      -0.53,
+      0.832
+     ],
+     "paarweise_richtig_groesser": 5,
+     "geom_iou_richtig": 0.995,
+     "geom_iou_falsch": 0.726,
+     "score_richtig": 0.967,
+     "score_falsch": 0.823,
+     "tor_bestanden_richtig": 6,
+     "tor_bestanden_FALSCH": 6,
+     "dauer_s_mittel": 18.7,
+     "vram_gb_spitze": 15.66
+    },
+    "kreuz": {
+     "n": 6,
+     "rho_richtig_mittel": 0.132,
+     "rho_falsch_mittel": 0.121,
+     "rho_richtig_spanne": [
+      -0.195,
+      0.327
+     ],
+     "paarweise_richtig_groesser": 4,
+     "geom_iou_richtig": 0.909,
+     "geom_iou_falsch": 0.798,
+     "score_richtig": 0.903,
+     "score_falsch": 0.851,
+     "tor_bestanden_richtig": 6,
+     "tor_bestanden_FALSCH": 6,
+     "dauer_s_mittel": 18.6,
+     "vram_gb_spitze": 15.66
+    },
+    "und_bei_lora_1.0_kippt_es_ganz": {
+     "n": 6,
+     "rho_richtig_mittel": 0.098,
+     "rho_falsch_mittel": 0.287,
+     "rho_richtig_spanne": [
+      -0.157,
+      0.287
+     ],
+     "paarweise_richtig_groesser": 2,
+     "geom_iou_richtig": 0.906,
+     "geom_iou_falsch": 0.817,
+     "score_richtig": 0.917,
+     "score_falsch": 0.88,
+     "tor_bestanden_richtig": 6,
+     "tor_bestanden_FALSCH": 6,
+     "dauer_s_mittel": 18.6,
+     "vram_gb_spitze": 15.66
+    }
+   },
+   "einordnung": "Stimmen Referenz und Karte ueberein, sieht es hervorragend aus: rho 0.413 gegen 0.085, Tor 6 von 6, geom_iou 0.995. Wer nur DAS misst, meldet Erfolg. Die Kreuzprobe nimmt ihn zurueck: rho 0.132 gegen 0.121, paarweise nur 4 von 6 — die Tiefenkarte setzt sich gegen das Referenzbild nicht durch. Bei LoRA-Gewicht 1.0 gewinnt die FALSCHE Karte sogar deutlich (0.287 gegen 0.098, paarweise 2 von 6), weil das Referenzbild dort die andere Szene war. Die LoRA tut genau, was ihr Blatt verspricht — Identitaet der Referenz halten. Sie tut nicht, was VISBOX braucht — der Geometrie der Karte folgen."
+  },
+  {
+   "nr": "Befund 4",
+   "behauptung": "Weg B kennt gar keinen Staerkeregler. 'Drei Staerken der Bildkonditionierung' ist auf dieser Pipeline nicht ausfuehrbar.",
+   "urteil": "gilt",
+   "beleg": {
+    "aufrufliste_Flux2KleinPipeline.__call__": [
+     "image",
+     "prompt",
+     "height",
+     "width",
+     "num_inference_steps",
+     "sigmas",
+     "guidance_scale",
+     "num_images_per_prompt",
+     "generator",
+     "latents",
+     "prompt_embeds",
+     "negative_prompt_embeds",
+     "output_type",
+     "return_dict",
+     "attention_kwargs",
+     "callback_on_step_end",
+     "callback_on_step_end_tensor_inputs",
+     "max_sequence_length",
+     "text_encoder_out_layers"
+    ],
+    "fehlt": [
+     "strength",
+     "denoise",
+     "controlnet_conditioning_scale",
+     "control_image"
+    ],
+    "euer_eigener_rechenweg_meldet_es_auch": "'controlnet_conditioning_scale' (0.8) kennt diese Pipeline nicht und wurde nicht uebergeben. Der Wert ist wirkungslos — eine Vergleichsreihe darueber wuerde identische Bilder liefern.",
+    "ersatz": "Drei Werte von guidance_scale (1.0 / 2.5 / 4.0) — der einzige Regler, den es gibt."
+   },
+   "einordnung": "Das ist kein Nebensatz, sondern ein Riegel: Die Staerke der Bildkonditionierung ist bei dieser Pipeline nicht einstellbar. Das Bild ist drin oder nicht. Der einzige Hebel ist die Fuehrung — und der dreht nach Befund 1 in die falsche Richtung."
+  },
+  {
+   "nr": "Befund 5",
+   "behauptung": "Der Anker bringt nichts ein: z-image-turbo mit echtem Tiefen-ControlNet ist hier NICHT besser.",
+   "urteil": "gilt",
+   "beleg": {
+    "anker": {
+     "n": 12,
+     "rho_richtig_mittel": 0.12,
+     "rho_falsch_mittel": 0.049,
+     "rho_richtig_spanne": [
+      -0.189,
+      0.398
+     ],
+     "paarweise_richtig_groesser": 9,
+     "geom_iou_richtig": 0.948,
+     "geom_iou_falsch": 0.747,
+     "score_richtig": 0.807,
+     "score_falsch": 0.723,
+     "tor_bestanden_richtig": 10,
+     "tor_bestanden_FALSCH": 9,
+     "dauer_s_mittel": 2.1,
+     "vram_gb_spitze": 22.89
+    },
+    "klein_4b_bester_fall": {
+     "n": 12,
+     "rho_richtig_mittel": 0.299,
+     "rho_falsch_mittel": 0.031,
+     "rho_richtig_spanne": [
+      -0.78,
+      0.918
+     ],
+     "paarweise_richtig_groesser": 10,
+     "geom_iou_richtig": 0.7,
+     "geom_iou_falsch": 0.638,
+     "score_richtig": 0.775,
+     "score_falsch": 0.74,
+     "tor_bestanden_richtig": 10,
+     "tor_bestanden_FALSCH": 10,
+     "dauer_s_mittel": 5.9,
+     "vram_gb_spitze": 15.54
+    },
+    "gleicher_satz": "dieselben zwei Szenen, beide Polaritaeten, Startwerte 0/1/2"
+   },
+   "einordnung": "Der Anker sollte sagen, was ihr mit dem kleinen Modell VERLIERT. Gemessen verliert ihr nichts: 0.120/0.049 beim grossen Modell gegen 0.299/0.031 beim kleinen. Zwei Lesarten, und beide gehoeren in die Arbeit: Entweder bindet auch das ControlNet die Geometrie bei 8 Schritten kaum — oder rho_maske ist bei n=12 zu unruhig, um zwei Modelle zu trennen (Spanne -0.78 bis +0.92 innerhalb EINER Reihe). Was die Messung sicher sagt: Sie kann den behaupteten Vorsprung des grossen Modells nicht zeigen."
+  },
+  {
+   "nr": "Befund 6",
+   "behauptung": "Die 9,6 GB im Auftrag stimmen nicht. Der Textgeber ist die versteckte Haelfte.",
+   "urteil": "gilt",
+   "beleg": {
+    "flux2_klein_4b_platte_gesamt_gb": 23,
+    "davon_doppelt": "7.22 GB Einzeldatei 'flux-2-klein-base-4b.safetensors' NEBEN dem transformer-Ordner — loeschbar",
+    "was_wirklich_geladen_wird_gb": {
+     "transformer": 7.22,
+     "text_encoder_qwen3": 7.5,
+     "vae": 0.16
+    },
+    "gemessene_spitze_im_speicher_gb": 15.55,
+    "z_image_turbo_platte_gb": 31,
+    "z_image_controlnet_platte_gb": 2.9,
+    "z_image_gemessene_spitze_im_speicher_gb": 22.89
+   },
+   "einordnung": "Die Lage auf der Zielhardware sieht damit anders aus als im Auftrag. klein-4b braucht 15,55 GB, nicht 9,6 — der Qwen3-Textgeber ist so gross wie der Transformer selbst. z-image-turbo braucht 22,89 GB, nicht 34 — weil Basis und ControlNet 67 Parameter teilen. Auf einem M1 Max mit 32 GB Gesamtspeicher ist klein-4b bequem, z-image-turbo knapp aber nicht ausgeschlossen. Wer die Grenze zieht, sollte sie an diesen zwei Zahlen ziehen."
+  },
+  {
+   "nr": "Befund 7",
+   "behauptung": "Euer Rechenweg kommt an z-image-turbo nicht heran — und er sagt vorher, warum.",
+   "urteil": "gilt",
+   "beleg": {
+    "geraeteweg": "cuda+auslagerung",
+    "warnung_aus_eurem_code": "NICHT DURCHGEGRIFFEN: 2 von 67 Parametern sind weiter geteilt, obwohl 5 Untermodule kopiert wurden. Das Auslagern wird voraussichtlich scheitern.",
+    "danach": "RuntimeError: Expected all tensors to be on the same device, but got mat1 is on cuda:0, different from other tensors on cpu",
+    "zwoelf_von_zwoelf": "alle zwoelf Auftraege des Ankers scheiterten so",
+    "warum_das_auslagern_ueberhaupt_begann": "_lege_auf_geraet rechnet mit der PLATTENGROESSE (31 GB + Zuschlag 1.25) und kennt die geteilten Parameter nicht. Am Stueck geladen belegt dasselbe Modell 22,19 GB und die Spitze liegt bei 22,89 GB — es haette nie ausgelagert werden muessen."
+   },
+   "einordnung": "Zwei Posten, beide ohne Umbau von uns gemeldet, wie verlangt. Der Anker in diesem Ergebnis wurde daneben gemessen, mit derselben Pipeline, aber am Stueck auf der Karte."
+  }
+ ],
+ "was_gebaut_werden_muesste": [
+  {
+   "naht": "LoRA laden",
+   "warum": "Ohne sie ist Weg A im Produktpfad nicht fahrbar. Braucht peft (Apache-2.0)."
+  },
+  {
+   "naht": "ZWEI Bilder uebergeben",
+   "warum": "Flux2KleinPipeline nimmt image als LISTE. Die RefControl-Familie braucht Karte UND Referenz. Heute reicht der Adapter genau ein Bild durch."
+  },
+  {
+   "naht": "Geraeteentscheid an gemessenem statt geschaetztem Speicher",
+   "warum": "Befund 7: 31 GB auf der Platte, 22,89 GB im Speicher. Der Entscheid faellt am falschen Mass."
+  },
+  {
+   "naht": "fuehrung darf nicht None sein",
+   "warum": "pipeline_flux2_klein.py:585 rechnet 'guidance_scale > 1.0' — mit None gibt das TypeError, bevor irgendetwas laeuft."
+  },
+  {
+   "naht": "backbone.py modell_id",
+   "warum": "'black-forest-labs/FLUX.2-klein' antwortet 401; die Gewichte liegen unter '...-base-4B'. Ihr wusstet es, es steht der Vollstaendigkeit halber hier."
+  }
+ ],
+ "eigene_fehler": [
+  {
+   "fehler": "Die erste Messreihe war gar keine Messung.",
+   "was_passierte": "In allen Spalten stand None, und das sah aus wie 'Wert null'. In Wahrheit hatte der Tiefenschaetzer nie geladen: AIIMAGING_MODELLE zeigte auf ein Verzeichnis ohne 'depth-anything-v2-small', und qa_gegen_soll lieferte pflichtgemaess status='fehler'. Euer fail-closed hat funktioniert — MEINE Ausgabe hat gelogen, weil sie den Status nicht las.",
+   "folge": "Das Messskript prueft jetzt jeden einzelnen Status und meldet 'NICHT GEMESSEN' statt einer Zahl."
+  },
+  {
+   "fehler": "Die zweite Messreihe lief unter Einstellungen, die das Modellblatt ausschliesst.",
+   "was_passierte": "Gemessen wurde mit 8 Schritten und Fuehrung 1.0 — den Werten eines DESTILLIERTEN Modells. FLUX.2-klein-base-4B ist undestilliert; sein Blatt sagt '~50 inference steps, guidance_scale ~4.0'. Die Reihe steht unten unter 'verworfen_...' zum Vergleich, ist aber kein Beleg.",
+   "folge": "Alle berichteten Reihen laufen mit 50 Schritten."
+  }
+ ],
+ "messwerte": {
+  "wegB_fuehrung_1.0": {
+   "n": 12,
+   "rho_richtig_mittel": 0.299,
+   "rho_falsch_mittel": 0.031,
+   "rho_richtig_spanne": [
+    -0.78,
+    0.918
+   ],
+   "paarweise_richtig_groesser": 10,
+   "geom_iou_richtig": 0.7,
+   "geom_iou_falsch": 0.638,
+   "score_richtig": 0.775,
+   "score_falsch": 0.74,
+   "tor_bestanden_richtig": 10,
+   "tor_bestanden_FALSCH": 10,
+   "dauer_s_mittel": 5.9,
+   "vram_gb_spitze": 15.54
+  },
+  "wegB_fuehrung_2.5": {
+   "n": 12,
+   "rho_richtig_mittel": 0.05,
+   "rho_falsch_mittel": 0.008,
+   "rho_richtig_spanne": [
+    -0.324,
+    0.287
+   ],
+   "paarweise_richtig_groesser": 9,
+   "geom_iou_richtig": 0.925,
+   "geom_iou_falsch": 0.712,
+   "score_richtig": 0.848,
+   "score_falsch": 0.765,
+   "tor_bestanden_richtig": 12,
+   "tor_bestanden_FALSCH": 11,
+   "dauer_s_mittel": 11.7,
+   "vram_gb_spitze": 15.55
+  },
+  "wegB_fuehrung_4.0": {
+   "n": 12,
+   "rho_richtig_mittel": 0.03,
+   "rho_falsch_mittel": 0.01,
+   "rho_richtig_spanne": [
+    -0.323,
+    0.153
+   ],
+   "paarweise_richtig_groesser": 8,
+   "geom_iou_richtig": 0.975,
+   "geom_iou_falsch": 0.724,
+   "score_richtig": 0.876,
+   "score_falsch": 0.778,
+   "tor_bestanden_richtig": 12,
+   "tor_bestanden_FALSCH": 12,
+   "dauer_s_mittel": 11.7,
+   "vram_gb_spitze": 15.55
+  },
+  "wegA_lora_0.4_referenz_andere_szene": {
+   "n": 6,
+   "rho_richtig_mittel": 0.004,
+   "rho_falsch_mittel": -0.005,
+   "rho_richtig_spanne": [
+    -0.324,
+    0.33
+   ],
+   "paarweise_richtig_groesser": 4,
+   "geom_iou_richtig": 0.91,
+   "geom_iou_falsch": 0.794,
+   "score_richtig": 0.913,
+   "score_falsch": 0.862,
+   "tor_bestanden_richtig": 6,
+   "tor_bestanden_FALSCH": 6,
+   "dauer_s_mittel": 18.7,
+   "vram_gb_spitze": 15.66
+  },
+  "wegA_lora_0.8_referenz_andere_szene": {
+   "n": 6,
+   "rho_richtig_mittel": 0.132,
+   "rho_falsch_mittel": 0.121,
+   "rho_richtig_spanne": [
+    -0.195,
+    0.327
+   ],
+   "paarweise_richtig_groesser": 4,
+   "geom_iou_richtig": 0.909,
+   "geom_iou_falsch": 0.798,
+   "score_richtig": 0.903,
+   "score_falsch": 0.851,
+   "tor_bestanden_richtig": 6,
+   "tor_bestanden_FALSCH": 6,
+   "dauer_s_mittel": 18.6,
+   "vram_gb_spitze": 15.66
+  },
+  "wegA_lora_1.0_referenz_andere_szene": {
+   "n": 6,
+   "rho_richtig_mittel": 0.098,
+   "rho_falsch_mittel": 0.287,
+   "rho_richtig_spanne": [
+    -0.157,
+    0.287
+   ],
+   "paarweise_richtig_groesser": 2,
+   "geom_iou_richtig": 0.906,
+   "geom_iou_falsch": 0.817,
+   "score_richtig": 0.917,
+   "score_falsch": 0.88,
+   "tor_bestanden_richtig": 6,
+   "tor_bestanden_FALSCH": 6,
+   "dauer_s_mittel": 18.6,
+   "vram_gb_spitze": 15.66
+  },
+  "wegA2_lora_0.8_referenz_eigen_karte_eigen": {
+   "n": 6,
+   "rho_richtig_mittel": 0.413,
+   "rho_falsch_mittel": 0.085,
+   "rho_richtig_spanne": [
+    -0.53,
+    0.832
+   ],
+   "paarweise_richtig_groesser": 5,
+   "geom_iou_richtig": 0.995,
+   "geom_iou_falsch": 0.726,
+   "score_richtig": 0.967,
+   "score_falsch": 0.823,
+   "tor_bestanden_richtig": 6,
+   "tor_bestanden_FALSCH": 6,
+   "dauer_s_mittel": 18.7,
+   "vram_gb_spitze": 15.66
+  },
+  "wegA2_lora_0.8_referenz_eigen_karte_kreuz": {
+   "n": 6,
+   "rho_richtig_mittel": 0.132,
+   "rho_falsch_mittel": 0.121,
+   "rho_richtig_spanne": [
+    -0.195,
+    0.327
+   ],
+   "paarweise_richtig_groesser": 4,
+   "geom_iou_richtig": 0.909,
+   "geom_iou_falsch": 0.798,
+   "score_richtig": 0.903,
+   "score_falsch": 0.851,
+   "tor_bestanden_richtig": 6,
+   "tor_bestanden_FALSCH": 6,
+   "dauer_s_mittel": 18.6,
+   "vram_gb_spitze": 15.66
+  },
+  "anker_z_image_turbo_controlnet_0.8": {
+   "n": 12,
+   "rho_richtig_mittel": 0.12,
+   "rho_falsch_mittel": 0.049,
+   "rho_richtig_spanne": [
+    -0.189,
+    0.398
+   ],
+   "paarweise_richtig_groesser": 9,
+   "geom_iou_richtig": 0.948,
+   "geom_iou_falsch": 0.747,
+   "score_richtig": 0.807,
+   "score_falsch": 0.723,
+   "tor_bestanden_richtig": 10,
+   "tor_bestanden_FALSCH": 9,
+   "dauer_s_mittel": 2.1,
+   "vram_gb_spitze": 22.89
+  },
+  "verworfen_wegB_8schritte_fuehrung_1.0": {
+   "n": 12,
+   "rho_richtig_mittel": 0.28,
+   "rho_falsch_mittel": 0.108,
+   "rho_richtig_spanne": [
+    -0.24,
+    0.933
+   ],
+   "paarweise_richtig_groesser": 8,
+   "geom_iou_richtig": 0.741,
+   "geom_iou_falsch": 0.648,
+   "score_richtig": 0.793,
+   "score_falsch": 0.751,
+   "tor_bestanden_richtig": 10,
+   "tor_bestanden_FALSCH": 11,
+   "dauer_s_mittel": 1.1,
+   "vram_gb_spitze": 15.54
+  }
+ },
+ "umgebung": {
+  "karte": "RTX 5090, 31,36 GiB, Leistungsdeckel 400 W",
+  "leerlauf_vor_jedem_lauf": "14-16 W, 886-970 MiB — beide Auflagen eingehalten",
+  "diffusers": "0.39.0",
+  "peft": "0.21.0 (nachgeruestet, Apache-2.0, --no-deps)",
+  "szenen": "dieselben zwei wie auf-20260909-92, beide neu bei 512x512; Bauwerksmaske 19.8 % und 21.2 %",
+  "bilder_gesamt": 78,
+  "keine_non_commercial_gewichte_geladen": true
+ },
+ "fragen_zurueck": [
+  "Soll rho_maske zum TOR werden? Es ist das einzige Mass in dieser Reihe, das richtig und falsch ueberhaupt trennt — aber seine Spanne innerhalb EINER Reihe geht von -0.78 bis +0.92. Als Tor bei n=1 waere es Zufall; als Mittel ueber drei Startwerte koennte es tragen. Das ist eine Entscheidung ueber die Betriebsform der Pruefung, nicht ueber eine Zahl.",
+  "Soll score/geom_iou weiterhin ANGEZEIGT werden? Nach Befund 1 steigen beide, waehrend die Geometrie verschwindet. Ein Mensch, der sie liest, wird in die Irre gefuehrt — derselbe Grund, aus dem ihr R2 am 24.08. herausgenommen habt.",
+  "Zielhardware oder Vorgabemodell? Nach Befund 6 sind es 15,55 GB gegen 22,89 GB, nicht 9,6 gegen 34. Damit ist z-image-turbo auf einem 32-GB-M1-Max nicht mehr ausgeschlossen — und nach Befund 5 auch nicht besser."
+ ],
+ "fehler": null
+}

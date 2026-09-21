@@ -1,0 +1,70 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260909-97",
+ "status": "ok",
+ "beendet": "2026-09-21T11:00:00Z",
+ "stand": "889296e",
+ "geprueft": "An derselben 4771-Knoten-Bestandsdatei wie auf-20260826-51 und auf-20260907-82 — die Knotenzahl ist auf den Knoten genau dieselbe (4771), damit die Zahlen vergleichbar sind. Keine Knotennamen mit Projekt- oder Kundenbezug in dieser Rueckgabe: genannt werden die FAMILIENnamen (die ersten zwei Segmente), nicht die Einzelknoten mit ihren Kennungen.",
+ "kurzantwort": {
+  "familienregel_wirkt": true,
+  "aber": "Mehr als die Haelfte des Gewinns stammt aus vier Knoten, die KEIN Gelaende sind — Textbeschriftungen. Die Regel verbessert die Zahl zum Teil aus dem falschen Grund.",
+  "schrumpfung": {
+   "namensregel": "2.32 %",
+   "familienregel": "9.42 %",
+   "familienregel_ohne_die_vier_textknoten": "3.99 %"
+  }
+ },
+ "rueckgabe": {
+  "V1": {
+   "als_familie_False": {
+    "gelaende": 1,
+    "unklar": 0,
+    "bauwerk": 4770,
+    "urteile": 4771
+   },
+   "als_familie_True": {
+    "gelaende": 25,
+    "unklar": 0,
+    "bauwerk": 4746,
+    "urteile": 4771
+   },
+   "einordnung": "Eure Korngroessen-Diagnose trifft zu: aus EINEM Gelaendeknoten werden 25. Die 20 Sub-Division-Stuecke, die einzeln alle am Grundrissanteil scheiterten, werden als Familie erkannt — genau wie vorhergesagt."
+  },
+  "V2": {
+   "schrumpfung_namensregel": 0.023201149398744514,
+   "schrumpfung_familienregel": 0.094195,
+   "schrumpfung_familienregel_ohne_textknoten": 0.039924,
+   "schrumpfung_nur_toposolid": 0.0,
+   "einordnung": "2.32 % -> 9.42 %. Das ist ein Vierfaches, und es ist trotzdem weit von den -34.5 % entfernt, die bei richtiger Erkennung zu erwarten waeren.\n\nUND DIE ZAHL IST ZUM TEIL FALSCH VERDIENT: Nimmt man die vier Textknoten heraus (s. V3), bleiben 3.99 %. Der ECHTE Gewinn der Familienregel — die 20 Sub-Division-Stuecke — betraegt also 2.32 auf 3.99 Prozentpunkte, nicht 2.32 auf 9.42. Die groessere Haelfte des Sprungs stammt von Knoten, die kein Gelaende sind."
+  },
+  "V3": {
+   "neu_als_gelaende": 24,
+   "familien": [
+    {
+     "familienname": "IfcCovering_Sub-Division",
+     "knoten": 20,
+     "urteil": "RICHTIG — das ist die Familie, die ihr gesucht habt"
+    },
+    {
+     "familienname": "IfcSite_Model_Text",
+     "knoten": 4,
+     "auspraegungen": [
+      "125mm_Arial",
+      "140mm_Arial",
+      "400mm_Arial",
+      "600mm_Arial"
+     ],
+     "urteil": "FALSCH — das sind Textbeschriftungen im Modell, kein Gelaende"
+    }
+   ],
+   "einordnung": "Ihr habt gefragt, ob Knoten zu Gelaende werden, die keines sind. Ja, vier: die Model-Text-Familie. Ihre Auspraegungen nennen Schriftgroesse und Schriftart (125, 140, 400, 600 mm Arial) — das sind Beschriftungen, die flach auf dem Gelaende liegen. Sie erfuellen die drei Merkmale deshalb voellig zu Recht: Sie SIND flach, sie liegen tief, und als Familie fuellen sie viel Grundriss. Die Merkmale sind nicht falsch — sie koennen eine Beschriftung nicht von dem unterscheiden, worauf sie liegt.\n\nOB DAS SCHLIMM IST, haengt an eurer Absicht. Als MASKENregel ist es sogar nuetzlich: Eine Beschriftung gehoert nicht in die Bauwerksbox. Als GELAENDE-Aussage ist es falsch. Wir koennen das von hier aus nicht fuer euch entscheiden; wir sagen nur, dass die Zahl in V2 beides enthaelt."
+  },
+  "V4": {
+   "eure_erwartung": "Eine bessere Gelaendeerkennung sollte die 2.32 % NICHT verbessern.",
+   "gemessen": "Sie verbessert sie — und ihr habt trotzdem recht gehabt.",
+   "einordnung": "Euer Satz aus auf-82 lautete, die Textbeschriftung trage die 2.32 % allein. Genau das bestaetigt sich: `nur Toposolid` ergibt 0.00 % Schrumpfung — der eine Toposolid-Knoten traegt nichts bei. Die 2.32 % kommen ausschliesslich aus der Textbeschriftung, die die heutige Namensregel bereits trennt.\n\nDass die Familienregel die Zahl trotzdem hebt, liegt daran, dass sie VIER WEITERE Textknoten mitnimmt (V3) — also mehr von derselben Sache, nicht mehr Gelaende. Eure Erwartung war richtig; sie wird nur von einem Nebeneffekt durchkreuzt, den ihr nicht vorhersehen konntet."
+  },
+  "V5": "Die Zeile, die ihr nicht erfragt habt: DIE FAMILIENREGEL LOEST DAS PROBLEM DIESER DATEI NICHT.\n\nSie tut genau, was sie soll — die 20 Sub-Division-Stuecke werden erkannt. Aber die Schrumpfung steigt dadurch nur von 2.32 auf 3.99 Prozent, und ihr rechnet bei richtiger Trennung mit rund -34.5 %. Der Abstand ist so gross, dass die Sub-Division-Familie nicht der dominante Fall sein KANN — dieser Bestand hat noch etwas anderes, das die Bauwerksbox aufspannt.\n\nWir haben nicht gesucht, was es ist; das war nicht bestellt, und eine halbe Suche waere schlechter als keine. Aber die Richtung, in die wir schauen wuerden: Die Datei ist ein GEOREFERENZIERTER Bestand. Wenn irgendwo ein Knoten mit den echten Landeskoordinaten steht, spannt EIN solcher Knoten die Box ueber Kilometer auf, und dann sind alle Gelaende-Feinheiten Nachkommastellen. Das ist eine Vermutung, ausdruecklich als solche benannt und nicht gemessen.\n\nEine Bitte fuer den naechsten Auftrag dieser Art: Gebt uns den GROESSTEN verbleibenden Bauwerksknoten samt seiner Kantenlaenge mit heraus (`glbbox.bauwerksbox` kennt ihn bereits, es ist die Meldung, die ihr in auf-51 selbst als den richtigen Hebel bezeichnet habt). Dann beantwortet die Messung diese Frage nebenbei mit, statt sie zu eroeffnen."
+ },
+ "fehler": null
+}

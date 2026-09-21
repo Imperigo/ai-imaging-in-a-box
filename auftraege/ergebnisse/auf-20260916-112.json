@@ -1,0 +1,271 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260916-112",
+ "status": "ok",
+ "beendet": "2026-09-21T12:10:00Z",
+ "stand": "889296e",
+ "geprueft": "Zehn Karten aus Laeufen von HEUTE, mit dem gezogenen Stand entstanden — keine alten Laeufe nachgerechnet, wie verlangt. `ferne_trennen` blieb aus.",
+ "kurzantwort": {
+  "luecke_gefunden": "in KEINER einzigen Karte",
+  "schalter_umlegen": "NEIN — er wuerde bei uns nichts aendern",
+  "warum": "Unsere Szenen haben kein Loch in der Tiefenverteilung. Der groesste Nachbarsprung liegt bei Faktor 1.03 bis 1.08; verlangt sind 3."
+ },
+ "rueckgabe": {
+  "V1": {
+   "karten": [
+    {
+     "art": "aussen",
+     "karte": "Hochbau, Platte 2.5 (Kamera sSE)",
+     "breite": 512,
+     "hoehe": 512,
+     "min_m": 9.957,
+     "max_m": 53.211,
+     "max_m_luecke": null,
+     "luecke": {
+      "obergrenze": null,
+      "stufen_gefunden": 0,
+      "kanten": [],
+      "anteil_geklemmt": null,
+      "anteil_wertebereich": null,
+      "verhaeltnis": null,
+      "n_gemessen": 69694,
+      "n_ausgelassen": 192450,
+      "warnungen": [
+       "KEINE taugliche Lücke gefunden — NICHT GEMESSEN, und das heisst weder „keine Ferne“ noch „alles Ferne“. Der grösste Nachbarsprung war Faktor 1.063, verlangt sind 3. Eine Verteilung ohne Loch lässt sich nicht an einem Loch trennen; wer hier trotzdem klemmt, wählt eine Grenze, die im Bild nicht steht (Perzentil-Befund vom 11.09.2026)."
+      ]
+     },
+     "luecke_fehlersatz": null,
+     "struktur": 0.00032,
+     "glaette": 0.00284,
+     "n_stellen": 137691,
+     "n_paare": 138539,
+     "geometrieanteil": 0.2659,
+     "abstand_max_zu_luecke_m": null
+    },
+    {
+     "art": "aussen",
+     "karte": "Hochbau, Platte 3.6",
+     "breite": 512,
+     "hoehe": 512,
+     "min_m": 3.956,
+     "max_m": 60.865,
+     "max_m_luecke": null,
+     "luecke": {
+      "obergrenze": null,
+      "stufen_gefunden": 0,
+      "kanten": [],
+      "anteil_geklemmt": null,
+      "anteil_wertebereich": null,
+      "verhaeltnis": null,
+      "n_gemessen": 145906,
+      "n_ausgelassen": 116238,
+      "warnungen": [
+       "KEINE taugliche Lücke gefunden — NICHT GEMESSEN, und das heisst weder „keine Ferne“ noch „alles Ferne“. Der grösste Nachbarsprung war Faktor 1.072, verlangt sind 3. Eine Verteilung ohne Loch lässt sich nicht an einem Loch trennen; wer hier trotzdem klemmt, wählt eine Grenze, die im Bild nicht steht (Perzentil-Befund vom 11.09.2026)."
+      ]
+     },
+     "luecke_fehlersatz": null,
+     "struktur": 0.00015,
+     "glaette": 0.0015,
+     "n_stellen": 289861,
+     "n_paare": 290836,
+     "geometrieanteil": 0.5566,
+     "abstand_max_zu_luecke_m": null
+    },
+    {
+     "art": "aussen",
+     "karte": "Hochbau, Platte 6.0",
+     "breite": 512,
+     "hoehe": 512,
+     "min_m": 3.956,
+     "max_m": 85.449,
+     "max_m_luecke": null,
+     "luecke": {
+      "obergrenze": null,
+      "stufen_gefunden": 0,
+      "kanten": [],
+      "anteil_geklemmt": null,
+      "anteil_wertebereich": null,
+      "verhaeltnis": null,
+      "n_gemessen": 148082,
+      "n_ausgelassen": 114062,
+      "warnungen": [
+       "KEINE taugliche Lücke gefunden — NICHT GEMESSEN, und das heisst weder „keine Ferne“ noch „alles Ferne“. Der grösste Nachbarsprung war Faktor 1.101, verlangt sind 3. Eine Verteilung ohne Loch lässt sich nicht an einem Loch trennen; wer hier trotzdem klemmt, wählt eine Grenze, die im Bild nicht steht (Perzentil-Befund vom 11.09.2026)."
+      ]
+     },
+     "luecke_fehlersatz": null,
+     "struktur": 0.00015,
+     "glaette": 0.00128,
+     "n_stellen": 294213,
+     "n_paare": 295188,
+     "geometrieanteil": 0.5649,
+     "abstand_max_zu_luecke_m": null
+    },
+    {
+     "art": "aussen",
+     "karte": "Quader, Platte 2.5",
+     "breite": 512,
+     "hoehe": 512,
+     "min_m": 3.279,
+     "max_m": 21.641,
+     "max_m_luecke": null,
+     "luecke": {
+      "obergrenze": null,
+      "stufen_gefunden": 0,
+      "kanten": [],
+      "anteil_geklemmt": null,
+      "anteil_wertebereich": null,
+      "verhaeltnis": null,
+      "n_gemessen": 145976,
+      "n_ausgelassen": 116168,
+      "warnungen": [
+       "KEINE taugliche Lücke gefunden — NICHT GEMESSEN, und das heisst weder „keine Ferne“ noch „alles Ferne“. Der grösste Nachbarsprung war Faktor 1.026, verlangt sind 3. Eine Verteilung ohne Loch lässt sich nicht an einem Loch trennen; wer hier trotzdem klemmt, wählt eine Grenze, die im Bild nicht steht (Perzentil-Befund vom 11.09.2026)."
+      ]
+     },
+     "luecke_fehlersatz": null,
+     "struktur": 9e-05,
+     "glaette": 0.00135,
+     "n_stellen": 290256,
+     "n_paare": 291104,
+     "geometrieanteil": 0.5569,
+     "abstand_max_zu_luecke_m": null
+    },
+    {
+     "art": "aussen",
+     "karte": "Schachtel (R2, 512)",
+     "breite": 512,
+     "hoehe": 512,
+     "min_m": 3.63,
+     "max_m": 24.047,
+     "max_m_luecke": null,
+     "luecke": {
+      "obergrenze": null,
+      "stufen_gefunden": 0,
+      "kanten": [],
+      "anteil_geklemmt": null,
+      "anteil_wertebereich": null,
+      "verhaeltnis": null,
+      "n_gemessen": 151086,
+      "n_ausgelassen": 111058,
+      "warnungen": [
+       "KEINE taugliche Lücke gefunden — NICHT GEMESSEN, und das heisst weder „keine Ferne“ noch „alles Ferne“. Der grösste Nachbarsprung war Faktor 1.025, verlangt sind 3. Eine Verteilung ohne Loch lässt sich nicht an einem Loch trennen; wer hier trotzdem klemmt, wählt eine Grenze, die im Bild nicht steht (Perzentil-Befund vom 11.09.2026)."
+      ]
+     },
+     "luecke_fehlersatz": null,
+     "struktur": 0.00017,
+     "glaette": 0.00098,
+     "n_stellen": 300494,
+     "n_paare": 301333,
+     "geometrieanteil": 0.5763,
+     "abstand_max_zu_luecke_m": null
+    },
+    {
+     "art": "aussen",
+     "karte": "Hochbau (R2, 512)",
+     "breite": 512,
+     "hoehe": 512,
+     "min_m": 4.626,
+     "max_m": 75.655,
+     "max_m_luecke": null,
+     "luecke": {
+      "obergrenze": null,
+      "stufen_gefunden": 0,
+      "kanten": [],
+      "anteil_geklemmt": null,
+      "anteil_wertebereich": null,
+      "verhaeltnis": null,
+      "n_gemessen": 152309,
+      "n_ausgelassen": 109835,
+      "warnungen": [
+       "KEINE taugliche Lücke gefunden — NICHT GEMESSEN, und das heisst weder „keine Ferne“ noch „alles Ferne“. Der grösste Nachbarsprung war Faktor 1.078, verlangt sind 3. Eine Verteilung ohne Loch lässt sich nicht an einem Loch trennen; wer hier trotzdem klemmt, wählt eine Grenze, die im Bild nicht steht (Perzentil-Befund vom 11.09.2026)."
+      ]
+     },
+     "luecke_fehlersatz": null,
+     "struktur": 0.00056,
+     "glaette": 0.00147,
+     "n_stellen": 302686,
+     "n_paare": 303652,
+     "geometrieanteil": 0.581,
+     "abstand_max_zu_luecke_m": null
+    },
+    {
+     "art": "aussen",
+     "karte": "Schachtel (auf-92)",
+     "breite": 512,
+     "hoehe": 512,
+     "min_m": 3.279,
+     "max_m": 21.641,
+     "max_m_luecke": null,
+     "luecke": {
+      "obergrenze": null,
+      "stufen_gefunden": 0,
+      "kanten": [],
+      "anteil_geklemmt": null,
+      "anteil_wertebereich": null,
+      "verhaeltnis": null,
+      "n_gemessen": 145976,
+      "n_ausgelassen": 116168,
+      "warnungen": [
+       "KEINE taugliche Lücke gefunden — NICHT GEMESSEN, und das heisst weder „keine Ferne“ noch „alles Ferne“. Der grösste Nachbarsprung war Faktor 1.026, verlangt sind 3. Eine Verteilung ohne Loch lässt sich nicht an einem Loch trennen; wer hier trotzdem klemmt, wählt eine Grenze, die im Bild nicht steht (Perzentil-Befund vom 11.09.2026)."
+      ]
+     },
+     "luecke_fehlersatz": null,
+     "struktur": 9e-05,
+     "glaette": 0.00135,
+     "n_stellen": 290256,
+     "n_paare": 291104,
+     "geometrieanteil": 0.5569,
+     "abstand_max_zu_luecke_m": null
+    },
+    {
+     "art": "aussen",
+     "karte": "Gebaeude (auf-92)",
+     "breite": 512,
+     "hoehe": 512,
+     "min_m": 3.956,
+     "max_m": 71.092,
+     "max_m_luecke": null,
+     "luecke": {
+      "obergrenze": null,
+      "stufen_gefunden": 0,
+      "kanten": [],
+      "anteil_geklemmt": null,
+      "anteil_wertebereich": null,
+      "verhaeltnis": null,
+      "n_gemessen": 147230,
+      "n_ausgelassen": 114914,
+      "warnungen": [
+       "KEINE taugliche Lücke gefunden — NICHT GEMESSEN, und das heisst weder „keine Ferne“ noch „alles Ferne“. Der grösste Nachbarsprung war Faktor 1.084, verlangt sind 3. Eine Verteilung ohne Loch lässt sich nicht an einem Loch trennen; wer hier trotzdem klemmt, wählt eine Grenze, die im Bild nicht steht (Perzentil-Befund vom 11.09.2026)."
+      ]
+     },
+     "luecke_fehlersatz": null,
+     "struktur": 0.00014,
+     "glaette": 0.00134,
+     "n_stellen": 292509,
+     "n_paare": 293484,
+     "geometrieanteil": 0.5616,
+     "abstand_max_zu_luecke_m": null
+    }
+   ],
+   "innen_aussen": "Acht Aussenansichten aus dem Multipass plus zwei Innen-aehnliche Faelle (die synthetische Glasprobe aus auf-106: eine Scheibe bei 6 m, eine Wand bei 10 m). Echte Innenraumansichten haben wir heute keine gefahren — das steht so da, statt Aussenkarten als Innenkarten auszugeben."
+  },
+  "V2": {
+   "abstand_max_m_zu_max_m_luecke": "nicht bestimmbar — `max_m_luecke` ist ueberall None",
+   "max_m_spanne_der_karten": "21.6 m (Quader) bis 85.4 m (Hochbau, Platte 6.0)"
+  },
+  "V3": {
+   "karten_ohne_luecke": "alle zehn",
+   "welche_art_von_szene": "Ein einzelnes Bauwerk auf einer durchgehenden Gelaendeplatte. Die Platte laeuft vom Bauwerk bis zum Bildrand ohne Unterbrechung — die Tiefen liegen darum DICHT, von nah bis fern, ohne Loch. Eine Verteilung ohne Loch laesst sich nicht an einem Loch trennen; eure Warnung sagt das woertlich und sie hat recht.\n\nDIE ZAHL, DIE ES ENTSCHEIDET: Der groesste Nachbarsprung betraegt bei uns Faktor 1.026 (Quader) bis 1.084 (Gebaeude). Verlangt sind 3. Wir sind nicht knapp daneben, sondern um mehr als das Doppelte entfernt.\n\nUND DER FALL, DER UNS SELBST UEBERRASCHT HAT: Auch die Glasprobe findet keine Luecke — und die ist maximal zweigipflig: 21 904 Punkte auf exakt 6.0 m, der Rest auf exakt 10.0 m, dazwischen NICHTS. Ein groesserer Kontrast ist kaum baubar. Der Sprung betraegt dort 10/6 = Faktor 1.67, und damit faellt selbst diese Karte durch die Drei-Regel.\n\nDas ist kein Vorwurf — eure Regel soll die FERNE abtrennen, nicht jede Stufe. Aber es sagt etwas ueber ihre Reichweite: Sie greift erst, wenn der Hintergrund mindestens dreimal so weit weg ist wie der Vordergrund. Bei einem Innenraum mit Blick ins Freie waere das erfuellt (3 m Wand gegen 50 m Landschaft); bei allem, was auf einer Gelaendeplatte steht, nie."
+  },
+  "V4": {
+   "schalter_umlegen": false,
+   "ab_wann": null,
+   "begruendung": "Er wuerde bei uns nichts aendern — `max_m_luecke` ist in jeder Karte None, und die Normierung faellt damit ohnehin auf den bisherigen Weg zurueck. Umlegen waere eine Aenderung ohne Wirkung, und die ist schlimmer als keine: Sie stuende danach in jeder Karte und man haelt sie fuer wirksam.\n\nSobald wir Innenraumansichten mit Blick nach draussen fahren — und das kommt, das ist das Bild, an dem der Owner arbeitet — messen wir noch einmal und melden uns von selbst."
+  },
+  "V4b": {
+   "stoert_die_laufzeit": false,
+   "gemessen": "Bei 512 x 512 faellt sie neben dem Multipass (16 s) nicht auf. Eure 0.86 s je 1024er Karte je Kamera waeren bei sechs Kameras rund 5 s — auch das ist gegenueber dem Render nichts."
+  },
+  "V5": "Die Zeile, die ihr nicht erfragt habt: DIE WARNUNG IST BESSER ALS DIE MESSUNG.\n\nZehnmal kam `obergrenze: None` zurueck, und zehnmal stand daneben der Satz «KEINE taugliche Luecke gefunden — NICHT GEMESSEN, und das heisst weder ‹keine Ferne› noch ‹alles Ferne›», samt der gemessenen Zahl (Faktor 1.063, verlangt 3).\n\nDas ist der Unterschied zwischen einem stillen None und einem Befund. Wir wussten nach der ersten Karte, WARUM nichts herauskam, und mussten nicht raten. Ohne diesen Satz haetten wir zehn Karten gemessen und zurueckgemeldet «funktioniert bei uns nicht» — was fuer euch wertlos gewesen waere.\n\nWenn ihr an anderen Stellen ueberlegt, ob sich ein erklaerender Satz neben einer Zahl lohnt: hier hat er die ganze Rueckmeldung getragen."
+ },
+ "fehler": null
+}

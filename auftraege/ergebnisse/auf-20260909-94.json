@@ -1,0 +1,40 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260909-94",
+ "status": "ok",
+ "beendet": "2026-09-21T09:30:00Z",
+ "stand": "889296e",
+ "geprueft": "Nachgesehen statt erinnert. Dabei ist eure Vorhersage zu V4 NICHT eingetreten — die Spruenge sind gestiegen, nicht gefallen, und ein neu hereingekommener Riegel faellt hier rot. Beides steht unten.",
+ "rueckgabe": {
+  "V1": {
+   "kosmodraw_liegt_hier": true,
+   "fassung": "0.13.5",
+   "module": 13,
+   "__main__.py": "vorhanden",
+   "befehlszeile_geprobt": "`python -m kosmodraw --help` laeuft und gibt die Hilfe aus — ohne Installation, aus dem Ordner heraus",
+   "wo": "eine lokale Kopie im OneDrive-Abzug vom 09.06.2026 unter dem Archivbaum dieser Maschine (kein Benutzername im Pfad, darum hier ohne Pfadangabe — sagt Bescheid, wenn ihr den relativen Ort braucht)",
+   "einordnung": "Das ist die Antwort, auf die es euch ankommt: Das Paket haengt NICHT allein am archivierten privaten Repo. Es liegt hier vollstaendig, mit `__main__.py`, und die Befehlszeile laeuft. Fuer die HALTBARKEIT heisst das: Der eine Weg, der daran haengt, faellt nicht, wenn das Archiv verschwindet — solange diese Kopie gesichert wird. Das ist sie heute nur in einem OneDrive-Abzug, und das ist keine Sicherung, sondern ein Zufall."
+  },
+  "V2": {
+   "antwort": "weiss ich nicht — und das ist hier die ehrliche Antwort",
+   "was_messbar_ist": "Der ArchiCAD-native-Weg ist im Code vorhanden und wurde am 01.09.2026 zuletzt angefasst (`nodes/archicad_native.py`, `core/archicad_native_export.py`, `tools/archicad_ifc_impl.py`). Ob der OWNER ihn in der Praxis benutzt oder ueber den Swiss-Tool-Export geht, steht an keiner Maschine — das ist eine Frage an ihn, nicht an ein Dateisystem.",
+   "weitergereicht": true
+  },
+  "V3": {
+   "lizenzzeile_der_lokalen_kopie": "GPL-3.0-or-later. © Andrin Baumann.",
+   "wo": "README.md der lokalen Kopie, Abschnitt «Lizenz»",
+   "abweichung": false,
+   "nebenbefund": "KEINE Lizenzdatei und KEIN Lizenzkopf in irgendeiner der 13 `.py`-Dateien. Die Angabe steht an genau einer Stelle, in der README. Wer nur das Paket kopiert, kopiert die Lizenz nicht mit — fuer ein GPL-Paket ist das ein Mangel, und er faellt niemandem auf."
+  },
+  "V4": {
+   "vorhersage": "weniger Spruenge",
+   "gemessen": "MEHR — 70 am 06.09., heute 86. Und ein Test faellt.",
+   "vorher_06_09": "Ran 1169 tests / OK (skipped=70)",
+   "nachher_19_09": "Ran 1257 tests / FAILED (failures=1, skipped=86)",
+   "was_dazwischen_lag": "Dieser Baum war 27 Commits im Rueckstand — `tools/ifc_geruest_impl.py` aus eurem Punkt 1 war hier GAR NICHT VORHANDEN. Heute gezogen (derselbe Weg wie am 06.09.: der fremde Fix an `register_in_odysseus.sh` vor dem Pull gestasht und danach unveraendert zurueckgeholt), danach neu gemessen.",
+   "einordnung": "Die sieben Proben aus eurem Punkt 1 laufen jetzt sehr wohl durch — die 88 zusaetzlichen Tests sind zum grossen Teil genau der Zuwachs dieser 27 Commits. Die Sprungzahl steigt trotzdem, weil mit denselben Commits auch NEUE Proben hereinkamen, die hier springen. Eine Sprungzahl ueber zwei verschiedene Testmengen ist darum keine vergleichbare Groesse — das ist kein Vorwurf, sondern der Grund, warum eure Vorhersage nicht eintreffen KONNTE."
+  },
+  "V5": "Die Zeile, die ihr nicht erfragt habt, und sie ist die wichtigste dieses Auftrags:\n\nEUER NEUER LIZENZRIEGEL FAELLT AUF DIESER MASCHINE ROT — und er hat recht.\n\n`test_kein_totes_copyleft_in_libs` meldet zwei Pakete in `libs/`, die kein Produktmodul mehr ruft:\n  · pyphen 0.17.2  — GPL-2+ / LGPL-2.1+ / MPL-1.1, 6,2 MB (kam transitiv ueber weasyprint)\n  · pysolar 0.13   — GPL-3\nNachgesehen, nicht geglaubt: Kein `.py` ausserhalb von `libs/` und der Proben importiert eines der beiden. `ifcopenshell` bleibt zu Recht liegen — es wird gebraucht, hinter der Prozessgrenze, und sechs Werkzeuge rufen es.\n\n`libs/` ist gitignored, steht in keinem Repo, und wird trotzdem AUSGELIEFERT. Damit ist das ein Lizenzbefund und kein Aufraeumposten.\n\nGELOESCHT HABEN WIR NICHTS. Euer eigenes Werkzeug sagt es: «Dieses Werkzeug loescht nichts — der Entscheid gehoert dem Owner.» Der Befund liegt ihm vor. Wir sagen es euch, damit ihr wisst, dass der Riegel beim ersten Lauf auf einer echten Maschine sofort etwas gefunden hat — das ist die beste Nachricht dieses Auftrags."
+ },
+ "fehler": null
+}
