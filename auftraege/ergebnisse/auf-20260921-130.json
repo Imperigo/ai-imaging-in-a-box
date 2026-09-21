@@ -1,0 +1,65 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260921-130",
+  "status": "ok",
+  "beendet": "2026-09-21T21:20:00Z",
+  "stand": "8fa6f1b",
+  "geprueft": "Ansage gelesen. V1 nicht aus dem Gedaechtnis beantwortet, sondern am gespeicherten Ergebnis von auf-20260909-92 nachgesehen.",
+  "kurzantwort": {
+    "v1_mit_beauty_anker_bestellt": "NEIN — und das ist am Datensatz belegbar, nicht erinnert.",
+    "v2_stoeren_die_zwei_felder": false,
+    "ein_zusatz": "Die zwei Felder haetten meinen Befund aus auf-123 um einen halben Tag beschleunigt."
+  },
+  "befunde": {
+    "v1_woran_es_haengt": {
+      "geprueft": "build/auf92/ergebnis.json, alle zwoelf Zeilen und der Kopf.",
+      "felder_im_kopf": [
+        "zeilen",
+        "vram_spitze_mib",
+        "prompt_ohne",
+        "prompt_mit",
+        "negativ_prompt",
+        "controlnet_staerke",
+        "schritte",
+        "seeds"
+      ],
+      "felder_je_zeile": [
+        "begruendung",
+        "bestanden",
+        "bild",
+        "controlnet_staerke",
+        "fall",
+        "geom_iou",
+        "kante",
+        "n_gemeinsam",
+        "paar_bestanden",
+        "prompt_art",
+        "qa_status",
+        "render_dauer_s",
+        "rho_maske",
+        "schwelle",
+        "score",
+        "seed",
+        "spearman",
+        "szene",
+        "ueber_rauschen"
+      ],
+      "beauty_feld": "kommt weder im Kopf noch in einer Zeile vor",
+      "antwort": "Die zwoelf Laeufe wurden OHNE Beauty-Anker bestellt — reines txt2img mit Tiefenkonditionierung. Damit ist auch klar, dass ihr `modus`-Befund die zwoelf nicht beruehrt: Sie haben nie einen Bildeingang gehabt, also konnte auch keiner verlorengehen."
+    },
+    "v2_stoert_uns_etwas": {
+      "antwort": "Nein. Zwei zusaetzliche Felder in einem Ergebnis kosten hier nichts.",
+      "und_ein_lob_das_nuetzt": "Genau diese zwei Felder haetten meine Messung in auf-20260919-123 abgekuerzt. Ich brauchte sieben Laeufe und einen sha256-Vergleich, um zu belegen, dass das Eingangsbild nicht ankommt. Mit `modus_bestellt: image_edit` gegen `modus_gerechnet: txt2img` haette EIN Lauf gereicht.",
+      "eine_bitte": "Wenn die beiden Felder verschieden sind, bitte auch in den WARNUNGEN und nicht nur in den Hinweisen. In auf-123 stand die Auskunft woertlich da («Nicht uebergeben, weil unbekannt: image») — als Hinweis unter vier anderen. Wer Hinweise ueberfliegt, sieht sie nicht."
+    }
+  },
+  "bemerkungen": [
+    "Kein Lauf gefahren; diese Antwort kostet nichts ausser Nachsehen."
+  ],
+  "umgebung": {
+    "gpu_benutzt": false,
+    "netz_benutzt": false,
+    "dauer_min": 3
+  },
+  "fehler": null
+}

@@ -1,0 +1,71 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260921-131",
+  "status": "ok",
+  "beendet": "2026-09-21T21:20:00Z",
+  "stand": "8fa6f1b",
+  "geprueft": "Beide Teile. Die Ansage gelesen, die Messung gefahren — und die Reparatur traegt: Der Vorgabelauf waehlt jetzt OHNE jede Erzwingung den vollen Weg und rechnet durch.",
+  "kurzantwort": {
+    "v5_voller_weg_ohne_erzwingung": "BESTAETIGT. geraeteweg = 'cuda', Auslagerung findet nicht mehr statt.",
+    "v4_kam_der_lauf_durch": "Ja, vollstaendig: status ok, 8 von 8 Diffusionsschritten, 5,75 s.",
+    "v1_entflechtung": "Nicht noetig und darum None — sie wird nur vor dem Auslagern gerufen.",
+    "v2_parameter_je_komponente": "Entfaellt: Es wurde nichts ausgelagert.",
+    "der_zweite_fehler": "Der Auslagerungsweg selbst ist damit NICHT geprueft — er wird auf dieser Karte fuer z-image-turbo nicht mehr betreten. Er bleibt offen, und zwar unsichtbar."
+  },
+  "befunde": {
+    "v5_die_messung": {
+      "wie": "`render._lege_auf_geraet` an der Naht beobachtet, ohne sie zu ersetzen — der echte Aufruf laeuft, seine Rueckgabe wird mitgelesen.",
+      "rueckgabe": {
+        "weg": "cuda",
+        "entflechtung": null,
+        "bedarf": {
+          "quelle": "gemessene Spitze (Registry)",
+          "summe_byte": 26950919782,
+          "groesster_byte": 13475459891,
+          "zuschlag": 1.1,
+          "verlangt_byte": 29646011760,
+          "frei_byte": 32129155072
+        }
+      },
+      "in_MiB": {
+        "verlangt": 28272,
+        "frei": 30641,
+        "spielraum": 2369
+      },
+      "urteil": "Genau die Rechnung aus eurer Ansage. Vorher verlangte dieselbe Lage 39219 MiB (Plattengroesse 31376 x 1.25) und fiel damit in den Auslagerungsweg."
+    },
+    "v4_der_lauf": {
+      "status": "ok",
+      "schritte_bestellt": 8,
+      "schritte_gerechnet": 8,
+      "dauer_s": 5.75,
+      "bild_geschrieben": true,
+      "anmerkung": "`vram_spitze_mib` kommt als None zurueck — der Lauf misst seine eigene Spitze nicht. Das ist kein Fehler dieses Auftrags, faellt hier aber auf: Die Registry-Zahl, an der die neue Rechnung haengt, laesst sich aus einem gewoehnlichen Lauf nicht nachpruefen."
+    },
+    "v3_fassungen": {
+      "diffusers": "0.39.0",
+      "accelerate": "1.14.0",
+      "torch": "2.11.0+cu128",
+      "cuda": "12.8"
+    },
+    "ein_befund_nebenbei": {
+      "worum": "`_lege_auf_geraet` traegt die Annotation `-> tuple[str, dict | None]`, gibt aber DREI Werte zurueck (Weg, Entflechtung, Bedarfsbericht).",
+      "wie_gemessen": "Ein Beobachter mit zwei Rueckgabewerten scheiterte an `ValueError: too many values to unpack (expected 2, got 3)`.",
+      "warum_es_zaehlt": "Wer die Naht fuer eine Probe ersetzt — und genau dafuer ist sie gebaut —, liest die Annotation und baut einen Zweier. Der dritte Wert ist der interessanteste: Er traegt Quelle, Zuschlag und Spielraum.",
+      "dazu": "Die Signatur hat einen neuen Parameter `erwartet_gemessen`. Auch der steht nicht in der Annotation der Rueckgabe."
+    }
+  },
+  "bemerkungen": [
+    "Damit ist der erste meiner beiden Befunde aus auf-20260919-123 erledigt, und zwar schnell — zwischen Meldung und Reparatur lag ein halber Tag.",
+    "Der zweite (ZImageControlNetPipeline kennt weder 'image' noch 'strength') bleibt offen; er ist in auf-20260921-130 aufgegriffen."
+  ],
+  "umgebung": {
+    "gpu_benutzt": true,
+    "gpu_leistungsgrenze_w": 400,
+    "leerlauf_schwellen_eingehalten": true,
+    "netz_benutzt": false,
+    "dauer_min": 6,
+    "non_commercial_gewichte_geladen": false
+  },
+  "fehler": null
+}

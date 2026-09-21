@@ -1,0 +1,42 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260921-135",
+  "status": "ok",
+  "beendet": "2026-09-21T21:20:00Z",
+  "stand": "8fa6f1b",
+  "geprueft": "Gelesen. Keine Messung verlangt, keine gefahren.",
+  "kurzantwort": {
+    "gelesen": true,
+    "die_marke_15_oktober": "Angenommen.",
+    "stand_der_drei": "131 ist HEUTE beantwortet und gruen. 134 ist heute gemessen — die Antwort ist unbequem. 128 ist offen."
+  },
+  "befunde": {
+    "die_drei_mit_frist": {
+      "auf-131": {
+        "stand": "ERLEDIGT am 21.09.2026",
+        "ergebnis": "Die Bedarfsrechnung traegt, der Vorgabelauf waehlt den vollen Weg ohne Erzwingung. ABER: Der Auslagerungsweg selbst ist damit nicht geprueft — er wird auf dieser Karte fuer z-image-turbo nicht mehr betreten. Eure Frage «Laeuft der Auslagerungsweg wieder?» ist also NICHT beantwortet, sondern gegenstandslos geworden. Das ist ein Unterschied, und er gehoert vor den 15. Oktober."
+      },
+      "auf-134": {
+        "stand": "ERLEDIGT am 21.09.2026",
+        "ergebnis": "s. dort — die Zahlen sprechen gegen das Modell auf dieser Karte."
+      },
+      "auf-128": {
+        "stand": "OFFEN",
+        "grund": "Heute nicht mehr gemessen. Er braucht eine Messreihe, keine Stichprobe."
+      }
+    },
+    "was_ich_zur_frist_sagen_kann": {
+      "bis_15_oktober": "Zwei der drei sind heute beantwortet, also 24 Tage vor der Marke. Der dritte (128) ist der aufwendigste und der einzige, der wirklich Zeit braucht.",
+      "eine_warnung": "Wenn an der Bildstrecke in den zwoelf Wochen noch etwas passieren soll, ist der Engpass nicht die Rechenzeit, sondern die Zahl der Auftraege, die gleichzeitig offen stehen. Am 19.09. waren es siebzehn; heute sind sieben eingetroffen, waehrend ich neun beantwortet habe. Das haelt sich die Waage — aber nur, solange jemand taeglich hinsieht. Ich habe dafuer seit heute einen Melder."
+    }
+  },
+  "bemerkungen": [
+    "Keine Rueckfragen. Die Frist ist realistisch, wenn 128 bald kommt."
+  ],
+  "umgebung": {
+    "gpu_benutzt": false,
+    "netz_benutzt": false,
+    "dauer_min": 2
+  },
+  "fehler": null
+}

@@ -1,38 +1,38 @@
 {
- "schema": "aiimaging.homeworker-auftrag/v1",
- "auftrag_id": "auf-20260921-127",
- "art": "qa",
- "worker": "local",
- "rang": 4,
- "erstellt": "2026-09-21T14:00:00Z",
- "params": {},
- "beschreibung": "Kommen die elf neuen Bestellungen (Sonnenstand, Rahmung, Augenhoehe u.a.) ueber den Kettenweg am Runner an? Hier nur mit Attrappen geprueft. Kern ist die Gegenprobe: zwei Laeufe, nur die Sonne geaendert — sind die Bilder verschieden? Und: Gilt eine Sonnenaenderung im Zwischenspeicher als Treffer? Fuenf Laeufe, keine Messreihe.",
- "anweisung": "=== KOMMEN DIE ELF NEUEN BESTELLUNGEN AM RUNNER AN? ===\n\nWAS SICH GEAENDERT HAT (rein additiv, kein Verhalten)\n\n`aiimaging.kette.baue_kette` nimmt seit dem 21.09.2026 elf Angaben mehr an und\nreicht sie an `seams.glb_zu_multipass` weiter:\n\n    kamera            kamera_modus      kamera_huellbox    sonne\n    gelaende_z        hoehe             deckungsgrad       augenhoehe\n    bias_grad         stillstand_frist_s                   multipass_timeout\n\nDazu drei, die den Standpunkt von Hand setzen: auge, blick_auf, brennweite.\n\nWARUM: Gemessen am 21.09.2026 nimmt euer Runner 21 Angaben an. Der Abholer\nbestellte 17 davon, der Weg ueber den Graphen 8. Elf Dinge waren ueber den\nGraphen nicht erreichbar — darunter Sonnenstand, Blickrichtung, Rahmung und\nAugenhoehe.\n\n    Eine Faehigkeit, die der Runner hat und die ueber einen der Wege nicht\n    bestellbar ist, gibt es fuer jeden, der diesen Weg benutzt, nicht.\n\nAM ABHOLER AENDERT SICH NICHTS. Er bestellt wie bisher, und `None` heisst auf\ndem neuen Weg ueberall NICHT ANGEFASST — dann gelten eure Vorgaben, und jede\nbisher gemessene Aufnahme bleibt reproduzierbar.\n\n\nWAS ZU TUN IST\n\n  SCHRITT 1 · EINMAL UEBER DEN GRAPHEN MIT VOLLER BESTELLUNG\n\n  Baut die Standardszene (`python tools/make_test_ifc.py --hochbau`), wandelt\n  sie um und fahrt EINEN Lauf ueber `kette.baue_kette` + `kette.fuehre_aus`\n  mit ECHTEN Ausfuehrern — nicht ueber den Abholer.\n\n  Setzt dabei alle elf, mit Werten, die sich im Bild sehen lassen:\n\n      sonne          = Abendstand (niedrig, seitlich)\n      kamera         = eine benannte Richtung\n      deckungsgrad   = 0.55   (statt der Vorgabe 0.70)\n      augenhoehe     = 1.60\n      hoehe          = die Gebaeudehoehe eurer Szene\n      kamera_modus   = shift\n      gelaende_z     = der Gelaendestand eurer Szene\n      bias_grad      = 2.0\n      kamera_huellbox= die Bauwerksbox\n      stillstand_frist_s / multipass_timeout = eure ueblichen Werte\n\n  SCHRITT 2 · DIE GEGENPROBE, UND SIE IST DER KERN\n\n  Fahrt denselben Lauf ein zweites Mal — mit GENAU EINER Aenderung: Sonne auf\n  Mittagstand. Sonst alles gleich, derselbe Seed.\n\n  DIE FRAGE: Sind die zwei Bilder verschieden?\n\n  Wenn ja, ist belegt, dass die Bestellung nicht nur angenommen, sondern\n  AUSGELIEFERT wird. Wenn nein, kommt sie irgendwo unterwegs nicht an — und\n  dann ist das der eigentliche Befund.\n\n      Eine Bestellung, die angenommen und nicht ausgeliefert wird, ist\n      schlimmer als eine abgelehnte: Die Ablehnung sieht man.\n\n  Dasselbe bitte fuer `deckungsgrad` (0.55 gegen 0.70): zwei Laeufe, sonst\n  alles gleich, und die Frage ist dieselbe.\n\n  SCHRITT 3 · DER ZWISCHENSPEICHER\n\n  Fahrt den Abendlauf ein drittes Mal, unveraendert, MIT Zwischenspeicher.\n  Er soll ein Treffer sein. Dann noch einmal mit Mittagstand: Das darf KEIN\n  Treffer sein.\n\n  Wenn eine Sonnenaenderung als Treffer durchgeht, liefert die Software ein\n  Bild mit Abendsonne auf eine Mittagsbestellung — der Lauf gelingt, das Bild\n  liegt da, und niemand sieht ihm an, dass etwas anderes bestellt war.\n\n  SCHRITT 4 · NIMMT DER RUNNER ALLES AN?\n\n  Falls einer der elf Namen bei euch anders heisst oder gar nicht existiert:\n  sagt es, aendert aber NICHTS. Wir tragen es hier ein.\n\n\nWAS NICHT ZU TUN IST\n\n  - NICHTS an unserem Code aendern. Ein falscher Name wird gemeldet, nicht\n    behoben — eine Aenderung drueben waere hier unsichtbar.\n  - KEINE neuen Szenen. Die Standardszene genuegt und macht die Bilder\n    vergleichbar.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.\n\nZeitbedarf: kurz. Es sind fuenf Laeufe auf einer Szene, keine Messreihe.\n\n«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort.",
- "geometrie": {
-  "synthetisch": true,
-  "pfad": null,
-  "erzeugen_mit": "python tools/make_test_ifc.py --hochbau",
-  "hinweis": "Eine Szene genuegt — sie macht die fuenf Laeufe vergleichbar."
- },
- "auflagen": {
-  "leistungsgrenze_w": 400,
-  "nur_bei_leerlauf": true,
-  "leerlauf_schwelle_w": 60,
-  "leerlauf_schwelle_mem_gb": 2,
-  "hinweise": [
-   "NICHTS an unserem Code aendern — falsche Namen melden, nicht beheben.",
-   "Am Abholer aendert sich nichts; dieser Auftrag gilt dem Weg ueber den Graphen.",
-   "KEINE Non-Commercial-Gewichte laden.",
-   "«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort.",
-   "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260921-127",
+  "art": "qa",
+  "worker": "local",
+  "rang": 1,
+  "erstellt": "2026-09-21T14:00:00Z",
+  "params": {},
+  "beschreibung": "Kommen die elf neuen Bestellungen (Sonnenstand, Rahmung, Augenhoehe u.a.) ueber den Kettenweg am Runner an? Hier nur mit Attrappen geprueft. Kern ist die Gegenprobe: zwei Laeufe, nur die Sonne geaendert — sind die Bilder verschieden? Und: Gilt eine Sonnenaenderung im Zwischenspeicher als Treffer? Fuenf Laeufe, keine Messreihe.",
+  "anweisung": "=== KOMMEN DIE ELF NEUEN BESTELLUNGEN AM RUNNER AN? ===\n\nWAS SICH GEAENDERT HAT (rein additiv, kein Verhalten)\n\n`aiimaging.kette.baue_kette` nimmt seit dem 21.09.2026 elf Angaben mehr an und\nreicht sie an `seams.glb_zu_multipass` weiter:\n\n    kamera            kamera_modus      kamera_huellbox    sonne\n    gelaende_z        hoehe             deckungsgrad       augenhoehe\n    bias_grad         stillstand_frist_s                   multipass_timeout\n\nDazu drei, die den Standpunkt von Hand setzen: auge, blick_auf, brennweite.\n\nWARUM: Gemessen am 21.09.2026 nimmt euer Runner 21 Angaben an. Der Abholer\nbestellte 17 davon, der Weg ueber den Graphen 8. Elf Dinge waren ueber den\nGraphen nicht erreichbar — darunter Sonnenstand, Blickrichtung, Rahmung und\nAugenhoehe.\n\n    Eine Faehigkeit, die der Runner hat und die ueber einen der Wege nicht\n    bestellbar ist, gibt es fuer jeden, der diesen Weg benutzt, nicht.\n\nAM ABHOLER AENDERT SICH NICHTS. Er bestellt wie bisher, und `None` heisst auf\ndem neuen Weg ueberall NICHT ANGEFASST — dann gelten eure Vorgaben, und jede\nbisher gemessene Aufnahme bleibt reproduzierbar.\n\n\nWAS ZU TUN IST\n\n  SCHRITT 1 · EINMAL UEBER DEN GRAPHEN MIT VOLLER BESTELLUNG\n\n  Baut die Standardszene (`python tools/make_test_ifc.py --hochbau`), wandelt\n  sie um und fahrt EINEN Lauf ueber `kette.baue_kette` + `kette.fuehre_aus`\n  mit ECHTEN Ausfuehrern — nicht ueber den Abholer.\n\n  Setzt dabei alle elf, mit Werten, die sich im Bild sehen lassen:\n\n      sonne          = Abendstand (niedrig, seitlich)\n      kamera         = eine benannte Richtung\n      deckungsgrad   = 0.55   (statt der Vorgabe 0.70)\n      augenhoehe     = 1.60\n      hoehe          = die Gebaeudehoehe eurer Szene\n      kamera_modus   = shift\n      gelaende_z     = der Gelaendestand eurer Szene\n      bias_grad      = 2.0\n      kamera_huellbox= die Bauwerksbox\n      stillstand_frist_s / multipass_timeout = eure ueblichen Werte\n\n  SCHRITT 2 · DIE GEGENPROBE, UND SIE IST DER KERN\n\n  Fahrt denselben Lauf ein zweites Mal — mit GENAU EINER Aenderung: Sonne auf\n  Mittagstand. Sonst alles gleich, derselbe Seed.\n\n  DIE FRAGE: Sind die zwei Bilder verschieden?\n\n  Wenn ja, ist belegt, dass die Bestellung nicht nur angenommen, sondern\n  AUSGELIEFERT wird. Wenn nein, kommt sie irgendwo unterwegs nicht an — und\n  dann ist das der eigentliche Befund.\n\n      Eine Bestellung, die angenommen und nicht ausgeliefert wird, ist\n      schlimmer als eine abgelehnte: Die Ablehnung sieht man.\n\n  Dasselbe bitte fuer `deckungsgrad` (0.55 gegen 0.70): zwei Laeufe, sonst\n  alles gleich, und die Frage ist dieselbe.\n\n  SCHRITT 3 · DER ZWISCHENSPEICHER\n\n  Fahrt den Abendlauf ein drittes Mal, unveraendert, MIT Zwischenspeicher.\n  Er soll ein Treffer sein. Dann noch einmal mit Mittagstand: Das darf KEIN\n  Treffer sein.\n\n  Wenn eine Sonnenaenderung als Treffer durchgeht, liefert die Software ein\n  Bild mit Abendsonne auf eine Mittagsbestellung — der Lauf gelingt, das Bild\n  liegt da, und niemand sieht ihm an, dass etwas anderes bestellt war.\n\n  SCHRITT 4 · NIMMT DER RUNNER ALLES AN?\n\n  Falls einer der elf Namen bei euch anders heisst oder gar nicht existiert:\n  sagt es, aendert aber NICHTS. Wir tragen es hier ein.\n\n\nWAS NICHT ZU TUN IST\n\n  - NICHTS an unserem Code aendern. Ein falscher Name wird gemeldet, nicht\n    behoben — eine Aenderung drueben waere hier unsichtbar.\n  - KEINE neuen Szenen. Die Standardszene genuegt und macht die Bilder\n    vergleichbar.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.\n\nZeitbedarf: kurz. Es sind fuenf Laeufe auf einer Szene, keine Messreihe.\n\n«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort.",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python tools/make_test_ifc.py --hochbau",
+    "hinweis": "Eine Szene genuegt — sie macht die fuenf Laeufe vergleichbar."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 60,
+    "leerlauf_schwelle_mem_gb": 2,
+    "hinweise": [
+      "NICHTS an unserem Code aendern — falsche Namen melden, nicht beheben.",
+      "Am Abholer aendert sich nichts; dieser Auftrag gilt dem Weg ueber den Graphen.",
+      "KEINE Non-Commercial-Gewichte laden.",
+      "«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Nimmt der Runner alle elf Namen an? Wo nicht: der Name, den eure Fassung hat.",
+    "V2 Abendsonne gegen Mittagssonne, sonst alles gleich: Sind die Bilder verschieden? Beide Bilder mitschicken.",
+    "V3 Deckungsgrad 0.55 gegen 0.70, sonst alles gleich: Sind die Bilder verschieden?",
+    "V4 Der unveraenderte dritte Lauf: Zwischenspeicher-Treffer ja/nein?",
+    "V5 Der Lauf mit geaenderter Sonne: Treffer ja/nein? (Ein Treffer waere der Befund.)",
+    "V6 Eine Zeile Urteil: Kommen die Bestellungen ueber den Graphen an?"
   ]
- },
- "rueckgabe": [
-  "V1 Nimmt der Runner alle elf Namen an? Wo nicht: der Name, den eure Fassung hat.",
-  "V2 Abendsonne gegen Mittagssonne, sonst alles gleich: Sind die Bilder verschieden? Beide Bilder mitschicken.",
-  "V3 Deckungsgrad 0.55 gegen 0.70, sonst alles gleich: Sind die Bilder verschieden?",
-  "V4 Der unveraenderte dritte Lauf: Zwischenspeicher-Treffer ja/nein?",
-  "V5 Der Lauf mit geaenderter Sonne: Treffer ja/nein? (Ein Treffer waere der Befund.)",
-  "V6 Eine Zeile Urteil: Kommen die Bestellungen ueber den Graphen an?"
- ]
 }

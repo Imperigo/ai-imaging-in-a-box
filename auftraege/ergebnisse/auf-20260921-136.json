@@ -1,0 +1,75 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260921-136",
+  "status": "ok",
+  "beendet": "2026-09-21T21:25:00Z",
+  "stand": "8fa6f1b",
+  "geprueft": "Ein Befehl, wie verlangt: `python tools/beweis/31_der_weg_des_produkts.py --echt`. Er ist gelaufen und HAELT NICHT — der Weg bricht am ersten Kettenknoten ab.",
+  "kurzantwort": {
+    "exitcode": 1,
+    "wo_es_bricht": "Knoten 1 von 4 (geometrie) — abgelehnt. Die drei folgenden werden uebersprungen.",
+    "die_meldung": "Torwaechter: Konversion meldet status='ok', traegt aber keine brauchbare bbox (None).",
+    "v2_das_bild": "Es gibt keines — die Bildstufe wurde nie erreicht.",
+    "v3_diffusionsschritte": 0,
+    "die_ersten_drei_stufen_halten": "Tuer, Mappe und Wiederoeffnen laufen sauber durch."
+  },
+  "befunde": {
+    "die_fuenf_stufen_einzeln": [
+      {
+        "stufe": "1 Die Tuer",
+        "ergebnis": "brauchbar=True, format=IFC, hochachse=Z_UP (steht fest)",
+        "urteil": "haelt"
+      },
+      {
+        "stufe": "2 Die Mappe",
+        "ergebnis": "weg=ifc, status=ok, hochachse=Y, steht_fest=True, treue=None",
+        "urteil": "haelt"
+      },
+      {
+        "stufe": "3 Wieder geoeffnet",
+        "ergebnis": "modell_stand=unveraendert — «Das Modell ist dasselbe wie beim letzten Oeffnen»",
+        "urteil": "haelt — der Pfad-Fehler, den ihr vorgestern repariert habt, ist hier nicht mehr da"
+      },
+      {
+        "stufe": "4 Der Lauf",
+        "ergebnis": "1/4 geometrie ABGELEHNT · 2/4 multipass uebersprungen · 3/4 render uebersprungen · 4/4 qa uebersprungen",
+        "urteil": "BRICHT"
+      },
+      {
+        "stufe": "5 Was in der Mappe steht",
+        "ergebnis": "KEIN EINZIGES BILD eingetragen",
+        "urteil": "Folge von 4"
+      }
+    ],
+    "v5_der_abschnitt_mit_meldung": {
+      "knoten": "geometrie",
+      "woertlich": "geometrie: Torwaechter: Konversion meldet status='ok', traegt aber keine brauchbare bbox (None). Ohne Ausdehnung ist weder Massstab noch Georeferenz pruefbar — und ungeprueft wird nicht gerendert.",
+      "gefunden_in": "projekt/projekt.json, Feld `error` des Laufeintrags",
+      "was_daran_auffaellt": "Der Torwaechter hat recht und tut genau das Richtige. Der Fehler liegt eine Stufe davor: Etwas meldet Erfolg OHNE Ausdehnung — dieselbe Familie wie der rote Faden von v0.1.2 («ein Werkzeug, das Erfolg meldet, ohne ihn geleistet zu haben»)."
+    },
+    "die_gegenprobe_die_den_fall_einengt": {
+      "frage": "Liefert die IFC-nach-glb-Wandlung auf dieser Maschine ueberhaupt eine bbox?",
+      "gemessen": "JA. `seams.ifc_zu_glb` auf der Standardszene liefert bbox [[0.0, 0.0, -0.25], [12.0, 9.5, 15.0]], n_elements 141, n_triangles 1692 — heute mehrfach gefahren (auf-20260921-126).",
+      "urteil": "Es liegt NICHT an der Wandlung und nicht an dieser Maschine. Der Weg, den das Beweisskript nimmt, verliert die bbox unterwegs — oder der echte Ausfuehrer gibt sie nicht weiter."
+    },
+    "v4_laufzeit_je_knoten": {
+      "geometrie": "0.0001 s (Ablehnung, kein Lauf)",
+      "multipass": "uebersprungen",
+      "render": "uebersprungen",
+      "qa": "uebersprungen",
+      "anmerkung": "Aussagekraeftige Zeiten gibt es erst, wenn der erste Knoten durchkommt."
+    },
+    "v1_die_ausgabe": "Vollstaendig oben wiedergegeben; `bericht.json` gab es nicht — das Skript legt seinen Stand in `projekt/projekt.json` ab."
+  },
+  "bemerkungen": [
+    "Das Skript erzeugt sein Bauwerk selbst, wie angekuendigt. Regel 3 ist eingehalten: nichts Fremdes im Lauf.",
+    "Dass die ersten drei Stufen halten, ist die gute Nachricht: Tuer, Mappe und Wiederoeffnen sind am echten Weg belegt — auch der Pfad-Fehler, den ihr vorgestern gefunden habt, taucht nicht wieder auf.",
+    "Der Befund ist genau das, wofuer dieser Beweis gebaut wurde: Er hat etwas gefunden, das die Attrappen nicht zeigen konnten."
+  ],
+  "umgebung": {
+    "gpu_benutzt": false,
+    "netz_benutzt": false,
+    "dauer_min": 4
+  },
+  "fehler": null
+}

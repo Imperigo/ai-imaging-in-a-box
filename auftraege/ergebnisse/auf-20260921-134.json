@@ -1,0 +1,61 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260921-134",
+  "status": "ok",
+  "beendet": "2026-09-21T21:25:00Z",
+  "stand": "8fa6f1b",
+  "geprueft": "Beide Fragen gemessen, nicht gerechnet — und die Rechnung haette die erste falsch beantwortet.",
+  "kurzantwort": {
+    "laeuft_es_auf_der_karte": "JA. Vier Diffusionsschritte in 13-26 s, status ok. Die Auslagerung traegt.",
+    "nimmt_es_ein_eingangsbild_an": "NEIN — und das ist hart belegt: DREI Laeufe (Bild A, Bild B, ganz ohne Bild) tragen DIESELBE sha256.",
+    "warum": "Dieselbe Falle wie am 18.08.2026: Die Pipeline hat nur EINEN Bildeingang, und die Tiefenkarte belegt ihn. Die Software sagt es woertlich.",
+    "die_rechnung_war_falsch": "Nach Plattengroesse haette es nicht passen duerfen — 55047 MiB Gewichte, groesster Brocken 38968 MiB, Karte 32108 MiB. Es laeuft trotzdem."
+  },
+  "befunde": {
+    "v_laeuft_es": {
+      "gewichte_auf_der_platte": {
+        "summe_mib": 55047,
+        "groesster_brocken_mib": 38968,
+        "karte_gesamt_mib": 32108,
+        "frei_mib": 30641
+      },
+      "was_die_rechnung_sagte": "Voller Weg braucht 68808 MiB — passt nicht. Groesster Brocken x 1.25 = 48710 MiB — passt auch nicht. Nach der Bedarfsrechnung waere selbst komponentenweises Auslagern unmoeglich.",
+      "was_die_messung_sagt": "Es laeuft. Erster Lauf 50,5 s (mit Laden), Folgelaeufe 13-26 s, je 4 von 4 Schritten, status ok, Bild geschrieben.",
+      "warum_beides_stimmt": "Die schichtweise Auslagerung (`enable_sequential_cpu_offload`) bewegt UNTERMODULE, nicht ganze Komponenten. Der groesste Brocken muss darum nie am Stueck auf die Karte. Die Bedarfsrechnung kennt diesen Weg — sie waehlt ihn, wenn auch der groesste Brocken nicht passt.",
+      "und_das_ist_die_antwort_auf_auf_131_v_auslagerungsweg": "DER AUSLAGERUNGSWEG LAEUFT. In auf-20260921-131 steht, er sei durch die Reparatur nur nicht mehr betreten worden und bleibe ungeprueft. Das stimmt fuer z-image-turbo; hier ist er gefahren, und er traegt."
+    },
+    "v_nimmt_es_ein_bild_an": {
+      "die_probe": "Drei Laeufe, alles gleich ausser dem Eingangsbild: (a) beauty_png = A0.png, (b) beauty_png = C2.png — ein sichtbar anderes Bild, (c) kein beauty_png.",
+      "ergebnis": {
+        "a": "sha256 8a54472af68656b4",
+        "b": "sha256 8a54472af68656b4",
+        "c": "sha256 8a54472af68656b4"
+      },
+      "urteil": "Drei verschiedene Bestellungen, EIN Bild. Das Eingangsbild kommt nicht an.",
+      "die_software_sagt_es_selbst": "«Diese Pipeline hat keinen 'control_image'-Eingang und kein erkennbares ControlNet. Die Tiefenkarte wurde als 'image' uebergeben und ersetzt dabei den Beauty-Pass — die Konditionierung ist damit Bildbearbeitung, nicht ControlNet.»",
+      "das_ist_die_falle_vom_18_08": "Wortgleich dieselbe Lage, nur ein anderes Modell. Damals war es Qwen-Image-Edit, heute Qwen-Image-Edit-2511.",
+      "was_das_fuer_schritt_5_heisst": "Hineinskizzieren geht mit diesem Modell NUR OHNE Tiefenkarte. Und das geht heute nicht: `depth_png` ist im Auftragsschema Pflicht (gemessen in auf-20260919-123, V3). Solange das so ist, hat die Bildstrecke KEIN Modell, das ein Eingangsbild annimmt."
+    },
+    "zwei_hinweise_die_ich_nicht_uebergehe": {
+      "tiefenkonvention": "«Fuer 'qwen-image-edit-2511' ist nicht gemessen, welche Tiefenkonvention sein ControlNet erwartet. Es wird NICHT gedreht.» — richtig so, aber es heisst: Selbst wenn die Tiefenkarte ankommt, ist ungeprueft, ob sie richtig herum ankommt.",
+      "fuehrung": "«keine Fuehrung (guidance_scale) bestimmt. Es greift die Vorgabe von diffusers — eine fremde Entscheidung.» Bei einem destillierten Modell ist das der Unterschied zwischen einem Bild und Matsch. Vor jeder Messreihe mit diesem Modell gehoert das gesetzt."
+    },
+    "modus_felder_leer": {
+      "beobachtet": "In allen drei Laeufen sind `modus_bestellt` und `modus_gerechnet` None — obwohl ein `beauty_png` bestellt war und die Pipeline es verworfen hat.",
+      "warum_das_zaehlt": "Genau dieser Fall ist der, fuer den die zwei Felder in auf-20260921-130 gebaut wurden. Hier haetten sie `image_edit` gegen `txt2img` zeigen muessen. Sie zeigen nichts. Siehe auch meine Antwort auf 130."
+    }
+  },
+  "bemerkungen": [
+    "Die Bedarfsrechnung hat hier RICHTIG entschieden — sie hat den Weg gewaehlt, der traegt, obwohl die Zahlen dagegen sprachen. Wer nur rechnet und nicht misst, haette dieses Modell abgeschrieben.",
+    "Keine Non-Commercial-Gewichte geladen. qwen-image-edit-2511 liegt lokal im Modellordner."
+  ],
+  "umgebung": {
+    "gpu_benutzt": true,
+    "gpu_leistungsgrenze_w": 400,
+    "leerlauf_schwellen_eingehalten": true,
+    "netz_benutzt": false,
+    "dauer_min": 9,
+    "non_commercial_gewichte_geladen": false
+  },
+  "fehler": null
+}
