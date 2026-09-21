@@ -5820,6 +5820,57 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **E24: Die Lieferform ist ein iPad mit Stift — und die Fläche geht mit.**
+      Owner-Entscheid 21.09.2026, unmittelbar auf E23: eine Ergänzungssoftware fürs iPad,
+      simple Oberfläche wie eine Zeichen-App, Stift → Skizze → AI-Imaging.
+      **Kein neues Produkt, sondern die Lieferform für E23.** Ein iPad kann das Bildmodell
+      nicht rechnen (kein CUDA, rund 30 GB Gewichte) — die Aufteilung ist damit vorgegeben
+      und nicht gewählt: zeichnen drüben, rechnen hier.
+      *Das ist genau die Bauform, die Regel 4 seit dem ersten Tag verlangt.* Eine zweite
+      dünne Fläche kostet an der Bibliothek nichts. Wer die Fähigkeiten in die Oberfläche
+      gebaut hätte, bräuchte hier ein zweites Programm.
+      **Empfehlung Seite statt App**, begründet und nicht bequem: kein zweiter Quelltext,
+      kein Entwicklerkonto, Verteilung per Link — und Stiftdruck kommt über
+      Zeigerereignisse an. **Die eine Zeile, die zählt, ist nicht gemessen:** ob sich das
+      auf einem iPad wie eine Zeichen-App *anfühlt*. Darum wird zuerst gebaut und
+      ausprobiert; fällt die Probe durch, ist eine App die Antwort — mit gemessener
+      Begründung statt mit einer Vermutung.
+- [x] **Gebaut: die Zeichenfläche, und sie ist für einen Stift gebaut.**
+      Bild wählen, hineinzeichnen, Radierer, Strichstärke, in die Mappe legen. Die
+      Zeichnung ist ein eigener Eintrag im Projekt (`projekt.vermerke_skizze`) — mit ihrer
+      **Unterlage**, denn *eine Zeichnung ohne ihre Unterlage ist ein Strichbild; erst
+      zusammen sind sie ein Entwurf.*
+      **`stand` ist Pflichtfeld**, Vorgabe `offen`: *Gezeichnet ist nicht gerechnet.* Eine
+      Skizze ohne Zustand sieht nach zwei Wochen aus wie erledigt.
+      **Die Seite misst genau eine Sache selbst, und zwar das GERÄT:** ob Stiftdruck
+      ankommt. *Eine Zeichenfläche, die das nicht sagt, lässt den Benutzer raten, warum der
+      Strich überall gleich dick ist.* Eine Druckkurve wird ausdrücklich **nicht**
+      erfunden — was ein echter Stift meldet, hat hier niemand gemessen.
+      **Jede abgelegte Skizze trägt den Satz, dass sie nicht gerechnet wurde**, mit der
+      Messung dazu. Angenommen wird sie trotzdem: Die Zeichnung ist das, was der Mensch
+      getan hat, und sie geht nicht verloren, nur weil die Maschine sie nicht einlösen kann.
+      Der Dateiname kommt **aus dem Zeitpunkt, nie aus dem Wunsch** — sonst bestimmte ein
+      Browser, wo geschrieben wird. Der Wunsch geht in die Bemerkung statt verloren.
+      Achtzehn Wächter, acht Mutationsproben.
+- [x] **Und zum vierten Mal an einem Tag: eine Probe war grün und prüfte den Text.**
+      Der Wächter für den Grössenriegel verglich die **Reihenfolge zweier Zeichenketten im
+      Quelltext**. Die Mutation setzte den Riegel auf `if False` — die Zeile stand noch da,
+      sie tat nur nichts mehr, und die Probe blieb grün.
+      *Ein Wächter, der die Stellung einer Zeile prüft statt ihrer Wirkung, prüft den Text
+      und nicht das Programm.*
+      Berichtigt: Die Entscheidung steht jetzt in `pruefe_skizzenbytes` und wird von der
+      Probe **gerufen** statt gelesen. Danach fällt sie — und die Gegenprobe (knapp unter
+      der Grenze kommt durch) fängt den Riegel, der einfach alles abweist.
+- [x] **Der Abhängigkeitswächter der Fläche prüft jetzt gegen die Standardbibliothek
+      selbst.** Er trug eine von Hand gepflegte Erlaubnisliste und schlug beim ersten
+      `import base64` an — einem Standardmodul, an dem unter Regel 1 nichts auszusetzen
+      ist. *Ein Wächter, der bei jedem Ausbau von Hand nachgezogen werden muss, wird
+      irgendwann weit gestellt statt nachgezogen.* Mit `sys.stdlib_module_names` wird er
+      **schärfer**: jedes Standardmodul erlaubt, kein einziges fremdes Paket.
+- [~] **Und die Fläche bleibt zu, bis der Owner entscheidet.** Damit ein iPad sie
+      erreicht, müsste sie im Heimnetz hören statt nur auf dem Rechner selbst. Der Grund
+      für das Bisherige steht in ihrem LIESMICH: *Hier liegen die Gebäudemodelle von
+      jemandem.* Jedes Gerät im selben Netz könnte sie dann lesen. *Adressat: Owner.*
 - [x] **E23 entschieden: Das AI-Imaging darf Volumen ERFINDEN — der Zweck verschiebt sich.**
       Owner-Entscheid 21.09.2026: Die Software soll für **schnelle Variantenstudien** nach
       einer ins Bild gezeichneten Skizze Volumen hinzuerfinden — und wenn ein Bild

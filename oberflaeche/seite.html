@@ -108,6 +108,22 @@
   .felder input.gesetzt { border-color: var(--leise); color: var(--schrift); }
   .felder input:not(.gesetzt) { color: var(--leise); font-style: italic; }
   .knopfzeile { margin-top: 10px; display: flex; gap: 8px; align-items: center; }
+  /* DIE ZEICHENFLAECHE. Bild und Tafel liegen exakt uebereinander — die Tafel ist
+     durchsichtig, und was darauf entsteht, gehoert zum Bild darunter.
+     `touch-action: none` ist keine Kosmetik: Ohne das schiebt ein Tablet beim Zeichnen
+     die Seite, statt einen Strich zu machen. */
+  .zeichenflaeche { position: relative; margin: 10px 0; border: 1px solid var(--rand);
+                    border-radius: 6px; overflow: hidden; background: #0e1013;
+                    max-width: 900px; }
+  .zeichenflaeche img { display: block; width: 100%; height: auto; }
+  .zeichenflaeche canvas { position: absolute; inset: 0; width: 100%; height: 100%;
+                           touch-action: none; cursor: crosshair; }
+  .skizze { border: 1px solid var(--rand); border-radius: 6px; padding: 8px 12px;
+            margin-top: 8px; font-size: 13px; }
+  .skizze .stand { font-size: 12px; font-weight: 600; letter-spacing: .03em;
+                   color: var(--ungemessen); }
+  select { font: inherit; background: var(--grund); color: var(--schrift);
+           border: 1px solid var(--rand); border-radius: 6px; padding: 6px 8px; }
   dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; }
   dt { color: var(--leise); }
   dd { margin: 0; overflow-wrap: anywhere; }
@@ -131,6 +147,30 @@
   <section>
     <h2>Was gerechnet würde</h2>
     <div id="baum" class="leise">—</div>
+  </section>
+
+  <section style="grid-column: 1 / -1">
+    <h2>Skizze — Entwurfsmodus</h2>
+    <div id="skizzenlage" class="meldung">
+      Gezeichnet wird auf ein vorhandenes Bild. Öffnen Sie zuerst ein Projekt.
+    </div>
+    <div id="skizzenblock" hidden>
+      <div class="knopfzeile">
+        <label class="leise" for="unterlage">Unterlage</label>
+        <select id="unterlage"></select>
+        <label class="leise" for="stift">Strich</label>
+        <input id="stift" type="range" min="1" max="24" value="6">
+        <button id="radierer" type="button">Radierer: aus</button>
+        <button id="leeren" type="button">Leeren</button>
+        <button id="skizzeAblegen" type="button">In die Mappe legen</button>
+      </div>
+      <div class="zeichenflaeche">
+        <img id="unterlagenbild" alt="">
+        <canvas id="tafel"></canvas>
+      </div>
+      <div id="stiftlage" class="satz">Noch kein Strich gezeichnet.</div>
+      <div id="skizzen" class="leise">—</div>
+    </div>
   </section>
 
   <section style="grid-column: 1 / -1">
@@ -465,7 +505,7 @@ async function laden() {
     const antwort = await fetch("/api/projekt?ordner=" + encodeURIComponent(ordner));
     const d = await antwort.json();
     if (d.fehler) { $("stand").textContent = d.fehler; return; }
-    zeigeModell(d); zeigeBaum(d); zeigeBilder(d);
+    zeigeModell(d); zeigeBaum(d); zeigeBilder(d); zeigeSkizzenteil(d);
     $("stand").textContent = d.bilder.length + " Bilder, " + d.laeufe.length + " Läufe";
   } catch (f) {
     $("stand").textContent = "Die Oberfläche erreicht ihren eigenen Dienst nicht: " + f;
@@ -489,6 +529,201 @@ async function rechnen() {
     $("stand").textContent = "Der Lauf liess sich nicht starten: " + f;
   }
 }
+
+// ══════════════════════════════════════════════════════════════════════════════════
+// Die Zeichenflaeche — der Entwurfsmodus (E23)
+//
+// SIE IST FUER EINEN STIFT GEBAUT, nicht fuer eine Maus, die auch geht. Das ist der
+// Unterschied, um den es hier geht: Ein iPad mit Stift soll sich anfuehlen wie eine
+// Zeichen-App, und dafuer muessen Druck und Stiftart wirklich ankommen.
+//
+// `PointerEvent` ist der einzige Weg, der beides liefert und ueberall gleich heisst —
+// `pointerType` ("pen" / "touch" / "mouse") und `pressure` (0 bis 1). Maus- und
+// Beruehrungsereignisse getrennt zu behandeln waere derselbe Code dreimal.
+// ══════════════════════════════════════════════════════════════════════════════════
+
+/** Wie breit ein Strich bei diesem Druck wird.
+ *
+ *  KEINE Kurve und keine Glaettung — noch nicht. Was ein Stift auf einem echten Geraet
+ *  wirklich meldet, hat hier niemand gemessen; eine erfundene Druckkurve saehe nach
+ *  Handwerk aus und waere geraten.
+ *
+ *  `pressure` ist 0, wenn das Geraet keinen Druck kennt (Maus, einfacher Finger). Dann
+ *  gilt die eingestellte Breite unveraendert — sonst zoege eine Maus Haarlinien. */
+function strichbreite(grund, druck, art) {
+  if (art !== "pen" || !druck) return grund;
+  return Math.max(1, grund * (0.25 + 1.5 * druck));
+}
+
+const tafel = {
+  stift: null, letzte: null, gezeichnet: false, radiert: false,
+  /** Was das Geraet bisher wirklich gemeldet hat — fuer die Zeile unter der Flaeche.
+   *  Das ist die einzige Messung, die diese Seite selbst vornimmt, und sie misst das
+   *  GERAET, nicht die Zeichnung: Ohne sie weiss niemand, ob der Stift ankommt. */
+  arten: new Set(), druckMax: 0,
+};
+
+function tafelGroesse() {
+  const leinwand = $("tafel"), bild = $("unterlagenbild");
+  // DIE TAFEL BEKOMMT DIE PUNKTZAHL DES BILDES, nicht die des Bildschirms. Eine Skizze,
+  // die in Bildschirmpunkten entsteht, passt spaeter nicht auf das Bild, auf das sie
+  // gezeichnet wurde — und genau darauf soll sie ja angewandt werden.
+  if (!bild.naturalWidth) return;
+  leinwand.width = bild.naturalWidth;
+  leinwand.height = bild.naturalHeight;
+}
+
+/** Bildschirmpunkt → Bildpunkt. Ohne diese Umrechnung sitzt der Strich dort, wo geklickt
+ *  wurde, und nicht dort, wo das Bild getroffen wurde. */
+function aufTafel(e) {
+  const leinwand = $("tafel"), r = leinwand.getBoundingClientRect();
+  return {
+    x: (e.clientX - r.left) * (leinwand.width / r.width),
+    y: (e.clientY - r.top) * (leinwand.height / r.height),
+  };
+}
+
+function zeichenStart(e) {
+  if (!$("tafel").width) return;
+  tafel.stift = e.pointerId;
+  tafel.letzte = aufTafel(e);
+  tafel.arten.add(e.pointerType || "unbekannt");
+  if (e.pointerType === "pen") tafel.druckMax = Math.max(tafel.druckMax, e.pressure || 0);
+  $("tafel").setPointerCapture(e.pointerId);
+  e.preventDefault();
+}
+
+function zeichenZug(e) {
+  if (tafel.stift !== e.pointerId) return;
+  const c = $("tafel").getContext("2d");
+  const jetzt = aufTafel(e);
+  const breite = strichbreite(Number($("stift").value), e.pressure, e.pointerType);
+
+  if (e.pointerType === "pen") tafel.druckMax = Math.max(tafel.druckMax, e.pressure || 0);
+
+  // RADIEREN IST KEIN WEISSER STRICH, sondern Wegnehmen. Ein weisser Strich auf einer
+  // durchsichtigen Tafel waere weisse Farbe — und wuerde das Bild darunter verdecken
+  // statt die eigene Linie zu entfernen.
+  c.globalCompositeOperation = tafel.radiert ? "destination-out" : "source-over";
+  c.strokeStyle = "#ff3b30";
+  c.lineWidth = tafel.radiert ? breite * 2.5 : breite;
+  c.lineCap = "round";
+  c.lineJoin = "round";
+  c.beginPath();
+  c.moveTo(tafel.letzte.x, tafel.letzte.y);
+  c.lineTo(jetzt.x, jetzt.y);
+  c.stroke();
+
+  tafel.letzte = jetzt;
+  tafel.gezeichnet = true;
+  zeigeStiftlage();
+  e.preventDefault();
+}
+
+function zeichenEnde(e) {
+  if (tafel.stift !== e.pointerId) return;
+  tafel.stift = null;
+  tafel.letzte = null;
+}
+
+/** Was das Geraet gemeldet hat — und was NICHT.
+ *
+ *  Auf einem iPad soll hier "pen" stehen und ein Druck ueber null. Steht dort "touch",
+ *  hat der Stift nichts geliefert, was diese Seite von einem Finger unterscheiden
+ *  koennte. *Eine Zeichenflaeche, die nicht sagt, ob der Stift ankommt, laesst den
+ *  Benutzer raten, warum der Strich ueberall gleich dick ist.* */
+function zeigeStiftlage() {
+  if (!tafel.gezeichnet) { $("stiftlage").textContent = "Noch kein Strich gezeichnet."; return; }
+  const arten = [...tafel.arten].join(", ");
+  $("stiftlage").textContent = tafel.druckMax > 0
+    ? `Eingabe: ${arten} · Druck kommt an (bis ${tafel.druckMax.toFixed(2)})`
+    : `Eingabe: ${arten} · KEIN Druck gemeldet — der Strich hat überall dieselbe Breite.`;
+}
+
+function tafelLeeren() {
+  const c = $("tafel").getContext("2d");
+  c.clearRect(0, 0, $("tafel").width, $("tafel").height);
+  tafel.gezeichnet = false;
+  zeigeStiftlage();
+}
+
+function zeigeSkizzenteil(d) {
+  const hat = (d.bilder || []).filter((b) => b.vorhanden !== false);
+  $("skizzenlage").hidden = hat.length > 0;
+  $("skizzenblock").hidden = hat.length === 0;
+  if (!hat.length) {
+    $("skizzenlage").textContent =
+      "Gezeichnet wird auf ein vorhandenes Bild — in diesem Projekt liegt noch keines.";
+    return;
+  }
+
+  const wahl = $("unterlage");
+  const vorher = wahl.value;
+  wahl.replaceChildren();
+  for (const b of hat) {
+    const o = feld("option", null, b.bild);
+    o.value = b.bild;
+    wahl.append(o);
+  }
+  if (hat.some((b) => b.bild === vorher)) wahl.value = vorher;
+  unterlageWechseln();
+
+  const liste2 = $("skizzen");
+  liste2.replaceChildren();
+  const skizzen = d.skizzen || [];
+  liste2.className = skizzen.length ? "" : "leise";
+  if (!skizzen.length) { liste2.textContent = "Noch keine Skizze in diesem Projekt."; return; }
+  for (const s of skizzen) {
+    const k = feld("div", "skizze");
+    k.append(feld("span", "stand", s.stand.toUpperCase()), feld("span", null, "  " + s.skizze));
+    k.append(feld("div", "satz",
+      (s.ueber ? "über " + s.ueber : "ohne Unterlage") + (s.bemerkung ? " · " + s.bemerkung : "")));
+    liste2.append(k);
+  }
+}
+
+function unterlageWechseln() {
+  const name = $("unterlage").value;
+  if (!name) return;
+  $("unterlagenbild").src = bildweg($("ordner").value.trim(), name);
+}
+
+async function skizzeAblegen() {
+  if (!tafel.gezeichnet) { $("stand").textContent = "Es ist nichts gezeichnet."; return; }
+  const daten = $("tafel").toDataURL("image/png").split(",")[1];
+  $("stand").textContent = "legt ab …";
+  try {
+    const antwort = await fetch("/api/skizze", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        ordner: $("ordner").value.trim(),
+        ueber: $("unterlage").value,
+        png_base64: daten,
+      }),
+    });
+    const d = await antwort.json();
+    // DER HINWEIS KOMMT VOM SERVER UND WIRD GEZEIGT. Er sagt, dass die Zeichnung
+    // abgelegt und NICHT gerechnet wurde — eine Bestellung, die angenommen und nicht
+    // ausgeliefert wird, ist schlimmer als eine abgelehnte.
+    $("stand").textContent = d.fehler ? d.fehler : (d.skizze + " — " + d.hinweis);
+    if (!d.fehler) { tafelLeeren(); await laden(); }
+  } catch (f) {
+    $("stand").textContent = "Die Zeichnung liess sich nicht ablegen: " + f;
+  }
+}
+
+$("unterlagenbild").addEventListener("load", tafelGroesse);
+$("unterlage").addEventListener("change", unterlageWechseln);
+$("tafel").addEventListener("pointerdown", zeichenStart);
+$("tafel").addEventListener("pointermove", zeichenZug);
+$("tafel").addEventListener("pointerup", zeichenEnde);
+$("tafel").addEventListener("pointercancel", zeichenEnde);
+$("leeren").addEventListener("click", tafelLeeren);
+$("skizzeAblegen").addEventListener("click", skizzeAblegen);
+$("radierer").addEventListener("click", () => {
+  tafel.radiert = !tafel.radiert;
+  $("radierer").textContent = "Radierer: " + (tafel.radiert ? "an" : "aus");
+});
 
 $("laden").addEventListener("click", laden);
 $("rechnen").addEventListener("click", rechnen);

@@ -286,6 +286,10 @@ def neu(wurzel, modell, *, name: str | None = None, einstellungen: dict | None =
         },
         "einstellungen": dict(einstellungen or {}),
         "bilder": [],
+        # DIE EINGABE DES ENTWURFSMODUS (E23). Sie steht hier von Anfang an leer da und
+        # entsteht nicht erst beim ersten Eintrag: Ein Feld, das mal fehlt und mal nicht,
+        # zwingt jeden Leser zu einer Fallunterscheidung, die nichts bedeutet.
+        "skizzen": [],
         "regel3_ersetzt": 0,
     }
 
@@ -452,4 +456,67 @@ def vermerke_bild(projekt: dict, *, bild: str, schicht: str, urteil=None,
         "herkunft": dict(herkunft or {}),
     }
     projekt.setdefault("bilder", []).append(eintrag)
+    return projekt
+
+
+#: Was mit einer Skizze geschehen ist. Drei Zustände, und der mittlere ist der, den es
+#: sonst nirgends gäbe.
+SKIZZE_OFFEN = "offen"          #: gezeichnet, noch nicht gerechnet
+SKIZZE_GERECHNET = "gerechnet"  #: ein Bild ist daraus entstanden
+SKIZZE_VERWORFEN = "verworfen"  #: bewusst liegengelassen
+
+SKIZZEN_STAENDE = (SKIZZE_OFFEN, SKIZZE_GERECHNET, SKIZZE_VERWORFEN)
+
+
+def vermerke_skizze(projekt: dict, *, skizze: str, ueber: str | None = None,
+                    stand: str = SKIZZE_OFFEN, bemerkung: str = "") -> dict:
+    """Eine Skizze ins Projekt eintragen — **die Eingabe des Entwurfsmodus** (E23).
+
+    Args:
+        skizze: Dateiname der Skizze, relativ zum Projektordner.
+        ueber: Das Bild, auf das gezeichnet wurde — oder ``None`` für eine Skizze auf
+            leerem Grund. ``None`` heisst hier wirklich *ohne Unterlage* und nicht
+            *unbekannt*: Wer auf etwas zeichnet, weiss, worauf.
+        stand: Einer aus :data:`SKIZZEN_STAENDE`.
+        bemerkung: Was gemeint war. Freitext, für einen Menschen.
+
+    Returns:
+        Das geänderte Projekt. **Nicht geschrieben** — dafür gibt es :func:`speichere`.
+
+    **Warum eine Skizze überhaupt in die Mappe gehört, und nicht bloss als Datei daneben.**
+    Sie ist im Entwurfsmodus die *Bestellung*: Sie sagt, was hinzukommen soll. Ein Bild
+    daraus ist später nur zu verstehen, wenn danebensteht, **worauf** gezeichnet wurde —
+    dieselbe Geometrie, ein anderer Gedanke.
+
+        *Eine Zeichnung ohne ihre Unterlage ist ein Strichbild. Erst zusammen sind sie
+        ein Entwurf.*
+
+    **Und `stand` ist ein Pflichtfeld aus demselben Grund wie das Urteil am Bild.** Eine
+    Skizze, die dasteht und von der niemand weiss, ob je etwas daraus wurde, sieht nach
+    zwei Wochen aus wie erledigt. Der Vorgabewert ist darum ``offen`` und nicht leer —
+    *gezeichnet ist nicht gerechnet.*
+    """
+    if stand not in SKIZZEN_STAENDE:
+        raise ProjektError(
+            f"stand ist einer aus {', '.join(SKIZZEN_STAENDE)} — war {stand!r}. "
+            f"Ein erfundener Zustand wäre eine Auskunft, die niemand einlösen kann.")
+    if not skizze or not str(skizze).strip():
+        raise ProjektError(
+            "skizze ist der Dateiname der Zeichnung und darf nicht leer sein.")
+    if ueber is not None and not str(ueber).strip():
+        raise ProjektError(
+            "ueber ist entweder ein Bildname oder None (ohne Unterlage) — eine leere "
+            "Zeichenkette ist beides nicht, und sie sähe in der Mappe aus wie 'None'.")
+
+    eintrag = {
+        "skizze": str(skizze),
+        "ueber": str(ueber) if ueber is not None else None,
+        "erzeugt": _jetzt(),
+        "stand": stand,
+        "bemerkung": str(bemerkung),
+        # WAS DARAUS WURDE, als eigenes Feld. `None` heisst: noch nichts. Es hier
+        # wegzulassen hiesse, den Zusammenhang spaeter aus Zeitstempeln zu raten.
+        "ergebnis": None,
+    }
+    projekt.setdefault("skizzen", []).append(eintrag)
     return projekt

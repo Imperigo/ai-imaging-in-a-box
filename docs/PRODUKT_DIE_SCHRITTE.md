@@ -70,7 +70,7 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 | 2 | **Kamera** | **gebaut**, aber nicht bedienbar | Die Software wählt den Standpunkt selbst. Von Hand wählen geht nur über die Bibliothek. |
 | 3 | **Blender-Render** | **gebaut** | Läuft nur, wo Blender liegt — also bis heute nur auf der Werkstattmaschine. |
 | 4 | **KI-Bild** | **gebaut** | Braucht eine Grafikkarte. Der Vorgabeweg lief dort drei Wochen lang gar nicht (repariert 21.09.). |
-| 5 | **hineinzeichnen** | **nicht gebaut** | Braucht ein Modell, das ein Bild annimmt. Unseres tut es nicht. |
+| 5 | **hineinzeichnen** | **halb gebaut** | Zeichnen geht seit 21.09. Rechnen nicht — unser Modell nimmt kein Bild an. |
 | 6 | **neues Bild** | **nicht gebaut** | Folgt aus 5. |
 | 7 | **zurück ins Modell** (Kosmo baut nach) | **nicht gebaut** | Neu seit 21.09. Braucht die Differenz aus Schritt 6. |
 
@@ -82,6 +82,7 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 | **Die Oberfläche** | gebaut, wächst | Läuft auf dem eigenen Rechner, ohne Netz, ohne fremde Bausteine. |
 | **Der Knotenbaum** | bedienbar | Zeigt, was gerechnet würde, und lässt die Werte ändern. Knoten hinzufügen geht nicht. |
 | **Die Bildanzeige** | **neu am 21.09.2026** | Zeigt die Bilder selbst, mit dem Prüfvermerk **auf** dem Bild. |
+| **Die Zeichenfläche** | **neu am 21.09.2026** | Mit dem Stift ins Bild zeichnen, ablegen. Für iPad gebaut. |
 
 ---
 
@@ -114,6 +115,32 @@ Auf der Werkstattmaschine lief das KI-Bild **überhaupt nicht** — die Software
 Weg aus, der stirbt. Repariert; die Hälfte des Fehlers (der Ausweichweg selbst) ist
 gemessen bestellt und noch offen.
 
+### 21.09.2026 · Zeichnen geht — und zwar für den Stift, nicht für die Maus
+
+**Sie sollen es auf dem iPad ausprobieren können, und dafür musste es zuerst existieren.**
+
+In der Oberfläche steht jetzt eine Zeichenfläche: Bild auswählen, mit dem Stift
+hineinzeichnen, Radierer, Strichstärke, «in die Mappe legen». Die Zeichnung landet als
+eigener Eintrag im Projekt — mit dem Bild, auf das gezeichnet wurde, und dem Vermerk, dass
+noch nichts daraus gerechnet ist.
+
+**Drei Dinge daran sind bewusst so und nicht anders:**
+
+* **Der Druck des Stifts kommt an**, und die Fläche sagt Ihnen, ob er ankommt. Steht dort
+  «kein Druck gemeldet», hat Ihr Gerät keinen geliefert — dann liegt es nicht an der
+  Software. *Eine Zeichenfläche, die das nicht sagt, lässt Sie raten, warum der Strich
+  überall gleich dick ist.*
+* **Keine erfundene Druckkurve.** Wie sich ein echter Stift auf einem echten Gerät
+  verhält, hat hier niemand gemessen. Eine ausgedachte Kurve sähe nach Handwerk aus und
+  wäre geraten.
+* **Jede abgelegte Zeichnung trägt den Satz, dass sie NICHT gerechnet wurde.** Sie geht
+  nicht verloren — sie wartet. *Eine Bestellung, die angenommen und nicht ausgeliefert
+  wird, ist schlimmer als eine abgelehnte: Die Ablehnung sieht man.*
+
+**Was Sie dafür tun müssten:** Das iPad muss den Rechner erreichen. Heute hört die Fläche
+nur auf dem Rechner selbst — mit Absicht, denn dort liegen Ihre Gebäudemodelle. Das zu
+öffnen ist ein kleiner Handgriff und Ihre Entscheidung, nicht meine.
+
 ### 21.09.2026 · Die Registry sagt jetzt, ob eine Zahl gemessen oder geschätzt ist
 
 Beim Nachsehen, welches Modell eine Skizze annehmen könnte, fiel ein Fehler in der
@@ -134,8 +161,9 @@ Vorher stand im Protokoll «mit Ankerbild gerechnet», während ohne gerechnet w
 | | Schritt | Warum jetzt |
 |---|---|---|
 | **1** | **Den Standpunkt von Hand wählen** (Schritt 2) | Die Software entscheidet ihn heute allein. Für ein Architekturbild ist der Blickpunkt keine Nebensache. |
-| **2** | **Den Lauf in der Fläche starten und zusehen** | Heute rechnet die Fläche, und dann steht sie still. Ein Fortschritt, den niemand sieht, sieht aus wie ein Absturz. |
-| **3** | **Schritt 5 «hineinzeichnen»** | Entschieden, aber **hardwareseitig blockiert** — siehe unten. |
+| **2** | **Die Zeichenfläche auf dem iPad ausprobieren** | Das kann nur **Sie** — hier gibt es kein iPad und keinen Stift. Es ist die einzige offene Frage, die kein Worker beantworten kann. |
+| **3** | **Den Lauf in der Fläche starten und zusehen** | Heute rechnet die Fläche, und dann steht sie still. Ein Fortschritt, den niemand sieht, sieht aus wie ein Absturz. |
+| **4** | **Schritt 5 fertig machen** | Zeichnen geht. Rechnen ist **hardwareseitig blockiert** — siehe unten. |
 
 ---
 
@@ -175,6 +203,10 @@ es entscheidet, wie Schritt 5 aussieht.
 
 * **Auf einem fremden Rechner ist die Oberfläche nie geöffnet worden.** Ob der Browser
   einer anderen Person dieselbe Seite gleich darstellt: unbekannt.
+* **Und auf einem iPad erst recht nicht.** Ob sich eine Browserseite dort wie eine
+  Zeichen-App *anfühlt*, ist nicht gemessen und von hier aus nicht messbar. Das entscheidet
+  kein Schreibtisch, sondern ein Mensch mit einem Stift. **Fällt die Probe durch, ist eine
+  eigene App die Antwort** — dann aber mit gemessener Begründung statt mit einer Vermutung.
 * **Der Erfolgsmassstab von E4 ist nie geprüft worden.** Keine fremde Person hat diese
   Software je geöffnet.
 * **Ohne Grafikkarte gibt es kein KI-Bild.** Der Ein-Klick-Download ist das Ziel; ein
@@ -184,7 +216,7 @@ es entscheidet, wie Schritt 5 aussieht.
 
 | Belegstelle | Wo |
 |---|---|
-| Die sechs Schritte (E4) und der Skizzenmodus (E23) | `docs/ENTSCHEIDE_VISBOX_2026-09-18.md` |
+| Die Schritte (E4), der Skizzenmodus (E23), das iPad (E24) | `docs/ENTSCHEIDE_VISBOX_2026-09-18.md` |
 | Der Bau, Sitzung für Sitzung | `docs/sitzungen/`, `docs/PLAN.md` |
 | Die Oberfläche und ihre Auflagen | `oberflaeche/LIESMICH.md` |
 | Der Bildweg und seine Sperren | `oberflaeche/server.py`, `tests/test_oberflaeche.py` |

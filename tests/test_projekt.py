@@ -295,3 +295,99 @@ def test_die_projektdatei_ist_lesbarer_text(tmp_path, ifc):
     assert text.startswith("{\n"), "eingerückt, nicht in einer Zeile"
     assert '"modell"' in text and '"einstellungen"' in text
     assert text.endswith("\n")
+
+
+# ------------------------------------------ Die Skizze — die Eingabe des Entwurfsmodus
+#
+# E23 (Owner-Entscheid 21.09.2026): Das AI-Imaging darf Volumen ERFINDEN, nach einer ins
+# Bild gezeichneten Skizze. Die Skizze ist damit die Bestellung, und sie gehoert in die
+# Mappe wie das Bild, das daraus wird.
+
+def _mappe(tmp_path):
+    modell = tmp_path / "m.glb"
+    modell.write_bytes(b"glTF\x02\x00\x00\x00")
+    return projekt.neu(tmp_path, modell, name="Probe")
+
+
+def test_eine_frische_mappe_fuehrt_die_skizzenliste_schon(tmp_path):
+    """Sie steht von Anfang an leer da und entsteht nicht erst beim ersten Eintrag.
+
+    *Ein Feld, das mal fehlt und mal nicht, zwingt jeden Leser zu einer
+    Fallunterscheidung, die nichts bedeutet.*
+    """
+    assert _mappe(tmp_path)["skizzen"] == []
+
+
+def test_eine_skizze_traegt_ihre_unterlage(tmp_path):
+    """*Eine Zeichnung ohne ihre Unterlage ist ein Strichbild. Erst zusammen sind sie ein
+    Entwurf.*"""
+    p = _mappe(tmp_path)
+    projekt.vermerke_skizze(p, skizze="s1.png", ueber="ansicht-1.png",
+                            bemerkung="Anbau nach Sueden")
+
+    eintrag = p["skizzen"][0]
+    assert eintrag["skizze"] == "s1.png"
+    assert eintrag["ueber"] == "ansicht-1.png"
+    assert eintrag["bemerkung"] == "Anbau nach Sueden"
+
+
+def test_der_stand_ist_von_anfang_an_offen_und_nicht_leer(tmp_path):
+    """*Gezeichnet ist nicht gerechnet.* Eine Skizze ohne Zustand sieht nach zwei Wochen
+    aus wie erledigt."""
+    p = _mappe(tmp_path)
+    projekt.vermerke_skizze(p, skizze="s1.png")
+
+    assert p["skizzen"][0]["stand"] == projekt.SKIZZE_OFFEN
+    assert p["skizzen"][0]["ergebnis"] is None
+
+
+def test_ein_erfundener_stand_wird_abgewiesen(tmp_path):
+    """Ein vierter Zustand waere eine Auskunft, die niemand einloesen kann."""
+    p = _mappe(tmp_path)
+    with pytest.raises(projekt.ProjektError):
+        projekt.vermerke_skizze(p, skizze="s1.png", stand="fast_fertig")
+
+
+def test_ohne_unterlage_ist_erlaubt_und_heisst_wirklich_ohne(tmp_path):
+    """`None` heisst hier **ohne Unterlage** und nicht *unbekannt* — wer auf etwas
+    zeichnet, weiss, worauf. Das ist die eine Stelle, an der `None` in diesem Projekt
+    NICHT «nicht gemessen» bedeutet, und darum steht es im Docstring."""
+    p = _mappe(tmp_path)
+    projekt.vermerke_skizze(p, skizze="s1.png", ueber=None)
+
+    assert p["skizzen"][0]["ueber"] is None
+
+
+def test_eine_leere_unterlage_ist_etwas_anderes_als_keine(tmp_path):
+    """Eine leere Zeichenkette saehe in der Mappe aus wie `None` und waere es nicht.
+    Zwei Sachverhalte, die gleich aussehen, sind genau der Fehler, gegen den E20 steht."""
+    p = _mappe(tmp_path)
+    for leer in ("", "   "):
+        with pytest.raises(projekt.ProjektError):
+            projekt.vermerke_skizze(p, skizze="s1.png", ueber=leer)
+
+
+def test_eine_skizze_ohne_namen_wird_abgewiesen(tmp_path):
+    p = _mappe(tmp_path)
+    for leer in ("", "  ", None):
+        with pytest.raises(projekt.ProjektError):
+            projekt.vermerke_skizze(p, skizze=leer)
+
+
+def test_mehrere_skizzen_behalten_ihre_reihenfolge(tmp_path):
+    """Eine Variantenstudie ist eine Reihe. Wer sie umsortiert, nimmt ihr, was sie zeigt."""
+    p = _mappe(tmp_path)
+    for i in range(3):
+        projekt.vermerke_skizze(p, skizze=f"s{i}.png", ueber="a.png")
+
+    assert [s["skizze"] for s in p["skizzen"]] == ["s0.png", "s1.png", "s2.png"]
+
+
+def test_skizzen_ueberleben_das_speichern_und_oeffnen(tmp_path):
+    """Sonst waere der Eintrag eine Angabe, die nur bis zum Schliessen des Fensters gilt."""
+    p = _mappe(tmp_path)
+    projekt.vermerke_skizze(p, skizze="s1.png", ueber="a.png", bemerkung="mehr Volumen")
+    projekt.speichere(p, tmp_path)
+
+    wieder = projekt.oeffne(tmp_path)["projekt"]
+    assert wieder["skizzen"][0]["bemerkung"] == "mehr Volumen"

@@ -35,8 +35,11 @@ Maschine, und eine andere Adresse muss ausdrücklich gesetzt werden.
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 import json
 import sys
+import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
@@ -69,6 +72,99 @@ BILDTYPEN = {
     ".jpeg": "image/jpeg",
     ".webp": "image/webp",
 }
+
+
+#: Wie gross eine Zeichnung höchstens sein darf, die über die Fläche hereinkommt.
+#:
+#: **Zwei Megabyte, und die Zahl ist eine Setzung mit Begründung.** Eine
+#: Bildschirmzeichnung im iPad-Format (2048 x 1536) als PNG mit wenigen Strichen liegt
+#: weit darunter; ein versehentlich hereingereichtes Foto liegt darüber. Der Riegel
+#: trennt genau diese zwei Fälle.
+#:
+#: *Er greift, BEVOR geschrieben wird.* Ein Riegel, der erst beim Schreiben greift, hat
+#: schon geschrieben.
+SKIZZE_GROESSENRIEGEL = 2 * 1024 * 1024
+
+#: Was an jeder abgelegten Skizze mitgeht, solange der Entwurfsmodus nicht rechnen kann.
+#:
+#: **Er steht hier und nicht in der Seite**, weil er eine Aussage über die Bibliothek ist
+#: und keine über die Anzeige. *Eine Bestellung, die angenommen und nicht ausgeliefert
+#: wird, ist schlimmer als eine abgelehnte: Die Ablehnung sieht man.* Angenommen wird sie
+#: trotzdem — die Zeichnung ist das, was der Mensch getan hat, und sie geht nicht
+#: verloren, nur weil die Maschine sie noch nicht einlösen kann.
+HINWEIS_SKIZZE_OHNE_WEG = (
+    "Abgelegt, aber NICHT gerechnet: Das Vorgabe-Bildmodell nimmt kein Eingangsbild an "
+    "(gemessen, auf-20260919-123). Die Zeichnung liegt in der Mappe und wartet.")
+
+
+#: Die acht Byte, an denen ein PNG erkennbar ist. **Am Inhalt, nicht an der Endung** —
+#: derselbe Grundsatz wie am Einlass für die Modelldateien: Der Name kommt von aussen,
+#: was wirklich da ist, sagen die Bytes.
+PNG_KENNUNG = b"\x89PNG\r\n\x1a\n"
+
+
+def pruefe_skizzenbytes(roh_base64: str) -> bytes:
+    """Aus dem, was der Browser schickt, die Bytes der Zeichnung — oder eine Absage.
+
+    **Eigene Funktion, damit eine Probe sie rufen kann.** Der erste Wurf hatte diese drei
+    Prüfungen im Anfragebehandler stehen, und die Probe darüber verglich nur die
+    Reihenfolge im Quelltext. Eine Mutationsprobe hat den Grössenriegel danach
+    ausgeschaltet — **die Probe blieb grün**, denn die Zeile stand ja noch da, sie tat nur
+    nichts mehr.
+
+        *Ein Wächter, der die Stellung einer Zeile prüft statt ihrer Wirkung, prüft den
+        Text und nicht das Programm.*
+
+    Raises:
+        FlaechenError: mit dem Satz, der dem Menschen gesagt wird.
+    """
+    try:
+        bytes_ = base64.b64decode(roh_base64, validate=True)
+    except (ValueError, binascii.Error):
+        raise FlaechenError(
+            "Die Zeichnung liess sich nicht lesen — sie kam nicht als gültiges "
+            "Base64 an.") from None
+
+    if not bytes_.startswith(PNG_KENNUNG):
+        raise FlaechenError(
+            "Was ankam, ist kein PNG. Die Fläche legt nur ab, was sie auch erkennt.")
+
+    if len(bytes_) > SKIZZE_GROESSENRIEGEL:
+        raise FlaechenError(
+            f"Die Zeichnung ist {len(bytes_) // 1024} KB gross, erlaubt sind "
+            f"{SKIZZE_GROESSENRIEGEL // 1024}. Ein Riegel, der erst beim Schreiben "
+            f"greift, hat schon geschrieben.")
+
+    return bytes_
+
+
+def _bemerkung(bemerkung, gewuenschter_name) -> str:
+    """Die Bemerkung des Menschen — **samt dem Namen, den er der Zeichnung geben wollte.**
+
+    Der Wunschname taugt nicht als Dateiname (siehe :func:`_skizzenname`), aber er ist
+    das Einzige, was jemand über seine eigene Zeichnung gesagt hat. *Ihn wegzuwerfen,
+    weil er an einer Stelle unbrauchbar ist, wirft ihn auch an der Stelle weg, an der er
+    etwas sagt.*
+    """
+    teile = [str(bemerkung).strip() if bemerkung else ""]
+    if gewuenschter_name and str(gewuenschter_name).strip():
+        teile.append(f"gewünschter Name: {str(gewuenschter_name).strip()}")
+    return " · ".join(t for t in teile if t)
+
+
+def _skizzenname(gewuenscht) -> str:
+    """Ein Dateiname für eine Zeichnung — **aus dem Zeitpunkt, nie aus dem Wunsch.**
+
+    Der Wunsch kommt aus einem Browser und damit von aussen. Ihn als Dateinamen zu
+    nehmen hiesse, jemand anderem zu erlauben, zu bestimmen, wo geschrieben wird —
+    dieselbe Lücke, die :func:`bildpfad` beim Lesen schliesst, nur in die andere
+    Richtung.
+
+    Er geht darum **nicht verloren, sondern in die Bemerkung**: Was der Mensch gemeint
+    hat, bleibt lesbar; was auf die Platte geschrieben wird, bestimmt diese Funktion.
+    """
+    stempel = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
+    return f"skizze-{stempel}.png"
 
 
 class FlaechenError(Exception):
@@ -447,6 +543,9 @@ def sicht(ordner) -> dict:
         "bedienfelder": bedienfelder(p.get("einstellungen") or {}, graph,
                                      glb=einfuhr.get("glb")),
         "bilder": [_bild_fuer_die_flaeche(b, ordner) for b in (p.get("bilder") or [])],
+        # DIE SKIZZEN, unveraendert aus der Mappe. Kein Urteil, keine Umrechnung — die
+        # Flaeche reicht durch, was die Bibliothek fuehrt.
+        "skizzen": p.get("skizzen") or [],
         "laeufe": p.get("laeufe") or [],
         # WAS DIESE FLAECHE NICHT KANN, steht in ihr selbst und nicht nur im LIESMICH.
         # Eine Flaeche, die ihre Grenzen nur in einer Datei daneben nennt, hat sie fuer
@@ -564,6 +663,8 @@ class Flaeche(BaseHTTPRequestHandler):
             self._anlegen(wunsch)
         elif weg == "/api/einstellungen":
             self._einstellungen(wunsch)
+        elif weg == "/api/skizze":
+            self._skizze(wunsch)
         elif weg == "/api/rechne":
             self._rechne(wunsch)
         else:
@@ -650,6 +751,49 @@ class Flaeche(BaseHTTPRequestHandler):
         p["einstellungen"] = gemischt
         projekt.speichere(p, Path(ordner))
         self._sende({"gespeichert": True, "einstellungen": gemischt})
+
+    def _skizze(self, wunsch: dict) -> None:
+        """Eine Zeichnung ablegen und in der Mappe vermerken — **die Eingabe von E23.**
+
+        Die Fläche schreibt die Datei und ruft
+        :func:`aiimaging.projekt.vermerke_skizze`. Sie entscheidet dabei **nichts** über
+        die Skizze: nicht, ob sie etwas taugt, und nicht, was daraus wird.
+
+        **Warum die Bildpunkte hier hereinkommen und nicht ein Pfad.** Bei allem anderen
+        gilt in diesem Projekt der umgekehrte Satz — *was als Absicht ankommt, lässt sich
+        später anders ausführen.* Eine Zeichnung **ist** aber die Absicht; sie hat vor
+        diesem Augenblick keine Datei, weil sie im Browser entstanden ist. Ein Pfad wäre
+        hier ein Pfad auf etwas, das es noch nicht gibt.
+        """
+        ordner = wunsch.get("ordner") or self.ordner
+        roh = wunsch.get("png_base64") or ""
+        if not ordner or not roh:
+            self._fehler("Es fehlt der Projektordner oder die Zeichnung.")
+            return
+
+        try:
+            bytes_ = pruefe_skizzenbytes(roh)
+        except FlaechenError as fehler:
+            self._fehler(str(fehler))
+            return
+
+        try:
+            ziel = Path(ordner) / _skizzenname(wunsch.get("name"))
+            p = projekt.oeffne(Path(ordner))["projekt"]
+            ziel.write_bytes(bytes_)
+            projekt.vermerke_skizze(
+                p, skizze=ziel.name, ueber=wunsch.get("ueber") or None,
+                bemerkung=_bemerkung(wunsch.get("bemerkung"), wunsch.get("name")))
+            projekt.speichere(p, Path(ordner))
+        except projekt.ProjektError as fehler:
+            self._fehler(str(fehler))
+            return
+        except OSError as fehler:
+            self._fehler(f"Die Zeichnung liess sich nicht schreiben: {fehler}")
+            return
+
+        self._sende({"abgelegt": True, "skizze": ziel.name,
+                     "hinweis": HINWEIS_SKIZZE_OHNE_WEG})
 
     def _rechne(self, wunsch: dict) -> None:
         """Ruft :func:`aiimaging.arbeitsgang.rechne` — **mit den echten Ausführern.**

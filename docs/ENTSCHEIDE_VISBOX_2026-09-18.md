@@ -585,6 +585,71 @@ In der Registry steht genau **ein** Modell, das es könnte und unter Regel 1 zul
 
 ---
 
+## E24 · Die Lieferform ist ein **iPad mit Stift** — und die Fläche geht mit
+
+**Owner-Entscheid 21.09.2026**, unmittelbar auf E23:
+
+> *«Es soll eine Ergänzungssoftware für das iPad entwickelt werden, die genau dafür gebaut
+> ist. Eine simple Oberfläche wie bei iPad-Zeichnungs-Apps, damit ein schlauer
+> Stift-zu-Skizze-zu-AI-Imaging-Ablauf entsteht — ähnlich wie Samsung das auf ihrem Handy
+> macht.»*
+
+**Das ist kein neues Produkt, sondern die Lieferform für E23.** Der Entwurfsmodus braucht
+jemanden, der zeichnet; ein Stift auf einem Tablet ist das naheliegendste Gerät dafür, und
+es ist das, was der Owner in der Hand hat.
+
+### Die Aufteilung, und sie folgt aus Regel 4
+
+Ein iPad kann das Bildmodell **nicht** rechnen: kein CUDA, und die Gewichte brauchen rund
+dreissig Gigabyte. Damit ist die Rollenteilung vorgegeben und nicht gewählt:
+
+```
+iPad  ─ zeichnen, ansehen, entscheiden ─┐
+                                        ├─ Netz ─  HomePC: Bibliothek, Blender, GPU
+Browser am Rechner  ────────────────────┘
+```
+
+*Das ist genau die Bauform, die Regel 4 seit dem ersten Tag verlangt: Der Kern ist eine
+Bibliothek, die Fläche ist dünn. Eine zweite dünne Fläche kostet darum nichts an der
+Bibliothek.* Hätte das Projekt die Fähigkeiten in die Oberfläche gebaut, wäre an dieser
+Stelle ein zweites Programm fällig.
+
+### Empfehlung: **Seite im Browser, keine App im App Store**
+
+Das iPad öffnet **dieselbe Seite**, die heute schon läuft. Begründet, nicht bequem:
+
+| | Seite im Safari | Eigene App |
+|---|---|---|
+| Zweiter Quelltext | **nein** | ja, in Swift |
+| Apple-Entwicklerkonto (jährliche Gebühr) | **nein** | ja |
+| Verteilung an Dritte | Link | App Store, mit Prüfung |
+| Stiftdruck und Stiftart | **ja**, über Zeiger­ereignisse | ja |
+| Latenz wie eine Zeichen-App | **nicht gemessen** | vermutlich besser |
+| Regel 1 | unberührt | unberührt (Apples Werkzeuge sind proprietär, nicht ansteckend) |
+
+**Die eine Zeile, die zählt, ist die vorletzte:** Ob sich eine Browserseite auf einem iPad
+wie eine Zeichen-App *anfühlt*, ist **nicht gemessen** und von hier aus nicht messbar.
+Das entscheidet niemand am Schreibtisch, sondern ein Mensch mit einem Stift.
+
+*Darum wird die Zeichenfläche zuerst gebaut und ausprobiert, bevor über eine App geredet
+wird.* Fällt die Probe durch, ist eine App die Antwort — dann aber mit gemessener
+Begründung statt mit einer Vermutung.
+
+### Die offene Frage, und sie ist keine technische
+
+**Das iPad muss den HomePC erreichen können.** Die Fläche hört heute ausdrücklich nur auf
+der eigenen Maschine, und der Grund steht in ihrem LIESMICH: *Hier liegen die
+Gebäudemodelle von jemandem.*
+
+Sie im Heimnetz zu öffnen ist ein kleiner Handgriff und eine **Entscheidung des Owners**,
+keine des Ausführenden. Was daran hängt: Jedes Gerät im selben Netz könnte die Projekte
+lesen. Ein Passwort davor ist machbar, ist aber selbst wieder etwas, das gebaut, geprüft
+und nicht vergessen werden will.
+
+*Solange das nicht entschieden ist, wird die Fläche nicht geöffnet.*
+
+---
+
 Diese zwei sind **Tatsachen, keine Wahl**. Ich trage sie nicht als entschieden ein.
 
 ## O1 · Der Abgabetermin und die Form (F59) — **offen**

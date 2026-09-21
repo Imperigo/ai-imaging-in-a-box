@@ -3948,6 +3948,23 @@ bequem ausging — bis der nächste, etwas grössere Lauf stirbt. Die Zahl steht
 21.09.2026 in jedem Ergebnis, und unter zwei Gigabyte meldet sich der Kurzbefund.
 *Negativ heisst:* Es reichte nicht, also wurde ausgelagert.
 
+**Zeigerereignisse (Pointer Events)** — Die Art, wie ein Browser meldet, dass jemand
+etwas berührt, klickt oder mit einem Stift darauf zeichnet. **Ein** Weg für alle drei
+Geräte, statt je einem für Maus, Finger und Stift.
+*Warum das Projekt genau diesen nimmt:* Er ist der einzige, der **Druck** und **Gerätart**
+mitliefert — ob also ein Stift geschrieben hat oder ein Finger, und wie fest. Ohne beides
+wäre eine Zeichenfläche auf einem Tablet dasselbe wie eine mit der Maus.
+*Und was er nicht löst:* Wie schnell der Strich erscheint. Das hängt am Gerät und am
+Browser und ist in diesem Projekt **nicht gemessen**.
+
+**Leinwand (Canvas)** — Eine Fläche in einer Webseite, auf die ein Programm zeichnen kann
+— im Unterschied zum übrigen Seiteninhalt, der aus Text und Bildern besteht.
+*Im Projekt:* Sie liegt **durchsichtig über** dem Bild, auf das gezeichnet wird. So bleibt
+die Zeichnung von dem Bild getrennt, das darunter liegt, und lässt sich einzeln ablegen.
+*Und darum arbeitet der Radierer anders, als man denkt:* Er malt nicht weiss, sondern
+**nimmt weg**. Weisse Farbe würde das Bild darunter verdecken statt die eigene Linie zu
+entfernen — auf dem Bildschirm sähe beides zuerst gleich aus.
+
 **Darstellungsmodus und Entwurfsmodus** — Die zwei Betriebsarten, die Visbox seit dem
 21.09.2026 hat, und sie stellen fast entgegengesetzte Fragen.
 *Darstellung:* Zeigt das Bild, was im Gebäudemodell wirklich steht? Erfundenes Volumen ist
@@ -5179,6 +5196,7 @@ System laufen.
 | 2026-09-21 | Aus der Pruefung der Kanten zum Nachbarsystem: **Nullbar (nullable)**, **Tote Kante und leere Kante** |
 | 2026-09-21 | Aus der Bildanzeige der Oberflaeche: **Verweis (Symlink)** neu; **Positivliste / Verbotsliste** um das zweite Beispiel erweitert statt ein zweites Mal angelegt — der Waechter gegen Doppeleintraege hat es gemeldet |
 | 2026-09-21 | Aus dem Owner-Entscheid zum Skizzenmodus (E23): **Darstellungsmodus und Entwurfsmodus**, **Erfundenes Volumen** |
+| 2026-09-21 | Aus der Zeichenflaeche fuer das iPad (E24): **Zeigerereignisse (Pointer Events)**, **Leinwand (Canvas)** |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |

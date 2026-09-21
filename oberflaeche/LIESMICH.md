@@ -131,3 +131,50 @@ Mutationsprobe hat gezeigt, dass die Namenssperre nichts fängt, was die Auflös
 auch fängt. Sie bleibt für die **Meldung** stehen — wer `/etc/passwd` eingibt, soll nicht
 über Verweise belehrt werden. *Ein Wächter, der nichts fängt, was der nächste nicht auch
 fängt, ist kein zweiter Wächter.*
+
+## Seit dem 21.09.2026 kann man hineinzeichnen
+
+Die Zeichenfläche ist die Eingabe des **Entwurfsmodus** (E23) und die Lieferform dafür ist
+ein **iPad mit Stift** (E24). Sie ist darum für einen Stift gebaut und nicht für eine
+Maus, die auch geht.
+
+**Zeigerereignisse und nichts daneben.** `PointerEvent` ist der einzige Weg, der `pressure`
+und `pointerType` liefert und für Maus, Finger und Stift derselbe ist. Maus- und
+Berührungsereignisse daneben wären derselbe Code dreimal, und der dritte veraltet zuerst.
+
+**`touch-action: none` ist keine Kosmetik.** Ohne das schiebt ein Tablet beim Zeichnen die
+Seite, statt einen Strich zu machen.
+
+**Die Leinwand hat die Punktzahl des Bildes, nicht die des Bildschirms.** Eine Skizze in
+Bildschirmpunkten passt später nicht auf das Bild, auf das sie gezeichnet wurde — und
+genau darauf soll sie angewandt werden.
+
+**Der Radierer nimmt weg, statt weiss zu malen.** Die Leinwand liegt durchsichtig über dem
+Bild; weisse Farbe würde es verdecken statt die eigene Linie zu entfernen.
+
+**Und die Fläche misst genau eine Sache selbst — das Gerät.** Unter der Zeichenfläche
+steht, welche Eingabeart gemeldet wurde und ob Druck dabei war. *Eine Zeichenfläche, die
+das nicht sagt, lässt den Benutzer raten, warum der Strich überall gleich dick ist.*
+
+Eine **Druckkurve wird ausdrücklich nicht erfunden**: Was ein echter Stift auf einem
+echten Gerät meldet, hat hier niemand gemessen, und eine ausgedachte Kennlinie sähe nach
+Handwerk aus.
+
+### Was beim Ablegen gilt
+
+* **Das Format wird am Inhalt erkannt**, nicht am Namen — dieselbe Regel wie am Einlass
+  für die Modelldateien.
+* **Der Grössenriegel greift vor dem Schreiben.** *Ein Riegel, der erst beim Schreiben
+  greift, hat schon geschrieben.*
+* **Der Dateiname kommt aus dem Zeitpunkt, nie aus dem Wunsch.** Der Wunsch kommt aus
+  einem Browser; ihn als Dateinamen zu nehmen hiesse, jemand anderem zu erlauben zu
+  bestimmen, wo geschrieben wird. Er geht in die Bemerkung statt verloren.
+* **Jede abgelegte Skizze trägt den Satz, dass sie nicht gerechnet wurde.** *Eine
+  Bestellung, die angenommen und nicht ausgeliefert wird, ist schlimmer als eine
+  abgelehnte: Die Ablehnung sieht man.*
+
+### Und sie hört weiterhin nur auf dieser Maschine
+
+Damit ein iPad sie erreicht, müsste sie im Heimnetz hören. **Das ist eine Entscheidung des
+Owners und wird nicht nebenbei getroffen:** Jedes Gerät im selben Netz könnte die Projekte
+dann lesen.

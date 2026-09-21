@@ -190,8 +190,16 @@ def test_die_flaeche_braucht_kein_fremdes_paket():
             fremd |= {n.name.split(".")[0] for n in k.names}
         elif isinstance(k, ast.ImportFrom) and k.module:
             fremd.add(k.module.split(".")[0])
-    erlaubt = {"argparse", "inspect", "json", "sys", "urllib", "http", "pathlib",
-               "aiimaging", "__future__"}
+    # GEGEN DIE STANDARDBIBLIOTHEK SELBST, nicht gegen eine Liste von Hand.
+    #
+    # Bis zum 21.09.2026 stand hier eine aufgezaehlte Erlaubnisliste. Sie hat beim ersten
+    # `import base64` angeschlagen — einem Modul der Standardbibliothek, an dem unter
+    # Regel 1 nichts auszusetzen ist. *Ein Waechter, der bei jedem Ausbau von Hand
+    # nachgezogen werden muss, wird irgendwann weit gestellt statt nachgezogen.*
+    #
+    # `sys.stdlib_module_names` kennt sie alle. Der Waechter wird dadurch SCHAERFER: Er
+    # erlaubt jedes Standardmodul und weiterhin kein einziges fremdes Paket.
+    erlaubt = set(sys.stdlib_module_names) | {"aiimaging", "__future__"}
     assert fremd <= erlaubt, f"Fremde Pakete in der Fläche: {sorted(fremd - erlaubt)}"
 
 
@@ -665,3 +673,179 @@ def test_der_bildname_wird_kodiert_und_nicht_eingeklebt():
     baustein = SEITE.read_text(encoding="utf-8").split("function bildweg", 1)[1] \
                                                 .split("\n}", 1)[0]
     assert baustein.count("encodeURIComponent") == 2
+
+
+# ------------------------------------ 9 · Die Zeichenflaeche — der Entwurfsmodus (E23)
+#
+# Sie ist fuer einen STIFT gebaut, nicht fuer eine Maus, die auch geht. Der Owner will
+# einen «schlauen Stift»-Ablauf auf dem iPad: zeichnen, AI-imagen, Variante ansehen.
+# Ob ein Browser das wirklich traegt, kann hier niemand messen — es gibt kein iPad und
+# keinen Stift. Was hier geprueft wird, ist darum nicht das Gefuehl, sondern dass die
+# Seite die einzigen Ereignisse benutzt, die Druck und Stiftart ueberhaupt liefern.
+
+def test_die_seite_benutzt_zeigerereignisse_und_nicht_maus_und_beruehrung_getrennt():
+    """`PointerEvent` ist der einzige Weg, der `pressure` und `pointerType` liefert —
+    und der fuer Maus, Finger und Stift derselbe ist.
+
+    Maus- und Beruehrungsereignisse daneben waeren derselbe Code dreimal, und der dritte
+    veraltet zuerst.
+    """
+    text = SEITE.read_text(encoding="utf-8")
+
+    assert "pointerdown" in text and "pointermove" in text
+    for alt in ("mousedown", "touchstart", "mousemove", "touchmove"):
+        assert alt not in text, f"{alt} steht daneben — dann gibt es zwei Wege"
+
+
+def test_die_zeichenflaeche_laesst_das_geraet_nicht_die_seite_schieben():
+    """`touch-action: none` ist keine Kosmetik. Ohne das schiebt ein Tablet beim Zeichnen
+    die Seite, statt einen Strich zu machen — und die Flaeche waere mit dem Finger oder
+    dem Stift schlicht nicht bedienbar."""
+    text = SEITE.read_text(encoding="utf-8")
+    regel = text.split(".zeichenflaeche canvas", 1)[1].split("}", 1)[0]
+
+    assert "touch-action: none" in regel
+
+
+def test_der_druck_wirkt_nur_beim_stift():
+    """Eine Maus meldet `pressure` 0. Wer daraus eine Breite rechnet, zieht mit der Maus
+    Haarlinien — und es saehe aus wie ein kaputter Stift statt wie eine Maus."""
+    baustein = SEITE.read_text(encoding="utf-8").split("function strichbreite", 1)[1] \
+                                                .split("\n}", 1)[0]
+
+    assert '"pen"' in baustein
+    assert "return grund" in baustein, "ohne Stift muss die eingestellte Breite gelten"
+
+
+def test_die_seite_erfindet_keine_druckkurve():
+    """**Was hier NICHT steht, ist die Aussage.**
+
+    Eine geglaettete Druckkurve saehe nach Handwerk aus und waere geraten: Was ein echter
+    Stift auf einem echten Geraet meldet, hat in diesem Projekt niemand gemessen. Der
+    Grund steht im Baustein selbst — eine Probe haelt fest, dass er dort bleibt.
+    """
+    text = SEITE.read_text(encoding="utf-8")
+    # AB DEM ERKLAERKOMMENTAR, nicht ab der Funktionszeile: Die Begruendung steht
+    # darueber, und genau sie soll hier festgehalten werden.
+    mitBegruendung = text.split("/** Wie breit ein Strich", 1)[1] \
+                         .split("function strichbreite", 1)[0]
+
+    assert "gemessen" in mitBegruendung.lower()
+    assert "geraten" in mitBegruendung.lower()
+
+
+def test_die_tafel_bekommt_die_punktzahl_des_BILDES():
+    """Eine Skizze in Bildschirmpunkten passt spaeter nicht auf das Bild, auf das sie
+    gezeichnet wurde — und genau darauf soll sie angewandt werden."""
+    baustein = SEITE.read_text(encoding="utf-8").split("function tafelGroesse", 1)[1] \
+                                                .split("\n}", 1)[0]
+
+    assert "naturalWidth" in baustein and "naturalHeight" in baustein
+
+
+def test_der_radierer_nimmt_weg_statt_weiss_zu_malen():
+    """Ein weisser Strich auf einer durchsichtigen Tafel waere weisse FARBE — er wuerde
+    das Bild darunter verdecken statt die eigene Linie zu entfernen. Auf dem Bildschirm
+    saehe beides zuerst gleich aus."""
+    text = SEITE.read_text(encoding="utf-8")
+    assert "destination-out" in text
+
+
+def test_die_seite_sagt_ob_der_stift_wirklich_ankommt():
+    """**Die einzige Messung, die diese Seite selbst vornimmt** — und sie misst das
+    GERAET, nicht die Zeichnung.
+
+    Steht dort "touch" statt "pen", hat der Stift nichts geliefert, was ihn von einem
+    Finger unterschiede. *Eine Zeichenflaeche, die nicht sagt, ob der Stift ankommt,
+    laesst den Benutzer raten, warum der Strich ueberall gleich dick ist.*
+    """
+    baustein = SEITE.read_text(encoding="utf-8").split("function zeigeStiftlage", 1)[1] \
+                                                .split("\n}", 1)[0]
+
+    assert "KEIN Druck" in baustein, "der Fall ohne Druck muss benannt werden"
+    assert "pointerType" in SEITE.read_text(encoding="utf-8")
+
+
+# ------------------------------------------- 10 · Was beim Ablegen einer Skizze gilt
+
+def test_der_dateiname_kommt_nie_aus_dem_wunsch(server):
+    """Der Wunsch kommt aus einem Browser und damit von aussen. Ihn als Dateinamen zu
+    nehmen hiesse, jemand anderem zu erlauben zu bestimmen, WO geschrieben wird —
+    dieselbe Luecke wie beim Lesen, nur in die andere Richtung."""
+    for boese in ("../../etc/passwd", "/tmp/weg.png", "a/b.png", "x" * 300):
+        name = server._skizzenname(boese)
+        assert name.startswith("skizze-") and name.endswith(".png")
+        assert "/" not in name and ".." not in name
+
+
+def test_der_wunschname_geht_nicht_verloren_sondern_in_die_bemerkung(server):
+    """*Ihn wegzuwerfen, weil er an einer Stelle unbrauchbar ist, wirft ihn auch an der
+    Stelle weg, an der er etwas sagt.* Er ist das Einzige, was jemand ueber seine eigene
+    Zeichnung gesagt hat."""
+    assert "Variante B" in server._bemerkung("", "Variante B")
+    assert "mehr Volumen" in server._bemerkung("mehr Volumen", None)
+
+
+def test_eine_zu_grosse_zeichnung_wird_abgewiesen(server):
+    """*Ein Riegel, der erst beim Schreiben greift, hat schon geschrieben.*
+
+    **Diese Probe hat in ihrer ersten Fassung NICHT gefallen.** Sie verglich die
+    Reihenfolge zweier Zeichenketten im Quelltext; eine Mutationsprobe hat den Riegel
+    danach auf `if False` gesetzt — die Zeile stand noch da, sie tat nur nichts mehr, und
+    die Probe blieb gruen.
+
+        *Ein Waechter, der die Stellung einer Zeile prueft statt ihrer Wirkung, prueft
+        den Text und nicht das Programm.*
+
+    Jetzt wird die Entscheidung gerufen statt gelesen.
+    """
+    import base64 as b64
+
+    zu_gross = b64.b64encode(
+        server.PNG_KENNUNG + b"\0" * (server.SKIZZE_GROESSENRIEGEL + 1)).decode()
+
+    with pytest.raises(server.FlaechenError) as fehler:
+        server.pruefe_skizzenbytes(zu_gross)
+    assert "gross" in str(fehler.value)
+
+
+def test_eine_zeichnung_knapp_unter_der_grenze_kommt_durch(server):
+    """Die Gegenprobe. Ohne sie waere ein Riegel, der ALLES abweist, ebenso gruen — und
+    eine Flaeche, die nie eine Zeichnung annimmt, haette jede Probe bestanden."""
+    import base64 as b64
+
+    gerade_noch = server.PNG_KENNUNG + b"\0" * (server.SKIZZE_GROESSENRIEGEL
+                                                - len(server.PNG_KENNUNG))
+    assert server.pruefe_skizzenbytes(b64.b64encode(gerade_noch).decode()) == gerade_noch
+
+
+def test_das_format_wird_am_inhalt_erkannt_und_nicht_am_namen(server):
+    """Derselbe Grundsatz wie am Einlass fuer die Modelldateien: Der Name kommt von
+    aussen, die Bytes sagen, was wirklich da ist.
+
+    Ein JPEG, ein Textschnipsel, eine SVG-Datei — alle drei koennten `.png` heissen.
+    """
+    import base64 as b64
+
+    for kein_png in (b"nur text", b"\xff\xd8\xff\xe0JFIF", b"<svg></svg>"):
+        with pytest.raises(server.FlaechenError) as fehler:
+            server.pruefe_skizzenbytes(b64.b64encode(kein_png).decode())
+        assert "PNG" in str(fehler.value)
+
+
+def test_kaputtes_base64_ist_eine_absage_mit_satz(server):
+    """Nicht ein Absturz im Anfragebehandler. Wer einen Stacktrace liest, hoert auf."""
+    with pytest.raises(server.FlaechenError):
+        server.pruefe_skizzenbytes("### das ist kein base64 ###")
+
+
+def test_jede_abgelegte_skizze_traegt_den_hinweis_dass_sie_nicht_gerechnet_wurde(server):
+    """*Eine Bestellung, die angenommen und nicht ausgeliefert wird, ist schlimmer als
+    eine abgelehnte: Die Ablehnung sieht man.*
+
+    Angenommen wird sie trotzdem — die Zeichnung ist das, was der Mensch getan hat, und
+    sie geht nicht verloren, nur weil die Maschine sie noch nicht einloesen kann.
+    """
+    assert "NICHT gerechnet" in server.HINWEIS_SKIZZE_OHNE_WEG
+    assert "auf-20260919-123" in server.HINWEIS_SKIZZE_OHNE_WEG, (
+        "der Hinweis behauptet etwas ueber die Software — dann gehoert die Messung dazu")
