@@ -4985,6 +4985,18 @@ Angabe von sich aus — *der Weg über IFC beantwortet die Frage, statt sie zu s
 *Wo im Projekt:* `aiimaging.contracts.normalize_up_axis`, `aiimaging.hochachse`,
 `aiimaging.arbeitsgang.rechne`.
 
+**Die Oberfläche (von Visbox)** — Das Fenster, in dem man das Programm bedient: Projekt
+öffnen, Modell und Bilder ansehen, einen Lauf starten.
+*Wo sie liegt und warum dort:* **Ausserhalb** des Programmkerns, im Ordner `oberflaeche/`.
+Regel 4 verlangt, dass jede Fähigkeit ohne Fenster nutzbar bleibt — *was nur über einen
+Klick erreichbar ist, existiert nicht.* Läge die Oberfläche im Kern, wäre sie irgendwann
+dessen Voraussetzung.
+*Womit sie gebaut ist:* mit dem, was in Python selbst steckt, und einer Seite, die man im
+Browser öffnet. Kein zugekaufter Baukasten — die üblichen sind copyleft (Regel 1), und was
+zum Start eine Netzverbindung braucht, ist kein Ein-Klick-Download.
+*Die Auflage, um die es geht:* Ein **ungeprüftes** Bild darf nie aussehen wie ein
+bestandenes — und auch nicht wie gar nichts. *Kein Abzeichen sieht aus wie kein Problem.*
+
 ---
 
 ## 9 · Arbeit mit Claude Code
@@ -5045,6 +5057,7 @@ System laufen.
 | 2026-09-21 | Zum Importeur: **Importeur (3D-Modell-Importeur)**, **Durchreichen**, **Rundreise mit bekannter Wahrheit**, **Der Vorgabewürfel** |
 | 2026-09-21 | Zur Fundation: **Projekt (die Mappe)**, **Fingerabdruck (einer Datei)** |
 | 2026-09-21 | Zum Einhaengen: **Arbeitsgang**, **Hochachse** |
+| 2026-09-21 | Zur Oberflaeche: **Die Oberflaeche (von Visbox)** |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |

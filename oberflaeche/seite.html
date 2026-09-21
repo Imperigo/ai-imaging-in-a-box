@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visbox</title>
+<!--
+  KEIN SKRIPT UND KEINE SCHRIFT VON EINEM FREMDEN SERVER, und das ist eine Auflage und
+  keine Sparsamkeit: Das Ziel ist ein Ein-Klick-Download. Was zum Start eine
+  Netzverbindung braucht, ist keiner — und eine Schriftart von einem fremden Server ist
+  eine Netzverbindung.  `tests/test_oberflaeche.py` haelt es fest.
+-->
+<style>
+  :root {
+    --grund: #14161a; --feld: #1c1f26; --rand: #2b3038;
+    --schrift: #e6e8ec; --leise: #9aa2ae;
+    --bestanden: #4ea373; --durchgefallen: #c2554f; --ungemessen: #c8a53f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--grund); color: var(--schrift);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  header {
+    padding: 14px 20px; border-bottom: 1px solid var(--rand);
+    display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap;
+  }
+  h1 { font-size: 17px; margin: 0; font-weight: 600; letter-spacing: .02em; }
+  main { padding: 20px; display: grid; gap: 20px; grid-template-columns: 1fr; max-width: 1100px; }
+  @media (min-width: 900px) { main { grid-template-columns: 340px 1fr; } }
+  section { background: var(--feld); border: 1px solid var(--rand); border-radius: 8px; padding: 16px; }
+  h2 { font-size: 13px; margin: 0 0 12px; color: var(--leise);
+       text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+  input, button {
+    font: inherit; background: var(--grund); color: var(--schrift);
+    border: 1px solid var(--rand); border-radius: 6px; padding: 7px 10px;
+  }
+  button { cursor: pointer; }
+  button:hover { border-color: var(--leise); }
+  .leise { color: var(--leise); }
+  .satz { color: var(--leise); font-size: 13px; margin-top: 4px; }
+
+  /* DIE DREI ZEICHEN — und sie sind mit ABSICHT verschieden stark.
+     Ein ungeprueftes Bild darf nie aussehen wie ein bestandenes, und auch nicht wie
+     gar nichts: Kein Abzeichen sieht aus wie kein Problem. */
+  .zeichen {
+    display: inline-block; padding: 2px 9px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; letter-spacing: .03em; border: 1px solid;
+  }
+  .bestanden      { color: var(--bestanden);      border-color: var(--bestanden); }
+  .durchgefallen  { color: var(--durchgefallen);  border-color: var(--durchgefallen); }
+  .nicht-gemessen { color: var(--ungemessen);     border-color: var(--ungemessen);
+                    border-style: dashed; }
+
+  .bild { border: 1px solid var(--rand); border-radius: 6px; padding: 12px; margin-bottom: 10px; }
+  .bild .kopf { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .bild .name { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; }
+  .basis { margin-top: 8px; padding-left: 12px; border-left: 2px solid var(--rand);
+           font-size: 13px; color: var(--leise); }
+
+  .knoten { display: flex; gap: 10px; align-items: baseline; padding: 7px 0;
+            border-bottom: 1px solid var(--rand); }
+  .knoten:last-child { border-bottom: 0; }
+  .knoten .art { font-family: ui-monospace, Menlo, monospace; font-size: 13px; min-width: 96px; }
+  .knoten .von { font-size: 12px; color: var(--leise); }
+  .meldung { border-left: 3px solid var(--ungemessen); padding: 8px 12px; margin-top: 10px;
+             background: rgba(200,165,63,.07); font-size: 13px; }
+  .fehler  { border-left-color: var(--durchgefallen); background: rgba(194,85,79,.08); }
+  dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; }
+  dt { color: var(--leise); }
+  dd { margin: 0; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Visbox</h1>
+  <input id="ordner" placeholder="Projektordner" size="34">
+  <button id="laden">Öffnen</button>
+  <button id="rechnen">Rechnen</button>
+  <span id="stand" class="leise"></span>
+</header>
+
+<main>
+  <section>
+    <h2>Modell</h2>
+    <div id="modell" class="leise">Noch kein Projekt geöffnet.</div>
+  </section>
+
+  <section>
+    <h2>Was gerechnet würde</h2>
+    <div id="baum" class="leise">—</div>
+  </section>
+
+  <section style="grid-column: 1 / -1">
+    <h2>Bilder</h2>
+    <div id="bilder" class="leise">—</div>
+  </section>
+</main>
+
+<script>
+"use strict";
+
+// KEIN RAHMENWERK. Die Flaeche zeigt vier Dinge an; dafuer eines einzubinden hiesse, eine
+// Abhaengigkeit zu pflegen, zu installieren und lizenzzupruefen — fuer Code, der hier in
+// hundert Zeilen steht.
+
+const $ = (id) => document.getElementById(id);
+
+/** Text einsetzen, niemals HTML. Ein Dateiname kommt von der Platte eines Menschen und
+ *  ist damit fremder Text; ihn als HTML zu setzen hiesse, ihm zu erlauben, diese Seite
+ *  umzubauen. */
+function feld(tag, klasse, text) {
+  const e = document.createElement(tag);
+  if (klasse) e.className = klasse;
+  if (text !== undefined && text !== null) e.textContent = String(text);
+  return e;
+}
+
+function liste(paare) {
+  const dl = feld("dl");
+  for (const [k, v] of paare) {
+    if (v === undefined || v === null || v === "") continue;
+    dl.append(feld("dt", null, k), feld("dd", null, v));
+  }
+  return dl;
+}
+
+/** DIE DREI ZEICHEN. Hier steht keine Bedingung darueber, OB etwas gemessen wurde —
+ *  das hat der Server aus der Bibliothek geholt. Hier wird nur angezeigt. */
+function zeichenFuer(bild) {
+  const beschriftung = {
+    "bestanden": "bestanden",
+    "durchgefallen": "durchgefallen",
+    "nicht-gemessen": "nicht gemessen",
+  }[bild.zeichen] || bild.zeichen;
+  return feld("span", "zeichen " + bild.zeichen, beschriftung);
+}
+
+function zeigeModell(d) {
+  const ziel = $("modell");
+  ziel.replaceChildren();
+  ziel.className = "";
+  ziel.append(liste([
+    ["Projekt", d.name],
+    ["Datei", d.modell.pfad],
+    ["Format", d.modell.einlass.format || d["import"].format],
+    ["Weg herein", d["import"].weg],
+    ["Hochachse", d["import"].hochachse_steht_fest
+       ? d["import"].hochachse
+       : (d.einstellungen.up_axis ? d.einstellungen.up_axis + " (angegeben)" : "nicht bekannt")],
+  ]));
+
+  // DER ZUSTAND DES MODELLS steht als Satz da und nicht als Farbe. Ein geaendertes
+  // Modell haelt hier nichts an — es wird gemeldet, wie in der Bibliothek auch.
+  if (d.modell.stand !== "unveraendert") {
+    ziel.append(feld("div", "meldung", d.modell.grund));
+  }
+  // Was beim Import NICHT geprueft wurde, gehoert hierher und nicht in eine Fussnote.
+  if (d["import"].treue === null || d["import"].treue === undefined) {
+    ziel.append(feld("div", "satz",
+      "Ob die Umwandlung die Geometrie getroffen hat, ist NICHT GEPRÜFT — dafür müsste " +
+      "bekannt sein, was herauskommen soll."));
+  }
+  for (const h of (d["import"].hinweise || [])) ziel.append(feld("div", "satz", h));
+}
+
+function zeigeBaum(d) {
+  const ziel = $("baum");
+  ziel.replaceChildren();
+  ziel.className = "";
+  if (d.knotenbaum_fehler) {
+    ziel.append(feld("div", "meldung fehler", d.knotenbaum_fehler));
+    return;
+  }
+  if (!d.knotenbaum.length) {
+    ziel.className = "leise";
+    ziel.textContent = "Keine Rechnung möglich — es fehlt die umgewandelte Geometrie.";
+    return;
+  }
+  for (const k of d.knotenbaum) {
+    const zeile = feld("div", "knoten");
+    zeile.append(feld("span", "art", k.art));
+    zeile.append(feld("span", "von",
+      k.eingaenge.length ? "aus " + k.eingaenge.join(", ") : "Anfang"));
+    ziel.append(zeile);
+  }
+  ziel.append(feld("div", "satz",
+    "Das ist die Reihenfolge, in der gerechnet würde. Sie lässt sich hier noch nicht " +
+    "ändern."));
+}
+
+function zeigeBilder(d) {
+  const ziel = $("bilder");
+  ziel.replaceChildren();
+  ziel.className = d.bilder.length ? "" : "leise";
+  if (!d.bilder.length) { ziel.textContent = "Noch keine Bilder in diesem Projekt."; return; }
+
+  for (const b of d.bilder) {
+    const karte = feld("div", "bild");
+    const kopf = feld("div", "kopf");
+    kopf.append(zeichenFuer(b));
+    kopf.append(feld("span", "name", b.bild));
+    kopf.append(feld("span", "leise", b.schicht));
+    karte.append(kopf);
+    // DER SATZ STEHT IMMER DA, auch beim bestandenen Bild. Eine Zahl ohne ihre Bedingung
+    // ist keine Auskunft — und ein Abzeichen ohne Satz ist eine Zahl ohne Bedingung.
+    karte.append(feld("div", "satz", b.satz));
+
+    if (b.basis) {
+      const u = b.basis.geometrie_bestanden;
+      const wort = u === true ? "bestanden" : (u === false ? "durchgefallen" : "nicht gemessen");
+      const block = feld("div", "basis");
+      block.append(feld("div", null,
+        "Darunter liegt " + (b.basis.bild || "ein Bild") + " — dessen Geometrie ist " +
+        wort + "."));
+      if (b.basis.grund) block.append(feld("div", "satz", b.basis.grund));
+      if (b.basis.herkunft) block.append(feld("div", "satz", "Zuordnung: " + b.basis.herkunft));
+      karte.append(block);
+    }
+
+    const h = b.herkunft || {};
+    karte.append(liste([
+      ["Prompt", h.prompt], ["Backbone", h.backbone], ["Startwert", h.seed],
+      ["Modellstand", h.modell_stand !== "unveraendert" ? h.modell_stand : null],
+    ]));
+    ziel.append(karte);
+  }
+}
+
+async function laden() {
+  const ordner = $("ordner").value.trim();
+  $("stand").textContent = "lädt …";
+  try {
+    const antwort = await fetch("/api/projekt?ordner=" + encodeURIComponent(ordner));
+    const d = await antwort.json();
+    if (d.fehler) { $("stand").textContent = d.fehler; return; }
+    zeigeModell(d); zeigeBaum(d); zeigeBilder(d);
+    $("stand").textContent = d.bilder.length + " Bilder, " + d.laeufe.length + " Läufe";
+  } catch (f) {
+    $("stand").textContent = "Die Oberfläche erreicht ihren eigenen Dienst nicht: " + f;
+  }
+}
+
+async function rechnen() {
+  $("stand").textContent = "rechnet …";
+  try {
+    const antwort = await fetch("/api/rechne", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ordner: $("ordner").value.trim()}),
+    });
+    const d = await antwort.json();
+    // EIN FEHLSCHLAG WIRD ANGEZEIGT, NICHT VERSCHLUCKT. Er ist ein Satz aus der
+    // Bibliothek und fuer einen Menschen geschrieben.
+    $("stand").textContent = d.fehler ? d.fehler
+      : (d.vermerkt + " Bilder eingetragen" + (d.error ? " — " + d.error : ""));
+    if (!d.fehler) await laden();
+  } catch (f) {
+    $("stand").textContent = "Der Lauf liess sich nicht starten: " + f;
+  }
+}
+
+$("laden").addEventListener("click", laden);
+$("rechnen").addEventListener("click", rechnen);
+$("ordner").addEventListener("keydown", (e) => { if (e.key === "Enter") laden(); });
+// Beim Start einmal fragen: Wer mit --ordner gestartet hat, soll nicht erst klicken.
+laden();
+</script>
+</body>
+</html>

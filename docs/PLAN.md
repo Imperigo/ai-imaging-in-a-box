@@ -5820,6 +5820,37 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Die Oberflaeche steht — ausserhalb des Kerns, und das ist der ganze Punkt.**
+      `oberflaeche/` liegt **neben** `src/aiimaging/`, weil Regel 4 jeden
+      Oberflaechen-Import im Kern verbietet. *Was nur ueber einen Klick erreichbar ist,
+      existiert nicht* — laege sie im Kern, waere sie irgendwann dessen Voraussetzung.
+      **Gebaut mit der Standardbibliothek und einer Seite**, die neben ihr liegt. Kein
+      Fenster-Werkzeugkasten (PyQt ist GPL, PySide LGPL — Regel 1), kein Web-Rahmenwerk,
+      **nichts aus dem Netz**: *Was zum Start eine Netzverbindung braucht, ist kein
+      Ein-Klick-Download, und eine Schriftart von einem fremden Server ist eine
+      Netzverbindung.*
+      Sie hoert nur auf **127.0.0.1**. Hier liegen die Gebaeudemodelle von jemandem; eine
+      Flaeche, die von aussen erreichbar ist, gibt sie weiter — auch wenn niemand das
+      wollte.
+      **Die Auflage, um die es geht**, kommt aus dem Entwurf vom 26.08.2026: *Traegt die
+      Oberflaeche die Messung nicht, ist sie im Produkt unsichtbar; traegt sie sie als
+      gruenes Abzeichen, ist sie schlimmer als unsichtbar.* Ein ungepruefetes Bild bekommt
+      darum ein **eigenes** Zeichen (gestrichelt, eigene Farbe) und **seinen eigenen Satz
+      aus dem Eintrag** — nicht einen allgemeinen aus der Flaeche.
+      **Und das geerbte Urteil faerbt das eigene Zeichen nie** (E20): Eine Variante auf
+      bestandener Basis bleibt «nicht gemessen», die Basis steht darunter.
+      **Sechs Mutationsproben, alle gefallen** — darunter «ungeprueft sieht aus wie
+      bestanden» und «das geerbte Urteil faerbt das eigene».
+      **Einmal wirklich gelaufen**, nicht nur gebaut: Server gestartet, Seite und
+      Projektsicht abgeholt, beide Bilder mit dem richtigen Zeichen.
+- [x] **Fehler der Bibliothek erscheinen als Satz, unerwartete mit Typnamen.**
+      *«prompt fehlt oder ist leer … ohne ihn ist nicht beschrieben, was entstehen soll»*
+      ist fuer einen Menschen geschrieben; ein vorangestelltes `KettenError:` macht daraus
+      wieder eine Programmmeldung, und die Zielgruppe hoert bei Programmmeldungen auf zu
+      lesen.
+      **Umgekehrt bei unerwarteten Fehlern**, und das ist kein Widerspruch: Ein Fehler,
+      den dieses Projekt nicht vorhergesehen hat, ist fuer niemanden geschrieben — dann
+      ist der Typ die einzige Spur.
 - [x] **Die Gegenprobe zum Einbau bestellt** (`auf-20260921-127`, Rang 10).
       Die elf neuen Bestellungen sind hier nur mit Attrappen geprueft. **Der Kern des
       Auftrags ist nicht, ob der Runner sie annimmt, sondern ob er sie AUSLIEFERT:** Zwei
