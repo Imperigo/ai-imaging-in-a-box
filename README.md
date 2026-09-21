@@ -64,7 +64,7 @@ allein. Sie unterscheidet sauber, wo der zusammengesetzte Score es nicht tut. *D
 | IFC → glb, über die Prozessgrenze | läuft, an 40 echten Dateien gemessen. **Seit 26.08. trägt der Knotenname den IFC-Namen** — ohne ihn war das Gelände auf der Blender-Seite nicht abtrennbar |
 | glb → Blender-Multipass (Beauty, Material-ID, Tiefe) | läuft auf Blender 4.2 **und** 5.2 |
 | Bildmodell-Stufe (`diffusers`) | **am Gerät gelaufen** (18.08.); am 25.08. bis in die Diffusion, dort an einem Gerätekonflikt gescheitert — Ursache gefunden, Fix eingebaut, Bestätigung beauftragt |
-| Geometrie-Treue-Metrik | gebaut und kalibriert |
+| Geometrie-Treue-Metrik | gebaut und kalibriert — **und seit 21.09. mit einer gemessenen Grenze**: Auf einem *gegliederten* Bau misst `geom_iou` schon bei richtiger Zuordnung 0,36 bei Schwelle 0,85. Das tragende Ergebnis gilt bis auf Weiteres nur fuer die Szenen des Datensatzes vom 09.09.2026 (`auf-20260921-128` bestellt) |
 | Prüfungen **vor** dem Bildlauf | seit 26.08.: Rahmung, Kamerahöhe, Zwischenbilder, Doppelansicht — **Massstab meldet, bricht noch nicht ab**. Die Rahmung rechnet mit dem **gemessenen** Füllgrad des Laufs, nicht mit dem Sollwert |
 | Stil-Gate | gebaut, Schwelle ungeprüft |
 | Kette als Graph mit Zwischenspeicher | gebaut und **gemessen** (Prompt-Änderung rechnet die Geometriestufen nicht neu) — aber **nicht am Produktivweg**: der Abholer fährt die Stufen als gerade Abfolge |
@@ -78,7 +78,7 @@ darüber liegt: [`docs/OBERFLAECHE_KOSMOVIS.md`](docs/OBERFLAECHE_KOSMOVIS.md). 
 bei der eigenen Arbeit an der Oberfläche auffällt und an den UI-Worker geht:
 [`docs/UI_BEFUNDE.md`](docs/UI_BEFUNDE.md).
 
-Tests: **6548**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+Tests: **6554**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
 (`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
 
 ---

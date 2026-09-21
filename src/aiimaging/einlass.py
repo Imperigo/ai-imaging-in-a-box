@@ -47,7 +47,7 @@ from pathlib import Path
 from aiimaging import herkunft
 
 __all__ = [
-    "EIGENE_UMWANDLUNG", "EinlassError", "FREMDE_FORMATE",
+    "EIGENE_UMWANDLUNG", "EinlassError", "FASSUNGSABHAENGIG", "FREMDE_FORMATE",
     "GROESSE_WARNSCHWELLE_BYTE",
     "KOPF_LESEFENSTER_BYTE", "UNSERE_FORMATE", "sichte",
 ]
@@ -106,6 +106,14 @@ KOPF_LESEFENSTER_BYTE = 512
 #: **nicht**: Sie sind am Inhalt nicht zu erkennen und fallen darum in «nicht
 #: entscheidbar» — und das lässt der Importeur durch, weil abgewiesen nur wird, was
 #: sicher falsch ist.
+#: Formate aus :data:`EIGENE_UMWANDLUNG`, deren Umwandlung an der **Blender-Fassung**
+#: hängt. Gemessen am 21.09.2026 (`auf-20260921-126`): In Blender 5.2.1 sind Collada und
+#: X3D **entfernt**, nicht umbenannt — Import wie Export. Blender 4.2 liest beide.
+FASSUNGSABHAENGIG: dict[str, str] = {
+    ".dae": "In Blender 5.2 ist Collada entfernt; Blender 4.2 liest es.",
+    ".x3d": "In Blender 5.2 ist X3D entfernt; Blender 4.2 liest es.",
+}
+
 EIGENE_UMWANDLUNG: tuple[tuple[bytes, int, tuple[str, ...], str], ...] = (
     (b"Kaydara FBX Binary", 0, (".fbx",), "Autodesk FBX"),
     (b"PXR-USDC", 0, (".usd", ".usdc"), "USD (binär)"),
@@ -312,9 +320,18 @@ def sichte(pfad) -> dict:
     # Rat gegeben, sie doch selbst zu exportieren.
     eigene = _eigene_umwandlung(anfang, pfad.suffix.lower())
     if eigene is not None:
+        # DIE ZUSAGE HAENGT AN EINER FREMDEN FASSUNG, und seit dem 21.09.2026 steht das
+        # dabei: Blender 5.2.1 hat Collada und X3D ENTFERNT (gemessen, `auf-20260921-126`).
+        # Wer hier «wird umgewandelt» liest und dann eine Fehlermeldung bekommt, ist
+        # schlechter dran als jemand, der es von vornherein weiss.
+        #
+        #     *Ein Versprechen, das von einer fremden Fassung abhaengt, ist ohne diesen
+        #     Zusatz keine Zusage, sondern eine Wette.*
+        vorbehalt = FASSUNGSABHAENGIG.get(pfad.suffix.lower())
         hinweise.append(
             f"{eigene} wird beim Import umgewandelt — das kostet einen Programmstart und "
-            f"geschieht von selbst.")
+            f"geschieht von selbst."
+            + (f" ACHTUNG: {vorbehalt}" if vorbehalt else ""))
         hinweise.append(
             "Ueber Einheit und Hochachse dieser Datei ist hier noch nichts bekannt: Der "
             "Kopf laesst sich nur bei IFC und glTF lesen. Was darin steht, zeigt sich "

@@ -62,7 +62,7 @@ from pathlib import Path
 from aiimaging import einlass, konversionstreue, seams
 
 __all__ = [
-    "FORMATE_BLENDER", "ImporteurError", "WEGE", "WEG_BLENDER", "WEG_DURCHGEREICHT",
+    "FASSUNGSABHAENGIG", "FORMATE_BLENDER", "ImporteurError", "WEGE", "WEG_BLENDER", "WEG_DURCHGEREICHT",
     "WEG_IFC", "importiere", "kann_importieren", "weg_fuer_endung",
 ]
 
@@ -104,6 +104,28 @@ FORMATE_BLENDER: dict[str, str] = {
     ".usda": "USD (Text)",
     ".abc": "Alembic",
     ".x3d": "X3D",
+}
+
+#: Formate, die **nicht jede Blender-Fassung** liest — gemessen, nicht vermutet.
+#:
+#: ``auf-20260921-126`` (HomeStation, 21.09.2026, **Blender 5.2.1 LTS**): Collada und X3D
+#: sind dort **ganz entfernt**, nicht umbenannt — und zwar in beide Richtungen, Import wie
+#: Export. Auf Blender 4.2 gibt es beide.
+#:
+#: **Warum sie trotzdem in der Tabelle bleiben.** Eine ganze Fassungsreihe kann sie, und
+#: wer sie hat, soll sie benutzen können. Was **nicht** bleibt, ist die Zusage: Der
+#: Einlass sagt seither *«sofern die vorhandene Blender-Fassung es noch liest»* statt
+#: *«wird umgewandelt»*, und der Runner nennt beim Fehlschlag die Fassung, die ihn
+#: verursacht.
+#:
+#:     *Ein Versprechen, das von einer fremden Fassung abhängt, ist ohne diesen Zusatz
+#:     keine Zusage, sondern eine Wette.*
+#:
+#: Die sechs übrigen sind an derselben Messung belegt: Rundreise über alle sechs, Hüllbox
+#: **auf den Millimeter**, Dreieckszahl exakt.
+FASSUNGSABHAENGIG: dict[str, str] = {
+    ".dae": "In Blender 5.2 ist Collada entfernt; Blender 4.2 liest es.",
+    ".x3d": "In Blender 5.2 ist X3D entfernt; Blender 4.2 liest es.",
 }
 
 #: Endung → Weg. Die einzige Stelle, an der entschieden wird, wohin eine Datei geht.

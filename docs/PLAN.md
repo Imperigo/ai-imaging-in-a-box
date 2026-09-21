@@ -5820,6 +5820,43 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Neun Antworten der Werkstatt — und die schwerste Grenze von Kapitel 6 war FALSCH.**
+      Dort stand: *«Die tragende Messung fehlt, alle Zahlen sind an Soll-Karten
+      gerechnet.»* **Es fehlte nicht die Messung, es fehlte ihre Auswertung.** Der
+      Datensatz vom 09.09.2026 ist bereits unter dem echten Schaetzer gerechnet worden;
+      alle 48 Zahlen der Vertauschprobe stimmen bis zur letzten Stelle.
+      *Ein Vorbehalt, der auf einer ungeprueften Annahme ueber die eigenen Daten ruht, ist
+      keine Vorsicht — er ist derselbe Fehler wie eine ungeprueefte Zusage, nur in die
+      andere Richtung.*
+      Das Verfahren traegt damit unter Schaetzerrauschen: **12/12 bestanden, 12/12
+      Verwechslungen gesperrt, 0/12 Muellbilder durch.**
+      **Zwei Einschraenkungen bleiben:** Alle zwoelf Laeufe sind **diagonal** — der
+      frontale Fall kommt im Datensatz gar nicht vor. Und **Tor A traegt zur
+      Unterscheidung richtig/fremd nichts bei**; die ganze Trennung leistet Tor B.
+- [ ] **Und der Befund, der das tragende Ergebnis einschraenkt** (`auf-20260919-124`).
+      Auf einem **gegliederten Bau** misst `geom_iou` schon bei der RICHTIGEN Zuordnung
+      nur **0,3635** — bei einer Schwelle von 0,85. Der Abstand zur fremden Form betraegt
+      **0,006**, also Rauschen; bei einem Paar kehrt sich das Vorzeichen um.
+      *Ein Abstand, der bei null anfaengt, kann nicht verschwinden.* Auf dieser Szene
+      besteht **kein einziges** Bild Tor B, auch nicht sein eigenes.
+      **Es liegt nicht an der Aehnlichkeit, sondern an der Szene:** Derselbe Messaufbau
+      trennt an der Schachtel mit **+0,937**.
+      **Und der Widerspruch ist nicht aufgeloest:** `auf-92` misst an der Szene «gebaeude»
+      0,9257 … 0,9784, `auf-124` an «hochbau» 0,3635 — beides Gebaeude, beides richtig
+      zugeordnet. *Eine der beiden Szenen ist nicht das, wofuer wir sie halten, oder die
+      Kennzahl haengt an etwas, das keiner von uns benannt hat.*
+      Bestellt als `auf-20260921-128`. **Solange das offen ist, gilt das tragende Ergebnis
+      nur fuer die Szenen des Datensatzes vom 09.09.2026.**
+- [x] **Der Importeur versprach zwei Formate, die Blender 5.2 nicht mehr kann.**
+      Gemessen (`auf-20260921-126`): Collada und X3D sind in Blender 5.2.1 **ganz
+      entfernt** — nicht umbenannt, auch nicht als Add-on, und in beide Richtungen.
+      *Ein Versprechen, das von einer fremden Fassung abhaengt, ist ohne diesen Zusatz
+      keine Zusage, sondern eine Wette.* Der Einlass nennt den Vorbehalt jetzt; die
+      Tabelle behaelt beide Formate, weil eine ganze Fassungsreihe sie kann.
+      **Die sechs uebrigen sind belegt:** Rundreise ueber alle sechs, Huellbox **auf den
+      Millimeter**, Dreieckszahl exakt. Kein Vorgabewuerfel in der Ausgabe. Leere Szene →
+      Fehler statt leerer glb. Die Frist von 300 s ist reichlich (langsamstes Format
+      1,4 s).
 - [x] **Owner-Entscheid E22: Die zwei Oberflaechen bleiben getrennt.**
       Die von KosmoOrbit baut der UI-Worker; dort ist Visbox **ein Knoten**. Die hier ist
       die Flaeche von Visbox; dort ist es **das Programm**. *Kein Doppelbau, sondern zwei

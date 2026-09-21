@@ -399,3 +399,43 @@ def test_jedes_fremde_format_nennt_einen_ausweg():
     for kennung, _versatz, name, rat in einlass.FREMDE_FORMATE:
         assert rat and rat.strip(), f"{name!r} sagt nicht, wie man weiterkommt"
         assert len(rat) > 30, f"der Rat zu {name!r} ist zu kurz, um zu helfen: {rat!r}"
+
+
+def test_was_von_der_blender_fassung_abhaengt_wird_nicht_zugesagt(tmp_path):
+    """**Gemessen am 21.09.2026, und es macht aus einer Zusage eine Wette.**
+
+    `auf-20260921-126` (HomeStation, Blender 5.2.1 LTS): Collada und X3D sind dort **ganz
+    entfernt** — nicht umbenannt, auch nicht als Add-on, und in beide Richtungen. Blender
+    4.2 liest beide.
+
+    Bis dahin sagte der Einlass ohne Vorbehalt *«wird beim Import umgewandelt»*. Wer das
+    liest und danach eine Fehlermeldung bekommt, ist schlechter dran als jemand, der es
+    von vornherein weiss.
+
+        *Ein Versprechen, das von einer fremden Fassung abhaengt, ist ohne diesen Zusatz
+        keine Zusage, sondern eine Wette.*
+    """
+    (pfad := tmp_path / "modell.dae").write_bytes(
+        b"<?xml version='1.0'?><COLLADA>" + b"\x00" * 64)
+    befund = einlass.sichte(pfad)
+
+    assert befund["brauchbar"] is True, "auf einer Fassung, die es kann, geht es weiter"
+    zusagen = [h for h in befund["hinweise"] if "umgewandelt" in h]
+    assert zusagen, "die Zusage fehlt ganz"
+    assert any("Blender 5.2" in h for h in zusagen), (
+        "die Zusage nennt ihren Vorbehalt nicht — sie ist dann eine Wette")
+
+
+def test_ein_fassungsunabhaengiges_format_bekommt_keinen_vorbehalt(tmp_path):
+    """Die Gegenrichtung, und sie ist die Haelfte des Entscheids.
+
+    Stuende der Vorbehalt bei allen, waere er nichts wert: Wer ihn ueberall liest, liest
+    ihn nirgends. FBX ist an derselben Messung belegt — Rundreise ueber sechs Formate,
+    Huellbox auf den Millimeter.
+    """
+    (pfad := tmp_path / "modell.fbx").write_bytes(
+        b"Kaydara FBX Binary  \x00" + b"\x00" * 64)
+    hinweise = einlass.sichte(pfad)["hinweise"]
+    assert any("umgewandelt" in h for h in hinweise)
+    assert not any("ACHTUNG" in h for h in hinweise), (
+        "ein Vorbehalt, der ueberall steht, wird nirgends gelesen")

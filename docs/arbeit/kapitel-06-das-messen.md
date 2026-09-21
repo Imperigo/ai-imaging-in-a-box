@@ -3,10 +3,12 @@
 > **Stand 21.09.2026 — Entwurf.** Viertes geschriebenes Kapitel, und das tragende.
 > **Alle Zahlen sind am 19.09.2026 neu gerechnet**, gegen die Rohdaten in
 > `auftraege/ergebnisse/auf-20260909-92-tabelle.json` und den heutigen Quelltext.
-> **Nachgetragen am 21.09.2026:** zwei bestellte Messungen sind zurück. Die eine löst den
-> Grenzfall aus 6.5 auf — *und zwar zugunsten der Schwelle*. Die andere ist für eine ganz
-> andere Frage gefahren worden und liefert die erste Bestätigung des Ergebnisses an
-> **fremden Daten** (6.6).
+> **Nachgetragen am 21.09.2026, in zwei Schüben.** Erst lösten zwei Messungen den
+> Grenzfall aus 6.5 auf und bestätigten das Ergebnis an fremden Daten (6.6). Dann kamen
+> **neun weitere Antworten**, und sie verschieben 6.7 in beide Richtungen: Die schwerste
+> Grenze dieses Kapitels war **falsch** — die fehlende Messung gab es längst. Dafür
+> steht dort jetzt eine schwerere: *Auf einem gegliederten Bau kehrt sich das Verfahren
+> um oder verschwindet.*
 > **Die Strukturnotiz zu diesem Kapitel ist überholt.** Sie nennt als Kernbehauptung einen
 > zusammengesetzten Wert — und genau der ist am 18.09.2026 widerlegt worden. Das Kapitel
 > ist um das neue Ergebnis herum geschrieben, nicht um das alte.
@@ -287,21 +289,75 @@ Geometrie ankommt.
 
 ## 6.7 Grenzen dieses Kapitels
 
-**Erstens, und es ist die schwerste: Die tragende Messung fehlt.** Alle Zahlen dieses
-Kapitels sind an **Soll-Karten** gerechnet — an der Tiefenkarte, die das Modell selbst
-geliefert hat. Im Betrieb steht dort aber eine **geschätzte** Tiefenkarte, die eine
-zweite KI aus dem erzeugten Bild ableitet, und deren Rauschen ist in keiner dieser Zahlen
-enthalten.
+### Was hier bis zum 21.09.2026 stand — und warum es falsch war
 
-Nach der Hausregel dieses Projekts dürfen solche Messungen **ausschliessen, aber nichts
-zusagen**. Was dieses Kapitel zeigt, ist also: *Der alte Riegel ist widerlegt.* Was es
-**nicht** zeigt: dass der neue unter Schätzerrauschen trägt.
+An dieser Stelle stand als **schwerste Grenze**: *«Die tragende Messung fehlt. Alle Zahlen
+dieses Kapitels sind an Soll-Karten gerechnet; im Betrieb steht dort eine geschätzte
+Karte, und deren Rauschen ist in keiner dieser Zahlen enthalten.»* Daraus folgte, die
+Zahlen dürften **ausschliessen, aber nichts zusagen**.
 
-Eine erste Messung dazu liegt vor, und sie ist unangenehm: Unter dem Rauschen eines
-echten Schätzers gibt es auf **frontalen** Ansichten kein fehlerfreies Fenster mehr — die
-Werte guter und schlechter Fälle überlappen fast vollständig. Diagonale Ansichten trennen
-weiter. Auch diese Messung stammt aus gerenderten Bildern, nicht aus erzeugten, und
-beantwortet die Frage darum **nicht**.
+**Das war eine Annahme über die eigenen Daten, und sie stimmte nicht.** Die bestellte
+Messung kam am 21.09.2026 zurück mit dem Befund, dass es sie **schon gibt**: Der Datensatz
+vom 09.09.2026 ist *bereits* unter dem echten Schätzer gerechnet worden. Alle 48 Zahlen
+der Vertauschprobe wurden nachgerechnet und stimmen bis zur letzten Stelle.
+
+> **Es fehlte nicht die Messung. Es fehlte ihre Auswertung.**
+>
+> *Ein Vorbehalt, der auf einer ungeprüften Annahme über die eigenen Daten ruht, ist keine
+> Vorsicht — er ist derselbe Fehler wie eine ungeprüfte Zusage, nur in die andere
+> Richtung.*
+
+Das Zwei-Tore-Verfahren trägt damit **unter Schätzerrauschen**: 12 von 12 bestanden, 12
+von 12 Verwechslungen gesperrt, 0 von 12 Müllbildern durch, Lücke +0,1491 — unverändert,
+weil es dieselbe Messung ist.
+
+**Zwei Einschränkungen bleiben, und die zweite ist die schwerere.**
+
+**Alle zwölf Läufe sind diagonal** (Azimut 145°). Der frontale Fall, vor dem eine frühere
+Messung warnt, kommt in diesem Datensatz **gar nicht vor**. Die Sorge bleibt unbeantwortet.
+
+**Und Tor A trägt zur Unterscheidung richtig/fremd nichts bei.** Die ganze Trennung
+leistet Tor B. Tor A hält, wozu es da ist — es fängt Bilder, die überhaupt nichts
+befolgen —, aber die Frage *«welches Gebäude?»* beantwortet allein die
+Flächenüberschneidung.
+
+### Und der Befund, der das tragende Ergebnis einschränkt
+
+Am selben Tag kam die zweite bestellte Messung zurück — die Gegenprobe an **ähnlichen**
+Gebäuden —, und sie beantwortet die gestellte Frage nicht. Sie beantwortet eine
+wichtigere:
+
+> **Auf einem gegliederten Bau misst die Flächenüberschneidung schon bei der RICHTIGEN
+> Zuordnung nur 0,36 — bei einer Schwelle von 0,85.**
+
+| Paar 1 (ein Geschoss mehr) | Rangkorrelation | Flächenüberschneidung |
+|---|---|---|
+| Bild A gegen **seine eigene** Form | 0,9603 | **0,3635** |
+| Bild A gegen die **fremde** Form | 0,9298 | 0,3571 |
+
+Der Abstand beträgt **0,006** — das ist Rauschen. Über alle drei Paare dasselbe Bild, und
+bei einem Paar kehrt sich das Vorzeichen sogar um.
+
+*Ein Abstand, der bei null anfängt, kann nicht verschwinden.* Die Frage nach der
+Ähnlichkeit ist damit gar nicht erst erreichbar: **Auf dieser Szene besteht kein einziges
+Bild Tor B, auch nicht sein eigenes.**
+
+**Es liegt nicht an der Ähnlichkeit, sondern an der Szene.** Derselbe Messaufbau trennt an
+der Schachtel-Szene mit **+0,937**.
+
+> **Das Zwei-Tore-Verfahren ist an einem glatten Kasten belegt. An einem gegliederten Bau
+> kehrt es sich um oder verschwindet.**
+
+**Und hier steht ein Widerspruch, der nicht aufgelöst ist.** Der Datensatz vom 09.09.2026
+enthält eine Szene namens *Gebäude* und misst dort 0,9257 … 0,9784 bei richtiger
+Zuordnung. Die neue Messung baut eine Szene namens *Hochbau* und misst 0,36. Beides sind
+Gebäude mit Geschossen, beides dieselbe Kennzahl, beides richtig zugeordnet — und die
+Werte liegen um mehr als das Zweieinhalbfache auseinander.
+
+*Eine der beiden Szenen ist nicht das, wofür man sie hält, oder die Kennzahl hängt an
+etwas, das keiner von uns benannt hat.* Solange das offen ist, gilt das tragende Ergebnis
+**für die Szenen des Datensatzes vom 09.09.2026 und nicht darüber hinaus.** Die Messung,
+die es entscheidet, ist bestellt.
 
 **Zweitens: Zwölf Bilder sind zwölf Bilder.** Ein Bildmodell, eine Maschine, zwei Szenen —
 eine Schachtel und ein fünfgeschossiger Bau. Dass die Gegenprobe trennt, ist an **zwei
