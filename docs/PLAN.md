@@ -5820,6 +5820,48 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Owner-Entscheid E22: Die zwei Oberflaechen bleiben getrennt.**
+      Die von KosmoOrbit baut der UI-Worker; dort ist Visbox **ein Knoten**. Die hier ist
+      die Flaeche von Visbox; dort ist es **das Programm**. *Kein Doppelbau, sondern zwei
+      Gegenstaende.*
+      **Was es kostet, steht dabei:** *Zwei Anzeigen derselben Messung sind zwei
+      Gelegenheiten, sie falsch anzuzeigen.* Die Gegenmassnahme ist keine gemeinsame
+      Flaeche, sondern eine gemeinsame QUELLE — beide holen Urteil und Vorbehalt aus
+      derselben Bibliothek und formulieren keinen eigenen Satz dazu.
+- [x] **Der Knotenbaum ist bedienbar.**
+      Knoten anklicken, Einstellungen aendern, uebernehmen. **Die Felder kommen aus
+      `baue_kette`**, nicht aus einer Liste in der Flaeche: *Eine handgeschriebene
+      Feldliste macht denselben Fehler ein drittes Mal — und diesmal saehe ihn niemand,
+      weil nichts kaputtgeht, sondern nur fehlt.*
+      **Geprueft wird nicht in der Flaeche.** Sie legt die Werte der Bibliothek vor; baut
+      `baue_kette` damit keine Kette, kommt ihr Satz zurueck und **es wird nichts
+      gespeichert**. Ein Projekt mit unbrauchbaren Einstellungen saehe in der Mappe aus
+      wie jedes andere, und der Fehler fiele erst beim naechsten Lauf auf.
+      Leer heisst NICHT GESETZT — dann gilt wieder die Vorgabe; ein leerer Text waere
+      etwas anderes.
+- [x] **Wo ein Feld wirkt, wird ausprobiert — nach drei Anlaeufen.**
+      **(1) Den gebauten Graphen ablesen:** zu schwach, ein ungesetztes Feld steht in
+      keinem Knoten. **16 von 34** landeten im Sammelbecken, darunter der Sonnenstand.
+      *Eine Zuordnung, die nur das Gesetzte kennt, ordnet das Unbenutzte falsch ein — und
+      das Unbenutzte ist genau das, was jemand als Naechstes sucht.*
+      **(2) Je Feld bauen und die NAMEN vergleichen:** 16 → 4, aber blind fuer jedes Feld,
+      das im Knoten anders heisst (`qa_schwelle` steht dort als `schwelle`).
+      **(3) Die WERTE vergleichen:** findet auch die umbenannten — und deckte zwei eigene
+      Fehler auf, die bis dahin unter «kein Knoten» verschwunden waren: Der Probewert
+      `"Y "` wird zu `"Y"` zuruecknormalisiert (*eine Probe, deren Wert unterwegs
+      zurueckverwandelt wird, misst nicht die Wirkung, sondern die Normalisierung*), und
+      `qa=False` **entfernt** einen Knoten, was ein Vergleich der vorhandenen nicht sieht.
+      Heute: **32 von 34** Feldern finden ihren Knoten, und die zwei uebrigen haben einen
+      **benannten** Grund statt eines Sammelbeckens.
+- [x] **Und eine eigene Probe war aus dem falschen Grund gruen — zum dritten Mal an
+      diesem Tag.**
+      Sie behauptete, `up_axis` bekomme keinen Knoten, *weil es auf mehrere wirkt*.
+      Nachgemessen stimmte das nicht: Es wirkt auf einen, aber der Probewert wird
+      zurueckgerechnet. Berichtigt, mit der wahren Begruendung.
+      **Und ein Zweig ohne Fall wird als solcher benannt:** «wirkt auf mehrere Knoten»
+      kommt in der jetzigen Kette **nicht vor**, die Mutationsprobe dazu faellt darum
+      nicht. *Ein Zweig ohne Fall ist kein bewachter Zweig — ihn als geprueft auszugeben
+      waere dieselbe Beruhigung, gegen die an diesem Tag schon dreimal etwas stand.*
 - [x] **Die Oberflaeche steht — ausserhalb des Kerns, und das ist der ganze Punkt.**
       `oberflaeche/` liegt **neben** `src/aiimaging/`, weil Regel 4 jeden
       Oberflaechen-Import im Kern verbietet. *Was nur ueber einen Klick erreichbar ist,

@@ -190,8 +190,8 @@ def test_die_flaeche_braucht_kein_fremdes_paket():
             fremd |= {n.name.split(".")[0] for n in k.names}
         elif isinstance(k, ast.ImportFrom) and k.module:
             fremd.add(k.module.split(".")[0])
-    erlaubt = {"argparse", "json", "sys", "urllib", "http", "pathlib", "aiimaging",
-               "__future__"}
+    erlaubt = {"argparse", "inspect", "json", "sys", "urllib", "http", "pathlib",
+               "aiimaging", "__future__"}
     assert fremd <= erlaubt, f"Fremde Pakete in der Fläche: {sorted(fremd - erlaubt)}"
 
 
@@ -296,3 +296,194 @@ def test_die_sicht_zeigt_ein_projekt_vollstaendig(tmp_path, server):
     assert d["modell"]["stand"] == projekt.MODELL_UNVERAENDERT
     assert [k["art"] for k in d["knotenbaum"]][:2] == ["geometrie", "multipass"]
     assert d["bilder"][0]["zeichen"] == "nicht-gemessen"
+
+
+# ======================================================================================
+# DER BEDIENBARE KNOTENBAUM — und die Zuordnung, die zweimal zu schwach war
+# ======================================================================================
+
+def _projekt_mit_glb(tmp_path, einstellungen=None):
+    """Ein Projekt mit durchgereichter glb — ohne Blender, ohne Umwandlung."""
+    from aiimaging import projekt
+    import struct
+
+    js = json.dumps({"asset": {"version": "2.0", "generator": "T"}}).encode()
+    js += b" " * (-len(js) % 4)
+    block = struct.pack("<II", len(js), 0x4E4F534A) + js
+    modell = tmp_path / "haus.glb"
+    modell.write_bytes(struct.pack("<4sII", b"glTF", 2, 12 + len(block)) + block)
+
+    wurzel = tmp_path / "p"
+    p = projekt.neu(wurzel, modell, einstellungen=einstellungen or
+                    {"prompt": "Abendlicht", "up_axis": "Y"})
+    p["import"] = {"status": "ok", "weg": "durchgereicht", "glb": str(modell),
+                   "format": "glTF", "treue": None, "hochachse": None,
+                   "hochachse_steht_fest": False, "hinweise": []}
+    projekt.speichere(p, wurzel)
+    return wurzel
+
+
+def test_die_bedienfelder_kommen_aus_der_bibliothek_und_nicht_aus_einer_liste(server, tmp_path):
+    """**Eine handgeschriebene Feldliste macht denselben Fehler ein drittes Mal.**
+
+    Am 21.09.2026 waren elf Bestellungen über einen der beiden Wege nicht erreichbar, weil
+    eine Aufzählung nicht mitgewachsen war. Eine Oberfläche mit fester Feldliste wäre
+    dasselbe — und diesmal sähe es niemand, weil nichts kaputtgeht, sondern nur fehlt.
+    """
+    import inspect
+    from aiimaging import kette
+
+    namen = {f["name"] for f in server.sicht(_projekt_mit_glb(tmp_path))["bedienfelder"]}
+    erwartet = {n for n in inspect.signature(kette.baue_kette).parameters
+                if n not in server.NICHT_EINSTELLBAR}
+    assert namen == erwartet, (
+        f"Die Fläche bietet nicht an, was die Bibliothek kann: fehlt {sorted(erwartet - namen)}, "
+        f"zu viel {sorted(namen - erwartet)}")
+
+
+def test_ein_noch_nicht_gesetztes_feld_findet_trotzdem_seinen_knoten(server, tmp_path):
+    """**Der erste Fehlschlag dieser Zuordnung, als Probe festgehalten.**
+
+    Der erste Anlauf las den gebauten Graphen — und ein Feld, das noch nicht gesetzt ist,
+    steht in keinem Knoten. 16 von 34 Feldern landeten im Sammelbecken, darunter der
+    Sonnenstand. *Und das Unbenutzte ist genau das, was jemand als Nächstes sucht.*
+    """
+    felder = {f["name"]: f for f in
+              server.sicht(_projekt_mit_glb(tmp_path))["bedienfelder"]}
+    assert felder["sonne"]["gesetzt"] is False, "die Vorbedingung der Probe"
+    assert felder["sonne"]["knoten"] == "multipass", (
+        "ein ungesetztes Feld muss seinen Knoten trotzdem finden")
+
+
+def test_ein_feld_das_im_knoten_anders_heisst_wird_gefunden(server, tmp_path):
+    """**Der zweite Fehlschlag, und er ist der lehrreichere.**
+
+    Der zweite Anlauf verglich die Parameter-**Namen** — und war blind für jedes Feld, das
+    im Knoten anders heisst. ``qa_schwelle`` landet dort als ``schwelle``.
+
+        *Was ankommt, zählt; nicht, wie es heisst.* — dieselbe Art Prüfung, die im Kern
+        zwischen den zwei Wegen gefehlt hat.
+    """
+    felder = {f["name"]: f for f in
+              server.sicht(_projekt_mit_glb(tmp_path))["bedienfelder"]}
+    assert felder["qa_schwelle"]["knoten"] == "qa", (
+        "ein Namensvergleich findet das nie — hier wird der Wert verglichen")
+
+
+def test_kein_knoten_heisst_dreierlei_und_wird_dreierlei_gemeldet(server, tmp_path):
+    """**Diese Probe stand zuerst mit einer falschen Begründung da, und das ist der Punkt.**
+
+    Sie behauptete, ``up_axis`` bekomme keinen Knoten, *weil es auf mehrere wirkt*.
+    Nachgemessen stimmte das nicht: Der Probewert ``"Y "`` wird von der Prüfung zu ``"Y"``
+    zurücknormalisiert — **es ändert sich gar nichts**, und das Feld galt als wirkungslos.
+
+        *Eine Probe, deren Wert unterwegs zurückverwandelt wird, misst nicht die Wirkung,
+        sondern die Normalisierung.* Und eine Probe, die aus dem falschen Grund grün ist,
+        bewacht etwas anderes, als ihr Name sagt — zum dritten Mal an diesem Tag.
+
+    «Kein Knoten» hiess bis dahin dreierlei, und die drei sahen gleich aus. Jetzt sind es
+    drei Antworten:
+
+    ``bau``
+        Das Feld bestimmt, **welche** Knoten es gibt — ``qa=False`` entfernt die Prüfung.
+    ``unbekannt``
+        Die Probe hat **nichts gesehen**. Weder ja noch nein.
+    ``knoten``
+        Genau ein Knoten sieht damit anders aus.
+    """
+    felder = {f["name"]: f for f in
+              server.sicht(_projekt_mit_glb(tmp_path))["bedienfelder"]}
+
+    assert felder["qa"]["wirkt_auf"] == server.WIRKT_AUF_BAU, (
+        "`qa` entfernt den Prüfknoten — das ist eine Auskunft über den Bau, keine fehlende")
+    assert felder["qa"]["knoten"] is None
+
+    assert felder["up_axis"]["wirkt_auf"] == server.WIRKT_UNBEKANNT, (
+        "der Probewert wird zurücknormalisiert — die Probe sieht nichts, und sagt das")
+    assert felder["sonne"]["wirkt_auf"] == server.WIRKT_AUF_KNOTEN
+
+
+def test_fast_jedes_feld_findet_seinen_knoten(server, tmp_path):
+    """Die Zahl, an der die drei Anläufe zu messen sind.
+
+    Beim ersten Anlauf lagen **16 von 34** Feldern im Sammelbecken. Diese Probe hält
+    fest, dass es heute höchstens zwei sind — und dass beide einen **benannten** Grund
+    haben.
+    """
+    felder = server.sicht(_projekt_mit_glb(tmp_path))["bedienfelder"]
+    ohne = [f for f in felder if f["knoten"] is None]
+    assert len(ohne) <= 2, (
+        f"{len(ohne)} von {len(felder)} Feldern ohne Knoten: "
+        f"{[f['name'] for f in ohne]}")
+    for f in ohne:
+        assert f["wirkt_auf"] in (server.WIRKT_AUF_BAU, server.WIRKT_UNBEKANNT)
+
+
+def test_eine_abgelehnte_einstellung_wird_nicht_gespeichert(server, tmp_path):
+    """**Die Bibliothek urteilt, nicht die Fläche — und bei Nein bleibt alles stehen.**
+
+    Ein Projekt, dessen Einstellungen keine Kette ergeben, sieht in der Mappe aus wie
+    jedes andere. Der Fehler fiele erst beim nächsten Lauf auf, an einer Stelle, die mit
+    ihm nichts zu tun hat.
+    """
+    from aiimaging import projekt
+    wurzel = _projekt_mit_glb(tmp_path)
+
+    class Antwort:
+        def __init__(self): self.daten = None
+        def __call__(self, nutzlast, code=200): self.daten = (nutzlast, code)
+
+    flaeche = server.Flaeche.__new__(server.Flaeche)
+    flaeche.ordner = wurzel
+    antwort = Antwort()
+    flaeche._sende = antwort
+    flaeche._fehler = lambda satz, code=400: antwort({"fehler": satz}, code)
+
+    flaeche._einstellungen({"ordner": str(wurzel), "einstellungen": {"prompt": None}})
+
+    nutzlast, _ = antwort.daten
+    assert "fehler" in nutzlast and "prompt fehlt" in nutzlast["fehler"]
+    gespeichert = projekt.oeffne(wurzel)["projekt"]["einstellungen"]
+    assert gespeichert["prompt"] == "Abendlicht", "der alte Wert bleibt stehen"
+
+
+def test_eine_angenommene_einstellung_landet_im_knoten(server, tmp_path):
+    """Der ganze Zweck: Was oben eingegeben wird, steht unten in der Rechnung."""
+    from aiimaging import projekt
+    wurzel = _projekt_mit_glb(tmp_path)
+
+    p = projekt.oeffne(wurzel)["projekt"]
+    p["einstellungen"]["sonne"] = {"azimut": 250, "hoehe": 8}
+    p["einstellungen"]["aufloesung"] = 768
+    projekt.speichere(p, wurzel)
+
+    baum = {k["art"]: k for k in server.sicht(wurzel)["knotenbaum"]}
+    assert baum["multipass"]["params"]["sonne"] == {"azimut": 250, "hoehe": 8}
+    assert baum["multipass"]["params"]["aufloesung"] == 768
+
+
+def test_ein_leeres_feld_stellt_die_vorgabe_wieder_her(server, tmp_path):
+    """Leer heisst NICHT GESETZT, nicht «leerer Text».
+
+    Der Unterschied ist derselbe wie überall hier: «nicht gesetzt» heisst «es gilt die
+    Vorgabe», ein leerer Text hiesse «ausdrücklich nichts».
+    """
+    from aiimaging import projekt
+    wurzel = _projekt_mit_glb(tmp_path, {"prompt": "Abendlicht", "up_axis": "Y",
+                                         "aufloesung": 768})
+
+    class Antwort:
+        def __init__(self): self.daten = None
+        def __call__(self, nutzlast, code=200): self.daten = (nutzlast, code)
+
+    flaeche = server.Flaeche.__new__(server.Flaeche)
+    flaeche.ordner = wurzel
+    antwort = Antwort()
+    flaeche._sende = antwort
+    flaeche._fehler = lambda satz, code=400: antwort({"fehler": satz}, code)
+
+    flaeche._einstellungen({"ordner": str(wurzel), "einstellungen": {"aufloesung": None}})
+
+    gespeichert = projekt.oeffne(wurzel)["projekt"]["einstellungen"]
+    assert "aufloesung" not in gespeichert, (
+        "auf None gesetzt heisst entfernt — nicht als None gespeichert")

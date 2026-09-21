@@ -39,6 +39,40 @@ nichts. Es bekommt ein eigenes Zeichen und einen eigenen Satz. Der UI-Worker hat
 03.09.2026 genau das an seiner eigenen Fläche gemeldet: Die Bildkachel zeigte bei fehlender
 Prüfung **kein** Abzeichen, und kein Abzeichen sieht aus wie kein Problem.
 
+## Warum die Bedienfelder nicht hier aufgezählt sind
+
+Sie kommen aus `aiimaging.kette.baue_kette` — Namen, Vorgaben und die Zuordnung zum
+Knoten. Eine Liste an dieser Stelle wäre in dem Augenblick veraltet, in dem die Bibliothek
+etwas dazubekommt.
+
+*Genau so ist am 21.09.2026 die Lücke entstanden, in der elf Bestellungen über einen der
+beiden Wege nicht erreichbar waren.* Eine Oberfläche mit handgeschriebener Feldliste macht
+denselben Fehler ein drittes Mal — und diesmal sähe ihn niemand, weil nichts kaputtgeht,
+sondern nur fehlt.
+
+**Wo ein Feld wirkt, wird ausprobiert**, nicht nachgeschlagen: Die Fläche baut die Kette
+einmal je Feld mit einem Probewert und sieht, welcher Knoten danach anders aussieht.
+Verglichen werden **Werte**, nicht Namen — sonst bliebe jedes Feld unsichtbar, das im
+Knoten anders heisst (`qa_schwelle` steht dort als `schwelle`).
+
+Und wo die Probe nichts sieht, steht das da. **«Kein Knoten» heisst dreierlei**, und die
+drei sahen zuerst gleich aus:
+
+| | |
+|---|---|
+| **formt den Bau** | Das Feld bestimmt, *welche* Knoten es gibt — `qa` schaltet die Prüfung ab |
+| **unbekannt** (mit `?`) | Die Probe hat nichts gesehen. *Weder ja noch nein* |
+| sonst | Genau ein Knoten sieht damit anders aus |
+
+## Geprüft wird nicht hier
+
+Was eingegeben wird, legt die Fläche der Bibliothek vor. Baut `baue_kette` damit eine
+Kette, ist es brauchbar; wirft sie, kommt **ihr** Satz zurück und **es wird nichts
+gespeichert**.
+
+*Eine Oberfläche, die eigene Regeln über zulässige Werte kennt, hat dieselbe Regel
+zweimal — und die zweite veraltet, ohne dass jemand es merkt.*
+
 ## Starten
 
     python3 oberflaeche/server.py --ordner <projektordner>
@@ -52,7 +86,8 @@ Dann im Browser `http://127.0.0.1:8731`. Ohne `--ordner` startet sie leer und fr
 | **kann** | Ein Projekt anzeigen: Modell, Zustand des Modells, den Knotenbaum der Rechnung, jedes Bild mit seinem Urteil und dessen Vorbehalt |
 | **kann** | Ein Projekt anlegen (Modell hereinholen) |
 | **kann** | Einen Lauf starten — und den Fehlschlag als Satz zeigen, wenn Werkzeuge fehlen |
-| **kann nicht** | Den Knotenbaum bearbeiten. Er zeigt, was die Rechnung **ist**, nicht was sie sein soll |
+| **kann** | Den Knotenbaum **bedienen**: Knoten anklicken, Einstellungen ändern, übernehmen. Die Felder kommen aus der Bibliothek, nicht aus einer Liste hier |
+| **kann nicht** | Knoten hinzufügen, entfernen oder umhängen. Die Form der Kette steht fest |
 | **kann nicht** | Bilder nebeneinanderlegen, Varianten vergleichen |
 
 *Die zweite Spalte ist kein Mangelbericht, sondern der Stand.* Was hier fehlt, fehlt

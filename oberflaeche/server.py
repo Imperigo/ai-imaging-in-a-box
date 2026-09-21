@@ -45,6 +45,8 @@ from pathlib import Path
 # Bibliothek weiss von dieser Datei nichts und laeuft ohne sie vollstaendig.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+import inspect                                                  # noqa: E402
+
 from aiimaging import arbeitsgang, importeur, kette, projekt   # noqa: E402
 
 #: Nur die eigene Maschine. Siehe Modulkopf.
@@ -75,6 +77,176 @@ def _knotenbaum(graph) -> list[dict]:
              # ist und was eine Ableitung, weiss die Bibliothek; hier steht es, wie es ist.
              "params": {k: v for k, v in sorted(graph.knoten[kid].params.items())}}
             for kid in graph.topologische_reihenfolge()]
+
+
+#: Was der Aufrufer **nicht** einstellt, weil das Projekt es selbst weiss.
+#:
+#: Sie kommen aus dem Import und stehen in der Mappe. Sie hier anzubieten hiesse, zwei
+#: Quellen für dieselbe Angabe zu haben — und die falsche gewänne genau dann, wenn
+#: jemand sie einmal angefasst und danach vergessen hat.
+NICHT_EINSTELLBAR = ("ifc_path", "glb_path", "bbox")
+
+
+def _probewert(vorgabe, annotation=""):
+    """Ein Wert, mit dem sich ausprobieren lässt, wo ein Feld landet.
+
+    Er wird nie gespeichert und nie gerechnet — er dient einem Bau, der sofort verworfen
+    wird. Der Typ folgt der Vorgabe; ist sie ``None``, folgt er der **Annotation**, denn
+    ``baue_kette`` rechnet manche Felder beim Bauen um (``float(hintergrund)``), und ein
+    Text scheitert dort.
+    """
+    if isinstance(vorgabe, bool):
+        return not vorgabe
+    if isinstance(vorgabe, (int, float)):
+        return vorgabe + 1
+    if isinstance(vorgabe, str):
+        return vorgabe + " " if vorgabe else "probe"
+    if vorgabe is None:
+        text = str(annotation)
+        if "bool" in text:
+            return True
+        if "float" in text:
+            return 0.5
+        if "int" in text:
+            return 2
+    return "probe"
+
+
+#: Ein Feld wirkt auf **einen** Knoten — dort steht seine Knoten-ID.
+WIRKT_AUF_KNOTEN = "knoten"
+#: Es entscheidet, **welche Knoten es gibt** (``qa`` schaltet die Prüfung ab).
+WIRKT_AUF_BAU = "bau"
+#: Die Probe hat **nichts** gesehen. *Weder ja noch nein* — die dritte Antwort, angewandt
+#: auf die Frage, wo ein Bedienfeld hingehört.
+WIRKT_UNBEKANNT = "unbekannt"
+
+
+def _wo_landet(einstellungen: dict, graph, glb: str | None) -> dict[str, tuple]:
+    """Welches Feld wirkt wo — **ausprobiert, am Wert erkannt, und ehrlich, wenn nicht.**
+
+    Drei Anläufe waren nötig, und alle drei Fehlschläge sind dieselbe Familie:
+
+    **1 · Den gebauten Graphen ablesen.** Zu schwach: Ein Feld, das noch nicht gesetzt
+    ist, steht in keinem Knoten. **16 von 34** landeten im Sammelbecken, darunter der
+    Sonnenstand — *und das Unbenutzte ist genau das, was jemand als Nächstes sucht.*
+
+    **2 · Je Feld bauen und die Parameter-NAMEN vergleichen.** Besser (16 → 4), aber blind
+    für jedes Feld, das im Knoten anders heisst: ``qa_schwelle`` landet dort als
+    ``schwelle``.
+
+    **3 · Die Werte vergleichen.** Findet auch die umbenannten — und deckte dabei zwei
+    eigene Fehler auf, die bis dahin unter «kein Knoten» verschwunden waren:
+
+    * ``up_axis`` wurde mit dem Probewert ``"Y "`` gebaut, und die Prüfung normalisiert ihn
+      zu ``"Y"`` zurück. **Es änderte sich nichts**, und das Feld galt als wirkungslos.
+      *Eine Probe, deren Wert unterwegs zurückverwandelt wird, misst nicht die Wirkung,
+      sondern die Normalisierung.*
+    * ``qa=False`` **entfernt den Prüfknoten**. Ein Vergleich, der nur die vorhandenen
+      Knoten ansieht, bemerkt einen entfallenen nicht.
+
+    Beides steht jetzt als eigene Antwort da (:data:`WIRKT_AUF_BAU`,
+    :data:`WIRKT_UNBEKANNT`) statt in einem Sammelbecken, in dem drei verschiedene Gründe
+    gleich aussahen.
+
+    Returns:
+        ``{name: (wohin, knoten_id_oder_None)}``.
+    """
+    if graph is None or not glb:
+        return {}
+
+    grund = dict(einstellungen)
+    grund.pop("ifc_path", None)
+
+    def bild(g) -> dict[str, dict]:
+        return {kid: dict(g.knoten[kid].params) for kid in g.knoten}
+
+    vorher = bild(graph)
+    wo: dict[str, tuple] = {}
+    for name, p in inspect.signature(kette.baue_kette).parameters.items():
+        if name in NICHT_EINSTELLBAR:
+            continue
+        vorgabe = None if p.default is inspect.Parameter.empty else p.default
+        probe = dict(grund)
+        probe[name] = _probewert(einstellungen.get(name, vorgabe), p.annotation)
+        try:
+            nachher = bild(kette.baue_kette(glb_path=glb, **probe))
+        except Exception:
+            # Ein Feld, dessen Probebau nicht durchgeht, bleibt unbekannt. Es zu raten
+            # waere schlimmer als es offenzulassen.
+            wo[name] = (WIRKT_UNBEKANNT, None)
+            continue
+
+        if set(nachher) != set(vorher):
+            # ES GIBT DANACH ANDERE KNOTEN. Das Feld bestimmt die Form des Baums, nicht
+            # den Inhalt eines Knotens — und das ist eine eigene Auskunft, keine fehlende.
+            wo[name] = (WIRKT_AUF_BAU, None)
+            continue
+
+        geaendert = [kid for kid in nachher if nachher[kid] != vorher.get(kid)]
+        if len(geaendert) == 1:
+            wo[name] = (WIRKT_AUF_KNOTEN, geaendert[0])
+        else:
+            # KEINE ODER MEHRERE. Wirkt ein Feld auf mehrere Knoten, gehoert es an keinen
+            # einzelnen — es unter einen zu schreiben hiesse, die anderen zu verschweigen.
+            # Wirkt es auf keinen, hat diese Probe nichts gesehen, und genau das steht da.
+            #
+            # DER FALL «MEHRERE» IST HEUTE NICHT BELEGT, und das gehoert hierhin statt in
+            # eine Zusage: In der jetzigen Kette aendert **kein einziges** Feld mehr als
+            # einen Knoten. Die Mutationsprobe dazu faellt darum nicht — `len(...) == 1`
+            # durch `if geaendert:` zu ersetzen aendert an keinem Ergebnis etwas.
+            #
+            #     *Ein Zweig ohne Fall ist kein bewachter Zweig. Er ist eine Vorkehrung,
+            #     und sie hier als geprueft auszugeben waere dieselbe Sorte Beruhigung,
+            #     gegen die an diesem Tag schon dreimal etwas stand.*
+            #
+            # Er bleibt trotzdem: Ein Feld, das zwei Knoten anfasst, ist jederzeit
+            # baubar, und dann waere die Alternative, es willkuerlich einem zuzuschlagen.
+            wo[name] = (WIRKT_AUF_BAU if geaendert else WIRKT_UNBEKANNT, None)
+    return wo
+
+
+def bedienfelder(einstellungen: dict, graph=None, glb: str | None = None) -> list[dict]:
+    """Was sich einstellen lässt — **gelesen aus der Bibliothek, nicht hier aufgezählt.**
+
+    Die Namen, die Vorgaben und die Zuordnung zu den Knoten kommen aus
+    :func:`aiimaging.kette.baue_kette` und aus dem gebauten Graphen. Eine Liste an dieser
+    Stelle wäre in dem Augenblick veraltet, in dem die Bibliothek etwas dazubekommt.
+
+        *Genau so ist am 21.09.2026 die Lücke entstanden, in der elf Bestellungen über
+        einen der beiden Wege nicht erreichbar waren.* Eine Oberfläche mit einer
+        handgeschriebenen Feldliste macht denselben Fehler ein drittes Mal — und diesmal
+        sähe ihn niemand, weil er nur fehlt und nichts kaputtmacht.
+
+    Returns:
+        Je Feld ``{name, vorgabe, wert, gesetzt, knoten}``. ``knoten`` ist die Knoten-ID,
+        in deren Parametern der Name im **gebauten** Graphen auftaucht, oder ``None`` —
+        *dann wirkt das Feld auf den Bau des Graphen und nicht auf einen einzelnen
+        Knoten*, und die Fläche sagt das so.
+    """
+    wo = _wo_landet(einstellungen, graph, glb)
+
+    felder = []
+    for name, p in inspect.signature(kette.baue_kette).parameters.items():
+        if name in NICHT_EINSTELLBAR:
+            continue
+        vorgabe = None if p.default is inspect.Parameter.empty else p.default
+        felder.append({
+            "name": name,
+            "vorgabe": vorgabe if isinstance(vorgabe, (str, int, float, bool, type(None)))
+                       else str(vorgabe),
+            "wert": einstellungen.get(name),
+            # GESETZT IST NICHT DASSELBE WIE «hat einen Wert». Ein Feld, das der Vorgabe
+            # entspricht, aber ausdruecklich gesetzt wurde, bleibt gesetzt — sonst
+            # verschwaende ein bewusster Entscheid beim naechsten Speichern.
+            "gesetzt": name in einstellungen,
+            "knoten": wo.get(name, (WIRKT_UNBEKANNT, None))[1],
+            # DREI ANTWORTEN STATT EINES SAMMELBECKENS. «Kein Knoten» hiess bisher
+            # dreierlei: es formt den Baum, es wirkt auf mehrere, oder wir wissen es
+            # nicht. Sie sahen gleich aus, und das ist genau die Verwechslung, gegen die
+            # dieses Projekt ueberall sonst anschreibt.
+            "wirkt_auf": wo.get(name, (WIRKT_UNBEKANNT, None))[0],
+        })
+    return felder
 
 
 def _bild_fuer_die_flaeche(eintrag: dict) -> dict:
@@ -130,14 +302,15 @@ def sicht(ordner) -> dict:
     # DER KNOTENBAUM WIRD GEBAUT, NICHT GESPEICHERT. Er ist keine Eigenschaft des
     # Projekts, sondern eine der Einstellungen — und er soll zeigen, was beim NAECHSTEN
     # Lauf gerechnet wuerde, nicht was beim letzten gerechnet wurde.
-    baum, baum_fehler = [], None
+    baum, baum_fehler, graph = [], None, None
     if einfuhr.get("glb"):
         args = dict(p.get("einstellungen") or {})
         args.pop("ifc_path", None)
         if not args.get("up_axis") and einfuhr.get("hochachse_steht_fest"):
             args["up_axis"] = einfuhr["hochachse"]
         try:
-            baum = _knotenbaum(kette.baue_kette(glb_path=einfuhr["glb"], **args))
+            graph = kette.baue_kette(glb_path=einfuhr["glb"], **args)
+            baum = _knotenbaum(graph)
         except kette.KettenError as fehler:
             # NUR DER SATZ, OHNE DEN TYPNAMEN. Die Fehler der Bibliothek sind fuer einen
             # Menschen geschrieben — «prompt fehlt oder ist leer … ohne ihn ist nicht
@@ -165,6 +338,8 @@ def sicht(ordner) -> dict:
         "einstellungen": p.get("einstellungen") or {},
         "knotenbaum": baum,
         "knotenbaum_fehler": baum_fehler,
+        "bedienfelder": bedienfelder(p.get("einstellungen") or {}, graph,
+                                     glb=einfuhr.get("glb")),
         "bilder": [_bild_fuer_die_flaeche(b) for b in (p.get("bilder") or [])],
         "laeufe": p.get("laeufe") or [],
         # WAS DIESE FLAECHE NICHT KANN, steht in ihr selbst und nicht nur im LIESMICH.
@@ -245,6 +420,8 @@ class Flaeche(BaseHTTPRequestHandler):
         weg = urllib.parse.urlparse(self.path).path
         if weg == "/api/anlegen":
             self._anlegen(wunsch)
+        elif weg == "/api/einstellungen":
+            self._einstellungen(wunsch)
         elif weg == "/api/rechne":
             self._rechne(wunsch)
         else:
@@ -268,6 +445,69 @@ class Flaeche(BaseHTTPRequestHandler):
         # hier zu einem Fehler zu machen hiesse, dem Benutzer die Mappe wegzunehmen, in
         # der die Begruendung steht.
         self._sende({"angelegt": True, "import": ergebnis["projekt"]["import"]})
+
+    def _einstellungen(self, wunsch: dict) -> None:
+        """Einstellungen ändern — **und vorher die Kette damit bauen lassen.**
+
+        Die Fläche prüft die Werte nicht selbst. Sie legt sie der Bibliothek vor und lässt
+        **die** urteilen: Baut :func:`aiimaging.kette.baue_kette` damit einen Graphen, sind
+        sie brauchbar; wirft sie, kommt ihr Satz zurück und **es wird nichts gespeichert.**
+
+            *Eine Oberfläche, die eigene Regeln über zulässige Werte kennt, hat dieselbe
+            Regel zweimal — und die zweite veraltet, ohne dass jemand es merkt.*
+
+        **Und warum nichts gespeichert wird, wenn es nicht baut:** Ein Projekt, dessen
+        Einstellungen keine Kette ergeben, sieht in der Mappe aus wie jedes andere. Der
+        Fehler fiele erst beim nächsten Lauf auf — und dann an einer Stelle, die mit ihm
+        nichts zu tun hat.
+        """
+        ordner = wunsch.get("ordner") or self.ordner
+        if not ordner:
+            self._fehler("Kein Projektordner angegeben.")
+            return
+        neu_werte = wunsch.get("einstellungen")
+        if not isinstance(neu_werte, dict):
+            self._fehler("Es fehlen die Einstellungen.")
+            return
+
+        try:
+            auf = projekt.oeffne(Path(ordner))
+        except projekt.ProjektError as fehler:
+            self._fehler(str(fehler), 404)
+            return
+
+        p = auf["projekt"]
+        einfuhr = p.get("import") or {}
+        # WAS AUF `None` GESETZT WIRD, WIRD ENTFERNT und nicht als `None` gespeichert.
+        # Der Unterschied ist derselbe wie ueberall in diesem Projekt: «nicht gesetzt»
+        # heisst «es gilt die Vorgabe», `None` hiesse «ausdruecklich nichts».
+        gemischt = dict(p.get("einstellungen") or {})
+        for name, wert in neu_werte.items():
+            if wert is None:
+                gemischt.pop(name, None)
+            else:
+                gemischt[name] = wert
+
+        if einfuhr.get("glb"):
+            probe = dict(gemischt)
+            probe.pop("ifc_path", None)
+            if not probe.get("up_axis") and einfuhr.get("hochachse_steht_fest"):
+                probe["up_axis"] = einfuhr["hochachse"]
+            try:
+                kette.baue_kette(glb_path=einfuhr["glb"], **probe)
+            except kette.KettenError as fehler:
+                self._fehler(str(fehler))
+                return
+            except TypeError as fehler:
+                # EIN UNBEKANNTER FELDNAME landet hier — `baue_kette` kennt ihn nicht.
+                # Das ist keine Programmmeldung fuer den Benutzer, sondern eine Auskunft
+                # ueber seine Eingabe, und sie wird als solche formuliert.
+                self._fehler(f"Diese Einstellung kennt das Programm nicht: {fehler}")
+                return
+
+        p["einstellungen"] = gemischt
+        projekt.speichere(p, Path(ordner))
+        self._sende({"gespeichert": True, "einstellungen": gemischt})
 
     def _rechne(self, wunsch: dict) -> None:
         """Ruft :func:`aiimaging.arbeitsgang.rechne` — **mit den echten Ausführern.**

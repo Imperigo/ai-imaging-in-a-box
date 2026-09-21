@@ -66,6 +66,18 @@
   .meldung { border-left: 3px solid var(--ungemessen); padding: 8px 12px; margin-top: 10px;
              background: rgba(200,165,63,.07); font-size: 13px; }
   .fehler  { border-left-color: var(--durchgefallen); background: rgba(194,85,79,.08); }
+  .knoten { display: block; }
+  .knoten > .zeile { display: flex; gap: 10px; align-items: baseline; cursor: pointer; }
+  .knoten > .zeile:hover .art { color: #fff; }
+  .felder { margin: 8px 0 10px 12px; padding-left: 12px; border-left: 2px solid var(--rand);
+            display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-items: center; }
+  .felder label { font-size: 13px; color: var(--leise); font-family: ui-monospace, Menlo, monospace; }
+  .felder input { width: 100%; font-size: 13px; padding: 5px 8px; }
+  /* GESETZT SIEHT ANDERS AUS ALS VORGEGEBEN. Sonst weiss nach einer Woche niemand mehr,
+     was er selbst entschieden hat und was das Programm mitbringt. */
+  .felder input.gesetzt { border-color: var(--leise); color: var(--schrift); }
+  .felder input:not(.gesetzt) { color: var(--leise); font-style: italic; }
+  .knopfzeile { margin-top: 10px; display: flex; gap: 8px; align-items: center; }
   dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; }
   dt { color: var(--leise); }
   dd { margin: 0; overflow-wrap: anywhere; }
@@ -164,29 +176,146 @@ function zeigeModell(d) {
   for (const h of (d["import"].hinweise || [])) ziel.append(feld("div", "satz", h));
 }
 
+/** Ein Eingabefeld zu einem Bedienfeld der Bibliothek.
+ *
+ *  DIE FELDER WERDEN NICHT HIER AUFGEZAEHLT. Sie kommen aus `baue_kette`, und die
+ *  Zuordnung zum Knoten ist am gebauten Graphen abgelesen. Eine Liste an dieser Stelle
+ *  waere in dem Augenblick veraltet, in dem die Bibliothek etwas dazubekommt — und genau
+ *  so ist die Luecke entstanden, in der elf Bestellungen nicht erreichbar waren.
+ */
+function eingabe(f) {
+  const e = feld("input");
+  e.dataset.name = f.name;
+  e.value = f.gesetzt ? alsText(f.wert) : "";
+  e.placeholder = f.vorgabe === null || f.vorgabe === undefined
+    ? "nicht gesetzt" : alsText(f.vorgabe);
+  if (f.gesetzt) e.classList.add("gesetzt");
+  e.addEventListener("input", () => e.classList.toggle("gesetzt", e.value.trim() !== ""));
+  return e;
+}
+
+function alsText(w) {
+  if (w === null || w === undefined) return "";
+  return (typeof w === "object") ? JSON.stringify(w) : String(w);
+}
+
+/** Aus dem Eingabefeld wieder ein Wert.
+ *
+ *  LEER HEISST NICHT GESETZT, nicht «leerer Text»: Der Server entfernt das Feld dann, und
+ *  es gilt wieder die Vorgabe der Bibliothek. Ein leerer Text waere etwas anderes — eine
+ *  ausdrueckliche Angabe von nichts.
+ */
+function ausText(roh) {
+  const s = roh.trim();
+  if (s === "") return null;
+  if (s === "true") return true;
+  if (s === "false") return false;
+  if (s !== "" && !isNaN(Number(s))) return Number(s);
+  if (s.startsWith("{") || s.startsWith("[")) {
+    try { return JSON.parse(s); } catch (f) { return s; }
+  }
+  return s;
+}
+
 function zeigeBaum(d) {
   const ziel = $("baum");
   ziel.replaceChildren();
   ziel.className = "";
   if (d.knotenbaum_fehler) {
     ziel.append(feld("div", "meldung fehler", d.knotenbaum_fehler));
-    return;
   }
-  if (!d.knotenbaum.length) {
+  if (!d.knotenbaum.length && !d.knotenbaum_fehler) {
     ziel.className = "leise";
     ziel.textContent = "Keine Rechnung möglich — es fehlt die umgewandelte Geometrie.";
     return;
   }
+
+  const felderJeKnoten = new Map();
+  const ohneKnoten = [];
+  for (const f of (d.bedienfelder || [])) {
+    if (f.knoten) {
+      if (!felderJeKnoten.has(f.knoten)) felderJeKnoten.set(f.knoten, []);
+      felderJeKnoten.get(f.knoten).push(f);
+    } else {
+      ohneKnoten.push(f);
+    }
+  }
+
   for (const k of d.knotenbaum) {
-    const zeile = feld("div", "knoten");
+    const block = feld("div", "knoten");
+    const zeile = feld("div", "zeile");
     zeile.append(feld("span", "art", k.art));
     zeile.append(feld("span", "von",
       k.eingaenge.length ? "aus " + k.eingaenge.join(", ") : "Anfang"));
-    ziel.append(zeile);
+    const eigene = felderJeKnoten.get(k.id) || [];
+    zeile.append(feld("span", "von", eigene.length ? eigene.length + " Einstellungen" : ""));
+    block.append(zeile);
+
+    const felder = feld("div", "felder");
+    felder.hidden = true;
+    for (const f of eigene) {
+      felder.append(feld("label", null, f.name));
+      felder.append(eingabe(f));
+    }
+    if (eigene.length) {
+      zeile.addEventListener("click", () => { felder.hidden = !felder.hidden; });
+      block.append(felder);
+    }
+    ziel.append(block);
   }
-  ziel.append(feld("div", "satz",
-    "Das ist die Reihenfolge, in der gerechnet würde. Sie lässt sich hier noch nicht " +
-    "ändern."));
+
+  if (ohneKnoten.length) {
+    const block = feld("div", "knoten");
+    // DREI ANTWORTEN, DREI SAETZE. «Kein Knoten» hiess dreierlei, und die drei sahen
+    // gleich aus — genau die Verwechslung, gegen die diese Flaeche sonst ueberall steht.
+    const bau = ohneKnoten.filter((f) => f.wirkt_auf === "bau").length;
+    block.append(feld("div", "satz", bau === ohneKnoten.length
+      ? "Diese Angaben bestimmen, WELCHE Knoten es gibt — nicht den Inhalt eines einzelnen:"
+      : "Diese Angaben gehören zu keinem einzelnen Knoten. Bei den mit «?» markierten " +
+        "hat die Prüfung nicht feststellen können, wo sie wirken:"));
+    const felder = feld("div", "felder");
+    for (const f of ohneKnoten) {
+      felder.append(feld("label", null,
+        f.wirkt_auf === "unbekannt" ? f.name + " ?" : f.name));
+      felder.append(eingabe(f));
+    }
+    block.append(felder);
+    ziel.append(block);
+  }
+
+  const zeile = feld("div", "knopfzeile");
+  const knopf = feld("button", null, "Einstellungen übernehmen");
+  knopf.addEventListener("click", uebernehmen);
+  zeile.append(knopf);
+  zeile.append(feld("span", "satz",
+    "Leer lassen heisst: es gilt die Vorgabe des Programms."));
+  ziel.append(zeile);
+}
+
+/** Alle Felder einsammeln und der Bibliothek vorlegen.
+ *
+ *  GEPRUEFT WIRD NICHT HIER. Der Server baut die Kette mit den neuen Werten; baut sie
+ *  nicht, kommt der Satz der Bibliothek zurueck und es wird NICHTS gespeichert. Eine
+ *  Flaeche mit eigenen Regeln ueber zulaessige Werte haette dieselbe Regel zweimal.
+ */
+async function uebernehmen() {
+  const werte = {};
+  for (const e of document.querySelectorAll(".felder input")) {
+    werte[e.dataset.name] = ausText(e.value);
+  }
+  $("stand").textContent = "übernimmt …";
+  try {
+    const antwort = await fetch("/api/einstellungen", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ordner: $("ordner").value.trim(), einstellungen: werte}),
+    });
+    const d = await antwort.json();
+    if (d.fehler) { $("stand").textContent = d.fehler; return; }
+    await laden();
+    $("stand").textContent = "Einstellungen übernommen.";
+  } catch (f) {
+    $("stand").textContent = "Die Änderung liess sich nicht speichern: " + f;
+  }
 }
 
 function zeigeBilder(d) {

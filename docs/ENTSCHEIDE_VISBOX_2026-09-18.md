@@ -431,6 +431,43 @@ zurückgezogen hat, und wertvoll für eine andere.*
 
 ---
 
+## E22 · Zwei Oberflächen für zwei Produkte — und sie bleiben getrennt
+
+**Owner-Entscheid 21.09.2026**, auf die Frage, ob die neue Visbox-Fläche und die von
+KosmoOrbit zusammenwachsen sollen: *«Ja, getrennt bleiben.»*
+
+### Was damit entschieden ist
+
+| | |
+|---|---|
+| **Die Oberfläche von KosmoOrbit** | baut der UI-Worker, seit dem 26.08.2026 ganz. Dort ist Visbox **ein Knoten** unter vielen. |
+| **Die Oberfläche von Visbox** | liegt hier, in `oberflaeche/`. Dort ist Visbox **das Programm**. |
+
+**Das ist kein Doppelbau, sondern zwei Gegenstände.** Eine Fläche, in der Visbox ein
+Knoten neben siebzehn anderen ist, kann nicht zugleich die Fläche sein, in der es das
+Ganze ist: Was dort ein Bedienelement unter vielen wäre, ist hier der Hauptgegenstand —
+und umgekehrt sind die siebzehn anderen Knoten hier gar nicht vorhanden.
+
+### Was das kostet, und es steht hier, weil es sonst später überrascht
+
+**Zwei Flächen zeigen dieselbe Zahl, und sie können auseinanderlaufen.** Genau das ist
+der Grund, warum der Entscheid aufgeschrieben wird statt stillschweigend zu gelten:
+
+> *Zwei Anzeigen derselben Messung sind zwei Gelegenheiten, sie falsch anzuzeigen.*
+
+Die Gegenmassnahme ist keine gemeinsame Oberfläche, sondern eine gemeinsame **Quelle**:
+Beide holen Urteil und Vorbehalt aus derselben Bibliothek und formulieren keinen eigenen
+Satz dazu. Wo eine Fläche einen Satz selbst schreibt, ist sie die Stelle, an der die
+beiden auseinandergehen — hier hält `tests/test_oberflaeche.py` das fest.
+
+### Was daraus für die Arbeit folgt
+
+Die Vertiefungsarbeit beschreibt **Visbox**. Die KosmoOrbit-Fläche kommt darin als
+*Einbauort* vor (Kapitel 8), nicht als Produktfläche. Umgekehrt ist die Fläche hier keine
+Vorarbeit für drüben — *sie ist die Fläche des Programms, das abgegeben wird.*
+
+---
+
 # Was ich nicht entscheiden kann
 
 ## E20 · Zwei Schichten — **Geometrielayer, und ein AI-Imaging-Layer darauf**
