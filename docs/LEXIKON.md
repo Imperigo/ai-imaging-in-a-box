@@ -981,6 +981,17 @@ Lesbarkeit oder Struktur.
 **Technische Schuld** — Metapher für Abkürzungen, die kurzfristig Zeit sparen und
 langfristig Zinsen kosten. Nicht per se schlecht, aber buchführungspflichtig.
 
+**Uhrenabweichung (Clock Skew)** — Zwei Rechner zeigen nicht dieselbe Zeit. Über ein
+Netzlaufwerk trifft das aufeinander: Wann eine Datei zuletzt geschrieben wurde, sagt die
+Uhr des **Servers**; wie spät es *jetzt* ist, sagt die Uhr des eigenen Rechners.
+*Warum das hier zählt:* Eine Sperre, die nach vier Stunden abläuft, rechnet mit beiden
+Uhren gleichzeitig. Geht die eine um Stunden nach, sieht eine frische Sperre alt aus und
+wird aufgebrochen.
+*Wie das Projekt damit umgeht:* Es fragt **zwei** Quellen — die Dateizeit und den
+Zeitpunkt, den die Rechnung selbst hineingeschrieben hat — und nimmt die **jüngere**. Im
+Zweifel bleibt zu. *Eine Sperre, die eine falsch gehende Uhr aufbricht, ist keine Sperre,
+sondern eine Verzögerung.*
+
 **Sperre (Lock) und der verlorene Schreibvorgang** — Ein Schutz davor, dass zwei
 Vorgänge gleichzeitig dasselbe bearbeiten.
 *Was ohne ihn passiert, hier gemessen:* Zwei Rechnungen auf demselben Projekt lesen beide
@@ -5278,6 +5289,7 @@ System laufen.
 | 2026-09-21 | Aus Beweis 31 und dem Pfadfehler: **Relativer und absoluter Pfad** |
 | 2026-09-21 | Aus dem Einschalten des Speichers auf dem Produktweg: **Zwischenspeicher (Cache) einer Rechenkette** |
 | 2026-09-21 | Aus dem stillen Datenverlust bei zwei gleichzeitigen Laeufen: **Sperre (Lock) und der verlorene Schreibvorgang** |
+| 2026-09-21 | Aus der Pruefung fuers Netzlaufwerk: **Uhrenabweichung (Clock Skew)** |
 | 2026-09-21 | Aus der Anmeldung fuers Heimnetz (E25): **Vergleich in gleichbleibender Zeit** und **Unverschluesselte Verbindung (HTTP)** neu; **Fail-closed** um das zweite Beispiel erweitert statt ein zweites Mal angelegt — zum zweiten Mal an diesem Tag hat der Waechter gegen Doppeleintraege es gemeldet |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |

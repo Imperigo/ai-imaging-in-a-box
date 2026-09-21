@@ -521,3 +521,47 @@ def test_loese_pfad_macht_aus_leer_nichts(tmp_path):
     plötzlich auf den Projektordner selbst."""
     assert str(projekt.loese_pfad("", tmp_path)) == "."
     assert str(projekt.loese_pfad(None, tmp_path)) == "."
+
+
+def test_der_fingerabdruck_haengt_am_INHALT_und_nicht_an_der_uhr(heimatartig):
+    """**Geprueft, weil es auf einem Netzlaufwerk darauf ankommt.**
+
+    Dort ist die Zeitangabe einer Datei grob (oft zwei Sekunden) und kommt von der Uhr des
+    Servers. Haengt die Wiedererkennung daran, sieht ein geaendertes Modell unveraendert
+    aus — und das Urteil gilt fuer ein anderes Gebaeude.
+
+        *Ein Fingerabdruck, der an einer Uhr haengt, ist ein Zeitstempel mit besserem
+        Namen.*
+
+    Hier wird die Datei **angefasst, ohne sie zu aendern**: neue Zeitangabe, gleicher
+    Inhalt. Das Projekt muss weiterhin «unveraendert» sagen.
+    """
+    import os
+    import time as zeit
+
+    modell = heimatartig / "haus.ifc"
+    modell.write_bytes(b"ISO-10303-21;\n")
+    mappe = heimatartig / "projekt"
+    projekt.speichere(projekt.neu(mappe, modell), mappe)
+
+    spaeter = zeit.time() + 10_000
+    os.utime(modell, (spaeter, spaeter))
+
+    assert projekt.oeffne(mappe)["modell_stand"] == projekt.MODELL_UNVERAENDERT
+
+
+def test_und_eine_gleich_GROSSE_aenderung_faellt_trotzdem_auf(heimatartig):
+    """Die Gegenprobe zur vorigen, und sie ist die schaerfere: Gleiche Groesse, gleiche
+    Zeit, **anderer Inhalt**. Wer nur Groesse und Datum vergleicht, sieht hier nichts."""
+    import os
+
+    modell = heimatartig / "haus.ifc"
+    modell.write_bytes(b"AAAA")
+    mappe = heimatartig / "projekt"
+    projekt.speichere(projekt.neu(mappe, modell), mappe)
+    vorher = modell.stat()
+
+    modell.write_bytes(b"BBBB")
+    os.utime(modell, (vorher.st_atime, vorher.st_mtime))
+
+    assert projekt.oeffne(mappe)["modell_stand"] == projekt.MODELL_VERAENDERT

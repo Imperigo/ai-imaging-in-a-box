@@ -5820,6 +5820,33 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Das Netzlaufwerk, so weit es sich ohne eines prüfen lässt — und zwei Befunde.**
+      **Der gute:** Der Fingerabdruck hängt am **Inhalt** und an keiner Uhr. Auf einem
+      Netzlaufwerk ist die Zeitangabe grob (oft zwei Sekunden) und kommt vom Server;
+      hinge die Wiedererkennung daran, sähe ein geändertes Modell unverändert aus.
+      *Ein Fingerabdruck, der an einer Uhr hängt, ist ein Zeitstempel mit besserem Namen.*
+      Zwei Wächter halten es fest, und der zweite ist der schärfere: gleiche Grösse,
+      gleiche Zeit, **anderer Inhalt** — wer nur Grösse und Datum vergleicht, sieht dort
+      nichts.
+      **Der schlechte:** Die Sperre von vorhin rechnete mit **einer** Uhr. Auf einem
+      Netzlaufwerk kommt die Dateizeit vom **Server** und `time.time()` vom Rechner;
+      gehen sie auseinander, sieht eine frische Sperre alt aus, wird übernommen — und der
+      stille Datenverlust wäre zurück.
+      *Eine Sperre, die eine falsch gehende Uhr aufbricht, ist keine Sperre. Sie ist eine
+      Verzögerung.*
+      **Neu: zwei Quellen, und die jüngere gewinnt** — Dateizeit und der Zeitpunkt, den
+      der Lauf selbst in die Sperre geschrieben hat. Im Zweifel wird **nicht** übernommen.
+      Der Preis ist eine Mappe, die länger zu bleibt; die Meldung sagt, wie man sie löst.
+      Der Preis der anderen Richtung wäre verlorene Arbeit, die niemand bemerkt.
+      **Und eine unlesbare Sperre ist nicht «alt», sondern unbekannt** — sie kann von
+      einem Lauf stammen, der gerade zwischen Anlegen und Schreiben steht, also genau von
+      dem, den sie schützen soll.
+      Sechs Wächter, drei Mutationsproben, alle gefallen.
+- [~] **Was am Netzlaufwerk weiterhin ungeprüft ist, und es steht hier als Liste.**
+      `O_EXCL` auf altem NFS, das atomare Umbenennen über eine Freigabe, und die
+      Gross-/Kleinschreibung unter SMB. *Ohne ein Netzlaufwerk ist das nicht messbar, und
+      ohne Messung wird es hier nicht behauptet* — weder in die eine noch in die andere
+      Richtung.
 - [x] **Zwei Läufe auf derselben Mappe verloren stillschweigend die Arbeit des einen.**
       Gemessen: Zwei gleichzeitige Läufe, **beide meldeten Erfolg** — und danach stand
       **ein** Bild und **ein** Lauf in der Mappe. Beide lesen sie, beide schreiben sie,

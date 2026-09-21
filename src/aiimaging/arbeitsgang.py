@@ -44,6 +44,7 @@ GPU und ohne Blender läuft dieses Modul mit Attrappen vollständig durch.
 """
 from __future__ import annotations
 
+import datetime
 import json
 import time
 from pathlib import Path
@@ -195,6 +196,51 @@ SPERRDATEI = "lauf.sperre"
 SPERRFRIST_S = 4 * 3600
 
 
+def _sperralter(pfad: Path) -> float | None:
+    """Wie alt diese Sperre ist — **vorsichtig gerechnet.**
+
+    Zwei Quellen, und es gilt die **jüngere**:
+
+    ``st_mtime``
+        Wann das Dateisystem sagt, dass geschrieben wurde.
+    der Inhalt
+        Wann der Lauf selbst sagt, dass er begonnen hat.
+
+    **Warum nicht einfach die eine.** Liegt die Mappe auf einem Netzlaufwerk, kommt
+    ``st_mtime`` von der **Uhr des Servers** und ``time.time()`` von der des Rechners.
+    Gehen die beiden auseinander — und das tun sie —, sieht eine frische Sperre alt aus.
+    Sie würde übernommen, und der stille Datenverlust wäre zurück.
+
+        *Eine Sperre, die eine falsch gehende Uhr aufbricht, ist keine Sperre. Sie ist
+        eine Verzögerung.*
+
+    **Die jüngere gewinnt**, und das ist die sichere Richtung: Im Zweifel wird **nicht**
+    übernommen. Der Preis ist eine Mappe, die länger blockiert bleibt; die Meldung sagt,
+    wie man sie löst. Der Preis der anderen Richtung wäre verlorene Arbeit, die niemand
+    bemerkt.
+
+    Returns:
+        Das Alter in Sekunden, oder ``None`` — **unbekannt, nicht null.** Eine Sperre,
+        deren Alter niemand kennt, wird nicht übernommen.
+    """
+    alter = []
+    try:
+        alter.append(time.time() - pfad.stat().st_mtime)
+    except OSError:
+        pass
+    try:
+        satz = json.loads(pfad.read_text(encoding="utf-8"))
+        begonnen = datetime.datetime.fromisoformat(
+            str(satz["begonnen"]).replace("Z", "+00:00"))
+        alter.append((datetime.datetime.now(datetime.timezone.utc) - begonnen)
+                     .total_seconds())
+    except (OSError, ValueError, KeyError, TypeError):
+        # EINE SPERRE OHNE LESBAREN INHALT ist nicht «alt», sondern unbekannt. Sie kann
+        # von einem Lauf stammen, der gerade zwischen Anlegen und Schreiben steht.
+        pass
+    return min(alter) if alter else None
+
+
 def _nimm_sperre(wurzel: Path) -> Path:
     """Die Mappe für diesen Lauf sperren — oder begründet ablehnen.
 
@@ -230,11 +276,7 @@ def _nimm_sperre(wurzel: Path) -> Path:
     try:
         kennung = os.open(pfad, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
     except FileExistsError:
-        alter = None
-        try:
-            alter = time.time() - pfad.stat().st_mtime
-        except OSError:
-            pass
+        alter = _sperralter(pfad)
         if alter is not None and alter > SPERRFRIST_S:
             # UEBERNOMMEN, und es steht im Lauf. Wer spaeter sucht, warum zwei Laeufe
             # dieselbe Mappe angefasst haben, findet hier den Grund.
@@ -259,7 +301,6 @@ def _nimm_sperre(wurzel: Path) -> Path:
 
 
 def _jetzt_iso() -> str:
-    import datetime
     return datetime.datetime.now(datetime.timezone.utc).replace(
         microsecond=0).isoformat().replace("+00:00", "Z")
 

@@ -751,20 +751,99 @@ def test_auch_ein_GESCHEITERTER_lauf_gibt_die_mappe_frei(tmp_path):
     assert not (tmp_path / arbeitsgang.SPERRDATEI).exists(), "Sperre nach Ausnahme"
 
 
+def _mache_sperre_alt(sperre, sekunden):
+    """Eine Sperre kuenstlich altern lassen — **in beiden Quellen.**
+
+    Dateizeit UND Inhalt, denn `_sperralter` nimmt die juengere von beiden. Nur eine zu
+    aendern prueft genau den Fall, den die Vorsichtsregel abfangen soll.
+    """
+    import datetime
+    import json as js
+    import os
+    import time as zeit
+
+    satz = js.loads(sperre.read_text(encoding="utf-8"))
+    frueher = (datetime.datetime.now(datetime.timezone.utc)
+               - datetime.timedelta(seconds=sekunden))
+    satz["begonnen"] = frueher.replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    sperre.write_text(js.dumps(satz), encoding="utf-8")
+    wann = zeit.time() - sekunden
+    os.utime(sperre, (wann, wann))
+
+
 def test_eine_liegengebliebene_sperre_wird_uebernommen(tmp_path):
     """*Eine Sperre, die man nur von Hand loesen kann, wird von Hand geloescht — und zwar
     auch dann, wenn sie gerade zu Recht steht.*"""
+    _melde_mappe(tmp_path)
+    sperre = arbeitsgang._nimm_sperre(tmp_path)
+    _mache_sperre_alt(sperre, arbeitsgang.SPERRFRIST_S + 60)
+
+    ergebnis = arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+
+    assert ergebnis["vermerkt"] >= 1
+
+
+def test_eine_falsch_gehende_UHR_bricht_die_sperre_NICHT_auf(tmp_path):
+    """**Der Fall, der auf einem Netzlaufwerk wirklich vorkommt.**
+
+    Dort kommt die Dateizeit von der Uhr des **Servers** und `time.time()` von der des
+    Rechners. Gehen die beiden auseinander — und das tun sie —, sieht eine frische Sperre
+    alt aus. Sie wuerde uebernommen, und der stille Datenverlust waere zurueck.
+
+        *Eine Sperre, die eine falsch gehende Uhr aufbricht, ist keine Sperre. Sie ist
+        eine Verzoegerung.*
+
+    Hier steht die **Dateizeit** weit in der Vergangenheit, der Inhalt sagt aber «gerade
+    eben». Die juengere Angabe gewinnt: nicht uebernehmen.
+    """
     import os
     import time as zeit
 
     _melde_mappe(tmp_path)
     sperre = arbeitsgang._nimm_sperre(tmp_path)
-    alt = zeit.time() - arbeitsgang.SPERRFRIST_S - 60
-    os.utime(sperre, (alt, alt))
+    try:
+        wann = zeit.time() - arbeitsgang.SPERRFRIST_S - 3600      # nur die DATEIZEIT
+        os.utime(sperre, (wann, wann))
 
-    ergebnis = arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+        with pytest.raises(arbeitsgang.ArbeitsgangError):
+            arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+    finally:
+        sperre.unlink(missing_ok=True)
 
-    assert ergebnis["vermerkt"] >= 1
+
+def test_auch_die_andere_richtung_der_abweichung_schuetzt(tmp_path):
+    """Und umgekehrt: Der Inhalt sagt «alt», die Dateizeit «gerade eben». Auch dann wird
+    nicht uebernommen — *im Zweifel bleibt die Mappe zu.*"""
+    import json as js
+
+    _melde_mappe(tmp_path)
+    sperre = arbeitsgang._nimm_sperre(tmp_path)
+    try:
+        satz = js.loads(sperre.read_text(encoding="utf-8"))
+        satz["begonnen"] = "2020-01-01T00:00:00Z"                 # nur der INHALT
+        sperre.write_text(js.dumps(satz), encoding="utf-8")
+
+        with pytest.raises(arbeitsgang.ArbeitsgangError):
+            arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+    finally:
+        sperre.unlink(missing_ok=True)
+
+
+def test_eine_unlesbare_sperre_wird_nicht_uebernommen(tmp_path):
+    """*Eine Sperre, deren Alter niemand kennt, wird nicht uebernommen.*
+
+    Sie kann von einem Lauf stammen, der gerade zwischen Anlegen und Schreiben steht —
+    also genau von dem, den sie schuetzen soll.
+    """
+    _melde_mappe(tmp_path)
+    sperre = arbeitsgang._nimm_sperre(tmp_path)
+    try:
+        sperre.write_text("kein json", encoding="utf-8")
+
+        with pytest.raises(arbeitsgang.ArbeitsgangError):
+            arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+    finally:
+        sperre.unlink(missing_ok=True)
 
 
 def test_eine_frische_sperre_wird_NICHT_uebernommen(tmp_path):
