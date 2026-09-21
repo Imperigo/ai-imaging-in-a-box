@@ -92,3 +92,42 @@ Dann im Browser `http://127.0.0.1:8731`. Ohne `--ordner` startet sie leer und fr
 
 *Die zweite Spalte ist kein Mangelbericht, sondern der Stand.* Was hier fehlt, fehlt
 sichtbar statt halb gebaut dazustehen.
+
+## Seit dem 21.09.2026 zeigt sie die Bilder selbst
+
+Vorher nannte sie **Dateinamen und Urteile** — ein Werkzeug für Bilder, das keine Bilder
+zeigt.
+
+**Das Abzeichen sitzt auf dem Bild, nicht daneben.** Ein Bild wird angesehen, eine Liste
+daneben wird gelesen — und beim Weiterreichen (ein Bildschirmfoto, ein Ausschnitt) bleibt
+nur das Bild übrig.
+
+    Ein Vorbehalt, der beim ersten Weiterreichen abfällt, ist kein Vorbehalt.
+
+Die drei Zustände bekommen **drei verschiedene Rahmen**, und der ungemessene ist
+zusätzlich gestrichelt: Farbe allein unterscheidet nicht für den, der sie nicht sieht.
+
+**Und wo die Datei fehlt, steht die Lücke da.** Das ist ein Zustand, den es vor der
+Bildanzeige gar nicht gab: Die Mappe nennt ein Bild, und die Datei ist weg. *Ein Name ohne
+Datei sieht in einer Liste genauso aus wie einer mit.* Gelöscht wird hier trotzdem nichts —
+das Projekt nennt den Namen weiter, und die Fläche sagt, dass er ins Leere zeigt.
+
+### Was das an Verantwortung dazubringt
+
+Von dem Augenblick an, in dem diese Fläche **Dateien ausliefert**, entscheidet sie
+darüber, was von der Platte dieses Rechners in einen Browser geht.
+
+Sie hört nur auf `127.0.0.1` — die Sperre in `bildpfad` steht trotzdem da:
+
+    Eine zweite Sperre, die nur dann nötig wird, wenn die erste fällt, ist genau die
+    Sperre, die man baut, solange nichts passiert ist.
+
+Ausgeliefert wird nur, was **im Projektordner** liegt, und geprüft wird am **aufgelösten**
+Pfad statt am Namen: Ein Verweis im Ordner heisst harmlos und kann anderswohin zeigen.
+*Ein Name sagt, wie etwas heisst, nicht wo es liegt.*
+
+**Eine dieser Prüfungen trägt nichts zur Sicherheit bei, und das steht dran.** Eine
+Mutationsprobe hat gezeigt, dass die Namenssperre nichts fängt, was die Auflösung nicht
+auch fängt. Sie bleibt für die **Meldung** stehen — wer `/etc/passwd` eingibt, soll nicht
+über Verweise belehrt werden. *Ein Wächter, der nichts fängt, was der nächste nicht auch
+fängt, ist kein zweiter Wächter.*

@@ -58,6 +58,93 @@ VORGABE_ANSCHLUSS = 8731
 
 SEITE = Path(__file__).resolve().parent / "seite.html"
 
+#: Endungen, die diese Fläche als Bild ausliefert, mit ihrem Medientyp.
+#:
+#: **Eine Positivliste und keine Sperrliste.** Eine Sperrliste ist immer unvollständig —
+#: sie kennt nur, woran jemand schon gedacht hat. Diese hier sagt, was hinausgeht, und
+#: alles andere geht nicht hinaus, auch wenn es im Projektordner liegt.
+BILDTYPEN = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+}
+
+
+class FlaechenError(Exception):
+    """Eine Anfrage, die diese Fläche nicht beantwortet — mit einem Satz für einen Menschen."""
+
+
+def bildpfad(ordner, name: str) -> Path:
+    """Den Pfad zu einem Bild **innerhalb** des Projektordners — oder eine Absage.
+
+    **Warum diese Funktion so viel Text hat für drei Zeilen Arbeit.** Von dem Augenblick
+    an, in dem diese Fläche Dateien ausliefert, entscheidet sie darüber, was von der
+    Platte dieses Rechners in einen Browser geht. Sie hört zwar nur auf ``127.0.0.1`` —
+    aber *eine zweite Sperre, die nur dann nötig wird, wenn die erste fällt, ist genau die
+    Sperre, die man baut, solange nichts passiert ist.*
+
+    Vier Absagen, und jede fängt etwas anderes:
+
+    **1 · Kein absoluter Pfad.** ``/etc/passwd`` als Name wäre sonst ein gültiger Name.
+    ``Path.joinpath`` ersetzt bei einem absoluten Teil den ganzen bisherigen Pfad —
+    aus ``ordner / "/etc/passwd"`` wird ``/etc/passwd``, ohne dass irgendetwas auffällt.
+
+    **2 · Kein Aufstieg.** ``..`` in irgendeinem Teil führt aus dem Ordner heraus.
+
+    **3 · Danach trotzdem noch einmal nachsehen, wohin es wirklich zeigt.** Die ersten
+    beiden Prüfungen lesen den *Namen*; ein Verweis (Symlink) im Ordner kann trotzdem
+    irgendwohin zeigen. ``resolve()`` folgt ihm, und erst das Ergebnis wird verglichen.
+    *Ein Name sagt, wie etwas heisst, nicht wo es liegt.*
+
+    .. important::
+       **Die dritte ist die tragende, und die ersten beiden fangen nichts, was sie
+       durchliesse.** Das ist gemessen und nicht vermutet: Eine Mutationsprobe am
+       21.09.2026 hat Prüfung 1 und 2 ausgeschaltet — **alle Proben blieben grün**, weil
+       ``resolve()`` sowohl den absoluten Pfad als auch den Aufstieg aus dem Ordner
+       herausfallen lässt.
+
+       Sie bleiben trotzdem stehen, und zwar aus **einem** Grund: für die **Meldung**.
+       Wer ``/etc/passwd`` eingibt, bekommt «zeigt aus dem Projektordner heraus» statt
+       eines Satzes über Verweise, die hier keine Rolle spielen.
+
+       *Ein Wächter, der nichts fängt, was der nächste nicht auch fängt, ist kein zweiter
+       Wächter. Hier ist er eine bessere Auskunft — und das steht dran, damit ihn niemand
+       für Sicherheit hält, die er nicht leistet.*
+
+    **4 · Nur die Endungen aus** :data:`BILDTYPEN`. Die Projektdatei liegt im selben
+    Ordner, und sie ist kein Bild.
+
+    Raises:
+        FlaechenError: mit dem Satz, der dem Benutzer gesagt wird.
+    """
+    wurzel = Path(ordner).resolve()
+    roh = Path(name)
+
+    if roh.is_absolute() or ".." in roh.parts:
+        raise FlaechenError(
+            f"{name!r} zeigt aus dem Projektordner heraus. Diese Fläche liefert nur, was "
+            f"im Projekt selbst liegt.")
+
+    ziel = (wurzel / roh).resolve()
+    if ziel != wurzel and wurzel not in ziel.parents:
+        raise FlaechenError(
+            f"{name!r} liegt nicht im Projektordner. (Ein Verweis darin kann anderswohin "
+            f"zeigen — darum wird der aufgelöste Pfad verglichen, nicht der Name.)")
+
+    if ziel.suffix.lower() not in BILDTYPEN:
+        raise FlaechenError(
+            f"{ziel.suffix or 'ohne Endung'} wird nicht als Bild ausgeliefert. "
+            f"Erlaubt sind: {', '.join(sorted(BILDTYPEN))}.")
+
+    if not ziel.is_file():
+        raise FlaechenError(
+            f"{name!r} steht in der Mappe, die Datei gibt es nicht (mehr). Das Projekt "
+            f"nennt sie weiter — gelöscht wird hier nichts hinter dem Rücken.")
+
+    return ziel
+
+
 
 # ======================================================================================
 # Was die Fläche zu sehen bekommt — und es kommt vollständig aus der Bibliothek
@@ -249,7 +336,7 @@ def bedienfelder(einstellungen: dict, graph=None, glb: str | None = None) -> lis
     return felder
 
 
-def _bild_fuer_die_flaeche(eintrag: dict) -> dict:
+def _bild_fuer_die_flaeche(eintrag: dict, ordner=None) -> dict:
     """Ein Bildeintrag, wie ihn die Seite braucht — **samt seinem Vorbehalt.**
 
     Hier steht die einzige Stelle, an der diese Datei etwas *entscheidet*, und sie
@@ -264,6 +351,24 @@ def _bild_fuer_die_flaeche(eintrag: dict) -> dict:
     """
     urteil = eintrag.get("geometrie_bestanden")
     basis = eintrag.get("basis") or None
+
+    # OB ES DIE DATEI UEBERHAUPT GIBT, und zwar als eigene Angabe.
+    #
+    # Seit die Flaeche Bilder ZEIGT, gibt es einen Zustand, den es vorher nicht gab: Die
+    # Mappe nennt ein Bild, und die Datei ist weg — verschoben, geloescht, ein Ordner
+    # umbenannt. In einer Liste aus Namen sah das aus wie jedes andere Bild.
+    #
+    #     *Ein Name ohne Datei sieht in einer Liste genauso aus wie einer mit.*
+    #
+    # `None` heisst hier UNBEKANNT und nicht «weg»: Ohne Ordner ist die Frage nicht
+    # gestellt worden. Das ist dieselbe Dreiteilung wie ueberall sonst.
+    vorhanden = None
+    if ordner is not None and eintrag.get("bild"):
+        try:
+            bildpfad(ordner, str(eintrag["bild"]))
+            vorhanden = True
+        except FlaechenError:
+            vorhanden = False
     if urteil is True:
         zeichen, satz = "bestanden", "Die Geometrieprüfung ist bestanden."
     elif urteil is False:
@@ -280,6 +385,7 @@ def _bild_fuer_die_flaeche(eintrag: dict) -> dict:
         "satz": satz,
         "erzeugt": eintrag.get("erzeugt"),
         "herkunft": eintrag.get("herkunft") or {},
+        "vorhanden": vorhanden,
         # DAS GEERBTE URTEIL BLEIBT EIN EIGENES FELD (E20). Es in `zeichen` zu mischen
         # hiesse, ein Bild der zweiten Stufe als geprueft anzuzeigen — genau der Fehler,
         # gegen den dieses Projekt seit Wochen anschreibt.
@@ -340,7 +446,7 @@ def sicht(ordner) -> dict:
         "knotenbaum_fehler": baum_fehler,
         "bedienfelder": bedienfelder(p.get("einstellungen") or {}, graph,
                                      glb=einfuhr.get("glb")),
-        "bilder": [_bild_fuer_die_flaeche(b) for b in (p.get("bilder") or [])],
+        "bilder": [_bild_fuer_die_flaeche(b, ordner) for b in (p.get("bilder") or [])],
         "laeufe": p.get("laeufe") or [],
         # WAS DIESE FLAECHE NICHT KANN, steht in ihr selbst und nicht nur im LIESMICH.
         # Eine Flaeche, die ihre Grenzen nur in einer Datei daneben nennt, hat sie fuer
@@ -406,7 +512,43 @@ class Flaeche(BaseHTTPRequestHandler):
                 self._fehler(str(fehler), 404)
             return
 
+        if weg.path == "/bild":
+            self._bild(urllib.parse.parse_qs(weg.query))
+            return
+
         self._fehler(f"Unbekannter Weg: {weg.path}", 404)
+
+    def _bild(self, frage: dict) -> None:
+        """Ein Bild aus dem Projektordner ausliefern — und sonst nichts von der Platte.
+
+        Die ganze Entscheidung steht in :func:`bildpfad`; hier wird sie nur befolgt. Eine
+        zweite Prüfung an dieser Stelle wäre dieselbe Regel zum zweiten Mal, und die
+        zweite veraltet.
+        """
+        ordner = (frage.get("ordner") or [None])[0] or self.ordner
+        name = (frage.get("name") or [None])[0]
+        if not ordner or not name:
+            self._fehler("Es fehlt der Projektordner oder der Bildname.", 404)
+            return
+        try:
+            ziel = bildpfad(Path(ordner), name)
+            roh = ziel.read_bytes()
+        except FlaechenError as fehler:
+            self._fehler(str(fehler), 404)
+            return
+        except OSError as fehler:
+            self._fehler(f"Das Bild liess sich nicht lesen: {fehler}", 404)
+            return
+
+        self.send_response(200)
+        self.send_header("Content-Type", BILDTYPEN[ziel.suffix.lower()])
+        self.send_header("Content-Length", str(len(roh)))
+        # NICHT ZWISCHENSPEICHERN. Ein neuer Lauf schreibt unter denselben Namen, und ein
+        # Browser, der das alte Bild behaelt, zeigt ein Ergebnis, das es nicht mehr gibt —
+        # neben einem Urteil, das zum neuen gehoert. Das ist schlimmer als langsam.
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(roh)
 
     # ------------------------------------------------------------------------ handeln
     def do_POST(self) -> None:                       # noqa: N802 — Name der Basisklasse

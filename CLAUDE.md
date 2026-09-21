@@ -175,6 +175,25 @@ benötigst.»* Was GPU, echte Gewichte oder einen Blick auf das fremde Backend b
 wird als Auftrag abgelegt — nicht als Frage an den Owner und nicht als Vorbehalt in einem
 Dokument. **Eine Messung, die hier nicht geht, ist keine offene Frage, sondern ein
 unverschickter Auftrag.**
+### Der Owner schreibt die Arbeit, Claude schreibt die Unterlagen
+
+**Owner-Entscheid 21.09.2026:**
+
+> *«Die Arbeit musst du nicht schreiben, das mach ich. Ich möchte nur, dass du immer
+> sauber dafür einfach das Dokument schreibst von den Schritten und so.»*
+
+Damit ist die Rollenteilung für den Text festgelegt: **Der fertige Text der
+Vertiefungsarbeit ist Sache des Owners.** Claude liefert die Unterlage dazu — was gebaut
+wurde, in welcher Reihenfolge, mit welcher Begründung, und was dabei offen blieb.
+
+Das Blatt dafür ist `docs/PRODUKT_DIE_SECHS_SCHRITTE.md`. Es wird **in derselben Sitzung
+fortgeschrieben, in der gebaut wird** — wie das Lexikon und wie `docs/PLAN.md`.
+*Ein Standblatt, das nachgezogen wird, wenn Zeit ist, steht irgendwann auf einem alten
+Stand — und ein alter Stand sieht genauso aus wie ein aktueller.*
+
+Die Kapitelentwürfe in `docs/arbeit/` bleiben stehen: Sie sind Material, kein Ersatz für
+den Text des Owners. Neue Kapitel werden **nicht** von sich aus angefangen.
+
 ### Wie im Chat geantwortet wird
 
 **Owner-Vorgabe 10.09.2026, und sie gilt ab sofort für jede Antwort:**

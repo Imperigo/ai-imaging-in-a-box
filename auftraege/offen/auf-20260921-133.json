@@ -1,0 +1,32 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "auftrag_id": "auf-20260921-133",
+ "art": "frage",
+ "worker": "cloud",
+ "rang": 10,
+ "erstellt": "2026-09-21T20:00:00Z",
+ "params": {},
+ "beschreibung": "Vertragsfrage: Vier Felder an der Kante KosmoDraw -> aiimaging sind beim Erzeuger nullbar und bei uns nicht — und derselbe Fall steht in unserer eigenen Kette. Drei moegliche Festlegungen, wir neigen zu C (Warnung in der Oberflaeche), aber es ist eine Festlegung fuer alle Lanes.",
+ "anweisung": "=== EINE VERTRAGSFRAGE ZU `null`, UND SIE BETRIFFT UNS BEIDE ===\n\nDu hast unser Repo nicht. Alles, was du brauchst, steht hier.\n\nDas ist eine FRAGE, kein Auftrag zum Bauen. Wir haben bei uns bereits\neingebaut, was wir einbauen konnten; was offen bleibt, ist eine Festlegung,\ndie keiner von uns allein treffen kann.\n\n\nDER BEFUND, UND ER IST GEMESSEN\n\nAn der Kante vom Zeichenprogramm (KosmoDraw) zu unserer Lane stehen VIER\nStellen, an denen die Schemata nicht zusammenpassen — und zwar alle auf\ndieselbe Art:\n\n    Feld        Erzeuger sagt            Wir sagen\n    --------------------------------------------------\n    ifc_path    [\"string\", \"null\"]       \"string\"\n    glb_path    [\"string\", \"null\"]       \"string\"\n    up_axis     [\"string\", \"null\"]       \"string\"\n    bbox        [\"array\",  \"null\"]       \"array\"\n\nDer Erzeuger erlaubt ausdruecklich «nichts». Wir nehmen «nichts» nicht an.\n\nGemessen am 21.09.2026 an beiden Quelltexten, nicht an einer Selbstauskunft.\nDie Feldnamen stimmen auf beiden Seiten woertlich ueberein — es ist KEIN\nNamensproblem und KEINE tote Kante.\n\n\nWARUM DAS NICHT BLOSS KOSMETIK IST\n\nIm guten Fall merkt es niemand: Der Erzeuger liefert einen Pfad, wir nehmen\nihn, es laeuft.\n\nScheitert der Erzeuger aber — Datei nicht schreibbar, Modell leer, was auch\nimmer —, dann liefert er ordnungsgemaess `glb_path: null`. Das ist richtig so:\nWer keine Datei erzeugt hat, soll keinen erfundenen Dateinamen zurueckgeben.\n\nNur kommt dieses `null` dann bei einem Werkzeug an, das eine Zeichenkette\nverlangt. Und die Vorpruefung hat die Kante durchgelassen, weil Namen und\nStruktur ja passen.\n\n    Ein Fehlerfall, der nur im Fehlerfall auftritt, wird im Normalbetrieb\n    nie gesehen — und genau dann gebraucht.\n\n\nUND DERSELBE FALL STEHT BEI UNS IM EIGENEN HAUS\n\nDamit klar ist, dass das keine Beschwerde ueber euch ist: Unsere eigene Kette\nhat ihn auch.\n\n`aiimaging_enqueue_render` gibt `job_id` als [\"string\",\"null\"] zurueck —\nbewusst, denn ohne angelegten Auftrag gibt es keine Kennung.\n`aiimaging_query_render` verlangt `job_id` als \"string\", und zwar als\nPflichtfeld.\n\nWir reichen im Fehlerfall also selbst ein `null` in ein Pflichtfeld weiter.\nGefunden hat es unsere eigene neue Pruefung, beim ersten Lauf.\n\n\nDIE FRAGE\n\nEs gibt drei moegliche Festlegungen, und sie schliessen einander aus:\n\n  A) ERZEUGER HOEREN AUF, `null` ZU DEKLARIEREN.\n     Statt `glb_path: null` im Fehlerfall gar kein `glb_path` — das Feld\n     fehlt dann einfach.\n     Dafuer: Ein Feld, das da ist, traegt dann immer einen Wert.\n     Dagegen: Ein fehlendes Feld ist schwerer zu unterscheiden von «vergessen».\n\n  B) VERBRAUCHER NEHMEN `null` AN UND WEISEN ES SELBST AB.\n     Wir wuerden `[\"string\",\"null\"]` deklarieren und im Werkzeug einen\n     sauberen Mangel melden.\n     Dafuer: Die Kante ist dann vertragstreu, und der Fehler kommt dort an,\n     wo er erklaert werden kann.\n     Dagegen: Das Schema sagt dann etwas zu, was wir gar nicht wollen.\n\n  C) ES BLEIBT, WIE ES IST, UND DIE OBERFLAECHE WARNT.\n     Die Vorpruefung meldet die Stelle beim Ziehen der Kante.\n     Dafuer: Kein Vertrag muss sich aendern.\n     Dagegen: Es haengt daran, dass die Warnung gebaut wird und gelesen wird.\n\nWIR NEIGEN ZU C, und wir sagen auch warum: A und B verschieben beide einen\nrichtigen Zustand — der Erzeuger DARF nichts liefern, und wir DUERFEN nichts\nannehmen. Beide Seiten haben recht; falsch ist nur, dass niemand es merkt.\n\nAber es ist eure Festlegung, nicht unsere: Sie gilt fuer alle Lanes, nicht\nnur fuer unsere Kante.\n\n\nWAS WIR SCHON GETAN HABEN\n\nUnser eigener Nachbau eurer Entwurfszeit-Pruefung meldet beide Faelle jetzt:\n\n  `nullable-mismatch` (Warnung) — Erzeuger erlaubt null, Verbraucher nicht.\n  `no-geometry`      (Fehler)   — die Kante ueberlappt, aber weder ifc_path\n                                  noch glb_path kommt an.\n\nDer zweite ist ein eigener Befund und geht dich nur am Rande an: Eine Kante\nkann LEBEN und trotzdem nichts tragen. `kosmodraw_bim_layers` liefert von\nunseren vier Feldern genau `bbox`. Eine Bounding-Box beschreibt ein Modell,\nsie ersetzt es nicht.\n\n\nWAS ZURUECKKOMMEN SOLL\n\n  V1 A, B oder C — und wenn C: Wer baut die Warnung, und bis wann?\n  V2 Gilt die Festlegung fuer alle Lanes oder je Kante?\n  V3 Wenn A: Betrifft das nur die vier Felder oben oder jedes nullbare\n     Ausgabefeld im Oekosystem? Die Antwort aendert den Aufwand erheblich.\n  V4 Ungefragt, aber wichtig: Wisst ihr von weiteren Kanten mit demselben\n     Muster? Wir sehen nur unsere.\n\nEine Zeile je Punkt genuegt. «Noch nicht entschieden» ist eine vollstaendige\nAntwort — dann wissen wir, dass wir nicht darauf warten.\n\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n\n  - Nichts an unseren Schemata aendern. Wenn etwas zu aendern ist, aendern\n    wir es hier.\n  - Keine Kante entfernen.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade —\n    unser Repo ist oeffentlich.\n",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": null,
+  "hinweis": "Keine Geometrie noetig — reine Vertragsfrage."
+ },
+ "auflagen": {
+  "leistungsgrenze_w": null,
+  "nur_bei_leerlauf": false,
+  "hinweise": [
+   "Nichts an unseren Schemata aendern.",
+   "«Noch nicht entschieden» ist eine vollstaendige Antwort.",
+   "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+  ]
+ },
+ "rueckgabe": [
+  "V1 A, B oder C — und bei C: wer baut die Warnung, bis wann?",
+  "V2 Gilt die Festlegung fuer alle Lanes oder je Kante?",
+  "V3 Bei A: nur diese vier Felder oder jedes nullbare Ausgabefeld?",
+  "V4 Weitere Kanten mit demselben Muster bekannt?"
+ ]
+}

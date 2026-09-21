@@ -3948,6 +3948,13 @@ bequem ausging — bis der nächste, etwas grössere Lauf stirbt. Die Zahl steht
 21.09.2026 in jedem Ergebnis, und unter zwei Gigabyte meldet sich der Kurzbefund.
 *Negativ heisst:* Es reichte nicht, also wurde ausgelagert.
 
+**Verweis (Symlink)** — Ein Eintrag im Dateisystem, der kein eigener Inhalt ist, sondern
+auf eine andere Datei zeigt — wie eine Verknüpfung auf dem Schreibtisch.
+*Warum er hier vorkommt:* Die Oberfläche liefert nur Bilder **aus dem Projektordner** aus.
+Ein Verweis liegt im Projektordner und kann trotzdem auf etwas ganz anderes zeigen. Darum
+wird nicht der Name geprüft, sondern das Ziel, dem er folgt.
+*Der Satz dazu:* **Ein Name sagt, wie etwas heisst, nicht wo es liegt.**
+
 **Nullbar (nullable)** — Ein Feld, das ausdrücklich auch «nichts» enthalten darf, nicht
 nur einen Wert. In der Beschreibung eines Werkzeugs steht dann nicht «Text», sondern
 «Text oder nichts».
@@ -4600,6 +4607,9 @@ Namen prüfen, bevor sie zu Pfaden werden.
 ist (Positivliste), oder ablehnen, was ausdrücklich schädlich ist (Verbotsliste). *Bei
 Sicherheitsfragen ist die Positivliste die richtige — eine Verbotsliste übersieht immer
 etwas.*
+*Zweites Beispiel im Projekt, seit 21.09.2026:* Die Oberfläche liefert nur die
+Dateiendungen aus, die als Bild gelten. Alles andere bleibt liegen, auch wenn es im
+Projektordner steht — die Projektdatei zum Beispiel.
 
 **fsync** — Betriebssystem-Befehl, der erzwingt, dass Geschriebenes tatsächlich auf dem
 Datenträger liegt und nicht nur in einem Zwischenspeicher. Nötig, wenn ein Stromausfall
@@ -5147,6 +5157,7 @@ System laufen.
 | 2026-09-21 | Aus dem Befund «bestellt mit Bild, gerechnet ohne»: **Bestellter und gerechneter Modus**, **Vertraeglichkeitsfilter** |
 | 2026-09-21 | Aus dem Befund «der Vorgabe-Backbone rechnet gar nicht mehr»: **Bedarfsrechnung (vor dem Ladeweg)**, **Aktivierungen**, **Spielraum (einer Ladewegentscheidung)** |
 | 2026-09-21 | Aus der Pruefung der Kanten zum Nachbarsystem: **Nullbar (nullable)**, **Tote Kante und leere Kante** |
+| 2026-09-21 | Aus der Bildanzeige der Oberflaeche: **Verweis (Symlink)** neu; **Positivliste / Verbotsliste** um das zweite Beispiel erweitert statt ein zweites Mal angelegt — der Waechter gegen Doppeleintraege hat es gemeldet |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |

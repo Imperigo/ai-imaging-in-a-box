@@ -55,6 +55,36 @@
   .bild { border: 1px solid var(--rand); border-radius: 6px; padding: 12px; margin-bottom: 10px; }
   .bild .kopf { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .bild .name { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; }
+
+  /* DAS ABZEICHEN SITZT AUF DEM BILD, nicht daneben.
+     Ein Bild wird angesehen, eine Liste daneben gelesen — und beim Weiterreichen
+     (Bildschirmfoto, Ausschnitt) bleibt nur das Bild uebrig. Ein Vorbehalt, der beim
+     ersten Weiterreichen abfaellt, ist kein Vorbehalt. */
+  .rahmen { position: relative; margin: 10px 0 8px; border-radius: 6px; overflow: hidden;
+            border: 2px solid var(--rand); background: #0e1013; }
+  .rahmen.bestanden      { border-color: var(--bestanden); }
+  .rahmen.durchgefallen  { border-color: var(--durchgefallen); }
+  .rahmen.nicht-gemessen { border-color: var(--ungemessen); border-style: dashed; }
+  .rahmen img { display: block; width: 100%; height: auto; }
+  .rahmen .auflage {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 10px;
+    font-size: 12px; font-weight: 600; letter-spacing: .03em;
+    background: rgba(8,10,13,.82); backdrop-filter: blur(2px);
+  }
+  .rahmen.bestanden      .auflage { color: var(--bestanden); }
+  .rahmen.durchgefallen  .auflage { color: var(--durchgefallen); }
+  .rahmen.nicht-gemessen .auflage { color: var(--ungemessen); }
+
+  /* WO DIE DATEI FEHLT, steht die Luecke da — und zwar in der Groesse, die das Bild
+     haette. Ein Name ohne Datei sieht in einer Liste genauso aus wie einer mit. */
+  .fehlt { padding: 26px 12px; text-align: center; color: var(--leise); font-size: 13px; }
+
+  /* NEBENEINANDER. Ohne Vorher gibt es kein Nachher — und die Frage dieses Projekts
+     lautet, ob das KI-Bild dem Modell noch folgt. Das sieht man nur im Vergleich. */
+  .paar { display: grid; gap: 12px; grid-template-columns: 1fr; }
+  @media (min-width: 720px) { .paar { grid-template-columns: 1fr 1fr; } }
+  .paar .titel { font-size: 12px; color: var(--leise); text-transform: uppercase;
+                 letter-spacing: .06em; margin-bottom: 6px; }
   .basis { margin-top: 8px; padding-left: 12px; border-left: 2px solid var(--rand);
            font-size: 13px; color: var(--leise); }
 
@@ -318,6 +348,74 @@ async function uebernehmen() {
   }
 }
 
+/** Der Weg, unter dem der Server ein Bild dieses Projekts ausliefert.
+ *  Beide Teile werden kodiert: Ein Dateiname darf ein `&` enthalten, und ohne Kodierung
+ *  waere ab dort ein zweiter Parameter daraus geworden. */
+function bildweg(ordner, name) {
+  return "/bild?ordner=" + encodeURIComponent(ordner) + "&name=" + encodeURIComponent(name);
+}
+
+/** Ein Bild mit seinem Abzeichen AUF dem Bild — oder die Luecke, wenn die Datei weg ist.
+ *
+ *  Hier wird nichts entschieden: `zeichen`, `satz` und `vorhanden` kommen fertig vom
+ *  Server, der sie aus der Bibliothek hat. Diese Funktion setzt sie nur hin. */
+function bildrahmen(ordner, b) {
+  const rahmen = feld("div", "rahmen " + b.zeichen);
+
+  if (b.vorhanden === false) {
+    rahmen.append(feld("div", "fehlt",
+      "Die Datei gibt es nicht (mehr). Das Projekt nennt sie weiter — " +
+      "hier wird nichts hinter Ihrem Rücken gelöscht."));
+  } else if (b.vorhanden === null) {
+    // UNBEKANNT, nicht «weg». Die Frage wurde nicht gestellt.
+    rahmen.append(feld("div", "fehlt", "Ob die Datei da ist, wurde nicht geprüft."));
+  } else {
+    const bild = feld("img");
+    bild.src = bildweg(ordner, b.bild);
+    bild.alt = b.bild;
+    bild.loading = "lazy";
+    // UND WENN DAS LADEN SCHEITERT, bleibt kein leerer Rahmen stehen. Ein leerer Rahmen
+    // mit gruenem Abzeichen waere genau die Beruhigung, gegen die dieses Feld gebaut ist.
+    bild.onerror = () => {
+      bild.remove();
+      rahmen.prepend(feld("div", "fehlt", "Das Bild liess sich nicht laden."));
+    };
+    rahmen.append(bild);
+  }
+
+  // DIE AUFLAGE STEHT IMMER DA, auch am bestandenen Bild und auch an der Luecke.
+  // Kein Abzeichen sieht aus wie kein Problem.
+  rahmen.append(feld("div", "auflage", zeichenwort(b) + " · " + b.satz));
+  return rahmen;
+}
+
+function zeichenwort(b) {
+  return {
+    "bestanden": "GEPRÜFT",
+    "durchgefallen": "DURCHGEFALLEN",
+    "nicht-gemessen": "NICHT GEPRÜFT",
+  }[b.zeichen] || b.zeichen;
+}
+
+/** Das Bild und seine Unterlage nebeneinander — wenn es eine gibt.
+ *
+ *  Die Unterlage ist der Geometrielayer (E20): das Bild, auf dem dieses hier aufsetzt.
+ *  Ihr Urteil steht unter `basis` und NIE im selben Feld wie das eigene. */
+function nebeneinander(ordner, b, alleBilder) {
+  const unterlage = b.basis && b.basis.bild
+    ? alleBilder.find((x) => x.bild === b.basis.bild) : null;
+  if (!unterlage) return bildrahmen(ordner, b);
+
+  const paar = feld("div", "paar");
+  for (const [titel, eintrag] of [["Unterlage", unterlage], ["Dieses Bild", b]]) {
+    const spalte = feld("div");
+    spalte.append(feld("div", "titel", titel));
+    spalte.append(bildrahmen(ordner, eintrag));
+    paar.append(spalte);
+  }
+  return paar;
+}
+
 function zeigeBilder(d) {
   const ziel = $("bilder");
   ziel.replaceChildren();
@@ -334,6 +432,10 @@ function zeigeBilder(d) {
     // DER SATZ STEHT IMMER DA, auch beim bestandenen Bild. Eine Zahl ohne ihre Bedingung
     // ist keine Auskunft — und ein Abzeichen ohne Satz ist eine Zahl ohne Bedingung.
     karte.append(feld("div", "satz", b.satz));
+
+    // UND JETZT DAS BILD SELBST. Bis zum 21.09.2026 nannte diese Flaeche nur Dateinamen
+    // und Urteile — ein Werkzeug fuer Bilder, das keine Bilder zeigt.
+    karte.append(nebeneinander(d.ordner, b, d.bilder));
 
     if (b.basis) {
       const u = b.basis.geometrie_bestanden;

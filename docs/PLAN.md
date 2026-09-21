@@ -5820,6 +5820,38 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Die Oberfläche zeigt die Bilder — vorher nannte sie nur Dateinamen.**
+      *Ein Werkzeug für Bilder, das keine Bilder zeigt.* Seit dem 21.09.2026 stehen sie da.
+      **Das Abzeichen sitzt AUF dem Bild**, nicht daneben: Beim Weiterreichen — ein
+      Bildschirmfoto, ein Ausschnitt in einer Mail — bleibt nur das Bild übrig. *Ein
+      Vorbehalt, der beim ersten Weiterreichen abfällt, ist kein Vorbehalt.*
+      Drei Zustände, drei Rahmen, der ungemessene zusätzlich **gestrichelt** — Farbe
+      allein unterscheidet nicht für den, der sie nicht sieht.
+      **Nebeneinander:** Ein nachbearbeitetes Bild steht neben der Unterlage, auf der es
+      aufsetzt. Die beiden Urteile bleiben getrennt (E20).
+      **Und ein Zustand, den es vorher gar nicht gab:** Die Mappe nennt ein Bild, die
+      Datei ist weg. *Ein Name ohne Datei sieht in einer Liste genauso aus wie einer mit.*
+      Die Lücke steht jetzt in der Grösse da, die das Bild hätte — und gelöscht wird
+      nichts.
+      **Dazu die neue Verantwortung:** Die Fläche liefert ab jetzt Dateien aus. Nur aus
+      dem Projektordner, geprüft am **aufgelösten** Pfad statt am Namen, und nur die
+      Endungen einer Positivliste.
+      Vierzehn Wächter, fünf Mutationsproben.
+- [x] **Und eine Mutationsprobe hat einen meiner eigenen Wächter als wirkungslos
+      entlarvt.** Die Namenssperre in `bildpfad` (kein absoluter Pfad, kein `..`) wurde
+      ausgeschaltet — **alle Proben blieben grün**, weil die Pfadauflösung beide Fälle
+      ohnehin fängt.
+      *Ein Wächter, der nichts fängt, was der nächste nicht auch fängt, ist kein zweiter
+      Wächter.* Er bleibt stehen, aber nur noch für die **Meldung**, und das steht im
+      Quelltext. Eine Probe hält jetzt den Satz fest, damit die Behauptung nicht wieder
+      zu «Sicherheit» wird.
+- [x] **Ein Blatt für den Owner: `docs/PRODUKT_DIE_SECHS_SCHRITTE.md`.**
+      Owner-Entscheid 21.09.2026: *«Die Arbeit musst du nicht schreiben, das mach ich.»*
+      Claude liefert die Unterlage — was gebaut wurde, in welcher Reihenfolge, was offen
+      blieb. Die sechs Schritte aus E4 mit ihrem Stand, das zuletzt Gebaute, die nächsten
+      drei Schritte, und die **eine Frage**, an der Schritt 5 hängt.
+      In `CLAUDE.md` als stehende Regel eingetragen; fortgeschrieben wird es in derselben
+      Sitzung, in der gebaut wird.
 - [x] **Die kalibrierte Schwelle 0,88 ist gemessen worden — und wird NICHT übernommen.**
       Die Werkstatt hat sauber gearbeitet (`auf-20260909-98`, 44 Fälle, vier neue Szenen,
       Etiketten aus unserem eigenen Werkzeug): fehlerfreies Fenster **0,8651 … 0,9031**,

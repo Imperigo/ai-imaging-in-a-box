@@ -487,3 +487,181 @@ def test_ein_leeres_feld_stellt_die_vorgabe_wieder_her(server, tmp_path):
     gespeichert = projekt.oeffne(wurzel)["projekt"]["einstellungen"]
     assert "aufloesung" not in gespeichert, (
         "auf None gesetzt heisst entfernt — nicht als None gespeichert")
+
+
+# --------------------------------------------- 6 · Die Flaeche liefert Dateien aus
+#
+# Seit dem 21.09.2026 zeigt sie Bilder statt Dateinamen. Damit entscheidet sie darueber,
+# was von der Platte dieses Rechners in einen Browser geht — und das ist eine andere
+# Sorte Verantwortung als eine Liste anzuzeigen.
+#
+# Sie hoert nur auf 127.0.0.1. Trotzdem steht die Sperre hier:
+#
+#     Eine zweite Sperre, die nur dann noetig wird, wenn die erste faellt, ist genau die
+#     Sperre, die man baut, solange nichts passiert ist.
+
+def test_ein_absoluter_pfad_kommt_nicht_durch(server, tmp_path):
+    """Der Fall, den `Path.joinpath` still erfuellt.
+
+    ``ordner / "/etc/passwd"`` ergibt ``/etc/passwd`` — der ganze bisherige Pfad wird
+    ersetzt, und nichts daran sieht nach einem Fehler aus.
+
+    **Geprueft wird auch der SATZ, und das hat einen gemessenen Grund.** Eine
+    Mutationsprobe am 21.09.2026 hat die Namenssperre ausgeschaltet: Alle Proben blieben
+    gruen, weil die Aufloesung des Pfades denselben Fall ohnehin faengt. Die Namenssperre
+    traegt also nichts zur Sicherheit bei — sie traegt die **bessere Auskunft**, und nur
+    dafuer steht sie noch da. Wer `/etc/passwd` eingibt, soll nicht ueber Verweise
+    belehrt werden, die hier keine Rolle spielen.
+
+        *Ein Waechter, der nichts faengt, was der naechste nicht auch faengt, ist kein
+        zweiter Waechter.*
+    """
+    with pytest.raises(server.FlaechenError) as fehler:
+        server.bildpfad(tmp_path, "/etc/passwd")
+    assert "heraus" in str(fehler.value), (
+        "Der absolute Pfad soll den Satz ueber den Ordner bekommen, nicht den ueber "
+        "Verweise — sonst ist die Namenssperre ganz ohne Wirkung und gehoert weg.")
+
+
+def test_ein_aufstieg_kommt_nicht_durch(server, tmp_path):
+    """`..` in irgendeinem Teil fuehrt aus dem Projektordner heraus."""
+    (tmp_path / "projekt").mkdir()
+    for name in ("../geheim.png", "unter/../../geheim.png"):
+        with pytest.raises(server.FlaechenError):
+            server.bildpfad(tmp_path / "projekt", name)
+
+
+def test_ein_verweis_aus_dem_ordner_heraus_kommt_nicht_durch(server, tmp_path):
+    """**Die Probe, die den Namen nicht glaubt.**
+
+    Die ersten beiden Sperren lesen den *Namen*. Ein Verweis im Ordner heisst harmlos und
+    zeigt trotzdem anderswohin. Erst der aufgeloeste Pfad beantwortet die Frage.
+
+        *Ein Name sagt, wie etwas heisst, nicht wo es liegt.*
+    """
+    aussen = tmp_path / "aussen"
+    aussen.mkdir()
+    (aussen / "fremd.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+    innen = tmp_path / "projekt"
+    innen.mkdir()
+    try:
+        (innen / "harmlos.png").symlink_to(aussen / "fremd.png")
+    except (OSError, NotImplementedError):
+        pytest.skip("Dieses Dateisystem kennt keine Verweise.")
+
+    with pytest.raises(server.FlaechenError):
+        server.bildpfad(innen, "harmlos.png")
+
+
+def test_die_projektdatei_selbst_wird_nicht_als_bild_ausgeliefert(server, tmp_path):
+    """Sie liegt im selben Ordner und ist kein Bild. Eine Positivliste der Endungen sagt,
+    was hinausgeht; eine Sperrliste kennte nur, woran schon jemand gedacht hat."""
+    (tmp_path / "projekt.json").write_text("{}", encoding="utf-8")
+    with pytest.raises(server.FlaechenError):
+        server.bildpfad(tmp_path, "projekt.json")
+
+
+def test_ein_bild_im_projektordner_kommt_durch(server, tmp_path):
+    """Die Gegenprobe. **Ohne sie waeren die vier Sperren oben auch dann gruen, wenn die
+    Funktion einfach immer ablehnte** — und eine Flaeche, die nie ein Bild zeigt, haette
+    alle Proben bestanden."""
+    (tmp_path / "ansicht-1.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+    assert server.bildpfad(tmp_path, "ansicht-1.png") == (tmp_path / "ansicht-1.png")
+
+
+def test_auch_ein_unterordner_im_projekt_ist_erlaubt(server, tmp_path):
+    """Die Mappe darf Ordnung halten. Verboten ist der Weg HINAUS, nicht der nach unten."""
+    (tmp_path / "laeufe").mkdir()
+    (tmp_path / "laeufe" / "a.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+    assert server.bildpfad(tmp_path, "laeufe/a.png").is_file()
+
+
+def test_eine_fehlende_datei_ist_eine_absage_mit_satz(server, tmp_path):
+    """Und der Satz sagt, was los ist: Der Name steht in der Mappe, die Datei nicht.
+
+    Nicht «404». Wer einen Zustandscode liest, hoert auf; wer einen Satz liest, weiss,
+    woran er ist.
+    """
+    with pytest.raises(server.FlaechenError) as fehler:
+        server.bildpfad(tmp_path, "weg.png")
+    assert "Mappe" in str(fehler.value)
+
+
+# ------------------------------------- 7 · Was die Flaeche ueber ein fehlendes Bild sagt
+
+def _eintrag(**zusatz):
+    grund = {"bild": "a.png", "schicht": "geometrielayer", "geometrie_bestanden": True}
+    grund.update(zusatz)
+    return grund
+
+
+def test_ein_fehlendes_bild_wird_als_fehlend_gemeldet(server, tmp_path):
+    """**Der Zustand, den es vor der Bildanzeige gar nicht gab.**
+
+    Die Mappe nennt ein Bild, und die Datei ist weg — verschoben, geloescht, ein Ordner
+    umbenannt. In einer Liste aus Namen sah das aus wie jedes andere Bild.
+
+        *Ein Name ohne Datei sieht in einer Liste genauso aus wie einer mit.*
+    """
+    assert server._bild_fuer_die_flaeche(_eintrag(), tmp_path)["vorhanden"] is False
+
+
+def test_ein_vorhandenes_bild_wird_als_vorhanden_gemeldet(server, tmp_path):
+    """Die Gegenprobe — sonst genuegte ein `vorhanden: False` fuer alles."""
+    (tmp_path / "a.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+    assert server._bild_fuer_die_flaeche(_eintrag(), tmp_path)["vorhanden"] is True
+
+
+def test_ohne_ordner_heisst_es_unbekannt_und_nicht_weg(server):
+    """Die dritte Antwort, und sie gilt auch fuer diese kleine Frage: Wo niemand
+    nachgesehen hat, steht **nicht** «weg», sondern `None`."""
+    assert server._bild_fuer_die_flaeche(_eintrag())["vorhanden"] is None
+
+
+# ------------------------------------------- 8 · Das Abzeichen sitzt AUF dem Bild
+
+def test_die_seite_setzt_das_abzeichen_in_den_bildrahmen():
+    """**Die Auflage, um die es bei dieser Flaeche ueberhaupt geht.**
+
+    Ein Abzeichen neben dem Bild faellt beim ersten Weiterreichen ab — ein
+    Bildschirmfoto, ein Ausschnitt, und uebrig bleibt das Bild ohne seinen Vorbehalt.
+
+        *Ein Vorbehalt, der beim ersten Weiterreichen abfaellt, ist kein Vorbehalt.*
+
+    Geprueft wird, was maschinell entscheidbar ist: dass die Auflage im Rahmen entsteht,
+    in dem auch das Bild liegt — und zwar in **jedem** Zweig, auch dort, wo die Datei
+    fehlt.
+    """
+    text = SEITE.read_text(encoding="utf-8")
+    baustein = text.split("function bildrahmen", 1)[1].split("\nfunction ", 1)[0]
+
+    assert 'feld("div", "auflage"' in baustein, "die Auflage entsteht nicht im Rahmen"
+    assert baustein.count("return rahmen") == 1, (
+        "mehr als ein Ausgang aus dem Rahmenbaustein — dann kann einer davon ohne die "
+        "Auflage herausfuehren, und genau der zeigt ein Bild ohne seinen Vorbehalt")
+
+
+def test_die_drei_zeichen_haben_drei_verschiedene_rahmen():
+    """Gleich aussehende Rahmen waeren dasselbe wie kein Abzeichen. Der ungemessene ist
+    zusaetzlich **gestrichelt** — Farbe allein unterscheidet nicht, wer sie nicht sieht."""
+    text = SEITE.read_text(encoding="utf-8")
+    for zeichen in ("bestanden", "durchgefallen", "nicht-gemessen"):
+        assert f".rahmen.{zeichen}" in text, zeichen
+    strich = text.split(".rahmen.nicht-gemessen", 1)[1].split("}", 1)[0]
+    assert "dashed" in strich
+
+
+def test_das_bild_wird_nicht_zwischengespeichert():
+    """Ein neuer Lauf schreibt unter denselben Namen. Ein Browser, der das alte Bild
+    behaelt, zeigt ein Ergebnis, das es nicht mehr gibt — **neben einem Urteil, das zum
+    neuen gehoert.** Das ist schlimmer als langsam."""
+    assert 'self.send_header("Cache-Control", "no-store")' in \
+        SERVER_PY.read_text(encoding="utf-8")
+
+
+def test_der_bildname_wird_kodiert_und_nicht_eingeklebt():
+    """Ein Dateiname darf ein `&` enthalten. Ohne Kodierung waere ab dort ein zweiter
+    Parameter daraus geworden, und das Bild waere ein anderes."""
+    baustein = SEITE.read_text(encoding="utf-8").split("function bildweg", 1)[1] \
+                                                .split("\n}", 1)[0]
+    assert baustein.count("encodeURIComponent") == 2
