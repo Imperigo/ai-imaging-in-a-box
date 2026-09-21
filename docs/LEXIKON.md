@@ -4997,6 +4997,21 @@ zum Start eine Netzverbindung braucht, ist kein Ein-Klick-Download.
 *Die Auflage, um die es geht:* Ein **ungeprüftes** Bild darf nie aussehen wie ein
 bestandenes — und auch nicht wie gar nichts. *Kein Abzeichen sieht aus wie kein Problem.*
 
+**Ausbesserung (Inpainting)** — Einem Bildmodell einen **Bereich** vorgeben und sagen, was
+dort hin soll, während es den Rest des Bildes nicht anfassen darf.
+*Wozu:* Damit lässt sich etwas ins fertige Bild setzen, das im Gebäudemodell gar nicht
+vorkommt — ein Mensch, ein Gerät, ein Möbelstück.
+*Wie der Bereich übergeben wird:* als **Maske**, ein zweites Bild in derselben Grösse, in
+dem hell heisst «hier darf gearbeitet werden» und dunkel «Finger weg». Die Graustufen
+dazwischen sind der weiche Übergang — ohne ihn sitzt das eingesetzte Stück wie
+ausgeschnitten im Bild.
+*Stand 21.09.2026:* **Bei Visbox nicht möglich**, und das ist gemessen: Das
+Vorgabe-Bildmodell nimmt überhaupt kein Eingangsbild an — ein Lauf mit Bild liefert
+Byte für Byte dasselbe wie einer ohne.
+*Und die Folge fürs Urteil:* Ein ausgebessertes Bild bekommt **kein** Geometrie-Urteil
+mehr, sondern «nicht anwendbar» — die Prüfung vergleicht mit dem Modell, und was jemand
+hineingesetzt hat, steht dort nicht.
+
 ---
 
 ## 9 · Arbeit mit Claude Code
@@ -5058,6 +5073,7 @@ System laufen.
 | 2026-09-21 | Zur Fundation: **Projekt (die Mappe)**, **Fingerabdruck (einer Datei)** |
 | 2026-09-21 | Zum Einhaengen: **Arbeitsgang**, **Hochachse** |
 | 2026-09-21 | Zur Oberflaeche: **Die Oberflaeche (von Visbox)** |
+| 2026-09-21 | Aus der Anfrage der Modellseite: **Ausbesserung (Inpainting)** |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |

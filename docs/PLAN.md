@@ -5820,6 +5820,32 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Eine Anfrage der Modellseite beantwortet — vier von fuenf Fragen aus Messungen.**
+      Sie haben ein Feld fuer einen **Bearbeitungsbereich** gebaut (Maske als PNG, weiche
+      Kante im Bereich statt im Werkzeug) und fragen, ob wir es annehmen.
+      **Die wichtigste Antwort ist ein Nein mit Messung**, und sie haben es selbst
+      vermutet: Unser Vorgabe-Bildmodell nimmt **ueberhaupt kein Eingangsbild** an — ein
+      Lauf mit Bild ist byte-identisch mit einem ohne. *Eine Maske hat nichts, woran sie
+      sich festmachen koennte.*
+      Der WEG existiert seit dem 19.09. in der Bibliothek; was fehlt, ist ein Modell.
+      *Ein Auftragsfeld, das kein Weg annimmt, ist eine Zusage auf Vorrat* — darum wird es
+      heute NICHT gebaut, und der Auftrag sagt, was sich aendern muesste.
+      **Pfad statt Bytes**, weil unser Regel-3-Riegel Zeichenketten ueber 2048 Zeichen
+      abweist: Eine 786-KB-Maske als Base64 wuerde abgewiesen, nicht bloss stoeren.
+      **Nicht gemessen, und warum**: Ob wir eine weiche Kante als Staerke lesen, laesst
+      sich nicht beantworten, solange es keinen Weg gibt, durch den eine Maske ginge.
+      *Behaltet die Graustufen — eine weiche Kante laesst sich haerten, eine harte nicht
+      weich machen.*
+      **Und wo es ein Rechteck ist, soll das Rechteck kommen:** *Was als Absicht ankommt,
+      laesst sich spaeter anders ausfuehren. Was als Bildpunkte ankommt, ist eine
+      Entscheidung, die schon gefallen ist.*
+      **Ungefragt und wichtig (V5):** Eine Ausbesserung macht das Geometrie-Urteil NICHT
+      ANWENDBAR; das Urteil der Basis reist in einem eigenen Feld mit, und die beiden
+      duerfen nie im selben Feld stehen.
+      Zugestellt in ihren Zweig. **Und der Block fuer `cloud` ist nachgezogen** — der
+      Waechter hat gemeldet, dass der vom 19.09. den neuen Auftrag nicht nennt. *Ein
+      Block, der einen Auftrag auslaesst, laesst ihn liegen, und es faellt niemandem auf,
+      weil in `auftraege/offen/` alles ordentlich aussieht.*
 - [x] **Neun Antworten der Werkstatt — und die schwerste Grenze von Kapitel 6 war FALSCH.**
       Dort stand: *«Die tragende Messung fehlt, alle Zahlen sind an Soll-Karten
       gerechnet.»* **Es fehlte nicht die Messung, es fehlte ihre Auswertung.** Der
