@@ -1,0 +1,78 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260921-127",
+  "status": "ok",
+  "beendet": "2026-09-21T21:55:00Z",
+  "stand": "d8efdad",
+  "geprueft": "V1 vollstaendig beantwortet. V2 bis V5 NICHT — und zwar nicht aus Zeitmangel: Der Kettenweg kommt auf dieser Maschine nicht bis zur Bildstufe. Er bricht am ERSTEN Knoten, und zwar an derselben Stelle wie euer Beweis 31 (auf-20260921-136).",
+  "kurzantwort": {
+    "v1_nimmt_die_kette_alle_namen_an": "JA, alle vierzehn — die elf plus auge, blick_auf, brennweite.",
+    "v2_v3_v4_v5": "Nicht messbar. Der Lauf erreicht die Bildstufe nicht.",
+    "wo_es_bricht": "Knoten `geometrie`: «Torwaechter: Konversion meldet status='ok', traegt aber keine brauchbare bbox (None).»",
+    "der_zusammenhang": "WORTGLEICH derselbe Abbruch wie in auf-20260921-136. Zwei verschiedene Wege, ein Hindernis — es liegt nicht am Beweisskript."
+  },
+  "befunde": {
+    "v1_die_vierzehn_namen": {
+      "geprueft_mit": "inspect.signature(kette.baue_kette) gegen eure Liste",
+      "vorhanden": [
+        "kamera",
+        "kamera_modus",
+        "kamera_huellbox",
+        "sonne",
+        "gelaende_z",
+        "hoehe",
+        "deckungsgrad",
+        "augenhoehe",
+        "bias_grad",
+        "stillstand_frist_s",
+        "multipass_timeout",
+        "auge",
+        "blick_auf",
+        "brennweite"
+      ],
+      "fehlend": [],
+      "summe": "14 von 14",
+      "urteil": "Kein Name heisst hier anders, keiner fehlt. Die Bestellung wird ANGENOMMEN — ob sie ausgeliefert wird, sagt dieser Befund nicht, denn dafuer braeuchte es das Bild."
+    },
+    "warum_v2_bis_v5_offen_bleiben": {
+      "was_ich_gefahren_habe": "Standardszene (`make_test_ifc.py --hochbau`), ueber `seams.ifc_zu_glb` gewandelt, dann `kette.baue_kette` mit allen vierzehn Angaben und `kette.fuehre_aus` mit den echten Ausfuehrern. Zwei Laeufe (Abend elevation 12/azimuth 250, Mittag 60/180), sonst alles gleich.",
+      "ergebnis_beider_laeufe": {
+        "status": "fehler",
+        "gescheitert": [
+          "geometrie"
+        ],
+        "dauer_s": 0.0,
+        "bilder": 0,
+        "cache_treffer": 0
+      },
+      "die_meldung": "geometrie: Torwaechter: Konversion meldet status='ok', traegt aber keine brauchbare bbox (None). Ohne Ausdehnung ist weder Massstab noch Georeferenz pruefbar — und ungeprueft wird nicht gerendert.",
+      "und_das_ist_der_haken": "Ich habe `kamera_huellbox` AUSDRUECKLICH mitgegeben — [[0.0, 0.0, -0.25], [12.0, 9.5, 15.0]], direkt aus dem Wandlungsbericht. Der Torwaechter sieht sie trotzdem nicht. Die bbox geht also zwischen dem Geometrie-Knoten und dem Torwaechter verloren, nicht davor."
+    },
+    "die_gegenprobe": {
+      "frage": "Liefert die Wandlung auf dieser Maschine ueberhaupt eine bbox?",
+      "gemessen": "JA, im selben Lauf, unmittelbar davor: up_axis Y, bbox [[0.0, 0.0, -0.25], [12.0, 9.5, 15.0]], 141 Elemente.",
+      "urteil": "Es liegt nicht an der Maschine, nicht an der Szene und nicht an der Wandlung."
+    },
+    "was_das_zusammen_mit_136_heisst": {
+      "beobachtung": "auf-136 faehrt den PRODUKTWEG (einlass -> importeur -> projekt -> arbeitsgang -> speichern), auf-127 den GRAPHENWEG (baue_kette -> fuehre_aus). Beide brechen am Knoten `geometrie` mit demselben Satz.",
+      "folgerung": "Der Torwaechter blockiert heute JEDEN Weg zur Bildstufe, der ueber die Kette laeuft. Der einzige Weg, auf dem hier heute Bilder entstanden sind, ist der direkte Aufruf von `render.rendere` — so sind die Messungen zu auf-131 und auf-134 zustandegekommen.",
+      "was_das_fuer_die_frist_heisst": "Solange das steht, ist keine der elf neuen Bestellungen an einem Bild pruefbar. Das trifft auch auf-128 und jede weitere Messung, die ueber die Kette laufen soll."
+    },
+    "ein_eigener_fehler_unterwegs": {
+      "was": "Mein erster Lauf scheiterte an `glb-Eingang ohne brauchbare up_axis` — ich hatte `up_axis` nicht uebergeben.",
+      "warum_es_hier_steht": "Weil eure Fehlermeldung genau richtig war und mich in einem Zug zur Ursache gefuehrt hat: «Ein Default waere eine stille Verdrehung.» Kein Ratefehler moeglich."
+    }
+  },
+  "bemerkungen": [
+    "«Geht nicht» mit Belegen, wie ihr es zugelassen habt — und mit der Einschraenkung, dass der Grund NICHT bei den elf Bestellungen liegt. Sie werden angenommen; nur kommt der Lauf nicht bis dorthin, wo sie wirken.",
+    "Sobald der bbox-Befund behoben ist, sind V2 bis V5 in wenigen Minuten nachgeholt — fuenf Laeufe auf einer Szene, wie ihr schreibt. Der Aufbau steht hier bereit.",
+    "Keine Aenderung an eurem Code, wie verlangt."
+  ],
+  "umgebung": {
+    "gpu_benutzt": false,
+    "netz_benutzt": false,
+    "dauer_min": 12,
+    "anmerkung": "Keine GPU noetig — der Lauf endet vor der Bildstufe."
+  },
+  "fehler": null
+}

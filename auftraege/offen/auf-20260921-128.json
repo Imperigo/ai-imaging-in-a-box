@@ -3,7 +3,7 @@
   "auftrag_id": "auf-20260921-128",
   "art": "qa",
   "worker": "local",
-  "rang": 2,
+  "rang": 1,
   "erstellt": "2026-09-21T15:30:00Z",
   "params": {},
   "beschreibung": "Der Widerspruch aus euren eigenen zwei Messungen: geom_iou misst bei RICHTIGER Zuordnung 0,93 an der Szene «gebaeude» (auf-92) und 0,36 an «hochbau» (auf-124). An diesem Widerspruch haengt das tragende Ergebnis der Vertiefungsarbeit. Drei Schritte: Sind es zwei verschiedene Szenen? Ergibt dieselbe Szene auf beiden Messwegen dasselbe? Und wovon haengt die Zahl ab — Bildanteil oder Gliederung?",
