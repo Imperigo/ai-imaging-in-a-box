@@ -246,7 +246,20 @@ def test_tiefenkarte_meldet_abbruch_des_prozesses(tmp_path, blender_attrappe):
         glb_zu_tiefenkarte("bau.glb", tmp_path / "depth", up_axis="Y", _starte=aufrufer)
 
 
-def test_die_diagnose_der_ifc_steht_vor_dem_rauschen_der_fremden_bibliothek(ifc_datei):
+@pytest.fixture
+def ifc_werkzeug_vorhanden(monkeypatch):
+    """Tut so, als gaebe es das `.venv-ifc` — ohne es zu benutzen.
+
+    Die Proben, die diese Fixture brauchen, starten keinen Prozess: Ihr Aufrufer ist eine
+    Attrappe. Sie hingen trotzdem an der Einrichtung der Maschine, weil `ifc_zu_glb`
+    zuerst das Environment sucht. Gefunden von der Pruefung auf `main`, im ersten Lauf
+    nach ihrer Einrichtung.
+    """
+    monkeypatch.setattr(seams, "finde_ifc_python", lambda: "/nicht/benutzt/python")
+
+
+def test_die_diagnose_der_ifc_steht_vor_dem_rauschen_der_fremden_bibliothek(
+        ifc_datei, ifc_werkzeug_vorhanden):
     """BEFUND 19.09.2026: `ifc_zu_glb` hat die einzige brauchbare Meldung verworfen.
 
     Gemessen an einer umbenannten JPG mit der Endung `.ifc`::
@@ -289,7 +302,7 @@ def test_die_diagnose_der_ifc_steht_vor_dem_rauschen_der_fremden_bibliothek(ifc_
         "das Rauschen bleibt trotzdem drin — bei einem Absturz ist es die einzige Spur"
 
 
-def test_die_ifc_naht_kommt_auch_ohne_lesbaren_report_zurecht(ifc_datei):
+def test_die_ifc_naht_kommt_auch_ohne_lesbaren_report_zurecht(ifc_datei, ifc_werkzeug_vorhanden):
     """Die Gegenprobe: Ohne JSON auf stdout bleibt stderr die beste Quelle.
 
     Ohne sie waere «lies immer den Report» auch dann gruen, wenn es gar keinen gibt — und
@@ -299,6 +312,24 @@ def test_die_ifc_naht_kommt_auch_ohne_lesbaren_report_zurecht(ifc_datei):
 
     with pytest.raises(SeamError, match="Segmentation fault"):
         seams.ifc_zu_glb(ifc_datei, "raus.glb", _starte=aufrufer)
+
+
+# ---------------------------------------------------------------------------------------
+# WARUM DIE ZWEI PROBEN OBEN EINE ATTRAPPE FUER DAS WERKZEUG BRAUCHEN (21.09.2026)
+#
+# Sie prueften die DIAGNOSE eines gescheiterten Laufs und starteten dafuer gar keinen
+# Prozess — der Aufrufer ist eine Attrappe. Trotzdem hingen sie an einer Einrichtung:
+# `ifc_zu_glb` sucht ZUERST das `.venv-ifc` und bricht ab, wenn es fehlt. Auf einer
+# Maschine mit venv liefen sie gruen, auf einer ohne fielen sie mit einer Meldung, die
+# mit ihrem Gegenstand nichts zu tun hat.
+#
+# Gefunden hat das die Pruefung auf `main`, am Tag ihrer Einrichtung, im ersten Lauf.
+#
+#     *Eine Probe, die ohne Subprozess auskommt, aber nicht ohne das Werkzeug, prueft
+#     nebenbei die Einrichtung der Maschine — und meldet deren Fehlen als ihren eigenen
+#     Fehlschlag.*
+# ---------------------------------------------------------------------------------------
+
 
 
 def test_blender_zeigt_seinen_eigenen_report_statt_nur_sein_rauschen(tmp_path, blender_attrappe):

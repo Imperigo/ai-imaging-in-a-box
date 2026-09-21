@@ -10,6 +10,22 @@ an denen ein Importeur still falsch sein kann:
 
 **Ohne Blender, ohne ``.venv-ifc``, ohne GPU.** Jeder Subprozess ist eine Attrappe, jede
 Datei entsteht hier aus zwei Handvoll Bytes (Regel 3).
+
+**Und dieser Satz stimmte am 21.09.2026 einen halben Tag lang nicht.** Neun dieser Proben
+starteten zwar keinen Prozess — sie riefen aber ``seams.finde_blender()``, und das bricht
+ab, wenn kein Blender installiert ist. Auf dieser Maschine liegt eines unter
+``/opt/blender``; die Proben waren grün und behaupteten in ihrem eigenen Kopf etwas
+Falsches.
+
+Gefunden hat es die Prüfung auf ``main``, im **ersten Lauf** nach ihrer Einrichtung.
+
+    *Eine Probe, die ohne Subprozess auskommt, aber nicht ohne das Werkzeug, prüft
+    nebenbei die Einrichtung der Maschine — und meldet deren Fehlen als ihren eigenen
+    Fehlschlag.*
+
+Seither täuscht :func:`blender_vorhanden` das Werkzeug vor. Die Attrappe ist damit
+vollständig: Weg, Aufruf und Bericht sind gesetzt, und **nichts** an diesen Proben hängt
+noch an der Maschine, auf der sie laufen.
 """
 from __future__ import annotations
 
@@ -24,6 +40,17 @@ from aiimaging import importeur
 
 
 # ----------------------------------------------------------------- die Attrappen
+
+@pytest.fixture(autouse=True)
+def blender_vorhanden(monkeypatch):
+    """Tut so, als sei Blender installiert — ohne es je zu starten.
+
+    ``autouse``, und das ist Absicht: Die Alternative wäre, sie an neun Proben einzeln zu
+    schreiben, und die zehnte vergässe sie. *Ein Wächter, den man an jeder Stelle von Hand
+    setzen muss, fehlt irgendwann an einer.*
+    """
+    monkeypatch.setattr(importeur.seams, "finde_blender", lambda: "/nicht/benutzt/blender")
+
 
 class _Lauf:
     """Was ``subprocess.run`` zurückgibt, so weit der Importeur es ansieht."""

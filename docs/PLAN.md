@@ -5820,6 +5820,23 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Die Pruefung hat im ERSTEN Lauf elf Proben gefunden, die an der Maschine hingen.**
+      Neun eigene Importeur-Proben und zwei bestehende Naht-Proben starteten zwar keinen
+      Prozess — ihr Aufrufer ist eine Attrappe —, riefen aber die Werkzeugsuche auf. Auf
+      dieser Maschine liegt ein Blender unter `/opt/blender` und ein `.venv-ifc` im Repo;
+      dort waren sie gruen. Auf einer sauberen Maschine fielen alle elf, mit einer Meldung,
+      die mit ihrem Gegenstand nichts zu tun hat.
+      **Der Kopf der eigenen Testdatei behauptete dabei ausdruecklich «ohne Blender, ohne
+      .venv-ifc, ohne GPU».** Er war einen halben Tag lang falsch.
+      *Eine Probe, die ohne Subprozess auskommt, aber nicht ohne das Werkzeug, prueft
+      nebenbei die Einrichtung der Maschine — und meldet deren Fehlen als ihren eigenen
+      Fehlschlag.*
+      Berichtigt mit zwei Attrappen fuer die Werkzeugsuche; bei den Importeur-Proben als
+      `autouse`, weil die Alternative waere, sie an neun Stellen von Hand zu setzen — *und
+      die zehnte vergaesse sie.*
+      **Das ist genau der Zweck dieser Pruefung**, und sie hat ihn am Tag ihrer
+      Einrichtung erfuellt: Sie laeuft auf einer Maschine, auf der nichts von dem steht,
+      woran man sich hier gewoehnt hat.
 - [x] **Vier der vierzehn Antworten eingearbeitet — die drei, die Annahmen umwerfen.**
       **(a) Der Grenzfall aus Kapitel 6 ist aufgeloest, und zwar ZUGUNSTEN der Schwelle.**
       Das fragliche Bild folgt der FREMDEN Geometrie besser als der eigenen (−0,155 gegen
