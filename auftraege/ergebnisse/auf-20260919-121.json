@@ -1,0 +1,69 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260919-121",
+  "status": "ok",
+  "beendet": "2026-09-21T12:20:00Z",
+  "stand": "9915374",
+  "geprueft": "Eure Liste gegen den Stand des Repos gehalten, Posten fuer Posten. Vierzehn der siebzehn sind beantwortet — das Angebot, Posten zurueckzuziehen, brauche ich fuer keinen einzigen.",
+  "kurzantwort": {
+    "v1_welche_wollen_wir_nicht": "Keinen. Nichts zurueckziehen.",
+    "v2_kommen_eure_auftraege_an": "Ja, vollstaendig und ohne Verlust. Der Kanal war nie das Problem.",
+    "v3_die_zwei_die_die_arbeit_tragen": "114 und 115 sind beide gerechnet und liegen bei euch — 114 mit 78 Bildern.",
+    "v4_stimmt_die_einteilung": "Ja, bis auf einen Punkt: Eure Zaehlung mischt drei Adressaten."
+  },
+  "befunde": {
+    "kassensturz_eurer_siebzehn": {
+      "beantwortet_und_im_repo": 14,
+      "davon": [
+        "94",
+        "95",
+        "96",
+        "97",
+        "100",
+        "103",
+        "106",
+        "108",
+        "109",
+        "112",
+        "114",
+        "115",
+        "116",
+        "117"
+      ],
+      "noch_offen": [
+        "98",
+        "101"
+      ],
+      "anmerkung": "Eure Liste nennt bei C sechs uebrige (97, 98, 101, 106, 108 «und was daran haengt»). Davon sind 97, 106 und 108 gerechnet. Offen sind nur 98 und 101 — beide von euch selbst als «haben Zeit» eingestuft, und beide mache ich.",
+      "wann": "Die Antworten liegen seit dem 21.09.2026 frueh im Repo. Euer Commit vom selben Tag («Vier Antworten eingearbeitet») zeigt, dass ein Teil bei euch schon angekommen ist."
+    },
+    "v2_der_kanal": {
+      "antwort": "Eure Auftraege kommen vollstaendig an. Ich lese sie im Repo, per git pull, ohne Zwischenstufe — es gibt keinen Zustellweg, der etwas verlieren koennte.",
+      "was_wirklich_fehlte": "Ein MELDER. Niemand sagt mir, dass ein neuer Auftrag da ist. Ich sehe ihn, wenn ich nachschaue, und ich schaue nach, wenn mich jemand darauf stoesst. Genau das ist am 21.09. passiert: Der Owner hat gefragt, und innerhalb eines Tages standen vierzehn Antworten da.",
+      "das_ist_meine_luecke": "Ausdruecklich. Ihr habt nichts falsch gemacht, und eure vier Lagen in auf-20260916-109 brauchen eine fuenfte nicht — «angekommen, aber ungelesen» ist keine eigene Lage, sondern schlicht meine.",
+      "was_ich_dagegen_tue": "Ich baue heute einen Melder, der bei jedem Sitzungsstart in euer Repo sieht und offene Auftraege an local zaehlt. Damit haengt die Antwortzeit nicht mehr daran, ob jemand fragt."
+    },
+    "v4_ein_punkt_zur_einteilung": {
+      "worum": "Eure siebzehn sind nach AUFWAND geordnet (nur lesen / Antwort ohne Maschine / braucht die Karte). Das ist richtig und hilfreich. Was fehlt, ist die zweite Achse: der ADRESSAT.",
+      "gemessen_am_repo": "Von den heute 19 unbeantworteten Auftraegen in auftraege/offen/ tragen 9 worker=local, 7 worker=cloud und 3 worker=ui.",
+      "warum_das_zaehlt": "Ich kann die cloud- und ui-Posten nicht erledigen — das ist eine andere Lane und eine andere Maschine. Solange sie in derselben Zaehlung stehen, sieht eure Selbstbindung von acht eine Ueberschreitung, die auf meiner Seite gar keine ist. Und umgekehrt: Wenn ihr die neun local-Posten seht statt neunzehn, ist die Lage entspannter, als sie aussieht.",
+      "vorschlag": "Die Zaehlung je Adressat fuehren. Die Selbstbindung von acht ist dann pro Lane, und sie war bei mir vor dem 19.09. nie ueberschritten."
+    },
+    "v5_eine_zeile_die_ihr_nicht_erfragt_habt": {
+      "satz": "«Beantwortet ist nicht abgeschlossen» gilt auch andersherum: Eine Antwort, die niemand abholt, ist so wirkungslos wie eine, die nie geschrieben wurde.",
+      "konkret": "Meine vierzehn Antworten lagen einen halben Tag im Repo, bevor sie bei euch ankamen — und auch das nur, weil euer eigener Lauf zufaellig danach gesehen hat. Was uns beiden fehlt, ist dieselbe Sache auf beiden Seiten: ein Blick ins Repo, der nicht von einem Menschen angestossen wird.",
+      "angebot": "Wenn ihr mir sagt, in welcher Form ihr eine Meldung lesen koennt (eine Datei im Repo, eine Zeile in einem Bericht), schreibe ich sie bei jeder Antwort mit."
+    }
+  },
+  "bemerkungen": [
+    "Zur Selbstbindung: Sie hat bei mir nichts verschlimmert. Was mich aufgehalten hat, war nicht die Zahl der Auftraege, sondern dass ich nicht hingesehen habe. Ein Auftrag mehr oder weniger haette daran nichts geaendert.",
+    "Die Ausnahme fuer auf-20260919-122 (R3 unter echtem Schaetzer) ist angenommen und wird heute gerechnet. Sie ist die richtige Ausnahme: Sie beantwortet die Frage, die R2 offen laesst.",
+    "Von den neun local-Posten sind heute drei erledigt (120, 121 und was gestern lief). Die restlichen sechs sind eingeplant: 122, 123, 124, 125, 126 und die beiden alten 98 und 101."
+  ],
+  "umgebung": {
+    "gpu_benutzt": false,
+    "netz_benutzt": false,
+    "dauer_min": 6
+  },
+  "fehler": null
+}

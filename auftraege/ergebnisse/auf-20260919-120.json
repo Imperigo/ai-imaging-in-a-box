@@ -1,0 +1,91 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260919-120",
+  "status": "ok",
+  "beendet": "2026-09-21T12:10:00Z",
+  "stand": "9915374",
+  "geprueft": "Gelesen — und nachgemessen statt bloss zur Kenntnis genommen. Der Sichtgang ist an 72 verschiedenen Modelldateien dieser Maschine gelaufen, davon 40 aus echten Projektordnern. Dazu sieben Gegenproben mit Dateien, die sicher falsch sind.",
+  "kurzantwort": {
+    "v1_gelesen": true,
+    "v2_wird_etwas_abgewiesen_das_frueher_lief": false,
+    "v3_stoert_die_reihenfolge": false,
+    "ein_befund": "Eure SketchUp-Kennung greift bei der verbreiteten Kopfform vermutlich nicht. Nicht gemessen — hier liegt keine echte .skp. Begruendung unten."
+  },
+  "befunde": {
+    "v2_keine_abweisung": {
+      "geprueft_dateien": 72,
+      "davon_aus_echten_projektordnern": 40,
+      "brauchbar_true": 72,
+      "brauchbar_none_durchgelassen": 0,
+      "brauchbar_false_abgewiesen": 0,
+      "urteil": "KEINE einzige Datei wird abgewiesen, die frueher lief. Das Tor ist an diesem Bestand vollstaendig durchlaessig fuer echte IFC — es hat in 72 Faellen 72-mal True gesagt, nie None und nie False.",
+      "wie_der_bestand_entstand": "Alle Modelldateien dieser Maschine ausserhalb von Bibliotheksordnern, nach Inhalt dedupliziert (sha256 der ersten MB). Die 40 aus Projektordnern sind derselbe Bestand, mit dem am 18.08.2026 auf-20260818-08 gerechnet wurde — die Zahl stimmt ueberein."
+    },
+    "gegenprobe_kann_das_tor_widersprechen": {
+      "warum": "Ein Tor, das 72-mal True sagt, koennte auch eines sein, das nur True sagen KANN. Diese Frage entscheidet keine Messung an echten Dateien, sondern nur eine an falschen.",
+      "ergebnisse": [
+        {
+          "vorgelegt": "umbenanntes PNG als .ifc",
+          "brauchbar": false,
+          "meldung": "Das sieht aus wie PNG-Bild. Damit rechnet dieses Werkzeug nicht — es kann glb, gltf, ifc."
+        },
+        {
+          "vorgelegt": "leere Datei",
+          "brauchbar": false,
+          "meldung": "ist leer (0 Byte)."
+        },
+        {
+          "vorgelegt": "ZIP-Kopf",
+          "brauchbar": false,
+          "meldung": "Das sieht aus wie ZIP-Archiv (oder ein Format, das darauf aufbaut)."
+        },
+        {
+          "vorgelegt": "PDF-Kopf",
+          "brauchbar": false,
+          "meldung": "Das sieht aus wie PDF."
+        },
+        {
+          "vorgelegt": "FBX-Kopf (binaer)",
+          "brauchbar": false,
+          "meldung": "Das sieht aus wie FBX."
+        },
+        {
+          "vorgelegt": "echte IFC",
+          "brauchbar": true,
+          "meldung": "—"
+        },
+        {
+          "vorgelegt": "SketchUp-Kopf in UTF-16",
+          "brauchbar": null,
+          "meldung": "nicht erkannt — siehe Befund unten"
+        }
+      ],
+      "urteil": "Das Tor kann widersprechen. Fuenf von sechs sicher falschen Dateien werden abgewiesen, und zwar mit einem Satz, den ein Mensch versteht."
+    },
+    "bruecke_model_glb": {
+      "vorgelegt": "eine echte JPG, umbenannt zu model.glb",
+      "brauchbar": false,
+      "format_erkannt": "JPEG-Bild",
+      "naechster_schritt_text": "Das ist ein Bild und kein Modell. Stimmt der Dateiname?",
+      "urteil": "Der von euch beschriebene Fall ist hier reproduziert und wird jetzt gefangen. Vorher kam er durch."
+    },
+    "v4_der_befund_den_ihr_nicht_erfragt_habt": {
+      "worum": "Eure SketchUp-Kennung ist b\"SketchUp Model\" an Offset 0, also reines ASCII am Dateianfang.",
+      "was_dagegen_spricht": "Die verbreitete .skp-Kopfform traegt diese Zeichenfolge als UTF-16, eingeleitet von einem BOM und einem Laengenfeld. Als ASCII an Offset 0 steht sie dort nicht — zwischen jedem Buchstaben liegt ein Nullbyte, und die ersten vier Byte sind nicht 'Sket'.",
+      "was_das_bedeutet": "Der Fall faellt nicht auf eine falsche Absage, sondern auf GAR KEINE: brauchbar=None statt False. Der Nutzer bekommt wieder den Stacktrace von ifcopenshell — also genau das, was ihr mit diesem Eintrag abschaffen wolltet. Der Schaden ist klein, aber der Nutzen faellt aus.",
+      "was_ich_NICHT_belegen_kann": "Hier liegt keine echte .skp. Ich habe gesucht und keine gefunden. Das ist ein begruendeter Hinweis und KEINE Messung — genau die Art Aussage, vor der euer eigener Vorbehalt warnt.",
+      "vorschlag": "Die Kennung als UTF-16-Folge zusaetzlich aufnehmen (b'S\\x00k\\x00e\\x00t\\x00c\\x00h\\x00U\\x00p\\x00', Suchfenster statt Offset 0). Kostet nichts und faengt beide Kopfformen. Wer eine echte .skp hat, misst es in einer Minute nach."
+    }
+  },
+  "bemerkungen": [
+    "V3 zur Reihenfolge: Erst .venv-ifc, dann die Datei — das ist richtig herum, und die Begruendung in eurem Kommentar trifft es. Eine Frage nach dem Gegenstand setzt voraus, dass das Werkzeug ihn anfassen koennte.",
+    "Zur elf Tage langen Stille: Der Kanal ist nicht das Problem. Eure Auftraege kommen an, ich habe sie nur nicht angesehen. Es gibt hier keinen Waechter, der neue Auftraege meldet — ich sehe sie, wenn ich nachschaue. Das ist meine Luecke, nicht eure. Ich baue heute einen Melder dagegen.",
+    "Zum Zeitpunkt: Diese Antwort entsteht am 21.09.2026, zwei Tage nach eurer Ansage. Der Sichtgang war zu diesem Zeitpunkt bereits in dem Stand, den ich gezogen habe — gemessen ist also die Fassung, die ihr angekuendigt habt."
+  ],
+  "umgebung": {
+    "gpu_benutzt": false,
+    "netz_benutzt": false,
+    "dauer_min": 8
+  },
+  "fehler": null
+}

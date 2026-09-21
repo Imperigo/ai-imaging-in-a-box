@@ -1,0 +1,187 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260919-124",
+  "status": "ok",
+  "beendet": "2026-09-21T12:15:00Z",
+  "stand": "9915374",
+  "geprueft": "Drei Paare gebaut und gemessen. Die gestellte Frage bleibt UNBEANTWORTET — nicht aus Zeitmangel, sondern weil eine Voraussetzung fehlt: An der Hochbau-Szene misst geom_iou schon bei der RICHTIGEN Zuordnung nur 0,36 bei einer Schwelle von 0,85. Ein Abstand, der bei null anfaengt, kann nicht verschwinden.",
+  "kurzantwort": {
+    "v4_urteil": "An DIESER Szene traegt die Gegenprobe ueberhaupt nicht — auch nicht beim unaehnlichsten Paar.",
+    "aber_das_liegt_nicht_an_der_aehnlichkeit": "Es liegt an der Szene. Derselbe Messaufbau trennt an eurer Schachtel-Szene mit +0,9370.",
+    "der_eigentliche_fund": "Eine VOELLIG FREMDE Form passt zum Hochbau-Bild BESSER als die eigene: 0,7110 gegen 0,3635. Das Vorzeichen stimmt nicht.",
+    "was_das_heisst": "Das Zwei-Tore-Verfahren ist an einem glatten Kasten belegt. An einem gegliederten Bau — genau dem, wofuer --hochbau gebaut wurde — kehrt es sich um."
+  },
+  "befunde": {
+    "v1_die_drei_paare": [
+      {
+        "paar": "Paar 1 · ein Geschoss mehr",
+        "was_geaendert": "HB_GESCHOSSE 5 -> 6. Huellbox 15,25 m -> 18,25 m hoch, 141 -> 169 Bauteile.",
+        "vier_messungen": {
+          "A gegen A (richtig)": {
+            "rho_maske": 0.9603,
+            "geom_iou": 0.3635,
+            "besteht_beide_tore": false
+          },
+          "A gegen B (falsch)": {
+            "rho_maske": 0.9298,
+            "geom_iou": 0.3571,
+            "besteht_beide_tore": false
+          },
+          "B gegen B (richtig)": {
+            "rho_maske": 0.9068,
+            "geom_iou": 0.3825,
+            "besteht_beide_tore": false
+          },
+          "B gegen A (falsch)": {
+            "rho_maske": 0.8811,
+            "geom_iou": 0.3761,
+            "besteht_beide_tore": false
+          }
+        },
+        "abstand_geom_iou_A": 0.0063,
+        "abstand_geom_iou_B": 0.0064
+      },
+      {
+        "paar": "Paar 2 · Fassade 1,5 m versetzt",
+        "was_geaendert": "HB_LAENGE_X 12,0 -> 13,5 m. Gleiche Hoehe, gleiche Bauteilzahl (141).",
+        "vier_messungen": {
+          "A gegen A (richtig)": {
+            "rho_maske": 0.9603,
+            "geom_iou": 0.3635,
+            "besteht_beide_tore": false
+          },
+          "A gegen B (falsch)": {
+            "rho_maske": 0.9132,
+            "geom_iou": 0.3673,
+            "besteht_beide_tore": false
+          },
+          "B gegen B (richtig)": {
+            "rho_maske": 0.9425,
+            "geom_iou": 0.3727,
+            "besteht_beide_tore": false
+          },
+          "B gegen A (falsch)": {
+            "rho_maske": 0.9034,
+            "geom_iou": 0.3671,
+            "besteht_beide_tore": false
+          }
+        },
+        "abstand_geom_iou_A": -0.0038,
+        "abstand_geom_iou_B": 0.0056
+      },
+      {
+        "paar": "Paar 3 · Fassadenachsen verschoben",
+        "was_geaendert": "HB_TAFELN_LANG 4 -> 5. IDENTISCHE Huellbox (12,0 x 9,5 x 15,25), 141 -> 151 Bauteile.",
+        "vier_messungen": {
+          "A gegen A (richtig)": {
+            "rho_maske": 0.9603,
+            "geom_iou": 0.3635,
+            "besteht_beide_tore": false
+          },
+          "A gegen B (falsch)": {
+            "rho_maske": 0.9602,
+            "geom_iou": 0.3635,
+            "besteht_beide_tore": false
+          },
+          "B gegen B (richtig)": {
+            "rho_maske": 0.9639,
+            "geom_iou": 0.3669,
+            "besteht_beide_tore": false
+          },
+          "B gegen A (falsch)": {
+            "rho_maske": 0.964,
+            "geom_iou": 0.3669,
+            "besteht_beide_tore": false
+          }
+        },
+        "abstand_geom_iou_A": 0.0,
+        "abstand_geom_iou_B": 0.0
+      }
+    ],
+    "v1_anmerkung_zu_paar_3": "Ihr wolltet «Fensterachsen um eine halbe Achsbreite verschoben». Das gibt das Werkzeug nicht her — es kennt keinen Parameter fuer eine Verschiebung, nur fuer die ANZAHL der Fassadentafeln. Geaendert habe ich darum HB_TAFELN_LANG von 4 auf 5. Das verschiebt die Achsen und laesst Kubatur und Hoehe unangetastet (Huellbox in allen drei Kanten identisch). Es ist die naechstaehnliche Aenderung, die geht — und sie steht hier, statt stillschweigend eingesetzt zu werden.",
+    "v2_v3_die_zahlen": "siehe v1_die_drei_paare, je Paar vier Messungen mit beiden Torwerten",
+    "die_kontrolle_die_alles_entscheidet": {
+      "warum": "Ein Abstand von +0,006 kann zweierlei heissen: Die Paare sind zu aehnlich — oder der Messaufbau misst nichts. Das entscheidet nur eine Messung an einem Paar, das SICHER unterscheidbar ist.",
+      "gemessen": [
+        {
+          "fall": "Bild Schachtel gegen Form Schachtel (richtig)",
+          "rho_maske": 0.9157,
+          "geom_iou": 0.9771
+        },
+        {
+          "fall": "Bild Schachtel gegen Form Hochbau (fremd)",
+          "rho_maske": -0.0469,
+          "geom_iou": 0.0401
+        },
+        {
+          "abstand": "+0.9370 — der Aufbau trennt einwandfrei"
+        },
+        {
+          "fall": "Bild Hochbau gegen Form Hochbau (richtig)",
+          "rho_maske": 0.9603,
+          "geom_iou": 0.3635
+        },
+        {
+          "fall": "Bild Hochbau gegen Form Schachtel (fremd)",
+          "rho_maske": 0.6134,
+          "geom_iou": 0.711
+        },
+        {
+          "abstand": "-0.3476 — VERKEHRT HERUM"
+        }
+      ],
+      "urteil": "Der Messaufbau ist in Ordnung. Die Hochbau-Szene ist es fuer dieses Tor nicht."
+    },
+    "warum_die_hochbau_szene_nicht_traegt": {
+      "vermutung_gepruefte": "Zuerst lag der Verdacht bei der fehlenden Gelaendeplatte — eure auf-92-Szenen tragen eine. Also nachgemessen.",
+      "mit_gelaende": [
+        {
+          "vielfaches": 1.5,
+          "anteil_bauwerk": 0.1145,
+          "rho_maske": 0.6695,
+          "geom_iou": 0.0242
+        },
+        {
+          "vielfaches": 2.5,
+          "anteil_bauwerk": 0.041,
+          "rho_maske": 0.4602,
+          "geom_iou": 0.0
+        },
+        {
+          "vielfaches": 6.0,
+          "anteil_bauwerk": 0.0071,
+          "anmerkung": "Platte 91,5 m — das Bauwerk ist 0,7 % des Bildes"
+        }
+      ],
+      "ohne_gelaende": {
+        "anteil_bauwerk": 0.2594,
+        "rho_maske": 0.9603,
+        "geom_iou": 0.3635
+      },
+      "ergebnis": "Mit Gelaende wird es SCHLECHTER, nicht besser. Der beste Wert steht ohne Platte, und er reicht nicht.",
+      "was_uebrig_bleibt": "Der Unterschied ist die GLIEDERUNG. Die Schachtel ist ein glatter Quader mit einfacher Silhouette; der Hochbau hat Stuetzenraster, Fugen zwischen Fassadentafeln und eine Auskragung. Die geschaetzte Tiefenkarte trifft eine solche Silhouette nicht — und geom_iou misst genau die Silhouette.",
+      "die_unbequeme_folge": "`--hochbau` ist laut eurer eigenen Hilfe gebaut «fuer Messungen, an denen ein glatter Kasten nichts zeigt». Fuer dieses Tor gilt das Gegenteil: Der glatte Kasten zeigt etwas, der gegliederte Bau nicht."
+    },
+    "was_das_fuer_die_pluszahl_0149_bedeutet": {
+      "nicht_widerlegt": "Die +0,149 aus auf-20260909-92 bleibt richtig. Sie gilt fuer zwei glatte, sehr verschiedene Koerper.",
+      "aber_enger_als_gedacht": "Sie gilt NICHT fuer gegliederte Bauten, und zwar unabhaengig von der Aehnlichkeit. Eure Frage «ab welcher Aehnlichkeit verschwindet der Abstand» setzt voraus, dass er bei grosser Unaehnlichkeit da ist. An dieser Szene ist er nie da.",
+      "die_frage_die_jetzt_zuerst_kommt": "Nicht «ab welcher Aehnlichkeit», sondern «ab welcher GLIEDERUNG». Dafuer braeuchte es eine Reihe vom glatten Quader ueber eine Fassade mit Fugen bis zum vollen Hochbau — vier oder fuenf Stufen, je zwei Formen. Das ist ein neuer Datensatz; sagt Bescheid, wenn ihr ihn wollt."
+    }
+  },
+  "bemerkungen": [
+    "Die Schwelle 0,85 ist nicht angefasst worden. Haette ich sie auf 0,35 gesenkt, waeren zwei Paare «bestanden» — und die Messung waere wertlos.",
+    "Alle vier Varianten sind synthetisch, aus eurem eigenen Generator, je EINE Konstante geaendert. Euer Skript im Repo ist unberuehrt; geaendert wurde jeweils eine Kopie.",
+    "Die Bilder mussten mit erzwungenem vollem Geraeteweg gerechnet werden, weil der Backbone sonst gar nicht laeuft — siehe auf-20260919-123, dort steht der Grund. Das ist eine Umgehung fuer die Messung, keine Reparatur an eurem Code."
+  ],
+  "umgebung": {
+    "gpu_benutzt": true,
+    "gpu_leistungsgrenze_w": 400,
+    "leerlauf_schwellen_eingehalten": true,
+    "netz_benutzt": false,
+    "dauer_min": 25,
+    "backbone": "z-image-turbo (Apache-2.0)",
+    "schaetzer": "depth-anything-v2-small (Apache-2.0)",
+    "non_commercial_gewichte_geladen": false
+  },
+  "fehler": null
+}

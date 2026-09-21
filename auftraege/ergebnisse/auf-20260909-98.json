@@ -1,0 +1,172 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260909-98",
+  "status": "ok",
+  "beendet": "2026-09-21T12:25:00Z",
+  "stand": "9915374",
+  "geprueft": "An einem NEUEN Datensatz kalibriert: vier Szenen, die es am 09.09. noch nicht gab, je ein erzeugtes Bild, elf Stoerungsarten mit vorab gesetztem Etikett. 44 Faelle, keiner davon aus den zwoelf Laeufen von auf-20260909-92.",
+  "kurzantwort": {
+    "v1_gibt_es_ein_fehlerfreies_fenster": "JA.",
+    "das_fenster": "hoechster schlechter +0.8651 gegen niedrigsten guten +0.9031 — Breite 0.038.",
+    "vorschlag_schwelle": "0.88, in der Mitte des Fensters. Sie ist KALIBRIERT und nicht gesetzt — aber sie ist knapp, und das ist der wichtigere Teil der Antwort.",
+    "v3_kantenanteil": "Bestaetigt: +0.0053 … +0.0117 an vier neuen Szenen gegen -0.0026 … +0.0098 aus auf-92. Derselbe Bereich.",
+    "was_das_ueber_die_kante_sagt": "Ein Sprung von rund einem Prozent der Kartenspanne ist kein Sprung. Als Riegel taugt sie nicht."
+  },
+  "befunde": {
+    "v4_woher_die_faelle_stammen": {
+      "szenen": "Vier Varianten aus tools/make_test_ifc.py --hochbau, gebaut am 21.09.2026 fuer auf-20260919-124: Grundfassung, ein Geschoss mehr, Fassade 1,5 m versetzt, Fassadenachsen verschoben.",
+      "warum_sie_nicht_aus_auf92_stammen": "Sie existieren erst seit heute. auf-92 lief auf 'schachtel' und 'gebaeude' — zwei andere Geometrien, ein anderer Generatoraufruf, ein anderer Tag. Es gibt keinen Fall, der in beiden Reihen vorkommt.",
+      "die_bilder": "Je Szene EIN erzeugtes Bild (z-image-turbo, Seed 0, 8 Schritte, ControlNet 1.0) — also erzeugt und nicht gerendert. Genau das war der Unterschied zu auf-20260907-81, den ihr benannt habt.",
+      "die_etiketten": "Nicht von mir vergeben, sondern aus eurem eigenen Werkzeug: tools/studie_paarmasse.py, Funktion faelle(). Fuenf Arten tragen gut, sechs tragen schlecht. Ich habe keine Zeile umetikettiert.",
+      "die_konstruktion": "Gestoert wird die REFERENZ (die Soll-Karte), gemessen wird gegen die aus dem erzeugten Bild geschaetzte Karte. So entsteht ein Etikett, das vor der Messung feststeht."
+    },
+    "v1_v2_das_fenster": {
+      "n_faelle": 44,
+      "n_gut": 20,
+      "n_schlecht": 24,
+      "rho_gut": {
+        "min": 0.9031,
+        "max": 0.9639,
+        "n": 20
+      },
+      "rho_schlecht_messbar": {
+        "min": -0.9639,
+        "max": 0.8651,
+        "n": 16
+      },
+      "fenster": {
+        "untere_kante": 0.8651,
+        "obere_kante": 0.9031,
+        "breite": 0.038
+      },
+      "trennt_fehlerfrei": true,
+      "vorgeschlagene_schwelle": 0.88,
+      "je_stoerungsart": [
+        {
+          "art": "treu",
+          "etikett": "gut",
+          "rho_min": 0.9068,
+          "rho_max": 0.9639,
+          "messbar": "4 von 4"
+        },
+        {
+          "art": "skala",
+          "etikett": "gut",
+          "rho_min": 0.9068,
+          "rho_max": 0.9639,
+          "messbar": "4 von 4"
+        },
+        {
+          "art": "versatz_1px",
+          "etikett": "gut",
+          "rho_min": 0.9047,
+          "rho_max": 0.9629,
+          "messbar": "4 von 4"
+        },
+        {
+          "art": "rausch_leicht",
+          "etikett": "gut",
+          "rho_min": 0.9057,
+          "rho_max": 0.9628,
+          "messbar": "4 von 4"
+        },
+        {
+          "art": "glatt_leicht",
+          "etikett": "gut",
+          "rho_min": 0.9031,
+          "rho_max": 0.96,
+          "messbar": "4 von 4"
+        },
+        {
+          "art": "versatz_20px",
+          "etikett": "schlecht",
+          "rho_min": 0.778,
+          "rho_max": 0.8651,
+          "messbar": "4 von 4"
+        },
+        {
+          "art": "gedreht_90",
+          "etikett": "schlecht",
+          "rho_min": -0.0182,
+          "rho_max": 0.0093,
+          "messbar": "4 von 4"
+        },
+        {
+          "art": "rauschen",
+          "etikett": "schlecht",
+          "rho_min": -0.0039,
+          "rho_max": 0.004,
+          "messbar": "4 von 4"
+        },
+        {
+          "art": "innen_vertauscht",
+          "etikett": "schlecht",
+          "rho_min": -0.9639,
+          "rho_max": -0.9068,
+          "messbar": "4 von 4"
+        },
+        {
+          "art": "bauwerk_weg",
+          "etikett": "schlecht",
+          "rho_min": null,
+          "rho_max": null,
+          "messbar": "0 von 4"
+        },
+        {
+          "art": "flach",
+          "etikett": "schlecht",
+          "rho_min": null,
+          "rho_max": null,
+          "messbar": "0 von 4"
+        }
+      ],
+      "der_knappste_fall": "versatz_20px erreicht +0.8651. Das ist eine Karte, die um 20 Bildpunkte verschoben ist — sie zeigt DASSELBE Bauwerk, nur an der falschen Stelle. Dass sie so nahe an die guten Faelle kommt, ist kein Zufall: Die Rangordnung der Tiefen bleibt beim Verschieben fast erhalten."
+    },
+    "acht_faelle_sind_nicht_messbar": {
+      "welche": "bauwerk_weg und flach, je vier Szenen — beide mit Etikett schlecht.",
+      "warum": "Beide erzeugen eine Referenz ohne Varianz innerhalb der Maske. Eine Rangkorrelation braucht zwei Rangfolgen; wo eine davon konstant ist, gibt es keine.",
+      "ist_das_schlimm": "Nein, und zwar wegen eurer eigenen Regel: rho ist dann None, und zwei_tore liest None als NICHT GEMESSEN und damit als nicht bestanden. Die acht Faelle fallen durch — nur nicht, weil der Wert niedrig ist, sondern weil es keinen gibt.",
+      "aber_es_gehoert_in_die_rechnung": "Von 24 schlechten Faellen sind 16 ueber den Wert gefangen und 8 ueber das Fehlen eines Werts. Wer nur die Spanne liest, zaehlt 16 und glaubt, das seien alle."
+    },
+    "v3_der_kantenanteil": {
+      "gemessen_an": "denselben vier erzeugten Bildern, kante_an_maskengrenze mit gemessener Polaritaet -1",
+      "werte": {
+        "grund": 0.007961,
+        "p1_hoeher": 0.011707,
+        "p2_laenger": 0.007883,
+        "p3_achsen": 0.005279
+      },
+      "spanne": "+0.0053 … +0.0117",
+      "auf92_zum_vergleich": "-0.0026 … +0.0098 (Feld 'kante' in build/auf92/ergebnis.json, zwoelf Zeilen)",
+      "urteil": "Bestaetigt. Der Median innen liegt rund ein Prozent der Kartenspanne ueber dem Median aussen — bei allen vier Szenen, in derselben Richtung, aber viel zu schwach, um daran etwas festzumachen.",
+      "was_ich_zusaetzlich_gemessen_habe": "anteil_grenze_mit_kante liegt bei 0.1515 bis 0.2728. Das heisst: an rund einem Viertel der Grenzpunkte gibt es ueberhaupt einen Sprung, an drei Vierteln nicht. Auch das spricht gegen einen Riegel an dieser Stelle."
+    },
+    "v5_was_diese_messung_nicht_traegt": [
+      "Sie gilt fuer EINE Blickrichtung. Alle vier Szenen nutzen dieselbe abgeleitete Kamera (diagonal von vorn-oben). Der frontale Fall, an dem auf-20260907-81 gescheitert ist, kommt hier nicht vor.",
+      "Sie gilt fuer EINEN Gebaeudetyp — den gegliederten Hochbau. Die Schachtel-Szene von auf-92 ist nicht dabei.",
+      "Sie gilt fuer EINEN Seed je Szene. Vier Bilder sind vier Wuerfe; die Streuung ueber Seeds ist nicht gemessen.",
+      "Die Stoerungen treffen die REFERENZ, nicht das Bild. Ein schlecht erzeugtes Bild gegen eine richtige Referenz ist ein anderer Fall — und der haeufigere im Betrieb.",
+      "Das Fenster ist 0.038 breit. Bei zwanzig guten und sechzehn schlechten Faellen ist das eine Schwelle mit wenig Luft: Ein einziger weiterer Fall zwischen 0.8651 und 0.9031 wuerde sie schliessen."
+    ],
+    "was_ich_daraus_empfehle": {
+      "schwelle": 0.88,
+      "aber_mit_auflage": "Sie sollte als VORLAEUFIG gefuehrt werden, bis eine frontale Reihe und ein zweiter Gebaeudetyp dazukommen. Nicht weil die Zahl falsch waere, sondern weil ihre Luft an 36 Faellen haengt.",
+      "und_ein_hinweis_zur_heutigen_0.1": "Die heutige Schwelle SCHWELLE_FOLGT = 0.1 liegt weit unter allem, was hier gemessen wurde — auch die schlechten Faelle versatz_20px (0.78-0.87) liegen darueber. Sie faengt nur die Faelle mit negativem oder verschwindendem rho. Das ist wenig, aber es ist nicht nichts: gedreht_90, rauschen und innen_vertauscht faengt sie zuverlaessig."
+    }
+  },
+  "bemerkungen": [
+    "Keine Schwelle an den Daten nachgezogen, an denen sie danach misst — das war der Kern eures Auftrags, und er ist eingehalten: Der Datensatz ist neu, die Etiketten stammen aus eurem Werkzeug, und die zwoelf Laeufe von auf-92 sind nicht darin.",
+    "Die Bilder mussten mit erzwungenem vollem Geraeteweg gerechnet werden — Grund siehe auf-20260919-123."
+  ],
+  "umgebung": {
+    "gpu_benutzt": true,
+    "gpu_leistungsgrenze_w": 400,
+    "leerlauf_schwellen_eingehalten": true,
+    "netz_benutzt": false,
+    "dauer_min": 20,
+    "schaetzer": "depth-anything-v2-small (Apache-2.0)",
+    "backbone": "z-image-turbo (Apache-2.0)",
+    "non_commercial_gewichte_geladen": false
+  },
+  "fehler": null
+}

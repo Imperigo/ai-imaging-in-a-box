@@ -1,0 +1,245 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260921-126",
+  "status": "ok",
+  "beendet": "2026-09-21T12:10:00Z",
+  "stand": "9915374",
+  "geprueft": "Blender 5.2.1 LTS, echtes Geraet. Operatortabelle geprueft, Rundreise ueber sechs Formate gefahren, Vorgabewuerfel und leere Szene einzeln nachgestellt.",
+  "kurzantwort": {
+    "blender_fassung": "5.2.1 LTS",
+    "zwei_operatoren_fehlen": [
+      "wm.collada_import (.dae)",
+      "import_scene.x3d (.x3d)"
+    ],
+    "und_zwar_in_beide_richtungen": "Auch die EXPORTE fehlen — Collada und X3D sind in dieser Fassung ganz weg, nicht nur umbenannt.",
+    "rundreise": "Sechs Formate, alle sechs halten die Huellbox auf den Millimeter und die Dreieckszahl exakt.",
+    "v4_vorgabewuerfel": "Kein zusaetzliches Objekt in der Ausgabe.",
+    "v5_leere_szene": "Der Runner meldet einen Fehler. Es wird KEINE leere glb geschrieben.",
+    "v6_frist": "300 s sind reichlich — das langsamste Format braucht 1,4 s."
+  },
+  "befunde": {
+    "v1_operatortabelle": {
+      "blender": "5.2.1 LTS",
+      "gemessen_mit": "--background, einmal mit und einmal ohne --factory-startup, gleiches Ergebnis",
+      "eintraege": [
+        {
+          "euer_name": "wm.obj_import",
+          "vorhanden": true
+        },
+        {
+          "euer_name": "import_scene.fbx",
+          "vorhanden": true,
+          "anmerkung": "es gibt zusaetzlich wm.fbx_import — beide da"
+        },
+        {
+          "euer_name": "wm.collada_import",
+          "vorhanden": false,
+          "ersatzname_in_unserer_fassung": "KEINER. Collada ist in 5.2.1 nicht vorhanden, weder als Operator noch als Add-on."
+        },
+        {
+          "euer_name": "wm.stl_import",
+          "vorhanden": true
+        },
+        {
+          "euer_name": "wm.ply_import",
+          "vorhanden": true
+        },
+        {
+          "euer_name": "wm.usd_import",
+          "vorhanden": true
+        },
+        {
+          "euer_name": "wm.alembic_import",
+          "vorhanden": true
+        },
+        {
+          "euer_name": "import_scene.x3d",
+          "vorhanden": false,
+          "ersatzname_in_unserer_fassung": "KEINER. X3D ebenfalls entfernt."
+        },
+        {
+          "euer_name": "import_scene.gltf",
+          "vorhanden": true
+        }
+      ],
+      "was_bpy_ops_wm_wirklich_traegt": [
+        "alembic_import",
+        "drop_import_file",
+        "fbx_import",
+        "grease_pencil_import_svg",
+        "obj_import",
+        "ply_import",
+        "stl_import",
+        "usd_import"
+      ],
+      "was_import_scene_traegt": [
+        "fbx",
+        "gltf"
+      ],
+      "was_import_mesh_traegt": "leer — das Modul gibt es noch, es ist aber leer",
+      "urteil": "Sieben eurer neun Namen stimmen. Zwei zeigen auf Operatoren, die es in 5.2.1 gar nicht mehr gibt — und zwar nicht unter einem anderen Namen, sondern gar nicht. Die Add-on-Liste dieser Fassung (14 Stueck) enthaelt nichts mit Collada, X3D, dae oder web3d.",
+      "vorschlag": "Die beiden Endungen .dae und .x3d aus WEGE nehmen ODER in die Absage verschieben — mit dem Rat, den ihr bei den anderen Formaten schon gebt. Ein Eintrag, der auf einen fehlenden Operator zeigt, wird zu einem Fehler an einer Stelle, an der der Nutzer eine Absage erwartet haette."
+    },
+    "v2_v3_die_rundreise": {
+      "wahrheit_der_testszene": {
+        "huellbox_m": [
+          12.0,
+          9.5,
+          15.25
+        ],
+        "n_bauteile": 141,
+        "n_dreiecke": 1692,
+        "woher": "tools/make_test_ifc.py --hochbau, dann unser IFC-Weg nach glb"
+      },
+      "weg": "IFC -> glb (unser Weg) -> Blender-Export -> unser Importeur -> glb",
+      "zeilen": [
+        {
+          "format": "glb",
+          "kanten_m": null,
+          "n_elements": null,
+          "n_triangles": null,
+          "dauer_s": 0.0,
+          "satz": "Durchgereicht, nichts gewandelt — und darum liefert der Bericht auch keine Zahlen. Das ist richtig so, aber es heisst: bei glb kann die Treue gar nicht geprueft werden, weil nichts passiert, was man pruefen koennte."
+        },
+        {
+          "format": "obj",
+          "kanten_m": [
+            12.0,
+            9.500004,
+            15.250004
+          ],
+          "n_elements": 141,
+          "n_triangles": 1692,
+          "dauer_s": 1.3,
+          "satz": "Verliert nichts. Bauteile, Dreiecke und alle drei Kanten bleiben."
+        },
+        {
+          "format": "fbx",
+          "kanten_m": [
+            12.0,
+            9.500005,
+            15.250004
+          ],
+          "n_elements": 141,
+          "n_triangles": 1692,
+          "dauer_s": 1.4,
+          "satz": "Verliert nichts."
+        },
+        {
+          "format": "stl",
+          "kanten_m": [
+            12.0,
+            9.500003,
+            15.250003
+          ],
+          "n_elements": 1,
+          "n_triangles": 1692,
+          "dauer_s": 1.2,
+          "satz": "Verliert die BAUTEILGLIEDERUNG: aus 141 Koerpern wird einer. Geometrie und Masse bleiben vollstaendig."
+        },
+        {
+          "format": "ply",
+          "kanten_m": [
+            12.0,
+            9.500003,
+            15.250003
+          ],
+          "n_elements": 1,
+          "n_triangles": 1692,
+          "dauer_s": 1.2,
+          "satz": "Wie STL — ein Koerper statt 141."
+        },
+        {
+          "format": "usdc",
+          "kanten_m": [
+            12.0,
+            9.500005,
+            15.250004
+          ],
+          "n_elements": 141,
+          "n_triangles": 1692,
+          "dauer_s": 1.3,
+          "satz": "Verliert nichts."
+        },
+        {
+          "format": "abc",
+          "kanten_m": [
+            12.0,
+            9.500005,
+            15.250004
+          ],
+          "n_elements": 141,
+          "n_triangles": 1692,
+          "dauer_s": 1.3,
+          "satz": "Verliert nichts."
+        },
+        {
+          "format": "dae",
+          "status": "NICHT PRUEFBAR",
+          "satz": "Blender 5.2.1 kann Collada weder schreiben noch lesen. Die Rundreise faellt schon beim Export aus."
+        },
+        {
+          "format": "x3d",
+          "status": "NICHT PRUEFBAR",
+          "satz": "Dasselbe fuer X3D."
+        }
+      ],
+      "kein_massstabsfehler_keine_vertauschte_achse": "Die drei Kanten stehen bei jedem Format in derselben Reihenfolge und in denselben Betraegen wie in der Wahrheit. Die groesste Abweichung ist 5 Mikrometer und stammt aus der Gleitkomma-Darstellung der Formate, nicht aus einer Umrechnung.",
+      "pruefe_konversion_hat_gegriffen": "konversionstreue meldet fuer STL und PLY ausdruecklich `stimmt: false` mit der Abweichung {achse: Bauteile, ist: 1, soll: 141}. Sie faengt genau das, was eine reine Masszahl uebersehen haette."
+    },
+    "v4_vorgabewuerfel": {
+      "geprueft_an": "STL-Import (der Fall, bei dem am wenigsten Struktur mitkommt und ein Zusatzobjekt am ehesten durchrutschte)",
+      "n_elements": 1,
+      "bbox": [
+        [
+          0.0,
+          -3.4e-08,
+          -0.25
+        ],
+        [
+          12.0,
+          9.5,
+          15.0
+        ]
+      ],
+      "urteil": "KEIN zusaetzliches Objekt. Der Vorgabewuerfel spannt -1..+1 in allen drei Achsen; die gemessene Untergrenze liegt bei 0.0 / -0.0 / -0.25. Waere er dabei, muesste mindestens eine Achse bis -1 reichen."
+    },
+    "v5_leere_szene": {
+      "fall_a_null_byte": {
+        "status": "abgelehnt",
+        "glb_geschrieben": false,
+        "grund": "'… ist leer (0 Byte).'",
+        "anmerkung": "Faellt schon am Sichtgang, ohne dass Blender ueberhaupt startet."
+      },
+      "fall_b_datei_mit_inhalt_ohne_flaeche": {
+        "status": "ImporteurError",
+        "meldung": "Wavefront OBJ gelesen, aber die Szene ist leer — keine einzige Flaeche. Die Datei traegt vermutlich nur Kurven, Punkte oder Leerobjekte.",
+        "glb_geschrieben": false
+      },
+      "urteil": "Beide Faelle enden mit einer Meldung, keiner mit einer leeren glb. Das ist die Antwort, die ihr gehofft habt."
+    },
+    "v6_zeiten": {
+      "je_format_s": {
+        "obj": 1.3,
+        "fbx": 1.4,
+        "stl": 1.2,
+        "ply": 1.2,
+        "usdc": 1.3,
+        "abc": 1.3
+      },
+      "urteil": "Die Gesamtfrist von 300 s ist nicht zu knapp, sie ist um zwei Groessenordnungen zu grosszuegig — bei dieser Szene. An einer echten Projektdatei mit hunderttausend Dreiecken sieht das anders aus, und diese Szene sagt darueber nichts."
+    }
+  },
+  "bemerkungen": [
+    "Die Testszene ist klein (141 Bauteile, 1692 Dreiecke). Alle Aussagen ueber TREUE gelten dafuer. Ueber das Verhalten an einer 300-MB-Datei sagt dieser Lauf nichts.",
+    "Der Export kam aus Blender selbst. Ein Format, das Blender sauber schreibt und sauber liest, muss nicht auch das lesen, was ein FREMDES Programm schreibt — die haeufigste Quelle fuer Achsen- und Massstabsfehler liegt genau dort, und sie ist hier nicht gemessen.",
+    "Keine GPU benutzt."
+  ],
+  "umgebung": {
+    "blender": "5.2.1 LTS",
+    "gpu_benutzt": false,
+    "netz_benutzt": false,
+    "dauer_min": 9
+  },
+  "fehler": null
+}

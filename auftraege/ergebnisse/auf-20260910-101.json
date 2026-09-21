@@ -1,0 +1,153 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260910-101",
+  "status": "ok",
+  "beendet": "2026-09-21T12:20:00Z",
+  "stand": "9915374",
+  "geprueft": "Beide Teile erledigt. Teil A nicht am Cockpit-Endpunkt, sondern an den QUELLEN beider Seiten — der Endpunkt verlangt eine Anmeldung, deren Kennwort seit dem Umbau vom 20.09. nicht mehr im Klartext liegt. Warum das hier kein Ersatz, sondern der genauere Weg ist, steht unten.",
+  "kurzantwort": {
+    "v1_tote_kanten": "Keine zwischen KosmoDraw und euch. ABER: KosmoDesign liefert KEINES der vier Felder — jede Kante von dort waere tot.",
+    "v2_namensabweichungen": "Keine. Die vier Feldnamen stimmen auf beiden Seiten woertlich ueberein.",
+    "v3_typabweichungen": "VIER STUECK, und alle dieselbe: Beim Erzeuger sind alle vier Felder NULLBAR, bei euch nicht.",
+    "v4_hat_das_werkzeug_die_arbeit_abgenommen": "Nur zum Teil. Es findet tote Kanten. Ein FEHLENDES Feld und eine Typabweichung meldet es NICHT — beides gemessen.",
+    "w1_capabilities_in_der_liste": "Nein, fehlte noch.",
+    "w2_eingetragen": "Ja, heute. Am Quelltext geprueft, nicht an der Selbstauskunft."
+  },
+  "befunde": {
+    "warum_nicht_am_endpunkt": {
+      "versuch": "GET /api/mcp/tools antwortet {\"error\": \"Not authenticated\"}. Der Anmeldeweg mit dem frueheren Kennwort wird abgewiesen.",
+      "grund": "Am 20.09.2026 ist das Backend-Kennwort aus dem Quelltext entfernt worden (13 Dateien). Es liegt jetzt nur noch als Hash in der Benutzerdatei — auslesen kann ich es nicht, und das ist richtig so.",
+      "was_ich_stattdessen_getan_habe": "Beide Seiten an der QUELLE abgefragt: euren mcp_server.WERKZEUGE und KosmoDraws list_tools() aus seinem MCP-Server, beide auf dieser Maschine.",
+      "warum_das_nicht_schlechter_ist": "Der Endpunkt reicht genau diese Schemata durch — er erzeugt sie nicht. Eine Abweichung zwischen Quelle und Endpunkt waere ein Befund ueber das Cockpit, nicht ueber eure Kante. Diese eine Moeglichkeit bleibt ungeprueft, und ich sage es, statt es zu verschweigen."
+    },
+    "v1_tote_kanten": {
+      "gepruefte_kanten": [
+        {
+          "von": "kosmodraw_export_glb",
+          "nach": "aiimaging_enqueue_render",
+          "befunde": 0
+        },
+        {
+          "von": "kosmodraw_export_glb",
+          "nach": "aiimaging_check_geometry",
+          "befunde": 0
+        },
+        {
+          "von": "kosmodraw_export_ifc",
+          "nach": "aiimaging_enqueue_render",
+          "befunde": 0
+        },
+        {
+          "von": "kosmodraw_bim_layers",
+          "nach": "aiimaging_enqueue_render",
+          "befunde": 0
+        }
+      ],
+      "wer_liefert_was": {
+        "kosmodraw_export_glb": [
+          "glb_path",
+          "up_axis",
+          "bbox"
+        ],
+        "kosmodraw_export_ifc": [
+          "ifc_path"
+        ],
+        "kosmodraw_bim_layers": [
+          "bbox"
+        ]
+      },
+      "der_befund_den_ihr_nicht_erfragt_habt": "Von 30 KosmoDraw-Werkzeugen liefern nur DREI eines der vier Felder. Und im KosmoDesign-MCP-Server (25 Werkzeuge) kommt KEINES der vier Felder im Ausgabeschema vor — dort ist `bbox` genau einmal im ganzen Quelltext, und nicht als Ausgabefeld. Wer eine Kante von KosmoDesign zu euch zieht, zieht eine tote."
+    },
+    "v2_namensabweichungen": {
+      "gefunden": 0,
+      "gepruefte_namen": [
+        "ifc_path",
+        "glb_path",
+        "up_axis",
+        "bbox"
+      ],
+      "anmerkung": "mcp_schemas.FELD_SYNONYME kennt drei Synonympaare, alle aus dem Flaechenbereich (parzelle_flaeche_m2, az, total_hnf_m2). Fuer die vier Geometriefelder ist kein Synonym hinterlegt — und keines noetig."
+    },
+    "v3_typabweichungen": {
+      "gefunden": 4,
+      "alle_derselbe_fall": "Erzeuger `[\"string\", \"null\"]` gegen Verbraucher `\"string\"` (bei bbox: `[\"array\",\"null\"]` gegen `\"array\"`).",
+      "einzeln": [
+        {
+          "feld": "ifc_path",
+          "erzeuger": "kosmodraw_export_ifc",
+          "aus": [
+            "string",
+            "null"
+          ],
+          "ein": "string"
+        },
+        {
+          "feld": "glb_path",
+          "erzeuger": "kosmodraw_export_glb",
+          "aus": [
+            "string",
+            "null"
+          ],
+          "ein": "string"
+        },
+        {
+          "feld": "up_axis",
+          "erzeuger": "kosmodraw_export_glb",
+          "aus": [
+            "string",
+            "null"
+          ],
+          "ein": "string"
+        },
+        {
+          "feld": "bbox",
+          "erzeuger": "kosmodraw_export_glb und _bim_layers",
+          "aus": [
+            "array",
+            "null"
+          ],
+          "ein": "array"
+        }
+      ],
+      "was_das_praktisch_heisst": "KosmoDraws Schema erlaubt ausdruecklich `null`. Euer Schema tut es nicht. Liefert der Vorgaenger in einem Fehlerfall `glb_path: null`, bekommt euer Werkzeug ein null in einem Feld, das eine Zeichenkette verlangt — und der Cockpit-Vorpruefer laesst die Kante durch, weil er diesen Fall nicht kennt.",
+      "das_ist_genau_euer_fall_c": "«gleicher Name, unvertraeglicher Typ (etwa Zahl gegen Zeichenkette, ODER NULLBAR GEGEN NICHT NULLBAR)». Vier Treffer."
+    },
+    "v4_taugt_pruefe_verdrahtbarkeit": {
+      "was_es_kann": "Tote Kanten. Gegenprobe: `kosmodraw_interpret_sketch -> aiimaging_enqueue_render` liefert einen Befund der Art `dead-edge`. Es KANN widersprechen.",
+      "was_es_nicht_kann": [
+        {
+          "probe": "glb_path aus dem Ausgabeschema ENTFERNT",
+          "erwartet": "Befund",
+          "gemessen": "0 Befunde",
+          "warum": "Solange irgendein Feld ueberlappt (hier up_axis und bbox), meldet es keine tote Kante. Ein fehlendes TRAGENDES Feld faellt nicht auf."
+        },
+        {
+          "probe": "up_axis von Text auf Zahl geaendert",
+          "erwartet": "Befund",
+          "gemessen": "0 Befunde",
+          "warum": "Typen werden nicht verglichen."
+        }
+      ],
+      "urteil": "Es nimmt Punkt a) eures Auftrags ab und Punkt b) und c) NICHT. Die vier Typabweichungen oben habe ich darum von Hand gefunden — ein Werkzeug, das sie melden soll, haette sie melden muessen.",
+      "vorschlag": "Zwei Ergaenzungen, beide klein: (1) Ein Befund, wenn ein Feld aus LANE_FIELDS im Ausgabeschema des Erzeugers fehlt, obwohl der Verbraucher es als PFLICHT fuehrt. (2) Ein Befund, wenn die Typmengen sich nicht decken — der Nullbarkeitsfall ist der haeufigste und der stillste."
+    },
+    "w_zweiter_teil": {
+      "w1": "Bestaetigt: `aiimaging_capabilities` fehlte am 21.09.2026 noch in READ_ONLY_MCP_TOOLS. `check_geometry` und `query_render` stehen drin, `enqueue_render` bewusst nicht.",
+      "w2_eingetragen": true,
+      "wie_geprueft": "Am Quelltext eurer Funktion, nicht an der Selbstauskunft des Servers: `capabilities` verwirft ihr Argument (`del argumente`) und gibt Konstanten, Schemata und die Geometrie-Schwelle zurueck. Keine Datei, kein Subprozess, kein Netz.",
+      "stand_danach": "Drei aiimaging-Werkzeuge read-only, enqueue_render weiter hinter require_admin. Backend neu gestartet, Port antwortet.",
+      "w3": "Entfaellt — wir halten es fuer richtig."
+    }
+  },
+  "bemerkungen": [
+    "Der Kommentar in unserer Liste sagt «ALLE DREI seiner Werkzeuge». Es sind inzwischen VIER. Der Satz stammt vom 18.08.2026 und war damals richtig — er ist jetzt nachgefuehrt.",
+    "Die Typabweichung bei der Nullbarkeit ist die Art Fund, die erst im Betrieb weh tut: Solange KosmoDraw erfolgreich exportiert, steht dort nie null. Der Fall tritt genau dann ein, wenn schon etwas anderes schiefgegangen ist.",
+    "Keine GPU, kein Render. Am fremden Backend nichts geaendert — geaendert wurde nur unsere eigene Liste, und das war der Auftrag."
+  ],
+  "umgebung": {
+    "gpu_benutzt": false,
+    "netz_benutzt": false,
+    "dauer_min": 18
+  },
+  "fehler": null
+}

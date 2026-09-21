@@ -1,0 +1,106 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260919-123",
+  "status": "ok",
+  "beendet": "2026-09-21T12:50:00Z",
+  "stand": "9915374",
+  "geprueft": "An echter Hardware gemessen, mit einer Marke, die nicht am Augenschein haengt: ein rotes Rechteck, dessen Rotueberschuss vorher und nachher als Zahl gemessen wird. Dazu zwei Gegenproben — dasselbe Bild ohne Marke und ein Lauf ganz ohne Bild.",
+  "kurzantwort": {
+    "v1_kommt_das_zeichen_an": "NEIN — und zwar vollstaendig: Das Ergebnis ist BYTE-IDENTISCH mit dem Lauf ohne Bild.",
+    "aber_anders_als_bei_qwen": "Bei Qwen gewann die Tiefenkarte den EINEN Bildeingang. Hier gibt es fuer das Bild ueberhaupt keinen Eingang — ZImageControlNetPipeline kennt weder 'image' noch 'strength'.",
+    "die_software_sagt_es_selbst": "Der Lauf meldet woertlich: «Nicht uebergeben, weil unbekannt: image» und «'strength' (0.5) kennt diese Pipeline nicht». Es ist KEIN stiller Verlust — aber ein Hinweis, kein Mangel.",
+    "v3_ohne_tiefenkarte": "Geht nicht. Der Auftrag wird schon bei der Pruefung abgewiesen.",
+    "ein_zweiter_befund": "Der Vorgabe-Backbone rechnet auf dieser Karte derzeit UEBERHAUPT NICHT — auch ohne Bild. Das ist der schwerere Fund, und er hat nichts mit eurer Frage zu tun."
+  },
+  "befunde": {
+    "v1_die_messung": {
+      "marke": "rotes Rechteck, 113 x 102 Bildpunkte, an der Fassade; Kontrollfeld gleicher Groesse daneben",
+      "rotueberschuss_eingang_ohne_marke": 0.64,
+      "rotueberschuss_eingang_mit_marke": 195.0,
+      "rotueberschuss_kontrollfeld": 0.46,
+      "ergebnisse": [
+        {
+          "denoise": 0.2,
+          "rot_im_kasten": 0.64,
+          "rot_im_kontrollfeld": 0.46
+        },
+        {
+          "denoise": 0.35,
+          "rot_im_kasten": 0.64,
+          "rot_im_kontrollfeld": 0.46
+        },
+        {
+          "denoise": 0.5,
+          "rot_im_kasten": 0.64,
+          "rot_im_kontrollfeld": 0.46
+        },
+        {
+          "denoise": 0.65,
+          "rot_im_kasten": 0.64,
+          "rot_im_kontrollfeld": 0.46
+        },
+        {
+          "denoise": 0.8,
+          "rot_im_kasten": 0.64,
+          "rot_im_kontrollfeld": 0.46
+        }
+      ],
+      "der_harte_beleg": "Nicht die Zahlen entscheiden, sondern die Pruefsumme: Alle fuenf Ergebnisse, die Gegenprobe ohne Marke UND der Lauf ganz ohne Bild tragen dieselbe sha256. Sieben Laeufe, ein einziges Bild. Es ist dasselbe Bild, das auf-20260909-92 als A0 erzeugt hat.",
+      "was_das_ausschliesst": "Ein 'teils' gibt es nicht. Waere das Bild auch nur schwach eingegangen, koennten zwei Laeufe mit verschiedenem denoise nicht bitgleich sein.",
+      "schritte_gerechnet": "8 bei bestellten 8. Im Bildbearbeitungsmodus waeren es 8 x 0.5 = 4 gewesen — auch daran ist ablesbar, dass keiner lief."
+    },
+    "v2_die_bilder": {
+      "ordner": "auf-20260919-123-bilder/",
+      "1-eingang-mit-marke.png": "das hineingemalte Rechteck",
+      "2-ergebnis-denoise-0.5.png": "was herauskam",
+      "3-gegenprobe-lauf-ohne-bild.png": "derselbe Lauf ohne jedes Eingangsbild — und dieselbe Datei wie 2",
+      "hinweis": "Alle drei sind synthetisch, aus eurer eigenen Standardszene. Kein Projektbezug."
+    },
+    "wo_genau_es_verloren_geht": {
+      "stelle": "render.py, im Modellaufruf: `argumente['image']` und `argumente['strength']` werden gesetzt, sobald modus == image_edit. Danach filtert `_vertraegliche_argumente` beide heraus, weil die Pipeline sie nicht in ihrer Signatur hat.",
+      "was_der_parametersatz_zeigt": "Er traegt beauty_png, denoise UND modus='image_edit'. Bis zur Modellschicht kommt alles an — der Verlust passiert erst beim Abgleich mit der Pipeline-Signatur.",
+      "warum_das_wichtig_ist": "Wer den Parametersatz protokolliert (und das tut die Software), liest dort 'image_edit' und 'denoise: 0.5'. Im Protokoll steht ein Bildbearbeitungslauf. Gerechnet wurde reines txt2img.",
+      "vorschlag": "Wenn `image` bei modus == image_edit verworfen wird, ist das kein Hinweis, sondern ein MANGEL: Der Nutzer hat ausdruecklich ein Bild uebergeben, und es wurde nicht benutzt. Als Mangel gemeldet, kaeme der Lauf gar nicht erst durch — und niemand bekaeme ein Ergebnis, das nach Bildbearbeitung aussieht."
+    },
+    "v3_ohne_tiefenkarte": {
+      "geprueft": "depth_png=None und depth_png=''",
+      "ergebnis": "Beide Male ein Mangel: «Tiefenkarte (depth_png) fehlt oder ist kein Pfad». Der Auftrag kommt nicht bis zum Modell.",
+      "urteil": "Eine reine Bildbearbeitung ist auf diesem Weg nicht vorgesehen — unabhaengig davon, ob das Modell sie koennte. Das ist eine Entscheidung im Auftragsschema, nicht eine Eigenschaft des Modells."
+    },
+    "v4_staerken": {
+      "gerechnet_bei": [
+        0.2,
+        0.35,
+        0.5,
+        0.65,
+        0.8
+      ],
+      "anmerkung": "Alle fuenf sind wirkungslos, weil 'strength' nicht uebergeben wird. Die Reihe war trotzdem noetig: Sie ist der Beleg, dass es keine Grenze gibt, an der es doch ankaeme."
+    },
+    "der_zweite_befund_backbone_laeuft_nicht": {
+      "beobachtung": "Jeder Lauf endet mit `RuntimeError: Expected all tensors to be on the same device, but got mat1 is on cuda:0, different from other tensors on cpu` — auch ohne Eingangsbild.",
+      "warum": "`_lege_auf_geraet` rechnet den Bedarf aus der Summe der Gewichtsdateien: 31376 MiB, mal GERAETE_ZUSCHLAG 1.25 = 39219 MiB. Frei sind 30717 MiB. Also wird ausgelagert — und der Auslagerungsweg stirbt an genau dem Fehler, gegen den `_entflechte_controlnet` am 25.08.2026 gebaut wurde.",
+      "die_gegenprobe": "Wird der volle Weg erzwungen (pipeline.to('cuda') ohne Bedarfsrechnung), laeuft derselbe Auftrag DURCH — mit und ohne Eingangsbild, in wenigen Sekunden.",
+      "was_das_heisst": "Der Lauf PASST auf die Karte. auf-20260909-92 hat 25671 MiB Spitze gemessen, und 30717 sind frei. Die Schaetzung aus der Plattengroesse verlangt 39 GB fuer einen Lauf, der 25 GB braucht — sie verhindert den gesunden Weg und schickt ihn auf den kaputten.",
+      "zwei_dinge_sind_kaputt_nicht_eines": "Erstens die Bedarfsschaetzung (zu streng, weil sie Dateigroessen statt Laufzeitbedarf misst). Zweitens die Entflechtung (sie greift nicht mehr). Wird nur eines repariert, laeuft es wieder — aber der andere Fehler bleibt stehen und schlaegt beim naechsten groesseren Modell zu.",
+      "wie_ich_trotzdem_gemessen_habe": "Mit erzwungenem vollem Weg. Das ist eine Umgehung fuer die Messung und KEINE Reparatur — ich habe in eurem Code nichts geaendert."
+    }
+  },
+  "bemerkungen": [
+    "Die Antwort auf eure Frage lautet NEIN, und der Pfad fuer Schritt 5 traegt heute nicht.",
+    "Die gute Nachricht darin: Es ist kein stiller Verlust. Die Software meldet beide Verwuerfe woertlich. Wer die Hinweise liest, merkt es sofort — wer sie nicht liest, bekommt ein Bild, das aussieht wie ein Ergebnis.",
+    "Keine Schwelle, keine Einstellung und keine Zeile eures Codes veraendert."
+  ],
+  "umgebung": {
+    "gpu_benutzt": true,
+    "gpu_leistungsgrenze_w": 400,
+    "gpu_w_vor_lauf": 13.7,
+    "gpu_gb_vor_lauf": 0.87,
+    "leerlauf_schwellen_eingehalten": true,
+    "netz_benutzt": false,
+    "dauer_min": 22,
+    "backbone": "z-image-turbo (Apache-2.0)",
+    "non_commercial_gewichte_geladen": false
+  },
+  "fehler": null
+}
