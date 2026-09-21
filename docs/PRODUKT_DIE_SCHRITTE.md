@@ -118,6 +118,39 @@ Auf der Werkstattmaschine lief das KI-Bild **überhaupt nicht** — die Software
 Weg aus, der stirbt. Repariert; die Hälfte des Fehlers (der Ausweichweg selbst) ist
 gemessen bestellt und noch offen.
 
+### 21.09.2026 · Der ganze Weg einmal am Stück — und er war kaputt
+
+**Die schlechteste Nachricht dieses Tages, und sie ist rechtzeitig gekommen.**
+
+Ich habe einen Beweis gebaut, der den Weg fährt, den **Sie** gehen würden: Modelldatei
+hineingeben → Mappe anlegen → rechnen → Mappe morgen wieder öffnen. Bisher war jede
+einzelne Stufe geprüft, der ganze Weg am Stück aber nie.
+
+**Er fiel beim ersten Lauf um.** Jede Mappe verlor beim Speichern den Pfad zu ihrem
+Modell. Beim nächsten Öffnen hätte dort gestanden: «Modell fehlt» — und weiterrechnen wäre
+unmöglich gewesen.
+
+**Der Grund ist eine unserer eigenen Regeln.** Dieses Repository ist öffentlich, darum
+wird beim Speichern Ihr Benutzername aus allen Pfaden entfernt. Genau das machte die Pfade
+unbrauchbar. Und dasselbe traf **die Bilder**: Die Oberfläche hätte nie ein einziges
+echtes Bild angezeigt.
+
+**Warum es niemandem aufgefallen ist:** Alle automatischen Prüfungen laufen in einem
+Ordner ohne Benutzernamen. Dort funktionierte alles.
+
+**Repariert, und zwar besser als vorher:** Die Mappe merkt sich ihre Dateien jetzt
+*relativ* — «eine Ebene höher, dann haus.ifc» statt des ganzen Wegs. Kein Benutzername,
+und als Nebeneffekt lässt sich eine Mappe jetzt **verschieben**: Kopieren Sie sie samt
+Modell auf einen Stick, funktioniert sie dort weiter.
+
+> *Zum dritten Mal in diesem Projekt sass der Fehler genau dort, wo die Prüfung aufhört
+> und die Wirklichkeit anfängt.*
+
+**Was noch fehlt:** Der Beweis läuft hier ohne Grafikkarte, also mit Platzhaltern. Er
+belegt die fünf Stufen, **nicht das Bild**. Auf der Werkstattmaschine läuft derselbe
+Befehl mit echtem Blender und echter Grafikkarte — das ist bestellt und ist die Marke vom
+15. November.
+
 ### 21.09.2026 · Der Standpunkt wird angeklickt, nicht getippt
 
 Bisher entschied die Software allein, von wo das Gebäude gezeigt wird. Der Blickpunkt war

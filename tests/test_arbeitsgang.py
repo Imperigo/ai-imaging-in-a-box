@@ -455,3 +455,36 @@ def test_auch_ein_UEBERSPRUNGENER_knoten_meldet_fertig(tmp_path):
     assert uebersprungen, (
         "In diesem Lauf wurde kein Knoten uebersprungen — dann prueft diese Probe den "
         "Zweig nicht, fuer den sie geschrieben ist.")
+
+
+def test_die_glb_und_die_bilder_stehen_relativ_in_der_mappe(tmp_path):
+    """**Derselbe Fehler stand an drei Stellen** (Beweis 31, 21.09.2026): der Modellpfad,
+    die umgewandelte glb und jeder Bildname.
+
+    Bei den Bildern haengt mehr daran als die Lesbarkeit: Die Oberflaeche liefert nur
+    Bilder **aus dem Projektordner** aus und kennt sie am relativen Namen. Ein absoluter
+    Name waere dort ueberhaupt kein Bild — die Flaeche haette nie eines gezeigt.
+    """
+    heim = tmp_path / "home" / "jemand"
+    heim.mkdir(parents=True)
+    modell = heim / "m.glb"
+    modell.write_bytes(b"glTF\x02\x00\x00\x00")
+    mappe = heim / "projekt"
+
+    p = projekt.neu(mappe, modell, name="Probe",
+                    einstellungen={"prompt": "ein Haus", "up_axis": "Y", "schritte": 8})
+    p["import"] = {"status": "ok", "weg": "ifc", "glb": "modell.glb", "format": ".ifc",
+                   "treue": None, "hochachse": "Y", "hochachse_steht_fest": True,
+                   "hinweise": []}
+    (mappe / "modell.glb").write_bytes(b"glTF\x02\x00\x00\x00")
+    projekt.speichere(p, mappe)
+
+    arbeitsgang.rechne(mappe, ausfuehrer=Werkbank().tabelle())
+
+    text = (mappe / projekt.PROJEKTDATEI).read_text(encoding="utf-8")
+    assert "jemand" not in text and "<nutzer>" not in text, text[:300]
+
+    fertig = projekt.oeffne(mappe)["projekt"]
+    for b in fertig["bilder"]:
+        assert not Path(b["bild"]).is_absolute(), b["bild"]
+        assert (mappe / b["bild"]).is_file(), f"{b['bild']} zeigt ins Leere"

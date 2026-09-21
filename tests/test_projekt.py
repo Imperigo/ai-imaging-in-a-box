@@ -391,3 +391,133 @@ def test_skizzen_ueberleben_das_speichern_und_oeffnen(tmp_path):
 
     wieder = projekt.oeffne(tmp_path)["projekt"]
     assert wieder["skizzen"][0]["bemerkung"] == "mehr Volumen"
+
+
+# ------------------------- Pfade in der Mappe — der Fehler, den drei Wochen niemand sah
+#
+# GEFUNDEN AM 21.09.2026 VON BEWEIS 31, beim ersten Lauf ausserhalb von `/tmp`.
+#
+# Die Mappe wird beim Speichern von Benutzernamen befreit (Regel 3, dieses Repo ist
+# oeffentlich). Aus einem Heimatverzeichnis wurde dabei `/home/<nutzer>/…` — ein Pfad,
+# der auf NICHTS mehr zeigt. Jedes Projekt meldete beim naechsten Oeffnen «Modell fehlt»,
+# und `rechne` verweigerte die Arbeit mit «keine umgewandelte Geometrie».
+#
+# Aufgefallen ist es nie, weil JEDE Probe unter `tmp_path` laeuft — und der liegt unter
+# `/tmp` und traegt keinen Benutzernamen.
+#
+#     Zum dritten Mal in diesem Projekt sass der Fehler genau zwischen der Attrappe und
+#     der echten Datei.
+#
+# Diese Proben fahren darum ausdruecklich unter einem Pfad MIT Benutzernamen.
+
+@pytest.fixture
+def heimatartig(tmp_path):
+    """Ein Ordner, dessen Pfad aussieht wie ein Heimatverzeichnis.
+
+    Er liegt weiterhin unter `tmp_path` — geprueft wird nicht das Dateisystem, sondern
+    die Saeuberung, und die schaut auf die **Zeichenkette**.
+    """
+    ort = tmp_path / "home" / "jemand" / "bauten"
+    ort.mkdir(parents=True)
+    return ort
+
+
+def test_der_modellpfad_ueberlebt_das_speichern(heimatartig):
+    """**Die Probe, die drei Wochen gefehlt hat.**
+
+    Nach `speichere`/`oeffne` muss das Modell wiedergefunden werden — sonst ist jede
+    Mappe beim zweiten Öffnen leer.
+    """
+    modell = heimatartig / "haus.ifc"
+    modell.write_bytes(b"ISO-10303-21;\nENDSEC;\n")
+    mappe = heimatartig / "projekt"
+
+    p = projekt.neu(mappe, modell, name="Probe")
+    projekt.speichere(p, mappe)
+
+    auf = projekt.oeffne(mappe)
+    assert auf["modell_stand"] == projekt.MODELL_UNVERAENDERT, auf["modell_grund"]
+
+
+def test_kein_benutzername_landet_in_der_mappe(heimatartig):
+    """Und die andere Hälfte: Regel 3 gilt weiter. Beides zugleich, nicht eines davon.
+
+    *Ein Pfad, der funktioniert und den Benutzernamen trägt, wäre keine Lösung — er wäre
+    der Fehler in die andere Richtung.*
+    """
+    modell = heimatartig / "haus.ifc"
+    modell.write_bytes(b"ISO-10303-21;\n")
+    mappe = heimatartig / "projekt"
+
+    p = projekt.neu(mappe, modell)
+    pfad = projekt.speichere(p, mappe)
+    text = pfad.read_text(encoding="utf-8")
+
+    assert "jemand" not in text, "der Benutzername steht in der Mappe"
+    assert "<nutzer>" not in text, (
+        "ein ersetzter Benutzername heisst, dass ein absoluter Pfad gespeichert wurde — "
+        "und der zeigt danach auf nichts")
+
+
+def test_der_pfad_steht_relativ_zur_mappe_darin(heimatartig):
+    """Was in der Datei steht, ist nachlesbar und kurz: `../haus.ifc`.
+
+    Die Mappe wird dadurch **umziehbar** — wer sie samt Modell kopiert, nimmt eine
+    gültige Angabe mit.
+    """
+    modell = heimatartig / "haus.ifc"
+    modell.write_bytes(b"ISO-10303-21;\n")
+    mappe = heimatartig / "projekt"
+
+    p = projekt.neu(mappe, modell)
+    assert p["modell"]["pfad"] == "../haus.ifc"
+
+
+def test_die_mappe_laesst_sich_mitsamt_modell_verschieben(heimatartig, tmp_path):
+    """**Die Eigenschaft, die als Nebenwirkung entstanden ist — und die zählt.**
+
+    Wer den ganzen Ordner woandershin kopiert, hat weiterhin ein gültiges Projekt. Mit
+    absoluten Pfaden wäre es beim ersten Verschieben kaputt gewesen.
+    """
+    import shutil
+
+    modell = heimatartig / "haus.ifc"
+    modell.write_bytes(b"ISO-10303-21;\n")
+    mappe = heimatartig / "projekt"
+    projekt.speichere(projekt.neu(mappe, modell), mappe)
+
+    anderswo = tmp_path / "stick" / "bauten"
+    shutil.copytree(heimatartig, anderswo)
+
+    auf = projekt.oeffne(anderswo / "projekt")
+    assert auf["modell_stand"] == projekt.MODELL_UNVERAENDERT, auf["modell_grund"]
+
+
+def test_ein_geaendertes_modell_faellt_weiterhin_auf(heimatartig):
+    """Die Gegenprobe. Ohne sie wäre ein `oeffne`, das IMMER «unverändert» sagt, ebenso
+    grün — und der Fingerabdruck umsonst gerechnet."""
+    modell = heimatartig / "haus.ifc"
+    modell.write_bytes(b"ISO-10303-21;\n")
+    mappe = heimatartig / "projekt"
+    projekt.speichere(projekt.neu(mappe, modell), mappe)
+
+    modell.write_bytes(b"ISO-10303-21;\nETWAS ANDERES\n")
+
+    assert projekt.oeffne(mappe)["modell_stand"] == projekt.MODELL_VERAENDERT
+
+
+def test_ein_absoluter_pfad_ohne_gemeinsamen_stamm_bleibt_absolut():
+    """Der Fall ohne relativen Pfad — ein anderes Laufwerk unter Windows.
+
+    Dann bleibt es absolut, die Säuberung greift wie bisher, und das Projekt meldet beim
+    Öffnen ehrlich, dass es das Modell nicht findet. *Unschön und wahr ist besser als
+    schön und falsch.*
+    """
+    assert projekt.pfad_fuer_die_mappe("/ganz/woanders/haus.ifc", "/mappe").startswith("..")
+
+
+def test_loese_pfad_macht_aus_leer_nichts(tmp_path):
+    """`""` ist keine Datei und wird auch nicht zu einer — sonst zeigte ein leeres Feld
+    plötzlich auf den Projektordner selbst."""
+    assert str(projekt.loese_pfad("", tmp_path)) == "."
+    assert str(projekt.loese_pfad(None, tmp_path)) == "."

@@ -118,7 +118,11 @@ def lege_an(wurzel, modell, *, name: str | None = None,
     p["import"] = {
         "status": bericht["status"],
         "weg": bericht["weg"],
-        "glb": bericht["glb_path"],
+        # RELATIV ZUR MAPPE. Die glb liegt DARIN — ein absoluter Pfad ueberlebt die
+        # Saeuberung nach Regel 3 nicht und zeigt danach auf nichts. Gefunden am
+        # 21.09.2026 von Beweis 31.
+        "glb": projekt.pfad_fuer_die_mappe(bericht["glb_path"], wurzel)
+               if bericht.get("glb_path") else bericht.get("glb_path"),
         "format": bericht["format"],
         "treue": bericht["treue"],
         "hochachse": hochachse if steht_fest else None,
@@ -224,6 +228,10 @@ def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None, cache=None
             f"unter welchem Modellstand es entstand.")
 
     glb = (p.get("import") or {}).get("glb")
+    if glb:
+        # DIE ANGABE IST RELATIV ZUR MAPPE — hier wird sie wieder zu einem Pfad auf
+        # dieser Platte. Siehe `projekt.loese_pfad`.
+        glb = str(projekt.loese_pfad(glb, wurzel))
     if not glb:
         raise ArbeitsgangError(
             "In diesem Projekt liegt keine umgewandelte Geometrie. Es ist vermutlich "
@@ -282,7 +290,12 @@ def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None, cache=None
         urteil, grund, qa_id = _urteil_zu(graph, knoten_ergebnisse, kid)
         felder = schichten.get(kid) or {}
         projekt.vermerke_bild(
-            p, bild=str(bild),
+            # RELATIV ZUR MAPPE — zum dritten Mal derselbe Grund (Beweis 31, 21.09.2026):
+            # Ein absoluter Pfad ueberlebt die Saeuberung nach Regel 3 nicht. Und hier
+            # haengt mehr daran als die Lesbarkeit: Die Oberflaeche liefert nur Bilder
+            # AUS DEM PROJEKTORDNER aus und kennt sie am relativen Namen. Ein absoluter
+            # Name waere dort gar kein Bild.
+            p, bild=projekt.pfad_fuer_die_mappe(bild, wurzel),
             schicht=felder.get(kette.FELD_SCHICHT, kette.SCHICHT_GEOMETRIE),
             urteil=urteil,
             basis=felder.get(kette.FELD_BASIS),

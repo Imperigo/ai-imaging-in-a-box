@@ -736,14 +736,18 @@ def sicht(ordner) -> dict:
     # DER KNOTENBAUM WIRD GEBAUT, NICHT GESPEICHERT. Er ist keine Eigenschaft des
     # Projekts, sondern eine der Einstellungen — und er soll zeigen, was beim NAECHSTEN
     # Lauf gerechnet wuerde, nicht was beim letzten gerechnet wurde.
+    # DIE ANGABE IN DER MAPPE IST RELATIV — hier wird sie wieder zu einem Pfad auf
+    # dieser Platte. Siehe `projekt.loese_pfad`.
+    glb = str(projekt.loese_pfad(einfuhr.get("glb"), ordner)) if einfuhr.get("glb") else None
+
     baum, baum_fehler, graph = [], None, None
-    if einfuhr.get("glb"):
+    if glb:
         args = dict(p.get("einstellungen") or {})
         args.pop("ifc_path", None)
         if not args.get("up_axis") and einfuhr.get("hochachse_steht_fest"):
             args["up_axis"] = einfuhr["hochachse"]
         try:
-            graph = kette.baue_kette(glb_path=einfuhr["glb"], **args)
+            graph = kette.baue_kette(glb_path=glb, **args)
             baum = _knotenbaum(graph)
         except kette.KettenError as fehler:
             # NUR DER SATZ, OHNE DEN TYPNAMEN. Die Fehler der Bibliothek sind fuer einen
@@ -772,15 +776,14 @@ def sicht(ordner) -> dict:
         "einstellungen": p.get("einstellungen") or {},
         "knotenbaum": baum,
         "knotenbaum_fehler": baum_fehler,
-        "bedienfelder": bedienfelder(p.get("einstellungen") or {}, graph,
-                                     glb=einfuhr.get("glb")),
+        "bedienfelder": bedienfelder(p.get("einstellungen") or {}, graph, glb=glb),
         "bilder": [_bild_fuer_die_flaeche(b, ordner) for b in (p.get("bilder") or [])],
         # DIE SKIZZEN, unveraendert aus der Mappe. Kein Urteil, keine Umrechnung — die
         # Flaeche reicht durch, was die Bibliothek fuehrt.
         "skizzen": p.get("skizzen") or [],
         # DER GRUNDRISS, damit der Standpunkt anklickbar wird statt tippbar.
         "grundriss": grundriss(
-            einfuhr.get("glb"),
+            glb,
             (p.get("einstellungen") or {}).get("up_axis")
             or (einfuhr.get("hochachse") if einfuhr.get("hochachse_steht_fest") else None)),
         "laeufe": p.get("laeufe") or [],

@@ -981,6 +981,18 @@ Lesbarkeit oder Struktur.
 **Technische Schuld** — Metapher für Abkürzungen, die kurzfristig Zeit sparen und
 langfristig Zinsen kosten. Nicht per se schlecht, aber buchführungspflichtig.
 
+**Relativer und absoluter Pfad** — Zwei Arten, eine Datei zu benennen.
+*Absolut:* der ganze Weg von der Wurzel der Festplatte an, mit allen Ordnern dazwischen —
+und damit fast immer mit dem **Namen des Benutzers** darin.
+*Relativ:* der Weg von einem Bezugspunkt aus, hier vom Projektordner. `../haus.ifc` heisst
+«eine Ebene höher, dann haus.ifc».
+*Warum das Projekt seit dem 21.09.2026 relativ speichert:* Der absolute Pfad trägt einen
+Benutzernamen, und Regel 3 verbietet den in diesem öffentlichen Repo. Er wurde beim
+Speichern ersetzt — und zeigte danach **auf nichts**. Jede Mappe verlor so ihr Modell.
+*Und der Nebeneffekt, der mehr wert ist als die Reparatur:* Eine Mappe mit relativen
+Pfaden lässt sich **verschieben**. Wer sie samt Modell auf einen Stick kopiert, hat dort
+ein gültiges Projekt.
+
 **Fail-closed** — Entwurfshaltung: Im Zweifel oder bei Störung *nicht* handeln. Für
 teure, nicht rückholbare Vorgänge wie GPU-Renderläufe die richtige Grundeinstellung.
 *Zweites Beispiel im Projekt, seit 21.09.2026 (E25):* Wer die Oberfläche im Netz
@@ -5239,6 +5251,7 @@ System laufen.
 | 2026-09-21 | Aus dem Owner-Entscheid zum Skizzenmodus (E23): **Darstellungsmodus und Entwurfsmodus**, **Erfundenes Volumen** |
 | 2026-09-21 | Aus der Zeichenflaeche fuer das iPad (E24): **Zeigerereignisse (Pointer Events)**, **Leinwand (Canvas)** |
 | 2026-09-21 | Aus dem Zusehen beim Rechnen: **Belegter Fortschritt und Lebenszeichen**, **Hintergrundfaden (Thread)** |
+| 2026-09-21 | Aus Beweis 31 und dem Pfadfehler: **Relativer und absoluter Pfad** |
 | 2026-09-21 | Aus der Anmeldung fuers Heimnetz (E25): **Vergleich in gleichbleibender Zeit** und **Unverschluesselte Verbindung (HTTP)** neu; **Fail-closed** um das zweite Beispiel erweitert statt ein zweites Mal angelegt — zum zweiten Mal an diesem Tag hat der Waechter gegen Doppeleintraege es gemeldet |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |

@@ -1,0 +1,35 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "auftrag_id": "auf-20260921-136",
+ "art": "qa",
+ "worker": "local",
+ "rang": 2,
+ "erstellt": "2026-09-21T23:00:00Z",
+ "params": {},
+ "beschreibung": "Ein Befehl: `python tools/beweis/31_der_weg_des_produkts.py --echt`. Der Weg des Produkts — Tuer, Import, Mappe, Lauf, Wiederoeffnen — hat noch nie einen echten Lauf gesehen. Er muss bis zum 15.11.2026 belegt sein; daran haengt mehr als am Entwurfsmodus.",
+ "anweisung": "=== DER WEG DES PRODUKTS, EINMAL ECHT — EIN BEFEHL ===\n\nDas ist der Auftrag, an dem die Arbeit am meisten haengt. Er kostet euch eine\nZeile und uns die Gewissheit, dass der Weg traegt, den ein Mensch wirklich geht.\n\n\nWORUM ES GEHT, UND WARUM DAS NICHT BEWEIS 20 IST\n\nBeweis 20 faehrt die KETTE mit echten Ausfuehrern. Seit dem 21.09.2026 geht das\nProdukt aber einen anderen Weg darueber:\n\n    Modelldatei -> einlass.sichte        (kommt das ueberhaupt herein?)\n                -> importeur.importiere  (umwandeln, Treue pruefen)\n                -> projekt.neu           (die Mappe anlegen)\n                -> arbeitsgang.rechne    (Kette fahren UND jedes Urteil eintragen)\n                -> projekt.speichere     (morgen dort weitermachen)\n\nDiese fuenf Stufen hat noch nie ein echter Lauf gesehen. Sie sind mit Attrappen\ngeprueft — und Attrappen beantworten die eine Frage nicht, um die es hier geht:\n\n    Haelt der Weg, den ein Mensch wirklich geht, und nicht der, den die Tests\n    gehen?\n\nGenau dieser Unterschied hat bei uns schon dreimal einen Fehler versteckt. Beim\ndritten Mal war es vorgestern, und der Fehler war schwer: Jede Mappe verlor\nbeim Speichern den Pfad zu ihrem Modell, weil unsere Regel-3-Saeuberung den\nBenutzernamen ersetzt. Aufgefallen ist es nie, weil jede Probe unter /tmp\nlaeuft — und /tmp traegt keinen Benutzernamen. Repariert, und dieser Beweis ist\ndas, was es gefunden hat.\n\n\nWAS ZU TUN IST\n\n    cd <euer Klon>\n    git pull\n    python tools/beweis/31_der_weg_des_produkts.py --echt\n\nDas ist alles. Das Skript erzeugt sich sein Bauwerk selbst (synthetische IFC,\nRegel 3), legt eine Mappe an, faehrt den Lauf, oeffnet die Mappe wieder und\nprueft am Schluss, ob ein VERAENDERTES Modell den naechsten Lauf anhaelt.\n\nEs schreibt nach `build/beweis/31_der_weg_des_produkts/`, inklusive\n`bericht.json`.\n\n\nWAS ZURUECKKOMMEN SOLL\n\n  V1 Die vollstaendige Ausgabe des Skripts (sechs Abschnitte, ein paar Zeilen\n     je Abschnitt) und `bericht.json`.\n\n  V2 Das erzeugte Bild selbst. Es ist das erste Bild, das ueber den PRODUKTWEG\n     entstanden ist, und genau darum geht es.\n\n  V3 Die Zeile «gezaehlte Diffusionsschritte». Bei euch muss dort eine Zahl\n     groesser null stehen — bei uns steht null, weil die Attrappe keine\n     meldet. Steht bei euch auch null, ist der Schrittzaehler auf dem Weg\n     ueber den Graphen nicht angekommen, und das waere ein eigener Befund.\n\n  V4 Die Laufzeit je Knoten, so wie das Skript sie ausgibt. Wir haben keine\n     Vorstellung davon, wie lange der Produktweg wirklich braucht.\n\n  V5 Und wenn es scheitert: an welchem der sechs Abschnitte, mit der Meldung.\n     Ein Scheitern an Abschnitt 4 ist eine vollstaendige und sehr nuetzliche\n     Antwort — dann wissen wir, dass der Produktweg NICHT traegt, und haben\n     noch acht Wochen, das zu richten.\n\n\nDER TERMIN, UND ER IST KNAPP\n\nDer Abgabetermin steht: Ende Januar 2027. Der durchgehende Weg muss bis zum\n**15.11.2026** belegt sein. Das ist die Marke, an der am meisten haengt — mehr\nals am Entwurfsmodus, ueber den am 15.10. entschieden wird.\n\nDieser Auftrag hat darum Rang 2, gleich hinter der Reparatur des\nAuslagerungswegs.\n\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n\n  - Nichts reparieren. Wenn es scheitert, wollen wir die Meldung, nicht die\n    Loesung — die Loesung gehoert in unser Repo, mit Probe und Begruendung.\n  - Keine eigene IFC und kein Kundenmodell. Das Skript erzeugt seine eigene.\n  - Keine nicht-kommerziellen Gewichte.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade in der\n    Rueckgabe. (Das Skript selbst legt seine Pfade relativ ab — wenn in eurer\n    Ausgabe ein absoluter auftaucht, ist DAS ein Befund.)\n",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_ifc.py — das Skript ruft es selbst",
+  "hinweis": "Keine eigene Geometrie noetig."
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 60,
+  "leerlauf_schwelle_mem_gb": 2,
+  "hinweise": [
+   "Nichts reparieren — die Meldung ist die Antwort.",
+   "Ein Scheitern an einem bestimmten Abschnitt ist eine vollstaendige Antwort.",
+   "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+  ]
+ },
+ "rueckgabe": [
+  "V1 Vollstaendige Ausgabe des Skripts und `bericht.json`.",
+  "V2 Das erzeugte Bild — das erste ueber den Produktweg.",
+  "V3 Die Zahl der gezaehlten Diffusionsschritte (bei null: eigener Befund).",
+  "V4 Laufzeit je Knoten.",
+  "V5 Bei Scheitern: welcher Abschnitt, mit Meldung."
+ ]
+}

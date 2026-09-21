@@ -3,7 +3,7 @@
  "auftrag_id": "auf-20260921-130",
  "art": "frage",
  "worker": "local",
- "rang": 5,
+ "rang": 6,
  "erstellt": "2026-09-21T17:00:00Z",
  "params": {},
  "beschreibung": "ANSAGE VOR DEM PULL, keine Messung. `render` gibt ab jetzt `modus_bestellt` und `modus_gerechnet` zurueck — rein additiv. Anlass ist eure Messung auf-123: Der Parametersatz nannte `image_edit`, waehrend `txt2img` gerechnet wurde. Dazu EINE Frage: Wurden die zwoelf Laeufe von auf-92 mit Beauty-Anker bestellt? Wenn ja, waren sie in Wahrheit txt2img — die Geometriezahlen bleiben gueltig, aber jede Aussage «mit Beauty-Anker gerechnet» waere falsch.",

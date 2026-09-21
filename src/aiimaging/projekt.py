@@ -218,6 +218,65 @@ def _modellstand(gespeichert: dict, jetzt: dict) -> tuple[str, str]:
             "rechnet neu; wer den alten vergleichen will, hat ihn noch.")
 
 
+def pfad_fuer_die_mappe(pfad, wurzel) -> str:
+    """Ein Pfad, wie er **in** der Projektdatei steht — relativ zur Mappe, wo es geht.
+
+    **Der Anlass ist ein Produktfehler, gefunden am 21.09.2026 von Beweis 31.**
+
+    Die Mappe wird beim Speichern von Benutzernamen befreit (Regel 3, dieses Repo ist
+    öffentlich). Aus dem Heimatverzeichnis eines Menschen wurde dabei
+    ``/home/<nutzer>/…`` — ein Pfad, der **auf nichts mehr zeigt**. (Ein echtes Beispiel
+    steht hier nicht: Der Wächter zu Regel 3 hat genau diese Zeile beim ersten Lauf
+    gemeldet, und er hatte recht.) Beim
+    nächsten Öffnen meldete jedes Projekt ``modell fehlt``, und ``rechne`` verweigerte die
+    Arbeit mit «keine umgewandelte Geometrie».
+
+    **Aufgefallen ist es nie**, weil jede Probe unter ``tmp_path`` läuft — und der liegt
+    unter ``/tmp`` und trägt keinen Benutzernamen.
+
+        *Zum dritten Mal in diesem Projekt sass der Fehler genau zwischen der Attrappe und
+        der echten Datei.*
+
+    **Die Lösung ist keine Ausnahme von Regel 3, sondern der bessere Pfad.** Relativ zur
+    Mappe enthält er keinen Benutzernamen — und die Mappe wird nebenbei **umziehbar**:
+    Wer sie auf einen Stick kopiert, nimmt das Modell mit, und die Angabe stimmt weiter.
+
+    Absolut bleibt es nur dort, wo kein relativer Pfad existiert (ein anderes Laufwerk
+    unter Windows). Dann greift die Säuberung wie bisher, und das Projekt meldet beim
+    Öffnen ehrlich, dass es das Modell nicht findet.
+    """
+    pfad, wurzel = Path(pfad), Path(wurzel)
+    try:
+        return str(_relativ(pfad, wurzel))
+    except ValueError:
+        # KEIN GEMEINSAMER STAMM — etwa ein anderes Laufwerk. Dann absolut, und die
+        # Saeuberung macht daraus einen Pfad, der nicht mehr traegt. Das ist unschoen und
+        # ehrlich: Beim Oeffnen steht «Modell fehlt», und das stimmt dann auch.
+        return str(pfad)
+
+
+def _relativ(pfad: Path, wurzel: Path) -> Path:
+    """``pfad`` relativ zu ``wurzel`` — auch nach oben (``..``).
+
+    ``Path.relative_to`` kann nur nach unten. Eine Modelldatei liegt aber fast immer
+    **neben** der Mappe und nicht darin, und genau dieser Fall ist der häufige.
+    """
+    import os
+    return Path(os.path.relpath(pfad.resolve(), wurzel.resolve()))
+
+
+def loese_pfad(gespeichert, wurzel):
+    """Aus der Angabe in der Mappe wieder einen Pfad auf dieser Platte machen.
+
+    Ein relativer Pfad wird an der Mappe verankert, ein absoluter bleibt, wie er ist.
+    Leer bleibt leer — ``""`` ist keine Datei und wird auch nicht zu einer.
+    """
+    if not gespeichert:
+        return Path("")
+    p = Path(gespeichert)
+    return p if p.is_absolute() else (Path(wurzel) / p)
+
+
 def neu(wurzel, modell, *, name: str | None = None, einstellungen: dict | None = None) -> dict:
     """Ein Projekt anlegen — **und dabei einmal auf das Modell sehen.**
 
@@ -269,7 +328,9 @@ def neu(wurzel, modell, *, name: str | None = None, einstellungen: dict | None =
         "angelegt": _jetzt(),
         "zuletzt_gespeichert": None,
         "modell": {
-            "pfad": str(modell),
+            # RELATIV ZUR MAPPE, wo es geht — siehe `pfad_fuer_die_mappe`. Ein absoluter
+            # Pfad ueberlebt die Saeuberung nach Regel 3 nicht.
+            "pfad": pfad_fuer_die_mappe(modell, wurzel),
             "abdruck": fingerabdruck(modell),
             # DER BEFUND VOM EINLASS WANDERT MIT, und das ist mehr als Bequemlichkeit:
             # Er sagt, was ueber Format und Hochachse feststand, ALS das Projekt entstand.
@@ -399,7 +460,7 @@ def oeffne(wurzel) -> dict:
 
     modell = projekt.get("modell") or {}
     stand, grund = _modellstand(modell.get("abdruck") or {},
-                                fingerabdruck(modell.get("pfad") or ""))
+                                fingerabdruck(loese_pfad(modell.get("pfad"), wurzel)))
     return {"projekt": projekt, "modell_stand": stand, "modell_grund": grund, "pfad": pfad}
 
 

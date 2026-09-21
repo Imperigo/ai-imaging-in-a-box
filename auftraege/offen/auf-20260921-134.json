@@ -3,7 +3,7 @@
  "auftrag_id": "auf-20260921-134",
  "art": "qa",
  "worker": "local",
- "rang": 2,
+ "rang": 3,
  "erstellt": "2026-09-21T21:00:00Z",
  "params": {},
  "beschreibung": "Laeuft `qwen-image-edit-2511` auf eurer Karte, und nimmt es ein Eingangsbild an? Es ist das einzige Modell unserer Registry, das beides koennte und unter Regel 1 zulaessig ist — und der neue Skizzenmodus (Owner-Entscheid E23) haengt daran. NACH auf-131, sonst misst es nur denselben kaputten Auslagerungsweg.",

@@ -5820,6 +5820,39 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Beweis 31 gebaut — und er hat beim ERSTEN Lauf einen schweren Produktfehler
+      gefunden.**
+      Beweis 20 fährt die **Kette**. Das Produkt geht seit dem 21.09. einen anderen Weg
+      darüber: Tür → Import → Mappe → Lauf → Wiederöffnen. **Diese fünf Stufen hatte noch
+      nie ein echter Lauf gesehen.**
+      Und der erste Lauf ausserhalb von `/tmp` fiel sofort um: **Jede Mappe verlor beim
+      Speichern den Pfad zu ihrem Modell.** Die Regel-3-Säuberung ersetzt den
+      Benutzernamen — aus einem Heimatverzeichnis wurde `/home/<nutzer>/…`, und das zeigt
+      auf nichts. Beim nächsten Öffnen meldete jedes Projekt «Modell fehlt», und `rechne`
+      verweigerte die Arbeit.
+      **Derselbe Fehler stand an DREI Stellen:** Modellpfad, umgewandelte glb, und jeder
+      Bildname. Beim letzten hing mehr daran als Lesbarkeit — die Oberfläche liefert nur
+      Bilder **aus dem Projektordner** aus und kennt sie am relativen Namen. *Sie hätte
+      nie ein einziges echtes Bild gezeigt.*
+      **Aufgefallen ist es nie, weil jede Probe unter `tmp_path` läuft** — und der liegt
+      unter `/tmp` und trägt keinen Benutzernamen.
+      *Zum dritten Mal in diesem Projekt sass der Fehler genau zwischen der Attrappe und
+      der echten Datei.*
+      **Die Lösung ist keine Ausnahme von Regel 3, sondern der bessere Pfad:** relativ zur
+      Mappe. Kein Benutzername, und die Mappe wird nebenbei **umziehbar** — wer sie samt
+      Modell kopiert, nimmt eine gültige Angabe mit. `regel3_ersetzt` steht danach bei
+      **0** statt bei 2.
+      Zehn Wächter, die ausdrücklich unter einem Pfad **mit** Benutzernamen fahren; drei
+      Mutationsproben, alle gefallen.
+- [x] **Und der Regel-3-Wächter hat mein eigenes Beispiel gefangen.**
+      Im Docstring der Reparatur stand ein echtes Heimatverzeichnis als Beispiel. Der
+      Wächter meldete es beim ersten Lauf, und er hatte recht. Der Satz steht jetzt ohne
+      Beispiel da — *mit dem Hinweis, warum.*
+- [~] **Der Produktweg ist damit repariert, aber nicht belegt.** Mit Attrappen hält er;
+      das Bild belegt er nicht. Bestellt als `auf-20260921-136`, **Rang 2 bei `local`** —
+      ein Befehl, und er ist die Marke vom **15.11.2026**, an der am meisten hängt.
+      *Ein Beweis, der auf der Maschine ohne Gerät dasselbe meldet wie auf der mit, belegt
+      das Gerät nicht.*
 - [x] **O1 beantwortet: Abgabe Ende Januar 2027 — und der Plan ist jetzt eine Rechnung.**
       19 Wochen. Davon gehören die letzten **sechs dem Schreiben**, und das ist keine
       Grosszügigkeit, sondern eine Bedingung: *Eine Software, die im Januar noch wächst,
