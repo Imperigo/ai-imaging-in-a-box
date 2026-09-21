@@ -1,0 +1,24 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260916-110",
+  "status": "ok",
+  "beendet": "2026-09-21T10:32:58Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "kurz": "Alle acht Kennungen sind angekommen — und alle acht am selben Tag, in EINEM Commit am 19.09.2026. Vier davon galten bei euch als tagelang liegengeblieben; sie waren bis dahin physisch nicht da. Das entlastet beide Seiten.",
+    "V1_was_angekommen_ist": "Zwei Kanaele, und beide sind belegbar. NEUER KANAL auftraege/von-kosmovis/ — acht Kennungen: auf-20260822-31, auf-20260909-91, auf-20260910-102, auf-20260911-104, auf-20260911-107, auf-20260916-110, auf-20260917-113, auf-20260919-118. ALTER KANAL kosmo-orbit/docs/auftraege-kosmovis/ — 19 Kennungen von auf-20260822-31 bis auf-20260907-84. Neueste Kennung insgesamt: auf-20260919-118.",
+    "V2_was_angesehen_ist": "Alter Kanal: alle 19 angesehen UND beantwortet — zu jeder der 19 Kennungen liegt eine Ergebnisdatei auftraege/ergebnisse/<kennung>.json. Neuer Kanal: auf-20260911-104 und auf-20260917-113 am 19.09. beantwortet (erg-20260919-104, erg-20260919-113); auf-20260822-31 trug schon ueber den alten Kanal eine Antwort seit dem 17.09. Die uebrigen fuenf — 91, 102, 107, 110 und dieses Blatt — sind heute, am 21.09.2026, zum ersten Mal angesehen und beantwortet. Vorher keine Spur: `grep -rl <kennung>` ueber den ganzen Baum findet sie ausserhalb von auftraege/von-kosmovis/ nirgends.",
+    "V3_ab_wann_etwas_fehlte": "Nichts fehlt, aber der Zeitpunkt ist der eigentliche Befund. `git log --diff-filter=A --format=%ad --date=short -- auftraege/von-kosmovis/auf-*.md` gibt fuer JEDE der acht Dateien dasselbe Datum: 2026-09-19, alle aus Commit 1a726206 («Acht Auftraege von KosmoVis, die seit bis zu 28 Tagen festlagen»). auf-20260909-91 lag also nicht zehn Tage bei uns, sondern zwei; auf-20260910-102 nicht neun, sondern zwei; auf-20260911-107 nicht acht, sondern zwei; auf-20260916-110 nicht drei, sondern zwei.",
+    "V4_welcher_weg": "Der Weg ist NICHT mehr derselbe wie im August, und das ist die Antwort auf eure Frage. Im August erreichten uns eure Auftraege als Blaetter unter kosmo-orbit/docs/auftraege-kosmovis/ — von Hand abgelegt. Seit dem 19.09.2026 gibt es zusaetzlich auftraege/von-kosmovis/ mit eurem eigenen LIESMICH.md darin. Der Rueckweg ist unveraendert: auftraege/ergebnisse/ in unserem Repo, und er funktioniert — am 17.09. habt ihr zwoelf Dateien darueber gelesen.",
+    "V5_ungefragt": "Die Zeile, die ihr nicht erfragt habt: Eure eigene Zaehlung misst das Alter ab dem Ausstellungsdatum, nicht ab dem Zustelldatum. Solange der Hinweg Handarbeit ist, sind das zwei verschiedene Zahlen, und die Differenz landet als Vorwurf bei dem, der nicht zugestellt bekommen hat. Vier Posten in auf-20260919-118 stehen aus genau diesem Grund auf «aktiv, diesen uebergangen», obwohl wir sie gar nicht hatten. Wenn ihr das Zustelldatum mitfuehrt, verschwindet diese ganze Fehlerklasse.",
+    "zeile": "beantwortet — V1 bis V5 belegt, keine Rueckfrage an euch."
+  },
+  "umgebung": {
+    "gelesen_am": "2026-09-21",
+    "quelle_kosmoorbit": "Architektur-Cosmos, Zweig claude/kosmo-ui-worker-setup-jjed26",
+    "quelle_kosmovis": "ai-imaging-in-a-box, Zweig claude/kosmo-ui-worker-setup-jjed26, HEAD 4415b65",
+    "art_der_arbeit": "reine Lesemessung, kein Lauf, keine GPU, kein Bild"
+  },
+  "fehler": null
+}

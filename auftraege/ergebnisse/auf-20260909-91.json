@@ -1,0 +1,26 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260909-91",
+  "status": "ok",
+  "beendet": "2026-09-21T10:32:58Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "kurz": "V1 = A, aber mit einem Vorbehalt, den ihr wissen muesst: Der Vertrag KANN eine Innenraumbestellung tragen (`interior`), unser Render-Bestellweg kann sie heute aber nicht senden, weil er unbedingt glb schickt. A ist damit richtig gewaehlt und bei UNS noch nicht fertig gebaut. C faellt weg.",
+    "V1_antwort": "A — WIR rechnen die Innenstandpunkte, vor der Umwandlung, und schicken fertige CameraSpecs. Begruendung ist eure eigene und sie traegt: Raeume sind IfcSpace, in der glb gibt es keine mehr. Wer den Standpunkt will, muss ihn rechnen, solange die IFC noch da ist — und die IFC ist bei uns. B waere ein neues Feld fuer eine Rechnung, die wir ohnehin machen muessen.",
+    "V1_der_vorbehalt": "A laeuft NICHT bereits, wie euer Blatt annimmt. Gemessen: apps/kosmo-orbit/src/modules/vis/vis-jobs.ts setzt `geometry: { path: '', format: 'glb' }` fest an drei Stellen (:1109, :1405, :1458) und haengt bei :1112 eine `model.glb` an. Der Kopfkommentar :377 sagt es selbst: dieser Weg «sendet immer `geometry.format:'glb'` und nie ein `interior`-Feld». Und der Vertrag weist eine Innenansicht ohne IFC hart ab (packages/kosmo-contracts/src/render-scene.ts:576-581, superRefine). Solange der Render-Weg kein IFC sendet, kommt auch keine Innenkamera durch — das ist ein Bauposten bei uns.",
+    "V2_sprache": "Wir brauchen die Rechenregel NICHT portiert. Falls wir sie doch uebernehmen, waere TypeScript die Sprache (der Kamerapfad liegt in packages/kosmo-kernel/src/derive/kamera.ts). Aber sagt es ruhig als Zahlen, nicht als Code: Augenhoehe ueber Fussboden, Abstand zur Wand, Blickziel — daraus bauen wir es selbst und koennen es testen.",
+    "V3_feldname_falls_doch_B": "Das Feld GIBT ES SCHON, und das ist die eigentliche Nachricht dieses Punktes: `interior: { rooms: 'auto' | string[] }`, optional, in packages/kosmo-contracts/src/render-scene.ts:118-122. Daneben der geduldete Zweitname `innenansichten: z.boolean().default(false)` (:133), der `interior: { rooms: 'auto' }` bedeutet. Beide loesen denselben IFC-Riegel aus (:564-581). Ein Raumblock mit Grundriss-Polygon, z_unten_m und hoehe_m steht dort NICHT — wenn ihr B wollt, waere das der Zusatz. Wir schlagen ihn nicht vor, weil A ohne ihn auskommt.",
+    "V4_C_faellt_weg": "C ist beantwortet und faellt weg: Eine IFC erreicht heute genau einen Endpunkt, und es ist nicht der Render-Endpunkt. Der Bake-Weg kann `format:'ifc'` senden (apps/kosmo-orbit/src/modules/asset/bake-auftrag.ts:98-108, `exportIfc(doc)` als `model.ifc`), und der Empfangsvertrag nimmt es inzwischen an (packages/kosmo-contracts/src/bake-job.ts:33, `z.enum(['glb','ifc'])`). Die Bruecke biegt das Format nicht mehr zurueck (tools/homestation-bridge/kosmo_bridge/main.py:645 `_format_bestimmen`, Render-Endpunkt :831 mit RENDER_FORMATE :636 inkl. \"ifc\").",
+    "V5_wieviele_innenansichten": "Unsere Vorgabe: EINE je Auftrag, genau wie aussen, und aus demselben Grund — ein Standpunkt ist ein Renderlauf. Gebaut ist die Ableitung dafuer schon: `deriveAutoKameras` liefert bei vorhandenen Zonen genau EINEN Innenstandpunkt, und der Filter, der ihn heute aussen vor laesst, ist eine einzige exportierte Funktion (vis-jobs.ts:370-385, `istUeberDiesenWegBestellbar`). Mehr als eine waere eine Raumauswahl, und dafuer ist `interior.rooms` als Namensliste schon vorgesehen — dann entscheidet der Benutzer, nicht eine Vorgabe.",
+    "V6_ungefragt": "Eine Zeile, die ihr nicht erfragt habt: `exportIfc(doc)` erzeugt die IFC aus unserem Dokumentmodell NEU. Eine hochgeladene Fremd-IFC reist heute nicht byte-gleich durch. Wenn eure Raumableitung auf Originalnamen der IfcSpace oder auf der Storey-Zuordnung einer fremden Datei beruht, ist das die Stelle, an der es auseinandergehen kann — und niemand wuerde es merken, weil beide Seiten `format:'ifc'` sehen.",
+    "zeile": "offen bei UNS, nicht bei euch: A ist gewaehlt, der Render-Weg mit format:'ifc' ist der Bauposten. Von euch braucht es dafuer nichts."
+  },
+  "umgebung": {
+    "gelesen_am": "2026-09-21",
+    "quelle_kosmoorbit": "Architektur-Cosmos, Zweig claude/kosmo-ui-worker-setup-jjed26",
+    "quelle_kosmovis": "ai-imaging-in-a-box, Zweig claude/kosmo-ui-worker-setup-jjed26, HEAD 4415b65",
+    "art_der_arbeit": "reine Lesemessung, kein Lauf, keine GPU, kein Bild"
+  },
+  "fehler": null
+}

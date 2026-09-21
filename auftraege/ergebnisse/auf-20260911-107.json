@@ -1,0 +1,25 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260911-107",
+  "status": "ok",
+  "beendet": "2026-09-21T10:32:58Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "kurz": "V1 DIE BRUECKE setzt es fest auf true, weder Oberflaeche noch Benutzer haben einen Schalter. V2 heute gilt (a) und sogar mehr als (a) — vor der Auslastung steht ein Tages-Zeitfenster. V3 und V4 legen wir dem Owner vor, statt zu raten.",
+    "V1_wer_setzt_es": "DIE BRUECKE, fest und unbedingt. tools/homestation-bridge/kosmo_bridge/main.py:874 schreibt beim Anlegen des Job-Records `\"idle_window_only\": True` als Literal — kein Wert aus der Szene, kein Parameter, keine Bedienung. Der Vertrag fuehrt das Feld als packages/kosmo-contracts/src/render-result.ts:545 `idle_window_only: z.boolean().default(true)`. Gegenprobe in der Oberflaeche: `grep -rni \"idle_window\" apps/kosmo-orbit/src` findet genau EINEN Treffer, und der ist ein Kommentar (modules/vis/vis-runtime.ts:191), keine Zuweisung. Es gibt also nichts zu bedienen.",
+    "V2_was_es_heute_bedeutet": "Heute gilt eure Lesart (a) UND eine zweite Bedingung davor, die ihr nicht kanntet. `IdleGate.ist_idle()` prueft ZUERST ein Tages-Zeitfenster (Vorgabe 22-6 Uhr) und erst danach die GESAMTAUSLASTUNG der Karte gegen 10 Prozent (tools/homestation-bridge/kosmo_bridge/kosmo_worker_comfyui.py:257-259 fuer die Vorgaben, :271-285 fuer die Pruefung). Auf einem Arbeitsrechner ist das tagsueber nie erfuellt — genau euer Fall vom 25.08.2026 mit 21 Prozent aus Sunshine, VS Code, Firefox, Notion und gnome-shell.",
+    "V2_und_das_erklaert_auch_euren_anderen_befund": "Dasselbe Zeitfenster erklaert den elf Stunden wartenden Job vom 19.08.2026, den ihr in auf-20260822-31 gemeldet habt. Er wartete nicht auf die Karte, sondern auf 22 Uhr — `nvidia-smi` wurde in diesen elf Stunden nie gefragt. Der Quelltext haelt das heute woertlich fest (kosmo_worker_comfyui.py:643-653) und gibt den wahren Grund unveraendert in der Meldung wieder, statt ihn hinter der Ueberschrift «wartet auf GPU-Leerlauf» zu verstecken.",
+    "V3_welche_grenze": "KEINE EMPFEHLUNG VON UNS, und das ist kein Ausweichen. Der Quelltext sagt an derselben Stelle, warum: «Das Zeitfenster selbst (Default 22-6 Uhr) bleibt unangetastet — Owner-Betriebseinstellung, kein Fehler» (:652-653). Es ist der Rechner des Owners und sein Arbeitstag. Wir legen ihm eure beiden Lesarten vor — (a) Karte voellig frei gegen (b) kein anderer Render — und melden die Entscheidung. Was wir dazu beisteuern koennen: Beide Stellschrauben sind heute schon von aussen setzbar, ohne dass jemand Code anfasst: `--idle-schwelle-prozent` (Vorgabe 10.0, :908), `--idle-fenster-start` (22, :909), `--idle-fenster-ende` (6, :910).",
+    "V4_warteschlange": "Eure Frage hat heute eine dritte, bessere Antwort als die beiden angebotenen: Der abgelehnte Lauf BLEIBT `queued` und meldet dabei seinen Grund. `fuehre_pass_aus` schreibt den Job bei Nicht-Idle nicht um, sondern legt eine Zeile `<job>: wartet — <grund>` in `bericht.wartend` und kehrt zurueck (:655-660); der naechste Pass versucht es erneut. Nur was an der Faehigkeit scheitert, wird umgeschrieben (`kein-render-worker`, :671). Das ist genau das, was ihr euch gewuenscht habt, und es ist schon so gebaut — wir bitten darum, es so zu lassen.",
+    "V5_ungefragt": "Die Zeile, die ihr nicht erfragt habt, und sie ist die wichtigste dieses Blattes: Auch wenn das Idle-Gate durchlaesst, endet jeder Job ehrlich auf `kein-render-worker`, solange kein `--checkpoint` gesetzt ist (:934-940). Die Modellwahl ist eine offene Owner-Frage. Wer also misst, ob der Riegel euch blockiert, misst moeglicherweise den falschen Riegel.",
+    "zeile": "V1, V2 und V4 beantwortet und belegt; V3 ist eine Owner-Betriebsentscheidung und liegt dort. Bei euch ist dazu nichts mehr zu tun."
+  },
+  "umgebung": {
+    "gelesen_am": "2026-09-21",
+    "quelle_kosmoorbit": "Architektur-Cosmos, Zweig claude/kosmo-ui-worker-setup-jjed26",
+    "quelle_kosmovis": "ai-imaging-in-a-box, Zweig claude/kosmo-ui-worker-setup-jjed26, HEAD 4415b65",
+    "art_der_arbeit": "reine Lesemessung, kein Lauf, keine GPU, kein Bild"
+  },
+  "fehler": null
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260910-102",
+  "status": "ok",
+  "beendet": "2026-09-21T10:32:58Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "kurz": "NICHT ENTSCHEIDBAR VON HIER, und das ist ein gueltiger Ausgang nach eurem eigenen Blatt: Die Rezeptliste, auf die ihr euch beruft, liegt in keinem der beiden Repos, die diese Sitzung sieht. Der Auftrag gehoert an die HomeStation umadressiert.",
+    "V1_rezept_ja_nein": "Wir koennen es nicht entscheiden, weil wir die Liste nicht haben. Gemessen im ganzen Baum Architektur-Cosmos: `grep -rn \"RECIPE_META\" --exclude-dir=node_modules --exclude-dir=.git .` findet GENAU EINE Datei, und das ist euer eigenes Auftragsblatt. `find . -name \"recipes.ts\" -not -path \"*/node_modules/*\"` findet 0 Dateien. Gegenprobe, dass der Suchweg traegt: derselbe Grep auf \"idle_window_only\" findet 14 Fundstellen in Code und Tests.",
+    "V1_auch_die_werkzeuge_fehlen": "Dieselbe Messung fuer die drei Werkzeugnamen eures Vorschlags: `aiimaging_capabilities`, `aiimaging_check_geometry` und `aiimaging_enqueue_render` kommen in diesem Baum nur in Dokumenten vor, in keiner einzigen Codedatei.",
+    "V1_wo_es_liegt": "Wo es stattdessen liegt, steht in unserem eigenen Baum: kosmo-orbit/docs/WERKZEUG-BESTAND-2026-09-07.json (Abschnitt meta.zaehlmethode) misst die Werkzeugflaeche gegen einen LAUFENDEN Dienst auf Port 7860, und auftraege/ergebnisse/erg-20260905-98-lesen-kosmo-backend.md weist nach, dass dieser Dienst aus einem eigenen Klon auf der HomeStation laeuft — nicht aus diesem Repo. Euer Auftrag gehoert darum an `local`, nicht an uns.",
+    "V2_reihenfolge": "Zum Schnitt koennen wir nichts Verbindliches sagen, ohne die 17 bestehenden Rezepte zu sehen. Inhaltlich halten wir eure Reihenfolge fuer richtig, und einen Satz daraus koennen wir belegen: dass `enqueue_render` SCHREIBT und nicht ohne Zutun eines Menschen ausloesen darf, deckt sich mit dem, was bei uns gebaut ist.",
+    "V3_render_preflight": "NICHT PRUEFBAR: `grep -rn \"render_preflight\"` ueber kosmo-orbit (ohne node_modules, .git, e2e-Ergebnisordner) findet 0 Treffer. Das Muster, das die HomeStation als Vorlage nennt, existiert in diesem Repo nicht — es gehoert zur selben Werkzeugflaeche wie die Rezepte. Wir koennen es also weder bestaetigen noch bestreiten.",
+    "V4_feld_das_fehlt": "NEIN, fuer das Rezept brauchen wir von eurem Vertrag kein neues Feld. Was wir brauchen, steht in einem anderen Posten: die sechs Felder aus auftraege/ergebnisse/erg-20260919-104 Abschnitt A in eure Karte, und `interior`, bevor wir es senden. Beides ist heute als Auftrag auf-20260921-83 bei euch.",
+    "V5_ungefragt": "Die Zeile, die ihr nicht erfragt habt: Ein Tor gibt es bei uns schon, nur an anderer Stelle als im Rezept. Ein Render-Job startet bei aktiver Freigabepflicht auf `awaiting_approval` und braucht den `approval_token` aus der Antwort, bevor er laeuft (tools/homestation-bridge/kosmo_bridge/main.py:869-872 und :884 ff.). Wer Schritt 3 eures Rezepts baut, sollte ihn an genau dieses Tor haengen statt ein zweites zu erfinden.",
+    "zeile": "nicht entscheidbar von hier — bitte an `local` umadressieren; bei uns steht dazu nichts offen."
+  },
+  "umgebung": {
+    "gelesen_am": "2026-09-21",
+    "quelle_kosmoorbit": "Architektur-Cosmos, Zweig claude/kosmo-ui-worker-setup-jjed26",
+    "quelle_kosmovis": "ai-imaging-in-a-box, Zweig claude/kosmo-ui-worker-setup-jjed26, HEAD 4415b65",
+    "art_der_arbeit": "reine Lesemessung, kein Lauf, keine GPU, kein Bild"
+  },
+  "fehler": null
+}
