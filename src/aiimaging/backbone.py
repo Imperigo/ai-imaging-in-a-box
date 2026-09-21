@@ -591,6 +591,12 @@ _eintrag(Backbone(
     # lässt `waehle(max_vram_gb=24)` dieses Modell durchgehen, und der Lauf stirbt am
     # Speicher — eine zu grosse verweigert nur einen Lauf, der vielleicht ginge. Von den
     # beiden Irrtümern ist der zweite der billigere.
+    # DRITTE MESSUNG, 21.09.2026 (`auf-20260918-114`, HomeStation): **22,89 GB** —
+    # niedriger als beide vorigen, weil Basis und ControlNet dort **67 Parameter teilen**
+    # und nur einmal im Speicher stehen. Die Zahl bleibt trotzdem bei 25,1, und zwar aus
+    # demselben Grund wie oben: Dieses Feld beantwortet «passt es auf die Karte?», und von
+    # den beiden Irrtümern ist der zu grosse der billigere. Drei Messungen, drei
+    # Bedingungen — 22,89 / 23,4 / 25,1 —, keine davon falsch.
     vram_gb=25.1,
     dateien=_DIFFUSERS_DATEIEN,
     # Geprüft 2026-08-18 an der Modellkarte selbst: Front-Matter "license: apache-2.0".
@@ -766,7 +772,23 @@ _eintrag(Backbone(
     # — aber OHNE klassisches Depth-ControlNet. Wer nur nach der Lizenz filtert, wählt
     # ein Modell, für das die Naht dieses Projekts nicht existiert.
     konditionierung=KOND_INTEGRIERTES_EDIT,
-    vram_gb=_vram_schaetzung(4.0),
+    # GEMESSEN, nicht mehr geschätzt (`auf-20260918-114`, HomeStation, 21.09.2026, über
+    # 78 Läufe, Spitze auf der Karte): **15,55 GB**. Die Schätzung aus der Parameterzahl
+    # stand bei **9,6** und war um 62 Prozent zu klein.
+    #
+    # DER GRUND IST LEHRREICH UND GILT NICHT NUR HIER: Der Textgeber (Qwen3) ist bei
+    # diesem Modell **so gross wie der Transformer selbst**. Eine Schätzung, die von der
+    # Parameterzahl des Bildteils ausgeht, kann ihn darum nicht kennen — sie unterschätzt
+    # jedes Modell mit grossem Textgeber, und zwar systematisch.
+    #
+    #     *Eine Faustformel, die einen ganzen Bestandteil nicht sieht, irrt nicht zufällig.*
+    #
+    # WAS SICH DADURCH AM PRODUKT ÄNDERT: Der Auftrag `auf-20260918-114` nannte dieses
+    # Modell «9,6 GB, laptoptauglich» und das grosse «34 GB, zu gross». Beide Zahlen waren
+    # falsch. Gemessen stehen sich **15,55** und **22,89** GB gegenüber — auf einem
+    # MacBook M1 Max mit 32 GB Gesamtspeicher ist das kleine bequem und das grosse knapp,
+    # aber nicht ausgeschlossen. Wer die Grenze zieht, zieht sie an diesen zwei Zahlen.
+    vram_gb=15.55,
     dateien=_DIFFUSERS_DATEIEN,
     # Geprüft 2026-08-18 an Modellkarte UND LICENSE.md des 4B-Repos: Front-Matter
     # "license: apache-2.0", LICENSE.md ist der Apache-2.0-Volltext.

@@ -1,8 +1,12 @@
 # 6 · Das Messen: der Kern der Arbeit
 
-> **Stand 19.09.2026 — Entwurf.** Viertes geschriebenes Kapitel, und das tragende.
+> **Stand 21.09.2026 — Entwurf.** Viertes geschriebenes Kapitel, und das tragende.
 > **Alle Zahlen sind am 19.09.2026 neu gerechnet**, gegen die Rohdaten in
 > `auftraege/ergebnisse/auf-20260909-92-tabelle.json` und den heutigen Quelltext.
+> **Nachgetragen am 21.09.2026:** zwei bestellte Messungen sind zurück. Die eine löst den
+> Grenzfall aus 6.5 auf — *und zwar zugunsten der Schwelle*. Die andere ist für eine ganz
+> andere Frage gefahren worden und liefert die erste Bestätigung des Ergebnisses an
+> **fremden Daten** (6.6).
 > **Die Strukturnotiz zu diesem Kapitel ist überholt.** Sie nennt als Kernbehauptung einen
 > zusammengesetzten Wert — und genau der ist am 18.09.2026 widerlegt worden. Das Kapitel
 > ist um das neue Ergebnis herum geschrieben, nicht um das alte.
@@ -169,18 +173,119 @@ Paarweise über dieselben Zellen gerechnet:
 **An den Rändern ist die Ordnung sauber. In der Mitte gibt es keine Ordnung, nur
 Streuung** — und für eine Schwelle ist die Mitte genau der Bereich, der zählt.
 
-Der Preis ist gezählt statt geschätzt: Bei mittlerer Führung wird **ein brauchbares Bild
-von zwölf** abgewiesen. Das ist ein Fehlalarm und kein Durchlasser — die verzeihliche
-Richtung, weil ein Fehlalarm sichtbar ist —, aber es ist ein **ungeklärter Fall**. Ob das
-Bild dort dem Modell wirklich weniger folgt oder ob die Kennzahl versagt, ist mit zwölf
-Bildern **nicht entscheidbar**.
+Der Preis schien gezählt: Bei mittlerer Führung wird **ein Bild von zwölf** abgewiesen —
+ein Fehlalarm und kein Durchlasser, also die verzeihliche Richtung.
+
+### Nachtrag vom 21.09.2026: Es war kein Fehlalarm
+
+Die Gegenprobe, die diesen Fall entscheiden würde, war als Messauftrag offen. Sie ist
+gefahren — 36 Bilder, jedes gegen die richtige **und** gegen eine falsche Tiefenkarte —
+und sie beantwortet die Frage in eine Richtung, die man nicht erwartet:
+
+| Dasselbe Bild, gemessen gegen | Rangkorrelation |
+|---|---|
+| die **richtige** Geometrie | **−0,155** |
+| die **falsche** Geometrie | **+0,300** |
+
+**Das Bild folgt dem fremden Gebäude besser als dem eigenen.** Eine blinde Kennzahl kann
+das nicht: Sie sieht dort etwas, und es ist die falsche Form. Das Bildmodell hat aus dem
+gegliederten Bau einen Block gemacht — und ein Block ist der Schachtel ähnlicher als dem
+Haus, das er darstellen soll.
+
+Das ändert das Urteil über diesen Abschnitt vollständig:
+
+> Die Schwelle hatte recht. Das abgewiesene Bild war **kein brauchbares**, und der
+> vermeintliche Fehlalarm war eine richtige Absage.
+
+**Und es liegt nicht an der Führungsstärke**, wie hier zuerst vermutet: Dieselbe Zelle
+steht auch bei voller Führung falschherum (+0,144 eigen gegen +0,412 fremd), nur weniger
+deutlich. Es ist eine Eigenschaft **dieses einen Falls**, nicht der Einstellung.
 
 *Dieser Abschnitt steht hier und nicht im Anhang, weil ein Kapitel über das Messen, das
-den eigenen Grenzfall verschweigt, seine eigene These widerlegt.*
+den eigenen Grenzfall verschweigt, seine eigene These widerlegt. Er bleibt stehen,
+obwohl er aufgelöst ist — denn dass die Auflösung erst eine bestellte Messung brachte,
+ist selbst das Ergebnis.*
+
+### Was dieselbe Messung sonst noch umwirft
+
+Ein zweiter Befund aus demselben Lauf verschiebt die Arbeitsteilung der beiden Masse:
+
+| Frage | Werkzeug | Form | gemessen |
+|---|---|---|---|
+| Folgt das Bild **überhaupt** etwas? | Rangkorrelation | Schwelle | fällt ohne Führung exakt auf null |
+| Folgt es **diesem** Modell? | Flächenüberschneidung | **Vergleich** | **24 von 24** richtig geordnet |
+
+Die Rangkorrelation ordnet paarweise nur **19 von 24** richtig. Als *Schwelle* ist sie
+das bessere Werkzeug, als *Vergleich* das schlechtere — und umgekehrt.
+
+**Die zweite Frage braucht also gar keine Schwelle, sondern eine zweite Karte.** Das ist
+billiger als jede Kalibrierung.
+
+Aber auch hier hält die Messung eine unbequeme Hälfte bereit, die erst beim Nachrechnen
+der Rohdaten auffiel: Der kleinste **echte** Abstand zwischen eigener und fremder Karte
+beträgt +0,154 — der grösste Abstand im **Rauschen** 0,159. Er ist *grösser*. Zwischen
+Signal und Rauschen liegt keine Lücke.
+
+> *Eine Schwelle, die es in den Daten nicht gibt, wird durch Setzen nicht wahr.*
+
+Gewertet wird darum allein das Vorzeichen. Das genügt, weil diese Frage erst gestellt
+wird, wenn die erste mit Ja beantwortet ist — *die Ordnung ist nur dort etwas wert, wo
+überhaupt etwas geordnet wird.*
 
 ---
 
-## 6.6 Grenzen dieses Kapitels
+## 6.6 Die Gegenprobe von aussen — ein Regler, der die Geometrie herausdreht
+
+Bis zum 21.09.2026 ruhte alles in diesem Kapitel auf **einem** Datensatz: zwölf Bilder,
+ein Bildmodell, eine Maschine.
+
+> *Ein Ergebnis, das nur an den Daten belegt ist, aus denen es gewonnen wurde, ist eine
+> Beschreibung und kein Befund.*
+
+Am 21.09.2026 kam eine zweite Messreihe zurück, die für eine **ganz andere Frage**
+bestellt war — ob ein kleines, für einen Laptop taugliches Bildmodell der Geometrie
+folgen kann. 78 Bilder, anderes Modell, andere Anbindung, andere Maschine. Sie liefert
+nebenbei den stärksten Beleg, den dieses Kapitel hat.
+
+Das Modell hat einen Regler, der bestimmt, wie streng es dem Textbefehl folgt. Man dreht
+ihn von 1,0 auf 4,0 und misst mit:
+
+| Regler | zusammengesetzter Wert | Flächenüberschneidung | Rangkorrelation |
+|---|---|---|---|
+| 1,0 | 0,775 | 0,700 | **0,299** |
+| 2,5 | 0,848 | 0,925 | 0,050 |
+| 4,0 | **0,876** | **0,975** | **0,030** |
+
+Alles, was der alte Riegel misst, **steigt**. Das eine, worum es geht, **fällt auf null**.
+
+> **Wer nach dem zusammengesetzten Wert optimiert, optimiert die Geometrie weg.**
+
+Und die Flächenüberschneidung gegen die **falsche** Geometrie rührt sich über alle drei
+Zeilen kaum: sie bleibt zwischen 0,638 und 0,724. *Eine Zahl, die sich nicht ändert, wenn
+man ihr ein anderes Gebäude vorlegt, beantwortet die Frage nach dem Gebäude nicht.* Sie
+misst, **wie viel** Bild ein Bauwerk füllt — nicht **welches**.
+
+**Der alte Riegel besteht alle drei Zeilen** — gegen die richtige Karte *und* gegen die
+falsche (0,740 / 0,765 / 0,778, alle über 0,65). Zum zweiten Mal, an fremden Daten.
+
+**Die zwei Tore halten alle drei an, und jede aus einem anderen Grund:**
+
+| Regler | was durchfällt | warum |
+|---|---|---|
+| 1,0 | Tor B | die Silhouette sitzt nicht |
+| 2,5 und 4,0 | Tor A | die Bindung an die Tiefe ist weg |
+
+Ein einzelnes Mass könnte das nicht. Bei 4,0 sieht die Flächenüberschneidung mit 0,975
+tadellos aus — und genau dort ist die Geometrie verschwunden.
+
+**Was diese Reihe nicht zeigt, und es ist die härtere Hälfte:** Kein einziges dieser 78
+Bilder besteht beide Tore. Das ist die richtige Auskunft über diese Bilder — und es heisst
+zugleich, dass für das laptoptaugliche Modell **noch kein Weg** gefunden ist, auf dem die
+Geometrie ankommt.
+
+---
+
+## 6.7 Grenzen dieses Kapitels
 
 **Erstens, und es ist die schwerste: Die tragende Messung fehlt.** Alle Zahlen dieses
 Kapitels sind an **Soll-Karten** gerechnet — an der Tiefenkarte, die das Modell selbst
@@ -222,5 +327,7 @@ nach hinten.*
 | 6.2 Massstabsblindheit | `docs/POLARITAET_2026-08-21.md` |
 | 6.3 Maske und Nullanker | `docs/MASKE_2026-08-21.md`, `docs/BRAUCHT_ES_GEOM_IOU_2026-08-26.md` |
 | 6.4 Das tragende Ergebnis | `src/aiimaging.geometrie_qa.zwei_tore`, `docs/R3_WELCHES_MASS_TRENNT_2026-09-18.md` |
+| 6.6 Der Regler, der die Geometrie herausdreht | `auftraege/ergebnisse/auf-20260918-114.json` |
 | 6.5 Der Befund gegen die eigene Schwelle | Kommentar an `SCHWELLE_FOLGT` in `src/aiimaging/geometrie_qa.py` |
-| 6.6 Die Messung unter Schätzerrauschen | `auftraege/ergebnisse/auf-20260907-81.json` |
+| 6.5 Die Auflösung des Grenzfalls | `auftraege/ergebnisse/auf-20260918-115.json` |
+| 6.7 Die Messung unter Schätzerrauschen | `auftraege/ergebnisse/auf-20260907-81.json` |

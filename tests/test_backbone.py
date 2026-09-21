@@ -1268,3 +1268,47 @@ def test_die_modell_id_treibt_keinen_ladevorgang():
         f"{treffer}) — der Kommentar an der 4B-Kennung behauptet, es gebe keinen "
         f"Ladeweg über die Kennung. Einer von beiden muss nachgezogen werden."
     )
+
+
+# ======================================================================================
+# DIE GEMESSENEN SPEICHERZAHLEN — eingetragen am 21.09.2026 aus `auf-20260918-114`
+# ======================================================================================
+
+def test_das_kleine_modell_traegt_die_gemessene_zahl_und_nicht_die_schaetzung():
+    """**Eine Faustformel, die einen ganzen Bestandteil nicht sieht, irrt systematisch.**
+
+    Die Schaetzung aus der Parameterzahl stand bei 9,6 GB, gemessen sind **15,55** — um
+    62 Prozent daneben. Der Grund: Bei diesem Modell ist der Textgeber so gross wie der
+    Bildteil selbst, und eine Formel, die von der Parameterzahl des Bildteils ausgeht,
+    kann ihn nicht kennen.
+
+    Die Probe haelt fest, dass hier die MESSUNG steht. Faellt sie auf die Schaetzung
+    zurueck, meldet dieses Projekt ein Modell als laptoptauglich, das sechs Gigabyte mehr
+    braucht als angegeben.
+    """
+    klein = [b for b in backbone_modul.waehle() if b.name == "flux2-klein-4b"]
+    assert klein, "der Eintrag fehlt"
+    assert klein[0].vram_gb == pytest.approx(15.55), (
+        "hier gehoert die gemessene Zahl hin, nicht die Schaetzung aus der Parameterzahl")
+    assert klein[0].vram_gb > backbone_modul._vram_schaetzung(4.0), (
+        "und sie muss ueber der Schaetzung liegen — sonst ist die Messung nicht drin")
+
+
+def test_die_beiden_anwaerter_fuer_den_laptop_stehen_mit_gemessenen_zahlen_da():
+    """Die zwei Zahlen, an denen die Grenze fuer die Zielhardware gezogen wird.
+
+    Der Auftrag `auf-20260918-114` ging mit «9,6 GB laptoptauglich» gegen «34 GB zu
+    gross» hinaus. Beide Zahlen waren falsch. Gemessen stehen sich **15,55** und
+    **22,89** GB gegenueber — auf einem MacBook M1 Max mit 32 GB ist das kleine bequem
+    und das grosse knapp, aber nicht ausgeschlossen.
+
+    *Eine Entscheidung ueber die Zielhardware, die auf zwei geschaetzten Zahlen ruht, ist
+    keine Entscheidung, sondern eine Vermutung mit Beschluss.*
+    """
+    nach_name = {b.name: b for b in backbone_modul.waehle()}
+    assert nach_name["flux2-klein-4b"].vram_gb < 16.0
+    assert nach_name["z-image-turbo"].vram_gb > 16.0
+    # Der grosse Eintrag traegt bewusst die GROESSTE der drei Messungen (25,1 statt
+    # 22,89): Dieses Feld beantwortet «passt es auf die Karte?», und eine zu kleine Zahl
+    # laesst einen Lauf zu, der am Speicher stirbt.
+    assert nach_name["z-image-turbo"].vram_gb == pytest.approx(25.1)

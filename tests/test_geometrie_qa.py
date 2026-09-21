@@ -3366,3 +3366,214 @@ def test_die_luecke_von_tor_A_ist_nur_bei_voller_staerke_sauber(tabelle_92):
     assert urteil["tor_dieses"]["bestanden"] is True, \
         "die Silhouette sitzt — es ist kein Muellbild, und Tor A sperrt es trotzdem aus"
     assert urteil["bestanden"] is False
+
+
+# ======================================================================================
+# DIE ZUORDNUNG — «folgt es DIESEM Modell?» als Vergleich statt als Schwelle
+# ======================================================================================
+#
+# Eingebaut am 21.09.2026 nach `auf-20260918-115` (HomeStation, 36 Bilder). Die Werkstatt
+# hat eine Unterscheidung nachgemessen, die hier zwei Fragen in einem Tor vermischt hatte:
+# `geom_iou` ist als SCHWELLE schwach und als VERGLEICH das schaerfere Werkzeug — 24 von
+# 24 Paaren richtig geordnet gegen 19 von 24 bei `rho_maske`.
+#
+# Die Zahlen unten sind aus `auf-20260918-115-tabelle.json` genommen und NICHT erfunden.
+
+#: Die Zelle, um die es seit dem 18.09.2026 geht: Gebaeude, Prompt mit Bauteilen, Saat 2.
+#: Sie ist das Bild, das auf der Schlusspraesentation als «das schoenste mit der
+#: schlechtesten Bauwerkstreue» stehen soll — und jetzt steht die Erklaerung daneben.
+ZELLE_C_GEBAEUDE_SEED2 = {
+    "1.00": {"rho": 0.1437, "rho_fremd": 0.4122, "iou": 0.9257, "iou_fremd": 0.7350},
+    "0.75": {"rho": -0.1549, "rho_fremd": 0.3001, "iou": 0.9119, "iou_fremd": 0.7409},
+    "0.30": {"rho": -0.0370, "rho_fremd": -0.1153, "iou": 0.6771, "iou_fremd": 0.8358},
+}
+
+
+def test_die_zuordnung_ordnet_nach_dem_vorzeichen_und_nicht_nach_einem_abstand():
+    """**Eine Schwelle, die es in den Daten nicht gibt, wird durch Setzen nicht wahr.**
+
+    Aus den Rohdaten von `auf-20260918-115` nachgerechnet: Der kleinste ECHTE Abstand
+    betraegt +0,1541, der groesste Betrag im RAUSCHEN 0,1586 — er ist groesser. Zwischen
+    Signal und Rauschen liegt keine Luecke, und damit ist kein Mindestabstand setzbar.
+
+    Diese Probe haelt fest, dass die Funktion darum auch keinen setzt: Ein Abstand von
+    einem Zehntausendstel ordnet genauso wie einer von zwei Zehnteln.
+    """
+    knapp = geometrie_qa.zuordnung(0.8001, 0.8000)
+    deutlich = geometrie_qa.zuordnung(0.9600, 0.7600)
+    assert knapp["ordnet"] is True and deutlich["ordnet"] is True
+    assert knapp["abstand"] < 0.001 < deutlich["abstand"]
+
+
+def test_die_fragliche_zelle_ist_der_schachtel_aehnlicher_als_ihrem_eigenen_bau():
+    """Der Befund, der einen offenen Punkt aus Kapitel 6 schliesst.
+
+    Bis zum 21.09.2026 stand dort: *«Ob das Bild dem Modell wirklich weniger folgt oder ob
+    die Kennzahl versagt, ist mit zwoelf Bildern nicht entscheidbar.»* Die Vertauschprobe
+    entscheidet es — und zwar gegen das Bild: Es folgt der fremden Geometrie BESSER als
+    der eigenen. *Das Modell hat aus dem gegliederten Bauwerk einen Block gemacht.*
+    """
+    fall = ZELLE_C_GEBAEUDE_SEED2["0.75"]
+    urteil = geometrie_qa.zwei_tore(fall["rho"], fall["iou"],
+                                    rho_maske_fremd=fall["rho_fremd"],
+                                    geom_iou_fremd=fall["iou_fremd"])
+    assert urteil["tor_folgt"]["bestanden"] is False, "Tor A hat recht: es faellt durch"
+    assert urteil["zuordnung"]["ordnet"] is True, \
+        "die SILHOUETTE sitzt trotzdem — darum reicht die Silhouette allein nicht"
+    assert fall["rho_fremd"] > fall["rho"], \
+        "die Rangkorrelation folgt der FREMDEN Geometrie besser — das ist der Befund"
+
+
+def test_ohne_fuehrung_ordnet_die_zuordnung_falsch_und_tor_A_haelt_trotzdem_an():
+    """*Die Ordnung ist nur dort etwas wert, wo ueberhaupt etwas geordnet wird.*
+
+    Bei Fuehrung 0,30 ordnet die Vergleichszahl in 6 von 12 Faellen falsch — also Zufall.
+    Das ist kein Mangel der Ordnung: Tor A faellt dort auf null, das Urteil steht schon
+    fest, und die Ordnung wird gar nicht erst befragt. Diese Probe haelt fest, dass die
+    Reihenfolge der beiden Tore genau das leistet.
+    """
+    fall = ZELLE_C_GEBAEUDE_SEED2["0.30"]
+    urteil = geometrie_qa.zwei_tore(fall["rho"], fall["iou"],
+                                    rho_maske_fremd=fall["rho_fremd"],
+                                    geom_iou_fremd=fall["iou_fremd"])
+    assert urteil["zuordnung"]["ordnet"] is False, "hier ordnet sie falschherum"
+    assert urteil["bestanden"] is False, "und das Urteil steht trotzdem richtig"
+    assert urteil["tor_folgt"]["bestanden"] is False
+
+
+def test_ein_widerspruch_zwischen_schwelle_und_ordnung_wird_gemeldet():
+    """Der Fall, den eine Schwelle allein nie sieht.
+
+    Ein Bild kann ueber der Schwelle liegen und der FREMDEN Geometrie trotzdem
+    aehnlicher sein. *Eine Schwelle sagt, wie gut es passt; sie sagt nicht, ob es zu
+    diesem Modell gehoert.*
+    """
+    urteil = geometrie_qa.zwei_tore(0.80, 0.96, rho_maske_fremd=0.10, geom_iou_fremd=0.99)
+    assert any("WIDERSPRUCH ZWISCHEN SCHWELLE UND ORDNUNG" in w
+               for w in urteil["warnungen"])
+
+
+def test_eine_halbe_zuordnung_ist_nicht_gemessen_und_kein_nein():
+    """Fehlt eine der beiden Zahlen, ist die Ordnung weder ja noch nein.
+
+    Dieselbe Falle wie bei der halben Gegenprobe, und dort war sie ein echter Fehler: Aus
+    einer fehlenden Messung darf keine Behauptung werden.
+    """
+    for eigen, fremd in ((0.96, None), (None, 0.75), (None, None)):
+        ergebnis = geometrie_qa.zuordnung(eigen, fremd)
+        assert ergebnis["ordnet"] is None
+        assert ergebnis["gemessen"] is False
+        assert "NICHT GEMESSEN" in ergebnis["begruendung"]
+
+
+def test_die_zuordnung_weist_unsinn_ab_statt_ihn_zu_rechnen():
+    with pytest.raises(geometrie_qa.QaError):
+        geometrie_qa.zuordnung("0.9", 0.7)
+    with pytest.raises(geometrie_qa.QaError):
+        geometrie_qa.zuordnung(0.9, True)
+
+
+# ======================================================================================
+# DER REGLER, DER DIE GEOMETRIE HERAUSDREHT — die erste fremde Bestaetigung
+# ======================================================================================
+#
+# `auf-20260918-114` (HomeStation, 21.09.2026, 78 Bilder, anderes Bildmodell, andere
+# Naht, andere Maschine). Der Auftrag galt einer ganz anderen Frage — traegt ein kleines,
+# laptoptaugliches Modell eine Tiefen-Konditionierung? — und lieferte nebenbei den
+# staerksten Beleg fuer die zwei Tore, den dieses Projekt hat:
+#
+#     Von Fuehrung 1.0 auf 4.0 steigt der zusammengesetzte Wert von 0.775 auf 0.876 und
+#     die Flaechenueberschneidung von 0.700 auf 0.975 — waehrend die Rangkorrelation von
+#     0.299 auf 0.030 faellt, also auf null.
+#
+#         *Wer nach dem zusammengesetzten Wert optimiert, optimiert die Geometrie WEG.*
+#
+# Und die Flaechenueberschneidung gegen die FALSCHE Karte steht dabei stur bei 0.72-0.73:
+# Sie misst, wieviel Bild ein Bauwerk fuellt — nicht WELCHES.
+#
+# Bis dahin ruhte die ganze Zwei-Tore-Entscheidung auf EINEM Datensatz (`auf-92`, zwoelf
+# Bilder, eine Pipeline). *Ein Ergebnis, das nur an den Daten belegt ist, aus denen es
+# gewonnen wurde, ist eine Beschreibung und kein Befund.* Diese Reihe ist die zweite.
+
+#: Mittelwerte je Fuehrungsstaerke aus `auf-20260918-114`, n = 12 je Zeile.
+#: (rho richtig, geom_iou richtig, rho falsch, geom_iou falsch, score richtig, score falsch)
+R2_REIHEN = {
+    "1.0": (0.299, 0.700, 0.031, 0.638, 0.775, 0.740),
+    "2.5": (0.050, 0.925, 0.008, 0.712, 0.848, 0.765),
+    "4.0": (0.030, 0.975, 0.010, 0.724, 0.876, 0.778),
+}
+
+
+@pytest.mark.parametrize("fuehrung", sorted(R2_REIHEN))
+def test_der_alte_riegel_besteht_auch_gegen_die_falsche_karte(fuehrung):
+    """Der alte Riegel faellt ein zweites Mal — an fremden Daten.
+
+    Am 18.09.2026 ist er an `auf-92` gefallen (zwoelf Bilder, eine Pipeline). Hier steht
+    dieselbe Zahl noch einmal, gemessen an einem anderen Modell auf einer anderen
+    Maschine: **Alle drei Reihen bestehen die alte Schwelle von 0.65 — und zwar gegen die
+    richtige Karte UND gegen die falsche.**
+    """
+    _, _, _, _, score_richtig, score_falsch = R2_REIHEN[fuehrung]
+    assert score_richtig >= 0.65, "besteht gegen die richtige Karte"
+    assert score_falsch >= 0.65, (
+        "und gegen die FALSCHE ebenso — damit hat der alte Riegel nichts gemessen")
+
+
+@pytest.mark.parametrize("fuehrung", sorted(R2_REIHEN))
+def test_die_zwei_tore_halten_jede_der_drei_reihen_an(fuehrung):
+    """Und die zwei Tore halten alle drei an — jede aus einem ANDEREN Grund.
+
+    Das ist der Gehalt dieser Probe, nicht das blosse ``False``:
+
+    ==========  ==========================  ==============================
+    Fuehrung    was durchfaellt             warum
+    ==========  ==========================  ==============================
+    1.0         Tor B                       die Silhouette sitzt nicht
+    2.5, 4.0    Tor A                       die Bindung an die Tiefe ist weg
+    ==========  ==========================  ==============================
+
+    Ein einzelnes Mass koennte das nicht: Bei 4.0 sieht die Flaechenueberschneidung mit
+    0.975 tadellos aus, und genau dort ist die Geometrie verschwunden.
+    """
+    rho, iou, rho_f, iou_f, _, _ = R2_REIHEN[fuehrung]
+    urteil = geometrie_qa.zwei_tore(rho, iou, rho_maske_fremd=rho_f, geom_iou_fremd=iou_f)
+
+    assert urteil["bestanden"] is False, "keine der drei Reihen darf bestehen"
+    if fuehrung == "1.0":
+        assert urteil["tor_folgt"]["bestanden"] is True
+        assert urteil["tor_dieses"]["bestanden"] is False, "die Silhouette sitzt nicht"
+    else:
+        assert urteil["tor_folgt"]["bestanden"] is False, "die Bindung an die Tiefe ist weg"
+        assert urteil["tor_dieses"]["bestanden"] is True, (
+            "waehrend die Flaeche tadellos aussieht — genau darum braucht es zwei Tore")
+
+
+def test_der_regler_dreht_die_beiden_masse_gegeneinander():
+    """*Wer nach dem zusammengesetzten Wert optimiert, optimiert die Geometrie weg.*
+
+    Die Probe haelt die Richtung fest, nicht die einzelnen Zahlen: Ueber die drei
+    Fuehrungsstaerken steigt alles, was der alte Riegel misst, und faellt das eine, worum
+    es geht.
+    """
+    rho = [R2_REIHEN[f][0] for f in ("1.0", "2.5", "4.0")]
+    iou = [R2_REIHEN[f][1] for f in ("1.0", "2.5", "4.0")]
+    score = [R2_REIHEN[f][4] for f in ("1.0", "2.5", "4.0")]
+
+    assert rho == sorted(rho, reverse=True), "die Rangkorrelation faellt"
+    assert iou == sorted(iou), "die Flaechenueberschneidung steigt"
+    assert score == sorted(score), "und der zusammengesetzte Wert steigt mit"
+    assert rho[-1] < geometrie_qa.SCHWELLE_FOLGT, "am Ende ist die Bindung weg"
+    assert iou[-1] > geometrie_qa.SCHWELLE_DIESES, "und die Flaeche sieht tadellos aus"
+
+
+def test_die_flaeche_gegen_die_falsche_karte_ruehrt_sich_kaum():
+    """Sie misst, WIEVIEL Bild ein Bauwerk fuellt — nicht WELCHES.
+
+    Ueber alle drei Fuehrungsstaerken bleibt die Flaechenueberschneidung gegen die
+    **falsche** Karte zwischen 0.638 und 0.724, waehrend sie gegen die richtige von 0.700
+    auf 0.975 steigt. *Eine Zahl, die sich nicht ruehrt, wenn man ihr ein anderes Gebaeude
+    vorlegt, beantwortet die Frage nach dem Gebaeude nicht.*
+    """
+    fremd = [R2_REIHEN[f][3] for f in ("1.0", "2.5", "4.0")]
+    assert max(fremd) - min(fremd) < 0.10, "sie ruehrt sich kaum"
+    assert all(0.60 < w < 0.75 for w in fremd)

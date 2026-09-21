@@ -3554,16 +3554,31 @@ def ferne_abtrennen(karte: Sequence[float], *, stufen: int = 1,
 #: Das ist die richtige Richtung für einen Riegel — aber es heisst auch, dass
 #: ``rho_maske`` bei 0.75 mindestens einmal **etwas anderes misst als bei 1.00**.
 #:
-#: **Nicht entscheidbar ist, welches von beiden zutrifft:** ob das Bild bei 0.75 dem
-#: Modell wirklich weniger folgt, oder ob ``rho_maske`` dort versagt, wo Tor B noch
-#: trägt. Zwölf Bilder sagen es nicht. Die Gegenprobe, die es sagen würde — jedes
-#: 0.75-Bild auch gegen eine fremde Tiefenkarte — gibt es im Datensatz nicht; sie liegt
-#: als Messauftrag bei der HomeStation (``auf-20260918-115``).
+#: **ENTSCHIEDEN am 21.09.2026 — die Gegenprobe ist gefahren** (``auf-20260918-115``,
+#: HomeStation, 36 Bilder, jedes gegen die richtige **und** die falsche Tiefenkarte).
+#: Die Frage lautete: folgt das Bild bei 0.75 wirklich weniger, oder versagt dort
+#: ``rho_maske``? Die Antwort ist die erste, und sie ist deutlich::
+#:
+#:     Fall C, gebaeude, Seed 2, Stärke 0.75
+#:         rho_maske gegen die RICHTIGE Karte   −0.1549
+#:         rho_maske gegen die FALSCHE  Karte   +0.3001
+#:
+#: **Das Bild folgt der fremden Geometrie besser als der eigenen.** Eine blinde Zahl kann
+#: das nicht — sie sieht dort etwas, und es ist das falsche Gebäude. *Das Modell hat aus
+#: dem gegliederten Bauwerk einen Block gemacht, und der ist der Schachtel ähnlicher.*
+#:
+#: **Die Schwelle 0.10 bleibt damit, wo sie ist.** Dieses Bild fällt durch Tor A, und es
+#: soll durchfallen. Was oben als möglicher Fehlalarm stand, ist keiner.
+#:
+#: **Und es liegt nicht an der Stärke.** Dieselbe Zelle steht bei Stärke 1.00 auf
+#: richtig +0.1437 gegen falsch +0.4122 — ebenfalls falschherum, nur weniger deutlich.
+#: Es ist eine Eigenschaft **dieser Zelle**, nicht der Führungsstärke.
 #:
 #: *Genau diese Sorte Zahl war die alte 0.65, und sie hat elf von zwölf Müllbildern
-#: durchgelassen.* Der Unterschied ist, dass hier dransteht, worauf sie ruht **und wo
-#: sie im eigenen Datensatz schon einmal danebenliegt** — und dass die Gegenprobe in
-#: :func:`zwei_tore` sie bei jedem Lauf prüft, statt ihr zu glauben.
+#: durchgelassen.* Der Unterschied ist, dass hier dransteht, worauf sie ruht — und dass
+#: die Gegenprobe in :func:`zwei_tore` sie bei jedem Lauf prüft, statt ihr zu glauben.
+#: Am 21.09.2026 hat genau diese Gegenprobe den einen zweifelhaften Fall des eigenen
+#: Datensatzes aufgelöst, und zwar **zugunsten der Schwelle**.
 SCHWELLE_FOLGT = 0.10
 
 #: Ab welchem ``geom_iou`` gilt **Tor B** als bestanden: folgt es DIESEM Modell?
@@ -3609,6 +3624,84 @@ def _tor(wert, schwelle: float, frage: str, name: str) -> dict:
     return {"name": name, "frage": frage, "wert": float(wert), "schwelle": schwelle,
             "gemessen": True, "bestanden": bestanden,
             "begruendung": f"{name}: {wert:.4f} {'≥' if bestanden else '<'} {schwelle:.2f}"}
+
+
+def zuordnung(geom_iou, geom_iou_fremd) -> dict:
+    """**Folgt das Bild DIESEM Modell?** — beantwortet durch Vergleich, nicht durch Schwelle.
+
+    Args:
+        geom_iou: Silhouetten-Überdeckung gegen die **richtige** Soll-Karte.
+        geom_iou_fremd: dieselbe Zahl gegen eine **fremde** Geometrie.
+            Beide ``None`` = nicht gemessen.
+
+    Returns:
+        ``{ordnet, abstand, gemessen, begruendung}``. ``ordnet`` ist ``True``, wenn die
+        eigene Karte besser passt als die fremde, ``False``, wenn die fremde besser passt,
+        und ``None``, wenn eine der beiden Zahlen fehlt.
+
+    **Woher diese Funktion kommt** (HomeStation, ``auf-20260918-115``, 21.09.2026, an 36
+    Bildern gemessen). Die Werkstatt hat eine Unterscheidung nachgemessen, die hier zwei
+    Fragen in einem Tor vermischt hatte:
+
+    ================================  =========================  =====================
+    Frage                             Werkzeug                   Form
+    ================================  =========================  =====================
+    Folgt das Bild **überhaupt** etwas?   ``rho_maske``          Schwelle
+    Folgt es **DIESEM** Modell?           ``geom_iou``           **Vergleich**
+    ================================  =========================  =====================
+
+    Gemessen, und beide Hälften sind unbequem:
+
+    * Als **Schwelle** ist ``geom_iou`` schwach — es lässt bei 56 % Geometrieanteil auch
+      das falsche Gebäude durch.
+    * Als **Vergleich** ist es das schärfere Werkzeug: **24 von 24** Paaren richtig
+      geordnet (Führung 1,00 und 0,75), gegen 19 von 24 bei ``rho_maske``.
+
+    **Warum hier kein Mindestabstand steht, obwohl er naheliegt.** Aus den Rohdaten
+    derselben Messung nachgerechnet (nicht aus der Zusammenfassung übernommen):
+
+    ==================  ===================  ==================
+    Führung             richtig geordnet     Abstand
+    ==================  ===================  ==================
+    1,00                12 von 12            +0,1876 … +0,2243
+    0,75                12 von 12            +0,1541 … +0,2254
+    0,30 (ohne Führung)  6 von 12            −0,1586 … +0,1570
+    ==================  ===================  ==================
+
+    Der kleinste **echte** Abstand ist +0,1541. Der grösste Betrag im **Rauschen** ist
+    0,1586 — er ist **grösser**. Zwischen Signal und Rauschen liegt hier also *keine
+    Lücke*, und damit ist kein Mindestabstand setzbar, der die beiden trennte.
+
+        *Eine Schwelle, die es in den Daten nicht gibt, wird durch Setzen nicht wahr.*
+
+    Gewertet wird darum allein das **Vorzeichen**. Das genügt, weil diese Frage erst
+    gestellt wird, wenn die erste schon mit Ja beantwortet ist: Bei Führung 0,30 fällt
+    ``rho_maske`` auf null, Tor A hält an, und diese Ordnung wird nie befragt. *Die
+    Ordnung ist nur dort etwas wert, wo überhaupt etwas geordnet wird.*
+    """
+    for name, wert in (("geom_iou", geom_iou), ("geom_iou_fremd", geom_iou_fremd)):
+        if wert is None or isinstance(wert, (int, float)) and not isinstance(wert, bool):
+            continue
+        raise QaError(f"{name}: Zahl oder None erwartet, war {wert!r} "
+                      f"({type(wert).__name__}).")
+
+    if geom_iou is None or geom_iou_fremd is None:
+        fehlt = "geom_iou" if geom_iou is None else "geom_iou_fremd"
+        return {"ordnet": None, "abstand": None, "gemessen": False,
+                "begruendung": (f"NICHT GEMESSEN: {fehlt} fehlt. Ohne beide Zahlen gibt es "
+                                f"keinen Vergleich — und eine fehlende Zahl ist hier "
+                                f"weder ein Ja noch ein Nein.")}
+
+    abstand = float(geom_iou) - float(geom_iou_fremd)
+    ordnet = abstand > 0.0
+    if ordnet:
+        satz = (f"Die eigene Geometrie passt besser als die fremde "
+                f"({geom_iou:.4f} gegen {geom_iou_fremd:.4f}, Abstand {abstand:+.4f}).")
+    else:
+        satz = (f"DIE FREMDE GEOMETRIE PASST BESSER ODER GLEICH GUT "
+                f"({geom_iou:.4f} gegen {geom_iou_fremd:.4f}, Abstand {abstand:+.4f}). "
+                f"Das Bild stellt dann nicht dieses Modell dar.")
+    return {"ordnet": ordnet, "abstand": abstand, "gemessen": True, "begruendung": satz}
 
 
 def zwei_tore(rho_maske, geom_iou, *,
@@ -3746,6 +3839,28 @@ def zwei_tore(rho_maske, geom_iou, *,
         # Der Satz oben waere hier eine Behauptung ueber eine Messung, die es nicht gibt.
         begruendung += " Die Gegenprobe ist unvollstaendig; ob sie trennt, ist offen."
 
+    # DIE ZUORDNUNG — dieselben zwei Zahlen, aber als VERGLEICH statt als Schwelle.
+    #
+    # Sie urteilt hier bewusst NICHT mit. `bestanden` bleibt, was die zwei Tore sagen.
+    # Der Grund ist der Zustand der Belege: Die Ordnung ist an 24 Paaren gemessen und
+    # traegt dort 24 von 24; die Schwelle 0.85 steht seit dem 18.09.2026 in einer
+    # gemessenen Luecke. Beide gegeneinander auszuspielen, bevor ein Fall bekannt ist,
+    # in dem sie sich widersprechen, hiesse raten.
+    #
+    # Was sie tut, ist mehr wert: Sie MELDET den Widerspruch, wenn es ihn gibt. Ein Bild,
+    # das Tor B ueber die Schwelle bringt und zugleich der fremden Geometrie aehnlicher
+    # ist, ist genau der Fall, den diese Funktion finden soll — und genau der Fall, den
+    # eine Schwelle allein nie sieht.
+    ordnung = zuordnung(geom_iou, geom_iou_fremd)
+    if ordnung["gemessen"] and ordnung["ordnet"] is False and b["bestanden"]:
+        warnungen.append(
+            f"WIDERSPRUCH ZWISCHEN SCHWELLE UND ORDNUNG: Tor B besteht "
+            f"({geom_iou:.4f} >= {float(schwelle_dieses):.2f}), aber die FREMDE Geometrie "
+            f"passt besser ({geom_iou_fremd:.4f}). Eine Schwelle sagt, wie gut es passt; "
+            f"sie sagt nicht, ob es zu DIESEM Modell gehoert. Dieser Fall ist am "
+            f"21.09.2026 an einem echten Bild gemessen worden.")
+
     return {"bestanden": bestanden, "trennt": trennt,
             "tor_folgt": a, "tor_dieses": b, "gegenprobe": gegenprobe,
+            "zuordnung": ordnung,
             "begruendung": begruendung, "warnungen": warnungen}

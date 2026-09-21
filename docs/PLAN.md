@@ -5820,6 +5820,36 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Vier der vierzehn Antworten eingearbeitet — die drei, die Annahmen umwerfen.**
+      **(a) Der Grenzfall aus Kapitel 6 ist aufgeloest, und zwar ZUGUNSTEN der Schwelle.**
+      Das fragliche Bild folgt der FREMDEN Geometrie besser als der eigenen (−0,155 gegen
+      +0,300). *Das Bildmodell hat aus dem gegliederten Bau einen Block gemacht, und ein
+      Block ist der Schachtel aehnlicher.* Was als moeglicher Fehlalarm dastand, war eine
+      richtige Absage. Und es liegt nicht an der Fuehrungsstaerke.
+      **(b) Zwei Werkzeuge fuer zwei Fragen**, gebaut als `geometrie_qa.zuordnung`: Die
+      Flaechenueberschneidung ordnet paarweise **24 von 24** richtig, die Rangkorrelation
+      nur 19 von 24. *Als Schwelle ist die eine besser, als Vergleich die andere.* Die
+      zweite Frage braucht keine Schwelle, sondern eine zweite Karte.
+      **Beim Nachrechnen der Rohdaten eine unbequeme Haelfte gefunden, die in der
+      Zusammenfassung fehlte:** Der kleinste echte Abstand ist +0,1541, der groesste
+      Betrag im Rauschen 0,1586 — er ist GROESSER. *Eine Schwelle, die es in den Daten
+      nicht gibt, wird durch Setzen nicht wahr.* Gewertet wird darum nur das Vorzeichen.
+      **(c) Die erste Bestaetigung an FREMDEN Daten.** 78 Bilder, anderes Modell, andere
+      Maschine: Von Fuehrung 1,0 auf 4,0 steigt der zusammengesetzte Wert von 0,775 auf
+      0,876 und die Flaeche von 0,700 auf 0,975 — waehrend die Rangkorrelation von 0,299
+      auf 0,030 faellt. *Wer nach dem zusammengesetzten Wert optimiert, optimiert die
+      Geometrie weg.* Die zwei Tore halten alle drei Reihen an, jede aus einem anderen
+      Grund.
+      **Die haertere Haelfte gehoert dazu:** Kein einziges dieser 78 Bilder besteht beide
+      Tore. Fuer das laptoptaugliche Modell ist noch KEIN Weg gefunden, auf dem die
+      Geometrie ankommt.
+      **(d) Zwei Speicherzahlen, die eine Produktentscheidung getragen haben, waren beide
+      falsch.** Gemessen 15,55 statt 9,6 GB und 22,89 statt 34 GB. Die Schaetzung war um
+      62 Prozent zu klein, weil der Textgeber so gross ist wie der Bildteil selbst.
+      *Eine Faustformel, die einen ganzen Bestandteil nicht sieht, irrt nicht zufaellig.*
+      Gemessene Zahl in der Registry; beim grossen Modell bleibt bewusst die groesste der
+      drei Messungen stehen.
+      **Vier Mutationsproben, alle gefallen.**
 - [x] **Die Pruefung laeuft jetzt bei jedem Schieben** (`.github/workflows/pruefung.yml`).
       Ohne GPU, ohne Blender, ohne `.venv-ifc` — 45 Proben melden sich dann als
       uebersprungen, und genau das ist der Beleg dafuer, dass der Kern eine Bibliothek ist.
