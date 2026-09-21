@@ -324,3 +324,134 @@ def test_auch_der_arbeitsgang_schreibt_keinen_benutzernamen(tmp_path, glb):
                         einstellungen={"ablage": "/home/vorname-nachname/bilder"})
     text = (wurzel / projekt.PROJEKTDATEI).read_text(encoding="utf-8")
     assert "vorname-nachname" not in text and "<nutzer>" in text
+
+
+# ------------------------------------------------ Der Melder — zusehen beim Rechnen
+#
+# Bis zum 21.09.2026 meldete ein Lauf ueber die Kette GAR NICHTS, bis er fertig war.
+# Von aussen sieht ein rechnender Lauf dann genauso aus wie ein haengender.
+#
+#     Ein Fortschritt, den niemand sieht, sieht aus wie ein Absturz.
+
+def _melde_mappe(tmp_path):
+    """Eine Mappe, die ohne GPU und ohne Blender durch die Kette geht."""
+    modell = tmp_path / "m.glb"
+    modell.write_bytes(b"glTF\x02\x00\x00\x00")
+    p = projekt.neu(tmp_path, modell, name="Melderprobe",
+                    einstellungen={"prompt": "ein Haus", "up_axis": "Y", "schritte": 8})
+    p["import"] = {"status": "ok", "weg": "ifc", "glb": str(modell), "format": ".ifc",
+                   "treue": None, "hochachse": "Y", "hochachse_steht_fest": True,
+                   "hinweise": []}
+    projekt.speichere(p, tmp_path)
+    return p
+
+
+def _attrappen():
+    """Die vorhandene `Werkbank` — sie schreibt echte Dateien und wird hier nicht
+    nachgebaut. *Eine zweite Attrappe waere eine zweite Wahrheit ueber denselben Lauf.*"""
+    return Werkbank().tabelle()
+
+
+def test_jeder_knoten_meldet_beginn_und_ende(tmp_path):
+    """**Die Probe, auf die es ankommt: beides, und fuer JEDEN Knoten.**
+
+    Der Rumpf der Knotenschleife verlaesst die Runde an fuenf Stellen mit `continue`.
+    Ein Melden an jeder einzelnen haette eine davon vergessen — und der Knoten, der nie
+    fertig meldet, bliebe in der Anzeige fuer immer am Rechnen.
+    """
+    _melde_mappe(tmp_path)
+    ereignisse = []
+
+    arbeitsgang.rechne(tmp_path, ausfuehrer=_attrappen(), melder=ereignisse.append)
+
+    begonnen = [e["knoten"] for e in ereignisse if e["art"] == "knoten_beginnt"]
+    fertig = [e["knoten"] for e in ereignisse if e["art"] == "knoten_fertig"]
+
+    assert begonnen, "kein einziger Knoten hat sich gemeldet"
+    assert begonnen == fertig, (
+        f"Knoten ohne Fertigmeldung: {sorted(set(begonnen) - set(fertig))}")
+
+
+def test_die_nummerierung_zaehlt_wirklich_mit(tmp_path):
+    """«Knoten 3 von 6» ist eine Auskunft. Waere `von` falsch, waere sie eine falsche."""
+    _melde_mappe(tmp_path)
+    ereignisse = []
+
+    arbeitsgang.rechne(tmp_path, ausfuehrer=_attrappen(), melder=ereignisse.append)
+    beginnt = [e for e in ereignisse if e["art"] == "knoten_beginnt"]
+
+    assert [e["nummer"] for e in beginnt] == list(range(1, len(beginnt) + 1))
+    assert all(e["von"] == len(beginnt) for e in beginnt)
+
+
+def test_ein_kaputter_melder_reisst_den_lauf_nicht_mit(tmp_path):
+    """*Ein Rueckruf, der die Rechnung mitreisst, ist teurer als gar keiner* — die
+    GPU-Zeit ist schon bezahlt, wenn er zuschlaegt."""
+    _melde_mappe(tmp_path)
+
+    def boeser(_ereignis):
+        raise RuntimeError("ich gehe immer kaputt")
+
+    ergebnis = arbeitsgang.rechne(tmp_path, ausfuehrer=_attrappen(), melder=boeser)
+
+    assert ergebnis["lauf"]["status"] in ("ok", "teilweise", "fehler")
+    assert ergebnis["projekt"] is not None
+
+
+def test_ohne_melder_wird_nichts_gerufen_und_nichts_ersetzt(tmp_path):
+    """Die Gegenprobe: Der Weg ohne Zuschauer bleibt Zeile fuer Zeile der alte."""
+    _melde_mappe(tmp_path)
+
+    ergebnis = arbeitsgang.rechne(tmp_path, ausfuehrer=_attrappen())
+
+    assert ergebnis["lauf"]["status"] in ("ok", "teilweise", "fehler")
+
+
+def test_der_schrittzaehler_wird_nur_ohne_eigene_ausfuehrer_eingehaengt(tmp_path):
+    """*Eine stille Ersetzung in einer mitgebrachten Tabelle waere genau die Sorte
+    Ueberraschung, gegen die `fuehre_aus` die Tabelle ersetzen statt ergaenzen laesst.*
+
+    Wer eine Attrappe fuer `render` mitbringt, bekommt sie — und nicht heimlich eine
+    andere, die das echte Bildmodell laedt.
+    """
+    _melde_mappe(tmp_path)
+    gerufen = []
+    eigene = _attrappen()
+    echt = eigene[ART_RENDER]
+
+    def merk(*, knoten, eingaben, out_dir):
+        gerufen.append(knoten.id)
+        return echt(knoten=knoten, eingaben=eingaben, out_dir=out_dir)
+
+    eigene[ART_RENDER] = merk
+    arbeitsgang.rechne(tmp_path, ausfuehrer=eigene, melder=lambda e: None, cache=None)
+
+    assert gerufen, "die mitgebrachte Render-Attrappe wurde NICHT gerufen"
+
+
+def test_auch_ein_UEBERSPRUNGENER_knoten_meldet_fertig(tmp_path):
+    """**Der Zweig, den die erste Fassung dieser Proben nicht betrat.**
+
+    Faellt die Bildstufe, werden ihre Nachfolger uebersprungen — und der Rumpf verlaesst
+    die Runde dann ueber ein `continue`, nicht ueber sein Ende. Genau dafuer steht das
+    `finally` in `fuehre_aus`.
+
+    Ohne diesen Fall waere die Probe darueber ein *Waechter an einer Stelle, an der der
+    Fall nicht vorkommt* — und der uebersprungene Knoten bliebe in der Anzeige fuer immer
+    am Rechnen.
+    """
+    _melde_mappe(tmp_path)
+    ereignisse = []
+
+    arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank(render_faellt=True).tabelle(),
+                       melder=ereignisse.append)
+
+    begonnen = [e["knoten"] for e in ereignisse if e["art"] == "knoten_beginnt"]
+    fertig = {e["knoten"]: e for e in ereignisse if e["art"] == "knoten_fertig"}
+
+    assert begonnen == list(fertig), (
+        f"Knoten ohne Fertigmeldung: {sorted(set(begonnen) - set(fertig))}")
+    uebersprungen = [e for e in fertig.values() if e["status"] == "uebersprungen"]
+    assert uebersprungen, (
+        "In diesem Lauf wurde kein Knoten uebersprungen — dann prueft diese Probe den "
+        "Zweig nicht, fuer den sie geschrieben ist.")

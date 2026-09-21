@@ -83,6 +83,7 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 | **Der Knotenbaum** | bedienbar | Zeigt, was gerechnet würde, und lässt die Werte ändern. Knoten hinzufügen geht nicht. |
 | **Die Bildanzeige** | **neu am 21.09.2026** | Zeigt die Bilder selbst, mit dem Prüfvermerk **auf** dem Bild. |
 | **Die Zeichenfläche** | **neu am 21.09.2026** | Mit dem Stift ins Bild zeichnen, ablegen. Für iPad gebaut. |
+| **Zusehen beim Rechnen** | **neu am 21.09.2026** | Die Seite bleibt bedienbar und zeigt, wo der Lauf steht. |
 
 ---
 
@@ -114,6 +115,29 @@ Auf der Werkstattmaschine lief das KI-Bild **überhaupt nicht** — die Software
 39 GB Grafikspeicher für einen Lauf, der 25 braucht, und wich deshalb auf einen langsamen
 Weg aus, der stirbt. Repariert; die Hälfte des Fehlers (der Ausweichweg selbst) ist
 gemessen bestellt und noch offen.
+
+### 21.09.2026 · Man kann dem Lauf zusehen — und die Anzeige behauptet nichts
+
+Bisher klickten Sie auf «Rechnen», und dann stand die Seite still. Minutenlang. **Das sieht
+aus wie ein Absturz**, auch wenn alles in Ordnung ist.
+
+Jetzt läuft die Rechnung im Hintergrund, und die Seite zeigt, wo sie steht: welcher Schritt
+von wie vielen, wie lange er schon läuft, und was schon erledigt ist — samt dem Hinweis,
+wenn etwas aus dem Zwischenspeicher kam statt neu gerechnet zu werden.
+
+**Das Wichtigste daran ist aber, was die Anzeige *nicht* tut.** Es gibt zwei ganz
+verschiedene Auskünfte, und sie sehen hier verschieden aus:
+
+* **Gezählt.** Beim Bild werden die Rechenschritte wirklich mitgezählt, und es steht
+  vorher fest, wie viele es werden. Nur hier gibt es einen Fortschrittsbalken.
+* **Lebt.** Beim Blender-Lauf ist nur erkennbar, dass er noch arbeitet. Wie weit er ist,
+  weiss niemand. Dort steht ein blinkender Punkt, eine Dauer — und **kein Balken**.
+
+> *Ein erfundener Balken ist dasselbe wie ein grünes Prüfzeichen an einem ungeprüften
+> Bild: Er sieht aus wie eine Auskunft und ist geraten.*
+
+Und es gibt **keinen** Prozentsatz über den ganzen Lauf. Dafür müsste man wissen, wie lange
+die einzelnen Schritte im Verhältnis dauern — das weiss niemand.
 
 ### 21.09.2026 · Zeichnen geht — und zwar für den Stift, nicht für die Maus
 
@@ -160,9 +184,9 @@ Vorher stand im Protokoll «mit Ankerbild gerechnet», während ohne gerechnet w
 
 | | Schritt | Warum jetzt |
 |---|---|---|
-| **1** | **Den Standpunkt von Hand wählen** (Schritt 2) | Die Software entscheidet ihn heute allein. Für ein Architekturbild ist der Blickpunkt keine Nebensache. |
-| **2** | **Die Zeichenfläche auf dem iPad ausprobieren** | Das kann nur **Sie** — hier gibt es kein iPad und keinen Stift. Es ist die einzige offene Frage, die kein Worker beantworten kann. |
-| **3** | **Den Lauf in der Fläche starten und zusehen** | Heute rechnet die Fläche, und dann steht sie still. Ein Fortschritt, den niemand sieht, sieht aus wie ein Absturz. |
+| **1** | **Die Zeichenfläche auf dem iPad ausprobieren** | Das kann nur **Sie** — hier gibt es kein iPad und keinen Stift. Es ist die einzige offene Frage, die kein Worker beantworten kann. |
+| **2** | **Entscheiden, ob die Fläche ins Heimnetz darf** | Ohne das erreicht Ihr iPad den Rechner nicht. |
+| **3** | **Den Standpunkt von Hand wählen** | Die Software entscheidet ihn heute allein. Für ein Architekturbild ist der Blickpunkt keine Nebensache. |
 | **4** | **Schritt 5 fertig machen** | Zeichnen geht. Rechnen ist **hardwareseitig blockiert** — siehe unten. |
 
 ---

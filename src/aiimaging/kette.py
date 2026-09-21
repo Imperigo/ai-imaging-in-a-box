@@ -1022,7 +1022,8 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     return bericht
 
 
-def render_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
+def render_ausfuehrer(*, modell=None, _lader=None,
+                      schrittzaehler=None) -> Callable[..., dict]:
     """Baut die Render-Stufe — mit optional injiziertem Bildmodell.
 
     Warum eine Fabrik und nicht einfach eine Funktion: Ein Modell ist ein Objekt und kann
@@ -1034,6 +1035,15 @@ def render_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
     ``render.rendere`` beantwortet auch das Scheitern mit einem Ergebnis
     (``status='abgelehnt'``/``'fehler'``) statt mit einer Ausnahme. Das passt hier
     unverändert durch, weil dieses Modul dieselben Statuswörter benutzt.
+
+    ``schrittzaehler`` wird durchgereicht. Es ist **der einzige belegte Fortschritt, den
+    dieses Projekt hat**: Er zählt Diffusionsschritte, die wirklich gerechnet wurden —
+    nicht das Weiterleben eines Prozesses. Bis zum 21.09.2026 war die Naht in
+    ``render.rendere`` vorhanden und **von der Kette aus nicht erreichbar**; damit gab es
+    sie für jeden, der über den Graphen rechnet, nicht.
+
+        *Eine Naht, die nur der direkte Aufrufer erreicht, gibt es für den Weg nicht, den
+        das Produkt wirklich geht.*
     """
     def fuehre_render(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
         if not eingaben:
@@ -1065,7 +1075,12 @@ def render_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
         # dessen Tiefenkarte messbar — es ist der Geometrielayer in Person. Das Feld wird
         # auch an ein gescheitertes Ergebnis gehaengt: Welche Schicht gemeint war, bleibt
         # auch dann die Auskunft, wenn die Rechnung nicht durchkam.
-        return dict(render.rendere(auftrag, modell=modell, _lader=_lader),
+        # DER SCHRITTZAEHLER NUR, WENN ES IHN GIBT. Ihn immer als `None` zu uebergeben
+        # waere gleichwertig — aber `render.rendere` unterscheidet «kein Zaehler» von
+        # «Zaehler, den die Pipeline nicht annimmt», und diese Unterscheidung soll durch
+        # unseren Aufruf nicht verschwinden.
+        weiter = {"schrittzaehler": schrittzaehler} if schrittzaehler is not None else {}
+        return dict(render.rendere(auftrag, modell=modell, _lader=_lader, **weiter),
                     **{FELD_SCHICHT: SCHICHT_GEOMETRIE})
 
     return fuehre_render
@@ -1910,6 +1925,7 @@ def fuehre_aus(
     out_dir: str | Path | None = None,
     bedarf: dict[str, Bedarf] | None = None,
     pruefe_verdrahtung: bool = False,
+    melder: Callable[[dict], None] | None = None,
 ) -> dict:
     """Einen Ketten-Graphen abarbeiten: topologisch, zwischengespeichert, skip-on-error.
 
@@ -1928,6 +1944,22 @@ def fuehre_aus(
             Felder ein Cache-Eintrag zusagen muss, um als Treffer zu gelten. Eine Art
             ohne Eintrag wird nicht geprüft — dann greift nur die Endungs-Heuristik
             (``_fehlende_ausgabedateien``), wie vor Sitzung 07.
+        melder: ``(ereignis: dict) -> None``, gerufen **vor** und **nach** jedem Knoten.
+            ``None`` heisst: niemand sieht zu, und es wird nichts gerufen.
+
+            **Wozu es das gibt** (21.09.2026): Ein Lauf über den Graphen dauert Minuten
+            und meldete bis dahin *gar nichts*, bis er fertig war. Von aussen sieht ein
+            rechnender Lauf dann genauso aus wie ein hängender.
+
+                *Ein Fortschritt, den niemand sieht, sieht aus wie ein Absturz.*
+
+            Die Ereignisse tragen ``art`` (``knoten_beginnt`` / ``knoten_fertig``),
+            ``knoten``, ``knotenart``, ``nummer``, ``von`` — und beim Ende zusätzlich
+            ``status``, ``aus_cache`` und ``dauer_s``.
+
+            **Ein Fehler im Melder reisst den Lauf nicht mit.** Er wird geschluckt und
+            beim nächsten Ereignis wieder versucht: *Ein Rückruf, der die Rechnung
+            mitreisst, ist teurer als gar keiner* — die GPU-Zeit ist schon bezahlt.
         pruefe_verdrahtung: ``True`` prüft den Graphen **vor dem ersten Knoten** gegen
             ``bedarf`` und bricht bei einem ``error``-Befund ab. Vorgabe ``False``, weil
             ein Graph mit unbekannten Knotenarten (Attrappen, Versuche) weiterhin laufen
@@ -2003,117 +2035,143 @@ def fuehre_aus(
     gescheitert: list[str] = []
     beginn_gesamt = time.perf_counter()
 
-    for kid in reihenfolge:
+    def _melde(ereignis: dict) -> None:
+        """Den Melder rufen — und **niemals** daran scheitern. Siehe Docstring."""
+        if melder is None:
+            return
+        try:
+            melder(ereignis)
+        except Exception:                          # noqa: BLE001 — Absicht, siehe oben
+            pass
+
+    for nummer, kid in enumerate(reihenfolge, start=1):
         knoten = graph.knoten[kid]
-
-        if kid in uebersprungen:
-            knoten_ergebnisse[kid] = _knoteneintrag(
-                knoten.art, STATUS_UEBERSPRUNGEN, aus_cache=False, dauer_s=0.0,
-                grund=uebersprungen[kid],
-            )
-            continue
-
-        vorgaenger = graph.vorgaenger(kid)
-        eingaben = [knoten_ergebnisse[v]["ausgaben"] for v in vorgaenger]
-        beginn = time.perf_counter()
+        _melde({"art": "knoten_beginnt", "knoten": kid, "knotenart": knoten.art,
+                "nummer": nummer, "von": len(reihenfolge)})
 
         try:
-            schluessel = _knoten_hash(knoten, [hashes[v] for v in vorgaenger])
-        except GraphError as fehler:
-            # Häufigster Fall: Die Eingabedatei gibt es nicht. Das ist ein Fehler dieses
-            # Knotens und kein Grund, den ganzen Lauf abzubrechen — die Kette meldet ihn
-            # wie jeden anderen und überspringt, was dahinter hängt.
-            knoten_ergebnisse[kid] = _knoteneintrag(
-                knoten.art, STATUS_FEHLER, aus_cache=False,
-                dauer_s=time.perf_counter() - beginn,
-                error=f"Hash nicht bildbar: {fehler}",
-            )
-            gescheitert.append(kid)
-            for nachfolger in graph.nachfolger_transitiv([kid]):
-                uebersprungen.setdefault(nachfolger, f"Vorgänger {kid!r} ist gescheitert.")
-            continue
-
-        hashes[kid] = schluessel
-        arbeit = _arbeitsverzeichnis(wurzel, knoten.art, schluessel)
-
-        # --- 1) Nachsehen ------------------------------------------------------------
-        lese_fehler = None
-        try:
-            eintrag = cache.hole(schluessel) if cache is not None else None
-        except GraphError as fehler:
-            # Ein unlesbarer Eintrag ist ein Fund und kein Grund, den Lauf abzubrechen.
-            # ``hole`` meldet ihn laut, weil dort niemand weiterrechnet; hier ist die
-            # richtige Antwort dieselbe wie bei einem Fehltreffer — rechnen, und den
-            # Grund ins Protokoll schreiben. Ein Stapellauf soll nicht an einer fremden
-            # Datei im Cache-Ordner sterben.
-            eintrag, lese_fehler = None, str(fehler)
-        if eintrag is not None:
-            gespeichert = eintrag.get("ausgaben") or {}
-            maengel = _cache_maengel(knoten.art, gespeichert, tabelle_bedarf)
-            if maengel:
-                # Treffer im Schlüssel, aber der Eintrag hält nicht, was er zusagt. Kein
-                # Treffer also — es wird gerechnet, und der Eintrag wird dabei überschrieben.
-                eintrag = None
-                lese_fehler = "Eintrag verworfen: " + " ".join(maengel)
-            else:
+            if kid in uebersprungen:
                 knoten_ergebnisse[kid] = _knoteneintrag(
-                    knoten.art, eintrag.get("status", STATUS_OK), aus_cache=True,
-                    dauer_s=time.perf_counter() - beginn,
-                    dauer_s_original=eintrag.get("dauer_s"),
-                    hash=schluessel, arbeits_dir=str(arbeit), ausgaben=gespeichert,
+                    knoten.art, STATUS_UEBERSPRUNGEN, aus_cache=False, dauer_s=0.0,
+                    grund=uebersprungen[kid],
                 )
                 continue
 
-        # --- 2) Rechnen --------------------------------------------------------------
-        arbeit.mkdir(parents=True, exist_ok=True)
-        try:
-            antwort = tabelle[knoten.art](knoten=knoten, eingaben=eingaben, out_dir=arbeit)
-        except Exception as fehler:                  # noqa: BLE001 — bewusst breit
-            # Bewusst jede Ausnahme: Was hinter einer Prozessgrenze passiert, ist nicht
-            # vorhersagbar (SeamError, CUDA-OOM, kaputte EXR, ein Fehler im eigenen
-            # Adapter). Ein Stapelabbruch mitten in einer Serie kostet die ganze Serie;
-            # ein protokollierter Fehlschlag kostet einen Knoten. Dieselbe Abwägung wie
-            # in ``render.rendere``.
-            antwort = {"status": STATUS_FEHLER, "error": f"{type(fehler).__name__}: {fehler}"}
+            vorgaenger = graph.vorgaenger(kid)
+            eingaben = [knoten_ergebnisse[v]["ausgaben"] for v in vorgaenger]
+            beginn = time.perf_counter()
 
-        dauer = time.perf_counter() - beginn
-
-        if not isinstance(antwort, dict):
-            antwort = {
-                "status": STATUS_FEHLER,
-                "error": (f"Ausführer für {knoten.art!r} lieferte {type(antwort).__name__}, "
-                          f"erwartet ist ein dict mit den Ausgaben des Knotens."),
-            }
-        status = antwort.get("status", STATUS_OK)
-
-        cache_fehler = lese_fehler
-        if status == STATUS_OK and cache is not None:
-            eigen = tabelle_bedarf.get(knoten.art)
             try:
-                cache.lege_ab(schluessel, {
-                    "art": knoten.art, "status": status,
-                    "ausgaben": antwort, "dauer_s": round(dauer, 4),
-                }, zusagen=() if eigen is None else eigen.zugesagte_dateien(antwort))
+                schluessel = _knoten_hash(knoten, [hashes[v] for v in vorgaenger])
             except GraphError as fehler:
-                # Der Knoten hat gerechnet und ist gelungen — er wird nicht nachträglich
-                # für gescheitert erklärt, nur weil sein Ergebnis nicht speicherbar ist.
-                # Stillschweigend übergangen wird es aber auch nicht: Ohne diese Meldung
-                # sähe man nur, dass der Cache nie greift, und suchte an der falschen
-                # Stelle.
-                cache_fehler = str(fehler)
+                # Häufigster Fall: Die Eingabedatei gibt es nicht. Das ist ein Fehler dieses
+                # Knotens und kein Grund, den ganzen Lauf abzubrechen — die Kette meldet ihn
+                # wie jeden anderen und überspringt, was dahinter hängt.
+                knoten_ergebnisse[kid] = _knoteneintrag(
+                    knoten.art, STATUS_FEHLER, aus_cache=False,
+                    dauer_s=time.perf_counter() - beginn,
+                    error=f"Hash nicht bildbar: {fehler}",
+                )
+                gescheitert.append(kid)
+                for nachfolger in graph.nachfolger_transitiv([kid]):
+                    uebersprungen.setdefault(nachfolger, f"Vorgänger {kid!r} ist gescheitert.")
+                continue
 
-        knoten_ergebnisse[kid] = _knoteneintrag(
-            knoten.art, status, aus_cache=False, dauer_s=dauer, dauer_s_original=dauer,
-            hash=schluessel, arbeits_dir=str(arbeit), ausgaben=antwort,
-            error=antwort.get("error"), cache_fehler=cache_fehler,
-        )
+            hashes[kid] = schluessel
+            arbeit = _arbeitsverzeichnis(wurzel, knoten.art, schluessel)
 
-        if status != STATUS_OK:
-            gescheitert.append(kid)
-            for nachfolger in graph.nachfolger_transitiv([kid]):
-                uebersprungen.setdefault(
-                    nachfolger, f"Vorgänger {kid!r} endete mit status={status!r}.")
+            # --- 1) Nachsehen ------------------------------------------------------------
+            lese_fehler = None
+            try:
+                eintrag = cache.hole(schluessel) if cache is not None else None
+            except GraphError as fehler:
+                # Ein unlesbarer Eintrag ist ein Fund und kein Grund, den Lauf abzubrechen.
+                # ``hole`` meldet ihn laut, weil dort niemand weiterrechnet; hier ist die
+                # richtige Antwort dieselbe wie bei einem Fehltreffer — rechnen, und den
+                # Grund ins Protokoll schreiben. Ein Stapellauf soll nicht an einer fremden
+                # Datei im Cache-Ordner sterben.
+                eintrag, lese_fehler = None, str(fehler)
+            if eintrag is not None:
+                gespeichert = eintrag.get("ausgaben") or {}
+                maengel = _cache_maengel(knoten.art, gespeichert, tabelle_bedarf)
+                if maengel:
+                    # Treffer im Schlüssel, aber der Eintrag hält nicht, was er zusagt. Kein
+                    # Treffer also — es wird gerechnet, und der Eintrag wird dabei überschrieben.
+                    eintrag = None
+                    lese_fehler = "Eintrag verworfen: " + " ".join(maengel)
+                else:
+                    knoten_ergebnisse[kid] = _knoteneintrag(
+                        knoten.art, eintrag.get("status", STATUS_OK), aus_cache=True,
+                        dauer_s=time.perf_counter() - beginn,
+                        dauer_s_original=eintrag.get("dauer_s"),
+                        hash=schluessel, arbeits_dir=str(arbeit), ausgaben=gespeichert,
+                    )
+                    continue
 
+            # --- 2) Rechnen --------------------------------------------------------------
+            arbeit.mkdir(parents=True, exist_ok=True)
+            try:
+                antwort = tabelle[knoten.art](knoten=knoten, eingaben=eingaben, out_dir=arbeit)
+            except Exception as fehler:                  # noqa: BLE001 — bewusst breit
+                # Bewusst jede Ausnahme: Was hinter einer Prozessgrenze passiert, ist nicht
+                # vorhersagbar (SeamError, CUDA-OOM, kaputte EXR, ein Fehler im eigenen
+                # Adapter). Ein Stapelabbruch mitten in einer Serie kostet die ganze Serie;
+                # ein protokollierter Fehlschlag kostet einen Knoten. Dieselbe Abwägung wie
+                # in ``render.rendere``.
+                antwort = {"status": STATUS_FEHLER, "error": f"{type(fehler).__name__}: {fehler}"}
+
+            dauer = time.perf_counter() - beginn
+
+            if not isinstance(antwort, dict):
+                antwort = {
+                    "status": STATUS_FEHLER,
+                    "error": (f"Ausführer für {knoten.art!r} lieferte {type(antwort).__name__}, "
+                              f"erwartet ist ein dict mit den Ausgaben des Knotens."),
+                }
+            status = antwort.get("status", STATUS_OK)
+
+            cache_fehler = lese_fehler
+            if status == STATUS_OK and cache is not None:
+                eigen = tabelle_bedarf.get(knoten.art)
+                try:
+                    cache.lege_ab(schluessel, {
+                        "art": knoten.art, "status": status,
+                        "ausgaben": antwort, "dauer_s": round(dauer, 4),
+                    }, zusagen=() if eigen is None else eigen.zugesagte_dateien(antwort))
+                except GraphError as fehler:
+                    # Der Knoten hat gerechnet und ist gelungen — er wird nicht nachträglich
+                    # für gescheitert erklärt, nur weil sein Ergebnis nicht speicherbar ist.
+                    # Stillschweigend übergangen wird es aber auch nicht: Ohne diese Meldung
+                    # sähe man nur, dass der Cache nie greift, und suchte an der falschen
+                    # Stelle.
+                    cache_fehler = str(fehler)
+
+            knoten_ergebnisse[kid] = _knoteneintrag(
+                knoten.art, status, aus_cache=False, dauer_s=dauer, dauer_s_original=dauer,
+                hash=schluessel, arbeits_dir=str(arbeit), ausgaben=antwort,
+                error=antwort.get("error"), cache_fehler=cache_fehler,
+            )
+
+            if status != STATUS_OK:
+                gescheitert.append(kid)
+                for nachfolger in graph.nachfolger_transitiv([kid]):
+                    uebersprungen.setdefault(
+                        nachfolger, f"Vorgänger {kid!r} endete mit status={status!r}.")
+
+        finally:
+            # NACH JEDEM KNOTEN, AUF JEDEM WEG. Der Rumpf verlaesst die Runde an
+            # fuenf Stellen mit `continue`; ein Melden an jeder einzelnen haette
+            # eine davon vergessen, und der Knoten, der nie fertig meldet, bleibt
+            # in der Anzeige fuer immer am Rechnen.
+            #
+            #     *Ein Waechter an vier von fuenf Ausgaengen bewacht den fuenften
+            #     nicht — und genau durch den geht der seltene Fall.*
+            fertig = knoten_ergebnisse.get(kid) or {}
+            _melde({"art": "knoten_fertig", "knoten": kid, "knotenart": knoten.art,
+                    "nummer": nummer, "von": len(reihenfolge),
+                    "status": fertig.get("status"),
+                    "aus_cache": fertig.get("aus_cache"),
+                    "dauer_s": fertig.get("dauer_s")})
     # --- 3) Die zweite Schicht nachtragen --------------------------------------------
     #
     # NACH dem Lauf und NICHT waehrend: Das Urteil ueber die Basis faellt ein QA-Knoten im

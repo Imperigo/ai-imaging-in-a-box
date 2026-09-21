@@ -849,3 +849,144 @@ def test_jede_abgelegte_skizze_traegt_den_hinweis_dass_sie_nicht_gerechnet_wurde
     assert "NICHT gerechnet" in server.HINWEIS_SKIZZE_OHNE_WEG
     assert "auf-20260919-123" in server.HINWEIS_SKIZZE_OHNE_WEG, (
         "der Hinweis behauptet etwas ueber die Software — dann gehoert die Messung dazu")
+
+
+# ------------------------------------ 11 · Der Laufstand — zwei Sorten Lebenszeichen
+#
+# Die eigentliche Arbeit an dieser Klasse ist NICHT, dass etwas angezeigt wird. Sie ist,
+# dass zwei verschiedene Dinge nicht gleich aussehen:
+#
+#   belegt    gezaehlte Diffusionsschritte — es steht fest, wie viele es werden
+#   unbelegt  ein Knoten laeuft; WIE WEIT er ist, weiss niemand
+#
+#     Ein erfundener Balken ist dasselbe wie ein gruenes Abzeichen an einem
+#     ungepruefeten Bild: Er sieht aus wie eine Auskunft und ist geraten.
+
+def test_ein_knoten_ohne_schrittzaehler_meldet_unbelegt(server, tmp_path):
+    """Ein Blender-Lauf meldet ein LEBENSzeichen. Daraus einen Anteil zu machen hiesse,
+    eine Zahl zu erfinden, die niemand gemessen hat."""
+    stand = server.Laufstand()
+    stand.beginne(tmp_path, schritte_gesamt=8)
+    stand.melde({"art": "knoten_beginnt", "knoten": "k1", "knotenart": "multipass",
+                 "nummer": 1, "von": 4})
+
+    assert stand.sicht()["art_des_zeichens"] == "unbelegt"
+    assert stand.sicht()["schritt"] is None
+
+
+def test_gezaehlte_schritte_melden_belegt(server, tmp_path):
+    """Die Gegenprobe. Ohne sie waere ein Laufstand, der IMMER «unbelegt» sagt, ebenso
+    gruen — und der einzige belegte Fortschritt dieses Projekts bliebe unsichtbar."""
+    stand = server.Laufstand()
+    stand.beginne(tmp_path, schritte_gesamt=8)
+    stand.melde({"art": "knoten_beginnt", "knoten": "k3", "knotenart": "render",
+                 "nummer": 3, "von": 4})
+    stand.melde({"art": "schritt", "schritt": 5})
+
+    sicht = stand.sicht()
+    assert sicht["art_des_zeichens"] == "belegt"
+    assert (sicht["schritt"], sicht["schritte_gesamt"]) == (5, 8)
+
+
+def test_ohne_gesamtzahl_bleibt_es_unbelegt_auch_mit_schritten(server, tmp_path):
+    """**Ein Zaehler ohne Nenner ist eine Zahl ohne Auskunft.**
+
+    «Schritt 5» allein sagt nicht, ob es fast fertig ist oder kaum begonnen. Ein Balken
+    liesse sich daraus nicht zeichnen, und ein erfundener Nenner waere geraten.
+    """
+    stand = server.Laufstand()
+    stand.beginne(tmp_path, schritte_gesamt=None)
+    stand.melde({"art": "knoten_beginnt", "knoten": "k3", "knotenart": "render",
+                 "nummer": 3, "von": 4})
+    stand.melde({"art": "schritt", "schritt": 5})
+
+    assert stand.sicht()["art_des_zeichens"] == "unbelegt"
+
+
+def test_der_naechste_knoten_loescht_den_alten_schrittstand(server, tmp_path):
+    """Sonst stuende beim Pruefknoten noch «Schritt 8 von 8» aus der Bildstufe — eine
+    Zahl aus einem anderen Knoten, und sie saehe aus wie seine eigene."""
+    stand = server.Laufstand()
+    stand.beginne(tmp_path, schritte_gesamt=8)
+    stand.melde({"art": "knoten_beginnt", "knotenart": "render", "nummer": 3, "von": 4})
+    stand.melde({"art": "schritt", "schritt": 8})
+    stand.melde({"art": "knoten_beginnt", "knotenart": "qa", "nummer": 4, "von": 4})
+
+    assert stand.sicht()["schritt"] is None
+    assert stand.sicht()["art_des_zeichens"] == "unbelegt"
+
+
+def test_ein_fertiger_knoten_sagt_ob_er_aus_dem_speicher_kam(server, tmp_path):
+    """Der Unterschied zwischen «rechnet vier Minuten» und «kam aus dem Speicher» ist
+    genau das, was ein Zuschauer sehen will."""
+    stand = server.Laufstand()
+    stand.beginne(tmp_path)
+    stand.melde({"art": "knoten_fertig", "knoten": "k1", "knotenart": "geometrie",
+                 "status": "ok", "aus_cache": True, "dauer_s": 0.0})
+
+    assert stand.sicht()["fertige"][0]["aus_cache"] is True
+
+
+def test_nach_dem_ende_laeuft_nichts_mehr_und_das_ergebnis_steht_da(server, tmp_path):
+    stand = server.Laufstand()
+    stand.beginne(tmp_path)
+    stand.beende(ergebnis={"status": "ok", "vermerkt": 2})
+
+    sicht = stand.sicht()
+    assert sicht["laeuft"] is False
+    assert sicht["knoten"] is None
+    assert sicht["ergebnis"]["vermerkt"] == 2
+
+
+def test_ein_gescheiterter_lauf_hinterlaesst_keinen_ewig_laufenden_stand(server, tmp_path):
+    """**Der Fall, der ohne Absicht entsteht.** Eine Ausnahme in einem Hintergrundfaden
+    verschwindet spurlos: Der Faden endet, und der Laufstand bliebe fuer immer auf
+    «laeuft». Die Anzeige zeigte dann bis zum Neustart einen Lauf, den es nicht gibt."""
+    stand = server.Laufstand()
+    stand.beginne(tmp_path)
+    stand.beende(fehler="Blender fehlt.")
+
+    assert stand.sicht()["laeuft"] is False
+    assert stand.sicht()["fehler"] == "Blender fehlt."
+
+
+def test_der_hintergrundfaden_faengt_auch_unerwartete_fehler():
+    """Er faengt ausdruecklich ALLES — und genau dafuer steht der Grund im Quelltext."""
+    baustein = SERVER_PY.read_text(encoding="utf-8") \
+                        .split("def _rechne_im_hintergrund", 1)[1] \
+                        .split("\ndef ", 1)[0]
+
+    assert "except Exception" in baustein
+    assert "LAUFSTAND.beende" in baustein.split("except Exception", 1)[1]
+
+
+def test_die_seite_zeichnet_nur_bei_gezaehlten_schritten_einen_balken():
+    """**Die Auflage dieser ganzen Runde, in der Anzeige.**
+
+    Der Balken darf nur erscheinen, wenn `art_des_zeichens` «belegt» ist. Sonst
+    behauptete die Flaeche Fortschritt, wo nur Leben ist.
+    """
+    baustein = SEITE.read_text(encoding="utf-8").split("function zeigeLauf", 1)[1] \
+                                                .split("\nasync function", 1)[0]
+
+    assert "art_des_zeichens" in baustein
+    assert 'hidden = !(f.laeuft && belegt)' in baustein
+
+
+def test_die_seite_sagt_beim_unbelegten_fall_dass_sie_es_nicht_weiss():
+    """Ein Puls allein koennte auch «fast fertig» heissen. Der Satz daneben sagt es."""
+    baustein = SEITE.read_text(encoding="utf-8").split("function zeigeLauf", 1)[1] \
+                                                .split("\nasync function", 1)[0]
+
+    assert "WIE WEIT" in baustein and "Lebenszeichen" in baustein
+
+
+def test_zwei_gleichzeitige_laeufe_werden_abgewiesen():
+    """Sie schrieben beide in dieselbe Projektdatei, und der zweite ueberschriebe die
+    Bilder des ersten."""
+    baustein = SERVER_PY.read_text(encoding="utf-8") \
+                        .split("def _rechne(self, wunsch", 1)[1] \
+                        .split("\n    def ", 1)[0]
+
+    assert 'LAUFSTAND.sicht()["laeuft"]' in baustein
+    assert baustein.index("laeuft") < baustein.index("Thread")

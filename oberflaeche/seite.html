@@ -108,6 +108,20 @@
   .felder input.gesetzt { border-color: var(--leise); color: var(--schrift); }
   .felder input:not(.gesetzt) { color: var(--leise); font-style: italic; }
   .knopfzeile { margin-top: 10px; display: flex; gap: 8px; align-items: center; }
+  /* DER LAUF. Zwei Sorten Lebenszeichen, und sie sehen mit ABSICHT verschieden aus:
+     Ein Balken behauptet, man wisse, wie weit es ist. Das weiss man nur bei gezaehlten
+     Schritten — bei allem anderen laeuft nur Zeit. */
+  .laufzeile { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+  .laufzeile .art { font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+  .balkenrahmen { height: 6px; border-radius: 3px; background: var(--rand);
+                  margin: 8px 0 4px; overflow: hidden; }
+  #balken { height: 100%; width: 0; background: var(--bestanden); transition: width .2s; }
+  /* Der unbelegte Fall bekommt KEINEN Balken, sondern einen wandernden Strich: Er zeigt,
+     dass etwas lebt, und behauptet nichts darueber, wie weit es ist. */
+  .puls { display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+          background: var(--ungemessen); animation: pulsen 1.2s ease-in-out infinite; }
+  @keyframes pulsen { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+
   /* DIE ZEICHENFLAECHE. Bild und Tafel liegen exakt uebereinander — die Tafel ist
      durchsichtig, und was darauf entsteht, gehoert zum Bild darunter.
      `touch-action: none` ist keine Kosmetik: Ohne das schiebt ein Tablet beim Zeichnen
@@ -147,6 +161,15 @@
   <section>
     <h2>Was gerechnet würde</h2>
     <div id="baum" class="leise">—</div>
+    <div id="lauf" hidden>
+      <div class="laufzeile">
+        <span id="laufknoten" class="art"></span>
+        <span id="laufzeichen" class="zeichen"></span>
+      </div>
+      <div class="balkenrahmen" id="balkenrahmen" hidden><div id="balken"></div></div>
+      <div id="laufsatz" class="satz"></div>
+      <div id="lauffertige" class="satz"></div>
+    </div>
   </section>
 
   <section style="grid-column: 1 / -1">
@@ -512,8 +535,93 @@ async function laden() {
   }
 }
 
+// ══════════════════════════════════════════════════════════════════════════════════
+// Der Lauf und das Zusehen
+//
+// ZWEI SORTEN LEBENSZEICHEN, und sie duerfen nie gleich aussehen:
+//
+//   belegt    — gezaehlte Diffusionsschritte. Es steht fest, wie viele es werden, und
+//               jeder einzelne wurde wirklich gerechnet. Hier ist ein Balken ehrlich.
+//   unbelegt  — ein Knoten laeuft. Ein Blender-Lauf meldet ein LEBENSzeichen und keinen
+//               Fortschritt; wie weit er ist, weiss niemand. Hier gibt es einen Puls
+//               und eine Dauer, und ausdruecklich keinen Balken.
+//
+// *Ein erfundener Balken ist dasselbe wie ein gruenes Abzeichen an einem ungepruefeten
+// Bild: Er sieht aus wie eine Auskunft und ist geraten.*
+// ══════════════════════════════════════════════════════════════════════════════════
+
+let laufUhr = null;
+
+function zeigeLauf(f) {
+  const block = $("lauf");
+  block.hidden = !f.laeuft && !f.fehler && !f.ergebnis;
+  if (block.hidden) return;
+
+  $("laufknoten").textContent = f.laeuft
+    ? `${f.knotenart || "…"}  (${f.nummer || "?"} von ${f.von || "?"})`
+    : "fertig";
+
+  const zeichen = $("laufzeichen");
+  zeichen.replaceChildren();
+  zeichen.className = "zeichen";
+
+  const belegt = f.art_des_zeichens === "belegt";
+  $("balkenrahmen").hidden = !(f.laeuft && belegt);
+
+  if (!f.laeuft) {
+    $("laufsatz").textContent = f.fehler
+      ? f.fehler
+      : (f.ergebnis ? `${f.ergebnis.vermerkt} Bilder eingetragen` +
+                      (f.ergebnis.error ? " — " + f.ergebnis.error : "") : "");
+    zeichen.classList.add(f.fehler ? "durchgefallen" : "bestanden");
+    zeichen.textContent = f.fehler ? "fehlgeschlagen" : "fertig";
+    return;
+  }
+
+  if (belegt) {
+    const anteil = Math.min(1, f.schritt / f.schritte_gesamt);
+    $("balken").style.width = (anteil * 100).toFixed(1) + "%";
+    zeichen.classList.add("bestanden");
+    zeichen.textContent = "gezählt";
+    $("laufsatz").textContent =
+      `Schritt ${f.schritt} von ${f.schritte_gesamt} — wirklich gerechnete Schritte.`;
+  } else {
+    // KEIN BALKEN. Der Puls sagt: es lebt. Er sagt nicht, wie weit es ist.
+    zeichen.classList.add("nicht-gemessen");
+    zeichen.append(feld("span", "puls"), document.createTextNode(" läuft"));
+    $("laufsatz").textContent =
+      `Seit ${f.knoten_seit_s ?? "?"} s an diesem Schritt, ${f.seit_s ?? "?"} s insgesamt. ` +
+      `WIE WEIT er ist, meldet dieser Knoten nicht — das ist ein Lebenszeichen und kein Fortschritt.`;
+  }
+
+  const fertige = (f.fertige || []).map((k) =>
+    `${k.knotenart}${k.aus_cache ? " (aus dem Speicher)" : ""}`);
+  $("lauffertige").textContent = fertige.length ? "Erledigt: " + fertige.join(", ") : "";
+}
+
+async function fortschrittHolen() {
+  try {
+    const f = await (await fetch("/api/fortschritt")).json();
+    zeigeLauf(f);
+
+    // LAEUFT EINER UND NIEMAND SIEHT HIN, wird hingesehen. Der Lauf haengt am Server und
+    // nicht am Fenster: Wer die Seite neu laedt, soll nicht denken, sein Lauf sei weg.
+    if (f.laeuft && !laufUhr) laufUhr = setInterval(fortschrittHolen, 1000);
+
+    if (!f.laeuft && laufUhr) {
+      clearInterval(laufUhr);
+      laufUhr = null;
+      $("stand").textContent = f.fehler ? f.fehler : "Lauf beendet.";
+      await laden();
+    }
+  } catch (fehler) {
+    if (laufUhr) { clearInterval(laufUhr); laufUhr = null; }
+    $("stand").textContent = "Der Fortschritt liess sich nicht abfragen: " + fehler;
+  }
+}
+
 async function rechnen() {
-  $("stand").textContent = "rechnet …";
+  $("stand").textContent = "startet …";
   try {
     const antwort = await fetch("/api/rechne", {
       method: "POST", headers: {"Content-Type": "application/json"},
@@ -522,9 +630,13 @@ async function rechnen() {
     const d = await antwort.json();
     // EIN FEHLSCHLAG WIRD ANGEZEIGT, NICHT VERSCHLUCKT. Er ist ein Satz aus der
     // Bibliothek und fuer einen Menschen geschrieben.
-    $("stand").textContent = d.fehler ? d.fehler
-      : (d.vermerkt + " Bilder eingetragen" + (d.error ? " — " + d.error : ""));
-    if (!d.fehler) await laden();
+    if (d.fehler) { $("stand").textContent = d.fehler; return; }
+
+    $("stand").textContent = "rechnet …";
+    // EINE SEKUNDE, und die Uhr stellt `fortschrittHolen` selbst. Haeufiger waere eine
+    // Anfrage je Bildschirmaufbau fuer eine Zahl, die sich alle paar Sekunden aendert;
+    // seltener saehe nach Stillstand aus.
+    fortschrittHolen();
   } catch (f) {
     $("stand").textContent = "Der Lauf liess sich nicht starten: " + f;
   }
@@ -730,6 +842,8 @@ $("rechnen").addEventListener("click", rechnen);
 $("ordner").addEventListener("keydown", (e) => { if (e.key === "Enter") laden(); });
 // Beim Start einmal fragen: Wer mit --ordner gestartet hat, soll nicht erst klicken.
 laden();
+// UND EINMAL NACHSEHEN, OB SCHON EINER LAEUFT — siehe `fortschrittHolen`.
+fortschrittHolen();
 </script>
 </body>
 </html>

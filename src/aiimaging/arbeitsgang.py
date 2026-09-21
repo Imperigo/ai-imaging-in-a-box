@@ -170,7 +170,7 @@ def _urteil_zu(graph, knoten_ergebnisse: dict, bild_knoten: str):
 
 
 def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None, cache=None,
-           **kettenargumente) -> dict:
+           melder=None, **kettenargumente) -> dict:
     """Die Kette für ein Projekt fahren — **und jedes Bild samt Urteil eintragen.**
 
     Args:
@@ -180,6 +180,19 @@ def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None, cache=None
         ausfuehrer: Knotenart → Funktion, wie bei :func:`aiimaging.kette.fuehre_aus`.
             Ohne Angabe die echten — dann braucht es Blender, Gewichte und eine GPU.
         cache: Zwischenspeicher der Kette.
+        melder: ``(ereignis: dict) -> None``, gerufen vor und nach jedem Knoten — und
+            **zusätzlich nach jedem Diffusionsschritt** der Bildstufe. ``None`` heisst:
+            niemand sieht zu.
+
+            Die Schritte kommen als ``{"art": "schritt", "schritt": n}``. Sie sind der
+            **einzige belegte Fortschritt** dieses Projekts: gezählt wird, was wirklich
+            gerechnet wurde. Was ein Blender-Lauf meldet, ist dagegen ein *Lebens*zeichen
+            und kein Fortschritt — die beiden dürfen in einer Anzeige nie gleich aussehen.
+
+            **Der Zähler wird nur dann eingehängt, wenn kein eigener ``ausfuehrer``
+            übergeben ist.** Wer die Tabelle selbst mitbringt, hat seine Gründe, und eine
+            stille Ersetzung darin wäre genau die Sorte Überraschung, gegen die
+            ``fuehre_aus`` die Tabelle ausdrücklich *ersetzen* statt ergänzen lässt.
         **kettenargumente: alles Weitere an :func:`aiimaging.kette.baue_kette` (Prompt,
             Seed, Auflösung …). Was im Projekt unter ``einstellungen`` steht, wird
             **vorangestellt** und hier überschrieben — *die Mappe trägt die Vorgabe, der
@@ -243,7 +256,13 @@ def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None, cache=None
 
     graph = kette.baue_kette(glb_path=glb, **args)
 
-    lauf = kette.fuehre_aus(graph, ausfuehrer=ausfuehrer, cache=cache,
+    tabelle = ausfuehrer
+    if melder is not None and ausfuehrer is None:
+        tabelle = {**kette.AUSFUEHRER,
+                   kette.ART_RENDER: kette.render_ausfuehrer(
+                       schrittzaehler=lambda n: melder({"art": "schritt", "schritt": n}))}
+
+    lauf = kette.fuehre_aus(graph, ausfuehrer=tabelle, cache=cache, melder=melder,
                             out_dir=str(wurzel / "laeufe"))
     knoten_ergebnisse = lauf.get("knoten") or {}
     schichten = kette.schichtbefund(graph, knoten_ergebnisse)

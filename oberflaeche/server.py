@@ -39,6 +39,7 @@ import base64
 import binascii
 import json
 import sys
+import threading
 import time
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -165,6 +166,122 @@ def _skizzenname(gewuenscht) -> str:
     """
     stempel = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
     return f"skizze-{stempel}.png"
+
+
+class Laufstand:
+    """Was ein laufender Auftrag von sich preisgibt — **und was er ausdrücklich nicht weiss.**
+
+    **Der Anlass:** Ein Lauf über die Kette dauert Minuten und meldete bis zum 21.09.2026
+    gar nichts, bis er fertig war. Die Seite stand still.
+
+        *Ein Fortschritt, den niemand sieht, sieht aus wie ein Absturz.*
+
+    **Die Auflage, um die es dabei geht, ist aber eine andere**, und sie ist die
+    eigentliche Arbeit an dieser Klasse: Es gibt in diesem Projekt **zwei** Sorten von
+    Lebenszeichen, und sie dürfen nie gleich aussehen.
+
+    ``belegt``
+        Gezählte Diffusionsschritte. Es steht fest, wie viele es insgesamt sind, und jeder
+        einzelne wurde wirklich gerechnet. Hier ist ein Anteil ehrlich.
+
+    ``unbelegt``
+        Ein Knoten läuft — mehr ist nicht bekannt. Ein Blender-Lauf meldet ein
+        *Lebens*zeichen und keinen Fortschritt; wie weit er ist, weiss niemand.
+
+    **Darum gibt es hier keinen Prozentsatz über den ganzen Lauf.** Er müsste die Dauer
+    der Knoten gegeneinander gewichten, und die ist nicht bekannt — eine Zahl, die
+    aussähe wie eine Messung und geraten wäre. *Ein erfundener Balken ist dasselbe wie
+    ein grünes Abzeichen an einem ungeprüften Bild.*
+    """
+
+    def __init__(self):
+        self.sperre = threading.Lock()
+        self.laeuft = False
+        self.ordner = None
+        self.begonnen = None
+        self.knoten = None
+        self.knotenart = None
+        self.nummer = None
+        self.von = None
+        self.knoten_begonnen = None
+        self.schritt = None
+        self.schritte_gesamt = None
+        self.fertige = []
+        self.ergebnis = None
+        self.fehler = None
+
+    # ------------------------------------------------------------------ schreiben
+    def beginne(self, ordner, schritte_gesamt=None) -> None:
+        with self.sperre:
+            self.__init__()
+            self.laeuft = True
+            self.ordner = str(ordner)
+            self.begonnen = time.time()
+            self.schritte_gesamt = schritte_gesamt
+
+    def melde(self, ereignis: dict) -> None:
+        """Ein Ereignis aus der Kette. Wird aus dem Rechenfaden gerufen."""
+        with self.sperre:
+            art = ereignis.get("art")
+            if art == "knoten_beginnt":
+                self.knoten = ereignis.get("knoten")
+                self.knotenart = ereignis.get("knotenart")
+                self.nummer = ereignis.get("nummer")
+                self.von = ereignis.get("von")
+                self.knoten_begonnen = time.time()
+                self.schritt = None
+            elif art == "knoten_fertig":
+                self.fertige.append({
+                    "knoten": ereignis.get("knoten"),
+                    "knotenart": ereignis.get("knotenart"),
+                    "status": ereignis.get("status"),
+                    "aus_cache": ereignis.get("aus_cache"),
+                    "dauer_s": ereignis.get("dauer_s"),
+                })
+                self.schritt = None
+            elif art == "schritt":
+                self.schritt = ereignis.get("schritt")
+
+    def beende(self, ergebnis=None, fehler=None) -> None:
+        with self.sperre:
+            self.laeuft = False
+            self.ergebnis = ergebnis
+            self.fehler = fehler
+            self.knoten = None
+            self.schritt = None
+
+    # ---------------------------------------------------------------------- lesen
+    def sicht(self) -> dict:
+        """Was die Seite anzeigt — **mit der Herkunft jeder Angabe.**"""
+        with self.sperre:
+            jetzt = time.time()
+            belegt = self.schritt is not None and bool(self.schritte_gesamt)
+            return {
+                "laeuft": self.laeuft,
+                "ordner": self.ordner,
+                "seit_s": round(jetzt - self.begonnen, 1) if self.begonnen else None,
+                "knoten": self.knoten,
+                "knotenart": self.knotenart,
+                "nummer": self.nummer,
+                "von": self.von,
+                "knoten_seit_s": (round(jetzt - self.knoten_begonnen, 1)
+                                  if self.knoten_begonnen and self.laeuft else None),
+                "schritt": self.schritt,
+                "schritte_gesamt": self.schritte_gesamt,
+                # DIE HERKUNFT DES LEBENSZEICHENS, und sie steht als eigenes Feld da.
+                # Eine Anzeige, die «laeuft» und «ist bei Schritt 5 von 8» gleich
+                # darstellt, behauptet Fortschritt, wo nur Leben ist.
+                "art_des_zeichens": "belegt" if belegt else "unbelegt",
+                "fertige": list(self.fertige),
+                "ergebnis": self.ergebnis,
+                "fehler": self.fehler,
+            }
+
+
+#: Der eine Laufstand dieser Fläche. Es gibt **einen** Lauf zur Zeit, und das ist eine
+#: Entscheidung: Zwei gleichzeitige Läufe auf derselben Mappe schrieben beide in dieselbe
+#: Projektdatei, und der zweite überschriebe die Bilder des ersten.
+LAUFSTAND = Laufstand()
 
 
 class FlaechenError(Exception):
@@ -611,6 +728,10 @@ class Flaeche(BaseHTTPRequestHandler):
                 self._fehler(str(fehler), 404)
             return
 
+        if weg.path == "/api/fortschritt":
+            self._sende(LAUFSTAND.sicht())
+            return
+
         if weg.path == "/bild":
             self._bild(urllib.parse.parse_qs(weg.query))
             return
@@ -807,18 +928,75 @@ class Flaeche(BaseHTTPRequestHandler):
         if not ordner:
             self._fehler("Kein Projektordner angegeben.")
             return
-        try:
-            ergebnis = arbeitsgang.rechne(
-                Path(ordner), trotz_aenderung=bool(wunsch.get("trotz_aenderung")),
-                **(wunsch.get("einstellungen") or {}))
-        except (arbeitsgang.ArbeitsgangError, projekt.ProjektError,
-                kette.KettenError) as fehler:
-            self._fehler(str(fehler))
+        if LAUFSTAND.sicht()["laeuft"]:
+            self._fehler("Es läuft schon einer. Zwei Läufe auf derselben Mappe schrieben "
+                         "beide in dieselbe Projektdatei — der zweite überschriebe die "
+                         "Bilder des ersten.")
             return
-        self._sende({"status": ergebnis["lauf"].get("status"),
-                     "vermerkt": ergebnis["vermerkt"],
-                     "modell_stand": ergebnis["modell_stand"],
-                     "error": ergebnis["lauf"].get("error")})
+
+        einstellungen = dict(wunsch.get("einstellungen") or {})
+        # WIE VIELE SCHRITTE ES INSGESAMT WERDEN, muss VOR dem Lauf feststehen — sonst
+        # gibt es einen Zaehler ohne Nenner, und ein Zaehler ohne Nenner ist eine Zahl
+        # ohne Auskunft.
+        gesamt = _schritte_gesamt(Path(ordner), einstellungen)
+
+        LAUFSTAND.beginne(ordner, schritte_gesamt=gesamt)
+        faden = threading.Thread(
+            target=_rechne_im_hintergrund,
+            args=(Path(ordner), bool(wunsch.get("trotz_aenderung")), einstellungen),
+            daemon=True)
+        faden.start()
+
+        # SOFORT ANTWORTEN. Bis zum 21.09.2026 blieb diese Anfrage offen, bis der ganze
+        # Lauf fertig war — Minuten. Ein Browser zeigt in der Zeit nichts an und laeuft
+        # irgendwann in seine eigene Frist.
+        self._sende({"gestartet": True, "schritte_gesamt": gesamt})
+
+
+def _schritte_gesamt(ordner, einstellungen: dict):
+    """Wie viele Diffusionsschritte dieser Lauf rechnen wird — oder ``None``.
+
+    Gelesen wird, was der Lauf wirklich benutzt: erst die Einstellungen der Mappe, dann
+    die des Aufrufs — **dieselbe Reihenfolge wie in** :func:`aiimaging.arbeitsgang.rechne`.
+    Eine eigene Regel hier wäre dieselbe Regel zweimal, und die zweite veraltet.
+
+    ``None`` heisst **unbekannt** und nicht null: Ohne Nenner zeigt die Fläche keinen
+    Anteil an. *Ein Zähler ohne Nenner ist eine Zahl ohne Auskunft.*
+    """
+    try:
+        aus_mappe = (projekt.oeffne(ordner)["projekt"].get("einstellungen") or {})
+    except projekt.ProjektError:
+        aus_mappe = {}
+    wert = {**aus_mappe, **einstellungen}.get("schritte")
+    return wert if isinstance(wert, int) and wert > 0 else None
+
+
+def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict) -> None:
+    """Der Lauf selbst — in einem eigenen Faden, damit die Seite währenddessen antwortet.
+
+    **Er fängt alles.** Eine Ausnahme in einem Hintergrundfaden verschwindet sonst
+    spurlos: Der Faden endet, der Laufstand bliebe für immer auf «läuft», und die Anzeige
+    zeigte bis zum Neustart einen Lauf, den es nicht mehr gibt.
+
+        *Ein Fehler, den niemand sieht, ist schlimmer als einer, der eine Meldung macht.*
+    """
+    try:
+        ergebnis = arbeitsgang.rechne(
+            ordner, trotz_aenderung=trotz_aenderung, melder=LAUFSTAND.melde,
+            **einstellungen)
+        LAUFSTAND.beende(ergebnis={
+            "status": ergebnis["lauf"].get("status"),
+            "vermerkt": ergebnis["vermerkt"],
+            "modell_stand": ergebnis["modell_stand"],
+            "error": ergebnis["lauf"].get("error"),
+        })
+    except (arbeitsgang.ArbeitsgangError, projekt.ProjektError,
+            kette.KettenError) as fehler:
+        # DIE FEHLER DER BIBLIOTHEK OHNE TYPNAMEN — sie sind fuer einen Menschen
+        # geschrieben.
+        LAUFSTAND.beende(fehler=str(fehler))
+    except Exception as fehler:                    # noqa: BLE001 — siehe Docstring
+        LAUFSTAND.beende(fehler=f"{type(fehler).__name__}: {fehler}")
 
 
 def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,

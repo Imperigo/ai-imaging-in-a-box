@@ -3948,6 +3948,27 @@ bequem ausging — bis der nächste, etwas grössere Lauf stirbt. Die Zahl steht
 21.09.2026 in jedem Ergebnis, und unter zwei Gigabyte meldet sich der Kurzbefund.
 *Negativ heisst:* Es reichte nicht, also wurde ausgelagert.
 
+**Belegter Fortschritt und Lebenszeichen** — Zwei Auskünfte über einen laufenden
+Rechenvorgang, die leicht verwechselt werden und **nie gleich aussehen dürfen**.
+*Belegter Fortschritt:* Es ist gezählt worden, wie viel schon getan ist, und es steht
+fest, wie viel es insgesamt wird. Nur hier ist ein Fortschrittsbalken ehrlich.
+*Lebenszeichen:* Es ist erkennbar, dass etwas noch arbeitet — mehr nicht. Wie weit es ist,
+weiss niemand.
+*Im Projekt:* Die Bildstufe zählt ihre Rechenschritte und meldet damit **belegten**
+Fortschritt. Der Blender-Lauf meldet nur, dass er noch lebt.
+*Und warum das aufgeschrieben ist:* Ein Balken, der aus einem Lebenszeichen gemacht wird,
+sieht aus wie eine Messung und ist geraten — dieselbe Art Fehler wie ein grünes
+Prüfzeichen an einem ungeprüften Bild.
+
+**Hintergrundfaden (Thread)** — Ein zweiter Arbeitsstrang im selben Programm. Während er
+rechnet, kann der erste weiter antworten.
+*Wozu hier:* Ein Bildlauf dauert Minuten. Ohne zweiten Strang bliebe die Oberfläche so
+lange stumm — der Browser zeigte nichts an und gäbe irgendwann selbst auf.
+*Und die Falle dabei:* Geht in einem Hintergrundstrang etwas schief, verschwindet der
+Fehler spurlos — der Strang endet einfach. Darum wird dort **alles** aufgefangen und in
+den Laufstand geschrieben. *Ein Fehler, den niemand sieht, ist schlimmer als einer, der
+eine Meldung macht.*
+
 **Zeigerereignisse (Pointer Events)** — Die Art, wie ein Browser meldet, dass jemand
 etwas berührt, klickt oder mit einem Stift darauf zeichnet. **Ein** Weg für alle drei
 Geräte, statt je einem für Maus, Finger und Stift.
@@ -5197,6 +5218,7 @@ System laufen.
 | 2026-09-21 | Aus der Bildanzeige der Oberflaeche: **Verweis (Symlink)** neu; **Positivliste / Verbotsliste** um das zweite Beispiel erweitert statt ein zweites Mal angelegt — der Waechter gegen Doppeleintraege hat es gemeldet |
 | 2026-09-21 | Aus dem Owner-Entscheid zum Skizzenmodus (E23): **Darstellungsmodus und Entwurfsmodus**, **Erfundenes Volumen** |
 | 2026-09-21 | Aus der Zeichenflaeche fuer das iPad (E24): **Zeigerereignisse (Pointer Events)**, **Leinwand (Canvas)** |
+| 2026-09-21 | Aus dem Zusehen beim Rechnen: **Belegter Fortschritt und Lebenszeichen**, **Hintergrundfaden (Thread)** |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |

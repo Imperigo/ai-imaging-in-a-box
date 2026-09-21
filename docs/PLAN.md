@@ -5820,6 +5820,40 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Man kann dem Lauf jetzt zusehen — und die Anzeige lügt dabei nicht.**
+      Bis zum 21.09.2026 blieb die Anfrage offen, bis der ganze Lauf fertig war: Minuten,
+      in denen die Seite stillstand. *Ein Fortschritt, den niemand sieht, sieht aus wie
+      ein Absturz.*
+      **Die eigentliche Arbeit war nicht das Anzeigen, sondern die Unterscheidung:** Es
+      gibt **zwei** Sorten Lebenszeichen, und sie dürfen nie gleich aussehen.
+      `belegt` sind gezählte Diffusionsschritte — es steht fest, wie viele es werden, und
+      jeder wurde wirklich gerechnet; dort ist ein Balken ehrlich. `unbelegt` heisst: Ein
+      Knoten läuft, und wie weit er ist, weiss niemand — ein Blender-Lauf meldet ein
+      *Lebens*zeichen. Dort gibt es einen Puls, eine Dauer und **ausdrücklich keinen
+      Balken**.
+      *Ein erfundener Balken ist dasselbe wie ein grünes Abzeichen an einem ungeprüften
+      Bild: Er sieht aus wie eine Auskunft und ist geraten.*
+      **Und kein Prozentsatz über den ganzen Lauf**: Er müsste die Knoten gegeneinander
+      gewichten, und diese Gewichte kennt niemand.
+- [x] **Der Schrittzähler war gebaut und von der Kette aus nicht erreichbar.**
+      `render.rendere` führt ihn seit Wochen; `kette.render_ausfuehrer` reichte ihn nicht
+      durch. *Eine Naht, die nur der direkte Aufrufer erreicht, gibt es für den Weg nicht,
+      den das Produkt wirklich geht.* Jetzt geht er durch — damit hat der **einzige
+      belegte Fortschritt dieses Projekts** erstmals einen Zuschauer.
+      Der Zähler wird **nur** eingehängt, wenn kein eigener Ausführer übergeben ist: Eine
+      stille Ersetzung in einer mitgebrachten Tabelle wäre genau die Überraschung, gegen
+      die `fuehre_aus` die Tabelle ersetzen statt ergänzen lässt.
+- [x] **Und wieder ein Wächter an einer Stelle, an der der Fall nicht vorkam.**
+      Der Rumpf der Knotenschleife verlässt die Runde an fünf Stellen mit `continue`. Das
+      `finally` deckt alle — aber die Probe dazu fuhr nur Läufe, in denen **jeder** Knoten
+      durchkommt. Die Mutationsprobe schlug darum nicht an.
+      Berichtigt mit einem Lauf, in dem die Bildstufe fällt und die Prüfstufe
+      **übersprungen** wird. Danach fällt sie. *Ein Wächter an einer Stelle, an der der
+      Fall nicht vorkommt, ist kein Wächter — er ist eine Beruhigung.*
+- [~] **Zwei gleichzeitige Läufe werden abgewiesen, und das ist noch keine Lösung.**
+      Sie schrieben beide in dieselbe Projektdatei. Der zweite bekommt einen Satz statt
+      eines Platzes in einer Warteschlange — für eine Fläche mit einem Benutzer genügt
+      das, für ein iPad **und** einen Rechner am selben Projekt vielleicht nicht.
 - [x] **E24: Die Lieferform ist ein iPad mit Stift — und die Fläche geht mit.**
       Owner-Entscheid 21.09.2026, unmittelbar auf E23: eine Ergänzungssoftware fürs iPad,
       simple Oberfläche wie eine Zeichen-App, Stift → Skizze → AI-Imaging.
