@@ -94,10 +94,38 @@ lange **keinen Aufrufer**.
 > nur in Tests.
 >
 > Der Einwand fällt damit nicht weg, er wird genauer: *Der Weg, auf dem heute Aufträge der
-> Werkstatt abgearbeitet werden, benutzt den Graphen weiterhin nicht.* Es gibt jetzt zwei
-> Wege statt einem — den alten geraden für die Aufträge und den neuen über den Graphen für
-> ein Projekt. **Zwei Wege sind nicht besser als einer**, und dass sie dieselbe
-> Speicherregel teilen (siehe unten), macht das erträglich, aber nicht richtig.
+> Werkstatt abgearbeitet werden, benutzt den Graphen weiterhin nicht.*
+
+### Und was «zwei Wege» wirklich hiess — nachgemessen am 21.09.2026
+
+Hier stand zuerst: *«Es gibt jetzt zwei Wege statt einem, und zwei Wege sind nicht besser
+als einer.»* Das war zu grob, und das Nachmessen hat etwas Genaueres und Unangenehmeres
+ergeben.
+
+**Die beiden Wege verdoppeln keinen Code.** Sie rufen dieselben drei Bibliotheksfunktionen
+und benutzen dieselbe Regel dafür, wann ein Zwischenergebnis noch gilt. Das war schon
+vorher so.
+
+**Was sie unterschieden, war etwas anderes: was man bei ihnen bestellen kann.**
+
+| | |
+|---|---|
+| Der Renderdienst nimmt an | **21** Angaben |
+| Der alte Auftragsweg bestellt | **17** |
+| Der Weg über den Graphen bestellte | **8** |
+
+Elf Dinge waren über den Graphen nicht erreichbar — darunter **Sonnenstand,
+Blickrichtung, Rahmung und Augenhöhe**, also genau das, was eine Architektin einstellen
+will. Und der Graph ist der Weg, auf den eine Oberfläche aufsetzt.
+
+> **Eine Fähigkeit, die der Renderdienst hat und die über einen der Wege nicht bestellbar
+> ist, gibt es für jeden, der diesen Weg benutzt, nicht.**
+
+Es war also nie «zwei Wege, die dasselbe tun». Es waren zwei Wege zu demselben Dienst, und
+**der neuere konnte weniger.** Die Lücke ist geschlossen; zwei Wächter halten sie zu, und
+sie messen gegen den Dienst selbst statt gegen eine Liste von Namen — *eine Liste wäre in
+dem Augenblick veraltet, in dem der Dienst etwas dazubekommt, und genau so ist die Lücke
+entstanden.*
 
 Daraus folgt aber nicht, was man zuerst vermutet. Die Frage ist nicht, ob der *Graph* dort
 läuft, sondern ob der *Nutzen* dort ankommt — und das ist messbar. Dieselben vier Läufe,

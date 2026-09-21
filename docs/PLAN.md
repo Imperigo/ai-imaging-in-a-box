@@ -5820,6 +5820,42 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Die zwei Wege zusammengefuehrt — und «zwei Wege» hiess etwas anderes als gedacht.**
+      Nachgemessen statt vermutet: Die beiden Wege verdoppeln **keinen Code**. Sie rufen
+      dieselben drei Bibliotheksfunktionen und benutzen dieselbe Regel dafuer, wann ein
+      Zwischenergebnis noch gilt.
+      **Unterschieden hat sie, was man bei ihnen BESTELLEN kann:**
+      Der Renderdienst nimmt **21** Angaben an. Der alte Auftragsweg bestellt **17**, der
+      Weg ueber den Graphen bestellte **8**. Elf Dinge waren ueber den Graphen nicht
+      erreichbar — darunter **Sonnenstand, Blickrichtung, Rahmung und Augenhoehe**, also
+      genau das, was eine Architektin einstellen will. Und der Graph ist der Weg, auf den
+      eine Oberflaeche aufsetzt.
+      *Eine Faehigkeit, die der Dienst hat und die ueber einen der Wege nicht bestellbar
+      ist, gibt es fuer jeden, der diesen Weg benutzt, nicht.*
+      **Es war nie «zwei Wege, die dasselbe tun». Es waren zwei Wege zu demselben Dienst,
+      und der neuere konnte weniger.**
+      Luecke geschlossen, rein additiv: `None` heisst NICHT ANGEFASST, und jede bisher
+      gemessene Aufnahme bleibt reproduzierbar. Dazu der Standpunkt von Hand — und zwei
+      Quellen fuer denselben Standpunkt werden **abgewiesen, nicht geordnet**.
+      **Meine eigene Aussage in Kapitel 4 war zu grob und ist berichtigt.**
+- [x] **Zwei Waechter statt einem — und der zweite ist der noetige.**
+      Der erste misst die **Signatur**: Kann man es bestellen? Er faellt nicht, wenn eine
+      Angabe angenommen und danach stillschweigend weggeworfen wird — und genau das kam
+      bei der Mutationsprobe heraus: `stillstand_frist_s` aus der Weiterreichliste zu
+      entfernen liess ALLE Proben gruen.
+      *Eine Bestellung, die angenommen und nicht ausgeliefert wird, ist schlimmer als eine
+      abgelehnte: Die Ablehnung sieht man.*
+      Der zweite faehrt die Stufe mit einer Attrappe an der Naht und prueft, was **dort
+      ankommt**. Sechs Mutationsproben, alle gefallen.
+      **Und beide messen gegen den Dienst selbst statt gegen eine Liste von Namen** — eine
+      Liste waere in dem Augenblick veraltet, in dem der Dienst etwas dazubekommt, und
+      genau so ist die Luecke entstanden.
+- [x] **Ein eigener Waechter stand an einer Stelle, an der der Fall nicht vorkommt.**
+      Die Abweisung «Standpunkt zweimal bestellt» lag zuerst in `baue_kette` — und
+      `innenraum` ist dort gar kein Parameter. Sie haette nie ausgeloest.
+      *Ein Waechter an einer Stelle, an der der Fall nicht vorkommt, ist kein Waechter. Er
+      ist eine Beruhigung.* Verschoben in den Ausfuehrer, wo beide Angaben wirklich
+      nebeneinander stehen koennen.
 - [x] **Eingehaengt: `aiimaging.arbeitsgang` — Import, Kette und Projekt in einem Ablauf.**
       Importeur und Projekt waren gebaut und **an keiner Stelle verdrahtet**. *Ein gebautes
       Modul ohne Aufrufer ist kein Werkzeug, sondern ein Vorrat.*

@@ -1368,3 +1368,194 @@ def test_eine_unerfuellbare_innenansicht_rendert_NICHT_ersatzweise_aussen(monkey
 
     assert ergebnis["status"] == kette_modul.STATUS_FEHLER
     assert "Innenansicht verlangt" in ergebnis["error"]
+
+
+# ======================================================================================
+# DIE ZWEI WEGE ZUM RUNNER — und die Luecke, die zwischen ihnen stand
+# ======================================================================================
+#
+# Gemessen am 21.09.2026, nicht vermutet: `seams.glb_zu_multipass` nimmt 21 Angaben an.
+# Der Abholer bestellte 17 davon, dieser Weg **8**. Elf Dinge waren ueber den Graphen
+# nicht erreichbar — darunter Sonnenstand, Blickrichtung, Rahmung und Augenhoehe, also
+# genau das, was eine Architektin einstellen will.
+#
+# Es waren also nie «zwei Wege, die dasselbe tun». Es waren zwei Wege zum selben Runner,
+# und der neuere konnte weniger.
+#
+#     *Eine Faehigkeit, die der Runner hat und die ueber einen der Wege nicht bestellbar
+#     ist, gibt es fuer jeden, der diesen Weg benutzt, nicht.*
+#
+# Die Probe unten misst die Luecke bei JEDEM Lauf neu, gegen die echte Signatur. Eine
+# Liste von Namen waere in dem Augenblick veraltet, in dem der Runner etwas dazubekommt —
+# und genau so ist die Luecke ueberhaupt entstanden.
+
+#: Was `seams.glb_zu_multipass` annimmt, aber **keiner** der beiden Wege bestellt.
+#: Jeder Eintrag braucht seinen Grund; eine Ausnahme ohne Begruendung ist eine Luecke
+#: mit besserer Presse.
+NICHT_BESTELLT_MIT_GRUND = {
+    "herzschlag_takt_s": ("Der Takt unseres eigenen Lebenszeichens. Maschinenfest und "
+                          "keine Einstellung der Aufnahme — wer ihn aendert, aendert die "
+                          "Wache, nicht das Bild."),
+    "shift_y": ("Der Shift wird aus der Rahmung GERECHNET, nicht bestellt. Ihn von aussen "
+                "zu setzen hiesse, die Rechnung zu uebergehen, die ihn begruendet."),
+}
+
+
+def _was_der_runner_annimmt() -> set[str]:
+    import inspect
+    from aiimaging import seams as _seams
+    return {n for n in inspect.signature(_seams.glb_zu_multipass).parameters
+            if n not in ("glb_path", "out_dir", "_starte")}
+
+
+def _was_der_abholer_bestellt() -> set[str]:
+    """Die Schluesselwoerter, die der Abholer in sein `einstellungen` legt.
+
+    Aus dem **Quelltext** gelesen und nicht durch einen Lauf: Ein Lauf braeuchte Blender.
+    """
+    import ast as _ast
+    from pathlib import Path as _Path
+    quelle = (_Path(kette.__file__).parent / "abholer.py").read_text(encoding="utf-8")
+    runner = _was_der_runner_annimmt()
+    return {kw.arg for k in _ast.walk(_ast.parse(quelle)) if isinstance(k, _ast.Call)
+            and getattr(k.func, "id", "") == "dict"
+            for kw in k.keywords if kw.arg in runner}
+
+
+def _was_die_kette_bestellen_kann() -> set[str]:
+    import inspect
+    namen = set(inspect.signature(kette.baue_kette).parameters)
+    # Drueben heisst sie `timeout`; hier `multipass_timeout`, weil es in `baue_kette`
+    # schon andere Fristen gibt und ein zweites `timeout` spaeter Raten hiesse.
+    if "multipass_timeout" in namen:
+        namen.add("timeout")
+    return namen
+
+
+def test_der_kettenweg_kann_alles_bestellen_was_der_abholer_bestellt():
+    """**Die Probe, die es am 21.09.2026 noch nicht gab — und darum die Luecke.**
+
+    Sie vergleicht bei jedem Lauf, was der Abholer an den Runner gibt, mit dem, was ueber
+    `baue_kette` ueberhaupt bestellbar ist. Elf Namen fehlten.
+    """
+    fehlt = _was_der_abholer_bestellt() - _was_die_kette_bestellen_kann()
+    assert not fehlt, (
+        f"{len(fehlt)} Angaben kann der Abholer bestellen und dieser Weg nicht: "
+        f"{sorted(fehlt)}.\\nWer den Graphen benutzt — und darauf setzt die Oberflaeche "
+        f"auf —, kann sie damit nicht setzen. Eine Faehigkeit, die ueber einen Weg nicht "
+        f"bestellbar ist, gibt es fuer dessen Benutzer nicht.")
+
+
+def test_jede_nicht_bestellte_angabe_des_runners_hat_einen_grund():
+    """Was keiner der beiden Wege bestellt, ist entweder Absicht — oder die naechste Luecke.
+
+    Diese Probe zwingt die Entscheidung: Wer dem Runner eine Angabe hinzufuegt, muss sie
+    entweder bestellbar machen oder hier begruenden, warum nicht.
+    """
+    offen = (_was_der_runner_annimmt()
+             - _was_die_kette_bestellen_kann()
+             - _was_der_abholer_bestellt())
+    ohne_grund = offen - set(NICHT_BESTELLT_MIT_GRUND)
+    assert not ohne_grund, (
+        f"Der Runner nimmt {sorted(ohne_grund)} an, und kein Weg bestellt es. Entweder "
+        f"bestellbar machen oder in NICHT_BESTELLT_MIT_GRUND begruenden — eine Ausnahme "
+        f"ohne Begruendung ist eine Luecke mit besserer Presse.")
+    veraltet = set(NICHT_BESTELLT_MIT_GRUND) - _was_der_runner_annimmt()
+    assert not veraltet, (
+        f"{sorted(veraltet)} steht als Ausnahme da, aber der Runner kennt es gar nicht "
+        f"(mehr). Eine Ausnahme fuer etwas, das es nicht gibt, verdeckt die naechste.")
+
+
+def test_der_sonnenstand_landet_im_hash_und_nicht_nur_im_aufruf(tmp_path):
+    """Ein Bild mit Abendsonne darf kein Treffer fuer eine Mittagsbestellung sein.
+
+    Das ist der teuerste Ausgang ueberhaupt: Der Lauf gelingt, das Bild liegt da, und
+    niemand sieht ihm an, dass etwas anderes bestellt war.
+    """
+    gemeinsam = dict(glb_path=str(tmp_path / "m.glb"), up_axis="Y", prompt="Haus",
+                     bbox=BBOX_HAUS)
+    abend = kette.baue_kette(**gemeinsam, sonne={"azimut": 250, "hoehe": 8})
+    mittag = kette.baue_kette(**gemeinsam, sonne={"azimut": 180, "hoehe": 60})
+    ohne = kette.baue_kette(**gemeinsam)
+
+    a = abend.knoten[KNOTEN_MULTIPASS].params
+    m = mittag.knoten[KNOTEN_MULTIPASS].params
+    assert a["sonne"] != m["sonne"], "zwei Bestellungen, zwei Parametersaetze"
+    assert "sonne" not in ohne.knoten[KNOTEN_MULTIPASS].params, \
+        "nicht bestellt heisst NICHT ANGEFASST — dann gilt die Vorgabe des Runners"
+
+
+def test_ein_standpunkt_von_hand_und_ein_innenraum_zugleich_werden_abgewiesen(tmp_path):
+    """Zwei Quellen fuer dasselbe — abgewiesen, nicht geordnet.
+
+    *Eine Vorrangregel waere eine Entscheidung, an die sich spaeter niemand erinnert — und
+    die falsche Kamera sieht man dem Bild nicht an.*
+    """
+    knoten = Knoten(KNOTEN_MULTIPASS, ART_MULTIPASS,
+                    {"aufloesung": 512, "samples": 16, "beauty": True,
+                     "material_id": True, "auge": [1, 2, 3],
+                     "innenraum": {"raum": "Nord"}})
+    ausgaben = kette.AUSFUEHRER[ART_MULTIPASS](
+        knoten=knoten, eingaben=[{"glb_path": "/tmp/m.glb", "up_axis": "Y"}],
+        out_dir=tmp_path)
+
+    assert ausgaben["status"] == "fehler"
+    assert "zweimal bestellt" in ausgaben["error"]
+
+
+def test_jede_bestellte_angabe_kommt_beim_runner_auch_an(tmp_path, monkeypatch):
+    """**Die Probe, die die vorige nicht ersetzt, sondern rettet.**
+
+    Der Waechter darueber misst die **Signatur**: Kann man es bestellen? Er faellt nicht,
+    wenn eine Angabe angenommen und danach stillschweigend weggeworfen wird — und genau
+    das ist bei der Mutationsprobe herausgekommen:
+
+        `stillstand_frist_s` aus der Weiterreichliste zu entfernen, liess ALLE Proben
+        gruen. Die Angabe stand im Hash, kam beim Runner nie an, und niemand merkte es.
+
+    *Eine Bestellung, die angenommen und nicht ausgeliefert wird, ist schlimmer als eine
+    abgelehnte: Die Ablehnung sieht man.*
+
+    Diese Probe faehrt die Stufe mit einer Attrappe an der Naht und prueft, was **dort
+    ankommt**. Kein Blender, kein Bild.
+    """
+    from aiimaging import seams as _seams
+
+    angekommen = {}
+
+    def naht(glb_path, out_dir, **kw):
+        angekommen.update(kw)
+        tiefe = Path(out_dir) / "tiefe_norm.png"
+        tiefe.write_text("t", encoding="utf-8")
+        return {"status": "ok", "depth_png": str(tiefe)}
+
+    monkeypatch.setattr(_seams, "glb_zu_multipass", naht)
+
+    bestellung = {
+        "kamera": "sued", "kamera_modus": "shift", "kamera_huellbox": BBOX_HAUS,
+        "sonne": {"azimut": 250, "hoehe": 8}, "gelaende_z": 1.5, "hoehe": 12.0,
+        "deckungsgrad": 0.7, "augenhoehe": 1.6, "bias_grad": 2.0,
+        "stillstand_frist_s": 99.0, "multipass_timeout": 123.0,
+        "auge": [1.0, 2.0, 3.0], "blick_auf": [0.0, 0.0, 0.0], "brennweite": 24.0,
+    }
+    graph = kette.baue_kette(glb_path=str(tmp_path / "m.glb"), up_axis="Y",
+                             prompt="Haus", bbox=BBOX_HAUS, **bestellung)
+    kette.AUSFUEHRER[ART_MULTIPASS](
+        knoten=graph.knoten[KNOTEN_MULTIPASS],
+        eingaben=[{"glb_path": str(tmp_path / "m.glb"), "up_axis": "Y"}],
+        out_dir=tmp_path)
+
+    fehlend = []
+    for name, wert in bestellung.items():
+        # Drueben heisst die Frist `timeout` — der einzige Name, der sich unterwegs
+        # aendert, und er ist bei `baue_kette` begruendet.
+        drueben = "timeout" if name == "multipass_timeout" else name
+        if drueben not in angekommen:
+            fehlend.append(f"{name} kam gar nicht an")
+        elif angekommen[drueben] != wert:
+            fehlend.append(f"{name}: bestellt {wert!r}, angekommen {angekommen[drueben]!r}")
+
+    assert not fehlend, (
+        "Bestellt und nicht ausgeliefert:\n  " + "\n  ".join(fehlend) +
+        "\nEine Bestellung, die angenommen und nicht ausgeliefert wird, ist schlimmer "
+        "als eine abgelehnte — die Ablehnung sieht man.")

@@ -400,6 +400,48 @@ def baue_kette(
     schaetzer: str = tiefenschaetzer.VORGABE_TIEFENSCHAETZER,
     hintergrund_strategie: str = tiefenschaetzer.HG_WIE_SOLL,
     hintergrund_anteil: float | None = None,
+    # ── DIE ELF, DIE DER ABHOLER BESTELLEN KONNTE UND DIESER WEG NICHT ───────────────
+    #
+    # Gemessen am 21.09.2026, nicht vermutet: `seams.glb_zu_multipass` nimmt 21 Angaben
+    # an. Der Abholer bestellt 17 davon, dieser Weg bestellte **8**. Elf Dinge waren
+    # ueber den Graphen nicht erreichbar — darunter der Sonnenstand, die Blickrichtung,
+    # die Rahmung und die Augenhoehe, also genau das, was eine Architektin einstellen
+    # will.
+    #
+    # Das ist derselbe Fehler, den der Abholer am 26.08.2026 an sich selbst gefunden hat
+    # («drei Kameraparameter, die der Runner seit jeher kennt und die auf diesem Weg NIE
+    # ankamen»), eine Ebene hoeher:
+    #
+    #     *Eine Faehigkeit, die der Runner hat und die ueber einen der Wege nicht
+    #     bestellbar ist, gibt es fuer jeden, der diesen Weg benutzt, nicht.*
+    #
+    # `None` heisst hier ueberall NICHT ANGEFASST: Dann gelten die Vorgaben des Runners,
+    # und jede bisher ueber diesen Weg gemessene Aufnahme bleibt reproduzierbar. Dieser
+    # Zusatz ist rein additiv — er aendert kein Verhalten, er macht eines erreichbar.
+    kamera=None,
+    kamera_modus: str | None = None,
+    kamera_huellbox=None,
+    sonne=None,
+    gelaende_z: float | None = None,
+    hoehe: float | None = None,
+    deckungsgrad: float | None = None,
+    augenhoehe: float | None = None,
+    bias_grad: float | None = None,
+    stillstand_frist_s: float | None = None,
+    multipass_timeout: float | None = None,
+    # DER STANDPUNKT VON HAND — die letzten drei der gemessenen Luecke.
+    #
+    # Sie waren ueber diesen Weg nur MITTELBAR erreichbar: ueber `innenraum`, das sie
+    # ausrechnen laesst. Wer eine Aussenkamera an eine bestimmte Stelle setzen will — die
+    # naheliegendste Bedienhandlung ueberhaupt —, konnte das nicht.
+    #
+    # ZWEI QUELLEN FUER DASSELBE WERDEN ABGEWIESEN, nicht stillschweigend geordnet: Wer
+    # `innenraum` UND `auge` angibt, bekommt einen Satz statt einer Auswahl. Eine
+    # Vorrangregel waere genau die Sorte Entscheidung, an die sich spaeter niemand
+    # erinnert — und die falsche Kamera sieht man dem Bild nicht an.
+    auge=None,
+    blick_auf=None,
+    brennweite: float | None = None,
 ) -> Graph:
     """Die Standardkette als Graph: ``geometrie → multipass → render → qa``.
 
@@ -485,6 +527,27 @@ def baue_kette(
                 "samples": int(samples),
                 "beauty": bool(beauty),
                 "material_id": bool(material_id),
+                # SIE STEHEN IM KNOTEN UND DAMIT IM HASH — das ist der Punkt. Ein Bild
+                # mit Abendsonne darf nicht als Treffer fuer eine Bestellung mit
+                # Mittagssonne gelten. Genau so ein Treffer waere der teuerste Ausgang:
+                # Der Lauf gelingt, das Bild liegt da, und niemand sieht ihm an, dass er
+                # etwas anderes bestellt hatte.
+                **{name: wert for name, wert in {
+                    "kamera": kamera,
+                    "kamera_modus": kamera_modus,
+                    "kamera_huellbox": kamera_huellbox,
+                    "sonne": sonne,
+                    "gelaende_z": gelaende_z,
+                    "hoehe": hoehe,
+                    "deckungsgrad": deckungsgrad,
+                    "augenhoehe": augenhoehe,
+                    "bias_grad": bias_grad,
+                    "stillstand_frist_s": stillstand_frist_s,
+                    "multipass_timeout": multipass_timeout,
+                    "auge": auge,
+                    "blick_auf": blick_auf,
+                    "brennweite": brennweite,
+                }.items() if wert is not None},
             },
             eingaenge=(KNOTEN_GEOMETRIE,),
         ),
@@ -837,7 +900,30 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     # Innenansicht: NUR auf ausdrückliche Bestellung. Ein Auftrag, der nicht danach
     # gefragt hat, soll keine Innenaufnahme bekommen — und ein Auftrag, der danach
     # gefragt hat und sie nicht bekommen kann, soll scheitern statt aussen zu rendern.
-    auge = blick_auf = brennweite = None
+    # VON HAND GESETZT — oder aus dem Innenraum gerechnet. **Beides zugleich gibt es
+    # nicht**, und die Pruefung steht HIER und nicht in `baue_kette`.
+    #
+    # Der erste Anlauf legte sie dorthin — und sie waere toter Code gewesen: `innenraum`
+    # ist gar kein Parameter von `baue_kette`, es wird von aussen an den Knoten gesetzt.
+    # Der Fall kann dort also nie eintreten, und die Abfrage haette nie ausgeloest.
+    #
+    #     *Ein Waechter an einer Stelle, an der der Fall nicht vorkommt, ist kein
+    #     Waechter. Er ist eine Beruhigung.*
+    #
+    # An dieser Stelle koennen beide Angaben wirklich nebeneinander am Knoten stehen, und
+    # genau hier wird abgewiesen statt geordnet: Eine Vorrangregel waere eine Entscheidung,
+    # an die sich spaeter niemand erinnert — und die falsche Kamera sieht man dem Bild
+    # nicht an.
+    von_hand = [n for n in ("auge", "blick_auf", "brennweite") if p.get(n) is not None]
+    if von_hand and p.get("innenraum"):
+        return {"status": STATUS_FEHLER,
+                "error": (f"Standpunkt zweimal bestellt: `innenraum` rechnet ihn aus, und "
+                          f"{', '.join(von_hand)} gibt ihn vor. Welcher gilt, entscheidet "
+                          f"dieses Modul nicht.")}
+
+    auge = p.get("auge")
+    blick_auf = p.get("blick_auf")
+    brennweite = p.get("brennweite")
     if p.get("innenraum"):
         wunsch = p["innenraum"]
         wahl = raumkamera.waehle(geometrie.get("raeume"),
@@ -866,12 +952,29 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
         # durchgereicht. Zum vierten Mal — und darum steht sie hier mit ihrer Messung.
         brennweite = (wahl["standpunkt"].get("sichtfeld") or {}).get("brennweite_mm")
 
+    # WAS NICHT IM KNOTEN STEHT, WIRD NICHT UEBERGEBEN — und damit gilt drueben die
+    # Vorgabe des Runners. Ein `None` durchzureichen waere etwas anderes: Es setzte den
+    # Wert ausdruecklich auf nichts und ueberschriebe damit die Vorgabe.
+    #
+    # `multipass_timeout` heisst hier so und drueben `timeout`. Der Name ist bewusst
+    # verschieden: In `baue_kette` gibt es schon andere Fristen, und ein zweites `timeout`
+    # waere die Sorte Feldname, bei der man spaeter raten muss, welche Frist gemeint war.
+    # `auge`, `blick_auf` und `brennweite` stehen NICHT in dieser Liste: Sie gehen weiter
+    # unten als eigene Argumente mit, und zweimal uebergeben waere ein TypeError.
+    weiter = {name: p[name] for name in
+              ("kamera", "kamera_modus", "kamera_huellbox", "sonne", "gelaende_z",
+               "hoehe", "deckungsgrad", "augenhoehe", "bias_grad", "stillstand_frist_s")
+              if name in p}
+    if "multipass_timeout" in p:
+        weiter["timeout"] = p["multipass_timeout"]
+
     bericht = seams.glb_zu_multipass(
         glb_path, out_dir,
         up_axis=geometrie.get("up_axis"),
         aufloesung=p["aufloesung"], samples=p["samples"],
         beauty=p["beauty"], material_id=p["material_id"],
         auge=auge, blick_auf=blick_auf, brennweite=brennweite,
+        **weiter,
     )
     bericht.setdefault("status", STATUS_OK)
 
