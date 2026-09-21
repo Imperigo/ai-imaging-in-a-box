@@ -488,3 +488,204 @@ def test_die_glb_und_die_bilder_stehen_relativ_in_der_mappe(tmp_path):
     for b in fertig["bilder"]:
         assert not Path(b["bild"]).is_absolute(), b["bild"]
         assert (mappe / b["bild"]).is_file(), f"{b['bild']} zeigt ins Leere"
+
+
+# ------------------------- Der Zwischenspeicher auf dem Weg, den das Produkt geht
+#
+# GEMESSEN AM 21.09.2026: Drei Laeufe hintereinander auf derselben Mappe ergaben
+# `cache_treffer=0`. Jeder Klick auf «Rechnen» rechnete den Blender-Lauf und das Bild neu,
+# auch wenn sich nichts geaendert hatte.
+#
+# Der Zwischenspeicher ist gebaut und durch drei Beweise belegt (05, 23, 29). Auf dem Weg,
+# den das Produkt geht, war er NICHT EINGESCHALTET — dieselbe Sorte Luecke wie beim
+# Schrittzaehler am selben Tag.
+#
+#     Eine Faehigkeit, die ueber den Weg des Produkts nicht erreichbar ist, gibt es fuer
+#     den Benutzer nicht.
+
+class Zaehlbank(Werkbank):
+    """Eine Werkbank, die mitzaehlt, wie oft jede Stufe wirklich gerufen wurde.
+
+    *Ein Treffer im Speicher ist erst dann einer, wenn die Stufe NICHT gelaufen ist* —
+    und das sagt nur der Zaehler, nicht die Zahl im Bericht.
+    """
+
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self.aufrufe = {"geometrie": 0, "multipass": 0, "render": 0, "qa": 0}
+
+    def geometrie(self, **kw):
+        self.aufrufe["geometrie"] += 1
+        return super().geometrie(**kw)
+
+    def multipass(self, **kw):
+        self.aufrufe["multipass"] += 1
+        return super().multipass(**kw)
+
+    def render(self, **kw):
+        self.aufrufe["render"] += 1
+        return super().render(**kw)
+
+    def qa(self, **kw):
+        self.aufrufe["qa"] += 1
+        return super().qa(**kw)
+
+
+def test_der_zweite_lauf_rechnet_blender_und_bild_NICHT_neu(tmp_path):
+    """**Die Probe, um die es geht.** Nicht die Zahl im Bericht, sondern der Zaehler:
+    Die teuren Stufen duerfen beim zweiten Lauf gar nicht gerufen werden."""
+    _melde_mappe(tmp_path)
+    bank = Zaehlbank()
+
+    arbeitsgang.rechne(tmp_path, ausfuehrer=bank.tabelle())
+    arbeitsgang.rechne(tmp_path, ausfuehrer=bank.tabelle())
+
+    assert bank.aufrufe["geometrie"] == 1, "die Geometrie wurde zweimal gerechnet"
+    assert bank.aufrufe["multipass"] == 1, "Blender lief zweimal"
+    assert bank.aufrufe["render"] == 1, "das Bild wurde zweimal gerechnet"
+
+
+def test_eine_andere_schwelle_faellt_ein_neues_urteil(tmp_path):
+    """**Die Probe, die ich zuerst falsch geschrieben hatte** — und die Berichtigung ist
+    der interessantere Teil.
+
+    Ich hatte behauptet, der QA-Knoten duerfe ueberhaupt nie aus dem Speicher kommen. Das
+    ist nicht die Regel aus E20. Dort geht es um das **Basis-Urteil** eines
+    Layer-2-Bildes: Das faellt ein Knoten im NEBENZWEIG, dessen Parameter nicht im Hash
+    der Bildstufe stehen — abgelegt waere es ein Urteil aus einem anderen Lauf.
+
+    Der QA-Knoten selbst haengt sehr wohl an seinen eigenen Parametern. Die wirkliche
+    Frage lautet darum:
+
+        *Aendert sich die Schwelle, faellt das Urteil neu?*
+
+    Waere es anders, hiesse ein verschobener Riegel: dasselbe Urteil, andere Schwelle —
+    und niemand saehe es dem Ergebnis an.
+    """
+    _melde_mappe(tmp_path)
+    bank = Zaehlbank()
+
+    arbeitsgang.rechne(tmp_path, ausfuehrer=bank.tabelle())
+    arbeitsgang.rechne(tmp_path, ausfuehrer=bank.tabelle(), qa_schwelle=0.42)
+
+    assert bank.aufrufe["qa"] == 2, (
+        "Die Schwelle wurde verschoben und das Urteil kam aus dem Speicher — dann misst "
+        "die Mappe gegen einen Riegel, den es nicht mehr gibt.")
+
+
+def test_ohne_aenderung_bleibt_das_urteil_dasselbe(tmp_path):
+    """Die Gegenprobe. Ein Urteil, das sich ohne Anlass aendert, waere schlimmer als eines,
+    das steht — und ein QA-Knoten, der IMMER neu rechnet, verdeckte das."""
+    _melde_mappe(tmp_path)
+    bank = Zaehlbank()
+
+    arbeitsgang.rechne(tmp_path, ausfuehrer=bank.tabelle())
+    arbeitsgang.rechne(tmp_path, ausfuehrer=bank.tabelle())
+
+    p = projekt.oeffne(tmp_path)["projekt"]
+    assert len({b["geometrie_bestanden"] for b in p["bilder"]}) == 1
+
+
+def test_eine_geaenderte_einstellung_rechnet_nur_das_noetige_neu(tmp_path):
+    """Der ganze Zweck des Graphen: Ein neuer Prompt kostet das Bild, nicht Blender."""
+    _melde_mappe(tmp_path)
+    bank = Zaehlbank()
+
+    arbeitsgang.rechne(tmp_path, ausfuehrer=bank.tabelle())
+    arbeitsgang.rechne(tmp_path, ausfuehrer=bank.tabelle(), prompt="ein anderes Haus")
+
+    assert bank.aufrufe["multipass"] == 1, "Blender lief wegen eines Prompts noch einmal"
+    assert bank.aufrufe["render"] == 2, "das Bild haette neu gerechnet werden muessen"
+
+
+def test_ohne_speicher_rechnet_jede_stufe_wieder(tmp_path):
+    """Die Gegenprobe. `cache=None` heisst ausdruecklich **kein Speicher** — und ohne
+    diese Probe waere ein Speicher, der IMMER trifft, ebenso gruen."""
+    _melde_mappe(tmp_path)
+    bank = Zaehlbank()
+
+    arbeitsgang.rechne(tmp_path, ausfuehrer=bank.tabelle(), cache=None)
+    arbeitsgang.rechne(tmp_path, ausfuehrer=bank.tabelle(), cache=None)
+
+    assert bank.aufrufe["multipass"] == 2
+
+
+def test_der_speicher_liegt_in_der_mappe(tmp_path):
+    """Damit eine kopierte Mappe ihren Speicher mitnimmt. Ein Eintrag, dessen Dateien
+    fehlen, wird ohnehin verworfen — ein Umzug kostet hoechstens einen neuen Lauf."""
+    _melde_mappe(tmp_path)
+    arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+
+    assert (tmp_path / arbeitsgang.SPEICHERORDNER).is_dir()
+
+
+# --------------------------------------------------- Eine Datei, ein Eintrag
+
+def test_derselbe_lauf_zweimal_ergibt_EIN_bild_in_der_mappe(tmp_path):
+    """*Eine Liste von Bildern, in der dieselbe Datei dreimal steht, ist keine Liste von
+    Bildern — sie ist eine Liste von Klicks.*"""
+    _melde_mappe(tmp_path)
+    for _ in range(3):
+        arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+
+    p = projekt.oeffne(tmp_path)["projekt"]
+    namen = [b["bild"] for b in p["bilder"]]
+
+    assert len(namen) == len(set(namen)) == 1, namen
+
+
+def test_die_laeufe_zaehlen_trotzdem_alle_mit(tmp_path):
+    """**Die Gegenprobe, ohne die die vorige falsch waere.** Ein Lauf ist eine Tatsache
+    ueber dieses Projekt; nur das ERZEUGNIS gibt es einmal."""
+    _melde_mappe(tmp_path)
+    for _ in range(3):
+        arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+
+    assert len(projekt.oeffne(tmp_path)["projekt"]["laeufe"]) == 3
+
+
+def test_ein_anderes_bild_bekommt_einen_eigenen_eintrag(tmp_path):
+    """Sonst waere die Regel «eine Datei, ein Eintrag» eine Regel «ein Bild, fertig»."""
+    _melde_mappe(tmp_path)
+    arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+    arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle(), prompt="etwas anderes")
+
+    assert len(projekt.oeffne(tmp_path)["projekt"]["bilder"]) == 2
+
+
+def test_ein_neu_gerechnetes_bild_bleibt_an_seiner_stelle(tmp_path):
+    """**Diese Probe fehlte, und eine Mutationsprobe hat es gezeigt.**
+
+    Der Quelltext behauptete «an derselben Stelle, nicht hinten angehaengt» — und eine
+    Mutation, die den Eintrag ans Ende schiebt, blieb gruen.
+
+        *Die Reihenfolge einer Bilderliste ist eine Auskunft: Sie sagt, was zuerst
+        entstand. Wer sie beim Neurechnen umstellt, nimmt sie ihr — und es faellt
+        niemandem auf, weil beide Listen dieselben Bilder enthalten.*
+    """
+    _melde_mappe(tmp_path)
+    arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+    erstes = projekt.oeffne(tmp_path)["projekt"]["bilder"][0]["bild"]
+
+    arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle(), prompt="ein zweites")
+    zweites = projekt.oeffne(tmp_path)["projekt"]["bilder"][1]["bild"]
+
+    # Und jetzt das ERSTE noch einmal — es muss vorn bleiben.
+    arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+
+    namen = [b["bild"] for b in projekt.oeffne(tmp_path)["projekt"]["bilder"]]
+    assert namen == [erstes, zweites], namen
+
+
+def test_das_erste_entstehen_bleibt_stehen_und_das_letzte_kommt_dazu(tmp_path):
+    """Beide Zeitpunkte sagen etwas: der erste die Herkunft, der letzte die Aktualitaet
+    des Urteils. Einen davon zu ueberschreiben verliert eine Auskunft."""
+    _melde_mappe(tmp_path)
+    arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+    vorher = projekt.oeffne(tmp_path)["projekt"]["bilder"][0]
+
+    arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+    nachher = projekt.oeffne(tmp_path)["projekt"]["bilder"][0]
+
+    assert nachher["erzeugt"] == vorher["erzeugt"], "die Herkunft wurde ueberschrieben"
+    assert nachher["zuletzt_vermerkt"] >= vorher["zuletzt_vermerkt"]

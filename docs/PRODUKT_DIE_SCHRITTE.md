@@ -118,6 +118,32 @@ Auf der Werkstattmaschine lief das KI-Bild **überhaupt nicht** — die Software
 Weg aus, der stirbt. Repariert; die Hälfte des Fehlers (der Ausweichweg selbst) ist
 gemessen bestellt und noch offen.
 
+### 21.09.2026 · Jeder Klick rechnete alles neu — jetzt nicht mehr
+
+Nachdem der Pfadfehler gefunden war, habe ich gezielt nach weiteren Stellen dieser Art
+gesucht. Zwei Sondierungen gaben Entwarnung (Leerzeichen, Umlaute und lange Namen in
+Pfaden halten überall). **Die dritte nicht.**
+
+**Wer zweimal auf «Rechnen» klickte, wartete zweimal auf Blender** — auch wenn sich nichts
+geändert hatte. Die Software hat einen Zwischenspeicher, der genau das verhindert; er ist
+gebaut, durch drei Beweise belegt — und auf dem Weg, den das Produkt geht, war er **nicht
+eingeschaltet**.
+
+Jetzt ist er es. Gemessen danach:
+
+| Was Sie tun | Was gerechnet wird |
+|---|---|
+| Zweimal «Rechnen» ohne Änderung | **nichts** von Blender oder dem Bild — nur das Urteil |
+| Nur den Text ändern | das **Bild**, nicht die Geometrie |
+| Das Modell austauschen | alles, und das ist richtig so |
+
+Der Speicher liegt **in der Mappe**. Wer sie auf einen Stick kopiert, nimmt ihn mit.
+
+**Ausserdem:** Dieselbe Sondierung zeigte, dass dreimal «Rechnen» dreimal denselben
+Bildnamen in die Mappe schrieb. *Eine Liste von Bildern, in der dieselbe Datei dreimal
+steht, ist keine Liste von Bildern — sie ist eine Liste von Klicks.* Jetzt steht jedes
+Bild einmal da; die Läufe werden weiterhin alle gezählt.
+
 ### 21.09.2026 · Der ganze Weg einmal am Stück — und er war kaputt
 
 **Die schlechteste Nachricht dieses Tages, und sie ist rechtzeitig gekommen.**

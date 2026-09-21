@@ -5820,6 +5820,51 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Gezielt nach dem Muster gesucht — und zwei weitere Stellen gefunden.**
+      Dreimal derselbe Fehlertyp an einem Tag ist kein Zufall: *Eine Prüfung, die unter
+      künstlichen Bedingungen grün ist, sagt nichts über die Bedingungen, die es wirklich
+      gibt.*
+      **Zwei Sondierungen gaben Entwarnung, und das ist auch ein Ergebnis:** Der
+      Produktweg hält unter Leerzeichen, Umlauten, Klammern, Rauten, Prozentzeichen und
+      sehr langen Namen; die Oberfläche liefert Bilder mit solchen Namen korrekt aus. Das
+      war nicht selbstverständlich — es geht eine Adresszeile durch.
+- [x] **Der Zwischenspeicher war auf dem Weg des Produkts NICHT eingeschaltet.**
+      Gemessen: Drei Läufe hintereinander auf derselben Mappe, `cache_treffer=0`. **Jeder
+      Klick auf «Rechnen» rechnete den Blender-Lauf und das Bild neu**, auch ohne jede
+      Änderung.
+      Der Speicher ist gebaut und durch **drei Beweise** belegt (05, 23, 29) — und auf dem
+      Weg, den das Produkt geht, war er aus. *Dieselbe Sorte Lücke wie beim Schrittzähler
+      am selben Tag: Eine Fähigkeit, die über den Weg des Produkts nicht erreichbar ist,
+      gibt es für den Benutzer nicht.*
+      **Neu:** Er liegt **in der Mappe** (`<mappe>/speicher`), damit eine kopierte Mappe
+      ihn mitnimmt. `cache=None` heisst weiterhin ausdrücklich kein Speicher — der
+      Vorgabewert hat ein **eigenes Wort**, weil `None` in diesem Projekt überall «nicht
+      gemessen» bedeutet.
+      **Gemessen nach der Reparatur:** zweiter Lauf 3 Treffer, Blender und Bild werden
+      **gar nicht gerufen**; ein neuer Prompt kostet das Bild und nicht Blender.
+      Sechs Wächter — und sie zählen die **Aufrufe**, nicht die Zahl im Bericht: *Ein
+      Treffer im Speicher ist erst dann einer, wenn die Stufe nicht gelaufen ist.*
+- [x] **Eine Datei, ein Eintrag.** Dreimal «Rechnen» ohne Änderung ergab dreimal denselben
+      Bildnamen in der Liste — mit Speicher sogar dieselbe **Datei**, die der zweite Lauf
+      gar nicht erzeugt hat.
+      *Eine Liste von Bildern, in der dieselbe Datei dreimal steht, ist keine Liste von
+      Bildern — sie ist eine Liste von Klicks.*
+      Die Läufe stehen weiterhin vollständig unter `laeufe`; was hier geführt wird, ist
+      das **Erzeugnis**. Der neueste Eintrag gewinnt, denn ein Urteil kann sich ändern,
+      ohne dass sich die Datei ändert.
+- [x] **Und eine Probe behauptete eine Regel, die es nicht gibt.**
+      Ich hatte geschrieben, der QA-Knoten dürfe nie aus dem Speicher kommen — das ist
+      **nicht** die Regel aus E20. Dort geht es um das *Basis*-Urteil eines Layer-2-Bildes,
+      das ein Knoten im **Nebenzweig** fällt. Der QA-Knoten selbst hängt sehr wohl an
+      seinen eigenen Parametern.
+      Berichtigt zur wirklichen Frage: **Ändert sich die Schwelle, fällt das Urteil neu?**
+      Wäre es anders, hiesse ein verschobener Riegel: dasselbe Urteil, andere Schwelle —
+      und niemand sähe es dem Ergebnis an.
+- [x] **Eine Mutationsprobe fiel nicht, und die Behauptung stand seit einer Stunde da.**
+      «An derselben Stelle, nicht hinten angehängt» stand im Quelltext und in keiner Probe.
+      *Die Reihenfolge einer Bilderliste ist eine Auskunft: Sie sagt, was zuerst entstand.
+      Wer sie beim Neurechnen umstellt, nimmt sie ihr — und es fällt niemandem auf, weil
+      beide Listen dieselben Bilder enthalten.*
 - [x] **Beweis 31 gebaut — und er hat beim ERSTEN Lauf einen schweren Produktfehler
       gefunden.**
       Beweis 20 fährt die **Kette**. Das Produkt geht seit dem 21.09. einen anderen Weg

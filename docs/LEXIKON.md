@@ -981,6 +981,16 @@ Lesbarkeit oder Struktur.
 **Technische Schuld** — Metapher für Abkürzungen, die kurzfristig Zeit sparen und
 langfristig Zinsen kosten. Nicht per se schlecht, aber buchführungspflichtig.
 
+**Zwischenspeicher (Cache) einer Rechenkette** — Ein Ablageort für **Ergebnisse**, damit
+ein Rechenschritt, dessen Eingaben sich nicht geändert haben, nicht noch einmal läuft.
+*Warum es ihn hier gibt:* Ein Blender-Lauf dauert Minuten, ein Bild ebenso. Wer nur den
+Text ändert, soll nicht auf die Geometrie warten.
+*Woran er erkennt, dass zwei Aufträge dieselben sind:* an einem Fingerabdruck über alle
+Angaben des Schritts — nicht am Dateinamen. Ein Modell, das unter demselben Namen
+ausgetauscht wird, ist ein anderes, und das merkt er.
+*Und was er nie tut:* ein Ergebnis ausliefern, dessen Dateien inzwischen fehlen. Dann
+rechnet er lieber neu. **Ein Speicher darf langsam machen, nie falsch.**
+
 **Relativer und absoluter Pfad** — Zwei Arten, eine Datei zu benennen.
 *Absolut:* der ganze Weg von der Wurzel der Festplatte an, mit allen Ordnern dazwischen —
 und damit fast immer mit dem **Namen des Benutzers** darin.
@@ -5252,6 +5262,7 @@ System laufen.
 | 2026-09-21 | Aus der Zeichenflaeche fuer das iPad (E24): **Zeigerereignisse (Pointer Events)**, **Leinwand (Canvas)** |
 | 2026-09-21 | Aus dem Zusehen beim Rechnen: **Belegter Fortschritt und Lebenszeichen**, **Hintergrundfaden (Thread)** |
 | 2026-09-21 | Aus Beweis 31 und dem Pfadfehler: **Relativer und absoluter Pfad** |
+| 2026-09-21 | Aus dem Einschalten des Speichers auf dem Produktweg: **Zwischenspeicher (Cache) einer Rechenkette** |
 | 2026-09-21 | Aus der Anmeldung fuers Heimnetz (E25): **Vergleich in gleichbleibender Zeit** und **Unverschluesselte Verbindung (HTTP)** neu; **Fail-closed** um das zweite Beispiel erweitert statt ein zweites Mal angelegt — zum zweiten Mal an diesem Tag hat der Waechter gegen Doppeleintraege es gemeldet |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |

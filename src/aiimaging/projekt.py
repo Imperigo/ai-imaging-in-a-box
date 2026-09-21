@@ -504,10 +504,35 @@ def vermerke_bild(projekt: dict, *, bild: str, schicht: str, urteil=None,
         raise ProjektError(
             f"schicht ist 'geometrielayer' oder 'ai-imaging-layer' — war {schicht!r}.")
 
+    # EINE DATEI, EIN EINTRAG — und das ist eine Entscheidung, keine Aufräumarbeit.
+    #
+    # **Gemessen am 21.09.2026:** Dreimal «Rechnen» ohne Änderung ergab dreimal denselben
+    # Bildnamen in der Liste. Mit eingeschaltetem Zwischenspeicher ist es sogar dieselbe
+    # DATEI — der zweite Lauf hat sie gar nicht neu erzeugt.
+    #
+    #     *Eine Liste von Bildern, in der dieselbe Datei dreimal steht, ist keine Liste
+    #     von Bildern — sie ist eine Liste von Klicks.*
+    #
+    # Die Läufe stehen weiterhin vollständig unter `laeufe`. Was hier geführt wird, ist
+    # das Erzeugnis, und das gibt es einmal.
+    #
+    # **Der neueste Eintrag gewinnt**, denn ein Urteil kann sich ändern, ohne dass sich
+    # die Datei ändert: Wer die Schwelle verschiebt, misst dasselbe Bild neu. Die alte
+    # Fassung stünde sonst neben der neuen und sähe aus wie ein zweites Bild.
+    vorher = None
+    for i, alt_eintrag in enumerate(projekt.get("bilder") or []):
+        if alt_eintrag.get("bild") == str(bild):
+            vorher = i
+            break
+
     eintrag = {
         "bild": str(bild),
         "schicht": schicht,
-        "erzeugt": _jetzt(),
+        # WANN ZUERST, und wann zuletzt. Beide, weil beide etwas sagen: Das erste Mal ist
+        # die Herkunft, das letzte Mal die Aktualitaet des Urteils.
+        "erzeugt": (projekt["bilder"][vorher]["erzeugt"]
+                    if vorher is not None else _jetzt()),
+        "zuletzt_vermerkt": _jetzt(),
         # DAS EIGENE URTEIL HEISST `geometrie_bestanden`, das geerbte steht im Block
         # `basis` unter demselben Namen — aber eine Ebene tiefer. Ein geerbtes Urteil ist
         # kein eigenes, und die beiden duerfen nie in DEMSELBEN Feld stehen (E20).
@@ -516,7 +541,12 @@ def vermerke_bild(projekt: dict, *, bild: str, schicht: str, urteil=None,
         "basis": dict(basis) if basis else None,
         "herkunft": dict(herkunft or {}),
     }
-    projekt.setdefault("bilder", []).append(eintrag)
+    if vorher is not None:
+        # AN DERSELBEN STELLE, nicht hinten angehaengt. Die Reihenfolge einer
+        # Bilderliste ist eine Auskunft — wer sie beim Neurechnen umstellt, nimmt sie ihr.
+        projekt["bilder"][vorher] = eintrag
+    else:
+        projekt.setdefault("bilder", []).append(eintrag)
     return projekt
 
 

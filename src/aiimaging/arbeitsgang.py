@@ -47,6 +47,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from aiimaging import importeur, kette, projekt
+# DIE KLASSE DIREKT, nicht das Modul: `graph` heisst hier unten der GRAPH
+# dieses Laufs, und ein Modulname, den eine lokale Zuweisung verdeckt, ist
+# ein Fehler, der erst beim Aufruf auffaellt.
+from aiimaging.graph import ArtefaktCache
 
 __all__ = ["ArbeitsgangError", "lege_an", "rechne"]
 
@@ -173,8 +177,19 @@ def _urteil_zu(graph, knoten_ergebnisse: dict, bild_knoten: str):
     return urteil, grund, qa_id
 
 
-def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None, cache=None,
-           melder=None, **kettenargumente) -> dict:
+#: Vorgabewert für ``cache``: der Zwischenspeicher liegt **in der Mappe**.
+#:
+#: **Eigenes Wort statt ``None``**, weil ``None`` in diesem Projekt überall
+#: *nicht gemessen / nicht angefasst* heisst — und hier etwas anderes bedeuten müsste.
+#: So bleibt ``cache=None`` ausdrücklich **kein Speicher**, und das ist prüfbar.
+SPEICHER_IN_DER_MAPPE = "in-der-mappe"
+
+#: Wie der Ordner des Zwischenspeichers in der Mappe heisst.
+SPEICHERORDNER = "speicher"
+
+
+def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None,
+           cache=SPEICHER_IN_DER_MAPPE, melder=None, **kettenargumente) -> dict:
     """Die Kette für ein Projekt fahren — **und jedes Bild samt Urteil eintragen.**
 
     Args:
@@ -183,7 +198,23 @@ def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None, cache=None
             oder verschwunden ist. Der Modellstand steht dann **an jedem erzeugten Bild**.
         ausfuehrer: Knotenart → Funktion, wie bei :func:`aiimaging.kette.fuehre_aus`.
             Ohne Angabe die echten — dann braucht es Blender, Gewichte und eine GPU.
-        cache: Zwischenspeicher der Kette.
+        cache: Zwischenspeicher der Kette. Vorgabe ist
+            :data:`SPEICHER_IN_DER_MAPPE` — dann liegt er unter ``<mappe>/speicher``.
+            ``None`` heisst ausdrücklich **kein Speicher**, jede Stufe rechnet.
+
+            **Der Anlass ist gemessen** (21.09.2026): Bis dahin fuhr der Produktweg
+            **ohne** Speicher. Drei Läufe hintereinander auf derselben Mappe ergaben
+            ``cache_treffer=0`` — jeder Klick auf «Rechnen» rechnete den Blender-Lauf und
+            das Bild neu, auch wenn sich nichts geändert hatte.
+
+            *Der Zwischenspeicher ist gebaut, durch drei Beweise belegt — und auf dem Weg,
+            den das Produkt geht, war er nicht eingeschaltet.* Dieselbe Sorte Lücke wie
+            beim Schrittzähler am selben Tag.
+
+            **Er liegt in der Mappe und nicht daneben**, damit eine kopierte Mappe ihren
+            Speicher mitnimmt. Ein Eintrag, dessen Dateien fehlen, wird von
+            ``fuehre_aus`` ohnehin verworfen — ein Umzug kostet darum höchstens einen
+            neuen Lauf, nie ein falsches Ergebnis.
         melder: ``(ereignis: dict) -> None``, gerufen vor und nach jedem Knoten — und
             **zusätzlich nach jedem Diffusionsschritt** der Bildstufe. ``None`` heisst:
             niemand sieht zu.
@@ -263,6 +294,9 @@ def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None, cache=None
                 "sie zu stellen.")
 
     graph = kette.baue_kette(glb_path=glb, **args)
+
+    if cache is SPEICHER_IN_DER_MAPPE:
+        cache = ArtefaktCache(wurzel / SPEICHERORDNER)
 
     tabelle = ausfuehrer
     if melder is not None and ausfuehrer is None:
