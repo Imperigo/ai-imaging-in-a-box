@@ -511,6 +511,80 @@ anfangen kann.*
 
 ---
 
+## E23 · Der Skizzenmodus — **Volumen darf erfunden werden, aber nie unbemerkt**
+
+**Owner-Entscheid 21.09.2026**, und er verschiebt den Zweck des ganzen Werkzeugs:
+
+> *«Das AI-Imaging soll für Variantentests auch Volumen hineinerfinden gemäss meiner
+> Skizze. Ich kann Dinge in Skizzenform abgeben, AI-imagen, und es gut als Entwurfstool
+> für schnelle Variantenstudien nutzen — im Bild selbst. Wenn ich dann sage, das Bild ist
+> gut, kann Kosmo das Bild untersuchen und versuchen, es im Modell nachzubauen.»*
+
+### Was daran neu ist
+
+Bis heute stand im ganzen Projekt **ein** Satz über erfundene Geometrie: Sie ist der
+Fehler, gegen den gemessen wird. Die Tiefenkarte war der Riegel dagegen, und Kapitel 6
+steht darauf.
+
+**Das bleibt richtig — für den einen Modus.** Dazu kommt ein zweiter, in dem das Erfinden
+**der Zweck** ist:
+
+| | Modus 1 · Darstellung | Modus 2 · Entwurf |
+|---|---|---|
+| Frage | Zeigt das Bild, was im Modell steht? | Wie sähe es aus, wenn dort etwas anderes stünde? |
+| Tiefenkarte | Pflicht | nur als Anhalt, nicht als Riegel |
+| Erfundenes Volumen | **Fehler** | **Ergebnis** |
+| Was die Messung sagt | bestanden / durchgefallen | **wo es abweicht**, nicht ob |
+
+### Die drei Auflagen, unter denen Modus 2 gebaut wird
+
+**1 · Ein Bild aus Modus 2 sieht nie aus wie eines aus Modus 1.** Es bekommt ein eigenes
+Zeichen und einen eigenen Satz — nicht das «nicht geprüft» von heute, denn *nicht geprüft*
+und *absichtlich erfunden* sind nicht dasselbe. Wer die beiden im selben Feld führt,
+macht genau den Fehler, gegen den E20 gebaut ist.
+
+**2 · Die Abweichung wird gemessen, nicht bloss festgestellt.** Die Kennzahlen dieser
+Arbeit — Silhouettenüberdeckung und Tiefenrangfolge — beantworten heute *ob* das Bild dem
+Modell folgt. In Modus 2 beantworten **dieselben** Kennzahlen *wo es abweicht*. Das ist
+kein neues Werkzeug, sondern dasselbe mit umgekehrtem Vorzeichen.
+
+> *Der Riegel und der Messstab sind dasselbe Gerät. Nur im ersten Modus liest man ein
+> Urteil ab und im zweiten eine Differenz.*
+
+**3 · Die Abweichung ist die Übergabe an Kosmo.** Das ist der Grund, warum Punkt 2 nicht
+Zierde ist: Wenn das nachgebaut werden soll, muss etwas sagen, **was** hinzugekommen ist.
+Ein Bild allein sagt es nicht.
+
+### Was das für Kapitel 6 heisst
+
+**Nichts an den Messungen, alles an ihrer Einordnung.** Das tragende Ergebnis bleibt: Auf
+den Szenen des Datensatzes vom 09.09.2026 trennt das Verfahren richtig von fremd. Neu ist,
+dass diese Trennung **eine von zwei Betriebsarten** bedient statt der einzigen.
+
+*Ein Riegel, der auch dort hält, wo er gar nicht gebraucht wird, ist kein besserer Riegel
+— er ist ein Werkzeug, das seinen zweiten Gebrauch nicht kennt.*
+
+### Was dem heute im Weg steht, und es ist gemessen
+
+**Unser Vorgabe-Bildmodell nimmt überhaupt kein Eingangsbild an** (`auf-20260919-123`,
+sieben Läufe, ein einziger sha256). Ohne Eingangsbild gibt es keine Skizze, die
+hineingereicht werden könnte. **Modus 2 ist auf dem Vorgabeweg heute nicht baubar.**
+
+In der Registry steht genau **ein** Modell, das es könnte und unter Regel 1 zulässig ist:
+`qwen-image-edit-2511`, Apache-2.0, integriertes Edit. Drei Dinge sind daran offen:
+
+1. Sein Speicherbedarf ist **geschätzt** (48 GB aus der Parameterzahl), nicht gemessen.
+   Die einzige echte Messung dazu (`auf-20260818-09`) sagt: Gewichte 29,57 GiB geladen,
+   und dann scheitert der Lauf an 18 MiB. *Er passte nicht — knapp.*
+2. Damit landet er auf dem **Auslagerungsweg**, und der ist seit dem 25.08.2026 kaputt
+   (`auf-20260921-131`, offen).
+3. Wie eine Skizze überhaupt hereinkommt — im Browser gezeichnet oder als Datei —, ist
+   eine Frage an den Owner und noch nicht entschieden.
+
+**Diese Reihenfolge ist zwingend:** ohne 2 kein 1, ohne 1 kein Modus 2.
+
+---
+
 Diese zwei sind **Tatsachen, keine Wahl**. Ich trage sie nicht als entschieden ein.
 
 ## O1 · Der Abgabetermin und die Form (F59) — **offen**

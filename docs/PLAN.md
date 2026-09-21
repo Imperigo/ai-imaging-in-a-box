@@ -5820,6 +5820,50 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **E23 entschieden: Das AI-Imaging darf Volumen ERFINDEN — der Zweck verschiebt sich.**
+      Owner-Entscheid 21.09.2026: Die Software soll für **schnelle Variantenstudien** nach
+      einer ins Bild gezeichneten Skizze Volumen hinzuerfinden — und wenn ein Bild
+      überzeugt, soll Kosmo versuchen, es **im Modell nachzubauen**.
+      **Bis heute stand im ganzen Projekt ein Satz über erfundene Geometrie: der Fehler,
+      gegen den gemessen wird.** Das bleibt richtig — für den einen Modus. Dazu kommt ein
+      zweiter, in dem das Erfinden der Zweck ist.
+      **Und die Kennzahlen bleiben dieselben.** Silhouettenüberdeckung und Tiefenrangfolge
+      beantworten heute *ob* das Bild dem Modell folgt; im Entwurfsmodus beantworten sie
+      *wo es abweicht*. *Der Riegel und der Messstab sind dasselbe Gerät — nur liest man
+      im einen Modus ein Urteil ab und im anderen eine Differenz.*
+      **Die Differenz ist die Übergabe an Kosmo**, und damit keine Zierde: Ohne sie hätte
+      der Nachbau nur ein Bild und müsste raten, was neu ist. Aus sechs Schritten sind
+      damit **sieben** geworden.
+      **Für Kapitel 6 ändert das nichts an den Messungen und alles an ihrer Einordnung:**
+      Die Trennung richtig/fremd bedient künftig **eine von zwei** Betriebsarten statt der
+      einzigen.
+      Drei Auflagen stehen in E23, und die erste ist bindend: *Ein Bild aus dem
+      Entwurfsmodus sieht nie aus wie eines aus dem Darstellungsmodus.* «Nicht geprüft»
+      und «absichtlich erfunden» sind nicht dasselbe.
+- [ ] **Und gebaut werden kann es heute nicht — der Grund ist gemessen.**
+      Unser Vorgabe-Bildmodell nimmt **kein Eingangsbild** an (`auf-123`), also gibt es
+      keine Skizze, die hereinkäme. In der Registry steht **genau ein** Modell, das es
+      könnte und unter Regel 1 zulässig ist: `qwen-image-edit-2511`, Apache-2.0.
+      Die einzige Messung dazu (`auf-20260818-09`) sagt: Gewichte 29,57 GiB geladen von
+      31,36 GiB nutzbar, dann scheitert der Lauf an **18 MiB**. *Es passte nicht. Knapp,
+      aber nicht.* Damit landet es auf dem Auslagerungsweg — und der ist kaputt.
+      **Die Reihenfolge ist zwingend:** `auf-131` (Auslagerung) vor `auf-134` (läuft das
+      Modell überhaupt?) vor Schritt 5. Beide abgelegt, Rang 1 und 2 bei `local`.
+      Offen bleibt eine kleine Frage an den Owner: **Wie kommt die Skizze herein** — im
+      Browser aufs Bild gezeichnet oder als Datei daneben?
+- [x] **Ein Fehler in der Reparatur von heute früh, gefunden beim Nachsehen für E23.**
+      `MESSUNG_ZUSCHLAG` war damit begründet, dass `vram_gb` eine **gemessene Spitze**
+      sei — und wurde auf **jeden** Registry-Eintrag angewandt. Dort stehen aber **fünf
+      von sieben** als Schätzung aus der Parameterzahl (zwei sind gemessen: `z-image-turbo` und
+      `flux2-klein-4b`).
+      *Ein Zuschlag, der mit einer Messung begründet ist, darf nicht auf eine Schätzung
+      angewandt werden — sonst ist die Begründung eine Erzählung über die eigenen Daten.*
+      **Neu:** `Backbone.vram_gemessen`, Vorgabe `False` — wer es vergisst, bekommt die
+      vorsichtigere Behandlung. Unbekannte Herkunft gilt wie eine Schätzung.
+      **Ehrlich zur Wirkung:** Auf der Werkstattmaschine ändert es **keine einzige**
+      Entscheidung — nachgerechnet für alle sieben Einträge. Falsch war die Begründung,
+      nicht das Ergebnis. Auf einer kleineren Karte wäre es ein Ergebnis geworden.
+      Sieben Wächter, vier Mutationsproben, alle gefallen.
 - [x] **Die Oberfläche zeigt die Bilder — vorher nannte sie nur Dateinamen.**
       *Ein Werkzeug für Bilder, das keine Bilder zeigt.* Seit dem 21.09.2026 stehen sie da.
       **Das Abzeichen sitzt AUF dem Bild**, nicht daneben: Beim Weiterreichen — ein
@@ -5845,7 +5889,7 @@ Bekannt und ausdrücklich nicht erledigt:
       Wächter.* Er bleibt stehen, aber nur noch für die **Meldung**, und das steht im
       Quelltext. Eine Probe hält jetzt den Satz fest, damit die Behauptung nicht wieder
       zu «Sicherheit» wird.
-- [x] **Ein Blatt für den Owner: `docs/PRODUKT_DIE_SECHS_SCHRITTE.md`.**
+- [x] **Ein Blatt für den Owner: `docs/PRODUKT_DIE_SCHRITTE.md`.**
       Owner-Entscheid 21.09.2026: *«Die Arbeit musst du nicht schreiben, das mach ich.»*
       Claude liefert die Unterlage — was gebaut wurde, in welcher Reihenfolge, was offen
       blieb. Die sechs Schritte aus E4 mit ihrem Stand, das zuletzt Gebaute, die nächsten

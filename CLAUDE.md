@@ -186,7 +186,7 @@ Damit ist die Rollenteilung für den Text festgelegt: **Der fertige Text der
 Vertiefungsarbeit ist Sache des Owners.** Claude liefert die Unterlage dazu — was gebaut
 wurde, in welcher Reihenfolge, mit welcher Begründung, und was dabei offen blieb.
 
-Das Blatt dafür ist `docs/PRODUKT_DIE_SECHS_SCHRITTE.md`. Es wird **in derselben Sitzung
+Das Blatt dafür ist `docs/PRODUKT_DIE_SCHRITTE.md`. Es wird **in derselben Sitzung
 fortgeschrieben, in der gebaut wird** — wie das Lexikon und wie `docs/PLAN.md`.
 *Ein Standblatt, das nachgezogen wird, wenn Zeit ist, steht irgendwann auf einem alten
 Stand — und ein alter Stand sieht genauso aus wie ein aktueller.*

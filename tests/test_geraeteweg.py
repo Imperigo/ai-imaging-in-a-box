@@ -309,7 +309,8 @@ def test_auf_dem_auslagerungsweg_wird_sehr_wohl_entflochten():
 
     pipe = _Pipe()
     weg, entflechtung, bedarf = render._lege_auf_geraet(
-        pipe, "/gibt/es/nicht", _Torch, erwartet=(30 * 2**30, 1 * 2**30))
+        pipe, "/gibt/es/nicht", _Torch, erwartet=(30 * 2**30, 1 * 2**30),
+        erwartet_gemessen=True)
 
     assert weg == "cuda+auslagerung"
     assert entflechtung["noetig"] is True and entflechtung["nachher"] == 0
@@ -467,7 +468,8 @@ def test_der_vorgabe_backbone_passt_auf_die_werkstattkarte():
 
     pipe = _VollwegPipe()
     weg, entflechtung, bedarf = render._lege_auf_geraet(
-        pipe, "/gibt/es/nicht", _torch_mit(FREI_HOMESTATION), erwartet=erwartet)
+        pipe, "/gibt/es/nicht", _torch_mit(FREI_HOMESTATION), erwartet=erwartet,
+        erwartet_gemessen=render._bedarf_ist_gemessen(eintrag))
 
     assert weg == "cuda", (
         f"Der Vorgabe-Backbone muss auf {FREI_HOMESTATION / 2**20:.0f} MiB freiem "
@@ -606,3 +608,82 @@ def test_der_auslagerungsweg_nennt_die_zahl_gegen_die_entschieden_wurde():
 
     treffer = [z for z in zeilen if "28272 MiB verlangt" in z]
     assert treffer, zeilen
+
+
+# ──────────────────────── Die Herkunft der Registry-Zahl — Messung oder Schaetzung
+#
+# BERICHTIGUNG AM TAG DES EINBAUS (21.09.2026). Der erste Wurf von `MESSUNG_ZUSCHLAG`
+# hat ihn auf JEDES `vram_gb` der Registry angewandt. Dort stehen aber fuenf von sieben
+# Eintraegen als Schaetzung aus der Parameterzahl — und die ganze Begruendung des kleinen
+# Zuschlags («die Aktivierungen sind schon drin») traegt fuer eine Schaetzung nicht.
+#
+#     Ein Zuschlag, der mit einer Messung begruendet ist, darf nicht auf eine Schaetzung
+#     angewandt werden — sonst ist die Begruendung eine Erzaehlung ueber die eigenen Daten.
+
+def test_die_registry_trennt_gemessene_von_geschaetzten_zahlen():
+    """**Beide Sorten muessen wirklich vorkommen**, sonst prueft alles darunter nichts.
+
+    Gaebe es nur gemessene Eintraege, waere der Zweig fuer Schaetzungen ein Zweig ohne
+    Fall; gaebe es nur geschaetzte, der andere. *Ein Zweig ohne Fall ist kein bewachter
+    Zweig.*
+    """
+    from aiimaging import backbone
+
+    gemessen = [n for n in backbone.BACKBONES if backbone.hole(n).vram_gemessen]
+    geschaetzt = [n for n in backbone.BACKBONES if not backbone.hole(n).vram_gemessen]
+
+    assert gemessen, "kein einziger gemessener Eintrag"
+    assert geschaetzt, "kein einziger geschaetzter Eintrag"
+
+
+def test_eine_geschaetzte_zahl_bekommt_den_grossen_zuschlag():
+    """Der Fall, der vor der Berichtigung falsch lief."""
+    pipe = _VollwegPipe()
+    _weg, _e, bedarf = render._lege_auf_geraet(
+        pipe, "/gibt/es/nicht", _torch_mit(100 * 2**30),
+        erwartet=(8 * 2**30, 4 * 2**30), erwartet_gemessen=False)
+
+    assert bedarf["quelle"] == render.QUELLE_SCHAETZUNG
+    assert bedarf["zuschlag"] == render.GERAETE_ZUSCHLAG
+
+
+def test_eine_unbekannte_herkunft_wird_wie_eine_schaetzung_behandelt():
+    """**Die Richtung des Irrtums, und sie ist eine Entscheidung.**
+
+    Wer die Angabe vergisst, bekommt den vorsichtigeren Weg. Umgekehrt voreingestellt
+    bekaeme er den kuehnen genau dann, wenn er nicht hingesehen hat.
+    """
+    pipe = _VollwegPipe()
+    _weg, _e, bedarf = render._lege_auf_geraet(
+        pipe, "/gibt/es/nicht", _torch_mit(100 * 2**30),
+        erwartet=(8 * 2**30, 4 * 2**30))          # erwartet_gemessen fehlt absichtlich
+
+    assert bedarf["zuschlag"] == render.GERAETE_ZUSCHLAG
+
+
+def test_ein_fremdes_objekt_ohne_das_feld_gilt_als_geschaetzt():
+    """Eine Attrappe, ein aelterer Eintrag, ein fremder Lader — keines von ihnen fuehrt
+    `vram_gemessen`. *Eine Zahl, von der niemand weiss, woher sie kommt, ist keine
+    Messung.*"""
+    from types import SimpleNamespace
+
+    assert render._bedarf_ist_gemessen(SimpleNamespace(vram_gb=20.0)) is False
+
+
+def test_nur_ein_echtes_ja_zaehlt_als_messung():
+    """`1` ist in Python gleich `True`. Ein `vram_gemessen=1` in einem Eintrag saehe aus
+    wie eine Messung und waere keine — derselbe Fall wie beim Urteil in der Projektmappe,
+    wo genau das schon einmal durchgerutscht ist."""
+    from types import SimpleNamespace
+
+    assert render._bedarf_ist_gemessen(SimpleNamespace(vram_gemessen=True)) is True
+    for falsch in (1, "ja", [1]):
+        assert render._bedarf_ist_gemessen(SimpleNamespace(vram_gemessen=falsch)) is False
+
+
+def test_der_vorgabe_backbone_traegt_eine_gemessene_zahl():
+    """Sonst waere die Probe weiter oben — «er passt auf die Werkstattkarte» — gruen aus
+    dem falschen Grund: Mit dem grossen Zuschlag passt er naemlich NICHT."""
+    from aiimaging import backbone
+
+    assert backbone.hole(render.VORGABE_BACKBONE).vram_gemessen is True

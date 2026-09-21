@@ -3948,6 +3948,26 @@ bequem ausging — bis der nächste, etwas grössere Lauf stirbt. Die Zahl steht
 21.09.2026 in jedem Ergebnis, und unter zwei Gigabyte meldet sich der Kurzbefund.
 *Negativ heisst:* Es reichte nicht, also wurde ausgelagert.
 
+**Darstellungsmodus und Entwurfsmodus** — Die zwei Betriebsarten, die Visbox seit dem
+21.09.2026 hat, und sie stellen fast entgegengesetzte Fragen.
+*Darstellung:* Zeigt das Bild, was im Gebäudemodell wirklich steht? Erfundenes Volumen ist
+hier ein **Fehler**, und die Prüfung fällt als Urteil aus: bestanden oder nicht.
+*Entwurf:* Wie sähe es aus, wenn dort etwas anderes stünde? Hier ist das erfundene Volumen
+**das Ergebnis** — jemand zeichnet eine Idee ins Bild, und das Modell malt sie aus.
+*Und die Prüfung ist beide Male dieselbe:* Sie vergleicht Bild und Gebäudemodell. Im
+ersten Modus liest man daraus ein Urteil ab, im zweiten die **Differenz** — also, was neu
+dazugekommen ist. Genau diese Differenz ist es, die ein anderes Programm später braucht,
+um die Idee ins Modell nachzubauen.
+
+**Erfundenes Volumen** — Bauteile oder Baumassen, die in einem erzeugten Bild zu sehen
+sind, im Gebäudemodell aber nicht vorkommen.
+*Warum das Projekt dagegen misst:* Ein Bild, das ein Gebäude zeigt, das es nicht gibt,
+ist als Darstellung wertlos und als Täuschung gefährlich — es sieht genauso überzeugend
+aus wie ein richtiges.
+*Und warum es trotzdem erlaubt wird:* Im Entwurfsmodus ist es der Zweck. Der Unterschied
+ist nicht, **ob** erfunden wird, sondern ob es **absichtlich** geschieht und ob am Bild
+steht, dass es geschehen ist.
+
 **Verweis (Symlink)** — Ein Eintrag im Dateisystem, der kein eigener Inhalt ist, sondern
 auf eine andere Datei zeigt — wie eine Verknüpfung auf dem Schreibtisch.
 *Warum er hier vorkommt:* Die Oberfläche liefert nur Bilder **aus dem Projektordner** aus.
@@ -5158,6 +5178,7 @@ System laufen.
 | 2026-09-21 | Aus dem Befund «der Vorgabe-Backbone rechnet gar nicht mehr»: **Bedarfsrechnung (vor dem Ladeweg)**, **Aktivierungen**, **Spielraum (einer Ladewegentscheidung)** |
 | 2026-09-21 | Aus der Pruefung der Kanten zum Nachbarsystem: **Nullbar (nullable)**, **Tote Kante und leere Kante** |
 | 2026-09-21 | Aus der Bildanzeige der Oberflaeche: **Verweis (Symlink)** neu; **Positivliste / Verbotsliste** um das zweite Beispiel erweitert statt ein zweites Mal angelegt — der Waechter gegen Doppeleintraege hat es gemeldet |
+| 2026-09-21 | Aus dem Owner-Entscheid zum Skizzenmodus (E23): **Darstellungsmodus und Entwurfsmodus**, **Erfundenes Volumen** |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |

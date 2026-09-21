@@ -815,7 +815,8 @@ def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None):
 
     erwartet = _erwarteter_bedarf(eintrag)
     geraet, entflechtung, bedarf = _lege_auf_geraet(
-        pipeline, wurzel, torch, erwartet=erwartet)
+        pipeline, wurzel, torch, erwartet=erwartet,
+        erwartet_gemessen=_bedarf_ist_gemessen(eintrag))
 
     modell = _pipeline_adapter(pipeline, eintrag, torch, schrittzaehler=schrittzaehler)
     modell.geraet = geraet
@@ -905,6 +906,19 @@ GERAETE_ZUSCHLAG = 1.25
 #: Alle drei Messungen sind bei 512 x 512 entstanden. Ein deutlich grösseres Bild
 #: braucht mehr Aktivierungen, und um wie viel mehr, ist nicht gemessen. Der Spielraum
 #: einer Entscheidung steht darum in jedem Ergebnis (`geraeteweg.bedarf`).
+#:
+#: **Und er gilt NUR für eine gemessene Zahl** (berichtigt am 21.09.2026, wenige Stunden
+#: nach dem Einbau). Der erste Wurf hat ihn auf jedes ``vram_gb`` der Registry angewandt —
+#: dort stehen aber **fünf von sieben** Einträgen als *Schätzung* aus der Parameterzahl.
+#: Eine Schätzung ist keine Spitze, und die ganze Begründung dieses Zuschlags
+#: («Aktivierungen sind schon drin») trägt für sie nicht.
+#:
+#: *Ein Zuschlag, der mit einer Messung begründet ist, darf nicht auf eine Schätzung
+#: angewandt werden — sonst ist die Begründung eine Erzählung über die eigenen Daten.*
+#:
+#: Wo ``vram_gemessen`` nicht ``True`` ist, gilt darum weiter ``GERAETE_ZUSCHLAG``. Das ist
+#: der Zustand von vor dem 21.09.2026, und die sichere Richtung: Eine unbelegte Zahl
+#: bekommt mehr Luft, nicht weniger.
 MESSUNG_ZUSCHLAG = 1.10
 
 
@@ -1026,6 +1040,16 @@ def _entflechte_controlnet(pipeline) -> dict:
             "nachher": nachher, "grund": grund}
 
 
+def _bedarf_ist_gemessen(eintrag) -> bool:
+    """Steht in ``vram_gb`` dieses Eintrags eine **Messung** oder eine Schätzung?
+
+    Alles, was nicht ausdrücklich ``True`` sagt, gilt als Schätzung — auch ein fehlendes
+    Feld und auch ein fremdes Objekt ohne dieses Feld. *Die sichere Richtung: Eine Zahl,
+    von der niemand weiss, woher sie kommt, ist keine Messung.*
+    """
+    return getattr(eintrag, "vram_gemessen", False) is True
+
+
 def _erwarteter_bedarf(eintrag) -> tuple[int, int] | None:
     """Der Bedarf aus der **Registry**, oder ``None``, wenn dort keine Messung steht.
 
@@ -1046,9 +1070,14 @@ def _erwarteter_bedarf(eintrag) -> tuple[int, int] | None:
     return summe, summe // 2
 
 
-#: Woher die Zahl stammt, mit der über den Ladeweg entschieden wurde. Drei Werte, weil es
-#: drei Lagen gibt — und die dritte ist nicht «null», sondern **unbekannt**.
+#: Woher die Zahl stammt, mit der über den Ladeweg entschieden wurde. Vier Werte, weil es
+#: vier Lagen gibt — und die letzte ist nicht «null», sondern **unbekannt**.
+#:
+#: Die Registry liefert **zwei** davon: eine Messung am Gerät oder eine Schätzung aus der
+#: Parameterzahl. Sie stehen im selben Feld und sind nicht dasselbe; welches von beidem,
+#: sagt ``Backbone.vram_gemessen``.
 QUELLE_MESSUNG = "gemessene Spitze (Registry)"
+QUELLE_SCHAETZUNG = "Schaetzung aus der Parameterzahl (Registry)"
 QUELLE_PLATTE = "Groesse der Gewichtsdateien auf der Platte"
 QUELLE_KEINE = "nicht bestimmbar"
 
@@ -1084,7 +1113,8 @@ def _bedarfsbericht(*, quelle, summe, groesster, zuschlag, frei, grund="") -> di
             "spielraum_byte": spielraum, "grund": grund}
 
 
-def _lege_auf_geraet(pipeline, wurzel, torch, *, erwartet=None) -> tuple[str, dict | None]:
+def _lege_auf_geraet(pipeline, wurzel, torch, *, erwartet=None,
+                     erwartet_gemessen=None) -> tuple[str, dict | None]:
     """Modell auf die Karte legen — ganz, komponentenweise, schichtweise, oder gar nicht.
 
     ``erwartet`` ist ``(summe_byte, groesster_byte)`` und **schlägt die Plattengrösse**.
@@ -1121,6 +1151,11 @@ def _lege_auf_geraet(pipeline, wurzel, torch, *, erwartet=None) -> tuple[str, di
     beide gleich behandelt, zählt die Aktivierungen zweimal — und schickt einen Lauf, der
     mit 5 GiB Luft auf die Karte passt, auf den Auslagerungsweg.
 
+    ``erwartet_gemessen`` sagt, ob ``erwartet`` aus einer Messung stammt. **Nur ``True``
+    bekommt den kleinen Zuschlag**; ``False`` und ``None`` (unbekannt) bekommen den
+    grossen. Eine Registry-Zahl kann auch eine Schätzung aus der Parameterzahl sein, und
+    auf die trifft die Begründung des kleinen Zuschlags nicht zu.
+
     Returns:
         ``(weg, entflechtung, bedarf)``. ``entflechtung`` ist ``None`` auf den beiden
         Wegen, die **nicht** auslagern — dort wird :func:`_entflechte_controlnet` bewusst
@@ -1139,9 +1174,12 @@ def _lege_auf_geraet(pipeline, wurzel, torch, *, erwartet=None) -> tuple[str, di
     if erwartet is None:
         summe, groesster = _gewichte_byte(wurzel)
         quelle, zuschlag = QUELLE_PLATTE, GERAETE_ZUSCHLAG
-    else:
+    elif erwartet_gemessen is True:
         summe, groesster = erwartet
         quelle, zuschlag = QUELLE_MESSUNG, MESSUNG_ZUSCHLAG
+    else:
+        summe, groesster = erwartet
+        quelle, zuschlag = QUELLE_SCHAETZUNG, GERAETE_ZUSCHLAG
 
     if not summe:                                  # nichts messbar: wie bisher verfahren
         pipeline.to("cuda")

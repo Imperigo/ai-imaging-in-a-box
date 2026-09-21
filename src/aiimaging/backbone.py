@@ -203,7 +203,14 @@ class Backbone:
             Bei ``False`` ist der Backbone unter Regel 1 ausgeschlossen — auch für daraus
             abgeleitete LoRAs.
         konditionierung: Einer der Werte aus :data:`KONDITIONIERUNGEN`.
-        vram_gb: Grobe Schätzung des VRAM-Bedarfs (siehe :func:`_vram_schaetzung`).
+        vram_gb: Der VRAM-Bedarf in GB — **entweder gemessen oder geschätzt**, und
+            welches von beidem, sagt ``vram_gemessen``. Die Schätzung steht in
+            :func:`_vram_schaetzung`.
+        vram_gemessen: Ob ``vram_gb`` aus einer **Messung am Gerät** stammt.
+            **Vorgabe ist ``False``, und das ist die sichere Richtung.** Wer einen Eintrag
+            hinzufügt und das Feld vergisst, bekommt die vorsichtigere Behandlung; wer es
+            andersherum voreinstellte, bekäme sie genau dann nicht, wenn er es vergisst.
+            Wofür der Unterschied zählt, steht bei ``render.MESSUNG_ZUSCHLAG``.
             **Nicht gemessen** — hier existiert keine GPU.
         dateien: Pfade relativ zur Modellwurzel, die vorliegen müssen, damit ein Lauf
             überhaupt starten kann. Ordner (diffusers-Unterordner) sind zulässig.
@@ -226,6 +233,7 @@ class Backbone:
     konditionierung: str
     vram_gb: float
     dateien: tuple[str, ...]
+    vram_gemessen: bool = False
     lizenz_quelle: str = QUELLE_UNGEPRUEFT
 
     # --- Die zweite Hälfte der Naht ----------------------------------------------------
@@ -598,6 +606,7 @@ _eintrag(Backbone(
     # den beiden Irrtümern ist der zu grosse der billigere. Drei Messungen, drei
     # Bedingungen — 22,89 / 23,4 / 25,1 —, keine davon falsch.
     vram_gb=25.1,
+    vram_gemessen=True,
     dateien=_DIFFUSERS_DATEIEN,
     # Geprüft 2026-08-18 an der Modellkarte selbst: Front-Matter "license: apache-2.0".
     # https://huggingface.co/Tongyi-MAI/Z-Image-Turbo — Repo offen, nicht gated.
@@ -795,6 +804,7 @@ _eintrag(Backbone(
     # und sie ersetzt eine Schaetzung, die um 62 Prozent danebenlag. *Was gemessen ist,
     # wird nicht dadurch unrichtig, dass die Frage sich erledigt hat.*
     vram_gb=15.55,
+    vram_gemessen=True,
     dateien=_DIFFUSERS_DATEIEN,
     # Geprüft 2026-08-18 an Modellkarte UND LICENSE.md des 4B-Repos: Front-Matter
     # "license: apache-2.0", LICENSE.md ist der Apache-2.0-Volltext.

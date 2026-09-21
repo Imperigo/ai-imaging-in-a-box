@@ -1,0 +1,36 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "auftrag_id": "auf-20260921-134",
+ "art": "qa",
+ "worker": "local",
+ "rang": 2,
+ "erstellt": "2026-09-21T21:00:00Z",
+ "params": {},
+ "beschreibung": "Laeuft `qwen-image-edit-2511` auf eurer Karte, und nimmt es ein Eingangsbild an? Es ist das einzige Modell unserer Registry, das beides koennte und unter Regel 1 zulaessig ist — und der neue Skizzenmodus (Owner-Entscheid E23) haengt daran. NACH auf-131, sonst misst es nur denselben kaputten Auslagerungsweg.",
+ "anweisung": "=== KANN DAS EINZIGE ERLAUBTE BILDBEARBEITUNGS-MODELL AUF EURER KARTE RECHNEN? ===\n\nAnlass ist eine Owner-Entscheidung von heute, und sie verschiebt den Zweck des\nWerkzeugs: Das AI-Imaging soll kuenftig auch Volumen ERFINDEN duerfen — nach\neiner Skizze, die in ein fertiges Bild gezeichnet wird, fuer schnelle\nVariantenstudien.\n\nDafuer braucht es ein Modell, das ein EINGANGSBILD annimmt. Unser\nVorgabe-Backbone tut das nicht; das habt ihr selbst gemessen (auf-123, sieben\nLaeufe, ein einziger sha256). In unserer Registry steht genau EIN Modell, das\nes koennte und unter Regel 1 zulaessig ist:\n\n    qwen-image-edit-2511   Apache-2.0   integriertes Edit   ~20 Mrd. Parameter\n\nDie Frage ist schlicht: Laeuft es bei euch?\n\n\nWAS WIR SCHON WISSEN, UND ES SIEHT NICHT GUT AUS\n\nAus `auf-20260818-09`, eurer eigenen Messung vom 18.08.2026: Die Gewichte in\nbfloat16 belegen **29,57 GiB** auf einer Karte mit 31,36 GiB nutzbar. Voll\ngeladen — und dann scheitert die Bilderzeugung an einer Anforderung von\n**18 MiB**.\n\nEs passte also nicht. Knapp, aber nicht.\n\nIn unserer Registry steht fuer dieses Modell **48 GB**, und das ist eine\nSCHAETZUNG aus der Parameterzahl, keine Messung. (Wir haben heute nachgezogen,\ndass die Registry Messung und Schaetzung unterscheidet — vorher standen beide\nim selben Feld, und die Unterscheidung fehlte.)\n\n\nDIE REIHENFOLGE IST ZWINGEND\n\nDieser Auftrag kommt NACH `auf-20260921-131`. Der Grund: Mit 48 GB verlangtem\nSpeicher landet dieses Modell auf dem Auslagerungsweg — und der ist genau der,\nder bei euch stirbt. Ohne die Reparatur misst dieser Auftrag nur noch einmal\ndenselben Fehler.\n\nWenn 131 noch offen ist: diesen hier liegen lassen und zuerst 131 machen.\n\n\nWAS ZU MESSEN IST\n\n  M1 LAEUFT ES UEBERHAUPT?\n     Ein einziger Lauf genuegt: ein Text, ein Eingangsbild (eure\n     Standardszene als Beauty-Pass), 512 x 512. Kommt ein Bild heraus?\n\n  M2 WIE VIEL BRAUCHT ES WIRKLICH?\n     Spitze im Viersekundenraster ueber den ganzen Lauf, so wie ihr es bei\n     auf-92 gemacht habt. Wir wollen die Zahl fuer die Registry — sie steht\n     dort bis heute als Schaetzung.\n\n  M3 AUF WELCHEM WEG?\n     `geraeteweg` aus dem Ergebnis, vollstaendig: `geraet`, `ladeweg`,\n     `entflechtung` und der neue Block `bedarf` (Herkunft der Zahl, Zuschlag,\n     verlangt, frei, Spielraum).\n\n  M4 KOMMT DAS EINGANGSBILD AN?\n     Dieselbe Probe wie bei auf-123: Ein rotes Rechteck ins Eingangsbild\n     malen, den Rotueberschuss vorher und nachher messen — und die Pruefsumme\n     gegen einen Lauf OHNE Eingangsbild vergleichen.\n     Das ist die eigentliche Frage. Ein Modell, das laeuft und das Bild nicht\n     annimmt, nuetzt uns genauso wenig wie das jetzige.\n\n  M5 UND WENN ES NICHT PASST: Wie weit fehlt es?\n     Mit erzwungener Auslagerung (Stufe 2 und, wenn noetig, Stufe 3): Kommt\n     ein Bild heraus, und wie lange dauert es? Ein Lauf, der zehn Minuten\n     braucht, ist fuer eine SCHNELLE Variantenstudie nutzlos — und genau\n     darum geht es bei dieser Betriebsart.\n\n     Hier zaehlt die Zeit ausnahmsweise mit, und zwar als Entscheidungszahl:\n     Unter einer Minute waere brauchbar, ueber fuenf nicht.\n\n\nWAS ZURUECKKOMMT\n\nDie fuenf Punkte, je eine bis drei Zeilen. Und wenn schon M1 scheitert: Das ist\neine vollstaendige Antwort, dann steht die Meldung da und wir wissen, dass\ndieser Weg ein anderes Modell braucht.\n\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n\n  - Kein Herunterladen von Gewichten, die nicht schon da sind, ohne dass ihr\n    den Platz habt. Wenn das Modell nicht lokal liegt: sagt es, dann\n    entscheiden wir, ob es sich lohnt.\n  - KEINE nicht-kommerziellen Gewichte laden. FLUX.1-dev und FLUX.2-dev sind\n    unter Regel 1 gesperrt, auch «nur zum Vergleich».\n  - Nichts im Repo aendern.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.\n",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": null,
+  "hinweis": "Eure Standardszene genuegt — Beauty-Pass als Eingangsbild."
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 60,
+  "leerlauf_schwelle_mem_gb": 2,
+  "hinweise": [
+   "ZUERST auf-20260921-131 — sonst misst dieser Auftrag denselben Fehler.",
+   "Keine nicht-kommerziellen Gewichte, auch nicht zum Vergleich.",
+   "«Es laeuft nicht» ist eine vollstaendige Antwort.",
+   "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+  ]
+ },
+ "rueckgabe": [
+  "M1 Laeuft es ueberhaupt? Ja/nein, bei nein die Meldung.",
+  "M2 Gemessene Spitze in MiB, Viersekundenraster ueber den ganzen Lauf.",
+  "M3 `geraeteweg` vollstaendig, samt dem neuen Block `bedarf`.",
+  "M4 Kommt das Eingangsbild an? Rotueberschuss und Pruefsumme gegen einen Lauf ohne Bild.",
+  "M5 Falls es nur mit Auslagerung geht: Dauer je Bild in Sekunden."
+ ]
+}
