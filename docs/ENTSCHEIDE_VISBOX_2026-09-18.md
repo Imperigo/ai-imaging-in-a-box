@@ -694,7 +694,35 @@ sehen soll, ist es das nicht mehr.**
 
 Diese zwei sind **Tatsachen, keine Wahl**. Ich trage sie nicht als entschieden ein.
 
-## O1 · Der Abgabetermin und die Form (F59) — **halb beantwortet, 21.09.2026**
+## O1 · Der Abgabetermin und die Form (F59) — **BEANTWORTET, 21.09.2026**
+
+> *«Also einfach bis Ende Januar ca. soll fertig sein.»*
+
+**Damit ist O1 keine offene Frage mehr.** Gerechnet wird mit dem **31.01.2027**; das «ca.»
+bleibt stehen und heisst: Verschiebt sich der Tag um eine Woche, verschieben sich alle
+Marken mit — die Reihenfolge nicht.
+
+**Die Rechnung, und sie ist der ganze Punkt dieser Antwort:** 19 Wochen. Davon gehören die
+letzten **sechs dem Schreiben**, und das ist keine Grosszügigkeit, sondern eine Bedingung:
+
+> *Eine Software, die im Januar noch wächst, ist im Januar nicht gemessen — und was nicht
+> gemessen ist, steht nicht in der Arbeit.*
+
+Bleiben **zwölf Wochen Bauzeit.** Der Terminplan mit vier Marken steht in
+`docs/PRODUKT_DIE_SCHRITTE.md`. Die wichtigste ist **nicht** die letzte:
+
+**Am 15.10.2026 fällt die Entscheidung über den Entwurfsmodus** (E23). Er hängt an drei
+Messungen, die wir nicht selbst fahren können. Liegen sie bis dahin nicht vor, wird er
+gestrichen — *ein Vorhaben, über das man nicht rechtzeitig entscheidet, entscheidet sich
+selbst, meistens zu spät und immer teurer.*
+
+**Was damit fällt, ist entschieden und nicht vertagt:** der Rückweg ins Modell (E23,
+Schritt 7) und eine eigene iPad-App (E24). Beide bleiben als **Ausblick** in der Arbeit —
+das ist ihr richtiger Platz, nicht der Papierkorb.
+
+### Die alte Fassung dieser Frage, zum Nachlesen
+
+
 
 Ich weiss nicht, wann abzugeben ist, in welchem Umfang und in welcher Form. **Der ganze
 Plan hängt daran**, denn er wird rückwärts vom Termin gerechnet.

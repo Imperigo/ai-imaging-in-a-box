@@ -1,0 +1,29 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "auftrag_id": "auf-20260921-135",
+ "art": "frage",
+ "worker": "local",
+ "rang": 6,
+ "erstellt": "2026-09-21T22:00:00Z",
+ "params": {},
+ "beschreibung": "ANSAGE, keine Messung. Der Abgabetermin steht: Ende Januar 2027. Damit haben auf-131, auf-134 und auf-128 eine Frist — 15.10.2026. Liegen 131 und 134 bis dahin nicht vor, wird der Entwurfsmodus gestrichen. «Schaffen wir nicht» ist eine vollstaendige Antwort.",
+ "anweisung": "=== ANSAGE, KEINE MESSUNG: DREI VON EUREN AUFTRAEGEN HABEN JETZT EIN DATUM ===\n\nDer Owner hat heute den Abgabetermin genannt: **Ende Januar 2027**. Das sind\n19 Wochen, und die letzten sechs gehoeren dem Schreiben. Bleiben zwoelf Wochen,\nin denen an der Software noch etwas passieren kann.\n\nFuer euch aendert das nichts an dem, WAS zu tun ist — aber es setzt eine Frist\nauf drei Auftraege, die ihr schon habt.\n\n\nDER 15. OKTOBER 2026 IST DIE MARKE\n\nBis dahin muessen drei Antworten vorliegen. Nicht, weil dann etwas fertig sein\nmuss, sondern weil an diesem Tag eine ENTSCHEIDUNG faellt:\n\n    auf-20260921-131   Laeuft der Auslagerungsweg wieder?\n    auf-20260921-134   Laeuft ein Modell, das ein Eingangsbild annimmt?\n    auf-20260921-128   Der Widerspruch 0,93 gegen 0,36 — wie weit traegt das\n                       Ergebnis wirklich?\n\nLiegen 131 und 134 bis zum 15.10. nicht vor, wird der ganze Skizzen- und\nEntwurfsmodus **gestrichen**. Nicht spaeter, sondern dann.\n\n    Ein Vorhaben, ueber das man nicht rechtzeitig entscheidet, entscheidet sich\n    selbst — meistens zu spaet und immer teurer.\n\n128 hat keine Ausweichmoeglichkeit: Davon haengt ab, wie weit das tragende\nErgebnis dieser Arbeit reicht. Es wird geschrieben, so wie die Antwort ausfaellt\n— auch wenn sie unbequem ist.\n\n\nDIE REIHENFOLGE, DIE WIR UNS WUENSCHEN\n\n  1. auf-131 (Auslagerung)   — ohne sie misst 134 nur denselben Fehler\n  2. auf-134 (Bildmodell)    — die Entscheidung am 15.10. haengt daran\n  3. auf-128 (Widerspruch)   — die wichtigste fuer die Arbeit selbst\n  4. auf-127, auf-130        — kleine Rueckfragen, koennen warten\n\nDie Raenge in den Auftragsdateien stehen bereits so.\n\n\nWAS WIR NICHT VON EUCH WOLLEN\n\n  - Keine Eile auf Kosten der Sorgfalt. Eine schnelle falsche Zahl kostet mehr\n    als eine spaete richtige — wir haben heute dreimal erlebt, was eine Zahl\n    anrichtet, die nicht stimmt.\n  - Keine Teilantwort, die nach einer ganzen aussieht. Wenn ihr nur die Haelfte\n    schafft, schreibt hin, welche Haelfte.\n  - «Wir schaffen das nicht bis zum 15.10.» ist eine vollstaendige und\n    nuetzliche Antwort. Dann streichen wir frueher und ehrlich, statt bis\n    November zu hoffen.\n\n\nWAS ZURUECKKOMMEN SOLL\n\nAuf diesen Auftrag: nichts. Er ist eine Ansage.\n\nWenn ihr schon wisst, dass eine der drei Messungen bis zum 15.10. nicht geht:\neine Zeile dazu, in welchem der bestehenden Auftraege auch immer. Das ist die\neinzige Antwort, die uns hier wirklich hilft.\n",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": null,
+  "hinweis": "Kein Lauf noetig — eine Ansage."
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "hinweise": [
+   "Nichts umbauen, nichts messen.",
+   "Keine Eile auf Kosten der Sorgfalt.",
+   "«Schaffen wir nicht bis zum 15.10.» ist eine vollstaendige Antwort."
+  ]
+ },
+ "rueckgabe": [
+  "Nichts — ausser ihr wisst schon, dass eine der drei bis zum 15.10. nicht geht."
+ ]
+}

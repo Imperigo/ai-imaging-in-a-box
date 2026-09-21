@@ -1,6 +1,9 @@
 # 6 · Das Messen: der Kern der Arbeit
 
-> **Stand 21.09.2026 — Entwurf.** Viertes geschriebenes Kapitel, und das tragende.
+> **Stand 21.09.2026, abends — Entwurf.** Viertes geschriebenes Kapitel, und das tragende.
+> **Nachgezogen am Abend des 21.09.:** Der Geltungsbereich dieser Zahlen ist enger geworden,
+> ohne dass sich eine von ihnen geändert hätte — sie bedienen seit einem Owner-Entscheid
+> **eine von zwei Betriebsarten** statt der einzigen (siehe 6.1 und 6.8).
 > **Alle Zahlen sind am 19.09.2026 neu gerechnet**, gegen die Rohdaten in
 > `auftraege/ergebnisse/auf-20260909-92-tabelle.json` und den heutigen Quelltext.
 > **Nachgetragen am 21.09.2026, in zwei Schüben.** Erst lösten zwei Messungen den
@@ -30,6 +33,34 @@ steht nirgends. Ein Mass, das Meter gegen Meter hält, misst darum nichts.
 dazu erfindet, erfindet es *plausibel*. Genau darin besteht seine Leistung. Die Abweichung
 ist nicht als Fehler erkennbar, sondern nur als Abweichung — und nur, wenn man etwas hat,
 wogegen man hält.
+
+### Nachtrag 21.09.2026: die Frage hat einen zweiten Gebrauch
+
+Bis zu diesem Tag stand im ganzen Projekt **ein** Satz über erfundene Geometrie: Sie ist
+der Fehler, gegen den gemessen wird. Ein Owner-Entscheid vom selben Abend stellt daneben
+einen zweiten Gebrauch — **das Erfinden als Zweck**, für schnelle Variantenstudien nach
+einer ins Bild gezeichneten Skizze.
+
+Das ändert an den Messungen dieses Kapitels **nichts** und an ihrer Einordnung **alles**:
+
+| | Darstellung | Entwurf |
+|---|---|---|
+| Die Frage | Folgt das Bild dem Modell? | Wie sähe es aus, wenn dort etwas anderes stünde? |
+| Erfundenes Volumen | **Fehler** | **Ergebnis** |
+| Dieselbe Zahl liefert | ein **Urteil** | eine **Differenz** |
+
+**Das Werkzeug ist in beiden Fällen dasselbe.** Silhouettenüberdeckung und
+Tiefenrangfolge vergleichen Bild und Modell; ob man daraus ein Urteil abliest oder eine
+Abweichung, ist eine Frage an den Leser, nicht an die Kennzahl.
+
+> *Der Riegel und der Messstab sind dasselbe Gerät. Nur liest man im einen Modus ein
+> Urteil ab und im anderen eine Differenz.*
+
+**Für dieses Kapitel heisst das:** Was hier gezeigt wird, gilt für die **Darstellung** —
+und damit für eine von zwei Betriebsarten, nicht für die einzige. Der zweite Gebrauch ist
+zum Zeitpunkt dieses Entwurfs **nicht gebaut** und **nicht gemessen**; er steht hier, weil
+ein Kapitel, das den Geltungsbereich seiner eigenen Zahlen nicht nennt, ihn stillschweigend
+zu weit zieht.
 
 ---
 
@@ -421,6 +452,50 @@ nach hinten.*
 
 ---
 
+---
+
+## 6.8 Was dieses Kapitel **nicht** beantwortet — der zweite Gebrauch
+
+Alles oben beantwortet eine Frage: **Folgt das Bild dem Modell?** Seit dem 21.09.2026 gibt
+es eine zweite, und sie ist nicht die Umkehrung, sondern eine andere:
+
+> **Was ist hinzugekommen — und wo?**
+
+Sie entsteht aus dem Entwurfsmodus: Jemand zeichnet eine Idee in ein fertiges Bild, das
+Modell malt sie aus, und **danach soll sich das Ergebnis im Gebäudemodell nachbauen
+lassen.** Dafür genügt kein Urteil. Es braucht die Stelle.
+
+**Warum dasselbe Werkzeug dafür in Frage kommt.** Silhouettenüberdeckung und
+Tiefenrangfolge sind Vergleiche zwischen Bild und Modell. Ein Urteil entsteht daraus,
+indem man sie gegen eine Schwelle hält; eine *Differenz* entsteht daraus, indem man es
+nicht tut. Die Rechnung dazwischen ist dieselbe.
+
+**Und warum das hier nur als Frage steht.** Drei Dinge fehlen, und keines davon ist eine
+Formalie:
+
+1. **Ein Modell, das ein Eingangsbild annimmt.** Gemessen (`auf-20260919-123`): Der
+   Vorgabe-Backbone dieses Projekts tut es nicht — sieben Läufe, eine einzige Prüfsumme.
+   Ohne Eingangsbild gibt es keine Skizze, die hineinginge, und damit keinen einzigen Fall
+   zum Messen.
+2. **Eine Form für die Differenz.** Eine Maske? Eine Liste von Bereichen? Eine
+   Tiefendifferenz? Das ist keine Rechen-, sondern eine Vertragsfrage, und der Gegenüber
+   ist ein anderes Programm.
+3. **Ein Massstab dafür, wann eine Differenz *gut* ist.** Bei der ersten Frage gibt es ihn:
+   richtig oder fremd, und die Gegenprobe entscheidet. Bei der zweiten ist unklar, woran
+   sich «richtig erkannt» überhaupt messen liesse.
+
+> *Eine Kennzahl, die für eine zweite Frage brauchbar aussieht, ist damit noch nicht für
+> sie belegt. Zwischen «dasselbe Gerät liesse sich verwenden» und «es misst dort etwas»
+> liegt genau die Arbeit, die dieses Kapitel für die erste Frage geleistet hat.*
+
+**Stand zum Zeitpunkt dieses Entwurfs:** nicht gebaut, nicht gemessen, und bis zum
+15.10.2026 entscheidet sich, ob es im Rahmen dieser Arbeit überhaupt dazu kommt. Fällt die
+Entscheidung negativ, bleibt dieser Abschnitt als **Ausblick** stehen — mit den drei
+Punkten, die ihn heute unmöglich machen, und das ist mehr als die meisten Ausblicke
+mitbringen.
+
+---
+
 ## Belegstellen
 
 | Abschnitt | Im Repo |
@@ -434,3 +509,5 @@ nach hinten.*
 | 6.7 Die nicht übernommene Kalibrierung | `auftraege/ergebnisse/auf-20260909-98.json`, Gegenrechnung in `tests/test_geometrie_qa.py` |
 | 6.5 Die Auflösung des Grenzfalls | `auftraege/ergebnisse/auf-20260918-115.json` |
 | 6.7 Die Messung unter Schätzerrauschen | `auftraege/ergebnisse/auf-20260907-81.json` |
+| 6.1 und 6.8 Der zweite Gebrauch | Entscheid E23 in `docs/ENTSCHEIDE_VISBOX_2026-09-18.md` |
+| 6.8 Warum es kein Modell dafür gibt | `auftraege/ergebnisse/auf-20260919-123.json` |

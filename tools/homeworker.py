@@ -112,7 +112,22 @@ def darf_starten(zustand: dict, auflagen: dict) -> tuple[bool, str]:
 
     # Dann die Leistungsgrenze. **Nicht abschaltbar**, denn sie ist die Auflage, an der
     # der ganze Rechner hängt.
-    soll = auflagen.get("leistungsgrenze_w", auf.LEISTUNGSGRENZE_W)
+    # `.get(name, vorgabe)` GENUEGT HIER NICHT, und das ist gemessen: Steht der
+    # Schluessel mit dem Wert `None` in der Datei — was ein Auftrag sagen will, der die
+    # Karte gar nicht braucht —, liefert `.get` das `None` und nicht die Vorgabe. Die
+    # naechste Zeile rechnete dann `None + 1`.
+    #
+    # Gefunden am 21.09.2026 durch einen eigenen Auftrag (`auf-20260921-135`, eine reine
+    # Ansage ohne Messung). Der Torwaechter stuerzte ab, BEVOR er etwas pruefen konnte.
+    #
+    #     *Ein fehlender Schluessel und ein Schluessel mit `None` sehen im Auftrag gleich
+    #     aus und bedeuten dasselbe — dann muessen sie es auch im Code.*
+    #
+    # Und die Richtung ist die sichere: `None` faellt auf die STRENGE Vorgabe zurueck,
+    # nicht auf «keine Grenze».
+    soll = auflagen.get("leistungsgrenze_w")
+    if soll is None:
+        soll = auf.LEISTUNGSGRENZE_W
     ist = zustand.get("leistungsgrenze_w")
     if ist is None:
         return False, (f"Leistungsgrenze der Karte unbekannt — nvidia-smi hat sie nicht "

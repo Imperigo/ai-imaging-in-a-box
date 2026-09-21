@@ -5820,6 +5820,43 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **O1 beantwortet: Abgabe Ende Januar 2027 — und der Plan ist jetzt eine Rechnung.**
+      19 Wochen. Davon gehören die letzten **sechs dem Schreiben**, und das ist keine
+      Grosszügigkeit, sondern eine Bedingung: *Eine Software, die im Januar noch wächst,
+      ist im Januar nicht gemessen — und was nicht gemessen ist, steht nicht in der
+      Arbeit.* Bleiben **zwölf Wochen Bauzeit.**
+      **Vier Marken, und die wichtigste ist nicht die letzte:** Am **15.10.2026** fällt
+      die Entscheidung über den Entwurfsmodus. Er hängt an `auf-131`, `auf-134` und
+      `auf-128` — drei Messungen, die wir nicht selbst fahren können. Liegen sie nicht
+      vor, wird gestrichen. *Ein Vorhaben, über das man nicht rechtzeitig entscheidet,
+      entscheidet sich selbst — meistens zu spät und immer teurer.*
+      **Gestrichen, nicht vertagt:** der Rückweg ins Modell und eine eigene iPad-App.
+      Beide bleiben als **Ausblick** in der Arbeit — das ist ihr richtiger Platz.
+      Der Werkstatt als Ansage zugestellt (`auf-20260921-135`), samt dem Satz, dass
+      «schaffen wir nicht bis zum 15.10.» eine vollständige und nützliche Antwort ist.
+- [x] **Kapitel 6 nachgezogen: dieselben Zahlen, engerer Geltungsbereich.**
+      Keine Zahl hat sich geändert. Was sich geändert hat, ist, **wofür sie gelten**: Seit
+      E23 bedienen sie eine von **zwei** Betriebsarten statt der einzigen.
+      Neu ist **6.8 — die zweite Frage**, die dieses Kapitel ausdrücklich *nicht*
+      beantwortet: «Was ist hinzugekommen, und wo?» Dazu die drei Gründe, warum sie heute
+      unbeantwortbar ist: kein Modell, das ein Bild annimmt; keine Form für die Differenz;
+      und **kein Massstab dafür, wann eine Differenz gut ist.**
+      *Eine Kennzahl, die für eine zweite Frage brauchbar aussieht, ist damit noch nicht
+      für sie belegt.*
+- [x] **Ein eigener Auftrag hat den Torwächter der HomeStation zum Absturz gebracht.**
+      `auf-20260921-135` ist eine reine Ansage ohne Messung und trug darum
+      `"leistungsgrenze_w": None`. `.get(name, vorgabe)` liefert bei einem **eingetragenen**
+      `None` das `None` und nicht die Vorgabe — die nächste Zeile rechnete `None + 1`.
+      *Ein fehlender Schlüssel und ein Schlüssel mit `None` sehen im Auftrag gleich aus und
+      bedeuten dasselbe — dann müssen sie es auch im Code.*
+      **Die Richtung der Reparatur ist die sichere:** `None` fällt auf die **strenge**
+      Vorgabe zurück, nicht auf «keine Grenze».
+      **Gefunden hat es die Probe, die gegen die WIRKLICHEN Auftragsdateien fährt** — die
+      es seit dem 07.09.2026 gibt, weil damals genau zwischen Attrappe und echter Datei
+      ein Fehler sass. *Ein Auftrag, der den Torwächter zum Absturz bringt, wird nie
+      abgelehnt und nie ausgeführt — er bleibt liegen, und die Meldung sieht aus wie ein
+      Fehler der Maschine.*
+      Drei Wächter, zwei Mutationsproben, beide gefallen.
 - [x] **E25: Die Fläche darf ins Heimnetz — mit Kennwort, fail-closed.**
       Owner-Entscheid 21.09.2026. Die eigentliche Eigenschaft ist nicht das Kennwort,
       sondern dass man es **nicht vergessen kann**: Eine andere Adresse als `127.0.0.1`

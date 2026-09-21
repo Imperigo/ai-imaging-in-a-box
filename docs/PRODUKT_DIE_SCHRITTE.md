@@ -229,8 +229,8 @@ Vorher stand im Protokoll «mit Ankerbild gerechnet», während ohne gerechnet w
 | | Schritt | Warum jetzt |
 |---|---|---|
 | **1** | **Die Zeichenfläche auf dem iPad ausprobieren** | Das kann nur **Sie** — hier gibt es kein iPad und keinen Stift. Es ist die einzige offene Frage, die kein Worker beantworten kann. Alles dafür ist jetzt gebaut. |
-| **2** | **Das Abgabedatum nennen** | Sie haben «früher als Februar» gesagt. Ohne das Datum kann ich nicht sagen, was wegfällt — nur, in welcher Reihenfolge. |
-| **3** | **Schritt 5 fertig machen** | Zeichnen geht. Rechnen ist **hardwareseitig blockiert** — siehe unten. |
+| **2** | **Die drei Messungen der Werkstatt** | Sie entscheiden am **15.10.**, ob der Entwurfsmodus gebaut oder gestrichen wird. Bestellt, liegen dort. |
+| **3** | **Kapitel 6 nachziehen** | Die Messungen bleiben, ihr Geltungsbereich hat sich geändert: Sie bedienen eine von zwei Betriebsarten statt der einzigen. |
 
 ---
 
@@ -266,11 +266,34 @@ es entscheidet, wie Schritt 5 aussieht.
 
 ---
 
-## Wenn die Zeit knapper wird — was zuerst wegfällt, und warum
+## Der Terminplan — rückwärts gerechnet von Ende Januar 2027
 
-**Sie haben am 21.09.2026 gesagt: früher als Ende Februar 2027.** Das Datum kenne ich
-nicht, und ohne Datum kann ich nicht sagen, *wie viel* wegfällt. Die **Reihenfolge** kann
-ich sagen, und sie steht hier, damit sie nicht im Januar unter Zeitdruck entsteht.
+**Owner-Angabe 21.09.2026: «bis Ende Januar ca. soll fertig sein.»** Damit ist der Plan
+keine Absichtserklärung mehr, sondern eine Rechnung.
+
+**Von heute bis zum 31.01.2027 sind es 19 Wochen.** Davon gehören die letzten sechs
+**Ihnen** — Sie schreiben die Arbeit, und ein Text entsteht nicht neben einer Baustelle.
+
+> *Eine Software, die im Januar noch wächst, ist im Januar nicht gemessen — und was nicht
+> gemessen ist, steht nicht in der Arbeit.*
+
+| Bis wann | Was fertig sein muss | Wenn nicht |
+|---|---|---|
+| **15.10.2026**<br>in 3½ Wochen | Die drei Messungen, an denen alles hängt: läuft der Ausweichweg (`auf-131`), läuft ein Modell mit Eingangsbild (`auf-134`), und wie weit reicht das tragende Ergebnis (`auf-128`). | Der Entwurfsmodus wird **gestrichen** — nicht später, sondern dann. |
+| **15.11.2026**<br>in 8 Wochen | Der durchgehende Weg ist **belegt**: ein Lauf vom Modell bis zum geprüften Bild, auf der Werkstattmaschine, dokumentiert. Entwurfsmodus gebaut oder gestrichen. | Die Arbeit zeigt einen Prototyp ohne durchgehenden Beleg. Das wäre der teuerste Verlust. |
+| **15.12.2026**<br>in 12 Wochen | **Software eingefroren.** Alle Zahlen, die in der Arbeit stehen sollen, sind gefahren und abgelegt. Lexikon und Protokolle vollständig. | Sie schreiben über etwas, das sich noch ändert. |
+| **15.12. – 31.01.**<br>6½ Wochen | **Sie schreiben.** Ich liefere nur noch Belege, rechne Zahlen nach und berichtige. **Kein neuer Code.** | — |
+
+**Der 15. Oktober ist der wichtigste Tag dieser Tabelle**, und zwar nicht wegen dessen,
+was dann gebaut ist, sondern wegen der Entscheidung: Bis dahin muss feststehen, ob der
+Entwurfsmodus überhaupt möglich ist. *Ein Vorhaben, über das man nicht rechtzeitig
+entscheidet, entscheidet sich selbst — meistens zu spät und immer teurer.*
+
+---
+
+## Was wegfällt, und warum
+
+Die **Reihenfolge** steht hier, damit sie nicht im Januar unter Zeitdruck entsteht.
 
 > *Eine Streichliste, die man erst macht, wenn es eng wird, streicht das, woran man
 > gerade zuletzt gearbeitet hat.*
@@ -293,9 +316,23 @@ ich sagen, und sie steht hier, damit sie nicht im Januar unter Zeitdruck entsteh
 | **C** | **Der durchgehende Weg: Modell rein → Bild raus** | Ohne ihn gibt es nichts zu messen und nichts zu zeigen. |
 | **D** | **Die Protokolle und das Lexikon** | Sie sind Anhang der Arbeit und entstehen nur laufend. Nachträglich sind sie nicht herstellbar. |
 
-**Was das praktisch heisst, wenn Sie mir das Datum nennen:** Ich rechne rückwärts und sage
-Ihnen, wo die Linie zwischen der oberen und der unteren Tabelle zu liegen kommt. Nicht
-mehr, und nicht weniger.
+**Und wo die Linie bei Ende Januar liegt:**
+
+**Punkt 1 (Rückweg ins Modell) ist gestrichen.** Er hängt an einem fremden Team und einem
+Vertrag, den es nicht gibt. In 19 Wochen, von denen 6 dem Schreiben gehören, ist das nicht
+zu verhandeln und zu bauen. Er bleibt als **Ausblick** in der Arbeit stehen — das ist sein
+richtiger Platz.
+
+**Punkt 2 (eigene iPad-App) ist gestrichen.** Die Seite im Browser ist die Antwort.
+
+**Punkt 3 (Entwurfsmodus) steht auf der Kippe**, und die Entscheidung fällt am
+**15.10.2026**. Er hängt an zwei Messungen, die wir nicht selbst fahren können.
+
+**Punkt 4 (Bequemlichkeit) ist gestrichen**, ausser dort, wo etwas ohne sie unbedienbar
+wäre.
+
+**Alles in der zweiten Tabelle bleibt.** Es ist zusammen weniger Arbeit als Punkt 3 allein,
+und es ist das, worüber die Arbeit handelt.
 
 ---
 
@@ -303,8 +340,9 @@ mehr, und nicht weniger.
 
 * **Auf einem fremden Rechner ist die Oberfläche nie geöffnet worden.** Ob der Browser
   einer anderen Person dieselbe Seite gleich darstellt: unbekannt.
-* **Das Abgabedatum ist nicht bekannt.** «Früher als Ende Februar 2027» ist die einzige
-  Angabe. Jede Planung darunter ist eine **Arbeitsannahme** und steht überall als solche da.
+* **Das Abgabedatum ist «Ende Januar 2027, ca.»** — mit dem «ca.». Der Plan oben rechnet
+  mit dem **31.01.2027**; verschiebt sich der Tag um eine Woche, verschieben sich alle
+  Marken mit. Die Reihenfolge ändert sich dadurch nicht.
 * **Und auf einem iPad erst recht nicht.** Ob sich eine Browserseite dort wie eine
   Zeichen-App *anfühlt*, ist nicht gemessen und von hier aus nicht messbar. Das entscheidet
   kein Schreibtisch, sondern ein Mensch mit einem Stift. **Fällt die Probe durch, ist eine

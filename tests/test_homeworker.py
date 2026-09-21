@@ -1784,3 +1784,56 @@ def test_kein_offener_local_auftrag_bringt_das_tor_zum_absturz():
     for satz in offen:
         frei, grund = hw.darf_starten(zustand, hw.auf.auflagen_maschine(satz))
         assert isinstance(frei, bool) and grund, satz["auftrag_id"]
+
+
+# ------------------------------------------ Ein `None` in den Auflagen ist kein Wert
+#
+# GEMESSEN AM 21.09.2026 durch einen EIGENEN Auftrag: `auf-20260921-135` ist eine reine
+# Ansage ohne Messung und trug darum `"leistungsgrenze_w": None`. Der Torwaechter stuerzte
+# daran ab, BEVOR er etwas pruefen konnte — `.get(name, vorgabe)` liefert bei einem
+# eingetragenen `None` das `None` und nicht die Vorgabe, und die naechste Zeile rechnete
+# `None + 1`.
+#
+#     Ein fehlender Schluessel und ein Schluessel mit `None` sehen im Auftrag gleich aus
+#     und bedeuten dasselbe — dann muessen sie es auch im Code.
+#
+# Gefunden hat ihn die Probe `test_kein_offener_local_auftrag_bringt_das_tor_zum_absturz`
+# weiter oben — die an den WIRKLICHEN Dateien. Die drei hier halten die Reparatur fest.
+
+def test_eine_leistungsgrenze_von_None_faellt_auf_die_vorgabe_zurueck():
+    """Und zwar auf die **strenge** Vorgabe, nicht auf «keine Grenze».
+
+    Die Richtung ist hier die ganze Entscheidung: Wer nichts angibt, bekommt die Auflage
+    des Projekts — nicht ihre Abwesenheit.
+    """
+    zustand = {"verfuegbar": True, "leistungsgrenze_w": 450, "leistung_w": 10,
+               "speicher_belegt_gb": 0.5}
+
+    darf, grund = hw.darf_starten(zustand, {"leistungsgrenze_w": None})
+
+    assert darf is False, "450 W liegen ueber der Vorgabe — das muss auffallen"
+    assert "450" in grund
+
+
+def test_ein_fehlender_schluessel_verhaelt_sich_genauso():
+    """Die Gegenprobe zur vorigen: Beide Faelle bedeuten dasselbe, also muessen sie
+    dasselbe tun. Taeten sie es nicht, haette ein Auftrag zwei Bedeutungen fuer «nichts
+    gesagt»."""
+    zustand = {"verfuegbar": True, "leistungsgrenze_w": 450, "leistung_w": 10,
+               "speicher_belegt_gb": 0.5}
+
+    ohne = hw.darf_starten(zustand, {})
+    mit_none = hw.darf_starten(zustand, {"leistungsgrenze_w": None})
+
+    assert ohne == mit_none
+
+
+def test_eine_eigene_grenze_gilt_weiterhin():
+    """Sonst waere die Reparatur eine Abschaffung: Ein Auftrag darf die Grenze
+    **senken**, und das muss ankommen."""
+    zustand = {"verfuegbar": True, "leistungsgrenze_w": 300, "leistung_w": 10,
+               "speicher_belegt_gb": 0.5}
+
+    darf, grund = hw.darf_starten(zustand, {"leistungsgrenze_w": 250})
+
+    assert darf is False and "250" in grund
