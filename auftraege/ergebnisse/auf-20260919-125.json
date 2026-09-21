@@ -1,0 +1,522 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260919-125",
+  "status": "ok",
+  "beendet": "2026-09-21T13:00:00Z",
+  "stand": "9915374",
+  "geprueft": "Alle 40 echten Dateien durch IFC->glb und danach durch aiimaging.hochachse. Rechenzeit knapp eine Stunde, keine GPU. Der Bestand ist derselbe wie in auf-20260818-08 — die Zahl 40 stimmt ueberein, obwohl er unabhaengig neu zusammengestellt wurde.",
+  "kurzantwort": {
+    "a_wie_oft_sagt_das_modul_etwas": "21 von 40 (52 %).",
+    "b_wie_oft_stimmt_es_mit_der_datei": "21 von 21 — AUSNAHMSLOS.",
+    "c_widersprueche": "KEINER. Punkt C eures Auftrags ist damit leer, und das ist eine vollstaendige Antwort.",
+    "v4_die_grenze_4.0": "An diesem Bestand nie wirksam. Die Verteilung ist zweigipflig: entweder unendlich (21 Faelle) oder 1,0 bis 2,9 (5 Faelle). Dazwischen liegt nichts.",
+    "ein_fall_lohnt_das_hinsehen": "Bei einer Datei misst das Modul die Achse X — weil es eine senkrecht stehende WAND fuer Gelaende haelt. Es merkt es selbst und schweigt."
+  },
+  "befunde": {
+    "v1_die_tabelle": [
+      {
+        "nr": 1,
+        "groesse_mb": 0.0,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": null,
+        "grund": "mehrdeutig",
+        "vorsprung": 1.083,
+        "sicherheit": null,
+        "n_knoten": 5,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 2,
+        "groesse_mb": 0.1,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": null,
+        "grund": "mehrdeutig",
+        "vorsprung": 1.034,
+        "sicherheit": null,
+        "n_knoten": 35,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 3,
+        "groesse_mb": 0.1,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": null,
+        "grund": "kein_gelaende",
+        "vorsprung": null,
+        "sicherheit": null,
+        "n_knoten": 52,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 4,
+        "groesse_mb": 0.0,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": null,
+        "grund": "kein_gelaende",
+        "vorsprung": null,
+        "sicherheit": null,
+        "n_knoten": 1,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 5,
+        "groesse_mb": 0.7,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": null,
+        "grund": "mehrdeutig",
+        "vorsprung": 2.507,
+        "sicherheit": null,
+        "n_knoten": 511,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 6,
+        "groesse_mb": 65.9,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 4771,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 7,
+        "groesse_mb": 1.2,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 615,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 8,
+        "groesse_mb": 314.0,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 118,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 9,
+        "groesse_mb": 13.8,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 10130,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 10,
+        "groesse_mb": 15.3,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 11578,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 11,
+        "groesse_mb": 17.4,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 11514,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 12,
+        "groesse_mb": 31.9,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 11515,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 13,
+        "groesse_mb": 1.6,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": null,
+        "grund": "achse_ausserhalb_des_vertrags",
+        "vorsprung": null,
+        "sicherheit": null,
+        "n_knoten": 1514,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 14,
+        "groesse_mb": 33.7,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 12541,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 15,
+        "groesse_mb": 39.5,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 12857,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 16,
+        "groesse_mb": 39.6,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 12873,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 17,
+        "groesse_mb": 39.6,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 12880,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 18,
+        "groesse_mb": 39.8,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 12145,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 19,
+        "groesse_mb": 35.5,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 8967,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 20,
+        "groesse_mb": 37.5,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 8967,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 21,
+        "groesse_mb": 39.8,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 12145,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 22,
+        "groesse_mb": 52.1,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 14011,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 23,
+        "groesse_mb": 52.2,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 14011,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 24,
+        "groesse_mb": 0.1,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": null,
+        "grund": "mehrdeutig",
+        "vorsprung": 1.0,
+        "sicherheit": null,
+        "n_knoten": 24,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 25,
+        "groesse_mb": 5.3,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": null,
+        "grund": "kein_gelaende",
+        "vorsprung": null,
+        "sicherheit": null,
+        "n_knoten": 2250,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 26,
+        "groesse_mb": 0.0,
+        "angabe_der_datei": null,
+        "messung_des_moduls": null,
+        "grund": null,
+        "vorsprung": null,
+        "sicherheit": null,
+        "n_knoten": null,
+        "wandlung": "fehler"
+      },
+      {
+        "nr": 27,
+        "groesse_mb": 0.0,
+        "angabe_der_datei": null,
+        "messung_des_moduls": null,
+        "grund": null,
+        "vorsprung": null,
+        "sicherheit": null,
+        "n_knoten": null,
+        "wandlung": "fehler"
+      },
+      {
+        "nr": 28,
+        "groesse_mb": 0.1,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 73,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 29,
+        "groesse_mb": 0.1,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": null,
+        "grund": "mehrdeutig",
+        "vorsprung": 2.879,
+        "sicherheit": null,
+        "n_knoten": 50,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 30,
+        "groesse_mb": 0.1,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 72,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 31,
+        "groesse_mb": 0.0,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": null,
+        "grund": "kein_gelaende",
+        "vorsprung": null,
+        "sicherheit": null,
+        "n_knoten": 1,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 32,
+        "groesse_mb": 0.0,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": null,
+        "grund": "kein_gelaende",
+        "vorsprung": null,
+        "sicherheit": null,
+        "n_knoten": 2,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 33,
+        "groesse_mb": 56.6,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": null,
+        "grund": "kein_gelaende",
+        "vorsprung": null,
+        "sicherheit": null,
+        "n_knoten": 1,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 34,
+        "groesse_mb": 0.1,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": null,
+        "grund": "kein_gelaende",
+        "vorsprung": null,
+        "sicherheit": null,
+        "n_knoten": 52,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 35,
+        "groesse_mb": 1.1,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 999,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 36,
+        "groesse_mb": 0.0,
+        "angabe_der_datei": null,
+        "messung_des_moduls": null,
+        "grund": null,
+        "vorsprung": null,
+        "sicherheit": null,
+        "n_knoten": null,
+        "wandlung": "fehler"
+      },
+      {
+        "nr": 37,
+        "groesse_mb": 0.0,
+        "angabe_der_datei": null,
+        "messung_des_moduls": null,
+        "grund": null,
+        "vorsprung": null,
+        "sicherheit": null,
+        "n_knoten": null,
+        "wandlung": "fehler"
+      },
+      {
+        "nr": 38,
+        "groesse_mb": 0.1,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": "Y",
+        "grund": "gemessen",
+        "vorsprung": null,
+        "sicherheit": "eindeutig",
+        "n_knoten": 35,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 39,
+        "groesse_mb": 0.2,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": null,
+        "grund": "kein_gelaende",
+        "vorsprung": null,
+        "sicherheit": null,
+        "n_knoten": 82,
+        "wandlung": "ok"
+      },
+      {
+        "nr": 40,
+        "groesse_mb": 0.2,
+        "angabe_der_datei": "Y",
+        "messung_des_moduls": null,
+        "grund": "kein_gelaende",
+        "vorsprung": null,
+        "sicherheit": null,
+        "n_knoten": 82,
+        "wandlung": "ok"
+      }
+    ],
+    "v2_die_drei_zahlen": {
+      "A_sagt_etwas": {
+        "n": 21,
+        "von": 40,
+        "anteil": 0.525
+      },
+      "B_stimmt_mit_der_datei": {
+        "n": 21,
+        "von": 21,
+        "anteil": 1.0
+      },
+      "C_widersprueche": 0,
+      "warum_C_leer_ist": "Alle 36 wandelbaren Dateien geben Y an (glTF-Standard, vom Konverter gesetzt). Wo das Modul etwas sagt, sagt es ebenfalls Y. Es gibt keine Datei in diesem Bestand, die Z angibt — die Wandlung normiert vorher.",
+      "und_was_das_einschraenkt": "Damit ist NICHT gezeigt, dass das Modul einen Irrtum faengt. Es ist gezeigt, dass es keinen ERFINDET. Das ist weniger, als ihr erhofft habt, und mehr, als eine synthetische Probe leisten kann."
+    },
+    "warum_das_modul_bei_19_dateien_schweigt": {
+      "kein_gelaende": {
+        "n": 9,
+        "bedeutung": "In keiner Achse ist ein Koerper gross, flach und unten. Das sind Innenraum- und Bauteilmodelle ohne Terrain — bei einem reinen Gebaeudeexport ist das der Normalfall, kein Fehler."
+      },
+      "mehrdeutig": {
+        "n": 5,
+        "vorspruenge": [
+          1.0,
+          1.034,
+          1.083,
+          2.507,
+          2.879
+        ],
+        "bedeutung": "Zwei Achsen tragen einen Gelaendebefund und der Vorsprung reicht nicht. Bei 1.0 sind zwei Achsen exakt gleich stark."
+      },
+      "achse_ausserhalb_des_vertrags": {
+        "n": 1,
+        "aufgeloest": true,
+        "was_passiert": "Das Modul misst X mit Staerke 0.31. Der Kandidat, den es fuer Gelaende haelt, traegt die IFC-Klasse IfcWall im Namen — eine grosse duenne Platte, die SENKRECHT steht und der Form nach wie eine liegende aussieht.",
+        "wer_hat_recht": "Die DATEI. Y ist richtig, X ist falsch. Das Modul verwirft sein eigenes Ergebnis aber selbst, weil X nicht im Vertrag steht — es gibt also keinen falschen Wert weiter, sondern schweigt.",
+        "warum_das_gut_ist": "Genau dieser Fall steht in seinem eigenen Satz: «Entweder ist die Datei in einer dritten Konvention geschrieben, oder eine grosse duenne Platte steht senkrecht und sieht der Messung wie Gelaende aus.» Es hat die zweite Moeglichkeit richtig vorhergesehen.",
+        "vorschlag": "Der Kandidat ist an seiner IFC-Klasse erkennbar. Wer IfcWall, IfcCurtainWall und IfcPlate als Gelaendekandidaten AUSSCHLIESST, verliert nichts — Gelaende ist nie eine Wand — und gewinnt in diesem Fall eine eindeutige Messung statt eines Schweigens. Das Modul liest die Namen ohnehin schon (gelaende_quelle: name)."
+      },
+      "wandlung_gescheitert": {
+        "n": 4,
+        "grund": "«keine Geometrie im IFC» — bei einer davon ausdruecklich: 4 Produkte waren da, alle IfcSpace. Das sind Raumbuch-Dateien ohne gebaute Substanz. Der Konverter weist sie richtig ab; das Modul kommt gar nicht erst dran."
+      }
+    },
+    "v4_der_mindestvorsprung": {
+      "gemessen": "Ein Vorsprung als ZAHL entsteht nur, wenn zwei Achsen einen Gelaendebefund tragen. Das war bei 5 von 40 Dateien der Fall: 1.0, 1.034, 1.083, 2.507, 2.879 — alle fuenf unter 4.0, alle fuenf abgewiesen.",
+      "die_anderen_21": "Dort traegt nur EINE Achse einen Befund. Der Vorsprung ist dann unendlich und wird als None gefuehrt; die Sicherheit steht auf 'eindeutig'.",
+      "liegt_die_grenze_richtig": "Sie liegt nicht falsch — aber sie ist an diesem Bestand auch nicht gepruefte. Zwischen 2.879 und unendlich liegt kein einziger Fall. Man koennte sie auf 3.0 senken oder auf 10 heben, ohne dass sich ein Urteil aendert.",
+      "verschweigt_sie_brauchbare_faelle": "Nein. Die fuenf abgewiesenen liegen bei 1.0 bis 2.9 — bei 1.0 sind zwei Achsen GLEICH stark. Das ist kein knapper Fall, den eine mildere Grenze retten wuerde, sondern ein echtes Patt.",
+      "was_das_heisst": "Die Grenze ist eine Vorsichtsmassnahme ohne Kosten. Sie zu kalibrieren braucht Faelle, die knapp darueber oder darunter liegen — dieser Bestand liefert keine."
+    }
+  },
+  "bemerkungen": [
+    "Regel 3 eingehalten: Es stehen nur laufende Nummern und Dateigroessen in dieser Antwort. Kein Dateiname, kein Pfad, kein Projekt- oder Bauteilname.",
+    "Der Bestand ist NICHT nach Herkunft gefiltert worden: alle Modelldateien dieser Maschine ausserhalb von Bibliotheksordnern, nach Inhalt dedupliziert. Dass genau 40 herauskamen, ist keine Absicht.",
+    "Nichts eingehaengt, wie verlangt. Das Modul ist nur aufgerufen worden.",
+    "Die groesste Datei (314 MB) ist durchgelaufen und wurde gemessen. Die Rechenzeit lag bei 60 Minuten fuer alle 40 — die vier groessten kosten davon rund 20."
+  ],
+  "umgebung": {
+    "gpu_benutzt": false,
+    "netz_benutzt": false,
+    "dauer_min": 60
+  },
+  "fehler": null
+}

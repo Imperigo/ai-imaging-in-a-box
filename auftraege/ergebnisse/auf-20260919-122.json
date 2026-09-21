@@ -1,0 +1,229 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260919-122",
+  "status": "ok",
+  "beendet": "2026-09-21T13:30:00Z",
+  "stand": "9915374",
+  "geprueft": "Vor dem Rechnen die Praemisse geprueft — und sie stimmt nicht. auf-20260909-92 ist BEREITS unter dem echten Schaetzer gerechnet worden. Beleg: Alle 48 Zahlen der Vertauschprobe sind hier nachgerechnet und stimmen bis zur letzten Stelle ueberein. Die Messung, die Kapitel 6 traegt, liegt seit dem 09.09.2026 vor. Was gefehlt hat, ist die Auswertung — die steht unten.",
+  "kurzantwort": {
+    "v6_urteil": "Das Zwei-Tore-Verfahren TRAEGT unter Schaetzerrauschen — 12 von 12 richtig, 12 von 12 Verwechslungen gesperrt, 0 von 12 Muellbildern durch.",
+    "die_luecke_bleibt": "+0.1491 — unveraendert, weil es dieselbe Messung ist.",
+    "aber_eine_einschraenkung": "Alle zwoelf Laeufe sind DIAGONAL (Azimut 145 Grad). Der frontale Fall, vor dem auf-20260907-81 warnt, kommt in diesem Datensatz gar nicht vor. Eure Sorge bleibt unbeantwortet.",
+    "und_ein_unbequemer_befund": "Tor A traegt zur Unterscheidung richtig/fremd NICHTS bei. Die ganze Trennung leistet Tor B."
+  },
+  "befunde": {
+    "der_beweis_dass_auf92_schon_mit_schaetzer_lief": {
+      "wie_geprueft": "Alle zwoelf Bilder erneut durch tiefenschaetzer.qa_gegen_soll geschickt — Schaetzer depth-anything-v2-small, Bauwerksmaske aus maske.bauwerksmaske_aus_lauf, Soll-Karte aus dem EXR-Tiefenpass. Anschliessend gegen build/auf92/vertauschprobe.json gehalten.",
+      "ergebnis": "geom_iou 24 von 24 identisch, rho_maske 24 von 24 identisch — bis zur letzten gespeicherten Stelle.",
+      "was_das_heisst": "qa_gegen_soll schaetzt die Ist-Karte AUS DEM ERZEUGTEN BILD; die Soll-Karte kommt aus Blender. Dass dieselben Zahlen herauskommen, ist nur moeglich, wenn auf-92 denselben Weg gegangen ist. Eine Messung Soll-gegen-Soll haette andere Zahlen ergeben — und rho_maske waere nicht 0.1437 gewesen, sondern nahe 1.",
+      "ein_stolperstein_unterwegs": "Mit einer zu WEITEN Maske (alle material_id > 0, Anteil 0.5569 statt 0.1706) kam rho_maske auf 0.9959 statt 0.9157 — und trennte dann gar nicht mehr (fremd 0.9597). Die Maske entscheidet ueber dieses Tor. Wer sie anders zieht, misst etwas anderes und merkt es nicht.",
+      "folge_fuer_kapitel_6": "Der Vorbehalt im Text laesst sich aufloesen. Es braucht keine neue Messung, sondern einen Satz: Der Datensatz von auf-20260909-92 IST der Schaetzer-Datensatz."
+    },
+    "v1_die_zahlen_je_lauf": [
+      {
+        "lauf": "A0",
+        "szene_kuerzel": "S",
+        "rho_maske_richtig": 0.9157,
+        "geom_iou_richtig": 0.9771,
+        "rho_maske_fremd": 0.1831,
+        "geom_iou_fremd": 0.7735,
+        "abstand_geom_iou": 0.2037,
+        "stimmt_mit_auf92": true
+      },
+      {
+        "lauf": "A1",
+        "szene_kuerzel": "S",
+        "rho_maske_richtig": 0.9564,
+        "geom_iou_richtig": 0.9642,
+        "rho_maske_fremd": 0.1402,
+        "geom_iou_fremd": 0.7766,
+        "abstand_geom_iou": 0.1876,
+        "stimmt_mit_auf92": true
+      },
+      {
+        "lauf": "A2",
+        "szene_kuerzel": "S",
+        "rho_maske_richtig": 0.9854,
+        "geom_iou_richtig": 0.9732,
+        "rho_maske_fremd": 0.1802,
+        "geom_iou_fremd": 0.7713,
+        "abstand_geom_iou": 0.202,
+        "stimmt_mit_auf92": true
+      },
+      {
+        "lauf": "B0",
+        "szene_kuerzel": "S",
+        "rho_maske_richtig": 0.9748,
+        "geom_iou_richtig": 0.9784,
+        "rho_maske_fremd": 0.223,
+        "geom_iou_fremd": 0.7744,
+        "abstand_geom_iou": 0.204,
+        "stimmt_mit_auf92": true
+      },
+      {
+        "lauf": "B1",
+        "szene_kuerzel": "S",
+        "rho_maske_richtig": 0.9931,
+        "geom_iou_richtig": 0.9749,
+        "rho_maske_fremd": 0.203,
+        "geom_iou_fremd": 0.7722,
+        "abstand_geom_iou": 0.2027,
+        "stimmt_mit_auf92": true
+      },
+      {
+        "lauf": "B2",
+        "szene_kuerzel": "S",
+        "rho_maske_richtig": 0.9767,
+        "geom_iou_richtig": 0.9719,
+        "rho_maske_fremd": 0.1855,
+        "geom_iou_fremd": 0.7711,
+        "abstand_geom_iou": 0.2009,
+        "stimmt_mit_auf92": true
+      },
+      {
+        "lauf": "C0",
+        "szene_kuerzel": "G",
+        "rho_maske_richtig": 0.9029,
+        "geom_iou_richtig": 0.95,
+        "rho_maske_fremd": 0.5529,
+        "geom_iou_fremd": 0.7414,
+        "abstand_geom_iou": 0.2085,
+        "stimmt_mit_auf92": true
+      },
+      {
+        "lauf": "C1",
+        "szene_kuerzel": "G",
+        "rho_maske_richtig": 0.6201,
+        "geom_iou_richtig": 0.9724,
+        "rho_maske_fremd": 0.3925,
+        "geom_iou_fremd": 0.7481,
+        "abstand_geom_iou": 0.2243,
+        "stimmt_mit_auf92": true
+      },
+      {
+        "lauf": "C2",
+        "szene_kuerzel": "G",
+        "rho_maske_richtig": 0.1437,
+        "geom_iou_richtig": 0.9257,
+        "rho_maske_fremd": 0.4122,
+        "geom_iou_fremd": 0.735,
+        "abstand_geom_iou": 0.1907,
+        "stimmt_mit_auf92": true
+      },
+      {
+        "lauf": "D0",
+        "szene_kuerzel": "G",
+        "rho_maske_richtig": 0.8673,
+        "geom_iou_richtig": 0.9312,
+        "rho_maske_fremd": 0.6698,
+        "geom_iou_fremd": 0.737,
+        "abstand_geom_iou": 0.1942,
+        "stimmt_mit_auf92": true
+      },
+      {
+        "lauf": "D1",
+        "szene_kuerzel": "G",
+        "rho_maske_richtig": 0.7512,
+        "geom_iou_richtig": 0.9745,
+        "rho_maske_fremd": 0.4164,
+        "geom_iou_fremd": 0.7566,
+        "abstand_geom_iou": 0.2179,
+        "stimmt_mit_auf92": true
+      },
+      {
+        "lauf": "D2",
+        "szene_kuerzel": "G",
+        "rho_maske_richtig": 0.4877,
+        "geom_iou_richtig": 0.9411,
+        "rho_maske_fremd": 0.6324,
+        "geom_iou_fremd": 0.7391,
+        "abstand_geom_iou": 0.202,
+        "stimmt_mit_auf92": true
+      }
+    ],
+    "v1_anmerkung": "Ihr habt vier Spalten erfragt: rho(soll), iou(soll), rho(schaetz), iou(schaetz). Es gibt nur zwei, weil die Spalten «soll» in Wahrheit die Spalten «schaetz» sind. Ich gebe sie stattdessen als richtig/fremd — das ist die Achse, um die es geht.",
+    "v2_schaetzer": {
+      "kennung": "depth-anything-v2-small",
+      "modell_id": "depth-anything/Depth-Anything-V2-Small-hf",
+      "lizenz": "Apache-2.0",
+      "polaritaet": "disparitaet (-1), gemessen",
+      "derselbe_wie_in": "auf-20260907-81 und auf-20260909-92"
+    },
+    "v3_die_gegenprobe": {
+      "abstand_je_lauf_geom_iou": {
+        "mittel": 0.2032,
+        "kleinster": 0.1876,
+        "groesster": 0.2243,
+        "ordnet_richtig": "12 von 12"
+      },
+      "abstand_der_verteilungen": {
+        "niedrigster_guter": 0.9257,
+        "hoechster_schlechter": 0.7766,
+        "abstand": 0.1491,
+        "anmerkung": "Das ist eure +0.149. Die Zahl ist reproduziert, nicht uebernommen."
+      },
+      "bleibt_schrumpft_kehrt_um": "BLEIBT. Sie kann nicht schrumpfen, weil sie unter dem Schaetzer entstanden ist.",
+      "rho_maske_dagegen": {
+        "ordnet_richtig": "10 von 12",
+        "zwei_umkehrungen": [
+          "C2: richtig 0.1437 gegen fremd 0.4122",
+          "D2: richtig 0.4877 gegen fremd 0.6324"
+        ],
+        "was_das_heisst": "Bei zwei von zwoelf Bildern passt die FREMDE Geometrie besser zur Rangordnung als die eigene. Das Tor besteht trotzdem, weil die Schwelle bei 0.1 liegt — es merkt die Umkehrung nicht."
+      }
+    },
+    "v4_muellbilder": {
+      "geprueft": 12,
+      "bestehen_beide_tore": 0,
+      "rho_maske_spanne": [
+        -0.7115,
+        -0.1111
+      ],
+      "geom_iou_spanne": [
+        0.0,
+        0.4238
+      ],
+      "arten": "je Szene grau, Rauschen, Verlauf — vier Szenen",
+      "urteil": "Unter dem Schaetzer faellt jedes Muellbild an BEIDEN Toren. Alle zwoelf rho-Werte sind NEGATIV, also nicht bloss schwach, sondern verkehrt herum geordnet."
+    },
+    "v5_frontal_gegen_diagonal": {
+      "gemessen": "NICHT MOEGLICH an diesem Datensatz.",
+      "grund": "Beide Szenen sind mit derselben abgeleiteten Kamera gerechnet: Azimut 145 Grad, Kuerzel sSE, Neigung 0. Das ist eine diagonale Ansicht. Eine frontale kommt in den zwoelf Laeufen nicht vor.",
+      "was_daraus_folgt": "Die Zahlen oben gelten fuer den Fall, den auf-20260907-81 als den GUENSTIGEN bezeichnet. Eure Sorge — «frontal trennt unter Rauschen nicht» — wird von diesem Datensatz weder bestaetigt noch widerlegt.",
+      "was_es_braeuchte": "Dieselben zwei Szenen, dieselben Seeds, Azimut 0 oder 180. Das sind zwoelf zusaetzliche Bilder und rund zwei Minuten Rechenzeit. Sagt Bescheid, dann fahre ich sie — aber es waere ein NEUER Datensatz, und ihr habt ausdruecklich keinen gewollt."
+    },
+    "v6_was_jedes_tor_wirklich_leistet": {
+      "tor_a_rho_maske_schwelle_0.1": {
+        "richtig": "+0.1437 … +0.9931, 12 von 12 ueber der Schwelle",
+        "fremd": "+0.1402 … +0.6698, 12 von 12 ueber der Schwelle",
+        "muell": "-0.7115 … -0.1111, 0 von 12 ueber der Schwelle",
+        "urteil": "Tor A ist der MUELLFAENGER. Zwischen richtiger und fremder Zuordnung trennt es NICHT — die Spannen ueberlappen vollstaendig (0.1402 gegen 0.1437)."
+      },
+      "tor_b_geom_iou_schwelle_0.85": {
+        "richtig": "+0.9257 … +0.9784, 12 von 12",
+        "fremd": "+0.7350 … +0.7766, 0 von 12",
+        "muell": "+0.0000 … +0.4238, 0 von 12",
+        "urteil": "Tor B trennt BEIDES, und mit Abstand: +0.1491 zur Verwechslung, +0.5019 zum Muell."
+      },
+      "der_unbequeme_teil": "An diesen 36 Faellen faengt Tor A keinen einzigen, den Tor B nicht auch faengt. Das ist KEIN Grund, es zu entfernen — ein Tor, das an einem Datensatz nichts zusaetzlich faengt, kann am naechsten der einzige sein, der greift. Aber der Beleg fuer seinen Nutzen entsteht hier nicht, und der Satz «beide Tore tragen» ist an diesem Datensatz nicht belegt.",
+      "wo_tor_a_doch_zaehlt": "Bei C2 und D2 passt die fremde Geometrie besser als die eigene. Ein Tor A mit einer Schwelle, die diese Umkehrung faengt, waere ein echter Zugewinn — aber 0.1 faengt sie nicht, und ich habe die Schwelle nicht angefasst."
+    }
+  },
+  "bemerkungen": [
+    "Keine neue Schwelle, kein neuer Seed, keine neue Szene, kein neues Bild erzeugt. Gerechnet wurde ausschliesslich auf dem Datensatz von auf-20260909-92.",
+    "Die Owner-Ausnahme von der Selbstbindung war fuer diese Messung nicht noetig — sie hat keine Bilder gekostet, nur Rechenzeit fuer die Schaetzung. Rund zwoelf Minuten insgesamt.",
+    "Was ich NICHT gemacht habe: die frontalen Ansichten nachgeholt. Ihr habt einen zweiten Datensatz ausdruecklich ausgeschlossen, und dieser waere einer. Die Frage bleibt damit offen, und sie ist die einzige, die offen bleibt."
+  ],
+  "umgebung": {
+    "gpu_benutzt": true,
+    "gpu_leistungsgrenze_w": 400,
+    "gpu_w_vor_lauf": 14.1,
+    "gpu_gb_vor_lauf": 0.87,
+    "leerlauf_schwellen_eingehalten": true,
+    "netz_benutzt": false,
+    "dauer_min": 12,
+    "schaetzer_lizenz": "Apache-2.0",
+    "non_commercial_gewichte_geladen": false
+  },
+  "fehler": null
+}
