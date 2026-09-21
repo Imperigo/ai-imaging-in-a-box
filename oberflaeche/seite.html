@@ -132,6 +132,12 @@
   .zeichenflaeche img { display: block; width: 100%; height: auto; }
   .zeichenflaeche canvas { position: absolute; inset: 0; width: 100%; height: 100%;
                            touch-action: none; cursor: crosshair; }
+  /* DER GRUNDRISS. Er zeigt das Bauwerk von oben — und nur das Bauwerk: Die Szenenbox
+     enthaelt das Gelaende, und ein Grundriss, in dem das Haus ein Fleck in einer Wiese
+     ist, laedt zu einem Standpunkt ein, der daran vorbeisieht. */
+  #riss { display: block; width: 100%; max-width: 760px; height: auto; margin: 10px 0;
+          border: 1px solid var(--rand); border-radius: 6px; background: #0e1013;
+          cursor: crosshair; touch-action: none; }
   .skizze { border: 1px solid var(--rand); border-radius: 6px; padding: 8px 12px;
             margin-top: 8px; font-size: 13px; }
   .skizze .stand { font-size: 12px; font-weight: 600; letter-spacing: .03em;
@@ -169,6 +175,22 @@
       <div class="balkenrahmen" id="balkenrahmen" hidden><div id="balken"></div></div>
       <div id="laufsatz" class="satz"></div>
       <div id="lauffertige" class="satz"></div>
+    </div>
+  </section>
+
+  <section style="grid-column: 1 / -1">
+    <h2>Standpunkt</h2>
+    <div id="rissgrund" class="meldung">Noch kein Projekt geöffnet.</div>
+    <div id="rissblock" hidden>
+      <div class="knopfzeile">
+        <button id="risszurueck" type="button">Zurücksetzen</button>
+        <label class="leise" for="augenhoeheRiss">Augenhöhe</label>
+        <input id="augenhoeheRiss" type="number" step="0.5" value="1.6" style="width:5.5em">
+        <span class="leise">m</span>
+        <button id="rissuebernehmen" type="button">Standpunkt übernehmen</button>
+      </div>
+      <canvas id="riss" width="760" height="420"></canvas>
+      <div id="risssatz" class="satz"></div>
     </div>
   </section>
 
@@ -396,6 +418,13 @@ async function uebernehmen() {
   for (const e of document.querySelectorAll(".felder input")) {
     werte[e.dataset.name] = ausText(e.value);
   }
+  await einstellungenSchicken(werte);
+}
+
+/** Einstellungen an die Bibliothek geben. Getrennt von `uebernehmen`, damit auch der
+ *  Grundriss denselben Weg nimmt — *zwei Wege, dieselbe Sache, und einer davon
+ *  veraltet.* */
+async function einstellungenSchicken(werte) {
   $("stand").textContent = "übernimmt …";
   try {
     const antwort = await fetch("/api/einstellungen", {
@@ -528,7 +557,7 @@ async function laden() {
     const antwort = await fetch("/api/projekt?ordner=" + encodeURIComponent(ordner));
     const d = await antwort.json();
     if (d.fehler) { $("stand").textContent = d.fehler; return; }
-    zeigeModell(d); zeigeBaum(d); zeigeBilder(d); zeigeSkizzenteil(d);
+    zeigeModell(d); zeigeBaum(d); zeigeBilder(d); zeigeSkizzenteil(d); zeigeGrundriss(d);
     $("stand").textContent = d.bilder.length + " Bilder, " + d.laeufe.length + " Läufe";
   } catch (f) {
     $("stand").textContent = "Die Oberfläche erreicht ihren eigenen Dienst nicht: " + f;
@@ -640,6 +669,146 @@ async function rechnen() {
   } catch (f) {
     $("stand").textContent = "Der Lauf liess sich nicht starten: " + f;
   }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════
+// Der Grundriss — den Standpunkt anklicken statt eintippen
+//
+// Bis zum 21.09.2026 waren `auge` und `blick_auf` ueber diese Flaeche nur als drei
+// getippte Zahlen erreichbar. *Was nur ueber das Eintippen von Koordinaten erreichbar
+// ist, wird nicht benutzt.*
+//
+// Gezeichnet wird die Huellbox des BAUWERKS von oben. Weltkoordinaten mit Z oben: Der
+// Grundriss ist die X/Y-Ebene, die Hoehe ist Z.
+// ══════════════════════════════════════════════════════════════════════════════════
+
+const riss = { bbox: null, auge: null, ziel: null, rand: 0.35 };
+
+/** Weltkoordinate → Bildpunkt auf der Rissflaeche.
+ *
+ *  Massstabsgetreu und mit GLEICHEM Massstab in beiden Richtungen: Ein Grundriss, der
+ *  X anders skaliert als Y, zeigt ein Haus, das es nicht gibt — und ein Standpunkt
+ *  daraus staende anderswo als geklickt. */
+function rissAbbildung() {
+  const c = $("riss"), b = riss.bbox;
+  const breite = b[1][0] - b[0][0], tiefe = b[1][1] - b[0][1];
+  const spanne = Math.max(breite, tiefe) * (1 + 2 * riss.rand) || 1;
+  const massstab = Math.min(c.width, c.height) / spanne;
+  const mx = (b[0][0] + b[1][0]) / 2, my = (b[0][1] + b[1][1]) / 2;
+  return {
+    hin: (x, y) => [c.width / 2 + (x - mx) * massstab,
+                    // Y NACH OBEN, wie auf einem Plan. Auf einer Leinwand waechst y nach
+                    // unten; ohne dieses Minus staende Norden unten.
+                    c.height / 2 - (y - my) * massstab],
+    zurueck: (px, py) => [mx + (px - c.width / 2) / massstab,
+                          my - (py - c.height / 2) / massstab],
+    massstab,
+  };
+}
+
+function zeichneRiss() {
+  const c = $("riss"), g = c.getContext("2d"), b = riss.bbox;
+  g.clearRect(0, 0, c.width, c.height);
+  if (!b) return;
+  const a = rissAbbildung();
+
+  // Das Bauwerk
+  const [x0, y0] = a.hin(b[0][0], b[0][1]);
+  const [x1, y1] = a.hin(b[1][0], b[1][1]);
+  g.fillStyle = "rgba(230,232,236,.12)";
+  g.strokeStyle = "#9aa2ae";
+  g.lineWidth = 1.5;
+  g.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.abs(y1 - y0));
+  g.strokeRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.abs(y1 - y0));
+
+  // Norden, damit die Richtung nicht geraten werden muss
+  g.fillStyle = "#9aa2ae";
+  g.font = "12px system-ui, sans-serif";
+  g.fillText("N ↑", 10, 20);
+
+  if (riss.auge && riss.ziel) {
+    const [ax, ay] = a.hin(riss.auge[0], riss.auge[1]);
+    const [zx, zy] = a.hin(riss.ziel[0], riss.ziel[1]);
+    g.strokeStyle = "#4ea373";
+    g.setLineDash([5, 4]);
+    g.beginPath(); g.moveTo(ax, ay); g.lineTo(zx, zy); g.stroke();
+    g.setLineDash([]);
+  }
+  for (const [punkt, farbe, wort] of [[riss.auge, "#4ea373", "Standpunkt"],
+                                      [riss.ziel, "#c8a53f", "Blickziel"]]) {
+    if (!punkt) continue;
+    const [px, py] = a.hin(punkt[0], punkt[1]);
+    g.fillStyle = farbe;
+    g.beginPath(); g.arc(px, py, 6, 0, Math.PI * 2); g.fill();
+    g.fillText(wort, px + 10, py + 4);
+  }
+}
+
+function rissKlick(e) {
+  if (!riss.bbox) return;
+  const c = $("riss"), r = c.getBoundingClientRect();
+  const a = rissAbbildung();
+  const [x, y] = a.zurueck((e.clientX - r.left) * (c.width / r.width),
+                           (e.clientY - r.top) * (c.height / r.height));
+  // ERSTER KLICK: wo man steht. ZWEITER: wohin man sieht. Danach faengt es von vorn an —
+  // eine Reihenfolge, die man sich merken muss, ist eine Bedienungsanleitung.
+  if (!riss.auge || (riss.auge && riss.ziel)) { riss.auge = [x, y]; riss.ziel = null; }
+  else { riss.ziel = [x, y]; }
+  zeichneRiss();
+  zeigeRisssatz();
+}
+
+function zeigeRisssatz() {
+  if (!riss.auge) {
+    $("risssatz").textContent = "Klicken Sie, wo Sie stehen. Dann, wohin Sie sehen.";
+    return;
+  }
+  if (!riss.ziel) {
+    $("risssatz").textContent = "Standpunkt gesetzt. Jetzt klicken, wohin Sie sehen.";
+    return;
+  }
+  const dx = riss.ziel[0] - riss.auge[0], dy = riss.ziel[1] - riss.auge[1];
+  const weite = Math.hypot(dx, dy);
+  $("risssatz").textContent =
+    `Abstand ${weite.toFixed(1)} m. Übernehmen schreibt 'auge' und 'blick_auf' in die ` +
+    `Einstellungen — die Höhe des Standpunkts kommt aus der Augenhöhe über der ` +
+    `Unterkante des Bauwerks.`;
+}
+
+function zeigeGrundriss(d) {
+  const g = d.grundriss || {};
+  riss.bbox = g.bbox || null;
+  riss.auge = null;
+  riss.ziel = null;
+  $("rissblock").hidden = !riss.bbox;
+  $("rissgrund").hidden = !!riss.bbox;
+  if (!riss.bbox) {
+    $("rissgrund").textContent = g.grund ||
+      "Für dieses Projekt lässt sich kein Grundriss zeichnen.";
+    return;
+  }
+  // DER VORBEHALT DER BIBLIOTHEK WANDERT MIT, auch wenn eine Box da ist.
+  $("risssatz").textContent = "";
+  if (g.grund) $("risssatz").textContent = g.grund;
+  zeichneRiss();
+  zeigeRisssatz();
+}
+
+async function rissUebernehmen() {
+  if (!riss.auge || !riss.ziel) {
+    $("stand").textContent = "Erst Standpunkt und Blickziel anklicken.";
+    return;
+  }
+  const hoehe = Number($("augenhoeheRiss").value) || 1.6;
+  const unterkante = riss.bbox[0][2];
+  // DIE HOEHE DES ZIELS ist die halbe Bauwerkshoehe — nicht der Boden. Wer auf den Boden
+  // zielt, bekommt ein Bild, in dem das Haus nach hinten kippt.
+  const mitte = (riss.bbox[0][2] + riss.bbox[1][2]) / 2;
+  const neu = {
+    auge: [riss.auge[0], riss.auge[1], unterkante + hoehe],
+    blick_auf: [riss.ziel[0], riss.ziel[1], mitte],
+  };
+  await einstellungenSchicken(neu);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════
@@ -836,6 +1005,12 @@ $("radierer").addEventListener("click", () => {
   tafel.radiert = !tafel.radiert;
   $("radierer").textContent = "Radierer: " + (tafel.radiert ? "an" : "aus");
 });
+
+$("riss").addEventListener("pointerdown", rissKlick);
+$("risszurueck").addEventListener("click", () => {
+  riss.auge = null; riss.ziel = null; zeichneRiss(); zeigeRisssatz();
+});
+$("rissuebernehmen").addEventListener("click", rissUebernehmen);
 
 $("laden").addEventListener("click", laden);
 $("rechnen").addEventListener("click", rechnen);

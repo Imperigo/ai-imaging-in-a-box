@@ -173,8 +173,45 @@ Handwerk aus.
   Bestellung, die angenommen und nicht ausgeliefert wird, ist schlimmer als eine
   abgelehnte: Die Ablehnung sieht man.*
 
-### Und sie hört weiterhin nur auf dieser Maschine
+### Sie darf ins Heimnetz — mit Kennwort (E25, 21.09.2026)
 
-Damit ein iPad sie erreicht, müsste sie im Heimnetz hören. **Das ist eine Entscheidung des
-Owners und wird nicht nebenbei getroffen:** Jedes Gerät im selben Netz könnte die Projekte
-dann lesen.
+    python3 oberflaeche/server.py --ordner <projektordner> --im-heimnetz --kennwort-erzeugen
+
+**Fail-closed, und das ist die eigentliche Eigenschaft.** Eine andere Adresse als
+`127.0.0.1` ohne Kennwort ergibt **keinen Server**, sondern einen Satz.
+
+    Eine Sperre, die man vergessen kann, ist im entscheidenden Augenblick vergessen.
+
+Auf `127.0.0.1` bleibt es ohne Kennwort: Dort kommt ohnehin nur diese Maschine heran, und
+wer eine Hürde ohne Gegenüber täglich nimmt, schaltet sie irgendwann ab.
+
+Verglichen wird in gleichbleibender Zeit, **Name und Kennwort, beide immer** — ein `and`
+käme bei falschem Namen früher zurück, und die Dauer wäre wieder eine Auskunft. Das
+Kennwort kommt aus `secrets`: *Ein Zufall, der sich fortrechnen lässt, ist keiner.*
+
+**Und was sie nicht leistet, steht hier, damit es niemand für geleistet hält:** Sie läuft
+über gewöhnliches HTTP. Kennwort und Bilder gehen **unverschlüsselt** durch das Netz. Sie
+hält Geräte fern, die zufällig im selben Netz sind — nicht jemanden, der dort mithört.
+
+Kein TLS, weil ein selbst ausgestelltes Zertifikat auf dem iPad eine Warnung erzeugt, die
+man wegklickt — *und eine Sicherheitswarnung, die man täglich wegklickt, erzieht zum
+Wegklicken.*
+
+## Der Grundriss — den Standpunkt anklicken statt eintippen
+
+`auge` und `blick_auf` waren über diese Fläche erreichbar: als **drei getippte Zahlen**.
+
+    Was nur über das Eintippen von Koordinaten erreichbar ist, wird nicht benutzt.
+
+Der Grundriss kommt aus `aiimaging.glbbox.bauwerksbox` — **ohne Blender**, in
+Sekundenbruchteilen, in Weltkoordinaten mit Z oben. Erster Klick Standpunkt, zweiter Klick
+Blickziel; geschrieben wird über **denselben** Weg wie jede andere Einstellung.
+
+**Gezeichnet wird das Bauwerk, nicht die Szene.** Die Szenenbox enthält das Gelände — ein
+Grundriss, in dem das Haus ein Fleck in einer Wiese ist, lädt zu einem Standpunkt ein, der
+daran vorbeisieht. Lässt sich die Bauwerksbox nicht bestimmen, gibt es **keinen**
+Grundriss und einen Grund: *Die naheliegendste Ersatzantwort ist die, die niemand als
+Ersatz erkennt.*
+
+Das Blickziel liegt auf **halber Gebäudehöhe**. Wer auf den Boden zielt, bekommt ein Bild,
+in dem das Haus nach hinten kippt.

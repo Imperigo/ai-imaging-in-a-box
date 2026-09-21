@@ -5820,6 +5820,51 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **E25: Die Fläche darf ins Heimnetz — mit Kennwort, fail-closed.**
+      Owner-Entscheid 21.09.2026. Die eigentliche Eigenschaft ist nicht das Kennwort,
+      sondern dass man es **nicht vergessen kann**: Eine andere Adresse als `127.0.0.1`
+      ohne Kennwort ergibt keinen Server, sondern einen Satz.
+      *Eine Sperre, die man vergessen kann, ist im entscheidenden Augenblick vergessen.*
+      Verglichen wird in gleichbleibender Zeit, **Name und Kennwort, beide immer** — ein
+      `and` käme bei falschem Namen früher zurück, und die Dauer wäre wieder eine Auskunft.
+      Das Kennwort kommt aus `secrets`: *Ein Zufall, der sich fortrechnen lässt, ist keiner.*
+      **Und der unbequeme Satz steht an drei Stellen und unter einem Wächter:** Das läuft
+      über HTTP, Kennwort und Bilder gehen **unverschlüsselt**. Es hält Geräte fern, die
+      zufällig im Netz sind, nicht jemanden, der mithört. Kein TLS, weil ein selbst
+      ausgestelltes Zertifikat auf dem iPad eine Warnung erzeugt — *und eine
+      Sicherheitswarnung, die man täglich wegklickt, erzieht zum Wegklicken.*
+      Fünf Mutationsproben. Eine fiel zuerst nicht: Ein leeres Kennwort als «keine
+      Anmeldung» zu lesen blieb grün, weil `baue_server` den Fall schon fängt. *Ein
+      Riegel, der nur an einer von zwei Türen hängt, bewacht die andere nicht* — jetzt
+      weist auch `pruefe_anmeldung` ein leeres Kennwort ab, und zwar als **Fehler, nicht
+      als Freibrief.**
+- [x] **Der Standpunkt wird angeklickt, nicht getippt.**
+      `auge` und `blick_auf` waren über die Fläche erreichbar — als **drei getippte
+      Zahlen**. *Was nur über das Eintippen von Koordinaten erreichbar ist, wird nicht
+      benutzt.*
+      Neu zeichnet die Fläche einen **Grundriss** aus `glbbox.bauwerksbox` — ohne Blender,
+      in Sekundenbruchteilen. Erster Klick Standpunkt, zweiter Klick Blickziel, dazu die
+      Augenhöhe. Geschrieben wird über **denselben** Weg wie jede andere Einstellung:
+      *zwei Wege, dieselbe Sache, und einer davon veraltet.*
+      **Gezeichnet wird das Bauwerk, nicht die Szene.** Ein Grundriss, in dem das Haus ein
+      Fleck in einer Wiese ist, lädt zu einem Standpunkt ein, der daran vorbeisieht. Und
+      wo sich die Bauwerksbox nicht bestimmen lässt, gibt es **keinen** Grundriss und
+      einen Grund — *die naheliegendste Ersatzantwort ist die, die niemand als Ersatz
+      erkennt.*
+      Elf Wächter, fünf Mutationsproben. **Zwei fielen zuerst nicht:** Der Rückfall auf
+      die Szenenbox blieb grün, weil die Probe `schrumpfung` las — eine Zahl **neben** der
+      Box. *Ein Wächter, der eine Kennzahl prüft statt des Werts, den sie beschreibt,
+      bewacht die Beschreibung.* Nachgezogen, dann fielen beide.
+- [~] **Der Abgabetermin ist halb beantwortet: früher als Ende Februar 2027.**
+      Ein Datum steht nicht fest. Es ist die erste Angabe, die den Plan **kürzt** statt
+      ihn zu füllen.
+      Die **Reihenfolge** des Verzichts steht jetzt in `docs/PRODUKT_DIE_SCHRITTE.md` —
+      aufgeschrieben, bevor es eng wird. *Eine Streichliste, die man erst macht, wenn es
+      eng wird, streicht das, woran man gerade zuletzt gearbeitet hat.*
+      Zuerst fällt der Rückweg ins Modell (hängt an einem fremden Team), dann die eigene
+      iPad-App, dann der Entwurfsmodus. **Nicht fallen** dürfen die Messung, die Klärung
+      von `auf-128`, der durchgehende Weg und die Protokolle. *Adressat für das Datum:
+      Owner.*
 - [x] **Man kann dem Lauf jetzt zusehen — und die Anzeige lügt dabei nicht.**
       Bis zum 21.09.2026 blieb die Anfrage offen, bis der ganze Lauf fertig war: Minuten,
       in denen die Seite stillstand. *Ein Fortschritt, den niemand sieht, sieht aus wie

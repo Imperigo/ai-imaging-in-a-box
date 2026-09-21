@@ -990,3 +990,322 @@ def test_zwei_gleichzeitige_laeufe_werden_abgewiesen():
 
     assert 'LAUFSTAND.sicht()["laeuft"]' in baustein
     assert baustein.index("laeuft") < baustein.index("Thread")
+
+
+# ------------------------------------------------- 12 · Die Tuer (Owner-Entscheid E25)
+#
+# Damit ein iPad herankommt, muss die Flaeche im Netz hoeren. Hier liegen Gebaeudemodelle.
+# Der Owner hat am 21.09.2026 «ja, mit Kennwort» entschieden — und damit ist die
+# wichtigste Eigenschaft nicht das Kennwort, sondern dass man es nicht VERGESSEN kann.
+
+def test_ohne_kennwort_wird_im_netz_gar_nicht_erst_gebaut(server):
+    """**Fail-closed, und zwar an der einzigen Stelle, an der es zaehlt.**
+
+    *Eine Sperre, die man vergessen kann, ist im entscheidenden Augenblick vergessen.*
+    """
+    for adresse in ("0.0.0.0", "192.168.1.20", "::"):
+        with pytest.raises(server.FlaechenError):
+            server.baue_server(adresse=adresse, anschluss=0)
+
+
+def test_auf_der_eigenen_maschine_bleibt_es_ohne_kennwort(server):
+    """Die Gegenprobe. Auf `127.0.0.1` kommt ohnehin nur diese Maschine heran — ein
+    Kennwort dort waere eine Huerde ohne Gegenueber, und wer es jeden Tag eintippt,
+    schaltet es irgendwann ab."""
+    srv = server.baue_server(adresse="127.0.0.1", anschluss=0)
+    try:
+        assert srv.RequestHandlerClass.kennwort is None
+    finally:
+        srv.server_close()
+
+
+def test_im_netz_mit_kennwort_wird_gebaut(server):
+    """Sonst waere die Probe darueber auch dann gruen, wenn gar nichts mehr gebaut wird."""
+    srv = server.baue_server(adresse="0.0.0.0", anschluss=0, kennwort="geheim")
+    try:
+        assert srv.RequestHandlerClass.kennwort == "geheim"
+    finally:
+        srv.server_close()
+
+
+@pytest.mark.parametrize("kopf", [
+    None, "", "Bearer abc", "Basic", "Basic !!!kein-base64!!!",
+])
+def test_was_keine_gueltige_anmeldung_ist(server, kopf):
+    """Nichts davon kommt herein — und nichts davon wirft eine Ausnahme. Ein Absturz im
+    Anfragebehandler waere selbst eine Auskunft."""
+    assert server.pruefe_anmeldung(kopf, "geheim") is False
+
+
+def test_richtiger_benutzer_und_richtiges_kennwort_kommen_herein(server):
+    import base64 as b64
+    kopf = "Basic " + b64.b64encode(f"{server.BENUTZER}:geheim".encode()).decode()
+
+    assert server.pruefe_anmeldung(kopf, "geheim") is True
+
+
+def test_der_richtige_benutzer_mit_falschem_kennwort_bleibt_draussen(server):
+    import base64 as b64
+    kopf = "Basic " + b64.b64encode(f"{server.BENUTZER}:falsch".encode()).decode()
+
+    assert server.pruefe_anmeldung(kopf, "geheim") is False
+
+
+def test_das_richtige_kennwort_unter_falschem_namen_bleibt_draussen(server):
+    """Sonst waere der Name Zierde — und eine Anmeldung, bei der die Haelfte nicht
+    geprueft wird, ist eine halbe."""
+    import base64 as b64
+    kopf = "Basic " + b64.b64encode(f"fremd:geheim".encode()).decode()
+
+    assert server.pruefe_anmeldung(kopf, "geheim") is False
+
+
+def test_ohne_verlangtes_kennwort_kommt_jeder_herein(server):
+    """`None` heisst ausdruecklich **keine Anmeldung verlangt** — der Zustand auf der
+    eigenen Maschine. Es heisst NICHT «leeres Kennwort»."""
+    assert server.pruefe_anmeldung(None, None) is True
+
+
+def test_ein_leeres_kennwort_ist_kein_kennwort(server):
+    """Wer `--kennwort ''` schreibt, hat keines gesetzt. Es als gueltig zu nehmen hiesse,
+    eine Tuer zu bauen, die jeder mit der Eingabetaste oeffnet."""
+    with pytest.raises(server.FlaechenError):
+        server.baue_server(adresse="0.0.0.0", anschluss=0, kennwort="")
+
+
+@pytest.mark.parametrize("leer", ["", "   ", "\t"])
+def test_auch_die_pruefung_selbst_weist_ein_leeres_kennwort_ab(server, leer):
+    """**Diese Probe gab es zuerst nicht — und eine Mutationsprobe hat das gezeigt.**
+
+    Der Riegel hing nur an `baue_server`; `pruefe_anmeldung` las ein leeres Kennwort als
+    «keine Anmeldung verlangt». Die Mutation, die genau das tut, blieb gruen, weil der
+    Fall auf dem gebauten Weg nicht vorkommt.
+
+        *Ein Riegel, der nur an einer von zwei Tueren haengt, bewacht die andere nicht.*
+
+    Und die Richtung zaehlt: **Ein leeres Kennwort ist ein Fehler, kein Freibrief.** Die
+    gefaehrlichste Abkuerzung ist die, die aus einem Fehler einen zulaessigen Zustand
+    macht.
+    """
+    with pytest.raises(server.FlaechenError):
+        server.pruefe_anmeldung("Basic Zm9vOg==", leer)
+
+
+def test_verglichen_wird_in_gleichbleibender_zeit():
+    """*Ein Vergleich, dessen Dauer vom Inhalt abhaengt, verraet den Inhalt.*
+
+    Ein gewoehnliches `==` bricht beim ersten falschen Zeichen ab. Daraus laesst sich ein
+    Kennwort Zeichen fuer Zeichen erraten, ohne es je ganz zu kennen.
+    """
+    baustein = SERVER_PY.read_text(encoding="utf-8").split("def pruefe_anmeldung", 1)[1] \
+                                                    .split("\ndef ", 1)[0]
+    # NUR DER CODE, ohne den Docstring — sonst zaehlt die Erklaerung als Umsetzung mit.
+    code = baustein.split('"""', 2)[-1]
+
+    assert "hmac.compare_digest(name, BENUTZER)" in code
+    assert "hmac.compare_digest(gegeben, kennwort)" in code
+    # UND BEIDE VOR DEM RUECKGABEWERT. Ein `and` im `return` kaeme bei falschem Namen
+    # frueher zurueck — und damit waere die Dauer wieder eine Auskunft.
+    assert code.index("hmac.compare_digest(gegeben") < code.index("return stimmt_name")
+
+
+def test_das_kennwort_kommt_nicht_aus_random(server):
+    """`random` erzeugt Zahlen, die fuer ein Wuerfelspiel genuegen und fuer ein Kennwort
+    nicht — seine Folge laesst sich aus wenigen Werten fortrechnen.
+
+    *Ein Zufall, der sich fortrechnen laesst, ist keiner.*
+    """
+    quelle = SERVER_PY.read_text(encoding="utf-8")
+    assert "secrets.token_urlsafe" in quelle
+    assert "import random" not in quelle
+
+    a, b = server.erzeuge_kennwort(), server.erzeuge_kennwort()
+    assert a != b and len(a) == server.KENNWORTLAENGE
+
+
+def test_auch_die_seite_selbst_liegt_hinter_der_tuer():
+    """*Eine Tuer, die nur einen von zwei Wegen bewacht, ist keine Tuer.*
+
+    Eine Anmeldung, die nur die Daten schuetzt und die Seite freigibt, schuetzt nichts —
+    die Seite fragt die Daten ja gerade ab.
+    """
+    quelle = SERVER_PY.read_text(encoding="utf-8")
+    for weg in ("def do_GET", "def do_POST"):
+        baustein = quelle.split(weg, 1)[1][:400]
+        assert "_darf_herein" in baustein, f"{weg} geht nicht durch die Tuer"
+
+
+def test_der_unverschluesselte_weg_wird_ausdruecklich_gesagt():
+    """**Die unbequeme Zeile, und sie muss stehenbleiben.**
+
+    Das Kennwort geht ueber gewoehnliches HTTP — also lesbar durch das Netz. Es haelt
+    Geraete fern, die zufaellig im selben WLAN sind, und niemanden, der dort mithoert.
+    Wer das nicht dazusagt, verkauft eine Sicherheit, die es nicht gibt.
+    """
+    quelle = SERVER_PY.read_text(encoding="utf-8")
+    assert "UNVERSCHLÜSSELT" in quelle or "unverschlüsselt" in quelle
+    assert "mithört" in quelle or "mitliest" in quelle
+
+
+# ---------------------------------- 13 · Der Grundriss — den Standpunkt anklicken
+#
+# Bis zum 21.09.2026 waren `auge` und `blick_auf` ueber diese Flaeche nur als DREI
+# GETIPPTE ZAHLEN erreichbar. Das ist derselbe Satz wie immer, nur von der anderen Seite:
+#
+#     Was nur ueber das Eintippen von Koordinaten erreichbar ist, wird nicht benutzt.
+
+@pytest.fixture(scope="module")
+def echte_glb():
+    """Eine wirkliche glb aus dem Repo — keine Attrappe.
+
+    Eine erfundene Datei wuerde hier nichts beweisen: Geprueft wird, dass die Huellbox
+    des BAUWERKS gelesen wird, und dafuer muss eine Szene mit Gelaende darin vorkommen.
+    """
+    pfad = WURZEL / "build" / "beweis" / "02_knoten_multipass" / "szene.glb"
+    if not pfad.is_file():
+        pytest.skip("Die Beweis-glb liegt nicht im Arbeitsbaum.")
+    return pfad
+
+
+def test_der_grundriss_liest_die_huellbox_des_bauwerks(server, echte_glb):
+    """Ohne Blender, hier, in Sekundenbruchteilen — und in Weltkoordinaten mit Z oben."""
+    g = server.grundriss(str(echte_glb), "Y")
+
+    assert g["bbox"] is not None, g["grund"]
+    (x0, y0, z0), (x1, y1, z1) = g["bbox"]
+    assert x1 > x0 and y1 > y0 and z1 > z0
+
+
+def test_das_gelaende_wird_wirklich_abgezogen(server, echte_glb):
+    """**Die Probe, ohne die der Grundriss eine Wiese zeigen koennte.**
+
+    Faellt die Software auf die Szenenbox zurueck, ist das Bauwerk darin ein Fleck — und
+    ein Standpunkt, den jemand darin anklickt, sieht am Haus vorbei. `schrumpfung` ist
+    die Zahl, an der sich ablesen laesst, ob die Gelaenderegel ueberhaupt gegriffen hat.
+    """
+    from aiimaging import glbbox
+
+    g = server.grundriss(str(echte_glb), "Y")
+    roh = glbbox.bauwerksbox(str(echte_glb), up_axis="Y")
+
+    assert roh["schrumpfung"] > 0.1, (
+        f"Die Gelaenderegel hat nur um {roh['schrumpfung']:.3f} verkleinert — dann ist "
+        f"diese Probe an einer Szene gefahren, in der es nichts zu trennen gibt.")
+
+    # UND JETZT DIE EIGENTLICHE FRAGE, und sie hat in der ersten Fassung gefehlt: Es
+    # genuegt nicht, dass die Regel GEGRIFFEN hat — zurueckkommen muss ihr Ergebnis.
+    #
+    # Eine Mutationsprobe hat genau das gezeigt: Ein Rueckfall auf die Szenenbox blieb
+    # gruen, weil die alte Fassung nur `schrumpfung` las — eine Zahl NEBEN der Box.
+    #
+    #     *Ein Waechter, der eine Kennzahl prueft statt des Werts, den sie beschreibt,
+    #     bewacht die Beschreibung.*
+    assert g["bbox"] == roh["bbox_bauwerk"]
+    szene = roh["bbox_szene"]
+    breite_bau = g["bbox"][1][0] - g["bbox"][0][0]
+    breite_szene = szene[1][0] - szene[0][0]
+    assert breite_bau < breite_szene, (
+        "Der Grundriss ist so breit wie die ganze Szene — dann steht dort das Gelaende, "
+        "und ein Standpunkt darin sieht am Haus vorbei.")
+
+
+def test_ohne_hochachse_gibt_es_keinen_grundriss_und_einen_grund(server, echte_glb):
+    """Eine leere Flaeche ohne Grund saehe aus wie ein Fehler der Anzeige."""
+    g = server.grundriss(str(echte_glb), None)
+
+    assert g["bbox"] is None
+    assert "up_axis" in g["grund"]
+
+
+def test_fuer_Z_up_wird_nicht_geraten(server, echte_glb):
+    """Die Bibliothek weigert sich, und ihr Satz kommt unveraendert durch. *Eine geratene
+    Achsenkonvention waere der vierte unvereinbare Vertrag in diesem Projekt.*"""
+    g = server.grundriss(str(echte_glb), "Z")
+
+    assert g["bbox"] is None
+    assert g["grund"], "die Weigerung ohne Begruendung waere schlimmer als keine"
+
+
+def test_ohne_geometrie_sagt_es_das(server):
+    g = server.grundriss(None, "Y")
+
+    assert g["bbox"] is None and "Geometrie" in g["grund"]
+
+
+def test_eine_unlesbare_glb_stuerzt_nicht_ab(server, tmp_path):
+    """Sie kommt als Satz zurueck. Ein Absturz im Anfragebehandler naehme der Seite auch
+    alles andere weg — die Bilder, den Knotenbaum, die Skizzen."""
+    g = server.grundriss(str(tmp_path / "gibt-es-nicht.glb"), "Y")
+
+    assert g["bbox"] is None and g["grund"]
+
+
+def test_der_riss_rechnet_in_beiden_richtungen_mit_demselben_massstab():
+    """Ein Grundriss, der X anders skaliert als Y, zeigt ein Haus, das es nicht gibt —
+    und ein Standpunkt daraus staende anderswo als geklickt."""
+    baustein = SEITE.read_text(encoding="utf-8").split("function rissAbbildung", 1)[1] \
+                                                .split("\nfunction ", 1)[0]
+
+    assert baustein.count("massstab") >= 3
+    assert "Math.max(breite, tiefe)" in baustein, "sonst zwei Massstaebe"
+    # UND DIE FLAECHE MUSS AUCH HINEINPASSEN. `c.width` allein zeichnet bei einem
+    # breiteren als hohen Feld ueber den unteren Rand hinaus — der Standpunkt waere dort
+    # anklickbar, wo nichts zu sehen ist.
+    assert "Math.min(c.width, c.height)" in baustein
+
+
+def test_norden_zeigt_nach_oben():
+    """Auf einer Leinwand waechst y nach unten. Ohne das Minus staende Norden unten — und
+    jeder Standpunkt waere an der Nordseite, wenn er an der Suedseite gemeint war."""
+    baustein = SEITE.read_text(encoding="utf-8").split("function rissAbbildung", 1)[1] \
+                                                .split("\nfunction ", 1)[0]
+
+    assert "c.height / 2 - (y - my)" in baustein
+
+
+def test_das_blickziel_liegt_auf_halber_hoehe_und_nicht_am_boden():
+    """Wer auf den Boden zielt, bekommt ein Bild, in dem das Haus nach hinten kippt."""
+    baustein = SEITE.read_text(encoding="utf-8").split("async function rissUebernehmen", 1)[1] \
+                                                .split("\n}", 1)[0]
+
+    assert "mitte" in baustein and "riss.bbox[1][2]" in baustein
+
+
+def test_der_standpunkt_nimmt_denselben_weg_wie_jede_andere_einstellung():
+    """*Zwei Wege, dieselbe Sache, und einer davon veraltet.*
+
+    Der Grundriss schreibt `auge` und `blick_auf` ueber dieselbe Funktion wie die
+    Eingabefelder — also auch durch dieselbe Pruefung der Bibliothek.
+    """
+    text = SEITE.read_text(encoding="utf-8")
+    baustein = text.split("async function rissUebernehmen", 1)[1].split("\n}", 1)[0]
+
+    assert "einstellungenSchicken" in baustein
+    assert text.count("/api/einstellungen") == 1, "es gibt genau einen Weg dorthin"
+
+
+def test_ohne_bauwerksbox_wird_NICHT_auf_die_szenenbox_ausgewichen(server, monkeypatch,
+                                                                   echte_glb):
+    """**Der Fall, den die Proben oben nicht betreten** — und eine Mutationsprobe hat es
+    gezeigt: Ein Rueckfall auf die Szenenbox blieb gruen, weil in der Beweis-Szene immer
+    eine Bauwerksbox herauskommt.
+
+    Findet die Gelaenderegel nichts, ist die Szenenbox das Naechstliegende und das
+    Falscheste: Sie enthaelt das Gelaende. Ein Grundriss, in dem das Haus ein Fleck in
+    einer Wiese ist, laedt zu einem Standpunkt ein, der daran vorbeisieht.
+
+        *Die naheliegendste Ersatzantwort ist die, die niemand als Ersatz erkennt.*
+    """
+    from aiimaging import glbbox
+
+    monkeypatch.setattr(glbbox, "bauwerksbox", lambda *a, **k: {
+        "bbox_bauwerk": None,
+        "bbox_szene": [[-100.0, -100.0, 0.0], [100.0, 100.0, 5.0]],
+        "note": "Die Regel hat nichts gefunden.",
+        "schrumpfung": 0.0,
+    })
+
+    g = server.grundriss(str(echte_glb), "Y")
+
+    assert g["bbox"] is None, "die Szenenbox ist hier keine Antwort"
+    assert g["grund"], "und das Schweigen darueber waere schlimmer als die falsche Box"

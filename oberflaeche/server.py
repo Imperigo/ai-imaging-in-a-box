@@ -37,7 +37,9 @@ from __future__ import annotations
 import argparse
 import base64
 import binascii
+import hmac
 import json
+import secrets
 import sys
 import threading
 import time
@@ -51,7 +53,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import inspect                                                  # noqa: E402
 
-from aiimaging import arbeitsgang, importeur, kette, projekt   # noqa: E402
+from aiimaging import arbeitsgang, glbbox, importeur, kette, projekt   # noqa: E402
 
 #: Nur die eigene Maschine. Siehe Modulkopf.
 VORGABE_ADRESSE = "127.0.0.1"
@@ -166,6 +168,74 @@ def _skizzenname(gewuenscht) -> str:
     """
     stempel = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
     return f"skizze-{stempel}.png"
+
+
+#: Der Name, unter dem sich ein Mensch anmeldet. Ein Name allein schützt nichts — er
+#: steht hier, weil ein Browser bei der einfachen Anmeldung nach beidem fragt.
+BENUTZER = "visbox"
+
+#: Wie lang ein selbst erzeugtes Kennwort ist. 32 Zeichen aus ``secrets`` sind mehr, als
+#: ein Heimnetz je erraten würde, und kurz genug, um es einmal abzutippen.
+KENNWORTLAENGE = 32
+
+
+def erzeuge_kennwort() -> str:
+    """Ein Kennwort, das **niemand sich ausgedacht hat.**
+
+    ``secrets`` und nicht ``random``: Der zweite erzeugt Zahlen, die für ein Würfelspiel
+    genügen und für ein Kennwort nicht — seine Folge lässt sich aus wenigen Werten
+    fortrechnen. *Ein Zufall, der sich fortrechnen lässt, ist keiner.*
+    """
+    return secrets.token_urlsafe(KENNWORTLAENGE)[:KENNWORTLAENGE]
+
+
+def pruefe_anmeldung(kopfzeile, kennwort: str | None) -> bool:
+    """Darf diese Anfrage herein?
+
+    Args:
+        kopfzeile: Der ``Authorization``-Kopf der Anfrage, oder ``None``.
+        kennwort: Das erwartete Kennwort. ``None`` heisst **keine Anmeldung verlangt** —
+            das ist der Zustand auf ``127.0.0.1``, wo ohnehin nur diese Maschine
+            herankommt.
+
+    **Verglichen wird mit** ``hmac.compare_digest`` **und nicht mit** ``==``. Ein
+    gewöhnlicher Vergleich bricht beim ersten falschen Zeichen ab und braucht dadurch
+    messbar unterschiedlich lange — daraus lässt sich ein Kennwort Zeichen für Zeichen
+    erraten, ohne es je ganz zu kennen. *Ein Vergleich, dessen Dauer vom Inhalt abhängt,
+    verrät den Inhalt.*
+
+    **Was diese Anmeldung NICHT leistet, und es steht hier, damit es niemand für geleistet
+    hält:** Sie läuft über gewöhnliches HTTP. Kennwort und Bilder gehen **unverschlüsselt**
+    durch das Netz; wer im selben WLAN mitliest, liest mit. Sie hält Geräte fern, die
+    zufällig im selben Netz sind — nicht jemanden, der dort mithört.
+    """
+    if kennwort is None:
+        return True
+    if not str(kennwort).strip():
+        # NICHT «dann eben keine Anmeldung». Ein leeres Kennwort als «keines» zu lesen
+        # macht aus einem Tippfehler eine offene Tuer — und zwar lautlos.
+        #
+        #     *Die gefaehrlichste Abkuerzung ist die, die aus einem Fehler einen
+        #     zulaessigen Zustand macht.*
+        #
+        # `baue_server` faengt den Fall heute schon. Er steht hier trotzdem, weil diese
+        # Funktion auch allein gerufen werden kann — und ein Riegel, der nur an einer von
+        # zwei Tueren haengt, bewacht die andere nicht.
+        raise FlaechenError(
+            "Ein leeres Kennwort ist kein Kennwort. Entweder keines verlangen (None) "
+            "oder eines setzen — beides zugleich gibt es nicht.")
+    if not kopfzeile or not kopfzeile.startswith("Basic "):
+        return False
+    try:
+        roh = base64.b64decode(kopfzeile[6:], validate=True).decode("utf-8")
+    except (ValueError, binascii.Error, UnicodeDecodeError):
+        return False
+    name, _, gegeben = roh.partition(":")
+    # BEIDE VERGLEICHE LAUFEN IMMER. Ein `and` waere hier eine Abkuerzung, die bei
+    # falschem Namen frueher zurueckkaeme — und damit wieder eine Dauer, die etwas verraet.
+    stimmt_name = hmac.compare_digest(name, BENUTZER)
+    stimmt_wort = hmac.compare_digest(gegeben, kennwort)
+    return stimmt_name and stimmt_wort
 
 
 class Laufstand:
@@ -606,6 +676,51 @@ def _bild_fuer_die_flaeche(eintrag: dict, ordner=None) -> dict:
     }
 
 
+def grundriss(glb, up_axis) -> dict:
+    """Die Hüllbox des **Bauwerks** — damit ein Mensch den Standpunkt anklicken kann.
+
+    Bis zum 21.09.2026 war der Standpunkt über diese Fläche nur als **drei getippte
+    Zahlen** erreichbar. Das ist derselbe Satz wie immer, nur von der anderen Seite:
+
+        *Was nur über das Eintippen von Koordinaten erreichbar ist, wird nicht benutzt.*
+
+    Gelesen wird mit :func:`aiimaging.glbbox.bauwerksbox` — **ohne Blender**, hier, in
+    Sekundenbruchteilen. Zurück kommt die Box in Weltkoordinaten mit Z oben; der Grundriss
+    ist damit die X/Y-Ebene und die Höhe Z.
+
+    Returns:
+        ``{bbox, grund, schrumpfung}``. ``bbox`` ist ``None``, wenn sich nichts lesen
+        liess — **und ``grund`` sagt dann warum.** Eine leere Fläche ohne Grund sähe aus
+        wie ein Fehler der Anzeige.
+    """
+    if not glb:
+        return {"bbox": None, "grund": "Dieses Projekt hat keine umgewandelte Geometrie.",
+                "schrumpfung": None}
+    if not up_axis:
+        return {"bbox": None, "schrumpfung": None,
+                "grund": ("Welche Achse oben ist, steht für dieses Modell nicht fest — "
+                          "ohne das lässt sich kein Grundriss zeichnen. Oben unter "
+                          "up_axis 'Y' oder 'Z' angeben.")}
+    try:
+        befund = glbbox.bauwerksbox(glb, up_axis=up_axis)
+    except glbbox.GlbError as fehler:
+        # DER SATZ DER BIBLIOTHEK, unveraendert. Er erklaert unter anderem, warum es fuer
+        # Z-up keine geratene Umrechnung gibt.
+        return {"bbox": None, "grund": str(fehler), "schrumpfung": None}
+    except OSError as fehler:
+        return {"bbox": None, "grund": f"Die glb liess sich nicht lesen: {fehler}",
+                "schrumpfung": None}
+
+    return {
+        "bbox": befund.get("bbox_bauwerk"),
+        # DIE SZENENBOX WIRD NICHT ERSATZWEISE GENOMMEN. Sie enthaelt das Gelaende, und
+        # ein Grundriss, in dem das Bauwerk ein Fleck in einer Wiese ist, laedt zu einem
+        # Standpunkt ein, der am Haus vorbeisieht.
+        "grund": befund.get("note") or "",
+        "schrumpfung": befund.get("schrumpfung"),
+    }
+
+
 def sicht(ordner) -> dict:
     """Alles, was die Seite über ein Projekt zeigt — in einem Stück.
 
@@ -663,6 +778,11 @@ def sicht(ordner) -> dict:
         # DIE SKIZZEN, unveraendert aus der Mappe. Kein Urteil, keine Umrechnung — die
         # Flaeche reicht durch, was die Bibliothek fuehrt.
         "skizzen": p.get("skizzen") or [],
+        # DER GRUNDRISS, damit der Standpunkt anklickbar wird statt tippbar.
+        "grundriss": grundriss(
+            einfuhr.get("glb"),
+            (p.get("einstellungen") or {}).get("up_axis")
+            or (einfuhr.get("hochachse") if einfuhr.get("hochachse_steht_fest") else None)),
         "laeufe": p.get("laeufe") or [],
         # WAS DIESE FLAECHE NICHT KANN, steht in ihr selbst und nicht nur im LIESMICH.
         # Eine Flaeche, die ihre Grenzen nur in einer Datei daneben nennt, hat sie fuer
@@ -679,8 +799,33 @@ class Flaeche(BaseHTTPRequestHandler):
     """Übersetzt Anfragen in Bibliotheksaufrufe. Mehr tut sie nicht."""
 
     ordner: Path | None = None
+    kennwort: str | None = None
     server_version = "Visbox"
     sys_version = ""
+
+    # ------------------------------------------------------------------- die Tuer
+    def _darf_herein(self) -> bool:
+        """Jede Anfrage geht hier durch — **auch die nach der Seite selbst.**
+
+        Eine Anmeldung, die nur die Daten schützt und die Seite freigibt, schützt nichts:
+        Die Seite fragt die Daten ja gerade ab. *Eine Tür, die nur einen von zwei Wegen
+        bewacht, ist keine Tür.*
+        """
+        if pruefe_anmeldung(self.headers.get("Authorization"), self.kennwort):
+            return True
+        roh = json.dumps(
+            {"fehler": "Nicht angemeldet. Benutzername und Kennwort stehen im Fenster, "
+                       "in dem Visbox gestartet wurde."},
+            ensure_ascii=False).encode("utf-8")
+        self.send_response(401)
+        # DER BROWSER FRAGT ERST, WENN ER DAS HIER SIEHT. Ohne diesen Kopf bekaeme der
+        # Benutzer eine Fehlermeldung statt eines Anmeldefensters.
+        self.send_header("WWW-Authenticate", 'Basic realm="Visbox", charset="UTF-8"')
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(roh)))
+        self.end_headers()
+        self.wfile.write(roh)
+        return False
 
     # -------------------------------------------------------------- kleine Handgriffe
     def _sende(self, nutzlast: dict, code: int = 200) -> None:
@@ -705,6 +850,8 @@ class Flaeche(BaseHTTPRequestHandler):
 
     # -------------------------------------------------------------------------- lesen
     def do_GET(self) -> None:                        # noqa: N802 — Name der Basisklasse
+        if not self._darf_herein():
+            return
         weg = urllib.parse.urlparse(self.path)
         if weg.path in ("/", "/index.html"):
             roh = SEITE.read_bytes()
@@ -772,6 +919,8 @@ class Flaeche(BaseHTTPRequestHandler):
 
     # ------------------------------------------------------------------------ handeln
     def do_POST(self) -> None:                       # noqa: N802 — Name der Basisklasse
+        if not self._darf_herein():
+            return
         laenge = int(self.headers.get("Content-Length") or 0)
         try:
             wunsch = json.loads(self.rfile.read(laenge) or b"{}")
@@ -1000,14 +1149,33 @@ def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict) -
 
 
 def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
-                anschluss: int = VORGABE_ANSCHLUSS) -> HTTPServer:
+                anschluss: int = VORGABE_ANSCHLUSS, kennwort=None) -> HTTPServer:
     """Den Server bauen, **ohne ihn zu starten** — damit ein Test ihn prüfen kann.
 
     *Eine Funktion, die baut und sofort losläuft, ist von aussen nicht prüfbar* — und
     was nicht prüfbar ist, wird nicht geprüft.
+
+    **Fail-closed an der einzigen Stelle, an der es zählt** (21.09.2026, Owner-Entscheid
+    E25): Wer eine andere Adresse als ``127.0.0.1`` wählt, macht diese Fläche im Netz
+    erreichbar — und hier liegen die Gebäudemodelle von jemandem. Ohne Kennwort wird sie
+    dann **nicht gebaut**.
+
+        *Eine Sperre, die man vergessen kann, ist im entscheidenden Augenblick vergessen.*
+
+    Raises:
+        FlaechenError: Nicht-lokale Adresse ohne Kennwort.
     """
+    if adresse != VORGABE_ADRESSE and not kennwort:
+        raise FlaechenError(
+            f"Diese Fläche soll auf {adresse!r} hören und damit im Netz erreichbar sein — "
+            f"ohne Kennwort wird das nicht gebaut. Hier liegen Gebäudemodelle, und jedes "
+            f"Gerät im selben Netz käme heran.\n"
+            f"Mit --kennwort ein eigenes setzen, oder --kennwort-erzeugen und das "
+            f"angezeigte verwenden.")
+
     klasse = type("FlaecheMitOrdner", (Flaeche,),
-                  {"ordner": Path(ordner) if ordner else None})
+                  {"ordner": Path(ordner) if ordner else None,
+                   "kennwort": kennwort or None})
     return HTTPServer((adresse, anschluss), klasse)
 
 
@@ -1017,13 +1185,40 @@ def main(argv=None) -> int:
     ap.add_argument("--adresse", default=VORGABE_ADRESSE,
                     help="Vorgabe 127.0.0.1 — nur die eigene Maschine. Siehe LIESMICH.")
     ap.add_argument("--anschluss", type=int, default=VORGABE_ANSCHLUSS)
+    ap.add_argument("--kennwort", default=None,
+                    help="Kennwort für die Anmeldung. Pflicht, sobald --adresse nicht "
+                         "127.0.0.1 ist.")
+    ap.add_argument("--kennwort-erzeugen", action="store_true",
+                    help="Ein zufälliges Kennwort erzeugen und anzeigen.")
+    ap.add_argument("--im-heimnetz", action="store_true",
+                    help="Auf allen Adressen hören, damit ein iPad herankommt. Verlangt "
+                         "ein Kennwort — und zeigt an, was das bedeutet.")
     a = ap.parse_args(argv)
 
-    server = baue_server(ordner=a.ordner, adresse=a.adresse, anschluss=a.anschluss)
-    print(f"Visbox läuft auf http://{a.adresse}:{a.anschluss}  (Strg-C beendet)")
-    if a.adresse != VORGABE_ADRESSE:
-        print("ACHTUNG: Diese Fläche ist von aussen erreichbar. Hier liegen "
-              "Gebäudemodelle — sie werden damit weitergegeben.")
+    adresse = "0.0.0.0" if a.im_heimnetz else a.adresse
+    kennwort = a.kennwort
+    if getattr(a, "kennwort_erzeugen", False) and not kennwort:
+        kennwort = erzeuge_kennwort()
+
+    try:
+        server = baue_server(ordner=a.ordner, adresse=adresse, anschluss=a.anschluss,
+                             kennwort=kennwort)
+    except FlaechenError as fehler:
+        # KEIN STACKTRACE. Das ist der eine Fehler, den ein Mensch beim Start wirklich
+        # sieht, und er ist fuer ihn geschrieben.
+        print(str(fehler))
+        return 2
+
+    print(f"Visbox läuft auf http://{adresse}:{a.anschluss}  (Strg-C beendet)")
+    if kennwort:
+        print(f"  Anmeldung:  Benutzer {BENUTZER!r}   Kennwort {kennwort}")
+    if adresse != VORGABE_ADRESSE:
+        print("  ACHTUNG: Diese Fläche ist im Netz erreichbar. Sie läuft über "
+              "gewöhnliches HTTP —\n"
+              "  Kennwort und Bilder gehen UNVERSCHLÜSSELT durch das Netz. Das Kennwort "
+              "hält\n"
+              "  Geräte fern, die zufällig im selben Netz sind, nicht jemanden, der dort "
+              "mithört.")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

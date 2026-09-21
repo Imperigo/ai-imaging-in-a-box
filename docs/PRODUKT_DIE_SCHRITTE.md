@@ -67,7 +67,7 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 | # | Schritt | Stand | Woran es noch hängt |
 |---|---|---|---|
 | 1 | **Modell rein** | **gebaut** | Blender hat der Importeur nur einmal wirklich gesehen (`auf-126`). |
-| 2 | **Kamera** | **gebaut**, aber nicht bedienbar | Die Software wählt den Standpunkt selbst. Von Hand wählen geht nur über die Bibliothek. |
+| 2 | **Kamera** | **gebaut und bedienbar** | Seit 21.09. klicken Sie Standpunkt und Blickrichtung im Grundriss an. |
 | 3 | **Blender-Render** | **gebaut** | Läuft nur, wo Blender liegt — also bis heute nur auf der Werkstattmaschine. |
 | 4 | **KI-Bild** | **gebaut** | Braucht eine Grafikkarte. Der Vorgabeweg lief dort drei Wochen lang gar nicht (repariert 21.09.). |
 | 5 | **hineinzeichnen** | **halb gebaut** | Zeichnen geht seit 21.09. Rechnen nicht — unser Modell nimmt kein Bild an. |
@@ -84,6 +84,8 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 | **Die Bildanzeige** | **neu am 21.09.2026** | Zeigt die Bilder selbst, mit dem Prüfvermerk **auf** dem Bild. |
 | **Die Zeichenfläche** | **neu am 21.09.2026** | Mit dem Stift ins Bild zeichnen, ablegen. Für iPad gebaut. |
 | **Zusehen beim Rechnen** | **neu am 21.09.2026** | Die Seite bleibt bedienbar und zeigt, wo der Lauf steht. |
+| **Der Grundriss** | **neu am 21.09.2026** | Standpunkt und Blickziel anklicken statt Zahlen tippen. |
+| **Die Anmeldung** | **neu am 21.09.2026** | Die Fläche darf ins Heimnetz — nur mit Kennwort. |
 
 ---
 
@@ -115,6 +117,48 @@ Auf der Werkstattmaschine lief das KI-Bild **überhaupt nicht** — die Software
 39 GB Grafikspeicher für einen Lauf, der 25 braucht, und wich deshalb auf einen langsamen
 Weg aus, der stirbt. Repariert; die Hälfte des Fehlers (der Ausweichweg selbst) ist
 gemessen bestellt und noch offen.
+
+### 21.09.2026 · Der Standpunkt wird angeklickt, nicht getippt
+
+Bisher entschied die Software allein, von wo das Gebäude gezeigt wird. Der Blickpunkt war
+zwar einstellbar — aber nur, indem man **drei Zahlen eintippt**. Das ist dasselbe, wie es
+gar nicht zu können.
+
+Jetzt zeigt die Oberfläche einen **Grundriss**: das Gebäude von oben, massstäblich, Norden
+oben. Erster Klick — hier stehe ich. Zweiter Klick — dorthin sehe ich. Dazu ein Feld für
+die Augenhöhe. «Übernehmen» schreibt es in die Einstellungen, und beim nächsten Lauf gilt
+es.
+
+**Zwei Kleinigkeiten, die den Unterschied machen:**
+
+* **Gezeichnet wird das Gebäude, nicht das Gelände.** Die Software trennt beides. Ein
+  Grundriss, in dem das Haus ein Fleck in einer Wiese ist, lädt zu einem Standpunkt ein,
+  der daran vorbeisieht.
+* **Das Blickziel liegt auf halber Gebäudehöhe**, nicht am Boden. Wer auf den Boden zielt,
+  bekommt ein Bild, in dem das Haus nach hinten kippt.
+
+Wo die Software das Gebäude nicht sicher von der Wiese trennen kann, **zeichnet sie keinen
+Grundriss** und sagt warum — statt eine Fläche zu zeigen, die falsch ist.
+
+### 21.09.2026 · Die Oberfläche darf ins Heimnetz — mit Kennwort
+
+Damit Ihr iPad den Rechner erreicht, muss die Oberfläche im Netz hören. Das geht jetzt,
+und zwar **nur mit Kennwort**: Wer sie ohne startet, bekommt keinen Server, sondern einen
+Satz, der erklärt warum.
+
+So starten Sie sie:
+
+```
+python3 oberflaeche/server.py --ordner <projektordner> --im-heimnetz --kennwort-erzeugen
+```
+
+Benutzername und Kennwort stehen danach im Fenster. Auf dem iPad rufen Sie die Adresse
+auf, die dort steht, und geben beides ein.
+
+**Und der Satz, den ich nicht weglasse:** Das läuft über eine unverschlüsselte Verbindung.
+Das Kennwort hält Geräte fern, die zufällig in Ihrem WLAN sind — **nicht jemanden, der
+dort mithört.** Für ein Heimnetz ist das vertretbar; in einem fremden WLAN wäre es das
+nicht.
 
 ### 21.09.2026 · Man kann dem Lauf zusehen — und die Anzeige behauptet nichts
 
@@ -184,10 +228,9 @@ Vorher stand im Protokoll «mit Ankerbild gerechnet», während ohne gerechnet w
 
 | | Schritt | Warum jetzt |
 |---|---|---|
-| **1** | **Die Zeichenfläche auf dem iPad ausprobieren** | Das kann nur **Sie** — hier gibt es kein iPad und keinen Stift. Es ist die einzige offene Frage, die kein Worker beantworten kann. |
-| **2** | **Entscheiden, ob die Fläche ins Heimnetz darf** | Ohne das erreicht Ihr iPad den Rechner nicht. |
-| **3** | **Den Standpunkt von Hand wählen** | Die Software entscheidet ihn heute allein. Für ein Architekturbild ist der Blickpunkt keine Nebensache. |
-| **4** | **Schritt 5 fertig machen** | Zeichnen geht. Rechnen ist **hardwareseitig blockiert** — siehe unten. |
+| **1** | **Die Zeichenfläche auf dem iPad ausprobieren** | Das kann nur **Sie** — hier gibt es kein iPad und keinen Stift. Es ist die einzige offene Frage, die kein Worker beantworten kann. Alles dafür ist jetzt gebaut. |
+| **2** | **Das Abgabedatum nennen** | Sie haben «früher als Februar» gesagt. Ohne das Datum kann ich nicht sagen, was wegfällt — nur, in welcher Reihenfolge. |
+| **3** | **Schritt 5 fertig machen** | Zeichnen geht. Rechnen ist **hardwareseitig blockiert** — siehe unten. |
 
 ---
 
@@ -223,10 +266,45 @@ es entscheidet, wie Schritt 5 aussieht.
 
 ---
 
+## Wenn die Zeit knapper wird — was zuerst wegfällt, und warum
+
+**Sie haben am 21.09.2026 gesagt: früher als Ende Februar 2027.** Das Datum kenne ich
+nicht, und ohne Datum kann ich nicht sagen, *wie viel* wegfällt. Die **Reihenfolge** kann
+ich sagen, und sie steht hier, damit sie nicht im Januar unter Zeitdruck entsteht.
+
+> *Eine Streichliste, die man erst macht, wenn es eng wird, streicht das, woran man
+> gerade zuletzt gearbeitet hat.*
+
+**Fällt zuerst — und tut am wenigsten weh:**
+
+| | Was | Warum es verzichtbar ist |
+|---|---|---|
+| **1** | **Schritt 7, der Rückweg ins Modell** | Er hängt an einem fremden Team und einem Vertrag, den es noch nicht gibt. Das ist Aufwand, den wir nicht allein steuern — und die Arbeit steht auch ohne ihn. |
+| **2** | **Eine eigene iPad-App** | Die Seite im Browser ist die Antwort, bis gemessen ist, dass sie nicht genügt. Eine App wäre ein zweiter Quelltext für dieselbe Fähigkeit. |
+| **3** | **Schritt 5 und 6, der Entwurfsmodus** | Er ist heute hardwareseitig blockiert. Bleibt er es, fällt er von selbst — und die Arbeit verliert eine Anwendung, nicht ihr Ergebnis. |
+| **4** | **Weitere Bequemlichkeit in der Oberfläche** | Warteschlange für zwei Läufe, feinere Anzeigen, mehr Bedienelemente. Angenehm, trägt nichts. |
+
+**Fällt nicht — und zwar auch dann nicht, wenn es eng wird:**
+
+| | Was | Warum es bleiben muss |
+|---|---|---|
+| **A** | **Die Messung und ihr Geltungsbereich** | Das ist die Arbeit. Ein Prototyp ohne sie wäre ein Softwareprojekt, kein Forschungsbeitrag. |
+| **B** | **Der Widerspruch 0,93 gegen 0,36** (`auf-128`) | Er sagt, **wie weit** das tragende Ergebnis reicht. Ungeklärt müsste die Arbeit ihr eigenes Hauptergebnis auf «die Szenen eines Tages» einschränken. |
+| **C** | **Der durchgehende Weg: Modell rein → Bild raus** | Ohne ihn gibt es nichts zu messen und nichts zu zeigen. |
+| **D** | **Die Protokolle und das Lexikon** | Sie sind Anhang der Arbeit und entstehen nur laufend. Nachträglich sind sie nicht herstellbar. |
+
+**Was das praktisch heisst, wenn Sie mir das Datum nennen:** Ich rechne rückwärts und sage
+Ihnen, wo die Linie zwischen der oberen und der unteren Tabelle zu liegen kommt. Nicht
+mehr, und nicht weniger.
+
+---
+
 ## Was heute nicht gemessen ist, und darum nicht behauptet wird
 
 * **Auf einem fremden Rechner ist die Oberfläche nie geöffnet worden.** Ob der Browser
   einer anderen Person dieselbe Seite gleich darstellt: unbekannt.
+* **Das Abgabedatum ist nicht bekannt.** «Früher als Ende Februar 2027» ist die einzige
+  Angabe. Jede Planung darunter ist eine **Arbeitsannahme** und steht überall als solche da.
 * **Und auf einem iPad erst recht nicht.** Ob sich eine Browserseite dort wie eine
   Zeichen-App *anfühlt*, ist nicht gemessen und von hier aus nicht messbar. Das entscheidet
   kein Schreibtisch, sondern ein Mensch mit einem Stift. **Fällt die Probe durch, ist eine

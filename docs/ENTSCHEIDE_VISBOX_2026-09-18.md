@@ -650,15 +650,65 @@ und nicht vergessen werden will.
 
 ---
 
+## E25 · Die Fläche darf ins Heimnetz — **mit Kennwort, und mit gesagtem Vorbehalt**
+
+**Owner-Entscheid 21.09.2026.** Damit ein iPad die Fläche erreicht, muss sie im Netz
+hören statt nur auf dem Rechner selbst. Gewählt wurde **«ja, mit Kennwort»**.
+
+### Was gebaut ist
+
+**Fail-closed**, und das ist die eigentliche Eigenschaft: Wer eine andere Adresse als
+`127.0.0.1` wählt und **kein** Kennwort setzt, bekommt keinen Server, sondern einen Satz.
+
+> *Eine Sperre, die man vergessen kann, ist im entscheidenden Augenblick vergessen.*
+
+Auf `127.0.0.1` bleibt es ohne Kennwort. Dort kommt ohnehin nur diese Maschine heran, und
+wer eine Hürde ohne Gegenüber jeden Tag nimmt, schaltet sie irgendwann ab.
+
+Verglichen wird in gleichbleibender Zeit (`hmac.compare_digest`), Name **und** Kennwort,
+beide immer. Das Kennwort kommt aus `secrets`, nicht aus `random`: *Ein Zufall, der sich
+fortrechnen lässt, ist keiner.*
+
+### Was diese Anmeldung **nicht** leistet
+
+Sie läuft über gewöhnliches HTTP. **Kennwort und Bilder gehen unverschlüsselt durch das
+Netz.** Wer im selben WLAN mitliest, liest mit.
+
+Sie hält Geräte fern, die zufällig im selben Netz sind — nicht jemanden, der dort mithört.
+Das steht im Quelltext, im LIESMICH und beim Start auf dem Bildschirm, und eine Probe hält
+fest, dass es stehenbleibt.
+
+**Warum kein TLS:** Ein selbst ausgestelltes Zertifikat erzeugt auf dem iPad eine Warnung,
+die man wegklicken muss — und eine Sicherheitswarnung, die man täglich wegklickt, erzieht
+zum Wegklicken. Ein echtes Zertifikat braucht einen Namen im Netz und eine Stelle, die ihn
+bestätigt. *Für ein Heimnetz mit einem Benutzer ist das die teurere Hälfte einer Lösung,
+deren billigere Hälfte hier genügt* — solange danebensteht, was sie nicht kann.
+
+### Was daran noch offen ist
+
+Wer das Kennwort einmal hat, hat es dauerhaft: Es gibt kein Abmelden und keinen Ablauf.
+Für ein Heimnetz mit einem Menschen ist das vertretbar; **sobald jemand Drittes die Fläche
+sehen soll, ist es das nicht mehr.**
+
+---
+
 Diese zwei sind **Tatsachen, keine Wahl**. Ich trage sie nicht als entschieden ein.
 
-## O1 · Der Abgabetermin und die Form (F59) — **offen**
+## O1 · Der Abgabetermin und die Form (F59) — **halb beantwortet, 21.09.2026**
 
 Ich weiss nicht, wann abzugeben ist, in welchem Umfang und in welcher Form. **Der ganze
 Plan hängt daran**, denn er wird rückwärts vom Termin gerechnet.
 
-*Bis zur Antwort rechne ich mit: Abgabe Ende Februar 2027, schriftliche Arbeit plus
-Software als Anhang.* Sagen Sie mir das Datum, und ich richte den Plan danach aus.
+**Neu am 21.09.2026:** Der Owner hat geantwortet — **früher als Ende Februar 2027**. Ein
+Datum steht noch nicht fest.
+
+Das ist keine Kleinigkeit und auch keine Formalie: Es ist die erste Angabe, die den Plan
+**kürzt** statt ihn zu füllen. Was zuerst wegfällt, steht in
+`docs/PRODUKT_DIE_SCHRITTE.md` — und zwar **begründet, nicht nach Gefühl**.
+
+*Bis zum Datum rechne ich weiter mit Ende Februar 2027 als oberer Schranke und behandle
+alles darunter als möglich.* **Das ist eine Arbeitsannahme und keine Auskunft** — sie
+steht überall dort, wo sie etwas trägt, ausdrücklich als solche da.
 
 ## O2 · Eine Maschine zum Messen (F49, berührt E12/E15/E16) — **offen**
 

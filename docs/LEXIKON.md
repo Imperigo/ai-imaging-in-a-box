@@ -983,6 +983,11 @@ langfristig Zinsen kosten. Nicht per se schlecht, aber buchführungspflichtig.
 
 **Fail-closed** — Entwurfshaltung: Im Zweifel oder bei Störung *nicht* handeln. Für
 teure, nicht rückholbare Vorgänge wie GPU-Renderläufe die richtige Grundeinstellung.
+*Zweites Beispiel im Projekt, seit 21.09.2026 (E25):* Wer die Oberfläche im Netz
+erreichbar machen will und **kein Kennwort** setzt, bekommt keinen Server, sondern eine
+Erklärung. Das Gegenteil wäre: Sie startet, und der Schutz fehlt still.
+*Der Satz dazu:* **Eine Sperre, die man vergessen kann, ist im entscheidenden Augenblick
+vergessen.**
 
 **Fail-open** — Das Gegenstück: Bei einer Störung wird weitergemacht statt angehalten.
 Vertretbar nur dort, wo das Hauptergebnis auch ohne den gestörten Teilschritt gültig
@@ -3948,6 +3953,21 @@ bequem ausging — bis der nächste, etwas grössere Lauf stirbt. Die Zahl steht
 21.09.2026 in jedem Ergebnis, und unter zwei Gigabyte meldet sich der Kurzbefund.
 *Negativ heisst:* Es reichte nicht, also wurde ausgelagert.
 
+**Vergleich in gleichbleibender Zeit** — Zwei Kennwörter so vergleichen, dass es immer
+gleich lange dauert, egal wo der erste Unterschied liegt.
+*Warum das nötig ist:* Ein gewöhnlicher Vergleich hört beim ersten falschen Zeichen auf.
+Wer misst, wie lange die Antwort braucht, kann daraus ein Kennwort Zeichen für Zeichen
+erraten — ohne es je ganz zu kennen.
+*Der Satz dazu:* **Ein Vergleich, dessen Dauer vom Inhalt abhängt, verrät den Inhalt.**
+
+**Unverschlüsselte Verbindung (HTTP)** — Eine Verbindung, bei der alles im Klartext durch
+das Netz geht: die Bilder, die Namen, und auch das Kennwort.
+*Im Projekt:* So läuft die Oberfläche, auch im Heimnetz. Das Kennwort hält Geräte fern,
+die zufällig im selben Netz sind — **nicht** jemanden, der dort mithört.
+*Und warum es so bleibt:* Die verschlüsselte Fassung bräuchte ein Zertifikat. Ein selbst
+ausgestelltes erzeugt auf dem Tablet eine Warnung, die man wegklickt — *und eine
+Sicherheitswarnung, die man täglich wegklickt, erzieht zum Wegklicken.*
+
 **Belegter Fortschritt und Lebenszeichen** — Zwei Auskünfte über einen laufenden
 Rechenvorgang, die leicht verwechselt werden und **nie gleich aussehen dürfen**.
 *Belegter Fortschritt:* Es ist gezählt worden, wie viel schon getan ist, und es steht
@@ -5219,6 +5239,7 @@ System laufen.
 | 2026-09-21 | Aus dem Owner-Entscheid zum Skizzenmodus (E23): **Darstellungsmodus und Entwurfsmodus**, **Erfundenes Volumen** |
 | 2026-09-21 | Aus der Zeichenflaeche fuer das iPad (E24): **Zeigerereignisse (Pointer Events)**, **Leinwand (Canvas)** |
 | 2026-09-21 | Aus dem Zusehen beim Rechnen: **Belegter Fortschritt und Lebenszeichen**, **Hintergrundfaden (Thread)** |
+| 2026-09-21 | Aus der Anmeldung fuers Heimnetz (E25): **Vergleich in gleichbleibender Zeit** und **Unverschluesselte Verbindung (HTTP)** neu; **Fail-closed** um das zweite Beispiel erweitert statt ein zweites Mal angelegt — zum zweiten Mal an diesem Tag hat der Waechter gegen Doppeleintraege es gemeldet |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |
