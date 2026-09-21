@@ -366,6 +366,71 @@ Die drei Teilfragen, alle messbar und alle schon angefangen:
   `auf-20260909-92` als noch ausstehend. Die README ist nachgezogen, das Strukturpapier
   folgt beim Schreiben des Plans.
 
+## E21 · Die Zielhardware ist wieder der **HomePC**, nicht der Laptop
+
+**Owner-Entscheid 21.09.2026**, im Wortlaut:
+
+> *«Ist okay, wir lassen das sonst mal mit dem Laptop. Wir nehmen mal meinen HomePC als
+> Standard wie anhin und lassen das Laptop-Thema mal.»*
+
+**Damit ist eine Prämisse vom 18.09.2026 zurückgenommen**, und zwar die, die seither die
+meisten Entscheidungen getragen hat.
+
+### Was am 18.09. galt, und warum es fiel
+
+Am 18.09. war die Zielhardware auf den *Laptop einer Studierenden* (MacBook M1 Max)
+umgestellt worden. Daraus folgte eine Klemme, die als Messauftrag hinausging: Ein Modell
+müsste **drei** Bedingungen zugleich erfüllen — permissiv lizenziert, laptoptauglich, und
+mit der Tiefen-Naht, auf der die Geometrieprüfung steht. Es gibt keines; immer nur zwei
+von dreien.
+
+**Die Messung dazu ist am 21.09. zurückgekommen, und sie ist eindeutig negativ:**
+
+| | |
+|---|---|
+| Die Apache-2.0-LoRA für das kleine Modell | folgt dem **Referenzbild**, nicht der Tiefenkarte |
+| Der integrierte Weg, bei Führung 1,0 | trägt ein wenig (0,299 gegen 0,031), bei Führung 4,0 ist die Bindung weg |
+| Von 78 Bildern bestehen beide Tore | **null** |
+
+*Der Weg über das kleine Modell ist nicht eng — er ist an dieser Messung nicht vorhanden.*
+
+### Was das für die Software heisst
+
+**Am Code ändert sich nichts.** Der Vorgabe-Backbone war nie umgestellt worden; er steht
+seit August auf `z-image-turbo`, und er bleibt es. *Dass hier nichts zurückzubauen ist,
+liegt daran, dass die Umstellung als Messauftrag hinausging statt als Umbau.*
+
+| | |
+|---|---|
+| **Referenzmaschine** | die HomeStation — Ryzen 9 9950X, 96 GB, RTX 5090 |
+| **Vorgabe-Backbone** | `z-image-turbo`, unverändert |
+| **Speichergrenze** | die gemessenen 25,1 GB bleiben stehen |
+| **Zeitgrenzen** | bleiben grosszügig; sie schaden auf einer schnellen Maschine nicht |
+
+**Was stehen bleibt, obwohl das Thema ruht:** der Umrechnungsfaktor für langsame Maschinen
+(`AIIMAGING_ZEITFAKTOR`) und die Ersatzpfade, die kein `/ai`-Verzeichnis voraussetzen.
+Beides ist am 18.09. wegen des Laptops gebaut worden und ist **auch ohne ihn richtig** —
+es macht die Software von einer bestimmten Maschine unabhängig, und genau das verlangt
+Regel 4.
+
+> *Eine Vorkehrung, die aus einer zurückgenommenen Annahme stammt, ist nicht dadurch
+> falsch. Sie ist nur nicht mehr begründet durch sie.*
+
+### Und was dieser Entscheid für die Arbeit bedeutet
+
+Die Vertiefungsarbeit misst damit wieder auf **einer** Maschine, und das ist für die
+Forschungsfrage ein Gewinn: Sie fragt, ob ein Bild dem Gebäudemodell folgt — nicht, auf
+welcher Hardware. *Eine zweite Zielmaschine hätte jede Zahl mit einer zweiten Bedingung
+belastet, ohne die Frage zu schärfen.*
+
+Die Messung `auf-20260918-114` bleibt trotzdem in der Arbeit stehen, und zwar als
+**Ergebnis**, nicht als Vorarbeit: Sie hat gezeigt, dass ein Regler existiert, der alle
+alten Kennzahlen hebt und die Geometrie dabei herausdreht. Das ist die erste Bestätigung
+des tragenden Ergebnisses an fremden Daten — *bestellt für eine Frage, die der Owner heute
+zurückgezogen hat, und wertvoll für eine andere.*
+
+---
+
 # Was ich nicht entscheiden kann
 
 ## E20 · Zwei Schichten — **Geometrielayer, und ein AI-Imaging-Layer darauf**

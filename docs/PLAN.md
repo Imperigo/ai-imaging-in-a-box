@@ -5820,6 +5820,48 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Owner-Entscheid E21: Die Zielhardware ist wieder der HomePC.**
+      *«Wir nehmen mal meinen HomePC als Standard wie anhin und lassen das Laptop-Thema
+      mal.»* Damit ist die Praemisse vom 18.09.2026 zurueckgenommen, die seither die
+      meisten Entscheidungen getragen hat.
+      **Am Code aendert sich nichts** — der Vorgabe-Backbone war nie umgestellt worden.
+      *Dass hier nichts zurueckzubauen ist, liegt daran, dass die Umstellung als
+      Messauftrag hinausging statt als Umbau.*
+      Die Messung `auf-20260918-114` bleibt in der Arbeit, aber als **Ergebnis** statt als
+      Vorarbeit: Sie hat den Regler gefunden, der alle alten Kennzahlen hebt und die
+      Geometrie dabei herausdreht.
+      Was aus der zurueckgenommenen Annahme stammt und bleibt: der Zeitfaktor fuer
+      langsame Maschinen und die Ersatzpfade ohne `/ai`. *Eine Vorkehrung, die aus einer
+      zurueckgenommenen Annahme stammt, ist nicht dadurch falsch. Sie ist nur nicht mehr
+      begruendet durch sie.*
+- [x] **Die Fundation steht: `aiimaging.projekt` — die Mappe, in der die Arbeit
+      zusammenbleibt.**
+      Bis heute konnte dieses Repo viel, aber nicht das Selbstverstaendlichste: *ein
+      Modell oeffnen, etwas damit machen, morgen dort weitermachen.* Darauf setzt alles
+      auf, was noch kommt — der Knotenbaum braucht etwas zum Anzeigen, ein Gespraech mit
+      Kosmo etwas zum Beziehen, eine Variantenstudie eine benannte Basis.
+      **Fuenf Entscheide, jeder mit seinem Preis:** Das Projekt verweist auf das Modell
+      statt es zu schlucken (*eine Kopie waere eine zweite Wahrheit auf der Platte*);
+      beim Oeffnen wird **nichts repariert**, ein geaendertes Modell wird gemeldet; jedes
+      Bild traegt sein Urteil, und `None` heisst NICHT GEMESSEN; die Projektdatei ist
+      lesbarer Text; Regel 3 wird beim Schreiben durchgesetzt und die Zahl der Ersetzungen
+      steht in der Datei.
+      **Sieben Mutationsproben, alle gefallen — zwei davon erst im dritten Anlauf.**
+- [x] **Zwei eigene Fehler, die beide die eigene Probe gefunden hat.**
+      **(a) `1` galt als Urteil.** In Python ist `1 == True`, und `urteil not in (True,
+      False, None)` laesst die Zahlen 1 und 0 durch. Sie landeten als Urteil in der
+      Projektdatei und sahen dort aus wie eine Entscheidung. *Eine Zahl, die sich als
+      Urteil ausgibt, ist schlimmer als gar keines: Sie beantwortet die Frage, ohne sie
+      gestellt zu haben.* Berichtigt mit `is` statt `in`.
+      **(b) Ein Waechter, der zweimal am falschen Ort stand.** Die Probe, die belegen
+      sollte, dass die Dateigroesse in den Fingerabdruck eingeht, fiel bei der Mutation
+      **nicht**. Erster Grund: zwei kleine Dateien, dort wird ohnehin alles gelesen.
+      Zweiter Grund (nach der Berichtigung): das Lesefenster von 64 KiB ist groesser als
+      die Testdatei, also wurde wieder zweimal alles gelesen.
+      *Beim ersten Anlauf prueft der Waechter den falschen Weg. Beim zweiten prueft er den
+      richtigen — unter Bedingungen, unter denen er sich wie der falsche verhaelt.*
+      Berichtigt, indem beide Grenzen uebergebbar wurden; im dritten Anlauf faellt die
+      Mutation.
 - [x] **Die Pruefung hat im ERSTEN Lauf elf Proben gefunden, die an der Maschine hingen.**
       Neun eigene Importeur-Proben und zwei bestehende Naht-Proben starteten zwar keinen
       Prozess — ihr Aufrufer ist eine Attrappe —, riefen aber die Werkzeugsuche auf. Auf

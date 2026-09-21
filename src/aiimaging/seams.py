@@ -75,6 +75,20 @@ TAKT_S = 2.0
 # kaputt ist, macht aus einem langsamen Lauf einen Fehlschlag — und schickt die Nutzerin
 # an die falsche Stelle suchen.
 #
+# ZURUECKGENOMMEN AM 21.09.2026 (Owner-Entscheid E21): Die Zielmaschine ist wieder die
+# HomeStation; das Laptop-Thema ruht. **An diesen Fristen aendert sich trotzdem nichts**,
+# und zwar aus einem Grund, der staerker ist als der Anlass:
+#
+#     Eine Vorkehrung, die aus einer zurueckgenommenen Annahme stammt, ist nicht dadurch
+#     falsch. Sie ist nur nicht mehr begruendet durch sie.
+#
+# Die Durchsicht hat die Fristen in maschinenfeste und maschinengebundene getrennt, und
+# diese Trennung ist auf JEDER Maschine richtig. Eine grosszuegige Frist schadet auf einer
+# schnellen Maschine nicht; eine knappe schadet auf jeder langsamen. Der Umrechnungsfaktor
+# `AIIMAGING_ZEITFAKTOR` bleibt aus demselben Grund: Er macht diese Software von einer
+# bestimmten Maschine unabhaengig, und genau das verlangt Regel 4 — unabhaengig davon,
+# welche Maschine gerade die Referenz ist.
+#
 # WAS DIE DURCHSICHT ERGEBEN HAT, in zwei Sorten getrennt:
 #
 # 1) MASCHINENFEST, weil sie NICHT die Rechenzeit messen, sondern unser eigenes

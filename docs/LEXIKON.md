@@ -4941,6 +4941,28 @@ Gebäude verschiebt den Bildausschnitt, *und niemand sieht ihm an, woher er komm
 Import räumt die Szene darum zuerst leer.
 *Wo im Projekt:* `runners/blender_import_runner.py`, Funktion `_leere_szene`.
 
+**Projekt (die Mappe)** — Der Ort, an dem die Arbeit an *einem* Gebäudemodell
+zusammenbleibt: welches Modell, welche Einstellungen, welche Bilder daraus entstanden sind
+und was die Prüfung zu jedem gesagt hat.
+*Wozu:* Ohne ihn lebt jede Fähigkeit in ihrem eigenen Aufruf, und was dabei herauskommt,
+liegt in Ordnern, deren Zusammenhang nur im Kopf dessen besteht, der sie angelegt hat.
+*Was nicht in einer Datei steht, ist weg.*
+*Die Besonderheit:* Das Projekt **verweist** auf das Modell, statt es zu kopieren — eine
+Kopie wäre eine zweite Wahrheit auf der Platte, und wer danach die eine ändert, hat zwei
+Gebäude.
+*Wo im Projekt:* `aiimaging.projekt`, seit dem 21.09.2026.
+
+**Fingerabdruck (einer Datei)** — Eine kurze Zeichenfolge, an der sich eine Datei
+wiedererkennen lässt, ohne sie ganz aufzubewahren.
+*Wozu:* Damit beim nächsten Öffnen gesagt werden kann, ob das Gebäudemodell noch dasselbe
+ist. Ist es ein anderes geworden, wird **nichts** neu gerechnet und nichts verworfen — es
+wird gemeldet. Die bisherigen Messungen gehören zum alten Stand und gelten dafür weiter.
+*Und der Vorbehalt gehört dazu:* Bei grossen Dateien werden nur Anfang und Ende gelesen.
+Das erkennt eine ersetzte Datei zuverlässig und eine Änderung mitten in einer grossen
+möglicherweise nicht. Der Abdruck sagt darum selbst, welcher Art er ist — *eine Prüfsumme
+ohne Angabe, worüber sie läuft, behauptet mehr, als sie weiss.*
+*Wo im Projekt:* `aiimaging.projekt.fingerabdruck`.
+
 ---
 
 ## 9 · Arbeit mit Claude Code
@@ -4999,6 +5021,7 @@ System laufen.
 | 2026-09-19 | Zum Einlass: **Einlass (Sichtgang an der Tür)**, **Das Format am Inhalt statt an der Endung bestimmen**, **Eine Absage ohne Ausweg ist eine halbe Auskunft** |
 | 2026-09-19 | Zum Einbau und zu den zwei Schichten: **Gebaut, am Gerät unbestätigt**, **Abgelegt ist nicht zugestellt**, **Handeingriff**, **Geometrielayer und AI-Imaging-Layer** |
 | 2026-09-21 | Zum Importeur: **Importeur (3D-Modell-Importeur)**, **Durchreichen**, **Rundreise mit bekannter Wahrheit**, **Der Vorgabewürfel** |
+| 2026-09-21 | Zur Fundation: **Projekt (die Mappe)**, **Fingerabdruck (einer Datei)** |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |

@@ -788,6 +788,12 @@ _eintrag(Backbone(
     # falsch. Gemessen stehen sich **15,55** und **22,89** GB gegenüber — auf einem
     # MacBook M1 Max mit 32 GB Gesamtspeicher ist das kleine bequem und das grosse knapp,
     # aber nicht ausgeschlossen. Wer die Grenze zieht, zieht sie an diesen zwei Zahlen.
+    #
+    # NACHTRAG 21.09.2026 (E21): Die Frage nach dem Laptop ist zurueckgezogen — Referenz
+    # ist wieder die HomeStation, und der Vorgabe-Backbone bleibt `z-image-turbo`. Die
+    # gemessene Zahl bleibt trotzdem hier stehen: Sie ist eine Messung und keine Meinung,
+    # und sie ersetzt eine Schaetzung, die um 62 Prozent danebenlag. *Was gemessen ist,
+    # wird nicht dadurch unrichtig, dass die Frage sich erledigt hat.*
     vram_gb=15.55,
     dateien=_DIFFUSERS_DATEIEN,
     # Geprüft 2026-08-18 an Modellkarte UND LICENSE.md des 4B-Repos: Front-Matter

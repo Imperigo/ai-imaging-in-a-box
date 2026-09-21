@@ -205,8 +205,11 @@ def _ist_absolut(wert, system) -> bool:
 def anwendungsdaten_wurzel(*, system=None, umgebung=None, heim=None) -> Path:
     """Der Ort, an dem dieses Betriebssystem Anwendungsdaten erlaubt.
 
-    **Der Anlass** (18.09.2026, Umstellung auf Visbox): Zielhardware ist der Laptop einer
-    Studierenden — ein MacBook M1 Max, nicht mehr die HomeStation. Der bisherige
+    **Der Anlass** (18.09.2026, Umstellung auf Visbox): Zielhardware war damals der Laptop
+    einer Studierenden — ein MacBook M1 Max, nicht mehr die HomeStation. *Diese Prämisse
+    ist am 21.09.2026 zurückgenommen worden (E21); diese Funktion bleibt.* Sie ersetzt
+    einen Pfad, der nur auf einer Maschine existiert, durch den je System üblichen Ort —
+    das ist unter Regel 4 richtig, gleich welche Maschine die Referenz ist. Der bisherige
     Vorgabepfad ``/ai`` ist dort ein Ordner direkt unter der Systemwurzel, und die ist
     nicht beschreibbar. Wer Visbox startet, bekommt einen Rechtefehler aus dem Inneren
     einer Bibliothek, bevor ein einziges Modell geladen wird. Auf Windows gibt es ``/ai``
