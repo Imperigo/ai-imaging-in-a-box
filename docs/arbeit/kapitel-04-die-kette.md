@@ -85,8 +85,19 @@ gibt, und niemand sieht es ihm an.
 
 **Der Einwand ist berechtigt und stand lange unwidersprochen:** Dieser Graph läuft nicht am
 Produktivweg. Was in der laufenden Software Aufträge abarbeitet, fährt die Stufen als
-gerade Abfolge; `kette.baue_kette` hat ausserhalb seiner Tests und der Beweisskripte bis
-heute **keinen Aufrufer**.
+gerade Abfolge; `kette.baue_kette` hatte ausserhalb seiner Tests und der Beweisskripte
+lange **keinen Aufrufer**.
+
+> **Nachtrag vom 21.09.2026 — der erste ist da, und er ist nicht der Abholer.**
+> `aiimaging.arbeitsgang` ruft `baue_kette` und `fuehre_aus`, um für ein Projekt zu
+> rechnen. Damit hat der Graph seinen ersten Aufrufer **im Produktcode** und nicht mehr
+> nur in Tests.
+>
+> Der Einwand fällt damit nicht weg, er wird genauer: *Der Weg, auf dem heute Aufträge der
+> Werkstatt abgearbeitet werden, benutzt den Graphen weiterhin nicht.* Es gibt jetzt zwei
+> Wege statt einem — den alten geraden für die Aufträge und den neuen über den Graphen für
+> ein Projekt. **Zwei Wege sind nicht besser als einer**, und dass sie dieselbe
+> Speicherregel teilen (siehe unten), macht das erträglich, aber nicht richtig.
 
 Daraus folgt aber nicht, was man zuerst vermutet. Die Frage ist nicht, ob der *Graph* dort
 läuft, sondern ob der *Nutzen* dort ankommt — und das ist messbar. Dieselben vier Läufe,

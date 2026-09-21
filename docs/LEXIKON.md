@@ -4963,6 +4963,28 @@ möglicherweise nicht. Der Abdruck sagt darum selbst, welcher Art er ist — *ei
 ohne Angabe, worüber sie läuft, behauptet mehr, als sie weiss.*
 *Wo im Projekt:* `aiimaging.projekt.fingerabdruck`.
 
+**Arbeitsgang** — Die Stelle, an der die einzelnen Fähigkeiten zu einem Ablauf werden:
+Modell hereinholen, Bilder rechnen, Urteil in die Mappe schreiben.
+*Wozu:* Ohne ihn kann die Software jedes Stück einzeln, und niemand ruft sie in der
+richtigen Reihenfolge. *Ein gebautes Modul ohne Aufrufer ist kein Werkzeug, sondern ein
+Vorrat.*
+*Was er ausdrücklich nicht tut:* selbst rechnen. Er ruft und schreibt auf. Täte er mehr,
+wäre er die Stelle, durch die alles hindurch muss — und dann wäre die Bibliothek keine
+Bibliothek mehr, sondern ein Programm mit einem Einstiegspunkt.
+*Wo im Projekt:* `aiimaging.arbeitsgang`, seit dem 21.09.2026.
+
+**Hochachse** — Welche der drei Raumrichtungen im Gebäudemodell «oben» ist.
+*Wozu das eine Frage ist:* Manche Programme schreiben Z nach oben, andere Y. Das
+Austauschformat glTF hat dafür **gar kein Feld**. Wird die Achse falsch angenommen, liegt
+das Gebäude auf der Seite — und das fällt nirgends auf, weil Tiefenkarte, Kamera und
+Prüfung **gemeinsam** mitkippen. Das Ergebnis ist dann in sich stimmig und vollständig
+falsch.
+*Darum wird sie nicht geraten:* Hat die Software die Datei selbst umgewandelt, weiss sie
+es aus dem eigenen Lauf. Kam eine fremde Datei herein, fragt sie nach. Eine IFC trägt die
+Angabe von sich aus — *der Weg über IFC beantwortet die Frage, statt sie zu stellen.*
+*Wo im Projekt:* `aiimaging.contracts.normalize_up_axis`, `aiimaging.hochachse`,
+`aiimaging.arbeitsgang.rechne`.
+
 ---
 
 ## 9 · Arbeit mit Claude Code
@@ -5022,6 +5044,7 @@ System laufen.
 | 2026-09-19 | Zum Einbau und zu den zwei Schichten: **Gebaut, am Gerät unbestätigt**, **Abgelegt ist nicht zugestellt**, **Handeingriff**, **Geometrielayer und AI-Imaging-Layer** |
 | 2026-09-21 | Zum Importeur: **Importeur (3D-Modell-Importeur)**, **Durchreichen**, **Rundreise mit bekannter Wahrheit**, **Der Vorgabewürfel** |
 | 2026-09-21 | Zur Fundation: **Projekt (die Mappe)**, **Fingerabdruck (einer Datei)** |
+| 2026-09-21 | Zum Einhaengen: **Arbeitsgang**, **Hochachse** |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |

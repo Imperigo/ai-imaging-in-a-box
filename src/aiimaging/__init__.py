@@ -47,7 +47,7 @@ Aufbau
 __version__ = "0.0.2"
 
 from aiimaging import (  # noqa: F401
-    auftrag, auftragspost, backbone, bildlesen, bildschreiben, contracts,
+    arbeitsgang, auftrag, auftragspost, backbone, bildlesen, bildschreiben, contracts,
     einbau, einbetter, einlass, gate, geometrie_qa, importeur,
     graph, herkunft, jobs, kette, konversionstreue, kosmo_naht, lizenzquelle, lora,
     mcp_schemas, paarschwellen, projekt, render, schwellenstudie, seams, stil_qa,

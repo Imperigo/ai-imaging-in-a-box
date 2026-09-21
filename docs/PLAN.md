@@ -5820,6 +5820,34 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Eingehaengt: `aiimaging.arbeitsgang` — Import, Kette und Projekt in einem Ablauf.**
+      Importeur und Projekt waren gebaut und **an keiner Stelle verdrahtet**. *Ein gebautes
+      Modul ohne Aufrufer ist kein Werkzeug, sondern ein Vorrat.*
+      **Und damit hat `kette.baue_kette` seinen ERSTEN Aufrufer im Produktcode** — bis
+      heute gab es ihn nur in Tests und Beweisskripten. Der Posten in Kapitel 4 faellt
+      damit nicht weg, er wird genauer: *Der Weg, auf dem Auftraege der Werkstatt
+      abgearbeitet werden, benutzt den Graphen weiterhin nicht.* Zwei Wege sind nicht
+      besser als einer.
+      **Zwei Entscheide, die man beim Lesen sofort merkt:**
+      (1) Ein **geaendertes Modell haelt den Lauf an** — anders als beim Oeffnen, denn
+      *Oeffnen ist harmlos, Rechnen schreibt ein Urteil in die Mappe.* Der Riegel laesst
+      sich oeffnen (`trotz_aenderung=True`), und dann steht an **jedem** Bild, unter
+      welchem Modellstand es entstand. *Ein Riegel, den man nicht aufmachen kann, wird
+      umgangen; einer, dessen Oeffnen im Ergebnis steht, bleibt sichtbar.*
+      (2) **Jedes erzeugte Bild wird vermerkt, auch das ohne Urteil** — `None` mit Grund,
+      nicht «nichts». Ein Bild ohne Eintrag waere spaeter von einem ohne Pruefung nicht zu
+      unterscheiden, und beide saehen aus wie ein bestandenes.
+      **Sieben Mutationsproben, alle gefallen.**
+- [x] **Die Hochachse wird nicht geraten — und das kam erst beim Einhaengen heraus.**
+      Die Kette weist einen glb-Eingang ohne Hochachse ab, und das ist richtig: glTF hat
+      kein Feld dafuer, und eine falsche Angabe verdreht Tiefenkarte, Kamera und Pruefung
+      **gemeinsam**. *Ein Fehlschlag, der wie ein Erfolg aussieht, wird nicht gefunden — er
+      wird geglaubt.*
+      Der Arbeitsgang unterscheidet darum zwei Faelle, und sie sind verschieden viel wert:
+      **Haben wir selbst umgewandelt** (IFC- oder Blender-Weg), ist Y-up eine Tatsache
+      ueber unseren eigenen Lauf — keine Annahme ueber eine fremde Datei.
+      **Wurde durchgereicht**, wissen wir nichts und fragen nach. Die Absage nennt den
+      Handgriff und den Weg, der die Frage gar nicht erst stellt (ueber IFC).
 - [x] **Owner-Entscheid E21: Die Zielhardware ist wieder der HomePC.**
       *«Wir nehmen mal meinen HomePC als Standard wie anhin und lassen das Laptop-Thema
       mal.»* Damit ist die Praemisse vom 18.09.2026 zurueckgenommen, die seither die
