@@ -91,6 +91,47 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 21.09.2026 · Der ganze Weg war gesperrt — von einer Zahl, die niemand mitgab
+
+Die HomeStation hat sechs Aufträge beantwortet, und einer davon hat den wichtigsten
+Befund seit Tagen gebracht: **Kein Lauf kam bis zum Bild.** Auf zwei ganz verschiedenen
+Wegen brach er an derselben Stelle ab, mit demselben Satz.
+
+**Was los war, in einfachen Worten:** Bevor gerechnet wird, prüft das Programm, ob das
+Modell eine plausible Grösse hat — ein Haus, das versehentlich in Millimetern statt Metern
+steht, soll auffallen, *bevor* die Grafikkarte eine Stunde rechnet. Diese Prüfung braucht
+die Ausdehnung des Modells. Und die verlangte sie vom Aufrufer, statt sie aus der Datei zu
+lesen, in der sie steht. Wer eine Datei vorlegt und ihre Masse nicht auswendig kennt, kam
+nicht durch.
+
+*Eine Angabe, die das Programm selbst ausrechnen kann, darf es nicht verlangen.*
+
+Repariert; das Programm liest die Ausdehnung jetzt aus der Datei. Eine Datei, die es
+nicht lesen kann, wird weiterhin abgelehnt — **es rät nicht.** Fünf Wächter halten das
+fest, und drei Gegenproben belegen, dass sie fallen, wenn man den Fehler zurücklegt.
+
+**Zwei kleinere aus demselben Stapel:**
+
+* Zwei Auskunftsfelder, die sagen, *was bestellt war* und *was wirklich gerechnet wurde*,
+  wurden gebaut, begründet — und eine Funktion vor dem Leser weggeworfen. Sie kommen
+  jetzt an. Und eine Abweichung steht **vorne** statt als Hinweis Nummer sechzehn.
+* Eine Beschreibung behauptete zwei Rückgabewerte, wo drei kamen. Die HomeStation ist
+  daran gescheitert, als sie genau die Stelle prüfen wollte, für die sie gebaut ist.
+
+### 21.09.2026 · Und eine unbequeme Nachricht zum Entwurfsmodus
+
+Das Modell, auf das die Hoffnung fürs Hineinskizzieren lag (`qwen-image-edit-2511`),
+**nimmt kein Eingangsbild an**, solange eine Tiefenkarte mitgeschickt wird: Drei Läufe mit
+drei verschiedenen Bildern ergaben **dasselbe** Bild, bitgenau. Die Tiefenkarte belegt den
+einzigen Bildeingang.
+
+Das ist dieselbe Falle wie am 18.08.2026, nur bei einem anderen Modell — und die
+Tiefenkarte ist im Auftrag heute Pflicht. **Damit hat die Bildstrecke aktuell kein Modell,
+das eine Skizze als Bild annimmt.** Genau davon lebt der Entwurfsmodus.
+
+Das ist der ernsteste offene Posten dieses Tages, und er entscheidet mehr als jede
+Bedienfrage.
+
 ### 21.09.2026 · Zwanzig Bedienfragen beantwortet — und die zwei Geräte werden eines
 
 Der Entwurf stellte zwanzig Fragen, und sie sind alle beantwortet. Sie stehen mit

@@ -101,8 +101,8 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from aiimaging import (
-    backbone, bildlesen, contracts, geometrie_qa, maske, raumkamera, render, seams,
-    tiefenschaetzer, torwaechter,
+    backbone, bildlesen, contracts, geometrie_qa, glbbox, maske, raumkamera, render,
+    seams, tiefenschaetzer, torwaechter,
 )
 from aiimaging.graph import (
     ArtefaktCache, Bedarf, Graph, GraphError, Knoten, inhalts_hash, pruefe_bedarf,
@@ -826,6 +826,33 @@ def _raeume_lesen(ifc_path) -> dict | None:
             "grund": ""}
 
 
+def _erste_bbox(*kandidaten):
+    """Die erste bbox, die wirklich eine ist — ``None`` zaehlt nicht als Angabe.
+
+    Gebraucht, weil ``dict.get(schluessel, ersatz)`` den Ersatz **nur bei fehlendem
+    Schluessel** liefert. Ein gesetztes ``None`` gewinnt dort gegen den Ersatz, und genau
+    daran ist am 21.09.2026 der ganze Kettenweg gescheitert.
+    """
+    for kandidat in kandidaten:
+        if kandidat is not None:
+            return kandidat
+    return None
+
+
+def _bbox_aus_glb(glb_path, up_axis: str):
+    """Die Szenenbox aus der glb selbst — oder ``None``, wenn sie nicht lesbar ist.
+
+    Das ``None`` ist hier die dritte Antwort und keine Ausrede: Wer die Datei nicht lesen
+    kann, weiss nicht, ob der Massstab stimmt, und der Torwaechter lehnt danach mit
+    seiner eigenen Begruendung ab. Was diese Funktion **nicht** tun darf, ist raten — eine
+    erfundene Ausdehnung wuerde die Massstabspruefung stillschweigend bestehen lassen.
+    """
+    try:
+        return glbbox.bauwerksbox(glb_path, up_axis=up_axis)["bbox_szene"]
+    except (glbbox.GlbError, OSError, KeyError):
+        return None
+
+
 def _fuehre_geometrie(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
     """IFC → glb (Subprozess im ``.venv-ifc``) oder glb durchreichen — dann Torwächter.
 
@@ -856,7 +883,12 @@ def _fuehre_geometrie(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
             # „keine Räume".
             "raeume": raeume,
             "up_axis": bericht.get("up_axis", "Y"),
-            "bbox": bericht.get("bbox", p.get("bbox")),
+            # `bericht.get("bbox", p.get("bbox"))` STAND HIER, UND DAS IST DIE FALLE:
+            # Traegt der Report den Schluessel `bbox` mit dem Wert None, gibt `.get` die
+            # None zurueck und nicht den Ersatz. Der zweite Parameter greift nur bei
+            # FEHLENDEM Schluessel, nie bei einem gesetzten None — derselbe Griff, der am
+            # 21.09.2026 schon `homeworker._darf_starten` zu Fall gebracht hat.
+            "bbox": _erste_bbox(bericht.get("bbox"), p.get("bbox")),
             "n_elements": bericht.get("n_elements"),
             "n_triangles": bericht.get("n_triangles"),
         }
@@ -865,7 +897,30 @@ def _fuehre_geometrie(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
             "glb_path": p["glb_path"],
             "raeume": None,
             "up_axis": p["up_axis"],
-            "bbox": p.get("bbox"),
+            # HIER STAND NUR `p.get("bbox")`, UND DAS HAT DEN GANZEN WEG GESPERRT.
+            #
+            # Am 21.09.2026 von der HomeStation auf ZWEI unabhaengigen Wegen gemeldet
+            # (`auf-20260921-127` am Graphenweg, `auf-20260921-136` am Produktweg): Der
+            # Lauf bricht am ERSTEN Knoten mit «Konversion meldet status='ok', traegt
+            # aber keine brauchbare bbox (None)». Der Torwaechter hatte recht — er bekam
+            # wirklich keine. Nur lag das nicht am Modell, sondern daran, dass beim
+            # glb-Eingang niemand die Ausdehnung mitgibt: Der Produktweg wandelt die IFC
+            # beim Import und uebergibt der Kette danach nur noch den glb-Pfad.
+            #
+            # **Eine Angabe, die das Programm aus der Datei selbst ausrechnen kann, darf
+            # es nicht vom Aufrufer verlangen.** Die Ausdehnung einer glb steht in der
+            # glb; sie zu fordern hiess, denjenigen scheitern zu lassen, der die Datei
+            # vorlegt, aber ihre Masse nicht kennt.
+            #
+            # Gemessen wird hier die SZENENbox und nicht die Bauwerksbox, weil der
+            # Torwaechter den Massstab der Konversion prueft — und dafuer zaehlt, was in
+            # der Datei steht, nicht was davon Bauwerk ist. Der Weg ueber die
+            # Bauwerksbox ist der fuer die Kamera; die beiden duerfen nicht verwechselt
+            # werden.
+            #
+            # Eine ausdrueckliche `bbox` des Aufrufers gewinnt weiterhin: Wer sie kennt,
+            # hat sie meist aus einer Quelle, die mehr weiss als die Datei.
+            "bbox": _erste_bbox(p.get("bbox"), _bbox_aus_glb(p["glb_path"], p["up_axis"])),
             "n_elements": None,
             "n_triangles": None,
         }

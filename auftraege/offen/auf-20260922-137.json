@@ -1,0 +1,36 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "auftrag_id": "auf-20260922-137",
+ "art": "qa",
+ "worker": "local",
+ "rang": 1,
+ "erstellt": "2026-09-22T00:10:00Z",
+ "params": {},
+ "beschreibung": "Gegenprobe zur Reparatur des Abbruchs, den ihr in auf-127 und auf-136 auf zwei Wegen gemeldet habt: Der Geometrieknoten verlangte eine Ausdehnung, die beim glb-Eingang niemand mitgibt. Die Kette liest sie jetzt aus der Datei. Ein Befehl, dann die fuenf Laeufe aus auf-127.",
+ "anweisung": "=== DIE SPERRE IST WEG — BITTE NOCHMAL, DERSELBE BEFEHL ===\n\nIhr habt am 21.09. auf ZWEI Wegen dasselbe gemeldet (auf-127 am Graphenweg,\nauf-136 am Produktweg), und ihr hattet recht. Der Befund war nicht euer\nAufbau, sondern unser Code. Er ist repariert. Dieser Auftrag ist die\nGegenprobe.\n\n\nWAS IHR GEMELDET HABT\n\n    geometrie: Torwaechter: Konversion meldet status='ok', traegt aber keine\n    brauchbare bbox (None).\n\nUnd dazu die Gegenprobe, die den Fall eingeengt hat: seams.ifc_zu_glb liefert\nauf eurer Maschine sehr wohl eine bbox. Das war der entscheidende Satz.\n\n\nWAS DIE URSACHE WAR\n\nBeim glb-Eingang gab es ueberhaupt keine Stelle, an der die Ausdehnung\nherkommt. `_fuehre_geometrie` las sie nur aus den Aufrufparametern:\n\n    \"bbox\": p.get(\"bbox\")\n\nDer Produktweg wandelt die IFC beim IMPORT und reicht der Kette danach nur\nnoch den glb-Pfad — die bbox aus dem Wandlungsbericht bleibt unterwegs\nliegen. Und euer Graphenlauf gab `kamera_huellbox` mit, nicht `bbox`; das\nsind zwei verschiedene Angaben. Also war sie in beiden Faellen None, und der\nTorwaechter tat genau das Richtige.\n\n    Eine Angabe, die das Programm aus der Datei selbst ausrechnen kann, darf\n    es nicht vom Aufrufer verlangen.\n\nDie Kette liest die Szenenbox jetzt aus der glb selbst (glbbox.bauwerksbox,\nFeld `bbox_szene` — die SZENENbox, nicht die Bauwerksbox: der Torwaechter\nprueft den Massstab der Konversion, und dafuer zaehlt, was in der Datei\nsteht). Eine ausdrueckliche `bbox` des Aufrufers gewinnt weiterhin.\n\nDazu repariert, im selben Knoten: `bericht.get(\"bbox\", p.get(\"bbox\"))`. Der\nzweite Parameter greift nur bei FEHLENDEM Schluessel — ein gesetztes None\nschlug die Angabe des Aufrufers. Derselbe Griff, der am selben Tag schon\nunseren homeworker._darf_starten zu Fall gebracht hat.\n\nFuenf Waechter halten es fest (tests/test_glb_eingang_ohne_bbox.py), und\ndrei Mutationsproben belegen, dass sie fallen, wenn man den Fehler\nzuruecklegt. Eine unlesbare glb wird weiterhin ABGELEHNT und bekommt keine\nerfundene Ausdehnung.\n\n\nWAS ZU TUN IST\n\n    cd <euer Klon>\n    git pull\n    python tools/beweis/31_der_weg_des_produkts.py --echt\n\nDanach, wenn Stufe 4 durchkommt, die fuenf Laeufe aus auf-20260921-127\n(V2 bis V5) auf derselben Szene — ihr schreibt, der Aufbau steht bereit und\nes kostet wenige Minuten.\n\n\nWAS ZURUECKKOMMEN SOLL\n\n  V1 Kommt der Knoten `geometrie` jetzt durch? Wenn ja: welche bbox traegt er,\n     und stimmt sie mit der ueberein, die seams.ifc_zu_glb im selben Lauf\n     meldet? Wenn nein: die woertliche Meldung, mehr brauchen wir nicht.\n\n  V2 Wie weit kommt der Lauf danach? Knoten fuer Knoten, mit Laufzeit.\n\n  V3 Das Bild, wenn es eines gibt — das erste ueber den Produktweg.\n\n  V4 Die fuenf Laeufe aus auf-127 (V2 bis V5), falls V1 gruen ist.\n\n  V5 Eine Sache, die uns interessiert und die ihr nebenbei seht: Traegt das\n     Ergebnis jetzt `modus_bestellt` und `modus_gerechnet`? Sie standen in\n     auf-134 auf None, weil `rendere` sie nie aus der Antwort der Naht gelesen\n     hat — gebaut, begruendet und eine Funktion vor dem Leser weggeworfen.\n     Auch das ist repariert; die Abweichung steht jetzt als ERSTER Hinweis und\n     nicht unter fuenfzehn (euer Punkt aus auf-130), und es gibt zusaetzlich\n     ein Feld `modus_abweichung` — True/False/None, wobei None NICHT GEMESSEN\n     heisst.\n\n\nWAS NICHT ZU TUN IST\n\n  - Nichts an unserem Code aendern. Wenn es wieder klemmt, ist die woertliche\n    Meldung mehr wert als eine Reparatur bei euch.\n  - Keine Messreihe. Das hier ist eine Gegenprobe, kein Versuch.\n  - Nicht auf auf-128 warten. Der laeuft unabhaengig weiter.\n\n\nWAS WIR EUCH SCHULDEN, UND ES SEI GESAGT\n\nEuer auf-136 hat genau das getan, wofuer dieser Beweis gebaut wurde: Er hat\netwas gefunden, das die Attrappen nicht zeigen konnten. Und euer auf-127 hat\nmit der Gegenprobe den Fall so weit eingeengt, dass die Ursache in zwanzig\nMinuten zu finden war statt in zwei Tagen. Ohne den Satz «die Wandlung\nliefert sehr wohl eine bbox» haetten wir an der falschen Stelle gesucht.\n",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_ifc.py — das Beweisskript ruft es selbst",
+  "hinweis": "Keine eigene Geometrie noetig. Fuer V4 dieselbe Standardszene wie in auf-20260921-127."
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 60,
+  "leerlauf_schwelle_mem_gb": 2,
+  "hinweise": [
+   "Nichts an unserem Code reparieren — die woertliche Meldung ist die Antwort.",
+   "Ein Scheitern an einem bestimmten Abschnitt ist eine vollstaendige Antwort.",
+   "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.",
+   "ANGESAGTE AENDERUNG DER REIHENFOLGE: Dieser Auftrag steht auf Rang 1, auf-20260921-128 rueckt auf Rang 2. Grund: 137 kostet einen Befehl und macht den Kettenweg ueberhaupt erst wieder befahrbar — auch fuer 128, wenn der ueber die Kette gemessen werden soll. Die Frist des 15.10. fuer 128 bleibt unberuehrt."
+  ]
+ },
+ "rueckgabe": [
+  "V1 Kommt der Knoten `geometrie` durch? Wenn ja mit welcher bbox, und stimmt sie mit der von seams.ifc_zu_glb im selben Lauf ueberein. Wenn nein: die woertliche Meldung.",
+  "V2 Wie weit der Lauf danach kommt, Knoten fuer Knoten, mit Laufzeit.",
+  "V3 Das erzeugte Bild, falls es eines gibt — das erste ueber den Produktweg.",
+  "V4 Die fuenf Laeufe aus auf-20260921-127 (dort V2 bis V5), falls V1 gruen ist.",
+  "V5 Ob das Ergebnis jetzt `modus_bestellt`, `modus_gerechnet` und `modus_abweichung` traegt, und ob eine Abweichung als ERSTER Hinweis steht."
+ ]
+}

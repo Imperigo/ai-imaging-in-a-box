@@ -6994,3 +6994,35 @@ Bekannt und ausdrücklich nicht erledigt:
       heute keinen zweiten Schreiber.
 - [ ] **local:** Ab welcher Grösse das Senden einer Skizze spürbar wird — ohne Messung am
       Gerät eine Vermutung, also ein Auftrag und keine offene Frage.
+
+## Sitzung 54, dritter Teil — 21.09.2026 · Sechs Antworten der HomeStation
+
+**Erledigt**
+
+- [x] **Der Kettenweg ist entsperrt.** `_fuehre_geometrie` liest die Szenenbox aus der
+      glb, statt sie vom Aufrufer zu verlangen (`auf-127`/`auf-136`, zwei Wege, ein
+      Hindernis). Dazu die `.get(k, ersatz)`-Falle im selben Knoten behoben — derselbe
+      Griff wie bei `homeworker._darf_starten` am selben Tag.
+      → `tests/test_glb_eingang_ohne_bbox.py`, fünf Wächter, drei Mutationsproben.
+- [x] **`modus_bestellt` / `modus_gerechnet` kommen an.** Sie wurden gebaut und in
+      `rendere` nie aus der Antwort gelesen (`auf-134`). Neu dazu `modus_abweichung`
+      (True/False/**None = nicht gemessen**), und eine Abweichung steht als **erster**
+      Hinweis (`auf-130`). → `tests/test_modus_kommt_an.py`, fünf Wächter, drei Proben.
+- [x] Annotation von `_lege_auf_geraet` berichtigt: drei Rückgabewerte, nicht zwei
+      (`auf-131`).
+- [x] `auf-20260922-137` an `local` abgelegt: die Gegenprobe, ein Befehl. Dass `auf-128`
+      dafür auf Rang 2 rückt, ist im Auftrag **angesagt** und nicht still geschehen.
+
+**Offen, und bei wem es liegt**
+
+- [ ] **Schwer, und wichtiger als alles Übrige:** `qwen-image-edit-2511` nimmt kein
+      Eingangsbild an, solange die Tiefenkarte mitgeht — drei Bilder, eine sha256
+      (`auf-134`). `depth_png` ist im Auftrag Pflicht. **Damit hat die Bildstrecke heute
+      kein Modell, das eine Skizze als Bild annimmt** — und genau davon lebt der
+      Entwurfsmodus, über den am 15.10. entschieden wird.
+- [ ] **local:** `auf-137` (Gegenprobe) und `auf-128` (Schwellenmessreihe, Frist 15.10.).
+- [ ] **Kern (wir):** Führung (`guidance_scale`) ist bei destillierten Modellen nicht
+      gesetzt und übernimmt die Vorgabe von diffusers — eine fremde Entscheidung, und bei
+      solchen Modellen der Unterschied zwischen einem Bild und Matsch (`auf-134`).
+- [ ] **Kern (wir):** Die Tiefenkonvention von `qwen-image-edit-2511` ist nicht gemessen.
+      Selbst wenn die Tiefenkarte ankommt, ist ungeprüft, ob sie richtig herum ankommt.

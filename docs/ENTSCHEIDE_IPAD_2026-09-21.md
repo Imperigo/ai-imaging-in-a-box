@@ -1,5 +1,8 @@
 # Entscheide zur iPad-Oberfläche — 21.09.2026
 
+**Grundlage:** keine — hier steht kein Messwert, sondern was der Owner entschieden hat
+**Codestand:** `3ffbffd`
+
 Zwanzig Fragen zum Entwurf, vom Owner am 21.09.2026 beantwortet. Diese Liste ist die
 Grundlage für den Bau; was hier steht, wird nicht neu verhandelt.
 

@@ -1114,7 +1114,7 @@ def _bedarfsbericht(*, quelle, summe, groesster, zuschlag, frei, grund="") -> di
 
 
 def _lege_auf_geraet(pipeline, wurzel, torch, *, erwartet=None,
-                     erwartet_gemessen=None) -> tuple[str, dict | None]:
+                     erwartet_gemessen=None) -> tuple[str, dict | None, dict]:
     """Modell auf die Karte legen — ganz, komponentenweise, schichtweise, oder gar nicht.
 
     ``erwartet`` ist ``(summe_byte, groesster_byte)`` und **schlägt die Plattengrösse**.
@@ -1157,6 +1157,13 @@ def _lege_auf_geraet(pipeline, wurzel, torch, *, erwartet=None,
     auf die trifft die Begründung des kleinen Zuschlags nicht zu.
 
     Returns:
+        **Drei** Werte, nicht zwei — die Annotation behauptete bis zum 21.09.2026 zwei.
+        Gemeldet von der HomeStation (`auf-20260921-131`), die diese Naht fuer eine Probe
+        ersetzt hat und an ``ValueError: too many values to unpack (expected 2, got 3)``
+        scheiterte. *Wer eine Naht fuer eine Probe ersetzt — und genau dafuer ist sie
+        gebaut —, liest die Annotation und baut danach.* Ausgerechnet der dritte Wert ist
+        der interessanteste: Er traegt Quelle, Zuschlag und Spielraum.
+
         ``(weg, entflechtung, bedarf)``. ``entflechtung`` ist ``None`` auf den beiden
         Wegen, die **nicht** auslagern — dort wird :func:`_entflechte_controlnet` bewusst
         nicht gerufen, weil seine 1,35 GiB einen gesunden Lauf erst in die Auslagerung
@@ -1919,7 +1926,8 @@ def _geraeteweg(modell) -> dict:
 
 def _ergebnis(status: str, parameter: dict, *, bild_png=None, dauer_s: float = 0.0,
               error=None, maengel=(), lizenz=None, hinweise=(),
-              schritte_gerechnet=None, geraeteweg=None) -> dict:
+              schritte_gerechnet=None, geraeteweg=None,
+              modus_bestellt=None, modus_gerechnet=None) -> dict:
     """Der Ergebnissatz — eine Form für alle drei Ausgänge.
 
     Ein einheitlicher Satz ist kein Selbstzweck: Wer ein Ergebnis auswertet, soll
@@ -1945,6 +1953,31 @@ def _ergebnis(status: str, parameter: dict, *, bild_png=None, dauer_s: float = 0
         # Auf welchem Weg das Modell lief. Steht auch bei einer Ablehnung da — dann
         # eben mit `gemeldet: False` und dem Grund. Siehe `_geraeteweg`.
         "geraeteweg": geraeteweg if geraeteweg is not None else _geraeteweg(None),
+        # WAS BESTELLT WAR UND WAS GERECHNET WURDE — und bis zum 21.09.2026 stand hier
+        # NICHTS davon.
+        #
+        # Die beiden Felder wurden im Adapter gebaut, mit einem langen Kommentar
+        # begruendet («ein Hinweis wird gelesen oder nicht; ein Feld laesst sich
+        # vergleichen») — und dann in `rendere` nie aus der Antwort gelesen. Die
+        # HomeStation hat es an drei Laeufen gemessen (`auf-20260921-134`): beide Felder
+        # None, obwohl ein Ausgangsbild bestellt und von der Pipeline verworfen worden
+        # war. Genau der Fall, fuer den sie gebaut sind.
+        #
+        # *Eine Auskunft, die eine Funktion frueher wegwirft als der Leser sie braucht,
+        # gibt es fuer den Leser nicht.*
+        #
+        # `modus_bestellt` ist immer bekannt — es steht im Auftrag. `modus_gerechnet`
+        # darf None sein: Dann hat die Naht nichts gemeldet, und das ist die dritte
+        # Antwort und kein «war gleich».
+        "modus_bestellt": modus_bestellt if modus_bestellt is not None
+                          else parameter.get("modus"),
+        "modus_gerechnet": modus_gerechnet,
+        # Eine Zahl statt eines Satzes: Wer zwei Laeufe vergleicht, fragt dieses Feld ab
+        # und liest keine Hinweisliste. None heisst auch hier NICHT GEMESSEN.
+        "modus_abweichung": (None if modus_gerechnet is None
+                             else bool(modus_gerechnet != (modus_bestellt
+                                                           if modus_bestellt is not None
+                                                           else parameter.get("modus")))),
     }
 
 
@@ -2098,11 +2131,23 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         # Konsole: erst hier ist bekannt, welche Argumente die geladene Pipeline wirklich
         # genommen hat. Ein wirkungsloser Parameter, der nur im Auftrag steht und nirgends
         # ankommt, ist genau die stillschweigende Unwirksamkeit, die `_hinweise` verhindert.
-        hinweise = tuple(hinweise) + tuple(antwort.get("hinweise") or ())
+        # DIE ABWEICHUNG STEHT VORNE UND NICHT UNTER FUENFZEHN ANDEREN.
+        #
+        # Die HomeStation hat es am 21.09.2026 aus der Praxis gemeldet
+        # (`auf-20260921-130`): In `auf-20260919-123` stand die entscheidende Auskunft
+        # woertlich da — als Hinweis unter vier anderen, und darum ueberlesen. Wer
+        # Hinweise ueberfliegt, sieht den einen nicht, der den Lauf entwertet.
+        eigene = tuple(antwort.get("hinweise") or ())
+        vorn = tuple(h for h in eigene if h.startswith("BESTELLT WAR"))
+        hinweise = vorn + tuple(hinweise) + tuple(h for h in eigene if h not in vorn)
         gerechnet = antwort.get("schritte_gerechnet")
+        modus_bestellt = antwort.get("modus_bestellt")
+        modus_gerechnet = antwort.get("modus_gerechnet")
     else:
         bild_png = antwort
         gerechnet = None
+        modus_bestellt = None
+        modus_gerechnet = None
     if not isinstance(bild_png, str) or not bild_png.strip():
         return _ergebnis(
             STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
@@ -2120,7 +2165,8 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
 
     return _ergebnis(STATUS_OK, parameter, bild_png=bild_png, dauer_s=dauer,
                      lizenz=lizenz, hinweise=hinweise, schritte_gerechnet=gerechnet,
-                     geraeteweg=geraeteweg)
+                     geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,
+                     modus_gerechnet=modus_gerechnet)
 
 
 __all__ = [
