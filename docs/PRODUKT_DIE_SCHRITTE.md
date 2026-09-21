@@ -91,6 +91,45 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 21.09.2026 · Zwanzig Bedienfragen beantwortet — und die zwei Geräte werden eines
+
+Der Entwurf stellte zwanzig Fragen, und sie sind alle beantwortet. Sie stehen mit
+Begründung in `docs/ENTSCHEIDE_IPAD_2026-09-21.md`. Was sich dadurch am Entwurf geändert
+hat:
+
+* **Hochformat gleichberechtigt.** Es gibt jetzt ein zweites Blatt der Zeichenfläche, bei
+  dem die Werkzeuge unten in Daumenreichweite liegen. Gleicher Inhalt, andere Anordnung.
+* **Zwei Radierer** statt einem: einer nimmt ganze Striche weg, einer wischt flächig.
+* **Mehrere Ebenen**, jede eine Variante — und daraus folgt eine Regel, die vorher keine
+  war: **gerechnet wird, was sichtbar ist.** Eine ausgeblendete Ebene geht nicht mit.
+* **Wischregler** neben dem Nebeneinander: zwei Bilder deckungsgleich übereinander, ein
+  Strich zum Schieben. Der Unterschied zeigt sich an der Kante statt im Hin-und-Her-Blick.
+* **Nie auf dem iPad rechnen.** Ist die HomeStation aus, wird die Skizze geparkt und von
+  selbst nachgeschickt. Ein Ort, ein Ergebnis — sonst wären zwei Bilder nicht vergleichbar.
+
+### 21.09.2026 · Ein Faden zwischen iPad und Rechner
+
+Dazu kam der Wunsch, dass die beiden Geräte **als ein Werkzeug wirken** und das Senden
+einer Skizze als Bewegung beginnt und drüben weitergeht.
+
+Der Entwurf dafür steht auf zwei neuen Blättern: dem Faden selbst (fünf Augenblicke vom
+Ablegen bis zum Rückweg) und der HomeStation am Rechner, auf der die Skizze ankommt.
+
+Die Grundidee ist ein Satz: **Ein Gegenstand, ein Weg.** Die Skizze verschwindet nicht
+hier und erscheint dort, sondern reist — als dieselbe Marke, gleiche Farbe, gleiche Form.
+Kommt das Bild zurück, legt es sich genau an die Stelle, von der die Skizze kam.
+
+**Und die Bewegung darf nicht mehr behaupten, als sie weiss** — das ist dieselbe Lehre wie
+beim Fortschrittsbalken, eine Etage weiter:
+
+* Bewegt sich etwas, ist etwas unterwegs.
+* Gleichmässig läuft nur, was gezählt wird. Reines Warten *atmet* an Ort und Stelle.
+* Die Animation endet nie vor der Ankunft. *Sie endet früher, behauptet sie eine Ankunft.*
+* Reisst die Verbindung, fällt die Marke zurück aufs iPad. Sie verschwindet nie in der
+  Mitte.
+
+Wer Bewegung am Gerät abgestellt hat, bekommt denselben Weg ohne Bewegung.
+
 ### 21.09.2026 · Die iPad-Oberfläche liegt als Entwurf vor — acht Blätter
 
 Bisher gab es die Oberfläche **nur als Browserseite**. Jetzt liegt daneben ein

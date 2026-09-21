@@ -6968,3 +6968,29 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Kern (wir):** Schriftfrage — mitliefern oder bei der Systemschrift bleiben. Hängt
       an der Antwort des Owners und an der Auflage, dass zum Start keine Netzverbindung
       nötig sein darf.
+
+## Sitzung 54, zweiter Teil — 21.09.2026 · Zwanzig Antworten und die Verbindung
+
+**Erledigt**
+
+- [x] Alle zwanzig Bedienfragen beantwortet und in `docs/ENTSCHEIDE_IPAD_2026-09-21.md`
+      festgehalten, mit den zwei Folgeentscheiden, die niemand gefragt hat: *gerechnet
+      wird, was sichtbar ist* und *Schriften werden mitgeliefert, nicht geladen.*
+- [x] Entwurf nachgezogen: Hochformat-Blatt, zwei Radierer, Ebenenliste, freie
+      Stiftfarbe, Zurück mit Deckel 20, Wischregler, Parken ohne HomeStation,
+      nachträgliche Benennung.
+- [x] Zwei neue Blätter für die Verbindung iPad/Rechner: der Faden in fünf Augenblicken
+      und die HomeStation am Rechner.
+- [x] `CLAUDE.md`: stehende Regel, dass UI- und UX-Arbeit immer zuerst auf der einen
+      Entwurfsfläche entsteht — und dass Entscheide daraus ins Repo gehören.
+- [x] Lexikon um Wischregler, Übergabe-Animation, Bewegungsreduktion ergänzt.
+
+**Offen, und bei wem es liegt**
+
+- [ ] **Kern (wir):** Das zu dunkle Rot in `oberflaeche/seite.html` (3.3 statt 4.5 zu 1).
+- [ ] **Kern (wir):** Wie das iPad die HomeStation erstmals findet — Heimnetz mit Kennwort
+      ist entschieden, die Entdeckung nicht.
+- [ ] **Kern (wir):** Was bei zwei iPads an derselben Mappe passiert. Die Mappe kennt
+      heute keinen zweiten Schreiber.
+- [ ] **local:** Ab welcher Grösse das Senden einer Skizze spürbar wird — ohne Messung am
+      Gerät eine Vermutung, also ein Auftrag und keine offene Frage.

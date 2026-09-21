@@ -5292,12 +5292,31 @@ beiden, ist eine Entwurfsentscheidung und keine Eigenschaft des Stiftes.
 **Wortzeichen** — Der Name eines Produkts in einer festgelegten Schrift, der als Zeichen
 benutzt wird. Kein Bild, kein Symbol — nur der geschriebene Name.
 
+**Wischregler** — Zwei Bilder liegen deckungsgleich übereinander, und ein senkrechter
+Strich, den man mit dem Finger verschiebt, entscheidet, wo das obere aufhört und das
+untere anfängt. Beide Bilder bleiben dabei in voller Grösse — der Unterschied zeigt sich
+genau an der Kante.
+*In diesem Projekt: als zweite Art, Modellbild und KI-Bild zu vergleichen.*
+
+**Übergabe-Animation** — Eine Bewegung, die einen Gegenstand von einem Ort zu einem
+anderen begleitet, statt ihn verschwinden und woanders auftauchen zu lassen. Ihr Zweck ist
+nicht Schmuck: Sie beantwortet die Frage «wo ist meine Sache jetzt?», ohne dass jemand
+danach suchen muss.
+*In diesem Projekt: die Skizze, die vom iPad zur HomeStation reist.*
+
+**Bewegungsreduktion** — Eine Einstellung im Betriebssystem, mit der jemand sagt, dass
+Bewegung auf dem Bildschirm ihm unangenehm ist oder schwindlig macht. Programme können sie
+abfragen und ihre Animationen weglassen. Wer sie eingeschaltet hat, darf dadurch keine
+Auskunft verlieren — *eine Aussage, die nur in der Bewegung steckt, ist für diese Leute
+keine Aussage.*
+
 ---
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-21 | Nachgetragen zu Abschnitt 10 aus der Verbindung iPad/Rechner: **Wischregler**, **Übergabe-Animation**, **Bewegungsreduktion** |
 | 2026-09-21 | Neuer Abschnitt **10 · Oberfläche und Entwurf**, aus dem Entwurf der iPad-Oberfläche: **Entwurfsblatt (Artboard)**, **Entwurfsfläche**, **Berührungsfläche (Touch-Ziel)**, **Kontrastverhältnis**, **Druckempfindlichkeit**, **Wortzeichen**. Der Eintrag zum Kontrastverhältnis traegt einen Befund gegen die eigene Oberflaeche: Das Rot fuer «durchgefallen» kommt auf dem dunklen Grund nur auf 3.3 zu 1 und ist damit unter dem Mindestmass — im iPad-Entwurf eine Stufe heller, in der Browser-Oberflaeche noch nicht geaendert |
 | 2026-09-19 | Zum Bild-Eingang: **Bild-Eingang**, **Hineinskizzieren**, **Bildquelle (als Arbeitsschritt)**, **Nachrender**, **Ein Bildeingang, den die Tiefenkarte gewinnt**. Der letzte Eintrag traegt den scharfen Befund dieses Tages: Die Bibliothek reicht ein Ausgangsbild sehr wohl an das Modell durch — aber auf einer Pipeline mit nur EINEM Bildeingang bekommt ihn die Tiefenkarte, und das Hineingezeichnete faellt weg. Am Geraet gemessen (`auf-20260818-09`), hier erstmals mit einer Probe hinterlegt statt nur als Kommentar in der Registry |
 | 2026-09-16 | Ergaenzt beim EINBAU der vier Bausteine: **Feste Schranke (einer Tiefennormierung)**, **Nutzung des Wertebereichs**, **Klemmen (einer Tiefenkarte)**, **Boden (eines Wertebereichs)**, **Quantisierungsschritt als Pruefstein**. Alle fuenf aus Befunden gegen den eigenen Code: Die am 11.09. gemeldete flachgedrueckte Tiefenkarte stammt aus UNSERER festen Schranke und nicht aus dem Perzentil der HomeStation (98,9 % der Punkte ueber 0,99, nachgerechnet); die erste Fassung des Ersatzes klemmte Geometrie auf den Hintergrundwert und machte sie damit unsichtbar fuer die Silhouette; und der zuerst gewaehlte halbe 8-Bit-Schritt als Boden ueberlebt die Rundung nicht, obwohl der Kommentar daneben behauptete, er tue es |

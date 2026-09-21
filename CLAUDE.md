@@ -175,6 +175,27 @@ benötigst.»* Was GPU, echte Gewichte oder einen Blick auf das fremde Backend b
 wird als Auftrag abgelegt — nicht als Frage an den Owner und nicht als Vorbehalt in einem
 Dokument. **Eine Messung, die hier nicht geht, ist keine offene Frage, sondern ein
 unverschickter Auftrag.**
+### Oberfläche wird gezeichnet, bevor sie gebaut wird
+
+**Owner-Vorgabe 21.09.2026:** *«Nutze immer für UI- und UX-Arbeiten.»* Gemeint ist die
+Entwurfsfläche — das gezeichnete Dokument, auf dem die Bildschirme als Blätter
+nebeneinander liegen.
+
+Ab sofort gilt für **jede** Arbeit an Bedienung und Aussehen:
+
+1. **Erst zeichnen, dann bauen.** Ein Bildschirm, über den entschieden werden soll, wird
+   als Blatt gezeichnet. Fragen zur Bedienung lassen sich an einem Bild stellen, an einem
+   fertigen Programm nicht mehr — *wer erst baut und dann fragt, hat die Antwort schon
+   gegeben.*
+2. **Eine Fläche, nicht viele.** Es gibt **eine** Entwurfsfläche für Visbox, und neue
+   Blätter kommen auf sie darauf. Eine zweite anzulegen heisst, zwei Stände zu haben, von
+   denen einer still veraltet.
+   → `https://claude.ai/artifact/DBiXUJ6LLMhBJrZ6asg8fa` («Visbox iPad — Stift zu Bild»)
+3. **Was entschieden wird, kommt ins Repo.** Die Fläche trägt das Bild, aber nicht das
+   Gedächtnis: Entscheide gehören in `docs/ENTSCHEIDE_IPAD_2026-09-21.md` (oder das
+   Nachfolgeblatt), Begriffe ins Lexikon, der Verlauf ins Sitzungsprotokoll.
+   *Ein Entscheid, der nur in einem Bild steht, ist beim nächsten Öffnen eine Vermutung.*
+
 ### Der Owner schreibt die Arbeit, Claude schreibt die Unterlagen
 
 **Owner-Entscheid 21.09.2026:**
