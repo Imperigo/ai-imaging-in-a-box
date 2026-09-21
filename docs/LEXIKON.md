@@ -3948,6 +3948,27 @@ bequem ausging — bis der nächste, etwas grössere Lauf stirbt. Die Zahl steht
 21.09.2026 in jedem Ergebnis, und unter zwei Gigabyte meldet sich der Kurzbefund.
 *Negativ heisst:* Es reichte nicht, also wurde ausgelagert.
 
+**Nullbar (nullable)** — Ein Feld, das ausdrücklich auch «nichts» enthalten darf, nicht
+nur einen Wert. In der Beschreibung eines Werkzeugs steht dann nicht «Text», sondern
+«Text oder nichts».
+*Wozu es gebraucht wird:* Damit ein Werkzeug im Fehlerfall ehrlich antworten kann. Wer
+keine Datei erzeugt hat, soll keinen erfundenen Dateinamen zurückgeben.
+*Und wo es zur Falle wird:* Wenn das nächste Werkzeug in der Kette «nichts» **nicht**
+annimmt. Im guten Fall merkt es niemand, denn dort kommt ja ein Wert. Erst wenn der
+Vorgänger scheitert, kommt das Nichts an einer Stelle an, die keines verträgt.
+*Im Projekt gemessen* (21.09.2026): An der Kante vom Zeichenprogramm zu uns stehen vier
+solche Stellen — und eine fünfte in unserer eigenen Kette.
+
+**Tote Kante und leere Kante** — Zwei verschiedene Fehler an einer Verbindung zwischen
+zwei Werkzeugen, und sie sehen gleich aus.
+*Tot:* Die beiden Seiten haben **kein einziges** Feld gemeinsam. Über diese Verbindung
+fliesst nichts, und das fällt auf.
+*Leer:* Sie haben Felder gemeinsam, aber keines davon ist das, worauf es ankommt. Ein
+Beispiel aus dem Projekt: Ein Werkzeug liefert die Masse eines Gebäudes, aber nicht das
+Gebäude. Die Verbindung sieht gesund aus und trägt nichts.
+*Warum die Unterscheidung zählt:* **Die tote sieht man.** Die leere nicht — bis der Lauf
+ohne Modell dasteht.
+
 **Geteilte Parameter (Parameter Sharing)** — Zwei Teile eines Modells benutzen
 **dasselbe** Stück Zahlenwerk, statt jeder eine eigene Kopie zu halten. Das spart
 Speicher und ist gewollt.
@@ -5125,6 +5146,7 @@ System laufen.
 | 2026-09-21 | Aus der Anfrage der Modellseite: **Ausbesserung (Inpainting)** |
 | 2026-09-21 | Aus dem Befund «bestellt mit Bild, gerechnet ohne»: **Bestellter und gerechneter Modus**, **Vertraeglichkeitsfilter** |
 | 2026-09-21 | Aus dem Befund «der Vorgabe-Backbone rechnet gar nicht mehr»: **Bedarfsrechnung (vor dem Ladeweg)**, **Aktivierungen**, **Spielraum (einer Ladewegentscheidung)** |
+| 2026-09-21 | Aus der Pruefung der Kanten zum Nachbarsystem: **Nullbar (nullable)**, **Tote Kante und leere Kante** |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |

@@ -5820,6 +5820,53 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Die kalibrierte Schwelle 0,88 ist gemessen worden — und wird NICHT übernommen.**
+      Die Werkstatt hat sauber gearbeitet (`auf-20260909-98`, 44 Fälle, vier neue Szenen,
+      Etiketten aus unserem eigenen Werkzeug): fehlerfreies Fenster **0,8651 … 0,9031**,
+      Vorschlag 0,88 in der Mitte. An **ihrem** Datensatz stimmt das.
+      **An unserem nicht, und es ist gezählt statt geschätzt:** Dieselbe Schwelle auf die
+      tragende Reihe angewandt ergibt **7 von 12 statt 12 von 12**. Fünf Bilder fallen —
+      und **drei davon folgen nachweislich ihrer eigenen Geometrie besser als einer
+      fremden** (C1 +0,2276, D0 +0,1974, D1 +0,3348). Drei Fehlalarme auf zwölf Bilder,
+      an der Reihe, die diese Arbeit trägt.
+      **Der Grund ist keine schlechte Messung, sondern eine andere Grundgesamtheit**, und
+      die Werkstatt hat ihn selbst benannt: Gestört wird die **Referenz**, im Betrieb ist
+      das **Bild** das Schlechte. *Eine Schwelle, die an einer gestörten Referenz
+      kalibriert ist, misst die Störung — nicht das Bild.*
+      **Was die Messung trotzdem beiträgt:** 0,10 fängt nur die grobe Hälfte. Dasselbe
+      Bauwerk zwanzig Bildpunkte neben seinem Platz liegt bei 0,78 … 0,87 und kommt durch.
+      Sechs neue Wächter halten die Zählung fest, drei Mutationsproben gefallen.
+- [x] **Und eine Berichtigung an der eigenen Dokumentation: es sind ZWEI Zellen, nicht
+      eine.** Bei `SCHWELLE_FOLGT` und in Kapitel 6 stand «dieses einen Falls». Nachgezählt
+      über alle zwölf Paare: **C2** (+0,144 gegen +0,412) **und D2** (+0,488 gegen +0,632)
+      folgen beide der fremden Geometrie besser. Beide bestehen Tor A heute.
+      *Die Zahl war nie falsch — die Anzahl war es. Eine Aussage über die eigenen Daten,
+      die nicht nachgezählt ist, veraltet nicht: Sie war von Anfang an falsch.*
+      **Was nicht wackelt:** `geom_iou` ordnet alle zwölf richtig, D2 mit +0,2020.
+- [x] **Unsere Verdrahtungsprüfung hatte zwei Lücken — und die Werkstatt hat sie uns
+      nachgewiesen** (`auf-20260910-101`). Zwei Proben, beide erwarteten einen Befund und
+      bekamen null: ein entferntes tragendes Feld, und ein Typ von Text auf Zahl geändert.
+      **Neu gebaut:** `nullable-mismatch` (Warnung — der Erzeuger erlaubt `null`, wir
+      nicht; der häufigste und stillste Fall, vier an der echten Kante) und `no-geometry`
+      (Fehler — die Kante überlappt, aber weder `ifc_path` noch `glb_path` kommt an).
+      *Eine Kante, die lebt und nichts trägt, ist schlimmer als eine tote: Die tote sieht
+      man.*
+      **Und die neue Prüfung hat als Erstes uns selbst gemeldet:** `enqueue_render` gibt
+      `job_id` nullbar zurück, `query_render` verlangt es als Pflicht-Zeichenkette — unsere
+      eigene Kette reicht im Fehlerfall `null` in ein Pflichtfeld. *Die Regel, die wir dem
+      Nachbarn vorhalten, gilt auch im eigenen Haus.*
+      **Dazu eine falsche Zeile in unserer eigenen Probe:** `kosmodraw_bim_layers` stand
+      unter «tragende Kante» und liefert nur `bbox`. Eine Bounding-Box beschreibt ein
+      Modell, sie ersetzt es nicht. Korrigiert und mit Gegenprobe versehen.
+      Elf Wächter, vier Mutationsproben — **eine davon fiel zuerst nicht**, weil der
+      Wächter nur die eine Richtung bewachte (typloser Erzeuger, nicht typloser
+      Verbraucher). Nachgeschärft, dann fiel sie.
+      Weitergegeben als `auf-20260921-132` an `ui`.
+- [~] **Die Vertragsseite derselben Sache liegt bei `cloud` und ist noch nicht abgelegt.**
+      Ob Erzeuger aufhören sollen, `null` zu deklarieren, oder Verbraucher es annehmen
+      sollen, ist eine Vertragsfrage. *Adressat: `cloud`.* **Gesammelt statt abgelegt,
+      weil dort schon neun Aufträge liegen und der Deckel bei acht steht** — ein zehnter
+      verdeckt die neun, statt etwas zu bewegen.
 - [x] **Der Vorgabe-Backbone lief auf der Werkstattmaschine gar nicht mehr — die Hälfte
       davon ist repariert.** Gemessen (`auf-20260919-123`): frei 30 717 MiB, gebraucht
       25 671 MiB, **verlangt 32 128 MiB**. Der Lauf passte mit über 5 GiB Luft und wurde

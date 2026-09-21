@@ -201,7 +201,22 @@ Das ändert das Urteil über diesen Abschnitt vollständig:
 
 **Und es liegt nicht an der Führungsstärke**, wie hier zuerst vermutet: Dieselbe Zelle
 steht auch bei voller Führung falschherum (+0,144 eigen gegen +0,412 fremd), nur weniger
-deutlich. Es ist eine Eigenschaft **dieses einen Falls**, nicht der Einstellung.
+deutlich. Es ist eine Eigenschaft **dieses Falls**, nicht der Einstellung.
+
+**Berichtigung, 21.09.2026 — es ist nicht ein Fall, es sind zwei.** Hier stand «dieses
+einen Falls». Nachgezählt über alle zwölf Paare der Reihe bei voller Führung:
+
+| Zelle | gegen die eigene | gegen die fremde | Abstand |
+|---|---|---|---|
+| C2 | +0,144 | +0,412 | **−0,269** |
+| D2 | +0,488 | +0,632 | **−0,145** |
+
+Beide bestehen die heutige Schwelle. Was daran nicht wackelt: Die Flächenüberschneidung
+ordnet **alle zwölf** Paare richtig, auch diese beiden. Die Zuordnung hängt an ihr, und
+genau darum.
+
+*Die Zahl war nie falsch — die Anzahl war es. Eine Aussage über die eigenen Daten, die
+nicht nachgezählt ist, veraltet nicht: Sie war von Anfang an falsch.*
 
 *Dieser Abschnitt steht hier und nicht im Anhang, weil ein Kapitel über das Messen, das
 den eigenen Grenzfall verschweigt, seine eigene These widerlegt. Er bleibt stehen,
@@ -368,6 +383,37 @@ geprüft, und dort wird es schwer. Die Messung dazu ist bestellt.
 Lücken, aber *wo* in der Lücke, sagt keine Messung. Bei Tor B ist die Lücke gross genug,
 dass es wenig ausmacht; bei Tor A ist sie es nicht — siehe 6.5.
 
+Eine Kalibrierung war bestellt und ist gekommen, und **sie wurde nicht übernommen.** Das
+gehört hierher, weil es aussieht wie eine versäumte Verbesserung und keine ist.
+
+An 44 Fällen, vier neuen Szenen, mit Etiketten aus unserem eigenen Werkzeug, fand die
+Werkstatt ein **fehlerfreies Fenster**: höchster schlechter Fall +0,865, niedrigster guter
++0,903, Vorschlag 0,88 in der Mitte. Sauber gemacht, und an *ihrem* Datensatz stimmt es.
+
+An unserem nicht, und das ist gezählt:
+
+| Schwelle für Tor A | von zwölf tragenden Bildern bestehen |
+|---|---|
+| 0,10 (heute) | **12** |
+| 0,88 (Vorschlag) | **7** |
+
+Fünf Bilder fielen — und **drei von ihnen passen nachweislich besser zu ihrer eigenen
+Geometrie als zu einer fremden.** Das wären drei Fehlalarme an genau der Reihe, die diese
+Arbeit trägt.
+
+Der Grund ist keine schlechte Messung, sondern eine andere Grundgesamtheit, und die
+Werkstatt hat ihn selbst benannt: Gestört wurde die **Referenz**, gemessen gegen die
+geschätzte Karte eines erzeugten Bildes. Im Betrieb ist es umgekehrt — die Referenz stimmt
+und das **Bild** ist schlecht.
+
+> *Eine Schwelle, die an einer gestörten Referenz kalibriert ist, misst die Störung —
+> nicht das Bild.*
+
+Was die Messung trotzdem beiträgt, ist unbequem und wichtig: Sie zeigt, wie **grob** 0,10
+ist. Sie fängt das Gedrehte, das Verrauschte, das Vertauschte. Dasselbe Bauwerk zwanzig
+Bildpunkte neben seinem Platz liegt bei 0,78 bis 0,87 und kommt durch. *Ein Riegel, der
+die grobe Hälfte fängt, ist kein Riegel gegen die feine.*
+
 **Viertens, und es gehört dazu:** Der alte Riegel bleibt unverändert neben dem neuen
 stehen. Alle bisher veröffentlichten Zahlen dieses Projekts sind mit ihm entstanden und
 müssen nachbaubar bleiben. *Die zwei Tore sind der Weg nach vorn, nicht eine Berichtigung
@@ -385,5 +431,6 @@ nach hinten.*
 | 6.4 Das tragende Ergebnis | `src/aiimaging.geometrie_qa.zwei_tore`, `docs/R3_WELCHES_MASS_TRENNT_2026-09-18.md` |
 | 6.6 Der Regler, der die Geometrie herausdreht | `auftraege/ergebnisse/auf-20260918-114.json` |
 | 6.5 Der Befund gegen die eigene Schwelle | Kommentar an `SCHWELLE_FOLGT` in `src/aiimaging/geometrie_qa.py` |
+| 6.7 Die nicht übernommene Kalibrierung | `auftraege/ergebnisse/auf-20260909-98.json`, Gegenrechnung in `tests/test_geometrie_qa.py` |
 | 6.5 Die Auflösung des Grenzfalls | `auftraege/ergebnisse/auf-20260918-115.json` |
 | 6.7 Die Messung unter Schätzerrauschen | `auftraege/ergebnisse/auf-20260907-81.json` |

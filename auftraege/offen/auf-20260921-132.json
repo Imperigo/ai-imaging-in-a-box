@@ -1,0 +1,32 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "auftrag_id": "auf-20260921-132",
+ "art": "frage",
+ "worker": "ui",
+ "rang": 4,
+ "erstellt": "2026-09-21T19:00:00Z",
+ "params": {},
+ "beschreibung": "Zwei Luecken in der Entwurfszeit-Pruefung, gemessen an unserem Nachbau und bei uns repariert: Typen gemeinsamer Felder werden nicht verglichen (vier Nullbarkeitsfaelle an der echten Kante), und eine Kante kann leben, ohne ein tragendes Feld zu liefern. Vier Fragen, ob eure Originalpruefung dieselben Luecken hat.",
+ "anweisung": "=== ZWEI LUECKEN IN DER ENTWURFSZEIT-PRUEFUNG, UND WIR HABEN SIE ZUERST BEI UNS GEFUNDEN ===\n\nDas hier ist ein Befund ueber die Oberflaeche, kein Auftrag ueber unseren Code.\nWir haben ihn an unserem eigenen Nachbau eurer Pruefung gemessen, ihn bei uns\nrepariert, und geben weiter, wonach bei euch zu suchen waere.\n\n\nWORUM ES GEHT\n\nWenn im Cockpit eine Kante von einem Werkzeug zum naechsten gezogen wird,\nprueft die Oberflaeche vorab, ob die Kante traegt (`pipelineReadiness`). Bei\nuns liegt ein Nachbau dieser Pruefung, damit wir unsere Vertraege testen\nkoennen, ohne das Cockpit zu starten.\n\nDie Werkstatt hat diesen Nachbau geprueft und ihm ZWEI Faelle nachgewiesen,\ndie er nicht meldete. Wir haben beide eingebaut. Ob eure Originalpruefung\ndieselben Luecken hat, koennen wir von hier aus NICHT feststellen — sie steht\nin TypeScript und laeuft nur bei euch. Darum als Frage und nicht als Behauptung.\n\n\nLUECKE 1 — TYPEN WERDEN NICHT VERGLICHEN\n\nGemessene Probe: `up_axis` beim Erzeuger von Text auf Zahl geaendert. Erwartet\nwar ein Befund; gekommen sind null Befunde. Die Namen stimmen ueberein, also\ngilt die Kante als verdrahtbar.\n\nDer haeufigste und stillste Unterfall ist die NULLBARKEIT. An der echten Kante\nKosmoDraw -> uns stehen vier davon:\n\n    ifc_path   [\"string\", \"null\"]   ->   \"string\"\n    glb_path   [\"string\", \"null\"]   ->   \"string\"\n    up_axis    [\"string\", \"null\"]   ->   \"string\"\n    bbox       [\"array\",  \"null\"]   ->   \"array\"\n\nKosmoDraws Schema erlaubt ausdruecklich `null`. Unseres nicht. Im guten Fall\nlaeuft es; scheitert der Vorgaenger und liefert `glb_path: null`, bekommt unser\nWerkzeug ein null in einem Feld, das eine Zeichenkette verlangt — und die\nVorpruefung hat die Kante durchgelassen.\n\nWir melden das jetzt als eigene Art `nullable-mismatch` mit Schwere `warn` und\nNICHT als Fehler. Es ist kein Grund, die Kante nicht zu ziehen; es ist ein\nGrund, den Fehlerfall zu kennen.\n\n\nLUECKE 2 — EINE KANTE KANN LEBEN UND TROTZDEM NICHTS TRAGEN\n\nGemessene Probe: `glb_path` aus dem Ausgabeschema entfernt, `up_axis` und\n`bbox` bleiben. Erwartet war ein Befund; gekommen sind null.\n\nUnd die alte Pruefung hatte damit sogar recht: Die Kante ist nicht TOT, es\nueberlappen ja zwei Felder. Sie traegt nur nichts, womit sich rechnen liesse.\n\n    Eine Kante, die lebt und nichts traegt, ist schlimmer als eine tote:\n    Die tote sieht man.\n\nUnd ein `required`-Feld faengt es bei uns nicht, weil unser Eingang bewusst\nKEINES fuehrt: Wir nehmen entweder `ifc_path` ODER `glb_path`, und euer\nSchemaformat kennt kein Entweder-oder. Die Regel «eines von beiden» steht\ndarum bei uns im Code statt in einer Beschreibung.\n\n\nDER FALL, DEN IHR IM COCKPIT SEHEN KOENNT\n\n`kosmodraw_bim_layers` -> `aiimaging_enqueue_render`.\n\n`bim_layers` liefert von unseren vier Feldern genau eines: `bbox`. Eine\nBounding-Box beschreibt ein Modell, sie ersetzt es nicht. Wer diese Kante\nzieht und sonst nichts setzt, bekommt einen Knoten, der sauber aussieht und\nnichts zu rendern hat.\n\nDas war uebrigens auch in UNSERER Probe falsch: Dort stand `bim_layers` unter\nder Ueberschrift «von allen drei Ausgaengen muss eine tragende Kante\nentstehen». Wir haben es korrigiert — die Kante ist eine ERGAENZUNG an eine\nKette, die die Geometrie schon traegt.\n\n\nWAS WIR VON EUCH WISSEN MOECHTEN\n\n  V1 Vergleicht eure Entwurfszeit-Pruefung die TYPEN gemeinsamer Felder?\n     Wenn nein: Ist das Absicht oder eine Luecke?\n\n  V2 Kennt sie den Fall «Kante ueberlappt, traegt aber kein Pflichtfeld des\n     Verbrauchers»? Anders gefragt: Fuehrt sie eine Liste tragender Felder je\n     Lane, oder nur die Namensueberschneidung?\n\n  V3 Wenn beides fehlt: Waere eine Warnung im Cockpit vorstellbar — sichtbar\n     an der Kante, nicht in einem Protokoll? Ein Befund, den man erst suchen\n     muss, wird nicht gefunden.\n\n  V4 Und der Fall oben konkret: Zeigt euer Cockpit heute etwas an, wenn jemand\n     `kosmodraw_bim_layers` -> `aiimaging_enqueue_render` zieht?\n\nEine Zeile je Punkt genuegt. «Weiss ich nicht» ist eine vollstaendige Antwort —\ndann wissen wir, dass es zu pruefen waere.\n\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n\n  - Nichts an unseren Vertraegen aendern. Die Nullbarkeit auf eurer Seite ist\n    richtig so, und unsere Enge ist es auch — wir wollen kein null, wo ein Pfad\n    stehen muss.\n  - Keine Kante im Cockpit entfernen. `bim_layers` ist eine gueltige\n    Ergaenzung, nur kein Startpunkt.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.\n",
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": null,
+  "hinweis": "Keine Geometrie noetig — es geht um Schemata und die Anzeige."
+ },
+ "auflagen": {
+  "leistungsgrenze_w": null,
+  "nur_bei_leerlauf": false,
+  "hinweise": [
+   "Nichts an unseren Vertraegen aendern.",
+   "«Weiss ich nicht» ist eine vollstaendige Antwort.",
+   "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+  ]
+ },
+ "rueckgabe": [
+  "V1 Vergleicht die Entwurfszeit-Pruefung die Typen gemeinsamer Felder?",
+  "V2 Kennt sie den Fall «Kante ueberlappt, traegt aber kein tragendes Feld»?",
+  "V3 Waere eine Warnung an der Kante selbst vorstellbar, nicht nur im Protokoll?",
+  "V4 Zeigt das Cockpit heute etwas bei kosmodraw_bim_layers -> aiimaging_enqueue_render?"
+ ]
+}

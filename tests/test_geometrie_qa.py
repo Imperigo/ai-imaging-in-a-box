@@ -3577,3 +3577,118 @@ def test_die_flaeche_gegen_die_falsche_karte_ruehrt_sich_kaum():
     fremd = [R2_REIHEN[f][3] for f in ("1.0", "2.5", "4.0")]
     assert max(fremd) - min(fremd) < 0.10, "sie ruehrt sich kaum"
     assert all(0.60 < w < 0.75 for w in fremd)
+
+
+# --------------------------------------------------------------------------------------
+# 9 · Der Vorschlag 0.88 — und warum er an UNSEREN Daten nicht trägt
+#
+# `auf-20260909-98` hat sauber kalibriert: 44 Fälle, vier neue Szenen, Etiketten aus
+# unserem eigenen Werkzeug, kein Fall aus `auf-92` darin. Ergebnis: ein fehlerfreies
+# Fenster +0.8651 … +0.9031, Vorschlag 0.88.
+#
+# Die Entscheidung dagegen ist GEZÄHLT und nicht gefühlt, und diese Proben halten die
+# Zählung fest. Ohne sie wäre die Begründung im Docstring eine Behauptung — und
+# Behauptungen über die eigenen Daten veralten still.
+# --------------------------------------------------------------------------------------
+
+#: Der Vorschlag aus `auf-20260909-98`. Steht hier als Zahl und nicht im Code, weil er
+#: genau nicht übernommen wurde — eine Konstante dafür wäre eine halbe Übernahme.
+VORSCHLAG_98 = 0.88
+
+
+def test_der_vorschlag_088_wuerde_fuenf_der_zwoelf_tragenden_bilder_fallen_lassen(
+        tabelle_92):
+    """**Die Probe, die die Entscheidung trägt.**
+
+    Nicht «0.88 erscheint uns zu hoch», sondern: Dieselbe Schwelle auf dieselbe Reihe
+    angewandt, die diese Arbeit trägt, kostet fünf von zwölf Bildern.
+    """
+    echt = tabelle_92["reihen"]["staerke_1.00"]
+
+    mit_010 = [e for e in echt if e["rho_maske"] >= SCHWELLE_FOLGT]
+    mit_088 = [e for e in echt if e["rho_maske"] >= VORSCHLAG_98]
+
+    assert len(mit_010) == 12, "die heutige Schwelle lässt alle zwölf durch"
+    assert len(mit_088) == 7, (
+        f"0.88 lässt {len(mit_088)} von 12 durch — die Zahl im Docstring von "
+        f"SCHWELLE_FOLGT sagt 7. Eine der beiden ist veraltet.")
+
+
+def test_drei_der_fuenf_gefallenen_folgen_nachweislich_ihrer_eigenen_geometrie(
+        tabelle_92):
+    """**Ohne diese Probe wäre die vorige nur halb so viel wert.**
+
+    Fünf Bilder zu verlieren wäre richtig, wenn alle fünf schlecht wären. Sind sie nicht:
+    Drei von ihnen passen nachweislich besser zu ihrer eigenen Geometrie als zu einer
+    fremden — das sind **Fehlalarme**, und zwar an der tragenden Reihe.
+    """
+    gefallen = [(e, f) for e, f in _mit_gegenprobe(tabelle_92)
+                if e["rho_maske"] < VORSCHLAG_98]
+
+    assert len(gefallen) == 5
+
+    richtig_geordnet = [(e, f) for e, f in gefallen
+                        if e["rho_maske"] > f["rho_maske"]]
+    namen = sorted(f"{e['fall']}{e['seed']}" for e, _f in richtig_geordnet)
+
+    assert namen == ["C1", "D0", "D1"], (
+        f"Erwartet sind C1, D0, D1 als Fehlalarme einer Schwelle 0.88 — gefunden: {namen}")
+
+
+def test_zwei_zellen_ordnen_ueber_rho_maske_falschherum_nicht_eine(tabelle_92):
+    """**Eine Berichtigung an der eigenen Dokumentation, und sie ist nachgezählt.**
+
+    Bis zum 21.09.2026 stand bei ``SCHWELLE_FOLGT``, die Gegenprobe habe «den einen
+    zweifelhaften Fall des eigenen Datensatzes» aufgelöst. Es sind zwei: C2 **und** D2.
+
+    *Eine Aussage über die eigenen Daten, die nicht nachgezählt ist, veraltet nicht — sie
+    war von Anfang an falsch.*
+    """
+    falschherum = sorted(f"{e['fall']}{e['seed']}" for e, f in _mit_gegenprobe(tabelle_92)
+                         if e["rho_maske"] < f["rho_maske"])
+
+    assert falschherum == ["C2", "D2"], falschherum
+
+
+def test_und_beide_falschherum_geordneten_bestehen_tor_A_heute(tabelle_92):
+    """Die unbequeme Hälfte davon: Eine höhere Schwelle würde sie **nicht** fangen —
+    D2 liegt bei +0.4877, also weit über 0.10 und weit unter 0.88.
+
+    Tor A ist für diese Frage das falsche Werkzeug, und darum beantwortet sie Tor B.
+    """
+    falschherum = [e for e, f in _mit_gegenprobe(tabelle_92)
+                   if e["rho_maske"] < f["rho_maske"]]
+
+    assert all(e["rho_maske"] >= SCHWELLE_FOLGT for e in falschherum)
+
+
+def test_tor_B_ordnet_alle_zwoelf_richtig_auch_die_beiden_falschherum(tabelle_92):
+    """Und die beruhigende Hälfte: Woran die Zuordnung wirklich hängt, ordnet sauber.
+
+    ``geom_iou`` trennt alle zwölf Paare in dieselbe Richtung — auch C2 und D2. Das ist
+    der gemessene Grund dafür, dass :func:`zuordnung` an ``geom_iou`` hängt und nicht an
+    ``rho_maske``.
+    """
+    abstaende = [e["geom_iou"] - f["geom_iou"] for e, f in _mit_gegenprobe(tabelle_92)]
+
+    assert all(a > 0 for a in abstaende), abstaende
+    assert min(abstaende) > 0.18, f"kleinster Abstand {min(abstaende):.4f}"
+
+
+def test_die_begruendung_am_code_nennt_die_gezaehlten_zahlen():
+    """Die Zählung oben und der Text am Code müssen dieselben Zahlen tragen.
+
+    Sonst entsteht genau der Zustand, gegen den dieses Repo seit dem 26.08.2026 prüft:
+    ein Dokument, das gepflegt aussieht und nicht trägt. Geprüft wird nur, was maschinell
+    entscheidbar ist — dass die Zahlen und die beiden Zellnamen **vorkommen**, nicht ob
+    der Satz drumherum noch schön ist.
+    """
+    quelle = Path(geometrie_qa.__file__).read_text(encoding="utf-8")
+    block = quelle.split("#: Ab welchem ``rho_maske`` gilt **Tor A**", 1)[1] \
+                  .split("SCHWELLE_FOLGT = ", 1)[0]
+
+    for stueck in ("auf-20260909-98", "0.88", "7 von 12", "C1", "D0", "D1", "C2", "D2"):
+        assert stueck in block, (
+            f"{stueck!r} fehlt in der Begründung von SCHWELLE_FOLGT — die Entscheidung "
+            f"gegen 0.88 ruht auf gezählten Zahlen, und die gehören dorthin, wo die "
+            f"Schwelle steht.")

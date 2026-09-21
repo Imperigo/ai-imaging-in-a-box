@@ -3574,11 +3574,59 @@ def ferne_abtrennen(karte: Sequence[float], *, stufen: int = 1,
 #: richtig +0.1437 gegen falsch +0.4122 — ebenfalls falschherum, nur weniger deutlich.
 #: Es ist eine Eigenschaft **dieser Zelle**, nicht der Führungsstärke.
 #:
+#: **BERICHTIGUNG 21.09.2026 — es ist nicht EINE Zelle, es sind ZWEI.** Hier stand, die
+#: Gegenprobe habe «den einen zweifelhaften Fall des eigenen Datensatzes» aufgelöst.
+#: Nachgezählt an ``auf-20260909-92-tabelle.json``, Reihe Stärke 1.00, alle zwölf Paare::
+#:
+#:     C2  gebaeude  richtig +0.1437   falsch +0.4122   Abstand −0.2685
+#:     D2  gebaeude  richtig +0.4877   falsch +0.6324   Abstand −0.1447
+#:
+#: Beide folgen der **fremden** Geometrie besser als der eigenen, und beide bestehen
+#: Tor A heute (0.1437 und 0.4877 liegen über 0.10). Die Zahl war nie falsch — die
+#: **Anzahl** war es, und sie stand seit dem 21.09.2026 als «eine» da. *Eine Aussage
+#: über die eigenen Daten, die nicht nachgezählt ist, veraltet nicht, sie war von
+#: Anfang an falsch.*
+#:
+#: Was daran NICHT wackelt: ``geom_iou`` ordnet **alle zwölf** Paare richtig, D2 mit
+#: +0.2020 Abstand. Die Zuordnung leistet Tor B, und genau darum steht sie dort
+#: (siehe :func:`zuordnung`).
+#:
+#: **ENTSCHIEDEN 21.09.2026 — der Vorschlag 0.88 wird NICHT übernommen**
+#: (``auf-20260909-98``, HomeStation, 44 Fälle an vier neuen Szenen). Die Werkstatt hat
+#: sauber kalibriert und ein fehlerfreies Fenster gefunden: höchster schlechter Fall
+#: +0.8651, niedrigster guter +0.9031, Vorschlag 0.88 in der Mitte. An **ihrem**
+#: Datensatz stimmt das.
+#:
+#: **An unserem nicht, und das ist gezählt statt geschätzt.** Dieselbe Schwelle auf die
+#: tragende Reihe von ``auf-20260909-92`` (Stärke 1.00) angewandt::
+#:
+#:     Tor A mit 0.10    12 von 12 bestanden
+#:     Tor A mit 0.88     7 von 12 bestanden
+#:
+#: Fünf Bilder fielen. **Drei davon folgen ihrer eigenen Geometrie nachweislich besser
+#: als einer fremden** — C1 (+0.2276), D0 (+0.1974), D1 (+0.3348). Das wären drei
+#: **Fehlalarme** auf zwölf Bilder, an der Reihe, die diese Arbeit trägt.
+#:
+#: **Der Grund ist keine schlechte Messung, sondern eine andere Population**, und die
+#: Werkstatt hat ihn selbst benannt: Sie stört die **Referenz** und misst gegen die
+#: geschätzte Karte eines erzeugten Bildes. Im Betrieb ist das **Bild** das Schlechte und
+#: die Referenz richtig.
+#:
+#:     *Eine Schwelle, die an einer gestörten Referenz kalibriert ist, misst die
+#:     Störung — nicht das Bild.*
+#:
+#: Das Fenster 0.8651…0.9031 ist in unseren Daten kein Fenster: Fünf von zwölf guten
+#: Bildern liegen darunter oder darin.
+#:
+#: **Was die Messung trotzdem beiträgt**, und es ist nicht wenig: Sie zeigt, dass 0.10
+#: **nur** die Fälle mit verschwindendem oder negativem Wert fängt — gedreht, verrauscht,
+#: innen vertauscht. ``versatz_20px``, also dasselbe Bauwerk an der falschen Stelle,
+#: liegt bei 0.78…0.87 und kommt durch. *Ein Riegel, der die grobe Hälfte fängt, ist
+#: kein Riegel gegen die feine.*
+#:
 #: *Genau diese Sorte Zahl war die alte 0.65, und sie hat elf von zwölf Müllbildern
 #: durchgelassen.* Der Unterschied ist, dass hier dransteht, worauf sie ruht — und dass
 #: die Gegenprobe in :func:`zwei_tore` sie bei jedem Lauf prüft, statt ihr zu glauben.
-#: Am 21.09.2026 hat genau diese Gegenprobe den einen zweifelhaften Fall des eigenen
-#: Datensatzes aufgelöst, und zwar **zugunsten der Schwelle**.
 SCHWELLE_FOLGT = 0.10
 
 #: Ab welchem ``geom_iou`` gilt **Tor B** als bestanden: folgt es DIESEM Modell?

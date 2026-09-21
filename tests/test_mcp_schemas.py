@@ -99,7 +99,7 @@ def test_unbekanntes_werkzeug_wird_gemeldet():
 # ── Verdrahtbarkeit gegen die echten Nachbarn ────────────────────────────────────────
 
 @pytest.mark.parametrize("erzeuger", [
-    KOSMODRAW_EXPORT_IFC, KOSMODRAW_EXPORT_GLB, KOSMODRAW_BIM_LAYERS,
+    KOSMODRAW_EXPORT_IFC, KOSMODRAW_EXPORT_GLB,
 ], ids=lambda e: e["name"])
 def test_enqueue_ist_an_jeden_echten_erzeuger_verdrahtbar(erzeuger):
     """Der Kern der Phase: von allen drei KosmoDraw-Ausgängen muss eine tragende Kante entstehen.
@@ -107,8 +107,17 @@ def test_enqueue_ist_an_jeden_echten_erzeuger_verdrahtbar(erzeuger):
     Beide Wege sind gültig — eigener IFC-Pfad (Regel 4) und Einfügen hinter export_glb.
     Genau deshalb steht in `required` nichts: KosmoOrbits Prüfung kennt kein
     Entweder-oder, und ein Pflichtfeld würde jeweils den anderen Weg brechen.
+
+    **Geprüft wird auf `error`, nicht auf Schweigen** (seit 21.09.2026): Diese Kanten
+    tragen echte Warnungen — KosmoDraw erlaubt in jedem dieser Felder ausdrücklich
+    ``null``, wir nicht. Das ist gemessen (`auf-20260910-101`) und kein Grund, die Kante
+    nicht zu ziehen. *Eine Warnung zum Verstummen zu bringen, indem man sie in die Probe
+    einrechnet, wäre dasselbe wie sie abzuschalten* — darum steht sie unten als eigene
+    Probe, mit Namen und Anzahl.
     """
-    assert pruefe_verdrahtbarkeit(erzeuger, WERKZEUGE[WERKZEUG_ENQUEUE]) == []
+    befunde = pruefe_verdrahtbarkeit(erzeuger, WERKZEUGE[WERKZEUG_ENQUEUE])
+
+    assert [b for b in befunde if b["schwere"] == "error"] == []
 
 
 @pytest.mark.parametrize("erzeuger,erwartet", [
@@ -116,16 +125,55 @@ def test_enqueue_ist_an_jeden_echten_erzeuger_verdrahtbar(erzeuger):
     (KOSMODRAW_EXPORT_GLB, "glb_path"),
     (KOSMODRAW_BIM_LAYERS, "bbox"),
 ], ids=["export_ifc", "export_glb", "bim_layers"])
-def test_die_tragende_kante_hat_einen_konkreten_namen(erzeuger, erwartet):
-    """Nicht nur 'irgendeine' Überschneidung: das erwartete Feld muss es wirklich sein."""
+def test_die_kante_hat_einen_konkreten_namen(erzeuger, erwartet):
+    """Nicht nur 'irgendeine' Überschneidung: das erwartete Feld muss es wirklich sein.
+
+    **Umbenannt am 21.09.2026**, und die Umbenennung ist der Befund: Diese Probe hiess
+    ``..._die_tragende_kante_...`` und zählte ``bbox`` mit. Eine Bounding-Box ist aber
+    keine Geometrie — sie *beschreibt* ein Modell und ersetzt es nicht. Siehe
+    :func:`test_bim_layers_allein_traegt_keine_geometrie`.
+    """
     gemeinsam = (set(schema_felder(erzeuger["outputSchema"]))
                  & set(schema_felder(WERKZEUGE[WERKZEUG_ENQUEUE]["inputSchema"])))
     assert erwartet in gemeinsam
 
 
+def test_bim_layers_allein_traegt_keine_geometrie():
+    """**Der Befund, den die neue Prüfung als Erstes über uns selbst gefunden hat.**
+
+    Bis zum 21.09.2026 stand ``kosmodraw_bim_layers`` in der Probe darüber neben
+    ``export_ifc`` und ``export_glb``, unter der Überschrift «von allen drei Ausgängen
+    muss eine **tragende** Kante entstehen». Sie liefert aber nur ``bbox`` — gemessen von
+    der Werkstatt (`auf-20260910-101`): *«Von 30 KosmoDraw-Werkzeugen liefern nur DREI
+    eines der vier Felder»*, und dieses eine ist die Box.
+
+    Ein Rendern ohne Modell gibt es nicht. Diese Kante ist kein Weg zu uns, sondern eine
+    **Ergänzung** an einer Kette, die die Geometrie schon trägt.
+
+    *Die Kante war nie tot — sie war leer, und das sah gleich aus.*
+    """
+    befunde = pruefe_verdrahtbarkeit(KOSMODRAW_BIM_LAYERS, WERKZEUGE[WERKZEUG_ENQUEUE])
+
+    assert [b["art"] for b in befunde if b["schwere"] == "error"] == ["no-geometry"]
+
+
+def test_mit_geometrie_von_hand_traegt_dieselbe_kante_sehr_wohl():
+    """Die Gegenprobe — **ohne sie wäre die vorige eine Sackgasse statt eines Befunds.**
+
+    Wird der Pfad im Knoten von Hand gesetzt, ist die Geometrie da, und ``bim_layers``
+    ergänzt die Box. Genau so ist diese Kante gemeint.
+    """
+    befunde = pruefe_verdrahtbarkeit(KOSMODRAW_BIM_LAYERS, WERKZEUGE[WERKZEUG_ENQUEUE],
+                                     gesetzte_args={"glb_path", "up_axis"})
+
+    assert [b for b in befunde if b["schwere"] == "error"] == []
+
+
 def test_pruefe_werkzeug_ist_ebenfalls_verdrahtbar():
     """Die Vorprüfung soll vor den Render gehängt werden können, ohne tote Kante."""
-    assert pruefe_verdrahtbarkeit(KOSMODRAW_EXPORT_GLB, WERKZEUGE[WERKZEUG_PRUEFE]) == []
+    befunde = pruefe_verdrahtbarkeit(KOSMODRAW_EXPORT_GLB, WERKZEUGE[WERKZEUG_PRUEFE])
+
+    assert [b for b in befunde if b["schwere"] == "error"] == []
 
 
 def test_query_braucht_die_job_id_und_meldet_sie_als_pflicht():
@@ -136,7 +184,9 @@ def test_query_braucht_die_job_id_und_meldet_sie_als_pflicht():
 
 def test_query_ist_hinter_enqueue_verdrahtbar():
     """Die natürliche Kette enqueue → query muss ohne Handarbeit tragen."""
-    assert pruefe_verdrahtbarkeit(WERKZEUGE[WERKZEUG_ENQUEUE], WERKZEUGE[WERKZEUG_QUERY]) == []
+    befunde = pruefe_verdrahtbarkeit(WERKZEUGE[WERKZEUG_ENQUEUE], WERKZEUGE[WERKZEUG_QUERY])
+
+    assert [b for b in befunde if b["schwere"] == "error"] == []
 
 
 def test_gesetztes_arg_ersetzt_den_fehlenden_vorgaenger():
@@ -318,3 +368,145 @@ def test_unbekanntes_werkzeug_wird_gemeldet_und_stuerzt_nicht():
     ergebnis = rufe_werkzeug("aiimaging_gibt_es_nicht", {})
     assert "error" in ergebnis
     assert "Unbekanntes Werkzeug" in ergebnis["error"]
+
+
+# ── Die zwei Luecken, die ein Mensch von Hand gefunden hat ───────────────────────────
+#
+# `auf-20260910-101` (HomeStation, 21.09.2026) hat unser eigenes Pruefwerkzeug geprueft
+# und ihm zwei Faelle nachgewiesen, die es NICHT meldet. Beide Proben unten sind ihre
+# Proben, nachgebaut:
+#
+#   1. `glb_path` aus dem Ausgabeschema entfernt      -> erwartet Befund, gemessen 0
+#   2. `up_axis` von Text auf Zahl geaendert          -> erwartet Befund, gemessen 0
+#
+# Dazu die vier Typabweichungen, die sie von Hand gefunden haben, weil das Werkzeug
+# schwieg. *Ein Werkzeug, das einen Fall nicht kennt, meldet ihn nicht — und sein
+# Schweigen sieht aus wie ein Freispruch.*
+
+def test_die_vier_gemessenen_nullbarkeiten_werden_jetzt_gemeldet():
+    """Die vier Treffer aus `auf-20260910-101`, an denselben zwei Erzeugern.
+
+    Alle vier sind derselbe Fall: KosmoDraw erlaubt ausdruecklich ``null``, wir nicht.
+    """
+    gemeldet = []
+    for erzeuger in (KOSMODRAW_EXPORT_IFC, KOSMODRAW_EXPORT_GLB):
+        for b in pruefe_verdrahtbarkeit(erzeuger, WERKZEUGE[WERKZEUG_ENQUEUE]):
+            if b["art"] == "nullable-mismatch":
+                gemeldet.append(b["detail"].split(":", 1)[0])
+
+    assert sorted(gemeldet) == ["bbox", "glb_path", "ifc_path", "up_axis"], gemeldet
+
+
+def test_ein_echter_typkonflikt_ist_ein_fehler_keine_warnung():
+    """Die zweite Probe der Werkstatt: ``up_axis`` von Text auf Zahl geaendert.
+
+    Hier ueberschneiden sich die Typmengen gar nicht — kein Wert passt in beide. Das ist
+    kein Risiko im Fehlerfall, sondern eine Kante, die in keinem Lauf traegt.
+    """
+    erzeuger = {"name": "erfunden", "outputSchema": {"type": "object", "properties": {
+        "glb_path": {"type": "string"},
+        "up_axis": {"type": "integer"}}}}
+
+    befunde = pruefe_verdrahtbarkeit(erzeuger, WERKZEUGE[WERKZEUG_ENQUEUE])
+    konflikte = [b for b in befunde if b["art"] == "type-mismatch"]
+
+    assert len(konflikte) == 1
+    assert konflikte[0]["schwere"] == "error"
+    assert "up_axis" in konflikte[0]["detail"]
+
+
+def test_ein_fehlendes_tragendes_feld_wird_gemeldet_obwohl_die_kante_lebt():
+    """Die erste Probe der Werkstatt: ``glb_path`` entfernt, ``up_axis`` und ``bbox`` bleiben.
+
+    Die alte Pruefung schwieg, und sie hatte damit sogar recht: Die Kante ist nicht tot.
+    Sie traegt nur nichts, womit sich rechnen liesse.
+
+    *Eine Kante, die lebt und nichts traegt, ist schlimmer als eine tote: Die tote sieht
+    man.*
+    """
+    erzeuger = {"name": "ohne_geometrie", "outputSchema": {"type": "object", "properties": {
+        "up_axis": {"type": "string"},
+        "bbox": {"type": "array"}}}}
+
+    befunde = pruefe_verdrahtbarkeit(erzeuger, WERKZEUGE[WERKZEUG_ENQUEUE])
+
+    assert [b["art"] for b in befunde] == ["no-geometry"]
+    assert befunde[0]["schwere"] == "error"
+
+
+def test_die_tote_kante_bleibt_eine_tote_und_wird_nicht_zur_leeren():
+    """Zwei Arten fuer zwei Lagen — sonst waere die neue die alte mit mehr Worten.
+
+    Ueberlappt gar nichts, ist es weiterhin ``dead-edge``. ``no-geometry`` ist der Fall
+    daneben: Es ueberlappt, und trotzdem kommt kein Modell an.
+    """
+    fremd = {"name": "fremd", "outputSchema": {"type": "object", "properties": {
+        "irgendwas": {"type": "string"}}}}
+
+    arten = [b["art"] for b in pruefe_verdrahtbarkeit(fremd, WERKZEUGE[WERKZEUG_ENQUEUE])]
+
+    assert "dead-edge" in arten
+    assert "no-geometry" not in arten
+
+
+@pytest.mark.parametrize("wer", ["erzeuger", "verbraucher", "beide"])
+def test_ohne_typangabe_wird_nichts_behauptet(wer):
+    """Ein Schema ohne ``type`` erlaubt alles. Daraus einen Konflikt zu machen waere ein
+    Fehlalarm — und Fehlalarme sind das, woran ein Pruefwerkzeug stirbt.
+
+    *Die dritte Antwort, angewandt auf eine Typpruefung:* keine Angabe heisst UNBEKANNT,
+    nicht unvertraeglich.
+
+    **BEIDE Richtungen, und das ist der Punkt dieser Probe** (21.09.2026): In der ersten
+    Fassung stand hier nur der typlose **Erzeuger** — und eine Mutationsprobe zeigte, dass
+    sie gruen blieb, wenn man «unbekannt» als leere Menge behandelt. Denn eine leere Menge
+    ist in jeder enthalten; in dieser Richtung faellt nichts auf. Die andere Richtung — ein
+    typloser **Verbraucher** — erzeugt dann einen ``type-mismatch`` auf jedem Feld.
+
+        *Ein Waechter, der nur den Weg bewacht, den man beim Schreiben im Kopf hatte,
+        bewacht den anderen nicht.*
+
+    Unsere eigenen Vertraege fuehren ueberall Typen; darum kommt der Fall im Repo nicht
+    vor, und darum wird er hier gebaut statt gesucht.
+    """
+    mit_typ = {"glb_path": {"type": "string"}, "up_axis": {"type": "string"}}
+    ohne_typ = {"glb_path": {"description": "kein type-Feld"}, "up_axis": {}}
+
+    erzeuger = {"name": "e", "outputSchema": {"type": "object", "properties":
+                ohne_typ if wer in ("erzeuger", "beide") else mit_typ}}
+    verbraucher = {"name": "v", "inputSchema": {"type": "object", "properties":
+                   ohne_typ if wer in ("verbraucher", "beide") else mit_typ,
+                   "required": []}}
+
+    arten = [b["art"] for b in pruefe_verdrahtbarkeit(erzeuger, verbraucher)]
+
+    assert "type-mismatch" not in arten and "nullable-mismatch" not in arten, arten
+
+
+def test_ein_engerer_erzeuger_ist_kein_befund():
+    """Die Gegenrichtung: Der Erzeuger liefert NUR Text, wir nehmen Text oder null. Das
+    passt — und eine Meldung dafuer waere die haeufigste Warnung des Systems."""
+    erzeuger = {"name": "eng", "outputSchema": {"type": "object", "properties": {
+        "job_id": {"type": "string"}}}}
+
+    arten = [b["art"] for b in pruefe_verdrahtbarkeit(erzeuger, WERKZEUGE[WERKZEUG_QUERY])]
+
+    assert "nullable-mismatch" not in arten and "type-mismatch" not in arten
+
+
+def test_unsere_eigene_kette_traegt_dieselbe_luecke():
+    """**Der Befund ueber uns selbst, und er kam ungefragt.**
+
+    Die neue Pruefung hat als Erstes eine Stelle gefunden, die nicht an der Lane-Grenze
+    liegt, sondern bei uns: ``enqueue_render`` gibt ``job_id`` als ``["string","null"]``
+    zurueck — bewusst, denn ohne angelegten Auftrag gibt es keine Kennung. ``query_render``
+    verlangt ``"string"``, und zwar als Pflichtfeld.
+
+    Im Fehlerfall reicht unsere eigene Kette also ``null`` in ein Pflichtfeld weiter.
+
+    *Die Regel, die wir dem Nachbarn vorhalten, gilt auch im eigenen Haus.*
+    """
+    befunde = pruefe_verdrahtbarkeit(WERKZEUGE[WERKZEUG_ENQUEUE], WERKZEUGE[WERKZEUG_QUERY])
+    nullbar = [b for b in befunde if b["art"] == "nullable-mismatch"]
+
+    assert [b["detail"].split(":", 1)[0] for b in nullbar] == ["job_id"]

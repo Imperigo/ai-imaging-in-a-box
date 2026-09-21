@@ -340,6 +340,115 @@ def schema_felder(schema) -> list[str]:
     return list(eigenschaften) if isinstance(eigenschaften, dict) else []
 
 
+#: Die Felder, über die diese Lane ihre **Geometrie** bekommt. Kommt keines davon an,
+#: trägt die Kante nichts — auch wenn ``up_axis`` und ``bbox`` sauber überlappen.
+#:
+#: **Warum das eine eigene Prüfung braucht** (gemessen, `auf-20260910-101`, 21.09.2026):
+#: Die Werkstatt hat ``glb_path`` aus dem Ausgabeschema des Erzeugers entfernt und
+#: erwartet einen Befund. Es kam **keiner** — denn ``up_axis`` und ``bbox`` überlappen
+#: weiter, also ist die Kante nicht tot. Sie ist nur nutzlos.
+#:
+#: Und ``required`` fängt es nicht: Unser Eingang führt bewusst ``required: []``, weil
+#: das Ökosystem kein *entweder-oder* kennt (siehe Modul-Docstring). Die Regel «eines von
+#: beiden» steht darum hier, wo sie prüfbar ist, statt in einer Beschreibung, die niemand
+#: auswertet.
+TRAGENDE_GEOMETRIE_FELDER = ("ifc_path", "glb_path")
+
+
+def _typmenge(eigenschaft) -> set[str] | None:
+    """Die erlaubten JSON-Typen einer Schemaeigenschaft — ``None`` heisst **unbekannt**.
+
+    ``type`` darf eine Zeichenkette oder eine Liste sein; beides kommt im Ökosystem vor.
+    Fehlt es ganz, steht hier ``None`` und **nicht** die leere Menge: Ein Schema ohne
+    Typangabe erlaubt alles, und daraus einen Konflikt zu machen wäre ein Fehlalarm.
+    """
+    if not isinstance(eigenschaft, dict):
+        return None
+    typ = eigenschaft.get("type")
+    if isinstance(typ, str):
+        return {typ}
+    if isinstance(typ, list) and all(isinstance(e, str) for e in typ) and typ:
+        return set(typ)
+    return None
+
+
+def _eigenschaften(schema) -> dict:
+    if not isinstance(schema, dict):
+        return {}
+    eigenschaften = schema.get("properties")
+    return eigenschaften if isinstance(eigenschaften, dict) else {}
+
+
+def _typbefunde(erzeuger: dict, verbraucher: dict) -> list[dict]:
+    """Typabweichungen an den gemeinsamen Feldern einer Kante.
+
+    **Anlass, und er ist gemessen** (`auf-20260910-101`, HomeStation, 21.09.2026): An der
+    Kante von KosmoDraw zu uns stehen **vier** Abweichungen, alle derselbe Fall — der
+    Erzeuger erlaubt ausdrücklich ``null``, wir nicht::
+
+        ifc_path   ["string", "null"]  ->  "string"
+        glb_path   ["string", "null"]  ->  "string"
+        up_axis    ["string", "null"]  ->  "string"
+        bbox       ["array",  "null"]  ->  "array"
+
+    Gefunden hat sie ein Mensch von Hand. Dieses Werkzeug hat geschwiegen, obwohl genau
+    das sein Auftrag war — *ein Werkzeug, das einen Fall nicht kennt, meldet ihn nicht,
+    und sein Schweigen sieht aus wie ein Freispruch.*
+
+    Zwei Arten, und sie sind bewusst verschieden schwer:
+
+    ``type-mismatch`` (**error**)
+        Die Typmengen überschneiden sich gar nicht — Zahl gegen Zeichenkette. Diese Kante
+        kann in keinem Lauf tragen.
+
+    ``nullable-mismatch`` (**warn**)
+        Der Erzeuger erlaubt ``null``, wir nicht; sonst passt es. Im guten Fall läuft es,
+        im Fehlerfall des Vorgängers kommt ``null`` in einem Feld, das eine Zeichenkette
+        verlangt. *Der häufigste Fall und der stillste* — darum eine eigene Art und nicht
+        in ``type-mismatch`` hineingerechnet, wo er hinter den echten Konflikten
+        verschwände.
+
+    Wo eine Seite **keine** Typangabe führt, wird nichts gemeldet. Ein Schema ohne Typ
+    erlaubt alles, und ein Befund daraus wäre ein Fehlalarm — und Fehlalarme sind das,
+    woran ein Prüfwerkzeug stirbt.
+    """
+    aus = _eigenschaften(erzeuger.get("outputSchema"))
+    ein = _eigenschaften(verbraucher.get("inputSchema"))
+
+    befunde: list[dict] = []
+    for name in sorted(set(aus) & set(ein)):
+        typen_aus, typen_ein = _typmenge(aus[name]), _typmenge(ein[name])
+        if typen_aus is None or typen_ein is None:
+            continue
+        if typen_aus <= typen_ein:
+            continue
+
+        zuviel = typen_aus - typen_ein
+        gemeinsam = typen_aus & typen_ein
+        if zuviel == {"null"} and gemeinsam:
+            befunde.append({
+                "art": "nullable-mismatch", "schwere": "warn",
+                "detail": (f"{name}: Erzeuger erlaubt null "
+                           f"({sorted(typen_aus)}), Verbraucher nicht "
+                           f"({sorted(typen_ein)}). Im Fehlerfall des Vorgaengers kommt "
+                           f"null in einem Feld, das keines annimmt."),
+            })
+        elif not gemeinsam:
+            befunde.append({
+                "art": "type-mismatch", "schwere": "error",
+                "detail": (f"{name}: unvertraegliche Typen — Erzeuger {sorted(typen_aus)}, "
+                           f"Verbraucher {sorted(typen_ein)}. Kein Wert passt in beide."),
+            })
+        else:
+            befunde.append({
+                "art": "type-mismatch", "schwere": "warn",
+                "detail": (f"{name}: Erzeuger liefert auch {sorted(zuviel)}, was der "
+                           f"Verbraucher nicht annimmt ({sorted(typen_ein)}). "
+                           f"Gemeinsam ist {sorted(gemeinsam)}."),
+            })
+    return befunde
+
+
 def pruefe_verdrahtbarkeit(erzeuger: dict, verbraucher: dict,
                            gesetzte_args: set[str] | None = None) -> list[dict]:
     """Meldet, was KosmoOrbits Entwurfszeit-Prüfung an einer Kante bemängeln würde.
@@ -375,6 +484,21 @@ def pruefe_verdrahtbarkeit(erzeuger: dict, verbraucher: dict,
             "detail": "Kante trägt nichts: keine gemeinsamen Feldnamen zwischen "
                       "outputSchema des Erzeugers und inputSchema des Verbrauchers",
         })
+
+    # Die Kante lebt, und trotzdem kommt keine Geometrie an. Siehe
+    # `TRAGENDE_GEOMETRIE_FELDER`: `required` kann das hier nicht fangen, weil unser
+    # Eingang bewusst keines führt.
+    elif aus and ein and set(ein) & set(GEOMETRIE_FELDER) \
+            and not (verfuegbar & set(TRAGENDE_GEOMETRIE_FELDER)):
+        befunde.append({
+            "art": "no-geometry", "schwere": "error",
+            "detail": (f"Kante traegt keine Geometrie: weder "
+                       f"{' noch '.join(TRAGENDE_GEOMETRIE_FELDER)} kommt an, weder aus "
+                       f"dem Erzeuger noch von Hand gesetzt. Felder wie up_axis oder bbox "
+                       f"beschreiben ein Modell, sie ersetzen es nicht."),
+        })
+
+    befunde.extend(_typbefunde(erzeuger, verbraucher))
     return befunde
 
 
