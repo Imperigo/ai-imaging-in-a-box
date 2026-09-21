@@ -5820,6 +5820,22 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Die Pruefung laeuft jetzt bei jedem Schieben** (`.github/workflows/pruefung.yml`).
+      Ohne GPU, ohne Blender, ohne `.venv-ifc` — 45 Proben melden sich dann als
+      uebersprungen, und genau das ist der Beleg dafuer, dass der Kern eine Bibliothek ist.
+      **Kein Stilpruefer im Tor:** `ruff` meldet mit den Vorgaberegeln 108 Befunde an einem
+      Bestand, der diese Regeln nie uebernommen hat. *Ein Tor, das vom ersten Tag an rot
+      ist, bringt allen bei, rote Tore zu uebersehen.* Die 108 sind ein eigener Posten.
+- [x] **Und die Pruefung hat sofort etwas gefunden — bei mir.**
+      Der Commit mit dem Importeur war selbst rot: README 6439, gezaehlt 6442. Die Ursache
+      ist ein Bauteil und kein Fluechtigkeitsfehler: Der Waechter, der jede Python-Datei
+      auf Lesbarkeit prueft, las allein das **schon Eingecheckte**. Drei neue Dateien
+      zaehlten erst NACH ihrem Commit mit.
+      *Ein Waechter, der erst nach dem Commit zaehlen kann, erzwingt einen roten Commit.*
+      Berichtigt mit `--others --exclude-standard`: Neue Dateien zaehlen mit, ignorierte
+      Ordner bleiben draussen. Der Waechter wird dadurch **schaerfer** — eine neue Datei
+      mit einem Syntaxfehler faellt jetzt auf, bevor sie eingecheckt ist.
+      Zwei Mutationsproben, beide gefallen.
 - [x] **Schritt 1 gebaut: der 3D-Modell-Importeur.**
       Bis zum 21.09.2026 kannte dieses Projekt **drei** Formate (`glb`, `gltf`, `ifc`).
       Alles andere bekam eine hoefliche Absage mit dem Rat, die Datei doch selbst in

@@ -50,14 +50,40 @@ def _mindestfassung() -> tuple[int, int]:
 
 
 def _versionierte_dateien() -> list[Path]:
-    """Jede von git geführte `.py` — **nicht** ein Ordnerdurchlauf.
+    """Jede `.py`, die ins Repo gehört — **nicht** ein Ordnerdurchlauf.
 
     Ein Durchlauf über das Dateisystem läse `build/`, `.venv` und die Reste abgebrochener
-    Läufe mit; was dort nicht parst, geht niemanden etwas an.
+    Läufe mit; was dort nicht parst, geht niemanden etwas an. ``--exclude-standard`` hält
+    genau diese Reste draussen, denn es hört auf `.gitignore`.
+
+    **``--others`` ist am 21.09.2026 dazugekommen, und der Anlass ist ein selbst gebauter
+    Fehlschlag.** Bis dahin stand hier nur ``ls-files``, also allein das **schon
+    Eingecheckte**. Eine neu geschriebene Datei zählte darum erst *nach* ihrem Commit mit
+    — und die Testzahl im README, die genau diese Fälle zählt, war vor dem Commit
+    zwangsläufig zu klein.
+
+    Das hiess: **Wer drei neue Dateien schreibt, kann die Zahl nicht richtig eintragen.**
+    Er fährt die Proben, sie sind grün, er checkt ein — und erst der Commit macht den
+    Wächter rot. Genau das ist am 21.09.2026 passiert, in demselben Stand, in dem eine
+    Prüfung auf `main` eingerichtet wurde, weil ein roter Hauptzweig zwei Tage lang
+    niemandem aufgefallen war.
+
+        *Ein Wächter, der erst nach dem Commit zählen kann, erzwingt einen roten Commit.*
+
+    Der Zusatz macht den Wächter zugleich **schärfer**: Eine neue Datei mit einem
+    Syntaxfehler fällt jetzt auf, bevor sie eingecheckt ist, und nicht erst danach.
     """
-    roh = subprocess.run(["git", "-C", str(WURZEL), "ls-files", "*.py"],
-                         capture_output=True, text=True, check=True).stdout
-    return [WURZEL / z for z in roh.split() if z]
+    roh = subprocess.run(
+        ["git", "-C", str(WURZEL), "ls-files", "--cached", "--others",
+         "--exclude-standard", "*.py"],
+        capture_output=True, text=True, check=True).stdout
+    # `--cached --others` kann dieselbe Datei zweimal nennen, wenn sie eingecheckt UND
+    # geaendert ist. Doppelte Eintraege waeren doppelte Proben und damit eine falsche
+    # Testzahl — die Reihenfolge bleibt dabei erhalten, damit die Sammlung stabil ist.
+    gesehen: dict[str, None] = {}
+    for zeile in roh.split():
+        gesehen.setdefault(zeile, None)
+    return [WURZEL / z for z in gesehen]
 
 
 def test_der_laufende_python_stand_haelt_die_zusage():
@@ -68,6 +94,49 @@ def test_der_laufende_python_stand_haelt_die_zusage():
         f"Python {laeuft[0]}.{laeuft[1]} laeuft, zugesagt ist mindestens "
         f"{mindest[0]}.{mindest[1]} (pyproject.toml). Alles Weitere in dieser Sammlung "
         f"sagt darueber nichts.")
+
+
+def test_eine_neue_noch_nicht_eingecheckte_datei_zaehlt_mit(tmp_path):
+    """**Der Wächter muss zählen können, bevor eingecheckt wird.**
+
+    Bis zum 21.09.2026 tat er das nicht: Er las allein das schon Eingecheckte. Wer drei
+    neue Dateien schrieb, fuhr die Proben grün, checkte ein — und **erst der Commit**
+    machte die Testzahl im README falsch. Ein zweiter Commit musste sie nachziehen, und
+    dazwischen stand der Hauptzweig rot.
+
+        *Ein Wächter, der erst nach dem Commit zählen kann, erzwingt einen roten Commit.*
+
+    Diese Probe legt eine Datei ins Repo, fragt nach, und räumt sie wieder weg. Sie
+    verändert die Sammlung nicht: Die ist längst gelaufen, wenn diese Zeile steht.
+    """
+    neu = WURZEL / "tests" / "_probe_neue_datei_bitte_ignorieren.py"
+    assert not neu.exists(), "Rest einer abgebrochenen Probe — bitte von Hand wegräumen"
+    try:
+        neu.write_text("# nur fuer diese Probe\n", encoding="utf-8")
+        gefunden = _versionierte_dateien()
+    finally:
+        neu.unlink(missing_ok=True)
+
+    assert neu in gefunden, (
+        "Eine neue, noch nicht eingecheckte Datei wird nicht mitgezaehlt. Dann ist die "
+        "Testzahl im README vor jedem Commit zu klein, und sie laesst sich nicht "
+        "richtig eintragen, bevor der Commit sie falsch gemacht hat.")
+
+
+def test_was_gitignore_ausschliesst_bleibt_draussen():
+    """Die Gegenrichtung, und sie ist die Hälfte des Entscheids.
+
+    ``--others`` allein läse `build/`, `.venv-ifc/` und jeden abgebrochenen Lauf mit —
+    also genau das, wogegen hier von Anfang an kein Ordnerdurchlauf steht.
+    ``--exclude-standard`` hält sie draussen, weil es auf `.gitignore` hört.
+    """
+    gefunden = {p.as_posix() for p in _versionierte_dateien()}
+    draussen = [p for p in gefunden
+                if "/.venv-ifc/" in p or "/build/" in p or "/__pycache__/" in p
+                or "/node_modules/" in p]
+    assert not draussen, (
+        f"{len(draussen)} Dateien aus ignorierten Ordnern sind mitgezaehlt worden, "
+        f"z. B. {draussen[:3]}. Was dort nicht parst, geht niemanden etwas an.")
 
 
 @pytest.mark.parametrize("pfad", _versionierte_dateien(), ids=lambda p: p.name)

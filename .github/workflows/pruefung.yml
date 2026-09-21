@@ -1,0 +1,88 @@
+# DIE PRUEFUNG, DIE NIEMAND VERGESSEN KANN
+#
+# Der Anlass ist ein Befund vom 21.09.2026 und keine Vorsichtsmassnahme: `main` war zwei
+# Tage lang rot, und es ist niemandem aufgefallen. Die HomeStation hatte vierzehn
+# Auftraege beantwortet und direkt nach `main` geschoben; dabei entstanden Luecken in der
+# Rangfolge der offenen Auftraege. Der Waechter dafuer meldete das sofort — nur fuhr ihn
+# niemand.
+#
+#     Ein Waechter, der meldet, wo niemand hinsieht, hat dieselbe Wirkung wie keiner.
+#
+# Diese Datei ist die fehlende Stelle: Sie faehrt die Proben bei JEDEM Schieben, und wenn
+# etwas rot ist, schickt GitHub demjenigen eine Nachricht, der geschoben hat. Es gibt
+# danach keinen Zustand mehr, in dem der Hauptzweig kaputt ist und es keiner weiss.
+#
+# WAS HIER BEWUSST NICHT STEHT
+#
+# Kein `ruff` und kein anderer Stilpruefer. Gemessen am 21.09.2026: Mit den Vorgaberegeln
+# meldet `ruff` 108 Befunde an einem Bestand, der diese Regeln nie uebernommen hat. Ein
+# Tor, das vom ersten Tag an rot ist, bringt niemandem etwas bei — es bringt allen bei,
+# rote Tore zu uebersehen. Die 108 Befunde sind als eigener Posten notiert, nicht als
+# Torwaechter eingesetzt.
+#
+# Keine GPU, kein Blender, kein `.venv-ifc`. Die Proben laufen ohne all das — 45 von
+# ihnen melden sich dann als uebersprungen, und genau das ist der Beleg dafuer, dass der
+# Kern eine Bibliothek ist (Regel 4). Waere hier Blender noetig, waere die Regel verletzt.
+
+name: Proben
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  # Von Hand ausloesbar — fuer den Fall, dass jemand wissen will, ob der Stand haelt,
+  # ohne dafuer etwas schieben zu muessen.
+  workflow_dispatch:
+
+# Ein zweites Schieben auf denselben Zweig loest den vorigen Lauf ab. Ohne das stauen
+# sich Laeufe, deren Ergebnis niemanden mehr interessiert, und der interessante steht
+# dahinter in der Schlange.
+concurrency:
+  group: proben-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  proben:
+    name: Proben ohne GPU, ohne Blender
+    runs-on: ubuntu-latest
+    # GESETZT, nicht gemessen: Der ganze Lauf dauert hier rund zwei Minuten. Fuenfzehn
+    # geben Luft fuer eine langsamere Maschine und schneiden einen haengenden Lauf ab,
+    # statt ihn sechs Stunden stehen zu lassen (die Vorgabe von GitHub).
+    timeout-minutes: 15
+
+    steps:
+      - name: Stand holen
+        uses: actions/checkout@v4
+
+      - name: Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          # Die Fassung, gegen die dieses Projekt seine Zahlen misst. `pyproject.toml`
+          # laesst >=3.11 zu; hier steht die eine, an der die Zahlen haengen.
+          python-version: "3.11"
+          cache: pip
+
+      - name: Abhaengigkeiten
+        # `.[dev]` und nicht nur `pytest`: numpy und Pillow gehoeren dazu, weil vier
+        # Waechter der 16-Bit-Skalierung ohne sie STILLSCHWEIGEND aussetzen. Am
+        # 22.08.2026 ist genau das passiert. Ein Waechter, der nur laeuft, wenn zufaellig
+        # das richtige Paket da ist, bewacht nichts.
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Die Proben
+        # Ohne `-x`: Wir wollen ALLE Fehlschlaege sehen und nicht nur den ersten. Wer
+        # beim ersten abbricht, faehrt danach so oft, wie es Fehler gibt.
+        run: python -m pytest -q
+
+      - name: Der Einbau-Stand, zum Mitlesen
+        # KEIN TOR, sondern eine Auskunft — darum `continue-on-error`. Sie steht hier,
+        # weil dieses Werkzeug ohnehin gelesen wird, bevor jemand einen Auftrag schreibt,
+        # und weil im Lauf sichtbar sein soll, was gerade bei wem liegt.
+        if: always()
+        continue-on-error: true
+        run: python tools/einbau.py
