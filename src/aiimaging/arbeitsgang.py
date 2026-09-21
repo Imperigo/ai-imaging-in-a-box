@@ -44,6 +44,8 @@ GPU und ohne Blender läuft dieses Modul mit Attrappen vollständig durch.
 """
 from __future__ import annotations
 
+import json
+import time
 from pathlib import Path
 
 from aiimaging import importeur, kette, projekt
@@ -177,6 +179,91 @@ def _urteil_zu(graph, knoten_ergebnisse: dict, bild_knoten: str):
     return urteil, grund, qa_id
 
 
+#: Die Sperrdatei in der Mappe. Sie verhindert, dass zwei Läufe gleichzeitig in
+#: dieselbe Mappe schreiben.
+SPERRDATEI = "lauf.sperre"
+
+#: Ab wann eine Sperre als **liegengeblieben** gilt und übernommen werden darf.
+#:
+#: **Vier Stunden, und die Zahl ist eine Setzung mit Begründung.** Sie muss deutlich über
+#: dem längsten erwarteten Lauf liegen: Der Multipass hat eine Gesamtfrist von fünfzehn
+#: Minuten, und ein Bild auf dem Auslagerungsweg kann ein Vielfaches davon brauchen. Vier
+#: Stunden sind auch dann noch reichlich, wenn jemand über Nacht eine Reihe fährt.
+#:
+#: *Eine Frist, die knapp über dem Normalfall liegt, bricht genau die Sperre, die gerade
+#: am meisten schützt — die des langen Laufs.*
+SPERRFRIST_S = 4 * 3600
+
+
+def _nimm_sperre(wurzel: Path) -> Path:
+    """Die Mappe für diesen Lauf sperren — oder begründet ablehnen.
+
+    **Der Anlass ist gemessen** (21.09.2026): Zwei Läufe gleichzeitig auf derselben Mappe
+    meldeten **beide Erfolg**, und danach stand **ein** Bild und **ein** Lauf in der
+    Mappe. Der zweite hatte den ersten überschrieben: Beide lesen die Mappe, beide
+    schreiben sie, der letzte gewinnt.
+
+        *Ein Fehlschlag, der wie ein Erfolg aussieht, wird nicht gefunden — er wird
+        geglaubt.*
+
+    Und es ist kein Laborfall: Sobald ein iPad und ein Rechner am selben Projekt hängen,
+    ist das Montagmorgen.
+
+    **Angelegt wird mit ``O_EXCL``** — das Betriebssystem entscheidet, wer zuerst da war.
+    Eine Prüfung «gibt es die Datei schon?» mit anschliessendem Schreiben hätte genau
+    dazwischen dieselbe Lücke wie das Problem, das sie lösen soll.
+
+    **Und eine liegengebliebene Sperre blockiert nicht ewig.** Stirbt ein Lauf, bleibt
+    seine Datei stehen; nach :data:`SPERRFRIST_S` darf der nächste sie übernehmen. *Eine
+    Sperre, die man nur von Hand lösen kann, wird von Hand gelöscht — und zwar auch dann,
+    wenn sie gerade zu Recht steht.*
+
+    In der Datei stehen **Zeitpunkt und Prozessnummer, sonst nichts**: Kein Benutzer- und
+    kein Rechnername (Regel 3).
+
+    Raises:
+        ArbeitsgangError: Es läuft schon einer, und seine Sperre ist frisch.
+    """
+    import os
+
+    pfad = Path(wurzel) / SPERRDATEI
+    try:
+        kennung = os.open(pfad, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError:
+        alter = None
+        try:
+            alter = time.time() - pfad.stat().st_mtime
+        except OSError:
+            pass
+        if alter is not None and alter > SPERRFRIST_S:
+            # UEBERNOMMEN, und es steht im Lauf. Wer spaeter sucht, warum zwei Laeufe
+            # dieselbe Mappe angefasst haben, findet hier den Grund.
+            pfad.unlink(missing_ok=True)
+            return _nimm_sperre(wurzel)
+        raise ArbeitsgangError(
+            f"In dieser Mappe läuft schon eine Rechnung"
+            + (f" (seit {alter / 60:.0f} Minuten)" if alter is not None else "")
+            + ".\n"
+            f"Zwei gleichzeitige Läufe schreiben beide in dieselbe Projektdatei, und der "
+            f"zweite überschriebe die Ergebnisse des ersten — BEIDE meldeten dabei "
+            f"Erfolg.\n"
+            f"Warten, bis der erste fertig ist. Ist er abgestürzt, wird die Sperre nach "
+            f"{SPERRFRIST_S // 3600} Stunden von selbst frei; wer nicht warten will, "
+            f"löscht {SPERRDATEI!r} in der Mappe.")
+
+    with os.fdopen(kennung, "w", encoding="utf-8") as datei:
+        # KEIN BENUTZER- UND KEIN RECHNERNAME (Regel 3, dieses Repo ist oeffentlich, und
+        # eine Mappe wandert mit).
+        json.dump({"begonnen": _jetzt_iso(), "pid": os.getpid()}, datei)
+    return pfad
+
+
+def _jetzt_iso() -> str:
+    import datetime
+    return datetime.datetime.now(datetime.timezone.utc).replace(
+        microsecond=0).isoformat().replace("+00:00", "Z")
+
+
 #: Vorgabewert für ``cache``: der Zwischenspeicher liegt **in der Mappe**.
 #:
 #: **Eigenes Wort statt ``None``**, weil ``None`` in diesem Projekt überall
@@ -246,6 +333,25 @@ def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None,
     gleich aussehen: «wurde nie versucht» und «wurde versucht und ging nicht».
     """
     wurzel = Path(wurzel)
+    # DIE SPERRE ZUERST, VOR DEM OEFFNEN. Laege sie spaeter, haette der zweite Lauf die
+    # Mappe schon gelesen, bevor der erste sie geschrieben hat — und genau diese Kopie
+    # wuerde er am Ende zurueckschreiben.
+    sperre = _nimm_sperre(wurzel)
+    try:
+        return _rechne_gesperrt(
+            wurzel, trotz_aenderung=trotz_aenderung, ausfuehrer=ausfuehrer, cache=cache,
+            melder=melder, **kettenargumente)
+    finally:
+        # AUCH BEIM SCHEITERN. Eine Sperre, die ein abgebrochener Lauf stehenlaesst,
+        # blockiert die Mappe fuer Stunden — und der naechste Mensch sieht nur, dass
+        # nichts geht.
+        Path(sperre).unlink(missing_ok=True)
+
+
+def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder,
+                     **kettenargumente) -> dict:
+    """Der Lauf selbst. Siehe :func:`rechne` — hier steht nur, was **innerhalb** der
+    Sperre geschieht."""
     auf = projekt.oeffne(wurzel)
     p, stand = auf["projekt"], auf["modell_stand"]
 

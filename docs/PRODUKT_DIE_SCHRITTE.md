@@ -118,6 +118,24 @@ Auf der Werkstattmaschine lief das KI-Bild **überhaupt nicht** — die Software
 Weg aus, der stirbt. Repariert; die Hälfte des Fehlers (der Ausweichweg selbst) ist
 gemessen bestellt und noch offen.
 
+### 21.09.2026 · Zwei Rechnungen gleichzeitig verloren eine davon — lautlos
+
+**Der unangenehmste Fund des Tages**, und er betrifft genau das, was Sie vorhaben: iPad
+und Rechner am selben Projekt.
+
+Starten zwei Rechnungen gleichzeitig auf derselben Mappe, **melden beide Erfolg** — und
+danach steht nur **eine** in der Mappe. Die andere ist weg. Ohne Fehlermeldung, ohne
+Spur.
+
+> *Ein Fehlschlag, der wie ein Erfolg aussieht, wird nicht gefunden — er wird geglaubt.*
+
+**Repariert:** Die Mappe wird für die Dauer einer Rechnung gesperrt. Ein zweiter Versuch
+bekommt jetzt einen Satz statt eines Verlusts — mit der Angabe, seit wann der erste läuft.
+
+Und die Sperre blockiert nicht ewig: Stürzt eine Rechnung ab, gibt sie nach vier Stunden
+von selbst frei. *Eine Sperre, die man nur von Hand lösen kann, wird von Hand gelöscht —
+auch dann, wenn sie gerade zu Recht steht.*
+
 ### 21.09.2026 · Jeder Klick rechnete alles neu — jetzt nicht mehr
 
 Nachdem der Pfadfehler gefunden war, habe ich gezielt nach weiteren Stellen dieser Art

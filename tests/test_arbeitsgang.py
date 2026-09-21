@@ -689,3 +689,124 @@ def test_das_erste_entstehen_bleibt_stehen_und_das_letzte_kommt_dazu(tmp_path):
 
     assert nachher["erzeugt"] == vorher["erzeugt"], "die Herkunft wurde ueberschrieben"
     assert nachher["zuletzt_vermerkt"] >= vorher["zuletzt_vermerkt"]
+
+
+# ---------------------------- Zwei Laeufe auf derselben Mappe — stiller Datenverlust
+#
+# GEMESSEN AM 21.09.2026: Zwei Laeufe gleichzeitig, beide meldeten Erfolg, und danach
+# stand EIN Bild und EIN Lauf in der Mappe. Der zweite hatte den ersten ueberschrieben:
+# Beide lesen die Mappe, beide schreiben sie, der letzte gewinnt.
+#
+#     Ein Fehlschlag, der wie ein Erfolg aussieht, wird nicht gefunden — er wird geglaubt.
+#
+# Und es ist kein Laborfall: Sobald ein iPad und ein Rechner am selben Projekt haengen,
+# ist das Montagmorgen.
+
+def test_der_zweite_gleichzeitige_lauf_wird_abgelehnt(tmp_path):
+    """**Abgelehnt, nicht stillschweigend ueberschrieben.** Eine Ablehnung sieht man."""
+    _melde_mappe(tmp_path)
+    sperre = arbeitsgang._nimm_sperre(tmp_path)
+    try:
+        with pytest.raises(arbeitsgang.ArbeitsgangError) as fehler:
+            arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+        assert "läuft schon" in str(fehler.value)
+    finally:
+        sperre.unlink(missing_ok=True)
+
+
+def test_nach_dem_lauf_ist_die_mappe_wieder_frei(tmp_path):
+    """Sonst waere die erste Rechnung die letzte."""
+    _melde_mappe(tmp_path)
+    arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+
+    assert not (tmp_path / arbeitsgang.SPERRDATEI).exists()
+    arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle(), prompt="noch einmal")
+
+
+def test_auch_ein_GESCHEITERTER_lauf_gibt_die_mappe_frei(tmp_path):
+    """**Der Fall, den man beim Bauen vergisst.**
+
+    *Eine Sperre, die ein abgebrochener Lauf stehenlaesst, blockiert die Mappe fuer
+    Stunden — und der naechste Mensch sieht nur, dass nichts geht.*
+    """
+    _melde_mappe(tmp_path)
+
+    # ZWEI SORTEN SCHEITERN, und sie nehmen verschiedene Wege durch den Code.
+    #
+    # 1) Eine Stufe faellt. Das ist KEINE Ausnahme — `fuehre_aus` faengt sie ab
+    #    (skip-on-error) und traegt den Fehlschlag als Tatsache ein.
+    tabelle = Werkbank(render_faellt=True).tabelle()
+    ergebnis = arbeitsgang.rechne(tmp_path, ausfuehrer=tabelle)
+    assert ergebnis["lauf"]["status"] != "ok"
+    assert not (tmp_path / arbeitsgang.SPERRDATEI).exists(), "Sperre nach Fehlschlag"
+
+    # 2) `rechne` selbst wirft — hier, weil das Modell ein anderes geworden ist. Dieser
+    #    Weg verlaesst die Funktion ueber eine Ausnahme, und auch dann muss das `finally`
+    #    greifen.
+    modell = tmp_path / "m.glb"
+    modell.write_bytes(modell.read_bytes() + b"\n")
+    with pytest.raises(arbeitsgang.ArbeitsgangError):
+        arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+
+    assert not (tmp_path / arbeitsgang.SPERRDATEI).exists(), "Sperre nach Ausnahme"
+
+
+def test_eine_liegengebliebene_sperre_wird_uebernommen(tmp_path):
+    """*Eine Sperre, die man nur von Hand loesen kann, wird von Hand geloescht — und zwar
+    auch dann, wenn sie gerade zu Recht steht.*"""
+    import os
+    import time as zeit
+
+    _melde_mappe(tmp_path)
+    sperre = arbeitsgang._nimm_sperre(tmp_path)
+    alt = zeit.time() - arbeitsgang.SPERRFRIST_S - 60
+    os.utime(sperre, (alt, alt))
+
+    ergebnis = arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+
+    assert ergebnis["vermerkt"] >= 1
+
+
+def test_eine_frische_sperre_wird_NICHT_uebernommen(tmp_path):
+    """Die Gegenprobe. Ohne sie waere eine Sperre, die IMMER uebernommen wird, ebenso
+    gruen — und der stille Datenverlust waere zurueck."""
+    _melde_mappe(tmp_path)
+    sperre = arbeitsgang._nimm_sperre(tmp_path)
+    try:
+        with pytest.raises(arbeitsgang.ArbeitsgangError):
+            arbeitsgang.rechne(tmp_path, ausfuehrer=Werkbank().tabelle())
+    finally:
+        sperre.unlink(missing_ok=True)
+
+
+def test_in_der_sperre_steht_kein_benutzer_und_kein_rechnername(tmp_path):
+    """Regel 3 gilt auch fuer eine Datei, die nur ein paar Sekunden lebt — eine Mappe
+    wandert mit, und wer sie weitergibt, gibt alles darin weiter."""
+    import getpass
+    import socket
+
+    _melde_mappe(tmp_path)
+    sperre = arbeitsgang._nimm_sperre(tmp_path)
+    try:
+        inhalt = sperre.read_text(encoding="utf-8")
+        assert getpass.getuser() not in inhalt
+        assert socket.gethostname() not in inhalt
+        assert "begonnen" in inhalt and "pid" in inhalt
+    finally:
+        sperre.unlink(missing_ok=True)
+
+
+def test_die_sperre_wird_vor_dem_oeffnen_genommen():
+    """**Die Reihenfolge ist die ganze Wirkung.**
+
+    Laege die Sperre spaeter, haette der zweite Lauf die Mappe schon gelesen, bevor der
+    erste sie geschrieben hat — und genau diese veraltete Kopie wuerde er am Ende
+    zurueckschreiben. Der Datenverlust waere derselbe, nur schwerer zu finden.
+    """
+    from pathlib import Path as P
+
+    quelle = P(arbeitsgang.__file__).read_text(encoding="utf-8")
+    kopf = quelle.split("    wurzel = Path(wurzel)\n    # DIE SPERRE ZUERST", 1)[1] \
+                 .split("\ndef ", 1)[0]
+
+    assert kopf.index("_nimm_sperre") < kopf.index("_rechne_gesperrt")

@@ -5820,6 +5820,32 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Zwei Läufe auf derselben Mappe verloren stillschweigend die Arbeit des einen.**
+      Gemessen: Zwei gleichzeitige Läufe, **beide meldeten Erfolg** — und danach stand
+      **ein** Bild und **ein** Lauf in der Mappe. Beide lesen sie, beide schreiben sie,
+      der letzte gewinnt.
+      *Ein Fehlschlag, der wie ein Erfolg aussieht, wird nicht gefunden — er wird
+      geglaubt.* Und es ist kein Laborfall: Sobald ein iPad und ein Rechner am selben
+      Projekt hängen, ist das Montagmorgen.
+      **Neu: eine Sperre in der Mappe**, angelegt mit `O_EXCL` — das Betriebssystem
+      entscheidet, wer zuerst da war. Eine Prüfung «gibt es die Datei schon?» mit
+      anschliessendem Schreiben hätte genau dazwischen dieselbe Lücke wie das Problem,
+      das sie lösen soll.
+      **Die Reihenfolge ist die ganze Wirkung:** Die Sperre kommt **vor** dem Öffnen.
+      Läge sie später, hätte der zweite Lauf die Mappe schon gelesen — und genau diese
+      veraltete Kopie schriebe er am Ende zurück.
+      **Und sie blockiert nicht ewig:** Nach vier Stunden darf der nächste sie übernehmen.
+      *Eine Sperre, die man nur von Hand lösen kann, wird von Hand gelöscht — auch dann,
+      wenn sie gerade zu Recht steht.* Die vier Stunden sind begründet: Sie müssen
+      deutlich über dem längsten erwarteten Lauf liegen, sonst bricht die Frist genau die
+      Sperre, die am meisten schützt.
+      **Auch ein gescheiterter Lauf gibt frei** — und die Probe dazu fährt **beide**
+      Sorten Scheitern: die abgefangene Stufe (skip-on-error, keine Ausnahme) und die
+      Ausnahme aus `rechne` selbst. *Zwei Wege hinaus, und nur einer davon war beim ersten
+      Schreiben im Kopf.*
+      In der Sperrdatei stehen Zeitpunkt und Prozessnummer, **kein Benutzer- und kein
+      Rechnername** (Regel 3) — eine Mappe wandert mit.
+      Sieben Wächter, vier Mutationsproben, alle gefallen.
 - [x] **Gezielt nach dem Muster gesucht — und zwei weitere Stellen gefunden.**
       Dreimal derselbe Fehlertyp an einem Tag ist kein Zufall: *Eine Prüfung, die unter
       künstlichen Bedingungen grün ist, sagt nichts über die Bedingungen, die es wirklich
