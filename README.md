@@ -57,8 +57,19 @@ darüber liegt: [`docs/OBERFLAECHE_KOSMOVIS.md`](docs/OBERFLAECHE_KOSMOVIS.md). 
 bei der eigenen Arbeit an der Oberfläche auffällt und an den UI-Worker geht:
 [`docs/UI_BEFUNDE.md`](docs/UI_BEFUNDE.md).
 
-Tests: **5275**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+Tests: **5282**, ohne GPU. *Die Zahl steht unter einem Wächter
 (`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
+
+**Zwei stehen am 21.09.2026 rot, und beide sind benannt statt übergangen:**
+`tests/test_schalterprobe.py::test_auftragspost_neueste_gibt_genau_einen_block`
+verlangt, dass der Befehl `auftragspost ui --neueste` mit 0 endet — er endet
+mit 1, weil für den UI-Worker **nichts offen ist**. Die Wache misst damit den
+heutigen Rückstand statt das Werkzeug und schlägt beim Erfolg an; sie gehört
+gegen eine synthetische Ablage gefahren, nicht gegen diese.
+`tests/test_seams.py::test_beide_erzeugen_bei_gleichen_angaben_dasselbe_kommando`
+baut im echten Lauf kein Kommando — ungeklärt, nicht angefasst.
+*Hier stand bis zum 21.09.2026 «alle grün». Das war falsch: die Suite war
+schon vorher rot, und der Satz hat es zugedeckt.*
 
 ---
 

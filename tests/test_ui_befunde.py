@@ -117,18 +117,40 @@ def test_ein_ui_befund_geht_an_den_ui_worker(kennung, spalten):
     stand = spalten[-1]
     if WEITERGEGEBEN not in stand.lower():
         return
+    geprueft = 0
     for name in AUFTRAG.findall(stand):
         for ordner in ("offen", "ergebnisse"):
             pfad = REPO / "auftraege" / ordner / f"{name}.json"
             if not pfad.is_file():
                 continue
             satz = json.loads(pfad.read_text(encoding="utf-8"))
+            # BERICHTIGT 21.09.2026 — diese Wache wurde ROT, SOBALD EIN
+            # UI-AUFTRAG BEANTWORTET WURDE, und das war ein Fehler in ihr
+            # selbst, kein Befund: eine Ergebnisdatei traegt per Schema gar
+            # kein `worker`-Feld (der Adressat stand im Auftrag), also verglich
+            # sie `None` mit `'ui'`. Neun Faelle standen deshalb rot. Ein
+            # Waechter, der beim Erfolg anschlaegt, erzieht dazu, ihn zu
+            # ueberhoeren.
+            #
+            # Die Ergebnisdatei wird trotzdem nicht einfach uebersprungen: sie
+            # muss sich als Ergebnis ausweisen. Eine Datei, die weder Auftrag
+            # noch Ergebnis ist, faellt weiterhin durch.
+            if satz.get("schema") == auftrag.SCHEMA_ERGEBNIS:
+                continue
+            geprueft += 1
             assert satz.get("worker") == auftrag.WORKER_UI, (
                 f"{kennung} ist an {name} weitergegeben, und der geht an "
                 f"{satz.get('worker')!r} statt an {auftrag.WORKER_UI!r}. Dort bleibt er "
                 f"liegen — nicht aus Ablehnung, sondern weil er nicht zum Gegenstand "
                 f"des Lesers gehört."
             )
+    # GEGEN DAS ERBLINDEN: der Sprung oben darf die Wache nicht leerlaufen
+    # lassen. Zu jedem weitergegebenen Befund muss mindestens eine
+    # AUFTRAGSDATEI dagestanden haben — sonst prueft diese Zeile nichts mehr.
+    assert geprueft or not AUFTRAG.findall(stand), (
+        f"{kennung} nennt Auftraege, aber keiner davon lag als Auftragsdatei vor — "
+        f"diese Wache hat nichts geprueft."
+    )
 
 
 def test_der_ui_worker_ist_ueberhaupt_ein_bekannter_worker():
