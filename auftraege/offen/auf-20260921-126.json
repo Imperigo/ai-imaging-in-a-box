@@ -1,0 +1,38 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260921-126",
+  "art": "qa",
+  "worker": "local",
+  "rang": 4,
+  "erstellt": "2026-09-21T12:00:00Z",
+  "params": {},
+  "beschreibung": "Der neue 3D-Modell-Importeur an ECHTEM Blender. Er ist hier nur mit Attrappen geprueft. Kern: Gibt es die Operatornamen in eurer Fassung (Blender hat sie zwischen 4.0 und 4.1 umbenannt), und was verliert welches Format auf einer Rundreise mit bekannter Wahrheit? Dazu die zwei Faelle, die still schiefgehen: der Vorgabewuerfel und die leere Szene.",
+  "anweisung": "=== DER 3D-MODELL-IMPORTEUR AN ECHTEM BLENDER — ER IST HIER NIE GELAUFEN ===\n\nWAS SEIT DEM 21.09.2026 NEU IST\n\nVisbox kannte bis gestern DREI Modellformate: glb, gltf, ifc. Alles andere\nbekam an der Tuer eine hoefliche Absage mit einem Rat — zum Beispiel: «Blender\nliest FBX und schreibt glTF: Datei → Exportieren → glTF 2.0.»\n\nDer Rat war richtig und eine Zumutung. Er verlangt von jemandem, der Bilder\nmachen will, dass er zuerst ein Programm bedient, DAS DIESE SOFTWARE SELBST\nSCHON AUFRUFT.\n\n    Ein Werkzeug, das den Weg kennt und ihn dem Benutzer auftraegt, hat die\n    Arbeit nicht getan, sondern verteilt.\n\nGebaut ist darum ein Importeur mit drei Wegen:\n\n    glb, gltf          -> DURCHGEREICHT (nichts umwandeln, nichts kopieren)\n    ifc                -> ueber das .venv-ifc wie bisher\n    obj fbx dae stl\n    ply usd usdc usda\n    abc x3d            -> ueber `blender --background --python`\n\nDer Blender-Weg ist hier mit Attrappen geprueft — 18 Proben, sieben\nMutationen, alle gefallen. ECHTES BLENDER HAT ER NIE GESEHEN. Das ist eure\nMessung, und sie ist die einzige, die zaehlt.\n\n\nWAS ZU TUN IST\n\n  SCHRITT 1 · GIBT ES DIE OPERATOREN IN EURER BLENDER-FASSUNG?\n\n  Das ist die billigste und wichtigste Frage. Blender hat seine Importeure\n  zwischen 4.0 und 4.1 umbenannt: `import_mesh.stl` heisst seither\n  `wm.stl_import`, `import_scene.obj` heisst `wm.obj_import`. Wir haben die\n  NEUEN Namen eingetragen — geraten aus der Dokumentation, nicht gemessen.\n\n  Fahrt in EURER Fassung (und, wenn ihr beide habt, in 4.2 UND 5.2):\n\n      blender --background --python-expr \"import bpy; print(bpy.app.version_string); \\\n          print([n for n in ('wm.obj_import','import_scene.fbx','wm.collada_import', \\\n          'wm.stl_import','wm.ply_import','wm.usd_import','wm.alembic_import', \\\n          'import_scene.x3d','import_scene.gltf') ])\"\n\n  Sagt uns je Operator: vorhanden oder nicht. Wo er fehlt, nennt den Namen,\n  den EURE Fassung stattdessen hat.\n\n    Ein Name, der aus einer Dokumentation stammt statt von der Maschine, ist\n    eine Behauptung. Diese hier steht in einer Tabelle, auf die sich ab\n    sofort jeder Import verlaesst.\n\n\n  SCHRITT 2 · DIE RUNDREISE MIT BEKANNTER WAHRHEIT\n\n  Das ist der Kern. Baut mit `python tools/make_test_ifc.py --hochbau` eine\n  Szene, deren Masse ihr KENNT. Wandelt sie ueber unseren IFC-Weg nach glb.\n  Dann exportiert aus Blender dieselbe Geometrie in die fremden Formate und\n  importiert sie mit unserem neuen Weg WIEDER HEREIN:\n\n      IFC -> glb  (unser Weg)  -> Blender-Export nach obj/fbx/dae/stl/usd\n                               -> unser Importeur -> glb\n\n  Je Format zurueckgeben:\n\n      Format | Huellbox (drei Kantenlaengen) | n_elements | n_triangles\n\n  Verglichen wird gegen die Masse, mit denen die IFC GESCHRIEBEN wurde — die\n  kennt ihr aus `make_test_ifc.py`. Dafuer gibt es bei uns\n  `aiimaging.konversionstreue.pruefe_konversion`; ruft sie oder rechnet von\n  Hand, aber gebt die Rohzahlen mit.\n\n  DIE FRAGE, UM DIE ES GEHT: Welches Format verliert was? Ein Massstabsfehler\n  (Faktor 1000, Millimeter gegen Meter) und eine vertauschte Achse sehen in\n  einer reinen Zahlenabweichung GLEICH aus. Darum die drei Kantenlaengen\n  einzeln und nicht eine Summe.\n\n\n  SCHRITT 3 · DIE ZWEI FAELLE, DIE STILL SCHIEFGEHEN\n\n  a) DER VORGABEWUERFEL. Unser Runner raeumt die Startszene leer\n     (`wm.read_factory_settings(use_empty=True)`). Prueft, dass in der\n     Ausgabe wirklich kein zusaetzliches Objekt steht — ein 2-m-Wuerfel neben\n     einem Gebaeude verschiebt jede Kameraableitung, und niemand sieht ihm an,\n     woher er kommt.\n\n  b) DIE LEERE SZENE. Nehmt eine Datei, die nur Kurven oder Hilfsgeometrie\n     traegt (in Blender: nur eine Bezier-Kurve, als .fbx exportiert). Unser\n     Runner soll dann `status: error` melden mit dem Satz «die Szene ist leer\n     — keine einzige Flaeche», NICHT eine leere glb schreiben.\n\n     Eine leere glb waere der schlimmste Ausgang: Der Lauf gelingt, eine Datei\n     liegt da, und der Fehler taucht drei Stufen spaeter als unerklaerliche\n     Zahl wieder auf.\n\n\n  SCHRITT 4 · DIE ZEIT\n\n  Wie lange dauert ein Blender-Import je Format, bei der Testszene und bei\n  einer der 40 echten IFC (nach glb und zurueck)? Unsere Gesamtfrist steht bei\n  300 s und ist GESETZT, nicht gemessen. Sagt uns, ob sie zu knapp ist — auf\n  einem MacBook M1 Max, nicht auf eurer Maschine, ist sie am Ende zu halten.\n\n\nWAS NICHT ZU TUN IST\n\n  - NICHTS an unserem Runner aendern. Wenn ein Operatorname falsch ist, sagt\n    ihn — wir tragen ihn ein. Eine Aenderung drueben waere hier unsichtbar.\n  - KEIN BlenderBIM, kein Add-on. Der Runner laeuft mit `--factory-startup`,\n    und das ist Absicht: Ein Import, der nur mit euren Voreinstellungen\n    gelingt, gelingt bei einer Studierenden nicht.\n  - KEINE echten Projektdateien in die Rueckgabe. Die Rundreise laeuft ueber\n    die synthetische Szene; von den 40 echten Dateien kommen nur laufende\n    Nummern und Zahlen zurueck.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.\n\n\nWARUM DAS SCHRITT 1 DES GANZEN PRODUKTS IST\n\nDie Software soll eine Architektin herunterladen, ihr Modell hineinziehen und\nein Bild bekommen. Wenn der Import nicht traegt, gibt es keinen zweiten\nSchritt — und zwar unabhaengig davon, wie gut alles danach gemessen ist.\n\n«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort.",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python tools/make_test_ifc.py --hochbau",
+    "hinweis": "Die Rundreise laeuft ueber die synthetische Szene, deren Masse wir kennen. Von den 40 echten Dateien kommen nur Zeiten zurueck."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 60,
+    "leerlauf_schwelle_mem_gb": 2,
+    "hinweise": [
+      "NICHTS an unserem Runner aendern — falsche Operatornamen melden, nicht beheben.",
+      "Kein BlenderBIM, kein Add-on. Der Runner laeuft mit --factory-startup, und das ist Absicht.",
+      "Braucht keine GPU und keine Gewichte, nur Blender.",
+      "«Geht nicht» mit Belegen ist eine vollstaendige und wertvolle Antwort.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Je Operatorname: vorhanden oder nicht, in eurer Blender-Fassung (Fassungsnummer dazu). Wo er fehlt: der Name, den eure Fassung hat.",
+    "V2 Die Rundreise je Format: Huellbox (drei Kantenlaengen einzeln), n_elements, n_triangles — gegen die bekannten Masse der Testszene.",
+    "V3 Welches Format verliert was? Ein Satz je Format.",
+    "V4 Der Vorgabewuerfel: steht in der Ausgabe wirklich kein zusaetzliches Objekt?",
+    "V5 Die leere Szene: meldet der Runner einen Fehler, oder schreibt er eine leere glb?",
+    "V6 Die Zeiten je Format, und ob die Gesamtfrist von 300 s zu knapp ist."
+  ]
+}

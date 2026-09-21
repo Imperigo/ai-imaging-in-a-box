@@ -3,7 +3,7 @@
   "auftrag_id": "auf-20260919-125",
   "art": "qa",
   "worker": "local",
-  "rang": 22,
+  "rang": 5,
   "erstellt": "2026-09-19T23:30:00Z",
   "params": {},
   "beschreibung": "Die Achsenpruefung `aiimaging.hochachse` gegen die 40 echten IFC-Dateien. Das Modul misst aus der Geometrie selbst, welche Achse oben ist — es ist gebaut, synthetisch geprueft und NIRGENDS eingehaengt, weil hier nicht messbar ist, ob es an echten Dateien traegt. Kern: Wo Modul und Datei sich widersprechen — wer hat recht? Braucht keine GPU.",

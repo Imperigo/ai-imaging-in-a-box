@@ -3,7 +3,7 @@
   "auftrag_id": "auf-20260910-101",
   "art": "qa",
   "worker": "local",
-  "rang": 10,
+  "rang": 9,
   "erstellt": "2026-09-10T05:00:00Z",
   "params": {},
   "beschreibung": "A7 am laufenden Cockpit messen: contracts.LANE_FIELDS gegen die live gelieferten Schemata, tote Kanten suchen. Seit auf-58 ist es moeglich — dort wurde es ausdruecklich nur entsperrt, nicht gemessen. Kein Render, keine GPU. Zweiter, getrennter Teil: die Luecke aus eurem eigenen R4-Befund (aiimaging_capabilities fehlt in READ_ONLY_MCP_TOOLS).",

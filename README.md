@@ -57,6 +57,7 @@ allein. Sie unterscheidet sauber, wo der zusammengesetzte Score es nicht tut. *D
 
 | | Stand |
 |---|---|
+| 3D-Modell-Importeur (`obj`, `fbx`, `dae`, `stl`, `ply`, `usd`, `abc`, `x3d`) | gebaut am 21.09., **nur mit Attrappen geprüft** — echtes Blender hat er nie gesehen. Die Messung ist bestellt (`auf-20260921-126`). *Bis dahin gilt: gebaut, am Gerät unbestätigt.* |
 | IFC → glb, über die Prozessgrenze | läuft, an 40 echten Dateien gemessen. **Seit 26.08. trägt der Knotenname den IFC-Namen** — ohne ihn war das Gelände auf der Blender-Seite nicht abtrennbar |
 | glb → Blender-Multipass (Beauty, Material-ID, Tiefe) | läuft auf Blender 4.2 **und** 5.2 |
 | Bildmodell-Stufe (`diffusers`) | **am Gerät gelaufen** (18.08.); am 25.08. bis in die Diffusion, dort an einem Gerätekonflikt gescheitert — Ursache gefunden, Fix eingebaut, Bestätigung beauftragt |
@@ -74,7 +75,7 @@ darüber liegt: [`docs/OBERFLAECHE_KOSMOVIS.md`](docs/OBERFLAECHE_KOSMOVIS.md). 
 bei der eigenen Arbeit an der Oberfläche auffällt und an den UI-Worker geht:
 [`docs/UI_BEFUNDE.md`](docs/UI_BEFUNDE.md).
 
-Tests: **6412**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+Tests: **6439**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
 (`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
 
 ---

@@ -101,7 +101,6 @@ def test_eine_umbenannte_jpg_wird_als_bild_erkannt_und_nicht_als_kaputte_ifc(tmp
     (b"SketchUp Model\x00", "SketchUp", "IFC"),
     (b"3D Geometry File Format 3.0", "Rhino", "glTF"),
     (b"AC1027\x00\x00", "AutoCAD", "IFC"),
-    (b"Kaydara FBX Binary  \x00", "FBX", "glTF"),
     (b"BLENDER-v302", "Blender", "glTF"),
 ])
 def test_fremde_architekturformate_werden_beim_namen_genannt(
@@ -119,6 +118,52 @@ def test_fremde_architekturformate_werden_beim_namen_genannt(
     assert erwartet_im_namen in befund["format"]
     assert erwartet_im_rat in befund["naechster_schritt"], \
         "die Absage muss sagen, wie man weiterkommt"
+
+
+@pytest.mark.parametrize("kennung,endung,erwartet_im_namen", [
+    (b"Kaydara FBX Binary  \x00", ".fbx", "FBX"),
+    (b"PXR-USDC\x00\x00", ".usdc", "USD"),
+    (b"solid quader\n", ".stl", "STL"),
+    (b"<?xml version='1.0'?><COLLADA>", ".dae", "Collada"),
+])
+def test_was_wir_selbst_umwandeln_wird_an_der_tuer_nicht_mehr_abgewiesen(
+        tmp_path, kennung, endung, erwartet_im_namen):
+    """Seit dem 21.09.2026 wandelt dieses Werkzeug diese vier Formate selbst um.
+
+    **FBX stand bis dahin eine Zeile weiter oben** — unter «koennen wir nicht», mit dem
+    Rat, die Datei doch selbst in Blender nach glTF zu exportieren. Genau diesen Rat gibt
+    das Werkzeug seither sich selbst.
+
+        *Eine Faehigkeit, von der die Tuer nichts weiss, gibt es fuer den Benutzer nicht.*
+
+    Ein Tuersteher, der jemanden wegschickt, fuer den drinnen laengst gedeckt ist, sieht
+    dabei sorgfaeltig aus — und ist schlimmer als keiner.
+    """
+    (pfad := tmp_path / f"modell{endung}").write_bytes(kennung + b"\x00" * 64)
+    befund = einlass.sichte(pfad)
+
+    assert befund["brauchbar"] is True
+    assert erwartet_im_namen in befund["format"]
+    assert any("umgewandelt" in h for h in befund["hinweise"])
+    assert any("Hochachse" in h for h in befund["hinweise"]), \
+        "ueber Einheit und Hochachse ist vor der Umwandlung nichts bekannt — das gehoert gesagt"
+
+
+def test_dieselben_bytes_ohne_passende_endung_kommen_nicht_durch(tmp_path):
+    """Kennung UND Endung muessen passen — und der Grund ist kein Formalismus.
+
+    Der Subprozess waehlt seinen Importeur nach der **Endung**. Eine FBX, die `modell.bin`
+    heisst, kaeme drueben ohne Weg an und schluege dort mit einer Meldung fehl, die
+    niemand mehr der Endung zuordnet. Die Absage hier nennt stattdessen den einen
+    Handgriff, der fehlt.
+    """
+    (pfad := tmp_path / "modell.bin").write_bytes(b"Kaydara FBX Binary  \x00" + b"\x00" * 64)
+    befund = einlass.sichte(pfad)
+
+    assert befund["brauchbar"] is False
+    assert "FBX" in befund["format"]
+    assert ".fbx" in befund["naechster_schritt"], \
+        "die Absage muss den fehlenden Handgriff nennen, nicht einen Umweg ueber Blender"
 
 
 def test_ein_unbekanntes_format_ist_NICHT_ENTSCHEIDBAR_und_nicht_unbrauchbar(tmp_path):

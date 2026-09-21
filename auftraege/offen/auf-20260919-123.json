@@ -3,7 +3,7 @@
   "auftrag_id": "auf-20260919-123",
   "art": "qa",
   "worker": "local",
-  "rang": 20,
+  "rang": 6,
   "erstellt": "2026-09-19T23:20:00Z",
   "params": {},
   "beschreibung": "Kommt ein hineingezeichnetes Bild am Vorgabe-Modell z-image-turbo an, oder gewinnt die Tiefenkarte den einen Bildeingang — wie am 18.08.2026 bei Qwen-Image-Edit gemessen? Der Pfad fuer Schritt 5 (Hineinskizzieren) ist gebaut; ob er traegt, ist auf unserem Vorgabe-Modell NICHT GEMESSEN.",

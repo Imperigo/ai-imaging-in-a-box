@@ -5820,6 +5820,39 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Schritt 1 gebaut: der 3D-Modell-Importeur.**
+      Bis zum 21.09.2026 kannte dieses Projekt **drei** Formate (`glb`, `gltf`, `ifc`).
+      Alles andere bekam eine hoefliche Absage mit dem Rat, die Datei doch selbst in
+      Blender umzuwandeln — *in genau dem Programm, das diese Software seit August selbst
+      als Subprozess aufruft.*
+      Neu sind **drei Wege**: durchreichen (`glb`, `gltf` — eine Umwandlung ohne Zweck kann
+      nur verlieren), die IFC-Naht (Blender kaeme dort nur ueber BlenderBIM hin, und das
+      ist GPL), und der Blender-Subprozess fuer `obj`, `fbx`, `dae`, `stl`, `ply`, `usd`,
+      `abc`, `x3d`.
+      **Sieben Mutationsproben, alle gefallen.** Die teuerste: «nicht geprueft» wird als
+      «in Ordnung» gemeldet. Ohne uebergebene Wahrheit steht im Bericht `treue: None` —
+      *ein `True` truege eine verdrehte Geometrie durch die ganze Kette und saehe am Ende
+      nach schlechter Bildqualitaet aus statt nach einem Importfehler.*
+      **NICHT GEMESSEN: Echtes Blender hat der Importeur nie gesehen.** Die Operatornamen
+      sind aus der Dokumentation geraten — Blender hat sie zwischen 4.0 und 4.1 umbenannt.
+      Bestellt als `auf-20260921-126`.
+- [x] **Die Tuer kannte die neue Faehigkeit nicht — und das fiel erst beim ersten Lauf auf.**
+      Der Einlass wies die FBX ab, bevor der Importeur sie zu sehen bekam. Er tat genau
+      das, wofuer er am 19.09. gebaut worden war; seine Liste war seit einem Tag falsch.
+      *Eine Faehigkeit, von der die Tuer nichts weiss, gibt es fuer den Benutzer nicht.*
+      Neu hat der Einlass eine **dritte** Kategorie: fremd, aber wir wandeln es selbst um.
+      **Und ein Waechter bewachte etwas anderes, als er behauptete:** Die Bestandsprobe
+      fuehrte FBX unter «wird abgewiesen» und blieb nach der Aenderung gruen — weil ihre
+      Testdatei `modell.bin` heisst und die Endung nie passt. *Eine gruene Probe ist kein
+      Beleg dafuer, dass sie noch prueft, was ihr Name sagt.*
+- [x] **`main` war rot, und zwei Tage lang hat es niemand gesehen.**
+      Die Werkstatt hat am 21.09. vierzehn Auftraege beantwortet und direkt nach `main`
+      geschoben. Danach war die Rangfolge der offenen Auftraege bei `local` lueckenhaft
+      (2, 3, 8, 10, 19, 20, 21, 22), und der Waechter meldete das sofort.
+      *Ein Waechter, der meldet, wo niemand hinsieht, hat dieselbe Wirkung wie keiner.*
+      Berichtigt als **Entscheidung, nicht als Arithmetik**: Ansagen vorn (sie muessen vor
+      dem naechsten `git pull` gelesen sein), dann die Messung, an der Kapitel 6 haengt,
+      dann der Importeur.
 - [x] **Kapitel 4 geschrieben: «Die Kette» — aus vier Knoten wurden sechs.**
       Alle Zeitangaben **gemessen**, nicht zitiert (Beweis 05 und 23, beide am 19.09.2026
       gefahren).

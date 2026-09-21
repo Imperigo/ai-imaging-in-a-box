@@ -47,7 +47,8 @@ from pathlib import Path
 from aiimaging import herkunft
 
 __all__ = [
-    "EinlassError", "FREMDE_FORMATE", "GROESSE_WARNSCHWELLE_BYTE",
+    "EIGENE_UMWANDLUNG", "EinlassError", "FREMDE_FORMATE",
+    "GROESSE_WARNSCHWELLE_BYTE",
     "KOPF_LESEFENSTER_BYTE", "UNSERE_FORMATE", "sichte",
 ]
 
@@ -83,6 +84,44 @@ GROESSE_WARNSCHWELLE_BYTE = 500 * 1024 * 1024
 #: Byte-Reihenfolge-Zeichen oder Leerraum voranstellen.
 KOPF_LESEFENSTER_BYTE = 512
 
+#: Formate, die wir **nicht selbst lesen, aber selbst umwandeln** — seit dem 21.09.2026.
+#:
+#: **Warum es diese dritte Kategorie geben musste.** Bis zum 21.09.2026 kannte dieser
+#: Sichtgang zwei Sorten: unsere Formate und fremde. Eine FBX fiel unter «fremd» und bekam
+#: den Rat, sie doch bitte selbst in Blender nach glTF zu exportieren.
+#:
+#: Seit :mod:`aiimaging.importeur` existiert, ist dieser Rat falsch — **wir tun das
+#: selbst**, über denselben Blender-Subprozess, der ohnehin läuft. Ein Türsteher, der
+#: jemanden wegschickt, für den drinnen längst gedeckt ist, ist schlimmer als keiner: Er
+#: macht die neue Fähigkeit unerreichbar und sieht dabei sorgfältig aus.
+#:
+#:     *Eine Fähigkeit, von der die Tür nichts weiss, gibt es für den Benutzer nicht.*
+#:
+#: **Kennung UND Endung müssen passen.** ``<?xml`` steht am Anfang jeder XML-Datei; nur
+#: zusammen mit ``.dae`` oder ``.x3d`` ist daraus ein Modell zu schliessen. Der
+#: Subprozess wählt seinen Importeur nach der Endung, und eine Datei, deren Endung er
+#: nicht kennt, käme dort ohne Weg an.
+#:
+#: Formate ohne eigene Kennung (``.obj``, ``.ply``, ``.usda``, ``.abc``) stehen hier
+#: **nicht**: Sie sind am Inhalt nicht zu erkennen und fallen darum in «nicht
+#: entscheidbar» — und das lässt der Importeur durch, weil abgewiesen nur wird, was
+#: sicher falsch ist.
+EIGENE_UMWANDLUNG: tuple[tuple[bytes, int, tuple[str, ...], str], ...] = (
+    (b"Kaydara FBX Binary", 0, (".fbx",), "Autodesk FBX"),
+    (b"PXR-USDC", 0, (".usd", ".usdc"), "USD (binär)"),
+    (b"solid ", 0, (".stl",), "STL (Text)"),
+    (b"<?xml", 0, (".dae", ".x3d"), "Collada bzw. X3D"),
+)
+
+
+def _eigene_umwandlung(anfang: bytes, endung: str) -> str | None:
+    """Können **wir** diese Datei umwandeln? Der Name des Formats, oder ``None``."""
+    for kennung, versatz, endungen, name in EIGENE_UMWANDLUNG:
+        if anfang[versatz:versatz + len(kennung)] == kennung and endung in endungen:
+            return name
+    return None
+
+
 #: Formate, die dieses Projekt **nicht** verarbeitet — aber beim Namen nennen kann.
 #:
 #: **Warum das mehr ist als Höflichkeit:** Eine ``.skp`` lief bis zum 19.09.2026 als
@@ -107,19 +146,24 @@ FREMDE_FORMATE: tuple[tuple[bytes, int, str, str], ...] = (
      "Eine DWG ist eine Zeichnung, kein Gebäudemodell — sie trägt keine Bauteile, nur "
      "Linien. Aus Revit oder ArchiCAD gibt es einen IFC-Export."),
     (b"Kaydara FBX Binary", 0, "FBX",
-     "Blender liest FBX und schreibt glTF: Datei → Exportieren → glTF 2.0."),
+     "Dieses Werkzeug wandelt FBX selbst um — dafür muss die Datei aber auf .fbx enden. "
+     "Datei umbenennen, dann geht sie von allein durch."),
     (b"BLENDER", 0, "Blender-Datei (.blend)",
      "In Blender selbst: Datei → Exportieren → glTF 2.0 (.glb)."),
     (b"SketchUp Model", 0, "SketchUp (.skp)",
      "SketchUp kann IFC ausgeben (Datei → Exportieren → IFC) — das ist der bessere Weg, "
      "weil dabei die Bauteile erhalten bleiben."),
     (b"PXR-USDC", 0, "USD (binär)",
-     "USD lässt sich in Blender öffnen und als glTF ausgeben."),
+     "Dieses Werkzeug wandelt USD selbst um — dafür muss die Datei auf .usd oder .usdc "
+     "enden. Datei umbenennen, dann geht sie von allein durch."),
     (b"solid ", 0, "STL (Text)",
-     "Eine STL trägt nur Dreiecke — keine Räume, keine Bauteile, keine Materialien. Für "
-     "eine Architektur-Visualisierung ist das zu wenig; besser IFC oder glTF."),
+     "Mit der Endung .stl wandelt dieses Werkzeug die Datei selbst um. Es bleibt aber "
+     "dabei: Eine STL trägt nur Dreiecke — keine Räume, keine Bauteile, keine "
+     "Materialien. Für eine Architektur-Visualisierung ist IFC oder glTF der bessere Weg."),
     (b"<?xml", 0, "XML — vermutlich Collada (.dae) oder ein XML-Format",
-     "Blender liest Collada und schreibt glTF."),
+     "Heisst die Datei .dae oder .x3d, wandelt dieses Werkzeug sie selbst um. Ohne diese "
+     "Endung ist nicht zu erkennen, ob überhaupt Geometrie darin steht — jede XML-Datei "
+     "fängt gleich an."),
     (b"\xff\xd8\xff", 0, "JPEG-Bild",
      "Das ist ein Bild und kein Modell. Stimmt der Dateiname?"),
     (b"\x89PNG", 0, "PNG-Bild",
@@ -260,6 +304,28 @@ def sichte(pfad) -> dict:
             f"Gewarnt, nicht gesperrt — wer eine grosse Datei hat, hat sie.")
 
     anfang = _lies_anfang(pfad)
+
+    # ── Können WIR es umwandeln? Diese Frage kommt vor der Absage ───────────────────
+    #
+    # Sonst weist die Tuer ab, was drinnen laengst geht. Die Reihenfolge ist der ganze
+    # Unterschied: `_fremdes_format` kennt FBX als «koennen wir nicht» und haette den
+    # Rat gegeben, sie doch selbst zu exportieren.
+    eigene = _eigene_umwandlung(anfang, pfad.suffix.lower())
+    if eigene is not None:
+        hinweise.append(
+            f"{eigene} wird beim Import umgewandelt — das kostet einen Programmstart und "
+            f"geschieht von selbst.")
+        hinweise.append(
+            "Ueber Einheit und Hochachse dieser Datei ist hier noch nichts bekannt: Der "
+            "Kopf laesst sich nur bei IFC und glTF lesen. Was darin steht, zeigt sich "
+            "erst nach der Umwandlung — und wird dann gemeldet, nicht stillschweigend "
+            "zurechtgerueckt.")
+        return _befund(
+            brauchbar=True, format=eigene, groesse_byte=groesse,
+            grund=f"Das ist {eigene}. Damit laesst sich rechnen — dieses Werkzeug wandelt "
+                  f"die Datei beim Import selbst um.",
+            naechster_schritt=None,
+            hinweise=hinweise)
 
     # ── Format am INHALT, nicht an der Endung ────────────────────────────────────────
     fremd = _fremdes_format(anfang)

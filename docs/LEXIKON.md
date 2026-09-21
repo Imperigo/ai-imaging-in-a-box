@@ -4905,6 +4905,42 @@ tun. Dort ist «Layer» eine technische Spur in einer Datei; hier eine Stufe der
 `basis` trägt das Urteil der Unterlage. Das eigene Urteil heisst weiterhin `bestanden`;
 das geerbte heisst `basis.geometrie_bestanden` und **nie** gleich.
 
+**Importeur (3D-Modell-Importeur)** — Der erste Schritt der Software: Er nimmt die
+Modelldatei entgegen, die jemand hineinzieht, und macht daraus die eine Form, mit der
+alles Weitere rechnet.
+*Wozu:* Architekturprogramme geben ganz verschiedene Dateiarten aus. Ohne Importeur
+müsste die Benutzerin ihre Datei zuerst selbst in ein anderes Programm laden und dort
+umwandeln — *ein Werkzeug, das den Weg kennt und ihn dem Benutzer aufträgt, hat die Arbeit
+nicht getan, sondern verteilt.*
+*Die drei Wege:* durchreichen (die Datei ist schon im Zielformat), über die IFC-Naht, oder
+über einen Blender-Aufruf als eigenständiges Programm.
+*Wo im Projekt:* `aiimaging.importeur`, seit dem 21.09.2026.
+
+**Durchreichen** — Eine Datei unverändert weitergeben, statt sie umzuwandeln.
+*Wozu:* Jede Umwandlung kann etwas verlieren — Materialnamen, die Gliederung in Bauteile,
+Zusatzangaben. Eine Umwandlung, an deren Ende dasselbe Format steht wie am Anfang, kann
+darum nur verlieren. *Und sie sieht hinterher aus wie eine gelungene Umwandlung*, weshalb
+im Bericht ausdrücklich steht, dass nichts umgewandelt wurde.
+*Wo im Projekt:* `importeur.WEG_DURCHGEREICHT`.
+
+**Rundreise mit bekannter Wahrheit** — Eine Prüfung, bei der dieselbe Geometrie einmal im
+Kreis durch mehrere Formate geschickt und am Ende mit den Massen verglichen wird, mit
+denen sie ursprünglich geschrieben wurde.
+*Wozu:* Bei einer echten Datei weiss niemand, wie gross das Gebäude «wirklich» ist — man
+müsste es mit demselben Werkzeug ausrechnen, das man prüfen will. Bei einer selbst
+erzeugten Datei kennt man jede Kante, *weil man sie geschrieben hat.* Erst dadurch lässt
+sich sagen, ob eine Umwandlung stimmt oder bloss durchgelaufen ist.
+*Wo im Projekt:* `aiimaging.konversionstreue`; bestellt als Messung in
+`auf-20260921-126`.
+
+**Der Vorgabewürfel** — Der Würfel, den Blender beim Start von sich aus in jede neue Szene
+stellt.
+*Wozu er hier vorkommt:* Bliebe er stehen, wanderte er beim Import in die Ausgabedatei, in
+die Hüllbox und damit in jede Kameraberechnung. Ein zwei Meter grosser Würfel neben einem
+Gebäude verschiebt den Bildausschnitt, *und niemand sieht ihm an, woher er kommt.* Der
+Import räumt die Szene darum zuerst leer.
+*Wo im Projekt:* `runners/blender_import_runner.py`, Funktion `_leere_szene`.
+
 ---
 
 ## 9 · Arbeit mit Claude Code
@@ -4962,6 +4998,7 @@ System laufen.
 | 2026-09-11 | Ergaenzt aus dem Befund der HomeStation zum Renderprojekt: **Stilles Abstreifen (unbekannter Felder)**. Der Begriff wurde noetig, weil `lies_szene` erfundene Bestellfelder spurlos verschluckt hat — gemessen, nicht vermutet |
 | 2026-09-19 | Zum Einlass: **Einlass (Sichtgang an der Tür)**, **Das Format am Inhalt statt an der Endung bestimmen**, **Eine Absage ohne Ausweg ist eine halbe Auskunft** |
 | 2026-09-19 | Zum Einbau und zu den zwei Schichten: **Gebaut, am Gerät unbestätigt**, **Abgelegt ist nicht zugestellt**, **Handeingriff**, **Geometrielayer und AI-Imaging-Layer** |
+| 2026-09-21 | Zum Importeur: **Importeur (3D-Modell-Importeur)**, **Durchreichen**, **Rundreise mit bekannter Wahrheit**, **Der Vorgabewürfel** |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |
