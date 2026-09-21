@@ -5820,6 +5820,14 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Die Gegenprobe zum Einbau bestellt** (`auf-20260921-127`, Rang 10).
+      Die elf neuen Bestellungen sind hier nur mit Attrappen geprueft. **Der Kern des
+      Auftrags ist nicht, ob der Runner sie annimmt, sondern ob er sie AUSLIEFERT:** Zwei
+      Laeufe, nur die Sonne geaendert, sonst alles gleich — sind die Bilder verschieden?
+      Dazu die Frage an den Zwischenspeicher: Gilt eine Sonnenaenderung als Treffer? Wenn
+      ja, liefert die Software ein Abendbild auf eine Mittagsbestellung, *der Lauf gelingt,
+      das Bild liegt da, und niemand sieht ihm an, dass etwas anderes bestellt war.*
+      Fuenf Laeufe auf einer Szene, keine Messreihe.
 - [x] **Die zwei Wege zusammengefuehrt — und «zwei Wege» hiess etwas anderes als gedacht.**
       Nachgemessen statt vermutet: Die beiden Wege verdoppeln **keinen Code**. Sie rufen
       dieselben drei Bibliotheksfunktionen und benutzen dieselbe Regel dafuer, wann ein
