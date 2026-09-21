@@ -5820,6 +5820,26 @@ Bekannt und ausdrücklich nicht erledigt:
       **Die Messung wird dabei gar nicht erst gefahren.** Eine Zahl, die niemand deuten
       darf, ist keine Auskunft, sondern eine Einladung, sie doch zu deuten.
 
+- [x] **Ein Lauf sagte «mit Bild», und gerechnet wurde ohne — jetzt sagt er es selbst.**
+      Gemessen (`auf-20260919-123`): Sieben Läufe am Vorgabe-Bildmodell, **ein einziger
+      sha256**. Das Eingangsbild kam nie an. Die Ursache liegt **in unserem Code** und
+      nicht drüben: `render.py` setzt `image` und `strength`, der Verträglichkeitsfilter
+      wirft beide wieder hinaus, weil die Pipeline sie nicht kennt — und der Parametersatz
+      sagt weiterhin `image_edit`.
+      *Ein Lauf, der anders gerechnet wird als bestellt, und dessen Parametersatz die
+      Bestellung nennt, ist nicht reproduzierbar — er ist nachstellbar mit demselben
+      falschen Ergebnis.*
+      **Neu am Ergebnis:** `modus_bestellt` und `modus_gerechnet`, dazu ein Hinweis im
+      Klartext («BESTELLT WAR … GERECHNET WURDE …»).
+      **Abgebrochen wird ausdrücklich nicht.** Das Bild ist gültig, nur eben ein
+      Textbild — *falsch war nicht der Lauf, sondern die Auskunft über ihn.*
+      Vier Wächter, drei Mutationsproben, alle drei gefallen und zurückgenommen.
+- [~] **Und eine Frage, die das Repo nicht beantworten kann** (`auf-20260921-130`).
+      Wurden die zwölf Läufe von `auf-20260909-92` **mit** Beauty-Anker bestellt? Wenn ja,
+      waren alle zwölf in Wahrheit reine Textbilder. *Die Geometriezahlen blieben gültig —
+      falsch wäre jeder Satz der Form «mit Beauty-Anker gerechnet».* Abgelegt als Ansage
+      **vor** dem nächsten `git pull` der HomeStation, weil eine neue Zeile im Ergebnis
+      drüben sonst wie ein Fehler aussieht. *Adressat: `local`.*
 - [x] **Eine Anfrage der Modellseite beantwortet — vier von fuenf Fragen aus Messungen.**
       Sie haben ein Feld fuer einen **Bearbeitungsbereich** gebaut (Maske als PNG, weiche
       Kante im Bereich statt im Werkzeug) und fragen, ob wir es annehmen.

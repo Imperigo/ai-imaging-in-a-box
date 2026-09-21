@@ -1,0 +1,32 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260921-130",
+  "art": "frage",
+  "worker": "local",
+  "rang": 3,
+  "erstellt": "2026-09-21T17:00:00Z",
+  "params": {},
+  "beschreibung": "ANSAGE VOR DEM PULL, keine Messung. `render` gibt ab jetzt `modus_bestellt` und `modus_gerechnet` zurueck — rein additiv. Anlass ist eure Messung auf-123: Der Parametersatz nannte `image_edit`, waehrend `txt2img` gerechnet wurde. Dazu EINE Frage: Wurden die zwoelf Laeufe von auf-92 mit Beauty-Anker bestellt? Wenn ja, waren sie in Wahrheit txt2img — die Geometriezahlen bleiben gueltig, aber jede Aussage «mit Beauty-Anker gerechnet» waere falsch.",
+  "anweisung": "=== ANSAGE VOR DEM PULL, keine Messung ===\n\nEine Verhaltensaenderung kommt mit dem naechsten `git pull` bei euch an. Sie\nist rein additiv — kein Lauf faellt anders aus —, aber euer Ergebnis traegt\nzwei Felder mehr, und eines davon kann eine unangenehme Auskunft enthalten.\n\n\nWAS SICH AENDERT\n\n`render` gibt ab jetzt zwei Felder zurueck:\n\n    modus_bestellt      was der Auftrag verlangt hat\n    modus_gerechnet     was die Pipeline daraus gemacht hat\n\nMeistens sind sie gleich. Wo sie es nicht sind, steht ausserdem ein Hinweis\nim Klartext.\n\n\nWOHER DAS KOMMT — EURE EIGENE MESSUNG\n\n`auf-20260919-123`, sieben Laeufe an eurer Karte: Auf `z-image-turbo` kommt\ndas Eingangsbild ueberhaupt nicht an. Alle sieben Laeufe — mit Bild, ohne\nBild, mit fuenf verschiedenen `denoise`-Werten — tragen dieselbe sha256.\n\nWas dabei bisher unterging: `modus` wird aus dem BESTELLTEN Anker abgeleitet\n(`image_edit`, sobald ein `beauty_png` da ist). Im Parametersatz stand also\n`image_edit`, waehrend `txt2img` gerechnet wurde.\n\n    Ein Lauf, der anders gerechnet wird als bestellt, und dessen Parametersatz\n    die Bestellung nennt, ist nicht reproduzierbar — er ist nachstellbar mit\n    demselben falschen Ergebnis.\n\n\nWARUM NICHT ABGEBROCHEN WIRD\n\nDas Bild ist gueltig: Die Tiefenkarte traegt ueber `control_image`, die\nGeometrie kommt an. Falsch war nicht der Lauf, sondern die AUSKUNFT ueber ihn.\nEin Abbruch machte ausserdem den Vorgabeweg dieses Projekts unbenutzbar — und\nein Riegel, der den Normalfall sperrt, wird abgeschaltet statt beachtet.\n\nDarum ein Feld und kein Abbruch. Ein Hinweis wird gelesen oder nicht; ein Feld\nlaesst sich vergleichen, ablegen und pruefen.\n\n\nDER FALL, DEN EIN BLICK AUF `image` ALLEIN NICHT FAENGT\n\nFaellt `control_image` weg, schreibt unser Adapter die Tiefenkarte nach\n`image` — und ueberschreibt damit den Anker. Dann ist `image` belegt und der\nAnker trotzdem verloren. Genau das habt ihr am 18.08.2026 an Qwen-Image-Edit\ngemessen. Auch dieser Fall meldet jetzt `txt2img`.\n\n\nEINE FRAGE, UND SIE IST DER GRUND FUER DIESE ANSAGE\n\nWurden die zwoelf Laeufe von `auf-20260909-92` MIT Beauty-Anker bestellt?\n\nWir koennen es hier nicht feststellen — im Ergebnis steht `beauty` nur als\nNullanker-Wert, nicht als Betriebsart. Wenn ja, sind alle zwoelf in Wahrheit\n`txt2img` gewesen.\n\nWAS DAS AENDERT UND WAS NICHT:\n\n  NICHT betroffen sind die Geometriezahlen. Die Tiefenkarte traegt ueber\n  `control_image`, und daran aendert der fehlende Anker nichts.\n\n  BETROFFEN ist jede Aussage der Form «mit Beauty-Anker gerechnet». Sie stuende\n  dann in unseren Dokumenten und waere falsch — und der Datensatz, der die\n  Vertiefungsarbeit traegt, waere etwas anderes, als er heisst.\n\nEine Zeile genuegt: ja, nein, oder «laesst sich nicht mehr feststellen». Auch\ndas Letzte ist eine vollstaendige Antwort — dann schreiben wir es so hin.\n\n\nWAS NICHT ZU TUN IST\n\n  - Nichts umbauen. Das ist eine Ansage und eine Frage, keine Messung.\n  - Kein neuer Lauf noetig.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Kein neuer Lauf noetig — eine Zeile genuegt."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 60,
+    "leerlauf_schwelle_mem_gb": 2,
+    "hinweise": [
+      "Nichts umbauen — Ansage und Frage, keine Messung.",
+      "«Laesst sich nicht mehr feststellen» ist eine vollstaendige Antwort.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Eine Zeile: Wurden die zwoelf Laeufe von auf-20260909-92 mit Beauty-Anker bestellt? ja / nein / nicht mehr feststellbar.",
+    "V2 Falls die zwei neuen Felder bei euch irgendwo stoeren: sagt es, dann sehen wir es uns an."
+  ]
+}

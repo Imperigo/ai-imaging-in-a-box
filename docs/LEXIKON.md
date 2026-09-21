@@ -5012,6 +5012,25 @@ Byte für Byte dasselbe wie einer ohne.
 mehr, sondern «nicht anwendbar» — die Prüfung vergleicht mit dem Modell, und was jemand
 hineingesetzt hat, steht dort nicht.
 
+**Bestellter und gerechneter Modus** — Zwei Angaben am Ergebnis eines Bildlaufs: die
+Betriebsart, die der Aufrufer **wollte**, und die, die tatsächlich **gelaufen** ist.
+*Warum getrennt:* Weil sie auseinanderfallen können, ohne dass jemand etwas falsch macht.
+Bestellt wird ein Bild «ausgehend von unserem Render»; kann das Modell kein Eingangsbild
+annehmen, wird daraus ein reines Textbild — ein gültiges Bild, nur ein anderes.
+*Wo es vorkommt:* `render.py` schreibt `modus_bestellt` und `modus_gerechnet` an jedes
+Ergebnis und legt einen Hinweis im Klartext dazu, wenn die beiden verschieden sind.
+*Warum nicht abgebrochen wird:* Das Bild ist brauchbar. *Falsch war nicht der Lauf,
+sondern die Auskunft über ihn.*
+
+**Verträglichkeitsfilter** — Die Stelle, an der vor dem Bildlauf geprüft wird, welche der
+vorbereiteten Angaben das gewählte Modell überhaupt kennt. Was es nicht kennt, wird
+weggelassen, statt den Lauf abstürzen zu lassen.
+*Warum er nötig ist:* Jedes Bildmodell nimmt andere Angaben entgegen. Ohne diesen Filter
+stürbe jeder Lauf am ersten unbekannten Wort.
+*Und wo die Gefahr liegt:* Eine Angabe kann **zweimal** vorkommen — hineingelegt und
+wieder hinausgeworfen. Wer nur die eine Liste liest, sieht ein Eingangsbild ankommen, das
+nie angekommen ist. Genau daraus entstand der bestellte/gerechnete Modus.
+
 ---
 
 ## 9 · Arbeit mit Claude Code
@@ -5074,6 +5093,7 @@ System laufen.
 | 2026-09-21 | Zum Einhaengen: **Arbeitsgang**, **Hochachse** |
 | 2026-09-21 | Zur Oberflaeche: **Die Oberflaeche (von Visbox)** |
 | 2026-09-21 | Aus der Anfrage der Modellseite: **Ausbesserung (Inpainting)** |
+| 2026-09-21 | Aus dem Befund «bestellt mit Bild, gerechnet ohne»: **Bestellter und gerechneter Modus**, **Vertraeglichkeitsfilter** |
 | 2026-09-19 | Zum Rueckstand und seiner Zaehlung: **Ansage gegen Messauftrag**, **Nachfrage gegen Mahnung**, **Eine Ablehnung schliesst einen Posten so gut wie eine Erledigung** |
 | 2026-09-18 | Zur neuen QA und zur Umstellung auf Visbox: **Zwei Tore statt einer Kennzahl**, **Rauschband**, **Fehlalarm gegen Durchlasser**, **Ein gemeldeter Mangel, der in der Naht abgefangen wird**, **Anwendungsdatenordner**, **Zeitfaktor (für Fristen)**, **Grössenriegel**, **Absoluter Pfad, und warum er vom System abhängt** |
 | 2026-09-09 | Ergaenzt aus dem Einbau-Bericht: **Rueckstand gegen Einbau-Stand**. Der Begriff wurde noetig, als eine neue Zaehlung zeigte, dass 21 der 23 offenen Posten nur noch Auftraege nennen, die laengst beantwortet sind |

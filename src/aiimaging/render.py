@@ -1479,6 +1479,50 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
         if uebrig:
             hinweise.append(f"Nicht übergeben, weil unbekannt: {', '.join(uebrig)}.")
 
+        # ══ WAS WURDE WIRKLICH GERECHNET? ══════════════════════════════════════════
+        #
+        # Gemessen am 21.09.2026 (`auf-20260919-123`, HomeStation, sieben Laeufe): Auf
+        # `z-image-turbo` kommt das Eingangsbild UEBERHAUPT NICHT an — die Pipeline kennt
+        # weder `image` noch `strength`. Alle sieben Laeufe, mit Bild und ohne, mit
+        # fuenf verschiedenen `denoise`-Werten, tragen **dieselbe sha256**.
+        #
+        # Das heisst: Jeder Lauf mit Beauty-Anker auf diesem Backbone lief in Wahrheit
+        # als `txt2img`. Und weil `modus` aus dem BESTELLTEN Anker abgeleitet wird
+        # (`image_edit if beauty_png else txt2img`), stand im Parametersatz die ganze
+        # Zeit `image_edit`.
+        #
+        #     Ein Lauf, der anders gerechnet wird als bestellt, und dessen Parametersatz
+        #     die Bestellung nennt, ist nicht reproduzierbar — er ist nachstellbar mit
+        #     demselben falschen Ergebnis.
+        #
+        # ES WIRD DARUM NICHT ABGEBROCHEN, und das ist ein Entscheid: Das Bild ist ein
+        # gueltiges txt2img-Bild, die Tiefenkarte hat ueber `control_image` getragen, und
+        # ein Abbruch machte den Vorgabeweg dieses Projekts unbenutzbar. Was falsch war,
+        # ist nicht der Lauf — es ist die AUSKUNFT ueber ihn.
+        #
+        # Der Ausgang ist darum ein eigenes Feld statt eines Hinweises unter fuenfzehn:
+        # `modus_gerechnet` neben `modus_bestellt`. Ein Hinweis wird gelesen oder nicht;
+        # ein Feld laesst sich vergleichen, ablegen und pruefen.
+        modus_bestellt = parameter["modus"]
+        modus_gerechnet = modus_bestellt
+        if modus_bestellt == MODUS_IMAGE_EDIT:
+            # `image` allein genuegt NICHT als Beleg: Faellt `control_image` weg, wird die
+            # Tiefenkarte oben in `genommen["image"]` geschrieben und ueberschreibt den
+            # Anker. Dann ist `image` belegt und der Anker trotzdem verloren — genau der
+            # Fall, der am 18.08.2026 an Qwen-Image-Edit gemessen wurde.
+            anker_kam_an = ("image" in genommen
+                            and "image" not in verworfen
+                            and "control_image" not in verworfen)
+            if not anker_kam_an:
+                modus_gerechnet = MODUS_TXT2IMG
+                hinweise.append(
+                    f"BESTELLT WAR '{MODUS_IMAGE_EDIT}', GERECHNET WURDE "
+                    f"'{MODUS_TXT2IMG}': Das Ausgangsbild ist bei dieser Pipeline nicht "
+                    f"angekommen. Das Bild ist gueltig, aber es ist NICHT das, was "
+                    f"bestellt war — eine Vergleichsreihe ueber 'denoise' liefert hier "
+                    f"bitgleiche Bilder."
+                )
+
         bild = pipeline(**genommen).images[0]
 
         bestellt = parameter["schritte"]
@@ -1498,7 +1542,11 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
         )
         bild.save(ziel)
         return {"bild_png": ziel, "hinweise": hinweise,
-                "schritte_gerechnet": gerechnet[0] or None}
+                "schritte_gerechnet": gerechnet[0] or None,
+                # ZWEI FELDER, NICHT EINES. Sie sind meistens gleich, und genau darum
+                # faellt der Fall auf, in dem sie es nicht sind.
+                "modus_bestellt": modus_bestellt,
+                "modus_gerechnet": modus_gerechnet}
 
     modell.backbone = eintrag.name       # zur Fehlersuche: welches Modell steckt drin
     return modell

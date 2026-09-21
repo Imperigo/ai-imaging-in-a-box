@@ -1949,3 +1949,89 @@ def test_eine_pipeline_mit_zwei_bildeingaengen_bekommt_beide(tmp_path, pillow_at
         "Ausgangsbild und Steuerbild sind zwei verschiedene Bilder")
     assert pipeline.gesehen["strength"] == 0.35
     assert not any("ersetzt dabei den Beauty-Pass" in h for h in ergebnis["hinweise"])
+
+
+# ======================================================================================
+# BESTELLT GEGEN GERECHNET — der Lauf, der anders lief, als sein Parametersatz sagt
+# ======================================================================================
+#
+# `auf-20260919-123` (HomeStation, 21.09.2026, sieben Laeufe an echter Hardware):
+# Auf `z-image-turbo` kommt das Eingangsbild UEBERHAUPT NICHT an — die Pipeline kennt
+# weder `image` noch `strength`. Alle sieben Laeufe, mit Bild und ohne, mit fuenf
+# verschiedenen `denoise`-Werten, tragen **dieselbe sha256**.
+#
+# Und weil `modus` aus dem BESTELLTEN Anker abgeleitet wird, stand im Parametersatz die
+# ganze Zeit `image_edit`. Jeder Lauf mit Beauty-Anker auf diesem Backbone lief in
+# Wahrheit als `txt2img` — und sagte das Gegenteil.
+#
+#     *Ein Lauf, der anders gerechnet wird als bestellt, und dessen Parametersatz die
+#     Bestellung nennt, ist nicht reproduzierbar — er ist nachstellbar mit demselben
+#     falschen Ergebnis.*
+
+def _lauf(tmp_path, pipeline, *, modus, verworfen=(), monkeypatch=None):
+    """Einen Lauf mit einer Attrappe fahren und das Ergebnis zurueckgeben."""
+    monkeypatch.setattr(
+        render, "_vertraegliche_argumente",
+        lambda p, a: ({k: v for k, v in a.items() if k not in verworfen},
+                      sorted(verworfen)))
+    tiefe = _schreibe_graustufen_png(tmp_path / "t.png")
+    anker = _schreibe_graustufen_png(tmp_path / "beauty.png")
+    return _adapter(pipeline, None)({
+        "depth_png": str(tiefe), "tiefe_invertiert": False, "seed": 1, "prompt": "x",
+        "negativ_prompt": "", "controlnet_staerke": 0.8, "schritte": 4, "fuehrung": 1.0,
+        "modus": modus, "denoise": 0.6,
+        "beauty_png": str(anker) if modus == render.MODUS_IMAGE_EDIT else None,
+        "ausgabe_png": str(tmp_path / "b.png")})
+
+
+def test_ein_lauf_meldet_bestellten_UND_gerechneten_modus(tmp_path, monkeypatch,
+                                                           pillow_attrappe):
+    """Zwei Felder, nicht eines — *und genau darum faellt der Fall auf, in dem sie
+    verschieden sind.*"""
+    ergebnis = _lauf(tmp_path, Pipelineattrappe(), modus=render.MODUS_IMAGE_EDIT,
+                     monkeypatch=monkeypatch)
+    assert ergebnis["modus_bestellt"] == render.MODUS_IMAGE_EDIT
+    assert ergebnis["modus_gerechnet"] == render.MODUS_IMAGE_EDIT
+
+
+def test_kommt_das_bild_nicht_an_steht_txt2img_da_und_nicht_image_edit(
+        tmp_path, monkeypatch, pillow_attrappe):
+    """**Der gemessene Fall, als Probe.**
+
+    Die Pipeline kennt `image` und `strength` nicht. Das Bild ist gueltig — aber es ist
+    nicht, was bestellt war, und der Parametersatz darf das nicht behaupten.
+    """
+    ergebnis = _lauf(tmp_path, Pipelineattrappe(), modus=render.MODUS_IMAGE_EDIT,
+                     verworfen=("image", "strength"), monkeypatch=monkeypatch)
+
+    assert ergebnis["modus_bestellt"] == render.MODUS_IMAGE_EDIT
+    assert ergebnis["modus_gerechnet"] == render.MODUS_TXT2IMG
+    assert any("GERECHNET WURDE" in h for h in ergebnis["hinweise"])
+    assert ergebnis["bild_png"], "der Lauf wird NICHT abgebrochen — das Bild ist gueltig"
+
+
+def test_ein_ueberschriebener_anker_gilt_auch_als_nicht_angekommen(
+        tmp_path, monkeypatch, pillow_attrappe):
+    """**Der Fall, den ein Blick auf `image` allein nicht faengt.**
+
+    Faellt `control_image` weg, schreibt der Adapter die Tiefenkarte nach `image` — und
+    ueberschreibt damit den Beauty-Anker. Dann ist `image` belegt und der Anker trotzdem
+    verloren. Genau das ist am 18.08.2026 an Qwen-Image-Edit gemessen worden.
+    """
+    ergebnis = _lauf(tmp_path, Pipelineattrappe(), modus=render.MODUS_IMAGE_EDIT,
+                     verworfen=("control_image",), monkeypatch=monkeypatch)
+
+    assert ergebnis["modus_gerechnet"] == render.MODUS_TXT2IMG, (
+        "`image` ist belegt — aber mit der Tiefenkarte, nicht mit dem Anker")
+
+
+def test_ein_bestellter_txt2img_lauf_bleibt_txt2img(tmp_path, monkeypatch,
+                                                     pillow_attrappe):
+    """Die Gegenrichtung: Wer nichts bestellt hat, bekommt keine Meldung darueber.
+
+    *Ein Hinweis, der bei jedem Lauf steht, wird bei keinem gelesen.*
+    """
+    ergebnis = _lauf(tmp_path, Pipelineattrappe(), modus=render.MODUS_TXT2IMG,
+                     verworfen=("image", "strength"), monkeypatch=monkeypatch)
+    assert ergebnis["modus_bestellt"] == ergebnis["modus_gerechnet"] == render.MODUS_TXT2IMG
+    assert not any("GERECHNET WURDE" in h for h in ergebnis["hinweise"])
