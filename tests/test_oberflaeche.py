@@ -1279,6 +1279,50 @@ def test_mit_kennwort_kommt_auch_ein_post_durch(server):
     assert a.codes == [400], a.codes
 
 
+@pytest.mark.parametrize("befehl", ["GET", "POST"])
+def test_ein_unbekannter_weg_bleibt_404_mit_seinem_satz(server, befehl):
+    """**Die Wegtafel darf das Unbekannte nicht verschlucken** (Umbau 22.09.2026).
+
+    Aus der ``if``/``elif``-Kette wurde eine Tafel. Die Gefahr einer Tafel ist eine
+    andere als die der Kette: Ein Nachschlagen mit Vorgabewert (``.get(weg, "_anlegen")``)
+    oder ein Fang-alles-Eintrag liesse jeden Tippfehler an einer echten Methode landen —
+    und die antwortete dann mit ihrem eigenen Satz statt mit «Unbekannter Weg».
+
+    Angemeldet angefragt, damit die 404 von der Tafel kommt und nicht von der Tuer.
+    """
+    import base64 as b64
+
+    kopf = "Basic " + b64.b64encode(f"{server.BENUTZER}:geheim".encode()).decode()
+    a = _Anfrage(server, befehl=befehl, weg="/api/gibtesnicht",
+                 kennwort="geheim", kopf=kopf, rumpf=b"{}").stelle()
+
+    assert a.codes == [404], a.codes
+    assert json.loads(a.rumpf.decode("utf-8")) == {
+        "fehler": "Unbekannter Weg: /api/gibtesnicht"}
+
+
+def test_jeder_weg_der_tafel_ist_angemeldet_erreichbar(server):
+    """*Ein Weg in der Tafel, dessen Methode es nicht gibt, ist ein 500 beim ersten Klick.*
+
+    Je Eintrag eine echte Anfrage, angemeldet und **ohne** Projektordner. Keiner der Wege
+    darf «Unbekannter Weg» sagen — was sie stattdessen sagen (400, 404 «kein
+    Projektordner», 403 «kein Verbinden offen»), ist ihre eigene Auskunft. Gerechnet wird
+    dabei nichts: ``/api/rechne`` ohne Ordner scheitert vor dem Start.
+    """
+    import base64 as b64
+
+    kopf = "Basic " + b64.b64encode(f"{server.BENUTZER}:geheim".encode()).decode()
+    faelle = ([("POST", w) for w in server.WEGTAFEL]
+              + [("GET", w) for w in server.WEGTAFEL_LESEN if w != server.WEG_BILD]
+              + [("GET", server.WEG_BILD + "?name=bild.png")])
+    for befehl, weg in faelle:
+        a = _Anfrage(server, befehl=befehl, weg=weg, kennwort="geheim", kopf=kopf,
+                     rumpf=b"{}").stelle()
+        assert len(a.codes) == 1, (befehl, weg, a.codes)
+        assert "Unbekannter Weg" not in a.rumpf.decode("utf-8"), (
+            f"{befehl} {weg} steht in der Tafel und antwortet trotzdem «Unbekannter Weg»")
+
+
 def test_der_unverschluesselte_weg_wird_ausdruecklich_gesagt():
     """**Die unbequeme Zeile, und sie muss stehenbleiben.**
 

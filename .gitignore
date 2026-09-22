@@ -72,3 +72,14 @@ praesentation/node_modules
 praesentation/*.pptx
 praesentation/*.pdf
 praesentation/slide-*.jpg
+
+# --- 7 · Die iPad-App: Quelle ja, Uebersetztes nein --------------------------
+# `swift build`/`swift test` legen `.build/` an, Xcode legt in jedem Paket `.swiftpm/`
+# (nur so, mit Punkt am Anfang — `Visbox.swiftpm` ist die Quelle und bleibt drin) und
+# Benutzerzustand an. Alles davon ist aus `ipad/` neu erzeugbar und traegt keinen
+# Entscheid; der Benutzerzustand traegt ausserdem den Namen dessen, der Xcode geoeffnet hat.
+ipad/**/.build/
+ipad/**/.swiftpm/
+ipad/**/DerivedData/
+xcuserdata/
+*.xcuserstate

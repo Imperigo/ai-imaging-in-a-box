@@ -1,0 +1,91 @@
+# DIE IPAD-APP WIRD HIER UEBERSETZT, WEIL SIE SONST NIRGENDS UEBERSETZT WIRD
+#
+# Der Anlass ist ein Umstand und kein Befund: Die App entsteht in einer Umgebung ohne Mac
+# (Owner-Entscheid 22.09.2026, Nr. 21/22). Der Kern laesst sich dort unter Linux pruefen,
+# die App selbst nicht — SwiftUI und PencilKit gibt es nur bei Apple. Ohne diesen Lauf
+# hiesse «gebaut» bei der App: geschrieben und nie einem Uebersetzer vorgelegt.
+#
+#     Ein Code, den nie ein Uebersetzer gesehen hat, ist ein Entwurf, der wie Code aussieht.
+#
+# Er faehrt darum ZWEI Dinge, und das zweite ist das, was es sonst nirgends gibt:
+#   1. `swift test` im Kern — dieselben Proben wie unter Linux, hier gegen Apples Foundation.
+#      Zwei Foundations koennen dasselbe JSON verschieden lesen; das faellt nur auf, wenn
+#      beide fahren.
+#   2. Die App fuer den iOS-Simulator uebersetzen — ohne Signatur, ohne Geraet.
+#
+# WAS HIER BEWUSST NICHT STEHT
+#
+# Kein Aufspielen, keine Signatur, kein Simulatorlauf mit Klicks. Ob die App auf dem iPad
+# startet, zeichnet und die HomeStation findet, zeigt nur das Geraet — bis dahin heisst
+# sie im Einbau-Stand «gebaut, am Geraet unbestaetigt». Und ob Swift Playgrounds auf dem
+# iPad das Paket oeffnet, kann kein Mac-Lauf beantworten.
+#
+# Nur bei Aenderungen unter `ipad/` oder an dieser Datei: Ein Mac-Lauf kostet ein
+# Vielfaches eines Linux-Laufs, und eine Aenderung am Python-Kern aendert an der App nichts
+# (die Uebereinstimmung der Wege bewacht `tests/test_ipad_geruest.py` im Linux-Lauf).
+
+name: iPad
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "ipad/**"
+      - ".github/workflows/ipad.yml"
+  pull_request:
+    paths:
+      - "ipad/**"
+      - ".github/workflows/ipad.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ipad-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    name: Kern pruefen, App uebersetzen
+    # EINE FESTE FASSUNG statt `macos-latest`: Wechselt GitHub die Vorgabe, wechselt mit
+    # ihr Xcode — und ein roter Lauf saehe dann aus wie ein Fehler in unserem Code.
+    runs-on: macos-15
+    # GESETZT, nicht gemessen: Ein erster Lauf mit leerem Zwischenspeicher braucht fuer
+    # Paketaufloesung und Uebersetzung einige Minuten. Dreissig schneiden einen haengenden
+    # Simulator ab, statt ihn sechs Stunden stehen zu lassen.
+    timeout-minutes: 30
+
+    steps:
+      - name: Stand holen
+        uses: actions/checkout@v4
+
+      - name: Fassungen, zum Mitlesen
+        # Ohne diese Zeile laesst sich ein roter Lauf in drei Monaten nicht mehr einer
+        # Xcode-Fassung zuordnen.
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Der Kern (swift test)
+        working-directory: ipad/VisboxKern
+        run: swift test
+
+      - name: Welche Schemata Xcode im App-Paket sieht
+        # EINE AUSKUNFT, KEIN TOR. Faellt der naechste Schritt, steht hier, unter welchem
+        # Namen Xcode die App fuehrt.
+        if: always()
+        continue-on-error: true
+        working-directory: ipad/Visbox.swiftpm
+        run: xcodebuild -list
+
+      - name: Die App fuer den iOS-Simulator
+        # Im Paketordner selbst: `xcodebuild` liest dann `Package.swift` samt
+        # `AppleProductTypes`, wie Xcode es beim Oeffnen des `.swiftpm` tut. Ein
+        # gewoehnliches `swift build` kennt `AppleProductTypes` nicht.
+        working-directory: ipad/Visbox.swiftpm
+        run: |
+          xcodebuild build \
+            -scheme Visbox \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO

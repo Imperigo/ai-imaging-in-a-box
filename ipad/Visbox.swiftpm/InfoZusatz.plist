@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Was das Manifest nicht selbst ausdruecken kann, und nur das.
+
+  App Transport Security bleibt AN. Ausgenommen sind allein lokale Netze
+  (NSAllowsLocalNetworking): Der Server auf der HomeStation spricht gewoehnliches HTTP,
+  und ohne diese Ausnahme wuerde iOS die Verbindung zu einem Namen wie
+  `homestation.local` verweigern. Ein pauschales NSAllowsArbitraryLoads stuende hier
+  falsch: Es oeffnete jede Adresse im Internet, nicht nur das eigene Heimnetz.
+-->
+<plist version="1.0">
+<dict>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+</dict>
+</plist>

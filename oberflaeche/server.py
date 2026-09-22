@@ -177,6 +177,19 @@ def _skizzenname(gewuenscht) -> str:
 #: Der Weg, über den ein Gerät zum ersten Mal hereinkommt — der einzige ohne Anmeldung.
 WEG_VERBINDEN = "/api/verbinden"
 
+# DIE UEBRIGEN WEGE, je als Konstante. Sie stehen hier, damit die Gegenseite (die
+# iPad-App, `ipad/VisboxKern/.../Wege.swift`) gegen das MODUL geprueft werden kann und
+# nicht gegen einen Suchtreffer im Quelltext (`tests/test_ipad_geruest.py`).
+WEG_SEITE = "/"
+WEG_SEITE_LANG = "/index.html"
+WEG_PROJEKT = "/api/projekt"
+WEG_FORTSCHRITT = "/api/fortschritt"
+WEG_BILD = "/bild"
+WEG_ANLEGEN = "/api/anlegen"
+WEG_EINSTELLUNGEN = "/api/einstellungen"
+WEG_SKIZZE = "/api/skizze"
+WEG_RECHNE = "/api/rechne"
+
 BENUTZER = "visbox"
 
 #: Wie lang ein selbst erzeugtes Kennwort ist. 32 Zeichen aus ``secrets`` sind mehr, als
@@ -803,6 +816,39 @@ def sicht(ordner) -> dict:
 # Der Anschluss — vier Wege, und jeder ruft genau eine Funktion der Bibliothek
 # ======================================================================================
 
+#: Welcher POST-Weg welche Methode von :class:`Flaeche` ruft — **eine Tafel statt einer
+#: Kette aus ``if``/``elif``.**
+#:
+#: Der Anlass ist kein Stil, sondern die Arbeitsteilung (22.09.2026): Mehrere Einheiten
+#: bekommen neue Wege, und jede davon haette dieselbe Kette an derselben Stelle
+#: verlaengert. Zwei solche Aenderungen stossen beim Zusammenfuehren zusammen, und die
+#: haeufigste Aufloesung verliert einen Zweig — der Weg ist dann gebaut und antwortet
+#: 404. *Genau das ist diesem Projekt mit dem ersten Verbinden schon einmal passiert.*
+#: Eine Tafel bekommt je Weg **eine eigene Zeile**; zwei neue Zeilen stossen nicht
+#: zusammen.
+#:
+#: Eingetragen wird der **Methodenname** und nicht die Methode selbst: So bleibt die Tafel
+#: oberhalb der Klasse lesbar, und ``tests/test_ipad_geruest.py`` prueft, dass jeder Name
+#: wirklich eine Methode ist.
+WEGTAFEL = {
+    WEG_ANLEGEN: "_anlegen",
+    WEG_EINSTELLUNGEN: "_einstellungen",
+    WEG_SKIZZE: "_skizze",
+    WEG_RECHNE: "_rechne",
+    WEG_VERBINDEN: "_verbinden",
+}
+
+#: Dasselbe fuer die lesenden Wege (GET). Jede Methode bekommt den zerlegten Weg
+#: (``urllib.parse.urlparse``) und liest daraus, was sie braucht.
+WEGTAFEL_LESEN = {
+    WEG_SEITE: "_seite",
+    WEG_SEITE_LANG: "_seite",
+    WEG_PROJEKT: "_projekt",
+    WEG_FORTSCHRITT: "_fortschritt",
+    WEG_BILD: "_bild_anfrage",
+}
+
+
 class Flaeche(BaseHTTPRequestHandler):
     """Übersetzt Anfragen in Bibliotheksaufrufe. Mehr tut sie nicht."""
 
@@ -885,37 +931,37 @@ class Flaeche(BaseHTTPRequestHandler):
         if not self._darf_herein():
             return
         weg = urllib.parse.urlparse(self.path)
-        if weg.path in ("/", "/index.html"):
-            roh = SEITE.read_bytes()
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.send_header("Content-Length", str(len(roh)))
-            self.end_headers()
-            self.wfile.write(roh)
+        methode = WEGTAFEL_LESEN.get(weg.path)
+        if methode is None:
+            self._fehler(f"Unbekannter Weg: {weg.path}", 404)
             return
+        getattr(self, methode)(weg)
 
-        if weg.path == "/api/projekt":
-            frage = urllib.parse.parse_qs(weg.query)
-            ordner = (frage.get("ordner") or [None])[0] or self.ordner
-            if not ordner:
-                self._fehler("Kein Projektordner angegeben — mit --ordner starten oder "
-                             "oben einen eintragen.", 404)
-                return
-            try:
-                self._sende(sicht(Path(ordner)))
-            except projekt.ProjektError as fehler:
-                self._fehler(str(fehler), 404)
+    def _seite(self, weg) -> None:
+        roh = SEITE.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(roh)))
+        self.end_headers()
+        self.wfile.write(roh)
+
+    def _projekt(self, weg) -> None:
+        frage = urllib.parse.parse_qs(weg.query)
+        ordner = (frage.get("ordner") or [None])[0] or self.ordner
+        if not ordner:
+            self._fehler("Kein Projektordner angegeben — mit --ordner starten oder "
+                         "oben einen eintragen.", 404)
             return
+        try:
+            self._sende(sicht(Path(ordner)))
+        except projekt.ProjektError as fehler:
+            self._fehler(str(fehler), 404)
 
-        if weg.path == "/api/fortschritt":
-            self._sende(LAUFSTAND.sicht())
-            return
+    def _fortschritt(self, weg) -> None:
+        self._sende(LAUFSTAND.sicht())
 
-        if weg.path == "/bild":
-            self._bild(urllib.parse.parse_qs(weg.query))
-            return
-
-        self._fehler(f"Unbekannter Weg: {weg.path}", 404)
+    def _bild_anfrage(self, weg) -> None:
+        self._bild(urllib.parse.parse_qs(weg.query))
 
     def _bild(self, frage: dict) -> None:
         """Ein Bild aus dem Projektordner ausliefern — und sonst nichts von der Platte.
@@ -961,18 +1007,13 @@ class Flaeche(BaseHTTPRequestHandler):
             return
 
         weg = urllib.parse.urlparse(self.path).path
-        if weg == "/api/anlegen":
-            self._anlegen(wunsch)
-        elif weg == "/api/einstellungen":
-            self._einstellungen(wunsch)
-        elif weg == "/api/skizze":
-            self._skizze(wunsch)
-        elif weg == "/api/rechne":
-            self._rechne(wunsch)
-        elif weg == WEG_VERBINDEN:
-            self._verbinden(wunsch)
-        else:
+        # DIE TAFEL STATT DER KETTE — siehe `WEGTAFEL`. Wer einen Weg ergaenzt, schreibt
+        # dort eine Zeile und hier nichts.
+        methode = WEGTAFEL.get(weg)
+        if methode is None:
             self._fehler(f"Unbekannter Weg: {weg}", 404)
+            return
+        getattr(self, methode)(wunsch)
 
     def _verbinden(self, wunsch: dict) -> None:
         """Das erste Verbinden: eine kurze Zahl gegen das lange Kennwort.
