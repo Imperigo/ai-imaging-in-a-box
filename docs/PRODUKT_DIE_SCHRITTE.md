@@ -91,6 +91,40 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 22.09.2026 · Das Warnzeichen ist jetzt lesbar — und der Rechner passt darauf auf
+
+Das Rot für «durchgefallen» war auf dem dunklen Grund zu dunkel: 4.06, nötig sind 4.5.
+Ausgerechnet die eine Aussage, die niemand übersehen darf, war von allen dreien die am
+schlechtesten lesbare. Jetzt steht dort derselbe hellere Wert wie im iPad-Entwurf — eine
+Bedeutung, eine Farbe.
+
+**Meine eigene Zahl von gestern war falsch.** Ich hatte «3.3» geschrieben, ohne es
+nachzurechnen, und sie ist in vier Dokumente gewandert. Der Befund stimmt, die Zahl
+stimmte nicht. *Eine Zahl, die niemand nachgerechnet hat, ist eine Behauptung mit
+Nachkommastelle.* Überall berichtigt.
+
+**Neu passt ein Rechner darauf auf.** Er liest die Farben aus der Oberfläche selbst und
+rechnet bei jedem Testlauf nach, ob sich jede Schriftfarbe von ihrem Untergrund abhebt.
+Wer morgen eine vierte farbige Aussage einführt, bekommt die Prüfung geschenkt.
+
+### 22.09.2026 · Und dabei fiel etwas auf, wonach niemand gesucht hat
+
+Der dunkle Streifen, auf dem das Prüfzeichen steht, war **halbdurchsichtig**. Über einem
+dunklen Bild ist das schön. Über einem **hellen** Bild — Himmel, weisser Render, Schnee —
+hellt er so weit auf, dass **alle vier** farbigen Aussagen unlesbar werden.
+
+Das ist schlimmer als die erste Sache, denn es trifft alle drei Antworten auf einmal, und
+zwar genau dort, wo das Zeichen sitzt: auf dem Bild.
+
+> *Ein Abzeichen, dessen Lesbarkeit vom Bild abhängt, auf dem es sitzt, ist auf dem hellen
+> Bild keines.*
+
+Der Streifen deckt jetzt zu 94 %. Man sieht noch, dass ein Bild darunter liegt, und im
+schlechtesten Fall bleibt genug Abstand. Die iPad-Blätter sind mitgezogen.
+
+Gefunden hat das **nicht das Nachdenken, sondern die Bauform der Prüfung**: Sie rechnet
+über alle Untergründe, nicht über die, an die jemand gedacht hat.
+
 ### 21.09.2026 · Der ganze Weg war gesperrt — von einer Zahl, die niemand mitgab
 
 Die HomeStation hat sechs Aufträge beantwortet, und einer davon hat den wichtigsten
@@ -206,7 +240,7 @@ Drei Dinge hält der Entwurf fest, die vorher nur im Text standen:
   ungeprüften. Kein Zeichen sähe aus wie kein Problem.
 
 **Ein Befund gegen die eigene Oberfläche fiel dabei ab:** Das Rot für «durchgefallen»
-(`#c2554f`) erreicht auf dem dunklen Grund nur ein Kontrastverhältnis von 3.3 zu 1 — unter
+(`#c2554f`) erreicht auf dem dunklen Grund nur ein Kontrastverhältnis von 4.06 zu 1 — unter
 dem Mindestmass von 4.5 zu 1 für normale Schriftgrösse. Auf kleinen Bildschirmen und bei
 Tageslicht ist das schlecht lesbar. Im iPad-Entwurf steht es eine Stufe heller
 (`#e2776f`); **in der Browserseite ist es noch nicht geändert** — das ist ein offener

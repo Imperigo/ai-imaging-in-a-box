@@ -14,7 +14,18 @@
   :root {
     --grund: #14161a; --feld: #1c1f26; --rand: #2b3038;
     --schrift: #e6e8ec; --leise: #9aa2ae;
-    --bestanden: #4ea373; --durchgefallen: #c2554f; --ungemessen: #c8a53f;
+    /* DAS ROT WAR ZU DUNKEL ZUM LESEN, und es traf ausgerechnet die eine Aussage,
+       die niemand ueberlesen darf. Nachgerechnet am 22.09.2026: #c2554f erreicht auf
+       dem Grund 4.06 und auf einem Feld 3.70 — unter dem Mindestmass von 4.5 fuer
+       gewoehnliche Schriftgroesse. #e2776f erreicht 6.13 bzw. 5.58.
+
+       Ein Warnzeichen, das man nur bei guter Beleuchtung liest, warnt bei schlechter
+       nicht — und die Oberflaeche steht auf einem Bildschirm im Tageslicht.
+
+       Es ist derselbe Wert wie im iPad-Entwurf: Eine Bedeutung hat eine Farbe, sonst
+       sehen zwei Flaechen desselben Werkzeugs verschieden aus und niemand weiss, welche
+       gilt. `tests/test_kontrast.py` rechnet es aus dieser Datei nach. */
+    --bestanden: #4ea373; --durchgefallen: #e2776f; --ungemessen: #c8a53f;
   }
   * { box-sizing: border-box; }
   body {
@@ -69,7 +80,19 @@
   .rahmen .auflage {
     position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 10px;
     font-size: 12px; font-weight: 600; letter-spacing: .03em;
-    background: rgba(8,10,13,.82); backdrop-filter: blur(2px);
+    /* DER STREIFEN MUSS DECKEN, WEIL DAS BILD DARUNTER HELL SEIN DARF.
+       Mit .82 Deckkraft liess ein helles Bild (Himmel, weisser Render) den Streifen auf
+       etwa #343639 aufhellen — und dort fielen ALLE VIER farbigen Aussagen unter das
+       Mindestmass: bestanden 3.93, durchgefallen 4.10, leise 4.71, nicht gemessen 5.14.
+       Gefunden am 22.09.2026 vom eigenen Kontrast-Waechter, nicht von Hand.
+
+       Ein Abzeichen, dessen Lesbarkeit vom Bild abhaengt, auf dem es sitzt, ist auf dem
+       hellen Bild keines — und helle Bilder sind in diesem Projekt der Normalfall.
+
+       .94 laesst noch erkennen, dass ein Bild darunter liegt, und haelt im
+       unguenstigsten Fall 5.71. `tests/test_kontrast.py` liest die Deckkraft aus dieser
+       Zeile und rechnet sie ueber Weiss nach. */
+    background: rgba(8,10,13,.94); backdrop-filter: blur(2px);
   }
   .rahmen.bestanden      .auflage { color: var(--bestanden); }
   .rahmen.durchgefallen  .auflage { color: var(--durchgefallen); }
@@ -95,7 +118,7 @@
   .knoten .von { font-size: 12px; color: var(--leise); }
   .meldung { border-left: 3px solid var(--ungemessen); padding: 8px 12px; margin-top: 10px;
              background: rgba(200,165,63,.07); font-size: 13px; }
-  .fehler  { border-left-color: var(--durchgefallen); background: rgba(194,85,79,.08); }
+  .fehler  { border-left-color: var(--durchgefallen); background: rgba(226,119,111,.09); }
   .knoten { display: block; }
   .knoten > .zeile { display: flex; gap: 10px; align-items: baseline; cursor: pointer; }
   .knoten > .zeile:hover .art { color: #fff; }

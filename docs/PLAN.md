@@ -6962,7 +6962,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Owner:** zwanzig Bedienfragen zum Entwurf (Stiftgesten, Hand, Ebenen, Rückgängig,
       Verhalten ohne Netz, Abbruch, Varianten, Benennung, Export, Schriften).
 - [ ] **Kern (wir):** Das Rot für «durchgefallen» (`#c2554f`) erreicht auf dem dunklen
-      Grund nur 3.3 zu 1 statt der nötigen 4.5 zu 1. Im iPad-Entwurf auf `#e2776f`
+      Grund nur 4.06 zu 1 statt der nötigen 4.5 zu 1. Im iPad-Entwurf auf `#e2776f`
       gehoben, **in `oberflaeche/seite.html` noch nicht**. Eigene Sitzung mit Gegenprobe,
       weil es die geprüfte Oberfläche anfasst.
 - [ ] **Kern (wir):** Schriftfrage — mitliefern oder bei der Systemschrift bleiben. Hängt
@@ -6987,7 +6987,8 @@ Bekannt und ausdrücklich nicht erledigt:
 
 **Offen, und bei wem es liegt**
 
-- [ ] **Kern (wir):** Das zu dunkle Rot in `oberflaeche/seite.html` (3.3 statt 4.5 zu 1).
+- [x] **Kern (wir):** Das zu dunkle Rot in `oberflaeche/seite.html` — erledigt am
+      22.09.2026 (`#e2776f`, 6.13 auf dem Grund). Siehe Sitzung 56.
 - [ ] **Kern (wir):** Wie das iPad die HomeStation erstmals findet — Heimnetz mit Kennwort
       ist entschieden, die Entdeckung nicht.
 - [ ] **Kern (wir):** Was bei zwei iPads an derselben Mappe passiert. Die Mappe kennt
@@ -7052,3 +7053,25 @@ Bekannt und ausdrücklich nicht erledigt:
       `auf-128` (Schwellenreihe, Rang 3, Frist 15.10.).
 - [ ] **Kern (wir):** Die Führung (`guidance_scale`) bleibt für sieben von acht Einträgen
       ungesetzt. Sie hier zu setzen hiesse raten — darum Teil 3 des Auftrags.
+
+## Sitzung 56 — 22.09.2026 · Der Kontrast wird gerechnet
+
+**Erledigt**
+
+- [x] Das Rot für «durchgefallen» in `oberflaeche/seite.html` auf `#e2776f` gehoben
+      (4.06 → 6.13 auf dem Grund). Derselbe Wert wie im iPad-Entwurf.
+- [x] **Die eigene Zahl berichtigt:** «3.3» war geschätzt, nie gerechnet, und in vier
+      Dokumente gewandert. Gerechnet sind es 4.06 bzw. 3.70. Überall nachgezogen.
+- [x] `tests/test_kontrast.py`: acht Wächter, die die Farben **aus der Datei lesen** und
+      das Verhältnis rechnen. Drei Mutationsproben, alle drei fallen — darunter die, die
+      belegt, dass auch eine **neu eingeführte** Farbe erfasst wird.
+- [x] **Zweiter Befund, nach dem niemand gesucht hat:** Der Streifen unter dem Abzeichen
+      war halbdurchsichtig (.82) und hellte über einem weissen Bild so auf, dass alle vier
+      farbigen Aussagen durchfielen (3.93 bis 5.14). Jetzt .94, ungünstigster Fall 5.71.
+      Die sechs iPad-Blätter mit Abzeichen sind mitgezogen.
+
+**Offen, und bei wem es liegt**
+
+- [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2), `auf-128` (Rang 3, Frist 15.10.).
+- [ ] **Kern (wir):** Wie das iPad die HomeStation erstmals findet.
+- [ ] **Kern (wir):** Was bei zwei iPads an derselben Mappe geschieht.
