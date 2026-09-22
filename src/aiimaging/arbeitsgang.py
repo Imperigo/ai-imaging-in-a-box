@@ -55,7 +55,7 @@ from aiimaging import importeur, kette, projekt
 # ein Fehler, der erst beim Aufruf auffaellt.
 from aiimaging.graph import ArtefaktCache
 
-__all__ = ["ArbeitsgangError", "lege_an", "rechne"]
+__all__ = ["ArbeitsgangError", "MESSFELDER", "lege_an", "rechne"]
 
 
 class ArbeitsgangError(ValueError):
@@ -305,6 +305,48 @@ def _jetzt_iso() -> str:
         microsecond=0).isoformat().replace("+00:00", "Z")
 
 
+#: Was die Bildstufe über ihren eigenen Lauf **misst** — und was bis zum 22.09.2026
+#: nirgends in der Mappe ankam.
+#:
+#: **Der Befund (22.09.2026):** Der Lauf schrieb sechs Zusammenfassungsfelder in die
+#: Mappe (Status, Dauer, Treffer …) und liess alles stehen, was die Renderstufe über
+#: *diesen* Lauf gemessen hatte. Nachgestellt mit einem Knoten, der
+#: ``modus_bestellt='image_edit'``, ``modus_gerechnet='txt2img'`` und den Satz
+#: «BESTELLT WAR …» meldete: In der geschriebenen Projektdatei kam keines dieser
+#: Wörter vor.
+#:
+#: Und es wiegt schwer, weil ``modus_abweichung`` am 21.09.2026 **eigens** verdrahtet
+#: wurde — es war eine Funktion vor dem Leser weggeworfen worden. Eine Ebene später
+#: wurde es wieder weggeworfen.
+#:
+#:     *Eine Auskunft, die eine Ebene früher wegfällt, als der Leser sie braucht, gibt
+#:     es für den Leser nicht — und es ist gleichgültig, welche Ebene es war.*
+MESSFELDER = ("modus_bestellt", "modus_gerechnet", "modus_abweichung",
+              "hinweise", "schritte_gerechnet", "geraeteweg")
+
+
+def _messung_zu(ausgaben: dict) -> dict:
+    """Was ein Bildknoten über seinen Lauf gemeldet hat — **jedes Feld, auch das leere.**
+
+    Ein Feld, das der Knoten nicht führt, steht hier als ``None``: **nicht gemessen.**
+    Es wird nicht weggelassen und nicht auf ``False`` oder ``0`` gezogen — sonst wäre in
+    der Mappe eine schweigende Naht von einer meldenden nicht zu unterscheiden, und
+    genau diese Unterscheidung ist der Zweck von ``modus_abweichung``.
+
+    ``hinweise`` ist der einzige Sonderfall: ``[]`` heisst **gemessen und nichts zu
+    sagen**, ``None`` heisst **nicht gemessen**. Die beiden sind verschieden viel wert.
+    """
+    messung = {}
+    for feld in MESSFELDER:
+        wert = ausgaben.get(feld)
+        if feld == "hinweise" and wert is not None:
+            # TUPEL ZU LISTE — die Projektdatei ist JSON, und `hinweise` kommt aus
+            # `render._ergebnis` als Tupel herein.
+            wert = list(wert)
+        messung[feld] = wert
+    return messung
+
+
 #: Vorgabewert für ``cache``: der Zwischenspeicher liegt **in der Mappe**.
 #:
 #: **Eigenes Wort statt ``None``**, weil ``None`` in diesem Projekt überall
@@ -372,6 +414,12 @@ def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None,
     **Warum ein Lauf, der scheitert, trotzdem eingetragen wird.** Ein gescheiterter Lauf
     ist eine Tatsache über dieses Projekt. Ihn wegzuwerfen hiesse, dass zwei Zustände
     gleich aussehen: «wurde nie versucht» und «wurde versucht und ging nicht».
+
+    **Und was der Lauf gemessen hat, wird mitgeschrieben** (22.09.2026). Im Lauf stehen
+    ``modus_abweichungen`` (die Fälle, in denen etwas anderes gerechnet als bestellt
+    wurde), ``modus_ungemessen`` (die Knoten, die dazu nichts gemeldet haben) und
+    ``messungen`` je Bildknoten; dieselbe Messung hängt unter ``herkunft.messung`` an
+    jedem eingetragenen Bild. Siehe :data:`MESSFELDER`.
     """
     wurzel = Path(wurzel)
     # DIE SPERRE ZUERST, VOR DEM OEFFNEN. Laege sie spaeter, haette der zweite Lauf die
@@ -456,6 +504,34 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder,
     knoten_ergebnisse = lauf.get("knoten") or {}
     schichten = kette.schichtbefund(graph, knoten_ergebnisse)
 
+    # WAS DIE BILDSTUFE GEMESSEN HAT — EINMAL EINGESAMMELT, ZWEIMAL GEBRAUCHT: an jedem
+    # Bild (Herkunft) und im Lauf (Zusammenfassung). Siehe `MESSFELDER`, Befund
+    # 22.09.2026.
+    #
+    # ÜBER ALLE BILDKNOTEN, nicht nur über die mit einem Bild: Ein Knoten, der gescheitert
+    # ist, hat womöglich trotzdem gemessen, auf welchem Weg er lief — und dass er NICHTS
+    # gemeldet hat, ist selbst eine Auskunft. Ein fehlender Eintrag wäre von einem
+    # Knoten, den es nie gab, nicht zu unterscheiden.
+    messungen = {}
+    for kid in sorted(graph.knoten):
+        if kette._ist_bildart(graph.knoten[kid].art):
+            messungen[kid] = _messung_zu(
+                (knoten_ergebnisse.get(kid) or {}).get("ausgaben") or {})
+
+    # DIE ABWEICHUNG STEHT VORNE UND NICHT IN EINER HINWEISLISTE. Derselbe Grund wie in
+    # `render._ergebnis` (Befund `auf-20260921-130`): Wer Hinweise überfliegt, sieht
+    # ausgerechnet den nicht, der den Lauf entwertet. Eine Liste, die man abfragen kann,
+    # wird abgefragt.
+    modus_abweichungen = [
+        {"knoten": kid, "bestellt": m["modus_bestellt"],
+         "gerechnet": m["modus_gerechnet"], "hinweise": m["hinweise"]}
+        for kid, m in sorted(messungen.items()) if m["modus_abweichung"] is True]
+    # UND DIE DRITTE ANTWORT DANEBEN. Ohne diese Liste hiesse eine leere Abweichungsliste
+    # zweierlei: «keine Abweichung» und «niemand hat hingesehen». Die beiden dürfen in
+    # einer Mappe nicht gleich aussehen.
+    modus_ungemessen = [kid for kid, m in sorted(messungen.items())
+                        if m["modus_abweichung"] is None]
+
     vermerkt = 0
     for kid in sorted(graph.knoten):
         if not kette._ist_bildart(graph.knoten[kid].art):
@@ -491,6 +567,11 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder,
                 # spaeter ein einzelnes Bild ansieht, sieht sonst nicht, dass es gegen
                 # ein inzwischen geaendertes Modell gerechnet wurde.
                 "modell_stand": stand,
+                # WAS DIESER KNOTEN GEMESSEN HAT, AN SEINEM BILD. Wer ein einzelnes Bild
+                # ansieht, muss sehen koennen, dass es als `txt2img` entstand, obwohl
+                # `image_edit` bestellt war — sonst sieht ein entwertetes Bild aus wie
+                # jedes andere.
+                "messung": messungen.get(kid),
             })
         vermerkt += 1
 
@@ -503,6 +584,12 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder,
         "error": lauf.get("error"),
         "modell_stand": stand,
         "bilder_vermerkt": vermerkt,
+        # WAS DER LAUF GEMESSEN HAT, GEHOERT IN DIE MAPPE — und zwar die Abweichung
+        # zuerst. Befund 22.09.2026: Bis hierher standen im Lauf nur sechs
+        # Zusammenfassungsfelder, und alles Gemessene blieb im Knotenergebnis liegen.
+        "modus_abweichungen": modus_abweichungen,
+        "modus_ungemessen": modus_ungemessen,
+        "messungen": messungen,
     })
     pfad = projekt.speichere(p, wurzel)
     return {"projekt": p, "lauf": lauf, "vermerkt": vermerkt,

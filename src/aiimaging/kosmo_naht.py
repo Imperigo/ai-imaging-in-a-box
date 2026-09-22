@@ -47,6 +47,11 @@ import re
 from pathlib import Path
 
 from aiimaging import jobs
+# DIE EINE QUELLE DER FREMDEN KENNUNGSFORM liegt in `kosmo_szene` — dort wird der
+# Vertrag geprüft (`pruefe_job_id`). Der Import ist zyklusfrei: `kosmo_szene` führt
+# dieses Modul weder direkt noch über eine seiner Abhängigkeiten ein (22.09.2026
+# nachgerechnet), und es ist reine Standardbibliothek, holt also nichts Schweres mit.
+from aiimaging import kosmo_szene
 
 #: Unser Auftragsfeld → Feld des Vertrags. Nur die Namen, die wirklich abweichen.
 JOB_FELDER: dict[str, str] = {
@@ -66,10 +71,25 @@ MCP_FELDER: dict[str, str] = {
 
 #: Deren Kennungsmuster: `vis-<unix_ts>-<6hex>`. Unsere 14-stellige Form besteht darin;
 #: ihre zehnstellige besteht bei uns **nicht** — die Unverträglichkeit ist einseitig.
-FREMDES_JOB_ID_MUSTER = re.compile(r"^vis-\d+-[0-9a-f]{6}$")
+#:
+#: **Hier stand bis zum 22.09.2026 eine eigene Kopie dieses Musters** (Befund
+#: 22.09.2026: dieselbe Regel dreimal im Repo — hier, in ``bruecke`` und in
+#: ``kosmo_szene``, und keine las eine andere). Weitet die fremde Warteschlange ihre
+#: Kennungsform, wird sie dort geändert, wo der Vertrag geprüft wird — in
+#: :func:`aiimaging.kosmo_szene.pruefe_job_id`. Eine Kopie hier hätte danach eine
+#: andere Auskunft gegeben als die Stelle, die entscheidet.
+#:
+#: Es ist **dasselbe Musterobjekt**, kein gleichlautendes zweites: Wer hier wieder ein
+#: eigenes kompiliert, baut die Abweichung von neuem ein.
+FREMDES_JOB_ID_MUSTER = kosmo_szene.FREMDE_JOB_ID
 
-#: Die Schemakennung der Bestellung — dieselbe wie in `kosmo_szene`, hier ohne Import
-#: wiederholt, damit dieses Modul unabhängig von der Szenenauswertung bleibt.
+#: Die Schemakennung der Bestellung — wörtlich dieselbe wie `kosmo_szene.SCHEMA_SZENE`.
+#:
+#: Hier stand bis zum 22.09.2026 dazu, sie sei *«ohne Import wiederholt, damit dieses
+#: Modul unabhängig von der Szenenauswertung bleibt»*. Diese Begründung trägt seit der
+#: Zeile darüber nicht mehr: Das Modul führt `kosmo_szene` jetzt ein. Die Zeichenkette
+#: bleibt vorerst stehen, **aber sie ist dieselbe Doppelung wie die eben aufgelöste** —
+#: ein eigener Befund und kein Teil dieser Reparatur.
 SCHEMA_RENDER_SCENE = "kosmovis.render-scene/v1"
 
 #: Umgebungsvariable, unter der das Ökosystem sein Auftragsverzeichnis führt.

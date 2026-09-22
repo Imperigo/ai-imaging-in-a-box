@@ -178,9 +178,32 @@ def _zeilen(bericht: dict, nur: str | None) -> list[str]:
     wartend = bericht.get("wartet_auf_beantwortetes") or []
     if wartend and not nur:
         aus.append("")
-        aeltest = max((w["seit_tagen"] or 0) for w in wartend)
+        # UNBEKANNT BLEIBT UNBEKANNT (Befund 22.09.2026). Hier stand
+        # `max((w["seit_tagen"] or 0) for w in wartend)`. `seit_tagen` ist None, wenn die
+        # Antwort kein Datum traegt — `aiimaging.einbau.wartet_auf_beantwortetes` setzt
+        # das mit Absicht, und `tests/test_einbau.py` haelt es fest: «Null Tage hiesse
+        # heute beantwortet. Unbekannt heisst unbekannt.»
+        #
+        # Das `or 0` machte aus jedem unbekannten Alter eine Null. Trugen ALLE wartenden
+        # Posten kein Datum, meldete der Bericht an den Owner «aeltester seit 0 Tagen» —
+        # also «heute», an genau der Stelle, an der wir am wenigsten wissen. Eine Zahl,
+        # die Dringlichkeit kleinredet. Vier Zeilen tiefer schrieb dieselbe Funktion in
+        # der Einzelzeile laengst richtig ein «?».
+        #
+        # Drei Lagen, drei Saetze: nichts gemessen, teils gemessen, ganz gemessen. Dass
+        # neben einem bekannten Aeltesten unbekannte stehen, gehoert dazugesagt — sonst
+        # liest sich das Aelteste als das Aelteste ueberhaupt.
+        bekannt = [w["seit_tagen"] for w in wartend if w["seit_tagen"] is not None]
+        ohne_datum = len(wartend) - len(bekannt)
+        if not bekannt:
+            alter = "Alter unbekannt, keine Antwort traegt ein Datum"
+        elif ohne_datum:
+            alter = (f"aeltester bekannter seit {max(bekannt)} Tagen, "
+                     f"{ohne_datum} ohne Datum")
+        else:
+            alter = f"aeltester seit {max(bekannt)} Tagen"
         aus.append(f"WARTEN AUF EINE ANTWORT, DIE DA IST: {len(wartend)} Posten — "
-                   f"aeltester seit {aeltest} Tagen. Ansehen, nicht falsch:")
+                   f"{alter}. Ansehen, nicht falsch:")
         for w in sorted(wartend, key=lambda x: -(x["seit_tagen"] or 0)):
             tage = f"{w['seit_tagen']}d" if w["seit_tagen"] is not None else "  ?"
             aus.append(f"      {w['kennung']:<5}{tage:>4}  {w['zustand'][:28]:<30}"

@@ -49,7 +49,6 @@ schreibt Dateien; das Rendern bleibt, wo es ist.
 from __future__ import annotations
 
 import json
-import re
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
@@ -73,9 +72,6 @@ STATUS_CANCELLED = "cancelled"
 STATUSSE = (STATUS_AWAITING, STATUS_QUEUED, STATUS_RUNNING, STATUS_DONE,
             STATUS_ERROR, STATUS_CANCELLED)
 
-#: Die Form ihrer Verzeichnisnamen. Nur was so heisst, ist ein Auftrag.
-VERZEICHNIS_MUSTER = re.compile(r"^vis-\d+-[0-9a-f]{6}$")
-
 #: Vorsatz des Freigabe-Tokens — bei ihnen wie bei uns.
 TOKEN_VORSATZ = "CONFIRMED_RENDER_"
 
@@ -98,6 +94,29 @@ FELD_MELDUNG = "message"
 
 class BrueckenError(ValueError):
     """Ein Auftragsverzeichnis ist unbrauchbar, oder eine Antwort passte nicht hinein."""
+
+
+def _ist_auftragsordner(name: str) -> bool:
+    """Heisst dieser Ordner so, wie die fremde Warteschlange ihre Aufträge benennt?
+
+    **Hier stand bis zum 22.09.2026 eine eigene Kopie ihres Kennungsmusters** — obwohl
+    dieses Modul :mod:`aiimaging.kosmo_szene` schon einführte, wo der Vertrag geprüft
+    wird (Befund 22.09.2026: dieselbe Regel stand dreimal im Repo, und keine Stelle las
+    eine andere).
+
+    Was das kostete, sobald die fremde Warteschlange ihre Kennungsform weitet: Geändert
+    würde ``kosmo_szene.pruefe_job_id``, denn dort wird der Vertrag geprüft.
+    :func:`offene_auftraege` hätte danach weiter mit dem alten Muster gefiltert und den
+    neuen Auftragsordner **stillschweigend** übersprungen — kein Fehler, keine Warnung,
+    der Auftrag bleibt liegen.
+
+    Gefragt wird darum :func:`aiimaging.kosmo_szene.ist_fremde_job_id`, und zwar bei
+    jedem Aufruf: Ein einmal gebundenes Muster wäre wieder eine zweite Kopie, nur eine
+    unsichtbare. Dass ein Ordnername mit einer Auftragskennung geprüft wird, ist dabei
+    kein Kunstgriff — die Brücke legt den Ordner unter dem Namen des Auftrags an, der
+    darin liegt.
+    """
+    return kosmo_szene.ist_fremde_job_id(name)
 
 
 def _jetzt() -> str:
@@ -150,7 +169,7 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
     warnungen: list[str] = []
     maengel: list[str] = []
 
-    if not VERZEICHNIS_MUSTER.match(ordner.name):
+    if not _ist_auftragsordner(ordner.name):
         warnungen.append(
             f"Der Ordnername {ordner.name!r} entspricht nicht der Form der fremden "
             f"Warteschlange (vis-<zahl>-<sechs Hexziffern>). Gelesen wird trotzdem — "
@@ -296,7 +315,7 @@ def offene_auftraege(store, *, nur_status=(STATUS_QUEUED,)) -> list[Path]:
         return []
     treffer = []
     for d in sorted(ordner.iterdir()):
-        if not d.is_dir() or not VERZEICHNIS_MUSTER.match(d.name):
+        if not d.is_dir() or not _ist_auftragsordner(d.name):
             continue
         zettel = d / DATEI_LAUFZETTEL
         if not zettel.is_file():

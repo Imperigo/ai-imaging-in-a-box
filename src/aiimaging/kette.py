@@ -431,17 +431,55 @@ def baue_kette(
     multipass_timeout: float | None = None,
     # DER STANDPUNKT VON HAND — die letzten drei der gemessenen Luecke.
     #
-    # Sie waren ueber diesen Weg nur MITTELBAR erreichbar: ueber `innenraum`, das sie
-    # ausrechnen laesst. Wer eine Aussenkamera an eine bestimmte Stelle setzen will — die
-    # naheliegendste Bedienhandlung ueberhaupt —, konnte das nicht.
+    # Wer eine Aussenkamera an eine bestimmte Stelle setzen will — die naheliegendste
+    # Bedienhandlung ueberhaupt —, konnte das ueber diesen Weg nicht.
     #
-    # ZWEI QUELLEN FUER DASSELBE WERDEN ABGEWIESEN, nicht stillschweigend geordnet: Wer
-    # `innenraum` UND `auge` angibt, bekommt einen Satz statt einer Auswahl. Eine
-    # Vorrangregel waere genau die Sorte Entscheidung, an die sich spaeter niemand
-    # erinnert — und die falsche Kamera sieht man dem Bild nicht an.
+    # Ein erster Anlauf schrieb hier, sie seien wenigstens MITTELBAR erreichbar gewesen:
+    # ueber `innenraum`, das sie ausrechnen laesst. Das stimmte nicht — `innenraum` war
+    # bis zum 22.09.2026 hier selbst keine Angabe (siehe unten). Erreichbar war also
+    # weder der Standpunkt noch das, was ihn ausrechnet.
     auge=None,
     blick_auf=None,
     brennweite: float | None = None,
+    # ── DIE INNENANSICHT, DIE NUR VON HAND ZU BESTELLEN WAR (Befund 22.09.2026) ──────
+    #
+    # `_fuehre_multipass` wertet `innenraum` aus und laesst `raumkamera.waehle` daraus
+    # Auge, Blickziel und die gemessene 24-mm-Brennweite rechnen — aber `baue_kette`
+    # nahm die Angabe nie entgegen. Die Innenansicht war damit nur erreichbar, wenn
+    # jemand den Multipass-Knoten von Hand zusammensetzte.
+    #
+    # Ueber das Produkt gab es sie gar nicht: Die Oberfläche gewinnt ihre Bedienfelder
+    # aus der Signatur dieser Funktion; was hier nicht steht, kann dort niemand
+    # bestellen, und wer es trotzdem schickt, bekommt eine Abweisung.
+    #
+    # BESTELLBAR IST NOCH NICHT LIEFERBAR (Durchsicht 22.09.2026). Raeume gibt es nur
+    # beim Einstieg ueber `ifc_path` — aus einer glb laesst sich kein Raumbegriff
+    # gewinnen (`_fuehre_geometrie` setzt dort `raeume: None`). Der Weg ueber die
+    # Projektmappe (`arbeitsgang.rechne`) baut aber IMMER aus der umgewandelten glb.
+    # Seit heute bietet die Oberflaeche das Feld also an, und jeder Lauf damit endet im
+    # Fehlerknoten «Innenansicht verlangt, aber kein Standpunkt». Laut und ehrlich,
+    # nicht aussen gerendert — aber erfuellbar ist die Bestellung heute nur ueber den
+    # direkten Aufruf mit `ifc_path`. Beides ist bewacht
+    # (tests/test_innenansicht_bestellweg.py).
+    #
+    #     *Eine Naht, die nur der direkte Aufrufer erreicht, gibt es fuer den Weg nicht,
+    #     den das Produkt wirklich geht.*
+    #
+    # Dieselbe Fehlerart wie am 21.09.2026 bei den elf Kameraangaben, eine Ebene tiefer.
+    #
+    # Erwartet wird, was `_fuehre_multipass` liest: ``{"raum": ..., "art": ...}``.
+    # Geprueft wird der Inhalt hier NICHT — welche Raeume es gibt, weiss erst der
+    # Geometrie-Knoten, und ein Urteil ueber einen Raumnamen waere an dieser Stelle
+    # geraten. `None` heisst wie ueberall in dieser Gruppe NICHT ANGEFASST.
+    #
+    # ZWEI QUELLEN FUER DASSELBE WERDEN ABGEWIESEN, nicht stillschweigend geordnet: Wer
+    # `innenraum` UND `auge` angibt, bekommt einen Satz statt einer Auswahl. Die
+    # Abweisung steht am Knoten (`_fuehre_multipass`) und faellt beim Lauf, nicht hier —
+    # dort koennen beide Angaben auch dann nebeneinander stehen, wenn der Knoten gar
+    # nicht aus dieser Funktion stammt. Eine Vorrangregel waere genau die Sorte
+    # Entscheidung, an die sich spaeter niemand erinnert — und die falsche Kamera sieht
+    # man dem Bild nicht an.
+    innenraum: dict | None = None,
 ) -> Graph:
     """Die Standardkette als Graph: ``geometrie → multipass → render → qa``.
 
@@ -468,6 +506,16 @@ def baue_kette(
             ``tiefenschaetzer.qa_gegen_soll``. Der Schätzername gehört in die Parameter
             und damit in den Hash: Ein Urteil, das mit einem anderen Schätzer entstanden
             ist, ist ein anderes Urteil.
+        innenraum: Eine Innenaufnahme bestellen: ``{"raum": <Name>, "art": "frontal"``
+            ``| "ueber_eck"}``. Der Standpunkt wird beim Lauf aus den Räumen des
+            Geometrie-Knotens gerechnet (``raumkamera.waehle``), samt der dort gemessenen
+            24-mm-Brennweite. **Vorbedingung: Einstieg über** ``ifc_path`` — nur dort
+            gibt es Räume. Über ``glb_path`` (und damit heute über die Projektmappe,
+            die immer aus der umgewandelten glb baut) endet der Lauf im Fehlerknoten
+            «Innenansicht verlangt, aber kein Standpunkt», statt aussen zu rendern. ``None`` heisst **nicht angefasst** — es entsteht dann wie
+            bisher eine Aussenaufnahme, und keine schon gemessene bleibt zurück.
+            Zusammen mit ``auge``/``blick_auf``/``brennweite`` wird der Lauf abgewiesen:
+            *zwei Quellen für denselben Standpunkt werden nicht geordnet.*
 
     Returns:
         Ein ``Graph`` mit drei bzw. vier Knoten. Er wird **nicht** ausgeführt — Bau und
@@ -547,6 +595,7 @@ def baue_kette(
                     "auge": auge,
                     "blick_auf": blick_auf,
                     "brennweite": brennweite,
+                    "innenraum": innenraum,
                 }.items() if wert is not None},
             },
             eingaenge=(KNOTEN_GEOMETRIE,),
@@ -958,12 +1007,19 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     # VON HAND GESETZT — oder aus dem Innenraum gerechnet. **Beides zugleich gibt es
     # nicht**, und die Pruefung steht HIER und nicht in `baue_kette`.
     #
-    # Der erste Anlauf legte sie dorthin — und sie waere toter Code gewesen: `innenraum`
-    # ist gar kein Parameter von `baue_kette`, es wird von aussen an den Knoten gesetzt.
-    # Der Fall kann dort also nie eintreten, und die Abfrage haette nie ausgeloest.
+    # Der erste Anlauf legte sie dorthin — und sie waere damals toter Code gewesen:
+    # `innenraum` war gar kein Parameter von `baue_kette`, es wurde von aussen an den
+    # Knoten gesetzt. Der Fall konnte dort nie eintreten, und die Abfrage haette nie
+    # ausgeloest.
     #
     #     *Ein Waechter an einer Stelle, an der der Fall nicht vorkommt, ist kein
     #     Waechter. Er ist eine Beruhigung.*
+    #
+    # SEIT DEM 22.09.2026 nimmt `baue_kette` die Angabe entgegen — genau das war der
+    # Befund dieses Tages. Die Pruefung bleibt trotzdem HIER, und zwar aus dem zweiten
+    # Grund, der immer galt: Ein Multipass-Knoten muss nicht aus `baue_kette` stammen.
+    # Wer ihn von Hand baut, serialisiert, einliest oder verschickt, kommt an einer
+    # Pruefung im Bau vorbei — an dieser hier kommt niemand vorbei.
     #
     # An dieser Stelle koennen beide Angaben wirklich nebeneinander am Knoten stehen, und
     # genau hier wird abgewiesen statt geordnet: Eine Vorrangregel waere eine Entscheidung,

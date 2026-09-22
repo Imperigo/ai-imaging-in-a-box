@@ -467,14 +467,24 @@ def test_kein_denoise_hinweis_im_image_edit(tmp_path, tiefe, ziel):
 
 
 def test_lizenzauflagen_reisen_im_ergebnis_mit(tiefe, ziel):
-    """SDXL ist erlaubt, aber nicht bedingungslos — die Auflage gehört ins Protokoll."""
+    """SDXL wird im Produkt nicht gerechnet — und die Auflagen reisen trotzdem mit.
+
+    **Bis zum 22.09.2026 hiess dieser Test: «SDXL ist erlaubt, aber nicht
+    bedingungslos».** Seit dem Owner-Entscheid dieses Tages gilt für die beiden
+    Lizenzen, die erlaubt, aber nicht permissiv sind (SDXL mit OpenRAIL-M, SD3.5 mit
+    der Community-Lizenz), dasselbe wie für FLUX: nur zum Messen, nie im ausgelieferten
+    Produkt. Der Produktweg lehnt darum ab.
+
+    Was bleibt, ist die Pflicht dieses Tests: Wer abgelehnt wird, muss sehen, **warum**
+    — die Auflagen und die Begründung stehen im Ergebnis, nicht nur ein Nein.
+    """
     ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel, backbone="sdxl-juggernaut"),
                        modell=Attrappe())
 
-    assert ergebnis["status"] == STATUS_OK
-    assert ergebnis["lizenz"]["zulaessig"] is True
-    assert ergebnis["lizenz"]["auflagen"]
-    assert any("OpenRAIL" in h for h in ergebnis["hinweise"])
+    assert ergebnis["status"] != STATUS_OK, "SDXL darf im Produkt nicht rechnen"
+    assert ergebnis["lizenz"]["zulaessig"] is False
+    assert ergebnis["lizenz"]["auflagen"], "die Auflagen fallen mit der Ablehnung nicht weg"
+    assert "Owner-Entscheid 22.09.2026" in ergebnis["lizenz"]["begruendung"]
 
 
 def test_fehlender_ausgabeort_wird_als_hinweis_vermerkt(tiefe, tmp_path):

@@ -9,7 +9,7 @@ woran sie stirbt**: an der Frist, an den Versuchen, und am ersten gelungenen Ver
 """
 from __future__ import annotations
 
-import inspect
+import json
 import re
 from pathlib import Path
 
@@ -205,9 +205,33 @@ def test_der_vergleich_laeuft_ueber_compare_digest():
     *Eine Vorsichtsmassnahme, die nur dort greift, wo man sie für nötig hält, greift
     irgendwann nicht mehr.*
     """
-    quelle = inspect.getsource(kopplung.pruefe)
-    assert "compare_digest" in quelle
-    assert "== kopplung.pin" not in quelle and "== self.pin" not in quelle
+    # BIS ZUM 22.09.2026 stand hier ein Blick in den Quelltext: «kommt compare_digest
+    # vor?». Er blieb gruen, wenn der Aufruf dastand und das Ergebnis danach ein `==`
+    # entschied. Gezaehlt wird jetzt, ob der gleichzeitige Vergleich WIRKLICH laeuft —
+    # und ob er die eingetippte Zahl gegen die echte haelt.
+    import hmac
+
+    echt = hmac.compare_digest
+    gesehen = []
+
+    def zaehlend(a, b):
+        gesehen.append((a, b))
+        return echt(a, b)
+
+    k = kopplung.eroeffne(jetzt=0.0, _pin="123456")
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(hmac, "compare_digest", zaehlend)
+        falsch = kopplung.pruefe(k, "123450", jetzt=1.0)
+        richtig = kopplung.pruefe(k, "123456", jetzt=2.0)
+
+    assert falsch["angenommen"] is False and richtig["angenommen"] is True
+    assert len(gesehen) == 2, (
+        f"compare_digest lief {len(gesehen)}-mal statt je Versuch einmal — entschieden "
+        f"hat dann ein gewoehnlicher Vergleich, der bei der ersten falschen Ziffer abbricht")
+    for a, b in gesehen:
+        assert {str(a if isinstance(a, str) else a.decode()),
+                str(b if isinstance(b, str) else b.decode())} & {"123456"}, (
+            "verglichen wurde nicht gegen die echte Zahl")
 
 
 def test_eine_kopplung_ohne_versuche_wird_abgelehnt():
@@ -394,12 +418,58 @@ def test_fuenf_fehlversuche_wirken_auch_ueber_die_flaeche(flaechenmodul):
         "nach dem Aufbrauchen hilft auch die richtige Zahl nicht mehr")
 
 
-def test_der_weg_haengt_wirklich_in_der_wegtafel(flaechenmodul):
+class _Anfrage(_Tuer):
+    """Wie `_Tuer`, aber die ganze Anfrage: `do_POST` läuft hier **wirklich**.
+
+    `_Tuer` reicht bis zur Türschwelle — sie ruft `_darf_herein`. Für die Frage, ob ein
+    Weg in der Wegtafel hängt, genügt das nicht: Die Tafel liegt hinter der Schwelle.
+    """
+
+    def __init__(self, modul, *, command, path, kennwort, offen, rumpf=b"",
+                 authorization=None):
+        super().__init__(modul, command=command, path=path, kennwort=kennwort,
+                         offen=offen, authorization=authorization)
+        self.selbst.headers = dict(self.selbst.headers,
+                                   **{"Content-Length": str(len(rumpf))})
+        self.selbst.rfile = _io.BytesIO(rumpf)
+        self.codes = []
+        self.selbst.send_response = lambda code, *a, **k: self.codes.append(code)
+
+    def stelle(self):
+        self.selbst.do_POST()
+        return self
+
+    def nutzlast(self):
+        return json.loads(self.selbst.wfile.getvalue().decode("utf-8"))
+
+
+def test_der_weg_haengt_wirklich_in_der_wegtafel(flaechenmodul, capsys):
     """Der Wächter gegen genau den Fehler, den dieses Projekt dreimal gemacht hat.
 
     Eine Methode, die gebaut ist und in keiner Verzweigung steht, gibt es für den, der
     über HTTP kommt, nicht.
+
+    **Was dieser Wächter bis zum 22.09.2026 nicht geprüft hat:** Er sah nach, ob zwei
+    Zeilen im Quelltext von ``oberflaeche/server.py`` **stehen**. Ob sie beim Anklopfen
+    auch **erreicht werden**, stand nirgends. Wer ``do_POST`` umbaut und die alte Kette
+    als unbenutzte Methode stehenlässt, liess ihn grün — und das erste Verbinden
+    antwortete in Wahrheit 404.
+
+        *Ein Wächter, der die Stellung einer Zeile prüft statt ihrer Wirkung, prüft den
+        Text und nicht das Programm.*
+
+    Angeklopft wird jetzt auf dem Weg, den das Gerät wirklich geht: ein POST auf
+    ``WEG_VERBINDEN`` mit der richtigen Zahl — und zurück muss das Kennwort kommen, nicht
+    ein «Unbekannter Weg».
     """
-    quelle = (_FLAECHE / "server.py").read_text(encoding="utf-8")
-    assert "elif weg == WEG_VERBINDEN:" in quelle
-    assert "self._verbinden(wunsch)" in quelle
+    offen = kopplung.eroeffne(_pin="123456")
+    a = _Anfrage(flaechenmodul, command="POST", path=flaechenmodul.WEG_VERBINDEN,
+                 kennwort="das-lange-kennwort", offen=offen,
+                 rumpf=json.dumps({"pin": "123456"}).encode("utf-8")).stelle()
+
+    assert a.codes == [200], (
+        f"POST {flaechenmodul.WEG_VERBINDEN} kam mit {a.codes} zurück — 404 hiesse, der "
+        f"Weg hängt in keiner Verzweigung.")
+    nutzlast = a.nutzlast()
+    assert nutzlast["verbunden"] is True
+    assert nutzlast["kennwort"] == "das-lange-kennwort"

@@ -22,6 +22,7 @@ Fläche still etwas kaputtmacht:
 from __future__ import annotations
 
 import ast
+import io
 import json
 import sys
 from pathlib import Path
@@ -1091,22 +1092,54 @@ def test_auch_die_pruefung_selbst_weist_ein_leeres_kennwort_ab(server, leer):
         server.pruefe_anmeldung("Basic Zm9vOg==", leer)
 
 
-def test_verglichen_wird_in_gleichbleibender_zeit():
+def test_verglichen_wird_in_gleichbleibender_zeit(server, monkeypatch):
     """*Ein Vergleich, dessen Dauer vom Inhalt abhaengt, verraet den Inhalt.*
 
     Ein gewoehnliches `==` bricht beim ersten falschen Zeichen ab. Daraus laesst sich ein
     Kennwort Zeichen fuer Zeichen erraten, ohne es je ganz zu kennen.
-    """
-    baustein = SERVER_PY.read_text(encoding="utf-8").split("def pruefe_anmeldung", 1)[1] \
-                                                    .split("\ndef ", 1)[0]
-    # NUR DER CODE, ohne den Docstring — sonst zaehlt die Erklaerung als Umsetzung mit.
-    code = baustein.split('"""', 2)[-1]
 
-    assert "hmac.compare_digest(name, BENUTZER)" in code
-    assert "hmac.compare_digest(gegeben, kennwort)" in code
-    # UND BEIDE VOR DEM RUECKGABEWERT. Ein `and` im `return` kaeme bei falschem Namen
-    # frueher zurueck — und damit waere die Dauer wieder eine Auskunft.
-    assert code.index("hmac.compare_digest(gegeben") < code.index("return stimmt_name")
+    **Was dieser Waechter bis zum 22.09.2026 NICHT geprueft hat, obwohl er es behauptete:**
+    Er hing an drei Quelltextmerkmalen — den zwei `compare_digest`-Aufrufen und ihrer
+    Reihenfolge IM TEXT. Ob beide Vergleiche auch WIRKLICH LAUFEN, hat er nie gemessen.
+    Ein `if not stimmt_name: return False` zwischen den beiden Zeilen liess ihn gruen,
+    und genau diese Abkuerzung ist der Angriff: Bei falschem Benutzernamen kaeme die
+    Antwort frueher zurueck, und die Dauer waere wieder eine Auskunft.
+
+        *Ein Waechter, der die Stellung einer Zeile prueft statt ihrer Wirkung, prueft
+        den Text und nicht das Programm.*
+
+    Gemessen wird darum jetzt am laufenden Aufruf: ein zaehlender Mantel um
+    `hmac.compare_digest`, ein ABSICHTLICH FALSCHER Benutzername — und die Forderung,
+    dass das Kennwort trotzdem verglichen wird.
+    """
+    import base64 as b64
+
+    laeufe: list[tuple] = []
+    echt = server.hmac.compare_digest
+
+    def zaehlend(a, b):
+        laeufe.append((a, b))
+        return echt(a, b)
+
+    monkeypatch.setattr(server.hmac, "compare_digest", zaehlend)
+
+    kopf = "Basic " + b64.b64encode(b"fremd:geheim").decode()
+    assert server.pruefe_anmeldung(kopf, "geheim") is False
+
+    # ZWEI VERGLEICHE, obwohl schon der erste verloren war. Waere `and` eine Abkuerzung,
+    # stuende hier eine Eins — und die Dauer verriete, dass der Name nicht stimmt.
+    assert len(laeufe) == 2, (
+        f"Bei falschem Namen liefen {len(laeufe)} Vergleiche statt zwei — dann haengt "
+        f"die Dauer davon ab, welche Haelfte falsch war.")
+    assert ("fremd", server.BENUTZER) in laeufe, "der Benutzername wurde nicht verglichen"
+    assert ("geheim", "geheim") in laeufe, "das Kennwort wurde nicht verglichen"
+
+    # UND DER UMGEKEHRTE FALL, damit die Zwei nicht bloss zufaellig stimmt: Auch bei
+    # richtigem Namen und falschem Kennwort sind es genau zwei.
+    laeufe.clear()
+    kopf = "Basic " + b64.b64encode(f"{server.BENUTZER}:falsch".encode()).decode()
+    assert server.pruefe_anmeldung(kopf, "geheim") is False
+    assert len(laeufe) == 2
 
 
 def test_das_kennwort_kommt_nicht_aus_random(server):
@@ -1123,16 +1156,127 @@ def test_das_kennwort_kommt_nicht_aus_random(server):
     assert a != b and len(a) == server.KENNWORTLAENGE
 
 
-def test_auch_die_seite_selbst_liegt_hinter_der_tuer():
+class _Anfrage:
+    """Eine ganze Anfrage ohne Netz — `do_GET` und `do_POST` laufen hier WIRKLICH.
+
+    Gebraucht wird sie, weil die Tuer nur auf dem Weg zu pruefen ist, den das Produkt
+    geht: Ein Browser ruft nicht `_darf_herein`, er ruft einen Pfad. Was dabei
+    herauskommt, steht in `codes` (jede Antwort, in der Reihenfolge ihres Absendens), in
+    `koepfe` (jede Kopfzeile) und in `rumpf` (alles, was als Rumpf auf die Leitung ging).
+    """
+
+    def __init__(self, modul, *, befehl, weg, kennwort, kopf=None, rumpf=b"",
+                 ordner=None, offen=None):
+        klasse = type("FlaechePruefling", (modul.Flaeche,),
+                      {"kennwort": kennwort, "ordner": ordner, "kopplung_offen": offen})
+        self.selbst = klasse.__new__(klasse)
+        self.selbst.command = befehl
+        self.selbst.path = weg
+        self.selbst.headers = {"Authorization": kopf, "Content-Length": str(len(rumpf))}
+        self.selbst.rfile = io.BytesIO(rumpf)
+        self.selbst.wfile = io.BytesIO()
+        self.codes: list[int] = []
+        self.koepfe: list[tuple[str, str]] = []
+        self.selbst.send_response = lambda code, *a, **k: self.codes.append(code)
+        self.selbst.send_header = lambda name, wert: self.koepfe.append((name, wert))
+        self.selbst.end_headers = lambda: None
+
+    def stelle(self) -> "_Anfrage":
+        (self.selbst.do_GET if self.selbst.command == "GET" else self.selbst.do_POST)()
+        return self
+
+    @property
+    def rumpf(self) -> bytes:
+        return self.selbst.wfile.getvalue()
+
+
+# Die Wege, die ein Browser wirklich anfaesst — GET und POST, und auf beiden etwas, das
+# ohne Tuer etwas HERAUSGEBEN wuerde. Keiner davon rechnet: Fiele die Tuer, antwortete
+# jeder harmlos, aber er antwortete — und genau das ist hier der Befund.
+_WEGE_HINTER_DER_TUER = [
+    ("GET", "/"),
+    ("GET", "/index.html"),
+    ("GET", "/api/projekt"),
+    ("GET", "/api/fortschritt"),
+    ("GET", "/bild?name=bild.png"),
+    ("POST", "/api/anlegen"),
+    ("POST", "/api/einstellungen"),
+    ("POST", "/api/verbinden"),
+    ("POST", "/api/gibtesnicht"),
+]
+
+
+@pytest.mark.parametrize("befehl,weg", _WEGE_HINTER_DER_TUER)
+def test_auch_die_seite_selbst_liegt_hinter_der_tuer(server, befehl, weg):
     """*Eine Tuer, die nur einen von zwei Wegen bewacht, ist keine Tuer.*
 
     Eine Anmeldung, die nur die Daten schuetzt und die Seite freigibt, schuetzt nichts —
     die Seite fragt die Daten ja gerade ab.
+
+    **Was dieser Waechter bis zum 22.09.2026 NICHT geprueft hat:** Er las nach, ob die
+    Zeichenkette `_darf_herein` in den ersten 400 Zeichen hinter `def do_GET` bzw.
+    `def do_POST` VORKOMMT. Ob die Tuer dabei auch ZUHAELT, stand nirgends. Wird aus
+    `if not self._darf_herein(): return` ein blosses `self._darf_herein()` — der
+    Rueckgabewert verworfen, wie es bei einem Zusammenfuehren passiert —, blieb der
+    Waechter gruen, und «/», «/api/projekt», «/api/fortschritt» und «/bild» gingen
+    unangemeldet heraus.
+
+        *Ein Waechter, der die Stellung einer Zeile prueft statt ihrer Wirkung, prueft
+        den Text und nicht das Programm.*
+
+    Gemessen wird jetzt die Antwort selbst: **genau eine**, und die traegt 401. Eine
+    zweite Antwort hiesse, dass hinter der Tuer weitergearbeitet wurde.
     """
-    quelle = SERVER_PY.read_text(encoding="utf-8")
-    for weg in ("def do_GET", "def do_POST"):
-        baustein = quelle.split(weg, 1)[1][:400]
-        assert "_darf_herein" in baustein, f"{weg} geht nicht durch die Tuer"
+    a = _Anfrage(server, befehl=befehl, weg=weg, kennwort="ein-langes-kennwort").stelle()
+
+    assert a.codes == [401], (
+        f"{befehl} {weg} unangemeldet: geantwortet wurde {a.codes} statt nur 401 — "
+        f"nach der 401 lief die Anfrage weiter.")
+    # UND ES GING NICHTS MIT. Der Rumpf ist die eine Fehlermeldung, sonst nichts:
+    # Die Seite selbst wuerde hier als HTML erscheinen. Erst als Text geprueft, damit
+    # ein angehaengtes HTML als Befund faellt und nicht als geworfener JSON-Fehler.
+    text = a.rumpf.decode("utf-8")
+    assert "<html" not in text.lower(), f"{befehl} {weg}: hinter der 401 ging die Seite mit"
+    assert json.loads(text).keys() == {"fehler"}
+    # UND DER BROWSER WIRD GEFRAGT. Ohne diesen Kopf sieht der Benutzer eine
+    # Fehlermeldung statt des Anmeldefensters — und kommt nie herein.
+    assert any(name == "WWW-Authenticate" and wert.startswith("Basic")
+               for name, wert in a.koepfe), (
+        f"{befehl} {weg}: die 401 fragt nicht nach dem Kennwort — der Browser zeigt "
+        f"dann kein Anmeldefenster")
+
+
+def test_mit_kennwort_kommt_dieselbe_anfrage_durch(server):
+    """**Die Gegenprobe, ohne die der Waechter oben auch bei einer zugemauerten Tuer
+    gruen waere.** Eine Tuer, die niemanden durchlaesst, besteht jede Probe auf
+    Verschlossenheit — und ist trotzdem kaputt.
+    """
+    import base64 as b64
+
+    kopf = "Basic " + b64.b64encode(f"{server.BENUTZER}:geheim".encode()).decode()
+    a = _Anfrage(server, befehl="GET", weg="/api/fortschritt",
+                 kennwort="geheim", kopf=kopf).stelle()
+
+    assert a.codes == [200]
+    assert "laeuft" in json.loads(a.rumpf.decode("utf-8"))
+
+
+def test_mit_kennwort_kommt_auch_ein_post_durch(server):
+    """**Die Gegenprobe fuer die zweite Haelfte der Tuer** (Durchsicht 22.09.2026).
+
+    Die Probe darueber deckt einen GET-Weg. Eine Tuer, die angemeldete GETs durchlaesst
+    und jeden POST abweist, bestand sie — und die Flaeche waere unbenutzbar: nichts
+    anlegen, nichts einstellen, nichts rechnen. Gefordert wird darum an einem POST-Weg,
+    der nichts schreibt, die Antwort HINTER der Tuer: 400 (kein Ordner), nicht 401.
+    """
+    import base64 as b64
+
+    kopf = "Basic " + b64.b64encode(f"{server.BENUTZER}:geheim".encode()).decode()
+    a = _Anfrage(server, befehl="POST", weg="/api/anlegen",
+                 kennwort="geheim", kopf=kopf, rumpf=b"{}").stelle()
+
+    assert 401 not in a.codes, "angemeldet, und der POST wird trotzdem abgewiesen"
+    assert a.codes == [400], a.codes
 
 
 def test_der_unverschluesselte_weg_wird_ausdruecklich_gesagt():

@@ -1411,8 +1411,8 @@ def aufnahme(*, kamerahoehe_m: float, bezugspunkt: str, gebaeudehoehe_m: float,
              abstand_m: float,
              brennweite_mm: float = ARBEITSBRENNWEITE_AUSSEN_MM,
              sensor_hoehe_mm: float = SENSOR_HOEHE_HOCH_MM,
-             shift_mm: float = 0.0,
-             neigung_grad: float = NEIGUNG_WAAGRECHT_GRAD) -> dict:
+             shift_mm: float | None = 0.0,
+             neigung_grad: float | None = NEIGUNG_WAAGRECHT_GRAD) -> dict:
     """Eine Aussenaufnahme, vollständig durchgerechnet und mit ihren Warnungen.
 
     Das ist der Zusammenbau: Höhe mit Bezugspunkt, Neigung, Konvergenz, Bodenanteil,
@@ -1421,32 +1421,77 @@ def aufnahme(*, kamerahoehe_m: float, bezugspunkt: str, gebaeudehoehe_m: float,
     Abweichung ist ein **Wunsch**, kein Zustand, und ein Programm kann sie nicht aus der
     Geometrie ableiten.
 
+    **``None`` heisst NICHT GEMESSEN — und der Vorgabewert 0 heisst etwas anderes**
+    (Befund 22.09.2026). Der Vorgabewert sagt *«waagrecht, kein Shift»*; ``None`` sagt
+    *«ob waagrecht, weiss hier niemand»*. Wer die beiden zusammenfallen lässt, bekommt
+    aus einem fehlenden Feld die Aussage «HABS/NPS eingehalten» — also ein Bestanden aus
+    einer Nichtmessung, und zwar in die gefährliche Richtung. Darum:
+
+    * ``neigung_grad=None`` → ``neigung_grad`` und ``konvergenz`` bleiben ``None``, und
+      es gibt eine Warnung. Es gibt **keine** Neigungswarnung «statt 0°», denn es ist
+      auch keine Abweichung festgestellt.
+    * ``shift_mm=None`` → ``mindestabstand``, ``bodenanteil`` und ``abstand_genuegt``
+      bleiben ``None``. Alle drei hängen am Shift; ein angenommener Shift von 0 gäbe
+      einen gerechnet aussehenden Mindestabstand, den niemand gerechnet hat.
+
     Returns:
         dict mit ``kamerahoehe`` (dem vollständigen Eintrag aus :func:`kamerahoehe`),
         ``neigung_grad``, ``rollwinkel_grad``, ``konvergenz``, ``bodenanteil``,
         ``horizont_am_baukoerper``, ``mindestabstand``, ``abstand_m``,
-        ``abstand_genuegt`` und ``warnungen``.
+        ``abstand_genuegt``, ``nicht_gemessen`` und ``warnungen``.
+
+        ``nicht_gemessen`` nennt die Eingaben, die als ``None`` hereinkamen. Sie steht
+        da, damit ein Leser die leeren Felder nicht selbst zusammensuchen muss — ein
+        ``None``, dessen Grund man erraten muss, wird geraten.
     """
     hoehe = kamerahoehe(kamerahoehe_m, bezugspunkt=bezugspunkt)
-    neigung = _zahl(neigung_grad, "neigung_grad")
-    konv = konvergenz(neigung_grad=neigung, gebaeudehoehe_m=gebaeudehoehe_m,
-                      kamerahoehe_m=kamerahoehe_m, abstand_m=abstand_m)
-    noetig = mindestabstand(gebaeudehoehe_m=gebaeudehoehe_m, kamerahoehe_m=kamerahoehe_m,
-                            brennweite_mm=brennweite_mm, sensor_hoehe_mm=sensor_hoehe_mm,
-                            shift_mm=shift_mm)
-    boden = bodenanteil(kamerahoehe_m=kamerahoehe_m, brennweite_mm=brennweite_mm,
-                        sensor_hoehe_mm=sensor_hoehe_mm, shift_mm=shift_mm)
+    neigung = None if neigung_grad is None else _zahl(neigung_grad, "neigung_grad")
+    schieb = None if shift_mm is None else _zahl(shift_mm, "shift_mm")
+    nicht_gemessen = tuple(
+        name for name, wert in (("neigung_grad", neigung), ("shift_mm", schieb))
+        if wert is None)
+
+    konv = None if neigung is None else konvergenz(
+        neigung_grad=neigung, gebaeudehoehe_m=gebaeudehoehe_m,
+        kamerahoehe_m=kamerahoehe_m, abstand_m=abstand_m)
+    noetig = None if schieb is None else mindestabstand(
+        gebaeudehoehe_m=gebaeudehoehe_m, kamerahoehe_m=kamerahoehe_m,
+        brennweite_mm=brennweite_mm, sensor_hoehe_mm=sensor_hoehe_mm,
+        shift_mm=schieb)
+    boden = None if schieb is None else bodenanteil(
+        kamerahoehe_m=kamerahoehe_m, brennweite_mm=brennweite_mm,
+        sensor_hoehe_mm=sensor_hoehe_mm, shift_mm=schieb)
 
     warnungen = list(hoehe["warnungen"])
-    if neigung != NEIGUNG_WAAGRECHT_GRAD:
+    # Erstes Wort = Art der Warnung (`abholer._warnungsart` fasst danach zusammen).
+    # «Neigungsangabe» und «Neigung» sind darum absichtlich zwei Wörter: Eine fehlende
+    # Angabe und eine festgestellte Abweichung dürfen in der Zusammenfassung nicht
+    # zu einer Zeile verschmelzen.
+    if neigung is None:
+        warnungen.append(
+            "Neigungsangabe fehlt — NICHT GEMESSEN. Ob die Sensorebene lotrecht steht "
+            "(HABS/NPS), ist an dieser Aufnahme weder bestätigt noch widerlegt, und die "
+            "Konvergenz bleibt leer. Der Kamerablock des vorgegebenen Wegs — so schickt "
+            "die Bedienoberfläche ihre Kameras — trägt die Neigung nicht; bis zum "
+            "22.09.2026 wurde daraus eine gerechnete 0°, die sich wie eine eingehaltene "
+            "Regel las."
+        )
+    elif neigung != NEIGUNG_WAAGRECHT_GRAD:
         warnungen.append(
             f"Neigung {neigung:g}° statt 0°. Die einzige institutionell verbindliche "
             "Regel des Fachs (HABS/NPS) verlangt die lotrechte Sensorebene; die "
             f"Vertikalen laufen hier um {konv * 100:.1f} % aufeinander zu. Das ist "
             "zulässig als Absicht, nicht als Voreinstellung."
         )
-    genuegt = float(abstand_m) >= noetig["abstand_m"]
-    if not genuegt:
+    if schieb is None:
+        warnungen.append(
+            "Shiftangabe fehlt — NICHT GEMESSEN. Mindestabstand, Bodenanteil und damit "
+            "das Urteil über den Abstand hängen am Shift; sie bleiben leer, statt aus "
+            "einem angenommenen Shift von 0 mm gerechnet zu werden."
+        )
+
+    genuegt = None if noetig is None else float(abstand_m) >= noetig["abstand_m"]
+    if genuegt is False:
         warnungen.append(
             f"Abstand {float(abstand_m):.2f} m unterschreitet den Mindestabstand "
             f"{noetig['abstand_m']:.2f} m; bindend ist der {noetig['bindend']}. "
@@ -1462,7 +1507,8 @@ def aufnahme(*, kamerahoehe_m: float, bezugspunkt: str, gebaeudehoehe_m: float,
             kamerahoehe_m=kamerahoehe_m, gebaeudehoehe_m=gebaeudehoehe_m),
         "mindestabstand": noetig,
         "abstand_m": float(abstand_m),
-        "abstand_genuegt": bool(genuegt),
+        "abstand_genuegt": None if genuegt is None else bool(genuegt),
+        "nicht_gemessen": nicht_gemessen,
         "warnungen": warnungen,
     }
 
@@ -1470,6 +1516,27 @@ def aufnahme(*, kamerahoehe_m: float, bezugspunkt: str, gebaeudehoehe_m: float,
 # --------------------------------------------------------------------------------------
 # Die Brücke zu den wirklichen Kameras
 # --------------------------------------------------------------------------------------
+
+def _gemeldet(kamera: dict, feld: str) -> float | None:
+    """Einen gemeldeten Zahlenwert holen — ``None``, wenn er nicht gemeldet wurde.
+
+    **Der Befund, aus dem diese Funktion kommt (22.09.2026):** Hier stand
+    ``float(kamera.get(feld) or 0.0)``. Ein Kamerablock ohne ``neigung_grad`` bekam damit
+    eine gerechnete 0.0 — also die Aussage *«Sensorebene lotrecht, HABS/NPS
+    eingehalten»*, aus einem Feld, das gar nicht da war. Und der Weg, auf dem das Feld
+    fehlt, ist kein Sonderfall: ``runners/blender_depth_stage.py`` setzt ``neigung_grad``
+    und ``shift_mm`` nur im Zweig ``weg='abgeleitet'``. Auf dem Zweig ``vorgegeben`` —
+    genau dem, den die Bedienoberfläche nimmt, wenn jemand Auge und Blickziel im
+    Grundriss anklickt — entstehen sie nie.
+
+    ``or`` konnte die beiden Fälle gar nicht auseinanderhalten: Eine **gemeldete** Null
+    und ein **fehlendes** Feld sind für ``or`` dasselbe, und genau das ist hier der
+    Unterschied zwischen einer Messung und einer Annahme. Geprüft wird darum auf
+    ``None``, nicht auf Wahrheitswert.
+    """
+    wert = kamera.get(feld)
+    return None if wert is None else float(wert)
+
 
 def beurteile_kamera(kamera: dict, *, gebaeudehoehe_m: float, gelaende_z: float,
                      bezugspunkt: str) -> dict:
@@ -1488,6 +1555,11 @@ def beurteile_kamera(kamera: dict, *, gebaeudehoehe_m: float, gelaende_z: float,
         Die Antwort von :func:`aufnahme`, plus ``kuerzel``. Ihre ``warnungen`` sind die
         eigentliche Ausbeute: Sie sagen, was an dieser Kamera gegen die Norm steht.
 
+        Trägt der Eintrag ``neigung_grad`` oder ``shift_mm`` nicht, geht das als ``None``
+        weiter und steht in ``nicht_gemessen`` — siehe :func:`_gemeldet`. Die davon
+        abhängigen Felder bleiben dann leer, statt aus einer angenommenen Null zu
+        entstehen.
+
     Die Sensorhöhe wird aus dem **Seitenverhältnis dieser Kamera** gerechnet und nicht
     aus :data:`SENSOR_HOEHE_HOCH_MM` übernommen. Der Vorgabewert dort ist die Hochlage
     (36 mm); wer ihn für ein quadratisches Bild stehen liesse, bekäme einen zu grossen
@@ -1505,8 +1577,8 @@ def beurteile_kamera(kamera: dict, *, gebaeudehoehe_m: float, gelaende_z: float,
             abstand_m=float(kamera["abstand_m"]),
             brennweite_mm=float(kamera["brennweite_mm"]),
             sensor_hoehe_mm=SENSOR_BREITE_MM / seitenverhaeltnis,
-            shift_mm=float(kamera.get("shift_mm") or 0.0),
-            neigung_grad=float(kamera.get("neigung_grad") or 0.0),
+            shift_mm=_gemeldet(kamera, "shift_mm"),
+            neigung_grad=_gemeldet(kamera, "neigung_grad"),
         ),
         kuerzel=kamera.get("kuerzel"),
     )
@@ -1531,6 +1603,12 @@ def beurteile_kamerasatz(satz: dict) -> dict:
         ``alle_waagrecht`` ist die eine Zahl, auf die es normativ ankommt: ob **jede**
         Kamera dieses Satzes die lotrechte Sensorebene einhält (HABS/NPS). Sie steht
         getrennt, weil sie in den vielen Warnungen sonst untergeht.
+
+        **Sie hat drei Werte, nicht zwei** (Befund 22.09.2026): ``True`` heisst
+        *eingehalten*, ``False`` *verletzt*, ``None`` **nicht gemessen** — mindestens
+        eine Kamera hat keine Neigungsangabe gemeldet. Ein ``None``, das hier zu ``True``
+        würde, wäre die schlimmste der drei Antworten: eine Normerfüllung, die niemand
+        geprüft hat.
     """
     kameras = satz.get("kameras") or []
     gelaende_z = float(satz.get("gelaende_z") or 0.0)
@@ -1546,14 +1624,22 @@ def beurteile_kamerasatz(satz: dict) -> dict:
                for k in kameras]
     warnungen = [f"{u['kuerzel']}: {w}" for u in urteile for w in u["warnungen"]]
 
+    neigungen = [u["neigung_grad"] for u in urteile]
+    if not urteile or any(n is None for n in neigungen):
+        # Ohne Kameras gibt es nichts zu bestätigen, und eine einzige ungemessene
+        # Neigung macht die Aussage über den GANZEN Satz ungemessen. Ein `all()` über
+        # eine Liste, in der ein Wert fehlt, urteilt über die anderen mit.
+        alle_waagrecht = None
+    else:
+        alle_waagrecht = all(n == NEIGUNG_WAAGRECHT_GRAD for n in neigungen)
+
     return {
         "kameras": urteile,
         "n_mit_warnung": sum(1 for u in urteile if u["warnungen"]),
         "warnungen": tuple(warnungen),
         "gebaeudehoehe_m": gebaeudehoehe,
         "bezugspunkt": bezugspunkt,
-        "alle_waagrecht": bool(urteile) and all(
-            u["neigung_grad"] == NEIGUNG_WAAGRECHT_GRAD for u in urteile),
+        "alle_waagrecht": alle_waagrecht,
     }
 
 
@@ -1580,6 +1666,16 @@ def beurteile_bericht(kamera_bericht: dict) -> dict:
         fehlt; die Felder von :func:`aufnahme` fehlen dann. **Kein Rückfall auf
         Ersatzwerte** — eine Beurteilung aus geratenen Zahlen sähe aus wie eine Prüfung
         und wäre keine.
+
+    .. note::
+       ``neigung_grad`` und ``shift_mm`` stehen **mit Absicht nicht** in
+       :data:`BERICHTSFELDER`. Ohne sie ist nicht nichts zu beurteilen — Kamerahöhe,
+       Bezugspunkt und Horizontlage stehen ja da. Sie fehlen dem Bericht des vorgegebenen
+       Wegs regelmässig; sie zur Pflicht zu machen hiesse, genau dort wieder gar nicht zu
+       urteilen, wo die Bilder für Menschen entstehen (Befund der HomeStation vom
+       24.08.2026). Das Urteil ist dann **teilweise**: ``beurteilt=True``, und die
+       Felder, die an den fehlenden Zahlen hängen, sind ``None`` und in
+       ``nicht_gemessen`` benannt.
     """
     if not isinstance(kamera_bericht, dict):
         return {"beurteilt": False,

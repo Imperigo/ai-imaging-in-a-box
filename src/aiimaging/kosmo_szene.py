@@ -102,7 +102,46 @@ BACKBONE_VON_FREMD = {
 
 #: Die Auftragskennung der fremden Warteschlange — wörtlich aus ihrem Schema.
 #: Ein Auftrag mit abweichender Kennung wird dort abgewiesen.
+#:
+#: **DIE EINE QUELLE, und bis zum 22.09.2026 waren es drei** (Befund 22.09.2026):
+#: Dieselbe Regel stand als eigene Kopie in :data:`aiimaging.bruecke.VERZEICHNIS_MUSTER`
+#: und in :data:`aiimaging.kosmo_naht.FREMDES_JOB_ID_MUSTER`, und keine las die andere —
+#: obwohl ``bruecke`` dieses Modul längst einführte.
+#:
+#: Was das kostet, wenn die fremde Warteschlange ihre Kennungsform weitet: Geändert wird
+#: die Stelle, an der der Vertrag geprüft wird — also :func:`pruefe_job_id` hier.
+#: ``bruecke.offene_auftraege`` filterte danach weiter mit dem alten Muster und übergeht
+#: den neuen Auftragsordner **stillschweigend**: kein Fehler, keine Warnung, der Auftrag
+#: bleibt liegen. Genau die Sorte Lücke, gegen die dieses Projekt sonst baut.
+#:
+#: Die Regel trägt hier, weil hier der Vertrag geprüft wird. Gelesen wird sie auf
+#: **zwei verschiedene Arten**, und wer sie weitet, muss beide kennen:
+#:
+#: * ``bruecke`` fragt :func:`ist_fremde_job_id` bei **jedem Aufruf** — eine Änderung an
+#:   der Funktion erreicht die Auftragsordner drüben sofort.
+#: * ``kosmo_naht.FREMDES_JOB_ID_MUSTER`` hält **dieses Musterobjekt**, gebunden beim
+#:   Laden. Wer nur die Funktion ändert, ändert die Auskunft der Naht nicht mit.
+#:
+#: Geweitet wird darum **hier, an diesem Muster** — dann folgen Funktion und Naht beide.
 FREMDE_JOB_ID = re.compile(r"^vis-\d+-[0-9a-f]{6}$")
+
+
+def ist_fremde_job_id(wert) -> bool:
+    """Trägt dieser Text die Kennungsform der fremden Warteschlange?
+
+    Die **einzige** Stelle, an der diese Frage beantwortet wird — siehe
+    :data:`FREMDE_JOB_ID` für den Befund dahinter.
+
+    Gefragt wird sowohl nach einer Auftragskennung (:func:`pruefe_job_id`) als auch nach
+    einem **Ordnernamen** (``bruecke``). Das ist dieselbe Frage und nicht zufällig
+    dieselbe Antwort: Die fremde Brücke benennt das Auftragsverzeichnis nach der Kennung
+    des Auftrags, der darin liegt.
+
+    Args:
+        wert: Irgendetwas. Was kein Text ist, kann die Form nicht tragen — das ist ein
+            ``False`` und kein Fehler.
+    """
+    return isinstance(wert, str) and FREMDE_JOB_ID.match(wert) is not None
 
 #: Sensorbreite für die Umrechnung Brennweite ↔ Bildwinkel. Dieselbe wie in
 #: :mod:`aiimaging.kameras` — zwei verschiedene Sensorbreiten an zwei Stellen wären ein
@@ -1588,8 +1627,13 @@ def pruefe_job_id(job_id) -> dict:
 
     Es wird **nicht** umbenannt: Eine Kennung ist die Klammer zwischen Auftrag, Bildern
     und Protokoll. Wer sie an der Naht still ändert, macht ein Ergebnis unauffindbar.
+
+    Gefragt wird über :func:`ist_fremde_job_id` — dieselbe Auskunft, die auch
+    ``bruecke`` über seine Auftragsordner einholt. Bis zum 22.09.2026 stand die Regel
+    hier und dort und in ``kosmo_naht`` je einmal ausgeschrieben; siehe
+    :data:`FREMDE_JOB_ID`.
     """
-    if not isinstance(job_id, str) or not FREMDE_JOB_ID.match(job_id):
+    if not ist_fremde_job_id(job_id):
         return {"passt": False, "begruendung": (
             f"Die Auftragskennung {job_id!r} entspricht nicht der Form der fremden "
             f"Warteschlange (vis-<zahl>-<sechs Hexziffern>). Der Auftrag würde dort "
