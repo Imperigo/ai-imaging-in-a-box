@@ -1,0 +1,109 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260922-138",
+ "status": "ok",
+ "beendet": "2026-09-22T19:30:00Z",
+ "stand": "d76be4a",
+ "geprueft": "Teil 1 gefahren, ohne einen einzigen Diffusionsschritt. KEINER der fuenf Eintraege hat beide Bildeingaenge — und bei den drei ungeprueften liegt das NICHT an den Modellen, sondern an eurem Ladeweg: `_lade_mit_controlnet` kennt genau EINE ControlNet-Klasse (ZImageControlNetPipeline) und waehlt sie ohne jede Fallunterscheidung fuer jeden Eintrag mit `depth_controlnet`. SDXL und SD3.5 bekaemen also eine Z-Image-Klasse, die ihre Gewichte gar nicht lesen kann. Das ist am Quelltext belegt und erspart euch rund 20 GB Download und die Lizenzfrage dazu. Teil 2 entfaellt mangels Kandidat.",
+ "kurzantwort": {
+  "v2_welcher_hat_beide": "KEINER.",
+  "der_eigentliche_grund": "Nicht die Modelle, sondern der Ladeweg. `render.py` waehlt in EINER Zeile ohne Fallunterscheidung: `if eintrag.konditionierung == KOND_DEPTH_CONTROLNET and eintrag.controlnet_id: pipeline, weg = _lade_mit_controlnet(...)`, und darin steht fest verdrahtet `ZImageControlNetPipeline.from_pretrained(...)`. Vier eurer fuenf Eintraege tragen `depth_controlnet` — alle vier bekaemen dieselbe Z-Image-Klasse.",
+  "was_das_fuer_den_entwurfsmodus_heisst": "Ein Download der drei fehlenden Gewichte wuerde die Frage NICHT beantworten. Solange der Ladeweg nur eine ControlNet-Klasse kennt, kann keine SDXL- oder SD3.5-Pipeline entstehen — und damit auch nicht die Bauform, bei der `control_image` die Tiefe nimmt und `image` fuer die Skizze frei bleibt.",
+  "eure_sdxl_warnung_ist_gegenstandslos": "Ihr warnt, bei SDXL heisse der Steuereingang der reinen ControlNet-Pipeline `image` und `control_image` sei in der Img2Img-Variante das Ausgangsbild. Richtig — aber auf diesem Weg kommt keine der beiden SDXL-Klassen je zustande."
+ },
+ "befunde": {
+  "v1_die_tabelle": {
+   "wie_geladen": "`render.lade_modell(name)` — der Weg der Anwendung. Ein Fallstrick dabei, den ihr kennen solltet: `lade_modell` gibt eine FUNKTION zurueck, kein Pipeline-Objekt. `inspect.signature(rueckgabe.__call__)` liefert darum die Signatur der Funktion und meldet `image=False, control_image=False` fuer JEDES Modell. Die echte Pipeline steckt in `__closure__[0]`; von dort habe ich sie geholt, statt eine von Hand zu bauen.",
+   "zeilen": [
+    {
+     "eintrag": "qwen-image-2512",
+     "geladen": false,
+     "grund": "nicht geladen — Gewichte liegen hier nicht (kein Ordner im Modellort)",
+     "dazu": "Die Registry verlangt 48,0 GB; die Karte hat 31,8 GB. Selbst mit Gewichten liefe er hier nicht — dasselbe Muster wie euer Vorgabemodell in auf-126."
+    },
+    {
+     "eintrag": "sdxl-juggernaut",
+     "geladen": false,
+     "grund": "nicht geladen — Gewichte liegen hier nicht",
+     "dazu": "8,4 GB, wuerde passen. Lizenz CreativeML OpenRAIL-M (nutzungsbeschraenkt); euer eigener Registry-Kommentar nennt dazu einen ungeloesten Owner-Punkt."
+    },
+    {
+     "eintrag": "sd35-large",
+     "geladen": false,
+     "grund": "nicht geladen — Gewichte liegen hier nicht",
+     "dazu": "19,2 GB, wuerde passen. Lizenz Stability AI Community License (nutzungsbeschraenkt)."
+    },
+    {
+     "eintrag": "qwen-image-edit-2511",
+     "geladen": true,
+     "klasse": "QwenImageEditPlusPipeline",
+     "kennt_image": true,
+     "kennt_control_image": false,
+     "kennt_strength": false,
+     "kennt_controlnet_conditioning_scale": false,
+     "guidance_scale_vorgabe": null,
+     "dazu": "Bestaetigt euren Befund aus auf-134: nur `image`, die Tiefenkarte belegt ihn, die Skizze faellt weg."
+    },
+    {
+     "eintrag": "z-image-turbo",
+     "geladen": true,
+     "klasse": "ZImageControlNetPipeline",
+     "kennt_image": false,
+     "kennt_control_image": true,
+     "kennt_strength": false,
+     "kennt_controlnet_conditioning_scale": false,
+     "guidance_scale_vorgabe": 5.0,
+     "dazu": "Bestaetigt euren Befund aus auf-123: `control_image` ja, `image` und `strength` nein. Umgekehrt zum Edit-Modell."
+    }
+   ]
+  },
+  "der_ladeweg_im_einzelnen": {
+   "stelle": "src/aiimaging/render.py, Verzweigung im Ladeweg und `_lade_mit_controlnet`",
+   "woertlich": "if eintrag.konditionierung == KOND_DEPTH_CONTROLNET and eintrag.controlnet_id:  ->  _lade_mit_controlnet(...)  ->  ZImageControlNetModel.from_single_file(...) + ZImageControlNetPipeline.from_pretrained(...)",
+   "keine_fallunterscheidung": "In `_lade_mit_controlnet` gibt es keine einzige Verzweigung nach `eintrag.name` oder nach Modellfamilie. Die beiden Z-Image-Klassen sind fest importiert.",
+   "wen_es_trifft": {
+    "qwen-image-2512": "depth_controlnet + controlnet_id -> ZImageControlNetPipeline",
+    "sdxl-juggernaut": "depth_controlnet + controlnet_id -> ZImageControlNetPipeline",
+    "sd35-large": "depth_controlnet + controlnet_id -> ZImageControlNetPipeline",
+    "z-image-turbo": "depth_controlnet + controlnet_id -> ZImageControlNetPipeline (richtig)",
+    "qwen-image-edit-2511": "integriertes_edit, kein controlnet_id -> DiffusionPipeline"
+   },
+   "warum_das_kein_vorwurf_ist": "Der Ladeweg ist am 19.09. genau dafuer gebaut worden, z-image-turbo seine ControlNet-Pipeline zu geben — und das tut er. Die drei anderen Eintraege sind seither nie gefahren worden; der Weg ist nicht falsch, er ist nur noch nicht verallgemeinert."
+  },
+  "v3_teil_2": "ENTFAELLT. Teil 2 sollte nur laufen, wenn Teil 1 einen Eintrag findet, der `image` UND `control_image` kennt. Keiner tut das. Drei sha256 gibt es darum nicht — und sie zu erzeugen, indem ich eine Pipeline von Hand baue, waere genau der Fehler vom 19.09., vor dem ihr in diesem Auftrag warnt.",
+  "v4_fuehrungswerte": {
+   "z-image-turbo": {
+    "guidance_scale_vorgabe": 5.0,
+    "quelle": "aus der Signatur der geladenen ZImageControlNetPipeline abgelesen"
+   },
+   "qwen-image-edit-2511": {
+    "guidance_scale_vorgabe": null,
+    "quelle": "aus der Signatur der geladenen QwenImageEditPlusPipeline abgelesen",
+    "was_das_heisst": "Der Parameter traegt in der Signatur KEINEN Vorgabewert. Euer Punkt aus auf-134 steht damit: Wenn ihr ihn nicht setzt, entscheidet die Bibliothek — und bei einem destillierten Modell ist das der Unterschied zwischen einem Bild und Matsch."
+   },
+   "eigene_empfehlung": "KEINE. Ich habe keinen gemessenen Wert und keine Modellkarte gelesen. Eine Zahl aus dem Bauch waere genau die Sorte Eintrag, die ihr spaeter nicht mehr zurueckverfolgen koennt."
+  },
+  "v5_was_aufgefallen_ist": {
+   "1_der_zusammenhang_zu_auf_137": "Im selben Zeitraum hat auf-137 gemeldet: modus_bestellt='image_edit', modus_gerechnet='txt2img', modus_abweichung=True. DAS IST DIESELBE SACHE VON DER ANDEREN SEITE. Weil z-image-turbo kein `image` kennt, kann die Bestellung `image_edit` nicht ankommen — die Kette faellt auf txt2img zurueck und meldet es ehrlich. Euer neuer erster Hinweis zeigt also genau auf die Luecke, die dieser Auftrag sucht.",
+   "2_und_er_erklaert_vier_identische_bilder": "In auf-137 lieferten vier verschiedene Bestellungen dasselbe Bild. Mit `txt2img` gibt es kein Eingangsbild — es bleiben Prompt, Seed und Tiefenkarte. Die Ursachen haengen zusammen.",
+   "3_der_fallstrick_beim_messen": "`lade_modell` gibt eine Funktion zurueck. Wer `inspect.signature(...).__call__` darauf anwendet, misst die Signatur des Aufrufers und bekommt fuer JEDES Modell `image=False, control_image=False` — eine Tabelle voller Nullen, die wie ein Befund aussieht. Mir ist das im ersten Anlauf genau so passiert. Wer diese Messung wiederholt, sollte es wissen.",
+   "4_ein_zweiter_fallstrick": "Das zweite Argument von `lade_modell` heisst `modell_wurzel`, ist aber der MODELLORDNER, nicht dessen Elternverzeichnis. Mit dem Elternverzeichnis meldet es 'Gewichte unvollstaendig … Es fehlen: model_index.json, transformer, vae, …' — was nach fehlenden Gewichten aussieht und in Wahrheit ein Pfad eine Ebene zu hoch ist. Ohne zweites Argument (also ueber AIIMAGING_MODELLE) ist es eindeutig."
+  }
+ },
+ "bemerkungen": [
+  "Kein Download. Die drei fehlenden Gewichte haette ich holen koennen — zwei davon tragen nutzungsbeschraenkte Lizenzen (OpenRAIL-M, Stability Community), und eure Auflage sagt, solche nicht zu laden, auch nicht zum Vergleich. Der Befund am Ladeweg macht den Download ohnehin gegenstandslos.",
+  "An eurem Code nichts geaendert. Gemessen wurde ueber `render.lade_modell`, nicht ueber einen eigenen Aufbau.",
+  "Keine Diffusionsschritte gerechnet. GPU im Leerlauf gestartet (45,8 W, 1,16 GB)."
+ ],
+ "umgebung": {
+  "gpu_benutzt": true,
+  "gpu_leistungsgrenze_w": 400,
+  "leerlauf_schwellen_eingehalten": true,
+  "netz_benutzt": false,
+  "dauer_min": 25,
+  "backbone": null,
+  "schaetzer": null,
+  "non_commercial_gewichte_geladen": false
+ },
+ "fehler": null
+}
