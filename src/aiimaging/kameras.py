@@ -1891,6 +1891,11 @@ def berichtsfelder_aus_stellung(auge, blick_auf, bbox, *,
     _ox, _oy, oz = _punkt(oben, "bbox[max]")
 
     grund = float(uz) if gelaende_z is None else float(gelaende_z)
+    # `gesetzt` ist eine HERKUNFT, kein Ort: Die Zahl hat der Betreiber angegeben, und
+    # niemand hat sie am Modell geprueft. Bis zum 22.09.2026 kannte
+    # `komposition.BEZUGSPUNKTE` diesen Namen nicht — wer den Gelaendestand setzte, wie
+    # der Abholer es empfiehlt, bekam «Komposition NICHT beurteilbar». Der Name bleibt,
+    # der Eintrag dort ist nachgetragen (mit `verlaesslich: None`, nicht True).
     bezug = "huellbox_unterkante" if gelaende_z is None else "gesetzt"
     return {
         "abstand_m": round(math.hypot(ax - zx, ay - zy), 4),
@@ -1995,6 +2000,13 @@ def kamerasatz(bbox, *,
     # Hüllbox-Unterkante liegt bei einem Untergeschoss im Erdreich, und dann steht die
     # Kamera im Keller. `komposition.BEZUGSPUNKTE` führt genau diese Unterscheidung samt
     # ihrer Verlässlichkeit — ohne dieses Feld könnte die Beurteilung sie nicht treffen.
+    #
+    # OFFEN, UND ES IST EINE OWNER-FRAGE (Durchsicht 22.09.2026): Dieselbe Angabe des
+    # Betreibers (`gelaende_z`) heisst HIER `terrain_an_kamera` — also verlaesslich, ohne
+    # Warnung — und in `berichtsfelder_aus_stellung` (vorgegebener Weg) `gesetzt`, also
+    # ungeprueft. Eine der beiden Stellen setzt still gleich, was die andere trennt.
+    # Nicht geaendert, bis entschieden ist, ob ein gesetzter Gelaendestand ein Bezug am
+    # Gelaende ist oder eine Angabe. `tests/test_gelaendestand.py` haelt den heutigen Stand.
     gelaende_bezug = ("huellbox_unterkante" if gelaende_z is None
                       else "terrain_an_kamera")
     auge_z = grund + augenhoehe_m

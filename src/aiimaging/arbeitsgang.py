@@ -44,6 +44,7 @@ GPU und ohne Blender läuft dieses Modul mit Attrappen vollständig durch.
 """
 from __future__ import annotations
 
+import copy
 import datetime
 import json
 import time
@@ -55,7 +56,7 @@ from aiimaging import importeur, kette, projekt
 # ein Fehler, der erst beim Aufruf auffaellt.
 from aiimaging.graph import ArtefaktCache
 
-__all__ = ["ArbeitsgangError", "MESSFELDER", "lege_an", "rechne"]
+__all__ = ["ANGABEFELDER", "ArbeitsgangError", "MESSFELDER", "lege_an", "rechne"]
 
 
 class ArbeitsgangError(ValueError):
@@ -165,7 +166,7 @@ def _urteil_zu(graph, knoten_ergebnisse: dict, bild_knoten: str):
             continue
         ausgaben = eintrag.get("ausgaben") or {}
         if "bestanden" in ausgaben:
-            urteile.append((k, ausgaben["bestanden"], ausgaben.get("grund")))
+            urteile.append((k, ausgaben["bestanden"], _grund_der_pruefung(k, ausgaben)))
 
     if not urteile:
         return None, (f"Die Prüfung {', '.join(passende)} hat in diesem Lauf kein Urteil "
@@ -178,6 +179,43 @@ def _urteil_zu(graph, knoten_ergebnisse: dict, bild_knoten: str):
                       f"hiesse, das andere zu verschweigen."), None
     qa_id, urteil, grund = urteile[0]
     return urteil, grund, qa_id
+
+
+def _grund_der_pruefung(qa_id: str, ausgaben: dict) -> str:
+    """Der Satz, mit dem eine Prüfung ihr Urteil begründet — **nie** ``None``.
+
+    **Der Befund (22.09.2026):** Hier stand ``ausgaben.get("grund")``. Die
+    Geometrieprüfung (``tiefenschaetzer.qa_gegen_soll`` über ``kette.qa_ausfuehrer``)
+    liefert ihren Satz aber unter ``begruendung`` — nachgestellt am echten Ausführer mit
+    einer Attrappe als Schätzer: ``begruendung`` gesetzt, ``grund`` fehlt. Am Bild stand
+    darum zu **jedem** gemessenen Urteil der Grund ``None``. Nur der Weg «von Hand
+    bearbeitet» (``nicht_anwendbar``) schreibt ``grund``; darum werden beide gelesen, und
+    ``begruendung`` zuerst.
+
+    **Ein leerer Satz zählt wie ein fehlender.** Das Urteil von ``qa_gegen_soll`` trägt
+    heute immer einen gefüllten Satz; die Regel ist Vorsicht für einen Ausführer, der
+    das nicht tut (``geometrie_qa`` legt in Teilergebnissen ``""`` an), kein Befund.
+    Liefert die Prüfung gar keinen, steht das ausdrücklich da, statt ``None``.
+
+    **Und ein Urteil ``None`` bekommt den Vorbehalt vorangestellt.** Fehlt der Maskenweg,
+    setzt ``qa_gegen_soll`` ``bestanden`` auf ``None``, lässt die Begründung aber beim
+    Score («Score 1.000 ≥ Schwelle 0.65 …»). Allein neben ein nicht gemessenes Bild
+    gestellt, liest sich dieser Satz wie ein bestandenes Urteil. Der Handeingriff
+    (``nicht_anwendbar``) sagt es selbst und bleibt, wie er ist.
+    """
+    satz = None
+    for schluessel in ("begruendung", "grund"):
+        wert = ausgaben.get(schluessel)
+        if wert:
+            satz = str(wert)
+            break
+    if satz is None:
+        satz = f"Die Prüfung {qa_id} hat zu ihrem Urteil keine Begründung mitgeliefert."
+    if ausgaben.get("bestanden") is None and ausgaben.get("nicht_anwendbar") is not True:
+        satz = (f"Die Prüfung {qa_id} hat gerechnet, aber kein Urteil gefällt — NICHT "
+                f"GEMESSEN, weder bestanden noch durchgefallen. Was sie dazu meldet: "
+                f"{satz}")
+    return satz
 
 
 #: Die Sperrdatei in der Mappe. Sie verhindert, dass zwei Läufe gleichzeitig in
@@ -338,13 +376,52 @@ def _messung_zu(ausgaben: dict) -> dict:
     """
     messung = {}
     for feld in MESSFELDER:
-        wert = ausgaben.get(feld)
+        # EINE EIGENE KOPIE, nicht der Wert aus dem Knotenergebnis. `geraeteweg` ist ein
+        # Woerterbuch, und das Knotenergebnis geht als `lauf` an den Aufrufer zurueck.
+        # Siehe `rechne`, Befund «geteilte Objekte» vom 22.09.2026.
+        wert = copy.deepcopy(ausgaben.get(feld))
         if feld == "hinweise" and wert is not None:
             # TUPEL ZU LISTE — die Projektdatei ist JSON, und `hinweise` kommt aus
             # `render._ergebnis` als Tupel herein.
             wert = list(wert)
         messung[feld] = wert
     return messung
+
+
+#: Was die Bildstufe über ihren Lauf **angibt**, ohne es zu messen — und was bis zum
+#: 22.09.2026 auf dem Weg in die Mappe wegfiel.
+#:
+#: **Der Befund (22.09.2026):** ``render._ergebnis`` liefert neben den
+#: :data:`MESSFELDER` auch ``lizenz`` (die Lizenzprüfung des benutzten Gewichts,
+#: ``backbone.pruefe_lizenz``) und ``maengel`` (warum ein Auftrag abgelehnt wurde).
+#: Keines der beiden kam in der Projektdatei an.
+#:
+#: **Getrennt von den Messfeldern, weil eine Lizenz keine Messung ist.** Sie steht im
+#: Datensatz des Gewichts und nicht im Lauf; wer sie unter «gemessen» fände, hielte sie
+#: für etwas, das dieser Lauf festgestellt hat.
+#:
+#: **Wo sie stehen, und warum an beiden Stellen.** An jedem Bild unter ``herkunft`` —
+#: Regel 1 ist die Lizenz, und die Frage «unter welcher Lizenz entstand dieses Bild?»
+#: stellt sich am einzelnen Bild, das womöglich ohne seinen Lauf weitergegeben wird. Und
+#: im Lauf unter ``angaben`` je Bildknoten, **auch ohne Bild**: Ein abgelehnter Auftrag
+#: hat kein Bild, und gerade seine ``maengel`` (oft die Lizenz selbst) fielen sonst weg.
+#:
+#: ``None`` heisst wie überall **nicht angegeben**. ``maengel == []`` heisst: geprüft
+#: und nichts gefunden — die beiden sind verschieden viel wert.
+ANGABEFELDER = ("lizenz", "maengel")
+
+
+def _angaben_zu(ausgaben: dict) -> dict:
+    """``lizenz`` und ``maengel`` eines Bildknotens — als eigene Kopie, ``None`` bleibt
+    ``None``. Siehe :data:`ANGABEFELDER`."""
+    angaben = {}
+    for feld in ANGABEFELDER:
+        wert = copy.deepcopy(ausgaben.get(feld))
+        if feld == "maengel" and wert is not None:
+            # TUPEL ZU LISTE, derselbe Grund wie bei `hinweise`.
+            wert = list(wert)
+        angaben[feld] = wert
+    return angaben
 
 
 #: Vorgabewert für ``cache``: der Zwischenspeicher liegt **in der Mappe**.
@@ -419,7 +496,10 @@ def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None,
     ``modus_abweichungen`` (die Fälle, in denen etwas anderes gerechnet als bestellt
     wurde), ``modus_ungemessen`` (die Knoten, die dazu nichts gemeldet haben) und
     ``messungen`` je Bildknoten; dieselbe Messung hängt unter ``herkunft.messung`` an
-    jedem eingetragenen Bild. Siehe :data:`MESSFELDER`.
+    jedem eingetragenen Bild — **als eigene Kopie**, nicht als dasselbe Objekt. Siehe
+    :data:`MESSFELDER`. Lizenz und Mängel der Bildstufe stehen im Lauf unter ``angaben``
+    und am Bild unter ``herkunft.lizenz`` / ``herkunft.maengel``; siehe
+    :data:`ANGABEFELDER`.
     """
     wurzel = Path(wurzel)
     # DIE SPERRE ZUERST, VOR DEM OEFFNEN. Laege sie spaeter, haette der zweite Lauf die
@@ -513,18 +593,26 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder,
     # gemeldet hat, ist selbst eine Auskunft. Ein fehlender Eintrag wäre von einem
     # Knoten, den es nie gab, nicht zu unterscheiden.
     messungen = {}
+    angaben = {}
     for kid in sorted(graph.knoten):
         if kette._ist_bildart(graph.knoten[kid].art):
-            messungen[kid] = _messung_zu(
-                (knoten_ergebnisse.get(kid) or {}).get("ausgaben") or {})
+            ausgaben_kid = (knoten_ergebnisse.get(kid) or {}).get("ausgaben") or {}
+            messungen[kid] = _messung_zu(ausgaben_kid)
+            # LIZENZ UND MAENGEL, Befund 22.09.2026 — siehe `ANGABEFELDER`.
+            angaben[kid] = _angaben_zu(ausgaben_kid)
 
     # DIE ABWEICHUNG STEHT VORNE UND NICHT IN EINER HINWEISLISTE. Derselbe Grund wie in
     # `render._ergebnis` (Befund `auf-20260921-130`): Wer Hinweise überfliegt, sieht
     # ausgerechnet den nicht, der den Lauf entwertet. Eine Liste, die man abfragen kann,
     # wird abgefragt.
+    #
+    # `hinweise` ALS EIGENE KOPIE (Befund 22.09.2026): Bis dahin war es dieselbe Liste
+    # wie in `messungen[kid]` und — ueber die flache Kopie in `projekt.vermerke_bild` —
+    # wie an der Herkunft des Bildes. Eine Aenderung an einer der drei Stellen aenderte
+    # still die beiden anderen.
     modus_abweichungen = [
         {"knoten": kid, "bestellt": m["modus_bestellt"],
-         "gerechnet": m["modus_gerechnet"], "hinweise": m["hinweise"]}
+         "gerechnet": m["modus_gerechnet"], "hinweise": copy.deepcopy(m["hinweise"])}
         for kid, m in sorted(messungen.items()) if m["modus_abweichung"] is True]
     # UND DIE DRITTE ANTWORT DANEBEN. Ohne diese Liste hiesse eine leere Abweichungsliste
     # zweierlei: «keine Abweichung» und «niemand hat hingesehen». Die beiden dürfen in
@@ -571,7 +659,16 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder,
                 # ansieht, muss sehen koennen, dass es als `txt2img` entstand, obwohl
                 # `image_edit` bestellt war — sonst sieht ein entwertetes Bild aus wie
                 # jedes andere.
-                "messung": messungen.get(kid),
+                #
+                # EINE EIGENE KOPIE, und das ist ein gefangener Fehler (22.09.2026):
+                # `projekt.vermerke_bild` kopiert die Herkunft nur flach. Ohne Kopie hier
+                # war diese Messung DASSELBE Objekt wie `lauf["messungen"][kid]` — wer
+                # sie am Bild berichtigte, schrieb still den Lauf mit um, und umgekehrt.
+                "messung": copy.deepcopy(messungen.get(kid)),
+                # UNTER WELCHER LIZENZ DAS BILD ENTSTAND, und was am Auftrag bemaengelt
+                # wurde — siehe `ANGABEFELDER`. Wieder als eigene Kopie.
+                "lizenz": copy.deepcopy(angaben[kid]["lizenz"]),
+                "maengel": copy.deepcopy(angaben[kid]["maengel"]),
             })
         vermerkt += 1
 
@@ -590,6 +687,9 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder,
         "modus_abweichungen": modus_abweichungen,
         "modus_ungemessen": modus_ungemessen,
         "messungen": messungen,
+        # LIZENZ UND MAENGEL JE BILDKNOTEN, auch ohne Bild (22.09.2026). Siehe
+        # `ANGABEFELDER`.
+        "angaben": angaben,
     })
     pfad = projekt.speichere(p, wurzel)
     return {"projekt": p, "lauf": lauf, "vermerkt": vermerkt,

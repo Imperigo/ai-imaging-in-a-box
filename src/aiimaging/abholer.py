@@ -593,12 +593,29 @@ def negativ_lage(stil: str | None, backbone_name: str | None) -> dict | None:
 def _kompositionszeilen(kameras: list) -> list:
     """Kompositionsbefunde zusammenfassen — **was alle betrifft, steht einmal da.**
 
-    **Der Anlass ist eine Messung am eigenen Ausgabetext.** Ohne Geländestand meldet die
-    Kompositionsprüfung für *jede* Kamera zwei Warnungen: den unzuverlässigen
-    Bezugspunkt und die Neigung. Bei zwölf Kameras sind das zwölf von zwölf, immer
-    dieselben zwei. Eine Warnung, die bei jedem Lauf und für jede Kamera erscheint, ist
-    kein Signal mehr — es ist dasselbe Versagen wie ein Wächter, der nie greift, nur von
-    der anderen Seite.
+    **Der Anlass ist eine Messung am eigenen Ausgabetext.** Ohne Geländestand meldete die
+    Kompositionsprüfung für *jede* Kamera des gerechneten Wegs zwei Warnungen: den
+    unzuverlässigen Bezugspunkt und die Neigung. Bei zwölf Kameras sind das zwölf von
+    zwölf, immer dieselben zwei. Eine Warnung, die bei jedem Lauf und für jede Kamera
+    erscheint, ist kein Signal mehr — es ist dasselbe Versagen wie ein Wächter, der nie
+    greift, nur von der anderen Seite.
+
+    **Auf dem vorgegebenen Weg — so schickt die Oberfläche ihre Kameras — sind es seit dem
+    22.09.2026 drei je Kamera:** ``Bezugspunkt``, ``Neigungsangabe`` und
+    ``Shiftangabe``. Der Kamerablock dort trägt weder Neigung noch Shift, und beide
+    werden seither als NICHT GEMESSEN gemeldet statt als gerechnete Null. Mit gesetztem
+    Geländestand tritt ``Geländeangabe`` an die Stelle von ``Bezugspunkt``: Die Angabe
+    ist ungeprüft, aber sie ist keine Hüllbox-Unterkante mehr — und der Rat unten
+    (``--gelaende-z``) hängt nur an ``Bezugspunkt``, weil er nach dem Befolgen sonst
+    stehen bliebe. Bis zum 22.09.2026 hat derselbe Rat die Prüfung ganz abgeschaltet:
+    ``gesetzt`` war in :data:`aiimaging.komposition.BEZUGSPUNKTE` unbekannt, und die
+    Zeile hiess danach «NICHT beurteilbar».
+
+    **Eine fehlende Angabe und eine festgestellte Abweichung bleiben zwei Zeilen**
+    (``Neigungsangabe`` gegen ``Neigung``), weil :func:`_warnungsart` nach dem ersten
+    Wort gruppiert. Das gilt nur, solange die Warnungen in
+    :func:`aiimaging.komposition.aufnahme` so beginnen; der Wächter dafür füttert diese
+    Funktion mit einer ungemessenen und einer gekippten Kamera.
 
     Beide sind dabei **richtig**. Der Bezugspunkt ist aus einer glb gar nicht besser zu
     wissen (dort gibt es kein Gelände), und die Neigung bleibt, bis die Vorgabe auf

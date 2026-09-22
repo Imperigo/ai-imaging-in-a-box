@@ -266,6 +266,20 @@ class Backbone:
     #: nicht. Eine Ableitung wäre eine Vermutung, und sie schlüge erst beim Laden fehl.
     controlnet_ordner: str | None = None
 
+    #: Zu welcher **Pipeline-Familie** das ControlNet dieses Eintrags gehört — der
+    #: Schlüssel, unter dem :data:`aiimaging.render.CONTROLNET_KLASSEN` die beiden
+    #: ``diffusers``-Klassen (ControlNet-Modell und Pipeline) nachschlägt.
+    #:
+    #: **BEFUND 22.09.2026 (`auf-20260922-138`, HomeStation):** Der Ladeweg nahm für
+    #: JEDEN Eintrag mit getrenntem ControlNet die Klassen von Z-Image. ``qwen-image-2512``
+    #: wäre damit mit der Klasse einer fremden Familie geladen worden. Die Familie stand
+    #: bis dahin nirgends im Register — nur implizit im Namen, und aus dem Namen wird sie
+    #: nicht geraten, aus demselben Grund wie bei ``controlnet_ordner``.
+    #:
+    #: ``None`` heisst **nicht benannt**, nicht „die übliche". Dann weist der Ladeweg den
+    #: Eintrag mit einem Satz ab, statt eine fremde Klasse zu nehmen.
+    controlnet_familie: str | None = None
+
     #: Welche Tiefenkonvention das ControlNet dieses Modells **erwartet**.
     #:
     #: Einer aus :data:`TIEFENPOLARITAETEN`. Unsere ``tiefe_norm.png`` ist
@@ -627,6 +641,7 @@ _eintrag(Backbone(
     tiefen_polaritaet=POL_NAH_DUNKEL,
     controlnet_id="alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union",
     controlnet_ordner="z-image-controlnet-union",
+    controlnet_familie="z-image",
     controlnet_lizenz="Apache-2.0",
     # Front-Matter "license: apache-2.0"; das Ursprungsprojekt VideoX-Fun trägt eine
     # Apache-2.0-LICENSE im Volltext. Geprüft 2026-08-18.
@@ -689,6 +704,11 @@ _eintrag(Backbone(
     lizenz_quelle=QUELLE_MODELLKARTE,
     # Geprüft 2026-08-18 an der Modellkarte: Front-Matter "license: apache-2.0".
     controlnet_id="alibaba-pai/Qwen-Image-2512-Fun-Controlnet-Union",
+    # 22.09.2026 (`auf-20260922-138`): Familie benannt, damit der Ladeweg nicht mehr die
+    # Z-Image-Klassen nimmt. Ein `controlnet_ordner` steht hier weiterhin NICHT — wie
+    # der Ordner auf der HomeStation heisst, ist nicht gemessen und wird nicht geraten.
+    # Bis er eingetragen ist, bricht `_lade_mit_controlnet` an genau dieser Stelle ab.
+    controlnet_familie="qwen-image",
     controlnet_lizenz="Apache-2.0",
     controlnet_lizenz_quelle=QUELLE_MODELLKARTE,
 ))

@@ -852,8 +852,9 @@ def kleinbild_aequivalent(brennweite_grossformat_mm: float, *,
 
 #: Die Nullpunkte, die alle „Augenhöhe" heissen und verschiedene Orte meinen.
 #:
-#: Fünf Stück, und im Projekt ist an dieser Stelle schon zweimal etwas schiefgegangen.
-#: Darum ist der Bezugspunkt in :func:`kamerahoehe` ein **Pflichtargument**: Es gibt
+#: Fünf Orte und eine Herkunft (``gesetzt``, seit 22.09.2026), und im Projekt ist an
+#: dieser Stelle schon zweimal etwas schiefgegangen. ``verlaesslich`` hat darum drei
+#: Werte: ``True``, ``False`` und ``None`` für *nicht geprüft*. Darum ist der Bezugspunkt in :func:`kamerahoehe` ein **Pflichtargument**: Es gibt
 #: keine Vorgabe, weil jede Vorgabe irgendwo falsch wäre.
 BEZUGSPUNKTE = {
     "terrain_an_kamera": {
@@ -892,6 +893,32 @@ BEZUGSPUNKTE = {
                       "1,35–1,40 m über OKFF, nicht 0,45 m.",
         "verlaesslich": False,
     },
+    # DER SECHSTE NULLPUNKT, und er fehlte bis zum 22.09.2026 (Durchsicht, mit einem Lauf
+    # bestaetigt). `kameras.berichtsfelder_aus_stellung(..., gelaende_z=<Zahl>)` schreibt
+    # diesen Namen seit dem 24.08.2026 in den Bericht; hier war er unbekannt, also warf
+    # `kamerahoehe`, und der Abholer meldete «Komposition NICHT beurteilbar». Genau der
+    # Handgriff, den `abholer._kompositionszeilen` dem Betreiber empfiehlt
+    # (`--gelaende-z`), schaltete damit die ganze Pruefung ab.
+    #
+    # WARUM DER NAME HIERHER GEHOERT und nicht in `terrain_an_kamera` umbenannt wird: Er
+    # sagt, woher die Zahl kommt — eine Setzung des Betreibers, im Sinn der Dreiteilung
+    # belegt / gesetzt / ungemessen. `terrain_an_kamera` ist ein Ort, `gesetzt` eine
+    # Herkunft; wer das eine ins andere uebersetzt, macht aus einer Angabe stillschweigend
+    # einen verlaesslichen Bezug.
+    #
+    # WARUM `verlaesslich` HIER None IST und weder True noch False: Die Zahl ist nicht
+    # schiefgegangen wie die Huellbox-Unterkante — und sie ist auch nicht geprueft. Sie
+    # ist so gut wie wer sie gesetzt hat, und niemand hat sie am Modell nachgesehen. Das
+    # ist die dritte Antwort, und `kamerahoehe` meldet sie mit eigenem Wortlaut.
+    "gesetzt": {
+        "beschreibung": "Geländestand von Hand angegeben (gelaende_z) — eine Angabe des "
+                        "Betreibers, keine Messung am Modell.",
+        "kippt_wenn": "Die Zahl ist so gut wie wer sie setzt: ein Landeskoordinatenwert "
+                      "statt eines örtlichen, ein Geschoss daneben. Sie gilt zudem für die "
+                      "ganze Szene, nicht für den Standort jeder Kamera — am Hang ist das "
+                      "nicht dasselbe.",
+        "verlaesslich": None,
+    },
 }
 
 
@@ -917,7 +944,8 @@ def kamerahoehe(hoehe_m: float, *, bezugspunkt: str) -> dict:
         bezugspunkt: einer der Schlüssel von :data:`BEZUGSPUNKTE`.
 
     Returns:
-        dict mit ``hoehe_m``, ``bezugspunkt``, ``beschreibung``, ``verlaesslich``,
+        dict mit ``hoehe_m``, ``bezugspunkt``, ``beschreibung``, ``verlaesslich``
+        (``True``, ``False`` oder ``None`` für eine ungeprüfte Angabe),
         ``belegstufe`` (immer ``"gesetzt"`` — eine Kamerahöhe ist nirgends belegt) und
         ``warnungen``.
 
@@ -934,10 +962,21 @@ def kamerahoehe(hoehe_m: float, *, bezugspunkt: str) -> dict:
 
     eintrag = BEZUGSPUNKTE[bezugspunkt]
     warnungen = []
-    if not eintrag["verlaesslich"]:
+    # Auf `is False` und `is None` getrennt geprueft, nicht auf Wahrheitswert: Ein
+    # ungepruefter Bezug ist weder «schiefgegangen» noch «verlaesslich» (22.09.2026).
+    # Das erste Wort ist dabei die Art der Warnung (`abholer._warnungsart`): Eine
+    # gesetzte Angabe darf nicht unter «Bezugspunkt» landen, sonst haengt der Abholer
+    # ihr den Rat an, den Gelaendestand zu setzen — den der Betreiber gerade befolgt hat.
+    if eintrag["verlaesslich"] is False:
         warnungen.append(
             f"Bezugspunkt {bezugspunkt!r} ist im Projekt schon schiefgegangen: "
             f"{eintrag['kippt_wenn']}"
+        )
+    elif eintrag["verlaesslich"] is None:
+        warnungen.append(
+            f"Geländeangabe von Hand gesetzt ({bezugspunkt!r}) — NICHT GEPRÜFT. Die "
+            f"Kamerahöhe gilt über dieser Angabe, und niemand hat sie am Modell "
+            f"nachgesehen: {eintrag['kippt_wenn']}"
         )
     unten, oben = AUGENHOEHE_SPANNE_M
     if not (unten <= h <= oben):
@@ -1412,7 +1451,8 @@ def aufnahme(*, kamerahoehe_m: float, bezugspunkt: str, gebaeudehoehe_m: float,
              brennweite_mm: float = ARBEITSBRENNWEITE_AUSSEN_MM,
              sensor_hoehe_mm: float = SENSOR_HOEHE_HOCH_MM,
              shift_mm: float | None = 0.0,
-             neigung_grad: float | None = NEIGUNG_WAAGRECHT_GRAD) -> dict:
+             neigung_grad: float | None = NEIGUNG_WAAGRECHT_GRAD,
+             rollwinkel_grad: float | None = ROLLWINKEL_WAAGRECHT_GRAD) -> dict:
     """Eine Aussenaufnahme, vollständig durchgerechnet und mit ihren Warnungen.
 
     Das ist der Zusammenbau: Höhe mit Bezugspunkt, Neigung, Konvergenz, Bodenanteil,
@@ -1433,20 +1473,35 @@ def aufnahme(*, kamerahoehe_m: float, bezugspunkt: str, gebaeudehoehe_m: float,
     * ``shift_mm=None`` → ``mindestabstand``, ``bodenanteil`` und ``abstand_genuegt``
       bleiben ``None``. Alle drei hängen am Shift; ein angenommener Shift von 0 gäbe
       einen gerechnet aussehenden Mindestabstand, den niemand gerechnet hat.
+    * ``rollwinkel_grad=None`` → ``rollwinkel_grad`` bleibt ``None``, und
+      ``rollwinkel_vorbehalt`` sagt, warum (Befund 22.09.2026). Bis dahin gab diese
+      Funktion :data:`ROLLWINKEL_WAAGRECHT_GRAD` als Konstante zurück, ohne Eingabe —
+      eine 0°, die «Kamera nicht verkantet» behauptete, ohne dass je ein Aufrufer einen
+      Rollwinkel gemeldet hätte. Gemeldet ungleich 0 gibt es eine Warnung.
+
+      Der Rollwinkel steht **nicht** in ``nicht_gemessen`` und bekommt **keine**
+      Warnung, wenn er fehlt — und das ist entschieden, nicht vergessen: Heute meldet
+      ihn kein Weg des Produkts (ein Kamerablock könnte es, der Runner tut es nicht),
+      und an ihm hängt kein gerechnetes Feld. Eine Warnung darüber stünde an jeder Kamera jedes Laufs, ohne Handgriff
+      dagegen — genau die Dauermeldung, die ``abholer._kompositionszeilen`` als
+      Möblierung beschreibt. Der Vorbehalt steht darum am Wert selbst.
 
     Returns:
         dict mit ``kamerahoehe`` (dem vollständigen Eintrag aus :func:`kamerahoehe`),
         ``neigung_grad``, ``rollwinkel_grad``, ``konvergenz``, ``bodenanteil``,
         ``horizont_am_baukoerper``, ``mindestabstand``, ``abstand_m``,
-        ``abstand_genuegt``, ``nicht_gemessen`` und ``warnungen``.
+        ``abstand_genuegt``, ``nicht_gemessen``, ``rollwinkel_vorbehalt`` und
+        ``warnungen``.
 
-        ``nicht_gemessen`` nennt die Eingaben, die als ``None`` hereinkamen. Sie steht
+        ``nicht_gemessen`` nennt die Eingaben **Neigung und Shift**, die als ``None``
+        hereinkamen — den Rollwinkel nicht, siehe oben. Sie steht
         da, damit ein Leser die leeren Felder nicht selbst zusammensuchen muss — ein
         ``None``, dessen Grund man erraten muss, wird geraten.
     """
     hoehe = kamerahoehe(kamerahoehe_m, bezugspunkt=bezugspunkt)
     neigung = None if neigung_grad is None else _zahl(neigung_grad, "neigung_grad")
     schieb = None if shift_mm is None else _zahl(shift_mm, "shift_mm")
+    roll = None if rollwinkel_grad is None else _zahl(rollwinkel_grad, "rollwinkel_grad")
     nicht_gemessen = tuple(
         name for name, wert in (("neigung_grad", neigung), ("shift_mm", schieb))
         if wert is None)
@@ -1466,7 +1521,9 @@ def aufnahme(*, kamerahoehe_m: float, bezugspunkt: str, gebaeudehoehe_m: float,
     # Erstes Wort = Art der Warnung (`abholer._warnungsart` fasst danach zusammen).
     # «Neigungsangabe» und «Neigung» sind darum absichtlich zwei Wörter: Eine fehlende
     # Angabe und eine festgestellte Abweichung dürfen in der Zusammenfassung nicht
-    # zu einer Zeile verschmelzen.
+    # zu einer Zeile verschmelzen. Seit dem 22.09.2026 hat diese Zusage über ein
+    # anderes Modul ihren Wächter: tests/test_bezug_und_rollwinkel.py füttert
+    # `_kompositionszeilen` mit einer ungemessenen und einer gekippten Kamera.
     if neigung is None:
         warnungen.append(
             "Neigungsangabe fehlt — NICHT GEMESSEN. Ob die Sensorebene lotrecht steht "
@@ -1489,6 +1546,11 @@ def aufnahme(*, kamerahoehe_m: float, bezugspunkt: str, gebaeudehoehe_m: float,
             "das Urteil über den Abstand hängen am Shift; sie bleiben leer, statt aus "
             "einem angenommenen Shift von 0 mm gerechnet zu werden."
         )
+    if roll is not None and roll != ROLLWINKEL_WAAGRECHT_GRAD:
+        warnungen.append(
+            f"Rollwinkel {roll:g}° statt 0°. Die Vertikalen stehen damit schräg zum "
+            "Bildrand; das ist zulässig als Absicht, nicht als Voreinstellung."
+        )
 
     genuegt = None if noetig is None else float(abstand_m) >= noetig["abstand_m"]
     if genuegt is False:
@@ -1500,7 +1562,11 @@ def aufnahme(*, kamerahoehe_m: float, bezugspunkt: str, gebaeudehoehe_m: float,
     return {
         "kamerahoehe": hoehe,
         "neigung_grad": neigung,
-        "rollwinkel_grad": ROLLWINKEL_WAAGRECHT_GRAD,
+        "rollwinkel_grad": roll,
+        "rollwinkel_vorbehalt": None if roll is not None else (
+            "Rollwinkel nicht gemeldet — NICHT GEMESSEN. Ob die Kamera verkantet ist, "
+            "sagt diese Aufnahme nicht; bis zum 22.09.2026 stand hier eine 0°, die "
+            "niemand gemessen hatte."),
         "konvergenz": konv,
         "bodenanteil": boden,
         "horizont_am_baukoerper": horizont_am_baukoerper(
@@ -1558,7 +1624,8 @@ def beurteile_kamera(kamera: dict, *, gebaeudehoehe_m: float, gelaende_z: float,
         Trägt der Eintrag ``neigung_grad`` oder ``shift_mm`` nicht, geht das als ``None``
         weiter und steht in ``nicht_gemessen`` — siehe :func:`_gemeldet`. Die davon
         abhängigen Felder bleiben dann leer, statt aus einer angenommenen Null zu
-        entstehen.
+        entstehen. ``rollwinkel_grad`` ebenso, mit seinem Vorbehalt am Wert (siehe
+        :func:`aufnahme`).
 
     Die Sensorhöhe wird aus dem **Seitenverhältnis dieser Kamera** gerechnet und nicht
     aus :data:`SENSOR_HOEHE_HOCH_MM` übernommen. Der Vorgabewert dort ist die Hochlage
@@ -1579,6 +1646,7 @@ def beurteile_kamera(kamera: dict, *, gebaeudehoehe_m: float, gelaende_z: float,
             sensor_hoehe_mm=SENSOR_BREITE_MM / seitenverhaeltnis,
             shift_mm=_gemeldet(kamera, "shift_mm"),
             neigung_grad=_gemeldet(kamera, "neigung_grad"),
+            rollwinkel_grad=_gemeldet(kamera, "rollwinkel_grad"),
         ),
         kuerzel=kamera.get("kuerzel"),
     )
@@ -1598,7 +1666,7 @@ def beurteile_kamerasatz(satz: dict) -> dict:
 
     Returns:
         ``{kameras, n_mit_warnung, warnungen, gebaeudehoehe_m, bezugspunkt,
-        alle_waagrecht}``.
+        alle_waagrecht, neigung_nicht_gemessen, alle_waagrecht_grund}``.
 
         ``alle_waagrecht`` ist die eine Zahl, auf die es normativ ankommt: ob **jede**
         Kamera dieses Satzes die lotrechte Sensorebene einhält (HABS/NPS). Sie steht
@@ -1609,6 +1677,12 @@ def beurteile_kamerasatz(satz: dict) -> dict:
         eine Kamera hat keine Neigungsangabe gemeldet. Ein ``None``, das hier zu ``True``
         würde, wäre die schlimmste der drei Antworten: eine Normerfüllung, die niemand
         geprüft hat.
+
+        **Und das ``None`` nennt, wer es verursacht hat** (Befund 22.09.2026):
+        ``neigung_nicht_gemessen`` zählt die Kameras ohne Neigungsangabe mit Kürzel auf,
+        ``alle_waagrecht_grund`` sagt es in einem Satz — auch für den leeren Satz, bei
+        dem es keine Kamera zu nennen gibt. Ein ``None``, dessen Grund man erraten muss,
+        wird geraten; bei zwölf Kameras hiesse das, zwölf Urteile von Hand zu öffnen.
     """
     kameras = satz.get("kameras") or []
     gelaende_z = float(satz.get("gelaende_z") or 0.0)
@@ -1625,13 +1699,22 @@ def beurteile_kamerasatz(satz: dict) -> dict:
     warnungen = [f"{u['kuerzel']}: {w}" for u in urteile for w in u["warnungen"]]
 
     neigungen = [u["neigung_grad"] for u in urteile]
-    if not urteile or any(n is None for n in neigungen):
+    # WER die Neigung nicht gemeldet hat, nicht nur DASS (22.09.2026). Ohne Kürzel
+    # zählt die Stelle im Satz — ein namenloser Eintrag ist trotzdem ein Eintrag.
+    ohne_neigung = tuple(
+        str(u["kuerzel"]) if u.get("kuerzel") is not None else f"#{i}"
+        for i, u in enumerate(urteile) if u["neigung_grad"] is None)
+    if not urteile or ohne_neigung:
         # Ohne Kameras gibt es nichts zu bestätigen, und eine einzige ungemessene
         # Neigung macht die Aussage über den GANZEN Satz ungemessen. Ein `all()` über
         # eine Liste, in der ein Wert fehlt, urteilt über die anderen mit.
         alle_waagrecht = None
+        grund = ("NICHT GEMESSEN: Der Satz enthält keine Kamera." if not urteile else
+                 f"NICHT GEMESSEN: Keine Neigungsangabe von {', '.join(ohne_neigung)} "
+                 f"({len(ohne_neigung)} von {len(urteile)} Kameras).")
     else:
         alle_waagrecht = all(n == NEIGUNG_WAAGRECHT_GRAD for n in neigungen)
+        grund = ""
 
     return {
         "kameras": urteile,
@@ -1640,6 +1723,8 @@ def beurteile_kamerasatz(satz: dict) -> dict:
         "gebaeudehoehe_m": gebaeudehoehe,
         "bezugspunkt": bezugspunkt,
         "alle_waagrecht": alle_waagrecht,
+        "neigung_nicht_gemessen": ohne_neigung,
+        "alle_waagrecht_grund": grund,
     }
 
 

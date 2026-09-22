@@ -40,6 +40,7 @@ import binascii
 import hmac
 import json
 import secrets
+import socket
 import sys
 import threading
 import time
@@ -1295,10 +1296,70 @@ def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
     return HTTPServer((adresse, anschluss), klasse)
 
 
+# ALLE ADRESSEN DIESES RECHNERS. Man kann auf ihr hoeren, aber sie nicht eintippen: Ein
+# iPad, das `http://0.0.0.0:8731` aufruft, spricht mit sich selbst (Befund 22.09.2026).
+ALLE_ADRESSEN = "0.0.0.0"
+
+# EINE DOKUMENTATIONSADRESSE (RFC 5737, TEST-NET-1). Sie gehoert niemandem und wird nie
+# angesprochen — sie dient nur dazu, das Betriebssystem zu fragen, ueber welche eigene
+# Adresse es ins Netz ginge.
+_FRAGEZIEL = ("192.0.2.1", 9)
+
+# DER SATZ, WENN DIE ADRESSE NICHT ERMITTELT WURDE. Die dritte Antwort: nicht gemessen ist
+# weder 0.0.0.0 noch 127.0.0.1 noch eine geratene Zahl.
+NICHT_ERMITTELT = "Adresse im Heimnetz nicht ermittelt — am Rechner nachsehen"
+
+
+def heimnetz_adresse():
+    """Die eigene Adresse auf dem **Standardweg** ins Netz — oder ``None``.
+
+    Im Heimnetz ist das meist die Adresse, unter der ein anderes Gerät diesen Rechner
+    erreicht. **Nicht immer:** Mit VPN oder mehreren Netzkarten kann der Standardweg über
+    eine andere Karte gehen. Am Gerät unbestätigt (Auftrag an die HomeStation).
+
+    Befund 22.09.2026: ``--im-heimnetz`` druckte ``http://0.0.0.0:…`` — eine Adresse, die
+    man nirgends eintippen kann. Wer die Zeile abliest, kam nicht an und wusste nicht warum.
+
+    Gefragt wird das Betriebssystem, nicht das Netz: ``connect`` auf einem UDP-Socket
+    **sendet nichts**, es legt nur fest, über welche eigene Adresse ein Paket hinausginge.
+    ``getsockname`` liest sie ab.
+
+    ``None`` heisst **nicht ermittelt** — kein Netz, keine Route, oder nur die eigene
+    Maschine (``127.…``), die ein iPad nie erreicht. Es wird **nie** geraten.
+    """
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(_FRAGEZIEL)
+            adresse = s.getsockname()[0]
+    except OSError:
+        return None
+    if not adresse or adresse == ALLE_ADRESSEN or adresse.startswith("127."):
+        return None
+    return adresse
+
+
+def startzeile(adresse: str, anschluss: int) -> str:
+    """Die Zeile, die ein Mensch abliest und ins iPad tippt.
+
+    Hört die Fläche auf allen Adressen, wird die **erreichbare** genannt, nicht die, auf
+    der sie hört (Befund 22.09.2026). Lässt sie sich nicht ermitteln, sagt die Zeile das.
+    """
+    if adresse in (ALLE_ADRESSEN, ""):
+        erreichbar = heimnetz_adresse()
+        if erreichbar is None:
+            return (f"Visbox läuft auf allen Adressen, Anschluss {anschluss} — "
+                    f"{NICHT_ERMITTELT}  (Strg-C beendet)")
+        return (f"Visbox läuft auf http://{erreichbar}:{anschluss}  "
+                f"(im Heimnetz; Strg-C beendet)")
+    return f"Visbox läuft auf http://{adresse}:{anschluss}  (Strg-C beendet)"
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Die Oberfläche von Visbox.")
     ap.add_argument("--ordner", default=None, help="Projektordner, der beim Start gezeigt wird")
-    ap.add_argument("--adresse", default=VORGABE_ADRESSE,
+    # KEINE VORGABE IM PARSER: Nur so ist zu unterscheiden, ob jemand --adresse
+    # ausdruecklich geschrieben hat (Befund 22.09.2026, siehe unten).
+    ap.add_argument("--adresse", default=None,
                     help="Vorgabe 127.0.0.1 — nur die eigene Maschine. Siehe LIESMICH.")
     ap.add_argument("--anschluss", type=int, default=VORGABE_ANSCHLUSS)
     ap.add_argument("--kennwort", default=None,
@@ -1314,7 +1375,20 @@ def main(argv=None) -> int:
                          "ein Kennwort — und zeigt an, was das bedeutet.")
     a = ap.parse_args(argv)
 
-    adresse = "0.0.0.0" if a.im_heimnetz else a.adresse
+    # ZWEI ANGABEN FUER DIESELBE SACHE WERDEN ABGEWIESEN, nicht still geordnet (Befund
+    # 22.09.2026): `--im-heimnetz` ueberschrieb eine ausdrueckliche `--adresse`, und wer
+    # `--adresse 127.0.0.1` schrieb, stand im Netz, ohne dass gesagt wurde, dass seine
+    # Angabe verworfen war. Sagen beide dasselbe (auch `''` heisst «alle Adressen»),
+    # gibt es nichts abzuweisen.
+    if a.im_heimnetz and a.adresse is not None and a.adresse not in (ALLE_ADRESSEN, ""):
+        print(f"--im-heimnetz und --adresse {a.adresse} widersprechen sich: das eine heisst "
+              f"«auf allen Adressen hören», das andere nur auf {a.adresse}. "
+              f"Bitte nur eines von beiden angeben.")
+        return 2
+    if a.im_heimnetz:
+        adresse = ALLE_ADRESSEN
+    else:
+        adresse = a.adresse if a.adresse is not None else VORGABE_ADRESSE
     kennwort = a.kennwort
     if getattr(a, "kennwort_erzeugen", False) and not kennwort:
         kennwort = erzeuge_kennwort()
@@ -1330,7 +1404,9 @@ def main(argv=None) -> int:
         print(str(fehler))
         return 2
 
-    print(f"Visbox läuft auf http://{adresse}:{a.anschluss}  (Strg-C beendet)")
+    # DER WIRKLICHE ANSCHLUSS, nicht der verlangte: Bei `--anschluss 0` waehlt das
+    # Betriebssystem einen, und die Zeile nannte bisher die 0.
+    print(startzeile(adresse, server.server_address[1]))
     if kennwort:
         print(f"  Anmeldung:  Benutzer {BENUTZER!r}   Kennwort {kennwort}")
     if offen is not None:

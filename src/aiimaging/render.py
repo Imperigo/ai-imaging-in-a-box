@@ -847,9 +847,26 @@ def _lade_mit_controlnet(eintrag, wurzel, torch):
     config.json»* ab (`auf-20260818-13`). Die Einzeldatei ist nicht der bequemere, sondern
     der einzige Weg.
     """
-    # Die zwei Prüfungen stehen VOR dem Import: Ein fehlender Ordner ist kein Grund,
+    # Die Prüfungen stehen VOR dem Import: Ein fehlender Ordner ist kein Grund,
     # erst 20 GB Bibliothekscode zu laden — und so bleiben sie ohne GPU-Stack prüfbar,
     # dieselbe Trennung wie in `lade_modell` selbst.
+    #
+    # Zuerst die Familie (Befund 22.09.2026, `auf-20260922-138`): Bis dahin standen hier
+    # die Z-Image-Klassen fest, für jeden Eintrag. Jetzt folgen sie aus
+    # `eintrag.controlnet_familie`, und eine Familie ohne bekannte Klassen wird
+    # abgewiesen — eine fremde Klasse zu nehmen, hiesse ein Modell mit dem Bauplan eines
+    # anderen zu laden, und der Fehler käme erst nach dem Herunterladen der Gewichte.
+    klassen = CONTROLNET_KLASSEN.get(eintrag.controlnet_familie)
+    if klassen is None:
+        raise RenderError(
+            f"Backbone {eintrag.name!r} nennt ein ControlNet ({eintrag.controlnet_id!r}), "
+            f"aber für seine Familie {eintrag.controlnet_familie!r} ist keine "
+            f"Pipeline-Klasse bekannt. Bekannt: {', '.join(sorted(CONTROLNET_KLASSEN))}. "
+            f"Mit der Klasse einer anderen Familie wird nicht geladen — das Modell hätte "
+            f"den falschen Bauplan."
+        )
+    modell_klasse, pipeline_klasse = klassen
+
     if not eintrag.controlnet_ordner:
         raise RenderError(
             f"Backbone {eintrag.name!r} nennt ein ControlNet ({eintrag.controlnet_id!r}), "
@@ -866,13 +883,43 @@ def _lade_mit_controlnet(eintrag, wurzel, torch):
             f"ohne sie wäre genau die erfundene Kubatur, gegen die dieses Projekt antritt."
         )
 
-    from diffusers import ZImageControlNetModel, ZImageControlNetPipeline
+    import diffusers
 
-    controlnet = ZImageControlNetModel.from_single_file(str(dateien[0]),
-                                                       torch_dtype=torch.bfloat16)
-    pipeline = ZImageControlNetPipeline.from_pretrained(str(wurzel), controlnet=controlnet,
-                                                       torch_dtype=torch.bfloat16)
-    return pipeline, f"ZImageControlNetPipeline + from_single_file({dateien[0].name})"
+    fehlend = [k for k in (modell_klasse, pipeline_klasse) if not hasattr(diffusers, k)]
+    if fehlend:
+        raise RenderError(
+            f"Die installierte diffusers-Fassung kennt {', '.join(fehlend)} nicht — für "
+            f"{eintrag.name!r} (Familie {eintrag.controlnet_familie!r}) gibt es damit "
+            f"keinen ControlNet-Ladeweg."
+        )
+    ControlNetModell = getattr(diffusers, modell_klasse)
+    ControlNetPipeline = getattr(diffusers, pipeline_klasse)
+
+    controlnet = ControlNetModell.from_single_file(str(dateien[0]),
+                                                  torch_dtype=torch.bfloat16)
+    pipeline = ControlNetPipeline.from_pretrained(str(wurzel), controlnet=controlnet,
+                                                  torch_dtype=torch.bfloat16)
+    return pipeline, f"{pipeline_klasse} + from_single_file({dateien[0].name})"
+
+
+#: Familie -> (ControlNet-Modellklasse, Pipeline-Klasse) in ``diffusers``. Der Schlüssel
+#: ist ``Backbone.controlnet_familie``. Namen statt Klassen, weil ``diffusers`` erst im
+#: Ladeweg importiert wird — siehe :func:`lade_modell`.
+#:
+#: **Stand der Belege, 22.09.2026:**
+#:
+#: * ``"z-image"`` — AM GERÄT GEMESSEN: Diese beiden Klassen sind der Weg, über den
+#:   alle Z-Image-Messungen liefen (`auf-20260818-13`, `auf-20260909-92`).
+#: * ``"qwen-image"`` — **AM GERÄT UNBESTÄTIGT.** Die Namen sind die Qwen-Image-
+#:   ControlNet-Klassen von ``diffusers``, wie sie hier ohne installierte Bibliothek
+#:   angenommen werden. Nicht geprüft ist, (a) ob die Fassung auf der HomeStation sie
+#:   führt, (b) ob ``from_single_file`` für diese Modellklasse geht und (c) ob das
+#:   ControlNet ``alibaba-pai/Qwen-Image-2512-Fun-Controlnet-Union`` überhaupt in diese
+#:   Klasse passt. Belegt ist allein, dass es nicht mehr die Z-Image-Klasse ist.
+CONTROLNET_KLASSEN: dict[str, tuple[str, str]] = {
+    "z-image": ("ZImageControlNetModel", "ZImageControlNetPipeline"),
+    "qwen-image": ("QwenImageControlNetModel", "QwenImageControlNetPipeline"),
+}
 
 
 #: Vielfaches der **Plattengrösse**, das frei sein muss, damit das ganze Modell auf der
