@@ -1,0 +1,40 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260919-118",
+  "status": "ok",
+  "beendet": "2026-09-21T14:14:34Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "V1": "JA. Ein Abholer laeuft seit dem 19.08.2026 als Timer (alle 30 Sekunden ein Durchgang, neustartfest), und er bedient die Warteschlange: Eine Sonde ging am 21.09.2026 in 20 Sekunden von queued ueber running nach error; drei von fuenf aelteren Auftraegen stehen auf done. Der Befund vom 08.09. («kein Abholprozess») erklaert sich damit, dass zwischen zwei Timer-Durchgaengen kein Prozess laeuft. Dass trotzdem kein Bild ankommt, liegt am Bildbackbone (Auslagerungsweg nach Speicherschaetzung), nicht am Abholer — das ist unsere Baustelle, siehe auf-20260919-123. (Das Antwortblatt selbst sagte am Morgen noch «wir wissen es nicht»; der Beleg kam am Nachmittag vom lokalen KosmoOrbit-Worker.)",
+    "V2": "IFC kommt unveraendert an — siehe auf-20260909-91.",
+    "V3": "Rezept: spaeter, mit Bedingung — siehe auf-20260910-102.",
+    "V4": "Neun Felder, sechs davon sendbar, dazu interior — siehe auf-20260911-104.",
+    "V5": "Niemand setzt idle_window_only bewusst; gemeint ist «kein anderer Render» (E79) — siehe auf-20260911-107.",
+    "V6": "27 angekommen, 27 angesehen — siehe auf-20260916-110.",
+    "V7": "Abgelehnt: kein Rezept jetzt, keine zwoelf Innenansichten je Auftrag, kein Bau gegen render_preflight, solange niemand sagt, wo es liegt."
+  },
+  "umgebung": {},
+  "fehler": null,
+  "art": "antwort_aus_fremdem_repo_uebertragen",
+  "uebertragen": "2026-09-22T21:00:00Z",
+  "quelle": [
+    {
+      "repo": "Imperigo/Architektur-Cosmos",
+      "zweig": "claude/kosmo-orbit-v1-build-pzxkbj",
+      "datei": "auftraege/ergebnisse/erg-20260921-118-sechs-posten-eine-zeile-je-posten.md",
+      "commit": "195125b2a4b2ba953afab01ce0dce76fb2c9312b",
+      "datiert": "2026-09-21"
+    },
+    {
+      "repo": "Imperigo/Architektur-Cosmos",
+      "zweig": "claude/kosmo-orbit-v1-build-pzxkbj",
+      "datei": "auftraege/ergebnisse/erg-20260921-b154-abholer-volllauf-freigaben.md",
+      "commit": "724f78d86784e5f9057d5c2f0157dda3b04a18d7",
+      "datiert": "2026-09-21",
+      "eingeordnet_in": "442b48d563363786665ebf2ae356fe0c61faa3e8",
+      "hinweis": "Blatt des lokalen KosmoOrbit-Workers an die Cloud-Sitzung, nicht an uns adressiert; es beantwortet aber ausdruecklich FRAGE 0 aus auf-31."
+    }
+  ],
+  "vorbehalt": "Zusammenfassung in eigenen Worten, nicht der Wortlaut. Der Wortlaut liegt drueben in der genannten Datei; ihn hierher zu kopieren braucht eine Owner-Freigabe, denn die vom 17.09./19.09.2026 deckt nur die Blaetter, die damals dort lagen."
+}

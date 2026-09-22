@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260917-113",
+  "status": "ok",
+  "beendet": "2026-09-19T05:20:45Z",
+  "dauer_s": null,
+  "messwerte": {
+    "dateien_unter_auftraege_origin_main": 297,
+    "dateien_unter_auftraege_ergebnisse": 124
+  },
+  "urteil": {
+    "V1": "Ja, abgeschnitten — aber das war nicht die Ursache: Auch ein Klon mit --depth 1 meldet den vollen Baum (297 Dateien unter auftraege). Die wahrscheinliche Ursache war ein fehlender Zweig mit weggeleiteter Fehlermeldung (ls-tree bricht mit 128 ab, gezaehlt wird 0) — rekonstruiert, nicht bewiesen.",
+    "V2": "Die Ruecknahme in erg-20260917-80 FAELLT; die Zusage vom 06.09. stimmte.",
+    "V3": "Unsere Antwort zu auf-20260827-64 schliesst den Punkt vollstaendig.",
+    "V4": "JA — Owner-Entscheid E77 drueben (19.09.2026) deckt die Blaetter, die damals bei uns lagen (14 plus README).",
+    "V4c": "Kein Widerspruch: Weg A (Szenenvertrag) ist der Produktweg (E78). Weg B bleibt, ohne Zusage.",
+    "V4d": "Geht nicht zu weit: nachgezaehlt 0 Normtexte, 0 Zugangsdaten, 0 Pfade mit Benutzernamen; oeffentlich ist Struktur (45 relative Quellpfade, 42 Zeilenbelege), keine Substanz.",
+    "V5": "Vorwarnung: interior wird kommen und laeuft in unseren Riegel (inzwischen eingetreten, siehe auf-20260911-104)."
+  },
+  "umgebung": {},
+  "fehler": null,
+  "art": "antwort_aus_fremdem_repo_uebertragen",
+  "uebertragen": "2026-09-22T21:00:00Z",
+  "quelle": [
+    {
+      "repo": "Imperigo/Architektur-Cosmos",
+      "zweig": "claude/kosmo-orbit-v1-build-pzxkbj",
+      "datei": "auftraege/ergebnisse/erg-20260919-113-ruecknahme-faellt-produktweg-steht.md",
+      "commit": "da0894aabe3dd9dbdb0c0cfd6da5ea4c7cccb782",
+      "datiert": "2026-09-19"
+    }
+  ],
+  "vorbehalt": "Zusammenfassung in eigenen Worten, nicht der Wortlaut. Der Wortlaut liegt drueben in der genannten Datei; ihn hierher zu kopieren braucht eine Owner-Freigabe, denn die vom 17.09./19.09.2026 deckt nur die Blaetter, die damals dort lagen.",
+  "folgen_fuer_uns": [
+    "E77 deckt nur die Blaetter bis 19.09. Wer die spaeteren Antworten (19.09.–21.09.) im Wortlaut nach auftraege/von-kosmoorbit/ holen will, braucht eine neue Owner-Freigabe (Adressat: Owner)."
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260910-102",
+  "status": "ok",
+  "beendet": "2026-09-21T07:48:29Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "V1": "SPAETER — Ablehnung auf Zeit, keine Absage. Bedingung: ein durchgelaufener Auftrag, dessen Bild unsere Geometrie-Schwelle besteht. Dazu: solange nicht feststeht, dass abgeholt wird, waere ein Rezept wertlos (inzwischen belegt: es wird abgeholt, siehe auf-20260822-31).",
+    "V2": "Die vorgeschlagene Reihenfolge passt — gebaut wuerde in unserer Reihenfolge, Tor an Stelle 2, Mensch zwischen Tor und Bestellung. Die drei Verbote (enqueue_render in keiner Nur-Lese-Liste, kein Ausloesen ohne Mensch, unser Vertrag bleibt unberuehrt) sind schon jetzt angenommen.",
+    "V3": "render_preflight gibt es drueben NICHT (Suche mit Gegenprobe: 2 Treffer, beide in unserem eigenen Auftragsblatt). Auch «17 Rezepte» gibt es unter diesem Begriff in jenem Repo nicht. Die Angabe stammt von der HomeStation und muss dort geklaert werden.",
+    "V4": "Kein neues Vertragsfeld verlangt.",
+    "V5": "Unsere Werkzeugbeschreibungen (capabilities, check_geometry, enqueue_render, query_render) sind drueben nicht nachgelesen, sondern uebernommen."
+  },
+  "umgebung": {},
+  "fehler": null,
+  "art": "antwort_aus_fremdem_repo_uebertragen",
+  "uebertragen": "2026-09-22T21:00:00Z",
+  "quelle": [
+    {
+      "repo": "Imperigo/Architektur-Cosmos",
+      "zweig": "claude/kosmo-orbit-v1-build-pzxkbj",
+      "datei": "auftraege/ergebnisse/erg-20260921-118-sechs-posten-eine-zeile-je-posten.md",
+      "commit": "195125b2a4b2ba953afab01ce0dce76fb2c9312b",
+      "datiert": "2026-09-21"
+    }
+  ],
+  "vorbehalt": "Zusammenfassung in eigenen Worten, nicht der Wortlaut. Der Wortlaut liegt drueben in der genannten Datei; ihn hierher zu kopieren braucht eine Owner-Freigabe, denn die vom 17.09./19.09.2026 deckt nur die Blaetter, die damals dort lagen.",
+  "folgen_fuer_uns": [
+    "Bedingung fuer das Rezept liegt bei uns: ein durchgelaufenes Bild, das die Schwelle besteht (Adressat: local/kern).",
+    "Woher stammen render_preflight und die «17 Rezepte»? Die HomeStation hat sie am 07.09. genannt; drueben gibt es beides nicht (Adressat: local)."
+  ]
+}

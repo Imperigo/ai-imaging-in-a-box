@@ -1,0 +1,43 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260911-104",
+  "status": "ok",
+  "beendet": "2026-09-19T04:50:58Z",
+  "dauer_s": null,
+  "messwerte": {
+    "felder_nicht_in_unserer_karte": 9,
+    "davon_sendbar": 6,
+    "davon_nur_im_vertrag_am_19_09": 3
+  },
+  "urteil": {
+    "V1": "NEUN Felder der render-scene stehen nicht in unserer Karte. Sechs koennen wirklich ankommen, aber nur, wenn jemand sie einstellt: komposition, render.environment, render.himmel, render.belichtung, render.rauschschwelle, vis.research_only. Drei standen am 19.09. nur im Vertrag: interior, innenansichten, gelaende — interior wird seit dem 19.09. aber WIRKLICH gesendet (Meldung vom 21.09.).",
+    "V2": "ABWEISEN BEHALTEN (Owner-Entscheid E75 drueben, 19.09.2026). Gegenbitte: die sechs Felder aufnehmen oder je Feld ablehnen.",
+    "V3": "Kein .strict() drueben, aber unbekannte Felder werden jetzt GEMELDET statt still verworfen (E76; laut Meldung vom 21.09. inzwischen gebaut — die erste Probe fand sofort unsere Skalare nullanker und maskenanker).",
+    "V4": "Widerspruch: Eine drueben am 17.09. gemessene Tabelle sagt, unser lies_szene beanstande Unbekanntes in render NICHT; unsere Ansage vom 11.09. sagt das Gegenteil. Drueben bittet man um eine Zeile, an welchem Datum und in welcher Funktion unsere Strenge scharf ist."
+  },
+  "umgebung": {},
+  "fehler": null,
+  "art": "antwort_aus_fremdem_repo_uebertragen",
+  "uebertragen": "2026-09-22T21:00:00Z",
+  "quelle": [
+    {
+      "repo": "Imperigo/Architektur-Cosmos",
+      "zweig": "claude/kosmo-orbit-v1-build-pzxkbj",
+      "datei": "auftraege/ergebnisse/erg-20260919-104-unbekannte-felder-in-der-bestellung.md",
+      "commit": "1feaab1a070a04c91a357ef3f0c963567b55e9d3",
+      "datiert": "2026-09-19"
+    },
+    {
+      "repo": "Imperigo/Architektur-Cosmos",
+      "zweig": "claude/kosmo-orbit-v1-build-pzxkbj",
+      "datei": "auftraege/ergebnisse/meldung-orbit-20260921-01-fuenf-antworten-und-was-gebaut-wurde.md",
+      "commit": "b7708d5eaebfd0f57602520e2137f3f3ea938a21",
+      "datiert": "2026-09-21"
+    }
+  ],
+  "vorbehalt": "Zusammenfassung in eigenen Worten, nicht der Wortlaut. Der Wortlaut liegt drueben in der genannten Datei; ihn hierher zu kopieren braucht eine Owner-Freigabe, denn die vom 17.09./19.09.2026 deckt nur die Blaetter, die damals dort lagen.",
+  "folgen_fuer_uns": [
+    "interior (und die sechs sendbaren Felder) in kosmo_szene.BEKANNTE_FELDER aufnehmen oder je Feld ablehnen — sonst weist unser Riegel jede Innenraum-Bestellung ab (Adressat: kern). DAS BLOCKIERT DEN EINBAU der Innenansichten.",
+    "Den Widerspruch aus V4 beantworten: wo und seit wann unsere Strenge greift (Adressat: kern, Antwort an cloud)."
+  ]
+}

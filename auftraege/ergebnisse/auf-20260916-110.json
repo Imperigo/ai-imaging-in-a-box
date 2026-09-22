@@ -1,0 +1,33 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260916-110",
+  "status": "ok",
+  "beendet": "2026-09-21T07:48:29Z",
+  "dauer_s": null,
+  "messwerte": {
+    "angekommen": 27,
+    "angesehen": 27,
+    "weg_alt": 19,
+    "weg_neu": 8
+  },
+  "urteil": {
+    "V1": "27 Auftragsblaetter angekommen: 19 auf dem aelteren Weg (kosmo-orbit/docs/auftraege-kosmovis/), 8 im Ordner auftraege/von-kosmovis/ seit 19.09.2026.",
+    "V2": "Alle 27 angesehen; die 19 aelteren haben je mindestens ein Ergebnisblatt.",
+    "V3": "Vor dem 19.09.2026 gab es fuer unsere Richtung keinen Dateiweg — nur Handarbeit ueber den Owner. Das erklaert die 28 Tage bei auf-31, nicht ein liegengelassener Auftrag.",
+    "V4": "Seit 19.09.2026 der Dateiordner auftraege/von-kosmovis/ in ihrem Repo; er funktioniert."
+  },
+  "umgebung": {},
+  "fehler": null,
+  "art": "antwort_aus_fremdem_repo_uebertragen",
+  "uebertragen": "2026-09-22T21:00:00Z",
+  "quelle": [
+    {
+      "repo": "Imperigo/Architektur-Cosmos",
+      "zweig": "claude/kosmo-orbit-v1-build-pzxkbj",
+      "datei": "auftraege/ergebnisse/erg-20260921-118-sechs-posten-eine-zeile-je-posten.md",
+      "commit": "195125b2a4b2ba953afab01ce0dce76fb2c9312b",
+      "datiert": "2026-09-21"
+    }
+  ],
+  "vorbehalt": "Zusammenfassung in eigenen Worten, nicht der Wortlaut. Der Wortlaut liegt drueben in der genannten Datei; ihn hierher zu kopieren braucht eine Owner-Freigabe, denn die vom 17.09./19.09.2026 deckt nur die Blaetter, die damals dort lagen."
+}

@@ -1,0 +1,39 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260909-91",
+  "status": "ok",
+  "beendet": "2026-09-21T07:48:29Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "V1": "A, also KosmoOrbit — und seit 19.09.2026 in Betrieb: Der Bestellweg sendet interior {rooms: 'auto'} zusammen mit geometry.format 'ifc', wenn das Dokument Zonen traegt; ihre Kern-Ableitung leitet die Standpunkte ab und sendet sie als benannte Kameras mit.",
+    "V2": "Entfaellt — die Ableitung liegt drueben, eine Portierung unserer Rechenregel wird nicht verlangt.",
+    "V3_V4": "Entfaellt fuer B. Zur Nachfrage aus auf-118 (kommt eine IFC unveraendert an?): JA — die Bruecke schreibt die hochgeladenen Bytes unveraendert; nur die Dateiendung folgt dem Format. Widerspruch zwischen geometry.format und Endung oder beides fehlend gibt 400 statt einer stillen Wahl.",
+    "V5": "EINE Innenansicht je Auftrag, solange kein einziger Lauf durchgelaufen ist.",
+    "V6": "Gerendert hat einen Innenraum-Auftrag noch niemand — der Transport ist gegen den Vertrag geprueft, nicht am Bild."
+  },
+  "umgebung": {},
+  "fehler": null,
+  "art": "antwort_aus_fremdem_repo_uebertragen",
+  "uebertragen": "2026-09-22T21:00:00Z",
+  "quelle": [
+    {
+      "repo": "Imperigo/Architektur-Cosmos",
+      "zweig": "claude/kosmo-orbit-v1-build-pzxkbj",
+      "datei": "auftraege/ergebnisse/erg-20260921-118-sechs-posten-eine-zeile-je-posten.md",
+      "commit": "195125b2a4b2ba953afab01ce0dce76fb2c9312b",
+      "datiert": "2026-09-21"
+    },
+    {
+      "repo": "Imperigo/Architektur-Cosmos",
+      "zweig": "claude/kosmo-orbit-v1-build-pzxkbj",
+      "datei": "auftraege/ergebnisse/erg-20260921-31-vier-von-sechs-waren-schon-gebaut.md",
+      "commit": "269b451cffed6ae2af5284a33d0575db6e98b3ac",
+      "datiert": "2026-09-21"
+    }
+  ],
+  "vorbehalt": "Zusammenfassung in eigenen Worten, nicht der Wortlaut. Der Wortlaut liegt drueben in der genannten Datei; ihn hierher zu kopieren braucht eine Owner-Freigabe, denn die vom 17.09./19.09.2026 deckt nur die Blaetter, die damals dort lagen.",
+  "folgen_fuer_uns": [
+    "Drueben werden ZWEI Dinge gleichzeitig gesendet: benannte Innenkameras UND interior {rooms: 'auto'}. Unsere Karte kennt interior nicht (kosmo_szene.BEKANNTE_FELDER) — jede Innenraum-Bestellung laeuft seit 19.09. in unseren Riegel fuer unbekannte Felder (Adressat: kern)."
+  ]
+}

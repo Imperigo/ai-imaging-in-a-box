@@ -1,0 +1,31 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260911-107",
+  "status": "ok",
+  "beendet": "2026-09-21T07:48:29Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "V1": "NIEMAND setzt es bewusst: Die Oberflaeche setzt das Feld nicht (0 Treffer, mit Gegenprobe); es steht als Vertragsvorgabe auf true, und die Bruecke setzt es beim Anlegen noch einmal auf true.",
+    "V2": "Lesart (b): «kein anderer Renderlauf», NICHT «Karte voellig frei» — Owner-Entscheid E79 drueben, 21.09.2026. Die Karte darf von jemandem, der am Rechner arbeitet, benutzt sein.",
+    "V3": "Die Grenze ist ein zweiter Renderlauf; eine Prozentgrenze fuer die Gesamtauslastung wird nicht verlangt.",
+    "V4": "Ein abgelehnter Lauf soll in der Warteschlange BLEIBEN, mit sichtbarem Grund — nicht zurueckkommen."
+  },
+  "umgebung": {},
+  "fehler": null,
+  "art": "antwort_aus_fremdem_repo_uebertragen",
+  "uebertragen": "2026-09-22T21:00:00Z",
+  "quelle": [
+    {
+      "repo": "Imperigo/Architektur-Cosmos",
+      "zweig": "claude/kosmo-orbit-v1-build-pzxkbj",
+      "datei": "auftraege/ergebnisse/erg-20260921-118-sechs-posten-eine-zeile-je-posten.md",
+      "commit": "195125b2a4b2ba953afab01ce0dce76fb2c9312b",
+      "datiert": "2026-09-21"
+    }
+  ],
+  "vorbehalt": "Zusammenfassung in eigenen Worten, nicht der Wortlaut. Der Wortlaut liegt drueben in der genannten Datei; ihn hierher zu kopieren braucht eine Owner-Freigabe, denn die vom 17.09./19.09.2026 deckt nur die Blaetter, die damals dort lagen.",
+  "folgen_fuer_uns": [
+    "Unser Riegel misst heute die Gesamtauslastung der Karte (21 % gegen Grenze 10 % am 25.08.). Nach E79 muss er auf «laeuft ein anderer Render?» umgestellt werden, und ein abgewiesener Lauf soll wartend bleiben statt zurueckzukommen — Einbauauftrag noetig (Adressat: kern fuer die Bibliothek, local fuer den Homeworker/Abholer)."
+  ]
+}
