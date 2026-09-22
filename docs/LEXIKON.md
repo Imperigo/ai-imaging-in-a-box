@@ -4809,6 +4809,45 @@ geändert hat — also im einzigen Fall, der zählt.
 und schaut, ob die Tests ihn bemerken. Tun sie es nicht, bewachen sie nichts. *Ohne das
 kann eine grüne Testreihe blosse Beruhigung sein.*
 
+**Wirkungsprüfung gegen Textprüfung** — Zwei Arten, einen Test zu schreiben. Eine
+**Textprüfung** liest das Programm wie einen Aufsatz und sucht ein Wort darin («steht
+`compare_digest` im Text?»). Eine **Wirkungsprüfung** lässt das Programm laufen und
+schaut, was herauskommt («werden bei einer falschen Zahl wirklich zwei Vergleiche
+gemacht?»). Nur die zweite merkt, wenn das Wort noch dasteht, aber nichts mehr tut.
+*In diesem Projekt am 22.09.2026 an vier Wächtern nachgewiesen:* Jeder blieb grün, während
+eine Mutationsprobe die Tür aufsperrte oder den Vergleich abkürzte. Ausnahme, und die
+einzige: die **Prüfung auf Abwesenheit** — dass etwas *nicht* im Text steht, etwa
+`import bpy` oder eine zweite Kopie einer Regel. Dort ist der Text selbst der Gegenstand.
+
+**Bestellbar, aber nicht lieferbar** — Ein Zustand, in dem man etwas auswählen kann, das
+danach nie entstehen kann. Schlimmer als ein fehlendes Feld, weil es aussieht, als ginge
+es. *In diesem Projekt seit dem 22.09.2026 an der Innenansicht:* Sie lässt sich in der
+Oberfläche bestellen, aber Räume gibt es nur, wenn das Modell als IFC hereinkommt — und die
+Projektmappe rechnet immer mit der umgewandelten glb-Datei. Jeder solche Lauf endet mit
+einer ehrlichen Fehlermeldung statt mit einem falschen Aussenbild; lieferbar wird die
+Innenansicht erst, wenn die Mappe die Räume mitführt.
+
+**Modusabweichung** — Der Fall, dass ein Bild auf eine andere Art gerechnet wurde, als
+bestellt war — etwa «aus dem Ausgangsbild weiterzeichnen» bestellt, «nur aus dem Text»
+gerechnet, weil das Ausgangsbild unterwegs fehlte. Das Bild sieht dann aus wie jedes
+andere. Darum steht die Abweichung seit dem 22.09.2026 **in der Projektmappe**, beim Lauf
+und beim einzelnen Bild — und daneben, welche Knoten es **nicht gemeldet** haben: Eine
+leere Liste der Abweichungen hiesse sonst zweierlei, «alles wie bestellt» und «niemand
+hat nachgesehen».
+
+**Laufmessung (in der Mappe)** — Was die Bildstufe während eines Laufs über sich selbst
+gemessen hat: bestellte und gerechnete Betriebsart, Schrittzahl, Gerät, Hinweise. Bis zum
+22.09.2026 wurde das gemessen und dann zwischen Lauf und Projektdatei weggeworfen. *Eine
+Messung, die niemand aufschreibt, hat nicht stattgefunden* — sie muss nur ein einziges Mal
+gebraucht werden, um zu fehlen.
+
+**Konvergenz (stürzender Linien)** — Wie stark senkrechte Kanten eines Gebäudes im Bild
+aufeinander zulaufen, weil die Kamera nach oben oder unten geneigt ist. Null heisst: Die
+Kanten stehen parallel, wie es die Architekturfotografie verlangt. *In diesem Projekt am
+22.09.2026 berichtigt:* Fehlte die Angabe der Neigung, rechnete die Prüfung mit null
+Grad — und bescheinigte damit parallele Kanten, die nie gemessen waren. Heute heisst eine
+fehlende Neigung «nicht gemessen».
+
 **Erreichbarkeit einer Schwelle (Deckel)** — Die Frage, ob ein Messwert eine Schwelle
 unter den gegebenen Umständen **überhaupt** erreichen kann — unabhängig davon, wie gut das
 Geprüfte ist. Liegt die beste erreichbare Zahl unter der Schwelle, misst die Prüfung nicht
@@ -5342,6 +5381,7 @@ keine Aussage.*
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-22 | Ergaenzt aus der Abarbeitung von sechs Befunden: **Wirkungspruefung gegen Textpruefung**, **Bestellbar, aber nicht lieferbar**, **Modusabweichung**, **Laufmessung (in der Mappe)**, **Konvergenz (stuerzender Linien)**. Drei davon tragen einen Befund gegen den eigenen Code: vier Waechter, die Text statt Wirkung prueften; eine Innenansicht, die sich bestellen und nicht liefern laesst; eine fehlende Neigung, die als gemessene Null bescheinigt wurde |
 | 2026-09-22 | Ergaenzt zu Abschnitt 10 aus dem ersten Verbinden: **Kopplungszahl**, **Stetige Uhr** |
 | 2026-09-22 | Ergaenzt zu Abschnitt 10 aus der Arbeit an zwei Geraeten an derselben Mappe: **Standnummer**, **Schreibkollision** |
 | 2026-09-21 | Nachgetragen zu Abschnitt 10 aus der Verbindung iPad/Rechner: **Wischregler**, **Übergabe-Animation**, **Bewegungsreduktion** |

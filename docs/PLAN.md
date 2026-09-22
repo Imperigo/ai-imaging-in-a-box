@@ -7185,12 +7185,40 @@ Bekannt und ausdrücklich nicht erledigt:
 
 **Offen, und bei wem es liegt** — die neun übrigen bestätigten Befunde
 
-- [ ] **Kern:** `arbeitsgang.py:497` — der Lauf misst, die Mappe liest es nicht.
+- [x] **Kern:** `arbeitsgang.py:497` — der Lauf misst, die Mappe liest es nicht. *(Sitzung 63)*
       **Dieselbe Fehlerart, dritte Fundstelle diese Woche.**
-- [ ] **Kern:** `kette.py:378` — `innenraum` über den Produktweg nicht bestellbar.
-- [ ] **Kern:** `komposition.py:1509` — fehlende Neigung wird zur gemessenen 0.0.
-- [ ] **Kern:** drei Textwächter (`test_oberflaeche.py` zweimal, `test_kopplung.py` einmal
+- [x] **Kern:** `kette.py:378` — `innenraum` über den Produktweg nicht bestellbar.
+      *(Sitzung 63: bestellbar — über die Mappe aber noch nicht lieferbar)*
+- [x] **Kern:** `komposition.py:1509` — fehlende Neigung wird zur gemessenen 0.0. *(Sitzung 63)*
+- [x] **Kern:** drei Textwächter (`test_oberflaeche.py` zweimal, `test_kopplung.py` einmal
       — letzterer von mir, aus dieser Sitzung).
-- [ ] **Kern:** `bruecke.py:77` — dasselbe Muster für die fremde Kennung an drei Stellen.
+- [x] **Kern:** `bruecke.py:77` — dasselbe Muster für die fremde Kennung an drei Stellen. *(Sitzung 63)*
 - [ ] **Kern:** `einbau.py:181`, `homeworker.py:652` — «unbekannt» wird zu 0 bzw. False.
-- [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2).
+      *(Sitzung 63: `einbau.py` erledigt, `homeworker.py` noch offen)*
+- [x] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2). *(beide beantwortet, Sitzung 62)*
+
+## Sitzung 62 — 22.09.2026 · Der Weg des Produkts läuft zum ersten Mal ganz durch
+
+- [x] SDXL und SD3.5 nur zum Messen, nie ausgeliefert (Owner-Entscheid) — an beiden Wegen.
+- [x] Tür → Mappe → Lauf → Bild am Gerät durch, alle fünf Stufen (`auf-137`).
+- [ ] **Kern:** Sonne und Bildausschnitt ohne Wirkung aufs Bild; Deckungsgrad ändert die
+      Tiefenkarte nicht; Tiefenrichtung auf dem Produktweg vertauscht.
+
+## Sitzung 63 — 22.09.2026 · Sechs Befunde, deren Fehler niemand sah
+
+**Erledigt**
+
+- [x] Sechs Befunde gebaut, gegengeprüft, zwei abgelehnte nachgebessert (`3984686`).
+- [x] 33 Mutationsproben zentral gefahren — alle fallen.
+- [x] Der vom Lizenzentscheid rot hinterlassene Test prüft jetzt die neue Regel.
+- [x] C8/C10 mit Nachtrag: bleiben «gebaut, am Gerät unbestätigt».
+
+**Offen, und bei wem es liegt**
+
+- [ ] **Kern (Runde 4 läuft):** Ladeweg nach Modellfamilie; Mappe (Grund, Lizenz, geteilte
+      Objekte, «nicht zutreffend»); Komposition (Geländebezug, Rollwinkel, benannte
+      Ungemessene); Adresse im Heimnetz.
+- [ ] **Kern:** Innenansicht über die Mappe lieferbar machen — Räume mitführen.
+- [ ] **Kern:** C8/C10 — nur der Grund der schlechtesten Kamera kommt an;
+      `geometry_gates` bleibt leer.
+- [ ] **ui:** Messung am Bild anzeigen; Freitext im Feld Innenansicht; `_probewert`.

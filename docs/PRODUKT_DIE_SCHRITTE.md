@@ -91,6 +91,30 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 22.09.2026 · Sechs Fehler, die niemand sah, weil nichts kaputtging
+
+Sechs der dreizehn Befunde von vorhin sind behoben. Sie hatten alle dieselbe Form: Etwas
+wurde gemessen und kam nicht an — oder es kam an und behauptete mehr, als gemessen war.
+
+* **Die Mappe vergass, wie ein Bild entstanden ist.** Bestellt war «aus dem Ausgangsbild
+  weiterzeichnen», gerechnet wurde «nur aus dem Text» — und in der gespeicherten Mappe sah
+  das Bild danach aus wie jedes andere. Jetzt steht die Abweichung am Bild.
+* **Die Prüfung bescheinigte gerade Kanten, die sie nie gemessen hatte.** Fehlte die
+  Angabe der Kameraneigung, rechnete sie mit null Grad. Genau auf dem Weg, den Sie nehmen,
+  wenn Sie den Standpunkt im Grundriss anklicken. Jetzt heisst es «nicht gemessen».
+* **Die Innenansicht ist jetzt bestellbar — aber noch nicht lieferbar.** Räume kennt das
+  Programm nur aus einer IFC-Datei, und die Mappe rechnet mit der umgewandelten Datei.
+  Wer innen bestellt, bekommt deshalb eine klare Fehlermeldung statt eines falschen
+  Aussenbilds. *Lieferbar wird sie, wenn die Mappe die Räume mitführt.*
+* **Drei Prüfstände an der Anmeldung prüften nichts.** Man konnte die Tür aufsperren, und
+  sie blieben grün. Jetzt klopfen sie wirklich an.
+
+Zwei der sechs Arbeiten hat der zweite Agent zuerst **abgelehnt** — nicht, weil sie falsch
+waren, sondern weil sie mehr versprachen, als sie prüften. Beide sind nachgebessert.
+
+**Und einer war meiner:** Der Lizenzentscheid von heute Morgen hat einen Test rot
+hinterlassen, weil ich danach nicht alles laufen liess. Behoben, bevor er nach `main` kam.
+
 ### 22.09.2026 · Ein einziges leeres Feld legte die ganze Warteschlange lahm
 
 Eine Durchsuchung des ganzen Programms nach sechs bekannten Fehlerarten hat **dreizehn
