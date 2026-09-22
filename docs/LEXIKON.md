@@ -3744,6 +3744,9 @@ dass die Scheiben unterwegs verlorengegangen sind.*
 **Mittelwert** des Rechtecks alter Bildpunkte wird, das er ersetzt. Die einfachere
 Alternative, der **nächste Nachbar**, greift stattdessen einen einzelnen alten Punkt
 heraus und wirft die übrigen weg.
+*Seit dem 22.09.2026 auch beim Zusammensetzen einer Skizze auf ihre Unterlage — dort
+gewichtet danach, wie stark jeder Bildpunkt deckt, damit ein durchsichtiger Grund nicht
+als Farbe mitzählt.*
 
 *Bei einer Gebäudeansicht ist der Unterschied sichtbar: Fenstersprossen und
 Geländerstäbe sind oft nur einen Bildpunkt breit. Der nächste Nachbar lässt sie je nach
@@ -5003,11 +5006,43 @@ Tabelle lädt sonst gar nicht.
 
 **Wegtafel** — Die Liste, in der der Server nachschlägt, welcher Programmteil eine Anfrage an einen bestimmten Weg (etwa «/api/skizze») beantwortet. Eine Tafel statt einer Kette von Wenn-dann-Abfragen: Neue Wege kommen dazu, ohne dass zwei Leute an derselben Stelle schreiben, und ein Wächter kann die Wege der App gegen die des Servers halten.
 
-**Parkfach** — Der Ort auf dem iPad, an dem eine Skizze wartet, die noch nicht beim Rechner angekommen ist. Jede Skizze geht zuerst dorthin und von dort hinaus; ist der Rechner nicht erreichbar, bleibt sie liegen und geht später von selbst. Eine Skizze, bei der unklar ist, ob sie ankam, geht nicht von selbst ein zweites Mal — das entscheidet ein Mensch.
+**Parkfach** — Der Ort auf dem iPad, an dem eine Skizze wartet, die noch nicht beim Rechner angekommen ist. Jede Skizze geht zuerst dorthin und von dort hinaus; ist der Rechner nicht erreichbar, bleibt sie liegen und geht später von selbst. Ist unklar, ob sie ankam, geht sie nur dann von selbst noch einmal, wenn sie ihren Schlüssel schon beim ersten Mal mitgeschickt hat (siehe *Doppelsendeschutz*), und höchstens fünfmal — sonst entscheidet ein Mensch. Angekommene Skizzen räumt das Fach nach sieben Tagen oder ab fünfzig Stück weg. *Stand 23.09.2026; bis zur Welle 2 ging eine ungewisse Skizze nie von selbst ein zweites Mal.*
 
 **Schlüsselbund** — Der geschützte Speicher von iPad und Mac für Kennwörter. *In diesem Projekt* liegt dort das Kennwort der Kopplung — nicht in den gewöhnlichen Einstellungen, wo es eine frühere Fassung abgelegt und wieder verloren hatte.
 
 **Doppelsendeschutz** — Eine Vorkehrung, dass dieselbe Skizze nicht zweimal ankommt, wenn das iPad nach einem Abbruch noch einmal sendet: Jede Skizze trägt einen Schlüssel, und der Server erkennt ihn wieder. Derselbe Schlüssel mit einer **anderen** Zeichnung wird abgewiesen.
+
+**Identität einer Ansicht** — Woran ein Bildschirm-Baukasten erkennt, dass ein Teil des Bildschirms nach einer Änderung *derselbe* ist wie vorher. Erkennt er ihn nicht wieder, wirft er ihn weg und baut ihn neu — samt allem, was darin lag. *In diesem Projekt:* Beim Drehen des iPads wurde das Zeichenblatt anfangs neu gebaut, und «Zurück» wirkte danach auf ein Blatt, das es nicht mehr gab. Seit der Welle 2 bleibt es dasselbe; am Gerät unbestätigt.
+
+**Treffertest** — Wie das iPad entscheidet, welche Fläche eine Berührung bekommt, wenn mehrere übereinander liegen. Versteckte Flächen werden dabei übergangen — wer eine Fläche versteckt, nimmt ihr auch die Finger weg. *In diesem Projekt:* Darum wird eine ausgeblendete Ebene nicht versteckt, sondern mit einer leeren Schablone (Maske) verdeckt.
+
+**Unterlage (einer Skizze)** — Das Bild, über das hineingezeichnet wird. Die Skizze selbst hat einen durchsichtigen Grund; erst der Rechner legt sie auf die Unterlage und gibt beides zusammen dem Bildmodell. Fehlt die Unterlage, liegt die Skizze auf mittlerem Grau — nicht auf Schwarz, das das Bild ins Dunkle ziehen würde (Annahme, nicht gemessen). *In diesem Projekt:* Die Webseite schickt die Unterlage mit; die App bekommt sie in der Welle 2b.
+
+**Eingangsbild (des Nachrenders)** — Das Bild, das der Rechner aus Unterlage und Skizze zusammensetzt und dem Bildmodell als Ausgangsbild gibt. Hat die Unterlage ein anderes Seitenverhältnis als das Zeichenblatt, wird sie gestreckt, und das steht als Hinweis am Bild.
+
+**Nachholen (nach einer Schreibkollision)** — Ein Lauf, der beim Speichern merkt, dass jemand anderes die Mappe inzwischen geändert hat, liest sie neu und trägt seine Vermerke auf den neuen Stand nach, statt ihn zu überschreiben. Die Alternative wäre eine Sperre — aber ein Lauf kann Stunden dauern, und so lange soll niemand ein Bild umbenennen oder eine Skizze ablegen müssen. Eine inzwischen verworfene Skizze bleibt dabei verworfen (Welle 2b).
+
+**Handlungsquittung** — Die Antwort der App auf «Rechnen», «Abbrechen» oder «Namen geben», mit vier möglichen Ausgängen: angenommen, abgelehnt, ungewiss (die Leitung riss, bevor die Antwort kam) und nicht gesendet. Die Handlungsquittung ist die dritte Antwort, angewandt auf einen Knopfdruck: *Ob etwas geschah, ist eine Frage mit mehr als zwei Antworten.*
+
+**Ebenen-Reihe** — Mehrere Ebenen einer Zeichnung, jede als eigene Skizze gerechnet, und die Ergebnisse nebeneinander als Varianten. Die andere Art, Varianten zu bekommen, ist dieselbe Skizze mit drei verschiedenen Zufallsstartwerten.
+
+**Seitenfeld** — Die eine Spalte neben dem Zeichenblatt, die umschaltbar entweder die Ebenen oder die Mappe zeigt. Eine Spalte, nicht zwei — auf einem 11-Zoll-Bildschirm ist Platz das Knappste.
+
+**Laufwächter** — Der Teil der App, der während eines Laufs öfter beim Rechner nachfragt, wie weit er ist, und danach einmal die Mappe neu holt.
+
+**Aufklappbarer Vorbehalt** — Ein Vorbehalt, der in einer kleinen Bildkachel nur mit seinem festen Anfang steht («SKIZZE NICHT ANGEKOMMEN …») und sich durch Tippen ganz zeigt. Er darf gekürzt stehen, aber nie fehlen.
+
+**Rumpffehler** — Eine Anfrage, deren Inhalt sich nicht aufschreiben lässt, etwa weil eine Zahl «unendlich» oder «keine Zahl» ist. Sie geht dann **nicht** hinaus und sagt, warum — statt still eine leere Anfrage zu schicken, die der Rechner als gültig nähme.
+
+**Unicode-Zeilentrenner** — Unsichtbare Sonderzeichen, die in manchen Programmen eine neue Zeile beginnen, in anderen nicht. In einem Bildnamen würden sie die Anzeige zerreissen oder Zeilen vortäuschen; darum weist die Mappe sie ab.
+
+**Signifikante Stellen** — Die Ziffern einer Zahl, die etwas aussagen, gezählt ab der ersten, die nicht null ist. Zwei Zahlen, die sich erst in der sechzehnten Stelle unterscheiden, sehen mit vier Stellen gleich aus. *In diesem Projekt:* Die Anzeige zeigt so viele Stellen, bis sich eine Zahl von ihrer Schwelle unterscheidet — höchstens siebzehn —, damit ein knapp verfehlter Wert nie als «gleich» dasteht.
+
+**Unicast** — Eine Nachricht an genau ein Gerät, im Gegensatz zum *Rundruf* an alle. *In diesem Projekt* von Belang, weil ein zweites Programm, das ebenfalls auf Rundrufe hört, einem schon laufenden Dienst die direkten Nachrichten wegnehmen kann — geprüft unter Linux, am echten Rechner offen.
+
+**Bekanntes, abgewiesenes Feld** — Ein Feld aus dem Vertrag von KosmoOrbit, das wir kennen und trotzdem ablehnen, mit einem eigenen Satz, warum. Im Unterschied zu einem **unbekannten** Feld, bei dem wir nur sagen können, dass wir es nicht kennen. Beide halten den Lauf an; still übergangen wird keines.
+
+**Innenraum-Bestellung** — Eine Bestellung aus KosmoOrbit, die eine Ansicht **aus einem Raum heraus** will statt von aussen. Sie kommt mit einem IFC-Modell und meist mit den drüben schon gewählten Innenkameras. Bis zum 22.09.2026 wies unsere Seite jede solche Bestellung ab, weil sie das Feld nicht kannte.
 
 **Erreichbarkeit einer Schwelle (Deckel)** — Die Frage, ob ein Messwert eine Schwelle
 unter den gegebenen Umständen **überhaupt** erreichen kann — unabhängig davon, wie gut das
@@ -5542,6 +5577,7 @@ keine Aussage.*
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-23 | Ergaenzt aus der Welle 2 der iPad-App: **Identitaet einer Ansicht**, **Treffertest**, **Unterlage (einer Skizze)**, **Eingangsbild (des Nachrenders)**, **Nachholen (nach einer Schreibkollision)**, **Handlungsquittung**, **Ebenen-Reihe**, **Seitenfeld**, **Laufwaechter**, **Aufklappbarer Vorbehalt**, **Rumpffehler**, **Unicode-Zeilentrenner**, **Signifikante Stellen**, **Unicast**, **Bekanntes, abgewiesenes Feld**, **Innenraum-Bestellung**; nachgefuehrt: **Kastenmittel** (deckungsgewichtet), **Parkfach** (ungewisse Skizzen gehen mit Schluessel von selbst noch einmal) |
 | 2026-09-22 | Ergaenzt aus dem Bau der iPad-App: **Native App gegen Webseite**, **Swift**, **SwiftUI**, **PencilKit**, **Xcode**, **Swift Playgrounds**, **App-Paket (.swiftpm)**, **Bundle-Kennung**, **Simulator**, **Pruefstrecke (auf GitHub)**, **Bonjour (mDNS)**, **Rundruf**, **App Transport Security**, **Wegtafel**, **Parkfach**, **Schluesselbund**, **Doppelsendeschutz** |
 | 2026-09-22 | Ergaenzt aus dem Grundlagenblatt «Wie man eine Software von Grund auf baut» (Anhang B): **Anforderung**, **Randbedingung**, **Erfolgskriterium**, **Kleinste Fassung, die ein Erfolg waere**, **Kippstelle**, **Schnittstelle**, **Blender**, **Versionsverwaltung**, **Sitzungsprotokoll**, **Die dritte Antwort**, **Ersatzwert**, **Einbau**, **Produktweg gegen direkten Aufruf**, **Worker**, **HomeStation**, **Durchsicht**, **Open Font License (OFL)**, **Tuer (Anmeldung der Oberflaeche)** |
 | 2026-09-22 | Ergaenzt aus der sechsten Runde: **Richtungsgrenze**, **Wirkungslos (im Bericht)**, **Zwillingsansicht**, **Registereintrag** |
