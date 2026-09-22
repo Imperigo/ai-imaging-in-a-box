@@ -62,6 +62,9 @@ from . import kameras as _kameras
 from . import sonne as _sonne
 
 #: Die beiden Vertragskennungen, wörtlich aus den Schemadateien der Designzentrale.
+#:
+#: ``SCHEMA_SZENE`` ist die **einzige** Stelle dieser Kennung im Kern (Befund 22.09.2026):
+#: ``kosmo_naht.SCHEMA_RENDER_SCENE`` hält seither dieses Objekt und keine eigene Kopie.
 SCHEMA_SZENE = "kosmovis.render-scene/v1"
 SCHEMA_ERGEBNIS = "kosmovis.render-result/v2"
 
@@ -1422,14 +1425,22 @@ def _andere_kameras_einrechnen(block: dict, je_kamera, eigene) -> None:
     **Die Zwillingsansicht der eigenen Kamera ist keine andere Kamera** (``doppelt_von``,
     siehe ``abholer._sollkennung``): Sie traegt dasselbe Bild und dasselbe Torurteil. Faellt
     die eigene Kamera durch, steht das schon im Block; ein zweites Mal unter anderem Namen
-    hiesse, ein Bild als zwei Befunde zu zaehlen.
+    hiesse, ein Bild als zwei Befunde zu zaehlen. Derselbe Grundsatz gilt seit dem
+    22.09.2026 fuer den Zwilling einer ANDEREN Kamera: Er wird mit ihr einmal genannt,
+    nicht als zweite Kamera daneben.
 
     **Satz und Feld sagen dasselbe** (Durchsicht 22.09.2026): Ist die eigene Kamera nicht
     gemessen und faellt zugleich eine andere GEMESSEN durch, steht ``passed: false`` im
     Block — und der Grund darf dann nicht «'passed: null' heisst ungeprueft» sagen. Er
     nennt stattdessen, woher das ``false`` kommt.
     """
-    durchgefallen = []
+    # JE BILD EIN BEFUND, nicht je Kameraname (Befund 22.09.2026). Der Zwilling der
+    # EIGENEN Kamera wird oben uebersprungen; der Zwilling einer ANDEREN Kamera stand bis
+    # dahin als zweiter Name im Grund («'Uebersicht', 'Gegenueber'») — ein Bild, zwei
+    # Befunde. Gezaehlt wird darum nach dem Stamm (`doppelt_von` oder der eigene Name),
+    # und genannt wird die Kamera, deren Bild es ist; der Zwilling nur, wenn sein Stamm
+    # selbst nicht in der Liste steht.
+    je_stamm: dict = {}
     for eintrag in je_kamera or ():
         if not isinstance(eintrag, dict):
             continue
@@ -1442,7 +1453,10 @@ def _andere_kameras_einrechnen(block: dict, je_kamera, eigene) -> None:
         if eigene is not None and urteil.get("doppelt_von") == eigene:
             continue
         if _tore_gemessen_durchgefallen(urteil.get(URTEIL_ZWEI_TORE)):
-            durchgefallen.append(str(name))
+            stamm = urteil.get("doppelt_von") or name
+            if stamm not in je_stamm or name == stamm:
+                je_stamm[stamm] = str(name)
+    durchgefallen = list(je_stamm.values())
     genannt = ", ".join(repr(n) for n in durchgefallen)
 
     if block.get("status") == STATUS_FEHLT:

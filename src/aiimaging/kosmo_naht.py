@@ -83,14 +83,16 @@ MCP_FELDER: dict[str, str] = {
 #: eigenes kompiliert, baut die Abweichung von neuem ein.
 FREMDES_JOB_ID_MUSTER = kosmo_szene.FREMDE_JOB_ID
 
-#: Die Schemakennung der Bestellung — wörtlich dieselbe wie `kosmo_szene.SCHEMA_SZENE`.
+#: Die Schemakennung der Bestellung — **dasselbe Objekt** wie `kosmo_szene.SCHEMA_SZENE`.
 #:
-#: Hier stand bis zum 22.09.2026 dazu, sie sei *«ohne Import wiederholt, damit dieses
-#: Modul unabhängig von der Szenenauswertung bleibt»*. Diese Begründung trägt seit der
-#: Zeile darüber nicht mehr: Das Modul führt `kosmo_szene` jetzt ein. Die Zeichenkette
-#: bleibt vorerst stehen, **aber sie ist dieselbe Doppelung wie die eben aufgelöste** —
-#: ein eigener Befund und kein Teil dieser Reparatur.
-SCHEMA_RENDER_SCENE = "kosmovis.render-scene/v1"
+#: Hier stand bis zum 22.09.2026 eine eigene Zeichenkette, *«ohne Import wiederholt, damit
+#: dieses Modul unabhängig von der Szenenauswertung bleibt»*. Diese Begründung trug nicht
+#: mehr, seit das Modul `kosmo_szene` für das Kennungsmuster ohnehin einführt — und sie
+#: war dieselbe Doppelung wie beim Muster darüber (Befund 22.09.2026): Zieht der fremde
+#: Vertrag auf `/v2`, wird die Kennung dort geändert, wo die Bestellung geprüft wird, und
+#: eine Kopie hier bestellte weiter nach `/v1`. Wie beim Muster gilt: kein gleichlautender
+#: zweiter Wert, sondern der eine.
+SCHEMA_RENDER_SCENE = kosmo_szene.SCHEMA_SZENE
 
 #: Umgebungsvariable, unter der das Ökosystem sein Auftragsverzeichnis führt.
 FREMDES_JOB_VERZEICHNIS_ENV = "KOSMOVIS_RENDER_JOBS_DIR"

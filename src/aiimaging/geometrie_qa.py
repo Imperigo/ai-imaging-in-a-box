@@ -299,6 +299,42 @@ GEMESSENE_POLARITAET = {
     "depth-anything-v2-small": POLARITAET_DISPARITAET,
 }
 
+#: Um wie viele Zufallsstreuungen ``polaritaet * rho`` unter null liegen muss, bevor die
+#: Meldung «vorne und hinten sind vertauscht» fällt.
+#:
+#: **Der Befund vom 22.09.2026 (auf-20260922-137):** Die Meldung löste bis dahin schon bei
+#: ``polaritaet * rho < 0`` aus, ganz ohne Mindestbetrag. Am Gerät gemessen: ρ = +0,037
+#: über 848 Punkte bei Polarität −1 — und die Kette meldete «vertauscht». Die
+#: Zufallsstreuung einer Rangkorrelation ohne jeden Zusammenhang liegt bei etwa
+#: ``1/sqrt(n-1)``, dort also bei 0,034. +0,037 ist von null nicht zu unterscheiden; das
+#: heisst «kein Zusammenhang», nicht «umgekehrt».
+#:
+#: **Warum 2 Streuungen:** Unter «kein Zusammenhang» liegt ρ in rund 2,3 % der Fälle
+#: zufällig mehr als zwei Streuungen unter null (einseitig). Erst darunter ist eine
+#: Umkehrung eine Feststellung und keine Rauschlesung. Die Grenze wächst mit kleinem
+#: ``n`` — bei 848 Punkten liegt sie bei 0,069, bei 32 Punkten bei 0,36; unter fünf Punkten
+#: übersteigt sie 1, und dann ist die Richtung gar nicht bestimmbar. Das ist gewollt.
+#:
+#: **Was diese Zahl NICHT tut:** Sie ändert kein Urteil. Der Score schneidet jeden Wert
+#: unter null ohnehin auf 0 ab (``max(0, ·)``), und ``gerichtet`` im Maskenweg bleibt
+#: unverändert. Sie entscheidet allein, welcher Hinweis in ``warnungen`` steht.
+RICHTUNG_MIN_STREUUNGEN = 2.0
+
+
+def richtungsgrenze(n: int) -> float:
+    """Ab welchem Betrag ein gerichtetes ρ über ``n`` Punkte eine Richtung trägt.
+
+    ``RICHTUNG_MIN_STREUUNGEN / sqrt(n-1)`` — die Zufallsstreuung einer Rangkorrelation
+    ohne Zusammenhang, mal die Zahl der verlangten Streuungen. Warum, steht bei
+    :data:`RICHTUNG_MIN_STREUUNGEN` (Befund 22.09.2026).
+
+    Unter zwei Punkten gibt es keine Rangkorrelation; dann ist die Grenze unendlich, und
+    keine Richtung gilt als bestimmt.
+    """
+    if n < 2:
+        return math.inf
+    return RICHTUNG_MIN_STREUUNGEN / math.sqrt(n - 1)
+
 #: Kurzform des Rechenwegs, wandert in jedes Ergebnis. Wer später eine Zahl in der Arbeit
 #: wiederfindet, soll ihr ansehen, wie sie entstanden ist — und an welcher Fassung.
 METHODE = "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1"
@@ -789,13 +825,32 @@ def geometrie_score(soll: Sequence[float], ist: Sequence[float],
                 f"— vorne und hinten sind vertauscht. Ohne gemessene Polarität kann die "
                 f"Metrik diese beiden Fälle nicht trennen."
             )
-    elif rho is not None and polaritaet * rho < 0.0:
+    # «Vertauscht» erst DEUTLICH unter null — Befund 22.09.2026 (auf-20260922-137): ρ =
+    # +0,037 über 848 Punkte bei Polarität −1 ergab bis dahin «vertauscht», obwohl es von
+    # null nicht zu unterscheiden war. Dazwischen steht die dritte Antwort. Am Score
+    # ändert das nichts: max(0, ·) schneidet beide Fälle gleich ab.
+    elif rho is not None and polaritaet * rho <= -richtungsgrenze(n_gemeinsam):
         warnungen.append(
             f"Rangkorrelation zeigt in die falsche Richtung ({rho:+.3f} bei Polarität "
-            f"{polaritaet:+d}): Die Ist-Karte ordnet die Tiefe umgekehrt. Weil die "
+            f"{polaritaet:+d}, über {n_gemeinsam} Punkte): Die Ist-Karte ordnet die Tiefe "
+            f"umgekehrt, und zwar deutlicher, als der Zufall es erklärt (Grenze "
+            f"{-richtungsgrenze(n_gemeinsam):+.3f}). Weil die "
             f"Polarität GEMESSEN ist, ist das kein Konventionsbefund mehr, sondern ein "
             f"Geometriebefund — vorne und hinten sind vertauscht. Der Score ist auf 0 "
             f"abgeschnitten."
+        )
+    elif rho is not None and polaritaet * rho < 0.0:
+        warnungen.append(
+            f"Kein messbarer Zusammenhang (rho ≈ 0), die Richtung ist nicht bestimmbar: "
+            f"gewertet {polaritaet:+d} * spearman = {polaritaet * rho:+.3f} über "
+            f"{n_gemeinsam} Punkte. Die Zufallsstreuung einer Rangkorrelation ohne jeden "
+            f"Zusammenhang liegt dort bei 1/sqrt(n-1) = {1.0 / math.sqrt(n_gemeinsam - 1):.3f}; "
+            f"eine Umkehrung von vorne und hinten wird erst ab "
+            f"{-richtungsgrenze(n_gemeinsam):+.3f} festgestellt. Das ist kein Freispruch "
+            f"und kein Befund über die Richtung, sondern: eine Ordnung der Tiefe ist "
+            f"nicht nachweisbar. "
+            f"Der Score ist wie jeder Wert unter null auf 0 abgeschnitten; am Urteil "
+            f"ändert dieser Hinweis nichts."
         )
     elif rho is not None and rho < 0.0:
         warnungen.append(
@@ -1310,14 +1365,30 @@ def rho_ueber_maske(soll: Sequence[float], ist: Sequence[float],
             "Abhilfe: die Polarität einmal bestimmen (polaritaet_aus_messungen) und "
             "mitgeben."
         )
-    elif rho is not None and polaritaet * rho < 0.0:
+    # Dieselbe Grenze wie im Score-Weg, wo die Gerätemessung des 22.09.2026 auflief
+    # (auf-20260922-137: +0,037 über 848 gemeinsame Punkte). ``gerichtet`` bleibt
+    # unverändert; nur der Hinweis unterscheidet «umgekehrt» von «kein Zusammenhang».
+    elif rho is not None and polaritaet * rho <= -richtungsgrenze(n_maske):
         warnungen.append(
             f"Rangkorrelation zeigt in die falsche Richtung ({rho:+.4f} bei Polarität "
-            f"{polaritaet:+d}): Die Ist-Karte ordnet die Tiefe innerhalb der Maske "
-            f"umgekehrt. Weil die Polarität GEMESSEN ist, ist das kein Konventionsbefund "
+            f"{polaritaet:+d}, über {n_maske} Punkte): Die Ist-Karte ordnet die Tiefe "
+            f"innerhalb der Maske umgekehrt, und zwar deutlicher, als der Zufall es "
+            f"erklärt (Grenze {-richtungsgrenze(n_maske):+.4f}). Weil die Polarität "
+            f"GEMESSEN ist, ist das kein Konventionsbefund "
             f"mehr, sondern ein Geometriebefund — vorne und hinten sind vertauscht. "
             f"Gewertet wird {polaritaet * rho:+.4f}, und der Wert ist NICHT bei 0 "
             f"abgeschnitten: 'genau umgekehrt' ist etwas anderes als 'kein Zusammenhang'."
+        )
+    elif rho is not None and polaritaet * rho < 0.0:
+        warnungen.append(
+            f"Kein messbarer Zusammenhang (rho ≈ 0), die Richtung ist nicht bestimmbar: "
+            f"gewertet {polaritaet:+d} * rho = {polaritaet * rho:+.4f} über {n_maske} "
+            f"Maskenpunkte. Die Zufallsstreuung einer Rangkorrelation ohne jeden "
+            f"Zusammenhang liegt dort bei 1/sqrt(n-1) = {1.0 / math.sqrt(n_maske - 1):.4f}; "
+            f"eine Umkehrung von vorne und hinten wird erst ab "
+            f"{-richtungsgrenze(n_maske):+.4f} festgestellt. Das ist kein Freispruch und "
+            f"kein Befund über die Richtung, sondern: eine Ordnung der Tiefe innerhalb "
+            f"der Maske ist nicht nachweisbar. 'gerichtet' bleibt, wie gemessen."
         )
     elif rho is not None and rho < 0.0:
         warnungen.append(

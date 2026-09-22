@@ -91,3 +91,22 @@ def test_ein_zweiter_lauf_meldet_null_neu_und_laesst_alles_stehen(tmp_path, caps
     assert _vermerk(wurzel) == nach_erstem
     ausgabe = capsys.readouterr().out
     assert "0 Kennung(en) NEU vermerkt, 2 schon vermerkt" in ausgabe, ausgabe
+
+
+def test_eine_kaputte_ablage_endet_im_werkzeug_mit_einem_satz(tmp_path, capsys):
+    """Die Bibliothek weist den Vermerk bei unlesbarer Ablage ab (Runde 6, 22.09.2026).
+
+    Das Werkzeug fing das zuerst nicht ab und endete mit einem Traceback. Verlangt ist
+    ein Satz auf stderr, ein Rückgabewert ungleich 0 — und eine Datei, die danach noch
+    genau so kaputt ist wie vorher, statt still ersetzt.
+    """
+    wurzel = _probeordner(tmp_path)
+    ablage = wurzel / "auftraege" / "zustellung.json"
+    ablage.parent.mkdir(parents=True, exist_ok=True)
+    ablage.write_text('{"auf-20260901-01": "2026-09-01T00:0', encoding="utf-8")
+
+    rc = _cli().main(["ui", "--repo", str(wurzel), "--vermerken"])
+
+    assert rc == 3
+    assert "NICHT geschrieben" in capsys.readouterr().err
+    assert ablage.read_text(encoding="utf-8") == '{"auf-20260901-01": "2026-09-01T00:0'

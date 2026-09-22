@@ -51,9 +51,11 @@ Bildquelle → nachrendern.
    bräuchte einen Auftrag, der ein Bild ohne Geometrie annimmt.
 2. **Ob das Ausgangsbild beim Modell ankommt, hängt an der Pipeline.** Hat sie keinen
    eigenen Steuereingang, bekommt die Tiefenkarte den einen Bildeingang und das
-   Ausgangsbild fällt weg. Für ``qwen-image-edit-2511`` ist das am Gerät gemessen
-   (``auf-20260818-09``); für alle anderen ist es **nicht gemessen**. Siehe
-   :func:`bildeingang_lage`.
+   Ausgangsbild fällt weg. Am Gerät gemessen ist das für ``qwen-image-edit-2511``
+   (``auf-20260818-09``) und für den **Vorgabe-Backbone** ``z-image-turbo``
+   (``auf-20260919-123``, bestätigt ``auf-20260922-137``) — bei beiden kommt es **nicht**
+   an. Für alle anderen ist es nicht gemessen. Die Auskunft steht seit dem 22.09.2026 am
+   Registereintrag (``bildeingang_traegt``); siehe :func:`bildeingang_lage`.
 3. **Der fremde Vertrag hat kein Feld dafür.** ``kosmo_szene.BEKANNTE_FELDER`` kennt kein
    Eingangsbild, und ein erfundenes Feld wird als unbekannt **abgelehnt**. Der Weg über
    KosmoOrbit existiert also nicht; aus Python heraus existiert er (Regel 4).
@@ -511,6 +513,21 @@ def baue_kette(
             ``tiefenschaetzer.qa_gegen_soll``. Der Schätzername gehört in die Parameter
             und damit in den Hash: Ein Urteil, das mit einem anderen Schätzer entstanden
             ist, ist ein anderes Urteil.
+        hoehe: Die **Bildhöhe in Bildpunkten** (``--hoehe`` des Runners), nicht die
+            Gebäudehöhe. ``aufloesung`` ist die Breite; ohne ``hoehe`` wird quadratisch
+            gerendert. Das Seitenverhältnis geht in den Bildwinkel und damit in den
+            Kameraabstand ein. (Klargestellt am 22.09.2026: Der eigene Auftrag
+            ``auf-127`` hatte die Angabe als Gebäudehöhe erklärt — hier stand bis dahin
+            nichts, woran das aufgefallen wäre.)
+        kamera: Richtungskürzel aus ``kameras`` (``"s"``, ``"sSE"``, …); der Standpunkt
+            wird im Runner aus der Hüllbox gerechnet. **Nicht zusammen mit** ``auge``,
+            ``blick_auf`` oder ``innenraum`` — der Lauf wird dann abgewiesen, statt dass
+            eine der beiden Quellen still wegfällt (Befund 22.09.2026).
+        deckungsgrad: Wieviel der Bildbreite das Bauwerk füllen soll. **Wirkt nur mit**
+            ``kamera``: Nur dort rechnet der Runner die Kamera aus ihm. Ohne ``kamera``
+            wird der Lauf abgewiesen — sonst käme dieselbe Tiefenkarte heraus wie ohne
+            die Angabe (Befund 22.09.2026, ``auf-20260922-137``).
+        auge, blick_auf, brennweite: Der Standpunkt von Hand, in Metern im Weltsystem.
         innenraum: Eine Innenaufnahme bestellen: ``{"raum": <Name>, "art": "frontal"``
             ``| "ueber_eck"}``. Der Standpunkt wird beim Lauf aus den Räumen des
             Geometrie-Knotens gerechnet (``raumkamera.waehle``), samt der dort gemessenen
@@ -1108,6 +1125,35 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
                           f"{', '.join(von_hand)} gibt ihn vor. Welcher gilt, entscheidet "
                           f"dieses Modul nicht.")}
 
+    # DIESELBE REGEL FUER DAS RICHTUNGSKUERZEL (Befund 22.09.2026, Anlass
+    # auf-20260922-137). `kamera` laesst den Standpunkt aus der Huellbox rechnen, `auge`
+    # und `blick_auf` geben ihn vor, `innenraum` rechnet ihn aus den Raeumen. Stand
+    # `kamera` neben einem davon, fiel es unterwegs still weg: `seams` reicht dann nur
+    # `--auge` weiter, und auch der Runner selbst liesse das Auge vorgehen. Das ist genau
+    # die Vorrangregel, die oben fuer `innenraum` + `auge` abgelehnt ist — und die
+    # falsche Kamera sieht man dem Bild nicht an.
+    vorgegeben = [n for n in ("auge", "blick_auf") if p.get(n) is not None]
+    if p.get("innenraum"):
+        vorgegeben.append("innenraum")
+    if p.get("kamera") is not None and vorgegeben:
+        return {"status": STATUS_FEHLER,
+                "error": (f"Standpunkt zweimal bestellt: `kamera` {p['kamera']!r} rechnet "
+                          f"ihn aus der Huellbox, und {', '.join(vorgegeben)} gibt ihn "
+                          f"vor. Welcher gilt, entscheidet dieses Modul nicht.")}
+
+    # RAHMUNG OHNE DEN WEG, AUF DEM SIE WIRKT (Befund 22.09.2026). Der Runner liest
+    # `deckungsgrad` nur, wenn er die Kamera aus dem Richtungskuerzel rechnet. Ohne
+    # `kamera` — Standpunkt vorgegeben, aus dem Innenraum, oder gar keiner — ist die
+    # Angabe wirkungslos: Zwei Bestellungen mit verschiedenem Deckungsgrad ergaben
+    # dieselbe Tiefenkarte. Eine Bestellung, die angenommen und nicht ausgefuehrt wird,
+    # ist schlimmer als eine abgelehnte.
+    if p.get("deckungsgrad") is not None and p.get("kamera") is None:
+        return {"status": STATUS_FEHLER,
+                "error": (f"Rahmung bestellt, aber kein Kameraweg, auf dem sie wirkt: "
+                          f"`deckungsgrad` {p['deckungsgrad']!r} wirkt nur zusammen mit "
+                          f"`kamera` (Richtungskuerzel, Standpunkt aus der Huellbox "
+                          f"gerechnet). Ohne `kamera` wuerde er still uebergangen.")}
+
     auge = p.get("auge")
     blick_auf = p.get("blick_auf")
     brennweite = p.get("brennweite")
@@ -1362,8 +1408,10 @@ def nachrender_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
 
     ``bildeingang_lage`` wird mitgemeldet, nicht geprüft: Ob das Ausgangsbild beim Modell
     **ankommt**, entscheidet die geladene Pipeline (siehe die Funktion). Ein Riegel wäre
-    hier falsch — wir wüssten ihn nur für einen einzigen Backbone zu setzen, und ein
-    Riegel auf ungemessener Grundlage sperrt irgendwann das Richtige.
+    hier nicht unsere Entscheidung: Gemessen ist der Bildeingang für zwei Backbones, und
+    auf beiden — auch auf dem Vorgabe-Backbone — kommt das Ausgangsbild **nicht** an.
+    Ob der Nachrender dort gesperrt oder umgeleitet wird, ist eine Owner-Frage
+    (Sitzung 66); bis dahin meldet der Knoten es ehrlich und rechnet trotzdem.
     """
     def fuehre_nachrender(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
         if len(eingaben) < 2:
@@ -1442,16 +1490,19 @@ def bildeingang_lage(backbone_name: str) -> dict:
     Returns:
         ``{backbone, konditionierung, traegt, grund, beleg}``.
 
-        ``traegt`` ist ``False`` oder ``None``. **``None`` heisst NICHT GEMESSEN** —
-        weder bestanden noch durchgefallen. ``True`` steht hier für **keinen** Backbone,
-        und das ist kein Versehen: Es gäbe erst nach einem Lauf an echten Gewichten etwas
-        zu behaupten, und hier gibt es weder GPU noch Gewichte.
+        ``traegt`` ist ``True``, ``False`` oder ``None`` — so, wie es der Registereintrag
+        in ``backbone.Backbone.bildeingang_traegt`` führt. **``None`` heisst NICHT
+        GEMESSEN** — weder bestanden noch durchgefallen. Ein Urteil steht nur mit der
+        Auftragskennung der Messung in ``beleg``; ohne sie nimmt ``backbone._eintrag``
+        den Eintrag gar nicht an.
 
-    Der einzige gemessene Fall ist ``qwen-image-edit-2511``: ``auf-20260818-09`` hat am
-    Gerät belegt, dass ``QwenImageEditPlusPipeline`` weder ``control_image`` noch
-    ``strength`` kennt (siehe ``backbone.py``, Eintrag qwen). Dort fällt das Ausgangsbild
-    nachweislich weg — ausgerechnet auf dem Backbone, dessen Konditionierungsart
-    «integriertes Edit» heisst.
+    **Die Auskunft steht am Eintrag, nicht hier** (Befund 22.09.2026). Bis dahin fragte
+    diese Funktion den Namen ``qwen-image-edit-2511`` ab und kannte sonst nichts — und
+    meldete darum für den VORGABE-Backbone ``z-image-turbo`` «NICHT GEMESSEN», obwohl
+    ``auf-20260919-123`` (sieben Läufe, eine sha256) und ``auf-20260922-137`` V5
+    (``modus_abweichung`` True) es gemessen hatten. Gemessen ist heute: auf beiden fällt
+    das Ausgangsbild weg — auf qwen, weil die Tiefenkarte den einen Bildeingang bekommt,
+    auf z-image, weil die Pipeline gar keinen hat.
     """
     try:
         eintrag = backbone.hole(backbone_name)
@@ -1460,14 +1511,14 @@ def bildeingang_lage(backbone_name: str) -> dict:
                 "grund": str(fehler),
                 "beleg": "kein Registry-Eintrag — über diesen Namen ist nichts bekannt"}
 
-    if eintrag.name == "qwen-image-edit-2511":
+    # `is not None` und nicht Wahrheitswert: False ist ein gemessenes Urteil und darf
+    # nicht in den Zweig «nicht gemessen» fallen.
+    if eintrag.bildeingang_traegt is not None:
         return {
             "backbone": eintrag.name, "konditionierung": eintrag.konditionierung,
-            "traegt": False,
-            "grund": ("Diese Pipeline hat genau einen Bildeingang, und den bekommt die "
-                      "Tiefenkarte. Das Ausgangsbild wird überschrieben — das "
-                      "Hineingezeichnete erreicht das Modell nicht."),
-            "beleg": "auf-20260818-09, am Gerät gemessen (siehe backbone.py, Eintrag qwen)",
+            "traegt": eintrag.bildeingang_traegt,
+            "grund": eintrag.bildeingang_grund or "gemessen; ein Grund ist nicht eingetragen",
+            "beleg": eintrag.bildeingang_beleg,
         }
 
     if eintrag.konditionierung == backbone.KOND_INTEGRIERTES_EDIT:

@@ -1280,8 +1280,16 @@ def test_der_bericht_nennt_den_benutzten_deckungsgrad(lauf):
 
     Der Rahmungsriegel diesseits der Grenze rechnete darum mit der Konstanten der
     Bibliothek, gleichgültig womit dieser Lauf gestellt worden war.
+
+    **Angepasst am 22.09.2026:** Dieser Lauf hat KEINE Kamera bestellt (Weg
+    ``rueckfall``), und dort wird der Deckungsgrad nie gelesen. Hier stand bis dahin
+    ``0.70`` — genau die Rahmung, die nie gestellt wurde (Befund auf-20260922-137,
+    tests/test_deckungsgrad_wirkt_nur_abgeleitet.py). Benutzt wurde keiner, und das
+    steht jetzt so da; der bestellte Fall steht im Test darunter.
     """
-    assert lauf.get("deckungsgrad") == pytest.approx(0.70)
+    assert lauf["kamera"]["weg"] == "rueckfall"
+    assert lauf["deckungsgrad"] is None
+    assert "rueckfall" in lauf["deckungsgrad_wirkungslos"]
 
 
 @ohne_blender

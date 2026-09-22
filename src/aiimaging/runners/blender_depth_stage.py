@@ -281,6 +281,33 @@ def _vorgabe(a, feld: str, aus_der_bibliothek):
     return float(aus_der_bibliothek if wert is None else wert)
 
 
+def _deckungsgrad_befund(a, herkunft: dict) -> dict:
+    """Die beiden Berichtsfelder zum Deckungsgrad — **so, wie er gewirkt hat.**
+
+    **Befund 22.09.2026** (Anlass ``auf-20260922-137``: zwei Deckungsgrade, dieselbe
+    Tiefenkarte, mit einer Attrappe von ``bpy`` am ``main`` nachgefahren): Gelesen wird
+    der Deckungsgrad nur auf dem Weg ``abgeleitet`` — dort rechnet ``kameras.kamerasatz``
+    mit ihm den Abstand. Mit ``--auge``/``--blick-auf`` (``vorgegeben``) und ohne Kamera
+    (``rueckfall``) greift er nirgends. Der Bericht schrieb ihn trotzdem auf jedem Weg
+    hinein, und wer ihn las, bekam eine Rahmung gemeldet, die nie gestellt wurde.
+
+    Returns:
+        ``{"deckungsgrad": ..., "deckungsgrad_wirkungslos": ...}``. Auf dem Weg
+        ``abgeleitet`` die gerechnete Zahl und ``None`` (es gibt keinen Grund zu melden);
+        sonst ``None`` — **nicht gerahmt**, weder mit der Vorgabe noch mit der Bestellung
+        — und ein Satz, warum. Beide Felder stehen immer da.
+    """
+    if herkunft.get("weg") == "abgeleitet":
+        return {"deckungsgrad": herkunft["deckungsgrad"], "deckungsgrad_wirkungslos": None}
+    bestellt = getattr(a, "deckungsgrad", None) if a is not None else None
+    grund = (f"Die Kamera kam auf dem Weg {herkunft.get('weg')!r} zustande. Der "
+             f"Deckungsgrad wirkt nur auf dem Weg 'abgeleitet' (Kamera aus der Huellbox "
+             f"gerechnet); hier hat er nichts gerahmt. ")
+    grund += (f"Bestellt war {float(bestellt)} — die Bestellung ist an diesem Bild "
+              f"wirkungslos." if bestellt is not None else "Bestellt war keiner.")
+    return {"deckungsgrad": None, "deckungsgrad_wirkungslos": grund}
+
+
 def _kameras_modul():
     """``aiimaging.kameras`` von hier aus erreichbar machen — oder ``None``.
 
@@ -712,12 +739,18 @@ def _kamera_setzen(lo, hi, a=None):
         else:
             if brennweite is None:
                 brennweite = kameras.BRENNWEITE_MM
+            # DIE EINZIGE STELLE, AN DER DER DECKUNGSGRAD AUF DIE KAMERA WIRKT — und
+            # darum die einzige, von der der Bericht ihn als gewirkt uebernimmt
+            # (`_deckungsgrad_befund` liest ihn sonst nur, um den Grund zu nennen).
+            # Befund 22.09.2026 (auf-20260922-137, zwei Deckungsgrade, dieselbe
+            # Tiefenkarte): Der Bericht schrieb ihn bis dahin auf JEDEM Weg hinein.
+            deckungsgrad = _vorgabe(a, "deckungsgrad", kameras.DECKUNGSGRAD)
             satz = kameras.kamerasatz(
                 [list(lo), list(hi)], kuerzel=[a.kamera],
                 brennweite_mm=brennweite,
                 bias_grad=float(getattr(a, "bias", 35.0)),
                 augenhoehe_m=float(getattr(a, "augenhoehe", 1.70)),
-                deckungsgrad=_vorgabe(a, "deckungsgrad", kameras.DECKUNGSGRAD),
+                deckungsgrad=deckungsgrad,
                 gelaende_z=getattr(a, "gelaende_z", None),
                 # Das TATSÄCHLICHE Seitenverhältnis dieses Laufs, nicht eine Annahme.
                 # Bis zum 19.08.2026 stand hier fest 1.0 mit dem Kommentar „der Runner
@@ -754,6 +787,9 @@ def _kamera_setzen(lo, hi, a=None):
                 shift_y = k["shift_y"]
             herkunft = {
                 "weg": "abgeleitet", "kuerzel": k["kuerzel"],
+                # Der Deckungsgrad, mit dem DIESE Kamera gerechnet wurde. Er steht nur
+                # auf diesem Weg da, weil er nur hier gewirkt hat.
+                "deckungsgrad": deckungsgrad,
                 "azimut_grad": k["azimut_grad"],
                 "modus": k["modus"],
                 "neigung_grad": k["neigung_grad"],
@@ -1583,7 +1619,15 @@ def main() -> int:
         # womit dieser Lauf wirklich gestellt worden war. Ein Vergleichslauf bei 0.55
         # gegen 0.70 (auf-20260825-41) haette ein Urteil bekommen, das ueber den anderen
         # Lauf spricht.
-        "deckungsgrad": float(_vorgabe(a, "deckungsgrad", _kameras_modul().DECKUNGSGRAD)),
+        #
+        # UND NUR, WO ER GEWIRKT HAT (Befund 22.09.2026): Auf den Wegen `vorgegeben`
+        # und `rueckfall` wird er nie gelesen, und bis dahin stand er trotzdem hier —
+        # zwei Bestellungen mit 0.55 und 0.70 ergaben dieselbe Tiefenkarte und zwei
+        # verschiedene Zahlen im Bericht. Dort steht jetzt `None` (NICHT GERAHMT) und
+        # daneben `deckungsgrad_wirkungslos` mit dem Grund. Nebenbei faellt damit der
+        # Absturz weg, den `_kameras_modul().DECKUNGSGRAD` auf dem Rueckfall ohne
+        # erreichbare Bibliothek ausgeloest haette.
+        **_deckungsgrad_befund(a, kamera_herkunft),
         "n_meshes": sum(1 for o in bpy.data.objects if o.type == "MESH"),
         "aufloesung": a.aufloesung,
         "hoehe": a.hoehe or a.aufloesung,

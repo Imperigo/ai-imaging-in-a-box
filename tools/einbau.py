@@ -204,7 +204,15 @@ def _zeilen(bericht: dict, nur: str | None) -> list[str]:
             alter = f"aeltester seit {max(bekannt)} Tagen"
         aus.append(f"WARTEN AUF EINE ANTWORT, DIE DA IST: {len(wartend)} Posten — "
                    f"{alter}. Ansehen, nicht falsch:")
-        for w in sorted(wartend, key=lambda x: -(x["seit_tagen"] or 0)):
+        # UNBEKANNTES ALTER ZUERST (Befund 22.09.2026). Hier stand
+        # `key=lambda x: -(x["seit_tagen"] or 0)` — dasselbe `or 0` wie oben, nur in der
+        # Reihenfolge: Ein Posten ohne Antwortdatum sortierte als «0 Tage» ganz nach
+        # unten, unter den juengsten, obwohl er der aelteste sein kann. Die Liste liest
+        # sich von oben nach dringend; wer nicht weiss, wie alt etwas ist, stellt es
+        # darum nach oben und nicht dorthin, wo «kann warten» steht. Darunter die
+        # bekannten, aeltester zuerst.
+        for w in sorted(wartend, key=lambda x: (x["seit_tagen"] is not None,
+                                                -(x["seit_tagen"] or 0))):
             tage = f"{w['seit_tagen']}d" if w["seit_tagen"] is not None else "  ?"
             aus.append(f"      {w['kennung']:<5}{tage:>4}  {w['zustand'][:28]:<30}"
                        f"{', '.join(w['auftraege'])}")

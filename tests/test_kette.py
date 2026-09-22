@@ -1531,29 +1531,39 @@ def test_jede_bestellte_angabe_kommt_beim_runner_auch_an(tmp_path, monkeypatch):
 
     monkeypatch.setattr(_seams, "glb_zu_multipass", naht)
 
-    bestellung = {
-        "kamera": "sued", "kamera_modus": "shift", "kamera_huellbox": BBOX_HAUS,
-        "sonne": {"azimut": 250, "hoehe": 8}, "gelaende_z": 1.5, "hoehe": 12.0,
-        "deckungsgrad": 0.7, "augenhoehe": 1.6, "bias_grad": 2.0,
+    # ZWEI BESTELLUNGEN STATT EINER (angepasst am 22.09.2026). Bis dahin stand hier
+    # EINE, die `kamera` und `auge` zugleich setzte — und genau diese Mischung verschluckte
+    # `seams` still (nur `--auge` ging weiter). Seither wird sie abgewiesen
+    # (tests/test_deckungsgrad_wirkt_nur_abgeleitet.py); die Probe hier prueft darum jeden
+    # Kameraweg fuer sich.
+    gemeinsam = {
+        "sonne": {"azimut": 250, "hoehe": 8}, "gelaende_z": 1.5, "hoehe": 512,
         "stillstand_frist_s": 99.0, "multipass_timeout": 123.0,
-        "auge": [1.0, 2.0, 3.0], "blick_auf": [0.0, 0.0, 0.0], "brennweite": 24.0,
     }
-    graph = kette.baue_kette(glb_path=str(tmp_path / "m.glb"), up_axis="Y",
-                             prompt="Haus", bbox=BBOX_HAUS, **bestellung)
-    kette.AUSFUEHRER[ART_MULTIPASS](
-        knoten=graph.knoten[KNOTEN_MULTIPASS],
-        eingaben=[{"glb_path": str(tmp_path / "m.glb"), "up_axis": "Y"}],
-        out_dir=tmp_path)
-
+    bestellungen = [
+        dict(gemeinsam, kamera="sued", kamera_modus="shift", kamera_huellbox=BBOX_HAUS,
+             deckungsgrad=0.7, augenhoehe=1.6, bias_grad=2.0),
+        dict(gemeinsam, auge=[1.0, 2.0, 3.0], blick_auf=[0.0, 0.0, 0.0], brennweite=24.0),
+    ]
     fehlend = []
-    for name, wert in bestellung.items():
-        # Drueben heisst die Frist `timeout` — der einzige Name, der sich unterwegs
-        # aendert, und er ist bei `baue_kette` begruendet.
-        drueben = "timeout" if name == "multipass_timeout" else name
-        if drueben not in angekommen:
-            fehlend.append(f"{name} kam gar nicht an")
-        elif angekommen[drueben] != wert:
-            fehlend.append(f"{name}: bestellt {wert!r}, angekommen {angekommen[drueben]!r}")
+    for bestellung in bestellungen:
+        angekommen.clear()
+        graph = kette.baue_kette(glb_path=str(tmp_path / "m.glb"), up_axis="Y",
+                                 prompt="Haus", bbox=BBOX_HAUS, **bestellung)
+        kette.AUSFUEHRER[ART_MULTIPASS](
+            knoten=graph.knoten[KNOTEN_MULTIPASS],
+            eingaben=[{"glb_path": str(tmp_path / "m.glb"), "up_axis": "Y"}],
+            out_dir=tmp_path)
+
+        for name, wert in bestellung.items():
+            # Drueben heisst die Frist `timeout` — der einzige Name, der sich unterwegs
+            # aendert, und er ist bei `baue_kette` begruendet.
+            drueben = "timeout" if name == "multipass_timeout" else name
+            if drueben not in angekommen:
+                fehlend.append(f"{name} kam gar nicht an")
+            elif angekommen[drueben] != wert:
+                fehlend.append(
+                    f"{name}: bestellt {wert!r}, angekommen {angekommen[drueben]!r}")
 
     assert not fehlend, (
         "Bestellt und nicht ausgeliefert:\n  " + "\n  ".join(fehlend) +

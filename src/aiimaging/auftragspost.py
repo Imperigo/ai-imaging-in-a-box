@@ -366,18 +366,50 @@ ZUSTELLUNG_NOETIG = (_auftrag.WORKER_CLOUD, _auftrag.WORKER_UI)
 ZUSTELLUNG_DATEI = "auftraege/zustellung.json"
 
 
-def _zustellvermerk(repo_wurzel) -> dict:
+def _zustellvermerk(repo_wurzel, *, zum_schreiben: bool = False) -> dict:
+    """Die Ablage :data:`ZUSTELLUNG_DATEI` lesen.
+
+    Zwei Leser, zwei Auslegungen einer unlesbaren Datei — und der Unterschied ist Absicht:
+
+    * **Wer nur auswertet** (:func:`unzugestellt`, :func:`warum_keine_antwort`), liest sie
+      als «nichts zugestellt». Das ist dort die sichere Richtung: eine Auslieferung zu
+      viel statt eines Auftrags, der nie ankommt.
+    * **Wer danach schreibt** (``zum_schreiben=True``, :func:`vermerke_zustellung`),
+      scheitert laut. Befund 22.09.2026: Bis dahin galt die kaputte Datei auch hier als
+      leer, und der naechste Vermerk mit etwas Neuem ERSETZTE sie durch ein Buch, in dem
+      nur noch die neue Kennung stand. Alle alten Zustellzeiten waren weg, still — und
+      die Regel «die erste Zustellung zaehlt» galt danach fuer keinen Auftrag mehr. Eine
+      Lesart, die beim Auswerten nur vorsichtig ist, wird beim Schreiben zur Loeschung.
+
+    Raises:
+        PostError: ``zum_schreiben`` und die Datei ist da, aber nicht lesbar oder kein
+            Woerterbuch.
+    """
     pfad = Path(repo_wurzel) / ZUSTELLUNG_DATEI
     if not pfad.is_file():
         return {}
     try:
         gelesen = json.loads(pfad.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        # EIN KAPUTTER VERMERK HEISST «NICHTS ZUGESTELLT», nicht «alles zugestellt».
-        # Die strengere Auslegung ist hier die sichere: Sie führt zu einer Auslieferung
-        # zu viel, die andere zu einem Auftrag, der nie ankommt.
+    except (OSError, ValueError) as fehler:
+        if zum_schreiben:
+            raise PostError(
+                f"{ZUSTELLUNG_DATEI} ist da und nicht lesbar ({fehler}). Vermerkt wird "
+                f"NICHT: Die Datei wuerde sonst durch ein Buch ersetzt, in dem nur die "
+                f"neuen Kennungen stehen, und alle alten Zustellzeiten waeren still weg. "
+                f"Bitte die Datei von Hand in Ordnung bringen (git zeigt den letzten "
+                f"lesbaren Stand) und dann erneut vermerken.") from fehler
+        # EIN KAPUTTER VERMERK HEISST BEIM AUSWERTEN «NICHTS ZUGESTELLT», nicht «alles
+        # zugestellt». Die strengere Auslegung ist hier die sichere: Sie führt zu einer
+        # Auslieferung zu viel, die andere zu einem Auftrag, der nie ankommt.
         return {}
-    return gelesen if isinstance(gelesen, dict) else {}
+    if not isinstance(gelesen, dict):
+        if zum_schreiben:
+            raise PostError(
+                f"{ZUSTELLUNG_DATEI} ist nicht lesbar als Zustellbuch: Sie traegt kein "
+                f"Woerterbuch, sondern {type(gelesen).__name__}. Vermerkt wird NICHT — "
+                f"sonst ersetzte der Vermerk die Datei, siehe oben.")
+        return {}
+    return gelesen
 
 
 def vermerke_zustellung(repo_wurzel, kennungen, *, wann: str | None = None) -> int:
@@ -450,7 +482,10 @@ def vermerke_zustellung(repo_wurzel, kennungen, *, wann: str | None = None) -> i
         raise PostError(
             f"«{kennungen}» ist eine einzelne Kennung und keine Folge. Eine Zeichenkette "
             f"würde Buchstabe für Buchstabe vermerkt — bitte [{kennungen!r}] übergeben.")
-    vermerk = _zustellvermerk(repo_wurzel)
+    # STRENG GELESEN, weil gleich geschrieben wird (Befund 22.09.2026, siehe
+    # `_zustellvermerk`): Eine kaputte Datei als leer zu lesen, hiesse hier, sie mit den
+    # neuen Kennungen allein zu UEBERSCHREIBEN.
+    vermerk = _zustellvermerk(repo_wurzel, zum_schreiben=True)
     zeit = wann or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     neu = 0
     for kennung in kennungen:
@@ -463,10 +498,12 @@ def vermerke_zustellung(repo_wurzel, kennungen, *, wann: str | None = None) -> i
         vermerk[schluessel] = zeit
         neu += 1
     if neu:
-        pfad = Path(repo_wurzel) / ZUSTELLUNG_DATEI
-        pfad.parent.mkdir(parents=True, exist_ok=True)
-        pfad.write_text(json.dumps(vermerk, indent=2, ensure_ascii=False,
-                                   sort_keys=True) + "\n", encoding="utf-8")
+        # IN EINEM ZUG ERSETZT, seit dem 22.09.2026. Seit eine unlesbare Datei den
+        # naechsten Vermerk laut abweist, waere ein halb geschriebener Stand kein
+        # Schoenheitsfehler mehr, sondern eine Sperre fuer jeden weiteren Postlauf —
+        # dieselbe Ueberlegung wie bei `gesehen.json`. Das Format bleibt Zeichen fuer
+        # Zeichen dasselbe.
+        _schreibe_atomar(Path(repo_wurzel) / ZUSTELLUNG_DATEI, vermerk)
     return neu
 
 
@@ -493,12 +530,14 @@ SELBST = "kern"
 def _schreibe_atomar(pfad: Path, daten: dict) -> Path:
     """Die Ablage in einem Zug ersetzen — **nie halb beschrieben zurücklassen**.
 
-    Warum hier strenger als beim Zustellvermerk: Eine unlesbare ``gesehen.json`` lässt
-    :func:`gesehen_vermerke` absichtlich hart fehlschlagen. Damit wäre eine abgebrochene
-    Schreiboperation kein Schönheitsfehler, sondern ein Repo, in dem die Rückstandsfrage
-    gar nicht mehr beantwortet werden kann. Der Zustellvermerk verkraftet eine zerrissene
-    Datei (er liest sie als «nichts zugestellt»); diese hier nicht — also darf sie gar
-    nicht erst entstehen.
+    Warum: Eine unlesbare ``gesehen.json`` lässt :func:`gesehen_vermerke` absichtlich
+    hart fehlschlagen. Damit wäre eine abgebrochene Schreiboperation kein
+    Schönheitsfehler, sondern ein Repo, in dem die Rückstandsfrage gar nicht mehr
+    beantwortet werden kann — also darf sie gar nicht erst entstehen.
+
+    Seit dem 22.09.2026 schreibt auch :func:`vermerke_zustellung` hierüber: Eine
+    unlesbare ``zustellung.json`` weist seither jeden weiteren Vermerk laut ab (siehe
+    :func:`_zustellvermerk`), und eine zerrissene Datei wäre damit dort dieselbe Sperre.
     """
     pfad.parent.mkdir(parents=True, exist_ok=True)
     text = json.dumps(daten, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
@@ -531,9 +570,11 @@ def gesehen_vermerke(repo_wurzel) -> dict:
     Raises:
         PostError: Die Datei ist da und nicht lesbar.
 
-    **Warum das hier hart fehlschlägt und beim Zustellvermerk nicht.** Der Zustellvermerk
-    liest eine kaputte Datei als «nichts zugestellt»: Die strengere Auslegung kostet dort
-    eine Auslieferung zu viel, die mildere einen Auftrag, der nie ankommt. Hier gibt es
+    **Warum das hier schon beim Lesen hart fehlschlägt und beim Zustellvermerk erst beim
+    Schreiben.** Die Auswertung des Zustellvermerks liest eine kaputte Datei als «nichts
+    zugestellt»: Die strengere Auslegung kostet dort eine Auslieferung zu viel, die
+    mildere einen Auftrag, der nie ankommt (wer dort VERMERKT, scheitert seit dem
+    22.09.2026 laut — siehe :func:`_zustellvermerk`). Hier gibt es
     diese sichere Richtung nicht. Ein leeres Ergebnis hiesse «niemand hat hingesehen» und
     würde eine bestätigte Tatsache still in eine Vermutung zurückverwandeln — ein
     unlesbares Buch heisst weder «nichts gesehen» noch «alles gesehen». *Die dritte

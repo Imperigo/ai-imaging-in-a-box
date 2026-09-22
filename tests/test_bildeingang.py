@@ -276,8 +276,12 @@ def test_bildeingang_lage_sagt_nicht_gemessen_statt_ja():
 
     Für keinen Backbone steht hier ``True``. Das ist Absicht: Es gäbe erst nach einem
     Lauf an echten Gewichten etwas zu behaupten, und hier gibt es keine.
+
+    Angepasst 22.09.2026: ``z-image-turbo`` stand hier und hielt damit den alten Stand
+    fest — gemessen ist er seit ``auf-20260919-123`` (trägt NICHT). Sein Urteil prüft
+    ``tests/test_bildeingang_register.py``; hier bleiben die ungemessenen Einträge.
     """
-    for name in ("z-image-turbo", "flux2-klein-4b"):
+    for name in ("flux2-klein-4b", "qwen-image-2512", "sdxl-juggernaut"):
         lage = kette.bildeingang_lage(name)
         assert lage["traegt"] is None, name
         assert "NICHT GEMESSEN" in lage["beleg"], name

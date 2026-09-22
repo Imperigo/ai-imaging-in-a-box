@@ -314,6 +314,33 @@ class Backbone:
     #: (`auf-20260818-09`), nur an einem anderen Argument.
     fuehrung: float | None = None
 
+    #: Kommt ein **Ausgangsbild** (``beauty_png``, das Hineingezeichnete) auf diesem
+    #: Backbone beim Modell an? Gelesen von :func:`aiimaging.kette.bildeingang_lage`, und
+    #: über sie vom Nachrender-Knoten mitgemeldet.
+    #:
+    #: **Die dritte Antwort:** ``None`` heisst NICHT GEMESSEN — weder «trägt» noch «trägt
+    #: nicht». ``False`` und ``True`` stehen nur mit einer Messung am Gerät, und die
+    #: Auftragskennung dazu steht in :attr:`bildeingang_beleg`. ``_eintrag`` weist einen
+    #: Eintrag ab, der ein Urteil ohne Beleg führt.
+    #:
+    #: **BEFUND 22.09.2026:** Bis dahin stand diese Auskunft nicht hier, sondern als
+    #: Namensabfrage in ``kette.bildeingang_lage`` — und die kannte nur
+    #: ``qwen-image-edit-2511``. Für den VORGABE-Backbone meldete sie darum «NICHT
+    #: GEMESSEN», obwohl ``auf-20260919-123`` und ``auf-20260922-137`` es gemessen hatten.
+    #: Eine Messung, die an einem Namen in einer fremden Funktion hängt, wird beim
+    #: nächsten Eintrag vergessen; ein Feld am Eintrag nicht. Darum steht sie hier, wie
+    #: ``tiefen_polaritaet`` und ``controlnet_familie``.
+    bildeingang_traegt: bool | None = None
+
+    #: Die Auftragskennung(en) der Messung zu :attr:`bildeingang_traegt`. ``None`` genau
+    #: dann, wenn nicht gemessen ist.
+    bildeingang_beleg: str | None = None
+
+    #: Ein Satz, WARUM das Ausgangsbild ankommt oder wegfällt — das, was die Messung am
+    #: Gerät über die Pipeline gezeigt hat. ``None`` bei ungemessenen Einträgen; dann sagt
+    #: ``bildeingang_lage`` den Grund aus der Konditionierungsart.
+    bildeingang_grund: str | None = None
+
 
 def _vram_schaetzung(parameter_b: float) -> float:
     """Grobe VRAM-Schätzung in GB aus der Parameterzahl.
@@ -582,6 +609,18 @@ def _eintrag(backbone: Backbone) -> None:
     if riegel["zulaessig"] is True and riegel["auflagen"]:
         raise BackboneError(f"{backbone.name}: {riegel['auflagen'][0]}")
 
+    # Ein Urteil über den Bildeingang ohne Auftragskennung ist eine Behauptung, und ein
+    # Beleg ohne Urteil ist eine Messung, die niemand liest (Befund 22.09.2026, siehe
+    # `bildeingang_traegt`). Beides kommt nicht in die Tabelle.
+    if ((backbone.bildeingang_traegt is None) != (not backbone.bildeingang_beleg)
+            or (backbone.bildeingang_beleg
+                and not re.search(r"auf-\d{8}-\d+", str(backbone.bildeingang_beleg)))):
+        raise BackboneError(
+            f"{backbone.name}: bildeingang_traegt={backbone.bildeingang_traegt!r} und "
+            f"bildeingang_beleg={backbone.bildeingang_beleg!r} passen nicht zusammen — "
+            f"ein Urteil braucht eine Auftragskennung, und ohne Urteil steht keine."
+        )
+
     BACKBONES[backbone.name] = backbone
 
 
@@ -646,6 +685,20 @@ _eintrag(Backbone(
     # Front-Matter "license: apache-2.0"; das Ursprungsprojekt VideoX-Fun trägt eine
     # Apache-2.0-LICENSE im Volltext. Geprüft 2026-08-18.
     controlnet_lizenz_quelle=QUELLE_MODELLKARTE,
+    # AM GERÄT GEMESSEN (`auf-20260919-123`, HomeStation, 21.09.2026): Sieben Läufe —
+    # fünf denoise-Stufen mit hineingemalter Marke, einer ohne Marke, einer ganz ohne
+    # Bild — tragen EINE sha256. Das Ausgangsbild geht nicht einmal schwach ein.
+    # Bestätigt über den Produktweg in `auf-20260922-137` V5: modus_bestellt='image_edit',
+    # modus_gerechnet='txt2img', modus_abweichung=True. Nachgetragen 22.09.2026 — bis
+    # dahin meldete `kette.bildeingang_lage` hier «NICHT GEMESSEN».
+    bildeingang_traegt=False,
+    bildeingang_beleg="auf-20260919-123 (sieben Läufe, eine sha256); bestätigt in "
+                      "auf-20260922-137 V5 (modus_abweichung=True)",
+    bildeingang_grund=("ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die "
+                       "Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild "
+                       "dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und "
+                       "gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete "
+                       "erreicht das Modell nicht."),
 ))
 
 _eintrag(Backbone(
@@ -688,6 +741,15 @@ _eintrag(Backbone(
     # Wer daraus liest „Qwen kann kein ControlNet", liest falsch. Nachgetragen, damit die
     # Registry nicht eine engere Aussage macht, als die Messung hergibt — der Eintrag
     # `qwen-image-2512` trägt den ControlNet-Weg bereits.
+    #
+    # Der Bildeingang, am Gerät gemessen in derselben Messung (auf-20260818-09): Die
+    # Pipeline hat genau einen Bildeingang, und den bekommt die Tiefenkarte. Stand bis
+    # 22.09.2026 als Namensabfrage in `kette.bildeingang_lage`; jetzt am Eintrag.
+    bildeingang_traegt=False,
+    bildeingang_beleg="auf-20260818-09, am Gerät gemessen",
+    bildeingang_grund=("Diese Pipeline hat genau einen Bildeingang, und den bekommt die "
+                       "Tiefenkarte. Das Ausgangsbild wird überschrieben — das "
+                       "Hineingezeichnete erreicht das Modell nicht."),
 ))
 
 _eintrag(Backbone(

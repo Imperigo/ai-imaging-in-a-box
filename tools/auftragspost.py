@@ -186,11 +186,9 @@ def main(argv: list[str] | None = None) -> int:
         if a.nach:
             for ziel in auftragspost.lege_ab(block, a.nach):
                 print(f"geschrieben: {ziel.name}")
-            _vermerke(block, a.repo)
-            return 0
+            return _vermerke(block, a.repo)
         if a.vermerken:
-            _vermerke(block, a.repo)
-            return 0
+            return _vermerke(block, a.repo)
         print(block[0][1])
         return 0
 
@@ -219,15 +217,13 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         for ziel in auftragspost.lege_ab(blocks, a.nach):
             print(f"geschrieben: {ziel.name}")
-        _vermerke(blocks, a.repo)
-        return 0
+        return _vermerke(blocks, a.repo)
 
     if a.vermerken:
         # NICHTS SCHREIBEN, NUR VERMERKEN. Der Block liegt schon unter
         # `auftraege/bloecke/` und geht ueber git hinaus; hier wird nur nachgezogen, was
         # dort bereits passiert ist.
-        _vermerke(blocks, a.repo)
-        return 0
+        return _vermerke(blocks, a.repo)
 
     for i, (kennung, text) in enumerate(blocks):
         if i:
@@ -454,7 +450,7 @@ def _warum(a) -> int:
     return 0
 
 
-def _vermerke(blocks, repo) -> None:
+def _vermerke(blocks, repo) -> int:
     """Den Zustellvermerk nachziehen — **nur nach dem Schreiben, nie davor**.
 
     Die Reihenfolge ist der ganze Punkt: Ein Vermerk vor dem Schreiben behauptet eine
@@ -464,6 +460,12 @@ def _vermerke(blocks, repo) -> None:
 
     Nur Adressaten aus :data:`aiimaging.auftragspost.ZUSTELLUNG_NOETIG` werden
     vermerkt; `local` liest das Repo selbst und braucht keine Post.
+
+    Returns:
+        0, oder 3, wenn der Vermerk nicht geschrieben werden konnte — etwa weil
+        ``zustellung.json`` unlesbar ist. Dann steht ein Satz auf stderr statt eines
+        Tracebacks (Durchsicht 22.09.2026): Die Bibliothek weist den Vermerk ab, statt
+        die Datei still zu ersetzen, und das Werkzeug sagt es.
     """
     kennungen = []
     for kennung, _text in blocks:
@@ -476,12 +478,17 @@ def _vermerke(blocks, repo) -> None:
         # hatten dabei ihren ersten Zeitpunkt verloren. Die Bibliothek laesst ihn seither
         # stehen; diese Zeile sagt es, damit «0 neu» nicht wie ein Fehlschlag aussieht.
         verschieden = list(dict.fromkeys(kennungen))
-        neu = auftragspost.vermerke_zustellung(repo, verschieden)
+        try:
+            neu = auftragspost.vermerke_zustellung(repo, verschieden)
+        except auftragspost.PostError as fehler:
+            print(f"zustellvermerk NICHT geschrieben: {fehler}", file=sys.stderr)
+            return 3
         schon = len(verschieden) - neu
         print(f"zustellvermerk: {neu} Kennung(en) NEU vermerkt, {schon} schon vermerkt")
         if schon:
             print("  schon vermerkte behalten ihren Zeitpunkt — die erste Zustellung "
                   "zaehlt, ein zweiter Vermerk ueberschreibt sie nicht.")
+    return 0
 
 
 def _lies(wurzel: Path, kennung: str) -> dict | None:
