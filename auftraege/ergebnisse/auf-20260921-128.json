@@ -1,0 +1,150 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260921-128",
+ "status": "ok",
+ "beendet": "2026-09-21T23:05:00Z",
+ "stand": "b8f3f62",
+ "geprueft": "Alle fuenf Rueckgaben beantwortet, ohne einen einzigen neuen Bildlauf. Der Widerspruch loest sich: Es sind ZWEI VERSCHIEDENE BAUWERKE, und der Messweg ist in beiden Blaettern derselbe — das belegt euer eigenes Blatt auf-124, das die Schachtel mitgemessen und dabei auf VIER STELLEN dieselbe Zahl wie auf-92 bekommen hat. Die Zahl haengt am Bildanteil und an der Gliederung, beide gemessen. ABER: die beiden Bedingungen erklaeren die RICHTUNG und einen Teil der Groesse, NICHT den ganzen Abstand. Das steht unten als offener Rest, nicht als geloest.",
+ "kurzantwort": {
+  "v1_zwei_verschiedene_szenen": "JA, und nicht knapp: 6 gegen 142 Bauteile, 72 gegen 1704 Dreiecke, 3,3 m gegen 15,3 m hoch. Kapitel 6 beschreibt mit «12 von 12» die SCHACHTEL.",
+  "v2_derselbe_messweg": "JA — und das steht schon in eurem eigenen Blatt. auf-124 hat die Schachtel mit IHREM Aufbau mitgemessen: geom_iou 0,9771 und rho_maske 0,9157. auf-92 meldet fuer Fall A, seed 0: geom_iou 0,9771 und rho_maske 0,9157. Buchstabengleich auf vier Stellen. Am Messweg liegt es NICHT.",
+  "v3_der_bildanteil": "0,5822 gegen 0,1524 — Faktor 3,82. Nachgemessen und damit bestaetigt: die Tabelle im Kopf von tools/make_test_ifc.py nennt seit dem 09.09.2026 0,5903 und 0,1525. Der Hochbau stimmt auf vier Stellen.",
+  "v4_die_gliederung": "Maskengrenze je Flaeche 0,0300 gegen 0,0974 — Faktor 3,25. Der Hochbau hat je Flaecheneinheit gut dreimal so viel Silhouettenrand.",
+  "v5_urteil": "An der SZENE, nicht am Messweg. Aber Anteil und Gliederung erklaeren den Abstand nicht ganz: Ein gleichmaessiger Randfehler muesste 19 Bildpunkte breit sein, um den Hochbau auf 0,36 zu druecken — und bei genau demselben Fehler stuende die Schachtel bei 0,79 statt bei den gemessenen 0,98.",
+  "die_ursache_hinter_der_ursache": "Die Gelaendeplatte waechst mit der GROESSTEN Ausdehnung, nicht mit dem Grundriss. Der Hochbau ist 15,25 m hoch, also wird seine Platte 2,5 x 15,25 = 38,12 m breit — bei einem Grundriss von nur 12 x 9,5 m. Er steht als kleiner Turm auf einem grossen Feld. Die Konstante GELAENDE_VIELFACHES ist am Quader kalibriert; das steht als Warnung in eurem eigenen Code und ist hier die Ursache des kleinen Anteils."
+ },
+ "befunde": {
+  "v1_die_zwei_szenen": {
+   "gemessen_mit": "tools/make_test_ifc.py <ziel> [--hochbau] --gelaende, danach importeur.importiere() — Zahlen aus dessen Bericht (n_elements, n_triangles, bbox_bauwerk)",
+   "gebaeude": {
+    "bauteile": 6,
+    "dreiecke": 72,
+    "huellbox_mit_platte_m": [
+     20.0,
+     20.0,
+     3.3
+    ],
+    "huellbox_bauwerk_ohne_platte_m": [
+     8.0,
+     5.0,
+     3.25
+    ],
+    "ifc_bytes": 5512
+   },
+   "hochbau": {
+    "bauteile": 142,
+    "dreiecke": 1704,
+    "huellbox_mit_platte_m": [
+     38.12,
+     38.12,
+     15.3
+    ],
+    "huellbox_bauwerk_ohne_platte_m": [
+     12.0,
+     9.5,
+     15.25
+    ],
+    "ifc_bytes": 93159
+   },
+   "urteil": "Zwei grundverschiedene Gegenstaende. Faktor 23,7 bei Bauteilen UND Dreiecken, Faktor 4,6 in der Hoehe. Ein eingeschossiger Flachbau gegen einen fuenfgeschossigen Bau.",
+   "ein_fund_nebenbei": "Die Gelaendeplatte ist ein IFCSLAB, also gebaute Substanz. Sie steht darum in `bbox_bauwerk` DRIN — dieses Feld schliesst nur IfcSite aus. Wer auf diese Box rahmt, rahmt die Platte und nicht das Bauwerk. Mir ist genau das im ersten Anlauf passiert: Geometrieanteil 0,0493 statt 0,5822, und die Reihenfolge der beiden Szenen kehrte sich sogar um. Erst die Rahmung auf die Huellbox OHNE Platte reproduziert eure Tabelle. Das ist eine Falle, die jeden trifft, der diese Zahl nachrechnet."
+  },
+  "v2_derselbe_messweg_zwei_blaetter": {
+   "warum_das_die_frage_beantwortet": "Ihr fragt, ob dieselbe Szene auf beiden Messwegen dasselbe ergibt. Sie tut es — und ihr habt es selbst gemessen, ohne es als Antwort auf diese Frage zu lesen. In auf-124 steht unter «die_kontrolle_die_alles_entscheidet» die Schachtel, gefahren mit dem Aufbau von auf-124.",
+   "auf_92_fall_A_seed_0": {
+    "geom_iou": 0.9771,
+    "rho_maske": 0.9157
+   },
+   "auf_124_kontrolle_schachtel": {
+    "geom_iou": 0.9771,
+    "rho_maske": 0.9157
+   },
+   "urteil": "Identisch auf vier Stellen, in beiden Kennzahlen. Zwei Blaetter, ein Messweg. Es braucht dafuer keinen neuen Lauf — es steht schon da."
+  },
+  "v3_v4_die_zahlen": {
+   "gemessen_mit": "Soll-Tiefenkarte aus Blender ueber seams.glb_zu_multipass(up_axis='Y', 256x160, 8 samples), Kamera sSE aus kameras.kamerasatz() auf die Huellbox OHNE Gelaendeplatte, Deckungsgrad 0,70. Gerendert wird die Szene MIT Platte. Geometrieanteil = Anteil der Bildpunkte mit endlicher Tiefe. Maskengrenze = Zahl der Maskenpunkte mit mindestens einem 4er-Nachbarn ausserhalb.",
+   "gebaeude": {
+    "abstand_m": 14.34,
+    "fuellgrad": 0.6388,
+    "bildpunkte_geometrie": 23847,
+    "geometrieanteil": 0.5822,
+    "maskengrenze_punkte": 715,
+    "grenze_durch_flaeche": 0.03
+   },
+   "hochbau": {
+    "abstand_m": 54.0,
+    "fuellgrad": 0.7,
+    "bildpunkte_geometrie": 6242,
+    "geometrieanteil": 0.1524,
+    "maskengrenze_punkte": 608,
+    "grenze_durch_flaeche": 0.0974
+   },
+   "gegen_eure_tabelle": "make_test_ifc.py nennt 0,5903 (Quader) und 0,1525 (Hochbau). Gemessen 0,5822 und 0,1524. Der Hochbau stimmt auf vier Stellen; die 1,4 Prozent beim Quader gehen auf mein Seitenverhaeltnis 256/160 zurueck. Eure Tabelle traegt."
+  },
+  "der_beweis_ohne_schaetzer": {
+   "warum": "Wenn die Szenengeometrie allein die 0,93 gegen 0,36 erklaert, dann muss schon ein GERATENER Randfehler die beiden Szenen verschieden hart treffen — ohne Bildmodell, ohne Schaetzer, mit reiner Arithmetik auf den Soll-Masken. Das ist die untere Schranke dessen, was jeder Schaetzer mit endlicher Randgenauigkeit anrichtet.",
+   "iou_gegen_die_eigene_maske_verschoben": {
+    "1px": {
+     "gebaeude": 0.9925,
+     "hochbau": 0.9722
+    },
+    "4px": {
+     "gebaeude": 0.9704,
+     "hochbau": 0.8932
+    },
+    "8px": {
+     "gebaeude": 0.9415,
+     "hochbau": 0.7981
+    }
+   },
+   "iou_gegen_die_eigene_maske_verdickt": {
+    "1px": {
+     "gebaeude": 0.9856,
+     "hochbau": 0.9086
+    },
+    "2px": {
+     "gebaeude": 0.9717,
+     "hochbau": 0.8328
+    },
+    "4px": {
+     "gebaeude": 0.9452,
+     "hochbau": 0.7143
+    }
+   },
+   "die_umgekehrte_frage": {
+    "frage": "Welcher Randfehler bringt den Hochbau auf seine 0,3635?",
+    "antwort_px": 19,
+    "hochbau_dort": 0.3549,
+    "schachtel_bei_demselben_fehler": 0.7912,
+    "schachtel_tatsaechlich_gemessen": 0.9771,
+    "was_das_heisst": "19 Bildpunkte sind 7,4 Prozent der Bildbreite — als gleichmaessiger Randfehler unplausibel. Und selbst dann stuende die Schachtel bei 0,79 statt 0,98. EIN REINER RANDFEHLER ERKLAERT DEN ABSTAND NICHT. Die Richtung ja, die Hoehe nicht."
+   }
+  },
+  "was_daraus_folgt_fuer_kapitel_6": {
+   "was_gesichert_ist": "«Das Verfahren trennt 12 von 12» gilt fuer die SCHACHTEL — eine Szene mit 58 Prozent Bildanteil und wenig Silhouettenrand. Das ist keine Kleinigkeit, sondern die Bedingung, unter der der Satz wahr ist.",
+   "was_nicht_gesichert_ist": "Dass er fuer einen gegliederten Bau gilt. Eure eigene Kontrolle in auf-124 zeigt am Hochbau sogar das falsche Vorzeichen: eine FREMDE Form passt mit 0,7110 besser als die eigene mit 0,3635.",
+   "der_ehrliche_satz": "geom_iou ist brauchbar, solange das Bauwerk einen nennenswerten Teil des Bildes fuellt. Ab welchem Anteil genau, ist mit diesen zwei Punkten nicht bestimmbar — dafuer braucht es eine Reihe, und die steht unten als naechster Schritt."
+  },
+  "der_naechste_schritt_falls_ihr_ihn_wollt": {
+   "eine_messung_die_alles_entscheidet": "Denselben Hochbau mit --gelaende-vielfaches=6.0 bauen. Eure Tabelle sagt: Geometrieanteil steigt damit von 0,1525 auf 0,5003, also auf Schachtel-Niveau. Die GLIEDERUNG bleibt dabei unveraendert. Steigt geom_iou dann auf ueber 0,85, ist der Anteil die Bedingung und die Gliederung unschuldig. Bleibt es bei 0,36, ist es die Gliederung — oder etwas Drittes.",
+   "aufwand": "Ein Bildlauf, rund 25 Minuten auf dieser Maschine. Nicht in diesem Auftrag enthalten (ihr habt ausdruecklich keinen neuen Datensatz verlangt) — sagt Bescheid, dann fahre ich ihn.",
+   "was_ich_NICHT_getan_habe": "Keine Schwelle angefasst. Keine neue Kennzahl erfunden. Kein Bilddatensatz gerechnet. Euer Generator im Repo ist unberuehrt — alle vier IFC-Dateien entstanden ausserhalb des Repos."
+  }
+ },
+ "bemerkungen": [
+  "Ein eigener Fehler, benannt statt geglaettet: Mein erster Messanlauf rahmte die Kamera auf `bbox_bauwerk` aus dem Importbericht — und darin steckt die Gelaendeplatte. Ergebnis 0,0493 gegen 0,0742, also nicht nur falsch, sondern in der falschen REIHENFOLGE. Ich haette daraus beinahe den Schluss gezogen, der Hochbau fuelle MEHR Bild als die Schachtel. Gefunden habe ich es, weil eure Tabelle im Code danebenstand und nicht passte.",
+  "Die Antwort auf V3 stand seit dem 09.09.2026 in eurem eigenen Quelltext — in genau der Datei, die dieser Auftrag zum Bauen der Szenen nennt (tools/make_test_ifc.py, Zeilen 55 bis 76). Ich habe sie trotzdem nachgemessen, statt sie zu zitieren.",
+  "Kein Bildmodell geladen, keine GPU benutzt, kein Netz benutzt."
+ ],
+ "umgebung": {
+  "gpu_benutzt": false,
+  "gpu_leistungsgrenze_w": 400,
+  "leerlauf_schwellen_eingehalten": true,
+  "netz_benutzt": false,
+  "dauer_min": 35,
+  "backbone": null,
+  "schaetzer": null,
+  "non_commercial_gewichte_geladen": false
+ },
+ "fehler": null
+}
