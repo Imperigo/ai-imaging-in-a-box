@@ -137,6 +137,7 @@ eine, die nach Vollständigkeit aussieht.
 
 | | |
 |---|---|
+| **[`docs/SOFTWARE_VON_GRUND_AUF.md`](docs/SOFTWARE_VON_GRUND_AUF.md)** | **1 · Zuerst lesen: Wie man eine Software von Grund auf baut** — die Grundkonzepte, ohne technische Tiefe (Anhang B der Arbeit) |
 | [`docs/PLAN.md`](docs/PLAN.md) | Vorgehensplan, Phasen 0–4, **offene Wissensschulden** |
 | [`docs/PLAN_AB_2026-09-01.md`](docs/PLAN_AB_2026-09-01.md) | **Der Plan ab 1.9.2026: Rückstand zuerst** — zwei Wochen nichts Neues bauen |
 | [`docs/LAGEBEURTEILUNG_2026-08-14.md`](docs/LAGEBEURTEILUNG_2026-08-14.md) | Bestandsaufnahme der Bausteine mit Lizenzprüfung |

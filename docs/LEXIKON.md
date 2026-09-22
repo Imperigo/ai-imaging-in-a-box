@@ -4939,6 +4939,42 @@ dem 22.09.2026 auch, ob ein Ausgangsbild bei ihm ankommt — jedes Urteil mit de
 des Auftrags, der es gemessen hat. *Ein Urteil ohne Messung kommt nicht hinein*; die
 Tabelle lädt sonst gar nicht.
 
+**Anforderung** — Was eine Software können soll, festgelegt, bevor gebaut wird. *In diesem Projekt:* sieben Schritte vom Modell zum veränderten Bild, aufgeschrieben in «Produkt — die Schritte».
+
+**Randbedingung** — Was eine Software nie tun darf oder immer einhalten muss, auch wenn ein anderer Weg bequemer wäre. *In diesem Projekt:* die vier Regeln — permissive Lizenzen, Blender nur von aussen, keine echten Projektdaten, der Kern ist eine Bibliothek.
+
+**Erfolgskriterium** — Ein nachprüfbarer Satz, woran man erkennt, dass ein Vorhaben gelungen ist. *In diesem Projekt:* Eine fremde Person öffnet die Software zum ersten Mal und kommt ohne Hilfe zu einem veränderten Bild.
+
+**Kleinste Fassung, die ein Erfolg wäre** — Der kleinste zusammenhängende Umfang, der schon als gelungen gilt; alles darüber ist Zugabe. Er schützt davor, am Ende viel Halbes und nichts Ganzes zu haben (Visbox-Entscheid E4).
+
+**Kippstelle (eines Entscheids)** — Die ausdrücklich genannte Bedingung, unter der ein Entscheid anders ausfiele. Wer widersprechen will, muss nur dort nachsehen und nicht die ganze Begründung lesen.
+
+**Schnittstelle** — Die Stelle, an der zwei Bausteine sich berühren, samt der Festlegung, was hineingeht und was herauskommt. *In diesem Projekt:* die Wege zwischen iPad-App und Rechner, beschrieben im Visbox-Protokoll.
+
+**Blender** — Ein freies 3D-Programm unter der GPL. Visbox rechnet damit aus dem Gebäudemodell Vorschaubild, Tiefenkarte und Materialmaske — und ruft es wegen der Lizenz nur **von aussen** auf, als eigenes Programm (Regel 2).
+
+**Versionsverwaltung** — Ein Werkzeug, das jeden Stand einer Software mit Urheber, Zeit und Begründung festhält, so dass man zu jedem früheren Stand zurückkehren kann. Git ist die Versionsverwaltung dieses Projekts.
+
+**Sitzungsprotokoll** — Die Datei, in der jede Arbeitssitzung ihre Entscheidungen mit Begründung, die korrigierten Fehlannahmen und das Offene festhält. *Was nicht in einer Datei steht, ist weg* — das Gedächtnis einer Sitzung verschwindet mit ihr.
+
+**Die dritte Antwort** — Die Hausregel, dass eine Prüfung neben «bestanden» und «nicht bestanden» auch «nicht gemessen» kennt — und dass daraus nie still «in Ordnung» werden darf. Die förmliche Fassung steht unter «Dreiwertiges Urteil».
+
+**Ersatzwert (Vorgabewert)** — Ein Wert, den ein Programm einsetzt, wenn keiner angegeben ist. Bequem, aber gefährlich: So wird aus «nicht gemessen» unbemerkt eine Messung. *In diesem Projekt mehrfach gefunden* — etwa eine fehlende Kameraneigung, die als «lotrecht» galt.
+
+**Einbau** — Der Schritt, durch den eine gebaute Fähigkeit dort ankommt, wo sie gebraucht wird: am echten Gerät, in der fremden Software, auf dem Weg eines Menschen. *Gebaut ist nicht eingebaut.*
+
+**Produktweg gegen direkten Aufruf** — Der Weg, den ein Mensch wirklich geht (Oberfläche, Mappe, Vertrag), im Unterschied zum direkten Aufruf einer Funktion, dem man alles von Hand hineinreicht. Was auf dem einen Weg geht, kann auf dem anderen nie ankommen — geprüft wird darum auf dem Produktweg.
+
+**Worker (local, cloud, ui)** — Die drei mitarbeitenden Stellen ausserhalb dieses Repos, jede mit anderen Mitteln: die Rechenmaschine zu Hause, der Vertrag von KosmoOrbit, die Oberfläche von KosmoOrbit. Jeder Auftrag nennt genau einen von ihnen.
+
+**HomeStation** — Die Rechenmaschine zu Hause mit Grafikkarte, Blender und echten Modellgewichten (Worker «local»). Sie misst und rechnet, was hier nicht geht, und antwortet über Dateien im Repo.
+
+**Durchsicht (durch einen zweiten Agenten)** — Ein zweiter Agent liest eine Änderung, ohne etwas anzufassen, und urteilt «taugt» oder «taugt nicht», mit Fundstellen. *Eine Zustimmung ohne eigene Fundstelle ist keine Durchsicht.*
+
+**Open Font License (OFL)** — Eine freie Lizenz eigens für Schriften. Sie erlaubt, Schriften mit einer Software mitzuliefern, und verbietet nur den Verkauf der Schrift allein. *In diesem Projekt seit dem 22.09.2026 als einzige ausdrückliche Ausnahme von Regel 1 zugelassen* — nur für Schriften, nicht für Code.
+
+**Tür (Anmeldung der Oberfläche)** — Die Anmeldung mit Kennwort, die die Visbox-Oberfläche schützt, sobald sie im Heimnetz erreichbar ist. Unangemeldet antwortet sie nur mit «nicht angemeldet» — ausser auf dem einen Weg zum Koppeln.
+
 **Erreichbarkeit einer Schwelle (Deckel)** — Die Frage, ob ein Messwert eine Schwelle
 unter den gegebenen Umständen **überhaupt** erreichen kann — unabhängig davon, wie gut das
 Geprüfte ist. Liegt die beste erreichbare Zahl unter der Schwelle, misst die Prüfung nicht
@@ -5472,6 +5508,7 @@ keine Aussage.*
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-22 | Ergaenzt aus dem Grundlagenblatt «Wie man eine Software von Grund auf baut» (Anhang B): **Anforderung**, **Randbedingung**, **Erfolgskriterium**, **Kleinste Fassung, die ein Erfolg waere**, **Kippstelle**, **Schnittstelle**, **Blender**, **Versionsverwaltung**, **Sitzungsprotokoll**, **Die dritte Antwort**, **Ersatzwert**, **Einbau**, **Produktweg gegen direkten Aufruf**, **Worker**, **HomeStation**, **Durchsicht**, **Open Font License (OFL)**, **Tuer (Anmeldung der Oberflaeche)** |
 | 2026-09-22 | Ergaenzt aus der sechsten Runde: **Richtungsgrenze**, **Wirkungslos (im Bericht)**, **Zwillingsansicht**, **Registereintrag** |
 | 2026-09-22 | Ergaenzt aus der fuenften Runde: **Kameraweg (abgeleitet, vorgegeben, Rueckfall)**, **Bildpunkt-Pruefsumme gegen Datei-Pruefsumme**, **Zufallsstreuung einer Rangkorrelation**, **Die erste Zustellung zaehlt**; nachgefuehrt: **Gelaendeangabe** (Owner-Entscheid) |
 | 2026-09-22 | Ergaenzt aus der vierten Runde: **Pipeline-Familie**, **Flache Kopie gegen tiefe Kopie**, **Angabe gegen Messung**, **Rollwinkel**, **Geländeangabe**, **Adresse im Heimnetz gegen «alle Adressen» (0.0.0.0)**. Jeder Eintrag traegt den Befund gegen den eigenen Code, aus dem er kam |

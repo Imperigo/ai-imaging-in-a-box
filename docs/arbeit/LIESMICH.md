@@ -23,6 +23,11 @@ behauptet, was es trägt und was ihm fehlt.
 | `kapitel-06-das-messen.md` | **Entwurf, 21.09.2026.** *Geltungsbereich nachgezogen:* Die Zahlen sind unverändert, sie bedienen aber seit E23 **eine von zwei Betriebsarten**. Neu 6.8 — die zweite Frage («was ist hinzugekommen, und wo?») samt den drei Gründen, warum sie heute unbeantwortbar ist. **Entwurf, 19.09.2026.** Das tragende Kapitel. Alle Zahlen am 19.09.2026 **neu gerechnet**. Die Strukturnotiz dazu ist überholt — ihre Kernbehauptung (ein zusammengesetzter Wert) wurde am 18.09.2026 widerlegt; das Kapitel ist um das neue Ergebnis herum geschrieben. |
 | `kapitel-07-die-methode.md` | **Entwurf, 19.09.2026.** Erstes geschriebenes Kapitel. |
 
+**Anhang B, seit dem 22.09.2026:** `docs/SOFTWARE_VON_GRUND_AUF.md` — *Wie man eine
+Software von Grund auf baut.* Die Grundkonzepte dieses Projekts für Leser:innen ohne
+Informatikhintergrund. Es liegt als Unterlage in `docs/`, nicht hier: Den Text der Arbeit
+schreibt der Owner.
+
 ## Die Reihenfolge, in der geschrieben wird
 
 Sie steht in `docs/STRUKTUR_VERTIEFUNGSARBEIT.md` und ist begründet. Kapitel 7 steht an

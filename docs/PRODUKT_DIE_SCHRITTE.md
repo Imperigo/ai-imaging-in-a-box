@@ -18,9 +18,23 @@ welcher Reihenfolge, und was dabei offen blieb.**
 
 ---
 
+## 1 · Der wichtigste Punkt zuerst: wie man eine Software von Grund auf baut
+
+**Owner-Auftrag 22.09.2026, als erster wichtiger Punkt markiert.** Bevor dieses Blatt
+sagt, was gebaut ist, steht hier, *wie* gebaut wird — in einem eigenen Dokument, für
+einen Architekten geschrieben, nicht für Programmierer:
+
+→ **[`SOFTWARE_VON_GRUND_AUF.md`](SOFTWARE_VON_GRUND_AUF.md)** — zehn Grundkonzepte, jedes
+an Visbox erklärt: erst die Frage, dann der Bau · Bibliothek und Oberfläche · Bausteine
+und Schnittstellen · fremde Bausteine und Lizenzen · Versionsverwaltung · Prüfen · die
+dritte Antwort · gebaut ist nicht eingebaut · Arbeitsteilung · erst zeichnen, dann bauen.
+Anhang B der Vertiefungsarbeit.
+
+---
+
 ## Wozu die Software da ist — zwei Betriebsarten, nicht eine
 
-**Owner-Entscheid 21.09.2026, und er ist der wichtigste Satz auf diesem Blatt:**
+**Owner-Entscheid 21.09.2026, und er ist der wichtigste Entscheid auf diesem Blatt:**
 
 > *Das AI-Imaging soll auch **Volumen erfinden** dürfen — nach einer Skizze, ins fertige
 > Bild gezeichnet, für schnelle Variantenstudien. Und wenn ein Bild überzeugt, soll Kosmo

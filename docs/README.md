@@ -17,10 +17,11 @@ gelesen und nicht erzeugt, und `tests/test_plan.py` hält fest, dass sie da ist.
 
 ---
 
-## Wenn du nur drei Dinge liest
+## Wenn du nur vier Dinge liest
 
 | Datei | wofür |
 |---|---|
+| **1 ·** [`SOFTWARE_VON_GRUND_AUF.md`](SOFTWARE_VON_GRUND_AUF.md) | **Zuerst lesen.** Wie man eine Software von Grund auf baut — die Grundkonzepte dieses Projekts, ohne technische Tiefe. Anhang B der Vertiefungsarbeit. |
 | [`LEXIKON.md`](LEXIKON.md) | Jeder Fachbegriff des Projekts, für Leser:innen ohne Informatikhintergrund. Anhang der Vertiefungsarbeit, kein Nebenprodukt. |
 | [`EINBAU_STAND.md`](EINBAU_STAND.md) | Was von KosmoVis wirklich in KosmoOrbit läuft — je Posten mit Adressat und Beleg. Die ehrlichste Seite des Projekts. |
 | [`PLAN_AB_2026-09-01.md`](PLAN_AB_2026-09-01.md) | Der laufende Plan, täglich fortgeschrieben. Erledigtes wird abgehakt, nicht gelöscht. |

@@ -178,10 +178,11 @@ Nur was aus der Arbeit selbst folgt, nicht was man sich wünschen könnte:
 | | |
 |---|---|
 | **A · Lexikon** | `docs/LEXIKON.md`. **Kein Nebenprodukt, sondern Anhang der Arbeit** (CLAUDE.md): jeder nicht-architektonische Fachbegriff für Leser:innen ohne Informatikhintergrund, keine Definition, die einen anderen unerklärten Begriff voraussetzt. |
-| **B · Beweisbilder** | 21 Skripte unter `tools/beweis/`, seriell gefahren von `tools/beweise_fahren.py`, **193 Bilder**. Jedes Bild trägt seine Messwerte im Dateinamen — *eine Zahl gehört an die Bedingung, unter der sie gemessen wurde.* Für den Druck ist eine Auswahl zu treffen; die Reihe selbst ist reproduzierbar und gehört als Verweis in den Text. |
-| **C · Messreihen** | Die datierten Studien in `docs/` (Schwellen, Rauschboden, Empfindlichkeit, Seedauswahl, Deckelstudie, Innenansicht). |
-| **D · Sitzungsprotokolle** | `docs/sitzungen/`, 23 Stück. Nicht zum Abdruck, aber als Beleg für Kapitel 7. |
-| **E · Aufträge und Antworten** | `auftraege/`. Der Beleg für Kapitel 8 — und das einzige Material, das zeigt, wie die Zusammenarbeit mit den drei Wartenden tatsächlich lief. |
+| **B · Wie man eine Software von Grund auf baut** | `docs/SOFTWARE_VON_GRUND_AUF.md`. **Owner-Entscheid 22.09.2026:** die Grundkonzepte, nach denen Visbox gebaut ist, für Leser:innen, die über den Bau einer Software entscheiden, ohne selbst zu programmieren — erklärt an diesem Projekt, nur Text, mit Verweisen in Anhang A. Unterlage, nicht Text der Arbeit. |
+| **C · Beweisbilder** | 21 Skripte unter `tools/beweis/`, seriell gefahren von `tools/beweise_fahren.py`, **193 Bilder**. Jedes Bild trägt seine Messwerte im Dateinamen — *eine Zahl gehört an die Bedingung, unter der sie gemessen wurde.* Für den Druck ist eine Auswahl zu treffen; die Reihe selbst ist reproduzierbar und gehört als Verweis in den Text. |
+| **D · Messreihen** | Die datierten Studien in `docs/` (Schwellen, Rauschboden, Empfindlichkeit, Seedauswahl, Deckelstudie, Innenansicht). |
+| **E · Sitzungsprotokolle** | `docs/sitzungen/`, 23 Stück. Nicht zum Abdruck, aber als Beleg für Kapitel 7. |
+| **F · Aufträge und Antworten** | `auftraege/`. Der Beleg für Kapitel 8 — und das einzige Material, das zeigt, wie die Zusammenarbeit mit den drei Wartenden tatsächlich lief. |
 
 ---
 
