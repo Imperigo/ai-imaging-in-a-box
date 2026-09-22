@@ -284,14 +284,22 @@ def test_flux2_klein_ist_apache_aber_nicht_die_depth_naht():
 def test_sd35_meldet_die_umsatzschwelle_als_auflage():
     """Kommerziell nutzbar, aber nicht bedingungslos — die Bedingung gehört benannt."""
     urteil = pruefe_lizenz("sd35-large")
-    assert urteil["zulaessig"] is True
+    # BIS ZUM 22.09.2026 STAND HIER `is True`. Owner-Entscheid 22.09.2026: «nur zum Messen, nie ausgeliefert»:
+    # Die Lizenz erlaubt kommerzielle Nutzung, ist aber keine der vier aus Regel 1. Die
+    # Auflagen werden weiter gemeldet — wer das Modell zum Vergleich heranzieht, soll
+    # wissen, woran er waere, wenn er es je ausliefern wollte.
+    assert urteil["zulaessig"] is False
     assert any("1 Mio USD" in a for a in urteil["auflagen"])
 
 
 def test_sdxl_meldet_die_openrail_nutzungsauflagen():
     """OpenRAIL++-M ist keine der vier permissiven Lizenzen aus Regel 1."""
     urteil = pruefe_lizenz(RUECKFALL_BACKBONE)
-    assert urteil["zulaessig"] is True
+    # BIS ZUM 22.09.2026 STAND HIER `is True`. Owner-Entscheid 22.09.2026: «nur zum Messen, nie ausgeliefert»:
+    # Die Lizenz erlaubt kommerzielle Nutzung, ist aber keine der vier aus Regel 1. Die
+    # Auflagen werden weiter gemeldet — wer das Modell zum Vergleich heranzieht, soll
+    # wissen, woran er waere, wenn er es je ausliefern wollte.
+    assert urteil["zulaessig"] is False
     assert any("OpenRAIL" in a for a in urteil["auflagen"])
 
 
@@ -866,7 +874,12 @@ def test_bestehende_auflagen_ueberleben_den_widerspruch():
     with _vorruebergehend(stability):
         urteil = pruefe_lizenz("probe-4b-stab")
 
-    assert urteil["zulaessig"] is True, "die Groesse ist freigegeben, strittig ist der Name"
+    # Bis zum 22.09.2026 `is True` («die Groesse ist freigegeben, strittig ist der
+    # Name»). Owner-Entscheid 22.09.2026: «nur zum Messen, nie ausgeliefert» — jetzt entscheidet die
+    # Lizenz selbst, und zwar gegen die Auslieferung. Worum es diesem Waechter geht,
+    # bleibt unveraendert und steht in den Zeilen darunter: dass die Auflagen den
+    # Widerspruch UEBERLEBEN.
+    assert urteil["zulaessig"] is False
     for stueck in ("Mio USD", "Powered by Stability AI", "trainieren"):
         assert stueck in urteil["begruendung"], (
             f"eine bestehende Auflage ist aus der Begruendung verschwunden: {stueck!r}"
@@ -966,7 +979,10 @@ def test_der_riegel_schweigt_zu_familien_die_er_nicht_kennt(name):
     assert riegel["grund"] == "keine_groessengebundene_familie"
 
     # Und die Lizenzprüfung urteilt davon unberührt weiter.
-    assert pruefe_lizenz(name)["zulaessig"] is (name != "flux1-dev")
+    # Owner-Entscheid 22.09.2026: «nur zum Messen, nie ausgeliefert». Nicht auslieferbar sind jetzt
+    # FLUX (nicht kommerziell) UND die beiden nicht-permissiven (SDXL, SD3.5).
+    assert pruefe_lizenz(name)["zulaessig"] is (
+        name not in {"flux1-dev", "sdxl-juggernaut", "sd35-large"})
 
 
 def test_ein_widerspruechlicher_eintrag_kommt_gar_nicht_erst_in_die_registry():
@@ -1312,3 +1328,55 @@ def test_die_beiden_anwaerter_fuer_den_laptop_stehen_mit_gemessenen_zahlen_da():
     # 22,89): Dieses Feld beantwortet «passt es auf die Karte?», und eine zu kleine Zahl
     # laesst einen Lauf zu, der am Speicher stirbt.
     assert nach_name["z-image-turbo"].vram_gb == pytest.approx(25.1)
+
+
+# ======================================================================================
+# Owner-Entscheid 22.09.2026 — «nur zum Messen, nie ausgeliefert»
+# ======================================================================================
+#
+# SDXL (CreativeML OpenRAIL-M) und SD3.5 (Stability AI Community License) erlauben
+# kommerzielle Nutzung, sind aber keine der vier Lizenzen aus Regel 1. Seit dem 18.08.2026
+# stand das als «Owner-Entscheid ausstehend» in jeder Antwort von `pruefe_lizenz` — einen
+# Monat lang. Am 22.09.2026 entschieden: wie FLUX behandeln.
+
+def test_die_auswahl_und_die_lizenzpruefung_sagen_dasselbe():
+    """**Der Wächter gegen die Sperre an einem von zwei Wegen.**
+
+    `waehle` liest die Registry direkt und ruft `pruefe_lizenz` nicht auf — das steht im
+    Code ausdrücklich, beim Grössenriegel. Stünde der Entscheid nur in der
+    Lizenzprüfung, käme `sdxl-juggernaut` über die Auswahl trotzdem ins Produkt: Es ist
+    `kommerziell_nutzbar` und bestünde den ersten Filter.
+
+        *Eine Sperre an einem von zwei Wegen ist keine Sperre.*
+
+    Geprüft wird darum nicht ein Name, sondern die Übereinstimmung: **Nichts**, was die
+    Auswahl für die Auslieferung anbietet, darf die Lizenzprüfung ablehnen.
+    """
+    angeboten = [b.name for b in waehle()]
+    abgelehnt = [n for n in angeboten if not pruefe_lizenz(n)["zulaessig"]]
+
+    assert not abgelehnt, (
+        f"die Auswahl bietet fuer die Auslieferung an, was die Lizenzpruefung ablehnt: "
+        f"{abgelehnt}")
+
+
+def test_die_zwei_nicht_permissiven_stehen_zum_vergleich_weiter_bereit():
+    """«Nur zum Messen» heisst: in der Registry, über den Forschungshebel sichtbar.
+
+    Wer sie löschte, verlöre den Vergleich — und genau den wollte der Owner behalten.
+    """
+    zum_vergleich = {b.name for b in waehle(kommerziell=False)}
+    fuer_die_auslieferung = {b.name for b in waehle()}
+
+    for name in ("sdxl-juggernaut", "sd35-large"):
+        assert name in zum_vergleich
+        assert name not in fuer_die_auslieferung
+
+
+def test_der_entscheid_steht_in_der_begruendung():
+    """Wer fragt, warum ein Modell fehlt, soll die Antwort im Urteil finden."""
+    for name in ("sdxl-juggernaut", "sd35-large"):
+        urteil = pruefe_lizenz(name)
+        assert "Owner-Entscheid 22.09.2026" in urteil["begruendung"]
+        assert urteil["regel_1_spannung"] is None, (
+            "die Spannung ist aufgeloest — sie darf nicht weiter als offen gemeldet werden")

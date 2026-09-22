@@ -965,6 +965,15 @@ def waehle(*, kommerziell: bool = True, max_vram_gb: float | None = None,
         # und die ist `True`.
         if kommerziell and groessen_riegel(backbone)["zulaessig"] is False:
             continue
+        # DER DRITTE FILTER, und aus demselben Grund wie der Grössenriegel darüber:
+        # `waehle` liest die Registry direkt und ruft `pruefe_lizenz` nicht auf. Stünde
+        # der Owner-Entscheid vom 22.09.2026 nur in der Lizenzprüfung, bliebe genau der
+        # Weg offen, über den ein Modell tatsächlich ausgewählt wird — `sdxl-juggernaut`
+        # ist `kommerziell_nutzbar` und käme durch den ersten Filter.
+        #
+        #     *Eine Sperre an einem von zwei Wegen ist keine Sperre.*
+        if kommerziell and not lizenzquelle.ist_permissiv(backbone.lizenz):
+            continue
         if max_vram_gb is not None and backbone.vram_gb > max_vram_gb:
             continue
         if konditionierung is not None and backbone.konditionierung != konditionierung:
@@ -1109,10 +1118,22 @@ def pruefe_lizenz(name: str) -> dict:
         )
     else:
         # Kommerziell nutzbar, aber die Lizenz ist keine der vier permissiven aus
-        # Regel 1. Solche Fälle werden nicht stillschweigend durchgewinkt: Die Auflage
-        # gehört benannt, damit sie im NOTICE landet und beim Wachsen des Büros
-        # wieder aufschlägt.
-        zulaessig = True
+        # Regel 1.
+        #
+        # OWNER-ENTSCHEID 22.09.2026: «Nur zum Messen, nie ausgeliefert» — wie FLUX.
+        #
+        # Bis dahin stand hier `zulaessig = True`, und das war seit dem 18.08.2026
+        # ausdrücklich als offene Frage markiert (`lizenzquelle.regel_1_spannung`): Der
+        # Einbetter schloss DINOv3 mit der Begründung aus, Regel 1 verlange «permissiv,
+        # nicht bloss erlaubt», und diese Registry liess dieselbe Klasse von Lizenz zu.
+        # Dieselbe Frage, entgegengesetztes Urteil — einen Monat lang.
+        #
+        # *Eine Spannung, die man meldet und nicht auflöst, wird nach einem Monat nicht
+        # mehr gelesen.* Aufgelöst hat sie der Owner, nicht dieser Code.
+        #
+        # Die Auflagen werden trotzdem weiter gesammelt: Wer das Modell zum Vergleich
+        # heranzieht, soll wissen, woran er wäre, wenn er es je ausliefern wollte.
+        zulaessig = False
         if "Community" in backbone.lizenz:
             auflagen.append(
                 "Freie Nutzung nur unterhalb der Umsatzschwelle von 1 Mio USD pro Jahr. "
@@ -1161,8 +1182,11 @@ def pruefe_lizenz(name: str) -> dict:
                 f"Lizenzen. Vor Auslieferung im Original prüfen."
             )
         begruendung = (
-            f"{backbone.name}: '{backbone.lizenz}' erlaubt kommerzielle Nutzung, aber "
-            f"nicht bedingungslos. " + " ".join(auflagen)
+            f"{backbone.name}: '{backbone.lizenz}' erlaubt kommerzielle Nutzung, ist aber "
+            f"keine der vier Lizenzen, die Regel 1 nennt (MIT, Apache-2.0, BSD, MPL-2.0). "
+            f"Owner-Entscheid 22.09.2026: nur zum Messen und Vergleichen, NIE im "
+            f"ausgelieferten Produkt — dieselbe Behandlung wie FLUX. Was eine Auslieferung "
+            f"verlangen würde: " + " ".join(auflagen)
         )
 
     # --- Die Lizenz hängt manchmal an der GRÖSSE, nicht am Namen ------------------------

@@ -319,9 +319,19 @@ def test_ablehnung_traegt_die_parameter_ins_protokoll(trainer_umgebung):
 # A3 · Regel-1-Spannung — ein HINWEIS, kein Abbruch
 # --------------------------------------------------------------------------------------
 
-def test_gegenprobe_es_gibt_ueberhaupt_eintraege_mit_regel_1_spannung():
-    """Ohne diese Probe wären die beiden Tests unten leer parametrisiert und still grün."""
-    assert set(MIT_SPANNUNG) == {"sdxl-juggernaut", "sd35-large"}
+def test_die_regel_1_spannung_ist_aufgeloest():
+    """**Seit dem 22.09.2026 trägt kein Eintrag mehr eine Spannung — und das ist das Ziel.**
+
+    Hier stand bis dahin die Gegenprobe, dass es solche Einträge **gibt** (``sdxl-juggernaut``
+    und ``sd35-large``): Ohne sie wären die Tests darunter leer parametrisiert und still grün
+    gewesen. Owner-Entscheid 22.09.2026: «nur zum Messen, nie ausgeliefert» hat die Spannung
+    aufgelöst — nicht dieser Code.
+
+    Der Waechter kehrt sich darum um: Taucht wieder ein zugelassener, nicht-permissiver
+    Eintrag auf, ist das kein neuer Normalfall, sondern ein Rückfall in eine Frage, die
+    der Owner schon beantwortet hat.
+    """
+    assert set(MIT_SPANNUNG) == set()
 
 
 @pytest.mark.parametrize("basis", MIT_SPANNUNG)
@@ -355,10 +365,16 @@ def test_auftrag_mit_spannung_laeuft_und_traegt_den_hinweis_mit(basis, tmp_path,
     assert ergebnis["maengel"] == []
 
 
-def test_hinweis_verhindert_das_kommando_nicht(trainer_umgebung):
-    """``baue_kommando`` filtert HINWEIS-Zeilen heraus — sonst wäre SDXL unbenutzbar."""
-    cmd = baue_kommando(auftrag(basis="sdxl-juggernaut"))
-    assert cmd[0] == TRAINER_PYTHON
+def test_ein_lora_auf_sdxl_wird_jetzt_abgelehnt(trainer_umgebung):
+    """**Die Folge des Owner-Entscheids, und sie ist gewollt.**
+
+    Bis zum 22.09.2026 hiess dieser Test ``test_hinweis_verhindert_das_kommando_nicht``
+    und hielt fest, dass ein LoRA auf SDXL trotz Hinweis gebaut wird. Owner-Entscheid 22.09.2026: «nur zum Messen, nie ausgeliefert»
+    — ein LoRA erbt die Lage seiner Grundlage, und
+    eine Grundlage, die nie ausgeliefert wird, trägt keinen verkaufbaren Stil.
+    """
+    with pytest.raises(LoraError, match="Owner-Entscheid 22.09.2026"):
+        baue_kommando(auftrag(basis="sdxl-juggernaut"))
 
 
 # ======================================================================================
