@@ -1,45 +1,45 @@
 {
- "schema": "aiimaging.homeworker-auftrag/v1",
- "auftrag_id": "auf-20260922-138",
- "art": "render",
- "worker": "local",
- "rang": 2,
- "erstellt": "2026-09-22T08:00:00Z",
- "params": {
-  "eintraege": [
-   "qwen-image-2512",
-   "sdxl-juggernaut",
-   "sd35-large",
-   "z-image-turbo",
-   "qwen-image-edit-2511"
-  ],
-  "schritte_teil2": 4
- },
- "beschreibung": "Welcher unserer Registry-Eintraege hat eine Pipeline mit ZWEI Bildeingaengen (`image` und `control_image`)? Daran haengt, ob das Hineinskizzieren ueberhaupt moeglich ist. Teil 1 kostet keine Diffusionsschritte.",
- "anweisung": "=== WELCHE PIPELINE NIMMT ZWEI BILDER? — EIN SIGNATURVERGLEICH ===\n\nDas ist der Auftrag, an dem der Entwurfsmodus haengt, und er kostet fast\nkeine Rechenzeit: Fuer den ersten Teil muss kein einziger Schritt gerechnet\nwerden.\n\n\nWORUM ES GEHT\n\nDas Hineinskizzieren braucht ZWEI Bildeingaenge gleichzeitig:\n\n    die Tiefenkarte   -> damit die Geometrie erhalten bleibt\n    die Skizze        -> das, was hineingezeichnet wurde\n\nZwei Modelle sind gemessen, und beide koennen es NICHT:\n\n  * qwen-image-edit-2511 (auf-20260921-134, euer Befund): hat nur `image`,\n    die Tiefenkarte belegt ihn, die Skizze faellt weg. Drei Bilder, eine\n    sha256.\n  * z-image-turbo mit ControlNet (auf-20260919-123, euer Befund):\n    ZImageControlNetPipeline kennt `control_image`, aber weder `image` noch\n    `strength`. Also umgekehrt — Tiefe ja, Skizze nein.\n\nDREI EINTRAEGE UNSERER REGISTRY SIND NIE GEPRUEFT WORDEN, und alle drei\ntragen ein ECHTES, separates Depth-ControlNet — also genau die Bauform, bei\nder `control_image` die Tiefe nimmt und `image` fuer die Skizze frei bleibt:\n\n    qwen-image-2512    cn=alibaba-pai/Qwen-Image-2512-Fun-Controlnet-Union\n    sdxl-juggernaut    cn=xinsir/controlnet-depth-sdxl-1.0\n    sd35-large         cn=stabilityai/stable-diffusion-3.5-large-controlnet-depth\n\nWir haben bis heute geschrieben, die Bildstrecke habe «kein Modell, das ein\nEingangsbild annimmt». Das ist zu stark: Sie hat kein GEMESSENES. Diesen\nUnterschied wollen wir nicht weiter mit uns herumtragen.\n\nVorsicht bei SDXL: Dort heisst der Steuereingang der reinen\nControlNet-Pipeline `image`, und `control_image` ist in der Img2Img-Variante\ndas AUSGANGSBILD — dieselbe Zeichenkette, die andere Bedeutung. Welche\nKlasse geladen wird, entscheidet also alles. Genau darum diese Messung.\n\n\nTEIL 1 — DER SIGNATURVERGLEICH (billig, keine Diffusionsschritte)\n\nFuer jeden der fuenf Eintraege (die drei ungeprueften und die zwei\ngemessenen als Gegenprobe):\n\n    1. Laden, wie es die Anwendung tut — `render.lade_modell`, nicht ein\n       eigener Aufbau von Hand. Genau darauf sind wir am 19.09. schon\n       einmal hereingefallen: Das Messskript baute eine Pipeline, die der\n       Produktweg nie bekam.\n    2. Den KLASSENNAMEN der wirklich geladenen Pipeline melden.\n    3. `inspect.signature(pipeline.__call__)` und daraus:\n         - kennt sie `image`?\n         - kennt sie `control_image`?\n         - kennt sie `strength` (bzw. `denoise`)?\n         - kennt sie `controlnet_conditioning_scale`?\n    4. Was `guidance_scale` als Vorgabe traegt (der Zahlenwert aus der\n       Signatur, nicht euer Gefuehl).\n\nWer nicht laedt (Gewichte fehlen, zu gross, was auch immer), bekommt eine\nZeile «nicht geladen, Grund» — das ist eine vollstaendige Antwort.\n\n\nTEIL 2 — EIN ECHTER LAUF, NUR MIT DEM BESTEN KANDIDATEN\n\nNur wenn Teil 1 einen Eintrag findet, der `image` UND `control_image` kennt:\n\n    Drei Laeufe, alles gleich ausser dem Eingangsbild — Bild A, Bild B, kein\n    Bild. Tiefenkarte in allen dreien dieselbe, ueber `control_image`.\n    Danach die sha256 der drei Ergebnisse.\n\n    Drei verschiedene sha256 = die Skizze kommt an. DAS ist die Antwort, auf\n    die der Entwurfsmodus wartet.\n    Eine sha256 = dieselbe Falle wie zweimal zuvor, und dann wissen wir,\n    dass sie nicht am Modell liegt, sondern an unserem Weg.\n\nNehmt den kleinsten Kandidaten, der es kann. Es geht um das Ja oder Nein,\nnicht um ein schoenes Bild — vier Schritte reichen.\n\n\nTEIL 3 — DIE FUEHRUNG, NEBENBEI\n\nIhr habt in auf-20260921-134 angemerkt, dass `guidance_scale` bei uns fuer\nqwen-image-edit-2511 NICHT gesetzt ist und die Vorgabe von diffusers greift\n— eine fremde Entscheidung, und bei einem destillierten Modell der\nUnterschied zwischen einem Bild und Matsch.\n\nIhr habt recht, und wir koennen es hier nicht setzen, ohne zu raten. Teil 1\nPunkt 4 liefert die Vorgabewerte. Wenn ihr bei einem Modell aus eigener\nErfahrung einen besseren Wert kennt, schreibt ihn dazu **mit der Quelle** —\nModellkarte, eigene Messung, oder «Erfahrung, ungemessen». Wir tragen ihn\nnur mit der Quelle in die Registry ein.\n\n\nWAS ZURUECKKOMMEN SOLL\n\n  V1 Die Tabelle aus Teil 1: fuenf Zeilen, je Klassenname und die vier\n     Ja/Nein plus der guidance-Vorgabewert.\n  V2 Welcher Eintrag beide Bildeingaenge hat — oder die Feststellung, dass\n     keiner es tut.\n  V3 Die drei sha256 aus Teil 2, falls es dazu kommt.\n  V4 Eure Fuehrungswerte mit Quelle, falls ihr welche habt.\n  V5 Was euch dabei aufgefallen ist und wonach wir nicht gefragt haben.\n\n\nWAS NICHT ZU TUN IST\n\n  - Keine Pipeline von Hand zusammenbauen. Gemessen wird der Weg, den die\n    Anwendung geht — sonst messen wir wieder etwas, das niemand benutzt.\n  - Keine Messreihe ueber Parameter. Teil 2 ist eine Ja/Nein-Frage.\n  - Nichts an unserem Code aendern.\n  - Nicht vor auf-20260922-137 (der Gegenprobe) — die ist eine Zeile und\n    macht den Kettenweg wieder befahrbar.\n",
- "geometrie": {
-  "synthetisch": true,
-  "pfad": null,
-  "erzeugen_mit": "tools/make_test_ifc.py, dieselbe Standardszene wie in auf-20260921-134",
-  "hinweis": "Fuer Teil 1 wird ueberhaupt keine Geometrie gebraucht."
- },
- "auflagen": {
-  "leistungsgrenze_w": 400,
-  "nur_bei_leerlauf": true,
-  "leerlauf_schwelle_w": 60,
-  "leerlauf_schwelle_mem_gb": 2,
-  "hinweise": [
-   "Keine Non-Commercial-Gewichte laden. flux1-dev und flux2-dev stehen mit Absicht nicht auf der Liste.",
-   "Nichts an unserem Code reparieren — die woertliche Meldung ist die Antwort.",
-   "Ein Eintrag, der nicht laedt, bekommt eine Zeile mit Grund; das ist eine vollstaendige Antwort.",
-   "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260922-138",
+  "art": "render",
+  "worker": "local",
+  "rang": 1,
+  "erstellt": "2026-09-22T08:00:00Z",
+  "params": {
+    "eintraege": [
+      "qwen-image-2512",
+      "sdxl-juggernaut",
+      "sd35-large",
+      "z-image-turbo",
+      "qwen-image-edit-2511"
+    ],
+    "schritte_teil2": 4
+  },
+  "beschreibung": "Welcher unserer Registry-Eintraege hat eine Pipeline mit ZWEI Bildeingaengen (`image` und `control_image`)? Daran haengt, ob das Hineinskizzieren ueberhaupt moeglich ist. Teil 1 kostet keine Diffusionsschritte.",
+  "anweisung": "=== WELCHE PIPELINE NIMMT ZWEI BILDER? — EIN SIGNATURVERGLEICH ===\n\nDas ist der Auftrag, an dem der Entwurfsmodus haengt, und er kostet fast\nkeine Rechenzeit: Fuer den ersten Teil muss kein einziger Schritt gerechnet\nwerden.\n\n\nWORUM ES GEHT\n\nDas Hineinskizzieren braucht ZWEI Bildeingaenge gleichzeitig:\n\n    die Tiefenkarte   -> damit die Geometrie erhalten bleibt\n    die Skizze        -> das, was hineingezeichnet wurde\n\nZwei Modelle sind gemessen, und beide koennen es NICHT:\n\n  * qwen-image-edit-2511 (auf-20260921-134, euer Befund): hat nur `image`,\n    die Tiefenkarte belegt ihn, die Skizze faellt weg. Drei Bilder, eine\n    sha256.\n  * z-image-turbo mit ControlNet (auf-20260919-123, euer Befund):\n    ZImageControlNetPipeline kennt `control_image`, aber weder `image` noch\n    `strength`. Also umgekehrt — Tiefe ja, Skizze nein.\n\nDREI EINTRAEGE UNSERER REGISTRY SIND NIE GEPRUEFT WORDEN, und alle drei\ntragen ein ECHTES, separates Depth-ControlNet — also genau die Bauform, bei\nder `control_image` die Tiefe nimmt und `image` fuer die Skizze frei bleibt:\n\n    qwen-image-2512    cn=alibaba-pai/Qwen-Image-2512-Fun-Controlnet-Union\n    sdxl-juggernaut    cn=xinsir/controlnet-depth-sdxl-1.0\n    sd35-large         cn=stabilityai/stable-diffusion-3.5-large-controlnet-depth\n\nWir haben bis heute geschrieben, die Bildstrecke habe «kein Modell, das ein\nEingangsbild annimmt». Das ist zu stark: Sie hat kein GEMESSENES. Diesen\nUnterschied wollen wir nicht weiter mit uns herumtragen.\n\nVorsicht bei SDXL: Dort heisst der Steuereingang der reinen\nControlNet-Pipeline `image`, und `control_image` ist in der Img2Img-Variante\ndas AUSGANGSBILD — dieselbe Zeichenkette, die andere Bedeutung. Welche\nKlasse geladen wird, entscheidet also alles. Genau darum diese Messung.\n\n\nTEIL 1 — DER SIGNATURVERGLEICH (billig, keine Diffusionsschritte)\n\nFuer jeden der fuenf Eintraege (die drei ungeprueften und die zwei\ngemessenen als Gegenprobe):\n\n    1. Laden, wie es die Anwendung tut — `render.lade_modell`, nicht ein\n       eigener Aufbau von Hand. Genau darauf sind wir am 19.09. schon\n       einmal hereingefallen: Das Messskript baute eine Pipeline, die der\n       Produktweg nie bekam.\n    2. Den KLASSENNAMEN der wirklich geladenen Pipeline melden.\n    3. `inspect.signature(pipeline.__call__)` und daraus:\n         - kennt sie `image`?\n         - kennt sie `control_image`?\n         - kennt sie `strength` (bzw. `denoise`)?\n         - kennt sie `controlnet_conditioning_scale`?\n    4. Was `guidance_scale` als Vorgabe traegt (der Zahlenwert aus der\n       Signatur, nicht euer Gefuehl).\n\nWer nicht laedt (Gewichte fehlen, zu gross, was auch immer), bekommt eine\nZeile «nicht geladen, Grund» — das ist eine vollstaendige Antwort.\n\n\nTEIL 2 — EIN ECHTER LAUF, NUR MIT DEM BESTEN KANDIDATEN\n\nNur wenn Teil 1 einen Eintrag findet, der `image` UND `control_image` kennt:\n\n    Drei Laeufe, alles gleich ausser dem Eingangsbild — Bild A, Bild B, kein\n    Bild. Tiefenkarte in allen dreien dieselbe, ueber `control_image`.\n    Danach die sha256 der drei Ergebnisse.\n\n    Drei verschiedene sha256 = die Skizze kommt an. DAS ist die Antwort, auf\n    die der Entwurfsmodus wartet.\n    Eine sha256 = dieselbe Falle wie zweimal zuvor, und dann wissen wir,\n    dass sie nicht am Modell liegt, sondern an unserem Weg.\n\nNehmt den kleinsten Kandidaten, der es kann. Es geht um das Ja oder Nein,\nnicht um ein schoenes Bild — vier Schritte reichen.\n\n\nTEIL 3 — DIE FUEHRUNG, NEBENBEI\n\nIhr habt in auf-20260921-134 angemerkt, dass `guidance_scale` bei uns fuer\nqwen-image-edit-2511 NICHT gesetzt ist und die Vorgabe von diffusers greift\n— eine fremde Entscheidung, und bei einem destillierten Modell der\nUnterschied zwischen einem Bild und Matsch.\n\nIhr habt recht, und wir koennen es hier nicht setzen, ohne zu raten. Teil 1\nPunkt 4 liefert die Vorgabewerte. Wenn ihr bei einem Modell aus eigener\nErfahrung einen besseren Wert kennt, schreibt ihn dazu **mit der Quelle** —\nModellkarte, eigene Messung, oder «Erfahrung, ungemessen». Wir tragen ihn\nnur mit der Quelle in die Registry ein.\n\n\nWAS ZURUECKKOMMEN SOLL\n\n  V1 Die Tabelle aus Teil 1: fuenf Zeilen, je Klassenname und die vier\n     Ja/Nein plus der guidance-Vorgabewert.\n  V2 Welcher Eintrag beide Bildeingaenge hat — oder die Feststellung, dass\n     keiner es tut.\n  V3 Die drei sha256 aus Teil 2, falls es dazu kommt.\n  V4 Eure Fuehrungswerte mit Quelle, falls ihr welche habt.\n  V5 Was euch dabei aufgefallen ist und wonach wir nicht gefragt haben.\n\n\nWAS NICHT ZU TUN IST\n\n  - Keine Pipeline von Hand zusammenbauen. Gemessen wird der Weg, den die\n    Anwendung geht — sonst messen wir wieder etwas, das niemand benutzt.\n  - Keine Messreihe ueber Parameter. Teil 2 ist eine Ja/Nein-Frage.\n  - Nichts an unserem Code aendern.\n  - Nicht vor auf-20260922-137 (der Gegenprobe) — die ist eine Zeile und\n    macht den Kettenweg wieder befahrbar.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_ifc.py, dieselbe Standardszene wie in auf-20260921-134",
+    "hinweis": "Fuer Teil 1 wird ueberhaupt keine Geometrie gebraucht."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 60,
+    "leerlauf_schwelle_mem_gb": 2,
+    "hinweise": [
+      "Keine Non-Commercial-Gewichte laden. flux1-dev und flux2-dev stehen mit Absicht nicht auf der Liste.",
+      "Nichts an unserem Code reparieren — die woertliche Meldung ist die Antwort.",
+      "Ein Eintrag, der nicht laedt, bekommt eine Zeile mit Grund; das ist eine vollstaendige Antwort.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Tabelle: je Eintrag Klassenname der geladenen Pipeline, kennt `image`, kennt `control_image`, kennt `strength`, kennt `controlnet_conditioning_scale`, Vorgabewert von `guidance_scale`.",
+    "V2 Welcher Eintrag BEIDE Bildeingaenge hat — oder die Feststellung, dass keiner es tut.",
+    "V3 Die drei sha256 aus Teil 2 (Bild A, Bild B, kein Bild), falls es dazu kommt.",
+    "V4 Fuehrungswerte mit Quelle, falls vorhanden.",
+    "V5 Was aufgefallen ist und wonach nicht gefragt wurde."
   ]
- },
- "rueckgabe": [
-  "V1 Tabelle: je Eintrag Klassenname der geladenen Pipeline, kennt `image`, kennt `control_image`, kennt `strength`, kennt `controlnet_conditioning_scale`, Vorgabewert von `guidance_scale`.",
-  "V2 Welcher Eintrag BEIDE Bildeingaenge hat — oder die Feststellung, dass keiner es tut.",
-  "V3 Die drei sha256 aus Teil 2 (Bild A, Bild B, kein Bild), falls es dazu kommt.",
-  "V4 Fuehrungswerte mit Quelle, falls vorhanden.",
-  "V5 Was aufgefallen ist und wonach nicht gefragt wurde."
- ]
 }

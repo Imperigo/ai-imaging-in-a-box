@@ -1,0 +1,128 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260922-137",
+ "status": "ok",
+ "beendet": "2026-09-22T18:40:00Z",
+ "stand": "f8fd21d",
+ "geprueft": "EURE REPARATUR TRAEGT. Der Knoten `geometrie` kommt durch, und der Weg des Produkts haelt zum ersten Mal ueber ALLE FUENF STUFEN — 1 Bild, 8 gezaehlte Schritte, Exitcode 0. Dahinter lag noch eine zweite Sperre, und die war Umgebung: AIIMAGING_MODELLE war nicht gesetzt. Eure eigene Meldung hat sie in einem Satz eingeordnet. Die fuenf Laeufe aus auf-127 sind gefahren und bringen einen neuen Befund: Sonne und Deckungsgrad kommen im Blender-Bild an, aber NICHT in der Tiefenkarte — und das Endbild haengt nur an dieser.",
+ "kurzantwort": {
+  "v1_geometrie_kommt_durch": "JA. bbox [[0.0, ~0, -0.25], [8.0, 5.0, 3.0]] — das ist der Testquader 8 x 5 x 3,25 m. Der multipass-Knoten meldet im selben Lauf [[0.0, -3.36e-08, -0.2500007], [8.0, 5.0000010, 3.0000005]]: dieselbe Box, der Unterschied ist Gleitkomma-Rauschen aus der glb-Wandlung. Die Szenenbox aus der Datei stimmt also mit der aus der Wandlung ueberein.",
+  "v2_wie_weit": "Ganz durch. geometrie 0,0006 s -> multipass 2,2391 s -> render 14,5793 s -> qa 0,7546 s. Lauf gesamt 17,6053 s, 4 Knoten gerechnet, 0 Zwischenspeicher-Treffer, 1 Bild vermerkt, nichts gescheitert.",
+  "v3_das_bild": "Es gibt eines — das erste ueber den Produktweg: `laeufe/render-27cce86d0f4d766c/bild.png`, 8 Diffusionsschritte. Die QA weist es ab: score 0.000 < Schwelle 0.65, geom_iou 0.0096, |spearman| 0.037 ueber 848 gemeinsame Punkte. Der erste QA-Hinweis nennt den Grund: «Rangkorrelation zeigt in die falsche Richtung (+0.037 bei Polaritaet -1) — vorne und hinten sind vertauscht.»",
+  "v4_die_fuenf_laeufe": "Gefahren. Der Zwischenspeicher arbeitet richtig. ABER: alle vier gerechneten Laeufe liefern dasselbe Bild, sha256 50958ed0e66c73a7 — bei DREI verschiedenen Sonnen und ZWEI Deckungsgraden.",
+  "v5_modus_felder": "JA, alle drei sind da, und die Abweichung steht als ERSTER Hinweis von fuenf: modus_bestellt='image_edit', modus_gerechnet='txt2img', modus_abweichung=True."
+ },
+ "befunde": {
+  "die_zweite_sperre_und_eure_meldung": {
+   "was_geschah": "Der erste Lauf kam bis `render` und wurde dort abgelehnt. Das Skript meldet an der Oberflaeche nur «abgelehnt»; der Grund steht in der Mappe (`projekt.json`, laeufe[0].error) und ist vorbildlich:",
+   "woertlich": "render: AIIMAGING_MODELLE ist NICHT gesetzt; es gilt der Vorgabeort dieses Betriebssystems '/home/<nutzer>/snap/code/261/.local/share/visbox/modelle', und dort liegt kein Ordner 'z-image-turbo'. Das ist keine Aussage ueber das Modell, sondern ueber die Umgebung.",
+   "warum_das_gut_ist": "Die Meldung ordnet sich SELBST ein — «keine Aussage ueber das Modell, sondern ueber die Umgebung». Damit war die Sache in zwei Minuten geklaert statt in zwei Stunden. Genau das, was ihr uns fuer auf-127 gedankt habt, in die andere Richtung.",
+   "die_lage_am_geraet": "Der genannte Vorgabeort existiert hier nicht — die Snap-Revision stimmt zwar (261), aber der Unterordner ist nie angelegt worden. Die Gewichte liegen unter einem eigenen Modellordner ausserhalb des Snaps. Mit gesetztem AIIMAGING_MODELLE laeuft alles durch.",
+   "was_ihr_erwaegen_koenntet": "Ein Vorgabeort INNERHALB eines Snap-Pfades mit fester Revisionsnummer ist hier schon einmal teuer geworden: venvs aus dem VS-Code-Snap sterben mit der Revision, und `ls` zeigt tote Verweise weiter. Ein Ort ausserhalb des Snaps waere haltbarer. Das ist ein Vorschlag, kein Befund — geaendert habe ich nichts."
+  },
+  "v1_die_bbox_im_vergleich": {
+   "geometrie_knoten": [
+    [
+     0.0,
+     -1.84e-16,
+     -0.25
+    ],
+    [
+     8.0,
+     5.0,
+     3.0000000000000004
+    ]
+   ],
+   "multipass_knoten": [
+    [
+     0.0,
+     -3.358971412126266e-08,
+     -0.2500007152557373
+    ],
+    [
+     8.0,
+     5.000000953674316,
+     3.000000476837158
+    ]
+   ],
+   "urteil": "Dieselbe Box. Die Abweichung liegt bei 1e-06 m und stammt aus der float32-Wandlung nach glb. Der Torwaechter prueft den Massstab — der stimmt."
+  },
+  "v4_die_fuenf_laeufe_im_einzelnen": {
+   "aufbau": "Graphenweg, `kette.baue_kette` + `kette.fuehre_aus` mit `kette.AUSFUEHRER` und gemeinsamem ArtefaktCache. Prompt, Seed (0), Schritte (8), Aufloesung (256) und Samples (8) in allen fuenf gleich.",
+   "laeufe": [
+    {
+     "lauf": "L1 Mittagssonne (60/180), Deckung 0,70",
+     "dauer_s": 18.1,
+     "gerechnet": 4,
+     "treffer": 0,
+     "sha": "50958ed0e66c73a7"
+    },
+    {
+     "lauf": "L2 Abendsonne (12/250), sonst gleich",
+     "dauer_s": 12.3,
+     "gerechnet": 3,
+     "treffer": 1,
+     "sha": "50958ed0e66c73a7"
+    },
+    {
+     "lauf": "L3 Deckung 0,55, sonst gleich wie L1",
+     "dauer_s": 13.3,
+     "gerechnet": 3,
+     "treffer": 1,
+     "sha": "50958ed0e66c73a7"
+    },
+    {
+     "lauf": "L4 L1 WORTGLEICH wiederholt",
+     "dauer_s": 0.0,
+     "gerechnet": 0,
+     "treffer": 4,
+     "sha": "50958ed0e66c73a7"
+    },
+    {
+     "lauf": "L5 dritte Sonne (35/95), sonst wie L1",
+     "dauer_s": 12.1,
+     "gerechnet": 3,
+     "treffer": 1,
+     "sha": "50958ed0e66c73a7"
+    }
+   ],
+   "v4_zwischenspeicher_unveraendert": "RICHTIG. L4 ist wortgleich zu L1: 4 Treffer, 0 gerechnet, 0,0 s. Der Speicher arbeitet.",
+   "v5_zwischenspeicher_bei_geaenderter_sonne": "RICHTIG, kein falscher Treffer. L5 hat 1 Treffer (der Geometrieknoten, der sich zu Recht nicht aendert) und rechnet die uebrigen 3 neu. Dasselbe bei L2 und L3. Der von euch befuerchtete Fall — ein Treffer trotz geaenderter Bestellung — tritt NICHT ein.",
+   "v2_v3_und_der_eigentliche_fund": {
+    "frage": "Sind die Bilder verschieden?",
+    "antwort": "NEIN — alle vier gerechneten Laeufe liefern sha256 50958ed0e66c73a7.",
+    "aber_die_gegenprobe_zeigt_wo_es_haengenbleibt": "Ich habe nicht beim Endbild aufgehoert, sondern die Zwischenstufen verglichen:",
+    "beauty_aus_blender": "VIER VERSCHIEDENE (48bc2ffc, 28a7cb1c, 067cc745, b5070a59). Sonne UND Deckungsgrad kommen also bis in den Blender-Lauf an. Die Bestellung reist korrekt durch den Graphen.",
+    "tiefenkarte": "VIERMAL IDENTISCH (699f855d) — obwohl einer der vier einen anderen DECKUNGSGRAD hatte, also eine andere Kameraentfernung.",
+    "endbild": "VIERMAL IDENTISCH (50958ed0).",
+    "was_das_heisst": "Die Kette ist an dieser Stelle zweigeteilt. Dass die SONNE das Endbild nicht aendert, ist erklaerbar und kein Fehler: Sie aendert die Beleuchtung, nicht die Geometrie, und das Bild wird ueber `control_image` = Tiefenkarte gefuehrt. Dass der DECKUNGSGRAD die Tiefenkarte nicht aendert, ist nicht erklaerbar — er aendert das Beauty-Bild nachweislich, also bewegt sich die Kamera. Eine bewegte Kamera muss eine andere Tiefenkarte liefern.",
+    "was_ich_NICHT_behaupte": "Ich kenne die Ursache nicht. Es koennte an der Normierung von `tiefe_norm.png` liegen, an der Kamerawahl im multipass-Knoten, oder daran, dass `deckungsgrad` den Blender-Lauf anders erreicht als die Kamerarechnung. Drei Verdaechtige, keiner gemessen — das waere eine Messreihe, und die habt ihr fuer diesen Auftrag ausdruecklich ausgeschlossen."
+   }
+  },
+  "v5_die_modus_felder": {
+   "modus_bestellt": "image_edit",
+   "modus_gerechnet": "txt2img",
+   "modus_abweichung": true,
+   "steht_als_erster_hinweis": true,
+   "woertlich": "BESTELLT WAR 'image_edit', GERECHNET WURDE 'txt2img': Das Ausgangsbild ist bei dieser Pipeline nicht angekommen. Das Bild ist gueltig, aber es ist NICHT das, was bestellt war.",
+   "urteil": "Gebaut, und es traegt. Die Abweichung steht als Hinweis [0] von fuenf, nicht unter fuenfzehn. Beides wie zugesagt.",
+   "und_der_zusammenhang_zu_auf_138": "Dieser eine Hinweis erklaert die vier identischen Bilder mit. Weil `txt2img` statt `image_edit` gerechnet wird, gibt es gar kein Eingangsbild — es bleiben Prompt, Seed und Tiefenkarte, und die sind in allen vier Laeufen gleich. **Das ist genau die Frage von auf-138**: solange kein Eintrag beide Bildeingaenge hat, kann die Bestellung `image_edit` nicht ankommen."
+  }
+ },
+ "bemerkungen": [
+  "Ein eigener Zweifel, ausgeraeumt statt uebergangen: Alle fuenf Laeufe meldeten dieselbe sha256, und ich hatte fuer alle denselben Ausgabeordner benutzt. Bevor ich das gemeldet habe, habe ich geprueft, ob ich fuenfmal DIESELBE Datei lese. Die Bildpfade sind verschieden (vier eigene render-Ordner, L4 teilt sich richtigerweise einen mit L1). Die Messung traegt.",
+  "An eurem Code ist nichts geaendert. AIIMAGING_MODELLE wurde nur fuer den Lauf gesetzt — das ist Bedienung, keine Reparatur.",
+  "GPU im Leerlauf gestartet (40,6 W von 60 Schwelle, 1,14 GB von 2). Leistungsgrenze 400 W."
+ ],
+ "umgebung": {
+  "gpu_benutzt": true,
+  "gpu_leistungsgrenze_w": 400,
+  "leerlauf_schwellen_eingehalten": true,
+  "netz_benutzt": false,
+  "dauer_min": 20,
+  "backbone": "z-image-turbo (Apache-2.0)",
+  "schaetzer": "depth-anything-v2-small (Apache-2.0)",
+  "non_commercial_gewichte_geladen": false
+ },
+ "fehler": null
+}
