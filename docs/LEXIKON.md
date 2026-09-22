@@ -5304,6 +5304,19 @@ nicht Schmuck: Sie beantwortet die Frage «wo ist meine Sache jetzt?», ohne das
 danach suchen muss.
 *In diesem Projekt: die Skizze, die vom iPad zur HomeStation reist.*
 
+**Standnummer** — Eine Zahl in einer Datei, die bei jedem Schreiben um eins hochzählt.
+Sie sagt nicht, *wann* zuletzt geschrieben wurde, sondern **wie oft** — und darum lässt
+sich mit ihr feststellen, ob jemand anderes inzwischen geschrieben hat. Wer von Stand 7
+kommt und auf der Platte Stand 9 vorfindet, weiss: Zwei Änderungen liegen dazwischen, die
+er nicht kennt.
+*In diesem Projekt: in jeder Mappe, damit ein iPad und die HomeStation nicht gegenseitig
+ihre Arbeit überschreiben.*
+
+**Schreibkollision** — Zwei Stellen wollen dieselbe Datei schreiben und kommen beide vom
+selben Ausgangsstand. Ohne Vorkehrung gewinnt der Letzte, und die Arbeit des anderen ist
+weg — **ohne Meldung**, weil aus Sicht des Programms beide Male alles geklappt hat. Das
+ist die gefährliche Form des Datenverlusts: Sie sieht aus wie Erfolg.
+
 **Bewegungsreduktion** — Eine Einstellung im Betriebssystem, mit der jemand sagt, dass
 Bewegung auf dem Bildschirm ihm unangenehm ist oder schwindlig macht. Programme können sie
 abfragen und ihre Animationen weglassen. Wer sie eingeschaltet hat, darf dadurch keine
@@ -5316,6 +5329,7 @@ keine Aussage.*
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-22 | Ergaenzt zu Abschnitt 10 aus der Arbeit an zwei Geraeten an derselben Mappe: **Standnummer**, **Schreibkollision** |
 | 2026-09-21 | Nachgetragen zu Abschnitt 10 aus der Verbindung iPad/Rechner: **Wischregler**, **Übergabe-Animation**, **Bewegungsreduktion** |
 | 2026-09-21 | Neuer Abschnitt **10 · Oberfläche und Entwurf**, aus dem Entwurf der iPad-Oberfläche: **Entwurfsblatt (Artboard)**, **Entwurfsfläche**, **Berührungsfläche (Touch-Ziel)**, **Kontrastverhältnis**, **Druckempfindlichkeit**, **Wortzeichen**. Der Eintrag zum Kontrastverhältnis traegt einen Befund gegen die eigene Oberflaeche: Das Rot fuer «durchgefallen» kommt auf dem dunklen Grund nur auf 4.06 zu 1 und ist damit unter dem Mindestmass — im iPad-Entwurf eine Stufe heller, in der Browser-Oberflaeche noch nicht geaendert. **BERICHTIGT am 22.09.2026:** Hier stand zuerst 3.3; das war geschaetzt und nicht gerechnet. Der gerechnete Wert ist 4.06 auf dem Grund und 3.70 auf einem Feld — der Befund bleibt, die Zahl war falsch |
 | 2026-09-19 | Zum Bild-Eingang: **Bild-Eingang**, **Hineinskizzieren**, **Bildquelle (als Arbeitsschritt)**, **Nachrender**, **Ein Bildeingang, den die Tiefenkarte gewinnt**. Der letzte Eintrag traegt den scharfen Befund dieses Tages: Die Bibliothek reicht ein Ausgangsbild sehr wohl an das Modell durch — aber auf einer Pipeline mit nur EINEM Bildeingang bekommt ihn die Tiefenkarte, und das Hineingezeichnete faellt weg. Am Geraet gemessen (`auf-20260818-09`), hier erstmals mit einer Probe hinterlegt statt nur als Kommentar in der Registry |

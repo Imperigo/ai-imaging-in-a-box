@@ -7074,4 +7074,25 @@ Bekannt und ausdrücklich nicht erledigt:
 
 - [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2), `auf-128` (Rang 3, Frist 15.10.).
 - [ ] **Kern (wir):** Wie das iPad die HomeStation erstmals findet.
-- [ ] **Kern (wir):** Was bei zwei iPads an derselben Mappe geschieht.
+- [x] **Kern (wir):** Was bei zwei iPads an derselben Mappe geschieht — erledigt am
+      22.09.2026, siehe Sitzung 57.
+
+## Sitzung 57 — 22.09.2026 · Zwei Geräte, eine Mappe
+
+**Erledigt**
+
+- [x] Jede Mappe trägt eine **Standnummer**; `projekt.speichere` lehnt ab statt zu
+      überschreiben (`ProjektKollision`). Bis heute gewann schlicht der Letzte — dieselbe
+      Bauform wie die zwei gleichzeitigen Läufe vom Vortag, eine Ebene höher.
+- [x] Die Oberfläche behandelt den Fall an ihren zwei Speicherstellen **verschieden**:
+      *Wiederholen darf, was hinzufügt. Was ersetzt, muss fragen.* Eine Skizze wird einmal
+      wiederholt (ihre Datei liegt schon auf der Platte), eine Einstellung wird gemeldet.
+- [x] `tests/test_zwei_geraete.py`: elf Wächter, fünf Mutationsproben, alle fünf fallen.
+- [x] Was die Sperre **nicht** kann (das Mikrosekundenfenster), steht im Docstring.
+
+**Offen, und bei wem es liegt**
+
+- [ ] **Kern (wir), als Nächstes:** Wie das iPad die HomeStation erstmals findet. Heute
+      müsste jemand eine Adresse und ein 32 Zeichen langes Kennwort auf einem Tablet
+      abtippen — *was nur über das Eintippen erreichbar ist, wird nicht benutzt.*
+- [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2), `auf-128` (Rang 3, Frist 15.10.).

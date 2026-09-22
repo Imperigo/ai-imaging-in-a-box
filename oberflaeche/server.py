@@ -1022,7 +1022,22 @@ class Flaeche(BaseHTTPRequestHandler):
                 return
 
         p["einstellungen"] = gemischt
-        projekt.speichere(p, Path(ordner))
+        try:
+            projekt.speichere(p, Path(ordner))
+        except projekt.ProjektKollision as fehler:
+            # HIER WIRD NICHT WIEDERHOLT, und das ist der Unterschied zur Skizze.
+            #
+            # Eine Skizze kommt DAZU — sie laesst sich auf dem neuen Stand noch einmal
+            # eintragen, ohne dass jemandem etwas fehlt. Eine Einstellung ERSETZT: Wer
+            # sie auf dem neuen Stand wiederholte, wuerfe die Einstellung des anderen
+            # weg, und genau davor soll diese Sperre schuetzen.
+            #
+            # *Wiederholen darf, was hinzufuegt. Was ersetzt, muss fragen.*
+            self._fehler(f"{fehler} Die Seite neu laden zeigt den neuen Stand.")
+            return
+        except projekt.ProjektError as fehler:
+            self._fehler(str(fehler))
+            return
         self._sende({"gespeichert": True, "einstellungen": gemischt})
 
     def _skizze(self, wunsch: dict) -> None:
@@ -1054,10 +1069,31 @@ class Flaeche(BaseHTTPRequestHandler):
             ziel = Path(ordner) / _skizzenname(wunsch.get("name"))
             p = projekt.oeffne(Path(ordner))["projekt"]
             ziel.write_bytes(bytes_)
+            bemerkung = _bemerkung(wunsch.get("bemerkung"), wunsch.get("name"))
             projekt.vermerke_skizze(
                 p, skizze=ziel.name, ueber=wunsch.get("ueber") or None,
-                bemerkung=_bemerkung(wunsch.get("bemerkung"), wunsch.get("name")))
-            projekt.speichere(p, Path(ordner))
+                bemerkung=bemerkung)
+            try:
+                projekt.speichere(p, Path(ordner))
+            except projekt.ProjektKollision:
+                # EINMAL WIEDERHOLEN, UND ZWAR HIER UND NICHT BEIM BENUTZER.
+                #
+                # Die Datei liegt an diesem Punkt schon auf der Platte. Wer jetzt nur
+                # meldete «geht nicht», liesse eine Zeichnung zurueck, die es gibt und
+                # die in keiner Mappe steht — unsichtbar, und beim naechsten Aufraeumen
+                # weg. *Eine Zeichnung, die niemand mehr findet, ist verloren, auch wenn
+                # ihre Datei noch da ist.*
+                #
+                # Wiederholen ist hier unbedenklich, weil ein Vermerk HINZUFUEGT: Auf dem
+                # neuen Stand steht danach beides, die Arbeit des anderen und diese
+                # Skizze. Genau EINMAL — kommt es zweimal in Folge, laeuft drueben etwas,
+                # das schneller schreibt als wir, und dann ist Melden die richtige
+                # Antwort.
+                frisch = projekt.oeffne(Path(ordner))["projekt"]
+                projekt.vermerke_skizze(
+                    frisch, skizze=ziel.name, ueber=wunsch.get("ueber") or None,
+                    bemerkung=bemerkung)
+                projekt.speichere(frisch, Path(ordner))
         except projekt.ProjektError as fehler:
             self._fehler(str(fehler))
             return

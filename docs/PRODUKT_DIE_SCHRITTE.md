@@ -91,6 +91,35 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 22.09.2026 · Zwei Geräte an derselben Mappe löschen sich nicht mehr gegenseitig
+
+Aus dem iPad-Entwurf blieb eine Frage offen: Was passiert, wenn das iPad und der Rechner
+gleichzeitig an derselben Mappe arbeiten? Die Antwort war unbequem — **es war gar nicht
+bedacht.** Wer zuletzt speicherte, gewann; die Arbeit des anderen war weg, ohne Meldung
+und ohne Spur.
+
+Das ist dieselbe Sache wie die zwei gleichzeitigen Rechnungen vom Vortag, nur eine Etage
+höher. Zum zweiten Mal in zwei Tagen.
+
+**Jetzt zählt jede Mappe mit, wie oft sie geschrieben wurde.** Wer von einem älteren Stand
+kommt, bekommt eine Absage statt eines stillen Überschreibens — und kann die Mappe neu
+öffnen, seine Änderung darauf wiederholen und speichern. Niemand verliert etwas.
+
+Bewusst **keine Uhrzeit**, sondern eine Zählung: Zwei Geräte haben zwei Uhren, und eine
+davon geht falsch.
+
+**Eine Regel ist dabei entstanden, und sie gilt weiter:**
+
+> **Wiederholen darf, was hinzufügt. Was ersetzt, muss fragen.**
+
+Eine abgelegte Skizze *kommt dazu* — die wiederholt das Programm von selbst, und danach
+steht beides da. Eine geänderte Einstellung *ersetzt* — die wird gemeldet, denn sie
+stillschweigend zu wiederholen hiesse, die Einstellung des anderen wegzuwerfen.
+
+Und was die Sperre **nicht** kann, steht ausdrücklich dabei: Zwei Geräte, die in derselben
+Millisekunde schreiben, fängt sie nicht. Sie fängt den Fall, der wirklich vorkommt — zwei
+Geräte, Minuten auseinander.
+
 ### 22.09.2026 · Das Warnzeichen ist jetzt lesbar — und der Rechner passt darauf auf
 
 Das Rot für «durchgefallen» war auf dem dunklen Grund zu dunkel: 4.06, nötig sind 4.5.

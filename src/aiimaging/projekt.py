@@ -76,7 +76,8 @@ from aiimaging.auftrag import ohne_kennungen
 
 __all__ = [
     "MODELL_FEHLT", "MODELL_NICHT_PRUEFBAR", "MODELL_UNVERAENDERT", "MODELL_VERAENDERT",
-    "PROJEKTDATEI", "ProjektError", "SCHEMA", "VOLLE_PRUEFUNG_BIS_BYTE",
+    "PROJEKTDATEI", "ProjektError", "ProjektKollision", "SCHEMA",
+    "VOLLE_PRUEFUNG_BIS_BYTE",
     "fingerabdruck", "neu", "oeffne", "speichere", "vermerke_bild",
 ]
 
@@ -116,6 +117,23 @@ MODELL_VERAENDERT = "veraendert"
 MODELL_FEHLT = "fehlt"
 #: Es liess sich nicht feststellen — **weder ja noch nein.**
 MODELL_NICHT_PRUEFBAR = "nicht_pruefbar"
+
+
+class ProjektKollision(ProjektError):
+    """Zwei Stände derselben Mappe — und keiner von beiden wird stillschweigend verworfen.
+
+    Geworfen, wenn auf der Platte ein **neuerer** Stand liegt als der, aus dem heraus
+    gespeichert werden soll. Das ist kein Defekt, sondern der Normalfall, sobald ein iPad
+    und die HomeStation dieselbe Mappe führen.
+
+    **Warum das eine eigene Fehlerart ist und keine Meldung im Text:** Der Aufrufer muss
+    diesen Fall anders behandeln als eine kaputte Datei — er kann die Mappe neu öffnen,
+    seine Änderung darauf wiederholen und erneut speichern. Eine Fehlerart lässt sich
+    abfangen; ein Satz in einer Meldung lässt sich nur lesen.
+
+        *Wer die Arbeit des anderen überschreibt, tut es nie absichtlich — er erfährt nur
+        nie, dass es einen anderen gab.*
+    """
 
 
 def _jetzt() -> str:
@@ -327,6 +345,19 @@ def neu(wurzel, modell, *, name: str | None = None, einstellungen: dict | None =
         "name": name or modell.stem,
         "angelegt": _jetzt(),
         "zuletzt_gespeichert": None,
+        # DIE NUMMER DES STANDES — und sie steht hier, weil zwei Geraete dieselbe Mappe
+        # oeffnen koennen.
+        #
+        # Ein iPad und die HomeStation lesen beide dieselbe Datei, arbeiten beide daran
+        # und schreiben beide zurueck. Ohne diese Zahl gewinnt schlicht der Letzte, und
+        # der andere verliert seine Arbeit, OHNE dass es irgendwo auffiele — dieselbe
+        # Bauform wie die zwei gleichzeitigen Laeufe, die am 21.09.2026 einer den anderen
+        # ueberschrieben haben, nur eine Ebene hoeher.
+        #
+        # Die Zahl zaehlt bei jedem Schreiben um eins hoch. Wer speichert, muss von dem
+        # Stand kommen, der auf der Platte liegt; sonst wird abgelehnt statt
+        # ueberschrieben. Siehe `speichere` und `ProjektKollision`.
+        "stand_nr": 1,
         "modell": {
             # RELATIV ZUR MAPPE, wo es geht — siehe `pfad_fuer_die_mappe`. Ein absoluter
             # Pfad ueberlebt die Saeuberung nach Regel 3 nicht.
@@ -355,6 +386,23 @@ def neu(wurzel, modell, *, name: str | None = None, einstellungen: dict | None =
     }
 
 
+def _stand_auf_der_platte(ziel: Path):
+    """Welche Standnummer in der Datei steht, die gerade dort liegt.
+
+    ``None`` heisst **nicht feststellbar** und nicht «null»: keine Datei, unlesbar, oder
+    eine ältere, die diese Zahl noch nicht führt. In allen drei Fällen wird geschrieben —
+    eine Mappe, die vor dieser Neuerung entstanden ist, darf nicht plötzlich klemmen.
+    """
+    try:
+        vorhanden = json.loads(ziel.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(vorhanden, dict):
+        return None
+    nummer = vorhanden.get("stand_nr")
+    return nummer if isinstance(nummer, int) else None
+
+
 def speichere(projekt: dict, wurzel) -> Path:
     """Das Projekt schreiben — atomar, und von Benutzernamen befreit.
 
@@ -366,8 +414,28 @@ def speichere(projekt: dict, wurzel) -> Path:
     Datei: *Eine Säuberung, die nicht sagt, dass sie stattfand, ist von keiner Säuberung
     zu unterscheiden.*
 
+    **Und es wird nachgesehen, ob jemand anderes inzwischen geschrieben hat.** Seit dem
+    22.09.2026 trägt jede Mappe eine Standnummer. Liegt auf der Platte eine höhere als die
+    des Projekts, aus dem heraus gespeichert werden soll, wirft diese Funktion
+    :class:`ProjektKollision` — sie schreibt **nicht**.
+
+    Der Fall ist kein Sonderfall: Sobald ein iPad und die HomeStation dieselbe Mappe
+    führen, ist er der Normalfall. Ohne die Prüfung gewänne schlicht der Letzte.
+
+    **Was diese Prüfung NICHT leistet, und das gehört dazu:** Zwischen dem Blick auf die
+    Platte und dem Umbenennen liegen Mikrosekunden. Zwei Schreibvorgänge, die in dieses
+    Fenster fallen, fängt sie nicht — dafür gibt es die Laufsperre in
+    :mod:`aiimaging.arbeitsgang`, die den rechnenden Weg ohnehin abdeckt. Gefangen wird
+    der Fall, der in der Praxis vorkommt: zwei Geräte, die Minuten auseinander schreiben.
+
+        *Eine Sperre, die den seltenen Fall nicht kann, ist trotzdem besser als keine —
+        solange sie sagt, welchen sie nicht kann.*
+
     Returns:
         Der Pfad der geschriebenen Datei.
+
+    Raises:
+        ProjektKollision: Auf der Platte liegt ein neuerer Stand.
     """
     if not isinstance(projekt, dict) or projekt.get("schema") != SCHEMA:
         raise ProjektError(
@@ -378,9 +446,33 @@ def speichere(projekt: dict, wurzel) -> Path:
     wurzel.mkdir(parents=True, exist_ok=True)
     ziel = wurzel / PROJEKTDATEI
 
+    # DER BLICK AUF DIE PLATTE, BEVOR GESCHRIEBEN WIRD.
+    #
+    # Ohne ihn gewinnt der Letzte, und der andere verliert seine Arbeit lautlos. Mit ihm
+    # verliert niemand etwas: Wer auf einem ueberholten Stand sitzt, bekommt eine
+    # Ablehnung und kann neu oeffnen, seine Aenderung wiederholen und erneut speichern.
+    meiner = projekt.get("stand_nr")
+    meiner = meiner if isinstance(meiner, int) else 0
+    drueben = _stand_auf_der_platte(ziel)
+    if drueben is not None and drueben > meiner:
+        raise ProjektKollision(
+            f"Diese Mappe ist inzwischen weitergeschrieben worden: Auf der Platte liegt "
+            f"Stand {drueben}, dieser hier kommt von Stand {meiner}. Gespeichert wird "
+            f"NICHT — sonst waere die Arbeit des anderen weg, ohne dass es jemandem "
+            f"auffiele. Die Mappe neu oeffnen, die Aenderung darauf wiederholen, dann "
+            f"speichern."
+        )
+
     gesaeubert, ersetzt = _saeubere(projekt)
     gesaeubert["zuletzt_gespeichert"] = _jetzt()
     gesaeubert["regel3_ersetzt"] = ersetzt
+    # HOCHGEZAEHLT WIRD AUF DEM, WAS AUF DER PLATTE LIEGT, nicht auf dem eigenen Stand.
+    # Sonst schriebe ein Aufrufer, der zweimal dasselbe Projekt-Woerterbuch speichert,
+    # zweimal dieselbe Nummer — und die dritte Partei haelt beide fuer denselben Stand.
+    gesaeubert["stand_nr"] = max(meiner, drueben or 0) + 1
+    # WAS IM ARBEITSSPEICHER LIEGT, ZIEHT MIT. Sonst traegt der Aufrufer nach dem
+    # Speichern eine alte Nummer und faellt beim naechsten Speichern ueber sich selbst.
+    projekt["stand_nr"] = gesaeubert["stand_nr"]
 
     text = json.dumps(gesaeubert, indent=2, ensure_ascii=False) + "\n"
     fd, temp = tempfile.mkstemp(dir=str(wurzel), suffix=".tmp")
