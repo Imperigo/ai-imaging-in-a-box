@@ -54,6 +54,7 @@ Abhängigkeiten: :mod:`aiimaging.bruecke` und stdlib. Kein ``bpy``, keine Oberfl
 """
 from __future__ import annotations
 
+import math
 import time
 from pathlib import Path
 
@@ -2066,6 +2067,14 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                               urteil.get("score"), anker, schwelle=grenze),
                           belichtung=_belichtung_urteil(
                               ergebnis["bild_png"], stil, rahmen, belichtung_pruefen))
+            # DIE ZWEI TORE JE KAMERA — Befund der Durchsicht vom 22.09.2026: Der Block
+            # `geometry_gates` war in `kosmo_szene.als_ergebnis` gebaut, auf diesem Weg
+            # aber nie gefuellt. Er steht hier am Kameraurteil, weil er so ueber
+            # `geometrie_urteil` UND `je_kamera` beide Quellen erreicht, ohne dass eine
+            # ihre Schreibfunktion aendern muss. Siehe `_zwei_tore_dieser_kamera`.
+            # Bewacht fuer BEIDE Quellen an der geschriebenen Datei: Bruecke und eigene
+            # Ablage in `tests/test_vertrag_jede_kamera_spricht.py`.
+            urteil[_kosmo_szene.URTEIL_ZWEI_TORE] = _zwei_tore_dieser_kamera(urteil)
             urteil["doppelt_von"] = None
             # OB DIE GEOMETRIESTUFE GERECHNET ODER GEHOLT WURDE. Sie steht am
             # Kameraurteil und nicht nur im Multipassbericht, weil `befund_kurz` und
@@ -3193,10 +3202,72 @@ def _qa_je_kamera_eintraege(kameras) -> list[dict]:
         if not name:
             continue
         satz = {"kamera": str(name)}
-        if k.get("gemessen"):
+        if _kamera_gemessen(k):
             satz["geometrie_urteil"] = k
         aus.append(satz)
     return aus
+
+
+def _kamera_gemessen(urteil: dict) -> bool:
+    """Wurde diese Kamera gemessen? ``gemessen`` gilt, wo es steht — sonst ``status``.
+
+    **Nachgestellt am 22.09.2026 am Produktweg:** Hier stand ``k.get("gemessen")``. Das
+    Feld setzt aber nur :func:`_uebersprungenes_urteil` (auf ``False``); ein Urteil aus
+    ``tiefenschaetzer.qa_gegen_soll`` traegt stattdessen ``status: "ok"``. Zwei gemessene
+    Kameras kamen darum in ``qa_je_kamera`` als ``[{"kamera": …}, {"kamera": …}]`` an —
+    nur Namen, also *nicht gemessen*, obwohl beide gemessen waren. Die Proben dieser
+    Funktion setzten ``gemessen: True`` von Hand und sahen den Fehler nie.
+
+    Ein Urteil mit ``status`` ausser ``"ok"`` (``abgelehnt``, ``fehler``) gilt weiter als
+    nicht gemessen: Es traegt keine Zahl, und ein Block mit ``passed: false`` laese sich
+    als durchgefallen.
+    """
+    gemessen = urteil.get("gemessen")
+    if gemessen is not None:
+        return gemessen is True
+    return urteil.get("status") == "ok"
+
+
+def _zahl_oder_none(wert):
+    """Eine endliche Zahl — oder ``None``, und dann heisst es NICHT GEMESSEN.
+
+    ``geometrie_qa.zwei_tore`` wirft bei allem, was weder Zahl noch ``None`` ist. Ein
+    kaputtes Feld an einer Kamera darf hier aber nicht den ganzen Auftrag mitnehmen; es
+    wird zu *nicht gemessen*, und genau so steht es danach im Block. ``bool`` zaehlt
+    nicht als Zahl (``True >= 0.10`` waere wahr).
+    """
+    if isinstance(wert, bool) or not isinstance(wert, (int, float)):
+        return None
+    return float(wert) if math.isfinite(wert) else None
+
+
+def _zwei_tore_dieser_kamera(urteil: dict) -> dict | None:
+    """Das Urteil aus :func:`geometrie_qa.zwei_tore` fuer EINE gemessene Kamera.
+
+    **Tor A** liest ``rho_maske.gerichtet`` — denselben Wert, den
+    ``geometrie_qa.paarurteil`` liest; ein negatives ``rho`` (vertauschte Tiefe) faellt
+    damit durch, wie es soll. **Tor B** liest ``geom_iou``, dieselbe Zahl wie
+    ``qa.geometry.geom_iou`` — ausser ohne gemeinsame Silhouette: Dort ist sie eine
+    fehlende Messung, und Tor B bekommt ``None``.
+
+    **Ohne Gegenprobe.** Eine fremde Geometrie wird auf diesem Weg nicht gerechnet; das
+    Urteil sagt das selbst (``counter_check_status: fehlt``, ``released: false``). Es ist
+    damit *vorlaeufig* — aber es steht da, statt still zu fehlen.
+    """
+    from . import geometrie_qa
+    # Eine Kamera, deren Messung gar nicht lief (`status: fehler`), bekommt KEIN Urteil
+    # und nicht eines aus zwei `None`: `zwei_tore(None, None)` ist fail-closed und
+    # meldete `passed: false` — fuer ein Bild, ueber das nichts bekannt ist.
+    if not _kamera_gemessen(urteil):
+        return None
+    maske = urteil.get("rho_maske")
+    rho = _zahl_oder_none(maske.get("gerichtet") if isinstance(maske, dict) else None)
+    # OHNE GEMEINSAME SILHOUETTE ist `geom_iou` 0.0 eine FEHLENDE MESSUNG (Durchsicht
+    # 22.09.2026): So nennt es `verdict.reason` im selben Ergebnis, und Tor B darf dieselbe
+    # Zahl nicht als gemessen fuehren. Siehe `kosmo_szene.keine_gemeinsame_silhouette`.
+    iou = (None if _kosmo_szene.keine_gemeinsame_silhouette(urteil)
+           else _zahl_oder_none(urteil.get("geom_iou")))
+    return geometrie_qa.zwei_tore(rho, iou)
 
 
 def _uebersprungenes_urteil(kuerzel, rahmung: dict) -> dict:
@@ -3208,9 +3279,14 @@ def _uebersprungenes_urteil(kuerzel, rahmung: dict) -> dict:
     verbessert also nichts und verschwindet nirgends — er ist *nicht gemessen*, und das
     ist weder bestanden noch durchgefallen.
     """
+    # `zwei_tore: None` ausdruecklich und nicht weggelassen (22.09.2026): Ist diese Kamera
+    # die schlechteste, liest `kosmo_szene.als_ergebnis` daran, dass der Block
+    # `geometry_gates` als NICHT GEMESSEN erscheinen soll — statt ganz zu fehlen, was
+    # von «nie angeschlossen» nicht zu unterscheiden waere.
     return {"kamera": kuerzel, "score": None, "bestanden": None, "gemessen": False,
             "zustaendig": False, "bild_png": None, "rahmung": rahmung,
-            "grund": rahmung.get("abbruch_grund") or rahmung.get("grund", "")}
+            "grund": rahmung.get("abbruch_grund") or rahmung.get("grund", ""),
+            _kosmo_szene.URTEIL_ZWEI_TORE: None}
 
 
 def _nullprobe(ordner, soll, breite, hoehe, *, bildschreiben, messen, grenze,

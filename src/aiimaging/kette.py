@@ -93,6 +93,7 @@ Blender durch (siehe ``AUSFUEHRER``).
 """
 from __future__ import annotations
 
+import json
 import re
 import shutil
 import tempfile
@@ -452,18 +453,22 @@ def baue_kette(
     # aus der Signatur dieser Funktion; was hier nicht steht, kann dort niemand
     # bestellen, und wer es trotzdem schickt, bekommt eine Abweisung.
     #
-    # BESTELLBAR IST NOCH NICHT LIEFERBAR (Durchsicht 22.09.2026). Raeume gibt es nur
-    # beim Einstieg ueber `ifc_path` — aus einer glb laesst sich kein Raumbegriff
-    # gewinnen (`_fuehre_geometrie` setzt dort `raeume: None`). Der Weg ueber die
-    # Projektmappe (`arbeitsgang.rechne`) baut aber IMMER aus der umgewandelten glb.
-    # Seit heute bietet die Oberflaeche das Feld also an, und jeder Lauf damit endet im
-    # Fehlerknoten «Innenansicht verlangt, aber kein Standpunkt». Laut und ehrlich,
-    # nicht aussen gerendert — aber erfuellbar ist die Bestellung heute nur ueber den
-    # direkten Aufruf mit `ifc_path`. Beides ist bewacht
-    # (tests/test_innenansicht_bestellweg.py).
+    # BESTELLBAR WAR NOCH NICHT LIEFERBAR (Durchsicht 22.09.2026, nachgefahren). Raeume
+    # gibt es nur in der IFC — aus einer glb laesst sich kein Raumbegriff gewinnen. Der
+    # Weg ueber die Projektmappe (`arbeitsgang.rechne`) baut aber IMMER aus der
+    # umgewandelten glb, und bis dahin warf er die IFC dabei weg. Die Oberflaeche bot das
+    # Feld an, und jeder Lauf damit endete im Fehlerknoten «Innenansicht verlangt, aber
+    # kein Standpunkt».
     #
     #     *Eine Naht, die nur der direkte Aufrufer erreicht, gibt es fuer den Weg nicht,
     #     den das Produkt wirklich geht.*
+    #
+    # SEITHER FUEHRT DIE MAPPE DIE RAEUME MIT: `arbeitsgang.lege_an` liest sie beim
+    # Anlegen einer IFC einmal (`_raeume_lesen`, derselbe Weg wie hier), und
+    # `arbeitsgang.rechne` setzt sie bei einer Innenbestellung mit `mit_raeumen` an den
+    # Geometrie-Knoten. Warum dort und nicht als Angabe hier, steht an `mit_raeumen`.
+    # Bewacht in tests/test_innenansicht_mappe.py (Produktweg) und
+    # tests/test_innenansicht_bestellweg.py (Bibliotheksweg, glb ohne Raeume).
     #
     # Dieselbe Fehlerart wie am 21.09.2026 bei den elf Kameraangaben, eine Ebene tiefer.
     #
@@ -509,10 +514,12 @@ def baue_kette(
         innenraum: Eine Innenaufnahme bestellen: ``{"raum": <Name>, "art": "frontal"``
             ``| "ueber_eck"}``. Der Standpunkt wird beim Lauf aus den Räumen des
             Geometrie-Knotens gerechnet (``raumkamera.waehle``), samt der dort gemessenen
-            24-mm-Brennweite. **Vorbedingung: Einstieg über** ``ifc_path`` — nur dort
-            gibt es Räume. Über ``glb_path`` (und damit heute über die Projektmappe,
-            die immer aus der umgewandelten glb baut) endet der Lauf im Fehlerknoten
-            «Innenansicht verlangt, aber kein Standpunkt», statt aussen zu rendern. ``None`` heisst **nicht angefasst** — es entsteht dann wie
+            24-mm-Brennweite. **Vorbedingung: Räume** — beim Einstieg über
+            ``ifc_path`` liest die Kette sie selbst; beim Einstieg über ``glb_path``
+            müssen sie mit :func:`mit_raeumen` an den Graphen gesetzt werden (so tut es
+            die Projektmappe, siehe ``arbeitsgang.rechne``). Fehlen sie, endet der Lauf
+            im Fehlerknoten «Innenansicht verlangt, aber kein Standpunkt», statt aussen
+            zu rendern. ``None`` heisst **nicht angefasst** — es entsteht dann wie
             bisher eine Aussenaufnahme, und keine schon gemessene bleibt zurück.
             Zusammen mit ``auge``/``blick_auf``/``brennweite`` wird der Lauf abgewiesen:
             *zwei Quellen für denselben Standpunkt werden nicht geordnet.*
@@ -638,6 +645,68 @@ def baue_kette(
             eingaenge=(KNOTEN_MULTIPASS, KNOTEN_RENDER),
         ))
     return Graph(knoten)
+
+
+def mit_raeumen(graph: Graph, raeume: dict | None) -> Graph:
+    """Räume, die schon gelesen sind, an den Geometrie-Knoten eines glb-Einstiegs setzen.
+
+    **Der Befund (22.09.2026, nachgefahren):** Die Projektmappe baut immer aus der
+    umgewandelten glb, und beim glb-Einstieg setzte ``_fuehre_geometrie`` ``raeume``
+    fest auf ``None``. Eine über die Oberfläche bestellte Innenansicht endete darum in
+    jedem Lauf im Fehlerknoten. Die Räume liest ``arbeitsgang.lege_an`` jetzt beim
+    Anlegen einmal aus der IFC; hier kommen sie in den Graphen.
+
+    **Warum eine eigene Funktion und keine Angabe von** :func:`baue_kette`. Die
+    Oberfläche gewinnt ihre Bedienfelder aus der Signatur von ``baue_kette``. Eine
+    Angabe ``raeume`` stünde dort als Feld, das jemand von Hand ausfüllen könnte — für
+    etwas, das die Mappe selbst weiss. Das ist dieselbe Doppelquelle, gegen die die
+    Fläche ``ifc_path``, ``glb_path`` und ``bbox`` ausdrücklich nicht anbietet. Dasselbe
+    Muster wie :func:`haenge_nachrender_an`: Der Graph wird gebaut und danach ergänzt.
+
+    **Sie stehen in den Parametern und damit im Hash.** Ändern sich die Räume, rechnet
+    die Geometrie neu, und mit ihr alles dahinter — sonst wäre die Aufnahme aus dem alten
+    Grundriss ein Zwischenspeicher-Treffer für den neuen.
+
+    Args:
+        graph: Ein Graph aus :func:`baue_kette` mit glb-Einstieg.
+        raeume: Die Ausgabe von ``_raeume_lesen`` (``{"status", "raeume": [...], ...}``)
+            — oder ``None``: **nicht gelesen**. Dann bleibt der Graph unverändert, und
+            eine Innenbestellung scheitert laut mit dem Grund aus ``raumkamera.waehle``.
+            ``{"raeume": []}`` ist etwas anderes: gelesen, keine gefunden.
+
+    Raises:
+        KettenError: Der Graph hat keinen Geometrie-Knoten, steigt über ``ifc_path`` ein
+            (dort liest die Kette die Räume selbst — zwei Quellen würden nicht geordnet),
+            oder ``raeume`` hat nicht die Form, die ``raumkamera.waehle`` liest.
+    """
+    if raeume is None:
+        return graph
+    geometrie = graph.knoten.get(KNOTEN_GEOMETRIE)
+    if geometrie is None:
+        raise KettenError(f"Der Graph hat keinen Knoten {KNOTEN_GEOMETRIE!r} — wohin "
+                          f"die Räume gehören, ist dann nicht bestimmt.")
+    if geometrie.params.get("ifc_path"):
+        raise KettenError(
+            "Räume an einen IFC-Einstieg zu setzen hiesse, zwei Quellen für dieselben "
+            "Räume zu haben: Beim Einstieg über ifc_path liest die Kette sie selbst. "
+            "Welche gälte, entscheidet dieses Modul nicht.")
+    if not isinstance(raeume, dict) or not isinstance(raeume.get("raeume"), list):
+        raise KettenError(
+            f"raeume hat nicht die Form der Raumliste ({{'status': …, 'raeume': [...]}}), "
+            f"sondern {type(raeume).__name__}. Erwartet wird die Ausgabe des Raumlesers.")
+    # EINMAL DURCH JSON, wie in der Mappe. `raumkamera.standpunkte` liefert Tupel, und ein
+    # Knoten lehnt Parameter ab, die die JSON-Runde nicht verlustfrei ueberstehen. Nach
+    # der Runde ergibt dieselbe Raumliste denselben Hash — gleich, ob sie frisch aus
+    # `_raeume_lesen` kommt oder aus der gespeicherten Mappe.
+    try:
+        raeume = json.loads(json.dumps(raeume, allow_nan=False))
+    except (TypeError, ValueError) as fehler:
+        raise KettenError(f"Die Raumliste ist nicht als JSON darstellbar: {fehler}") \
+            from fehler
+    neu = Knoten(id=geometrie.id, art=geometrie.art,
+                 params={**geometrie.params, "raeume": raeume},
+                 eingaenge=geometrie.eingaenge)
+    return Graph([neu if k.id == KNOTEN_GEOMETRIE else k for k in graph.knoten.values()])
 
 
 def haenge_nachrender_an(
@@ -839,7 +908,7 @@ def _freier_vorsatz(graph: Graph) -> str:
 # Pflichtfelder ausfüllen müssen, um „hat geklappt" zu sagen.
 
 
-def _raeume_lesen(ifc_path) -> dict | None:
+def _raeume_lesen(ifc_path, *, _starte=None) -> dict | None:
     """Räume und ihre Kamerastandpunkte — oder eine benannte Lücke.
 
     **Warum das an dieser Stelle steht.** Räume gibt es nur in der IFC. Sobald daraus eine
@@ -852,8 +921,12 @@ def _raeume_lesen(ifc_path) -> dict | None:
     Befund verschwindet trotzdem nicht — sonst sähe eine Datei ohne Räume aus wie eine,
     die nie gefragt wurde.
     """
+    # `_starte` NUR, WENN ES GESETZT IST. `arbeitsgang.lege_an` reicht seine Testnaht
+    # durch (wer den Subprozess ersetzt, will keinen echten gestartet sehen); ohne sie
+    # bleibt der Aufruf genau der bisherige.
+    zusatz = {"_starte": _starte} if _starte is not None else {}
     try:
-        bericht = seams.ifc_raeume(str(ifc_path))
+        bericht = seams.ifc_raeume(str(ifc_path), **zusatz)
     except Exception as fehler:      # noqa: BLE001 — siehe Docstring
         return {"status": "fehler", "raeume": [],
                 "grund": f"Räume nicht lesbar: {type(fehler).__name__}: {fehler}"}
@@ -944,7 +1017,10 @@ def _fuehre_geometrie(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     else:
         ausgaben = {
             "glb_path": p["glb_path"],
-            "raeume": None,
+            # AUS DER GLB SELBST GIBT ES KEINE RAEUME — nur, was `mit_raeumen` aus der
+            # Mappe an den Knoten gesetzt hat. Fehlt der Eintrag, bleibt es `None`: nicht
+            # gelesen, wie bisher (Befund 22.09.2026, siehe `mit_raeumen`).
+            "raeume": p.get("raeume"),
             "up_axis": p["up_axis"],
             # HIER STAND NUR `p.get("bbox")`, UND DAS HAT DEN GANZEN WEG GESPERRT.
             #
@@ -1041,9 +1117,14 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
                                  raum=wunsch.get("raum"),
                                  art=wunsch.get("art", raumkamera.ART_FRONTAL))
         if not wahl["gefunden"]:
+            # WAS DER RAUMLESER SELBST GEMELDET HAT, KOMMT MIT. Ist er gescheitert, steht
+            # sein Grund in der Raumliste — ohne ihn sagte der Satz nur «keine Räume»,
+            # und ein unlesbares Modell sähe aus wie eines ohne Räume.
+            leser = (geometrie.get("raeume") or {}).get("grund")
             return {"status": STATUS_FEHLER,
                     "error": ("Innenansicht verlangt, aber kein Standpunkt: "
-                              + wahl["grund"]),
+                              + wahl["grund"]
+                              + (f" Der Raumleser meldete: {leser}" if leser else "")),
                     "innenraum": wahl}
         auge = list(wahl["standpunkt"]["auge"])
         blick_auf = list(wahl["standpunkt"]["blick_auf"])
@@ -2334,6 +2415,7 @@ __all__ = [
     "STATUS_ABGELEHNT", "STATUS_FEHLER", "STATUS_OK", "STATUS_UEBERSPRUNGEN",
     "KettenError",
     "baue_kette", "bildeingang_lage", "fuehre_aus", "haenge_nachrender_an",
-    "nachrender_ausfuehrer", "pruefe_kette", "qa_ausfuehrer", "render_ausfuehrer",
+    "mit_raeumen", "nachrender_ausfuehrer", "pruefe_kette", "qa_ausfuehrer",
+    "render_ausfuehrer",
     "schicht_von", "schichtbefund", "standard_out_dir",
 ]

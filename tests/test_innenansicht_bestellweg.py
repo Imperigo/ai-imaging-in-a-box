@@ -16,14 +16,19 @@ Signatur von ``baue_kette``; was dort nicht steht, kann niemand bestellen.
 Es ist dieselbe Fehlerart wie am 21.09.2026, als elf Kameraangaben über einen der beiden
 Wege nicht bestellbar waren — eine Ebene tiefer.
 
-Bestellbar ist noch nicht lieferbar (Durchsicht 22.09.2026)
-------------------------------------------------------------
-Räume gibt es nur beim Einstieg über ``ifc_path``. Der Weg über die Projektmappe baut
-immer aus der umgewandelten glb — dort ist ``raeume`` ``None``. Über die Fläche ist die
-Innenansicht damit seit heute **bestellbar, aber nicht lieferbar**: Jeder Lauf endet im
-Fehlerknoten. Die Probe 1 unten bewacht darum den **Bibliotheksweg** (``baue_kette``
-mit den Räumen, die der IFC-Einstieg liefert), nicht den Weg der Fläche; die Proben 5
-und 6 halten fest, dass der glb-Weg laut scheitert statt aussen zu rendern.
+Bestellbar war noch nicht lieferbar (Durchsicht 22.09.2026, behoben am selben Tag)
+-----------------------------------------------------------------------------------
+Räume gibt es nur in der IFC. Der Weg über die Projektmappe baut immer aus der
+umgewandelten glb, und dort war ``raeume`` ``None``: Über die Fläche war die
+Innenansicht **bestellbar, aber nicht lieferbar**, jeder Lauf endete im Fehlerknoten.
+
+Seither liest ``arbeitsgang.lege_an`` die Räume beim Anlegen einer IFC einmal, und
+``arbeitsgang.rechne`` setzt sie bei einer Innenbestellung mit ``kette.mit_raeumen`` an
+den Geometrie-Knoten. **Den Produktweg bewacht** ``tests/test_innenansicht_mappe.py``;
+diese Datei bewacht den **Bibliotheksweg** (Probe 1: ``baue_kette`` mit den Räumen, die
+der IFC-Einstieg liefert) und den **glb-Einstieg ohne Räume** (Proben 5 und 6: laut
+scheitern statt aussen rendern — so geht es einer Mappe aus einer glb bis heute, und
+das ist richtig).
 
 Warum diese Proben
 ------------------
@@ -41,9 +46,9 @@ Warum diese Proben
 4. **Der Weg der Oberfläche.** Geprüft wird die Wirkung: dass die Feldliste, die die
    Fläche wirklich baut, die Angabe enthält und sie dem Multipass-Knoten zuordnet. Der
    Quelltext der Fläche wird dabei nicht gelesen — er wird ausgeführt.
-5. **Über den glb-Einstieg scheitert die Bestellung laut.** Die ganze Kette läuft über
-   die echten Ausführer von Geometrie und Multipass; es darf nicht gerendert werden, und
-   der Fehler muss sagen, warum.
+5. **Über den glb-Einstieg ohne Räume scheitert die Bestellung laut.** Die ganze Kette
+   läuft über die echten Ausführer von Geometrie und Multipass; es darf nicht gerendert
+   werden, und der Fehler muss sagen, warum.
 6. **Zwei Standpunktquellen über** ``baue_kette`` **werden abgewiesen** — die Zusage des
    Docstrings, bisher nur am handgebauten Knoten belegt.
 
@@ -87,7 +92,8 @@ def test_eine_ueber_baue_kette_bestellte_innenansicht_erreicht_den_standpunkt(
     """**Bestellt über** ``baue_kette``, **angekommen am Runner** — der Bibliotheksweg.
 
     Die Räume werden so eingereicht, wie der IFC-Einstieg sie liefert. Über die
-    Projektmappe gibt es sie heute nicht (siehe Modulkopf und Probe 5).
+    Projektmappe kommen sie seit dem 22.09.2026 aus der Mappe — bewacht in
+    ``tests/test_innenansicht_mappe.py``.
 
     Nicht geprüft wird, ob ein Wort im Knoten steht — sondern ob aus der Bestellung ein
     Standpunkt IM Raum wird. Auf halber Raumhöhe (0,1 m + 2,4 m / 2 = 1,3 m), waagrecht,
@@ -195,7 +201,7 @@ def test_die_innenansicht_steht_in_der_feldliste_der_flaeche(flaeche):
         "die Probe der Fläche findet nicht, wo die Angabe wirkt")
 
 
-# ------------------------------------------------- 5 · Bestellbar ist nicht lieferbar
+# ------------------------------------------- 5 · glb-Einstieg ohne Räume: laut, ehrlich
 
 #: Bauwerk 12 × 9 × 15 m auf einer Geländeplatte — synthetisch, in glTF-Koordinaten.
 SZENE = (
@@ -233,9 +239,13 @@ def _lauf_ueber_den_glb_einstieg(glb, tmp_path, monkeypatch, **angaben):
     return kette.fuehre_aus(gebaut, ausfuehrer=tabelle, out_dir=tmp_path / "out")
 
 
-def test_ueber_den_glb_einstieg_scheitert_die_innenansicht_laut(tmp_path, monkeypatch,
-                                                                 szene_glb):
-    """**Der Weg, den die Projektmappe geht: bestellbar, aber nicht lieferbar.**
+def test_ueber_den_glb_einstieg_ohne_raeume_scheitert_die_innenansicht_laut(
+        tmp_path, monkeypatch, szene_glb):
+    """**glb-Einstieg ohne Räume: bestellbar, aber nicht lieferbar — und das laut.**
+
+    Bis zum 22.09.2026 war das der Weg jeder Projektmappe. Heute ist es der Weg einer
+    Mappe aus einer glb (dort gibt es keinen Raumbegriff) und jedes direkten Aufrufs, der
+    keine Räume mit ``kette.mit_raeumen`` setzt.
 
     Die Geometrie muss durchkommen — sonst prüfte diese Probe einen anderen Fehler. Danach
     muss der Multipass-Knoten mit der ehrlichen Begründung stehen bleiben, und es darf
@@ -253,6 +263,8 @@ def test_ueber_den_glb_einstieg_scheitert_die_innenansicht_laut(tmp_path, monkey
     assert multipass["status"] == kette.STATUS_FEHLER
     fehler = multipass["error"] or multipass["ausgaben"].get("error") or ""
     assert "Innenansicht verlangt" in fehler, fehler
+    assert "über eine glb eingestiegen" in fehler, (
+        "der Grund muss den glb-Einstieg nennen — nicht bloss «kein Standpunkt»")
 
 
 def test_zwei_standpunktquellen_ueber_baue_kette_werden_abgewiesen(tmp_path, monkeypatch,

@@ -45,6 +45,10 @@ andere Annahme über den Menschen im Bild. Hier gilt:
   die einzige Bodenreferenz, die in den Daten steckt, und im Zweifel um eine
   Geschosshöhe daneben statt um vierhundert Meter.
 
+  Eine solche Angabe wird **nicht nachgeprüft** und darum auch so gemeldet
+  (Bezugspunkt ``gesetzt``, «Geländeangabe … NICHT GEPRÜFT»), auf beiden Kamerawegen —
+  Owner-Entscheid vom 22.09.2026.
+
 Und ein vierter Vertrag, diesmal in einer anderen Sprache
 ---------------------------------------------------------
 Seit dem 01.09.2026 ist bekannt, dass die Rechnung ein zweites Mal existiert: in
@@ -2001,14 +2005,19 @@ def kamerasatz(bbox, *,
     # Kamera im Keller. `komposition.BEZUGSPUNKTE` führt genau diese Unterscheidung samt
     # ihrer Verlässlichkeit — ohne dieses Feld könnte die Beurteilung sie nicht treffen.
     #
-    # OFFEN, UND ES IST EINE OWNER-FRAGE (Durchsicht 22.09.2026): Dieselbe Angabe des
-    # Betreibers (`gelaende_z`) heisst HIER `terrain_an_kamera` — also verlaesslich, ohne
-    # Warnung — und in `berichtsfelder_aus_stellung` (vorgegebener Weg) `gesetzt`, also
-    # ungeprueft. Eine der beiden Stellen setzt still gleich, was die andere trennt.
-    # Nicht geaendert, bis entschieden ist, ob ein gesetzter Gelaendestand ein Bezug am
-    # Gelaende ist oder eine Angabe. `tests/test_gelaendestand.py` haelt den heutigen Stand.
-    gelaende_bezug = ("huellbox_unterkante" if gelaende_z is None
-                      else "terrain_an_kamera")
+    # EIN GESETZTER GELAENDESTAND IST EINE ANGABE, KEIN BEZUG AM GELAENDE (Owner-Entscheid
+    # 22.09.2026). Bis dahin hiess dieselbe Zahl des Betreibers (`gelaende_z`) hier
+    # `terrain_an_kamera` — verlaesslich, ohne Warnung — und in
+    # `berichtsfelder_aus_stellung` (vorgegebener Weg) `gesetzt`, also ungeprueft. Die
+    # Durchsicht vom 22.09.2026 hat das mit einem Lauf ueber
+    # `abholer._komposition_vor_dem_render` bestaetigt: gleiche Eingabe, auf dem
+    # gerechneten Weg keine Warnung, auf dem vorgegebenen «NICHT GEPRÜFT». Jetzt sagen
+    # beide Wege `gesetzt` (`tests/test_gelaendestand_nicht_geprueft.py`).
+    #
+    # `terrain_an_kamera` bleibt in `komposition.BEZUGSPUNKTE` stehen — fuer ein Gelaende,
+    # das wirklich GEMESSEN ist. Einen solchen Weg in `kamerasatz` gibt es heute nicht:
+    # Jede Zahl, die hier ankommt, hat jemand angegeben.
+    gelaende_bezug = "huellbox_unterkante" if gelaende_z is None else "gesetzt"
     auge_z = grund + augenhoehe_m
     # Das Blickziel liegt darüber, aber niemals über dem Bauwerk hinaus (ZIEL_HOECHSTANTEIL).
     ziel_z = min(auge_z + masse[2] * ZIEL_ANTEIL_HOEHE,

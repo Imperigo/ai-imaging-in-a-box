@@ -78,7 +78,10 @@ def lege_an(wurzel, modell, *, name: str | None = None,
         modell: Die Modelldatei in irgendeinem Format aus :data:`importeur.WEGE`.
         name: Anzeigename des Projekts.
         einstellungen: Was der Lauf später braucht (Backbone, Auflösung, Prompt …).
-        timeout: Gesamtfrist für die Umwandlung.
+        timeout: Gesamtfrist für die Umwandlung. **Nicht** für den Raumleser, der bei
+            einer IFC seit dem 22.09.2026 zusätzlich einmal läuft (eigener Subprozess
+            im ``.venv-ifc``, eigene Frist) — das Anlegen einer IFC dauert dadurch
+            spürbar länger.
 
     Returns:
         ``{projekt, import_bericht, pfad}``. Das Projekt ist **geschrieben**.
@@ -138,9 +141,41 @@ def lege_an(wurzel, modell, *, name: str | None = None,
         "hinweise": list(bericht.get("hinweise") or ()),
         "grund": bericht.get("grund"),
         "naechster_schritt": bericht.get("naechster_schritt"),
+        "raeume": _raeume_beim_anlegen(modell, bericht, _starte),
     }
     pfad = projekt.speichere(p, wurzel)
     return {"projekt": p, "import_bericht": bericht, "pfad": pfad}
+
+
+def _raeume_beim_anlegen(modell, bericht: dict, _starte) -> dict | None:
+    """Die Räume einer IFC, **jetzt** gelesen — solange es die IFC noch gibt.
+
+    **Der Befund (22.09.2026, nachgefahren):** Die Innenansicht war über die Oberfläche
+    bestellbar, über die Mappe aber nicht lieferbar. Räume gibt es nur in der IFC; die
+    Mappe rechnet später aus der umgewandelten glb, in der Wände und Böden Dreiecke ohne
+    Raumbegriff sind. :func:`rechne` warf ``ifc_path`` weg, und jeder Lauf mit
+    ``innenraum`` endete im Fehlerknoten «Innenansicht verlangt, aber kein Standpunkt».
+
+    **Warum beim Anlegen und nicht bei jedem Lauf.** Beim Anlegen ist das Quellmodell
+    sicher da, und die glb entsteht im selben Griff aus derselben Datei. Die Räume
+    liegen in IFC-Koordinaten, dieselbe Annahme wie beim Einstieg über ``ifc_path`` —
+    ob sie zur umgewandelten glb passen, ist **am Gerät unbestätigt**
+    (``auf-20260922-141``). Bei jedem Lauf nachzulesen
+    hiesse, einen Subprozess ins ``.venv-ifc`` pro Klick zu starten, und gegen eine IFC,
+    die sich seither geändert haben kann.
+
+    **Derselbe Weg wie beim IFC-Einstieg der Kette** (``kette._raeume_lesen``): Subprozess
+    jenseits der Prozessgrenze, ein Fehlschlag hält nichts an und steht als Befund in der
+    Raumliste (Regel 1, IfcOpenShell bleibt drüben).
+
+    Returns:
+        Die Raumliste, oder ``None`` — **nicht gelesen**: Das Modell kam nicht als IFC
+        (eine glb, ein FBX … hat keinen Raumbegriff), oder der Import wurde abgelehnt.
+        ``{"raeume": []}`` heisst dagegen: gelesen, keine gefunden.
+    """
+    if bericht.get("status") != "ok" or bericht.get("weg") != importeur.WEG_IFC:
+        return None
+    return kette._raeume_lesen(modell, _starte=_starte)
 
 
 def _urteil_zu(graph, knoten_ergebnisse: dict, bild_knoten: str):
@@ -517,6 +552,33 @@ def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None,
         Path(sperre).unlink(missing_ok=True)
 
 
+def _raeume_der_mappe(p: dict) -> dict | None:
+    """Die Räume, die :func:`lege_an` in der Mappe abgelegt hat — oder ``None``.
+
+    **Eine Mappe von vor dem 22.09.2026 trägt gar keinen Eintrag.** Kam ihr Modell als
+    IFC, sind die Räume nicht «keine», sondern **nie gelesen** — und der Grund, den die
+    Kette dann nennen würde («über eine glb eingestiegen … oder nichts gefunden»), wäre
+    für diese Mappe falsch. Darum wird hier abgewiesen, mit dem Satz, was zu tun ist.
+
+    Kam das Modell nicht als IFC, ist ``None`` die ehrliche Antwort, alt wie neu: Aus
+    einer glb gibt es keinen Raumbegriff, und die Kette sagt das selbst.
+
+    Raises:
+        ArbeitsgangError: IFC-Mappe ohne Raumeintrag.
+    """
+    einfuhr = p.get("import") or {}
+    if "raeume" not in einfuhr and einfuhr.get("weg") == importeur.WEG_IFC:
+        raise ArbeitsgangError(
+            "Eine Innenansicht ist bestellt, aber in dieser Mappe stehen keine Räume: Sie "
+            "wurde angelegt, bevor die Mappe die Räume der IFC mitführte (22.09.2026). "
+            "Gelesen wurden sie für diese Mappe nie — das heisst NICHT, dass das Modell "
+            "keine hat.\n"
+            "Die Mappe muss in einem neuen Projektordner neu angelegt werden (lege_an "
+            "mit derselben IFC); dabei werden die Räume einmal gelesen. Aussenansichten "
+            "rechnet diese Mappe weiterhin wie bisher.")
+    return einfuhr.get("raeume")
+
+
 def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder,
                      **kettenargumente) -> dict:
     """Der Lauf selbst. Siehe :func:`rechne` — hier steht nur, was **innerhalb** der
@@ -569,6 +631,12 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder,
                 "sie zu stellen.")
 
     graph = kette.baue_kette(glb_path=glb, **args)
+
+    # DIE RAEUME AUS DER MAPPE, ABER NUR BEI EINER INNENBESTELLUNG (Befund 22.09.2026).
+    # Ohne `innenraum` bleiben Graph und Hash genau die bisherigen — sonst rechnete jeder
+    # alte Lauf einer IFC-Mappe neu, nur weil jetzt Raeume in ihr stehen.
+    if args.get("innenraum"):
+        graph = kette.mit_raeumen(graph, _raeume_der_mappe(p))
 
     if cache is SPEICHER_IN_DER_MAPPE:
         cache = ArtefaktCache(wurzel / SPEICHERORDNER)

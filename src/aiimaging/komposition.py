@@ -349,6 +349,10 @@ BELEGT = {
 SETZUNG_AUGENHOEHE_AUSSEN_M = 1.70
 
 #: **GESETZT.** Der Bezugspunkt, auf den sich die Kamerahöhe aussen bezieht.
+#:
+#: Das ist der Ort, an dem die Konvention misst — nicht der Bezug, den ein Lauf meldet.
+#: Ein von Hand gesetztes ``gelaende_z`` heisst im Bericht ``gesetzt`` und gilt als
+#: nicht geprüft (Owner-Entscheid 22.09.2026).
 SETZUNG_BEZUGSPUNKT_AUSSEN = "terrain_an_kamera"
 
 #: **GESETZT (vorgeschlagen, nicht entschieden).** Anteil der Bildbreite, auf dem eine
@@ -857,6 +861,11 @@ def kleinbild_aequivalent(brennweite_grossformat_mm: float, *,
 #: Werte: ``True``, ``False`` und ``None`` für *nicht geprüft*. Darum ist der Bezugspunkt in :func:`kamerahoehe` ein **Pflichtargument**: Es gibt
 #: keine Vorgabe, weil jede Vorgabe irgendwo falsch wäre.
 BEZUGSPUNKTE = {
+    # DER VERLAESSLICHE BEZUG — fuer ein GEMESSENES Gelaende. Seit dem Owner-Entscheid
+    # vom 22.09.2026 traegt ihn eine Angabe des Betreibers (`gelaende_z`) auf keinem Weg
+    # mehr; `kameras.kamerasatz` meldet sie wie `berichtsfelder_aus_stellung` als
+    # `gesetzt` (tests/test_gelaendestand_nicht_geprueft.py). Einen Weg, der das Gelaende
+    # wirklich misst und diesen Namen setzt, gibt es heute nicht.
     "terrain_an_kamera": {
         "beschreibung": "Gelände an der XY-Position der Kamera. Was der Fotograf meint; "
                         "SketchUp sagt „directly above the point you click“.",
@@ -895,7 +904,8 @@ BEZUGSPUNKTE = {
     },
     # DER SECHSTE NULLPUNKT, und er fehlte bis zum 22.09.2026 (Durchsicht, mit einem Lauf
     # bestaetigt). `kameras.berichtsfelder_aus_stellung(..., gelaende_z=<Zahl>)` schreibt
-    # diesen Namen seit dem 24.08.2026 in den Bericht; hier war er unbekannt, also warf
+    # diesen Namen seit dem 24.08.2026 in den Bericht, `kameras.kamerasatz` seit dem
+    # Owner-Entscheid vom 22.09.2026 ebenso; hier war er unbekannt, also warf
     # `kamerahoehe`, und der Abholer meldete «Komposition NICHT beurteilbar». Genau der
     # Handgriff, den `abholer._kompositionszeilen` dem Betreiber empfiehlt
     # (`--gelaende-z`), schaltete damit die ganze Pruefung ab.

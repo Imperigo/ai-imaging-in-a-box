@@ -69,7 +69,9 @@ def _kamerablock(kuerzel):
             "auge": [0.0, -30.0, 1.70], "blick_auf": [0.0, 0.0, 5.5],
             "abstand_m": 30.0, "brennweite_mm": 35.0, "seitenverhaeltnis": 1.6,
             "shift_mm": 0.0, "neigung_grad": 0.0,
-            "gelaende_z": 0.0, "gelaende_bezug": "terrain_an_kamera",
+            # "gesetzt" seit dem Owner-Entscheid vom 22.09.2026: So meldet der Runner
+            # einen von Hand gesetzten Gelaendestand heute (nicht geprueft).
+            "gelaende_z": 0.0, "gelaende_bezug": "gesetzt",
             "gebaeudehoehe_m": 11.0}
 
 

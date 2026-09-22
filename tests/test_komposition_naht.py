@@ -41,11 +41,16 @@ def test_die_vier_faelle_ergeben_vier_verschiedene_urteile():
         return kameras.kamerasatz(BBOX, modus=modus, seitenverhaeltnis=1.0,
                                   gelaende_z=gelaende_z)
 
+    # Bis zum 22.09.2026 war ein gesetzter Geländestand hier stumm (`[]` und
+    # `["Neigung"]`). Der Owner-Entscheid vom 22.09.2026 hat den Stand geändert: Die
+    # Angabe gilt als NICHT GEPRÜFT und meldet sich mit eigener Art — «Geländeangabe»,
+    # nicht «Bezugspunkt». Vier Fälle, vier Urteile bleiben es trotzdem.
     assert _arten(satz(kameras.MODUS_GEKIPPT, None)) == ["Bezugspunkt", "Neigung"]
-    assert _arten(satz(kameras.MODUS_GEKIPPT, 0.0)) == ["Neigung"]
+    assert _arten(satz(kameras.MODUS_GEKIPPT, 0.0)) == ["Geländeangabe", "Neigung"]
     assert _arten(satz(kameras.MODUS_SHIFT, None)) == ["Bezugspunkt"]
-    assert _arten(satz(kameras.MODUS_SHIFT, 0.0)) == [], (
-        "waagrechte Kamera und erklärter Geländestand — hier ist nichts mehr zu melden"
+    assert _arten(satz(kameras.MODUS_SHIFT, 0.0)) == ["Geländeangabe"], (
+        "waagrechte Kamera und gesetzter Geländestand — zu melden bleibt nur, dass die "
+        "Angabe nicht geprüft ist"
     )
 
 
@@ -112,8 +117,12 @@ def test_der_shift_wird_wirklich_mitbeurteilt_und_nicht_nur_mitgereicht():
     assert kamera["shift_mm"] > 0.5, "ohne Shift prüft dieser Test nichts"
 
     def urteil(k):
+        # Der Bezug, den `kamerasatz(gelaende_z=0.0)` seit dem Owner-Entscheid vom
+        # 22.09.2026 meldet — vorher stand hier "terrain_an_kamera". Für Bodenanteil und
+        # Mindestabstand ist er gleichgültig; er steht hier, damit der Test nicht einen
+        # Bezug behauptet, den der Produktweg nicht mehr liefert.
         return komposition.beurteile_kamera(k, gebaeudehoehe_m=15.0, gelaende_z=0.0,
-                                            bezugspunkt="terrain_an_kamera")
+                                            bezugspunkt="gesetzt")
 
     mit = urteil(kamera)
     ohne = urteil(dict(kamera, shift_mm=0.0))
@@ -144,7 +153,10 @@ def _bericht(**kw):
         "brennweite_mm": kamera["brennweite_mm"],
         "seitenverhaeltnis": kamera["seitenverhaeltnis"],
         "neigung_grad": kamera["neigung_grad"], "shift_mm": kamera["shift_mm"],
-        "gelaende_z": 0.0, "gelaende_bezug": "terrain_an_kamera",
+        # Wie der Runner es meldet: `satz["gelaende_bezug"]` aus `kamerasatz`. Seit dem
+        # Owner-Entscheid vom 22.09.2026 ist das bei gesetztem `gelaende_z` "gesetzt",
+        # vorher stand hier "terrain_an_kamera".
+        "gelaende_z": 0.0, "gelaende_bezug": "gesetzt",
         "gebaeudehoehe_m": 15.0,
     }
     block.update({k: v for k, v in kw.items() if k not in ("modus", "seitenverhaeltnis")})
@@ -161,7 +173,12 @@ def test_ein_berichteter_kamerablock_wird_beurteilt():
 def test_der_shift_modus_kommt_auch_ueber_den_bericht_sauber_an():
     urteil = komposition.beurteile_bericht(_bericht(modus=kameras.MODUS_SHIFT))
     assert urteil["neigung_grad"] == 0.0
-    assert urteil["warnungen"] == [], "waagrecht und erklärter Boden — nichts zu melden"
+    # Bis zum 22.09.2026 hiess das hier `warnungen == []`. Der Owner-Entscheid vom
+    # 22.09.2026 hat den Stand geändert: Ein gesetzter Geländestand bleibt als NICHT
+    # GEPRÜFT gemeldet — und das ist dann auch das Einzige, was zu melden ist.
+    assert [w.split(" ", 1)[0] for w in urteil["warnungen"]] == ["Geländeangabe"], (
+        "waagrecht und gesetzter Boden — zu melden bleibt nur die ungeprüfte Angabe"
+    )
 
 
 @pytest.mark.parametrize("fehlend", komposition.BERICHTSFELDER)

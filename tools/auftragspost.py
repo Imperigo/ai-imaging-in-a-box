@@ -81,7 +81,9 @@ def main(argv: list[str] | None = None) -> int:
     # wahre Angabe zu machen, erzeugt dabei eine zweite Wahrheit.*
     p.add_argument("--vermerken", action="store_true",
                    help="nur die Zustellung vermerken, nichts schreiben — fuer den "
-                        "git-Weg, bei dem der Block unter auftraege/bloecke/ liegt")
+                        "git-Weg, bei dem der Block unter auftraege/bloecke/ liegt. "
+                        "Die erste Zustellung zaehlt: ein schon vermerkter Zeitpunkt "
+                        "wird nicht ueberschrieben.")
     p.add_argument("--nach", type=Path,
                    help="Blocks als <kennung>.md in dieses Verzeichnis schreiben, statt "
                         "sie zu drucken. Der Pfad wird NICHT im Repo festgeschrieben — "
@@ -469,8 +471,17 @@ def _vermerke(blocks, repo) -> None:
         if satz and satz.get("worker") in auftragspost.ZUSTELLUNG_NOETIG:
             kennungen.append(kennung)
     if kennungen:
-        auftragspost.vermerke_zustellung(repo, kennungen)
-        print(f"zustellvermerk: {len(kennungen)} Kennung(en) nachgezogen")
+        # NEU UND SCHON VERMERKT GETRENNT ZAEHLEN (Befund 22.09.2026). Bis dahin stand
+        # hier «5 Kennung(en) nachgezogen», obwohl nur eine neu war — und die vier anderen
+        # hatten dabei ihren ersten Zeitpunkt verloren. Die Bibliothek laesst ihn seither
+        # stehen; diese Zeile sagt es, damit «0 neu» nicht wie ein Fehlschlag aussieht.
+        verschieden = list(dict.fromkeys(kennungen))
+        neu = auftragspost.vermerke_zustellung(repo, verschieden)
+        schon = len(verschieden) - neu
+        print(f"zustellvermerk: {neu} Kennung(en) NEU vermerkt, {schon} schon vermerkt")
+        if schon:
+            print("  schon vermerkte behalten ihren Zeitpunkt — die erste Zustellung "
+                  "zaehlt, ein zweiter Vermerk ueberschreibt sie nicht.")
 
 
 def _lies(wurzel: Path, kennung: str) -> dict | None:

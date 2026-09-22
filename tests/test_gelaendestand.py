@@ -77,10 +77,19 @@ def test_die_kamera_steht_ohne_angabe_wirklich_im_keller():
 # --------------------------------------------------------------------------------------
 
 def test_mit_gelaende_z_ist_die_warnung_weg():
-    """Eine Warnung, die auch bei richtiger Angabe kommt, ist Rauschen und wird ueberlesen."""
+    """Die Warnung «nicht feststellbar» geht, sobald eine Angabe da ist.
+
+    Was bleibt, ist gewollt (Owner-Entscheid 22.09.2026): der Vorbehalt «Geländeangabe …
+    NICHT GEPRÜFT». Er sagt etwas anderes — nicht «wir wissen es nicht», sondern «wir
+    haben es nicht nachgeprüft».
+    """
     satz = kameras.kamerasatz(MIT_ZWEI_UG, kuerzel=("sSE",), gelaende_z=0.0)
     assert not any("GELAENDESTAND" in w for w in satz["warnungen"]), satz["warnungen"]
-    assert satz["gelaende_bezug"] == "terrain_an_kamera"
+    # Bis zum 22.09.2026 stand hier "terrain_an_kamera". Der Owner-Entscheid vom
+    # 22.09.2026 hat den Stand geaendert: Ein von Hand gesetzter Gelaendestand ist eine
+    # Angabe und gilt als NICHT GEPRUEFT — die Warnung «nicht feststellbar» geht, der
+    # Vorbehalt «nicht geprueft» bleibt (tests/test_gelaendestand_nicht_geprueft.py).
+    assert satz["gelaende_bezug"] == "gesetzt"
 
 
 # --------------------------------------------------------------------------------------

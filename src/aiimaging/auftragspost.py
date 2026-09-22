@@ -380,8 +380,30 @@ def _zustellvermerk(repo_wurzel) -> dict:
     return gelesen if isinstance(gelesen, dict) else {}
 
 
-def vermerke_zustellung(repo_wurzel, kennungen, *, wann: str | None = None) -> Path:
+def vermerke_zustellung(repo_wurzel, kennungen, *, wann: str | None = None) -> int:
     """Festhalten, dass diese Kennungen als Block hinausgegangen sind.
+
+    Returns:
+        Wie viele Kennungen **neu** eingetragen wurden. Wer auch die schon vermerkten
+        zählen will, zieht diese Zahl von der Zahl der (verschiedenen) Kennungen ab.
+
+    **Die erste Zustellung zählt; ein zweiter Vermerk überschreibt sie nicht** — dieselbe
+    Regel wie bei :func:`vermerke_gesehen`. Befund 22.09.2026, beim Verschicken selbst
+    passiert: ``tools/auftragspost.py ui --vermerken`` setzte den Zeitpunkt ALLER offenen
+    ui-Aufträge auf «jetzt», auch den von ``auf-20260909-99``, der seit dem 21.09.2026
+    draussen war. Der Vermerk hätte ab da behauptet, der Auftrag sei erst heute
+    hinausgegangen. Verfälscht wird damit der **gespeicherte Verlauf** — heute rechnet
+    kein Leser das Alter aus diesem Zeitpunkt (``einbau`` nimmt ``erstellt``). Aber
+    jede künftige Auswertung sähe einen Auftrag jünger, als er ist, und zwar in der
+    gefährlichen Richtung: weniger Rückstand.
+
+    **Einen Weg zum Neudatieren gibt es absichtlich nicht.** Ein erneut verschickter
+    Block ändert nichts daran, seit wann der Adressat den Auftrag haben *kann*; genau das
+    datiert der Vermerk. War die erste Zustellung eine Falschangabe (wie am 19.09.2026,
+    als ``--nach`` ins eigene Repo zeigte), ist die Abhilfe, den falschen Eintrag aus
+    :data:`ZUSTELLUNG_DATEI` zu **entfernen** — von Hand und mit einem Commit, der sagt
+    warum —, nicht ihn mit einem neuen Datum zu überdecken. Ein Schalter dafür läge einen
+    Tastendruck neben ``--vermerken`` und machte die bequemere Wahrheit zur billigsten.
 
     **Wozu, und der Fehler, der es ausgelöst hat.** Am 03.09.2026 lagen ``auf-70`` und
     ``auf-72`` seit zwei bzw. einem Tag in ``auftraege/offen/`` — und **nirgends sonst**.
@@ -430,13 +452,22 @@ def vermerke_zustellung(repo_wurzel, kennungen, *, wann: str | None = None) -> P
             f"würde Buchstabe für Buchstabe vermerkt — bitte [{kennungen!r}] übergeben.")
     vermerk = _zustellvermerk(repo_wurzel)
     zeit = wann or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    neu = 0
     for kennung in kennungen:
-        vermerk[str(kennung)] = zeit
-    pfad = Path(repo_wurzel) / ZUSTELLUNG_DATEI
-    pfad.parent.mkdir(parents=True, exist_ok=True)
-    pfad.write_text(json.dumps(vermerk, indent=2, ensure_ascii=False,
-                               sort_keys=True) + "\n", encoding="utf-8")
-    return pfad
+        schluessel = str(kennung)
+        # EIN BESTEHENDER ZEITPUNKT BLEIBT STEHEN (Befund 22.09.2026, siehe oben). Bis
+        # dahin stand hier eine blanke Zuweisung, und jeder Postlauf datierte alle
+        # offenen Aufträge auf seinen eigenen Zeitpunkt um.
+        if schluessel in vermerk:  # die erste Zustellung bleibt stehen
+            continue
+        vermerk[schluessel] = zeit
+        neu += 1
+    if neu:
+        pfad = Path(repo_wurzel) / ZUSTELLUNG_DATEI
+        pfad.parent.mkdir(parents=True, exist_ok=True)
+        pfad.write_text(json.dumps(vermerk, indent=2, ensure_ascii=False,
+                                   sort_keys=True) + "\n", encoding="utf-8")
+    return neu
 
 
 #: Wo vermerkt wird, dass ein Adressat einen Auftrag **gesehen** hat — dieselbe Bauform
@@ -540,7 +571,7 @@ def vermerke_gesehen(repo_wurzel, kennungen, *, von: str,
         jetzt: Für Proben einsetzbar. Ohne Angabe die aktuelle UTC-Zeit.
 
     Returns:
-        Wieviele Kennungen **neu** eingetragen wurden.
+        Wie viele Kennungen **neu** eingetragen wurden.
 
     **Ein zweiter Vermerk überschreibt den ersten nicht.** Der erste Blick ist der, der
     zählt: Er beantwortet die Frage, ob der Auftrag angekommen ist, und er datiert, seit

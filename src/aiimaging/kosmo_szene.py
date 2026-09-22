@@ -961,6 +961,19 @@ def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
 #: Gegenseite kennt sie noch nicht. Siehe :func:`als_zwei_tore_block`.
 FELD_ZWEI_TORE = "geometry_gates"
 
+#: Der Schluessel, unter dem ein **Kameraurteil** sein ``geometrie_qa.zwei_tore``-Urteil
+#: traegt (gesetzt in ``abholer.verarbeiter``).
+#:
+#: **Warum am Urteil und nicht als eigener Uebergabewert** (Durchsicht 22.09.2026): Der
+#: Block `geometry_gates` war gebaut und auf dem Produktweg nie gefuellt — der Abholer
+#: reichte kein ``zwei_tore_urteil`` durch, und beide Quellen (Bruecke und eigene Ablage)
+#: haetten dafuer ihre Schreibfunktion aendern muessen. Das Kameraurteil reist schon durch
+#: beide — bewacht an der geschriebenen Datei beider Wege in
+#: ``tests/test_vertrag_jede_kamera_spricht.py``. Steht der Schluessel da und traegt
+#: ``None``, heisst das: diese Kamera wurde NICHT GEMESSEN — und der Block erscheint als
+#: solcher, statt still zu fehlen.
+URTEIL_ZWEI_TORE = "zwei_tore"
+
 #: Die drei Zustandswoerter, woertlich aus :mod:`aiimaging.gate` uebernommen.
 #:
 #: **Warum uebernommen und nicht neu erfunden:** `gate.als_kosmovis_verdikt` bringt den
@@ -1235,6 +1248,236 @@ def _pruefe_ein_name_eine_zahl(block: dict, geometrie_urteil) -> None:
     block["released"] = False
 
 
+def _lage_ohne_urteil(geometrie_urteil: dict) -> str:
+    """WARUM ein Geometrieurteil ``bestanden: None`` traegt — der Satz fuer ``reason``.
+
+    Herausgezogen am 22.09.2026 aus :func:`als_ergebnis`, damit derselbe Satz auch fuer
+    jede andere Kamera in ``qa_je_kamera`` gilt (siehe :func:`_vorbehalte_je_kamera`).
+    Der Wortlaut ist unveraendert.
+    """
+    if (geometrie_urteil.get("torchance") or {}).get("lage") == "zu_klein":
+        return ("NICHT BEURTEILBAR (Rahmung): Das Bauwerk fuellt so wenig Bild, dass "
+                "das Tor GEMESSEN nicht bestehen kann. 'passed: false' heisst hier "
+                "nicht durchgefallen — eine naehere Kamera behebt es, eine gesenkte "
+                "Schwelle nicht.")
+    if geometrie_urteil.get("score") is not None and \
+            geometrie_urteil.get("paarurteil") is None:
+        return ("KEIN MASKENWEG: Der Score liegt vor, aber die Abwesenheitspruefung "
+                "ist nicht gelaufen — rho_maske, Kante und Paarurteil fehlen. Der "
+                "Score ueber das ganze Bild beantwortet nicht, ob ueberhaupt gebaut "
+                "wurde (ein leeres Grundstueck erreichte dort 0.9530). 'passed: "
+                "false' heisst hier nicht durchgefallen; es fehlt ein "
+                "Material-ID-Pass, und ohne Gelaende in der Szene dazu die Angabe "
+                "gelaende_erwartet=false.")
+    if (geometrie_urteil.get("paarurteil") or {}).get("zustaendig") is False:
+        return ("NICHT ZUSTAENDIG: Hinter dem Umriss steht kein Himmel; das zweite "
+                "Mass misst in dieser Szene nichts. 'passed: false' heisst hier nicht "
+                "durchgefallen, sondern nicht beantwortbar.")
+    return ("NICHT GEMESSEN: Es liegt keine Zahl vor. 'passed: false' heisst hier "
+            "nicht durchgefallen, sondern ungeprueft — ein Lauf fehlt.")
+
+
+def _vorbehalte_je_kamera(je_kamera, gesamt) -> list[str]:
+    """Je Kamera mit ``bestanden: None`` der Satz, warum ihr ``passed: false`` kein
+    Durchfallen ist.
+
+    Args:
+        je_kamera: die Eintraege ``{kamera, geometrie_urteil?}`` wie fuer
+            :func:`_qa_je_kamera`. Ein Eintrag ohne Urteil traegt dort nur seinen Namen
+            und damit schon die Auskunft *nicht gemessen*; er braucht keinen Satz.
+        gesamt: das Gesamturteil, **wenn** es selbst schon seinen Lagesatz traegt — dann
+            steht dieselbe Kamera nicht ein zweites Mal da. Sonst ``None``.
+
+    **Durchsicht 22.09.2026, und warum ``passed`` dort nicht ``null`` wird:** Eine
+    gemessene Kamera ohne Maskenweg (``bestanden: None``) kam in ``qa_je_kamera`` mit
+    ``geometry.passed: false`` an — ohne Vorbehalt, also lesbar als *durchgefallen*.
+    ``passed`` ist im fremden Vertrag ein Wahrheitswert (siehe den Abschnitt zur dritten
+    Antwort in :func:`als_ergebnis`; nur die Zahlenfelder nehmen seit P-NULLGEOMETRIE
+    ``null`` an). Der Gesamtblock loest das mit ``passed: false`` UND einem Satz in
+    ``verdict.reason`` — und genau dieser Form folgt der Block je Kamera. Der Satz steht im
+    Gesamtgrund, weil ``_qa_je_kamera`` das ``verdict`` je Kamera weglaesst und ein
+    Zusatzfeld im Eintrag drueben still abgestreift wuerde.
+    """
+    schon_genannt = gesamt.get("kamera") if isinstance(gesamt, dict) else None
+    saetze: list[str] = []
+    for eintrag in je_kamera or ():
+        if not isinstance(eintrag, dict):
+            continue
+        urteil = eintrag.get("geometrie_urteil")
+        if not isinstance(urteil, dict) or urteil.get("bestanden") is not None:
+            continue
+        name = eintrag.get("kamera") or urteil.get("kamera")
+        if schon_genannt is not None and name == schon_genannt:
+            continue
+        saetze.append(f"UNGEPRUEFT bei Kamera {str(name)!r} (qa_je_kamera): "
+                      f"{_lage_ohne_urteil(urteil)}")
+    return saetze
+
+
+def keine_gemeinsame_silhouette(urteil) -> bool:
+    """Ist ``geom_iou`` dieses Kameraurteils eine FEHLENDE MESSUNG und kein Nullwert?
+
+    Ja, wenn Soll- und Ist-Karte keinen einzigen Bildpunkt gemeinsam haben
+    (``n_gemeinsam`` 0). ``geometrie_qa.geometrie_score`` sagt dazu selbst: Weisses
+    Rauschen und das Bild ergaben dort denselben ``geom_iou`` 0.0 — eine Zahl, die fuer
+    Rauschen dasselbe sagt wie fuer das Bild, sagt ueber das Bild nichts. Und
+    ``verdict.reason`` nennt diese 0.0 seit Demolauf 14 eine FEHLENDE MESSUNG.
+
+    **Warum hier und nicht nur im Satz** (Durchsicht 22.09.2026): ``geometry_gates``
+    fuehrte dieselbe 0.0 als gemessen (``geom_iou_status: ok``), im selben Ergebnis wie
+    der Satz, der sie eine fehlende Messung nennt. ``abholer._zwei_tore_dieser_kamera``
+    liest diese Funktion und reicht dann ``None`` an Tor B.
+
+    Fehlt die Zaehlung am Urteil, gilt dasselbe bei ``score: None`` und ``geom_iou`` genau
+    0: Eine Ueberdeckung von null heisst, dass die Schnittmenge leer ist — und die
+    Schnittmenge ist, was ``n_gemeinsam`` zaehlt.
+    """
+    if not isinstance(urteil, dict):
+        return False
+    n = urteil.get("n_gemeinsam")
+    if isinstance(n, int) and not isinstance(n, bool):
+        return n == 0
+    iou = urteil.get("geom_iou")
+    return (urteil.get("score") is None and isinstance(iou, (int, float))
+            and not isinstance(iou, bool) and iou == 0)
+
+
+def _score_besteht_maske_widerspricht(urteil) -> bool:
+    """Besteht der Score, waehrend das Paarurteil des Maskenwegs gemessen durchfaellt?
+
+    Geprueft wird mit ``is True`` / ``is False``: Ein Paarurteil, das nicht gemessen hat
+    (``bestanden: None``), widerspricht nicht — es schweigt, und das ist etwas anderes.
+    """
+    if not isinstance(urteil, dict):
+        return False
+    paar = urteil.get("paarurteil")
+    return (urteil.get("bestanden") is True and isinstance(paar, dict)
+            and paar.get("bestanden") is False)
+
+
+def _widersprueche_je_kamera(je_kamera, gesamt) -> list[str]:
+    """Je Kamera, deren Maskenweg dem Score widerspricht, ein Satz fuer ``verdict.reason``.
+
+    Args:
+        je_kamera: die Eintraege ``{kamera, geometrie_urteil?}`` wie fuer
+            :func:`_qa_je_kamera`. Ein Eintrag ohne Urteil ist *nicht gemessen* und
+            widerspricht darum nichts.
+        gesamt: das Gesamturteil, **wenn** es selbst schon den langen Satz traegt —
+            dann steht dieselbe Kamera nicht ein zweites Mal da. Sonst ``None``.
+
+    **Durchsicht 22.09.2026:** Bis dahin sprach nur die schlechteste Kamera. Siehe den
+    Kommentar an der Aufrufstelle in :func:`als_ergebnis`.
+    """
+    schon_genannt = gesamt.get("kamera") if isinstance(gesamt, dict) else None
+    saetze: list[str] = []
+    for eintrag in je_kamera or ():
+        if not isinstance(eintrag, dict):
+            continue
+        urteil = eintrag.get("geometrie_urteil")
+        if not _score_besteht_maske_widerspricht(urteil):
+            continue
+        name = eintrag.get("kamera") or urteil.get("kamera")
+        if schon_genannt is not None and name == schon_genannt:
+            continue
+        paar = urteil.get("paarurteil") or {}
+        saetze.append(
+            f"SCORE BESTEHT, MASKENWEG WIDERSPRICHT bei Kamera {str(name)!r}: Score "
+            f"{urteil.get('score')}, rho_maske {paar.get('rho')}. 'passed: true' dieser "
+            f"Kamera heisst: der Score besteht — nicht, dass dort ueberhaupt gebaut wurde.")
+    return saetze
+
+
+def _tore_gemessen_durchgefallen(tore) -> bool:
+    """Ist mindestens ein Tor dieses Urteils GEMESSEN und nicht bestanden?
+
+    Nicht ``tore["bestanden"] is False``: Das ist auch dann falsch, wenn ein Tor bloss
+    nicht gemessen wurde (fail-closed in ``geometrie_qa._tor``). Fuer das Urteil der
+    Kamera selbst ist das richtig — hier aber wuerde daraus «eine andere Kamera ist
+    durchgefallen», und das waere eine Aussage ueber ein Bild, die niemand gemessen hat.
+    """
+    if not isinstance(tore, dict):
+        return False
+    return any(isinstance(t, dict) and t.get("gemessen") is True
+               and t.get("bestanden") is False
+               for t in (tore.get("tor_folgt"), tore.get("tor_dieses")))
+
+
+def _andere_kameras_einrechnen(block: dict, je_kamera, eigene) -> None:
+    """Den Block `geometry_gates` an die UEBRIGEN Kameras des Auftrags binden.
+
+    Der Block beschreibt die Kamera des `qa`-Blocks — die mit dem schlechtesten Score.
+    Das muss nicht die mit den schlechtesten Toren sein: Nachgestellt am 22.09.2026 fiel
+    eine Kamera mit Score 0.951 an Tor A (``rho_maske`` −0.018), waehrend die mit Score
+    0.70 beide Tore bestand. Ohne diese Funktion stuende ``passed: true`` im Block.
+
+    **Ein Auftrag ist so gut wie sein schwaechstes Bild** — dieselbe Regel wie beim
+    Score. Faellt eine andere Kamera GEMESSEN durch, wird ``passed`` ``False`` und
+    ``released`` ``False``, mit Grund und Kameranamen. Die Zahlen bleiben die der eigenen
+    Kamera, damit ``geom_iou`` weiter dasselbe heisst wie im `qa`-Block.
+
+    Eine Kamera ohne Torurteil zaehlt hier NICHT als durchgefallen: *nicht gemessen* ist
+    weder ja noch nein. Und ist die eigene Kamera nicht gemessen, bekommt der Block
+    seinen Grund dazu, statt nur «kein Torurteil» zu sagen.
+
+    **Die Zwillingsansicht der eigenen Kamera ist keine andere Kamera** (``doppelt_von``,
+    siehe ``abholer._sollkennung``): Sie traegt dasselbe Bild und dasselbe Torurteil. Faellt
+    die eigene Kamera durch, steht das schon im Block; ein zweites Mal unter anderem Namen
+    hiesse, ein Bild als zwei Befunde zu zaehlen.
+
+    **Satz und Feld sagen dasselbe** (Durchsicht 22.09.2026): Ist die eigene Kamera nicht
+    gemessen und faellt zugleich eine andere GEMESSEN durch, steht ``passed: false`` im
+    Block — und der Grund darf dann nicht «'passed: null' heisst ungeprueft» sagen. Er
+    nennt stattdessen, woher das ``false`` kommt.
+    """
+    durchgefallen = []
+    for eintrag in je_kamera or ():
+        if not isinstance(eintrag, dict):
+            continue
+        urteil = eintrag.get("geometrie_urteil")
+        if not isinstance(urteil, dict):
+            continue
+        name = eintrag.get("kamera") or urteil.get("kamera")
+        if name == eigene:
+            continue
+        if eigene is not None and urteil.get("doppelt_von") == eigene:
+            continue
+        if _tore_gemessen_durchgefallen(urteil.get(URTEIL_ZWEI_TORE)):
+            durchgefallen.append(str(name))
+    genannt = ", ".join(repr(n) for n in durchgefallen)
+
+    if block.get("status") == STATUS_FEHLT:
+        block["fail_reasons"] = [*block.get("fail_reasons", ()), "kamera_nicht_gemessen"]
+        if durchgefallen:
+            schluss = (f"'released: false' heisst fuer diese Kamera ungeprueft; "
+                       f"'passed: false' kommt von Kamera {genannt}, die GEMESSEN "
+                       f"durchfiel.")
+        else:
+            schluss = ("'passed: null' und 'released: false' heissen hier ungeprueft, "
+                       "nicht durchgefallen.")
+        block["reason"] = (
+            f"NICHT GEMESSEN: Die Kamera {str(eigene)!r}, auf der das Urteil dieses "
+            f"Auftrags ruht, wurde nicht gemessen — es gibt kein rho_maske und kein "
+            f"geom_iou. {schluss}")
+    if not durchgefallen:
+        return
+    block["fail_reasons"] = [*block.get("fail_reasons", ()),
+                             *(f"kamera_nicht_bestanden:{n}" for n in durchgefallen)]
+    block["warnings"] = [*block.get("warnings", ()), (
+        f"ANDERE KAMERA FAELLT DURCH: {genannt} "
+        f"besteht die zwei Tore nicht. Die Zahlen hier gehoeren zur Kamera "
+        f"{str(eigene)!r} (der mit dem schlechtesten Score); der Auftrag ist so gut wie "
+        f"sein schwaechstes Bild.")]
+    if block.get("passed") is not False:
+        block["passed"] = False
+    block["released"] = False
+    # Der Grund muss mitdrehen: Er begann mit «BESTANDEN — …» der eigenen Kamera, und
+    # daneben stuende jetzt `passed: false`. Ein Satz, der dem Feld daneben widerspricht,
+    # ist schlechter als keiner.
+    block["reason"] = (
+        f"NICHT BESTANDEN wegen Kamera {genannt}. "
+        f"Kamera {str(eigene)!r}: {block.get('reason', '')}").strip()
+
+
 def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None,
                  zeiten=None, uebersprungen: bool = False,
                  nicht_gerendert=(), je_kamera=None,
@@ -1267,7 +1510,10 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         zwei_tore_urteil: Antwort von ``geometrie_qa.zwei_tore(...)`` oder ``None``.
             Wandert **neben** den ``qa``-Block, siehe :func:`als_zwei_tore_block`. Ohne
             Angabe fehlt das Feld ganz — ein leerer Block hiesse «gemessen, Ergebnis
-            leer», und das ist etwas anderes als «nicht gemessen».
+            leer», und das ist etwas anderes als «nicht gemessen». **Ausser** das
+            ``geometrie_urteil`` traegt den Schluessel :data:`URTEIL_ZWEI_TORE` (so auf dem
+            Produktweg seit dem 22.09.2026): Dann kommt das Urteil von dort, und ein
+            ``None`` darin erscheint als Block mit ``status: fehlt`` und Grund.
         zeiten: ``{name: sekunden}``, wandert unverändert in ``timings``.
         uebersprungen: Der Auftrag trug ``skip: true`` und wurde **nicht gerechnet**.
         nicht_gerendert: Kurzgründe für Kameras, die **absichtlich** kein Bild bekamen —
@@ -1435,27 +1681,7 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     #   Rahmung zu weit  -> naeher heranfahren
     lage = None
     if qa.get("geometry") and geometrie_urteil.get("bestanden") is None:
-        if (geometrie_urteil.get("torchance") or {}).get("lage") == "zu_klein":
-            lage = ("NICHT BEURTEILBAR (Rahmung): Das Bauwerk fuellt so wenig Bild, dass "
-                    "das Tor GEMESSEN nicht bestehen kann. 'passed: false' heisst hier "
-                    "nicht durchgefallen — eine naehere Kamera behebt es, eine gesenkte "
-                    "Schwelle nicht.")
-        elif geometrie_urteil.get("score") is not None and \
-                geometrie_urteil.get("paarurteil") is None:
-            lage = ("KEIN MASKENWEG: Der Score liegt vor, aber die Abwesenheitspruefung "
-                    "ist nicht gelaufen — rho_maske, Kante und Paarurteil fehlen. Der "
-                    "Score ueber das ganze Bild beantwortet nicht, ob ueberhaupt gebaut "
-                    "wurde (ein leeres Grundstueck erreichte dort 0.9530). 'passed: "
-                    "false' heisst hier nicht durchgefallen; es fehlt ein "
-                    "Material-ID-Pass, und ohne Gelaende in der Szene dazu die Angabe "
-                    "gelaende_erwartet=false.")
-        elif (geometrie_urteil.get("paarurteil") or {}).get("zustaendig") is False:
-            lage = ("NICHT ZUSTAENDIG: Hinter dem Umriss steht kein Himmel; das zweite "
-                    "Mass misst in dieser Szene nichts. 'passed: false' heisst hier nicht "
-                    "durchgefallen, sondern nicht beantwortbar.")
-        else:
-            lage = ("NICHT GEMESSEN: Es liegt keine Zahl vor. 'passed: false' heisst hier "
-                    "nicht durchgefallen, sondern ungeprueft — ein Lauf fehlt.")
+        lage = _lage_ohne_urteil(geometrie_urteil)
         teile.insert(0, lage)
 
     # DAS LOCH, DAS OFFEN BLEIBT — und darum im Vertragsgrund steht.
@@ -1472,14 +1698,35 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     #
     # SELBSTLOESCHEND: nur wenn der Score besteht UND das Paarurteil widerspricht.
     _geo = geometrie_urteil or {}
-    if (_geo.get("bestanden") is True
-            and (_geo.get("paarurteil") or {}).get("bestanden") is False):
+    gesamt_widerspricht = _score_besteht_maske_widerspricht(_geo)
+    if gesamt_widerspricht:
         teile.insert(0, (
             "SCORE BESTEHT, MASKENWEG WIDERSPRICHT: Das Tor liest den Score, und der "
             "kann bei viel Boden hoch bleiben, obwohl das Bauwerk fehlt (gemessen: "
             "Score 0.951, geom_iou 1.000, rho_maske -0.018 bei VOLLSTAENDIG "
             "verschwundenem Bauwerk). 'passed: true' heisst hier: der Score besteht — "
             "nicht, dass ueberhaupt gebaut wurde."))
+
+    # DERSELBE WIDERSPRUCH AN JEDER ANDEREN KAMERA — Durchsicht 22.09.2026.
+    #
+    # Der Satz darueber liest nur `geometrie_urteil`, und das ist auf dem Produktweg das
+    # Urteil der SCHLECHTESTEN Kamera. Nachgestellt mit zwei Kameras: Die schlechtere
+    # (Score 0.70) bestand sauber, die bessere (Score 0.951, rho_maske -0.018) trug den
+    # Widerspruch — und `verdict.reason` lautete «Geometrie 0.7 gegen 0.65», sonst
+    # nichts. Die Kamera, deren Bauwerk fehlen kann, kam drueben nicht vor.
+    #
+    # Der Satz je Kamera gehoert in `verdict.reason` und nicht in einen neuen Schluessel
+    # in `qa_je_kamera`: Deren Eintrag ist drueben `z.object({kamera, geometry, style})`,
+    # nicht strikt — ein Zusatzfeld wuerde beim Einlesen still abgestreift
+    # (erg-20260917-37 F6, erg-20260917-49 V2). `reason` ist ein Vertragsfeld.
+    saetze = _widersprueche_je_kamera(je_kamera, _geo if gesamt_widerspricht else None)
+    # UND DER VORBEHALT JE KAMERA, deren `passed: false` kein Durchfallen ist — siehe
+    # `_vorbehalte_je_kamera`. Die Kamera des Gesamtsatzes hat ihren Satz schon (`lage`).
+    saetze += _vorbehalte_je_kamera(je_kamera, _geo if lage is not None else None)
+    if saetze:
+        # Hinter den Satz der schlechtesten Kamera, nicht davor: Er ordnet den Auftrag ein.
+        stelle = 1 if (gesamt_widerspricht or lage is not None) else 0
+        teile[stelle:stelle] = saetze
 
     # DER UMGEKEHRTE FALL: KEIN SCORE, ABER EIN MASKENWEG — Demolauf 14, 01.09.2026.
     #
@@ -1600,8 +1847,24 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     # `qa_je_kamera`: Der bestehende Block bleibt byte-identisch. Was hier dazukommt, ist
     # keine Berichtigung des alten Urteils, sondern die zweite Frage, die es nie gestellt
     # hat (R3, 18.09.2026).
-    if zwei_tore_urteil is not None:
+    #
+    # AUF DEM PRODUKTWEG KOMMT DAS URTEIL AM KAMERAURTEIL (Durchsicht 22.09.2026): Bis
+    # dahin reichte niemand `zwei_tore_urteil` durch, und der Block fehlte in jedem
+    # Ergebnis, das an die fremde Warteschlange ging. Er stammt von DERSELBEN Kamera wie
+    # der `qa`-Block — sonst stuenden unter `geom_iou` zwei Zahlen zweier Kameras, und
+    # `_pruefe_ein_name_eine_zahl` meldete zu Recht einen Widerspruch.
+    vom_kameraurteil = (zwei_tore_urteil is None and isinstance(geometrie_urteil, dict)
+                        and URTEIL_ZWEI_TORE in geometrie_urteil)
+    if vom_kameraurteil:
+        zwei_tore_urteil = geometrie_urteil[URTEIL_ZWEI_TORE]
+    if zwei_tore_urteil is not None or vom_kameraurteil:
+        # `None` vom Kameraurteil heisst NICHT GEMESSEN: `als_zwei_tore_block` meldet
+        # dann `status: fehlt`, `passed: None` und einen Grund — keinen leeren Block.
         ergebnis[FELD_ZWEI_TORE] = als_zwei_tore_block(zwei_tore_urteil)
+        if vom_kameraurteil:
+            ergebnis[FELD_ZWEI_TORE]["camera"] = geometrie_urteil.get("kamera")
+            _andere_kameras_einrechnen(ergebnis[FELD_ZWEI_TORE], je_kamera,
+                                       geometrie_urteil.get("kamera"))
         _pruefe_ein_name_eine_zahl(ergebnis[FELD_ZWEI_TORE], geometrie_urteil)
 
     if je_kamera:
