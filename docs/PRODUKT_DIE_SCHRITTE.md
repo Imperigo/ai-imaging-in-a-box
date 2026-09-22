@@ -91,6 +91,36 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 22.09.2026 · Das iPad verbindet sich mit einer sechsstelligen Zahl
+
+Seit dem 21.09. darf die Oberfläche ins Heimnetz — geschützt mit einem Kennwort aus 32
+zufälligen Zeichen. Für ein Kennwort ist das richtig. Zum **ersten Verbinden** auf einem
+Tablet ist es unbrauchbar: Niemand tippt 32 Zeichen ab, und wer es doch tut, vertippt sich.
+
+Das ist derselbe Satz, mit dem diese Woche schon der Standpunkt aus dem Eingabefeld in den
+Grundriss gewandert ist — *was nur über das Eintippen erreichbar ist, wird nicht benutzt.*
+Er galt hier genauso und war übersehen worden.
+
+**Jetzt zeigt die HomeStation beim Start eine sechsstellige Zahl.** Das iPad tippt sie
+einmal ein und bekommt dafür das richtige Kennwort, das es von da an selbst aufbewahrt.
+
+Sechs Stellen sind nicht viel, und darum hängt die Zahl an drei Auflagen:
+
+* **zehn Minuten** — gerechnet auf einer Uhr, die sich nicht stellen lässt;
+* **fünf Versuche** — danach ist sie tot, nicht «kurz gesperrt»;
+* **ein Gerät** — nach dem ersten Verbinden verbraucht.
+
+Für ein zweites Gerät wird neu gestartet, und das verlangt jemanden am Rechner. Das ist
+die eigentliche Sicherung.
+
+**Wer daneben tippt, hört auf dem iPad immer denselben Satz.** Der genaue Grund — falsch,
+abgelaufen, aufgebraucht — steht im Fenster am Rechner, also vor dem Menschen, der etwas
+daran ändern kann. *Wer beim Raten erfährt, warum er daneben lag, rät beim nächsten Mal
+besser.*
+
+**Was das nicht löst:** wie das iPad die **Adresse** des Rechners findet. Die muss heute
+noch einmal eingegeben werden. Die Zahl löst das Kennwort, nicht das Finden.
+
 ### 22.09.2026 · Zwei Geräte an derselben Mappe löschen sich nicht mehr gegenseitig
 
 Aus dem iPad-Entwurf blieb eine Frage offen: Was passiert, wenn das iPad und der Rechner

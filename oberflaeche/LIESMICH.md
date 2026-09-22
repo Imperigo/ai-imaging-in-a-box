@@ -197,6 +197,48 @@ Kein TLS, weil ein selbst ausgestelltes Zertifikat auf dem iPad eine Warnung erz
 man wegklickt — *und eine Sicherheitswarnung, die man täglich wegklickt, erzieht zum
 Wegklicken.*
 
+### Das erste Verbinden — eine kurze Zahl statt 32 Zeichen (22.09.2026)
+
+    python3 oberflaeche/server.py --ordner <projektordner> --im-heimnetz \
+        --kennwort-erzeugen --kopplung
+
+Das erzeugte Kennwort ist 32 Zeichen lang. Für ein Kennwort ist das richtig; für das
+**erste Verbinden** auf einem Tablet ist es unbrauchbar.
+
+    Was nur über das Eintippen erreichbar ist, wird nicht benutzt.
+
+`--kopplung` zeigt darum beim Start eine **sechsstellige Zahl**. Das iPad tippt sie einmal
+ein (`POST /api/verbinden` mit `{"pin": "…"}`) und bekommt dafür Benutzer und Kennwort,
+die es von da an selbst aufbewahrt.
+
+**Woran die Zahl hängt**, und alle drei Auflagen stehen im Code:
+
+| | |
+|---|---|
+| **zehn Minuten** | gerechnet auf einer Uhr, die sich nicht stellen lässt |
+| **fünf Versuche** | danach ist sie tot, nicht «eine Minute gesperrt» |
+| **ein Gerät** | nach dem ersten Verbinden verbraucht |
+
+Für ein zweites Gerät wird Visbox mit `--kopplung` neu gestartet — und das verlangt einen
+Menschen an der HomeStation. Das ist die eigentliche Schranke: *Sechs Stellen sind eine
+Million Möglichkeiten, und eine Million ist nicht viel. Fünf Versuche sind wenig.*
+
+**Zwei Sätze, nicht einer.** Wer daneben tippt, hört auf dem iPad immer denselben Satz —
+«Das hat nicht geklappt». Der genaue Grund (falsch, abgelaufen, aufgebraucht, verbraucht)
+steht im Fenster, in dem Visbox läuft, also vor dem Menschen, der etwas daran ändern kann.
+
+    Wer beim Raten erfährt, warum er daneben lag, rät beim nächsten Mal besser.
+
+**Die Tür hat dafür genau eine Öffnung**, und sie ist an vier Bedingungen gebunden: nur
+dieser Pfad, nur `POST`, nur solange eine Kopplung offen ist, und dahinter zählt jeder
+Versuch. Ohne `--kopplung` gibt es die Öffnung nicht.
+
+`--kopplung` **ohne** Kennwort ergibt keinen Server, sondern einen Satz: Es gäbe nichts zu
+übergeben.
+
+Entschieden wird all das in `aiimaging.kopplung` — die Fläche reicht nur durch. Sie kennt
+weder die Frist noch den Zähler.
+
 ## Der Grundriss — den Standpunkt anklicken statt eintippen
 
 `auge` und `blick_auf` waren über diese Fläche erreichbar: als **drei getippte Zahlen**.

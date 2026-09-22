@@ -5312,6 +5312,19 @@ er nicht kennt.
 *In diesem Projekt: in jeder Mappe, damit ein iPad und die HomeStation nicht gegenseitig
 ihre Arbeit überschreiben.*
 
+**Kopplungszahl** — Eine kurze Zahl, die ein Gerät **einmal** eintippt, um dafür das
+richtige, lange Kennwort zu bekommen. Sie ist absichtlich schwach und darum absichtlich
+kurzlebig: Sie gilt Minuten, verträgt wenige Fehlversuche und ist nach dem ersten
+erfolgreichen Verbinden verbraucht. Der Sinn ist ein Tausch — ein schwaches Geheimnis für
+einen Augenblick gegen ein starkes für immer.
+*In diesem Projekt: sechs Stellen, zehn Minuten, fünf Versuche, ein Gerät.*
+
+**Stetige Uhr** — Eine Uhr, die nur vorwärts läuft und nicht sagt, wie spät es ist,
+sondern wie viel Zeit seit einem beliebigen Anfang vergangen ist. Sie lässt sich nicht
+stellen — weder von Hand noch von der Zeitumstellung noch von einem Zeitserver. Fristen
+werden darauf gerechnet und nicht auf der Wanduhr: *Eine Sperre, die eine falsch gehende
+Uhr aufbricht, ist keine Sperre.*
+
 **Schreibkollision** — Zwei Stellen wollen dieselbe Datei schreiben und kommen beide vom
 selben Ausgangsstand. Ohne Vorkehrung gewinnt der Letzte, und die Arbeit des anderen ist
 weg — **ohne Meldung**, weil aus Sicht des Programms beide Male alles geklappt hat. Das
@@ -5329,6 +5342,7 @@ keine Aussage.*
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-22 | Ergaenzt zu Abschnitt 10 aus dem ersten Verbinden: **Kopplungszahl**, **Stetige Uhr** |
 | 2026-09-22 | Ergaenzt zu Abschnitt 10 aus der Arbeit an zwei Geraeten an derselben Mappe: **Standnummer**, **Schreibkollision** |
 | 2026-09-21 | Nachgetragen zu Abschnitt 10 aus der Verbindung iPad/Rechner: **Wischregler**, **Übergabe-Animation**, **Bewegungsreduktion** |
 | 2026-09-21 | Neuer Abschnitt **10 · Oberfläche und Entwurf**, aus dem Entwurf der iPad-Oberfläche: **Entwurfsblatt (Artboard)**, **Entwurfsfläche**, **Berührungsfläche (Touch-Ziel)**, **Kontrastverhältnis**, **Druckempfindlichkeit**, **Wortzeichen**. Der Eintrag zum Kontrastverhältnis traegt einen Befund gegen die eigene Oberflaeche: Das Rot fuer «durchgefallen» kommt auf dem dunklen Grund nur auf 4.06 zu 1 und ist damit unter dem Mindestmass — im iPad-Entwurf eine Stufe heller, in der Browser-Oberflaeche noch nicht geaendert. **BERICHTIGT am 22.09.2026:** Hier stand zuerst 3.3; das war geschaetzt und nicht gerechnet. Der gerechnete Wert ist 4.06 auf dem Grund und 3.70 auf einem Feld — der Befund bleibt, die Zahl war falsch |

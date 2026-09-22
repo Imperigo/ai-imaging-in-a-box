@@ -7092,7 +7092,29 @@ Bekannt und ausdrücklich nicht erledigt:
 
 **Offen, und bei wem es liegt**
 
-- [ ] **Kern (wir), als Nächstes:** Wie das iPad die HomeStation erstmals findet. Heute
-      müsste jemand eine Adresse und ein 32 Zeichen langes Kennwort auf einem Tablet
-      abtippen — *was nur über das Eintippen erreichbar ist, wird nicht benutzt.*
+- [x] **Kern (wir):** Das Kennwort beim ersten Verbinden — erledigt am 22.09.2026 mit der
+      Kopplungszahl (`aiimaging.kopplung`, `--kopplung`). Siehe Sitzung 58.
+- [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2), `auf-128` (Rang 3, Frist 15.10.).
+
+## Sitzung 58 — 22.09.2026 · Das erste Verbinden
+
+**Erledigt**
+
+- [x] `aiimaging.kopplung`: eine sechsstellige Zahl, zehn Minuten auf einer **stetigen**
+      Uhr, fünf Versuche, ein Gerät. Ohne Oberfläche aufrufbar (Regel 4).
+- [x] Verdrahtet: `--kopplung`, die Route `POST /api/verbinden`, und **genau eine**
+      Öffnung in der Tür — an vier Bedingungen gebunden. Nicht nur gebaut, sondern über
+      den Weg erreichbar, den das Produkt geht.
+- [x] Zwei Sätze statt einem: der genaue Grund an die HomeStation, ein unbestimmter an das
+      Gerät.
+- [x] `--kopplung` ohne Kennwort ergibt keinen Server, sondern einen Satz.
+- [x] 28 Wächter, 9 Mutationsproben, alle neun fallen.
+- [x] Ein **bestehender** Wächter hat die neue Datei beim ersten Anlauf abgewiesen, weil
+      sie im Modulkopf die Oberfläche nannte. Zu Recht — Regel 4 gilt in beide Richtungen.
+
+**Offen, und bei wem es liegt**
+
+- [ ] **Kern (wir):** Wie das iPad die **Adresse** der HomeStation erfährt. Ein Verfahren
+      dafür (mDNS/Bonjour) brächte eine Abhängigkeit mit, deren Lizenz nach Regel 1 erst
+      zu prüfen wäre — also kein Nebenbei.
 - [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2), `auf-128` (Rang 3, Frist 15.10.).

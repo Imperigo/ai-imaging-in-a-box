@@ -53,7 +53,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import inspect                                                  # noqa: E402
 
-from aiimaging import arbeitsgang, glbbox, importeur, kette, projekt   # noqa: E402
+from aiimaging import (arbeitsgang, glbbox, importeur, kette, kopplung,   # noqa: E402
+                       projekt)
 
 #: Nur die eigene Maschine. Siehe Modulkopf.
 VORGABE_ADRESSE = "127.0.0.1"
@@ -172,6 +173,9 @@ def _skizzenname(gewuenscht) -> str:
 
 #: Der Name, unter dem sich ein Mensch anmeldet. Ein Name allein schützt nichts — er
 #: steht hier, weil ein Browser bei der einfachen Anmeldung nach beidem fragt.
+#: Der Weg, über den ein Gerät zum ersten Mal hereinkommt — der einzige ohne Anmeldung.
+WEG_VERBINDEN = "/api/verbinden"
+
 BENUTZER = "visbox"
 
 #: Wie lang ein selbst erzeugtes Kennwort ist. 32 Zeichen aus ``secrets`` sind mehr, als
@@ -803,6 +807,12 @@ class Flaeche(BaseHTTPRequestHandler):
 
     ordner: Path | None = None
     kennwort: str | None = None
+    #: Die offene Kopplung fuer das erste Verbinden, oder ``None``.
+    #:
+    #: Sie liegt auf der KLASSE und nicht in einer Anfrage: Alle Anfragen teilen sie
+    #: sich, und genau das ist gewollt — der Versuchszaehler ist nur dann eine Schranke,
+    #: wenn er fuer alle derselbe ist. *Ein Zaehler je Verbindung zaehlt nichts.*
+    kopplung_offen = None
     server_version = "Visbox"
     sys_version = ""
 
@@ -815,6 +825,24 @@ class Flaeche(BaseHTTPRequestHandler):
         bewacht, ist keine Tür.*
         """
         if pruefe_anmeldung(self.headers.get("Authorization"), self.kennwort):
+            return True
+
+        # DER EINE WEG, DER UNANGEMELDET DURCHDARF — und er ist der Weg HINEIN.
+        #
+        # Ohne ihn gaebe es kein erstes Verbinden: Wer das Kennwort noch nicht hat, kommt
+        # an nichts heran, was es ihm geben koennte. Die Oeffnung ist darum so eng wie
+        # moeglich gefasst und an vier Bedingungen gebunden:
+        #
+        #   1. nur dieser eine Pfad,
+        #   2. nur POST — ein Aufruf aus der Adresszeile erreicht ihn nicht,
+        #   3. nur, solange eine Kopplung offen ist (ohne `--kopplung` gibt es sie nicht),
+        #   4. und was dahinter liegt, zaehlt jeden Versuch (`aiimaging.kopplung`).
+        #
+        # *Eine Tuer, die man zum Hereinkommen braucht, laesst sich nicht abschaffen —
+        # aber sie laesst sich auf die Breite eines Menschen bringen.*
+        if (self.command == "POST"
+                and urllib.parse.urlparse(self.path).path == WEG_VERBINDEN
+                and self.kopplung_offen is not None):
             return True
         roh = json.dumps(
             {"fehler": "Nicht angemeldet. Benutzername und Kennwort stehen im Fenster, "
@@ -940,8 +968,46 @@ class Flaeche(BaseHTTPRequestHandler):
             self._skizze(wunsch)
         elif weg == "/api/rechne":
             self._rechne(wunsch)
+        elif weg == WEG_VERBINDEN:
+            self._verbinden(wunsch)
         else:
             self._fehler(f"Unbekannter Weg: {weg}", 404)
+
+    def _verbinden(self, wunsch: dict) -> None:
+        """Das erste Verbinden: eine kurze Zahl gegen das lange Kennwort.
+
+        Was hier passiert, entscheidet :mod:`aiimaging.kopplung` — diese Methode reicht
+        nur durch und gibt im Erfolgsfall das Kennwort heraus. **Die Fläche urteilt
+        nicht**, sie kennt weder die Frist noch den Versuchszähler.
+
+        **Das Kennwort geht genau einmal über diesen Weg**, und danach ist die Zahl tot.
+        Ein Gerät, das es hat, benutzt von da an die gewöhnliche Anmeldung.
+
+        *Ein Weg, über den ein Geheimnis zweimal herauskommt, ist kein Austausch, sondern
+        eine Ausgabestelle.*
+        """
+        offen = type(self).kopplung_offen
+        if offen is None:
+            # Kann nur erreicht werden, wenn zwischen Tuer und hier die Kopplung
+            # geschlossen wurde. Dann ist Ablehnen richtig, nicht Abstuerzen.
+            self._fehler("Auf dieser HomeStation ist gerade kein Verbinden offen.", 403)
+            return
+
+        antwort = kopplung.pruefe(offen, wunsch.get("pin"))
+        if not antwort["angenommen"]:
+            # DAS GERAET HOERT DEN UNBESTIMMTEN SATZ, nicht den genauen Grund — sonst
+            # halbierte sich die Arbeit dessen, der raet. Der genaue Grund geht an die
+            # HomeStation, also in das Fenster, in dem Visbox gestartet wurde.
+            print(f"  Verbinden abgelehnt: {antwort['grund']} "
+                  f"(noch {antwort['versuche_uebrig']} Versuche)")
+            self._sende({"verbunden": False,
+                         "satz": antwort["satz_fuer_das_geraet"]}, 403)
+            return
+
+        print("  Ein Gerät hat sich verbunden. Die Zahl ist damit verbraucht.")
+        self._sende({"verbunden": True, "benutzer": BENUTZER,
+                     "kennwort": self.kennwort,
+                     "satz": "Verbunden. Dieses Gerät merkt sich die Anmeldung."})
 
     def _anlegen(self, wunsch: dict) -> None:
         """Ruft :func:`aiimaging.arbeitsgang.lege_an` — und sonst nichts."""
@@ -1188,7 +1254,8 @@ def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict) -
 
 
 def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
-                anschluss: int = VORGABE_ANSCHLUSS, kennwort=None) -> HTTPServer:
+                anschluss: int = VORGABE_ANSCHLUSS, kennwort=None,
+                kopplung_offen=None) -> HTTPServer:
     """Den Server bauen, **ohne ihn zu starten** — damit ein Test ihn prüfen kann.
 
     *Eine Funktion, die baut und sofort losläuft, ist von aussen nicht prüfbar* — und
@@ -1212,9 +1279,19 @@ def baue_server(*, ordner=None, adresse: str = VORGABE_ADRESSE,
             f"Mit --kennwort ein eigenes setzen, oder --kennwort-erzeugen und das "
             f"angezeigte verwenden.")
 
+    if kopplung_offen is not None and not kennwort:
+        # OHNE KENNWORT GAEBE ES NICHTS ZU TAUSCHEN, und der Weg waere eine Tuer, die ins
+        # Leere fuehrt. Abgelehnt statt stillschweigend ignoriert: Wer `--kopplung`
+        # schreibt, erwartet, dass es wirkt.
+        raise FlaechenError(
+            "Verbinden per Zahl ergibt ohne Kennwort keinen Sinn — es gäbe nichts zu "
+            "übergeben. Entweder --kennwort/--kennwort-erzeugen dazu, oder --kopplung "
+            "weglassen.")
+
     klasse = type("FlaecheMitOrdner", (Flaeche,),
                   {"ordner": Path(ordner) if ordner else None,
-                   "kennwort": kennwort or None})
+                   "kennwort": kennwort or None,
+                   "kopplung_offen": kopplung_offen})
     return HTTPServer((adresse, anschluss), klasse)
 
 
@@ -1229,6 +1306,9 @@ def main(argv=None) -> int:
                          "127.0.0.1 ist.")
     ap.add_argument("--kennwort-erzeugen", action="store_true",
                     help="Ein zufälliges Kennwort erzeugen und anzeigen.")
+    ap.add_argument("--kopplung", action="store_true",
+                    help="Eine sechsstellige Zahl anzeigen, mit der sich ein Gerät "
+                         "EINMAL verbinden darf. Sie gilt zehn Minuten.")
     ap.add_argument("--im-heimnetz", action="store_true",
                     help="Auf allen Adressen hören, damit ein iPad herankommt. Verlangt "
                          "ein Kennwort — und zeigt an, was das bedeutet.")
@@ -1239,9 +1319,11 @@ def main(argv=None) -> int:
     if getattr(a, "kennwort_erzeugen", False) and not kennwort:
         kennwort = erzeuge_kennwort()
 
+    offen = kopplung.eroeffne() if a.kopplung else None
+
     try:
         server = baue_server(ordner=a.ordner, adresse=adresse, anschluss=a.anschluss,
-                             kennwort=kennwort)
+                             kennwort=kennwort, kopplung_offen=offen)
     except FlaechenError as fehler:
         # KEIN STACKTRACE. Das ist der eine Fehler, den ein Mensch beim Start wirklich
         # sieht, und er ist fuer ihn geschrieben.
@@ -1251,6 +1333,13 @@ def main(argv=None) -> int:
     print(f"Visbox läuft auf http://{adresse}:{a.anschluss}  (Strg-C beendet)")
     if kennwort:
         print(f"  Anmeldung:  Benutzer {BENUTZER!r}   Kennwort {kennwort}")
+    if offen is not None:
+        minuten = int(kopplung.FRIST_S // 60)
+        print(f"  Verbinden:  Zahl {offen.pin}   — gilt {minuten} Minuten, für EIN Gerät")
+        print(f"              Auf dem iPad eintippen. Danach ist sie verbraucht; für ein "
+              f"zweites Gerät\n"
+              f"              Visbox mit --kopplung neu starten. Nach "
+              f"{kopplung.VERSUCHE} Fehlversuchen ist sie tot.")
     if adresse != VORGABE_ADRESSE:
         print("  ACHTUNG: Diese Fläche ist im Netz erreichbar. Sie läuft über "
               "gewöhnliches HTTP —\n"
