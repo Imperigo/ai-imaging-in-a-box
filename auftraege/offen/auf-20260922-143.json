@@ -1,0 +1,43 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "ui",
+  "auftrag_id": "auf-20260922-143",
+  "art": "frage",
+  "beschreibung": "Zehn weitere Oberflaechenpunkte (Innenansicht mit Raumauswahl, Sonne und Bildausschnitt, die heute nicht wirken, Bildhoehe, Urteilsanzeige, Gelaendeangabe) und die Berichtigung, dass auf-140 P5 ueberholt ist. Einbauauftrag.",
+  "anweisung": "=== ZEHN WEITERE PUNKTE ZUR OBERFLAECHE — UND EINE BERICHTIGUNG ZU auf-20260922-140 ===\n\nEINBAUAUFTRAG wie auf-140: Die Rueckgabe soll je Punkt den Einbau belegen (Datei oder\nAnsicht, Commit) oder sagen, warum nicht. `seite.html`/`server.py` meint unsere Flaeche\n(`oberflaeche/`), die Vorlage; wo ihr Visbox in KosmoOrbit baut, gilt derselbe Punkt dort.\n\n\nZUERST DIE BERICHTIGUNG\n\n  auf-140 P5 («Innenansicht bestellbar, aber nicht lieferbar») ist seit dem Abend des\n  22.09.2026 UEBERHOLT: Eine Mappe, die aus einer IFC angelegt wird, fuehrt ihre Raeume\n  jetzt mit, und die Innenansicht ist ueber die Mappe lieferbar. Statt P5 gelten Q1–Q3.\n\n\nDIE INNENANSICHT\n\n  Q1 AUSWAHL STATT FREITEXT. Die Raumnamen stehen jetzt in der Mappe unter\n     `import.raeume.raeume[].raum.name`. Das Feld `innenraum` kann daraus eine Auswahl\n     anbieten (dazu `art`: frontal / ueber_eck). Das erledigt auch auf-140 P6.\n  Q2 WENN DIE MAPPE KEINE RAEUME TRAEGT. `import.raeume` ist `null` (Mappe aus glb/FBX,\n     oder vor dem 22.09.2026 angelegt) → am Feld sagen, dass die Innenansicht hier nicht\n     lieferbar ist, und warum. Bei einer alten IFC-Mappe kommt beim Rechnen ein Satz mit\n     Handlungsanweisung («in einem neuen Ordner neu anlegen») — vollstaendig zeigen.\n  Q3 DIE VORSCHAU DES KNOTENBAUMS (`server.py`, `sicht`, um Zeile 751) baut die Kette\n     ohne die Raeume der Mappe. Bei gesetztem `innenraum` zeigt sie darum einen anderen\n     Geometrieknoten, als der Lauf rechnet. Dort ebenfalls `kette.mit_raeumen(graph,\n     p[\"import\"].get(\"raeume\"))` anwenden, wenn `innenraum` gesetzt ist.\n\n\nREGLER, DIE HEUTE NICHT WIRKEN (am Code nachgewiesen, am Geraet in Arbeit)\n\n  Q4 SONNE. Auf dem Vorgabe-Bildmodell (z-image-turbo) kommt das Blender-Vorschaubild\n     nicht beim Bildmodell an; die Sonne wirkt dort NUR auf das Vorschaubild, nie auf das\n     Endbild. Am Regler sagen: «wirkt auf dem heutigen Bildmodell nur im Vorschaubild».\n     Erkennbar am Lauf: `modus_gerechnet == \"txt2img\"` bei bestelltem `image_edit`.\n     (Ersetzt auf-140 P7 fuer die Sonne.)\n  Q5 BILDAUSSCHNITT (`deckungsgrad`). Wirkt NUR, wenn eine Himmelsrichtung (`kamera`)\n     gewaehlt und KEIN Standpunkt von Hand (`auge`/`blick_auf`) gesetzt ist. Ohne\n     Richtung und mit Standpunkt von Hand: ausgrauen, mit Grund. (Ersetzt auf-140 P7\n     fuer den Bildausschnitt.)\n  Q6 RICHTUNG UND STANDPUNKT ZUGLEICH. Heute gewinnt still der Standpunkt. Die Flaeche\n     darf nicht beide Eingaben zugleich scharf anbieten; wir stellen es im Kern auf\n     Abweisen um — bis dahin sagen, welche gilt.\n  Q7 `hoehe` IST DIE BILDHOEHE IN BILDPUNKTEN, nicht die Gebaeudehoehe. Beschriftung und\n     Einheit pruefen. Unser eigener Auftrag auf-127 hat es verwechselt.\n\n\nANZEIGE VON URTEILEN\n\n  Q8 «VORNE UND HINTEN VERTAUSCHT» erschien am Geraet bei einer Rangkorrelation von\n     +0,037 — das ist «kein Zusammenhang», nicht «umgekehrt». Wir korrigieren die Meldung\n     im Kern. Die Anzeige sollte neben dem Hinweis den Wert zeigen.\n  Q9 GELAENDEANGABE (Owner-Entscheid 22.09.2026): Ein von Hand gesetzter Gelaendestand\n     gilt auf BEIDEN Kamerawegen als nicht geprueft. `kamerahoehe.verlaesslich: null`\n     heisst «nicht geprueft» — weder «in Ordnung» noch «durchgefallen»; die Zeile\n     «Geländeangabe … NICHT GEPRÜFT» ist ein Vorbehalt (nicht rot, nicht wegfiltern).\n  Q10 BILD GEAENDERT? Eine Anzeige «das Bild hat sich geaendert» darf nicht an der\n     Datei-Pruefsumme haengen: Blender schreibt vermutlich Datum und Renderzeit in jede\n     PNG. Wenn, dann an den Bildpunkten.\n\n\nFUER EURE KOSMOORBIT-ANSICHT (das Ergebnis an die Warteschlange)\n  Nachrichtlich, nicht als eigener Punkt: `verdict.reason` kann jetzt mehrere Saetze\n  tragen («… bei Kamera '<name>'») — nicht auf eine Zeile kuerzen. Und ein Eintrag in\n  `qa_je_kamera` nur mit Namen heisst «nicht gemessen», nicht «durchgefallen».\n\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n  - Nichts in `src/aiimaging/` aendern.\n  - Keinen Vorbehalt kuerzen.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.",
+  "erstellt": "2026-09-22T19:21:11Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie noetig — es geht um die Anzeige."
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Nichts in src/aiimaging/ aendern.",
+      "Keinen Vorbehalt kuerzen.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "Q1 eingebaut (wo und Commit) — oder nicht eingebaut, mit Grund.",
+    "Q2 eingebaut (wo und Commit) — oder nicht eingebaut, mit Grund.",
+    "Q3 eingebaut (wo und Commit) — oder nicht eingebaut, mit Grund.",
+    "Q4 eingebaut (wo und Commit) — oder nicht eingebaut, mit Grund.",
+    "Q5 eingebaut (wo und Commit) — oder nicht eingebaut, mit Grund.",
+    "Q6 eingebaut (wo und Commit) — oder nicht eingebaut, mit Grund.",
+    "Q7 eingebaut (wo und Commit) — oder nicht eingebaut, mit Grund.",
+    "Q8 eingebaut (wo und Commit) — oder nicht eingebaut, mit Grund.",
+    "Q9 eingebaut (wo und Commit) — oder nicht eingebaut, mit Grund.",
+    "Q10 eingebaut (wo und Commit) — oder nicht eingebaut, mit Grund.",
+    "Wie der Einbau geprueft wurde.",
+    "Was aufgefallen ist und wonach nicht gefragt wurde."
+  ],
+  "rang": 6
+}

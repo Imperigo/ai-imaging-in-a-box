@@ -1,0 +1,35 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "cloud",
+  "auftrag_id": "auf-20260922-142",
+  "art": "frage",
+  "beschreibung": "Vertragsfrage zu render-result: qa_je_kamera[].geometry kommt seit heute wirklich an (ohne Maskenweg passed false mit Vorbehaltssatz), verdict.reason traegt Saetze je Kamera, und das neue Feld geometry_gates — wird es bei euch still abgestreift, und wollt ihr es im Vertrag?",
+  "anweisung": "=== ZWEI FELDER IM ERGEBNIS AN EUCH — EINES IST NEU, EINES KOMMT ENDLICH AN ===\n\nDas hier ist eine VERTRAGSFRAGE, keine Frage zur Anzeige. Es geht um das Ergebnis,\ndas unsere Seite fuer einen Renderauftrag an eure Warteschlange zurueckschreibt\n(render-result, Datei `ergebnis.json` im Auftragsordner).\n\n\nWAS SICH BEI UNS AM 22.09.2026 GEAENDERT HAT\n\n  1 `qa_je_kamera[].geometry` KOMMT JETZT WIRKLICH AN.\n    Bis heute trug jeder Eintrag auf unserem Produktweg nur den Kameranamen\n    (`{\"kamera\": \"Eingang\"}`), weil wir ein Feld abfragten, das ein echtes\n    Kameraurteil nie traegt. Seit heute steht dort je gemessener Kamera der\n    Geometrieblock — in DERSELBEN Form wie `qa.geometry`, keine neuen Feldnamen.\n    Ein Eintrag nur mit Namen heisst weiterhin: diese Kamera wurde NICHT GEMESSEN.\n    Ist fuer eine Kamera kein Maskenweg gelaufen, steht dort `passed: false` — weil\n    wir annehmen, dass euer Schema bei `passed` kein `null` zulaesst — und in\n    `verdict.reason` ein eigener Satz «UNGEPRUEFT bei Kamera '<name>' …». Das `false`\n    heisst dort also NICHT «durchgefallen». Laesst euer Schema `null` zu, stellen wir\n    auf `null` um (V3).\n\n  2 `verdict.reason` KANN MEHRERE SAETZE TRAGEN.\n    Widerspricht bei einer Kamera der Maskenweg dem Score, steht ein eigener Satz\n    «SCORE BESTEHT, MASKENWEG WIDERSPRICHT bei Kamera '<name>': …» im Grund — bisher\n    kam nur der Satz der schlechtesten Kamera an. Das Feld ist dasselbe wie bisher.\n\n  3 NEU: `geometry_gates` (oberste Ebene des Ergebnisses).\n    Der Block der zwei Tore: Tor A am Maskenweg (Rangkorrelation ueber das Bauwerk),\n    Tor B an der Deckung der Umrisse (`geom_iou`). Er traegt `camera`, `passed`,\n    `released`, `status`, `fail_reasons` und einen Grund. `released` ist auf dem\n    heutigen Weg IMMER `false`, weil die Gegenprobe fehlt — das steht im Block selbst.\n\n  Nach eurer eigenen Auskunft (erg-20260917-37, F6: «Zod ist hier non-strict …\n  still abgestreift») vermuten wir, dass `geometry_gates` bei euch beim Einlesen\n  STILL ENTFERNT wird. Das ist ein Schluss, nicht nachgelesen — die Aussage stammt\n  von render-scene, nicht von render-result.\n\n\nWAS WIR WISSEN MOECHTEN\n\n  V1 Streift euer Einlesen von render-result unbekannte Felder der obersten Ebene\n     ab — also `geometry_gates`? Ja / nein / weiss nicht.\n  V2 Wollt ihr `geometry_gates` in den Vertrag aufnehmen? Wenn ja: unter welchem\n     Namen und in welcher Form; wir liefern dann genau diese. Wenn nein: sagt es,\n     dann entfernen wir den Block wieder, statt ihn ins Leere zu schicken.\n  V3 Liest euer Werkzeug `qa_je_kamera[].geometry` heute, jetzt wo die Bloecke\n     wirklich ankommen? Und laesst euer Schema `passed: null` dort zu?\n  V4 Wird `verdict.reason` bei euch vollstaendig durchgereicht, oder irgendwo auf\n     eine Laenge gekuerzt?\n\nEine Zeile je Punkt genuegt. «Weiss ich nicht» ist eine vollstaendige Antwort.\n\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n  - Nichts an unserem Code aendern, nichts in unserem Repo ausser der Antwort.\n  - Keine Anzeige bauen — das ist Sache des ui-Workers.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.",
+  "erstellt": "2026-09-22T19:20:41Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie noetig — es geht um den Vertrag."
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Nichts an unserem Code aendern.",
+      "«Weiss ich nicht» ist eine vollstaendige Antwort.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Streift das Einlesen von render-result unbekannte Felder ab (geometry_gates)?",
+    "V2 geometry_gates in den Vertrag aufnehmen — Name und Form, oder nein.",
+    "V3 Liest das Werkzeug qa_je_kamera[].geometry, und liesse das Schema passed: null zu?",
+    "V4 Wird verdict.reason vollstaendig durchgereicht?"
+  ],
+  "rang": 11
+}

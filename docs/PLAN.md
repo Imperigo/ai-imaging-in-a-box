@@ -7235,9 +7235,33 @@ Bekannt und ausdrücklich nicht erledigt:
 
 **Offen, und bei wem es liegt**
 
-- [ ] **Owner:** Gilt ein von Hand gesetzter Geländestand als verlässlich oder als
+- [x] **Owner:** Gilt ein von Hand gesetzter Geländestand als verlässlich oder als
       ungeprüft? Zwei Stellen im Code sagen heute Verschiedenes.
+      *(Entschieden: nicht geprüft; gebaut in Sitzung 65)*
 - [ ] **local:** `auf-20260922-139` (Rang 1) — Qwen laden, Lauf über die Mappe, Heimnetz.
 - [ ] **ui:** `auf-20260922-140` (Rang 5) — neun Anzeigepunkte, Einbauauftrag.
-- [ ] **Kern:** Innenansicht über die Mappe lieferbar; C8/C10-Vertragsbefunde;
+- [x] **Kern:** Innenansicht über die Mappe lieferbar; C8/C10-Vertragsbefunde;
       `homeworker.py:652`; Sonne/Bildausschnitt/Deckungsgrad ohne Wirkung.
+      *(Sitzung 65: gebaut bzw. untersucht; `homeworker.py:652` war seit Sitzung 61 behoben,
+      nur unbewacht)*
+
+## Sitzung 65 — 22.09.2026 · Runde 5: was drüben ankommt, und warum die Sonne nichts tut
+
+**Erledigt**
+
+- [x] Geländeangabe auf beiden Kamerawegen «nicht geprüft» (Owner-Entscheid).
+- [x] Innenansicht über die Mappe lieferbar (Räume beim Anlegen gelesen).
+- [x] Vertrag: jede widersprechende Kamera spricht; `geometry_gates` gefüllt;
+      `qa_je_kamera` trägt wieder Blöcke — B5 dafür zurückgestuft.
+- [x] Zustellvermerk: die erste Zustellung zählt.
+- [x] Untersuchung Sonne/Bildausschnitt/Tiefenrichtung; 32 Gegenproben fallen.
+- [x] Aufträge verteilt: `auf-141` (local), `auf-142` (cloud), `auf-143` (ui).
+
+**Offen, und bei wem es liegt**
+
+- [ ] **Kern (Runde 6):** Bildausschnitt nur, wo er wirkt; Richtung + Standpunkt abweisen;
+      `hoehe` dokumentieren; «vertauscht» erst über der Zufallsstreuung;
+      `bildeingang_lage` für z-image auf «gemessen: trägt nicht».
+- [ ] **local:** `auf-139` (Rang 1), `auf-141` (Rang 2).
+- [ ] **cloud:** `auf-142` — wird `geometry_gates` abgestreift?
+- [ ] **ui:** `auf-140` (Rang 5), `auf-143` (Rang 6).

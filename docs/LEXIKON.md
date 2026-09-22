@@ -4878,8 +4878,9 @@ gemessen», bis der Blender-Schritt ihn wirklich abliest.
 **Geländeangabe** — Die Höhe des Bodens, die der Betreiber von Hand eingibt. Besser als
 die Unterkante des Modells (die bei einem Untergeschoss im Erdreich liegt), aber niemand
 prüft sie nach — darum heisst sie im Bericht «nicht geprüft» und nicht «verlässlich».
-*Offen und eine Frage an den Owner:* An einer zweiten Stelle im Programm heisst dieselbe
-Eingabe noch «Gelände an der Kamera», also verlässlich.
+*Owner-Entscheid vom 22.09.2026:* Auf beiden Kamerawegen heisst sie jetzt «nicht
+geprüft» — bis dahin nannte eine zweite Stelle dieselbe Eingabe «Gelände an der Kamera»,
+also verlässlich.
 
 **Adresse im Heimnetz gegen «alle Adressen» (0.0.0.0)** — Ein Programm, das Anfragen aus
 dem Netz annehmen soll, kann auf **allen** Anschlüssen des Rechners zuhören; das schreibt
@@ -4890,6 +4891,31 @@ Startzeile bis zum 22.09.2026 «0.0.0.0» — eine Adresse, die man nirgends ein
 Heute fragt das Programm das Betriebssystem, über welche eigene Adresse es ins Netz ginge
 (ohne etwas zu senden, über eine reservierte Beispieladresse), und sagt ehrlich, wenn es
 das nicht herausfindet.
+
+**Kameraweg (abgeleitet, vorgegeben, Rückfall)** — Die drei Arten, wie der Blender-Schritt
+seine Kamera stellt: aus einer gewählten Himmelsrichtung **gerechnet**, als Standpunkt
+**von Hand** übergeben, oder als feste Schrägansicht, wenn gar nichts bestellt ist. *In
+diesem Projekt am 22.09.2026 untersucht:* Der Bildausschnitt (Deckungsgrad) wirkt nur auf
+dem gerechneten Weg. Auf den beiden anderen kommt er an und wird nie gelesen — der Bericht
+nannte ihn trotzdem.
+
+**Bildpunkt-Prüfsumme gegen Datei-Prüfsumme** — Ein Fingerabdruck nur der Farbwerte eines
+Bildes, im Unterschied zu dem der ganzen Datei. Die Datei trägt oft unsichtbare
+Zusatzangaben (Datum, Renderzeit); zwei Dateien können darum dasselbe Bild zeigen und
+trotzdem verschiedene Datei-Prüfsummen haben. *In diesem Projekt:* Ob sich ein
+Blender-Vorschaubild wirklich geändert hat, lässt sich nur an den Bildpunkten sagen —
+am Gerät gefragt.
+
+**Zufallsstreuung einer Rangkorrelation** — Wie weit eine Rangkorrelation schon durch
+Zufall von null abweicht, grob eins geteilt durch die Wurzel aus der Zahl der Punkte. Bei
+848 Punkten etwa 0,034. *In diesem Projekt am 22.09.2026 gefunden:* Die Prüfung meldete
+«vorne und hinten vertauscht» bei +0,037 — einem Wert in der Grösse des Zufalls. Richtig
+wäre «kein messbarer Zusammenhang» gewesen.
+
+**Die erste Zustellung zählt** — Wird ein Auftrag ein zweites Mal verschickt, bleibt als
+Zustellzeit die erste stehen. Sonst sähe ein Auftrag, der seit Tagen liegt, nach jedem
+neuen Versand frisch aus. *In diesem Projekt am 22.09.2026 repariert, nachdem es beim
+Verschicken selbst passiert war.*
 
 **Erreichbarkeit einer Schwelle (Deckel)** — Die Frage, ob ein Messwert eine Schwelle
 unter den gegebenen Umständen **überhaupt** erreichen kann — unabhängig davon, wie gut das
@@ -5424,6 +5450,7 @@ keine Aussage.*
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-22 | Ergaenzt aus der fuenften Runde: **Kameraweg (abgeleitet, vorgegeben, Rueckfall)**, **Bildpunkt-Pruefsumme gegen Datei-Pruefsumme**, **Zufallsstreuung einer Rangkorrelation**, **Die erste Zustellung zaehlt**; nachgefuehrt: **Gelaendeangabe** (Owner-Entscheid) |
 | 2026-09-22 | Ergaenzt aus der vierten Runde: **Pipeline-Familie**, **Flache Kopie gegen tiefe Kopie**, **Angabe gegen Messung**, **Rollwinkel**, **Geländeangabe**, **Adresse im Heimnetz gegen «alle Adressen» (0.0.0.0)**. Jeder Eintrag traegt den Befund gegen den eigenen Code, aus dem er kam |
 | 2026-09-22 | Ergaenzt aus der Abarbeitung von sechs Befunden: **Wirkungspruefung gegen Textpruefung**, **Bestellbar, aber nicht lieferbar**, **Modusabweichung**, **Laufmessung (in der Mappe)**, **Konvergenz (stuerzender Linien)**. Drei davon tragen einen Befund gegen den eigenen Code: vier Waechter, die Text statt Wirkung prueften; eine Innenansicht, die sich bestellen und nicht liefern laesst; eine fehlende Neigung, die als gemessene Null bescheinigt wurde |
 | 2026-09-22 | Ergaenzt zu Abschnitt 10 aus dem ersten Verbinden: **Kopplungszahl**, **Stetige Uhr** |

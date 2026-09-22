@@ -91,6 +91,27 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 22.09.2026 · Warum die Sonne nichts am Bild ändert — und was jetzt drüben ankommt
+
+* **Ihr Entscheid ist eingebaut:** Ein von Hand gesetzter Geländestand heisst jetzt überall
+  «nicht geprüft».
+* **Die Innenansicht funktioniert über die Mappe** — sofern das Modell als IFC hereinkam.
+  Das Programm liest die Räume einmal beim Anlegen. Ob sie am echten Modell an der richtigen
+  Stelle liegen, prüft die Werkstatt.
+* **Die Sonne kann das Bild heute gar nicht ändern.** Sie wirkt nur auf das
+  Blender-Vorschaubild, und unser Bildmodell nimmt kein Vorschaubild an — es sieht nur die
+  Tiefenkarte, und Tiefe hat kein Licht. Das ist Bauart, kein Fehler. Der Regler wird das
+  künftig dazusagen.
+* **Der Bildausschnitt wirkt nur, wenn Sie eine Himmelsrichtung wählen** und keinen
+  Standpunkt anklicken. Die Werkstatt hat — auf unsere Bitte hin — mit angeklicktem
+  Standpunkt gemessen; darum änderte sich nichts. Unser Fehler im Auftrag.
+* **«Vorne und hinten vertauscht» stimmte nicht.** Der Wert lag so nah bei null, dass er
+  «kein Zusammenhang» heisst. Das Bild folgt der Tiefenkarte nicht — aber nicht, weil etwas
+  umgedreht wäre.
+* **Nach KosmoOrbit ging bis heute nur die schlechteste Kamera.** Jetzt spricht jede, bei
+  der etwas nicht stimmt. Und ein Punkt, der seit fünf Tagen als erledigt galt, war es nicht:
+  Pro Kamera kamen nur Namen an. Zurückgestuft und repariert.
+
 ### 22.09.2026 · Vier Stellen, an denen eine Zahl mehr sagte, als gemessen war
 
 * **Ein zweites Bildmodell ist einen Schritt näher.** Das Programm wählte für jedes
