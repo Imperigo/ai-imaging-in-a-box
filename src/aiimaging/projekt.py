@@ -62,6 +62,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import tempfile
 from datetime import datetime, timezone
@@ -77,8 +78,9 @@ from aiimaging.auftrag import ohne_kennungen
 __all__ = [
     "MODELL_FEHLT", "MODELL_NICHT_PRUEFBAR", "MODELL_UNVERAENDERT", "MODELL_VERAENDERT",
     "PROJEKTDATEI", "ProjektError", "ProjektKollision", "SCHEMA",
-    "VOLLE_PRUEFUNG_BIS_BYTE",
-    "fingerabdruck", "neu", "oeffne", "speichere", "vermerke_bild",
+    "VOLLE_PRUEFUNG_BIS_BYTE", "TITEL_HOECHSTENS",
+    "benenne", "fingerabdruck", "markiere_skizze", "neu", "oeffne", "speichere",
+    "vermerke_bild", "vermerke_skizze",
 ]
 
 
@@ -556,8 +558,29 @@ def oeffne(wurzel) -> dict:
     return {"projekt": projekt, "modell_stand": stand, "modell_grund": grund, "pfad": pfad}
 
 
+def _zahl_oder_none(wert, name: str):
+    """Eine Messzahl für die Mappe — eine endliche Zahl oder ``None``, nie etwas Drittes.
+
+    ``True`` ist in Python eine Zahl (``True == 1``) und wäre hier ein Score von 1.0, der
+    aussieht wie gemessen. Darum wird ein Wahrheitswert abgewiesen, wie beim Urteil.
+    """
+    if wert is None:
+        return None
+    if isinstance(wert, bool) or not isinstance(wert, (int, float)):
+        raise ProjektError(
+            f"{name} ist eine Zahl oder None (nicht gemessen) — war {wert!r} "
+            f"({type(wert).__name__}).")
+    if not math.isfinite(float(wert)):
+        raise ProjektError(
+            f"{name} ist {wert!r} — keine endliche Zahl. Ein solcher Wert ist keine "
+            f"Messung; nicht gemessen heisst None.")
+    return float(wert)
+
+
 def vermerke_bild(projekt: dict, *, bild: str, schicht: str, urteil=None,
-                  basis: dict | None = None, herkunft: dict | None = None) -> dict:
+                  basis: dict | None = None, herkunft: dict | None = None,
+                  score=None, schwelle=None, entwurf: bool = False,
+                  variantengruppe: dict | None = None) -> dict:
     """Ein erzeugtes Bild ins Projekt eintragen — **samt der Frage, ob es geprüft ist.**
 
     Args:
@@ -568,6 +591,17 @@ def vermerke_bild(projekt: dict, *, bild: str, schicht: str, urteil=None,
         basis: Bei einem Bild der zweiten Stufe das Urteil seiner Unterlage — unter einem
             **anderen** Feldnamen, nie unter ``urteil``.
         herkunft: Womit es entstand (Backbone, Prompt, Startwert, Führung …).
+        score, schwelle: **Die Zahl zum Urteil** (Entscheid 16: «Farbe, Wort und Zahl»),
+            aus der Prüfung, die das Urteil gefällt hat. ``None`` heisst **nicht
+            gemessen** — nie 0. Seit dem 22.09.2026; ältere Einträge führen die Felder
+            nicht, und ihr Fehlen heisst dasselbe.
+        entwurf: ``True`` für ein Bild aus einem Entwurfslauf (Entscheid 30: schnell,
+            ohne Geometrieprüfung). Ein eigenes Feld, damit eine Anzeige das blaue
+            Zeichen «Entwurf — nicht geprüft» von einem gewöhnlichen «nicht gemessen»
+            unterscheiden kann, ohne einen Satz zu deuten. Ein Entwurf **mit** Urteil
+            wird abgewiesen: Ein Entwurf ist nicht geprüft.
+        variantengruppe: ``{id, art, nummer, von}`` für ein Bild aus einer Variantenreihe
+            (Entscheid 32), sonst ``None``.
 
     Returns:
         Das geänderte Projekt. Es ist **nicht geschrieben** — dafür gibt es
@@ -595,6 +629,20 @@ def vermerke_bild(projekt: dict, *, bild: str, schicht: str, urteil=None,
     if schicht not in ("geometrielayer", "ai-imaging-layer"):
         raise ProjektError(
             f"schicht ist 'geometrielayer' oder 'ai-imaging-layer' — war {schicht!r}.")
+    if entwurf is not True and entwurf is not False:
+        raise ProjektError(f"entwurf ist True oder False — war {entwurf!r}.")
+    if entwurf and urteil is not None:
+        # EIN ENTWURF IST NICHT GEPRUEFT (Entscheid 30). Traegt er trotzdem ein Urteil,
+        # stuende am Bild zweierlei — das blaue Zeichen und ein gruenes oder rotes.
+        raise ProjektError(
+            f"Ein Entwurf ist nicht geprüft — ein Urteil ({urteil!r}) dazu wäre eine "
+            f"Auskunft, die der Lauf nicht hatte.")
+    if variantengruppe is not None and not isinstance(variantengruppe, dict):
+        raise ProjektError(
+            f"variantengruppe ist ein Wörterbuch {{id, art, nummer, von}} oder None — "
+            f"war {type(variantengruppe).__name__}.")
+    score = _zahl_oder_none(score, "score")
+    schwelle = _zahl_oder_none(schwelle, "schwelle")
 
     # EINE DATEI, EIN EINTRAG — und das ist eine Entscheidung, keine Aufräumarbeit.
     #
@@ -625,11 +673,22 @@ def vermerke_bild(projekt: dict, *, bild: str, schicht: str, urteil=None,
         "erzeugt": (projekt["bilder"][vorher]["erzeugt"]
                     if vorher is not None else _jetzt()),
         "zuletzt_vermerkt": _jetzt(),
+        # DER EIGENE NAME UEBERLEBT DAS NEURECHNEN (Entscheid 19: «nach der Zeit, ein
+        # eigener Name nachtraeglich moeglich»). Derselbe Grund wie bei `erzeugt`: Wer
+        # ein Bild benannt hat und es erneut vermerkt bekommt, hat es nicht umbenannt.
+        "titel": (projekt["bilder"][vorher].get("titel")
+                  if vorher is not None else None),
         # DAS EIGENE URTEIL HEISST `geometrie_bestanden`, das geerbte steht im Block
         # `basis` unter demselben Namen — aber eine Ebene tiefer. Ein geerbtes Urteil ist
         # kein eigenes, und die beiden duerfen nie in DEMSELBEN Feld stehen (E20).
         "geometrie_bestanden": urteil,
         "geometrie_gemessen": urteil is not None,
+        # DIE ZAHL ZUM URTEIL, aus derselben Pruefung (22.09.2026). `None` heisst nicht
+        # gemessen; eine 0 an dieser Stelle hiesse «gemessen und ganz schlecht».
+        "score": score,
+        "schwelle": schwelle,
+        "entwurf": entwurf,
+        "variantengruppe": dict(variantengruppe) if variantengruppe else None,
         "basis": dict(basis) if basis else None,
         "herkunft": dict(herkunft or {}),
     }
@@ -700,6 +759,132 @@ def vermerke_skizze(projekt: dict, *, skizze: str, ueber: str | None = None,
         # WAS DARAUS WURDE, als eigenes Feld. `None` heisst: noch nichts. Es hier
         # wegzulassen hiesse, den Zusammenhang spaeter aus Zeitstempeln zu raten.
         "ergebnis": None,
+        # DER EIGENE NAME, nachtraeglich (Entscheid 19). `None` heisst: benannt nach der
+        # Zeit, wie die Datei. Siehe `benenne`.
+        "titel": None,
     }
     projekt.setdefault("skizzen", []).append(eintrag)
     return projekt
+
+
+def _skizzeneintraege(projekt: dict, skizze: str) -> list[dict]:
+    return [e for e in (projekt.get("skizzen") or [])
+            if isinstance(e, dict) and e.get("skizze") == str(skizze)]
+
+
+def markiere_skizze(projekt: dict, *, skizze: str, stand: str,
+                    ergebnis=None) -> dict:
+    """Den Stand einer Skizze nachführen — **und was daraus wurde**.
+
+    Args:
+        skizze: Der Dateiname, wie er in der Mappe steht.
+        stand: Einer aus :data:`SKIZZEN_STAENDE`.
+        ergebnis: Was daraus wurde — ein Bildname, eine Liste von Bildnamen, oder
+            ``None`` (noch nichts). Bei ``gerechnet`` Pflicht: *Gerechnet ohne Ergebnis*
+            wäre ein Zustand, den niemand einlösen kann.
+
+    Returns:
+        Das geänderte Projekt, **nicht geschrieben**.
+
+    Raises:
+        ProjektError: Die Skizze steht nicht (oder mehrfach) in der Mappe, der Stand ist
+            unbekannt, oder «gerechnet» kommt ohne Ergebnis.
+    """
+    if stand not in SKIZZEN_STAENDE:
+        raise ProjektError(
+            f"stand ist einer aus {', '.join(SKIZZEN_STAENDE)} — war {stand!r}.")
+    if stand == SKIZZE_GERECHNET and not ergebnis:
+        raise ProjektError(
+            "Eine Skizze ist erst «gerechnet», wenn ein Bild daraus entstanden ist — "
+            "ohne Ergebnis bleibt sie offen.")
+    treffer = _skizzeneintraege(projekt, skizze)
+    if len(treffer) != 1:
+        raise ProjektError(
+            f"Die Skizze {skizze!r} steht {len(treffer)}-mal in der Mappe. Nachgeführt "
+            f"wird nur ein Eintrag, der eindeutig ist — bei zweien wäre die Wahl geraten.")
+    treffer[0]["stand"] = stand
+    treffer[0]["ergebnis"] = (list(ergebnis) if isinstance(ergebnis, (list, tuple))
+                              else ergebnis)
+    return projekt
+
+
+#: Wie lang ein eigener Name höchstens sein darf. **GESETZT, nicht gemessen:** lang
+#: genug für einen Satz wie «Variante Süd mit Holzfassade, Abendlicht», kurz genug, dass
+#: er unter ein Vorschaubild passt. Ein Name ist keine Bemerkung — die hat ihr Feld.
+TITEL_HOECHSTENS = 120
+
+
+def benenne(wurzel, *, titel: str | None, bild: str | None = None,
+            skizze: str | None = None, von_stand: int | None = None) -> dict:
+    """Einem Bild oder einer Skizze **nachträglich** einen eigenen Namen geben (E19).
+
+    Die **Datei bleibt, wie sie heisst.** Der Name ist eine Anzeige und steht als
+    ``titel`` am Eintrag; der Dateiname trägt weiter die Zeit, und alles, was auf die
+    Datei zeigt (die Skizze auf ihr Bild, ein Lauf auf seine Ausgabe), zeigt weiter.
+
+        *Umbenennen hiesse, jeden Verweis mitzunehmen — und der eine, den man vergisst,
+        zeigt danach auf nichts.*
+
+    Args:
+        wurzel: Der Projektordner.
+        titel: Der neue Name. ``None`` oder leer nimmt ihn zurück — dann gilt wieder der
+            Name nach der Zeit.
+        bild, skizze: **Genau eines** davon — der Dateiname, wie er in der Mappe steht.
+        von_stand: Die Standnummer, von der der Aufrufer kommt (``stand_nr`` aus seinem
+            letzten Öffnen). Gesetzt, wird wie bei :func:`speichere` abgelehnt, wenn auf
+            der Platte ein neuerer Stand liegt — wer einen alten Stand vor Augen hatte,
+            benennt womöglich ein Bild, das es drüben nicht mehr so gibt. ``None``: Die
+            Mappe wird frisch geöffnet, und nur ein Schreiber im selben Augenblick
+            kollidiert.
+
+    Returns:
+        ``{projekt, eintrag, pfad}`` — das Projekt ist **geschrieben**.
+
+    Raises:
+        ProjektError: Nicht genau eines von ``bild``/``skizze``, der Eintrag fehlt (oder
+            steht bei einer Skizze mehrfach da), oder der Name ist unbrauchbar (zu lang,
+            mit Zeilenumbruch oder Steuerzeichen).
+        ProjektKollision: Auf der Platte liegt ein neuerer Stand als ``von_stand``.
+    """
+    if (bild is None) == (skizze is None):
+        raise ProjektError(
+            "Genau eines von bild und skizze — sonst ist nicht bestimmt, was den Namen "
+            "bekommt.")
+    if titel is not None and not isinstance(titel, str):
+        raise ProjektError(f"titel ist Text oder None — war {type(titel).__name__}.")
+    titel = (titel or "").strip() or None
+    if titel is not None:
+        if len(titel) > TITEL_HOECHSTENS:
+            raise ProjektError(
+                f"Der Name ist {len(titel)} Zeichen lang, höchstens {TITEL_HOECHSTENS} "
+                f"gehen. Was länger ist, gehört in die Bemerkung.")
+        if any(ord(z) < 32 or ord(z) == 127 for z in titel):
+            raise ProjektError(
+                "Der Name enthält einen Zeilenumbruch oder ein Steuerzeichen. Ein Name "
+                "steht auf einer Zeile unter dem Bild.")
+
+    auf = oeffne(wurzel)
+    p = auf["projekt"]
+    if bild is not None:
+        treffer = [e for e in (p.get("bilder") or [])
+                   if isinstance(e, dict) and e.get("bild") == str(bild)]
+        wofuer = f"Das Bild {bild!r}"
+    else:
+        treffer = _skizzeneintraege(p, skizze)
+        wofuer = f"Die Skizze {skizze!r}"
+    if not treffer:
+        raise ProjektError(f"{wofuer} steht nicht in dieser Mappe.")
+    if len(treffer) > 1:
+        raise ProjektError(
+            f"{wofuer} steht {len(treffer)}-mal in der Mappe. Benannt wird nur ein "
+            f"Eintrag, der eindeutig ist — bei zweien wäre die Wahl geraten.")
+    treffer[0]["titel"] = titel
+
+    if von_stand is not None:
+        if isinstance(von_stand, bool) or not isinstance(von_stand, int):
+            raise ProjektError(f"von_stand ist eine ganze Zahl — war {von_stand!r}.")
+        # DER STAND DES AUFRUFERS ZAEHLT, nicht der eben gelesene. Sonst waere die
+        # Pruefung in `speichere` hier immer bestanden.
+        p["stand_nr"] = von_stand
+    pfad = speichere(p, wurzel)
+    return {"projekt": p, "eintrag": treffer[0], "pfad": pfad}

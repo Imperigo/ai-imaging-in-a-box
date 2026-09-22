@@ -240,6 +240,12 @@ STATUS_OK = "ok"
 STATUS_ABGELEHNT = "abgelehnt"
 STATUS_FEHLER = "fehler"
 STATUS_UEBERSPRUNGEN = "uebersprungen"
+#: Der Knoten lief nicht, weil der Lauf **auf Wunsch** angehalten wurde (Entscheid 31,
+#: 22.09.2026). Ein eigenes Wort und nicht ``uebersprungen``: Übersprungen heisst «ein
+#: Vorgänger ist gescheitert» — ein Grund im Graphen. Abgebrochen heisst «jemand hat
+#: angehalten» — ein Grund ausserhalb. Wer beides gleich schreibt, sucht nach einem
+#: Abbruch den Fehler im Graphen, den es nicht gibt.
+STATUS_ABGEBROCHEN = "abgebrochen"
 
 #: Welche Parameter eines Knotens **Eingabedateien** benennen. Ihr Inhalt fliesst in den
 #: Hash, ihr **Pfad** nicht (``graph.inhalts_hash``, Argument ``param_dateien``).
@@ -2188,6 +2194,7 @@ def fuehre_aus(
     bedarf: dict[str, Bedarf] | None = None,
     pruefe_verdrahtung: bool = False,
     melder: Callable[[dict], None] | None = None,
+    abbrechen: Callable[[], bool] | None = None,
 ) -> dict:
     """Einen Ketten-Graphen abarbeiten: topologisch, zwischengespeichert, skip-on-error.
 
@@ -2222,6 +2229,22 @@ def fuehre_aus(
             **Ein Fehler im Melder reisst den Lauf nicht mit.** Er wird geschluckt und
             beim nächsten Ereignis wieder versucht: *Ein Rückruf, der die Rechnung
             mitreisst, ist teurer als gar keiner* — die GPU-Zeit ist schon bezahlt.
+        abbrechen: ``() -> bool``, gefragt **vor jedem Knoten** — auch vor einem, der
+            aus dem Zwischenspeicher käme. Sagt sie einmal ``True``, läuft **kein** Knoten
+            mehr; alle übrigen stehen mit ``status='abgebrochen'`` im Ergebnis, und die
+            Frage wird nicht erneut gestellt. ``None`` heisst: niemand kann anhalten.
+
+            **Wozu es das gibt** (Entscheid 31, 22.09.2026: «Abbrechen — jetzt mitbauen,
+            auch im Kern; Fertiges bleibt»). Ein Knoten, der schon rechnet, wird **nicht**
+            unterbrochen: Die Frage steht zwischen den Knoten, nicht in ihnen. Was fertig
+            ist, bleibt, wie es ist — im Ergebnis und im Zwischenspeicher, denn abgelegt
+            wird dort gleich nach jedem Knoten.
+
+            **Ein Fehler in der Frage hält nichts an.** Er wird geschluckt, der Lauf geht
+            weiter, und der Satz steht unter ``abbruchfrage_fehler`` im Ergebnis. Dieselbe
+            Abwägung wie beim Melder — und die Folge ist benannt statt still: Wer
+            angehalten hat und dessen Frage scheitert, sieht hier, warum weitergerechnet
+            wurde.
         pruefe_verdrahtung: ``True`` prüft den Graphen **vor dem ersten Knoten** gegen
             ``bedarf`` und bricht bei einem ``error``-Befund ab. Vorgabe ``False``, weil
             ein Graph mit unbekannten Knotenarten (Attrappen, Versuche) weiterhin laufen
@@ -2230,7 +2253,12 @@ def fuehre_aus(
 
     Returns:
         ``{status, reihenfolge, knoten, dauer_s, out_dir, gerechnet, cache_treffer,
-        uebersprungen, gescheitert, error}``.
+        uebersprungen, gescheitert, error, abgebrochen, abbruchfrage_fehler}``.
+
+        ``status`` ist ``"abgebrochen"`` (:data:`STATUS_ABGEBROCHEN`), sobald ein Knoten
+        wegen der Abbruchfrage nicht lief — auch wenn davor einer gescheitert ist; die
+        Gescheiterten stehen weiterhin unter ``gescheitert``. ``abgebrochen`` ist die
+        Liste der nicht gelaufenen Knoten in Rechenreihenfolge (leer: nicht angehalten).
 
         ``knoten`` ist die Auswertung je Knoten-ID, jeweils mit ``status``, ``aus_cache``,
         ``dauer_s``, ``dauer_s_original``, ``hash``, ``arbeits_dir``, ``ausgaben``,
@@ -2295,6 +2323,8 @@ def fuehre_aus(
     hashes: dict[str, str] = {}
     uebersprungen: dict[str, str] = {}      # Knoten-ID → Grund
     gescheitert: list[str] = []
+    abgebrochen: list[str] = []
+    abbruchfrage_fehler: str | None = None
     beginn_gesamt = time.perf_counter()
 
     def _melde(ereignis: dict) -> None:
@@ -2308,10 +2338,39 @@ def fuehre_aus(
 
     for nummer, kid in enumerate(reihenfolge, start=1):
         knoten = graph.knoten[kid]
-        _melde({"art": "knoten_beginnt", "knoten": kid, "knotenart": knoten.art,
-                "nummer": nummer, "von": len(reihenfolge)})
+
+        # DIE ABBRUCHFRAGE, VOR JEDEM KNOTEN (Entscheid 31). Einmal «ja» gilt fuer den
+        # Rest des Laufs: Wer angehalten hat, will nicht, dass der naechste Knoten doch
+        # noch anlaeuft, weil die Frage beim zweiten Mal anders ausfaellt.
+        if abbrechen is not None and not abgebrochen:
+            try:
+                angehalten = bool(abbrechen())
+            except Exception as fehler:            # noqa: BLE001 — siehe Docstring
+                angehalten = False
+                if abbruchfrage_fehler is None:
+                    abbruchfrage_fehler = f"{type(fehler).__name__}: {fehler}"
+            if angehalten:
+                abgebrochen.append(kid)
+        elif abgebrochen:
+            abgebrochen.append(kid)
+
+        # EIN KNOTEN, DER NICHT BEGINNT, MELDET KEINEN BEGINN. Sein Ende meldet er doch
+        # (unten, `finally`), mit `status='abgebrochen'` — sonst stuende er in einer
+        # Anzeige als nie erwaehnt da, und «angehalten» saehe aus wie «vergessen».
+        if not (abgebrochen and abgebrochen[-1] == kid):
+            _melde({"art": "knoten_beginnt", "knoten": kid, "knotenart": knoten.art,
+                    "nummer": nummer, "von": len(reihenfolge)})
 
         try:
+            if abgebrochen and abgebrochen[-1] == kid:
+                knoten_ergebnisse[kid] = _knoteneintrag(
+                    knoten.art, STATUS_ABGEBROCHEN, aus_cache=False, dauer_s=0.0,
+                    grund=("Der Lauf wurde angehalten, bevor dieser Knoten an der Reihe "
+                           "war. Er lief nicht — weder gerechnet noch aus dem "
+                           "Zwischenspeicher geholt."),
+                )
+                continue
+
             if kid in uebersprungen:
                 knoten_ergebnisse[kid] = _knoteneintrag(
                     knoten.art, STATUS_UEBERSPRUNGEN, aus_cache=False, dauer_s=0.0,
@@ -2455,10 +2514,16 @@ def fuehre_aus(
         eintrag["ausgaben"] = {**(eintrag["ausgaben"] or {}), **zusatz}
 
     treffer = sum(1 for e in knoten_ergebnisse.values() if e["aus_cache"])
+    # ABGEBROCHENE ZAEHLEN NICHT ALS GERECHNET — sie liefen so wenig wie uebersprungene.
     gerechnet = sum(1 for e in knoten_ergebnisse.values()
-                    if not e["aus_cache"] and e["status"] != STATUS_UEBERSPRUNGEN)
+                    if not e["aus_cache"]
+                    and e["status"] not in (STATUS_UEBERSPRUNGEN, STATUS_ABGEBROCHEN))
+    if abgebrochen:
+        gesamtstatus = STATUS_ABGEBROCHEN
+    else:
+        gesamtstatus = STATUS_OK if not gescheitert else STATUS_FEHLER
     return {
-        "status": STATUS_OK if not gescheitert else STATUS_FEHLER,
+        "status": gesamtstatus,
         "reihenfolge": reihenfolge,
         "knoten": knoten_ergebnisse,
         "dauer_s": round(time.perf_counter() - beginn_gesamt, 4),
@@ -2469,6 +2534,8 @@ def fuehre_aus(
         "gescheitert": gescheitert,
         "error": None if not gescheitert else "; ".join(
             f"{kid}: {knoten_ergebnisse[kid]['error']}" for kid in gescheitert),
+        "abgebrochen": list(abgebrochen),
+        "abbruchfrage_fehler": abbruchfrage_fehler,
     }
 
 
@@ -2483,7 +2550,8 @@ __all__ = [
     "SCHICHT_AI_IMAGING", "SCHICHT_GEOMETRIE",
     "KNOTEN_BILDQUELLE", "KNOTEN_GEOMETRIE", "KNOTEN_MULTIPASS", "KNOTEN_NACHRENDER",
     "KNOTEN_QA", "KNOTEN_RENDER",
-    "STATUS_ABGELEHNT", "STATUS_FEHLER", "STATUS_OK", "STATUS_UEBERSPRUNGEN",
+    "STATUS_ABGEBROCHEN", "STATUS_ABGELEHNT", "STATUS_FEHLER", "STATUS_OK",
+    "STATUS_UEBERSPRUNGEN",
     "KettenError",
     "baue_kette", "bildeingang_lage", "fuehre_aus", "haenge_nachrender_an",
     "mit_raeumen", "nachrender_ausfuehrer", "pruefe_kette", "qa_ausfuehrer",

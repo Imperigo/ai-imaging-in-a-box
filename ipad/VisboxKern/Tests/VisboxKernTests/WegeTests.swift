@@ -12,11 +12,26 @@ final class WegeTests: XCTestCase {
         XCTAssertEqual(Set(schluessel).count, schluessel.count, "\(schluessel)")
     }
 
-    func testGenauEinWegOhneAnmeldungUndDasIstVerbinden() {
-        let offen = Wege.alle.filter(\.ohneAnmeldung)
-        XCTAssertEqual(offen, [Wege.verbinden])
+    /// Seit dem 22.09.2026 zwei: das Verbinden (POST, die App) und die Koppelseite (GET,
+    /// der Browser, Entscheid 26). Mehr nicht — und keiner der beiden unter der anderen
+    /// Methode: `GET /api/verbinden` und `POST /koppeln` bleiben hinter der Tuer.
+    func testNurVerbindenUndKoppelnKommenOhneAnmeldungDurch() {
+        let offen = Set(Wege.alle.filter(\.ohneAnmeldung))
+        XCTAssertEqual(offen, [Wege.verbinden, Wege.koppeln])
         XCTAssertEqual(Wege.verbinden.methode, .post,
-                       "der Server laesst ohne Anmeldung nur POST durch")
+                       "der Server laesst das Verbinden ohne Anmeldung nur als POST durch")
+        XCTAssertEqual(Wege.koppeln.methode, .get,
+                       "die Koppelseite ist eine Seite — sie wird gelesen, nicht geschickt")
+    }
+
+    func testDieNeuenWegeDesKernsSindAngemeldet() {
+        // Umbenennen, Abbrechen und Skizze-Rechnen aendern die Mappe oder den Lauf. Ein
+        // `ohneAnmeldung: true` hier liesse die App ohne Kopfzeile schicken — und drueben
+        // kaeme 401.
+        for weg in [Wege.benennen, Wege.abbrechen, Wege.rechneSkizze] {
+            XCTAssertFalse(weg.ohneAnmeldung, weg.pfad)
+            XCTAssertEqual(weg.methode, .post, weg.pfad)
+        }
     }
 
     func testDieAdresseTraegtPfadUndAnschluss() throws {

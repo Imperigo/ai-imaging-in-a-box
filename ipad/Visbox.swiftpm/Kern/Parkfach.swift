@@ -1,0 +1,406 @@
+import Foundation
+
+// DAS PARKFACH — Skizzen, die (noch) nicht drueben sind.
+//
+// Owner-Entscheide Nr. 12 und Nr. 28: Ist die HomeStation nicht erreichbar, bleibt die
+// Skizze auf dem Geraet und geht von selbst hinaus, sobald sie es wieder ist. Gebaut am
+// 22.09.2026 so, dass JEDE Skizze zuerst hier landet und von hier aus gesendet wird: Das
+// Parken ist der Weg, nicht die Ausnahme. Eine Skizze, die nur im Speicher auf das Senden
+// wartet, ist beim Schliessen der App weg — und niemand merkt es.
+//
+// Drei Zusagen, jede mit einer Probe in `ParkfachTests`:
+//   1. Nach einem Neustart ist das Fach noch da (es liegt in Dateien, nicht im Speicher).
+//   2. Eine angekommene Skizze geht NIE ein zweites Mal hinaus.
+//   3. Eine abgewiesene bleibt mit ihrem Grund liegen, statt still verworfen zu werden.
+
+/// Wo eine geparkte Skizze steht.
+public enum Parkzustand: Equatable, Sendable, Codable {
+    /// Wartet auf das Senden.
+    case geparkt
+    /// Ist gerade unterwegs. Steht **vor** dem Senden auf der Platte — siehe `ungewiss`.
+    case unterwegs
+    /// Drüben in der Mappe abgelegt (Antwort 200). `skizze` ist der Dateiname drüben.
+    case angekommen(skizze: String?, hinweis: String?)
+    /// Drüben abgewiesen, mit dem Satz des Servers. Bleibt liegen, bis ein Mensch sie
+    /// noch einmal schickt oder verwirft.
+    case abgewiesen(grund: String, code: Int?)
+    /// **Ob sie angekommen ist, ist nicht bekannt** — die dritte Antwort.
+    ///
+    /// Die Leitung riss ab, nachdem schon Bytes hinaus waren, oder die App wurde mitten im
+    /// Senden beendet. Von selbst noch einmal zu senden könnte eine Skizze zweimal in die
+    /// Mappe legen (der Server kennt keinen Schlüssel gegen Doppelsendung); sie als
+    /// angekommen zu führen könnte eine verlieren. Darum entscheidet hier ein Mensch.
+    case ungewiss(grund: String)
+
+    /// Das Wort, das ein Mensch sieht.
+    public var wort: String {
+        switch self {
+        case .geparkt: return "geparkt"
+        case .unterwegs: return "unterwegs"
+        case .angekommen: return "angekommen"
+        case .abgewiesen: return "abgewiesen"
+        case .ungewiss: return "ungewiss"
+        }
+    }
+}
+
+/// Eine Skizze im Fach.
+public struct Parkeintrag: Equatable, Sendable, Codable, Identifiable {
+    /// Eindeutig, auf dem Gerät vergeben. **Gegen Doppelsendung:** Jeder Sendeversuch
+    /// läuft über `Parkfach.beginneSenden(_:)`, und das gibt denselben Schlüssel nur einmal
+    /// frei, solange er unterwegs oder angekommen ist.
+    public let schluessel: String
+    public let erstellt: Date
+    public internal(set) var geaendert: Date
+    public internal(set) var zustand: Parkzustand
+    /// Wie oft sie schon hinausging.
+    public internal(set) var versuche: Int
+    /// Warum der letzte Versuch nicht ankam, wenn er zurück ins Fach fiel.
+    public internal(set) var letzterGrund: String?
+    /// Wie gross die Zeichnung ist (Bytes des PNG).
+    public let bytes: Int
+    // Was mit ihr hinausgeht (siehe `Anfragen.skizze`).
+    public let ueber: String?
+    public let bemerkung: String?
+    public let name: String?
+    public let ordner: String?
+
+    public var id: String { schluessel }
+}
+
+/// Was ein Sendeversuch ergab — aus der Sicht des Fachs.
+public enum Sendeergebnis: Equatable, Sendable {
+    /// 200 mit `abgelegt: true`.
+    case angekommen(skizze: String?, hinweis: String?)
+    /// Drüben abgewiesen (400, 404, …). Die Skizze bleibt mit dem Satz liegen.
+    case abgewiesen(grund: String, code: Int?)
+    /// Die Tür (401/403): nicht die Skizze ist falsch, sondern die Anmeldung. Zurück ins
+    /// Fach; sie geht wieder, sobald neu gekoppelt ist.
+    case nichtAngemeldet(grund: String)
+    /// Kein Byte ist hinaus — sie **kann** nicht angekommen sein. Zurück ins Fach.
+    case nichtErreicht(grund: String)
+    /// Bytes waren hinaus, eine Antwort kam nicht (oder keine lesbare). Ob sie angekommen
+    /// ist, ist nicht bekannt.
+    case ohneAntwort(grund: String)
+
+    /// Aus einer Antwort der HomeStation auf `POST /api/skizze`.
+    public static func aus(status: Int, daten: Data) -> Sendeergebnis {
+        if (200..<300).contains(status) {
+            do {
+                let q = try Skizzenquittung.lies(status: status, daten: daten)
+                return .angekommen(skizze: q.skizze, hinweis: q.hinweis)
+            } catch {
+                // EIN ERFOLG, DER SICH NICHT LESEN LAESST, IST KEINER — aber auch kein
+                // Misserfolg. Die Skizze kann drueben liegen.
+                return .ohneAntwort(grund: "Die HomeStation hat geantwortet, aber nicht "
+                                    + "lesbar — ob die Skizze abgelegt ist, ist nicht bekannt.")
+            }
+        }
+        let fehler = Serverfehler.aus(status: status, daten: daten)
+        if status == 401 || status == 403 {
+            return .nichtAngemeldet(grund: fehler.satz)
+        }
+        return .abgewiesen(grund: fehler.satz, code: status)
+    }
+
+    /// Wenn gar keine Antwort kam: **Ob Bytes hinaus waren, entscheidet.** Ohne ein Byte
+    /// kann drüben nichts angekommen sein; mit Bytes ist es nicht bekannt.
+    public static func ohneVerbindung(grund: String, gesendeteBytes: Int64) -> Sendeergebnis {
+        gesendeteBytes > 0 ? .ohneAntwort(grund: grund) : .nichtErreicht(grund: grund)
+    }
+}
+
+/// Die Warteschlange der Skizzen, **als Dateien in einem Ordner**, den die App übergibt.
+///
+/// Je Skizze zwei Dateien: `<schluessel>.png` (die Zeichnung) und `<schluessel>.json` (der
+/// Eintrag). **Der Eintrag wird zuletzt geschrieben** — er ist die Bestätigung. Bricht die
+/// App dazwischen ab, liegt ein PNG ohne Eintrag da; es wird beim nächsten Öffnen als
+/// geparkt aufgenommen, nicht übergangen (*eine Zeichnung, die niemand mehr findet, ist
+/// verloren, auch wenn ihre Datei noch da ist*).
+///
+/// Nicht für mehrere Fäden gebaut: Die App benutzt es von einem Ort aus (dem Hauptfaden).
+public final class Parkfach {
+    public let ordner: URL
+    /// Alle Einträge, die ältesten zuerst.
+    public private(set) var eintraege: [Parkeintrag] = []
+    /// Dateien, die wie Einträge aussehen und sich nicht lesen liessen. **Gemeldet, nicht
+    /// übergangen** — und nicht gelöscht.
+    public private(set) var unlesbar: [String] = []
+
+    /// Öffnet (oder legt an) das Fach in `ordner` und liest, was darin liegt.
+    ///
+    /// Was beim letzten Schliessen **unterwegs** war, wird `ungewiss`: Die App wurde mitten
+    /// im Senden beendet, und ob die Skizze drüben liegt, weiss hier niemand.
+    public init(ordner: URL, jetzt: Date = Date()) throws {
+        self.ordner = ordner
+        try FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
+        try lade(jetzt: jetzt)
+    }
+
+    // ---------------------------------------------------------------------- lesen
+
+    /// Die nächste Skizze, die hinaus soll: die älteste **geparkte.**
+    public var naechster: Parkeintrag? {
+        eintraege.first { $0.zustand == .geparkt }
+    }
+
+    /// Wie viele auf das Senden warten.
+    public var wartend: Int { eintraege.filter { $0.zustand == .geparkt }.count }
+
+    public func eintrag(_ schluessel: String) -> Parkeintrag? {
+        eintraege.first { $0.schluessel == schluessel }
+    }
+
+    /// Die Zeichnung. `nil` nach der Ankunft — dann liegt sie drüben in der Mappe, und
+    /// hier gibt es nichts mehr, das ein zweites Mal hinausgehen könnte.
+    public func png(_ schluessel: String) -> Data? {
+        try? Data(contentsOf: pngDatei(schluessel))
+    }
+
+    // ------------------------------------------------------------------- schreiben
+
+    /// Legt eine Skizze ins Fach.
+    @discardableResult
+    public func parke(png: Data, ueber: String? = nil, bemerkung: String? = nil,
+                      name: String? = nil, ordner zielordner: String? = nil,
+                      jetzt: Date = Date()) throws -> Parkeintrag {
+        let schluessel = UUID().uuidString
+        let e = Parkeintrag(schluessel: schluessel, erstellt: jetzt, geaendert: jetzt,
+                            zustand: .geparkt, versuche: 0, letzterGrund: nil,
+                            bytes: png.count, ueber: ueber, bemerkung: bemerkung,
+                            name: name, ordner: zielordner)
+        try png.write(to: pngDatei(schluessel), options: .atomic)
+        try schreibe(e)
+        eintraege.append(e)
+        sortiere()
+        return e
+    }
+
+    /// **Das Tor gegen Doppelsendung.** Gibt eine Skizze zum Senden frei — nur, wenn sie
+    /// geparkt ist — und hält `unterwegs` auf der Platte fest, **bevor** gesendet wird.
+    ///
+    /// `nil` heisst: nicht senden. Eine Skizze, die unterwegs, angekommen, abgewiesen
+    /// oder ungewiss ist, kommt hier nicht noch einmal durch.
+    public func beginneSenden(_ schluessel: String, jetzt: Date = Date()) throws -> Parkeintrag? {
+        guard var e = eintrag(schluessel), e.zustand == .geparkt else { return nil }
+        guard FileManager.default.fileExists(atPath: pngDatei(schluessel).path) else {
+            e.zustand = .abgewiesen(grund: "Die Zeichnung fehlt im Fach — es gibt nichts "
+                                    + "zu senden.", code: nil)
+            e.geaendert = jetzt
+            try ersetze(e)
+            return nil
+        }
+        e.zustand = .unterwegs
+        e.versuche += 1
+        e.geaendert = jetzt
+        try ersetze(e)
+        return e
+    }
+
+    /// Was aus dem Versuch wurde. Nur eine Skizze, die **unterwegs** ist, nimmt eine
+    /// Meldung an — eine zweite Meldung für dieselbe Sendung ändert nichts (`false`).
+    @discardableResult
+    public func melde(_ schluessel: String, _ ergebnis: Sendeergebnis,
+                      jetzt: Date = Date()) throws -> Bool {
+        guard var e = eintrag(schluessel), e.zustand == .unterwegs else { return false }
+        e.geaendert = jetzt
+        switch ergebnis {
+        case .angekommen(let skizze, let hinweis):
+            e.zustand = .angekommen(skizze: skizze, hinweis: hinweis)
+            e.letzterGrund = nil
+        case .abgewiesen(let grund, let code):
+            e.zustand = .abgewiesen(grund: grund, code: code)
+        case .nichtAngemeldet(let grund), .nichtErreicht(let grund):
+            e.zustand = .geparkt
+            e.letzterGrund = grund
+        case .ohneAntwort(let grund):
+            e.zustand = .ungewiss(grund: grund)
+        }
+        try ersetze(e)
+        if case .angekommen = e.zustand {
+            // ERST DER EINTRAG, DANN DIE ZEICHNUNG WEG. Andersherum laege nach einem
+            // Absturz dazwischen ein Eintrag «unterwegs» ohne Zeichnung da.
+            try? FileManager.default.removeItem(at: pngDatei(schluessel))
+        }
+        return true
+    }
+
+    /// Eine abgewiesene oder ungewisse Skizze **auf Wunsch eines Menschen** wieder ins
+    /// Fach legen. Angekommene, geparkte und unterwegs befindliche nicht.
+    @discardableResult
+    public func nochEinmal(_ schluessel: String, jetzt: Date = Date()) throws -> Bool {
+        guard var e = eintrag(schluessel) else { return false }
+        switch e.zustand {
+        case .abgewiesen(let grund, _), .ungewiss(let grund):
+            e.zustand = .geparkt
+            e.letzterGrund = grund
+            e.geaendert = jetzt
+            try ersetze(e)
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// Nimmt eine Skizze aus dem Fach — **nur auf Wunsch eines Menschen**, und nie, solange
+    /// sie unterwegs ist.
+    @discardableResult
+    public func verwirf(_ schluessel: String) throws -> Bool {
+        guard let e = eintrag(schluessel), e.zustand != .unterwegs else { return false }
+        // ERST DIE ZEICHNUNG, DANN DER EINTRAG. Andersherum naehme ein Absturz dazwischen
+        // die Zeichnung beim naechsten Oeffnen als verwaist wieder auf.
+        try? FileManager.default.removeItem(at: pngDatei(schluessel))
+        try FileManager.default.removeItem(at: eintragsDatei(schluessel))
+        eintraege.removeAll { $0.schluessel == schluessel }
+        return true
+    }
+
+    // ------------------------------------------------------------------- Handgriffe
+
+    private func pngDatei(_ s: String) -> URL { ordner.appendingPathComponent(s + ".png") }
+    private func eintragsDatei(_ s: String) -> URL { ordner.appendingPathComponent(s + ".json") }
+
+    private func schreibe(_ e: Parkeintrag) throws {
+        let schreiber = JSONEncoder()
+        schreiber.outputFormatting = [.sortedKeys]
+        try schreiber.encode(e).write(to: eintragsDatei(e.schluessel), options: .atomic)
+    }
+
+    private func ersetze(_ e: Parkeintrag) throws {
+        try schreibe(e)
+        if let i = eintraege.firstIndex(where: { $0.schluessel == e.schluessel }) {
+            eintraege[i] = e
+        }
+    }
+
+    private func sortiere() {
+        eintraege.sort { ($0.erstellt, $0.schluessel) < ($1.erstellt, $1.schluessel) }
+    }
+
+    private func lade(jetzt: Date) throws {
+        let dateien = try FileManager.default.contentsOfDirectory(
+            at: ordner, includingPropertiesForKeys: nil)
+        var gelesen: [Parkeintrag] = []
+        var mitEintrag = Set<String>()
+        var fehlerhaft: [String] = []
+        let leser = JSONDecoder()
+
+        for datei in dateien where datei.pathExtension == "json" {
+            let stamm = datei.deletingPathExtension().lastPathComponent
+            guard UUID(uuidString: stamm) != nil else { continue }
+            guard let daten = try? Data(contentsOf: datei),
+                  var e = try? leser.decode(Parkeintrag.self, from: daten),
+                  e.schluessel == stamm else {
+                fehlerhaft.append(datei.lastPathComponent)
+                // DIE ZEICHNUNG DAZU WIRD NICHT ALS VERWAIST AUFGENOMMEN — sie hat einen
+                // Eintrag, nur einen unlesbaren. Beides bleibt liegen, wie es ist.
+                mitEintrag.insert(stamm)
+                continue
+            }
+            mitEintrag.insert(stamm)
+            if e.zustand == .unterwegs {
+                e.zustand = .ungewiss(grund: "Das Senden wurde unterbrochen (die App wurde "
+                                      + "beendet). Ob die Skizze angekommen ist, ist nicht bekannt.")
+                e.geaendert = jetzt
+                try schreibe(e)
+            }
+            if case .angekommen = e.zustand {
+                try? FileManager.default.removeItem(at: pngDatei(stamm))
+            }
+            gelesen.append(e)
+        }
+
+        // VERWAISTE ZEICHNUNGEN: ein PNG ohne Eintrag. Die App wurde zwischen dem Schreiben
+        // der Zeichnung und dem des Eintrags beendet. Aufgenommen, nicht uebergangen.
+        for datei in dateien where datei.pathExtension == "png" {
+            let stamm = datei.deletingPathExtension().lastPathComponent
+            guard UUID(uuidString: stamm) != nil, !mitEintrag.contains(stamm),
+                  let daten = try? Data(contentsOf: datei) else { continue }
+            let zeit = (try? FileManager.default.attributesOfItem(atPath: datei.path))?[
+                .modificationDate] as? Date ?? jetzt
+            let e = Parkeintrag(schluessel: stamm, erstellt: zeit, geaendert: jetzt,
+                                zustand: .geparkt, versuche: 0,
+                                letzterGrund: "Nach einem Abbruch wieder aufgenommen.",
+                                bytes: daten.count, ueber: nil, bemerkung: nil, name: nil,
+                                ordner: nil)
+            try schreibe(e)
+            gelesen.append(e)
+        }
+
+        eintraege = gelesen
+        unlesbar = fehlerhaft.sorted()
+        sortiere()
+    }
+}
+
+// ============================================================ die Übergabe als Bewegung
+
+/// Wo die Marke der Übergabe steht — **die vier Bewegungsregeln als Rechnung** (Entwurf
+/// «Ein Faden, zwei Geräte», Entscheide vom 21.09.2026):
+///
+/// 1. *Bewegt sich etwas, ist etwas unterwegs.* Der Ort ändert sich nur mit gezählten Bytes.
+/// 2. *Gleichmässig heisst gezählt.* Ohne Zählung fliegt die Marke nicht, sie **atmet**.
+/// 3. *Die Animation endet nicht vor der Ankunft.* Vor der Antwort 200 bleibt die Marke
+///    vor dem Ziel stehen (`haltepunkt`); am Ziel ist sie erst `eingerastet`.
+/// 4. *Ein Gegenstand, ein Weg.* Das ist Sache der Ansicht: **eine** Marke, die ihren Ort
+///    ändert — nie eine zweite, die am Ziel erscheint.
+///
+/// Die Ansicht (`Verbindung/Uebergabe.swift`) zeichnet nur, was hier steht.
+public enum Flugbahn {
+    public enum Phase: Equatable, Sendable {
+        /// Die Skizze schrumpft auf die Marke (am iPad).
+        case ablegen
+        /// Die Marke wandert an den Rand (noch am iPad).
+        case abheben
+        /// Bytes gehen hinaus. `gesamt` `nil` oder 0: **nicht gezählt.**
+        case flug(gesendet: Int64, gesamt: Int64?)
+        /// Alles ist hinaus, die Antwort steht aus.
+        case warten
+        /// Drüben bestätigt (200).
+        case eingerastet
+        /// Abgebrochen: die Marke fällt zurück aufs iPad.
+        case zurueck
+    }
+
+    /// Wie weit die Marke vor der Bestätigung höchstens kommt (Anteil des Wegs).
+    public static let haltepunkt = 0.92
+
+    // Die Zeiten des Entwurfs, in Sekunden.
+    public static let ablegen = 0.22
+    public static let abheben = 0.18
+    public static let einrasten = 0.14
+    public static let atem = 1.8
+
+    /// Der Anteil der gezählten Bytes — `nil`, wenn nicht gezählt.
+    public static func anteil(_ phase: Phase) -> Double? {
+        guard case .flug(let gesendet, let gesamt) = phase, let g = gesamt, g > 0 else {
+            return nil
+        }
+        return min(max(Double(gesendet) / Double(g), 0), 1)
+    }
+
+    /// Der Ort der Marke: 0 am iPad, 1 am Ziel.
+    public static func ort(_ phase: Phase) -> Double {
+        switch phase {
+        case .ablegen, .abheben, .zurueck:
+            return 0
+        case .flug:
+            // NICHT GEZAEHLT HEISST: DIE MARKE BLEIBT, WO SIE IST — am Rand des iPads.
+            return (anteil(phase) ?? 0) * haltepunkt
+        case .warten:
+            return haltepunkt
+        case .eingerastet:
+            return 1
+        }
+    }
+
+    /// Ob die Marke an Ort und Stelle atmet statt zu fliegen: wenn gewartet wird, und
+    /// wenn Bytes gehen, die niemand zählt.
+    public static func atmet(_ phase: Phase) -> Bool {
+        switch phase {
+        case .warten: return true
+        case .flug: return anteil(phase) == nil
+        default: return false
+        }
+    }
+}

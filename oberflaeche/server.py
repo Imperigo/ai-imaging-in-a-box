@@ -37,14 +37,19 @@ from __future__ import annotations
 import argparse
 import base64
 import binascii
+import hashlib
 import hmac
+import math
+import importlib.util
 import json
+import re
 import secrets
 import socket
 import sys
 import threading
 import time
 import urllib.parse
+from collections import OrderedDict
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
@@ -65,6 +70,91 @@ VORGABE_ADRESSE = "127.0.0.1"
 VORGABE_ANSCHLUSS = 8731
 
 SEITE = Path(__file__).resolve().parent / "seite.html"
+
+#: Die Koppelseite (Entscheid 26) — **ohne Anmeldung erreichbar, darum ohne jeden Inhalt
+#: aus dem Projekt.** Ein Zahlenfeld, ein Knopf, ein Satz. Sie schickt die Zahl an
+#: ``POST /api/verbinden`` und zeigt, was zurückkommt: im Erfolgsfall Benutzer und
+#: Kennwort, **einmal** — der Browser fragt danach beim Öffnen der Fläche, und dort
+#: werden sie eingetragen.
+#:
+#: Sie steht hier und nicht in einer Datei daneben, damit an ihr nichts nachgeladen werden
+#: kann: kein Skript, keine Schrift, kein Bild — auch nicht von diesem Server. Eine Seite
+#: vor der Tür, die etwas hinter der Tür nachlädt, bekäme es nicht (401) oder, schlimmer,
+#: bekäme es doch.
+KOPPELSEITE = """<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visbox — Gerät verbinden</title>
+<style>
+  :root { --grund: #14161a; --feld: #1c1f26; --rand: #2b3038; --schrift: #e6e8ec;
+          --leise: #9aa2ae; --bestanden: #4ea373; --durchgefallen: #e2776f; }
+  body { margin: 0; background: var(--grund); color: var(--schrift);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 420px; margin: 12vh auto; padding: 24px; background: var(--feld);
+         border: 1px solid var(--rand); border-radius: 10px; }
+  h1 { font-size: 18px; margin: 0 0 8px; }
+  p { color: var(--leise); margin: 0 0 16px; }
+  input { font: 600 28px/1 ui-monospace, Menlo, monospace; letter-spacing: .3em;
+          width: 100%; box-sizing: border-box; padding: 12px; text-align: center;
+          background: var(--grund); color: var(--schrift); border: 1px solid var(--rand);
+          border-radius: 8px; }
+  button { margin-top: 12px; width: 100%; min-height: 60px; font: inherit; font-weight: 600;
+           background: var(--grund); color: var(--schrift); border: 1px solid var(--leise);
+           border-radius: 8px; cursor: pointer; }
+  #satz { margin-top: 14px; min-height: 1.5em; }
+  .gut { color: var(--bestanden); } .schlecht { color: var(--durchgefallen); }
+  dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 12px 0; }
+  dt { color: var(--leise); } dd { margin: 0; font-family: ui-monospace, Menlo, monospace;
+                                   overflow-wrap: anywhere; }
+  a { color: var(--schrift); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Dieses Gerät verbinden</h1>
+  <p>Die sechsstellige Zahl steht im Fenster, in dem Visbox auf dem Rechner gestartet wurde.</p>
+  <input id="zahl" inputmode="numeric" autocomplete="one-time-code" maxlength="6"
+         pattern="[0-9]*" aria-label="Sechsstellige Zahl">
+  <button id="los" type="button">Verbinden</button>
+  <div id="satz" role="status"></div>
+  <div id="zugang" hidden>
+    <dl><dt>Benutzer</dt><dd id="benutzer"></dd><dt>Kennwort</dt><dd id="kennwort"></dd></dl>
+    <p>Beim Öffnen der Fläche fragt der Browser danach. Er kann sie sich merken; hier
+       erscheinen sie nicht noch einmal.</p>
+    <a href="/">Zur Fläche</a>
+  </div>
+</main>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+async function verbinden() {
+  $("satz").className = ""; $("satz").textContent = "prüft …";
+  try {
+    const antwort = await fetch("/api/verbinden", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({pin: $("zahl").value}),
+    });
+    const d = await antwort.json();
+    const gut = d.verbunden === true;
+    $("satz").className = gut ? "gut" : "schlecht";
+    $("satz").textContent = d.satz || d.fehler || "Keine Antwort.";
+    if (gut) {
+      $("benutzer").textContent = d.benutzer; $("kennwort").textContent = d.kennwort;
+      $("zugang").hidden = false; $("los").disabled = true;
+    }
+  } catch (f) {
+    $("satz").className = "schlecht";
+    $("satz").textContent = "Der Rechner antwortet nicht: " + f;
+  }
+}
+$("los").addEventListener("click", verbinden);
+$("zahl").addEventListener("keydown", (e) => { if (e.key === "Enter") verbinden(); });
+</script>
+</body>
+</html>
+"""
 
 #: Endungen, die diese Fläche als Bild ausliefert, mit ihrem Medientyp.
 #:
@@ -90,16 +180,23 @@ BILDTYPEN = {
 #: schon geschrieben.
 SKIZZE_GROESSENRIEGEL = 2 * 1024 * 1024
 
-#: Was an jeder abgelegten Skizze mitgeht, solange der Entwurfsmodus nicht rechnen kann.
+#: Was an jeder abgelegten Skizze mitgeht: **abgelegt ist nicht gerechnet.**
 #:
 #: **Er steht hier und nicht in der Seite**, weil er eine Aussage über die Bibliothek ist
 #: und keine über die Anzeige. *Eine Bestellung, die angenommen und nicht ausgeliefert
 #: wird, ist schlimmer als eine abgelehnte: Die Ablehnung sieht man.* Angenommen wird sie
 #: trotzdem — die Zeichnung ist das, was der Mensch getan hat, und sie geht nicht
 #: verloren, nur weil die Maschine sie noch nicht einlösen kann.
+#:
+#: **Seit dem 22.09.2026 gibt es den Weg zum Rechnen** (``POST /api/rechne-skizze``, über
+#: :func:`aiimaging.arbeitsgang.rechne_skizze`). Nichts rechnet von selbst (Entscheid 11);
+#: und auf dem Vorgabe-Bildmodell kommt die Zeichnung beim Rechnen **nicht an** — das steht
+#: dann als Hinweis am Bild, nicht nur hier.
 HINWEIS_SKIZZE_OHNE_WEG = (
-    "Abgelegt, aber NICHT gerechnet: Das Vorgabe-Bildmodell nimmt kein Eingangsbild an "
-    "(gemessen, auf-20260919-123). Die Zeichnung liegt in der Mappe und wartet.")
+    "Abgelegt, aber NICHT gerechnet: Die Zeichnung liegt in der Mappe und wartet, bis "
+    "jemand «Rechnen lassen» wählt. Auf dem Vorgabe-Bildmodell kommt sie dabei nicht an "
+    "(gemessen, auf-20260919-123) — das Bild trägt dann den Hinweis «Skizze nicht "
+    "angekommen».")
 
 
 #: Die acht Byte, an denen ein PNG erkennbar ist. **Am Inhalt, nicht an der Endung** —
@@ -157,7 +254,16 @@ def _bemerkung(bemerkung, gewuenschter_name) -> str:
     return " · ".join(t for t in teile if t)
 
 
-def _skizzenname(gewuenscht) -> str:
+def _stempel() -> str:
+    """Der Zeitpunkt im Dateinamen einer Skizze (Weltzeit, auf die Sekunde).
+
+    Eine eigene Funktion, damit eine Probe zwei Skizzen **in dieselbe Sekunde** legen
+    kann — der Fall, um den es in :func:`_skizzenname` geht, ist sonst Glückssache.
+    """
+    return time.strftime("%Y%m%d-%H%M%S", time.gmtime())
+
+
+def _skizzenname(gewuenscht, belegt=()) -> str:
     """Ein Dateiname für eine Zeichnung — **aus dem Zeitpunkt, nie aus dem Wunsch.**
 
     Der Wunsch kommt aus einem Browser und damit von aussen. Ihn als Dateinamen zu
@@ -167,9 +273,103 @@ def _skizzenname(gewuenscht) -> str:
 
     Er geht darum **nicht verloren, sondern in die Bemerkung**: Was der Mensch gemeint
     hat, bleibt lesbar; was auf die Platte geschrieben wird, bestimmt diese Funktion.
+
+    **Und der Name ist eindeutig** (Befund 22.09.2026): Bis dahin hiess jede Skizze einer
+    Sekunde gleich, und die zweite überschrieb die erste **still** — Datei weg, Mappe mit
+    zwei Einträgen auf dieselbe Zeichnung. Ist der Name in ``belegt``, bekommt er eine
+    Nummer (``skizze-…-2.png``). Dass die Datei nicht schon auf der Platte liegt, sichert
+    erst das Schreiben selbst (:func:`_lege_skizze_ab`) — ein Nachsehen vorher wäre ein
+    Blick, zwischen dem und dem Schreiben ein anderer schreiben kann.
     """
-    stempel = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
-    return f"skizze-{stempel}.png"
+    grund = f"skizze-{_stempel()}"
+    name, nummer = f"{grund}.png", 2
+    while name in belegt:
+        name, nummer = f"{grund}-{nummer}.png", nummer + 1
+    return name
+
+
+def _lege_skizze_ab(ordner: Path, bytes_: bytes, belegt) -> Path:
+    """Die Zeichnung unter einem **neuen** Namen schreiben — nie über eine vorhandene.
+
+    Geschrieben wird mit ``"xb"``: Das Betriebssystem legt die Datei nur an, wenn es sie
+    noch nicht gibt, und sagt es sonst (``FileExistsError``). Dann kommt die nächste
+    Nummer. *Ein Nachsehen, ob der Name frei ist, und ein Schreiben danach sind zwei
+    Schritte; «anlegen, wenn frei» ist einer.*
+    """
+    belegt = set(belegt)
+    for _ in range(1000):
+        ziel = ordner / _skizzenname(None, belegt)
+        try:
+            with open(ziel, "xb") as datei:
+                datei.write(bytes_)
+        except FileExistsError:
+            belegt.add(ziel.name)
+            continue
+        return ziel
+    raise OSError("Für diese Sekunde gibt es schon tausend Skizzen — kein freier Name.")
+
+
+def _belegte_namen(p: dict) -> set:
+    """Was die Mappe schon nennt — Skizzen und Bilder. Auch eine Datei, die fehlt, bleibt
+    belegt: Ihr Name zeigt in der Mappe weiter auf sie."""
+    namen = {str(e.get("skizze")) for e in (p.get("skizzen") or []) if isinstance(e, dict)}
+    namen |= {str(e.get("bild")) for e in (p.get("bilder") or []) if isinstance(e, dict)}
+    return namen
+
+
+#: Welche Form ein Schlüssel gegen Doppelsendung haben darf: 8 bis 128 Zeichen aus
+#: Buchstaben, Ziffern, Punkt, Bindestrich, Unterstrich. Eine UUID der App passt; ein
+#: Schlüssel wie «1» nicht — er wäre nicht eindeutig, und genau das ist seine Aufgabe.
+SCHLUESSEL_FORM = re.compile(r"[A-Za-z0-9._-]{8,128}")
+
+
+class Eingangsbuch:
+    """Welche Skizzen-Schlüssel schon angekommen sind — **und was ihnen geantwortet wurde.**
+
+    **Der Anlass** (Entscheid 12/28, Parkfach der App): Das iPad schickt eine Skizze, die
+    Verbindung reisst, bevor die Antwort ankommt. Das Gerät weiss nicht, ob sie drüben
+    liegt, und schickt sie noch einmal. Ohne dieses Buch lägen dann zwei Dateien in der
+    Mappe, und der Mensch sähe dieselbe Zeichnung doppelt in der Warteschlange.
+
+    Mit ihm gilt: **Derselbe Schlüssel zweimal → dieselbe Antwort, keine zweite Datei.**
+    Derselbe Schlüssel mit einer **anderen** Zeichnung wird abgewiesen — sonst ginge die
+    zweite Zeichnung still verloren, weil sie für eine Wiederholung gehalten wurde.
+
+    **Was es NICHT leistet, und es steht hier, damit es niemand für geleistet hält:** Das
+    Buch liegt im Arbeitsspeicher. Nach einem Neustart des Servers erkennt es keinen
+    Schlüssel wieder, und eine Wiederholung legt dann eine zweite Datei an. Dafür müsste
+    der Schlüssel in der Mappe stehen — an der Skizze, über
+    :func:`aiimaging.projekt.vermerke_skizze`, also in der Bibliothek und nicht hier
+    (offener Posten an den Kern, 22.09.2026). Es behält die letzten
+    :data:`HOECHSTENS` Schlüssel.
+    """
+
+    HOECHSTENS = 512
+
+    def __init__(self):
+        # EINE SPERRE UEBER DAS GANZE ABLEGEN, nicht nur ueber das Nachschlagen: Sonst
+        # saehen zwei gleichzeitige Wiederholungen beide «noch nicht da» und legten beide ab.
+        self.sperre = threading.Lock()
+        self._eintraege: OrderedDict = OrderedDict()
+
+    @staticmethod
+    def _schluessel(ordner, schluessel: str) -> tuple:
+        return (str(Path(ordner).resolve()), schluessel)
+
+    def nachsehen(self, ordner, schluessel: str):
+        """``(abdruck, antwort)`` des ersten Eingangs, oder ``None``."""
+        return self._eintraege.get(self._schluessel(ordner, schluessel))
+
+    def vermerke(self, ordner, schluessel: str, abdruck: str, antwort: dict) -> None:
+        k = self._schluessel(ordner, schluessel)
+        self._eintraege[k] = (abdruck, dict(antwort))
+        self._eintraege.move_to_end(k)
+        while len(self._eintraege) > self.HOECHSTENS:
+            self._eintraege.popitem(last=False)
+
+
+#: Das eine Eingangsbuch dieser Fläche — wie der Laufstand für alle Anfragen dasselbe.
+EINGANG = Eingangsbuch()
 
 
 #: Der Name, unter dem sich ein Mensch anmeldet. Ein Name allein schützt nichts — er
@@ -189,6 +389,14 @@ WEG_ANLEGEN = "/api/anlegen"
 WEG_EINSTELLUNGEN = "/api/einstellungen"
 WEG_SKIZZE = "/api/skizze"
 WEG_RECHNE = "/api/rechne"
+# SEIT DEM 22.09.2026 — die Faehigkeiten, die die Bibliothek fuer die App bekommen hat
+# (Entscheide 19, 30, 31, 32). Jeder ruft genau eine Funktion aus `aiimaging`.
+WEG_BENENNEN = "/api/benennen"
+WEG_ABBRECHEN = "/api/abbrechen"
+WEG_RECHNE_SKIZZE = "/api/rechne-skizze"
+#: Die Koppelseite (Entscheid 26) — neben ``WEG_VERBINDEN`` der einzige Weg, der ohne
+#: Anmeldung durchkommt, und nur, solange eine Kopplung offen ist. Siehe ``_darf_herein``.
+WEG_KOPPELN = "/koppeln"
 
 BENUTZER = "visbox"
 
@@ -297,15 +505,44 @@ class Laufstand:
         self.fertige = []
         self.ergebnis = None
         self.fehler = None
+        # ABGEBROCHEN WIRD ZWISCHEN ZWEI KNOTEN (Entscheid 31). Das Feld sagt nur, dass es
+        # VERLANGT ist; ob es gewirkt hat, steht nach dem Lauf in `ergebnis.abgebrochen`.
+        # Kam der Wunsch nach dem letzten Knoten, lief der Lauf regulaer zu Ende — und das
+        # darf nicht aussehen wie ein Abbruch.
+        self.abbruch = False
+        #: Bei einer Variantenreihe: ``{nummer, von, gruppe}`` der laufenden Variante.
+        self.variante = None
+        #: Was bestellt ist: ``{art, entwurf, varianten, skizzen}`` — zur Anzeige.
+        self.bestellung = None
 
     # ------------------------------------------------------------------ schreiben
-    def beginne(self, ordner, schritte_gesamt=None) -> None:
+    def beginne(self, ordner, schritte_gesamt=None, bestellung=None) -> None:
         with self.sperre:
+            sperre = self.sperre
             self.__init__()
+            # DIESELBE SPERRE BEHALTEN. `__init__` legte eine neue an — und wer die alte
+            # gerade haelt (dieser Aufruf), gaebe danach eine Sperre frei, die niemand mehr
+            # benutzt.
+            self.sperre = sperre
             self.laeuft = True
             self.ordner = str(ordner)
             self.begonnen = time.time()
             self.schritte_gesamt = schritte_gesamt
+            self.bestellung = dict(bestellung) if bestellung else None
+
+    def verlange_abbruch(self) -> bool:
+        """Den Abbruch verlangen. ``False``, wenn gar nichts läuft."""
+        with self.sperre:
+            if not self.laeuft:
+                return False
+            self.abbruch = True
+            return True
+
+    def abbruch_verlangt(self) -> bool:
+        """Die Frage, die die Kette vor jedem Knoten stellt (``abbrechen`` in
+        :func:`aiimaging.arbeitsgang.rechne`)."""
+        with self.sperre:
+            return self.abbruch
 
     def melde(self, ereignis: dict) -> None:
         """Ein Ereignis aus der Kette. Wird aus dem Rechenfaden gerufen."""
@@ -322,13 +559,28 @@ class Laufstand:
                 self.fertige.append({
                     "knoten": ereignis.get("knoten"),
                     "knotenart": ereignis.get("knotenart"),
+                    # AUCH «abgebrochen» (Entscheid 31): ein Knoten, der wegen des Abbruchs
+                    # nicht mehr begann. Er meldet sich fertig, ohne je begonnen zu haben.
                     "status": ereignis.get("status"),
                     "aus_cache": ereignis.get("aus_cache"),
                     "dauer_s": ereignis.get("dauer_s"),
+                    "variante": (self.variante or {}).get("nummer"),
                 })
                 self.schritt = None
             elif art == "schritt":
                 self.schritt = ereignis.get("schritt")
+            elif art == "variante_beginnt":
+                # EINE NEUE VARIANTE: Die Knotennummern beginnen wieder bei eins, und der
+                # Schrittzaehler auch. Ohne dieses Feld saehe die zweite Variante aus wie
+                # ein Lauf, der rueckwaerts geht.
+                self.variante = {"nummer": ereignis.get("nummer"),
+                                 "von": ereignis.get("von"),
+                                 "gruppe": ereignis.get("gruppe")}
+                self.knoten = None
+                self.knotenart = None
+                self.nummer = None
+                self.von = None
+                self.schritt = None
 
     def beende(self, ergebnis=None, fehler=None) -> None:
         with self.sperre:
@@ -363,6 +615,9 @@ class Laufstand:
                 "fertige": list(self.fertige),
                 "ergebnis": self.ergebnis,
                 "fehler": self.fehler,
+                "abbruch_verlangt": self.abbruch,
+                "variante": dict(self.variante) if self.variante else None,
+                "bestellung": dict(self.bestellung) if self.bestellung else None,
             }
 
 
@@ -691,7 +946,68 @@ def _bild_fuer_die_flaeche(eintrag: dict, ordner=None) -> dict:
         # hiesse, ein Bild der zweiten Stufe als geprueft anzuzeigen — genau der Fehler,
         # gegen den dieses Projekt seit Wochen anschreibt.
         "basis": basis,
+        # DIE ZAHL ZUM ZEICHEN (Entscheid 16: «Farbe, Wort und Zahl»), aus der Pruefung,
+        # die das Urteil gefaellt hat — gelesen, nicht gerechnet. `None` heisst nicht
+        # gemessen, auch bei einem aelteren Eintrag, der die Felder nicht fuehrt; nie 0.
+        "score": _zahl_oder_nichts(eintrag.get("score")),
+        "schwelle": _zahl_oder_nichts(eintrag.get("schwelle")),
+        # DER EIGENE NAME (Entscheid 19). `None`: benannt nach der Zeit, wie die Datei.
+        "titel": eintrag.get("titel"),
+        # ENTWURF — NICHT GEPRUEFT (Entscheid 30). Ein eigenes Feld und KEIN viertes
+        # Zeichen: `zeichen` bleibt «nicht-gemessen», denn gemessen wurde nicht. Das blaue
+        # Zeichen der App entsteht an diesem Feld, nicht an einem Satz, den sie deuten
+        # muesste. Aeltere Eintraege fuehren es nicht — dann `None`, nicht «kein Entwurf».
+        "entwurf": eintrag.get("entwurf") if isinstance(eintrag.get("entwurf"), bool)
+                   else None,
+        "variantengruppe": eintrag.get("variantengruppe") or None,
+        **_hinweise_zum_bild(eintrag),
     }
+
+
+def _zahl_oder_nichts(wert):
+    """Eine endliche Zahl, oder ``None``. Ein Wahrheitswert ist hier keine Zahl."""
+    if isinstance(wert, bool) or not isinstance(wert, (int, float)):
+        return None
+    return float(wert) if math.isfinite(float(wert)) else None
+
+
+#: Der feste Anfang des Satzes, mit dem der Nachrender sagt, dass die Skizze beim Modell
+#: nicht ankam — **aus der Bibliothek gelesen**, nicht hier abgeschrieben. Sie hat ihm
+#: dafür einen festen Anfang gegeben, «damit eine Anzeige ihn erkennen kann, ohne den
+#: Rest zu deuten».
+SKIZZE_NICHT_ANGEKOMMEN = kette.HINWEIS_SKIZZE_NICHT_ANGEKOMMEN.split(":")[0]
+
+
+def _hinweise_zum_bild(eintrag: dict) -> dict:
+    """Die Hinweise der Bildstufe am Bild — und ob die Skizze beim Modell ankam.
+
+    ``hinweise`` ist die Liste aus ``herkunft.messung.hinweise``, oder ``None``, wenn der
+    Eintrag keine Messung trägt (älter als der 22.09.2026, oder der Knoten meldete
+    nichts). **Leer heisst gemessen und ohne Hinweis; ``None`` heisst nicht gemessen.**
+
+    ``skizze_hinweis`` ist der Satz der Bibliothek dazu, oder ``None``.
+    ``skizze_nicht_angekommen`` hat drei Antworten:
+
+    * ``True`` — das Bild kam aus einer Skizze, und die Bildstufe sagt, sie kam nicht an
+      (Befund ``auf-20260919-123``: Das Vorgabemodell nimmt kein Ausgangsbild an). Das Bild
+      ist dann aus Tiefenkarte und Text gerechnet, **was hineingezeichnet war, steckt
+      nicht darin** — und genau das muss neben dem Bild stehen.
+    * ``False`` — aus einer Skizze, gemessen, und kein solcher Hinweis.
+    * ``None`` — kein Skizzenbild, oder nicht gemessen. Die Frage stellt sich nicht bzw.
+      ist nicht beantwortet.
+    """
+    herkunft = eintrag.get("herkunft") or {}
+    messung = herkunft.get("messung") if isinstance(herkunft.get("messung"), dict) else None
+    roh = (messung or {}).get("hinweise")
+    hinweise = [str(h) for h in roh] if isinstance(roh, (list, tuple)) else None
+    angekommen, satz = None, None
+    if herkunft.get("skizze") and hinweise is not None:
+        satz = next((h for h in hinweise if h.startswith(SKIZZE_NICHT_ANGEKOMMEN)), None)
+        angekommen = satz is not None
+    # DER SATZ SELBST GEHT MIT (`skizze_hinweis`), damit die Anzeige ihn nicht an seinem
+    # Anfang wiedererkennen muss — der Anfang stuende sonst ein zweites Mal in der Seite.
+    return {"hinweise": hinweise, "skizze_nicht_angekommen": angekommen,
+            "skizze_hinweis": satz}
 
 
 def grundriss(glb, up_axis) -> dict:
@@ -784,6 +1100,10 @@ def sicht(ordner) -> dict:
     return {
         "name": p.get("name"),
         "ordner": str(ordner),
+        # DIE STANDNUMMER DER MAPPE (22.09.2026). Wer benennt, schickt sie als `von_stand`
+        # zurueck — dann wird abgewiesen statt ueberschrieben, wenn inzwischen jemand
+        # anderes geschrieben hat (`projekt.benenne`). `None`: eine Mappe von vorher.
+        "stand_nr": p.get("stand_nr") if isinstance(p.get("stand_nr"), int) else None,
         "modell": {
             "pfad": (p.get("modell") or {}).get("pfad"),
             "stand": auf["modell_stand"],
@@ -813,7 +1133,7 @@ def sicht(ordner) -> dict:
 
 
 # ======================================================================================
-# Der Anschluss — vier Wege, und jeder ruft genau eine Funktion der Bibliothek
+# Der Anschluss — die Wege, und jeder ruft genau eine Funktion der Bibliothek
 # ======================================================================================
 
 #: Welcher POST-Weg welche Methode von :class:`Flaeche` ruft — **eine Tafel statt einer
@@ -836,6 +1156,9 @@ WEGTAFEL = {
     WEG_SKIZZE: "_skizze",
     WEG_RECHNE: "_rechne",
     WEG_VERBINDEN: "_verbinden",
+    WEG_BENENNEN: "_benennen",
+    WEG_ABBRECHEN: "_abbrechen",
+    WEG_RECHNE_SKIZZE: "_rechne_skizze",
 }
 
 #: Dasselbe fuer die lesenden Wege (GET). Jede Methode bekommt den zerlegten Weg
@@ -846,6 +1169,7 @@ WEGTAFEL_LESEN = {
     WEG_PROJEKT: "_projekt",
     WEG_FORTSCHRITT: "_fortschritt",
     WEG_BILD: "_bild_anfrage",
+    WEG_KOPPELN: "_koppelseite",
 }
 
 
@@ -891,6 +1215,19 @@ class Flaeche(BaseHTTPRequestHandler):
                 and urllib.parse.urlparse(self.path).path == WEG_VERBINDEN
                 and self.kopplung_offen is not None):
             return True
+        # DIE ZWEITE OEFFNUNG, und sie fuehrt zur ersten (Entscheid 26, 22.09.2026): die
+        # Koppelseite fuer einen Browser, der das Kennwort noch nicht hat. Ohne sie haette
+        # die Webflaeche kein erstes Verbinden — der Browser fragt nach einem Kennwort, das
+        # er nur ueber `WEG_VERBINDEN` bekommt, und dorthin fuehrt ihn nichts.
+        #
+        # Enger als die erste: nur GET, nur genau dieser Pfad, und nur, solange die Zahl
+        # wirklich noch gilt (`kopplung.stand` sagt «offen»). Eine verbrauchte oder
+        # abgelaufene Kopplung zeigt keine Seite mehr, auf der man eine tote Zahl eingibt.
+        # Die Seite selbst traegt keine Daten — nur ein Zahlenfeld.
+        if (self.command == "GET"
+                and urllib.parse.urlparse(self.path).path == WEG_KOPPELN
+                and self._kopplung_gilt()):
+            return True
         roh = json.dumps(
             {"fehler": "Nicht angemeldet. Benutzername und Kennwort stehen im Fenster, "
                        "in dem Visbox gestartet wurde."},
@@ -904,6 +1241,11 @@ class Flaeche(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(roh)
         return False
+
+    def _kopplung_gilt(self) -> bool:
+        """Ob gerade eine Zahl gilt — nicht nur, ob es eine Kopplung gibt."""
+        offen = type(self).kopplung_offen
+        return offen is not None and kopplung.stand(offen) == kopplung.STAND_OFFEN
 
     # -------------------------------------------------------------- kleine Handgriffe
     def _sende(self, nutzlast: dict, code: int = 200) -> None:
@@ -942,6 +1284,29 @@ class Flaeche(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(roh)))
+        self.end_headers()
+        self.wfile.write(roh)
+
+    def _koppelseite(self, weg) -> None:
+        """Die Koppelseite — **nur, solange eine Zahl gilt.**
+
+        Unangemeldet kommt hierher nur, wer die Tür mit geltender Zahl durchlassen hat.
+        Angemeldet ohne geltende Zahl: 404 mit Satz — es gibt nichts zu koppeln, und eine
+        Seite mit einem Zahlenfeld, in das keine Zahl passt, wäre ein Bedienelement ohne
+        Wirkung.
+        """
+        if not self._kopplung_gilt():
+            self._fehler("Auf dieser HomeStation ist gerade kein Verbinden offen. Visbox "
+                         "mit --kopplung starten, dann gilt die angezeigte Zahl zehn "
+                         "Minuten.", 404)
+            return
+        roh = KOPPELSEITE.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(roh)))
+        # NICHT AUFHEBEN. Eine Koppelseite aus dem Speicher des Browsers stuende auch
+        # dann noch da, wenn die Zahl laengst tot ist.
+        self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(roh)
 
@@ -1160,11 +1525,24 @@ class Flaeche(BaseHTTPRequestHandler):
         später anders ausführen.* Eine Zeichnung **ist** aber die Absicht; sie hat vor
         diesem Augenblick keine Datei, weil sie im Browser entstanden ist. Ein Pfad wäre
         hier ein Pfad auf etwas, das es noch nicht gibt.
+
+        **Der Schlüssel gegen Doppelsendung** (``schluessel``, freiwillig, seit dem
+        22.09.2026): Kommt derselbe zweimal, geht die erste Antwort noch einmal hinaus, und
+        es entsteht keine zweite Datei. Siehe :class:`Eingangsbuch` — auch dafür, was er
+        nach einem Neustart nicht mehr weiss.
         """
         ordner = wunsch.get("ordner") or self.ordner
         roh = wunsch.get("png_base64") or ""
         if not ordner or not roh:
             self._fehler("Es fehlt der Projektordner oder die Zeichnung.")
+            return
+        schluessel = wunsch.get("schluessel")
+        if schluessel is not None and (not isinstance(schluessel, str)
+                                       or not SCHLUESSEL_FORM.fullmatch(schluessel)):
+            self._fehler("Der Schlüssel gegen Doppelsendung hat 8 bis 128 Zeichen aus "
+                         "Buchstaben, Ziffern, Punkt, Bindestrich und Unterstrich. Ohne "
+                         "Schlüssel schicken geht auch — dann schützt nichts vor einer "
+                         "zweiten Datei.")
             return
 
         try:
@@ -1173,16 +1551,40 @@ class Flaeche(BaseHTTPRequestHandler):
             self._fehler(str(fehler))
             return
 
+        with EINGANG.sperre:
+            abdruck = hashlib.sha256(bytes_).hexdigest()
+            if schluessel is not None:
+                frueher = EINGANG.nachsehen(ordner, schluessel)
+                if frueher is not None and frueher[0] != abdruck:
+                    # DERSELBE SCHLUESSEL, EINE ANDERE ZEICHNUNG. Als Wiederholung
+                    # behandelt, ginge die zweite Zeichnung still verloren.
+                    self._fehler("Dieser Schlüssel ist schon mit einer ANDEREN Zeichnung "
+                                 "angekommen. Eine neue Zeichnung braucht einen neuen "
+                                 "Schlüssel — abgelegt wurde nichts.")
+                    return
+                if frueher is not None:
+                    self._sende(dict(frueher[1]))
+                    return
+            antwort = self._lege_ab(Path(ordner), bytes_, wunsch)
+            if antwort is None:
+                return
+            if schluessel is not None:
+                antwort["schluessel"] = schluessel
+                EINGANG.vermerke(ordner, schluessel, abdruck, antwort)
+        self._sende(antwort)
+
+    def _lege_ab(self, ordner: Path, bytes_: bytes, wunsch: dict):
+        """Datei schreiben, in der Mappe vermerken, speichern. ``None`` heisst: Die Absage
+        ist schon hinausgegangen."""
         try:
-            ziel = Path(ordner) / _skizzenname(wunsch.get("name"))
-            p = projekt.oeffne(Path(ordner))["projekt"]
-            ziel.write_bytes(bytes_)
+            p = projekt.oeffne(ordner)["projekt"]
+            ziel = _lege_skizze_ab(ordner, bytes_, _belegte_namen(p))
             bemerkung = _bemerkung(wunsch.get("bemerkung"), wunsch.get("name"))
             projekt.vermerke_skizze(
                 p, skizze=ziel.name, ueber=wunsch.get("ueber") or None,
                 bemerkung=bemerkung)
             try:
-                projekt.speichere(p, Path(ordner))
+                projekt.speichere(p, ordner)
             except projekt.ProjektKollision:
                 # EINMAL WIEDERHOLEN, UND ZWAR HIER UND NICHT BEIM BENUTZER.
                 #
@@ -1197,20 +1599,70 @@ class Flaeche(BaseHTTPRequestHandler):
                 # Skizze. Genau EINMAL — kommt es zweimal in Folge, laeuft drueben etwas,
                 # das schneller schreibt als wir, und dann ist Melden die richtige
                 # Antwort.
-                frisch = projekt.oeffne(Path(ordner))["projekt"]
+                frisch = projekt.oeffne(ordner)["projekt"]
                 projekt.vermerke_skizze(
                     frisch, skizze=ziel.name, ueber=wunsch.get("ueber") or None,
                     bemerkung=bemerkung)
-                projekt.speichere(frisch, Path(ordner))
+                projekt.speichere(frisch, ordner)
+        except projekt.ProjektError as fehler:
+            self._fehler(str(fehler))
+            return None
+        except OSError as fehler:
+            self._fehler(f"Die Zeichnung liess sich nicht schreiben: {fehler}")
+            return None
+        return {"abgelegt": True, "skizze": ziel.name, "hinweis": HINWEIS_SKIZZE_OHNE_WEG}
+
+    def _benennen(self, wunsch: dict) -> None:
+        """Ruft :func:`aiimaging.projekt.benenne` — ein eigener Name für ein Bild oder eine
+        Skizze (Entscheid 19). Die Datei behält ihren Namen nach der Zeit.
+
+        **``titel`` muss im Rumpf stehen**, auch als ``null`` (das nimmt den Namen
+        zurück). Ein fehlendes Feld als «zurücknehmen» zu lesen hiesse, dass ein
+        vergessenes Feld einen Namen löscht.
+
+        **Bei einer Kollision wird nicht wiederholt** — ein Name ersetzt einen anderen,
+        und *was ersetzt, muss fragen* (wie bei den Einstellungen).
+        """
+        ordner = wunsch.get("ordner") or self.ordner
+        if not ordner:
+            self._fehler("Kein Projektordner angegeben.")
+            return
+        if "titel" not in wunsch:
+            self._fehler("Es fehlt der Name (titel). Mit null wird ein Name "
+                         "zurückgenommen — dann gilt wieder der Name nach der Zeit.")
+            return
+        try:
+            ergebnis = projekt.benenne(
+                Path(ordner), titel=wunsch.get("titel"), bild=wunsch.get("bild"),
+                skizze=wunsch.get("skizze"), von_stand=wunsch.get("von_stand"))
+        except projekt.ProjektKollision as fehler:
+            self._fehler(f"{fehler} Die Seite neu laden zeigt den neuen Stand.")
+            return
         except projekt.ProjektError as fehler:
             self._fehler(str(fehler))
             return
-        except OSError as fehler:
-            self._fehler(f"Die Zeichnung liess sich nicht schreiben: {fehler}")
-            return
+        self._sende({"benannt": True, "eintrag": ergebnis["eintrag"],
+                     "stand_nr": ergebnis["projekt"].get("stand_nr")})
 
-        self._sende({"abgelegt": True, "skizze": ziel.name,
-                     "hinweis": HINWEIS_SKIZZE_OHNE_WEG})
+    def _abbrechen(self, wunsch: dict) -> None:
+        """Den laufenden Lauf anhalten (Entscheid 31) — **zwischen zwei Knoten.**
+
+        Die Fläche setzt nur ein Zeichen; gefragt wird es von
+        :func:`aiimaging.kette.fuehre_aus` vor jedem Knoten (``abbrechen``). **Der Knoten,
+        der gerade rechnet, rechnet zu Ende** — ein Blender-Lauf oder eine Bildstufe lässt
+        sich von aussen nicht mitten im Schritt anhalten, ohne ein halbes Ergebnis zu
+        hinterlassen. Was fertig ist, bleibt in der Mappe (Entscheid 14).
+
+        Es gibt **einen** Lauf zur Zeit auf diesem Server; ``ordner`` wird darum nicht
+        gebraucht.
+        """
+        if not LAUFSTAND.verlange_abbruch():
+            self._fehler("Es läuft gerade kein Lauf — es gibt nichts abzubrechen.")
+            return
+        self._sende({"abbruch_verlangt": True,
+                     "satz": "Abbruch verlangt. Der Schritt, der gerade rechnet, rechnet zu "
+                             "Ende; danach beginnt keiner mehr. Was fertig ist, bleibt in "
+                             "der Mappe."})
 
     def _rechne(self, wunsch: dict) -> None:
         """Ruft :func:`aiimaging.arbeitsgang.rechne` — **mit den echten Ausführern.**
@@ -1219,6 +1671,10 @@ class Flaeche(BaseHTTPRequestHandler):
         Fehlschlag kommt als Satz zurück. **Eine Attrappe einzusetzen, damit hier etwas
         erscheint, wäre die schlimmste Zeile dieser Datei:** Es entstünden Bilder und
         Urteile, die nichts gemessen haben, und niemand sähe ihnen das an.
+
+        Seit dem 22.09.2026 auch als **Entwurf** (``entwurf``, Entscheid 30) und als
+        **Reihe von Startwerten** (``varianten``, Entscheid 32). Ebenen-Varianten entstehen
+        aus Skizzen und gehen über ``WEG_RECHNE_SKIZZE``.
         """
         ordner = wunsch.get("ordner") or self.ordner
         if not ordner:
@@ -1229,32 +1685,157 @@ class Flaeche(BaseHTTPRequestHandler):
                          "beide in dieselbe Projektdatei — der zweite überschriebe die "
                          "Bilder des ersten.")
             return
+        try:
+            b = _lies_bestellung(wunsch, skizzenlauf=False)
+        except FlaechenError as fehler:
+            self._fehler(str(fehler))
+            return
 
-        einstellungen = dict(wunsch.get("einstellungen") or {})
         # WIE VIELE SCHRITTE ES INSGESAMT WERDEN, muss VOR dem Lauf feststehen — sonst
         # gibt es einen Zaehler ohne Nenner, und ein Zaehler ohne Nenner ist eine Zahl
-        # ohne Auskunft.
-        gesamt = _schritte_gesamt(Path(ordner), einstellungen)
+        # ohne Auskunft. Bei einer Reihe: je Variante, denn jede zaehlt von vorn.
+        gesamt = _schritte_gesamt(Path(ordner), b["einstellungen"], entwurf=b["entwurf"])
 
-        LAUFSTAND.beginne(ordner, schritte_gesamt=gesamt)
+        LAUFSTAND.beginne(ordner, schritte_gesamt=gesamt, bestellung={
+            "art": "modell", "entwurf": b["entwurf"], "varianten": b["varianten"],
+            "skizzen": None})
         faden = threading.Thread(
             target=_rechne_im_hintergrund,
-            args=(Path(ordner), bool(wunsch.get("trotz_aenderung")), einstellungen),
+            args=(Path(ordner), b["trotz_aenderung"], b["einstellungen"]),
+            kwargs={"entwurf": b["entwurf"], "varianten": b["varianten"]},
             daemon=True)
         faden.start()
 
         # SOFORT ANTWORTEN. Bis zum 21.09.2026 blieb diese Anfrage offen, bis der ganze
         # Lauf fertig war — Minuten. Ein Browser zeigt in der Zeit nichts an und laeuft
         # irgendwann in seine eigene Frist.
-        self._sende({"gestartet": True, "schritte_gesamt": gesamt})
+        self._sende({"gestartet": True, "schritte_gesamt": gesamt,
+                     "entwurf": b["entwurf"], "varianten": b["varianten"]})
+
+    def _rechne_skizze(self, wunsch: dict) -> None:
+        """Ruft :func:`aiimaging.arbeitsgang.rechne_skizze` — eine abgelegte Skizze
+        **rechnen lassen** (Entscheid 11: nichts rechnet von selbst).
+
+        ``skizze`` ist ein Dateiname aus der Mappe oder eine Liste von zweien bis acht:
+        Dann entsteht je Skizze ein Lauf, als **Ebenen-Reihe** (Entscheid 32). Was die
+        Bibliothek an einer Skizze abweist (unbekannt, verworfen, Datei fehlt, keine
+        Anweisung), kommt als Satz im Laufstand (``fehler``) — geprüft wird es dort, unter
+        der Laufsperre, und nicht ein zweites Mal hier.
+        """
+        ordner = wunsch.get("ordner") or self.ordner
+        if not ordner:
+            self._fehler("Kein Projektordner angegeben.")
+            return
+        if LAUFSTAND.sicht()["laeuft"]:
+            self._fehler("Es läuft schon einer. Zwei Läufe auf derselben Mappe schrieben "
+                         "beide in dieselbe Projektdatei — der zweite überschriebe die "
+                         "Bilder des ersten.")
+            return
+        try:
+            b = _lies_bestellung(wunsch, skizzenlauf=True)
+        except FlaechenError as fehler:
+            self._fehler(str(fehler))
+            return
+
+        gesamt = _schritte_gesamt(Path(ordner), b["einstellungen"], entwurf=b["entwurf"])
+        skizzen = b["skizze"] if isinstance(b["skizze"], list) else [b["skizze"]]
+        LAUFSTAND.beginne(ordner, schritte_gesamt=gesamt, bestellung={
+            "art": "skizze", "entwurf": b["entwurf"],
+            "varianten": len(skizzen) if len(skizzen) > 1 else None, "skizzen": skizzen})
+        faden = threading.Thread(
+            target=_rechne_im_hintergrund,
+            args=(Path(ordner), b["trotz_aenderung"], b["einstellungen"]),
+            kwargs={"entwurf": b["entwurf"], "skizze": b["skizze"],
+                    "anweisung": b["anweisung"]},
+            daemon=True)
+        faden.start()
+        self._sende({"gestartet": True, "schritte_gesamt": gesamt,
+                     "entwurf": b["entwurf"], "skizzen": skizzen})
 
 
-def _schritte_gesamt(ordner, einstellungen: dict):
+def _lies_bestellung(wunsch: dict, *, skizzenlauf: bool) -> dict:
+    """Was ein Rechenauftrag bestellt — **in der Form geprüft, nicht im Inhalt.**
+
+    Geprüft wird hier nur, was die Leitung verfälschen kann: ob ein Wahrheitswert einer
+    ist (``"nein"`` wäre für Python wahr), ob die Einstellungen ein Objekt sind und nur
+    Felder von :func:`aiimaging.kette.baue_kette` tragen. **Was zulässig ist, entscheidet
+    die Bibliothek**; die Grenzen einer Reihe werden bei ihr erfragt
+    (``arbeitsgang._pruefe_varianten``), damit die Absage sofort kommt und nicht erst im
+    Laufstand.
+
+    **Und warum nur Felder der Kette:** ``rechne`` nimmt neben den Kettenfeldern auch
+    Ausführer, Speicher und Melder. Über die Einstellungen kämen sie aus dem Netz — ein
+    leerer Speicher oder eine fremde Ausführertafel wären dann eine Bestellung von
+    aussen, und genau das darf diese Fläche nie weiterreichen.
+
+    Raises:
+        FlaechenError: mit dem Satz für den Menschen.
+    """
+    einstellungen = wunsch.get("einstellungen")
+    if einstellungen is None:
+        einstellungen = {}
+    if not isinstance(einstellungen, dict):
+        raise FlaechenError("Die Einstellungen sind ein Objekt aus Namen und Werten.")
+    kettenfelder = set(inspect.signature(kette.baue_kette).parameters) - set(NICHT_EINSTELLBAR)
+    fremd = sorted(set(einstellungen) - kettenfelder)
+    if fremd:
+        raise FlaechenError(f"Diese Einstellung kennt das Programm nicht: {', '.join(fremd)}")
+
+    for feld in ("entwurf", "trotz_aenderung"):
+        if feld in wunsch and not isinstance(wunsch[feld], bool):
+            raise FlaechenError(
+                f"{feld} ist wahr oder falsch (true/false) — war {wunsch[feld]!r}.")
+    b = {"einstellungen": dict(einstellungen),
+         "entwurf": wunsch.get("entwurf", False),
+         "trotz_aenderung": wunsch.get("trotz_aenderung", False),
+         "varianten": None, "skizze": None, "anweisung": None}
+
+    if not skizzenlauf:
+        varianten = wunsch.get("varianten")
+        try:
+            arbeitsgang._pruefe_varianten(varianten, arbeitsgang.VARIANTEN_STARTWERTE)
+        except arbeitsgang.ArbeitsgangError as fehler:
+            raise FlaechenError(str(fehler)) from None
+        b["varianten"] = varianten
+        return b
+
+    if "varianten" in wunsch:
+        # NICHT STILL UEBERGANGEN: Wer drei Startwerte einer Skizze bestellt, bekaeme
+        # sonst ein Bild und haelt es fuer die erste von dreien.
+        raise FlaechenError(
+            "Varianten einer Skizze entstehen als Ebenen — eine Liste von Skizzen unter "
+            "«skizze», je Skizze ein Lauf. Startwert-Reihen kennt die Bibliothek nur für "
+            "das Bild aus dem Modell (POST /api/rechne mit «varianten»).")
+    skizze = wunsch.get("skizze")
+    if isinstance(skizze, list):
+        if not skizze or not all(isinstance(s, str) and s.strip() for s in skizze):
+            raise FlaechenError("«skizze» ist ein Dateiname oder eine Liste von "
+                                "Dateinamen aus der Mappe.")
+        if len(skizze) > 1:
+            try:
+                arbeitsgang._pruefe_varianten(len(skizze), arbeitsgang.VARIANTEN_EBENEN)
+            except arbeitsgang.ArbeitsgangError as fehler:
+                raise FlaechenError(str(fehler)) from None
+        else:
+            skizze = skizze[0]
+    elif not isinstance(skizze, str) or not skizze.strip():
+        raise FlaechenError("Welche Skizze gerechnet werden soll, ist nicht gesagt "
+                            "(«skizze»: ein Dateiname aus der Mappe).")
+    anweisung = wunsch.get("anweisung")
+    if anweisung is not None and not isinstance(anweisung, str):
+        raise FlaechenError("Die Anweisung ist ein Text — was sich am Bild ändern soll.")
+    b["skizze"], b["anweisung"] = skizze, anweisung
+    return b
+
+
+def _schritte_gesamt(ordner, einstellungen: dict, *, entwurf: bool = False):
     """Wie viele Diffusionsschritte dieser Lauf rechnen wird — oder ``None``.
 
     Gelesen wird, was der Lauf wirklich benutzt: erst die Einstellungen der Mappe, dann
     die des Aufrufs — **dieselbe Reihenfolge wie in** :func:`aiimaging.arbeitsgang.rechne`.
-    Eine eigene Regel hier wäre dieselbe Regel zweimal, und die zweite veraltet.
+    Eine eigene Regel hier wäre dieselbe Regel zweimal, und die zweite veraltet. Beim
+    Entwurf rechnet die Bibliothek die Deckelung selbst (``_entwurfsargumente``) — auch
+    sie wird dort geholt, nicht hier nachgebaut.
 
     ``None`` heisst **unbekannt** und nicht null: Ohne Nenner zeigt die Fläche keinen
     Anteil an. *Ein Zähler ohne Nenner ist eine Zahl ohne Auskunft.*
@@ -1263,12 +1844,24 @@ def _schritte_gesamt(ordner, einstellungen: dict):
         aus_mappe = (projekt.oeffne(ordner)["projekt"].get("einstellungen") or {})
     except projekt.ProjektError:
         aus_mappe = {}
-    wert = {**aus_mappe, **einstellungen}.get("schritte")
-    return wert if isinstance(wert, int) and wert > 0 else None
+    zusammen = {**aus_mappe, **einstellungen}
+    if entwurf:
+        try:
+            zusammen = arbeitsgang._entwurfsargumente(zusammen, einstellungen)
+        except arbeitsgang.ArbeitsgangError:
+            return None
+    wert = zusammen.get("schritte")
+    return wert if isinstance(wert, int) and not isinstance(wert, bool) and wert > 0 else None
 
 
-def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict) -> None:
+def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict, *,
+                           entwurf: bool = False, varianten=None, skizze=None,
+                           anweisung=None) -> None:
     """Der Lauf selbst — in einem eigenen Faden, damit die Seite währenddessen antwortet.
+
+    Mit ``skizze`` über :func:`aiimaging.arbeitsgang.rechne_skizze`, sonst über
+    :func:`aiimaging.arbeitsgang.rechne`. Beide bekommen den Laufstand als Melder **und
+    als Frage nach dem Abbruch** (Entscheid 31).
 
     **Er fängt alles.** Eine Ausnahme in einem Hintergrundfaden verschwindet sonst
     spurlos: Der Faden endet, der Laufstand bliebe für immer auf «läuft», und die Anzeige
@@ -1277,14 +1870,26 @@ def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict) -
         *Ein Fehler, den niemand sieht, ist schlimmer als einer, der eine Meldung macht.*
     """
     try:
-        ergebnis = arbeitsgang.rechne(
-            ordner, trotz_aenderung=trotz_aenderung, melder=LAUFSTAND.melde,
-            **einstellungen)
+        gemeinsam = {"trotz_aenderung": trotz_aenderung, "melder": LAUFSTAND.melde,
+                     "abbrechen": LAUFSTAND.abbruch_verlangt, "entwurf": entwurf}
+        if skizze is not None:
+            ergebnis = arbeitsgang.rechne_skizze(
+                ordner, skizze, anweisung=anweisung, **gemeinsam, **einstellungen)
+        else:
+            ergebnis = arbeitsgang.rechne(
+                ordner, varianten=varianten, **gemeinsam, **einstellungen)
         LAUFSTAND.beende(ergebnis={
             "status": ergebnis["lauf"].get("status"),
             "vermerkt": ergebnis["vermerkt"],
             "modell_stand": ergebnis["modell_stand"],
             "error": ergebnis["lauf"].get("error"),
+            # ANGEHALTEN IST NICHT GESCHEITERT (Entscheid 31) — und nicht fertig. Dazu,
+            # wie viele Varianten gar nicht erst begannen: Sie fehlen, und das soll man
+            # sehen, statt eine Reihe von zwei fuer eine Reihe von drei zu halten.
+            "abgebrochen": ergebnis.get("abgebrochen"),
+            "bilder": list(ergebnis.get("bilder") or []),
+            "variantengruppe": ergebnis.get("variantengruppe"),
+            "varianten_nicht_begonnen": ergebnis.get("varianten_nicht_begonnen"),
         })
     except (arbeitsgang.ArbeitsgangError, projekt.ProjektError,
             kette.KettenError) as fehler:
@@ -1395,6 +2000,48 @@ def startzeile(adresse: str, anschluss: int) -> str:
     return f"Visbox läuft auf http://{adresse}:{anschluss}  (Strg-C beendet)"
 
 
+RUNDRUF_DATEI = Path(__file__).resolve().parent / "rundruf.py"
+
+
+def _rundruf_modul():
+    """``rundruf.py`` von nebenan — geladen **über den Pfad**, nicht über ``import``.
+
+    Diese Datei läuft als Programm (``python3 oberflaeche/server.py``) und wird in den
+    Proben als Modul geladen; ein ``import rundruf`` fände die Nachbardatei nur im ersten
+    Fall. Und ``tests/test_oberflaeche.py`` lässt in dieser Datei nur Importe aus der
+    Standardbibliothek und aus ``aiimaging`` zu — ``rundruf`` ist keines von beiden, obwohl
+    es selbst nur die Standardbibliothek benutzt (bewacht in ``tests/test_rundruf.py``).
+    """
+    geladen = sys.modules.get("rundruf")
+    if geladen is not None and Path(getattr(geladen, "__file__", "")).resolve() == RUNDRUF_DATEI:
+        return geladen
+    spez = importlib.util.spec_from_file_location("rundruf", RUNDRUF_DATEI)
+    modul = importlib.util.module_from_spec(spez)
+    spez.loader.exec_module(modul)
+    return modul
+
+
+def starte_rundruf(anschluss: int):
+    """Den Rundruf für ``--im-heimnetz`` starten (Entscheid 27) — ``(rundruf, satz)``.
+
+    ``rundruf`` ist ``None``, wenn er nicht läuft; ``satz`` sagt dann **warum**. Ein
+    Rundruf, der nicht startet, hält die Fläche nicht auf: Sie ist weiter erreichbar, nur
+    muss die Adresse dann am iPad eingetippt werden — und genau das sagt der Satz.
+
+    Die Adresse kommt aus :func:`heimnetz_adresse` — derselben, die die Startzeile nennt.
+    """
+    modul = _rundruf_modul()
+    adresse = heimnetz_adresse()
+    try:
+        r = modul.starte(anschluss=anschluss, adresse=adresse)
+    except modul.RundrufError as fehler:
+        return None, (f"  Finden:     kein Rundruf — {fehler} Die Adresse am iPad "
+                      f"eintippen.")
+    return r, (f"  Finden:     Rundruf läuft ({modul.DIENST}, Anschluss {anschluss}) — "
+               f"ein iPad im selben Netz kann die HomeStation suchen statt die Adresse "
+               f"einzutippen (am Gerät unbestätigt).")
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Die Oberfläche von Visbox.")
     ap.add_argument("--ordner", default=None, help="Projektordner, der beim Start gezeigt wird")
@@ -1464,11 +2111,21 @@ def main(argv=None) -> int:
               "hält\n"
               "  Geräte fern, die zufällig im selben Netz sind, nicht jemanden, der dort "
               "mithört.")
+    # DER RUNDRUF NUR IM HEIMNETZ. Auf 127.0.0.1 kann kein anderes Geraet herein; ein
+    # Rundruf luede dann zu einer Verbindung ein, die nicht zustande kommt.
+    rundruf = None
+    if a.im_heimnetz:
+        rundruf, satz = starte_rundruf(server.server_address[1])
+        print(satz)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         print("\nBeendet.")
     finally:
+        # ERST DER RUNDRUF, DANN DIE FLAECHE: Er verabschiedet sich im Netz (Gueltigkeit
+        # 0), damit kein iPad eine Stunde lang auf eine HomeStation zeigt, die weg ist.
+        if rundruf is not None:
+            rundruf.beende()
         server.server_close()
     return 0
 

@@ -14,8 +14,9 @@ public enum Methode: String, Sendable {
 public struct Weg: Hashable, Sendable {
     public let pfad: String
     public let methode: Methode
-    /// Ob der Weg **ohne Anmeldung** erreichbar ist. Genau einer ist es, und nur,
-    /// solange an der HomeStation eine Kopplung offen ist.
+    /// Ob der Weg **ohne Anmeldung** erreichbar ist. Zwei sind es — das Verbinden und die
+    /// Koppelseite für den Browser —, und beide nur, solange an der HomeStation eine
+    /// Kopplung offen ist.
     public let ohneAnmeldung: Bool
 
     public init(pfad: String, methode: Methode, ohneAnmeldung: Bool = false) {
@@ -49,6 +50,10 @@ public enum Wege {
     public static let fortschritt = Weg(pfad: "/api/fortschritt", methode: .get)
     /// Ein Bild aus dem Projektordner. Frage: `ordner` (freiwillig), `name`.
     public static let bild = Weg(pfad: "/bild", methode: .get)
+    /// Die Koppelseite für einen **Browser** (Entscheid 26): ein Zahlenfeld, das
+    /// `verbinden` ruft. Die App braucht sie nicht — sie ruft `verbinden` selbst. Ohne
+    /// Anmeldung erreichbar, und nur, solange drüben eine Zahl gilt.
+    public static let koppeln = Weg(pfad: "/koppeln", methode: .get, ohneAnmeldung: true)
 
     // ---------------------------------------------------------------- handeln (POST)
 
@@ -59,11 +64,20 @@ public enum Wege {
     /// Das erste Verbinden: sechsstellige Zahl gegen Kennwort.
     public static let verbinden = Weg(pfad: "/api/verbinden", methode: .post,
                                       ohneAnmeldung: true)
+    /// Einen eigenen Namen geben (Entscheid 19): `bild` oder `skizze`, `titel` (Pflicht;
+    /// `null` nimmt ihn zurück), `von_stand` (freiwillig).
+    public static let benennen = Weg(pfad: "/api/benennen", methode: .post)
+    /// Den laufenden Lauf anhalten (Entscheid 31) — zwischen zwei Knoten.
+    public static let abbrechen = Weg(pfad: "/api/abbrechen", methode: .post)
+    /// Eine abgelegte Skizze rechnen lassen: `skizze` (Name oder Liste für Ebenen),
+    /// `anweisung`, `entwurf` (freiwillig).
+    public static let rechneSkizze = Weg(pfad: "/api/rechne-skizze", methode: .post)
 
     /// Alle Wege, die der Server heute bedient.
     public static let alle: [Weg] = [
-        seite, seiteLang, projekt, fortschritt, bild,
+        seite, seiteLang, projekt, fortschritt, bild, koppeln,
         anlegen, einstellungen, skizze, rechne, verbinden,
+        benennen, abbrechen, rechneSkizze,
     ]
 
     /// Die Adresse für einen Weg auf einer HomeStation — oder `nil`, wenn sich aus

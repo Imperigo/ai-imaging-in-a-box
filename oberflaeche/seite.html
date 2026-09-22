@@ -26,6 +26,10 @@
        sehen zwei Flaechen desselben Werkzeugs verschieden aus und niemand weiss, welche
        gilt. `tests/test_kontrast.py` rechnet es aus dieser Datei nach. */
     --bestanden: #4ea373; --durchgefallen: #e2776f; --ungemessen: #c8a53f;
+    /* BLAU HEISST UEBERALL: hier wird kein Urteil gesprochen (Entscheid 30, Blatt
+       «Zeichen»). Derselbe Wert wie im iPad-Entwurf. Es ist KEIN viertes Urteil — ein
+       Entwurf ist nicht gemessen; das Blau sagt nur, warum. */
+    --entwurf: #6fb3d2;
   }
   * { box-sizing: border-box; }
   body {
@@ -97,6 +101,45 @@
   .rahmen.bestanden      .auflage { color: var(--bestanden); }
   .rahmen.durchgefallen  .auflage { color: var(--durchgefallen); }
   .rahmen.nicht-gemessen .auflage { color: var(--ungemessen); }
+  /* DER ENTWURF: gepunktet und blau. Er ist «nicht gemessen» und traegt darum dessen
+     Klasse mit — das Blau ueberschreibt nur die Farbe, nicht die Aussage. */
+  .zeichen.entwurf, .rahmen.entwurf { color: var(--entwurf); border-color: var(--entwurf);
+                                      border-style: dotted; }
+  .rahmen.entwurf .auflage { color: var(--entwurf); }
+  .rahmen .auflage { z-index: 2; }
+  .rahmen .auflage .zweit { display: block; font-weight: 600; color: var(--durchgefallen); }
+  .zahl { font-variant-numeric: tabular-nums; }
+
+  /* DER WISCHREGLER (Entscheid 17). Das Vorher liegt UEBER dem Nachher und wird von
+     links her weggeschnitten — die Auflage des Nachher bleibt obenauf: Sie gehoert zu
+     dem Bild, das beurteilt wurde, und faellt beim Wischen nicht weg. */
+  .deck { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .deck img { width: 100%; height: 100%; object-fit: contain; background: #0e1013; }
+  .deck .schnitt { position: absolute; top: 0; bottom: 0; width: 2px;
+                   background: var(--schrift); }
+  .umschalter { display: flex; gap: 6px; margin-top: 10px; }
+  .umschalter button.an { border-color: var(--schrift); }
+  .wischregler { width: 100%; }
+
+  /* VARIANTEN NEBENEINANDER (Entscheid 18: drei). */
+  .reihe { display: grid; gap: 10px; grid-template-columns: 1fr; margin-bottom: 14px; }
+  @media (min-width: 720px) { .reihe { grid-template-columns: repeat(3, 1fr); } }
+  .reihe .titel { font-size: 12px; color: var(--leise); margin-bottom: 4px; }
+
+  /* DIE WARTESCHLANGE (Blatt «Desktop»): was vom iPad kam und noch nicht gerechnet ist. */
+  .schlange .eintrag { display: grid; grid-template-columns: 72px 1fr; gap: 10px;
+                       border: 1px solid var(--rand); border-radius: 6px; padding: 10px;
+                       margin-bottom: 8px; }
+  .schlange .marke { width: 72px; height: 54px; object-fit: contain; border-radius: 4px;
+                     background: #0e1013; border: 1px solid var(--rand); }
+  .schlange .neu { color: var(--bestanden); font-size: 12px; font-weight: 600;
+                   margin-left: 6px; }
+  .schlange .anweisung { width: 100%; margin-top: 6px; }
+  .anzahl { display: inline-block; min-width: 1.6em; text-align: center; border-radius: 999px;
+            border: 1px solid var(--rand); font-size: 12px; margin-left: 6px; }
+  .name-titel { font-weight: 600; }
+  .benennen { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .benennen input { flex: 1 1 14em; }
 
   /* WO DIE DATEI FEHLT, steht die Luecke da — und zwar in der Groesse, die das Bild
      haette. Ein Name ohne Datei sieht in einer Liste genauso aus wie einer mit. */
@@ -178,6 +221,13 @@
   <input id="ordner" placeholder="Projektordner" size="34">
   <button id="laden">Öffnen</button>
   <button id="rechnen">Rechnen</button>
+  <label class="leise"><input id="entwurf" type="checkbox"> Entwurf (schnell, nicht geprüft)</label>
+  <label class="leise" for="varianten">Varianten</label>
+  <select id="varianten">
+    <option value="1">ein Bild</option>
+    <option value="2">2 Startwerte</option>
+    <option value="3">3 Startwerte</option>
+  </select>
   <span id="stand" class="leise"></span>
 </header>
 
@@ -198,6 +248,19 @@
       <div class="balkenrahmen" id="balkenrahmen" hidden><div id="balken"></div></div>
       <div id="laufsatz" class="satz"></div>
       <div id="lauffertige" class="satz"></div>
+      <div class="knopfzeile">
+        <button id="abbrechen" type="button" hidden>Lauf abbrechen</button>
+        <span id="abbruchsatz" class="satz"></span>
+      </div>
+    </div>
+  </section>
+
+  <section style="grid-column: 1 / -1">
+    <h2>Warteschlange<span id="schlangenzahl" class="anzahl">0</span></h2>
+    <div id="schlange" class="schlange leise">Noch kein Projekt geöffnet.</div>
+    <div class="knopfzeile" id="ebenenzeile" hidden>
+      <button id="ebenenRechnen" type="button">Gewählte als Ebenen rechnen</button>
+      <span class="satz">Je Skizze ein Lauf, zusammen eine Variantenreihe (2 bis 8).</span>
     </div>
   </section>
 
@@ -283,7 +346,35 @@ function zeichenFuer(bild) {
     "durchgefallen": "durchgefallen",
     "nicht-gemessen": "nicht gemessen",
   }[bild.zeichen] || bild.zeichen;
-  return feld("span", "zeichen " + bild.zeichen, beschriftung);
+  // DER ENTWURF IST NICHT GEMESSEN — und sagt, warum (Entscheid 30). Die Klasse
+  // «nicht-gemessen» bleibt dran; das Blau kommt dazu, es ersetzt sie nicht.
+  if (bild.entwurf === true) {
+    return feld("span", "zeichen " + bild.zeichen + " entwurf", "Entwurf — nicht geprüft");
+  }
+  // FARBE, WORT UND ZAHL (Entscheid 16). Die Zahl steht nur da, wo die Pruefung eine
+  // geliefert hat — ein fehlender Wert bleibt fehlend und wird nicht zu 0.
+  const zahl = zahlText(bild.score, bild.schwelle);
+  return feld("span", "zeichen " + bild.zeichen,
+              beschriftung + (zahl ? " · " + zahl.score : ""));
+}
+
+/** Score und Schwelle als Text — und NIE auf Gleichstand gerundet.
+ *
+ *  Zwei Stellen genuegen fast immer. Aber 0.7999 gegen die Schwelle 0.8 zeigte mit zwei
+ *  Stellen «0.80 gegen 0.80» — ein DURCHGEFALLENES Bild, dessen Zahl aussieht, als haette
+ *  es die Schwelle erreicht. Also: so viele Stellen, bis die beiden sich unterscheiden
+ *  (hoechstens sechs); «0.7999 gegen 0.8000». Runden kehrt die Reihenfolge nie um, es
+ *  macht nur Verschiedenes gleich — und genau das faengt die Schleife. *Ein Zustand, den
+ *  die Anzeige auf zwei rundet, ist ein anderer Zustand.*
+ *
+ *  `null`, wenn kein Score da ist — nicht gemessen ist keine Zahl. */
+function zahlText(score, schwelle) {
+  if (typeof score !== "number" || !isFinite(score)) return null;
+  const hatSchwelle = typeof schwelle === "number" && isFinite(schwelle);
+  let stellen = 2;
+  while (hatSchwelle && stellen < 6 && score !== schwelle &&
+         score.toFixed(stellen) === schwelle.toFixed(stellen)) stellen++;
+  return {score: score.toFixed(stellen), schwelle: hatSchwelle ? schwelle.toFixed(stellen) : null};
 }
 
 function zeigeModell(d) {
@@ -500,16 +591,40 @@ function bildrahmen(ordner, b) {
 
   // DIE AUFLAGE STEHT IMMER DA, auch am bestandenen Bild und auch an der Luecke.
   // Kein Abzeichen sieht aus wie kein Problem.
-  rahmen.append(feld("div", "auflage", zeichenwort(b) + " · " + b.satz));
+  if (b.entwurf === true) rahmen.classList.add("entwurf");
+  const zahl = zahlText(b.score, b.schwelle);
+  const auflage = feld("div", "auflage", zeichenwort(b) +
+    (zahl ? " · " + zahl.score + (zahl.schwelle ? " (Schwelle " + zahl.schwelle + ")" : "") : "") +
+    " · " + b.satz);
+  // UND DER HINWEIS, DASS DIE SKIZZE NICHT ANKAM, AUF DEM BILD — nicht nur in der Karte.
+  // Wer das Bild weiterreicht, reicht sonst ein Text-zu-Bild-Ergebnis als Bearbeitung
+  // seiner Zeichnung weiter.
+  if (b.skizze_nicht_angekommen === true) {
+    auflage.append(feld("span", "zweit", "SKIZZE NICHT ANGEKOMMEN — was gezeichnet war, steckt nicht darin."));
+  }
+  rahmen.append(auflage);
   return rahmen;
 }
 
 function zeichenwort(b) {
+  if (b.entwurf === true) return "ENTWURF — NICHT GEPRÜFT";
   return {
     "bestanden": "GEPRÜFT",
     "durchgefallen": "DURCHGEFALLEN",
     "nicht-gemessen": "NICHT GEPRÜFT",
   }[b.zeichen] || b.zeichen;
+}
+
+/** Eine Skizze als Bild — ohne Urteil, und das steht auf ihr. Eine Zeichnung wird nicht
+ *  geprueft; ein leerer Streifen saehe aus wie ein vergessenes Zeichen. */
+function skizzenrahmen(ordner, name) {
+  const rahmen = feld("div", "rahmen");
+  const bild = feld("img");
+  bild.src = bildweg(ordner, name);
+  bild.alt = name;
+  bild.onerror = () => { bild.replaceWith(feld("div", "fehlt", "Die Skizze liess sich nicht laden.")); };
+  rahmen.append(bild, feld("div", "auflage", "SKIZZE · kein Urteil — eine Zeichnung wird nicht geprüft"));
+  return rahmen;
 }
 
 /** Das Bild und seine Unterlage nebeneinander — wenn es eine gibt.
@@ -519,16 +634,142 @@ function zeichenwort(b) {
 function nebeneinander(ordner, b, alleBilder) {
   const unterlage = b.basis && b.basis.bild
     ? alleBilder.find((x) => x.bild === b.basis.bild) : null;
-  if (!unterlage) return bildrahmen(ordner, b);
+  // DAS VORHER: die Unterlage (E20) — oder, bei einem Bild aus einer Skizze, die Skizze.
+  const skizze = !unterlage && b.herkunft && b.herkunft.skizze ? b.herkunft.skizze : null;
+  if (!unterlage && !skizze) return bildrahmen(ordner, b);
 
-  const paar = feld("div", "paar");
-  for (const [titel, eintrag] of [["Unterlage", unterlage], ["Dieses Bild", b]]) {
-    const spalte = feld("div");
-    spalte.append(feld("div", "titel", titel));
-    spalte.append(bildrahmen(ordner, eintrag));
-    paar.append(spalte);
+  const vorherTitel = unterlage ? "Unterlage" : "Skizze";
+  const vorherRahmen = () => unterlage ? bildrahmen(ordner, unterlage) : skizzenrahmen(ordner, skizze);
+  const vorherWeg = unterlage ? bildweg(ordner, unterlage.bild) : bildweg(ordner, skizze);
+
+  // BEIDES UMSCHALTBAR (Entscheid 17): nebeneinander und Wischregler.
+  const block = feld("div");
+  const schalter = feld("div", "umschalter");
+  const knopfPaar = feld("button", null, "Nebeneinander");
+  const knopfWisch = feld("button", null, "Wischregler");
+  knopfPaar.type = knopfWisch.type = "button";
+  schalter.append(knopfPaar, knopfWisch);
+  const ziel = feld("div");
+  block.append(schalter, ziel);
+
+  function paar() {
+    const p = feld("div", "paar");
+    for (const [titel, rahmen] of [[vorherTitel, vorherRahmen()], ["Dieses Bild", bildrahmen(ordner, b)]]) {
+      const spalte = feld("div");
+      spalte.append(feld("div", "titel", titel), rahmen);
+      p.append(spalte);
+    }
+    return p;
   }
-  return paar;
+
+  function wisch() {
+    const aussen = feld("div");
+    const rahmen = bildrahmen(ordner, b);
+    if (b.vorhanden !== true) {
+      // OHNE BILD GIBT ES NICHTS ZU WISCHEN — die Luecke steht da, wie im Rahmen selbst.
+      aussen.append(rahmen);
+      return aussen;
+    }
+    const deck = feld("div", "deck");
+    const oben = feld("img");
+    oben.src = vorherWeg;
+    oben.alt = vorherTitel;
+    const strich = feld("div", "schnitt");
+    deck.append(oben, strich);
+    rahmen.insertBefore(deck, rahmen.querySelector(".auflage"));
+    const regler = feld("input", "wischregler");
+    regler.type = "range"; regler.min = "0"; regler.max = "100"; regler.value = "50";
+    const satz = feld("div", "satz");
+    const setze = () => {
+      const v = Number(regler.value);
+      oben.style.clipPath = "inset(0 0 0 " + v + "%)";
+      strich.style.left = "calc(" + v + "% - 1px)";
+      satz.textContent = "Links dieses Bild, rechts " + (unterlage ? "die Unterlage" : "die Skizze") +
+                         " — Schnitt bei " + v + " %.";
+    };
+    regler.addEventListener("input", setze);
+    setze();
+    aussen.append(rahmen, regler, satz);
+    return aussen;
+  }
+
+  function zeige(art) {
+    ziel.replaceChildren(art === "wisch" ? wisch() : paar());
+    knopfPaar.classList.toggle("an", art !== "wisch");
+    knopfWisch.classList.toggle("an", art === "wisch");
+  }
+  knopfPaar.addEventListener("click", () => zeige("paar"));
+  knopfWisch.addEventListener("click", () => zeige("wisch"));
+  zeige("paar");
+  return block;
+}
+
+/** Ein eigener Name, nachtraeglich (Entscheid 19) — fuer ein Bild oder eine Skizze.
+ *  Die Datei behaelt ihren Namen nach der Zeit; der Name ist eine Anzeige. */
+function benennFeld(d, art, eintrag) {
+  const zeile = feld("div", "benennen");
+  const knopf = feld("button", null, eintrag.titel ? "Umbenennen" : "Benennen");
+  knopf.type = "button";
+  zeile.append(knopf);
+  knopf.addEventListener("click", () => {
+    zeile.replaceChildren();
+    const eingabeFeld = feld("input");
+    eingabeFeld.value = eintrag.titel || "";
+    eingabeFeld.placeholder = "eigener Name — leer lassen heisst: Name nach der Zeit";
+    eingabeFeld.maxLength = 120;
+    const speichern = feld("button", null, "Speichern");
+    speichern.type = "button";
+    const satz = feld("span", "satz");
+    speichern.addEventListener("click", async () => {
+      const koerper = {ordner: $("ordner").value.trim(), titel: eingabeFeld.value.trim() || null,
+                       von_stand: d.stand_nr};
+      koerper[art] = eintrag[art];
+      try {
+        const a = await fetch("/api/benennen", {
+          method: "POST", headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(koerper),
+        });
+        const r = await a.json();
+        if (r.fehler) { satz.textContent = r.fehler; return; }
+        await laden();
+      } catch (f) {
+        satz.textContent = "Der Name liess sich nicht speichern: " + f;
+      }
+    });
+    zeile.append(eingabeFeld, speichern, satz);
+    eingabeFeld.focus();
+  });
+  return zeile;
+}
+
+/** Die Variantenreihen, nebeneinander (Entscheid 18) — je Gruppe eine Zeile. */
+function zeigeReihen(d, ziel) {
+  const gruppen = new Map();
+  for (const b of d.bilder) {
+    const g = b.variantengruppe;
+    if (!g || !g.id) continue;
+    if (!gruppen.has(g.id)) gruppen.set(g.id, []);
+    gruppen.get(g.id).push(b);
+  }
+  for (const [id, liste] of gruppen) {
+    liste.sort((a, b) => (a.variantengruppe.nummer || 0) - (b.variantengruppe.nummer || 0));
+    const erste = liste[0].variantengruppe;
+    ziel.append(feld("div", "satz",
+      "Variantenreihe (" + (erste.art === "ebenen" ? "Ebenen" : "Startwerte") + ") · " +
+      liste.length + " von " + (erste.von || "?") + " Bildern da"));
+    const reihe = feld("div", "reihe");
+    for (const b of liste) {
+      const g = b.variantengruppe;
+      const spalte = feld("div");
+      spalte.append(feld("div", "titel",
+        "Variante " + g.nummer + " von " + g.von +
+        (g.seed !== undefined && g.seed !== null ? " · Startwert " + g.seed : "") +
+        (g.skizze ? " · " + g.skizze : "")));
+      spalte.append(bildrahmen(d.ordner, b));
+      reihe.append(spalte);
+    }
+    ziel.append(reihe);
+  }
 }
 
 function zeigeBilder(d) {
@@ -537,16 +778,37 @@ function zeigeBilder(d) {
   ziel.className = d.bilder.length ? "" : "leise";
   if (!d.bilder.length) { ziel.textContent = "Noch keine Bilder in diesem Projekt."; return; }
 
+  zeigeReihen(d, ziel);
+
   for (const b of d.bilder) {
     const karte = feld("div", "bild");
     const kopf = feld("div", "kopf");
     kopf.append(zeichenFuer(b));
+    // DER EIGENE NAME VORN, DER DATEINAME DANEBEN — er bleibt die Spur zur Datei.
+    if (b.titel) kopf.append(feld("span", "name-titel", b.titel));
     kopf.append(feld("span", "name", b.bild));
     kopf.append(feld("span", "leise", b.schicht));
+    if (b.variantengruppe) {
+      kopf.append(feld("span", "leise",
+        "Variante " + b.variantengruppe.nummer + " von " + b.variantengruppe.von));
+    }
     karte.append(kopf);
     // DER SATZ STEHT IMMER DA, auch beim bestandenen Bild. Eine Zahl ohne ihre Bedingung
     // ist keine Auskunft — und ein Abzeichen ohne Satz ist eine Zahl ohne Bedingung.
     karte.append(feld("div", "satz", b.satz));
+    const zahl = zahlText(b.score, b.schwelle);
+    if (zahl) {
+      karte.append(feld("div", "satz zahl",
+        "Wie gut das Bild zur Geometrie passt: " + zahl.score +
+        (zahl.schwelle ? " — Schwelle " + zahl.schwelle : " — Schwelle nicht gemeldet")));
+    }
+
+    // SKIZZE NICHT ANGEKOMMEN — als Meldung, nicht als Fussnote. Der ganze Satz kommt
+    // aus der Bibliothek; hier wird nur erkannt, DASS er da ist (der Server sagt es).
+    if (b.skizze_nicht_angekommen === true) {
+      karte.append(feld("div", "meldung fehler",
+        b.skizze_hinweis || "Die Skizze ist beim Bildmodell nicht angekommen."));
+    }
 
     // UND JETZT DAS BILD SELBST. Bis zum 21.09.2026 nannte diese Flaeche nur Dateinamen
     // und Urteile — ein Werkzeug fuer Bilder, das keine Bilder zeigt.
@@ -567,8 +829,15 @@ function zeigeBilder(d) {
     const h = b.herkunft || {};
     karte.append(liste([
       ["Prompt", h.prompt], ["Backbone", h.backbone], ["Startwert", h.seed],
+      ["Aus der Skizze", h.skizze], ["Anweisung", h.anweisung],
       ["Modellstand", h.modell_stand !== "unveraendert" ? h.modell_stand : null],
     ]));
+    // DIE UEBRIGEN HINWEISE DER BILDSTUFE. `null` heisst nicht gemessen — dann steht
+    // nichts da, und das ist etwas anderes als «keine Hinweise».
+    for (const hinweis of (b.hinweise || [])) {
+      if (hinweis !== b.skizze_hinweis) karte.append(feld("div", "satz", hinweis));
+    }
+    karte.append(benennFeld(d, "bild", b));
     ziel.append(karte);
   }
 }
@@ -581,6 +850,7 @@ async function laden() {
     const d = await antwort.json();
     if (d.fehler) { $("stand").textContent = d.fehler; return; }
     zeigeModell(d); zeigeBaum(d); zeigeBilder(d); zeigeSkizzenteil(d); zeigeGrundriss(d);
+    zeigeWarteschlange(d);
     $("stand").textContent = d.bilder.length + " Bilder, " + d.laeufe.length + " Läufe";
   } catch (f) {
     $("stand").textContent = "Die Oberfläche erreicht ihren eigenen Dienst nicht: " + f;
@@ -609,8 +879,24 @@ function zeigeLauf(f) {
   block.hidden = !f.laeuft && !f.fehler && !f.ergebnis;
   if (block.hidden) return;
 
+  // ABBRECHEN (Entscheid 31) — nur, solange einer laeuft. Ist er verlangt, sagt der Knopf
+  // das, statt noch einmal gedrueckt werden zu wollen: Der laufende Schritt rechnet zu
+  // Ende, und bis dahin passiert scheinbar nichts.
+  const knopf = $("abbrechen");
+  knopf.hidden = !f.laeuft;
+  knopf.disabled = !!f.abbruch_verlangt;
+  knopf.textContent = f.abbruch_verlangt ? "Abbruch verlangt …" : "Lauf abbrechen";
+  $("abbruchsatz").textContent = f.laeuft && f.abbruch_verlangt
+    ? "Der Schritt, der gerade rechnet, rechnet zu Ende; danach beginnt keiner mehr. " +
+      "Was fertig ist, bleibt in der Mappe."
+    : "";
+
+  const b = f.bestellung || {};
+  const zusatz = (b.art === "skizze" ? " · aus Skizze" : "") +
+                 (b.entwurf ? " · Entwurf" : "") +
+                 (f.variante ? ` · Variante ${f.variante.nummer} von ${f.variante.von}` : "");
   $("laufknoten").textContent = f.laeuft
-    ? `${f.knotenart || "…"}  (${f.nummer || "?"} von ${f.von || "?"})`
+    ? `${f.knotenart || "…"}  (${f.nummer || "?"} von ${f.von || "?"})${zusatz}`
     : "fertig";
 
   const zeichen = $("laufzeichen");
@@ -621,12 +907,22 @@ function zeigeLauf(f) {
   $("balkenrahmen").hidden = !(f.laeuft && belegt);
 
   if (!f.laeuft) {
+    const e = f.ergebnis;
+    // ANGEHALTEN IST WEDER FERTIG NOCH GESCHEITERT — ein eigenes Wort, und die fehlenden
+    // Varianten werden gezaehlt, statt eine Reihe von zwei fuer eine von drei zu halten.
+    const angehalten = !!(e && e.abgebrochen === true);
     $("laufsatz").textContent = f.fehler
       ? f.fehler
-      : (f.ergebnis ? `${f.ergebnis.vermerkt} Bilder eingetragen` +
-                      (f.ergebnis.error ? " — " + f.ergebnis.error : "") : "");
-    zeichen.classList.add(f.fehler ? "durchgefallen" : "bestanden");
-    zeichen.textContent = f.fehler ? "fehlgeschlagen" : "fertig";
+      : (e ? (angehalten ? "Angehalten — " : "") + `${e.vermerkt} Bilder eingetragen` +
+             (e.varianten_nicht_begonnen ? `, ${e.varianten_nicht_begonnen} Varianten nicht begonnen` : "") +
+             (e.error ? " — " + e.error : "") : "");
+    zeichen.classList.add(f.fehler ? "durchgefallen" : (angehalten ? "nicht-gemessen" : "bestanden"));
+    zeichen.textContent = f.fehler ? "fehlgeschlagen" : (angehalten ? "angehalten" : "fertig");
+    if (f.abbruch_verlangt && !angehalten && !f.fehler) {
+      // VERLANGT IST NICHT GEWIRKT: Kam der Wunsch nach dem letzten Schritt, lief der Lauf
+      // regulaer zu Ende. Das darf nicht aussehen wie ein Abbruch.
+      $("abbruchsatz").textContent = "Der Abbruch kam nach dem letzten Schritt — der Lauf war schon fertig.";
+    }
     return;
   }
 
@@ -646,9 +942,23 @@ function zeigeLauf(f) {
       `WIE WEIT er ist, meldet dieser Knoten nicht — das ist ein Lebenszeichen und kein Fortschritt.`;
   }
 
-  const fertige = (f.fertige || []).map((k) =>
+  const fertige = (f.fertige || []).filter((k) => k.status !== "abgebrochen").map((k) =>
     `${k.knotenart}${k.aus_cache ? " (aus dem Speicher)" : ""}`);
   $("lauffertige").textContent = fertige.length ? "Erledigt: " + fertige.join(", ") : "";
+}
+
+async function abbrechen() {
+  $("abbrechen").disabled = true;
+  try {
+    const d = await (await fetch("/api/abbrechen", {
+      method: "POST", headers: {"Content-Type": "application/json"}, body: "{}",
+    })).json();
+    $("abbruchsatz").textContent = d.fehler || d.satz;
+    fortschrittHolen();
+  } catch (f) {
+    $("abbrechen").disabled = false;
+    $("abbruchsatz").textContent = "Der Abbruch kam nicht an: " + f;
+  }
 }
 
 async function fortschrittHolen() {
@@ -675,9 +985,18 @@ async function fortschrittHolen() {
 async function rechnen() {
   $("stand").textContent = "startet …";
   try {
+    const varianten = Number($("varianten").value);
     const antwort = await fetch("/api/rechne", {
       method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ordner: $("ordner").value.trim()}),
+      body: JSON.stringify({
+        ordner: $("ordner").value.trim(),
+        // ENTWURF: schnell und OHNE Geometriepruefung (Entscheid 30). Jedes Bild traegt
+        // danach das blaue Zeichen — nie ein gruenes.
+        entwurf: $("entwurf").checked,
+        // VARIANTEN: nur mitgeschickt, wenn es mehr als eine ist. «1» ist keine Reihe,
+        // und die Bibliothek sagt das auch — besser, es kommt gar nicht erst an.
+        ...(varianten > 1 ? {varianten} : {}),
+      }),
     });
     const d = await antwort.json();
     // EIN FEHLSCHLAG WIRD ANGEZEIGT, NICHT VERSCHLUCKT. Er ist ein Satz aus der
@@ -948,7 +1267,19 @@ function tafelLeeren() {
   const c = $("tafel").getContext("2d");
   c.clearRect(0, 0, $("tafel").width, $("tafel").height);
   tafel.gezeichnet = false;
+  // EINE NEUE ZEICHNUNG BEKOMMT EINEN NEUEN SCHLUESSEL — siehe `skizzeAblegen`.
+  tafel.schluessel = null;
   zeigeStiftlage();
+}
+
+/** Ein Schluessel gegen Doppelsendung: 32 Zeichen aus dem Zufall des Browsers.
+ *
+ *  `crypto.getRandomValues` und nicht `crypto.randomUUID`: Das zweite gibt es nur auf
+ *  verschluesselten Seiten, und diese Flaeche laeuft im Heimnetz ueber gewoehnliches HTTP. */
+function neuerSchluessel() {
+  const b = new Uint8Array(16);
+  crypto.getRandomValues(b);
+  return Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
 }
 
 function zeigeSkizzenteil(d) {
@@ -986,6 +1317,133 @@ function zeigeSkizzenteil(d) {
   }
 }
 
+// ══════════════════════════════════════════════════════════════════════════════════
+// Die Warteschlange (Blatt «Desktop») — was vom iPad kam und darauf wartet, gerechnet
+// zu werden. NICHTS RECHNET VON SELBST (Entscheid 11): Jede Skizze hat ihren eigenen
+// Knopf «Rechnen lassen».
+// ══════════════════════════════════════════════════════════════════════════════════
+
+/** Die Skizzen, die beim ersten Blick schon da waren — alles andere ist «neu». */
+let ersteSicht = null;
+let ersteSichtOrdner = null;
+let schlangenStand = "";
+
+function skizzenStand(d) {
+  return JSON.stringify((d.skizzen || []).map((s) => [s.skizze, s.stand, s.titel, s.ergebnis]));
+}
+
+function zeigeWarteschlange(d) {
+  const ziel = $("schlange");
+  const skizzen = (d.skizzen || []).filter((s) => s && s.skizze);
+  schlangenStand = skizzenStand(d);
+  if (ersteSicht === null || ersteSichtOrdner !== d.ordner) {
+    ersteSicht = new Set(skizzen.map((s) => s.skizze));
+    ersteSichtOrdner = d.ordner;
+  }
+  // DIE NEUESTE OBEN — die Mappe fuehrt sie in der Reihenfolge des Eingangs.
+  const offen = skizzen.filter((s) => s.stand === "offen").reverse();
+  $("schlangenzahl").textContent = String(offen.length);
+  $("ebenenzeile").hidden = offen.length < 2;
+  ziel.replaceChildren();
+  ziel.className = "schlange";
+  if (!offen.length) {
+    ziel.append(feld("div", "leise", "Keine Skizze wartet. Was vom iPad kommt, erscheint hier."));
+  }
+  for (const s of offen) {
+    const eintrag = feld("div", "eintrag");
+    const marke = feld("img", "marke");
+    marke.src = bildweg(d.ordner, s.skizze);
+    marke.alt = s.skizze;
+    marke.loading = "lazy";
+    const rechts = feld("div");
+    const kopf = feld("div");
+    const wahl = feld("input");
+    wahl.type = "checkbox";
+    wahl.dataset.skizze = s.skizze;
+    wahl.className = "ebenenwahl";
+    wahl.title = "für eine Ebenen-Reihe wählen";
+    kopf.append(wahl, document.createTextNode(" "));
+    kopf.append(feld("span", "name-titel", s.titel || s.skizze));
+    if (!ersteSicht.has(s.skizze)) kopf.append(feld("span", "neu", "neu"));
+    rechts.append(kopf);
+    rechts.append(feld("div", "satz",
+      (s.titel ? s.skizze + " · " : "") + (s.ueber ? "über " + s.ueber : "ohne Unterlage") +
+      (s.erzeugt ? " · abgelegt " + s.erzeugt : "")));
+    const anweisung = feld("input", "anweisung");
+    anweisung.value = s.bemerkung || "";
+    anweisung.placeholder = "Was sich am Bild ändern soll (ohne Angabe gilt die Bemerkung)";
+    const zeile = feld("div", "knopfzeile");
+    const entwurfWahl = feld("input");
+    entwurfWahl.type = "checkbox";
+    const entwurfLabel = feld("label", "leise");
+    entwurfLabel.append(entwurfWahl, document.createTextNode(" Entwurf"));
+    const los = feld("button", null, "Rechnen lassen");
+    los.type = "button";
+    los.addEventListener("click", () =>
+      skizzeRechnen(s.skizze, anweisung.value.trim() || null, entwurfWahl.checked));
+    zeile.append(los, entwurfLabel);
+    rechts.append(anweisung, zeile, benennFeld(d, "skizze", s));
+    eintrag.append(marke, rechts);
+    ziel.append(eintrag);
+  }
+
+  // WAS SCHON GERECHNET IST — kurz, mit dem Hinweis, wenn die Skizze nicht ankam.
+  const fertig = skizzen.filter((s) => s.stand === "gerechnet").reverse();
+  for (const s of fertig) {
+    const erg = Array.isArray(s.ergebnis) ? s.ergebnis[s.ergebnis.length - 1] : s.ergebnis;
+    const bild = (d.bilder || []).find((b) => b.bild === erg);
+    const z = feld("div", "satz", "gerechnet: " + (s.titel || s.skizze) + " → " + (erg || "—"));
+    ziel.append(z);
+    if (bild && bild.skizze_nicht_angekommen === true) {
+      ziel.append(feld("div", "meldung fehler",
+        bild.skizze_hinweis || "Die Skizze ist beim Bildmodell nicht angekommen."));
+    }
+  }
+}
+
+async function skizzeRechnen(skizze, anweisung, entwurf) {
+  $("stand").textContent = "startet …";
+  try {
+    const antwort = await fetch("/api/rechne-skizze", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ordner: $("ordner").value.trim(), skizze, anweisung, entwurf}),
+    });
+    const d = await antwort.json();
+    if (d.fehler) { $("stand").textContent = d.fehler; return; }
+    $("stand").textContent = "rechnet …";
+    fortschrittHolen();
+  } catch (f) {
+    $("stand").textContent = "Der Lauf liess sich nicht starten: " + f;
+  }
+}
+
+function ebenenRechnen() {
+  const namen = [...document.querySelectorAll(".ebenenwahl")]
+    .filter((e) => e.checked).map((e) => e.dataset.skizze);
+  if (namen.length < 2) {
+    $("stand").textContent = "Für eine Ebenen-Reihe mindestens zwei Skizzen wählen.";
+    return;
+  }
+  // KEINE GEMEINSAME ANWEISUNG: Jede Ebene nimmt ihre eigene Bemerkung.
+  skizzeRechnen(namen, null, false);
+}
+
+/** Alle zehn Sekunden nachsehen, ob vom iPad etwas angekommen ist — nur die
+ *  Warteschlange wird neu gezeichnet, nicht die Zeichenflaeche (dort koennte gerade
+ *  jemand zeichnen). */
+async function nachsehen() {
+  if (document.hidden || laufUhr || ersteSicht === null) return;
+  try {
+    const d = await (await fetch("/api/projekt?ordner=" +
+                                 encodeURIComponent($("ordner").value.trim()))).json();
+    if (d.fehler) return;
+    if (skizzenStand(d) !== schlangenStand) zeigeWarteschlange(d);
+  } catch (f) {
+    // STILL WAERE FALSCH: Wer wartet, soll sehen, dass nicht mehr nachgesehen wird.
+    $("schlangenzahl").title = "Nachsehen gescheitert: " + f;
+  }
+}
+
 function unterlageWechseln() {
   const name = $("unterlage").value;
   if (!name) return;
@@ -995,6 +1453,10 @@ function unterlageWechseln() {
 async function skizzeAblegen() {
   if (!tafel.gezeichnet) { $("stand").textContent = "Es ist nichts gezeichnet."; return; }
   const daten = $("tafel").toDataURL("image/png").split(",")[1];
+  // DERSELBE SCHLUESSEL, BIS DIE ZEICHNUNG ANGEKOMMEN IST: Ein zweiter Klick auf «In die
+  // Mappe legen», waehrend der erste noch unterwegs ist, legt keine zweite Datei an —
+  // der Server erkennt den Schluessel und antwortet wie beim ersten Mal.
+  if (!tafel.schluessel) tafel.schluessel = neuerSchluessel();
   $("stand").textContent = "legt ab …";
   try {
     const antwort = await fetch("/api/skizze", {
@@ -1003,6 +1465,7 @@ async function skizzeAblegen() {
         ordner: $("ordner").value.trim(),
         ueber: $("unterlage").value,
         png_base64: daten,
+        schluessel: tafel.schluessel,
       }),
     });
     const d = await antwort.json();
@@ -1035,6 +1498,9 @@ $("risszurueck").addEventListener("click", () => {
 });
 $("rissuebernehmen").addEventListener("click", rissUebernehmen);
 
+$("abbrechen").addEventListener("click", abbrechen);
+$("ebenenRechnen").addEventListener("click", ebenenRechnen);
+setInterval(nachsehen, 10000);
 $("laden").addEventListener("click", laden);
 $("rechnen").addEventListener("click", rechnen);
 $("ordner").addEventListener("keydown", (e) => { if (e.key === "Enter") laden(); });

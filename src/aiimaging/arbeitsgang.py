@@ -39,6 +39,16 @@ Das Urteil kommt aus dem QA-Knoten desselben Laufs; gibt es keinen, steht ``None
 Nicht «nichts», sondern ``None`` mit Grund. Ein Bild ohne Eintrag wäre später von einem
 Bild ohne Prüfung nicht zu unterscheiden — und beide sähen aus wie ein bestandenes.
 
+Was die App braucht (22.09.2026, Entscheide 16, 30, 31, 32)
+------------------------------------------------------------
+Die iPad-App zeigt, was in der Mappe steht — was die Mappe nicht trägt, kann sie nicht
+zeigen. Seither trägt jedes Bild **Score und Schwelle** seiner Prüfung (``None``: nicht
+gemessen), :func:`rechne` kennt den **Entwurf** (``entwurf=True``), die
+**Variantenreihe** über Startwerte (``varianten=n``) und das **Anhalten**
+(``abbrechen=``), und :func:`rechne_skizze` rechnet eine abgelegte Skizze — oder mehrere
+als Ebenen-Reihe. Bewacht in ``tests/test_mappe_fuer_die_app.py``, über diesen Weg und
+mit der Mappe frisch von der Platte.
+
 Regel 4: Aufrufbar aus reinem Python. Die Ausführer der Kette lassen sich übergeben; ohne
 GPU und ohne Blender läuft dieses Modul mit Attrappen vollständig durch.
 """
@@ -46,17 +56,24 @@ from __future__ import annotations
 
 import copy
 import datetime
+import inspect
 import json
+import math
+import secrets
 import time
 from pathlib import Path
 
-from aiimaging import importeur, kette, projekt
-# DIE KLASSE DIREKT, nicht das Modul: `graph` heisst hier unten der GRAPH
+from aiimaging import importeur, kette, projekt, render
+# DIE KLASSEN DIREKT, nicht das Modul: `graph` heisst hier unten der GRAPH
 # dieses Laufs, und ein Modulname, den eine lokale Zuweisung verdeckt, ist
 # ein Fehler, der erst beim Aufruf auffaellt.
-from aiimaging.graph import ArtefaktCache
+from aiimaging.graph import ArtefaktCache, Graph, Knoten
+# DERSELBE GRUND: `varianten` heisst in `rechne` die ANZAHL der Laeufe.
+from aiimaging.varianten import VariantenError, saatreihe
 
-__all__ = ["ANGABEFELDER", "ArbeitsgangError", "MESSFELDER", "lege_an", "rechne"]
+__all__ = ["ANGABEFELDER", "ArbeitsgangError", "ENTWURF_SCHRITTE", "ENTWURF_VERMERK",
+           "MESSFELDER", "VARIANTEN_EBENEN", "VARIANTEN_HOECHSTENS",
+           "VARIANTEN_STARTWERTE", "lege_an", "rechne", "rechne_skizze"]
 
 
 class ArbeitsgangError(ValueError):
@@ -195,14 +212,24 @@ def _urteil_zu(graph, knoten_ergebnisse: dict, bild_knoten: str):
                       "NICHT GEMESSEN — weder bestanden noch durchgefallen."), None
 
     urteile = []
+    angehalten = []
     for k in passende:
         eintrag = knoten_ergebnisse.get(k) or {}
+        if eintrag.get("status") == kette.STATUS_ABGEBROCHEN:
+            angehalten.append(k)
         if eintrag.get("status") != kette.STATUS_OK:
             continue
         ausgaben = eintrag.get("ausgaben") or {}
         if "bestanden" in ausgaben:
             urteile.append((k, ausgaben["bestanden"], _grund_der_pruefung(k, ausgaben)))
 
+    if not urteile and angehalten:
+        # ANGEHALTEN, BEVOR GEPRUEFT WURDE (Entscheid 31) — ein eigener Satz, weil «nicht
+        # gelaufen» hier einen Grund hat, den der Mensch selbst gesetzt hat.
+        return None, (f"Der Lauf wurde angehalten, bevor die Prüfung "
+                      f"{', '.join(angehalten)} an der Reihe war. Das Bild ist fertig, "
+                      f"geprüft wurde es nicht. NICHT GEMESSEN — weder bestanden noch "
+                      f"durchgefallen."), None
     if not urteile:
         return None, (f"Die Prüfung {', '.join(passende)} hat in diesem Lauf kein Urteil "
                       f"geliefert (nicht gelaufen, übersprungen oder gescheitert). "
@@ -470,8 +497,35 @@ SPEICHER_IN_DER_MAPPE = "in-der-mappe"
 SPEICHERORDNER = "speicher"
 
 
+#: Wieviele Diffusionsschritte ein **Entwurfslauf** höchstens rechnet (Entscheid 30:
+#: «schnell, ohne Geometrieprüfung»).
+#:
+#: **GESETZT, nicht gemessen** (22.09.2026). Acht Schritte sind weniger als die Hälfte der
+#: Vorgabe von :func:`aiimaging.kette.baue_kette` (20); wie viel Zeit das auf der
+#: HomeStation spart und wie das Bild dabei aussieht, ist **am Gerät unbestätigt**. Die
+#: Zahl steht an einer Stelle, damit sie nach der Messung an einer Stelle geändert wird.
+ENTWURF_SCHRITTE = 8
+
+#: Der Vermerk an jedem Bild eines Entwurfslaufs — das blaue Zeichen aus Entscheid 30.
+#: Fester Anfang, damit eine Anzeige ihn erkennt, ohne den Rest zu deuten.
+ENTWURF_VERMERK = "Entwurf — nicht geprüft"
+
+#: Die zwei Arten einer Variantenreihe (Entscheid 32: «drei Startwerte oder drei
+#: Ebenen»). Startwerte rechnet :func:`rechne`, Ebenen :func:`rechne_skizze`.
+VARIANTEN_STARTWERTE = "startwerte"
+VARIANTEN_EBENEN = "ebenen"
+VARIANTEN_ARTEN = (VARIANTEN_STARTWERTE, VARIANTEN_EBENEN)
+
+#: Wieviele Varianten eine Reihe höchstens hat. **GESETZT, nicht gemessen:** Entscheid 18
+#: zeigt drei nebeneinander; acht lassen Luft für einen Vergleich, und eine Bestellung von
+#: tausend über das Netz hielte die HomeStation nicht für Stunden fest.
+VARIANTEN_HOECHSTENS = 8
+
+
 def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None,
-           cache=SPEICHER_IN_DER_MAPPE, melder=None, **kettenargumente) -> dict:
+           cache=SPEICHER_IN_DER_MAPPE, melder=None, abbrechen=None,
+           entwurf: bool = False, varianten: int | None = None,
+           art: str = VARIANTEN_STARTWERTE, **kettenargumente) -> dict:
     """Die Kette für ein Projekt fahren — **und jedes Bild samt Urteil eintragen.**
 
     Args:
@@ -506,26 +560,50 @@ def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None,
             gerechnet wurde. Was ein Blender-Lauf meldet, ist dagegen ein *Lebens*zeichen
             und kein Fortschritt — die beiden dürfen in einer Anzeige nie gleich aussehen.
 
+            Bei einer Variantenreihe kommt vor jeder Variante
+            ``{"art": "variante_beginnt", "nummer": i, "von": n, "gruppe": id}`` — die
+            Knotennummern beginnen danach wieder bei eins.
+
             **Der Zähler wird nur dann eingehängt, wenn kein eigener ``ausfuehrer``
             übergeben ist.** Wer die Tabelle selbst mitbringt, hat seine Gründe, und eine
             stille Ersetzung darin wäre genau die Sorte Überraschung, gegen die
             ``fuehre_aus`` die Tabelle ausdrücklich *ersetzen* statt ergänzen lässt.
+        abbrechen: ``() -> bool``, gefragt vor jedem Knoten (Entscheid 31). Siehe
+            :func:`aiimaging.kette.fuehre_aus`. Sagt sie ``True``, läuft kein Knoten mehr
+            und **keine weitere Variante**; was fertig ist, wird wie immer vermerkt, und
+            der Lauf steht mit ``abgebrochen: True`` in der Mappe.
+        entwurf: ``True`` rechnet einen **Entwurf** (Entscheid 30): höchstens
+            :data:`ENTWURF_SCHRITTE` Schritte und **keine Geometrieprüfung**. Jedes Bild
+            trägt ``entwurf: True``, das Urteil ``None`` und als Grund
+            :data:`ENTWURF_VERMERK` — nie «bestanden». ``qa=True`` im selben Aufruf wird
+            abgewiesen; ein ``qa`` aus den Einstellungen der Mappe wird überstimmt.
+        varianten: ``None`` für einen Lauf, sonst 2 … :data:`VARIANTEN_HOECHSTENS` Läufe
+            als **eine Variantenreihe** (Entscheid 32).
+        art: Die Art der Reihe. Hier nur :data:`VARIANTEN_STARTWERTE`: Die Läufe
+            unterscheiden sich **nur im Startwert**, nach der Vorschrift von
+            :func:`aiimaging.varianten.saatreihe` (``seed``, ``seed+1``, …). Ebenen
+            rechnet :func:`rechne_skizze`.
         **kettenargumente: alles Weitere an :func:`aiimaging.kette.baue_kette` (Prompt,
             Seed, Auflösung …). Was im Projekt unter ``einstellungen`` steht, wird
             **vorangestellt** und hier überschrieben — *die Mappe trägt die Vorgabe, der
             Aufruf das Besondere.*
 
     Returns:
-        ``{projekt, lauf, vermerkt, modell_stand, pfad}``. ``vermerkt`` ist die Zahl der
-        eingetragenen Bilder. Das Projekt ist **geschrieben**.
+        ``{projekt, lauf, laeufe, vermerkt, bilder, modell_stand, pfad, abgebrochen,
+        variantengruppe, varianten_nicht_begonnen}``. ``lauf`` ist der letzte
+        Kettenlauf, ``laeufe`` alle (einer je Variante); ``vermerkt`` ist die Zahl der
+        eingetragenen Bilder, ``bilder`` ihre Namen. ``variantengruppe`` ist die Kennung
+        der Reihe oder ``None``. Das Projekt ist **geschrieben**.
 
     Raises:
-        ArbeitsgangError: Kein Modell zum Rechnen, oder das Modell hat sich geändert und
-            ``trotz_aenderung`` ist nicht gesetzt.
+        ArbeitsgangError: Kein Modell zum Rechnen, das Modell hat sich geändert und
+            ``trotz_aenderung`` ist nicht gesetzt, oder Entwurf/Varianten sind so nicht
+            bestellbar.
 
     **Warum ein Lauf, der scheitert, trotzdem eingetragen wird.** Ein gescheiterter Lauf
     ist eine Tatsache über dieses Projekt. Ihn wegzuwerfen hiesse, dass zwei Zustände
-    gleich aussehen: «wurde nie versucht» und «wurde versucht und ging nicht».
+    gleich aussehen: «wurde nie versucht» und «wurde versucht und ging nicht». Dasselbe
+    gilt für einen abgebrochenen.
 
     **Und was der Lauf gemessen hat, wird mitgeschrieben** (22.09.2026). Im Lauf stehen
     ``modus_abweichungen`` (die Fälle, in denen etwas anderes gerechnet als bestellt
@@ -534,17 +612,106 @@ def rechne(wurzel, *, trotz_aenderung: bool = False, ausfuehrer=None,
     jedem eingetragenen Bild — **als eigene Kopie**, nicht als dasselbe Objekt. Siehe
     :data:`MESSFELDER`. Lizenz und Mängel der Bildstufe stehen im Lauf unter ``angaben``
     und am Bild unter ``herkunft.lizenz`` / ``herkunft.maengel``; siehe
-    :data:`ANGABEFELDER`.
+    :data:`ANGABEFELDER`. Score und Schwelle der Prüfung stehen am Bild unter ``score``
+    und ``schwelle``.
     """
+    _pruefe_varianten(varianten, art)
+    if art == VARIANTEN_EBENEN:
+        raise ArbeitsgangError(
+            "Ebenen-Varianten entstehen aus Skizzen — eine je Ebene. Sie rechnet "
+            "rechne_skizze mit einer Liste von Skizzen; rechne kennt nur Startwerte.")
+    return _unter_sperre(
+        wurzel, trotz_aenderung=trotz_aenderung, ausfuehrer=ausfuehrer, cache=cache,
+        melder=melder, abbrechen=abbrechen, entwurf=entwurf, varianten=varianten,
+        skizzen=None, anweisung=None, kettenargumente=kettenargumente)
+
+
+def rechne_skizze(wurzel, skizze, *, anweisung: str | None = None,
+                  trotz_aenderung: bool = False, ausfuehrer=None,
+                  cache=SPEICHER_IN_DER_MAPPE, melder=None, abbrechen=None,
+                  entwurf: bool = False, **kettenargumente) -> dict:
+    """Eine abgelegte Skizze **rechnen lassen** — sie wird zum Eingangsbild eines
+    Nachrenders (:func:`aiimaging.kette.haenge_nachrender_an`).
+
+    Args:
+        wurzel: Der Projektordner.
+        skizze: Der Dateiname einer Skizze der Mappe (``skizzen[].skizze``) — oder eine
+            **Liste** von zweien bis :data:`VARIANTEN_HOECHSTENS`: Dann entsteht je Skizze
+            ein Lauf, und alle Bilder tragen eine gemeinsame Variantengruppe der Art
+            :data:`VARIANTEN_EBENEN` (Entscheid 32, «drei Ebenen»).
+        anweisung: Was sich am Bild ändern soll — der Prompt des Nachrenders. ``None``
+            nimmt die ``bemerkung`` der Skizze; ist die leer, wird abgewiesen.
+            **Bewusst nicht** der Prompt der Mappe: Der beschreibt, was entstehen soll,
+            diese Anweisung, was sich ändern soll (siehe ``haenge_nachrender_an``).
+        trotz_aenderung, ausfuehrer, cache, melder, abbrechen, entwurf: wie bei
+            :func:`rechne`.
+        **kettenargumente: wie bei :func:`rechne`. Backbone, Startwert, Schritte,
+            ControlNet-Stärke und ``denoise`` gehen an den Nachrender.
+
+    Returns:
+        Wie :func:`rechne`.
+
+    Raises:
+        ArbeitsgangError: Die Skizze steht nicht (oder mehrfach) in der Mappe, ist
+            verworfen, ihre Datei fehlt, oder es gibt keine Anweisung — sowie alles, was
+            :func:`rechne` abweist.
+
+    **Der Graph** ist ``geometrie → multipass → skizze-bildquelle → skizze-nachrender``,
+    ohne ``geometrie → render``: Das Bild aus dem Modell braucht dieser Lauf nicht, und
+    es zu rechnen kostete eine volle Bildstufe. Die Prüfung hängt an, wenn sie nicht
+    abgeschaltet ist — sie urteilt auf einer Skizze **«nicht anwendbar»** (Owner-Entscheid
+    19.09.2026), und genau dieser Satz steht dann am Bild.
+
+    **Danach ist die Skizze «gerechnet»** und ihr ``ergebnis`` nennt das Bild — aber nur,
+    wenn eines entstand. Scheitert der Lauf oder wird er angehalten, bleibt sie offen:
+    *gezeichnet ist nicht gerechnet*, und angefangen auch nicht.
+
+    **Auf dem Vorgabemodell kommt die Skizze nicht an** (gemessen, ``auf-20260919-123``).
+    Gerechnet wird trotzdem; der Satz :data:`aiimaging.kette.HINWEIS_SKIZZE_NICHT_ANGEKOMMEN`
+    steht dann zuvorderst in ``herkunft.messung.hinweise`` am Bild.
+    """
+    if isinstance(skizze, (list, tuple)):
+        namen = [str(s) for s in skizze]
+    else:
+        namen = [str(skizze)] if skizze is not None else []
+    if not namen or any(not n.strip() for n in namen):
+        raise ArbeitsgangError("Welche Skizze gerechnet werden soll, ist nicht gesagt.")
+    if len(set(namen)) != len(namen):
+        raise ArbeitsgangError(
+            "Dieselbe Skizze steht zweimal in der Liste. Zwei Ebenen aus derselben "
+            "Zeichnung wären dieselbe Variante unter zwei Namen.")
+    if len(namen) > 1:
+        _pruefe_varianten(len(namen), VARIANTEN_EBENEN)
+    return _unter_sperre(
+        wurzel, trotz_aenderung=trotz_aenderung, ausfuehrer=ausfuehrer, cache=cache,
+        melder=melder, abbrechen=abbrechen, entwurf=entwurf,
+        varianten=len(namen) if len(namen) > 1 else None,
+        skizzen=namen, anweisung=anweisung, kettenargumente=kettenargumente)
+
+
+def _pruefe_varianten(varianten, art) -> None:
+    if art not in VARIANTEN_ARTEN:
+        raise ArbeitsgangError(
+            f"art ist eine aus {', '.join(VARIANTEN_ARTEN)} — war {art!r}.")
+    if varianten is None:
+        return
+    if isinstance(varianten, bool) or not isinstance(varianten, int):
+        raise ArbeitsgangError(
+            f"varianten ist eine ganze Zahl oder None — war {varianten!r}.")
+    if varianten < 2 or varianten > VARIANTEN_HOECHSTENS:
+        raise ArbeitsgangError(
+            f"Eine Variantenreihe hat 2 bis {VARIANTEN_HOECHSTENS} Läufe, bestellt waren "
+            f"{varianten}. Ein einzelner Lauf ist keine Reihe — dafür varianten=None.")
+
+
+def _unter_sperre(wurzel, **angaben) -> dict:
     wurzel = Path(wurzel)
     # DIE SPERRE ZUERST, VOR DEM OEFFNEN. Laege sie spaeter, haette der zweite Lauf die
     # Mappe schon gelesen, bevor der erste sie geschrieben hat — und genau diese Kopie
     # wuerde er am Ende zurueckschreiben.
     sperre = _nimm_sperre(wurzel)
     try:
-        return _rechne_gesperrt(
-            wurzel, trotz_aenderung=trotz_aenderung, ausfuehrer=ausfuehrer, cache=cache,
-            melder=melder, **kettenargumente)
+        return _rechne_gesperrt(wurzel, **angaben)
     finally:
         # AUCH BEIM SCHEITERN. Eine Sperre, die ein abgebrochener Lauf stehenlaesst,
         # blockiert die Mappe fuer Stunden — und der naechste Mensch sieht nur, dass
@@ -579,10 +746,137 @@ def _raeume_der_mappe(p: dict) -> dict | None:
     return einfuhr.get("raeume")
 
 
-def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder,
-                     **kettenargumente) -> dict:
+def _entwurfsargumente(args: dict, kettenargumente: dict) -> dict:
+    """Die Einstellungen eines Entwurfslaufs: keine Prüfung, höchstens
+    :data:`ENTWURF_SCHRITTE` Schritte. Siehe :func:`rechne`."""
+    if kettenargumente.get("qa") is True:
+        raise ArbeitsgangError(
+            "entwurf=True und qa=True im selben Aufruf widersprechen sich: Ein Entwurf "
+            "ist der Lauf OHNE Geometrieprüfung (Entscheid 30). Für ein geprüftes Bild "
+            "ohne entwurf rechnen.")
+    vorgabe = inspect.signature(kette.baue_kette).parameters["schritte"].default
+    schritte = args.get("schritte")
+    try:
+        schritte = vorgabe if schritte is None else int(schritte)
+    except (TypeError, ValueError) as fehler:
+        raise ArbeitsgangError(f"schritte ist keine ganze Zahl: {schritte!r}") from fehler
+    return {**args, "qa": False, "schritte": min(schritte, ENTWURF_SCHRITTE)}
+
+
+def _baue_grundgraph(glb: str, args: dict, p: dict):
+    graph = kette.baue_kette(glb_path=glb, **args)
+    # DIE RAEUME AUS DER MAPPE, ABER NUR BEI EINER INNENBESTELLUNG (Befund 22.09.2026).
+    # Ohne `innenraum` bleiben Graph und Hash genau die bisherigen — sonst rechnete jeder
+    # alte Lauf einer IFC-Mappe neu, nur weil jetzt Raeume in ihr stehen.
+    if args.get("innenraum"):
+        graph = kette.mit_raeumen(graph, _raeume_der_mappe(p))
+    return graph
+
+
+#: Der Namensvorsatz der Knoten eines Skizzenlaufs: ``skizze-bildquelle``,
+#: ``skizze-nachrender``, ``skizze-qa``.
+SKIZZEN_VORSATZ = "skizze"
+
+
+def _skizzengraph(glb: str, args: dict, p: dict, *, pfad: Path, anweisung: str):
+    """``geometrie → multipass → bildquelle(skizze) → nachrender [→ qa]``.
+
+    Der Nachrender übernimmt Backbone, Startwert, Schritte, ControlNet-Stärke,
+    Negativprompt und ``denoise`` aus dem Renderknoten, den :func:`kette.baue_kette` mit
+    denselben Einstellungen gebaut hätte — ausdrücklich übergeben, weil dieser
+    Renderknoten danach aus dem Graphen fällt.
+    """
+    voll = _baue_grundgraph(glb, args, p)
+    vorlage = voll.knoten[kette.KNOTEN_RENDER].params
+    qa_vorlage = voll.knoten.get(kette.KNOTEN_QA)
+    grund = Graph([k for k in voll.knoten.values()
+                   if k.art not in (kette.ART_RENDER, kette.ART_QA)])
+    graph = kette.haenge_nachrender_an(
+        grund, prompt=anweisung, eingangsbild=str(pfad),
+        negativ_prompt=vorlage["negativ_prompt"], backbone=vorlage["backbone"],
+        seed=vorlage["seed"], schritte=vorlage["schritte"],
+        controlnet_staerke=vorlage["controlnet_staerke"], denoise=vorlage["denoise"],
+        id_vorsatz=SKIZZEN_VORSATZ)
+    if qa_vorlage is not None:
+        # DIESELBE PRUEFUNG, auf das neue Bild gerichtet (Slot 0 Soll, Slot 1 Ist). Auf
+        # einer Skizze urteilt sie «nicht anwendbar» — und dieser Satz ist mehr wert als
+        # «in diesem Lauf keine Pruefung», weil er sagt, WARUM.
+        graph = Graph(list(graph.knoten.values()) + [Knoten(
+            id=f"{SKIZZEN_VORSATZ}-{kette.KNOTEN_QA}", art=kette.ART_QA,
+            params=dict(qa_vorlage.params),
+            eingaenge=(kette.KNOTEN_MULTIPASS,
+                       f"{SKIZZEN_VORSATZ}-{kette.KNOTEN_NACHRENDER}"))])
+    return graph
+
+
+def _skizze_der_mappe(p: dict, wurzel: Path, name: str, anweisung) -> tuple[Path, str]:
+    """Die Skizze nachschlagen: ``(pfad, anweisung)`` — oder begründet abweisen."""
+    treffer = [e for e in (p.get("skizzen") or [])
+               if isinstance(e, dict) and e.get("skizze") == name]
+    if len(treffer) != 1:
+        raise ArbeitsgangError(
+            f"Die Skizze {name!r} steht {len(treffer)}-mal in dieser Mappe. Gerechnet wird "
+            f"nur eine, die genau einmal dasteht — bei zweien wäre die Wahl geraten.")
+    eintrag = treffer[0]
+    if eintrag.get("stand") == projekt.SKIZZE_VERWORFEN:
+        raise ArbeitsgangError(
+            f"Die Skizze {name!r} ist verworfen — bewusst liegengelassen. Sie wird nicht "
+            f"still wieder aufgenommen; wer sie doch will, legt sie neu ab.")
+    pfad = projekt.loese_pfad(name, wurzel)
+    if not Path(pfad).is_file():
+        raise ArbeitsgangError(
+            f"Die Datei der Skizze {name!r} liegt nicht in der Mappe. Die Mappe nennt sie, "
+            f"aber es gibt nichts zu rechnen.")
+    text = anweisung if anweisung is not None else eintrag.get("bemerkung")
+    if not isinstance(text, str) or not text.strip():
+        raise ArbeitsgangError(
+            f"Zur Skizze {name!r} fehlt die Anweisung, was sich am Bild ändern soll — "
+            f"weder als anweisung noch als Bemerkung der Skizze. Der Prompt der Mappe "
+            f"wird bewusst nicht genommen: Er beschreibt, was entstehen soll, nicht was "
+            f"sich ändern soll.")
+    return Path(pfad), text
+
+
+def _gruppenkennung(art: str) -> str:
+    # KEIN BENUTZER- UND KEIN RECHNERNAME (Regel 3): Zeit und ein paar Zufallszeichen.
+    zeit = _jetzt_iso().replace("-", "").replace(":", "")
+    return f"{art}-{zeit}-{secrets.token_hex(3)}"
+
+
+def _startwerte(args: dict, n: int) -> list[int]:
+    """Die Startwerte einer Reihe, nach der Vorschrift von :func:`varianten.saatreihe`.
+
+    Die Vorschrift wird **dort** geholt und nicht nachgebaut: ``seed``, ``seed+1``, …,
+    kein Umbruch am Rand. Eine zweite Fassung derselben Regel wäre an einer der beiden
+    Stellen bereits veraltet.
+    """
+    start = args.get("seed")
+    try:
+        start = 0 if start is None else int(start)
+        reihe = saatreihe(
+            render.RenderAuftrag(depth_png="", prompt=str(args.get("prompt") or "")),
+            n, erster_seed=start)
+    except (TypeError, ValueError, VariantenError) as fehler:
+        raise ArbeitsgangError(f"Die Startwerte der Reihe sind so nicht bildbar: "
+                               f"{fehler}") from fehler
+    return [a.seed for a in reihe]
+
+
+def _melde_sicher(melder, ereignis: dict) -> None:
+    if melder is None:
+        return
+    try:
+        melder(ereignis)
+    except Exception:                              # noqa: BLE001 — wie in fuehre_aus
+        pass
+
+
+def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder, abbrechen,
+                     entwurf, varianten, skizzen, anweisung, kettenargumente) -> dict:
     """Der Lauf selbst. Siehe :func:`rechne` — hier steht nur, was **innerhalb** der
     Sperre geschieht."""
+    if entwurf is not True and entwurf is not False:
+        raise ArbeitsgangError(f"entwurf ist True oder False — war {entwurf!r}.")
     auf = projekt.oeffne(wurzel)
     p, stand = auf["projekt"], auf["modell_stand"]
 
@@ -630,13 +924,32 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder,
                 "trägt die Angabe selbst — der Weg über IFC beantwortet die Frage, statt "
                 "sie zu stellen.")
 
-    graph = kette.baue_kette(glb_path=glb, **args)
+    if entwurf:
+        args = _entwurfsargumente(args, kettenargumente)
 
-    # DIE RAEUME AUS DER MAPPE, ABER NUR BEI EINER INNENBESTELLUNG (Befund 22.09.2026).
-    # Ohne `innenraum` bleiben Graph und Hash genau die bisherigen — sonst rechnete jeder
-    # alte Lauf einer IFC-Mappe neu, nur weil jetzt Raeume in ihr stehen.
-    if args.get("innenraum"):
-        graph = kette.mit_raeumen(graph, _raeume_der_mappe(p))
+    # DER PLAN: ein Eintrag je Lauf. Alle Graphen werden VOR dem ersten Lauf gebaut —
+    # ein Baufehler in Variante drei soll nicht erst auffallen, wenn zwei schon gerechnet
+    # sind.
+    plaene = []
+    if skizzen:
+        art = VARIANTEN_EBENEN
+        for name in skizzen:
+            pfad_skizze, text = _skizze_der_mappe(p, wurzel, name, anweisung)
+            plaene.append({"args": args, "skizze": name, "anweisung": text,
+                           "graph": _skizzengraph(glb, args, p, pfad=pfad_skizze,
+                                                  anweisung=text)})
+    elif varianten:
+        art = VARIANTEN_STARTWERTE
+        for startwert in _startwerte(args, varianten):
+            eigene = {**args, "seed": startwert}
+            plaene.append({"args": eigene, "skizze": None, "anweisung": None,
+                           "graph": _baue_grundgraph(glb, eigene, p)})
+    else:
+        art = None
+        plaene.append({"args": args, "skizze": None, "anweisung": None,
+                       "graph": _baue_grundgraph(glb, args, p)})
+
+    gruppe_id = _gruppenkennung(art) if len(plaene) > 1 else None
 
     if cache is SPEICHER_IN_DER_MAPPE:
         cache = ArtefaktCache(wurzel / SPEICHERORDNER)
@@ -647,8 +960,73 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder,
                    kette.ART_RENDER: kette.render_ausfuehrer(
                        schrittzaehler=lambda n: melder({"art": "schritt", "schritt": n}))}
 
-    lauf = kette.fuehre_aus(graph, ausfuehrer=tabelle, cache=cache, melder=melder,
-                            out_dir=str(wurzel / "laeufe"))
+    laeufe, bilder, vermerkt = [], [], 0
+    nicht_begonnen = 0
+    for nummer, plan in enumerate(plaene, start=1):
+        if laeufe and laeufe[-1].get("status") == kette.STATUS_ABGEBROCHEN:
+            # ANGEHALTEN HEISST: AUCH KEINE WEITERE VARIANTE. Sonst liefe nach dem Klick
+            # die naechste Reihe an und wuerde erst an ihrem ersten Knoten gestoppt.
+            nicht_begonnen = len(plaene) - nummer + 1
+            break
+        gruppe = None
+        if gruppe_id is not None:
+            gruppe = {"id": gruppe_id, "art": art, "nummer": nummer, "von": len(plaene)}
+            if art == VARIANTEN_STARTWERTE:
+                gruppe["seed"] = plan["args"].get("seed")
+            if art == VARIANTEN_EBENEN:
+                gruppe["skizze"] = plan["skizze"]
+            _melde_sicher(melder, {"art": "variante_beginnt", "nummer": nummer,
+                                   "von": len(plaene), "gruppe": gruppe_id})
+        lauf = kette.fuehre_aus(plan["graph"], ausfuehrer=tabelle, cache=cache,
+                                melder=melder, abbrechen=abbrechen,
+                                out_dir=str(wurzel / "laeufe"))
+        zahl, namen = _trage_ein(p, wurzel, plan, lauf, stand, entwurf=entwurf,
+                                 gruppe=gruppe)
+        laeufe.append(lauf)
+        bilder.extend(namen)
+        vermerkt += zahl
+        if plan["skizze"] is not None and namen:
+            # GERECHNET HEISST: EIN BILD IST DARAUS ENTSTANDEN. Ohne Bild bleibt die
+            # Skizze, wie sie war — ein gescheiterter oder angehaltener Lauf hat nichts
+            # aus ihr gemacht.
+            projekt.markiere_skizze(p, skizze=plan["skizze"],
+                                    stand=projekt.SKIZZE_GERECHNET, ergebnis=namen[-1])
+
+    pfad = projekt.speichere(p, wurzel)
+    return {"projekt": p, "lauf": laeufe[-1], "laeufe": laeufe, "vermerkt": vermerkt,
+            "bilder": bilder, "modell_stand": stand, "pfad": pfad,
+            "abgebrochen": laeufe[-1].get("status") == kette.STATUS_ABGEBROCHEN,
+            "variantengruppe": gruppe_id, "varianten_nicht_begonnen": nicht_begonnen}
+
+
+def _zahl_zu(knoten_ergebnisse: dict, qa_id: str | None) -> tuple:
+    """``(score, schwelle)`` der Prüfung, die das Urteil gefällt hat — oder ``None``.
+
+    Nur aus **dieser** Prüfung: Eine Zahl aus einer anderen stünde neben einem Urteil,
+    das sie nicht begründet. Was keine endliche Zahl ist (fehlt, Text, ``True``, NaN),
+    wird ``None`` — **nicht gemessen**, nie 0.
+    """
+    if qa_id is None:
+        return None, None
+    ausgaben = (knoten_ergebnisse.get(qa_id) or {}).get("ausgaben") or {}
+
+    def _zahl(wert):
+        if isinstance(wert, bool) or not isinstance(wert, (int, float)):
+            return None
+        return float(wert) if math.isfinite(float(wert)) else None
+
+    return _zahl(ausgaben.get("score")), _zahl(ausgaben.get("schwelle"))
+
+
+def _trage_ein(p: dict, wurzel: Path, plan: dict, lauf: dict, stand, *,
+               entwurf: bool, gruppe: dict | None) -> tuple[int, list[str]]:
+    """Die Bilder eines Kettenlaufs und den Lauf selbst in die Mappe schreiben (im
+    Speicher; geschrieben wird am Ende von :func:`_rechne_gesperrt`).
+
+    Returns:
+        ``(vermerkt, bildnamen)``.
+    """
+    graph, args = plan["graph"], plan["args"]
     knoten_ergebnisse = lauf.get("knoten") or {}
     schichten = kette.schichtbefund(graph, knoten_ergebnisse)
 
@@ -688,7 +1066,7 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder,
     modus_ungemessen = [kid for kid, m in sorted(messungen.items())
                         if m["modus_abweichung"] is None]
 
-    vermerkt = 0
+    vermerkt, namen = 0, []
     for kid in sorted(graph.knoten):
         if not kette._ist_bildart(graph.knoten[kid].art):
             continue
@@ -699,46 +1077,72 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder,
             # Ausgabe hat nichts erzeugt, was in einer Bildliste stehen koennte. Dass er
             # lief und scheiterte, steht im Lauf, und der Lauf wird mitgeschrieben.
             continue
+        if plan["skizze"] is not None and graph.knoten[kid].art == kette.ART_BILDQUELLE:
+            # DIE SKIZZE SELBST IST KEIN ERZEUGTES BILD. Die Bildquelle reicht sie nur
+            # herein (als Kopie im Arbeitsordner); in der Mappe steht sie schon unter
+            # `skizzen`. Als Bild vermerkt, stuende dieselbe Zeichnung zweimal da.
+            continue
 
-        urteil, grund, qa_id = _urteil_zu(graph, knoten_ergebnisse, kid)
+        if entwurf:
+            # ENTWURF — NICHT GEPRUEFT (Entscheid 30). Der Graph hat keine Pruefung; das
+            # Urteil ist darum None, und der Grund sagt, dass es ein Entwurf ist und
+            # nicht bloss «keine Pruefung in diesem Lauf».
+            urteil, qa_id = None, None
+            grund = (f"{ENTWURF_VERMERK}: schnell gerechnet, ohne Geometrieprüfung "
+                     f"(Entscheid 30). NICHT GEMESSEN — weder bestanden noch "
+                     f"durchgefallen.")
+        else:
+            urteil, grund, qa_id = _urteil_zu(graph, knoten_ergebnisse, kid)
+        score, schwelle = _zahl_zu(knoten_ergebnisse, qa_id)
         felder = schichten.get(kid) or {}
+        herkunft = {
+            "knoten": kid,
+            "grund": grund,
+            "urteil_von": qa_id,
+            "backbone": args.get("backbone"),
+            "prompt": args.get("prompt"),
+            "seed": args.get("seed"),
+            # DER MODELLSTAND GEHOERT AN JEDES BILD, nicht nur in den Lauf. Wer
+            # spaeter ein einzelnes Bild ansieht, sieht sonst nicht, dass es gegen
+            # ein inzwischen geaendertes Modell gerechnet wurde.
+            "modell_stand": stand,
+            # WAS DIESER KNOTEN GEMESSEN HAT, AN SEINEM BILD. Wer ein einzelnes Bild
+            # ansieht, muss sehen koennen, dass es als `txt2img` entstand, obwohl
+            # `image_edit` bestellt war — sonst sieht ein entwertetes Bild aus wie
+            # jedes andere.
+            #
+            # EINE EIGENE KOPIE, und das ist ein gefangener Fehler (22.09.2026):
+            # `projekt.vermerke_bild` kopiert die Herkunft nur flach. Ohne Kopie hier
+            # war diese Messung DASSELBE Objekt wie `lauf["messungen"][kid]` — wer
+            # sie am Bild berichtigte, schrieb still den Lauf mit um, und umgekehrt.
+            "messung": copy.deepcopy(messungen.get(kid)),
+            # UNTER WELCHER LIZENZ DAS BILD ENTSTAND, und was am Auftrag bemaengelt
+            # wurde — siehe `ANGABEFELDER`. Wieder als eigene Kopie.
+            "lizenz": copy.deepcopy(angaben[kid]["lizenz"]),
+            "maengel": copy.deepcopy(angaben[kid]["maengel"]),
+        }
+        if plan["skizze"] is not None:
+            # WORAUS ES ENTSTAND. Die Skizze nennt ihr Bild (`ergebnis`), das Bild seine
+            # Skizze — ein Verweis in nur einer Richtung waere von der anderen Seite
+            # nicht zu finden.
+            herkunft["skizze"] = plan["skizze"]
+            herkunft["anweisung"] = plan["anweisung"]
+        name = projekt.pfad_fuer_die_mappe(bild, wurzel)
         projekt.vermerke_bild(
             # RELATIV ZUR MAPPE — zum dritten Mal derselbe Grund (Beweis 31, 21.09.2026):
             # Ein absoluter Pfad ueberlebt die Saeuberung nach Regel 3 nicht. Und hier
-            # haengt mehr daran als die Lesbarkeit: Die Oberflaeche liefert nur Bilder
+            # haengt mehr daran als die Lesbarkeit: Die Flaeche liefert nur Bilder
             # AUS DEM PROJEKTORDNER aus und kennt sie am relativen Namen. Ein absoluter
             # Name waere dort gar kein Bild.
-            p, bild=projekt.pfad_fuer_die_mappe(bild, wurzel),
+            p, bild=name,
             schicht=felder.get(kette.FELD_SCHICHT, kette.SCHICHT_GEOMETRIE),
             urteil=urteil,
             basis=felder.get(kette.FELD_BASIS),
-            herkunft={
-                "knoten": kid,
-                "grund": grund,
-                "urteil_von": qa_id,
-                "backbone": args.get("backbone"),
-                "prompt": args.get("prompt"),
-                "seed": args.get("seed"),
-                # DER MODELLSTAND GEHOERT AN JEDES BILD, nicht nur in den Lauf. Wer
-                # spaeter ein einzelnes Bild ansieht, sieht sonst nicht, dass es gegen
-                # ein inzwischen geaendertes Modell gerechnet wurde.
-                "modell_stand": stand,
-                # WAS DIESER KNOTEN GEMESSEN HAT, AN SEINEM BILD. Wer ein einzelnes Bild
-                # ansieht, muss sehen koennen, dass es als `txt2img` entstand, obwohl
-                # `image_edit` bestellt war — sonst sieht ein entwertetes Bild aus wie
-                # jedes andere.
-                #
-                # EINE EIGENE KOPIE, und das ist ein gefangener Fehler (22.09.2026):
-                # `projekt.vermerke_bild` kopiert die Herkunft nur flach. Ohne Kopie hier
-                # war diese Messung DASSELBE Objekt wie `lauf["messungen"][kid]` — wer
-                # sie am Bild berichtigte, schrieb still den Lauf mit um, und umgekehrt.
-                "messung": copy.deepcopy(messungen.get(kid)),
-                # UNTER WELCHER LIZENZ DAS BILD ENTSTAND, und was am Auftrag bemaengelt
-                # wurde — siehe `ANGABEFELDER`. Wieder als eigene Kopie.
-                "lizenz": copy.deepcopy(angaben[kid]["lizenz"]),
-                "maengel": copy.deepcopy(angaben[kid]["maengel"]),
-            })
+            herkunft=herkunft,
+            score=score, schwelle=schwelle, entwurf=entwurf,
+            variantengruppe=gruppe)
         vermerkt += 1
+        namen.append(name)
 
     p.setdefault("laeufe", []).append({
         "status": lauf.get("status"),
@@ -758,7 +1162,12 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder,
         # LIZENZ UND MAENGEL JE BILDKNOTEN, auch ohne Bild (22.09.2026). Siehe
         # `ANGABEFELDER`.
         "angaben": angaben,
+        # ANGEHALTEN (Entscheid 31) — als eigenes Feld und nicht nur im Status, damit
+        # «abgebrochen» und «gescheitert» sich nicht ein Wort teilen muessen.
+        "abgebrochen": lauf.get("status") == kette.STATUS_ABGEBROCHEN,
+        "abgebrochene_knoten": list(lauf.get("abgebrochen") or []),
+        "entwurf": entwurf,
+        "variantengruppe": dict(gruppe) if gruppe else None,
+        "skizze": plan["skizze"],
     })
-    pfad = projekt.speichere(p, wurzel)
-    return {"projekt": p, "lauf": lauf, "vermerkt": vermerkt,
-            "modell_stand": stand, "pfad": pfad}
+    return vermerkt, namen
