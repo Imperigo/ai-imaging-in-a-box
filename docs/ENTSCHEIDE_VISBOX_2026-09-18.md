@@ -468,6 +468,38 @@ Vorarbeit für drüben — *sie ist die Fläche des Programms, das abgegeben wir
 
 ---
 
+## E23 · Nach der Abgabe: zurück in KosmoOrbit — die iPad-App wird KosmoSketch
+
+**Owner-Entscheid 22.09.2026**, im Wortlaut:
+
+> *«Nach Abgabe Vertiefungsarbeit wird Visbox App Desktop und iPad-Version komplett wieder
+> in KosmoOrbit-Softwares integriert, die Visbox-iPad-App wird wieder zur KosmoSketch-App.»*
+
+**Das ergänzt E22, es hebt ihn nicht auf.** Bis zur Abgabe bleiben die Flächen getrennt;
+die Arbeit beschreibt Visbox. Danach ist Visbox ein Teil von KosmoOrbit.
+
+**Was daraus schon heute folgt:** Name, Kennung und Dienstname der App stehen an **einer**
+Stelle; die Wege zwischen App und Rechner sind in `docs/VISBOX_PROTOKOLL.md` beschrieben,
+nicht nur im Code; und kein Teil geht davon aus, nur Visbox zu sein. *Eine Integration,
+die erst nach der Abgabe bedacht wird, beginnt mit einem Umbau.*
+
+## E24 · Hineinskizzieren auf dem Vorgabemodell: weiter rechnen, mit Hinweis
+
+**Owner-Entscheid 22.09.2026.** Gemessen ist, dass das Vorgabemodell `z-image-turbo` kein
+Ausgangsbild annimmt (`auf-20260919-123`, bestätigt `auf-20260922-137`). Ein Nachrender
+dort rechnet aus Tiefenkarte und Text; die Skizze steckt nicht im Bild.
+
+Entschieden: **nicht sperren, sondern rechnen und es sagen.** Der Nachrender setzt den
+Satz «SKIZZE NICHT ANGEKOMMEN …» mit Beleg als ersten Hinweis; er reist bis an das Bild in
+der Mappe. Bewacht in `tests/test_bildeingang_register.py`, samt Gegenprobe für einen
+ungemessenen Bildeingang (dort kein solcher Satz).
+
+**Kippt an:** einem Modell, das Tiefe **und** Skizze annimmt. Meldet die Werkstatt, dass
+`qwen-image-2512` das kann, rechnet es **nur** das Hineinskizzieren; `z-image-turbo`
+bleibt Vorgabe (Owner, 22.09.2026).
+
+---
+
 # Was ich nicht entscheiden kann
 
 ## E20 · Zwei Schichten — **Geometrielayer, und ein AI-Imaging-Layer darauf**

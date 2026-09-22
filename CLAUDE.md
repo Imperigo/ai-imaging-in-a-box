@@ -34,6 +34,16 @@ aber ausschliesslich unter drei Auflagen:
 Dieselben drei Auflagen gelten für GPL-Komponenten, die als eigenständiges Programm
 aufgerufen werden (Blender, IfcOpenShell) — siehe Regel 2.
 
+**Präzisierung Schriften (Owner-Entscheid 2026-09-22):** Schriftdateien unter der **SIL
+Open Font License (OFL-1.1)** sind zugelassen — ausschliesslich Schriften (heute IBM Plex
+und Instrument Serif für die Oberflächen), unverändert und mit ihrer Lizenz im `NOTICE`
+deklariert. Die OFL ist permissiv, stand aber nicht in der Liste oben; sie gilt nur für
+Schriften, nicht für Code.
+
+**Plattform-Bausteine:** Die Apple-Frameworks der iPad-App (SwiftUI, PencilKit, Network,
+Security) gehören zur Plattform wie das Betriebssystem und werden nicht mitgeliefert. Sie
+stehen als Vermerk im `NOTICE`, nicht als Abhängigkeit.
+
 ### 2 · Blender nur als externer Prozess, nie als Add-on
 
 Blender ist GPL. Die saubere Grenze ist der **Prozessaufruf**, nicht der Import.

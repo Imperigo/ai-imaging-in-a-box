@@ -247,3 +247,49 @@ def test_ein_beleg_ohne_auftragskennung_wird_abgewiesen(eigenes_register):
             backbone.BACKBONES["flux2-klein-4b"], name="probe-ohne-kennung",
             bildeingang_traegt=False, bildeingang_beleg="am Geraet gesehen",
             bildeingang_grund="Probeeintrag"))
+
+
+def test_der_nachrender_sagt_zuvorderst_dass_die_skizze_nicht_ankam(tmp_path):
+    """Owner-Entscheid 22.09.2026: auf dem Vorgabemodell weiter rechnen — mit Hinweis.
+
+    Derselbe Weg wie oben (Kette, Nachrender, ``fuehre_aus``). Der Satz muss als ERSTER
+    Hinweis stehen und den Beleg nennen; sonst sieht ein reiner Text-zu-Bild-Lauf aus wie
+    eine Bearbeitung der Skizze. Gerechnet wird trotzdem: Status ok, ein Bild liegt da.
+    """
+    zeichnung = _png(tmp_path / "zeichnung.png", werte=(1, 1, 1, 1))
+    (tmp_path / "m.glb").write_text("glb", encoding="utf-8")
+    graph = haenge_nachrender_an(
+        baue_kette(glb_path=str(tmp_path / "m.glb"), up_axis="Y", prompt="ein Haus",
+                   qa=False),
+        prompt="ein Balkon dazu", eingangsbild=str(zeichnung))
+
+    lauf = fuehre_aus(graph, cache=ArtefaktCache(tmp_path / "cache"),
+                      ausfuehrer=_tabelle(_Modell()), out_dir=tmp_path / "out")
+    assert lauf["status"] == "ok", lauf["error"]
+
+    nachrender = [kid for kid, k in graph.knoten.items() if k.art == ART_NACHRENDER][0]
+    ausgaben = lauf["knoten"][nachrender]["ausgaben"]
+    assert ausgaben.get("bild_png"), "weiter rechnen heisst: ein Bild entsteht"
+    hinweise = list(ausgaben["hinweise"])
+    assert hinweise and hinweise[0].startswith("SKIZZE NICHT ANGEKOMMEN"), hinweise
+    assert BELEG_Z_IMAGE in hinweise[0]
+
+
+def test_ein_ungemessener_bildeingang_behauptet_nicht_dass_die_skizze_fehlt(tmp_path):
+    """Gegenprobe: ``traegt is None`` heisst ungemessen — nicht «kommt nicht an»."""
+    zeichnung = _png(tmp_path / "zeichnung.png", werte=(1, 1, 1, 1))
+    (tmp_path / "m.glb").write_text("glb", encoding="utf-8")
+    graph = haenge_nachrender_an(
+        baue_kette(glb_path=str(tmp_path / "m.glb"), up_axis="Y", prompt="ein Haus",
+                   qa=False, backbone="flux2-klein-4b"),
+        prompt="ein Balkon dazu", eingangsbild=str(zeichnung), backbone="flux2-klein-4b")
+
+    lauf = fuehre_aus(graph, cache=ArtefaktCache(tmp_path / "cache"),
+                      ausfuehrer=_tabelle(_Modell()), out_dir=tmp_path / "out")
+    assert lauf["status"] == "ok", lauf["error"]
+    nachrender = [kid for kid, k in graph.knoten.items() if k.art == ART_NACHRENDER][0]
+    ausgaben = lauf["knoten"][nachrender].get("ausgaben") or {}
+    assert ausgaben.get("bildeingang_lage", {}).get("traegt") is None, (
+        "die Gegenprobe braucht einen UNGEMESSENEN Bildeingang")
+    assert not any(str(h).startswith("SKIZZE NICHT ANGEKOMMEN")
+                   for h in (ausgaben.get("hinweise") or ())), ausgaben.get("hinweise")

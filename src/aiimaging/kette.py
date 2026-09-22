@@ -1471,10 +1471,29 @@ def nachrender_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
         # Die Schicht wird aus dem Eingang GELESEN und nicht vom Aufrufer ERKLAERT. Eine
         # erklaerte Schicht waere eine Behauptung, die kein Lauf widerlegen kann.
         schicht = SCHICHT_AI_IMAGING if handeingriff else SCHICHT_GEOMETRIE
+        # WEITER RECHNEN, MIT HINWEIS (Owner-Entscheid 22.09.2026). Auf einem Backbone,
+        # dessen Bildeingang gemessen NICHT traegt, kommt die Skizze beim Modell nicht an.
+        # Gerechnet wird trotzdem — aber der Satz steht zuvorderst in `hinweise`, und die
+        # reisen bis an das Bild in der Mappe (`arbeitsgang.MESSFELDER`). Ohne ihn saehe
+        # ein reiner Text-zu-Bild-Lauf aus wie eine Bearbeitung der Skizze.
+        #
+        # Nur bei `traegt is False`: Ungemessen (None) ist nicht «kommt nicht an».
+        if lage.get("traegt") is False and ausgangsbild:
+            hinweise = tuple(ergebnis.get("hinweise") or ())
+            ergebnis = dict(ergebnis, hinweise=(HINWEIS_SKIZZE_NICHT_ANGEKOMMEN.format(
+                backbone=p["backbone"], beleg=lage.get("beleg") or "—"),) + hinweise)
         return dict(ergebnis, ausgangsbild=ausgangsbild, bildeingang_lage=lage,
                     **{FELD_HANDEINGRIFF: handeingriff, FELD_SCHICHT: schicht})
 
     return fuehre_nachrender
+
+
+#: Der Satz, mit dem ein Nachrender sagt, dass die Skizze beim Modell nicht ankam.
+#: Fester Anfang, damit eine Anzeige ihn erkennen kann, ohne den Rest zu deuten.
+HINWEIS_SKIZZE_NICHT_ANGEKOMMEN = (
+    "SKIZZE NICHT ANGEKOMMEN: {backbone} nimmt gemessen kein Ausgangsbild an ({beleg}). "
+    "Das Bild ist aus Tiefenkarte und Text gerechnet — was hineingezeichnet war, steckt "
+    "nicht darin.")
 
 
 def bildeingang_lage(backbone_name: str) -> dict:
@@ -2454,6 +2473,7 @@ def fuehre_aus(
 
 
 __all__ = [
+    "HINWEIS_SKIZZE_NICHT_ANGEKOMMEN",
     "ART_BILDQUELLE", "ART_GEOMETRIE", "ART_MULTIPASS", "ART_NACHRENDER", "ART_QA",
     "ART_RENDER",
     "AUSFUEHRER", "BEDARF", "EINGABEDATEIEN",

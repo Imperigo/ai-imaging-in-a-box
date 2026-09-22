@@ -108,10 +108,41 @@ Bewegung steckt, ist für diese Leute keine Aussage.*
 
 ---
 
+## Nachtrag 22.09.2026 — die App, und wie sie gebaut wird
+
+Zwanzig weitere Fragen, vom Owner am 22.09.2026 beantwortet. Anlass: Die Bestandsaufnahme
+zeigte, dass die Webseite die meisten der zwanzig Entscheide oben nicht trägt — und dass
+es nirgends eine native iPad-App gibt. Geprüft wurden auch die eigenen früheren Arbeiten:
+KosmoOrbit hat eine Zeichen-Webseite mit QR-Kopplung (nie am echten iPad gelaufen), das
+Codex-Repo eine Zahlenkopplung mit einem SwiftUI-Client **für den Mac**. Übernommen werden
+Abläufe und Lehren, kein Code.
+
+| # | Frage | Entschieden |
+|---|---|---|
+| 21 | Webseite oder eigene App | **Eigene native App «Visbox»** (SwiftUI + PencilKit), jetzt |
+| 22 | Wo sie gebaut wird | **Xcode und Swift Playgrounds**, beide vorbereitet; die Prüfstrecke auf GitHub übersetzt sie |
+| 23 | Apple-Konto | **Kostenlos**: die App läuft je 7 Tage, dann neu aufspielen |
+| 24 | Radierer | **Doppeltipp am Pencil 2** (in der App nativ; die Webseite hätte ihn nicht gesehen) |
+| 25 | Schriften | **IBM Plex / Instrument Serif unter OFL zugelassen** (CLAUDE.md, Regel 1) |
+| 26 | Koppeln | **Sechsstellige Zahl**; für die Web-Fläche eine kleine Koppelseite ohne Kennwort |
+| 27 | Finden | **Automatisch** — ein eigener kleiner Rundruf im Heimnetz, nur mit Python-Bordmitteln |
+| 28 | Parken | Skizzen bleiben auf dem Gerät und gehen hinaus, sobald der Rechner erreichbar ist |
+| 29 | Vollbild | **Knopf**; als App ohnehin ohne Browserleiste |
+| 30 | Entwerfen | **Schnell, ohne Geometrieprüfung**, blaues Zeichen «Entwurf — nicht geprüft» |
+| 31 | Abbrechen | **Jetzt mitbauen**, auch im Kern; Fertiges bleibt |
+| 32 | Drei Varianten | **Beides wählbar**: drei Startwerte **oder** drei Ebenen |
+| 33 | Name | **Visbox** |
+| 34 | Zukunft | **Nach der Abgabe werden Visbox (Rechner und iPad) wieder in die KosmoOrbit-Software integriert; die iPad-App wird zur KosmoSketch-App.** Darum steht der Name an einer Stelle, und das Protokoll ist offen beschrieben (`docs/VISBOX_PROTOKOLL.md`) |
+
+**Was 21 kostet, und es steht hier, damit es später nicht überrascht:** Die App wird hier
+geschrieben, aber nicht auf einem Mac übersetzt. Übersetzt wird sie in der Prüfstrecke auf
+GitHub; aufs iPad bringt sie nur der Owner. Bis dahin heisst jeder Teil «gebaut, am Gerät
+unbestätigt».
+
 ## Was daraus noch nicht entschieden ist
 
-* **Wie die Geräte sich finden.** Heimnetz mit Kennwort ist entschieden (E25); wie das
-  iPad die HomeStation erstmals entdeckt, ist es nicht.
+* ~~**Wie die Geräte sich finden.**~~ *Entschieden am 22.09.2026 (Nr. 27): automatisch,
+  eigener Rundruf.*
 * **Was bei zwei iPads passiert.** Die Mappe kennt heute keinen zweiten Schreiber.
 * **Wie gross eine Skizze werden darf**, bevor das Senden spürbar wird. Ohne Messung am
   Gerät ist das eine Vermutung — also ein unverschickter Auftrag und keine offene Frage.
