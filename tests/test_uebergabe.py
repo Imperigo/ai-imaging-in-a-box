@@ -148,13 +148,47 @@ def test_der_fremde_name_kommt_im_lesecode_wirklich_vor(name):
     Tabelle, das Blatt nennt ihn, beide sind einig — und der Vertrag heisst anders.
     """
     fremd = kosmo_szene.STEHENGEBLIEBEN[name]["fremd"]
-    quelle = (Path(kosmo_szene.__file__)).read_text(encoding="utf-8")
-    # `style.mode` wird als `stil.get("mode")` gelesen — geprüft wird der letzte Teil.
-    stueck = fremd.rsplit(".", 1)[-1]
-    assert re.search(rf'\.get\(\s*"{re.escape(stueck)}"', quelle), (
-        f"{name!r} deklariert den fremden Namen {fremd!r}, aber `kosmo_szene` liest "
-        f"nirgends ein Feld {stueck!r}. Entweder ist die Deklaration falsch, oder das "
-        f"Feld wird gar nicht mehr gelesen.")
+
+    # HIER STAND EINE SUCHE IM QUELLTEXT (`re.search(r'\.get\("mode"', quelle)`).
+    #
+    # Sie hat am 22.09.2026 einen RICHTIGEN Umbau gemeldet: Die Felder werden seither
+    # None-fest über `wert_oder(...)` gelesen statt über `.get(...)`, und der Wächter
+    # fiel — obwohl das Feld genauso ankommt wie vorher. Umgekehrt wäre er grün
+    # geblieben, wenn jemand `stil.get("mode")` hinschreibt und das Ergebnis wegwirft.
+    #
+    #     *Ein Wächter, der die Stellung einer Zeile prüft statt ihrer Wirkung, prüft den
+    #     Text und nicht das Programm.*
+    #
+    # Geprüft wird jetzt die Wirkung: Ein unter dem FREMDEN Namen gesetzter, erkennbarer
+    # Wert muss in unserem Feld ankommen.
+    erkennbar = {"hochskalieren": True, "stil_modus": "diese-zeichenkette-ist-erkennbar",
+                 "stil_referenzen": ["/tmp/ref-a.png"]}[name]
+
+    roh = {"schema": kosmo_szene.SCHEMA_SZENE,
+           "geometry": {"path": "/tmp/nicht-vorhanden/modell.glb"}}
+    ziel = roh
+    teile = fremd.split(".")
+    for stufe in teile[:-1]:
+        ziel = ziel.setdefault({"style": "style"}.get(stufe, stufe), {})
+    if len(teile) == 1:
+        roh.setdefault("vis", {})[teile[0]] = erkennbar
+    else:
+        ziel[teile[-1]] = erkennbar
+
+    szene = kosmo_szene.lies_szene(roh)
+
+    assert szene[name] == erkennbar, (
+        f"{name!r} deklariert den fremden Namen {fremd!r}, aber ein dort gesetzter Wert "
+        f"kommt nicht an: gelesen wurde {szene[name]!r}. Entweder ist die Deklaration "
+        f"falsch, oder das Feld wird gar nicht mehr gelesen.")
+
+    # Und die Gegenprobe: Ohne den fremden Namen steht der neutrale Wert da.
+    ohne = kosmo_szene.lies_szene(
+        {"schema": kosmo_szene.SCHEMA_SZENE,
+         "geometry": {"path": "/tmp/nicht-vorhanden/modell.glb"}})
+    assert ohne[name] != erkennbar, (
+        "der Wert kommt auch ohne den fremden Namen zustande — dann prueft der Waechter "
+        "nichts")
 
 
 # ======================================================================================

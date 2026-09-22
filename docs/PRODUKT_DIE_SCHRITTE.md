@@ -91,6 +91,33 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 22.09.2026 · Ein einziges leeres Feld legte die ganze Warteschlange lahm
+
+Eine Durchsuchung des ganzen Programms nach sechs bekannten Fehlerarten hat **dreizehn
+bestätigte Befunde** gebracht. Der schwerste:
+
+Kommt aus der KosmoOrbit-Warteschlange ein Auftrag, in dem ein Feld ausdrücklich **leer**
+steht — was jeder schreibt, der die Vorgabe gelten lassen will —, dann bricht nicht dieser
+eine Auftrag ab, sondern **der ganze Durchlauf**. Und weil der kaputte Auftrag danach
+weiter als «wartend» dasteht, stolpert jeder folgende Lauf wieder über ihn. Auch unsere
+eigene Ablage steht dann still.
+
+> *Ein Auftrag, den wir nicht lesen können, ist ein Mangel an diesem Auftrag — und nicht
+> das Ende des Durchgangs.*
+
+**Derselbe Griff zum vierten Mal in zwei Tagen.** Er steht jetzt an einer Stelle je Datei
+und nicht mehr an jeder einzelnen.
+
+**Der gefährlichste Fall stürzt gar nicht ab:** Steht das Feld «nur bei freier Karte
+rechnen» leer, galt das Sicherheitstor als *im Auftrag abgeschaltet*. Keine Meldung, kein
+Fehler — die Grafikkarte hätte gerechnet, obwohl ein fremdes Modell darauf liegt. *Eine
+Sperre, die ein leeres Feld aufhebt, ist keine Sperre — und sie fällt nicht auf, weil
+nichts kaputtgeht.*
+
+**Und zwei Prüfstände prüften nichts:** Einer erreichte die Stelle gar nicht, die er
+bewachen sollte. Der andere suchte eine Textstelle und hat deshalb eine **richtige**
+Verbesserung als Fehler gemeldet. Beide ersetzt.
+
 ### 22.09.2026 · Die Warnung von vorhin kam bei niemandem an
 
 Eine Stunde nachdem die Warnung gebaut war, hat eine Prüfung gemeldet: **Vier Werkzeuge

@@ -84,6 +84,27 @@ def gpu_zustand() -> dict:
         return {"verfuegbar": False, "grund": f"nvidia-smi unverständlich: {e}"}
 
 
+def _auflage(auflagen: dict, schluessel: str, vorgabe):
+    """Eine Auflage lesen — **ein ausdrückliches ``null`` zählt wie «nicht gesagt».**
+
+    ``auflagen.get(schluessel, vorgabe)`` greift nur bei FEHLENDEM Schlüssel. Steht das
+    Feld mit ``null`` da, gewinnt die ``None`` — und der Vergleich darunter wirft
+    ``TypeError``, **bevor** der Torwächter irgendetwas prüfen konnte.
+
+    Dieselbe Falle wie bei ``leistungsgrenze_w`` (repariert 21.09.2026) und wie in
+    ``kette._fuehre_geometrie`` und ``kosmo_szene.lies_szene`` (beide 22.09.2026). Vier
+    Stellen in zwei Tagen — darum eine Funktion und keine vierte Einzelreparatur.
+
+        *Ein fehlender Schlüssel und ein Schlüssel mit ``None`` sehen im Auftrag gleich
+        aus und bedeuten dasselbe — dann müssen sie es auch im Code.*
+
+    Die Richtung bleibt die sichere: ``None`` fällt auf die **strenge** Vorgabe zurück,
+    nie auf «keine Grenze».
+    """
+    wert = auflagen.get(schluessel)
+    return vorgabe if wert is None else wert
+
+
 def darf_starten(zustand: dict, auflagen: dict) -> tuple[bool, str]:
     """Fail-closed: Nur bei nachweislich freier Karte und gesetzter Grenze grünes Licht.
 
@@ -125,9 +146,7 @@ def darf_starten(zustand: dict, auflagen: dict) -> tuple[bool, str]:
     #
     # Und die Richtung ist die sichere: `None` faellt auf die STRENGE Vorgabe zurueck,
     # nicht auf «keine Grenze».
-    soll = auflagen.get("leistungsgrenze_w")
-    if soll is None:
-        soll = auf.LEISTUNGSGRENZE_W
+    soll = _auflage(auflagen, "leistungsgrenze_w", auf.LEISTUNGSGRENZE_W)
     ist = zustand.get("leistungsgrenze_w")
     if ist is None:
         return False, (f"Leistungsgrenze der Karte unbekannt — nvidia-smi hat sie nicht "
@@ -139,12 +158,12 @@ def darf_starten(zustand: dict, auflagen: dict) -> tuple[bool, str]:
 
     # Zuletzt das Leerlauf-Gate. Es darf ein Auftrag abschalten: Wer weiss, dass er die
     # Karte teilen will, teilt sie — das kostet Zeit, nicht Hardware.
-    if not auflagen.get("nur_bei_leerlauf", True):
+    if not _auflage(auflagen, "nur_bei_leerlauf", True):
         return True, (f"Leerlauf-Gate im Auftrag abgeschaltet; Leistungsgrenze "
                       f"{ist:.0f} W ≤ {soll} W ist trotzdem geprüft")
 
-    grenze_w = auflagen.get("leerlauf_schwelle_w", auf.GPU_LEERLAUF_W)
-    grenze_gb = auflagen.get("leerlauf_schwelle_mem_gb", auf.GPU_LEERLAUF_MEM_GB)
+    grenze_w = _auflage(auflagen, "leerlauf_schwelle_w", auf.GPU_LEERLAUF_W)
+    grenze_gb = _auflage(auflagen, "leerlauf_schwelle_mem_gb", auf.GPU_LEERLAUF_MEM_GB)
     if zustand["leistung_w"] >= grenze_w:
         return False, f"GPU zieht {zustand['leistung_w']:.0f} W (≥ {grenze_w} W) — nicht frei"
     if zustand["speicher_belegt_gb"] >= grenze_gb:
@@ -663,7 +682,7 @@ def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
     # eine ausgefallene Maske ist dann ein Befund und keine stille Annahme.
     maskenbefund = maske.maske_aus_bericht(
         blender_bericht,
-        gelaende_erwartet=bool(params.get("gelaende_erwartet", True)))
+        gelaende_erwartet=bool(_auflage(params, "gelaende_erwartet", True)))
     # OHNE `_nur_dateinamen` reist hier der volle Pfad des Arbeitsverzeichnisses mit —
     # `maske_aus_bericht` gibt `material_id_png` zurueck, damit sich eine Maske
     # zurueckverfolgen laesst. Regel 3, und der Waechter in `test_homeworker` hat es beim

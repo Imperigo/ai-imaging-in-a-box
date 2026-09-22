@@ -497,6 +497,40 @@ def unbekannte_felder(fremd: dict) -> tuple[str, ...]:
     return tuple(gefunden)
 
 
+def wert_oder(quelle: dict, schluessel: str, ersatz):
+    """Ein Feld der fremden Bestellung lesen — und ein ausdrückliches ``null`` wie ein
+    fehlendes Feld behandeln.
+
+    **Warum das nicht ``dict.get(schluessel, ersatz)`` sein darf.** Der zweite Parameter
+    greift **nur bei fehlendem Schlüssel**. Steht das Feld da und trägt ``null``, gewinnt
+    die ``None`` gegen den Ersatz — und gleich darauf wirft ``int(None)`` oder
+    ``float(None)``.
+
+    Das ist keine erdachte Lage: Wer die Vorgabe des Vertrags gelten lassen will, schreibt
+    in JSON genau ``"samples": null``. Am 22.09.2026 nachgestellt: **Ein einziger solcher
+    Auftrag reisst den ganzen Abholdurchgang mit** — der ``TypeError`` fällt durch
+    ``except quelle.QUELLEN_FEHLER`` hindurch (das ist nur ``BrueckenError``) bis in
+    ``abholer.durchgang``, und weil der kaputte Auftrag auf ``queued`` stehenbleibt,
+    stolpert **jeder** folgende Lauf wieder über ihn. Eine dauerhaft verstopfte
+    Warteschlange, und die eigene Ablage steht mit still, weil die Brücke in derselben
+    Schleife zuerst drankommt.
+
+        *Ein Auftrag, den wir nicht lesen können, ist ein Mangel an diesem Auftrag — und
+        nicht das Ende des Durchgangs.*
+
+    Derselbe Griff hat am 21./22.09.2026 schon an zwei anderen Stellen zugeschlagen
+    (`homeworker._darf_starten`, `kette._fuehre_geometrie`). Dreimal an drei Tagen ist
+    kein Ausrutscher; darum steht hier eine Funktion und keine dritte Einzelreparatur.
+
+    Args:
+        quelle: Der Block aus der fremden Bestellung.
+        schluessel: Das Feld.
+        ersatz: Was gilt, wenn das Feld fehlt **oder** ``null`` trägt.
+    """
+    wert = quelle.get(schluessel)
+    return ersatz if wert is None else wert
+
+
 def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     """``kosmovis.render-scene/v1`` → unsere Felder, mit allem, was dabei auffällt.
 
@@ -588,7 +622,7 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     if hinweis:
         (warnungen if gewaehlt else vorgaben).append(hinweis)
 
-    treue = render.get("faithful", 0.8)
+    treue = wert_oder(render, "faithful", 0.8)
     vorgaben.append(
         f"'faithful' ({treue}) wird auf 'controlnet_staerke' abgebildet — die einzige "
         f"ehrliche Zuordnung. Was dabei NICHT abgebildet wird: 'denoise' und die "
@@ -687,17 +721,17 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         "kameras": kameras,
         "aufloesung": int(aufl[0]),
         "hoehe": int(aufl[1]),
-        "samples": int(render.get("samples", 128)),
+        "samples": int(wert_oder(render, "samples", 128)),
         "controlnet_staerke": float(treue),
         "prompt": sprachbefund["uebersetzt"],
         "prompt_original": sprachbefund["original"],
         "prompt_sprache": sprachbefund,
         "prompt_bauteile": tuple(bauteile),
-        "stil_modus": stil.get("mode", "none"),
+        "stil_modus": wert_oder(stil, "mode", "none"),
         "stil_referenzen": list(stil.get("refs") or []),
         "backbone": bb["name"],
-        "ueberspringen": bool(vis.get("skip", False)),
-        "hochskalieren": bool(vis.get("upscale", False)),
+        "ueberspringen": bool(wert_oder(vis, "skip", False)),
+        "hochskalieren": bool(wert_oder(vis, "upscale", False)),
         "sonne": sonne,
         # Was JEDEN Auftrag gleich trifft — getrennt von dem, was DIESEN betrifft.
         #

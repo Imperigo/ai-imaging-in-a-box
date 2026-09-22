@@ -7168,3 +7168,29 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Kern (wir):** Zwei berührte Messdokumente — Zahlen unberührt, aber eines enthält
       eine inzwischen falsche Aussage.
 - [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2).
+
+## Sitzung 61 — 22.09.2026 · Ein `null` legte die Warteschlange lahm
+
+**Erledigt**
+
+- [x] 27 Agenten, sechs Fehlerarten, 21 Funde gegengeprüft — **13 halten stand.**
+- [x] `kosmo_szene.wert_oder` und `homeworker._auflage`: ein ausdrückliches `null` zählt
+      überall wie «nicht gesagt», an **einer** Stelle je Datei entschieden.
+- [x] Der gefährlichste Fall (`nur_bei_leerlauf: null` schaltete das Leerlauf-Tor still ab)
+      ist bewacht — er wirft nicht, darum fingen ihn die übrigen Wächter nicht.
+- [x] `tests/test_null_im_auftrag.py`: 22 Wächter über **jedes** Feld des Vertragsblocks,
+      nicht nur über die zwei aufgefallenen. Vier Mutationsproben.
+- [x] Ein bestehender Textwächter (`test_uebergabe.py`) in einen Wirkungswächter
+      überführt — er hatte den richtigen Umbau als Fehler gemeldet.
+
+**Offen, und bei wem es liegt** — die neun übrigen bestätigten Befunde
+
+- [ ] **Kern:** `arbeitsgang.py:497` — der Lauf misst, die Mappe liest es nicht.
+      **Dieselbe Fehlerart, dritte Fundstelle diese Woche.**
+- [ ] **Kern:** `kette.py:378` — `innenraum` über den Produktweg nicht bestellbar.
+- [ ] **Kern:** `komposition.py:1509` — fehlende Neigung wird zur gemessenen 0.0.
+- [ ] **Kern:** drei Textwächter (`test_oberflaeche.py` zweimal, `test_kopplung.py` einmal
+      — letzterer von mir, aus dieser Sitzung).
+- [ ] **Kern:** `bruecke.py:77` — dasselbe Muster für die fremde Kennung an drei Stellen.
+- [ ] **Kern:** `einbau.py:181`, `homeworker.py:652` — «unbekannt» wird zu 0 bzw. False.
+- [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2).
