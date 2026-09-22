@@ -451,6 +451,63 @@ def _hochbau_bauteile(s: _Step, g, kontext: str, besitz: str, ort_gesch: str,
     return teile
 
 
+#: Was die Geländeplatte treibt: der Grundriss oder die Höhe.
+TREIBER_GRUNDRISS = "grundriss"
+TREIBER_HOEHE = "hoehe"
+
+
+def gelaendekante(*, hochbau: bool, vielfaches: float = GELAENDE_VIELFACHES) -> dict:
+    """Wie gross die Geländeplatte wird — **und wovon sie das hat.**
+
+    Die Platte ist ein Vielfaches der **grössten** Spanne des Bauwerks. Für den Quader ist
+    das der Grundriss. Für den Hochbau ist es die **Höhe** — und damit wird die Platte
+    breiter, als der Grundriss je verlangt hätte: 15,25 m hoch ergibt 38,12 m Platte bei
+    12 × 9,5 m Grundriss. Ein kleiner Turm auf einem grossen Feld.
+
+    Das ist keine Kleinigkeit, sondern die **Ursache hinter einem Befund**: Am 22.09.2026
+    hat die HomeStation (`auf-20260921-128`) den Widerspruch 0,93 gegen 0,36 aufgelöst —
+    er lag nicht am Messweg, sondern daran, dass der Hochbau im Bild nur ein Viertel so
+    viel Fläche einnimmt wie der Quader (0,1524 gegen 0,5822). Eine Messreihe über beide
+    Szenen verglich zwei Gegenstände und sah aus wie ein Befund über das Verfahren.
+
+        *Ein Vorbehalt im Docstring ist kein Wächter. Er wird gelesen, wenn man ihn schon
+        kennt.*
+
+    Diese Funktion rechnet die Zahl an **einer** Stelle, damit die Warnung und die Datei
+    nie auseinanderlaufen können. *Eine Zahl an zwei Stellen ist an einer davon bereits
+    falsch.*
+
+    Returns:
+        ``{kante, treiber, spanne_x, spanne_y, spanne_z, vielfaches, anteil_grundriss}``.
+        ``treiber`` ist :data:`TREIBER_HOEHE`, wenn die Höhe die grösste Spanne ist —
+        genau der Fall, der still zu unvergleichbaren Szenen führt.
+        ``anteil_grundriss`` sagt, wie viel von der Plattenbreite der Grundriss erklärt;
+        1,0 heisst «ganz», kleiner heisst «die Höhe hat sie aufgeblasen».
+    """
+    if hochbau:
+        spanne_x = HB_LAENGE_X
+        spanne_y = HB_BREITE_Y + HB_AUSKRAGUNG
+        spanne_z = HB_GESCHOSSE * HB_GESCHOSSHOEHE + HB_DECKENDICKE
+    else:
+        spanne_x, spanne_y = LAENGE_X, BREITE_Y
+        spanne_z = HOEHE_Z + PLATTENDICKE
+
+    grundriss = max(spanne_x, spanne_y)
+    groesste = max(grundriss, spanne_z)
+    return {
+        "kante": float(vielfaches) * groesste,
+        # GROESSER-GLEICH und nicht groesser: Sind Grundriss und Hoehe gleich gross,
+        # treibt der Grundriss — sonst wuerde ein Wuerfel als Hoehenfall gemeldet, und
+        # eine Warnung, die auch im harmlosen Fall kommt, wird abgeschaltet.
+        "treiber": TREIBER_HOEHE if spanne_z > grundriss else TREIBER_GRUNDRISS,
+        "spanne_x": spanne_x,
+        "spanne_y": spanne_y,
+        "spanne_z": spanne_z,
+        "vielfaches": float(vielfaches),
+        "anteil_grundriss": grundriss / groesste if groesste > 0 else None,
+    }
+
+
 def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
                 mit_gelaende: bool = False, mit_raeumen: bool = False,
                 hochbau: bool = False,
@@ -611,14 +668,12 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
         # ist 8,0, also genau der bisherige Wert — jede bestehende Messreihe behaelt ihre
         # Platte. Das ist Absicht und der Grund, warum hier ein Maximum steht und keine
         # Fallunterscheidung.
-        if hochbau:
-            spanne_x = HB_LAENGE_X
-            spanne_y = HB_BREITE_Y + HB_AUSKRAGUNG
-            spanne_z = HB_GESCHOSSE * HB_GESCHOSSHOEHE + HB_DECKENDICKE
-        else:
-            spanne_x, spanne_y = LAENGE_X, BREITE_Y
-            spanne_z = HOEHE_Z + PLATTENDICKE
-        kante = float(gelaende_vielfaches) * max(spanne_x, spanne_y, spanne_z)
+        # GERECHNET WIRD IN `gelaendekante`, und nur dort. Hier stand dieselbe Rechnung
+        # ein zweites Mal — und eine Zahl an zwei Stellen ist an einer davon bereits
+        # falsch, sobald jemand eine davon anfasst.
+        mass = gelaendekante(hochbau=hochbau, vielfaches=gelaende_vielfaches)
+        spanne_x, spanne_y = mass["spanne_x"], mass["spanne_y"]
+        kante = mass["kante"]
         shape, ort = _quader(
             s, kontext, kante, kante, GELAENDE_DICKE,
             (spanne_x - kante) / 2.0, (spanne_y - kante) / 2.0,
@@ -792,3 +847,29 @@ if __name__ == "__main__":
                     mit_gelaende=mit_gelaende, mit_raeumen=mit_raeumen,
                     hochbau=hochbau, gelaende_vielfaches=vielfaches)
     print(f"{p}  ({p.stat().st_size} Bytes, {len(p.read_text().splitlines())} Zeilen)")
+
+    # DIE WARNUNG STEHT DA, WO SIE JEMAND SIEHT — beim Erzeugen, nicht im Docstring.
+    #
+    # Der Vorbehalt war seit dem 09.09.2026 dokumentiert, und am 22.09.2026 hat die
+    # HomeStation (`auf-20260921-128`) trotzdem einen halben Tag gebraucht, um den
+    # Widerspruch 0,93 gegen 0,36 darauf zurueckzufuehren. Ein Vorbehalt, den man erst
+    # liest, wenn man ihn schon kennt, hat niemanden gewarnt.
+    if mit_gelaende:
+        mass = gelaendekante(hochbau=hochbau, vielfaches=vielfaches)
+        if mass["treiber"] == TREIBER_HOEHE:
+            print(
+                f"  ACHTUNG: Die Gelaendeplatte wird von der HOEHE getrieben, nicht vom "
+                f"Grundriss.\n"
+                f"  Hoehe {mass['spanne_z']:.2f} m > Grundriss "
+                f"{max(mass['spanne_x'], mass['spanne_y']):.2f} m, also Platte "
+                f"{mass['kante']:.2f} m bei {mass['vielfaches']:g}-fach.\n"
+                f"  Das Bauwerk steht als kleiner Koerper auf einem grossen Feld und "
+                f"nimmt im Bild deutlich\n"
+                f"  weniger Flaeche ein als eine Szene, deren Platte vom Grundriss "
+                f"kommt. ZWEI SOLCHE SZENEN\n"
+                f"  SIND NICHT VERGLEICHBAR — ein Unterschied in den Kennzahlen sagt "
+                f"dann etwas ueber die\n"
+                f"  Szene und nichts ueber das Verfahren. Wer vergleichen will, gleicht "
+                f"mit\n"
+                f"  --gelaende-vielfaches= an (gemessen: rund 6.0 fuer den Hochbau).",
+                file=sys.stderr)

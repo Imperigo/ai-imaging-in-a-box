@@ -91,6 +91,32 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 22.09.2026 · Der Widerspruch 0,93 gegen 0,36 ist aufgeklärt — und es war unsere Szene
+
+Zwei Messungen desselben Verfahrens ergaben einmal 0,93 und einmal 0,36. Das sah aus wie
+ein Befund über das Verfahren. Es war keiner.
+
+Die HomeStation hat es ohne einen einzigen neuen Bildlauf aufgelöst: **Es sind zwei
+verschiedene Gebäude**, und das kleinere nimmt im Bild fast viermal so viel Fläche ein wie
+das grössere. Der Messweg war in beiden Fällen buchstabengleich derselbe.
+
+**Warum das so ist:** Das Testgelände unter dem Gebäude wächst mit der **grössten**
+Abmessung — und beim hohen Gebäude ist das die Höhe. 15 m hoch ergibt 38 m Wiese bei einem
+Grundriss von 12 × 9,5 m. Ein kleiner Turm auf einem grossen Feld, und im Bild ist er
+entsprechend klein.
+
+**Das Unangenehme:** Wir wussten es. Es stand seit dem 09.09. im Quelltext, mit einer
+Tabelle von sieben gemessenen Zeilen. Gelesen hat es niemand — es ist ein Hinweis an einer
+Stelle, an die man nur schaut, wenn man die Antwort schon hat.
+
+> *Ein Vorbehalt im Kommentar ist keine Warnung. Er wird gelesen, wenn man ihn schon kennt.*
+
+**Jetzt sagt das Werkzeug es beim Erzeugen**, mit der Zahl und mit dem Ausweg — und es
+sagt es auch dann noch, wenn man angeglichen hat, weil der Umstand bleibt.
+
+**Was offen bleibt, und es wird nicht schöngeredet:** Die unterschiedliche Grösse erklärt
+den Abstand **nicht ganz**. Ein Rest bleibt unerklärt und steht als offene Frage da.
+
 ### 22.09.2026 · Das iPad verbindet sich mit einer sechsstelligen Zahl
 
 Seit dem 21.09. darf die Oberfläche ins Heimnetz — geschützt mit einem Kennwort aus 32

@@ -7118,3 +7118,24 @@ Bekannt und ausdrücklich nicht erledigt:
       dafür (mDNS/Bonjour) brächte eine Abhängigkeit mit, deren Lizenz nach Regel 1 erst
       zu prüfen wäre — also kein Nebenbei.
 - [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2), `auf-128` (Rang 3, Frist 15.10.).
+
+## Sitzung 59 — 22.09.2026 · Ein kleiner Turm auf einem grossen Feld
+
+**Erledigt**
+
+- [x] `auf-20260921-128` beantwortet und eingearbeitet: Der Widerspruch 0,93 gegen 0,36
+      liegt an der **Szene**, nicht am Messweg (Bildanteil 0,5822 gegen 0,1524).
+- [x] `tools/make_test_ifc.py`: neue Funktion `gelaendekante()` — sagt, wie breit die
+      Platte wird **und wovon sie das hat**. Der Erzeuger rechnet nicht mehr selbst.
+- [x] Eine **Warnung beim Erzeugen** statt eines Vorbehalts im Docstring. Sie nennt die
+      Zahl und den Ausweg und verschwindet nach dem Angleichen nicht.
+- [x] `tests/test_gelaendeplatte.py`: elf Wächter, vier Mutationsproben.
+- [x] **Ein eigener Wächter war eine Beruhigung** und ist ersetzt: Er prüfte die Grenze
+      `>` gegen `>=` an einer Szene, in der der Fall nicht vorkommt.
+
+**Offen, und bei wem es liegt**
+
+- [ ] **Kern (wir):** Anteil und Gliederung erklären den Abstand **nicht ganz**. Ein
+      gleichmässiger Randfehler müsste 19 Bildpunkte breit sein, um den Hochbau auf 0,36
+      zu drücken — und der Quader stünde dann bei 0,79 statt 0,93. Der Rest ist unerklärt.
+- [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2).
