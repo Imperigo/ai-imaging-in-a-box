@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260922-150",
+  "art": "frage",
+  "beschreibung": "Vier Laeufe, die nur an EURER Maschine moeglich sind: zwei Vergleichsbilder erneuern, die Publish-Tuer an einem ECHTEN Projektpaket fahren, nachsehen ob eure IFC-Dateien Moebel fuehren, und den Vorlagen-Lernpfad gegen den echten Dienst. Owner-Entscheide vom 22.09.2026 (Fragen 8, 9, 6, 16).",
+  "anweisung": "=== VIER LAEUFE AN ECHTEN DATEN\n\nAlle vier gehen hier nicht: zwei brauchen eure Maschine, einer ein echtes\nProjekt, einer das Netz. Keiner braucht die Karte.\n\n    cd <euer KosmoPublish-Klon>\n    git pull\n\n\nV1 · DIE ZWEI VERGLEICHSBILDER ERNEUERN — und bitte EINZELN\n\nSie sind vom 02.09.2026 und zeigen ein Blatt, das so niemand mehr erzeugt.\nGemessen, woher die Abweichung kommt: der CODE traegt sie, nicht das\nWerkzeug (der Werkzeugunterschied zwischen eurer Maschine und der Wolke\nmisst 1.15 %, die Schwelle liegt bei 2 %). Neu setzen geht nur bei euch —\ndas Bild traegt die Werkzeugmarke der Maschine, auf der es entstand.\n\n    .venv/bin/python tools/kosmopublish_cli.py visual-test \\\n        --golden output/visual_tests/golden --update-golden \\\n        --nur bridge-grundriss\n\n    .venv/bin/python tools/kosmopublish_cli.py visual-test \\\n        --golden output/visual_tests/golden --update-golden \\\n        --nur massing-demo\n\n**Die Fahne `--nur` ist kein Zierat, sondern der Schutz.** Ohne sie erneuert\nder Lauf JEDES Vergleichsbild, auch das des A0-Blatts — und das darf nur aus\nErfindung stammen. Der Owner hat es am 07.09.2026 aus dem Repo nehmen lassen,\nweil das alte aus euren echten Plaenen entstand und deren Geometrie ALS\nBILDPUNKTE trug, wo keine Textsuche und kein Riegel sie findet. In\n`output/planraw/` liegen bei euch echte Plaene.\n\nFalls ihr das Plakatbild doch erneuern wollt: nur mit\n`--nur generativ-poster --plan-quelle erfunden`. Ohne die zweite Fahne\nverweigert der Lauf es und sagt warum.\n\n\nV2 · DIE PUBLISH-TUER AN EINEM ECHTEN PAKET\n\nGemessen ist sie nur an einem Paket, das ihr Erzeuger hier frisch und leer\nbaut; die Bruecke darin ist unsere Erfindung. Ob sie an euren Daten haelt,\nsieht nur ihr.\n\n    .venv/bin/python tools/kosmopublish_cli.py handoff <pfad-zum-paket>\n\nDie Ausgabe landet unter `<paket>/publish/`, NICHT im Repo. Daneben\nentsteht `publish/kosmopublish-result.json` mit 25 Feldern.\n\nZurueck brauchen wir aus dieser Datei nur SECHS Zahlen — keine Namen, keine\nRaumbezeichnungen, keine Datei:\n\n    ueberlauf                  (wieviele Elemente, und welche ART)\n    massstabstreue             (N von M)\n    blatt_belegung             (Prozent)\n    verlorene_beschriftungen   (Anzahl)\n    ungezeichnete_oeffnungen   (Anzahl)\n    flaechen_widerspruch       (der Satz, ODER null)\n\nDazu euer Urteil in zwei, drei Saetzen: sieht das Blatt brauchbar aus?\n\n\nV3 · FUEHREN EURE ECHTEN IFC-DATEIEN MOEBEL?\n\nIn KosmoPublish liegt `nodes/furniture_symbols.py` (268 Zeilen), das aus\n`IfcFurniture` 2D-Schemen zeichnet — von keinem Einstieg erreichbar. Der\nOwner wollte es nicht verlieren und hat entschieden: **erst messen.**\n\nWir haben hier gemessen, dass unsere IFC-Bruecke zehn Klassen liest und\nKEINE davon ein Moebel ist; anschliessen hiesse also, die Bruecke jenseits\nder Prozessgrenze zu erweitern — ein eigener Auftrag.\n\nDie Frage, die das entscheidet, koennt ihr in fuenf Minuten beantworten:\noeffnet eine IFC-Datei aus einem echten Projekt und seht nach, ob darin\n`IfcFurniture` (oder `IfcFurnishingElement`) ueberhaupt vorkommt.\n\n    ja / nein / «in manchen»  — und falls ja, ungefaehr wieviele Stueck\n\nIst die Antwort nein, faellt der Baustein, und niemand baut an einer\nFaehigkeit, fuer die es keine Daten gibt.\n\n\nV4 · DER VORLAGEN-LERNPFAD GEGEN DEN ECHTEN DIENST\n\nSeit dem 22.09.2026 kann diese Lane ein Blatt-Layout aus einem fremden\nWettbewerbsplakat lernen (Owner-Entscheid B8). Gemessen ist der ganze Weg —\naber OHNE Netz: der Suchdienst war hier nachgestellt, alles danach echt.\nDiese Maschine kommt nicht an architekturkosmos.ch.\n\n    .venv/bin/python tools/kosmopublish_cli.py vorlagen-lernen --limit 2\n\nDer Lauf laedt hoechstens zwei fremde PDF, lernt daraus Slots und legt sie\nunter `~/.kosmopublish/user_templates/` ab — **nicht** im Repo. Danach:\n\n    .venv/bin/python tools/kosmopublish_cli.py build --engine typst \\\n        --vorlage liste\n\nZurueck brauchen wir: wieviele Vorlagen gelernt wurden, wieviele Slots je\nVorlage, und ob der Lauf «nicht gemessen» meldet (das hiesse, es lag an\nNetz oder `pypdf`, nicht am Code).\n\n\nWAS AUSDRUECKLICH NICHT GETAN WERDEN SOLL\n\n* KEINE Bilder, KEINE Plaene, KEINE Pakete zurueckschicken. Zahlen und euer\n  Urteil in Worten genuegen; echte Projektdaten duerfen nicht in unser Repo.\n* In V1 NICHT ohne `--nur` fahren.\n* Keine absoluten Pfade mit Benutzernamen (REGEL 3), keine Buero-, Kunden-\n  oder Wettbewerbsnamen — auch nicht im Namen des Pakets aus V2.\n* Keine Installation, keine Maschinen-Aenderung, keine GPU-Last.\n* Nichts reparieren. Bricht etwas, wollen wir wissen WIE.\n\n«Hab ich nicht ausprobiert» und «weiss ich nicht» sind vollstaendige\nAntworten. Jeder der vier Punkte steht fuer sich — einer allein hilft schon.",
+  "erstellt": "2026-09-22T21:52:05Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "V1 NIE ohne --nur fahren — sonst wird auch das A0-Vergleichsbild erneuert, und das darf nur aus Erfindung stammen.",
+      "Keine Bilder, Plaene oder Pakete zurueckschicken; nur Zahlen und Urteil in Worten.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3), auch nicht im Paketnamen.",
+      "Keine Installation, keine Maschinen-Aenderung, keine GPU-Last.",
+      "Jeder Punkt steht fuer sich; einer allein hilft schon."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Sind `bridge-grundriss` und `massing-demo` erneuert? ja/nein je Fall, und was der Lauf gemeldet hat.",
+    "V2 Die sechs Zahlen aus `publish/kosmopublish-result.json` (ueberlauf, massstabstreue, blatt_belegung, verlorene_beschriftungen, ungezeichnete_oeffnungen, flaechen_widerspruch) plus euer Urteil zum Blatt in zwei bis drei Saetzen.",
+    "V3 Fuehren eure echten IFC-Dateien IfcFurniture/IfcFurnishingElement? ja/nein/in-manchen, und ungefaehr wieviele.",
+    "V4 Wieviele Vorlagen hat `vorlagen-lernen` gelernt, mit wievielen Slots — oder meldet der Lauf «nicht gemessen»?",
+    "V5 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ],
+  "rang": 8
+}
