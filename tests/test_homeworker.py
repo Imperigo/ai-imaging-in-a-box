@@ -1079,6 +1079,41 @@ def test_der_maskenweg_wird_auf_der_homestation_wirklich_gefahren(
     assert qa["paarurteil"] is not None, "der Maskenweg ist gefahren, also gibt es ein Urteil"
 
 
+@pytest.mark.parametrize("angabe,erwartet", [
+    ("fehlt", True), (None, True), (True, True), (False, False)])
+def test_ein_null_bei_gelaende_erwartet_gibt_die_strenge_lesart(
+        blender_naht, ifc, aus, tmp_path, monkeypatch, angabe, erwartet):
+    """Wer nichts sagt — auch mit ``null`` —, bekommt die strengere Lesart.
+
+    **Befund aus Sitzung 61, bis zum 22.09.2026 ohne Wächter:** Hier stand
+    ``bool(params.get("gelaende_erwartet", True))``. Ein ausdrückliches ``null`` im Auftrag
+    wurde damit zu ``False`` — zur Erklärung «diese Szene hat kein Gelände» —, und die
+    Maske galt dann auch dort, wo der Boden in ihr steckte. Behoben war es seit Sitzung 61
+    über ``_auflage``; geprüft hat es niemand.
+
+    Geprüft wird die Wirkung: mit welchem Wert der Maskenweg wirklich gerufen wird.
+    """
+    from aiimaging import maske
+
+    gesehen = []
+    echt = maske.maske_aus_bericht
+
+    def mitschreibend(bericht, **kw):
+        gesehen.append(kw.get("gelaende_erwartet"))
+        return echt(bericht, **kw)
+
+    monkeypatch.setattr(maske, "maske_aus_bericht", mitschreibend)
+    satz = _multipass_satz("render", ifc, aus)
+    if angabe != "fehlt":
+        satz["params"]["gelaende_erwartet"] = angabe
+
+    hw.fuehre_aus(satz, tmp_path, _render_modell=Renderattrappe(),
+                  _tiefen_modell=Tiefenattrappe(treue_ist_karte(blender_naht)))
+
+    assert gesehen == [erwartet], (
+        f"gelaende_erwartet={angabe!r} im Auftrag kam als {gesehen} beim Maskenweg an")
+
+
 # ── Die Kommandozeile ────────────────────────────────────────────────────────────────
 
 def test_liste_zeigt_unerledigtes_ohne_etwas_zu_starten(tmp_path, capsys):
