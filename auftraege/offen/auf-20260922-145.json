@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "ui",
+  "auftrag_id": "auf-20260922-145",
+  "art": "frage",
+  "beschreibung": "Fuenf Oberflaechenpunkte aus Runde 6: Grundriss und Richtung schliessen sich aus, Bildausschnitt nur mit Richtung, «wirkungslos» zeigen, drei Zustaende der Tiefenrichtung, Vorbehalt beim Hineinskizzieren. Einbauauftrag.",
+  "anweisung": "=== FUENF WEITERE PUNKTE ZUR OBERFLAECHE, AUS RUNDE 6 (22.09.2026) ===\n\nEINBAUAUFTRAG wie auf-140 und auf-143. `seite.html`/`server.py` meint unsere Flaeche\n(`oberflaeche/`), die Vorlage.\n\n  R1 DER GRUNDRISS UND DIE RICHTUNG SCHLIESSEN SICH AUS. Der Kern weist seit heute\n     `kamera` zusammen mit `auge`/`blick_auf` ab («Standpunkt zweimal bestellt»), ebenso\n     `deckungsgrad` ohne `kamera`. `seite.html`, `rissUebernehmen` (um Zeile 821–834)\n     schickt nur `auge` und `blick_auf`, und `server.py` `_einstellungen` (um 1063–1070)\n     MISCHT das in die gespeicherten Einstellungen — steht dort schon `kamera` oder\n     `deckungsgrad`, liegen danach beide Quellen nebeneinander, und der Fehler kommt erst\n     beim Rechnen. Einbauen: beim Uebernehmen aus dem Grundriss `kamera: null` und\n     `deckungsgrad: null` mitschicken (null entfernt den Wert) — und umgekehrt beim Waehlen\n     einer Richtung den gespeicherten Standpunkt ausdruecklich verwerfen. Sichtbar, nicht\n     still: «Richtung ersetzt den angeklickten Standpunkt».\n  R2 DER BILDAUSSCHNITT NUR MIT RICHTUNG. Das Feld `deckungsgrad` nur bedienbar, wenn eine\n     Richtung (`kamera`) gewaehlt ist (ersetzt auf-143 Q5).\n  R3 «WIRKUNGSLOS» ZEIGEN. Im Blender-Bericht steht auf den Wegen ohne Richtung\n     `deckungsgrad: null` und `deckungsgrad_wirkungslos: <Grund>`. Den Grund neben dem\n     leeren Wert zeigen — nicht die Vorgabe 0,70 einsetzen.\n  R4 DIE RICHTUNG DER TIEFE HAT DREI ZUSTAENDE. «vertauscht» (deutlich umgekehrt), «Kein\n     messbarer Zusammenhang … nicht bestimmbar» (neu, die dritte Antwort) und «ERWARTETE\n     Fall». Die mittlere Meldung als eigenen, neutralen Zustand zeigen — nicht rot\n     (ersetzt auf-143 Q8).\n  R5 HINEINSKIZZIEREN AUF DEM VORGABE-MODELL. Der Nachrender-Knoten meldet in\n     `bildeingang_lage` fuer z-image-turbo jetzt `traegt: false` mit Beleg: Das\n     Hineingezeichnete kommt beim Modell NICHT an. Wo die Oberflaeche einen Weg zum\n     Hineinskizzieren anbietet, muss dieser Vorbehalt neben dem Ergebnis stehen — sonst\n     sieht ein reiner Text-zu-Bild-Lauf aus wie eine Bildbearbeitung. (Ob der Weg dort\n     gesperrt wird, entscheidet der Owner; bis dahin: Vorbehalt zeigen.)\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n  - Nichts in `src/aiimaging/` aendern.\n  - Keinen Vorbehalt kuerzen.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.",
+  "erstellt": "2026-09-22T19:56:07Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie noetig — es geht um die Anzeige."
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Nichts in src/aiimaging/ aendern.",
+      "Keinen Vorbehalt kuerzen.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "R1 eingebaut (wo und Commit) — oder nicht eingebaut, mit Grund.",
+    "R2 eingebaut (wo und Commit) — oder nicht eingebaut, mit Grund.",
+    "R3 eingebaut (wo und Commit) — oder nicht eingebaut, mit Grund.",
+    "R4 eingebaut (wo und Commit) — oder nicht eingebaut, mit Grund.",
+    "R5 eingebaut (wo und Commit) — oder nicht eingebaut, mit Grund.",
+    "Was aufgefallen ist und wonach nicht gefragt wurde."
+  ],
+  "rang": 7
+}

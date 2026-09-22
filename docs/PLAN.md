@@ -7259,9 +7259,27 @@ Bekannt und ausdrücklich nicht erledigt:
 
 **Offen, und bei wem es liegt**
 
-- [ ] **Kern (Runde 6):** Bildausschnitt nur, wo er wirkt; Richtung + Standpunkt abweisen;
+- [x] **Kern (Runde 6):** Bildausschnitt nur, wo er wirkt; Richtung + Standpunkt abweisen;
       `hoehe` dokumentieren; «vertauscht» erst über der Zufallsstreuung;
       `bildeingang_lage` für z-image auf «gemessen: trägt nicht».
+      *(Sitzung 66)*
 - [ ] **local:** `auf-139` (Rang 1), `auf-141` (Rang 2).
 - [ ] **cloud:** `auf-142` — wird `geometry_gates` abgestreift?
 - [ ] **ui:** `auf-140` (Rang 5), `auf-143` (Rang 6).
+
+## Sitzung 66 — 22.09.2026 · Runde 6: was angenommen wird, muss auch wirken
+
+**Erledigt**
+
+- [x] Bildausschnitt nur im Bericht, wo er wirkt; zwei Standpunktquellen abgewiesen.
+- [x] Bildeingang am Registereintrag, mit Auftragskennung als Pflicht.
+- [x] «vertauscht» erst unter der Richtungsgrenze.
+- [x] Zustellablage, undatierte Posten, Zwillingsansicht, doppelte Szenenkennung.
+- [x] 22 Gegenproben fallen; Aufträge `auf-144` (local), `auf-145` (ui).
+
+**Offen, und bei wem es liegt**
+
+- [ ] **Owner:** Hineinskizzieren auf dem Vorgabemodell sperren oder mit Vorbehalt rechnen?
+- [ ] **Kern:** `augenhoehe`/`bias_grad`/`kamera_modus` wirken nur auf «abgeleitet»;
+      Abholer-Rahmung auf anderen Wegen; Richtung + Standpunkt an `seams` aus Homeworker
+      und Abholer; positive Seite der Richtungsmeldung.

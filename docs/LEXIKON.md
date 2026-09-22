@@ -4917,6 +4917,28 @@ Zustellzeit die erste stehen. Sonst sähe ein Auftrag, der seit Tagen liegt, nac
 neuen Versand frisch aus. *In diesem Projekt am 22.09.2026 repariert, nachdem es beim
 Verschicken selbst passiert war.*
 
+**Richtungsgrenze** — Wie deutlich eine Rangkorrelation unter null liegen muss, bevor die
+Prüfung «vorne und hinten vertauscht» meldet: zwei Zufallsstreuungen, also zwei geteilt
+durch die Wurzel aus der Punktzahl minus eins. Darüber heisst die Meldung «kein messbarer
+Zusammenhang». *In diesem Projekt seit dem 22.09.2026* — vorher genügte jedes negative
+Vorzeichen, auch eines in der Grösse des Zufalls.
+
+**Wirkungslos (im Bericht)** — Eine Angabe, die angenommen, am Bild aber nicht benutzt
+wurde. Der Bericht sagt dann ausdrücklich warum, statt eine Zahl hinzuschreiben, die nichts
+bewirkt hat. *In diesem Projekt seit dem 22.09.2026 beim Bildausschnitt:* Auf den
+Kamerawegen «vorgegeben» und «Rückfall» steht dort keine Zahl mehr, sondern der Grund.
+
+**Zwillingsansicht** — Eine Kameraansicht, deren Soll-Tiefenkarte genau gleich aussieht
+wie die einer anderen (etwa zwei Über-Eck-Ansichten eines Quaders). Sie wird nicht neu
+gerechnet, sondern übernimmt Bild und Urteil der ersten. Darum darf ein Befund über sie
+nur **einmal** genannt werden — sonst sieht ein einziger Fehler aus wie zwei.
+
+**Registereintrag** — Eine Zeile in der Tabelle der Bildmodelle, in der alles steht, was
+man über ein Modell vor dem Laden weiss: Lizenz, Speicherbedarf, Bauplan-Familie und seit
+dem 22.09.2026 auch, ob ein Ausgangsbild bei ihm ankommt — jedes Urteil mit der Kennung
+des Auftrags, der es gemessen hat. *Ein Urteil ohne Messung kommt nicht hinein*; die
+Tabelle lädt sonst gar nicht.
+
 **Erreichbarkeit einer Schwelle (Deckel)** — Die Frage, ob ein Messwert eine Schwelle
 unter den gegebenen Umständen **überhaupt** erreichen kann — unabhängig davon, wie gut das
 Geprüfte ist. Liegt die beste erreichbare Zahl unter der Schwelle, misst die Prüfung nicht
@@ -5450,6 +5472,7 @@ keine Aussage.*
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-22 | Ergaenzt aus der sechsten Runde: **Richtungsgrenze**, **Wirkungslos (im Bericht)**, **Zwillingsansicht**, **Registereintrag** |
 | 2026-09-22 | Ergaenzt aus der fuenften Runde: **Kameraweg (abgeleitet, vorgegeben, Rueckfall)**, **Bildpunkt-Pruefsumme gegen Datei-Pruefsumme**, **Zufallsstreuung einer Rangkorrelation**, **Die erste Zustellung zaehlt**; nachgefuehrt: **Gelaendeangabe** (Owner-Entscheid) |
 | 2026-09-22 | Ergaenzt aus der vierten Runde: **Pipeline-Familie**, **Flache Kopie gegen tiefe Kopie**, **Angabe gegen Messung**, **Rollwinkel**, **Geländeangabe**, **Adresse im Heimnetz gegen «alle Adressen» (0.0.0.0)**. Jeder Eintrag traegt den Befund gegen den eigenen Code, aus dem er kam |
 | 2026-09-22 | Ergaenzt aus der Abarbeitung von sechs Befunden: **Wirkungspruefung gegen Textpruefung**, **Bestellbar, aber nicht lieferbar**, **Modusabweichung**, **Laufmessung (in der Mappe)**, **Konvergenz (stuerzender Linien)**. Drei davon tragen einen Befund gegen den eigenen Code: vier Waechter, die Text statt Wirkung prueften; eine Innenansicht, die sich bestellen und nicht liefern laesst; eine fehlende Neigung, die als gemessene Null bescheinigt wurde |

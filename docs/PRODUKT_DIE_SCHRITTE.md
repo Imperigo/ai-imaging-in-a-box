@@ -91,6 +91,21 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 22.09.2026 · Was angenommen wird, muss auch wirken
+
+* **Der Bildausschnitt steht nur noch dort im Bericht, wo er gewirkt hat.** Vorher stand er
+  überall, auch wo er nichts tat — der Bericht behauptete eine Rahmung, die es nie gab.
+* **Himmelsrichtung und angeklickter Standpunkt zugleich werden abgelehnt,** statt dass
+  still einer gewinnt. Die Oberfläche muss beim Anklicken die Richtung löschen — beauftragt.
+* **«Vorne und hinten vertauscht» kommt nur noch bei einem deutlichen Wert.** Sonst heisst
+  es ehrlich «kein messbarer Zusammenhang».
+* **Das Programm weiss jetzt, welches Bildmodell ein Ausgangsbild annimmt** — und jedes
+  Urteil darüber muss den Messauftrag nennen, sonst startet es gar nicht.
+
+**Eine Frage an Sie:** Auf dem Vorgabemodell kommt eine hineingezeichnete Skizze gemessen
+nicht an. Soll das Hineinskizzieren dort gesperrt werden, oder weiter rechnen und den
+Vorbehalt anzeigen?
+
 ### 22.09.2026 · Warum die Sonne nichts am Bild ändert — und was jetzt drüben ankommt
 
 * **Ihr Entscheid ist eingebaut:** Ein von Hand gesetzter Geländestand heisst jetzt überall
