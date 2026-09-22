@@ -7017,12 +7017,38 @@ Bekannt und ausdrücklich nicht erledigt:
 
 - [ ] **Schwer, und wichtiger als alles Übrige:** `qwen-image-edit-2511` nimmt kein
       Eingangsbild an, solange die Tiefenkarte mitgeht — drei Bilder, eine sha256
-      (`auf-134`). `depth_png` ist im Auftrag Pflicht. **Damit hat die Bildstrecke heute
-      kein Modell, das eine Skizze als Bild annimmt** — und genau davon lebt der
-      Entwurfsmodus, über den am 15.10. entschieden wird.
+      (`auf-134`). `depth_png` ist im Auftrag Pflicht.
+      **Berichtigt am 22.09.:** Daraus «die Bildstrecke hat kein Modell, das eine Skizze
+      annimmt» zu machen, war zu weit gegriffen. Gemessen sind **zwei** von acht
+      Einträgen (`qwen-image-edit-2511` nur `image`, `z-image-turbo` nur
+      `control_image`). **Drei ungeprüfte Einträge tragen ein eigenes, getrenntes
+      Depth-ControlNet** — `qwen-image-2512`, `sdxl-juggernaut`, `sd35-large` —, also die
+      Bauform, bei der `control_image` die Tiefe nimmt und `image` frei bleibt. Als
+      `auf-20260922-138` abgelegt; Teil 1 kostet keinen Rechenschritt.
 - [ ] **local:** `auf-137` (Gegenprobe) und `auf-128` (Schwellenmessreihe, Frist 15.10.).
 - [ ] **Kern (wir):** Führung (`guidance_scale`) ist bei destillierten Modellen nicht
       gesetzt und übernimmt die Vorgabe von diffusers — eine fremde Entscheidung, und bei
       solchen Modellen der Unterschied zwischen einem Bild und Matsch (`auf-134`).
 - [ ] **Kern (wir):** Die Tiefenkonvention von `qwen-image-edit-2511` ist nicht gemessen.
       Selbst wenn die Tiefenkarte ankommt, ist ungeprüft, ob sie richtig herum ankommt.
+
+## Sitzung 55 — 22.09.2026 · Eine eigene Aussage zurückgenommen
+
+**Erledigt**
+
+- [x] Die Aussage «die Bildstrecke hat kein Modell, das eine Skizze annimmt»
+      **berichtigt**: Gemessen sind zwei von acht Einträgen, drei ungeprüfte tragen ein
+      getrenntes Depth-ControlNet. Der Unterschied entscheidet, ob am 15.10. der
+      Entwurfsmodus fällt oder ob nur eine Messung fehlt.
+- [x] `auf-20260922-138` an `local`: Signaturvergleich über fünf Einträge (Teil 1 ohne
+      Rechenschritte), dann ein Ja/Nein-Lauf mit dem besten Kandidaten, dazu die
+      Führungs-Vorgabewerte, nach denen die HomeStation gefragt hat.
+- [x] `auf-20260921-128` rückt dafür auf Rang 3 — angesagt in beiden neuen Aufträgen,
+      nicht still geändert.
+
+**Offen, und bei wem es liegt**
+
+- [ ] **local:** `auf-137` (Gegenprobe, Rang 1), `auf-138` (Signaturen, Rang 2),
+      `auf-128` (Schwellenreihe, Rang 3, Frist 15.10.).
+- [ ] **Kern (wir):** Die Führung (`guidance_scale`) bleibt für sieben von acht Einträgen
+      ungesetzt. Sie hier zu setzen hiesse raten — darum Teil 3 des Auftrags.

@@ -126,11 +126,22 @@ drei verschiedenen Bildern ergaben **dasselbe** Bild, bitgenau. Die Tiefenkarte 
 einzigen Bildeingang.
 
 Das ist dieselbe Falle wie am 18.08.2026, nur bei einem anderen Modell — und die
-Tiefenkarte ist im Auftrag heute Pflicht. **Damit hat die Bildstrecke aktuell kein Modell,
-das eine Skizze als Bild annimmt.** Genau davon lebt der Entwurfsmodus.
+Tiefenkarte ist im Auftrag heute Pflicht.
 
-Das ist der ernsteste offene Posten dieses Tages, und er entscheidet mehr als jede
-Bedienfrage.
+**Berichtigung am 22.09.2026, und sie ändert die Lage:** Wir hatten daraus geschrieben,
+die Bildstrecke habe «kein Modell, das eine Skizze annimmt». Das ist zu stark. Sie hat
+**kein gemessenes**. Nachgesehen in der eigenen Modellliste: **Drei Einträge sind nie
+geprüft worden**, und alle drei haben einen eigenen, getrennten Steuereingang für die
+Tiefe — also genau die Bauform, bei der der Bildeingang für die Skizze frei bleibt.
+
+*Ein «geht nicht», das aus zwei Messungen auf acht Einträge schliesst, ist keine Messung
+mehr, sondern eine Vermutung mit Beleg-Anstrich.*
+
+Die Prüfung ist billig: Für den ersten Teil muss kein einziger Rechenschritt laufen — man
+sieht der geladenen Software an, welche Eingänge sie kennt. Als Auftrag abgelegt
+(`auf-20260922-138`).
+
+Offen bleibt es trotzdem, und es entscheidet mehr als jede Bedienfrage.
 
 ### 21.09.2026 · Zwanzig Bedienfragen beantwortet — und die zwei Geräte werden eines
 
