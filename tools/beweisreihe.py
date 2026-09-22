@@ -315,8 +315,14 @@ def main(argv=None) -> int:
     for ziel, schalter in ((bau_ifc, []), (raeume_ifc, ["--raeume"])):
         if not ziel.exists():
             import subprocess
-            subprocess.run([sys.executable, str(WURZEL / "tools" / "make_test_ifc.py"),
-                            str(ziel), *schalter], check=True, capture_output=True)
+            lauf = subprocess.run(
+                [sys.executable, str(WURZEL / "tools" / "make_test_ifc.py"),
+                 str(ziel), *schalter],
+                check=True, capture_output=True, text=True)
+            # Dasselbe wie in `tools/homeworker.py`: Was das Kind auf stderr sagt, wird
+            # durchgereicht. Ein Kind, dessen stderr niemand liest, hat nicht gewarnt.
+            if (lauf.stderr or "").strip():
+                print(f"  [Geometrie] {lauf.stderr.strip()}", file=sys.stderr)
 
     bau_glb = seams.ifc_zu_glb(str(bau_ifc), str(wurzel / "bau.glb"))
     raeume_glb = seams.ifc_zu_glb(str(raeume_ifc), str(wurzel / "raeume.glb"))

@@ -7139,3 +7139,32 @@ Bekannt und ausdrücklich nicht erledigt:
       gleichmässiger Randfehler müsste 19 Bildpunkte breit sein, um den Hochbau auf 0,36
       zu drücken — und der Quader stünde dann bei 0,79 statt 0,93. Der Rest ist unerklärt.
 - [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2).
+
+## Sitzung 60 — 22.09.2026 · Die Warnung kam bei niemandem an
+
+**Erledigt**
+
+- [x] Die Warnung aus Sitzung 59 steckte im `__main__`-Block und erreichte **vier
+      Aufrufer nicht**, darunter `tools/homeworker.py` — den Weg der HomeStation. Jetzt
+      warnt `erzeuge_ifc` selbst (`GelaendeWarnung`), und `homeworker`/`beweisreihe`
+      reichen das `stderr` des Kindes durch — **alles davon**, nicht nach Wort gesucht.
+- [x] Der Warnsatz steht an **einer** Stelle (`warnsatz()`); ein Wächter vergleicht die
+      Konsolenausgabe mit dem Wortlaut der Warnung.
+- [x] **Zwei eigene Wächter überführt und ersetzt:** einer zählte eine Zeichenkette, die
+      im Quelltext gar nicht zusammenhängend vorkommt; einer prüfte nur diese eine
+      Warnung, obwohl der Kommentar Allgemeingültigkeit behauptete.
+- [x] Neun Einbau-Posten geprüft und gegengeprüft (18 Agenten). Sechs Befunde halten.
+
+**Offen, und bei wem es liegt**
+
+- [ ] **Kern (wir):** `--im-heimnetz` zeigt `http://0.0.0.0:8799` — eine Adresse, die es
+      im Netz nicht gibt — und wirft eine getippte `--adresse` bedingungslos weg.
+- [ ] **Kern (wir):** `pruefe_verdrahtbarkeit` wird nur von der Testsuite gerufen; der
+      echte Bestellweg trägt eine dritte Kopie der vier Feldnamen (A7).
+- [ ] **Kern (wir):** Der Läufer prüft kein Token mehr, nur noch den Status im File; die
+      Befugnisprüfung hängt an einem Schalter ohne Ausgeber (A12).
+- [ ] **Kern (wir):** Einbau-Stand nachziehen — C8 und C10 sind seit dem 21.09. am Gerät
+      bestätigt, die Tabelle sagt weiter «unbestätigt». Vor dem Abhaken selbst nachsehen.
+- [ ] **Kern (wir):** Zwei berührte Messdokumente — Zahlen unberührt, aber eines enthält
+      eine inzwischen falsche Aussage.
+- [ ] **local:** `auf-137` (Rang 1), `auf-138` (Rang 2).

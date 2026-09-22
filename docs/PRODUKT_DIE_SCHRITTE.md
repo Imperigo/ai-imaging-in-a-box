@@ -91,6 +91,27 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 22.09.2026 · Die Warnung von vorhin kam bei niemandem an
+
+Eine Stunde nachdem die Warnung gebaut war, hat eine Prüfung gemeldet: **Vier Werkzeuge
+sehen sie nicht** — darunter ausgerechnet das, über das die HomeStation ihre Testgebäude
+baut. Sie fangen die Ausgabe des Hilfsprogramms ab und werfen sie weg.
+
+Das ist derselbe Fehler wie der, den die Warnung beheben sollte, nur eine Etage tiefer —
+und diesmal war er meiner.
+
+> *Eine Auskunft, die nur beim Tippen von Hand erscheint, gibt es für jedes Programm, das
+> das Hilfsprogramm aufruft, nicht.*
+
+Jetzt warnt die Funktion selbst, und die beiden Werkzeuge reichen weiter, was ihr
+Hilfsprogramm sagt — **alles davon**, nicht nach einem Stichwort gesucht, damit die
+nächste Warnung nicht wieder hängenbleibt.
+
+**Und zwei meiner eigenen Prüfungen waren keine:** Die eine zählte eine Textstelle, die es
+gar nicht gab, und war deshalb grün. Die andere prüfte nur genau diese eine Warnung,
+obwohl der Kommentar «reicht alles durch» versprach. Beide ersetzt durch Prüfungen, die
+das Ergebnis ansehen statt den Text.
+
 ### 22.09.2026 · Der Widerspruch 0,93 gegen 0,36 ist aufgeklärt — und es war unsere Szene
 
 Zwei Messungen desselben Verfahrens ergaben einmal 0,93 und einmal 0,36. Das sah aus wie

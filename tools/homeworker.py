@@ -232,9 +232,23 @@ def _geometrie_bereitstellen(satz: dict, repo: Path) -> str:
                 f"der Runner nicht und laesst sie weg. Gebaut wuerde dann ein ANDERES "
                 f"Gebaeude als bestellt, und der Lauf kaeme gruen zurueck. Bekannt sind: "
                 f"{', '.join(ERLAUBTE_GEOMETRIESCHALTER)}.")
-        subprocess.run([sys.executable, str(repo / "tools" / "make_test_ifc.py"),
-                        str(ziel), *genommen],
-                       check=True, capture_output=True, text=True)
+        lauf = subprocess.run([sys.executable, str(repo / "tools" / "make_test_ifc.py"),
+                               str(ziel), *genommen],
+                              check=True, capture_output=True, text=True)
+        # WAS DAS KIND AUF STDERR SAGT, WIRD DURCHGEREICHT.
+        #
+        # Bis zum 22.09.2026 wurde es verschluckt. Der Szenen-Erzeuger warnt seit
+        # demselben Tag, wenn die Gelaendeplatte von der HOEHE getrieben wird und die
+        # Szene damit nicht mit einer anderen vergleichbar ist — und ausgerechnet dieser
+        # Weg hier ist der, ueber den die HomeStation ihre Geometrie baut. Die Warnung
+        # waere also genau dort nicht angekommen, wo sie einen halben Tag erspart haette.
+        #
+        # *Ein Kind, dessen stderr niemand liest, hat nicht gewarnt.*
+        #
+        # Durchgereicht wird ALLES, nicht nur diese eine Warnung: Eine Weiterleitung, die
+        # nach einem bestimmten Wort sucht, verschluckt die naechste Warnung wieder.
+        if (lauf.stderr or "").strip():
+            print(f"  [Geometrie] {lauf.stderr.strip()}", file=sys.stderr)
         return str(ziel)
     pfad = geom.get("pfad")
     if not Path(pfad).is_file():

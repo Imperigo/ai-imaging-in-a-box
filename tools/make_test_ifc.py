@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import sys
 import uuid
+import warnings
 from pathlib import Path
 
 # Gebäudemass in Metern. Asymmetrisch, damit Verdrehungen sichtbar werden.
@@ -451,6 +452,39 @@ def _hochbau_bauteile(s: _Step, g, kontext: str, besitz: str, ort_gesch: str,
     return teile
 
 
+class GelaendeWarnung(UserWarning):
+    """Die Geländeplatte wird von der Höhe getrieben — zwei solche Szenen vergleichen sich nicht.
+
+    Eine **eigene** Warnklasse und keine blosse ``UserWarning``: Wer sie abstellen will,
+    muss sie benennen. *Eine Warnung, die man mit einem Handstrich zusammen mit allen
+    anderen abschaltet, ist beim nächsten Mal nicht mehr da.*
+    """
+
+
+def _mass_warnt(mass: dict) -> bool:
+    """Ob dieses Mass eine Warnung verdient — an **einer** Stelle entschieden."""
+    return mass["treiber"] == TREIBER_HOEHE
+
+
+def warnsatz(mass: dict) -> str:
+    """Der Satz, den sowohl die Warnung als auch die Konsole benutzen.
+
+    Er steht hier und nicht zweimal: *Eine Zahl an zwei Stellen ist an einer davon
+    bereits falsch.* Das gilt für einen Satz mit Zahlen darin erst recht.
+    """
+    grundriss = max(mass["spanne_x"], mass["spanne_y"])
+    return (
+        f"Die Gelaendeplatte wird von der HOEHE getrieben, nicht vom Grundriss: "
+        f"Hoehe {mass['spanne_z']:.2f} m > Grundriss {grundriss:.2f} m, also Platte "
+        f"{mass['kante']:.2f} m bei {mass['vielfaches']:g}-fach. Das Bauwerk steht als "
+        f"kleiner Koerper auf einem grossen Feld und nimmt im Bild deutlich weniger "
+        f"Flaeche ein als eine Szene, deren Platte vom Grundriss kommt. ZWEI SOLCHE "
+        f"SZENEN SIND NICHT VERGLEICHBAR — ein Unterschied in den Kennzahlen sagt dann "
+        f"etwas ueber die Szene und nichts ueber das Verfahren. Wer vergleichen will, "
+        f"gleicht mit --gelaende-vielfaches= an (gemessen: rund 6.0 fuer den Hochbau)."
+    )
+
+
 #: Was die Geländeplatte treibt: der Grundriss oder die Höhe.
 TREIBER_GRUNDRISS = "grundriss"
 TREIBER_HOEHE = "hoehe"
@@ -668,10 +702,31 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
         # ist 8,0, also genau der bisherige Wert — jede bestehende Messreihe behaelt ihre
         # Platte. Das ist Absicht und der Grund, warum hier ein Maximum steht und keine
         # Fallunterscheidung.
+        # UND HIER WIRD GEWARNT, NICHT ERST IM `__main__`-BLOCK.
+        #
+        # Die Warnung stand seit dem 22.09.2026 nur dort — und war damit fuer VIER
+        # Aufrufer unsichtbar: `tools/homeworker.py` und `tools/beweisreihe.py` starten
+        # dieses Skript mit `capture_output=True` und verschlucken stderr;
+        # `tools/studie_ersatzkalibrierung.py` und `tools/studie_innenansicht.py` rufen
+        # `erzeuge_ifc` unmittelbar auf und haben den `__main__`-Block nie gesehen.
+        #
+        # Ausgerechnet die HomeStation, deren halber Tag diese Warnung erspart haette,
+        # laeuft ueber den ersten Weg.
+        #
+        # *Dieselbe Falle, an derselben Stelle, eine Stunde nach ihrer Reparatur: Eine
+        # Auskunft im `__main__`-Block gibt es fuer jeden, der die Funktion aufruft,
+        # nicht.*
+        #
+        # `warnings.warn` und kein `print`: Es geht durch jeden Aufrufer, laesst sich in
+        # einem Test mit `pytest.warns` PRUEFEN, und wer es nicht hoeren will, schaltet
+        # es ausdruecklich ab, statt es versehentlich zu ueberhoeren.
+        if _mass_warnt(mass := gelaendekante(hochbau=hochbau,
+                                             vielfaches=gelaende_vielfaches)):
+            warnings.warn(warnsatz(mass), GelaendeWarnung, stacklevel=2)
+
         # GERECHNET WIRD IN `gelaendekante`, und nur dort. Hier stand dieselbe Rechnung
         # ein zweites Mal — und eine Zahl an zwei Stellen ist an einer davon bereits
         # falsch, sobald jemand eine davon anfasst.
-        mass = gelaendekante(hochbau=hochbau, vielfaches=gelaende_vielfaches)
         spanne_x, spanne_y = mass["spanne_x"], mass["spanne_y"]
         kante = mass["kante"]
         shape, ort = _quader(
@@ -843,9 +898,14 @@ if __name__ == "__main__":
     ziel = Path(argv[0] if argv else "build/testbau.ifc")
     schema = argv[1] if len(argv) > 1 else "IFC4"
     vorsatz = argv[2] if len(argv) > 2 else None
-    p = erzeuge_ifc(ziel, schema=schema, vorsatz=(vorsatz or None),
-                    mit_gelaende=mit_gelaende, mit_raeumen=mit_raeumen,
-                    hochbau=hochbau, gelaende_vielfaches=vielfaches)
+    # DIE WARNUNG WIRD HIER STUMMGESCHALTET, WEIL SIE GLEICH IN LESBARER FORM KOMMT.
+    # Zweimal dasselbe zu melden ist keine doppelte Sicherheit, sondern der Anfang davon,
+    # dass man beide Fassungen ueberliest.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", GelaendeWarnung)
+        p = erzeuge_ifc(ziel, schema=schema, vorsatz=(vorsatz or None),
+                        mit_gelaende=mit_gelaende, mit_raeumen=mit_raeumen,
+                        hochbau=hochbau, gelaende_vielfaches=vielfaches)
     print(f"{p}  ({p.stat().st_size} Bytes, {len(p.read_text().splitlines())} Zeilen)")
 
     # DIE WARNUNG STEHT DA, WO SIE JEMAND SIEHT — beim Erzeugen, nicht im Docstring.
@@ -856,20 +916,8 @@ if __name__ == "__main__":
     # liest, wenn man ihn schon kennt, hat niemanden gewarnt.
     if mit_gelaende:
         mass = gelaendekante(hochbau=hochbau, vielfaches=vielfaches)
-        if mass["treiber"] == TREIBER_HOEHE:
-            print(
-                f"  ACHTUNG: Die Gelaendeplatte wird von der HOEHE getrieben, nicht vom "
-                f"Grundriss.\n"
-                f"  Hoehe {mass['spanne_z']:.2f} m > Grundriss "
-                f"{max(mass['spanne_x'], mass['spanne_y']):.2f} m, also Platte "
-                f"{mass['kante']:.2f} m bei {mass['vielfaches']:g}-fach.\n"
-                f"  Das Bauwerk steht als kleiner Koerper auf einem grossen Feld und "
-                f"nimmt im Bild deutlich\n"
-                f"  weniger Flaeche ein als eine Szene, deren Platte vom Grundriss "
-                f"kommt. ZWEI SOLCHE SZENEN\n"
-                f"  SIND NICHT VERGLEICHBAR — ein Unterschied in den Kennzahlen sagt "
-                f"dann etwas ueber die\n"
-                f"  Szene und nichts ueber das Verfahren. Wer vergleichen will, gleicht "
-                f"mit\n"
-                f"  --gelaende-vielfaches= an (gemessen: rund 6.0 fuer den Hochbau).",
-                file=sys.stderr)
+        if _mass_warnt(mass):
+            # DERSELBE SATZ WIE IN DER WARNUNG, aus derselben Funktion. Hier stand er ein
+            # zweites Mal, von Hand umgebrochen — und zwei Fassungen eines Satzes laufen
+            # auseinander, sobald jemand eine davon anfasst.
+            print(f"  ACHTUNG: {warnsatz(mass)}", file=sys.stderr)

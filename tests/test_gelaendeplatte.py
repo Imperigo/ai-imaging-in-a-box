@@ -195,3 +195,171 @@ def test_ein_angeglichenes_vielfaches_warnt_weiterhin(tmp_path):
 
     assert "ACHTUNG" in ergebnis.stderr
     assert "91.50" in ergebnis.stderr
+
+
+# --------------------------------------------------------------------------------------
+# 4 · Die Warnung erreicht JEDEN Aufrufer — und das war sie zuerst nicht
+# --------------------------------------------------------------------------------------
+#
+# **Derselbe Fehler, an derselben Stelle, eine Stunde nach seiner Reparatur.** Die Warnung
+# stand zuerst nur im ``__main__``-Block. Damit war sie für vier Aufrufer unsichtbar:
+# ``tools/homeworker.py`` und ``tools/beweisreihe.py`` starten das Skript mit
+# ``capture_output=True``, ``tools/studie_ersatzkalibrierung.py`` und
+# ``tools/studie_innenansicht.py`` rufen ``erzeuge_ifc`` unmittelbar auf.
+#
+# Ausgerechnet die HomeStation, deren halber Tag diese Warnung erspart hätte, läuft über
+# den ersten Weg.
+#
+#     *Eine Auskunft im ``__main__``-Block gibt es für jeden, der die Funktion aufruft,
+#     nicht.*
+
+import warnings as _warnings
+
+
+def test_wer_die_funktion_aufruft_bekommt_die_warnung(mk, tmp_path):
+    """Der Wächter für den Weg, den `studie_*` und jeder Test gehen."""
+    with pytest.warns(mk.GelaendeWarnung, match="HOEHE"):
+        mk.erzeuge_ifc(tmp_path / "hoch.ifc", mit_gelaende=True, hochbau=True)
+
+
+def test_beim_quader_warnt_die_funktion_nicht(mk, tmp_path):
+    with _warnings.catch_warnings():
+        _warnings.simplefilter("error", mk.GelaendeWarnung)
+        mk.erzeuge_ifc(tmp_path / "quader.ifc", mit_gelaende=True, hochbau=False)
+
+
+def test_die_warnung_hat_eine_eigene_klasse(mk):
+    """*Eine Warnung, die man mit allen anderen abschaltet, ist beim nächsten Mal weg.*"""
+    assert issubclass(mk.GelaendeWarnung, Warning)
+    assert mk.GelaendeWarnung is not UserWarning
+
+
+def test_konsole_und_warnung_sagen_woertlich_dasselbe(mk, tmp_path):
+    """Konsole und Warnung benutzen **denselben** Satz — geprüft an beiden Ausgaben.
+
+    Hier stand zuerst eine Zählung über den Quelltext. Sie war grün, weil der Satz im
+    Quelltext über zwei Zeilen umbrochen ist und die gesuchte Zeichenkette darum gar
+    nicht vorkam — *ein Wächter, der die Stellung einer Zeile prüft statt ihrer Wirkung,
+    prüft den Text und nicht das Programm.* Und in diesem Fall nicht einmal den Text.
+
+    Jetzt wird verglichen, was wirklich herauskommt.
+    """
+    satz = mk.warnsatz(mk.gelaendekante(hochbau=True))
+    assert "38.12" in satz and "--gelaende-vielfaches=" in satz
+
+    with pytest.warns(mk.GelaendeWarnung) as gemeldet:
+        mk.erzeuge_ifc(tmp_path / "hoch.ifc", mit_gelaende=True, hochbau=True)
+    assert str(gemeldet[0].message) == satz
+
+    auf_der_konsole = _lauf(tmp_path, "--gelaende", "--hochbau").stderr
+    assert satz in auf_der_konsole, (
+        "die Konsole sagt etwas anderes als die Warnung — zwei Fassungen desselben "
+        "Satzes laufen auseinander, sobald jemand eine davon anfasst")
+
+
+def test_die_konsole_meldet_genau_einmal(tmp_path):
+    """Zweimal dasselbe ist keine doppelte Sicherheit, sondern der Anfang des Überlesens."""
+    ergebnis = _lauf(tmp_path, "--gelaende", "--hochbau")
+
+    assert ergebnis.stderr.count("HOEHE getrieben") == 1
+
+
+def test_die_homestation_bekommt_die_warnung_zu_sehen(tmp_path, capsys):
+    """**Der Wächter für den Weg, über den die HomeStation ihre Geometrie baut.**
+
+    Sie startet den Erzeuger als Unterprozess mit ``capture_output=True``. Wer das tut,
+    muss das aufgefangene ``stderr`` weitergeben — *ein Kind, dessen stderr niemand
+    liest, hat nicht gewarnt.*
+
+    Geprüft wird die **Wirkung**: Der Auftrag wird wirklich ausgeführt, und danach muss
+    die Warnung auf unserem eigenen stderr stehen.
+    """
+    import importlib.util as _iu
+    import sys as _sys
+
+    pfad = WERKZEUG.parent / "homeworker.py"
+    spez = _iu.spec_from_file_location("homeworker_gelaende", pfad)
+    hw = _iu.module_from_spec(spez)
+    _sys.modules[spez.name] = hw
+    spez.loader.exec_module(hw)
+
+    satz = {"geometrie": {"synthetisch": True,
+                          "erzeugen_mit": "tools/make_test_ifc.py --hochbau --gelaende"}}
+    hw._geometrie_bereitstellen(satz, WERKZEUG.parent.parent)
+
+    ausgabe = capsys.readouterr()
+    assert "HOEHE getrieben" in ausgabe.err, (
+        "die HomeStation verschluckt die Warnung — und sie ist die, der sie einen halben "
+        "Tag erspart haette")
+
+
+def test_der_quaderfall_macht_bei_der_homestation_keinen_laerm(tmp_path, capsys):
+    """*Eine Warnung, die immer kommt, wird abgeschaltet.* Auch weitergereicht."""
+    import importlib.util as _iu
+    import sys as _sys
+
+    pfad = WERKZEUG.parent / "homeworker.py"
+    spez = _iu.spec_from_file_location("homeworker_gelaende_quader", pfad)
+    hw = _iu.module_from_spec(spez)
+    _sys.modules[spez.name] = hw
+    spez.loader.exec_module(hw)
+
+    hw._geometrie_bereitstellen(
+        {"geometrie": {"synthetisch": True,
+                       "erzeugen_mit": "tools/make_test_ifc.py --gelaende"}},
+        WERKZEUG.parent.parent)
+
+    assert "HOEHE getrieben" not in capsys.readouterr().err
+
+
+def test_die_homestation_reicht_JEDE_meldung_durch_nicht_nur_diese(monkeypatch):
+    """**Die Weiterleitung sucht kein Wort — sie reicht weiter, was da ist.**
+
+    Eine Mutationsprobe (22.09.2026) hat gezeigt, dass der Kommentar mehr behauptete, als
+    ein Wächter prüfte: Ersetzt man die allgemeine Weitergabe durch eine Suche nach dem
+    Wort «HOEHE», bleiben alle Wächter grün — und die **nächste** Warnung wäre wieder
+    verschluckt.
+
+        *Eine Weiterleitung, die nach einem bestimmten Wort sucht, verschluckt die
+        nächste Warnung.*
+
+    Hier steht darum eine Meldung auf dem stderr des Kindes, die mit dem Gelände nichts zu
+    tun hat.
+    """
+    import importlib.util as _iu
+    import subprocess as _sp
+    import sys as _sys
+
+    pfad = WERKZEUG.parent / "homeworker.py"
+    spez = _iu.spec_from_file_location("homeworker_durchreichen", pfad)
+    hw = _iu.module_from_spec(spez)
+    _sys.modules[spez.name] = hw
+    spez.loader.exec_module(hw)
+
+    FREMDE_MELDUNG = "Etwas ganz anderes, das kuenftig einmal gemeldet wird."
+    gerufen = {}
+
+    class Lauf:
+        returncode = 0
+        stdout = ""
+        stderr = FREMDE_MELDUNG
+
+    def statt_subprozess(befehl, **kw):
+        gerufen["ja"] = True
+        return Lauf()
+
+    monkeypatch.setattr(hw.subprocess, "run", statt_subprozess)
+
+    gesammelt = []
+    monkeypatch.setattr(hw, "print",
+                        lambda *a, **k: gesammelt.append(" ".join(str(x) for x in a)),
+                        raising=False)
+
+    hw._geometrie_bereitstellen(
+        {"geometrie": {"synthetisch": True,
+                       "erzeugen_mit": "tools/make_test_ifc.py --gelaende"}},
+        WERKZEUG.parent.parent)
+
+    assert gerufen.get("ja"), "der Unterprozess wurde gar nicht gerufen"
+    assert any(FREMDE_MELDUNG in z for z in gesammelt), (
+        "die Weiterleitung sucht ein bestimmtes Wort, statt weiterzureichen, was da ist")
