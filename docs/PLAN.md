@@ -7215,10 +7215,29 @@ Bekannt und ausdrücklich nicht erledigt:
 
 **Offen, und bei wem es liegt**
 
-- [ ] **Kern (Runde 4 läuft):** Ladeweg nach Modellfamilie; Mappe (Grund, Lizenz, geteilte
-      Objekte, «nicht zutreffend»); Komposition (Geländebezug, Rollwinkel, benannte
-      Ungemessene); Adresse im Heimnetz.
+- [x] **Kern (Runde 4):** Ladeweg nach Modellfamilie; Mappe (Grund, Lizenz, geteilte
+      Objekte — «nicht zutreffend» stimmte auf dem Produktweg nicht); Komposition
+      (Geländebezug, Rollwinkel, benannte Ungemessene); Adresse im Heimnetz. *(Sitzung 64)*
 - [ ] **Kern:** Innenansicht über die Mappe lieferbar machen — Räume mitführen.
 - [ ] **Kern:** C8/C10 — nur der Grund der schlechtesten Kamera kommt an;
       `geometry_gates` bleibt leer.
-- [ ] **ui:** Messung am Bild anzeigen; Freitext im Feld Innenansicht; `_probewert`.
+- [x] **ui:** Messung am Bild anzeigen; Freitext im Feld Innenansicht; `_probewert`.
+      *(als Auftrag abgelegt: `auf-20260922-140`, Sitzung 64)*
+
+## Sitzung 64 — 22.09.2026 · Vier Stellen, an denen eine Zahl mehr sagte als gemessen
+
+**Erledigt**
+
+- [x] Vier Befunde gebaut, alle vier Durchsichten «taugt» (`a64bea3`); 29 Gegenproben fallen.
+- [x] Lader nach Pipeline-Familie; Grund, Lizenz und eigene Kopien in der Mappe;
+      Geländeangabe und Rollwinkel ehrlich; Startzeile im Heimnetz.
+- [x] Aufträge verteilt: `auf-139` (local), `auf-140` (ui). Einbau-Stand C16, C17.
+
+**Offen, und bei wem es liegt**
+
+- [ ] **Owner:** Gilt ein von Hand gesetzter Geländestand als verlässlich oder als
+      ungeprüft? Zwei Stellen im Code sagen heute Verschiedenes.
+- [ ] **local:** `auf-20260922-139` (Rang 1) — Qwen laden, Lauf über die Mappe, Heimnetz.
+- [ ] **ui:** `auf-20260922-140` (Rang 5) — neun Anzeigepunkte, Einbauauftrag.
+- [ ] **Kern:** Innenansicht über die Mappe lieferbar; C8/C10-Vertragsbefunde;
+      `homeworker.py:652`; Sonne/Bildausschnitt/Deckungsgrad ohne Wirkung.

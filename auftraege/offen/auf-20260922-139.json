@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260922-139",
+  "art": "render",
+  "beschreibung": "Qwen-Image-2512 ueber den neuen Lader nach Familie (Klassen in diffusers, Ordnername des ControlNet), ein echter Lauf ueber die Projektmappe (Grund und Lizenz am Bild), und die Startzeile im Heimnetz — dazu die Ansage von fuenf Verhaltensaenderungen, die mit dem naechsten Pull kommen.",
+  "anweisung": "=== VIER SACHEN, DIE NUR AM GERAET GEHEN — UND EINE ANSAGE VORWEG ===\n\nANSAGE ZUERST: Mit dem naechsten `git pull` aendert sich bei euch Verhalten.\nDas ist gewollt und KEIN Fehler:\n\n  A1 SDXL (sdxl-juggernaut) und SD3.5 (sd35-large) werden von `render.rendere`\n     ABGELEHNT (Owner-Entscheid 22.09.2026: nur zum Messen, nie im Produkt,\n     dieselbe Behandlung wie FLUX). Status «abgelehnt», Lizenz und Auflagen\n     stehen trotzdem im Ergebnis.\n  A2 Mit `--gelaende-z` auf dem vorgegebenen Kameraweg steht im Kurzbefund\n     jetzt «Geländeangabe … NICHT GEPRÜFT» statt «Komposition NICHT\n     beurteilbar». Die Kompositionspruefung laeuft also wieder.\n  A3 Fehlt die Kameraneigung im Kamerablock, heisst es «NICHT GEMESSEN»\n     statt «lotrecht». `rollwinkel_grad` ist `null`, wenn ihn niemand meldet.\n  A4 Am Bild in der Projektmappe steht der echte Satz der Pruefung\n     (`herkunft.grund`) und die Lizenz des benutzten Gewichts\n     (`herkunft.lizenz`). Bei einem Urteil `null` beginnt der Satz mit\n     «… hat gerechnet, aber kein Urteil gefällt — NICHT GEMESSEN».\n  A5 `oberflaeche/server.py --im-heimnetz` druckt die Adresse des Rechners\n     statt 0.0.0.0, und `--im-heimnetz` zusammen mit `--adresse 127.0.0.1`\n     wird abgewiesen (Rueckgabewert 2).\n\n\nTEIL 1 — QWEN-IMAGE-2512 LADEN (V1 bis V3)\n\nBei uns waehlt der Lader die Pipeline-Klasse jetzt nach der Modellfamilie.\nFuer qwen-image-2512 fordert er `QwenImageControlNetModel` und\n`QwenImageControlNetPipeline` an. Diese Namen sind hier NICHT an einer\ninstallierten Bibliothek geprueft.\n\n  V1 Im Produkt-venv:\n       python -c \"import diffusers; print(diffusers.__version__, hasattr(diffusers,'QwenImageControlNetModel'), hasattr(diffusers,'QwenImageControlNetPipeline'))\"\n     Woertliche Ausgabe zurueck.\n\n  V2 Unter welchem Ordnernamen liegen die ControlNet-Gewichte von\n     qwen-image-2512 neben der Modellwurzel? (Nur der Ordnername und die\n     Dateinamen darin, keine absoluten Pfade.) Ohne diesen Namen bricht\n     unser Produktweg mit «nennt ein ControlNet, aber keinen Ordner» ab —\n     wir tragen ihn dann ins Register ein.\n     Und: Laedt `QwenImageControlNetModel.from_single_file(<datei>)` diese\n     Datei, oder passt das ControlNet (VideoX-Fun-Format) gar nicht in die\n     diffusers-Klasse? Woertliche Meldung genuegt.\n\n  V3 NUR wenn V1 zweimal True ergibt und V2 eine ladbare Datei nennt: einmal\n     ueber den Produktweg laden, nicht ueber ein Messskript:\n       from aiimaging import render\n       m = render.lade_modell('qwen-image-2512', modell_wurzel=<eure Wurzel>)\n     Wenn dabei der Ordner fehlt, setzt ihn fuer diesen Versuch per\n     `dataclasses.replace(eintrag, controlnet_ordner=<name>)` — NICHT im Repo.\n     Zurueck: der Ladeweg-Text, VRAM-Spitze, und ob die Pipeline\n     `control_image` und `controlnet_conditioning_scale` annimmt.\n     Scheitert es: die woertliche Meldung, das ist eine vollstaendige Antwort.\n\n\nTEIL 2 — EIN ECHTER LAUF UEBER DIE PROJEKTMAPPE (V4)\n\nMit der synthetischen Testszene (`python3 tools/make_test_ifc.py build/testbau.ifc`)\neine Mappe anlegen und einmal rechnen:\n  from aiimaging import arbeitsgang\n  arbeitsgang.lege_an(<ordner>, 'build/testbau.ifc', name='Probe', einstellungen={'prompt': 'Abendlicht', 'seed': 7})\n  arbeitsgang.rechne(<ordner>)\nDanach die Projektdatei als TEXT lesen und zurueckmelden:\n  - steht `herkunft.grund` am Bild, und ist es ein Satz (nicht null)?\n  - steht `herkunft.lizenz` mit `name`, `lizenz`, `zulaessig`?\n  - steht im letzten Laufeintrag `messungen`, `modus_abweichungen`, `modus_ungemessen`, `angaben`?\n  - `modus_bestellt` und `modus_gerechnet` am Bild: welche Werte?\nNur Feldnamen und Werte, kein Bild.\n\n\nTEIL 3 — DIE ADRESSE IM HEIMNETZ (V5)\n\n  python oberflaeche/server.py --im-heimnetz --kennwort-erzeugen\nDie gedruckte Startzeile mit `ip addr` (bzw. `ipconfig`) vergleichen: Ist die\ngedruckte Adresse die des Rechners im Heimnetz, oder die einer anderen\nNetzkarte (VPN, Docker)? Danach sofort beenden (Strg+C). Nur «stimmt» / «ist\ndie Karte X» zurueck, KEINE Adressen ins Repo.\n\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n  - Nichts an unserem Code aendern, auch nicht den Ordnernamen ins Register\n    schreiben. Die Antwort ist die Meldung; eingetragen wird bei uns.\n  - Keine Non-Commercial-Gewichte laden (flux1-dev, flux2-dev).\n  - Keine Bilder, keine Geometrie, keine absoluten Pfade, keine Adressen,\n    keine Kunden-, Buero- oder Projektnamen zurueckgeben.\n  - Die Fläche aus Teil 3 nicht laufen lassen, sobald die Zeile abgelesen ist.",
+  "erstellt": "2026-09-22T18:39:28Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Keine Non-Commercial-Gewichte laden.",
+      "Nichts an unserem Code aendern — die woertliche Meldung ist die Antwort.",
+      "Keine Bilder, Geometrie, Pfade, Adressen oder Namen zurueckgeben."
+    ]
+  },
+  "rueckgabe": [
+    "A Bestaetigung, dass die Ansage A1–A5 gelesen wurde, bevor gezogen wird.",
+    "V1 diffusers-Fassung und die zwei hasattr-Werte, woertlich.",
+    "V2 Ordnername und Dateinamen des Qwen-ControlNet; laedt from_single_file die Datei?",
+    "V3 Ladeweg-Text, VRAM-Spitze, nimmt die Pipeline control_image und controlnet_conditioning_scale — oder die woertliche Meldung.",
+    "V4 Die vier Feldbefunde aus der geschriebenen Projektdatei.",
+    "V5 Stimmt die gedruckte Heimnetz-Adresse, oder ist es eine andere Netzkarte?",
+    "V6 Was aufgefallen ist und wonach nicht gefragt wurde."
+  ],
+  "rang": 1
+}

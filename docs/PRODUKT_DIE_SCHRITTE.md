@@ -91,6 +91,25 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 22.09.2026 · Vier Stellen, an denen eine Zahl mehr sagte, als gemessen war
+
+* **Ein zweites Bildmodell ist einen Schritt näher.** Das Programm wählte für jedes
+  Modell denselben Bauplan. Jetzt nach Modellfamilie. Laden lässt sich das Modell
+  trotzdem noch nicht: Wie sein Zusatzordner auf der Werkstattmaschine heisst, ist nicht
+  gemessen — gefragt ist es.
+* **Am Bild steht jetzt, warum die Prüfung so geurteilt hat — und unter welcher Lizenz es
+  entstand.** Bis dahin stand beim Grund immer «leer», weil unter dem falschen Namen
+  nachgesehen wurde. Und wo die Prüfung gar nicht urteilen konnte, klang ihr Satz trotzdem
+  nach «bestanden»; jetzt steht der Vorbehalt davor.
+* **Der Rat des Programms schaltete die Prüfung ab.** Wer den Geländestand setzte, wie
+  empfohlen, bekam gar keine Kompositionsprüfung mehr. Behoben.
+* **Die Adresse fürs iPad ist jetzt eine, die man eintippen kann.** Vorher stand dort
+  «0.0.0.0» — das ist keine Adresse, sondern eine Anweisung an den Rechner.
+
+**Eine Frage an Sie:** Wenn Sie den Geländestand von Hand eingeben — soll das Programm ihm
+trauen wie einer Messung, oder soll es dazuschreiben «nicht geprüft»? Heute sagen zwei
+Stellen Verschiedenes.
+
 ### 22.09.2026 · Sechs Fehler, die niemand sah, weil nichts kaputtging
 
 Sechs der dreizehn Befunde von vorhin sind behoben. Sie hatten alle dieselbe Form: Etwas

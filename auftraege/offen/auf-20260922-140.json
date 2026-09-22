@@ -1,0 +1,42 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "ui",
+  "auftrag_id": "auf-20260922-140",
+  "art": "frage",
+  "beschreibung": "Neun Oberflaechenpunkte aus dem 22.09.2026, gesammelt: wie ein Bild entstand, Grund und Lizenz am Bild, abgelehnte Knoten im Lauf, die bestellbare, aber nicht lieferbare Innenansicht, Regler ohne Wirkung, drei Kompositionsvorbehalte und das LIESMICH zum Heimnetz. Einbauauftrag.",
+  "anweisung": "=== NEUN PUNKTE ZUR OBERFLAECHE — GESAMMELT, NICHT IM VORBEIGEHEN ===\n\nDas hier ist ein EINBAUAUFTRAG. Er fragt nicht, ob etwas geht, sondern bittet,\nes einzubauen, und die Rueckgabe soll den Einbau belegen.\n\nAlle neun Punkte haben dieselbe Wurzel: Die Bibliothek misst oder weiss etwas\nseit dem 22.09.2026, und die Anzeige zeigt es nicht — oder sie zeigt eine Zahl\nohne ihren Vorbehalt. Wo unten `seite.html` steht, ist unsere eigene kleine\nFlaeche in diesem Repo gemeint (`oberflaeche/seite.html`, `oberflaeche/server.py`);\nsie ist die Vorlage. Wo ihr die Visbox-Ansicht in KosmoOrbit baut, gilt\nderselbe Punkt dort.\n\n\nAM EINZELNEN BILD\n\n  P1 WIE ES ENTSTANDEN IST. In der Mappe steht am Bild `herkunft.messung`\n     mit `modus_bestellt`, `modus_gerechnet`, `modus_abweichung` (true /\n     false / null). Bei `true` wurde anders gerechnet als bestellt (etwa\n     «aus dem Ausgangsbild» bestellt, «nur aus dem Text» gerechnet). Heute\n     sieht so ein Bild aus wie jedes andere. Einbauen: ein sichtbares\n     Zeichen am Bild bei `true`, mit beiden Werten; bei `null` «nicht\n     gemeldet», NICHT dasselbe wie `false`.\n     (seite.html zeigt aus `herkunft` heute nur Prompt, Backbone, Startwert,\n     Modellstand — um Zeile 567.)\n\n  P2 DER GRUND DES URTEILS. `herkunft.grund` traegt jetzt den echten Satz\n     der Pruefung (Score, Schwelle, Rangkorrelation). Die Flaeche zeigt ihn\n     nur bei einem Urteil `null` (server.py um Zeile 667) und sonst einen\n     allgemeinen Satz. Einbauen: den Satz neben JEDEM Urteil. Bei `null`\n     beginnt er mit «… hat gerechnet, aber kein Urteil gefällt — NICHT\n     GEMESSEN»: Diesen Vorbehalt NICHT abschneiden und nicht hinter die\n     Zahl stellen.\n\n  P3 DIE LIZENZ. `herkunft.lizenz` (name, lizenz, zulaessig, auflagen) steht\n     jetzt am Bild. Einbauen: Lizenz und Auflagen sichtbar beim Bild. `null`\n     heisst «nicht angegeben» und muss anders aussehen als eine Lizenz.\n\n\nAM LAUF\n\n  P4 DER GRUND EINES ABGELEHNTEN KNOTENS. Ein abgelehnter Auftrag (etwa ein\n     Gewicht, das nicht ausgeliefert werden darf) hat kein Bild; sein Grund\n     steht nur in `laeufe[-1].angaben[<knoten>].maengel`. Einbauen: in der\n     Laufanzeige zeigen, statt nur «gescheitert».\n\n\nBEI DEN EINSTELLUNGEN\n\n  P5 DIE INNENANSICHT IST BESTELLBAR, ABER NICHT LIEFERBAR. Das Feld\n     `innenraum` erscheint seit heute in der Feldliste. Ueber die Mappe endet\n     jeder Lauf damit im Fehler «Innenansicht verlangt, aber kein Standpunkt»,\n     weil Raeume nur beim IFC-Einstieg entstehen und die Mappe mit der\n     umgewandelten glb rechnet. Einbauen: am Feld sagen, dass es heute ueber\n     die Mappe nicht lieferbar ist — oder es bis dahin ausgegraut zeigen.\n     NICHT stillschweigend ausblenden.\n  P6 FORM DER EINGABE. `innenraum` erwartet `{\"raum\": <Name>, \"art\":\n     \"frontal\" | \"ueber_eck\"}`. Ein Freitext («Raum-Sued») wird gespeichert und\n     faellt erst im Lauf als Programmmeldung heraus («'str' object has no\n     attribute 'get'»). Einbauen: die Form beim Eingeben pruefen und mit einem\n     Satz ablehnen. Dazu: `_probewert` in server.py kennt nur Wahrheitswert,\n     Zahl und Text und faellt sonst auf \"probe\" zurueck — fuer ein Feld, das\n     ein Woerterbuch erwartet, ein stiller Fehlschlag.\n  P7 BEDIENELEMENTE OHNE WIRKUNG. Am Geraet gemessen (auf-20260922-137):\n     Vier Laeufe mit drei Sonnenstaenden ergaben BITGENAU dasselbe Bild; der\n     Deckungsgrad aenderte die Tiefenkarte nicht. Sonne und Bildausschnitt\n     wirken heute nicht aufs Bild. Einbauen: an beiden Reglern ein Vermerk\n     «wirkt derzeit nicht aufs Bild», bis wir es beheben. Ein Regler, der\n     nichts tut und nichts sagt, ist schlimmer als keiner.\n\n\nBEI DER KOMPOSITION (nur falls ihr sie anzeigt)\n\n  P8 DREI VORBEHALTE. (a) `alle_waagrecht: null` hat jetzt einen Grund\n     (`alle_waagrecht_grund`, Kameras in `neigung_nicht_gemessen`) — ein leeres\n     Feld liest sich sonst als bestanden. (b) Die Zeile «Geländeangabe …\n     NICHT GEPRÜFT» ist ein Vorbehalt, kein Durchfallen: nicht rot faerben,\n     nicht wegfiltern. (c) `rollwinkel_grad: null` nie als 0° oder «nicht\n     verkantet» zeigen; daneben steht `rollwinkel_vorbehalt`.\n\n\nBEIM START\n\n  P9 LIESMICH der Flaeche (`oberflaeche/LIESMICH.md`): `--adresse` und\n     `--im-heimnetz` gehen nur noch zusammen, wenn beide «alle Adressen»\n     meinen; die Startzeile nennt jetzt die Adresse des Rechners. Kann sie\n     nicht ermittelt werden, steht «am Rechner nachsehen» — ein Satz im\n     LIESMICH, wo man nachsieht (Windows `ipconfig`, sonst die\n     Netzwerkeinstellungen), hilft.\n\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n  - Nichts in `src/aiimaging/` aendern. Alle Felder oben liefert die\n    Bibliothek schon; fehlt eines, ist das eine Rueckmeldung, keine Reparatur.\n  - Keinen Vorbehalt kuerzen, um Platz zu sparen. Wo der Platz fehlt, lieber\n    aufklappbar als abgeschnitten.\n  - Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade.",
+  "erstellt": "2026-09-22T18:40:14Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "Keine Geometrie noetig — es geht um die Anzeige."
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Nichts in src/aiimaging/ aendern.",
+      "Keinen Vorbehalt kuerzen.",
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "P1 eingebaut (wo: Datei oder Ansicht, und Commit) — oder nicht eingebaut, mit Grund.",
+    "P2 eingebaut (wo: Datei oder Ansicht, und Commit) — oder nicht eingebaut, mit Grund.",
+    "P3 eingebaut (wo: Datei oder Ansicht, und Commit) — oder nicht eingebaut, mit Grund.",
+    "P4 eingebaut (wo: Datei oder Ansicht, und Commit) — oder nicht eingebaut, mit Grund.",
+    "P5 eingebaut (wo: Datei oder Ansicht, und Commit) — oder nicht eingebaut, mit Grund.",
+    "P6 eingebaut (wo: Datei oder Ansicht, und Commit) — oder nicht eingebaut, mit Grund.",
+    "P7 eingebaut (wo: Datei oder Ansicht, und Commit) — oder nicht eingebaut, mit Grund.",
+    "P8 eingebaut (wo: Datei oder Ansicht, und Commit) — oder nicht eingebaut, mit Grund.",
+    "P9 eingebaut (wo: Datei oder Ansicht, und Commit) — oder nicht eingebaut, mit Grund.",
+    "Wie der Einbau geprueft wurde (welcher Zustand angezeigt, z. B. modus_abweichung true / false / null).",
+    "Was aufgefallen ist und wonach nicht gefragt wurde."
+  ],
+  "rang": 5
+}

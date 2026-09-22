@@ -4848,6 +4848,49 @@ Kanten stehen parallel, wie es die Architekturfotografie verlangt. *In diesem Pr
 Grad — und bescheinigte damit parallele Kanten, die nie gemessen waren. Heute heisst eine
 fehlende Neigung «nicht gemessen».
 
+**Pipeline-Familie** — Eine Gruppe von Bildmodellen, die denselben Bauplan in der
+Bildbibliothek teilen, etwa «z-image» oder «qwen-image». Der Bauplan (die
+«Pipeline-Klasse») sagt, wie das Modell zusammengesetzt und aufgerufen wird; ein fremder
+passt nicht. *In diesem Projekt seit dem 22.09.2026 im Register vermerkt:* Bis dahin
+bekam jedes Modell mit getrenntem Tiefen-Steuermodell denselben Bauplan, und ein Modell
+einer anderen Familie wäre damit falsch geladen worden. Heute wird eine unbekannte Familie
+abgewiesen statt geraten.
+
+**Flache Kopie gegen tiefe Kopie** — Wer ein verschachteltes Datenbündel kopiert, kann
+nur die oberste Ebene neu anlegen (flach) oder alles darin (tief). Bei der flachen Kopie
+teilen sich Original und Kopie alles darunter: Wer in der einen Liste etwas ändert, ändert
+es in der anderen mit, ohne dass es zu sehen ist. *In diesem Projekt am 22.09.2026
+gefunden:* Die Messung am Bild und die im Lauf waren dasselbe Stück Speicher — eine
+Berichtigung am Bild hätte den Lauf still umgeschrieben.
+
+**Angabe gegen Messung** — Eine **Messung** hat ein Programm selbst festgestellt (wie
+viele Schritte gerechnet wurden). Eine **Angabe** teilt es nur mit, ohne sie geprüft zu
+haben (welche Lizenz im Datensatz eines Gewichts steht; welche Geländehöhe jemand von
+Hand eingetippt hat). Beide gehören in die Mappe, aber getrennt: *Eine Angabe, die neben
+den Messungen steht, sieht aus wie eine.*
+
+**Rollwinkel** — Wie weit die Kamera um ihre eigene Blickachse gedreht ist, wie ein
+schief gehaltener Fotoapparat. Bei null Grad stehen senkrechte Kanten parallel zum
+Bildrand. *In diesem Projekt bis zum 22.09.2026 eine feste Null,* die «nicht verkantet»
+behauptete, ohne dass je jemand den Winkel gemeldet hat. Heute steht dort «nicht
+gemessen», bis der Blender-Schritt ihn wirklich abliest.
+
+**Geländeangabe** — Die Höhe des Bodens, die der Betreiber von Hand eingibt. Besser als
+die Unterkante des Modells (die bei einem Untergeschoss im Erdreich liegt), aber niemand
+prüft sie nach — darum heisst sie im Bericht «nicht geprüft» und nicht «verlässlich».
+*Offen und eine Frage an den Owner:* An einer zweiten Stelle im Programm heisst dieselbe
+Eingabe noch «Gelände an der Kamera», also verlässlich.
+
+**Adresse im Heimnetz gegen «alle Adressen» (0.0.0.0)** — Ein Programm, das Anfragen aus
+dem Netz annehmen soll, kann auf **allen** Anschlüssen des Rechners zuhören; das schreibt
+man «0.0.0.0». Aufrufen kann man diese Adresse aber nicht — ein iPad braucht die Adresse,
+unter der **dieser** Rechner im Heimnetz steht (etwa 192.168.…). Die Adresse
+127.0.0.1 («Loopback») erreicht nur den Rechner selbst. *In diesem Projekt druckte die
+Startzeile bis zum 22.09.2026 «0.0.0.0» — eine Adresse, die man nirgends eintippen kann.*
+Heute fragt das Programm das Betriebssystem, über welche eigene Adresse es ins Netz ginge
+(ohne etwas zu senden, über eine reservierte Beispieladresse), und sagt ehrlich, wenn es
+das nicht herausfindet.
+
 **Erreichbarkeit einer Schwelle (Deckel)** — Die Frage, ob ein Messwert eine Schwelle
 unter den gegebenen Umständen **überhaupt** erreichen kann — unabhängig davon, wie gut das
 Geprüfte ist. Liegt die beste erreichbare Zahl unter der Schwelle, misst die Prüfung nicht
@@ -5381,6 +5424,7 @@ keine Aussage.*
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-22 | Ergaenzt aus der vierten Runde: **Pipeline-Familie**, **Flache Kopie gegen tiefe Kopie**, **Angabe gegen Messung**, **Rollwinkel**, **Geländeangabe**, **Adresse im Heimnetz gegen «alle Adressen» (0.0.0.0)**. Jeder Eintrag traegt den Befund gegen den eigenen Code, aus dem er kam |
 | 2026-09-22 | Ergaenzt aus der Abarbeitung von sechs Befunden: **Wirkungspruefung gegen Textpruefung**, **Bestellbar, aber nicht lieferbar**, **Modusabweichung**, **Laufmessung (in der Mappe)**, **Konvergenz (stuerzender Linien)**. Drei davon tragen einen Befund gegen den eigenen Code: vier Waechter, die Text statt Wirkung prueften; eine Innenansicht, die sich bestellen und nicht liefern laesst; eine fehlende Neigung, die als gemessene Null bescheinigt wurde |
 | 2026-09-22 | Ergaenzt zu Abschnitt 10 aus dem ersten Verbinden: **Kopplungszahl**, **Stetige Uhr** |
 | 2026-09-22 | Ergaenzt zu Abschnitt 10 aus der Arbeit an zwei Geraeten an derselben Mappe: **Standnummer**, **Schreibkollision** |
