@@ -39,7 +39,7 @@ enum Schluesselbund {
 
     static func lies() -> Fund {
         var frage = grundfrage
-        frage[kSecReturnData as String] = kCFBooleanTrue
+        frage[kSecReturnData as String] = true
         frage[kSecMatchLimit as String] = kSecMatchLimitOne
         var ergebnis: CFTypeRef?
         let stand = SecItemCopyMatching(frage as CFDictionary, &ergebnis)

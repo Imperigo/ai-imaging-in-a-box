@@ -34,8 +34,9 @@ enum Haltung {
 /// werden nur anders hingelegt. *Am Gerät unbestätigt*, und für die Zeichenfläche gilt
 /// trotzdem: Was nicht verloren gehen darf, gehört nicht in den Zustand einer Ansicht.
 ///
-/// `Startansicht` benutzt ihn heute noch nicht; sie ordnet fest an. Wer sie umstellt,
-/// schreibt `Arbeitsplatz { Zeichenflaeche() } seitenfeld: { … }`.
+/// `Startansicht` setzt ihn seit dem 22.09.2026 ein:
+/// `Arbeitsplatz { Zeichenflaeche(eigeneTafel: false) } seitenfeld: { Seitentafel() }` —
+/// die Zeichenfläche **ohne** eigene Ebenentafel, weil die Tafel im einen Seitenfeld steht.
 struct Arbeitsplatz<Mitte: View, Seitenfeld: View>: View {
     @ObservedObject var wahl: Leistenwahl
     @Environment(\.accessibilityReduceMotion) private var bewegungReduziert

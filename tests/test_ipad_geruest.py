@@ -219,6 +219,30 @@ def test_ohne_anmeldung_geht_genau_der_weg_den_die_app_so_nennt(server):
                 f"App führt ihn fälschlich als angemeldet")
 
 
+def test_der_vorgabe_anschluss_der_app_ist_der_des_servers(server):
+    """Wer am iPad die Adresse **ohne** Anschluss eintippt, bekommt ``Suche.vorgabeAnschluss``.
+
+    Das ist eine Abschrift von ``VORGABE_ANSCHLUSS`` — und bis zur Durchsicht vom
+    22.09.2026 eine unbewachte. Läuft sie auseinander, sagt das iPad «nimmt keine
+    Verbindung an», obwohl die HomeStation läuft, nur auf einem anderen Anschluss.
+
+    Die Serverseite wird **am Modul** gelesen und an dem, was ``baue_server`` ohne Angabe
+    wirklich nimmt — nicht per Textsuche in ``server.py``.
+    """
+    import inspect
+
+    text = _ohne_kommentarzeilen((KERN_QUELLEN / "Suche.swift").read_text(encoding="utf-8"))
+    funde = re.findall(r"\bstatic\s+let\s+vorgabeAnschluss\s*(?::\s*Int\s*)?=\s*(\d+)", text)
+    assert len(funde) == 1, f"vorgabeAnschluss in Suche.swift nicht genau einmal gefunden: {funde}"
+    app = int(funde[0])
+
+    gebaut = inspect.signature(server.baue_server).parameters["anschluss"].default
+    assert gebaut == server.VORGABE_ANSCHLUSS, (gebaut, server.VORGABE_ANSCHLUSS)
+    assert app == server.VORGABE_ANSCHLUSS, (
+        f"Die App tippt ohne Angabe Anschluss {app} ein, der Server hört ohne Angabe auf "
+        f"{server.VORGABE_ANSCHLUSS}. `Suche.vorgabeAnschluss` nachziehen.")
+
+
 # ================================================ 2 · Name, Kennung, Dienst: eine Stelle
 
 def test_name_kennung_und_dienst_stehen_nur_in_der_marke():

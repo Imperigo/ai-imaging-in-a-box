@@ -67,7 +67,7 @@ from . import kameras as _kameras_modul
 from . import kette as _kette
 from . import komposition as _komposition
 from . import kosmo_szene as _kosmo_szene
-from . import prompts, render
+from . import prompts, raumkamera as _raumkamera, render
 from . import seams as _seams
 from . import sonne as _sonne
 from . import varianten
@@ -1365,6 +1365,14 @@ def _karte_frei(laufzettel: dict, darf_rechnen) -> tuple[bool, str]:
     ``nur_bei_leerlauf``. Fehlt die Auskunft, wird **nicht** gerechnet: „ungeprüft" ist
     nicht „in Ordnung" — dieselbe Regel wie in :mod:`aiimaging.belichtung` und
     :mod:`aiimaging.fortschritt`.
+
+    **Was das Feld drüben bedeutet, ist seit dem 21.09.2026 entschieden** (E79, Antwort
+    auf auf-20260911-107, übertragen am 22.09.2026): «kein anderer Renderlauf», nicht
+    «Karte völlig frei»; und ein abgelehnter Lauf soll in der Warteschlange **bleiben**,
+    mit sichtbarem Grund. Das Zweite tut diese Stelle: Sie fasst den Status nicht an, und
+    :func:`hole_einen` heftet den Grund an den Laufzettel (bewacht in
+    ``tests/test_interior_bestellung.py``). Das Erste entscheidet nicht diese Funktion,
+    sondern die Auskunft ``darf_rechnen`` — im Betrieb ``tools/abholen.karte_auskunft``.
     """
     nur_leerlauf = bool(laufzettel.get("idle_window_only", False))
     if not nur_leerlauf:
@@ -1570,6 +1578,51 @@ def ausgabeort(auftrag: dict, out_wurzel=None) -> Path:
     return Path(auftrag["ausgabe"])
 
 
+def _raeume_des_modells(modell):
+    """Die Raumliste eines Auftragsmodells — nur aus einer IFC, sonst ``None``.
+
+    ``None`` heisst **nicht gelesen**, nicht «keine Räume»: Aus einer glb lässt sich kein
+    Raumbegriff gewinnen (siehe ``kette._raeume_lesen``). Gelesen wird über denselben
+    Weg wie in der Kette, also im ``.venv-ifc`` jenseits einer Prozessgrenze (Regel 1).
+    """
+    if modell is None or Path(modell).suffix.lower() != ".ifc":
+        return None
+    return _kette._raeume_lesen(modell)
+
+
+def _innenaufgabe(wunsch: dict, raeume) -> dict:
+    """Eine Innenbestellung → EINE Kameraaufgabe mit Standpunkt aus den Räumen.
+
+    Dieselbe Rechnung wie ``kette._fuehre_multipass``: ``raumkamera.waehle`` sucht den
+    Standpunkt, und **die Brennweite gehört zum Standpunkt** — ohne sie gilt drüben der
+    Rückfall des Runners (50 mm), und bei 50 mm trug die Tiefenkarte eines Raums am
+    09.09.2026 einen einzigen Wert (``docs/INNENANSICHT_2026-09-09.md``).
+
+    Raises:
+        AbholerError: kein Standpunkt — mit dem Grund aus ``raumkamera.waehle`` und dem
+            des Raumlesers. Es wird **nicht** ersatzweise aussen gerendert: Wer innen
+            bestellt und aussen bekommt, sieht es dem Bild nicht an.
+    """
+    wahl = _raumkamera.waehle(raeume, raum=wunsch.get("raum"),
+                              art=wunsch.get("art") or _raumkamera.ART_FRONTAL)
+    if not wahl["gefunden"]:
+        leser = (raeume or {}).get("grund")
+        raise AbholerError(
+            "Innenansicht bestellt ('interior'), aber kein Standpunkt: " + wahl["grund"]
+            + (f" Der Raumleser meldete: {leser}" if leser else "")
+            + " Es wird NICHT ersatzweise aussen gerendert.")
+    standpunkt = wahl["standpunkt"]
+    return {
+        # Ein fester Name und nicht der Raumname: Das Kuerzel wird zum Ordnernamen, und
+        # ein Raumname aus einer fremden IFC kann Zeichen tragen, die dort nichts suchen.
+        "kuerzel": "innen",
+        "auge": list(standpunkt["auge"]),
+        "blick_auf": list(standpunkt["blick_auf"]),
+        "brennweite_mm": (standpunkt.get("sichtfeld") or {}).get("brennweite_mm"),
+        "innenraum": {"raum": wahl["raum"], "art": standpunkt.get("art")},
+    }
+
+
 def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 up_axis: str = ANGENOMMENE_HOCHACHSE, schwelle: float | None = None,
                 stillstand_frist_s: float | None = None, stil: str | None = None,
@@ -1586,7 +1639,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 zeitdeckel_s: int | None = None,
                 kamera_huellbox=None,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
-                _belichtung=None, _render_modell=None, _tiefen_modell=None):
+                _belichtung=None, _render_modell=None, _tiefen_modell=None,
+                _raeume=None):
     """Baut das ``verarbeite``, das :func:`hole_einen` durch unsere Kette schickt.
 
     Je Kamera ein Durchgang: **Multipass → Render → Geometrie-QA**. Ein Auftrag mit drei
@@ -1642,12 +1696,24 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
     messen = _qa or tiefenschaetzer.qa_gegen_soll
     soll_lesen = _soll or bildlesen.tiefen_aus_report
     belichtung_pruefen = _belichtung or _bel.pruefe_bild
+    # Die Raeume fuer eine Innenansicht. Eine Testnaht wie `_multipass`: Der echte Leser
+    # startet einen Unterprozess im `.venv-ifc` (Regel 1, Prozessgrenze).
+    raeume_lesen = _raeume or _raeume_des_modells
     grenze = geometrie_qa.SCHWELLE_GEOMETRIE if schwelle is None else schwelle
     rahmen = _bel.rahmen_fuer(stil) if stil else None
 
     def verarbeite(auftrag: dict) -> dict:
         szene = auftrag["szene"]
         ordner = Path(auftrag["verzeichnis"])
+        # DER GELAENDEBEFUND DER SZENE SCHLAEGT DEN SCHALTER DES PROZESSES (22.09.2026).
+        #
+        # `gelaende_erwartet` hier oben ist `tools/abholen.py --kein-gelaende`: eine
+        # Aussage ueber EIN Gebaeude als Dauereinstellung fuer alle Auftraege (so
+        # begruendet in auf-20260901-67). Traegt die Bestellung `gelaende: true|false`,
+        # gilt diese. `None` heisst nicht angefasst — dann bleibt es beim Schalter.
+        gelaende_der_szene = szene.get("gelaende_erwartet")
+        if gelaende_der_szene is None:
+            gelaende_der_szene = gelaende_erwartet
         # DIE HOCHACHSE DES AUFTRAGS SCHLAEGT DIE ANNAHME.
         #
         # `kosmovis.render-scene/v1` hat kein Feld dafuer, also gilt hier sonst
@@ -1699,7 +1765,19 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             }
 
         kameras = szene.get("kameras")
-        if kameras == "auto" or not isinstance(kameras, list):
+        if szene.get("innenraum"):
+            # DIE INNENANSICHT AUS `interior` (Befund 22.09.2026, auf-104): EINE Aufgabe,
+            # ihr Standpunkt aus den Raeumen — und die Richtungen fuer `auto` fallen weg.
+            # `auto` ist auch die Vorgabe, wenn `cameras` fehlt; es ist keine Bestellung
+            # von Aussenansichten, `interior` dagegen ist eine von innen.
+            if isinstance(kameras, list):
+                raise AbholerError(
+                    "Standpunkt zweimal bestellt: `innenraum` rechnet ihn aus den Raeumen, "
+                    "und die Szene nennt eigene Kameras. Welcher gilt, entscheidet dieses "
+                    "Modul nicht (dieselbe Regel wie `kette._fuehre_multipass`).")
+            aufgaben = [_innenaufgabe(szene["innenraum"],
+                                      raeume_lesen(auftrag.get("modell")))]
+        elif kameras == "auto" or not isinstance(kameras, list):
             aufgaben = [{"kuerzel": r, "richtung": r, "brennweite_mm": brennweite_mm}
                         for r in auto_richtungen]
         else:
@@ -1960,7 +2038,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                                struktur_fehler=f"{type(fehler).__name__}: {fehler}")
 
             maskenbefund = _maske_bauen(
-                bericht, gelaende_erwartet=gelaende_erwartet,
+                bericht, gelaende_erwartet=gelaende_der_szene,
                 gelaende_zusatz=_formgelaende_aus_bericht(bericht))
 
             # DIE DOPPELTE ANSICHT. Zweizaehlige Drehsymmetrie laesst die beiden

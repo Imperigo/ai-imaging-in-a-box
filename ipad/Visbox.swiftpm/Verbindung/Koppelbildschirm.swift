@@ -56,6 +56,8 @@ struct Koppelbildschirm: View {
             stand.starteSuche()
             if adresseText.isEmpty, let a = stand.adresse { adresseText = Koppelbildschirm.text(a) }
         }
+        // NUR DIE SUCHE DIESES BILDSCHIRMS endet hier. Sucht das Pruefen die gekoppelte
+        // HomeStation unter ihrem Namen, sucht es weiter (`Suchwunsch`, Durchsicht 22.09.2026).
         .onDisappear { stand.beendeSuche() }
         .onChange(of: stand.gefunden) { _, neu in
             // GENAU EINE → DIE, aber nur, solange nichts eingetippt ist.

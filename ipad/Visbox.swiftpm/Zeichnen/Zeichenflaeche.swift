@@ -8,33 +8,53 @@ import SwiftUI
 /// die PNG-Ausgabe in `Zeichenstand` — **die Schnittstelle für das Senden ist
 /// `Zeichenstand.gemeinsam.pngAusgabe(_:)`.**
 ///
-/// Im Querformat liegt die Ebenentafel rechts neben dem Blatt, im Hochformat darunter —
-/// derselbe Inhalt, eine andere Anordnung (Entscheid Nr. 1).
+/// **Wo die Ebenentafel steht, entscheidet, wer die Zeichenfläche einsetzt.**
+///
+/// * `eigeneTafel: true` (Vorgabe, so ruft `Startansicht` sie heute): Die Fläche bringt
+///   die Tafel selbst mit — im Querformat rechts, im Hochformat darunter (Entscheid Nr. 1),
+///   so breit wie das Seitenfeld des Arbeitsplatzes (`Zeichenblatt.seitenfeldBreite`). Im
+///   Vollbild (`Leistenwahl.vollbild`) fällt sie weg, wie das Seitenfeld dort.
+/// * `eigeneTafel: false`: nur Blatt und Werkzeugzeile. Dann legt der Arbeitsplatz
+///   `Ebenentafel` in **sein** Seitenfeld:
+///   `Arbeitsplatz { Zeichenflaeche(eigeneTafel: false) } seitenfeld: { Ebenentafel() }`.
+///   Sonst stünden zwei Seitenfelder nebeneinander (Befund Durchsicht A, 22.09.2026).
 struct Zeichenflaeche: View {
     @ObservedObject var stand: Zeichenstand
     @ObservedObject var wahl: Leistenwahl
+    private let eigeneTafel: Bool
 
-    init(stand: Zeichenstand? = nil) {
+    init(stand: Zeichenstand? = nil, eigeneTafel: Bool = true) {
         let s = stand ?? Zeichenstand.gemeinsam
         self.stand = s
         self.wahl = s.leistenwahl
+        self.eigeneTafel = eigeneTafel
     }
 
     var body: some View {
         GeometryReader { flaeche in
-            if flaeche.size.width >= flaeche.size.height {
-                HStack(spacing: 0) {
-                    buehne
-                    trennlinie.frame(width: 1)
-                    Ebenentafel(stand: stand)
-                        .frame(width: 300)
-                }
-            } else {
-                VStack(spacing: 0) {
-                    buehne
-                    trennlinie.frame(height: 1)
-                    Ebenentafel(stand: stand)
-                        .frame(height: 300)
+            let quer = flaeche.size.width >= flaeche.size.height
+            // EINE ANORDNUNG, DIE SICH NUR UMLEGT — kein `if quer { HStack } else { VStack }`.
+            // Befund Durchsicht A (22.09.2026): Mit zwei Zweigen war das Blatt nach dem Drehen
+            // eine andere Ansicht; SwiftUI baute Leinwand, Koordinator und alle PencilKit-
+            // Flächen neu, und der gemeinsame `UndoManager` hielt die Schritte der alten —
+            // «Zurück» wirkte unsichtbar, der Zähler zählte trotzdem. `AnyLayout` wechselt
+            // nur die Anordnung; die Kinder bleiben dieselben. Was trotzdem neu gebaut wird,
+            // räumt `Zeichenleinwand.dismantleUIView` ab. Beides am Gerät unbestätigt.
+            let anordnung = quer ? AnyLayout(HStackLayout(spacing: 0))
+                                 : AnyLayout(VStackLayout(spacing: 0))
+            anordnung {
+                buehne
+                if eigeneTafel && !wahl.vollbild {
+                    trennlinie
+                        .frame(width: quer ? 1 : nil, height: quer ? nil : 1)
+                    ScrollView(.vertical, showsIndicators: false) {
+                        Ebenentafel(stand: stand).padding(20)
+                    }
+                    .background(Zeichenblatt.leiste)
+                    // Querformat: die Breite des Seitenfelds. Hochformat: 300 pt, dieselbe
+                    // Höhe, die `Arbeitsplatzanordnung` dem Seitenfeld dort gibt.
+                    .frame(width: quer ? Zeichenblatt.seitenfeldBreite : nil,
+                           height: quer ? nil : 300)
                 }
             }
         }
@@ -73,13 +93,17 @@ struct Zeichenflaeche: View {
 
     /// Die gewählte Ebene ist ausgeblendet — dann wird nicht gezeichnet, und das steht da.
     /// *Ein Stift, der nichts tut, ohne dass es gesagt wird, sieht aus wie ein kaputter.*
+    /// Schieben und Zoomen gehen weiter (Entscheid Nr. 4, `Leinwandkoordinator.gleicheAb`);
+    /// nur dieses Feld selbst fängt die Finger ab, die darauf tippen.
     private var ausgeblendetHinweis: some View {
         VStack(spacing: 12) {
             Text("«\(stand.stapel.aktiveEbene.name)» ist ausgeblendet.")
                 .font(Schrift.text(15, .semibold))
-            Text("Auf eine ausgeblendete Ebene wird nicht gezeichnet.")
+            Text("Auf eine ausgeblendete Ebene wird nicht gezeichnet. Schieben und Zoomen "
+                 + "gehen weiter.")
                 .font(Schrift.text(13))
                 .foregroundStyle(Zeichenblatt.leise)
+                .multilineTextAlignment(.center)
             Button("Einblenden") {
                 stand.setzeSichtbar(stand.stapel.aktiv, true)
             }

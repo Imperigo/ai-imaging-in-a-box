@@ -479,10 +479,12 @@ def test_ein_einzelner_lauf_hat_keine_gruppe(mappe):
 def test_ein_abbruch_in_der_reihe_startet_keine_weitere_variante(mappe):
     werk = Werkbank()
     fragen = []
-    # Vier Knoten je Variante: Variante 1 ganz, Variante 2 bis vor die Prüfung.
+    # Vier Knoten je Variante: Variante 1 ganz, Variante 2 bis vor die Prüfung. Seit dem
+    # 22.09.2026 wird zusätzlich ZWISCHEN den Varianten gefragt (eine Frage vor Variante
+    # 2) — darum die neunte Frage und nicht mehr die achte.
     ergebnis = arbeitsgang.rechne(
         mappe, ausfuehrer=werk.tabelle(), varianten=3,
-        abbrechen=lambda: fragen.append(1) or len(fragen) >= 8)
+        abbrechen=lambda: fragen.append(1) or len(fragen) >= 9)
 
     assert ergebnis["abgebrochen"] is True
     assert ergebnis["varianten_nicht_begonnen"] == 1

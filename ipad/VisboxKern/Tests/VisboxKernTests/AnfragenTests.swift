@@ -31,15 +31,15 @@ final class AnfragenTests: XCTestCase {
     func testDerWegHineinBekommtKeineAnmeldungAuchWennEineDaIst() throws {
         // Ein altes, falsches Kennwort gehoert nicht an den Weg, der es erst ausgibt.
         let zahl = try XCTUnwrap(Kopplungszahl("123456"))
-        let a = Anfragen.baue(Wege.verbinden, rumpf: ["pin": .text(zahl.ziffern)],
-                              anmeldung: anmeldung)
+        let a = try Anfragen.baue(Wege.verbinden, rumpf: ["pin": .text(zahl.ziffern)],
+                                  anmeldung: anmeldung)
         XCTAssertNil(a.kopfzeilen["Authorization"])
-        XCTAssertNil(Anfragen.verbinden(zahl).kopfzeilen["Authorization"])
+        XCTAssertNil(try Anfragen.verbinden(zahl).kopfzeilen["Authorization"])
         XCTAssertEqual(try rumpf(Anfragen.verbinden(zahl)), ["pin": .text("123456")])
     }
 
-    func testJederAndereWegTraegtDieAnmeldung() {
-        for a in alleBauformen() where !a.weg.ohneAnmeldung {
+    func testJederAndereWegTraegtDieAnmeldung() throws {
+        for a in try alleBauformen() where !a.weg.ohneAnmeldung {
             XCTAssertNotNil(a.kopfzeilen["Authorization"], "\(a.methode) \(a.weg.pfad)")
         }
     }
@@ -55,26 +55,26 @@ final class AnfragenTests: XCTestCase {
     // --------------------------------------------------------------- die Bauformen
 
     /// Jede Bauform einmal. Eine neue Bauform gehört hier dazu.
-    private func alleBauformen() -> [Anfrage] {
+    private func alleBauformen() throws -> [Anfrage] {
         let png = Data(Ebenenausgabe.pngKennung)
         return [
             Anfragen.projekt(ordner: "/p", anmeldung: anmeldung),
             Anfragen.fortschritt(anmeldung: anmeldung),
             Anfragen.bild(name: "a.png", ordner: nil, anmeldung: anmeldung),
-            Anfragen.verbinden(Kopplungszahl("000000")!),
-            Anfragen.skizze(png: png, anmeldung: anmeldung),
-            Anfragen.rechne(anmeldung: anmeldung),
-            Anfragen.einstellungen(["schritte": .ganz(8)], anmeldung: anmeldung),
-            Anfragen.anlegen(ordner: "/p", modell: "/m.ifc", anmeldung: anmeldung),
-            Anfragen.benennen(bild: "a.png", titel: "Nord", anmeldung: anmeldung),
-            Anfragen.abbrechen(anmeldung: anmeldung),
-            Anfragen.rechneSkizze(["s.png"], anmeldung: anmeldung),
+            try Anfragen.verbinden(Kopplungszahl("000000")!),
+            try Anfragen.skizze(png: png, anmeldung: anmeldung),
+            try Anfragen.rechne(anmeldung: anmeldung),
+            try Anfragen.einstellungen(["schritte": .ganz(8)], anmeldung: anmeldung),
+            try Anfragen.anlegen(ordner: "/p", modell: "/m.ifc", anmeldung: anmeldung),
+            try Anfragen.benennen(bild: "a.png", titel: "Nord", anmeldung: anmeldung),
+            try Anfragen.abbrechen(anmeldung: anmeldung),
+            try Anfragen.rechneSkizze(["s.png"], anmeldung: anmeldung),
         ]
     }
 
-    func testJederWegDesServersHatEineBauformAusserDerWebseite() {
+    func testJederWegDesServersHatEineBauformAusserDerWebseite() throws {
         // Faellt, sobald in `Wege.alle` ein Weg dazukommt, den die App nicht bauen kann.
-        let gebaut = Set(alleBauformen().map(\.weg))
+        let gebaut = Set(try alleBauformen().map(\.weg))
         // `/koppeln` ist eine Webseite fuer den Browser wie `/` — die App koppelt ueber
         // `/api/verbinden` und braucht keine Bauform dafuer.
         let erwartet = Set(Wege.alle).subtracting([Wege.seite, Wege.seiteLang, Wege.koppeln])
@@ -82,7 +82,7 @@ final class AnfragenTests: XCTestCase {
     }
 
     func testPostTraegtImmerEinJsonObjektUndGetNie() throws {
-        for a in alleBauformen() {
+        for a in try alleBauformen() {
             switch a.methode {
             case .get:
                 XCTAssertNil(a.rumpf, a.weg.pfad)
@@ -92,13 +92,67 @@ final class AnfragenTests: XCTestCase {
                 XCTAssertNotNil(try rumpf(a), a.weg.pfad)
             }
         }
-        XCTAssertEqual(try rumpf(Anfragen.rechne(anmeldung: anmeldung)), [:])
+        XCTAssertEqual(try rumpf(try Anfragen.rechne(anmeldung: anmeldung)), [:])
+    }
+
+    // ------------------------------------------ ein unschreibbarer Rumpf geht nicht hinaus
+
+    /// Bis zur Durchsicht vom 22.09.2026 ging hier still `{}` hinaus — und drüben hiess das
+    /// «keine Einstellungen»: Die HomeStation rechnete mit ihren Vorgaben.
+    func testEinUnschreibbarerRumpfWirftStattStillLeerZuGehen() {
+        let unschreibbar: [Double] = [.nan, .infinity, -.infinity]
+        for z in unschreibbar {
+            XCTAssertThrowsError(try Anfragen.einstellungen(["cfg": .zahl(z)], anmeldung: anmeldung),
+                                 "\(z)") { fehler in
+                XCTAssertEqual(fehler as? Rumpffehler, Rumpffehler(weg: Wege.einstellungen))
+            }
+            XCTAssertThrowsError(try Anfragen.rechne(einstellungen: ["cfg": .zahl(z)],
+                                                     anmeldung: anmeldung), "\(z)")
+            // AUCH TIEF DRIN: in einer Liste in einem Objekt.
+            XCTAssertThrowsError(try Anfragen.baue(
+                Wege.anlegen, rumpf: ["einstellungen": .objekt(["reihe": .liste([.zahl(1), .zahl(z)])])],
+                anmeldung: anmeldung), "\(z)")
+        }
+        // Der Satz sagt, dass NICHTS hinausging — auch nicht leer.
+        let satz = Rumpffehler(weg: Wege.rechne).satz
+        XCTAssertTrue(satz.contains("/api/rechne"), satz)
+        XCTAssertTrue(satz.contains("ging nicht hinaus"), satz)
+        // Und eine gewoehnliche Kommazahl geht, wie sie ist.
+        XCTAssertEqual(try rumpf(try Anfragen.einstellungen(["cfg": .zahl(4.5)], anmeldung: anmeldung))[
+            "einstellungen"]?["cfg"], .zahl(4.5))
+    }
+
+    // ---------------------------------------------- der Schluessel gegen Doppelsendung
+
+    func testDieSkizzeAusDemFachTraegtIhrenSchluessel() throws {
+        let ordner = FileManager.default.temporaryDirectory
+            .appendingPathComponent("anfragen-probe-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: ordner) }
+        let fach = try Parkfach(ordner: ordner)
+        let png = Data(Ebenenausgabe.pngKennung + [4, 2])
+        let e = try fach.parke(png: png, ueber: "lauf-07.png", name: "Variante A", ordner: "/mappe")
+
+        let r = try rumpf(try Anfragen.skizze(e, png: png, anmeldung: anmeldung))
+        XCTAssertEqual(r["schluessel"], .text(e.schluessel))
+        XCTAssertEqual(r["ueber"], .text("lauf-07.png"))
+        XCTAssertEqual(r["name"], .text("Variante A"))
+        XCTAssertEqual(r["ordner"], .text("/mappe"))
+        XCTAssertEqual(r["png_base64"]?.alsText.flatMap { Data(base64Encoded: $0) }, png)
+
+        // DIE FORM, DIE DER SERVER ANNIMMT (Protokoll §3: 8–128 Zeichen aus A–Z a–z 0–9 . _ -).
+        // Eine andere Form wiese er mit 400 ab, und die Skizze laege abgewiesen im Fach.
+        let erlaubt = Set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-")
+        XCTAssertTrue((8...128).contains(e.schluessel.count), e.schluessel)
+        XCTAssertTrue(e.schluessel.allSatisfy { erlaubt.contains($0) }, e.schluessel)
+
+        // Ohne Schluessel fehlt das Feld — es wird nicht leer mitgeschickt.
+        XCTAssertNil(try rumpf(try Anfragen.skizze(png: png, anmeldung: anmeldung))["schluessel"])
     }
 
     func testDieSkizzeGehtAlsBase64UndFreiwilligesFehltStattLeerZuSein() throws {
         let png = Data(Ebenenausgabe.pngKennung + [1, 2, 3, 250])
-        let a = Anfragen.skizze(png: png, ueber: nil, bemerkung: "", name: "Variante A",
-                                ordner: "/mappe", anmeldung: anmeldung)
+        let a = try Anfragen.skizze(png: png, ueber: nil, bemerkung: "", name: "Variante A",
+                                    ordner: "/mappe", anmeldung: anmeldung)
         let r = try rumpf(a)
         XCTAssertEqual(r["png_base64"]?.alsText.flatMap { Data(base64Encoded: $0) }, png)
         XCTAssertEqual(r["name"], .text("Variante A"))
@@ -109,8 +163,8 @@ final class AnfragenTests: XCTestCase {
     }
 
     func testEinstellungMitNullWirdMitgeschicktDennSieEntferntDrueben() throws {
-        let a = Anfragen.einstellungen(["schritte": .ganz(28), "prompt": .null],
-                                       ordner: "/p", anmeldung: anmeldung)
+        let a = try Anfragen.einstellungen(["schritte": .ganz(28), "prompt": .null],
+                                           ordner: "/p", anmeldung: anmeldung)
         let e = try XCTUnwrap(try rumpf(a)["einstellungen"]?.alsObjekt)
         XCTAssertEqual(e["prompt"], .null)
         XCTAssertEqual(e["schritte"], .ganz(28))
@@ -118,8 +172,8 @@ final class AnfragenTests: XCTestCase {
 
     func testEineGanzeZahlBleibtGanzAufDerLeitung() throws {
         // Der Server prueft `isinstance(wert, int)`; eine 28.0 haette keinen Nenner.
-        let a = Anfragen.rechne(einstellungen: ["schritte": .ganz(28)], trotzAenderung: true,
-                                anmeldung: anmeldung)
+        let a = try Anfragen.rechne(einstellungen: ["schritte": .ganz(28)], trotzAenderung: true,
+                                    anmeldung: anmeldung)
         let text = String(decoding: try XCTUnwrap(a.rumpf), as: UTF8.self)
         XCTAssertTrue(text.contains("\"schritte\":28"), text)
         XCTAssertFalse(text.contains("28.0"), text)

@@ -16,9 +16,10 @@ enum Leistenachse {
 ///
 /// **Knöpfe ohne Wirkung gibt es hier nicht.** «Auf die andere Seite» und «Vollbild»
 /// erscheinen nur, wenn die Leiste in einem `Arbeitsplatz` sitzt, der sie auch umsetzt
-/// (`kannUmlegen`, `kannVollbild`). In der heutigen `Startansicht` steht die Leiste fest
-/// links; dort zeigt sie diese beiden Knöpfe darum nicht — *ein Bedienelement ohne Wirkung
-/// ist schlimmer als keines.*
+/// (`kannUmlegen`, `kannVollbild`) — so setzt der Arbeitsplatz sie selbst ein, und seit
+/// dem 22.09.2026 steht die `Startansicht` auf dem Arbeitsplatz. Wer die Leiste anderswo
+/// einsetzt, bekommt die beiden Knöpfe nicht: *ein Bedienelement ohne Wirkung ist
+/// schlimmer als keines.*
 struct Leiste: View {
     @ObservedObject var wahl: Leistenwahl
     var achse: Leistenachse

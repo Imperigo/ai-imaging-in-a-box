@@ -1,20 +1,27 @@
 import SwiftUI
 
-/// Farben, Schriften und Masse der App — abgeschrieben vom Blatt «Die Zeichen» der
-/// Entwurfsfläche (21./22.09.2026), **an einer Stelle.**
+/// Farben, Schriften und Masse der App — nach dem Blatt «Die Zeichen» der Entwurfsfläche
+/// (21./22.09.2026), **an einer Stelle.**
 ///
-/// Die Farben der Urteile stehen hier **nicht**: Sie liegen in `Kern/Pruefzeichen.swift`
-/// (`Zeichenart`), weil dort geprüft wird, dass «nicht gemessen» nie wie «bestanden»
-/// aussieht. Diese Datei macht aus ihnen nur SwiftUI-Farben.
+/// **Die Farbtöne selbst stehen nicht hier**, sondern im Kern (`Blattfarbe` und
+/// `Zeichenart` in `Kern/Pruefzeichen.swift`): Dort werden sie unter Linux gegen die
+/// Abschrift des Blatts und gegen die Webseite geprüft
+/// (`PruefzeichenTests.testJederFarbtonStehtSoAufDemBlatt`). Bis zur Durchsicht B vom
+/// 22.09.2026 standen sie hier als Hex-Ziffern, die keine Probe sah. Diese Datei macht aus
+/// ihnen nur SwiftUI-Farben; ein Ton in Hex-Ziffern ausserhalb des Kerns lässt
+/// `testDieAppSchreibtKeineFarbtoeneAusserhalbDesKerns` fallen.
 enum Zeichenblatt {
     // ----------------------------------------------------------- Grund und Schrift
-    static let grund = Color(Farbton(hex: "14161a"))
-    static let feld = Color(Farbton(hex: "1c1f26"))
-    static let leiste = Color(Farbton(hex: "16191e"))
-    static let buehne = Color(Farbton(hex: "101317"))
-    static let linie = Color(Farbton(hex: "2b3038"))
-    static let schrift = Color(Farbton(hex: "e6e8ec"))
-    static let leise = Color(Farbton(hex: "9aa2ae"))
+    static let grund = Color(Blattfarbe.grund)
+    static let feld = Color(Blattfarbe.feld)
+    static let leiste = Color(Blattfarbe.leiste)
+    static let buehne = Color(Blattfarbe.buehne)
+    static let linie = Color(Blattfarbe.linie)
+    static let schrift = Color(Blattfarbe.schrift)
+    static let leise = Color(Blattfarbe.leise)
+    /// Der Grund einer Bildkachel und der eines Bildes, das nicht geladen ist.
+    static let kachel = Color(Blattfarbe.kachel)
+    static let luecke = Color(Blattfarbe.luecke)
 
     // ------------------------------------------------------ gewählt (die Anfassfarbe)
     //
@@ -22,9 +29,9 @@ enum Zeichenblatt {
     // Entwurf (Blatt «Main»), und es ist eine bekannte Spannung: Ein gewähltes Werkzeug
     // heisst nicht «bestanden». Getragen wird sie davon, dass ein Knopf nie am Bild sitzt
     // und das Prüfzeichen immer Wort UND Farbe trägt. Offen für die Entwurfsfläche.
-    static let gewaehltRand = Color(Farbton(hex: "4ea373"))
-    static let gewaehltGrund = Color(Farbton(hex: "223028"))
-    static let gewaehltSchrift = Color(Farbton(hex: "a7dec0"))
+    static let gewaehltRand = Color(Blattfarbe.gewaehltRand)
+    static let gewaehltGrund = Color(Blattfarbe.gewaehltGrund)
+    static let gewaehltSchrift = Color(Blattfarbe.gewaehltSchrift)
 
     // --------------------------------------------------------------------- Masse
 

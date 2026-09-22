@@ -41,9 +41,24 @@ enum Streifengroesse: Equatable {
 ///
 /// Hier wird nichts entschieden. Farbe, Wort, Zahl, Strichelung und Vorbehalt stehen fertig
 /// in `Pruefzeichen` (Kern) und sind dort bewacht; diese Ansicht malt sie nur ab.
+///
+/// **Der Vorbehalt wird nicht abgeschnitten** (Durchsicht B, 22.09.2026). In der
+/// 160-pt-Kachel des Bildbands schnitt `lineLimit(2)` das kurze Wort «SKIZZE NICHT
+/// ANGEKOMMEN — aus Tiefenkarte und Text gerechnet» mitten im Satz ab. Jetzt steht dort
+/// zugeklappt der **feste Anfang ganz** (`Vorbehalt.kopf`) mit einem Pfeil, und ein Tipp auf
+/// den Streifen klappt das kurze Wort auf — ohne Zeilengrenze, notfalls kleiner gesetzt.
+/// In allen grösseren Stufen und im geteilten Bild steht es immer ganz da. *Am Gerät
+/// unbestätigt*, ebenso, dass der Tipp auf den Streifen nicht die Kachel öffnet.
 struct Zeichenrahmen: ViewModifier {
     let zeichen: Pruefzeichen
     var groesse: Streifengroesse = .mittel
+
+    @State private var aufgeklappt = false
+
+    /// Nur die kleine Kachel klappt; überall sonst ist Platz für den ganzen Vorbehalt.
+    private var klappbar: Bool {
+        groesse == .klein && !zeichen.vorbehalte.isEmpty
+    }
 
     func body(content: Content) -> some View {
         content
@@ -64,22 +79,44 @@ struct Zeichenrahmen: ViewModifier {
         VStack(alignment: .leading, spacing: 2) {
             Text(zeichen.zeile)
                 .foregroundStyle(Color(zeichen.art.schrift))
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
             // DER VORBEHALT STEHT IM STREIFEN, nicht daneben — damit er beim Teilen
             // mitgeht (Entscheid 20). *Ein Vorbehalt, der beim ersten Weiterreichen
             // abfällt, ist keiner.*
             ForEach(zeichen.vorbehalte, id: \.satz) { v in
-                Text(v.kurz)
-                    .foregroundStyle(Color(Pruefzeichen.vorbehaltSchrift))
+                if klappbar {
+                    Button {
+                        aufgeklappt.toggle()
+                    } label: {
+                        HStack(alignment: .firstTextBaseline, spacing: 4) {
+                            Text(aufgeklappt ? v.kurz : v.kopf)
+                                .lineLimit(aufgeklappt ? nil : 2)
+                                .minimumScaleFactor(aufgeklappt ? 0.7 : 0.8)
+                                .multilineTextAlignment(.leading)
+                            Image(systemName: aufgeklappt ? "chevron.up" : "chevron.down")
+                                .font(.system(size: groesse.schrift * 0.8, weight: .semibold))
+                        }
+                        .foregroundStyle(Color(Pruefzeichen.vorbehaltSchrift))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Text(v.kurz)
+                        .foregroundStyle(Color(Pruefzeichen.vorbehaltSchrift))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .font(Schrift.text(groesse.schrift, .semibold))
         .tracking(groesse.schrift * 0.04)
-        .lineLimit(2)
-        .minimumScaleFactor(0.8)
         .padding(.horizontal, groesse.schrift * 0.85)
         .padding(.vertical, groesse.schrift * 0.55)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(Pruefzeichen.streifen).opacity(Pruefzeichen.streifenDeckung))
+        // DER BILDSCHIRMLESER HOERT IMMER DEN GANZEN SATZ, zugeklappt oder nicht
+        // (`vorlesetext` trägt jeden Vorbehalt in voller Länge).
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(zeichen.vorlesetext)
     }
@@ -109,7 +146,7 @@ struct Bildflaeche: View {
                 .accessibilityHidden(true)
         } else {
             ZStack {
-                Color(Farbton(hex: "0e1013"))
+                Zeichenblatt.luecke
                 Text(vorhanden == false
                      ? "Die Mappe nennt dieses Bild, die Datei fehlt."
                      : "Bild nicht geladen.")

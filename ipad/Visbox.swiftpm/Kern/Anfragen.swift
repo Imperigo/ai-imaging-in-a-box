@@ -203,6 +203,23 @@ public struct Anfrage: Equatable, Sendable {
     }
 }
 
+/// Ein Rumpf, der sich **nicht als JSON schreiben** lässt — die Anfrage geht nicht hinaus.
+///
+/// Heute gibt es genau eine Ursache: eine Kommazahl, die JSON nicht kennt (`nan`, `inf`).
+/// Der Satz ist für den Menschen; er nennt den Weg, damit klar ist, **was** nicht hinausging.
+public struct Rumpffehler: Error, Equatable, Sendable {
+    public let weg: Weg
+
+    public init(weg: Weg) {
+        self.weg = weg
+    }
+
+    public var satz: String {
+        "Die Anfrage an \(weg.pfad) liess sich nicht schreiben (eine Zahl, die JSON nicht "
+            + "kennt, z. B. «nan» oder «unendlich»). Sie ging nicht hinaus — auch nicht leer."
+    }
+}
+
 /// Die Anfragen an die Wege aus `Wege.swift` — **eine Bauform je Weg.**
 ///
 /// Die Webseite (`Wege.seite`, `Wege.seiteLang`) bekommt keine eigene; die App braucht
@@ -217,40 +234,65 @@ public enum Anfragen {
     /// * Die **Anmeldung** geht nur an Wege, die sie verlangen. `POST /api/verbinden` ist
     ///   der Weg hinein; ein altes, falsches Kennwort dort mitzuschicken, hülfe nichts und
     ///   gäbe ein Geheimnis aus der Hand, das an diesem Weg niemand braucht.
+    /// * **Wirft `Rumpffehler`**, wenn sich der Rumpf nicht als JSON schreiben lässt.
+    ///
+    /// **Warum sie wirft (Durchsicht vom 22.09.2026):** Bis dahin ging an dieser Stelle
+    /// still `{}` hinaus, wenn das Schreiben scheiterte — und das scheitert genau an einer
+    /// Kommazahl wie `nan` oder `inf` in den Einstellungen. Drüben hiess `{}` dann: «keine
+    /// Einstellungen», und die HomeStation rechnete mit ihren Vorgaben, ohne dass hier
+    /// jemand davon erfuhr. Eine Anfrage, die nicht so hinausgehen kann, wie sie gemeint
+    /// ist, geht gar nicht hinaus; der Aufrufer zeigt den Satz.
+    /// `AnfragenTests.testEinUnschreibbarerRumpfWirftStattStillLeerZuGehen` bewacht es.
     public static func baue(_ weg: Weg, frage: [Frageteil] = [],
                             rumpf: [String: JSONWert]? = nil,
-                            anmeldung: Anmeldung?) -> Anfrage {
+                            anmeldung: Anmeldung?) throws -> Anfrage {
+        var kopf = kopfzeilen(weg, anmeldung: anmeldung)
+        var roh: Data?
+        if weg.methode == .post {
+            kopf["Content-Type"] = "application/json; charset=utf-8"
+            do {
+                roh = try JSONWert.objekt(rumpf ?? [:]).daten()
+            } catch {
+                throw Rumpffehler(weg: weg)
+            }
+        }
+        return Anfrage(weg: weg, frage: frage, kopfzeilen: kopf, rumpf: roh)
+    }
+
+    /// Die Bauform für die lesenden Wege (GET): **ohne Rumpf, und darum ohne Wurf.**
+    ///
+    /// Eigens, damit ein Leser (`projekt`, `fortschritt`, `bild`) nicht `try` verlangt,
+    /// obwohl er nicht scheitern kann — ein `try`, das nie wirft, lehrt, `try?` zu schreiben.
+    private static func baueLesen(_ weg: Weg, frage: [Frageteil] = [],
+                                  anmeldung: Anmeldung?) -> Anfrage {
+        Anfrage(weg: weg, frage: frage, kopfzeilen: kopfzeilen(weg, anmeldung: anmeldung),
+                rumpf: nil)
+    }
+
+    private static func kopfzeilen(_ weg: Weg, anmeldung: Anmeldung?) -> [String: String] {
         var kopf = ["Accept": "application/json"]
         if !weg.ohneAnmeldung, let a = anmeldung {
             kopf["Authorization"] = a.kopfzeile
         }
-        var roh: Data?
-        if weg.methode == .post {
-            kopf["Content-Type"] = "application/json; charset=utf-8"
-            // `try?` IST HIER KEIN WEGSCHAUEN: Ein `JSONWert` besteht nur aus Faellen, die
-            // JSON kennt; das Schreiben scheitert nur an einer Kommazahl wie `nan`, und
-            // dann geht `{}` hinaus, nicht eine halbe Anfrage.
-            roh = (try? JSONWert.objekt(rumpf ?? [:]).daten()) ?? Data("{}".utf8)
-        }
-        return Anfrage(weg: weg, frage: frage, kopfzeilen: kopf, rumpf: roh)
+        return kopf
     }
 
     // -------------------------------------------------------------------- lesen (GET)
 
     /// `GET /api/projekt` — ohne `ordner` gilt der beim Start der HomeStation gesetzte.
     public static func projekt(ordner: String?, anmeldung: Anmeldung?) -> Anfrage {
-        baue(Wege.projekt, frage: frageteile(["ordner": ordner]), anmeldung: anmeldung)
+        baueLesen(Wege.projekt, frage: frageteile(["ordner": ordner]), anmeldung: anmeldung)
     }
 
     /// `GET /api/fortschritt` — der eine Laufstand des Servers.
     public static func fortschritt(anmeldung: Anmeldung?) -> Anfrage {
-        baue(Wege.fortschritt, anmeldung: anmeldung)
+        baueLesen(Wege.fortschritt, anmeldung: anmeldung)
     }
 
     /// `GET /bild` — ein Bild aus dem Projektordner.
     public static func bild(name: String, ordner: String?, anmeldung: Anmeldung?) -> Anfrage {
-        baue(Wege.bild, frage: frageteile(["ordner": ordner, "name": name]),
-             anmeldung: anmeldung)
+        baueLesen(Wege.bild, frage: frageteile(["ordner": ordner, "name": name]),
+                  anmeldung: anmeldung)
     }
 
     // ----------------------------------------------------------------- handeln (POST)
@@ -258,8 +300,8 @@ public enum Anfragen {
     /// `POST /api/verbinden` — die sechsstellige Zahl gegen Benutzer und Kennwort.
     /// Nimmt nur eine geprüfte Zahl an: Ein Tippfehler soll keinen der wenigen Versuche
     /// verbrauchen, die die HomeStation zulässt.
-    public static func verbinden(_ zahl: Kopplungszahl) -> Anfrage {
-        baue(Wege.verbinden, rumpf: ["pin": .text(zahl.ziffern)], anmeldung: nil)
+    public static func verbinden(_ zahl: Kopplungszahl) throws -> Anfrage {
+        try baue(Wege.verbinden, rumpf: ["pin": .text(zahl.ziffern)], anmeldung: nil)
     }
 
     /// `POST /api/skizze` — eine Zeichnung als PNG.
@@ -267,44 +309,63 @@ public enum Anfragen {
     /// `ueber` fehlt, wenn auf leerem Grund gezeichnet wurde; `name` wird drüben **nicht**
     /// Dateiname, sondern geht in die Bemerkung (Protokoll §3).
     ///
+    /// `schluessel` ist der **Schutz gegen Doppelsendung** (Protokoll §3, seit 22.09.2026):
+    /// Kommt derselbe Schlüssel mit derselben Zeichnung zweimal, antwortet die HomeStation
+    /// wie beim ersten Mal und legt keine zweite Datei an. Aus dem Parkfach geht eine
+    /// Skizze darum nur über `skizze(_:png:anmeldung:)` hinaus, die ihn mitnimmt.
+    ///
     /// **Die Grösse prüft hier niemand** (der Server nimmt höchstens 2 MiB). Eine Abschrift
     /// seiner Grenze wäre eine zweite Regel, die unbewacht veraltet; eine zu grosse Skizze
     /// kommt als Abweisung mit Satz zurück und bleibt im Parkfach liegen.
     public static func skizze(png: Data, ueber: String? = nil, bemerkung: String? = nil,
                               name: String? = nil, ordner: String? = nil,
-                              anmeldung: Anmeldung?) -> Anfrage {
+                              schluessel: String? = nil,
+                              anmeldung: Anmeldung?) throws -> Anfrage {
         var rumpf = felder(["ordner": ordner, "ueber": ueber, "bemerkung": bemerkung,
-                            "name": name])
+                            "name": name, "schluessel": schluessel])
         rumpf["png_base64"] = .text(png.base64EncodedString())
-        return baue(Wege.skizze, rumpf: rumpf, anmeldung: anmeldung)
+        return try baue(Wege.skizze, rumpf: rumpf, anmeldung: anmeldung)
+    }
+
+    /// `POST /api/skizze` für eine Skizze **aus dem Parkfach** — mit ihrem Schlüssel.
+    ///
+    /// Die eine Bauform, die das Senden aus dem Fach benutzt (`Verbindungsstand.nachsenden`):
+    /// So kann der Schlüssel nicht vergessen werden, und die Regel «ungewiss geht von selbst
+    /// noch einmal» (`Parkeintrag.gehtVonSelbst`) steht auf ihm.
+    /// `AnfragenTests.testDieSkizzeAusDemFachTraegtIhrenSchluessel` bewacht es.
+    public static func skizze(_ eintrag: Parkeintrag, png: Data,
+                              anmeldung: Anmeldung?) throws -> Anfrage {
+        try skizze(png: png, ueber: eintrag.ueber, bemerkung: eintrag.bemerkung,
+                   name: eintrag.name, ordner: eintrag.ordner, schluessel: eintrag.schluessel,
+                   anmeldung: anmeldung)
     }
 
     /// `POST /api/rechne` — antwortet sofort; der Lauf kommt über `fortschritt`.
     public static func rechne(ordner: String? = nil, einstellungen: [String: JSONWert]? = nil,
                               trotzAenderung: Bool? = nil,
-                              anmeldung: Anmeldung?) -> Anfrage {
+                              anmeldung: Anmeldung?) throws -> Anfrage {
         var rumpf = felder(["ordner": ordner])
         if let e = einstellungen { rumpf["einstellungen"] = .objekt(e) }
         if let t = trotzAenderung { rumpf["trotz_aenderung"] = .wahrheit(t) }
-        return baue(Wege.rechne, rumpf: rumpf, anmeldung: anmeldung)
+        return try baue(Wege.rechne, rumpf: rumpf, anmeldung: anmeldung)
     }
 
     /// `POST /api/einstellungen`. Ein Feld mit `.null` **entfernt** die Einstellung drüben
     /// (dann gilt wieder die Vorgabe) — es wird darum mitgeschickt und nicht weggelassen.
     public static func einstellungen(_ werte: [String: JSONWert], ordner: String? = nil,
-                                     anmeldung: Anmeldung?) -> Anfrage {
+                                     anmeldung: Anmeldung?) throws -> Anfrage {
         var rumpf = felder(["ordner": ordner])
         rumpf["einstellungen"] = .objekt(werte)
-        return baue(Wege.einstellungen, rumpf: rumpf, anmeldung: anmeldung)
+        return try baue(Wege.einstellungen, rumpf: rumpf, anmeldung: anmeldung)
     }
 
     /// `POST /api/anlegen` — `ordner` und `modell` sind Pfade **auf der HomeStation.**
     public static func anlegen(ordner: String, modell: String, name: String? = nil,
                                einstellungen: [String: JSONWert]? = nil,
-                               anmeldung: Anmeldung?) -> Anfrage {
+                               anmeldung: Anmeldung?) throws -> Anfrage {
         var rumpf = felder(["ordner": ordner, "modell": modell, "name": name])
         if let e = einstellungen { rumpf["einstellungen"] = .objekt(e) }
-        return baue(Wege.anlegen, rumpf: rumpf, anmeldung: anmeldung)
+        return try baue(Wege.anlegen, rumpf: rumpf, anmeldung: anmeldung)
     }
 
     // ------------------------------------------------------------------- Handgriffe
@@ -723,30 +784,30 @@ extension Anfragen {
     /// zurück und geht darum als `null` hinaus, nicht als fehlendes Feld.
     public static func benennen(bild: String? = nil, skizze: String? = nil, titel: String?,
                                 vonStand: Int? = nil, ordner: String? = nil,
-                                anmeldung: Anmeldung?) -> Anfrage {
+                                anmeldung: Anmeldung?) throws -> Anfrage {
         var rumpf: [String: JSONWert] = [:]
         if let o = ordner, !o.isEmpty { rumpf["ordner"] = .text(o) }
         if let b = bild { rumpf["bild"] = .text(b) }
         if let s = skizze { rumpf["skizze"] = .text(s) }
         rumpf["titel"] = titel.map { .text($0) } ?? .null
         if let v = vonStand { rumpf["von_stand"] = .ganz(v) }
-        return baue(Wege.benennen, rumpf: rumpf, anmeldung: anmeldung)
+        return try baue(Wege.benennen, rumpf: rumpf, anmeldung: anmeldung)
     }
 
     /// `POST /api/abbrechen` — zwischen zwei Knoten (Entscheid 31).
-    public static func abbrechen(anmeldung: Anmeldung?) -> Anfrage {
-        baue(Wege.abbrechen, rumpf: [:], anmeldung: anmeldung)
+    public static func abbrechen(anmeldung: Anmeldung?) throws -> Anfrage {
+        try baue(Wege.abbrechen, rumpf: [:], anmeldung: anmeldung)
     }
 
     /// `POST /api/rechne-skizze` — eine Skizze, oder 2 bis 8 als Ebenen-Reihe.
     public static func rechneSkizze(_ skizzen: [String], anweisung: String? = nil,
                                     entwurf: Bool = false, ordner: String? = nil,
-                                    anmeldung: Anmeldung?) -> Anfrage {
+                                    anmeldung: Anmeldung?) throws -> Anfrage {
         var rumpf: [String: JSONWert] = [:]
         if let o = ordner, !o.isEmpty { rumpf["ordner"] = .text(o) }
         rumpf["skizze"] = skizzen.count == 1 ? .text(skizzen[0]) : .liste(skizzen.map { .text($0) })
         if let a = anweisung, !a.isEmpty { rumpf["anweisung"] = .text(a) }
         rumpf["entwurf"] = .wahrheit(entwurf)
-        return baue(Wege.rechneSkizze, rumpf: rumpf, anmeldung: anmeldung)
+        return try baue(Wege.rechneSkizze, rumpf: rumpf, anmeldung: anmeldung)
     }
 }

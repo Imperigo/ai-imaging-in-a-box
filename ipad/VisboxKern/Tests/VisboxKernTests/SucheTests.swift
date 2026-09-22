@@ -116,4 +116,26 @@ final class SucheTests: XCTestCase {
         XCTAssertEqual([Verbindungszustand.aus, .suche, .gekoppelt, .getrennt(grund: "x")].map(\.wort),
                        ["Aus", "Suche", "Gekoppelt", "Getrennt"])
     }
+
+    // ------------------------------------------------------------ wer die Suche will
+
+    func testSchliesstDerKoppelbildschirmSuchtDasPruefenWeiter() {
+        var w = Suchwunsch()
+        XCTAssertFalse(w.sucht)
+        XCTAssertTrue(w.verlange(.wiederfinden), "das Prüfen beginnt die Suche")
+        XCTAssertFalse(w.verlange(.koppeln), "sie läuft schon")
+        XCTAssertFalse(w.gibFrei(.koppeln), "der Koppelbildschirm schliesst — die Suche bleibt")
+        XCTAssertTrue(w.sucht)
+        XCTAssertTrue(w.gibFrei(.wiederfinden), "erst jetzt will sie keiner mehr")
+        XCTAssertFalse(w.sucht)
+    }
+
+    func testDerKoppelbildschirmAlleinBeginntUndBeendetSie() {
+        var w = Suchwunsch()
+        XCTAssertTrue(w.verlange(.koppeln))
+        XCTAssertFalse(w.gibFrei(.wiederfinden), "wer nicht wollte, beendet nichts")
+        XCTAssertTrue(w.sucht)
+        XCTAssertTrue(w.gibFrei(.koppeln))
+        XCTAssertFalse(w.gibFrei(.koppeln), "zweimal freigeben endet nicht zweimal")
+    }
 }

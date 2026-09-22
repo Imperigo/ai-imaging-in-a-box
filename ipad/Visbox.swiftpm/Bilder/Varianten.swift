@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Woraus die drei Varianten entstehen (Entscheid 32: **beides wählbar**).
 enum Variantenquelle: String, CaseIterable, Identifiable {
-    /// Dieselbe Skizze, dreimal mit anderem Startwert gerechnet.
+    /// Das Bild aus dem Modell, dreimal mit anderem Startwert gerechnet.
     case startwerte
     /// Drei Ebenen, jede eine Variante (Entscheid 7).
     case ebenen
@@ -19,57 +19,74 @@ enum Variantenquelle: String, CaseIterable, Identifiable {
     var satz: String {
         switch self {
         case .startwerte:
-            return "Dieselbe Skizze, dreimal gerechnet — jedes Mal mit einem anderen Startwert."
+            return "Das Bild aus dem Modell, dreimal gerechnet — jedes Mal mit einem anderen "
+                + "Startwert."
         case .ebenen:
-            return "Jede Ebene ist eine Variante. Gerechnet wird, was sichtbar ist."
+            return "Jede Ebene ist eine Variante. «In die Mappe legen» legt dann jede sichtbare "
+                + "Ebene als eigene Skizze ab; unten zwei oder drei davon wählen."
+        }
+    }
+
+    /// Wie die Zeichnung abgelegt wird. **Bei «Drei Ebenen» als eine Skizze je Ebene** —
+    /// sonst gäbe es in der Mappe nichts, woraus eine Ebenen-Reihe bestehen könnte.
+    var ausgabeart: Ebenenstapel.Ausgabeart {
+        switch self {
+        case .startwerte: return .eineSkizze
+        case .ebenen: return .ebenenAlsVarianten
+        }
+    }
+
+    /// Die Art einer Reihe aus der Mappe (`variantengruppe.art`), oder `nil`, wenn der
+    /// Server eine schrieb, die die App nicht kennt.
+    init?(art: String?) {
+        switch art {
+        case "startwerte": self = .startwerte
+        case "ebenen": self = .ebenen
+        default: return nil
         }
     }
 }
 
-/// Eine der drei Varianten, wie sie angezeigt wird.
-struct Variantenbild: Identifiable {
-    let id: String
-    let titel: String
-    let grafik: UIImage?
-    let zeichen: Pruefzeichen
-}
-
 /// **Drei Varianten nebeneinander** (Entscheid 18) — eine gross, drei klein darunter.
 ///
-/// Hier wird nur **angezeigt** und die Quelle gewählt; bestellt wird anderswo, und es liest
-/// die Wahl aus `Bildbandstand.variantenquelle`. Es sind immer drei Plätze: Fehlt eine
-/// Variante, steht ihr Platz leer **und sagt das** — zwei Bilder sähen sonst aus wie eine
-/// vollständige Auswahl aus zweien.
+/// Gezeigt wird **eine Reihe aus der Mappe** (`variantengruppe`), jede Variante mit ihrem
+/// eigenen Prüfzeichen. Es sind immer drei Plätze: Fehlt eine Variante, steht ihr Platz
+/// leer **und sagt das** — zwei Bilder sähen sonst aus wie eine vollständige Auswahl aus
+/// zweien. Hat die Reihe mehr als drei, steht das darüber.
 ///
 /// Die Wahl wird mit einem Balken gezeigt, nicht mit einem blauen Rand wie im Entwurf
 /// (Blatt «Varianten»): Blau heisst am Bild «Entwurf — nicht geprüft».
 struct Variantenansicht: View {
     @ObservedObject var stand: Bildbandstand
-    let varianten: [Variantenbild]
+    let gruppe: String
 
     @Environment(\.accessibilityReduceMotion) private var bewegungReduziert
     @State private var gewaehlt = 0
 
-    static let plaetze = 3
+    static let plaetze = Rechenbestellung.reihenlaenge
 
-    init(stand: Bildbandstand = .gemeinsam, varianten: [Variantenbild]) {
+    init(stand: Bildbandstand = .gemeinsam, gruppe: String) {
         self.stand = stand
-        self.varianten = varianten
+        self.gruppe = gruppe
+    }
+
+    private var varianten: [Bandbild] { stand.reihenbilder(gruppe) }
+
+    private var kopfsatz: String {
+        let g = varianten.first?.angaben.variantengruppe
+        let quelle = Variantenquelle(art: g?.art)?.name ?? "Reihe unbekannter Art"
+        guard let von = g?.von else { return quelle + " · wie viele es sind, sagt die Mappe nicht" }
+        if von > Variantenansicht.plaetze {
+            return quelle + " · \(von) Varianten, hier die ersten \(Variantenansicht.plaetze)"
+        }
+        return quelle + " · \(varianten.count) von \(von) in der Mappe"
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            VStack(alignment: .leading, spacing: 10) {
-                Abschnittstitel(text: "Woraus die drei entstehen")
-                HStack(spacing: 8) {
-                    ForEach(Variantenquelle.allCases) { q in
-                        Button(q.name) { stand.variantenquelle = q }
-                            .buttonStyle(Wahlknopfstil(gewaehlt: stand.variantenquelle == q,
-                                                       breite: nil))
-                            .accessibilityAddTraits(stand.variantenquelle == q ? .isSelected : [])
-                    }
-                }
-                Text(stand.variantenquelle.satz)
+            VStack(alignment: .leading, spacing: 6) {
+                Abschnittstitel(text: "Varianten nebeneinander")
+                Text(kopfsatz)
                     .font(Schrift.text(13))
                     .foregroundStyle(Zeichenblatt.leise)
             }
@@ -88,48 +105,62 @@ struct Variantenansicht: View {
     private var gross: some View {
         if gewaehlt < varianten.count {
             let v = varianten[gewaehlt]
-            Bildflaeche(grafik: v.grafik)
-                .pruefzeichen(v.zeichen, .gross)
+            Bildflaeche(grafik: v.grafik, vorhanden: v.vorhanden)
+                .pruefzeichen(v.pruefzeichen(stand.lesart(v)), .gross)
         } else {
-            leer(Text("Diese Variante ist noch nicht gerechnet."))
+            leer(Text("Diese Variante ist nicht in der Mappe."))
                 .aspectRatio(3.0 / 2.0, contentMode: .fit)
         }
     }
 
+    private func titel(_ v: Bandbild) -> String {
+        if let eigener = v.angaben.titel { return eigener }
+        let g = v.angaben.variantengruppe
+        if let seed = g?.seed { return "Startwert \(seed)" }
+        if let skizze = g?.skizze { return skizze }
+        return stand.name(v)
+    }
+
     private func platz(_ i: Int) -> some View {
         let an = gewaehlt == i
-        let buchstabe = ["A", "B", "C"][i]
-        return Button {
-            if bewegungReduziert {
-                gewaehlt = i
-            } else {
-                withAnimation(.easeInOut(duration: 0.18)) { gewaehlt = i }
-            }
-        } label: {
-            VStack(alignment: .leading, spacing: 6) {
-                Group {
-                    if i < varianten.count {
-                        Bildflaeche(grafik: varianten[i].grafik)
-                            .pruefzeichen(varianten[i].zeichen, .klein)
-                    } else {
-                        leer(Text("noch nicht gerechnet"))
-                    }
+        let buchstabe = ["A", "B", "C", "D", "E", "F", "G", "H"][min(i, 7)]
+        // KEIN `Button` UM DEN PLATZ: Im Prüfzeichen der kleinen Kachel sitzt ein eigener
+        // Knopf (der Vorbehalt klappt auf, `Zeichenrahmen`), und ein Knopf in einem Knopf
+        // bekommt in SwiftUI nicht verlässlich seinen eigenen Tipp.
+        return VStack(alignment: .leading, spacing: 6) {
+            Group {
+                if i < varianten.count {
+                    Bildflaeche(grafik: varianten[i].grafik, vorhanden: varianten[i].vorhanden)
+                        .pruefzeichen(varianten[i].pruefzeichen(stand.lesart(varianten[i])),
+                                      .klein)
+                } else {
+                    leer(Text("nicht in der Mappe"))
                 }
-                .frame(height: 130)
-                Text(i < varianten.count ? "\(buchstabe) · \(varianten[i].titel)" : buchstabe)
-                    .font(Schrift.text(14, .semibold))
-                    .foregroundStyle(an ? Zeichenblatt.schrift : Zeichenblatt.leise)
-                    .lineLimit(1)
-                Rectangle()
-                    .fill(an ? Zeichenblatt.schrift : Color.clear)
-                    .frame(height: 3)
-                    .accessibilityHidden(true)
             }
-            .frame(maxWidth: .infinity)
+            .frame(height: 130)
+            Text(i < varianten.count ? "\(buchstabe) · \(titel(varianten[i]))" : buchstabe)
+                .font(Schrift.text(14, .semibold))
+                .foregroundStyle(an ? Zeichenblatt.schrift : Zeichenblatt.leise)
+                .lineLimit(1)
+            Rectangle()
+                .fill(an ? Zeichenblatt.schrift : Color.clear)
+                .frame(height: 3)
+                .accessibilityHidden(true)
         }
-        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .onTapGesture { waehle(i) }
         .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(an ? .isSelected : [])
+        .accessibilityAddTraits(an ? [.isButton, .isSelected] : [.isButton])
+        .accessibilityAction { waehle(i) }
+    }
+
+    private func waehle(_ i: Int) {
+        if bewegungReduziert {
+            gewaehlt = i
+        } else {
+            withAnimation(.easeInOut(duration: 0.18)) { gewaehlt = i }
+        }
     }
 
     /// Ein leerer Platz — gestrichelt in der leisen Farbe, nicht in einer Urteilsfarbe.

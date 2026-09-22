@@ -24,16 +24,17 @@ struct Verbindungszeile: View {
     @State private var koppelnOffen = false
     @State private var fachOffen = false
 
-    /// Die Vorgabe der Skizzenquelle: die sichtbaren Ebenen der Zeichenfläche als **ein**
-    /// Bild (Einheit «Zeichnen», `Zeichenstand.pngAusgabe`).
-    static let zeichenflaeche: Skizzenquelle = {
-        Zeichenstand.gemeinsam.pngAusgabe(.eineSkizze)
-    }
-
-    init(stand: Verbindungsstand = .gemeinsam,
-         skizzenquelle: @escaping Skizzenquelle = Verbindungszeile.zeichenflaeche) {
+    /// `skizzenquelle` `nil` heisst: **die Vorgabe** — die sichtbaren Ebenen der
+    /// Zeichenfläche als **ein** Bild (Einheit «Zeichnen», `Zeichenstand.pngAusgabe`).
+    ///
+    /// Warum die Vorgabe im Rumpf steht und nicht als Standardwert (Mac-Übersetzung vom
+    /// 22.09.2026, Warnung «main actor-isolated static property 'zeichenflaeche' can not be
+    /// referenced from a nonisolated context»): Ein Standardwert wird **ausserhalb** des
+    /// Hauptfadens ausgewertet, die Eigenschaft gehörte aber zu dieser `@MainActor`-Ansicht.
+    /// Im Rumpf von `init` ist der Hauptfaden gesichert, und keine Marke muss wandern.
+    init(stand: Verbindungsstand = .gemeinsam, skizzenquelle: Skizzenquelle? = nil) {
         self.stand = stand
-        self.skizzenquelle = skizzenquelle
+        self.skizzenquelle = skizzenquelle ?? { Zeichenstand.gemeinsam.pngAusgabe(.eineSkizze) }
     }
 
     var body: some View {
@@ -51,8 +52,11 @@ struct Verbindungszeile: View {
             }
 
             if !stand.fach.isEmpty {
+                // FESTE BREITE AUS DEM INHALT: Ohne `fixedSize` nimmt der Knopf (breite: nil
+                // heisst im Wahlknopfstil «so breit wie moeglich») der Zeile den Platz weg.
                 Button { fachOffen = true } label: { fachteil }
                     .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: nil))
+                    .fixedSize()
             }
 
             Mappenknopf(stand: stand, skizzenquelle: skizzenquelle)
@@ -81,7 +85,9 @@ struct Verbindungszeile: View {
                     .lineLimit(2)
             }
         }
-        .frame(minHeight: Zeichenblatt.tippzielMindestens)
+        // 60 PT, WIE DAS BLATT «ZEICHEN» ES FUER JEDES ZIEL DES STIFTS VERLANGT — nicht die
+        // 44 pt, die Apple fuer den Finger als Untergrenze nennt (Durchsicht 22.09.2026).
+        .frame(minHeight: Zeichenblatt.tippziel)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
@@ -105,25 +111,32 @@ struct Verbindungszeile: View {
         }
     }
 
+    /// Was der Knopf zum Parkfach sagt — **nur Zahlen, die nicht null sind.**
+    ///
+    /// Bis zur Durchsicht vom 22.09.2026 stand hier dauerhaft «0 geparkt», sobald nur noch
+    /// angekommene Skizzen im Fach lagen (und die blieben für immer). Jetzt räumt das Fach
+    /// sie nach 7 Tagen weg (`Parkfach.raeumeAuf`), und solange sie dastehen, sagt der Knopf
+    /// nur «Parkfach»: Die Quittungen sind erreichbar, ohne eine Null zu behaupten.
     private var fachteil: some View {
-        let wartend = stand.fach.filter { $0.zustand == .geparkt }.count
-        let offen = stand.fach.filter {
-            switch $0.zustand {
-            case .abgewiesen, .ungewiss: return true
-            default: return false
-            }
-        }.count
+        let wartend = stand.wartend
+        let unterwegs = stand.fach.filter { $0.zustand == .unterwegs }.count
+        let offen = stand.brauchenEntscheid
+        let teile = [(wartend, "geparkt"), (unterwegs, "unterwegs"), (offen, "offen")]
+            .filter { $0.0 > 0 }
         return HStack(spacing: 8) {
-            Text("\(wartend)").font(Schrift.zahl(15, .medium))
-            Text("geparkt")
-            if offen > 0 {
-                Text("·")
-                Text("\(offen)").font(Schrift.zahl(15, .medium))
-                Text("offen")
+            if teile.isEmpty {
+                Text("Parkfach")
+            }
+            ForEach(Array(teile.enumerated()), id: \.offset) { paar in
+                if paar.offset > 0 { Text("·") }
+                Text("\(paar.element.0)").font(Schrift.zahl(15, .medium))
+                Text(paar.element.1)
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text("Parkfach: \(wartend) geparkt, \(offen) brauchen eine Entscheidung"))
+        .accessibilityLabel(Text(teile.isEmpty
+            ? "Parkfach: nichts wartet"
+            : "Parkfach: " + teile.map { "\($0.0) \($0.1)" }.joined(separator: ", ")))
     }
 }
 

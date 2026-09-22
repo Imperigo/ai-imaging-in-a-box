@@ -8,16 +8,23 @@ import SwiftUI
 ///
 /// 1. *Bewegt sich etwas, ist etwas unterwegs.* Die Ansicht gibt es nur, solange eine Skizze
 ///    gesendet wird (`Verbindungsstand.uebergabe`), und der Ort folgt den gezählten Bytes.
+///    Vor dem ersten Byte spielt `Flugbahn.vorspiel`: ablegen (220 ms), abheben (180 ms).
 /// 2. *Gleichmässig heisst gezählt.* Ohne Gesamt kein Balken; die Marke atmet an Ort und
-///    Stelle (1.8 s).
+///    Stelle (1.8 s) — vom Beginn des Sendens an (`Flugbahn.flugbeginn`), auch wenn nie
+///    ein Zählerstand kommt.
 /// 3. *Die Animation endet nicht vor der Ankunft.* Vor der Antwort 200 steht die Marke vor
 ///    dem Ziel; sie rastet erst danach ein (140 ms).
 /// 4. *Ein Gegenstand, ein Weg.* Es gibt **eine** Marke mit fester Identität, die ihren
 ///    Ort ändert — keine zweite, die am Ziel auftaucht.
 ///
-/// **Bewegungsreduktion:** derselbe Weg ohne Bewegung — die Marke erscheint erst am Ziel,
-/// der Balken und der Satz bleiben. *Eine Aussage, die nur in der Bewegung steckt, ist für
-/// diese Leute keine Aussage.*
+/// **Bewegungsreduktion** (Blatt: *«Die Marke erscheint am Ziel, der Balken bleibt.»*):
+/// Während der Übertragung steht die Marke **nirgends** — nicht am iPad, nicht auf dem
+/// Faden. Sie erscheint erst mit der Bestätigung, und dann am Ziel; fällt sie zurück,
+/// liegt sie auf dem iPad. Balken und Satz bleiben die ganze Zeit. Wo sie steht, rechnet
+/// der Kern (`Flugbahn.ortOhneBewegung`, geprüft in
+/// `ParkfachTests.testOhneBewegungErscheintDieMarkeErstAmZiel`). Bis zur Durchsicht vom
+/// 22.09.2026 stand sie in dieser Lage während der Übertragung am iPad — gegen das Blatt.
+/// *Eine Aussage, die nur in der Bewegung steckt, ist für diese Leute keine Aussage.*
 ///
 /// *Gebaut, am Gerät unbestätigt (22.09.2026).*
 @MainActor
@@ -50,7 +57,8 @@ struct Uebergabestrecke: View {
                         .fill(Uebergabestrecke.gruen)
                         .frame(width: weg * CGFloat(ort) + Uebergabestrecke.marke / 2, height: 2)
                     markeAnsicht
-                        .offset(x: weg * CGFloat(markenort))
+                        .opacity(markenort == nil ? 0 : 1)
+                        .offset(x: weg * CGFloat(markenort ?? 0))
                 }
                 .frame(height: Uebergabestrecke.marke)
             }
@@ -63,11 +71,10 @@ struct Uebergabestrecke: View {
         .accessibilityValue(Text(beschriftung))
     }
 
-    /// Bei Bewegungsreduktion steht die Marke **nicht unterwegs**: am iPad, bis sie am Ziel
-    /// ist (dann erscheint sie dort).
-    private var markenort: Double {
-        guard ruhig else { return ort }
-        return phase == .eingerastet ? 1 : 0
+    /// Wo die Marke steht — `nil`: nicht gezeigt (nur bei Bewegungsreduktion, unterwegs).
+    /// Unsichtbar gemacht, nicht weggenommen: Es bleibt **eine** Marke (Regel 4).
+    private var markenort: Double? {
+        ruhig ? Flugbahn.ortOhneBewegung(phase) : ort
     }
 
     /// **Eine** Marke, auch beim Atmen: kein `if`/`else` um zwei Ansichten (SwiftUI baute

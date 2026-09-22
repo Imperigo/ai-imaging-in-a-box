@@ -79,10 +79,19 @@ struct Bildvergleich: View {
                 .foregroundStyle(Zeichenblatt.leise)
             GeometryReader { geo in
                 ZStack(alignment: .topLeading) {
+                    // DAS VORHER SAGT AUCH HIER, DASS ES KEIN URTEIL TRAEGT (Durchsicht B,
+                    // 22.09.2026): Nebeneinander stand es schon da, beim Wischregler fehlte
+                    // es — und die Hälfte rechts der Kante lag unter dem Zeichen des Nachher,
+                    // als gehörte sie dazu. Die Marke sitzt IN der Schicht des Vorher: Wo das
+                    // Nachher darüber liegt, deckt es sie mit ab, wie das Bild selbst.
                     Bildflaeche(grafik: vorher)
                         .frame(width: geo.size.width, height: geo.size.height)
+                        .overlay(alignment: .topTrailing) {
+                            marke("VERGLEICHSBILD · kein Urteil nötig")
+                        }
                     Bildflaeche(grafik: nachher)
                         .frame(width: geo.size.width, height: geo.size.height)
+                        .overlay(alignment: .topLeading) { marke("AUS DER KI") }
                         .mask(alignment: .leading) {
                             Rectangle()
                                 .frame(width: geo.size.width * CGFloat(schnitt))
@@ -120,6 +129,18 @@ struct Bildvergleich: View {
                     .frame(width: 52, alignment: .trailing)
             }
         }
+    }
+
+    /// Eine Beschriftung auf dem Bild, im Streifen des Prüfzeichens, aber leise — **keine**
+    /// Urteilsfarbe, denn sie sagt nichts über ein Urteil.
+    private func marke(_ text: String) -> some View {
+        Text(text)
+            .font(Schrift.text(12, .semibold))
+            .foregroundStyle(Zeichenblatt.leise)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color(Pruefzeichen.streifen).opacity(Pruefzeichen.streifenDeckung))
+            .padding(8)
     }
 
     /// Das Seitenverhältnis des Nachher — sonst 3:2 wie im Entwurf.

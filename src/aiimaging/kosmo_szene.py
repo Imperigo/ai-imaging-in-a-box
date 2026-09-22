@@ -59,6 +59,7 @@ from . import contracts as _contracts
 from . import geometrie_qa, prompts, sprache, stil_qa
 from . import gate as _gate
 from . import kameras as _kameras
+from . import raumkamera as _raumkamera
 from . import sonne as _sonne
 
 #: Die beiden Vertragskennungen, wörtlich aus den Schemadateien der Designzentrale.
@@ -482,13 +483,93 @@ def _auf_raster(aufl):
 #: der Grund für die Form dieser Karte: **Ein Riegel prüft, ob jedes Element der
 #: WIRKLICHKEIT in seiner Liste steht — nicht, ob jedes Element seiner Liste in der
 #: Wirklichkeit vorkommt. Der zweite besteht immer.**
+#:
+#: **Seit dem 22.09.2026 heisst «bekannt» nicht mehr «gelesen».** Die Antwort auf
+#: ``auf-20260911-104`` nannte neun Felder ihrer ``render-scene``, die hier fehlten — und
+#: eines davon, ``interior``, wird seit dem 19.09.2026 wirklich gesendet. Unser Riegel
+#: wies damit **jede** Innenraum-Bestellung ab. Zwei der neun bedienen wir seither
+#: (``interior``, ``gelaende``); die übrigen sieben stehen in :data:`ABGEWIESENE_FELDER`
+#: und werden **mit ihrem eigenen Satz** abgewiesen statt als «unbekannt». Abweisen bleibt
+#: der Grundsatz (E75 drüben, 19.09.2026) — nur sagt die Abweisung jetzt, *warum*.
 BEKANNTE_FELDER = {
-    "": ("schema", "geometry", "render", "style", "vis", "cameras", "out"),
+    "": ("schema", "geometry", "render", "style", "vis", "cameras", "out",
+         "interior", "gelaende", "komposition", "innenansichten"),
     "geometry": ("path", "format", "up_axis"),
-    "render": ("resolution", "faithful", "samples", "sun"),
+    "render": ("resolution", "faithful", "samples", "sun",
+               "environment", "himmel", "belichtung", "rauschschwelle"),
     "style": ("prompt", "mode", "refs"),
-    "vis": ("backbone", "skip", "upscale"),
+    "vis": ("backbone", "skip", "upscale", "research_only"),
+    # Belegt ist genau EIN Unterfeld (auf-31 R3, auf-91 V1): `rooms`, gesendet als
+    # "auto". Ein `view` (frontal/ueber Eck) ist drueben ausdruecklich NICHT gebaut —
+    # kaeme es trotzdem, faellt es hier als unbekannt auf und nicht still weg.
+    "interior": ("rooms",),
 }
+
+#: Der einzige belegte Inhalt von ``interior.rooms``: seit dem 19.09.2026 gesendet, je
+#: Auftrag genau EIN Innenstandpunkt (auf-31 R3, auf-91 V5).
+INTERIOR_ROOMS_AUTO = "auto"
+
+#: Felder, die wir aus ihrem Vertrag **kennen** und trotzdem abweisen — je mit dem Satz,
+#: der der Gegenseite sagt, warum (Antwort auf ``auf-20260911-104``, V2: «die sechs
+#: Felder aufnehmen oder je Feld ablehnen»).
+#:
+#: Warum abweisen und nicht als «bekannt, nicht bedient» durchlassen: Keines davon liest
+#: unsere Kette, und bei fünf von sieben ist nicht einmal belegt, was sie verlangen. Ein
+#: Lauf, der sie still übergeht, liefert ein Bild, das nach Bestellung aussieht und keine
+#: ist — genau der Fall, gegen den die Karte gebaut ist. Ein Feld, das ``null`` trägt,
+#: verlangt nichts und wird **nicht** abgewiesen (dieselbe Regel wie :func:`wert_oder`).
+ABGEWIESENE_FELDER = {
+    "komposition": (
+        "Bekannt (seitenverhaeltnis, brennweiteMm, horizontlinie), aber von unserer "
+        "Kette nicht gelesen. Die Brennweite steht schon in den Kameras (fov), das "
+        "Seitenverhaeltnis in render.resolution, und was horizontlinie misst, ist nicht "
+        "belegt. Noetig waere: die Deutung von horizontlinie und eine Regel, welche "
+        "Angabe gilt, wenn Kamera und komposition sich widersprechen."),
+    "innenansichten": (
+        "Bei euch ein geduldeter Zweitname von 'interior' (auf-31 R3), gesendet wird er "
+        "nicht (auf-104, Stand 19.09.2026). Angenommen wird nur 'interior' — zwei Namen "
+        "fuer dieselbe Bestellung sind zwei Stellen, an denen sie sich widersprechen kann."),
+    "render.environment": (
+        "Bekannt (preset, hdri, intensitaet, rotationGrad — auf-44), aber von unserer "
+        "Kette nicht gelesen: Ein bestelltes Umgebungslicht fiele still weg. Noetig waere "
+        "ein Weg, Umgebungsbilder mit permissiver Lizenz zu uns zu bringen (Regeln 1 und 3)."),
+    "render.himmel": (
+        "Der Name ist bekannt (auf-104), Form und Bedeutung sind es nicht, und unsere "
+        "Kette liest das Feld nicht. Wir raten nicht, was es verlangt."),
+    "render.belichtung": (
+        "Der Name ist bekannt (auf-104), Form und Bedeutung sind es nicht, und unsere "
+        "Kette liest das Feld nicht. Wir raten nicht, was es verlangt."),
+    "render.rauschschwelle": (
+        "Der Name ist bekannt (auf-104), Form und Bedeutung sind es nicht, und unsere "
+        "Kette liest das Feld nicht. Wir raten nicht, was es verlangt."),
+    "vis.research_only": (
+        "Der Name ist bekannt (auf-104), die Bedeutung nicht. Gaebe es Modelle mit "
+        "reiner Forschungslizenz frei, widerspraeche es Regel 1 (nur permissive "
+        "Lizenzen); kennzeichnete es nur das Bild, fehlt der Ort, an dem es ankaeme. Wir "
+        "raten nicht, welches von beiden gemeint ist."),
+}
+
+
+def abgewiesene_felder(fremd: dict) -> tuple[str, ...]:
+    """Je gesetztem Feld aus :data:`ABGEWIESENE_FELDER` ein Satz — leer, wenn keines da ist.
+
+    «Gesetzt» heisst: vorhanden **und nicht** ``null``. Ein ausdrückliches ``null``
+    verlangt nichts; es abzuweisen hiesse, eine Bestellung für ein Feld abzulehnen, das
+    sie gar nicht benutzt.
+    """
+    if not isinstance(fremd, dict):
+        raise SzenenError(f"render-scene ist kein Wörterbuch: {type(fremd).__name__}")
+    saetze = []
+    for pfad, grund in ABGEWIESENE_FELDER.items():
+        block, _, name = pfad.rpartition(".")
+        quelle = fremd.get(block) if block else fremd
+        if not isinstance(quelle, dict) or quelle.get(name) is None:
+            continue
+        saetze.append(
+            f"Feld '{pfad}' ({quelle[name]!r}) wird abgewiesen: {grund} Abgewiesen statt "
+            f"uebergangen (E75 drueben, 19.09.2026): Wer ein Feld setzt und kein Wort "
+            f"hoert, haelt es fuer bedient.")
+    return tuple(saetze)
 
 #: Blöcke, deren Inhalt **nicht** durchsucht wird, mit dem Grund.
 #:
@@ -573,13 +654,82 @@ def wert_oder(quelle: dict, schluessel: str, ersatz):
     return ersatz if wert is None else wert
 
 
+def _lies_interior(roh, *, kameras, fmt: str, warnungen: list, maengel: list):
+    """``interior`` → unsere Innenansicht (``{"raum", "art"}``) oder ``None``.
+
+    **Der Befund** (22.09.2026, Antworten auf auf-104, auf-31 und auf-91, übertragen am
+    selben Tag): KosmoOrbit sendet seit dem 19.09.2026 ``interior: {rooms: "auto"}``
+    zusammen mit ``geometry.format: "ifc"``, und unsere Karte kannte das Feld nicht. Jede
+    Innenraum-Bestellung lief damit in den Riegel für unbekannte Felder.
+
+    Was belegt ist, und nur das wird angenommen:
+
+    * ``rooms: "auto"`` — die einzige gesendete Form, je Auftrag **ein** Innenstandpunkt.
+      Bei uns heisst das: der erste Raum mit brauchbarem Standpunkt
+      (``raumkamera.waehle(raum=None)``), frontal — ein ``view``-Feld ist drüben bewusst
+      nicht gebaut, und frontal ist unsere Vorgabe (``kette._fuehre_multipass``).
+    * **Mitgesandte Kameras gehen vor, und zwar als Auflösung, nicht als Rangfolge.**
+      Drüben leitet der eigene Kern die Standpunkte ab und schickt sie als benannte
+      Kameras mit; eine Portierung unserer Rechenregel wird nicht verlangt (auf-91 V1/V2).
+      Das ``"auto"`` ist in diesem Fall also schon beantwortet. Einen zweiten
+      Innenstandpunkt dazuzurechnen widerspräche auf-31 R6 («keine zwei
+      Innenstandpunkte je Raum») — gerendert werden die Kameras, und eine Warnung sagt es.
+
+    Was **nicht** belegt ist, wird mit einem Satz abgewiesen: eine Raumliste (Name?
+    IFC-Kennung? Objekt?), ein fehlendes ``rooms``, ein ``interior``, das kein Block ist,
+    und ein ``interior`` ohne IFC — Räume gibt es nur in der IFC, aus einer glb lässt sich
+    kein Raumbegriff gewinnen.
+
+    Returns:
+        ``{"raum": None, "art": "frontal"}`` oder ``None`` (nicht bestellt, abgewiesen,
+        oder durch mitgesandte Kameras bedient).
+    """
+    if roh is None:
+        return None
+    if not isinstance(roh, dict):
+        maengel.append(
+            f"'interior' ist {type(roh).__name__} und kein Block. Belegt ist bei euch "
+            f"nur {{rooms: '{INTERIOR_ROOMS_AUTO}'}} (auf-31 R3); was ein anderer Wert "
+            f"verlangt, raten wir nicht.")
+        return None
+    raeume = roh.get("rooms")
+    if raeume != INTERIOR_ROOMS_AUTO:
+        maengel.append(
+            f"'interior.rooms' ist {raeume!r}. Belegt ist bei euch nur "
+            f"'{INTERIOR_ROOMS_AUTO}' (seit 19.09.2026 gesendet, auf-31 R3, auf-91 V1); "
+            f"welche Form ein Raum in einer Liste haette — Name, IFC-Kennung oder "
+            f"Objekt —, ist nicht belegt, und wir raten sie nicht.")
+        return None
+    if isinstance(kameras, list):
+        warnungen.append(
+            f"'interior' {{rooms: '{INTERIOR_ROOMS_AUTO}'}} kam zusammen mit "
+            f"{len(kameras)} benannten Kamera(s). Nach eurer Antwort (auf-91 V1/V2) sind "
+            f"das die drueben abgeleiteten Standpunkte: Gerendert werden genau diese, und "
+            f"wir rechnen KEINEN zweiten Innenstandpunkt dazu (auf-31 R6). Welche der "
+            f"Kameras innen steht, sagt die Bestellung nicht.")
+        return None
+    if fmt != "ifc":
+        maengel.append(
+            f"'interior' verlangt Raeume, und die gibt es nur in einer IFC — die "
+            f"Bestellung traegt geometry.format {fmt or None!r}. Aus einer glb laesst sich "
+            f"kein Raumbegriff gewinnen; ersatzweise aussen zu rendern waere ein anderes "
+            f"Bild als das bestellte.")
+        return None
+    return {"raum": None, "art": _raumkamera.ART_FRONTAL}
+
+
 def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     """``kosmovis.render-scene/v1`` → unsere Felder, mit allem, was dabei auffällt.
 
     Returns:
         ``{geometrie, out, kameras, aufloesung, hoehe, samples, controlnet_staerke,
         prompt, prompt_original, prompt_sprache, stil_modus, stil_referenzen, backbone,
-        ueberspringen, hochskalieren, sonne, warnungen, maengel}``
+        ueberspringen, hochskalieren, sonne, innenraum, gelaende_erwartet, warnungen,
+        maengel}``
+
+        ``innenraum`` ist die Innenansicht aus ``interior`` (siehe
+        :func:`_lies_interior`), ``gelaende_erwartet`` das dreiwertige ``gelaende``
+        (``None`` heisst nicht angefasst, nicht ``False``).
 
         ``prompt`` ist die Fassung, mit der gerendert wird — englisch, wenn der Text der
         Oberfläche deutsch war. ``prompt_original`` hält den Wortlaut fest, wie er
@@ -624,6 +774,12 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             f"Entweder der Vertrag hat sich geaendert (dann sagt es uns), oder es ist ein "
             f"Tippfehler."
         )
+        (maengel if streng else warnungen).append(satz)
+    # BEKANNT UND ABGEWIESEN — dieselbe Wirkung wie ein unbekanntes Feld, aber mit dem
+    # Grund je Feld (Antwort auf auf-20260911-104, uebertragen am 22.09.2026). `streng`
+    # gilt hier genauso: Der Ausweg soll fuer diese Felder nicht enger werden, als er fuer
+    # sie war, solange sie noch «unbekannt» hiessen.
+    for satz in abgewiesene_felder(fremd):
         (maengel if streng else warnungen).append(satz)
 
     kennung = fremd.get("schema", SCHEMA_SZENE)
@@ -691,6 +847,22 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             "haben keinen Zugriff darauf und würden sonst stillschweigend 'auto' "
             "rendern — also andere Blickwinkel als bestellt."
         )
+
+    innenraum = _lies_interior(fremd.get("interior"), kameras=kameras, fmt=fmt,
+                               warnungen=warnungen, maengel=maengel)
+
+    # DAS GELAENDE, DREIWERTIG — die Antwort auf unseren eigenen Auftrag auf-20260901-67.
+    # Drueben gebaut als `gelaende: boolean | null`, Vorgabe null («unbekannt», nie still
+    # false). Bis zum 22.09.2026 kannte unsere Karte das Feld nicht und haette eine
+    # Bestellung, die es setzt, abgewiesen — obwohl WIR es bestellt hatten. `None` heisst
+    # hier NICHT ANGEFASST: Dann gilt, was der Abholer prozessweit eingestellt hat.
+    gelaende = fremd.get("gelaende")
+    if gelaende is not None and not isinstance(gelaende, bool):
+        maengel.append(
+            f"'gelaende' ist {gelaende!r}. Euer Vertrag fuehrt es dreiwertig (true, false "
+            f"oder null, auf-67); ein anderer Wert laesst sich nicht deuten, und ein "
+            f"geratener Gelaendebefund macht die Bauwerksmaske falsch.")
+        gelaende = None
 
     sonne = render.get("sun")
     if sonne is not None:
@@ -775,6 +947,8 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         "ueberspringen": bool(wert_oder(vis, "skip", False)),
         "hochskalieren": bool(wert_oder(vis, "upscale", False)),
         "sonne": sonne,
+        "innenraum": innenraum,
+        "gelaende_erwartet": gelaende,
         # Was JEDEN Auftrag gleich trifft — getrennt von dem, was DIESEN betrifft.
         #
         # **Der Anlass ist eine Zaehlung** (26.08.2026): `tools/abholen.py` zeigte
@@ -834,6 +1008,13 @@ DURCHGEREICHT = {
     # Seit 26.08.2026 — vorher der GEFAEHRLICHSTE der stehengebliebenen Felder, weil das
     # Bild danach richtig AUSSAH (auf-vis-20260825-15 Posten 5.3).
     "sonne": "seams.glb_zu_multipass(sonne=…) → blender_depth_stage --sonne-hoehe/-azimut",
+    # Seit 22.09.2026 (auf-104): `interior` {rooms: "auto"}. Nur ohne mitgesandte
+    # Kameras gesetzt — mit ihnen gelten diese, siehe `_lies_interior`.
+    "innenraum": "abholer.verarbeiter: EINE Kameraaufgabe aus raumkamera.waehle "
+                 "(auge, blick_auf, Brennweite des Standpunkts) → seams.glb_zu_multipass",
+    # Seit 22.09.2026: `gelaende` (auf-67), dreiwertig. Schlaegt den prozessweiten
+    # Schalter des Abholers, weil die Aussage je Szene gilt.
+    "gelaende_erwartet": "abholer.verarbeiter → maske (gelaende_erwartet=…)",
 }
 
 #: Felder, die der Betreiber setzen **kann** und die heute **nichts** bewirken.

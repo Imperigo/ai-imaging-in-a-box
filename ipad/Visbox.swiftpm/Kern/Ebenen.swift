@@ -22,7 +22,8 @@ public struct Ebene: Identifiable, Equatable, Sendable {
     public internal(set) var sichtbar: Bool
     /// Zwischen `Ebenenstapel.mindestDeckkraft` und 1.
     public internal(set) var deckkraft: Double
-    /// Wie viele Striche auf der Ebene liegen. `0` heisst: **nichts gezeichnet.**
+    /// Wie viele Striche auf der Ebene liegen. `0` heisst: **nichts, was man sieht** —
+    /// nichts gezeichnet, oder alles weggewischt (`Ebenenstapel.setzeStriche(_:_:alpha:)`).
     public internal(set) var striche: Int
 
     /// Nichts gezeichnet. Das ist kein leeres Bild, sondern keines.
@@ -163,6 +164,27 @@ public struct Ebenenstapel: Equatable, Sendable {
         aendere(id) { $0.striche = max(0, anzahl) }
     }
 
+    /// Meldet die Striche einer Ebene **zusammen mit ihrem gemalten Bild**: `alpha` trägt
+    /// ein Byte je Bildpunkt, die Deckung. Deckt kein einziger Bildpunkt (überall 0), zählt
+    /// die Ebene als leer — gleich, wie viele Striche PencilKit noch führt.
+    ///
+    /// **Warum am Bild und nicht an der Strichzahl (Befund Durchsicht A, 22.09.2026).** Der
+    /// flächige Radierer nimmt Striche nicht weg, er deckt sie ab: Nach vollständigem
+    /// Radieren kann eine Ebene Striche tragen, von denen nichts mehr zu sehen ist. Nach der
+    /// Strichzahl ginge sie als leeres PNG hinaus — ein Bild, das drüben aussähe wie eine
+    /// bewusst leere Skizze, gegen die dritte Antwort. Die Grenze der Zeichnung
+    /// (`PKDrawing.bounds`) wäre billiger, aber ob PencilKit darin die Abdeckung abzieht,
+    /// ist nirgends belegt; das Bild ist das, was hinausginge.
+    ///
+    /// **Die Schwelle ist «grösser als 0», nicht «kaum sichtbar».** Der Server liest den
+    /// Alphakanal heute nicht (`bildlesen.lies_png_luminanz` übergeht ihn): Was dort von
+    /// einem schwach deckenden Bildpunkt ankommt, bestimmt nicht dessen Deckung. Ein
+    /// leerer Puffer ist kein gemaltes Bild und zeigt darum nichts.
+    public mutating func setzeStriche(_ id: UUID, _ anzahl: Int, alpha: Data) {
+        let zeigtEtwas = alpha.contains { $0 > 0 }
+        setzeStriche(id, zeigtEtwas ? anzahl : 0)
+    }
+
     /// Schiebt eine Ebene im Stapel eine Stelle nach oben oder unten. Am Rand geschieht
     /// nichts (`false`).
     @discardableResult
@@ -178,7 +200,9 @@ public struct Ebenenstapel: Equatable, Sendable {
 
     /// Wie die Zeichnung hinausgeht (Entscheid Nr. 32: beides wählbar).
     public enum Ausgabeart: String, Sendable, CaseIterable {
-        /// Ein Bild aus allen sichtbaren Ebenen, übereinander wie auf dem Schirm.
+        /// Ein Bild aus allen sichtbaren, bezeichneten Ebenen, übereinander in Stapelfolge.
+        /// (Wie es auf dem Schirm aussieht, hängt zusätzlich an der Unterlage — die legt
+        /// der Server darunter, nicht die App.)
         case eineSkizze
         /// Ein Bild je sichtbarer Ebene — jede eine Variante.
         case ebenenAlsVarianten
@@ -350,6 +374,21 @@ public struct Schrittzaehler: Equatable, Sendable {
     public mutating func geleert() {
         zurueck = 0
         vor = 0
+    }
+
+    /// **Die Flächen wurden neu gebaut**, und ihre Schritte sind aus dem `UndoManager`
+    /// entfernt. Was er danach noch kann, gehört nicht zu dem, was gezählt wurde — wie viel
+    /// es ist, weiss niemand.
+    ///
+    /// **Warum nicht `abgleichen`.** Nach sieben gezählten Strichen und dem Neuaufbau hielte
+    /// `abgleichen(kannZurueck: true, …)` die 7 fest — eine Zahl über Schritte, die es nicht
+    /// mehr gibt. Befund Durchsicht A (22.09.2026): Nach dem Drehen baute SwiftUI die Flächen
+    /// neu, «Zurück» wirkte auf die alten, unsichtbar, und der Zähler zählte trotzdem.
+    /// Hier heisst darum «es geht noch etwas» immer **nicht gezählt** («?»), und «es geht
+    /// nichts» sicher 0.
+    public mutating func flaechenNeu(kannZurueck: Bool, kannVor: Bool) {
+        zurueck = kannZurueck ? nil : 0
+        vor = kannVor ? nil : 0
     }
 
     /// Mit dem abgleichen, was der `UndoManager` selbst weiss. Er hat das letzte Wort

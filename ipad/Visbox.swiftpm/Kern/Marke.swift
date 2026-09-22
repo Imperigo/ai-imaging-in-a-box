@@ -16,7 +16,9 @@ import Foundation
 /// stehen dort darum ein zweites Mal. `tests/test_ipad_geruest.py` prüft, dass beide
 /// Stellen übereinstimmen, und dass sonst keine Swift-Datei sie nennt.
 public enum Marke {
-    /// Der Name, den ein Mensch sieht.
+    /// Der Name, den ein Mensch sieht. Auf der HomeStation tragen ihn der Rundruf
+    /// (`rundruf.NAME`) und die Koppelseite (`server.NAME`, aus `rundruf.NAME`) —
+    /// beide gegen diese Zeile bewacht.
     public static let name = "Visbox"
 
     /// Die Bundle-Kennung (umgekehrte Domain-Schreibweise).
@@ -29,8 +31,10 @@ public enum Marke {
     /// Der Dienst, unter dem die HomeStation im Heimnetz gesucht wird (Bonjour-Form
     /// `_name._tcp`).
     ///
-    /// **Der Server kündigt ihn heute nicht an** — siehe `docs/VISBOX_PROTOKOLL.md`,
-    /// Abschnitt «Finden». Er steht hier, weil iOS verlangt, dass eine App jeden Dienst,
-    /// den sie sucht, vorher im Manifest nennt.
+    /// **Der Server kündigt ihn seit dem 22.09.2026 an** — mit `--im-heimnetz`
+    /// (`oberflaeche/rundruf.py`, dieselbe Zeichenkette, bewacht in
+    /// `tests/test_rundruf.py`); siehe `docs/VISBOX_PROTOKOLL.md`, §8. Dass ein echtes iPad
+    /// ihn findet, ist am Gerät unbestätigt. Er steht hier, weil iOS verlangt, dass eine
+    /// App jeden Dienst, den sie sucht, vorher im Manifest nennt.
     public static let dienst = "_visbox._tcp"
 }

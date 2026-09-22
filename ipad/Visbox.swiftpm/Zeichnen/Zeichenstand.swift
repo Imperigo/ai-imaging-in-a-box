@@ -51,6 +51,10 @@ final class Zeichenstand: ObservableObject {
     private var werkzeugwahl = Werkzeugwahl()
     private var abos: Set<AnyCancellable> = []
 
+    /// Wie viele Leinwandstapel (`Zeichenleinwand`) gerade stehen. Nicht `@Published`: Die
+    /// Ansicht braucht die Zahl nicht, nur das Abräumen (`stapelAbgebaut`).
+    private var stehendeStapel = 0
+
     init(leistenwahl: Leistenwahl = .gemeinsam) {
         self.leistenwahl = leistenwahl
         let verlauf = UndoManager()
@@ -119,6 +123,48 @@ final class Zeichenstand: ObservableObject {
         kannVor = rueckgaengig.canRedo
     }
 
+    // ------------------------------------------------- Flächen gebaut und abgebaut
+
+    /// Ein Leinwandstapel ist gebaut worden (`Zeichenleinwand.makeUIView`).
+    func stapelAufgebaut() {
+        stehendeStapel += 1
+    }
+
+    /// Ein Leinwandstapel wird abgebaut (`Zeichenleinwand.dismantleUIView`) — **seine
+    /// Schritte gehen mit ihm.**
+    ///
+    /// Befund Durchsicht A (22.09.2026): Nach einem Neuaufbau der Flächen hielt der
+    /// gemeinsame `UndoManager` Schritte der abgebauten; «Zurück» wirkte auf eine Fläche,
+    /// die niemand mehr sieht, und der Zähler zählte trotzdem herunter. Die Striche selbst
+    /// gehen dabei nicht verloren — sie liegen in `zeichnungen`, und die neuen Flächen
+    /// laden sie.
+    ///
+    /// Entfernt werden zuerst die Schritte, die an einer der abgebauten Flächen hängen.
+    /// Ob PencilKit seine Schritte an die Fläche hängt oder an etwas in ihr, ist nicht
+    /// belegt; **steht danach kein Stapel mehr, wird darum der ganze Verlauf geleert** —
+    /// was er dann noch hielte, könnte nur noch unsichtbar wirken. Steht schon ein neuer
+    /// (SwiftUI darf den neuen vor dem Abbau des alten bauen), bleibt dessen Verlauf, und
+    /// der Zähler sagt «nicht gezählt», wenn noch etwas geht (Kern:
+    /// `Schrittzaehler.flaechenNeu`).
+    func stapelAbgebaut(_ flaechen: [UIView]) {
+        stehendeStapel = max(0, stehendeStapel - 1)
+        for flaeche in flaechen {
+            rueckgaengig.removeAllActions(withTarget: flaeche)
+        }
+        if stehendeStapel == 0 {
+            rueckgaengig.removeAllActions()
+        }
+        // SPAETER VEROEFFENTLICHEN: Der Abbau geschieht mitten im Neuzeichnen der Ansicht,
+        // und dort darf ein `@Published` nicht geändert werden.
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.schritte.flaechenNeu(kannZurueck: self.rueckgaengig.canUndo,
+                                      kannVor: self.rueckgaengig.canRedo)
+            self.kannZurueck = self.rueckgaengig.canUndo
+            self.kannVor = self.rueckgaengig.canRedo
+        }
+    }
+
     // ------------------------------------------------------------------ Ebenen
 
     func legeEbeneAn() {
@@ -153,11 +199,7 @@ final class Zeichenstand: ObservableObject {
     func zeichnungGeaendert(_ id: UUID, _ zeichnung: PKDrawing) {
         guard stapel.ebene(id) != nil else { return }
         zeichnungen[id] = zeichnung
-        // Nur schreiben, was sich ändert: Jeder Schreibzugriff auf den Stapel zeichnet
-        // die Tafel neu.
-        if stapel.ebene(id)?.striche != zeichnung.strokes.count {
-            stapel.setzeStriche(id, zeichnung.strokes.count)
-        }
+        meldeStriche(id, zeichnung)
         kannZurueck = rueckgaengig.canUndo
         kannVor = rueckgaengig.canRedo
         // DER ZAEHLER WIRD HIER NICHT SOFORT ABGEGLICHEN. Diese Meldung kann vor dem
@@ -169,6 +211,55 @@ final class Zeichenstand: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.gleicheAb()
         }
+    }
+
+    /// Meldet dem Kern, ob auf der Ebene etwas zu sehen ist.
+    ///
+    /// **Die Strichzahl allein reicht nicht** (Befund Durchsicht A, 22.09.2026): Der
+    /// flächige Radierer (`PKEraserTool(.bitmap)`) deckt Striche ab, statt sie zu
+    /// entfernen; ganz weggewischt kann eine Ebene Striche tragen, von denen nichts zu sehen
+    /// ist. Sobald ein Strich eine Abdeckung trägt (`PKStroke.mask`), entscheidet darum das
+    /// gemalte Bild (`deckung`, Regel im Kern: `setzeStriche(_:_:alpha:)`). Ohne Abdeckung
+    /// ist jeder Strich zu sehen, und die Zahl gilt — so bleibt das Malen beim gewöhnlichen
+    /// Zeichnen aus dem Spiel.
+    ///
+    /// Liess sich das Bild nicht malen (`deckung` gibt `nil`), gilt die Strichzahl. Das ist
+    /// ein Rückfall, der im schlimmsten Fall ein leeres Bild hinauslässt; ob `deckung` am
+    /// Gerät je `nil` gibt, ist ungeprüft.
+    private func meldeStriche(_ id: UUID, _ zeichnung: PKDrawing) {
+        let anzahl = zeichnung.strokes.count
+        var neu = stapel
+        if zeichnung.strokes.contains(where: { $0.mask != nil }),
+           let alpha = Zeichenstand.deckung(zeichnung) {
+            neu.setzeStriche(id, anzahl, alpha: alpha)
+        } else {
+            neu.setzeStriche(id, anzahl)
+        }
+        // Nur schreiben, was sich ändert: Jeder Schreibzugriff auf den Stapel zeichnet
+        // die Tafel neu.
+        if neu != stapel { stapel = neu }
+    }
+
+    /// Die Deckung einer Zeichnung, ein Byte je Bildpunkt, in der Grösse der Ausgabe
+    /// (`Ebenenstapel.blattBreite × blattHoehe`, Massstab 1) — oder `nil`, wenn sie sich
+    /// nicht malen liess. Ungeprüft am Gerät.
+    static func deckung(_ zeichnung: PKDrawing) -> Data? {
+        let breite = Ebenenstapel.blattBreite
+        let hoehe = Ebenenstapel.blattHoehe
+        let rahmen = CGRect(x: 0, y: 0, width: breite, height: hoehe)
+        guard let bild = zeichnung.image(from: rahmen, scale: 1).cgImage else { return nil }
+        var alpha = Data(count: breite * hoehe)
+        let gemalt: Bool = alpha.withUnsafeMutableBytes { roh -> Bool in
+            guard let ziel = CGContext(data: roh.baseAddress, width: breite, height: hoehe,
+                                       bitsPerComponent: 8, bytesPerRow: breite,
+                                       space: CGColorSpaceCreateDeviceGray(),
+                                       bitmapInfo: CGImageAlphaInfo.alphaOnly.rawValue) else {
+                return false
+            }
+            ziel.draw(bild, in: rahmen)
+            return true
+        }
+        return gemalt ? alpha : nil
     }
 
     // ------------------------------------------------------------ Werkzeug und Farbe
@@ -242,16 +333,23 @@ final class Zeichenstand: ObservableObject {
     /// **DIE SCHNITTSTELLE FÜR DAS SENDEN.** Die sichtbaren Ebenen als PNG.
     ///
     /// * `.eineSkizze`: **ein** Bild aus allen sichtbaren, bezeichneten Ebenen,
-    ///   übereinander in Stapelfolge und mit ihrer Deckkraft — so, wie es auf dem Schirm
-    ///   steht.
+    ///   übereinander in Stapelfolge, jede mit ihrer Deckkraft.
     /// * `.ebenenAlsVarianten`: ein Bild **je** sichtbarer, bezeichneter Ebene
     ///   (Entscheid Nr. 32), höchstens drei.
     ///
-    /// Eine ausgeblendete Ebene geht nie mit. Ist nichts Sichtbares gezeichnet, kommt
-    /// `.nichtsGezeichnet` und **kein leeres Bild.** Jedes Bild ist
-    /// `Ebenenstapel.blattBreite × blattHoehe` Bildpunkte gross, mit durchsichtigem Grund:
-    /// Was unter der Skizze liegt (ein Bild aus einem Lauf), weiss der Server über `ueber`,
-    /// und es in das PNG zu malen hiesse, es zweimal zu schicken.
+    /// Eine ausgeblendete Ebene geht nie mit. Ist nichts Sichtbares gezeichnet (auch: alles
+    /// flächig weggewischt, `meldeStriche`), kommt `.nichtsGezeichnet` und **kein leeres
+    /// Bild.**
+    ///
+    /// **Was das PNG ist, und was nicht (22.09.2026).** Jedes Bild ist
+    /// `Ebenenstapel.blattBreite × blattHoehe` = 1536 × 1024 Bildpunkte, mit
+    /// **durchsichtigem Grund**; die Deckkraft einer Ebene steckt **nur im Alphakanal.** Es
+    /// ist darum *nicht* das Bild, das auf dem Schirm steht: Dort liegt die Skizze auf dem
+    /// dunklen Blatt oder auf einem Bild aus einem Lauf. Das Zusammensetzen auf die
+    /// Unterlage macht der Server (der weiss über `ueber`, was darunter liegt; es in das PNG
+    /// zu malen hiesse, es zweimal zu schicken). Heute liest der Server den Alphakanal nicht
+    /// (`bildlesen.lies_png_luminanz` übergeht ihn) — bis er zusammensetzt, sieht er weder
+    /// Deckkraft noch durchsichtigen Grund.
     ///
     /// **Nicht geprüft wird hier die Grösse**: Der Server nimmt höchstens 2 MiB je Skizze
     /// (`docs/VISBOX_PROTOKOLL.md`). Das prüft, wer sendet.
@@ -262,7 +360,8 @@ final class Zeichenstand: ObservableObject {
     /// Ein Teil als PNG — oder `nil`, wenn eine seiner Ebenen keine Zeichnung hat.
     private func male(_ teil: Ebenenstapel.Teil) -> Data? {
         // EINE EBENE MIT STRICHEN UND OHNE ZEICHNUNG gibt es nicht; gäbe es sie doch, ginge
-        // sonst ein Bild hinaus, dem eine sichtbare Ebene fehlt.
+        // sonst ein Bild hinaus, dem eine sichtbare Ebene fehlt. Die Deckkraft geht als
+        // Alpha in das Bild (siehe `pngAusgabe`), nicht als Mischung mit einem Grund.
         var lagen: [(PKDrawing, CGFloat)] = []
         for ebene in teil.ebenen {
             guard let zeichnung = zeichnungen[ebene.id] else { return nil }

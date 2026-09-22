@@ -11,7 +11,15 @@ Nach der Abgabe (Januar 2027) wird die App in KosmoOrbit eingebaut und heisst da
 wiederholen (es kann die Quellen nicht lesen); `tests/test_ipad_geruest.py` fällt, sobald
 die beiden auseinanderlaufen oder eine andere Swift-Datei sie nennt.
 
-**Stand:** Welle 0, nur das Gerüst. Gebaut, am Gerät unbestätigt.
+**Stand (22.09.2026, nachgeführt):** Welle 1 gebaut — Zeichnen, Leiste, Bilder, Verbindung und
+ihr Kern. **Übersetzt auf dem Mac:** Die Prüfstrecke `.github/workflows/ipad.yml` lief für den
+Stand `f32266f` durch (Lauf 3, «success»; der Lauf davor für `54f28b9` fand einen Fehler, der
+mit `f32266f` behoben ist; beides nachgesehen in der Laufliste auf GitHub). Nach Angabe der
+Welle-2-Leitung meldet der Lauf eine Warnung (`Verbindung/Verbindungszeile.swift`, «main
+actor-isolated static property 'zeichenflaeche'») — die Warnung selbst ist hier nicht
+nachgelesen. **Am Gerät unbestätigt** ist alles,
+was über das Übersetzen hinausgeht. Der Baum unten zeigt das Gerüst der Welle 0; die Einheiten
+haben seither weitere Dateien in ihren Ordnern.
 
 ## Was wo liegt
 
@@ -124,13 +132,16 @@ diesem Zertifikat trauen (`--cacert`); die Verbindung ungeprüft zu lassen ist k
 
 ## Was ungeprüft ist
 
-* **Ob die App übersetzt.** Das zeigt erst der erste Lauf von `.github/workflows/ipad.yml`
-  auf einem Mac. Insbesondere die Angaben im Manifest, die aus `AppleProductTypes` stammen
+* **Ob die App läuft.** Dass sie **übersetzt**, zeigt die Prüfstrecke auf dem Mac (siehe
+  «Stand» oben). Ob die Angaben im Manifest, die aus `AppleProductTypes` stammen
   (`.placeholder(icon: .leaf)`, `.localNetwork(...)`, `additionalInfoPlistContentFilePath`),
-  sind nach Kenntnis geschrieben und nie einem Übersetzer vorgelegt worden.
+  auf einem Gerät wirken, wie sie sollen, zeigt erst das Aufspielen.
 * **Ob Swift Playgrounds das Paket öffnet** und den Unterordner `Kern/` mitübersetzt.
 * **Ob iOS die Verbindung zur HomeStation zulässt** — lokale Netzwerkfreigabe
   (`NSLocalNetworkUsageDescription`, `NSBonjourServices`) und die ATS-Ausnahme
   `NSAllowsLocalNetworking` sind eingetragen, am Gerät nicht erprobt.
-* **Finden im Heimnetz.** Der Server kündigt sich heute nicht an; siehe
-  `docs/VISBOX_PROTOKOLL.md`, §8, samt dem Vorbehalt zu eigenen Rundrufen.
+* **Finden im Heimnetz.** Der Server kündigt sich seit dem 22.09.2026 an, wenn er mit
+  `--im-heimnetz` läuft (`oberflaeche/rundruf.py`, geprüft über einen lokalen UDP-Socket);
+  ob ein echtes iPad ihn über die Bonjour-Suche findet, ist **am Gerät unbestätigt**. Siehe
+  `docs/VISBOX_PROTOKOLL.md`, §8, samt dem Vorbehalt zu eigenen Rundrufen und dem Befund,
+  dass der Rundruf einem vorhandenen avahi direkte Pakete wegnehmen kann.

@@ -362,19 +362,29 @@ function zeichenFuer(bild) {
  *
  *  Zwei Stellen genuegen fast immer. Aber 0.7999 gegen die Schwelle 0.8 zeigte mit zwei
  *  Stellen «0.80 gegen 0.80» — ein DURCHGEFALLENES Bild, dessen Zahl aussieht, als haette
- *  es die Schwelle erreicht. Also: so viele Stellen, bis die beiden sich unterscheiden
- *  (hoechstens sechs); «0.7999 gegen 0.8000». Runden kehrt die Reihenfolge nie um, es
- *  macht nur Verschiedenes gleich — und genau das faengt die Schleife. *Ein Zustand, den
- *  die Anzeige auf zwei rundet, ist ein anderer Zustand.*
+ *  es die Schwelle erreicht. Also: so viele Stellen, bis die beiden sich unterscheiden;
+ *  «0.7999 gegen 0.8000». Runden kehrt die Reihenfolge nie um, es macht nur Verschiedenes
+ *  gleich — und genau das faengt die Schleife. *Ein Zustand, den die Anzeige auf zwei
+ *  rundet, ist ein anderer Zustand.*
+ *
+ *  BIS ZU 17 SIGNIFIKANTEN STELLEN (Befund der Durchsicht D-SERVER, 22.09.2026): Die
+ *  Schleife hoerte bei sechs Nachkommastellen auf, und 0.7999999 gegen 0.8 zeigte wieder
+ *  «0.800000 gegen 0.800000». Siebzehn signifikante Stellen trennen zwei verschiedene
+ *  Zahlen dieser Art immer (so viele braucht eine Gleitkommazahl hoechstens, um eindeutig
+ *  geschrieben zu werden) — die Schleife endet darum nie auf Gleichstand, ausser die
+ *  beiden sind gleich.
  *
  *  `null`, wenn kein Score da ist — nicht gemessen ist keine Zahl. */
 function zahlText(score, schwelle) {
   if (typeof score !== "number" || !isFinite(score)) return null;
   const hatSchwelle = typeof schwelle === "number" && isFinite(schwelle);
-  let stellen = 2;
-  while (hatSchwelle && stellen < 6 && score !== schwelle &&
-         score.toFixed(stellen) === schwelle.toFixed(stellen)) stellen++;
-  return {score: score.toFixed(stellen), schwelle: hatSchwelle ? schwelle.toFixed(stellen) : null};
+  let s = score.toFixed(2), t = hatSchwelle ? schwelle.toFixed(2) : null;
+  for (let stellen = 3; hatSchwelle && score !== schwelle && s === t && stellen <= 17;
+       stellen++) {
+    s = score.toPrecision(stellen);
+    t = schwelle.toPrecision(stellen);
+  }
+  return {score: s, schwelle: t};
 }
 
 function zeigeModell(d) {
@@ -1208,6 +1218,13 @@ function aufTafel(e) {
 
 function zeichenStart(e) {
   if (!$("tafel").width) return;
+  // JEDER NEUE STRICH IST EINE NEUE ZEICHNUNG — und bekommt beim Ablegen einen neuen
+  // Schluessel (Befund der Durchsicht D-SERVER, 22.09.2026). Bis dahin galt der Schluessel
+  // bis zum Leeren der Tafel: Kam die erste Sendung an und die Antwort nicht, und wurde
+  // danach weitergezeichnet, ging die ERGAENZTE Zeichnung mit dem alten Schluessel hinaus
+  // — der Server wies sie als «andere Zeichnung» ab. Ohne neuen Strich bleibt er, damit
+  // ein zweiter Klick auf «In die Mappe legen» keine zweite Datei anlegt.
+  tafel.schluessel = null;                         // ein neuer Strich: neue Zeichnung
   tafel.stift = e.pointerId;
   tafel.letzte = aufTafel(e);
   tafel.arten.add(e.pointerType || "unbekannt");

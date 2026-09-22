@@ -14,6 +14,10 @@ import UIKit
 /// anderen liegen darüber oder darunter und folgen ihr beim Schieben und Zoomen. Was das
 /// kostet: Speicher je Ebene — darum die Höchstzahl im Kern.
 ///
+/// **Beim Abbau gehen die Schritte mit** (`dismantleUIView`, `Zeichenstand.stapelAbgebaut`):
+/// Baut SwiftUI die Flächen neu, hielte der gemeinsame `UndoManager` sonst Schritte auf
+/// Flächen, die niemand mehr sieht (Befund Durchsicht A, 22.09.2026).
+///
 /// **Ungeprüft (22.09.2026):** Die ganze Datei ist nie einem Übersetzer vorgelegt worden,
 /// und ob die Flächen am Gerät deckungsgleich bleiben, zeigt erst das Gerät.
 struct Zeichenleinwand: UIViewRepresentable {
@@ -29,6 +33,7 @@ struct Zeichenleinwand: UIViewRepresentable {
         let stift = UIPencilInteraction()
         stift.delegate = context.coordinator
         ansicht.addInteraction(stift)
+        stand.stapelAufgebaut()
         context.coordinator.gleicheAb(ansicht)
         return ansicht
     }
@@ -36,6 +41,10 @@ struct Zeichenleinwand: UIViewRepresentable {
     func updateUIView(_ ansicht: Leinwandstapel, context: Context) {
         context.coordinator.stand = stand
         context.coordinator.gleicheAb(ansicht)
+    }
+
+    static func dismantleUIView(_ ansicht: Leinwandstapel, coordinator: Leinwandkoordinator) {
+        coordinator.raeumeAb()
     }
 }
 
@@ -48,6 +57,20 @@ final class Leinwand: PKCanvasView {
     var gemeinsamerVerlauf: UndoManager?
 
     override var undoManager: UndoManager? { gemeinsamerVerlauf }
+
+    /// Der Inhalt ist verdeckt, die Fläche nimmt aber weiter Berührungen an.
+    ///
+    /// Für die **gewählte, ausgeblendete** Ebene. Befund Durchsicht A (22.09.2026): War sie
+    /// mit `isHidden` versteckt, nahm keine Fläche mehr Berührungen an — der Finger schob
+    /// und zoomte gar nicht, gegen Entscheid Nr. 4. Eine versteckte Ansicht und eine mit
+    /// Deckkraft unter 0.01 übergeht UIKit beim Treffertest; eine **leere Maske** verdeckt
+    /// alles, ohne dass der Treffertest sie beachtet. Am Gerät unbestätigt.
+    var inhaltVerdeckt = false {
+        didSet {
+            guard inhaltVerdeckt != oldValue else { return }
+            mask = inhaltVerdeckt ? UIView(frame: .zero) : nil
+        }
+    }
 }
 
 /// Der Behälter der Flächen. Er legt sie deckungsgleich und stellt den Zoom so, dass das
@@ -162,20 +185,36 @@ final class Leinwandkoordinator: NSObject, PKCanvasViewDelegate, UIPencilInterac
             guard let leinwand = leinwaende[ebene.id] else { continue }
             ansicht.bringSubviewToFront(leinwand)
             reihe.append(leinwand)
-            leinwand.isHidden = !ebene.sichtbar
-            leinwand.alpha = CGFloat(ebene.deckkraft)
             let aktiv = ebene.id == stapel.aktiv
+            // DIE GEWAEHLTE BLEIBT DA, AUCH AUSGEBLENDET: Sie ist die Fläche, die der Finger
+            // schiebt und zoomt (Entscheid Nr. 4). Ausgeblendet wird sie verdeckt, nicht
+            // versteckt (`Leinwand.inhaltVerdeckt`); die anderen folgen ihr (`fuehreNach`).
+            leinwand.isHidden = !ebene.sichtbar && !aktiv
+            leinwand.inhaltVerdeckt = !ebene.sichtbar && aktiv
+            leinwand.alpha = CGFloat(ebene.deckkraft)
             // NUR DIE GEWAEHLTE NIMMT BERUEHRUNGEN AN. Die anderen lassen sie durch
             // (eine abgeschaltete Ansicht wird beim Treffertest übergangen).
             leinwand.isUserInteractionEnabled = aktiv
             // Auf eine ausgeblendete Ebene wird nicht gezeichnet (Kern:
-            // `aktiveIstZeichenbar`), mit der Hand auch nicht.
+            // `aktiveIstZeichenbar`), mit der Hand auch nicht. Nur das Zeichnen ist aus;
+            // Schieben und Zoomen gehören der Fläche selbst und bleiben.
             leinwand.drawingGestureRecognizer.isEnabled =
                 aktiv && stapel.aktiveIstZeichenbar && !hand
             if aktiv { leinwand.tool = werkzeug }
         }
         ansicht.leinwaende = reihe
         ansicht.setNeedsLayout()
+    }
+
+    /// Der Stapel wird abgebaut: Die Flächen melden nichts mehr, und ihre Schritte gehen
+    /// mit ihnen (`Zeichenstand.stapelAbgebaut`).
+    func raeumeAb() {
+        let weg = Array(leinwaende.values)
+        for leinwand in weg {
+            leinwand.delegate = nil
+        }
+        leinwaende = [:]
+        stand.stapelAbgebaut(weg)
     }
 
     // ------------------------------------------------------------ PencilKit meldet
@@ -210,16 +249,37 @@ final class Leinwandkoordinator: NSObject, PKCanvasViewDelegate, UIPencilInterac
 
     // ------------------------------------------------------------ der Doppeltipp
 
-    /// Doppeltipp am Pencil 2 (Entscheid Nr. 2).
+    /// Wann zuletzt ein Doppeltipp umgeschaltet hat (Sekunden seit Gerätestart).
+    private var letzterDoppeltipp: TimeInterval = -1
+
+    /// Doppeltipp am Pencil 2 (Entscheid Nr. 2) — **iOS 17.0 bis 17.4.**
     ///
     /// **Wer den Doppeltipp in den Einstellungen des iPads abgeschaltet hat, bekommt ihn
     /// auch hier nicht** (`preferredTapAction == .ignore`). Jede andere Einstellung
     /// führt zum Radierer, wie entschieden.
-    ///
-    /// Ab iOS 17.5 heisst diese Meldung anders (`pencilInteraction(_:didReceiveTap:)`);
-    /// die alte kommt weiter an, solange die neue nicht umgesetzt ist. Ungeprüft am Gerät.
     func pencilInteractionDidTap(_ interaction: UIPencilInteraction) {
+        doppeltipp()
+    }
+
+    /// Doppeltipp am Pencil 2 — **ab iOS 17.5**, wo die Meldung so heisst. Dieselbe Wirkung
+    /// wie oben.
+    @available(iOS 17.5, *)
+    func pencilInteraction(_ interaction: UIPencilInteraction,
+                           didReceiveTap tap: UIPencilInteraction.Tap) {
+        doppeltipp()
+    }
+
+    /// **Ein Doppeltipp schaltet einmal**, auch wenn beide Meldungen ankämen. Ob iOS ab
+    /// 17.5 die alte Meldung weiter schickt, wenn die neue umgesetzt ist, ist nicht belegt
+    /// (22.09.2026); kämen beide, schaltete der Stift zum Radierer und sofort zurück —
+    /// sichtbar nichts. Was innert 0.3 s nach einem Umschalten ankommt, gilt darum als
+    /// dieselbe Berührung. Die Frist ist gesetzt, nicht gemessen: Zwei echte Doppeltipps
+    /// liegen nach Kenntnis weiter auseinander. Am Gerät ungeprüft.
+    private func doppeltipp() {
         guard UIPencilInteraction.preferredTapAction != .ignore else { return }
+        let jetzt = ProcessInfo.processInfo.systemUptime
+        guard letzterDoppeltipp < 0 || jetzt - letzterDoppeltipp > 0.3 else { return }
+        letzterDoppeltipp = jetzt
         stand.doppeltipp()
     }
 }

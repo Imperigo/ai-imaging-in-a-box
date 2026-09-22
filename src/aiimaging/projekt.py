@@ -65,6 +65,7 @@ import json
 import math
 import os
 import tempfile
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -594,7 +595,10 @@ def vermerke_bild(projekt: dict, *, bild: str, schicht: str, urteil=None,
         score, schwelle: **Die Zahl zum Urteil** (Entscheid 16: «Farbe, Wort und Zahl»),
             aus der Prüfung, die das Urteil gefällt hat. ``None`` heisst **nicht
             gemessen** — nie 0. Seit dem 22.09.2026; ältere Einträge führen die Felder
-            nicht, und ihr Fehlen heisst dasselbe.
+            nicht, und ihr Fehlen heisst dasselbe. **Nur mit einem Urteil:** Eine Zahl
+            neben ``urteil=None`` wird abgewiesen — sie läse sich am Bild wie eine
+            Messung, die zu keinem Urteil geführt hat. Wer den Wert trotzdem aufheben
+            will, legt ihn in die Herkunft.
         entwurf: ``True`` für ein Bild aus einem Entwurfslauf (Entscheid 30: schnell,
             ohne Geometrieprüfung). Ein eigenes Feld, damit eine Anzeige das blaue
             Zeichen «Entwurf — nicht geprüft» von einem gewöhnlichen «nicht gemessen»
@@ -643,6 +647,15 @@ def vermerke_bild(projekt: dict, *, bild: str, schicht: str, urteil=None,
             f"war {type(variantengruppe).__name__}.")
     score = _zahl_oder_none(score, "score")
     schwelle = _zahl_oder_none(schwelle, "schwelle")
+    if urteil is None and (score is not None or schwelle is not None):
+        # KEINE ZAHL OHNE URTEIL (Befund der Durchsicht D-KERN, 22.09.2026): Eine Pruefung,
+        # die gerechnet und nicht geurteilt hat, stand mit ihrem Score am Bild — neben
+        # «nicht gemessen» las sich das wie eine Messung. Hier und nicht erst in der
+        # Anzeige, damit es in keiner Mappe mehr so steht.
+        raise ProjektError(
+            f"score/schwelle ({score!r}/{schwelle!r}) ohne Urteil: Eine Zahl neben «nicht "
+            f"gemessen» liest sich wie eine Messung. Ohne Urteil stehen beide auf None; "
+            f"der gemeldete Wert gehört in die Herkunft.")
 
     # EINE DATEI, EIN EINTRAG — und das ist eine Entscheidung, keine Aufräumarbeit.
     #
@@ -843,7 +856,14 @@ def benenne(wurzel, *, titel: str | None, bild: str | None = None,
     Raises:
         ProjektError: Nicht genau eines von ``bild``/``skizze``, der Eintrag fehlt (oder
             steht bei einer Skizze mehrfach da), oder der Name ist unbrauchbar (zu lang,
-            mit Zeilenumbruch oder Steuerzeichen).
+            mit Zeilenumbruch oder Steuerzeichen — auch den Unicode-Trennern U+2028,
+            U+2029 und dem Steuerzeichen U+0085, die in einer Anzeige umbrechen).
+
+    **Kein Schutz gegen einen gleichzeitigen Lauf nötig, und das ist entschieden**
+    (22.09.2026): Benennt jemand, während ein Lauf rechnet, holt der Lauf beim Speichern
+    diesen neueren Stand nach, statt ihn zu überschreiben oder selbst zu scheitern
+    (``arbeitsgang._vermerke_und_speichere``). Die Laufsperre zu nehmen hiesse, während
+    eines Laufs von Stunden keinen Namen vergeben zu können.
         ProjektKollision: Auf der Platte liegt ein neuerer Stand als ``von_stand``.
     """
     if (bild is None) == (skizze is None):
@@ -858,10 +878,15 @@ def benenne(wurzel, *, titel: str | None, bild: str | None = None,
             raise ProjektError(
                 f"Der Name ist {len(titel)} Zeichen lang, höchstens {TITEL_HOECHSTENS} "
                 f"gehen. Was länger ist, gehört in die Bemerkung.")
-        if any(ord(z) < 32 or ord(z) == 127 for z in titel):
+        # NACH DER UNICODE-KATEGORIE, nicht nach einer Liste von Nummern (Befund der
+        # Durchsicht D-KERN, 22.09.2026): Die alte Pruefung nahm nur 0..31 und 127. Durch
+        # kamen U+2028/U+2029 (Zeilen- und Absatztrenner, Kategorie Zl/Zp) und die
+        # Steuerzeichen 128..159 samt U+0085 (Zeilenende, Cc) — alle drei brechen in
+        # einer Anzeige die Zeile um.
+        if any(unicodedata.category(z) in ("Cc", "Zl", "Zp") for z in titel):
             raise ProjektError(
-                "Der Name enthält einen Zeilenumbruch oder ein Steuerzeichen. Ein Name "
-                "steht auf einer Zeile unter dem Bild.")
+                "Der Name enthält einen Zeilenumbruch, einen Zeilen- oder Absatztrenner "
+                "oder ein Steuerzeichen. Ein Name steht auf einer Zeile unter dem Bild.")
 
     auf = oeffne(wurzel)
     p = auf["projekt"]

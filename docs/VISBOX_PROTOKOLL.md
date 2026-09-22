@@ -12,7 +12,9 @@ Gelesen aus: `oberflaeche/server.py` (Wege, Tür, Antworten), `oberflaeche/rundr
 (Finden im Heimnetz), `src/aiimaging/kopplung.py` (erstes Verbinden),
 `src/aiimaging/projekt.py` (Mappe, Standnummer, Kollision, Urteil, Skizzen, Namen),
 `src/aiimaging/arbeitsgang.py` (Entwurf, Varianten, Skizze rechnen, Abbrechen). Stand:
-22.09.2026, abends (Einheit D-SERVER). Die App schreibt die Wege in `ipad/Visbox.swiftpm/Kern/Wege.swift`
+22.09.2026, abends (Einheit D-SERVER), nachgeführt nach den Durchsichten der Welle 1
+(Skizze auf Unterlage, Zahl nur mit Urteil, Abbruch zwischen Varianten, Kopplungssatz,
+Rundruf). Die App schreibt die Wege in `ipad/Visbox.swiftpm/Kern/Wege.swift`
 ab; `tests/test_ipad_geruest.py` fällt, sobald die Abschrift und der Server auseinanderlaufen.
 
 ---
@@ -83,10 +85,22 @@ Bewacht in `tests/test_flaeche_fuer_die_app.py` (die Koppelseite, «und nichts s
 | `/api/einstellungen` | `ordner` (freiwillig), `einstellungen` (Objekt; ein Feld mit `null` wird **entfernt** und gilt dann wieder als Vorgabe) | `{"gespeichert": true, "einstellungen": {…}}` (der ganze neue Satz) | **400** «Kein Projektordner angegeben.» / «Es fehlen die Einstellungen.»; **404** kein Projekt; **400** wenn die Kette damit nicht baut (Satz der Bibliothek) oder ein Feld unbekannt ist («Diese Einstellung kennt das Programm nicht: …») — **dann wird nichts gespeichert**; **400** bei Kollision, siehe §6 |
 | `/api/skizze` | `ordner` (freiwillig), `png_base64` (die Zeichnung als PNG, Base64), `ueber` (freiwillig: Bildname, auf den gezeichnet wurde; fehlt er, ist es eine Skizze auf leerem Grund), `bemerkung` (freiwillig), `name` (freiwillig; wird **nicht** Dateiname, sondern geht in die Bemerkung), `schluessel` (freiwillig, seit 22.09.2026: 8–128 Zeichen aus `A–Z a–z 0–9 . _ -`, z. B. eine UUID — gegen Doppelsendung, siehe unten) | `{"abgelegt": true, "skizze": "<dateiname>", "hinweis": "<satz>"}`, mit Schlüssel zusätzlich `"schluessel"` | **400** «Es fehlt der Projektordner oder die Zeichnung.»; **400** Schlüssel in falscher Form; **400** derselbe Schlüssel mit einer **anderen** Zeichnung («…schon mit einer ANDEREN Zeichnung angekommen…», es wird nichts abgelegt); **400** kein gültiges Base64 / kein PNG (erkannt an den ersten acht Bytes) / grösser als **2 MiB** (geprüft **vor** dem Schreiben); **400** Satz der Bibliothek; **400** «Die Zeichnung liess sich nicht schreiben: …» |
 | `/api/rechne` | `ordner` (freiwillig), `einstellungen` (freiwillig, Objekt; gelten nur für diesen Lauf; **nur Felder von `baue_kette`**), `trotz_aenderung` (freiwillig, `true`/`false`: auch rechnen, wenn das Modell sich geändert hat), `entwurf` (freiwillig, `true`/`false`, Entscheid 30: höchstens 8 Schritte, **keine** Geometrieprüfung), `varianten` (freiwillig, ganze Zahl 2–8, Entscheid 32: eine Reihe mit den Startwerten `seed`, `seed+1`, …) | **Sofort**: `{"gestartet": true, "schritte_gesamt": <zahl oder null>, "entwurf": <bool>, "varianten": <zahl oder null>}`. `schritte_gesamt` gilt **je Variante** (jede zählt von vorn). Der Lauf selbst geht im Hintergrund; sein Stand kommt über `GET /api/fortschritt`. | **400** «Kein Projektordner angegeben.»; **400** «Es läuft schon einer. …» (es gibt **einen** Lauf zur Zeit); **400** vor dem Start, wenn die Form nicht stimmt: `entwurf`/`trotz_aenderung` kein Wahrheitswert («… ist wahr oder falsch …»), `einstellungen` kein Objekt oder mit einem Feld, das `baue_kette` nicht kennt («Diese Einstellung kennt das Programm nicht: …» — so kommen auch Ausführer, Speicher oder Melder nie aus dem Netz in die Bibliothek), `varianten` ausserhalb 2–8 oder keine ganze Zahl (Satz der Bibliothek). Ein Scheitern **während** des Laufs kommt nicht hier, sondern im Laufstand (`fehler`) — auch `entwurf` zusammen mit `einstellungen.qa: true`. |
-| `/api/rechne-skizze` | `ordner` (freiwillig), `skizze` (Pflicht: ein Dateiname aus `skizzen[]` der Mappe, **oder eine Liste von 2–8** — dann je Skizze ein Lauf als **Ebenen-Reihe**, Entscheid 32), `anweisung` (freiwillig, Text: was sich am Bild ändern soll; ohne Angabe gilt die `bemerkung` der Skizze), `entwurf`, `trotz_aenderung`, `einstellungen` (wie bei `/api/rechne`) | **Sofort**: `{"gestartet": true, "schritte_gesamt": …, "entwurf": <bool>, "skizzen": [<namen>]}` | **400** wie bei `/api/rechne`; **400** ohne `skizze` oder mit etwas, das kein Dateiname ist; **400** `varianten` mitgeschickt (Startwert-Reihen gibt es nur für das Bild aus dem Modell); **400** `anweisung` kein Text. Was die Bibliothek an der Skizze selbst abweist (steht nicht oder doppelt in der Mappe, verworfen, Datei fehlt, keine Anweisung, dieselbe Skizze zweimal in der Liste), kommt **im Laufstand** als `fehler`. |
-| `/api/benennen` | `ordner` (freiwillig), **genau eines** von `bild` / `skizze` (der Dateiname, wie er in der Mappe steht), `titel` (**Pflichtfeld**: Text bis 120 Zeichen ohne Zeilenumbruch; `null` oder leer nimmt den Namen zurück), `von_stand` (freiwillig: die `stand_nr` aus der letzten Sicht) | `{"benannt": true, "eintrag": {…}, "stand_nr": <neue Nummer>}` — der Eintrag, wie er jetzt in der Mappe steht. **Die Datei behält ihren Namen** (Entscheid 19). | **400** «Kein Projektordner angegeben.»; **400** ohne Feld `titel` («Es fehlt der Name …» — ein fehlendes Feld löscht keinen Namen); **400** Satz der Bibliothek (Eintrag unbekannt oder mehrfach, beides oder keines angegeben, zu lang, Steuerzeichen); **400** Kollision mit Zusatz «Die Seite neu laden zeigt den neuen Stand.» — **nicht** wiederholt, siehe §6 |
+| `/api/rechne-skizze` | `ordner` (freiwillig), `skizze` (Pflicht: ein Dateiname aus `skizzen[]` der Mappe, **oder eine Liste von 2–8** — dann je Skizze ein Lauf als **Ebenen-Reihe**, Entscheid 32), `anweisung` (freiwillig, Text: was sich am Bild ändern soll; ohne Angabe gilt die `bemerkung` der Skizze), `entwurf`, `trotz_aenderung`, `einstellungen` (wie bei `/api/rechne`) | **Sofort**: `{"gestartet": true, "schritte_gesamt": …, "entwurf": <bool>, "skizzen": [<namen>]}` | **400** wie bei `/api/rechne`; **400** ohne `skizze` oder mit etwas, das kein Dateiname ist; **400** `varianten` mitgeschickt (Startwert-Reihen gibt es nur für das Bild aus dem Modell); **400** `anweisung` kein Text. Was die Bibliothek an der Skizze selbst abweist (steht nicht oder doppelt in der Mappe, verworfen, Datei fehlt, keine Anweisung, dieselbe Skizze zweimal in der Liste, seit dem 22.09.2026 auch: die Unterlage `ueber` steht nicht in der Mappe oder ihre Datei fehlt, eines der Bilder ist kein lesbares PNG), kommt **im Laufstand** als `fehler`. |
+| `/api/benennen` | `ordner` (freiwillig), **genau eines** von `bild` / `skizze` (der Dateiname, wie er in der Mappe steht), `titel` (**Pflichtfeld**: Text bis 120 Zeichen ohne Zeilenumbruch und ohne Steuerzeichen — seit dem 22.09.2026 auch ohne die Unicode-Trenner U+2028, U+2029 und U+0085; `null` oder leer nimmt den Namen zurück), `von_stand` (freiwillig: die `stand_nr` aus der letzten Sicht) | `{"benannt": true, "eintrag": {…}, "stand_nr": <neue Nummer>}` — der Eintrag, wie er jetzt in der Mappe steht. **Die Datei behält ihren Namen** (Entscheid 19). | **400** «Kein Projektordner angegeben.»; **400** ohne Feld `titel` («Es fehlt der Name …» — ein fehlendes Feld löscht keinen Namen); **400** Satz der Bibliothek (Eintrag unbekannt oder mehrfach, beides oder keines angegeben, zu lang, Steuerzeichen); **400** Kollision mit Zusatz «Die Seite neu laden zeigt den neuen Stand.» — **nicht** wiederholt, siehe §6 |
 | `/api/abbrechen` | — (ein `ordner` wird nicht gebraucht: es gibt einen Lauf zur Zeit) | `{"abbruch_verlangt": true, "satz": "Abbruch verlangt. Der Schritt, der gerade rechnet, rechnet zu Ende; danach beginnt keiner mehr. Was fertig ist, bleibt in der Mappe."}` | **400** «Es läuft gerade kein Lauf — es gibt nichts abzubrechen.» |
 | jeder andere | — | — | **404** `{"fehler": "Unbekannter Weg: <pfad>"}` |
+
+**Was beim Rechnen einer Skizze an den Nachrender geht** (seit dem 22.09.2026): **die Skizze
+auf ihrer Unterlage**, nicht die Skizze allein. Die Unterlage ist das Bild, das die Mappe an der
+Skizze unter `ueber` führt; fehlt `ueber`, ein neutrales Grau (128, 128, 128). Verrechnet wird
+mit dem **Alphakanal** (durchsichtig heisst Unterlage, halb deckend heisst halb). Die Grösse ist
+die der Unterlage, die Skizze wird Blatt auf Bild abgebildet — dass die App die Unterlage
+blattfüllend zeigt, ist eine Annahme und **am Gerät unbestätigt**; bei anderem
+Seitenverhältnis wird gestreckt, und das Bild sagt es (`herkunft.unterlage.gestreckt`). Ohne
+Unterlage bleibt die Grösse der Skizze. *Befund dazu:* Bis dahin ging die Zeichnung allein
+hinein, und die Bildstufe (die das Ausgangsbild ohne Alpha liest) machte aus dem durchsichtigen
+Grund **Schwarz** — das Bild, auf das gezeichnet war, kam nie an. Die App muss dafür nichts
+ändern: Sie schickt weiter Striche auf durchsichtigem Grund und den Namen der Unterlage.
 
 **Zum Ablegen einer Skizze:** Der Dateiname entsteht aus der Uhrzeit (`skizze-JJJJMMTT-HHMMSS.png`,
 Weltzeit), nie aus dem Wunsch des Geräts. **Er ist eindeutig** (seit 22.09.2026): Kommt in
@@ -107,7 +121,24 @@ Wiederholung versucht es noch einmal. **Grenze, und sie gehört hierher:** Der S
 Schlüssel **im Arbeitsspeicher** (die letzten 512). Nach einem Neustart erkennt er keinen wieder,
 und eine Wiederholung legt dann eine zweite Datei an. Dauerhaft wäre er erst, wenn die Mappe ihn an
 der Skizze führte (`projekt.vermerke_skizze`) — offener Posten an den Kern. Ohne Schlüssel schützt
-nichts; die Webseite schickt seit dem 22.09.2026 je Zeichnung einen.
+nichts.
+
+Wer ihn schickt, und wann er wechselt:
+
+* **Die App** schickt ihn aus dem **Parkfach** (`Kern/Parkfach.swift`, `Kern/Anfragen.swift`:
+  `Anfragen.skizze(_:png:anmeldung:)`, bewacht in `AnfragenTests.testDieSkizzeAusDemFachTraegtIhrenSchluessel`).
+  Jede geparkte Skizze hat ihren eigenen Schlüssel und behält ihn bei jeder Wiederholung.
+* **Der Zustand «ungewiss»** gehört der App, nicht der Leitung: Eine Skizze ist dort
+  `ungewiss`, wenn schon Bytes hinaus waren und keine Antwort kam, oder wenn die App mitten im
+  Senden beendet wurde. Ging ihr Schlüssel mit, schickt die App sie **von selbst** noch einmal
+  (höchstens `Parkfach.selbstHoechstens`-mal) — der Schlüssel macht aus der Wiederholung die
+  Frage «liegt sie drüben?». Ohne Schlüssel entscheidet ein Mensch. Die Grenze oben gilt auch
+  hier: Nach einem Neustart des Servers entsteht bei der Wiederholung doch eine zweite Datei.
+* **Die Webseite** schickt seit dem 22.09.2026 je Zeichnung einen, und **jeder neue Strich**
+  (auch mit dem Radierer) macht daraus eine neue Zeichnung mit neuem Schlüssel. Ein zweiter
+  Klick auf «In die Mappe legen» ohne neuen Strich schickt denselben. *Befund dazu:* Bis dahin
+  galt der Schlüssel bis zum Leeren der Tafel; eine nach verlorener Antwort ergänzte Zeichnung
+  ging mit dem alten hinaus und wurde als «andere Zeichnung» abgewiesen.
 
 **Zum Abbrechen:** Die Kette fragt **vor jedem Knoten** (`kette.fuehre_aus(abbrechen=…)`). Der
 Knoten, der gerade rechnet — ein Blender-Lauf, eine Bildstufe —, rechnet zu Ende; danach beginnt
@@ -115,6 +146,14 @@ keiner mehr und **keine weitere Variante**. Was fertig ist, bleibt in der Mappe 
 Lauf steht dort mit `abgebrochen: true`. Kommt der Wunsch erst nach dem letzten Knoten, lief der
 Lauf regulär zu Ende: Dann steht im Laufstand `abbruch_verlangt: true`, aber `ergebnis.abgebrochen:
 false` — **verlangt ist nicht gewirkt.**
+
+**In einer Reihe wird auch zwischen zwei Varianten gefragt** (seit dem 22.09.2026). Kommt der
+Wunsch während des letzten Knotens von Variante *i*, rechnet diese zu Ende, und Variante *i+1*
+**beginnt nicht mehr**: `ergebnis.abgebrochen: true`, `ergebnis.varianten_nicht_begonnen` zählt
+die nicht begonnenen. In der Mappe steht der Lauf von Variante *i* mit `abgebrochen: false` (er
+lief ja zu Ende) und `varianten_nicht_begonnen: <zahl>`. *Befund dazu:* Bis dahin begann die
+nächste Variante trotzdem und wurde erst vor ihrem ersten Knoten angehalten — mit einem leeren
+Lauf in der Mappe.
 
 **Zum Pfad `ordner`:** Er ist ein Pfad **auf der HomeStation**. Die App kennt ihn nur, wenn sie
 ihn gesagt bekommt; wurde der Server mit `--ordner` gestartet, kann sie ihn weglassen. Ein Weg,
@@ -136,7 +175,7 @@ auf dem die App die Projekte der HomeStation auflisten könnte: **nicht vorhande
 | `bilder` | Je Bild siehe unten |
 | `skizzen` | Unverändert aus der Mappe: je `{skizze, ueber, erzeugt, stand, bemerkung, ergebnis, titel}`; `stand` ist `offen`, `gerechnet` oder `verworfen`; `ergebnis` ist `null`, solange nichts daraus wurde (sonst der Bildname); `titel` ist der eigene Name oder `null` (ältere Einträge führen das Feld nicht) |
 | `grundriss` | `{bbox, grund, schrumpfung}`; `bbox` ist `null`, wenn sich nichts lesen liess — dann sagt `grund` warum |
-| `laeufe` | Die Läufe, unverändert aus der Mappe (je `status`, `gerechnet`, `cache_treffer`, `gescheitert`, `dauer_s`, `error`, `modell_stand`, `bilder_vermerkt`, `modus_abweichungen`, `modus_ungemessen`, `messungen`, `angaben`, seit 22.09.2026 auch `abgebrochen`, `abgebrochene_knoten`, `entwurf`, `variantengruppe`, `skizze`). `status` kann `abgebrochen` sein. Ihr Innenleben ist hier nicht weiter beschrieben. |
+| `laeufe` | Die Läufe, unverändert aus der Mappe (je `status`, `gerechnet`, `cache_treffer`, `gescheitert`, `dauer_s`, `error`, `modell_stand`, `bilder_vermerkt`, `modus_abweichungen`, `modus_ungemessen`, `messungen`, `angaben`, seit 22.09.2026 auch `abgebrochen`, `abgebrochene_knoten`, `entwurf`, `variantengruppe`, `skizze`, `varianten_nicht_begonnen`). `status` kann `abgebrochen` sein. `varianten_nicht_begonnen` ist `null` ausserhalb einer Reihe, sonst die Zahl der Varianten, die **nach diesem Lauf** nicht mehr begannen (0, wo es weiterging); ältere Läufe führen das Feld nicht. Ihr Innenleben ist hier nicht weiter beschrieben. |
 | `formate` | Welche Modellformate der Import kennt |
 
 **Je Bild** (`bilder[]`): `{bild, schicht, zeichen, satz, erzeugt, herkunft, vorhanden, basis,
@@ -157,6 +196,15 @@ skizze_hinweis}` (die letzten acht seit 22.09.2026).
 * `score`, `schwelle`: **die Zahl zum Zeichen** (Entscheid 16) aus der Prüfung, die das Urteil
   gefällt hat — endliche Zahlen oder `null`. **`null` heisst nicht gemessen, nie 0**; auch bei
   älteren Einträgen, die die Felder nicht führen, und bei allem, was keine endliche Zahl ist.
+  **Nur bei `zeichen` `bestanden` oder `durchgefallen`** (seit dem 22.09.2026): Hat die Prüfung
+  gerechnet, aber nicht geurteilt (Maskenweg fehlt), sind beide `null`, und der gemeldete Wert
+  steht in der Herkunft unter `herkunft.messung.score` / `herkunft.messung.schwelle`. Die Sicht
+  unterdrückt die Zahl ohne Urteil auch bei einer älteren Mappe, die sie noch trägt. *Befund
+  dazu:* Neben «nicht gemessen» las sich die Zahl wie eine Messung.
+* `herkunft.unterlage` (nur bei einem Bild aus einer Skizze, seit dem 22.09.2026):
+  `{bild, eingangsbild, breite, hoehe, gestreckt, grund}` — worauf die Skizze gesetzt wurde
+  (`bild` ist `null` ohne Unterlage), die Datei, die der Nachrender bekam (relativ zur Mappe),
+  und ob gestreckt wurde. Siehe «Was beim Rechnen einer Skizze an den Nachrender geht» in §3.
 * `titel`: der eigene Name (Entscheid 19) oder `null` — dann gilt der Name nach der Zeit (`bild`).
 * `entwurf`: `true` für ein Bild aus einem Entwurfslauf (Entscheid 30), `false` sonst, `null` bei
   älteren Einträgen. **Kein viertes Zeichen:** Ein Entwurf hat `zeichen: "nicht-gemessen"`, und
@@ -186,7 +234,9 @@ bestellung}` (die letzten drei seit 22.09.2026)
 * `fertige[]`: je `{knoten, knotenart, status, aus_cache, dauer_s, variante}`; `status` ist `ok`,
   `abgelehnt`, `fehler`, `uebersprungen` oder `abgebrochen` (ein Knoten, der wegen des Abbruchs
   nicht mehr begann — er meldet sich fertig, ohne je begonnen zu haben). `variante` ist die
-  Nummer der Variante oder `null`.
+  Nummer der Variante oder `null`. **Fünf Werte, nicht vier:** `abgebrochen` kam am 22.09.2026
+  dazu. Die App führt den Status roh als Text; ihr Kommentar dazu (`Kern/Anfragen.swift`, Stand
+  22.09.2026 abends) nennt nur die ersten vier — wer ihn deutet, muss den fünften kennen.
 * `abbruch_verlangt`: ob `POST /api/abbrechen` kam. **Nicht**, ob es gewirkt hat — das steht
   nach dem Lauf in `ergebnis.abgebrochen`.
 * `variante`: bei einer Reihe `{nummer, von, gruppe}` der laufenden Variante, sonst `null`. Mit
@@ -212,7 +262,7 @@ Was davon über die Leitung geht:
 | Zustandscode 409 | **nicht vorhanden.** Eine Kollision kommt als **400** mit Satz. |
 | `POST /api/einstellungen` | Bei Kollision **400** mit dem Satz der Bibliothek und dem Zusatz «Die Seite neu laden zeigt den neuen Stand.» — **es wird nicht wiederholt**, weil eine Einstellung ersetzt und eine Wiederholung die des anderen wegwürfe. |
 | `POST /api/skizze` | Bei Kollision **einmal still wiederholt** (auf dem frischen Stand neu eingetragen), weil eine Skizze hinzufügt. Kommt die Kollision zweimal in Folge: **400** mit Satz. Die Datei liegt dann schon auf der Platte. |
-| `POST /api/rechne`, `POST /api/rechne-skizze` | Eine Kollision beim Speichern des Laufs kommt nicht als Antwort, sondern im Laufstand als `fehler`. |
+| `POST /api/rechne`, `POST /api/rechne-skizze` | Schreibt während des Laufs jemand anderes in die Mappe (ein Name, eine Skizze, Einstellungen), **trägt der Lauf seine Vermerke auf den neueren Stand nach** (seit dem 22.09.2026, höchstens dreimal; `arbeitsgang.NACHHOLEN_HOECHSTENS`) — der Name des anderen bleibt, und der Lauf verliert nichts. Erst wenn es dreimal in Folge kollidiert, kommt die Kollision im Laufstand als `fehler`. *Befund dazu:* Bis dahin warf der Lauf am Ende die Kollision, und **alle seine Vermerke fehlten** in der Mappe, sobald während des Laufs benannt oder eine Skizze abgelegt wurde. |
 | `POST /api/benennen` | Mit `von_stand`: abgewiesen, sobald auf der Platte ein neuerer Stand liegt. Ohne: nur ein Schreiber im selben Augenblick kollidiert. **400** mit Zusatz «Die Seite neu laden …», **nicht** wiederholt — ein Name ersetzt einen anderen. |
 
 Was die Prüfung **nicht** fängt (steht so in `projekt.speichere`): zwei Schreibvorgänge im
@@ -231,7 +281,7 @@ danach selbst aufbewahrt.
 | Verbrauch | Nach dem ersten Erfolg ist die Zahl verbraucht; ein zweites Gerät braucht einen Neustart mit `--kopplung` |
 | Zustände (an der HomeStation) | `offen`, `abgelaufen`, `aufgebraucht`, `verbraucht` |
 | Was das Gerät erfährt | Bei jeder Ablehnung **denselben** Satz: «Das hat nicht geklappt. An der HomeStation eine neue Zahl holen.» — absichtlich ohne Grund; der genaue Grund erscheint nur im Fenster der HomeStation |
-| Erfolg | `{"verbunden": true, "benutzer": …, "kennwort": …, "satz": "Verbunden. Dieses Gerät merkt sich die Anmeldung."}` |
+| Erfolg | `{"verbunden": true, "benutzer": …, "kennwort": …, "satz": "Verbunden. Benutzer und Kennwort kommen nur dieses eine Mal über die Leitung."}` — seit dem 22.09.2026. Vorher hiess der Satz «Dieses Gerät merkt sich die Anmeldung»; das stimmt für die App (Schlüsselbund), nicht für einen Browser auf der Koppelseite, und der Server kann es für keines der beiden wissen. Ob und wo die Anmeldung aufbewahrt wird, sagt die App selbst. |
 
 Ein Weg, eine erteilte Anmeldung zurückzuziehen oder ein Gerät zu vergessen: **nicht vorhanden.**
 
@@ -251,7 +301,7 @@ kann kein anderes Gerät herein.
 | TXT | `fassung=1` — die Fassung dieses Protokolls |
 | A | Die Adresse aus `heimnetz_adresse()` — dieselbe, die die Startzeile nennt, **festgestellt beim Start** |
 | Beantwortet | nur Fragen nach dem eigenen Dienst, der eigenen Instanz, dem eigenen Rechnernamen und nach `_services._dns-sd._udp.local`. Alles andere bleibt still. |
-| Nebeneinander | `SO_REUSEADDR` und, wo vorhanden, `SO_REUSEPORT`: Ein vorhandener Bonjour-Dienst (avahi) wird nicht verdrängt. |
+| Nebeneinander | `SO_REUSEADDR` und, wo vorhanden, `SO_REUSEPORT`. **Geprüft ist das Binden:** Der Rundruf bindet an 5353, auch wenn dort schon ein anderer Socket mit einer der beiden Optionen hört (`tests/test_rundruf.py`). **Nicht** «verdrängt keinen»: Setzt ein vorhandener Dienst (avahi) nur `SO_REUSEADDR`, landen **alle direkt adressierten Pakete** (Unicast) beim später gebundenen Rundruf und keines beim anderen; mit `SO_REUSEPORT` werden sie nach Absender auf beide verteilt (Linux, nachgefahren und bewacht in `tests/test_durchsicht_kern_server.py`, 22.09.2026). Der Rundruf beantwortet davon nur Fragen nach seinem Dienst. Ob Pakete an die Gruppe beide erreichen: nicht nachgestellt. Offener Posten an `local` (HomeStation mit avahi). |
 | Einfache Fragesteller | Wer nicht von 5353 fragt, bekommt die Antwort direkt, mit seiner Kennung, ohne cache-flush, höchstens 10 s gültig (RFC 6762 §6.7). |
 | Start/Ende | Ankündigung beim Start; beim Beenden (Strg-C) ein Abschied mit Gültigkeit 0. |
 | Scheitert er | Keine Adresse ermittelt, Anschluss 5353 nicht zu haben, Beitritt verweigert: Die Fläche läuft trotzdem, und die Startzeile sagt «kein Rundruf — … Die Adresse am iPad eintippen.» |

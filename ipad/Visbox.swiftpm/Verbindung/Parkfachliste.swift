@@ -4,9 +4,14 @@ import UIKit
 /// Was im Parkfach liegt — **jede Skizze mit ihrem Zustand, und was nicht ankam, mit
 /// seinem Grund.**
 ///
-/// Eine abgewiesene Skizze verschwindet nicht still, und eine ungewisse geht nicht von
-/// selbst ein zweites Mal hinaus: Beides entscheidet hier ein Mensch — «Noch einmal
-/// senden» oder «Verwerfen» (`Kern/Parkfach.swift`).
+/// Eine abgewiesene Skizze verschwindet nicht still: Das entscheidet hier ein Mensch —
+/// «Noch einmal senden» oder «Verwerfen» (`Kern/Parkfach.swift`).
+///
+/// **Eine ungewisse geht seit dem 22.09.2026 von selbst noch einmal**, wenn ihr Schlüssel
+/// gegen Doppelsendung mitging (`Parkeintrag.gehtVonSelbst`): Die HomeStation erkennt ihn
+/// und legt keine zweite Datei an — ausser sie wurde dazwischen neu gestartet. Erst wenn
+/// das nicht bekannt ist oder zu oft nichts Klares zurückkam, entscheidet ein Mensch.
+/// Der Satz unter der Skizze sagt, welcher Fall es ist.
 ///
 /// *Gebaut, am Gerät unbestätigt (22.09.2026).*
 @MainActor
@@ -102,22 +107,21 @@ struct Parkfachliste: View {
 
     @ViewBuilder
     private func handgriffe(_ e: Parkeintrag) -> some View {
-        switch e.zustand {
-        case .abgewiesen, .ungewiss:
+        // 60 PT JE ZIEL (Blatt «Zeichen»), nicht 44 — die Vorgabe des Wahlknopfstils. Und
+        // `fixedSize`, weil `breite: nil` dort «so breit wie moeglich» heisst.
+        if e.brauchtEntscheid {
             HStack(spacing: Zeichenblatt.abstand) {
                 Button("Noch einmal senden") { stand.nochEinmal(e) }
-                    .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: nil,
-                                               hoehe: Zeichenblatt.tippzielMindestens))
+                    .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: nil))
+                    .fixedSize()
                 Button("Verwerfen") { zuVerwerfen = e }
-                    .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: nil,
-                                               hoehe: Zeichenblatt.tippzielMindestens))
+                    .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: nil))
+                    .fixedSize()
             }
-        case .geparkt, .angekommen:
+        } else if e.zustand != .unterwegs {
             Button("Verwerfen") { zuVerwerfen = e }
-                .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: nil,
-                                           hoehe: Zeichenblatt.tippzielMindestens))
-        case .unterwegs:
-            EmptyView()
+                .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: nil))
+                .fixedSize()
         }
     }
 
@@ -134,7 +138,18 @@ struct Parkfachliste: View {
         case .abgewiesen(let grund, let code):
             return code.map { "Abgewiesen (\($0)): \(grund)" } ?? "Abgewiesen: \(grund)"
         case .ungewiss(let grund):
-            return grund + " Noch einmal senden kann sie drüben verdoppeln."
+            if e.gehtVonSelbst {
+                return grund + " Sie geht mit demselben Schlüssel von selbst noch einmal; "
+                    + "drüben entsteht dabei keine zweite Datei — ausser die HomeStation wurde "
+                    + "inzwischen neu gestartet."
+            }
+            if e.schluesselGesendet == nil {
+                return grund + " Ob sie mit dem Schlüssel gegen Doppelsendung hinausging, ist "
+                    + "nicht bekannt — noch einmal senden kann sie drüben verdoppeln."
+            }
+            return grund + " Schon \(e.versuche)-mal ohne klare Antwort. Noch einmal senden geht "
+                + "mit demselben Schlüssel; nach einem Neustart der HomeStation kann drüben "
+                + "eine zweite Datei entstehen."
         }
     }
 

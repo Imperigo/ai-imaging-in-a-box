@@ -8,10 +8,12 @@ Ein iPad fragt über die Bonjour-Suche seines Systems nach ``_visbox._tcp``;
 2. **Eine selbstgebaute DNS-Frage bekommt die richtige Antwort** — Instanzname,
    Anschluss, Fassung, Adresse. Erst direkt über die Paketfunktionen, dann über einen
    lokalen UDP-Socket mit dem echten Hintergrundfaden (ohne Multicast).
-3. **Fremde Fragen bleiben unbeantwortet** — sonst verdrängte der Rundruf einen
-   vorhandenen Bonjour-Dienst, ohne ihn abzuschalten.
-4. **Zwei Antworter teilen sich einen Anschluss** — ``SO_REUSEADDR``/``SO_REUSEPORT`` an
-   der Wirkung: Das zweite Binden gelingt.
+3. **Fremde Fragen bleiben unbeantwortet** — sonst antwortete der Rundruf an Stelle
+   eines vorhandenen Bonjour-Dienstes.
+4. **Ein zweiter Socket bindet an denselben Anschluss** — ``SO_REUSEADDR``/
+   ``SO_REUSEPORT`` an der Wirkung: Das zweite Binden gelingt. **Nicht** geprüft ist, ob
+   danach jeder der beiden jede Frage bekommt (Befund der Durchsicht D-SERVER,
+   22.09.2026: Hier stand «verdrängt keinen» — geprüft war nur das Binden).
 5. **Er startet nur mit** ``--im-heimnetz`` und wird beim Beenden der Fläche beendet.
 
 Was hier NICHT geprüft wird und nicht geprüft werden kann: ob ein echtes iPad ihn findet
@@ -277,11 +279,13 @@ def test_eine_fremde_frage_ueber_den_socket_bleibt_still(rundruf, angabe):
         r.beende()
 
 
-def test_zwei_antworter_teilen_sich_einen_anschluss(rundruf, angabe):
+def test_ein_zweiter_antworter_bindet_an_denselben_anschluss(rundruf, angabe):
     """**Die Wirkung von SO_REUSEADDR/SO_REUSEPORT:** Ein zweiter Antworter bindet an
-    denselben Anschluss, ohne den ersten zu verdrängen — so wie dieser Rundruf neben
-    einem vorhandenen avahi auf 5353 steht. Ohne die beiden Optionen schlüge das zweite
-    Binden mit «Address already in use» fehl."""
+    denselben Anschluss, und der erste läuft danach weiter. Ohne die beiden Optionen
+    schlüge das zweite Binden mit «Address already in use» fehl.
+
+    **Mehr sagt diese Probe nicht** (22.09.2026): Sie prüft das Binden, nicht, welcher
+    der beiden danach welche Frage bekommt."""
     erster = rundruf.Rundruf(angabe, bindung=("127.0.0.1", 0), gruppe=False).starte()
     try:
         zweiter = rundruf.Rundruf(angabe, bindung=erster.gebunden, gruppe=False).starte()
@@ -296,8 +300,8 @@ def test_zwei_antworter_teilen_sich_einen_anschluss(rundruf, angabe):
 
 @pytest.mark.parametrize("option", ["SO_REUSEADDR", "SO_REUSEPORT"])
 def test_neben_einem_fremden_dienst_der_nur_eine_option_setzt(rundruf, angabe, option):
-    """**Jede der beiden Optionen an ihrer eigenen Wirkung.** Ein fremder Dienst hält den
-    Anschluss und setzt nur **eine** der beiden. Welche ein vorhandener Dienst wirklich
+    """**Jede der beiden Optionen an ihrer eigenen Wirkung** — am Binden. Ein fremder
+    Dienst hält den Anschluss und setzt nur **eine** der beiden. Welche ein vorhandener Dienst wirklich
     setzt (avahi, andere mDNS-Stapel), ist hier nicht nachgesehen — darum beide Fälle.
     Linux lässt ein zweites Binden nur zu, wenn beide Seiten **dieselbe** Option gesetzt
     haben; der Rundruf muss darum beide setzen.

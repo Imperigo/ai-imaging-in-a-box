@@ -66,6 +66,9 @@ final class Verbindungsstand: ObservableObject {
     private var erreichbar: Bool?
     private var grund: String?
     private var sendetGerade = false
+    /// Wer die Suche gerade will (`Kern/Suche.swift`). Der Sucher läuft, solange einer es
+    /// tut — der Koppelbildschirm beendet nicht die Suche, die das Prüfen braucht.
+    private var suchwunsch = Suchwunsch()
     private var uebergabeSchluessel: String?
     private var schleife: Task<Void, Never>?
 
@@ -119,14 +122,17 @@ final class Verbindungsstand: ObservableObject {
 
     var gekoppelt: Bool { adresse != nil }
 
-    /// Wie viele Skizzen auf das Senden warten.
-    var wartend: Int { fach.filter { $0.zustand == .geparkt }.count }
+    /// Wie viele Skizzen von selbst hinausgehen, sobald die HomeStation antwortet.
+    var wartend: Int { fach.filter { $0.gehtVonSelbst }.count }
+
+    /// Wie viele eine Entscheidung eines Menschen brauchen.
+    var brauchenEntscheid: Int { fach.filter { $0.brauchtEntscheid }.count }
 
     // ------------------------------------------------------------------- Zustand
     //
-    // DIE VIER HANDGRIFFE OHNE `@MainActor` (`bestimmeZustand`, `spiegleFach`,
-    // `gefundenGemeldet`, `flug`) werden nur auf dem Hauptfaden gerufen: aus `init`, aus
-    // Methoden mit `@MainActor` oder ueber `DispatchQueue.main`. Sie tragen die Marke nicht,
+    // DIE HANDGRIFFE OHNE `@MainActor` (`bestimmeZustand`, `spiegleFach`, `verlange`,
+    // `gibFrei`, `gefundenGemeldet`, `flug`) werden nur auf dem Hauptfaden gerufen: aus
+    // `init`, aus Methoden mit `@MainActor` oder ueber `DispatchQueue.main`. Sie tragen die Marke nicht,
     // weil `init` und die Rueckrufe von `Sucher` und `Sender` sie sonst nicht rufen duerften.
 
     private func bestimmeZustand() {
@@ -144,16 +150,30 @@ final class Verbindungsstand: ObservableObject {
 
     // ------------------------------------------------------------------- Suchen
 
+    /// Der Koppelbildschirm will suchen (beim Erscheinen).
     @MainActor
     func starteSuche() {
-        sucher.starte()
+        verlange(.koppeln)
+    }
+
+    /// Der Koppelbildschirm will nicht mehr suchen (beim Verschwinden). **Die Suche endet
+    /// nur, wenn sonst keiner sie will** — sucht das Prüfen die gekoppelte HomeStation
+    /// unter ihrem Namen, sucht es weiter (Durchsicht vom 22.09.2026, `Suchwunsch`).
+    @MainActor
+    func beendeSuche() {
+        gibFrei(.koppeln)
+    }
+
+    private func verlange(_ anlass: Suchwunsch.Anlass) {
+        if suchwunsch.verlange(anlass) { sucher.starte() }
         bestimmeZustand()
     }
 
-    @MainActor
-    func beendeSuche() {
-        sucher.beende()
-        suchSatz = nil
+    private func gibFrei(_ anlass: Suchwunsch.Anlass) {
+        if suchwunsch.gibFrei(anlass) {
+            sucher.beende()
+            suchSatz = nil
+        }
         bestimmeZustand()
     }
 
@@ -178,7 +198,15 @@ final class Verbindungsstand: ObservableObject {
         guard let zahl = Kopplungszahl(eingabe) else {
             return (false, "Die Zahl hat genau sechs Ziffern.")
         }
-        let antwort = await sender.fuehreAus(Anfragen.verbinden(zahl), basis: ziel)
+        let anfrage: Anfrage
+        do {
+            anfrage = try Anfragen.verbinden(zahl)
+        } catch let f as Rumpffehler {
+            return (false, f.satz)
+        } catch {
+            return (false, "Die Anfrage liess sich nicht bauen (\(error.localizedDescription)).")
+        }
+        let antwort = await sender.fuehreAus(anfrage, basis: ziel)
         let ergebnis: Kopplungsergebnis
         switch antwort {
         case .keineAntwort(let satz, _):
@@ -230,6 +258,7 @@ final class Verbindungsstand: ObservableObject {
     func trenne() {
         schleife?.cancel()
         schleife = nil
+        gibFrei(.wiederfinden)
         Schluesselbund.loesche()
         Verbindungsgedaechtnis.vergiss()
         anmeldung = nil
@@ -285,9 +314,11 @@ final class Verbindungsstand: ObservableObject {
             grund = satz
         }
         // NICHT ERREICHBAR, ABER MIT NAMEN GEKOPPELT: im Heimnetz nach ihr suchen — sie hat
-        // vielleicht eine neue Adresse. Wieder erreichbar: die Suche beenden.
-        if erreichbar == false, stationsname != nil { sucher.starte() }
-        if erreichbar == true, sucher.sucht { sucher.beende() }
+        // vielleicht eine neue Adresse. Wieder erreichbar: DIESEN Wunsch zuruecknehmen. Die
+        // Suche des offenen Koppelbildschirms laeuft weiter (bis zum 22.09.2026 beendete
+        // das Pruefen sie hier mit, und umgekehrt).
+        if erreichbar == false, stationsname != nil { verlange(.wiederfinden) }
+        if erreichbar == true { gibFrei(.wiederfinden) }
         bestimmeZustand()
 
         if zustand.darfSenden {
@@ -340,7 +371,9 @@ final class Verbindungsstand: ObservableObject {
     }
 
     /// Schickt, was im Fach wartet — eine Skizze nach der anderen, **jede durch das Tor**
-    /// (`Parkfach.beginneSenden`), damit keine zweimal hinausgeht.
+    /// (`Parkfach.beginneSenden`), damit keine zweimal hinausgeht, und **jede mit ihrem
+    /// Schlüssel** (`Anfragen.skizze(_:png:anmeldung:)`), damit eine ungewisse beim zweiten
+    /// Mal drüben keine zweite Datei anlegt (Protokoll §3).
     @MainActor
     func nachsenden() async {
         guard !sendetGerade, let fach = parkfach, let basis = adresse else { return }
@@ -366,14 +399,33 @@ final class Verbindungsstand: ObservableObject {
                 spiegleFach()
                 continue
             }
-            spiegleFach()
-            uebergabeSchluessel = eintrag.schluessel
-            uebergabe = .ablegen
-
             let schluessel = eintrag.schluessel
-            let anfrage = Anfragen.skizze(png: png, ueber: eintrag.ueber,
-                                          bemerkung: eintrag.bemerkung, name: eintrag.name,
-                                          ordner: eintrag.ordner, anmeldung: anmeldung)
+            let anfrage: Anfrage
+            do {
+                anfrage = try Anfragen.skizze(eintrag, png: png, anmeldung: anmeldung)
+            } catch {
+                // NICHT GEBAUT HEISST NICHT GESENDET: Die Skizze bleibt mit dem Satz liegen,
+                // statt in einer anderen Form hinauszugehen.
+                let satz = (error as? Rumpffehler)?.satz
+                    ?? "Die Anfrage liess sich nicht bauen (\(error.localizedDescription))."
+                _ = try? fach.melde(schluessel, .abgewiesen(grund: satz, code: nil))
+                spiegleFach()
+                continue
+            }
+            spiegleFach()
+            uebergabeSchluessel = schluessel
+
+            // DAS VORSPIEL DES BLATTS: ablegen (220 ms), abheben (180 ms) — erst dann geht das
+            // erste Byte. Bis zum 22.09.2026 wurde `.abheben` nie gesetzt, und ohne Zaehlerstand
+            // blieb die Marke vergroessert in `.ablegen` stehen, bis die Antwort kam.
+            for (phase, dauer) in Flugbahn.vorspiel {
+                uebergabe = phase
+                try? await Task.sleep(nanoseconds: UInt64(dauer * 1_000_000_000))
+            }
+            // UNTERWEGS, NICHT GEZAEHLT: Die Marke atmet am Rand, bis ein Zaehlerstand mit
+            // Gesamt kommt — auch dann, wenn keiner mehr kommt.
+            uebergabe = Flugbahn.flugbeginn
+
             let antwort = await sender.fuehreAus(anfrage, basis: basis) { [weak self] gesendet, gesamt in
                 DispatchQueue.main.async {
                     self?.flug(schluessel, gesendet: gesendet, gesamt: gesamt)
@@ -418,21 +470,15 @@ final class Verbindungsstand: ObservableObject {
 
     /// Ein Zählerstand vom Senden. Gilt nur für die Skizze, die gerade reist, und nur,
     /// solange sie noch nicht angekommen oder zurückgefallen ist.
+    /// Was ein Zählerstand bewirkt, rechnet der Kern (`Flugbahn.gezaehlt`).
     private func flug(_ schluessel: String, gesendet: Int64, gesamt: Int64?) {
-        guard uebergabeSchluessel == schluessel, let phase = uebergabe else { return }
-        switch phase {
-        case .ablegen, .abheben, .flug:
-            if let g = gesamt, gesendet >= g {
-                uebergabe = .warten
-            } else {
-                uebergabe = .flug(gesendet: gesendet, gesamt: gesamt)
-            }
-        default:
-            break
-        }
+        guard uebergabeSchluessel == schluessel, let phase = uebergabe,
+              let neu = Flugbahn.gezaehlt(phase, gesendet: gesendet, gesamt: gesamt) else { return }
+        uebergabe = neu
     }
 
-    /// Eine abgewiesene oder ungewisse Skizze auf Wunsch noch einmal schicken.
+    /// Eine abgewiesene oder ungewisse Skizze auf Wunsch noch einmal schicken — mit
+    /// demselben Schlüssel wie zuvor.
     @MainActor
     func nochEinmal(_ eintrag: Parkeintrag) {
         _ = try? parkfach?.nochEinmal(eintrag.schluessel)

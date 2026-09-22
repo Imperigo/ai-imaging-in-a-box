@@ -3,54 +3,50 @@ import UIKit
 
 /// Ein Bild der Mappe, wie das Bildband es zeigt — **nur, was der Server sagt.**
 ///
-/// Die Felder folgen `bilder[]` aus `GET /api/projekt` (`docs/VISBOX_PROTOKOLL.md`, §4).
-/// Wer die Antwort liest (Einheit «Verbindung»), baut daraus `Bandbild`-Werte und legt sie
-/// in `Bildbandstand.gemeinsam`; die Bildbytes kommen über `GET /bild`.
+/// Die Angaben kommen unverändert aus `bilder[]` von `GET /api/projekt`
+/// (`docs/VISBOX_PROTOKOLL.md`, §4), gelesen im Kern (`Mappenbild`). Die Einheit
+/// «Verbindung» legt sie in `Bildbandstand.gemeinsam` (`Verbindung/Mappenabgleich.swift`);
+/// die Bildbytes kommen über `GET /bild`.
 ///
-/// **Was heute fehlt, und es steht hier, damit es nicht als Null angezeigt wird:** Das
-/// Protokoll liefert je Bild **keine Zahl** (Stand 22.09.2026, §4: `bild, schicht, zeichen,
-/// satz, erzeugt, herkunft, vorhanden, basis`). `pruefzahl` ist darum heute immer `nil`,
-/// und das Prüfzeichen schreibt «ohne Zahl» — nie «0.00». Entscheid 16 («Farbe, Wort und
-/// Zahl — immer») ist damit am Bild erst erfüllt, wenn der Server die Zahl mitschickt.
+/// **Seit dem 22.09.2026 mit Zahl:** Der Server schickt je Bild `score` und `schwelle`,
+/// den eigenen Namen, ob es ein Entwurf ist, die Reihe und die Hinweise. Das Prüfzeichen
+/// entsteht daraus im Kern (`Mappenbild.pruefzeichen`) — dort ist bewacht, dass ein Bild
+/// ohne Urteil **keine** Zahl zeigt, auch wenn eine mitkommt.
 struct Bandbild: Identifiable, Equatable {
-    /// Der Dateiname relativ zum Projektordner (Feld `bild`). Er ist zugleich die Kennung.
+    /// Was der Server über das Bild sagt, wie es kam.
+    let angaben: Mappenbild
+    /// Der Dateiname relativ zum Projektordner (Feld `bild`). Er ist zugleich die Kennung;
+    /// ein Eintrag ohne ihn wird kein `Bandbild` (siehe `Mappenabgleich`).
     let bild: String
-    /// Das Zeichen, roh, wie es kam (`bestanden`, `durchgefallen`, `nicht-gemessen` — oder
-    /// ein unbekanntes, das nicht geraten wird).
-    let zeichen: String
-    /// Der Satz zum Zeichen (Feld `satz`).
-    let satz: String?
-    /// Wann es entstand (Feld `erzeugt`, Weltzeit, `JJJJ-MM-TTTHH:MM:SSZ`).
-    let erzeugt: String?
-    /// Die Zahl zum Urteil — `nil` heisst **nicht übertragen**, nie 0.
-    var pruefzahl: Double? = nil
-    /// Beim Entwerfen: der Abstand zum Modell — `nil` heisst nicht übertragen.
-    var unterschied: Double? = nil
-    /// Die Hinweise des Servers zu diesem Bild, unverändert.
-    var hinweise: [String] = []
-    /// Ob die Datei da ist: `true`, `false` (die Mappe nennt sie, sie fehlt) oder `nil`
-    /// (nicht gefragt) — die drei Antworten, auch hier.
-    var vorhanden: Bool? = nil
     /// Die geladenen Bildbytes; `nil`, solange nichts geladen ist.
     var grafik: UIImage? = nil
-    /// Das Vergleichsbild «aus dem Modell» (die Basis eines Bildes der zweiten Stufe),
-    /// wenn eines geladen ist.
+    /// Das Vergleichsbild «aus dem Modell», wenn eines geladen ist. **Heute nie:** Der
+    /// Server nennt zu einem Bild kein Vergleichsbild (Protokoll §4). Die Ansicht sagt das.
     var vorher: UIImage? = nil
 
     var id: String { bild }
 
+    var satz: String? { angaben.satz }
+    var erzeugt: String? { angaben.erzeugt }
+    /// `true`, `false` (die Mappe nennt es, die Datei fehlt) oder `nil` (nicht gefragt).
+    var vorhanden: Bool? { angaben.vorhanden }
+
     /// Das Prüfzeichen dieses Bildes in einer Lesart. Entschieden wird im Kern.
     func pruefzeichen(_ lesart: Bildlesart) -> Pruefzeichen {
-        Pruefzeichen(zeichen: zeichen, lesart: lesart, pruefzahl: pruefzahl,
-                     unterschied: unterschied, hinweise: hinweise)
+        angaben.pruefzeichen(lesart)
     }
 
     /// Der Name nach der Zeit (Entscheid 19), in Ortszeit: «21.09.2026 · 14:03».
     ///
     /// Ohne lesbare Zeit der Dateiname — **nicht** eine erfundene Zeit.
     var zeitname: String {
-        guard let roh = erzeugt, let datum = Bandbild.lies.date(from: roh) else { return bild }
-        return Bandbild.schreib.string(from: datum)
+        Bandbild.zeitname(erzeugt) ?? bild
+    }
+
+    /// Eine Zeit des Servers (`JJJJ-MM-TTTHH:MM:SSZ`) in Ortszeit, oder `nil`.
+    static func zeitname(_ roh: String?) -> String? {
+        guard let roh = roh, let datum = lies.date(from: roh) else { return nil }
+        return schreib.string(from: datum)
     }
 
     private static let lies: ISO8601DateFormatter = {
@@ -67,52 +63,79 @@ struct Bandbild: Identifiable, Equatable {
     }()
 }
 
-/// Was im Bildband gewählt und benannt ist — die Stelle, an der die anderen Einheiten
-/// Bilder hineinlegen und die Wahl der Varianten ablesen.
+/// Die Mappe, wie die App sie gerade kennt — und was im Seitenfeld dazu gewählt ist.
 ///
-/// **Eigene Namen bleiben auf dem Gerät.** Der Server kennt keinen Weg, ein Bild
-/// umzubenennen (Protokoll §3), und der Dateiname entsteht dort aus der Uhrzeit. Ein Name,
-/// den man hier vergibt (Entscheid 19), ist darum eine Beschriftung dieses iPads und nicht
-/// der Mappe; ein zweites Gerät sieht ihn nicht. *Am Gerät unbestätigt.*
+/// **Eigene Namen liegen seit dem 22.09.2026 in der Mappe**, nicht mehr auf dem Gerät:
+/// Der Server hat `POST /api/benennen` (Protokoll §3). Bis dahin merkte sich dieses iPad
+/// Namen in seinen Einstellungen — ein zweites Gerät sah sie nicht, und die Mappe wusste
+/// nichts davon. Solche alten Namen werden nicht mehr gelesen; wer einen braucht, gibt ihn
+/// neu (er landet dann in der Mappe).
 final class Bildbandstand: ObservableObject {
     static let gemeinsam = Bildbandstand()
 
-    private static let namenSchluessel = "bilder.eigene-namen"
-
     @Published var bilder: [Bandbild] = []
+    /// Die Skizzen der Mappe. `nil` heisst: **nicht geliefert** (noch nicht geladen, oder der
+    /// Server schickte keine Liste) — nicht «keine Skizzen».
+    @Published var skizzen: [Mappenskizze]?
+    /// Die Standnummer der Mappe, für `von_stand` beim Benennen. `nil`: nicht geführt.
+    @Published var standNr: Int?
+    @Published var projektname: String?
     @Published var gewaehlt: String?
     /// Prüfen oder Entwerfen, **je Bild** — der Schalter sitzt am Bild (Entscheid 15).
     @Published var lesarten: [String: Bildlesart] = [:]
-    /// Drei Startwerte oder drei Ebenen (Entscheid 32). Hier nur gewählt und angezeigt;
-    /// die Bestellung liest es von hier.
+    /// Was die nächste Bestellung tut: **Prüfen oder Entwerfen** (Blatt «Main», «Was die
+    /// Skizze tut»; Entscheid 30). Vorgabe Prüfen — schnell und ungeprüft muss man wählen.
+    @Published var bestellart: Bildlesart = .pruefen
+    /// Drei Startwerte oder drei Ebenen (Entscheid 32). Liest die Bestellung — und das
+    /// Ablegen: Bei «Drei Ebenen» geht jede sichtbare Ebene als eigene Skizze hinaus
+    /// (`Variantenquelle.ausgabeart`).
     @Published var variantenquelle: Variantenquelle = .startwerte
-    @Published private(set) var eigeneNamen: [String: String]
+    /// Die offenen Skizzen, die als Ebenen-Reihe gerechnet werden sollen.
+    @Published var reihe: [String] = []
+    /// Was zur letzten Handlung (Rechnen, Abbrechen, Benennen) zu sagen ist.
+    @Published var quittung: Handlungsquittung?
+    /// Ob für den laufenden Lauf ein Abbruch **verlangt** ist — nicht, ob er gewirkt hat
+    /// (das steht nach dem Lauf in dessen Ergebnis). Zurückgesetzt, wenn der Lauf endet.
+    @Published var abbruchVerlangt = false
+    /// Ob gerade eine Handlung unterwegs ist — dann ist derselbe Knopf nicht noch einmal
+    /// zu haben.
+    @Published var sendet = false
 
-    init() {
-        eigeneNamen = UserDefaults.standard.dictionary(forKey: Bildbandstand.namenSchluessel)
-            as? [String: String] ?? [:]
-    }
-
-    /// Der Name, den ein Mensch sieht: der eigene, sonst der nach der Zeit.
+    /// Der Name, den ein Mensch sieht: der eigene aus der Mappe, sonst der nach der Zeit.
     func name(_ b: Bandbild) -> String {
-        eigeneNamen[b.bild] ?? b.zeitname
+        b.angaben.titel ?? b.zeitname
     }
 
-    /// Einen eigenen Namen vergeben; ein leerer nimmt ihn zurück (dann gilt wieder die Zeit).
-    func benenne(_ b: Bandbild, als name: String) {
-        let sauber = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        eigeneNamen[b.bild] = sauber.isEmpty ? nil : sauber
-        UserDefaults.standard.set(eigeneNamen, forKey: Bildbandstand.namenSchluessel)
+    /// Der Name einer Skizze: der eigene, sonst die Zeit, sonst der Dateiname — und wenn
+    /// nicht einmal der kam, **das**, statt einer leeren Zeile.
+    func name(_ s: Mappenskizze) -> String {
+        s.titel ?? Bandbild.zeitname(s.erzeugt) ?? s.skizze ?? "Skizze ohne Dateinamen"
     }
 
-    /// Die Lesart eines Bildes. **Vorgabe ist Prüfen**: Ein Bild, das ohne Prüfung
-    /// entstand, zeigt dann «nicht gemessen» — und nicht still ein blaues Zeichen, das der
-    /// Server nie gesetzt hat.
+    /// Die Lesart eines Bildes: die am Bild gewählte, sonst die **aus der Mappe** — ein
+    /// Entwurf als Entwurf (blau), alles andere geprüft (`Mappenbild.vorgabeLesart`).
     func lesart(_ b: Bandbild) -> Bildlesart {
-        lesarten[b.bild] ?? .pruefen
+        lesarten[b.bild] ?? b.angaben.vorgabeLesart
     }
 
     func setzeLesart(_ l: Bildlesart, fuer b: Bandbild) {
         lesarten[b.bild] = l
+    }
+
+    /// Die Bilder einer Reihe, nach ihrer Nummer.
+    func reihenbilder(_ gruppe: String) -> [Bandbild] {
+        bilder.filter { $0.angaben.variantengruppe?.id == gruppe }
+            .sorted { ($0.angaben.variantengruppe?.nummer ?? Int.max)
+                    < ($1.angaben.variantengruppe?.nummer ?? Int.max) }
+    }
+
+    /// Eine offene Skizze in die Reihe nehmen oder herausnehmen — **höchstens drei**
+    /// (`Rechenbestellung.reihenlaenge`).
+    func schalteReihe(_ name: String) {
+        if let i = reihe.firstIndex(of: name) {
+            reihe.remove(at: i)
+        } else if reihe.count < Rechenbestellung.reihenlaenge {
+            reihe.append(name)
+        }
     }
 }

@@ -21,7 +21,10 @@ enum Leistenwerkzeug: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Ein SF-Symbol, das es in iOS 17 gibt.
+    /// Der Name eines SF-Symbols. **Ob es ihn in iOS 17 gibt, ist am Gerät unbestätigt**
+    /// (Durchsicht B, 22.09.2026): Der Übersetzer prüft Symbolnamen nicht, ein falscher
+    /// zeigt zur Laufzeit ein leeres Feld. Die Bezeichnung für den Bildschirmleser
+    /// (`name`) trägt der Knopf unabhängig davon.
     var symbol: String {
         switch self {
         case .stift: return "pencil.tip"
@@ -59,6 +62,23 @@ enum Leistenstrich: String, CaseIterable, Identifiable {
     }
 }
 
+/// Was das eine Seitenfeld zeigt (Blätter «Main», «Skizzen»): **die Ebenen oder die
+/// Mappe** — umschaltbar, nie beides nebeneinander. Zwei Seitenfelder nähmen dem Blatt im
+/// Querformat 680 pt; eines, das umschaltet, lässt ihm die Mitte.
+enum Seitenfeldwahl: String, CaseIterable, Identifiable {
+    case ebenen
+    case mappe
+
+    var id: String { rawValue }
+
+    var name: String {
+        switch self {
+        case .ebenen: return "Ebenen"
+        case .mappe: return "Mappe"
+        }
+    }
+}
+
 /// Auf welcher Seite die Leiste im Querformat sitzt (Entscheid 9).
 enum Leistenseite: String {
     case links
@@ -70,11 +90,11 @@ enum Leistenseite: String {
 /// Was in der Leiste gewählt ist — **eine** Stelle, die die Leiste schreibt und die
 /// Zeichenfläche liest.
 ///
-/// **Warum ein gemeinsamer Stand (`gemeinsam`) und keine Übergabe von oben.**
-/// `Startansicht` ordnet an und wird von keiner Einheit angefasst; die Leiste und die
-/// Zeichenfläche entstehen in zwei Einheiten gleichzeitig. Über `Leistenwahl.gemeinsam`
-/// finden sie sich, ohne dass eine die Datei der anderen ändern muss. Wer die Anordnung
-/// später in einer Hand zusammenzieht, kann eine eigene `Leistenwahl` übergeben.
+/// **Warum ein gemeinsamer Stand (`gemeinsam`) und keine Übergabe von oben.** Die Leiste
+/// und die Zeichenfläche entstanden in zwei Einheiten gleichzeitig; über
+/// `Leistenwahl.gemeinsam` finden sie sich, ohne dass eine die Datei der anderen ändern
+/// muss. `Startansicht` übergibt seit dem 22.09.2026 genau diesen Stand an den
+/// `Arbeitsplatz`, und `Zeichenstand.gemeinsam` liest ebenfalls ihn — es gibt einen.
 ///
 /// Die Seite der Leiste wird auf dem Gerät gemerkt — eine Linkshänderin soll sie nicht bei
 /// jedem Start umlegen müssen. Werkzeug und Strich beginnen jedes Mal mit dem Stift.
@@ -90,6 +110,9 @@ final class Leistenwahl: ObservableObject {
     }
     /// Vollbild (Entscheid 29): nur das Bild, keine Leiste, kein Seitenfeld.
     @Published var vollbild = false
+    /// Was im Seitenfeld steht. Hier und nicht im Zustand einer Ansicht, damit es das
+    /// Drehen und das Vollbild übersteht.
+    @Published var seitenfeld: Seitenfeldwahl = .ebenen
 
     init(seite: Leistenseite? = nil) {
         self.seite = seite ?? Leistenwahl.gemerkteSeite()

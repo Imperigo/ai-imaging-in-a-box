@@ -75,7 +75,10 @@ struct Teilenknopf: View {
         .task(id: schluessel) {
             teilbild = nil
             guard let g = grafik else { return }
-            teilbild = await Teilbildmaler.male(g, zeichen)
+            // OHNE `await` (Durchsicht B, 22.09.2026: es war überflüssig): `.task` erbt den
+            // Hauptfaden der Ansicht, auf dem auch der Maler (`@MainActor`) arbeitet — hier
+            // wird nicht gewartet, nur gerufen. Übersetzt erst die Prüfstrecke auf dem Mac.
+            teilbild = Teilbildmaler.male(g, zeichen)
         }
     }
 }

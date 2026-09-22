@@ -13,10 +13,20 @@ Rundruf-Adresse ``224.0.0.251``, Anschluss 5353.
 
 **Was er ausdrücklich NICHT tut, und es steht hier, damit es niemand für getan hält:**
 
-* **Er verdrängt keinen vorhandenen Dienst.** Läuft auf dem Rechner schon ein
-  Bonjour-Dienst (avahi), hören beide nebeneinander auf 5353 (``SO_REUSEADDR`` und, wo es
-  ihn gibt, ``SO_REUSEPORT``). Er beantwortet nur Fragen nach seinem eigenen Dienst; alles
-  andere bleibt unbeantwortet — dafür ist der andere da.
+* **Er nimmt einem vorhandenen Dienst den Anschluss nicht weg — beim Binden.**
+  Er setzt ``SO_REUSEADDR`` und, wo es ihn gibt, ``SO_REUSEPORT``; geprüft ist
+  (``tests/test_rundruf.py``), dass er sich an 5353 **binden** lässt, wenn dort schon ein
+  anderer Socket mit einer der beiden Optionen hört. Er beantwortet nur Fragen nach
+  seinem eigenen Dienst; alles andere bleibt unbeantwortet — dafür ist der andere da.
+  **Und er nimmt ihm direkte Pakete weg** (Befund der Durchsicht D-SERVER, 22.09.2026,
+  nachgefahren und bewacht in ``tests/test_durchsicht_kern_server.py``, Linux, über
+  127.0.0.1): Setzt der andere Dienst nur ``SO_REUSEADDR``, landet **jedes** direkt an
+  den Anschluss geschickte Paket (Unicast) beim zuletzt gebundenen Socket — also beim
+  Rundruf, wenn er nach dem anderen startet —, und der andere bekommt keines. Setzt der
+  andere ``SO_REUSEPORT``, verteilt das System die direkten Pakete **nach Absender** auf
+  beide. Der Rundruf beantwortet davon nur Fragen nach seinem Dienst und verwirft den
+  Rest. **Nicht nachgestellt:** ob Pakete an die Rundruf-Gruppe (224.0.0.251) beide
+  erreichen, und wie sehr ein avahi auf direkte Pakete angewiesen ist. Offener Posten.
 * **Er prüft seinen Namen nicht vorab** (das «Probing» aus RFC 6762 §8). Zwei HomeStations
   im selben Netz melden sich darum unter verschiedenen Namen nur, weil der Rechnername im
   Namen steht. Ein Namensstreit wird nicht erkannt.
@@ -458,7 +468,9 @@ class Rundruf:
         try:
             # NEBENEINANDER, NICHT STATT. Ohne diese beiden scheitert das Binden, sobald
             # ein avahi-Dienst auf 5353 hoert — oder, schlimmer, er scheitert beim naechsten
-            # Start, weil wir ihm den Anschluss weggenommen haben.
+            # Start, weil wir ihm den Anschluss weggenommen haben. Geprueft ist das
+            # BINDEN neben einem anderen Socket, nicht, dass der andere danach jede Frage
+            # bekommt (siehe Modulkopf).
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             if hasattr(socket, "SO_REUSEPORT"):
                 try:

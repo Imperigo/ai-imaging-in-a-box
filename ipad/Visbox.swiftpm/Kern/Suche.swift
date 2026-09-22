@@ -102,8 +102,10 @@ public enum Suche {
 
     /// Der Anschluss, auf dem der Server ohne Angabe hört.
     ///
-    /// **Eine Abschrift** von `VORGABE_ANSCHLUSS` in `oberflaeche/server.py`, und sie ist
-    /// (22.09.2026) nicht bewacht. Sie gilt nur, wenn beim Eintippen kein Anschluss
+    /// **Eine Abschrift** von `VORGABE_ANSCHLUSS` in `oberflaeche/server.py`. Bewacht seit
+    /// der Durchsicht vom 22.09.2026: `tests/test_ipad_geruest.py`
+    /// (`test_der_vorgabe_anschluss_der_app_ist_der_des_servers`) liest beide und fällt,
+    /// sobald sie auseinanderlaufen. Sie gilt nur, wenn beim Eintippen kein Anschluss
     /// angegeben wird; wer einen angibt, ist von ihr unabhängig.
     public static let vorgabeAnschluss = 8731
 
@@ -151,6 +153,50 @@ public enum Suche {
         aus.host = rechner
         aus.port = anschluss
         return aus.url
+    }
+}
+
+// ================================================================= wer die Suche will
+
+/// **Wer** gerade will, dass gesucht wird — die Suche läuft, solange es einer will.
+///
+/// Zwei wollen es aus verschiedenen Gründen: der Koppelbildschirm, solange er offen ist,
+/// und das Prüfen, solange die gekoppelte HomeStation nicht antwortet (sie hat vielleicht
+/// eine neue Adresse). Bis zur Durchsicht vom 22.09.2026 gab es nur ein «an» und ein
+/// «aus»: Schloss ein Mensch den Koppelbildschirm, endete damit auch die Suche, die das
+/// Prüfen gestartet hatte — und eine HomeStation mit neuer Adresse wurde nicht mehr
+/// wiedergefunden. `SucheTests.testSchliesstDerKoppelbildschirmSuchtDasPruefenWeiter`
+/// bewacht es.
+public struct Suchwunsch: Equatable, Sendable {
+    public enum Anlass: Hashable, Sendable {
+        /// Der Koppelbildschirm ist offen.
+        case koppeln
+        /// Die gekoppelte HomeStation antwortet nicht; sie wird am Namen wiedergesucht.
+        case wiederfinden
+    }
+
+    public private(set) var anlaesse: Set<Anlass> = []
+
+    public init() {}
+
+    /// Ob gesucht werden soll.
+    public var sucht: Bool { !anlaesse.isEmpty }
+
+    /// Ein Anlass will die Suche. Gibt zurück, ob sie **dadurch** beginnt.
+    @discardableResult
+    public mutating func verlange(_ anlass: Anlass) -> Bool {
+        let vorher = sucht
+        anlaesse.insert(anlass)
+        return !vorher && sucht
+    }
+
+    /// Ein Anlass will sie nicht mehr. Gibt zurück, ob sie **dadurch** endet — nur, wenn
+    /// kein anderer sie noch will.
+    @discardableResult
+    public mutating func gibFrei(_ anlass: Anlass) -> Bool {
+        let vorher = sucht
+        anlaesse.remove(anlass)
+        return vorher && !sucht
     }
 }
 

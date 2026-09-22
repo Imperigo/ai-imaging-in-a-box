@@ -98,22 +98,75 @@ final class ParkfachTests: XCTestCase {
         XCTAssertEqual(fach.eintrag(e.schluessel)?.zustand.wort, "angekommen")
     }
 
-    func testWasBeimSchliessenUnterwegsWarIstUngewissUndGehtNichtVonSelbst() throws {
+    /// Seit dem 22.09.2026 geht eine ungewisse Skizze **mit Schlüssel** von selbst noch
+    /// einmal: Der Server erkennt den Schlüssel und legt keine zweite Datei an
+    /// (Protokoll §3). Bis dahin wartete sie auf einen Menschen.
+    func testWasBeimSchliessenUnterwegsWarIstUngewissUndGehtMitSchluesselVonSelbst() throws {
         let fach = try Parkfach(ordner: ordner)
         let e = try fach.parke(png: zeichnung)
         _ = try fach.beginneSenden(e.schluessel)
         // Die App wird hier beendet — keine Meldung mehr.
 
         let wieder = try Parkfach(ordner: ordner)
-        guard case .ungewiss(let grund)? = wieder.eintrag(e.schluessel)?.zustand else {
-            return XCTFail("\(String(describing: wieder.eintrag(e.schluessel)?.zustand))")
+        let nach = try XCTUnwrap(wieder.eintrag(e.schluessel))
+        guard case .ungewiss(let grund) = nach.zustand else {
+            return XCTFail("\(nach.zustand)")
         }
         XCTAssertTrue(grund.contains("nicht bekannt"), grund)
-        XCTAssertNil(wieder.naechster, "nicht von selbst — sie könnte drüben liegen")
+        XCTAssertEqual(nach.schluesselGesendet, true, "am Tor festgehalten, vor dem Senden")
         XCTAssertEqual(wieder.png(e.schluessel), zeichnung, "und die Zeichnung ist noch da")
+        XCTAssertEqual(wieder.naechster?.schluessel, e.schluessel, "mit Schlüssel: von selbst")
+        XCTAssertEqual(wieder.wartend, 1)
+        XCTAssertEqual(wieder.brauchenEntscheid, 0)
+
+        // Die Wiederholung geht durch das Tor, und die Antwort macht ein Wissen daraus.
+        let frei = try XCTUnwrap(try wieder.beginneSenden(e.schluessel))
+        XCTAssertEqual(frei.versuche, 2)
+        try wieder.melde(e.schluessel, .aus(status: 200, daten: quittung()))
+        XCTAssertEqual(wieder.eintrag(e.schluessel)?.zustand.wort, "angekommen")
+    }
+
+    /// Ein Eintrag aus der Fassung vor dem 22.09.2026 kennt das Feld nicht: **Ob** der
+    /// Schlüssel mitging, ist nicht bekannt — dann entscheidet weiter ein Mensch.
+    func testUngewissOhneBekanntenSchluesselWartetAufEinenMenschen() throws {
+        let fach = try Parkfach(ordner: ordner)
+        let e = try fach.parke(png: zeichnung)
+        try sende(fach, .ohneVerbindung(grund: "abgerissen", gesendeteBytes: 4096))
+
+        // DIE ALTE FORM: dasselbe JSON ohne «schluesselGesendet».
+        let datei = ordner.appendingPathComponent(e.schluessel + ".json")
+        var roh = try XCTUnwrap(try JSONSerialization.jsonObject(
+            with: Data(contentsOf: datei)) as? [String: Any])
+        XCTAssertNotNil(roh.removeValue(forKey: "schluesselGesendet"), "das Feld steht auf der Platte")
+        try JSONSerialization.data(withJSONObject: roh).write(to: datei)
+
+        let wieder = try Parkfach(ordner: ordner)
+        let alt = try XCTUnwrap(wieder.eintrag(e.schluessel))
+        XCTAssertNil(alt.schluesselGesendet, "nicht bekannt — und nicht still «nein»")
+        XCTAssertEqual(alt.zustand, .ungewiss(grund: "abgerissen"))
+        XCTAssertNil(wieder.naechster, "nicht von selbst — sie könnte drüben liegen")
+        XCTAssertNil(try wieder.beginneSenden(e.schluessel), "auch nicht am Tor vorbei")
+        XCTAssertEqual(wieder.brauchenEntscheid, 1)
 
         XCTAssertTrue(try wieder.nochEinmal(e.schluessel), "ein Mensch darf sie schicken")
         XCTAssertEqual(wieder.naechster?.schluessel, e.schluessel)
+    }
+
+    func testUngewissGehtNurBegrenztOftVonSelbstDannEntscheidetEinMensch() throws {
+        let fach = try Parkfach(ordner: ordner)
+        let e = try fach.parke(png: zeichnung)
+        var gesendet = 0
+        while try sende(fach, .ohneAntwort(grund: "unlesbar")) != nil {
+            gesendet += 1
+            XCTAssertLessThanOrEqual(gesendet, Parkfach.selbstHoechstens, "endlos")
+            if gesendet > Parkfach.selbstHoechstens { break }
+        }
+        XCTAssertEqual(gesendet, Parkfach.selbstHoechstens)
+        let nach = try XCTUnwrap(fach.eintrag(e.schluessel))
+        XCTAssertFalse(nach.gehtVonSelbst)
+        XCTAssertTrue(nach.brauchtEntscheid)
+        XCTAssertTrue(try fach.nochEinmal(e.schluessel), "ein Mensch darf weiter")
+        XCTAssertNotNil(try fach.beginneSenden(e.schluessel))
     }
 
     // --------------------------------------------- 3 · abgewiesen bleibt mit Grund
@@ -153,7 +206,56 @@ final class ParkfachTests: XCTestCase {
         let e = try fach.parke(png: zeichnung)
         try sende(fach, .ohneVerbindung(grund: "abgerissen", gesendeteBytes: 4096))
         XCTAssertEqual(fach.eintrag(e.schluessel)?.zustand, .ungewiss(grund: "abgerissen"))
-        XCTAssertNil(fach.naechster)
+        XCTAssertEqual(fach.naechster?.schluessel, e.schluessel,
+                       "ungewiss, aber mit Schlüssel — geht von selbst noch einmal")
+    }
+
+    // --------------------------------------------- 4 · das Fach wächst nicht ohne Ende
+
+    private func angekommen(_ fach: Parkfach, am zeit: Date) throws -> Parkeintrag {
+        let e = try fach.parke(png: zeichnung, jetzt: zeit)
+        _ = try XCTUnwrap(try fach.beginneSenden(e.schluessel, jetzt: zeit))
+        try fach.melde(e.schluessel, .aus(status: 200, daten: quittung()), jetzt: zeit)
+        return e
+    }
+
+    func testAngekommeneGehenNachSiebenTagenWartendeNie() throws {
+        let tag: TimeInterval = 24 * 3600
+        let fach = try Parkfach(ordner: ordner)
+        let a = try angekommen(fach, am: t0)
+        let wartet = try fach.parke(png: zeichnung, jetzt: t0)
+        try sende(fach, .aus(status: 400, daten: Data(#"{"fehler": "zu gross"}"#.utf8)))
+        let abgewiesen = try XCTUnwrap(fach.eintraege.first { $0.brauchtEntscheid })
+        let nochDa = try fach.parke(png: zeichnung, jetzt: t0)
+        XCTAssertNotEqual(wartet.schluessel, nochDa.schluessel)
+
+        let nachSechs = try Parkfach(ordner: ordner, jetzt: t0.addingTimeInterval(6 * tag))
+        XCTAssertNotNil(nachSechs.eintrag(a.schluessel), "eine Woche steht die Quittung")
+
+        let nachAcht = try Parkfach(ordner: ordner, jetzt: t0.addingTimeInterval(8 * tag))
+        XCTAssertNil(nachAcht.eintrag(a.schluessel))
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: ordner.appendingPathComponent(a.schluessel + ".json").path),
+                       "auch von der Platte")
+        XCTAssertNotNil(nachAcht.eintrag(abgewiesen.schluessel), "abgewiesen wartet auf einen Menschen")
+        XCTAssertNotNil(nachAcht.eintrag(nochDa.schluessel), "geparkt wartet auf das Senden")
+        XCTAssertEqual(nachAcht.eintraege.count, 2)
+    }
+
+    func testHoechstensFuenfzigAngekommeneBleibenDieAeltestenGehen() throws {
+        let fach = try Parkfach(ordner: ordner)
+        let zahl = Parkfach.angekommenHoechstens + 3
+        var alle: [Parkeintrag] = []
+        for i in 0..<zahl {
+            alle.append(try angekommen(fach, am: t0.addingTimeInterval(Double(i))))
+        }
+        XCTAssertEqual(fach.eintraege.count, Parkfach.angekommenHoechstens)
+        for alt in alle.prefix(3) {
+            XCTAssertNil(fach.eintrag(alt.schluessel), "die ältesten gehen zuerst")
+        }
+        XCTAssertNotNil(fach.eintrag(alle[3].schluessel))
+        XCTAssertEqual(try Parkfach(ordner: ordner, jetzt: t0.addingTimeInterval(Double(zahl)))
+            .eintraege.count, Parkfach.angekommenHoechstens, "auch nach dem Neustart")
     }
 
     func testDieAntwortEntscheidetWasAusDerSkizzeWird() {
@@ -242,5 +344,49 @@ final class ParkfachTests: XCTestCase {
     func testImAbbruchFaelltDieMarkeZurueckAufsIpad() {
         XCTAssertEqual(Flugbahn.ort(.zurueck), 0)
         XCTAssertFalse(Flugbahn.atmet(.zurueck), "nach dem Abbruch bewegt sich nichts mehr")
+    }
+
+    func testVorDemErstenByteLegtDieMarkeAbUndHebtAb() {
+        // Die fünf Augenblicke des Blatts: 1 Ablegen (220 ms), 2 Abheben (180 ms), dann Flug.
+        XCTAssertEqual(Flugbahn.vorspiel.map(\.phase), [.ablegen, .abheben])
+        XCTAssertEqual(Flugbahn.vorspiel.map(\.dauer), [0.22, 0.18])
+    }
+
+    func testDerFlugBeginntUngezaehltUndAtmet() {
+        // Kommt kein einziger Zählerstand (ein kleines PNG in einem Stück), muss die Marke
+        // trotzdem atmen (Regel 2) — und darf nicht vorankommen (Regel 1).
+        XCTAssertTrue(Flugbahn.atmet(Flugbahn.flugbeginn))
+        XCTAssertNil(Flugbahn.anteil(Flugbahn.flugbeginn))
+        XCTAssertEqual(Flugbahn.ort(Flugbahn.flugbeginn), Flugbahn.ort(.abheben))
+        for (phase, _) in Flugbahn.vorspiel {
+            XCTAssertFalse(Flugbahn.atmet(phase), "vor dem Senden ist nichts unterwegs")
+        }
+    }
+
+    func testEinZaehlerstandWirktNurImFlugUndRastetNieEin() {
+        // Vor dem Flug und nach ihm ändert ein (später) Zählerstand nichts.
+        for p: Flugbahn.Phase in [.ablegen, .abheben, .warten, .eingerastet, .zurueck] {
+            XCTAssertNil(Flugbahn.gezaehlt(p, gesendet: 10, gesamt: 100), "\(p)")
+        }
+        XCTAssertEqual(Flugbahn.gezaehlt(Flugbahn.flugbeginn, gesendet: 40, gesamt: 100),
+                       .flug(gesendet: 40, gesamt: 100))
+        XCTAssertEqual(Flugbahn.gezaehlt(Flugbahn.flugbeginn, gesendet: 40, gesamt: nil),
+                       .flug(gesendet: 40, gesamt: nil))
+        // Alles hinaus heisst warten, nicht angekommen (Regel 3).
+        XCTAssertEqual(Flugbahn.gezaehlt(.flug(gesendet: 40, gesamt: 100), gesendet: 100,
+                                         gesamt: 100), .warten)
+    }
+
+    func testOhneBewegungErscheintDieMarkeErstAmZiel() {
+        // Blatt: «Die Marke erscheint am Ziel, der Balken bleibt.»
+        let unterwegs: [Flugbahn.Phase] = [.ablegen, .abheben, Flugbahn.flugbeginn,
+                                           .flug(gesendet: 50, gesamt: 100), .warten]
+        for p in unterwegs {
+            XCTAssertNil(Flugbahn.ortOhneBewegung(p), "\(p): unterwegs steht sie nirgends")
+        }
+        XCTAssertEqual(Flugbahn.ortOhneBewegung(.eingerastet), 1)
+        XCTAssertEqual(Flugbahn.ortOhneBewegung(.zurueck), 0)
+        // Der Balken bleibt: der Anteil hängt nicht an der Bewegung.
+        XCTAssertEqual(Flugbahn.anteil(.flug(gesendet: 50, gesamt: 100)), 0.5)
     }
 }

@@ -6,6 +6,12 @@ import SwiftUI
 /// mitgeht, sagt die Tafel in einem Satz, und der Satz kommt aus derselben Regel wie die
 /// Ausgabe (`Ebenenstapel.plan`) — *eine Tafel, die etwas anderes zeigt, als hinausgeht,
 /// wäre derselbe Fehler wie die Ausgabe selbst.*
+///
+/// **Eine eigenständige Ansicht, ohne Rahmen:** kein Rollbereich, kein Rand, kein Grund.
+/// Die bringt mit, wer sie hinlegt — das Seitenfeld des Arbeitsplatzes
+/// (`ScrollView { seitenfeld.padding(20) }` mit dem Grund der Leiste) oder die
+/// Zeichenfläche selbst, wenn sie ihre eigene Tafel zeigt. Mit eigenem Rollbereich stünde
+/// im Seitenfeld ein Rollbereich im Rollbereich (Befund Durchsicht A, 22.09.2026).
 struct Ebenentafel: View {
     @ObservedObject var stand: Zeichenstand
 
@@ -13,30 +19,31 @@ struct Ebenentafel: View {
     @State private var neuerName = ""
     @State private var loeschen: UUID?
 
+    init(stand: Zeichenstand? = nil) {
+        self.stand = stand ?? Zeichenstand.gemeinsam
+    }
+
     var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 10) {
-                kopf
-                ForEach(stand.stapel.vonObenGesehen) { ebene in
-                    zeile(ebene)
-                }
-                if !stand.stapel.kannAnlegen {
-                    leise("Höchstens \(Ebenenstapel.hoechstensEbenen) Ebenen.")
-                }
-                aktiveEbene
-                Text(mitgehSatz)
-                    .font(Schrift.text(13, .semibold))
-                    .foregroundStyle(Zeichenblatt.schrift)
-                    .padding(.top, 4)
-                if let satz = variantenSatz {
-                    leise(satz)
-                }
-                leise("Jede Ebene ist eine Variante. Gerechnet wird, was sichtbar ist — "
-                      + "unsichtbare Ebenen gehen nicht mit.")
+        VStack(alignment: .leading, spacing: 10) {
+            kopf
+            ForEach(stand.stapel.vonObenGesehen) { ebene in
+                zeile(ebene)
             }
-            .padding(20)
+            if !stand.stapel.kannAnlegen {
+                leise("Höchstens \(Ebenenstapel.hoechstensEbenen) Ebenen.")
+            }
+            aktiveEbene
+            Text(mitgehSatz)
+                .font(Schrift.text(13, .semibold))
+                .foregroundStyle(Zeichenblatt.schrift)
+                .padding(.top, 4)
+            if let satz = variantenSatz {
+                leise(satz)
+            }
+            leise("Jede Ebene ist eine Variante. Gerechnet wird, was sichtbar ist — "
+                  + "unsichtbare Ebenen gehen nicht mit.")
         }
-        .background(Zeichenblatt.leiste)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .alert("Ebene umbenennen", isPresented: umbenennenOffen) {
             TextField("Name", text: $neuerName)
             Button("Übernehmen") {

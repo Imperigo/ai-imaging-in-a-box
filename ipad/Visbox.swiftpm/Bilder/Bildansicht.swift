@@ -6,8 +6,12 @@ import SwiftUI
 /// Anordnung nach dem Blatt «Bilder»: links das Bild, rechts ein Feld von 360 pt mit dem,
 /// was der Server über das Bild sagt. Im Hochformat liegt das Feld darunter — derselbe
 /// Inhalt, eigene Anordnung (Entscheid 1).
+///
+/// **Der eigene Name geht in die Mappe** (`POST /api/benennen`, seit 22.09.2026), nicht mehr
+/// in die Einstellungen dieses iPads; ein zweites Gerät sieht ihn damit auch.
 struct Bildansicht: View {
     @ObservedObject var stand: Bildbandstand
+    @ObservedObject var verbindung: Verbindungsstand
     /// Das Bild, mit dem die Ansicht geöffnet wurde. Gezeigt wird der **aktuelle** Stand
     /// desselben Bildes aus `stand` — kommen die Bytes nach dem Öffnen an, erscheinen sie.
     let bild: Bandbild
@@ -17,6 +21,16 @@ struct Bildansicht: View {
     @State private var vergleich: Bildvergleichsart = .nebeneinander
     @State private var benennen = false
     @State private var neuerName = ""
+    @State private var namensQuittung: Handlungsquittung?
+    @State private var variantenOffen = false
+
+    init(stand: Bildbandstand, verbindung: Verbindungsstand = .gemeinsam, bild: Bandbild,
+         schliessen: @escaping () -> Void) {
+        self.stand = stand
+        self.verbindung = verbindung
+        self.bild = bild
+        self.schliessen = schliessen
+    }
 
     private var aktuell: Bandbild {
         stand.bilder.first { $0.bild == bild.bild } ?? bild
@@ -54,10 +68,29 @@ struct Bildansicht: View {
         .foregroundStyle(Zeichenblatt.schrift)
         .alert("Eigener Name", isPresented: $benennen) {
             TextField("Name", text: $neuerName)
-            Button("Übernehmen") { stand.benenne(aktuell, als: neuerName) }
+            Button("Übernehmen") {
+                let name = aktuell.bild
+                let titel = neuerName
+                Task { @MainActor in
+                    stand.sendet = true
+                    namensQuittung = await verbindung.benenne(bild: name, titel: titel,
+                                                              bildband: stand)
+                    stand.sendet = false
+                }
+            }
             Button("Abbrechen", role: .cancel) {}
         } message: {
-            Text("Leer lassen, um wieder den Namen nach der Zeit zu zeigen. Der Name bleibt auf diesem iPad.")
+            Text("Leer lassen, um wieder den Namen nach der Zeit zu zeigen. Der Name steht in "
+                 + "der Mappe der HomeStation; die Datei behält ihren.")
+        }
+        .sheet(isPresented: $variantenOffen) {
+            if let gruppe = aktuell.angaben.variantengruppe?.id {
+                ScrollView {
+                    Variantenansicht(stand: stand, gruppe: gruppe).padding(24)
+                }
+                .background(Zeichenblatt.grund)
+                .foregroundStyle(Zeichenblatt.schrift)
+            }
         }
     }
 
@@ -76,14 +109,16 @@ struct Bildansicht: View {
                 .font(Schrift.titel(26))
                 .lineLimit(1)
             Button {
-                neuerName = stand.eigeneNamen[aktuell.bild] ?? ""
+                neuerName = aktuell.angaben.titel ?? ""
+                namensQuittung = nil
                 benennen = true
             } label: {
                 Image(systemName: "pencil")
                     .font(.system(size: 20, weight: .regular))
             }
             .buttonStyle(Wahlknopfstil(gewaehlt: false))
-            .accessibilityLabel("Eigenen Namen geben")
+            .disabled(stand.sendet || !verbindung.gekoppelt)
+            .accessibilityLabel("Namen geben")
 
             Spacer(minLength: 0)
 
@@ -118,7 +153,8 @@ struct Bildansicht: View {
             } else {
                 Bildflaeche(grafik: aktuell.grafik, vorhanden: aktuell.vorhanden)
                     .pruefzeichen(zeichen, .gross)
-                Text("Kein Vergleichsbild aus dem Modell geladen — darum hier ohne Vorher.")
+                Text("Die Mappe nennt zu diesem Bild kein Vergleichsbild aus dem Modell — "
+                     + "darum hier ohne Vorher.")
                     .font(Schrift.text(13))
                     .foregroundStyle(Zeichenblatt.leise)
             }
@@ -141,11 +177,26 @@ struct Bildansicht: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
+            if let q = namensQuittung {
+                Text(q.satz)
+                    .font(Schrift.text(13))
+                    .foregroundStyle(q.ausgang == .angenommen ? Zeichenblatt.leise
+                                                               : Zeichenblatt.schrift)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             VStack(alignment: .leading, spacing: 8) {
                 Abschnittstitel(text: "Was der Server sagt")
                 Text(zeichen.zeile)
                     .font(Schrift.zahl(22, .medium))
                     .foregroundStyle(Color(zeichen.art.schrift))
+                // DIE SCHWELLE NUR NEBEN EINER GEZEIGTEN PRUEFZAHL — das entscheidet der Kern
+                // (`Pruefzeichen.schwelle`), nicht diese Ansicht.
+                if let grenze = zeichen.schwelle {
+                    Text("Schwelle \(grenze)")
+                        .font(Schrift.zahl(13))
+                        .foregroundStyle(Zeichenblatt.leise)
+                }
                 if let satz = aktuell.satz, !satz.isEmpty {
                     Text(satz)
                         .font(Schrift.text(14))
@@ -171,6 +222,34 @@ struct Bildansicht: View {
                 .background(RoundedRectangle(cornerRadius: 10).fill(Zeichenblatt.feld))
                 .overlay(RoundedRectangle(cornerRadius: 10)
                     .strokeBorder(Color(Pruefzeichen.vorbehaltSchrift), lineWidth: 1))
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Abschnittstitel(text: "Hinweise der Bildstufe")
+                // DREI ANTWORTEN: nicht gemessen (`nil`), gemessen ohne Hinweis (`[]`), und
+                // die Hinweise selbst, unverändert.
+                if let hinweise = aktuell.angaben.hinweise {
+                    if hinweise.isEmpty {
+                        Text("Gemessen, ohne Hinweis.")
+                            .font(Schrift.text(13))
+                            .foregroundStyle(Zeichenblatt.leise)
+                    }
+                    ForEach(Array(hinweise.enumerated()), id: \.offset) { paar in
+                        Text(paar.element)
+                            .font(Schrift.text(13))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                } else {
+                    Text("Nicht gemessen — die Bildstufe hat zu diesem Bild nichts gemeldet.")
+                        .font(Schrift.text(13))
+                        .foregroundStyle(Zeichenblatt.leise)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            if aktuell.angaben.variantengruppe?.id != nil {
+                Button("Varianten nebeneinander") { variantenOffen = true }
+                    .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: nil))
             }
 
             VStack(alignment: .leading, spacing: 8) {

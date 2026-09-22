@@ -39,6 +39,7 @@ import base64
 import binascii
 import hashlib
 import hmac
+import html
 import math
 import importlib.util
 import json
@@ -81,12 +82,20 @@ SEITE = Path(__file__).resolve().parent / "seite.html"
 #: kann: kein Skript, keine Schrift, kein Bild — auch nicht von diesem Server. Eine Seite
 #: vor der Tür, die etwas hinter der Tür nachlädt, bekäme es nicht (401) oder, schlimmer,
 #: bekäme es doch.
+#:
+#: **``__NAME__`` wird beim Ausliefern durch :data:`NAME` ersetzt** (Befund der
+#: Durchsicht D-SERVER, 22.09.2026): Hier stand der Name der App fest eingeschrieben —
+#: die Stelle, die beim Umbenennen in KosmoSketch (Entscheid 34) niemand findet.
+#:
+#: **Und sie sagt nur, was im Browser stimmt** (derselbe Befund): Der Erfolgssatz lautete
+#: «Dieses Gerät merkt sich die Anmeldung» — ein Browser merkt sich nichts, was ihm
+#: niemand zu merken gibt. Hier steht darum, was der Mensch jetzt tun muss.
 KOPPELSEITE = """<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Visbox — Gerät verbinden</title>
+<title>__NAME__ — Gerät verbinden</title>
 <style>
   :root { --grund: #14161a; --feld: #1c1f26; --rand: #2b3038; --schrift: #e6e8ec;
           --leise: #9aa2ae; --bestanden: #4ea373; --durchgefallen: #e2776f; }
@@ -114,15 +123,16 @@ KOPPELSEITE = """<!DOCTYPE html>
 <body>
 <main>
   <h1>Dieses Gerät verbinden</h1>
-  <p>Die sechsstellige Zahl steht im Fenster, in dem Visbox auf dem Rechner gestartet wurde.</p>
+  <p>Die sechsstellige Zahl steht im Fenster, in dem __NAME__ auf dem Rechner gestartet wurde.</p>
   <input id="zahl" inputmode="numeric" autocomplete="one-time-code" maxlength="6"
          pattern="[0-9]*" aria-label="Sechsstellige Zahl">
   <button id="los" type="button">Verbinden</button>
   <div id="satz" role="status"></div>
   <div id="zugang" hidden>
     <dl><dt>Benutzer</dt><dd id="benutzer"></dd><dt>Kennwort</dt><dd id="kennwort"></dd></dl>
-    <p>Beim Öffnen der Fläche fragt der Browser danach. Er kann sie sich merken; hier
-       erscheinen sie nicht noch einmal.</p>
+    <p>Hier erscheinen sie nur dieses eine Mal. Jetzt aufschreiben oder im Browser
+       speichern lassen: Beim Öffnen der Fläche fragt er danach. Ob er sie sich merkt,
+       entscheidet der Browser, nicht diese Seite.</p>
     <a href="/">Zur Fläche</a>
   </div>
 </main>
@@ -949,8 +959,15 @@ def _bild_fuer_die_flaeche(eintrag: dict, ordner=None) -> dict:
         # DIE ZAHL ZUM ZEICHEN (Entscheid 16: «Farbe, Wort und Zahl»), aus der Pruefung,
         # die das Urteil gefaellt hat — gelesen, nicht gerechnet. `None` heisst nicht
         # gemessen, auch bei einem aelteren Eintrag, der die Felder nicht fuehrt; nie 0.
-        "score": _zahl_oder_nichts(eintrag.get("score")),
-        "schwelle": _zahl_oder_nichts(eintrag.get("schwelle")),
+        #
+        # UND NUR NEBEN EINEM URTEIL (Befund der Durchsicht D-KERN, 22.09.2026): Die
+        # Bibliothek schreibt seither keine Zahl mehr ohne Urteil an ein Bild; eine Mappe
+        # aus der Zeit davor kann sie aber tragen. Neben «nicht gemessen» laese sie sich
+        # wie eine Messung.
+        "score": (_zahl_oder_nichts(eintrag.get("score"))
+                  if urteil is True or urteil is False else None),
+        "schwelle": (_zahl_oder_nichts(eintrag.get("schwelle"))
+                     if urteil is True or urteil is False else None),
         # DER EIGENE NAME (Entscheid 19). `None`: benannt nach der Zeit, wie die Datei.
         "titel": eintrag.get("titel"),
         # ENTWURF — NICHT GEPRUEFT (Entscheid 30). Ein eigenes Feld und KEIN viertes
@@ -1296,11 +1313,11 @@ class Flaeche(BaseHTTPRequestHandler):
         Wirkung.
         """
         if not self._kopplung_gilt():
-            self._fehler("Auf dieser HomeStation ist gerade kein Verbinden offen. Visbox "
-                         "mit --kopplung starten, dann gilt die angezeigte Zahl zehn "
-                         "Minuten.", 404)
+            self._fehler(f"Auf dieser HomeStation ist gerade kein Verbinden offen. {NAME} "
+                         f"mit --kopplung starten, dann gilt die angezeigte Zahl zehn "
+                         f"Minuten.", 404)
             return
-        roh = KOPPELSEITE.encode("utf-8")
+        roh = KOPPELSEITE.replace("__NAME__", html.escape(NAME)).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(roh)))
@@ -1412,9 +1429,14 @@ class Flaeche(BaseHTTPRequestHandler):
             return
 
         print("  Ein Gerät hat sich verbunden. Die Zahl ist damit verbraucht.")
+        # DER SATZ SAGT NUR, WAS DER SERVER WEISS (Befund der Durchsicht D-SERVER,
+        # 22.09.2026): Hier stand «Dieses Gerät merkt sich die Anmeldung». Die App legt
+        # sie in den Schluesselbund, ein Browser auf der Koppelseite nicht von selbst —
+        # und ob irgendwer sie aufhebt, kann der Server nicht wissen. Wahr ist fuer beide:
+        # Sie kommen nur dieses eine Mal.
         self._sende({"verbunden": True, "benutzer": BENUTZER,
                      "kennwort": self.kennwort,
-                     "satz": "Verbunden. Dieses Gerät merkt sich die Anmeldung."})
+                     "satz": SATZ_VERBUNDEN})
 
     def _anlegen(self, wunsch: dict) -> None:
         """Ruft :func:`aiimaging.arbeitsgang.lege_an` — und sonst nichts."""
@@ -1760,7 +1782,7 @@ def _lies_bestellung(wunsch: dict, *, skizzenlauf: bool) -> dict:
     ist (``"nein"`` wäre für Python wahr), ob die Einstellungen ein Objekt sind und nur
     Felder von :func:`aiimaging.kette.baue_kette` tragen. **Was zulässig ist, entscheidet
     die Bibliothek**; die Grenzen einer Reihe werden bei ihr erfragt
-    (``arbeitsgang._pruefe_varianten``), damit die Absage sofort kommt und nicht erst im
+    (``arbeitsgang.pruefe_varianten``), damit die Absage sofort kommt und nicht erst im
     Laufstand.
 
     **Und warum nur Felder der Kette:** ``rechne`` nimmt neben den Kettenfeldern auch
@@ -1793,7 +1815,7 @@ def _lies_bestellung(wunsch: dict, *, skizzenlauf: bool) -> dict:
     if not skizzenlauf:
         varianten = wunsch.get("varianten")
         try:
-            arbeitsgang._pruefe_varianten(varianten, arbeitsgang.VARIANTEN_STARTWERTE)
+            arbeitsgang.pruefe_varianten(varianten, arbeitsgang.VARIANTEN_STARTWERTE)
         except arbeitsgang.ArbeitsgangError as fehler:
             raise FlaechenError(str(fehler)) from None
         b["varianten"] = varianten
@@ -1813,7 +1835,7 @@ def _lies_bestellung(wunsch: dict, *, skizzenlauf: bool) -> dict:
                                 "Dateinamen aus der Mappe.")
         if len(skizze) > 1:
             try:
-                arbeitsgang._pruefe_varianten(len(skizze), arbeitsgang.VARIANTEN_EBENEN)
+                arbeitsgang.pruefe_varianten(len(skizze), arbeitsgang.VARIANTEN_EBENEN)
             except arbeitsgang.ArbeitsgangError as fehler:
                 raise FlaechenError(str(fehler)) from None
         else:
@@ -1834,8 +1856,9 @@ def _schritte_gesamt(ordner, einstellungen: dict, *, entwurf: bool = False):
     Gelesen wird, was der Lauf wirklich benutzt: erst die Einstellungen der Mappe, dann
     die des Aufrufs — **dieselbe Reihenfolge wie in** :func:`aiimaging.arbeitsgang.rechne`.
     Eine eigene Regel hier wäre dieselbe Regel zweimal, und die zweite veraltet. Beim
-    Entwurf rechnet die Bibliothek die Deckelung selbst (``_entwurfsargumente``) — auch
-    sie wird dort geholt, nicht hier nachgebaut.
+    Entwurf rechnet die Bibliothek die Deckelung selbst
+    (``arbeitsgang.entwurfsargumente``) — auch sie wird dort geholt, nicht hier
+    nachgebaut.
 
     ``None`` heisst **unbekannt** und nicht null: Ohne Nenner zeigt die Fläche keinen
     Anteil an. *Ein Zähler ohne Nenner ist eine Zahl ohne Auskunft.*
@@ -1847,7 +1870,7 @@ def _schritte_gesamt(ordner, einstellungen: dict, *, entwurf: bool = False):
     zusammen = {**aus_mappe, **einstellungen}
     if entwurf:
         try:
-            zusammen = arbeitsgang._entwurfsargumente(zusammen, einstellungen)
+            zusammen = arbeitsgang.entwurfsargumente(zusammen, einstellungen)
         except arbeitsgang.ArbeitsgangError:
             return None
     wert = zusammen.get("schritte")
@@ -2002,6 +2025,10 @@ def startzeile(adresse: str, anschluss: int) -> str:
 
 RUNDRUF_DATEI = Path(__file__).resolve().parent / "rundruf.py"
 
+#: Der Erfolgssatz von ``POST /api/verbinden``. Siehe :meth:`Flaeche._verbinden`.
+SATZ_VERBUNDEN = ("Verbunden. Benutzer und Kennwort kommen nur dieses eine Mal über die "
+                  "Leitung.")
+
 
 def _rundruf_modul():
     """``rundruf.py`` von nebenan — geladen **über den Pfad**, nicht über ``import``.
@@ -2019,6 +2046,15 @@ def _rundruf_modul():
     modul = importlib.util.module_from_spec(spez)
     spez.loader.exec_module(modul)
     return modul
+
+
+#: Der Name der App, wie ein Mensch ihn sieht — **aus** ``rundruf.NAME`` und nicht ein
+#: zweites Mal eingeschrieben. ``rundruf.NAME`` ist gegen ``Marke.name`` in
+#: ``ipad/Visbox.swiftpm/Kern/Marke.swift`` bewacht (``tests/test_rundruf.py``); diese
+#: Konstante zusätzlich (``tests/test_durchsicht_kern_server.py``). Heute nur auf der
+#: Koppelseite und in ihrer Absage (Befund der Durchsicht D-SERVER, 22.09.2026); die
+#: übrigen Sätze dieser Datei nennen den Namen noch fest.
+NAME = _rundruf_modul().NAME
 
 
 def starte_rundruf(anschluss: int):

@@ -187,11 +187,63 @@ final class EbenenTests: XCTestCase {
         XCTAssertEqual(Set(s.ebenen.map { $0.name }).count, s.ebenen.count)
     }
 
+    /// Die unterste Ebene hat keine darunter — die Wahl fällt auf die darüber, nicht ins
+    /// Leere (Wächterlücke aus Durchsicht A, 22.09.2026).
+    func testEntfernenDerUnterstenAktivenWaehltDieDarueber() {
+        var (s, a, b, c) = dreiBezeichnete()
+        s.waehle(a)
+        XCTAssertTrue(s.entferne(a))
+        XCTAssertEqual(s.aktiv, b)
+        XCTAssertEqual(s.ebenen.map { $0.id }, [b, c])
+        // Und was hinausginge, sind genau die beiden, die bleiben.
+        XCTAssertEqual(teile(s.plan(.eineSkizze)).first?.ebenen.map { $0.id }, [b, c])
+    }
+
+    func testVerschiebenAmRandTutNichts() {
+        var (s, a, b, c) = dreiBezeichnete()
+        XCTAssertFalse(s.verschiebe(c, nachOben: true), "die oberste kann nicht höher")
+        XCTAssertFalse(s.verschiebe(a, nachOben: false), "die unterste kann nicht tiefer")
+        XCTAssertFalse(s.verschiebe(UUID(), nachOben: true), "eine fremde Ebene gibt es nicht")
+        XCTAssertEqual(s.ebenen.map { $0.id }, [a, b, c])
+        XCTAssertEqual(teile(s.plan(.ebenenAlsVarianten)).map { $0.name },
+                       ["Variante A", "Variante B", "Variante C"])
+    }
+
     func testAufEineAusgeblendeteEbeneWirdNichtGezeichnet() {
         var s = Ebenenstapel()
         XCTAssertTrue(s.aktiveIstZeichenbar)
         s.setzeSichtbar(s.aktiv, false)
         XCTAssertFalse(s.aktiveIstZeichenbar)
+    }
+
+    // ----------------------------------------- leer heisst: im Bild deckt nichts
+
+    /// Flächig ganz weggewischt: PencilKit führt die Striche noch, im Bild deckt nichts.
+    /// Dann geht die Ebene nicht als leeres PNG hinaus (Befund Durchsicht A, 22.09.2026).
+    func testGanzWeggewischtIstLeerTrotzStrichen() {
+        var s = Ebenenstapel()
+        let a = s.aktiv
+        s.setzeStriche(a, 5, alpha: Data(repeating: 0, count: 64))
+        XCTAssertTrue(s.aktiveEbene.istLeer)
+        for art in Ebenenstapel.Ausgabeart.allCases {
+            XCTAssertEqual(s.plan(art), .nichtsGezeichnet(ausgeblendetGezeichnet: 0), "\(art)")
+        }
+        // Ein leerer Puffer ist kein gemaltes Bild — auch nichts, das deckt.
+        s.setzeStriche(a, 5, alpha: Data())
+        XCTAssertTrue(s.aktiveEbene.istLeer)
+    }
+
+    func testEinEinzigerDeckenderBildpunktZaehlt() {
+        var s = Ebenenstapel()
+        let a = s.aktiv
+        var alpha = Data(repeating: 0, count: 64)
+        alpha[63] = 1
+        s.setzeStriche(a, 5, alpha: alpha)
+        XCTAssertEqual(s.aktiveEbene.striche, 5)
+        XCTAssertEqual(teile(s.plan(.eineSkizze)).first?.ebenen.map { $0.id }, [a])
+        // Wieder weggewischt: wieder leer — die Zahl folgt dem Bild, nicht der Vorgeschichte.
+        s.setzeStriche(a, 5, alpha: Data(repeating: 0, count: 64))
+        XCTAssertTrue(s.aktiveEbene.istLeer)
     }
 
     // ------------------------------------------------------------------ Zurück und Vor
@@ -241,6 +293,49 @@ final class EbenenTests: XCTestCase {
         z.abgleichen(kannZurueck: true, kannVor: false)
         XCTAssertEqual(z.zurueck, 2)
         XCTAssertEqual(z.vor, 0)
+    }
+
+    /// Der Vor-Zweig des Abgleichs (Wächterlücke aus Durchsicht A, 22.09.2026).
+    func testAbgleichenSagtBeiVerpasstemVorNichtGezaehlt() {
+        var z = Schrittzaehler()
+        for _ in 0..<3 { z.neuerSchritt() }
+        // Der UndoManager kann vor, der Zähler hat kein Zurück mitbekommen.
+        z.abgleichen(kannZurueck: true, kannVor: true)
+        XCTAssertNil(z.vor)
+        XCTAssertEqual(z.zurueck, 3)
+        // Ein gezähltes Vor bleibt stehen, solange es geht …
+        var y = Schrittzaehler()
+        for _ in 0..<3 { y.neuerSchritt() }
+        y.zurueckGegangen()
+        y.zurueckGegangen()
+        y.abgleichen(kannZurueck: true, kannVor: true)
+        XCTAssertEqual(y.vor, 2)
+        // … und wird 0, sobald der UndoManager nicht mehr vor kann.
+        y.abgleichen(kannZurueck: true, kannVor: false)
+        XCTAssertEqual(y.vor, 0)
+    }
+
+    /// Nach dem Neuaufbau der Flächen (Drehen) gilt keine alte Zahl mehr: Was noch geht,
+    /// ist nicht gezählt; was nicht geht, ist sicher 0 (Befund Durchsicht A, 22.09.2026).
+    func testNachFlaechenNeuGiltKeineAlteZahl() {
+        var z = Schrittzaehler()
+        for _ in 0..<7 { z.neuerSchritt() }
+        z.zurueckGegangen()
+        z.flaechenNeu(kannZurueck: true, kannVor: true)
+        XCTAssertNil(z.zurueck, "die 6 zählte Schritte der abgebauten Flächen")
+        XCTAssertNil(z.vor)
+        XCTAssertEqual(z.anzeige, "?/20")
+
+        var y = Schrittzaehler()
+        for _ in 0..<7 { y.neuerSchritt() }
+        y.zurueckGegangen()
+        y.flaechenNeu(kannZurueck: false, kannVor: false)
+        XCTAssertEqual(y.zurueck, 0)
+        XCTAssertEqual(y.vor, 0)
+        XCTAssertEqual(y.anzeige, "0/20")
+        // Danach wird wieder gezählt.
+        y.neuerSchritt()
+        XCTAssertEqual(y.anzeige, "1/20")
     }
 
     // ------------------------------------------------------------------ der Doppeltipp
