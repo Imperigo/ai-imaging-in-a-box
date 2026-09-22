@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260922-147",
+  "art": "frage",
+  "beschreibung": "Der Vorlagen-Picker im KosmoPublish-Add-on hat seit dem 22.09.2026 einen Knopf, der wirklich baut (Owner-Entscheid B2). Gemessen ist hier nur die NAHT am Syntaxbaum — der Klick selbst braucht Blender, und das steht an dieser Maschine nicht. Genau an dieser Naht sass am 17.09.2026 ein Operator, der bei JEDEM Klick im TypeError endete und daraus eine hoefliche Bedienmeldung machte.",
+  "anweisung": "=== EINMAL KLICKEN — WAS PASSIERT?\n\nWARUM DIESER AUFTRAG EXISTIERT\n\nAm 17.09.2026 haben wir gemessen, dass der einzige plakatbauende Operator\ndes Add-ons bei jedem Klick abstuerzte: ein fehlendes Pflichtargument, und\nein `except Exception` daneben machte daraus «Build failed: TypeError» —\neine Meldung, bei der ein Nutzer den Fehler bei sich sucht. Seit wann er so\nwar, ist bis heute ungemessen; niemand hatte je geklickt.\n\nSeit dem 22.09.2026 steht im Panel ein ZWEITER Knopf: «Plakat aus Vorlage\nbauen». Wir haben die Naht am Syntaxbaum gebunden (jeder Aufruf aus dem\nAdd-on gegen die echte Signatur) und den gemeinsamen Bauschritt gemessen.\n**Was wir nicht koennen, ist klicken.** Blender steht hier nicht.\n\n\nWAS ZU TUN IST — drei Klicks, eine Viertelstunde\n\n    cd <euer KosmoPublish-Klon>\n    git pull\n\nDann Blender starten, das Add-on `kosmo_publish` laden (falls noch nicht\naktiv) und im N-Panel die KosmoPublish-Flaeche oeffnen.\n\nK1 · Das Feld «Layout: …» suchen. Was steht darin? Und welche Eintraege\n     bietet die Auswahl an — die Zahl genuegt, dazu zwei, drei Namen.\n\nK2 · Den Knopf «Plakat aus Vorlage bauen» druecken. Ihr braucht dafuer\n     Plan-SVG im Planordner; wenn keine dastehen, sagt der Lauf es, und\n     AUCH DAS ist ein vollstaendiges Ergebnis (dann bitte die Meldung\n     woertlich). Liegen welche da: was meldet der Operator?\n     Die Meldung ist eine Zeile in der Statuszeile unten und steht auch im\n     Fenster «Info».\n\nK3 · Falls ein Blatt entstanden ist: einmal ANSEHEN und in zwei, drei\n     Saetzen sagen, ob es brauchbar aussieht. Wir haben hier gemessen, dass\n     die Vorlage `klassisch` 4 von 5 Slots ohne Ueberdeckung fuellt und\n     `fassaden_strip` 7 von 7 Slots, aber mit 3 Ueberdeckungen fester\n     Kaesten. Ob das auf dem Bild stoerend ist, sieht nur ein Auge.\n\nK4 · Wenn etwas ABSTUERZT: bitte die ganze Meldung, samt Stapelabzug aus\n     der Konsole. Ein Absturz ist hier die wertvollste Antwort — er ist\n     genau der Zustand, gegen den dieser Knopf gebaut wurde.\n\n\nWAS AUSDRUECKLICH NICHT GETAN WERDEN SOLL\n\n* Keine Bilder zurueckschicken. Euer Urteil in Worten genuegt, und ein\n  Planbild aus einem echten Projekt darf nicht in unser Repo (Buerodaten).\n* Keine Installation, keine Maschinen-Aenderung, keine GPU-Last.\n* Keine absoluten Pfade mit Benutzernamen (REGEL 3), keine Buero-, Kunden-\n  oder Wettbewerbsnamen.\n* Nichts reparieren. Wenn es bricht, wollen wir wissen WIE — reparieren ist\n  unsere Arbeit.",
+  "erstellt": "2026-09-22T21:21:01Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Keine Bilder zurueckschicken; euer Urteil in Worten genuegt.",
+      "Nichts reparieren — wenn es bricht, wollen wir wissen WIE.",
+      "Keine Installation, keine Maschinen-Aenderung, keine GPU-Last.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
+      "«Kein Planordner da» ist eine vollstaendige Antwort."
+    ]
+  },
+  "rueckgabe": [
+    "K1 Was steht im Feld «Layout: …», und wieviele Eintraege bietet die Auswahl (dazu zwei, drei Namen)?",
+    "K2 Was meldet der Knopf «Plakat aus Vorlage bauen»? Die Meldung woertlich.",
+    "K3 Falls ein Blatt entstand: sieht es brauchbar aus? Zwei bis drei Saetze.",
+    "K4 Falls etwas abstuerzt: die ganze Meldung samt Stapelabzug aus der Konsole.",
+    "K5 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ],
+  "rang": 6
+}

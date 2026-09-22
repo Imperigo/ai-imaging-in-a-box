@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "ui",
+  "auftrag_id": "auf-20260922-148",
+  "art": "frage",
+  "beschreibung": "KosmoPublish schreibt an der Tuer zum Zusammenbauort eine Antwortdatei mit 25 Feldern. Sechs davon tragen einen VORBEHALT — sie sagen, was am fertigen A0-Blatt fehlt oder nicht stimmt. Ob eure Oberflaeche sie zeigt, wissen wir nicht; von hier aus ist sie nicht messbar. Eine Zahl, die entsteht und niemanden erreicht, ist die haeufigste Fehlerform dieses Monats.",
+  "anweisung": "=== SECHS ZAHLEN, DIE EIN BLATT BESCHREIBEN — KOMMEN SIE BEI EUCH AN?\n\nWORUM ES GEHT\n\nWenn ein KosmoDesign-Paket durch die KosmoPublish-Tuer laeuft (`handoff` /\nWerkzeug `consume_publish_handoff`), entsteht neben den Plaenen und dem\nA0-Blatt eine Antwortdatei:\n\n    <paket>/publish/kosmopublish-result.json\n    Kennung: kosmopublish.publish-result/0.1\n\nSie hat heute 25 Felder. Der Grund fuer diese Datei ist, dass es drueben\nKEINEN Rueckkanal gibt: ein Blatt kann tadellos aussehen und trotzdem keine\nAbgabe sein.\n\n\nDIE SECHS FELDER MIT VORBEHALT — je eine Zeile, was sie bedeuten\n\n  `ueberlauf`                 Liste der Elemente, die NICHT aufs Blatt\n                              passten. Ist Konzepttext, Programmtabelle oder\n                              Materialleiste darin, ist das Blatt keine\n                              Abgabe — und es sieht trotzdem gut aus.\n\n  `massstabstreue`            «N von M Zeichnungen stehen in dem Massstab,\n                              den sie selbst drucken». Steht dort nicht\n                              M von M, luegt eine gedruckte «1:100».\n\n  `blatt_belegung`            Wieviel Prozent der Blattflaeche von Kaesten\n                              bedeckt sind. Sagt, ob das Blatt leer wirkt.\n\n  `verlorene_beschriftungen`  Raeume, deren Name auf dem Plan fehlt, samt\n                              Grund (kein Platz / die Quelle schweigt).\n\n  `ungezeichnete_oeffnungen`  Fenster und Tueren, die in der Ansicht NICHT\n                              gezeichnet wurden, weil ihre Hoehenlage im\n                              Modell fehlt. Eine Fassade ohne Fenster sieht\n                              nicht unvollstaendig aus, sondern geschlossen.\n\n  `flaechen_widerspruch`      Ein Satz, wenn der Konzepttext eine andere\n                              Flaeche nennt als die Programmtabelle daneben.\n                              Das Feld steht IMMER da, auch als `null`:\n                              fehlender Schluessel heisst «diese Fassung\n                              kennt die Frage nicht», leerer heisst\n                              «geprueft, kein Widerspruch».\n\n\nWAS WIR BRAUCHEN — gemessen, nicht geschaetzt\n\nU1 · Liest eure Oberflaeche diese Datei ueberhaupt? ja / nein / teilweise.\n     Wenn nein, ist das die ganze Antwort und der Rest entfaellt.\n\nU2 · Welche der sechs Felder erscheinen heute irgendwo auf dem Schirm?\n     Bitte namentlich, nicht «die meisten».\n\nU3 · Wo endet eine Uebergabe fuer den Nutzer — gibt es eine Stelle, an der\n     er sieht «Blatt fertig»? Wenn ja: steht dort heute eine Zahl oder nur\n     ein Haken?\n\n\nWAS WIR VORSCHLAGEN, WENN U1 «ja» IST\n\nEin Haken allein ist die Form, an der diese Lane den ganzen Monat ihre\nFehler gefunden hat. Vorschlag, und ihr entscheidet ueber die Gestalt:\n\n  * Neben «Blatt fertig» gehoert der Vorbehalt, nicht in ein Aufklappfeld.\n    `ueberlauf` nicht leer heisst nicht «fertig mit Hinweis», sondern\n    «unvollstaendig».\n  * `massstabstreue` unter M von M gehoert rot, nicht grau: ein Plan, der\n    eine falsche «1:NNN» druckt, ist im Wettbewerb ein Formfehler.\n  * `null` und «leer» duerfen NICHT gleich aussehen. «Nicht geprueft» und\n    «geprueft, nichts gefunden» sind zwei Zustaende, und die Datei haelt\n    sie auseinander.\n\n\nWAS AUSDRUECKLICH NICHT GEMEINT IST\n\n* Kein Auftrag an unseren Code. Wenn ein Feld fehlt, das ihr braucht,\n  sagt es — wir bauen es.\n* Keine Vertragsaenderung. Die Kennung bleibt\n  `kosmopublish.publish-result/0.1`; neue Felder kommen additiv dazu.\n* Keine echten Projektdaten in der Antwort (REGEL 3, keine Buero-, Kunden-\n  oder Wettbewerbsnamen).",
+  "erstellt": "2026-09-22T21:21:37Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Kein Auftrag an unseren Code — fehlt euch ein Feld, sagt es, wir bauen es.",
+      "Keine Vertragsaenderung; neue Felder kommen additiv dazu.",
+      "«Wir lesen die Datei gar nicht» ist eine vollstaendige Antwort.",
+      "Keine echten Projektdaten in der Antwort (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "U1 Liest eure Oberflaeche `publish/kosmopublish-result.json`? ja/nein/teilweise.",
+    "U2 Welche der sechs Vorbehalts-Felder erscheinen heute auf dem Schirm? Namentlich.",
+    "U3 Gibt es eine Stelle «Blatt fertig», und steht dort eine Zahl oder nur ein Haken?",
+    "U4 Welches Feld fehlt euch, das wir nicht schreiben?",
+    "U5 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ],
+  "rang": 8
+}

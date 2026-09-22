@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260922-146",
+  "art": "qa",
+  "beschreibung": "Euer Befund zu `libs/` (Antwort auf auf-20260909-94, V5) hat in KosmoPrepare einen Defekt im Messwerkzeug selbst freigelegt: `pyphen` galt als «KANN WEG», obwohl vier Produktmodule `weasyprint` importieren, das Pyphen als Pflicht-Abhaengigkeit fuehrt. Das Werkzeug liest seit heute die METADATA. Bitte einmal nachmessen — die Korrektur ist an eurem Befund gebaut und hier nur an erfundenen Ordnern geprueft.",
+  "anweisung": "=== NACHMESSEN: WAS SAGT `libs_pruefen` JETZT?\n\nWARUM DIESER AUFTRAG EXISTIERT\n\nEuer V5 vom 21.09.2026 war der erste Lauf dieses Werkzeugs auf einer\nMaschine mit einem echten `libs/`. Er hat zwei Pakete gemeldet, und einer\nder beiden Befunde war unser Fehler:\n\n  * `pysolar 0.13` (GPL-3) — KANN WEG, und das stimmt: der Code dafuer ist\n    am 01.09.2026 selbst geschrieben worden (`core/sun.py`, NOAA-Verfahren),\n    das Paket ist am 01.09. aus `requirements.txt` und am 08.09. aus\n    `setup.sh` gefallen.\n  * `pyphen 0.17.2` — wir haben «KANN WEG» gemeldet und eine `rm -rf`-Zeile\n    dazugedruckt. **Das war falsch.** Gemessen importieren VIER\n    Produktmodule `weasyprint` (`core/briefing_pdf`, `core/dossier_composer`,\n    `core/plakat_layout`, `core/raumprogramm_publish`), und weasyprint fuehrt\n    Pyphen als Pflicht-Abhaengigkeit. Wer dem Rat gefolgt waere, haette den\n    PDF-Weg gebrochen — erst zur Laufzeit, auf eurer Maschine.\n\nDas Werkzeug liest jetzt die `METADATA` jedes Pakets in `libs/`\n(`Requires-Dist`) und nennt bei einem Copyleft-Paket den Nutzer, statt zum\nLoeschen zu raten. Geprueft ist das hier nur an ERFUNDENEN dist-info-Ordnern\n— ein echtes `libs/` gibt es an dieser Maschine nicht.\n\n\nWAS ZU TUN IST — ein Befehl\n\n    cd <euer KosmoPrepare-Klon>\n    git pull\n    python3 tools/libs_pruefen.py\n\nDas Werkzeug LOESCHT NICHTS. Es druckt je Copyleft-Paket eine Zeile.\n\n\nWAS WIR BRAUCHEN\n\nV1 · Die Ausgabe des Laufs, woertlich (sie ist kurz — rund zehn Zeilen).\n     Keine Pfade mit Benutzernamen: wo einer steht, ersetzt ihn durch\n     `<libs>`.\n\nV2 · Steht bei `pyphen` jetzt «WIRD GEBRAUCHT» und daneben «gebraucht von\n     weasyprint»? ja / nein. Wenn nein: die Zeile woertlich — dann ist unsere\n     Korrektur nicht vollstaendig, und das ist der wichtigste Satz dieses\n     Auftrags.\n\nV3 · Steht bei `pysolar` weiter «KANN WEG»? ja / nein. Diese Gegenprobe ist\n     noetig: ein Werkzeug, das nach der Korrektur NIE mehr eine Loeschung\n     nennt, waere von einem richtigen nicht zu unterscheiden.\n\nV4 · Meldet der Lauf Pakete ohne lesbare `METADATA` («NICHT NACHGESEHEN»)?\n     Wenn ja: wieviele und welche. Solange eines darin steht, faellt\n     absichtlich kein Freispruch.\n\nV5 · Wie gross ist `libs/` insgesamt (in MB), und wie gross sind die zwei\n     Ordner `pysolar*` und `pyphen*`? `du -sh` genuegt. Die Zahl traegt den\n     Entscheid des Owners, ob geloescht wird.\n\n\nWAS AUSDRUECKLICH NICHT GETAN WERDEN SOLL\n\n* NICHTS LOESCHEN. Auch nicht `pysolar`, obwohl der Lauf es anbietet — das\n  ist ein Entscheid des Owners und liegt ihm vor.\n* Keine Installation, kein `pip`, keine Maschinen-Aenderung.\n* Keine absoluten Pfade mit Benutzernamen (REGEL 3).\n* Kein Testlauf noetig: das hier ist ein Befehl, keine Suite.",
+  "erstellt": "2026-09-22T21:20:32Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "NICHTS LOESCHEN — auch nicht pysolar; der Entscheid gehoert dem Owner.",
+      "Keine Installation, kein pip, keine Maschinen-Aenderung.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
+      "Ein Befehl, kein Testlauf. Dauert Sekunden."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Die Ausgabe von `python3 tools/libs_pruefen.py`, woertlich, Pfade durch <libs> ersetzt.",
+    "V2 Steht bei pyphen «WIRD GEBRAUCHT» samt «gebraucht von weasyprint»? ja/nein (bei nein: die Zeile woertlich).",
+    "V3 Steht bei pysolar weiter «KANN WEG»? ja/nein.",
+    "V4 Meldet der Lauf Pakete ohne lesbare METADATA? wieviele, welche.",
+    "V5 Groesse von libs/ gesamt sowie der Ordner pysolar* und pyphen* (du -sh).",
+    "V6 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ],
+  "rang": 5
+}
