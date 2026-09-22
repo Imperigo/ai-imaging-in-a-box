@@ -48,9 +48,9 @@ struct Uebergabestrecke: View {
                         .frame(height: 1)
                     Rectangle()
                         .fill(Uebergabestrecke.gruen)
-                        .frame(width: weg * ort + Uebergabestrecke.marke / 2, height: 2)
+                        .frame(width: weg * CGFloat(ort) + Uebergabestrecke.marke / 2, height: 2)
                     markeAnsicht
-                        .offset(x: weg * markenort)
+                        .offset(x: weg * CGFloat(markenort))
                 }
                 .frame(height: Uebergabestrecke.marke)
             }

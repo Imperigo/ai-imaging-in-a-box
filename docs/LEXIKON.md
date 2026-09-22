@@ -4975,6 +4975,40 @@ Tabelle lädt sonst gar nicht.
 
 **Tür (Anmeldung der Oberfläche)** — Die Anmeldung mit Kennwort, die die Visbox-Oberfläche schützt, sobald sie im Heimnetz erreichbar ist. Unangemeldet antwortet sie nur mit «nicht angemeldet» — ausser auf dem einen Weg zum Koppeln.
 
+**Native App gegen Webseite** — Eine native App ist ein Programm, das eigens für ein Gerät geschrieben und dort installiert wird; eine Webseite läuft im Browser. Die App kommt an alles heran, was das Gerät kann — beim iPad etwa an den Doppeltipp des Stifts —, braucht aber einen Mac zum Übersetzen. *In diesem Projekt seit dem 22.09.2026:* Die iPad-Fassung von Visbox ist eine eigene App.
+
+**Swift** — Die Programmiersprache von Apple für Apps auf iPad, iPhone und Mac. *In diesem Projekt* ist die iPad-App in Swift geschrieben; ihr Kern lässt sich auch unter Linux prüfen.
+
+**SwiftUI** — Apples Baukasten für Bildschirme in Swift: Man beschreibt, was zu sehen ist, und das System zeichnet es. Die Ansichten der iPad-App sind in SwiftUI gebaut.
+
+**PencilKit** — Apples Baukasten für das Zeichnen mit dem Apple Pencil: Strich, Druck, Radierer, Zurück. Die Zeichenfläche der iPad-App steht darauf.
+
+**Xcode** — Apples Werkzeug auf dem Mac, mit dem Apps übersetzt und aufs Gerät gebracht werden. Ohne Mac gibt es kein Xcode — darum übersetzt in diesem Projekt eine Prüfstrecke auf GitHub die App.
+
+**Swift Playgrounds** — Eine Apple-App, mit der man auf dem iPad selbst kleine Apps bauen und starten kann, ohne Mac. Die Visbox-App ist so angelegt, dass sie sich in Xcode **und** in Swift Playgrounds öffnen lässt.
+
+**App-Paket (.swiftpm)** — Die Ablageform einer App, die Xcode und Swift Playgrounds beide verstehen: ein Ordner mit einer Beschreibung der App und ihren Quelltexten. *In diesem Projekt:* `ipad/Visbox.swiftpm`.
+
+**Bundle-Kennung** — Der eindeutige Name, unter dem eine App bei Apple und auf dem Gerät geführt wird, in umgekehrter Adressform (etwa «ch.beispiel.visbox»). Zwei Apps mit derselben Kennung sind für das Gerät dieselbe. *In diesem Projekt* steht dort ein Platzhalter, den der Owner vor dem ersten Aufspielen ersetzt.
+
+**Simulator** — Ein nachgebildetes iPad auf dem Mac, auf dem eine App laufen kann, ohne dass ein echtes Gerät angeschlossen ist. Die Prüfstrecke übersetzt die App dafür — das beweist, dass sie baut, nicht, dass sie am Gerät richtig läuft.
+
+**Prüfstrecke (auf GitHub)** — Ein automatischer Ablauf, der bei jedem Hochladen die Proben fährt und bei der iPad-App auf einem Mac übersetzt. Rot heisst: etwas ist kaputt, und derjenige, der hochgeladen hat, erfährt es sofort.
+
+**Bonjour (mDNS)** — Apples Verfahren, mit dem sich Geräte im selben Netz gegenseitig finden, ohne dass jemand eine Adresse eintippt: Ein Gerät ruft «wer bietet Dienst X?», das passende antwortet. *In diesem Projekt* antwortet der Rechner, und das iPad sucht.
+
+**Rundruf** — Eine Nachricht, die an alle Geräte im Netz zugleich geht statt an eines. *In diesem Projekt* ist der Rundruf die Art, wie sich der Rechner dem iPad bekannt macht (Owner-Entscheid 27), selbst geschrieben, ohne fremden Baustein.
+
+**App Transport Security** — Die Regel von iOS, dass eine App nur verschlüsselt mit Servern spricht. Für Geräte im eigenen Heimnetz lässt sie sich gezielt lockern — die Visbox-App tut genau das und nichts darüber hinaus.
+
+**Wegtafel** — Die Liste, in der der Server nachschlägt, welcher Programmteil eine Anfrage an einen bestimmten Weg (etwa «/api/skizze») beantwortet. Eine Tafel statt einer Kette von Wenn-dann-Abfragen: Neue Wege kommen dazu, ohne dass zwei Leute an derselben Stelle schreiben, und ein Wächter kann die Wege der App gegen die des Servers halten.
+
+**Parkfach** — Der Ort auf dem iPad, an dem eine Skizze wartet, die noch nicht beim Rechner angekommen ist. Jede Skizze geht zuerst dorthin und von dort hinaus; ist der Rechner nicht erreichbar, bleibt sie liegen und geht später von selbst. Eine Skizze, bei der unklar ist, ob sie ankam, geht nicht von selbst ein zweites Mal — das entscheidet ein Mensch.
+
+**Schlüsselbund** — Der geschützte Speicher von iPad und Mac für Kennwörter. *In diesem Projekt* liegt dort das Kennwort der Kopplung — nicht in den gewöhnlichen Einstellungen, wo es eine frühere Fassung abgelegt und wieder verloren hatte.
+
+**Doppelsendeschutz** — Eine Vorkehrung, dass dieselbe Skizze nicht zweimal ankommt, wenn das iPad nach einem Abbruch noch einmal sendet: Jede Skizze trägt einen Schlüssel, und der Server erkennt ihn wieder. Derselbe Schlüssel mit einer **anderen** Zeichnung wird abgewiesen.
+
 **Erreichbarkeit einer Schwelle (Deckel)** — Die Frage, ob ein Messwert eine Schwelle
 unter den gegebenen Umständen **überhaupt** erreichen kann — unabhängig davon, wie gut das
 Geprüfte ist. Liegt die beste erreichbare Zahl unter der Schwelle, misst die Prüfung nicht
@@ -5508,6 +5542,7 @@ keine Aussage.*
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-22 | Ergaenzt aus dem Bau der iPad-App: **Native App gegen Webseite**, **Swift**, **SwiftUI**, **PencilKit**, **Xcode**, **Swift Playgrounds**, **App-Paket (.swiftpm)**, **Bundle-Kennung**, **Simulator**, **Pruefstrecke (auf GitHub)**, **Bonjour (mDNS)**, **Rundruf**, **App Transport Security**, **Wegtafel**, **Parkfach**, **Schluesselbund**, **Doppelsendeschutz** |
 | 2026-09-22 | Ergaenzt aus dem Grundlagenblatt «Wie man eine Software von Grund auf baut» (Anhang B): **Anforderung**, **Randbedingung**, **Erfolgskriterium**, **Kleinste Fassung, die ein Erfolg waere**, **Kippstelle**, **Schnittstelle**, **Blender**, **Versionsverwaltung**, **Sitzungsprotokoll**, **Die dritte Antwort**, **Ersatzwert**, **Einbau**, **Produktweg gegen direkten Aufruf**, **Worker**, **HomeStation**, **Durchsicht**, **Open Font License (OFL)**, **Tuer (Anmeldung der Oberflaeche)** |
 | 2026-09-22 | Ergaenzt aus der sechsten Runde: **Richtungsgrenze**, **Wirkungslos (im Bericht)**, **Zwillingsansicht**, **Registereintrag** |
 | 2026-09-22 | Ergaenzt aus der fuenften Runde: **Kameraweg (abgeleitet, vorgegeben, Rueckfall)**, **Bildpunkt-Pruefsumme gegen Datei-Pruefsumme**, **Zufallsstreuung einer Rangkorrelation**, **Die erste Zustellung zaehlt**; nachgefuehrt: **Gelaendeangabe** (Owner-Entscheid) |

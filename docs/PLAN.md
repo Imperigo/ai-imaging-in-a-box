@@ -7279,7 +7279,28 @@ Bekannt und ausdrücklich nicht erledigt:
 
 **Offen, und bei wem es liegt**
 
-- [ ] **Owner:** Hineinskizzieren auf dem Vorgabemodell sperren oder mit Vorbehalt rechnen?
+- [x] **Owner:** Hineinskizzieren auf dem Vorgabemodell sperren oder mit Vorbehalt rechnen?
+      *(Entschieden: rechnen mit Hinweis, E24; gebaut in Sitzung 67)*
 - [ ] **Kern:** `augenhoehe`/`bias_grad`/`kamera_modus` wirken nur auf «abgeleitet»;
       Abholer-Rahmung auf anderen Wegen; Richtung + Standpunkt an `seams` aus Homeworker
       und Abholer; positive Seite der Richtungsmeldung.
+
+## Sitzung 67 — 22.09.2026 · Eine eigene iPad-App, ein Grundlagenblatt, acht Antworten von drüben
+
+**Erledigt**
+
+- [x] Hinweis «Skizze nicht angekommen» beim Hineinskizzieren (E24).
+- [x] Grundlagenblatt «Wie man eine Software von Grund auf baut» — erster Punkt, Anhang B.
+- [x] 20 Fragen beantwortet; Entscheide Nr. 21–34 (iPad), E23 und E24 (Visbox), OFL-Ausnahme.
+- [x] Cloud: 8 von 11 Aufträgen drüben beantwortet vorgefunden und übertragen; Sammelblock.
+- [x] Gerüst der iPad-App, auf dem Mac übersetzt.
+- [x] Welle 1 der App gebaut (Zwischenstand `54f28b9`, nicht auf `main`).
+
+**Offen, und bei wem es liegt**
+
+- [ ] **Kern/App (Welle 2):** Mängel aus der Durchsicht (Zeichnen: Zurück nach Drehen;
+      Verbindung: Import, Übergabe-Phasen, stiller leerer Rumpf), Verdrahtung der Ansichten,
+      Doppelsendeschlüssel in der App, Score ohne Urteil, Umbenennen während eines Laufs.
+- [ ] **Kern:** `interior` aus KosmoOrbit annehmen; Leerlauf-Riegel nach deren E79.
+- [ ] **Owner:** Cloud-Sammelblock hinüberreichen; Bundle-Kennung vor dem Aufspielen ersetzen;
+      erste Probe am iPad.

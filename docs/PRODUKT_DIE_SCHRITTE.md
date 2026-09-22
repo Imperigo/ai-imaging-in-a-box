@@ -84,7 +84,7 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 | 2 | **Kamera** | **gebaut und bedienbar** | Seit 21.09. klicken Sie Standpunkt und Blickrichtung im Grundriss an. |
 | 3 | **Blender-Render** | **gebaut** | Läuft nur, wo Blender liegt — also bis heute nur auf der Werkstattmaschine. |
 | 4 | **KI-Bild** | **gebaut** | Braucht eine Grafikkarte. Der Vorgabeweg lief dort drei Wochen lang gar nicht (repariert 21.09.). |
-| 5 | **hineinzeichnen** | **halb gebaut** | Zeichnen geht seit 21.09. Rechnen nicht — unser Modell nimmt kein Bild an. |
+| 5 | **hineinzeichnen** | **gebaut, rechnet mit Hinweis** | Seit 22.09. lässt sich eine Skizze rechnen. Auf dem Vorgabemodell kommt sie gemessen nicht an — das Bild sagt es dazu. Die iPad-App entsteht. |
 | 6 | **neues Bild** | **nicht gebaut** | Folgt aus 5. |
 | 7 | **zurück ins Modell** (Kosmo baut nach) | **nicht gebaut** | Neu seit 21.09. Braucht die Differenz aus Schritt 6. |
 
@@ -104,6 +104,23 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 ---
 
 ## Was zuletzt dazugekommen ist
+
+### 22.09.2026 · Die iPad-App entsteht — und sie übersetzt auf einem Mac
+
+* **Eine eigene App statt einer Webseite** (Ihr Entscheid). Sie heisst Visbox, wird später
+  KosmoSketch, und öffnet sich in Xcode und in Swift Playgrounds.
+* **Das Gerüst übersetzt** — geprüft auf einem Mac bei GitHub, weil es hier keinen gibt.
+* **Gebaut, aber noch nicht zusammengesteckt:** Zeichnen mit Ebenen, 20 Schritten zurück und
+  Doppeltipp-Radierer; Leiste, Prüfzeichen, Vergleich, Varianten, Teilen; Suche im Heimnetz,
+  Koppeln mit Zahl, Parken und Nachsenden. Zwei dieser Teile hat die Durchsicht
+  zurückgewiesen, sie werden nachgebessert.
+* **Der Rechner kann jetzt mehr:** eine Skizze rechnen lassen (mit dem Hinweis, wenn sie
+  nicht ankommt), einen Lauf abbrechen, Bilder umbenennen, schnell entwerfen, Varianten.
+* **Ein Grundlagenblatt** «Wie man eine Software von Grund auf baut» liegt als erster
+  wichtiger Punkt bereit.
+
+**Ausprobieren am iPad** können nur Sie — eine Anleitung folgt, sobald die App fertig
+zusammengesteckt ist.
 
 ### 22.09.2026 · Was angenommen wird, muss auch wirken
 
