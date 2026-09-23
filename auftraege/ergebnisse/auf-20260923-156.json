@@ -1,0 +1,21 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260923-156",
+ "status": "ok",
+ "beendet": "2026-09-23T19:30:00Z",
+ "stand": "3711221",
+ "geprueft": "Beide Klone angesehen, beide loesen die im Auftrag vorgesehene STOPP-Regel aus. Nichts gezogen, nichts umgeschaltet, kein Sicherungszweig angelegt, nichts geloescht.",
+ "kurzantwort": "K1 STOPP: der KosmoPrepare-Arbeitsbaum ist nicht leer (eine geaenderte Datei aus B113). K2 nicht umgeschaltet: der KosmoPublish-Zweig traegt 21 eigene Commits, 20 davon schreibt der naechtliche Bildtest selbst. Nebenbei: origin/main von KosmoPrepare traegt den B113-Umbau (kein festes Kennwort mehr) nicht — er liegt nur ungesichert bei uns.",
+ "befunde": {
+  "K1": "STOPP bei Schritt 1. `git status --short` zeigt ` M integrations/odysseus/register_in_odysseus.sh` (9 Zeilen hinzu, 3 weg, geaendert 19.09.2026 09:05). Inhalt: der B113-Umbau — das feste Backend-Kennwort als Vorgabe entfaellt, statt ODY_PASS wird KOSMO_ODYSSEUS_PASSWORD verlangt (ODY_PASS nur noch mit Warnung). Nie committet. Stand: main 1 voraus / 5 zurueck gegenueber origin/main (3bf8220, nach fetch). main steht auf a6584ca, kein Sicherungszweig angelegt. libs_pruefen.py (ALTE Fassung, unveraendert) meldet woertlich: «[KANN WEG]  pyphen 0.17.2 — GPL-2+ / LGPL-2.1+ / MPL-1.1 — keine davon im Mandat Q29», darunter die rm-Zeile fuer libs/pyphen*, «[nicht da]  pysolar», exit=0. Der gefaehrliche Rat steht also weiter da. Suite nicht gefahren (erst nach dem Ziehen sinnvoll). Gegenprobe: `git diff origin/main -- integrations/odysseus/register_in_odysseus.sh` zeigt dieselben 9/3 Zeilen — origin/main traegt den B113-Umbau NICHT, dort steht weiter das feste Backend-Kennwort als Vorgabe. Die Aenderung existiert nur in diesem Arbeitsbaum.",
+  "K2": "Zweig claude/kosmo-orbit-v010-build-mcng0k, Arbeitsbaum sauber, 21 Commits nicht auf origin/main, 184 zurueck. Nicht umgeschaltet, nichts gezogen. Von den 21 tragen 20 den Autor des Owner-Kontos und heissen «Visueller Test <Datum>» (taeglich 03:30, zuletzt heute 07:18 nach dem Hochfahren) — sie stammen vom Benutzer-Zeitgeber kosmopublish-visual-test, der tools/visual_test_nightly.sh im Klon faehrt. 1 Commit von Claude.",
+  "K3": "K1: Schritt `git status --short` — Meldung woertlich ` M integrations/odysseus/register_in_odysseus.sh`. K2: keine Meldung, die Zahl 21 statt 0 hat das Umschalten verhindert.",
+  "K4": "Solange der naechtliche Bildtest auf diesem Zweig committet, wird die Zahl eigener Commits nie 0 — die Bedingung aus K2 kann von selbst nie eintreten. Wer entscheidet, ob der Bildtest auf main umzieht, entscheidet damit auch K2."
+ },
+ "bemerkungen": "Vorschlag fuer den naechsten Auftrag (Entscheid bei euch bzw. beim Owner): K1 — die B113-Aenderung in register_in_odysseus.sh entweder auf einen eigenen Zweig committen oder bestaetigen, dass origin/main sie schon anders traegt; danach laeuft K1 wie beschrieben. K2 — die 20 Bildtest-Commits sind reine Tagesberichte; ob sie mit auf main sollen oder der Zeitgeber kuenftig nicht mehr committet, ist eure Wahl.",
+ "umgebung": {
+  "geraet": "HomeStation",
+  "gpu_last": "keine"
+ },
+ "fehler": null
+}
