@@ -4924,12 +4924,41 @@ Verschicken selbst passiert war.*
 Prüfung «vorne und hinten vertauscht» meldet: zwei Zufallsstreuungen, also zwei geteilt
 durch die Wurzel aus der Punktzahl minus eins. Darüber heisst die Meldung «kein messbarer
 Zusammenhang». *In diesem Projekt seit dem 22.09.2026* — vorher genügte jedes negative
-Vorzeichen, auch eines in der Grösse des Zufalls.
+Vorzeichen, auch eines in der Grösse des Zufalls. **Seit dem 23.09.2026 gilt sie in beide
+Richtungen:** Auch die Bestätigung «zeigt in die erwartete Richtung» steht erst über der
+Grenze; darunter heisst es auf beiden Seiten «die Richtung ist nicht bestimmbar». Vorher
+las die eine Seite eine Richtung aus Rauschen, und nur die andere war gebunden.
 
 **Wirkungslos (im Bericht)** — Eine Angabe, die angenommen, am Bild aber nicht benutzt
 wurde. Der Bericht sagt dann ausdrücklich warum, statt eine Zahl hinzuschreiben, die nichts
 bewirkt hat. *In diesem Projekt seit dem 22.09.2026 beim Bildausschnitt:* Auf den
 Kamerawegen «vorgegeben» und «Rückfall» steht dort keine Zahl mehr, sondern der Grund.
+*Seit dem 23.09.2026 auch bei Augenhöhe, Winkel (Bias) und Kameramodus* — mit einem
+Unterschied: Dort steht der Grund nur, wenn der Wert **bestellt** war; ein Vorgabewert, den
+niemand verlangt hat, ist nicht «wirkungslos bestellt».
+
+**Standpunkt zweimal bestellt** — Eine Bestellung, die den Blick auf das Gebäude auf
+zwei Arten zugleich festlegt: mit einer Himmelsrichtung (daraus rechnet die Bibliothek
+einen Standpunkt) **und** mit einem Standpunkt von Hand. Bis Runde 6/7 gewann still der
+Standpunkt von Hand. Seither wird die Bestellung abgewiesen, an jeder Stelle — Kette,
+seams und HomeStation. *Zwei Quellen für dieselbe Sache werden nicht geordnet, sondern
+zurückgegeben.*
+
+**Bias (Winkel einer Über-Eck-Ansicht)** — Um wie viel Grad eine schräge Ansicht gegen die
+Hauptachse des Gebäudes gedreht ist. Er regelt, wie viel man von den beiden sichtbaren
+Fassaden sieht. Er wirkt nur, wenn der Standpunkt aus einer Himmelsrichtung abgeleitet
+wird.
+
+**Nicht gerahmt** — Die Angabe im Urteil, dass für ein Bild **keine** Rahmung gewirkt hat,
+weil der Standpunkt von Hand kam. Vorher stand dort die Vorgabe 0,70, als hätte sie
+gegolten. *«Nicht gerahmt» ist etwas anderes als «nicht bekannt»:* Das eine sagt der
+Runner ausdrücklich, das andere heisst, ein alter Bericht kennt das Feld nicht.
+
+**Listenlage** — Die drei Zustände einer Liste, die die App vom Rechner bekommt: **nicht
+geliefert** (das Feld fehlt), **nicht lesbar** (ein Eintrag ist Unsinn) und **gelesen**.
+Dazu die Regel **ganz oder gar nicht**: Eine Liste wird ganz gelesen oder gilt als nicht
+gelesen — sie wird nie still kürzer. Eine kürzere Liste sähe aus wie «es gibt weniger»,
+und das wäre gelogen.
 
 **Zwillingsansicht** — Eine Kameraansicht, deren Soll-Tiefenkarte genau gleich aussieht
 wie die einer anderen (etwa zwei Über-Eck-Ansichten eines Quaders). Sie wird nicht neu
@@ -5613,6 +5642,7 @@ keine Aussage.*
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-23 | Ergaenzt aus Runde 7: **Standpunkt zweimal bestellt**, **Bias (Winkel einer Ueber-Eck-Ansicht)**, **Nicht gerahmt**, **Listenlage** (mit «ganz oder gar nicht»); nachgefuehrt: **Richtungsgrenze** (gilt in beide Richtungen), **Wirkungslos (im Bericht)** (auch Augenhoehe, Bias, Kameramodus) |
 | 2026-09-23 | Ergaenzt aus der Welle 2c: **Mitgesandte Kamera**, **Neuzentrierung**, **Gleichwertige Mutation**, **Abschrift-Probe**, **Zweiter Zustand (eines Entwurfsblatts)**, **Owner-Entscheid offen (Schild)** |
 | 2026-09-23 | Ergaenzt aus der Welle 2b: **Blattunterlage**, **Darauf skizzieren**, **Ablageplan**, **Fachzaehlung**, **Aufraeumfehler**, **Zug (Stiftzug)**, **Beruehrungsart**, **Deckungsbild**, **Einbausperre**, **Reine Absicherung**, **Bereich der Anmeldung (realm)**, **Pruefsumme im Dateinamen**; berichtigt: **Eingangsbild** (gestreckt wird die Skizze, nicht die Unterlage) |
 | 2026-09-23 | Ergaenzt aus der Welle 2 der iPad-App: **Identitaet einer Ansicht**, **Treffertest**, **Unterlage (einer Skizze)**, **Eingangsbild (des Nachrenders)**, **Nachholen (nach einer Schreibkollision)**, **Handlungsquittung**, **Ebenen-Reihe**, **Seitenfeld**, **Laufwaechter**, **Aufklappbarer Vorbehalt**, **Rumpffehler**, **Unicode-Zeilentrenner**, **Signifikante Stellen**, **Unicast**, **Bekanntes, abgewiesenes Feld**, **Innenraum-Bestellung**; nachgefuehrt: **Kastenmittel** (deckungsgewichtet), **Parkfach** (ungewisse Skizzen gehen mit Schluessel von selbst noch einmal) |
