@@ -7298,9 +7298,41 @@ Bekannt und ausdrücklich nicht erledigt:
 
 **Offen, und bei wem es liegt**
 
-- [ ] **Kern/App (Welle 2):** Mängel aus der Durchsicht (Zeichnen: Zurück nach Drehen;
+- [x] **Kern/App (Welle 2):** Mängel aus der Durchsicht (Zeichnen: Zurück nach Drehen;
       Verbindung: Import, Übergabe-Phasen, stiller leerer Rumpf), Verdrahtung der Ansichten,
       Doppelsendeschlüssel in der App, Score ohne Urteil, Umbenennen während eines Laufs.
-- [ ] **Kern:** `interior` aus KosmoOrbit annehmen; Leerlauf-Riegel nach deren E79.
+      *(Sitzung 68, Wellen 2–2c)*
+- [x] **Kern:** `interior` aus KosmoOrbit annehmen; Leerlauf-Riegel nach deren E79.
+      *(Sitzung 68; der Riegel war nach dem 01.09.2026 schon auf Grafikspeicher umgestellt —
+      Rest an local, siehe unten)*
 - [ ] **Owner:** Cloud-Sammelblock hinüberreichen; Bundle-Kennung vor dem Aufspielen ersetzen;
-      erste Probe am iPad.
+      erste Probe am iPad. *(fortgeführt in Sitzung 68: Block vom 23.09., Abnahmeblatt)*
+
+## Sitzung 68 — 23.09.2026 · Drei Wellen an der App, und zwei Sperren, die keiner sah
+
+**Erledigt**
+
+- [x] Welle 2: Mängel der Welle 1, Verdrahtung, Doppelsendeschlüssel, Unterlage am Server,
+      Nachholen statt Sperre, `interior` angenommen (49 Proben, Mac ohne Warnung).
+- [x] Welle 2b: die Unterlage in der App; `model.ifc` wird angenommen und umgewandelt
+      (64 Proben, Mac ohne Warnung, 172 Kernproben).
+- [x] Welle 2c: kein Satz über ein Bild, das es nicht gibt; die reale Innenbestellung trägt
+      ihren Vermerk; eine unlesbare Bestellung hält nur sich selbst auf (45 Proben).
+- [x] Entwurfsfläche nachgezogen (N1–N11) und als Fassung 6 veröffentlicht.
+- [x] Anleitung und Abnahmeblatt für die erste Probe am iPad.
+- [x] Verteilt: `auf-151` (local), `auf-152` (cloud), `auf-153` (ui); Blöcke vom 23.09.
+- [x] `auf-141` und `auf-144` von `qa` auf `frage` (der Runner beantwortet `qa` selbst).
+
+**Offen, und bei wem es liegt**
+
+- [ ] **Owner:** Abnahmeblatt am iPad; Cloud-Block vom 23.09. hinüberreichen; zwei Schilder
+      «Owner-Entscheid offen» (Beschriftung des Vergleichs, das Wort «offen»).
+- [ ] **Kern:** Satz am Laufzettel für eine dauerhaft unlesbare Bestellung;
+      `eigene_quelle.lies_auftrag` fängt `SzenenError` nicht; stille `compactMap` in der
+      Mappe der App; die App liest `unterlage_hinweis` nicht.
+- [ ] **Kern-Reste aus Runde 6:** `augenhoehe`, `bias_grad`, `kamera_modus` nur auf
+      «abgeleitet»; Rahmung des Abholers auf den anderen Wegen; Richtung und Standpunkt
+      zugleich an `seams`; positive Seite der Richtungsmeldung.
+- [ ] **local:** `auf-139`, `auf-141`, `auf-144`, `auf-151`. **cloud:** `auf-142`, `auf-133`,
+      `auf-129`, `auf-152`. **ui:** neun Aufträge, zuletzt `auf-153`.
+

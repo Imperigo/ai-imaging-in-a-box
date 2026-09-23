@@ -1,0 +1,31 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "ui",
+  "auftrag_id": "auf-20260923-153",
+  "art": "frage",
+  "beschreibung": "Innenbestellungen kommen jetzt durch: der Satz INNENANSICHT BESTELLT in verdict.reason, das Feld innenansicht je Kamera und die Umwandlungswarnungen muessen am Bild sichtbar sein.",
+  "anweisung": "=== ZWEI SAETZE UND EINE WARNUNG IM ERGEBNIS — ZEIGT EURE OBERFLAECHE SIE? ===\n\nSeit dem 23.09.2026 nimmt unsere Seite Innenraum-Bestellungen an (vorher wurde jede\nabgewiesen). Daraus entstehen drei Dinge im Ergebnis, die ein Mensch drueben sehen muss,\nsonst sieht ein Innenbild aus wie ein missratenes Aussenbild:\n\n  P1 `verdict.reason` beginnt bei einer Innenbestellung mit eurer Kameraliste mit dem Satz\n     «INNENANSICHT BESTELLT … Standpunkte von KosmoOrbit … Raum: nicht von uns gewaehlt».\n     Bitte ungekuerzt zeigen, nicht nur die erste Zeile.\n  P2 Jedes Kameraurteil traegt das Feld `innenansicht` (bei Aussenansichten null). Ist es\n     gesetzt, gehoert «Innenansicht» sichtbar an das Bild — als Wort, nicht nur als\n     Symbol.\n  P3 `befund.umwandlung.warnungen` (z. B. «Neuzentrierung empfohlen, nicht befolgt» bei\n     einem Modell weit vom Ursprung): gehoert als Vorbehalt neben das Bild, nicht in ein\n     Protokoll, das niemand oeffnet.\n\nWAS ZURUECKKOMMEN SOLL: je Punkt eingebaut (Datei/Ansicht und Commit), abgelehnt (mit\nGrund) oder nicht entscheidbar (was fehlt). Eine gemeldete Machbarkeit ist kein Einbau.",
+  "erstellt": "2026-09-23T01:41:35Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "P1 verdict.reason ungekuerzt: eingebaut / abgelehnt / nicht entscheidbar.",
+    "P2 Wort «Innenansicht» am Bild bei gesetztem innenansicht.",
+    "P3 befund.umwandlung.warnungen als Vorbehalt neben dem Bild."
+  ],
+  "rang": 9
+}

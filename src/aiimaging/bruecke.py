@@ -177,8 +177,10 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
 
     Raises:
         BrueckenError: Verzeichnis fehlt, Laufzettel oder Szene fehlen oder sind
-            unlesbar. Alles, was sich sinnvoll melden lässt, wird gemeldet statt geworfen
-            — geworfen wird nur, wenn es gar nichts zu lesen gibt.
+            unlesbar — auch dann, wenn :func:`aiimaging.kosmo_szene.lies_szene` die Szene
+            als unbrauchbar abweist (seit 23.09.2026 hier umgesetzt, vorher entkam deren
+            ``SzenenError``). Alles, was sich sinnvoll melden lässt, wird gemeldet statt
+            geworfen — geworfen wird nur, wenn es gar nichts zu lesen gibt.
     """
     ordner = Path(verzeichnis)
     if not ordner.is_dir():
@@ -210,7 +212,16 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
     # Rechner. Wir nehmen die Datei NEBEN dem Laufzettel, denn nur die liegt sicher hier.
     szene_pfad = ordner / DATEI_SZENE
     roh = _lies_json(szene_pfad, "Szene (render-scene.json)")
-    szene = kosmo_szene.lies_szene(roh)
+    # EINE UNLESBARE SZENE IST EIN FEHLER DIESES AUFTRAGS — nicht des Durchgangs
+    # (Durchsicht 23.09.2026). `lies_szene` wirft `SzenenError`, wenn es nichts zu
+    # rendern gibt (kein `geometry.path`, eine Kamera ohne `up_axis`), und
+    # `abholer.hole_einen` faengt nur `BrueckenError`. Nachgestellt: Ein einziger solcher
+    # Auftrag warf aus `hole_einen` heraus, und mit ihm `durchgang` und
+    # `tools/abholen.py` — kein anderer Auftrag der Ablage wurde mehr angesehen.
+    try:
+        szene = kosmo_szene.lies_szene(roh)
+    except kosmo_szene.SzenenError as fehler:
+        raise BrueckenError(f"Szene (render-scene.json) nicht lesbar: {fehler}") from fehler
     # Die Vertragsvorgaben wandern NICHT in `warnungen`. Sie treffen jeden Auftrag
     # gleich; unter die Warnungen gemischt haben sie am 26.08.2026 nachweislich die
     # auftragsspezifischen verdraengt (`kosmo_szene`, Feld `vertragsvorgaben`).

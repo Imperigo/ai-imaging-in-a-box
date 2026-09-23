@@ -113,6 +113,20 @@ public struct Ebenenstapel: Equatable, Sendable {
     /// nicht gezeichnet haben will.
     public var aktiveIstZeichenbar: Bool { aktiveEbene.sichtbar }
 
+    /// Ob auf der gewählten Fläche **der Stift das Blatt nicht schieben soll** — nur der
+    /// Finger (Entscheid Nr. 4).
+    ///
+    /// Auf einer ausgeblendeten Ebene ist das Zeichnen aus; der Stift fiele dann dem
+    /// Schieben zu, und wer zeichnen will, verschöbe das Blatt (Befund Durchsicht,
+    /// 22.09.2026). **Ausser mit der Hand:** Die ist genau dafür da, dass auch der Stift
+    /// schiebt (Durchsicht der Welle 2b, 23.09.2026 — bis dahin nahm die App dem Stift das
+    /// Schieben auch mit der Hand, gegen ihren eigenen Kommentar). Auf einer sichtbaren
+    /// Ebene zeichnet der Stift; die Regel sagt dort `false` und lässt es PencilKit.
+    /// Was die Fläche daraus macht (`Leinwand.stiftSchiebtNicht`), ist am Gerät unbestätigt.
+    public func stiftSchiebtNicht(mit werkzeug: Zeichenwerkzeug) -> Bool {
+        !aktiveIstZeichenbar && werkzeug != .hand
+    }
+
     public var kannAnlegen: Bool { ebenen.count < Ebenenstapel.hoechstensEbenen }
     public var kannEntfernen: Bool { ebenen.count > 1 }
 
@@ -516,6 +530,50 @@ public struct Schrittzaehler: Equatable, Sendable {
     /// «7/20» — oder «?/20», wenn nicht gezählt.
     public var anzeige: String {
         "\(zurueck.map { String($0) } ?? "?")/\(Schrittzaehler.tiefe)"
+    }
+}
+
+/// Der Zug des Stifts: **auf welcher Ebene der Stift gerade aufsitzt — und wann das nicht
+/// mehr gilt.**
+///
+/// Solange ein Zug offen ist, wird das Bild einer Ebene mit abgedeckten Strichen nicht bei
+/// jeder Änderung gelesen, sondern am Ende des Zugs (`Zeichenstand.zugBeendet`).
+///
+/// **Befund Durchsicht der Welle 2b (23.09.2026):** Kam das Ende eines Zugs nie (ein
+/// abgebrochener Zug), blieb er offen — und dann galten auch «Zurück» und «Vor» über die
+/// Knöpfe als «im Zug»: Ihr Bild wurde nur vorgemerkt, und die Ebenentafel zeigte bis zum
+/// Senden einen alten Stand. Darum schliesst jeder Weg **ohne Stift** (Zurück, Vor, eine
+/// andere Ebene wählen, eine Ebene löschen) einen offenen Zug (`ohneStift`). Dass die App
+/// diese Wege dafür ruft, steht in `Zeichenstand`; am Gerät unbestätigt.
+public struct Zugstand: Equatable, Sendable {
+    /// Die Ebene, auf der ein Zug offen ist — `nil`: keiner.
+    public private(set) var auf: UUID?
+
+    public init() {}
+
+    /// Der Stift setzt auf `ebene` an. Ein Zug, der noch offen war, gilt als vorbei.
+    public mutating func beginnt(_ ebene: UUID) {
+        auf = ebene
+    }
+
+    /// Das Ende eines Zugs auf `ebene`. **Das Ende einer anderen Ebene schliesst den offenen
+    /// Zug nicht** — es gehört zu einem Zug, der schon vorbei ist.
+    public mutating func endet(_ ebene: UUID) {
+        if auf == ebene { auf = nil }
+    }
+
+    /// Ein Weg ohne Stift: Ein offener Zug ist vorbei, wie immer er endete. Gibt die Ebene
+    /// zurück, auf der er offen war — dort steht das Bild vielleicht noch aus.
+    @discardableResult
+    public mutating func ohneStift() -> UUID? {
+        let war = auf
+        auf = nil
+        return war
+    }
+
+    /// Ob eine Änderung auf `ebene` mitten in einem Zug kommt.
+    public func imZug(_ ebene: UUID) -> Bool {
+        auf == ebene
     }
 }
 

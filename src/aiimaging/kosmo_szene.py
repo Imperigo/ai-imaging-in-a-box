@@ -655,7 +655,7 @@ def wert_oder(quelle: dict, schluessel: str, ersatz):
 
 
 def _lies_interior(roh, *, kameras, fmt: str, warnungen: list, maengel: list):
-    """``interior`` → unsere Innenansicht (``{"raum", "art"}``) oder ``None``.
+    """``interior`` → ``(innenraum, bestellt)``: was wir rechnen, und was bestellt war.
 
     **Der Befund** (22.09.2026, Antworten auf auf-104, auf-31 und auf-91, übertragen am
     selben Tag): KosmoOrbit sendet seit dem 19.09.2026 ``interior: {rooms: "auto"}``
@@ -687,18 +687,29 @@ def _lies_interior(roh, *, kameras, fmt: str, warnungen: list, maengel: list):
     und Räume gibt es nur in der IFC — aus einer glb lässt sich kein Raumbegriff gewinnen.
     Beide Fälle bewacht in ``tests/test_interior_bestellung.py``.
 
+    **Was bestellt war, reist in beiden Fällen weiter** (Durchsicht 23.09.2026). Bis
+    dahin kehrte der Zweig mit Kameraliste mit ``None`` zurück, und die Tatsache «die
+    Bestellung sagte ``interior``» ging an genau der Form verloren, in der KosmoOrbit
+    **jede** Innenbestellung sendet (auf-91 V1: immer mit benannten Kameras). Ein
+    Innenbild kam dann drüben ohne jeden Vermerk an und sah aus wie ein missratenes
+    Aussenbild. Darum zwei Rückgabewerte: ``innenraum`` sagt, ob WIR einen Standpunkt
+    rechnen; ``bestellt`` sagt, ob ``interior`` bestellt und angenommen war.
+
     Returns:
-        ``{"raum": None, "art": "frontal", "bestellt": {"rooms": "auto"}}`` oder ``None``
-        (nicht bestellt, abgewiesen, oder durch mitgesandte Kameras bedient).
+        ``(innenraum, bestellt)``. ``innenraum`` ist
+        ``{"raum": None, "art": "frontal", "bestellt": {"rooms": "auto"}}`` — nur ohne
+        Kameraliste und mit IFC — oder ``None``. ``bestellt`` ist ``{"rooms": "auto"}``,
+        wenn ``interior`` angenommen wurde (mit oder ohne Kameraliste), sonst ``None``
+        (nicht bestellt oder abgewiesen).
     """
     if roh is None:
-        return None
+        return None, None
     if not isinstance(roh, dict):
         maengel.append(
             f"'interior' ist {type(roh).__name__} und kein Block. Belegt ist bei euch "
             f"nur {{rooms: '{INTERIOR_ROOMS_AUTO}'}} (auf-31 R3); was ein anderer Wert "
             f"verlangt, raten wir nicht.")
-        return None
+        return None, None
     raeume = roh.get("rooms")
     if raeume != INTERIOR_ROOMS_AUTO:
         maengel.append(
@@ -706,7 +717,9 @@ def _lies_interior(roh, *, kameras, fmt: str, warnungen: list, maengel: list):
             f"'{INTERIOR_ROOMS_AUTO}' (seit 19.09.2026 gesendet, auf-31 R3, auf-91 V1); "
             f"welche Form ein Raum in einer Liste haette — Name, IFC-Kennung oder "
             f"Objekt —, ist nicht belegt, und wir raten sie nicht.")
-        return None
+        return None, None
+    # Was bestellt war, wortgetreu — der Abholer vermerkt es am Kameraurteil.
+    bestellt = {"rooms": INTERIOR_ROOMS_AUTO}
     if isinstance(kameras, list):
         warnungen.append(
             f"'interior' {{rooms: '{INTERIOR_ROOMS_AUTO}'}} kam zusammen mit "
@@ -714,17 +727,15 @@ def _lies_interior(roh, *, kameras, fmt: str, warnungen: list, maengel: list):
             f"das die drueben abgeleiteten Standpunkte: Gerendert werden genau diese, und "
             f"wir rechnen KEINEN zweiten Innenstandpunkt dazu (auf-31 R6). Welche der "
             f"Kameras innen steht, sagt die Bestellung nicht.")
-        return None
+        return None, bestellt
     if fmt != "ifc":
         maengel.append(
             f"'interior' verlangt Raeume, und die gibt es nur in einer IFC — die "
             f"Bestellung traegt geometry.format {fmt or None!r}. Aus einer glb laesst sich "
             f"kein Raumbegriff gewinnen; ersatzweise aussen zu rendern waere ein anderes "
             f"Bild als das bestellte.")
-        return None
-    return {"raum": None, "art": _raumkamera.ART_FRONTAL,
-            # Was bestellt war, wortgetreu — der Abholer vermerkt es am Kameraurteil.
-            "bestellt": {"rooms": INTERIOR_ROOMS_AUTO}}
+        return None, None
+    return {"raum": None, "art": _raumkamera.ART_FRONTAL, "bestellt": bestellt}, bestellt
 
 
 def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
@@ -733,11 +744,13 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     Returns:
         ``{geometrie, out, kameras, aufloesung, hoehe, samples, controlnet_staerke,
         prompt, prompt_original, prompt_sprache, stil_modus, stil_referenzen, backbone,
-        ueberspringen, hochskalieren, sonne, innenraum, gelaende_erwartet, warnungen,
-        maengel}``
+        ueberspringen, hochskalieren, sonne, innenraum, innen_bestellt,
+        gelaende_erwartet, warnungen, maengel}``
 
-        ``innenraum`` ist die Innenansicht aus ``interior`` (siehe
-        :func:`_lies_interior`), ``gelaende_erwartet`` das dreiwertige ``gelaende``
+        ``innenraum`` ist die Innenansicht, deren Standpunkt WIR aus den Raeumen
+        rechnen; ``innen_bestellt`` sagt, ob ``interior`` bestellt und angenommen war —
+        auch dann, wenn die Standpunkte als benannte Kameras mitkamen (siehe
+        :func:`_lies_interior`). ``gelaende_erwartet`` ist das dreiwertige ``gelaende``
         (``None`` heisst nicht angefasst, nicht ``False``).
 
         ``prompt`` ist die Fassung, mit der gerendert wird — englisch, wenn der Text der
@@ -800,10 +813,29 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         )
 
     geo = fremd.get("geometry") or {}
+    # KEIN BLOCK, KEIN PFAD — Durchsicht 23.09.2026: Ein `geometry`, das kein Block ist,
+    # stuerzte hier mit AttributeError ab und nahm ueber `bruecke.lies_auftrag` den ganzen
+    # Durchgang des Abholers mit. Ohne Block gibt es keinen Pfad, also dieselbe Antwort
+    # wie ohne Pfad.
+    if not isinstance(geo, dict):
+        raise SzenenError(
+            f"render-scene mit 'geometry' vom Typ {type(geo).__name__} statt eines "
+            f"Blocks — es gibt keinen 'geometry.path' und nichts zu rendern.")
     pfad = geo.get("path")
     if not pfad:
         raise SzenenError("render-scene ohne 'geometry.path' — es gibt nichts zu rendern.")
-    fmt = (geo.get("format") or "").lower()
+    # EIN FORMAT, DAS KEIN TEXT IST, IST EIN MANGEL — und kein Absturz (Durchsicht
+    # 23.09.2026, nachgestellt mit `format: 5`: AttributeError aus `.lower()`, ueber die
+    # Bruecke bis in `abholer.hole_einen`). Es wird auch nicht geraten: Das Format
+    # waehlt in `bruecke.lies_auftrag` die Datei (model.ifc oder model.glb).
+    roh_fmt = geo.get("format")
+    if roh_fmt is not None and not isinstance(roh_fmt, str):
+        maengel.append(
+            f"'geometry.format' ist {roh_fmt!r} und kein Text. Euer Vertrag fuehrt es als "
+            f"Wort ({', '.join(FREMDE_FORMATE)}); welches gemeint ist, raten wir nicht — "
+            f"das Format entscheidet, welche Datei gerechnet wird.")
+        roh_fmt = None
+    fmt = (roh_fmt or "").lower()
     if fmt and fmt not in FREMDE_FORMATE:
         warnungen.append(f"Format {fmt!r} steht nicht im fremden Vertrag ({', '.join(FREMDE_FORMATE)}).")
     if fmt and fmt not in UNSERE_FORMATE:
@@ -857,8 +889,9 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             "rendern — also andere Blickwinkel als bestellt."
         )
 
-    innenraum = _lies_interior(fremd.get("interior"), kameras=kameras, fmt=fmt,
-                               warnungen=warnungen, maengel=maengel)
+    innenraum, innen_bestellt = _lies_interior(
+        fremd.get("interior"), kameras=kameras, fmt=fmt,
+        warnungen=warnungen, maengel=maengel)
 
     # DAS GELAENDE, DREIWERTIG — die Antwort auf unseren eigenen Auftrag auf-20260901-67.
     # Drueben gebaut als `gelaende: boolean | null`, Vorgabe null («unbekannt», nie still
@@ -957,6 +990,7 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         "hochskalieren": bool(wert_oder(vis, "upscale", False)),
         "sonne": sonne,
         "innenraum": innenraum,
+        "innen_bestellt": innen_bestellt,
         "gelaende_erwartet": gelaende,
         # Was JEDEN Auftrag gleich trifft — getrennt von dem, was DIESEN betrifft.
         #
@@ -1025,6 +1059,12 @@ DURCHGEREICHT = {
                  "Kameraaufgabe aus raumkamera.waehle (auge, blick_auf, Brennweite des "
                  "Standpunkts) → seams.glb_zu_multipass auf der umgewandelten glb; "
                  "Vermerk am Kameraurteil (URTEIL_INNENANSICHT) und in verdict.reason",
+    # Seit 23.09.2026: dass `interior` bestellt war, auch MIT Kameraliste — die Form, in
+    # der KosmoOrbit jede Innenbestellung sendet (auf-91 V1). Es wird kein Standpunkt
+    # gerechnet; nur der Vermerk reist mit.
+    "innen_bestellt": "abholer.verarbeiter: Vermerk (standpunkt 'mitgesandt') an jedem "
+                      "Kameraurteil einer mitgesandten Kamera → urteil.json, befund.json "
+                      "und verdict.reason (innenansicht_satz)",
     # Seit 22.09.2026: `gelaende` (auf-67), dreiwertig. Schlaegt den prozessweiten
     # Schalter des Abholers, weil die Aussage je Szene gilt.
     "gelaende_erwartet": "abholer.verarbeiter → maske (gelaende_erwartet=…)",
@@ -1171,10 +1211,16 @@ FELD_ZWEI_TORE = "geometry_gates"
 #: solcher, statt still zu fehlen.
 URTEIL_ZWEI_TORE = "zwei_tore"
 
-#: Der Schluessel, unter dem ein **Kameraurteil** vermerkt, dass sein Standpunkt aus
-#: ``interior`` gerechnet wurde — ``{"raum", "art", "bestellt"}`` oder ``None``
-#: (gesetzt in ``abholer.verarbeiter``; ``None`` heisst: der Standpunkt kam NICHT aus
-#: ``interior``, sondern aus einer Richtung oder einer mitgesandten Kamera).
+#: Der Schluessel, unter dem ein **Kameraurteil** vermerkt, dass ``interior`` bestellt
+#: war — ``{"raum", "art", "bestellt", "standpunkt"}`` oder ``None`` (gesetzt in
+#: ``abholer.verarbeiter``). ``standpunkt`` sagt, woher der Standpunkt kam
+#: (:data:`INNEN_STANDPUNKT_AUS_RAEUMEN` oder :data:`INNEN_STANDPUNKT_MITGESANDT`); bei
+#: ``mitgesandt`` sind ``raum`` und ``art`` ``None`` — nicht von uns gewaehlt. ``None``
+#: als ganzer Vermerk heisst: ``interior`` war nicht bestellt.
+#:
+#: Bis zum 23.09.2026 trugen nur Standpunkte ``aus_raeumen`` den Vermerk, und die kommen
+#: bei KEINER echten Bestellung vor: KosmoOrbit sendet ``interior`` immer mit benannten
+#: Kameras (auf-91 V1).
 #:
 #: **Befund der Durchsicht vom 22.09.2026:** Die Innenaufgabe trug Raum und Blickart,
 #: und niemand las sie. Im Urteil, im Befund und im Vertragsergebnis stand nicht, dass es
@@ -1184,16 +1230,50 @@ URTEIL_ZWEI_TORE = "zwei_tore"
 #: eine ihre Schreibfunktion aendern muss.
 URTEIL_INNENANSICHT = "innenansicht"
 
+#: Woher der Standpunkt einer bestellten Innenansicht kam — der Schluessel ``standpunkt``
+#: im :data:`URTEIL_INNENANSICHT`-Vermerk (23.09.2026).
+#:
+#: ``aus_raeumen``: WIR haben ihn gerechnet (``raumkamera.waehle`` auf den Raeumen der
+#: IFC) — nur ohne mitgesandte Kameras. ``mitgesandt``: Er kam als benannte Kamera mit der
+#: Bestellung; so sendet KosmoOrbit jede Innenbestellung (auf-91 V1). Den Raum haben wir
+#: dann nicht gewaehlt, und ob die Kamera innen steht, prueft diese Seite nicht.
+INNEN_STANDPUNKT_AUS_RAEUMEN = "aus_raeumen"
+INNEN_STANDPUNKT_MITGESANDT = "mitgesandt"
 
-def innenansicht_satz(vermerk) -> str:
+
+def innenansicht_satz(vermerk, *, gerendert: bool) -> str:
     """Der Satz fuer ``verdict.reason`` zu einem :data:`URTEIL_INNENANSICHT`-Vermerk — oder ``""``.
 
     In ``verdict.reason`` und nicht in einem eigenen Feld: Ein Zusatzfeld in
     ``qa_je_kamera`` wuerde drueben beim Einlesen still abgestreift (``z.object``, nicht
     strikt — erg-20260917-37 F6), ``reason`` ist ein Vertragsfeld und wird angezeigt.
+
+    **Der Satz sagt nur, was stimmt** (Durchsicht 23.09.2026). Bis dahin stand «Das Bild
+    zeigt den Raum von innen» auch unter einem Ergebnis ohne Bild — nachgestellt: Auge
+    ausserhalb der Szenenbox, ``images: []``, und im Grund daneben «NICHT GERENDERT».
+    Jetzt:
+
+    * ``aus_raeumen`` und ``gerendert`` — der Satz vom Raum, denn es gibt ein Bild.
+    * ``aus_raeumen`` ohne Bild — nur, dass der Standpunkt gerechnet und nicht gerendert
+      wurde.
+    * ``mitgesandt`` — dass die Innenansicht bestellt war und die Standpunkte von
+      KosmoOrbit stammen. Kein Satz ueber den Raum: Den hat hier niemand gewaehlt.
+
+    Args:
+        gerendert: Hat die Kamera dieses Urteils ein Bild? ``als_ergebnis`` liest es am
+            ``bild_png`` desselben Urteils.
     """
     if not isinstance(vermerk, dict):
         return ""
+    if vermerk.get("standpunkt") == INNEN_STANDPUNKT_MITGESANDT:
+        return (f"INNENANSICHT BESTELLT: 'interior' {vermerk.get('bestellt')!r} kam mit "
+                f"benannten Kameras; die Standpunkte sind die von KosmoOrbit, einen "
+                f"eigenen Innenstandpunkt haben wir nicht gerechnet. Raum: nicht von uns "
+                f"gewaehlt — ob eine Kamera innen steht, prueft diese Seite nicht.")
+    if not gerendert:
+        return (f"INNENANSICHT BESTELLT: Standpunkt im Raum {vermerk.get('raum')!r} "
+                f"({vermerk.get('art')}) aus 'interior' {vermerk.get('bestellt')!r} "
+                f"gerechnet, nicht gerendert — zu diesem Standpunkt gibt es kein Bild.")
     return (f"INNENANSICHT: Standpunkt im Raum {vermerk.get('raum')!r} "
             f"({vermerk.get('art')}), aus 'interior' {vermerk.get('bestellt')!r} aus den "
             f"Raeumen der IFC gerechnet. Das Bild zeigt den Raum von innen, nicht das "
@@ -2059,11 +2139,16 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     else:
         grund = "; ".join(teile)
 
-    # DIE INNENANSICHT, wenn der Standpunkt aus `interior` kam (22.09.2026). Nach allen
-    # Zweigen oben angehaengt, weil sie keinen davon ersetzt: Sie sagt, WAS das Bild
-    # zeigt, nicht wie es abgeschnitten hat. Bei `uebersprungen` nicht — dort gibt es kein
-    # Bild, das etwas zeigen koennte.
-    innen = innenansicht_satz((geometrie_urteil or {}).get(URTEIL_INNENANSICHT))
+    # DIE INNENANSICHT, wenn `interior` bestellt war (22.09.2026). Nach allen Zweigen
+    # oben angehaengt, weil sie keinen davon ersetzt: Sie sagt, WOHER der Standpunkt kam,
+    # nicht wie es abgeschnitten hat. Bei `uebersprungen` nicht — abbestellt ist
+    # abbestellt, und die Kette liefert dort gar kein Urteil.
+    #
+    # OB ES EIN BILD GIBT, liest der Satz am `bild_png` DESSELBEN Urteils (Durchsicht
+    # 23.09.2026) — bis dahin hiess es auch ohne Bild «Das Bild zeigt den Raum».
+    _vermerk_urteil = geometrie_urteil or {}
+    innen = innenansicht_satz(_vermerk_urteil.get(URTEIL_INNENANSICHT),
+                              gerendert=bool(_vermerk_urteil.get("bild_png")))
     if innen and not uebersprungen:
         grund = f"{grund}; {innen}" if grund else innen
         hinweise.append(innen)

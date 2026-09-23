@@ -21,13 +21,13 @@ import UIKit
 /// **Unter allen Flächen liegt die Unterlage** (seit dem 23.09.2026, `Leinwandstapel.unterlage`):
 /// ein Bild, keine Fläche — nicht radiert, nicht gemalt ins PNG, gestreckt wie beim Server.
 ///
-/// **Was geprüft ist, und was nicht (23.09.2026).** Übersetzt hat die Datei auf dem Mac:
-/// seit f32266f, die Teile der Welle 2 (`dismantleUIView`, `Leinwand.inhaltVerdeckt`,
-/// `pencilInteraction(_:didReceiveTap:)`) mit dem Stand edbdcad (laut Meldung vom
-/// 23.09.2026, ohne Warnung; hier nicht nachprüfbar). **Nicht übersetzt** sind
-/// die Änderungen vom 23.09.2026: `Leinwand.stiftSchiebtNicht`, der Grund aus
-/// `Stiftfarben.papier`, das Ende des Zugs (`canvasViewDidEndUsingTool`). **Am Gerät
-/// unbestätigt ist alles** — auch, ob die Flächen deckungsgleich bleiben.
+/// **Was geprüft ist, und was nicht (23.09.2026).** Übersetzt hat die Datei auf dem Mac
+/// zuletzt mit dem Stand der Welle 2b (f8f2a40, Lauf 5 der Prüfstrecke für 6e267d7:
+/// «success», nachgesehen am 23.09.2026; «ohne Warnung» steht im Protokoll des Laufs, hier
+/// nicht nachgelesen). **Nicht übersetzt** sind die Änderungen der Durchsicht der Welle 2b
+/// (23.09.2026): der Zug im Stand statt im Koordinator (`Zeichenstand.zugBeginnt`), und
+/// dass mit der Hand auch der Stift schiebt (`Ebenenstapel.stiftSchiebtNicht(mit:)`).
+/// **Am Gerät unbestätigt ist alles** — auch, ob die Flächen deckungsgleich bleiben.
 struct Zeichenleinwand: UIViewRepresentable {
     @ObservedObject var stand: Zeichenstand
     @ObservedObject var wahl: Leistenwahl
@@ -82,13 +82,14 @@ final class Leinwand: PKCanvasView {
 
     /// **Der Stift schiebt nicht** — nur der Finger (Entscheid Nr. 4).
     ///
-    /// Für die gewählte, ausgeblendete Ebene. Befund Durchsicht (22.09.2026): Dort ist das
+    /// Für die gewählte, ausgeblendete Ebene — **ausser mit der Hand** (Kern,
+    /// `Ebenenstapel.stiftSchiebtNicht(mit:)`). Befund Durchsicht (22.09.2026): Dort ist das
     /// Zeichnen aus (`drawingGestureRecognizer`), die Fläche nimmt aber Berührungen an — und
     /// ohne Zeichnen fiele der Stift vermutlich dem Schieben der Fläche zu: Wer auf die
     /// ausgeblendete Ebene zeichnen will, verschöbe das Blatt. Darum wird der Stift aus den
     /// Berührungsarten genommen, die Schieben und Zoomen annehmen; alle anderen bleiben, und
-    /// beim Zurückschalten gilt wieder, was vorher galt. **Am Gerät unbestätigt**, und
-    /// nicht übersetzt (23.09.2026).
+    /// beim Zurückschalten gilt wieder, was vorher galt. Übersetzt mit f8f2a40, **am Gerät
+    /// unbestätigt** (23.09.2026).
     var stiftSchiebtNicht = false {
         didSet {
             guard stiftSchiebtNicht != oldValue else { return }
@@ -127,8 +128,8 @@ final class Leinwand: PKCanvasView {
 /// (`scaleToFill`), genau so, wie der Server die Skizze auf das Bild abbildet
 /// (`arbeitsgang.setze_auf_unterlage`, Kern: `Blattunterlage.gestreckt`) — gezeichnet wird,
 /// wo gerechnet wird. Beim Schieben und Zoomen folgt es der gewählten Fläche
-/// (`fuehreUnterlageNach`). Nicht übersetzt, am Gerät unbestätigt (23.09.2026) — auch, ob
-/// es dabei genau deckungsgleich bleibt.
+/// (`fuehreUnterlageNach`). Übersetzt mit f8f2a40, am Gerät unbestätigt (23.09.2026) —
+/// auch, ob es dabei genau deckungsgleich bleibt.
 final class Leinwandstapel: UIView {
     /// Von unten nach oben.
     var leinwaende: [Leinwand] = []
@@ -150,8 +151,8 @@ final class Leinwandstapel: UIView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        // Der Grund des Blattes aus dem Entwurf — im Kern, dort gegen das Blatt geprüft
-        // (`FarbtonTests.testJederStifttonStehtSoAufDemBlatt`).
+        // Der Grund des Blattes aus dem Entwurf — im Kern, dort gegen die Abschrift des
+        // Blatts im Test geprüft (`FarbtonTests.testJederStifttonStehtSoAufDemBlatt`).
         backgroundColor = UIColor(Color(Stiftfarben.papier))
         clipsToBounds = true
         layer.cornerRadius = 10
@@ -236,9 +237,6 @@ final class Leinwandkoordinator: NSObject, PKCanvasViewDelegate, UIPencilInterac
     private var leinwaende: [UUID: Leinwand] = [:]
     /// Verhindert, dass das Nachführen der anderen Flächen wieder ein Nachführen auslöst.
     private var fuehrtNach = false
-    /// Die Ebene, auf der der Stift gerade einen Zug macht (`canvasViewDidBeginUsingTool`
-    /// bis `canvasViewDidEndUsingTool`), sonst `nil`.
-    private var zugAuf: UUID?
 
     init(stand: Zeichenstand) {
         self.stand = stand
@@ -277,6 +275,8 @@ final class Leinwandkoordinator: NSObject, PKCanvasViewDelegate, UIPencilInterac
 
         let werkzeug = stand.pencilWerkzeug()
         let hand = stand.leistenwahl.werkzeug == .hand
+        let nurFingerSchiebt =
+            stapel.stiftSchiebtNicht(mit: Zeichenstand.kernwerkzeug(stand.leistenwahl.werkzeug))
         var reihe: [Leinwand] = []
         for ebene in stapel.ebenen {
             guard let leinwand = leinwaende[ebene.id] else { continue }
@@ -289,9 +289,12 @@ final class Leinwandkoordinator: NSObject, PKCanvasViewDelegate, UIPencilInterac
             leinwand.isHidden = !ebene.sichtbar && !aktiv
             leinwand.inhaltVerdeckt = !ebene.sichtbar && aktiv
             // UND DORT SCHIEBT NUR DER FINGER: Das Zeichnen ist aus, der Stift soll das
-            // Blatt trotzdem nicht verschieben (Entscheid Nr. 4, `stiftSchiebtNicht`). Mit
-            // der Hand dagegen schiebt auch der Stift — dafür ist sie da.
-            leinwand.stiftSchiebtNicht = !ebene.sichtbar && aktiv
+            // Blatt trotzdem nicht verschieben (Entscheid Nr. 4). Mit der Hand dagegen
+            // schiebt auch der Stift — dafür ist sie da. Die Regel steht im Kern
+            // (`Ebenenstapel.stiftSchiebtNicht(mit:)`, mit Probe); bis zur Durchsicht der
+            // Welle 2b (23.09.2026) nahm diese Zeile dem Stift das Schieben auch mit der
+            // Hand. Ob der Stift mit der Hand am Gerät wirklich schiebt: unbestätigt.
+            leinwand.stiftSchiebtNicht = aktiv && nurFingerSchiebt
             leinwand.alpha = CGFloat(ebene.deckkraft)
             // NUR DIE GEWAEHLTE NIMMT BERUEHRUNGEN AN. Die anderen lassen sie durch
             // (eine abgeschaltete Ansicht wird beim Treffertest übergangen).
@@ -320,7 +323,6 @@ final class Leinwandkoordinator: NSObject, PKCanvasViewDelegate, UIPencilInterac
             leinwand.delegate = nil
         }
         leinwaende = [:]
-        zugAuf = nil
         stand.stapelAbgebaut(weg)
     }
 
@@ -328,21 +330,26 @@ final class Leinwandkoordinator: NSObject, PKCanvasViewDelegate, UIPencilInterac
 
     func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
         guard let leinwand = canvasView as? Leinwand, let id = leinwand.ebene else { return }
-        stand.zeichnungGeaendert(id, leinwand.drawing, imZug: zugAuf == id)
+        stand.zeichnungGeaendert(id, leinwand.drawing)
     }
 
     /// Der Stift setzt zu einem Zug an. Bis zu seinem Ende wird das Bild einer Ebene mit
     /// abgedeckten Strichen nicht gelesen (`Zeichenstand.zeichnungGeaendert`) — die
-    /// Durchsicht vom 22.09.2026 fand es bei jeder Änderung gelesen.
+    /// Durchsicht vom 22.09.2026 fand es bei jeder Änderung gelesen. **Wo der Zug steht,
+    /// hält der Stand** (`Zeichenstand.zugBeginnt`, Kern `Zugstand`): Nur dort erreichen ihn
+    /// die Wege ohne Stift, die einen abgebrochenen Zug schliessen (Durchsicht der Welle
+    /// 2b, 23.09.2026).
     func canvasViewDidBeginUsingTool(_ canvasView: PKCanvasView) {
-        zugAuf = (canvasView as? Leinwand)?.ebene
+        guard let id = (canvasView as? Leinwand)?.ebene else { return }
+        stand.zugBeginnt(id)
     }
 
     /// Der Zug ist zu Ende: Was darin ausstand, wird jetzt gelesen. Ob diese Meldung vor
     /// oder nach der letzten Änderung kommt, ist nicht belegt — beides führt zum selben
-    /// Stand (`Zeichenstand.zugBeendet`). Am Gerät unbestätigt, nicht übersetzt.
+    /// Stand (`Zeichenstand.zugBeendet`). Kommt sie nie (ein abgebrochener Zug), schliesst
+    /// der nächste Weg ohne Stift den Zug (`Zeichenstand.zugOhneStift`). Am Gerät
+    /// unbestätigt; in dieser Form (Zug im Stand) nicht übersetzt (23.09.2026).
     func canvasViewDidEndUsingTool(_ canvasView: PKCanvasView) {
-        zugAuf = nil
         guard let leinwand = canvasView as? Leinwand, let id = leinwand.ebene else { return }
         stand.zugBeendet(id, leinwand.drawing)
     }

@@ -34,8 +34,10 @@ struct Bildansicht: View {
         self.schliessen = schliessen
     }
 
+    /// Derselbe Name **aus derselben Mappe** (`Bandbild.mappe`, 23.09.2026): Nach einem
+    /// Wechsel der Mappe ist ein Bild gleichen Namens ein anderes Bild.
     private var aktuell: Bandbild {
-        stand.bilder.first { $0.bild == bild.bild } ?? bild
+        stand.bilder.first { $0.bild == bild.bild && $0.mappe == bild.mappe } ?? bild
     }
 
     private var zeichen: Pruefzeichen {
@@ -171,10 +173,11 @@ struct Bildansicht: View {
             }
         }
         // DIE UNTERLAGE WIRD BEIM OEFFNEN GEHOLT, und neu, wenn die Mappe dem Bild eine andere
-        // nennt. Am Gerät unbestätigt (22.09.2026).
+        // nennt — aus der Mappe des Bildes, nicht aus der eingestellten (23.09.2026). Am Gerät
+        // unbestätigt.
         .task(id: aktuell.vorher) {
             if let name = aktuell.vorher {
-                await verbindung.ladeUnterlage(name, bildband: stand)
+                await verbindung.ladeUnterlage(name, mappe: aktuell.mappe, bildband: stand)
             }
         }
     }
@@ -184,7 +187,7 @@ struct Bildansicht: View {
         guard let name = aktuell.vorher else {
             return "Die Mappe nennt zu diesem Bild keine Unterlage — darum hier ohne Vorher."
         }
-        if let satz = stand.unterlagenSatz[name] {
+        if let satz = stand.satzZurUnterlage(aktuell) {
             return "Die Unterlage «\(name)» ist nicht geladen: \(satz)"
         }
         return "Die Unterlage «\(name)» wird geladen."

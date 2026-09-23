@@ -26,9 +26,10 @@ enum Bildvergleichsart: String, CaseIterable, Identifiable {
 /// Vorher (die Unterlage) und Nachher (aus der KI) — nebeneinander oder mit Wischregler.
 ///
 /// **Das Vorher ist die Unterlage**, das Bild, über das skizziert wurde (Feld `vorher` der
-/// Mappe, seit dem 22.09.2026). Das Blatt «Bilder» beschriftet es «Aus dem Modell»; das
+/// Mappe, seit dem 23.09.2026). Das Blatt «Bilder» beschriftet es «Aus dem Modell»; das
 /// stimmt nur, wenn über ein Bild aus dem Modell skizziert wurde — über ein früheres Bild der
-/// KI skizziert, wäre es falsch. Darum steht hier «Unterlage», bis das Blatt nachgezogen ist.
+/// KI skizziert, wäre es falsch. Darum steht hier «Unterlage»; das Blatt «Bilder» ist so nachgezogen
+/// (23.09.2026) und dort als **Owner-Entscheid offen** markiert.
 ///
 /// **Das Vorher trägt hier kein Urteil, und es sagt das.** Ein Rand in einer der
 /// Urteilsfarben hiesse, es sei in diesem Vergleich geprüft worden. Das Zeichen

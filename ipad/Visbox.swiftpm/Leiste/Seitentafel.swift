@@ -15,6 +15,15 @@ import SwiftUI
 /// «MainHoch»). Seit dem 23.09.2026 hier und nur hier — vorher sass er in der
 /// Verbindungszeile, weil das Seitenfeld noch nirgends hing.
 ///
+/// **Fest am Fuss, nicht am Ende des Rollbereichs** (Durchsicht der Welle 2b, 23.09.2026):
+/// Auf dem Blatt sitzt der Knopf am Fuss des Seitenfelds; in der App stand er am Ende des
+/// rollenden Inhalts und rollte bei vielen Ebenen oder in der Mappe aus dem Blick — der
+/// eine Knopf, der etwas hinausschickt. Darum bringt diese Tafel ihren Rollbereich selbst
+/// mit, und der Knopf steht darunter (`safeAreaInset(edge: .bottom)`); der Arbeitsplatz
+/// legt keinen eigenen mehr darum. Gebaut, nicht übersetzt, am Gerät unbestätigt — auch,
+/// wie viel im Hochformat (Seitenfeld 300 pt hoch, gesetzt) über dem Knopf zum Rollen
+/// bleibt: nicht gemessen.
+///
 /// Am ganzen Seitenfeld sitzt der `Laufwaechter`: Solange die HomeStation rechnet, fragt er
 /// öfter nach und holt am Ende die Mappe — auch wenn gerade die Ebenen dastehen.
 ///
@@ -32,27 +41,52 @@ struct Seitentafel: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            wasDieSkizzeTut
-            umschalter
-            // ES RECHNET, UND DIE MAPPE IST ZU: Der Knopf «Lauf abbrechen» sitzt in der Mappe.
-            // Damit er nicht unerreichbar hinter dem anderen Reiter liegt, steht hier der Weg.
-            if wahl.seitenfeld == .ebenen, verbindung.laufstand?.laeuft == true {
-                Button("Es rechnet auf der HomeStation — zum Lauf") { wahl.seitenfeld = .mappe }
+        ScrollView(.vertical) {
+            VStack(alignment: .leading, spacing: 22) {
+                wasDieSkizzeTut
+                umschalter
+                // ES RECHNET, UND DIE MAPPE IST ZU: Der Knopf «Lauf abbrechen» sitzt in der
+                // Mappe. Damit er nicht unerreichbar hinter dem anderen Reiter liegt, steht
+                // hier der Weg.
+                if wahl.seitenfeld == .ebenen, verbindung.laufstand?.laeuft == true {
+                    Button("Es rechnet auf der HomeStation — zum Lauf") {
+                        wahl.seitenfeld = .mappe
+                    }
                     .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: nil, hoehe: 44))
+                }
+                switch wahl.seitenfeld {
+                case .ebenen:
+                    Ebenentafel(stand: Zeichenstand.gemeinsam, verbindung: verbindung)
+                case .mappe:
+                    Mappentafel(mappe: mappe, verbindung: verbindung)
+                }
             }
-            switch wahl.seitenfeld {
-            case .ebenen:
-                Ebenentafel(stand: Zeichenstand.gemeinsam)
-            case .mappe:
-                Mappentafel(mappe: mappe, verbindung: verbindung)
-            }
-            Mappenknopf(stand: verbindung)
-                .padding(.top, 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(20)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        // DER KNOPF STEHT AUSSERHALB DES ROLLBEREICHS, am Fuss: Der Inhalt rollt über ihm
+        // hinweg und endet über ihm, statt darunter zu verschwinden.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            fuss
+        }
         .foregroundStyle(Zeichenblatt.schrift)
         .modifier(Laufwaechter(verbindung: verbindung, mappe: mappe))
+    }
+
+    /// Der Fuss des Seitenfelds: eine Linie und «In die Mappe legen», auf dem Grund der
+    /// Leiste, damit rollender Inhalt nicht durch ihn hindurch scheint.
+    private var fuss: some View {
+        VStack(spacing: 0) {
+            Rectangle()
+                .fill(Zeichenblatt.linie)
+                .frame(height: 1)
+                .accessibilityHidden(true)
+            Mappenknopf(stand: verbindung)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+        }
+        .background(Zeichenblatt.leiste)
     }
 
     private var wasDieSkizzeTut: some View {

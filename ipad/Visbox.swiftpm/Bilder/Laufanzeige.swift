@@ -12,12 +12,19 @@ import SwiftUI
 ///   ausgerechnet.
 /// * **«Abbruch verlangt» ist nicht «abgebrochen».** Nach dem Tippen sagt der Knopf, dass
 ///   der Abbruch verlangt ist; ob er wirkte, steht erst nach dem Lauf im Ergebnis.
+/// * **Der Knopf sagt, was der Server weiss** (seit der Durchsicht der Welle 2b, 23.09.2026):
+///   `Fortschrittsstand.abbruchAngezeigt(hier:)` — der Abbruch gilt als verlangt, wenn die
+///   HomeStation ihn vermerkt hat, auch von einem anderen Gerät; nur wenn sie dazu nichts
+///   sagt, gilt, was dieses iPad verlangt hat (`mappe.abbruchVerlangt`). Darunter steht,
+///   woher das «verlangt» kommt (`abbruchSatz(hier:)`). Bis dahin kannte der Knopf nur
+///   dieses iPad.
+/// * **Die Kopfzeile** über dem Schritt: «Variante 2 von 3 · Prüfen» (`Fortschrittsstand.
+///   kopfzeile`). Mit jeder Variante beginnt die Knotennummer wieder bei eins; ohne diese
+///   Zeile sähe die zweite Variante aus wie ein Lauf, der rückwärts geht. **Fehlt ein Feld,
+///   fehlt sein Teil** — kein «Prüfen» aus einem fehlenden `entwurf`.
 ///
-/// **Noch nicht gelesen** (22.09.2026): `Fortschrittsstand.abbruchVerlangt`, `.variante` und
-/// `.bestellung` baut die Einheit «Verbindung» gleichzeitig. Sie gehören hierher — der Abbruch
-/// in `abbrechen` (dann sagt der Knopf, was der *Server* verlangt weiss, nicht nur dieses
-/// iPad: `mappe.abbruchVerlangt`), Variante und Bestellung in die Kopfzeile von `laufend`
-/// («Variante 2 von 3», Prüfen oder Entwerfen).
+/// Beide Regeln stehen im Kern und sind dort geprüft (`AnfragenTests`); dass diese Ansicht
+/// sie zeigt, ist nicht übersetzt (Stand 23.09.2026), ohne Probe und am Gerät unbestätigt.
 ///
 /// Das Nachfragen während eines Laufs macht `Laufwaechter` — er sitzt am ganzen Seitenfeld,
 /// damit es auch weiterläuft, wenn dort gerade die Ebenen stehen. *Gebaut, am Gerät
@@ -63,6 +70,12 @@ struct Laufanzeige: View {
 
     private func laufend(_ s: Fortschrittsstand) -> some View {
         VStack(alignment: .leading, spacing: 10) {
+            // NUR, WAS DER SERVER SAGT: ohne Variante und Lesart keine Zeile, kein «Prüfen».
+            if let kopf = s.kopfzeile {
+                Text(kopf)
+                    .font(Schrift.zahl(13, .medium))
+                    .foregroundStyle(Zeichenblatt.schrift)
+            }
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(s.knoten ?? "Schritt ohne Namen")
                     .font(Schrift.zahl(14, .medium))
@@ -94,12 +107,13 @@ struct Laufanzeige: View {
                       + "und darum behauptet es hier auch nichts.")
             }
             fertige(s)
-            abbrechen
+            abbrechen(s)
         }
     }
 
-    private var abbrechen: some View {
-        VStack(alignment: .leading, spacing: 6) {
+    private func abbrechen(_ s: Fortschrittsstand) -> some View {
+        let verlangt = s.abbruchAngezeigt(hier: mappe.abbruchVerlangt)
+        return VStack(alignment: .leading, spacing: 6) {
             Button {
                 Task { @MainActor in
                     mappe.sendet = true
@@ -109,11 +123,14 @@ struct Laufanzeige: View {
                     if q.ausgang == .angenommen { mappe.abbruchVerlangt = true }
                 }
             } label: {
-                Text(mappe.abbruchVerlangt ? "Abbruch verlangt" : "Lauf abbrechen")
+                Text(verlangt ? "Abbruch verlangt" : "Lauf abbrechen")
             }
             .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: nil))
-            .disabled(mappe.abbruchVerlangt || mappe.sendet)
+            .disabled(verlangt || mappe.sendet)
             .accessibilityHint("Hält zwischen zwei Schritten an. Was fertig ist, bleibt in der Mappe.")
+            if let woher = s.abbruchSatz(hier: mappe.abbruchVerlangt) {
+                leise(woher)
+            }
             leise("Abgebrochen wird zwischen zwei Schritten. Was schon fertig ist, bleibt in der "
                   + "Mappe und wird beim nächsten Mal nicht neu gerechnet.")
         }

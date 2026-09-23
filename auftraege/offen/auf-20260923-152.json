@@ -1,0 +1,30 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "cloud",
+  "auftrag_id": "auf-20260923-152",
+  "art": "frage",
+  "beschreibung": "Vertragsfrage: Fuellt ein Cycles-Preset komposition auch bei interior? Dazu die Ansage, dass model.ifc und interior seit dem 23.09.2026 angenommen werden, und die Auskunft zu erg-20260919-104 V4.",
+  "anweisung": "=== EINE VERTRAGSFRAGE, EINE ANSAGE, UND EINE ANTWORT, DIE WIR EUCH SCHULDEN ===\n\nDas hier ist eine VERTRAGSFRAGE (euer Bestellweg und render-result), keine Frage zur\nAnzeige.\n\n1 · DIE FRAGE: komposition BEI EINER INNENRAUM-BESTELLUNG\n\nFuellt euer Bestellweg das Feld `komposition` {seitenverhaeltnis, brennweiteMm,\nhorizontlinie} auch bei einer Innenraum-Bestellung (`interior: {rooms: 'auto'}`,\n`geometry.format: 'ifc'`), sobald ein Cycles-Preset gewaehlt ist? Nach eurem Stand vom\n08.09.2026 (render-presets.ts:50/61/72) fuellt jedes Cycles-Preset das Feld. Unser\nAbholer weist ein gesetztes `komposition` seit dem 22.09.2026 mit eigenem Satz ab (euer\nE75: abweisen statt uebergehen). Damit bliebe jede Innenraum-Bestellung mit Preset\nliegen.\n\nBitte eine Zeile:\n  (a) JA, jede Bestellung mit Preset traegt komposition — dann braucht es von euch\n      entweder `komposition: null` bei interior, oder die Bedeutung von `horizontlinie`\n      und die Regel, was gilt, wenn Kamera und komposition sich widersprechen;\n  (b) NEIN, bei interior bleibt komposition null — dann ist nichts zu tun.\n\n2 · DIE ANSAGE: WAS SICH AN UNSEREM ERGEBNIS AENDERT (seit dem 23.09.2026)\n\n  - `model.ifc` wird angenommen (euer auf-91 V3_V4: die Bytes unveraendert, die Endung\n    folgt dem Format). Bisher blieb jede IFC-Bestellung mit «Die Geometrie fehlt:\n    model.glb» liegen — also auch jede Innenraum-Bestellung.\n  - `interior` wird angenommen. Mit euren benannten Kameras waehlen wir KEINEN Raum und\n    rechnen keinen zweiten Standpunkt; `verdict.reason` traegt dann den Satz\n    «INNENANSICHT BESTELLT … Standpunkte von KosmoOrbit … Raum: nicht von uns gewaehlt».\n    Ohne Kameras waehlen wir einen Raum; der Satz «Das Bild zeigt den Raum von innen»\n    steht nur an einem Bild, das es gibt.\n  - Die sieben weiteren Felder aus auf-104 werden je mit eigenem Satz abgewiesen statt\n    als «unbekannt»; `gelaende` wird bedient (dreiwertig wie in eurem auf-67).\n\n3 · WAS WIR EUCH SCHULDEN (erg-20260919-104, V4)\n\nUnsere Strenge greift in `kosmo_szene.lies_szene` (`streng=True` ist die Vorgabe), seit\ndem 11.09.2026. Das ist nur eine Auskunft; ihr muesst dazu nichts tun.",
+  "erstellt": "2026-09-23T01:41:35Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "V1 komposition bei interior mit Preset: (a) ja + Regel, oder (b) nein.",
+    "V2 Ansage gelesen; Einwand, falls der neue Satz in verdict.reason euren Vertrag stoert."
+  ],
+  "rang": 4
+}

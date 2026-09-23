@@ -218,17 +218,21 @@ struct Skizzenliste: View {
     /// Bestellt und legt die Quittung ab. **Die Auswahl der Ebenen-Reihe wird erst nach der
     /// Quittung geleert, und nur, wenn die HomeStation angenommen hat** — bei «abgelehnt»,
     /// «ungewiss» und «nicht gesendet» bleibt sie stehen (Durchsicht der Verdrahtung,
-    /// 22.09.2026: bis dahin wurde sie gleich nach dem Tippen geleert). Die Regel steht im
-    /// Kern (`Rechenbestellung.reihe(_:nach:)`) und ist dort geprüft; dass diese Ansicht sie
-    /// ruft, ist am Gerät unbestätigt.
+    /// 22.09.2026: bis dahin wurde sie gleich nach dem Tippen geleert). **Und nur die Auswahl,
+    /// die hinausging** (Durchsicht der Welle 2b, 23.09.2026): Bis dahin lief die Regel auf
+    /// der Auswahl zur Zeit der Quittung, und wer während der Bestellung neu wählte, verlor
+    /// die neue Wahl. Die Regel steht im Kern
+    /// (`Rechenbestellung.reihe(_:gesendet:nach:)`) und ist dort geprüft; dass diese Ansicht
+    /// sie mit der gesendeten Auswahl ruft, ist nicht übersetzt (23.09.2026) und am Gerät
+    /// unbestätigt.
     private func bestelle(_ b: Rechenbestellung) {
         let lesart = mappe.bestellart
         Task { @MainActor in
             mappe.sendet = true
             let q = await verbindung.bestelle(b, lesart: lesart)
             mappe.quittung = q
-            if case .ebenenreihe = b {
-                mappe.reihe = Rechenbestellung.reihe(mappe.reihe, nach: q)
+            if case .ebenenreihe(let gesendet, _) = b {
+                mappe.reihe = Rechenbestellung.reihe(mappe.reihe, gesendet: gesendet, nach: q)
             }
             mappe.sendet = false
         }

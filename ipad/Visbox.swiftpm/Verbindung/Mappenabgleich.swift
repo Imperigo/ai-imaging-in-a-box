@@ -56,8 +56,9 @@ extension Verbindungsstand {
             return
         }
 
-        // WAS SCHON GELADEN IST, BLEIBT — aber nur, wenn es dasselbe Bild ist (gleicher Name
-        // UND gleiche Zeit). Ein neuer Lauf schreibt unter denselben Namen.
+        // WAS SCHON GELADEN IST, BLEIBT — aber nur, wenn es dasselbe Bild ist (gleicher Name,
+        // gleiche Zeit UND gleiche Mappe). Ein neuer Lauf schreibt unter denselben Namen, und
+        // eine andere Mappe kann denselben Namen tragen (23.09.2026).
         let alt = Dictionary(bildband.bilder.map { ($0.bild, $0) },
                              uniquingKeysWith: { erstes, _ in erstes })
         var neu: [Bandbild] = []
@@ -69,8 +70,10 @@ extension Verbindungsstand {
                 ohneNamen += 1
                 continue
             }
-            var b = Bandbild(angaben: e, bild: name)
-            if let frueher = alt[name], frueher.erzeugt == e.erzeugt {
+            // DAS BILD TRAEGT SEINE MAPPE: die, aus der diese Liste kam (`Bandbild.mappe`).
+            var b = Bandbild(angaben: e, bild: name, mappe: zielordner)
+            if let frueher = alt[name], frueher.erzeugt == e.erzeugt,
+               frueher.mappe == zielordner {
                 b.grafik = frueher.grafik
             }
             neu.append(b)

@@ -5,7 +5,8 @@ import SwiftUI
 ///
 /// **Der Ort ist das Seitenfeld, unten** (Blätter «Main» und «MainHoch»), eingesetzt von
 /// `Seitentafel` — unter Ebenen **und** Mappe, damit er nicht hinter dem anderen Reiter
-/// liegt. Bis zum 23.09.2026 stand er in der Verbindungszeile, weil das Seitenfeld noch
+/// liegt, und seit dem 23.09.2026 **fest am Fuss**, ausserhalb des Rollbereichs. Bis zum
+/// 23.09.2026 stand er in der Verbindungszeile, weil das Seitenfeld noch
 /// nirgends hing; dort ist er entfernt (es gibt ihn einmal, nicht zweimal).
 ///
 /// Nach dem Tippen steht ein Satz da, wenn es einen zu sagen gibt (nichts gezeichnet,
@@ -57,8 +58,16 @@ struct Mappenknopf: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .onTapGesture { self.satz = nil }
             }
-            Text("Sie wird als offen abgelegt und wartet. Ist die HomeStation nicht da, "
-                 + "bleibt sie hier liegen, bis sie wieder da ist.")
+            // DER SATZ STEHT SO AUCH AUF DEN BLÄTTERN «MAIN» UND «MAINHOCH» (nachgezogen am
+            // 23.09.2026). Vorher sagte das Blatt «Gerechnet wird erst, wenn die HomeStation
+            // den Auftrag nimmt» — das klang, als nähme sie ihn von selbst. Der Server legt die
+            // Skizze aber nur ab (`POST /api/skizze`, `HINWEIS_SKIZZE_OHNE_WEG` in
+            // `oberflaeche/server.py`); gerechnet wird erst, wenn jemand «Rechnen lassen»
+            // wählt (`POST /api/rechne-skizze`, Entscheid 11: nichts rechnet von selbst).
+            // Nachgelesen im Server am 23.09.2026; am Gerät nicht gesehen.
+            Text("Sie wird als offen abgelegt und wartet — gerechnet wird erst auf «Rechnen "
+                 + "lassen» in der Mappe. Ist die HomeStation nicht da, bleibt sie hier "
+                 + "liegen, bis sie wieder da ist.")
                 .font(Schrift.text(13))
                 .foregroundStyle(Zeichenblatt.leise)
                 .fixedSize(horizontal: false, vertical: true)

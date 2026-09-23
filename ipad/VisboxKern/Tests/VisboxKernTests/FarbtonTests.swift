@@ -56,8 +56,10 @@ final class FarbtonTests: XCTestCase {
     /// Code, nicht im Kommentar** (ein Kommentar färbt nichts). Jede ist unten an einem
     /// Beispiel geprüft (`testDieProbeErkenntJedeSchreibweise`).
     private static let farbzahlen: [(name: String, muster: String)] = [
-        ("Kanal als Zahl (red:/green:/blue:/white: …)",
-         #"\b(red|green|blue|white|hue|saturation|brightness)\s*:\s*[-+]?(0x[0-9a-fA-F]+|[0-9]*\.?[0-9]+)"#),
+        // `srgbRed:` und `displayP3Red:` (CGColor, UIColor) seit der Durchsicht der Welle 2b
+        // (23.09.2026): Stand der erste Kanal allein in einer Zeile, sah die Probe ihn nicht.
+        ("Kanal als Zahl (red:/green:/blue:/white:/srgbRed:/displayP3Red: …)",
+         #"\b(red|green|blue|white|hue|saturation|brightness|srgbRed|displayP3Red)\s*:\s*[-+]?(0x[0-9a-fA-F]+|[0-9]*\.?[0-9]+)"#),
         ("Zahl durch 255", #"(0x[0-9a-fA-F]+|\b[0-9]+(\.[0-9]+)?)\s*/\s*255"#),
         ("Hex-Text #rrggbb", #"#[0-9a-fA-F]{6}\b"#),
         ("Farbton aus Ziffern", #"Farbton\s*\(\s*(hex\s*:|rot\s*:\s*[0-9])"#),
@@ -133,6 +135,9 @@ final class FarbtonTests: XCTestCase {
             "let wert = 0x191d23; let farbe = UIColor(rgb: wert)",
             "static let orange = mach(0xe0, 0x8b, 0x52)",
             "Color(uiColor: UIColor(red: 25/255, green: 29/255, blue: 35/255, alpha: 1))",
+            // Der erste Kanal allein in seiner Zeile, die anderen darunter.
+            "let grund = CGColor(srgbRed: 0.098,",
+            "let grund = UIColor(displayP3Red: 0.1,",
         ]
         for zeile in verboten {
             XCTAssertFalse(FarbtonTests.funde(in: zeile).isEmpty, "übersehen: \(zeile)")
@@ -146,6 +151,7 @@ final class FarbtonTests: XCTestCase {
             "static let pngKennung: [UInt8] = [0x89, 0x50, 0x4E, 0x47]",
             ".opacity(0.35 + 0.65 * welle)",
             ".foregroundStyle(Color(zeichen.art.schrift))",
+            "let srgbRedAnteil = ton.rot",
         ]
         for zeile in erlaubt {
             XCTAssertEqual(FarbtonTests.funde(in: zeile).map { $0.1 }, [], "fälschlich: \(zeile)")
@@ -154,7 +160,10 @@ final class FarbtonTests: XCTestCase {
 
     /// **Eine Abwesenheit:** In keiner Swift-Datei des App-Pakets ausserhalb von `Kern/`
     /// steht ein Farbwert als Zahl. Sonst gäbe es einen Ton, den keine Probe gegen das Blatt
-    /// hält — wie den Grund des Blattes und die Stiftfarben bis zum 22.09.2026.
+    /// hält — wie den Grund des Blattes und die Stiftfarben bis zum 22.09.2026. **Nur in den
+    /// Schreibweisen von `farbzahlen`**; die bekannten Lücken (Hex-Bytes in eckigen Klammern
+    /// ohne Farbwort, ein berechneter Kanal, ein Asset-Katalog) stehen in
+    /// `Kern/Stiftfarben.swift`.
     func testAusserhalbDesKernsStehtKeinFarbwertAlsZahl() throws {
         // DAS APP-PAKET UEBER DEN VERWEIS DES KERNS GEFUNDEN, wie in
         // `PruefzeichenTests.testDieAppSchreibtKeineFarbtoeneAusserhalbDesKerns` — nicht

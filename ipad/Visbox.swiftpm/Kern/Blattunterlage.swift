@@ -8,15 +8,26 @@ import Foundation
 // aus der Welle 2). Hier stehen die Regeln, die die App dafuer braucht — ohne UIKit, damit
 // sie unter Linux geprueft werden (`BlattunterlageTests`).
 //
-// Drei Zusagen, jede mit einer Probe:
+// WAS HIER GEPRUEFT IST (`BlattunterlageTests`, Stand 23.09.2026) — und nur das:
 //   1. Die Unterlage ist KEINE Ebene. Sie steht nicht in `Ebenenstapel.ebenen`, zaehlt
 //      nicht zur Hoechstzahl, nicht zu «Geht mit», nicht zur Leer-Pruefung, und sie ist nie
-//      eine Variante. Radiert wird sie nicht, gemalt ins PNG auch nicht: Der Server hat das
-//      Bild schon und setzt die Skizze selbst darauf (`arbeitsgang.setze_auf_unterlage`).
-//   2. `ueber` geht genau dann mit, wenn eine Unterlage liegt UND sichtbar ist
-//      (Entscheid 7, «gerechnet wird, was sichtbar ist» — Begruendung an `Unterlagenangabe`).
-//   3. Die App zeigt sie so, wie der Server sie abbildet: Blatt auf Bild, bei anderem
-//      Seitenverhaeltnis GESTRECKT (`gestreckt`, die Regel des Servers abgeschrieben).
+//      eine Variante.
+//   2. `ueber` geht genau dann mit, wenn eine Unterlage liegt, sichtbar ist UND aus der
+//      Mappe stammt, in die abgelegt wird (Entscheid 7, «gerechnet wird, was sichtbar
+//      ist» — Begruendung an `Unterlagenangabe`). Tafelsatz und Blatttitel lesen dieselbe
+//      Regel wie der Ablageplan (`tafelsatz`, `blatttitel`, seit der Durchsicht der Welle
+//      2b: vorher versprachen sie nach einem Mappenwechsel «wird auf X gerechnet»,
+//      waehrend der Ablageplan ablehnte).
+//   3. Ob gestreckt wird, entscheidet `gestreckt` wie der Server
+//      (`arbeitsgang.setze_auf_unterlage`, abgeschrieben; gegen den Server gehalten von
+//      `tests/test_app_abschrift_server.py`).
+//
+// WAS DIE APP-SCHICHT TUT, OHNE PROBE (gebaut, am Geraet unbestaetigt): Die Unterlage ist
+// ein Bild unter allen PencilKit-Flaechen, darum radiert der Radierer sie nicht; das PNG
+// malt nur die Ebenen (`Zeichenstand.male`), nicht die Unterlage — der Server hat das Bild
+// schon und setzt die Skizze selbst darauf; und `Leinwandstapel` zeigt sie gestreckt
+// (`scaleToFill`). Ob das Bild dort deckungsgleich unter den Strichen liegt, ist nicht
+// gesehen.
 
 /// Das Bild unter den Ebenen — **keine Ebene, sondern das, worauf gezeichnet wird.**
 ///
@@ -82,25 +93,53 @@ public struct Blattunterlage: Equatable, Sendable {
 
     /// Was an der Stelle der Unterlage in der Ebenentafel steht, unter ihrer Zeile — **ein
     /// Satz für jede Lage**, und keiner, der mehr sagt, als bekannt ist.
-    public static func tafelsatz(_ u: Blattunterlage?) -> String {
-        guard let u = u else {
-            return "Ohne Unterlage wird die Skizze auf neutralem Grau gerechnet. Ein Bild "
-                + "der Mappe legt «Darauf skizzieren» darunter."
-        }
-        guard u.sichtbar else {
+    ///
+    /// `ordner` ist die Mappe, in die jetzt abgelegt würde (leer = die des Starts). **Der
+    /// Satz liest dieselbe Regel wie das Ablegen** (`Unterlagenangabe.aus`, die auch
+    /// `Ablageplan` nimmt): «wird auf «X» gerechnet» steht genau dann da, wenn `ueber` mit
+    /// X hinausginge. Befund Durchsicht der Welle 2b (23.09.2026): Bis dahin kannte der Satz
+    /// die Mappe nicht und versprach nach einem Mappenwechsel «wird auf X gerechnet»,
+    /// während das Ablegen die Skizze abwies (`BlattunterlageTests`,
+    /// `testTafelUndTitelSagenDasselbeWieDerAblageplan`).
+    public static func tafelsatz(_ u: Blattunterlage?, ordner: String?) -> String {
+        let grau = "Ohne Unterlage wird die Skizze auf neutralem Grau gerechnet. Ein Bild "
+            + "der Mappe legt «Darauf skizzieren» darunter."
+        guard let u = u else { return grau }
+        switch Unterlagenangabe.aus(u, ordner: ordner) {
+        case .ohne:
+            return grau
+        case .ausgeblendet:
             return "Die Unterlage ist ausgeblendet: Die Skizze geht ohne sie hinaus und wird "
                 + "auf Grau gerechnet — gerechnet wird, was sichtbar ist."
+        case .andereMappe(let von, let jetzt):
+            return "«\(u.titel)» stammt aus \(Ablageplan.wo(von)), abgelegt würde in "
+                + "\(Ablageplan.wo(jetzt)). Dort gibt es das Bild nicht — so geht die Skizze "
+                + "nicht hinaus. Die Mappe zurückstellen oder die Unterlage entfernen."
+        case .ueber:
+            let gerechnet = "Die Skizze wird auf «\(u.titel)» gerechnet"
+            switch u.gestreckt {
+            case .some(true):
+                return gerechnet + ". Das Bild hat ein anderes Seitenverhältnis als das Blatt "
+                    + "und ist gestreckt — so, wie die HomeStation die Skizze daraufsetzt."
+            case .some(false):
+                return gerechnet + ", Blatt auf Bild."
+            case .none:
+                return gerechnet + ". Ob das Bild dafür gestreckt wird, ist nicht bekannt: "
+                    + "Seine Grösse liess sich nicht lesen."
+            }
         }
-        switch u.gestreckt {
-        case .some(true):
-            return "«\(u.titel)» hat ein anderes Seitenverhältnis als das Blatt und ist "
-                + "gestreckt — so, wie die HomeStation die Skizze daraufsetzt."
-        case .some(false):
-            return "Die Skizze wird auf «\(u.titel)» gerechnet, Blatt auf Bild."
-        case .none:
-            return "Die Skizze wird auf «\(u.titel)» gerechnet. Ob das Bild dafür gestreckt "
-                + "wird, ist nicht bekannt: Seine Grösse liess sich nicht lesen."
+    }
+
+    /// Der Titel über dem Blatt: «Skizze über Lauf 07 · Variante A» (Blatt «Main»: «Skizze
+    /// über Lauf 07») — **«über» nur, wenn die Unterlage auch mitginge** (`.ueber` nach
+    /// `Unterlagenangabe.aus`, dieselbe Regel wie `tafelsatz` und `Ablageplan`). Ausgeblendet
+    /// oder aus einer anderen Mappe verspräche der Titel sonst, was nicht gerechnet wird.
+    public static func blatttitel(ebene: String, unterlage u: Blattunterlage?,
+                                  ordner: String?) -> String {
+        if let u = u, Unterlagenangabe.aus(u, ordner: ordner).ueber != nil {
+            return "Skizze über \(u.titel) · \(ebene)"
         }
+        return "Skizze · \(ebene)"
     }
 
     /// Leer und `nil` sind dieselbe Mappe: die des Starts.

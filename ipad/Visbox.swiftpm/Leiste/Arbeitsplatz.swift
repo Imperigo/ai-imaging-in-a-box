@@ -37,6 +37,11 @@ enum Haltung {
 /// `Startansicht` setzt ihn seit dem 22.09.2026 ein:
 /// `Arbeitsplatz { Zeichenflaeche(eigeneTafel: false) } seitenfeld: { Seitentafel() }` —
 /// die Zeichenfläche **ohne** eigene Ebenentafel, weil die Tafel im einen Seitenfeld steht.
+///
+/// **Das Seitenfeld rollt selbst** (seit dem 23.09.2026): Der Arbeitsplatz gibt ihm nur
+/// Platz und Grund, keinen Rollbereich — `Seitentafel` hat ihren eigenen und stellt
+/// «In die Mappe legen» fest an den Fuss. Wer ein anderes Seitenfeld einsetzt, bringt das
+/// Rollen mit.
 struct Arbeitsplatz<Mitte: View, Seitenfeld: View>: View {
     @ObservedObject var wahl: Leistenwahl
     @Environment(\.accessibilityReduceMotion) private var bewegungReduziert
@@ -67,7 +72,11 @@ struct Arbeitsplatz<Mitte: View, Seitenfeld: View>: View {
                         if wahl.vollbild { ausgang }
                     }
 
-                ScrollView(.vertical) { seitenfeld.padding(20) }
+                // DAS SEITENFELD BRINGT SEINEN ROLLBEREICH SELBST MIT (seit dem 23.09.2026):
+                // So kann `Seitentafel` «In die Mappe legen» fest an den Fuss stellen,
+                // ausserhalb des Rollens. Ein Rollbereich hier drum herum rollte den Fuss mit.
+                seitenfeld
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     .background(Zeichenblatt.leiste)
                     .overlay(alignment: kante(haltung, fuerLeiste: false)) { randlinie(haltung) }
                     .versteckt(wahl.vollbild)

@@ -9,7 +9,13 @@ import Foundation
 // SwiftUI uebersetzt unter Linux nicht. Jetzt macht `Zeichnen/` aus diesen Werten nur noch
 // Farben. `FarbtonTests.testJederStifttonStehtSoAufDemBlatt` haelt jeden Ton gegen die
 // Abschrift der Blaetter, `testAusserhalbDesKernsStehtKeinFarbwertAlsZahl` haelt fest,
-// dass ausserhalb von `Kern/` keiner mehr als Zahl steht.
+// dass ausserhalb von `Kern/` keiner mehr als Zahl steht — IN KEINER SCHREIBWEISE, DIE DIE
+// PROBE KENNT (`FarbtonTests.farbzahlen`; seit dem 23.09.2026 auch `srgbRed:` und
+// `displayP3Red:`). Bekannte Luecken, die sie nicht sieht (Durchsicht der Welle 2b,
+// 23.09.2026): eine Liste von Hex-Bytes in eckigen Klammern ohne Farbwort in derselben
+// Zeile (`[0xe0, 0x8b, 0x52]` — so sieht auch die PNG-Kennung aus); ein Kanal, der erst
+// aus einer benannten Zahl berechnet wird; und Farben aus einem Asset-Katalog, weil die
+// Probe nur `.swift`-Dateien liest.
 
 /// Eine vorgegebene Stiftfarbe: ihr Name, wie ihn die Bedienhilfe vorliest, und ihr Ton.
 ///

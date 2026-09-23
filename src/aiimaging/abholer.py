@@ -494,6 +494,10 @@ def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> Non
         # und ob es eine Innenansicht war, aus welchem Raum (22.09.2026).
         "umwandlung": ergebnis.get("umwandlung"),
         "innenansicht": ergebnis.get("innenansicht"),
+        # Der Modellstand des AUFTRAGS, auch ohne Kamera (23.09.2026): Bei einem
+        # abbestellten Auftrag gibt es kein Kameraurteil, und bis dahin erreichte er
+        # keine Datei — gebaut fuer «jeder Ergebnissatz», gelesen von niemandem.
+        "modellstand": ergebnis.get("modellstand"),
         "warnungen_auftrag": list(antwort.get("warnungen") or ()),
         "vertragsvorgaben": list(antwort.get("vertragsvorgaben") or ()),
         "wache": antwort.get("wache"),
@@ -1628,8 +1632,29 @@ def _innenaufgabe(wunsch: dict, raeume) -> dict:
         # Kameraurteil (`kosmo_szene.URTEIL_INNENANSICHT`), von dort erreicht er
         # urteil.json, befund.json und `verdict.reason`.
         "innenraum": {"raum": wahl["raum"], "art": standpunkt.get("art"),
-                      "bestellt": wunsch.get("bestellt")},
+                      "bestellt": wunsch.get("bestellt"),
+                      "standpunkt": _kosmo_szene.INNEN_STANDPUNKT_AUS_RAEUMEN},
     }
+
+
+def _mitgesandter_innenvermerk(szene: dict) -> dict | None:
+    """Der Innenvermerk einer MITGESANDTEN Kamera — oder ``None``, wenn nicht innen bestellt.
+
+    **Die reale Form** (Durchsicht 23.09.2026): KosmoOrbit sendet ``interior`` immer
+    zusammen mit benannten Kameras (auf-91 V1). Bis zu diesem Tag entstand der Vermerk nur
+    aus :func:`_innenaufgabe`, also bei KEINER echten Bestellung — ein Innenbild kam
+    drueben ohne jeden Satz an und sah aus wie ein missratenes Aussenbild.
+
+    Es wird **kein** Standpunkt gerechnet und kein Raum gelesen (auf-31 R6: kein zweiter
+    Innenstandpunkt). ``raum`` und ``art`` bleiben ``None``: nicht von uns gewaehlt. Und
+    weil die Bestellung nicht sagt, welche Kamera innen steht, traegt JEDE mitgesandte
+    Kamera dieses Auftrags denselben Vermerk.
+    """
+    bestellt = szene.get("innen_bestellt")
+    if not bestellt:
+        return None
+    return {"raum": None, "art": None, "bestellt": dict(bestellt),
+            "standpunkt": _kosmo_szene.INNEN_STANDPUNKT_MITGESANDT}
 
 
 #: Name der umgewandelten Geometrie im Arbeitsordner eines IFC-Auftrags — derselbe wie
@@ -1670,10 +1695,17 @@ def _ifc_umwandeln(ifc, arbeitsordner) -> dict:
     Fehlalarmrate am Bestand ungemessen ist. Eine IFC-Bestellung strenger zu pruefen als
     dieselbe Geometrie als glb hiesse, dass das Format ueber die Sperre entscheidet.
 
+    **Und was das Tor empfiehlt, wird gesagt, nicht verschluckt** (Durchsicht
+    23.09.2026). Bis dahin fiel ``empfiehlt_neuzentrierung`` hier still weg. Befolgt wird
+    die Empfehlung auf diesem Weg NICHT — niemand verschiebt die Geometrie, und mitgesandte
+    Kameras stehen in den Koordinaten der IFC; eine verschobene glb liesse sie ins Leere
+    schauen (Schluss, nicht gemessen). Sie steht darum als Warnung im Ergebnis.
+
     Returns:
-        ``{quelle, glb_path, up_axis, torwaechter, n_elements, n_triangles}``.
-        ``torwaechter`` ist ``{entscheidung, begruendung}`` — der Befund steht im
-        Ergebnis, auch wenn er nichts sperrt.
+        ``{quelle, glb_path, up_axis, torwaechter, n_elements, n_triangles, warnungen}``.
+        ``torwaechter`` ist ``{entscheidung, begruendung, empfiehlt_neuzentrierung}`` —
+        der Befund steht im Ergebnis, auch wenn er nichts sperrt. ``warnungen`` traegt
+        den Satz zur Neuzentrierung, wenn das Tor sie empfiehlt, sonst ist sie leer.
 
     Raises:
         AbholerError: Umwandlung gescheitert, Tor sagt ``ablehnen_konversion``, oder die
@@ -1701,6 +1733,15 @@ def _ifc_umwandeln(ifc, arbeitsordner) -> dict:
         raise AbholerError(
             f"Die Umwandlung IFC → glb meldete Erfolg, aber {glb.name} liegt nicht im "
             f"Arbeitsordner. Gerechnet wird nur auf einer Datei, die da ist.")
+    neuzentrierung = bool(urteil.get("empfiehlt_neuzentrierung"))
+    warnungen = []
+    if neuzentrierung:
+        warnungen.append(
+            "Das Tor empfiehlt, die Geometrie neu zu zentrieren: Sie liegt so weit vom "
+            "Ursprung, dass glTF (float32) Kanten um Zentimeter bis Dezimeter springen "
+            "laesst. Dieser Weg zentriert NICHT neu — gerechnet wird auf der Geometrie, "
+            "wie sie kam. Kanten in Tiefenkarte und Bild koennen darum unscharf sein. "
+            + " ".join((urteil.get("georeferenz") or {}).get("warnungen") or ()))
     return {
         "quelle": ifc.name,
         "glb_path": str(glb),
@@ -1708,9 +1749,11 @@ def _ifc_umwandeln(ifc, arbeitsordner) -> dict:
         # und sagt es). Fehlt sie, gilt die Annahme des Abholers, und `hochachse` sagt es.
         "up_axis": bericht.get("up_axis"),
         "torwaechter": {"entscheidung": urteil["entscheidung"],
-                        "begruendung": urteil["begruendung"]},
+                        "begruendung": urteil["begruendung"],
+                        "empfiehlt_neuzentrierung": neuzentrierung},
         "n_elements": bericht.get("n_elements"),
         "n_triangles": bericht.get("n_triangles"),
+        "warnungen": warnungen,
     }
 
 
@@ -1910,7 +1953,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             aufgaben = [{"kuerzel": r, "richtung": r, "brennweite_mm": brennweite_mm}
                         for r in auto_richtungen]
         else:
-            aufgaben = [dict(k, kuerzel=k.get("kuerzel") or f"kamera{i}")
+            # Mitgesandte Kameras. War `interior` bestellt, reist der Vermerk an jeder
+            # mit — siehe `_mitgesandter_innenvermerk` (23.09.2026).
+            vermerk = _mitgesandter_innenvermerk(szene)
+            aufgaben = [dict(k, kuerzel=k.get("kuerzel") or f"kamera{i}",
+                             innenraum=dict(vermerk) if vermerk else None)
                         for i, k in enumerate(kameras)]
         if not aufgaben:
             raise AbholerError(
@@ -1935,7 +1982,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             kuerzel = aufgabe["kuerzel"]
             # Der Innenvermerk dieser Aufgabe, an JEDES ihrer Urteile — auch an eines,
             # das nicht gerendert wurde: Auch dort ist die Frage, WOHER der Standpunkt
-            # kam, die erste, die jemand stellt. `None`: nicht aus `interior`.
+            # kam, die erste, die jemand stellt. `None`: `interior` war nicht bestellt.
+            # Bewacht fuer die beiden Abbrueche vor dem Bild (Blickfeld, Komposition) in
+            # tests/test_interior_bestellung.py (23.09.2026). Am Zwilling ist nur die
+            # WIRKUNG bewacht: seine Zeile `**innen` ist gleichwertig zu ihrem Fehlen, weil
+            # das Vorbild denselben Vermerk traegt (siehe dort).
             innen = {_kosmo_szene.URTEIL_INNENANSICHT: aufgabe.get("innenraum")}
             aus = ziel / str(kuerzel)
             aus.mkdir(parents=True, exist_ok=True)
@@ -2183,6 +2234,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             kennung = _sollkennung(soll, breite, hoch)
             zwilling = gesehen.get(kennung) if kennung else None
             if zwilling is not None:
+                # `**innen`: der Vermerk DIESER Aufgabe, nicht der des Vorbilds. Heute
+                # sind beide gleich — alle Aufgaben eines Auftrags tragen denselben
+                # Vermerk —, die Zeile ist also gleichwertig zu ihrem Fehlen (Durchsicht
+                # 23.09.2026). Bewacht ist die WIRKUNG: Ein Zwilling einer mitgesandten
+                # Innenkamera traegt den Vermerk (tests/test_interior_bestellung.py).
                 urteile.append(dict(zwilling["urteil"], kamera=kuerzel,
                                     doppelt_von=zwilling["kamera"], **innen))
                 _urteil_ablegen(aus, urteile[-1])
@@ -2345,7 +2401,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # WAS AUS DER IFC WURDE — `None`, wenn keine umgewandelt wurde (glb-Auftrag).
             # Traegt das Urteil des Tors auch dann, wenn es nichts gesperrt hat.
             "umwandlung": umwandlung,
-            # Der Innenvermerk des Auftrags, wenn eine Aufgabe aus `interior` kam.
+            # Der Innenvermerk des Auftrags, wenn `interior` bestellt war — mit einem
+            # Standpunkt aus den Raeumen oder mit mitgesandten Kameras (23.09.2026).
             "innenansicht": next((a.get("innenraum") for a in aufgaben
                                   if a.get("innenraum")), None),
         }

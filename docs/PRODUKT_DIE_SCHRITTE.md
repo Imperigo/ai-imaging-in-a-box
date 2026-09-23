@@ -84,7 +84,7 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 | 2 | **Kamera** | **gebaut und bedienbar** | Seit 21.09. klicken Sie Standpunkt und Blickrichtung im Grundriss an. |
 | 3 | **Blender-Render** | **gebaut** | Läuft nur, wo Blender liegt — also bis heute nur auf der Werkstattmaschine. |
 | 4 | **KI-Bild** | **gebaut** | Braucht eine Grafikkarte. Der Vorgabeweg lief dort drei Wochen lang gar nicht (repariert 21.09.). |
-| 5 | **hineinzeichnen** | **gebaut, rechnet mit Hinweis** | Seit 22.09. lässt sich eine Skizze rechnen. Auf dem Vorgabemodell kommt sie gemessen nicht an — das Bild sagt es dazu. Die iPad-App entsteht. |
+| 5 | **hineinzeichnen** | **gebaut, rechnet mit Hinweis** | Seit 22.09. lässt sich eine Skizze rechnen, seit 23.09. auch aus der iPad-App, auf ein Bild als Unterlage. Auf dem Vorgabemodell kommt sie gemessen nicht an — das Bild sagt es dazu. Die App ist am Gerät unbestätigt. |
 | 6 | **neues Bild** | **nicht gebaut** | Folgt aus 5. |
 | 7 | **zurück ins Modell** (Kosmo baut nach) | **nicht gebaut** | Neu seit 21.09. Braucht die Differenz aus Schritt 6. |
 
@@ -104,6 +104,27 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 ---
 
 ## Was zuletzt dazugekommen ist
+
+### 23.09.2026 · Die App ist zusammengesteckt — und wartet auf Ihren Stift
+
+* **Alles hängt zusammen:** Zeichnen, Koppeln, Parken, Senden, Rechnen lassen, Abbrechen,
+  Namen geben, Varianten, das Prüfzeichen am Bild. Die ganze App übersetzt auf einem Mac
+  **ohne eine einzige Warnung**.
+* **Neu: «Darauf skizzieren».** Ein fertiges Bild wird zur Unterlage unter dem Blatt, man
+  zeichnet hinein und lässt neu rechnen. Bis dahin landete jede Skizze aus der App auf Grau,
+  weil die App das Bild darunter weder zeigte noch mitschickte.
+* **Innenraum-Bestellungen aus KosmoOrbit kommen durch.** Bis heute blieb jede liegen — aus
+  zwei Gründen, die man nur am Stück sieht: Das Feld war unbekannt, und die Datei hiess
+  anders, als wir sie suchten. Beides behoben; ob drüben ein drittes Hindernis wartet,
+  fragt ein Auftrag an KosmoOrbit.
+* **Die Entwurfsfläche ist nachgezogen:** Was der Bau brauchte und kein Blatt zeigte, ist
+  jetzt gezeichnet. Zwei Stellen tragen das Schild «Owner-Entscheid offen» — dort haben Sie
+  das Wort.
+* **Geprüft:** 158 absichtliche Fehler über drei Wellen, jeder wurde gefunden.
+
+**Ausprobieren am iPad** können nur Sie — die Anleitung samt Abnahmeblatt liegt in
+`docs/VISBOX_IPAD_ERSTE_PROBE.md`. Bis es ausgefüllt zurückkommt, heisst der Stand der App
+«gebaut, am Gerät unbestätigt».
 
 ### 22.09.2026 · Die iPad-App entsteht — und sie übersetzt auf einem Mac
 
@@ -703,7 +724,7 @@ Vorher stand im Protokoll «mit Ankerbild gerechnet», während ohne gerechnet w
 
 | | Schritt | Warum jetzt |
 |---|---|---|
-| **1** | **Die Zeichenfläche auf dem iPad ausprobieren** | Das kann nur **Sie** — hier gibt es kein iPad und keinen Stift. Es ist die einzige offene Frage, die kein Worker beantworten kann. Alles dafür ist jetzt gebaut. |
+| **1** | **Die App auf dem iPad ausprobieren** | Das kann nur **Sie** — hier gibt es kein iPad und keinen Stift. Anleitung und Abnahmeblatt: `docs/VISBOX_IPAD_ERSTE_PROBE.md`. |
 | **2** | **Die drei Messungen der Werkstatt** | Sie entscheiden am **15.10.**, ob der Entwurfsmodus gebaut oder gestrichen wird. Bestellt, liegen dort. |
 | **3** | **Kapitel 6 nachziehen** | Die Messungen bleiben, ihr Geltungsbereich hat sich geändert: Sie bedienen eine von zwei Betriebsarten statt der einzigen. |
 

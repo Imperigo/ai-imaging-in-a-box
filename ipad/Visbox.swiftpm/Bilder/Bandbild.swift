@@ -18,14 +18,27 @@ struct Bandbild: Identifiable, Equatable {
     /// Der Dateiname relativ zum Projektordner (Feld `bild`). Er ist zugleich die Kennung;
     /// ein Eintrag ohne ihn wird kein `Bandbild` (siehe `Mappenabgleich`).
     let bild: String
+    /// **Die Mappe, aus der dieses Bild geladen wurde** — der Projektordner auf der
+    /// HomeStation, mit dem `ladeMappe` die Liste holte. `nil` heisst hier nicht «unbekannt»,
+    /// sondern, wie beim Ordner jeder Anfrage (`Anfragen.bild(ordner:)`) und bei
+    /// `Blattunterlage.ordner`: **die Mappe des Starts**. Die Mappe ist immer bekannt — sie
+    /// ist die, die gefragt wurde.
+    ///
+    /// Durchsicht der Welle 2b (23.09.2026): Bis dahin trug das Bandbild seine Mappe nicht,
+    /// und wer es danach holte (die Unterlage des Vergleichs, «Darauf skizzieren»), nahm den
+    /// Ordner, der **jetzt** im Ordnerfeld steht. Das Feld lässt sich ändern, ohne dass die
+    /// Mappe neu geladen wird — dann kam das Bild gleichen Namens aus einer anderen Mappe.
+    /// Gesetzt nur von `Verbindung/Mappenabgleich.swift`; dass es dort richtig ankommt, ist
+    /// nicht übersetzt (23.09.2026), ohne Probe und am Gerät unbestätigt.
+    let mappe: String?
     /// Die geladenen Bildbytes; `nil`, solange nichts geladen ist.
     var grafik: UIImage? = nil
     /// **Der Name der Unterlage** — des Bildes, über das skizziert wurde (Feld `vorher`,
     /// Entscheid 17), gelesen im Kern (`Mappenbild.vorher`, dort mit Probe). `nil` heisst:
     /// keine, oder der Server nennt sie nicht — nicht «es gibt keine».
     ///
-    /// Bis zum 22.09.2026 war hier ein Bild-Feld, das nirgends gesetzt wurde: Der Vergleich
-    /// Vorher/Nachher war im Produkt nie zu sehen (Durchsicht der Verdrahtung). Die Bytes
+    /// Bis zum 23.09.2026 (Welle 2b) war hier ein Bild-Feld, das nirgends gesetzt wurde: Der
+    /// Vergleich Vorher/Nachher war im Produkt nie zu sehen (Durchsicht der Verdrahtung). Die Bytes
     /// liegen jetzt am `Bildbandstand` (`vorherbild`), nicht hier — `ladeMappe` baut die
     /// Bandbilder bei jedem Laden neu und übernimmt nur `grafik`; ein Bild hier ginge dabei
     /// jedes Mal verloren.
@@ -110,10 +123,26 @@ final class Bildbandstand: ObservableObject {
     /// Die zuletzt geladene Unterlage (Name → Bild) — **nur eine**, damit das Gedächtnis
     /// nicht mit jedem geöffneten Bild wächst (gesetzt, nicht gemessen). Geladen von
     /// `Verbindungsstand.ladeUnterlage` (`Bilder/Unterlage.swift`).
+    ///
+    /// Geführt unter Mappe **und** Name (`unterlagenSchluessel`): Gleicher Name in einer
+    /// anderen Mappe ist ein anderes Bild (23.09.2026; bis dahin nur unter dem Namen).
     @Published var unterlagen: [String: UIImage] = [:]
-    /// Warum eine Unterlage nicht da ist, je Name — der Satz des Servers oder der Leitung.
-    /// Fehlt ein Eintrag und ein Bild, ist sie **noch nicht geladen**, nicht «keine».
+    /// Warum eine Unterlage nicht da ist, je Mappe und Name — der Satz des Servers oder der
+    /// Leitung. Fehlt ein Eintrag und ein Bild, ist sie **noch nicht geladen**, nicht «keine».
+    /// Beim Nachladen wird der alte Satz zuerst weggenommen (`ladeUnterlage`).
     @Published var unterlagenSatz: [String: String] = [:]
+
+    /// Unter welchem Schlüssel eine Unterlage steht: Mappe und Name, getrennt durch ein
+    /// Zeichen, das in keinem Pfad und keinem Dateinamen vorkommt.
+    static func unterlagenSchluessel(_ name: String, mappe: String?) -> String {
+        (mappe ?? "") + "\u{0}" + name
+    }
+
+    /// Der Satz, warum die Unterlage eines Bildes nicht da ist — `nil`, wenn es keinen gibt.
+    func satzZurUnterlage(_ b: Bandbild) -> String? {
+        guard let name = b.vorher else { return nil }
+        return unterlagenSatz[Bildbandstand.unterlagenSchluessel(name, mappe: b.mappe)]
+    }
 
     /// Der Name, den ein Mensch sieht: der eigene aus der Mappe, sonst der nach der Zeit.
     func name(_ b: Bandbild) -> String {
@@ -136,11 +165,13 @@ final class Bildbandstand: ObservableObject {
         lesarten[b.bild] = l
     }
 
-    /// Das Vorher eines Bildes: die geladene Unterlage — oder, wenn die Unterlage selbst ein
-    /// Bild der Mappe ist, dessen schon geladene Grafik. `nil`, solange nichts geladen ist.
+    /// Das Vorher eines Bildes: die geladene Unterlage **aus seiner Mappe** — oder, wenn die
+    /// Unterlage selbst ein Bild derselben Mappe ist, dessen schon geladene Grafik. `nil`,
+    /// solange nichts geladen ist.
     func vorherbild(_ b: Bandbild) -> UIImage? {
         guard let name = b.vorher else { return nil }
-        return unterlagen[name] ?? bilder.first(where: { $0.bild == name })?.grafik
+        return unterlagen[Bildbandstand.unterlagenSchluessel(name, mappe: b.mappe)]
+            ?? bilder.first(where: { $0.bild == name && $0.mappe == b.mappe })?.grafik
     }
 
     /// Die Bilder einer Reihe, nach ihrer Nummer.

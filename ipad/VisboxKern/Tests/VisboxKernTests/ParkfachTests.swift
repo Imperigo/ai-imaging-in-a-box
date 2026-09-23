@@ -347,6 +347,113 @@ final class ParkfachTests: XCTestCase {
         XCTAssertNil(fach.aufraeumFehler)
     }
 
+    // ------------------ 4c · das Nachführen beim Öffnen wirft nicht (23.09.2026)
+
+    /// Ein Schreiben, das für die genannten Dateien scheitert — und sich unterwegs umstellen
+    /// lässt. Aus demselben Grund gesetzt wie `klemmt`: Als Verwalter lässt sich unter Linux
+    /// jede Datei schreiben.
+    private final class Schreibklemme {
+        var namen: Set<String> = []
+        var schreibe: (Data, URL) throws -> Void {
+            { [unowned self] daten, url in
+                if self.namen.contains(url.lastPathComponent) {
+                    throw CocoaError(.fileWriteNoPermission)
+                }
+                try daten.write(to: url, options: .atomic)
+            }
+        }
+    }
+
+    func testEinUnschreibbarerEintragHaeltDasOeffnenNichtAuf() throws {
+        let fach = try Parkfach(ordner: ordner)
+        let reist = try fach.parke(png: zeichnung, jetzt: t0)
+        _ = try XCTUnwrap(try fach.beginneSenden(reist.schluessel, abgebrochen: false, jetzt: t0))
+        // Die App wird mitten im Senden beendet; dazu eine Zeichnung ohne Eintrag.
+        let waise = UUID().uuidString
+        try zeichnung.write(to: ordner.appendingPathComponent(waise + ".png"))
+
+        let klemme = Schreibklemme()
+        klemme.namen = [reist.schluessel + ".json", waise + ".json"]
+        let offen = try Parkfach(ordner: ordner, jetzt: t0.addingTimeInterval(1),
+                                 schreibe: klemme.schreibe)
+        XCTAssertEqual(offen.eintrag(reist.schluessel)?.zustand.wort, "ungewiss",
+                       "im Fach steht sie, wie es stimmt")
+        XCTAssertEqual(offen.eintrag(waise)?.zustand, .geparkt, "die Waise ist aufgenommen")
+        let fehler = try XCTUnwrap(offen.ladeFehler, "getrennt gemeldet")
+        XCTAssertTrue(fehler.contains(reist.schluessel) && fehler.contains(waise), fehler)
+        XCTAssertEqual(offen.satz, fehler)
+        XCTAssertNil(offen.schreibFehler, "beim Öffnen wurde nichts verlangt, das scheiterte")
+
+        // Geht das Schreiben wieder, führt das nächste Schreiben des Eintrags ihn nach.
+        klemme.namen = []
+        _ = try XCTUnwrap(try offen.beginneSenden(waise, abgebrochen: false))
+        XCTAssertFalse(offen.ladeFehler?.contains(waise) ?? false, "die Waise ist nachgeführt")
+        XCTAssertTrue(offen.ladeFehler?.contains(reist.schluessel) ?? false)
+
+        // Nach einem Neustart ohne Klemme: ungewiss auf der Platte, und kein Satz mehr.
+        let danach = try Parkfach(ordner: ordner, jetzt: t0.addingTimeInterval(2))
+        XCTAssertEqual(danach.eintrag(reist.schluessel)?.zustand.wort, "ungewiss")
+        XCTAssertNil(danach.ladeFehler)
+        XCTAssertNil(danach.satz)
+    }
+
+    /// **Der ernste Satz hat Vorrang, und er geht mit dem nächsten gelungenen Schreiben**
+    /// (Durchsicht vom 23.09.2026). Bis dahin schrieb die App «liess sich nicht beschreiben»
+    /// selbst, und das Spiegeln des Fachs ersetzte es sofort durch die Aufräummeldung.
+    func testDerErnsteSatzHatVorrangUndGehtMitDemNaechstenSchreiben() throws {
+        let tag: TimeInterval = 24 * 3600
+        let fach = try Parkfach(ordner: ordner)
+        let alt = try angekommen(fach, am: t0)
+        let spaeter = t0.addingTimeInterval(8 * tag)
+
+        let klemme = Schreibklemme()
+        let offen = try Parkfach(ordner: ordner, jetzt: spaeter,
+                                 loesche: klemmt(alt.schluessel + ".json"),
+                                 schreibe: klemme.schreibe)
+        let aufraeumen = try XCTUnwrap(offen.aufraeumFehler)
+        XCTAssertEqual(offen.satz, aufraeumen, "allein ist die Aufräummeldung der Satz")
+
+        // Die Meldung einer Ankunft lässt sich nicht schreiben.
+        let neu = try offen.parke(png: zeichnung, jetzt: spaeter)
+        _ = try XCTUnwrap(try offen.beginneSenden(neu.schluessel, abgebrochen: false, jetzt: spaeter))
+        klemme.namen = [neu.schluessel + ".json"]
+        XCTAssertThrowsError(try offen.melde(neu.schluessel, .aus(status: 200, daten: quittung()),
+                                             jetzt: spaeter))
+        let ernst = try XCTUnwrap(offen.schreibFehler)
+        XCTAssertTrue(ernst.contains("nicht beschreiben"), ernst)
+        XCTAssertEqual(offen.satz, ernst, "der ernste Satz vor der Aufräummeldung")
+        XCTAssertNotNil(offen.aufraeumFehler, "die Aufräummeldung ist nicht vergessen")
+
+        // Ein Tor, das zu bleibt, schreibt nichts — und nimmt darum auch nichts zurück.
+        klemme.namen = []
+        XCTAssertNil(try offen.beginneSenden(neu.schluessel, abgebrochen: true))
+        XCTAssertEqual(offen.satz, ernst)
+
+        // Das nächste gelungene Schreiben nimmt ihn zurück; die Aufräummeldung steht wieder,
+        // solange die alte Quittung sich nicht löschen lässt.
+        XCTAssertTrue(try offen.melde(neu.schluessel, .aus(status: 200, daten: quittung()),
+                                      jetzt: spaeter))
+        XCTAssertNil(offen.schreibFehler)
+        XCTAssertEqual(offen.satz, offen.aufraeumFehler)
+        XCTAssertNotNil(offen.satz)
+
+        // Und die Aufräummeldung geht, wenn ein späteres Aufräumen gelingt.
+        let wieder = try Parkfach(ordner: ordner, jetzt: spaeter)
+        XCTAssertNil(wieder.aufraeumFehler)
+        XCTAssertNil(wieder.satz)
+    }
+
+    func testEinScheiterndesVerwerfenSagtEsUndDieSkizzeBleibt() throws {
+        let fach = try Parkfach(ordner: ordner, loesche: { url in
+            throw CocoaError(.fileWriteNoPermission, userInfo: [NSFilePathErrorKey: url.path])
+        })
+        let e = try fach.parke(png: zeichnung)
+        XCTAssertThrowsError(try fach.verwirf(e.schluessel))
+        XCTAssertNotNil(fach.eintrag(e.schluessel), "nicht verworfen, also noch da")
+        let satz = try XCTUnwrap(fach.satz)
+        XCTAssertTrue(satz.hasPrefix("Die Skizze liess sich nicht verwerfen"), satz)
+    }
+
     // --------------------------------------- das Tor nach dem Vorspiel (22.09.2026)
 
     func testEinAbbruchVorDemTorLaesstDenEintragUnberuehrt() throws {

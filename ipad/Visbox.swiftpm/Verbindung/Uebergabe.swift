@@ -7,9 +7,14 @@ import SwiftUI
 /// Ansicht zeichnet nur. Die vier Regeln, wie sie hier ankommen:
 ///
 /// 1. *Bewegt sich etwas, ist etwas unterwegs.* Die Ansicht gibt es nur, solange eine Skizze
-///    gesendet wird (`Verbindungsstand.uebergabe`), und der Ort folgt den gezählten Bytes.
-///    Vor dem ersten Byte spielt `Flugbahn.vorspiel`: ablegen (220 ms), abheben (180 ms) —
-///    beim Abheben wandert die Marke an den Rand des iPads, zum Ziel hin (`Flugbahn.rand`).
+///    **reist** (`Verbindungsstand.uebergabe`): vom Vorspiel an bis zum Einrasten oder
+///    Zurückfallen. Im Flug folgt der Ort den gezählten Bytes. **Das Vorspiel kommt vor dem
+///    Tor** (`Flugbahn.vorspiel`: ablegen 220 ms, abheben 180 ms — beim Abheben wandert die
+///    Marke an den Rand des iPads, zum Ziel hin, `Flugbahn.rand`): Bricht das Senden dort ab,
+///    geht **nichts** hinaus, und die Marke fällt zurück. Für diese 0,4 s gilt die Regel
+///    darum nicht ganz — die Marke bewegt sich, bevor feststeht, dass gesendet wird
+///    (Durchsicht der Welle 2b, 23.09.2026; bis dahin stand hier «nur, solange gesendet
+///    wird»).
 /// 2. *Gleichmässig heisst gezählt.* Ohne Gesamt kein Balken; die Marke atmet an Ort und
 ///    Stelle (1.8 s) — vom Beginn des Sendens an (`Flugbahn.flugbeginn`), auch wenn nie
 ///    ein Zählerstand kommt.

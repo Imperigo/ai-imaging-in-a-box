@@ -374,8 +374,8 @@ final class PruefzeichenTests: XCTestCase {
 
     /// **Die Unterlage aus dem Feld `vorher`** (Entscheid 17), aus Bytes gelesen: Ist das Feld
     /// da, steht ihr Name da; fehlt es oder ist es `null`, steht **nichts** — nicht
-    /// geliefert, nicht «keine». Bis zum 22.09.2026 las die App es nicht, und der Vergleich
-    /// war im Produkt nie zu sehen.
+    /// geliefert, nicht «keine». Bis zum 23.09.2026 (Welle 2b) gab es das Feld nicht, und der
+    /// Vergleich war im Produkt nie zu sehen.
     func testDieUnterlageKommtAusDemFeldVorher() {
         XCTAssertEqual(bild(#"{"bild": "b.png", "zeichen": "bestanden", "vorher": "a.png"}"#).vorher,
                        "a.png")
@@ -553,7 +553,7 @@ final class PruefzeichenTests: XCTestCase {
         let reihe = ["s1.png", "s2.png", "s3.png"]
         let rechnen = Handlungsquittung.rechnen(status:daten:)
         let angenommen = quittung(200, #"{"gestartet": true, "entwurf": false}"#, rechnen)
-        XCTAssertEqual(Rechenbestellung.reihe(reihe, nach: angenommen), [])
+        XCTAssertEqual(Rechenbestellung.reihe(reihe, gesendet: reihe, nach: angenommen), [])
         let stehen: [(String, Handlungsquittung)] = [
             ("abgelehnt", quittung(400, #"{"fehler": "Es läuft schon einer."}"#, rechnen)),
             ("ungewiss, ohne Bestätigung", quittung(200, #"{}"#, rechnen)),
@@ -562,8 +562,27 @@ final class PruefzeichenTests: XCTestCase {
             ("nicht gesendet", Handlungsquittung(ausgang: .nichtGesendet, satz: "Nicht gekoppelt.")),
         ]
         for (fall, q) in stehen {
-            XCTAssertEqual(Rechenbestellung.reihe(reihe, nach: q), reihe, fall)
+            XCTAssertEqual(Rechenbestellung.reihe(reihe, gesendet: reihe, nach: q), reihe, fall)
         }
+    }
+
+    /// **Geleert wird nur die Auswahl, die hinausging** (Durchsicht vom 23.09.2026): Wer
+    /// während der Bestellung neu wählt, behält die neue Wahl, auch wenn die alte angenommen
+    /// wurde.
+    func testEineInzwischenGeaenderteReiheBleibtStehen() {
+        let rechnen = Handlungsquittung.rechnen(status:daten:)
+        let angenommen = quittung(200, #"{"gestartet": true, "entwurf": false}"#, rechnen)
+        let gesendet = ["s1.png", "s2.png"]
+        for (fall, jetzt) in [("eine dazu", ["s1.png", "s2.png", "s3.png"]),
+                              ("eine weg", ["s1.png"]),
+                              ("neu gewählt", ["s4.png", "s5.png"]),
+                              ("andere Folge", ["s2.png", "s1.png"]),
+                              ("ganz abgewählt", [String]())] {
+            XCTAssertEqual(Rechenbestellung.reihe(jetzt, gesendet: gesendet, nach: angenommen),
+                           jetzt, fall)
+        }
+        XCTAssertEqual(Rechenbestellung.reihe(gesendet, gesendet: gesendet, nach: angenommen), [],
+                       "unverändert und angenommen: geleert")
     }
 
     // ------------------------------------------------- die Farbtöne gegen das Blatt
@@ -579,7 +598,8 @@ final class PruefzeichenTests: XCTestCase {
             .durchgefallen: ("Die drei Antworten: durchgefallen", "#e2776f"),
             .nichtGemessen: ("Die drei Antworten: nicht gemessen", "#c8a53f"),
             .entwurf: ("Nur für den Stift: Entwurf", "#6fb3d2"),
-            // Kein eigener Eintrag auf dem Blatt: der Ton von «nicht gemessen», gestrichelt.
+            // Blatt «Die Zeichen», Abschnitt «Wie die Zeichen am Bild sitzen: Zeichen unbekannt»
+            // (nachgezogen 23.09.2026): der Ton von «nicht gemessen», gestrichelt.
             .unbekannt: ("Die drei Antworten: nicht gemessen", "#c8a53f"),
         ]
         for art in Zeichenart.allCases {

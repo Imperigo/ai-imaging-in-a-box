@@ -5068,6 +5068,18 @@ Tabelle lädt sonst gar nicht.
 
 **Prüfsumme im Dateinamen** — Ein kurzer Fingerabdruck, an einen Dateinamen gehängt, damit zwei gleich benannte Dateien aus verschiedenen Ordnern sich nicht gegenseitig überschreiben. *Gefunden in der Welle 2b:* Ohne ihn rechneten zwei Ebenen einer Reihe beide auf der zweiten Zeichnung.
 
+**Mitgesandte Kamera** — Ein Standpunkt, den KosmoOrbit selbst berechnet, benennt und mit der Bestellung mitschickt. Bei einer Innenraum-Bestellung ist das heute der Normalfall: Wir wählen dann **keinen** Raum und rechnen keinen zweiten Standpunkt, sagen aber im Ergebnis, dass eine Innenansicht bestellt war und der Standpunkt von drüben kommt.
+
+**Neuzentrierung** — Ein Modell an den Ursprung schieben, bevor es gerechnet wird. Nötig, wenn ein Gebäude mit echten Landeskoordinaten kommt, also Hunderttausende Meter vom Nullpunkt entfernt: In dieser Entfernung werden die Zahlen, mit denen das Austauschformat rechnet, grob, und Kanten wackeln. Unser Weg zentriert **nicht** neu; empfiehlt die Prüfung es, steht das seit dem 23.09.2026 als Warnung im Befund statt still wegzufallen.
+
+**Gleichwertige Mutation** — Eine absichtliche Änderung am Code, die das Verhalten gar nicht ändert — etwa das Weglassen eines Werts, der ohnehin schon gleich gesetzt ist. Keine Probe kann sie fangen, und das ist kein Mangel der Probe. Man nennt sie beim Namen, damit ein grünes Ergebnis nicht mit einer Lücke verwechselt wird.
+
+**Abschrift-Probe** — Eine Probe für eine Regel, die an zwei Orten steht, weil zwei Programme sie brauchen und keines das andere lesen kann — hier die App (Swift) und der Rechner (Python). Die Probe liest die Abschrift aus dem Quelltext der App und hält sie gegen das laufende Original des Rechners. Ändert jemand die Regel an einem Ort, fällt die Probe. *In diesem Projekt:* die Regel, wann eine Unterlage gestreckt wird.
+
+**Zweiter Zustand (eines Entwurfsblatts)** — Dasselbe Blatt der Entwurfsfläche in einer anderen Lage, per Schalter auf dem Blatt oder als zweite Lage darunter — wenn das Blatt voll ist und ein neues nicht angelegt werden soll (eine Fläche, nicht viele).
+
+**Owner-Entscheid offen (Schild)** — Eine Markierung auf einem Entwurfsblatt für etwas, das so gebaut **und** so gezeichnet ist, dessen Wort oder Farbe der Owner aber nicht gewählt hat. Sie verhindert, dass ein Vorschlag des Baus beim nächsten Lesen wie ein Entscheid aussieht.
+
 **Erreichbarkeit einer Schwelle (Deckel)** — Die Frage, ob ein Messwert eine Schwelle
 unter den gegebenen Umständen **überhaupt** erreichen kann — unabhängig davon, wie gut das
 Geprüfte ist. Liegt die beste erreichbare Zahl unter der Schwelle, misst die Prüfung nicht
@@ -5601,6 +5613,7 @@ keine Aussage.*
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-23 | Ergaenzt aus der Welle 2c: **Mitgesandte Kamera**, **Neuzentrierung**, **Gleichwertige Mutation**, **Abschrift-Probe**, **Zweiter Zustand (eines Entwurfsblatts)**, **Owner-Entscheid offen (Schild)** |
 | 2026-09-23 | Ergaenzt aus der Welle 2b: **Blattunterlage**, **Darauf skizzieren**, **Ablageplan**, **Fachzaehlung**, **Aufraeumfehler**, **Zug (Stiftzug)**, **Beruehrungsart**, **Deckungsbild**, **Einbausperre**, **Reine Absicherung**, **Bereich der Anmeldung (realm)**, **Pruefsumme im Dateinamen**; berichtigt: **Eingangsbild** (gestreckt wird die Skizze, nicht die Unterlage) |
 | 2026-09-23 | Ergaenzt aus der Welle 2 der iPad-App: **Identitaet einer Ansicht**, **Treffertest**, **Unterlage (einer Skizze)**, **Eingangsbild (des Nachrenders)**, **Nachholen (nach einer Schreibkollision)**, **Handlungsquittung**, **Ebenen-Reihe**, **Seitenfeld**, **Laufwaechter**, **Aufklappbarer Vorbehalt**, **Rumpffehler**, **Unicode-Zeilentrenner**, **Signifikante Stellen**, **Unicast**, **Bekanntes, abgewiesenes Feld**, **Innenraum-Bestellung**; nachgefuehrt: **Kastenmittel** (deckungsgewichtet), **Parkfach** (ungewisse Skizzen gehen mit Schluessel von selbst noch einmal) |
 | 2026-09-22 | Ergaenzt aus dem Bau der iPad-App: **Native App gegen Webseite**, **Swift**, **SwiftUI**, **PencilKit**, **Xcode**, **Swift Playgrounds**, **App-Paket (.swiftpm)**, **Bundle-Kennung**, **Simulator**, **Pruefstrecke (auf GitHub)**, **Bonjour (mDNS)**, **Rundruf**, **App Transport Security**, **Wegtafel**, **Parkfach**, **Schluesselbund**, **Doppelsendeschutz** |

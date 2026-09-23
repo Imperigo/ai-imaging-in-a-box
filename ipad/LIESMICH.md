@@ -12,49 +12,63 @@ wiederholen (es kann die Quellen nicht lesen); `tests/test_ipad_geruest.py` fäl
 die beiden auseinanderlaufen oder eine andere Swift-Datei sie nennt. Der Server nimmt den
 Namen seit dem 23.09.2026 in allen Sätzen aus derselben Quelle (`server.NAME`).
 
-## Stand (23.09.2026, nach Welle 2)
+## Stand (23.09.2026, nach Welle 2b)
 
 **Gebaut** sind die fünf Einheiten Zeichnen, Leiste, Bilder, Verbindung und ihr Kern — zwei
-Wellen lang, jede Einheit mit einer Durchsicht. Der Stand der Welle 2 ist `edbdcad`.
+Wellen und eine Nachbesserung lang, jede mit einer Durchsicht. Der Stand der Welle 2 ist
+`edbdcad`, die Nachbesserung (Welle 2b) `f8f2a40`.
 
-**Übersetzt auf dem Mac:** Die Prüfstrecke `.github/workflows/ipad.yml` lief für `edbdcad`
-durch (Lauf 4, «success», nachgesehen am 23.09.2026 im Lauf selbst): 139 Proben des Kerns
-grün, die App für den iOS-Simulator «BUILD SUCCEEDED», **keine Warnung des Übersetzers**. Im
-Protokoll steht nur eine Zeile eines Apple-Werkzeugs («Metadata extraction skipped. No
+**Übersetzt auf dem Mac:** Die Prüfstrecke `.github/workflows/ipad.yml` lief für `6e267d7`
+(der Stand nach `f8f2a40`, nur das README dazu) durch — Lauf 5, «success», nachgesehen am
+23.09.2026 im Protokoll des Laufs: **172 Proben des Kerns grün** (nach der Welle 2 waren es
+139), die App für den iOS-Simulator «BUILD SUCCEEDED», **keine Warnung des Übersetzers**. Im
+Protokoll steht wieder nur die Zeile eines Apple-Werkzeugs («Metadata extraction skipped. No
 AppIntents.framework dependency found.») — ein Hinweis, dass die App keine App-Intents hat,
-kein Befund am Code. Die Warnung, die der Lauf für `f32266f` meldete
-(`Verbindung/Verbindungszeile.swift`), ist damit nicht mehr da.
+kein Befund am Code.
 
 **Was die App heute kann — gebaut, am Gerät unbestätigt:**
 
 * **Zeichnen:** eine PencilKit-Fläche je Ebene, übereinander; Ebenen als Varianten
   (Entscheid 7), «Zurück»/«Vor» mit Zähler, Stiftfarben; das Blatt bleibt beim Drehen
   dasselbe.
+* **Die Unterlage** (Welle 2b): In der grossen Bildansicht legt «Darauf skizzieren» das Bild
+  unter die Ebenen — blattfüllend, und bei anderem Seitenverhältnis gestreckt, **nach
+  derselben Regel wie der Server** (`Kern/Blattunterlage.swift`, abgeschrieben aus
+  `arbeitsgang.setze_auf_unterlage`; dass beide Seiten gleich entscheiden, hält
+  `tests/test_app_abschrift_server.py`). Die App schickt ihren Namen als `ueber` mit; eine
+  **ausgeblendete** Unterlage geht **nicht** mit (Entscheid 7, «gerechnet wird, was sichtbar
+  ist» — die Skizze wird dann auf Grau gerechnet, und die Ebenentafel sagt es). Ob das Bild
+  am Gerät deckungsgleich unter den Strichen liegt, ist **unbestätigt**.
 * **Leiste und Arbeitsplatz:** die Werkzeugleiste, ein Seitenfeld (Ebenen oder Mappe),
-  hoch und quer (Blätter «Main» und «MainHoch»), Vollbild (Entscheid 29).
+  hoch und quer (Blätter «Main» und «MainHoch»), Vollbild (Entscheid 29); «In die Mappe
+  legen» unten im Seitenfeld.
 * **Bilder:** das Bildband mit Prüfzeichen je Bild (Farbe, Wort, Zahl, Vorbehalt —
-  Entscheide 15, 16, 30), die grosse Ansicht mit Schalter Prüfen/Entwerfen, Vorher und
-  Nachher (Entscheid 17), Skizzenliste, Varianten, Laufanzeige mit «Lauf abbrechen»,
-  Teilen mit dem Zeichen auf dem Bild (Entscheid 20).
+  Entscheide 15, 16, 30), die grosse Ansicht mit Schalter Prüfen/Entwerfen, Skizzenliste,
+  Varianten, Laufanzeige mit «Lauf abbrechen», Teilen mit dem Zeichen auf dem Bild
+  (Entscheid 20). **Vorher und Nachher** (Entscheid 17) erscheint nur, wenn der Server zum
+  Bild das Feld `vorher` liefert — das Bild, über das skizziert wurde. Das Feld gibt es seit
+  der Welle 2b (23.09.2026); **vorher war der Vergleich in der App nie zu sehen**, und bei
+  einem Bild ohne Unterlage (auf Grau gerechnet, oder aus dem Modell) bleibt er es.
 * **Verbindung:** Suchen im Heimnetz über die Bonjour-Suche des Systems, erstes Verbinden
   mit der sechsstelligen Zahl, Anmeldung im Schlüsselbund, das Parkfach für Skizzen, die
-  (noch) nicht drüben sind, mit Schlüssel gegen Doppelsendung, und die Übergabe als
-  Bewegung.
+  (noch) nicht drüben sind, mit Schlüssel gegen Doppelsendung und samt `ueber`, und die
+  Übergabe als Bewegung.
 * **Kern** (nur Foundation, hier unter Linux mit `swift test` geprüft): Anfragen bauen und
-  Antworten lesen, Prüfzeichen, Ebenenregeln, Parkfach, Suche, Wege, Marke.
+  Antworten lesen, Prüfzeichen, Ebenenregeln, Unterlage, Parkfach, Suche, Wege, Marke.
 
 **Was bekannt fehlt:**
 
-* **Die Unterlage in der App.** Die Zeichenfläche zeigt kein Bild unter der Skizze, und die
-  App parkt ihre Skizzen **ohne** `ueber` (`Verbindung/Verbindungsstand.swift`). Jede Skizze
-  aus der App wird darum heute **auf Grau** gerechnet; das Bild sagt es seit dem 23.09.2026
-  selbst (`unterlage_hinweis`, Protokoll §4). Die Unterlage kommt in einem folgenden Schritt.
-* **Welle 2b** (Nachbesserungen aus den Durchsichten der Welle 2) ist am 23.09.2026 in
-  Arbeit; was sie ändert, steht nach ihrem Abschluss hier.
+* **Kein Teil der App ist auf einem iPad gelaufen.** Alles oben ist übersetzt und im Kern
+  geprüft, nicht bedient — Stift, Drehen, Vollbild, Übergabe, und neu die Unterlage unter
+  dem Blatt.
+* **Die Anleitung zum Aufspielen** samt Abnahmeblatt steht in
+  [`docs/VISBOX_IPAD_ERSTE_PROBE.md`](../docs/VISBOX_IPAD_ERSTE_PROBE.md).
+* **Die Beschriftung des Vergleichs** («Unterlage» statt «Aus dem Modell», weil über ein
+  früheres Bild der KI skizziert das Vorher nicht aus dem Modell stammt) ist auf dem Blatt
+  «Bilder» der Entwurfsfläche nachgezeichnet (23.09.2026) und dort als **Owner-Entscheid
+  offen** markiert.
 
-**Am Gerät unbestätigt** ist alles, was über das Übersetzen und die Kernproben hinausgeht —
-kein Teil der App ist bisher auf einem iPad gelaufen. Die Anleitung zum Aufspielen kommt
-separat.
+**Am Gerät unbestätigt** ist alles, was über das Übersetzen und die Kernproben hinausgeht.
 
 ## Was wo liegt
 
@@ -73,13 +87,17 @@ ipad/
 │   │   ├── Anfragen.swift       Anfragen gebaut und Antworten gelesen — nicht gesendet
 │   │   ├── Pruefzeichen.swift   das Zeichen am Bild, und wie ein Bild gelesen wird
 │   │   ├── Ebenen.swift         die Regeln der Zeichenfläche, ohne PencilKit
+│   │   ├── Blattunterlage.swift die Unterlage unter dem Blatt: gestreckt, was mitgeht
+│   │   ├── Stiftfarben.swift    Grund des Blattes und Stiftfarben, gegen das Blatt geprüft
 │   │   ├── Parkfach.swift       Skizzen, die (noch) nicht drüben sind
 │   │   └── Suche.swift          was gefunden wurde, und welche HomeStation genommen wird
-│   ├── Zeichnen/                Zeichenfläche, Leinwand je Ebene, Ebenentafel, Zeichenstand
-│   ├── Leiste/                  Leiste, Werkzeugwahl, Arbeitsplatz, Seitenfeld, Zeichenblatt
-│   │                            (Farben, Schriften, Masse nach dem Blatt «Die Zeichen»)
+│   ├── Zeichnen/                Zeichenfläche, Leinwand je Ebene, Ebenentafel, Zeichenstand,
+│   │                            Unterlagenbild
+│   ├── Leiste/                  Leiste, Werkzeugwahl, Arbeitsplatz, Seitenfeld, Zeichenblatt,
+│   │                            Mappenknopf (Farben, Schriften, Masse nach «Die Zeichen»)
 │   ├── Bilder/                  Bildband, Bildansicht, Vergleich, Skizzen, Varianten,
-│   │                            Laufanzeige, Teilen, Zeichenrahmen, Mappentafel
+│   │                            Laufanzeige, Teilen, Zeichenrahmen, Mappentafel,
+│   │                            Unterlage, «Darauf skizzieren»
 │   └── Verbindung/              Verbindungszeile, Koppelbildschirm, Sucher, Sender,
 │                                Schlüsselbund, Parkfachliste, Mappenabgleich, Übergabe
 └── VisboxKern/                  der Kern als eigenes Swift-Paket, zum Prüfen
@@ -175,10 +193,11 @@ diesem Zertifikat trauen (`--cacert`); die Verbindung ungeprüft zu lassen ist k
 ## Was ungeprüft ist
 
 * **Ob die App läuft.** Dass sie **übersetzt**, zeigt die Prüfstrecke auf dem Mac (siehe
-  «Stand» oben). Wie sie sich bedienen lässt — Stift, Drehen, Vollbild, Übergabe —, zeigt
-  erst ein iPad. Ob die Angaben im Manifest, die aus `AppleProductTypes` stammen
+  «Stand» oben). Wie sie sich bedienen lässt — Stift, Drehen, Vollbild, Übergabe, die
+  Unterlage unter dem Blatt —, zeigt erst ein iPad. Ob die Angaben im Manifest, die aus `AppleProductTypes` stammen
   (`.placeholder(icon: .leaf)`, `.localNetwork(...)`, `additionalInfoPlistContentFilePath`),
-  auf einem Gerät wirken, wie sie sollen, zeigt erst das Aufspielen.
+  auf einem Gerät wirken, wie sie sollen, zeigt erst das Aufspielen — die Liste dessen, was
+  dort zu prüfen ist, steht im Abnahmeblatt (`docs/VISBOX_IPAD_ERSTE_PROBE.md`).
 * **Ob Swift Playgrounds das Paket öffnet** und den Unterordner `Kern/` mitübersetzt.
 * **Ob iOS die Verbindung zur HomeStation zulässt** — lokale Netzwerkfreigabe
   (`NSLocalNetworkUsageDescription`, `NSBonjourServices`) und die ATS-Ausnahme

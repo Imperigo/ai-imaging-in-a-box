@@ -688,7 +688,11 @@ public struct Laufbestellung: Equatable, Sendable {
     /// Wie viele Varianten — `nil` heisst: keine Reihe **oder** nicht geliefert (der
     /// Server schickt bei einer einzelnen Skizze `null`).
     public let varianten: Int?
-    /// Die Dateinamen der Skizzen bei `art` `skizze`; sonst `nil`.
+    /// Die Dateinamen der Skizzen bei `art` `skizze` — `nil` sonst, wenn nicht geliefert,
+    /// **oder wenn die Liste nicht lesbar ist**: Steht darin ein Eintrag, der kein Text ist,
+    /// gilt die ganze Liste als nicht gelesen. Bis zur Durchsicht vom 23.09.2026 fiel ein
+    /// solcher Eintrag still weg, und eine Reihe aus drei Skizzen las sich als eine aus
+    /// zwei (`AnfragenTests.testEineSkizzenlisteMitNichtTextIstNichtGelesen`).
     public let skizzen: [String]?
 
     public init(art: String?, entwurf: Bool?, varianten: Int?, skizzen: [String]?) {
@@ -785,8 +789,65 @@ public struct Fortschrittsstand: Equatable, Sendable {
             bestellung: o["bestellung"]?.alsObjekt.map {
                 Laufbestellung(art: $0["art"]?.alsText, entwurf: $0["entwurf"]?.alsWahrheit,
                                varianten: $0["varianten"]?.alsGanz,
-                               skizzen: $0["skizzen"]?.alsListe?.compactMap { $0.alsText })
+                               skizzen: $0["skizzen"]?.alsListe.flatMap(Fortschrittsstand.nurTexte))
             })
+    }
+
+    /// Eine Liste, in der **jeder** Eintrag Text ist — sonst `nil` für die ganze Liste,
+    /// statt still einen weniger (siehe `Laufbestellung.skizzen`).
+    static func nurTexte(_ liste: [JSONWert]) -> [String]? {
+        let texte = liste.compactMap { $0.alsText }
+        return texte.count == liste.count ? texte : nil
+    }
+}
+
+// ------------------------------------------------------- was die Laufanzeige daraus sagt
+
+extension Fortschrittsstand {
+    /// **Die Kopfzeile eines laufenden Laufs** — «Variante 2 von 3 · Prüfen» —, oder `nil`,
+    /// wenn der Stand dazu nichts sagt.
+    ///
+    /// Gebaut für die Laufanzeige (`Bilder/Laufanzeige.swift`). Der Server liefert `variante`
+    /// und `bestellung` seit dem 22.09.2026; gelesen werden sie hier seit der Welle 2b
+    /// (23.09.2026), gezeigt seit der Durchsicht danach. **Die dritte Antwort:** Fehlt ein Feld,
+    /// fehlt sein Teil — es steht nicht «keine Variante» und nicht «Prüfen» da, weil der
+    /// Server nichts gesagt hat. Ohne `von` steht die Nummer allein («Variante 2»); ohne
+    /// Nummer steht keine Variante. `entwurf` `true` heisst Entwerfen, `false` Prüfen, `nil`
+    /// nichts. Bewacht: `AnfragenTests.testDieKopfzeileSagtNurWasDerServerSagt`.
+    public var kopfzeile: String? {
+        var teile: [String] = []
+        if let n = variante?.nummer {
+            teile.append(variante?.von.map { "Variante \(n) von \($0)" } ?? "Variante \(n)")
+        }
+        switch bestellung?.entwurf {
+        case .some(true): teile.append("Entwerfen")
+        case .some(false): teile.append("Prüfen")
+        case .none: break
+        }
+        return teile.isEmpty ? nil : teile.joined(separator: " · ")
+    }
+
+    /// Ob der Knopf «Abbruch verlangt» zeigt: **was der Server weiss** (`abbruchVerlangt`,
+    /// auch wenn ein anderes Gerät ihn verlangte) — und nur, wenn er dazu nichts sagt (ein
+    /// Server vor dem 22.09.2026), was dieses Gerät verlangt hat (`hier`). Sagt der Server
+    /// «nein», gilt das, auch wenn hier einmal verlangt wurde: Dann ist es ein anderer Lauf.
+    public func abbruchAngezeigt(hier: Bool) -> Bool {
+        abbruchVerlangt ?? hier
+    }
+
+    /// Der Satz unter dem Knopf, **woher** das «verlangt» kommt — `nil`, wenn keiner
+    /// verlangt ist. Nie «nicht verlangt» aus einem fehlenden Feld.
+    public func abbruchSatz(hier: Bool) -> String? {
+        switch abbruchVerlangt {
+        case .some(true):
+            return "Die HomeStation hat den Abbruch vermerkt. Ob er wirkt, steht nach dem Lauf "
+                + "im Ergebnis."
+        case .some(false):
+            return nil
+        case .none:
+            return hier ? "Von diesem iPad verlangt. Ob die HomeStation ihn vermerkt hat, "
+                + "sagt sie nicht." : nil
+        }
     }
 }
 

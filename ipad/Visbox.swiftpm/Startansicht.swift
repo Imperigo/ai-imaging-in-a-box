@@ -18,6 +18,10 @@ import SwiftUI
 ///   ging ihr Zustand verloren (welches Blatt offen ist), und eine laufende Übergabe-Marke
 ///   verschwand mitten im Flug. Jetzt bleibt sie im Baum, auf Höhe 0, unsichtbar, nicht
 ///   antippbar und für den Bildschirmleser still (`versteckt`, wie Leiste und Seitenfeld).
+///   **Belegt ist nur das:** Die Zeile steht ohne `if`, sie bleibt im Baum. Dass SwiftUI ihren
+///   Zustand dabei wirklich hält und die Übergabe im Vollbild weiterläuft, ist am Gerät
+///   unbestätigt (23.09.2026). Die Übergabe selbst hängt nicht an der Zeile — sie läuft im
+///   `Verbindungsstand`; im Vollbild ist ihre Marke aber nicht zu sehen.
 /// * **«In die Mappe legen» steht im Seitenfeld** (`Seitentafel`, `Leiste/Mappenknopf.swift`,
 ///   seit dem 23.09.2026), nicht mehr in der Verbindungszeile. Was er ablegt, folgt der Wahl
 ///   bei den Varianten (bei «Drei Ebenen» jede sichtbare Ebene als eigene Skizze, sonst
@@ -30,9 +34,9 @@ struct Startansicht: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // IM BAUM GEHALTEN, NUR AUSGEBLENDET: Zustand und Flug der Übergabe laufen im
-            // Vollbild weiter. Dass die Marke dabei wirklich nie in der Mitte verschwindet,
-            // ist am Gerät unbestätigt (22.09.2026) — hier übersetzt SwiftUI nicht.
+            // IM BAUM GEHALTEN, NUR AUSGEBLENDET — belegt ist nur das (kein `if`). Dass der
+            // Zustand der Zeile und die Marke der Uebergabe das Vollbild ueberstehen, ist am
+            // Geraet unbestaetigt (23.09.2026); hier uebersetzt SwiftUI nicht.
             VStack(spacing: 0) {
                 Verbindungszeile()
                 Rectangle()

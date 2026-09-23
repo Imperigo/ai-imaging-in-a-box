@@ -896,10 +896,15 @@ def setze_auf_unterlage(skizze, ziel, *, unterlage=None) -> dict:
     **Die Grösse ist die der Unterlage.** Sie ist das Bild, das gegen die Tiefenkarte
     gerechnet wurde; ihre Bildpunkte bleiben unberührt, und die Skizze wird auf sie
     abgebildet — Blatt auf Bild, Rand auf Rand, beim Verkleinern als Kastenmittel mit
-    Deckung gewichtet (ein dünner Strich wird blasser, verschwindet aber nicht). Dass die
-    App die Unterlage **blattfüllend** zeigt, ist eine Annahme und **am Gerät
-    unbestätigt**; weicht das Seitenverhältnis ab, wird gestreckt, und ``gestreckt``
-    sagt es. Ohne Unterlage bleibt die Grösse der Skizze.
+    Deckung gewichtet (ein dünner Strich wird blasser, verschwindet aber nicht). Weicht
+    das Seitenverhältnis ab, wird gestreckt, und ``gestreckt`` sagt es. Ohne Unterlage
+    bleibt die Grösse der Skizze.
+
+    **Die App zeigt die Unterlage nach derselben Regel** (seit der Welle 2b, 23.09.2026):
+    blattfüllend, und ob gestreckt wird, rechnet sie mit einer Abschrift dieser Schwelle
+    nach (``Blattunterlage.gestreckt`` in ``ipad/Visbox.swiftpm/Kern/Blattunterlage.swift``).
+    Dass beide Seiten gleich entscheiden, hält ``tests/test_app_abschrift_server.py``;
+    **ob es am Gerät deckungsgleich aussieht, ist unbestätigt.**
 
     Hat die Unterlage selbst einen Alphakanal, liegt sie zuerst auf dem neutralen Grund —
     sonst würde dort, wo sie durchsichtig ist, wieder Schwarz daraus.

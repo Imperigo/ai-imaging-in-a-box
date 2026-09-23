@@ -16,6 +16,15 @@ Wirkung** geprüft, jeder mit dem Befund, den er festhält.
 7. **Der Name der App** stand im 401-Satz, im Bereich, im Kopf ``Server`` und in den
    Startzeilen noch fest.
 
+Nachgezogen nach der Durchsicht der Welle 2b (23.09.2026) — drei Stellen, deren Mutation
+bis dahin grün blieb:
+
+8. ``vorher`` ist **nie das Bild selbst** (Protokoll §4 sagt es zu).
+9. Der Satz aus ``unterlage_hinweis`` steht auf der Webseite auch bei ``hinweise: null`` —
+   und neben einer Liste, die ihn schon trägt, nicht zweimal.
+10. Scheitert das Laden der Unterlage auf der Webseite, versucht das nächste Laden der Mappe
+    denselben Namen **neu** (bis dahin blieb das Bild unter diesem Namen leer).
+
 Ohne GPU, ohne Blender. Regel 3: alles hier entsteht aus ein paar Bytes.
 """
 from __future__ import annotations
@@ -402,6 +411,27 @@ def test_ohne_unterlage_gibt_es_kein_vorher(server, mappe):
     assert _sicht_von(server, mappe, "skizze-y.png")["vorher"] is None
 
 
+def test_das_vorher_ist_nie_das_bild_selbst(server, mappe):
+    """**Protokoll §4: «und er ist nicht das Bild selbst».** Nennt die Herkunft eines
+    Skizzenbilds sich selbst als Unterlage (eine von Hand oder fremd geschriebene Mappe),
+    stünde der Name in der Mappe und die Datei läge da — alle anderen Bedingungen hielten.
+    Ein Vergleich eines Bildes mit sich selbst sähe aus wie «nichts geändert». Bis zum
+    23.09.2026 prüfte das keine Probe (die Mutation blieb grün, Durchsicht der Welle 2b)."""
+    unterlage = _unterlage_rechnen(mappe)
+    _skizze_ablegen(mappe, "skizze-i.png", {(0, 0): (*ROT, 255)}, ueber=unterlage)
+    arbeitsgang.rechne_skizze(mappe, "skizze-i.png", ausfuehrer=_tabelle(_Modell()))
+    assert _sicht_von(server, mappe, "skizze-i.png")["vorher"] == unterlage, "Gegenprobe"
+
+    p = _neu(mappe)
+    (bild,) = [b for b in p["bilder"] if b["herkunft"].get("skizze") == "skizze-i.png"]
+    bild["herkunft"]["unterlage"]["bild"] = bild["bild"]
+    projekt.speichere(p, mappe)
+
+    b = _sicht_von(server, mappe, "skizze-i.png")
+    assert (mappe / b["bild"]).is_file(), "die Datei liegt — nur die Selbstnennung zählt"
+    assert b["vorher"] is None
+
+
 @pytest.mark.parametrize("fall", ["datei-weg", "nicht-mehr-in-der-mappe", "pfad-nach-draussen"])
 def test_ein_vorher_das_es_nicht_gibt_ist_null(server, mappe, fall):
     """Nur ein Bild, das in der Mappe **steht und liegt**. Fehlt die Datei, führt die
@@ -673,6 +703,142 @@ def test_der_wischregler_der_seite_nimmt_das_vorher(server, mappe, tmp_path):
     assert "skizze-r.png" not in aus["oben"]
     assert aus["satz"] and "das Bild, auf das skizziert wurde" in aus["satz"][0]
     assert "GESTRECKT" in aus["text"]
+
+
+#: Die Karten der Bilder, gefahren gegen eine echte Sicht: Gedruckt werden die Sätze
+#: (``div.satz``) jeder Karte, damit sich zählen lässt, wie oft einer dasteht.
+_KARTEN = r"""
+const skript = require("fs").readFileSync(process.argv[2], "utf8");
+const sicht = JSON.parse(require("fs").readFileSync(process.argv[3], "utf8"));
+""" + _EL + r"""
+const ids = {};
+const document = { hidden:false, getElementById:(id)=>ids[id]||(ids[id]=new El("div")), createElement:(t)=>new El(t),
+  createTextNode:(t)=>Object.assign(new El("#text"),{_text:t}), querySelectorAll:()=>[] };
+async function fetch(url) {
+  const d = url.startsWith("/api/projekt") ? sicht : {laeuft:false, fertige:[]};
+  return {json: async () => d};
+}
+const crypto = require("crypto").webcrypto;
+const ctx = {document, fetch, crypto, setInterval:()=>1, clearInterval:()=>{}, console};
+new Function(...Object.keys(ctx), skript)(...Object.values(ctx));
+(async () => {
+  await new Promise(r => setTimeout(r, 30));
+  const saetze = ids["bilder"].alle(c => c.classList && c.classList.contains("satz"))
+                              .map(c => c.textContent);
+  console.log(JSON.stringify({saetze, stand: ids.stand.textContent}));
+})().catch((f) => { console.log("AUSNAHME " + f.stack); });
+"""
+
+
+@pytest.mark.parametrize("hinweise", ["null", "liste"])
+def test_der_satz_zur_unterlage_steht_auf_der_seite_genau_einmal(server, mappe, tmp_path,
+                                                                 hinweise):
+    """**Über eine echte Sicht**, gefahren in node. Ohne Unterlage gezeichnet: Der Satz
+    «auf Grau» gehört an die Karte des Bildes.
+
+    * ``null`` — die Bildstufe hat nichts gemeldet (hier: eine Mappe, deren Messung keine
+      Liste trägt). Dann hängt der Server den Satz **nicht** an ``hinweise`` an, und die
+      Seite muss ihn aus ``unterlage_hinweis`` nehmen. Bis zum 23.09.2026 blieb die
+      Mutation ``if (false)`` an dieser Stelle grün (Durchsicht der Welle 2b).
+    * ``liste`` — der Satz steht schon in ``hinweise``; er steht trotzdem nur **einmal** da.
+    """
+    _skizze_ablegen(mappe, "skizze-n.png", {(0, 0): (*ROT, 255)}, ueber=None)
+    arbeitsgang.rechne_skizze(mappe, "skizze-n.png", ausfuehrer=_tabelle(_Modell()))
+    if hinweise == "null":
+        p = _neu(mappe)
+        (bild,) = [b for b in p["bilder"] if b["herkunft"].get("skizze") == "skizze-n.png"]
+        bild["herkunft"]["messung"] = {**(bild["herkunft"].get("messung") or {}),
+                                       "hinweise": None}
+        projekt.speichere(p, mappe)
+    sicht = _sicht(server, mappe)
+    (b,) = [x for x in sicht["bilder"] if (x.get("herkunft") or {}).get("skizze")]
+    satz = b["unterlage_hinweis"]
+    assert satz and "Grau" in satz
+    if hinweise == "null":
+        assert b["hinweise"] is None, "die dritte Antwort bleibt — der Fall ist echt"
+    else:
+        assert satz in b["hinweise"]
+
+    aus = json.loads(_seite_fahren(tmp_path, _KARTEN, sicht))
+
+    assert re.fullmatch(r"1 Bilder, \d+ Läufe", aus["stand"]), aus["stand"]
+    assert aus["saetze"].count(satz) == 1, aus["saetze"]
+
+
+#: Die Unterlage der Tafel kommt einmal nicht (``error``) — und dann beim nächsten Laden.
+_NEU_VERSUCH = r"""
+const skript = require("fs").readFileSync(process.argv[2], "utf8");
+const sicht = JSON.parse(require("fs").readFileSync(process.argv[3], "utf8"));
+""" + _EL + r"""
+const ids = {};
+const document = { hidden:false, getElementById:(id)=>ids[id]||(ids[id]=new El("div")), createElement:(t)=>new El(t),
+  createTextNode:(t)=>Object.assign(new El("#text"),{_text:t}), querySelectorAll:()=>[] };
+async function fetch(url) {
+  const d = url.startsWith("/api/projekt") ? sicht : {laeuft:false, fertige:[]};
+  return {json: async () => d};
+}
+const crypto = require("crypto").webcrypto;
+const ctx = {document, fetch, crypto, setInterval:()=>1, clearInterval:()=>{}, console};
+const api = new Function(...Object.keys(ctx), skript +
+  ";\nreturn {zeichenStart, zeichenZug, zeichenEnde, tafelGroesse, laden, tafel};")(
+  ...Object.values(ctx));
+const e = (x) => ({pointerId: 1, pointerType: "pen", pressure: 0.5, clientX: x, clientY: x,
+                   preventDefault(){}});
+const strich = (x) => { api.zeichenStart(e(x)); api.zeichenZug(e(x + 1)); api.zeichenEnde(e(x)); };
+const bild = () => ids.unterlagenbild;
+const scheitert = () => { for (const f of (bild().listeners.error || [])) f({}); };
+const laedt = (b, h) => { bild().naturalWidth = b; bild().naturalHeight = h;
+                          for (const f of (bild().listeners.load || [])) f({}); };
+const aus = {};
+(async () => {
+  await new Promise(r => setTimeout(r, 30));          // das erste `laden` der Seite
+  // WIE DIE AUSWAHLLISTE IM BROWSER: gewaehlt wird ein Bild, und es meldet sich.
+  const waehle = (name) => { ids.unterlage.value = name;
+                             for (const f of ids.unterlage.listeners.change) f({}); };
+  waehle(sicht.bilder[0].bild);
+  laedt(4, 4);                                        // das erste Bild kam, die Tafel steht
+  // A · Ein anderes Bild wird gewaehlt — und kommt nicht. Die Seite sagt es.
+  waehle(sicht.bilder[1].bild);
+  const erstesSrc = bild().src;
+  scheitert();
+  aus.satz = ids.stand.textContent;
+  strich(1);                                          // gezeichnet wird trotzdem
+  // B · Die Mappe wird neu geladen (wie nach jedem Lauf): DERSELBE Name, ein neuer Versuch —
+  // und die Zeichnung bleibt, denn sie gehoert zu diesem Namen.
+  let vorher = bild().srcGesetzt;
+  await api.laden();
+  aus.b = {neu: bild().srcGesetzt - vorher, gleich: bild().src === erstesSrc,
+           gezeichnet: api.tafel.gezeichnet};
+  // C · Diesmal kommt es. Gezeichnet, neu geladen: kein weiterer Versuch, nichts geleert.
+  laedt(4, 4);
+  strich(1);
+  vorher = bild().srcGesetzt;
+  await api.laden();
+  aus.c = {neu: bild().srcGesetzt - vorher, gezeichnet: api.tafel.gezeichnet};
+  console.log(JSON.stringify(aus));
+})().catch((f) => { console.log("AUSNAHME " + f.stack); });
+"""
+
+
+def test_eine_unterlage_die_nicht_kam_wird_beim_naechsten_laden_neu_versucht(
+        server, mappe, tmp_path):
+    """**Der Befund (Durchsicht der Welle 2b, 23.09.2026):** Die Seite merkte sich den Weg
+    der Unterlage schon beim Setzen. Kam das Bild nicht (``error``), kehrte jedes weitere
+    ``laden`` bei demselben Namen um — das Bild unter der Tafel blieb leer, bis jemand eine
+    andere Unterlage wählte. Jetzt: ein Satz, und beim nächsten Laden ein neuer Versuch, der
+    die Tafel **nicht** leert (die Zeichnung gehört zu demselben Namen).
+    Und die Gegenprobe: Ist das Bild einmal da, setzt ``laden`` es nicht neu (Welle 2)."""
+    for startwert in (7, 8):                           # zwei Läufe, zwei Bilder
+        arbeitsgang.rechne(mappe, ausfuehrer=_tabelle(_Modell()), seed=startwert)
+    sicht = _sicht(server, mappe)
+    assert len(sicht["bilder"]) == 2
+
+    aus = json.loads(_seite_fahren(tmp_path, _NEU_VERSUCH, sicht))
+
+    assert "Die Unterlage liess sich nicht laden" in aus["satz"]
+    assert aus["b"] == {"neu": 1, "gleich": True, "gezeichnet": True}, \
+        "derselbe Name, neu versucht — und die Tafel nicht geleert"
+    assert aus["c"] == {"neu": 0, "gezeichnet": True}, "geladen ist geladen"
 
 
 # ======================================================================================

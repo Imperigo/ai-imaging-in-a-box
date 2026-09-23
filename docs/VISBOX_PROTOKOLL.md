@@ -15,8 +15,9 @@ Gelesen aus: `oberflaeche/server.py` (Wege, Tür, Antworten), `oberflaeche/rundr
 22.09.2026, abends (Einheit D-SERVER), nachgeführt nach den Durchsichten der Welle 1
 (Skizze auf Unterlage, Zahl nur mit Urteil, Abbruch zwischen Varianten, Kopplungssatz,
 Rundruf) und der Welle 2 (23.09.2026: `vorher` und `unterlage_hinweis` je Bild, der Name der
-App in der Abweisung, eine während des Laufs verworfene Skizze, die Unterlage der App). Die App schreibt die Wege in `ipad/Visbox.swiftpm/Kern/Wege.swift`
-ab; `tests/test_ipad_geruest.py` fällt, sobald die Abschrift und der Server auseinanderlaufen.
+App in der Abweisung, eine während des Laufs verworfene Skizze, die Unterlage der App; gebaut
+als Welle 2b, `f8f2a40`) und nachgesehen nach deren Durchsicht (23.09.2026). Die App schreibt
+die Wege in `ipad/Visbox.swiftpm/Kern/Wege.swift` ab; `tests/test_ipad_geruest.py` fällt, sobald die Abschrift und der Server auseinanderlaufen.
 
 ---
 
@@ -99,15 +100,17 @@ Bewacht in `tests/test_flaeche_fuer_die_app.py` (die Koppelseite, «und nichts s
 auf ihrer Unterlage**, nicht die Skizze allein. Die Unterlage ist das Bild, das die Mappe an der
 Skizze unter `ueber` führt; fehlt `ueber`, ein neutrales Grau (128, 128, 128). Verrechnet wird
 mit dem **Alphakanal** (durchsichtig heisst Unterlage, halb deckend heisst halb). Die Grösse ist
-die der Unterlage, die Skizze wird Blatt auf Bild abgebildet — dass die App die Unterlage
-blattfüllend zeigt, ist seit dem 23.09.2026 so gebaut (unten), aber **am Gerät unbestätigt**; bei anderem
-Seitenverhältnis wird gestreckt, und das Bild sagt es (`herkunft.unterlage.gestreckt`). Ohne
+die der Unterlage, die Skizze wird Blatt auf Bild abgebildet; bei anderem Seitenverhältnis wird
+gestreckt, und das Bild sagt es (`herkunft.unterlage.gestreckt`). Die App zeigt die Unterlage
+seit der Welle 2b nach derselben Regel (unten); ob es am Gerät deckungsgleich aussieht, ist
+**unbestätigt**. Ohne
 Unterlage bleibt die Grösse der Skizze. *Befund dazu:* Bis dahin ging die Zeichnung allein
 hinein, und die Bildstufe (die das Ausgangsbild ohne Alpha liest) machte aus dem durchsichtigen
 Grund **Schwarz** — das Bild, auf das gezeichnet war, kam nie an.
 
-**Was die App schickt — die Unterlage in der App (gebaut am 23.09.2026, nicht übersetzt, am
-Gerät unbestätigt).** Bis zum Stand `edbdcad` zeigte die App keine Unterlage und parkte jede
+**Was die App schickt — die Unterlage in der App (gebaut in der Welle 2b, `f8f2a40`,
+23.09.2026; auf dem Mac übersetzt ohne Warnung, am Gerät unbestätigt).** Bis zum Stand
+`edbdcad` zeigte die App keine Unterlage und parkte jede
 Skizze **ohne `ueber`**; jede Skizze aus der App wurde darum auf Grau gerechnet (das Bild sagt es
 seither selbst, `unterlage_hinweis`, §4). Bis zum 23.09.2026 stand hier ausserdem «Die App muss
 dafür nichts ändern» — das stimmte nur für die Webseite, die `ueber` schon mitschickt. Jetzt:
@@ -123,7 +126,10 @@ dafür nichts ändern» — das stimmte nur für die Webseite, die `ueber` schon
   (Blatt 1536 × 1024 auf das ganze Bild). Ob gestreckt wird, rechnet der Kern mit der Regel des
   Servers nach (`Blattunterlage.gestreckt`: mehr als ein Prozent Abweichung im
   Seitenverhältnis; lässt sich die Grösse des Bildes nicht lesen, heisst es **nicht bekannt**,
-  nicht «nein»), und die Ebenentafel sagt es. Beim Schieben und Zoomen folgt sie der gewählten
+  nicht «nein»), und die Ebenentafel sagt es. Die Regel ist eine **Abschrift**;
+  `tests/test_app_abschrift_server.py` hält sie gegen den Server (seit dem 23.09.2026: der
+  Server wird gefahren, die Swift-Zeilen werden gelesen und ausgewertet — eine Schwelle, die
+  sich auf einer Seite verschiebt, fällt dort). Beim Schieben und Zoomen folgt sie der gewählten
   Fläche. Der Titel über dem Blatt lautet dann «Skizze über <Name> · <Ebene>».
 * **Keine Ebene.** Die Unterlage steht als **unterste Zeile** der Ebenentafel, mit dem Namen des
   Bildes, ein- und ausblendbar und entfernbar, aber nicht wählbar. Sie wird nicht radiert (sie
@@ -147,7 +153,8 @@ dafür nichts ändern» — das stimmte nur für die Webseite, die `ueber` schon
 Die Regeln stehen im Kern (`ipad/Visbox.swiftpm/Kern/Blattunterlage.swift`: `Blattunterlage`,
 `Unterlagenangabe`, `Ablageplan`; `Parkfach.parke(_:ueber:ordner:jetzt:)`) und sind in
 `BlattunterlageTests` bewacht, bis zum Weg Stapel → Parkfach → Neustart → Anfrage. Die App-Seite
-(Laden, Zeigen, Tafel, Knopf) ist SwiftUI/UIKit und hier nicht übersetzt.
+(Laden, Zeigen, Tafel, Knopf) ist SwiftUI/UIKit: hier nicht übersetzt, auf dem Mac übersetzt
+(Prüfstrecke, Lauf 5 für `6e267d7`), am Gerät nicht bedient.
 
 **«In die Mappe legen»** steht seit dem 23.09.2026 unten im Seitenfeld (Blätter «Main» und
 «MainHoch», `Leiste/Mappenknopf.swift`), unter beiden Reitern, und nicht mehr in der
@@ -197,7 +204,9 @@ Wer ihn schickt, und wann er wechselt:
   was sich bewegt** (seit dem 23.09.2026): Ein Tipp ohne Bewegung ändert weder Zeichnung noch
   Schlüssel. Wird die Tafel durch eine andere Unterlage geleert (auch eine gleich grosse), vergisst
   die Seite Zeichnung und Schlüssel; ein neues Laden der Mappe (nach jedem Lauf) leert sie nicht
-  mehr. *Befund dazu:* Bis dahin
+  mehr. Kam das Bild unter der Tafel nicht (`error`), sagt die Seite es und versucht denselben
+  Namen beim nächsten Laden der Mappe neu, ohne die Tafel zu leeren (seit dem 23.09.2026; bis
+  dahin blieb es unter diesem Namen leer, bis eine andere Unterlage gewählt wurde). *Befund dazu:* Bis dahin
   galt der Schlüssel bis zum Leeren der Tafel; eine nach verlorener Antwort ergänzte Zeichnung
   ging mit dem alten hinaus und wurde als «andere Zeichnung» abgewiesen.
 
@@ -276,7 +285,8 @@ skizze_hinweis, unterlage_hinweis}` (`score` bis `skizze_hinweis` ohne `vorher` 
 * `vorher` (seit dem 23.09.2026): **das Bild, über das skizziert wurde** — der Name, wie er
   unter `bilder[].bild` steht, gelesen aus `herkunft.unterlage.bild`. **Nur der Name eines
   Bildes dieser Mappe**: Er steht unter `bilder`, die Datei liegt im Projektordner (so, wie
-  `GET /bild` sie ausliefert), und er ist nicht das Bild selbst. **Sonst `null`** — ohne
+  `GET /bild` sie ausliefert), und er ist nicht das Bild selbst (jede der drei Bedingungen
+  bewacht über `GET /api/projekt`, die letzte seit dem 23.09.2026). **Sonst `null`** — ohne
   Unterlage gezeichnet (auf Grau), kein Bild aus einer Skizze, ein älteres Bild ohne
   `herkunft.unterlage`, die Unterlage ist nicht (mehr) zu haben. **Nie ein Pfad.** Die App holt
   die Bytes über `GET /bild` unter genau diesem Namen (Entscheid 17: Vorher und Nachher); die
@@ -290,7 +300,11 @@ skizze_hinweis, unterlage_hinweis}` (`score` bis `skizze_hinweis` ohne `vorher` 
   (`herkunft.unterlage.grund`), **nur wenn er etwas zu sagen hat**: die Skizze wurde auf ihr
   Bild **gestreckt** (anderes Seitenverhältnis), oder sie wurde **ohne Unterlage auf Grau**
   gerechnet. Sonst `null` (Blatt auf Bild ohne Streckung, kein Skizzenbild, ein älteres
-  Bild). Er steht zusätzlich in `hinweise` (siehe oben), ausser dort steht `null`.
+  Bild). Er steht zusätzlich in `hinweise` (siehe oben), ausser dort steht `null`. **Die
+  Webseite** zeigt ihn in beiden Fällen genau einmal (bewacht seit dem 23.09.2026, auch bei
+  `hinweise: null`). **Die App liest das Feld nicht** (nachgesehen am 23.09.2026: kein
+  `unterlage_hinweis` unter `ipad/`) — sie sieht den Satz nur über `hinweise`, bei
+  `hinweise: null` also nicht. Offen für die App.
 * `skizze_nicht_angekommen`: **drei Antworten.** `true` — das Bild kam aus einer Skizze, und die
   Bildstufe sagt, sie kam beim Modell nicht an (auf dem Vorgabemodell der Normalfall, Befund
   `auf-20260919-123`: Das Bild ist dann aus Tiefenkarte und Text gerechnet, was gezeichnet war,
@@ -313,8 +327,9 @@ bestellung}` (die letzten drei seit 22.09.2026)
   `abgelehnt`, `fehler`, `uebersprungen` oder `abgebrochen` (ein Knoten, der wegen des Abbruchs
   nicht mehr begann — er meldet sich fertig, ohne je begonnen zu haben). `variante` ist die
   Nummer der Variante oder `null`. **Fünf Werte, nicht vier:** `abgebrochen` kam am 22.09.2026
-  dazu. Die App führt den Status roh als Text; ihr Kommentar dazu (`Kern/Anfragen.swift`, Stand
-  22.09.2026 abends) nennt nur die ersten vier — wer ihn deutet, muss den fünften kennen.
+  dazu. Die App führt den Status roh als Text; ihr Kommentar dazu (`FertigerKnoten.status` in
+  `Kern/Anfragen.swift`) nennt seit der Welle 2b (`f8f2a40`) alle fünf, samt dem Unterschied
+  zwischen `abgebrochen` und `uebersprungen`; bis dahin nannte er nur die ersten vier.
 * `abbruch_verlangt`: ob `POST /api/abbrechen` kam. **Nicht**, ob es gewirkt hat — das steht
   nach dem Lauf in `ergebnis.abgebrochen`.
 * `variante`: bei einer Reihe `{nummer, von, gruppe}` der laufenden Variante, sonst `null`. Mit

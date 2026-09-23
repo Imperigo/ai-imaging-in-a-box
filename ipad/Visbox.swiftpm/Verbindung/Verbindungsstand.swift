@@ -46,7 +46,9 @@ final class Verbindungsstand: ObservableObject {
     /// Warum die Suche nicht läuft — `nil`, wenn sie läuft oder nicht gefragt ist.
     @Published private(set) var suchSatz: String?
     @Published private(set) var fach: [Parkeintrag] = []
-    /// Ein Satz zum Parkfach selbst (nicht zu einer Skizze).
+    /// Ein Satz zum Parkfach selbst (nicht zu einer Skizze). **Welcher, entscheidet das Fach**
+    /// (`Parkfach.satz`: der ernste zuerst, und jeder geht mit seinem Grund); hier steht er
+    /// nur gespiegelt — ausser das Fach liess sich gar nicht öffnen (`oeffnenSatz`).
     @Published private(set) var fachSatz: String?
     /// Die Skizze, die gerade reist, und wo ihre Marke steht.
     @Published private(set) var uebergabe: Flugbahn.Phase?
@@ -63,6 +65,9 @@ final class Verbindungsstand: ObservableObject {
     private let sucher = Sucher()
     private let netz = NWPathMonitor()
     private let parkfach: Parkfach?
+    /// Warum das Fach nicht offen ist — `nil`, wenn es offen ist. Er bleibt, solange die App
+    /// läuft: Ein Fach, das nicht aufging, geht erst beim nächsten Start wieder auf.
+    private let oeffnenSatz: String?
     private(set) var anmeldung: Anmeldung?
     private var erreichbar: Bool?
     private var grund: String?
@@ -80,9 +85,10 @@ final class Verbindungsstand: ObservableObject {
 
         do {
             parkfach = try Parkfach(ordner: Verbindungsstand.fachordner())
+            oeffnenSatz = nil
         } catch {
             parkfach = nil
-            fachSatz = "Das Parkfach liess sich nicht öffnen (\(error.localizedDescription)). "
+            oeffnenSatz = "Das Parkfach liess sich nicht öffnen (\(error.localizedDescription)). "
                 + "Skizzen können gerade nicht auf dem iPad warten."
         }
 
@@ -140,15 +146,14 @@ final class Verbindungsstand: ObservableObject {
                                               erreichbar: erreichbar, grund: grund)
     }
 
+    /// Spiegelt Fach und Satz. **Der Satz kommt aus dem Fach** (`Parkfach.satz`, Vorrang und
+    /// Zurücknehmen dort mit Probe): Bis zur Durchsicht vom 23.09.2026 schrieben die Handgriffe
+    /// unten «liess sich nicht beschreiben» selbst hierher, und dieses Spiegeln ersetzte es
+    /// gleich danach durch die harmlose Aufräummeldung — zurückgenommen wurde er nie. Dass
+    /// jeder Handgriff danach wirklich spiegelt, prüft keine Probe (hier nicht übersetzt).
     private func spiegleFach() {
         fach = parkfach?.eintraege ?? []
-        if let unlesbar = parkfach?.unlesbar, !unlesbar.isEmpty {
-            fachSatz = "\(unlesbar.count) Einträge im Parkfach liessen sich nicht lesen. "
-                + "Sie bleiben liegen, wie sie sind."
-        } else if let fehler = parkfach?.aufraeumFehler {
-            // EINE ALTE QUITTUNG BLIEB STEHEN — gesagt, aber das Fach ist offen und sendet.
-            fachSatz = fehler
-        }
+        fachSatz = oeffnenSatz ?? parkfach?.satz
     }
 
     // ------------------------------------------------------------------- Suchen
@@ -354,7 +359,7 @@ final class Verbindungsstand: ObservableObject {
             ueber = u
         }
         guard let fach = parkfach else {
-            return fachSatz ?? "Das Parkfach ist nicht offen — die Skizze kann nicht warten."
+            return oeffnenSatz ?? "Das Parkfach ist nicht offen — die Skizze kann nicht warten."
         }
         do {
             try fach.parke(bilder, ueber: ueber, ordner: zielordner)
@@ -416,7 +421,8 @@ final class Verbindungsstand: ObservableObject {
                 }
                 eintrag = frei
             } catch {
-                fachSatz = "Das Parkfach liess sich nicht beschreiben (\(error.localizedDescription))."
+                // DER SATZ STEHT IM FACH (`Parkfach.schreibFehler`) und kommt mit dem Spiegeln.
+                spiegleFach()
                 uebergabe = nil
                 uebergabeSchluessel = nil
                 break
@@ -459,11 +465,9 @@ final class Verbindungsstand: ObservableObject {
             case .keineAntwort(let satz, let bytes):
                 ergebnis = .ohneVerbindung(grund: satz, gesendeteBytes: bytes)
             }
-            do {
-                try fach.melde(schluessel, ergebnis)
-            } catch {
-                fachSatz = "Das Parkfach liess sich nicht beschreiben (\(error.localizedDescription))."
-            }
+            // GESCHEITERT STEHT ES IM FACH (`Parkfach.schreibFehler`), mit Vorrang vor der
+            // Aufraeummeldung; das Spiegeln danach zeigt es.
+            _ = try? fach.melde(schluessel, ergebnis)
             spiegleFach()
 
             // DIE MARKE RASTET ERST JETZT EIN — nach der Antwort, nicht nach dem letzten Byte.
@@ -524,11 +528,8 @@ final class Verbindungsstand: ObservableObject {
     /// Eine Skizze auf Wunsch verwerfen.
     @MainActor
     func verwirf(_ eintrag: Parkeintrag) {
-        do {
-            _ = try parkfach?.verwirf(eintrag.schluessel)
-        } catch {
-            fachSatz = "Die Skizze liess sich nicht verwerfen (\(error.localizedDescription))."
-        }
+        // SCHEITERT ES, sagt es das Fach (`Parkfach.schreibFehler`); das Spiegeln zeigt es.
+        _ = try? parkfach?.verwirf(eintrag.schluessel)
         spiegleFach()
     }
 

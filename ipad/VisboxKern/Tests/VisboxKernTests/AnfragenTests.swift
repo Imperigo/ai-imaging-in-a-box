@@ -421,6 +421,65 @@ final class AnfragenTests: XCTestCase {
             #"{"bestellung": {"art": "modell", "entwurf": true, "varianten": null, "skizzen": null}}"#))
         XCTAssertEqual(modell.bestellung, Laufbestellung(art: "modell", entwurf: true,
                                                          varianten: nil, skizzen: nil))
+
+        // DIE DRITTE ANTWORT AUCH INNERHALB DER BESTELLUNG (Durchsicht vom 23.09.2026: bis
+        // dahin unbewacht). Fehlen `entwurf` und `varianten`, sind sie nicht bekannt — nicht
+        // «kein Entwurf» und nicht «keine Reihe». Und eine 1 ist auch hier kein Ja.
+        let karg = try Fortschrittsstand.lies(status: 200, daten: json(
+            #"{"bestellung": {"art": "skizze"}}"#))
+        XCTAssertEqual(karg.bestellung, Laufbestellung(art: "skizze", entwurf: nil,
+                                                       varianten: nil, skizzen: nil))
+        XCTAssertNil(try Fortschrittsstand.lies(status: 200, daten: json(
+            #"{"bestellung": {"entwurf": 1, "varianten": 3.0}}"#)).bestellung?.entwurf)
+    }
+
+    /// Eine Skizzenliste mit einem Eintrag, der kein Text ist, ist **nicht gelesen** — nicht
+    /// eine Liste mit einem Eintrag weniger (Durchsicht vom 23.09.2026: er fiel still weg).
+    func testEineSkizzenlisteMitNichtTextIstNichtGelesen() throws {
+        let gemischt = try Fortschrittsstand.lies(status: 200, daten: json(
+            #"{"bestellung": {"art": "skizze", "skizzen": ["skizze-a.png", 7, "skizze-c.png"]}}"#))
+        XCTAssertNotNil(gemischt.bestellung, "die Bestellung selbst ist gelesen")
+        XCTAssertNil(gemischt.bestellung?.skizzen, "die Liste nicht — ganz, nicht zu zwei Dritteln")
+        let mitNull = try Fortschrittsstand.lies(status: 200, daten: json(
+            #"{"bestellung": {"skizzen": ["skizze-a.png", null]}}"#))
+        XCTAssertNil(mitNull.bestellung?.skizzen)
+        let leer = try Fortschrittsstand.lies(status: 200, daten: json(
+            #"{"bestellung": {"skizzen": []}}"#))
+        XCTAssertEqual(leer.bestellung?.skizzen, [], "leer geliefert ist leer, nicht nil")
+    }
+
+    /// Die Kopfzeile der Laufanzeige: **nur, was der Server sagt.** Fehlt ein Feld, fehlt
+    /// sein Teil — kein «Prüfen» aus einem fehlenden `entwurf`.
+    func testDieKopfzeileSagtNurWasDerServerSagt() throws {
+        func kopf(_ roh: String) throws -> String? {
+            try Fortschrittsstand.lies(status: 200, daten: json(roh)).kopfzeile
+        }
+        XCTAssertEqual(try kopf(#"{"variante": {"nummer": 2, "von": 3}, "bestellung": {"entwurf": false}}"#),
+                       "Variante 2 von 3 · Prüfen")
+        XCTAssertEqual(try kopf(#"{"variante": null, "bestellung": {"entwurf": true}}"#), "Entwerfen")
+        XCTAssertEqual(try kopf(#"{"variante": {"nummer": 2}, "bestellung": {"art": "skizze"}}"#),
+                       "Variante 2", "ohne entwurf kein Wort zur Lesart")
+        XCTAssertNil(try kopf(#"{"variante": {"von": 3}, "bestellung": {}}"#),
+                     "ohne Nummer keine Variante")
+        XCTAssertNil(try kopf(#"{"laeuft": true}"#), "ein älterer Server: nichts, nicht «Prüfen»")
+    }
+
+    /// «Abbruch verlangt» zeigt, **was der Server weiss** — und nur ohne sein Feld, was
+    /// dieses Gerät verlangt hat. Ein fehlendes Feld ist kein «nicht verlangt».
+    func testAbbruchVerlangtZeigtWasDerServerWeiss() throws {
+        let ja = try Fortschrittsstand.lies(status: 200, daten: json(#"{"abbruch_verlangt": true}"#))
+        let nein = try Fortschrittsstand.lies(status: 200, daten: json(#"{"abbruch_verlangt": false}"#))
+        let alt = try Fortschrittsstand.lies(status: 200, daten: json(#"{"laeuft": true}"#))
+
+        XCTAssertTrue(ja.abbruchAngezeigt(hier: false), "auch von einem anderen Gerät verlangt")
+        XCTAssertFalse(nein.abbruchAngezeigt(hier: true), "der Server sagt nein: ein neuer Lauf")
+        XCTAssertTrue(alt.abbruchAngezeigt(hier: true))
+        XCTAssertFalse(alt.abbruchAngezeigt(hier: false))
+
+        XCTAssertTrue(try XCTUnwrap(ja.abbruchSatz(hier: false)).contains("vermerkt"))
+        XCTAssertNil(nein.abbruchSatz(hier: true))
+        XCTAssertTrue(try XCTUnwrap(alt.abbruchSatz(hier: true)).contains("sagt sie nicht"))
+        XCTAssertNil(alt.abbruchSatz(hier: false), "nichts verlangt, nichts gesagt")
     }
 
     // ---------------------------------------------------------- Antworten auf POST

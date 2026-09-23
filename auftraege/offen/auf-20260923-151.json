@@ -1,0 +1,37 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260923-151",
+  "art": "frage",
+  "beschreibung": "Ansage: IFC-Bestellungen werden gerechnet (Umwandlung vor Blender), Innenansicht im Ergebnis, eine unlesbare Szene haelt nur ihren Auftrag auf, Skizze auf Unterlage, Rundruf neben avahi — und sechs Blicke an der ersten echten Innenbestellung.",
+  "anweisung": "=== ANSAGE: WAS MIT DEM NAECHSTEN PULL BEI EUCH ANKOMMT — UND WAS AN DER ERSTEN ECHTEN\n    INNENBESTELLUNG ZU SEHEN IST ===\n\nKein Messauftrag zum eigens Fahren, sondern eine Ansage nach der Regel «was ueber git\nankommt, wird vorher gesagt». Dazu Blicke an der ERSTEN ECHTEN Innenraum-Bestellung aus\nKosmoOrbit, die bei euch ohnehin ankommt.\n\n\nTEIL A — WAS SICH AN tools/abholen.py AENDERT (Bruecke zu KosmoOrbit)\n\n  A1 IFC-BESTELLUNGEN WERDEN GERECHNET. Die Bruecke waehlt die Datei nach\n     geometry.format: bei 'ifc' model.ifc, sonst model.glb. BISHER blieb jede\n     IFC-Bestellung mit «Die Geometrie fehlt: model.glb» liegen. Liegen solche Auftraege\n     schon in der Warteschlange, werden sie beim naechsten Durchgang GERECHNET und\n     belegen GPU-Zeit. idle_window_only und «Karte frei» gelten weiter.\n  A2 UMWANDLUNG VOR BLENDER. Je IFC-Auftrag startet zuerst ein Unterprozess im\n     .venv-ifc (seams.ifc_zu_glb). Es entsteht modell.glb — OHNE --out-wurzel in\n     <job>/out/modell.glb neben den Kamera-Unterordnern, MIT --out-wurzel in\n     <wurzel>/<job>/modell.glb. Danach urteilt der Torwaechter. «ablehnen_konversion» oder\n     eine fehlende Datei setzen den Auftrag auf error mit Satz; es entsteht kein Ergebnis.\n     «ablehnen_massstab» wird nur gemeldet, nicht gesperrt. Fehlt das .venv-ifc: error mit\n     dem Satz des Umwandlers.\n  A3 HOCHACHSE. Nach der Umwandlung gilt 'Y' mit Quelle 'umwandlung' — auch fuer Auftraege\n     der eigenen Ablage (eigene_quelle) mit .ifc-Pfad; deren MCP-up_axis wird dann\n     uebersteuert. Solche Auftraege gingen bisher unverwandelt an Blender.\n  A4 FALSCHE ODER DOPPELTE DATEI. Liegt die andere Datei statt oder NEBEN der bestellten\n     (z. B. model.ifc neben model.glb bei format 'glb'), bleibt der Auftrag mit Satz in\n     'message' auf queued. Bisher wurde bei 'glb' die glb gerechnet, auch wenn eine IFC\n     danebenlag.\n  A5 INNENANSICHT. interior ohne Kameras: der Raumleser (seams.ifc_raeume, ebenfalls\n     .venv-ifc) waehlt einen Raum, es gibt eine Kamera 'innen'. interior MIT Kameras (so\n     sendet KosmoOrbit heute): KEIN Raum wird gewaehlt, kein zweiter Standpunkt gerechnet\n     — aber jedes Ergebnis traegt jetzt in verdict.reason den Satz «INNENANSICHT\n     BESTELLT … Standpunkte von KosmoOrbit … Raum: nicht von uns gewaehlt». Der Satz «Das\n     Bild zeigt den Raum von innen» steht nur noch an einem Bild, das es gibt.\n  A6 NEUE FELDER. befund.json: 'umwandlung' (samt torwaechter.empfiehlt_neuzentrierung und\n     warnungen), 'innenansicht', 'modellstand' auf Auftragsebene; jedes urteil.json:\n     'innenansicht' (bei Aussenansichten null).\n  A7 EINE UNLESBARE SZENE HAELT NUR IHREN AUFTRAG AUF. Kein geometry.path, geometry kein\n     Block, eine Kamera ohne up_axis, ein format, das kein Text ist: BISHER warf das aus\n     dem Durchgang heraus und nahm tools/abholen.py mit — die anderen Auftraege wurden dann\n     nicht mehr angesehen. Jetzt bleibt nur dieser Auftrag liegen (queued) und kommt bei\n     jedem Durchgang wieder; ein nicht-textuelles format steht als Mangel am Laufzettel.\n  A8 SIEBEN FELDER mit eigenem Satz statt «unbekannt» abgewiesen (die aus auf-104 ausser\n     interior und gelaende). gelaende aus der Bestellung hat Vorrang vor --kein-gelaende.\n  Unveraendert: glb-Bestellungen rechnen wie bisher; die neuen Schluessel stehen dort auf\n  null.\n\n\nTEIL B — WAS SICH AN DER VISBOX-OBERFLAECHE AENDERT (oberflaeche/server.py)\n\n  B1 Eine Skizze wird vor dem Rechnen auf ihre Unterlage gesetzt (oder, ohne Unterlage, auf\n     mittleres Grau statt Schwarz). Bisher sah das Bildmodell einen durchsichtigen Grund.\n  B2 Mit --im-heimnetz beantwortet der Server Suchanfragen im Netz selbst (Rundruf auf\n     Anschluss 5353, nur Python-Bordmittel). GEPRUEFT UNTER LINUX: Laeuft daneben ein\n     avahi, kann unser Rundruf ihm direkt adressierte Pakete WEGNEHMEN (setzt avahi nur\n     SO_REUSEADDR, bekam in der Probe unser Socket alle 40 von 40). Siehe Blick V5.\n\n\nTEIL C — WAS ZURUECKKOMMEN SOLL, an der ERSTEN ECHTEN Innenraum-Bestellung aus KosmoOrbit\n\n  V1 Lag model.ifc im Ordner, und wie lange dauerte die Umwandlung? Was steht in\n     befund.json unter umwandlung (auch empfiehlt_neuzentrierung und warnungen)?\n  V2 Je Kamera im Blender-Bericht: kamera.weg (erwartet 'vorgegeben'), kamera.auge\n     gleich der bestellten position, blickfeld.geprueft True, kein Abbruch. Das belegt,\n     dass IFC-Koordinaten nach Umwandlung und Import Weltkoordinaten sind — hier nur am\n     synthetischen Testbau in Metern nahe dem Ursprung gezeigt.\n  V3 AUGENHOEHE: In dieser Form ist sie die dritte Koordinate von KosmoOrbits 'position',\n     absolut in IFC-Weltkoordinaten; auf dem Weg 'vorgegeben' liest der Runner\n     --augenhoehe (Vorgabe 1,70 m) NICHT. Liegt die Kamera auf sinnvoller Hoehe ueber dem\n     Geschossboden (vergleiche mit z_unten_m des Raums, falls ihr seams.ifc_raeume dazu\n     fahrt)?\n  V4 Kompositions- und Dachriegel an Innenkameras: komposition.abbruch/grund/warnungen,\n     maske.anteil und maskenbefund.warnungen. Frage: Wird die Bodenplatte im Raum als\n     Gelaende aus der Bauwerksmaske genommen?\n  V5 NUR WENN IHR DIE VISBOX-OBERFLAECHE MIT --im-heimnetz STARTET: Laeuft auf der\n     HomeStation avahi? Findet `avahi-browse -a -t` waehrend des Laufs weiter die anderen\n     Dienste im Netz? (Ja/Nein genuegt.)\n  V6 EINBAU: Erscheint der Satz «INNENANSICHT BESTELLT …» drueben in KosmoOrbit? (Wenn\n     ihr es seht; sonst «nicht gesehen».)\n\n  Kam bis zum 30.09.2026 keine echte Innenbestellung: «keine gekommen» ist eine\n  vollstaendige Antwort fuer V1–V4 und V6.\n\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n  - Keine eigene Innenbestellung erfinden oder eigens einen Lauf dafuer starten.\n  - Nichts an unserem Code aendern.\n  - Keine Bilder, Plaene, Raumnamen, Projektnamen oder absoluten Pfade zurueck —\n    nur Zahlen, Feldwerte und Saetze.",
+  "erstellt": "2026-09-23T01:41:35Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Keine eigene Innenbestellung erfinden, keinen Lauf eigens starten.",
+      "Nichts an unserem Code aendern.",
+      "Keine Bilder, Plaene, Raum- oder Projektnamen, keine absoluten Pfade zurueck."
+    ]
+  },
+  "rueckgabe": [
+    "A Ansage A1–A8 und B1–B2 gelesen.",
+    "V1 model.ifc da? Dauer der Umwandlung; befund.umwandlung.",
+    "V2 kamera.weg, kamera.auge = bestellt, blickfeld.geprueft, kein Abbruch.",
+    "V3 Kamerahoehe ueber dem Geschossboden sinnvoll?",
+    "V4 Kompositions-/Dachriegel, maske.anteil, Bodenplatte als Gelaende?",
+    "V5 avahi neben dem Rundruf (nur mit --im-heimnetz).",
+    "V6 Satz INNENANSICHT BESTELLT drueben sichtbar?"
+  ],
+  "rang": 9
+}

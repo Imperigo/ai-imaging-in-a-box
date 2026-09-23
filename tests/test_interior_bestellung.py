@@ -34,6 +34,18 @@ Multipass ankommt**, nicht, was in einem Wörterbuch steht.
    einer direkt gebauten Szene bewacht. ``interior`` mit Kameraliste braucht keine IFC,
    ohne Kameraliste schon.
 
+9. Die Durchsicht vom 23.09.2026:
+
+   * **Die reale Form.** KosmoOrbit sendet ``interior`` immer mit benannten Kameras
+     (auf-91 V1). Bis dahin entstand der Innenvermerk nur, wenn WIR den Standpunkt
+     rechneten — also bei keiner echten Bestellung. Jetzt trägt jede mitgesandte Kamera
+     den Vermerk ``standpunkt: 'mitgesandt'``, bis in ``verdict.reason``, ohne dass ein
+     Raum gelesen oder ein zweiter Standpunkt gerechnet wird.
+   * **Kein Satz über ein Bild, das es nicht gibt.** «Das Bild zeigt den Raum von
+     innen» stand auch unter einem Ergebnis ohne Bild.
+   * **Der Vermerk an den nicht gerenderten Urteilen** (Blickfeld, Komposition, Zwilling)
+     ist bewacht, nicht nur behauptet.
+
 **Seit dem 22.09.2026 liegt im Ordner ``model.ifc``**, wie KosmoOrbit ihn schreibt
 (auf-91 V3_V4). Bis dahin lag hier eine glb, obwohl die Bestellung ``ifc`` sagte — ein
 Szenario, das es nicht gibt: ``bruecke.lies_auftrag`` suchte nur ``model.glb``.
@@ -159,7 +171,8 @@ def test_die_innenansicht_steht_im_urteil_im_befund_und_im_vertragsgrund(
     assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
 
     erwartet = {"raum": RAUM["name"], "art": raumkamera.ART_FRONTAL,
-                "bestellt": {"rooms": "auto"}}
+                "bestellt": {"rooms": "auto"},
+                "standpunkt": kosmo_szene.INNEN_STANDPUNKT_AUS_RAEUMEN}
     urteil = json.loads((tmp_path / "aus" / ordner.name / "innen"
                          / abholer.DATEI_URTEIL).read_text(encoding="utf-8"))
     assert urteil["urteil"][kosmo_szene.URTEIL_INNENANSICHT] == erwartet
@@ -170,6 +183,9 @@ def test_die_innenansicht_steht_im_urteil_im_befund_und_im_vertragsgrund(
     ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
     grund = ergebnis["qa"]["verdict"]["reason"]
     assert "INNENANSICHT" in grund and repr(RAUM["name"]) in grund
+    # Es gibt ein Bild — nur dann darf der Satz über das Bild stehen.
+    assert ergebnis["images"], "Vorbedingung: gerendert"
+    assert "Das Bild zeigt den Raum von innen" in grund
 
 
 def test_eine_aussenansicht_traegt_keinen_innenvermerk(tmp_path):
@@ -209,7 +225,9 @@ def test_interior_ist_eine_bekannte_und_gelesene_bestellung():
     assert gelesen["maengel"] == ()
     assert gelesen["innenraum"] == {"raum": None, "art": raumkamera.ART_FRONTAL,
                                     "bestellt": {"rooms": "auto"}}
+    assert gelesen["innen_bestellt"] == {"rooms": "auto"}
     assert "innenraum" in kosmo_szene.DURCHGEREICHT
+    assert "innen_bestellt" in kosmo_szene.DURCHGEREICHT
 
 
 # --------------------------------------------------------------------------------------
@@ -262,6 +280,7 @@ def test_interior_ohne_ifc_und_ohne_kameras_wird_abgewiesen():
         _szene(geometry={"path": "model.glb", "format": "glb"}))
 
     assert gelesen["innenraum"] is None
+    assert gelesen["innen_bestellt"] is None, "abgewiesen ist nicht angenommen"
     assert any("nur in einer IFC" in m for m in gelesen["maengel"])
 
 
@@ -277,6 +296,8 @@ def test_interior_mit_kameras_braucht_keine_ifc():
 
     assert gelesen["maengel"] == ()
     assert gelesen["innenraum"] is None
+    assert gelesen["innen_bestellt"] == {"rooms": "auto"}, (
+        "bestellt war es trotzdem — der Vermerk reist mit (23.09.2026)")
     assert any("KEINEN zweiten Innenstandpunkt" in w for w in gelesen["warnungen"])
 
 
@@ -285,6 +306,7 @@ def test_interior_null_ist_keine_bestellung():
 
     assert gelesen["maengel"] == ()
     assert gelesen["innenraum"] is None
+    assert gelesen["innen_bestellt"] is None
 
 
 # --------------------------------------------------------------------------------------
@@ -454,3 +476,151 @@ def test_ein_wegen_idle_window_only_abgelehnter_lauf_bleibt_wartend_mit_grund(tm
     assert zweiter["verarbeitet"] == 1
     assert zettel["status"] == bruecke.STATUS_DONE
     assert not zettel.get(bruecke.FELD_MELDUNG), "der Grund von vorhin ist weg"
+
+
+# --------------------------------------------------------------------------------------
+# 9 · Durchsicht 23.09.2026: die reale Form, und kein Satz über ein fehlendes Bild
+# --------------------------------------------------------------------------------------
+
+#: Zwei Innenkameras, wie KosmoOrbit sie ableitet und mitsendet (auf-91 V1): benannt, in
+#: IFC-Koordinaten (Meter, Z oben), ``up_axis: 'z'``. Die Punkte liegen in den beiden
+#: Räumen von ``tools/make_test_ifc.py --raeume`` — synthetisch, Regel 3.
+KOSMO_INNENKAMERAS = [
+    {"name": "Innen-Sued", "position": [6.35, 0.8, 1.3], "target": [6.35, 2.4, 1.3],
+     "fov": 70, "up_axis": "z"},
+    {"name": "Innen-Nord", "position": [2.0, 3.5, 1.3], "target": [2.0, 0.5, 1.3],
+     "fov": 70, "up_axis": "z"},
+]
+
+#: Der Vermerk an einer mitgesandten Innenkamera: bestellt, aber Raum und Blickart nicht
+#: von uns gewählt.
+VERMERK_MITGESANDT = {"raum": None, "art": None, "bestellt": {"rooms": "auto"},
+                      "standpunkt": kosmo_szene.INNEN_STANDPUNKT_MITGESANDT}
+
+
+def _urteil_der_kamera(tmp_path, ordner, kuerzel) -> dict:
+    return json.loads((tmp_path / "aus" / ordner.name / kuerzel
+                       / abholer.DATEI_URTEIL).read_text(encoding="utf-8"))["urteil"]
+
+
+def _vertrag(ordner) -> dict:
+    return json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
+
+
+def _multipass_mit(zusatz):
+    """Die Attrappe des Multipass, deren Bericht ``zusatz(kw)`` ergänzt — so, wie der
+    Runner Kamerablock und Hüllbox meldet. Alles andere bleibt die Attrappe aus
+    ``test_abholer._kette``."""
+    protokoll, attrappen = _kette()
+    echt = attrappen["_multipass"]
+
+    def multipass(glb, out, **kw):
+        return dict(echt(glb, out, **kw), **zusatz(kw))
+
+    return protokoll, multipass
+
+
+def test_die_reale_form_traegt_den_innenvermerk_bis_ins_ergebnis(tmp_path, ifc_naht):
+    """**Mangel 2 der Durchsicht vom 23.09.2026.** So kommt JEDE Innenbestellung von
+    KosmoOrbit: ``model.ifc``, ``interior`` UND benannte Kameras in IFC-Koordinaten. Bis
+    dahin setzte ``lies_szene`` dann ``innenraum = None``, und kein Urteil, kein Befund
+    und kein Vertragsgrund sagte, dass innen bestellt war."""
+    antwort, protokoll, ordner = _lauf(tmp_path, _szene(cameras=KOSMO_INNENKAMERAS))
+
+    assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
+    # Kein Raum gelesen, kein zweiter Standpunkt gerechnet (auf-31 R6).
+    assert ifc_naht["ifc_raeume"] == []
+    assert len(ifc_naht["ifc_zu_glb"]) == 1, "die IFC wird trotzdem umgewandelt"
+    assert [kw["auge"] for kw in protokoll["multipass"]] == [
+        tuple(k["position"]) for k in KOSMO_INNENKAMERAS], (
+        "genau die mitgesandten Standpunkte, unverändert (up_axis 'z')")
+    assert all(kw["up_axis"] == "Y" for kw in protokoll["multipass"])
+
+    for kamera in KOSMO_INNENKAMERAS:
+        urteil = _urteil_der_kamera(tmp_path, ordner, kamera["name"])
+        assert urteil[kosmo_szene.URTEIL_INNENANSICHT] == VERMERK_MITGESANDT
+    assert abholer.lies_befund(ordner)["innenansicht"] == VERMERK_MITGESANDT
+
+    grund = _vertrag(ordner)["qa"]["verdict"]["reason"]
+    assert "INNENANSICHT BESTELLT" in grund and "von KosmoOrbit" in grund
+    assert "nicht von uns gewaehlt" in grund
+    assert "Das Bild zeigt den Raum" not in grund, (
+        "den Raum hat hier niemand gewählt — kein Satz darüber, was das Bild zeigt")
+
+
+def test_mitgesandte_aussenkameras_tragen_keinen_innenvermerk(tmp_path):
+    """Die Gegenprobe zur realen Form: dieselben Kameras ohne ``interior``."""
+    szene = _szene(geometry={"path": "model.glb", "format": "glb"},
+                   cameras=KOSMO_INNENKAMERAS)
+    del szene["interior"]
+    antwort, _, ordner = _lauf(tmp_path, szene)
+
+    assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
+    befund = abholer.lies_befund(ordner)
+    assert befund["innenansicht"] is None
+    assert [k[kosmo_szene.URTEIL_INNENANSICHT] for k in befund["kameras"]] == [None, None]
+    assert "INNENANSICHT" not in _vertrag(ordner)["qa"]["verdict"]["reason"]
+
+
+def test_ohne_bild_steht_kein_satz_ueber_das_bild(tmp_path, ifc_naht):
+    """**Mangel 1 der Durchsicht vom 23.09.2026**, über den Produktweg nachgestellt: Der
+    Sehstrahl der Innenkamera verfehlt die gemeldete Szenenbox, die Kamera wird nicht
+    gerendert — und ``verdict.reason`` sagte trotzdem «Das Bild zeigt den Raum von
+    innen», bei ``images: []``. Und Mangel 3: Der Vermerk steht am Urteil des
+    Blickfeld-Abbruchs."""
+    protokoll, multipass = _multipass_mit(lambda kw: {
+        "kamera": {"weg": "vorgegeben", "auge": kw["auge"], "blick_auf": kw["blick_auf"]},
+        # Eine Szenenbox weit neben dem Raum — der Strahl trifft sie nicht.
+        "bbox": [[100.0, 100.0, 100.0], [101.0, 101.0, 101.0]]})
+    antwort, _, ordner = _lauf(tmp_path, _szene(), _multipass=multipass)
+
+    assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
+    vertrag = _vertrag(ordner)
+    grund = vertrag["qa"]["verdict"]["reason"]
+    assert vertrag["images"] == [], "Vorbedingung: nicht gerendert"
+    assert "Das Bild zeigt den Raum" not in grund
+    assert "gerechnet, nicht gerendert" in grund and repr(RAUM["name"]) in grund
+
+    urteil = _urteil_der_kamera(tmp_path, ordner, "innen")
+    assert urteil["blickfeld"]["abbruch"] is True, "Vorbedingung: der Blickfeld-Zweig"
+    assert urteil[kosmo_szene.URTEIL_INNENANSICHT]["raum"] == RAUM["name"]
+    assert (urteil[kosmo_szene.URTEIL_INNENANSICHT]["standpunkt"]
+            == kosmo_szene.INNEN_STANDPUNKT_AUS_RAEUMEN)
+
+
+def test_der_innenvermerk_steht_am_urteil_eines_kompositionsabbruchs(tmp_path, ifc_naht):
+    """Mangel 3: Der zweite Abbruch vor dem Bild — die Kamera steht höher als das
+    Bauwerk (``_kamera_ueber_dach``). Keine Hüllbox im Bericht, damit das Blickfeld nicht
+    vorher greift."""
+    _, multipass = _multipass_mit(lambda kw: {
+        "kamera": {"weg": "vorgegeben", "auge": kw["auge"], "blick_auf": kw["blick_auf"],
+                   "gebaeudehoehe_m": 0.5, "gelaende_z": 0.0}})
+    antwort, _, ordner = _lauf(tmp_path, _szene(), _multipass=multipass)
+
+    assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
+    urteil = _urteil_der_kamera(tmp_path, ordner, "innen")
+    assert urteil["komposition"]["abbruch"] is True, "Vorbedingung: der Kompositionszweig"
+    assert urteil[kosmo_szene.URTEIL_INNENANSICHT]["raum"] == RAUM["name"]
+    grund = _vertrag(ordner)["qa"]["verdict"]["reason"]
+    assert "gerechnet, nicht gerendert" in grund
+    assert "Das Bild zeigt den Raum" not in grund
+
+
+def test_der_zwilling_einer_mitgesandten_innenkamera_traegt_den_vermerk(
+        tmp_path, ifc_naht):
+    """Mangel 3, der Zwilling: Zwei mitgesandte Kameras mit derselben Soll-Karte — die
+    zweite wird nicht gerendert, sondern übernimmt das Urteil der ersten. Mit der realen
+    Form ist das erst erreichbar: Aus den Räumen rechnen wir je Auftrag nur EINEN
+    Standpunkt.
+
+    Bewacht ist die WIRKUNG. Die Zeile ``**innen`` im Zwillingszweig ist heute
+    gleichwertig zu ihrem Fehlen: Das Urteil des Vorbilds trägt denselben Vermerk."""
+    zwei = [dict(KOSMO_INNENKAMERAS[0]), dict(KOSMO_INNENKAMERAS[0], name="Innen-Zwilling")]
+    antwort, protokoll, ordner = _lauf(
+        tmp_path, _szene(cameras=zwei),
+        _soll=lambda _bericht: ([[0.0, 1.0], [2.0, 3.0]], 2, 2))
+
+    assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
+    zwilling = _urteil_der_kamera(tmp_path, ordner, "Innen-Zwilling")
+    assert zwilling["doppelt_von"] == "Innen-Sued", "Vorbedingung: der Zwillingszweig"
+    assert zwilling[kosmo_szene.URTEIL_INNENANSICHT] == VERMERK_MITGESANDT

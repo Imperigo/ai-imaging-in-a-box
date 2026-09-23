@@ -12,7 +12,7 @@ import UIKit
 ///
 /// **Warum ein gemeinsamer Stand (`gemeinsam`).** Drei Stellen müssen dieselben Ebenen
 /// sehen, und keine baut die andere: `Startansicht` setzt `Zeichenflaeche(eigeneTafel:
-/// false)` ohne Stand ein, `Seitentafel` legt `Ebenentafel(stand: Zeichenstand.gemeinsam)`
+/// false)` ohne Stand ein, `Seitentafel` legt `Ebenentafel(stand: Zeichenstand.gemeinsam, verbindung:)`
 /// ins Seitenfeld, und der `Mappenknopf` im Seitenfeld nimmt
 /// `Zeichenstand.gemeinsam.skizzenpaket(_:)` als Quelle der Skizze. Dieselbe Bauform wie
 /// `Leistenwahl.gemeinsam`, aus demselben Grund (Stand 23.09.2026).
@@ -66,9 +66,15 @@ final class Zeichenstand: ObservableObject {
     private var stehendeStapel = 0
 
     /// Ebenen mit abgedeckten Strichen, deren Bild noch nicht gelesen ist — weil die
-    /// Änderung mitten in einem Zug kam (`zeichnungGeaendert(_:_:imZug:)`). Gelesen wird am
+    /// Änderung mitten in einem Zug kam (`zeichnungGeaendert`, Kern `Zugstand`). Gelesen wird am
     /// Ende des Zugs (`zugBeendet`), spätestens vor dem Senden (`pngAusgabe`).
     private var deckungAusstehend: Set<UUID> = []
+
+    /// Auf welcher Ebene der Stift gerade einen Zug macht (Kern, `Zugstand`). Bis zur
+    /// Durchsicht der Welle 2b (23.09.2026) hielt das der Koordinator der Leinwand, und ein
+    /// Zug, dessen Ende nie kam, blieb offen — auch für «Zurück» und «Vor» über die Knöpfe.
+    /// Hier schliessen die Wege ohne Stift ihn (`zugOhneStift`).
+    private var zug = Zugstand()
 
     init(leistenwahl: Leistenwahl = .gemeinsam) {
         self.leistenwahl = leistenwahl
@@ -82,12 +88,17 @@ final class Zeichenstand: ObservableObject {
 
     // ------------------------------------------------------------ Zurück und Vor
 
+    /// «Zurück» über den Knopf — ein Weg ohne Stift: Ein offener Zug ist vorbei, **bevor**
+    /// zurückgenommen wird, damit die Änderung, die das auslöst, nicht als «im Zug» nur
+    /// vorgemerkt wird (`zugOhneStift`). Am Gerät unbestätigt.
     func zurueck() {
+        zugOhneStift()
         if rueckgaengig.canUndo { rueckgaengig.undo() }
         gleicheAb()
     }
 
     func vor() {
+        zugOhneStift()
         if rueckgaengig.canRedo { rueckgaengig.redo() }
         gleicheAb()
     }
@@ -171,6 +182,7 @@ final class Zeichenstand: ObservableObject {
     /// Strich macht daraus keine Zahl. Ob der Fall am Gerät vorkommt, ist unbestätigt.
     func stapelAbgebaut(_ flaechen: [UIView]) {
         stehendeStapel = max(0, stehendeStapel - 1)
+        zug.ohneStift()
         for flaeche in flaechen {
             rueckgaengig.removeAllActions(withTarget: flaeche)
         }
@@ -193,6 +205,9 @@ final class Zeichenstand: ObservableObject {
     // ------------------------------------------------------------------ Ebenen
 
     func legeEbeneAn() {
+        // AUCH DAS ANLEGEN WECHSELT DIE EBENE (die neue wird aktiv) — ein Weg ohne Stift
+        // wie Waehlen und Loeschen, der einen offenen Zug schliesst (Durchsicht 2c).
+        zugOhneStift()
         guard let neu = stapel.legeAn() else { return }
         zeichnungen[neu.id] = PKDrawing()
     }
@@ -203,6 +218,7 @@ final class Zeichenstand: ObservableObject {
     /// «Zurück» täte dann nichts Sichtbares und zählte trotzdem herunter. Die Tafel sagt
     /// das vor dem Löschen.
     func entferneEbene(_ id: UUID) {
+        zugOhneStift()
         guard stapel.entferne(id) else { return }
         zeichnungen[id] = nil
         deckungAusstehend.remove(id)
@@ -211,7 +227,10 @@ final class Zeichenstand: ObservableObject {
         gleicheAb()
     }
 
-    func waehleEbene(_ id: UUID) { stapel.waehle(id) }
+    func waehleEbene(_ id: UUID) {
+        zugOhneStift()
+        stapel.waehle(id)
+    }
     func setzeSichtbar(_ id: UUID, _ sichtbar: Bool) { stapel.setzeSichtbar(id, sichtbar) }
     func setzeDeckkraft(_ id: UUID, _ wert: Double) { stapel.setzeDeckkraft(id, wert) }
     @discardableResult
@@ -244,15 +263,14 @@ final class Zeichenstand: ObservableObject {
 
     /// Die Fläche meldet jede Änderung ihrer Striche (Zeichnen, Radieren, Zurück).
     ///
-    /// `imZug`: Die Änderung kam, während der Stift noch auf dem Blatt ist
-    /// (`canvasViewDidBeginUsingTool` … `canvasViewDidEndUsingTool`). Dann wird das Bild
-    /// einer Ebene mit abgedeckten Strichen erst am Ende des Zugs gelesen (`zugBeendet`) —
-    /// ob PencilKit mitten im Zug überhaupt meldet, ist am Gerät unbestätigt; meldet es erst
-    /// danach, wird gleich gelesen.
-    func zeichnungGeaendert(_ id: UUID, _ zeichnung: PKDrawing, imZug: Bool = false) {
+    /// Kommt die Änderung, während der Stift noch auf dem Blatt ist (`zugBeginnt` …
+    /// `zugBeendet`, Kern: `Zugstand.imZug`), wird das Bild einer Ebene mit abgedeckten
+    /// Strichen erst am Ende des Zugs gelesen — ob PencilKit mitten im Zug überhaupt meldet,
+    /// ist am Gerät unbestätigt; meldet es erst danach, wird gleich gelesen.
+    func zeichnungGeaendert(_ id: UUID, _ zeichnung: PKDrawing) {
         guard stapel.ebene(id) != nil else { return }
         zeichnungen[id] = zeichnung
-        meldeStriche(id, zeichnung, bildLesen: !imZug)
+        meldeStriche(id, zeichnung, bildLesen: !zug.imZug(id))
         kannZurueck = rueckgaengig.canUndo
         kannVor = rueckgaengig.canRedo
         // DER ZAEHLER WIRD HIER NICHT SOFORT ABGEGLICHEN. Diese Meldung kann vor dem
@@ -266,12 +284,27 @@ final class Zeichenstand: ObservableObject {
         }
     }
 
+    /// Der Stift setzt an (`canvasViewDidBeginUsingTool`).
+    func zugBeginnt(_ id: UUID) {
+        zug.beginnt(id)
+    }
+
     /// Der Stift ist vom Blatt (`canvasViewDidEndUsingTool`): Steht das Bild dieser Ebene
     /// noch aus, wird es jetzt gelesen — **einmal je Zug**, nicht bei jeder Meldung darin.
     func zugBeendet(_ id: UUID, _ zeichnung: PKDrawing) {
+        zug.endet(id)
         guard stapel.ebene(id) != nil, deckungAusstehend.contains(id) else { return }
         zeichnungen[id] = zeichnung
         meldeStriche(id, zeichnung, bildLesen: true)
+    }
+
+    /// Ein Weg ohne Stift (Zurück, Vor, Ebene wählen oder löschen): **Ein offener Zug ist
+    /// vorbei** (Kern, `Zugstand.ohneStift`, mit Probe). War einer offen, kam sein Ende nie —
+    /// was er vorgemerkt hat, wird jetzt gelesen, damit die Tafel nicht bis zum Senden einen
+    /// alten Stand zeigt (Befund Durchsicht der Welle 2b, 23.09.2026). Dass diese Wege es
+    /// rufen, sieht keine Probe; am Gerät unbestätigt.
+    private func zugOhneStift() {
+        if zug.ohneStift() != nil { holeDeckungNach() }
     }
 
     /// Liest jedes Bild, das noch aussteht. Vor dem Senden, damit nie ein Stand

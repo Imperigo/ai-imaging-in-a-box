@@ -96,10 +96,12 @@ public enum Zeichenart: String, CaseIterable, Sendable {
         // DAS GELB VON «NICHT GEMESSEN», UNTERSCHIEDEN DURCH DAS WORT (Durchsicht der
         // Verdrahtung, 22.09.2026). Zuerst trug «Zeichen unbekannt» #9aa2ae, das Leise jeder
         // Beschriftung (Durchsicht B) — ein unbekanntes Zeichen sah aus wie ein Satz ohne
-        // Belang. Das danach gesetzte Flieder #b7a3e0 stand auf keinem Blatt; *Oberfläche wird
-        // gezeichnet, bevor sie gebaut wird.* Das Blatt «Die Zeichen» kennt für «kein Urteil»
-        // genau einen Ton, gestrichelt — und ein Zeichen, das die App nicht lesen kann, ist für
-        // sie keines. Ein eigener Ton kommt erst mit einem Eintrag auf dem Blatt und dem
+        // Belang. Ein danach gesetzter eigener Ton stand auf keinem Blatt; *Oberfläche wird
+        // gezeichnet, bevor sie gebaut wird.* Das Blatt «Die Zeichen» kennt für «nicht gemessen
+        // / kein Urteil vorhanden» genau einen Ton, gestrichelt — und ein Zeichen, das die App
+        // nicht lesen kann, ist für sie keines. (Auch das Blau des Entwurfs spricht kein
+        // Urteil, aber aus Absicht: gerechnet, nur nicht geprüft. Ein unlesbares Zeichen sagt
+        // das nicht.) Ein eigener Ton kommt erst mit einem Eintrag auf dem Blatt und dem
         // Entscheid des Owners. Bewacht: `testJederFarbtonStehtSoAufDemBlatt` (jede Art,
         // gegen die Abschrift des Blatts), `testKeineFarbeHeisstZweiDinge` (das Wort trennt),
         // `testKeineUrteilsfarbeIstEineGrundfarbe` (nie das Leise).
@@ -458,12 +460,13 @@ public struct Mappenbild: Equatable, Sendable {
     public let skizzeHinweis: String?
     /// **Die Unterlage** — der Name des Bildes, über das skizziert wurde (Feld `vorher`,
     /// Entscheid 17: Vorher und Nachher). `nil` heisst: Es gab keine, oder der Server nennt
-    /// sie nicht (ein Server vor dem 22.09.2026 führt das Feld nicht) — **nicht** «es gibt
-    /// keine». Ein leerer Name gilt wie keiner: Unter ihm lässt sich nichts laden.
+    /// sie nicht (ein Server vor dem 23.09.2026 führt das Feld nicht — es kam mit der Welle 2b,
+    /// `f8f2a40`) — **nicht** «es gibt keine». Ein leerer Name gilt wie keiner: Unter ihm
+    /// lässt sich nichts laden.
     ///
-    /// Bis zum 22.09.2026 las die App das Feld nicht, und der Vergleich Vorher/Nachher war im
-    /// Produkt nie zu sehen (Durchsicht der Verdrahtung). Die Bytes holt die App-Schicht über
-    /// `GET /bild` unter genau diesem Namen.
+    /// Bis zum 23.09.2026 gab es das Feld nicht, und der Vergleich Vorher/Nachher war im
+    /// Produkt nie zu sehen (Durchsicht der Verdrahtung vom 22.09.2026). Die Bytes holt die
+    /// App-Schicht über `GET /bild` unter genau diesem Namen.
     public let vorher: String?
 
     public init(_ o: [String: JSONWert]) {
@@ -609,16 +612,25 @@ public enum Rechenbestellung: Equatable, Sendable {
     public static let reihenlaenge = Ebenenstapel.hoechstensVarianten
 
     /// Was nach einer Ebenen-Reihe von der Auswahl bleibt — **geleert wird nur, was die
-    /// HomeStation angenommen hat.**
+    /// HomeStation angenommen hat**, und nur, wenn es noch die Auswahl ist, die hinausging.
+    ///
+    /// `jetzt` ist die Auswahl, wenn die Quittung kommt; `gesendet` die, die bestellt wurde.
     ///
     /// Befund der Durchsicht vom 22.09.2026: Die Skizzenliste leerte die Auswahl gleich nach
     /// dem Tippen, auch wenn die Bestellung abgelehnt wurde oder gar nicht hinausging — wer
     /// es noch einmal versuchen wollte, musste zwei bis drei Skizzen neu wählen. Bei
     /// `ungewiss` bleibt sie ebenfalls stehen: Ob drüben etwas rechnet, zeigt der Laufstand,
     /// und eine stehengebliebene Auswahl kostet höchstens einen Tipp, eine verlorene drei.
-    /// Bewacht: `testDieReiheBleibtStehenAusserSieWurdeAngenommen`.
-    public static func reihe(_ reihe: [String], nach quittung: Handlungsquittung) -> [String] {
-        quittung.ausgang == .angenommen ? [] : reihe
+    ///
+    /// Befund der Durchsicht vom 23.09.2026: Die Regel lief auf der Auswahl **zur Zeit der
+    /// Quittung**. Wählte jemand, während die Bestellung unterwegs war, neu, leerte das
+    /// Annehmen der alten die neue Wahl mit. Hat sich die Auswahl seither geändert, bleibt sie
+    /// darum, wie sie ist — geleert wird nie etwas, das nicht hinausging.
+    /// Bewacht: `testDieReiheBleibtStehenAusserSieWurdeAngenommen`,
+    /// `testEineInzwischenGeaenderteReiheBleibtStehen`.
+    public static func reihe(_ jetzt: [String], gesendet: [String],
+                             nach quittung: Handlungsquittung) -> [String] {
+        quittung.ausgang == .angenommen && jetzt == gesendet ? [] : jetzt
     }
 
     /// Die Anfrage dazu. Wirft `Rumpffehler`, wenn sie sich nicht schreiben lässt.

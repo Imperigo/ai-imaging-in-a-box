@@ -24,6 +24,18 @@ import Foundation
 // Ankunft schon auf der Platte stand, und die App meldete «liess sich nicht beschreiben».
 // Seither steht ein solcher Fehler in `Parkfach.aufraeumFehler`, und die Quittung bleibt
 // stehen (`ParkfachTests.testEinNichtLoeschbarerAlterEintragHaeltDasOeffnenNichtAuf`).
+//
+// Dieselbe Grenze fuer das Nachfuehren beim Oeffnen (Durchsicht vom 23.09.2026): Was beim
+// letzten Schliessen unterwegs war, wird ungewiss, und eine Zeichnung ohne Eintrag bekommt
+// einen — beides stand mit `try`, und ein Eintrag, der sich nicht schreiben liess, hielt
+// das ganze Fach zu. Seither steht es in `Parkfach.ladeFehler`, und das Fach geht auf
+// (`ParkfachTests.testEinUnschreibbarerEintragHaeltDasOeffnenNichtAuf`).
+//
+// Und welcher Satz zum Fach gezeigt wird, entscheidet das Fach selbst (`Parkfach.satz`,
+// 23.09.2026): Der ernste zuerst. Bis dahin schrieb die App den Satz «liess sich nicht
+// beschreiben» selbst, und das naechste Spiegeln des Fachs ersetzte ihn durch die harmlose
+// Aufraeummeldung; zurueckgenommen wurde er nie
+// (`ParkfachTests.testDerErnsteSatzHatVorrangUndGehtMitDemNaechstenSchreiben`).
 
 /// Wo eine geparkte Skizze steht.
 public enum Parkzustand: Equatable, Sendable, Codable {
@@ -259,24 +271,54 @@ public final class Parkfach {
     /// wartende Skizze fest.
     public private(set) var aufraeumFehler: String?
 
+    /// Warum das letzte Schreiben ins Fach scheiterte — `nil`, wenn das letzte gelang.
+    ///
+    /// Gesetzt, wenn sich eine Skizze nicht parken, freigeben, melden, zurücklegen oder
+    /// verwerfen liess; **zurückgenommen, sobald ein späteres Schreiben gelingt.** Dann ist
+    /// das Fach wieder beschreibbar, und was die gescheiterte Handlung hinterliess, steht
+    /// als Zustand in der Liste (eine Skizze, die unterwegs stehen blieb, wird beim nächsten
+    /// Öffnen ungewiss). Ein Schreiben, das gar nicht versucht wurde (das Tor bleibt zu,
+    /// nichts zurückzulegen), nimmt nichts zurück.
+    public private(set) var schreibFehler: String?
+
+    /// Einträge, die beim Öffnen **nachgeführt** werden sollten und sich nicht schreiben
+    /// liessen (Schlüssel → Grund): unterwegs → ungewiss, oder eine Zeichnung ohne Eintrag.
+    /// Im Fach stehen sie, wie sie nachgeführt wären; auf der Platte erst, wenn ihr Eintrag
+    /// später doch geschrieben wird — dann gehen sie hier weg.
+    private var ungeschrieben: [String: String] = [:]
+
     /// Wie eine Datei gelöscht wird. Nur für Proben anders als die Vorgabe: Eine Datei, die
     /// sich nicht löschen lässt, gibt es unter Linux als Verwalter nicht (Schreibschutz
     /// wirkt dort nicht), und ein nicht leerer Ordner an ihrer Stelle wird mitgelöscht.
     private let loesche: (URL) throws -> Void
+
+    /// Wie eine Datei geschrieben wird. Nur für Proben anders als die Vorgabe — aus
+    /// demselben Grund wie bei `loesche`: Als Verwalter lässt sich unter Linux jede Datei
+    /// schreiben, ein Schreibschutz wäre keine Probe.
+    private let schreibeDatei: (Data, URL) throws -> Void
 
     /// Öffnet (oder legt an) das Fach in `ordner` und liest, was darin liegt.
     ///
     /// Was beim letzten Schliessen **unterwegs** war, wird `ungewiss`: Die App wurde mitten
     /// im Senden beendet, und ob die Skizze drüben liegt, weiss hier niemand.
     ///
-    /// `loesche` bleibt in der App bei der Vorgabe; eine Probe setzt es, um ein Löschen
-    /// scheitern zu lassen (siehe `aufraeumFehler`).
+    /// `loesche` und `schreibe` bleiben in der App bei der Vorgabe; eine Probe setzt sie, um
+    /// ein Löschen oder Schreiben scheitern zu lassen (siehe `aufraeumFehler`, `ladeFehler`,
+    /// `schreibFehler`).
+    ///
+    /// **Wirft nur, wenn sich der Ordner nicht anlegen oder nicht lesen lässt.** Was darin
+    /// liegt und sich nicht lesen, nachführen oder aufräumen lässt, steht getrennt
+    /// (`unlesbar`, `ladeFehler`, `aufraeumFehler`) — das Fach geht trotzdem auf.
     public init(ordner: URL, jetzt: Date = Date(),
                 loesche: @escaping (URL) throws -> Void = {
                     try FileManager.default.removeItem(at: $0)
+                },
+                schreibe: @escaping (Data, URL) throws -> Void = {
+                    try $0.write(to: $1, options: .atomic)
                 }) throws {
         self.ordner = ordner
         self.loesche = loesche
+        self.schreibeDatei = schreibe
         try FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
         try lade(jetzt: jetzt)
     }
@@ -300,6 +342,40 @@ public final class Parkfach {
         eintraege.first { $0.schluessel == schluessel }
     }
 
+    /// Was beim Öffnen nicht nachgeführt werden konnte — `nil`, wenn alles.
+    public var ladeFehler: String? {
+        guard !ungeschrieben.isEmpty else { return nil }
+        let gruende = ungeschrieben.keys.sorted().map { "\($0).json (\(ungeschrieben[$0] ?? ""))" }
+        let wer = ungeschrieben.count == 1 ? "1 Eintrag im Parkfach liess"
+            : "\(ungeschrieben.count) Einträge im Parkfach liessen"
+        return "\(wer) sich beim Öffnen nicht nachführen: " + gruende.joined(separator: ", ")
+            + ". Das Fach ist offen; nachgeführt wird, wenn genau dieser Eintrag das nächste "
+            + "Mal geschrieben wird, oder beim nächsten Öffnen."
+    }
+
+    /// **Der eine Satz zum Fach** (nicht zu einer Skizze) — `nil`, wenn es nichts zu sagen
+    /// gibt. Der ernsteste zuerst:
+    ///
+    /// 1. `schreibFehler` — das Fach liess sich eben nicht beschreiben;
+    /// 2. `unlesbar` — Einträge, die hier nicht einmal stehen;
+    /// 3. `ladeFehler` — Einträge, die hier stehen, auf der Platte aber anders;
+    /// 4. `aufraeumFehler` — alte Quittungen, die stehen bleiben (harmlos).
+    ///
+    /// Jeder Satz verschwindet mit seinem Grund: 1 mit dem nächsten gelungenen Schreiben,
+    /// 2 und 3 werden bei jedem Öffnen neu bestimmt (3 geht auch, wenn der Eintrag später
+    /// geschrieben wird), 4 mit dem nächsten gelungenen Aufräumen. Durchsicht vom 23.09.2026:
+    /// Bis dahin setzte die App den Satz selbst, und die Aufräummeldung überschrieb den
+    /// ernsten sofort. Bewacht sind 1 vor 4 und das Zurücknehmen von 1, 3 und 4
+    /// (`ParkfachTests`); die Reihenfolge von 2 und 3 untereinander prüft keine Probe.
+    public var satz: String? {
+        if let s = schreibFehler { return s }
+        if !unlesbar.isEmpty {
+            return "\(unlesbar.count) Einträge im Parkfach liessen sich nicht lesen. "
+                + "Sie bleiben liegen, wie sie sind."
+        }
+        return ladeFehler ?? aufraeumFehler
+    }
+
     /// Die Zeichnung. `nil` nach der Ankunft — dann liegt sie drüben in der Mappe, und
     /// hier gibt es nichts mehr, das ein zweites Mal hinausgehen könnte.
     public func png(_ schluessel: String) -> Data? {
@@ -318,8 +394,10 @@ public final class Parkfach {
                             zustand: .geparkt, versuche: 0, letzterGrund: nil,
                             bytes: png.count, schluesselGesendet: nil, ueber: ueber,
                             bemerkung: bemerkung, name: name, ordner: zielordner)
-        try png.write(to: pngDatei(schluessel), options: .atomic)
-        try schreibe(e)
+        try festgehalten("Die Skizze liess sich nicht ins Parkfach legen") {
+            try schreibeDatei(png, pngDatei(schluessel))
+            try schreibe(e)
+        }
         eintraege.append(e)
         sortiere()
         return e
@@ -367,14 +445,14 @@ public final class Parkfach {
             e.zustand = .abgewiesen(grund: "Die Zeichnung fehlt im Fach — es gibt nichts "
                                     + "zu senden.", code: nil)
             e.geaendert = jetzt
-            try ersetze(e)
+            try festgehalten("Das Parkfach liess sich nicht beschreiben") { try ersetze(e) }
             return nil
         }
         e.zustand = .unterwegs
         e.versuche += 1
         e.schluesselGesendet = true
         e.geaendert = jetzt
-        try ersetze(e)
+        try festgehalten("Das Parkfach liess sich nicht beschreiben") { try ersetze(e) }
         return e
     }
 
@@ -397,7 +475,7 @@ public final class Parkfach {
         case .ohneAntwort(let grund):
             e.zustand = .ungewiss(grund: grund)
         }
-        try ersetze(e)
+        try festgehalten("Das Parkfach liess sich nicht beschreiben") { try ersetze(e) }
         if case .angekommen = e.zustand {
             // ERST DER EINTRAG, DANN DIE ZEICHNUNG WEG. Andersherum laege nach einem
             // Absturz dazwischen ein Eintrag «unterwegs» ohne Zeichnung da.
@@ -467,7 +545,9 @@ public final class Parkfach {
             e.zustand = .geparkt
             e.letzterGrund = grund
             e.geaendert = jetzt
-            try ersetze(e)
+            try festgehalten("Die Skizze liess sich nicht zurück ins Fach legen") {
+                try ersetze(e)
+            }
             return true
         default:
             return false
@@ -482,8 +562,11 @@ public final class Parkfach {
         // ERST DIE ZEICHNUNG, DANN DER EINTRAG. Andersherum naehme ein Absturz dazwischen
         // die Zeichnung beim naechsten Oeffnen als verwaist wieder auf.
         try? FileManager.default.removeItem(at: pngDatei(schluessel))
-        try FileManager.default.removeItem(at: eintragsDatei(schluessel))
+        try festgehalten("Die Skizze liess sich nicht verwerfen") {
+            try loesche(eintragsDatei(schluessel))
+        }
         eintraege.removeAll { $0.schluessel == schluessel }
+        ungeschrieben[schluessel] = nil
         return true
     }
 
@@ -495,7 +578,22 @@ public final class Parkfach {
     private func schreibe(_ e: Parkeintrag) throws {
         let schreiber = JSONEncoder()
         schreiber.outputFormatting = [.sortedKeys]
-        try schreiber.encode(e).write(to: eintragsDatei(e.schluessel), options: .atomic)
+        try schreibeDatei(try schreiber.encode(e), eintragsDatei(e.schluessel))
+        // JETZT STEHT ER AUF DER PLATTE, wie er im Fach steht (siehe `ladeFehler`).
+        ungeschrieben[e.schluessel] = nil
+    }
+
+    /// Schreibt und hält fest, ob es gelang (`schreibFehler`): gelungen nimmt den Satz
+    /// zurück, gescheitert setzt ihn — und der Fehler geht weiter an den Rufer.
+    private func festgehalten<T>(_ satz: String, _ tu: () throws -> T) throws -> T {
+        do {
+            let ergebnis = try tu()
+            schreibFehler = nil
+            return ergebnis
+        } catch {
+            schreibFehler = "\(satz) (\(error.localizedDescription))."
+            throw error
+        }
     }
 
     private func ersetze(_ e: Parkeintrag) throws {
@@ -516,6 +614,7 @@ public final class Parkfach {
         var mitEintrag = Set<String>()
         var fehlerhaft: [String] = []
         let leser = JSONDecoder()
+        ungeschrieben = [:]
 
         for datei in dateien where datei.pathExtension == "json" {
             let stamm = datei.deletingPathExtension().lastPathComponent
@@ -534,7 +633,10 @@ public final class Parkfach {
                 e.zustand = .ungewiss(grund: "Das Senden wurde unterbrochen (die App wurde "
                                       + "beendet). Ob die Skizze angekommen ist, ist nicht bekannt.")
                 e.geaendert = jetzt
-                try schreibe(e)
+                // DAS NACHFUEHREN WIRFT NICHT: Im Fach steht sie ungewiss, wie es stimmt; auf
+                // der Platte bleibt «unterwegs», und das naechste Oeffnen macht wieder
+                // «ungewiss» daraus — dieselbe Aussage (siehe `ladeFehler`).
+                do { try schreibe(e) } catch { ungeschrieben[stamm] = error.localizedDescription }
             }
             if case .angekommen = e.zustand {
                 try? FileManager.default.removeItem(at: pngDatei(stamm))
@@ -555,7 +657,13 @@ public final class Parkfach {
                                 letzterGrund: "Nach einem Abbruch wieder aufgenommen.",
                                 bytes: daten.count, schluesselGesendet: nil, ueber: nil,
                                 bemerkung: nil, name: nil, ordner: nil)
-            try schreibe(e)
+            // AUCH HIER WIRFT ES NICHT: Die Zeichnung steht geparkt im Fach; ohne Eintrag auf
+            // der Platte nimmt das naechste Oeffnen sie wieder als verwaist auf.
+            do {
+                try schreibe(e)
+            } catch {
+                ungeschrieben[stamm] = "Zeichnung ohne Eintrag: " + error.localizedDescription
+            }
             gelesen.append(e)
         }
 
@@ -573,7 +681,11 @@ public final class Parkfach {
 /// Wo die Marke der Übergabe steht — **die vier Bewegungsregeln als Rechnung** (Entwurf
 /// «Ein Faden, zwei Geräte», Entscheide vom 21.09.2026):
 ///
-/// 1. *Bewegt sich etwas, ist etwas unterwegs.* Der Ort ändert sich nur mit gezählten Bytes.
+/// 1. *Bewegt sich etwas, ist etwas unterwegs.* **Im Flug** ändert sich der Ort nur mit
+///    gezählten Bytes. Davor wandert die Marke einmal ein kleines Stück: beim Abheben an den
+///    Rand des iPads (`rand`, seit der Durchsicht vom 22.09.2026) — noch vor dem Tor, also
+///    bevor feststeht, dass gesendet wird. Bricht das Senden dort ab, fällt sie zurück, und
+///    es ging nichts hinaus. Die Regel gilt darum erst vom Flug an, nicht für das Vorspiel.
 /// 2. *Gleichmässig heisst gezählt.* Ohne Zählung fliegt die Marke nicht, sie **atmet**.
 /// 3. *Die Animation endet nicht vor der Ankunft.* Vor der Antwort 200 bleibt die Marke
 ///    vor dem Ziel stehen (`haltepunkt`); am Ziel ist sie erst `eingerastet`.

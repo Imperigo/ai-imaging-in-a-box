@@ -29,13 +29,24 @@ struct Daraufskizzieren: View {
         self.schliessen = schliessen
     }
 
-    /// Liegt genau dieses Bild **aus dieser Mappe** schon unter dem Blatt? Gleicher Name in
-    /// einer anderen Mappe ist ein anderes Bild.
+    /// Die Mappe, die jetzt eingestellt ist — `nil` heisst die des Starts.
+    private var eingestellt: String? {
+        verbindung.ordner.isEmpty ? nil : verbindung.ordner
+    }
+
+    /// Liegt genau dieses Bild **aus seiner Mappe** schon unter dem Blatt? Gleicher Name in
+    /// einer anderen Mappe ist ein anderes Bild (`Bandbild.mappe`, 23.09.2026).
     private var liegtSchon: Bool {
         guard let u = zeichnen.stapel.unterlage else { return false }
-        let mappe: String? = verbindung.ordner.isEmpty ? nil : verbindung.ordner
-        return u.bild == bild.bild && u.ordner == mappe
+        return u.bild == bild.bild && u.ordner == bild.mappe
     }
+
+    /// Das Bild kam aus einer anderen Mappe als der, die jetzt eingestellt ist (das Ordnerfeld
+    /// wurde geändert, die Mappe nicht neu geladen). **Dann wird nichts gelegt:** Geholt würde
+    /// unter diesem Namen aus der eingestellten Mappe — womöglich ein anderes Bild —, und
+    /// abgelegt würde in eine Mappe, in der die Unterlage nicht liegt. Durchsicht der Welle 2b
+    /// (23.09.2026); am Gerät unbestätigt, ohne Probe.
+    private var ausAndererMappe: Bool { bild.mappe != eingestellt }
 
     /// Die Mappe nennt das Bild, seine Datei fehlt aber (`vorhanden == false`): Dann gibt
     /// es nichts zu holen. `nil` (nicht gefragt) ist **kein** Grund zum Sperren.
@@ -50,7 +61,7 @@ struct Daraufskizzieren: View {
                 Text(legtGerade ? "Wird geholt …" : "Darauf skizzieren")
             }
             .buttonStyle(Wahlknopfstil(gewaehlt: true, breite: nil))
-            .disabled(legtGerade || fehlt)
+            .disabled(legtGerade || fehlt || (ausAndererMappe && !liegtSchon))
             .accessibilityHint("Legt dieses Bild als Unterlage unter die Ebenen und öffnet "
                                + "das Blatt.")
             Text(erklaerung)
@@ -66,6 +77,11 @@ struct Daraufskizzieren: View {
         if liegtSchon {
             return "Liegt schon unter dem Blatt. Nochmals tippen öffnet das Blatt."
         }
+        if ausAndererMappe {
+            return "Dieses Bild stammt aus \(Daraufskizzieren.wo(bild.mappe)); eingestellt ist "
+                + "\(Daraufskizzieren.wo(eingestellt)). Erst die Mappe neu laden, dann darauf "
+                + "skizzieren."
+        }
         return "Das Bild kommt unter die Ebenen. Gesendet werden nur die Striche — das Bild "
             + "hat die HomeStation schon; sie setzt die Skizze darauf."
     }
@@ -78,6 +94,9 @@ struct Daraufskizzieren: View {
             zeigeBlatt()
             return
         }
+        // NICHT AUS EINER ANDEREN MAPPE LEGEN — der Knopf ist dann gesperrt, und hier noch
+        // einmal: eine Sperre, die nur an der Ansicht hängt, hängt an einer Stelle zu wenig.
+        guard !ausAndererMappe else { return }
         legtGerade = true
         satz = nil
         Task { @MainActor in
@@ -90,6 +109,11 @@ struct Daraufskizzieren: View {
                 zeigeBlatt()
             }
         }
+    }
+
+    /// «der Mappe «/pfad»», oder «der Mappe des Starts».
+    static func wo(_ mappe: String?) -> String {
+        mappe.map { "der Mappe «\($0)»" } ?? "der Mappe des Starts"
     }
 
     private func zeigeBlatt() {

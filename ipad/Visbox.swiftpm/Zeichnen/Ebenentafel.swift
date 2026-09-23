@@ -11,22 +11,27 @@ import SwiftUI
 /// Lauf 07» unter den Ebenen): ein- und ausblendbar und entfernbar, aber **nicht wählbar** —
 /// sie ist keine Ebene (Kern, `Blattunterlage`), auf sie wird nicht gezeichnet und nicht
 /// radiert, und sie zählt nicht zu «Geht mit». Darunter ein Satz, was mit ihr gerechnet
-/// wird (`Blattunterlage.tafelsatz`, aus dem Kern mit Probe).
+/// wird (`Blattunterlage.tafelsatz`, aus dem Kern mit Probe) — **mit der Mappe, in die
+/// jetzt abgelegt würde** (`verbindung.ordner`), damit er dasselbe sagt wie das Ablegen
+/// (Befund Durchsicht der Welle 2b, 23.09.2026).
 ///
 /// **Eine eigenständige Ansicht, ohne Rahmen:** kein Rollbereich, kein Rand, kein Grund.
 /// Die bringt mit, wer sie hinlegt — das Seitenfeld des Arbeitsplatzes
-/// (`ScrollView { seitenfeld.padding(20) }` mit dem Grund der Leiste) oder die
+/// (`Seitentafel`, die den Rollbereich seit dem 23.09.2026 selbst mitbringt) oder die
 /// Zeichenfläche selbst, wenn sie ihre eigene Tafel zeigt. Mit eigenem Rollbereich stünde
 /// im Seitenfeld ein Rollbereich im Rollbereich (Befund Durchsicht A, 22.09.2026).
 struct Ebenentafel: View {
     @ObservedObject var stand: Zeichenstand
+    /// Nur für die Mappe, in die abgelegt würde (`ordner`, für den Tafelsatz).
+    @ObservedObject var verbindung: Verbindungsstand
 
     @State private var umbenennen: UUID?
     @State private var neuerName = ""
     @State private var loeschen: UUID?
 
-    init(stand: Zeichenstand? = nil) {
+    init(stand: Zeichenstand? = nil, verbindung: Verbindungsstand? = nil) {
         self.stand = stand ?? Zeichenstand.gemeinsam
+        self.verbindung = verbindung ?? Verbindungsstand.gemeinsam
     }
 
     var body: some View {
@@ -52,7 +57,7 @@ struct Ebenentafel: View {
             if let satz = ungewissSatz {
                 leise(satz)
             }
-            leise(Blattunterlage.tafelsatz(stand.stapel.unterlage))
+            leise(Blattunterlage.tafelsatz(stand.stapel.unterlage, ordner: verbindung.ordner))
             leise("Jede Ebene ist eine Variante. Gerechnet wird, was sichtbar ist — "
                   + "unsichtbare Ebenen gehen nicht mit.")
         }
@@ -191,10 +196,16 @@ struct Ebenentafel: View {
         .accessibilityLabel("Unterlage \(u.titel), \(unterlagenzustand(u))")
     }
 
-    /// Neben dem Namen der Unterlage: ausgeblendet, gestreckt, oder nur «Unterlage». Ob sie
-    /// gestreckt ist, sagt der Kern (`Blattunterlage.gestreckt`); nicht bekannt steht als «?».
+    /// Neben dem Namen der Unterlage: ausgeblendet, aus einer anderen Mappe, gestreckt, oder
+    /// nur «Unterlage». Ob sie mitginge, sagt dieselbe Regel wie beim Ablegen
+    /// (`Unterlagenangabe.aus`); ob sie gestreckt ist, `Blattunterlage.gestreckt`; nicht
+    /// bekannt steht als «?».
     private func unterlagenzustand(_ u: Blattunterlage) -> String {
-        if !u.sichtbar { return "ausgeblendet" }
+        switch Unterlagenangabe.aus(u, ordner: verbindung.ordner) {
+        case .ausgeblendet: return "ausgeblendet"
+        case .andereMappe: return "andere Mappe"
+        case .ohne, .ueber: break
+        }
         switch u.gestreckt {
         case .some(true): return "gestreckt"
         case .some(false): return "Unterlage"

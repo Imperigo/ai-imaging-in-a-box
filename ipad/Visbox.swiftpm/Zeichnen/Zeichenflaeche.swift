@@ -13,7 +13,7 @@ import SwiftUI
 ///
 /// * `eigeneTafel: false` — **so setzt `Startansicht` sie heute ein** (Stand 23.09.2026):
 ///   nur Blatt und Werkzeugzeile. Die Ebenentafel legt `Seitentafel` in das Seitenfeld
-///   des Arbeitsplatzes (`Ebenentafel(stand: Zeichenstand.gemeinsam)`, umschaltbar mit der
+///   des Arbeitsplatzes (`Ebenentafel(stand: Zeichenstand.gemeinsam, verbindung:)`, umschaltbar mit der
 ///   Mappe): `Arbeitsplatz { Zeichenflaeche(eigeneTafel: false) } seitenfeld: {
 ///   Seitentafel(wahl: wahl) }`. Sonst stünden zwei Seitenfelder nebeneinander (Befund
 ///   Durchsicht A, 22.09.2026).
@@ -25,12 +25,17 @@ import SwiftUI
 struct Zeichenflaeche: View {
     @ObservedObject var stand: Zeichenstand
     @ObservedObject var wahl: Leistenwahl
+    /// Nur für die Mappe, in die abgelegt würde (`ordner`) — der Titel über dem Blatt
+    /// liest sie wie das Ablegen (`blatttitel`).
+    @ObservedObject var verbindung: Verbindungsstand
     private let eigeneTafel: Bool
 
-    init(stand: Zeichenstand? = nil, eigeneTafel: Bool = true) {
+    init(stand: Zeichenstand? = nil, eigeneTafel: Bool = true,
+         verbindung: Verbindungsstand? = nil) {
         let s = stand ?? Zeichenstand.gemeinsam
         self.stand = s
         self.wahl = s.leistenwahl
+        self.verbindung = verbindung ?? Verbindungsstand.gemeinsam
         self.eigeneTafel = eigeneTafel
     }
 
@@ -52,7 +57,7 @@ struct Zeichenflaeche: View {
                     trennlinie
                         .frame(width: quer ? 1 : nil, height: quer ? nil : 1)
                     ScrollView(.vertical, showsIndicators: false) {
-                        Ebenentafel(stand: stand).padding(20)
+                        Ebenentafel(stand: stand, verbindung: verbindung).padding(20)
                     }
                     .background(Zeichenblatt.leiste)
                     // Querformat: die Breite des Seitenfelds. Hochformat: 300 pt, dieselbe
@@ -96,14 +101,14 @@ struct Zeichenflaeche: View {
     }
 
     /// «Skizze über Lauf 07 · Variante A» (Blatt «Main»: «Skizze über Lauf 07») — **über**
-    /// nur, solange die Unterlage sichtbar ist: Ausgeblendet geht sie nicht mit (Kern,
-    /// `Unterlagenangabe`), und der Titel soll nicht versprechen, was nicht gerechnet wird.
+    /// nur, wenn die Unterlage auch mitginge: sichtbar **und** aus der Mappe, in die jetzt
+    /// abgelegt würde. Die Regel steht im Kern (`Blattunterlage.blatttitel`, dieselbe wie
+    /// beim Ablegen, mit Probe). Befund Durchsicht der Welle 2b (23.09.2026): Bis dahin
+    /// kannte der Titel die Mappe nicht und versprach nach einem Mappenwechsel «über X».
     private var blatttitel: String {
-        let ebene = stand.stapel.aktiveEbene.name
-        if let u = stand.stapel.unterlage, u.sichtbar {
-            return "Skizze über \(u.titel) · \(ebene)"
-        }
-        return "Skizze · \(ebene)"
+        Blattunterlage.blatttitel(ebene: stand.stapel.aktiveEbene.name,
+                                  unterlage: stand.stapel.unterlage,
+                                  ordner: verbindung.ordner)
     }
 
     /// Die gewählte Ebene ist ausgeblendet — dann wird nicht gezeichnet, und das steht da.

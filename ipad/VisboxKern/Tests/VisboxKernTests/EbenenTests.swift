@@ -216,6 +216,21 @@ final class EbenenTests: XCTestCase {
         XCTAssertFalse(s.aktiveIstZeichenbar)
     }
 
+    /// Entscheid Nr. 4 und die Hand (Durchsicht der Welle 2b, 23.09.2026): Auf einer
+    /// ausgeblendeten Ebene schiebt der Stift nicht — **ausser mit der Hand**, die genau dafür
+    /// da ist. Auf einer sichtbaren zeichnet er, und die Regel mischt sich nicht ein.
+    func testMitDerHandSchiebtAuchDerStiftSonstNurDerFinger() {
+        var s = Ebenenstapel()
+        for w in Zeichenwerkzeug.allCases {
+            XCTAssertFalse(s.stiftSchiebtNicht(mit: w), "sichtbar, \(w)")
+        }
+        s.setzeSichtbar(s.aktiv, false)
+        XCTAssertFalse(s.stiftSchiebtNicht(mit: .hand), "ausgeblendet, mit der Hand schiebt er")
+        for w in [Zeichenwerkzeug.stift, .radiererStriche, .radiererFlaeche] {
+            XCTAssertTrue(s.stiftSchiebtNicht(mit: w), "ausgeblendet, \(w): nur der Finger")
+        }
+    }
+
     // ----------------------------------------- leer heisst: im Bild deckt nichts
 
     /// Flächig ganz weggewischt: PencilKit führt die Striche noch, im Bild deckt nichts.
@@ -459,5 +474,38 @@ final class EbenenTests: XCTestCase {
     func testDieHandIstKeinRadierer() {
         XCTAssertEqual(Zeichenwerkzeug.allCases.filter { $0.istRadierer },
                        [.radiererStriche, .radiererFlaeche])
+    }
+
+    // ------------------------------------------------------------------ der Zug
+
+    /// Befund Durchsicht der Welle 2b (23.09.2026): Kam das Ende eines Zugs nie, blieb er
+    /// offen, und «Zurück» über den Knopf galt als «im Zug». Ein Weg ohne Stift schliesst ihn.
+    func testEinWegOhneStiftSchliesstEinenAbgebrochenenZug() {
+        let a = UUID()
+        var z = Zugstand()
+        XCTAssertFalse(z.imZug(a))
+        z.beginnt(a)
+        XCTAssertTrue(z.imZug(a))
+        // Das Ende kommt nie. Dann tippt jemand auf «Zurück»:
+        XCTAssertEqual(z.ohneStift(), a, "der offene Zug wird genannt, sein Bild steht aus")
+        XCTAssertFalse(z.imZug(a), "danach ist die Änderung durch «Zurück» keine im Zug")
+        XCTAssertNil(z.ohneStift(), "kein offener Zug, nichts zu nennen")
+    }
+
+    func testDasEndeEinesZugsSchliesstNurSeinenEigenen() {
+        let a = UUID(), b = UUID()
+        var z = Zugstand()
+        z.beginnt(a)
+        z.endet(a)
+        XCTAssertFalse(z.imZug(a), "gewöhnliches Ende")
+
+        z.beginnt(a)
+        z.beginnt(b)  // das Ende auf A kam nie
+        XCTAssertFalse(z.imZug(a))
+        XCTAssertTrue(z.imZug(b))
+        z.endet(a)    // kommt verspätet
+        XCTAssertTrue(z.imZug(b), "ein spätes Ende auf A schliesst den Zug auf B nicht")
+        z.endet(b)
+        XCTAssertNil(z.auf)
     }
 }

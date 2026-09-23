@@ -184,16 +184,75 @@ final class BlattunterlageTests: XCTestCase {
     }
 
     func testDieTafelSagtJedeLageMitEigenemSatz() {
-        XCTAssertTrue(Blattunterlage.tafelsatz(nil).contains("Grau"))
-        XCTAssertTrue(Blattunterlage.tafelsatz(unterlage(breite: 1024, hoehe: 1024))
-            .contains("gestreckt"))
-        XCTAssertTrue(Blattunterlage.tafelsatz(unterlage()).contains("Blatt auf Bild"))
-        XCTAssertTrue(Blattunterlage.tafelsatz(unterlage(breite: nil, hoehe: nil))
-            .contains("nicht bekannt"))
+        XCTAssertTrue(Blattunterlage.tafelsatz(nil, ordner: "/mappe").contains("Grau"))
+        XCTAssertTrue(Blattunterlage.tafelsatz(unterlage(breite: 1024, hoehe: 1024),
+                                               ordner: "/mappe").contains("gestreckt"))
+        XCTAssertTrue(Blattunterlage.tafelsatz(unterlage(), ordner: "/mappe")
+            .contains("Blatt auf Bild"))
+        XCTAssertTrue(Blattunterlage.tafelsatz(unterlage(breite: nil, hoehe: nil),
+                                               ordner: "/mappe").contains("nicht bekannt"))
         var s = Ebenenstapel()
         s.legeUnterlage(unterlage())
         s.setzeUnterlageSichtbar(false)
-        XCTAssertTrue(Blattunterlage.tafelsatz(s.unterlage).contains("ausgeblendet"))
+        XCTAssertTrue(Blattunterlage.tafelsatz(s.unterlage, ordner: "/mappe")
+            .contains("ausgeblendet"))
+        let fremd = Blattunterlage.tafelsatz(unterlage(ordner: "/mappe-a"), ordner: "/mappe-b")
+        XCTAssertTrue(fremd.contains("«/mappe-a»") && fremd.contains("«/mappe-b»"), fremd)
+        XCTAssertTrue(fremd.contains("nicht hinaus"), fremd)
+    }
+
+    /// **Tafel, Titel und Ablegen lesen eine Regel** (Befund Durchsicht der Welle 2b,
+    /// 23.09.2026): Nach einem Mappenwechsel versprach die Tafel «wird auf X gerechnet» und
+    /// der Titel «Skizze über X», während das Ablegen die Skizze abwies. Geprüft an der
+    /// Wirkung, für jede Lage: Was der Ablageplan mit `ueber` X parken würde, kündigen Tafel
+    /// und Titel als X an — und nur das.
+    func testTafelUndTitelSagenDasselbeWieDerAblageplan() {
+        let ausgabe = Ebenenausgabe.aus(stapel(bezeichnet: 1).plan(.eineSkizze)) { _ in self.png }
+        var lagen: [(String, Blattunterlage?, String?)] = [("keine Unterlage", nil, "/mappe")]
+        for (mappeDerUnterlage, jetzt) in [("/mappe", "/mappe"), ("/mappe-a", "/mappe-b"),
+                                           ("", ""), ("", "/mappe"), ("/mappe", "")] {
+            for (breite, hoehe) in [(1536, 1024), (1024, 1024)] as [(Int?, Int?)]
+                + [(nil, nil)] {
+                for sichtbar in [true, false] {
+                    var s = Ebenenstapel()
+                    s.legeUnterlage(unterlage(ordner: mappeDerUnterlage, breite: breite,
+                                              hoehe: hoehe))
+                    s.setzeUnterlageSichtbar(sichtbar)
+                    lagen.append(("aus «\(mappeDerUnterlage)», jetzt «\(jetzt)», "
+                                  + "\(String(describing: breite)), sichtbar \(sichtbar)",
+                                  s.unterlage, jetzt))
+                }
+            }
+        }
+        var gesehen: Set<String> = []
+        for (name, u, jetzt) in lagen {
+            let plan = Ablageplan.aus(Skizzenpaket(ausgabe: ausgabe, unterlage: u),
+                                      ordner: jetzt)
+            let satz = Blattunterlage.tafelsatz(u, ordner: jetzt)
+            let titel = Blattunterlage.blatttitel(ebene: "Variante A", unterlage: u,
+                                                  ordner: jetzt)
+            let versprochen = satz.contains("auf «Lauf 07» gerechnet")
+            switch plan {
+            case .parke(_, let ueber?):
+                gesehen.insert("mit")
+                XCTAssertEqual(ueber, "lauf-07.png", name)
+                XCTAssertTrue(versprochen, "\(name): \(satz)")
+                XCTAssertEqual(titel, "Skizze über Lauf 07 · Variante A", name)
+            case .parke(_, nil):
+                gesehen.insert("ohne")
+                XCTAssertFalse(versprochen, "\(name): \(satz)")
+                XCTAssertTrue(satz.contains("Grau"), "\(name): \(satz)")
+                XCTAssertEqual(titel, "Skizze · Variante A", name)
+            case .nicht(let grund):
+                gesehen.insert("abgelehnt")
+                XCTAssertFalse(versprochen, "\(name): \(satz)")
+                XCTAssertTrue(satz.contains("nicht hinaus"), "\(name): \(satz)")
+                XCTAssertTrue(grund.contains("Dort gibt es das Bild nicht"), grund)
+                XCTAssertEqual(titel, "Skizze · Variante A", name)
+            }
+        }
+        // DIE PROBE MUSS JEDEN AUSGANG GESEHEN HABEN, sonst prüft sie einen nicht.
+        XCTAssertEqual(gesehen, ["mit", "ohne", "abgelehnt"])
     }
 
     // --------------------------------------------------------- 4 · durch das Parkfach

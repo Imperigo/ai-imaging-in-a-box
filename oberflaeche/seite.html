@@ -1213,6 +1213,9 @@ const tafel = {
   neuerStrich: false,
   /** Der Weg des Bildes, das gerade unter der Tafel liegt — `null`, solange keines. */
   unterlagenWeg: null,
+  /** Ob das Laden dieses Bildes gescheitert ist (`error`). Dann gilt der Weg als nicht
+   *  gelegt, und derselbe Name wird beim naechsten Laden der Mappe neu versucht. */
+  unterlageFehlt: false,
   /** Was das Geraet bisher wirklich gemeldet hat — fuer die Zeile unter der Flaeche.
    *  Das ist die einzige Messung, die diese Seite selbst vornimmt, und sie misst das
    *  GERAET, nicht die Zeichnung: Ohne sie weiss niemand, ob der Stift ankommt. */
@@ -1515,13 +1518,30 @@ function unterlageWechseln() {
   // NUR BEI EINER ANDEREN UNTERLAGE. `laden` ruft hierher nach jedem Lauf und jeder
   // Ablage; das Bild noch einmal zu setzen hiesse, dass es sich neu meldet (Durchsicht
   // der Welle 2, 22.09.2026, siehe `tafelGroesse`).
-  if (weg === tafel.unterlagenWeg) return;
+  //
+  // AUSSER SEIN LADEN SCHEITERTE (Durchsicht der Welle 2b, 23.09.2026): Bis dahin galt der
+  // Weg schon beim Setzen als gelegt — ein Bild, das einmal nicht kam (Server kurz weg,
+  // Datei noch nicht geschrieben), blieb unter diesem Namen fuer immer leer, weil jedes
+  // weitere `laden` hier umkehrte. Jetzt versucht es das naechste `laden` neu.
+  if (weg === tafel.unterlagenWeg && !tafel.unterlageFehlt) return;
   // EINE ANDERE UNTERLAGE, EINE LEERE TAFEL: Eine Zeichnung gehoert zu dem Bild, auf das
   // sie gezeichnet wurde. Bis dahin leerte das der Groessenwechsel nebenbei — bei einem
-  // Bild derselben Groesse haette die Zeichnung sonst die Unterlage gewechselt.
-  if (tafel.unterlagenWeg !== null) tafelLeeren();
+  // Bild derselben Groesse haette die Zeichnung sonst die Unterlage gewechselt. Der neue
+  // Versuch unter DEMSELBEN Namen leert hier nicht: Die Zeichnung gehoert zu diesem Bild.
+  // ABER: Kommt das Bild beim neuen Versuch in einer ANDEREN Groesse als die Tafel, leert
+  // tafelGroesse sie trotzdem — die Probe faehrt nur gleich grosse Bilder (23.09.2026).
+  if (tafel.unterlagenWeg !== null && weg !== tafel.unterlagenWeg) tafelLeeren();
   tafel.unterlagenWeg = weg;
+  tafel.unterlageFehlt = false;
   $("unterlagenbild").src = weg;
+}
+
+/** Das Bild unter der Tafel kam nicht (`error`) — **gesagt, nicht still**, und vorgemerkt
+ *  fuer einen neuen Versuch beim naechsten Laden der Mappe (siehe `unterlageWechseln`). */
+function unterlageFehlt() {
+  tafel.unterlageFehlt = true;
+  $("stand").textContent = "Die Unterlage liess sich nicht laden — beim nächsten Laden der " +
+                           "Mappe wird sie neu versucht.";
 }
 
 async function skizzeAblegen() {
@@ -1554,6 +1574,7 @@ async function skizzeAblegen() {
 }
 
 $("unterlagenbild").addEventListener("load", tafelGroesse);
+$("unterlagenbild").addEventListener("error", unterlageFehlt);
 $("unterlage").addEventListener("change", unterlageWechseln);
 $("tafel").addEventListener("pointerdown", zeichenStart);
 $("tafel").addEventListener("pointermove", zeichenZug);
