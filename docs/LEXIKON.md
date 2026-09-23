@@ -5016,9 +5016,9 @@ Tabelle lädt sonst gar nicht.
 
 **Treffertest** — Wie das iPad entscheidet, welche Fläche eine Berührung bekommt, wenn mehrere übereinander liegen. Versteckte Flächen werden dabei übergangen — wer eine Fläche versteckt, nimmt ihr auch die Finger weg. *In diesem Projekt:* Darum wird eine ausgeblendete Ebene nicht versteckt, sondern mit einer leeren Schablone (Maske) verdeckt.
 
-**Unterlage (einer Skizze)** — Das Bild, über das hineingezeichnet wird. Die Skizze selbst hat einen durchsichtigen Grund; erst der Rechner legt sie auf die Unterlage und gibt beides zusammen dem Bildmodell. Fehlt die Unterlage, liegt die Skizze auf mittlerem Grau — nicht auf Schwarz, das das Bild ins Dunkle ziehen würde (Annahme, nicht gemessen). *In diesem Projekt:* Die Webseite schickt die Unterlage mit; die App bekommt sie in der Welle 2b.
+**Unterlage (einer Skizze)** — Das Bild, über das hineingezeichnet wird. Die Skizze selbst hat einen durchsichtigen Grund; erst der Rechner legt sie auf die Unterlage und gibt beides zusammen dem Bildmodell. Fehlt die Unterlage, liegt die Skizze auf mittlerem Grau — nicht auf Schwarz, das das Bild ins Dunkle ziehen würde (Annahme, nicht gemessen). *In diesem Projekt:* Die Webseite schickt die Unterlage mit, die App seit der Welle 2b ebenfalls (siehe *Blattunterlage*).
 
-**Eingangsbild (des Nachrenders)** — Das Bild, das der Rechner aus Unterlage und Skizze zusammensetzt und dem Bildmodell als Ausgangsbild gibt. Hat die Unterlage ein anderes Seitenverhältnis als das Zeichenblatt, wird sie gestreckt, und das steht als Hinweis am Bild.
+**Eingangsbild (des Nachrenders)** — Das Bild, das der Rechner aus Unterlage und Skizze zusammensetzt und dem Bildmodell als Ausgangsbild gibt. Hat die Unterlage ein anderes Seitenverhältnis als das Zeichenblatt, wird die **Skizze** auf die Unterlage gestreckt (nicht umgekehrt — das Bild behält seine Masse), und das steht als Hinweis am Bild. Die App zeigt die Unterlage nach derselben Regel, damit gezeichnet wird, wo gerechnet wird — am Gerät unbestätigt.
 
 **Nachholen (nach einer Schreibkollision)** — Ein Lauf, der beim Speichern merkt, dass jemand anderes die Mappe inzwischen geändert hat, liest sie neu und trägt seine Vermerke auf den neuen Stand nach, statt ihn zu überschreiben. Die Alternative wäre eine Sperre — aber ein Lauf kann Stunden dauern, und so lange soll niemand ein Bild umbenennen oder eine Skizze ablegen müssen. Eine inzwischen verworfene Skizze bleibt dabei verworfen (Welle 2b).
 
@@ -5043,6 +5043,30 @@ Tabelle lädt sonst gar nicht.
 **Bekanntes, abgewiesenes Feld** — Ein Feld aus dem Vertrag von KosmoOrbit, das wir kennen und trotzdem ablehnen, mit einem eigenen Satz, warum. Im Unterschied zu einem **unbekannten** Feld, bei dem wir nur sagen können, dass wir es nicht kennen. Beide halten den Lauf an; still übergangen wird keines.
 
 **Innenraum-Bestellung** — Eine Bestellung aus KosmoOrbit, die eine Ansicht **aus einem Raum heraus** will statt von aussen. Sie kommt mit einem IFC-Modell und meist mit den drüben schon gewählten Innenkameras. Bis zum 22.09.2026 wies unsere Seite jede solche Bestellung ab, weil sie das Feld nicht kannte.
+
+**Blattunterlage** — Das Bild aus der Mappe, das in der App **unter** den Zeichenebenen liegt, damit man hineinzeichnen kann. Sie ist keine Ebene: Man radiert nicht auf ihr, und sie wird nicht mitgeschickt — der Rechner hat das Bild ja schon; mit geht nur sein Name. Eine **ausgeblendete** Unterlage geht nicht mit, weil gerechnet wird, was sichtbar ist (Entscheid 7). *Stand 23.09.2026, am Gerät unbestätigt.*
+
+**Darauf skizzieren** — Der Knopf in der Bildansicht der App, der ein fertiges Bild zur Blattunterlage macht. Damit schliesst sich der Kreis: Bild ansehen, hineinzeichnen, neu rechnen lassen. Das Wort steht noch auf keinem Blatt der Entwurfsfläche; es wird nachgezeichnet.
+
+**Ablageplan** — Die Regel im Kern der App, die vor «In die Mappe legen» entscheidet, was ins Parkfach geht — und was nicht, mit einem Satz: etwa eine Unterlage aus einer anderen Mappe, die der Rechner sonst erst beim Rechnen abweisen würde, oder eine Unterlage ganz ohne Striche.
+
+**Fachzählung** — Die getrennte Zählung im Knopf zum Parkfach: geparkt, ungewiss, unterwegs, offen. Vorher stand dort eine einzige Zahl, die ungewisse Skizzen mitzählte, als wären sie geparkt — dasselbe Wort für zwei Zustände.
+
+**Aufräumfehler** — Eine alte, längst angekommene Skizze, die sich nicht löschen liess. Er wird gemeldet, bringt aber nichts zu Fall: Aufräumen darf nie verhindern, dass das Parkfach aufgeht oder eine Ankunft festgehalten wird. *Vorher* konnte eine einzige nicht löschbare Datei das ganze Fach sperren.
+
+**Zug (Stiftzug)** — Alles vom Aufsetzen des Stifts bis zum Abheben. Die App prüft teure Dinge — etwa, ob nach dem flächigen Radieren noch etwas zu sehen ist — erst am Ende eines Zugs statt bei jeder kleinen Bewegung.
+
+**Berührungsart** — Ob eine Berührung vom Finger, vom Stift oder von einem Zeiger kommt. Eine Geste kann festlegen, welche Arten sie annimmt. *In diesem Projekt:* Der Finger schiebt und zoomt, der Stift zeichnet (Entscheid 4) — und auf einer ausgeblendeten Ebene schiebt der Stift auch nicht, ausser mit dem Werkzeug Hand.
+
+**Deckungsbild** — Ein gemaltes Bild, so wie es im Speicher liegt: je Bildpunkt ein paar Zahlen, eine davon sagt, wie stark er deckt. Die App liest daraus, ob eine Ebene nach dem Radieren noch etwas zeigt. In welcher Reihenfolge die Zahlen liegen (die *Byte-Reihenfolge*), sagt das Bild selbst; liest man sie falsch, hält man eine Farbe für die Deckung — darum ist dieser Teil am Gerät zu prüfen.
+
+**Einbausperre** — Ein Fehler, der verhindert, dass etwas Gebautes drüben überhaupt ankommt — nicht, dass es falsch rechnet, sondern dass es gar nicht rechnet. *In diesem Projekt:* Die Brücke kannte nur `model.glb`, KosmoOrbit schreibt aber `model.ifc`; jede Innenraum-Bestellung wäre trotz angenommenem Feld liegen geblieben. Behoben in der Welle 2b.
+
+**Reine Absicherung** — Eine Prüfung, die der gewöhnliche Weg durch das Programm nie erreicht, weil eine frühere Stelle den Fall schon ausschliesst. Sie bleibt stehen, falls sich die frühere Stelle einmal ändert — wird aber **so genannt** und an einem eigens gebauten Fall geprüft, damit niemand glaubt, sie schütze den Alltag.
+
+**Bereich der Anmeldung (realm)** — Der Name, den ein Browser im Anmeldefenster zeigt, wenn eine Seite ein Kennwort verlangt. *In diesem Projekt* ist es der Name der App aus der einen Namenskonstante — damit er nach der Abgabe mit KosmoSketch mitwechselt.
+
+**Prüfsumme im Dateinamen** — Ein kurzer Fingerabdruck, an einen Dateinamen gehängt, damit zwei gleich benannte Dateien aus verschiedenen Ordnern sich nicht gegenseitig überschreiben. *Gefunden in der Welle 2b:* Ohne ihn rechneten zwei Ebenen einer Reihe beide auf der zweiten Zeichnung.
 
 **Erreichbarkeit einer Schwelle (Deckel)** — Die Frage, ob ein Messwert eine Schwelle
 unter den gegebenen Umständen **überhaupt** erreichen kann — unabhängig davon, wie gut das
@@ -5577,6 +5601,7 @@ keine Aussage.*
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-23 | Ergaenzt aus der Welle 2b: **Blattunterlage**, **Darauf skizzieren**, **Ablageplan**, **Fachzaehlung**, **Aufraeumfehler**, **Zug (Stiftzug)**, **Beruehrungsart**, **Deckungsbild**, **Einbausperre**, **Reine Absicherung**, **Bereich der Anmeldung (realm)**, **Pruefsumme im Dateinamen**; berichtigt: **Eingangsbild** (gestreckt wird die Skizze, nicht die Unterlage) |
 | 2026-09-23 | Ergaenzt aus der Welle 2 der iPad-App: **Identitaet einer Ansicht**, **Treffertest**, **Unterlage (einer Skizze)**, **Eingangsbild (des Nachrenders)**, **Nachholen (nach einer Schreibkollision)**, **Handlungsquittung**, **Ebenen-Reihe**, **Seitenfeld**, **Laufwaechter**, **Aufklappbarer Vorbehalt**, **Rumpffehler**, **Unicode-Zeilentrenner**, **Signifikante Stellen**, **Unicast**, **Bekanntes, abgewiesenes Feld**, **Innenraum-Bestellung**; nachgefuehrt: **Kastenmittel** (deckungsgewichtet), **Parkfach** (ungewisse Skizzen gehen mit Schluessel von selbst noch einmal) |
 | 2026-09-22 | Ergaenzt aus dem Bau der iPad-App: **Native App gegen Webseite**, **Swift**, **SwiftUI**, **PencilKit**, **Xcode**, **Swift Playgrounds**, **App-Paket (.swiftpm)**, **Bundle-Kennung**, **Simulator**, **Pruefstrecke (auf GitHub)**, **Bonjour (mDNS)**, **Rundruf**, **App Transport Security**, **Wegtafel**, **Parkfach**, **Schluesselbund**, **Doppelsendeschutz** |
 | 2026-09-22 | Ergaenzt aus dem Grundlagenblatt «Wie man eine Software von Grund auf baut» (Anhang B): **Anforderung**, **Randbedingung**, **Erfolgskriterium**, **Kleinste Fassung, die ein Erfolg waere**, **Kippstelle**, **Schnittstelle**, **Blender**, **Versionsverwaltung**, **Sitzungsprotokoll**, **Die dritte Antwort**, **Ersatzwert**, **Einbau**, **Produktweg gegen direkten Aufruf**, **Worker**, **HomeStation**, **Durchsicht**, **Open Font License (OFL)**, **Tuer (Anmeldung der Oberflaeche)** |
