@@ -1,0 +1,137 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260923-154",
+ "status": "ok",
+ "beendet": "2026-09-23T19:40:00Z",
+ "stand": "3711221",
+ "geprueft": "Teil A und NACHTRAG gelesen, dann Stand 3711221 gezogen. Alter Teil B NICHT gefahren (vor dem Lauf ersetzt). B1–B6 je mit frischer Mappe im Heimatordner ueber arbeitsgang.lege_an/rechne, genau die Einstellungen der Tabelle; danach ALLE SECHS ein zweites Mal gefahren: alle Zahlen stellengleich (Spanne null). Teil C: C1 geladen (scheitert), C2 darum nicht moeglich, C3 gelesen. Nichts am Code geaendert, nichts heruntergeladen.",
+ "kurzantwort": "Der Boden traegt NICHT (B1 ist nicht einmal messbar: mit Gelaendeplatte schrumpft der Quader auf 2 % des Bildes). Bester Lauf B3 (ferne_abstand 0.15): score 0.534, geom_iou 0.918 gegen 0.347 bei B2 — und der Gewinn liegt nachgewiesen im ENDBILD, nicht in der Messung: das Soll von B2 und B3 ist wertgleich, und ueber Kreuz gemessen haelt jedes Bild seine Zahlen. |spearman| sinkt dabei (0.310 gegen 0.582). Polaritaet stimmt (B4 schlechter als B2). Weniger Pixel (B5) und weniger Staerke (B6) sind beide schlechter. Kein Lauf bestanden. Inpaint-Pipeline laedt mit unseren Gewichten nicht: sie verlangt Controlnet-Union-2.0, das hier nicht liegt.",
+ "befunde": {
+  "A": "A1–A5 und NACHTRAG gelesen, vor dem Ziehen.",
+  "B_alt": "nicht gefahren — der Nachtrag lag vor dem ersten Lauf vor.",
+  "B1_B6": {
+   "B1": {
+    "ifc": "testbau_boden.ifc",
+    "A": 512,
+    "S": 1.0,
+    "X": {},
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 11.2,
+    "endbild": "Andeutung — eine skizzenhafte Grafik; auf Hoehe des Quaders ein waagrechtes Band, darunter ein grosser Block, der in der Tiefe nicht vorkommt. Der Quader selbst belegt nur 2 % des Bildes (Gelaendeplatte rahmt die Kamera weit).",
+    "qa": "nicht messbar: nur 3.2 % der Bildpunkte tragen Geometrie (Bauwerk 2.0 %)"
+   },
+   "B2": {
+    "ifc": "testbau.ifc",
+    "A": 512,
+    "S": 1.0,
+    "X": {},
+    "score": 0.4498098352496061,
+    "spearman": -0.5824046492456221,
+    "geom_iou": 0.3474025974025974,
+    "bestanden": false,
+    "dauer_s": 7.4,
+    "endbild": "Bauwerk erkennbar — ein Fassadenrechteck mit Fensterreihe genau an der Stelle des Quaders, darum herum skizzenhafte Hilfslinien."
+   },
+   "B3": {
+    "ifc": "testbau.ifc",
+    "A": 512,
+    "S": 1.0,
+    "X": {
+     "ferne_abstand": 0.15
+    },
+    "score": 0.5335270250986025,
+    "spearman": -0.31016362095108874,
+    "geom_iou": 0.9177449168207024,
+    "bestanden": false,
+    "dauer_s": 7.8,
+    "endbild": "Bauwerk erkennbar — von blossem Auge wie B2 (Fassadenrechteck mit Fenstern an der Stelle des Quaders); 94.5 % der Bildpunkte weichen leicht ab, hoechstens 101 Stufen."
+   },
+   "B4": {
+    "ifc": "testbau.ifc",
+    "A": 512,
+    "S": 1.0,
+    "X": {
+     "tiefe_invertieren": false
+    },
+    "score": 0.2961633417861508,
+    "spearman": -0.09954950275000993,
+    "geom_iou": 0.8810965659788954,
+    "bestanden": false,
+    "dauer_s": 7.4,
+    "endbild": "Andeutung — eine flache, streifig gemusterte Flaeche liegt genau in der Silhouette des Quaders, sonst leeres Grau; keine Fenster, keine Kanten eines Baukoerpers."
+   },
+   "B5": {
+    "ifc": "testbau.ifc",
+    "A": 256,
+    "S": 1.0,
+    "X": {},
+    "score": null,
+    "spearman": null,
+    "geom_iou": 0.0,
+    "bestanden": false,
+    "dauer_s": 6.0,
+    "endbild": "nichts — eine farbige Fotofassade fuellt das ganze Bild, der Quader ist darin nicht auszumachen.",
+    "qa": "nicht messbar: 19.8 % Geometrieanteil, unter der Messbarkeitsgrenze der QA"
+   },
+   "B6": {
+    "ifc": "testbau.ifc",
+    "A": 512,
+    "S": 0.8,
+    "X": {},
+    "score": 0.1560941257209622,
+    "spearman": -0.12028487390261226,
+    "geom_iou": 0.2025639242413705,
+    "bestanden": false,
+    "dauer_s": 7.5,
+    "endbild": "Andeutung — Fassadenrechteck an der Stelle des Quaders, aber ueberlagert von weiteren Bauteilen und Linien, die in der Tiefe nicht vorkommen."
+   }
+  },
+  "B_lesart": "Nach eurem Schluessel: B1 gut/B2 schlecht trifft NICHT zu — B1 ist nicht messbar, weil die Gelaendeplatte den Bildausschnitt aufweitet (Bauwerk 2.0 % statt 19.8 %); die frueheren guten Laeufe hatten also nicht nur einen Boden, sondern vermutlich einen anderen Ausschnitt. B3 besser als B2 (0.534 gegen 0.450; geom_iou 0.918 gegen 0.347), |spearman| aber tiefer (0.310 gegen 0.582): die Silhouette sitzt, der Verlauf innen weniger. B4 schlechter als B2 (0.296, |spearman| 0.100) → die Polaritaet des Registers (nah_dunkel, invertiert) ist fuer diesen Fall richtig. B5 nicht messbar, Bild ohne Bezug zum Quader → Pixel tragen. B6 0.156 → Staerke traegt.",
+  "B3_B4_kontrolle": {
+   "B3_depth_normalisierung_ferne_abstand": 0.15,
+   "B3_grau_boden": 0.15,
+   "B4_tiefe_invertiert_ueberschrieben": false,
+   "andere_laeufe_tiefe_invertiert_ueberschrieben": [
+    "None"
+   ],
+   "satz": "Beide Schalter kamen an; kein Fehlersatz."
+  },
+  "C1": {
+   "befehl": "diffusers.ZImageControlNetModel.from_single_file(<controlnet-ordner>/Z-Image-Turbo-Fun-Controlnet-Union.safetensors, torch_dtype=bfloat16); diffusers.ZImageControlNetInpaintPipeline.from_pretrained(<z-image-turbo-wurzel>, controlnet=cn, torch_dtype=bfloat16) — dieselbe Datei und Wurzel, die render._lade_mit_controlnet findet; diffusers 0.39.0",
+   "satz": "ValueError: ZImageControlNetInpaintPipeline is not compatible with `alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union`, use `alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union-2.0`.",
+   "wo": "Im __init__ der Pipeline: sie wirft, wenn transformer.in_channels == controlnet.config.control_in_dim — das ControlNet 1.0 hat keinen Masken-Eingang.",
+   "vorhanden": "Im ControlNet-Ordner liegt nur die 1.0-Datei (3 101 572 408 Byte). Keine 2.0 auf der Platte, nichts heruntergeladen; deren Lizenz nicht geprueft."
+  },
+  "C2": "nicht moeglich — C1 laedt nicht. Das Skript liegt bereit (bei uns, nicht im Repo) und laeuft, sobald eine 2.0 vorhanden ist.",
+  "C3": "__call__(self, prompt, height, width, num_inference_steps, sigmas, guidance_scale, image, mask_image, control_image, controlnet_conditioning_scale, cfg_normalization, cfg_truncation, negative_prompt, num_images_per_prompt, generator, latents, prompt_embeds, negative_prompt_embeds, output_type, return_dict, joint_attention_kwargs, callback_on_step_end, callback_on_step_end_tensor_inputs, max_sequence_length) — KEIN strength. __init__(self, scheduler, vae, text_encoder, tokenizer, transformer, controlnet).",
+  "B3_kreuzprobe": {
+   "frage": "Kommt der B3-Gewinn aus dem Bild oder aus der Messung?",
+   "weg": "QA-Aufruf der Kette nachgebaut (bildlesen.tiefen_aus_report + maske.maske_aus_bericht + tiefenschaetzer.qa_gegen_soll, Vorgaben der Kette). Kontrolle: B2-Bild gegen B2-Soll ergibt stellengleich 0.4498 / -0.5824 / 0.3474 — der Nachbau misst dasselbe wie der QA-Knoten.",
+   "soll_B2_gleich_soll_B3": true,
+   "B2_bild_gegen_B3_soll": {
+    "score": 0.4498,
+    "spearman": -0.5824,
+    "geom_iou": 0.3474
+   },
+   "B3_bild_gegen_B2_soll": {
+    "score": 0.5335,
+    "spearman": -0.3102,
+    "geom_iou": 0.9177
+   },
+   "satz": "Das Soll ist in beiden Laeufen wertgleich; jedes Bild behaelt seine Zahlen unter dem anderen Soll. Der Unterschied liegt ganz im Endbild. ferne_abstand aendert also, was das Modell zeichnet — von blossem Auge kaum, fuer den Tiefenschaetzer deutlich (94.5 % der Bildpunkte weichen ab, hoechstens 101 Stufen)."
+  }
+ },
+ "bemerkungen": "Zwei eigene Fehler, genannt: (1) Beim ersten Anschauen der B1-Tiefenkarte habe ich die 16-Bit-PNG per convert('L') auf 8 Bit gedrueckt und sie fuer zweifarbig gehalten; tatsaechlich 445 Stufen (8407–65535). (2) Im Entwurf dieser Antwort stand, der B3-Gewinn komme «vermutlich aus der Soll-Silhouette» — das war falsch; die Kreuzprobe oben widerlegt es, und sie ist der Grund, warum sie hier steht. Die Laeufe sind schnell: 7.5–15.4 s je Lauf ganz, 8 Schritte in rund 1 s.",
+ "umgebung": {
+  "geraet": "HomeStation",
+  "gpu": "RTX 5090, Leistungsgrenze 400 W",
+  "gpu_last_max_w": 323.15,
+  "gpu_speicher_max_mib": 25520,
+  "leerlauf_vor_start": "16 W, 604 MiB, kein Ollama-Modell geladen",
+  "diffusers": "0.39.0"
+ },
+ "fehler": null
+}
