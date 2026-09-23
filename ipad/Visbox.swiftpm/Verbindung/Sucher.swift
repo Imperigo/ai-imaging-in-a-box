@@ -12,8 +12,12 @@ import Network
 /// **Was gemeldet wird, entscheidet der Kern** (`Suche.waehle`): eine → die, mehrere → ein
 /// Mensch wählt.
 ///
-/// **Stand 22.09.2026: Der Server kündigt sich noch nicht an.** Bis er es tut, findet diese
-/// Suche nichts, und die Adresse wird im Koppelbildschirm eingetippt.
+/// **Der Server kündigt sich an, seit dem 22.09.2026 — aber nur, wenn er mit
+/// `--im-heimnetz` läuft** (`oberflaeche/rundruf.py`, Protokoll §8). Bis zum 23.09.2026
+/// stand hier, er tue es noch nicht; das war mit dem Bau des Rundrufs überholt. Läuft er
+/// ohne die Angabe, findet diese Suche nichts, und die Adresse wird im Koppelbildschirm
+/// eingetippt. Ob ein iPad die Ankündigung über die Bonjour-Suche wirklich sieht, ist
+/// **am Gerät unbestätigt.**
 ///
 /// *Gebaut, am Gerät unbestätigt* — auch, ob iOS die Suche ohne Sonderberechtigung zulässt.
 final class Sucher {

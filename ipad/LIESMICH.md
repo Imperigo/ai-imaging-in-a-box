@@ -53,6 +53,13 @@ kein Befund am Code.
   mit der sechsstelligen Zahl, Anmeldung im Schlüsselbund, das Parkfach für Skizzen, die
   (noch) nicht drüben sind, mit Schlüssel gegen Doppelsendung und samt `ueber`, und die
   Übergabe als Bewegung.
+* **Schriften** (23.09.2026, Entscheide 20 und 25): IBM Plex Sans (Text), IBM Plex Mono
+  (Zahlen, Dateinamen) und Instrument Serif (Titel) liegen **mitgeliefert** in
+  `Visbox.swiftpm/Schriften/` — unverändert aus der Verteilung von Google Fonts, SIL OFL 1.1,
+  je Familie mit ihrem Lizenztext, Herkunft und Prüfsummen im `NOTICE`. Registriert werden
+  sie beim ersten Gebrauch (`Leiste/Schriftregister.swift`); die Namen stehen nur in
+  `Schrift.schnitte` (`Leiste/Zeichenblatt.swift`). Scheitert eine Familie, gilt für sie die
+  Systemschrift. **Am Gerät unbestätigt**, ob die Schriften wirklich erscheinen.
 * **Kern** (nur Foundation, hier unter Linux mit `swift test` geprüft): Anfragen bauen und
   Antworten lesen, Prüfzeichen, Ebenenregeln, Unterlage, Parkfach, Suche, Wege, Marke.
 
@@ -80,6 +87,8 @@ ipad/
 │   ├── VisboxApp.swift          der Einstieg (@main)
 │   ├── Startansicht.swift       ordnet die Einheiten an, sonst nichts
 │   ├── Platzhalter.swift        aus Welle 0; keine Einheit benutzt ihn mehr
+│   ├── Schriften/               IBM Plex Sans, IBM Plex Mono, Instrument Serif (OFL 1.1),
+│   │                            je Familie ein Ordner mit `<Familie>-OFL.txt` — unverändert
 │   ├── Kern/                    der plattformneutrale Kern — NUR Foundation
 │   │   ├── Marke.swift          Name, Kennung, Dienst: die eine Stelle
 │   │   ├── Urteil.swift         bestanden / durchgefallen / nicht gemessen
@@ -94,7 +103,8 @@ ipad/
 │   ├── Zeichnen/                Zeichenfläche, Leinwand je Ebene, Ebenentafel, Zeichenstand,
 │   │                            Unterlagenbild
 │   ├── Leiste/                  Leiste, Werkzeugwahl, Arbeitsplatz, Seitenfeld, Zeichenblatt,
-│   │                            Mappenknopf (Farben, Schriften, Masse nach «Die Zeichen»)
+│   │                            Mappenknopf (Farben, Schriften, Masse nach «Die Zeichen»),
+│   │                            Schriftregister
 │   ├── Bilder/                  Bildband, Bildansicht, Vergleich, Skizzen, Varianten,
 │   │                            Laufanzeige, Teilen, Zeichenrahmen, Mappentafel,
 │   │                            Unterlage, «Darauf skizzieren»
@@ -199,6 +209,21 @@ diesem Zertifikat trauen (`--cacert`); die Verbindung ungeprüft zu lassen ist k
   auf einem Gerät wirken, wie sie sollen, zeigt erst das Aufspielen — die Liste dessen, was
   dort zu prüfen ist, steht im Abnahmeblatt (`docs/VISBOX_IPAD_ERSTE_PROBE.md`).
 * **Ob Swift Playgrounds das Paket öffnet** und den Unterordner `Kern/` mitübersetzt.
+* **Ob die Schriften am Gerät erscheinen.** Geprüft ist hier (`tests/test_ipad_geruest.py`):
+  Die Dateien sind echte TrueType-Dateien, tragen die Namen, unter denen die App sie
+  verlangt, stimmen mit den Prüfsummen im `NOTICE` überein, und das Manifest legt den Ordner
+  in die App. Nachgefahren mit SwiftPM unter Linux (23.09.2026, an einer Kopie): **ohne**
+  Angabe im Manifest warnt SwiftPM über unbehandelte Dateien, und drei gleichnamige
+  `OFL.txt` bricht es ab, weil `.process` alles flach ablegt — darum heissen die Lizenztexte
+  `<Familie>-OFL.txt`. Ungeprüft: ob CoreText die variable Plex-Sans-Datei unter
+  `IBMPlexSans-Regular` führt und ihr Gewicht über die Achse annimmt — **scheitert das
+  Registrieren oder die Namensnachfrage**, zeigt die App die Systemschrift und schreibt den
+  Grund in die Konsole (`Schriftregister.stand.befunde`). **Kein Rückfall** gibt es für zwei
+  andere Fälle (Durchsicht Runde 11): Legt Swift Playgrounds `Bundle.module` nicht wie
+  Xcode an, lässt sich die App dort gar nicht übersetzen; und schreibt Playgrounds das
+  Manifest beim Ändern von Symbol oder Farbe neu und lässt dabei `resources:
+  [.process("Schriften")]` fallen, ebenso. Beides zeigt erst das Öffnen in Playgrounds —
+  im Abnahmeblatt nachzusehen.
 * **Ob iOS die Verbindung zur HomeStation zulässt** — lokale Netzwerkfreigabe
   (`NSLocalNetworkUsageDescription`, `NSBonjourServices`) und die ATS-Ausnahme
   `NSAllowsLocalNetworking` sind eingetragen, am Gerät nicht erprobt.

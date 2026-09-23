@@ -221,3 +221,66 @@ null Laufzeitabhaengigkeiten auskommt.
   pruefe_auftrag lehnt solche Auftraege VOR der ersten GPU-Sekunde ab.
 
 --------------------------------------------------------------------------------
+
+================================================================================
+Mitgelieferte Schriften (iPad-App)
+================================================================================
+
+Die folgenden Schriftdateien werden MIT der iPad-App ausgeliefert (sie liegen im
+App-Paket unter ipad/Visbox.swiftpm/Schriften/ und gehen in die App ein). Sie
+stehen unter der SIL Open Font License 1.1 - zugelassen nach CLAUDE.md, Regel 1,
+Praezisierung Schriften (Owner-Entscheid 2026-09-22): ausschliesslich Schriften,
+unveraendert, mit ihrer Lizenz deklariert. Der Lizenztext liegt je Familie neben
+den Dateien (<Familie>-OFL.txt, Wortlaut unveraendert; umbenannt nur, weil das
+App-Paket alle Dateien flach in die App legt und drei gleichnamige OFL.txt dort
+ein Fehler waeren) und geht mit in die App, wie es die OFL verlangt.
+
+Die OFL verbietet, die Schriften allein zu verkaufen, und behaelt die
+Schriftnamen (Reserved Font Name) dem Original vor. Beides beruehrt dieses
+Produkt nicht: Die Dateien werden nicht einzeln vertrieben und nicht veraendert.
+
+Abgerufen am 2026-09-23 aus der Verteilung von Google Fonts,
+https://raw.githubusercontent.com/google/fonts/main/ofl/<familie>/ . Die
+Pruefsummen (SHA-256) belegen, dass die Dateien im Repo die abgerufenen sind;
+tests/test_ipad_geruest.py vergleicht sie mit den Dateien.
+
+Registriert werden die Schriften zur Laufzeit ueber CoreText (Apple-Plattform,
+nicht mitgeliefert - wie SwiftUI, PencilKit, Network und Security).
+
+--------------------------------------------------------------------------------
+IBM Plex Sans                                      OFL-1.1
+Copyright 2017 IBM Corp. with Reserved Font Name "Plex"
+https://github.com/IBM/plex  ·  Quelle: google/fonts, ofl/ibmplexsans/
+
+  IBMPlexSans[wdth,wght].ttf   537244 Byte
+    SHA-256 3b031aa4216174205bd8471f88a49b91f093169e9e87bd5262242bc5967fe2e3
+  IBMPlexSans-OFL.txt          (dort: OFL.txt)
+
+Nur als variable Datei verteilt (Achsen wght 100-700, wdth 75-100); feste
+Schnitte liegen in dieser Quelle nicht. Die Strichstaerke setzt die App ueber
+die Achse wght, ohne die Datei zu veraendern.
+
+--------------------------------------------------------------------------------
+IBM Plex Mono                                      OFL-1.1
+Copyright 2017 IBM Corp. with Reserved Font Name "Plex"
+https://github.com/IBM/plex  ·  Quelle: google/fonts, ofl/ibmplexmono/
+
+  IBMPlexMono-Regular.ttf      135580 Byte
+    SHA-256 6a3412f058c7d8dfd9170c41e85ade48e5156ecb89356110ca57a0a27734af46
+  IBMPlexMono-Medium.ttf       136704 Byte
+    SHA-256 a9b4c49bb299e05b5f6c481e7fb5e78943d2793249a0c8874ab574a2d1ea6755
+  IBMPlexMono-SemiBold.ttf     140216 Byte
+    SHA-256 d3c38e55c78f5b0f28009fddba4834ec503278936a5986032424c9bd2d23aa46
+  IBMPlexMono-OFL.txt          (dort: OFL.txt)
+
+--------------------------------------------------------------------------------
+Instrument Serif                                   OFL-1.1
+Copyright 2022 The Instrument Serif Project Authors
+https://github.com/Instrument/instrument-serif  ·  Quelle: google/fonts,
+ofl/instrumentserif/
+
+  InstrumentSerif-Regular.ttf  70012 Byte
+    SHA-256 498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88
+  InstrumentSerif-OFL.txt      (dort: OFL.txt)
+
+--------------------------------------------------------------------------------

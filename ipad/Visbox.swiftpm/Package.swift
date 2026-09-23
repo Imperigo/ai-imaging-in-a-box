@@ -13,6 +13,14 @@
 //
 // Der Kern (`Kern/`) wird hier NICHT als Paket eingebunden, sondern mituebersetzt — er
 // liegt im selben Ziel. Warum, steht in `ipad/LIESMICH.md`.
+//
+// DIE SCHRIFTEN (`Schriften/`, 23.09.2026) stehen als `resources: [.process(...)]` am
+// Ziel — die Form, die Swift Playgrounds selbst schreibt, wenn man dort Dateien hinzufuegt.
+// Ohne die Angabe waeren die Dateien im Ziel «unbehandelt», und SwiftPM warnt (nachgefahren
+// am 23.09.2026 mit Swift 6.4 unter Linux, an einer Kopie dieses Aufbaus). `.process` legt
+// alle Dateien FLACH in die Ablage der App: Zwei Dateien gleichen Namens, auch in
+// verschiedenen Unterordnern, sind ein Fehler («multiple resources named 'OFL.txt'»,
+// ebenso nachgefahren) — darum heissen die Lizenztexte `<Familie>-OFL.txt`.
 
 import PackageDescription
 import AppleProductTypes
@@ -56,7 +64,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "AppModule",
-            path: "."
+            path: ".",
+            resources: [
+                .process("Schriften")
+            ]
         )
     ]
 )

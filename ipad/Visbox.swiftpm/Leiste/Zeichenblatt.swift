@@ -55,32 +55,116 @@ enum Zeichenblatt {
     static let seitenfeldBreite: CGFloat = 340
 }
 
-/// Die Schriften — **die eine Stelle, an der später die eigenen eingesetzt werden.**
+/// Die drei mitgelieferten Schriftfamilien (Entscheide 20 und 25).
+enum Schriftfamilie: CaseIterable {
+    /// IBM Plex Sans — alles Gelesene.
+    case plexSans
+    /// IBM Plex Mono — jede Zahl, jeder Dateiname.
+    case plexMono
+    /// Instrument Serif — Titel und Wortzeichen.
+    case instrumentSerif
+}
+
+/// Ein mitgelieferter Schnitt: welche Familie, welcher PostScript-Name, welche Datei.
+struct Schriftschnitt {
+    let familie: Schriftfamilie
+    /// Der Name, unter dem das System die Schrift nach der Registrierung kennt.
+    let postScript: String
+    /// Die Datei unter `Schriften/<Familie>/`, ohne `.ttf`.
+    let datei: String
+    /// Die Strichstärke des Schnitts auf der OpenType-Skala (400 normal, 500 mittel,
+    /// 600 halbfett) — wie sie die Datei selbst angibt (Tabelle `OS/2`, bewacht).
+    let staerke: CGFloat
+}
+
+/// Die Schriften — **die eine Stelle, an der ihre Namen stehen.**
 ///
-/// Heute Systemschrift. Entschieden sind IBM Plex Sans/Mono und Instrument Serif (beide
-/// OFL, Entscheid 25), und zwar **mitgeliefert, nicht geladen** (Entscheid 20: das geteilte
-/// Bild trägt das Zeichen, also muss die Schrift auf dem Gerät liegen). Sobald die Dateien
-/// im Paket liegen und registriert sind, wird nur hier getauscht, z. B.
-/// `.custom("IBMPlexMono-Regular", size: groesse)`.
+/// Entschieden sind IBM Plex Sans/Mono und Instrument Serif (SIL OFL 1.1, Entscheid 25),
+/// **mitgeliefert, nicht geladen** (Entscheid 20: das geteilte Bild trägt das Zeichen, also
+/// muss die Schrift auf dem Gerät liegen, und zum Start darf keine Netzverbindung nötig
+/// sein). Seit dem 23.09.2026 liegen die Dateien unverändert in `Schriften/` (Herkunft und
+/// Prüfsummen im `NOTICE`), registriert werden sie in `Schriftregister.swift`.
+///
+/// **Die PostScript-Namen und Dateinamen stehen nur in `schnitte`.**
+/// `tests/test_ipad_geruest.py` liest jeden Namen aus der Namentabelle der genannten Datei
+/// nach und fällt, wenn ein Name dort nicht vorkommt, eine Datei fehlt oder ein Name
+/// ausserhalb dieser Datei steht.
+///
+/// **Scheitert die Registrierung einer Familie, gilt für sie die Systemschrift** (serif,
+/// normal, gleich breit — wie bis zum 22.09.2026). Nie unsichtbarer Text, und nie still eine
+/// fremde Ersatzschrift: `Schriftregister` prüft nach dem Registrieren, ob das System unter
+/// dem Namen wirklich diese Schrift liefert. *Gebaut, am Gerät unbestätigt.*
 enum Schrift {
-    /// Titel und Wortzeichen (später Instrument Serif).
+    /// Jeder mitgelieferte Schnitt.
+    ///
+    /// IBM Plex Sans liegt in der Originalverteilung (google/fonts, 23.09.2026) **nur als
+    /// variable Datei** vor — eine Datei, deren Strichstärke über die Achse `wght` (100–700)
+    /// einstellbar ist. Ihr Grundschnitt heisst `IBMPlexSans-Regular`; das Gewicht setzt
+    /// `Schriftregister.schrift(_:groesse:gewicht:)` über diese Achse. Plex Mono liegt in
+    /// festen Schnitten vor; mitgeliefert sind die drei, die die App verlangt (normal,
+    /// mittel, halbfett — nachgezählt an den Aufrufen von `zahl(_:_:)` am 23.09.2026).
+    static let schnitte: [Schriftschnitt] = [
+        Schriftschnitt(familie: .plexSans, postScript: "IBMPlexSans-Regular",
+                       datei: "IBMPlexSans[wdth,wght]", staerke: 400),
+        Schriftschnitt(familie: .plexMono, postScript: "IBMPlexMono-Regular",
+                       datei: "IBMPlexMono-Regular", staerke: 400),
+        Schriftschnitt(familie: .plexMono, postScript: "IBMPlexMono-Medium",
+                       datei: "IBMPlexMono-Medium", staerke: 500),
+        Schriftschnitt(familie: .plexMono, postScript: "IBMPlexMono-SemiBold",
+                       datei: "IBMPlexMono-SemiBold", staerke: 600),
+        Schriftschnitt(familie: .instrumentSerif, postScript: "InstrumentSerif-Regular",
+                       datei: "InstrumentSerif-Regular", staerke: 400),
+    ]
+
+    /// Titel und Wortzeichen (Instrument Serif; es gibt nur den normalen Schnitt).
     static func titel(_ groesse: CGFloat) -> Font {
-        .system(size: groesse, weight: .regular, design: .serif)
+        schnitt(.instrumentSerif, 400).flatMap { Schriftregister.schrift($0, groesse: groesse) }
+            ?? .system(size: groesse, weight: .regular, design: .serif)
     }
 
-    /// Alles Gelesene (später IBM Plex Sans).
+    /// Alles Gelesene (IBM Plex Sans, Gewicht über die Achse der variablen Datei).
     static func text(_ groesse: CGFloat, _ gewicht: Font.Weight = .regular) -> Font {
-        .system(size: groesse, weight: gewicht, design: .default)
+        schnitt(.plexSans, 400).flatMap {
+            Schriftregister.schrift($0, groesse: groesse, gewicht: staerke(gewicht))
+        } ?? .system(size: groesse, weight: gewicht, design: .default)
     }
 
-    /// Jede Zahl, jeder Dateiname (später IBM Plex Mono) — gleich breite Ziffern, damit
-    /// 0.93 und 0.36 untereinander gleich breit sind und ein Sprung auffällt.
+    /// Jede Zahl, jeder Dateiname (IBM Plex Mono) — gleich breite Ziffern, damit 0.93 und
+    /// 0.36 untereinander gleich breit sind und ein Sprung auffällt.
+    ///
+    /// Mitgeliefert sind drei Schnitte; ein anderes Gewicht nimmt den nächsten: leichter als
+    /// normal → normal, fetter als halbfett → halbfett. (Am 23.09.2026 verlangt kein Aufruf
+    /// ein solches Gewicht.)
     static func zahl(_ groesse: CGFloat, _ gewicht: Font.Weight = .regular) -> Font {
-        .system(size: groesse, weight: gewicht, design: .monospaced)
+        schnitt(.plexMono, staerke(gewicht)).flatMap {
+            Schriftregister.schrift($0, groesse: groesse)
+        } ?? .system(size: groesse, weight: gewicht, design: .monospaced)
     }
 
     /// Die Kopfzeile eines Abschnitts (klein, gesperrt, Grossbuchstaben).
-    static let abschnitt = Font.system(size: 12, weight: .semibold)
+    static let abschnitt = text(12, .semibold)
+
+    // ------------------------------------------------------------------ intern
+
+    /// Der Schnitt einer Familie, der der verlangten Stärke am nächsten liegt.
+    private static func schnitt(_ familie: Schriftfamilie,
+                                _ staerke: CGFloat) -> Schriftschnitt? {
+        schnitte.filter { $0.familie == familie }
+            .min { abs($0.staerke - staerke) < abs($1.staerke - staerke) }
+    }
+
+    /// Ein SwiftUI-Gewicht als Zahl der Achse `wght` (OpenType: 400 normal, 700 fett).
+    private static func staerke(_ gewicht: Font.Weight) -> CGFloat {
+        if gewicht == .ultraLight { return 200 }
+        if gewicht == .thin { return 100 }
+        if gewicht == .light { return 300 }
+        if gewicht == .medium { return 500 }
+        if gewicht == .semibold { return 600 }
+        if gewicht == .bold { return 700 }
+        if gewicht == .heavy { return 800 }
+        if gewicht == .black { return 900 }
+        return 400
+    }
 }
 
 extension Color {

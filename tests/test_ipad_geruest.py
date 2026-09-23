@@ -16,6 +16,9 @@ Geprüft wird darum:
 3. **Der Kern bleibt plattformneutral** — er importiert nur Foundation.
 4. **Der Kern, der geprüft wird, ist der, der in die App geht** (ein Verweis, keine Kopie).
 5. Und wenn ``swift`` da ist, fährt ``swift test`` im Kern wirklich.
+6. **Die mitgelieferten Schriften** (seit dem 23.09.2026): Sie liegen im App-Paket, sind
+   echte TrueType-Dateien, tragen je Familie ihre Lizenz daneben, stehen mit Prüfsumme im
+   ``NOTICE``, und jeder Name, unter dem die App sie verlangt, steht in der Datei selbst.
 """
 from __future__ import annotations
 
@@ -24,7 +27,9 @@ import io
 import json
 import os
 import re
+import hashlib
 import shutil
+import struct
 import subprocess
 import sys
 from pathlib import Path
@@ -44,6 +49,9 @@ APP_MANIFEST = APP / "Package.swift"
 KERN_MANIFEST = KERNPAKET / "Package.swift"
 ARBEITSABLAUF = WURZEL / ".github" / "workflows" / "ipad.yml"
 FLAECHE = WURZEL / "oberflaeche"
+SCHRIFTEN = APP / "Schriften"
+ZEICHENBLATT = APP / "Leiste" / "Zeichenblatt.swift"
+NOTICE = WURZEL / "NOTICE"
 
 
 @pytest.fixture(scope="module")
@@ -382,3 +390,217 @@ def test_swift_test_im_kern():
     # GEFAHREN, NICHT NUR GEBAUT. Ein Lauf mit null Proben ist ebenfalls «returncode 0».
     gefahren = re.findall(r"Executed (\d+) tests?, with 0 failures", ausgabe)
     assert gefahren and int(gefahren[-1]) > 0, ausgabe
+
+
+# ============================================================ 6 · Die Schriften (23.09.2026)
+#
+# Entscheide 20 und 25: IBM Plex Sans, IBM Plex Mono und Instrument Serif, SIL OFL 1.1,
+# MITGELIEFERT und nicht geladen. Was hier still auseinanderlaufen kann: ein Name in der App,
+# den keine Datei traegt (am Geraet: die Systemschrift, ohne dass es jemand merkt), eine
+# Datei ohne Lizenz daneben, eine Datei, die nicht die im `NOTICE` ist, und ein Manifest,
+# das die Dateien nicht in die App legt.
+#
+# Die Schriftdateien werden SELBST gelesen (Tabellenverzeichnis, `name`, `fvar`, `OS/2` nach
+# der OpenType-Beschreibung), nur mit der Standardbibliothek — keine neue Abhaengigkeit.
+
+def _sfnt_tabellen(daten: bytes) -> dict[str, bytes]:
+    """Die Tabellen einer TrueType-Datei, je Kennung ihr Inhalt."""
+    anzahl = struct.unpack(">H", daten[4:6])[0]
+    tabellen = {}
+    for i in range(anzahl):
+        kennung, _, anfang, laenge = struct.unpack(">4sIII", daten[12 + 16 * i:28 + 16 * i])
+        assert anfang + laenge <= len(daten), f"Tabelle {kennung!r} reicht über das Dateiende"
+        tabellen[kennung.decode("latin-1")] = daten[anfang:anfang + laenge]
+    return tabellen
+
+
+def _sfnt_namen(tabellen: dict[str, bytes]) -> dict[int, set[str]]:
+    """Die Namentabelle: je Namensnummer die Einträge (6 = PostScript-Name)."""
+    name = tabellen["name"]
+    _, anzahl, ablage = struct.unpack(">HHH", name[:6])
+    namen: dict[int, set[str]] = {}
+    for i in range(anzahl):
+        plattform, _, _, nummer, laenge, stelle = struct.unpack(
+            ">HHHHHH", name[6 + 12 * i:18 + 12 * i])
+        roh = name[ablage + stelle:ablage + stelle + laenge]
+        text = roh.decode("utf-16-be") if plattform in (0, 3) else roh.decode("latin-1")
+        namen.setdefault(nummer, set()).add(text)
+    return namen
+
+
+def _sfnt_postscript_namen(tabellen: dict[str, bytes]) -> set[str]:
+    """Jeder PostScript-Name der Datei: der eigene (Nr. 6) und, bei einer variablen Datei,
+    die ihrer benannten Schnitte (Tabelle ``fvar``)."""
+    namen = _sfnt_namen(tabellen)
+    gefunden = set(namen.get(6, set()))
+    fvar = tabellen.get("fvar")
+    if fvar:
+        _, _, achsen_ab, _, achsen, achsgroesse, schnitte, schnittgroesse = struct.unpack(
+            ">HHHHHHHH", fvar[:16])
+        ab = achsen_ab + achsen * achsgroesse
+        for i in range(schnitte):
+            eintrag = fvar[ab + i * schnittgroesse:ab + (i + 1) * schnittgroesse]
+            if schnittgroesse >= 6 + 4 * achsen:
+                nummer = struct.unpack(">H", eintrag[4 + 4 * achsen:6 + 4 * achsen])[0]
+                gefunden |= namen.get(nummer, set())
+    return gefunden
+
+
+def _sfnt_familie(tabellen: dict[str, bytes]) -> str:
+    """Der Familienname, wie ihn ein Mensch liest (Nr. 16, sonst Nr. 1)."""
+    namen = _sfnt_namen(tabellen)
+    return sorted(namen.get(16) or namen[1])[0]
+
+
+def _schriftdateien() -> list[Path]:
+    dateien = sorted(SCHRIFTEN.rglob("*.ttf"))
+    assert dateien, f"keine Schriftdatei unter {SCHRIFTEN.relative_to(WURZEL)}"
+    return dateien
+
+
+def _schnitte() -> list[dict]:
+    """Die Einträge von ``Schrift.schnitte`` in ``Leiste/Zeichenblatt.swift``."""
+    text = _ohne_kommentarzeilen(ZEICHENBLATT.read_text(encoding="utf-8"))
+    muster = re.compile(
+        r'Schriftschnitt\(\s*familie:\s*\.(\w+)\s*,\s*postScript:\s*"([^"]+)"\s*,'
+        r'\s*datei:\s*"([^"]+)"\s*,\s*staerke:\s*(\d+)\s*\)')
+    schnitte = [dict(familie=f, postscript=p, datei=d, staerke=int(s))
+                for f, p, d, s in muster.findall(text)]
+    # NICHT VAKUUM: Ohne diese Zeile wäre jede Probe über die Schnitte bei einem
+    # umformatierten Eintrag grün, weil sie über eine leere Liste liefe.
+    assert len(schnitte) == text.count("Schriftschnitt(familie:"), (
+        "Ein Eintrag in `Schrift.schnitte` hat nicht die erwartete Form "
+        "(familie, postScript, datei, staerke)")
+    familien = set(re.findall(r"^\s*case\s+(\w+)\s*$",
+                              re.search(r"enum Schriftfamilie[^{]*\{(.*?)\n\}", text,
+                                        re.S).group(1), re.M))
+    assert familien and {s["familie"] for s in schnitte} == familien, (
+        f"Familien {sorted(familien)}, Schnitte für {sorted({s['familie'] for s in schnitte})}"
+        " — eine Familie ohne Schnitt fiele am Gerät still auf die Systemschrift.")
+    return schnitte
+
+
+def test_die_schriftdateien_liegen_im_paket_und_sind_truetype():
+    """Echte TrueType-Dateien, keine Fehlerseite des Proxys, kein Git-LFS-Zeiger.
+
+    Eine abgebrochene oder umgeleitete Abfrage liefert HTML oder Text mit der Endung
+    ``.ttf`` — beim Übersetzen fällt das nicht auf, am Gerät scheitert die Registrierung.
+    """
+    for datei in _schriftdateien():
+        daten = datei.read_bytes()
+        assert daten[:4] == b"\x00\x01\x00\x00", (
+            f"{datei.relative_to(WURZEL)} beginnt mit {daten[:4]!r}, nicht wie TrueType")
+        tabellen = _sfnt_tabellen(daten)
+        fehlend = {"cmap", "glyf", "head", "name", "OS/2"} - set(tabellen)
+        assert not fehlend, f"{datei.name}: ohne Tabelle(n) {sorted(fehlend)}"
+
+
+def test_je_familie_liegt_ihre_lizenz_daneben():
+    """Die OFL verlangt, dass der Lizenztext mit der Schrift geht (Bedingung 2).
+
+    Der Ordner einer Familie trägt genau einen Lizenztext ``<Ordner>-OFL.txt`` — der
+    Wortlaut aus der Verteilung, nur umbenannt, weil ``.process`` flach ablegt (siehe
+    ``test_kein_dateiname_kommt_unter_schriften_doppelt_vor``).
+    """
+    ordner = sorted({d.parent for d in _schriftdateien()})
+    for o in ordner:
+        lizenzen = sorted(o.glob("*OFL*"))
+        assert [p.name for p in lizenzen] == [f"{o.name}-OFL.txt"], (
+            f"{o.relative_to(WURZEL)}: Lizenztexte {[p.name for p in lizenzen]}")
+        text = lizenzen[0].read_text(encoding="utf-8")
+        assert "This Font Software is licensed under the SIL Open Font License, Version 1.1." \
+            in text, lizenzen[0].name
+        assert "SIL OPEN FONT LICENSE Version 1.1" in text, lizenzen[0].name
+
+
+def test_kein_dateiname_kommt_unter_schriften_doppelt_vor():
+    """``resources: [.process(...)]`` legt alle Dateien FLACH in die App.
+
+    Zwei gleichnamige Dateien, auch in verschiedenen Unterordnern, bricht SwiftPM ab:
+    «multiple resources named 'OFL.txt' in target 'AppModule'» — nachgefahren am
+    23.09.2026 mit Swift 6.4 unter Linux, an einer Kopie dieses Aufbaus mit dreimal
+    ``OFL.txt`` aus der Verteilung.
+    """
+    namen = [p.name for p in SCHRIFTEN.rglob("*") if p.is_file()]
+    doppelt = sorted({n for n in namen if namen.count(n) > 1})
+    assert not doppelt, f"doppelt unter Schriften/: {doppelt}"
+
+
+def test_das_manifest_legt_die_schriften_in_die_app():
+    """Ohne Angabe wären die Dateien im Ziel «unbehandelt»: SwiftPM warnt, die Prüfstrecke
+    verlangt null Warnungen, und in der App fehlten die Schriften (nachgefahren wie oben).
+    Die Form ist die, die Swift Playgrounds selbst schreibt."""
+    manifest = _ohne_kommentarzeilen(APP_MANIFEST.read_text(encoding="utf-8"))
+    ziel = re.search(r"\.executableTarget\((.*?)\n\s*\)", manifest, re.S)
+    assert ziel, "kein executableTarget im Manifest"
+    ressourcen = re.findall(r"resources:\s*\[(.*?)\]", ziel.group(1), re.S)
+    assert len(ressourcen) == 1, ressourcen
+    eintraege = re.findall(r'\.(\w+)\("([^"]+)"\)', ressourcen[0])
+    assert ("process", SCHRIFTEN.name) in eintraege, eintraege
+    assert SCHRIFTEN.is_dir()
+
+
+def test_das_notice_nennt_jede_schriftdatei_mit_ihrer_pruefsumme():
+    """Regel 1, Präzisierung Schriften: *unverändert und mit ihrer Lizenz im NOTICE*.
+
+    Geprüft wird an der Datei: Ihr Familienname (aus der Namentabelle) steht als Kopf eines
+    Blocks mit ``OFL-1.1``, und in diesem Block steht ihr Dateiname samt der SHA-256 der
+    Datei, wie sie im Repo liegt. Ändert jemand die Datei, stimmt die Prüfsumme nicht mehr.
+    """
+    bloecke = [b.strip() for b in re.split(r"^-{80}$", NOTICE.read_text(encoding="utf-8"),
+                                           flags=re.M) if b.strip()]
+    for datei in _schriftdateien():
+        familie = _sfnt_familie(_sfnt_tabellen(datei.read_bytes()))
+        passend = [b for b in bloecke if b.splitlines()[0].startswith(familie + " ")]
+        assert len(passend) == 1, f"NOTICE: {len(passend)} Blöcke für {familie!r}"
+        block = passend[0]
+        assert re.search(r"\bOFL-1\.1\b", block.splitlines()[0]), block.splitlines()[0]
+        assert datei.name in block, f"NOTICE, Block {familie!r}: {datei.name} fehlt"
+        pruefsumme = hashlib.sha256(datei.read_bytes()).hexdigest()
+        assert re.search(re.escape(datei.name) + r"[^\n]*\n\s*SHA-256 " + pruefsumme, block), (
+            f"NOTICE, Block {familie!r}: {datei.name} steht nicht mit SHA-256 {pruefsumme}")
+
+
+def test_jeder_postscript_name_steht_in_seiner_datei():
+    """Der Name, unter dem die App eine Schrift verlangt, muss die Datei selbst tragen.
+
+    Sonst liefert das System am Gerät unter diesem Namen eine Ersatzschrift — die App fällt
+    dann zwar auf die Systemschrift zurück (``Schriftregister``), aber still. Gelesen wird
+    die Namentabelle der Datei (Nr. 6) und bei einer variablen Datei die Namen ihrer
+    benannten Schnitte; die Stärke wird gegen ``OS/2`` geprüft (``usWeightClass``).
+    """
+    dateien = {d.stem: d for d in _schriftdateien()}
+    for schnitt in _schnitte():
+        datei = dateien.get(schnitt["datei"])
+        assert datei, f"{schnitt['datei']}.ttf liegt nicht unter Schriften/"
+        tabellen = _sfnt_tabellen(datei.read_bytes())
+        namen = _sfnt_postscript_namen(tabellen)
+        assert schnitt["postscript"] in namen, (
+            f"{schnitt['postscript']!r} steht nicht in {datei.name} (dort: {sorted(namen)})")
+        staerke = struct.unpack(">H", tabellen["OS/2"][4:6])[0]
+        assert staerke == schnitt["staerke"], (
+            f"{schnitt['postscript']}: in der App {schnitt['staerke']}, in der Datei {staerke}")
+
+
+def test_jede_mitgelieferte_schriftdatei_wird_benutzt():
+    """Eine Datei, die keiner verlangt, geht trotzdem in die App — und ins NOTICE."""
+    benutzt = {s["datei"] for s in _schnitte()}
+    unbenutzt = sorted(d.name for d in _schriftdateien() if d.stem not in benutzt)
+    assert not unbenutzt, f"mitgeliefert, aber in `Schrift.schnitte` nicht genannt: {unbenutzt}"
+
+
+def test_die_schriftnamen_stehen_nur_im_zeichenblatt():
+    """Eine Abwesenheitsprüfung: Kein PostScript- oder Dateiname einer Schrift und kein
+    ``.custom("…")`` mit festem Namen ausserhalb von ``Zeichenblatt.swift``. Wer an einer
+    zweiten Stelle eine Schrift beim Namen nennt, umgeht den Rückfall auf die
+    Systemschrift, wenn die Registrierung scheitert."""
+    namen = {s["postscript"] for s in _schnitte()} | {s["datei"] for s in _schnitte()}
+    funde = []
+    for datei in _swift_dateien(APP):
+        if datei.resolve() == ZEICHENBLATT.resolve():
+            continue
+        text = datei.read_text(encoding="utf-8")
+        funde += [f"{datei.relative_to(WURZEL)}: {n}" for n in sorted(namen) if n in text]
+        if re.search(r'\.custom\(\s*"', _ohne_kommentarzeilen(text)):
+            funde.append(f"{datei.relative_to(WURZEL)}: .custom mit festem Namen")
+    assert not funde, "Schriftnamen ausserhalb des Zeichenblatts:\n  " + "\n  ".join(funde)
