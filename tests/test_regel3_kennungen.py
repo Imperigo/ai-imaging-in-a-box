@@ -73,7 +73,12 @@ SUCHE_VOR_DEM_REPO = re.compile(r"([^/\s\"'<>)\]]+)/ai-imaging-in-a-box/")
 #: dieser Liste — ein Platzhalter ist erlaubt, ein Name nicht — und ``%h`` ist der
 #: einzige, den ein Mensch hier gar nicht erst von Hand ersetzen kann.
 ERLAUBT_VOR_DEM_REPO = {"…", "...", "home", "Users", "user", "opt", "srv", "repo", "code",
-                        "%h"}
+                        "%h", ".."}
+#: ``..`` ist am 23.09.2026 dazugekommen: Ein relativer Pfad, der einen Ordner hinaufsteigt
+#: (``../../ai-imaging-in-a-box/…``), nennt keinen Namen — er ist gerade die Form, die
+#: keinen braucht. Anlass: die Antwort der HomeStation auf ``auf-20260922-139``, die den
+#: Mappenpfad im Heimatordner als Gegenprobe zitiert. Der Name hinter ``/home/`` wird
+#: weiter vom ersten Durchgang gefunden (``SUCHE``).
 
 
 def _vor_dem_repo(roh: str) -> str:
