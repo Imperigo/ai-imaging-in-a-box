@@ -1,0 +1,97 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260923-157",
+ "status": "ok",
+ "beendet": "2026-09-23T20:10:00Z",
+ "stand": "5aed40d",
+ "geprueft": "Nur gelesen. Q1: Snippet aus dem Auftrag woertlich im Render-venv, ohne GPU (CUDA_VISIBLE_DEVICES leer), nur Klasse importiert, kein Laden von Gewichten. Q2: pipeline_qwenimage_edit_plus.py aus dem Render-venv gelesen. Q3: README.md, model_index.json, scheduler/scheduler_config.json, transformer/config.json im Modellordner <modellwurzel>/qwen-image-edit-2511 gelesen (Unterordner = Registry-Name, render.standard_modell_wurzel). Q4: src/aiimaging/render.py gelesen, alle Ergebnisse mit qwen-image-edit-2511 durchsucht. Kein Render, keine GPU-Last, nichts heruntergeladen, nichts installiert, nichts am Code geaendert.",
+ "kurzantwort": "Eure Vermutung stimmt: Der wirksame Regler heisst true_cfg_scale (Vorgabe 4.0), nicht guidance_scale. guidance_scale ist bei diesen Gewichten wirkungslos (transformer/config.json: \"guidance_embeds\": false; die Pipeline ignoriert den Wert dann). Die Modellkarte bei unseren Gewichten empfiehlt true_cfg_scale 4.0, negative_prompt \" \", num_inference_steps 40, guidance_scale 1.0. Wichtig: CFG laeuft nur mit true_cfg_scale > 1 UND einem negativen Prompt — render.py macht aus dem leeren Vorgabe-Negativprompt None, also rechnet jeder Lauf ohne eigenen negativen Prompt heute GANZ OHNE Fuehrung.",
+ "befunde": {
+  "Q1": {
+   "ausgabe_woertlich": [
+    "0.39.0",
+    "true_cfg_scale 4.0",
+    "guidance_scale None",
+    "num_inference_steps 50",
+    "negative_prompt None"
+   ],
+   "diffusers": "0.39.0",
+   "satz": "true_cfg_scale steht in der Signatur und hat die Vorgabe 4.0. guidance_scale hat keine Vorgabe (None) — das ist der Befund aus auf-138, er stimmt weiterhin."
+  },
+  "Q2": {
+   "datei": "pipeline_qwenimage_edit_plus.py (diffusers 0.39.0, Render-venv)",
+   "negativer_prompt": {
+    "zeile_708": "has_neg_prompt = negative_prompt is not None or negative_prompt_embeds is not None",
+    "zeile_710_712": "if true_cfg_scale > 1 and not has_neg_prompt: logger.warning(f\"true_cfg_scale is passed as {true_cfg_scale}, but classifier-free guidance is not enabled since no negative_prompt is provided.\")",
+    "zeile_714_716": "elif true_cfg_scale <= 1 and has_neg_prompt: logger.warning(\" negative_prompt is passed but classifier-free guidance is not enabled since true_cfg_scale <= 1\")",
+    "zeile_719": "do_true_cfg = true_cfg_scale > 1 and has_neg_prompt",
+    "zeile_729": "if do_true_cfg: (erst dann wird negative_prompt ueberhaupt kodiert)",
+    "zeile_828_841": "if do_true_cfg: ... comb_pred = neg_noise_pred + true_cfg_scale * (noise_pred - neg_noise_pred)",
+    "satz": "Der negative Prompt wird nur gerechnet, wenn true_cfg_scale > 1 UND ein negative_prompt (nicht None) da ist. Dann zweiter Transformer-Durchgang je Schritt (Zeilen 828-841), danach Rueckskalierung auf die Norm der bedingten Vorhersage (cond_norm/noise_norm)."
+   },
+   "guidance_scale": {
+    "zeile_538": "guidance_scale: float | None = None,",
+    "zeile_589_596_docstring": "A guidance scale value for guidance distilled models. ... parameter in the pipeline is there to support future guidance-distilled models when they come up. It is ignored when not using guidance distilled models. To enable traditional classifier-free guidance, please pass `true_cfg_scale > 1.0` and `negative_prompt` (even an empty negative prompt like \" \" should ...",
+    "zeile_784_785": "if self.transformer.config.guidance_embeds and guidance_scale is None: raise ValueError(\"guidance_scale is required for guidance-distilled model.\")",
+    "zeile_786_788": "elif self.transformer.config.guidance_embeds: guidance = torch.full([1], guidance_scale, ...)",
+    "zeile_789_793": "elif not self.transformer.config.guidance_embeds and guidance_scale is not None: logger.warning(f\"guidance_scale is passed as {guidance_scale}, but ignored since the model is not guidance-distilled.\"); guidance = None",
+    "zeile_794_795": "elif not self.transformer.config.guidance_embeds and guidance_scale is None: guidance = None",
+    "satz": "guidance_scale wirkt nur bei guidance-destillierten Gewichten (transformer.config.guidance_embeds wahr). Unsere Gewichte haben guidance_embeds false (Q3) — guidance_scale ist hier wirkungslos, jeder Wert."
+   }
+  },
+  "Q3": {
+   "modellordner": "<modellwurzel>/qwen-image-edit-2511",
+   "readme_vorhanden": true,
+   "quelle": "README.md, Zeilen 53-62 (Quick-Start-Beispiel der Modellkarte)",
+   "woertlich": [
+    "\"true_cfg_scale\": 4.0,",
+    "\"negative_prompt\": \" \",",
+    "\"num_inference_steps\": 40,",
+    "\"guidance_scale\": 1.0,"
+   ],
+   "einordnung": "Das ist ein Code-Beispiel, keine ausdrueckliche Empfehlungstabelle; einen Text wie \"empfohlen\" enthaelt die README nicht. Es ist aber die einzige Wertangabe der Modellkarte.",
+   "transformer_config_json": "\"guidance_embeds\": false",
+   "model_index_json": "\"_class_name\": \"QwenImageEditPlusPipeline\", \"_diffusers_version\": \"0.36.0.dev0\"",
+   "scheduler_config_json": "FlowMatchEulerDiscreteScheduler, \"use_dynamic_shifting\": true, \"shift\": 1.0, \"base_shift\": 0.5, \"max_shift\": 0.9, \"shift_terminal\": 0.02, \"time_shift_type\": \"exponential\" — keine Schritt- oder Fuehrungsangabe"
+  },
+  "Q4": {
+   "urteil": "BESTAETIGT.",
+   "render_py": {
+    "zeile_1580": "\"negative_prompt\": parameter[\"negativ_prompt\"] or None,",
+    "zeile_1583": "\"num_inference_steps\": parameter[\"schritte\"],",
+    "zeile_1589": "\"guidance_scale\": parameter[\"fuehrung\"],",
+    "zeile_1650": "(\"guidance_scale\", parameter[\"fuehrung\"]), (in der Schleife ueber verworfene Namen; guidance_scale steht in der Signatur, wird also nicht verworfen, sondern als None uebergeben)",
+    "zeile_378": "negativ_prompt: str = \"\"",
+    "zeile_381": "schritte: int = 20",
+    "true_cfg_scale": "kommt in src/ und tools/ nirgends vor (grep, null Treffer) — wird nie uebergeben, es gilt die Vorgabe 4.0.",
+    "backbone_py": "Der Eintrag qwen-image-edit-2511 (backbone.py ab Zeile 704) setzt kein fuehrung; nur z-image-turbo traegt fuehrung=0.0 (Zeile 676)."
+   },
+   "was_daraus_folgt": "Bei einem Lauf ohne negativen Prompt: \"\" or None = None -> has_neg_prompt falsch -> do_true_cfg falsch -> ein Durchgang je Schritt, keine Fuehrung; diffusers loggt dabei die Warnung aus Zeile 712. guidance_scale=None loest bei guidance_embeds false keine Warnung aus (Zeile 794-795). Mit eigenem negativem Prompt: CFG mit true_cfg_scale 4.0 (Vorgabe), ohne dass wir das gewaehlt haben.",
+   "letzter_lauf": {
+    "ergebnis": "auf-20260921-134 (beendet 2026-09-21T21:25:00Z), der letzte Lauf mit diesem Modell in auftraege/ergebnisse (auf-138 und auf-139 haben es nicht gefahren).",
+    "parameter": "nicht gefunden — das Ergebnis enthaelt keinen Parametersatz (weder negativ_prompt noch fuehrung noch true_cfg_scale); belegt sind nur 4 Schritte (\"je 4 von 4 Schritten\").",
+    "hinweise_woertlich": [
+     "«Diese Pipeline hat keinen 'control_image'-Eingang und kein erkennbares ControlNet. Die Tiefenkarte wurde als 'image' uebergeben und ersetzt dabei den Beauty-Pass — die Konditionierung ist damit Bildbearbeitung, nicht ControlNet.»",
+     "«Fuer 'qwen-image-edit-2511' ist nicht gemessen, welche Tiefenkonvention sein ControlNet erwartet. Es wird NICHT gedreht.»",
+     "«keine Fuehrung (guidance_scale) bestimmt. Es greift die Vorgabe von diffusers — eine fremde Entscheidung.»"
+    ],
+    "satz": "Der Hinweis bestaetigt: fuehrung war None, true_cfg_scale wurde nicht gesetzt. Ob in diesem Lauf CFG lief, laesst sich aus dem Ergebnis NICHT ablesen, weil der negative Prompt nicht protokolliert ist."
+   }
+  },
+  "Q5": "negativ_wirksam() und der Hinweis in render.py (Zeilen 1928-1941) pruefen fuer dieses Modell den falschen Regler: Sie urteilen ueber fuehrung/guidance_scale gegen FUEHRUNG_MINDESTENS 1.0, die Pipeline aber schaltet CFG ueber true_cfg_scale — und die README schickt als negativen Prompt ein Leerzeichen \" \", gerade damit CFG ueberhaupt anspringt (unser \"\" wird zu None und schaltet sie ab)."
+ },
+ "bemerkungen": [
+  "Widerspruch in diffusers selbst: Der Docstring (pipeline_qwenimage_edit_plus.py Zeilen 570-571) sagt \"true_cfg_scale (`float`, *optional*, defaults to 1.0)\", die Signatur (Zeile 533) sagt \"true_cfg_scale: float = 4.0\". Es gilt die Signatur (Q1 gemessen: 4.0).",
+  "Signaturvorgabe num_inference_steps ist 50, die Modellkarte zeigt 40, render.py schickt immer parameter[\"schritte\"] (Vorgabe 20, Zeile 381) — die 50 greift bei uns also nie.",
+  "Die Gewichte tragen \"_diffusers_version\": \"0.36.0.dev0\", gefahren wird 0.39.0. Die Code-Stellen in Q2 sind die der gefahrenen 0.39.0.",
+  "Falls true_cfg_scale ins Register kommt: Er verdoppelt die Transformer-Durchgaenge je Schritt (zweiter Aufruf Zeilen 828-841), sobald ein negativer Prompt dabei ist. Rechenzeit nicht gemessen."
+ ],
+ "umgebung": {
+  "geraet": "HomeStation",
+  "gpu_benutzt": false,
+  "netz_benutzt": false,
+  "diffusers": "0.39.0",
+  "python_render_venv": "3.14"
+ },
+ "fehler": null
+}
