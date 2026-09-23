@@ -7355,6 +7355,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **local:** `auf-151` V7 — die Obergrenzen an Blender 5.2. *(5.2.2: dieselben)*
 - [x] **Runde 9:** Mappenpfad heimrelativ; Lieferstatus je Kamera; faithful am Einlass.
 - [ ] **local:** `auf-154` — steuert die Tiefe das Bild? Inpaint-Weg zum Skizzieren?
+      *(berichtigt 23.09. abends: kein Verdrahtungsfehler; wahrscheinlich Rückkante im
+      Hintergrund bei freistehendem Körper — Messschalter in Runde 10, Nachtrag in 154)*
 - [ ] **cloud:** `auf-155` — Zusage Lieferstatus, drei Fragen.
 - [ ] **Kern (klein):** Zwilling fehlt in `verdict.reason` (`_nicht_gerendert_kurz` fragt
       `bild_png` vor `doppelt_von`) — nur mit Ansage ändern.

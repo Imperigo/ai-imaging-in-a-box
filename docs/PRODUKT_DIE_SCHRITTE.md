@@ -111,10 +111,11 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
   «geliefert», auch wenn Bilder fehlten — ein Feld, das niemand füllte.
 * **Ein Fehler, den die HomeStation fand, ist behoben:** Eine Projektmappe auf einem
   anderen Laufwerk fand ihr Gebäudemodell nicht mehr.
-* **Die schlechte Nachricht:** Auf dem Vorgabemodell steuert die Tiefe das Endbild kaum —
-  an der Stelle des Gebäudes kam kein Gebäude. Die HomeStation misst jetzt, ob stärkere
-  Führung oder mehr Rechenschritte das ändern, und ob ein anderer Modellweg das
-  Hineinskizzieren möglich macht.
+* **Ein Lauf, in dem an der Stelle des Gebäudes kein Gebäude kam** — *berichtigt am selben
+  Abend:* Das war ein kleiner Quader ohne Boden, bei kleiner Auflösung und schwacher Führung.
+  Alle früheren Läufe mit Boden, grösserer Auflösung und voller Führung folgten der Form.
+  Der wahrscheinliche Grund: Die Rückkante eines freistehenden Körpers verschwindet in
+  unserer Tiefenkarte im Hintergrund. Die HomeStation misst das jetzt gezielt.
 
 ### 23.09.2026 · Was angenommen wird und nicht wirkt, wird jetzt gesagt
 
