@@ -104,7 +104,7 @@ class NahtError(ValueError):
 
 # ── Auflösung: Zahl gegen Zeichenkette ───────────────────────────────────────────────
 
-def aufloesung_zu_resolution(aufloesung: int) -> str:
+def aufloesung_zu_resolution(aufloesung: int | float) -> str:
     """Unsere Kantenlänge → deren ``"BxH"``.
 
     Unsere `aufloesung` ist **eine ganze Zahl** (Kantenlänge, quadratisch), deren
@@ -120,6 +120,11 @@ def aufloesung_zu_resolution(aufloesung: int) -> str:
     ``512.0`` ist dieselbe Zahl wie ``512``, und als 512 gelesen wirkt sie genau wie
     bestellt. Abgewiesen wird, was nicht wie bestellt wirken könnte (``1.5``, ``true``,
     ``0``, über :data:`~aiimaging.kosmo_szene.KANTE_HOECHSTENS`).
+
+    Die Annotation ``int | float`` sagt das seit der Runde 8 (23.09.2026) auch: Bis
+    dahin stand ``int``, während die Funktion seit der 7c ``512.0`` annimmt.
+    ``None`` ist hier KEINE Angabe und wird abgewiesen — ob ein Auftrag ohne Auflösung
+    übersetzt wird, entscheidet :func:`als_kosmo_auftrag`, nicht diese Funktion.
     """
     kante, satz = kosmo_szene.lies_zahl(aufloesung, "aufloesung", **kosmo_szene.REGEL_KANTE)
     if satz:
@@ -149,9 +154,31 @@ def resolution_zu_aufloesung(resolution) -> dict:
             f"resolution {resolution!r} ist nicht als 'BxH' lesbar. Der Vorgabewert des "
             f"Ökosystems ist '1920x1440'."
         )
-    breite, hoehe = int(treffer.group(1)), int(treffer.group(2))
-    if breite < 1 or hoehe < 1:
-        raise NahtError(f"resolution {resolution!r}: beide Kanten müssen positiv sein.")
+    # DIESELBE REGEL WIE AUF DEM HINWEG (Runde 8, 23.09.2026). Befund: Hier stand nur
+    # «beide Kanten positiv». `"100000x100000"` wurde still zu `aufloesung 100000` —
+    # eine Kante, die `aufloesung_zu_resolution` (seit der 7c `REGEL_KANTE`) und der
+    # MCP-Einlass abweisen und die Blender laut Quelltext gar nicht annimmt (gelesen,
+    # nicht gemessen — siehe `kosmo_szene.KANTE_HOECHSTENS`). Eine Kante mit über 4300
+    # Ziffern warf aus `int(...)` einen nackten ValueError statt NahtError. Seither
+    # geht jede Kante durch `kosmo_szene.lies_zahl` mit `REGEL_KANTE`, und was dort
+    # durchfällt, ist ein NahtError — wie hier schon jede andere unbrauchbare Angabe
+    # (unlesbar, null).
+    kanten = []
+    for name, ziffern in (("Breite", treffer.group(1)), ("Höhe", treffer.group(2))):
+        ziffern = ziffern.lstrip("0") or "0"
+        if len(ziffern) > len(str(kosmo_szene.KANTE_HOECHSTENS)):
+            # Mehr Stellen als die Obergrenze: zu gross, ohne `int(...)` zu versuchen —
+            # das wirft ab 4300 Stellen selbst.
+            raise NahtError(
+                f"resolution: die {name} hat {len(ziffern)} Stellen, erlaubt sind "
+                f"höchstens {kosmo_szene.KANTE_HOECHSTENS} Pixel je Kante — zu gross, "
+                f"darüber kann die Angabe nicht wirken.")
+        kante, satz = kosmo_szene.lies_zahl(int(ziffern), f"resolution ({name})",
+                                            **kosmo_szene.REGEL_KANTE)
+        if satz:
+            raise NahtError(satz)
+        kanten.append(kante)
+    breite, hoehe = kanten
     verlustfrei = breite == hoehe
     return {
         "aufloesung": min(breite, hoehe),
@@ -225,7 +252,18 @@ def als_kosmo_auftrag(satz: dict, *, approval_token: str | None = None) -> dict:
         fremd[ihrer] = satz.get(unser)
 
     params = dict(satz.get("params") or {})
-    if "aufloesung" in params:
+    # `None` HEISST NICHT BESTELLT (Runde 8, 23.09.2026). Befund: `enqueue_render` legt
+    # ohne Angabe `"aufloesung": None` ab — mit Absicht, dann entscheidet der Vertrag.
+    # Hier stand `if "aufloesung" in params`, und das übersetzte auch das `None`:
+    # `aufloesung_zu_resolution(None)` warf NahtError, also JEDER Auftrag aus dem
+    # MCP-Einlass ohne Auflösung. Seither wird `None` nicht übersetzt; der Schlüssel
+    # fällt weg, und es entsteht auch kein `resolution: null` — dann gilt drüben die
+    # Vorgabe ihres Vertrags, wie in `als_render_scene`. Es ist das einzige Feld, das
+    # diese Funktion in `params` übersetzt; die übrigen (auch `samples`) gehen wie sie
+    # sind, `None` eingeschlossen.
+    if params.get("aufloesung") is None:
+        params.pop("aufloesung", None)
+    else:
         params["resolution"] = aufloesung_zu_resolution(params.pop("aufloesung"))
     fremd["params"] = params
 
@@ -264,11 +302,17 @@ def aus_kosmo_auftrag(fremd: dict) -> dict:
 
     params = dict(fremd.get("params") or {})
     hinweise: list[str] = []
-    if "resolution" in params:
+    # Dieselbe Form wie im Hinweg (Runde 8, 23.09.2026): `resolution: null` heisst NICHT
+    # BESTELLT und warf hier NahtError aus `resolution_zu_aufloesung`. Bei uns steht es
+    # dann als `aufloesung: None` — dieselbe Angabe, die `enqueue_render` ablegt.
+    if params.get("resolution") is not None:
         gedeutet = resolution_zu_aufloesung(params.pop("resolution"))
         params["aufloesung"] = gedeutet["aufloesung"]
         if gedeutet["hinweis"]:
             hinweise.append(gedeutet["hinweis"])
+    elif "resolution" in params:
+        params.pop("resolution")
+        params["aufloesung"] = None
     unser["params"] = params
 
     # Die Tatsache der Freigabe übernehmen wir, das Token nicht.

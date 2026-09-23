@@ -304,6 +304,15 @@ def _deckungsgrad_befund(a, herkunft: dict) -> dict:
         ``abgeleitet`` die gerechnete Zahl und ``None`` (es gibt keinen Grund zu melden);
         sonst ``None`` — **nicht gerahmt**, weder mit der Vorgabe noch mit der Bestellung
         — und ein Satz, warum. Beide Felder stehen immer da.
+
+    **Der Satz steht auch OHNE Bestellung — anders als bei** :func:`_kamerawerte_befund`
+    (entschieden 23.09.2026, Runde 8, und mit Absicht nicht angeglichen). Der Grund ist
+    ein Leser: ``abholer._rahmung_vor_dem_render`` liest ``deckungsgrad_wirkungslos``
+    als Begründung für «nicht gerahmt», auch wenn niemand einen Deckungsgrad bestellt
+    hat. Die Rahmung ist dort eine Rechengrundlage des Urteils (Bildbreite, Knie,
+    Abbruch), nicht bloss eine Bestellung; fehlt der Satz, steht im Urteil nur «nennt
+    keinen Grund dafuer». Die drei Werte in :func:`_kamerawerte_befund` haben keinen
+    solchen Leser. Bewacht über Runner und Abholer in ``tests/test_runde8_reste.py``.
     """
     if herkunft.get("weg") == "abgeleitet":
         return {"deckungsgrad": herkunft["deckungsgrad"], "deckungsgrad_wirkungslos": None}
@@ -344,6 +353,13 @@ def _kamerawerte_befund(a, herkunft: dict) -> dict:
     etwas bestellt hat, das nicht ankam. Darum tragen ``--bias`` und ``--augenhoehe`` seit
     demselben Tag ``None`` statt ihrer Zahl als Vorgabe — sonst waere «bestellt» hier
     nicht feststellbar.
+
+    **Anders als beim Deckungsgrad**, und das ist kein Versehen (Runde 8, 23.09.2026):
+    :func:`_deckungsgrad_befund` nennt seinen Grund auch ohne Bestellung, weil der
+    Abholer ihn als Begründung für «nicht gerahmt» liest (``abholer.
+    _rahmung_vor_dem_render``). Augenhöhe, Bias und Kameramodus liest dort niemand — ein
+    Satz ohne Bestellung hätte keinen Leser und nur die Verdrängung als Wirkung. Bewacht
+    über Runner und Abholer in ``tests/test_runde8_reste.py``.
 
     Returns:
         Je Angabe zwei Felder, beide immer da: ``<name>`` und ``<name>_wirkungslos``.

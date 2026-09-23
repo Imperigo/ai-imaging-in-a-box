@@ -265,7 +265,8 @@ def kamera_zu_spec(kamera: dict) -> dict:
     Raises:
         SzenenError: Der Bildwinkel fällt aus ihrer Spanne (10–120°). Das ist kein
             Rundungsfall: Ihr Schema **weist ihn ab**, und ein abgewiesener Auftrag zwei
-            Stufen später ist teurer als ein Fehler hier.
+            Stufen später ist teurer als ein Fehler hier. Ebenso, wenn ``auge`` oder
+            ``blick_auf`` keine drei endlichen Zahlen sind (seit der Runde 8).
     """
     for feld in ("auge", "blick_auf"):
         wert = kamera.get(feld)
@@ -291,8 +292,18 @@ def kamera_zu_spec(kamera: dict) -> dict:
         ziel = [float(v) for v in kamera["blick_auf"]]
     except _UMWANDLUNGSFEHLER as e:
         raise SzenenError(
-            f"Kamera mit Punkten, die keine Zahlen sind: auge {kamera['auge']!r}, "
-            f"blick_auf {kamera['blick_auf']!r}") from e
+            f"Kamera mit Punkten, die keine Zahlen sind: auge "
+            f"{_zeige_punkt(kamera['auge'])}, blick_auf "
+            f"{_zeige_punkt(kamera['blick_auf'])}") from e
+    # NICHT ENDLICH IST KEIN STANDPUNKT — auch in dieser Richtung (Runde 8, 23.09.2026).
+    # Befund: `auge [inf, 0, 0]` und `blick_auf [nan, 0, 0]` gingen hier still durch und
+    # kamen als `position [inf, …]` in eine CameraSpec; nur die Gegenrichtung
+    # (`spec_zu_kamera`) pruefte. Dieselbe Pruefung, derselbe Satzbau.
+    for feld, zahlen in (("auge", position), ("blick_auf", ziel)):
+        if not all(math.isfinite(v) for v in zahlen):
+            raise SzenenError(
+                f"Kamera '{feld}' enthaelt keine endlichen Zahlen: "
+                f"{_zeige_punkt(kamera[feld])}")
     return {
         "name": kamera.get("kuerzel"),
         "position": position,
@@ -357,6 +368,7 @@ def kamera_nach_blender(punkt, up_axis):
         SzenenError: ``up_axis`` fehlt oder ist weder ``y`` noch ``z``. **Es wird nicht
             geraten** — genau dafür steht das Pflichtfeld im fremden Vertrag, und ein
             Vorgabewert hier wäre die stille Verdrehung, gegen die er gebaut wurde.
+            Ebenso, wenn ``punkt`` keine endlichen Zahlen trägt (seit der Runde 8).
     """
     achse = _hochachse(up_axis)
     try:
@@ -365,7 +377,14 @@ def kamera_nach_blender(punkt, up_axis):
         # Auch diese Umwandlung warf nackt (Durchsicht 23.09.2026); die Funktion ist
         # oeffentlich und sagt `SzenenError` zu. OverflowError seit der Runde 7c: `float`
         # einer ganzen Zahl mit 400 Stellen.
-        raise SzenenError(f"Kamerapunkt enthaelt keine Zahlen: {punkt!r}") from e
+        raise SzenenError(
+            f"Kamerapunkt enthaelt keine Zahlen: {_zeige_punkt(punkt)}") from e
+    # Ein Punkt im Unendlichen ist kein Standpunkt, auch gedreht nicht (Runde 8,
+    # 23.09.2026: `[inf, 0, 0]` kam hier als `(inf, 0.0, 0.0)` zurueck). Die Funktion ist
+    # oeffentlich; `spec_zu_kamera` prueft vorher selbst, andere Aufrufer nicht.
+    if not all(math.isfinite(z) for z in zahlen):
+        raise SzenenError(
+            f"Kamerapunkt enthaelt keine endlichen Zahlen: {_zeige_punkt(punkt)}")
     if achse == HOCHACHSE_BLENDER:
         return tuple(zahlen)
     return tuple(_contracts.blender_gltf_import_dreht(zahlen))
@@ -423,12 +442,13 @@ def spec_zu_kamera(spec: dict) -> dict:
         except _UMWANDLUNGSFEHLER as e:
             # OverflowError seit der Runde 7c (23.09.2026): `float` einer ganzen Zahl mit
             # 400 Stellen warf nackt, der Docstring sagt `SzenenError` zu.
-            raise SzenenError(f"CameraSpec '{fremd}' enthält keine Zahlen: {w!r}") from e
+            raise SzenenError(
+                f"CameraSpec '{fremd}' enthält keine Zahlen: {_zeige_punkt(w)}") from e
         # NICHT ENDLICH IST KEIN STANDPUNKT (23.09.2026): `Infinity` liest das
         # Python-JSON, und `float` nimmt es an — die Kamera ging so an den Runner.
         if not all(math.isfinite(v) for v in bestellt):
             raise SzenenError(
-                f"CameraSpec '{fremd}' enthält keine endlichen Zahlen: {w!r}")
+                f"CameraSpec '{fremd}' enthält keine endlichen Zahlen: {_zeige_punkt(w)}")
         werte[unser] = kamera_nach_blender(bestellt, achse)
         werte[f"{unser}_bestellt"] = bestellt
     werte["kuerzel"] = spec.get("name")
@@ -755,13 +775,29 @@ SAMPLES_HOECHSTENS = 1 << 24
 KANTE_HOECHSTENS = 1 << 16
 
 #: DIE EINE REGEL fuer eine Kantenlaenge — gelesen in :func:`lies_szene`
-#: (``render.resolution``), am MCP-Einlass (``aufloesung``) und in
-#: :func:`aiimaging.kosmo_naht.aufloesung_zu_resolution`. Als Woerterbuch hier, damit
-#: keiner der drei eine eigene Fassung fuehrt (Runde 7c, 23.09.2026).
+#: (``render.resolution``), am MCP-Einlass (``aufloesung``) und in beiden Richtungen der
+#: Auftragsnaht (:func:`aiimaging.kosmo_naht.aufloesung_zu_resolution`, seit der Runde 8
+#: auch :func:`aiimaging.kosmo_naht.resolution_zu_aufloesung`). Als Woerterbuch hier,
+#: damit keiner von ihnen eine eigene Fassung fuehrt (Runde 7c, 23.09.2026).
 REGEL_KANTE = {"ganzzahlig": True, "mindestens": 1, "hoechstens": KANTE_HOECHSTENS}
 
 #: DIE EINE REGEL fuer die Samplezahl — in :func:`lies_szene` und am MCP-Einlass.
 REGEL_SAMPLES = {"ganzzahlig": True, "mindestens": 1, "hoechstens": SAMPLES_HOECHSTENS}
+
+#: DIE REGEL fuer ``render.faithful`` — ein Regler von 0 bis 1, so steht er im fremden
+#: Vertrag (``docs/OEKOSYSTEM_2026-08-18.md``: «0..1, 1.0 = Cycles-treu ↔ 0.0 = KI-frei»)
+#: und so liest ihn :func:`lies_szene` als ``controlnet_staerke``.
+#:
+#: **Der Befund** (Runde 8, 23.09.2026): ``faithful: 5.0`` ging ohne Mangel durch und
+#: stand als ``controlnet_staerke 5.0`` in der Szene. Abgewiesen haette ihn erst
+#: ``render.pruefe_auftrag`` (``controlnet_staerke`` ausserhalb von 0..1) — laut
+#: Quelltext NACH der Blender-Stufe, beim Rendern; nachgefahren ist dieser spaete Weg
+#: nicht. Seither ein Mangel beim Lesen, bevor etwas gerechnet wird.
+#:
+#: Nur hier und nicht am MCP-Einlass: :func:`aiimaging.werkzeuge.enqueue_render` nimmt
+#: kein ``faithful`` an (nachgelesen am 23.09.2026), und die MCP-Naht
+#: :func:`aiimaging.kosmo_naht.als_render_scene` schreibt keines in die Szene.
+REGEL_TREUE = {"ganzzahlig": False, "mindestens": 0, "hoechstens": 1}
 
 
 def lies_zahl(wert, feld: str, *, ganzzahlig: bool, mindestens=None, hoechstens=None):
@@ -858,6 +894,18 @@ def _zeige(wert) -> str:
         art = "negative ganze Zahl" if wert < 0 else "ganze Zahl"
         return f"eine {art} mit rund {stellen} Stellen"
     return repr(wert)
+
+
+def _zeige_punkt(punkt) -> str:
+    """Ein Kamerapunkt fuer den Satz — jede Koordinate durch :func:`_zeige`.
+
+    ``repr`` einer Liste ruft ``repr`` jeder Zahl darin, und eine ganze Zahl mit ueber
+    4300 Stellen wirft dabei selbst ``ValueError`` (Runde 8, 23.09.2026): Der Satz, der
+    den Fehler erklaeren sollte, wurde zum Fehler.
+    """
+    if isinstance(punkt, (list, tuple)):
+        return "[" + ", ".join(_zeige(v) for v in punkt) + "]"
+    return _zeige(punkt)
 
 
 def _lies_interior(roh, *, kameras, fmt: str, warnungen: list, maengel: list):
@@ -1106,8 +1154,10 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
                               **REGEL_SAMPLES)
     if satz:
         maengel.append(satz)
+    # Mit Wertebereich seit der Runde 8 (23.09.2026, siehe `REGEL_TREUE`): `5.0` ist
+    # ein Mangel, und das Feld bleibt `None` — dann steht auch kein Abbildungssatz da.
     treue, satz = lies_zahl(wert_oder(render, "faithful", 0.8), "render.faithful",
-                            ganzzahlig=False)
+                            **REGEL_TREUE)
     if satz:
         maengel.append(satz)
     if treue is not None:
