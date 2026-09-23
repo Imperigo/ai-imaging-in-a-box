@@ -104,8 +104,8 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from aiimaging import (
-    backbone, bildlesen, contracts, geometrie_qa, glbbox, maske, raumkamera, render,
-    seams, tiefenschaetzer, torwaechter,
+    backbone, bildlesen, bildschreiben, contracts, geometrie_qa, glbbox, maske,
+    raumkamera, render, seams, tiefenschaetzer, torwaechter,
 )
 from aiimaging.graph import (
     ArtefaktCache, Bedarf, Graph, GraphError, Knoten, inhalts_hash, pruefe_bedarf,
@@ -493,6 +493,15 @@ def baue_kette(
     # Entscheidung, an die sich spaeter niemand erinnert — und die falsche Kamera sieht
     # man dem Bild nicht an.
     innenraum: dict | None = None,
+    # ── ZWEI MESSSCHALTER (23.09.2026), VORGABE AUS ─────────────────────────────────
+    #
+    # Anlass: Auf der HomeStation folgte ein Endbild der Tiefe nicht (auf-137 V3), und die
+    # wahrscheinlichste Ursache liegt in der Aufbereitung der Tiefenkarte, nicht in der
+    # Verdrahtung. Beide Schalter machen die Vermutung MESSBAR; sie entscheiden sie nicht.
+    # `None` heisst wie oben NICHT ANGEFASST: Dann steht nichts im Knoten, der Hash bleibt
+    # der alte, und jeder gemessene Lauf bleibt ein Zwischenspeicher-Treffer.
+    ferne_abstand: float | None = None,
+    tiefe_invertieren: bool | None = None,
 ) -> Graph:
     """Die Standardkette als Graph: ``geometrie → multipass → render → qa``.
 
@@ -553,6 +562,21 @@ def baue_kette(
             bisher eine Aussenaufnahme, und keine schon gemessene bleibt zurück.
             Zusammen mit ``auge``/``blick_auf``/``brennweite`` wird der Lauf abgewiesen:
             *zwei Quellen für denselben Standpunkt werden nicht geordnet.*
+        ferne_abstand: **Messschalter, nur für Messungen, Vorgabe AUS** (``None`` oder
+            ``0``). Die Geometrie der Tiefenkarte liegt dann auf ``[ferne_abstand, 1]``
+            statt auf ``[0, 1]``; der Hintergrund bleibt 0, und die entfernteste Kante
+            trennt sich von ihm (siehe ``bildschreiben.normalisiere_tiefe``). Erlaubt
+            ist ein Wert von einem 8-Bit-Schritt bis 0,5; anderes wird beim Bau
+            abgewiesen. Wirkt am Multipass-Knoten: das PNG wird aus der EXR neu
+            normiert (``seams.tiefe_neu_normieren``), und die Normierung trägt den
+            Abstand, damit jede Rückrechnung dieselben Meter ergibt.
+        tiefe_invertieren: **Messschalter, nur für Messungen.** ``None`` (Vorgabe) heisst:
+            Das Register entscheidet, ob die Tiefenkarte vor dem Bildmodell umgedreht
+            wird (``backbone``-Eintrag ``tiefen_polaritaet``, gemessen). ``True``/``False``
+            überschreiben das Register. Das Renderergebnis sagt in
+            ``parameter['tiefe_invertiert_ueberschrieben']``, ob und womit überschrieben
+            wurde (``None`` = nicht). Kein Bedienelement für den Alltag: Wer es gegen
+            das Register setzt, kehrt für das Modell nah und fern um.
 
     Returns:
         Ein ``Graph`` mit drei bzw. vier Knoten. Er wird **nicht** ausgeführt — Bau und
@@ -581,6 +605,18 @@ def baue_kette(
             f"Tiefenkarte, aber Material, Licht und Stimmung kommen aus dem Prompt — "
             f"ohne ihn ist nicht beschrieben, was entstehen soll."
         )
+
+    # DIE MESSSCHALTER BEIM BAU PRUEFEN, nicht erst nach dem Blender-Lauf. Ein Abstand, der
+    # beim Normieren abgewiesen wuerde, kostete sonst einen ganzen Render.
+    try:
+        abstand = bildschreiben.pruefe_ferne_abstand(ferne_abstand)
+    except bildschreiben.SchreibError as fehler:
+        raise KettenError(str(fehler)) from fehler
+    if tiefe_invertieren is not None and not isinstance(tiefe_invertieren, bool):
+        raise KettenError(
+            f"tiefe_invertieren muss None (Register entscheidet), True oder False sein, "
+            f"war {tiefe_invertieren!r}. Eine andere Angabe wuerde als wahr oder falsch "
+            f"GEDEUTET — und welche Karte das Modell sah, waere geraten.")
 
     geometrie_params: dict = {"bbox": _als_bbox(bbox)}
     if ifc_path:
@@ -633,6 +669,9 @@ def baue_kette(
                     "blick_auf": blick_auf,
                     "brennweite": brennweite,
                     "innenraum": innenraum,
+                    # Geprueft und auf «aus» gebracht: 0 kommt hier als None an und
+                    # laesst den Hash stehen — 0 heisst «wie heute».
+                    "ferne_abstand": abstand,
                 }.items() if wert is not None},
             },
             eingaenge=(KNOTEN_GEOMETRIE,),
@@ -649,6 +688,9 @@ def baue_kette(
                 "controlnet_staerke": float(controlnet_staerke),
                 "denoise": float(denoise),
                 "nutze_beauty": bool(nutze_beauty),
+                # NUR WENN GESETZT — sonst bliebe kein alter Render ein Treffer.
+                **({} if tiefe_invertieren is None
+                   else {"tiefe_invertieren": tiefe_invertieren}),
             },
             eingaenge=(KNOTEN_MULTIPASS,),
         ),
@@ -753,6 +795,7 @@ def haenge_nachrender_an(
     controlnet_staerke: float | None = None,
     denoise: float = 0.6,
     id_vorsatz: str | None = None,
+    tiefe_invertieren: bool | None = None,
 ) -> Graph:
     """Einen Bild-Eingang an einen bestehenden Graphen hängen: **Bild rein, Bild raus.**
 
@@ -790,6 +833,11 @@ def haenge_nachrender_an(
             Orte zwei Zahlen führen.
         id_vorsatz: Vorsatz für die neuen Knoten-IDs, z.B. ``"runde2"``. ``None`` wählt
             selbst einen freien Namen. Zwei Runden im selben Graphen sind der Normalfall.
+        tiefe_invertieren: Der Messschalter aus :func:`baue_kette`. ``None`` erbt ihn vom
+            Renderknoten dieses Graphen, sofern der ihn traegt. **Ausdruecklich**, weil der
+            Skizzenweg (``arbeitsgang._skizzengraph``) den Renderknoten vorher aus dem
+            Graphen nimmt — ohne dieses Argument ging der Schalter dort still verloren
+            (Durchsicht Runde 10, 23.09.2026).
 
     Returns:
         Ein neuer ``Graph``. Er wird **nicht** ausgeführt.
@@ -871,6 +919,13 @@ def haenge_nachrender_an(
             return wert
         return vorlage.get(name, vorgabe)
 
+    if tiefe_invertieren is not None and not isinstance(tiefe_invertieren, bool):
+        raise KettenError(
+            f"tiefe_invertieren muss None (erben), True oder False sein, war "
+            f"{tiefe_invertieren!r}.")
+    erbe = (tiefe_invertieren if tiefe_invertieren is not None
+            else vorlage.get("tiefe_invertieren"))
+
     vorsatz = id_vorsatz or _freier_vorsatz(graph)
     quelle_id = f"{vorsatz}-{KNOTEN_BILDQUELLE}"
     nach_id = f"{vorsatz}-{KNOTEN_NACHRENDER}"
@@ -900,6 +955,11 @@ def haenge_nachrender_an(
             "controlnet_staerke": float(_wahl(controlnet_staerke,
                                               "controlnet_staerke", 0.8)),
             "denoise": float(denoise),
+            # DER MESSSCHALTER WIRD GEERBT, wie Backbone und Startwert (23.09.2026): Ein
+            # Nachrender auf einer Messung mit umgelegter Polaritaet, der sie still
+            # zuruecklegte, saehe aus wie ein Vergleich und waere keiner. Nur wenn die
+            # Vorlage ihn traegt — sonst bleibt der Knoten der von vorher.
+            **({} if erbe is None else {"tiefe_invertieren": erbe}),
         },
         # Reihenfolge ist Bedeutung: Slot 0 = Geometrie (Tiefenkarte), Slot 1 = Bild.
         eingaenge=(multipass_knoten, quelle),
@@ -1185,6 +1245,14 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
                             "Standpunkt aus der Huellbox gerechnet). Ohne `kamera` "
                             "wuerden sie still uebergangen.")}
 
+    # DER MESSSCHALTER `ferne_abstand` (23.09.2026) — geprueft VOR dem Blender-Lauf. Ein
+    # Knoten muss nicht aus `baue_kette` stammen (siehe oben); ein unbrauchbarer Wert soll
+    # nicht erst nach einem ganzen Render auffallen, und nie still wegfallen.
+    try:
+        abstand = bildschreiben.pruefe_ferne_abstand(p.get("ferne_abstand"))
+    except bildschreiben.SchreibError as fehler:
+        return {"status": STATUS_FEHLER, "error": str(fehler)}
+
     auge = p.get("auge")
     blick_auf = p.get("blick_auf")
     brennweite = p.get("brennweite")
@@ -1246,6 +1314,15 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
         **weiter,
     )
     bericht.setdefault("status", STATUS_OK)
+
+    # DAS PNG MIT ABSTAND NEU AUS DER EXR. `glb_zu_multipass` hat es schon ohne Abstand
+    # geschrieben; hier wird es ersetzt, samt Normierung. Warum nicht als Angabe an
+    # `glb_zu_multipass`, steht an `seams.tiefe_neu_normieren`. Scheitert es, ist
+    # `depth_png` danach None und die Pruefung darunter meldet den Grund an DIESEM
+    # Knoten — ein PNG ohne den bestellten Abstand wird nicht still weitergereicht.
+    if abstand is not None:
+        seams.tiefe_neu_normieren(bericht, out_dir, ferne_abstand=abstand,
+                                  timeout=p.get("multipass_timeout"))
 
     # Die Naht ist bewusst nachsichtig: Scheitert die Normalisierung, bleibt der
     # Blender-Lauf gültig, weil die EXR mit den echten Metern das massgebliche Artefakt
@@ -1349,6 +1426,10 @@ def render_ausfuehrer(*, modell=None, _lader=None,
         # «Zaehler, den die Pipeline nicht annimmt», und diese Unterscheidung soll durch
         # unseren Aufruf nicht verschwinden.
         weiter = {"schrittzaehler": schrittzaehler} if schrittzaehler is not None else {}
+        # DER MESSSCHALTER `tiefe_invertieren` (23.09.2026), und nur, wenn er im Knoten
+        # steht — sonst ruft dieser Knoten `rendere` Wort fuer Wort wie vorher.
+        if "tiefe_invertieren" in p:
+            weiter["tiefe_invertieren"] = p["tiefe_invertieren"]
         return dict(render.rendere(auftrag, modell=modell, _lader=_lader, **weiter),
                     **{FELD_SCHICHT: SCHICHT_GEOMETRIE})
 
@@ -1486,7 +1567,10 @@ def nachrender_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
             beauty_png=ausgangsbild,
             ausgabe_png=str(out_dir / "bild.png"),
         )
-        ergebnis = render.rendere(auftrag, modell=modell, _lader=_lader)
+        # Derselbe Messschalter wie am Render — geerbt von `haenge_nachrender_an`.
+        weiter = ({"tiefe_invertieren": p["tiefe_invertieren"]}
+                  if "tiefe_invertieren" in p else {})
+        ergebnis = render.rendere(auftrag, modell=modell, _lader=_lader, **weiter)
         lage = bildeingang_lage(p["backbone"])
         # DER VORBEHALT WIRD VERERBT, und zwar aus dem Bildeingang. Ein Nachrender auf
         # einem unberührten Render trägt ihn nicht; einer auf einer Bildquelle oder auf

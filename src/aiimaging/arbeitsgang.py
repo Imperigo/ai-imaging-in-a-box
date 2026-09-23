@@ -1061,7 +1061,7 @@ def _skizzengraph(glb: str, args: dict, p: dict, *, pfad: Path, anweisung: str):
     """``geometrie → multipass → bildquelle(skizze) → nachrender [→ qa]``.
 
     Der Nachrender übernimmt Backbone, Startwert, Schritte, ControlNet-Stärke,
-    Negativprompt und ``denoise`` aus dem Renderknoten, den :func:`kette.baue_kette` mit
+    Negativprompt, ``denoise`` und den Messschalter ``tiefe_invertieren`` aus dem Renderknoten, den :func:`kette.baue_kette` mit
     denselben Einstellungen gebaut hätte — ausdrücklich übergeben, weil dieser
     Renderknoten danach aus dem Graphen fällt.
     """
@@ -1075,6 +1075,7 @@ def _skizzengraph(glb: str, args: dict, p: dict, *, pfad: Path, anweisung: str):
         negativ_prompt=vorlage["negativ_prompt"], backbone=vorlage["backbone"],
         seed=vorlage["seed"], schritte=vorlage["schritte"],
         controlnet_staerke=vorlage["controlnet_staerke"], denoise=vorlage["denoise"],
+        tiefe_invertieren=vorlage.get("tiefe_invertieren"),
         id_vorsatz=SKIZZEN_VORSATZ)
     if qa_vorlage is not None:
         # DIESELBE PRUEFUNG, auf das neue Bild gerichtet (Slot 0 Soll, Slot 1 Ist). Auf

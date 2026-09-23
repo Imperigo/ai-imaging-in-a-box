@@ -137,6 +137,90 @@ class SchreibError(ValueError):
     """Es lässt sich kein sinnvolles Bild aus diesen Daten schreiben."""
 
 
+# ── Der Messschalter «ferne_abstand» (23.09.2026) ─────────────────────────────────────
+#
+# **Der Anlass.** Auf der HomeStation folgte ein Endbild der Tiefe nicht (auf-137 V3:
+# score 0,000, rho +0,037). Ein Verdrahtungsfehler fand sich nicht. Die Vermutung liegt
+# in dieser Normierung: Das ENTFERNTESTE Geometriepixel bekommt denselben Grauwert wie der
+# Hintergrund (0, siehe `KONVENTION`). Mit Bodenplatte ist das Fernste der Boden; bei
+# einem freistehenden Quader verschwindet dessen Rueckkante im Hintergrund. Fuer z-image
+# wird die Karte vor dem Bildmodell umgedreht — dann sind beide 255.
+#
+# **Was der Schalter tut.** Die Geometrie liegt auf ``[a, 1]`` statt auf ``[0, 1]``; der
+# Hintergrund bleibt 0. Die Rueckkante trennt sich damit vom Hintergrund, die
+# Tiefenordnung bleibt (eine steigende Abbildung). Ob das die Steuerung verbessert, ist
+# NICHT gemessen — dafuer ist der Schalter da. Vorgabe AUS, und aus heisst bitgleich zu
+# vorher (Waechter: tests/test_runde10_messschalter.py).
+
+#: Der groesste zulaessige Abstand. Die Geometrie behaelt damit mindestens die Haelfte
+#: des Wertebereichs. **Gesetzt und nicht kalibriert** — die Obergrenze stammt aus der
+#: Bestellung des Messschalters (23.09.2026), nicht aus einer Messreihe.
+FERNE_ABSTAND_HOECHSTENS = 0.5
+
+#: Der kleinste zulaessige Abstand, der nicht AUS heisst: ein ganzer 8-Bit-Schritt.
+#:
+#: **Warum nicht jede Zahl ueber null.** Das Bildmodell sieht die Karte nicht in 16 Bit:
+#: :func:`aiimaging.render._tiefe_als_rgb` rechnet sie vor der Pipeline auf 8 Bit um.
+#: Ein Abstand unter einem halben 8-Bit-Schritt rundet dort auf null — der Schalter waere
+#: angenommen und wirkungslos, und genau das wird hier nicht still hingenommen, sondern
+#: abgewiesen. Derselbe Grund wie bei :data:`GEKLEMMT_MINDESTGRAU`, und darum dieselbe Zahl.
+FERNE_ABSTAND_MINDESTENS = GEKLEMMT_MINDESTGRAU
+
+#: Die Konvention, wenn der Abstand gilt. Ein Feld, das in zwei Faellen dasselbe sagt
+#: und zwei verschiedene Dinge meint, ist schlimmer als zwei Felder.
+KONVENTION_MIT_ABSTAND = (
+    "nah = hell (ControlNet); Hintergrund = 0. Die Geometrie liegt auf "
+    "[grau_boden, 1] — das entfernteste Geometriepixel traegt grau_boden und ist im PNG "
+    "vom Hintergrund getrennt (Messschalter ferne_abstand)."
+)
+
+#: Die Rueckrechnung mit Boden. Sie gilt fuer jeden Boden, auch fuer
+#: :data:`GEKLEMMT_MINDESTGRAU`; mit Boden 0 ist sie :data:`RUECKRECHNUNG`.
+RUECKRECHNUNG_MIT_BODEN = (
+    "meter = max_m - (grau - boden) / (1 - boden) * (max_m - min_m), "
+    "grau in boden..1, boden = grau_boden"
+)
+
+
+def pruefe_ferne_abstand(wert) -> float | None:
+    """Den Messschalter ``ferne_abstand`` pruefen → ``None`` (aus) oder die Zahl.
+
+    ``None`` und ``0`` heissen **aus** — wie vor dem 23.09.2026, bitgleich. Alles andere
+    muss eine endliche Zahl zwischen :data:`FERNE_ABSTAND_MINDESTENS` und
+    :data:`FERNE_ABSTAND_HOECHSTENS` sein; sonst wird abgewiesen, mit Satz. Ein Wahrheits-
+    wert ist keine Zahl (``True`` waere sonst 1,0 und still angenommen).
+
+    Raises:
+        SchreibError: keine Zahl, nicht endlich, negativ, unter einem 8-Bit-Schritt oder
+            ueber der Obergrenze.
+    """
+    if wert is None:
+        return None
+    if isinstance(wert, bool) or not isinstance(wert, (int, float)):
+        raise SchreibError(
+            f"ferne_abstand muss eine Zahl oder None sein, war {wert!r} "
+            f"({type(wert).__name__}).")
+    wert = float(wert)
+    if not math.isfinite(wert) or wert < 0.0:
+        raise SchreibError(
+            f"ferne_abstand={wert!r} ist kein Abstand. Erlaubt: None oder 0 (aus), sonst "
+            f"{FERNE_ABSTAND_MINDESTENS:.6g} bis {FERNE_ABSTAND_HOECHSTENS:g}.")
+    if wert == 0.0:
+        return None
+    if wert < FERNE_ABSTAND_MINDESTENS:
+        raise SchreibError(
+            f"ferne_abstand={wert!r} liegt unter einem 8-Bit-Schritt "
+            f"({FERNE_ABSTAND_MINDESTENS:.6g}). Das Bildmodell sieht die Karte in 8 Bit "
+            f"(render._tiefe_als_rgb); dort rundete der Abstand auf null, und der Schalter "
+            f"waere angenommen und wirkungslos. Abgewiesen statt still uebergangen.")
+    if wert > FERNE_ABSTAND_HOECHSTENS:
+        raise SchreibError(
+            f"ferne_abstand={wert!r} liegt ueber {FERNE_ABSTAND_HOECHSTENS:g}. Die "
+            f"Geometrie behielte weniger als die Haelfte des Wertebereichs; die Grenze ist "
+            f"gesetzt, nicht gemessen.")
+    return wert
+
+
 # ── PNG ───────────────────────────────────────────────────────────────────────────────
 
 def _block(art: bytes, nutzlast: bytes) -> bytes:
@@ -404,7 +488,8 @@ def _luecke_messen(tiefe: Sequence[float],
 
 def normalisiere_tiefe(tiefe: Sequence[float], *,
                        hintergrund_ab_m: float = HINTERGRUND_AB_M,
-                       ferne_trennen: bool = False) -> tuple[list[float], dict]:
+                       ferne_trennen: bool = False,
+                       ferne_abstand: float | None = None) -> tuple[list[float], dict]:
     """Meterwerte → Grauwerte 0..1 (*nah = hell*) plus die Angaben zur Rückrechnung.
 
     Warum nicht Blenders ``Normalize``-Knoten
@@ -453,6 +538,22 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
             und nicht zu Hintergrund gemacht: Es *ist* Geometrie, nur zu weit weg, um
             Auflösung zu verdienen. Findet die Messung **keine** Lücke, bleibt alles wie
             bisher — NICHT GEMESSEN darf nie zu einer erfundenen Grenze werden.
+        ferne_abstand: **Messschalter, Vorgabe AUS** (``None`` oder ``0``; 23.09.2026).
+            Gesetzt liegt die Geometrie auf ``[ferne_abstand, 1]`` statt auf ``[0, 1]``,
+            der Hintergrund bleibt 0 — das entfernteste Geometriepixel ist dann vom
+            Hintergrund getrennt. Geprueft von :func:`pruefe_ferne_abstand`. Die
+            Normierung traegt dann ``ferne_abstand``, ``grau_boden`` und die
+            Rueckrechnung mit Boden; :mod:`aiimaging.bildlesen` rechnet damit dieselben
+            Meter zurueck wie ohne. Ohne Schalter fehlen beide Felder — das ist das
+            bisherige Format, und die bisherige Formel gilt.
+
+            **Zusammen mit** ``ferne_trennen`` **vertraeglich**, und zwar so: Beide heben
+            die Geometrie vom Hintergrund ab, ``ferne_trennen`` nur um einen 8-Bit-Schritt
+            (:data:`GEKLEMMT_MINDESTGRAU`) und nur, wenn geklemmt wird. Der Abstand ist
+            nie kleiner als dieser Schritt (:data:`FERNE_ABSTAND_MINDESTENS`), erfuellt
+            also, wofuer der Mindestgrau steht, und ersetzt ihn als Boden. Geklemmte
+            Punkte tragen dann den Grauwert des Abstands. Kein Widerspruch — ein Boden,
+            nicht zwei.
 
     Returns:
         ``(grau, normalisierung)``. Ohne ``min_m``/``max_m`` in ``normalisierung`` ist
@@ -464,6 +565,10 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
             dass die Kamera nichts sieht — und darüber schweigend ein schwarzes Bild zu
             schreiben wäre die teuerste Art, es zu erfahren.
     """
+    # Vor allem anderen: Ein unbrauchbarer Schalter soll nicht erst nach der Messung
+    # auffallen, und nicht als Bild, das ihn stillschweigend ignoriert hat.
+    abstand = pruefe_ferne_abstand(ferne_abstand)
+
     gueltig = [i for i, t in enumerate(tiefe)
                if t == t and t not in (float("inf"), float("-inf"))
                and 0.0 < t < hintergrund_ab_m]
@@ -546,6 +651,16 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
 
     spanne = (max_m - min_m) or 1.0          # eine ebene Fläche frontal: Spanne 0
 
+    # DER BODEN DER GEOMETRIE — hoechstens einer. `None` heisst: kein Boden, die Rechnung
+    # bleibt Bit fuer Bit die von vor dem 16.09.2026. Der Abstand geht dem Mindestgrau vor,
+    # weil er nie kleiner ist (siehe `ferne_abstand` im Docstring).
+    if abstand is not None:
+        boden = abstand
+    elif ferne_getrennt:
+        boden = GEKLEMMT_MINDESTGRAU
+    else:
+        boden = None
+
     grau = [HINTERGRUND_GRAUWERT] * len(tiefe)
     n_geklemmt = 0
     for i in gueltig:
@@ -565,7 +680,7 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
         # nah = hell (ControlNet-Konvention). Der Hintergrund bleibt 0.0 — unendlich fern
         # ist der Grenzfall von „dunkel", nicht ein eigener Sonderfall.
         wert = 1.0 - (t - min_m) / spanne
-        if ferne_getrennt:
+        if boden is not None:
             # DER BODEN, UND ER GILT FUER ALLE GEOMETRIE DIESES LAUFS, nicht nur fuer die
             # geklemmten Punkte. Zoege man ihn nur bei den geklemmten hoch, waeren sie
             # HELLER als die echten hintersten Punkte — die Tiefenordnung stuende auf dem
@@ -576,7 +691,11 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
             # NUR im eingeschalteten Fall: Mit ausgeschaltetem Schalter bleibt die
             # Rechnung Bit fuer Bit die von vorher. Die HomeStation faehrt diesen Code
             # aus unserem Repo — was sie nicht bestellt hat, aendert sich nicht.
-            wert = GEKLEMMT_MINDESTGRAU + wert * (1.0 - GEKLEMMT_MINDESTGRAU)
+            #
+            # DERSELBE BODEN FUER DEN MESSSCHALTER `ferne_abstand` (23.09.2026), nur mit
+            # bestellter Hoehe. Ohne beide Schalter ist `boden` None und diese Zeile
+            # wird nie erreicht.
+            wert = boden + wert * (1.0 - boden)
         grau[i] = wert
 
     # ── Die gefährlichste Stelle: Wer Meter zurückrechnet, muss das Klemmen sehen ─────
@@ -602,26 +721,37 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
             f"{max_m:g} m abgeschnitten (ferne_trennen). Die Formel in `rueckrechnung` "
             f"gilt unverändert, aber für diese Punkte liefert sie {max_m:g} m als "
             f"UNTERGRENZE und nicht als Messwert — tatsächlich reichen sie bis "
-            f"{max_m_gemessen:g} m. Sie tragen Grauwert 0 und sind im PNG weder "
-            f"untereinander noch vom Hintergrund zu unterscheiden; wer echte Entfernungen "
-            f"braucht, nimmt die EXR."
+            f"{max_m_gemessen:g} m. Sie tragen alle den Grauwert des Bodens "
+            f"({boden:.6g}) und sind im PNG untereinander nicht zu unterscheiden, vom "
+            f"Hintergrund (0) schon; wer echte Entfernungen braucht, nimmt die EXR."
         )
+        # BERICHTIGT AM 23.09.2026: Hier stand «Sie tragen Grauwert 0 und sind … weder
+        # untereinander noch vom Hintergrund zu unterscheiden». Das galt nur fuer die
+        # erste Fassung vom 16.09.2026; seit dem Boden (GEKLEMMT_MINDESTGRAU) tragen sie
+        # den Boden, und genau das prueft tests/test_bildschreiben.py (geklemmt ist
+        # disjunkt zum Hintergrund). Ein Vorbehalt, der das Gegenteil des Waechters sagt,
+        # ist selbst ein Fehler.
 
-    return grau, {
+    normalisierung = {
         "min_m": float(min_m),
         "max_m": float(max_m),
-        "konvention": KONVENTION,
+        "konvention": KONVENTION if abstand is None else KONVENTION_MIT_ABSTAND,
         "hintergrund_grauwert": HINTERGRUND_GRAUWERT,
         # DIE FORMEL, UND SIE IST IM EINGESCHALTETEN FALL EINE ANDERE. Der Boden unter
         # der Geometrie (GEKLEMMT_MINDESTGRAU) staucht die Skala; wer weiter mit der
         # alten Formel raeumt, bekommt jeden Punkt um bis zu einen halben 8-Bit-Schritt
-        # zu weit nach hinten. Das ist wenig — und genau darum gefaehrlich: Es faellt
+        # zu nah (berichtigt 23.09.2026: hier stand «zu weit nach hinten»; der Grauwert
+        # mit Boden ist nie kleiner als ohne, also kommt max_m - grau*spanne kleiner
+        # heraus). Das ist wenig — und genau darum gefaehrlich: Es faellt
         # niemandem auf. Ein Feld, das in zwei Faellen dasselbe sagt und zwei
         # verschiedene Dinge meint, ist schlimmer als zwei Felder.
-        "rueckrechnung": (RUECKRECHNUNG if not ferne_getrennt else
+        "rueckrechnung": (RUECKRECHNUNG if boden is None else
+                          RUECKRECHNUNG_MIT_BODEN if abstand is not None else
                           "meter = max_m - (grau - boden) / (1 - boden) * (max_m - min_m), "
                           "grau in boden..1, boden = geklemmt_mindestgrau"),
-        "geklemmt_mindestgrau": GEKLEMMT_MINDESTGRAU if ferne_getrennt else None,
+        # Der Grauwert der geklemmten Punkte — mit Abstand ist das der Abstand (ein
+        # Boden, nicht zwei; siehe `ferne_abstand` im Docstring).
+        "geklemmt_mindestgrau": boden if ferne_getrennt else None,
         "n_geometriepixel": len(gueltig),
         # Wer den Wert später anders setzt, soll in der Datei sehen, wogegen gemessen
         # wurde — die Schranke bestimmt min_m und max_m mit.
@@ -639,10 +769,20 @@ def normalisiere_tiefe(tiefe: Sequence[float], *,
         "rueckrechnung_vorbehalt": vorbehalt,
         "warnungen": warnungen,
     }
+    # DIE FELDER DES MESSSCHALTERS NUR, WENN ER GILT. Ohne ihn bleibt die Normierung Feld
+    # fuer Feld die bisherige (tests/test_bildschreiben.py haelt die Schluesselmenge
+    # fest, tests/test_runde10_messschalter.py den Inhalt). Fehlen sie, gilt die
+    # bisherige Formel — genau das, was ein Report von vor dem 23.09.2026 meint.
+    if abstand is not None:
+        normalisierung["ferne_abstand"] = abstand
+        # Der eine Wert, mit dem jeder Leser zurueckrechnet (`bildlesen._boden_lesen`).
+        normalisierung["grau_boden"] = boden
+    return grau, normalisierung
 
 
 def tiefe_exr_zu_png(exr, ziel_png, *, hintergrund_ab_m: float = HINTERGRUND_AB_M,
                      bittiefe: int = 16, ferne_trennen: bool = False,
+                     ferne_abstand: float | None = None,
                      timeout: int = 300, _leser=None, _starte=None) -> dict:
     """EXR in Metern → normalisiertes Graustufen-PNG. Der ganze Weg, ohne Blender.
 
@@ -655,6 +795,15 @@ def tiefe_exr_zu_png(exr, ziel_png, *, hintergrund_ab_m: float = HINTERGRUND_AB_
             Kette aus gar nicht erreichbar, also ein Schalter ohne Draht. Die Messung
             (``max_m_luecke``, ``luecke``, ``ferne_getrennt``) steht ohnehin in jedem
             zurückgegebenen Bericht und damit in jedem Report.
+            **Nachgesehen am 23.09.2026: Der Draht endet hier.** Weder
+            ``seams._tiefe_nachbearbeiten`` noch ``kette.baue_kette`` reichen
+            ``ferne_trennen`` weiter; erreichbar ist er nur, wer diese Funktion oder
+            :func:`normalisiere_tiefe` selbst ruft. Der Satz davor beschreibt also eine
+            Voraussetzung, keinen Weg.
+        ferne_abstand: **Messschalter, nur durchgereicht, Vorgabe AUS** — siehe
+            :func:`normalisiere_tiefe`. Erreichbar ueber
+            :func:`aiimaging.seams.tiefe_neu_normieren` und damit ueber
+            ``kette.baue_kette(ferne_abstand=…)``.
         timeout, _starte: **Die Prozessgrenze, die hier versteckt liegt.** Die Vorgabe
             :func:`aiimaging.bildlesen.lies_exr_tiefe` liest zuerst mit der stdlib und
             fällt bei EXR-Spielarten, die sie nicht kann (PIZ, DWAA/B, B44, PXR24,
@@ -682,7 +831,8 @@ def tiefe_exr_zu_png(exr, ziel_png, *, hintergrund_ab_m: float = HINTERGRUND_AB_
         werte, breite, hoehe = bildlesen.lies_exr_tiefe(
             Path(exr), timeout=timeout, _starte=_starte)
     grau, normalisierung = normalisiere_tiefe(
-        werte, hintergrund_ab_m=hintergrund_ab_m, ferne_trennen=ferne_trennen)
+        werte, hintergrund_ab_m=hintergrund_ab_m, ferne_trennen=ferne_trennen,
+        ferne_abstand=ferne_abstand)
     schreibe_graustufen_png(ziel_png, grau, breite, hoehe, bittiefe=bittiefe)
     normalisierung["breite"] = breite
     normalisierung["hoehe"] = hoehe
@@ -691,11 +841,13 @@ def tiefe_exr_zu_png(exr, ziel_png, *, hintergrund_ab_m: float = HINTERGRUND_AB_
 
 
 __all__ = [
+    "FERNE_ABSTAND_HOECHSTENS", "FERNE_ABSTAND_MINDESTENS",
     "GEKLEMMT_MINDESTGRAU", "HINTERGRUND_AB_M", "HINTERGRUND_GRAUWERT", "KONVENTION",
-    "RUECKRECHNUNG",
+    "KONVENTION_MIT_ABSTAND", "RUECKRECHNUNG", "RUECKRECHNUNG_MIT_BODEN",
     "LUECKE_WARNT_AB_FAKTOR",
     "SchreibError",
-    "normalisiere_tiefe", "schreibe_farb_png", "schreibe_graustufen_png",
+    "normalisiere_tiefe", "pruefe_ferne_abstand", "schreibe_farb_png",
+    "schreibe_graustufen_png",
     "tiefe_exr_zu_png",
     "MIN_KANTE_FASSUNG",
     "base64_zeichen", "bildgroesse", "kleinere_fassung", "passt_unter",

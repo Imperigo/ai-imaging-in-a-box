@@ -1748,7 +1748,8 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
 # Der Lauf
 # --------------------------------------------------------------------------------------
 
-def _baue_parameter(a: RenderAuftrag, eintrag) -> dict:
+def _baue_parameter(a: RenderAuftrag, eintrag, *,
+                    tiefe_invertieren: bool | None = None) -> dict:
     """Alles, was den Lauf bestimmt, in einem Wörterbuch — die Wiederholvorschrift.
 
     Warum vollständig und nicht nur „das Wichtigste": Die Schwellenstudie (Phase 4)
@@ -1780,8 +1781,15 @@ def _baue_parameter(a: RenderAuftrag, eintrag) -> dict:
         # womöglich ihr Negativ — ohne diesen Eintrag wäre ein Lauf nicht nachvollziehbar.
         "tiefen_polaritaet_modell": getattr(eintrag, "tiefen_polaritaet",
                                             backbone.POL_UNBEKANNT),
-        "tiefe_invertiert": (getattr(eintrag, "tiefen_polaritaet", backbone.POL_UNBEKANNT)
+        #
+        # DER MESSSCHALTER (23.09.2026) schlaegt das Register, und nur er. Ohne ihn ist die
+        # Zeile die von vorher; mit ihm steht daneben, dass und womit ueberschrieben wurde
+        # — `None` heisst: nicht ueberschrieben, das Register galt.
+        "tiefe_invertiert": (bool(tiefe_invertieren) if tiefe_invertieren is not None
+                             else getattr(eintrag, "tiefen_polaritaet",
+                                          backbone.POL_UNBEKANNT)
                              == backbone.POL_NAH_DUNKEL),
+        "tiefe_invertiert_ueberschrieben": tiefe_invertieren,
         # Auftrag schlägt Registry schlägt fremde Vorgabe. `None` bleibt `None` und wird
         # unten als solches gemeldet — ein eingesetzter Ersatzwert wäre eine Erfindung.
         "fuehrung": (float(a.fuehrung) if a.fuehrung is not None
@@ -1885,7 +1893,19 @@ def _hinweise(a: RenderAuftrag, parameter: dict, lizenz: dict) -> tuple[str, ...
             f"denoise={a.denoise} bleibt im Modus '{MODUS_TXT2IMG}' wirkungslos: Ohne "
             f"'beauty_png' gibt es kein Ausgangsbild, das überschrieben werden könnte."
         )
-    if parameter["tiefe_invertiert"]:
+    if parameter.get("tiefe_invertiert_ueberschrieben") is not None:
+        # MESSSCHALTER STATT REGISTER. Die beiden Saetze darunter sprechen vom Register
+        # («am Geraet gemessen», «nicht gemessen») — sie stimmten hier nicht mehr.
+        register = (parameter["tiefen_polaritaet_modell"] == backbone.POL_NAH_DUNKEL)
+        hinweise.append(
+            f"MESSSCHALTER tiefe_invertieren={parameter['tiefe_invertiert_ueberschrieben']}"
+            f": Die Tiefenkarte wird für '{parameter['backbone']}' "
+            f"{'UMGEDREHT' if parameter['tiefe_invertiert'] else 'NICHT umgedreht'} "
+            f"übergeben — das Register "
+            f"({parameter['tiefen_polaritaet_modell']}) hätte "
+            f"{'gedreht' if register else 'nicht gedreht'}. Nur für Messungen; die "
+            f"Datei auf der Platte bleibt unverändert.")
+    elif parameter["tiefe_invertiert"]:
         hinweise.append(
             f"Die Tiefenkarte wird für '{parameter['backbone']}' UMGEDREHT übergeben: "
             f"Unsere Karte schreibt nah = hell, dieses ControlNet erwartet nah = dunkel "
@@ -2029,7 +2049,7 @@ def _ergebnis(status: str, parameter: dict, *, bild_png=None, dauer_s: float = 0
 
 
 def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
-            schrittzaehler=None) -> dict:
+            schrittzaehler=None, tiefe_invertieren: bool | None = None) -> dict:
     """Einen Bildauftrag ausführen — oder begründet ablehnen.
 
     Args:
@@ -2049,6 +2069,17 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
             Kennt die Pipeline ``callback_on_step_end`` nicht, steht das als Hinweis im
             Ergebnis; verdrahtet wird dann nichts. Ein Rückruf, der nie gerufen wird,
             sähe von aussen genauso aus wie ein hängender Lauf.
+        tiefe_invertieren: **Messschalter, nur für Messungen** (23.09.2026). ``None``
+            (Vorgabe): Das Register entscheidet (``tiefen_polaritaet`` des Backbones).
+            ``True``/``False`` überschreiben es; ``parameter['tiefe_invertiert']`` ist
+            dann dieser Wert, ``parameter['tiefe_invertiert_ueberschrieben']`` nennt ihn,
+            und ein Hinweis sagt, was das Register getan hätte. Anderes als
+            ``None``/``True``/``False`` wird **abgelehnt**, nicht gedeutet.
+            **Bewusst kein Feld von** :class:`RenderAuftrag`: Dessen Felder sind die
+            Bestellung und werden an der Naht des Abholers gezählt
+            (``abholer.RENDER_DURCHGEREICHT``/``RENDER_STEHENGEBLIEBEN``); ein
+            Messschalter gehört nicht in diese Zählung. Ins Protokoll kommt er trotzdem —
+            über den Parametersatz.
 
     Returns:
         ``{status, bild_png, seed, backbone, parameter, dauer_s, error, maengel, lizenz,
@@ -2097,6 +2128,14 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         )
 
     maengel = pruefe_auftrag(a)
+    if not (tiefe_invertieren is None or isinstance(tiefe_invertieren, bool)):
+        # Ein Mangel und keine Ausnahme: Es gibt einen Auftrag, also gibt es ein Ergebnis.
+        # Gedeutet wird nicht — «ja» oder 1 als wahr zu lesen hiesse raten, welche Karte
+        # das Modell sehen sollte.
+        maengel = list(maengel) + [
+            f"tiefe_invertieren muss None, True oder False sein, war "
+            f"{tiefe_invertieren!r}."]
+        tiefe_invertieren = None
 
     # Der Eintrag kann fehlen (unbekannter Backbone). Dann trägt das Ergebnis den
     # angefragten Namen und einen Ersatzsatz — besser als gar kein Protokoll.
@@ -2119,7 +2158,7 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
                          maengel=maengel)
 
     lizenz = backbone.pruefe_lizenz(eintrag.name)
-    parameter = _baue_parameter(a, eintrag)
+    parameter = _baue_parameter(a, eintrag, tiefe_invertieren=tiefe_invertieren)
     hinweise = _hinweise(a, parameter, lizenz)
 
     if maengel:

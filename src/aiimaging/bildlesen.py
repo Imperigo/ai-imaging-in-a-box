@@ -638,6 +638,39 @@ def _normalisierung_lesen(normalisierung) -> tuple[float, float]:
     return min_m, max_m
 
 
+def _boden_lesen(normalisierung: dict) -> float:
+    """Der Grauwert, auf dem das entfernteste Geometriepixel liegt — ``0.0`` ohne Boden.
+
+    **Der Befund (23.09.2026).** :mod:`aiimaging.bildschreiben` kennt seit dem 16.09.2026
+    einen Boden unter der Geometrie (``ferne_trennen``, :data:`GEKLEMMT_MINDESTGRAU`
+    dort) und seit dem 23.09.2026 einen zweiten Weg dorthin (Messschalter
+    ``ferne_abstand``). Die Normierung nannte die Formel mit Boden — aber dieser Leser
+    rechnete immer ohne ihn zurueck. Mit Boden kam jeder Punkt zu NAH heraus, um
+    bis zu ``boden * (max_m - min_m)`` — beim Abstand 0,2 ein Fuenftel der Spanne (Waechter:
+    tests/test_runde10_messschalter.py). Der Schreiber warnte davor in einem
+    Kommentar («wer weiter mit der alten Formel raeumt …»); der Leser war genau der.
+
+    Gelesen wird in dieser Reihenfolge: ``grau_boden`` (steht nur da, wenn der Abstand
+    galt), sonst ``geklemmt_mindestgrau`` (nicht ``None`` nur mit ``ferne_trennen``),
+    sonst ``0.0`` — das Format von vorher, und dann rechnet dieser Leser genau wie vorher.
+
+    Raises:
+        BildError: Der Boden ist keine Zahl oder liegt nicht in ``[0, 1)``.
+    """
+    for name in ("grau_boden", "geklemmt_mindestgrau"):
+        wert = normalisierung.get(name)
+        if wert is None:
+            continue
+        if isinstance(wert, bool) or not isinstance(wert, (int, float)) \
+                or not math.isfinite(float(wert)) or not 0.0 <= float(wert) < 1.0:
+            raise BildError(
+                f"normalisierung[{name!r}]: ein Grauwert in [0, 1) erwartet, war "
+                f"{wert!r}. Ohne gueltigen Boden ist das PNG nicht in Meter "
+                f"zurueckzurechnen.")
+        return float(wert)
+    return 0.0
+
+
 def tiefen_aus_png(pfad, normalisierung: dict, *,
                    grau_null: str = GRAU_NULL_HINTERGRUND) -> list[float]:
     """Normalisiertes PNG + ``depth_normalisierung`` aus dem Report → echte Meter.
@@ -683,17 +716,26 @@ def tiefen_aus_png(pfad, normalisierung: dict, *,
             f"Deutungen gilt, kann dieses Modul nicht für den Aufrufer entscheiden."
         )
     min_m, max_m = _normalisierung_lesen(normalisierung)
+    boden = _boden_lesen(normalisierung)
     grau, breite, hoehe = lies_png_graustufen(pfad)
-    return _rueckrechnen(grau, breite, hoehe, min_m, max_m, grau_null, Path(pfad).name)
+    return _rueckrechnen(grau, breite, hoehe, min_m, max_m, grau_null, Path(pfad).name,
+                         boden=boden)
 
 
 def _rueckrechnen(grau: list[float], breite: int, hoehe: int, min_m: float, max_m: float,
-                  grau_null: str, name: str) -> list[float]:
+                  grau_null: str, name: str, *, boden: float = 0.0) -> list[float]:
     """Grauwerte 0..1 → Meter, samt Warnung über den unvermeidlichen Verlust.
 
     Eigene Funktion, damit ``tiefen_aus_report`` Breite und Höhe aus demselben Lesevorgang
     bekommt, statt die Datei ein zweites Mal zu öffnen — und damit es die Rückrechnung nur
     an einer Stelle gibt.
+
+    ``boden`` ist der Grauwert des entferntesten Geometriepixels (:func:`_boden_lesen`).
+    Mit Boden 0 laeuft die Rechnung Zeile fuer Zeile wie vor dem 23.09.2026. Mit Boden
+    ueber 0 traegt Grauwert 0 nur noch den Hintergrund — der Silhouettenverlust, vor dem
+    die Warnung spricht, entsteht dann nicht, und sie bleibt bei ``grau_null=
+    "hintergrund"`` aus. Bei ``"geometrie"`` bleibt sie: Den Himmel als Geometrie zu
+    zaehlen ist dann erst recht eine Entscheidung des Aufrufers und kein Verlust des PNG.
     """
     spanne = max_m - min_m
     ersatz = math.inf if grau_null == GRAU_NULL_HINTERGRUND else max_m
@@ -703,10 +745,12 @@ def _rueckrechnen(grau: list[float], breite: int, hoehe: int, min_m: float, max_
         if wert == 0.0:
             n_null += 1
             tiefen.append(ersatz)
+        elif boden:
+            tiefen.append(max_m - (wert - boden) / (1.0 - boden) * spanne)
         else:
             tiefen.append(max_m - wert * spanne)
 
-    if n_null:
+    if n_null and (not boden or grau_null == GRAU_NULL_GEOMETRIE):
         anteil = n_null / (breite * hoehe)
         if grau_null == GRAU_NULL_HINTERGRUND:
             folge = (f"Sie gelten hier als Hintergrund (inf). Die hintersten "
@@ -745,11 +789,15 @@ def png_befund(pfad, normalisierung: dict) -> dict:
         und wer eine kleinere Abweichung meldet, hat sich verrechnet.
     """
     min_m, max_m = _normalisierung_lesen(normalisierung)
+    boden = _boden_lesen(normalisierung)
     grau, breite, hoehe, bittiefe = _png_lesen(pfad)
     n = breite * hoehe
     n_null = sum(1 for wert in grau if wert == 0.0)
     n_eins = sum(1 for wert in grau if wert == 1.0)
     stufen = (1 << bittiefe) - 1
+    # Mit Boden bekommt die Geometrie nur (1 - boden) des Wertebereichs, und jeder Schritt
+    # wird entsprechend groeber. Ohne Boden ist der Faktor 1 und die Zahl die von vorher.
+    geometrie_stufen = stufen * (1.0 - boden) if boden else stufen
 
     return {
         "breite": breite,
@@ -761,11 +809,15 @@ def png_befund(pfad, normalisierung: dict) -> dict:
         "n_grau_eins": n_eins,
         "min_m": min_m,
         "max_m": max_m,
-        "quantisierungsschritt_m": (max_m - min_m) / stufen,
+        "quantisierungsschritt_m": (max_m - min_m) / geometrie_stufen,
         "hinweis": (
             "Grauwert 0 trägt zwei Bedeutungen: Hintergrund und entferntestes "
             "Geometriepixel. Aus diesem PNG allein ist die Silhouette nicht exakt "
             "rekonstruierbar — dafür ist die EXR zuständig."
+        ) if not boden else (
+            f"Die Geometrie liegt auf [{boden:.6g}, 1]; Grauwert 0 ist nur Hintergrund. "
+            f"Die Silhouette ist aus diesem PNG ablesbar; echte Meter bleiben Sache der "
+            f"EXR."
         ),
     }
 
@@ -1372,8 +1424,10 @@ def tiefen_aus_report(report: dict, *, quelle: str = QUELLE_AUTO,
     if grau_null not in (GRAU_NULL_HINTERGRUND, GRAU_NULL_GEOMETRIE):
         raise BildError(f"grau_null: {grau_null!r} ist unbekannt.")
     min_m, max_m = _normalisierung_lesen(normalisierung)
+    boden = _boden_lesen(normalisierung)
     grau, breite, hoehe = lies_png_graustufen(png)
-    tiefen = _rueckrechnen(grau, breite, hoehe, min_m, max_m, grau_null, Path(png).name)
+    tiefen = _rueckrechnen(grau, breite, hoehe, min_m, max_m, grau_null, Path(png).name,
+                           boden=boden)
     return tiefen, breite, hoehe
 
 

@@ -1289,9 +1289,53 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
         _starte=_starte)
 
 
+def tiefe_neu_normieren(report: dict, out_dir, *, ferne_abstand: float | None = None,
+                        timeout: float | None = None, _starte=None) -> dict:
+    """Das Tiefen-PNG eines fertigen Multipass **aus seiner EXR neu rechnen** — mit dem
+    Messschalter ``ferne_abstand`` (23.09.2026). **Nur fuer Messungen.**
+
+    Dieselbe Nachbearbeitung, die :func:`glb_zu_multipass` am Ende ohnehin faehrt
+    (:func:`_tiefe_nachbearbeiten`), ein zweites Mal und mit Abstand. Die EXR ist das
+    massgebliche Artefakt; das PNG ist ihre Ableitung und darf darum neu abgeleitet werden.
+    ``tiefe_norm.png``, ``depth_png``, ``depth_normalisierung`` und ``depth_png_fehler``
+    werden dabei **ersetzt**, nicht ergaenzt — ein Report, der auf ein altes PNG zeigt,
+    waere schlimmer als einer ohne.
+
+    **Warum nicht als Angabe von** :func:`glb_zu_multipass`. Dessen Parameter werden an
+    der Naht des Abholers gezaehlt (``abholer.MULTIPASS_DURCHGEREICHT`` /
+    ``MULTIPASS_STEHENGEBLIEBEN``, bewacht in tests/test_durchreichung_verarbeiter.py) und
+    gegen das Trockenkommando gehalten (tests/test_seams.py). Ein Messschalter, der den
+    Blender-Lauf gar nicht beruehrt, gehoert nicht in diese Zaehlung. Der Preis: Das PNG
+    wird mit Schalter zweimal geschrieben — Arithmetik auf einem Zahlenfeld, kein zweiter
+    Render.
+
+    Args:
+        ferne_abstand: siehe :func:`aiimaging.bildschreiben.normalisiere_tiefe`. ``None``
+            oder ``0`` rechnet das PNG wie :func:`glb_zu_multipass` es schon tat.
+        timeout: Frist fuer einen EXR-Leserueckfall ueber Blender, umgerechnet mit dem
+            Zeitfaktor wie jede Gesamtfrist dieses Moduls. ``None`` heisst hier die
+            Vorgabe der Nachbearbeitung — wie in :func:`glb_zu_multipass` ohne
+            Gesamtfrist.
+
+    Returns:
+        Der ergaenzte ``report`` (dasselbe Objekt). Scheitert die Normierung — auch an
+        einem unbrauchbaren Abstand —, steht der Grund in ``depth_png_fehler`` und
+        ``depth_png`` ist ``None``; die Normierung wirft nichts, wie in
+        :func:`_tiefe_nachbearbeiten`. **Geworfen wird vorher** ein
+        :class:`aiimaging.seams.SeamError`, wenn ``timeout`` selbst unbrauchbar ist
+        (:func:`_gesamtfrist`) — im Kettenweg prueft :func:`glb_zu_multipass` denselben
+        Wert schon davor.
+    """
+    return _tiefe_nachbearbeiten(
+        report, Path(out_dir),
+        timeout=_gesamtfrist(GESAMTFRIST_NACHBEARBEITUNG_S if timeout is None
+                             else timeout, was="timeout"),
+        _starte=_starte, ferne_abstand=ferne_abstand)
+
+
 def _tiefe_nachbearbeiten(report: dict, out_dir: Path,
                           *, timeout: float = GESAMTFRIST_NACHBEARBEITUNG_S,
-                          _starte=None) -> dict:
+                          _starte=None, ferne_abstand: float | None = None) -> dict:
     """Aus der EXR das normalisierte PNG rechnen — auf dieser Seite der Prozessgrenze.
 
     Bis zum 18.08.2026 tat das der Runner selbst. Der Schritt ist hierher gewandert,
@@ -1336,8 +1380,13 @@ def _tiefe_nachbearbeiten(report: dict, out_dir: Path,
         # EXR-Spielart, und sein Rückfall ist ein zweiter Blender-Prozess. Ohne diese
         # beiden Argumente liefe er ohne Naht und mit einem Zeitlimit, das der Aufrufer
         # nie gesetzt hat.
+        #
+        # `ferne_abstand` nur, wenn gesetzt (Messschalter, 23.09.2026): Ohne ihn bleibt
+        # dieser Aufruf Wort fuer Wort der von vorher — auch fuer eine Attrappe, die
+        # mitschreibt, was sie bekommt.
+        weiter = {} if ferne_abstand is None else {"ferne_abstand": ferne_abstand}
         normalisierung = bildschreiben.tiefe_exr_zu_png(
-            exr, ziel, timeout=timeout, _starte=_starte)
+            exr, ziel, timeout=timeout, _starte=_starte, **weiter)
     except Exception as e:                              # Befund als Feld, nicht als Absturz
         report["depth_png_fehler"] = f"{type(e).__name__}: {e}"
         return report
@@ -1409,4 +1458,5 @@ __all__ = [
     "baue_kommando_multipass", "baue_kommando_tiefenkarte",
     "finde_blender", "finde_ifc_python",
     "glb_zu_multipass", "glb_zu_tiefenkarte", "ifc_raeume", "ifc_zu_glb",
+    "tiefe_neu_normieren",
 ]
