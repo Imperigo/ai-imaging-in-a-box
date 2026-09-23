@@ -233,8 +233,10 @@ def _modellstand(gespeichert: dict, jetzt: dict) -> tuple[str, str]:
     # sicherer Befund, eine Gleichheit aber nur ein starker Hinweis. Die Meldung sagt das,
     # statt eine Sicherheit zu behaupten, die die Methode nicht hergibt.
     return (MODELL_VERAENDERT,
-            "Das Modell hat sich seit dem letzten Öffnen geändert. **Es wird nichts neu "
-            "gerechnet und nichts verworfen.** Was bisher gemessen wurde, gehört zum alten "
+            # KEIN MARKDOWN IM SATZ (Rundgang 23.09.2026): Die Fläche zeigt ihn als Text,
+            # und dort standen die Sternchen wörtlich da.
+            "Das Modell hat sich seit dem letzten Öffnen geändert. Es wird nichts neu "
+            "gerechnet und nichts verworfen. Was bisher gemessen wurde, gehört zum alten "
             "Stand — und gilt dafür weiter. Wer den neuen Stand beurteilt haben will, "
             "rechnet neu; wer den alten vergleichen will, hat ihn noch.")
 

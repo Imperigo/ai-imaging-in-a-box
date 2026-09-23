@@ -114,6 +114,7 @@ def test_ein_geaendertes_modell_haelt_das_projekt_nicht_an_sondern_meldet_es(tmp
     auf = projekt.oeffne(wurzel)
     assert auf["modell_stand"] == projekt.MODELL_VERAENDERT
     assert "nichts neu gerechnet" in auf["modell_grund"]
+    assert "**" not in auf["modell_grund"], "die Fläche zeigt den Satz als Text, nicht Markdown"
     assert len(auf["projekt"]["bilder"]) == 1, "das alte Urteil bleibt stehen"
     assert auf["projekt"]["bilder"][0]["geometrie_bestanden"] is True
 

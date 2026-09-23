@@ -7430,4 +7430,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] **Kern:** Zwischenspeicher der Mappe kennt den Codestand nicht.
 - [ ] **Andere Sitzung (KosmoPublish):** KosmoPrepare-Suite rot (3), nächtlicher Push ohne
       vorher zu holen (`auf-159` K4) — nicht unser Repo, dem Owner gemeldet.
+- [x] **Rundgang** für den Owner (Rechner echt, iPad als Zeichnungen, drei Zustände).
+- [ ] **Anzeige:** Markdown-Sternchen in rund 15 Kernmeldungen — Flächen setzen sie als
+      Fettschrift oder der Kern schreibt ohne (Entscheid am Blatt).
+- [ ] **Rechner im neuen Aussehen** (Blatt 10) und Laiennamen für die Bedienfelder.
+- [ ] **iPad-Blätter 1 und 2** bauen (Mappe wählen, Standpunkt setzen) — nach dem Gerätetest.
 
