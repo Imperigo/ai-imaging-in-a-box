@@ -1,0 +1,44 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260923-159",
+ "status": "ok",
+ "beendet": "2026-09-23T20:30:00Z",
+ "stand": "c564305",
+ "geprueft": "K1 und K2 genau nach Anweisung gefahren. Nichts geloescht, nichts installiert, keine GPU-Last. Patch-Datei liegt ausserhalb des Klons, Sicherungszweig angelegt, KosmoPublish-Seitenzweig unberuehrt.",
+ "kurzantwort": "K1: main steht auf 2b0e19f, Sicherung und Patch angelegt, libs_pruefen wie erwartet (pyphen WIRD GEBRAUCHT, keine rm-Zeile, exit=0) — ABER die Suite ist ROT: 3 Fehlschlaege, und einer davon empfiehlt woertlich wieder «rm -rf libs/pyphen*». K2: Zweig trug nichts ausser main, umgeschaltet, main auf 0053ee7, diagnose exit=0. K4: Einwand ja — auf main scheitert der naechtliche Push, sobald die Cloud dazwischen pusht.",
+ "befunde": {
+  "K1": {
+   "main": "2b0e19f (git reset --keep origin/main, exit 0)",
+   "sicherungszweig": "sicherung/a6584ca-2026-09-21 angelegt",
+   "patch": "b113-arbeitsbaum-2026-09-19.patch, 37 Zeilen, ausserhalb des Klons, weder geloescht noch angewendet",
+   "status_nach_restore": "leer",
+   "libs_pruefen_exit": 0,
+   "libs_pruefen_pyphen": "[WIRD GEBRAUCHT]  pyphen 0.17.2 — GPL-2+ / LGPL-2.1+ / MPL-1.1 — keine davon im Mandat Q29 / gebraucht von weasyprint (Requires-Dist) — loeschen braeche dessen Weg",
+   "libs_pruefen_pysolar": "[nicht da]  pysolar",
+   "libs_pruefen_rm_zeile": "keine",
+   "suite": "./run_tests.sh exit=1 — letzte Ergebniszeile: «FAILED (failures=3, skipped=87)» bei «Ran 1283 tests» (unittest-Fallback)",
+   "suite_fehlschlaege": [
+    "test_libs_ohne_toten_copyleft.LibsTests.test_kein_totes_copyleft_in_libs (tests/test_libs_ohne_toten_copyleft.py:71): erwartet [], findet pyphen als «Copyleft, das KEIN Produktmodul mehr ruft» und schreibt woertlich «loeschen mit: rm -rf <klon>/libs/pyphen*». DERSELBE Rat, der am 21.09. den PDF-Weg gebrochen hat — dieser Test kennt die weasyprint-Abhaengigkeit nicht, die libs_pruefen seit 3bf8220 liest.",
+    "test_lizenzriegel.TestBundleErklaerung.test_libs_traegt_keine_unangemeldete_gpl_bibliothek (tests/test_lizenzriegel.py:615): COPYLEFT_IN_LIBS fuehrt 'pysolar', libs/ traegt es nicht («Items in the second set but not the first: 'pysolar'»).",
+    "test_lizenzriegel.TestLazyBleibtLazy.test_die_probe_kann_ueberhaupt_etwas_sehen (tests/test_lizenzriegel.py:562): erwartet ['ifcopenshell', 'pysolar'], erreichbar ist nur ['ifcopenshell']."
+   ]
+  },
+  "K2": {
+   "origin_main_bis_HEAD": "leer (keine Zeile)",
+   "status": "leer",
+   "umgeschaltet": true,
+   "main": "0053ee7",
+   "diagnose_exit": 0,
+   "diagnose_hinweis": "einziger Issue: «Kein Cosmos-Token in ~/.kosmopublish/cosmos.token — Cosmos-Refs nicht verfuegbar»"
+  },
+  "K3": "Inhaltlich zwei kleine Abweichungen, sonst gleich (KOSMO_ODYSSEUS_PASSWORD Pflicht, ODY_PASS nur mit Warnung, gleiche Rangfolge): (1) 2b0e19f liest zusaetzlich KOSMO_ODYSSEUS_USER, unsere Fassung nur ODY_USER. (2) Fehlt das Kennwort, endet 2b0e19f mit eigener FEHLER-Zeile und exit 2; unsere Fassung brach ueber ${…:?} mit der Shell-Meldung und exit 1 ab.",
+  "K4": "Einwand JA, mit Grund: Weder tools/visual_test_nightly.sh (Zeile 117: `git push --quiet origin HEAD`) noch der Nachzuegler KosmoBetrieb/wachen/zustellung.sh (Zeile 54 fetch, Zeile 62 push) holen vor dem Push den neuen Stand herein (kein pull/rebase). Auf dem Seitenzweig war das egal, weil nur die HomeStation dort schrieb. Auf main pusht die Cloud taeglich — dann wird der Push der Nacht als nicht schnellvorlaufend abgewiesen, der Bericht bleibt lokal, und der Klon laeuft von origin/main weg (spaeteres `pull --ff-only` scheitert). Vorschlag: vor dem Push `git pull --rebase` nur fuer den eigenen Berichtscommit, oder der Bildtest committet weiter auf einen eigenen Berichtszweig. Entscheid bei euch bzw. beim Owner; bis dahin steht der Klon auf main, wie angewiesen.",
+  "K5": "Die Suite war schon VOR dem Nachziehen nicht belegt gruen: a6584ca (Sicherungszweig) hatte COPYLEFT_IN_LIBS = {ifcopenshell}, main erwartet pysolar — ob pysolar zurueck in libs/ soll, ist dieselbe Owner-Frage wie pyphen am 22.09., nur mit anderem Ausgang offen."
+ },
+ "bemerkungen": "Keine Tests angepasst, nichts in libs/ angefasst: die drei Fehlschlaege sind ein Befund fuer den Worker, kein Grund, eine Wache aufzuweichen.",
+ "umgebung": {
+  "geraet": "HomeStation",
+  "gpu_last": "keine"
+ },
+ "fehler": null
+}
