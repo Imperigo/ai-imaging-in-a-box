@@ -1,0 +1,38 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260922-149",
+  "art": "frage",
+  "beschreibung": "Drei Owner-Entscheide vom 22.09.2026, alle drei betreffen Dateien an EURER Maschine: ein GPL-Paket in `libs/` soll weg, die lokale kosmodraw-Kopie ist nur zufaellig gesichert und traegt keine Lizenzdatei, und eine Frage an euren Auftrags-Vertrag.",
+  "anweisung": "=== ZWEI ORDNER, EINE LIZENZZEILE — UND EINE FRAGE AN EUREN VERTRAG\n\nVier Punkte. V1 bis V3 sind Owner-Entscheide vom 22.09.2026, V4 ist eine\nFrage. Nichts davon eilt; nichts davon braucht die Karte.\n\n\nV1 · `libs/pysolar*` LOESCHEN — Owner-Entscheid\n\nEuer Befund vom 21.09.2026 (Antwort auf auf-20260909-94, V5) hat es\ngefunden: `pysolar 0.13` liegt in `libs/`, GPL-3, und kein Produktmodul\nruft es. Das stimmt, und wir haben es hier gegengeprueft: der Code dafuer\nist am 01.09.2026 selbst geschrieben worden (`core/sun.py`, NOAA-Verfahren),\naus `requirements.txt` am 01.09. gefallen, aus `setup.sh` am 08.09.; im\nverfolgten Baum steht der Name nur noch als Zeichenkette in einer Probe.\n\n`libs/` wird AUSGELIEFERT (das Add-on-Manifest schliesst die venvs aus,\n`libs/` ausdruecklich nicht). Ein Erzeugnis, das eine GPL-Bibliothek noch\nmitliefert, ist nicht GPL-frei, auch wenn kein Code sie ruft.\n\n    cd <euer KosmoPrepare-Klon>\n    git pull\n    python3 tools/libs_pruefen.py          # ERST lesen (siehe auf-…-146)\n    rm -rf libs/pysolar*                   # DANN loeschen\n    python3 tools/libs_pruefen.py          # und nachsehen\n\n**Loescht erst, wenn der erste Lauf `pysolar` als KANN WEG zeigt.** Das\nWerkzeug hat seit dem 22.09. einen Leser fuer die Abhaengigkeiten; wenn es\ndort ploetzlich WIRD GEBRAUCHT sagt, ist das ein Befund und kein Hindernis —\ndann bitte NICHT loeschen und uns die Zeile schicken.\n\nUnd bitte NUR `pysolar`. `pyphen` bleibt — es sieht genauso aus, wird aber\nvon weasyprint gebraucht, und vier Produktmodule brauchen weasyprint.\n\n\nV2 · DIE `kosmodraw`-KOPIE RICHTIG SICHERN — Owner-Entscheid\n\nIhr habt am 21.09. gemessen, dass das Paket (Fassung 0.13.5, 13 Module) bei\neuch vollstaendig liegt und `python -m kosmodraw --help` laeuft — und selbst\ndazugeschrieben: «das ist keine Sicherung, sondern ein Zufall», weil es nur\nin einem OneDrive-Abzug steht.\n\nDer Owner hat entschieden, dass es gesichert wird. **WIE, entscheidet ihr** —\nihr kennt eure Maschine. Was wir zurueck brauchen, ist nur: wo liegt es\njetzt zusaetzlich, und ist die Kopie ohne OneDrive erreichbar?\n\nKEINE Pfade mit Benutzernamen (REGEL 3) — «auf der Datenplatte unter einem\neigenen Archivordner» genuegt vollkommen.\n\n\nV3 · DIE LIZENZ MITKOPIEREN — Owner-Entscheid\n\nEuer Nebenbefund vom 21.09.: KEINE Lizenzdatei und KEIN Lizenzkopf in einer\nder 13 `.py`-Dateien; die Angabe (GPL-3.0-or-later, Andrin Baumann) steht an\ngenau EINER Stelle, in der README. Wer nur das Paket kopiert, kopiert die\nLizenz nicht mit — fuer ein GPL-Paket ist das ein Mangel.\n\nZu tun, in der lokalen Kopie:\n  a) eine `LICENSE` danebenlegen (GPL-3.0-or-later im Volltext)\n  b) in jede der 13 `.py` einen kurzen Kopf: Projekt, Lizenz, Urheber\n\n**Es gibt keinen KosmoDraw-Worker mehr** (Owner-Auskunft 22.09.2026) — darum\nkommt das zu euch und nicht dorthin. Das Paket ist das des Owners selbst.\n\n\nV4 · EINE FRAGE AN EUREN VERTRAG (kein Auftrag, eine Bitte um Meinung)\n\nIhr habt am 08.09.2026 selbst gemessen: `worker: cloud` meint EINE Lane —\nden Worker an KosmoOrbit. Fuer UNSERE Lane (KosmoPublish/KosmoPrepare) gibt\nes im Schema gar keine Adresse, und ein Absenderfeld fehlt ebenfalls.\nGegenprobe bei euch: von elf offenen `cloud`-Auftraegen spricht keiner uns\nan. Wir legen darum als `local` und `ui` ab, und es kommt an.\n\nDer Owner hat am 22.09.2026 entschieden, dass ein Absenderfeld entstehen\nsoll. **Der Vertrag ist eurer, also fragen wir statt zu bauen:**\n\n  * Waere ein Feld `absender` (frei, z.B. \"kosmopublish\") der richtige\n    Schnitt — oder lieber ein weiterer Wert im Feld `worker`?\n  * Was braeche daran? Euer `pruefe_auftrag` kennt heute vier `worker`-Werte\n    und keine Absender.\n\n**Und ein zweiter Punkt, an dem wir uns selbst geschnitten haben:** wir haben\nam 22.09. einen Auftrag mit `art: \"qa\"` abgelegt, der einen Befehl und einen\nBericht bestellt. Euer Runner beantwortet diesen Zweig selbsttaetig mit\n`status: fehler` («art misst nichts»). **Dasselbe ist uns am 09.09.2026 schon\neinmal passiert.** Wir haben es korrigiert.\nGemessen haben wir danach, ob euer Validator den Fall sehen KOENNTE — und die\nnaheliegende Regel taugt nicht: von 152 Auftraegen im Bestand tragen **alle**\neine `rueckgabe`, auch alle 54 `qa`-Auftraege. Ein Riegel darauf haette 54\nFehlalarme. Falls euch ein besseres Unterscheidungsmerkmal einfaellt, waere\ndas die nuetzlichste Antwort dieses Auftrags.\n\n\nWAS AUSDRUECKLICH NICHT GETAN WERDEN SOLL\n\n* `pyphen` NICHT loeschen, auch wenn es aehnlich aussieht.\n* Keine Installation, kein `pip`, keine sonstige Maschinen-Aenderung.\n* Keine absoluten Pfade mit Benutzernamen (REGEL 3), keine Buero-, Kunden-\n  oder Wettbewerbsnamen.\n* Keine GPU-Last. Nichts hier braucht die Karte.\n* V4 ist eine FRAGE — nichts daran bauen.",
+  "erstellt": "2026-09-22T21:51:21Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "NUR pysolar loeschen — pyphen bleibt, weasyprint braucht es.",
+      "Erst `libs_pruefen.py` lesen, dann loeschen; sagt es WIRD GEBRAUCHT, NICHT loeschen.",
+      "Keine Installation, kein pip, keine Maschinen-Aenderung, keine GPU-Last.",
+      "Keine absoluten Pfade mit Benutzernamen (REGEL 3).",
+      "V4 und V5 sind Fragen, keine Bauauftraege."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Ist `libs/pysolar*` geloescht? ja/nein. Falls der Lauf vorher WIRD GEBRAUCHT sagte: die Zeile woertlich (dann bitte NICHT loeschen).",
+    "V2 Wo liegt die kosmodraw-Kopie jetzt zusaetzlich, und ist sie ohne OneDrive erreichbar? Ohne Pfade mit Benutzernamen.",
+    "V3 Liegt eine LICENSE daneben, und tragen die 13 .py einen Lizenzkopf? ja/nein/teilweise.",
+    "V4 Absenderfeld oder weiterer worker-Wert — was ist aus eurer Sicht der richtige Schnitt, und was braeche daran?",
+    "V5 Faellt euch ein Merkmal ein, an dem euer Validator «art: qa, aber ein Mensch soll antworten» erkennen koennte, ohne 54 Fehlalarme?",
+    "V6 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ],
+  "rang": 7
+}

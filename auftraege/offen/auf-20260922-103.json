@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "auftrag_id": "auf-20260922-103",
+  "art": "frage",
+  "worker": "local",
+  "rang": 4,
+  "erstellt": "2026-09-22T20:30:00Z",
+  "params": {},
+  "beschreibung": "Owner-Entscheid 22.09.2026: zwei Blender-Zeichner in KosmoPublish (`outline_renders`, `render_main_only`, zusammen 1054 Zeilen) werden nicht geloescht, sondern gemessen. Sie koennen als einzige «nur das Hauptgebaeude, Nachbarn als Silhouette». Ob das gebraucht wird, sieht nur ein echtes Modell — und das steht auf eurer Maschine.",
+  "anweisung": "=== ZWEI ZEICHNER IN KOSMOPUBLISH, DIE NIEMAND AUFRUFT — UND NUR EURE\n=== MASCHINE KANN SAGEN, OB SIE GEBRAUCHT WERDEN\n\nWORUM ES GEHT, IN DREI SAETZEN\n\nIn KosmoPublish liegen zwei Module, die SVG-Zeichnungen erzeugen und von\nkeinem Einstieg aus erreichbar sind: `nodes/outline_renders.py` (689 Zeilen)\nund `nodes/render_main_only.py` (365 Zeilen). Sie koennen etwas, das sonst\nnichts in dieser Lane kann — NUR das Hauptgebaeude zeichnen, die Nachbarn\nhoechstens als zurueckhaltende Silhouette. Ob das gebraucht wird, haengt am\nModell des Owners, und das steht auf eurer Maschine.\n\nDer Owner hat am 22.09.2026 entschieden: nicht loeschen, sondern messen\nlassen. Genau das ist dieser Auftrag.\n\n\nWAS WIR HIER SCHON GEMESSEN HABEN (damit ihr es nicht wiederholt)\n\n* Der Hauptgebaeude-Filter (`nodes/main_building_filter.py`) wird ausser von\n  diesen zwei Modulen und von `nodes/detail_views.py` von NIEMANDEM benutzt.\n* Die vier angeschlossenen Zeichner des Add-ons (Grundriss, Ansicht, Schnitt,\n  Axonometrie) zeichnen alles, was in der Szene steht — ungefiltert.\n* `outline_renders` ist eine Vereinfachung («V13»): statt jeder Mesh-Kante\n  nur der vereinigte Geschoss-Umriss. Der eigene Kopf des Moduls nennt die\n  Groessenordnung: aus 86'000 bis 985'000 Linien je Zeichnung werden\n  «~hundert».\n* Beide brauchen eine BLENDER-Szene. Hier steht kein Blender. Darum kann\n  diese Messung nur bei euch stattfinden.\n\n\nWAS WIR BRAUCHEN — drei Angaben, und die erste ist die wichtigste\n\nV1 ist eine reine Auskunft ueber das Modell und entscheidet den Rest.\nWenn V1 «nein» ist, koennt ihr V2 und V3 weglassen — dann ist die Antwort\nschon gegeben.\n\n\nV1 · FUEHRT EIN ECHTES MODELL UEBERHAUPT NACHBARGEBAEUDE?\n\nOeffnet ein Projekt, mit dem wirklich gearbeitet wird, in Blender und\nschaut nach: stehen dort neben dem Hauptgebaeude noch andere Baukoerper —\nNachbarhaeuser, Bestand, Kontextvolumen?\n\n    ja / nein / «kommt drauf an» (dann ein Satz, worauf)\n\nUnd falls ja: erscheinen sie heute in den erzeugten Plaenen mit, oder\nraeumt sie jemand vorher von Hand weg?\n\nDiese eine Frage traegt den ganzen Auftrag. Fuehrt ein echtes Modell keine\nNachbarn, dann loest der Filter ein Problem, das es nicht gibt, und die zwei\nModule koennen fallen.\n\n\nV2 · DIESELBE SZENE ZWEIMAL ZEICHNEN, ZWEI BILDER NEBENEINANDER\n\nNur wenn V1 «ja» ist. In eurem KosmoPublish-Klon, nach `git pull`:\n\n    cd <euer KosmoPublish-Klon>\n\n    # a) der HEUTIGE Weg — der Zeichner, den das Add-on benutzt\n    #    (im Viewport: Grundriss/Ansicht/Schnitt rendern wie immer)\n    #\n    # b) der Weg dieses Auftrags, headless in Blender:\n    #\n    blender --background <euer.blend> --python-expr \"\n    import sys; sys.path.insert(0, '.')\n    import bpy\n    from nodes.render_main_only import render_floor_plan_main_only\n    r = render_main_only = render_floor_plan_main_only(\n            bpy.context.scene, 1.2, '/tmp/kp_main_only.svg',\n            sia_scale='1:200', add_context_silhouette=True)\n    print('URTEIL', r)\n    \"\n\nWenn `render_floor_plan_main_only` mit «Kein BuildingOBB-Marker» abbricht:\n**das ist selbst ein Ergebnis** und gehoert genau so gemeldet — dann\nbraucht der Weg eine Vorbereitung, die heute niemand macht.\n\nZurueck brauchen wir:\n\n    * laeuft es durch? ja / nein / Abbruchgrund (eine Zeile)\n    * die zwei Bilder nebeneinander ANGESEHEN: ist das gefilterte besser\n      lesbar? Zwei bis drei Saetze genuegen — euer Urteil als Architekt,\n      nicht eine Zahl.\n    * Dateigroesse der zwei SVG in KB (die einzige Zahl, die wir wollen)\n\n\nV3 · LOHNT DIE VEREINFACHUNG?\n\nNur wenn V2 durchlief. Dasselbe noch einmal mit `outline_renders`:\n\n    blender --background <euer.blend> --python-expr \"\n    import sys; sys.path.insert(0, '.')\n    import bpy\n    from nodes.outline_renders import extract_axo_outline\n    g = extract_axo_outline(bpy.context.scene, view='SW', sia_scale='1:200')\n    print('URTEIL', len(g.visible_lines))\n    \"\n\nZurueck: die Zahl, und ob das Ergebnis brauchbar aussieht oder zu grob ist.\n\n\nWAS WIR AUSDRUECKLICH NICHT WOLLEN\n\n* Keine Bilder zurueckschicken. Euer Urteil in Worten genuegt, und ein\n  Planbild aus einem echten Projekt darf ohnehin nicht in unser Repo\n  (Buerodaten).\n* Keine absoluten Pfade mit Benutzernamen (REGEL 3), keine Buero-, Kunden-\n  oder Wettbewerbsnamen.\n* Keine Installation, keine Maschinen-Aenderung. Alles oben laeuft mit dem,\n  was auf der HomeStation ohnehin steht.\n* Keine GPU-Last: das sind Vektor-Zeichnungen, kein Cycles-Render.\n\n«Weiss ich nicht» und «hab ich nicht ausprobiert» sind vollstaendige\nAntworten. Eine geratene waere schlechter als keine — wir wuerden daraufhin\n1054 Zeilen loeschen oder behalten.\n",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": null,
+    "hinweis": "«synthetisch» heisst hier, was euer Vertrag damit meint: es REIST NICHTS — kein Modell im Auftrag, keine Geometrie im Repo (Regel 3). Gezeichnet wird eure EIGENE Blender-Szene aus einem echten Projekt, die schon bei euch liegt; von uns kommt kein Modell und zu uns kommt keines zurueck, nur euer Urteil in Worten."
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 0,
+    "leerlauf_schwelle_mem_gb": 0,
+    "hinweise": [
+      "Keine GPU-Last: Vektor-Zeichnungen, kein Cycles-Render.",
+      "Keine Installation, keine Maschinen-Aenderung.",
+      "Keine Bilder zurueckschicken, keine absoluten Pfade (REGEL 3), keine Buero-, Kunden- oder Wettbewerbsnamen.",
+      "V1 allein genuegt, wenn die Antwort «nein» ist — dann sind V2 und V3 hinfaellig.",
+      "«Weiss ich nicht» ist eine vollstaendige Antwort."
+    ]
+  },
+  "rueckgabe": [
+    "V1 Fuehrt ein echtes Projektmodell Nachbargebaeude neben dem Hauptgebaeude? ja/nein/kommt-drauf-an. Und falls ja: erscheinen sie heute in den Plaenen mit, oder raeumt sie jemand vorher weg?",
+    "V2 (nur bei V1=ja) Laeuft `render_floor_plan_main_only` an eurer Szene durch? ja/nein/Abbruchgrund. Dazu euer Urteil in zwei bis drei Saetzen, ob das gefilterte Bild besser lesbar ist, und die Dateigroesse der zwei SVG in KB.",
+    "V3 (nur wenn V2 lief) Wieviele Linien liefert `extract_axo_outline`, und sieht das Ergebnis brauchbar aus oder zu grob?",
+    "V4 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ]
+}
