@@ -16,6 +16,14 @@ import Foundation
 //      hoechstens 50 davon (Durchsicht vom 22.09.2026 — vorher blieb jede Quittung fuer
 //      immer, und der Knopf in der Leiste zeigte dauerhaft «0 geparkt»). Was wartet oder
 //      eine Entscheidung braucht, raeumt nichts weg.
+//
+// Und eine Grenze fuer das Aufraeumen (Durchsicht vom 22.09.2026): Es bringt NIE das Oeffnen
+// oder eine Ankunftsmeldung zu Fall. Bis dahin stand es mit `try` — liess sich eine einzige
+// alte Quittung nicht loeschen, warf das Oeffnen, das Fach war in der App nicht offen, und
+// keine geparkte Skizze konnte mehr warten oder hinaus. In `melde` warf es, nachdem die
+// Ankunft schon auf der Platte stand, und die App meldete «liess sich nicht beschreiben».
+// Seither steht ein solcher Fehler in `Parkfach.aufraeumFehler`, und die Quittung bleibt
+// stehen (`ParkfachTests.testEinNichtLoeschbarerAlterEintragHaeltDasOeffnenNichtAuf`).
 
 /// Wo eine geparkte Skizze steht.
 public enum Parkzustand: Equatable, Sendable, Codable {
@@ -63,7 +71,7 @@ public enum Parkzustand: Equatable, Sendable, Codable {
 /// Eine Skizze im Fach.
 public struct Parkeintrag: Equatable, Sendable, Codable, Identifiable {
     /// Eindeutig, auf dem Gerät vergeben. **Gegen Doppelsendung:** Jeder Sendeversuch
-    /// läuft über `Parkfach.beginneSenden(_:)`, und das gibt denselben Schlüssel nur einmal
+    /// läuft über `Parkfach.beginneSenden(_:abgebrochen:jetzt:)`, und das gibt denselben Schlüssel nur einmal
     /// frei, solange er unterwegs oder angekommen ist.
     public let schluessel: String
     public let erstellt: Date
@@ -79,7 +87,8 @@ public struct Parkeintrag: Equatable, Sendable, Codable, Identifiable {
     /// — **nicht bekannt**, weil der Eintrag aus einer Fassung vor dem 22.09.2026 stammt,
     /// die ihn noch nicht mitschickte. Nie still `false`.
     ///
-    /// Gesetzt am Tor (`Parkfach.beginneSenden`). Dass die App dann wirklich über
+    /// Gesetzt am Tor (`Parkfach.beginneSenden`), und das ruft die App erst **nach** dem
+    /// Vorspiel der Marke, unmittelbar vor dem Senden. Dass die App dann wirklich über
     /// `Anfragen.skizze(_:png:anmeldung:)` sendet, die ihn mitnimmt, prüft hier keine
     /// Probe — das tut die App-Schicht (`Verbindung/Verbindungsstand.swift`).
     public internal(set) var schluesselGesendet: Bool?
@@ -119,6 +128,59 @@ public struct Parkeintrag: Equatable, Sendable, Codable, Identifiable {
         case .ungewiss: return !gehtVonSelbst
         default: return false
         }
+    }
+}
+
+/// Was der Knopf zum Parkfach zählt — **jede Skizze in genau einem Fach der Zählung**
+/// (angekommene in keinem: sie sind Quittungen).
+///
+/// Warum getrennt gezählt wird (Durchsicht vom 22.09.2026): Bis dahin stand im Knopf
+/// «geparkt» für alles, was von selbst hinausgeht — auch für ungewisse Skizzen, die mit
+/// ihrem Schlüssel nochmals gehen. Die sind aber nicht geparkt (so heisst auf dem Blatt
+/// «Skizzen» nur, was auf dem iPad wartet, weil die HomeStation nicht erreichbar ist),
+/// sondern **ungewiss**: vielleicht schon drüben. Das Wort im Knopf ist jetzt das Wort,
+/// das die Liste des Fachs über dieselbe Skizze schreibt (`Parkzustand.wort`), und «offen»
+/// für alles, was einen Menschen braucht. `ParkfachTests.testDerKnopfZaehltUngewisseNichtAlsGeparkt`
+/// bewacht es.
+public struct Fachzaehlung: Equatable, Sendable {
+    /// Ein Teil der Anzeige: die Zahl und ihr Wort.
+    public struct Teil: Equatable, Sendable {
+        public let zahl: Int
+        public let wort: String
+    }
+
+    /// Wartet auf das Senden und war noch nie ungewiss hinaus (`Parkzustand.geparkt`).
+    public let geparkt: Int
+    /// Ungewiss, geht aber mit dem Schlüssel von selbst noch einmal.
+    public let ungewiss: Int
+    public let unterwegs: Int
+    /// Braucht eine Entscheidung eines Menschen (`Parkeintrag.brauchtEntscheid`).
+    public let offen: Int
+
+    public init(_ eintraege: [Parkeintrag]) {
+        var g = 0, u = 0, w = 0, o = 0
+        for e in eintraege {
+            switch e.zustand {
+            case .geparkt: g += 1
+            case .unterwegs: w += 1
+            case .ungewiss: if e.gehtVonSelbst { u += 1 } else { o += 1 }
+            case .abgewiesen: o += 1
+            case .angekommen: break
+            }
+        }
+        geparkt = g
+        ungewiss = u
+        unterwegs = w
+        offen = o
+    }
+
+    /// Die Teile, die der Knopf zeigt — **nur die, die nicht null sind**, in fester Folge.
+    /// Leer heisst: Es liegen nur Quittungen im Fach (oder nichts).
+    public var teile: [Teil] {
+        [Teil(zahl: geparkt, wort: Parkzustand.geparkt.wort),
+         Teil(zahl: ungewiss, wort: Parkzustand.ungewiss(grund: "").wort),
+         Teil(zahl: unterwegs, wort: Parkzustand.unterwegs.wort),
+         Teil(zahl: offen, wort: "offen")].filter { $0.zahl > 0 }
     }
 }
 
@@ -189,13 +251,32 @@ public final class Parkfach {
     /// Dateien, die wie Einträge aussehen und sich nicht lesen liessen. **Gemeldet, nicht
     /// übergangen** — und nicht gelöscht.
     public private(set) var unlesbar: [String] = []
+    /// Warum sich beim letzten Aufräumen eine alte Quittung nicht löschen liess — `nil`,
+    /// wenn das letzte Aufräumen alles weggenommen hat, was gehen sollte.
+    ///
+    /// **Getrennt geführt, nicht geworfen** (Durchsicht vom 22.09.2026): Eine Quittung, die
+    /// stehen bleibt, schadet niemandem; ein Fach, das deswegen nicht aufgeht, hält jede
+    /// wartende Skizze fest.
+    public private(set) var aufraeumFehler: String?
+
+    /// Wie eine Datei gelöscht wird. Nur für Proben anders als die Vorgabe: Eine Datei, die
+    /// sich nicht löschen lässt, gibt es unter Linux als Verwalter nicht (Schreibschutz
+    /// wirkt dort nicht), und ein nicht leerer Ordner an ihrer Stelle wird mitgelöscht.
+    private let loesche: (URL) throws -> Void
 
     /// Öffnet (oder legt an) das Fach in `ordner` und liest, was darin liegt.
     ///
     /// Was beim letzten Schliessen **unterwegs** war, wird `ungewiss`: Die App wurde mitten
     /// im Senden beendet, und ob die Skizze drüben liegt, weiss hier niemand.
-    public init(ordner: URL, jetzt: Date = Date()) throws {
+    ///
+    /// `loesche` bleibt in der App bei der Vorgabe; eine Probe setzt es, um ein Löschen
+    /// scheitern zu lassen (siehe `aufraeumFehler`).
+    public init(ordner: URL, jetzt: Date = Date(),
+                loesche: @escaping (URL) throws -> Void = {
+                    try FileManager.default.removeItem(at: $0)
+                }) throws {
         self.ordner = ordner
+        self.loesche = loesche
         try FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
         try lade(jetzt: jetzt)
     }
@@ -208,7 +289,8 @@ public final class Parkfach {
         eintraege.first { $0.gehtVonSelbst }
     }
 
-    /// Wie viele auf das Senden warten (von selbst).
+    /// Wie viele von selbst hinausgehen: geparkte **und** ungewisse mit Schlüssel. Für den
+    /// Knopf nicht als eine Zahl gedacht — dort zählt `Fachzaehlung` beide getrennt.
     public var wartend: Int { eintraege.filter { $0.gehtVonSelbst }.count }
 
     /// Wie viele eine Entscheidung eines Menschen brauchen.
@@ -243,13 +325,43 @@ public final class Parkfach {
         return e
     }
 
+    /// Legt die Bilder eines Ablageplans ins Fach (`Ablageplan.parke`) — **jedes mit
+    /// derselben Unterlage** und unter dem Namen seines Teils. Der Weg, den «In die Mappe
+    /// legen» nimmt (`Verbindungsstand.legeInDieMappe`), seit dem 23.09.2026: Bis dahin
+    /// parkte die App jede Skizze ohne `ueber`, und der Server rechnete sie auf Grau.
+    ///
+    /// Die Unterlage steht im Eintrag auf der Platte und **überlebt den Neustart der App**
+    /// (`BlattunterlageTests.testDieUnterlageGehtDurchFachUndNeustartBisInDieAnfrage`).
+    /// Scheitert ein Bild, ist, was davor lag, schon geparkt — und geht auch hinaus.
+    @discardableResult
+    public func parke(_ bilder: [Ebenenausgabe.Bild], ueber: String?,
+                      ordner zielordner: String?, jetzt: Date = Date()) throws -> [Parkeintrag] {
+        var gelegt: [Parkeintrag] = []
+        for bild in bilder {
+            gelegt.append(try parke(png: bild.png, ueber: ueber, name: bild.name,
+                                    ordner: zielordner, jetzt: jetzt))
+        }
+        return gelegt
+    }
+
     /// **Das Tor gegen Doppelsendung.** Gibt eine Skizze zum Senden frei — nur, wenn sie
     /// von selbst geht (`Parkeintrag.gehtVonSelbst`) — und hält `unterwegs` auf der Platte
     /// fest, **bevor** gesendet wird.
     ///
     /// `nil` heisst: nicht senden. Eine Skizze, die unterwegs, angekommen oder abgewiesen
     /// ist, kommt hier nicht noch einmal durch; eine ungewisse nur mit Schlüssel.
-    public func beginneSenden(_ schluessel: String, jetzt: Date = Date()) throws -> Parkeintrag? {
+    ///
+    /// **Das Tor ist der letzte Schritt vor dem ersten Byte** (Durchsicht vom 22.09.2026).
+    /// Bis dahin rief die App es vor dem Vorspiel der Marke (0,4 s): `unterwegs`, ein
+    /// Versuch mehr und «Schlüssel ging mit» standen dann schon auf der Platte, und ein
+    /// Abbruch im Vorspiel wurde verschluckt — gesendet wurde trotzdem. Jetzt spielt die
+    /// App das Vorspiel zuerst und fragt dann hier, mit `abgebrochen`: Ist das Senden
+    /// inzwischen abgebrochen, gibt das Tor nichts frei und **schreibt nichts** — die
+    /// Skizze steht, wie sie vorher stand (`ParkfachTests.testEinAbbruchVorDemTorLaesstDenEintragUnberuehrt`).
+    /// Dass die App es wirklich nach dem Vorspiel ruft, prüft hier keine Probe.
+    public func beginneSenden(_ schluessel: String, abgebrochen: Bool,
+                              jetzt: Date = Date()) throws -> Parkeintrag? {
+        guard !abgebrochen else { return nil }
         guard var e = eintrag(schluessel), e.gehtVonSelbst else { return nil }
         guard FileManager.default.fileExists(atPath: pngDatei(schluessel).path) else {
             e.zustand = .abgewiesen(grund: "Die Zeichnung fehlt im Fach — es gibt nichts "
@@ -290,7 +402,9 @@ public final class Parkfach {
             // ERST DER EINTRAG, DANN DIE ZEICHNUNG WEG. Andersherum laege nach einem
             // Absturz dazwischen ein Eintrag «unterwegs» ohne Zeichnung da.
             try? FileManager.default.removeItem(at: pngDatei(schluessel))
-            try raeumeAuf(jetzt: jetzt)
+            // DAS AUFRAEUMEN WIRFT NICHT: Die Ankunft steht schon auf der Platte, und ein
+            // Fehler hier ist keiner der Meldung (siehe `aufraeumFehler`).
+            raeumeAuf(jetzt: jetzt)
         }
         return true
     }
@@ -304,8 +418,12 @@ public final class Parkfach {
     /// warten auf das Senden oder auf einen Menschen.
     ///
     /// Gerufen beim Öffnen und nach jeder Ankunft; von aussen nur für Proben nötig.
+    ///
+    /// **Wirft nicht.** Lässt sich eine Quittung nicht löschen, bleibt sie im Fach stehen
+    /// (auf der Platte und hier), der Grund steht in `aufraeumFehler`, und die übrigen
+    /// gehen trotzdem. Das nächste Aufräumen versucht es wieder.
     @discardableResult
-    public func raeumeAuf(jetzt: Date = Date()) throws -> Int {
+    public func raeumeAuf(jetzt: Date = Date()) -> Int {
         let angekommen = eintraege.filter {
             if case .angekommen = $0.zustand { return true }
             return false
@@ -316,12 +434,27 @@ public final class Parkfach {
             || jetzt.timeIntervalSince(e.geaendert) > Parkfach.angekommenHoechstensAlter {
             weg.append(e)
         }
+        var gegangen = 0
+        var fehler: [String] = []
         for e in weg {
             try? FileManager.default.removeItem(at: pngDatei(e.schluessel))
-            try FileManager.default.removeItem(at: eintragsDatei(e.schluessel))
+            do {
+                try loesche(eintragsDatei(e.schluessel))
+            } catch {
+                // SCHON WEG IST WEG: Hat jemand die Datei inzwischen entfernt, ist erreicht,
+                // was das Aufraeumen wollte. Nur was noch DA ist, ist ein Fehler.
+                if FileManager.default.fileExists(atPath: eintragsDatei(e.schluessel).path) {
+                    fehler.append("\(e.schluessel).json (\(error.localizedDescription))")
+                    continue
+                }
+            }
             eintraege.removeAll { $0.schluessel == e.schluessel }
+            gegangen += 1
         }
-        return weg.count
+        aufraeumFehler = fehler.isEmpty ? nil
+            : "\(fehler.count) alte Quittung(en) liessen sich nicht löschen und bleiben "
+                + "stehen: " + fehler.joined(separator: ", ")
+        return gegangen
     }
 
     /// Eine abgewiesene oder ungewisse Skizze **auf Wunsch eines Menschen** wieder ins
@@ -429,7 +562,9 @@ public final class Parkfach {
         eintraege = gelesen
         unlesbar = fehlerhaft.sorted()
         sortiere()
-        try raeumeAuf(jetzt: jetzt)
+        // DAS AUFRAEUMEN WIRFT NICHT: Eine alte Quittung, die stehen bleibt, darf das Fach
+        // nicht verschliessen (siehe `aufraeumFehler`).
+        raeumeAuf(jetzt: jetzt)
     }
 }
 
@@ -450,7 +585,8 @@ public enum Flugbahn {
     public enum Phase: Equatable, Sendable {
         /// Die Skizze schrumpft auf die Marke (am iPad).
         case ablegen
-        /// Die Marke wandert an den Rand (noch am iPad).
+        /// Die Marke wandert an den Rand, an dem der Rechner sitzt (Blatt «Verbindung»,
+        /// Augenblick 2) — noch am iPad, aber schon in der Richtung des Ziels: `Flugbahn.rand`.
         case abheben
         /// Bytes gehen hinaus. `gesamt` `nil` oder 0: **nicht gezählt.**
         case flug(gesendet: Int64, gesamt: Int64?)
@@ -464,6 +600,17 @@ public enum Flugbahn {
 
     /// Wie weit die Marke vor der Bestätigung höchstens kommt (Anteil des Wegs).
     public static let haltepunkt = 0.92
+
+    /// Wo der Rand des iPads auf dem Faden liegt (Anteil des Wegs): dorthin hebt die Marke
+    /// ab, und dort beginnt der Flug.
+    ///
+    /// Das Blatt «Verbindung» sagt zum Abheben: *«Die Marke wandert an den Rand, an dem der
+    /// Rechner sitzt. Die Richtung ist die Richtung.»* Bis zur Durchsicht vom 22.09.2026
+    /// gab `ort(.abheben)` 0 wie das Ablegen — die Marke stand still, wo das Blatt eine
+    /// Bewegung zum Ziel hin zeigt. Der Wert selbst ist gesetzt, nicht gemessen: eine
+    /// sichtbare Strecke, klein genug, dass niemand sie für Übertragung hält.
+    /// `ParkfachTests.testBeimAbhebenWandertDieMarkeAnDenRandZumZiel` bewacht die Richtung.
+    public static let rand = 0.08
 
     // Die Zeiten des Entwurfs, in Sekunden.
     public static let ablegen = 0.22
@@ -529,14 +676,17 @@ public enum Flugbahn {
         return min(max(Double(gesendet) / Double(g), 0), 1)
     }
 
-    /// Der Ort der Marke: 0 am iPad, 1 am Ziel.
+    /// Der Ort der Marke: 0 am iPad, `rand` am Rand des iPads, 1 am Ziel.
     public static func ort(_ phase: Phase) -> Double {
         switch phase {
-        case .ablegen, .abheben, .zurueck:
+        case .ablegen, .zurueck:
             return 0
+        case .abheben:
+            return rand
         case .flug:
-            // NICHT GEZAEHLT HEISST: DIE MARKE BLEIBT, WO SIE IST — am Rand des iPads.
-            return (anteil(phase) ?? 0) * haltepunkt
+            // NICHT GEZAEHLT HEISST: DIE MARKE BLEIBT, WO SIE IST — am Rand des iPads. Gezaehlt
+            // geht sie vom Rand bis zum Haltepunkt, nie zurueck hinter den Rand.
+            return rand + (anteil(phase) ?? 0) * (haltepunkt - rand)
         case .warten:
             return haltepunkt
         case .eingerastet:

@@ -56,6 +56,7 @@ from __future__ import annotations
 
 import copy
 import datetime
+import hashlib
 import inspect
 import json
 import math
@@ -818,16 +819,21 @@ SKIZZEN_VORSATZ = "skizze"
 #: Strichen vor Schwarz.
 #:
 #: **Warum Grau, und warum GESETZT und nicht gemessen.** Ohne Unterlage gibt es kein
-#: Bild, dessen Helligkeit das Ergebnis erben soll. Schwarz (der alte, stille Zustand)
-#: zieht das Bild bei ``denoise`` unter eins ins Dunkle, Weiss ins Überbelichtete; der
-#: dunkle Blattgrund der App (#191d23) ist eine Bühnenfarbe und keine Aussage über das
-#: Bild. Die Mitte der Skala drückt in keine Richtung. Ob ein anderes Grau bessere Bilder
-#: gibt, ist **am Gerät unbestätigt**; die Zahl steht an einer Stelle.
+#: Bild, dessen Helligkeit das Ergebnis erben soll. **Angenommen, nicht gemessen**
+#: (Durchsicht der Welle 2, 22.09.2026: Hier stand es wie ein Befund): Schwarz (der alte,
+#: stille Zustand) zöge das Bild bei ``denoise`` unter eins ins Dunkle, Weiss ins
+#: Überbelichtete — kein Lauf hat das je verglichen. Der dunkle Blattgrund der App
+#: (#191d23) ist eine Bühnenfarbe und keine Aussage über das Bild. Die Mitte der Skala
+#: drückt, so die Annahme, in keine Richtung. Ob ein anderes Grau (oder Grau überhaupt)
+#: bessere Bilder gibt, ist **gesetzt, nicht gemessen**; die Zahl steht an einer Stelle.
+#: Bewacht ist nur, dass der Grund dieser Konstante folgt und nicht Schwarz ist
+#: (``tests/test_skizze_auf_unterlage.py``).
 NEUTRALER_GRUND = (128, 128, 128)
 
 #: Wohin in der Mappe das zusammengesetzte Eingangsbild eines Skizzenlaufs geschrieben
-#: wird — ``<mappe>/eingang/<skizze>.png``. In der Mappe, damit es mit ihr umzieht und
-#: nachzusehen ist, was der Nachrender wirklich bekam.
+#: wird — ``<mappe>/eingang/<stamm>-<pruefsumme>.png``. In der Mappe, damit es mit ihr
+#: umzieht und nachzusehen ist, was der Nachrender wirklich bekam. Den Namen bildet
+#: :func:`_eingangsname`.
 EINGANGSORDNER = "eingang"
 
 
@@ -964,6 +970,25 @@ def setze_auf_unterlage(skizze, ziel, *, unterlage=None) -> dict:
     return {"bild": ziel, "breite": t_breite, "hoehe": t_hoehe, "gestreckt": gestreckt}
 
 
+def _eingangsname(skizze: str) -> str:
+    """Der Dateiname des Eingangsbilds einer Skizze: ``<stamm>-<pruefsumme>.png``.
+
+    **Eindeutig je Skizzenname** (Durchsicht der Welle 2, 22.09.2026): Bis dahin hiess es
+    ``<stamm>.png``. Zwei Skizzen mit gleichem Stamm aus verschiedenen Unterordnern
+    (``a/skizze.png``, ``b/skizze.png``) schrieben in einer Ebenen-Reihe **dieselbe
+    Datei** — und weil alle Eingangsbilder vor dem ersten Lauf entstehen, rechneten beide
+    Ebenen auf dem Eingang der zweiten. Die Prüfsumme (die ersten zwölf Zeichen des
+    SHA-256 über den Namen, wie er in der Mappe steht) trennt sie; der Stamm bleibt
+    davor, damit ein Mensch im Ordner sieht, wozu die Datei gehört.
+
+    **Gleich bei jedem Lauf derselben Skizze**, und das mit Absicht: Eine laufende
+    Nummer änderte den Pfad, der als Parameter in den Graphen geht, und damit jeden
+    Zwischenspeicher-Schlüssel dahinter.
+    """
+    summe = hashlib.sha256(str(skizze).encode("utf-8")).hexdigest()[:12]
+    return f"{Path(str(skizze)).stem}-{summe}.png"
+
+
 def _eingangsbild(p: dict, wurzel: Path, name: str, pfad_skizze: Path, ueber) -> dict:
     """Die Skizze auf ihre Unterlage aus der Mappe setzen: ``{pfad, herkunft}``.
 
@@ -999,19 +1024,23 @@ def _eingangsbild(p: dict, wurzel: Path, name: str, pfad_skizze: Path, ueber) ->
                 f"Mappe. Die Mappe nennt sie, aber es gibt nichts, worauf die Skizze "
                 f"gesetzt werden könnte.")
 
-    ziel = Path(wurzel) / EINGANGSORDNER / f"{Path(name).stem}.png"
+    ziel = Path(wurzel) / EINGANGSORDNER / _eingangsname(name)
     try:
         gesetzt = setze_auf_unterlage(pfad_skizze, ziel, unterlage=unterlage)
     except (bildlesen.BildError, bildschreiben.SchreibError) as fehler:
         raise ArbeitsgangError(
             f"Die Skizze {name!r} liess sich nicht auf ihre Unterlage setzen: "
             f"{fehler}") from fehler
+    # DIESE SAETZE STEHEN SEIT DEM 23.09.2026 NEBEN DEM BILD (der Server der Flaeche
+    # reicht sie ohne Unterlage und gestreckt als Hinweis durch) — sie sind fuer einen
+    # Menschen geschrieben, nicht fuer die Fehlersuche.
     if ueber is None:
-        grund = (f"Ohne Unterlage gezeichnet — gesetzt auf ein neutrales Grau "
-                 f"{NEUTRALER_GRUND}, nicht auf Schwarz.")
+        grund = (f"Ohne Unterlage gezeichnet — gerechnet auf neutralem Grau "
+                 f"{NEUTRALER_GRUND} statt auf einem Bild.")
     elif gesetzt["gestreckt"]:
         grund = (f"Auf {ueber!r} gesetzt; Skizze und Unterlage haben nicht dasselbe "
-                 f"Seitenverhältnis — die Skizze wurde auf das Bild GESTRECKT.")
+                 f"Seitenverhältnis — die Skizze wurde auf das Bild GESTRECKT und sitzt "
+                 f"darum verzerrt darauf.")
     else:
         grund = f"Auf {ueber!r} gesetzt, Blatt auf Bild."
     return {"pfad": gesetzt["bild"],
@@ -1297,10 +1326,15 @@ def _vermerke_und_speichere(p: dict, wurzel: Path, gerechnet: list, stand, *,
     dass während eines Laufs (bis zu Stunden) kein Name vergeben und keine Skizze
     abgelegt werden kann — und die Skizze kommt gerade dann, wenn der Mensch wartet.
     Stattdessen trägt der Lauf, wenn er kollidiert, seine Vermerke **auf den frischen
-    Stand** noch einmal ein. Das ist unbedenklich, weil ein Lauf nur **hinzufügt**
-    (Bilder, Läufe, «gerechnet» an seiner Skizze) — derselbe Grund, aus dem die Fläche das
-    Ablegen einer Skizze wiederholen darf. Ein Name, den der andere vergab, bleibt:
-    ``vermerke_bild`` übernimmt ihn vom Eintrag, den es ersetzt.
+    Stand** noch einmal ein. Bilder und Läufe fügt er nur **hinzu** — derselbe Grund,
+    aus dem die Fläche das Ablegen einer Skizze wiederholen darf. Ein Name, den der andere
+    vergab, bleibt: ``vermerke_bild`` übernimmt ihn vom Eintrag, den es ersetzt.
+
+    **Nur hinzufügen stimmt an einer Stelle nicht, und dort wird nachgesehen:** am
+    Skizzeneintrag. ``markiere_skizze`` **überschreibt** ``stand`` und ``ergebnis``. Wurde
+    die Skizze während des Laufs verworfen, drehte das Nachholen sie still zurück auf
+    «gerechnet» (Durchsicht der Welle 2, 22.09.2026). Seither entscheidet
+    :func:`_vermerke_skizze_des_laufs` auf dem frischen Stand — siehe dort.
 
     Returns:
         ``(projekt, pfad, vermerkt, bildnamen)`` — das Projekt ist das **gespeicherte**.
@@ -1323,8 +1357,7 @@ def _vermerke_und_speichere(p: dict, wurzel: Path, gerechnet: list, stand, *,
                 # GERECHNET HEISST: EIN BILD IST DARAUS ENTSTANDEN. Ohne Bild bleibt die
                 # Skizze, wie sie war — ein gescheiterter oder angehaltener Lauf hat
                 # nichts aus ihr gemacht.
-                projekt.markiere_skizze(p, skizze=plan["skizze"],
-                                        stand=projekt.SKIZZE_GERECHNET, ergebnis=namen[-1])
+                _vermerke_skizze_des_laufs(p, plan["skizze"], namen[-1])
         try:
             return p, projekt.speichere(p, wurzel), vermerkt, bilder
         except projekt.ProjektKollision:
@@ -1334,6 +1367,35 @@ def _vermerke_und_speichere(p: dict, wurzel: Path, gerechnet: list, stand, *,
             # ueberholt; was der andere geschrieben hat, steht nur in der neuen.
             p = projekt.oeffne(wurzel)["projekt"]
     raise AssertionError("unerreichbar")  # pragma: no cover
+
+
+def _vermerke_skizze_des_laufs(p: dict, skizze: str, bild: str) -> None:
+    """An der Skizze eines Laufs vermerken, was daraus wurde — **ohne einen Entscheid
+    zurückzudrehen, der während des Laufs fiel.**
+
+    * **Verworfen** (während des Laufs, auf dem frischen Stand): Sie **bleibt verworfen**.
+      Das Ergebnis wird vermerkt — das Bild ist entstanden und steht in der Mappe, und
+      die Skizze soll es nennen können —, der Stand nicht. *Wer eine Skizze verwirft,
+      während sie rechnet, hat entschieden; ein Lauf, der danach fertig wird, weiss nichts
+      Neueres.* Bis zum 22.09.2026 (Durchsicht der Welle 2) wurde sie still «gerechnet».
+    * **Nicht (mehr) genau einmal in der Mappe:** nichts vermerkt. ``markiere_skizze``
+      würfe hier, und die Ausnahme nähme **alle** Vermerke des Laufs mit — genau der
+      Verlust, gegen den das Nachholen gebaut ist. Das Bild nennt seine Skizze weiter
+      (``herkunft.skizze``).
+    * Sonst: «gerechnet», mit diesem Bild als Ergebnis.
+
+    Bewacht über den Produktweg (eine Sonde verwirft bzw. entfernt die Skizze mitten im
+    Lauf) in ``tests/test_durchsicht_w2b_kern_server.py``.
+    """
+    treffer = [e for e in (p.get("skizzen") or [])
+               if isinstance(e, dict) and e.get("skizze") == skizze]
+    if len(treffer) != 1:
+        return
+    if treffer[0].get("stand") == projekt.SKIZZE_VERWORFEN:
+        projekt.markiere_skizze(p, skizze=skizze, stand=projekt.SKIZZE_VERWORFEN,
+                                ergebnis=bild)
+        return
+    projekt.markiere_skizze(p, skizze=skizze, stand=projekt.SKIZZE_GERECHNET, ergebnis=bild)
 
 
 def _zahl_zu(knoten_ergebnisse: dict, qa_id: str | None) -> tuple:

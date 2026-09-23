@@ -858,13 +858,14 @@ def benenne(wurzel, *, titel: str | None, bild: str | None = None,
             steht bei einer Skizze mehrfach da), oder der Name ist unbrauchbar (zu lang,
             mit Zeilenumbruch oder Steuerzeichen — auch den Unicode-Trennern U+2028,
             U+2029 und dem Steuerzeichen U+0085, die in einer Anzeige umbrechen).
+        ProjektKollision: Auf der Platte liegt ein neuerer Stand als ``von_stand``.
 
     **Kein Schutz gegen einen gleichzeitigen Lauf nötig, und das ist entschieden**
     (22.09.2026): Benennt jemand, während ein Lauf rechnet, holt der Lauf beim Speichern
     diesen neueren Stand nach, statt ihn zu überschreiben oder selbst zu scheitern
-    (``arbeitsgang._vermerke_und_speichere``). Die Laufsperre zu nehmen hiesse, während
+    (``arbeitsgang._vermerke_und_speichere``; bewacht in
+    ``tests/test_durchsicht_kern_server.py``). Die Laufsperre zu nehmen hiesse, während
     eines Laufs von Stunden keinen Namen vergeben zu können.
-        ProjektKollision: Auf der Platte liegt ein neuerer Stand als ``von_stand``.
     """
     if (bild is None) == (skizze is None):
         raise ProjektError(

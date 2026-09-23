@@ -27,7 +27,7 @@ final class ParkfachTests: XCTestCase {
     /// Ein Sendeversuch, wie die App ihn fährt: Tor, dann Meldung.
     @discardableResult
     private func sende(_ fach: Parkfach, _ ergebnis: Sendeergebnis) throws -> Parkeintrag? {
-        guard let e = fach.naechster, let frei = try fach.beginneSenden(e.schluessel) else {
+        guard let e = fach.naechster, let frei = try fach.beginneSenden(e.schluessel, abgebrochen: false) else {
             return nil
         }
         try fach.melde(frei.schluessel, ergebnis)
@@ -69,13 +69,13 @@ final class ParkfachTests: XCTestCase {
                        .angekommen(skizze: "skizze-20260922-081207.png",
                                    hinweis: "Abgelegt, aber NICHT gerechnet"))
         XCTAssertNil(fach.naechster)
-        XCTAssertNil(try fach.beginneSenden(e.schluessel), "das Tor bleibt zu")
+        XCTAssertNil(try fach.beginneSenden(e.schluessel, abgebrochen: false), "das Tor bleibt zu")
         XCTAssertFalse(try fach.nochEinmal(e.schluessel), "auch nicht auf Wunsch")
         XCTAssertNil(fach.png(e.schluessel), "die Zeichnung liegt drüben, nicht mehr hier")
 
         let wieder = try Parkfach(ordner: ordner)
         XCTAssertNil(wieder.naechster)
-        XCTAssertNil(try wieder.beginneSenden(e.schluessel))
+        XCTAssertNil(try wieder.beginneSenden(e.schluessel, abgebrochen: false))
         XCTAssertEqual(wieder.eintrag(e.schluessel)?.zustand.wort, "angekommen",
                        "die Quittung bleibt stehen")
     }
@@ -83,8 +83,8 @@ final class ParkfachTests: XCTestCase {
     func testUnterwegsGehtNichtEinZweitesMalDurchDasTor() throws {
         let fach = try Parkfach(ordner: ordner)
         let e = try fach.parke(png: zeichnung)
-        XCTAssertNotNil(try fach.beginneSenden(e.schluessel))
-        XCTAssertNil(try fach.beginneSenden(e.schluessel), "zwei Schleifen, eine Sendung")
+        XCTAssertNotNil(try fach.beginneSenden(e.schluessel, abgebrochen: false))
+        XCTAssertNil(try fach.beginneSenden(e.schluessel, abgebrochen: false), "zwei Schleifen, eine Sendung")
         XCTAssertNil(fach.naechster)
         XCTAssertEqual(fach.eintrag(e.schluessel)?.versuche, 1)
     }
@@ -92,7 +92,7 @@ final class ParkfachTests: XCTestCase {
     func testEineZweiteMeldungFuerDieselbeSendungAendertNichts() throws {
         let fach = try Parkfach(ordner: ordner)
         let e = try fach.parke(png: zeichnung)
-        _ = try fach.beginneSenden(e.schluessel)
+        _ = try fach.beginneSenden(e.schluessel, abgebrochen: false)
         XCTAssertTrue(try fach.melde(e.schluessel, .aus(status: 200, daten: quittung())))
         XCTAssertFalse(try fach.melde(e.schluessel, .nichtErreicht(grund: "spät")))
         XCTAssertEqual(fach.eintrag(e.schluessel)?.zustand.wort, "angekommen")
@@ -104,7 +104,7 @@ final class ParkfachTests: XCTestCase {
     func testWasBeimSchliessenUnterwegsWarIstUngewissUndGehtMitSchluesselVonSelbst() throws {
         let fach = try Parkfach(ordner: ordner)
         let e = try fach.parke(png: zeichnung)
-        _ = try fach.beginneSenden(e.schluessel)
+        _ = try fach.beginneSenden(e.schluessel, abgebrochen: false)
         // Die App wird hier beendet — keine Meldung mehr.
 
         let wieder = try Parkfach(ordner: ordner)
@@ -120,7 +120,7 @@ final class ParkfachTests: XCTestCase {
         XCTAssertEqual(wieder.brauchenEntscheid, 0)
 
         // Die Wiederholung geht durch das Tor, und die Antwort macht ein Wissen daraus.
-        let frei = try XCTUnwrap(try wieder.beginneSenden(e.schluessel))
+        let frei = try XCTUnwrap(try wieder.beginneSenden(e.schluessel, abgebrochen: false))
         XCTAssertEqual(frei.versuche, 2)
         try wieder.melde(e.schluessel, .aus(status: 200, daten: quittung()))
         XCTAssertEqual(wieder.eintrag(e.schluessel)?.zustand.wort, "angekommen")
@@ -145,7 +145,7 @@ final class ParkfachTests: XCTestCase {
         XCTAssertNil(alt.schluesselGesendet, "nicht bekannt — und nicht still «nein»")
         XCTAssertEqual(alt.zustand, .ungewiss(grund: "abgerissen"))
         XCTAssertNil(wieder.naechster, "nicht von selbst — sie könnte drüben liegen")
-        XCTAssertNil(try wieder.beginneSenden(e.schluessel), "auch nicht am Tor vorbei")
+        XCTAssertNil(try wieder.beginneSenden(e.schluessel, abgebrochen: false), "auch nicht am Tor vorbei")
         XCTAssertEqual(wieder.brauchenEntscheid, 1)
 
         XCTAssertTrue(try wieder.nochEinmal(e.schluessel), "ein Mensch darf sie schicken")
@@ -166,7 +166,7 @@ final class ParkfachTests: XCTestCase {
         XCTAssertFalse(nach.gehtVonSelbst)
         XCTAssertTrue(nach.brauchtEntscheid)
         XCTAssertTrue(try fach.nochEinmal(e.schluessel), "ein Mensch darf weiter")
-        XCTAssertNotNil(try fach.beginneSenden(e.schluessel))
+        XCTAssertNotNil(try fach.beginneSenden(e.schluessel, abgebrochen: false))
     }
 
     // --------------------------------------------- 3 · abgewiesen bleibt mit Grund
@@ -214,7 +214,7 @@ final class ParkfachTests: XCTestCase {
 
     private func angekommen(_ fach: Parkfach, am zeit: Date) throws -> Parkeintrag {
         let e = try fach.parke(png: zeichnung, jetzt: zeit)
-        _ = try XCTUnwrap(try fach.beginneSenden(e.schluessel, jetzt: zeit))
+        _ = try XCTUnwrap(try fach.beginneSenden(e.schluessel, abgebrochen: false, jetzt: zeit))
         try fach.melde(e.schluessel, .aus(status: 200, daten: quittung()), jetzt: zeit)
         return e
     }
@@ -258,6 +258,155 @@ final class ParkfachTests: XCTestCase {
             .eintraege.count, Parkfach.angekommenHoechstens, "auch nach dem Neustart")
     }
 
+    // ------------------------ 4b · das Aufräumen bringt nichts zu Fall (22.09.2026)
+
+    /// Ein Löschen, das für genau eine Datei scheitert. Unter Linux als Verwalter gibt es
+    /// keine Datei, die sich nicht löschen lässt (Schreibschutz wirkt nicht, und ein nicht
+    /// leerer Ordner an ihrer Stelle wird mitgelöscht) — darum hier gesetzt.
+    private func klemmt(_ name: String) -> (URL) throws -> Void {
+        { url in
+            if url.lastPathComponent == name { throw CocoaError(.fileWriteNoPermission) }
+            try FileManager.default.removeItem(at: url)
+        }
+    }
+
+    func testEinNichtLoeschbarerAlterEintragHaeltDasOeffnenNichtAuf() throws {
+        let tag: TimeInterval = 24 * 3600
+        let fach = try Parkfach(ordner: ordner)
+        let alt = try angekommen(fach, am: t0)
+        let wartet = try fach.parke(png: zeichnung, jetzt: t0.addingTimeInterval(1))
+        let datei = ordner.appendingPathComponent(alt.schluessel + ".json")
+
+        // Acht Tage spaeter: Die Quittung soll gehen, laesst sich aber nicht loeschen.
+        let wieder = try Parkfach(ordner: ordner, jetzt: t0.addingTimeInterval(8 * tag),
+                                  loesche: klemmt(alt.schluessel + ".json"))
+        XCTAssertEqual(wieder.naechster?.schluessel, wartet.schluessel,
+                       "das Fach ist offen, und die geparkte Skizze wartet")
+        XCTAssertEqual(wieder.png(wartet.schluessel), zeichnung)
+        XCTAssertNotNil(wieder.eintrag(alt.schluessel), "die Quittung bleibt stehen, wie auf der Platte")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: datei.path))
+        let fehler = try XCTUnwrap(wieder.aufraeumFehler, "der Fehler steht im Feld")
+        XCTAssertTrue(fehler.contains(alt.schluessel), fehler)
+
+        // Und sie geht hinaus.
+        try sende(wieder, .aus(status: 200, daten: quittung()))
+        XCTAssertEqual(wieder.eintrag(wartet.schluessel)?.zustand.wort, "angekommen")
+
+        // Laesst sich die Datei wieder loeschen, geht sie beim naechsten Oeffnen — und das
+        // Feld ist leer.
+        let danach = try Parkfach(ordner: ordner, jetzt: t0.addingTimeInterval(8 * tag))
+        XCTAssertNil(danach.eintrag(alt.schluessel))
+        XCTAssertNil(danach.aufraeumFehler)
+    }
+
+    func testEineAnkunftGiltAuchWennDasAufraeumenDanachScheitert() throws {
+        let tag: TimeInterval = 24 * 3600
+        let alt = UUID().uuidString
+        let fach = try Parkfach(ordner: ordner, loesche: klemmt(alt + ".json"))
+        // Eine alte Quittung unter dem Namen, dessen Loeschen scheitert.
+        let a = try fach.parke(png: zeichnung, jetzt: t0)
+        _ = try XCTUnwrap(try fach.beginneSenden(a.schluessel, abgebrochen: false, jetzt: t0))
+        try fach.melde(a.schluessel, .aus(status: 200, daten: quittung()), jetzt: t0)
+        let quelle = ordner.appendingPathComponent(a.schluessel + ".json")
+        var roh = try XCTUnwrap(try JSONSerialization.jsonObject(
+            with: Data(contentsOf: quelle)) as? [String: Any])
+        roh["schluessel"] = alt
+        try JSONSerialization.data(withJSONObject: roh)
+            .write(to: ordner.appendingPathComponent(alt + ".json"))
+        try FileManager.default.removeItem(at: quelle)
+
+        let offen = try Parkfach(ordner: ordner, jetzt: t0, loesche: klemmt(alt + ".json"))
+        XCTAssertNotNil(offen.eintrag(alt))
+        let neu = try offen.parke(png: zeichnung, jetzt: t0.addingTimeInterval(8 * tag))
+        _ = try XCTUnwrap(try offen.beginneSenden(neu.schluessel, abgebrochen: false,
+                                                   jetzt: t0.addingTimeInterval(8 * tag)))
+        XCTAssertTrue(try offen.melde(neu.schluessel, .aus(status: 200, daten: quittung()),
+                                      jetzt: t0.addingTimeInterval(8 * tag)),
+                      "die Meldung gilt — sie wirft nicht wegen des Aufraeumens")
+        XCTAssertNotNil(offen.aufraeumFehler)
+        XCTAssertEqual(try Parkfach(ordner: ordner, jetzt: t0.addingTimeInterval(8 * tag),
+                                    loesche: klemmt(alt + ".json"))
+            .eintrag(neu.schluessel)?.zustand.wort, "angekommen", "auf der Platte")
+    }
+
+    /// Ohne gesetztes Scheitern, an der Platte: Hat jemand eine alte Quittung schon
+    /// entfernt, ist erreicht, was das Aufräumen wollte — kein Fehler, kein Wurf.
+    func testEineSchonEntfernteQuittungGiltAlsAufgeraeumt() throws {
+        let tag: TimeInterval = 24 * 3600
+        let fach = try Parkfach(ordner: ordner)
+        let alt = try angekommen(fach, am: t0)
+        try FileManager.default.removeItem(
+            at: ordner.appendingPathComponent(alt.schluessel + ".json"))
+
+        let neu = try fach.parke(png: zeichnung, jetzt: t0.addingTimeInterval(8 * tag))
+        _ = try XCTUnwrap(try fach.beginneSenden(neu.schluessel, abgebrochen: false,
+                                                  jetzt: t0.addingTimeInterval(8 * tag)))
+        XCTAssertTrue(try fach.melde(neu.schluessel, .aus(status: 200, daten: quittung()),
+                                     jetzt: t0.addingTimeInterval(8 * tag)))
+        XCTAssertNil(fach.eintrag(alt.schluessel))
+        XCTAssertNil(fach.aufraeumFehler)
+    }
+
+    // --------------------------------------- das Tor nach dem Vorspiel (22.09.2026)
+
+    func testEinAbbruchVorDemTorLaesstDenEintragUnberuehrt() throws {
+        let fach = try Parkfach(ordner: ordner)
+        let e = try fach.parke(png: zeichnung, jetzt: t0)
+        XCTAssertNil(try fach.beginneSenden(e.schluessel, abgebrochen: true,
+                                            jetzt: t0.addingTimeInterval(1)))
+
+        // Auf der Platte, nach einem Neustart: nicht unterwegs gewesen, also nicht ungewiss.
+        let wieder = try Parkfach(ordner: ordner, jetzt: t0.addingTimeInterval(2))
+        let nach = try XCTUnwrap(wieder.eintrag(e.schluessel))
+        XCTAssertEqual(nach.zustand, .geparkt)
+        XCTAssertEqual(nach.versuche, 0, "kein Versuch gezaehlt")
+        XCTAssertNil(nach.schluesselGesendet, "nichts ging hinaus, also auch kein Schluessel")
+        XCTAssertEqual(nach.geaendert, t0)
+        XCTAssertEqual(wieder.naechster?.schluessel, e.schluessel, "sie wartet weiter")
+
+        // Eine ungewisse behaelt ihre Versuche.
+        try sende(wieder, .ohneAntwort(grund: "abgerissen"))
+        XCTAssertNil(try wieder.beginneSenden(e.schluessel, abgebrochen: true))
+        XCTAssertEqual(wieder.eintrag(e.schluessel)?.versuche, 1)
+        XCTAssertEqual(wieder.eintrag(e.schluessel)?.zustand, .ungewiss(grund: "abgerissen"))
+
+        // Ohne Abbruch geht sie gleich danach durch das Tor.
+        XCTAssertEqual(try wieder.beginneSenden(e.schluessel, abgebrochen: false)?.versuche, 2)
+    }
+
+    // ------------------------------------------------ der Knopf zählt getrennt
+
+    func testDerKnopfZaehltUngewisseNichtAlsGeparkt() throws {
+        let fach = try Parkfach(ordner: ordner)
+        let ungewiss = try fach.parke(png: zeichnung, jetzt: t0)
+        let abgewiesen = try fach.parke(png: zeichnung, jetzt: t0.addingTimeInterval(1))
+        let unterwegs = try fach.parke(png: zeichnung, jetzt: t0.addingTimeInterval(2))
+        let angekommen = try fach.parke(png: zeichnung, jetzt: t0.addingTimeInterval(3))
+        try fach.parke(png: zeichnung, jetzt: t0.addingTimeInterval(4))
+
+        _ = try fach.beginneSenden(ungewiss.schluessel, abgebrochen: false)
+        try fach.melde(ungewiss.schluessel, .ohneAntwort(grund: "abgerissen"))
+        _ = try fach.beginneSenden(abgewiesen.schluessel, abgebrochen: false)
+        try fach.melde(abgewiesen.schluessel, .abgewiesen(grund: "zu gross", code: 400))
+        _ = try fach.beginneSenden(angekommen.schluessel, abgebrochen: false)
+        try fach.melde(angekommen.schluessel, .aus(status: 200, daten: quittung()))
+        _ = try fach.beginneSenden(unterwegs.schluessel, abgebrochen: false)
+
+        XCTAssertEqual(fach.wartend, 2, "von selbst gehen zwei — aber nur eine ist geparkt")
+        let z = Fachzaehlung(fach.eintraege)
+        XCTAssertEqual(z.geparkt, 1)
+        XCTAssertEqual(z.ungewiss, 1)
+        XCTAssertEqual(z.unterwegs, 1)
+        XCTAssertEqual(z.offen, 1)
+        XCTAssertEqual(z.teile.map(\.wort), ["geparkt", "ungewiss", "unterwegs", "offen"])
+        XCTAssertEqual(z.teile.map(\.zahl), [1, 1, 1, 1])
+        XCTAssertEqual(z.teile.map(\.zahl).reduce(0, +), fach.eintraege.count - 1,
+                       "jede ausser der Quittung in genau einem Fach")
+
+        // Nur Quittungen: keine Zahl, keine Null.
+        XCTAssertEqual(Fachzaehlung(fach.eintraege.filter { $0.zustand.wort == "angekommen" }).teile, [])
+    }
+
     func testDieAntwortEntscheidetWasAusDerSkizzeWird() {
         XCTAssertEqual(Sendeergebnis.aus(status: 401, daten: Data(#"{"fehler": "Nicht angemeldet."}"#.utf8)),
                        .nichtAngemeldet(grund: "Nicht angemeldet."))
@@ -273,7 +422,7 @@ final class ParkfachTests: XCTestCase {
         let fach = try Parkfach(ordner: ordner)
         let a = try fach.parke(png: zeichnung, jetzt: t0)
         let b = try fach.parke(png: zeichnung, jetzt: t0.addingTimeInterval(1))
-        _ = try fach.beginneSenden(a.schluessel)
+        _ = try fach.beginneSenden(a.schluessel, abgebrochen: false)
         XCTAssertFalse(try fach.verwirf(a.schluessel), "unterwegs wird nicht verworfen")
         XCTAssertTrue(try fach.verwirf(b.schluessel))
 
@@ -339,6 +488,18 @@ final class ParkfachTests: XCTestCase {
                           Flugbahn.ort(.flug(gesendet: 60, gesamt: 100)))
         XCTAssertEqual(Flugbahn.anteil(.flug(gesendet: 25, gesamt: 100)), 0.25)
         XCTAssertTrue(Flugbahn.atmet(.warten))
+    }
+
+    func testBeimAbhebenWandertDieMarkeAnDenRandZumZiel() {
+        // Blatt «Verbindung», Augenblick 2: «Die Marke wandert an den Rand, an dem der
+        // Rechner sitzt. Die Richtung ist die Richtung.»
+        XCTAssertGreaterThan(Flugbahn.ort(.abheben), Flugbahn.ort(.ablegen), "sie bewegt sich zum Ziel")
+        XCTAssertEqual(Flugbahn.ort(.abheben), Flugbahn.rand)
+        XCTAssertLessThan(Flugbahn.ort(.abheben), Flugbahn.haltepunkt)
+        // Der Flug beginnt am Rand und faellt nicht hinter ihn zurueck.
+        XCTAssertEqual(Flugbahn.ort(.flug(gesendet: 0, gesamt: 100)), Flugbahn.rand)
+        XCTAssertEqual(Flugbahn.ort(.flug(gesendet: 100, gesamt: 100)), Flugbahn.haltepunkt,
+                       accuracy: 1e-12)
     }
 
     func testImAbbruchFaelltDieMarkeZurueckAufsIpad() {

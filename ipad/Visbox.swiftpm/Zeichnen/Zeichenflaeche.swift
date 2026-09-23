@@ -6,18 +6,22 @@ import SwiftUI
 /// Werkzeug und Strichstärke wählt die Leiste (`Leistenwahl`); hier wird nur gelesen,
 /// was sie gewählt hat. Die Regeln stehen im Kern (`Kern/Ebenen.swift`), die Striche und
 /// die PNG-Ausgabe in `Zeichenstand` — **die Schnittstelle für das Senden ist
-/// `Zeichenstand.gemeinsam.pngAusgabe(_:)`.**
+/// `Zeichenstand.gemeinsam.skizzenpaket(_:)`** (die PNG und die Unterlage, seit dem
+/// 23.09.2026). Unter den Ebenen liegt, wenn gelegt, die Unterlage (`Leinwandstapel`).
 ///
 /// **Wo die Ebenentafel steht, entscheidet, wer die Zeichenfläche einsetzt.**
 ///
-/// * `eigeneTafel: true` (Vorgabe, so ruft `Startansicht` sie heute): Die Fläche bringt
-///   die Tafel selbst mit — im Querformat rechts, im Hochformat darunter (Entscheid Nr. 1),
-///   so breit wie das Seitenfeld des Arbeitsplatzes (`Zeichenblatt.seitenfeldBreite`). Im
-///   Vollbild (`Leistenwahl.vollbild`) fällt sie weg, wie das Seitenfeld dort.
-/// * `eigeneTafel: false`: nur Blatt und Werkzeugzeile. Dann legt der Arbeitsplatz
-///   `Ebenentafel` in **sein** Seitenfeld:
-///   `Arbeitsplatz { Zeichenflaeche(eigeneTafel: false) } seitenfeld: { Ebenentafel() }`.
-///   Sonst stünden zwei Seitenfelder nebeneinander (Befund Durchsicht A, 22.09.2026).
+/// * `eigeneTafel: false` — **so setzt `Startansicht` sie heute ein** (Stand 23.09.2026):
+///   nur Blatt und Werkzeugzeile. Die Ebenentafel legt `Seitentafel` in das Seitenfeld
+///   des Arbeitsplatzes (`Ebenentafel(stand: Zeichenstand.gemeinsam)`, umschaltbar mit der
+///   Mappe): `Arbeitsplatz { Zeichenflaeche(eigeneTafel: false) } seitenfeld: {
+///   Seitentafel(wahl: wahl) }`. Sonst stünden zwei Seitenfelder nebeneinander (Befund
+///   Durchsicht A, 22.09.2026).
+/// * `eigeneTafel: true` (die Vorgabe des Aufrufs, heute von keiner Stelle genutzt): Die
+///   Fläche bringt die Tafel selbst mit — im Querformat rechts, im Hochformat darunter
+///   (Entscheid Nr. 1), so breit wie das Seitenfeld des Arbeitsplatzes
+///   (`Zeichenblatt.seitenfeldBreite`). Im Vollbild (`Leistenwahl.vollbild`) fällt sie
+///   weg, wie das Seitenfeld dort.
 struct Zeichenflaeche: View {
     @ObservedObject var stand: Zeichenstand
     @ObservedObject var wahl: Leistenwahl
@@ -70,7 +74,7 @@ struct Zeichenflaeche: View {
     private var buehne: some View {
         VStack(spacing: 14) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Abschnittstitel(text: "Skizze · \(stand.stapel.aktiveEbene.name)")
+                Abschnittstitel(text: blatttitel)
                 Spacer()
                 Text("\(Ebenenstapel.blattBreite) × \(Ebenenstapel.blattHoehe) px")
                     .font(Schrift.zahl(13))
@@ -91,19 +95,38 @@ struct Zeichenflaeche: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    /// «Skizze über Lauf 07 · Variante A» (Blatt «Main»: «Skizze über Lauf 07») — **über**
+    /// nur, solange die Unterlage sichtbar ist: Ausgeblendet geht sie nicht mit (Kern,
+    /// `Unterlagenangabe`), und der Titel soll nicht versprechen, was nicht gerechnet wird.
+    private var blatttitel: String {
+        let ebene = stand.stapel.aktiveEbene.name
+        if let u = stand.stapel.unterlage, u.sichtbar {
+            return "Skizze über \(u.titel) · \(ebene)"
+        }
+        return "Skizze · \(ebene)"
+    }
+
     /// Die gewählte Ebene ist ausgeblendet — dann wird nicht gezeichnet, und das steht da.
     /// *Ein Stift, der nichts tut, ohne dass es gesagt wird, sieht aus wie ein kaputter.*
-    /// Schieben und Zoomen gehen weiter (Entscheid Nr. 4, `Leinwandkoordinator.gleicheAb`);
-    /// nur dieses Feld selbst fängt die Finger ab, die darauf tippen.
+    ///
+    /// **Der Satz sagt nur, was sicher ist** (Durchsicht, 22.09.2026): Die Ebene ist
+    /// ausgeblendet, und auf ihr wird nicht gezeichnet — beides folgt aus der Regel des
+    /// Kerns (`aktiveIstZeichenbar`). Dass der Finger dort weiter schiebt und zoomt
+    /// (`Leinwand.inhaltVerdeckt`), ist am Gerät unbestätigt und steht darum nicht da.
+    ///
+    /// **Das Feld fängt keine Finger ab, ausser am Knopf:** Text und Grund lassen
+    /// Berührungen durch (`allowsHitTesting(false)`), damit das Blatt auch dort zu schieben
+    /// bleibt, wo der Hinweis liegt. Gebaut, nicht übersetzt, am Gerät unbestätigt.
     private var ausgeblendetHinweis: some View {
         VStack(spacing: 12) {
             Text("«\(stand.stapel.aktiveEbene.name)» ist ausgeblendet.")
                 .font(Schrift.text(15, .semibold))
-            Text("Auf eine ausgeblendete Ebene wird nicht gezeichnet. Schieben und Zoomen "
-                 + "gehen weiter.")
+                .allowsHitTesting(false)
+            Text("Auf eine ausgeblendete Ebene wird nicht gezeichnet.")
                 .font(Schrift.text(13))
                 .foregroundStyle(Zeichenblatt.leise)
                 .multilineTextAlignment(.center)
+                .allowsHitTesting(false)
             Button("Einblenden") {
                 stand.setzeSichtbar(stand.stapel.aktiv, true)
             }
@@ -111,7 +134,8 @@ struct Zeichenflaeche: View {
         }
         .foregroundStyle(Zeichenblatt.schrift)
         .padding(20)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Zeichenblatt.feld))
+        .background(RoundedRectangle(cornerRadius: 12).fill(Zeichenblatt.feld)
+            .allowsHitTesting(false))
     }
 
     // ------------------------------------------------------ Zurück, Vor, Farbe

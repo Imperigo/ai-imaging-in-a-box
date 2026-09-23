@@ -18,8 +18,16 @@ import UIKit
 /// Baut SwiftUI die Flächen neu, hielte der gemeinsame `UndoManager` sonst Schritte auf
 /// Flächen, die niemand mehr sieht (Befund Durchsicht A, 22.09.2026).
 ///
-/// **Ungeprüft (22.09.2026):** Die ganze Datei ist nie einem Übersetzer vorgelegt worden,
-/// und ob die Flächen am Gerät deckungsgleich bleiben, zeigt erst das Gerät.
+/// **Unter allen Flächen liegt die Unterlage** (seit dem 23.09.2026, `Leinwandstapel.unterlage`):
+/// ein Bild, keine Fläche — nicht radiert, nicht gemalt ins PNG, gestreckt wie beim Server.
+///
+/// **Was geprüft ist, und was nicht (23.09.2026).** Übersetzt hat die Datei auf dem Mac:
+/// seit f32266f, die Teile der Welle 2 (`dismantleUIView`, `Leinwand.inhaltVerdeckt`,
+/// `pencilInteraction(_:didReceiveTap:)`) mit dem Stand edbdcad (laut Meldung vom
+/// 23.09.2026, ohne Warnung; hier nicht nachprüfbar). **Nicht übersetzt** sind
+/// die Änderungen vom 23.09.2026: `Leinwand.stiftSchiebtNicht`, der Grund aus
+/// `Stiftfarben.papier`, das Ende des Zugs (`canvasViewDidEndUsingTool`). **Am Gerät
+/// unbestätigt ist alles** — auch, ob die Flächen deckungsgleich bleiben.
 struct Zeichenleinwand: UIViewRepresentable {
     @ObservedObject var stand: Zeichenstand
     @ObservedObject var wahl: Leistenwahl
@@ -71,24 +79,83 @@ final class Leinwand: PKCanvasView {
             mask = inhaltVerdeckt ? UIView(frame: .zero) : nil
         }
     }
+
+    /// **Der Stift schiebt nicht** — nur der Finger (Entscheid Nr. 4).
+    ///
+    /// Für die gewählte, ausgeblendete Ebene. Befund Durchsicht (22.09.2026): Dort ist das
+    /// Zeichnen aus (`drawingGestureRecognizer`), die Fläche nimmt aber Berührungen an — und
+    /// ohne Zeichnen fiele der Stift vermutlich dem Schieben der Fläche zu: Wer auf die
+    /// ausgeblendete Ebene zeichnen will, verschöbe das Blatt. Darum wird der Stift aus den
+    /// Berührungsarten genommen, die Schieben und Zoomen annehmen; alle anderen bleiben, und
+    /// beim Zurückschalten gilt wieder, was vorher galt. **Am Gerät unbestätigt**, und
+    /// nicht übersetzt (23.09.2026).
+    var stiftSchiebtNicht = false {
+        didSet {
+            guard stiftSchiebtNicht != oldValue else { return }
+            if stiftSchiebtNicht {
+                schiebeArten = panGestureRecognizer.allowedTouchTypes
+                panGestureRecognizer.allowedTouchTypes =
+                    Leinwand.ohneStift(panGestureRecognizer.allowedTouchTypes)
+                if let zoom = pinchGestureRecognizer {
+                    zoomArten = zoom.allowedTouchTypes
+                    zoom.allowedTouchTypes = Leinwand.ohneStift(zoom.allowedTouchTypes)
+                }
+            } else {
+                if let arten = schiebeArten { panGestureRecognizer.allowedTouchTypes = arten }
+                if let arten = zoomArten { pinchGestureRecognizer?.allowedTouchTypes = arten }
+                schiebeArten = nil
+                zoomArten = nil
+            }
+        }
+    }
+
+    /// Was Schieben und Zoomen annahmen, bevor der Stift herausgenommen wurde.
+    private var schiebeArten: [NSNumber]?
+    private var zoomArten: [NSNumber]?
+
+    private static func ohneStift(_ arten: [NSNumber]) -> [NSNumber] {
+        arten.filter { $0.intValue != UITouch.TouchType.pencil.rawValue }
+    }
 }
 
 /// Der Behälter der Flächen. Er legt sie deckungsgleich und stellt den Zoom so, dass das
 /// ganze Blatt (`Ebenenstapel.blattBreite × blattHoehe`) hineinpasst.
+///
+/// **Zuunterst liegt die Unterlage** (seit dem 23.09.2026): ein Bild unter allen Flächen,
+/// **keine** Fläche — der Radierer erreicht es darum nicht, und es nimmt keine Berührung an.
+/// Es füllt das Blatt Rand auf Rand und wird bei anderem Seitenverhältnis **gestreckt**
+/// (`scaleToFill`), genau so, wie der Server die Skizze auf das Bild abbildet
+/// (`arbeitsgang.setze_auf_unterlage`, Kern: `Blattunterlage.gestreckt`) — gezeichnet wird,
+/// wo gerechnet wird. Beim Schieben und Zoomen folgt es der gewählten Fläche
+/// (`fuehreUnterlageNach`). Nicht übersetzt, am Gerät unbestätigt (23.09.2026) — auch, ob
+/// es dabei genau deckungsgleich bleibt.
 final class Leinwandstapel: UIView {
     /// Von unten nach oben.
     var leinwaende: [Leinwand] = []
     private var letzteGroesse: CGSize = .zero
 
+    /// Das Bild der Unterlage, unter allen Flächen.
+    let unterlage: UIImageView = {
+        let bild = UIImageView()
+        // GESTRECKT, NICHT EINGEPASST: `scaleAspectFit` liesse Ränder, `scaleAspectFill`
+        // schnitte ab — beides zeigte das Bild anders, als der Server es unter die Skizze legt.
+        bild.contentMode = .scaleToFill
+        bild.isUserInteractionEnabled = false
+        bild.isHidden = true
+        bild.accessibilityElementsHidden = true
+        return bild
+    }()
+
     static let blatt = CGSize(width: Ebenenstapel.blattBreite, height: Ebenenstapel.blattHoehe)
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        // Der Grund des Blattes aus dem Entwurf (Blatt «Main»: #191d23).
-        backgroundColor = UIColor(red: 0x19 / 255.0, green: 0x1d / 255.0,
-                                  blue: 0x23 / 255.0, alpha: 1)
+        // Der Grund des Blattes aus dem Entwurf — im Kern, dort gegen das Blatt geprüft
+        // (`FarbtonTests.testJederStifttonStehtSoAufDemBlatt`).
+        backgroundColor = UIColor(Color(Stiftfarben.papier))
         clipsToBounds = true
         layer.cornerRadius = 10
+        addSubview(unterlage)
     }
 
     required init?(coder: NSCoder) {
@@ -126,6 +193,33 @@ final class Leinwandstapel: UIView {
             }
             Leinwandstapel.passeInhaltAn(leinwand)
         }
+        fuehreUnterlageNach(nil)
+    }
+
+    /// Zeigt die Unterlage — oder keine. Sie bleibt zuunterst, unter jeder Fläche.
+    func zeigeUnterlage(_ bild: UIImage?, sichtbar: Bool) {
+        if unterlage.image !== bild { unterlage.image = bild }
+        unterlage.isHidden = bild == nil || !sichtbar
+        sendSubviewToBack(unterlage)
+        fuehreUnterlageNach(nil)
+    }
+
+    /// Legt die Unterlage dorthin, wo die Flächen das Blatt gerade zeigen: Ursprung minus
+    /// Verschiebung, Grösse des Blattes mal Zoom. `quelle` ist die Fläche, die gerade
+    /// geschoben oder gezoomt wird; ohne sie die gewählte (die Berührungen annimmt), sonst
+    /// die unterste. Ohne Fläche füllt sie den Behälter.
+    func fuehreUnterlageNach(_ quelle: UIScrollView?) {
+        let gewaehlt: UIScrollView? = leinwaende.first(where: { $0.isUserInteractionEnabled })
+            ?? leinwaende.first
+        guard let bezug: UIScrollView = quelle ?? gewaehlt else {
+            unterlage.frame = bounds
+            return
+        }
+        let zoom = bezug.zoomScale
+        unterlage.frame = CGRect(x: bezug.frame.minX - bezug.contentOffset.x,
+                                 y: bezug.frame.minY - bezug.contentOffset.y,
+                                 width: Leinwandstapel.blatt.width * zoom,
+                                 height: Leinwandstapel.blatt.height * zoom)
     }
 
     /// Das Blatt in der Grösse des Zooms — so rechnet PencilKit mit festen
@@ -142,6 +236,9 @@ final class Leinwandkoordinator: NSObject, PKCanvasViewDelegate, UIPencilInterac
     private var leinwaende: [UUID: Leinwand] = [:]
     /// Verhindert, dass das Nachführen der anderen Flächen wieder ein Nachführen auslöst.
     private var fuehrtNach = false
+    /// Die Ebene, auf der der Stift gerade einen Zug macht (`canvasViewDidBeginUsingTool`
+    /// bis `canvasViewDidEndUsingTool`), sonst `nil`.
+    private var zugAuf: UUID?
 
     init(stand: Zeichenstand) {
         self.stand = stand
@@ -191,18 +288,27 @@ final class Leinwandkoordinator: NSObject, PKCanvasViewDelegate, UIPencilInterac
             // versteckt (`Leinwand.inhaltVerdeckt`); die anderen folgen ihr (`fuehreNach`).
             leinwand.isHidden = !ebene.sichtbar && !aktiv
             leinwand.inhaltVerdeckt = !ebene.sichtbar && aktiv
+            // UND DORT SCHIEBT NUR DER FINGER: Das Zeichnen ist aus, der Stift soll das
+            // Blatt trotzdem nicht verschieben (Entscheid Nr. 4, `stiftSchiebtNicht`). Mit
+            // der Hand dagegen schiebt auch der Stift — dafür ist sie da.
+            leinwand.stiftSchiebtNicht = !ebene.sichtbar && aktiv
             leinwand.alpha = CGFloat(ebene.deckkraft)
             // NUR DIE GEWAEHLTE NIMMT BERUEHRUNGEN AN. Die anderen lassen sie durch
             // (eine abgeschaltete Ansicht wird beim Treffertest übergangen).
             leinwand.isUserInteractionEnabled = aktiv
             // Auf eine ausgeblendete Ebene wird nicht gezeichnet (Kern:
             // `aktiveIstZeichenbar`), mit der Hand auch nicht. Nur das Zeichnen ist aus;
-            // Schieben und Zoomen gehören der Fläche selbst und bleiben.
+            // Schieben und Zoomen mit dem Finger gehören der Fläche selbst und bleiben —
+            // am Gerät unbestätigt.
             leinwand.drawingGestureRecognizer.isEnabled =
                 aktiv && stapel.aktiveIstZeichenbar && !hand
             if aktiv { leinwand.tool = werkzeug }
         }
         ansicht.leinwaende = reihe
+        // DIE UNTERLAGE NACH DEN FLAECHEN: `zeigeUnterlage` schiebt sie wieder ganz nach
+        // unten, nachdem die Flächen oben ihre Reihenfolge bekommen haben.
+        ansicht.zeigeUnterlage(stand.unterlagenbild,
+                               sichtbar: stand.stapel.unterlage?.sichtbar == true)
         ansicht.setNeedsLayout()
     }
 
@@ -214,6 +320,7 @@ final class Leinwandkoordinator: NSObject, PKCanvasViewDelegate, UIPencilInterac
             leinwand.delegate = nil
         }
         leinwaende = [:]
+        zugAuf = nil
         stand.stapelAbgebaut(weg)
     }
 
@@ -221,16 +328,42 @@ final class Leinwandkoordinator: NSObject, PKCanvasViewDelegate, UIPencilInterac
 
     func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
         guard let leinwand = canvasView as? Leinwand, let id = leinwand.ebene else { return }
-        stand.zeichnungGeaendert(id, leinwand.drawing)
+        stand.zeichnungGeaendert(id, leinwand.drawing, imZug: zugAuf == id)
+    }
+
+    /// Der Stift setzt zu einem Zug an. Bis zu seinem Ende wird das Bild einer Ebene mit
+    /// abgedeckten Strichen nicht gelesen (`Zeichenstand.zeichnungGeaendert`) — die
+    /// Durchsicht vom 22.09.2026 fand es bei jeder Änderung gelesen.
+    func canvasViewDidBeginUsingTool(_ canvasView: PKCanvasView) {
+        zugAuf = (canvasView as? Leinwand)?.ebene
+    }
+
+    /// Der Zug ist zu Ende: Was darin ausstand, wird jetzt gelesen. Ob diese Meldung vor
+    /// oder nach der letzten Änderung kommt, ist nicht belegt — beides führt zum selben
+    /// Stand (`Zeichenstand.zugBeendet`). Am Gerät unbestätigt, nicht übersetzt.
+    func canvasViewDidEndUsingTool(_ canvasView: PKCanvasView) {
+        zugAuf = nil
+        guard let leinwand = canvasView as? Leinwand, let id = leinwand.ebene else { return }
+        stand.zugBeendet(id, leinwand.drawing)
     }
 
     func scrollViewDidZoom(_ scrollView: UIScrollView) {
         Leinwandstapel.passeInhaltAn(scrollView)
         fuehreNach(scrollView)
+        unterlageFolgt(scrollView)
     }
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         fuehreNach(scrollView)
+        unterlageFolgt(scrollView)
+    }
+
+    /// Die Unterlage folgt der Fläche, die der Finger bewegt — nur der gewählten, wie die
+    /// anderen Flächen (`fuehreNach`).
+    private func unterlageFolgt(_ quelle: UIScrollView) {
+        guard quelle.isUserInteractionEnabled,
+              let stapel = quelle.superview as? Leinwandstapel else { return }
+        stapel.fuehreUnterlageNach(quelle)
     }
 
     /// Die anderen Flächen folgen der gewählten — sonst stünde eine Ebene beim Zoomen

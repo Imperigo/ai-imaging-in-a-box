@@ -375,6 +375,54 @@ final class AnfragenTests: XCTestCase {
         XCTAssertNil(fremd.schrittanteil)
     }
 
+    /// Abbruch, Variante und Bestellung — die Bytes sind die, die `Laufstand.sicht()` in
+    /// `oberflaeche/server.py` am 22.09.2026 für eine Reihe mit verlangtem Abbruch lieferte
+    /// (dort erzeugt und hierher abgeschrieben).
+    func testDerLaufstandTraegtAbbruchVarianteUndBestellung() throws {
+        let s = try Fortschrittsstand.lies(status: 200, daten: json(#"""
+        {"laeuft": true, "ordner": "/mappe", "seit_s": 1.0, "knoten": "k1", "knotenart": "import",
+         "nummer": 1, "von": 4, "knoten_seit_s": 0.0, "schritt": null, "schritte_gesamt": 8,
+         "art_des_zeichens": "unbelegt",
+         "fertige": [{"knoten": "k1", "knotenart": "import", "status": "abgebrochen",
+                      "aus_cache": null, "dauer_s": null, "variante": 2}],
+         "ergebnis": null, "fehler": null, "abbruch_verlangt": true,
+         "variante": {"nummer": 2, "von": 3, "gruppe": "skizze-20260922T081207-a1b2c3"},
+         "bestellung": {"art": "skizze", "entwurf": false, "varianten": 3,
+                        "skizzen": ["skizze-a.png", "skizze-b.png", "skizze-c.png"]}}
+        """#))
+        XCTAssertEqual(s.abbruchVerlangt, true)
+        XCTAssertEqual(s.variante, Laufvariante(nummer: 2, von: 3,
+                                                gruppe: "skizze-20260922T081207-a1b2c3"))
+        XCTAssertEqual(s.bestellung, Laufbestellung(art: "skizze", entwurf: false, varianten: 3,
+                                                    skizzen: ["skizze-a.png", "skizze-b.png",
+                                                              "skizze-c.png"]))
+        XCTAssertEqual(s.fertige?.first?.status, "abgebrochen", "der fünfte Wert, roh")
+        XCTAssertEqual(s.fertige?.first?.variante, 2)
+
+        // Nichts verlangt, keine Reihe, nichts bestellt: false heisst false, null heisst nil.
+        let ruhig = try Fortschrittsstand.lies(status: 200, daten: json(
+            #"{"laeuft": false, "abbruch_verlangt": false, "variante": null, "bestellung": null}"#))
+        XCTAssertEqual(ruhig.abbruchVerlangt, false)
+        XCTAssertNil(ruhig.variante)
+        XCTAssertNil(ruhig.bestellung)
+
+        // DIE DRITTE ANTWORT: Fehlt das Feld (ein Server vor dem 22.09.2026), ist es nicht
+        // bekannt — nicht «nicht verlangt».
+        let alt = try Fortschrittsstand.lies(status: 200, daten: json(#"{"laeuft": true}"#))
+        XCTAssertNil(alt.abbruchVerlangt)
+        XCTAssertNil(alt.variante)
+        XCTAssertNil(alt.bestellung)
+        // Eine 1 ist kein Ja.
+        XCTAssertNil(try Fortschrittsstand.lies(status: 200, daten: json(
+            #"{"abbruch_verlangt": 1}"#)).abbruchVerlangt)
+
+        // Beim Modell-Lauf ohne Reihe: varianten und skizzen null.
+        let modell = try Fortschrittsstand.lies(status: 200, daten: json(
+            #"{"bestellung": {"art": "modell", "entwurf": true, "varianten": null, "skizzen": null}}"#))
+        XCTAssertEqual(modell.bestellung, Laufbestellung(art: "modell", entwurf: true,
+                                                         varianten: nil, skizzen: nil))
+    }
+
     // ---------------------------------------------------------- Antworten auf POST
 
     func testAbgelegtIstEineQuittungUndNurDann() throws {

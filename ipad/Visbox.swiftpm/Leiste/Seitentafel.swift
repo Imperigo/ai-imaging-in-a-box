@@ -11,6 +11,10 @@ import SwiftUI
 /// Der Umschalter steht in `Leistenwahl.seitenfeld` und nicht im Zustand dieser Ansicht:
 /// Er übersteht so das Drehen und das Vollbild.
 ///
+/// **Unten, unter beiden Reitern: «In die Mappe legen»** (`Mappenknopf`, Blätter «Main» und
+/// «MainHoch»). Seit dem 23.09.2026 hier und nur hier — vorher sass er in der
+/// Verbindungszeile, weil das Seitenfeld noch nirgends hing.
+///
 /// Am ganzen Seitenfeld sitzt der `Laufwaechter`: Solange die HomeStation rechnet, fragt er
 /// öfter nach und holt am Ende die Mappe — auch wenn gerade die Ebenen dastehen.
 ///
@@ -43,6 +47,8 @@ struct Seitentafel: View {
             case .mappe:
                 Mappentafel(mappe: mappe, verbindung: verbindung)
             }
+            Mappenknopf(stand: verbindung)
+                .padding(.top, 6)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .foregroundStyle(Zeichenblatt.schrift)

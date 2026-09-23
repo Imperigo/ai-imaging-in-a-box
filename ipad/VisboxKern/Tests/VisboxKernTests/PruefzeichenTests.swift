@@ -112,6 +112,30 @@ final class PruefzeichenTests: XCTestCase {
                        "ENTWURF — NICHT GEPRÜFT · Unterschied 0.31")
     }
 
+    /// **Die Schwelle nur neben einer Prüfzahl** — und beim Entwerfen nie, auch wenn ein
+    /// Unterschied dasteht (Durchsicht der Verdrahtung, 22.09.2026: dieser Teil war unbewacht,
+    /// die Mutation `if true, case .wert = zahl` blieb grün). Beim Entwerfen ist die Zahl ein
+    /// Unterschied und keine Prüfzahl; eine Schwelle daneben läse sich wie ein Urteil.
+    func testDieSchwelleNurNebenEinerPruefzahl() {
+        for u in urteile {
+            let e = Pruefzeichen(urteil: u, lesart: .entwerfen, pruefzahl: 0.93,
+                                 unterschied: 0.31, schwelle: 0.8)
+            XCTAssertNil(e.schwelle, "Entwurf, \(u)")
+            XCTAssertFalse(e.vorlesetext.contains("0.80"), e.vorlesetext)
+            XCTAssertFalse(e.zeilen.joined().contains("0.80"), "\(e.zeilen)")
+        }
+        // Die Gegenprobe: dieselben Werte geprüft gelesen tragen sie.
+        XCTAssertEqual(Pruefzeichen(urteil: .bestanden, lesart: .pruefen, pruefzahl: 0.93,
+                                    unterschied: 0.31, schwelle: 0.8).schwelle, "0.80")
+        XCTAssertEqual(Pruefzeichen(urteil: .durchgefallen, lesart: .pruefen, pruefzahl: 0.36,
+                                    schwelle: 0.8).schwelle, "0.80")
+        // Ohne Messung und neben «ohne Zahl» keine.
+        XCTAssertNil(Pruefzeichen(urteil: .nichtGemessen, lesart: .pruefen, pruefzahl: 0.93,
+                                  schwelle: 0.8).schwelle)
+        XCTAssertNil(Pruefzeichen(urteil: .bestanden, lesart: .pruefen, pruefzahl: nil,
+                                  schwelle: 0.8).schwelle)
+    }
+
     // ------------------------------------------------------- das Zeichen des Servers
 
     func testEinUnbekanntesZeichenWirdNichtGeraten() {
@@ -181,13 +205,31 @@ final class PruefzeichenTests: XCTestCase {
 
     // -------------------------------------------------------------- die Farben selbst
 
+    /// **Vier Aussagen, vier Farben — und das unbekannte Zeichen heisst «kein Urteil».**
+    ///
+    /// Seit der Durchsicht vom 22.09.2026 trägt `.unbekannt` bewusst die Farbe von «nicht
+    /// gemessen» (ein eigener Ton stand auf keinem Blatt). Was die beiden trennt, ist das
+    /// Wort; was sie mit keinem Urteil verwechseln lässt, verbieten die Farben hier.
     func testKeineFarbeHeisstZweiDinge() {
-        let raender = Zeichenart.allCases.map { $0.rand }
+        let aussagen: [Zeichenart] = [.bestanden, .durchgefallen, .nichtGemessen, .entwurf]
+        XCTAssertEqual(Set(aussagen + [.unbekannt]), Set(Zeichenart.allCases),
+                       "eine neue Art braucht hier ihren Platz")
+        let raender = aussagen.map { $0.rand }
         XCTAssertEqual(Set(raender).count, raender.count, "\(raender.map { $0.hex })")
-        let schriften = Zeichenart.allCases.map { $0.schrift }
+        let schriften = aussagen.map { $0.schrift }
         XCTAssertEqual(Set(schriften).count, schriften.count)
-        let woerter = Zeichenart.allCases.map { $0.wort }
-        XCTAssertEqual(Set(woerter).count, woerter.count)
+        // KEIN URTEIL SIEHT AUS WIE KEIN URTEIL — und wie nichts anderes.
+        XCTAssertEqual(Zeichenart.unbekannt.rand, Zeichenart.nichtGemessen.rand)
+        XCTAssertEqual(Zeichenart.unbekannt.schrift, Zeichenart.nichtGemessen.schrift)
+        XCTAssertEqual(Zeichenart.unbekannt.gestrichelt, Zeichenart.nichtGemessen.gestrichelt)
+        for art in [Zeichenart.bestanden, .durchgefallen, .entwurf] {
+            XCTAssertNotEqual(Zeichenart.unbekannt.rand, art.rand, "\(art)")
+        }
+        // DAS WORT TRENNT: jede Art ihr eigenes, und «nicht geliefert» noch einmal eigens.
+        let woerter = Zeichenart.allCases.map { $0.wort } + [Pruefzeichen.wortNichtGeliefert]
+        XCTAssertEqual(Set(woerter).count, woerter.count, "\(woerter)")
+        XCTAssertNotEqual(Pruefzeichen(zeichen: "neu", lesart: .pruefen, pruefzahl: nil).zeile,
+                          Pruefzeichen(urteil: .nichtGemessen, lesart: .pruefen, pruefzahl: nil).zeile)
         XCTAssertFalse(Set(raender).contains(Pruefzeichen.vorbehaltSchrift),
                        "ein Vorbehalt ist kein weiteres Urteil")
     }
@@ -330,6 +372,45 @@ final class PruefzeichenTests: XCTestCase {
         }
     }
 
+    /// **Die Unterlage aus dem Feld `vorher`** (Entscheid 17), aus Bytes gelesen: Ist das Feld
+    /// da, steht ihr Name da; fehlt es oder ist es `null`, steht **nichts** — nicht
+    /// geliefert, nicht «keine». Bis zum 22.09.2026 las die App es nicht, und der Vergleich
+    /// war im Produkt nie zu sehen.
+    func testDieUnterlageKommtAusDemFeldVorher() {
+        XCTAssertEqual(bild(#"{"bild": "b.png", "zeichen": "bestanden", "vorher": "a.png"}"#).vorher,
+                       "a.png")
+        XCTAssertEqual(bild(#"{"bild": "b.png", "vorher": "renders/k2 ansicht.png"}"#).vorher,
+                       "renders/k2 ansicht.png", "der Name unverändert, auch mit Ordner und Leerzeichen")
+        for roh in [#"{"bild": "b.png", "zeichen": "bestanden"}"#,
+                    #"{"bild": "b.png", "vorher": null}"#,
+                    #"{"bild": "b.png", "vorher": ""}"#,
+                    #"{"bild": "b.png", "vorher": "  "}"#,
+                    #"{"bild": "b.png", "vorher": 3}"#] {
+            XCTAssertNil(bild(roh).vorher, roh)
+        }
+        // Die Unterlage ändert am Zeichen nichts: Sie trägt kein Urteil über dieses Bild.
+        let mit = bild(#"{"zeichen": "bestanden", "score": 0.9, "vorher": "a.png"}"#)
+        let ohne = bild(#"{"zeichen": "bestanden", "score": 0.9}"#)
+        XCTAssertEqual(mit.pruefzeichen(.pruefen), ohne.pruefzeichen(.pruefen))
+    }
+
+    /// **Ein Hinweis, den die App nicht kennt, kommt ungekürzt an** — etwa der, den der
+    /// Server seit dem 22.09.2026 setzt, wenn er die Unterlage auf ein anderes
+    /// Seitenverhältnis streckt. Er wird kein Vorbehalt (den erkennt nur der feste Anfang),
+    /// und er wird nicht abgeschnitten: Die Bildansicht zeigt `hinweise` Wort für Wort.
+    func testEinNeuerHinweisKommtUngekuerztAn() throws {
+        let satz = "UNTERLAGE GESTRECKT: Die Unterlage war 1024 × 768, das Bild ist 1024 × 1024; "
+            + "sie wurde für das Bildmodell gestreckt, Proportionen im Ergebnis mit Vorsicht lesen. "
+            + String(repeating: "Und noch ein langer Nachsatz. ", count: 12)
+        let objekt: [String: JSONWert] = ["zeichen": .text("bestanden"), "score": .zahl(0.9),
+                                          "hinweise": .liste([.text(satz), .text("Zweiter.")])]
+        let daten = try JSONWert.objekt(["bilder": .liste([.objekt(objekt)])]).daten()
+        let b = try Mappenlage.lies(status: 200, daten: daten).bilder?.first
+        XCTAssertEqual(b?.hinweise, [satz, "Zweiter."], "unverändert, in der Reihenfolge des Servers")
+        XCTAssertEqual(b?.pruefzeichen(.pruefen).vorbehalte, [], "ein fremder Satz ist kein Vorbehalt")
+        XCTAssertEqual(b?.pruefzeichen(.pruefen).zeile, "BESTANDEN · 0.90")
+    }
+
     /// Der Kopf des Vorbehalts ist das, was in der zugeklappten Kachel steht — er muss der
     /// feste Anfang sein und im kurzen Wort vorne stehen, sonst sagt die zugeklappte
     /// Kachel etwas anderes als die aufgeklappte.
@@ -464,12 +545,50 @@ final class PruefzeichenTests: XCTestCase {
         XCTAssertTrue(still.satz.hasPrefix("Die Verbindung ist abgerissen."))
     }
 
+    /// **Die Auswahl der Ebenen-Reihe bleibt stehen, ausser die HomeStation nahm sie an**
+    /// (Durchsicht der Verdrahtung, 22.09.2026: sie wurde gleich nach dem Tippen geleert,
+    /// auch bei einer Ablehnung). Gelesen über denselben Weg wie in der App: Antwortbytes →
+    /// `Handlungsquittung.rechnen` → `Rechenbestellung.reihe(_:nach:)`.
+    func testDieReiheBleibtStehenAusserSieWurdeAngenommen() {
+        let reihe = ["s1.png", "s2.png", "s3.png"]
+        let rechnen = Handlungsquittung.rechnen(status:daten:)
+        let angenommen = quittung(200, #"{"gestartet": true, "entwurf": false}"#, rechnen)
+        XCTAssertEqual(Rechenbestellung.reihe(reihe, nach: angenommen), [])
+        let stehen: [(String, Handlungsquittung)] = [
+            ("abgelehnt", quittung(400, #"{"fehler": "Es läuft schon einer."}"#, rechnen)),
+            ("ungewiss, ohne Bestätigung", quittung(200, #"{}"#, rechnen)),
+            ("ungewiss, unlesbar", quittung(200, "kaputt", rechnen)),
+            ("ungewiss, keine Antwort", Handlungsquittung.ohneAntwort(grund: "Abgerissen.")),
+            ("nicht gesendet", Handlungsquittung(ausgang: .nichtGesendet, satz: "Nicht gekoppelt.")),
+        ]
+        for (fall, q) in stehen {
+            XCTAssertEqual(Rechenbestellung.reihe(reihe, nach: q), reihe, fall)
+        }
+    }
+
     // ------------------------------------------------- die Farbtöne gegen das Blatt
 
     /// **Die Abschrift des Blatts «Die Zeichen» (und «Main»), Stand 22.09.2026.** Ändert
     /// jemand einen Ton im Kern, fällt diese Probe; ändert sich das Blatt, wird diese Liste
     /// nachgezogen — in derselben Sitzung.
     func testJederFarbtonStehtSoAufDemBlatt() {
+        // JEDE ART STEHT AUF DEM BLATT, ohne Ausnahme (Durchsicht vom 22.09.2026: der Ton
+        // von «Zeichen unbekannt» stand auf keinem). Eine neue Art ohne Eintrag fällt hier.
+        let artenAufDemBlatt: [Zeichenart: (String, String)] = [
+            .bestanden: ("Die drei Antworten: bestanden", "#4ea373"),
+            .durchgefallen: ("Die drei Antworten: durchgefallen", "#e2776f"),
+            .nichtGemessen: ("Die drei Antworten: nicht gemessen", "#c8a53f"),
+            .entwurf: ("Nur für den Stift: Entwurf", "#6fb3d2"),
+            // Kein eigener Eintrag auf dem Blatt: der Ton von «nicht gemessen», gestrichelt.
+            .unbekannt: ("Die drei Antworten: nicht gemessen", "#c8a53f"),
+        ]
+        for art in Zeichenart.allCases {
+            guard let (stelle, hex) = artenAufDemBlatt[art] else {
+                XCTFail("\(art) steht auf keinem Blatt")
+                continue
+            }
+            XCTAssertEqual(art.rand.hex, hex, "\(art) — \(stelle)")
+        }
         let blatt: [(String, Farbton, String)] = [
             ("Grund", Blattfarbe.grund, "#14161a"),
             ("Feld", Blattfarbe.feld, "#1c1f26"),
@@ -534,8 +653,14 @@ final class PruefzeichenTests: XCTestCase {
         XCTAssertNotEqual(Zeichenart.unbekannt.rand, Blattfarbe.leise)
     }
 
-    /// **Eine Abwesenheit:** Ausserhalb des Kerns schreibt keine Datei der App einen
-    /// Farbton als Hex-Ziffern. Sonst gäbe es einen Ton, den keine Probe sieht.
+    /// **Eine Abwesenheit, eng gefasst:** Ausserhalb des Kerns baut keine Datei der App einen
+    /// `Farbton(hex:` — ein Ton im Format des Kerns, an ihm vorbei.
+    ///
+    /// **Mehr prüft diese Probe nicht** (Durchsicht der Verdrahtung, 22.09.2026): Sie sucht
+    /// nur diese eine Schreibweise. Ein Ton als `#rrggbb`-Text, als Zahl durch 255 oder als
+    /// Hex-Bytes sähe sie nicht. Die breitere Probe über alle Schreibweisen ist
+    /// `FarbtonTests` (Einheit «Zeichnen»); diese hier bleibt bewusst so eng, damit die beiden
+    /// nicht dasselbe zweimal behaupten.
     func testDieAppSchreibtKeineFarbtoeneAusserhalbDesKerns() throws {
         // DAS APP-PAKET UEBER DEN VERWEIS DES KERNS GEFUNDEN, nicht über seinen Namen: Der
         // Name steht nur in `Marke.swift` (`test_name_kennung_und_dienst_stehen_nur_in_der_marke`).
@@ -558,7 +683,8 @@ final class PruefzeichenTests: XCTestCase {
             if datei.resolvingSymlinksInPath().path.hasPrefix(kern.path + "/") { continue }
             let text = try String(contentsOf: datei, encoding: .utf8)
             gelesen += 1
-            XCTAssertFalse(text.contains("Farbton(hex:"), datei.lastPathComponent)
+            XCTAssertFalse(text.contains("Farbton(hex:"),
+                           "\(datei.lastPathComponent) baut einen Farbton(hex:) ausserhalb des Kerns")
         }
         XCTAssertGreaterThan(gelesen, 5, "die Probe muss Dateien gesehen haben")
     }

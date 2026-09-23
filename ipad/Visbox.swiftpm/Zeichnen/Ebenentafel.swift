@@ -7,6 +7,12 @@ import SwiftUI
 /// Ausgabe (`Ebenenstapel.plan`) — *eine Tafel, die etwas anderes zeigt, als hinausgeht,
 /// wäre derselbe Fehler wie die Ausgabe selbst.*
 ///
+/// **Die Unterlage steht als unterste Zeile** (seit dem 23.09.2026, Blatt «Main»: «Bild aus
+/// Lauf 07» unter den Ebenen): ein- und ausblendbar und entfernbar, aber **nicht wählbar** —
+/// sie ist keine Ebene (Kern, `Blattunterlage`), auf sie wird nicht gezeichnet und nicht
+/// radiert, und sie zählt nicht zu «Geht mit». Darunter ein Satz, was mit ihr gerechnet
+/// wird (`Blattunterlage.tafelsatz`, aus dem Kern mit Probe).
+///
 /// **Eine eigenständige Ansicht, ohne Rahmen:** kein Rollbereich, kein Rand, kein Grund.
 /// Die bringt mit, wer sie hinlegt — das Seitenfeld des Arbeitsplatzes
 /// (`ScrollView { seitenfeld.padding(20) }` mit dem Grund der Leiste) oder die
@@ -29,6 +35,9 @@ struct Ebenentafel: View {
             ForEach(stand.stapel.vonObenGesehen) { ebene in
                 zeile(ebene)
             }
+            if let u = stand.stapel.unterlage {
+                unterlagenzeile(u)
+            }
             if !stand.stapel.kannAnlegen {
                 leise("Höchstens \(Ebenenstapel.hoechstensEbenen) Ebenen.")
             }
@@ -40,6 +49,10 @@ struct Ebenentafel: View {
             if let satz = variantenSatz {
                 leise(satz)
             }
+            if let satz = ungewissSatz {
+                leise(satz)
+            }
+            leise(Blattunterlage.tafelsatz(stand.stapel.unterlage))
             leise("Jede Ebene ist eine Variante. Gerechnet wird, was sichtbar ist — "
                   + "unsichtbare Ebenen gehen nicht mit.")
         }
@@ -131,6 +144,64 @@ struct Ebenentafel: View {
                           lineWidth: 1))
     }
 
+    /// Die Zeile der Unterlage, zuunterst. **Kein Knopf zum Wählen** — ein Tipp auf den Namen
+    /// täte nichts, und ein Knopf, der nichts tut, sieht aus wie ein kaputter. Die Deckkraft
+    /// ist fest: Der Server legt die Skizze auf das ganze Bild, nicht auf ein blasses.
+    private func unterlagenzeile(_ u: Blattunterlage) -> some View {
+        HStack(spacing: 10) {
+            Button {
+                stand.setzeUnterlageSichtbar(!u.sichtbar)
+            } label: {
+                Image(systemName: u.sichtbar ? "checkmark.square.fill" : "square")
+                    .font(.system(size: 22))
+                    .foregroundStyle(u.sichtbar ? Zeichenblatt.gewaehltRand : Zeichenblatt.leise)
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(u.sichtbar ? "Unterlage \(u.titel) ausblenden"
+                                           : "Unterlage \(u.titel) einblenden")
+
+            Image(systemName: "photo")
+                .font(.system(size: 15))
+                .foregroundStyle(Zeichenblatt.leise)
+                .accessibilityHidden(true)
+            Text(u.titel)
+                .font(Schrift.text(15))
+                .foregroundStyle(u.sichtbar ? Zeichenblatt.schrift : Zeichenblatt.leise)
+                .lineLimit(1)
+            Spacer(minLength: 4)
+            Text(unterlagenzustand(u))
+                .font(Schrift.zahl(13))
+                .foregroundStyle(Zeichenblatt.leise)
+
+            Button {
+                stand.entferneUnterlage()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 15))
+            }
+            .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: 44, hoehe: 44))
+            .accessibilityLabel("Unterlage \(u.titel) entfernen")
+        }
+        .padding(.horizontal, 6)
+        .frame(minHeight: 46)
+        .overlay(RoundedRectangle(cornerRadius: 10)
+            .strokeBorder(Zeichenblatt.linie, style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Unterlage \(u.titel), \(unterlagenzustand(u))")
+    }
+
+    /// Neben dem Namen der Unterlage: ausgeblendet, gestreckt, oder nur «Unterlage». Ob sie
+    /// gestreckt ist, sagt der Kern (`Blattunterlage.gestreckt`); nicht bekannt steht als «?».
+    private func unterlagenzustand(_ u: Blattunterlage) -> String {
+        if !u.sichtbar { return "ausgeblendet" }
+        switch u.gestreckt {
+        case .some(true): return "gestreckt"
+        case .some(false): return "Unterlage"
+        case .none: return "Unterlage ?"
+        }
+    }
+
     /// Was neben dem Namen steht. «leer» ist **kein** «0 %»: Eine leere Ebene ist nicht
     /// durchsichtig, sondern unbezeichnet — und geht darum nicht mit.
     private func zustand(_ ebene: Ebene) -> String {
@@ -214,6 +285,22 @@ struct Ebenentafel: View {
         case .zuVieleVarianten(let sichtbar, let hoechstens):
             return "\(sichtbar) sichtbare Ebenen, höchstens \(hoechstens) gehen."
         }
+    }
+
+    /// Nur, wenn sich das Bild einer Ebene nach dem Radieren nicht lesen liess
+    /// (`Ebene.deckungUngewiss`, Befund Durchsicht 22.09.2026). Dann zählen ihre Striche,
+    /// und sie geht mit — auch wenn sie leer aussieht. Das steht hier, statt dass die Tafel
+    /// still «bezeichnet» zeigt. Ob der Fall am Gerät vorkommt, ist ungeprüft.
+    private var ungewissSatz: String? {
+        let namen = stand.stapel.vonObenGesehen
+            .filter { $0.deckungUngewiss && $0.gehtMit }
+            .map { "«\($0.name)»" }
+        guard !namen.isEmpty else { return nil }
+        let wer = namen.joined(separator: ", ")
+        let satz = "Bei \(wer) liess sich nach dem Radieren nicht prüfen, ob noch etwas zu "
+            + "sehen ist."
+        if namen.count == 1 { return satz + " Sie geht mit, weil sie Striche trägt." }
+        return satz + " Sie gehen mit, weil sie Striche tragen."
     }
 
     /// Nur, wenn es als Varianten nicht ginge.

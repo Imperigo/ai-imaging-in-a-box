@@ -66,11 +66,14 @@ public struct Farbton: Equatable, Hashable, Sendable {
     }
 }
 
-/// Welche Art Zeichen ein Bild trägt — **fünf, und jede hat ihre eigene Farbe.**
+/// Welche Art Zeichen ein Bild trägt — **fünf Arten, vier Farben.**
 ///
 /// Die drei Antworten des Projekts, dazu der Entwurf (blau, spricht kein Urteil) und ein
 /// Zeichen, das diese App nicht kennt. *Dieselbe Farbe darf nie zwei Dinge heissen*
-/// (Blatt «Die Zeichen», 21.09.2026); `testKeineFarbeHeisstZweiDinge` hält das fest.
+/// (Blatt «Die Zeichen», 21.09.2026): Die vier Aussagen tragen vier Farben. Das unbekannte
+/// Zeichen trägt die Farbe von «nicht gemessen», weil es **dasselbe heisst** — kein Urteil —,
+/// und unterscheidet sich durch sein Wort (22.09.2026, siehe `rand`).
+/// `testKeineFarbeHeisstZweiDinge` hält beides fest.
 public enum Zeichenart: String, CaseIterable, Sendable {
     case bestanden
     case durchgefallen
@@ -90,13 +93,17 @@ public enum Zeichenart: String, CaseIterable, Sendable {
         case .durchgefallen: return Farbton(hex: "e2776f")
         case .nichtGemessen: return Farbton(hex: "c8a53f")
         case .entwurf: return Farbton(hex: "6fb3d2")
-        // EIGENES FLIEDER, NICHT DAS LEISE GRAU (Durchsicht B, 22.09.2026): Bis dahin trug
-        // «Zeichen unbekannt» #9aa2ae — dieselbe Farbe wie jede leise Beschriftung
-        // (`Blattfarbe.leise`). Ein unbekanntes Zeichen am Bild sah damit aus wie ein
-        // Satz ohne Belang. *Dieselbe Farbe darf nie zwei Dinge heissen.* Das Blatt «Die
-        // Zeichen» führt diese Art noch nicht; der Ton ist vorläufig und gehört dort
-        // eingetragen. `testKeineUrteilsfarbeIstEineGrundfarbe` bewacht die Trennung.
-        case .unbekannt: return Farbton(hex: "b7a3e0")
+        // DAS GELB VON «NICHT GEMESSEN», UNTERSCHIEDEN DURCH DAS WORT (Durchsicht der
+        // Verdrahtung, 22.09.2026). Zuerst trug «Zeichen unbekannt» #9aa2ae, das Leise jeder
+        // Beschriftung (Durchsicht B) — ein unbekanntes Zeichen sah aus wie ein Satz ohne
+        // Belang. Das danach gesetzte Flieder #b7a3e0 stand auf keinem Blatt; *Oberfläche wird
+        // gezeichnet, bevor sie gebaut wird.* Das Blatt «Die Zeichen» kennt für «kein Urteil»
+        // genau einen Ton, gestrichelt — und ein Zeichen, das die App nicht lesen kann, ist für
+        // sie keines. Ein eigener Ton kommt erst mit einem Eintrag auf dem Blatt und dem
+        // Entscheid des Owners. Bewacht: `testJederFarbtonStehtSoAufDemBlatt` (jede Art,
+        // gegen die Abschrift des Blatts), `testKeineFarbeHeisstZweiDinge` (das Wort trennt),
+        // `testKeineUrteilsfarbeIstEineGrundfarbe` (nie das Leise).
+        case .unbekannt: return Zeichenart.nichtGemessen.rand
         }
     }
 
@@ -112,7 +119,7 @@ public enum Zeichenart: String, CaseIterable, Sendable {
     /// **Gestrichelt heisst: hier ist nichts gemessen** — auch beim unbekannten Zeichen,
     /// denn ein Urteil, das die App nicht lesen kann, ist für sie keines. Damit sich ein
     /// ungeprüftes Bild auch von weitem und ohne Farbensehen nicht wie ein bestandenes
-    /// liest. `testWasKeinUrteilTraegtIstGestrichelt` bewacht beide.
+    /// liest. `testNichtGemessenUndUnbekanntSindGestrichelt` bewacht beide.
     public var gestrichelt: Bool {
         switch self {
         case .nichtGemessen, .unbekannt: return true
@@ -252,7 +259,10 @@ public struct Pruefzeichen: Equatable, Sendable {
             zahl = Pruefzeichen.schreibe(pruefzahl)
         }
         // DIE SCHWELLE NUR NEBEN EINER PRUEFZAHL: nicht beim Entwurf (dort ist die Zahl
-        // ein Unterschied), nicht ohne Messung, nicht neben «ohne Zahl».
+        // ein Unterschied), nicht ohne Messung, nicht neben «ohne Zahl». Bewacht in
+        // `testDieSchwelleNurNebenEinerPruefzahl` — der Teil «nicht beim Entwurf» erst seit
+        // der Durchsicht vom 22.09.2026 (die Mutation `if true, case .wert = zahl` blieb bis
+        // dahin grün).
         var grenze: String?
         if art == .bestanden || art == .durchgefallen, case .wert = zahl,
            case .wert(let s) = Pruefzeichen.schreibe(schwelle) {
@@ -446,6 +456,15 @@ public struct Mappenbild: Equatable, Sendable {
     public let skizzeNichtAngekommen: Bool?
     /// Der Satz der Bibliothek dazu, oder `nil`.
     public let skizzeHinweis: String?
+    /// **Die Unterlage** — der Name des Bildes, über das skizziert wurde (Feld `vorher`,
+    /// Entscheid 17: Vorher und Nachher). `nil` heisst: Es gab keine, oder der Server nennt
+    /// sie nicht (ein Server vor dem 22.09.2026 führt das Feld nicht) — **nicht** «es gibt
+    /// keine». Ein leerer Name gilt wie keiner: Unter ihm lässt sich nichts laden.
+    ///
+    /// Bis zum 22.09.2026 las die App das Feld nicht, und der Vergleich Vorher/Nachher war im
+    /// Produkt nie zu sehen (Durchsicht der Verdrahtung). Die Bytes holt die App-Schicht über
+    /// `GET /bild` unter genau diesem Namen.
+    public let vorher: String?
 
     public init(_ o: [String: JSONWert]) {
         bild = o["bild"]?.alsText
@@ -465,6 +484,9 @@ public struct Mappenbild: Equatable, Sendable {
         hinweise = o["hinweise"]?.alsListe?.compactMap { $0.alsText }
         skizzeNichtAngekommen = o["skizze_nicht_angekommen"]?.alsWahrheit
         skizzeHinweis = o["skizze_hinweis"]?.alsText
+        vorher = o["vorher"]?.alsText.flatMap {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0
+        }
     }
 
     /// Wie das Bild ohne eigenen Schalter gelesen wird: **Ein Entwurf als Entwurf** (das
@@ -585,6 +607,19 @@ public enum Rechenbestellung: Equatable, Sendable {
     /// nebeneinander (Entscheid 18). Dieselbe Zahl wie beim Senden der Ebenen, nicht eine
     /// zweite.
     public static let reihenlaenge = Ebenenstapel.hoechstensVarianten
+
+    /// Was nach einer Ebenen-Reihe von der Auswahl bleibt — **geleert wird nur, was die
+    /// HomeStation angenommen hat.**
+    ///
+    /// Befund der Durchsicht vom 22.09.2026: Die Skizzenliste leerte die Auswahl gleich nach
+    /// dem Tippen, auch wenn die Bestellung abgelehnt wurde oder gar nicht hinausging — wer
+    /// es noch einmal versuchen wollte, musste zwei bis drei Skizzen neu wählen. Bei
+    /// `ungewiss` bleibt sie ebenfalls stehen: Ob drüben etwas rechnet, zeigt der Laufstand,
+    /// und eine stehengebliebene Auswahl kostet höchstens einen Tipp, eine verlorene drei.
+    /// Bewacht: `testDieReiheBleibtStehenAusserSieWurdeAngenommen`.
+    public static func reihe(_ reihe: [String], nach quittung: Handlungsquittung) -> [String] {
+        quittung.ausgang == .angenommen ? [] : reihe
+    }
 
     /// Die Anfrage dazu. Wirft `Rumpffehler`, wenn sie sich nicht schreiben lässt.
     public func anfrage(lesart: Bildlesart, ordner: String?,

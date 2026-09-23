@@ -5,13 +5,14 @@ import Network
 /// Zeichenfläche.**
 ///
 /// Die Einheit «Verbindung» baut nichts in `Zeichnen/`; sie nimmt nur diese Funktion an.
-/// Vorgegeben ist `Zeichenstand.gemeinsam.pngAusgabe(.eineSkizze)` (siehe
-/// `Verbindungszeile`): die sichtbaren Ebenen als **ein** Bild, so wie es auf dem Schirm
-/// steht (Entscheid Nr. 7, «gerechnet wird, was sichtbar ist»).
+/// Vorgegeben ist `Zeichenstand.gemeinsam.skizzenpaket(_:)` (siehe `Mappenknopf`): die
+/// sichtbaren Ebenen als PNG **und die Unterlage des Blattes** (seit dem 23.09.2026; vorher
+/// nur die Bilder, und jede Skizze ging ohne `ueber` hinaus). Was davon ins Fach geht,
+/// entscheidet der Kern (`Ablageplan`, Entscheid Nr. 7: «gerechnet wird, was sichtbar ist»).
 ///
 /// `@MainActor`, weil das Malen der Ebenen (UIKit) auf den Hauptfaden gehört — und damit es
 /// gleich bleibt, ob die Zeichenfläche ihren Stand selbst so auszeichnet oder nicht.
-typealias Skizzenquelle = @MainActor () -> Ebenenausgabe
+typealias Skizzenquelle = @MainActor () -> Skizzenpaket
 
 /// Die Verbindung zur HomeStation: koppeln, prüfen, parken, nachsenden — **und ehrlich
 /// sagen, wie es steht.**
@@ -122,11 +123,10 @@ final class Verbindungsstand: ObservableObject {
 
     var gekoppelt: Bool { adresse != nil }
 
-    /// Wie viele Skizzen von selbst hinausgehen, sobald die HomeStation antwortet.
-    var wartend: Int { fach.filter { $0.gehtVonSelbst }.count }
-
-    /// Wie viele eine Entscheidung eines Menschen brauchen.
-    var brauchenEntscheid: Int { fach.filter { $0.brauchtEntscheid }.count }
+    /// Was der Knopf zum Parkfach zählt — geparkt, ungewiss, unterwegs und offen **getrennt**
+    /// (Kern: `Fachzaehlung`). Bis zur Durchsicht vom 22.09.2026 stand hier `wartend`, und
+    /// der Knopf nannte auch ungewisse Skizzen «geparkt».
+    var zaehlung: Fachzaehlung { Fachzaehlung(fach) }
 
     // ------------------------------------------------------------------- Zustand
     //
@@ -145,6 +145,9 @@ final class Verbindungsstand: ObservableObject {
         if let unlesbar = parkfach?.unlesbar, !unlesbar.isEmpty {
             fachSatz = "\(unlesbar.count) Einträge im Parkfach liessen sich nicht lesen. "
                 + "Sie bleiben liegen, wie sie sind."
+        } else if let fehler = parkfach?.aufraeumFehler {
+            // EINE ALTE QUITTUNG BLIEB STEHEN — gesagt, aber das Fach ist offen und sendet.
+            fachSatz = fehler
         }
     }
 
@@ -332,31 +335,29 @@ final class Verbindungsstand: ObservableObject {
     /// «In die Mappe legen»: Die Skizze geht **ins Parkfach** und von dort hinaus. Gibt den
     /// Satz zurück, der gezeigt wird — `nil`, wenn es nichts zu sagen gibt, weil die Marke
     /// es zeigt.
+    ///
+    /// **Was hinausgeht, entscheidet der Kern** (`Ablageplan.aus`, seit dem 23.09.2026, mit
+    /// Proben in `BlattunterlageTests`): nichts Gezeichnetes, zu viele Varianten, eine
+    /// Unterlage aus einer anderen Mappe — dann ein Satz und nichts im Fach. Sonst parkt das
+    /// Fach jedes Bild **mit `ueber`**, wenn eine Unterlage liegt und sichtbar ist
+    /// (`Parkfach.parke(_:ueber:ordner:jetzt:)`), und die Angabe überlebt den Neustart.
     @MainActor
-    func legeInDieMappe(_ ausgabe: Ebenenausgabe) -> String? {
+    func legeInDieMappe(_ paket: Skizzenpaket) -> String? {
+        let zielordner = ordner.isEmpty ? nil : ordner
         let bilder: [Ebenenausgabe.Bild]
-        switch ausgabe {
-        case .bilder(let b):
+        let ueber: String?
+        switch Ablageplan.aus(paket, ordner: zielordner) {
+        case .nicht(let satz):
+            return satz
+        case .parke(let b, let u):
             bilder = b
-        case .nichtsGezeichnet(let ausgeblendet):
-            return ausgeblendet > 0
-                ? "Nichts Sichtbares gezeichnet — ausgeblendete Ebenen gehen nicht mit "
-                    + "(\(ausgeblendet) mit Strichen)."
-                : "Nichts gezeichnet — ein leeres Blatt geht nicht hinaus."
-        case .zuVieleVarianten(let sichtbar, let hoechstens):
-            return "\(sichtbar) Ebenen sind sichtbar; als Varianten gehen höchstens "
-                + "\(hoechstens). Eine ausblenden."
-        case .nichtErzeugt(let grund):
-            return grund
+            ueber = u
         }
         guard let fach = parkfach else {
             return fachSatz ?? "Das Parkfach ist nicht offen — die Skizze kann nicht warten."
         }
         do {
-            for bild in bilder {
-                try fach.parke(png: bild.png, name: bild.name,
-                               ordner: ordner.isEmpty ? nil : ordner)
-            }
+            try fach.parke(bilder, ueber: ueber, ordner: zielordner)
         } catch {
             spiegleFach()
             return "Die Skizze liess sich nicht ins Parkfach legen (\(error.localizedDescription))."
@@ -374,6 +375,11 @@ final class Verbindungsstand: ObservableObject {
     /// (`Parkfach.beginneSenden`), damit keine zweimal hinausgeht, und **jede mit ihrem
     /// Schlüssel** (`Anfragen.skizze(_:png:anmeldung:)`), damit eine ungewisse beim zweiten
     /// Mal drüben keine zweite Datei anlegt (Protokoll §3).
+    ///
+    /// Die Folge je Skizze: Vorspiel der Marke → Tor (mit der Frage, ob inzwischen
+    /// abgebrochen ist) → erstes Byte. *Gebaut, am Gerät unbestätigt (22.09.2026)* — dass
+    /// ein Abbruch im Vorspiel wirklich nicht sendet, prüft keine Probe; bewacht ist nur die
+    /// Regel des Tors im Kern.
     @MainActor
     func nachsenden() async {
         guard !sendetGerade, let fach = parkfach, let basis = adresse else { return }
@@ -382,24 +388,46 @@ final class Verbindungsstand: ObservableObject {
         var angekommen = false
 
         while zustand.darfSenden, let naechste = fach.naechster {
+            let schluessel = naechste.schluessel
+            uebergabeSchluessel = schluessel
+
+            // DAS VORSPIEL DES BLATTS ZUERST: ablegen (220 ms), abheben (180 ms) — erst dann
+            // das Tor, und gleich danach das erste Byte. Bis zur Durchsicht vom 22.09.2026 kam
+            // das Tor VOR dem Vorspiel: `unterwegs`, ein Versuch mehr und «Schluessel ging
+            // mit» standen schon auf der Platte, und ein Abbruch im Vorspiel (`trenne` beendet
+            // die Pruefschleife) wurde von `try?` verschluckt — gesendet wurde trotzdem.
+            for (phase, dauer) in Flugbahn.vorspiel {
+                uebergabe = phase
+                try? await Task.sleep(nanoseconds: UInt64(dauer * 1_000_000_000))
+            }
+
+            // NACH DEM VORSPIEL: Ist das Senden abgebrochen (die Aufgabe beendet, getrennt,
+            // eine andere Adresse, nicht mehr gekoppelt), gibt das Tor nichts frei und
+            // schreibt nichts (Kern: `Parkfach.beginneSenden(_:abgebrochen:)`, bewacht). Die
+            // Skizze bleibt, wie sie war, und geht beim naechsten Pruefen.
+            let abgebrochen = Task.isCancelled || adresse != basis || !zustand.darfSenden
             let eintrag: Parkeintrag
             do {
-                guard let frei = try fach.beginneSenden(naechste.schluessel) else {
+                guard let frei = try fach.beginneSenden(schluessel, abgebrochen: abgebrochen) else {
                     spiegleFach()
+                    await lasseZurueckfallen(schluessel)
+                    if abgebrochen { break }
                     continue
                 }
                 eintrag = frei
             } catch {
                 fachSatz = "Das Parkfach liess sich nicht beschreiben (\(error.localizedDescription))."
+                uebergabe = nil
+                uebergabeSchluessel = nil
                 break
             }
-            guard let png = fach.png(eintrag.schluessel) else {
-                _ = try? fach.melde(eintrag.schluessel,
+            guard let png = fach.png(schluessel) else {
+                _ = try? fach.melde(schluessel,
                                     .abgewiesen(grund: "Die Zeichnung fehlt im Fach.", code: nil))
                 spiegleFach()
+                await lasseZurueckfallen(schluessel)
                 continue
             }
-            let schluessel = eintrag.schluessel
             let anfrage: Anfrage
             do {
                 anfrage = try Anfragen.skizze(eintrag, png: png, anmeldung: anmeldung)
@@ -410,18 +438,11 @@ final class Verbindungsstand: ObservableObject {
                     ?? "Die Anfrage liess sich nicht bauen (\(error.localizedDescription))."
                 _ = try? fach.melde(schluessel, .abgewiesen(grund: satz, code: nil))
                 spiegleFach()
+                await lasseZurueckfallen(schluessel)
                 continue
             }
             spiegleFach()
-            uebergabeSchluessel = schluessel
 
-            // DAS VORSPIEL DES BLATTS: ablegen (220 ms), abheben (180 ms) — erst dann geht das
-            // erste Byte. Bis zum 22.09.2026 wurde `.abheben` nie gesetzt, und ohne Zaehlerstand
-            // blieb die Marke vergroessert in `.ablegen` stehen, bis die Antwort kam.
-            for (phase, dauer) in Flugbahn.vorspiel {
-                uebergabe = phase
-                try? await Task.sleep(nanoseconds: UInt64(dauer * 1_000_000_000))
-            }
             // UNTERWEGS, NICHT GEZAEHLT: Die Marke atmet am Rand, bis ein Zaehlerstand mit
             // Gesamt kommt — auch dann, wenn keiner mehr kommt.
             uebergabe = Flugbahn.flugbeginn
@@ -466,6 +487,18 @@ final class Verbindungsstand: ObservableObject {
             }
         }
         if angekommen { await ladeMappe() }
+    }
+
+    /// Die Marke fällt zurück aufs iPad (Blatt: *«sie verschwindet nie in der Mitte»*), steht
+    /// einen Augenblick und geht dann weg — aber nur, wenn inzwischen keine andere reist.
+    @MainActor
+    private func lasseZurueckfallen(_ schluessel: String) async {
+        uebergabe = .zurueck
+        try? await Task.sleep(nanoseconds: 900_000_000)
+        if uebergabeSchluessel == schluessel {
+            uebergabe = nil
+            uebergabeSchluessel = nil
+        }
     }
 
     /// Ein Zählerstand vom Senden. Gilt nur für die Skizze, die gerade reist, und nur,

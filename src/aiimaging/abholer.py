@@ -490,6 +490,10 @@ def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> Non
         # war. Der Vertrag hat kein Feld dafuer; ohne diese Zeile stuende nirgends, unter
         # welcher Voraussetzung die Geometriezahlen des Laufs ueberhaupt gelten.
         "hochachse": ergebnis.get("hochachse"),
+        # Ob die Geometrie aus einer IFC umgewandelt wurde, und was das Tor dazu sagte;
+        # und ob es eine Innenansicht war, aus welchem Raum (22.09.2026).
+        "umwandlung": ergebnis.get("umwandlung"),
+        "innenansicht": ergebnis.get("innenansicht"),
         "warnungen_auftrag": list(antwort.get("warnungen") or ()),
         "vertragsvorgaben": list(antwort.get("vertragsvorgaben") or ()),
         "wache": antwort.get("wache"),
@@ -1619,8 +1623,110 @@ def _innenaufgabe(wunsch: dict, raeume) -> dict:
         "auge": list(standpunkt["auge"]),
         "blick_auf": list(standpunkt["blick_auf"]),
         "brennweite_mm": (standpunkt.get("sichtfeld") or {}).get("brennweite_mm"),
-        "innenraum": {"raum": wahl["raum"], "art": standpunkt.get("art")},
+        # DER VERMERK, DASS ES EINE INNENANSICHT IST — bis zum 22.09.2026 stand er hier
+        # und wurde nirgends gelesen (Durchsicht). `verarbeite` heftet ihn an das
+        # Kameraurteil (`kosmo_szene.URTEIL_INNENANSICHT`), von dort erreicht er
+        # urteil.json, befund.json und `verdict.reason`.
+        "innenraum": {"raum": wahl["raum"], "art": standpunkt.get("art"),
+                      "bestellt": wunsch.get("bestellt")},
     }
+
+
+#: Name der umgewandelten Geometrie im Arbeitsordner eines IFC-Auftrags — derselbe wie
+#: in ``tools/homeworker.py`` und ``kette._fuehre_geometrie``.
+DATEI_UMGEWANDELT = "modell.glb"
+
+
+def _ist_ifc(modell) -> bool:
+    """Ist das Auftragsmodell eine IFC? — an der Endung, die die Quelle gewaehlt hat.
+
+    Auf dem Brueckenweg genuegt die Endung, weil sie nicht vom Absender stammt:
+    ``bruecke.lies_auftrag`` nimmt ``model.ifc`` nur, wenn die Bestellung
+    ``format: 'ifc'`` sagt, und hat die Datei vorher gesichtet (``einlass.sichte``).
+    Die eigene Ablage reicht den Pfad der Bestellung durch; eine falsch benannte Datei
+    faellt dort erst beim Umwandler auf (``seams.ifc_zu_glb`` sichtet selbst).
+    """
+    return modell is not None and Path(modell).suffix.lower() == ".ifc"
+
+
+def _ifc_umwandeln(ifc, arbeitsordner) -> dict:
+    """IFC → glb in den Arbeitsordner, dann das Tor — oder ein :class:`AbholerError` mit Satz.
+
+    **Die Einbausperre vom 22.09.2026.** Die Bruecke legt eine IFC-Bestellung als
+    ``model.ifc`` ab (auf-91 V3_V4). Der Abholer reichte das Modell bis dahin
+    unverwandelt an ``seams.glb_zu_multipass`` — eine IFC dort, wo Blender eine glb
+    erwartet. Gemessen ist das nie: Die Bruecke liess bis zum selben Tag keine IFC durch.
+
+    Gemacht wie ``tools/homeworker.py`` (``seams.ifc_zu_glb`` nach ``modell.glb``, Status
+    pruefen) und wie ``kette._fuehre_geometrie`` (danach ``torwaechter`` auf den Report).
+    Die Umwandlung laeuft im ``.venv-ifc`` jenseits einer Prozessgrenze (Regel 1, LGPL):
+    Dieses Modul startet ein Programm und liest JSON, es importiert kein ifcopenshell.
+
+    **Was das Tor hier sperrt, und was nicht.** Gesperrt wird ``ablehnen_konversion``:
+    kein Report, ``status`` nicht ``ok``, keine lesbare Huellbox — dann gibt es nichts zu
+    rendern. **Gemeldet, nicht gesperrt** wird ``ablehnen_massstab``, und das weicht von
+    ``kette._fuehre_geometrie`` bewusst ab: Auf diesem Weg misst ``_massstab_gemeldet``
+    denselben Massstab je Kamera und bricht ausdruecklich NICHT ab, weil die
+    Fehlalarmrate am Bestand ungemessen ist. Eine IFC-Bestellung strenger zu pruefen als
+    dieselbe Geometrie als glb hiesse, dass das Format ueber die Sperre entscheidet.
+
+    Returns:
+        ``{quelle, glb_path, up_axis, torwaechter, n_elements, n_triangles}``.
+        ``torwaechter`` ist ``{entscheidung, begruendung}`` — der Befund steht im
+        Ergebnis, auch wenn er nichts sperrt.
+
+    Raises:
+        AbholerError: Umwandlung gescheitert, Tor sagt ``ablehnen_konversion``, oder die
+            glb liegt danach nicht da. Es wird NICHT ersatzweise etwas anderes gerechnet.
+    """
+    from . import torwaechter as _tw
+
+    ifc = Path(ifc)
+    ziel = Path(arbeitsordner) / DATEI_UMGEWANDELT
+    ziel.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        bericht = _seams.ifc_zu_glb(str(ifc), str(ziel))
+    except _seams.SeamError as fehler:
+        raise AbholerError(
+            f"Die IFC liess sich nicht in eine glb umwandeln: {fehler}\n"
+            f"Ohne glb gibt es keine Tiefenkarte und kein Bild. Es wird nichts "
+            f"ersatzweise gerechnet.") from fehler
+    urteil = _tw.torwaechter(bericht)
+    if urteil["entscheidung"] == _tw.ENTSCHEIDUNG_ABLEHNEN_KONVERSION:
+        raise AbholerError(
+            f"Die Umwandlung IFC → glb traegt nicht: {urteil['begruendung']} Es wird "
+            f"nichts ersatzweise gerechnet.")
+    glb = Path(bericht.get("glb_path") or ziel)
+    if not glb.is_file():
+        raise AbholerError(
+            f"Die Umwandlung IFC → glb meldete Erfolg, aber {glb.name} liegt nicht im "
+            f"Arbeitsordner. Gerechnet wird nur auf einer Datei, die da ist.")
+    return {
+        "quelle": ifc.name,
+        "glb_path": str(glb),
+        # Die Achse der UMGEWANDELTEN Datei, gemeldet vom Runner (er dreht Z-up nach Y-up
+        # und sagt es). Fehlt sie, gilt die Annahme des Abholers, und `hochachse` sagt es.
+        "up_axis": bericht.get("up_axis"),
+        "torwaechter": {"entscheidung": urteil["entscheidung"],
+                        "begruendung": urteil["begruendung"]},
+        "n_elements": bericht.get("n_elements"),
+        "n_triangles": bericht.get("n_triangles"),
+    }
+
+
+def _modellstand_nicht_umgewandelt() -> dict:
+    """Der Modellstand einer ABBESTELLTEN IFC-Bestellung — ungeprueft, mit Grund.
+
+    Der Modellstand liest den glb-Kopf. Eine abbestellte IFC wird nicht umgewandelt (das
+    kostete einen Unterprozess fuer nichts), also gibt es keinen Kopf zu lesen — und
+    *nicht gelesen* ist nicht *traegt*.
+    """
+    from . import modellstand as _ms
+
+    return {"geprueft": False, "urteil": _ms.UNGEPRUEFT, "maengel": [], "warnungen": [],
+            "quelle": None,
+            "grund": ("Abbestellt: Die IFC wurde nicht in eine glb umgewandelt, und der "
+                      "Modellstand liest nur den glb-Kopf. NICHT GEPRUEFT.")}
 
 
 def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
@@ -1731,6 +1837,22 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         ziel = ausgabeort(auftrag, out_wurzel)
         ziel.mkdir(parents=True, exist_ok=True)
 
+        # DIE IFC WIRD ZUERST ZUR GLB (Einbausperre 22.09.2026, siehe `_ifc_umwandeln`).
+        # Alles darunter — Modellstand, Multipass, Zwischenspeicher — arbeitet auf der
+        # glb; allein der Raumleser bekommt die IFC, denn Raeume gibt es nur dort.
+        #
+        # Nicht bei `ueberspringen`: Wer abbestellt, bekommt keinen Unterprozess.
+        modell = auftrag["modell"]
+        umwandlung = None
+        if _ist_ifc(modell) and not szene.get("ueberspringen"):
+            umwandlung = _ifc_umwandeln(modell, ziel)
+            modell = umwandlung["glb_path"]
+            if umwandlung.get("up_axis"):
+                # Die Achse der Datei, die Blender WIRKLICH bekommt — sie hat der
+                # Umwandler geschrieben und gemeldet. Eine Angabe des Auftrags spraeche
+                # ueber die IFC, und die sieht Blender nicht.
+                hochachse, hochachse_quelle = umwandlung["up_axis"], "umwandlung"
+
         # DER MODELLSTAND, EINMAL JE AUFTRAG UND VOR ALLEM ANDEREN. Er ist eine Eigenschaft
         # der DATEI, nicht der Kamera, er kostet einen glb-Kopf und keine GPU-Sekunde — und
         # er ist der Befund, der drei Laeufen am 01./02.09.2026 gefehlt hat.
@@ -1738,7 +1860,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # Er steht VOR dem `ueberspringen`-Zweig, damit `modellstand` in JEDEM Ergebnissatz
         # dieselbe Bedeutung hat. Ein Feld, das mal da ist und mal nicht, zwingt jeden
         # Auswerter zum Verzweigen — dieselbe Regel wie bei `status` und `grund`.
-        modellstand = _modellstand_gemeldet(auftrag["modell"])
+        modellstand = (_modellstand_nicht_umgewandelt() if _ist_ifc(modell)
+                       else _modellstand_gemeldet(modell))
 
         # ABBESTELLT. Bis zum 26.08.2026 las die Kette `skip: true` und rechnete
         # trotzdem — der Abholer meldete es sogar selbst («BESTELLT UND NICHT
@@ -1762,6 +1885,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                           "Das ist keine Stoerung und kein Urteil ueber die Geometrie — "
                           "es wurde nichts gemessen, weil nichts bestellt war."),
                 "modellstand": modellstand,
+                "umwandlung": None,
             }
 
         kameras = szene.get("kameras")
@@ -1771,6 +1895,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # `auto` ist auch die Vorgabe, wenn `cameras` fehlt; es ist keine Bestellung
             # von Aussenansichten, `interior` dagegen ist eine von innen.
             if isinstance(kameras, list):
+                # REINE ABSICHERUNG, auf dem Produktweg nicht erreichbar (Durchsicht
+                # 22.09.2026): `kosmo_szene.lies_szene` setzt `innenraum` nur OHNE
+                # mitgesandte Kameras. Er steht fuer eine Szene, die jemand von Hand baut
+                # oder eine kuenftige Quelle liefert — bewacht an einer direkt gebauten
+                # Szene in `tests/test_interior_bestellung.py`.
                 raise AbholerError(
                     "Standpunkt zweimal bestellt: `innenraum` rechnet ihn aus den Raeumen, "
                     "und die Szene nennt eigene Kameras. Welcher gilt, entscheidet dieses "
@@ -1804,12 +1933,16 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
 
         for aufgabe in aufgaben:
             kuerzel = aufgabe["kuerzel"]
+            # Der Innenvermerk dieser Aufgabe, an JEDES ihrer Urteile — auch an eines,
+            # das nicht gerendert wurde: Auch dort ist die Frage, WOHER der Standpunkt
+            # kam, die erste, die jemand stellt. `None`: nicht aus `interior`.
+            innen = {_kosmo_szene.URTEIL_INNENANSICHT: aufgabe.get("innenraum")}
             aus = ziel / str(kuerzel)
             aus.mkdir(parents=True, exist_ok=True)
             beginn = time.monotonic()
 
             einstellungen = dict(
-                glb_path=str(auftrag["modell"]), up_axis=hochachse,
+                glb_path=str(modell), up_axis=hochachse,
                 # DIE BOX, NACH DER DIE KAMERA RAHMT. `None` heisst: nach der SZENE, und
                 # das ist der Fall, fuer den der Rahmungsriegel gebaut wurde — er lehnt
                 # dann Laeufe ab, ohne je die Box zu reichen, die sie heilen wuerde.
@@ -1942,7 +2075,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 urteile.append(dict(_uebersprungenes_urteil(kuerzel, blickfeld),
                                     massstab=_massstab_gemeldet(bericht),
                                     rahmung=None, komposition=None,
-                                    blickfeld=blickfeld, modellstand=modellstand))
+                                    blickfeld=blickfeld, modellstand=modellstand,
+                                    **innen))
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
                 continue
@@ -1994,7 +2128,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 urteile.append(dict(_uebersprungenes_urteil(kuerzel, lage),
                                     massstab=massstab, rahmung=rahmung,
                                     komposition=komposition, blickfeld=blickfeld,
-                                    modellstand=modellstand))
+                                    modellstand=modellstand, **innen))
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
                 continue
@@ -2050,7 +2184,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             zwilling = gesehen.get(kennung) if kennung else None
             if zwilling is not None:
                 urteile.append(dict(zwilling["urteil"], kamera=kuerzel,
-                                    doppelt_von=zwilling["kamera"]))
+                                    doppelt_von=zwilling["kamera"], **innen))
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
                 continue
@@ -2165,6 +2299,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # der Befund jeden Fehler einer spaeteren Kamera. Dieselbe Ueberlegung wie
             # bei `blickfeld` und `zwischenspeicher` eine Zeile darueber.
             urteil["modellstand"] = modellstand
+            urteil.update(innen)
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
             # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.
@@ -2207,6 +2342,12 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # `uebersprungen` — ein Ergebnissatz mit wechselnden Schluesseln zwingt jeden
             # Auswerter, vor dem Lesen zu verzweigen (dieselbe Regel wie bei `status`).
             "modellstand": modellstand,
+            # WAS AUS DER IFC WURDE — `None`, wenn keine umgewandelt wurde (glb-Auftrag).
+            # Traegt das Urteil des Tors auch dann, wenn es nichts gesperrt hat.
+            "umwandlung": umwandlung,
+            # Der Innenvermerk des Auftrags, wenn eine Aufgabe aus `interior` kam.
+            "innenansicht": next((a.get("innenraum") for a in aufgaben
+                                  if a.get("innenraum")), None),
         }
 
     return verarbeite

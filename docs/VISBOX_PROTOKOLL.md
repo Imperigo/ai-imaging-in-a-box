@@ -14,7 +14,8 @@ Gelesen aus: `oberflaeche/server.py` (Wege, Tür, Antworten), `oberflaeche/rundr
 `src/aiimaging/arbeitsgang.py` (Entwurf, Varianten, Skizze rechnen, Abbrechen). Stand:
 22.09.2026, abends (Einheit D-SERVER), nachgeführt nach den Durchsichten der Welle 1
 (Skizze auf Unterlage, Zahl nur mit Urteil, Abbruch zwischen Varianten, Kopplungssatz,
-Rundruf). Die App schreibt die Wege in `ipad/Visbox.swiftpm/Kern/Wege.swift`
+Rundruf) und der Welle 2 (23.09.2026: `vorher` und `unterlage_hinweis` je Bild, der Name der
+App in der Abweisung, eine während des Laufs verworfene Skizze, die Unterlage der App). Die App schreibt die Wege in `ipad/Visbox.swiftpm/Kern/Wege.swift`
 ab; `tests/test_ipad_geruest.py` fällt, sobald die Abschrift und der Server auseinanderlaufen.
 
 ---
@@ -46,8 +47,12 @@ Jede Anfrage geht durch dieselbe Tür, **auch die nach der Seite selbst.**
   * Das Kennwort ist 32 Zeichen lang, zufällig erzeugt, verglichen in konstanter Zeit.
 
 **Abweisung: 401**, Rumpf `{"fehler": "Nicht angemeldet. Benutzername und Kennwort stehen im
-Fenster, in dem Visbox gestartet wurde."}`, Kopf `WWW-Authenticate: Basic realm="Visbox",
-charset="UTF-8"`. Nach einer 401 geht **nichts** weiter an die Anfrage.
+Fenster, in dem <Name> gestartet wurde."}`, Kopf `WWW-Authenticate: Basic realm="<Name>",
+charset="UTF-8"`. Nach einer 401 geht **nichts** weiter an die Anfrage. `<Name>` ist der Name
+der App aus `Marke.name` (heute «Visbox», nach der Abgabe «KosmoSketch»; in `server.py` die
+Konstante `NAME`, ein `"` darin wird im Bereich maskiert) — seit dem 23.09.2026 auch hier und
+im Kopf `Server` jeder Antwort; vorher stand an diesen Stellen «Visbox» fest. **Die App soll
+den Bereich nicht auswerten**: Er ändert sich mit dem Namen.
 
 **Die zwei Ausnahmen, beide nur bei offener Kopplung (`--kopplung`):**
 
@@ -95,12 +100,64 @@ auf ihrer Unterlage**, nicht die Skizze allein. Die Unterlage ist das Bild, das 
 Skizze unter `ueber` führt; fehlt `ueber`, ein neutrales Grau (128, 128, 128). Verrechnet wird
 mit dem **Alphakanal** (durchsichtig heisst Unterlage, halb deckend heisst halb). Die Grösse ist
 die der Unterlage, die Skizze wird Blatt auf Bild abgebildet — dass die App die Unterlage
-blattfüllend zeigt, ist eine Annahme und **am Gerät unbestätigt**; bei anderem
+blattfüllend zeigt, ist seit dem 23.09.2026 so gebaut (unten), aber **am Gerät unbestätigt**; bei anderem
 Seitenverhältnis wird gestreckt, und das Bild sagt es (`herkunft.unterlage.gestreckt`). Ohne
 Unterlage bleibt die Grösse der Skizze. *Befund dazu:* Bis dahin ging die Zeichnung allein
 hinein, und die Bildstufe (die das Ausgangsbild ohne Alpha liest) machte aus dem durchsichtigen
-Grund **Schwarz** — das Bild, auf das gezeichnet war, kam nie an. Die App muss dafür nichts
-ändern: Sie schickt weiter Striche auf durchsichtigem Grund und den Namen der Unterlage.
+Grund **Schwarz** — das Bild, auf das gezeichnet war, kam nie an.
+
+**Was die App schickt — die Unterlage in der App (gebaut am 23.09.2026, nicht übersetzt, am
+Gerät unbestätigt).** Bis zum Stand `edbdcad` zeigte die App keine Unterlage und parkte jede
+Skizze **ohne `ueber`**; jede Skizze aus der App wurde darum auf Grau gerechnet (das Bild sagt es
+seither selbst, `unterlage_hinweis`, §4). Bis zum 23.09.2026 stand hier ausserdem «Die App muss
+dafür nichts ändern» — das stimmte nur für die Webseite, die `ueber` schon mitschickt. Jetzt:
+
+* **Legen.** In der grossen Bildansicht steht «Darauf skizzieren» (`Bilder/Daraufskizzieren.swift`;
+  das Wort steht auf keinem Blatt und ist gesetzt). Der Knopf holt das Bild über `GET /bild` —
+  oder nimmt die Grafik, die das Bildband unter demselben Namen und derselben Zeit schon hat —,
+  legt es unter die Ebenen, stellt das Seitenfeld auf «Ebenen» und schliesst die Ansicht. **Ein
+  Bild, das nicht geladen ist, wird nicht gelegt** (sonst ginge ein Name als `ueber` hinaus,
+  während das Blatt leer aussieht); der Satz sagt, warum nicht.
+* **Zeigen.** Die Unterlage liegt unter allen Zeichenflächen, **blattfüllend und bei anderem
+  Seitenverhältnis gestreckt** — so, wie `setze_auf_unterlage` die Skizze auf das Bild abbildet
+  (Blatt 1536 × 1024 auf das ganze Bild). Ob gestreckt wird, rechnet der Kern mit der Regel des
+  Servers nach (`Blattunterlage.gestreckt`: mehr als ein Prozent Abweichung im
+  Seitenverhältnis; lässt sich die Grösse des Bildes nicht lesen, heisst es **nicht bekannt**,
+  nicht «nein»), und die Ebenentafel sagt es. Beim Schieben und Zoomen folgt sie der gewählten
+  Fläche. Der Titel über dem Blatt lautet dann «Skizze über <Name> · <Ebene>».
+* **Keine Ebene.** Die Unterlage steht als **unterste Zeile** der Ebenentafel, mit dem Namen des
+  Bildes, ein- und ausblendbar und entfernbar, aber nicht wählbar. Sie wird nicht radiert (sie
+  ist keine Zeichenfläche), nicht ins PNG gemalt und nicht mitgeschickt — der Server hat das
+  Bild. Sie zählt nicht zur Höchstzahl der Ebenen, nicht zu «Geht mit», nicht zur
+  Leer-Prüfung und ist nie eine Variante: **Liegt nur die Unterlage und ist nichts gezeichnet,
+  geht nichts hinaus**, mit dem Satz «Auf «<Name>» ist noch nichts gezeichnet — die Unterlage
+  allein geht nicht hinaus.»
+* **`ueber` geht genau dann mit, wenn eine Unterlage liegt und sichtbar ist** (Entscheid 7,
+  «gerechnet wird, was sichtbar ist», auf die Unterlage angewandt): **Eine ausgeblendete
+  Unterlage geht nicht mit** — wer sie ausblendet, sieht die Striche auf dem leeren Blatt, und
+  genau das wird gerechnet (auf Grau). Die Tafel sagt es in einem Satz. Bei «Drei Ebenen» trägt
+  jede Variante dieselbe Unterlage.
+* **Nur in der eigenen Mappe.** Die Unterlage merkt sich die Mappe (`ordner`), aus der sie kam.
+  Würde in eine andere abgelegt, lehnt die App **ab, mit Satz**, statt auf Grau auszuweichen:
+  Dort gibt es das Bild nicht, und der Server wiese die Skizze erst beim Rechnen ab.
+* **Geparkt überlebt sie den Neustart.** Das Parkfach schreibt `ueber` in den Eintrag auf der
+  Platte, und aus dem Fach geht es mit der Skizze hinaus (`Anfragen.skizze(_:png:anmeldung:)`).
+  Die Unterlage **auf dem Blatt** dagegen überlebt einen Neustart nicht — wie die Striche selbst.
+
+Die Regeln stehen im Kern (`ipad/Visbox.swiftpm/Kern/Blattunterlage.swift`: `Blattunterlage`,
+`Unterlagenangabe`, `Ablageplan`; `Parkfach.parke(_:ueber:ordner:jetzt:)`) und sind in
+`BlattunterlageTests` bewacht, bis zum Weg Stapel → Parkfach → Neustart → Anfrage. Die App-Seite
+(Laden, Zeigen, Tafel, Knopf) ist SwiftUI/UIKit und hier nicht übersetzt.
+
+**«In die Mappe legen»** steht seit dem 23.09.2026 unten im Seitenfeld (Blätter «Main» und
+«MainHoch», `Leiste/Mappenknopf.swift`), unter beiden Reitern, und nicht mehr in der
+Verbindungszeile.
+
+**Das Eingangsbild** liegt in der Mappe unter `eingang/<stamm>-<prüfsumme>.png`, die Prüfsumme
+aus dem Skizzennamen (seit dem 23.09.2026; vorher `eingang/<stamm>.png`, und zwei Skizzen mit
+gleichem Stamm aus verschiedenen Unterordnern überschrieben sich in einer Ebenen-Reihe — beide
+Ebenen rechneten auf der zweiten Zeichnung). Der Name steht am Bild unter
+`herkunft.unterlage.eingangsbild`; die App braucht ihn nicht.
 
 **Zum Ablegen einer Skizze:** Der Dateiname entsteht aus der Uhrzeit (`skizze-JJJJMMTT-HHMMSS.png`,
 Weltzeit), nie aus dem Wunsch des Geräts. **Er ist eindeutig** (seit 22.09.2026): Kommt in
@@ -136,7 +193,11 @@ Wer ihn schickt, und wann er wechselt:
   hier: Nach einem Neustart des Servers entsteht bei der Wiederholung doch eine zweite Datei.
 * **Die Webseite** schickt seit dem 22.09.2026 je Zeichnung einen, und **jeder neue Strich**
   (auch mit dem Radierer) macht daraus eine neue Zeichnung mit neuem Schlüssel. Ein zweiter
-  Klick auf «In die Mappe legen» ohne neuen Strich schickt denselben. *Befund dazu:* Bis dahin
+  Klick auf «In die Mappe legen» ohne neuen Strich schickt denselben. **Ein Strich ist erst,
+  was sich bewegt** (seit dem 23.09.2026): Ein Tipp ohne Bewegung ändert weder Zeichnung noch
+  Schlüssel. Wird die Tafel durch eine andere Unterlage geleert (auch eine gleich grosse), vergisst
+  die Seite Zeichnung und Schlüssel; ein neues Laden der Mappe (nach jedem Lauf) leert sie nicht
+  mehr. *Befund dazu:* Bis dahin
   galt der Schlüssel bis zum Leeren der Tafel; eine nach verlorener Antwort ergänzte Zeichnung
   ging mit dem alten hinaus und wurde als «andere Zeichnung» abgewiesen.
 
@@ -179,8 +240,9 @@ auf dem die App die Projekte der HomeStation auflisten könnte: **nicht vorhande
 | `formate` | Welche Modellformate der Import kennt |
 
 **Je Bild** (`bilder[]`): `{bild, schicht, zeichen, satz, erzeugt, herkunft, vorhanden, basis,
-score, schwelle, titel, entwurf, variantengruppe, hinweise, skizze_nicht_angekommen,
-skizze_hinweis}` (die letzten acht seit 22.09.2026).
+score, schwelle, titel, entwurf, variantengruppe, vorher, hinweise, skizze_nicht_angekommen,
+skizze_hinweis, unterlage_hinweis}` (`score` bis `skizze_hinweis` ohne `vorher` seit dem
+22.09.2026; `vorher` und `unterlage_hinweis` seit dem 23.09.2026).
 
 * `zeichen` ist **einer von drei** Werten: `bestanden`, `durchgefallen`, `nicht-gemessen`. In der
   Mappe steht dasselbe als `geometrie_bestanden: true | false | null`. **`null` heisst nicht
@@ -211,8 +273,24 @@ skizze_hinweis}` (die letzten acht seit 22.09.2026).
   `satz` beginnt mit «Entwurf — nicht geprüft». Das blaue Zeichen entsteht an diesem Feld.
 * `variantengruppe`: `{id, art, nummer, von, seed | skizze}` für ein Bild aus einer Reihe
   (`art` ist `startwerte` oder `ebenen`), sonst `null`.
+* `vorher` (seit dem 23.09.2026): **das Bild, über das skizziert wurde** — der Name, wie er
+  unter `bilder[].bild` steht, gelesen aus `herkunft.unterlage.bild`. **Nur der Name eines
+  Bildes dieser Mappe**: Er steht unter `bilder`, die Datei liegt im Projektordner (so, wie
+  `GET /bild` sie ausliefert), und er ist nicht das Bild selbst. **Sonst `null`** — ohne
+  Unterlage gezeichnet (auf Grau), kein Bild aus einer Skizze, ein älteres Bild ohne
+  `herkunft.unterlage`, die Unterlage ist nicht (mehr) zu haben. **Nie ein Pfad.** Die App holt
+  die Bytes über `GET /bild` unter genau diesem Namen (Entscheid 17: Vorher und Nachher); die
+  Webseite nimmt es für Nebeneinander und Wischregler.
 * `hinweise`: die Hinweise der Bildstufe (`herkunft.messung.hinweise`) als Liste von Sätzen;
-  `[]` heisst gemessen und ohne Hinweis, **`null` heisst nicht gemessen**.
+  `[]` heisst gemessen und ohne Hinweis, **`null` heisst nicht gemessen**. Seit dem 23.09.2026
+  hängt der Server **hinten** den Satz aus `unterlage_hinweis` an, **wenn** es einen gibt und
+  die Liste nicht `null` ist — damit Webseite und App ihn ohne eigenen Code zeigen. An `null`
+  hängt er nichts an: Das hiesse, «nicht gemessen» in eine Liste zu verwandeln.
+* `unterlage_hinweis` (seit dem 23.09.2026): der Satz der Bibliothek zur Unterlage
+  (`herkunft.unterlage.grund`), **nur wenn er etwas zu sagen hat**: die Skizze wurde auf ihr
+  Bild **gestreckt** (anderes Seitenverhältnis), oder sie wurde **ohne Unterlage auf Grau**
+  gerechnet. Sonst `null` (Blatt auf Bild ohne Streckung, kein Skizzenbild, ein älteres
+  Bild). Er steht zusätzlich in `hinweise` (siehe oben), ausser dort steht `null`.
 * `skizze_nicht_angekommen`: **drei Antworten.** `true` — das Bild kam aus einer Skizze, und die
   Bildstufe sagt, sie kam beim Modell nicht an (auf dem Vorgabemodell der Normalfall, Befund
   `auf-20260919-123`: Das Bild ist dann aus Tiefenkarte und Text gerechnet, was gezeichnet war,
@@ -262,7 +340,7 @@ Was davon über die Leitung geht:
 | Zustandscode 409 | **nicht vorhanden.** Eine Kollision kommt als **400** mit Satz. |
 | `POST /api/einstellungen` | Bei Kollision **400** mit dem Satz der Bibliothek und dem Zusatz «Die Seite neu laden zeigt den neuen Stand.» — **es wird nicht wiederholt**, weil eine Einstellung ersetzt und eine Wiederholung die des anderen wegwürfe. |
 | `POST /api/skizze` | Bei Kollision **einmal still wiederholt** (auf dem frischen Stand neu eingetragen), weil eine Skizze hinzufügt. Kommt die Kollision zweimal in Folge: **400** mit Satz. Die Datei liegt dann schon auf der Platte. |
-| `POST /api/rechne`, `POST /api/rechne-skizze` | Schreibt während des Laufs jemand anderes in die Mappe (ein Name, eine Skizze, Einstellungen), **trägt der Lauf seine Vermerke auf den neueren Stand nach** (seit dem 22.09.2026, höchstens dreimal; `arbeitsgang.NACHHOLEN_HOECHSTENS`) — der Name des anderen bleibt, und der Lauf verliert nichts. Erst wenn es dreimal in Folge kollidiert, kommt die Kollision im Laufstand als `fehler`. *Befund dazu:* Bis dahin warf der Lauf am Ende die Kollision, und **alle seine Vermerke fehlten** in der Mappe, sobald während des Laufs benannt oder eine Skizze abgelegt wurde. |
+| `POST /api/rechne`, `POST /api/rechne-skizze` | Schreibt während des Laufs jemand anderes in die Mappe (ein Name, eine Skizze, Einstellungen), **trägt der Lauf seine Vermerke auf den neueren Stand nach** (seit dem 22.09.2026, höchstens dreimal; `arbeitsgang.NACHHOLEN_HOECHSTENS`) — der Name des anderen bleibt, und der Lauf verliert nichts. **Wurde die gerechnete Skizze inzwischen verworfen, bleibt sie verworfen** (seit dem 23.09.2026): Das Bild steht in der Mappe und an der Skizze unter `ergebnis`, ihr `stand` wird nicht auf `gerechnet` zurückgedreht. Steht sie gar nicht mehr in der Mappe, wird an ihr nichts vermerkt; das Bild nennt sie weiter (`herkunft.skizze`). Erst wenn es dreimal in Folge kollidiert, kommt die Kollision im Laufstand als `fehler`. *Befund dazu:* Bis dahin warf der Lauf am Ende die Kollision, und **alle seine Vermerke fehlten** in der Mappe, sobald während des Laufs benannt oder eine Skizze abgelegt wurde. |
 | `POST /api/benennen` | Mit `von_stand`: abgewiesen, sobald auf der Platte ein neuerer Stand liegt. Ohne: nur ein Schreiber im selben Augenblick kollidiert. **400** mit Zusatz «Die Seite neu laden …», **nicht** wiederholt — ein Name ersetzt einen anderen. |
 
 Was die Prüfung **nicht** fängt (steht so in `projekt.speichere`): zwei Schreibvorgänge im
@@ -301,7 +379,7 @@ kann kein anderes Gerät herein.
 | TXT | `fassung=1` — die Fassung dieses Protokolls |
 | A | Die Adresse aus `heimnetz_adresse()` — dieselbe, die die Startzeile nennt, **festgestellt beim Start** |
 | Beantwortet | nur Fragen nach dem eigenen Dienst, der eigenen Instanz, dem eigenen Rechnernamen und nach `_services._dns-sd._udp.local`. Alles andere bleibt still. |
-| Nebeneinander | `SO_REUSEADDR` und, wo vorhanden, `SO_REUSEPORT`. **Geprüft ist das Binden:** Der Rundruf bindet an 5353, auch wenn dort schon ein anderer Socket mit einer der beiden Optionen hört (`tests/test_rundruf.py`). **Nicht** «verdrängt keinen»: Setzt ein vorhandener Dienst (avahi) nur `SO_REUSEADDR`, landen **alle direkt adressierten Pakete** (Unicast) beim später gebundenen Rundruf und keines beim anderen; mit `SO_REUSEPORT` werden sie nach Absender auf beide verteilt (Linux, nachgefahren und bewacht in `tests/test_durchsicht_kern_server.py`, 22.09.2026). Der Rundruf beantwortet davon nur Fragen nach seinem Dienst. Ob Pakete an die Gruppe beide erreichen: nicht nachgestellt. Offener Posten an `local` (HomeStation mit avahi). |
+| Nebeneinander | `SO_REUSEADDR` und, wo vorhanden, `SO_REUSEPORT`. **Geprüft ist das Binden:** Der Rundruf bindet an denselben Anschluss, an dem schon ein anderer Socket mit einer der beiden Optionen hört (`tests/test_rundruf.py`) — **nachgestellt auf einem freien Anschluss an 127.0.0.1, nicht an 5353**; ob es an 5353 neben einem echten avahi genauso geht, ist am Gerät unbestätigt (bis zum 23.09.2026 stand hier «bindet an 5353»). **Nicht** «verdrängt keinen»: Setzt ein vorhandener Dienst (avahi) nur `SO_REUSEADDR`, landen **alle direkt adressierten Pakete** (Unicast) beim später gebundenen Rundruf und keines beim anderen; mit `SO_REUSEPORT` werden sie nach Absender auf beide verteilt (Linux, nachgefahren und bewacht in `tests/test_durchsicht_kern_server.py`, 22.09.2026; auf anderen Systemen werden diese Proben mit Grund übersprungen). Der Rundruf beantwortet davon nur Fragen nach seinem Dienst. Ob Pakete an die Gruppe beide erreichen: nicht nachgestellt. Offener Posten an `local` (HomeStation mit avahi). |
 | Einfache Fragesteller | Wer nicht von 5353 fragt, bekommt die Antwort direkt, mit seiner Kennung, ohne cache-flush, höchstens 10 s gültig (RFC 6762 §6.7). |
 | Start/Ende | Ankündigung beim Start; beim Beenden (Strg-C) ein Abschied mit Gültigkeit 0. |
 | Scheitert er | Keine Adresse ermittelt, Anschluss 5353 nicht zu haben, Beitritt verweigert: Die Fläche läuft trotzdem, und die Startzeile sagt «kein Rundruf — … Die Adresse am iPad eintippen.» |

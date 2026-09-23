@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Die Oberfläche von Visbox — **eine dünne Schicht, und sie bleibt dünn.**
+"""Die Oberfläche der App (Webseite und Server für das iPad) — **eine dünne Schicht, und
+sie bleibt dünn.** Wie die App heisst, steht nicht hier, sondern in :data:`NAME`.
 
 Sie liegt ausserhalb von ``src/aiimaging/``, weil Regel 4 jeden Oberflächen-Import im Kern
 verbietet. Warum das keine Ordnungsfrage ist, steht in ``LIESMICH.md`` daneben.
@@ -902,7 +903,7 @@ def bedienfelder(einstellungen: dict, graph=None, glb: str | None = None) -> lis
     return felder
 
 
-def _bild_fuer_die_flaeche(eintrag: dict, ordner=None) -> dict:
+def _bild_fuer_die_flaeche(eintrag: dict, ordner=None, *, bilder_der_mappe=None) -> dict:
     """Ein Bildeintrag, wie ihn die Seite braucht — **samt seinem Vorbehalt.**
 
     Hier steht die einzige Stelle, an der diese Datei etwas *entscheidet*, und sie
@@ -914,6 +915,9 @@ def _bild_fuer_die_flaeche(eintrag: dict, ordner=None) -> dict:
 
     Der UI-Worker hat am 03.09.2026 genau das gemeldet: Die Bildkachel zeigte bei
     fehlender Prüfung **kein** Abzeichen. *Kein Abzeichen sieht aus wie kein Problem.*
+
+    ``bilder_der_mappe`` sind die Einträge unter ``bilder`` derselben Mappe. Ohne sie
+    (und ohne ``ordner``) bleibt ``vorher`` ``None`` — siehe :func:`_vorher`.
     """
     urteil = eintrag.get("geometrie_bestanden")
     basis = eintrag.get("basis") or None
@@ -977,8 +981,47 @@ def _bild_fuer_die_flaeche(eintrag: dict, ordner=None) -> dict:
         "entwurf": eintrag.get("entwurf") if isinstance(eintrag.get("entwurf"), bool)
                    else None,
         "variantengruppe": eintrag.get("variantengruppe") or None,
+        # DAS VORHER ZUM VERGLEICH (Entscheid 17): das Bild, ueber das skizziert wurde.
+        # Seit dem 23.09.2026; die App liest das Feld (`Mappenbild.vorher`).
+        "vorher": _vorher(eintrag, ordner, bilder_der_mappe),
         **_hinweise_zum_bild(eintrag),
     }
+
+
+def _vorher(eintrag: dict, ordner, bilder_der_mappe):
+    """Der Name des Bildes, **über das skizziert wurde** — oder ``None``.
+
+    Gelesen aus ``herkunft.unterlage.bild``: Dort legt ``_eingangsbild`` in
+    ``src/aiimaging/arbeitsgang.py`` die Unterlage ab, auf die die Skizze gesetzt wurde
+    (``skizzen[].ueber`` zur Zeit des Laufs). ``herkunft.skizze`` allein ist **nicht** das Vorher — das wäre die Zeichnung,
+    nicht das Bild.
+
+    **Nur der Name eines Bildes, das in dieser Mappe liegt** — sonst ``None``:
+
+    * es steht unter ``bilder`` der Mappe (ein Name, den die Mappe nicht mehr führt, ist
+      kein Bild dieser Mappe, auch wenn die Datei noch liegt);
+    * :func:`bildpfad` nimmt ihn an — im Projektordner, eine Bildendung, die Datei ist da;
+    * er ist nicht das Bild selbst.
+
+    **Nie ein Pfad**: Zurück geht genau der Name, wie er in der Mappe steht, und die App
+    holt die Bytes unter ihm über ``GET /bild``. ``None`` heisst: keine Unterlage (auch
+    «ohne Unterlage auf Grau»), ein älteres Bild ohne ``herkunft.unterlage``, oder die
+    Unterlage ist nicht (mehr) zu haben. Ohne ``ordner`` wird nicht nachgesehen — dann
+    ebenfalls ``None`` statt eines ungeprüften Namens.
+    """
+    herkunft = eintrag.get("herkunft") or {}
+    unterlage = herkunft.get("unterlage") if isinstance(herkunft, dict) else None
+    name = unterlage.get("bild") if isinstance(unterlage, dict) else None
+    if not isinstance(name, str) or not name.strip() or name == eintrag.get("bild"):
+        return None
+    if ordner is None or not any(isinstance(b, dict) and b.get("bild") == name
+                                 for b in (bilder_der_mappe or [])):
+        return None
+    try:
+        bildpfad(ordner, name)
+    except FlaechenError:
+        return None
+    return name
 
 
 def _zahl_oder_nichts(wert):
@@ -1021,10 +1064,52 @@ def _hinweise_zum_bild(eintrag: dict) -> dict:
     if herkunft.get("skizze") and hinweise is not None:
         satz = next((h for h in hinweise if h.startswith(SKIZZE_NICHT_ANGEKOMMEN)), None)
         angekommen = satz is not None
+    unterlage = _unterlage_hinweis(herkunft)
+    if unterlage is not None and hinweise is not None and unterlage not in hinweise:
+        # HINTEN ANGEHAENGT, nicht vorne: Der Satz «SKIZZE NICHT ANGEKOMMEN» steht
+        # zuvorderst, und die App verlaesst sich darauf nicht, aber die Webseite zeigt die
+        # Liste in dieser Reihenfolge.
+        #
+        # UND NUR AN EINE LISTE, NIE AN `None`: `hinweise: null` heisst «die Bildstufe
+        # hat nichts gemeldet». Ein Satz vom Server machte daraus eine Liste, und die
+        # Anzeige sagte nicht mehr «nicht gemessen». Dann traegt ihn `unterlage_hinweis`
+        # allein.
+        hinweise = hinweise + [unterlage]
     # DER SATZ SELBST GEHT MIT (`skizze_hinweis`), damit die Anzeige ihn nicht an seinem
     # Anfang wiedererkennen muss — der Anfang stuende sonst ein zweites Mal in der Seite.
     return {"hinweise": hinweise, "skizze_nicht_angekommen": angekommen,
-            "skizze_hinweis": satz}
+            "skizze_hinweis": satz, "unterlage_hinweis": unterlage}
+
+
+def _unterlage_hinweis(herkunft: dict):
+    """Der Satz zur Unterlage eines Skizzenbilds — **nur, wenn er etwas zu sagen hat.**
+
+    Die Bibliothek legt an jedes Bild aus einer Skizze ``herkunft.unterlage`` mit einem
+    ``grund`` (``_eingangsbild`` in ``src/aiimaging/arbeitsgang.py``). Bis zum 23.09.2026
+    zeigte ihn niemand (Durchsicht der Welle 2): Dass eine Skizze **gestreckt** auf ihr Bild gesetzt wurde oder
+    **ohne Unterlage auf Grau** gerechnet, stand nur in der Mappe. Beides ändert, was das
+    Bild bedeutet — ein verzerrter Balkon, ein Haus vor einem Grau statt vor seinem Bild.
+
+    Zurück kommt der ``grund`` der Bibliothek, unverändert (derselbe Grundsatz wie beim
+    Satz zum Zeichen: *der Grund kommt aus dem Eintrag*), in zwei Fällen:
+
+    * ``gestreckt`` ist ``True``;
+    * ``bild`` ist ``None`` — ohne Unterlage, auf Grau.
+
+    Sonst ``None``: kein Skizzenbild, ein älteres ohne ``herkunft.unterlage``, oder Blatt
+    auf Bild ohne Streckung — dann gibt es nichts, was neben dem Bild stehen müsste.
+    Fehlt der ``grund``, steht ein Satz von hier da, damit der Fall nicht verschwindet.
+    """
+    u = herkunft.get("unterlage") if herkunft.get("skizze") else None
+    if not isinstance(u, dict):
+        return None
+    grund = u.get("grund") if isinstance(u.get("grund"), str) and u.get("grund") else None
+    if u.get("gestreckt") is True:
+        return grund or ("Die Skizze wurde auf ihre Unterlage GESTRECKT — sie hat nicht "
+                         "dasselbe Seitenverhältnis wie das Bild.")
+    if "bild" in u and u.get("bild") is None:
+        return grund or "Ohne Unterlage gezeichnet — gerechnet auf neutralem Grau."
+    return None
 
 
 def grundriss(glb, up_axis) -> dict:
@@ -1132,7 +1217,8 @@ def sicht(ordner) -> dict:
         "knotenbaum": baum,
         "knotenbaum_fehler": baum_fehler,
         "bedienfelder": bedienfelder(p.get("einstellungen") or {}, graph, glb=glb),
-        "bilder": [_bild_fuer_die_flaeche(b, ordner) for b in (p.get("bilder") or [])],
+        "bilder": [_bild_fuer_die_flaeche(b, ordner, bilder_der_mappe=p.get("bilder") or [])
+                   for b in (p.get("bilder") or [])],
         # DIE SKIZZEN, unveraendert aus der Mappe. Kein Urteil, keine Umrechnung — die
         # Flaeche reicht durch, was die Bibliothek fuehrt.
         "skizzen": p.get("skizzen") or [],
@@ -1201,8 +1287,14 @@ class Flaeche(BaseHTTPRequestHandler):
     #: sich, und genau das ist gewollt — der Versuchszaehler ist nur dann eine Schranke,
     #: wenn er fuer alle derselbe ist. *Ein Zaehler je Verbindung zaehlt nichts.*
     kopplung_offen = None
-    server_version = "Visbox"
     sys_version = ""
+
+    @property
+    def server_version(self) -> str:
+        """Der Kopf ``Server`` jeder Antwort — der Name aus :data:`NAME`, nicht fest
+        eingeschrieben (Durchsicht der Welle 2, 22.09.2026). Eine Eigenschaft statt eines
+        Klassenfelds, weil :data:`NAME` erst weiter unten in dieser Datei entsteht."""
+        return NAME
 
     # ------------------------------------------------------------------- die Tuer
     def _darf_herein(self) -> bool:
@@ -1245,14 +1337,16 @@ class Flaeche(BaseHTTPRequestHandler):
                 and urllib.parse.urlparse(self.path).path == WEG_KOPPELN
                 and self._kopplung_gilt()):
             return True
+        # DER NAME AUS `NAME`, in Satz und Bereich (Durchsicht der Welle 2, 22.09.2026):
+        # Hier stand «Visbox» fest — die Stelle, die beim Umbenennen niemand findet.
         roh = json.dumps(
-            {"fehler": "Nicht angemeldet. Benutzername und Kennwort stehen im Fenster, "
-                       "in dem Visbox gestartet wurde."},
+            {"fehler": f"Nicht angemeldet. Benutzername und Kennwort stehen im Fenster, "
+                       f"in dem {NAME} gestartet wurde."},
             ensure_ascii=False).encode("utf-8")
         self.send_response(401)
         # DER BROWSER FRAGT ERST, WENN ER DAS HIER SIEHT. Ohne diesen Kopf bekaeme der
         # Benutzer eine Fehlermeldung statt eines Anmeldefensters.
-        self.send_header("WWW-Authenticate", 'Basic realm="Visbox", charset="UTF-8"')
+        self.send_header("WWW-Authenticate", f'Basic realm="{_bereich()}", charset="UTF-8"')
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(roh)))
         self.end_headers()
@@ -1421,7 +1515,7 @@ class Flaeche(BaseHTTPRequestHandler):
         if not antwort["angenommen"]:
             # DAS GERAET HOERT DEN UNBESTIMMTEN SATZ, nicht den genauen Grund — sonst
             # halbierte sich die Arbeit dessen, der raet. Der genaue Grund geht an die
-            # HomeStation, also in das Fenster, in dem Visbox gestartet wurde.
+            # HomeStation, also in das Fenster, in dem die Flaeche gestartet wurde.
             print(f"  Verbinden abgelehnt: {antwort['grund']} "
                   f"(noch {antwort['versuche_uebrig']} Versuche)")
             self._sende({"verbunden": False,
@@ -2016,11 +2110,11 @@ def startzeile(adresse: str, anschluss: int) -> str:
     if adresse in (ALLE_ADRESSEN, ""):
         erreichbar = heimnetz_adresse()
         if erreichbar is None:
-            return (f"Visbox läuft auf allen Adressen, Anschluss {anschluss} — "
+            return (f"{NAME} läuft auf allen Adressen, Anschluss {anschluss} — "
                     f"{NICHT_ERMITTELT}  (Strg-C beendet)")
-        return (f"Visbox läuft auf http://{erreichbar}:{anschluss}  "
+        return (f"{NAME} läuft auf http://{erreichbar}:{anschluss}  "
                 f"(im Heimnetz; Strg-C beendet)")
-    return f"Visbox läuft auf http://{adresse}:{anschluss}  (Strg-C beendet)"
+    return f"{NAME} läuft auf http://{adresse}:{anschluss}  (Strg-C beendet)"
 
 
 RUNDRUF_DATEI = Path(__file__).resolve().parent / "rundruf.py"
@@ -2051,10 +2145,20 @@ def _rundruf_modul():
 #: Der Name der App, wie ein Mensch ihn sieht — **aus** ``rundruf.NAME`` und nicht ein
 #: zweites Mal eingeschrieben. ``rundruf.NAME`` ist gegen ``Marke.name`` in
 #: ``ipad/Visbox.swiftpm/Kern/Marke.swift`` bewacht (``tests/test_rundruf.py``); diese
-#: Konstante zusätzlich (``tests/test_durchsicht_kern_server.py``). Heute nur auf der
-#: Koppelseite und in ihrer Absage (Befund der Durchsicht D-SERVER, 22.09.2026); die
-#: übrigen Sätze dieser Datei nennen den Namen noch fest.
+#: Konstante zusätzlich (``tests/test_durchsicht_kern_server.py``). Seit der Durchsicht
+#: D-SERVER (22.09.2026) auf der Koppelseite und in ihrer Absage, seit der Durchsicht der
+#: Welle 2 (23.09.2026) auch im Satz und im Bereich der Abweisung (401), im Kopf
+#: ``Server``, in der Startzeile und in den Sätzen beim Start — bewacht an der Wirkung in
+#: ``tests/test_durchsicht_w2b_kern_server.py``. **Nicht** umgestellt: der Benutzername
+#: :data:`BENUTZER` (die App übernimmt ihn aus der Antwort, siehe Protokoll §2) und der
+#: Dienstname im Rundruf (``rundruf.DIENST``, gegen ``Marke.dienst`` bewacht).
 NAME = _rundruf_modul().NAME
+
+
+def _bereich() -> str:
+    """:data:`NAME` als Wert von ``realm="…"``: Anführungszeichen und Rückstrich
+    maskiert, damit ein Name mit ``"`` den Kopf nicht zerbricht."""
+    return NAME.replace("\\", "\\\\").replace('"', '\\"')
 
 
 def starte_rundruf(anschluss: int):
@@ -2079,7 +2183,7 @@ def starte_rundruf(anschluss: int):
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Die Oberfläche von Visbox.")
+    ap = argparse.ArgumentParser(description=f"Die Oberfläche von {NAME}.")
     ap.add_argument("--ordner", default=None, help="Projektordner, der beim Start gezeigt wird")
     # KEINE VORGABE IM PARSER: Nur so ist zu unterscheiden, ob jemand --adresse
     # ausdruecklich geschrieben hat (Befund 22.09.2026, siehe unten).
@@ -2138,7 +2242,7 @@ def main(argv=None) -> int:
         print(f"  Verbinden:  Zahl {offen.pin}   — gilt {minuten} Minuten, für EIN Gerät")
         print(f"              Auf dem iPad eintippen. Danach ist sie verbraucht; für ein "
               f"zweites Gerät\n"
-              f"              Visbox mit --kopplung neu starten. Nach "
+              f"              {NAME} mit --kopplung neu starten. Nach "
               f"{kopplung.VERSUCHE} Fehlversuchen ist sie tot.")
     if adresse != VORGABE_ADRESSE:
         print("  ACHTUNG: Diese Fläche ist im Netz erreichbar. Sie läuft über "

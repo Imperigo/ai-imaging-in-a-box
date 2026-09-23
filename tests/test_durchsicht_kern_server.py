@@ -570,6 +570,18 @@ def _direkt_fragen(rundruf, option) -> tuple[int, int]:
         fremd.close()
 
 
+#: WAS HIER FESTGEHALTEN WIRD, IST LINUX (Durchsicht der Welle 2, 22.09.2026): Wie ein
+#: System direkte Pakete auf mehrere Sockets am selben Anschluss verteilt, legt jeder
+#: Betriebssystemkern selbst fest, und nachgefahren ist es nur unter Linux. Auf einem
+#: anderen System (etwa macOS) wäre ein Fallen dieser Proben keine Auskunft über den
+#: Rundruf, sondern über das System. Übersprungen mit Grund, nicht gefallen.
+NUR_LINUX = pytest.mark.skipif(
+    not sys.platform.startswith("linux"),
+    reason="hält das Verhalten des Linux-Kerns fest; auf "
+           f"{sys.platform} verteilt das System direkte Pakete nach eigenen Regeln")
+
+
+@NUR_LINUX
 def test_setzt_der_fremde_nur_reuseaddr_bekommt_er_kein_direktes_paket(rundruf):
     """**Hält den Befund der Durchsicht D-SERVER fest** (22.09.2026, hier nachgefahren),
     auf den sich der Modulkopf von ``rundruf.py`` und das Protokoll §8 stützen: Setzt
@@ -581,6 +593,7 @@ def test_setzt_der_fremde_nur_reuseaddr_bekommt_er_kein_direktes_paket(rundruf):
     assert (beim_rundruf, beim_fremden) == (ABSENDER, 0)
 
 
+@NUR_LINUX
 def test_setzt_der_fremde_reuseport_teilen_sich_beide_die_direkten_pakete(rundruf):
     """Mit ``SO_REUSEPORT`` auf beiden Seiten verteilt Linux direkte Pakete **nach
     Absender** auf die beiden Sockets: Der fremde Dienst bekommt einen Teil, nicht alle.

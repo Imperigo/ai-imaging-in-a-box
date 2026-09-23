@@ -23,10 +23,15 @@ enum Bildvergleichsart: String, CaseIterable, Identifiable {
     }
 }
 
-/// Vorher (aus dem Modell) und Nachher (aus der KI) — nebeneinander oder mit Wischregler.
+/// Vorher (die Unterlage) und Nachher (aus der KI) — nebeneinander oder mit Wischregler.
 ///
-/// **Das Vorher trägt kein Urteil, und es sagt das.** Es ist das Vergleichsbild aus der
-/// Geometrie; ein Rand in einer der Urteilsfarben hiesse, es sei geprüft worden. Das Zeichen
+/// **Das Vorher ist die Unterlage**, das Bild, über das skizziert wurde (Feld `vorher` der
+/// Mappe, seit dem 22.09.2026). Das Blatt «Bilder» beschriftet es «Aus dem Modell»; das
+/// stimmt nur, wenn über ein Bild aus dem Modell skizziert wurde — über ein früheres Bild der
+/// KI skizziert, wäre es falsch. Darum steht hier «Unterlage», bis das Blatt nachgezogen ist.
+///
+/// **Das Vorher trägt hier kein Urteil, und es sagt das.** Ein Rand in einer der
+/// Urteilsfarben hiesse, es sei in diesem Vergleich geprüft worden. Das Zeichen
 /// des Nachher sitzt am Nachher — beim Wischregler am ganzen Bild, weil beide Hälften zu
 /// demselben Nachher gehören.
 struct Bildvergleich: View {
@@ -35,7 +40,7 @@ struct Bildvergleich: View {
     let zeichen: Pruefzeichen
     let art: Bildvergleichsart
 
-    /// Wo der Schnitt sitzt, 0 bis 1 — links davon die KI, rechts das Modell.
+    /// Wo der Schnitt sitzt, 0 bis 1 — links davon die KI, rechts die Unterlage.
     @State private var schnitt: Double = 0.5
 
     var body: some View {
@@ -48,10 +53,10 @@ struct Bildvergleich: View {
     private var nebeneinander: some View {
         HStack(alignment: .top, spacing: 18) {
             VStack(alignment: .leading, spacing: 8) {
-                Abschnittstitel(text: "Aus dem Modell")
+                Abschnittstitel(text: "Unterlage")
                 Bildflaeche(grafik: vorher)
                     .overlay(alignment: .bottom) {
-                        Text("VERGLEICHSBILD · kein Urteil nötig")
+                        Text(Bildvergleich.markeVorher)
                             .font(Schrift.text(13, .semibold))
                             .foregroundStyle(Zeichenblatt.leise)
                             .padding(.horizontal, 12)
@@ -74,7 +79,7 @@ struct Bildvergleich: View {
 
     private var wischregler: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Links die KI, rechts das Modell")
+            Text("Links die KI, rechts die Unterlage")
                 .font(Schrift.text(13))
                 .foregroundStyle(Zeichenblatt.leise)
             GeometryReader { geo in
@@ -87,7 +92,7 @@ struct Bildvergleich: View {
                     Bildflaeche(grafik: vorher)
                         .frame(width: geo.size.width, height: geo.size.height)
                         .overlay(alignment: .topTrailing) {
-                            marke("VERGLEICHSBILD · kein Urteil nötig")
+                            marke(Bildvergleich.markeVorher)
                         }
                     Bildflaeche(grafik: nachher)
                         .frame(width: geo.size.width, height: geo.size.height)
@@ -122,7 +127,7 @@ struct Bildvergleich: View {
                 Slider(value: $schnitt, in: 0...1)
                     .tint(Zeichenblatt.schrift)
                     .frame(minHeight: Zeichenblatt.tippzielMindestens)
-                    .accessibilityLabel("Schnitt zwischen KI und Modell")
+                    .accessibilityLabel("Schnitt zwischen KI und Unterlage")
                 Text("\(Int((schnitt * 100).rounded())) %")
                     .font(Schrift.zahl(13))
                     .foregroundStyle(Zeichenblatt.leise)
@@ -130,6 +135,9 @@ struct Bildvergleich: View {
             }
         }
     }
+
+    /// Die Marke am Vorher, in beiden Arten dieselbe.
+    static let markeVorher = "UNTERLAGE · hier kein Urteil"
 
     /// Eine Beschriftung auf dem Bild, im Streifen des Prüfzeichens, aber leise — **keine**
     /// Urteilsfarbe, denn sie sagt nichts über ein Urteil.

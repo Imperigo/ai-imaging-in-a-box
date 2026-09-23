@@ -13,6 +13,12 @@ import SwiftUI
 /// * **«Abbruch verlangt» ist nicht «abgebrochen».** Nach dem Tippen sagt der Knopf, dass
 ///   der Abbruch verlangt ist; ob er wirkte, steht erst nach dem Lauf im Ergebnis.
 ///
+/// **Noch nicht gelesen** (22.09.2026): `Fortschrittsstand.abbruchVerlangt`, `.variante` und
+/// `.bestellung` baut die Einheit «Verbindung» gleichzeitig. Sie gehören hierher — der Abbruch
+/// in `abbrechen` (dann sagt der Knopf, was der *Server* verlangt weiss, nicht nur dieses
+/// iPad: `mappe.abbruchVerlangt`), Variante und Bestellung in die Kopfzeile von `laufend`
+/// («Variante 2 von 3», Prüfen oder Entwerfen).
+///
 /// Das Nachfragen während eines Laufs macht `Laufwaechter` — er sitzt am ganzen Seitenfeld,
 /// damit es auch weiterläuft, wenn dort gerade die Ebenen stehen. *Gebaut, am Gerät
 /// unbestätigt (22.09.2026).*

@@ -8,8 +8,14 @@ import SwiftUI
 /// Abschrift des Blatts und gegen die Webseite geprüft
 /// (`PruefzeichenTests.testJederFarbtonStehtSoAufDemBlatt`). Bis zur Durchsicht B vom
 /// 22.09.2026 standen sie hier als Hex-Ziffern, die keine Probe sah. Diese Datei macht aus
-/// ihnen nur SwiftUI-Farben; ein Ton in Hex-Ziffern ausserhalb des Kerns lässt
-/// `testDieAppSchreibtKeineFarbtoeneAusserhalbDesKerns` fallen.
+/// ihnen nur SwiftUI-Farben.
+///
+/// **Was bewacht ist, genau** (Durchsicht der Verdrahtung, 22.09.2026 — bis dahin stand
+/// hier, *jeder* Hex-Ton ausserhalb des Kerns lasse eine Probe fallen):
+/// `PruefzeichenTests.testDieAppSchreibtKeineFarbtoeneAusserhalbDesKerns` fällt nur, wenn
+/// ausserhalb des Kerns ein `Farbton` aus Hex-Ziffern gebaut wird. Andere Schreibweisen
+/// (`#rrggbb`-Text, Zahl durch 255, Hex-Bytes) sucht die breitere Probe `FarbtonTests` der
+/// Einheit «Zeichnen».
 enum Zeichenblatt {
     // ----------------------------------------------------------- Grund und Schrift
     static let grund = Color(Blattfarbe.grund)

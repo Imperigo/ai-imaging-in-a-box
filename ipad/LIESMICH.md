@@ -1,6 +1,6 @@
-# Die iPad-App «Visbox» — das Gerüst
+# Die iPad-App «Visbox»
 
-Native App für das iPad (SwiftUI, später PencilKit), Zielgerät iPad Pro 11 (1. Gen.) mit
+Native App für das iPad (SwiftUI und PencilKit, iOS 17), Zielgerät iPad Pro 11 (1. Gen.) mit
 Apple Pencil 2. Sie spricht per HTTP mit dem Server `oberflaeche/server.py` auf der
 HomeStation im Heimnetz. **Sie rechnet nie selbst** — jedes Bild, jedes Urteil, jede Zahl
 kommt vom Server. Was über die Leitung geht, steht in `docs/VISBOX_PROTOKOLL.md`.
@@ -9,17 +9,52 @@ Nach der Abgabe (Januar 2027) wird die App in KosmoOrbit eingebaut und heisst da
 «KosmoSketch». Name, Bundle-Kennung und Dienstname stehen darum an **einer** Stelle:
 `Visbox.swiftpm/Kern/Marke.swift`. Das App-Manifest muss Kennung, Dienst und Namen
 wiederholen (es kann die Quellen nicht lesen); `tests/test_ipad_geruest.py` fällt, sobald
-die beiden auseinanderlaufen oder eine andere Swift-Datei sie nennt.
+die beiden auseinanderlaufen oder eine andere Swift-Datei sie nennt. Der Server nimmt den
+Namen seit dem 23.09.2026 in allen Sätzen aus derselben Quelle (`server.NAME`).
 
-**Stand (22.09.2026, nachgeführt):** Welle 1 gebaut — Zeichnen, Leiste, Bilder, Verbindung und
-ihr Kern. **Übersetzt auf dem Mac:** Die Prüfstrecke `.github/workflows/ipad.yml` lief für den
-Stand `f32266f` durch (Lauf 3, «success»; der Lauf davor für `54f28b9` fand einen Fehler, der
-mit `f32266f` behoben ist; beides nachgesehen in der Laufliste auf GitHub). Nach Angabe der
-Welle-2-Leitung meldet der Lauf eine Warnung (`Verbindung/Verbindungszeile.swift`, «main
-actor-isolated static property 'zeichenflaeche'») — die Warnung selbst ist hier nicht
-nachgelesen. **Am Gerät unbestätigt** ist alles,
-was über das Übersetzen hinausgeht. Der Baum unten zeigt das Gerüst der Welle 0; die Einheiten
-haben seither weitere Dateien in ihren Ordnern.
+## Stand (23.09.2026, nach Welle 2)
+
+**Gebaut** sind die fünf Einheiten Zeichnen, Leiste, Bilder, Verbindung und ihr Kern — zwei
+Wellen lang, jede Einheit mit einer Durchsicht. Der Stand der Welle 2 ist `edbdcad`.
+
+**Übersetzt auf dem Mac:** Die Prüfstrecke `.github/workflows/ipad.yml` lief für `edbdcad`
+durch (Lauf 4, «success», nachgesehen am 23.09.2026 im Lauf selbst): 139 Proben des Kerns
+grün, die App für den iOS-Simulator «BUILD SUCCEEDED», **keine Warnung des Übersetzers**. Im
+Protokoll steht nur eine Zeile eines Apple-Werkzeugs («Metadata extraction skipped. No
+AppIntents.framework dependency found.») — ein Hinweis, dass die App keine App-Intents hat,
+kein Befund am Code. Die Warnung, die der Lauf für `f32266f` meldete
+(`Verbindung/Verbindungszeile.swift`), ist damit nicht mehr da.
+
+**Was die App heute kann — gebaut, am Gerät unbestätigt:**
+
+* **Zeichnen:** eine PencilKit-Fläche je Ebene, übereinander; Ebenen als Varianten
+  (Entscheid 7), «Zurück»/«Vor» mit Zähler, Stiftfarben; das Blatt bleibt beim Drehen
+  dasselbe.
+* **Leiste und Arbeitsplatz:** die Werkzeugleiste, ein Seitenfeld (Ebenen oder Mappe),
+  hoch und quer (Blätter «Main» und «MainHoch»), Vollbild (Entscheid 29).
+* **Bilder:** das Bildband mit Prüfzeichen je Bild (Farbe, Wort, Zahl, Vorbehalt —
+  Entscheide 15, 16, 30), die grosse Ansicht mit Schalter Prüfen/Entwerfen, Vorher und
+  Nachher (Entscheid 17), Skizzenliste, Varianten, Laufanzeige mit «Lauf abbrechen»,
+  Teilen mit dem Zeichen auf dem Bild (Entscheid 20).
+* **Verbindung:** Suchen im Heimnetz über die Bonjour-Suche des Systems, erstes Verbinden
+  mit der sechsstelligen Zahl, Anmeldung im Schlüsselbund, das Parkfach für Skizzen, die
+  (noch) nicht drüben sind, mit Schlüssel gegen Doppelsendung, und die Übergabe als
+  Bewegung.
+* **Kern** (nur Foundation, hier unter Linux mit `swift test` geprüft): Anfragen bauen und
+  Antworten lesen, Prüfzeichen, Ebenenregeln, Parkfach, Suche, Wege, Marke.
+
+**Was bekannt fehlt:**
+
+* **Die Unterlage in der App.** Die Zeichenfläche zeigt kein Bild unter der Skizze, und die
+  App parkt ihre Skizzen **ohne** `ueber` (`Verbindung/Verbindungsstand.swift`). Jede Skizze
+  aus der App wird darum heute **auf Grau** gerechnet; das Bild sagt es seit dem 23.09.2026
+  selbst (`unterlage_hinweis`, Protokoll §4). Die Unterlage kommt in einem folgenden Schritt.
+* **Welle 2b** (Nachbesserungen aus den Durchsichten der Welle 2) ist am 23.09.2026 in
+  Arbeit; was sie ändert, steht nach ihrem Abschluss hier.
+
+**Am Gerät unbestätigt** ist alles, was über das Übersetzen und die Kernproben hinausgeht —
+kein Teil der App ist bisher auf einem iPad gelaufen. Die Anleitung zum Aufspielen kommt
+separat.
 
 ## Was wo liegt
 
@@ -30,27 +65,34 @@ ipad/
 │   ├── InfoZusatz.plist         nur: App Transport Security für lokale Netze
 │   ├── VisboxApp.swift          der Einstieg (@main)
 │   ├── Startansicht.swift       ordnet die Einheiten an, sonst nichts
-│   ├── Platzhalter.swift        ein Feld, das sagt, dass es noch nicht gebaut ist
+│   ├── Platzhalter.swift        aus Welle 0; keine Einheit benutzt ihn mehr
 │   ├── Kern/                    der plattformneutrale Kern — NUR Foundation
 │   │   ├── Marke.swift          Name, Kennung, Dienst: die eine Stelle
 │   │   ├── Urteil.swift         bestanden / durchgefallen / nicht gemessen
-│   │   └── Wege.swift           die Wege des Servers, bewacht gegen server.py
-│   ├── Zeichnen/Zeichenflaeche.swift     Platzhalter der Einheit «Zeichnen»
-│   ├── Leiste/Leiste.swift               Platzhalter der Einheit «Leiste»
-│   ├── Verbindung/Verbindungszeile.swift Platzhalter der Einheit «Verbindung»
-│   └── Bilder/Bildband.swift             Platzhalter der Einheit «Bilder» (noch nicht eingehängt)
+│   │   ├── Wege.swift           die Wege des Servers, bewacht gegen server.py
+│   │   ├── Anfragen.swift       Anfragen gebaut und Antworten gelesen — nicht gesendet
+│   │   ├── Pruefzeichen.swift   das Zeichen am Bild, und wie ein Bild gelesen wird
+│   │   ├── Ebenen.swift         die Regeln der Zeichenfläche, ohne PencilKit
+│   │   ├── Parkfach.swift       Skizzen, die (noch) nicht drüben sind
+│   │   └── Suche.swift          was gefunden wurde, und welche HomeStation genommen wird
+│   ├── Zeichnen/                Zeichenfläche, Leinwand je Ebene, Ebenentafel, Zeichenstand
+│   ├── Leiste/                  Leiste, Werkzeugwahl, Arbeitsplatz, Seitenfeld, Zeichenblatt
+│   │                            (Farben, Schriften, Masse nach dem Blatt «Die Zeichen»)
+│   ├── Bilder/                  Bildband, Bildansicht, Vergleich, Skizzen, Varianten,
+│   │                            Laufanzeige, Teilen, Zeichenrahmen, Mappentafel
+│   └── Verbindung/              Verbindungszeile, Koppelbildschirm, Sucher, Sender,
+│                                Schlüsselbund, Parkfachliste, Mappenabgleich, Übergabe
 └── VisboxKern/                  der Kern als eigenes Swift-Paket, zum Prüfen
     ├── Package.swift
     ├── Sources/VisboxKern  →  ../../Visbox.swiftpm/Kern   (ein Verweis, keine Kopie)
-    └── Tests/VisboxKernTests/   XCTest-Proben des Kerns
+    └── Tests/VisboxKernTests/   XCTest-Proben des Kerns, eine Datei je Kerndatei
 ```
 
-**Für spätere Einheiten:** Jede Einheit bekommt ihren eigenen Ordner und ersetzt dort den
-Platzhalter. Der Typname (`Zeichenflaeche`, `Leiste`, `Verbindungszeile`, `Bildband`) bleibt,
-weil `Startansicht` ihn benutzt; `Startansicht.swift` selbst fasst keine Einheit an. Neue
-Dateien kommen in den Ordner ihrer Einheit — so stossen zwei Einheiten, die gleichzeitig
-entstehen, nicht in derselben Zeile zusammen. Kern-Code (ohne UIKit/SwiftUI/PencilKit) gehört
-nach `Kern/`, seine Proben nach `VisboxKern/Tests/VisboxKernTests/`.
+**Für weitere Arbeit:** Neue Dateien kommen in den Ordner ihrer Einheit — so stossen zwei
+Einheiten, die gleichzeitig entstehen, nicht in derselben Zeile zusammen.
+`Startansicht.swift` fasst keine Einheit an, sie ordnet nur an. Kern-Code (ohne
+UIKit/SwiftUI/PencilKit) gehört nach `Kern/`, seine Proben nach
+`VisboxKern/Tests/VisboxKernTests/`.
 
 ## Warum der Kern im App-Paket liegt und nicht daneben
 
@@ -133,7 +175,8 @@ diesem Zertifikat trauen (`--cacert`); die Verbindung ungeprüft zu lassen ist k
 ## Was ungeprüft ist
 
 * **Ob die App läuft.** Dass sie **übersetzt**, zeigt die Prüfstrecke auf dem Mac (siehe
-  «Stand» oben). Ob die Angaben im Manifest, die aus `AppleProductTypes` stammen
+  «Stand» oben). Wie sie sich bedienen lässt — Stift, Drehen, Vollbild, Übergabe —, zeigt
+  erst ein iPad. Ob die Angaben im Manifest, die aus `AppleProductTypes` stammen
   (`.placeholder(icon: .leaf)`, `.localNetwork(...)`, `additionalInfoPlistContentFilePath`),
   auf einem Gerät wirken, wie sie sollen, zeigt erst das Aufspielen.
 * **Ob Swift Playgrounds das Paket öffnet** und den Unterordner `Kern/` mitübersetzt.

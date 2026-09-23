@@ -676,13 +676,20 @@ def _lies_interior(roh, *, kameras, fmt: str, warnungen: list, maengel: list):
       Innenstandpunkte je Raum») — gerendert werden die Kameras, und eine Warnung sagt es.
 
     Was **nicht** belegt ist, wird mit einem Satz abgewiesen: eine Raumliste (Name?
-    IFC-Kennung? Objekt?), ein fehlendes ``rooms``, ein ``interior``, das kein Block ist,
-    und ein ``interior`` ohne IFC — Räume gibt es nur in der IFC, aus einer glb lässt sich
-    kein Raumbegriff gewinnen.
+    IFC-Kennung? Objekt?), ein fehlendes ``rooms`` und ein ``interior``, das kein Block
+    ist.
+
+    **Und ein ``interior`` ohne IFC — aber nur, wenn keine Kameras mitkommen**
+    (Durchsicht 22.09.2026: Hier stand bis dahin ohne Einschränkung «ein interior ohne IFC
+    wird abgewiesen», und die Reihenfolge darunter tat das nicht). Die Kameraliste wird
+    zuerst geprüft und kehrt zurück, denn mit ihr braucht es keine Räume: Der Standpunkt
+    ist gegeben, gerechnet wird keiner. Ohne Kameraliste müsste er aus den Räumen kommen,
+    und Räume gibt es nur in der IFC — aus einer glb lässt sich kein Raumbegriff gewinnen.
+    Beide Fälle bewacht in ``tests/test_interior_bestellung.py``.
 
     Returns:
-        ``{"raum": None, "art": "frontal"}`` oder ``None`` (nicht bestellt, abgewiesen,
-        oder durch mitgesandte Kameras bedient).
+        ``{"raum": None, "art": "frontal", "bestellt": {"rooms": "auto"}}`` oder ``None``
+        (nicht bestellt, abgewiesen, oder durch mitgesandte Kameras bedient).
     """
     if roh is None:
         return None
@@ -715,7 +722,9 @@ def _lies_interior(roh, *, kameras, fmt: str, warnungen: list, maengel: list):
             f"kein Raumbegriff gewinnen; ersatzweise aussen zu rendern waere ein anderes "
             f"Bild als das bestellte.")
         return None
-    return {"raum": None, "art": _raumkamera.ART_FRONTAL}
+    return {"raum": None, "art": _raumkamera.ART_FRONTAL,
+            # Was bestellt war, wortgetreu — der Abholer vermerkt es am Kameraurteil.
+            "bestellt": {"rooms": INTERIOR_ROOMS_AUTO}}
 
 
 def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
@@ -985,7 +994,9 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
 #: Felder, die unsere Kette wirklich erreichen — mit der Stelle, an der sie ankommen.
 DURCHGEREICHT = {
     "geometrie": "abholer: Pfad der glb",
-    "format": "lies_szene selbst — unbekannte Formate werden als Mangel abgelehnt",
+    "format": "lies_szene selbst — unbekannte Formate werden als Mangel abgelehnt; "
+              "'ifc' waehlt seit 22.09.2026 in bruecke.lies_auftrag model.ifc und in "
+              "abholer.verarbeiter die Umwandlung IFC → glb (seams.ifc_zu_glb)",
     "out": "abholer: Ausgabeverzeichnis",
     "kameras": "abholer.verarbeiter → Kameraaufgaben",
     "aufloesung": "seams.glb_zu_multipass(aufloesung=…)",
@@ -1010,8 +1021,10 @@ DURCHGEREICHT = {
     "sonne": "seams.glb_zu_multipass(sonne=…) → blender_depth_stage --sonne-hoehe/-azimut",
     # Seit 22.09.2026 (auf-104): `interior` {rooms: "auto"}. Nur ohne mitgesandte
     # Kameras gesetzt — mit ihnen gelten diese, siehe `_lies_interior`.
-    "innenraum": "abholer.verarbeiter: EINE Kameraaufgabe aus raumkamera.waehle "
-                 "(auge, blick_auf, Brennweite des Standpunkts) → seams.glb_zu_multipass",
+    "innenraum": "abholer.verarbeiter: Raeume aus der IFC (seams.ifc_raeume), EINE "
+                 "Kameraaufgabe aus raumkamera.waehle (auge, blick_auf, Brennweite des "
+                 "Standpunkts) → seams.glb_zu_multipass auf der umgewandelten glb; "
+                 "Vermerk am Kameraurteil (URTEIL_INNENANSICHT) und in verdict.reason",
     # Seit 22.09.2026: `gelaende` (auf-67), dreiwertig. Schlaegt den prozessweiten
     # Schalter des Abholers, weil die Aussage je Szene gilt.
     "gelaende_erwartet": "abholer.verarbeiter → maske (gelaende_erwartet=…)",
@@ -1157,6 +1170,34 @@ FELD_ZWEI_TORE = "geometry_gates"
 #: ``None``, heisst das: diese Kamera wurde NICHT GEMESSEN — und der Block erscheint als
 #: solcher, statt still zu fehlen.
 URTEIL_ZWEI_TORE = "zwei_tore"
+
+#: Der Schluessel, unter dem ein **Kameraurteil** vermerkt, dass sein Standpunkt aus
+#: ``interior`` gerechnet wurde — ``{"raum", "art", "bestellt"}`` oder ``None``
+#: (gesetzt in ``abholer.verarbeiter``; ``None`` heisst: der Standpunkt kam NICHT aus
+#: ``interior``, sondern aus einer Richtung oder einer mitgesandten Kamera).
+#:
+#: **Befund der Durchsicht vom 22.09.2026:** Die Innenaufgabe trug Raum und Blickart,
+#: und niemand las sie. Im Urteil, im Befund und im Vertragsergebnis stand nicht, dass es
+#: eine Innenansicht war — und welcher Raum. Ein Innenbild ohne diesen Satz sieht drueben
+#: aus wie ein missratenes Aussenbild. Er steht am Urteil aus demselben Grund wie
+#: :data:`URTEIL_ZWEI_TORE`: Das Kameraurteil reist schon durch beide Quellen, ohne dass
+#: eine ihre Schreibfunktion aendern muss.
+URTEIL_INNENANSICHT = "innenansicht"
+
+
+def innenansicht_satz(vermerk) -> str:
+    """Der Satz fuer ``verdict.reason`` zu einem :data:`URTEIL_INNENANSICHT`-Vermerk — oder ``""``.
+
+    In ``verdict.reason`` und nicht in einem eigenen Feld: Ein Zusatzfeld in
+    ``qa_je_kamera`` wuerde drueben beim Einlesen still abgestreift (``z.object``, nicht
+    strikt — erg-20260917-37 F6), ``reason`` ist ein Vertragsfeld und wird angezeigt.
+    """
+    if not isinstance(vermerk, dict):
+        return ""
+    return (f"INNENANSICHT: Standpunkt im Raum {vermerk.get('raum')!r} "
+            f"({vermerk.get('art')}), aus 'interior' {vermerk.get('bestellt')!r} aus den "
+            f"Raeumen der IFC gerechnet. Das Bild zeigt den Raum von innen, nicht das "
+            f"Gebaeude von aussen.")
 
 #: Die drei Zustandswoerter, woertlich aus :mod:`aiimaging.gate` uebernommen.
 #:
@@ -2017,6 +2058,15 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         hinweise.append(grund)
     else:
         grund = "; ".join(teile)
+
+    # DIE INNENANSICHT, wenn der Standpunkt aus `interior` kam (22.09.2026). Nach allen
+    # Zweigen oben angehaengt, weil sie keinen davon ersetzt: Sie sagt, WAS das Bild
+    # zeigt, nicht wie es abgeschnitten hat. Bei `uebersprungen` nicht — dort gibt es kein
+    # Bild, das etwas zeigen koennte.
+    innen = innenansicht_satz((geometrie_urteil or {}).get(URTEIL_INNENANSICHT))
+    if innen and not uebersprungen:
+        grund = f"{grund}; {innen}" if grund else innen
+        hinweise.append(innen)
 
     qa["verdict"] = {"passed": bestanden, "reason": grund}
 

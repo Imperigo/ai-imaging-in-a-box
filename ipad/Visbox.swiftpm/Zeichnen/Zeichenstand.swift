@@ -10,12 +10,15 @@ import UIKit
 /// wie gezählt wird) stehen im Kern (`Kern/Ebenen.swift`) und sind dort geprüft. Diese
 /// Datei hält nur, was PencilKit braucht, und reicht jede Entscheidung an den Kern weiter.
 ///
-/// **Warum ein gemeinsamer Stand (`gemeinsam`).** `Startansicht` ruft `Zeichenflaeche()`
-/// ohne Übergabe und wird von keiner Einheit angefasst; wer die Skizze senden will
-/// (Mappe, Verbindung), findet sie über `Zeichenstand.gemeinsam`. Dieselbe Bauform wie
-/// `Leistenwahl.gemeinsam`, aus demselben Grund.
+/// **Warum ein gemeinsamer Stand (`gemeinsam`).** Drei Stellen müssen dieselben Ebenen
+/// sehen, und keine baut die andere: `Startansicht` setzt `Zeichenflaeche(eigeneTafel:
+/// false)` ohne Stand ein, `Seitentafel` legt `Ebenentafel(stand: Zeichenstand.gemeinsam)`
+/// ins Seitenfeld, und der `Mappenknopf` im Seitenfeld nimmt
+/// `Zeichenstand.gemeinsam.skizzenpaket(_:)` als Quelle der Skizze. Dieselbe Bauform wie
+/// `Leistenwahl.gemeinsam`, aus demselben Grund (Stand 23.09.2026).
 ///
-/// **Die Schnittstelle für das Senden:** `pngAusgabe(_:)`.
+/// **Die Schnittstelle für das Senden:** `skizzenpaket(_:)` — die PNG aus `pngAusgabe(_:)`
+/// und die Unterlage des Blattes (seit dem 23.09.2026).
 final class Zeichenstand: ObservableObject {
     static let gemeinsam = Zeichenstand()
 
@@ -26,6 +29,13 @@ final class Zeichenstand: ObservableObject {
     /// Was der `UndoManager` selbst sagt. Er hat das letzte Wort darüber, ob es geht.
     @Published private(set) var kannZurueck = false
     @Published private(set) var kannVor = false
+
+    /// **Das Bild der Unterlage**, wie es unter den Ebenen liegt — `nil`, wenn keine liegt.
+    /// Was die Regeln brauchen (Name, Mappe, Grösse, ein- oder ausgeblendet), steht im Kern
+    /// an `stapel.unterlage`; hier nur die Grafik, die UIKit zeigt (`Leinwandstapel`).
+    /// Gesetzt und weggenommen **nur zusammen mit** `stapel.unterlage`
+    /// (`legeUnterlage(_:bild:)`, `entferneUnterlage()`).
+    @Published private(set) var unterlagenbild: UIImage?
 
     /// Die Stiftfarbe. Frei, und sie bedeutet nichts (Entscheid Nr. 8).
     @Published private(set) var farbe: Color = Stiftfarbe.vorgaben[0].farbe
@@ -54,6 +64,11 @@ final class Zeichenstand: ObservableObject {
     /// Wie viele Leinwandstapel (`Zeichenleinwand`) gerade stehen. Nicht `@Published`: Die
     /// Ansicht braucht die Zahl nicht, nur das Abräumen (`stapelAbgebaut`).
     private var stehendeStapel = 0
+
+    /// Ebenen mit abgedeckten Strichen, deren Bild noch nicht gelesen ist — weil die
+    /// Änderung mitten in einem Zug kam (`zeichnungGeaendert(_:_:imZug:)`). Gelesen wird am
+    /// Ende des Zugs (`zugBeendet`), spätestens vor dem Senden (`pngAusgabe`).
+    private var deckungAusstehend: Set<UUID> = []
 
     init(leistenwahl: Leistenwahl = .gemeinsam) {
         self.leistenwahl = leistenwahl
@@ -139,13 +154,21 @@ final class Zeichenstand: ObservableObject {
     /// gehen dabei nicht verloren — sie liegen in `zeichnungen`, und die neuen Flächen
     /// laden sie.
     ///
-    /// Entfernt werden zuerst die Schritte, die an einer der abgebauten Flächen hängen.
-    /// Ob PencilKit seine Schritte an die Fläche hängt oder an etwas in ihr, ist nicht
-    /// belegt; **steht danach kein Stapel mehr, wird darum der ganze Verlauf geleert** —
-    /// was er dann noch hielte, könnte nur noch unsichtbar wirken. Steht schon ein neuer
-    /// (SwiftUI darf den neuen vor dem Abbau des alten bauen), bleibt dessen Verlauf, und
-    /// der Zähler sagt «nicht gezählt», wenn noch etwas geht (Kern:
-    /// `Schrittzaehler.flaechenNeu`).
+    /// Entfernt werden zuerst die Schritte, die an einer der abgebauten Flächen hängen
+    /// (`removeAllActions(withTarget:)`). Ob PencilKit seine Schritte an die Fläche hängt
+    /// oder an etwas in ihr, ist nicht belegt; **steht danach kein Stapel mehr, wird darum
+    /// der ganze Verlauf geleert** — was er dann noch hielte, könnte nur noch unsichtbar
+    /// wirken.
+    ///
+    /// **Die offene Lücke (offengelegt 22.09.2026, nicht behoben):** SwiftUI darf den neuen
+    /// Stapel bauen, *bevor* es den alten abbaut. Dann steht beim Abbau noch einer, und der
+    /// Verlauf wird nicht geleert — er gehört ja auch dem neuen. Hängt PencilKit seine
+    /// Schritte nicht an die `PKCanvasView` selbst, bleiben die Schritte der abgebauten
+    /// Flächen darin stehen, und «Zurück» wirkt auf eine Fläche, die niemand mehr sieht:
+    /// Sichtbar geschieht nichts. **Der Zähler zeigt dann «?/20» und keine Zahl** —
+    /// `Schrittzaehler.flaechenNeu` setzt «nicht gezählt», solange der `UndoManager` noch
+    /// etwas zurücknehmen kann (Kern, `testNachFlaechenNeuGiltKeineAlteZahl`), und ein neuer
+    /// Strich macht daraus keine Zahl. Ob der Fall am Gerät vorkommt, ist unbestätigt.
     func stapelAbgebaut(_ flaechen: [UIView]) {
         stehendeStapel = max(0, stehendeStapel - 1)
         for flaeche in flaechen {
@@ -158,6 +181,8 @@ final class Zeichenstand: ObservableObject {
         // und dort darf ein `@Published` nicht geändert werden.
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
+            // Ein Zug, der mit den Flächen abgebaut wurde, meldet sein Ende nie mehr.
+            self.holeDeckungNach()
             self.schritte.flaechenNeu(kannZurueck: self.rueckgaengig.canUndo,
                                       kannVor: self.rueckgaengig.canRedo)
             self.kannZurueck = self.rueckgaengig.canUndo
@@ -180,6 +205,7 @@ final class Zeichenstand: ObservableObject {
     func entferneEbene(_ id: UUID) {
         guard stapel.entferne(id) else { return }
         zeichnungen[id] = nil
+        deckungAusstehend.remove(id)
         rueckgaengig.removeAllActions()
         schritte.geleert()
         gleicheAb()
@@ -192,14 +218,41 @@ final class Zeichenstand: ObservableObject {
     func benenneEbene(_ id: UUID, _ name: String) -> Bool { stapel.benenne(id, name) }
     func verschiebeEbene(_ id: UUID, nachOben: Bool) { stapel.verschiebe(id, nachOben: nachOben) }
 
+    // ------------------------------------------------------------------ Unterlage
+
+    /// Legt ein Bild der Mappe unter die Ebenen (Bildansicht, «Darauf skizzieren»).
+    ///
+    /// **Keine Ebene** (Kern, `Blattunterlage`): Die Ebenen, ihre Striche, die gewählte Ebene
+    /// und «Zurück» bleiben, wie sie sind — der Wechsel des Bildes ist kein Strich, und
+    /// «Zurück» nimmt ihn nicht zurück. Der Radierer erreicht sie nicht: Sie ist keine
+    /// PencilKit-Fläche, sondern ein Bild unter allen Flächen (`Leinwandstapel`).
+    func legeUnterlage(_ unterlage: Blattunterlage, bild: UIImage) {
+        stapel.legeUnterlage(unterlage)
+        unterlagenbild = bild
+    }
+
+    func setzeUnterlageSichtbar(_ sichtbar: Bool) { stapel.setzeUnterlageSichtbar(sichtbar) }
+
+    /// Nimmt die Unterlage weg — samt dem Bild, damit es nicht im Speicher bleibt.
+    func entferneUnterlage() {
+        stapel.entferneUnterlage()
+        unterlagenbild = nil
+    }
+
     /// Die Zeichnung einer Ebene, wie sie zuletzt gemeldet wurde.
     func zeichnung(_ id: UUID) -> PKDrawing { zeichnungen[id] ?? PKDrawing() }
 
     /// Die Fläche meldet jede Änderung ihrer Striche (Zeichnen, Radieren, Zurück).
-    func zeichnungGeaendert(_ id: UUID, _ zeichnung: PKDrawing) {
+    ///
+    /// `imZug`: Die Änderung kam, während der Stift noch auf dem Blatt ist
+    /// (`canvasViewDidBeginUsingTool` … `canvasViewDidEndUsingTool`). Dann wird das Bild
+    /// einer Ebene mit abgedeckten Strichen erst am Ende des Zugs gelesen (`zugBeendet`) —
+    /// ob PencilKit mitten im Zug überhaupt meldet, ist am Gerät unbestätigt; meldet es erst
+    /// danach, wird gleich gelesen.
+    func zeichnungGeaendert(_ id: UUID, _ zeichnung: PKDrawing, imZug: Bool = false) {
         guard stapel.ebene(id) != nil else { return }
         zeichnungen[id] = zeichnung
-        meldeStriche(id, zeichnung)
+        meldeStriche(id, zeichnung, bildLesen: !imZug)
         kannZurueck = rueckgaengig.canUndo
         kannVor = rueckgaengig.canRedo
         // DER ZAEHLER WIRD HIER NICHT SOFORT ABGEGLICHEN. Diese Meldung kann vor dem
@@ -213,41 +266,113 @@ final class Zeichenstand: ObservableObject {
         }
     }
 
+    /// Der Stift ist vom Blatt (`canvasViewDidEndUsingTool`): Steht das Bild dieser Ebene
+    /// noch aus, wird es jetzt gelesen — **einmal je Zug**, nicht bei jeder Meldung darin.
+    func zugBeendet(_ id: UUID, _ zeichnung: PKDrawing) {
+        guard stapel.ebene(id) != nil, deckungAusstehend.contains(id) else { return }
+        zeichnungen[id] = zeichnung
+        meldeStriche(id, zeichnung, bildLesen: true)
+    }
+
+    /// Liest jedes Bild, das noch aussteht. Vor dem Senden, damit nie ein Stand
+    /// hinausgeht, der mitten in einem Zug stehen blieb.
+    private func holeDeckungNach() {
+        for id in Array(deckungAusstehend) {
+            guard let zeichnung = zeichnungen[id], stapel.ebene(id) != nil else {
+                deckungAusstehend.remove(id)
+                continue
+            }
+            meldeStriche(id, zeichnung, bildLesen: true)
+        }
+    }
+
     /// Meldet dem Kern, ob auf der Ebene etwas zu sehen ist.
     ///
     /// **Die Strichzahl allein reicht nicht** (Befund Durchsicht A, 22.09.2026): Der
-    /// flächige Radierer (`PKEraserTool(.bitmap)`) deckt Striche ab, statt sie zu
-    /// entfernen; ganz weggewischt kann eine Ebene Striche tragen, von denen nichts zu sehen
-    /// ist. Sobald ein Strich eine Abdeckung trägt (`PKStroke.mask`), entscheidet darum das
-    /// gemalte Bild (`deckung`, Regel im Kern: `setzeStriche(_:_:alpha:)`). Ohne Abdeckung
-    /// ist jeder Strich zu sehen, und die Zahl gilt — so bleibt das Malen beim gewöhnlichen
-    /// Zeichnen aus dem Spiel.
+    /// flächige Radierer (`PKEraserTool(.bitmap)`) deckt Striche nach Kenntnis ab, statt sie
+    /// zu entfernen, und die Abdeckung steht am Strich (`PKStroke.mask`) — so beschrieben,
+    /// am Gerät unbestätigt. Ganz weggewischt kann eine Ebene dann Striche tragen, von denen
+    /// nichts zu sehen ist. Sobald ein Strich eine Abdeckung trägt, entscheidet darum das
+    /// gemalte Bild (`deckung`, Regel im Kern: `setzeStriche(_:_:deckung:)`). Ohne
+    /// Abdeckung ist jeder Strich zu sehen, und die Zahl gilt — so bleibt das Malen beim
+    /// gewöhnlichen Zeichnen aus dem Spiel.
     ///
-    /// Liess sich das Bild nicht malen (`deckung` gibt `nil`), gilt die Strichzahl. Das ist
-    /// ein Rückfall, der im schlimmsten Fall ein leeres Bild hinauslässt; ob `deckung` am
-    /// Gerät je `nil` gibt, ist ungeprüft.
-    private func meldeStriche(_ id: UUID, _ zeichnung: PKDrawing) {
+    /// **Liess sich das Bild nicht lesen** (`deckung` gibt `nil`), gilt die Strichzahl,
+    /// aber nicht still: Die Ebene trägt dann den Vorbehalt `deckungUngewiss`, und die
+    /// Ebenentafel sagt es (Befund Durchsicht, 22.09.2026). Ob `deckung` am Gerät je `nil`
+    /// gibt, ist ungeprüft.
+    private func meldeStriche(_ id: UUID, _ zeichnung: PKDrawing, bildLesen: Bool) {
         let anzahl = zeichnung.strokes.count
         var neu = stapel
-        if zeichnung.strokes.contains(where: { $0.mask != nil }),
-           let alpha = Zeichenstand.deckung(zeichnung) {
-            neu.setzeStriche(id, anzahl, alpha: alpha)
+        if zeichnung.strokes.contains(where: { $0.mask != nil }) {
+            guard bildLesen else {
+                // MITTEN IM ZUG: Der Stand der Tafel bleibt, bis das Bild gelesen ist.
+                deckungAusstehend.insert(id)
+                return
+            }
+            neu.setzeStriche(id, anzahl, deckung: Zeichenstand.deckung(zeichnung))
         } else {
             neu.setzeStriche(id, anzahl)
         }
+        deckungAusstehend.remove(id)
         // Nur schreiben, was sich ändert: Jeder Schreibzugriff auf den Stapel zeichnet
         // die Tafel neu.
         if neu != stapel { stapel = neu }
     }
 
-    /// Die Deckung einer Zeichnung, ein Byte je Bildpunkt, in der Grösse der Ausgabe
+    /// Die Deckung einer Zeichnung in der Grösse der Ausgabe
     /// (`Ebenenstapel.blattBreite × blattHoehe`, Massstab 1) — oder `nil`, wenn sie sich
-    /// nicht malen liess. Ungeprüft am Gerät.
-    static func deckung(_ zeichnung: PKDrawing) -> Data? {
-        let breite = Ebenenstapel.blattBreite
-        let hoehe = Ebenenstapel.blattHoehe
-        let rahmen = CGRect(x: 0, y: 0, width: breite, height: hoehe)
+    /// nicht lesen liess.
+    ///
+    /// **Einmal gemalt, nicht zweimal** (Durchsicht, 22.09.2026). Bisher wurde die
+    /// Zeichnung zu einem Bild gemalt und dieses ein zweites Mal in einen Puffer nur für die
+    /// Deckung. Jetzt werden die Bytes des einen Bildes gelesen, wenn ihre Form bekannt ist
+    /// (8 Bit je Kanal, 4 Bytes je Bildpunkt, Deckung vorne oder hinten); **nur sonst** wird
+    /// wie bisher ein zweites Mal gemalt. Wo die Deckung im Bildpunkt steht, folgt aus
+    /// `alphaInfo` und `byteOrderInfo` des Bildes; das ist nach der Beschreibung von Core
+    /// Graphics abgeleitet, **am Gerät unbestätigt.** Welcher der beiden Wege dort genommen
+    /// wird und wie lange er dauert: **nicht gemessen.**
+    static func deckung(_ zeichnung: PKDrawing) -> Deckungsbild? {
+        let rahmen = CGRect(x: 0, y: 0, width: Ebenenstapel.blattBreite,
+                            height: Ebenenstapel.blattHoehe)
         guard let bild = zeichnung.image(from: rahmen, scale: 1).cgImage else { return nil }
+        return gelesen(bild) ?? nachgemalt(bild)
+    }
+
+    /// Die Bytes des Bildes selbst — oder `nil`, wenn ihre Form keine der bekannten ist.
+    private static func gelesen(_ bild: CGImage) -> Deckungsbild? {
+        guard bild.bitsPerComponent == 8, bild.bitsPerPixel == 32,
+              !bild.bitmapInfo.contains(.floatComponents),
+              let stelle = alphaStelle(bild),
+              let roh = bild.dataProvider?.data else { return nil }
+        return Deckungsbild(daten: roh as Data, breite: bild.width, hoehe: bild.height,
+                            zeilenlaenge: bild.bytesPerRow, punktlaenge: 4,
+                            alphaStelle: stelle)
+    }
+
+    /// Das wievielte Byte eines 4-Byte-Bildpunkts die Deckung trägt. «Vorne» (`first`)
+    /// und «hinten» (`last`) gelten in der Reihenfolge der 32-Bit-Zahl; bei
+    /// `order32Little` liegt diese Zahl umgekehrt im Speicher. Eine andere Ordnung, oder
+    /// ein Bild ohne Deckung: `nil`, und dann wird nachgemalt.
+    private static func alphaStelle(_ bild: CGImage) -> Int? {
+        let vorne: Bool
+        switch bild.alphaInfo {
+        case .premultipliedFirst, .first: vorne = true
+        case .premultipliedLast, .last: vorne = false
+        default: return nil
+        }
+        switch bild.byteOrderInfo {
+        case .orderDefault, .order32Big: return vorne ? 0 : 3
+        case .order32Little: return vorne ? 3 : 0
+        default: return nil
+        }
+    }
+
+    /// Der alte Weg: das Bild ein zweites Mal in einen Puffer nur für die Deckung malen.
+    private static func nachgemalt(_ bild: CGImage) -> Deckungsbild? {
+        let breite = bild.width
+        let hoehe = bild.height
+        guard breite > 0, hoehe > 0 else { return nil }
         var alpha = Data(count: breite * hoehe)
         let gemalt: Bool = alpha.withUnsafeMutableBytes { roh -> Bool in
             guard let ziel = CGContext(data: roh.baseAddress, width: breite, height: hoehe,
@@ -256,10 +381,12 @@ final class Zeichenstand: ObservableObject {
                                        bitmapInfo: CGImageAlphaInfo.alphaOnly.rawValue) else {
                 return false
             }
-            ziel.draw(bild, in: rahmen)
+            ziel.draw(bild, in: CGRect(x: 0, y: 0, width: breite, height: hoehe))
             return true
         }
-        return gemalt ? alpha : nil
+        guard gemalt else { return nil }
+        return Deckungsbild(daten: alpha, breite: breite, hoehe: hoehe, zeilenlaenge: breite,
+                            punktlaenge: 1, alphaStelle: 0)
     }
 
     // ------------------------------------------------------------ Werkzeug und Farbe
@@ -330,7 +457,17 @@ final class Zeichenstand: ObservableObject {
 
     // ------------------------------------------------------------------ Ausgabe
 
-    /// **DIE SCHNITTSTELLE FÜR DAS SENDEN.** Die sichtbaren Ebenen als PNG.
+    /// **DIE SCHNITTSTELLE FÜR DAS SENDEN** (seit dem 23.09.2026): die PNG aus
+    /// `pngAusgabe(_:)` und die Unterlage, wie sie gerade liegt. Ob ihr Name als `ueber`
+    /// mitgeht, entscheidet der Kern (`Ablageplan`, `Unterlagenangabe`) — nicht diese Stelle.
+    /// **Das Bild der Unterlage geht nie mit**: Der Server hat es schon und setzt die
+    /// Skizze selbst darauf.
+    func skizzenpaket(_ art: Ebenenstapel.Ausgabeart) -> Skizzenpaket {
+        let ausgabe = pngAusgabe(art)
+        return Skizzenpaket(ausgabe: ausgabe, unterlage: stapel.unterlage)
+    }
+
+    /// Die sichtbaren Ebenen als PNG — **ohne die Unterlage.**
     ///
     /// * `.eineSkizze`: **ein** Bild aus allen sichtbaren, bezeichneten Ebenen,
     ///   übereinander in Stapelfolge, jede mit ihrer Deckkraft.
@@ -345,16 +482,20 @@ final class Zeichenstand: ObservableObject {
     /// `Ebenenstapel.blattBreite × blattHoehe` = 1536 × 1024 Bildpunkte, mit
     /// **durchsichtigem Grund**; die Deckkraft einer Ebene steckt **nur im Alphakanal.** Es
     /// ist darum *nicht* das Bild, das auf dem Schirm steht: Dort liegt die Skizze auf dem
-    /// dunklen Blatt oder auf einem Bild aus einem Lauf. Das Zusammensetzen auf die
-    /// Unterlage macht der Server (der weiss über `ueber`, was darunter liegt; es in das PNG
-    /// zu malen hiesse, es zweimal zu schicken). Heute liest der Server den Alphakanal nicht
-    /// (`bildlesen.lies_png_luminanz` übergeht ihn) — bis er zusammensetzt, sieht er weder
-    /// Deckkraft noch durchsichtigen Grund.
+    /// dunklen Blatt oder auf der Unterlage (`unterlagenbild`, seit dem 23.09.2026). Das
+    /// Zusammensetzen auf die Unterlage macht der Server (der weiss über `ueber`, was
+    /// darunter liegt; es in das PNG zu malen hiesse, es zweimal zu schicken): Seit dem 22.09.2026 setzt er die Skizze
+    /// **mit ihrem Alphakanal** auf das Bild, auf dem gezeichnet wurde, oder ohne Unterlage
+    /// auf ein neutrales Grau (`arbeitsgang._eingangsbild`, `setze_auf_unterlage`) — nicht
+    /// auf den dunklen Grund des Blattes (`Stiftfarben.papier`).
     ///
     /// **Nicht geprüft wird hier die Grösse**: Der Server nimmt höchstens 2 MiB je Skizze
     /// (`docs/VISBOX_PROTOKOLL.md`). Das prüft, wer sendet.
     func pngAusgabe(_ art: Ebenenstapel.Ausgabeart) -> Ebenenausgabe {
-        Ebenenausgabe.aus(stapel.plan(art)) { teil in self.male(teil) }
+        // ERST DIE AUSSTEHENDEN BILDER LESEN: Sonst ginge nach einem Zug, dessen Ende nie
+        // gemeldet wurde, der Stand von davor hinaus — etwa eine weggewischte Ebene.
+        holeDeckungNach()
+        return Ebenenausgabe.aus(stapel.plan(art)) { teil in self.male(teil) }
     }
 
     /// Ein Teil als PNG — oder `nil`, wenn eine seiner Ebenen keine Zeichnung hat.
@@ -390,23 +531,18 @@ final class Zeichenstand: ObservableObject {
     }
 }
 
-/// Eine vorgegebene Stiftfarbe. Die Farben sind die des Entwurfs (Blatt «Main», Feld
-/// «Stift»); sie **bedeuten nichts** (Entscheid Nr. 8) und sind nur schneller erreicht
-/// als die freie Wahl daneben.
+/// Eine vorgegebene Stiftfarbe, als SwiftUI-Farbe. **Die Töne stehen im Kern**
+/// (`Stiftfarben.vorgaben`, `Kern/Stiftfarben.swift`) und werden dort gegen das Blatt
+/// «Main» geprüft (`FarbtonTests.testJederStifttonStehtSoAufDemBlatt`); bis zur Durchsicht
+/// vom 22.09.2026 standen sie hier als Zahlen, die keine Probe sah. Sie **bedeuten
+/// nichts** (Entscheid Nr. 8) und sind nur schneller erreicht als die freie Wahl daneben.
 struct Stiftfarbe: Identifiable {
     let name: String
     let farbe: Color
 
     var id: String { name }
 
-    static let vorgaben: [Stiftfarbe] = [
-        Stiftfarbe(name: "Orange", farbe: ton(0xe0, 0x8b, 0x52)),
-        Stiftfarbe(name: "Hell", farbe: ton(0xe6, 0xe8, 0xec)),
-        Stiftfarbe(name: "Blau", farbe: ton(0x6f, 0xb3, 0xd2)),
-        Stiftfarbe(name: "Grün", farbe: ton(0x8f, 0xd4, 0xac)),
-    ]
-
-    private static func ton(_ r: Double, _ g: Double, _ b: Double) -> Color {
-        Color(.sRGB, red: r / 255, green: g / 255, blue: b / 255, opacity: 1)
+    static let vorgaben: [Stiftfarbe] = Stiftfarben.vorgaben.map {
+        Stiftfarbe(name: $0.name, farbe: Color($0.ton))
     }
 }

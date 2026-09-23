@@ -640,17 +640,29 @@ function skizzenrahmen(ordner, name) {
 /** Das Bild und seine Unterlage nebeneinander — wenn es eine gibt.
  *
  *  Die Unterlage ist der Geometrielayer (E20): das Bild, auf dem dieses hier aufsetzt.
- *  Ihr Urteil steht unter `basis` und NIE im selben Feld wie das eigene. */
+ *  Ihr Urteil steht unter `basis` und NIE im selben Feld wie das eigene.
+ *
+ *  Bei einem Bild aus einer Skizze ist das Vorher seit dem 23.09.2026 das Bild, UEBER DAS
+ *  skizziert wurde — das Feld `vorher` des Servers (nur ein Bild dieser Mappe, sonst
+ *  `null`). Die Skizze allein bleibt das Vorher, wenn es kein solches Bild gibt (ohne
+ *  Unterlage gezeichnet, oder ein aelteres Bild). */
 function nebeneinander(ordner, b, alleBilder) {
   const unterlage = b.basis && b.basis.bild
     ? alleBilder.find((x) => x.bild === b.basis.bild) : null;
-  // DAS VORHER: die Unterlage (E20) — oder, bei einem Bild aus einer Skizze, die Skizze.
-  const skizze = !unterlage && b.herkunft && b.herkunft.skizze ? b.herkunft.skizze : null;
-  if (!unterlage && !skizze) return bildrahmen(ordner, b);
+  // DAS BILD, UEBER DAS SKIZZIERT WURDE — nur, wenn der Server es nennt UND es in der
+  // Liste steht: Unter einem Namen ohne Eintrag gaebe es kein Zeichen zum Zeigen.
+  const vorher = !unterlage && typeof b.vorher === "string"
+    ? alleBilder.find((x) => x.bild === b.vorher) || null : null;
+  const vorherBild = unterlage || vorher;
+  // SONST DAS VORHER: bei einem Bild aus einer Skizze die Skizze.
+  const skizze = !vorherBild && b.herkunft && b.herkunft.skizze ? b.herkunft.skizze : null;
+  if (!vorherBild && !skizze) return bildrahmen(ordner, b);
 
-  const vorherTitel = unterlage ? "Unterlage" : "Skizze";
-  const vorherRahmen = () => unterlage ? bildrahmen(ordner, unterlage) : skizzenrahmen(ordner, skizze);
-  const vorherWeg = unterlage ? bildweg(ordner, unterlage.bild) : bildweg(ordner, skizze);
+  const vorherTitel = unterlage ? "Unterlage" : vorher ? "Vorher — darauf skizziert" : "Skizze";
+  const vorherWort = unterlage ? "die Unterlage" : vorher ? "das Bild, auf das skizziert wurde"
+                                                          : "die Skizze";
+  const vorherRahmen = () => vorherBild ? bildrahmen(ordner, vorherBild) : skizzenrahmen(ordner, skizze);
+  const vorherWeg = vorherBild ? bildweg(ordner, vorherBild.bild) : bildweg(ordner, skizze);
 
   // BEIDES UMSCHALTBAR (Entscheid 17): nebeneinander und Wischregler.
   const block = feld("div");
@@ -694,7 +706,7 @@ function nebeneinander(ordner, b, alleBilder) {
       const v = Number(regler.value);
       oben.style.clipPath = "inset(0 0 0 " + v + "%)";
       strich.style.left = "calc(" + v + "% - 1px)";
-      satz.textContent = "Links dieses Bild, rechts " + (unterlage ? "die Unterlage" : "die Skizze") +
+      satz.textContent = "Links dieses Bild, rechts " + vorherWort +
                          " — Schnitt bei " + v + " %.";
     };
     regler.addEventListener("input", setze);
@@ -846,6 +858,12 @@ function zeigeBilder(d) {
     // nichts da, und das ist etwas anderes als «keine Hinweise».
     for (const hinweis of (b.hinweise || [])) {
       if (hinweis !== b.skizze_hinweis) karte.append(feld("div", "satz", hinweis));
+    }
+    // DER SATZ ZUR UNTERLAGE (gestreckt, oder ohne Unterlage auf Grau) steht sonst in
+    // `hinweise` — nur nicht, wenn die Bildstufe nichts gemeldet hat (`null`): Dann haengt
+    // ihn der Server nicht an, und er kommt allein in `unterlage_hinweis`.
+    if (b.unterlage_hinweis && !(b.hinweise || []).includes(b.unterlage_hinweis)) {
+      karte.append(feld("div", "satz", b.unterlage_hinweis));
     }
     karte.append(benennFeld(d, "bild", b));
     ziel.append(karte);
@@ -1190,6 +1208,11 @@ function strichbreite(grund, druck, art) {
 
 const tafel = {
   stift: null, letzte: null, gezeichnet: false, radiert: false,
+  /** Ob der Stift seit dem Aufsetzen schon eine Linie gezogen hat — erst dann ist es ein
+   *  Strich und die Zeichnung eine neue (siehe `zeichenZug`). */
+  neuerStrich: false,
+  /** Der Weg des Bildes, das gerade unter der Tafel liegt — `null`, solange keines. */
+  unterlagenWeg: null,
   /** Was das Geraet bisher wirklich gemeldet hat — fuer die Zeile unter der Flaeche.
    *  Das ist die einzige Messung, die diese Seite selbst vornimmt, und sie misst das
    *  GERAET, nicht die Zeichnung: Ohne sie weiss niemand, ob der Stift ankommt. */
@@ -1202,8 +1225,17 @@ function tafelGroesse() {
   // die in Bildschirmpunkten entsteht, passt spaeter nicht auf das Bild, auf das sie
   // gezeichnet wurde — und genau darauf soll sie ja angewandt werden.
   if (!bild.naturalWidth) return;
+  // NUR BEI EINER ANDEREN GROESSE. Eine Leinwand, der man die Breite setzt, ist leer —
+  // auch bei derselben Zahl. Und das Bild meldet sich jedes Mal neu, wenn die Mappe neu
+  // geladen wird (nach jedem Lauf): Ohne diese Pruefung loeschte das Ende eines Laufs
+  // still, was waehrend des Wartens gezeichnet wurde (Durchsicht der Welle 2, 22.09.2026).
+  if (leinwand.width === bild.naturalWidth && leinwand.height === bild.naturalHeight) return;
   leinwand.width = bild.naturalWidth;
   leinwand.height = bild.naturalHeight;
+  // UND WAS DIE LEINWAND DABEI VERLOR, WEISS AUCH DIE SEITE (derselbe Befund): Bis dahin
+  // blieb `gezeichnet` wahr und der Schluessel stehen — «In die Mappe legen» schickte
+  // dann eine LEERE Tafel unter dem Schluessel der verlorenen Zeichnung.
+  tafelVergessen();                                // die Leinwand ist jetzt leer
 }
 
 /** Bildschirmpunkt → Bildpunkt. Ohne diese Umrechnung sitzt der Strich dort, wo geklickt
@@ -1224,7 +1256,11 @@ function zeichenStart(e) {
   // danach weitergezeichnet, ging die ERGAENZTE Zeichnung mit dem alten Schluessel hinaus
   // — der Server wies sie als «andere Zeichnung» ab. Ohne neuen Strich bleibt er, damit
   // ein zweiter Klick auf «In die Mappe legen» keine zweite Datei anlegt.
-  tafel.schluessel = null;                         // ein neuer Strich: neue Zeichnung
+  // ERST DIE ERSTE BEWEGUNG MACHT DARAUS EINEN STRICH (Durchsicht der Welle 2,
+  // 22.09.2026): Bis dahin wurde der Schluessel schon beim Aufsetzen verworfen — ein Tipp
+  // ohne Strich aenderte nichts an der Zeichnung und gab ihr trotzdem einen neuen, und ein
+  // zweites «In die Mappe legen» legte eine zweite Datei an. Siehe `zeichenZug`.
+  tafel.neuerStrich = true;
   tafel.stift = e.pointerId;
   tafel.letzte = aufTafel(e);
   tafel.arten.add(e.pointerType || "unbekannt");
@@ -1235,6 +1271,10 @@ function zeichenStart(e) {
 
 function zeichenZug(e) {
   if (tafel.stift !== e.pointerId) return;
+  if (tafel.neuerStrich) {
+    tafel.neuerStrich = false;
+    tafel.schluessel = null;                       // ein neuer Strich: neue Zeichnung
+  }
   const c = $("tafel").getContext("2d");
   const jetzt = aufTafel(e);
   const breite = strichbreite(Number($("stift").value), e.pressure, e.pointerType);
@@ -1264,6 +1304,7 @@ function zeichenEnde(e) {
   if (tafel.stift !== e.pointerId) return;
   tafel.stift = null;
   tafel.letzte = null;
+  tafel.neuerStrich = false;
 }
 
 /** Was das Geraet gemeldet hat — und was NICHT.
@@ -1283,6 +1324,12 @@ function zeigeStiftlage() {
 function tafelLeeren() {
   const c = $("tafel").getContext("2d");
   c.clearRect(0, 0, $("tafel").width, $("tafel").height);
+  tafelVergessen();
+}
+
+/** Die Tafel ist leer — und die Seite vergisst, was darauf war. Gerufen, wo die Leinwand
+ *  geleert wird: von Hand (`tafelLeeren`) und durch eine neue Groesse (`tafelGroesse`). */
+function tafelVergessen() {
   tafel.gezeichnet = false;
   // EINE NEUE ZEICHNUNG BEKOMMT EINEN NEUEN SCHLUESSEL — siehe `skizzeAblegen`.
   tafel.schluessel = null;
@@ -1464,7 +1511,17 @@ async function nachsehen() {
 function unterlageWechseln() {
   const name = $("unterlage").value;
   if (!name) return;
-  $("unterlagenbild").src = bildweg($("ordner").value.trim(), name);
+  const weg = bildweg($("ordner").value.trim(), name);
+  // NUR BEI EINER ANDEREN UNTERLAGE. `laden` ruft hierher nach jedem Lauf und jeder
+  // Ablage; das Bild noch einmal zu setzen hiesse, dass es sich neu meldet (Durchsicht
+  // der Welle 2, 22.09.2026, siehe `tafelGroesse`).
+  if (weg === tafel.unterlagenWeg) return;
+  // EINE ANDERE UNTERLAGE, EINE LEERE TAFEL: Eine Zeichnung gehoert zu dem Bild, auf das
+  // sie gezeichnet wurde. Bis dahin leerte das der Groessenwechsel nebenbei — bei einem
+  // Bild derselben Groesse haette die Zeichnung sonst die Unterlage gewechselt.
+  if (tafel.unterlagenWeg !== null) tafelLeeren();
+  tafel.unterlagenWeg = weg;
+  $("unterlagenbild").src = weg;
 }
 
 async function skizzeAblegen() {

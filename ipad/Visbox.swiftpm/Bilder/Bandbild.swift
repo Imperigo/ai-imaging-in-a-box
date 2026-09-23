@@ -20,9 +20,16 @@ struct Bandbild: Identifiable, Equatable {
     let bild: String
     /// Die geladenen Bildbytes; `nil`, solange nichts geladen ist.
     var grafik: UIImage? = nil
-    /// Das Vergleichsbild «aus dem Modell», wenn eines geladen ist. **Heute nie:** Der
-    /// Server nennt zu einem Bild kein Vergleichsbild (Protokoll §4). Die Ansicht sagt das.
-    var vorher: UIImage? = nil
+    /// **Der Name der Unterlage** — des Bildes, über das skizziert wurde (Feld `vorher`,
+    /// Entscheid 17), gelesen im Kern (`Mappenbild.vorher`, dort mit Probe). `nil` heisst:
+    /// keine, oder der Server nennt sie nicht — nicht «es gibt keine».
+    ///
+    /// Bis zum 22.09.2026 war hier ein Bild-Feld, das nirgends gesetzt wurde: Der Vergleich
+    /// Vorher/Nachher war im Produkt nie zu sehen (Durchsicht der Verdrahtung). Die Bytes
+    /// liegen jetzt am `Bildbandstand` (`vorherbild`), nicht hier — `ladeMappe` baut die
+    /// Bandbilder bei jedem Laden neu und übernimmt nur `grafik`; ein Bild hier ginge dabei
+    /// jedes Mal verloren.
+    var vorher: String? { angaben.vorher }
 
     var id: String { bild }
 
@@ -100,6 +107,13 @@ final class Bildbandstand: ObservableObject {
     /// Ob gerade eine Handlung unterwegs ist — dann ist derselbe Knopf nicht noch einmal
     /// zu haben.
     @Published var sendet = false
+    /// Die zuletzt geladene Unterlage (Name → Bild) — **nur eine**, damit das Gedächtnis
+    /// nicht mit jedem geöffneten Bild wächst (gesetzt, nicht gemessen). Geladen von
+    /// `Verbindungsstand.ladeUnterlage` (`Bilder/Unterlage.swift`).
+    @Published var unterlagen: [String: UIImage] = [:]
+    /// Warum eine Unterlage nicht da ist, je Name — der Satz des Servers oder der Leitung.
+    /// Fehlt ein Eintrag und ein Bild, ist sie **noch nicht geladen**, nicht «keine».
+    @Published var unterlagenSatz: [String: String] = [:]
 
     /// Der Name, den ein Mensch sieht: der eigene aus der Mappe, sonst der nach der Zeit.
     func name(_ b: Bandbild) -> String {
@@ -120,6 +134,13 @@ final class Bildbandstand: ObservableObject {
 
     func setzeLesart(_ l: Bildlesart, fuer b: Bandbild) {
         lesarten[b.bild] = l
+    }
+
+    /// Das Vorher eines Bildes: die geladene Unterlage — oder, wenn die Unterlage selbst ein
+    /// Bild der Mappe ist, dessen schon geladene Grafik. `nil`, solange nichts geladen ist.
+    func vorherbild(_ b: Bandbild) -> UIImage? {
+        guard let name = b.vorher else { return nil }
+        return unterlagen[name] ?? bilder.first(where: { $0.bild == name })?.grafik
     }
 
     /// Die Bilder einer Reihe, nach ihrer Nummer.

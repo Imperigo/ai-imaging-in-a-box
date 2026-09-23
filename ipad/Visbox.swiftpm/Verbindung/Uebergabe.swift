@@ -8,7 +8,8 @@ import SwiftUI
 ///
 /// 1. *Bewegt sich etwas, ist etwas unterwegs.* Die Ansicht gibt es nur, solange eine Skizze
 ///    gesendet wird (`Verbindungsstand.uebergabe`), und der Ort folgt den gezählten Bytes.
-///    Vor dem ersten Byte spielt `Flugbahn.vorspiel`: ablegen (220 ms), abheben (180 ms).
+///    Vor dem ersten Byte spielt `Flugbahn.vorspiel`: ablegen (220 ms), abheben (180 ms) —
+///    beim Abheben wandert die Marke an den Rand des iPads, zum Ziel hin (`Flugbahn.rand`).
 /// 2. *Gleichmässig heisst gezählt.* Ohne Gesamt kein Balken; die Marke atmet an Ort und
 ///    Stelle (1.8 s) — vom Beginn des Sendens an (`Flugbahn.flugbeginn`), auch wenn nie
 ///    ein Zählerstand kommt.

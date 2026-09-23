@@ -170,8 +170,11 @@ struct Arbeitsplatzanordnung: Layout {
     }
 }
 
-private extension View {
+extension View {
     /// Unsichtbar, nicht antippbar und für den Bildschirmleser still — aber noch da.
+    ///
+    /// Nicht mehr `private` seit dem 22.09.2026: Auch `Startansicht` blendet die
+    /// Verbindungszeile im Vollbild so aus, statt sie aus dem Baum zu nehmen.
     func versteckt(_ ja: Bool) -> some View {
         self
             .opacity(ja ? 0 : 1)

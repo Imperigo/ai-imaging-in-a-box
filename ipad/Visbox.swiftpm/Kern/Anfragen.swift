@@ -329,10 +329,13 @@ public enum Anfragen {
 
     /// `POST /api/skizze` für eine Skizze **aus dem Parkfach** — mit ihrem Schlüssel.
     ///
-    /// Die eine Bauform, die das Senden aus dem Fach benutzt (`Verbindungsstand.nachsenden`):
-    /// So kann der Schlüssel nicht vergessen werden, und die Regel «ungewiss geht von selbst
-    /// noch einmal» (`Parkeintrag.gehtVonSelbst`) steht auf ihm.
-    /// `AnfragenTests.testDieSkizzeAusDemFachTraegtIhrenSchluessel` bewacht es.
+    /// Die Bauform für das Senden aus dem Fach (`Verbindungsstand.nachsenden` benutzt sie):
+    /// Sie nimmt den Schlüssel aus dem Eintrag selbst, statt ihn als freies Feld zu
+    /// verlangen — auf ihm steht die Regel «ungewiss geht von selbst noch einmal»
+    /// (`Parkeintrag.gehtVonSelbst`). `AnfragenTests.testDieSkizzeAusDemFachTraegtIhrenSchluessel`
+    /// bewacht, dass **diese Bauform** ihn mitnimmt (samt `ueber`, `name`, `ordner`).
+    /// **Dass die App wirklich über sie sendet, prüft keine Probe** — das steht nur im
+    /// Quelltext von `nachsenden` (Durchsicht vom 22.09.2026, am Gerät unbestätigt).
     public static func skizze(_ eintrag: Parkeintrag, png: Data,
                               anmeldung: Anmeldung?) throws -> Anfrage {
         try skizze(png: png, ueber: eintrag.ueber, bemerkung: eintrag.bemerkung,
@@ -646,10 +649,54 @@ public struct Projektsicht: Equatable, Sendable {
 public struct FertigerKnoten: Equatable, Sendable {
     public let knoten: String?
     public let knotenart: String?
-    /// `ok`, `abgelehnt`, `fehler` oder `uebersprungen` — roh.
+    /// Roh, wie der Server ihn schickt — **fünf Werte**: `ok`, `abgelehnt`, `fehler`,
+    /// `uebersprungen` oder `abgebrochen` (`STATUS_*` in `src/aiimaging/kette.py`, nachgelesen
+    /// am 22.09.2026). `abgebrochen` heisst: Der Knoten begann nicht mehr, weil der Lauf auf
+    /// Wunsch angehalten wurde (Entscheid 31) — **nicht** dasselbe wie `uebersprungen`
+    /// (ein Vorgänger scheiterte). Bis zur Durchsicht vom 22.09.2026 nannte dieser Kommentar
+    /// nur die ersten vier.
     public let status: String?
     public let ausCache: Bool?
     public let dauerS: Double?
+    /// Die Nummer der Variante, zu der der Knoten gehört — `nil` ausserhalb einer Reihe
+    /// (der Server schickt `null`) oder wenn das Feld fehlt.
+    public let variante: Int?
+}
+
+/// Die laufende Variante einer Reihe (`variante` im Laufstand): `{nummer, von, gruppe}`.
+/// Mit jeder neuen Variante beginnen Knotennummer und Schritt wieder bei eins —
+/// ohne dieses Feld sähe die zweite Variante aus wie ein Lauf, der rückwärts geht.
+public struct Laufvariante: Equatable, Sendable {
+    public let nummer: Int?
+    public let von: Int?
+    /// Die Kennung der Reihe drüben (Text, aus Zeit und Zufall).
+    public let gruppe: String?
+
+    public init(nummer: Int?, von: Int?, gruppe: String?) {
+        self.nummer = nummer
+        self.von = von
+        self.gruppe = gruppe
+    }
+}
+
+/// Was bestellt ist (`bestellung` im Laufstand): `{art, entwurf, varianten, skizzen}`.
+public struct Laufbestellung: Equatable, Sendable {
+    /// `modell` oder `skizze` — roh.
+    public let art: String?
+    /// Ob ein Entwurfslauf bestellt ist — `nil`: nicht geliefert, nicht «nein».
+    public let entwurf: Bool?
+    /// Wie viele Varianten — `nil` heisst: keine Reihe **oder** nicht geliefert (der
+    /// Server schickt bei einer einzelnen Skizze `null`).
+    public let varianten: Int?
+    /// Die Dateinamen der Skizzen bei `art` `skizze`; sonst `nil`.
+    public let skizzen: [String]?
+
+    public init(art: String?, entwurf: Bool?, varianten: Int?, skizzen: [String]?) {
+        self.art = art
+        self.entwurf = entwurf
+        self.varianten = varianten
+        self.skizzen = skizzen
+    }
 }
 
 /// `GET /api/fortschritt` — der **eine** Laufstand des Servers.
@@ -670,6 +717,19 @@ public struct Fortschrittsstand: Equatable, Sendable {
     public let fertige: [FertigerKnoten]?
     public let ergebnis: JSONWert?
     public let fehler: String?
+    /// Ob `POST /api/abbrechen` kam — **nicht**, ob der Abbruch gewirkt hat (das steht nach
+    /// dem Lauf in `ergebnis.abgebrochen`; kam der Wunsch nach dem letzten Knoten, lief der
+    /// Lauf regulär zu Ende). `nil` heisst: **nicht geliefert** (ein Server vor dem
+    /// 22.09.2026) — nicht «nicht verlangt».
+    ///
+    /// Gelesen seit der Durchsicht vom 22.09.2026; bis dahin fiel das Feld hier still weg.
+    /// Die Anzeige («Abbruch verlangt») gehört nach `Bilder/` (`Laufanzeige`).
+    public let abbruchVerlangt: Bool?
+    /// Die laufende Variante einer Reihe — `nil`: keine Reihe (der Server schickt `null`)
+    /// oder nicht geliefert.
+    public let variante: Laufvariante?
+    /// Was bestellt ist — `nil`: nichts bestellt (vor dem ersten Lauf) oder nicht geliefert.
+    public let bestellung: Laufbestellung?
 
     /// Ob der Stand **gezählt** ist: `true` bei `belegt`, `false` bei `unbelegt`, `nil`
     /// bei allem anderen.
@@ -711,11 +771,22 @@ public struct Fortschrittsstand: Equatable, Sendable {
                                    knotenart: $0["knotenart"]?.alsText,
                                    status: $0["status"]?.alsText,
                                    ausCache: $0["aus_cache"]?.alsWahrheit,
-                                   dauerS: $0["dauer_s"]?.alsZahl)
+                                   dauerS: $0["dauer_s"]?.alsZahl,
+                                   variante: $0["variante"]?.alsGanz)
                 }
             },
             ergebnis: o["ergebnis"].flatMap { $0.istNull ? nil : $0 },
-            fehler: o["fehler"]?.alsText)
+            fehler: o["fehler"]?.alsText,
+            abbruchVerlangt: o["abbruch_verlangt"]?.alsWahrheit,
+            variante: o["variante"]?.alsObjekt.map {
+                Laufvariante(nummer: $0["nummer"]?.alsGanz, von: $0["von"]?.alsGanz,
+                             gruppe: $0["gruppe"]?.alsText)
+            },
+            bestellung: o["bestellung"]?.alsObjekt.map {
+                Laufbestellung(art: $0["art"]?.alsText, entwurf: $0["entwurf"]?.alsWahrheit,
+                               varianten: $0["varianten"]?.alsGanz,
+                               skizzen: $0["skizzen"]?.alsListe?.compactMap { $0.alsText })
+            })
     }
 }
 

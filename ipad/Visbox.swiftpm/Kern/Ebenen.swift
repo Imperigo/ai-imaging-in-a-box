@@ -25,6 +25,12 @@ public struct Ebene: Identifiable, Equatable, Sendable {
     /// Wie viele Striche auf der Ebene liegen. `0` heisst: **nichts, was man sieht** —
     /// nichts gezeichnet, oder alles weggewischt (`Ebenenstapel.setzeStriche(_:_:alpha:)`).
     public internal(set) var striche: Int
+    /// **Ob `striche` am Bild geprüft ist oder nur gezählt.** `true` heisst: Die Ebene trägt
+    /// abgedeckte Striche, aber ihr Bild liess sich nicht lesen
+    /// (`Ebenenstapel.setzeStriche(_:_:deckung:)` mit `nil`). Dann gilt die Strichzahl —
+    /// und die kann sagen «bezeichnet», wo nach dem Radieren nichts mehr zu sehen ist. Die
+    /// Ebenentafel sagt das in einem Satz, statt still zu zählen (Durchsicht, 22.09.2026).
+    public internal(set) var deckungUngewiss: Bool = false
 
     /// Nichts gezeichnet. Das ist kein leeres Bild, sondern keines.
     public var istLeer: Bool { striche == 0 }
@@ -73,6 +79,13 @@ public struct Ebenenstapel: Equatable, Sendable {
     public private(set) var ebenen: [Ebene]
     /// Die Ebene, auf die der Stift zeichnet.
     public private(set) var aktiv: UUID
+    /// Das Bild unter den Ebenen — **keine Ebene** (`Kern/Blattunterlage.swift`, seit dem
+    /// 23.09.2026). Darum steht es neben `ebenen` und nicht darin: So zählt es zu keiner
+    /// Regel dieses Stapels — nicht zur Höchstzahl, nicht zu `plan` (weder «sichtbar» noch
+    /// «leer»), nicht als Variante — und kann nie die aktive Ebene werden, auf die der
+    /// Stift oder der Radierer wirkt. Was davon mit einer Skizze hinausgeht, entscheidet
+    /// `Unterlagenangabe`.
+    public private(set) var unterlage: Blattunterlage?
 
     /// Ein Stapel mit einer einzigen, leeren, sichtbaren Ebene «Variante A».
     public init() {
@@ -158,10 +171,14 @@ public struct Ebenenstapel: Equatable, Sendable {
         return true
     }
 
-    /// Meldet, wie viele Striche eine Ebene trägt. Die App ruft das nach jeder Änderung
-    /// der Zeichnung; eine negative Zahl gibt es nicht und wird zu 0.
+    /// Meldet, wie viele Striche eine Ebene trägt — **für eine Zeichnung ohne abgedeckte
+    /// Striche**, in der jeder Strich zu sehen ist. Die Zahl ist dann geprüft, nicht nur
+    /// gezählt. Eine negative Zahl gibt es nicht und wird zu 0.
     public mutating func setzeStriche(_ id: UUID, _ anzahl: Int) {
-        aendere(id) { $0.striche = max(0, anzahl) }
+        aendere(id) {
+            $0.striche = max(0, anzahl)
+            $0.deckungUngewiss = false
+        }
     }
 
     /// Meldet die Striche einer Ebene **zusammen mit ihrem gemalten Bild**: `alpha` trägt
@@ -169,20 +186,61 @@ public struct Ebenenstapel: Equatable, Sendable {
     /// die Ebene als leer — gleich, wie viele Striche PencilKit noch führt.
     ///
     /// **Warum am Bild und nicht an der Strichzahl (Befund Durchsicht A, 22.09.2026).** Der
-    /// flächige Radierer nimmt Striche nicht weg, er deckt sie ab: Nach vollständigem
-    /// Radieren kann eine Ebene Striche tragen, von denen nichts mehr zu sehen ist. Nach der
-    /// Strichzahl ginge sie als leeres PNG hinaus — ein Bild, das drüben aussähe wie eine
-    /// bewusst leere Skizze, gegen die dritte Antwort. Die Grenze der Zeichnung
-    /// (`PKDrawing.bounds`) wäre billiger, aber ob PencilKit darin die Abdeckung abzieht,
-    /// ist nirgends belegt; das Bild ist das, was hinausginge.
+    /// flächige Radierer nimmt Striche nach Kenntnis nicht weg, er deckt sie ab
+    /// (`PKStroke.mask`, PencilKit ab iOS 14 — so beschrieben, am Gerät unbestätigt): Nach
+    /// vollständigem Radieren kann eine Ebene Striche tragen, von denen nichts mehr zu sehen
+    /// ist. Nach der Strichzahl ginge sie als leeres PNG hinaus — ein Bild, das drüben
+    /// aussähe wie eine bewusst leere Skizze, gegen die dritte Antwort. Die Grenze der
+    /// Zeichnung (`PKDrawing.bounds`) wäre billiger, aber ob PencilKit darin die Abdeckung
+    /// abzieht, ist nirgends belegt; das Bild ist das, was hinausginge.
     ///
-    /// **Die Schwelle ist «grösser als 0», nicht «kaum sichtbar».** Der Server liest den
-    /// Alphakanal heute nicht (`bildlesen.lies_png_luminanz` übergeht ihn): Was dort von
-    /// einem schwach deckenden Bildpunkt ankommt, bestimmt nicht dessen Deckung. Ein
-    /// leerer Puffer ist kein gemaltes Bild und zeigt darum nichts.
+    /// **Die Schwelle ist «grösser als 0», nicht «kaum sichtbar».** Jeder Bildpunkt, der
+    /// überhaupt deckt, geht im PNG hinaus, und der Server rechnet mit ihm: Er setzt die
+    /// Skizze mit ihrem Alphakanal auf die Unterlage (`arbeitsgang.setze_auf_unterlage`,
+    /// seit dem 22.09.2026). Wo die Grenze zu «nichts zu sehen» läge, entschiede sonst diese
+    /// Regel statt des Bildes. Ein leerer Puffer zeigt nichts.
     public mutating func setzeStriche(_ id: UUID, _ anzahl: Int, alpha: Data) {
         let zeigtEtwas = alpha.contains { $0 > 0 }
         setzeStriche(id, zeigtEtwas ? anzahl : 0)
+    }
+
+    /// Meldet die Striche einer Ebene mit abgedeckten Strichen — **mit ihrem gemalten Bild,
+    /// oder mit `nil`, wenn es sich nicht lesen liess.**
+    ///
+    /// * Ein Bild: Die Ebene ist leer, wenn darin kein Bildpunkt deckt (`zeigtEtwas`,
+    ///   dieselbe Schwelle wie `setzeStriche(_:_:alpha:)`).
+    /// * `nil`: **nicht geprüft.** Die Strichzahl gilt, weil ein Bild zu verschweigen
+    ///   schlimmer wäre als ein leeres zu senden — aber die Ebene trägt den Vorbehalt
+    ///   `deckungUngewiss`, und die Tafel sagt es (Befund Durchsicht, 22.09.2026: vorher
+    ///   fiel das still auf die Zahl zurück). Ohne Striche gibt es nichts, was ungewiss wäre.
+    public mutating func setzeStriche(_ id: UUID, _ anzahl: Int, deckung: Deckungsbild?) {
+        guard let bild = deckung else {
+            aendere(id) {
+                $0.striche = max(0, anzahl)
+                $0.deckungUngewiss = anzahl > 0
+            }
+            return
+        }
+        setzeStriche(id, bild.zeigtEtwas ? anzahl : 0)
+    }
+
+    /// Legt ein Bild unter die Ebenen — **sichtbar**, und an die Stelle einer früheren
+    /// (es gibt höchstens eine). Ebenen, Striche und die gewählte Ebene bleiben, wie sie
+    /// sind: Wer auf ein anderes Bild wechselt, verliert nichts Gezeichnetes.
+    public mutating func legeUnterlage(_ neu: Blattunterlage) {
+        var gelegt = neu
+        gelegt.sichtbar = true
+        unterlage = gelegt
+    }
+
+    /// Blendet die Unterlage ein oder aus. Ohne Unterlage geschieht nichts.
+    public mutating func setzeUnterlageSichtbar(_ sichtbar: Bool) {
+        unterlage?.sichtbar = sichtbar
+    }
+
+    /// Nimmt die Unterlage weg. Die Ebenen bleiben.
+    public mutating func entferneUnterlage() {
+        unterlage = nil
     }
 
     /// Schiebt eine Ebene im Stapel eine Stelle nach oben oder unten. Am Rand geschieht
@@ -329,6 +387,63 @@ public enum Ebenenausgabe: Equatable, Sendable {
 
     static func istPNG(_ daten: Data) -> Bool {
         daten.count >= pngKennung.count && Array(daten.prefix(pngKennung.count)) == pngKennung
+    }
+}
+
+/// Ein gemaltes Bild, **wie es im Speicher liegt**: Zeilen aus Bildpunkten, je Bildpunkt
+/// `punktlaenge` Bytes, eines davon (an `alphaStelle`) die Deckung.
+///
+/// **Warum diese Form (Durchsicht, 22.09.2026).** Die App las die Deckung bisher, indem sie
+/// die Zeichnung zu einem Bild malte und dieses Bild ein zweites Mal in einen Puffer nur für
+/// die Deckung — 1536 × 1024 Bildpunkte, zweimal gemalt, bei jeder Änderung einer Ebene
+/// mit abgedeckten Strichen. So liest sie die Bytes des einen Bildes direkt, und dieser
+/// Kern weiss, wo darin die Deckung steht und welche Bytes nicht dazugehören (die
+/// Farbbytes und die Füllbytes am Ende einer Zeile). Wie lange das am Gerät dauert, ist
+/// **nicht gemessen.**
+///
+/// Masse, die nicht zusammenpassen, ergeben **kein** Deckungsbild (`nil`) — geraten wird
+/// nicht, und die App meldet die Ebene dann als nicht geprüft.
+public struct Deckungsbild: Sendable {
+    public let daten: Data
+    public let breite: Int
+    public let hoehe: Int
+    /// Bytes je Zeile, mit allfälligen Füllbytes am Ende.
+    public let zeilenlaenge: Int
+    /// Bytes je Bildpunkt.
+    public let punktlaenge: Int
+    /// Das wievielte Byte eines Bildpunkts die Deckung ist, ab 0.
+    public let alphaStelle: Int
+
+    public init?(daten: Data, breite: Int, hoehe: Int, zeilenlaenge: Int,
+                 punktlaenge: Int, alphaStelle: Int) {
+        guard breite > 0, hoehe > 0, punktlaenge > 0,
+              alphaStelle >= 0, alphaStelle < punktlaenge else { return nil }
+        let (nutzlaenge, zuGross1) = breite.multipliedReportingOverflow(by: punktlaenge)
+        guard !zuGross1, zeilenlaenge >= nutzlaenge else { return nil }
+        let (vorLetzter, zuGross2) = zeilenlaenge.multipliedReportingOverflow(by: hoehe - 1)
+        let (noetig, zuGross3) = vorLetzter.addingReportingOverflow(nutzlaenge)
+        guard !zuGross2, !zuGross3, daten.count >= noetig else { return nil }
+        self.daten = daten
+        self.breite = breite
+        self.hoehe = hoehe
+        self.zeilenlaenge = zeilenlaenge
+        self.punktlaenge = punktlaenge
+        self.alphaStelle = alphaStelle
+    }
+
+    /// Ob irgendein Bildpunkt deckt (Deckung grösser als 0). **Bricht beim ersten ab** —
+    /// auf einem bezeichneten Blatt ist das meist früh. Farbbytes und Füllbytes zählen nie.
+    public var zeigtEtwas: Bool {
+        daten.withUnsafeBytes { (roh: UnsafeRawBufferPointer) -> Bool in
+            for zeile in 0..<hoehe {
+                var stelle = zeile * zeilenlaenge + alphaStelle
+                for _ in 0..<breite {
+                    if roh[stelle] > 0 { return true }
+                    stelle += punktlaenge
+                }
+            }
+            return false
+        }
     }
 }
 

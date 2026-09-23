@@ -8,10 +8,10 @@ import SwiftUI
 /// oder die gekoppelte HomeStation hat noch nicht geantwortet), **Gekoppelt** (sie hat
 /// zuletzt geantwortet), **Getrennt** (sie hat nicht geantwortet — mit Grund).
 ///
-/// **«In die Mappe legen» sitzt vorerst hier.** Im Entwurf (Blatt «Main») steht der Knopf
-/// im Seitenfeld; das Seitenfeld hängt noch nirgends (`Startansicht` ordnet fest an). Der
-/// Knopf ist darum als eigene Ansicht gebaut (`Mappenknopf`) und zieht mit, sobald das
-/// Seitenfeld eingehängt wird — **dann hier entfernen**, sonst gibt es ihn zweimal.
+/// **«In die Mappe legen» sitzt nicht mehr hier** (seit dem 23.09.2026): Er steht, wie im
+/// Entwurf (Blätter «Main» und «MainHoch»), unten im Seitenfeld (`Seitentafel`,
+/// `Leiste/Mappenknopf.swift`) — einmal, unter Ebenen und Mappe gleichermassen. Bis dahin
+/// stand er in dieser Zeile, weil das Seitenfeld noch nirgends hing.
 ///
 /// Der Name `Verbindungszeile` bleibt, weil `Startansicht` ihn benutzt.
 ///
@@ -19,22 +19,12 @@ import SwiftUI
 @MainActor
 struct Verbindungszeile: View {
     @ObservedObject var stand: Verbindungsstand
-    let skizzenquelle: Skizzenquelle
 
     @State private var koppelnOffen = false
     @State private var fachOffen = false
 
-    /// `skizzenquelle` `nil` heisst: **die Vorgabe** — die sichtbaren Ebenen der
-    /// Zeichenfläche als **ein** Bild (Einheit «Zeichnen», `Zeichenstand.pngAusgabe`).
-    ///
-    /// Warum die Vorgabe im Rumpf steht und nicht als Standardwert (Mac-Übersetzung vom
-    /// 22.09.2026, Warnung «main actor-isolated static property 'zeichenflaeche' can not be
-    /// referenced from a nonisolated context»): Ein Standardwert wird **ausserhalb** des
-    /// Hauptfadens ausgewertet, die Eigenschaft gehörte aber zu dieser `@MainActor`-Ansicht.
-    /// Im Rumpf von `init` ist der Hauptfaden gesichert, und keine Marke muss wandern.
-    init(stand: Verbindungsstand = .gemeinsam, skizzenquelle: Skizzenquelle? = nil) {
+    init(stand: Verbindungsstand = .gemeinsam) {
         self.stand = stand
-        self.skizzenquelle = skizzenquelle ?? { Zeichenstand.gemeinsam.pngAusgabe(.eineSkizze) }
     }
 
     var body: some View {
@@ -58,8 +48,6 @@ struct Verbindungszeile: View {
                     .buttonStyle(Wahlknopfstil(gewaehlt: false, breite: nil))
                     .fixedSize()
             }
-
-            Mappenknopf(stand: stand, skizzenquelle: skizzenquelle)
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 6)
@@ -111,32 +99,31 @@ struct Verbindungszeile: View {
         }
     }
 
-    /// Was der Knopf zum Parkfach sagt — **nur Zahlen, die nicht null sind.**
+    /// Was der Knopf zum Parkfach sagt — **nur Zahlen, die nicht null sind**, und jede
+    /// unter ihrem eigenen Wort: geparkt, ungewiss, unterwegs, offen (Kern: `Fachzaehlung`).
     ///
     /// Bis zur Durchsicht vom 22.09.2026 stand hier dauerhaft «0 geparkt», sobald nur noch
     /// angekommene Skizzen im Fach lagen (und die blieben für immer). Jetzt räumt das Fach
     /// sie nach 7 Tagen weg (`Parkfach.raeumeAuf`), und solange sie dastehen, sagt der Knopf
-    /// nur «Parkfach»: Die Quittungen sind erreichbar, ohne eine Null zu behaupten.
+    /// nur «Parkfach»: Die Quittungen sind erreichbar, ohne eine Null zu behaupten. Und bis
+    /// zur zweiten Durchsicht desselben Tages zählte «geparkt» auch ungewisse Skizzen mit,
+    /// die von selbst nochmals gehen — die sind aber vielleicht schon drüben.
     private var fachteil: some View {
-        let wartend = stand.wartend
-        let unterwegs = stand.fach.filter { $0.zustand == .unterwegs }.count
-        let offen = stand.brauchenEntscheid
-        let teile = [(wartend, "geparkt"), (unterwegs, "unterwegs"), (offen, "offen")]
-            .filter { $0.0 > 0 }
+        let teile = stand.zaehlung.teile
         return HStack(spacing: 8) {
             if teile.isEmpty {
                 Text("Parkfach")
             }
             ForEach(Array(teile.enumerated()), id: \.offset) { paar in
                 if paar.offset > 0 { Text("·") }
-                Text("\(paar.element.0)").font(Schrift.zahl(15, .medium))
-                Text(paar.element.1)
+                Text("\(paar.element.zahl)").font(Schrift.zahl(15, .medium))
+                Text(paar.element.wort)
             }
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text(teile.isEmpty
             ? "Parkfach: nichts wartet"
-            : "Parkfach: " + teile.map { "\($0.0) \($0.1)" }.joined(separator: ", ")))
+            : "Parkfach: " + teile.map { "\($0.zahl) \($0.wort)" }.joined(separator: ", ")))
     }
 }
 
@@ -171,40 +158,6 @@ struct Statuspunkt: View {
             Circle().fill(Zeichenblatt.leise)
         case .aus, .getrennt:
             Circle().strokeBorder(Zeichenblatt.leise, lineWidth: 2)
-        }
-    }
-}
-
-/// «In die Mappe legen» — **die Skizze geht ins Parkfach und von dort hinaus.**
-///
-/// Nach dem Tippen steht ein Satz da, wenn es einen zu sagen gibt (nichts gezeichnet,
-/// geparkt, weil niemand antwortet, …). Geht sie gleich hinaus, sagt es die Marke.
-@MainActor
-struct Mappenknopf: View {
-    @ObservedObject var stand: Verbindungsstand
-    let skizzenquelle: Skizzenquelle
-    @State private var satz: String?
-
-    var body: some View {
-        HStack(spacing: 12) {
-            if let satz {
-                Text(satz)
-                    .font(Schrift.text(12))
-                    .foregroundStyle(Zeichenblatt.leise)
-                    .lineLimit(3)
-                    .frame(maxWidth: 260, alignment: .trailing)
-                    .multilineTextAlignment(.trailing)
-                    .onTapGesture { self.satz = nil }
-            }
-            Button {
-                satz = stand.legeInDieMappe(skizzenquelle())
-            } label: {
-                Text("In die Mappe legen")
-            }
-            .buttonStyle(Wahlknopfstil(gewaehlt: true, breite: nil))
-            .fixedSize()
-            .accessibilityHint("Legt die sichtbaren Ebenen als Skizze in die Mappe der HomeStation. "
-                               + "Nichts rechnet von selbst.")
         }
     }
 }

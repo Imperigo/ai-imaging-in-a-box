@@ -1,7 +1,9 @@
 import SwiftUI
 
 /// Ein Bild gross — mit dem **Schalter Prüfen/Entwerfen am Bild** (Entscheide 15, 30), dem
-/// Vergleich Vorher/Nachher (17), einem eigenen Namen (19) und dem Teilen samt Zeichen (20).
+/// Vergleich Vorher/Nachher (17: die Unterlage gegen das Ergebnis), einem eigenen Namen (19),
+/// dem Teilen samt Zeichen (20) und, seit dem 23.09.2026, **«Darauf skizzieren»**: das Bild
+/// als Unterlage unter die Ebenen (`Daraufskizzieren`).
 ///
 /// Anordnung nach dem Blatt «Bilder»: links das Bild, rechts ein Feld von 360 pt mit dem,
 /// was der Server über das Bild sagt. Im Hochformat liegt das Feld darunter — derselbe
@@ -131,10 +133,13 @@ struct Bildansicht: View {
 
     // ---------------------------------------------------------------- das Bild
 
+    /// Vorher und Nachher, sobald die Unterlage da ist (Entscheid 17) — sonst das Bild allein,
+    /// **und der Satz, warum**: keine Unterlage genannt, noch nicht geladen, oder nicht
+    /// ladbar. Drei verschiedene Lagen, drei verschiedene Sätze.
     @ViewBuilder
     private var mitte: some View {
         VStack(alignment: .leading, spacing: 18) {
-            if aktuell.vorher != nil {
+            if let vorher = stand.vorherbild(aktuell) {
                 HStack(spacing: Zeichenblatt.abstand) {
                     ForEach(Bildvergleichsart.allCases) { art in
                         Button(art.name) {
@@ -148,23 +153,52 @@ struct Bildansicht: View {
                         .font(Schrift.text(13))
                         .foregroundStyle(Zeichenblatt.leise)
                 }
-                Bildvergleich(vorher: aktuell.vorher, nachher: aktuell.grafik,
+                Bildvergleich(vorher: vorher, nachher: aktuell.grafik,
                               zeichen: zeichen, art: vergleich)
+                if let name = aktuell.vorher {
+                    Text("Unterlage: " + name)
+                        .font(Schrift.zahl(12))
+                        .foregroundStyle(Zeichenblatt.leise)
+                        .textSelection(.enabled)
+                }
             } else {
                 Bildflaeche(grafik: aktuell.grafik, vorhanden: aktuell.vorhanden)
                     .pruefzeichen(zeichen, .gross)
-                Text("Die Mappe nennt zu diesem Bild kein Vergleichsbild aus dem Modell — "
-                     + "darum hier ohne Vorher.")
+                Text(ohneVorherSatz)
                     .font(Schrift.text(13))
                     .foregroundStyle(Zeichenblatt.leise)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
+        // DIE UNTERLAGE WIRD BEIM OEFFNEN GEHOLT, und neu, wenn die Mappe dem Bild eine andere
+        // nennt. Am Gerät unbestätigt (22.09.2026).
+        .task(id: aktuell.vorher) {
+            if let name = aktuell.vorher {
+                await verbindung.ladeUnterlage(name, bildband: stand)
+            }
+        }
+    }
+
+    /// Warum hier kein Vorher steht — **nie «es gibt keines»**, wenn es nur nicht geladen ist.
+    private var ohneVorherSatz: String {
+        guard let name = aktuell.vorher else {
+            return "Die Mappe nennt zu diesem Bild keine Unterlage — darum hier ohne Vorher."
+        }
+        if let satz = stand.unterlagenSatz[name] {
+            return "Die Unterlage «\(name)» ist nicht geladen: \(satz)"
+        }
+        return "Die Unterlage «\(name)» wird geladen."
     }
 
     // -------------------------------------------------------------- das Seitenfeld
 
     private var feld: some View {
         VStack(alignment: .leading, spacing: 22) {
+            // «DARAUF SKIZZIEREN» ZUOBERST (23.09.2026): Das Bild wird die Unterlage des
+            // Blattes, und die Ansicht schliesst sich zum Blatt hin.
+            Daraufskizzieren(verbindung: verbindung, bild: aktuell, titel: stand.name(aktuell),
+                             schliessen: schliessen)
+
             VStack(alignment: .leading, spacing: 10) {
                 Abschnittstitel(text: "Wie das Bild gelesen wird")
                 HStack(spacing: 8) {

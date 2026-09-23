@@ -7,7 +7,7 @@ Verzeichnis und **wartet**. Sie rendert nichts. Sie erwartet, dass jemand ein
 ``render-result.json`` danebenlegt und den Status hochsetzt::
 
     <store>/vis-<zeitstempel>-<sechs Hexziffern>/
-        model.glb              die Geometrie
+        model.glb              die Geometrie — oder model.ifc, wenn format 'ifc' ist
         render-scene.json      was gerendert werden soll
         job.json               der Laufzettel: job_id, status, scene, approval_token, …
         out/                   wohin die Ausgabe soll
@@ -61,6 +61,24 @@ DATEI_LAUFZETTEL = "job.json"
 DATEI_SZENE = "render-scene.json"
 DATEI_ERGEBNIS = "render-result.json"
 DATEI_MODELL = "model.glb"
+
+#: Die Geometrie einer IFC-Bestellung — **dieselbe Datei unter ihrer eigenen Endung**.
+#:
+#: Befund 22.09.2026 (Antwort auf auf-20260909-91, V3_V4, uebertragen am selben Tag):
+#: Die fremde Bruecke schreibt die hochgeladenen Bytes **unveraendert**; nur die
+#: Dateiendung folgt ``geometry.format``. Eine IFC-Bestellung — und damit jede
+#: Innenraum-Bestellung, denn ``interior`` kommt nur zusammen mit ``format: 'ifc'`` —
+#: liegt also als ``model.ifc`` im Ordner. Bis zu diesem Tag suchte :func:`lies_auftrag`
+#: nur :data:`DATEI_MODELL`, und jede solche Bestellung blieb mit «Die Geometrie fehlt:
+#: model.glb» liegen.
+DATEI_MODELL_IFC = "model.ifc"
+
+#: Das eine Format, fuer das die Geometrie NICHT :data:`DATEI_MODELL` heisst.
+#:
+#: Nur ``ifc`` ist belegt (auf-91 V3_V4). Was drueben aus ``format: 'gltf'`` wird, ist
+#: nicht belegt — dort bleibt es beim bisherigen Namen, und ein ``model.gltf`` faellt als
+#: fehlende Geometrie auf statt still gesucht zu werden.
+FORMAT_IFC = "ifc"
 
 #: Ihre Statuswerte, wörtlich aus ihrem Schema.
 STATUS_AWAITING = "awaiting_approval"
@@ -199,10 +217,8 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
     warnungen.extend(szene["warnungen"])
     maengel.extend(szene["maengel"])
 
-    modell = ordner / DATEI_MODELL
-    if not modell.is_file():
-        maengel.append(f"Die Geometrie fehlt: {DATEI_MODELL} liegt nicht im Verzeichnis.")
-    else:
+    modell = _modell_der_bestellung(ordner, szene.get("format"), maengel)
+    if modell is not None:
         # DER SICHTGANG, VERDRAHTET — und bis zum 19.09.2026 stand hier nur `is_file()`.
         #
         # GEMESSEN an demselben Tag: Ein Brueckenauftrag mit einer umbenannten JPG als
@@ -229,7 +245,7 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
         else:
             if befund["brauchbar"] is False:
                 maengel.append(
-                    f"{DATEI_MODELL}: {befund['grund']} {befund['naechster_schritt']}")
+                    f"{modell.name}: {befund['grund']} {befund['naechster_schritt']}")
             warnungen.extend(befund["hinweise"])
 
     freigegeben, grund = _freigabe(laufzettel, fremde_freigabe_gilt)
@@ -242,7 +258,7 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
         "verzeichnis": ordner,
         "laufzettel": laufzettel,
         "szene": szene,
-        "modell": modell if modell.is_file() else None,
+        "modell": modell,
         "ausgabe": ordner / "out",
         "freigegeben": freigegeben,
         "freigabe_grund": grund,
@@ -250,6 +266,45 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
         "vertragsvorgaben": tuple(szene["vertragsvorgaben"]),
         "maengel": tuple(maengel),
     }
+
+
+def _modell_der_bestellung(ordner: Path, fmt, maengel: list) -> Path | None:
+    """Die Geometriedatei, die DIESE Bestellung meint — oder ``None`` mit Satz in ``maengel``.
+
+    Welcher Name gilt, sagt ``geometry.format`` und sonst nichts: ``'ifc'`` →
+    :data:`DATEI_MODELL_IFC`, jedes andere Format und ein fehlendes →
+    :data:`DATEI_MODELL` wie bisher.
+
+    **Es wird nicht geraten, welche Datei gemeint ist** (22.09.2026). Liegt die andere
+    Datei statt oder neben der bestellten, wird abgewiesen: Drueben gibt ein Widerspruch
+    zwischen Format und Endung ein 400 statt einer stillen Wahl (auf-91 V3_V4) — bei uns
+    ankommen kann er also nur, wenn jemand den Ordner von Hand fuellt, und gerade dann
+    soll er einen Satz hoeren. Eine glb, die fuer eine IFC-Bestellung gerechnet wird,
+    liefert ein Bild ohne Raeume, und das sieht man dem Bild nicht an.
+    """
+    ist_ifc = (fmt or "").lower() == FORMAT_IFC
+    gemeint, andere = ((DATEI_MODELL_IFC, DATEI_MODELL) if ist_ifc
+                       else (DATEI_MODELL, DATEI_MODELL_IFC))
+    format_satz = f"geometry.format {fmt!r}" if fmt else "kein geometry.format"
+    da_gemeint = (ordner / gemeint).is_file()
+    da_andere = (ordner / andere).is_file()
+    if da_gemeint and da_andere:
+        maengel.append(
+            f"Im Verzeichnis liegen {gemeint} UND {andere}; die Bestellung traegt "
+            f"{format_satz} und meint damit {gemeint}. Welche Datei gerechnet werden soll, "
+            f"wird hier nicht geraten — zwei Geometrien sind zwei moegliche Bilder.")
+        return None
+    if da_andere:
+        maengel.append(
+            f"Die Geometrie passt nicht zur Bestellung: Im Verzeichnis liegt {andere}, "
+            f"die Bestellung traegt {format_satz} und verlangt {gemeint}. Es wird nicht "
+            f"ersatzweise die andere Datei gerechnet — sie waere ein anderes Bild als das "
+            f"bestellte.")
+        return None
+    if not da_gemeint:
+        maengel.append(f"Die Geometrie fehlt: {gemeint} liegt nicht im Verzeichnis.")
+        return None
+    return ordner / gemeint
 
 
 def _freigabe(laufzettel: dict, fremde_freigabe_gilt: bool) -> tuple[bool, str]:

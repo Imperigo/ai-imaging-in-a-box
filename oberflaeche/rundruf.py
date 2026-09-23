@@ -15,9 +15,13 @@ Rundruf-Adresse ``224.0.0.251``, Anschluss 5353.
 
 * **Er nimmt einem vorhandenen Dienst den Anschluss nicht weg — beim Binden.**
   Er setzt ``SO_REUSEADDR`` und, wo es ihn gibt, ``SO_REUSEPORT``; geprüft ist
-  (``tests/test_rundruf.py``), dass er sich an 5353 **binden** lässt, wenn dort schon ein
-  anderer Socket mit einer der beiden Optionen hört. Er beantwortet nur Fragen nach
-  seinem eigenen Dienst; alles andere bleibt unbeantwortet — dafür ist der andere da.
+  (``tests/test_rundruf.py``), dass er sich an **denselben Anschluss binden** lässt, an
+  dem schon ein anderer Socket mit einer der beiden Optionen hört — **nachgestellt auf
+  einem freien Anschluss an 127.0.0.1, nicht an 5353** und ohne Rundruf-Gruppe (Durchsicht
+  der Welle 2, 22.09.2026: Hier stand «an 5353», geprüft war das nie). Ob es an 5353
+  neben einem echten avahi genauso geht, ist **am Gerät unbestätigt**. Er beantwortet
+  nur Fragen nach seinem eigenen Dienst; alles andere bleibt unbeantwortet — dafür ist
+  der andere da.
   **Und er nimmt ihm direkte Pakete weg** (Befund der Durchsicht D-SERVER, 22.09.2026,
   nachgefahren und bewacht in ``tests/test_durchsicht_kern_server.py``, Linux, über
   127.0.0.1): Setzt der andere Dienst nur ``SO_REUSEADDR``, landet **jedes** direkt an

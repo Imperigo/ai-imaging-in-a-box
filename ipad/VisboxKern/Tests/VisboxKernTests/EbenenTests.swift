@@ -246,6 +246,91 @@ final class EbenenTests: XCTestCase {
         XCTAssertTrue(s.aktiveEbene.istLeer)
     }
 
+    // ------------------------------------- das Bild, wie es im Speicher liegt
+
+    /// Ein Bild mit vier Bytes je Bildpunkt, Deckung an `alphaStelle`, dazu `fuell`
+    /// Füllbytes am Ende jeder Zeile. Farb- und Füllbytes tragen 255 — sie dürfen nie zählen.
+    private func bild(breite: Int, hoehe: Int, fuell: Int, alphaStelle: Int,
+                      deckt: [(Int, Int)] = []) -> Deckungsbild? {
+        let zeilenlaenge = breite * 4 + fuell
+        var daten = Data(repeating: 255, count: zeilenlaenge * hoehe)
+        for y in 0..<hoehe {
+            for x in 0..<breite { daten[y * zeilenlaenge + x * 4 + alphaStelle] = 0 }
+        }
+        for (x, y) in deckt { daten[y * zeilenlaenge + x * 4 + alphaStelle] = 1 }
+        return Deckungsbild(daten: daten, breite: breite, hoehe: hoehe,
+                            zeilenlaenge: zeilenlaenge, punktlaenge: 4,
+                            alphaStelle: alphaStelle)
+    }
+
+    /// Gelesen wird **nur** die Deckung: Farbbytes und Füllbytes am Zeilenende tragen 255
+    /// und machen ein durchsichtiges Bild nicht zu einem bezeichneten.
+    func testDasBildZeigtNurWasDecktNichtFarbeOderFuellung() throws {
+        for stelle in [0, 3] {
+            let leer = try XCTUnwrap(bild(breite: 5, hoehe: 3, fuell: 8, alphaStelle: stelle))
+            XCTAssertFalse(leer.zeigtEtwas, "Deckung an Stelle \(stelle)")
+            // Der letzte Bildpunkt der letzten Zeile — dort, wo ein Abbruch zu früh ihn verpasste.
+            let ecke = try XCTUnwrap(bild(breite: 5, hoehe: 3, fuell: 8, alphaStelle: stelle,
+                                          deckt: [(4, 2)]))
+            XCTAssertTrue(ecke.zeigtEtwas, "Deckung an Stelle \(stelle)")
+        }
+    }
+
+    /// Ganz weggewischt heisst leer, auch am Bild aus dem Speicher — und ein Bildpunkt reicht.
+    func testDasGeleseneBildEntscheidetUeberLeer() throws {
+        var s = Ebenenstapel()
+        let a = s.aktiv
+        s.setzeStriche(a, 5, deckung: bild(breite: 6, hoehe: 4, fuell: 4, alphaStelle: 3))
+        XCTAssertTrue(s.aktiveEbene.istLeer)
+        XCTAssertFalse(s.aktiveEbene.deckungUngewiss)
+        s.setzeStriche(a, 5, deckung: bild(breite: 6, hoehe: 4, fuell: 4, alphaStelle: 3,
+                                           deckt: [(2, 1)]))
+        XCTAssertEqual(s.aktiveEbene.striche, 5)
+        XCTAssertFalse(s.aktiveEbene.deckungUngewiss)
+    }
+
+    /// **Nicht lesbar heisst nicht geprüft**, nicht still «bezeichnet» (Befund Durchsicht,
+    /// 22.09.2026): Die Strichzahl gilt, und die Ebene trägt den Vorbehalt — bis ein Bild
+    /// gelesen ist oder keine Abdeckung mehr im Spiel ist.
+    func testEinNichtLesbaresBildLaesstDieDeckungUngewiss() throws {
+        var s = Ebenenstapel()
+        let a = s.aktiv
+        s.setzeStriche(a, 5, deckung: nil)
+        XCTAssertEqual(s.aktiveEbene.striche, 5, "die Zahl gilt, nichts wird verschwiegen")
+        XCTAssertTrue(s.aktiveEbene.deckungUngewiss)
+        XCTAssertEqual(teile(s.plan(.eineSkizze)).first?.ebenen.map { $0.id }, [a])
+        s.setzeStriche(a, 5, deckung: bild(breite: 2, hoehe: 2, fuell: 0, alphaStelle: 0,
+                                           deckt: [(0, 0)]))
+        XCTAssertFalse(s.aktiveEbene.deckungUngewiss, "gelesen: nicht mehr ungewiss")
+        s.setzeStriche(a, 5, deckung: nil)
+        XCTAssertTrue(s.aktiveEbene.deckungUngewiss)
+        s.setzeStriche(a, 3)
+        XCTAssertFalse(s.aktiveEbene.deckungUngewiss, "ohne Abdeckung zählt die Zahl")
+        s.setzeStriche(a, 0, deckung: nil)
+        XCTAssertFalse(s.aktiveEbene.deckungUngewiss, "ohne Striche ist nichts ungewiss")
+        XCTAssertTrue(s.aktiveEbene.istLeer)
+    }
+
+    /// Masse, die nicht zum Puffer passen, ergeben kein Bild — geraten wird nicht.
+    func testWidersinnigeMasseErgebenKeinBild() {
+        let d = Data(repeating: 0, count: 64)
+        XCTAssertNotNil(Deckungsbild(daten: d, breite: 4, hoehe: 4, zeilenlaenge: 16,
+                                     punktlaenge: 4, alphaStelle: 3))
+        XCTAssertNil(Deckungsbild(daten: d, breite: 4, hoehe: 4, zeilenlaenge: 12,
+                                  punktlaenge: 4, alphaStelle: 3), "Zeile kürzer als ihre Punkte")
+        XCTAssertNil(Deckungsbild(daten: d, breite: 4, hoehe: 5, zeilenlaenge: 16,
+                                  punktlaenge: 4, alphaStelle: 3), "Puffer zu kurz")
+        XCTAssertNil(Deckungsbild(daten: d, breite: 4, hoehe: 4, zeilenlaenge: 16,
+                                  punktlaenge: 4, alphaStelle: 4), "Deckung ausserhalb")
+        XCTAssertNil(Deckungsbild(daten: d, breite: 0, hoehe: 4, zeilenlaenge: 16,
+                                  punktlaenge: 4, alphaStelle: 3), "kein Bildpunkt")
+        XCTAssertNil(Deckungsbild(daten: d, breite: Int.max, hoehe: 1, zeilenlaenge: 16,
+                                  punktlaenge: 4, alphaStelle: 3), "Überlauf")
+        // Die letzte Zeile braucht keine Füllbytes: genau so lang wie nötig reicht.
+        XCTAssertNotNil(Deckungsbild(daten: Data(count: 16 + 12), breite: 3, hoehe: 2,
+                                     zeilenlaenge: 16, punktlaenge: 4, alphaStelle: 0))
+    }
+
     // ------------------------------------------------------------------ Zurück und Vor
 
     func testDerZaehlerHoertBeiZwanzigAuf() {
@@ -324,6 +409,11 @@ final class EbenenTests: XCTestCase {
         z.flaechenNeu(kannZurueck: true, kannVor: true)
         XCTAssertNil(z.zurueck, "die 6 zählte Schritte der abgebauten Flächen")
         XCTAssertNil(z.vor)
+        XCTAssertEqual(z.anzeige, "?/20")
+        // Die offene Lücke (`Zeichenstand.stapelAbgebaut`): Bleiben Schritte der abgebauten
+        // Flächen stehen, macht weder ein neuer Strich noch der Abgleich daraus eine Zahl.
+        z.neuerSchritt()
+        z.abgleichen(kannZurueck: true, kannVor: false)
         XCTAssertEqual(z.anzeige, "?/20")
 
         var y = Schrittzaehler()

@@ -198,7 +198,6 @@ struct Skizzenliste: View {
         VStack(alignment: .leading, spacing: 6) {
             Button("Als Ebenen-Reihe rechnen (\(mappe.reihe.count) von \(Rechenbestellung.reihenlaenge))") {
                 bestelle(.ebenenreihe(mappe.reihe, anweisung: nil))
-                mappe.reihe = []
             }
             .buttonStyle(Wahlknopfstil(gewaehlt: true, breite: nil))
             // ZWEI BIS DREI: Eine «Reihe» aus einer Skizze wäre eine gewöhnliche Rechnung,
@@ -216,11 +215,21 @@ struct Skizzenliste: View {
         verbindung.gekoppelt && !laeuft && !mappe.sendet
     }
 
+    /// Bestellt und legt die Quittung ab. **Die Auswahl der Ebenen-Reihe wird erst nach der
+    /// Quittung geleert, und nur, wenn die HomeStation angenommen hat** — bei «abgelehnt»,
+    /// «ungewiss» und «nicht gesendet» bleibt sie stehen (Durchsicht der Verdrahtung,
+    /// 22.09.2026: bis dahin wurde sie gleich nach dem Tippen geleert). Die Regel steht im
+    /// Kern (`Rechenbestellung.reihe(_:nach:)`) und ist dort geprüft; dass diese Ansicht sie
+    /// ruft, ist am Gerät unbestätigt.
     private func bestelle(_ b: Rechenbestellung) {
         let lesart = mappe.bestellart
         Task { @MainActor in
             mappe.sendet = true
-            mappe.quittung = await verbindung.bestelle(b, lesart: lesart)
+            let q = await verbindung.bestelle(b, lesart: lesart)
+            mappe.quittung = q
+            if case .ebenenreihe = b {
+                mappe.reihe = Rechenbestellung.reihe(mappe.reihe, nach: q)
+            }
             mappe.sendet = false
         }
     }
