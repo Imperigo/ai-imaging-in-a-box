@@ -1,0 +1,35 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260923-154",
+  "art": "frage",
+  "beschreibung": "Ansage Runden 8/9 (Mappenpfad heimrelativ, Lieferstatus je Kamera, faithful wirkt, Kamerapunkte nur als Zahlen) — und zwei Messungen: steuert die Tiefe das Bild (ControlNet-Staerke x Schritte), und laedt ZImageControlNetInpaintPipeline als Weg zum Hineinskizzieren?",
+  "anweisung": "=== ANSAGE (RUNDEN 8 UND 9) UND ZWEI MESSUNGEN, DIE DAS BILD BETREFFEN ===\n\nDanke fuer 139/141/144/151 — der Mappenpfad-Fehler ist behoben (Teil A), und eure\nBerichtigung zu auf-137 steht im Protokoll. Dieser Auftrag hat zwei Teile: eine Ansage\n(lesen, vor dem Ziehen) und zwei Messungen, die ihr EIGENS faehrt.\n\n\nTEIL A — WAS MIT DEM NAECHSTEN PULL ANKOMMT\n\n  A1 MAPPENPFAD (euer Befund aus auf-139). Liegt eine Mappe AUSSERHALB des Heimatordners\n     und das Modell darin, steht der Modellpfad jetzt heimrelativ in projekt.json\n     («~/…», ohne Namen) und wird beim Lesen am Heimatverzeichnis dieses Rechners\n     aufgeloest. Mappe und Modell im selben Baum bleiben relativ wie bisher. Alte Mappen\n     mit «<nutzer>» im Pfad heilt das NICHT — die muessen neu angelegt werden.\n  A2 LIEFERSTATUS. Jede Ergebnisdatei (result.json der Bruecke UND die der eigenen Ablage)\n     traegt am Auftrag IMMER lieferstatus und lieferstatus_grund, und jeder Eintrag in\n     qa_je_kamera vier neue Felder: lieferstatus, lieferstatus_grund, bilder_soll,\n     bilder_ist. Bisher fehlte das Feld, und drueben galt still 'geliefert'. AB JETZT sieht\n     KosmoOrbit bei einem Auftrag mit einer nicht gerenderten Kamera 'fehlgeschlagen' —\n     an Bildern und QA aendert sich nichts. Zwillinge (gleiche Ansicht) sind je Kamera\n     'uebersprungen', der Auftrag bleibt 'geliefert' mit Grund.\n  A3 faithful WIRKT. Eine Bestellung mit render.faithful ausserhalb 0..1 bleibt mit Satz\n     am Laufzettel liegen (bisher lief sie). Ueber den MCP-Einlass kommt faithful jetzt bis\n     zur ControlNet-Staerke an (bisher still 0.8); faithful_slider wird dort abgewiesen.\n  A4 KAMERAPUNKTE nur noch als echte Zahlen: true, \"5\", null in position/target einer\n     render-scene → Auftrag liegt mit Satz (bisher still true→1.0, \"5\"→5.0).\n  A5 Blender-Bericht unveraendert; tools/homeworker.py unveraendert.\n\n\nTEIL B — MESSUNG «STEUERT DIE TIEFE DAS BILD?» (euer Befund aus auf-141 V4)\n\n  Ihr habt gesehen: Tiefenkarte klar (Kiste in der Mitte), Endbild zeigt dort KEIN\n  Bauwerk (spearman -0.918, geom_iou 0.063, score 0.240). Wir wollen wissen, ob das an\n  der ControlNet-Staerke oder an den Schritten liegt, oder am Modell.\n\n  Fahrt ueber den Produktweg, je Lauf eine frische Mappe (IM Heimatordner oder nach dem\n  Pull auch ausserhalb), synthetischer Testbau (tools/make_test_ifc.py), Kamera 's':\n\n      arbeitsgang.lege_an(<mappe>, <ifc>, name='Steuerung',\n          einstellungen={'prompt': 'a residential building, architectural photograph',\n                         'seed': 0, 'kamera': 's', 'aufloesung': 768,\n                         'controlnet_staerke': S, 'schritte': N})\n      arbeitsgang.rechne(<mappe>)\n\n  sechs Laeufe: S in {0.8, 1.0, 1.5} × N in {8, 28}.\n\n  Je Lauf zurueck: S, N, score, spearman, geom_iou, bestanden, Dauer — und EIN Satz, was\n  im Endbild an der Stelle der Kiste steht (Bauwerk erkennbar / Andeutung / nichts).\n  Keine Bilder zurueck.\n\n  Nimmt die Kette controlnet_staerke oder schritte nicht an (Fehlersatz), den Satz\n  woertlich zurueck und abbrechen — nicht umgehen.\n\n\nTEIL C — MESSUNG «EIN WEG ZUM HINEINSKIZZIEREN» (euer Befund aus auf-141 V5)\n\n  Ihr habt gefunden: keine Z-Image-Klasse nimmt control_image UND image UND strength; am\n  naechsten ZImageControlNetInpaintPipeline (control_image + image + mask_image). Das\n  koennte der Weg sein: Die Skizze wird zur Maske, das Unterlagenbild zu image, die\n  Tiefe zu control_image — gezeichnet wird nur, wo die Maske offen ist.\n\n  C1 Laedt ZImageControlNetInpaintPipeline mit UNSEREN Gewichten (z-image-turbo und dem\n     ControlNet aus dem Register, wie render._lade_mit_controlnet sie findet)? Befehl und\n     Fehlersatz woertlich. Nur Laden, kein Rechnen, wenn es nicht laedt.\n  C2 Wenn es laedt: EIN Lauf mit einem eigenen kleinen Skript (nicht in unserem Code):\n     image = ein Endbild aus Teil B, control_image = dessen Tiefenkarte, mask_image = ein\n     weisses Rechteck ueber dem oberen Drittel der Kiste (sonst schwarz), prompt = «+ 1\n     Geschoss, same building», schritte 8. Zurueck: Aendert sich das Bild NUR im\n     Rechteck? (ja / nein / teilweise, ein Satz), und ob ausserhalb der Maske\n     bildpunktgleich (Pruefsumme der Bildpunkte ausserhalb der Maske, vorher/nachher).\n  C3 Die Signatur von __call__ woertlich (Parameternamen), damit wir den Weg bauen koennen.\n\n\nWAS AUSDRUECKLICH NICHT ZU TUN IST\n  - Nichts an unserem Code aendern (das Skript fuer C2 liegt bei euch, nicht im Repo).\n  - Nichts herunterladen (kein qwen-image-2512, keine neuen Gewichte).\n  - Keine Bilder, Pfade mit Namen oder Projektnamen zurueck — Zahlen und Saetze.",
+  "erstellt": "2026-09-23T14:11:45Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Nichts an unserem Code aendern.",
+      "Nichts herunterladen.",
+      "Keine Bilder, Pfade mit Namen oder Projektnamen zurueck."
+    ]
+  },
+  "rueckgabe": [
+    "A Ansage A1–A5 gelesen, vor dem Ziehen.",
+    "B sechs Laeufe S x N: score, spearman, geom_iou, bestanden, Dauer, ein Satz zum Bild.",
+    "C1 Laedt die Inpaint-Pipeline mit unseren Gewichten? Befehl + Satz.",
+    "C2 Aendert sich das Bild nur in der Maske? Pruefsumme ausserhalb.",
+    "C3 Signatur von __call__ woertlich."
+  ],
+  "rang": 1
+}

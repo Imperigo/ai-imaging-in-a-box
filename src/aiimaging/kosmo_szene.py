@@ -190,11 +190,51 @@ LESEFEHLER = (SzenenError, ValueError, TypeError, AttributeError, ArithmeticErro
 # Brennweite ↔ Bildwinkel
 # --------------------------------------------------------------------------------------
 
-#: Was ``float(...)`` einer Angabe aus der Bestellung werfen kann: ein Text
-#: (``ValueError``), ein Block (``TypeError``) — und eine ganze Zahl jenseits des
-#: Gleitkommabereichs (``OverflowError``, Runde 7c, 23.09.2026: Sie fehlte in allen drei
-#: Kamerafunktionen, die ``SzenenError`` zusagen).
-_UMWANDLUNGSFEHLER = (TypeError, ValueError, OverflowError)
+def _lies_kamerapunkt(punkt, wer: str, feld: str) -> tuple[float, float, float]:
+    """Ein Kamerapunkt der Bestellung — drei echte, endliche Zahlen, sonst ``SzenenError``.
+
+    **Die eine Pruefung fuer alle drei Kamerafunktionen** (Runde 9, 23.09.2026). Bis
+    dahin stand sie dreimal, jede Fassung mit ``float(...)`` — und damit zwei Befunde:
+
+    * ``float`` nimmt ``True`` und ``'5'`` an. ``kamera_zu_spec(auge=[True, '5', 0])``
+      ergab ``position [1.0, 5.0, 0.0]``; ``spec_zu_kamera`` und ``kamera_nach_blender``
+      ebenso. Dieselbe Fehlerart, die :func:`lies_zahl` fuer ``render.*`` seit der Runde
+      7 abweist. Jede Koordinate geht darum durch :func:`lies_zahl` (``ganzzahlig=False``,
+      ohne Bereich) — eine Regel, nicht vier.
+
+      *Ob KosmoOrbit Koordinaten je als Text schickt, wurde vorher nachgelesen*
+      (23.09.2026): In keiner der uebertragenen Antworten
+      (``auftraege/ergebnisse/ANTWORT-*``), keinem abgelegten Auftrag und keinem Dokument
+      steht eine ``position`` oder ein ``target`` mit Text; der einzige Treffer ist unser
+      eigener Gegentest ``[0, 0, "x"]``. Die Kameras des Demolaufs 12 kamen als Zahlen.
+      Ein Text wuerde also nichts brechen, was heute ankommt — und angenommen hiesse er,
+      eine Zahl zu raten.
+    * Die Form wurde mit ``repr`` der ganzen Liste gemeldet: ``auge`` mit VIER Eintraegen,
+      einer davon eine ganze Zahl mit ueber 4300 Stellen, warf aus dem Satz selbst einen
+      nackten ``ValueError`` statt ``SzenenError``. Seither :func:`_zeige_punkt`.
+
+    Args:
+        punkt: der Punkt, wie er ankam.
+        wer: Satzanfang, z. B. ``"Kamera 'auge'"``.
+        feld: Name fuer den Satz aus :func:`lies_zahl` (``auge[0]`` …).
+
+    Raises:
+        SzenenError: keine Liste aus drei Eintraegen, ein Eintrag keine Zahl (Text,
+            Wahrheitswert, Block, eine ganze Zahl jenseits des Gleitkommabereichs), oder
+            nicht endlich.
+    """
+    if not isinstance(punkt, (list, tuple)) or len(punkt) != 3:
+        raise SzenenError(f"{wer} ist kein Punkt aus drei Zahlen: {_zeige_punkt(punkt)}")
+    zahlen = []
+    for k, wert in enumerate(punkt):
+        zahl, satz = lies_zahl(wert, f"{feld}[{k}]", ganzzahlig=False)
+        if satz:
+            # Ein `float` ist eine Zahl, nur keine endliche; alles andere (auch eine
+            # ganze Zahl jenseits des Gleitkommabereichs) laesst sich nicht rechnen.
+            art = "keine endlichen Zahlen" if isinstance(wert, float) else "keine Zahlen"
+            raise SzenenError(f"{wer} enthält {art}: {_zeige_punkt(punkt)}. {satz}")
+        zahlen.append(zahl)
+    return tuple(zahlen)
 
 
 def _als_float(wert) -> float:
@@ -266,12 +306,18 @@ def kamera_zu_spec(kamera: dict) -> dict:
         SzenenError: Der Bildwinkel fällt aus ihrer Spanne (10–120°). Das ist kein
             Rundungsfall: Ihr Schema **weist ihn ab**, und ein abgewiesener Auftrag zwei
             Stufen später ist teurer als ein Fehler hier. Ebenso, wenn ``auge`` oder
-            ``blick_auf`` keine drei endlichen Zahlen sind (seit der Runde 8).
+            ``blick_auf`` keine drei endlichen Zahlen sind (seit der Runde 8) — und
+            seit der Runde 9 auch bei ``True`` oder ``'5'`` als Koordinate und bei einer
+            Kamera, die kein Woerterbuch ist.
     """
-    for feld in ("auge", "blick_auf"):
-        wert = kamera.get(feld)
-        if not isinstance(wert, (list, tuple)) or len(wert) != 3:
-            raise SzenenError(f"Kamera ohne brauchbares '{feld}': {kamera.get(feld)!r}")
+    if not isinstance(kamera, dict):
+        raise SzenenError(f"Kamera ist kein Wörterbuch: {type(kamera).__name__}")
+    # Die Punkte ZUERST und ueber die eine Pruefung (Runde 9, 23.09.2026, siehe
+    # `_lies_kamerapunkt`): nur echte, endliche Zahlen, und ein Satz, der selbst nicht
+    # wirft. Vorher stand hier eine eigene Fassung mit `float(...)`.
+    position = list(_lies_kamerapunkt(kamera.get("auge"), "Kamera 'auge'", "auge"))
+    ziel = list(_lies_kamerapunkt(kamera.get("blick_auf"), "Kamera 'blick_auf'",
+                                  "blick_auf"))
 
     # Der Rückfall ist die VORGABE aus `kameras`, keine abgeschriebene Zahl. Hier stand
     # bis zum 23.08.2026 fest `28.0` — als der Owner die Vorgabe auf 35 mm setzte, wäre
@@ -285,25 +331,9 @@ def kamera_zu_spec(kamera: dict) -> dict:
             f"Vertrag lässt nur {FOV_MIN_GRAD:.0f}–{FOV_MAX_GRAD:.0f}° zu und würde den "
             f"Auftrag abweisen. Entweder die Brennweite ändern oder die Naht nicht nehmen."
         )
-    # Die Punkte werden VOR dem Woerterbuch umgewandelt, damit ein Text darin als
-    # `SzenenError` ankommt und nicht als nackter ValueError (Durchsicht 23.09.2026).
-    try:
-        position = [float(v) for v in kamera["auge"]]
-        ziel = [float(v) for v in kamera["blick_auf"]]
-    except _UMWANDLUNGSFEHLER as e:
-        raise SzenenError(
-            f"Kamera mit Punkten, die keine Zahlen sind: auge "
-            f"{_zeige_punkt(kamera['auge'])}, blick_auf "
-            f"{_zeige_punkt(kamera['blick_auf'])}") from e
-    # NICHT ENDLICH IST KEIN STANDPUNKT — auch in dieser Richtung (Runde 8, 23.09.2026).
-    # Befund: `auge [inf, 0, 0]` und `blick_auf [nan, 0, 0]` gingen hier still durch und
-    # kamen als `position [inf, …]` in eine CameraSpec; nur die Gegenrichtung
-    # (`spec_zu_kamera`) pruefte. Dieselbe Pruefung, derselbe Satzbau.
-    for feld, zahlen in (("auge", position), ("blick_auf", ziel)):
-        if not all(math.isfinite(v) for v in zahlen):
-            raise SzenenError(
-                f"Kamera '{feld}' enthaelt keine endlichen Zahlen: "
-                f"{_zeige_punkt(kamera[feld])}")
+    # NICHT ENDLICH IST KEIN STANDPUNKT — auch in dieser Richtung (Runde 8, 23.09.2026):
+    # `auge [inf, 0, 0]` ging hier still als `position [inf, …]` in eine CameraSpec. Das
+    # prueft seit der Runde 9 `_lies_kamerapunkt` oben, fuer alle drei Funktionen gleich.
     return {
         "name": kamera.get("kuerzel"),
         "position": position,
@@ -368,23 +398,17 @@ def kamera_nach_blender(punkt, up_axis):
         SzenenError: ``up_axis`` fehlt oder ist weder ``y`` noch ``z``. **Es wird nicht
             geraten** — genau dafür steht das Pflichtfeld im fremden Vertrag, und ein
             Vorgabewert hier wäre die stille Verdrehung, gegen die er gebaut wurde.
-            Ebenso, wenn ``punkt`` keine endlichen Zahlen trägt (seit der Runde 8).
+            Ebenso, wenn ``punkt`` keine drei endlichen Zahlen trägt (seit der Runde 8)
+            — ``True`` und ``'5'`` zählen seit der Runde 9 nicht als Zahlen.
     """
     achse = _hochachse(up_axis)
-    try:
-        zahlen = [float(v) for v in punkt]
-    except _UMWANDLUNGSFEHLER as e:
-        # Auch diese Umwandlung warf nackt (Durchsicht 23.09.2026); die Funktion ist
-        # oeffentlich und sagt `SzenenError` zu. OverflowError seit der Runde 7c: `float`
-        # einer ganzen Zahl mit 400 Stellen.
-        raise SzenenError(
-            f"Kamerapunkt enthaelt keine Zahlen: {_zeige_punkt(punkt)}") from e
-    # Ein Punkt im Unendlichen ist kein Standpunkt, auch gedreht nicht (Runde 8,
-    # 23.09.2026: `[inf, 0, 0]` kam hier als `(inf, 0.0, 0.0)` zurueck). Die Funktion ist
-    # oeffentlich; `spec_zu_kamera` prueft vorher selbst, andere Aufrufer nicht.
-    if not all(math.isfinite(z) for z in zahlen):
-        raise SzenenError(
-            f"Kamerapunkt enthaelt keine endlichen Zahlen: {_zeige_punkt(punkt)}")
+    # Die Funktion ist oeffentlich und sagt `SzenenError` zu; `spec_zu_kamera` prueft
+    # vorher selbst, andere Aufrufer nicht. Befunde, die hier einzeln geflickt wurden:
+    # ein Text warf nackt (Durchsicht 23.09.2026), eine ganze Zahl mit 400 Stellen
+    # OverflowError (Runde 7c), `[inf, 0, 0]` kam als `(inf, 0.0, 0.0)` zurueck (Runde 8),
+    # `[True, '5', 0]` als `(1.0, 5.0, 0.0)` und `[1, 2]` ohne Einwand als Paar (Runde 9).
+    # Seither die eine Pruefung `_lies_kamerapunkt`.
+    zahlen = _lies_kamerapunkt(punkt, "Kamerapunkt", "punkt")
     if achse == HOCHACHSE_BLENDER:
         return tuple(zahlen)
     return tuple(_contracts.blender_gltf_import_dreht(zahlen))
@@ -426,29 +450,22 @@ def spec_zu_kamera(spec: dict) -> dict:
         Tage gekostet.
 
     Raises:
-        SzenenError: ``position`` oder ``target`` fehlen oder sind keine drei Zahlen —
-            oder ``up_axis`` fehlt (Pflichtfeld ohne Vorgabewert).
+        SzenenError: ``position`` oder ``target`` fehlen oder sind keine drei endlichen
+            Zahlen (``true`` und ``"5"`` zählen seit der Runde 9 nicht) — oder
+            ``up_axis`` fehlt (Pflichtfeld ohne Vorgabewert).
     """
     if not isinstance(spec, dict):
         raise SzenenError(f"CameraSpec ist kein Wörterbuch: {spec!r}")
     achse = _hochachse(spec.get("up_axis"))
     werte = {}
     for fremd, unser in (("position", "auge"), ("target", "blick_auf")):
-        w = spec.get(fremd)
-        if not isinstance(w, (list, tuple)) or len(w) != 3:
-            raise SzenenError(f"CameraSpec ohne brauchbares '{fremd}': {w!r}")
-        try:
-            bestellt = tuple(float(v) for v in w)
-        except _UMWANDLUNGSFEHLER as e:
-            # OverflowError seit der Runde 7c (23.09.2026): `float` einer ganzen Zahl mit
-            # 400 Stellen warf nackt, der Docstring sagt `SzenenError` zu.
-            raise SzenenError(
-                f"CameraSpec '{fremd}' enthält keine Zahlen: {_zeige_punkt(w)}") from e
-        # NICHT ENDLICH IST KEIN STANDPUNKT (23.09.2026): `Infinity` liest das
-        # Python-JSON, und `float` nimmt es an — die Kamera ging so an den Runner.
-        if not all(math.isfinite(v) for v in bestellt):
-            raise SzenenError(
-                f"CameraSpec '{fremd}' enthält keine endlichen Zahlen: {_zeige_punkt(w)}")
+        # Die eine Pruefung `_lies_kamerapunkt` (Runde 9, 23.09.2026). Sie haelt, was
+        # hier einzeln geflickt war — `Infinity` aus dem Python-JSON (23.09.2026), eine
+        # ganze Zahl mit 400 Stellen (Runde 7c) — und weist seither auch `true` und
+        # `"5"` ab, die `float` still zu 1.0 und 5.0 machte. Die Form (drei Eintraege)
+        # wurde mit `repr` der ganzen Liste gemeldet, und das warf bei einer riesigen
+        # Zahl selbst.
+        bestellt = _lies_kamerapunkt(spec.get(fremd), f"CameraSpec '{fremd}'", fremd)
         werte[unser] = kamera_nach_blender(bestellt, achse)
         werte[f"{unser}_bestellt"] = bestellt
     werte["kuerzel"] = spec.get("name")
@@ -749,13 +766,15 @@ def wert_oder(quelle: dict, schluessel: str, ersatz):
 #: (``runners/blender_depth_stage.py``, ``szene.cycles.samples = a.samples``), und dort
 #: ist sie begrenzt.
 #:
-#: **Woher die Zahl stammt — GESETZT, NICHT GEMESSEN.** Im Bestand dieses Repos nimmt
+#: **Woher die Zahl stammt — gesetzt aus dem Quelltext, SEIT DEM 23.09.2026 AUCH GEMESSEN**
+#: an Blender 5.2.2 LTS auf der HomeStation (``auf-20260923-151`` V7: ``hard_max`` von
+#: ``samples`` 16777216, von ``resolution_x`` 65536 — dieselben). Im Bestand dieses Repos nimmt
 #: keine Stelle eine Obergrenze an: weder Runner (``--samples``, ``type=int``) noch Kette
 #: (``int(samples)``) noch der fremde Vertrag, soweit er hier abgebildet ist. Die Zahl
 #: ist die harte Grenze, die die Cycles-Erweiterung von Blender ihrer Eigenschaft
 #: ``samples`` gibt (``max=(1 << 24)``) — nachgelesen am 23.09.2026 im Quelltext von
-#: Blender 4.2.0 (``intern/cycles/blender/addon/properties.py``), an keinem Blender
-#: dieses Projekts nachgeprueft. Ob Blender darueber klemmt oder abweist, ist
+#: Blender 4.2.0 (``intern/cycles/blender/addon/properties.py``). Ob Blender darueber
+#: klemmt oder abweist, ist
 #: ebenfalls nicht gemessen; wie bestellt waere es in keinem der beiden Faelle. Die
 #: groesste Zahl, die hier je bestellt wurde, sind 220'000 Samples (HomeStation,
 #: ``auftraege/ergebnisse/auf-20260820-18.json``) — weit darunter.
@@ -794,9 +813,13 @@ REGEL_SAMPLES = {"ganzzahlig": True, "mindestens": 1, "hoechstens": SAMPLES_HOEC
 #: Quelltext NACH der Blender-Stufe, beim Rendern; nachgefahren ist dieser spaete Weg
 #: nicht. Seither ein Mangel beim Lesen, bevor etwas gerechnet wird.
 #:
-#: Nur hier und nicht am MCP-Einlass: :func:`aiimaging.werkzeuge.enqueue_render` nimmt
-#: kein ``faithful`` an (nachgelesen am 23.09.2026), und die MCP-Naht
-#: :func:`aiimaging.kosmo_naht.als_render_scene` schreibt keines in die Szene.
+#: **Seit der Runde 9 auch am MCP-Einlass** (23.09.2026). Bis dahin stand hier «nur hier
+#: und nicht am MCP-Einlass», und das stimmte in der schlechten Richtung:
+#: :func:`aiimaging.werkzeuge.enqueue_render` UEBERGING ein ``faithful`` im Aufruf still —
+#: der Auftrag wurde mit der Vorgabe 0.8 gerechnet. Seither liest der Einlass es mit
+#: dieser Regel, legt die gelesene Zahl ab, :func:`aiimaging.kosmo_naht.als_render_scene`
+#: schreibt sie als ``render.faithful`` in die Szene, und :func:`lies_szene` liest sie
+#: wieder mit dieser Regel — bis zur ``controlnet_staerke`` des Abholers.
 REGEL_TREUE = {"ganzzahlig": False, "mindestens": 0, "hoechstens": 1}
 
 
@@ -827,10 +850,21 @@ def lies_zahl(wert, feld: str, *, ganzzahlig: bool, mindestens=None, hoechstens=
     nie in ``float`` umgewandelt, bevor sie verglichen sind, und im Satz erscheint eine
     riesige Zahl als Stellenzahl statt als 400 Ziffern.
 
-    Dieselbe Funktion prueft den MCP-Einlass (:func:`aiimaging.werkzeuge.enqueue_render`)
-    und :func:`aiimaging.kosmo_naht.aufloesung_zu_resolution`, jeweils mit derselben
-    Regel aus :data:`REGEL_KANTE` bzw. :data:`REGEL_SAMPLES`: Was dort angenommen wird,
-    liest :func:`lies_szene` auch — eine Regel, nicht zwei.
+    **Wer sie ruft** (vollstaendig nachgezaehlt am 23.09.2026, Runde 9 — die Liste hier
+    war zuvor unvollstaendig):
+
+    * :func:`lies_szene` — ``render.resolution`` (:data:`REGEL_KANTE`),
+      ``render.samples`` (:data:`REGEL_SAMPLES`), ``render.faithful``
+      (:data:`REGEL_TREUE`);
+    * der MCP-Einlass :func:`aiimaging.werkzeuge.enqueue_render` — ``aufloesung``,
+      ``samples`` und seit der Runde 9 ``faithful``, mit denselben drei Regeln;
+    * beide Richtungen der Auftragsnaht, :func:`aiimaging.kosmo_naht.aufloesung_zu_resolution`
+      und :func:`aiimaging.kosmo_naht.resolution_zu_aufloesung`, mit :data:`REGEL_KANTE`;
+    * :func:`_lies_kamerapunkt` (seit der Runde 9) fuer jede Koordinate der drei
+      Kamerafunktionen, ``ganzzahlig=False`` ohne Bereich.
+
+    Was an einer dieser Stellen angenommen wird, liest :func:`lies_szene` auch — eine
+    Regel, nicht zwei.
 
     Args:
         wert: der Wert, wie er ankam (``null`` hat der Aufrufer schon ersetzt).
@@ -893,7 +927,14 @@ def _zeige(wert) -> str:
         # widerspruechlich, solange nicht dastand, dass die Zahl negativ ist.
         art = "negative ganze Zahl" if wert < 0 else "ganze Zahl"
         return f"eine {art} mit rund {stellen} Stellen"
-    return repr(wert)
+    try:
+        return repr(wert)
+    except ValueError:
+        # EINE RIESIGE ZAHL IN EINEM BLOCK (Runde 9, 23.09.2026): `[10**5000]` als
+        # Koordinate oder als `render.samples` — `repr` der Liste ruft `repr` der Zahl
+        # und wirft dieselbe Grenze. Der Satz nennt dann die Art, nicht den Inhalt.
+        return (f"ein {type(wert).__name__} mit einer ganzen Zahl von über 4300 "
+                f"Stellen darin")
 
 
 def _zeige_punkt(punkt) -> str:
@@ -1473,6 +1514,166 @@ def stehengebliebene_felder(szene: dict) -> tuple[dict, ...]:
 # Unser Ergebnis in ihren Vertrag
 # --------------------------------------------------------------------------------------
 
+# ── Der Lieferstatus — am Auftrag und je Kamera (23.09.2026) ─────────────────────────
+#
+# **Der Befund** (Teilantwort von KosmoOrbit auf `auf-20260919-119`, V3/V4, uebertragen
+# am 23.09.2026): Ihr Ergebnisvertrag traegt seit dem 01.09.2026 ein Feld `lieferstatus`
+# mit `lieferstatus_grund` — am AUFTRAG, mit der Vorgabe `'geliefert'`. Niemand setzte
+# es, auch wir nicht. Jedes Ergebnis, das wir schrieben, behauptete damit drueben eine
+# vollstaendige Lieferung, auch eines mit null Bildern.
+#
+# **Was sie brauchen:** dieselbe Auskunft JE KAMERA in `qa_je_kamera[]`, mit
+# `bilder_soll` und `bilder_ist` als zwei Zahlen nebeneinander. Die Namen durften wir
+# vorschlagen, die Ebene nicht. Wir uebernehmen ihre Namen woertlich — ein zweiter
+# Name fuer dieselbe Sache waere eine Uebersetzung, die jemand pflegen muss.
+#
+# **Solange sie die Felder je Kamera nicht gebaut haben**, streift ihr Einlesen sie ab
+# (`qa_je_kamera` ist dort `z.object({kamera, geometry, style})`, nicht strikt —
+# erg-20260917-49, render-result.ts 366-393). Darum steht die Auskunft auch im
+# `lieferstatus_grund` des Auftrags, der heute schon ankommt.
+
+#: Die drei Werte von `lieferstatus` in ihrem Vertrag (`Lieferstatus = z.enum([...])`,
+#: erg-20260917-37 F3). Woertlich — ein anderer Wert wird drueben abgewiesen.
+LIEFERSTATUS_GELIEFERT = "geliefert"
+LIEFERSTATUS_UEBERSPRUNGEN = "uebersprungen"
+LIEFERSTATUS_FEHLGESCHLAGEN = "fehlgeschlagen"
+LIEFERSTATUS = (LIEFERSTATUS_GELIEFERT, LIEFERSTATUS_UEBERSPRUNGEN,
+                LIEFERSTATUS_FEHLGESCHLAGEN)
+
+#: Die vier Felder, die ein Eintrag in `qa_je_kamera` seit dem 23.09.2026 traegt, wenn
+#: der Aufrufer die Lieferung kennt (auf dem Produktweg: `abholer._lieferung_der_kamera`).
+#: Die Namen sind ihre (V4); die Ebene je Kamera ist ihre Vorgabe.
+FELDER_LIEFERUNG = ("lieferstatus", "lieferstatus_grund", "bilder_soll", "bilder_ist")
+
+
+def _bilderzahl(wert, feld: str, name) -> int | None:
+    """Eine Bilderzahl — eine ganze Zahl ab null oder ``None`` (NICHT GEZAEHLT).
+
+    ``bool`` zaehlt nicht (``True`` waere sonst ein Bild), und eine Kommazahl auch nicht:
+    Ein halbes Bild gibt es nicht, und ``1.0`` statt ``1`` verriete einen Rechenweg, der
+    hier nichts zu suchen hat.
+    """
+    if wert is None:
+        return None
+    if isinstance(wert, bool) or not isinstance(wert, int) or wert < 0:
+        raise SzenenError(
+            f"Kamera {name!r}: {feld} ist {wert!r} — erwartet ist eine ganze Zahl ab 0 "
+            f"oder null (nicht gezaehlt), nie eine erfundene Null.")
+    return wert
+
+
+def _lieferung_je_kamera(eintrag: dict) -> dict | None:
+    """Die vier Lieferfelder eines Eintrags — geprueft, oder ``None``, wenn keines da ist.
+
+    ``None`` heisst: Der Aufrufer hat ueber die Lieferung nichts gesagt. Dann fehlen die
+    Felder im Eintrag ganz, statt mit erfundenen Werten dazustehen — und der Auftrag
+    meldet ``lieferstatus: null`` mit Grund (siehe :func:`_lieferstatus_des_auftrags`).
+
+    **Was angenommen wird, muss stimmen** — sonst laut, nicht still:
+
+    * ``lieferstatus`` ist einer der drei Werte oder ``None`` (nicht festgestellt).
+    * ``geliefert`` genau dann, wenn ``bilder_ist == bilder_soll > 0``. Ein
+      «geliefert» mit null Bildern war die Luege der fremden Vorgabe; ein
+      «fehlgeschlagen» bei vollstaendiger Lieferung waere dieselbe Luege umgekehrt.
+    * ``lieferstatus_grund`` ist Pflicht, sobald nicht ``geliefert`` (ihr
+      ``superRefine``).
+    """
+    if not any(feld in eintrag for feld in FELDER_LIEFERUNG):
+        return None
+    name = eintrag.get("kamera")
+    status = eintrag.get("lieferstatus")
+    if status is not None and status not in LIEFERSTATUS:
+        raise SzenenError(
+            f"Kamera {name!r}: lieferstatus {status!r} ist keiner der drei Werte ihres "
+            f"Vertrags {LIEFERSTATUS}. Drueben wuerde das ganze Ergebnis abgewiesen.")
+    soll = _bilderzahl(eintrag.get("bilder_soll"), "bilder_soll", name)
+    ist = _bilderzahl(eintrag.get("bilder_ist"), "bilder_ist", name)
+    grund = eintrag.get("lieferstatus_grund")
+    grund = "" if grund is None else str(grund)
+    vollstaendig = soll is not None and ist is not None and soll == ist and soll > 0
+    if status == LIEFERSTATUS_GELIEFERT and not vollstaendig:
+        raise SzenenError(
+            f"Kamera {name!r}: 'geliefert' bei bilder_soll={soll!r}, bilder_ist={ist!r}. "
+            f"Geliefert heisst: alle bestellten Bilder da, und mindestens eines — genau "
+            f"die Behauptung, die ihre Vorgabe bis zum 23.09.2026 still machte.")
+    if status in (LIEFERSTATUS_UEBERSPRUNGEN, LIEFERSTATUS_FEHLGESCHLAGEN) and vollstaendig:
+        raise SzenenError(
+            f"Kamera {name!r}: {status!r}, obwohl {ist} von {soll} Bildern da sind. "
+            f"Ein vollstaendig geliefertes Bild als nicht geliefert zu melden, ist "
+            f"dieselbe Unwahrheit in der anderen Richtung.")
+    if status != LIEFERSTATUS_GELIEFERT and not grund.strip():
+        raise SzenenError(
+            f"Kamera {name!r}: lieferstatus {status!r} ohne lieferstatus_grund. Ihr "
+            f"Vertrag verlangt den Satz, sobald nicht geliefert — und ohne ihn weiss "
+            f"niemand, was zu tun ist.")
+    return {"lieferstatus": status, "lieferstatus_grund": grund,
+            "bilder_soll": soll, "bilder_ist": ist}
+
+
+def _lieferstatus_des_auftrags(saetze, *, uebersprungen: bool,
+                               anzahl_bilder: int) -> tuple[str | None, str]:
+    """``(lieferstatus, lieferstatus_grund)`` des ganzen Auftrags.
+
+    **Geliefert nur, wenn JEDE Kamera geliefert hat.** Sonst griffe ihre Vorgabe
+    `'geliefert'` in anderer Form wieder: Ein Auftrag mit acht von zwoelf Bildern
+    hiesse geliefert.
+
+    * ``skip: true`` → ``uebersprungen`` — ihr Sinn des Wortes (erg-20260917-37 F3).
+    * eine Kamera ``fehlgeschlagen`` → der Auftrag ``fehlgeschlagen``.
+    * sonst mindestens eine Kamera ``geliefert`` und der Rest ``uebersprungen`` (heute nur
+      die Zwillingsansicht) → der Auftrag ``geliefert``, **mit Grund**, der die Zwillinge
+      nennt. Entscheid vom 23.09.2026: «uebersprungen» heisst am Auftrag bei ihnen «fand
+      insgesamt nicht statt» — das stimmt nicht, wenn Bilder kamen; und die Ansicht eines
+      Zwillings IST geliefert, mit dem Bild seines Vorbilds. Bis dahin hiess gerade der
+      einfachste Demofall (ein symmetrischer Quader) am Auftrag «uebersprungen».
+    * nur ``uebersprungen`` (kein Bild) → der Auftrag ``uebersprungen``.
+    * ``None`` — NICHT FESTGESTELLT —, wenn keine Kamera eine Lieferung meldet, eine
+      Kamera ``lieferstatus: None`` traegt, oder die Bilderzahlen der Kameras nicht mit
+      der Bildliste uebereinstimmen. Das ist die dritte Antwort und keine Vorgabe:
+      ``null`` besteht ihr Schema vermutlich nicht, und ein Ergebnis, das dort laut
+      abgewiesen wird, ist besser als eines, das still «geliefert» sagt.
+    """
+    if uebersprungen:
+        return LIEFERSTATUS_UEBERSPRUNGEN, (
+            "Abbestellt (skip: true): nichts gerechnet, kein Bild bestellt.")
+    lieferungen = [(s["kamera"], s) for s in (saetze or ()) if "lieferstatus" in s]
+    if not lieferungen or len(lieferungen) != len(saetze or ()):
+        return None, (
+            f"NICHT FESTGESTELLT: {len(lieferungen)} von {len(saetze or ())} Kameras "
+            f"melden eine Lieferung, {anzahl_bilder} Bild(er) in der Liste — ohne eine "
+            f"Meldung je Kamera ist nicht zu sagen, ob alles Bestellte da ist.")
+    offen = [name for name, s in lieferungen if s["lieferstatus"] is None]
+    if offen:
+        return None, (f"NICHT FESTGESTELLT: Die Lieferung der Kamera(s) "
+                      f"{', '.join(map(repr, offen))} ist nicht festgestellt.")
+    soll = [s["bilder_soll"] for _, s in lieferungen]
+    ist = [s["bilder_ist"] for _, s in lieferungen]
+    if None not in ist and sum(ist) != anzahl_bilder:
+        return None, (
+            f"NICHT FESTGESTELLT: Die Kameras melden {sum(ist)} Bild(er), die Bildliste "
+            f"traegt {anzahl_bilder}. Zwei Zahlen fuer dieselbe Lieferung, und eine ist "
+            f"falsch.")
+    status = [s["lieferstatus"] for _, s in lieferungen]
+    if all(x == LIEFERSTATUS_GELIEFERT for x in status):
+        return LIEFERSTATUS_GELIEFERT, ""
+    if LIEFERSTATUS_FEHLGESCHLAGEN in status:
+        gesamt = LIEFERSTATUS_FEHLGESCHLAGEN
+    elif LIEFERSTATUS_GELIEFERT in status:
+        gesamt = LIEFERSTATUS_GELIEFERT
+    else:
+        gesamt = LIEFERSTATUS_UEBERSPRUNGEN
+
+    def zahl(werte):
+        return "unbekannt" if None in werte else str(sum(werte))
+
+    fehlend = "; ".join(f"{name} {s['lieferstatus']}: {s['lieferstatus_grund']}"
+                        for name, s in lieferungen
+                        if s["lieferstatus"] != LIEFERSTATUS_GELIEFERT)
+    return gesamt, (
+        f"{status.count(LIEFERSTATUS_GELIEFERT)} von {len(status)} Kameras geliefert, "
+        f"{zahl(ist)} von {zahl(soll)} Bildern — {fehlend}")
+
+
 def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
     """Je Kamera ein ``{kamera, geometry?, style?}`` — in **ihrer** Form.
 
@@ -1502,6 +1703,12 @@ def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
         for feld in ("geometry", "style"):
             if feld in block:
                 satz[feld] = block[feld]
+        # DIE LIEFERUNG DIESER KAMERA (23.09.2026) — nur, wenn der Aufrufer sie kennt;
+        # geprueft in `_lieferung_je_kamera`. Fehlt sie, fehlen die Felder und der
+        # Auftrag meldet `lieferstatus: null`, statt eine Lieferung zu erfinden.
+        lieferung = _lieferung_je_kamera(eintrag)
+        if lieferung is not None:
+            satz.update(lieferung)
         aus.append(satz)
     return aus
 
@@ -1582,7 +1789,8 @@ def innenansicht_satz(vermerk, *, gerendert: bool) -> str:
 
     In ``verdict.reason`` und nicht in einem eigenen Feld: Ein Zusatzfeld in
     ``qa_je_kamera`` wuerde drueben beim Einlesen still abgestreift (``z.object``, nicht
-    strikt — erg-20260917-37 F6), ``reason`` ist ein Vertragsfeld und wird angezeigt.
+    strikt — erg-20260917-49, render-result.ts 366-393), ``reason`` ist ein Vertragsfeld
+    und wird angezeigt.
 
     **Der Satz sagt nur, was stimmt** (Durchsicht 23.09.2026). Bis dahin stand «Das Bild
     zeigt den Raum von innen» auch unter einem Ergebnis ohne Bild — nachgestellt: Auge
@@ -2186,10 +2394,18 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
             in Wahrheit hat der Betreiber selbst abbestellt (Owner-Vertragslücke,
             `auf-vis-20260825-15` Posten 2, angeschlossen am 26.08.2026).
 
+        je_kamera: Je Kamera ``{kamera, geometrie_urteil?, stil_urteil?}`` und — seit
+            dem 23.09.2026 — die vier Felder :data:`FELDER_LIEFERUNG`. Sie wandern
+            geprueft nach ``qa_je_kamera[]`` (siehe :func:`_lieferung_je_kamera`).
+
     Returns:
         Ein Wörterbuch nach ``kosmovis.render-result/v2``, plus ein Feld ``hinweise``,
         das **nicht** Teil ihres Vertrags ist. Wer strikt gegen ihr Schema prüft, nimmt
         :func:`nur_vertragsfelder`.
+
+        ``lieferstatus`` und ``lieferstatus_grund`` stehen **immer** darin (23.09.2026):
+        ``geliefert`` nur, wenn jede Kamera geliefert hat, ``None`` wenn es nicht
+        festzustellen ist — siehe :func:`_lieferstatus_des_auftrags`.
     """
     hinweise: list[str] = []
     qa: dict = {}
@@ -2370,7 +2586,7 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     # Der Satz je Kamera gehoert in `verdict.reason` und nicht in einen neuen Schluessel
     # in `qa_je_kamera`: Deren Eintrag ist drueben `z.object({kamera, geometry, style})`,
     # nicht strikt — ein Zusatzfeld wuerde beim Einlesen still abgestreift
-    # (erg-20260917-37 F6, erg-20260917-49 V2). `reason` ist ein Vertragsfeld.
+    # (erg-20260917-49, render-result.ts 366-393). `reason` ist ein Vertragsfeld.
     saetze = _widersprueche_je_kamera(je_kamera, _geo if gesamt_widerspricht else None)
     # UND DER VORBEHALT JE KAMERA, deren `passed: false` kein Durchfallen ist — siehe
     # `_vorbehalte_je_kamera`. Die Kamera des Gesamtsatzes hat ihren Satz schon (`lage`).
@@ -2533,8 +2749,15 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
                                        geometrie_urteil.get("kamera"))
         _pruefe_ein_name_eine_zahl(ergebnis[FELD_ZWEI_TORE], geometrie_urteil)
 
-    if je_kamera:
-        ergebnis["qa_je_kamera"] = _qa_je_kamera(job_id, je_kamera)
+    saetze = _qa_je_kamera(job_id, je_kamera) if je_kamera else None
+    if saetze:
+        ergebnis["qa_je_kamera"] = saetze
+    # DER LIEFERSTATUS DES AUFTRAGS — immer gesetzt (23.09.2026). Fehlt das Feld, greift
+    # drueben die Vorgabe 'geliefert', und die galt bis heute fuer jedes unserer
+    # Ergebnisse, auch fuer eines ohne Bild. Siehe `_lieferstatus_des_auftrags`.
+    ergebnis["lieferstatus"], ergebnis["lieferstatus_grund"] = (
+        _lieferstatus_des_auftrags(saetze, uebersprungen=uebersprungen,
+                                   anzahl_bilder=len(ergebnis["images"])))
     return ergebnis
 
 

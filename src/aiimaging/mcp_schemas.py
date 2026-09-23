@@ -117,6 +117,17 @@ def _eingang_enqueue() -> dict:
                 "description": "Cycles-Samples. Ohne Angabe gilt der Vorgabewert des "
                                "Szenenvertrags (128).",
             },
+            # SEIT RUNDE 9 (23.09.2026) WIRKT `faithful` am Einlass — ohne diesen Eintrag
+            # verdrahtet KosmoOrbits Pipeline die Kante nicht nach Feldnamen, und die
+            # Wirkung erreichte nur einen Aufrufer, der das Feld von sich aus setzt.
+            "faithful": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Wie treu das Bild der Geometrie folgt, 0 bis 1; wird zur "
+                               "ControlNet-Stärke. Ohne Angabe gilt 0.8. Ausserhalb "
+                               "0..1 entsteht kein Auftrag.",
+            },
             "approval_token": {
                 "type": "string",
                 "description": "Freigabe CONFIRMED_RENDER_*. OHNE Token bleibt der "

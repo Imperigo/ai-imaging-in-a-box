@@ -41,7 +41,6 @@ from test_abholer import _auftrag
 from test_runde7_kamera import AUGE, BESTELLUNGEN, _bericht
 from test_runde7b_einlass import (
     _argumente,
-    _durchgang_eigen,
     _laufzettel,
     _rahmung_ueber_den_verarbeiter,
     _szene,
@@ -69,7 +68,9 @@ GUTE_KAMERA = {"kuerzel": "k", "auge": [40.0, -30.0, 1.7], "blick_auf": [10.0, 8
 def test_kamera_zu_spec_weist_einen_nicht_endlichen_punkt_ab(feld, punkt):
     """**Der Wächter von K1.** Bis zur Runde 8 kam hier eine CameraSpec mit ``inf``
     heraus; ihr Schema hätte sie drüben abgewiesen oder, schlimmer, gerechnet."""
-    with pytest.raises(SzenenError, match=f"Kamera '{feld}' enthaelt keine endlichen"):
+    # «enthält» seit der Runde 9: Die drei Kamerafunktionen teilen seither EINE Pruefung
+    # (`kosmo_szene._lies_kamerapunkt`) und damit einen Satzbau.
+    with pytest.raises(SzenenError, match=f"Kamera '{feld}' enthält keine endlichen"):
         kosmo_szene.kamera_zu_spec(dict(GUTE_KAMERA, **{feld: punkt}))
 
 
@@ -203,21 +204,19 @@ def test_gegenprobe_faithful_im_bereich_kommt_als_controlnet_staerke_an(tmp_path
     assert gesehen[0]["controlnet_staerke"] == float(wert)
 
 
-def test_der_mcp_einlass_nimmt_kein_faithful_an(tmp_path, request):
-    """Die Aussage an ``REGEL_TREUE``, dass die Regel am MCP-Einlass nicht gebraucht
-    wird, über den Produktweg: ``faithful`` im Aufruf erreicht weder den abgelegten
-    Auftrag noch die Szene, die der Abholer liest — dort gilt die Vorgabe des Vertrags.
-    Fällt dieser Test, nimmt der Einlass ``faithful`` an, und dann gehört
-    ``REGEL_TREUE`` auch dorthin."""
+def test_der_mcp_einlass_liest_faithful_mit_derselben_regel(tmp_path, request):
+    """Bis zur Runde 9 stand hier ``test_der_mcp_einlass_nimmt_kein_faithful_an`` — und
+    bewachte damit genau das stille Übergehen, das die Durchsicht der Runde 8 als Befund
+    meldete: ``faithful: 5.0`` legte einen Auftrag ab und rechnete mit 0.8. Seither gilt
+    ``REGEL_TREUE`` auch am Einlass: 5.0 wird abgewiesen, und es entsteht kein Auftrag.
+    Die Wirkung eines brauchbaren Werts bis zur ControlNet-Stärke bewacht
+    ``tests/test_runde9_reste.py``."""
     ablage = request.getfixturevalue("store")
     antwort = werkzeuge.enqueue_render(_argumente(tmp_path, faithful=5.0))
-    assert antwort["status"] == jobs.STATUS_QUEUED, antwort
-    satz = jobs.lies_job(antwort["job_id"], ablage / antwort["job_id"])
-    assert not {"faithful", "treue", "controlnet_staerke"} & set(satz["params"])
-
-    bericht, gesehen = _durchgang_eigen(ablage)
-    assert bericht["verarbeitet"] == 1, bericht["ergebnisse"][0]["grund"]
-    assert gesehen[0]["controlnet_staerke"] == 0.8
+    assert antwort["status"] is None and antwort["job_id"] is None
+    assert "'faithful' ist 5.0, erwartet war eine endliche Zahl ab 0 bis 1" \
+        in antwort["error"], antwort["error"]
+    assert not ablage.exists() or not any(ablage.iterdir())
 
 
 # ======================================================================================
@@ -238,7 +237,9 @@ def test_ein_auftrag_ohne_aufloesung_laesst_sich_in_ihren_vertrag_uebersetzen(
     fremd = kosmo_naht.als_kosmo_auftrag(satz)
 
     assert "resolution" not in fremd["params"] and "aufloesung" not in fremd["params"]
-    assert fremd["params"]["samples"] is None, "die übrigen Felder gehen, wie sie sind"
+    # Seit der Runde 9 fällt JEDES `None` in `params` weg, nicht nur die Auflösung
+    # (tests/test_runde9_reste.py, R3).
+    assert "samples" not in fremd["params"]
     zurueck = kosmo_naht.aus_kosmo_auftrag(fremd)
     assert zurueck["params"].get("aufloesung") is None
 

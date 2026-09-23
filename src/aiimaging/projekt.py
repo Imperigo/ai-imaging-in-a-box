@@ -262,11 +262,40 @@ def pfad_fuer_die_mappe(pfad, wurzel) -> str:
     Mappe enthält er keinen Benutzernamen — und die Mappe wird nebenbei **umziehbar**:
     Wer sie auf einen Stick kopiert, nimmt das Modell mit, und die Angabe stimmt weiter.
 
-    Absolut bleibt es nur dort, wo kein relativer Pfad existiert (ein anderes Laufwerk
-    unter Windows). Dann greift die Säuberung wie bisher, und das Projekt meldet beim
-    Öffnen ehrlich, dass es das Modell nicht findet.
+    **Der zweite Befund, 23.09.2026, von der HomeStation (``auf-20260922-139``).** Die
+    Annahme «relativ enthält keinen Namen» galt nur, solange Mappe und Modell im selben
+    Baum liegen. Liegt die Mappe **ausserhalb** des Heimatordners (Datenlaufwerk,
+    ``/tmp``) und das Modell **darin**, führt der relative Weg nach oben und wieder
+    hinunter durch ``/home/<name>/`` — die Säuberung machte daraus ``<nutzer>``, und
+    ``arbeitsgang.rechne`` brach ab mit «An diesem Pfad liegt keine Datei mehr». Die
+    Gegenprobe drüben: dieselbe Mappe im Heimatordner rechnete durch. Die Proben sahen
+    es wieder nicht, aus demselben Grund wie oben: ``tmp_path`` hat keinen Heimatordner
+    im Weg.
+
+    **Darum gibt es seither drei Formen, und die Wahl folgt dem Ort, nicht dem Zufall:**
+
+    1. **Relativ zur Mappe** — der Vorzug, weil die Mappe damit umziehbar bleibt. Immer,
+       wenn das Ziel **in** der Mappe liegt (Bilder, glb, Skizzen: die Fläche kennt sie
+       nur so), und immer, wenn Mappe und Ziel **auf derselben Seite** des
+       Heimatordners liegen (beide darin oder das Ziel ausserhalb). Dann steigt der Weg
+       nie durch den Ordner mit dem Namen.
+    2. **Heimrelativ, ``~/…``** — genau dann, wenn das Ziel im Heimatordner liegt und
+       die Mappe nicht. Das ist der Fall, in dem der relative Weg den Namen tragen
+       müsste. ``~`` nennt keinen Namen (Regel 3 bleibt erfüllt, ohne dass gesäubert
+       werden muss), und :func:`loese_pfad` setzt beim Lesen das Heimatverzeichnis
+       **dieses** Rechners ein. Der Preis: Umziehen mit der Mappe tut das Modell dann
+       nicht mit — aber es lag auch vorher nicht neben ihr.
+    3. **Absolut** — nur, wo keine der beiden trägt (ein anderes Laufwerk unter
+       Windows, das Modell nicht im Heimatordner). Dann greift die Säuberung wie bisher,
+       und das Projekt meldet beim Öffnen ehrlich, dass es das Modell nicht findet.
+
+    Ohne feststellbares Heimatverzeichnis (``Path.home`` scheitert) gilt die bisherige
+    Regel — relativ, sonst absolut.
     """
     pfad, wurzel = Path(pfad), Path(wurzel)
+    heimrelativ = _heimrelativ(pfad, wurzel)
+    if heimrelativ is not None:
+        return heimrelativ
     try:
         return str(_relativ(pfad, wurzel))
     except ValueError:
@@ -274,6 +303,33 @@ def pfad_fuer_die_mappe(pfad, wurzel) -> str:
         # Saeuberung macht daraus einen Pfad, der nicht mehr traegt. Das ist unschoen und
         # ehrlich: Beim Oeffnen steht «Modell fehlt», und das stimmt dann auch.
         return str(pfad)
+
+
+#: Womit ein **heimrelativer** Pfad in der Mappe beginnt. Siehe :func:`pfad_fuer_die_mappe`.
+HEIM_ANFANG = "~/"
+
+
+def _heimrelativ(pfad: Path, wurzel: Path) -> str | None:
+    """``"~/…"``, wenn der relative Weg durch den Heimatordner führen würde — sonst ``None``.
+
+    ``None`` heisst hier **nicht zuständig** (die anderen beiden Formen tragen), nicht
+    «geht nicht». Siehe :func:`pfad_fuer_die_mappe`, Befund vom 23.09.2026.
+    """
+    try:
+        heim = Path.home().resolve()
+    except (RuntimeError, KeyError, OSError):
+        # KEIN HEIMATVERZEICHNIS FESTSTELLBAR — dann kann es auch nicht im Weg liegen,
+        # und der bisherige Weg gilt.
+        return None
+    ziel, mappe = pfad.resolve(), wurzel.resolve()
+    if not ziel.is_relative_to(heim):
+        return None           # das Ziel liegt nicht im Heimatordner
+    if ziel.is_relative_to(mappe):
+        return None           # in der Mappe: immer relativ (die Fläche kennt nur das)
+    if mappe.is_relative_to(heim):
+        return None           # beide im Heimatordner: relativ, umziehbar, ohne Namen
+    rest = ziel.relative_to(heim).as_posix()
+    return "~" if rest == "." else HEIM_ANFANG + rest
 
 
 def _relativ(pfad: Path, wurzel: Path) -> Path:
@@ -291,9 +347,24 @@ def loese_pfad(gespeichert, wurzel):
 
     Ein relativer Pfad wird an der Mappe verankert, ein absoluter bleibt, wie er ist.
     Leer bleibt leer — ``""`` ist keine Datei und wird auch nicht zu einer.
+
+    **Ein heimrelativer (``~/…``, seit dem 23.09.2026) wird am Heimatverzeichnis dieses
+    Rechners verankert** — siehe :func:`pfad_fuer_die_mappe`. Nur genau diese Form:
+    ``~`` allein oder ``~/`` am Anfang. Ein Name wie ``~entwurf.png`` ist ein Dateiname
+    in der Mappe und kein Verweis auf das Heim eines Benutzers «entwurf.png» — darum
+    hier nicht ``expanduser``, das ihn so läse. Ist kein Heimatverzeichnis feststellbar,
+    bleibt der Pfad, wie er steht, und zeigt auf nichts: Beim Öffnen steht dann
+    «Modell fehlt», und das stimmt.
     """
     if not gespeichert:
         return Path("")
+    text = str(gespeichert)
+    if text == "~" or text.startswith(HEIM_ANFANG) or text.startswith("~\\"):
+        try:
+            heim = Path.home()
+        except (RuntimeError, KeyError, OSError):
+            return Path(text)
+        return heim / text[2:] if len(text) > 1 else heim
     p = Path(gespeichert)
     return p if p.is_absolute() else (Path(wurzel) / p)
 
@@ -362,8 +433,10 @@ def neu(wurzel, modell, *, name: str | None = None, einstellungen: dict | None =
         # ueberschrieben. Siehe `speichere` und `ProjektKollision`.
         "stand_nr": 1,
         "modell": {
-            # RELATIV ZUR MAPPE, wo es geht — siehe `pfad_fuer_die_mappe`. Ein absoluter
-            # Pfad ueberlebt die Saeuberung nach Regel 3 nicht.
+            # RELATIV ZUR MAPPE, wo es geht, HEIMRELATIV («~/…»), wo der relative Weg
+            # durch den Heimatordner fuehren wuerde (Befund 23.09.2026) — siehe
+            # `pfad_fuer_die_mappe`. Ein absoluter Pfad ueberlebt die Saeuberung nach
+            # Regel 3 nicht, und ein relativer durch /home/<name>/ auch nicht.
             "pfad": pfad_fuer_die_mappe(modell, wurzel),
             "abdruck": fingerabdruck(modell),
             # DER BEFUND VOM EINLASS WANDERT MIT, und das ist mehr als Bequemlichkeit:

@@ -231,6 +231,11 @@ def als_kosmo_auftrag(satz: dict, *, approval_token: str | None = None) -> dict:
         sieht**, statt sie zu vermissen. Ein fehlender Schlüssel ist keine Aussage, ein
         leerer schon.
 
+        **In ``params`` gilt das Umgekehrte** (seit der Runde 9, 23.09.2026): Dort ist
+        ein Feld eine Bestellung, und ``None`` heisst NICHT BESTELLT. Ein solches Feld
+        fällt weg, damit drüben die Vorgabe des Vertrags gilt — dieselbe Behandlung wie
+        in :func:`als_render_scene`.
+
     Raises:
         NahtError: kein Auftragssatz, oder ein unbrauchbares Token.
     """
@@ -251,19 +256,21 @@ def als_kosmo_auftrag(satz: dict, *, approval_token: str | None = None) -> dict:
     for unser, ihrer in JOB_FELDER.items():
         fremd[ihrer] = satz.get(unser)
 
-    params = dict(satz.get("params") or {})
-    # `None` HEISST NICHT BESTELLT (Runde 8, 23.09.2026). Befund: `enqueue_render` legt
-    # ohne Angabe `"aufloesung": None` ab — mit Absicht, dann entscheidet der Vertrag.
-    # Hier stand `if "aufloesung" in params`, und das übersetzte auch das `None`:
-    # `aufloesung_zu_resolution(None)` warf NahtError, also JEDER Auftrag aus dem
-    # MCP-Einlass ohne Auflösung. Seither wird `None` nicht übersetzt; der Schlüssel
-    # fällt weg, und es entsteht auch kein `resolution: null` — dann gilt drüben die
-    # Vorgabe ihres Vertrags, wie in `als_render_scene`. Es ist das einzige Feld, das
-    # diese Funktion in `params` übersetzt; die übrigen (auch `samples`) gehen wie sie
-    # sind, `None` eingeschlossen.
-    if params.get("aufloesung") is None:
-        params.pop("aufloesung", None)
-    else:
+    # `None` HEISST NICHT BESTELLT — für JEDES Feld der Bestellung (Runde 8 und 9,
+    # 23.09.2026). Befund der Runde 8: `enqueue_render` legt ohne Angabe
+    # `"aufloesung": None` ab, und `aufloesung_zu_resolution(None)` warf NahtError bei
+    # JEDEM Auftrag aus dem MCP-Einlass ohne Auflösung; seither fiel dieser eine Schlüssel
+    # weg. Befund der Runde 9: Die übrigen gingen weiter als `null` hinüber —
+    # `samples`, `faithful`, `bbox`, `glb_path` —, dieselbe Unbekannte also in zwei
+    # Behandlungen. Seither fällt jedes `None`-Feld in `params` weg: Dann gilt drüben die
+    # Vorgabe ihres Vertrags, wie in `als_render_scene`, und nicht ein `null`, von dem
+    # niemand weiss, ob ihr Schema es als «fehlt» liest.
+    #
+    # Die Felder AUSSERHALB von `params` (`progress`, `phase`, `approval_token`, …)
+    # bleiben als leere Felder stehen, siehe Docstring: Sie sagen etwas über UNSEREN
+    # Satz («wir führen es nicht», «keines erteilt») und sind keine Bestellung.
+    params = {k: v for k, v in dict(satz.get("params") or {}).items() if v is not None}
+    if "aufloesung" in params:
         params["resolution"] = aufloesung_zu_resolution(params.pop("aufloesung"))
     fremd["params"] = params
 
@@ -445,6 +452,13 @@ def als_render_scene(satz: dict) -> dict:
         )
     if params.get("samples") is not None:
         render["samples"] = params["samples"]
+    # DIE TREUE, SEIT DER RUNDE 9 (23.09.2026). Befund: `enqueue_render` überging ein
+    # `faithful` still, und diese Naht hätte auch keines übertragen. Jetzt legt der
+    # Einlass die mit `kosmo_szene.REGEL_TREUE` gelesene Zahl ab, und sie geht unter
+    # ihrem Vertragsnamen in die Szene; `lies_szene` liest sie mit derselben Regel als
+    # `controlnet_staerke`. Ohne Angabe wird nichts gesetzt — dann gilt dort die Vorgabe.
+    if params.get("faithful") is not None:
+        render["faithful"] = params["faithful"]
 
     # DAS FORMAT WIRD GELESEN, NICHT GESETZT (10.09.2026).
     #

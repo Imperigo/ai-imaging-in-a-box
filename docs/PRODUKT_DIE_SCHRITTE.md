@@ -105,6 +105,17 @@ und kommt **ohne Hilfe** zu einem veränderten Bild.
 
 ## Was zuletzt dazugekommen ist
 
+### 23.09.2026 (abends) · Eine ehrliche Lieferauskunft, und eine schlechte Nachricht zum Bild
+
+* **KosmoOrbit erfährt jetzt je Kamera, ob ihr Bild kam.** Bisher stand dort still
+  «geliefert», auch wenn Bilder fehlten — ein Feld, das niemand füllte.
+* **Ein Fehler, den die HomeStation fand, ist behoben:** Eine Projektmappe auf einem
+  anderen Laufwerk fand ihr Gebäudemodell nicht mehr.
+* **Die schlechte Nachricht:** Auf dem Vorgabemodell steuert die Tiefe das Endbild kaum —
+  an der Stelle des Gebäudes kam kein Gebäude. Die HomeStation misst jetzt, ob stärkere
+  Führung oder mehr Rechenschritte das ändern, und ob ein anderer Modellweg das
+  Hineinskizzieren möglich macht.
+
 ### 23.09.2026 · Was angenommen wird und nicht wirkt, wird jetzt gesagt
 
 * **Einstellungen ohne Wirkung werden nicht mehr still geschluckt.** Augenhöhe, Winkel und

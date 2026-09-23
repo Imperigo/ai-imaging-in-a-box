@@ -152,7 +152,9 @@ def lege_an(wurzel, modell, *, name: str | None = None,
         "weg": bericht["weg"],
         # RELATIV ZUR MAPPE. Die glb liegt DARIN — ein absoluter Pfad ueberlebt die
         # Saeuberung nach Regel 3 nicht und zeigt danach auf nichts. Gefunden am
-        # 21.09.2026 von Beweis 31.
+        # 21.09.2026 von Beweis 31. Eine DURCHGEREICHTE glb liegt dagegen, wo sie lag;
+        # im Heimatordner bei einer Mappe ausserhalb steht sie heimrelativ da («~/…»,
+        # Befund 23.09.2026, siehe `projekt.pfad_fuer_die_mappe`).
         "glb": projekt.pfad_fuer_die_mappe(bericht["glb_path"], wurzel)
                if bericht.get("glb_path") else bericht.get("glb_path"),
         "format": bericht["format"],
@@ -1171,8 +1173,9 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder, abbr
 
     glb = (p.get("import") or {}).get("glb")
     if glb:
-        # DIE ANGABE IST RELATIV ZUR MAPPE — hier wird sie wieder zu einem Pfad auf
-        # dieser Platte. Siehe `projekt.loese_pfad`.
+        # DIE ANGABE IST RELATIV ZUR MAPPE ODER HEIMRELATIV («~/…», seit dem 23.09.2026:
+        # eine durchgereichte glb im Heimatordner, die Mappe ausserhalb) — hier wird sie
+        # wieder zu einem Pfad auf dieser Platte. Siehe `projekt.loese_pfad`.
         glb = str(projekt.loese_pfad(glb, wurzel))
     if not glb:
         raise ArbeitsgangError(

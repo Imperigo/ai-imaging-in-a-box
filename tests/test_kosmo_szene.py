@@ -345,7 +345,10 @@ def test_die_strikte_fassung_traegt_nur_ihre_felder():
     voll = ks.als_ergebnis("vis-1-abc123", [], stil_urteil=stil_urteil())
     strikt = ks.nur_vertragsfelder(voll)
     assert "hinweise" in voll and "hinweise" not in strikt
-    assert set(strikt) <= {"schema", "job_id", "images", "ai_variant", "qa", "timings"}
+    # lieferstatus/lieferstatus_grund sind Felder IHRES Vertrags (render-result.ts, seit
+    # 01.09.2026); seit Runde 9 (23.09.2026) senden wir sie — vorher griff ihre Vorgabe.
+    assert set(strikt) <= {"schema", "job_id", "images", "ai_variant", "qa", "timings",
+                           "lieferstatus", "lieferstatus_grund"}
 
 
 def test_die_schemakennung_steht_im_ergebnis():

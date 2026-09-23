@@ -1,0 +1,31 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "cloud",
+  "auftrag_id": "auf-20260923-155",
+  "art": "frage",
+  "beschreibung": "Zusage zu erg-20260921-119 V4: Wir liefern lieferstatus, lieferstatus_grund, bilder_soll, bilder_ist je Kamera (und lieferstatus am Auftrag immer) — mit drei Fragen: Zwillinge am Auftrag, null/faithful in Job-Params, faithful_slider.",
+  "anweisung": "=== ZUSAGE ZU EUREM erg-20260921-119 V4: WIR LIEFERN DEN LIEFERSTATUS JE KAMERA ===\n\nEuer Blatt vom 21.09. hat uns erst am 23.09. erreicht (es lag bei euch; unser Rueckweg hat\nes nicht geholt — nicht euer Fehler). Die Antwort auf eure Vertragsfrage:\n\n1 · JA, WIR LIEFERN — seit dem 23.09.2026, mit euren Namen und auf eurer Ebene\n\n  qa_je_kamera[]:\n    lieferstatus        'geliefert' | 'uebersprungen' | 'fehlgeschlagen'\n    lieferstatus_grund  \"\"  bei geliefert, sonst ein Satz (Pflicht)\n    bilder_soll         ganze Zahl >= 0, oder null = nicht bekannt\n    bilder_ist          ganze Zahl >= 0, oder null = nicht bekannt\n  am Auftrag, IMMER gesendet:\n    lieferstatus, lieferstatus_grund\n\n  Was die Zahlen bei uns heissen: Je Kamera liefern wir GENAU EIN Bild (den besten von\n  mehreren Startwerten; die uebrigen sind Kandidaten, keine Lieferung). «Acht statt\n  zwoelf» heisst bei uns also «8 von 12 Kameras mit je 1 von 1». bilder_soll ist heute\n  immer 1, bilder_ist 1 oder 0.\n\n  Unsere Einteilung nach eurer Definition («uebersprungen» = ein regulaerer Weg, auf dem\n  absichtlich kein Bild entsteht):\n    - gerendert → geliefert, 1/1 (auch wenn die QA-Messung scheiterte: Lieferung ist nicht QA)\n    - Zwilling (gleiche Ansicht wie eine andere Kamera) → uebersprungen, 0/1, Grund\n      «dieselbe Ansicht wie Kamera X»\n    - Abbruch vor dem Render (Blickfeld, Rahmung, Kamerahoehe) → fehlgeschlagen, 0/1,\n      Grund = derselbe Satz wie in verdict.reason\n    - skip: true → am Auftrag uebersprungen\n  Am Auftrag: geliefert, wenn jede Kamera geliefert hat ODER nur Zwillinge fehlen (mit\n  Grund, der sie nennt); fehlgeschlagen, sobald eine Kamera fehlschlug; uebersprungen nur,\n  wenn gar kein Bild kam.\n\n2 · DREI FRAGEN, JE EINE ZEILE\n\n  F1 ZWILLINGE AM AUFTRAG: Passt «geliefert (mit Grund)» fuer einen Auftrag, bei dem eine\n     Kamera geliefert hat und die anderen nur Zwillinge sind? Euer Kommentar sagt fuer\n     «uebersprungen» am Auftrag «fand insgesamt nicht statt» — darum nicht das.\n  F2 NULL IN JOB-PARAMS: Liest euer Job-Params-Schema null als «fehlt»? Wir lassen seit\n     heute jedes None in params weg (statt null zu senden). Und: Kennt euer Schema den\n     neuen Schluessel params.faithful (0..1, wird bei uns zur ControlNet-Staerke), oder\n     weist es ihn strikt ab?\n  F3 faithful_slider: An enqueue_render weisen wir faithful_slider jetzt mit Satz ab (er\n     stellt laut euch die Entrauschung, die wir aus keiner Bestellung setzen). Reicht eure\n     Pipeline (mergeInputs) dieses Feld je von einem Vorgaengerknoten durch? Dann wuerde\n     jede solche Kette abgewiesen — sagt es, dann aendern wir das.\n\n3 · WAS SICH FUER EUCH SICHTBAR AENDERT\n\n  Ab dem naechsten Lauf auf der HomeStation traegt jedes Ergebnis lieferstatus am Auftrag.\n  Ein Auftrag mit einer abgebrochenen Kamera heisst dann 'fehlgeschlagen' — bisher stand\n  dort still eure Vorgabe 'geliefert'. Das ist keine neue Stoerung, sondern die erste\n  ehrliche Auskunft. Die Felder je Kamera streift euer Einlesen heute ab (z.object, nicht\n  strikt); ihr baut sie, sobald ihr wollt — der Erzeuger steht.",
+  "erstellt": "2026-09-23T14:11:45Z",
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"
+  },
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Keine Kunden-, Buero- oder Projektnamen, keine absoluten Pfade."
+    ]
+  },
+  "rueckgabe": [
+    "F1 Zwillinge am Auftrag: geliefert (mit Grund) passt / passt nicht.",
+    "F2 null in params = fehlt? params.faithful bekannt?",
+    "F3 Reicht mergeInputs faithful_slider durch?"
+  ],
+  "rang": 5
+}

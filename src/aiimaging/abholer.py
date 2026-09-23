@@ -313,7 +313,10 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         # acht Tage lang nicht gesendet, und der Einbau-Stand fuehrte den Posten
         # derweil als IHRE Vertragsaenderung. Gebaut heisst nicht angeschlossen —
         # dieselbe Lehre wie bei `uebersprungen` am 26.08.
-        je_kamera=_qa_je_kamera_eintraege(ergebnis.get("kameras")),
+        # SEIT DEM 23.09.2026 MIT DER LIEFERUNG JE KAMERA — siehe
+        # `_je_kamera_mit_lieferung`. Ohne sie galt drueben fuer jedes Ergebnis die
+        # Vorgabe `lieferstatus: 'geliefert'`, auch fuer eines ohne Bild.
+        je_kamera=_je_kamera_mit_lieferung(ergebnis.get("kameras")),
         # Ohne diese Durchreichung stuende im Vertragsergebnis eines ABBESTELLTEN
         # Auftrags «keine QA gelaufen» — ununterscheidbar von einem vergessenen Lauf.
         # Gefunden am 26.08.2026 vom Kettenlauf-Test, nicht von den Bausteintests: Die
@@ -2871,6 +2874,8 @@ KEINE_RIEGEL = {
     "verarbeiter": "die Schleife selbst — sie liest die Urteile der Riegel, sie fällt keines",
     "befund_kurz": "Leser: macht aus abgelegten Urteilen Zeilen für einen Menschen",
     "_nicht_gerendert_kurz": "Leser: gruppiert die Gründe nach Art für das Vertragsergebnis",
+    "_art_ohne_bild": "Leser: sagt, welcher Riegel eine Kamera ohne Bild liess — für den "
+                      "Vertragsgrund und den Lieferstatus je Kamera (23.09.2026)",
     "_rahmung_abgeschaltet": "das Gegenteil eines Riegels — `rahmung_pruefen=False` "
                              "abbilden, ohne dass ein abgeschalteter Lauf wie ein "
                              "bestandener aussieht",
@@ -3129,49 +3134,65 @@ def _nicht_gerendert_kurz(kameras) -> tuple[str, ...]:
     for eintrag in kameras:
         if not isinstance(eintrag, dict) or eintrag.get("bild_png"):
             continue
-        if eintrag.get("doppelt_von"):
-            art = "doppelt"
-        elif (eintrag.get("blickfeld") or {}).get("abbruch"):
-            # ZUERST GEFRAGT. Eine Kamera, die an der Szene vorbeischaut, ist kein
-            # Rahmungsfall — bei ihr gibt es gar nichts zu rahmen. Stuende die Frage
-            # weiter unten, faenge der Rahmungszweig sie ab, sobald er je ein `abbruch`
-            # traegt, und die fremde Seite laese eine Bildbreite, die nie gemessen wurde.
-            art = "blickfeld"
-        elif (eintrag.get("rahmung") or {}).get("abbruch"):
-            art = "rahmung"
+        art = _art_ohne_bild(eintrag)
+        if art is None:
+            continue
+        if art == "rahmung":
             wert = (eintrag["rahmung"] or {}).get("wirksame_bildbreite")
             if isinstance(wert, float):
                 anteile.setdefault(art, []).append(wert)
-        elif (eintrag.get("komposition") or {}).get("abbruch"):
-            art = "kamerahoehe"
-        else:
-            continue
         nach_art.setdefault(art, []).append(str(eintrag.get("kamera")))
 
-    zeilen = []
-    for art, kuerzel in nach_art.items():
-        namen = ", ".join(kuerzel)
-        if art == "rahmung":
-            werte = anteile.get(art) or []
-            spanne = (f"{min(werte):.1%}" if len(set(round(w, 3) for w in werte)) <= 1
-                      else f"{min(werte):.1%}–{max(werte):.1%}") if werte else "zu wenig"
-            zeilen.append(
-                f"NICHT GERENDERT (Rahmung), {namen}: Das Bauwerk fuellt {spanne} der "
+    return tuple(_satz_ohne_bild(art, ", ".join(kuerzel), anteile.get(art))
+                 for art, kuerzel in nach_art.items())
+
+
+def _art_ohne_bild(eintrag: dict) -> str | None:
+    """WARUM eine Kamera kein eigenes Bild hat: ``doppelt``, ``blickfeld``, ``rahmung``,
+    ``kamerahoehe`` — oder ``None``, wenn das Urteil keinen dieser Gruende traegt.
+
+    Herausgeloest am 23.09.2026, damit der Vertragsgrund (:func:`_nicht_gerendert_kurz`)
+    und der Lieferstatus je Kamera (:func:`_lieferung_der_kamera`) dieselbe Einteilung
+    lesen. Zwei Einteilungen derselben Frage laufen auseinander, sobald eine gepflegt
+    wird.
+    """
+    if eintrag.get("doppelt_von"):
+        return "doppelt"
+    if (eintrag.get("blickfeld") or {}).get("abbruch"):
+        # ZUERST GEFRAGT. Eine Kamera, die an der Szene vorbeischaut, ist kein
+        # Rahmungsfall — bei ihr gibt es gar nichts zu rahmen. Stuende die Frage
+        # weiter unten, faenge der Rahmungszweig sie ab, sobald er je ein `abbruch`
+        # traegt, und die fremde Seite laese eine Bildbreite, die nie gemessen wurde.
+        return "blickfeld"
+    if (eintrag.get("rahmung") or {}).get("abbruch"):
+        return "rahmung"
+    if (eintrag.get("komposition") or {}).get("abbruch"):
+        return "kamerahoehe"
+    return None
+
+
+def _satz_ohne_bild(art: str, namen: str, werte=None) -> str:
+    """Der Satz zu :func:`_art_ohne_bild` — fuer eine Kamera oder eine Gruppe.
+
+    ``werte`` sind die wirksamen Bildbreiten der Rahmungsfaelle; ohne sie steht «zu
+    wenig» und keine erfundene Zahl.
+    """
+    if art == "rahmung":
+        werte = werte or []
+        spanne = (f"{min(werte):.1%}" if len(set(round(w, 3) for w in werte)) <= 1
+                  else f"{min(werte):.1%}–{max(werte):.1%}") if werte else "zu wenig"
+        return (f"NICHT GERENDERT (Rahmung), {namen}: Das Bauwerk fuellt {spanne} der "
                 f"Bildbreite, gemessen noetig sind "
                 f"{_kameras_modul.BILDBREITE_ABBRUCH:.0%}")
-        elif art == "blickfeld":
-            zeilen.append(
-                f"NICHT GERENDERT (Kamera schaut an der Szene vorbei), {namen}: Der "
+    if art == "blickfeld":
+        return (f"NICHT GERENDERT (Kamera schaut an der Szene vorbei), {namen}: Der "
                 f"Sehstrahl von Standort zu Blickziel trifft die Huellbox der Geometrie "
                 f"nicht. Haeufigste Ursache: eine Kameraliste in Dateikoordinaten — "
                 f"`up_axis` der CameraSpec pruefen")
-        elif art == "kamerahoehe":
-            zeilen.append(
-                f"NICHT GERENDERT (Aufnahme nicht beurteilbar), {namen}: Die Kamera steht "
+    if art == "kamerahoehe":
+        return (f"NICHT GERENDERT (Aufnahme nicht beurteilbar), {namen}: Die Kamera steht "
                 f"ueber dem Dach — nach HABS/NPS keine Architekturaufnahme")
-        else:
-            zeilen.append(f"Nicht neu gerendert (identische Soll-Karte), {namen}")
-    return tuple(zeilen)
+    return f"Nicht neu gerendert (identische Soll-Karte), {namen}"
 
 
 def _rahmung_abgeschaltet(rahmung: dict) -> dict:
@@ -3600,6 +3621,85 @@ def _qa_je_kamera_eintraege(kameras) -> list[dict]:
         if _kamera_gemessen(k):
             satz["geometrie_urteil"] = k
         aus.append(satz)
+    return aus
+
+
+#: Wie viele Bilder eine bestellte Kamera bekommt: **genau eines** (23.09.2026).
+#:
+#: Am Code abgelesen, nicht angenommen: `verarbeiter` haengt je gerenderter Kamera genau
+#: ein Bild an `bilder` an — das des besten Startwerts, von `_bester_seed` unter
+#: ``<kamera>.png`` abgelegt. Die uebrigen Startwerte sind KANDIDATEN der Auswahl und
+#: keine Lieferung; sie erscheinen nicht in ``images``. Ihr ``render-scene``-Vertrag hat
+#: kein Feld fuer mehrere Bilder je Kamera, soweit wir ihn lesen
+#: (`kosmo_szene.BEKANNTE_FELDER`). Bestellt ist also eine Ansicht, und eine Ansicht ist
+#: ein Bild.
+BILDER_JE_KAMERA = 1
+
+
+def _lieferung_der_kamera(urteil: dict) -> dict:
+    """Die vier Lieferfelder einer Kamera — ``kosmo_szene.FELDER_LIEFERUNG``.
+
+    **Die Einteilung (23.09.2026), und ihr Massstab.** Ihr Vertrag trennt
+    ``uebersprungen`` — ein regulaerer Weg, auf dem absichtlich kein Bild entsteht,
+    eingefuehrt fuer ``skip: true`` (erg-20260917-37 F3) — von ``fehlgeschlagen``. Die
+    Frage, die hier entscheidet: *Muss die bestellende Seite etwas aendern, um dieses
+    Bild zu bekommen?* Ja: ``fehlgeschlagen``. Nein: ``uebersprungen``.
+
+    * **Gerendert** (``bild_png``, kein Zwilling): ``geliefert``, 1 von 1. Ob die QA
+      bestand, ist eine andere Frage und steht im ``geometry``-Block daneben.
+    * **Zwilling** (``doppelt_von``): ``uebersprungen``, 0 von 1. Die Ansicht ist
+      geliefert — als Bild der anderen Kamera —, und niemand muss etwas tun. Ein
+      eigenes Bild gibt es nicht; ``bilder_ist`` zaehlt Bilder, nicht Ansichten.
+    * **Abbruch vor dem Render** (Blickfeld, Rahmung, Kamerahoehe):
+      ``fehlgeschlagen``, 0 von 1. Absichtlich von UNS, aber nicht von der Bestellung:
+      Wer das Bild will, muss die Kamera aendern. Unter ``uebersprungen`` saehe das
+      aus wie ein Zustand, in dem nichts zu tun ist.
+    * **Kein Bild ohne benannten Grund**: ``fehlgeschlagen`` mit dem Grund des Urteils.
+      Auf dem Produktweg heute nicht erreichbar; steht da, damit ein kuenftiger Weg ohne
+      Bild nicht still als geliefert durchgeht.
+
+    Der Grund bei Abbruechen ist derselbe Satz, den ``verdict.reason`` schon traegt
+    (:func:`_satz_ohne_bild`) — eine Auskunft, zwei Orte, ein Wortlaut.
+    """
+    name = urteil.get("kamera")
+    soll = BILDER_JE_KAMERA
+    vorbild = urteil.get("doppelt_von")
+    art = _art_ohne_bild(urteil)
+    if vorbild:
+        # Der Zwilling traegt das `bild_png` seines Vorbilds (abgelesen am 23.09.2026:
+        # `dict(zwilling["urteil"], kamera=…, doppelt_von=…)`). Darum ZUERST gefragt —
+        # sonst zaehlte ein Bild zweimal, und die Summe der Kameras stimmte nicht mehr
+        # mit `images` ueberein.
+        return {"lieferstatus": _kosmo_szene.LIEFERSTATUS_UEBERSPRUNGEN,
+                "lieferstatus_grund": (
+                    f"{_satz_ohne_bild('doppelt', str(name))}: dieselbe Ansicht wie "
+                    f"Kamera {str(vorbild)!r}, deren Bild sie zeigt — kein eigenes Bild"),
+                "bilder_soll": soll, "bilder_ist": 0}
+    if urteil.get("bild_png"):
+        return {"lieferstatus": _kosmo_szene.LIEFERSTATUS_GELIEFERT,
+                "lieferstatus_grund": "", "bilder_soll": soll, "bilder_ist": soll}
+    if art is not None:
+        breite = (urteil.get("rahmung") or {}).get("wirksame_bildbreite")
+        grund = _satz_ohne_bild(art, str(name),
+                                [breite] if isinstance(breite, float) else None)
+    else:
+        grund = (f"KEIN BILD, {name}: Das Kameraurteil nennt keinen der bekannten "
+                 f"Abbruchgruende. {urteil.get('grund') or 'Ohne Angabe.'}")
+    return {"lieferstatus": _kosmo_szene.LIEFERSTATUS_FEHLGESCHLAGEN,
+            "lieferstatus_grund": grund, "bilder_soll": soll, "bilder_ist": 0}
+
+
+def _je_kamera_mit_lieferung(kameras) -> list[dict]:
+    """:func:`_qa_je_kamera_eintraege` — und an jedem Eintrag die Lieferung der Kamera.
+
+    Eintrag fuer Eintrag ueber dieselbe Funktion, damit ein Urteil, das dort
+    uebergangen wird (kein Name), auch hier keinen Eintrag bekommt.
+    """
+    aus: list[dict] = []
+    for urteil in kameras or ():
+        eintrag = _qa_je_kamera_eintraege([urteil])
+        if eintrag:
+            aus.append(dict(eintrag[0], **_lieferung_der_kamera(urteil)))
     return aus
 
 

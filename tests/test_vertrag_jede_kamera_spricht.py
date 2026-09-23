@@ -150,7 +150,10 @@ def test_eine_kamera_mit_gescheiterter_messung_traegt_weiter_nur_ihren_namen(tmp
     erg = _vertragsdatei(tmp_path, eingang=FEHLER, uebersicht=SAUBER)
 
     je = {e["kamera"]: e for e in erg["qa_je_kamera"]}
-    assert je["Eingang"] == {"kamera": "Eingang"}
+    # Seit Runde 9 (23.09.2026) traegt jede Kamera ihre Lieferung; die gescheiterte
+    # MESSUNG nimmt ihr weiter nur die Bloecke geometry/style, nicht die Lieferung.
+    assert not {"geometry", "style"} & set(je["Eingang"]), je["Eingang"]
+    assert je["Eingang"]["lieferstatus"] == "geliefert"
     assert "geometry" in je["Uebersicht"]
 
 

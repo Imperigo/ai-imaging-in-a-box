@@ -103,7 +103,8 @@ def check_geometry(args: dict) -> dict:
 def enqueue_render(args: dict) -> dict:
     """Geometrie → gegateter Render-Auftrag. Rührt die GPU nicht an.
 
-    Ablauf: Zahlen prüfen (``aufloesung``, ``samples``) → Vertrag prüfen → bei
+    Ablauf: Zahlen prüfen (``aufloesung``, ``samples``, ``faithful``; ein
+    ``faithful_slider`` wird abgewiesen) → Vertrag prüfen → bei
     IFC-Eingang konvertieren (Subprozess im `.venv-ifc`) → Torwächter → Auftrag ablegen.
     Bricht eine Stufe, entsteht **kein** Auftrag: Ein Auftrag auf kaputter Geometrie
     würde später GPU-Zeit verbrennen, um dann doch zu scheitern.
@@ -127,15 +128,38 @@ def enqueue_render(args: dict) -> dict:
     #    Obergrenze galten `samples: 1e300` und `2**63` als angenommen. Seither dieselben
     #    Regeln wie in `lies_szene` (`kosmo_szene.REGEL_KANTE`, `REGEL_SAMPLES`, mit
     #    Obergrenze), und abgelegt wird die gelesene ganze Zahl.
+    #
+    #    `faithful` SEIT DER RUNDE 9 (23.09.2026). Befund: Dieser Einlass ueberging es
+    #    STILL — `faithful: 0.3` legte einen Auftrag ohne das Feld ab, und gerechnet wurde
+    #    mit der Vorgabe 0.8 (bewacht war genau das, als «nimmt kein faithful an»).
+    #    Seither gilt dieselbe Regel wie in `lies_szene` (`kosmo_szene.REGEL_TREUE`, 0 bis
+    #    1), abgelegt wird die gelesene Zahl, und `kosmo_naht.als_render_scene` schreibt
+    #    sie als `render.faithful` in die Szene, die der Abholer liest.
     from aiimaging import kosmo_szene as _k
     saetze = []
-    gelesen: dict = {"aufloesung": None, "samples": None}
-    for feld, regel in (("aufloesung", _k.REGEL_KANTE), ("samples", _k.REGEL_SAMPLES)):
+    gelesen: dict = {"aufloesung": None, "samples": None, "faithful": None}
+    for feld, regel in (("aufloesung", _k.REGEL_KANTE), ("samples", _k.REGEL_SAMPLES),
+                        ("faithful", _k.REGEL_TREUE)):
         if args.get(feld) is not None:
             zahl, satz = _k.lies_zahl(args[feld], feld, **regel)
             if satz:
                 saetze.append(satz)
             gelesen[feld] = zahl
+    #    `faithful_slider` WIRD ABGEWIESEN, NICHT UEBERSETZT (Runde 9, 23.09.2026). So
+    #    heisst der Regler an KosmoOrbits eigenem `kosmovis_enqueue_render`, beschrieben
+    #    als «structural faithfulness (denoise)» (docs/OEKOSYSTEM_2026-08-18.md, 7.7).
+    #    Er stellt damit den Entrauschungsgrad, und den setzt diese Lane aus keiner
+    #    Bestellung (`abholer.RENDER_STEHENGEBLIEBEN["denoise"]`). Ihn auf `faithful`
+    #    abzubilden hiesse, eine Richtung zu raten, die dort ausdruecklich offen steht:
+    #    Entrauschung und ControlNet-Staerke laufen moeglicherweise gegenlaeufig. Still
+    #    uebergehen hiesse, anders zu rechnen als bestellt. Bleibt: abweisen, mit Satz.
+    if args.get("faithful_slider") is not None:
+        saetze.append(
+            f"'faithful_slider' ist {_k._zeige(args['faithful_slider'])} und wirkt hier "
+            f"nicht: Er stellt laut KosmoOrbit die Entrauschung (denoise), die diese Lane "
+            f"aus keiner Bestellung setzt, und ihn als 'faithful' zu lesen hiesse, eine "
+            f"offene Richtung zu raten. Wer die Treue bestellen will, schickt 'faithful' "
+            f"(0 bis 1, wird zur ControlNet-Staerke).")
     if saetze:
         return _fehler("Angabe abgewiesen, es entsteht kein Auftrag: " + " ".join(saetze))
 
@@ -187,6 +211,9 @@ def enqueue_render(args: dict) -> dict:
             # Die gelesene Zahl (Schritt 0), nicht `args[...]` — `512.0` wird 512.
             "aufloesung": gelesen["aufloesung"],
             "samples": gelesen["samples"],
+            # Seit der Runde 9: die gelesene Treue, `None` heisst NICHT BESTELLT — dann
+            # gilt die Vorgabe des Vertrags (0.8 in `lies_szene`), wie bei den beiden oben.
+            "faithful": gelesen["faithful"],
             "empfiehlt_neuzentrierung": urteil.get("empfiehlt_neuzentrierung", False),
         },
         approval_token=args.get("approval_token"),

@@ -4972,7 +4972,20 @@ Liste, nicht zwei, damit beide Wege dasselbe fangen.
 
 **Obergrenze, gesetzt, nicht gemessen** — Eine Grenze, die aus einer Quelle abgelesen
 (hier: dem Quelltext von Blender 4.2) und nicht am eigenen Gerät nachgeprüft ist. Sie wird
-so beschriftet, bis die Messung kommt (`auf-151` V7 fragt nach Blender 5.2).
+so beschriftet, bis die Messung kommt (`auf-151` V7 fragt nach Blender 5.2). *Nachgemessen am 23.09.2026 an Blender 5.2.2 auf der HomeStation: dieselben Grenzen.*
+
+**Lieferstatus** — Ob bestellte Bilder angekommen sind: **geliefert**, **übersprungen**
+(ein regulärer Weg, auf dem absichtlich kein eigenes Bild entsteht, etwa eine Ansicht, die
+genau gleich aussieht wie eine andere) oder **fehlgeschlagen** (die bestellende Seite müsste
+etwas ändern, um das Bild zu bekommen). Dazu zwei Zahlen **nebeneinander**: bestellt und
+gekommen. *In diesem Projekt:* Das Feld stand in KosmoOrbits Vertrag mit der Vorgabe
+«geliefert», und niemand setzte es — jedes Ergebnis behauptete still eine vollständige
+Lieferung. Seit dem 23.09.2026 senden wir es je Kamera.
+
+**Heimrelativer Pfad** — Ein Pfad, der mit `~/` beginnt: «ab dem Heimatordner dessen, der
+die Datei öffnet». Er nennt keinen Benutzernamen und stimmt trotzdem auf jedem Rechner, auf
+dem der Ordner gleich aufgebaut ist. *In diesem Projekt* für ein Modell im Heimatordner,
+wenn die Mappe anderswo liegt (Befund der HomeStation, 23.09.2026).
 
 **Zwillingsansicht** — Eine Kameraansicht, deren Soll-Tiefenkarte genau gleich aussieht
 wie die einer anderen (etwa zwei Über-Eck-Ansichten eines Quaders). Sie wird nicht neu
@@ -5656,6 +5669,7 @@ keine Aussage.*
 
 | Datum | Änderung |
 |---|---|
+| 2026-09-23 | Ergaenzt aus Runde 9: **Lieferstatus**, **Heimrelativer Pfad**; nachgefuehrt: **Obergrenze, gesetzt, nicht gemessen** (an Blender 5.2.2 nachgemessen) |
 | 2026-09-23 | Ergaenzt aus Runde 7b/7c: **Ueberlauf**, **Zweite Linie**, **Obergrenze, gesetzt, nicht gemessen** |
 | 2026-09-23 | Ergaenzt aus Runde 7: **Standpunkt zweimal bestellt**, **Bias (Winkel einer Ueber-Eck-Ansicht)**, **Nicht gerahmt**, **Listenlage** (mit «ganz oder gar nicht»); nachgefuehrt: **Richtungsgrenze** (gilt in beide Richtungen), **Wirkungslos (im Bericht)** (auch Augenhoehe, Bias, Kameramodus) |
 | 2026-09-23 | Ergaenzt aus der Welle 2c: **Mitgesandte Kamera**, **Neuzentrierung**, **Gleichwertige Mutation**, **Abschrift-Probe**, **Zweiter Zustand (eines Entwurfsblatts)**, **Owner-Entscheid offen (Schild)** |
