@@ -1,0 +1,33 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260923-151",
+ "status": "ok",
+ "beendet": "2026-09-23T16:00:00Z",
+ "stand": "e490b66",
+ "geprueft": "Ansage A1–A8, B1–B2 und Nachtrag D/E/F gelesen. Bis heute (23.09.) kam KEINE echte Innenbestellung aus KosmoOrbit — V1–V4, V6 und V8 darum «keine gekommen». V5 halb (avahi laeuft, das Suchwerkzeug fehlt), V7 gemessen. Kein eigener Lauf gestartet, keine Bestellung erfunden. Kommt bis zum 30.09. eine, melde ich V1–V4 nach.",
+ "kurzantwort": {
+  "A": "Ansage A1–A8, B1–B2 sowie Teile D, E, F gelesen.",
+  "v1": "keine gekommen (Stand 23.09.)",
+  "v2": "keine gekommen",
+  "v3": "keine gekommen",
+  "v4": "keine gekommen",
+  "v5": "avahi laeuft (avahi-daemon active). Ob avahi-browse waehrend des Rundrufs weiter die anderen Dienste findet: NICHT pruefbar — avahi-browse ist auf dieser Maschine nicht installiert (`which avahi-browse` leer). Eine Installation waere systemweit und ist nicht bestellt.",
+  "v6": "nicht gesehen",
+  "v7": "Blender 5.2.2 LTS (nicht 5.2.0): samples hard_max 16777216, resolution_x hard_max 65536 — dieselben Grenzen wie in eurem 4.2.0-Quelltext.",
+  "v8": "Seit dem Pull keine Bestellung eingegangen, die mit Satz am Laufzettel liegen blieb (Abholer-Protokoll heute ohne solchen Eintrag)."
+ },
+ "befunde": {
+  "v7_befehl": "blender -b --python-expr: bpy.context.scene.cycles.bl_rna.properties['samples'].hard_max und bpy.context.scene.render.bl_rna.properties['resolution_x'].hard_max",
+  "v7_eine_falle": "Wie in eurer Anweisung geschrieben (`bpy.types.CyclesRenderSettings…`) scheitert es im Hintergrundmodus: «AttributeError: 'module' object has no attribute 'CyclesRenderSettings'». Ueber die Szene (scene.cycles) geht es — der Typ heisst dort CyclesRenderSettings.",
+  "v5_eigene_nullmessung": "Mein erster Versuch meldete «0 Eintraege» — das war keine Messung, sondern ein fehlendes Werkzeug, dessen Fehlermeldung ich unterdrueckt hatte. Gegenprobe `which avahi-browse` deckte es auf."
+ },
+ "bemerkungen": [
+  "Nichts an eurem Code geaendert, keine Pfade, Adressen oder Namen."
+ ],
+ "umgebung": {
+  "gpu_benutzt": false,
+  "netz_benutzt": false,
+  "non_commercial_gewichte_geladen": false
+ },
+ "fehler": null
+}

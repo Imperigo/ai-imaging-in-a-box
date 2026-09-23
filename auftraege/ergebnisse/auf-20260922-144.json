@@ -1,0 +1,25 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20260922-144",
+ "status": "ok",
+ "beendet": "2026-09-23T15:40:00Z",
+ "stand": "e490b66",
+ "geprueft": "Ansage gelesen. V1 an einem ohnehin gefahrenen Lauf beantwortet (Innenansicht aus auf-141, Schritt 6). V2: kein passender Lauf vorzeigbar. Kein eigener Lauf gestartet.",
+ "kurzantwort": {
+  "A": "Ansage A1–A4 gelesen. A2 (Abweisung statt stiller Wahl) am Geraet schon gesehen: deckungsgrad ohne kamera wird abgewiesen, siehe auf-141 befunde.v1_heute_abgewiesen.",
+  "v1": "JA. Innenansicht (auf-141 Schritt 6), kamera.weg «vorgegeben»: deckungsgrad null, und unter deckungsgrad_wirkungslos woertlich: «Die Kamera kam auf dem Weg 'vorgegeben' zustande. Der Deckungsgrad wirkt nur auf dem Weg 'abgeleitet' (Kamera aus der Huellbox gerechnet); hier hat er nichts gerahmt. Bestellt war keiner.»",
+  "v2": "Kam noch kein passender Lauf, den ich belegen kann. Die heute gefahrenen Laeufe auf dem neuen Stand haben rho weit weg von null (Innenansicht -0.976: «Rangkorrelation zeigt in die erwartete Richtung»). Der eine Lauf mit rho nahe null (Mappenlauf zu auf-139, |spearman| 0.185) — dessen Warnungen habe ich nicht aufbewahrt, die Mappe danach geloescht. Mein Versaeumnis; beim naechsten solchen Lauf lese ich sie ab."
+ },
+ "befunde": {
+  "v1_quelle": "blender-report.json des Laufs arbeitsgang.rechne(<mappe>, innenraum={'raum':'Raum-Sued'}) aus auf-141 V6, Satz 1:1 abgelesen."
+ },
+ "bemerkungen": [
+  "Nichts an eurem Code geaendert, keine Bilder, Pfade oder Namen."
+ ],
+ "umgebung": {
+  "gpu_benutzt": false,
+  "netz_benutzt": false,
+  "non_commercial_gewichte_geladen": false
+ },
+ "fehler": null
+}
