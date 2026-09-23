@@ -1,11 +1,11 @@
 {
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20260923-158",
- "status": "teilweise",
- "beendet": "2026-09-23T21:10:00Z",
- "stand": "a3aebb1",
- "geprueft": "A gelesen vor dem Ziehen. B: alle 24 Laeufe ueber arbeitsgang.lege_an/rechne, frische Mappe je Lauf, keiner mit Fehlersatz. C: NICHT gefahren — das Herunterladen der einen Datei (C0) hat an der HomeStation die Berechtigungspruefung meines Werkzeugs abgelehnt; umgangen habe ich das nicht, der Owner entscheidet. Alles fuer C liegt bereit und ist an 1.0 geprueft (siehe C_vorbereitung). Darum Status 'teilweise': C folgt mit derselben Auftrags-ID.",
- "kurzantwort": "Der Gewinn aus 154 traegt NICHT ueber Startwerte und Koerper. Beim Quader ist fuer Startwert 1 und 2 fast jedes Bild nicht messbar, egal mit welchem Abstand; nur Startwert 0 gibt stabile Zahlen, und dort ist 0.05 der beste Abstand (score 0.791, der einzige bestandene Lauf der Reihe), ab 0.30 kippt es (score 0.167, der Verlauf innen geht verloren). Beim Hochbau aendert der Abstand nichts: jedes messbare Bild hat score 0.000 bei positivem spearman um +0.5 — das Bild traegt die Tiefe verkehrt herum. C offen (Download an der HomeStation blockiert, Owner-Entscheid).",
+ "status": "ok",
+ "beendet": "2026-09-23T20:35:00Z",
+ "stand": "aebc1dc",
+ "geprueft": "A gelesen vor dem Ziehen. B: alle 24 Laeufe ueber arbeitsgang.lege_an/rechne, frische Mappe je Lauf, keiner mit Fehlersatz. C: der Download war zuerst an der Berechtigungspruefung meines Werkzeugs haengengeblieben; der Owner hat ihn danach ausdruecklich freigegeben (23.09. abends). Genau EINE Datei geladen, 1.0 unberuehrt (Pruefsumme vorher/nachher), nichts ins Register eingetragen, Skripte fuer C liegen bei uns.",
+ "kurzantwort": "Der Gewinn aus 154 traegt NICHT ueber Startwerte und Koerper (beim Quader haengt schon die Messbarkeit am Startwert, beim Hochbau aendert der Abstand nichts und jedes messbare Bild traegt die Tiefe verkehrt herum). Union-2.1 laedt und zeichnet sichtbar VIEL besser: ein sauberes, fotografisches Gebaeude genau auf der Silhouette des Quaders vor leerem Hintergrund — aber die QA erklaert genau diese Bilder fuer «nicht messbar» (geom_iou 0.000), dieselbe Soll-Karte, an der das 1.0-Bild messbar war. Die Messbarkeitsschranke haengt also am Bild und faellt gerade beim saubersten Bild. Inpaint mit 2.1 laedt und laeuft (2.8 s): sichtbar aendert sich nur die Maske, bildpunktgleich bleibt ausserhalb aber NICHTS (244 648 von 244 700 Bildpunkten, im Mittel 10 Stufen).",
  "befunde": {
   "A": "A1–A4 gelesen, vor dem Ziehen. freigabe-token.json: NEIN — gesucht im Heimatordner und unter der Datenplatte (je 5 Ebenen tief) sowie im Auftragsordner der Bruecke (existiert gerade nicht); Gegenprobe: dieselbe Suche findet eine absichtlich angelegte Probedatei.",
   "B_laeufe": [
@@ -373,18 +373,80 @@
    "platz": "2.9 TB frei auf der Datenplatte",
    "skript_kontrolle": "Das C2-Skript erzeugt mit dem 1.0-ControlNet fuer beide Karten stellengleich dasselbe Bild wie die Kette (Pruefsumme der Bildpunkte 61cdc29e4fc85e63 bzw. 6d143a191be25b42) und misst dieselben Zahlen (0.4498/-0.5824/0.3474 und 0.5335/-0.3102/0.9177). Der Vergleich 1.0 gegen 2.1 ist damit ein einziger Lauf, sobald die Datei da ist."
   },
-  "C0": "offen — Download blockiert (Berechtigungspruefung an der HomeStation), nichts geladen, 1.0 unberuehrt.",
-  "C1": "offen",
-  "C2": "offen",
-  "C3": "offen",
-  "D": "Die Messbarkeit selbst haengt am Startwert, nicht nur der Score: dieselbe Soll-Karte (Quader, 19.8 % Geometrie) ist bei Startwert 0 messbar und bei Startwert 1 «nicht messbar — geringer Geometrieanteil». Wer Abstaende vergleicht, vergleicht darum bei n=3 oft nur einen einzigen messbaren Lauf je Zelle."
+  "D": "Die Messbarkeit selbst haengt am Startwert, nicht nur der Score: dieselbe Soll-Karte (Quader, 19.8 % Geometrie) ist bei Startwert 0 messbar und bei Startwert 1 «nicht messbar — geringer Geometrieanteil». Wer Abstaende vergleicht, vergleicht darum bei n=3 oft nur einen einzigen messbaren Lauf je Zelle. Und die wichtigere: Die QA-Schranke «nicht messbar» faellt gerade dort, wo das Bild am saubersten ist (2.1: Gebaeude exakt auf der Silhouette, leerer Hintergrund). Bevor 2.1 gegen 1.0 in Zahlen entschieden werden kann, muss die Schranke lernen, ein solches Bild zu beurteilen.",
+  "C0": {
+   "datei": "Z-Image-Turbo-Fun-Controlnet-Union-2.1-2602-8steps.safetensors",
+   "ordner": "<modellwurzel>/z-image-controlnet-union-2.1/",
+   "groesse_byte": 6712485600,
+   "sha256": "d1251cc7bc3486bc61d25c3be498ef394c31c85ddf4ee9137d2e933411f4a689",
+   "gleich_hub": "ja (Groesse und SHA-256 wie in der Hub-Liste)",
+   "1.0_unberuehrt": "ja, SHA-256 der 1.0-Datei vor dem Laden festgehalten, Datei nicht verschoben",
+   "nebenbei_geholt": "diffusers.from_single_file holt die Modellkonfiguration selbst vom Hub: config.json (591 Byte) aus dem Konto hlky/Z-Image-Turbo-Fun-Controlnet-Union-2.1 — dasselbe tut es bei 1.0 (hlky/Z-Image-Turbo-Fun-Controlnet-Union liegt schon im Cache), also auch der Weg der Kette. Keine Gewichte, nur Bauplan (control_in_dim 33). Wer ganz ohne Netz laden will, braucht diese Datei lokal."
+  },
+  "C1": {
+   "befehl": "diffusers.ZImageControlNetModel.from_single_file(<2.1-datei>, torch_dtype=bfloat16); diffusers.ZImageControlNetPipeline.from_pretrained(<z-image-turbo-wurzel>, controlnet=cn, torch_dtype=bfloat16) — in unserem Skript, Code unberuehrt",
+   "satz": "laedt, ohne Warnung ueber fehlende oder ueberzaehlige Schluessel (2.1 traegt 295 Tensoren, 1.0 136)"
+  },
+  "C2": {
+   "weg": "je Karte ein Bild mit 1.0 und eines mit 2.1, sonst gleich (Prompt, Startwert 0, 8 Schritte, Staerke 1.0, 512 px, Tiefe umgedreht wie das Register); gemessen mit dem Nachbau der Ketten-QA",
+   "kontrolle": "1.0-Bilder stellengleich zur Kette (Pruefsumme 61cdc29e4fc85e63 bzw. 6d143a191be25b42)",
+   "zeilen": [
+    {
+     "cn": "1.0",
+     "karte": "ohne Abstand",
+     "score": 0.4498,
+     "spearman": -0.5824,
+     "geom_iou": 0.3474,
+     "bestanden": false,
+     "satz": "Skizzenhafte Grafik, Fassadenrechteck mit Fensterreihe an der Stelle des Quaders, viele Hilfslinien drumherum."
+    },
+    {
+     "cn": "2.1",
+     "karte": "ohne Abstand",
+     "score": null,
+     "spearman": null,
+     "geom_iou": 0.0,
+     "bestanden": false,
+     "satz": "Fotografisches Gebaeude mit Rasterfassade und Dachaufbau, sitzt genau auf der Silhouette des Quaders, Hintergrund leer und hell. QA: «Nicht messbar … Geringer Geometrieanteil: nur 19.8%»."
+    },
+    {
+     "cn": "1.0",
+     "karte": "ferne_abstand 0.15",
+     "score": 0.5335,
+     "spearman": -0.3102,
+     "geom_iou": 0.9177,
+     "bestanden": false,
+     "satz": "Wie ohne Abstand, von blossem Auge kaum zu unterscheiden."
+    },
+    {
+     "cn": "2.1",
+     "karte": "ferne_abstand 0.15",
+     "score": null,
+     "spearman": null,
+     "geom_iou": 0.0,
+     "bestanden": false,
+     "satz": "Wie 2.1 ohne Abstand, Rasterfassade enger, wieder genau auf der Silhouette. QA: dieselbe Begruendung «nicht messbar»."
+    }
+   ],
+   "lesart": "Sichtbar steuert 2.1 die Tiefe deutlich besser als 1.0; gemessen laesst es sich mit der heutigen QA nicht, weil sie die Bilder fuer nicht messbar erklaert."
+  },
+  "C3": {
+   "laedt": "ja — ZImageControlNetInpaintPipeline mit der 2.1-Datei, 1.9 s",
+   "lauf": "image = Endbild testbau ohne Abstand Startwert 0, control_image = dessen Tiefenkarte, mask_image = weisses Rechteck ueber dem oberen Drittel des Quaders (17 444 von 262 144 Bildpunkten), Prompt «+ 1 Geschoss, same building», 8 Schritte, 2.8 s",
+   "nur_in_der_maske": "teilweise — sichtbar entsteht nur in der Maske etwas Neues (ein zusaetzliches Band mit Fensterfeldern ueber der Fensterreihe); ausserhalb sieht das Bild von blossem Auge gleich aus, ist aber NICHT bildpunktgleich",
+   "pruefsumme_aussen_vorher": "63adeac45c45af4d",
+   "pruefsumme_aussen_nachher": "9d60bcf845f3cf95",
+   "aussen_geaendert": "244 648 von 244 700 Bildpunkten, mittlere Abweichung 10.0 Stufen (innen 22.3)",
+   "vermutung": "Das ganze Bild geht durch den VAE; wer ausserhalb bildpunktgleich will, muss das Original ausserhalb der Maske zurueckkopieren. Nicht gemessen, nur die naheliegende Lesart."
+  }
  },
  "bemerkungen": "Leerlauf vor dem Start hergestellt: das Kosmo-Sprachmodell lag noch von meinem eigenen Browsertest geladen auf der Karte (25 GB) und wurde von mir entladen, danach 65 W / 604 MiB. testbau ohne Abstand bei Startwert 0 ergibt heute stellengleich dieselben Zahlen wie 154 B2 — die Kette ist ueber die Tage stabil.",
  "umgebung": {
   "geraet": "HomeStation",
   "gpu": "RTX 5090, Leistungsgrenze 400 W",
   "gpu_last_max_w": 324.21,
-  "gpu_speicher_max_mib": 25518
+  "gpu_speicher_max_mib": 25518,
+  "gpu_last_max_w_teil_c": 294.63
  },
  "fehler": null
 }
