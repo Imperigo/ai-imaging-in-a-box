@@ -1,0 +1,32 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20260923-159",
+  "art": "frage",
+  "beschreibung": "Nachfolger von auf-20260923-156: beide STOPP-Gruende sind auf origin/main aufgeloest. KosmoPrepare traegt B113 jetzt selbst (2b0e19f), KosmoPublish hat den Seitenzweig der HomeStation gemergt (0053ee7) — der Zweig traegt nichts mehr, was main nicht hat. Die zwei Klone koennen jetzt nachgezogen werden.",
+  "anweisung": "=== ZWEI KLONE NACHZIEHEN — ZWEITER ANLAUF\n\nDANKE fuer die STOPPs in 156 — beide waren richtig, und beide haben etwas gefunden:\n* K1: B113 lag nur ungesichert bei euch. Auf origin/main von KosmoPrepare steht es jetzt als 2b0e19f: kein festes Kennwort mehr, KOSMO_ODYSSEUS_PASSWORD ist Pflicht, ODY_PASS wird noch gelesen, aber mit Warnung. Der Wortlaut ist unserer, nicht eurer — die Aussage dieselbe.\n* K2: auf dem Seitenzweig lagen DREI Stuecke echter Arbeit, die nie main erreicht hatten (B109 = dasselbe Kennwort in KosmoPublish, der Gelaende-Fix in tools/ifc_runner.py vom 07.09., der README-Satz E23). Sie sind jetzt auf main gemergt (0053ee7), samt den 18 Tagesberichten des Bildtests. **Euer Klon faehrt heute den Stand vom 04.09.2026** — 184 Commits hinter main.\n\n--- K1 · KosmoPrepare\n\n    cd <euer KosmoPrepare-Klon>\n    git fetch origin\n    git diff > <ausserhalb des Klons>/b113-arbeitsbaum-2026-09-19.patch   # Sicherung eurer Fassung\n    git diff origin/main -- integrations/odysseus/register_in_odysseus.sh | head -40   # zum Vergleich, nur ansehen\n    git restore integrations/odysseus/register_in_odysseus.sh\n    git status --short          # jetzt LEER, sonst STOPP und melden\n    git branch sicherung/a6584ca-2026-09-21 a6584ca\n    git switch main\n    git reset --keep origin/main\n\nDie Patch-Datei ist die Sicherung eurer Fassung: sie wird nicht geloescht und nicht angewendet. Weicht eure Fassung INHALTLICH von 2b0e19f ab (nicht nur im Wortlaut), bitte in K3 sagen, worin.\n\nDanach nachmessen:\n\n    python3 tools/libs_pruefen.py; echo \"exit=$?\"\n    ./run_tests.sh 2>&1 | tail -3\n\nErwartet: pyphen «[WIRD GEBRAUCHT]» mit «gebraucht von weasyprint», pysolar «[nicht da]», KEINE rm-Zeile, exit=0; die Suite gruen.\n\n--- K2 · KosmoPublish\n\n    cd <euer KosmoPublish-Klon>\n    git status --short          # muss LEER sein, sonst STOPP und melden\n    git fetch origin\n    git log --oneline origin/main..HEAD\n\nDie Liste zeigt, was der Zweig noch traegt, das main nicht hat. Nach unserem Merge sollte sie leer sein — hoechstens ein Tagesbericht von heute Nacht (`Visueller Test <Datum>`), falls der nach dem Merge entstand. **Umschalten verliert nichts**: der Zweig bleibt, wie er ist, nur der Klon steht danach woanders.\n\n* Steht dort NUR `Visueller Test …`: umschalten:\n\n      git switch main && git pull --ff-only origin main\n      .venv/bin/python tools/kosmopublish_cli.py diagnose; echo \"exit=$?\"\n\n* Steht dort etwas anderes: NICHT umschalten, die Liste woertlich melden.\n\n--- WAS DAMIT BEI EUCH ANDERS WIRD (angesagt, damit es nicht wie ein Fehler aussieht)\n\n* **Der naechtliche Bildtest committet und pusht ab dann auf main**, nicht mehr auf den Seitenzweig — er schreibt immer auf den Zweig, auf dem der Klon steht. Wenn ihr das NICHT wollt, bitte in K4 sagen; der Owner entscheidet dann.\n* Der Bildtest meldet beim ersten Lauf auf dem neuen Stand vermutlich «Basis veraltet» fuer mehrere Faelle — zwischen dem 04.09. und heute hat sich an den Zeichnungen viel geaendert. Das ist erwartet, keine Regression.\n* `register_in_odysseus.sh` in BEIDEN Repos verlangt KOSMO_ODYSSEUS_PASSWORD (Wert aus ~/.kosmo/bau.env) und bricht ohne es mit dem Namen der Variable ab.\n* Alles aus Auftrag 156 (FEHLT mit exit 1, Blender mit --python-exit-code, --update-golden endet mit 0, --anzahl zaehlt Plakate, build liefert EIN Blatt) kommt mit.\n\nWAS NICHT GETAN WERDEN SOLL\n* Nichts loeschen — weder den Sicherungszweig noch den Seitenzweig noch die Patch-Datei noch etwas in libs/.\n* Nichts installieren, keine Blender-Profile anfassen, keine GPU-Last.\n* Keinen Bildtest mit --update-golden fahren.\n* Keine Pfade mit Benutzernamen in der Antwort (REGEL 3), keinen Kennwort-Wert.",
+  "erstellt": "2026-09-23T19:55:00Z",
+  "geometrie": {"synthetisch": true, "pfad": null, "erzeugen_mit": "python3 tools/make_test_ifc.py build/testbau.ifc"},
+  "params": {},
+  "auflagen": {
+    "leistungsgrenze_w": 0,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten.",
+    "hinweise": [
+      "Eure B113-Fassung erst als Patch-Datei sichern, dann zuruecksetzen.",
+      "KosmoPublish nur umschalten, wenn der Zweig nichts ausser Tagesberichten traegt.",
+      "Nichts loeschen, nichts installieren, keine GPU-Last.",
+      "Keine absoluten Pfade mit Benutzernamen, keinen Kennwort-Wert (REGEL 3)."
+    ]
+  },
+  "rueckgabe": [
+    "K1 KosmoPrepare: main auf 2b0e19f? Sicherungszweig und Patch-Datei angelegt? libs_pruefen woertlich (pyphen- und pysolar-Zeile) samt exit, letzte Zeile der Suite.",
+    "K2 KosmoPublish: was stand in origin/main..HEAD? Umgeschaltet ja/nein; wenn ja: main auf 0053ee7 oder neuer, diagnose exit.",
+    "K3 Weicht eure B113-Fassung inhaltlich von 2b0e19f ab? Worin?",
+    "K4 Soll der naechtliche Bildtest kuenftig auf main committen — Einwand ja/nein, mit Grund.",
+    "K5 Eine Zeile, die wir nicht erfragt haben und wissen sollten."
+  ],
+  "rang": 3
+}
